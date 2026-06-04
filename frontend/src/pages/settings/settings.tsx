@@ -15,9 +15,10 @@
  */
 
 import {useQuery} from "@apollo/client/react";
-import {FC, Suspense, useCallback, useEffect, useMemo} from "react";
+import type {FC} from "react";
+import { Suspense, useCallback, useEffect, useMemo} from "react";
 import {InternalPage} from "../../components/page";
-import {InternalRoutes} from "../../config/routes";
+import {InternalRoutes, type IInternalRoute} from "../../config/routes";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {SettingsActions} from "../../store/settings";
 import {getAppName} from "@/config/features";
@@ -86,14 +87,14 @@ export const SettingsPage: FC = () => {
 
     const handleMetricsToggle = useCallback((enabled: boolean) => {
         if (enabled) {
-            optInUser();
+            void optInUser();
             void trackFrontendEvent('ui.telemetry_toggled', {enabled: true});
         } else {
             void trackFrontendEvent('ui.telemetry_toggled', {enabled: false});
-            optOutUser();
+            void optOutUser();
         }
         dispatch(SettingsActions.setMetricsEnabled(enabled));
-    }, [dispatch, trackFrontendEvent]);
+    }, [dispatch]);
 
     const handleStorageUnitViewToggle = useCallback((view: 'list' | 'card') => {
         dispatch(SettingsActions.setStorageUnitView(view));
@@ -128,7 +129,7 @@ export const SettingsPage: FC = () => {
     }, [dispatch]);
 
     return (
-        <InternalPage routes={[InternalRoutes.Settings!]}>
+        <InternalPage routes={[InternalRoutes.Settings as IInternalRoute]}>
             <div className="flex flex-col items-center w-full max-w-2xl mx-auto py-10 gap-8">
                 <div className="w-full flex flex-col gap-0">
                     <div className="flex flex-col gap-2">
@@ -263,7 +264,7 @@ export const SettingsPage: FC = () => {
                                         min={1}
                                         className="w-24"
                                         value={customPageSizeInput}
-                                        onChange={(e) => setCustomPageSizeInput(e.target.value)}
+                                        onChange={(e) => { setCustomPageSizeInput(e.target.value); }}
                                         onBlur={handleCustomPageSizeApply}
                                         onKeyDown={(e) => {
                                             if (e.key === "Enter") {

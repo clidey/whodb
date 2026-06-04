@@ -16,16 +16,16 @@
 
 import {Badge, Button, Label, Separator} from "@clidey/ux";
 import {ChatBubbleLeftRightIcon, EnvelopeIcon, GlobeAltIcon} from "../../components/heroicons";
-import {FC} from "react";
+import type {FC} from "react";
 import {InternalPage} from "../../components/page";
-import {InternalRoutes} from "../../config/routes";
+import {InternalRoutes, type IInternalRoute} from "../../config/routes";
 import {openExternalLink} from "../../utils/external-links";
 import {useTranslation} from '@/hooks/use-translation';
 
 export const ContactUsPage: FC = () => {
     const { t } = useTranslation('pages/contact-us');
     return (
-        <InternalPage routes={[InternalRoutes.ContactUs!]}>
+        <InternalPage routes={[InternalRoutes.ContactUs as IInternalRoute]}>
             <div className="flex flex-col items-center w-full max-w-2xl mx-auto py-10 gap-8">
                 <div className="w-full flex flex-col gap-0">
                     <div className="flex flex-col gap-sm mb-4">
@@ -57,7 +57,7 @@ export const ContactUsPage: FC = () => {
                                 variant="secondary"
                                 className="w-fit gap-2"
                                 data-testid="github-issue-button"
-                                onClick={(e) => openExternalLink("https://github.com/clidey/whodb/issues", e)}
+                                onClick={(e) => { void openExternalLink("https://github.com/clidey/whodb/issues", e); }}
                             >
                                 <GlobeAltIcon className="w-5 h-5"/>
                                 {t('submitIssue')}

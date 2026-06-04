@@ -33,10 +33,12 @@ import {
 } from "@clidey/ux";
 import { ChatBubbleLeftRightIcon, PlusCircleIcon, TrashIcon } from "../../components/heroicons";
 import { Tip } from "../../components/tip";
-import { ChangeEvent, FC, useCallback, useEffect, useRef, useState } from "react";
+import type { ChangeEvent, FC} from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "../../hooks/use-translation";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { ChatSession, HoudiniActions } from "../../store/chat";
+import type { ChatSession} from "../../store/chat";
+import { HoudiniActions } from "../../store/chat";
 
 type EditableSessionNameProps = {
     session: ChatSession;
@@ -229,7 +231,7 @@ export const ChatHistorySidebar: FC = () => {
                                                     "bg-muted": isActive,
                                                 }
                                             )}
-                                            onClick={() => handleSelectSession(session.id)}
+                                            onClick={() => { handleSelectSession(session.id); }}
                                             data-testid={`chat-session-item-${session.id}`}
                                         >
                                             <ChatBubbleLeftRightIcon className={cn("w-4 h-4 shrink-0", {

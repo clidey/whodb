@@ -29,7 +29,7 @@ func (p *MemcachedPlugin) DeleteRow(config *engine.PluginConfig, schema string, 
 		log.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to connect to Memcached for row deletion")
 		return false, err
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	if err := client.Delete(storageUnit); err != nil {
 		log.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to delete Memcached item")

@@ -32,7 +32,7 @@ func (p *RedisPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema stri
 		log.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to connect to Redis for storage unit update")
 		return false, err
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	ctx := context.Background()
 
@@ -43,31 +43,31 @@ func (p *RedisPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema stri
 	}
 
 	switch keyType {
-	case "string":
+	case redisTypeString:
 		if len(values) != 1 {
 			err := errors.New("invalid number of fields for a string key")
 			log.WithError(err).WithField("storageUnit", storageUnit).WithField("valueCount", len(values)).Error("Invalid number of fields for Redis string key update")
 			return false, err
 		}
-		err := client.Set(ctx, storageUnit, values["value"], 0).Err()
+		err := client.Set(ctx, storageUnit, values[redisKeyValue], 0).Err()
 		if err != nil {
-			log.WithError(err).WithField("storageUnit", storageUnit).WithField("value", values["value"]).Error("Failed to update Redis string value")
+			log.WithError(err).WithField("storageUnit", storageUnit).WithField(redisKeyValue, values[redisKeyValue]).Error("Failed to update Redis string value")
 			return false, err
 		}
-	case "hash":
-		err := client.HSet(ctx, storageUnit, values["field"], values["value"]).Err()
+	case redisTypeHash:
+		err := client.HSet(ctx, storageUnit, values["field"], values[redisKeyValue]).Err()
 		if err != nil {
-			log.WithError(err).WithField("storageUnit", storageUnit).WithField("field", values["field"]).WithField("value", values["value"]).Error("Failed to update Redis hash field")
+			log.WithError(err).WithField("storageUnit", storageUnit).WithField("field", values["field"]).WithField(redisKeyValue, values[redisKeyValue]).Error("Failed to update Redis hash field")
 			return false, err
 		}
-	case "list":
+	case redisTypeList:
 		indexInt, err := strconv.ParseInt(values["index"], 10, 64)
 		if err != nil {
 			log.WithError(err).WithField("storageUnit", storageUnit).WithField("index", values["index"]).Error("Failed to parse list index for Redis update")
 			return false, errors.New("unable to convert to int")
 		}
-		if err := client.LSet(ctx, storageUnit, indexInt, values["value"]).Err(); err != nil {
-			log.WithError(err).WithField("storageUnit", storageUnit).WithField("index", indexInt).WithField("value", values["value"]).Error("Failed to update Redis list item")
+		if err := client.LSet(ctx, storageUnit, indexInt, values[redisKeyValue]).Err(); err != nil {
+			log.WithError(err).WithField("storageUnit", storageUnit).WithField("index", indexInt).WithField(redisKeyValue, values[redisKeyValue]).Error("Failed to update Redis list item")
 			return false, errors.New("unable to update the list item")
 		}
 	case "set":

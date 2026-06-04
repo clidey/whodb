@@ -19,11 +19,13 @@ package gorm_plugin
 import (
 	"errors"
 	"fmt"
+	"slices"
+
+	"gorm.io/gorm"
+
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
-	"gorm.io/gorm"
-	"slices"
 )
 
 func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema string, storageUnit string, values map[string]string, updatedColumns []string) (bool, error) {
@@ -69,11 +71,12 @@ func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema strin
 			}
 
 			// GORM handles identifier escaping automatically
-			if isPK {
+			switch {
+			case isPK:
 				conditions[column] = convertedValue
-			} else if isUpdated {
+			case isUpdated:
 				convertedValues[column] = convertedValue
-			} else {
+			default:
 				// Store unchanged values for WHERE clause if no PKs
 				unchangedValues[column] = convertedValue
 			}

@@ -18,16 +18,18 @@ package gcp
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
 
 	memcachepb "cloud.google.com/go/memcache/apiv1/memcachepb"
+	"google.golang.org/api/iterator"
+
 	"github.com/clidey/whodb/core/src/engine"
 	gcpinfra "github.com/clidey/whodb/core/src/gcp"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/providers"
-	"google.golang.org/api/iterator"
 )
 
 // discoverMemcached discovers Memorystore for Memcached instances in the configured project/region.
@@ -44,12 +46,12 @@ func (p *Provider) discoverMemcached(ctx context.Context) ([]providers.Discovere
 
 	for {
 		if ctx.Err() != nil {
-			log.Warnf("Memcached: context cancelled, returning %d results so far", len(connections))
+			log.Warnf("Memcached: context canceled, returning %d results so far", len(connections))
 			return connections, ctx.Err()
 		}
 
 		instance, err := iter.Next()
-		if err == iterator.Done {
+		if errors.Is(err, iterator.Done) {
 			break
 		}
 		if err != nil {

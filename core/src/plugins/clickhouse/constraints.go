@@ -21,11 +21,12 @@ import (
 	"strconv"
 	"strings"
 
+	"gorm.io/gorm"
+
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
-	"gorm.io/gorm"
 )
 
 // enumValuePattern matches 'value' = N inside ClickHouse Enum definitions.
@@ -64,7 +65,7 @@ func (p *ClickHousePlugin) GetColumnConstraints(config *engine.PluginConfig, sch
 
 	if err != nil {
 		// Return base constraints if system.columns query fails
-		return constraints, nil
+		return constraints, nil //nolint:nilerr
 	}
 
 	return constraints, nil
@@ -168,7 +169,7 @@ func parseClickHouseDecimalParams(decimalType string) (scale int, precision int)
 	start := strings.Index(decimalType, "(")
 	end := strings.LastIndex(decimalType, ")")
 	if start == -1 || end == -1 || end <= start {
-		return
+		return scale, precision
 	}
 
 	baseName := strings.ToUpper(strings.TrimSpace(decimalType[:start]))
@@ -201,5 +202,5 @@ func parseClickHouseDecimalParams(decimalType string) (scale int, precision int)
 		}
 	}
 
-	return
+	return scale, precision
 }

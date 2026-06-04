@@ -21,6 +21,7 @@ import {
     AlertTitle,
     Button,
     Card,
+    Checkbox,
     cn,
     Dialog,
     DialogContent,
@@ -42,7 +43,8 @@ import {
     toast
 } from "@clidey/ux";
 import {ChatHistorySidebar} from "./chat-history-sidebar";
-import {ExecuteConfirmedSqlDocument, GenerateChatTitleDocument, GetAiChatQuery, GetDatabaseQuerySuggestionsDocument} from '@graphql';
+import type { GetAiChatQuery} from '@graphql';
+import {ExecuteConfirmedSqlDocument, GenerateChatTitleDocument, GetDatabaseQuerySuggestionsDocument} from '@graphql';
 import {
     ArrowUpCircleIcon,
     CheckCircleIcon,
@@ -56,7 +58,8 @@ import {
     TableCellsIcon
 } from "../../components/heroicons";
 import classNames from "classnames";
-import {cloneElement, FC, KeyboardEventHandler, memo, useCallback, useEffect, useMemo, useRef, useState} from "react";
+import type { FC, KeyboardEventHandler} from "react";
+import {memo, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import ReactMarkdown from 'react-markdown';
 import logoImage from "../../../public/images/logo.svg";
 import {AIProvider, useAI} from "../../components/ai";
@@ -67,12 +70,13 @@ import {Loading} from "../../components/loading";
 import {InternalPage} from "../../components/page";
 import {StorageUnitTable} from "../../components/table";
 import {copyToClipboard} from "../../services/clipboard";
-import {extensions} from "../../config/features";
+import {MessageCopyAction} from "../../components/message-copy-action";
+import {extensions, featureFlags} from "../../config/features";
 import {InternalRoutes} from "../../config/routes";
+import {reduxStorePersistor} from "../../store";
 import {HoudiniActions} from "../../store/chat";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {ScratchpadActions} from "../../store/scratchpad";
-import {featureFlags} from "../../config/features";
 import {chooseRandomItems} from "../../utils/functions";
 import {getComponent} from "../../config/component-registry";
 import {useSourceContract} from "../../hooks/useSourceContract";
@@ -93,31 +97,31 @@ const PieChart = getComponent('pie-chart');
 const THINKING_PHRASES_COUNT = 25;
 
 const markdownComponents = {
-    p: ({node, ...props}: any) => <p className="mb-2 last:mb-0" {...props} />,
-    strong: ({node, ...props}: any) => <strong className="font-semibold" {...props} />,
-    ul: ({node, ...props}: any) => <ul className="list-disc list-inside mb-2 space-y-1" {...props} />,
-    ol: ({node, ...props}: any) => <ol className="list-decimal list-inside mb-2 space-y-1" {...props} />,
-    li: ({node, ...props}: any) => <li className="ml-2" {...props} />,
-    h1: ({node, ...props}: any) => <h1 className="text-xl font-bold mb-2 mt-4 first:mt-0" {...props} />,
-    h2: ({node, ...props}: any) => <h2 className="text-lg font-semibold mb-2 mt-3 first:mt-0" {...props} />,
-    h3: ({node, ...props}: any) => <h3 className="text-md font-semibold mb-1 mt-2 first:mt-0" {...props} />,
-    code: ({node, children, ...props}: any) => {
-        const isInline = !String(props.className || '').includes('language-');
+    p: ({_node, ...props}: any) => <p className="mb-2 last:mb-0" {...props} />,
+    strong: ({_node, ...props}: any) => <strong className="font-semibold" {...props} />,
+    ul: ({_node, ...props}: any) => <ul className="list-disc list-inside mb-2 space-y-1" {...props} />,
+    ol: ({_node, ...props}: any) => <ol className="list-decimal list-inside mb-2 space-y-1" {...props} />,
+    li: ({_node, ...props}: any) => <li className="ml-2" {...props} />,
+    h1: ({_node, ...props}: any) => <h1 className="text-xl font-bold mb-2 mt-4 first:mt-0" {...props} />,
+    h2: ({_node, ...props}: any) => <h2 className="text-lg font-semibold mb-2 mt-3 first:mt-0" {...props} />,
+    h3: ({_node, ...props}: any) => <h3 className="text-md font-semibold mb-1 mt-2 first:mt-0" {...props} />,
+    code: ({_node, children, ...props}: any) => {
+        const isInline = !String(props.className ?? '').includes('language-');
         return isInline
             ? <code className="bg-neutral-100 dark:bg-neutral-800 px-1 py-0.5 rounded text-sm" {...props}>{children}</code>
             : <CodeBlock>{String(children)}</CodeBlock>;
     },
-    blockquote: ({node, ...props}: any) => <blockquote className="border-l-4 border-neutral-300 dark:border-neutral-700 pl-4 my-2 italic" {...props} />,
+    blockquote: ({_node, ...props}: any) => <blockquote className="border-l-4 border-neutral-300 dark:border-neutral-700 pl-4 my-2 italic" {...props} />,
 };
 
 const CodeBlock: FC<{ children: string }> = ({ children }) => {
     const [copied, setCopied] = useState(false);
 
     const handleCopy = useCallback(() => {
-        copyToClipboard(children).then(success => {
+        void copyToClipboard(children).then(success => {
             if (success) {
                 setCopied(true);
-                setTimeout(() => setCopied(false), 2000);
+                setTimeout(() =>{  setCopied(false); }, 2000);
             }
         });
     }, [children]);
@@ -151,9 +155,9 @@ const TablePreview: FC<{ type: string, data: TableData, text: string, containerW
     const [newPageName, setNewPageName] = useState<string>("");
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const navigate = useNavigate();
-    const current = useAppSelector(state => state.auth.current);
+    const currentType = useAppSelector(state => state.auth.current?.Type);
     const { pages, activePageId } = useAppSelector(state => state.scratchpad);
-    const { supportsScratchpad } = useSourceContract(current?.Type);
+    const { supportsScratchpad } = useSourceContract(currentType);
 
     const handleCodeToggle = useCallback(() => {
         setShowSQL(status => !status);
@@ -185,19 +189,19 @@ const TablePreview: FC<{ type: string, data: TableData, text: string, containerW
             const pageName = newPageName.trim() || `Page ${pages.length + 1}`;
             dispatch(ScratchpadActions.addPage({ name: pageName, initialQuery: text }));
             // Navigate to scratchpad - the new page will be created with the query
-            navigate(InternalRoutes.RawExecute.path, {
+            void navigate(InternalRoutes.RawExecute.path, {
                 state: {
                     targetPage: "new"
                 }
             });
         } else {
             // Add to existing page and set it as active
-            dispatch(ScratchpadActions.addCellToPageAndActivate({ 
-                pageId: selectedPage, 
-                initialQuery: text 
+            dispatch(ScratchpadActions.addCellToPageAndActivate({
+                pageId: selectedPage,
+                initialQuery: text
             }));
             // Navigate to scratchpad and highlight the target page
-            navigate(InternalRoutes.RawExecute.path, {
+            void navigate(InternalRoutes.RawExecute.path, {
                 state: {
                     targetPage: selectedPage
                 }
@@ -269,7 +273,7 @@ const TablePreview: FC<{ type: string, data: TableData, text: string, containerW
                             rows={data?.Rows ?? []}
                             disableEdit={true}
                             limitContextMenu={true}
-                            databaseType={current?.Type}
+                            databaseType={currentType}
                             rawQuery={text}
                             height={200}
                             enforceMinHeight={true}
@@ -317,7 +321,7 @@ const TablePreview: FC<{ type: string, data: TableData, text: string, containerW
                             <label className="text-sm font-medium mb-2 block">{t('newPageLabel')}</label>
                             <Input
                                 value={newPageName}
-                                onChange={(e) => setNewPageName(e.target.value)}
+                                onChange={(e) =>{  setNewPageName(e.target.value); }}
                                 placeholder={t('newPagePlaceholder')}
                             />
                         </div>
@@ -344,25 +348,29 @@ export const ChatPage: FC = () => {
     const { t } = useTranslation('pages/chat');
     const [query, setQuery] = useState("");
     const { sessions, activeSessionId } = useAppSelector(state => state.houdini);
-    const chats = useMemo(() => {
-        if (sessions.length > 0 && activeSessionId) {
-            const activeSession = sessions.find(s => s.id === activeSessionId);
-            return activeSession?.messages || [];
-        }
-        return [];
+    const activeSession = useMemo(() => {
+        return sessions.length > 0 && activeSessionId
+            ? sessions.find(s => s.id === activeSessionId)
+            : undefined;
     }, [sessions, activeSessionId]);
+    const chats = useMemo(() => {
+        return activeSession?.messages ?? [];
+    }, [activeSession]);
+    const autoScrollEnabled = activeSession?.autoScrollEnabled ?? true;
     const [executeConfirmedSql] = useMutation(ExecuteConfirmedSqlDocument);
     const [generateChatTitleMutation] = useMutation(GenerateChatTitleDocument);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const containerWidth = useContainerWidth(scrollContainerRef);
     const schemaFromState = useAppSelector(state => state.database.schema);
     const authProfile = useAppSelector(state => state.auth.current);
-    const { item, supportsScripts } = useSourceContract(authProfile?.Type);
+    const authProfileType = authProfile?.Type;
+    const authProfileDatabase = authProfile?.Database;
+    const { item, supportsScripts } = useSourceContract(authProfileType);
     const [executingConfirmedId, setExecutingConfirmedId] = useState<number | null>(null);
     const [showQueryForId, setShowQueryForId] = useState<number | null>(null);
     const [copiedSqlId, setCopiedSqlId] = useState<number | null>(null);
     const messageIdCounter = useRef(0);
-    const sourceScopeRef = useMemo(() => buildSourceScopeRef(item, authProfile, schemaFromState), [authProfile, item, schemaFromState]);
+    const sourceScopeRef = useMemo(() => buildSourceScopeRef(item, authProfile, schemaFromState), [authProfileDatabase, item, schemaFromState]);
     const [currentSearchIndex, setCurrentSearchIndex] = useState<number>();
 
     const dispatch = useAppDispatch();
@@ -449,7 +457,6 @@ export const ChatPage: FC = () => {
         // Check if we should try to generate a title:
         // - Session still has default name (matches "Chat X" pattern)
         // This will keep trying on each message until we get a meaningful title
-        const activeSession = sessions.find(s => s.id === activeSessionId);
         const hasDefaultName = activeSession?.name?.match(/^Chat \d+$/);
         const shouldTryTitle = hasDefaultName;
 
@@ -468,14 +475,16 @@ export const ChatPage: FC = () => {
             RequiresConfirmation: false
         }));
 
-        setTimeout(() => {
-            if (scrollContainerRef.current != null) {
-                scrollContainerRef.current.scroll({
-                    top: scrollContainerRef.current.scrollHeight,
-                    behavior: "smooth",
-                });
-            }
-        }, 250);
+        if (autoScrollEnabled) {
+            setTimeout(() => {
+                if (scrollContainerRef.current != null) {
+                    scrollContainerRef.current.scroll({
+                        top: scrollContainerRef.current.scrollHeight,
+                        behavior: "smooth",
+                    });
+                }
+            }, 250);
+        }
 
         try {
             const response = await fetch(withBasePath('/api/ai-chat/stream'), {
@@ -487,8 +496,8 @@ export const ChatPage: FC = () => {
                 body: JSON.stringify({
                     ref: sourceScopeRef,
                     modelType: modelType.modelType,
-                    providerId: modelType.id || '',
-                    token: modelType.token || '',
+                    providerId: modelType.id ?? '',
+                    token: modelType.token ?? '',
                     model: currentModel ?? '',
                     input: {
                         Query: sanitizedQuery,
@@ -514,7 +523,7 @@ export const ChatPage: FC = () => {
             let buffer = '';
             let streamingText = '';
             let currentEventType = '';
-            let addedSqlMessages = new Set<string>(); // Track added SQL to avoid duplicates
+            const addedSqlMessages = new Set<string>(); // Track added SQL to avoid duplicates
             let streamDone = false;
 
             while (true) {
@@ -540,8 +549,8 @@ export const ChatPage: FC = () => {
                             const parsed = JSON.parse(data);
 
                             if (currentEventType === 'chunk') {
-                                const text = parsed.text || '';
-                                const chunkType = parsed.type || '';
+                                const text = parsed.text ?? '';
+                                const chunkType = parsed.type ?? '';
 
                                 // Only update message text if it's longer (ignore SQL/error chunks)
                                 if (chunkType !== 'sql' && chunkType !== 'error' && text && text.length > streamingText.length) {
@@ -553,7 +562,7 @@ export const ChatPage: FC = () => {
                                 }
 
                                 // Auto-scroll
-                                if (scrollContainerRef.current != null) {
+                                if (autoScrollEnabled && scrollContainerRef.current != null) {
                                     scrollContainerRef.current.scroll({
                                         top: scrollContainerRef.current.scrollHeight,
                                         behavior: "smooth",
@@ -574,18 +583,20 @@ export const ChatPage: FC = () => {
                                             Type: parsed.Type,
                                             Text: parsed.Text,
                                             Result: parsed.Result,
-                                            RequiresConfirmation: parsed.RequiresConfirmation || false,
+                                            RequiresConfirmation: parsed.RequiresConfirmation ?? false,
                                             id: messageId,
                                         }));
 
-                                        setTimeout(() => {
-                                            if (scrollContainerRef.current != null) {
-                                                scrollContainerRef.current.scroll({
-                                                    top: scrollContainerRef.current.scrollHeight,
-                                                    behavior: "smooth",
-                                                });
-                                            }
-                                        }, 100);
+                                        if (autoScrollEnabled) {
+                                            setTimeout(() => {
+                                                if (scrollContainerRef.current != null) {
+                                                    scrollContainerRef.current.scroll({
+                                                        top: scrollContainerRef.current.scrollHeight,
+                                                        behavior: "smooth",
+                                                    });
+                                                }
+                                            }, 100);
+                                        }
                                     }
                                 }
                             } else if (currentEventType === 'done') {
@@ -604,14 +615,14 @@ export const ChatPage: FC = () => {
 
                                 // Try to generate title if session still has default name
                                 if (shouldTryTitle) {
-                                    generateChatTitle(sanitizedQuery);
+                                    void generateChatTitle(sanitizedQuery);
                                 }
                                 streamDone = true;
                             } else if (currentEventType === 'error') {
                                 dispatch(HoudiniActions.removeChatMessage(streamingMessageId));
                                 const errorMessage = typeof parsed.error === 'string'
                                     ? parsed.error
-                                    : parsed.error?.message || parsed.message || 'Unknown error';
+                                    : parsed.error?.message ?? parsed.message ?? 'Unknown error';
                                 toast.error(t('unableToQuery') + " " + errorMessage);
                                 setLoading(false);
                                 streamDone = true;
@@ -624,7 +635,7 @@ export const ChatPage: FC = () => {
 
                 // Stop reading after done/error — avoids WebKit throwing on post-EOF read in Wails
                 if (streamDone) {
-                    reader.cancel();
+                    void reader.cancel();
                     break;
                 }
             }
@@ -639,7 +650,7 @@ export const ChatPage: FC = () => {
             setLoading(false);
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [chats, currentModel, modelType, query, sourceScopeRef, dispatch, t, scrollContainerRef, getUniqueMessageId, activeSessionId, sessions]);
+    }, [chats, currentModel, modelType, query, sourceScopeRef, dispatch, t, scrollContainerRef, getUniqueMessageId, activeSession, activeSessionId, autoScrollEnabled]);
 
     // Helper function to generate and update chat title
     const generateChatTitle = useCallback(async (userQuery: string) => {
@@ -653,8 +664,8 @@ export const ChatPage: FC = () => {
                     input: {
                         Query: userQuery,
                         ModelType: modelType.modelType,
-                        ProviderId: modelType.id || undefined,
-                        Token: modelType.token || undefined,
+                        ProviderId: modelType.id ?? undefined,
+                        Token: modelType.token ?? undefined,
                         Model: currentModel,
                         Endpoint: undefined,
                     }
@@ -690,7 +701,7 @@ export const ChatPage: FC = () => {
     const handleKeyUp: KeyboardEventHandler<HTMLInputElement> = useCallback((e) => {
         if (e.key === "Enter") {
             if (query.trim().length > 0 && !disableChat) {
-                handleSubmitQuery();
+                void handleSubmitQuery();
             }
             return;
         }
@@ -770,7 +781,7 @@ export const ChatPage: FC = () => {
             });
 
             if (error || !data) {
-                toast.error(t('unableToQuery') + " " + (error?.message || t('failedToExecuteSQL')));
+                toast.error(t('unableToQuery') + " " + (error?.message ?? t('failedToExecuteSQL')));
                 setLoading(false);
                 return;
             }
@@ -788,15 +799,16 @@ export const ChatPage: FC = () => {
                 },
             }));
 
-            // Scroll to bottom
-            setTimeout(() => {
-                if (scrollContainerRef.current != null) {
-                    scrollContainerRef.current.scroll({
-                        top: scrollContainerRef.current.scrollHeight,
-                        behavior: "smooth",
-                    });
-                }
-            }, 100);
+            if (autoScrollEnabled) {
+                setTimeout(() => {
+                    if (scrollContainerRef.current != null) {
+                        scrollContainerRef.current.scroll({
+                            top: scrollContainerRef.current.scrollHeight,
+                            behavior: "smooth",
+                        });
+                    }
+                }, 100);
+            }
 
         } catch (error) {
             const errorMessage = error instanceof Error
@@ -808,7 +820,7 @@ export const ChatPage: FC = () => {
         } finally {
             setExecutingConfirmedId(null);
         }
-    }, [executeConfirmedSql, dispatch, t, scrollContainerRef]);
+    }, [autoScrollEnabled, executeConfirmedSql, dispatch, t, scrollContainerRef]);
 
     const handleCancelSQL = useCallback((messageId: number) => {
         dispatch(HoudiniActions.removeChatMessage(messageId));
@@ -830,10 +842,28 @@ export const ChatPage: FC = () => {
 
     // Auto-scroll to bottom when chats change or component mounts
     useEffect(() => {
-        if (scrollContainerRef.current != null && chats.length > 0) {
+        if (autoScrollEnabled && scrollContainerRef.current != null && chats.length > 0) {
             scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
         }
-    }, [chats.length]);
+    }, [activeSessionId, autoScrollEnabled, chats.length]);
+
+    const handleAutoScrollChange = useCallback((enabled: boolean) => {
+        if (activeSessionId) {
+            dispatch(HoudiniActions.updateSessionAutoScroll({ sessionId: activeSessionId, autoScrollEnabled: enabled }));
+            void reduxStorePersistor.flush();
+        }
+        if (!enabled) {
+            return;
+        }
+        setTimeout(() => {
+            if (scrollContainerRef.current != null) {
+                scrollContainerRef.current.scroll({
+                    top: scrollContainerRef.current.scrollHeight,
+                    behavior: "smooth",
+                });
+            }
+        }, 0);
+    }, [activeSessionId, dispatch]);
 
     // Fetch database-specific suggestions when AI is available and chat is empty
     useEffect(() => {
@@ -875,10 +905,22 @@ export const ChatPage: FC = () => {
     return (
         <InternalPage routes={[InternalRoutes.Chat]} className="h-full min-w-0" sidebar={<ChatHistorySidebar />}>
             <div className="flex flex-col w-full h-full gap-2 min-w-[30%]">
-                <AIProvider
-                    {...aiState}
-                    onClear={handleClear}
-                />
+                <div className="flex items-center">
+                    <AIProvider
+                        {...aiState}
+                        onClear={handleClear}
+                        footerAction={(
+                            <label className="flex h-9 items-center gap-2 rounded-md border border-input bg-transparent px-3 text-sm text-foreground shadow-xs dark:bg-input/30">
+                                <Checkbox
+                                    checked={autoScrollEnabled}
+                                    onCheckedChange={checked =>{  handleAutoScrollChange(checked === true); }}
+                                    data-testid="chat-auto-scroll-toggle"
+                                />
+                                <span>{t('autoScroll')}</span>
+                            </label>
+                        )}
+                    />
+                </div>
                 <div className={classNames("flex grow w-full rounded-xl overflow-hidden", {
                     "hidden": disableAll,
                 })}>
@@ -899,9 +941,9 @@ export const ChatPage: FC = () => {
                                     )}
                                     <div className="flex flex-wrap justify-center items-center gap-4" data-testid="chat-examples-list">
                                         {
-                                            examples.map((example, i) => (
-                                                <Card key={`chat-${i}`} className="flex flex-col gap-sm w-[250px] h-[120px] p-4 text-sm cursor-pointer hover:opacity-80 transition-all"
-                                                    onClick={() => handleSelectExample(example.description)}>
+                                            examples.map((example) => (
+                                                <Card key={example.description} className="flex flex-col gap-sm w-[250px] h-[120px] p-4 text-sm cursor-pointer hover:opacity-80 transition-all"
+                                                    onClick={() =>{  handleSelectExample(example.description); }}>
                                                     {example.icon}
                                                     {example.description}
                                                 </Card>
@@ -917,7 +959,7 @@ export const ChatPage: FC = () => {
                                     {
                                         chats.map((chat, i) => {
                                             if (chat.Type === "message" || chat.Type === "text") {
-                                                return <div key={`chat-${i}`} className={classNames("flex gap-lg overflow-hidden break-words leading-6 shrink-0 relative", {
+                                                return <div key={`chat-${chat.id}`} className={classNames("flex gap-lg overflow-hidden break-words leading-6 shrink-0 relative group/msg", {
                                                     "self-end ml-3": chat.isUserInput,
                                                     "self-start": !chat.isUserInput,
                                                 })} data-testid={chat.isUserInput ? "user-message" : "system-message"}>
@@ -925,26 +967,32 @@ export const ChatPage: FC = () => {
                                                         ? extensions.MetaIcon ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />
                                                         : <div className="pl-4" />}
                                                     {chat.isUserInput ? (
-                                                        <p className={classNames("py-2 rounded-xl whitespace-pre-wrap bg-neutral-600/5 dark:bg-[#2C2F33] px-4", {
-                                                            "animate-fade-in": chat.isStreaming,
-                                                        })} data-input-message="user">
-                                                            {chat.Text}
-                                                            {chat.isStreaming && <span className="inline-block w-2 h-4 ml-1 bg-current animate-pulse" />}
-                                                        </p>
-                                                    ) : (
-                                                        <div className={classNames("py-2 rounded-xl markdown-content", {
-                                                            "animate-fade-in": chat.isStreaming,
-                                                        })} data-input-message="system">
-                                                            <ReactMarkdown components={markdownComponents}>
+                                                        <div className="flex flex-col items-end">
+                                                            <p className={classNames("py-2 rounded-xl whitespace-pre-wrap bg-neutral-600/5 dark:bg-[#2C2F33] px-4", {
+                                                                "animate-fade-in": chat.isStreaming,
+                                                            })} data-input-message="user">
                                                                 {chat.Text}
-                                                            </ReactMarkdown>
-                                                            {chat.isStreaming && <span className="inline-block w-2 h-4 ml-1 bg-current animate-pulse" />}
+                                                                {chat.isStreaming && <span className="inline-block w-2 h-4 ml-1 bg-current animate-pulse" />}
+                                                            </p>
+                                                            <MessageCopyAction text={chat.Text} />
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex flex-col">
+                                                            <div className={classNames("py-2 rounded-xl markdown-content", {
+                                                                "animate-fade-in": chat.isStreaming,
+                                                            })} data-input-message="system">
+                                                                <ReactMarkdown components={markdownComponents}>
+                                                                    {chat.Text}
+                                                                </ReactMarkdown>
+                                                                {chat.isStreaming && <span className="inline-block w-2 h-4 ml-1 bg-current animate-pulse" />}
+                                                            </div>
+                                                            {!chat.isStreaming && <MessageCopyAction text={chat.Text} />}
                                                         </div>
                                                     )}
                                                 </div>
                                             } else if (chat.Type === "error") {
                                                 return (
-                                                    <div key={`chat-${i}`} className="flex overflow-hidden break-words leading-6 shrink-0 pt-6 relative self-start" data-testid="error-message">
+                                                    <div key={`chat-${chat.id}`} className="flex overflow-hidden break-words leading-6 shrink-0 pt-6 relative self-start" data-testid="error-message">
                                                         {!chat.isUserInput && chats[i-1]?.isUserInput
                                                             ? extensions.MetaIcon ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />
                                                             : null}
@@ -952,7 +1000,7 @@ export const ChatPage: FC = () => {
                                                     </div>
                                                 );
                                             } else if (featureFlags.dataVisualization && (chat.Type === "sql:pie-chart" || chat.Type === "sql:line-chart")) {
-                                                return <div key={`chat-${i}`} className={cn("flex gap-lg w-full max-w-full min-w-0 pt-4 relative", ph.mask)} data-testid="visual-message">
+                                                return <div key={`chat-${chat.id}`} className={cn("flex gap-lg w-full max-w-full min-w-0 pt-4 relative", ph.mask)} data-testid="visual-message">
                                                     {!chat.isUserInput && chats[i-1]?.isUserInput && (extensions.MetaIcon ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />)}
                                                     {/* @ts-ignore */}
                                                     {chat.Type === "sql:pie-chart" && PieChart && <PieChart columns={chat.Result?.Columns?.map(col => col.Name) ?? []} data={chat.Result?.Rows ?? []} text={chat.Text} />}
@@ -964,7 +1012,7 @@ export const ChatPage: FC = () => {
                                                 const isExecuting = executingConfirmedId === chat.id;
                                                 const showQuery = showQueryForId === chat.id;
 
-                                                return <div key={`chat-${i}`} className="flex gap-lg w-full max-w-full min-w-0 pt-4 relative" data-testid="confirmation-message">
+                                                return <div key={`chat-${chat.id}`} className="flex gap-lg w-full max-w-full min-w-0 pt-4 relative" data-testid="confirmation-message">
                                                     {!chat.isUserInput && chats[i-1]?.isUserInput
                                                         ? (extensions.MetaIcon ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />)
                                                         : <div className="pl-4" />}
@@ -981,7 +1029,7 @@ export const ChatPage: FC = () => {
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
-                                                            onClick={() => setShowQueryForId(showQuery ? null : (chat.id ?? null))}
+                                                            onClick={() =>{  setShowQueryForId(showQuery ? null : (chat.id ?? null)); }}
                                                             className="w-fit"
                                                         >
                                                             <CodeBracketIcon className="w-4 h-4 mr-2" />
@@ -996,10 +1044,10 @@ export const ChatPage: FC = () => {
                                                                 </div>
                                                                 <button
                                                                     onClick={() => {
-                                                                        copyToClipboard(chat.Text).then(success => {
+                                                                        void copyToClipboard(chat.Text).then(success => {
                                                                             if (success) {
                                                                                 setCopiedSqlId(chat.id ?? null);
-                                                                                setTimeout(() => setCopiedSqlId(null), 2000);
+                                                                                setTimeout(() =>{  setCopiedSqlId(null); }, 2000);
                                                                             }
                                                                         });
                                                                     }}
@@ -1017,14 +1065,14 @@ export const ChatPage: FC = () => {
                                                         <div className="flex gap-2">
                                                             <Button
                                                                 variant="outline"
-                                                                onClick={() => chat.id && handleCancelSQL(chat.id)}
+                                                                onClick={() => { if (chat.id) handleCancelSQL(chat.id); }}
                                                                 disabled={isExecuting}
                                                                 size="sm"
                                                             >
                                                                 {t('no') || 'No'}
                                                             </Button>
                                                             <Button
-                                                                onClick={() => chat.id && handleConfirmSQL(chat.id, chat.Text, chat.Type)}
+                                                                onClick={() => { if (chat.id) void handleConfirmSQL(chat.id, chat.Text, chat.Type); }}
                                                                 disabled={isExecuting || !supportsScripts}
                                                                 size="sm"
                                                             >
@@ -1034,7 +1082,7 @@ export const ChatPage: FC = () => {
                                                     </div>
                                                 </div>
                                             }
-                                            return <div key={`chat-${i}`} className="flex gap-lg w-full max-w-full min-w-0 pt-4 relative" data-testid="table-message">
+                                            return <div key={`chat-${chat.id}`} className="flex gap-lg w-full max-w-full min-w-0 pt-4 relative" data-testid="table-message">
                                                 {!chat.isUserInput && chats[i-1]?.isUserInput && (extensions.MetaIcon ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />)}
                                                 <TablePreview type={chat.Type} text={chat.Text} data={chat.Result} containerWidth={containerWidth} />
                                             </div>
@@ -1058,9 +1106,9 @@ export const ChatPage: FC = () => {
                 })}>
                     <Input
                         value={query}
-                        onChange={e => setQuery(e.target.value)}
+                        onChange={e =>{  setQuery(e.target.value); }}
                         placeholder={t('placeholder')}
-                        onSubmit={handleSubmitQuery}
+                        onSubmit={() => { void handleSubmitQuery(); }}
                         disabled={disableAll}
                         onKeyDown={handleKeyDown}
                         onKeyUp={handleKeyUp}
@@ -1068,7 +1116,7 @@ export const ChatPage: FC = () => {
                         data-testid="chat-input"
                     />
                     <Tip className="w-fit">
-                        <Button tabIndex={0} onClick={loading ? undefined : handleSubmitQuery} className={cn("rounded-full", {
+                        <Button tabIndex={0} onClick={loading ? undefined : () => { void handleSubmitQuery(); }} className={cn("rounded-full", {
                             "opacity-50": loading,
                         })} disabled={disableChat} variant={disableChat ? "secondary" : undefined} data-testid="icon-button" aria-label={t('sendMessage')}>
                             <ArrowUpCircleIcon className="w-8 h-8" aria-hidden="true" />

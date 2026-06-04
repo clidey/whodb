@@ -129,7 +129,7 @@ export function addAuthHeader(headers: HeadersInit = {}): HeadersInit {
     const id = getAnalyticsDistinctId()
     headers = {
         ...headers,
-        [analyticsHeaderName]: id != null ? id : ""
+        [analyticsHeaderName]: id ?? ""
     }
     if (authHeader) {
         return {

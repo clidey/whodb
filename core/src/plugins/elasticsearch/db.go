@@ -25,12 +25,13 @@ import (
 	"net/url"
 	"strconv"
 
+	elastictransport "github.com/elastic/elastic-transport-go/v8/elastictransport"
+	"github.com/elastic/go-elasticsearch/v8"
+
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/common/ssl"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
-	elastictransport "github.com/elastic/elastic-transport-go/v8/elastictransport"
-	"github.com/elastic/go-elasticsearch/v8"
 )
 
 func DB(config *engine.PluginConfig) (*elasticsearch.Client, error) {
@@ -86,7 +87,7 @@ func DB(config *engine.PluginConfig) (*elasticsearch.Client, error) {
 			log.Debug("[ES DB] Insecure mode: skipping certificate verification")
 			cfg.Transport = &http.Transport{
 				TLSClientConfig: &tls.Config{
-					InsecureSkipVerify: true,
+					InsecureSkipVerify: true, //nolint:gosec
 				},
 			}
 		} else {
@@ -156,7 +157,7 @@ func DB(config *engine.PluginConfig) (*elasticsearch.Client, error) {
 			"error":     errMsg,
 			"resStatus": resStatus,
 		}).Error("Failed to ping ElasticSearch server")
-		return nil, fmt.Errorf("error pinging Elasticsearch: %v", err)
+		return nil, fmt.Errorf("error pinging Elasticsearch: %w", err)
 	}
 
 	log.Debugf("[ES DB] Successfully connected to Elasticsearch at %s", addresses[0])

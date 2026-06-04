@@ -21,14 +21,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strconv"
 	"time"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
-	"go.mongodb.org/mongo-driver/v2/bson"
-	"go.mongodb.org/mongo-driver/v2/mongo"
-	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 // ExportData exports MongoDB collection data to tabular format
@@ -56,7 +58,7 @@ func (p *MongoDBPlugin) ExportData(config *engine.PluginConfig, schema string, s
 			headers[i] = common.FormatCSVHeader(field, "BSON")
 		}
 		if err := writer(headers); err != nil {
-			return fmt.Errorf("failed to write headers: %v", err)
+			return fmt.Errorf("failed to write headers: %w", err)
 		}
 
 		// Write selected rows
@@ -70,7 +72,7 @@ func (p *MongoDBPlugin) ExportData(config *engine.PluginConfig, schema string, s
 				}
 			}
 			if err := writer(rowData); err != nil {
-				return fmt.Errorf("failed to write row: %v", err)
+				return fmt.Errorf("failed to write row: %w", err)
 			}
 		}
 		return nil
@@ -96,7 +98,7 @@ func (p *MongoDBPlugin) ExportData(config *engine.PluginConfig, schema string, s
 			"schema":      schema,
 			"storageUnit": storageUnit,
 		}).Error("Failed to get MongoDB collection fields for export")
-		return fmt.Errorf("failed to get collection fields: %v", err)
+		return fmt.Errorf("failed to get collection fields: %w", err)
 	}
 
 	// Write headers with type information
@@ -111,7 +113,7 @@ func (p *MongoDBPlugin) ExportData(config *engine.PluginConfig, schema string, s
 			"storageUnit": storageUnit,
 			"headerCount": len(headers),
 		}).Error("Failed to write CSV headers for MongoDB export")
-		return fmt.Errorf("failed to write headers: %v", err)
+		return fmt.Errorf("failed to write headers: %w", err)
 	}
 
 	// Export all documents
@@ -122,9 +124,9 @@ func (p *MongoDBPlugin) ExportData(config *engine.PluginConfig, schema string, s
 			"schema":      schema,
 			"storageUnit": storageUnit,
 		}).Error("Failed to query MongoDB collection for export")
-		return fmt.Errorf("failed to query collection: %v", err)
+		return fmt.Errorf("failed to query collection: %w", err)
 	}
-	defer cursor.Close(context.Background())
+	defer func() { _ = cursor.Close(context.Background()) }()
 
 	rowCount := 0
 	for cursor.Next(context.Background()) {
@@ -136,7 +138,7 @@ func (p *MongoDBPlugin) ExportData(config *engine.PluginConfig, schema string, s
 				"storageUnit": storageUnit,
 				"rowNumber":   rowCount + 1,
 			}).Error("Failed to decode MongoDB document during export")
-			return fmt.Errorf("failed to decode document: %v", err)
+			return fmt.Errorf("failed to decode document: %w", err)
 		}
 
 		row := make([]string, len(fieldNames))
@@ -155,7 +157,7 @@ func (p *MongoDBPlugin) ExportData(config *engine.PluginConfig, schema string, s
 				"storageUnit": storageUnit,
 				"rowNumber":   rowCount + 1,
 			}).Error("Failed to write CSV row for MongoDB export")
-			return fmt.Errorf("failed to write row: %v", err)
+			return fmt.Errorf("failed to write row: %w", err)
 		}
 
 		rowCount++
@@ -190,7 +192,7 @@ func (p *MongoDBPlugin) ExportDataNDJSON(config *engine.PluginConfig, schema str
 	if err != nil {
 		return err
 	}
-	defer cursor.Close(context.Background())
+	defer func() { _ = cursor.Close(context.Background()) }()
 
 	for cursor.Next(context.Background()) {
 		var doc bson.M
@@ -219,7 +221,7 @@ func (p *MongoDBPlugin) getCollectionFields(collection *mongo.Collection) ([]str
 		log.WithError(err).WithField("collectionName", collection.Name()).Error("Failed to sample MongoDB collection documents for field extraction")
 		return nil, err
 	}
-	defer cursor.Close(context.Background())
+	defer func() { _ = cursor.Close(context.Background()) }()
 
 	fieldSet := make(map[string]bool)
 	for cursor.Next(context.Background()) {
@@ -259,7 +261,7 @@ func (p *MongoDBPlugin) formatBSONValue(val any) string {
 	case string:
 		strVal = v
 	case bool:
-		strVal = fmt.Sprintf("%t", v)
+		strVal = strconv.FormatBool(v)
 	case int, int8, int16, int32, int64:
 		strVal = fmt.Sprintf("%d", v)
 	case uint, uint8, uint16, uint32, uint64:

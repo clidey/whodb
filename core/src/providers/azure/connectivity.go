@@ -17,6 +17,7 @@
 package azure
 
 import (
+	"context"
 	"net"
 	"sync"
 	"sync/atomic"
@@ -57,14 +58,16 @@ func CheckConnectivity(connections []providers.DiscoveredConnection) {
 			defer func() { <-sem }()
 
 			addr := net.JoinHostPort(endpoint, port)
-			c, err := net.DialTimeout("tcp", addr, connectivityTimeout)
+			ctx, cancel := context.WithTimeout(context.Background(), connectivityTimeout)
+			defer cancel()
+			c, err := (&net.Dialer{}).DialContext(ctx, "tcp", addr)
 			if err != nil {
 				log.Debugf("Azure Connectivity: %s unreachable: %v", addr, err)
 				conn.Metadata["connectivity"] = connectivityUnreachable
 				unreachable.Add(1)
 				return
 			}
-			c.Close()
+			_ = c.Close()
 			log.Debugf("Azure Connectivity: %s reachable", addr)
 			conn.Metadata["connectivity"] = connectivityReachable
 			reachable.Add(1)

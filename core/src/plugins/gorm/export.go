@@ -21,11 +21,12 @@ import (
 	"fmt"
 	"time"
 
+	"gorm.io/gorm"
+
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
-	"gorm.io/gorm"
 )
 
 // ExportData exports data to tabular format (CSV/Excel). If selectedRows is nil/empty, exports all rows from the table.
@@ -41,7 +42,7 @@ func (p *GormPlugin) ExportData(config *engine.PluginConfig, schema string, stor
 		// Write header row
 		if err := writer(columns); err != nil {
 			log.WithError(err).Error("Failed to write CSV headers for selected rows export")
-			return fmt.Errorf("failed to write headers: %v", err)
+			return fmt.Errorf("failed to write headers: %w", err)
 		}
 
 		// Write selected rows
@@ -56,7 +57,7 @@ func (p *GormPlugin) ExportData(config *engine.PluginConfig, schema string, stor
 			}
 			if err := writer(rowData); err != nil {
 				log.WithError(err).Error(fmt.Sprintf("Failed to write selected row %d during export", i+1))
-				return fmt.Errorf("failed to write row %d: %v", i+1, err)
+				return fmt.Errorf("failed to write row %d: %w", i+1, err)
 			}
 		}
 
@@ -65,7 +66,7 @@ func (p *GormPlugin) ExportData(config *engine.PluginConfig, schema string, stor
 
 	// Export all rows from the database
 	_, err := plugins.WithConnection(config, p.DB, func(db *gorm.DB) (struct{}, error) {
-		columnConfig := config
+		var columnConfig *engine.PluginConfig
 		if config != nil {
 			clonedConfig := *config
 			clonedConfig.Transaction = db
@@ -79,7 +80,7 @@ func (p *GormPlugin) ExportData(config *engine.PluginConfig, schema string, stor
 		orderedColumns, err := p.PluginFunctions.GetColumnsForTable(columnConfig, schema, storageUnit)
 		if err != nil {
 			log.WithError(err).Error(fmt.Sprintf("Failed to get columns for export of table %s.%s", schema, storageUnit))
-			return struct{}{}, fmt.Errorf("failed to get columns: %v", err)
+			return struct{}{}, fmt.Errorf("failed to get columns: %w", err)
 		}
 
 		if len(orderedColumns) == 0 {
@@ -101,7 +102,7 @@ func (p *GormPlugin) ExportData(config *engine.PluginConfig, schema string, stor
 		}
 		if err := writer(headers); err != nil {
 			log.WithError(err).Error(fmt.Sprintf("Failed to write CSV headers for table %s.%s export", schema, storageUnit))
-			return struct{}{}, fmt.Errorf("failed to write headers: %v", err)
+			return struct{}{}, fmt.Errorf("failed to write headers: %w", err)
 		}
 
 		// Use batch processor for efficient export
@@ -126,14 +127,14 @@ func (p *GormPlugin) ExportData(config *engine.PluginConfig, schema string, stor
 
 				if err := writer(row); err != nil {
 					log.WithError(err).Error(fmt.Sprintf("Failed to write row %d during export of table %s.%s", totalRows+1, schema, storageUnit))
-					return fmt.Errorf("failed to write row %d: %v", totalRows+1, err)
+					return fmt.Errorf("failed to write row %d: %w", totalRows+1, err)
 				}
 				totalRows++
 			}
 			return nil
 		})
 		if err != nil {
-			return struct{}{}, fmt.Errorf("export failed after %d rows: %v", totalRows, err)
+			return struct{}{}, fmt.Errorf("export failed after %d rows: %w", totalRows, err)
 		}
 
 		log.WithField("totalRows", totalRows).

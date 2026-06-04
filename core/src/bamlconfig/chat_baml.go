@@ -22,6 +22,7 @@ import (
 	"context"
 
 	baml "github.com/boundaryml/baml/engine/language_client_go/pkg"
+
 	"github.com/clidey/whodb/core/baml_client"
 	"github.com/clidey/whodb/core/baml_client/types"
 	"github.com/clidey/whodb/core/src/source"

@@ -28,6 +28,10 @@ import (
 )
 
 const (
+	ollamaProviderType = "openai"
+)
+
+const (
 	Ollama_LLMType LLMType = "Ollama"
 )
 
@@ -45,7 +49,7 @@ func (p *OllamaProvider) GetType() LLMType {
 }
 
 // GetProtocol returns "openai" — Ollama uses the OpenAI-compatible streaming protocol.
-func (p *OllamaProvider) GetProtocol() string { return "openai" }
+func (p *OllamaProvider) GetProtocol() string { return ollamaProviderType }
 
 // GetDefaultEndpoint returns the default Ollama API endpoint, resolved for the current environment
 // (Docker, WSL2, or custom WHODB_OLLAMA_HOST/PORT).
@@ -67,14 +71,14 @@ func (p *OllamaProvider) GetSupportedModels(config *ProviderConfig) ([]string, e
 		return nil, err
 	}
 
-	url := fmt.Sprintf("%s/tags", config.Endpoint)
+	url := config.Endpoint + "/tags"
 
 	resp, err := sendHTTPRequest("GET", url, nil, nil)
 	if err != nil {
 		log.WithError(err).Errorf("Failed to fetch models from Ollama at %s", url)
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)

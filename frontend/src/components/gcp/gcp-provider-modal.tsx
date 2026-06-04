@@ -15,7 +15,8 @@
  */
 
 import { skipToken, useMutation, useQuery } from "@apollo/client/react";
-import { FC, useCallback, useEffect, useMemo, useState } from "react";
+import type { FC} from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
     Badge,
     Button,
@@ -32,21 +33,23 @@ import {
     toast,
 } from "@clidey/ux";
 import { SearchSelect } from "../ux";
-import {
-    AddGcpProviderDocument,
+import type {
     GcpProviderInput,
     GcpProvider,
+    LocalGcpProject} from "@graphql";
+import {
+    AddGcpProviderDocument,
     CloudProviderStatus,
     GetDiscoveredConnectionsDocument,
     GetGcpRegionsDocument,
     GetLocalGcpProjectsDocument,
-    LocalGcpProject,
     TestCloudProviderDocument,
     TestGcpCredentialsDocument,
     UpdateGcpProviderDocument,
 } from "@graphql";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { ProvidersActions, LocalCloudProvider } from "../../store/providers";
+import type { LocalCloudProvider } from "../../store/providers";
+import { ProvidersActions } from "../../store/providers";
 import { useTranslation } from "@/hooks/use-translation";
 import { ChevronDownIcon, CloudIcon } from "../heroicons";
 import { upsertCloudProviderCache } from "../../utils/apollo-provider-cache";
@@ -69,7 +72,7 @@ export const GcpProviderModal: FC<GcpProviderModalProps> = ({
     const editingProvider = useMemo(() => {
         if (!editingProviderId) return null;
         const found = cloudProviders.find(p => p.Id === editingProviderId);
-        if (!found || found.__typename !== 'GCPProvider') return null;
+        if (found?.__typename !== 'GCPProvider') return null;
         return found as GcpProvider;
     }, [editingProviderId, cloudProviders]);
 
@@ -291,7 +294,7 @@ export const GcpProviderModal: FC<GcpProviderModalProps> = ({
                                         <button
                                             key={`${project.Source}-${project.ProjectID}`}
                                             type="button"
-                                            onClick={() => handleSelectLocalProject(project)}
+                                            onClick={() =>{  handleSelectLocalProject(project); }}
                                             className={cn(
                                                 "flex items-center gap-2 px-3 py-2 rounded-md border text-sm transition-colors",
                                                 "hover:border-brand hover:bg-brand/5",
@@ -322,7 +325,7 @@ export const GcpProviderModal: FC<GcpProviderModalProps> = ({
                         <Input
                             id="provider-name"
                             value={name}
-                            onChange={(e) => setName(e.target.value)}
+                            onChange={(e) =>{  setName(e.target.value); }}
                             placeholder={t('namePlaceholder')}
                             data-testid="provider-name"
                         />
@@ -334,7 +337,7 @@ export const GcpProviderModal: FC<GcpProviderModalProps> = ({
                         <Input
                             id="project-id"
                             value={projectId}
-                            onChange={(e) => setProjectId(e.target.value)}
+                            onChange={(e) =>{  setProjectId(e.target.value); }}
                             placeholder={t('projectIdPlaceholder')}
                             data-testid="project-id"
                         />
@@ -362,7 +365,7 @@ export const GcpProviderModal: FC<GcpProviderModalProps> = ({
                         <Input
                             id="service-account-key"
                             value={serviceAccountKeyPath}
-                            onChange={(e) => setServiceAccountKeyPath(e.target.value)}
+                            onChange={(e) =>{  setServiceAccountKeyPath(e.target.value); }}
                             placeholder={t('serviceAccountKeyPlaceholder')}
                             data-testid="service-account-key"
                         />
@@ -413,7 +416,7 @@ export const GcpProviderModal: FC<GcpProviderModalProps> = ({
                 <DialogFooter className="flex gap-2">
                     <Button
                         variant="outline"
-                        onClick={handleTest}
+                        onClick={() => { void handleTest(); }}
                         disabled={loading}
                         data-testid="test-connection"
                     >
@@ -427,7 +430,7 @@ export const GcpProviderModal: FC<GcpProviderModalProps> = ({
                         {t('cancel')}
                     </Button>
                     <Button
-                        onClick={handleSubmit}
+                        onClick={() => { void handleSubmit(); }}
                         disabled={loading}
                         data-testid="submit-provider"
                     >

@@ -20,6 +20,11 @@ import (
 	"fmt"
 )
 
+const (
+	genProviderAnthropic = "anthropic"
+	genProviderOpenAI    = "openai"
+)
+
 // GenericProvider implements the AIProvider interface for any OpenAI-compatible API.
 // This enables support for Mistral, Cohere, Google Gemini, and other providers
 // that implement the OpenAI API specification.
@@ -52,12 +57,12 @@ func (p *GenericProvider) GetType() LLMType {
 // Maps "anthropic" → "anthropic", "aws-bedrock" → "aws-bedrock", everything else → "openai".
 func (p *GenericProvider) GetProtocol() string {
 	switch p.clientType {
-	case "anthropic":
-		return "anthropic"
+	case genProviderAnthropic:
+		return genProviderAnthropic
 	case "aws-bedrock":
 		return "aws-bedrock"
 	default:
-		return "openai"
+		return genProviderOpenAI
 	}
 }
 

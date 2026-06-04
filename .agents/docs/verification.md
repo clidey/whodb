@@ -4,7 +4,17 @@ Before marking any task as complete, run through this verification checklist.
 
 ## Frontend (TypeScript/React)
 
-### Type Checking and Build Verification
+### Type Checking
+```bash
+cd frontend && pnpm typecheck
+```
+
+### Lint
+```bash
+cd frontend && pnpm lint
+```
+
+### Build Verification
 ```bash
 cd frontend && pnpm run build:ce
 ```
@@ -22,9 +32,9 @@ After adding new code, verify it's actually used:
 cd core && go build ./cmd/whodb
 ```
 
-### Vet Check
+### Lint
 ```bash
-cd core && go vet ./...
+cd core && ./lint.sh
 ```
 
 ### Dead Code Check
@@ -44,10 +54,10 @@ cd core && go vet ./...
 
 ```bash
 # Frontend full check
-cd frontend && pnpm run build:ce
+cd frontend && pnpm lint && pnpm typecheck && pnpm run build:ce
 
 # Backend full check
-cd core && go build ./cmd/whodb && go vet ./...
+cd core && ./lint.sh && go build ./cmd/whodb
 
 # Search for unused exports (manual)
 # Use grep to search for function/type names and verify usage

@@ -51,7 +51,7 @@ func (p *MemcachedPlugin) ExportData(config *engine.PluginConfig, schema string,
 	if err != nil {
 		return err
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	item, err := client.Get(storageUnit)
 	if err != nil {
@@ -90,7 +90,7 @@ func (p *MemcachedPlugin) ExportDataNDJSON(config *engine.PluginConfig, schema s
 	if err != nil {
 		return err
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	item, err := client.Get(storageUnit)
 	if err != nil {

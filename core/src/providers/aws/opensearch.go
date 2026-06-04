@@ -64,7 +64,8 @@ func (p *Provider) discoverOpenSearch(ctx context.Context) ([]providers.Discover
 	}
 
 	var connections []providers.DiscoveredConnection
-	for _, domain := range descOutput.DomainStatusList {
+	for i := range descOutput.DomainStatusList {
+		domain := descOutput.DomainStatusList[i]
 		if domain.DomainName == nil {
 			continue
 		}

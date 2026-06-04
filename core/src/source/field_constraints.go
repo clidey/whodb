@@ -47,8 +47,8 @@ func MergeFieldConstraintsWithColumns(fields []FieldConstraints, columns []Colum
 	}
 
 	fieldIndexes := make(map[string]int, len(fields))
-	for i, field := range fields {
-		fieldIndexes[strings.ToLower(field.Name)] = i
+	for i := range fields {
+		fieldIndexes[strings.ToLower(fields[i].Name)] = i
 	}
 
 	merged := make([]FieldConstraints, 0, len(columns)+len(fields))
@@ -64,9 +64,9 @@ func MergeFieldConstraintsWithColumns(fields []FieldConstraints, columns []Colum
 		merged = append(merged, enrichFieldConstraintWithColumn(FieldConstraints{Name: column.Name}, column))
 	}
 
-	for i, field := range fields {
+	for i := range fields {
 		if _, used := usedFields[i]; !used {
-			merged = append(merged, field)
+			merged = append(merged, fields[i])
 		}
 	}
 	return merged

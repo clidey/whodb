@@ -19,6 +19,7 @@ package elasticsearch
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sort"
 
@@ -26,6 +27,17 @@ import (
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	queryast "github.com/clidey/whodb/core/src/query"
+)
+
+const (
+	esFieldID    = "_id"
+	esQueryKey   = "query"
+	esTypeBool   = "bool"
+	esTypeText   = "text"
+	esOpRange    = "range"
+	esOpWildcard = "wildcard"
+	esOpMatch    = "match"
+	esOpIDs      = "ids"
 )
 
 func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, req *engine.GetRowsRequest) (*engine.GetRowsResult, error) {
@@ -41,14 +53,14 @@ func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, req *engine.G
 	elasticSearchConditions, err := convertWhereConditionToES(where)
 	if err != nil {
 		log.WithError(err).WithField("collection", collection).Error("Failed to convert where condition to ElasticSearch query")
-		return nil, fmt.Errorf("error converting where condition: %v", err)
+		return nil, fmt.Errorf("error converting where condition: %w", err)
 	}
 
 	query := map[string]any{
 		"from": pageOffset,
 		"size": pageSize,
-		"query": map[string]any{
-			"bool": elasticSearchConditions,
+		esQueryKey: map[string]any{
+			esTypeBool: elasticSearchConditions,
 		},
 	}
 
@@ -91,7 +103,7 @@ func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, req *engine.G
 		log.WithError(err).WithField("collection", collection).Error("Failed to execute ElasticSearch search query")
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if res.IsError() {
 		err := fmt.Errorf("error searching documents: %s", res.String())
@@ -107,7 +119,7 @@ func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, req *engine.G
 
 	hits, ok := searchResult["hits"].(map[string]any)["hits"].([]any)
 	if !ok {
-		err := fmt.Errorf("invalid response structure")
+		err := errors.New("invalid response structure")
 		log.WithError(err).WithField("collection", collection).Error("ElasticSearch search response has invalid structure")
 		return nil, err
 	}
@@ -131,8 +143,8 @@ func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, req *engine.G
 	for _, hit := range hits {
 		hitMap := hit.(map[string]any)
 		source := hitMap["_source"].(map[string]any)
-		id := hitMap["_id"]
-		source["_id"] = id
+		id := hitMap[esFieldID]
+		source[esFieldID] = id
 		jsonBytes, err := json.Marshal(source)
 		if err != nil {
 			log.WithError(err).WithField("collection", collection).Error("Failed to marshal ElasticSearch document source to JSON")
@@ -152,12 +164,12 @@ func (p *ElasticSearchPlugin) GetRowCount(config *engine.PluginConfig, database,
 
 	elasticSearchConditions, err := convertWhereConditionToES(where)
 	if err != nil {
-		return 0, fmt.Errorf("error converting where condition: %v", err)
+		return 0, fmt.Errorf("error converting where condition: %w", err)
 	}
 
 	query := map[string]any{
-		"query": map[string]any{
-			"bool": elasticSearchConditions,
+		esQueryKey: map[string]any{
+			esTypeBool: elasticSearchConditions,
 		},
 	}
 
@@ -174,7 +186,7 @@ func (p *ElasticSearchPlugin) GetRowCount(config *engine.PluginConfig, database,
 	if err != nil {
 		return 0, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if res.IsError() {
 		return 0, fmt.Errorf("error counting documents: %s", res.String())
@@ -187,7 +199,7 @@ func (p *ElasticSearchPlugin) GetRowCount(config *engine.PluginConfig, database,
 
 	count, ok := countResult["count"].(float64)
 	if !ok {
-		return 0, fmt.Errorf("unexpected count response format")
+		return 0, errors.New("unexpected count response format")
 	}
 
 	return int64(count), nil
@@ -205,7 +217,7 @@ func (p *ElasticSearchPlugin) GetColumnsForTable(config *engine.PluginConfig, sc
 	var buf bytes.Buffer
 	query := map[string]any{
 		"size": 100,
-		"query": map[string]any{
+		esQueryKey: map[string]any{
 			"match_all": map[string]any{},
 		},
 	}
@@ -223,7 +235,7 @@ func (p *ElasticSearchPlugin) GetColumnsForTable(config *engine.PluginConfig, sc
 		log.WithError(err).WithField("index", storageUnit).Error("Failed to search for sample document")
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if res.IsError() {
 		log.WithField("index", storageUnit).Warn("No documents found, returning empty schema")
@@ -262,7 +274,7 @@ func (p *ElasticSearchPlugin) GetColumnsForTable(config *engine.PluginConfig, sc
 		log.WithError(err).Error("Failed to get ElasticSearch indices for FK detection")
 		return nil, err
 	}
-	defer indicesRes.Body.Close()
+	defer func() { _ = indicesRes.Body.Close() }()
 
 	if indicesRes.IsError() {
 		log.Error("ElasticSearch indices stats API returned error for FK detection")
@@ -300,7 +312,7 @@ func (p *ElasticSearchPlugin) GetColumnsForTable(config *engine.PluginConfig, sc
 
 	columns := []engine.Column{
 		{
-			Name:         "_id",
+			Name:         esFieldID,
 			Type:         "keyword",
 			IsPrimary:    true,
 			IsForeignKey: false,
@@ -336,7 +348,7 @@ func inferElasticSearchType(value any) string {
 
 	switch value.(type) {
 	case string:
-		return "text"
+		return esTypeText
 	case float64, float32:
 		return "float"
 	case int, int32, int64:

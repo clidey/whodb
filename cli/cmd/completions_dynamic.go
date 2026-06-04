@@ -45,9 +45,7 @@ func completeDatabaseTypes(cmd *cobra.Command, args []string, toComplete string)
 	synonyms := sourcetypes.Synonyms()
 	types := make([]string, 0, len(ids)+len(synonyms))
 	types = append(types, ids...)
-	for _, synonym := range synonyms {
-		types = append(types, synonym)
-	}
+	types = append(types, synonyms...)
 	return types, cobra.ShellCompDirectiveNoFileComp
 }
 

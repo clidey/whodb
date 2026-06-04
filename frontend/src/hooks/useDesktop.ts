@@ -95,11 +95,11 @@ export const useDesktopMenu = () => {
   const location = useLocation();
   const isDesktop = isDesktopApp();
   const { showConfirm } = useDesktopDialog();
-  const currentAuth = useAppSelector(state => state.auth.current);
+  const isLoggedIn = useAppSelector(state => state.auth.current != null);
 
-  const currentAuthRef = useRef(currentAuth);
+  const currentAuthRef = useRef(isLoggedIn);
   const locationRef = useRef(location);
-  currentAuthRef.current = currentAuth;
+  currentAuthRef.current = isLoggedIn;
   locationRef.current = location;
 
   useEffect(() => {
@@ -128,12 +128,14 @@ export const useDesktopMenu = () => {
 
     // Setup menu event listeners with error handling
     const safeHandler = (handler: () => void | Promise<void>) => {
-      return async () => {
-        try {
-          await handler();
-        } catch (error) {
-          console.error('Menu handler error:', error);
-        }
+      return () => {
+        void (async () => {
+          try {
+            await handler();
+          } catch (error) {
+            console.error('Menu handler error:', error);
+          }
+        })();
       };
     };
 
@@ -144,7 +146,7 @@ export const useDesktopMenu = () => {
           window.dispatchEvent(new CustomEvent('menu:open-add-profile'));
         } else {
           // User is not logged in - navigate to login page
-          navigate('/login');
+          void navigate('/login');
         }
       }),
       'menu:export-data': safeHandler(() => {
@@ -177,7 +179,7 @@ export const useDesktopMenu = () => {
       'menu:disconnect': safeHandler(async () => {
         const confirm = await showConfirm('Disconnect', 'Are you sure you want to disconnect from the current database?');
         if (confirm) {
-          navigate(InternalRoutes.Logout.path);
+          void navigate(InternalRoutes.Logout.path);
         }
       }),
       'menu:new-scratchpad-page': safeHandler(() => {

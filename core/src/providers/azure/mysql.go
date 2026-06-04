@@ -48,7 +48,7 @@ func (p *Provider) discoverMySQL(ctx context.Context) ([]providers.DiscoveredCon
 
 	for pager.More() {
 		if ctx.Err() != nil {
-			log.Warnf("Azure MySQL: context cancelled, returning %d results so far", len(connections))
+			log.Warnf("Azure MySQL: context canceled, returning %d results so far", len(connections))
 			return connections, ctx.Err()
 		}
 
@@ -78,9 +78,9 @@ func (p *Provider) mysqlServerToConnection(server *armmysqlflexibleservers.Serve
 	resourceGroup := extractResourceGroup(derefStr(server.ID))
 
 	metadata := map[string]string{
-		"port":          "3306",
-		"location":      location,
-		"resourceGroup": resourceGroup,
+		"port":                 "3306",
+		azureMetaLocation:      location,
+		azureMetaResourceGroup: resourceGroup,
 	}
 
 	var status providers.ConnectionStatus
@@ -150,9 +150,7 @@ func (w *mysqlRGPagerWrapper) NextPage(ctx context.Context) (armmysqlflexibleser
 	if err != nil {
 		return armmysqlflexibleservers.ServersClientListResponse{}, err
 	}
-	return armmysqlflexibleservers.ServersClientListResponse{
-		ServerListResult: resp.ServerListResult,
-	}, nil
+	return armmysqlflexibleservers.ServersClientListResponse(resp), nil
 }
 
 func toMySQLListPager(pager interface {

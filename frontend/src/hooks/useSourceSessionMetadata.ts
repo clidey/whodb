@@ -38,9 +38,9 @@ import {
  * @returns Object with metadata state and refresh function
  */
 export const useSourceSessionMetadata = () => {
-    const auth = useAppSelector(state => state.auth);
+    const authStatus = useAppSelector(state => state.auth.status);
+    const currentSourceType = useAppSelector(state => state.auth.current?.Type);
     const metadata = useSourceSessionMetadataState();
-    const currentSourceType = auth.current?.Type;
 
     const [fetchMetadata, { data, error, loading }] = useLazyQuery(SourceSessionMetadataDocument, {
         fetchPolicy: 'network-only',
@@ -61,28 +61,28 @@ export const useSourceSessionMetadata = () => {
 
     // Fetch metadata when source type changes or the session cache expires.
     useEffect(() => {
-        if (auth.status === 'logged-in' && currentSourceType) {
+        if (authStatus === 'logged-in' && currentSourceType) {
             if (shouldRefreshSourceSessionMetadata(currentSourceType)) {
                 setSourceSessionMetadataLoading(true);
                 void fetchMetadata();
             }
         }
-    }, [auth.status, currentSourceType, fetchMetadata, metadata.lastFetched, metadata.sourceType]);
+    }, [authStatus, currentSourceType, fetchMetadata, metadata.lastFetched, metadata.sourceType]);
 
     // Clear metadata on logout.
     useEffect(() => {
-        if (auth.status === 'unauthorized') {
+        if (authStatus === 'unauthorized') {
             clearSourceSessionMetadata();
         }
-    }, [auth.status]);
+    }, [authStatus]);
 
     // Manual refresh function.
     const refresh = useCallback(() => {
-        if (auth.status === 'logged-in') {
+        if (authStatus === 'logged-in') {
             setSourceSessionMetadataLoading(true);
             void fetchMetadata();
         }
-    }, [auth.status, fetchMetadata]);
+    }, [authStatus, fetchMetadata]);
 
     return {
         queryLanguages: metadata.queryLanguages,

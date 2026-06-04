@@ -31,10 +31,10 @@ type ChatResponse struct {
 func (c *ChatResponse) Decode(holder *cffi.CFFIValueClass, typeMap baml.TypeMap) {
 	typeName := holder.Name
 	if typeName.Namespace != cffi.CFFITypeNamespace_STREAM_TYPES {
-		panic(fmt.Sprintf("expected cffi.CFFITypeNamespace_STREAM_TYPES, got %s", string(typeName.Namespace.String())))
+		panic("expected cffi.CFFITypeNamespace_STREAM_TYPES, got " + string(typeName.Namespace.String()))
 	}
 	if typeName.Name != "ChatResponse" {
-		panic(fmt.Sprintf("expected ChatResponse, got %s", typeName.Name))
+		panic("expected ChatResponse, got " + typeName.Name)
 	}
 
 	for _, field := range holder.Fields {
@@ -86,10 +86,10 @@ type DatabaseContext struct {
 func (c *DatabaseContext) Decode(holder *cffi.CFFIValueClass, typeMap baml.TypeMap) {
 	typeName := holder.Name
 	if typeName.Namespace != cffi.CFFITypeNamespace_STREAM_TYPES {
-		panic(fmt.Sprintf("expected cffi.CFFITypeNamespace_STREAM_TYPES, got %s", string(typeName.Namespace.String())))
+		panic("expected cffi.CFFITypeNamespace_STREAM_TYPES, got " + string(typeName.Namespace.String()))
 	}
 	if typeName.Name != "DatabaseContext" {
-		panic(fmt.Sprintf("expected DatabaseContext, got %s", typeName.Name))
+		panic("expected DatabaseContext, got " + typeName.Name)
 	}
 
 	for _, field := range holder.Fields {

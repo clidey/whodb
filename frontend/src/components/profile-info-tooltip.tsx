@@ -1,7 +1,8 @@
 import classNames from "classnames";
-import { FC, useState, useRef, useEffect, useCallback, useMemo } from "react";
+import type { FC} from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { LocalLoginProfile } from "../store/auth";
+import type { LocalLoginProfile } from "../store/auth";
 import { useSourceTypeItem } from "../hooks/useSourceCatalog";
 import { InformationCircleIcon } from "./heroicons";
 import { useTranslation } from "@/hooks/use-translation";
@@ -26,7 +27,7 @@ const getPortFromAdvanced = (profile: LocalLoginProfile, defaultPort: string | u
   
   if (profile.Advanced) {
     const portObj = profile.Advanced.find(item => item.Key === 'Port');
-    return portObj?.Value || defaultPort;
+    return portObj?.Value ?? defaultPort;
   }
 
   return defaultPort;
@@ -86,11 +87,9 @@ export const ProfileInfoTooltip: FC<ProfileInfoTooltipProps> = ({ profile, class
   }, [databaseTypeItem?.extra?.Port, profile]);
   const lastAccessed = getLastAccessedTime(profile.Id);
 
-  if (!port && !lastAccessed) return null;
-
   const showTooltip = useCallback(() => {
     if (!btnRef.current) return;
-    
+
     const rect = btnRef.current.getBoundingClientRect();
     setTooltipPos({
       top: rect.top + rect.height / 2,
@@ -99,7 +98,7 @@ export const ProfileInfoTooltip: FC<ProfileInfoTooltipProps> = ({ profile, class
     setIsVisible(true);
   }, []);
 
-  const hideTooltip = useCallback(() => setIsVisible(false), []);
+  const hideTooltip = useCallback(() =>{  setIsVisible(false); }, []);
 
   const handleClickAway = useCallback((event: MouseEvent) => {
     if (btnRef.current?.contains(event.target as Node)) return;
@@ -112,10 +111,10 @@ export const ProfileInfoTooltip: FC<ProfileInfoTooltipProps> = ({ profile, class
 
   useEffect(() => {
     if (!isVisible) return;
-    
+
     document.addEventListener("mousedown", handleClickAway);
     document.addEventListener("keydown", handleKeyDown);
-    
+
     return () => {
       document.removeEventListener("mousedown", handleClickAway);
       document.removeEventListener("keydown", handleKeyDown);
@@ -123,6 +122,8 @@ export const ProfileInfoTooltip: FC<ProfileInfoTooltipProps> = ({ profile, class
   }, [isVisible, handleClickAway, handleKeyDown]);
 
   const portalContainer = useMemo(getTooltipPortalContainer, []);
+
+  if (!port && !lastAccessed) return null;
 
   const tooltip = isVisible && tooltipPos && createPortal(
     <div

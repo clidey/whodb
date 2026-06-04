@@ -22,14 +22,14 @@ import (
 	"fmt"
 	"strings"
 
+	"gorm.io/gorm"
+
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/common/ssl"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
-	sourcecatalogspecs "github.com/clidey/whodb/core/src/sourcecatalog/specs"
-	"gorm.io/gorm"
 )
 
 // CockroachDBPlugin extends PostgresPlugin with CockroachDB-specific overrides.
@@ -174,7 +174,7 @@ func (p *CockroachDBPlugin) getCockroachDBColumns(db *gorm.DB, schema string, st
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	columns := []engine.Column{}
 	for rows.Next() {
@@ -288,7 +288,7 @@ func (p *CockroachDBPlugin) HandleCustomDataType(value string, columnType string
 
 	blobData, hasHexPrefix, err := gorm_plugin.DecodeHexLiteral(value)
 	if err != nil {
-		return nil, true, fmt.Errorf("invalid hex binary format: %v", err)
+		return nil, true, fmt.Errorf("invalid hex binary format: %w", err)
 	}
 	if !hasHexPrefix {
 		blobData = []byte(value)
@@ -328,7 +328,7 @@ func (p *CockroachDBPlugin) GetSSLStatus(config *engine.PluginConfig) (*engine.S
 			}, nil
 		}
 
-		sslConfig := ssl.ParseSSLConfig(engine.DatabaseType(p.Type), config.Credentials.Advanced, config.Credentials.Hostname, config.Credentials.IsProfile)
+		sslConfig := ssl.ParseSSLConfig(p.Type, config.Credentials.Advanced, config.Credentials.Hostname, config.Credentials.IsProfile)
 		mode := "enabled"
 		if sslConfig != nil {
 			mode = string(sslConfig.Mode)
@@ -345,10 +345,6 @@ func (p *CockroachDBPlugin) GetSSLStatus(config *engine.PluginConfig) (*engine.S
 	}
 	return status, err
 }
-
-// CockroachDB-supported type definitions (excludes MONEY, XML, HSTORE, geometric types,
-// CIDR, MACADDR, TIMETZ which CockroachDB does not support).
-var cockroachDBTypeDefinitions = sourcecatalogspecs.CockroachDBTypeDefinitions
 
 // NewCockroachDBPlugin creates a CockroachDB plugin with PostgreSQL compatibility
 // and CockroachDB-specific overrides for unsupported catalog functions.

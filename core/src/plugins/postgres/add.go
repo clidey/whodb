@@ -19,9 +19,10 @@ package postgres
 import (
 	"strings"
 
-	"github.com/clidey/whodb/core/src/engine"
-	"github.com/clidey/whodb/core/src/plugins/gorm"
 	"gorm.io/gorm"
+
+	"github.com/clidey/whodb/core/src/engine"
+	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
 )
 
 func (p *PostgresPlugin) GetCreateTableQuery(db *gorm.DB, schema string, storageUnit string, columns []engine.Record) string {

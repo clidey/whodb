@@ -61,7 +61,7 @@ func init() {
 		bamlLevel = "error"
 	}
 
-	os.Setenv("BAML_LOG", bamlLevel)
+	_ = os.Setenv("BAML_LOG", bamlLevel)
 }
 
 // configureBamlLibraryPath sets BAML_LIBRARY_PATH for macOS desktop builds.
@@ -114,6 +114,6 @@ func configureBamlLibraryPath() {
 	dylibPath := filepath.Join(frameworksDir, dylibName)
 
 	if _, err := os.Stat(dylibPath); err == nil {
-		os.Setenv("BAML_LIBRARY_PATH", dylibPath)
+		_ = os.Setenv("BAML_LIBRARY_PATH", dylibPath)
 	}
 }

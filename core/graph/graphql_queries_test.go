@@ -25,7 +25,9 @@ import (
 	"testing"
 
 	"errors"
+
 	"github.com/99designs/gqlgen/graphql/handler"
+
 	"github.com/clidey/whodb/core/internal/testutil"
 	"github.com/clidey/whodb/core/src/engine"
 )

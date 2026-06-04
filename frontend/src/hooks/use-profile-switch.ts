@@ -20,7 +20,8 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from '@clidey/ux';
 import { LoginSourceDocument, LoginWithSourceProfileDocument } from '@graphql';
 import { useAppDispatch } from '@/store/hooks';
-import { AuthActions, LocalLoginProfile } from '@/store/auth';
+import type { LocalLoginProfile } from '@/store/auth';
+import { AuthActions } from '@/store/auth';
 import { DatabaseActions } from '@/store/database';
 import { updateProfileLastAccessed } from '@/components/profile-info-tooltip';
 import { InternalRoutes } from '@/config/routes';
@@ -98,7 +99,7 @@ export const useProfileSwitch = (options?: UseProfileSwitchOptions) => {
             }
             dispatch(DatabaseActions.setSchema(""));
             dispatch(AuthActions.switch({ id: profile.Id }));
-            navigate(InternalRoutes.Dashboard.StorageUnit.path, {
+            void navigate(InternalRoutes.Dashboard.StorageUnit.path, {
                 state: {},
             });
             options?.onSuccess?.();

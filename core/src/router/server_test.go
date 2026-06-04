@@ -26,11 +26,12 @@ import (
 	"testing"
 
 	"github.com/99designs/gqlgen/graphql"
+	"github.com/go-chi/chi/v5"
+	"github.com/vektah/gqlparser/v2/ast"
+
 	graphapi "github.com/clidey/whodb/core/graph"
 	coreaudit "github.com/clidey/whodb/core/src/audit"
 	"github.com/clidey/whodb/core/src/env"
-	"github.com/go-chi/chi/v5"
-	"github.com/vektah/gqlparser/v2/ast"
 )
 
 func TestHealthCheckMiddlewareShortCircuitsHandler(t *testing.T) {

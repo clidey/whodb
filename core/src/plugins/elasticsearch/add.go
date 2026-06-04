@@ -23,9 +23,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/elastic/go-elasticsearch/v8/esapi"
+
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
-	"github.com/elastic/go-elasticsearch/v8/esapi"
 )
 
 func (p *ElasticSearchPlugin) AddStorageUnit(config *engine.PluginConfig, schema string, storageUnit string, fields []engine.Record) (bool, error) {
@@ -74,7 +75,7 @@ func (p *ElasticSearchPlugin) CreateStorageUnit(config *engine.PluginConfig, sch
 		return false, err
 	}
 
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if res.IsError() {
 		err := fmt.Errorf("failed to create index: %s", formatElasticError(res))
@@ -98,15 +99,15 @@ func (p *ElasticSearchPlugin) AddRow(config *engine.PluginConfig, schema string,
 	}
 
 	docID := ""
-	if id, ok := jsonValue["_id"]; ok {
+	if id, ok := jsonValue[esFieldID]; ok {
 		docID = id
-		delete(jsonValue, "_id")
+		delete(jsonValue, esFieldID)
 	}
 
 	documentBytes, err := json.Marshal(jsonValue)
 	if err != nil {
 		log.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to marshal ElasticSearch document to JSON")
-		return false, fmt.Errorf("error marshaling document to JSON: %v", err)
+		return false, fmt.Errorf("error marshaling document to JSON: %w", err)
 	}
 
 	documentReader := bytes.NewReader(documentBytes)
@@ -125,9 +126,9 @@ func (p *ElasticSearchPlugin) AddRow(config *engine.PluginConfig, schema string,
 	)
 	if err != nil {
 		log.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to index document in ElasticSearch")
-		return false, fmt.Errorf("error indexing document: %v", err)
+		return false, fmt.Errorf("error indexing document: %w", err)
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if res.IsError() {
 		err := fmt.Errorf("failed to index document: %s", formatElasticError(res))
@@ -170,9 +171,9 @@ func mapElasticFieldType(typeStr string) string {
 	switch {
 	case strings.Contains(lower, "keyword"):
 		return "keyword"
-	case strings.Contains(lower, "text"):
-		return "text"
-	case strings.Contains(lower, "bool"):
+	case strings.Contains(lower, esTypeText):
+		return esTypeText
+	case strings.Contains(lower, esTypeBool):
 		return "boolean"
 	case strings.Contains(lower, "date"), strings.Contains(lower, "time"):
 		return "date"
@@ -185,6 +186,6 @@ func mapElasticFieldType(typeStr string) string {
 	case strings.Contains(lower, "object"), strings.Contains(lower, "json"):
 		return "object"
 	default:
-		return "text"
+		return esTypeText
 	}
 }

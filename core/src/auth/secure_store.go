@@ -19,9 +19,10 @@ package auth
 import (
 	"encoding/json"
 
+	"github.com/zalando/go-keyring"
+
 	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/source"
-	"github.com/zalando/go-keyring"
 )
 
 var keyringService = getKeyringService()
@@ -51,7 +52,7 @@ func SaveCredentials(id string, creds *source.Credentials) error {
 	if id == "" || creds == nil {
 		return nil
 	}
-	data, err := json.Marshal(creds)
+	data, err := json.Marshal(creds) //nolint:gosec
 	if err != nil {
 		return err
 	}

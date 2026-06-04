@@ -91,6 +91,23 @@ type SavedQuery struct {
 	Query string `json:"query"`
 }
 
+// PlatformHost stores non-secret hosted WhoDB account and workspace state.
+type PlatformHost struct {
+	URL                string `json:"url"`
+	AccountID          string `json:"account_id,omitempty"`
+	Email              string `json:"email,omitempty"`
+	DefaultOrgID       string `json:"default_org_id,omitempty"`
+	DefaultOrgName     string `json:"default_org_name,omitempty"`
+	DefaultProjectID   string `json:"default_project_id,omitempty"`
+	DefaultProjectName string `json:"default_project_name,omitempty"`
+}
+
+// PlatformConfig stores hosted WhoDB CLI configuration.
+type PlatformConfig struct {
+	DefaultHost string         `json:"default_host,omitempty"`
+	Hosts       []PlatformHost `json:"hosts,omitempty"`
+}
+
 // WorkspaceEditorBufferState stores the name and SQL text for one editor tab.
 type WorkspaceEditorBufferState struct {
 	Name  string `json:"name"`
@@ -151,6 +168,7 @@ type CLISection struct {
 	Display      DisplayConfig   `json:"display"`
 	AI           AIConfig        `json:"ai"`
 	Query        QueryConfig     `json:"query"`
+	Platform     PlatformConfig  `json:"platform,omitempty"`
 	SavedQueries []SavedQuery    `json:"saved_queries,omitempty"`
 	Profiles     []Profile       `json:"profiles,omitempty"`
 	ReadOnly     bool            `json:"read_only,omitempty"`
@@ -283,6 +301,11 @@ func loadConfig(includeSecrets, showWarnings bool) (*Config, error) {
 	return cfg, nil
 }
 
+// UsesKeyring returns whether this config instance can store secrets in the OS keyring.
+func (c *Config) UsesKeyring() bool {
+	return c.useKeyring
+}
+
 func (c *Config) showKeyringWarning() {
 	if !c.useKeyring && !c.keyringWarningShown {
 		fmt.Fprintf(os.Stderr, "\n⚠️  WARNING: OS keyring not available.\n")
@@ -325,6 +348,92 @@ func (c *Config) Save() error {
 	}
 
 	return nil
+}
+
+// UpsertPlatformHost stores or replaces a hosted WhoDB account entry.
+func (c *Config) UpsertPlatformHost(host PlatformHost) {
+	for i, existing := range c.Platform.Hosts {
+		if existing.URL == host.URL {
+			c.Platform.Hosts[i] = host
+			return
+		}
+	}
+	c.Platform.Hosts = append(c.Platform.Hosts, host)
+}
+
+// SetOnlyPlatformHost replaces all hosted WhoDB account entries with one host.
+func (c *Config) SetOnlyPlatformHost(host PlatformHost) {
+	c.Platform.Hosts = []PlatformHost{host}
+	c.Platform.DefaultHost = host.URL
+}
+
+// GetPlatformHost returns the hosted WhoDB account entry for the URL.
+func (c *Config) GetPlatformHost(url string) (*PlatformHost, bool) {
+	for i := range c.Platform.Hosts {
+		if c.Platform.Hosts[i].URL == url {
+			return &c.Platform.Hosts[i], true
+		}
+	}
+	return nil, false
+}
+
+// RemovePlatformHost deletes the hosted WhoDB account entry for the URL.
+func (c *Config) RemovePlatformHost(url string) bool {
+	for i, host := range c.Platform.Hosts {
+		if host.URL == url {
+			c.Platform.Hosts = append(c.Platform.Hosts[:i], c.Platform.Hosts[i+1:]...)
+			if c.Platform.DefaultHost == url {
+				c.Platform.DefaultHost = ""
+				if len(c.Platform.Hosts) > 0 {
+					c.Platform.DefaultHost = c.Platform.Hosts[0].URL
+				}
+			}
+			return true
+		}
+	}
+	return false
+}
+
+// SetDefaultPlatformHost updates the hosted WhoDB host used by default.
+func (c *Config) SetDefaultPlatformHost(url string) {
+	c.Platform.DefaultHost = url
+}
+
+// SavePlatformRefreshToken stores a hosted WhoDB refresh token in the OS keyring.
+func (c *Config) SavePlatformRefreshToken(hostURL, accountID, refreshToken string) error {
+	if !c.useKeyring {
+		return errors.New("OS keyring is required for hosted WhoDB refresh tokens")
+	}
+	return keyring.Set(identity.Current().KeyringService, platformRefreshTokenKey(hostURL, accountID), refreshToken)
+}
+
+// GetPlatformRefreshToken loads a hosted WhoDB refresh token from the OS keyring.
+func (c *Config) GetPlatformRefreshToken(hostURL, accountID string) (string, error) {
+	if !c.useKeyring {
+		return "", errors.New("OS keyring is required for hosted WhoDB refresh tokens")
+	}
+	return keyring.Get(identity.Current().KeyringService, platformRefreshTokenKey(hostURL, accountID))
+}
+
+// DeletePlatformRefreshToken removes a hosted WhoDB refresh token from the OS keyring.
+func (c *Config) DeletePlatformRefreshToken(hostURL, accountID string) error {
+	if !c.useKeyring {
+		return nil
+	}
+	err := keyring.Delete(identity.Current().KeyringService, platformRefreshTokenKey(hostURL, accountID))
+	if errors.Is(err, keyring.ErrNotFound) {
+		return nil
+	}
+	return err
+}
+
+// IsKeyringNotFound reports whether err means the requested keyring item is missing.
+func IsKeyringNotFound(err error) bool {
+	return errors.Is(err, keyring.ErrNotFound)
+}
+
+func platformRefreshTokenKey(hostURL, accountID string) string {
+	return "platform:" + hostURL + ":" + accountID + ":refresh_token"
 }
 
 func (c *Config) AddConnection(conn Connection) {

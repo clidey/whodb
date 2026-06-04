@@ -19,12 +19,14 @@ package mongodb
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
-	"go.mongodb.org/mongo-driver/v2/bson"
-	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 type MongoDBPlugin struct {
@@ -101,7 +103,7 @@ func (p *MongoDBPlugin) GetStorageUnits(config *engine.PluginConfig, database st
 		}).Error("Failed to list MongoDB collections")
 		return nil, err
 	}
-	defer cursor.Close(ctx)
+	defer func() { _ = cursor.Close(ctx) }()
 
 	storageUnits := []engine.StorageUnit{}
 	for cursor.Next(ctx) {
@@ -148,17 +150,17 @@ func (p *MongoDBPlugin) GetStorageUnits(config *engine.PluginConfig, database st
 			} else {
 				storageSize, hasStorage := toInt64(stats["storageSize"])
 				if hasStorage {
-					attrs = append(attrs, engine.Record{Key: "Data Size", Value: fmt.Sprintf("%d", storageSize)})
+					attrs = append(attrs, engine.Record{Key: "Data Size", Value: strconv.FormatInt(storageSize, 10)})
 				}
 				if totalSize, ok := toInt64(stats["totalSize"]); ok {
-					attrs = append(attrs, engine.Record{Key: "Total Size", Value: fmt.Sprintf("%d", totalSize)})
+					attrs = append(attrs, engine.Record{Key: "Total Size", Value: strconv.FormatInt(totalSize, 10)})
 				} else if hasStorage {
 					if indexSize, ok := toInt64(stats["totalIndexSize"]); ok {
-						attrs = append(attrs, engine.Record{Key: "Total Size", Value: fmt.Sprintf("%d", storageSize+indexSize)})
+						attrs = append(attrs, engine.Record{Key: "Total Size", Value: strconv.FormatInt(storageSize+indexSize, 10)})
 					}
 				}
 				if count, ok := toInt64(stats["count"]); ok {
-					attrs = append(attrs, engine.Record{Key: "Count", Value: fmt.Sprintf("%d", count)})
+					attrs = append(attrs, engine.Record{Key: "Count", Value: strconv.FormatInt(count, 10)})
 				}
 				storageUnit.Attributes = attrs
 			}
@@ -235,7 +237,7 @@ func (p *MongoDBPlugin) GetColumnConstraints(config *engine.PluginConfig, schema
 		}).Debug("Failed to list collections for schema validation")
 		return make(map[string]map[string]any), nil
 	}
-	defer cursor.Close(ctx)
+	defer func() { _ = cursor.Close(ctx) }()
 
 	var collInfo bson.M
 	if !cursor.Next(ctx) {

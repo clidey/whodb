@@ -26,9 +26,10 @@ import (
 	"sync"
 	"time"
 
+	"gorm.io/gorm"
+
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
-	"gorm.io/gorm"
 )
 
 // cachedConnection holds a cached GORM database instance.
@@ -243,9 +244,8 @@ func getOrCreateConnection(config *engine.PluginConfig, createDB DBCreationFunc)
 		connectionCacheMu.Unlock()
 		l.Debug("Cache HIT - reusing cached connection")
 		return db, nil
-	} else {
-		connectionCacheMu.Unlock()
 	}
+	connectionCacheMu.Unlock()
 
 	// Create new connection WITHOUT holding the lock
 	// This is critical - connection creation can take 30+ seconds for slow/failing DBs

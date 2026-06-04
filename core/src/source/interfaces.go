@@ -120,7 +120,7 @@ type AvailabilityChecker interface {
 // QueryRunner executes source-native queries.
 type QueryRunner interface {
 	// RunQuery executes a query against the active source session.
-	RunQuery(ctx context.Context, query string, params ...any) (*RowsResult, error)
+	RunQuery(ctx context.Context, sql string, params ...any) (*RowsResult, error)
 }
 
 // QueryStreamWriter receives streamed query output row by row.
@@ -136,7 +136,7 @@ type QueryStreamWriter interface {
 type StreamQueryRunner interface {
 	// RunQueryStream executes a query and streams the result rows through the
 	// supplied writer.
-	RunQueryStream(ctx context.Context, query string, writer QueryStreamWriter, params ...any) error
+	RunQueryStream(ctx context.Context, sql string, writer QueryStreamWriter, params ...any) error
 }
 
 // ScriptRunner executes source-native scripts that may require special runtime
@@ -156,7 +156,7 @@ type GraphReader interface {
 // SourceAssistant runs AI chat against a source scope.
 type SourceAssistant interface {
 	// Reply runs the source assistant against the provided scope.
-	Reply(ctx context.Context, ref *ObjectRef, previousConversation string, query string) ([]*ChatMessage, error)
+	Reply(ctx context.Context, ref *ObjectRef, previousConversation string, prompt string) ([]*ChatMessage, error)
 }
 
 // ModelAwareSourceAssistant runs AI chat with an explicitly selected external
@@ -164,7 +164,7 @@ type SourceAssistant interface {
 type ModelAwareSourceAssistant interface {
 	// ReplyWithModel runs the source assistant against the provided scope using
 	// the supplied model configuration.
-	ReplyWithModel(ctx context.Context, ref *ObjectRef, previousConversation string, query string, model *ExternalModel) ([]*ChatMessage, error)
+	ReplyWithModel(ctx context.Context, ref *ObjectRef, previousConversation string, prompt string, model *ExternalModel) ([]*ChatMessage, error)
 }
 
 // ObjectManager mutates source objects and row data.

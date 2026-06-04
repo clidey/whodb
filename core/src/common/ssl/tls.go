@@ -19,6 +19,7 @@ package ssl
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"fmt"
 	"os"
 
@@ -106,14 +107,15 @@ func BuildTLSConfig(cfg *SSLConfig, serverHostname string) (*tls.Config, error) 
 	}
 
 	// Handle verify-ca vs verify-identity
-	if cfg.Mode == SSLModeVerifyCA {
+	switch cfg.Mode {
+	case SSLModeVerifyCA:
 		// verify-ca: Verify cert chain but NOT hostname
 		// We use InsecureSkipVerify + VerifyConnection to manually verify chain only
 		tlsConfig.InsecureSkipVerify = true
 		if rootCAs != nil {
 			tlsConfig.VerifyConnection = func(cs tls.ConnectionState) error {
 				if len(cs.PeerCertificates) == 0 {
-					return fmt.Errorf("no peer certificates presented")
+					return errors.New("no peer certificates presented")
 				}
 				opts := x509.VerifyOptions{
 					Roots:         rootCAs,
@@ -130,7 +132,7 @@ func BuildTLSConfig(cfg *SSLConfig, serverHostname string) (*tls.Config, error) 
 				return err
 			}
 		}
-	} else if cfg.Mode == SSLModeVerifyIdentity {
+	case SSLModeVerifyIdentity:
 		// verify-identity: Verify cert chain AND hostname
 		if cfg.ServerName != "" {
 			tlsConfig.ServerName = cfg.ServerName
@@ -154,7 +156,7 @@ func loadRootCAs(tlsConfig *tls.Config, caCert *CertificateInput) error {
 
 	rootCAs := x509.NewCertPool()
 	if !rootCAs.AppendCertsFromPEM(caPEM) {
-		return fmt.Errorf("failed to parse CA certificate PEM")
+		return errors.New("failed to parse CA certificate PEM")
 	}
 	tlsConfig.RootCAs = rootCAs
 	return nil

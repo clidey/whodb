@@ -36,7 +36,7 @@ func (f *fakePosthogClient) Enqueue(message posthog.Message) error {
 	return nil
 }
 
-func (f *fakePosthogClient) Close() error                          { return nil }
+func (f *fakePosthogClient) Close() error                           { return nil }
 func (f *fakePosthogClient) CloseWithContext(context.Context) error { return nil }
 
 func (f *fakePosthogClient) IsFeatureEnabled(posthog.FeatureFlagPayload) (any, error) {
@@ -65,6 +65,10 @@ func (f *fakePosthogClient) GetAllFlags(posthog.FeatureFlagPayloadNoKey) (map[st
 
 func (f *fakePosthogClient) ReloadFeatureFlags() error {
 	return nil
+}
+
+func (f *fakePosthogClient) EvaluateFlags(posthog.EvaluateFlagsPayload) (*posthog.FeatureFlagEvaluations, error) {
+	return nil, nil
 }
 
 func (f *fakePosthogClient) GetFeatureFlags() ([]posthog.FeatureFlag, error) {

@@ -69,7 +69,7 @@ func formatSlice(items []any) string {
 }
 
 // formatReflectMap formats a typed map (e.g., map[string]int32) using reflection.
-func formatReflectMap(rv reflect.Value, upperType string) string {
+func formatReflectMap(rv reflect.Value) string {
 	keys := rv.MapKeys()
 	sort.Slice(keys, func(i, j int) bool {
 		return fmt.Sprint(keys[i].Interface()) < fmt.Sprint(keys[j].Interface())
@@ -93,7 +93,7 @@ func formatReflectTuple(rv reflect.Value) string {
 }
 
 // formatReflectSlice formats a typed slice as a ClickHouse array using reflection.
-func formatReflectSlice(rv reflect.Value, upperType string) string {
+func formatReflectSlice(rv reflect.Value) string {
 	parts := make([]string, rv.Len())
 	for i := range rv.Len() {
 		parts[i] = formatLiteral(rv.Index(i).Interface())
@@ -275,7 +275,7 @@ func splitTopLevel(s string, sep byte) []string {
 	inQ := false // single-quote state
 	start := 0
 
-	for i := 0; i < len(s); i++ {
+	for i := range len(s) {
 		switch ch := s[i]; {
 		case ch == '\'':
 			inQ = !inQ

@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import { motion, AnimatePresence } from 'framer-motion';
-import { FC, useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import type { FC} from 'react';
+import { useEffect, useState } from 'react';
 import { useAppSelector } from '../../store/hooks';
 
 interface TourSpotlightProps {

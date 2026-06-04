@@ -8,7 +8,7 @@ paths:
 
 ## Verification (run after changes)
 ```bash
-cd core && go build ./cmd/whodb && go vet ./...
+cd core && ./lint.sh && go build ./cmd/whodb
 ```
 
 ## SQL Security

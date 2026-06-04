@@ -24,7 +24,7 @@ import {
     getSourceColumnTypeDefinitions,
     parseTypeSpec,
 } from '../utils/source-column-types';
-import { TypeDefinition } from '../config/source-types';
+import type { TypeDefinition } from '../config/source-types';
 
 export interface TypeSelectorProps {
     /** The source type identifier used to load backend-owned type definitions. */
@@ -170,7 +170,7 @@ export function TypeSelector({
         return (
             <Input
                 value={value}
-                onChange={e => onChange(e.target.value)}
+                onChange={(e) => { onChange(e.target.value); }}
                 placeholder={placeholder}
             />
         );

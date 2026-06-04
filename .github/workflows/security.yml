@@ -1,0 +1,290 @@
+name: Security
+
+on:
+  pull_request:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@8d3c67de8e2fe68ef647c8db1e6a09f647780f40 # v2.19.0
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
+        with:
+          go-version-file: core/go.mod
+
+      - uses: pnpm/action-setup@26f6d4f2c533a43e6b5da0b4a5dd983f98f7b49a # v6.0.4
+        with:
+          package_json_file: frontend/package.json
+          run_install: false
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: '25.6.0'
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install gosec
+        run: go install github.com/securego/gosec/v2/cmd/gosec@v2.27.1
+
+      - name: Install govulncheck
+        run: go install golang.org/x/vuln/cmd/govulncheck@v1.3.0
+
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+      - name: Run gosec
+        working-directory: core
+        run: gosec -no-fail -fmt json -out ../gosec.json -exclude-generated ./... 2>&1 || true
+
+      - name: Run govulncheck
+        working-directory: core
+        run: govulncheck -format json ./... > ../govulncheck.json 2>&1 || true
+
+      - name: Audit frontend dependencies
+        working-directory: frontend
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm audit --json > ../audit.json 2>&1 || true
+
+      - name: Generate report
+        id: report
+        run: |
+          cat << 'SCRIPT' > generate_report.py
+          import json
+          import os
+          import sys
+
+          def parse_gosec(filename):
+              try:
+                  with open(filename) as f:
+                      data = json.load(f)
+                  issues = data.get("Issues", [])
+                  if not issues:
+                      return "✅ No issues found", 0
+
+                  output = f"⚠️ **{len(issues)} issue(s) found**\n\n"
+                  output += "| Severity | Confidence | File | Line | Issue |\n"
+                  output += "|----------|------------|------|------|-------|\n"
+                  for issue in issues[:25]:
+                      sev = issue.get("severity", "UNKNOWN")
+                      conf = issue.get("confidence", "UNKNOWN")
+                      file = issue.get("file", "").replace(os.getcwd() + "/", "")
+                      line = issue.get("line", "?")
+                      what = issue.get("details", issue.get("rule_id", ""))[:80]
+                      output += f"| {sev} | {conf} | `{file}` | {line} | {what} |\n"
+                  if len(issues) > 25:
+                      output += f"\n*...and {len(issues) - 25} more*\n"
+                  return output, len(issues)
+              except Exception as e:
+                  return f"⚠️ Scan error: {e}", 0
+
+          def parse_govulncheck(filename):
+              try:
+                  with open(filename) as f:
+                      content = f.read().strip()
+                  if not content:
+                      return "✅ No vulnerabilities found", 0
+
+                  vulns = []
+                  for line in content.split("\n"):
+                      if not line.strip():
+                          continue
+                      try:
+                          entry = json.loads(line)
+                          if "finding" in entry:
+                              vulns.append(entry["finding"])
+                      except json.JSONDecodeError:
+                          continue
+
+                  if not vulns:
+                      return "✅ No vulnerabilities found", 0
+
+                  seen = set()
+                  unique_vulns = []
+                  for v in vulns:
+                      osv = v.get("osv", "")
+                      if osv not in seen:
+                          seen.add(osv)
+                          unique_vulns.append(v)
+
+                  output = f"⚠️ **{len(unique_vulns)} vulnerable dependency(ies)**\n\n"
+                  output += "| ID | Module | Fixed In |\n"
+                  output += "|----|--------|----------|\n"
+                  for v in unique_vulns[:20]:
+                      osv = v.get("osv", "unknown")
+                      trace = v.get("trace", [{}])
+                      module = trace[0].get("module", "unknown") if trace else "unknown"
+                      fixed = v.get("fixed_version", "—")
+                      output += f"| [{osv}](https://pkg.go.dev/vuln/{osv}) | `{module}` | {fixed} |\n"
+                  if len(unique_vulns) > 20:
+                      output += f"\n*...and {len(unique_vulns) - 20} more*\n"
+                  return output, len(unique_vulns)
+              except Exception as e:
+                  return f"⚠️ Scan error: {e}", 0
+
+          def parse_pnpm_audit(filename):
+              try:
+                  with open(filename) as f:
+                      content = f.read().strip()
+                  if not content:
+                      return "✅ No vulnerabilities found", 0
+
+                  data = json.loads(content)
+                  advisories = data.get("advisories", {})
+                  if not advisories:
+                      return "✅ No vulnerabilities found", 0
+
+                  output = f"⚠️ **{len(advisories)} vulnerability(ies)**\n\n"
+                  output += "| Severity | Package | Title |\n"
+                  output += "|----------|---------|-------|\n"
+                  for adv_id, adv in list(advisories.items())[:15]:
+                      sev = adv.get("severity", "unknown")
+                      pkg = adv.get("module_name", "unknown")
+                      title = adv.get("title", "")[:60]
+                      output += f"| {sev} | `{pkg}` | {title} |\n"
+                  if len(advisories) > 15:
+                      output += f"\n*...and {len(advisories) - 15} more*\n"
+                  return output, len(advisories)
+              except json.JSONDecodeError:
+                  return "✅ No vulnerabilities found", 0
+              except Exception as e:
+                  return f"⚠️ Audit error: {e}", 0
+
+          gosec_report, gosec_count = parse_gosec("gosec.json")
+          govuln_report, govuln_count = parse_govulncheck("govulncheck.json")
+          audit_report, audit_count = parse_pnpm_audit("audit.json")
+
+          total = gosec_count + govuln_count + audit_count
+          status = "All clear" if total == 0 else f"{total} finding(s)"
+
+          report = f"""## Security Scan — {status}
+
+          ### Go Static Analysis (gosec)
+          {gosec_report}
+
+          ### Go Vulnerability Check (govulncheck)
+          {govuln_report}
+
+          ### Frontend Dependencies (pnpm audit)
+          {audit_report}
+
+          ---
+          <sub>Updated by [Security workflow](https://github.com/{os.environ.get('GITHUB_REPOSITORY', '')}/actions/runs/{os.environ.get('GITHUB_RUN_ID', '')}) • {os.environ.get('GITHUB_SHA', '')[:7]}</sub>
+          """
+
+          report = "\n".join(line.lstrip() for line in report.split("\n"))
+
+          with open("security_report.md", "w") as f:
+              f.write(report)
+
+          print(f"Total findings: {total}")
+          SCRIPT
+
+          python3 generate_report.py
+
+      - name: Upload report artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: security-report
+          path: |
+            security_report.md
+            gosec.json
+            govulncheck.json
+            audit.json
+          retention-days: 30
+
+      - name: Comment on PR
+        if: false  # disabled — re-enable when ready to surface security findings on PRs
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync('security_report.md', 'utf8');
+            const marker = '<!-- security-scan-comment -->';
+            const fullBody = marker + '\n' + body;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existing = comments.find(c => c.body.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body: fullBody,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: fullBody,
+              });
+            }
+
+  trivy-image:
+    name: Trivy Image Scan (${{ matrix.image }})
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    strategy:
+      matrix:
+        image:
+          - whodb
+          - whodb-cli
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@8d3c67de8e2fe68ef647c8db1e6a09f647780f40 # v2.19.0
+        with:
+          egress-policy: audit
+
+      - name: Trivy scan clidey/${{ matrix.image }}:latest
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: docker.io/clidey/${{ matrix.image }}:latest
+          format: table
+          exit-code: '0'
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+
+      - name: Trivy scan (JSON for artifact)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: docker.io/clidey/${{ matrix.image }}:latest
+          format: json
+          output: trivy-${{ matrix.image }}.json
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+
+      - name: Upload Trivy results
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: trivy-${{ matrix.image }}-report
+          path: trivy-${{ matrix.image }}.json
+          retention-days: 30

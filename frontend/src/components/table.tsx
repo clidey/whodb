@@ -42,13 +42,7 @@ import {
     EmptyState,
     Input,
     Label,
-    Pagination,
-    PaginationContent,
-    PaginationEllipsis,
-    PaginationItem,
-    PaginationLink,
-    PaginationNext,
-    PaginationPrevious,
+    DataPagination,
     Select,
     SelectContent,
     SelectItem,
@@ -77,7 +71,8 @@ import {
     SourceAction,
     type SourceObjectRefInput,
 } from '@graphql';
-import {FC, Suspense, useCallback, useEffect, useMemo, useRef, useState} from "react";
+import type {FC} from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {Export} from "./export";
 import {ImportData} from "./import-data";
 import {useTranslation} from '@/hooks/use-translation';
@@ -141,7 +136,7 @@ const DynamicExport: FC<{
     forceExportAll?: boolean;
 }> = (props) => {
     // Use registered Export if available, otherwise fall back to default
-    const ExportComponent = EEExport || Export;
+    const ExportComponent = EEExport ?? Export;
     return <ExportComponent {...props} />;
 };
 
@@ -220,24 +215,24 @@ function stripTypeSuffix(type: string): string {
 
 export function getColumnIcons(columns: string[], columnTypes?: string[], t?: (key: string) => string) {
     return columns.map((col, idx) => {
-        const rawType = columnTypes?.[idx] || "";
-        // Strip length/precision suffix and uppercase for matching
+        const rawType = columnTypes?.[idx] ?? "";
         const type = stripTypeSuffix(rawType).toUpperCase();
+        const key = `${col}-${idx}`;
 
-        if (intTypes.has(type) || uintTypes.has(type)) return <HashtagIcon className="w-4 h-4" aria-label={t?.('integerType') ?? 'Integer type'} />;
-        if (floatTypes.has(type)) return <CalculatorIcon className="w-4 h-4" aria-label={t?.('decimalType') ?? 'Decimal type'} />;
-        if (boolTypes.has(type)) return <CheckCircleIcon className="w-4 h-4" aria-label={t?.('booleanType') ?? 'Boolean type'} />;
-        if (dateTypes.has(type)) return <CalendarIcon className="w-4 h-4" aria-label={t?.('dateType') ?? 'Date type'} />;
-        if (dateTimeTypes.has(type)) return <ClockIcon className="w-4 h-4" aria-label={t?.('dateTimeType') ?? 'DateTime type'} />;
-        if (uuidTypes.has(type)) return <KeyIcon className="w-4 h-4" aria-label={t?.('uuidType') ?? 'UUID type'} />;
-        if (binaryTypes.has(type)) return <DocumentDuplicateIcon className="w-4 h-4" aria-label={t?.('binaryType') ?? 'Binary type'} />;
-        if (jsonTypes.has(type)) return <CodeBracketIcon className="w-4 h-4" aria-label={t?.('jsonType') ?? 'JSON type'} />;
-        if (networkTypes.has(type)) return <GlobeAltIcon className="w-4 h-4" aria-label={t?.('networkType') ?? 'Network type'} />;
-        if (geometryTypes.has(type)) return <Squares2X2Icon className="w-4 h-4" aria-label={t?.('geometryType') ?? 'Geometry type'} />;
-        if (xmlTypes.has(type)) return <CodeBracketIcon className="w-4 h-4" aria-label={t?.('xmlType') ?? 'XML type'} />;
-        if (type.startsWith("ARRAY")) return <ListBulletIcon className="w-4 h-4" aria-label={t?.('arrayType') ?? 'Array type'} />;
-        if (stringTypes.has(type)) return <DocumentTextIcon className="w-4 h-4" aria-label={t?.('textType') ?? 'Text type'} />;
-        return <CircleStackIcon className="w-4 h-4" aria-label={t?.('dataType') ?? 'Data type'} />;
+        if (intTypes.has(type) || uintTypes.has(type)) return <HashtagIcon key={key} className="w-4 h-4" aria-label={t?.('integerType') ?? 'Integer type'} />;
+        if (floatTypes.has(type)) return <CalculatorIcon key={key} className="w-4 h-4" aria-label={t?.('decimalType') ?? 'Decimal type'} />;
+        if (boolTypes.has(type)) return <CheckCircleIcon key={key} className="w-4 h-4" aria-label={t?.('booleanType') ?? 'Boolean type'} />;
+        if (dateTypes.has(type)) return <CalendarIcon key={key} className="w-4 h-4" aria-label={t?.('dateType') ?? 'Date type'} />;
+        if (dateTimeTypes.has(type)) return <ClockIcon key={key} className="w-4 h-4" aria-label={t?.('dateTimeType') ?? 'DateTime type'} />;
+        if (uuidTypes.has(type)) return <KeyIcon key={key} className="w-4 h-4" aria-label={t?.('uuidType') ?? 'UUID type'} />;
+        if (binaryTypes.has(type)) return <DocumentDuplicateIcon key={key} className="w-4 h-4" aria-label={t?.('binaryType') ?? 'Binary type'} />;
+        if (jsonTypes.has(type)) return <CodeBracketIcon key={key} className="w-4 h-4" aria-label={t?.('jsonType') ?? 'JSON type'} />;
+        if (networkTypes.has(type)) return <GlobeAltIcon key={key} className="w-4 h-4" aria-label={t?.('networkType') ?? 'Network type'} />;
+        if (geometryTypes.has(type)) return <Squares2X2Icon key={key} className="w-4 h-4" aria-label={t?.('geometryType') ?? 'Geometry type'} />;
+        if (xmlTypes.has(type)) return <CodeBracketIcon key={key} className="w-4 h-4" aria-label={t?.('xmlType') ?? 'XML type'} />;
+        if (type.startsWith("ARRAY")) return <ListBulletIcon key={key} className="w-4 h-4" aria-label={t?.('arrayType') ?? 'Array type'} />;
+        if (stringTypes.has(type)) return <DocumentTextIcon key={key} className="w-4 h-4" aria-label={t?.('textType') ?? 'Text type'} />;
+        return <CircleStackIcon key={key} className="w-4 h-4" aria-label={t?.('dataType') ?? 'Data type'} />;
     });
 }
 
@@ -337,7 +332,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     allowRowUpdate = true,
     allowRowDelete = true,
     limitContextMenu = false,
-    schema,
+    schema: _schema,
     storageUnit,
     objectRef,
     onRefresh,
@@ -352,7 +347,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     onPageChange,
     showPagination = false,
     // Foreign key functionality
-    isValidForeignKey,
+    isValidForeignKey: _isValidForeignKey,
     onEntitySearch,
     databaseType,
     // Mock data generation control
@@ -367,7 +362,6 @@ export const StorageUnitTable: FC<TableProps> = ({
     const [editIndex, setEditIndex] = useState<number | null>(null);
     const [editRow, setEditRow] = useState<string[] | null>(null);
     const [editRowInitialLengths, setEditRowInitialLengths] = useState<number[]>([]);
-    const [deleting, setDeleting] = useState(false);
     const [pendingDeleteIndexes, setPendingDeleteIndexes] = useState<number[] | null>(null);
     const [checked, setChecked] = useState<number[]>([]);
     const [showExportConfirm, setShowExportConfirm] = useState(false);
@@ -389,7 +383,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     const [mockDataOverwriteExisting, setMockDataOverwriteExisting] = useState("append");
     const [mockDataFkDensityRatio, setMockDataFkDensityRatio] = useState("20");
     const [showMockDataConfirmation, setShowMockDataConfirmation] = useState(false);
-    const { isNoSQL, item, supportsMockDataRelations } = useSourceContract(databaseType);
+    const { item, supportsMockDataRelations } = useSourceContract(databaseType);
     const isMockDataSupported =
         sourceObjectSupportsAction(item, objectRef?.Kind, SourceAction.GenerateMockData) && isMockDataGenerationAllowed;
     const isImportSupported = sourceObjectSupportsAction(item, objectRef?.Kind, SourceAction.ImportData);
@@ -397,11 +391,11 @@ export const StorageUnitTable: FC<TableProps> = ({
     const isRowUpdateSupported = sourceObjectSupportsAction(item, objectRef?.Kind, SourceAction.UpdateData);
     const isRowDeleteSupported = sourceObjectSupportsAction(item, objectRef?.Kind, SourceAction.DeleteData);
     const { data: maxRowData } = useQuery(MockDataMaxRowCountDocument);
-    const maxRowCount = maxRowData?.MockDataMaxRowCount || 200;
-    
+    const maxRowCount = maxRowData?.MockDataMaxRowCount ?? 200;
+
     // Use server-side pagination
-    const currentPage = serverCurrentPage || 1;
-    const totalRows = totalCount || 0;
+    const currentPage = serverCurrentPage ?? 1;
+    const totalRows = totalCount ?? 0;
     const totalPages = Math.ceil(totalRows / pageSize);
 
     const [generateMockData, { loading: generatingMockData }] = useMutation(GenerateMockDataDocument);
@@ -522,7 +516,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                     },
                 });
             } catch (e: any) {
-                toast.error(t('unableToDeleteRow', { message: e?.message || e }));
+                toast.error(t('unableToDeleteRow', { message: e?.message ?? e }));
                 unableToDeleteAll = true;
                 break;
             }
@@ -586,64 +580,13 @@ export const StorageUnitTable: FC<TableProps> = ({
                     header.focus();
                 }
             }, 50);
-            return () => clearTimeout(timeoutId);
+            return () => { clearTimeout(timeoutId); };
         }
     }, [rows]);
 
     const handlePageChange = useCallback((newPage: number) => {
         onPageChange?.(newPage);
     }, [onPageChange]);
-
-    const renderPaginationLinks = () => {
-        const links = [];
-        // Show up to 3 pages before and after current
-        const start = Math.max(1, currentPage - 2);
-        const end = Math.min(totalPages, currentPage + 2);
-
-        if (start > 1) {
-            links.push(
-                <PaginationItem key={1}>
-                    <PaginationLink href="#" onClick={e => { e.preventDefault(); handlePageChange(1); }} size="sm" data-testid="table-page-number" data-page="1" data-active={currentPage === 1} aria-label={t('goToPage', { page: 1 })}>{formatNumber(1, language)}</PaginationLink>
-                </PaginationItem>
-            );
-            if (start > 2) {
-                links.push(<PaginationEllipsis key="start-ellipsis" aria-hidden="true" />);
-            }
-        }
-
-        for (let i = start; i <= end; i++) {
-            links.push(
-                <PaginationItem key={i}>
-                    <PaginationLink
-                        href="#"
-                        isActive={i === currentPage}
-                        onClick={e => { e.preventDefault(); handlePageChange(i); }}
-                        size="sm"
-                        data-testid="table-page-number"
-                        data-page={i}
-                        data-active={i === currentPage}
-                        aria-label={i === currentPage ? t('currentPage', { page: i }) : t('goToPage', { page: i })}
-                        aria-current={i === currentPage ? 'page' : undefined}
-                    >
-                        {formatNumber(i, language)}
-                    </PaginationLink>
-                </PaginationItem>
-            );
-        }
-
-        if (end < totalPages) {
-            if (end < totalPages - 1) {
-                links.push(<PaginationEllipsis key="end-ellipsis" aria-hidden="true" />);
-            }
-            links.push(
-                <PaginationItem key={totalPages}>
-                    <PaginationLink href="#" onClick={e => { e.preventDefault(); handlePageChange(totalPages); }} size="sm" data-testid="table-page-number" data-page={totalPages} data-active={currentPage === totalPages} aria-label={t('goToPage', { page: totalPages })}>{formatNumber(totalPages, language)}</PaginationLink>
-                </PaginationItem>
-            );
-        }
-
-        return links;
-    };
 
     const handleSelectRow = useCallback((rowIndex: number) => {
         const isCurrentlySelected = checked.includes(rowIndex);
@@ -667,7 +610,7 @@ export const StorageUnitTable: FC<TableProps> = ({
         const timeout = window.setTimeout(() => {
             const cell = paginatedRows[rowIndex][cellIndex];
             if (cell !== undefined && cell !== null) {
-                copyToClipboard(String(cell)).then(success => {
+                void copyToClipboard(String(cell)).then(success => {
                     if (success) toast.success(t('copiedToClipboard'));
                 });
             }
@@ -691,7 +634,7 @@ export const StorageUnitTable: FC<TableProps> = ({
         const row = paginatedRows[rowIndex];
         if (row && Array.isArray(row)) {
             const rowString = row.map(cell => cell ?? "").join("\t");
-            copyToClipboard(rowString).then(success => {
+            void copyToClipboard(rowString).then(success => {
                 if (success) toast.success(t('rowCopiedToClipboard'));
             });
         }
@@ -780,7 +723,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     useEffect(() => {
         return () => {
             // Clear all pending timeouts
-            clickTimeouts.current.forEach(timeout => clearTimeout(timeout));
+            clickTimeouts.current.forEach(timeout => { clearTimeout(timeout); });
             clickTimeouts.current.clear();
         };
     }, []);
@@ -790,7 +733,7 @@ export const StorageUnitTable: FC<TableProps> = ({
         if (showMockDataSheet && objectRef) {
             const rowCount = parseInt(mockDataRowCount) || 100;
             if (rowCount > 0 && rowCount <= maxRowCount) {
-                analyzeDependencies({
+                void analyzeDependencies({
                     variables: {
                         ref: objectRef,
                         rowCount,
@@ -813,7 +756,7 @@ export const StorageUnitTable: FC<TableProps> = ({
 
         // Tables are in generation order (parents first, target last)
         // Recalculate: target gets requested count, parents get child/ratio
-        const recalculated = tables.map((t, i) => ({ ...t }));
+        const recalculated = tables.map((t) => ({ ...t }));
 
         // Start from the end (target table) and work backwards
         let childRowCount = requestedRows;
@@ -1099,7 +1042,7 @@ export const StorageUnitTable: FC<TableProps> = ({
         };
 
         window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
+        return () => { window.removeEventListener('keydown', handleKeyDown); };
     }, [enableKeyboardShortcuts, onRefresh, checked, paginatedRows, handleDeleteRow, handleEdit, focusedRowIndex, moveFocus, visibleRowCount, handleSelectRow, canEditRows, canDeleteRows, onPageChange, currentPage, totalPages, openExport, isExportSupported]);
 
 
@@ -1225,8 +1168,8 @@ export const StorageUnitTable: FC<TableProps> = ({
                     isSelected && "bg-muted"
                 )}
                 style={style}
-                onClick={() => setFocusedRowIndex(index)}
-                onFocus={() => setFocusedRowIndex(index)}
+                onClick={() => { setFocusedRowIndex(index); }}
+                onFocus={() => { setFocusedRowIndex(index); }}
             >
                 <TableCell
                     role="gridcell"
@@ -1236,7 +1179,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                 >
                     <Checkbox
                         checked={isSelected}
-                        onCheckedChange={() => setChecked(isSelected ? checked.filter(i => i !== index) : [...checked, index])}
+                        onCheckedChange={() => { setChecked(isSelected ? checked.filter(i => i !== index) : [...checked, index]); }}
                         aria-label={isSelected ? t('deselectRow') : t('selectRow')}
                     />
                     <Button variant="secondary" className="opacity-0 group-hover:opacity-100 absolute right-2 w-0 top-1.5" onClick={(e) => {
@@ -1255,7 +1198,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                 </TableCell>
                 {paginatedRows[index]?.map((cell, cellIdx) => (
                     <TableCell
-                        key={cellIdx}
+                        key={columns[cellIdx]}
                         role="gridcell"
                         className={cn(ph.mask, "cursor-pointer")}
                         title={t('cellInteractionHint')}
@@ -1264,8 +1207,8 @@ export const StorageUnitTable: FC<TableProps> = ({
                             setFocusedRowIndex(index);
                             handleCellClick(index, cellIdx);
                         }}
-                        onDoubleClick={() => handleCellDoubleClick(index)}
-                        onContextMenu={() => !limitContextMenu && setContextMenuCellIdx(cellIdx)}
+                        onDoubleClick={() => { handleCellDoubleClick(index); }}
+                        onContextMenu={() => { if (!limitContextMenu) { setContextMenuCellIdx(cellIdx); } }}
                         data-col-idx={cellIdx}
                     >
                         {cell}
@@ -1287,7 +1230,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                         if (contextMenuCellIdx == null) return;
                         const cell = paginatedRows[index]?.[contextMenuCellIdx];
                         if (cell !== undefined && cell !== null) {
-                            copyToClipboard(String(cell)).then(success => {
+                            void copyToClipboard(String(cell)).then(success => {
                                 if (success) toast.success(t('copiedCellToClipboard'));
                             });
                         }
@@ -1318,7 +1261,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                         const row = paginatedRows[index];
                         if (row && Array.isArray(row)) {
                             const rowString = row.map(cell => cell ?? "").join("\t");
-                            copyToClipboard(rowString).then(success => {
+                            void copyToClipboard(rowString).then(success => {
                                 if (success) toast.success(t('rowCopiedToClipboard'));
                             });
                         }
@@ -1330,14 +1273,14 @@ export const StorageUnitTable: FC<TableProps> = ({
                     <ContextMenuShortcut><CursorArrowRaysIcon className="w-4 h-4" /><CursorArrowRaysIcon className="w-4 h-4" /></ContextMenuShortcut>
                 </ContextMenuItem>
                 {!limitContextMenu && (
-                    <ContextMenuItem onSelect={() => handleSelectRow(index)}>
+                    <ContextMenuItem onSelect={() => { handleSelectRow(index); }}>
                         <CheckCircleIcon className="w-4 h-4 text-primary" />
                         {checked.includes(index) ? t('deselectRow') : t('selectRow')}
                         <ContextMenuShortcut>Space</ContextMenuShortcut>
                     </ContextMenuItem>
                 )}
                 {!limitContextMenu && canEditRows && (
-                    <ContextMenuItem onSelect={() => handleEdit(index)} disabled={checked.length > 1} data-testid="context-menu-edit-row">
+                    <ContextMenuItem onSelect={() => { handleEdit(index); }} disabled={checked.length > 1} data-testid="context-menu-edit-row">
                         <PencilSquareIcon className="w-4 h-4" />
                         {t('editRow')}
                         <ContextMenuShortcut>Enter</ContextMenuShortcut>
@@ -1353,14 +1296,14 @@ export const StorageUnitTable: FC<TableProps> = ({
                             collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
                         >
                             <ContextMenuItem
-                                onSelect={() => openExport('csv', true)}
+                                onSelect={() => { openExport('csv', true); }}
                             >
                                 <DocumentIcon className="w-4 h-4" />
                                 {t('exportAllAsCsv')}
                                 <ContextMenuShortcut>{formatShortcut(SHORTCUTS.exportData.displayKeys)}</ContextMenuShortcut>
                             </ContextMenuItem>
                             <ContextMenuItem
-                                onSelect={() => openExport('excel', true)}
+                                onSelect={() => { openExport('excel', true); }}
                             >
                                 <DocumentIcon className="w-4 h-4" />
                                 {t('exportAllAsExcel')}
@@ -1369,14 +1312,14 @@ export const StorageUnitTable: FC<TableProps> = ({
                                 <>
                                     <ContextMenuSeparator />
                                     <ContextMenuItem
-                                        onSelect={() => openExport('csv')}
+                                        onSelect={() => { openExport('csv'); }}
                                         disabled={checked.length === 0}
                                     >
                                         <DocumentIcon className="w-4 h-4" />
                                         {t('exportSelectedAsCsv')}
                                     </ContextMenuItem>
                                     <ContextMenuItem
-                                        onSelect={() => openExport('excel')}
+                                        onSelect={() => { openExport('excel'); }}
                                         disabled={checked.length === 0}
                                     >
                                         <DocumentIcon className="w-4 h-4" />
@@ -1389,7 +1332,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                 )}
                 {!limitContextMenu && isMockDataSupported && (
                     <ContextMenuItem
-                        onSelect={() => setShowMockDataSheet(true)}
+                        onSelect={() => { setShowMockDataSheet(true); }}
                     >
                         <DocumentDuplicateIcon className="w-4 h-4" />
                         {t('mockData')}
@@ -1399,9 +1342,9 @@ export const StorageUnitTable: FC<TableProps> = ({
                 {!limitContextMenu && canDeleteRows && (
                     <ContextMenuItem
                         variant="destructive"
-                        disabled={deleting}
-                        onSelect={async () => {
-                            await handleDeleteRow(index);
+                        disabled={false}
+                        onSelect={() => {
+                            handleDeleteRow(index);
                         }}
                         data-testid="context-menu-delete-row"
                     >
@@ -1412,7 +1355,29 @@ export const StorageUnitTable: FC<TableProps> = ({
                 )}
             </ContextMenuContent>
         </ContextMenu>
-    }, [checked, handleCellClick, handleEdit, handleSelectRow, handleDeleteRow, paginatedRows, disableEdit, limitContextMenu, onRefresh, t, contextMenuCellIdx, columns, columnIsForeignKey, columnIsPrimary, onEntitySearch, deleting, focusedRowIndex, isMockDataSupported, openExport, canEditRows, canDeleteRows, isExportSupported]);
+    }, [
+	checked,
+	handleCellClick,
+	handleEdit,
+	handleSelectRow,
+	handleDeleteRow,
+	paginatedRows,
+	disableEdit,
+	limitContextMenu,
+	onRefresh,
+	t,
+	contextMenuCellIdx,
+	columns,
+	columnIsForeignKey,
+	columnIsPrimary,
+	onEntitySearch,
+	focusedRowIndex,
+	isMockDataSupported,
+	openExport,
+	canEditRows,
+	canDeleteRows,
+	isExportSupported
+]);
 
     return (
         <div ref={tableRef} className="flex min-w-0 w-full">
@@ -1456,7 +1421,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                         </TableHead>
                                         {columns.map((col, idx) => (
                                             <TableHead
-                                                key={col + idx}
+                                                key={col}
                                                 icon={columnIsPrimary?.[idx] ? <KeyIcon className="w-4 h-4" aria-label="Primary key" /> : columnIsForeignKey?.[idx] ? <ShareIcon className="w-4 h-4" aria-label="Foreign key" /> : columnIcons?.[idx]}
                                                 className={cn(ph.mask, {
                                                     "cursor-pointer select-none": onColumnSort,
@@ -1472,7 +1437,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                                 onFocus={() => { focusedColumnRef.current = col; }}
                                                 data-testid={`column-header-${col}`}
                                                 data-column-name={col}
-                                                data-sort-direction={sortedColumns?.get(col) || undefined}
+                                                data-sort-direction={sortedColumns?.get(col) ?? undefined}
                                             >
                                                 <Tip>
                                                     <p className={cn("flex items-center gap-xs", {
@@ -1497,7 +1462,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                     collisionPadding={{ top: 16, right: 16, bottom: 16, left: 16 }}
                 >
                                     {!limitContextMenu && isMockDataSupported && (
-                                        <ContextMenuItem onSelect={() => setShowMockDataSheet(true)} data-testid="context-menu-mock-data">
+                                        <ContextMenuItem onSelect={() => { setShowMockDataSheet(true); }} data-testid="context-menu-mock-data">
                                             <CalculatorIcon className="w-4 h-4" />
                                             {t('mockData')}
                                             <ContextMenuShortcut>{formatShortcut(SHORTCUTS.mockData.displayKeys)}</ContextMenuShortcut>
@@ -1514,14 +1479,14 @@ export const StorageUnitTable: FC<TableProps> = ({
                                                 collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
                                             >
                                                 <ContextMenuItem
-                                                    onSelect={() => openExport('csv', true)}
+                                                    onSelect={() => { openExport('csv', true); }}
                                                 >
                                                     <DocumentIcon className="w-4 h-4" />
                                                     {t('exportAllAsCsv')}
                                                     <ContextMenuShortcut>{formatShortcut(SHORTCUTS.exportData.displayKeys)}</ContextMenuShortcut>
                                                 </ContextMenuItem>
                                                 <ContextMenuItem
-                                                    onSelect={() => openExport('excel', true)}
+                                                    onSelect={() => { openExport('excel', true); }}
                                                 >
                                                     <DocumentIcon className="w-4 h-4" />
                                                     {t('exportAllAsExcel')}
@@ -1530,14 +1495,14 @@ export const StorageUnitTable: FC<TableProps> = ({
                                                     <>
                                                         <ContextMenuSeparator />
                                                         <ContextMenuItem
-                                                            onSelect={() => openExport('csv')}
+                                                            onSelect={() => { openExport('csv'); }}
                                                             disabled={checked.length === 0}
                                                         >
                                                             <DocumentIcon className="w-4 h-4" />
                                                             {t('exportSelectedAsCsv')}
                                                         </ContextMenuItem>
                                                         <ContextMenuItem
-                                                            onSelect={() => openExport('excel')}
+                                                            onSelect={() => { openExport('excel'); }}
                                                             disabled={checked.length === 0}
                                                         >
                                                             <DocumentIcon className="w-4 h-4" />
@@ -1595,7 +1560,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                 className="w-52 max-h-[calc(100vh-2rem)] overflow-y-auto"
                 collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
             >
-                            <ContextMenuItem onSelect={() => setShowMockDataSheet(true)} className={cn({
+                            <ContextMenuItem onSelect={() => { setShowMockDataSheet(true); }} className={cn({
                                 "hidden": disableEdit || !isMockDataSupported,
                             })}>
                                 <CalculatorIcon className="w-4 h-4" />
@@ -1612,14 +1577,14 @@ export const StorageUnitTable: FC<TableProps> = ({
                                         collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
                                     >
                                         <ContextMenuItem
-                                            onSelect={() => openExport('csv', true)}
+                                            onSelect={() => { openExport('csv', true); }}
                                         >
                                             <DocumentIcon className="w-4 h-4" />
                                             {t('exportAllAsCsv')}
                                             <ContextMenuShortcut>{formatShortcut(SHORTCUTS.exportData.displayKeys)}</ContextMenuShortcut>
                                         </ContextMenuItem>
                                         <ContextMenuItem
-                                            onSelect={() => openExport('excel', true)}
+                                            onSelect={() => { openExport('excel', true); }}
                                         >
                                             <DocumentIcon className="w-4 h-4" />
                                             {t('exportAllAsExcel')}
@@ -1636,46 +1601,14 @@ export const StorageUnitTable: FC<TableProps> = ({
                     "mt-4": children != null,
                 })}>
                     {children}
-                    <Pagination
+                    <DataPagination
+                        totalPages={totalPages}
+                        currentPage={currentPage}
+                        onPageChange={handlePageChange}
                         className={cn("flex justify-end", {
                             "hidden": !showPagination,
                         })}
-                        aria-label={t('tablePagination')}
-                    >
-                        <PaginationContent>
-                            <PaginationItem>
-                                <PaginationPrevious
-                                    href="#"
-                                    onClick={e => {
-                                        e.preventDefault();
-                                        if (currentPage > 1) handlePageChange(currentPage - 1);
-                                    }}
-                                    aria-disabled={currentPage === 1}
-                                    aria-label={t('previousPage')}
-                                    size="sm"
-                                    className={cn({
-                                        "opacity-50 pointer-events-none": currentPage === 1,
-                                    })}
-                                />
-                            </PaginationItem>
-                            {renderPaginationLinks()}
-                            <PaginationItem>
-                                <PaginationNext
-                                    href="#"
-                                    onClick={e => {
-                                        e.preventDefault();
-                                        if (currentPage < totalPages) handlePageChange(currentPage + 1);
-                                    }}
-                                    aria-disabled={currentPage === totalPages}
-                                    aria-label={t('nextPage')}
-                                    size="sm"
-                                    className={cn({
-                                        "opacity-50 pointer-events-none": currentPage === totalPages,
-                                    })}
-                                />
-                            </PaginationItem>
-                        </PaginationContent>
-                    </Pagination>
+                    />
                 </div>
                 <div className="flex justify-end items-center mb-2 gap-4">
                     {totalCount != null && totalCount > 0 && (
@@ -1686,7 +1619,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                     {isImportSupported && allowImport && (
                         <Button
                             variant="secondary"
-                            onClick={() => setShowImport(true)}
+                            onClick={() => { setShowImport(true); }}
                             className="flex gap-sm"
                             data-testid="import-button"
                         >
@@ -1697,7 +1630,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                     {isExportSupported && (
                         <Button
                             variant="secondary"
-                            onClick={() => openExport()}
+                            onClick={() => { openExport(); }}
                             className="flex gap-sm"
                             data-testid="export-all-button"
                         >
@@ -1713,44 +1646,8 @@ export const StorageUnitTable: FC<TableProps> = ({
                         setEditRowInitialLengths([]);
                     }
                 }}>
-                    <SheetContent side="right" className="w-[400px] max-w-full p-8 flex flex-col" data-testid="edit-row-dialog">
-                        <SheetTitle>{t('editRow')}</SheetTitle>
-                        <div className="flex-1 overflow-y-auto mt-4">
-                            <div className="flex flex-col gap-lg pr-2">
-                                {editRow &&
-                                    columns.map((col, idx) => (
-                                        <div key={col} className={cn("flex flex-col gap-2", ph.noCapture)}>
-                                            <div className="flex flex-col gap-0.5">
-                                                <Label>{col}</Label>
-                                                {columnTypes?.[idx] && (
-                                                    <span className="text-xs text-muted-foreground">
-                                                        {t('typeHint', { type: columnTypes[idx] })}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            {
-                                                editRowInitialLengths[idx] < 50 ?
-                                                    <Input
-                                                        key={`input-${idx}`}
-                                                        value={editRow[idx] ?? ""}
-                                                        onChange={e => handleInputChange(e.target.value, idx)}
-                                                        data-testid={`editable-field-${idx}`}
-                                                        {...getInputPropsForColumnType(columnTypes?.[idx] || '')}
-                                                    />
-                                                    : <TextArea
-                                                        key={`textarea-${idx}`}
-                                                        value={editRow[idx] ?? ""}
-                                                        onChange={e => handleInputChange(e.target.value, idx)}
-                                                        rows={5}
-                                                        className="min-h-[100px]"
-                                                        data-testid={`editable-field-${idx}`}
-                                                    />
-                                            }
-                                        </div>
-                                    ))}
-                            </div>
-                        </div>
-                        <SheetFooter className="flex gap-sm px-0 mt-4">
+                    <SheetContent side="right" className="w-[400px] max-w-full p-8 flex flex-col" data-testid="edit-row-dialog" footer={
+                        <SheetFooter className="flex gap-sm px-0">
                             <Button
                                 className="flex-1"
                                 variant="secondary"
@@ -1767,6 +1664,41 @@ export const StorageUnitTable: FC<TableProps> = ({
                                 {t('update')}
                             </Button>
                         </SheetFooter>
+                    }>
+                        <SheetTitle>{t('editRow')}</SheetTitle>
+                        <div className="flex flex-col gap-lg mt-4">
+                                {editRow &&
+                                    columns.map((col, idx) => (
+                                        <div key={col} className={cn("flex flex-col gap-2", ph.noCapture)}>
+                                            <div className="flex flex-col gap-0.5">
+                                                <Label>{col}</Label>
+                                                {columnTypes?.[idx] && (
+                                                    <span className="text-xs text-muted-foreground">
+                                                        {t('typeHint', { type: columnTypes[idx] })}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            {
+                                                editRowInitialLengths[idx] < 50 ?
+                                                    <Input
+                                                        key={`input-${col}`}
+                                                        value={editRow[idx] ?? ""}
+                                                        onChange={e => { handleInputChange(e.target.value, idx); }}
+                                                        data-testid={`editable-field-${idx}`}
+                                                        {...getInputPropsForColumnType(columnTypes?.[idx] ?? '')}
+                                                    />
+                                                    : <TextArea
+                                                        key={`textarea-${col}`}
+                                                        value={editRow[idx] ?? ""}
+                                                        onChange={e => { handleInputChange(e.target.value, idx); }}
+                                                        rows={5}
+                                                        className="min-h-[100px]"
+                                                        data-testid={`editable-field-${idx}`}
+                                                    />
+                                            }
+                                        </div>
+                                    ))}
+                        </div>
                     </SheetContent>
                 </Sheet>
             </div>
@@ -1776,15 +1708,41 @@ export const StorageUnitTable: FC<TableProps> = ({
                         setShowMockDataConfirmation(false);
                     }
                 }}>
-                <SheetContent side="right" className="p-8" data-testid="mock-data-sheet">
-                    <div className="flex flex-col gap-lg h-full">
+                <SheetContent side="right" className="p-8" data-testid="mock-data-sheet" footer={
+                    <SheetFooter className="flex gap-sm px-0">
+                        <Alert variant={supportsMockDataRelations ? "info" : "default"} className="mb-4">
+                            <AlertTitle>{t('mockDataNote')}</AlertTitle>
+                            <AlertDescription>
+                                {supportsMockDataRelations ? t('mockDataWarning') : t('mockDataWarningClickHouse')}
+                            </AlertDescription>
+                        </Alert>
+                        <Button
+                            className="flex-1"
+                            variant="secondary"
+                            onClick={() => { setShowMockDataSheet(false); }}
+                            data-testid="cancel-mock-data"
+                        >
+                            {t('cancel')}
+                        </Button>
+                        {!showMockDataConfirmation ? (
+                            <Button className="flex-1" onClick={() => { void handleMockDataGenerate(); }} disabled={generatingMockData || !mockDataRowCount || parseInt(mockDataRowCount) < 1} data-testid="mock-data-generate-button">
+                                {t('generate')}
+                            </Button>
+                        ) : (
+                            <Button className="flex-1" onClick={() => { void handleMockDataGenerate(); }} disabled={generatingMockData || !mockDataRowCount || parseInt(mockDataRowCount) < 1} variant="destructive" data-testid="mock-data-overwrite-button">
+                                {t('yesOverwrite')}
+                            </Button>
+                        )}
+                    </SheetFooter>
+                }>
+                    <div className="flex flex-col gap-lg">
                         <SheetTitle className="flex items-center gap-2"><CalculatorIcon className="w-4 h-4" /> {t('mockData')}</SheetTitle>
                         {!showMockDataConfirmation ? (
                             <div className="space-y-4">
                                 <Label>{t('numberOfRows', { max: maxRowCount })}</Label>
                                 <Input
                                     value={mockDataRowCount}
-                                    onChange={e => handleMockDataRowCountChange(e.target.value)}
+                                    onChange={e => {handleMockDataRowCountChange(e.target.value); }}
                                     type="text"
                                     inputMode="numeric"
                                     pattern="[0-9]*"
@@ -1886,31 +1844,6 @@ export const StorageUnitTable: FC<TableProps> = ({
                             </div>
                         )}
                     </div>
-                    <SheetFooter className="flex gap-sm px-0">
-                        <Alert variant={supportsMockDataRelations ? "info" : "default"} className="mb-4">
-                            <AlertTitle>{t('mockDataNote')}</AlertTitle>
-                            <AlertDescription>
-                                {supportsMockDataRelations ? t('mockDataWarning') : t('mockDataWarningClickHouse')}
-                            </AlertDescription>
-                        </Alert>
-                        <Button
-                            className="flex-1"
-                            variant="secondary"
-                            onClick={() => setShowMockDataSheet(false)}
-                            data-testid="cancel-mock-data"
-                        >
-                            {t('cancel')}
-                        </Button>
-                        {!showMockDataConfirmation ? (
-                            <Button className="flex-1" onClick={handleMockDataGenerate} disabled={generatingMockData || !mockDataRowCount || parseInt(mockDataRowCount) < 1} data-testid="mock-data-generate-button">
-                                {t('generate')}
-                            </Button>
-                        ) : (
-                            <Button className="flex-1" onClick={handleMockDataGenerate} disabled={generatingMockData || !mockDataRowCount || parseInt(mockDataRowCount) < 1} variant="destructive" data-testid="mock-data-overwrite-button">
-                                {t('yesOverwrite')}
-                            </Button>
-                        )}
-                    </SheetFooter>
                 </SheetContent>
             </Sheet>
             {isExportSupported && (
@@ -1918,7 +1851,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                     <DynamicExport
                         open={showExportConfirm}
                         onOpenChange={setShowExportConfirm}
-                        storageUnit={rawQuery ? 'query_export' : (storageUnit || '')}
+                        storageUnit={rawQuery ? 'query_export' : (storageUnit ?? '')}
                         objectRef={objectRef}
                         hasSelectedRows={hasSelectedRows}
                         selectedRowsData={selectedRowsData}
@@ -1950,7 +1883,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                     <AlertDialogFooter>
                         <AlertDialogCancel onClick={handleCancelDelete}>{t('cancel')}</AlertDialogCancel>
                         <AlertDialogAction asChild>
-                            <Button variant="destructive" onClick={handleConfirmDelete} data-testid="confirm-delete-row-button">
+                            <Button variant="destructive" onClick={() => { void handleConfirmDelete(); }} data-testid="confirm-delete-row-button">
                                 {t('deleteRow', { count: pendingDeleteIndexes?.length ?? 1 })}
                             </Button>
                         </AlertDialogAction>

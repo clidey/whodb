@@ -201,7 +201,8 @@ func ValidateMutationContract(spec TypeSpec) error {
 // disagree about the source's connection shape.
 func ValidateConnectionContract(spec TypeSpec) error {
 	seenFields := map[string]struct{}{}
-	for _, field := range spec.ConnectionFields {
+	for i := range spec.ConnectionFields {
+		field := &spec.ConnectionFields[i]
 		fieldKey := strings.TrimSpace(field.Key)
 		if fieldKey == "" {
 			return fmt.Errorf("%s connection field has an empty key", sourceLabel(spec))

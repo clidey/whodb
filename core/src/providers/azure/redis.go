@@ -49,7 +49,7 @@ func (p *Provider) discoverRedis(ctx context.Context) ([]providers.DiscoveredCon
 
 	for pager.More() {
 		if ctx.Err() != nil {
-			log.Warnf("Azure Redis: context cancelled, returning %d results so far", len(connections))
+			log.Warnf("Azure Redis: context canceled, returning %d results so far", len(connections))
 			return connections, ctx.Err()
 		}
 
@@ -79,8 +79,8 @@ func (p *Provider) redisCacheToConnection(cache *armredis.ResourceInfo) provider
 	resourceGroup := extractResourceGroup(derefStr(cache.ID))
 
 	metadata := map[string]string{
-		"location":      location,
-		"resourceGroup": resourceGroup,
+		azureMetaLocation:      location,
+		azureMetaResourceGroup: resourceGroup,
 	}
 
 	var status providers.ConnectionStatus
@@ -161,9 +161,7 @@ func (w *redisRGPagerWrapper) NextPage(ctx context.Context) (armredis.ClientList
 	if err != nil {
 		return armredis.ClientListBySubscriptionResponse{}, err
 	}
-	return armredis.ClientListBySubscriptionResponse{
-		ListResult: resp.ListResult,
-	}, nil
+	return armredis.ClientListBySubscriptionResponse(resp), nil
 }
 
 func toRedisListPager(pager interface {

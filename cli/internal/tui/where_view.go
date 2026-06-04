@@ -412,7 +412,7 @@ func (v *WhereView) View() string {
 		b.WriteString(styles.RenderKey("Add New Condition" + targetLabel + ":"))
 		b.WriteString("\n\n")
 
-		fieldLabel := "Field:"
+		var fieldLabel string
 		if v.focusIndex == 0 {
 			fieldLabel = styles.RenderKey("▶ Field:")
 		} else {
@@ -434,7 +434,7 @@ func (v *WhereView) View() string {
 		}
 		b.WriteString("\n\n")
 
-		opLabel := "Operator:"
+		var opLabel string
 		if v.focusIndex == 1 {
 			opLabel = styles.RenderKey("▶ Operator:")
 		} else {
@@ -453,7 +453,7 @@ func (v *WhereView) View() string {
 		}
 		b.WriteString("\n\n")
 
-		valueLabel := "Value:"
+		var valueLabel string
 		if v.focusIndex == 2 {
 			valueLabel = styles.RenderKey("▶ Value:")
 		} else {

@@ -17,9 +17,10 @@
 package mysql
 
 import (
-	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+
+	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
 )
 
 // MySQLSQLBuilder extends the base SQLBuilder with MySQL-specific behavior
@@ -32,7 +33,7 @@ func NewMySQLSQLBuilder(db *gorm.DB, plugin gorm_plugin.GormPluginFunctions) gor
 	msb := &MySQLSQLBuilder{
 		SQLBuilder: gorm_plugin.NewSQLBuilder(db, plugin),
 	}
-	msb.SQLBuilder.SetSelf(msb) // Set self reference to enable polymorphic calls
+	msb.SetSelf(msb) // Set self reference to enable polymorphic calls
 	return msb
 }
 

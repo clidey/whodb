@@ -28,6 +28,10 @@ import (
 )
 
 const (
+	anthrpProviderType = "anthropic"
+)
+
+const (
 	Anthropic_LLMType LLMType = "Anthropic"
 )
 
@@ -44,8 +48,8 @@ func (p *AnthropicProvider) GetType() LLMType {
 	return Anthropic_LLMType
 }
 
-// GetProtocol returns "anthropic" — the streaming protocol family.
-func (p *AnthropicProvider) GetProtocol() string { return "anthropic" }
+// GetProtocol returns anthrpProviderType — the streaming protocol family.
+func (p *AnthropicProvider) GetProtocol() string { return anthrpProviderType }
 
 // GetDefaultEndpoint returns the default Anthropic API endpoint.
 func (p *AnthropicProvider) GetDefaultEndpoint() string {
@@ -69,7 +73,7 @@ func (p *AnthropicProvider) GetSupportedModels(config *ProviderConfig) ([]string
 		return nil, err
 	}
 
-	url := fmt.Sprintf("%s/models", config.Endpoint)
+	url := config.Endpoint + "/models"
 	headers := map[string]string{
 		"x-api-key":         config.APIKey,
 		"anthropic-version": "2023-06-01",
@@ -81,7 +85,7 @@ func (p *AnthropicProvider) GetSupportedModels(config *ProviderConfig) ([]string
 		log.WithError(err).Errorf("Failed to fetch models from Anthropic at %s", url)
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
@@ -118,5 +122,5 @@ func (p *AnthropicProvider) CreateBAMLClient(config *ProviderConfig, model strin
 	if config.Endpoint != "" && config.Endpoint != p.GetDefaultEndpoint() {
 		opts["base_url"] = config.Endpoint
 	}
-	return "anthropic", opts, nil
+	return anthrpProviderType, opts, nil
 }

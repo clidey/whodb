@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { WhereCondition } from '@graphql';
+import type { PayloadAction } from '@reduxjs/toolkit';
+import { createSlice } from '@reduxjs/toolkit';
+import type { WhereCondition } from '@graphql';
 import { v4 as uuidv4 } from 'uuid';
 
 export type ScratchpadPage = {
@@ -74,12 +75,12 @@ export const scratchpadSlice = createSlice({
       const cellId = uuidv4();
       const newPage: ScratchpadPage = {
         id: newId,
-        name: action.payload.name || `Page ${state.pages.length + 1}`,
+        name: action.payload.name ?? `Page ${state.pages.length + 1}`,
         cellIds: [cellId]
       };
       const newCell: ScratchpadCell = {
         id: cellId,
-        code: action.payload.initialQuery || "",
+        code: action.payload.initialQuery ?? "",
         mode: "Query",
         history: []
       };
@@ -123,7 +124,7 @@ export const scratchpadSlice = createSlice({
       const newCellId = uuidv4();
       const newCell: ScratchpadCell = {
         id: newCellId,
-        code: action.payload.initialQuery || "",
+        code: action.payload.initialQuery ?? "",
         mode: "Query",
         history: []
       };
@@ -240,7 +241,7 @@ export const scratchpadSlice = createSlice({
       const newCellId = uuidv4();
       const newCell: ScratchpadCell = {
         id: newCellId,
-        code: action.payload.initialQuery || "",
+        code: action.payload.initialQuery ?? "",
         mode: "Query",
         history: []
       };

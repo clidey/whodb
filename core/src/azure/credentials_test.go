@@ -17,6 +17,7 @@
 package azure
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/clidey/whodb/core/src/engine"
@@ -82,7 +83,7 @@ func TestParseFromWhoDB_MissingSubscriptionID(t *testing.T) {
 	}
 
 	_, err := ParseFromWhoDB(creds)
-	if err != ErrSubscriptionRequired {
+	if !errors.Is(err, ErrSubscriptionRequired) {
 		t.Errorf("expected ErrSubscriptionRequired, got %v", err)
 	}
 }
@@ -98,7 +99,7 @@ func TestParseFromWhoDB_ServicePrincipalMissingTenantID(t *testing.T) {
 	}
 
 	_, err := ParseFromWhoDB(creds)
-	if err != ErrTenantIDRequired {
+	if !errors.Is(err, ErrTenantIDRequired) {
 		t.Errorf("expected ErrTenantIDRequired, got %v", err)
 	}
 }
@@ -114,7 +115,7 @@ func TestParseFromWhoDB_ServicePrincipalMissingClientID(t *testing.T) {
 	}
 
 	_, err := ParseFromWhoDB(creds)
-	if err != ErrClientIDRequired {
+	if !errors.Is(err, ErrClientIDRequired) {
 		t.Errorf("expected ErrClientIDRequired, got %v", err)
 	}
 }
@@ -130,7 +131,7 @@ func TestParseFromWhoDB_ServicePrincipalMissingClientSecret(t *testing.T) {
 	}
 
 	_, err := ParseFromWhoDB(creds)
-	if err != ErrClientSecretRequired {
+	if !errors.Is(err, ErrClientSecretRequired) {
 		t.Errorf("expected ErrClientSecretRequired, got %v", err)
 	}
 }
@@ -144,7 +145,7 @@ func TestParseFromWhoDB_InvalidAuthMethod(t *testing.T) {
 	}
 
 	_, err := ParseFromWhoDB(creds)
-	if err != ErrInvalidAuthMethod {
+	if !errors.Is(err, ErrInvalidAuthMethod) {
 		t.Errorf("expected ErrInvalidAuthMethod, got %v", err)
 	}
 }
@@ -267,7 +268,7 @@ func TestValidate_EmptySubscription(t *testing.T) {
 		AuthMethod: AuthMethodDefault,
 	}
 
-	if err := config.Validate(); err != ErrSubscriptionRequired {
+	if err := config.Validate(); !errors.Is(err, ErrSubscriptionRequired) {
 		t.Errorf("expected ErrSubscriptionRequired, got %v", err)
 	}
 }

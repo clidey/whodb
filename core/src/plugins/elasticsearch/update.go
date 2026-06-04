@@ -70,7 +70,7 @@ func (p *ElasticSearchPlugin) UpdateStorageUnit(config *engine.PluginConfig, dat
 
 	idStr, ok := id.(string)
 	if !ok || strings.TrimSpace(idStr) == "" {
-		return false, fmt.Errorf("invalid '_id' field; expected non-empty string")
+		return false, errors.New("invalid '_id' field; expected non-empty string")
 	}
 
 	var buf bytes.Buffer
@@ -97,7 +97,7 @@ func (p *ElasticSearchPlugin) UpdateStorageUnit(config *engine.PluginConfig, dat
 		log.WithError(err).WithField("storageUnit", storageUnit).WithField("documentId", idStr).Error("Failed to execute ElasticSearch update operation")
 		return false, fmt.Errorf("failed to execute update: %w", err)
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if res.IsError() {
 		err := fmt.Errorf("error updating document: %s", formatElasticError(res))

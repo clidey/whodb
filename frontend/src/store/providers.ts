@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
-import { PayloadAction, createSlice } from '@reduxjs/toolkit';
-import {
+import type { PayloadAction} from '@reduxjs/toolkit';
+import { createSlice } from '@reduxjs/toolkit';
+import type {
   AwsProvider,
   AzureProvider,
   GcpProvider,
-  CloudProviderStatus,
   CloudProviderType,
-  GetDiscoveredConnectionsQuery,
+  GetDiscoveredConnectionsQuery} from '@graphql';
+import {
+  CloudProviderStatus
 } from '@graphql';
 
 /**

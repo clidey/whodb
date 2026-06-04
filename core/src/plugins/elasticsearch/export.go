@@ -51,7 +51,7 @@ func (p *ElasticSearchPlugin) ExportData(config *engine.PluginConfig, schema str
 			headers[i] = common.FormatCSVHeader(field, "JSON")
 		}
 		if err := writer(headers); err != nil {
-			return fmt.Errorf("failed to write headers: %v", err)
+			return fmt.Errorf("failed to write headers: %w", err)
 		}
 
 		// Write rows
@@ -65,7 +65,7 @@ func (p *ElasticSearchPlugin) ExportData(config *engine.PluginConfig, schema str
 				}
 			}
 			if err := writer(rowData); err != nil {
-				return fmt.Errorf("failed to write row: %v", err)
+				return fmt.Errorf("failed to write row: %w", err)
 			}
 		}
 		return nil
@@ -82,14 +82,14 @@ func (p *ElasticSearchPlugin) ExportData(config *engine.PluginConfig, schema str
 	)
 	if err != nil {
 		log.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to get ElasticSearch index mapping for export")
-		return fmt.Errorf("failed to get index mapping: %v", err)
+		return fmt.Errorf("failed to get index mapping: %w", err)
 	}
-	defer mapping.Body.Close()
+	defer func() { _ = mapping.Body.Close() }()
 
 	var mappingResponse map[string]any
 	if err := json.NewDecoder(mapping.Body).Decode(&mappingResponse); err != nil {
 		log.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to decode ElasticSearch mapping response for export")
-		return fmt.Errorf("failed to decode mapping: %v", err)
+		return fmt.Errorf("failed to decode mapping: %w", err)
 	}
 
 	// Extract field names from mapping
@@ -102,7 +102,7 @@ func (p *ElasticSearchPlugin) ExportData(config *engine.PluginConfig, schema str
 	}
 	if err := writer(headers); err != nil {
 		log.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to write CSV headers during ElasticSearch export")
-		return fmt.Errorf("failed to write headers: %v", err)
+		return fmt.Errorf("failed to write headers: %w", err)
 	}
 
 	// Scroll through all documents
@@ -114,16 +114,16 @@ func (p *ElasticSearchPlugin) ExportData(config *engine.PluginConfig, schema str
 	)
 	if err != nil {
 		log.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to execute ElasticSearch scroll search for export")
-		return fmt.Errorf("failed to search index: %v", err)
+		return fmt.Errorf("failed to search index: %w", err)
 	}
 
 	var searchResult map[string]any
 	if err := json.NewDecoder(res.Body).Decode(&searchResult); err != nil {
-		res.Body.Close()
+		_ = res.Body.Close()
 		log.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to decode ElasticSearch search result during export")
-		return fmt.Errorf("failed to decode search result: %v", err)
+		return fmt.Errorf("failed to decode search result: %w", err)
 	}
-	res.Body.Close()
+	_ = res.Body.Close()
 
 	scrollID, _ := searchResult["_scroll_id"].(string)
 	rowCount := 0
@@ -147,7 +147,7 @@ func (p *ElasticSearchPlugin) ExportData(config *engine.PluginConfig, schema str
 			}
 			if err := writer(row); err != nil {
 				log.WithError(err).WithField("storageUnit", storageUnit).WithField("rowCount", rowCount).Error("Failed to write row during ElasticSearch export")
-				return fmt.Errorf("failed to write row: %v", err)
+				return fmt.Errorf("failed to write row: %w", err)
 			}
 
 			rowCount++
@@ -163,17 +163,17 @@ func (p *ElasticSearchPlugin) ExportData(config *engine.PluginConfig, schema str
 			db.Scroll.WithScroll(5*60*1000),
 		)
 		if err != nil {
-			log.WithError(err).WithField("storageUnit", storageUnit).Error("Error during ElasticSearch scroll operation, breaking export loop")
-			break
+			log.WithError(err).WithField("storageUnit", storageUnit).Error("Error during ElasticSearch scroll operation")
+			return fmt.Errorf("scroll failed: %w", err)
 		}
 
 		searchResult = make(map[string]any)
 		if err := json.NewDecoder(res.Body).Decode(&searchResult); err != nil {
-			res.Body.Close()
-			log.WithError(err).WithField("storageUnit", storageUnit).Error("Error decoding ElasticSearch scroll response, breaking export loop")
-			break
+			_ = res.Body.Close()
+			log.WithError(err).WithField("storageUnit", storageUnit).Error("Error decoding ElasticSearch scroll response")
+			return fmt.Errorf("failed to decode scroll response: %w", err)
 		}
-		res.Body.Close()
+		_ = res.Body.Close()
 
 		if nextScrollID, ok := searchResult["_scroll_id"].(string); ok && nextScrollID != "" {
 			scrollID = nextScrollID
@@ -210,15 +210,15 @@ func (p *ElasticSearchPlugin) ExportDataNDJSON(config *engine.PluginConfig, sche
 		db.Search.WithSize(1000),
 	)
 	if err != nil {
-		return fmt.Errorf("failed to search index: %v", err)
+		return fmt.Errorf("failed to search index: %w", err)
 	}
 
 	var searchResult map[string]any
 	if err := json.NewDecoder(res.Body).Decode(&searchResult); err != nil {
-		res.Body.Close()
-		return fmt.Errorf("failed to decode search result: %v", err)
+		_ = res.Body.Close()
+		return fmt.Errorf("failed to decode search result: %w", err)
 	}
-	res.Body.Close()
+	_ = res.Body.Close()
 
 	scrollID, _ := searchResult["_scroll_id"].(string)
 
@@ -248,15 +248,15 @@ func (p *ElasticSearchPlugin) ExportDataNDJSON(config *engine.PluginConfig, sche
 			db.Scroll.WithScroll(5*60*1000),
 		)
 		if err != nil {
-			break
+			return fmt.Errorf("scroll failed: %w", err)
 		}
 
 		searchResult = make(map[string]any)
 		if err := json.NewDecoder(res.Body).Decode(&searchResult); err != nil {
-			res.Body.Close()
-			break
+			_ = res.Body.Close()
+			return fmt.Errorf("failed to decode scroll response: %w", err)
 		}
-		res.Body.Close()
+		_ = res.Body.Close()
 
 		if nextScrollID, ok := searchResult["_scroll_id"].(string); ok && nextScrollID != "" {
 			scrollID = nextScrollID

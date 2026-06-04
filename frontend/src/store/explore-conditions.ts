@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import {createSlice, PayloadAction} from '@reduxjs/toolkit';
-import {SortCondition, WhereCondition} from '@graphql';
+import type { PayloadAction} from '@reduxjs/toolkit';
+import {createSlice} from '@reduxjs/toolkit';
+import type {SortCondition, WhereCondition} from '@graphql';
 
 type ExploreConditionEntry = {
     whereCondition?: WhereCondition;

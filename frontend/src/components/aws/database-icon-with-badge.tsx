@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { FC, ReactElement, ReactNode } from "react";
+import type { FC, ReactElement} from "react";
 import { cn, Tooltip, TooltipContent, TooltipTrigger } from "@clidey/ux";
 import { CloudIcon, ShieldCheckIcon } from "../heroicons";
 import { useTranslation } from "@/hooks/use-translation";

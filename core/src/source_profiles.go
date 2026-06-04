@@ -29,7 +29,8 @@ import (
 func GetSourceProfiles() []source.Profile {
 	loginProfiles := GetLoginProfiles()
 	profiles := make([]source.Profile, 0, len(loginProfiles))
-	for i, profile := range loginProfiles {
+	for i := range loginProfiles {
+		profile := loginProfiles[i]
 		id := GetLoginProfileId(i, profile)
 		displayName := id
 		if profile.Alias != "" {
@@ -60,7 +61,8 @@ func GetSourceProfiles() []source.Profile {
 // FindSourceProfile resolves a source profile and its full credentials by id.
 func FindSourceProfile(id string) (*source.Profile, *source.Credentials, bool) {
 	loginProfiles := GetLoginProfiles()
-	for i, profile := range loginProfiles {
+	for i := range loginProfiles {
+		profile := loginProfiles[i]
 		profileID := GetLoginProfileId(i, profile)
 		if profile.CustomId != "" {
 			profileID = profile.CustomId

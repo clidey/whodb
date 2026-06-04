@@ -21,6 +21,7 @@ const (
 	PartitionStandard = "aws"
 	PartitionGovCloud = "aws-us-gov"
 	PartitionChina    = "aws-cn"
+	usWest2           = "us-west-2"
 )
 
 // Region represents an AWS region with its partition.
@@ -38,7 +39,7 @@ func GetRegions() []Region {
 		{ID: "us-east-1", Description: "US East (N. Virginia)", Partition: PartitionStandard},
 		{ID: "us-east-2", Description: "US East (Ohio)", Partition: PartitionStandard},
 		{ID: "us-west-1", Description: "US West (N. California)", Partition: PartitionStandard},
-		{ID: "us-west-2", Description: "US West (Oregon)", Partition: PartitionStandard},
+		{ID: usWest2, Description: "US West (Oregon)", Partition: PartitionStandard},
 
 		// Canada
 		{ID: "ca-central-1", Description: "Canada (Central)", Partition: PartitionStandard},

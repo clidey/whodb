@@ -23,11 +23,11 @@ import {
   Sheet,
   SheetContent,
   SheetTitle,
-  SheetTrigger,
   Spinner,
 } from "@clidey/ux";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import {cloneElement, FC, ReactElement, ReactNode, useEffect, useRef, useState,} from "react";
+import type { FC, ReactElement, ReactNode} from "react";
+import {cloneElement, useEffect, useState,} from "react";
 import {useTranslation} from "@/hooks/use-translation";
 
 
@@ -56,7 +56,7 @@ export const Card: FC<ICardProps> = ({
       const timeout = setTimeout(() => {
         setHighlightStatus(false);
       }, 3000);
-      return () => clearTimeout(timeout);
+      return () =>{  clearTimeout(timeout); };
     }
   }, [highlight]);
 
@@ -73,7 +73,7 @@ export const Card: FC<ICardProps> = ({
           <Spinner/>
       ) : (
         <>
-          {(propsIcon || tag) && (
+          {(propsIcon ?? tag) && (
             <CardHeader className="flex flex-row justify-between items-start px-4">
               {propsIcon && <div className="h-[40px] w-[40px] rounded-lg flex justify-center items-center bg-icon border border-icon-foreground">
                 {cloneElement(propsIcon, {
@@ -100,7 +100,6 @@ type IExpandableCardProps = {
 export const ExpandableCard: FC<IExpandableCardProps> = (props) => {
   const { t } = useTranslation('components/card');
   const [expand, setExpand] = useState(props.isExpanded ?? false);
-  const triggerRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     setExpand(props.isExpanded ?? false);
@@ -114,29 +113,27 @@ export const ExpandableCard: FC<IExpandableCardProps> = (props) => {
 
   // The collapsed card is always visible; clicking it opens the sheet
   return (
-    <>
-      <Sheet open={expand} onOpenChange={handleOpenChange}>
-        <div onClick={() => handleOpenChange(true)}>
-          <Card
-            {...props}
-            tag={props.collapsedTag}
-            className={cn(
-              "min-h-[200px] w-[240px] cursor-pointer",
-              props.className,
-            )}
-            loading={props.loading}>
-            {props.loading ? null : props.children[0]}
-          </Card>
+    <Sheet open={expand} onOpenChange={handleOpenChange}>
+      <div onClick={() =>{  handleOpenChange(true); }}>
+        <Card
+          {...props}
+          tag={props.collapsedTag}
+          className={cn(
+            "min-h-[200px] w-[240px] cursor-pointer",
+            props.className,
+          )}
+          loading={props.loading}>
+          {props.loading ? null : props.children[0]}
+        </Card>
+      </div>
+      <SheetContent side="right" className="p-0">
+        <VisuallyHidden>
+          <SheetTitle>{t('details')}</SheetTitle>
+        </VisuallyHidden>
+        <div className="flex flex-col w-full justify-center p-8 h-full">
+          {props.loading ? null : props.children[1]}
         </div>
-        <SheetContent side="right" className="p-0">
-          <VisuallyHidden>
-            <SheetTitle>{t('details')}</SheetTitle>
-          </VisuallyHidden>
-          <div className="flex flex-col w-full justify-center p-8 h-full">
-            {props.loading ? null : props.children[1]}
-          </div>
-        </SheetContent>
-      </Sheet>
-    </>
+      </SheetContent>
+    </Sheet>
   );
 };

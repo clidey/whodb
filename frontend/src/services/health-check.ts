@@ -71,7 +71,7 @@ class HealthCheckService {
             }
 
             // Check if data exists
-            if (!result.data || !result.data.Health) {
+            if (!result.data?.Health) {
                 return null;
             }
 
@@ -81,7 +81,7 @@ class HealthCheckService {
                 server: (health.Server?.toLowerCase() || 'unavailable') as 'healthy' | 'error' | 'unavailable',
                 database: (health.Database?.toLowerCase() || 'unavailable') as 'healthy' | 'error' | 'unavailable',
             };
-        } catch (error) {
+        } catch {
             // Network error or server unreachable
             return null;
         }

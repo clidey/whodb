@@ -15,10 +15,12 @@
  */
 
 import { useMutation, useQuery } from "@apollo/client/react";
-import { FC, useCallback, useEffect, useMemo } from "react";
+import type { FC} from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { Badge, Button, cn, toast } from "@clidey/ux";
+import type {
+    AwsProvider} from "@graphql";
 import {
-    AwsProvider,
     CloudProviderStatus,
     CloudProviderType,
     GetCloudProvidersDocument,
@@ -27,7 +29,8 @@ import {
     RemoveCloudProviderDocument,
 } from "@graphql";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { ProvidersActions, LocalCloudProvider } from "../../store/providers";
+import type { LocalCloudProvider } from "../../store/providers";
+import { ProvidersActions } from "../../store/providers";
 import { useTranslation } from "@/hooks/use-translation";
 import { AwsProviderModal } from "./aws-provider-modal";
 import { Tip } from "../tip";
@@ -146,7 +149,7 @@ export const AwsProvidersSection: FC = () => {
     }, [dispatch]);
 
     const handleRefetchProviders = useCallback(() => {
-        refetch();
+        void refetch();
     }, [refetch]);
 
     const isLoading = loading || refreshLoading || removeLoading;
@@ -243,7 +246,7 @@ export const AwsProvidersSection: FC = () => {
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        onClick={() => handleRefreshProvider(provider.Id)}
+                                        onClick={() => { void handleRefreshProvider(provider.Id); }}
                                         disabled={isLoading || provider.Status === CloudProviderStatus.Discovering}
                                         aria-label={t('refreshResources')}
                                         data-testid={`refresh-${provider.Id}`}
@@ -258,7 +261,7 @@ export const AwsProvidersSection: FC = () => {
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        onClick={() => handleEditProvider(provider.Id)}
+                                        onClick={() => { handleEditProvider(provider.Id); }}
                                         disabled={isLoading}
                                         aria-label={t('edit')}
                                         data-testid={`edit-${provider.Id}`}
@@ -271,7 +274,7 @@ export const AwsProvidersSection: FC = () => {
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        onClick={() => handleRemoveProvider(provider.Id, provider.Name)}
+                                        onClick={() => { void handleRemoveProvider(provider.Id, provider.Name); }}
                                         disabled={isLoading || provider.IsEnvironmentDefined}
                                         aria-label={provider.IsEnvironmentDefined ? t('cannotRemoveEnv') : t('remove')}
                                         data-testid={`remove-${provider.Id}`}

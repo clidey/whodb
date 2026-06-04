@@ -152,7 +152,7 @@ func (v *AuditView) View() string {
 		return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
 	}
 
-	if v.results == nil || len(v.results) == 0 {
+	if len(v.results) == 0 {
 		b.WriteString(styles.RenderMuted("No tables found."))
 		b.WriteString("\n\n")
 		b.WriteString(RenderBindingHelpWidth(v.width, Keys.Global.Back))

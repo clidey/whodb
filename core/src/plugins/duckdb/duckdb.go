@@ -19,10 +19,14 @@ package duckdb
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
 	"time"
+
+	duckdbDriver "github.com/duckdb/duckdb-go/v2"
+	"gorm.io/gorm"
 
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
@@ -31,8 +35,12 @@ import (
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
 	sourcecatalogspecs "github.com/clidey/whodb/core/src/sourcecatalog/specs"
-	duckdbDriver "github.com/duckdb/duckdb-go/v2"
-	"gorm.io/gorm"
+)
+
+const (
+	duckDBTypeBlob = "BLOB"
+	duckDBTypeUUID = "UUID"
+	duckDBBoolTrue = "true"
 )
 
 var supportedOperators = sourcecatalogspecs.DuckDBSupportedOperators
@@ -151,7 +159,7 @@ func (p *DuckDBPlugin) GetColumnCodec(columnType string) gorm_plugin.ColumnCodec
 
 			switch v := val.(type) {
 			case []byte:
-				if len(v) == 16 && strings.ToUpper(columnType) == "UUID" {
+				if len(v) == 16 && strings.ToUpper(columnType) == duckDBTypeUUID {
 					return fmt.Sprintf("%x-%x-%x-%x-%x", v[0:4], v[4:6], v[6:8], v[8:10], v[10:16]), nil
 				}
 				return "0x" + fmt.Sprintf("%X", v), nil
@@ -172,7 +180,7 @@ func (p *DuckDBPlugin) GetColumnCodec(columnType string) gorm_plugin.ColumnCodec
 			case map[string]any, []any:
 				b, err := json.Marshal(v)
 				if err != nil {
-					return fmt.Sprintf("%v", v), nil
+					return fmt.Sprintf("%v", v), nil //nolint:nilerr
 				}
 				return string(b), nil
 			default:
@@ -208,9 +216,9 @@ func (p *DuckDBPlugin) HandleCustomDataType(value string, columnType string, isN
 		return gorm.Expr(fmt.Sprintf("CAST('%s' AS INTERVAL)", escaped)), true, nil
 	case upper == "JSON":
 		return gorm.Expr(fmt.Sprintf("CAST('%s' AS JSON)", escaped)), true, nil
-	case upper == "UUID":
+	case upper == duckDBTypeUUID:
 		return gorm.Expr(fmt.Sprintf("CAST('%s' AS UUID)", escaped)), true, nil
-	case upper == "BLOB":
+	case upper == duckDBTypeBlob:
 		return gorm.Expr(fmt.Sprintf("'%s'::BLOB", escaped)), true, nil
 	case upper == "HUGEINT":
 		return gorm.Expr(fmt.Sprintf("CAST('%s' AS HUGEINT)", escaped)), true, nil
@@ -262,7 +270,7 @@ func (p *DuckDBPlugin) GetLastInsertID(db *gorm.DB) (int64, error) {
 // since DuckDB has no lastval() or last_insert_rowid() function.
 func (p *DuckDBPlugin) AddRowReturningID(config *engine.PluginConfig, schema string, storageUnit string, values []engine.Record) (int64, error) {
 	if storageUnit == "" {
-		return 0, fmt.Errorf("storage unit name cannot be empty")
+		return 0, errors.New("storage unit name cannot be empty")
 	}
 
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (int64, error) {
@@ -383,7 +391,7 @@ func formatInterval(v duckdbDriver.Interval) string {
 		hours := v.Micros / 3_600_000_000
 		remaining := v.Micros % 3_600_000_000
 		minutes := remaining / 60_000_000
-		remaining = remaining % 60_000_000
+		remaining %= 60_000_000
 		seconds := remaining / 1_000_000
 		if hours != 0 {
 			parts = append(parts, fmt.Sprintf("%d hour%s", hours, plural(hours)))

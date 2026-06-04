@@ -15,10 +15,12 @@
  */
 
 import { useMutation, useQuery } from "@apollo/client/react";
-import { FC, useCallback } from "react";
+import type { FC} from "react";
+import { useCallback } from "react";
 import { Badge, Button, cn, toast } from "@clidey/ux";
+import type {
+    AzureProvider} from "@graphql";
 import {
-    AzureProvider,
     CloudProviderStatus,
     CloudProviderType,
     GetAzureProvidersDocument,
@@ -138,7 +140,7 @@ export const AzureProvidersSection: FC = () => {
     }, [dispatch]);
 
     const handleRefetchProviders = useCallback(() => {
-        refetch();
+        void refetch();
     }, [refetch]);
 
     const isLoading = loading || refreshLoading || removeLoading;
@@ -234,7 +236,7 @@ export const AzureProvidersSection: FC = () => {
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        onClick={() => handleRefreshProvider(provider.Id)}
+                                        onClick={() => { void handleRefreshProvider(provider.Id); }}
                                         disabled={isLoading || provider.Status === CloudProviderStatus.Discovering}
                                         aria-label={t('refreshResources')}
                                         data-testid={`refresh-${provider.Id}`}
@@ -249,7 +251,7 @@ export const AzureProvidersSection: FC = () => {
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        onClick={() => handleEditProvider(provider.Id)}
+                                        onClick={() => { handleEditProvider(provider.Id); }}
                                         disabled={isLoading}
                                         aria-label={t('edit')}
                                         data-testid={`edit-${provider.Id}`}
@@ -262,7 +264,7 @@ export const AzureProvidersSection: FC = () => {
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        onClick={() => handleRemoveProvider(provider.Id, provider.Name)}
+                                        onClick={() => { void handleRemoveProvider(provider.Id, provider.Name); }}
                                         disabled={isLoading || provider.IsEnvironmentDefined}
                                         aria-label={provider.IsEnvironmentDefined ? t('cannotRemoveEnv') : t('remove')}
                                         data-testid={`remove-${provider.Id}`}

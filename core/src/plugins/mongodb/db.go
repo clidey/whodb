@@ -23,12 +23,13 @@ import (
 	"strings"
 	"time"
 
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
+
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/common/ssl"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
-	"go.mongodb.org/mongo-driver/v2/mongo"
-	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 // DefaultOperationTimeout is the default timeout for MongoDB operations.
@@ -43,7 +44,7 @@ func opCtx(config *engine.PluginConfig) (context.Context, context.CancelFunc) {
 func disconnectClient(client *mongo.Client) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	client.Disconnect(ctx)
+	_ = client.Disconnect(ctx)
 }
 
 func DB(config *engine.PluginConfig) (*mongo.Client, error) {
@@ -72,10 +73,10 @@ func DB(config *engine.PluginConfig) (*mongo.Client, error) {
 
 	if dnsEnabled {
 		connectionURI.WriteString("mongodb+srv://")
-		connectionURI.WriteString(fmt.Sprintf("%s/", config.Credentials.Hostname))
+		fmt.Fprintf(&connectionURI, "%s/", config.Credentials.Hostname)
 	} else {
 		connectionURI.WriteString("mongodb://")
-		connectionURI.WriteString(fmt.Sprintf("%s:%d/", config.Credentials.Hostname, port))
+		fmt.Fprintf(&connectionURI, "%s:%d/", config.Credentials.Hostname, port)
 	}
 
 	connectionURI.WriteString(config.Credentials.Database)

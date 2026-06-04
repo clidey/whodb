@@ -34,12 +34,13 @@ import {
     TabsTrigger,
     VirtualizedTableBody
 } from '@clidey/ux';
+import type {
+    GetColumnsBatchQuery,
+    GetGraphQuery,
+    GetStorageUnitsQuery} from '@graphql';
 import {
     DataShape,
     GetColumnsBatchDocument,
-    type GetColumnsBatchQuery,
-    GetGraphQuery,
-    GetStorageUnitsQuery,
     GetStorageUnitsDocument,
     SourceSchemaFidelity,
     SourceAction,
@@ -56,11 +57,12 @@ import {
     TableCellsIcon,
     XMarkIcon
 } from '../../components/heroicons';
-import {FC, useCallback, useEffect, useMemo, useState} from "react";
+import type {FC} from "react";
+import { useCallback, useEffect, useMemo, useState} from "react";
 import {useLocation, useNavigate, useSearchParams} from "react-router-dom";
 import {Handle, Position} from "reactflow";
 import {Card, ExpandableCard} from "../../components/card";
-import {IGraphCardProps} from "../../components/graph/graph";
+import type {IGraphCardProps} from "../../components/graph/graph";
 import {Loading, LoadingPage} from "../../components/loading";
 import {InternalPage} from "../../components/page";
 import {InternalRoutes} from "../../config/routes";
@@ -108,7 +110,7 @@ function nextBrowserState(
 }
 
 function sourceObjectRefKey(ref: SourceObjectRefLike): string {
-    return `${ref.Kind}:${ref.Locator ?? ""}:${ref.Path?.join("/") ?? ""}`;
+    return `${String(ref.Kind)}:${ref.Locator ?? ""}:${ref.Path?.join("/") ?? ""}`;
 }
 
 const StorageUnitCard: FC<{
@@ -119,8 +121,8 @@ const StorageUnitCard: FC<{
     const [expanded, setExpanded] = useState(false);
     const navigate = useNavigate();
     const { t } = useTranslation('pages/storage-unit');
-    const current = useAppSelector(state => state.auth.current);
-    const { item, schemaFidelity } = useSourceContract(current?.Type);
+    const currentType = useAppSelector(state => state.auth.current?.Type);
+    const { item, schemaFidelity } = useSourceContract(currentType);
     const [columns, setColumns] = useState<SourceColumn[] | undefined>(undefined);
     const [columnsLoading, setColumnsLoading] = useState(false);
     const [fetchColumnsBatch] = useLazyQuery(GetColumnsBatchDocument);
@@ -129,13 +131,13 @@ const StorageUnitCard: FC<{
 
     const handleNavigateToObject = useCallback(() => {
         if (canBrowse) {
-            navigate(InternalRoutes.Dashboard.StorageUnit.path, {
+            void navigate(InternalRoutes.Dashboard.StorageUnit.path, {
                 state: nextBrowserState(trail, unit),
             });
             return;
         }
 
-        navigate(InternalRoutes.Dashboard.ExploreStorageUnit.path, {
+        void navigate(InternalRoutes.Dashboard.ExploreStorageUnit.path, {
             state: {
                 unit,
                 parentRef: buildSourceParentObjectRef(item, unit.Ref),
@@ -208,7 +210,7 @@ const StorageUnitCard: FC<{
                     ))
                 }
             </div>
-            <div className="flex flex-row justify-end gap-xs" onClick={(e) => e.stopPropagation()}>
+            <div className="flex flex-row justify-end gap-xs" onClick={(e) => { e.stopPropagation(); }}>
                 <Button onClick={handleExpand} data-testid="explore-button" variant="secondary">
                     <MagnifyingGlassIcon className="w-4 h-4" /> {t('describe')}
                 </Button>
@@ -301,13 +303,16 @@ export const StorageUnitPage: FC = () => {
     const [error, setError] = useState<string>();
     let schema = useAppSelector(state => state.database.schema);
     const current = useAppSelector(state => state.auth.current);
+    const currentType = current?.Type;
+    const currentDatabase = current?.Database;
+    const currentProfileId = current?.Id;
     const {
         item,
         singularStorageUnitLabel,
         storageUnitLabel,
         supportsScratchpad,
         usesDatabaseInsteadOfSchema,
-    } = useSourceContract(current?.Type);
+    } = useSourceContract(currentType);
     const view = useAppSelector(state => state.settings.storageUnitView);
     const [expandedUnit, setExpandedUnit] = useState<string | null>(null);
     const [expandedUnitColumns, setExpandedUnitColumns] = useState<{ name: string; columns: SourceColumn[] } | null>(null);
@@ -323,17 +328,17 @@ export const StorageUnitPage: FC = () => {
 
     useEffect(() => {
         void trackFrontendEvent('ui.storage_unit_viewed', {
-            database_type: current?.Type ?? 'unknown',
+            database_type: currentType ?? 'unknown',
             view_mode: view,
         });
-    }, [current?.Type, trackFrontendEvent, view]);
+    }, [currentType, view]);
 
     // Databases like MySQL, MariaDB, ClickHouse, MongoDB use database name as schema parameter since they treat database=schema
     if (usesDatabaseInsteadOfSchema) {
-        schema = current?.Database ?? '';
+        schema = currentDatabase ?? '';
     }
 
-    const initialParentRef = useMemo(() => buildSourceParentRef(item, current, schema), [current, item, schema]);
+    const initialParentRef = useMemo(() => buildSourceParentRef(item, current, schema), [currentDatabase, item, schema]);
     const canCreateObjects = useMemo(() => {
         const parentKind = currentParent?.Kind ?? initialParentRef?.Kind;
         if (parentKind) {
@@ -371,11 +376,9 @@ export const StorageUnitPage: FC = () => {
         setStorageUnitColumnsByName(current => ({ ...current, [unitName]: columns }));
     }, []);
 
-    const currentProfileId = current?.Id;
-    const currentDatabase = current?.Database;
     useEffect(() => {
         if (currentProfileId) {
-            refetch();
+            void refetch();
         }
     }, [currentProfileId, currentDatabase, parentRefKey, refetch]);
 
@@ -464,10 +467,10 @@ export const StorageUnitPage: FC = () => {
         const next = !create;
         setCreate(next);
         void trackFrontendEvent('ui.storage_unit_create_toggle', {
-            database_type: current?.Type ?? 'unknown',
+            database_type: currentType ?? 'unknown',
             open: next,
         });
-    }, [create, current?.Type, trackFrontendEvent]);
+    }, [create, currentType]);
 
     const filterStorageUnits = useMemo(() => {
         const lowerCaseFilterValue = filterValue.toLowerCase();
@@ -482,13 +485,13 @@ export const StorageUnitPage: FC = () => {
 
     const handleOpenUnit = useCallback((unit: SourceBrowserObject) => {
         if (unit.Actions.includes(SourceAction.Browse) && unit.HasChildren) {
-            navigate(InternalRoutes.Dashboard.StorageUnit.path, {
+            void navigate(InternalRoutes.Dashboard.StorageUnit.path, {
                 state: nextBrowserState(trail, unit),
             });
             return;
         }
 
-        navigate(InternalRoutes.Dashboard.ExploreStorageUnit.path, {
+        void navigate(InternalRoutes.Dashboard.ExploreStorageUnit.path, {
             state: {
                 unit,
                 parentRef: buildSourceParentObjectRef(item, unit.Ref),
@@ -539,17 +542,17 @@ export const StorageUnitPage: FC = () => {
                     <Button
                         variant="secondary"
                         className="mr-2"
-                        onClick={() => navigate(InternalRoutes.Dashboard.StorageUnit.path, { state: previousBrowserState })}
+                        onClick={() => { void navigate(InternalRoutes.Dashboard.StorageUnit.path, { state: previousBrowserState }); }}
                     >
                         {tCommon('back')}
                     </Button>
                 )}
-                <SearchInput value={filterValue} onChange={e => setFilterValue(e.target.value)} placeholder={t('searchPlaceholder')} />
+                <SearchInput value={filterValue} onChange={(e) => { setFilterValue(e.target.value); }} placeholder={t('searchPlaceholder')} />
             </div>
             <div className="flex items-center gap-2">
                 {
                     supportsScratchpad &&
-                    <Button onClick={() => navigate(InternalRoutes.RawExecute.path)} data-testid="scratchpad-button" variant="secondary">
+                    <Button onClick={() => { void navigate(InternalRoutes.RawExecute.path); }} data-testid="scratchpad-button" variant="secondary">
                         <CommandLineIcon className="w-4 h-4" /> {t('scratchpad')}
                     </Button>
                 }
@@ -578,14 +581,14 @@ export const StorageUnitPage: FC = () => {
                     </Button>
                 </div>
                 <CreateSourceObjectCard
-                    databaseType={current?.Type}
+                    databaseType={currentType}
                     parentRef={parentRef}
                     referenceColumnsByName={referenceColumnsByName}
                     referenceObjects={referenceStorageUnits.map(unit => ({ name: unit.Name }))}
                     singularStorageUnitLabel={singularStorageUnitLabel}
-                    onCreated={refetch}
+                    onCreated={() => { void refetch(); }}
                     onErrorChange={setError}
-                    onClose={() => setCreate(false)}
+                    onClose={() => { setCreate(false); }}
                 />
             </ExpandableCard>}
             {
@@ -626,7 +629,7 @@ export const StorageUnitPage: FC = () => {
                                 <TableCell className="relative">
                                     <div className="flex gap-xs opacity-0 group-hover:opacity-100 transition-opacity">
                                         <Button
-                                            onClick={() => handleOpenUnit(unit)}
+                                            onClick={() => { handleOpenUnit(unit); }}
                                             data-testid="data-button"
                                             variant="secondary"
                                             size="sm"
@@ -685,7 +688,7 @@ export const StorageUnitPage: FC = () => {
                                                 {columns.map((col: any) => {
                                                     const isForeignKey = col.IsForeignKey;
                                                     return (
-                                                        <div key={col.Name} data-field-key={col.Name} data-field-value={col.Type?.toLowerCase()} data-is-foreign-key={isForeignKey || undefined}>
+                                                        <div key={col.Name} data-field-key={col.Name} data-field-value={col.Type?.toLowerCase()} data-is-foreign-key={isForeignKey ?? undefined}>
                                                             <StackListItem item={isForeignKey ?
                                                                 <Badge className="text-lg" data-testid="foreign-key-attribute">{col.Name}</Badge> : col.Name}>
                                                                 {col.Type?.toLowerCase()}
@@ -698,14 +701,14 @@ export const StorageUnitPage: FC = () => {
                                     )}
                                     <div className="flex gap-sm mt-4">
                                         <Button
-                                            onClick={() => handleOpenUnit(unit)}
+                                            onClick={() => { handleOpenUnit(unit); }}
                                             data-testid="data-button"
                                             variant="secondary"
                                         >
                                             <CircleStackIcon className="w-4 h-4" /> {t('data')}
                                         </Button>
                                         <Button
-                                            onClick={() => setExpandedUnit(null)}
+                                            onClick={() => { setExpandedUnit(null); }}
                                             variant="outline"
                                         >
                                             <XMarkIcon className="w-4 h-4" /> {t('close')}
@@ -734,7 +737,7 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnitGraphCardData>>
         if (data == null) {
             return;
         }
-        navigate(InternalRoutes.Dashboard.ExploreStorageUnit.path, {
+        void navigate(InternalRoutes.Dashboard.ExploreStorageUnit.path, {
             state: {
                 unit: data,
             }
@@ -743,9 +746,9 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnitGraphCardData>>
 
     // Attributes contains metadata (Type, Total Size, etc.)
     // Columns contains field definitions with FK/PK info for handles
-    const metadataItems = data?.Attributes || [];
-    const columnItems = data?.columns || [];
-    const columnsLoading = data?.columnsLoading || false;
+    const metadataItems = data?.Attributes ?? [];
+    const columnItems = data?.columns ?? [];
+    const columnsLoading = data?.columnsLoading ?? false;
 
     if (data == null) {
         return (<Card icon={<ArrowPathRoundedSquareIcon className="w-4 h-4" />}>
@@ -767,11 +770,11 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnitGraphCardData>>
                         <StackList>
                             {/* Show metadata first (Type, Total Size, etc.) */}
                             {
-                                metadataItems.map((item: any, index: number) => {
+                                metadataItems.map((item: any, _index: number) => {
                                     const name = item.Key;
                                     const value = item.Value?.toLowerCase();
                                     return (
-                                        <div key={`meta-${name}-${index}`} data-field-key={name} data-field-value={value}>
+                                        <div key={`meta-${name}`} data-field-key={name} data-field-value={value}>
                                             <StackListItem rowClassName="items-start" item={name}>
                                                 {value}
                                             </StackListItem>
@@ -788,14 +791,14 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnitGraphCardData>>
                             }
                             {/* Show columns with FK/PK handles */}
                             {
-                                !columnsLoading && columnItems.map((col: any, index: number) => {
+                                !columnsLoading && columnItems.map((col: any, _index: number) => {
                                     const name = col.Name;
                                     const value = col.Type?.toLowerCase();
-                                    const isFKColumn = col.IsForeignKey || false;
-                                    const isPKColumn = col.IsPrimary || false;
+                                    const isFKColumn = col.IsForeignKey ?? false;
+                                    const isPKColumn = col.IsPrimary ?? false;
 
                                     return (
-                                        <div key={`col-${name}-${index}`} className={cn("relative", ph.mask)} data-field-key={name} data-field-value={value} data-is-foreign-key={isFKColumn || undefined} data-is-primary-key={isPKColumn || undefined}>
+                                        <div key={`col-${name}`} className={cn("relative", ph.mask)} data-field-key={name} data-field-value={value} data-is-foreign-key={isFKColumn ?? undefined} data-is-primary-key={isPKColumn ?? undefined}>
                                             {isFKColumn && (
                                                 <Handle
                                                     type="source"

@@ -30,7 +30,7 @@ func (p *RedisPlugin) DeleteRow(config *engine.PluginConfig, schema string, stor
 		log.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to connect to Redis for row deletion")
 		return false, err
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	ctx := context.Background()
 
@@ -41,14 +41,14 @@ func (p *RedisPlugin) DeleteRow(config *engine.PluginConfig, schema string, stor
 	}
 
 	switch keyType {
-	case "string":
+	case redisTypeString:
 		// Deleting the entire string key
 		err := client.Del(ctx, storageUnit).Err()
 		if err != nil {
 			log.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to delete Redis string key")
 			return false, err
 		}
-	case "hash":
+	case redisTypeHash:
 		// Deleting a specific field from a hash
 		field, ok := values["field"]
 		if !ok {
@@ -61,7 +61,7 @@ func (p *RedisPlugin) DeleteRow(config *engine.PluginConfig, schema string, stor
 			log.WithError(err).WithField("storageUnit", storageUnit).WithField("field", field).Error("Failed to delete Redis hash field")
 			return false, err
 		}
-	case "list":
+	case redisTypeList:
 		// Removing an element from a list
 		indexStr, ok := values["index"]
 		if !ok {
@@ -76,7 +76,7 @@ func (p *RedisPlugin) DeleteRow(config *engine.PluginConfig, schema string, stor
 		}
 		value := client.LIndex(ctx, storageUnit, index).Val()
 		if err := client.LRem(ctx, storageUnit, 1, value).Err(); err != nil {
-			log.WithError(err).WithField("storageUnit", storageUnit).WithField("index", index).WithField("value", value).Error("Failed to remove Redis list item")
+			log.WithError(err).WithField("storageUnit", storageUnit).WithField("index", index).WithField(redisKeyValue, value).Error("Failed to remove Redis list item")
 			return false, errors.New("unable to remove the list item")
 		}
 	case "set":
@@ -92,7 +92,7 @@ func (p *RedisPlugin) DeleteRow(config *engine.PluginConfig, schema string, stor
 			log.WithError(err).WithField("storageUnit", storageUnit).WithField("member", member).Error("Failed to remove Redis set member")
 			return false, err
 		}
-	case "zset":
+	case redisTypeZSet:
 		// Removing a specific member from a sorted set
 		member, ok := values["member"]
 		if !ok {

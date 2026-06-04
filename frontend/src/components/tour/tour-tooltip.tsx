@@ -16,7 +16,8 @@
 
 import { Badge, Button, Card } from '@clidey/ux';
 import { motion } from 'framer-motion';
-import { FC, ReactElement, useEffect, useState } from 'react';
+import type { FC, ReactElement} from 'react';
+import { useEffect, useState } from 'react';
 import { CheckCircleIcon, ChevronRightIcon, XMarkIcon } from '../heroicons';
 import { useTranslation } from '../../hooks/use-translation';
 import { useAppSelector } from '../../store/hooks';
@@ -196,11 +197,11 @@ export const TourTooltip: FC<TourTooltipProps> = ({
                             {currentStep} / {totalSteps}
                         </Badge>
                         <div className="flex gap-1">
-                            {Array.from({ length: totalSteps }).map((_, i) => (
+                            {Array.from({ length: totalSteps }, (_, i) => i).map((step) => (
                                 <div
-                                    key={i}
+                                    key={`dot-${step}`}
                                     className={`h-1.5 rounded-full transition-all ${
-                                        i === currentStep - 1
+                                        step === currentStep - 1
                                             ? 'w-6 bg-brand'
                                             : 'w-1.5 bg-muted'
                                     }`}

@@ -16,7 +16,6 @@
 
 import {
     Button,
-    cn,
     Input,
     Label,
     Sheet,
@@ -25,8 +24,10 @@ import {
     SheetTitle
 } from "@clidey/ux";
 import { SearchSelect } from "../../components/ux";
-import { AtomicWhereCondition, WhereCondition, WhereConditionType } from '@graphql';
-import React, { FC, useCallback, useEffect, useMemo, useState } from "react";
+import type { AtomicWhereCondition, WhereCondition} from '@graphql';
+import { WhereConditionType } from '@graphql';
+import type { FC} from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { AdjustmentsHorizontalIcon, ChevronDownIcon, PencilIcon, PlusCircleIcon, XCircleIcon } from "../../components/heroicons";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { ScratchpadActions } from "../../store/scratchpad";
@@ -202,15 +203,34 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
             </div>
             {/* Sheet for managing all conditions */}
             <Sheet open={sheetOpen} onOpenChange={handleCloseSheet}>
-                <SheetContent side="right" className="w-[500px] max-w-full p-8 h-full">
+                <SheetContent side="right" className="w-[500px] max-w-full p-8" footer={
+                    <SheetFooter className="flex flex-row w-full gap-sm px-0">
+                        <Button
+                            className="flex-1"
+                            variant="secondary"
+                            onClick={handleCloseSheet}
+                            data-testid="cancel-add-conditions"
+                        >
+                            {t('cancel')}
+                        </Button>
+                        <Button
+                            className="flex-1"
+                            onClick={handleSheetSave}
+                            data-testid="add-conditions-button"
+                        >
+                            {t('addCondition')}
+                        </Button>
+                    </SheetFooter>
+                }>
                     <SheetTitle className="flex items-center gap-2"><AdjustmentsHorizontalIcon className="w-5 h-5" /> {t('conditionsTitle')}</SheetTitle>
                     {/* Display existing conditions as editable cards */}
                     {existingFilters.length > 0 && (
                         <div className="flex flex-col gap-sm mt-4">
                             {existingFilters.map((filter, i) => {
+                                const existingFilterKey = `${filter.Atomic?.Key}-${filter.Atomic?.Operator}-${filter.Atomic?.Value}-${i}`;
                                 const isEditing = editingExistingIndex === i;
                                 return (
-                                    <div key={`existing-condition-card-${i}`} className="flex flex-col gap-2">
+                                    <div key={existingFilterKey} className="flex flex-col gap-2">
                                         <div
                                             className="flex gap-2 p-4 border rounded-lg"
                                             data-testid={`existing-condition-card-${i}`}
@@ -255,9 +275,9 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                                                 <div className="flex flex-col gap-2">
                                                     <Label className="text-xs">{t('field')}</Label>
                                                     <SearchSelect
-                                                        value={editingExistingFilter?.Key || ""}
+                                                        value={editingExistingFilter?.Key ?? ""}
                                                         options={fieldsDropdownItems}
-                                                        onChange={(value) => handleEditExistingFilterChange('Key', value)}
+                                                        onChange={(value) => { handleEditExistingFilterChange('Key', value); }}
                                                         buttonProps={{
                                                             "data-testid": `edit-existing-field-key-${i}`,
                                                         }}
@@ -267,9 +287,9 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                                                 <div className="flex flex-col gap-2">
                                                     <Label className="text-xs">{t('operator')}</Label>
                                                     <SearchSelect
-                                                        value={editingExistingFilter?.Operator || ""}
+                                                        value={editingExistingFilter?.Operator ?? ""}
                                                         options={validOperators}
-                                                        onChange={(value) => handleEditExistingFilterChange('Operator', value)}
+                                                        onChange={(value) => { handleEditExistingFilterChange('Operator', value); }}
                                                         buttonProps={{
                                                             "data-testid": `edit-existing-field-operator-${i}`,
                                                         }}
@@ -278,8 +298,8 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                                                 <div className="flex flex-col gap-2">
                                                     <Label className="text-xs">{t('value')}</Label>
                                                     <Input
-                                                        value={editingExistingFilter?.Value || ""}
-                                                        onChange={(e) => handleEditExistingFilterChange('Value', e.target.value)}
+                                                        value={editingExistingFilter?.Value ?? ""}
+                                                        onChange={(e) => { handleEditExistingFilterChange('Value', e.target.value); }}
                                                         placeholder={t('enterFilterValue')}
                                                         data-testid={`edit-existing-field-value-${i}`}
                                                     />
@@ -361,9 +381,10 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                     
                     {/* Add new conditions section */}
                     <div className="flex flex-col gap-lg mt-6 overflow-y-auto h-full">
-                        {sheetFilters.map((filter, index) => (
-                            <div 
-                                key={index} 
+                        {sheetFilters.map((filter, index) => {
+                            const newFilterKey = `${filter.Key}-${filter.Operator}-${filter.Value}-${index}`;
+                            return (<div
+                                key={newFilterKey}
                                 className="flex flex-col gap-lg p-4 border rounded-lg"
                             >
                                 <div className="flex items-center justify-between">
@@ -391,7 +412,7 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                                     <SearchSelect
                                         value={filter.Key}
                                         options={fieldsDropdownItems}
-                                        onChange={(value) => handleSheetFieldChange(index, 'Key', value)}
+                                        onChange={(value) =>{  handleSheetFieldChange(index, 'Key', value); }}
                                         buttonProps={{
                                             "data-testid": `sheet-field-key-${index}`,
                                         }}
@@ -402,7 +423,7 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                                     <SearchSelect
                                         value={filter.Operator}
                                         options={validOperators}
-                                        onChange={(value) => handleSheetFieldChange(index, 'Operator', value)}
+                                        onChange={(value) =>{  handleSheetFieldChange(index, 'Operator', value); }}
                                         buttonProps={{
                                             "data-testid": `sheet-field-operator-${index}`,
                                         }}
@@ -412,13 +433,13 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                                     <Label className="text-xs">{t('value')}</Label>
                                     <Input
                                         value={filter.Value}
-                                        onChange={(e) => handleSheetFieldChange(index, 'Value', e.target.value)}
+                                        onChange={(e) =>{  handleSheetFieldChange(index, 'Value', e.target.value); }}
                                         placeholder={t('enterFilterValue')}
                                         data-testid={`sheet-field-value-${index}`}
                                     />
                                 </div>
-                            </div>
-                        ))}
+                            </div>);
+                        })}
                         <div className="flex items-center justify-end">
                             <Button
                                 variant="ghost"
@@ -431,23 +452,6 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                             </Button>
                         </div>
                     </div>
-                    <SheetFooter className="flex flex-row w-full gap-sm px-0 mt-6">
-                        <Button
-                            className="flex-1"
-                            variant="secondary"
-                            onClick={handleCloseSheet}
-                            data-testid="cancel-add-conditions"
-                        >
-                            {t('cancel')}
-                        </Button>
-                        <Button
-                            className="flex-1"
-                            onClick={handleSheetSave}
-                            data-testid="add-conditions-button"
-                        >
-                            {t('addCondition')}
-                        </Button>
-                    </SheetFooter>
                 </SheetContent>
             </Sheet>
         </div>

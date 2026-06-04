@@ -32,6 +32,16 @@ import (
 	"github.com/clidey/whodb/core/src/providers"
 )
 
+const (
+	rdsStatusAvailable = "available"
+	rdsStatusCreating  = "creating"
+	rdsStatusDeleting  = "deleting"
+	rdsStatusStarting  = "starting"
+	rdsStatusStopped   = "stopped"
+	rdsStatusFailed    = "failed"
+	rdsStatusModifying = "modifying"
+)
+
 func (p *Provider) discoverRDS(ctx context.Context) ([]providers.DiscoveredConnection, error) {
 	start := time.Now()
 	var connections []providers.DiscoveredConnection
@@ -41,7 +51,7 @@ func (p *Provider) discoverRDS(ctx context.Context) ([]providers.DiscoveredConne
 
 	for page := range maxPaginationPages {
 		if ctx.Err() != nil {
-			log.Warnf("RDS discoverRDS: context cancelled, returning %d results so far", len(connections))
+			log.Warnf("RDS discoverRDS: context canceled, returning %d results so far", len(connections))
 			return connections, ctx.Err()
 		}
 
@@ -58,18 +68,20 @@ func (p *Provider) discoverRDS(ctx context.Context) ([]providers.DiscoveredConne
 		}
 		log.Debugf("RDS discoverRDS: DescribeDBInstances returned %d instances", len(output.DBInstances))
 
-		for _, instance := range output.DBInstances {
+		for i := range output.DBInstances {
+			instance := output.DBInstances[i]
 			instanceID := aws.ToString(instance.DBInstanceIdentifier)
 			engineName := aws.ToString(instance.Engine)
 			log.Debugf("RDS discoverRDS: processing instance %s (engine=%s)", instanceID, engineName)
 
 			conn := p.rdsInstanceToConnection(&instance)
-			if conn != nil {
+			switch {
+			case conn != nil:
 				log.Debugf("RDS discoverRDS: instance %s converted to connection (type=%s)", instanceID, conn.DatabaseType)
 				connections = append(connections, *conn)
-			} else if isEngineHandledByDedicatedDiscovery(engineName) {
+			case isEngineHandledByDedicatedDiscovery(engineName):
 				log.Debugf("RDS discoverRDS: skipping instance %s (engine=%s handled by dedicated discovery)", instanceID, engineName)
-			} else {
+			default:
 				log.Warnf("RDS discoverRDS: instance %s could not be converted (engine=%s not supported)", instanceID, engineName)
 			}
 		}
@@ -140,7 +152,7 @@ func (p *Provider) discoverRDSClusters(ctx context.Context) ([]providers.Discove
 
 	for page := range maxPaginationPages {
 		if ctx.Err() != nil {
-			log.Warnf("RDS discoverRDSClusters: context cancelled, returning %d results so far", len(connections))
+			log.Warnf("RDS discoverRDSClusters: context canceled, returning %d results so far", len(connections))
 			return connections, ctx.Err()
 		}
 
@@ -157,7 +169,8 @@ func (p *Provider) discoverRDSClusters(ctx context.Context) ([]providers.Discove
 
 		log.Debugf("RDS discoverRDSClusters: DescribeDBClusters returned %d clusters", len(output.DBClusters))
 
-		for _, cluster := range output.DBClusters {
+		for i := range output.DBClusters {
+			cluster := output.DBClusters[i]
 			if cluster.Engine == nil || cluster.DBClusterIdentifier == nil {
 				continue
 			}
@@ -253,7 +266,7 @@ func (p *Provider) discoverRDSProxies(ctx context.Context) ([]providers.Discover
 
 	for page := range maxPaginationPages {
 		if ctx.Err() != nil {
-			log.Warnf("RDS discoverRDSProxies: context cancelled, returning %d results so far", len(connections))
+			log.Warnf("RDS discoverRDSProxies: context canceled, returning %d results so far", len(connections))
 			return connections, ctx.Err()
 		}
 
@@ -270,7 +283,8 @@ func (p *Provider) discoverRDSProxies(ctx context.Context) ([]providers.Discover
 
 		log.Debugf("RDS discoverRDSProxies: DescribeDBProxies returned %d proxies", len(output.DBProxies))
 
-		for _, proxy := range output.DBProxies {
+		for i := range output.DBProxies {
+			proxy := output.DBProxies[i]
 			if proxy.DBProxyName == nil || proxy.Endpoint == nil {
 				continue
 			}
@@ -395,11 +409,11 @@ func mapProxyEngineFamily(family string) engine.DatabaseType {
 
 func mapProxyStatus(status string) providers.ConnectionStatus {
 	switch strings.ToLower(status) {
-	case "available":
+	case rdsStatusAvailable:
 		return providers.ConnectionStatusAvailable
-	case "creating", "modifying":
+	case rdsStatusCreating, rdsStatusModifying:
 		return providers.ConnectionStatusStarting
-	case "deleting":
+	case rdsStatusDeleting:
 		return providers.ConnectionStatusDeleting
 	case "incompatible-network", "insufficient-resource-limits":
 		return providers.ConnectionStatusFailed
@@ -414,15 +428,15 @@ func mapRDSStatus(status *string) providers.ConnectionStatus {
 	}
 
 	switch strings.ToLower(*status) {
-	case "available":
+	case rdsStatusAvailable:
 		return providers.ConnectionStatusAvailable
-	case "starting", "creating", "configuring-enhanced-monitoring", "modifying", "upgrading":
+	case rdsStatusStarting, rdsStatusCreating, "configuring-enhanced-monitoring", rdsStatusModifying, "upgrading":
 		return providers.ConnectionStatusStarting
-	case "stopped", "stopping", "storage-optimization":
+	case rdsStatusStopped, "stopping", "storage-optimization":
 		return providers.ConnectionStatusStopped
-	case "deleting":
+	case rdsStatusDeleting:
 		return providers.ConnectionStatusDeleting
-	case "failed", "restore-error", "incompatible-credentials", "incompatible-parameters", "incompatible-options":
+	case rdsStatusFailed, "restore-error", "incompatible-credentials", "incompatible-parameters", "incompatible-options":
 		return providers.ConnectionStatusFailed
 	default:
 		return providers.ConnectionStatusUnknown

@@ -105,7 +105,7 @@ func Run(ctx context.Context, opts Options) (Report, error) {
 		Status:     statusOK,
 		DurationMS: elapsed(connectStart),
 	})
-	defer mgr.Disconnect()
+	defer mgr.Disconnect() //nolint:errcheck
 
 	schemaStart := time.Now()
 	resolvedSchema, err := mgr.ResolveSnapshotSchema(conn, opts.Schema)

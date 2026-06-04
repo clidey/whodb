@@ -24,12 +24,13 @@ import (
 	"strings"
 	"time"
 
+	"gorm.io/gorm"
+
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/common/ssl"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
-	"gorm.io/gorm"
 )
 
 const (
@@ -45,22 +46,22 @@ const (
 )
 
 type ConnectionInput struct {
-	//common
+	// common
 	Username string `validate:"required"`
 	Password string `validate:"required"`
 	Database string `validate:"required"`
 	Hostname string `validate:"required"`
 	Port     int    `validate:"required"`
 
-	//mysql/mariadb
+	// mysql/mariadb
 	ParseTime               bool           `validate:"boolean"`
 	Loc                     *time.Location `validate:"required"`
 	AllowClearTextPasswords bool           `validate:"boolean"`
 
-	//postgres
+	// postgres
 	SearchPath string
 
-	//clickhouse
+	// clickhouse
 	HTTPProtocol string
 	ReadOnly     string
 	Debug        string
@@ -73,7 +74,7 @@ type ConnectionInput struct {
 }
 
 func (p *GormPlugin) ParseConnectionConfig(config *engine.PluginConfig) (*ConnectionInput, error) {
-	//common
+	// common
 	port := 0
 	if rawPort := common.GetRecordValueOrDefault(config.Credentials.Advanced, portKey, ""); rawPort != "" {
 		parsedPort, err := strconv.Atoi(rawPort)
@@ -84,7 +85,7 @@ func (p *GormPlugin) ParseConnectionConfig(config *engine.PluginConfig) (*Connec
 		port = parsedPort
 	}
 
-	//mysql/mariadb specific
+	// mysql/mariadb specific
 	parseTime, err := strconv.ParseBool(common.GetRecordValueOrDefault(config.Credentials.Advanced, parseTimeKey, "True"))
 	if err != nil {
 		log.WithError(err).Error(fmt.Sprintf("Failed to parse parseTime setting for database type %s", p.Type))
@@ -101,7 +102,7 @@ func (p *GormPlugin) ParseConnectionConfig(config *engine.PluginConfig) (*Connec
 		return nil, err
 	}
 
-	//clickhouse specific
+	// clickhouse specific
 	httpProtocol := common.GetRecordValueOrDefault(config.Credentials.Advanced, httpProtocolKey, "disable")
 	readOnly, err := normalizeToggleValue(common.GetRecordValueOrDefault(config.Credentials.Advanced, readOnlyKey, "disable"))
 	if err != nil {
@@ -114,7 +115,7 @@ func (p *GormPlugin) ParseConnectionConfig(config *engine.PluginConfig) (*Connec
 		return nil, err
 	}
 
-	//postgres specific
+	// postgres specific
 	searchPath := common.GetRecordValueOrDefault(config.Credentials.Advanced, searchPathKey, "")
 
 	sslConfig := ssl.ParseSSLConfig(p.Type, config.Credentials.Advanced, config.Credentials.Hostname, config.Credentials.IsProfile)

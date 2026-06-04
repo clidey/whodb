@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { IAIModelType } from '../store/ai-models';
+import type { IAIModelType } from '../store/ai-models';
 
 /**
  * Ensures modelTypes is always an array with at least default values

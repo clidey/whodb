@@ -18,8 +18,10 @@ package redis
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sort"
+	"strconv"
 
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
@@ -31,7 +33,7 @@ func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, sto
 	if err != nil {
 		return err
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	keyType, err := client.Type(client.Context(), storageUnit).Result()
 	if err != nil {
@@ -39,8 +41,8 @@ func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, sto
 	}
 
 	switch keyType {
-	case "string":
-		headers := []string{common.FormatCSVHeader("value", "string")}
+	case redisTypeString:
+		headers := []string{common.FormatCSVHeader(redisKeyValue, "string")}
 		if err := writer(headers); err != nil {
 			return err
 		}
@@ -50,8 +52,8 @@ func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, sto
 		}
 		return writer([]string{val})
 
-	case "hash":
-		headers := []string{common.FormatCSVHeader("field", "string"), common.FormatCSVHeader("value", "string")}
+	case redisTypeHash:
+		headers := []string{common.FormatCSVHeader("field", "string"), common.FormatCSVHeader(redisKeyValue, "string")}
 		if err := writer(headers); err != nil {
 			return err
 		}
@@ -59,7 +61,9 @@ func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, sto
 		// If selected rows provided, use them
 		if len(selectedRows) > 0 {
 			for _, row := range selectedRows {
-				writer([]string{fmt.Sprintf("%v", row["field"]), fmt.Sprintf("%v", row["value"])})
+				if err := writer([]string{fmt.Sprintf("%v", row["field"]), fmt.Sprintf("%v", row[redisKeyValue])}); err != nil {
+					return err
+				}
 			}
 			return nil
 		}
@@ -80,15 +84,17 @@ func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, sto
 		}
 		return nil
 
-	case "list":
-		headers := []string{common.FormatCSVHeader("index", "string"), common.FormatCSVHeader("value", "string")}
+	case redisTypeList:
+		headers := []string{common.FormatCSVHeader("index", "string"), common.FormatCSVHeader(redisKeyValue, "string")}
 		if err := writer(headers); err != nil {
 			return err
 		}
 
 		if len(selectedRows) > 0 {
 			for _, row := range selectedRows {
-				writer([]string{fmt.Sprintf("%v", row["index"]), fmt.Sprintf("%v", row["value"])})
+				if err := writer([]string{fmt.Sprintf("%v", row["index"]), fmt.Sprintf("%v", row[redisKeyValue])}); err != nil {
+					return err
+				}
 			}
 			return nil
 		}
@@ -98,21 +104,23 @@ func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, sto
 			return err
 		}
 		for i, v := range values {
-			if err := writer([]string{fmt.Sprintf("%d", i), v}); err != nil {
+			if err := writer([]string{strconv.Itoa(i), v}); err != nil {
 				return err
 			}
 		}
 		return nil
 
 	case "set":
-		headers := []string{common.FormatCSVHeader("index", "string"), common.FormatCSVHeader("value", "string")}
+		headers := []string{common.FormatCSVHeader("index", "string"), common.FormatCSVHeader(redisKeyValue, "string")}
 		if err := writer(headers); err != nil {
 			return err
 		}
 
 		if len(selectedRows) > 0 {
 			for _, row := range selectedRows {
-				writer([]string{fmt.Sprintf("%v", row["index"]), fmt.Sprintf("%v", row["value"])})
+				if err := writer([]string{fmt.Sprintf("%v", row["index"]), fmt.Sprintf("%v", row[redisKeyValue])}); err != nil {
+					return err
+				}
 			}
 			return nil
 		}
@@ -123,13 +131,13 @@ func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, sto
 		}
 		sort.Strings(values)
 		for i, v := range values {
-			if err := writer([]string{fmt.Sprintf("%d", i), v}); err != nil {
+			if err := writer([]string{strconv.Itoa(i), v}); err != nil {
 				return err
 			}
 		}
 		return nil
 
-	case "zset":
+	case redisTypeZSet:
 		headers := []string{
 			common.FormatCSVHeader("index", "string"),
 			common.FormatCSVHeader("member", "string"),
@@ -141,11 +149,13 @@ func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, sto
 
 		if len(selectedRows) > 0 {
 			for _, row := range selectedRows {
-				writer([]string{
+				if err := writer([]string{
 					fmt.Sprintf("%v", row["index"]),
 					fmt.Sprintf("%v", row["member"]),
 					fmt.Sprintf("%v", row["score"]),
-				})
+				}); err != nil {
+					return err
+				}
 			}
 			return nil
 		}
@@ -156,7 +166,7 @@ func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, sto
 		}
 		for i, m := range values {
 			if err := writer([]string{
-				fmt.Sprintf("%d", i),
+				strconv.Itoa(i),
 				fmt.Sprintf("%v", m.Member),
 				fmt.Sprintf("%.2f", m.Score),
 			}); err != nil {
@@ -166,7 +176,7 @@ func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, sto
 		return nil
 	}
 
-	return fmt.Errorf("unsupported Redis data type")
+	return errors.New("unsupported Redis data type")
 }
 
 // ExportDataNDJSON streams Redis data as NDJSON.
@@ -175,7 +185,7 @@ func (p *RedisPlugin) ExportDataNDJSON(config *engine.PluginConfig, schema strin
 	if err != nil {
 		return err
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	keyType, err := client.Type(client.Context(), storageUnit).Result()
 	if err != nil {
@@ -202,32 +212,32 @@ func (p *RedisPlugin) ExportDataNDJSON(config *engine.PluginConfig, schema strin
 	ctx := client.Context()
 
 	switch keyType {
-	case "string":
+	case redisTypeString:
 		val, err := client.Get(ctx, storageUnit).Result()
 		if err != nil {
 			return err
 		}
-		return emit([]map[string]any{{"value": val}})
+		return emit([]map[string]any{{redisKeyValue: val}})
 
-	case "hash":
+	case redisTypeHash:
 		values, err := client.HGetAll(ctx, storageUnit).Result()
 		if err != nil {
 			return err
 		}
 		rows := make([]map[string]any, 0, len(values))
 		for field, value := range values {
-			rows = append(rows, map[string]any{"field": field, "value": value})
+			rows = append(rows, map[string]any{"field": field, redisKeyValue: value})
 		}
 		return emit(rows)
 
-	case "list":
+	case redisTypeList:
 		values, err := client.LRange(ctx, storageUnit, 0, -1).Result()
 		if err != nil {
 			return err
 		}
 		rows := make([]map[string]any, 0, len(values))
 		for i, v := range values {
-			rows = append(rows, map[string]any{"index": i, "value": v})
+			rows = append(rows, map[string]any{"index": i, redisKeyValue: v})
 		}
 		return emit(rows)
 
@@ -239,11 +249,11 @@ func (p *RedisPlugin) ExportDataNDJSON(config *engine.PluginConfig, schema strin
 		sort.Strings(values)
 		rows := make([]map[string]any, 0, len(values))
 		for i, v := range values {
-			rows = append(rows, map[string]any{"index": i, "value": v})
+			rows = append(rows, map[string]any{"index": i, redisKeyValue: v})
 		}
 		return emit(rows)
 
-	case "zset":
+	case redisTypeZSet:
 		values, err := client.ZRangeWithScores(ctx, storageUnit, 0, -1).Result()
 		if err != nil {
 			return err
@@ -259,5 +269,5 @@ func (p *RedisPlugin) ExportDataNDJSON(config *engine.PluginConfig, schema strin
 		return emit(rows)
 	}
 
-	return fmt.Errorf("unsupported Redis data type")
+	return errors.New("unsupported Redis data type")
 }

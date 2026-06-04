@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import {Dialog, DialogContent, DialogHeader, DialogTitle, SearchInput,} from "@clidey/ux";
-import {FC, useCallback, useEffect, useState, useMemo} from "react";
+import {Dialog, DialogContent, DialogHeader, DialogTitle, Kbd, SearchInput,} from "@clidey/ux";
+import type {FC} from "react";
+import { useCallback, useEffect, useState, useMemo} from "react";
 import {useTranslation} from "@/hooks/use-translation";
 import {getKeyDisplay, getEffectiveIsMac, formatShortcut} from "@/utils/platform";
 import {matchesShortcut, resolveShortcut, SHORTCUTS} from "@/utils/shortcuts";
@@ -30,11 +31,6 @@ interface ShortcutCategory {
     shortcuts: ShortcutEntry[];
 }
 
-const Kbd: FC<{ children: string }> = ({ children }) => (
-    <kbd className="inline-flex items-center justify-center min-w-[1.5rem] h-6 px-1.5 text-xs font-medium bg-muted border text-muted-foreground rounded shadow-sm">
-        {children}
-    </kbd>
-);
 
 const ShortcutRow: FC<{ shortcut: ShortcutEntry }> = ({ shortcut }) => (
     <div className="flex items-center justify-between py-1.5">
@@ -43,7 +39,7 @@ const ShortcutRow: FC<{ shortcut: ShortcutEntry }> = ({ shortcut }) => (
         </span>
         <div className="flex items-center gap-1">
             {shortcut.keys.map((key, idx) => (
-                <span key={idx} className="flex items-center gap-0.5">
+                <span key={key} className="flex items-center gap-0.5">
                     <Kbd>{getKeyDisplay(key)}</Kbd>
                     {idx < shortcut.keys.length - 1 && !getEffectiveIsMac() && (
                         <span className="text-muted-foreground text-xs">+</span>
@@ -60,8 +56,8 @@ const ShortcutSection: FC<{ category: ShortcutCategory; testId?: string }> = ({ 
             {category.title}
         </h3>
         <div className="divide-y divide-neutral-200 dark:divide-neutral-700">
-            {category.shortcuts.map((shortcut, idx) => (
-                <ShortcutRow key={idx} shortcut={shortcut} />
+            {category.shortcuts.map((shortcut, _idx) => (
+                <ShortcutRow key={shortcut.description} shortcut={shortcut} />
             ))}
         </div>
     </div>
@@ -159,13 +155,13 @@ export const KeyboardShortcutsHelp: FC<KeyboardShortcutsHelpProps> = ({
                     <DialogTitle className="flex items-center gap-2">
                         {t('title')}
                     </DialogTitle>
-                    <SearchInput className="mt-2" value={searchFilter} onChange={e => setSearchFilter(e.target.value)} placeholder={'Type a Shortcut or search...'} />
+                    <SearchInput className="mt-2" value={searchFilter} onChange={(e) => { setSearchFilter(e.target.value); }} placeholder={'Type a Shortcut or search...'} />
                 </DialogHeader>
                 <div className="mt-4">
                     {filteredShortcuts.length > 0 ?
-                    ( filteredShortcuts.map((category, idx) => (
+                    ( filteredShortcuts.map((category) => (
                         <ShortcutSection
-                            key={idx}
+                            key={category.title}
                             category={category}
                             testId={`shortcuts-category-${category.title.toLowerCase().replace(/\s+/g, '-')}`}
                         />
@@ -209,7 +205,7 @@ export const useKeyboardShortcutsHelp = () => {
 
     useEffect(() => {
         window.addEventListener("keydown", handleKeyDown);
-        return () => window.removeEventListener("keydown", handleKeyDown);
+        return () => { window.removeEventListener("keydown", handleKeyDown); };
     }, [handleKeyDown]);
 
     return {

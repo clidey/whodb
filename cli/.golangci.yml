@@ -1,0 +1,34 @@
+version: "2"
+
+run:
+  go: "1.26.1"
+
+linters:
+  enable:
+    - govet
+  settings:
+    errcheck:
+      exclude-functions:
+        - "(*github.com/spf13/cobra.Command).RegisterFlagCompletionFunc"
+        - fmt.Fprintf
+        - fmt.Fprintln
+        - fmt.Fprint
+        - os.Setenv
+        - os.Unsetenv
+        - os.Remove
+        - os.RemoveAll
+      check-type-assertions: false
+  exclusions:
+    rules:
+      - linters: [errcheck]
+        source: "defer "
+      - linters: [errcheck]
+        path: "_test\\.go$"
+      - linters: [staticcheck]
+        text: "SA1019.*deprecated"
+      - linters: [errcheck]
+        source: "viper\\.BindPFlag"
+
+formatters:
+  enable:
+    - gofmt

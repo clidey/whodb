@@ -14,18 +14,10 @@
  * limitations under the License.
  */
 
-import { IAIModelType } from './ai-models';
+import type { IAIModelType } from './ai-models';
 import { ensureModelTypesArray, ensureModelsArray } from '../utils/ai-models-helper';
 import { featureFlags } from '../config/features';
 
-// Define the old database state structure for migration purposes
-interface OldDatabaseState {
-  schema: string;
-  current?: IAIModelType;
-  modelTypes?: IAIModelType[];
-  currentModel?: string;
-  models?: string[];
-}
 
 /**
  * Migrates AI-related data from the old database store to the new aiModels store
@@ -57,7 +49,7 @@ export function migrateAIModelsFromDatabase(): void {
       modelTypes = databaseState.modelTypes ? JSON.parse(databaseState.modelTypes) : undefined;
       currentModel = databaseState.currentModel ? JSON.parse(databaseState.currentModel) : undefined;
       models = databaseState.models ? JSON.parse(databaseState.models) : undefined;
-    } catch (e) {
+    } catch {
       // If parsing fails, the data might be in a different format
       current = databaseState.current;
       modelTypes = databaseState.modelTypes;
@@ -110,7 +102,7 @@ export function migrateAIModelsFromDatabase(): void {
 
     // Clean up the old database state - keep only the schema
     const cleanedDatabaseState = {
-      schema: databaseState.schema || '""',
+      schema: databaseState.schema ?? '""',
       _persist: JSON.stringify({ version: -1, rehydrated: true })
     };
     localStorage.setItem('persist:database', JSON.stringify(cleanedDatabaseState));
@@ -146,14 +138,14 @@ function ensureValidAIModelsState(): void {
           needsUpdate = true;
         } else {
           // Ensure each modelType has required properties
-          const validModelTypes = modelTypes.filter((mt: IAIModelType | null) => mt && mt.id && mt.modelType);
+          const validModelTypes = modelTypes.filter((mt: IAIModelType | null) => mt?.id && mt.modelType);
           if (validModelTypes.length !== modelTypes.length) {
             modelTypes = validModelTypes.length > 0 ? validModelTypes : ensureModelTypesArray(null);
             aiModelsState.modelTypes = JSON.stringify(modelTypes);
             needsUpdate = true;
           }
         }
-      } catch (e) {
+      } catch {
         aiModelsState.modelTypes = JSON.stringify(ensureModelTypesArray(null));
         needsUpdate = true;
       }
@@ -171,7 +163,7 @@ function ensureValidAIModelsState(): void {
           aiModelsState.models = JSON.stringify(ensureModelsArray(models));
           needsUpdate = true;
         }
-      } catch (e) {
+      } catch {
         aiModelsState.models = JSON.stringify(ensureModelsArray(null));
         needsUpdate = true;
       }
@@ -248,7 +240,7 @@ function applyEESettingsDefaultsV4(): void {
           settingsState.whereConditionMode = JSON.stringify('sheet');
           needsUpdate = true;
         }
-      } catch (e) {
+      } catch {
         // If parsing fails, set to extension default
         settingsState.whereConditionMode = JSON.stringify('sheet');
         needsUpdate = true;
@@ -267,7 +259,7 @@ function applyEESettingsDefaultsV4(): void {
           settingsState.disableAnimations = JSON.stringify(true);
           needsUpdate = true;
         }
-      } catch (e) {
+      } catch {
         // If parsing fails, set to extension default
         settingsState.disableAnimations = JSON.stringify(true);
         needsUpdate = true;

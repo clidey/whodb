@@ -142,13 +142,13 @@ func (m *Manager) buildSourceChatTableDetails(ctx context.Context, spec source.T
 
 	var b strings.Builder
 	for _, object := range objects {
-		b.WriteString(fmt.Sprintf("table: %s\n", object.Name))
+		fmt.Fprintf(&b, "table: %s\n", object.Name)
 		columns, err := reader.Columns(ctx, object.Ref)
 		if err != nil {
 			continue
 		}
 		for _, col := range columns {
-			b.WriteString(fmt.Sprintf("- %s (%s)\n", col.Name, col.Type))
+			fmt.Fprintf(&b, "- %s (%s)\n", col.Name, col.Type)
 		}
 	}
 	return b.String(), nil

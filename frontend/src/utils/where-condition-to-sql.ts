@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { WhereCondition, WhereConditionType } from '@graphql';
+import type { WhereCondition} from '@graphql';
+import { WhereConditionType } from '@graphql';
 
 /**
  * Escapes a SQL string value by replacing single quotes with two single quotes

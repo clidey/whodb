@@ -75,7 +75,7 @@ func SetDiscoveryExtension(ext DiscoveryExtension) {
 
 // AzureSQLEngineMapper maps an Azure SQL engine type to a WhoDB DatabaseType.
 // Returns false if the engine is not recognized by this mapper.
-var azureSQLEngineMapper func(string) (engine.DatabaseType, bool)
+var azureSQLEngineMapper func(string) (engine.DatabaseType, bool) //nolint:unused
 
 // SetAzureSQLEngineMapper registers a mapper for additional Azure SQL engine types.
 func SetAzureSQLEngineMapper(fn func(string) (engine.DatabaseType, bool)) {
@@ -201,7 +201,7 @@ func (p *Provider) Name() string {
 	return p.config.Name
 }
 
-func (p *Provider) initialize(ctx context.Context) error {
+func (p *Provider) initialize(_ context.Context) error {
 	p.initMu.Lock()
 	defer p.initMu.Unlock()
 

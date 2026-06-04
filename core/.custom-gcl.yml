@@ -1,0 +1,5 @@
+version: v2.12.2
+plugins:
+  - module: "github.com/skhoroshavin/gounslop"
+    version: "v0.0.0-20260421235112-a136c04f8e03"
+    import: "github.com/skhoroshavin/gounslop/plugin"

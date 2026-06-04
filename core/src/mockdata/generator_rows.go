@@ -551,10 +551,8 @@ func (g *Generator) generateColumnValue(col engine.Column, constraints map[strin
 
 	// Merge column metadata (length, precision, scale) into constraints if available
 	effectiveConstraints := constraints
-	needsCopy := false
-	if col.Length != nil && *col.Length > 0 && (constraints == nil || constraints["length"] == nil) {
-		needsCopy = true
-	}
+	needsCopy := col.Length != nil && *col.Length > 0 && (constraints == nil || constraints["length"] == nil)
+
 	if col.Precision != nil && *col.Precision > 0 && (constraints == nil || constraints["precision"] == nil) {
 		needsCopy = true
 	}

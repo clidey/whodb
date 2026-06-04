@@ -577,7 +577,7 @@ func stripJSONC(data []byte) ([]byte, error) {
 				}
 			case '*':
 				index += 2
-				for index+1 < len(data) && !(data[index] == '*' && data[index+1] == '/') {
+				for index+1 < len(data) && (data[index] != '*' || data[index+1] != '/') {
 					if data[index] == '\n' || data[index] == '\r' {
 						stripped = append(stripped, data[index])
 					}

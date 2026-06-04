@@ -15,7 +15,8 @@
  */
 
 import { skipToken, useMutation, useQuery } from "@apollo/client/react";
-import { FC, useCallback, useEffect, useMemo, useState } from "react";
+import type { FC} from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
     Badge,
     Button,
@@ -32,21 +33,23 @@ import {
     toast,
 } from "@clidey/ux";
 import { SearchSelect } from "../ux";
-import {
-    AddAwsProviderDocument,
+import type {
     AwsProvider,
     AwsProviderInput,
+    LocalAwsProfile} from "@graphql";
+import {
+    AddAwsProviderDocument,
     CloudProviderStatus,
     GetAwsRegionsDocument,
     GetDiscoveredConnectionsDocument,
     GetLocalAwsProfilesDocument,
     TestAwsCredentialsDocument,
     TestCloudProviderDocument,
-    UpdateAwsProviderDocument,
-    LocalAwsProfile,
+    UpdateAwsProviderDocument
 } from "@graphql";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { ProvidersActions, LocalCloudProvider } from "../../store/providers";
+import type { LocalCloudProvider } from "../../store/providers";
+import { ProvidersActions } from "../../store/providers";
 import { useTranslation } from "@/hooks/use-translation";
 import { useSourceTypeItems } from "@/hooks/useSourceCatalog";
 import { ChevronDownIcon, CloudIcon } from "../heroicons";
@@ -71,7 +74,7 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
     const editingProvider = useMemo(() => {
         if (!editingProviderId) return null;
         const found = cloudProviders.find(p => p.Id === editingProviderId);
-        if (!found || found.__typename !== 'AWSProvider') return null;
+        if (found?.__typename !== 'AWSProvider') return null;
         return found as AwsProvider;
     }, [editingProviderId, cloudProviders]);
 
@@ -79,7 +82,7 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
     const localProfilesQueryOptions = isEditMode ? skipToken : {};
 
     // Query local AWS profiles
-    const { data: localProfilesData, loading: profilesLoading } = useQuery(GetLocalAwsProfilesDocument, localProfilesQueryOptions);
+    const { data: localProfilesData } = useQuery(GetLocalAwsProfilesDocument, localProfilesQueryOptions);
     const localProfiles = localProfilesData?.LocalAWSProfiles ?? [];
 
     // Query AWS regions from backend
@@ -349,7 +352,7 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
                                         <button
                                             key={`${profile.Source}-${profile.Name}`}
                                             type="button"
-                                            onClick={() => handleSelectLocalProfile(profile)}
+                                            onClick={() =>{  handleSelectLocalProfile(profile); }}
                                             className={cn(
                                                 "flex items-center gap-2 px-3 py-2 rounded-md border text-sm transition-colors",
                                                 "hover:border-brand hover:bg-brand/5",
@@ -390,7 +393,7 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
                         <Input
                             id="provider-name"
                             value={name}
-                            onChange={(e) => setName(e.target.value)}
+                            onChange={(e) =>{  setName(e.target.value); }}
                             placeholder={t('namePlaceholder')}
                             data-testid="provider-name"
                         />
@@ -410,7 +413,7 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
                         {region === "custom" && (
                             <Input
                                 value={customRegion}
-                                onChange={(e) => setCustomRegion(e.target.value)}
+                                onChange={(e) =>{  setCustomRegion(e.target.value); }}
                                 placeholder={t('customRegionPlaceholder')}
                                 data-testid="custom-region"
                                 className="mt-2"
@@ -424,7 +427,7 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
                         <Input
                             id="profile-name"
                             value={profileName}
-                            onChange={(e) => setProfileName(e.target.value)}
+                            onChange={(e) =>{  setProfileName(e.target.value); }}
                             placeholder={t('profilePlaceholder')}
                             data-testid="profile-name"
                         />
@@ -488,7 +491,7 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
                 <DialogFooter className="flex gap-2">
                     <Button
                         variant="outline"
-                        onClick={handleTest}
+                        onClick={() => { void handleTest(); }}
                         disabled={loading}
                         data-testid="test-connection"
                     >
@@ -502,7 +505,7 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
                         {t('cancel')}
                     </Button>
                     <Button
-                        onClick={handleSubmit}
+                        onClick={() => { void handleSubmit(); }}
                         disabled={loading}
                         data-testid="submit-provider"
                     >

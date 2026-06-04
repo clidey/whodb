@@ -72,7 +72,7 @@ var RedisOperators = map[string]string{
 	"STARTS WITH": "STARTS WITH",
 	"ENDS WITH":   "ENDS WITH",
 	"IN":          "IN",
-	"NOT IN":      "NOT IN",
+	opNotIn:       opNotIn,
 }
 
 var MemcachedOperators = map[string]string{
@@ -87,5 +87,5 @@ var MemcachedOperators = map[string]string{
 	"STARTS WITH": "STARTS WITH",
 	"ENDS WITH":   "ENDS WITH",
 	"IN":          "IN",
-	"NOT IN":      "NOT IN",
+	opNotIn:       opNotIn,
 }

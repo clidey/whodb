@@ -94,11 +94,11 @@ export const App = () => {
       }
 
       if (!metricsEnabled) {
-          optOutUser();
+          void optOutUser();
           return;
       }
 
-      optInUser();
+      void optInUser();
   }, [metricsEnabled, dispatch]);
 
     useEffect(() => {
@@ -120,7 +120,7 @@ export const App = () => {
       return;
     }
 
-    updateSettings({
+    void updateSettings({
       variables: {
         newSettings: {
           MetricsEnabled: String(metricsEnabled)

@@ -65,3 +65,5 @@ tools/
 .codex/*
 !.codex/hooks.json
 frontend/build-ee
+frontend/.pi-lens
+core/.pi-lens

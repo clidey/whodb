@@ -32,6 +32,13 @@ import (
 	"github.com/clidey/whodb/core/src/providers"
 )
 
+const (
+	ecStatusAvailable    = "available"
+	ecStatusCreating     = "creating"
+	ecStatusDeleting     = "deleting"
+	ecStatusCreateFailed = "create-failed"
+)
+
 func (p *Provider) discoverElastiCache(ctx context.Context) ([]providers.DiscoveredConnection, error) {
 	var connections []providers.DiscoveredConnection
 
@@ -73,7 +80,7 @@ func (p *Provider) discoverElastiCacheServerless(ctx context.Context) ([]provide
 
 	for page := range maxPaginationPages {
 		if ctx.Err() != nil {
-			log.Warnf("ElastiCache Serverless: context cancelled, returning %d results so far", len(connections))
+			log.Warnf("ElastiCache Serverless: context canceled, returning %d results so far", len(connections))
 			return connections, ctx.Err()
 		}
 
@@ -90,7 +97,8 @@ func (p *Provider) discoverElastiCacheServerless(ctx context.Context) ([]provide
 
 		log.Debugf("ElastiCache: DescribeServerlessCaches returned %d caches", len(output.ServerlessCaches))
 
-		for _, cache := range output.ServerlessCaches {
+		for i := range output.ServerlessCaches {
+			cache := output.ServerlessCaches[i]
 			cacheName := aws.ToString(cache.ServerlessCacheName)
 			cacheEngine := aws.ToString(cache.Engine)
 			status := aws.ToString(cache.Status)
@@ -136,7 +144,7 @@ func (p *Provider) discoverElastiCacheReplicationGroups(ctx context.Context) ([]
 
 	for page := range maxPaginationPages {
 		if ctx.Err() != nil {
-			log.Warnf("ElastiCache ReplicationGroups: context cancelled, returning %d results so far", len(connections))
+			log.Warnf("ElastiCache ReplicationGroups: context canceled, returning %d results so far", len(connections))
 			return connections, ctx.Err()
 		}
 
@@ -153,7 +161,8 @@ func (p *Provider) discoverElastiCacheReplicationGroups(ctx context.Context) ([]
 
 		log.Debugf("ElastiCache: DescribeReplicationGroups returned %d groups", len(output.ReplicationGroups))
 
-		for _, rg := range output.ReplicationGroups {
+		for i := range output.ReplicationGroups {
+			rg := output.ReplicationGroups[i]
 			rgID := aws.ToString(rg.ReplicationGroupId)
 			status := aws.ToString(rg.Status)
 			log.Debugf("ElastiCache: processing replication group %s (status=%s)", rgID, status)
@@ -193,7 +202,7 @@ func (p *Provider) discoverElastiCacheClusters(ctx context.Context) ([]providers
 
 	for page := range maxPaginationPages {
 		if ctx.Err() != nil {
-			log.Warnf("ElastiCache Clusters: context cancelled, returning %d results so far", len(connections))
+			log.Warnf("ElastiCache Clusters: context canceled, returning %d results so far", len(connections))
 			return connections, ctx.Err()
 		}
 
@@ -211,7 +220,8 @@ func (p *Provider) discoverElastiCacheClusters(ctx context.Context) ([]providers
 
 		log.Debugf("ElastiCache: DescribeCacheClusters returned %d clusters", len(output.CacheClusters))
 
-		for _, cluster := range output.CacheClusters {
+		for i := range output.CacheClusters {
+			cluster := output.CacheClusters[i]
 			clusterID := aws.ToString(cluster.CacheClusterId)
 			engineName := aws.ToString(cluster.Engine)
 			replicationGroupID := aws.ToString(cluster.ReplicationGroupId)
@@ -359,13 +369,13 @@ func (p *Provider) serverlessCacheToConnection(cache *ectypes.ServerlessCache) *
 
 func mapServerlessCacheStatus(status string) providers.ConnectionStatus {
 	switch strings.ToLower(status) {
-	case "available":
+	case ecStatusAvailable:
 		return providers.ConnectionStatusAvailable
-	case "creating", "modifying":
+	case ecStatusCreating, rdsStatusModifying:
 		return providers.ConnectionStatusStarting
-	case "deleting":
+	case ecStatusDeleting:
 		return providers.ConnectionStatusDeleting
-	case "create-failed", "update-failed", "delete-failed":
+	case ecStatusCreateFailed, "update-failed", "delete-failed":
 		return providers.ConnectionStatusFailed
 	default:
 		return providers.ConnectionStatusUnknown
@@ -373,9 +383,9 @@ func mapServerlessCacheStatus(status string) providers.ConnectionStatus {
 }
 
 // isRedisCompatibleEngine returns true for Redis-compatible engines (redis, valkey).
-func isRedisCompatibleEngine(engine string) bool {
-	engine = strings.ToLower(engine)
-	return engine == "redis" || engine == "valkey"
+func isRedisCompatibleEngine(engineName string) bool {
+	engineName = strings.ToLower(engineName)
+	return engineName == "redis" || engineName == "valkey"
 }
 
 // isSupportedCacheEngine returns true for all supported ElastiCache engines.
@@ -386,13 +396,13 @@ func isSupportedCacheEngine(eng string) bool {
 
 func mapElastiCacheStatus(status string) providers.ConnectionStatus {
 	switch strings.ToLower(status) {
-	case "available":
+	case ecStatusAvailable:
 		return providers.ConnectionStatusAvailable
-	case "creating", "modifying", "snapshotting", "rebooting cluster nodes":
+	case "creating", rdsStatusModifying, "snapshotting", "rebooting cluster nodes":
 		return providers.ConnectionStatusStarting
 	case "deleted", "deleting":
 		return providers.ConnectionStatusDeleting
-	case "create-failed", "restore-failed":
+	case ecStatusCreateFailed, "restore-failed":
 		return providers.ConnectionStatusFailed
 	default:
 		return providers.ConnectionStatusUnknown

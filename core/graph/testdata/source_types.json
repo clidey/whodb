@@ -1,0 +1,3374 @@
+[
+  {
+    "Id": "ClickHouse",
+    "Label": "ClickHouse",
+    "Connector": "ClickHouse",
+    "Category": "Database",
+    "Traits": {
+      "Connection": {
+        "Transport": "Network",
+        "HostInputMode": "Hostname",
+        "HostInputURLParser": "None",
+        "SupportsCustomCAContent": true
+      },
+      "Presentation": {
+        "ProfileLabelStrategy": "Default",
+        "SchemaFidelity": "Exact"
+      },
+      "Query": {
+        "SupportsAnalyze": false,
+        "SupportsScripts": true,
+        "SupportsStreaming": true,
+        "SupportsMultiStatement": false,
+        "SupportsSqlImport": true,
+        "ExplainMode": "ExplainPipeline"
+      },
+      "MockData": {
+        "SupportsRelationalDependencies": false
+      },
+      "Metadata": {
+        "Columns": "Exact",
+        "Constraints": "Exact",
+        "Graph": "Inferred",
+        "SystemObjectFiltering": "Exact"
+      }
+    },
+    "ConnectionFields": [
+      {
+        "Key": "Database",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": true,
+        "LabelKey": "databaseName",
+        "PlaceholderKey": "enterDatabase",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Debug",
+        "Kind": "Text",
+        "Section": "Advanced",
+        "Required": false,
+        "LabelKey": "advancedFields.debug",
+        "DefaultValue": "disable",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "HTTP Protocol",
+        "Kind": "Text",
+        "Section": "Advanced",
+        "Required": false,
+        "LabelKey": "advancedFields.httpProtocol",
+        "DefaultValue": "disable",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Hostname",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": true,
+        "LabelKey": "hostName",
+        "PlaceholderKey": "enterHostName",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Password",
+        "Kind": "Password",
+        "Section": "Primary",
+        "Required": true,
+        "LabelKey": "password",
+        "PlaceholderKey": "enterPassword",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Port",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": false,
+        "LabelKey": "advancedFields.port",
+        "DefaultValue": "9000",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Readonly",
+        "Kind": "Text",
+        "Section": "Advanced",
+        "Required": false,
+        "LabelKey": "advancedFields.readonly",
+        "DefaultValue": "disable",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Username",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": true,
+        "LabelKey": "username",
+        "PlaceholderKey": "enterUsername",
+        "SupportsOptions": false
+      }
+    ],
+    "Contract": {
+      "Model": "Relational",
+      "Surfaces": [
+        "Browser",
+        "Chat",
+        "Graph",
+        "Query"
+      ],
+      "RootActions": [
+        "Browse",
+        "Execute"
+      ],
+      "BrowsePath": [
+        "Database",
+        "Table"
+      ],
+      "DefaultObjectKind": "Table",
+      "GraphScopeKind": "Database",
+      "ObjectTypes": [
+        {
+          "Kind": "Database",
+          "DataShape": "Metadata",
+          "Actions": [
+            "Browse",
+            "CreateChild",
+            "ViewGraph"
+          ],
+          "Views": [
+            "Graph",
+            "Metadata"
+          ],
+          "SingularLabel": "Database",
+          "PluralLabel": "Databases"
+        },
+        {
+          "Kind": "Table",
+          "DataShape": "Tabular",
+          "Actions": [
+            "DeleteData",
+            "GenerateMockData",
+            "ImportData",
+            "InsertData",
+            "Inspect",
+            "UpdateData",
+            "ViewRows"
+          ],
+          "Views": [
+            "Grid",
+            "Metadata"
+          ],
+          "SingularLabel": "Table",
+          "PluralLabel": "Tables"
+        }
+      ]
+    },
+    "DiscoveryPrefill": {
+      "AdvancedDefaults": []
+    },
+    "IsAWSManaged": false,
+    "SSLModes": [
+      {
+        "value": "disabled",
+        "aliases": null
+      },
+      {
+        "value": "enabled",
+        "aliases": null
+      },
+      {
+        "value": "insecure",
+        "aliases": null
+      }
+    ]
+  },
+  {
+    "Id": "CockroachDB",
+    "Label": "CockroachDB",
+    "Connector": "CockroachDB",
+    "Category": "Database",
+    "Traits": {
+      "Connection": {
+        "Transport": "Network",
+        "HostInputMode": "Hostname",
+        "HostInputURLParser": "None",
+        "SupportsCustomCAContent": true
+      },
+      "Presentation": {
+        "ProfileLabelStrategy": "Default",
+        "SchemaFidelity": "Exact"
+      },
+      "Query": {
+        "SupportsAnalyze": false,
+        "SupportsScripts": true,
+        "SupportsStreaming": true,
+        "SupportsMultiStatement": true,
+        "SupportsSqlImport": true,
+        "ExplainMode": "Explain"
+      },
+      "MockData": {
+        "SupportsRelationalDependencies": true
+      },
+      "Metadata": {
+        "Columns": "Exact",
+        "Constraints": "Exact",
+        "Graph": "Exact",
+        "SystemObjectFiltering": "Exact"
+      }
+    },
+    "ConnectionFields": [
+      {
+        "Key": "Database",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": true,
+        "LabelKey": "databaseName",
+        "PlaceholderKey": "enterDatabase",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Hostname",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": true,
+        "LabelKey": "hostName",
+        "PlaceholderKey": "enterHostName",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Password",
+        "Kind": "Password",
+        "Section": "Primary",
+        "Required": true,
+        "LabelKey": "password",
+        "PlaceholderKey": "enterPassword",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Port",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": false,
+        "LabelKey": "advancedFields.port",
+        "DefaultValue": "26257",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Search Path",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": false,
+        "LabelKey": "advancedFields.searchPath",
+        "PlaceholderKey": "enterSearchPath",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Username",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": true,
+        "LabelKey": "username",
+        "PlaceholderKey": "enterUsername",
+        "SupportsOptions": false
+      }
+    ],
+    "Contract": {
+      "Model": "Relational",
+      "Surfaces": [
+        "Browser",
+        "Chat",
+        "Graph",
+        "Query"
+      ],
+      "RootActions": [
+        "Browse",
+        "Execute"
+      ],
+      "BrowsePath": [
+        "Database",
+        "Schema",
+        "Table"
+      ],
+      "DefaultObjectKind": "Table",
+      "GraphScopeKind": "Schema",
+      "ObjectTypes": [
+        {
+          "Kind": "Database",
+          "DataShape": "Metadata",
+          "Actions": [
+            "Browse",
+            "CreateChild"
+          ],
+          "Views": [
+            "Metadata"
+          ],
+          "SingularLabel": "Database",
+          "PluralLabel": "Databases"
+        },
+        {
+          "Kind": "Schema",
+          "DataShape": "Metadata",
+          "Actions": [
+            "Browse",
+            "CreateChild",
+            "ViewGraph"
+          ],
+          "Views": [
+            "Graph",
+            "Metadata"
+          ],
+          "SingularLabel": "Schema",
+          "PluralLabel": "Schemas"
+        },
+        {
+          "Kind": "Table",
+          "DataShape": "Tabular",
+          "Actions": [
+            "DeleteData",
+            "GenerateMockData",
+            "ImportData",
+            "InsertData",
+            "Inspect",
+            "UpdateData",
+            "ViewRows"
+          ],
+          "Views": [
+            "Grid",
+            "Metadata"
+          ],
+          "SingularLabel": "Table",
+          "PluralLabel": "Tables"
+        },
+        {
+          "Kind": "View",
+          "DataShape": "Tabular",
+          "Actions": [
+            "Inspect",
+            "ViewDefinition",
+            "ViewRows"
+          ],
+          "Views": [
+            "Grid",
+            "Metadata"
+          ],
+          "SingularLabel": "View",
+          "PluralLabel": "Views"
+        }
+      ]
+    },
+    "DiscoveryPrefill": {
+      "AdvancedDefaults": []
+    },
+    "IsAWSManaged": false,
+    "SSLModes": [
+      {
+        "value": "disabled",
+        "aliases": [
+          "disable"
+        ]
+      },
+      {
+        "value": "required",
+        "aliases": [
+          "require"
+        ]
+      },
+      {
+        "value": "verify-ca",
+        "aliases": null
+      },
+      {
+        "value": "verify-identity",
+        "aliases": [
+          "verify-full"
+        ]
+      }
+    ]
+  },
+  {
+    "Id": "DocumentDB",
+    "Label": "DocumentDB",
+    "Connector": "MongoDB",
+    "Category": "Database",
+    "Traits": {
+      "Connection": {
+        "Transport": "Network",
+        "HostInputMode": "HostnameOrURL",
+        "HostInputURLParser": "MongoSRV",
+        "SupportsCustomCAContent": true
+      },
+      "Presentation": {
+        "ProfileLabelStrategy": "Default",
+        "SchemaFidelity": "Sampled"
+      },
+      "Query": {
+        "SupportsAnalyze": false,
+        "SupportsScripts": false,
+        "SupportsStreaming": false,
+        "SupportsMultiStatement": false,
+        "SupportsSqlImport": false,
+        "ExplainMode": "None"
+      },
+      "MockData": {
+        "SupportsRelationalDependencies": true
+      },
+      "Metadata": {
+        "Columns": "Sampled",
+        "Constraints": "Sampled",
+        "Graph": "Inferred",
+        "SystemObjectFiltering": "Exact"
+      }
+    },
+    "ConnectionFields": [
+      {
+        "Key": "Database",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": false,
+        "LabelKey": "databaseName",
+        "PlaceholderKey": "enterDatabase",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Hostname",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": true,
+        "LabelKey": "hostName",
+        "PlaceholderKey": "enterHostName",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Password",
+        "Kind": "Password",
+        "Section": "Primary",
+        "Required": false,
+        "LabelKey": "password",
+        "PlaceholderKey": "enterPassword",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Port",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": false,
+        "LabelKey": "advancedFields.port",
+        "DefaultValue": "27017",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "URL Params",
+        "Kind": "Text",
+        "Section": "Advanced",
+        "Required": false,
+        "LabelKey": "advancedFields.urlParams",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Username",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": false,
+        "LabelKey": "username",
+        "PlaceholderKey": "enterUsername",
+        "SupportsOptions": false
+      }
+    ],
+    "Contract": {
+      "Model": "Document",
+      "Surfaces": [
+        "Browser",
+        "Graph"
+      ],
+      "RootActions": [
+        "Browse"
+      ],
+      "BrowsePath": [
+        "Collection",
+        "Database"
+      ],
+      "DefaultObjectKind": "Collection",
+      "GraphScopeKind": "Database",
+      "ObjectTypes": [
+        {
+          "Kind": "Collection",
+          "DataShape": "Document",
+          "Actions": [
+            "DeleteData",
+            "GenerateMockData",
+            "InsertData",
+            "Inspect",
+            "UpdateData",
+            "ViewRows"
+          ],
+          "Views": [
+            "Grid",
+            "JSON",
+            "Metadata"
+          ],
+          "SingularLabel": "Collection",
+          "PluralLabel": "Collections"
+        },
+        {
+          "Kind": "Database",
+          "DataShape": "Metadata",
+          "Actions": [
+            "Browse",
+            "CreateChild",
+            "ViewGraph"
+          ],
+          "Views": [
+            "Graph",
+            "Metadata"
+          ],
+          "SingularLabel": "Database",
+          "PluralLabel": "Databases"
+        },
+        {
+          "Kind": "Index",
+          "DataShape": "Metadata",
+          "Actions": [
+            "Browse"
+          ],
+          "Views": [
+            "Metadata"
+          ],
+          "SingularLabel": "Index",
+          "PluralLabel": "Indexes"
+        }
+      ]
+    },
+    "DiscoveryPrefill": {
+      "AdvancedDefaults": [
+        {
+          "Key": "URL Params",
+          "Value": "?tls=true\u0026tlsInsecure=true\u0026replicaSet=rs0\u0026retryWrites=false\u0026readPreference=secondaryPreferred",
+          "MetadataKey": "",
+          "DefaultValue": "",
+          "ProviderTypes": null,
+          "Conditions": []
+        }
+      ]
+    },
+    "IsAWSManaged": true,
+    "SSLModes": [
+      {
+        "value": "disabled",
+        "aliases": null
+      },
+      {
+        "value": "enabled",
+        "aliases": null
+      },
+      {
+        "value": "insecure",
+        "aliases": null
+      }
+    ]
+  },
+  {
+    "Id": "Dragonfly",
+    "Label": "Dragonfly",
+    "Connector": "Redis",
+    "Category": "Cache",
+    "Traits": {
+      "Connection": {
+        "Transport": "Network",
+        "HostInputMode": "Hostname",
+        "HostInputURLParser": "None",
+        "SupportsCustomCAContent": true
+      },
+      "Presentation": {
+        "ProfileLabelStrategy": "Hostname",
+        "SchemaFidelity": "Exact"
+      },
+      "Query": {
+        "SupportsAnalyze": false,
+        "SupportsScripts": false,
+        "SupportsStreaming": false,
+        "SupportsMultiStatement": false,
+        "SupportsSqlImport": false,
+        "ExplainMode": "None"
+      },
+      "MockData": {
+        "SupportsRelationalDependencies": false
+      },
+      "Metadata": {
+        "Columns": "Synthetic",
+        "Constraints": "Unsupported",
+        "Graph": "Unsupported",
+        "SystemObjectFiltering": "Unsupported"
+      }
+    },
+    "ConnectionFields": [
+      {
+        "Key": "Hostname",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": true,
+        "LabelKey": "hostName",
+        "PlaceholderKey": "enterHostName",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Password",
+        "Kind": "Password",
+        "Section": "Primary",
+        "Required": false,
+        "LabelKey": "password",
+        "PlaceholderKey": "enterPassword",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Port",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": false,
+        "LabelKey": "advancedFields.port",
+        "DefaultValue": "6379",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Username",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": false,
+        "LabelKey": "username",
+        "PlaceholderKey": "enterUsername",
+        "SupportsOptions": false
+      }
+    ],
+    "Contract": {
+      "Model": "KeyValue",
+      "Surfaces": [
+        "Browser"
+      ],
+      "RootActions": [
+        "Browse"
+      ],
+      "BrowsePath": [
+        "Database",
+        "Key"
+      ],
+      "DefaultObjectKind": "Key",
+      "ObjectTypes": [
+        {
+          "Kind": "Database",
+          "DataShape": "Metadata",
+          "Actions": [
+            "Browse",
+            "CreateChild"
+          ],
+          "Views": [
+            "Metadata"
+          ],
+          "SingularLabel": "Database",
+          "PluralLabel": "Databases"
+        },
+        {
+          "Kind": "Key",
+          "DataShape": "Content",
+          "Actions": [
+            "DeleteData",
+            "InsertData",
+            "Inspect",
+            "UpdateData",
+            "ViewRows"
+          ],
+          "Views": [
+            "Grid",
+            "Metadata"
+          ],
+          "SingularLabel": "Key",
+          "PluralLabel": "Keys"
+        }
+      ]
+    },
+    "DiscoveryPrefill": {
+      "AdvancedDefaults": [
+        {
+          "Key": "SSL Mode",
+          "Value": "enabled",
+          "MetadataKey": "",
+          "DefaultValue": "",
+          "ProviderTypes": [
+            "Azure"
+          ],
+          "Conditions": []
+        }
+      ]
+    },
+    "IsAWSManaged": false,
+    "SSLModes": [
+      {
+        "value": "disabled",
+        "aliases": null
+      },
+      {
+        "value": "enabled",
+        "aliases": null
+      },
+      {
+        "value": "insecure",
+        "aliases": null
+      }
+    ]
+  },
+  {
+    "Id": "DuckDB",
+    "Label": "DuckDB",
+    "Connector": "DuckDB",
+    "Category": "Database",
+    "Traits": {
+      "Connection": {
+        "Transport": "File",
+        "HostInputMode": "None",
+        "HostInputURLParser": "None",
+        "SupportsCustomCAContent": true
+      },
+      "Presentation": {
+        "ProfileLabelStrategy": "Database",
+        "SchemaFidelity": "Exact"
+      },
+      "Query": {
+        "SupportsAnalyze": false,
+        "SupportsScripts": true,
+        "SupportsStreaming": true,
+        "SupportsMultiStatement": false,
+        "SupportsSqlImport": true,
+        "ExplainMode": "Explain"
+      },
+      "MockData": {
+        "SupportsRelationalDependencies": true
+      },
+      "Metadata": {
+        "Columns": "Exact",
+        "Constraints": "Exact",
+        "Graph": "Exact",
+        "SystemObjectFiltering": "Exact"
+      }
+    },
+    "ConnectionFields": [
+      {
+        "Key": "Database",
+        "Kind": "FilePath",
+        "Section": "Primary",
+        "Required": true,
+        "LabelKey": "databaseFilePath",
+        "PlaceholderKey": "selectOrEnterDatabasePath",
+        "SupportsOptions": true
+      }
+    ],
+    "Contract": {
+      "Model": "Relational",
+      "Surfaces": [
+        "Browser",
+        "Chat",
+        "Graph",
+        "Query"
+      ],
+      "RootActions": [
+        "Browse",
+        "CreateChild",
+        "Execute"
+      ],
+      "BrowsePath": [
+        "Schema",
+        "Table"
+      ],
+      "DefaultObjectKind": "Table",
+      "GraphScopeKind": "Schema",
+      "ObjectTypes": [
+        {
+          "Kind": "Schema",
+          "DataShape": "Metadata",
+          "Actions": [
+            "Browse",
+            "CreateChild",
+            "ViewGraph"
+          ],
+          "Views": [
+            "Graph",
+            "Metadata"
+          ],
+          "SingularLabel": "Schema",
+          "PluralLabel": "Schemas"
+        },
+        {
+          "Kind": "Table",
+          "DataShape": "Tabular",
+          "Actions": [
+            "DeleteData",
+            "GenerateMockData",
+            "ImportData",
+            "InsertData",
+            "Inspect",
+            "UpdateData",
+            "ViewRows"
+          ],
+          "Views": [
+            "Grid",
+            "Metadata"
+          ],
+          "SingularLabel": "Table",
+          "PluralLabel": "Tables"
+        },
+        {
+          "Kind": "View",
+          "DataShape": "Tabular",
+          "Actions": [
+            "Inspect",
+            "ViewDefinition",
+            "ViewRows"
+          ],
+          "Views": [
+            "Grid",
+            "Metadata"
+          ],
+          "SingularLabel": "View",
+          "PluralLabel": "Views"
+        }
+      ]
+    },
+    "DiscoveryPrefill": {
+      "AdvancedDefaults": []
+    },
+    "IsAWSManaged": false,
+    "SSLModes": []
+  },
+  {
+    "Id": "ElastiCache",
+    "Label": "ElastiCache",
+    "Connector": "Redis",
+    "Category": "Cache",
+    "Traits": {
+      "Connection": {
+        "Transport": "Network",
+        "HostInputMode": "Hostname",
+        "HostInputURLParser": "None",
+        "SupportsCustomCAContent": true
+      },
+      "Presentation": {
+        "ProfileLabelStrategy": "Hostname",
+        "SchemaFidelity": "Exact"
+      },
+      "Query": {
+        "SupportsAnalyze": false,
+        "SupportsScripts": false,
+        "SupportsStreaming": false,
+        "SupportsMultiStatement": false,
+        "SupportsSqlImport": false,
+        "ExplainMode": "None"
+      },
+      "MockData": {
+        "SupportsRelationalDependencies": false
+      },
+      "Metadata": {
+        "Columns": "Synthetic",
+        "Constraints": "Unsupported",
+        "Graph": "Unsupported",
+        "SystemObjectFiltering": "Unsupported"
+      }
+    },
+    "ConnectionFields": [
+      {
+        "Key": "Hostname",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": true,
+        "LabelKey": "hostName",
+        "PlaceholderKey": "enterHostName",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Password",
+        "Kind": "Password",
+        "Section": "Primary",
+        "Required": false,
+        "LabelKey": "password",
+        "PlaceholderKey": "enterPassword",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Port",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": false,
+        "LabelKey": "advancedFields.port",
+        "DefaultValue": "6379",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "SSL Mode",
+        "Kind": "Text",
+        "Section": "Advanced",
+        "Required": false,
+        "LabelKey": "advancedFields.sslMode",
+        "DefaultValue": "enabled",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Username",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": false,
+        "LabelKey": "username",
+        "PlaceholderKey": "enterUsername",
+        "SupportsOptions": false
+      }
+    ],
+    "Contract": {
+      "Model": "KeyValue",
+      "Surfaces": [
+        "Browser"
+      ],
+      "RootActions": [
+        "Browse"
+      ],
+      "BrowsePath": [
+        "Database",
+        "Key"
+      ],
+      "DefaultObjectKind": "Key",
+      "ObjectTypes": [
+        {
+          "Kind": "Database",
+          "DataShape": "Metadata",
+          "Actions": [
+            "Browse",
+            "CreateChild"
+          ],
+          "Views": [
+            "Metadata"
+          ],
+          "SingularLabel": "Database",
+          "PluralLabel": "Databases"
+        },
+        {
+          "Kind": "Key",
+          "DataShape": "Content",
+          "Actions": [
+            "DeleteData",
+            "InsertData",
+            "Inspect",
+            "UpdateData",
+            "ViewRows"
+          ],
+          "Views": [
+            "Grid",
+            "Metadata"
+          ],
+          "SingularLabel": "Key",
+          "PluralLabel": "Keys"
+        }
+      ]
+    },
+    "DiscoveryPrefill": {
+      "AdvancedDefaults": [
+        {
+          "Key": "SSL Mode",
+          "Value": "enabled",
+          "MetadataKey": "",
+          "DefaultValue": "",
+          "ProviderTypes": null,
+          "Conditions": [
+            {
+              "Key": "transitEncryption",
+              "Value": "true"
+            }
+          ]
+        }
+      ]
+    },
+    "IsAWSManaged": true,
+    "SSLModes": [
+      {
+        "value": "disabled",
+        "aliases": null
+      },
+      {
+        "value": "enabled",
+        "aliases": null
+      },
+      {
+        "value": "insecure",
+        "aliases": null
+      }
+    ]
+  },
+  {
+    "Id": "ElasticSearch",
+    "Label": "ElasticSearch",
+    "Connector": "ElasticSearch",
+    "Category": "Search",
+    "Traits": {
+      "Connection": {
+        "Transport": "Network",
+        "HostInputMode": "Hostname",
+        "HostInputURLParser": "None",
+        "SupportsCustomCAContent": true
+      },
+      "Presentation": {
+        "ProfileLabelStrategy": "Default",
+        "SchemaFidelity": "Sampled"
+      },
+      "Query": {
+        "SupportsAnalyze": false,
+        "SupportsScripts": false,
+        "SupportsStreaming": false,
+        "SupportsMultiStatement": false,
+        "SupportsSqlImport": false,
+        "ExplainMode": "None"
+      },
+      "MockData": {
+        "SupportsRelationalDependencies": false
+      },
+      "Metadata": {
+        "Columns": "Sampled",
+        "Constraints": "Sampled",
+        "Graph": "Inferred",
+        "SystemObjectFiltering": "Exact"
+      }
+    },
+    "ConnectionFields": [
+      {
+        "Key": "Hostname",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": true,
+        "LabelKey": "hostName",
+        "PlaceholderKey": "enterHostName",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Password",
+        "Kind": "Password",
+        "Section": "Primary",
+        "Required": false,
+        "LabelKey": "password",
+        "PlaceholderKey": "enterPassword",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Port",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": false,
+        "LabelKey": "advancedFields.port",
+        "DefaultValue": "9200",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Username",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": false,
+        "LabelKey": "username",
+        "PlaceholderKey": "enterUsername",
+        "SupportsOptions": false
+      }
+    ],
+    "Contract": {
+      "Model": "Search",
+      "Surfaces": [
+        "Browser",
+        "Graph"
+      ],
+      "RootActions": [
+        "Browse"
+      ],
+      "BrowsePath": [
+        "Index"
+      ],
+      "DefaultObjectKind": "Index",
+      "GraphScopeKind": "Index",
+      "ObjectTypes": [
+        {
+          "Kind": "Index",
+          "DataShape": "Document",
+          "Actions": [
+            "DeleteData",
+            "InsertData",
+            "Inspect",
+            "UpdateData",
+            "ViewGraph",
+            "ViewRows"
+          ],
+          "Views": [
+            "Graph",
+            "Grid",
+            "JSON",
+            "Metadata"
+          ],
+          "SingularLabel": "Index",
+          "PluralLabel": "Indices"
+        }
+      ]
+    },
+    "DiscoveryPrefill": {
+      "AdvancedDefaults": []
+    },
+    "IsAWSManaged": false,
+    "SSLModes": [
+      {
+        "value": "disabled",
+        "aliases": null
+      },
+      {
+        "value": "enabled",
+        "aliases": null
+      },
+      {
+        "value": "insecure",
+        "aliases": null
+      }
+    ]
+  },
+  {
+    "Id": "FerretDB",
+    "Label": "FerretDB",
+    "Connector": "MongoDB",
+    "Category": "Database",
+    "Traits": {
+      "Connection": {
+        "Transport": "Network",
+        "HostInputMode": "HostnameOrURL",
+        "HostInputURLParser": "MongoSRV",
+        "SupportsCustomCAContent": true
+      },
+      "Presentation": {
+        "ProfileLabelStrategy": "Default",
+        "SchemaFidelity": "Sampled"
+      },
+      "Query": {
+        "SupportsAnalyze": false,
+        "SupportsScripts": false,
+        "SupportsStreaming": false,
+        "SupportsMultiStatement": false,
+        "SupportsSqlImport": false,
+        "ExplainMode": "None"
+      },
+      "MockData": {
+        "SupportsRelationalDependencies": true
+      },
+      "Metadata": {
+        "Columns": "Sampled",
+        "Constraints": "Sampled",
+        "Graph": "Inferred",
+        "SystemObjectFiltering": "Exact"
+      }
+    },
+    "ConnectionFields": [
+      {
+        "Key": "DNS Enabled",
+        "Kind": "Text",
+        "Section": "Advanced",
+        "Required": false,
+        "LabelKey": "advancedFields.dnsEnabled",
+        "DefaultValue": "false",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Database",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": false,
+        "LabelKey": "databaseName",
+        "PlaceholderKey": "enterDatabase",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Hostname",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": true,
+        "LabelKey": "hostName",
+        "PlaceholderKey": "enterHostName",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Password",
+        "Kind": "Password",
+        "Section": "Primary",
+        "Required": false,
+        "LabelKey": "password",
+        "PlaceholderKey": "enterPassword",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Port",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": false,
+        "LabelKey": "advancedFields.port",
+        "DefaultValue": "27017",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "URL Params",
+        "Kind": "Text",
+        "Section": "Advanced",
+        "Required": false,
+        "LabelKey": "advancedFields.urlParams",
+        "DefaultValue": "?",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Username",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": false,
+        "LabelKey": "username",
+        "PlaceholderKey": "enterUsername",
+        "SupportsOptions": false
+      }
+    ],
+    "Contract": {
+      "Model": "Document",
+      "Surfaces": [
+        "Browser",
+        "Graph"
+      ],
+      "RootActions": [
+        "Browse"
+      ],
+      "BrowsePath": [
+        "Collection",
+        "Database"
+      ],
+      "DefaultObjectKind": "Collection",
+      "GraphScopeKind": "Database",
+      "ObjectTypes": [
+        {
+          "Kind": "Collection",
+          "DataShape": "Document",
+          "Actions": [
+            "DeleteData",
+            "GenerateMockData",
+            "InsertData",
+            "Inspect",
+            "UpdateData",
+            "ViewRows"
+          ],
+          "Views": [
+            "Grid",
+            "JSON",
+            "Metadata"
+          ],
+          "SingularLabel": "Collection",
+          "PluralLabel": "Collections"
+        },
+        {
+          "Kind": "Database",
+          "DataShape": "Metadata",
+          "Actions": [
+            "Browse",
+            "CreateChild",
+            "ViewGraph"
+          ],
+          "Views": [
+            "Graph",
+            "Metadata"
+          ],
+          "SingularLabel": "Database",
+          "PluralLabel": "Databases"
+        },
+        {
+          "Kind": "Index",
+          "DataShape": "Metadata",
+          "Actions": [
+            "Browse"
+          ],
+          "Views": [
+            "Metadata"
+          ],
+          "SingularLabel": "Index",
+          "PluralLabel": "Indexes"
+        }
+      ]
+    },
+    "DiscoveryPrefill": {
+      "AdvancedDefaults": [
+        {
+          "Key": "URL Params",
+          "Value": "?tls=true\u0026tlsInsecure=true\u0026retryWrites=false",
+          "MetadataKey": "",
+          "DefaultValue": "",
+          "ProviderTypes": [
+            "Azure"
+          ],
+          "Conditions": []
+        }
+      ]
+    },
+    "IsAWSManaged": false,
+    "SSLModes": [
+      {
+        "value": "disabled",
+        "aliases": null
+      },
+      {
+        "value": "enabled",
+        "aliases": null
+      },
+      {
+        "value": "insecure",
+        "aliases": null
+      }
+    ]
+  },
+  {
+    "Id": "MariaDB",
+    "Label": "MariaDB",
+    "Connector": "MariaDB",
+    "Category": "Database",
+    "Traits": {
+      "Connection": {
+        "Transport": "Network",
+        "HostInputMode": "Hostname",
+        "HostInputURLParser": "None",
+        "SupportsCustomCAContent": true
+      },
+      "Presentation": {
+        "ProfileLabelStrategy": "Default",
+        "SchemaFidelity": "Exact"
+      },
+      "Query": {
+        "SupportsAnalyze": false,
+        "SupportsScripts": true,
+        "SupportsStreaming": true,
+        "SupportsMultiStatement": true,
+        "SupportsSqlImport": true,
+        "ExplainMode": "Explain"
+      },
+      "MockData": {
+        "SupportsRelationalDependencies": true
+      },
+      "Metadata": {
+        "Columns": "Exact",
+        "Constraints": "Exact",
+        "Graph": "Exact",
+        "SystemObjectFiltering": "Exact"
+      }
+    },
+    "ConnectionFields": [
+      {
+        "Key": "Allow clear text passwords",
+        "Kind": "Text",
+        "Section": "Advanced",
+        "Required": false,
+        "LabelKey": "advancedFields.allowClearTextPasswords",
+        "DefaultValue": "0",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Database",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": true,
+        "LabelKey": "databaseName",
+        "PlaceholderKey": "enterDatabase",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Hostname",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": true,
+        "LabelKey": "hostName",
+        "PlaceholderKey": "enterHostName",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Loc",
+        "Kind": "Text",
+        "Section": "Advanced",
+        "Required": false,
+        "LabelKey": "advancedFields.loc",
+        "DefaultValue": "UTC",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Parse Time",
+        "Kind": "Text",
+        "Section": "Advanced",
+        "Required": false,
+        "LabelKey": "advancedFields.parseTime",
+        "DefaultValue": "True",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Password",
+        "Kind": "Password",
+        "Section": "Primary",
+        "Required": true,
+        "LabelKey": "password",
+        "PlaceholderKey": "enterPassword",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Port",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": false,
+        "LabelKey": "advancedFields.port",
+        "DefaultValue": "3306",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Username",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": true,
+        "LabelKey": "username",
+        "PlaceholderKey": "enterUsername",
+        "SupportsOptions": false
+      }
+    ],
+    "Contract": {
+      "Model": "Relational",
+      "Surfaces": [
+        "Browser",
+        "Chat",
+        "Graph",
+        "Query"
+      ],
+      "RootActions": [
+        "Browse",
+        "Execute"
+      ],
+      "BrowsePath": [
+        "Database",
+        "Table"
+      ],
+      "DefaultObjectKind": "Table",
+      "GraphScopeKind": "Database",
+      "ObjectTypes": [
+        {
+          "Kind": "Database",
+          "DataShape": "Metadata",
+          "Actions": [
+            "Browse",
+            "CreateChild",
+            "ViewGraph"
+          ],
+          "Views": [
+            "Graph",
+            "Metadata"
+          ],
+          "SingularLabel": "Database",
+          "PluralLabel": "Databases"
+        },
+        {
+          "Kind": "Table",
+          "DataShape": "Tabular",
+          "Actions": [
+            "DeleteData",
+            "GenerateMockData",
+            "ImportData",
+            "InsertData",
+            "Inspect",
+            "UpdateData",
+            "ViewRows"
+          ],
+          "Views": [
+            "Grid",
+            "Metadata"
+          ],
+          "SingularLabel": "Table",
+          "PluralLabel": "Tables"
+        },
+        {
+          "Kind": "View",
+          "DataShape": "Tabular",
+          "Actions": [
+            "Inspect",
+            "ViewDefinition",
+            "ViewRows"
+          ],
+          "Views": [
+            "Grid",
+            "Metadata"
+          ],
+          "SingularLabel": "View",
+          "PluralLabel": "Views"
+        }
+      ]
+    },
+    "DiscoveryPrefill": {
+      "AdvancedDefaults": [
+        {
+          "Key": "SSL Mode",
+          "Value": "require",
+          "MetadataKey": "",
+          "DefaultValue": "",
+          "ProviderTypes": null,
+          "Conditions": []
+        }
+      ]
+    },
+    "IsAWSManaged": false,
+    "SSLModes": [
+      {
+        "value": "disabled",
+        "aliases": [
+          "DISABLED"
+        ]
+      },
+      {
+        "value": "preferred",
+        "aliases": [
+          "PREFERRED"
+        ]
+      },
+      {
+        "value": "required",
+        "aliases": [
+          "REQUIRED"
+        ]
+      },
+      {
+        "value": "verify-ca",
+        "aliases": [
+          "VERIFY_CA"
+        ]
+      },
+      {
+        "value": "verify-identity",
+        "aliases": [
+          "VERIFY_IDENTITY"
+        ]
+      }
+    ]
+  },
+  {
+    "Id": "Memcached",
+    "Label": "Memcached",
+    "Connector": "Memcached",
+    "Category": "Cache",
+    "Traits": {
+      "Connection": {
+        "Transport": "Network",
+        "HostInputMode": "Hostname",
+        "HostInputURLParser": "None",
+        "SupportsCustomCAContent": true
+      },
+      "Presentation": {
+        "ProfileLabelStrategy": "Default",
+        "SchemaFidelity": "Exact"
+      },
+      "Query": {
+        "SupportsAnalyze": false,
+        "SupportsScripts": false,
+        "SupportsStreaming": false,
+        "SupportsMultiStatement": false,
+        "SupportsSqlImport": false,
+        "ExplainMode": "None"
+      },
+      "MockData": {
+        "SupportsRelationalDependencies": false
+      },
+      "Metadata": {
+        "Columns": "Synthetic",
+        "Constraints": "Unsupported",
+        "Graph": "Unsupported",
+        "SystemObjectFiltering": "Exact"
+      }
+    },
+    "ConnectionFields": [
+      {
+        "Key": "Hostname",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": true,
+        "LabelKey": "hostName",
+        "PlaceholderKey": "enterHostName",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Password",
+        "Kind": "Password",
+        "Section": "Primary",
+        "Required": false,
+        "LabelKey": "password",
+        "PlaceholderKey": "enterPassword",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Port",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": false,
+        "LabelKey": "advancedFields.port",
+        "DefaultValue": "11211",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Username",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": false,
+        "LabelKey": "username",
+        "PlaceholderKey": "enterUsername",
+        "SupportsOptions": false
+      }
+    ],
+    "Contract": {
+      "Model": "KeyValue",
+      "Surfaces": [
+        "Browser"
+      ],
+      "RootActions": [
+        "Browse"
+      ],
+      "BrowsePath": [
+        "Item"
+      ],
+      "DefaultObjectKind": "Item",
+      "ObjectTypes": [
+        {
+          "Kind": "Item",
+          "DataShape": "Content",
+          "Actions": [
+            "DeleteData",
+            "Inspect",
+            "UpdateData",
+            "ViewRows"
+          ],
+          "Views": [
+            "Grid",
+            "Metadata"
+          ],
+          "SingularLabel": "Item",
+          "PluralLabel": "Items"
+        }
+      ]
+    },
+    "DiscoveryPrefill": {
+      "AdvancedDefaults": []
+    },
+    "IsAWSManaged": false,
+    "SSLModes": [
+      {
+        "value": "disabled",
+        "aliases": null
+      },
+      {
+        "value": "enabled",
+        "aliases": null
+      },
+      {
+        "value": "insecure",
+        "aliases": null
+      }
+    ]
+  },
+  {
+    "Id": "MongoDB",
+    "Label": "MongoDB",
+    "Connector": "MongoDB",
+    "Category": "Database",
+    "Traits": {
+      "Connection": {
+        "Transport": "Network",
+        "HostInputMode": "HostnameOrURL",
+        "HostInputURLParser": "MongoSRV",
+        "SupportsCustomCAContent": true
+      },
+      "Presentation": {
+        "ProfileLabelStrategy": "Default",
+        "SchemaFidelity": "Sampled"
+      },
+      "Query": {
+        "SupportsAnalyze": false,
+        "SupportsScripts": false,
+        "SupportsStreaming": false,
+        "SupportsMultiStatement": false,
+        "SupportsSqlImport": false,
+        "ExplainMode": "None"
+      },
+      "MockData": {
+        "SupportsRelationalDependencies": true
+      },
+      "Metadata": {
+        "Columns": "Sampled",
+        "Constraints": "Sampled",
+        "Graph": "Inferred",
+        "SystemObjectFiltering": "Exact"
+      }
+    },
+    "ConnectionFields": [
+      {
+        "Key": "DNS Enabled",
+        "Kind": "Text",
+        "Section": "Advanced",
+        "Required": false,
+        "LabelKey": "advancedFields.dnsEnabled",
+        "DefaultValue": "false",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Database",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": false,
+        "LabelKey": "databaseName",
+        "PlaceholderKey": "enterDatabase",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Hostname",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": true,
+        "LabelKey": "hostName",
+        "PlaceholderKey": "enterHostName",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Password",
+        "Kind": "Password",
+        "Section": "Primary",
+        "Required": false,
+        "LabelKey": "password",
+        "PlaceholderKey": "enterPassword",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Port",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": false,
+        "LabelKey": "advancedFields.port",
+        "DefaultValue": "27017",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "URL Params",
+        "Kind": "Text",
+        "Section": "Advanced",
+        "Required": false,
+        "LabelKey": "advancedFields.urlParams",
+        "DefaultValue": "?",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Username",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": false,
+        "LabelKey": "username",
+        "PlaceholderKey": "enterUsername",
+        "SupportsOptions": false
+      }
+    ],
+    "Contract": {
+      "Model": "Document",
+      "Surfaces": [
+        "Browser",
+        "Graph"
+      ],
+      "RootActions": [
+        "Browse"
+      ],
+      "BrowsePath": [
+        "Collection",
+        "Database"
+      ],
+      "DefaultObjectKind": "Collection",
+      "GraphScopeKind": "Database",
+      "ObjectTypes": [
+        {
+          "Kind": "Collection",
+          "DataShape": "Document",
+          "Actions": [
+            "DeleteData",
+            "GenerateMockData",
+            "InsertData",
+            "Inspect",
+            "UpdateData",
+            "ViewRows"
+          ],
+          "Views": [
+            "Grid",
+            "JSON",
+            "Metadata"
+          ],
+          "SingularLabel": "Collection",
+          "PluralLabel": "Collections"
+        },
+        {
+          "Kind": "Database",
+          "DataShape": "Metadata",
+          "Actions": [
+            "Browse",
+            "CreateChild",
+            "ViewGraph"
+          ],
+          "Views": [
+            "Graph",
+            "Metadata"
+          ],
+          "SingularLabel": "Database",
+          "PluralLabel": "Databases"
+        },
+        {
+          "Kind": "Index",
+          "DataShape": "Metadata",
+          "Actions": [
+            "Browse"
+          ],
+          "Views": [
+            "Metadata"
+          ],
+          "SingularLabel": "Index",
+          "PluralLabel": "Indexes"
+        }
+      ]
+    },
+    "DiscoveryPrefill": {
+      "AdvancedDefaults": [
+        {
+          "Key": "URL Params",
+          "Value": "?tls=true\u0026tlsInsecure=true\u0026retryWrites=false",
+          "MetadataKey": "",
+          "DefaultValue": "",
+          "ProviderTypes": [
+            "Azure"
+          ],
+          "Conditions": []
+        }
+      ]
+    },
+    "IsAWSManaged": false,
+    "SSLModes": [
+      {
+        "value": "disabled",
+        "aliases": null
+      },
+      {
+        "value": "enabled",
+        "aliases": null
+      },
+      {
+        "value": "insecure",
+        "aliases": null
+      }
+    ]
+  },
+  {
+    "Id": "MySQL",
+    "Label": "MySQL",
+    "Connector": "MySQL",
+    "Category": "Database",
+    "Traits": {
+      "Connection": {
+        "Transport": "Network",
+        "HostInputMode": "Hostname",
+        "HostInputURLParser": "None",
+        "SupportsCustomCAContent": true
+      },
+      "Presentation": {
+        "ProfileLabelStrategy": "Default",
+        "SchemaFidelity": "Exact"
+      },
+      "Query": {
+        "SupportsAnalyze": false,
+        "SupportsScripts": true,
+        "SupportsStreaming": true,
+        "SupportsMultiStatement": true,
+        "SupportsSqlImport": true,
+        "ExplainMode": "Explain"
+      },
+      "MockData": {
+        "SupportsRelationalDependencies": true
+      },
+      "Metadata": {
+        "Columns": "Exact",
+        "Constraints": "Exact",
+        "Graph": "Exact",
+        "SystemObjectFiltering": "Exact"
+      }
+    },
+    "ConnectionFields": [
+      {
+        "Key": "Allow clear text passwords",
+        "Kind": "Text",
+        "Section": "Advanced",
+        "Required": false,
+        "LabelKey": "advancedFields.allowClearTextPasswords",
+        "DefaultValue": "0",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Database",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": true,
+        "LabelKey": "databaseName",
+        "PlaceholderKey": "enterDatabase",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Hostname",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": true,
+        "LabelKey": "hostName",
+        "PlaceholderKey": "enterHostName",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Loc",
+        "Kind": "Text",
+        "Section": "Advanced",
+        "Required": false,
+        "LabelKey": "advancedFields.loc",
+        "DefaultValue": "UTC",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Parse Time",
+        "Kind": "Text",
+        "Section": "Advanced",
+        "Required": false,
+        "LabelKey": "advancedFields.parseTime",
+        "DefaultValue": "True",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Password",
+        "Kind": "Password",
+        "Section": "Primary",
+        "Required": true,
+        "LabelKey": "password",
+        "PlaceholderKey": "enterPassword",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Port",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": false,
+        "LabelKey": "advancedFields.port",
+        "DefaultValue": "3306",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Username",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": true,
+        "LabelKey": "username",
+        "PlaceholderKey": "enterUsername",
+        "SupportsOptions": false
+      }
+    ],
+    "Contract": {
+      "Model": "Relational",
+      "Surfaces": [
+        "Browser",
+        "Chat",
+        "Graph",
+        "Query"
+      ],
+      "RootActions": [
+        "Browse",
+        "Execute"
+      ],
+      "BrowsePath": [
+        "Database",
+        "Table"
+      ],
+      "DefaultObjectKind": "Table",
+      "GraphScopeKind": "Database",
+      "ObjectTypes": [
+        {
+          "Kind": "Database",
+          "DataShape": "Metadata",
+          "Actions": [
+            "Browse",
+            "CreateChild",
+            "ViewGraph"
+          ],
+          "Views": [
+            "Graph",
+            "Metadata"
+          ],
+          "SingularLabel": "Database",
+          "PluralLabel": "Databases"
+        },
+        {
+          "Kind": "Table",
+          "DataShape": "Tabular",
+          "Actions": [
+            "DeleteData",
+            "GenerateMockData",
+            "ImportData",
+            "InsertData",
+            "Inspect",
+            "UpdateData",
+            "ViewRows"
+          ],
+          "Views": [
+            "Grid",
+            "Metadata"
+          ],
+          "SingularLabel": "Table",
+          "PluralLabel": "Tables"
+        },
+        {
+          "Kind": "View",
+          "DataShape": "Tabular",
+          "Actions": [
+            "Inspect",
+            "ViewDefinition",
+            "ViewRows"
+          ],
+          "Views": [
+            "Grid",
+            "Metadata"
+          ],
+          "SingularLabel": "View",
+          "PluralLabel": "Views"
+        }
+      ]
+    },
+    "DiscoveryPrefill": {
+      "AdvancedDefaults": [
+        {
+          "Key": "SSL Mode",
+          "Value": "require",
+          "MetadataKey": "",
+          "DefaultValue": "",
+          "ProviderTypes": null,
+          "Conditions": []
+        }
+      ]
+    },
+    "IsAWSManaged": false,
+    "SSLModes": [
+      {
+        "value": "disabled",
+        "aliases": [
+          "DISABLED"
+        ]
+      },
+      {
+        "value": "preferred",
+        "aliases": [
+          "PREFERRED"
+        ]
+      },
+      {
+        "value": "required",
+        "aliases": [
+          "REQUIRED"
+        ]
+      },
+      {
+        "value": "verify-ca",
+        "aliases": [
+          "VERIFY_CA"
+        ]
+      },
+      {
+        "value": "verify-identity",
+        "aliases": [
+          "VERIFY_IDENTITY"
+        ]
+      }
+    ]
+  },
+  {
+    "Id": "OpenSearch",
+    "Label": "OpenSearch",
+    "Connector": "ElasticSearch",
+    "Category": "Search",
+    "Traits": {
+      "Connection": {
+        "Transport": "Network",
+        "HostInputMode": "Hostname",
+        "HostInputURLParser": "None",
+        "SupportsCustomCAContent": true
+      },
+      "Presentation": {
+        "ProfileLabelStrategy": "Default",
+        "SchemaFidelity": "Sampled"
+      },
+      "Query": {
+        "SupportsAnalyze": false,
+        "SupportsScripts": false,
+        "SupportsStreaming": false,
+        "SupportsMultiStatement": false,
+        "SupportsSqlImport": false,
+        "ExplainMode": "None"
+      },
+      "MockData": {
+        "SupportsRelationalDependencies": false
+      },
+      "Metadata": {
+        "Columns": "Sampled",
+        "Constraints": "Sampled",
+        "Graph": "Inferred",
+        "SystemObjectFiltering": "Exact"
+      }
+    },
+    "ConnectionFields": [
+      {
+        "Key": "Hostname",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": true,
+        "LabelKey": "hostName",
+        "PlaceholderKey": "enterHostName",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Password",
+        "Kind": "Password",
+        "Section": "Primary",
+        "Required": false,
+        "LabelKey": "password",
+        "PlaceholderKey": "enterPassword",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Port",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": false,
+        "LabelKey": "advancedFields.port",
+        "DefaultValue": "9200",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Username",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": false,
+        "LabelKey": "username",
+        "PlaceholderKey": "enterUsername",
+        "SupportsOptions": false
+      }
+    ],
+    "Contract": {
+      "Model": "Search",
+      "Surfaces": [
+        "Browser",
+        "Graph"
+      ],
+      "RootActions": [
+        "Browse"
+      ],
+      "BrowsePath": [
+        "Index"
+      ],
+      "DefaultObjectKind": "Index",
+      "GraphScopeKind": "Index",
+      "ObjectTypes": [
+        {
+          "Kind": "Index",
+          "DataShape": "Document",
+          "Actions": [
+            "DeleteData",
+            "InsertData",
+            "Inspect",
+            "UpdateData",
+            "ViewGraph",
+            "ViewRows"
+          ],
+          "Views": [
+            "Graph",
+            "Grid",
+            "JSON",
+            "Metadata"
+          ],
+          "SingularLabel": "Index",
+          "PluralLabel": "Indices"
+        }
+      ]
+    },
+    "DiscoveryPrefill": {
+      "AdvancedDefaults": []
+    },
+    "IsAWSManaged": false,
+    "SSLModes": [
+      {
+        "value": "disabled",
+        "aliases": null
+      },
+      {
+        "value": "enabled",
+        "aliases": null
+      },
+      {
+        "value": "insecure",
+        "aliases": null
+      }
+    ]
+  },
+  {
+    "Id": "Postgres",
+    "Label": "Postgres",
+    "Connector": "Postgres",
+    "Category": "Database",
+    "Traits": {
+      "Connection": {
+        "Transport": "Network",
+        "HostInputMode": "HostnameOrURL",
+        "HostInputURLParser": "Postgres",
+        "SupportsCustomCAContent": true
+      },
+      "Presentation": {
+        "ProfileLabelStrategy": "Default",
+        "SchemaFidelity": "Exact"
+      },
+      "Query": {
+        "SupportsAnalyze": true,
+        "SupportsScripts": true,
+        "SupportsStreaming": true,
+        "SupportsMultiStatement": true,
+        "SupportsSqlImport": true,
+        "ExplainMode": "ExplainAnalyze"
+      },
+      "MockData": {
+        "SupportsRelationalDependencies": true
+      },
+      "Metadata": {
+        "Columns": "Exact",
+        "Constraints": "Exact",
+        "Graph": "Exact",
+        "SystemObjectFiltering": "Exact"
+      }
+    },
+    "ConnectionFields": [
+      {
+        "Key": "Database",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": true,
+        "LabelKey": "databaseName",
+        "PlaceholderKey": "enterDatabase",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Hostname",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": true,
+        "LabelKey": "hostName",
+        "PlaceholderKey": "enterHostName",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Password",
+        "Kind": "Password",
+        "Section": "Primary",
+        "Required": true,
+        "LabelKey": "password",
+        "PlaceholderKey": "enterPassword",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Port",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": false,
+        "LabelKey": "advancedFields.port",
+        "DefaultValue": "5432",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Search Path",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": false,
+        "LabelKey": "advancedFields.searchPath",
+        "PlaceholderKey": "enterSearchPath",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Username",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": true,
+        "LabelKey": "username",
+        "PlaceholderKey": "enterUsername",
+        "SupportsOptions": false
+      }
+    ],
+    "Contract": {
+      "Model": "Relational",
+      "Surfaces": [
+        "Browser",
+        "Chat",
+        "Graph",
+        "Query"
+      ],
+      "RootActions": [
+        "Browse",
+        "Execute"
+      ],
+      "BrowsePath": [
+        "Database",
+        "Schema",
+        "Table"
+      ],
+      "DefaultObjectKind": "Table",
+      "GraphScopeKind": "Schema",
+      "ObjectTypes": [
+        {
+          "Kind": "Database",
+          "DataShape": "Metadata",
+          "Actions": [
+            "Browse",
+            "CreateChild"
+          ],
+          "Views": [
+            "Metadata"
+          ],
+          "SingularLabel": "Database",
+          "PluralLabel": "Databases"
+        },
+        {
+          "Kind": "Schema",
+          "DataShape": "Metadata",
+          "Actions": [
+            "Browse",
+            "CreateChild",
+            "ViewGraph"
+          ],
+          "Views": [
+            "Graph",
+            "Metadata"
+          ],
+          "SingularLabel": "Schema",
+          "PluralLabel": "Schemas"
+        },
+        {
+          "Kind": "Table",
+          "DataShape": "Tabular",
+          "Actions": [
+            "DeleteData",
+            "GenerateMockData",
+            "ImportData",
+            "InsertData",
+            "Inspect",
+            "UpdateData",
+            "ViewRows"
+          ],
+          "Views": [
+            "Grid",
+            "Metadata"
+          ],
+          "SingularLabel": "Table",
+          "PluralLabel": "Tables"
+        },
+        {
+          "Kind": "View",
+          "DataShape": "Tabular",
+          "Actions": [
+            "Inspect",
+            "ViewDefinition",
+            "ViewRows"
+          ],
+          "Views": [
+            "Grid",
+            "Metadata"
+          ],
+          "SingularLabel": "View",
+          "PluralLabel": "Views"
+        }
+      ]
+    },
+    "DiscoveryPrefill": {
+      "AdvancedDefaults": [
+        {
+          "Key": "SSL Mode",
+          "Value": "require",
+          "MetadataKey": "",
+          "DefaultValue": "",
+          "ProviderTypes": null,
+          "Conditions": []
+        }
+      ]
+    },
+    "IsAWSManaged": false,
+    "SSLModes": [
+      {
+        "value": "disabled",
+        "aliases": [
+          "disable"
+        ]
+      },
+      {
+        "value": "required",
+        "aliases": [
+          "require"
+        ]
+      },
+      {
+        "value": "verify-ca",
+        "aliases": null
+      },
+      {
+        "value": "verify-identity",
+        "aliases": [
+          "verify-full"
+        ]
+      }
+    ]
+  },
+  {
+    "Id": "QuestDB",
+    "Label": "QuestDB",
+    "Connector": "QuestDB",
+    "Category": "Database",
+    "Traits": {
+      "Connection": {
+        "Transport": "Network",
+        "HostInputMode": "Hostname",
+        "HostInputURLParser": "None",
+        "SupportsCustomCAContent": true
+      },
+      "Presentation": {
+        "ProfileLabelStrategy": "Default",
+        "SchemaFidelity": "Exact"
+      },
+      "Query": {
+        "SupportsAnalyze": false,
+        "SupportsScripts": true,
+        "SupportsStreaming": true,
+        "SupportsMultiStatement": true,
+        "SupportsSqlImport": true,
+        "ExplainMode": "Explain"
+      },
+      "MockData": {
+        "SupportsRelationalDependencies": false
+      },
+      "Metadata": {
+        "Columns": "Exact",
+        "Constraints": "Exact",
+        "Graph": "Unsupported",
+        "SystemObjectFiltering": "Unsupported"
+      }
+    },
+    "ConnectionFields": [
+      {
+        "Key": "Database",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": true,
+        "LabelKey": "databaseName",
+        "PlaceholderKey": "enterDatabase",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Hostname",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": true,
+        "LabelKey": "hostName",
+        "PlaceholderKey": "enterHostName",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Password",
+        "Kind": "Password",
+        "Section": "Primary",
+        "Required": true,
+        "LabelKey": "password",
+        "PlaceholderKey": "enterPassword",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Port",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": false,
+        "LabelKey": "advancedFields.port",
+        "DefaultValue": "8812",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Username",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": true,
+        "LabelKey": "username",
+        "PlaceholderKey": "enterUsername",
+        "SupportsOptions": false
+      }
+    ],
+    "Contract": {
+      "Model": "Relational",
+      "Surfaces": [
+        "Browser",
+        "Chat",
+        "Query"
+      ],
+      "RootActions": [
+        "Browse",
+        "CreateChild",
+        "Execute"
+      ],
+      "BrowsePath": [
+        "Table"
+      ],
+      "DefaultObjectKind": "Table",
+      "ObjectTypes": [
+        {
+          "Kind": "Table",
+          "DataShape": "Tabular",
+          "Actions": [
+            "InsertData",
+            "Inspect",
+            "ViewRows"
+          ],
+          "Views": [
+            "Grid",
+            "Metadata"
+          ],
+          "SingularLabel": "Table",
+          "PluralLabel": "Tables"
+        }
+      ]
+    },
+    "DiscoveryPrefill": {
+      "AdvancedDefaults": []
+    },
+    "IsAWSManaged": false,
+    "SSLModes": [
+      {
+        "value": "disabled",
+        "aliases": [
+          "disable"
+        ]
+      },
+      {
+        "value": "required",
+        "aliases": [
+          "require"
+        ]
+      },
+      {
+        "value": "verify-ca",
+        "aliases": null
+      },
+      {
+        "value": "verify-identity",
+        "aliases": [
+          "verify-full"
+        ]
+      }
+    ]
+  },
+  {
+    "Id": "Redis",
+    "Label": "Redis",
+    "Connector": "Redis",
+    "Category": "Cache",
+    "Traits": {
+      "Connection": {
+        "Transport": "Network",
+        "HostInputMode": "Hostname",
+        "HostInputURLParser": "None",
+        "SupportsCustomCAContent": true
+      },
+      "Presentation": {
+        "ProfileLabelStrategy": "Hostname",
+        "SchemaFidelity": "Exact"
+      },
+      "Query": {
+        "SupportsAnalyze": false,
+        "SupportsScripts": false,
+        "SupportsStreaming": false,
+        "SupportsMultiStatement": false,
+        "SupportsSqlImport": false,
+        "ExplainMode": "None"
+      },
+      "MockData": {
+        "SupportsRelationalDependencies": false
+      },
+      "Metadata": {
+        "Columns": "Synthetic",
+        "Constraints": "Unsupported",
+        "Graph": "Unsupported",
+        "SystemObjectFiltering": "Unsupported"
+      }
+    },
+    "ConnectionFields": [
+      {
+        "Key": "Hostname",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": true,
+        "LabelKey": "hostName",
+        "PlaceholderKey": "enterHostName",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Password",
+        "Kind": "Password",
+        "Section": "Primary",
+        "Required": false,
+        "LabelKey": "password",
+        "PlaceholderKey": "enterPassword",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Port",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": false,
+        "LabelKey": "advancedFields.port",
+        "DefaultValue": "6379",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Username",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": false,
+        "LabelKey": "username",
+        "PlaceholderKey": "enterUsername",
+        "SupportsOptions": false
+      }
+    ],
+    "Contract": {
+      "Model": "KeyValue",
+      "Surfaces": [
+        "Browser"
+      ],
+      "RootActions": [
+        "Browse"
+      ],
+      "BrowsePath": [
+        "Database",
+        "Key"
+      ],
+      "DefaultObjectKind": "Key",
+      "ObjectTypes": [
+        {
+          "Kind": "Database",
+          "DataShape": "Metadata",
+          "Actions": [
+            "Browse",
+            "CreateChild"
+          ],
+          "Views": [
+            "Metadata"
+          ],
+          "SingularLabel": "Database",
+          "PluralLabel": "Databases"
+        },
+        {
+          "Kind": "Key",
+          "DataShape": "Content",
+          "Actions": [
+            "DeleteData",
+            "InsertData",
+            "Inspect",
+            "UpdateData",
+            "ViewRows"
+          ],
+          "Views": [
+            "Grid",
+            "Metadata"
+          ],
+          "SingularLabel": "Key",
+          "PluralLabel": "Keys"
+        }
+      ]
+    },
+    "DiscoveryPrefill": {
+      "AdvancedDefaults": [
+        {
+          "Key": "SSL Mode",
+          "Value": "enabled",
+          "MetadataKey": "",
+          "DefaultValue": "",
+          "ProviderTypes": [
+            "Azure"
+          ],
+          "Conditions": []
+        }
+      ]
+    },
+    "IsAWSManaged": false,
+    "SSLModes": [
+      {
+        "value": "disabled",
+        "aliases": null
+      },
+      {
+        "value": "enabled",
+        "aliases": null
+      },
+      {
+        "value": "insecure",
+        "aliases": null
+      }
+    ]
+  },
+  {
+    "Id": "Sqlite3",
+    "Label": "Sqlite3",
+    "Connector": "Sqlite3",
+    "Category": "Database",
+    "Traits": {
+      "Connection": {
+        "Transport": "File",
+        "HostInputMode": "None",
+        "HostInputURLParser": "None",
+        "SupportsCustomCAContent": true
+      },
+      "Presentation": {
+        "ProfileLabelStrategy": "Database",
+        "SchemaFidelity": "Exact"
+      },
+      "Query": {
+        "SupportsAnalyze": false,
+        "SupportsScripts": true,
+        "SupportsStreaming": true,
+        "SupportsMultiStatement": true,
+        "SupportsSqlImport": true,
+        "ExplainMode": "Explain"
+      },
+      "MockData": {
+        "SupportsRelationalDependencies": true
+      },
+      "Metadata": {
+        "Columns": "Exact",
+        "Constraints": "Exact",
+        "Graph": "Exact",
+        "SystemObjectFiltering": "Exact"
+      }
+    },
+    "ConnectionFields": [
+      {
+        "Key": "Database",
+        "Kind": "FilePath",
+        "Section": "Primary",
+        "Required": true,
+        "LabelKey": "databaseFilePath",
+        "PlaceholderKey": "selectOrEnterDatabasePath",
+        "SupportsOptions": true
+      }
+    ],
+    "Contract": {
+      "Model": "Relational",
+      "Surfaces": [
+        "Browser",
+        "Chat",
+        "Graph",
+        "Query"
+      ],
+      "RootActions": [
+        "Browse",
+        "CreateChild",
+        "Execute",
+        "ViewGraph"
+      ],
+      "BrowsePath": [
+        "Table"
+      ],
+      "DefaultObjectKind": "Table",
+      "ObjectTypes": [
+        {
+          "Kind": "Table",
+          "DataShape": "Tabular",
+          "Actions": [
+            "DeleteData",
+            "GenerateMockData",
+            "ImportData",
+            "InsertData",
+            "Inspect",
+            "UpdateData",
+            "ViewRows"
+          ],
+          "Views": [
+            "Grid",
+            "Metadata"
+          ],
+          "SingularLabel": "Table",
+          "PluralLabel": "Tables"
+        }
+      ]
+    },
+    "DiscoveryPrefill": {
+      "AdvancedDefaults": []
+    },
+    "IsAWSManaged": false,
+    "SSLModes": []
+  },
+  {
+    "Id": "TiDB",
+    "Label": "TiDB",
+    "Connector": "TiDB",
+    "Category": "Database",
+    "Traits": {
+      "Connection": {
+        "Transport": "Network",
+        "HostInputMode": "Hostname",
+        "HostInputURLParser": "None",
+        "SupportsCustomCAContent": true
+      },
+      "Presentation": {
+        "ProfileLabelStrategy": "Default",
+        "SchemaFidelity": "Exact"
+      },
+      "Query": {
+        "SupportsAnalyze": false,
+        "SupportsScripts": true,
+        "SupportsStreaming": true,
+        "SupportsMultiStatement": true,
+        "SupportsSqlImport": true,
+        "ExplainMode": "Explain"
+      },
+      "MockData": {
+        "SupportsRelationalDependencies": true
+      },
+      "Metadata": {
+        "Columns": "Exact",
+        "Constraints": "Exact",
+        "Graph": "Exact",
+        "SystemObjectFiltering": "Exact"
+      }
+    },
+    "ConnectionFields": [
+      {
+        "Key": "Allow clear text passwords",
+        "Kind": "Text",
+        "Section": "Advanced",
+        "Required": false,
+        "LabelKey": "advancedFields.allowClearTextPasswords",
+        "DefaultValue": "0",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Database",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": true,
+        "LabelKey": "databaseName",
+        "PlaceholderKey": "enterDatabase",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Hostname",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": true,
+        "LabelKey": "hostName",
+        "PlaceholderKey": "enterHostName",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Loc",
+        "Kind": "Text",
+        "Section": "Advanced",
+        "Required": false,
+        "LabelKey": "advancedFields.loc",
+        "DefaultValue": "UTC",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Parse Time",
+        "Kind": "Text",
+        "Section": "Advanced",
+        "Required": false,
+        "LabelKey": "advancedFields.parseTime",
+        "DefaultValue": "True",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Password",
+        "Kind": "Password",
+        "Section": "Primary",
+        "Required": true,
+        "LabelKey": "password",
+        "PlaceholderKey": "enterPassword",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Port",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": false,
+        "LabelKey": "advancedFields.port",
+        "DefaultValue": "4000",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Username",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": true,
+        "LabelKey": "username",
+        "PlaceholderKey": "enterUsername",
+        "SupportsOptions": false
+      }
+    ],
+    "Contract": {
+      "Model": "Relational",
+      "Surfaces": [
+        "Browser",
+        "Chat",
+        "Graph",
+        "Query"
+      ],
+      "RootActions": [
+        "Browse",
+        "Execute"
+      ],
+      "BrowsePath": [
+        "Database",
+        "Table"
+      ],
+      "DefaultObjectKind": "Table",
+      "GraphScopeKind": "Database",
+      "ObjectTypes": [
+        {
+          "Kind": "Database",
+          "DataShape": "Metadata",
+          "Actions": [
+            "Browse",
+            "CreateChild",
+            "ViewGraph"
+          ],
+          "Views": [
+            "Graph",
+            "Metadata"
+          ],
+          "SingularLabel": "Database",
+          "PluralLabel": "Databases"
+        },
+        {
+          "Kind": "Table",
+          "DataShape": "Tabular",
+          "Actions": [
+            "DeleteData",
+            "GenerateMockData",
+            "ImportData",
+            "InsertData",
+            "Inspect",
+            "UpdateData",
+            "ViewRows"
+          ],
+          "Views": [
+            "Grid",
+            "Metadata"
+          ],
+          "SingularLabel": "Table",
+          "PluralLabel": "Tables"
+        },
+        {
+          "Kind": "View",
+          "DataShape": "Tabular",
+          "Actions": [
+            "Inspect",
+            "ViewDefinition",
+            "ViewRows"
+          ],
+          "Views": [
+            "Grid",
+            "Metadata"
+          ],
+          "SingularLabel": "View",
+          "PluralLabel": "Views"
+        }
+      ]
+    },
+    "DiscoveryPrefill": {
+      "AdvancedDefaults": []
+    },
+    "IsAWSManaged": false,
+    "SSLModes": [
+      {
+        "value": "disabled",
+        "aliases": [
+          "DISABLED"
+        ]
+      },
+      {
+        "value": "preferred",
+        "aliases": [
+          "PREFERRED"
+        ]
+      },
+      {
+        "value": "required",
+        "aliases": [
+          "REQUIRED"
+        ]
+      },
+      {
+        "value": "verify-ca",
+        "aliases": [
+          "VERIFY_CA"
+        ]
+      },
+      {
+        "value": "verify-identity",
+        "aliases": [
+          "VERIFY_IDENTITY"
+        ]
+      }
+    ]
+  },
+  {
+    "Id": "Valkey",
+    "Label": "Valkey",
+    "Connector": "Redis",
+    "Category": "Cache",
+    "Traits": {
+      "Connection": {
+        "Transport": "Network",
+        "HostInputMode": "Hostname",
+        "HostInputURLParser": "None",
+        "SupportsCustomCAContent": true
+      },
+      "Presentation": {
+        "ProfileLabelStrategy": "Hostname",
+        "SchemaFidelity": "Exact"
+      },
+      "Query": {
+        "SupportsAnalyze": false,
+        "SupportsScripts": false,
+        "SupportsStreaming": false,
+        "SupportsMultiStatement": false,
+        "SupportsSqlImport": false,
+        "ExplainMode": "None"
+      },
+      "MockData": {
+        "SupportsRelationalDependencies": false
+      },
+      "Metadata": {
+        "Columns": "Synthetic",
+        "Constraints": "Unsupported",
+        "Graph": "Unsupported",
+        "SystemObjectFiltering": "Unsupported"
+      }
+    },
+    "ConnectionFields": [
+      {
+        "Key": "Hostname",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": true,
+        "LabelKey": "hostName",
+        "PlaceholderKey": "enterHostName",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Password",
+        "Kind": "Password",
+        "Section": "Primary",
+        "Required": false,
+        "LabelKey": "password",
+        "PlaceholderKey": "enterPassword",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Port",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": false,
+        "LabelKey": "advancedFields.port",
+        "DefaultValue": "6379",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Username",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": false,
+        "LabelKey": "username",
+        "PlaceholderKey": "enterUsername",
+        "SupportsOptions": false
+      }
+    ],
+    "Contract": {
+      "Model": "KeyValue",
+      "Surfaces": [
+        "Browser"
+      ],
+      "RootActions": [
+        "Browse"
+      ],
+      "BrowsePath": [
+        "Database",
+        "Key"
+      ],
+      "DefaultObjectKind": "Key",
+      "ObjectTypes": [
+        {
+          "Kind": "Database",
+          "DataShape": "Metadata",
+          "Actions": [
+            "Browse",
+            "CreateChild"
+          ],
+          "Views": [
+            "Metadata"
+          ],
+          "SingularLabel": "Database",
+          "PluralLabel": "Databases"
+        },
+        {
+          "Kind": "Key",
+          "DataShape": "Content",
+          "Actions": [
+            "DeleteData",
+            "InsertData",
+            "Inspect",
+            "UpdateData",
+            "ViewRows"
+          ],
+          "Views": [
+            "Grid",
+            "Metadata"
+          ],
+          "SingularLabel": "Key",
+          "PluralLabel": "Keys"
+        }
+      ]
+    },
+    "DiscoveryPrefill": {
+      "AdvancedDefaults": [
+        {
+          "Key": "SSL Mode",
+          "Value": "enabled",
+          "MetadataKey": "",
+          "DefaultValue": "",
+          "ProviderTypes": null,
+          "Conditions": [
+            {
+              "Key": "transitEncryption",
+              "Value": "true"
+            }
+          ]
+        }
+      ]
+    },
+    "IsAWSManaged": false,
+    "SSLModes": [
+      {
+        "value": "disabled",
+        "aliases": null
+      },
+      {
+        "value": "enabled",
+        "aliases": null
+      },
+      {
+        "value": "insecure",
+        "aliases": null
+      }
+    ]
+  },
+  {
+    "Id": "YugabyteDB",
+    "Label": "YugabyteDB",
+    "Connector": "YugabyteDB",
+    "Category": "Database",
+    "Traits": {
+      "Connection": {
+        "Transport": "Network",
+        "HostInputMode": "HostnameOrURL",
+        "HostInputURLParser": "Postgres",
+        "SupportsCustomCAContent": true
+      },
+      "Presentation": {
+        "ProfileLabelStrategy": "Default",
+        "SchemaFidelity": "Exact"
+      },
+      "Query": {
+        "SupportsAnalyze": false,
+        "SupportsScripts": true,
+        "SupportsStreaming": true,
+        "SupportsMultiStatement": true,
+        "SupportsSqlImport": true,
+        "ExplainMode": "Explain"
+      },
+      "MockData": {
+        "SupportsRelationalDependencies": true
+      },
+      "Metadata": {
+        "Columns": "Exact",
+        "Constraints": "Exact",
+        "Graph": "Exact",
+        "SystemObjectFiltering": "Exact"
+      }
+    },
+    "ConnectionFields": [
+      {
+        "Key": "Database",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": true,
+        "LabelKey": "databaseName",
+        "PlaceholderKey": "enterDatabase",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Hostname",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": true,
+        "LabelKey": "hostName",
+        "PlaceholderKey": "enterHostName",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Password",
+        "Kind": "Password",
+        "Section": "Primary",
+        "Required": true,
+        "LabelKey": "password",
+        "PlaceholderKey": "enterPassword",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Port",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": false,
+        "LabelKey": "advancedFields.port",
+        "DefaultValue": "5433",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Search Path",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": false,
+        "LabelKey": "advancedFields.searchPath",
+        "PlaceholderKey": "enterSearchPath",
+        "SupportsOptions": false
+      },
+      {
+        "Key": "Username",
+        "Kind": "Text",
+        "Section": "Primary",
+        "Required": true,
+        "LabelKey": "username",
+        "PlaceholderKey": "enterUsername",
+        "SupportsOptions": false
+      }
+    ],
+    "Contract": {
+      "Model": "Relational",
+      "Surfaces": [
+        "Browser",
+        "Chat",
+        "Graph",
+        "Query"
+      ],
+      "RootActions": [
+        "Browse",
+        "Execute"
+      ],
+      "BrowsePath": [
+        "Database",
+        "Schema",
+        "Table"
+      ],
+      "DefaultObjectKind": "Table",
+      "GraphScopeKind": "Schema",
+      "ObjectTypes": [
+        {
+          "Kind": "Database",
+          "DataShape": "Metadata",
+          "Actions": [
+            "Browse",
+            "CreateChild"
+          ],
+          "Views": [
+            "Metadata"
+          ],
+          "SingularLabel": "Database",
+          "PluralLabel": "Databases"
+        },
+        {
+          "Kind": "Schema",
+          "DataShape": "Metadata",
+          "Actions": [
+            "Browse",
+            "CreateChild",
+            "ViewGraph"
+          ],
+          "Views": [
+            "Graph",
+            "Metadata"
+          ],
+          "SingularLabel": "Schema",
+          "PluralLabel": "Schemas"
+        },
+        {
+          "Kind": "Table",
+          "DataShape": "Tabular",
+          "Actions": [
+            "DeleteData",
+            "GenerateMockData",
+            "ImportData",
+            "InsertData",
+            "Inspect",
+            "UpdateData",
+            "ViewRows"
+          ],
+          "Views": [
+            "Grid",
+            "Metadata"
+          ],
+          "SingularLabel": "Table",
+          "PluralLabel": "Tables"
+        },
+        {
+          "Kind": "View",
+          "DataShape": "Tabular",
+          "Actions": [
+            "Inspect",
+            "ViewDefinition",
+            "ViewRows"
+          ],
+          "Views": [
+            "Grid",
+            "Metadata"
+          ],
+          "SingularLabel": "View",
+          "PluralLabel": "Views"
+        }
+      ]
+    },
+    "DiscoveryPrefill": {
+      "AdvancedDefaults": []
+    },
+    "IsAWSManaged": false,
+    "SSLModes": [
+      {
+        "value": "disabled",
+        "aliases": [
+          "disable"
+        ]
+      },
+      {
+        "value": "required",
+        "aliases": [
+          "require"
+        ]
+      },
+      {
+        "value": "verify-ca",
+        "aliases": null
+      },
+      {
+        "value": "verify-identity",
+        "aliases": [
+          "verify-full"
+        ]
+      }
+    ]
+  }
+]

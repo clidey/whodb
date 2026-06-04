@@ -112,7 +112,7 @@ Output formats:
 		if spinner != nil {
 			spinner.Stop()
 		}
-		defer mgr.Disconnect()
+		defer mgr.Disconnect() //nolint:errcheck
 
 		// Get schema
 		schema := columnsSchema

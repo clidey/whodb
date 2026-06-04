@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
+
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/analytics"
 	"github.com/clidey/whodb/core/src/audit"
@@ -56,6 +57,7 @@ func performSourceLogin(ctx context.Context, credentials *source.Credentials, pr
 		audit.RecordWithContext(ctx, audit.AuditEvent{
 			Timestamp: start,
 			Action:    "login.source",
+			Outcome:   loginAuditOutcome(err),
 			Severity:  severity,
 			Resource:  resource,
 			Details:   details,
@@ -160,6 +162,20 @@ func performSourceLogin(ctx context.Context, credentials *source.Credentials, pr
 	return resp, nil
 }
 
+func loginAuditOutcome(err error) audit.Outcome {
+	if err == nil {
+		return audit.OutcomeSuccess
+	}
+
+	errMessage := strings.TrimSpace(err.Error())
+	switch errMessage {
+	case "unauthorized", "login with credentials is disabled; use preconfigured connections":
+		return audit.OutcomeDenied
+	default:
+		return audit.OutcomeFailure
+	}
+}
+
 func testSourceConnection(ctx context.Context, credentials *source.Credentials) (*model.StatusResponse, error) {
 	spec, ok := sourcecatalog.Find(credentials.SourceType)
 	if !ok {
@@ -193,8 +209,8 @@ func testSourceConnection(ctx context.Context, credentials *source.Credentials) 
 
 func sourceObjectModels(_ source.TypeSpec, objects []source.Object) []*model.SourceObject {
 	mapped := make([]*model.SourceObject, 0, len(objects))
-	for _, object := range objects {
-		mapped = append(mapped, sourceObjectToModel(object))
+	for i := range objects {
+		mapped = append(mapped, sourceObjectToModel(objects[i]))
 	}
 	return mapped
 }
@@ -483,7 +499,7 @@ func analyzeMockDataDependenciesForRef(ctx context.Context, ref model.SourceObje
 	resolvedRef := sourceRefFromInput(&ref)
 	if err := validateSourceObjectAction(spec, resolvedRef, source.ActionGenerateMockData); err != nil {
 		errMsg := err.Error()
-		return &model.MockDataDependencyAnalysis{Error: &errMsg}, nil
+		return &model.MockDataDependencyAnalysis{Error: &errMsg}, nil //nolint:nilerr
 	}
 	_, objectName := namespaceAndObjectNameForRef(spec, *resolvedRef)
 	if !mockdata.IsMockDataGenerationAllowed(objectName) {
@@ -504,7 +520,7 @@ func analyzeMockDataDependenciesForRef(ctx context.Context, ref model.SourceObje
 	analysis, err := manager.AnalyzeMockDataDependencies(ctx, *resolvedRef, rowCount, fkRatio)
 	if err != nil {
 		errMsg := err.Error()
-		return &model.MockDataDependencyAnalysis{Error: &errMsg}, nil
+		return &model.MockDataDependencyAnalysis{Error: &errMsg}, nil //nolint:nilerr
 	}
 
 	tables := make([]*model.MockDataTableInfo, 0, len(analysis.Tables))

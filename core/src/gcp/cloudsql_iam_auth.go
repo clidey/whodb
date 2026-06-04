@@ -21,8 +21,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/clidey/whodb/core/src/log"
 	"golang.org/x/oauth2/google"
+
+	"github.com/clidey/whodb/core/src/log"
 )
 
 // GenerateCloudSQLIAMAuthToken generates an OAuth2 access token for Cloud SQL IAM
@@ -41,11 +42,11 @@ func GenerateCloudSQLIAMAuthToken(ctx context.Context, serviceAccountKeyPath, us
 	var err error
 
 	if serviceAccountKeyPath != "" {
-		data, readErr := os.ReadFile(serviceAccountKeyPath)
+		data, readErr := os.ReadFile(serviceAccountKeyPath) //nolint:gosec
 		if readErr != nil {
 			return "", fmt.Errorf("failed to read service account key file: %w", readErr)
 		}
-		creds, err = google.CredentialsFromJSONWithParams(ctx, data, google.CredentialsParams{Scopes: scopes})
+		creds, err = google.CredentialsFromJSONWithTypeAndParams(ctx, data, google.ServiceAccount, google.CredentialsParams{Scopes: scopes})
 	} else {
 		creds, err = google.FindDefaultCredentials(ctx, scopes...)
 	}

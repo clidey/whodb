@@ -15,11 +15,12 @@
  */
 
 import type { ApolloCache } from "@apollo/client";
+import type {
+    GetAzureProvidersQuery,
+    GetCloudProvidersQuery} from "@graphql";
 import {
     GetAzureProvidersDocument,
-    GetAzureProvidersQuery,
-    GetCloudProvidersDocument,
-    GetCloudProvidersQuery,
+    GetCloudProvidersDocument
 } from "@graphql";
 
 type WithId = {

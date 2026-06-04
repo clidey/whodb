@@ -22,7 +22,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { InternalRoutes, PublicRoutes } from '@/config/routes';
 import { XCircleIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
-import { LocalLoginProfile } from '@/store/auth';
+import type { LocalLoginProfile } from '@/store/auth';
 import { useProfileSwitch } from '@/hooks/use-profile-switch';
 import { getAppName } from '@/config/features';
 
@@ -109,7 +109,7 @@ export const DatabaseDownOverlay = () => {
     const databaseStatus = useAppSelector(state => state.health.databaseStatus);
     const serverStatus = useAppSelector(state => state.health.serverStatus);
     const authStatus = useAppSelector(state => state.auth.status);
-    const currentProfile = useAppSelector(state => state.auth.current);
+    const currentProfileId = useAppSelector(state => state.auth.current?.Id);
     const allProfiles = useAppSelector(state => state.auth.profiles);
     const isEmbedded = useAppSelector(state => state.auth.isEmbedded);
 
@@ -144,7 +144,7 @@ export const DatabaseDownOverlay = () => {
     }
 
     // Get profiles excluding the current one
-    const otherProfiles = allProfiles.filter(p => p.Id !== currentProfile?.Id);
+    const otherProfiles = allProfiles.filter(p => p.Id !== currentProfileId);
     const hasOtherProfiles = otherProfiles.length > 0;
 
     const handleSwitchProfile = () => {
@@ -155,11 +155,11 @@ export const DatabaseDownOverlay = () => {
 
         // Hide the dialog immediately when switching starts
         setIsSwitching(true);
-        switchProfile(profile);
+        void switchProfile(profile);
     };
 
     const handleLogout = () => {
-        navigate(InternalRoutes.Logout.path);
+        void navigate(InternalRoutes.Logout.path);
     };
 
     return (

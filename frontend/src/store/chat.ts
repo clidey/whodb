@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import { PayloadAction, createSlice } from '@reduxjs/toolkit';
-import { AiChatMessage } from '@graphql';
+import type { PayloadAction} from '@reduxjs/toolkit';
+import { createSlice } from '@reduxjs/toolkit';
+import type { AiChatMessage } from '@graphql';
 import { v4 as uuidv4 } from 'uuid';
 
 
@@ -30,6 +31,16 @@ export type ChatSession = {
     name: string;
     messages: IChatMessage[];
     createdAt: Date;
+    updatedAt?: Date;
+    projectId?: string;
+    sourceId?: string;
+    status?: string;
+    activeRunId?: string;
+    lastEventSequence?: number;
+    modelType?: string;
+    providerId?: string;
+    model?: string;
+    autoScrollEnabled?: boolean;
 };
 
 export type IChatState = {
@@ -51,16 +62,29 @@ export const houdiniSlice = createSlice({
   initialState,
   reducers: {
     // Legacy actions (for backward compatibility)
-    addChatMessage: (state, action: PayloadAction<IChatMessage & { sessionId?: string }>) => {
+    addChatMessage: (state, action: PayloadAction<IChatMessage & { sessionId?: string; insertAfterId?: number }>) => {
         const targetId = action.payload.sessionId ?? state.activeSessionId;
+        const insertMessage = (messages: IChatMessage[]) => {
+            const { sessionId: _, insertAfterId, ...msg } = action.payload;
+            if (insertAfterId == null) {
+                messages.push(msg);
+                return;
+            }
+            const index = messages.findIndex(chat => chat.id === insertAfterId);
+            if (index === -1) {
+                messages.push(msg);
+                return;
+            }
+            messages.splice(index + 1, 0, msg);
+        };
+
         if (state.sessions.length > 0 && targetId) {
             const session = state.sessions.find(s => s.id === targetId);
             if (session) {
-                const { sessionId: _, ...msg } = action.payload;
-                session.messages.push(msg);
+                insertMessage(session.messages);
             }
         } else {
-            state.chats.push(action.payload);
+            insertMessage(state.chats);
         }
     },
     updateChatMessage: (state, action: PayloadAction<{ id: number; Text: string; sessionId?: string }>) => {
@@ -134,7 +158,8 @@ export const houdiniSlice = createSlice({
                 id: newId,
                 name: "Chat 1",
                 messages: [],
-                createdAt: new Date()
+                createdAt: new Date(),
+                autoScrollEnabled: true,
             };
             state.sessions = [newSession];
             state.activeSessionId = newId;
@@ -145,21 +170,36 @@ export const houdiniSlice = createSlice({
             state.activeSessionId = state.sessions[0].id;
         }
     },
-    addChatSession: (state, action: PayloadAction<{ name?: string }>) => {
+    hydrateChatSessions: (state, action: PayloadAction<{ sessions: ChatSession[]; activeSessionId?: string | null }>) => {
+        state.sessions = action.payload.sessions;
+        if (action.payload.activeSessionId && state.sessions.some(session => session.id === action.payload.activeSessionId)) {
+            state.activeSessionId = action.payload.activeSessionId;
+            return;
+        }
+        state.activeSessionId = state.sessions[0]?.id ?? null;
+    },
+    addChatSession: (state, action: PayloadAction<{ name?: string; projectId?: string; sourceId?: string; modelType?: string; providerId?: string; model?: string }>) => {
         const newId = uuidv4();
         const newSession: ChatSession = {
             id: newId,
-            name: action.payload.name || `Chat ${state.sessions.length + 1}`,
+            name: action.payload.name ?? `Chat ${state.sessions.length + 1}`,
             messages: [],
-            createdAt: new Date()
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            projectId: action.payload.projectId,
+            sourceId: action.payload.sourceId,
+            status: 'idle',
+            lastEventSequence: 0,
+            modelType: action.payload.modelType,
+            providerId: action.payload.providerId,
+            model: action.payload.model,
+            autoScrollEnabled: true,
         };
         // Add new session at the top (beginning) of the list
         state.sessions.unshift(newSession);
         state.activeSessionId = newId;
     },
     deleteChatSession: (state, action: PayloadAction<{ sessionId: string }>) => {
-        if (state.sessions.length <= 1) return;
-
         const sessionIndex = state.sessions.findIndex(session => session.id === action.payload.sessionId);
         if (sessionIndex === -1) return;
 
@@ -181,6 +221,35 @@ export const houdiniSlice = createSlice({
         const session = state.sessions.find(s => s.id === action.payload.sessionId);
         if (session) {
             session.name = action.payload.name;
+        }
+    },
+    updateSessionModel: (state, action: PayloadAction<{ sessionId: string; modelType: string; providerId: string; model: string }>) => {
+        const session = state.sessions.find(s => s.id === action.payload.sessionId);
+        if (session) {
+            session.modelType = action.payload.modelType;
+            session.providerId = action.payload.providerId;
+            session.model = action.payload.model;
+        }
+    },
+    updateSessionStatus: (state, action: PayloadAction<{ sessionId: string; status: string; activeRunId?: string }>) => {
+        const session = state.sessions.find(s => s.id === action.payload.sessionId);
+        if (session) {
+            session.status = action.payload.status;
+            if (action.payload.activeRunId !== undefined) {
+                session.activeRunId = action.payload.activeRunId;
+            }
+        }
+    },
+    updateSessionEventSequence: (state, action: PayloadAction<{ sessionId: string; sequence: number }>) => {
+        const session = state.sessions.find(s => s.id === action.payload.sessionId);
+        if (session) {
+            session.lastEventSequence = Math.max(session.lastEventSequence ?? 0, action.payload.sequence);
+        }
+    },
+    updateSessionAutoScroll: (state, action: PayloadAction<{ sessionId: string; autoScrollEnabled: boolean }>) => {
+        const session = state.sessions.find(s => s.id === action.payload.sessionId);
+        if (session) {
+            session.autoScrollEnabled = action.payload.autoScrollEnabled;
         }
     },
     clearAllChatSessions: (state) => {

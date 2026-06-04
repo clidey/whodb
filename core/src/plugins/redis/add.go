@@ -18,12 +18,14 @@ package redis
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 
+	"github.com/go-redis/redis/v8"
+
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
-	"github.com/go-redis/redis/v8"
 )
 
 // AddStorageUnit creates a new Redis key with initial data.
@@ -48,12 +50,12 @@ func (p *RedisPlugin) createStorageUnitFromRecords(config *engine.PluginConfig, 
 	if err != nil {
 		return false, err
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	ctx := context.Background()
 
 	// Determine key type from the first field's Extra metadata
-	keyType := "string"
+	keyType := redisTypeString
 	if len(fields) > 0 {
 		if t, ok := fields[0].Extra["type"]; ok && t != "" {
 			keyType = t
@@ -61,7 +63,7 @@ func (p *RedisPlugin) createStorageUnitFromRecords(config *engine.PluginConfig, 
 	}
 
 	switch keyType {
-	case "string":
+	case redisTypeString:
 		value := ""
 		if len(fields) > 0 {
 			value = fields[0].Value
@@ -70,7 +72,7 @@ func (p *RedisPlugin) createStorageUnitFromRecords(config *engine.PluginConfig, 
 			log.WithError(err).WithField("key", storageUnit).Error("Failed to create Redis string key")
 			return false, err
 		}
-	case "hash":
+	case redisTypeHash:
 		fieldValues := map[string]any{}
 		for _, f := range fields {
 			fieldValues[f.Key] = f.Value
@@ -82,7 +84,7 @@ func (p *RedisPlugin) createStorageUnitFromRecords(config *engine.PluginConfig, 
 			log.WithError(err).WithField("key", storageUnit).Error("Failed to create Redis hash key")
 			return false, err
 		}
-	case "list":
+	case redisTypeList:
 		values := make([]any, 0, len(fields))
 		for _, f := range fields {
 			values = append(values, f.Value)
@@ -106,7 +108,7 @@ func (p *RedisPlugin) createStorageUnitFromRecords(config *engine.PluginConfig, 
 			log.WithError(err).WithField("key", storageUnit).Error("Failed to create Redis set key")
 			return false, err
 		}
-	case "zset":
+	case redisTypeZSet:
 		// Fields should have Key=member, Value=score
 		for _, f := range fields {
 			score, parseErr := strconv.ParseFloat(f.Value, 64)
@@ -137,7 +139,7 @@ func (p *RedisPlugin) AddRow(config *engine.PluginConfig, schema string, storage
 	if err != nil {
 		return false, err
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	ctx := context.Background()
 
@@ -153,31 +155,31 @@ func (p *RedisPlugin) AddRow(config *engine.PluginConfig, schema string, storage
 	}
 
 	switch keyType {
-	case "string":
-		value := valuesMap["value"]
+	case redisTypeString:
+		value := valuesMap[redisKeyValue]
 		if err := client.Set(ctx, storageUnit, value, 0).Err(); err != nil {
 			return false, err
 		}
-	case "hash":
+	case redisTypeHash:
 		field := valuesMap["field"]
-		value := valuesMap["value"]
+		value := valuesMap[redisKeyValue]
 		if field == "" {
-			return false, fmt.Errorf("field name is required for hash")
+			return false, errors.New("field name is required for hash")
 		}
 		if err := client.HSet(ctx, storageUnit, field, value).Err(); err != nil {
 			return false, err
 		}
-	case "list":
-		value := valuesMap["value"]
+	case redisTypeList:
+		value := valuesMap[redisKeyValue]
 		if err := client.RPush(ctx, storageUnit, value).Err(); err != nil {
 			return false, err
 		}
 	case "set":
-		value := valuesMap["value"]
+		value := valuesMap[redisKeyValue]
 		if err := client.SAdd(ctx, storageUnit, value).Err(); err != nil {
 			return false, err
 		}
-	case "zset":
+	case redisTypeZSet:
 		member := valuesMap["member"]
 		scoreStr := valuesMap["score"]
 		score, parseErr := strconv.ParseFloat(scoreStr, 64)

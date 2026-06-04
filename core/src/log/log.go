@@ -25,8 +25,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/clidey/whodb/core/src/env"
 	"github.com/sirupsen/logrus"
+
+	"github.com/clidey/whodb/core/src/env"
 )
 
 const (
@@ -97,8 +98,8 @@ func WithFields(fields Fields) *ConditionalEntry {
 
 // Error downgrades to Debug when the attached error is errors.ErrUnsupported.
 func (e *ConditionalEntry) Error(args ...any) {
-	if isUnsupportedOperation(e.Entry.Data["error"]) {
-		e.Entry.Debug(args...)
+	if isUnsupportedOperation(e.Data["error"]) {
+		e.Debug(args...)
 		return
 	}
 	e.Entry.Error(args...)
@@ -106,8 +107,8 @@ func (e *ConditionalEntry) Error(args ...any) {
 
 // Errorf downgrades to Debug when the attached error is errors.ErrUnsupported.
 func (e *ConditionalEntry) Errorf(format string, args ...any) {
-	if isUnsupportedOperation(e.Entry.Data["error"]) {
-		e.Entry.Debug(args...)
+	if isUnsupportedOperation(e.Data["error"]) {
+		e.Debug(args...)
 		return
 	}
 	e.Entry.Errorf(format, args...)
@@ -208,7 +209,7 @@ func openLogFile(path string) *os.File {
 		fmt.Fprintf(os.Stderr, "whodb: refusing to open log file %s: path is a symlink\n", path)
 		os.Exit(1)
 	}
-	f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600) //nolint:gosec
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "whodb: failed to open log file %s: %v\n", path, err)
 		os.Exit(1)
@@ -262,11 +263,11 @@ func DisableOutput() {
 // CloseLogFile closes the log file and access log file if they were opened.
 func CloseLogFile() {
 	if logFile != nil {
-		logFile.Close()
+		_ = logFile.Close()
 		logFile = nil
 	}
 	if accessLogFile != nil {
-		accessLogFile.Close()
+		_ = accessLogFile.Close()
 		accessLogFile = nil
 		accessLogger = nil
 	}

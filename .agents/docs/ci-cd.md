@@ -6,6 +6,7 @@ WhoDB uses GitHub Actions for automated builds, testing, and multi-platform depl
 
 ```
 .github/workflows/
+  lint-check.yml          # PR lint + typecheck gate (Go + Frontend)
   release-ce.yml          # Main CE release orchestrator
   _build-*.yml            # Reusable build workflows (called by release)
   _deploy-*.yml           # Reusable deploy workflows

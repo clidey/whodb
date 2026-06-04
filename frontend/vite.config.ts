@@ -122,6 +122,11 @@ export default defineConfig(async ({command}) => {
         '@': path.resolve(__dirname, './src'),
         '@graphql': path.resolve(__dirname, './src/generated/graphql.ts'),
       },
+      dedupe: [
+        '@codemirror/state',
+        '@codemirror/view',
+        '@codemirror/language',
+      ],
     },
     server: {
       port: parseInt(process.env.VITE_PORT || '3000'),

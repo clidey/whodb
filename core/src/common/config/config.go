@@ -80,7 +80,7 @@ func ReadSection(section string, value any, opts datadir.Options) error {
 		return err
 	}
 
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil // No config file yet, use defaults
@@ -114,7 +114,7 @@ func WriteSection(section string, value any, opts datadir.Options) error {
 
 	// Read existing config (or start fresh)
 	var raw RawConfig
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec
 	if err != nil {
 		if !os.IsNotExist(err) {
 			return err
@@ -152,18 +152,18 @@ func WriteSection(section string, value any, opts datadir.Options) error {
 
 	// Write data and close
 	if _, err := tempFile.Write(newData); err != nil {
-		tempFile.Close()
-		os.Remove(tempPath)
+		_ = tempFile.Close()
+		_ = os.Remove(tempPath)
 		return err
 	}
 	if err := tempFile.Close(); err != nil {
-		os.Remove(tempPath)
+		_ = os.Remove(tempPath)
 		return err
 	}
 
 	// Atomic rename
 	if err := os.Rename(tempPath, path); err != nil {
-		os.Remove(tempPath)
+		_ = os.Remove(tempPath)
 		return err
 	}
 

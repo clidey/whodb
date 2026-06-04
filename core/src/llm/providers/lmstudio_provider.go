@@ -26,6 +26,10 @@ import (
 )
 
 const (
+	lmsProviderType = "openai"
+)
+
+const (
 	LMStudio_LLMType LLMType = "LMStudio"
 )
 
@@ -44,7 +48,7 @@ func (p *LMStudioProvider) GetType() LLMType {
 
 // GetProtocol returns "openai" — LM Studio uses the OpenAI-compatible streaming protocol.
 func (p *LMStudioProvider) GetProtocol() string {
-	return "openai"
+	return lmsProviderType
 }
 
 // GetDefaultEndpoint returns the default LM Studio API endpoint.
@@ -68,13 +72,13 @@ func (p *LMStudioProvider) GetSupportedModels(config *ProviderConfig) ([]string,
 		return nil, err
 	}
 
-	url := fmt.Sprintf("%s/models", config.Endpoint)
+	url := config.Endpoint + "/models"
 
 	headers := map[string]string{
 		"Content-Type": "application/json",
 	}
 	if config.APIKey != "" {
-		headers["Authorization"] = fmt.Sprintf("Bearer %s", config.APIKey)
+		headers["Authorization"] = "Bearer " + config.APIKey
 	}
 
 	resp, err := sendHTTPRequest("GET", url, nil, headers)
@@ -82,7 +86,7 @@ func (p *LMStudioProvider) GetSupportedModels(config *ProviderConfig) ([]string,
 		log.WithError(err).Errorf("Failed to fetch models from LM Studio at %s", url)
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)

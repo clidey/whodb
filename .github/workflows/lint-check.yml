@@ -1,0 +1,136 @@
+name: Lint, Test & Typecheck
+
+on:
+  pull_request:
+  push:
+    branches: [main, release]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  go-lint:
+    name: Go Lint (Core)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
+        with:
+          go-version-file: core/go.mod
+
+      - name: Lint
+        run: |
+          cd core
+          GOBIN=/tmp go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2
+          /tmp/golangci-lint custom
+          ./custom-gcl run ./...
+
+  cli-lint:
+    name: Go Lint (CLI)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
+        with:
+          go-version-file: cli/go.mod
+
+      - name: Lint
+        run: |
+          GOBIN=/tmp go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2
+          cd cli
+          /tmp/golangci-lint run --config .golangci.yml ./...
+
+  go-vet:
+    name: Go Vet
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
+        with:
+          go-version-file: core/go.mod
+
+      - name: Vet
+        run: cd core && go vet ./...
+
+  go-build:
+    name: Go Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
+        with:
+          go-version-file: core/go.mod
+
+      - name: Build
+        run: cd core && go build ./cmd/whodb
+
+  go-test:
+    name: Go Test (-race)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
+        with:
+          go-version-file: core/go.mod
+
+      - name: Unit Tests (CE)
+        run: |
+          cd core
+          export GOCACHE="$PWD/.gocache"
+          mkdir -p "$GOCACHE"
+          go test -race -count=10 ./src/... ./graph/...
+
+  frontend-build:
+    name: Frontend Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - uses: pnpm/action-setup@26f6d4f2c533a43e6b5da0b4a5dd983f98f7b49a # v6.0.4
+        with:
+          package_json_file: frontend/package.json
+          run_install: false
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: '25.6.0'
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install
+        run: cd frontend && pnpm install --frozen-lockfile
+
+      - name: Build
+        run: cd frontend && pnpm build:ce
+
+  frontend-lint:
+    name: Frontend Lint & Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - uses: pnpm/action-setup@26f6d4f2c533a43e6b5da0b4a5dd983f98f7b49a # v6.0.4
+        with:
+          package_json_file: frontend/package.json
+          run_install: false
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: '25.6.0'
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install
+        run: cd frontend && pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: cd frontend && pnpm lint
+
+      - name: Typecheck
+        run: cd frontend && pnpm typecheck

@@ -16,5 +16,7 @@ while IFS= read -r file_path; do
 done < <(python3 "$hook_dir/changed-files.py")
 
 if [[ "$needs_translation" -eq 1 ]]; then
-    cd "$repo_root/dev/translate" && python3 detect.py 2>/dev/null && node translate.mjs 2>/dev/null
+    (cd "$repo_root/dev/translate" && python3 detect.py >/dev/null 2>&1 && node translate.mjs >/dev/null 2>&1) || true
 fi
+
+exit 0

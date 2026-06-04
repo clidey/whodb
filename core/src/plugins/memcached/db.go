@@ -68,7 +68,7 @@ func DB(config *engine.PluginConfig) (*Client, error) {
 	// Authenticate if both username and password are provided (text protocol -Y auth)
 	if config.Credentials.Username != "" && config.Credentials.Password != "" {
 		if authErr := client.Authenticate(config.Credentials.Username, config.Credentials.Password); authErr != nil {
-			client.Close()
+			_ = client.Close()
 			log.WithError(authErr).WithField("hostname", config.Credentials.Hostname).Error("Failed to authenticate with Memcached")
 			return nil, authErr
 		}
@@ -77,12 +77,12 @@ func DB(config *engine.PluginConfig) (*Client, error) {
 	// Validate server version (≥1.4.31 required for lru_crawler metadump)
 	version, err := client.Version()
 	if err != nil {
-		client.Close()
+		_ = client.Close()
 		log.WithError(err).WithField("hostname", config.Credentials.Hostname).Error("Failed to get Memcached version")
 		return nil, err
 	}
 	if !isVersionSupported(version) {
-		client.Close()
+		_ = client.Close()
 		return nil, fmt.Errorf("memcached version %s is not supported, minimum required: %s", version, minVersion)
 	}
 
@@ -102,7 +102,7 @@ func compareVersions(a, b string) int {
 
 	maxLen := max(len(bParts), len(aParts))
 
-	for i := 0; i < maxLen; i++ {
+	for i := range maxLen {
 		var aVal, bVal int
 		if i < len(aParts) {
 			aVal, _ = strconv.Atoi(aParts[i])

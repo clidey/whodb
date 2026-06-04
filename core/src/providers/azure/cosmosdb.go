@@ -29,6 +29,11 @@ import (
 	"github.com/clidey/whodb/core/src/providers"
 )
 
+const (
+	azureMetaLocation      = "location"
+	azureMetaResourceGroup = "resourceGroup"
+)
+
 // discoverCosmosDB discovers Azure Cosmos DB accounts with MongoDB API.
 // Only accounts with Kind == "MongoDB" or the EnableMongo capability are included.
 func (p *Provider) discoverCosmosDB(ctx context.Context) ([]providers.DiscoveredConnection, error) {
@@ -50,7 +55,7 @@ func (p *Provider) discoverCosmosDB(ctx context.Context) ([]providers.Discovered
 
 	for pager.More() {
 		if ctx.Err() != nil {
-			log.Warnf("Azure CosmosDB: context cancelled, returning %d results so far", len(connections))
+			log.Warnf("Azure CosmosDB: context canceled, returning %d results so far", len(connections))
 			return connections, ctx.Err()
 		}
 
@@ -103,9 +108,9 @@ func (p *Provider) cosmosAccountToConnection(account *armcosmos.DatabaseAccountG
 	resourceGroup := extractResourceGroup(derefStr(account.ID))
 
 	metadata := map[string]string{
-		"port":          "10255",
-		"location":      location,
-		"resourceGroup": resourceGroup,
+		"port":                 "10255",
+		azureMetaLocation:      location,
+		azureMetaResourceGroup: resourceGroup,
 	}
 
 	if account.Kind != nil {
@@ -177,9 +182,7 @@ func (w *cosmosRGPagerWrapper) NextPage(ctx context.Context) (armcosmos.Database
 	if err != nil {
 		return armcosmos.DatabaseAccountsClientListResponse{}, err
 	}
-	return armcosmos.DatabaseAccountsClientListResponse{
-		DatabaseAccountsListResult: resp.DatabaseAccountsListResult,
-	}, nil
+	return armcosmos.DatabaseAccountsClientListResponse(resp), nil
 }
 
 func toCosmosListPager(pager interface {

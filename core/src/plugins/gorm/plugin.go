@@ -18,19 +18,21 @@ package gorm_plugin
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"slices"
 	"strconv"
 	"strings"
 	"time"
 
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
+
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	queryast "github.com/clidey/whodb/core/src/query"
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 type GormPlugin struct {
@@ -174,7 +176,7 @@ func (p *GormPlugin) GetStorageUnits(config *engine.PluginConfig, schema string)
 			log.WithError(err).Error("Failed to execute table info query for schema: " + schema)
 			return nil, err
 		}
-		defer rows.Close()
+		defer func() { _ = rows.Close() }()
 
 		for rows.Next() {
 			tableName, attributes := p.GetTableNameAndAttributes(rows)
@@ -185,6 +187,9 @@ func (p *GormPlugin) GetStorageUnits(config *engine.PluginConfig, schema string)
 				Name:       tableName,
 				Attributes: attributes,
 			})
+		}
+		if err := rows.Err(); err != nil {
+			return nil, err
 		}
 
 		return storageUnits, nil
@@ -388,12 +393,12 @@ func (p *GormPlugin) getGenericRows(db *gorm.DB, schema, storageUnit string, whe
 		query = query.Limit(pageSize).Offset(pageOffset)
 	}
 
-	rows, err := query.Rows()
+	rows, err := query.Rows() //nolint:rowserrcheck
 	if err != nil {
 		log.WithError(err).Error(fmt.Sprintf("Failed to execute generic rows query for table %s.%s", schema, storageUnit))
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	result, err := p.GormPluginFunctions.ConvertRawToRows(rows)
 	if err != nil {
@@ -511,7 +516,7 @@ func (p *GormPlugin) applyBetweenCondition(query *gorm.DB, col, operator, rawVal
 	raw := strings.TrimSpace(rawValue)
 	parts := strings.Split(raw, ",")
 	if len(parts) != 2 {
-		return nil, fmt.Errorf("invalid BETWEEN value; expected 'min,max'")
+		return nil, errors.New("invalid BETWEEN value; expected 'min,max'")
 	}
 	v1, err := p.GormPluginFunctions.ConvertStringValue(strings.TrimSpace(parts[0]), columnType, isNullable)
 	if err != nil {
@@ -636,7 +641,7 @@ func (p *GormPlugin) ExecuteRawSQL(config *engine.PluginConfig, openMultiStateme
 		if err != nil {
 			return nil, err
 		}
-		defer rows.Close()
+		defer func() { _ = rows.Close() }()
 
 		return p.ConvertRawToRows(rows)
 	})
@@ -658,7 +663,7 @@ func (p *GormPlugin) QueryForeignKeyRelationships(config *engine.PluginConfig, q
 			log.Debugf("[FK DEBUG] ERROR: Raw query error: %v", err)
 			return nil, err
 		}
-		defer rows.Close()
+		defer func() { _ = rows.Close() }()
 
 		relationships := make(map[string]*engine.ForeignKeyRelationship)
 		for rows.Next() {
@@ -672,6 +677,9 @@ func (p *GormPlugin) QueryForeignKeyRelationships(config *engine.PluginConfig, q
 				ReferencedTable:  referencedTable,
 				ReferencedColumn: referencedColumn,
 			}
+		}
+		if err := rows.Err(); err != nil {
+			return nil, err
 		}
 		log.Debugf("[FK DEBUG] Found %d FK relationships for params %v", len(relationships), params)
 		return relationships, nil
@@ -687,7 +695,7 @@ func (p *GormPlugin) QueryComputedColumns(config *engine.PluginConfig, query str
 		if err != nil {
 			return nil, err
 		}
-		defer rows.Close()
+		defer func() { _ = rows.Close() }()
 
 		computed := make(map[string]bool)
 		for rows.Next() {
@@ -696,6 +704,9 @@ func (p *GormPlugin) QueryComputedColumns(config *engine.PluginConfig, query str
 				continue
 			}
 			computed[columnName] = true
+		}
+		if err := rows.Err(); err != nil {
+			return nil, err
 		}
 		return computed, nil
 	})

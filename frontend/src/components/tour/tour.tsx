@@ -15,9 +15,10 @@
  */
 
 import { AnimatePresence } from 'framer-motion';
-import { FC, useCallback, useEffect, useState } from 'react';
+import type { FC} from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { TourConfig, TourStep } from './tour-step';
+import type { TourConfig, TourStep } from './tour-step';
 import { TourSpotlight } from './tour-spotlight';
 import { TourTooltip } from './tour-tooltip';
 
@@ -51,7 +52,7 @@ export const Tour: FC<TourProps> = ({ config, isActive, onComplete, onSkip }) =>
             }
             attempts++;
             if (attempts < maxAttempts) {
-                setTimeout(() => tryFind(), 150);
+                setTimeout(() => { tryFind(); }, 150);
             } else {
                 callback(null);
             }
@@ -68,7 +69,7 @@ export const Tour: FC<TourProps> = ({ config, isActive, onComplete, onSkip }) =>
             const needsNavigation = step.path && location.pathname !== step.path;
 
             if (needsNavigation && step.path) {
-                navigate(step.path);
+                void navigate(step.path);
             }
 
             const delay = needsNavigation ? 1000 : 300;

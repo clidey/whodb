@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/brianvoe/gofakeit/v7"
+
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
@@ -140,14 +141,14 @@ func (g *Generator) AnalyzeDependencies(
 
 	if err := g.collectDependencies(plugin, config, schema, table, rowCount, visited, tableInfo, adjacency); err != nil {
 		analysis.Error = err.Error()
-		return analysis, nil
+		return analysis, nil //nolint:nilerr
 	}
 
 	// Topological sort with cycle detection
 	order, err := topoSort(adjacency)
 	if err != nil {
 		analysis.Error = err.Error()
-		return analysis, nil
+		return analysis, nil //nolint:nilerr
 	}
 
 	// Build result in generation order

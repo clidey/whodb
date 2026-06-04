@@ -17,11 +17,16 @@
 package duckdb
 
 import (
+	"gorm.io/gorm"
+
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
-	"gorm.io/gorm"
+)
+
+const (
+	duckDBYes = "YES"
 )
 
 // GetColumnConstraints retrieves column constraints for DuckDB tables.
@@ -38,14 +43,17 @@ func (p *DuckDBPlugin) GetColumnConstraints(config *engine.PluginConfig, schema 
 		if err != nil {
 			return false, err
 		}
-		defer rows.Close()
+		defer func() { _ = rows.Close() }()
 
 		for rows.Next() {
 			var columnName, isNullable string
 			if err := rows.Scan(&columnName, &isNullable); err != nil {
 				continue
 			}
-			gorm_plugin.EnsureConstraintEntry(constraints, columnName)["nullable"] = isNullable == "YES"
+			gorm_plugin.EnsureConstraintEntry(constraints, columnName)["nullable"] = isNullable == duckDBYes
+		}
+		if err := rows.Err(); err != nil {
+			return false, err
 		}
 
 		// Get primary keys and unique constraints via duckdb_constraints()
@@ -57,7 +65,7 @@ func (p *DuckDBPlugin) GetColumnConstraints(config *engine.PluginConfig, schema 
 				AND dc.schema_name = ? AND dc.table_name = ?
 		`, schema, storageUnit).Rows()
 		if err == nil {
-			defer constraintRows.Close()
+			defer func() { _ = constraintRows.Close() }()
 			for constraintRows.Next() {
 				var columnName, constraintType string
 				if err := constraintRows.Scan(&columnName, &constraintType); err != nil {
@@ -70,6 +78,9 @@ func (p *DuckDBPlugin) GetColumnConstraints(config *engine.PluginConfig, schema 
 					gorm_plugin.EnsureConstraintEntry(constraints, columnName)["unique"] = true
 				}
 			}
+			if err := constraintRows.Err(); err != nil {
+				return false, err
+			}
 		}
 
 		// Get single-column CHECK constraints used by mock data generation.
@@ -80,13 +91,16 @@ func (p *DuckDBPlugin) GetColumnConstraints(config *engine.PluginConfig, schema 
 				AND dc.schema_name = ? AND dc.table_name = ?
 		`, schema, storageUnit).Rows()
 		if err == nil {
-			defer checkRows.Close()
+			defer func() { _ = checkRows.Close() }()
 			for checkRows.Next() {
 				var columnName, checkClause string
 				if err := checkRows.Scan(&columnName, &checkClause); err != nil {
 					continue
 				}
 				p.parseCheckConstraint(columnName, checkClause, constraints)
+			}
+			if err := checkRows.Err(); err != nil {
+				return false, err
 			}
 		}
 

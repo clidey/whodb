@@ -14,15 +14,14 @@
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-      "@graphql": ["src/generated/graphql.ts"]
+      "@/*": ["./src/*"],
+      "@graphql": ["./src/generated/graphql.ts"]
     },
     "allowImportingTsExtensions": true
   },

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { TypeDefinition } from '../config/source-types';
+import type { TypeDefinition } from '../config/source-types';
 import { getSourceSessionMetadataState } from './source-session-metadata-cache';
 
 /**
@@ -33,8 +33,8 @@ export function getSourceColumnTypeDefinitions(sourceType: string): TypeDefiniti
         return metadataState.typeDefinitions.map(td => ({
             id: td.id,
             label: td.label,
-            hasLength: td.hasLength || undefined,
-            hasPrecision: td.hasPrecision || undefined,
+            hasLength: td.hasLength ?? undefined,
+            hasPrecision: td.hasPrecision ?? undefined,
             defaultLength: td.defaultLength ?? undefined,
             defaultPrecision: td.defaultPrecision ?? undefined,
             category: td.category,
@@ -99,9 +99,7 @@ export function findColumnTypeDefinition(typeId: string, sourceType: string): Ty
 
     let typeDef = typeDefs.find(t => t.id.toUpperCase() === normalizedType);
 
-    if (!typeDef) {
-        typeDef = typeDefs.find(t => t.id.toUpperCase() === typeId.toUpperCase());
-    }
+    typeDef ??= typeDefs.find(t => t.id.toUpperCase() === typeId.toUpperCase());
 
     return typeDef;
 }

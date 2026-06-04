@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {Button, useTheme} from "@clidey/ux";
+import {useTheme} from "@clidey/ux";
 import {json} from "@codemirror/lang-json";
 import {markdown} from "@codemirror/lang-markdown";
 import {sql} from "@codemirror/lang-sql";
@@ -24,7 +24,8 @@ import {EditorView, gutter, GutterMarker, lineNumbers} from "@codemirror/view";
 import {EyeIcon, EyeSlashIcon} from "./heroicons";
 import classNames from "classnames";
 import {basicSetup} from "codemirror";
-import React, {FC, useCallback, useEffect, useMemo, useRef, useState} from "react";
+import type {FC} from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState} from "react";
 import ReactJson from "react-json-view";
 import MarkdownPreview from 'react-markdown';
 import remarkGfm from "remark-gfm";
@@ -188,11 +189,11 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
   const darkModeEnabled = theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
   const apolloClient = useApolloClient();
   const currentSchema = useAppSelector(state => state.database.schema);
-  const currentProfile = useAppSelector(state => state.auth.current);
+  const currentDatabase = useAppSelector(state => state.auth.current?.Database);
 
   // For databases like MySQL where database and schema are the same,
   // use the connection database as fallback if no schema is selected
-  const defaultSchema = currentSchema || currentProfile?.Database || '';
+  const defaultSchema = currentSchema ?? currentDatabase ?? '';
 
   useEffect(() => {
     onRunReference.current = onRun;
@@ -314,7 +315,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
               },
           }),
             basicSetup,
-            languageExtension != null ? languageExtension : [],
+            languageExtension ?? [],
             // Add autocomplete for SQL in EE mode, but allow disabling it during E2E tests to prevent flakiness.
             (language === "sql" && createSQLAutocomplete && !(window as any).__E2E_DISABLE_AUTOCOMPLETE) ? createSQLAutocomplete({apolloClient, defaultSchema}) : [],
             darkModeEnabled ? [oneDark, EditorView.theme({

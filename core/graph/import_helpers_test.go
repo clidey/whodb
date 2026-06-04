@@ -6,9 +6,10 @@ import (
 	"testing"
 
 	"github.com/99designs/gqlgen/graphql"
+	"github.com/xuri/excelize/v2"
+
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/engine"
-	"github.com/xuri/excelize/v2"
 )
 
 func TestValidationKeyFromError(t *testing.T) {

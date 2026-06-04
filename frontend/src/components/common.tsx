@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {FC, ReactElement, ReactNode} from "react";
+import type {FC, ReactElement, ReactNode} from "react";
 import {createPortal} from "react-dom";
 
 type IEmptyMessageProps = {
@@ -40,5 +40,5 @@ interface PortalProps {
 }
 
 export const Portal: FC<PortalProps> = ({ children }) => {
-  return createPortal(children, document.querySelector("#whodb-app-container")!);
+  return createPortal(children, document.querySelector("#whodb-app-container") ?? document.body);
 };

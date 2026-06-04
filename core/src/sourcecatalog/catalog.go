@@ -290,8 +290,8 @@ func All() []source.TypeSpec {
 func IDs() []string {
 	specs := All()
 	ids := make([]string, 0, len(specs))
-	for _, spec := range specs {
-		ids = append(ids, spec.ID)
+	for i := range specs {
+		ids = append(ids, specs[i].ID)
 	}
 	return ids
 }
@@ -590,7 +590,6 @@ func buildConnectionFields(entry DatabaseEntry, traits source.TypeTraits) []sour
 
 		kind := source.ConnectionFieldKindText
 		labelKey := "advancedFields." + camelCaseKey(key)
-		placeholderKey := ""
 		field := entry.Extra[key]
 		if field.Kind != "" {
 			kind = field.Kind
@@ -598,7 +597,7 @@ func buildConnectionFields(entry DatabaseEntry, traits source.TypeTraits) []sour
 		if field.LabelKey != "" {
 			labelKey = field.LabelKey
 		}
-		placeholderKey = field.PlaceholderKey
+		placeholderKey := field.PlaceholderKey
 
 		section := source.ConnectionFieldSectionAdvanced
 		if key == "Port" && field.DefaultValue != "" {
@@ -684,7 +683,7 @@ func metadataObjectType(kind source.ObjectKind, singular string, plural string, 
 	}
 }
 
-func tabularObjectType(kind source.ObjectKind, singular string, plural string) source.ObjectType {
+func tabularObjectType(kind source.ObjectKind, singular string, plural string) source.ObjectType { //nolint:unparam
 	return source.ObjectType{
 		Kind:      kind,
 		DataShape: source.DataShapeTabular,
@@ -703,7 +702,7 @@ func tabularObjectType(kind source.ObjectKind, singular string, plural string) s
 	}
 }
 
-func tabularReadOnlyObjectType(kind source.ObjectKind, singular string, plural string) source.ObjectType {
+func tabularReadOnlyObjectType(kind source.ObjectKind, singular string, plural string) source.ObjectType { //nolint:unparam
 	return source.ObjectType{
 		Kind:      kind,
 		DataShape: source.DataShapeTabular,
@@ -1004,7 +1003,7 @@ func withHiddenObjectRules(
 	return traits
 }
 
-func withExecutionTraits(traits source.TypeTraits, streaming bool, multiStatement bool) source.TypeTraits {
+func withExecutionTraits(traits source.TypeTraits, streaming bool, multiStatement bool) source.TypeTraits { //nolint:unparam
 	traits.Query.SupportsScripts = true
 	traits.Query.SupportsStreaming = streaming
 	traits.Query.SupportsMultiStatement = multiStatement
@@ -1028,6 +1027,6 @@ func fileTraits(profileLabelStrategy source.ProfileLabelStrategy) source.TypeTra
 }
 
 //go:fix inline
-func ptr(kind source.ObjectKind) *source.ObjectKind {
+func ptr(kind source.ObjectKind) *source.ObjectKind { //nolint:unused
 	return new(kind)
 }

@@ -18,9 +18,11 @@ package graph
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"slices"
+	"strconv"
 
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/auth"
@@ -31,7 +33,7 @@ import (
 func getSourceSpecForContext(ctx context.Context) (source.TypeSpec, *source.Credentials, error) {
 	credentials := auth.GetSourceCredentials(ctx)
 	if credentials == nil {
-		return source.TypeSpec{}, nil, fmt.Errorf("unauthorized")
+		return source.TypeSpec{}, nil, errors.New("unauthorized")
 	}
 
 	spec, ok := sourcecatalog.Find(credentials.SourceType)
@@ -66,13 +68,6 @@ func sourceCredentialsFromInput(input model.SourceLoginInput) *source.Credential
 		SourceType:  input.SourceType,
 		Values:      recordInputsToMap(input.Values),
 		AccessToken: input.AccessToken,
-	}
-}
-
-func sourceCredentialsFromProfileInput(profile model.SourceProfileLoginInput) *source.Credentials {
-	return &source.Credentials{
-		ID:     &profile.ID,
-		Values: recordInputsToMap(profile.Values),
 	}
 }
 
@@ -146,7 +141,7 @@ func sourceRefFromInput(ref *model.SourceObjectRefInput) *source.ObjectRef {
 
 func validateSourceObjectAction(spec source.TypeSpec, ref *source.ObjectRef, action source.Action) error {
 	if ref == nil {
-		return fmt.Errorf("source object reference is required")
+		return errors.New("source object reference is required")
 	}
 	return source.ValidateObjectActionSupported(spec, ref.Kind, action)
 }
@@ -189,7 +184,8 @@ func sourceFileBaseName(ref *source.ObjectRef, fallback string) string {
 
 func sourceTypeToModel(spec source.TypeSpec) *model.SourceType {
 	fields := make([]*model.SourceConnectionField, 0, len(spec.ConnectionFields))
-	for _, field := range spec.ConnectionFields {
+	for i := range spec.ConnectionFields {
+		field := &spec.ConnectionFields[i]
 		var placeholder *string
 		if field.PlaceholderKey != "" {
 			placeholder = &field.PlaceholderKey
@@ -454,7 +450,8 @@ func sourceObjectCreationMetadataToModel(metadata source.ObjectCreationMetadata)
 // field constraints.
 func MapFieldConstraintsToModel(fields []source.FieldConstraints) []*model.SourceFieldConstraints {
 	results := make([]*model.SourceFieldConstraints, 0, len(fields))
-	for _, field := range fields {
+	for i := range fields {
+		field := &fields[i]
 		var foreignKey *model.ForeignKeyDefinition
 		if field.ForeignKey != nil {
 			foreignKey = &model.ForeignKeyDefinition{
@@ -506,7 +503,7 @@ func sourceContentToModel(content *source.ContentResult) *model.SourceContent {
 		Text:       content.Text,
 		MIMEType:   content.MIMEType,
 		IsBinary:   content.IsBinary,
-		SizeBytes:  fmt.Sprintf("%d", content.SizeBytes),
+		SizeBytes:  strconv.FormatInt(content.SizeBytes, 10),
 		Truncated:  content.Truncated,
 		FileName:   content.FileName,
 		ModifiedAt: content.ModifiedAt,
@@ -598,7 +595,7 @@ func appendGraphPath(parent *source.ObjectRef, name string) []string {
 	return path
 }
 
-func namespaceAndObjectNameForRef(spec source.TypeSpec, ref source.ObjectRef) (string, string) {
+func namespaceAndObjectNameForRef(spec source.TypeSpec, ref source.ObjectRef) (string, string) { //nolint:unparam
 	defaultIndex := slices.Index(spec.Contract.BrowsePath, spec.Contract.DefaultObjectKind)
 	namespace := ""
 	if defaultIndex > 0 && defaultIndex-1 < len(ref.Path) {

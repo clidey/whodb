@@ -395,7 +395,7 @@ func InitAWSProvidersFromEnv() error {
 
 func sanitizeID(s string) string {
 	result := make([]byte, 0, len(s))
-	for i := 0; i < len(s); i++ {
+	for i := range len(s) {
 		c := s[i]
 		if (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '-' || c == '_' {
 			result = append(result, c)

@@ -15,11 +15,12 @@
  */
 
 import { Alert, AlertDescription, Button, Input, Label, TextArea, cn } from '@clidey/ux';
-import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { FC} from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { SearchSelect } from './ux';
 import { DocumentTextIcon, ExclamationCircleIcon, FolderIcon } from './heroicons';
 import { useTranslation } from '@/hooks/use-translation';
-import { SSLModeOption } from '@/config/source-types';
+import type { SSLModeOption } from '@/config/source-types';
 import { SSL_KEYS } from '@/utils/source-ssl';
 
 export { SSL_KEYS } from '@/utils/source-ssl';
@@ -47,7 +48,7 @@ export interface SSLConfigProps {
  * Detects if the current page is served over an insecure connection (HTTP).
  */
 function isInsecureConnection(): boolean {
-  return typeof window !== 'undefined' && window.location.protocol === 'http:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+  return window?.location?.protocol === 'http:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
 }
 
 /**
@@ -194,8 +195,8 @@ export const SSLConfig: FC<SSLConfigProps> = ({
           label={t('caCertificate')}
           contentValue={advancedForm[SSL_KEYS.CA_CONTENT] || ''}
           inputMode={inputModes.ca}
-          onToggleMode={() => toggleInputMode('ca')}
-          onContentChange={(value) => onAdvancedFormChange(SSL_KEYS.CA_CONTENT, value)}
+          onToggleMode={() =>{  toggleInputMode('ca'); }}
+          onContentChange={(value) =>{  onAdvancedFormChange(SSL_KEYS.CA_CONTENT, value); }}
           testIdPrefix="ssl-ca-certificate"
         />
       )}
@@ -207,8 +208,8 @@ export const SSLConfig: FC<SSLConfigProps> = ({
             label={t('clientCertificate')}
             contentValue={advancedForm[SSL_KEYS.CLIENT_CERT_CONTENT] || ''}
             inputMode={inputModes.clientCert}
-            onToggleMode={() => toggleInputMode('clientCert')}
-            onContentChange={(value) => onAdvancedFormChange(SSL_KEYS.CLIENT_CERT_CONTENT, value)}
+            onToggleMode={() =>{  toggleInputMode('clientCert'); }}
+            onContentChange={(value) =>{  onAdvancedFormChange(SSL_KEYS.CLIENT_CERT_CONTENT, value); }}
             testIdPrefix="ssl-client-certificate"
             optional
           />
@@ -216,8 +217,8 @@ export const SSLConfig: FC<SSLConfigProps> = ({
             label={t('clientKey')}
             contentValue={advancedForm[SSL_KEYS.CLIENT_KEY_CONTENT] || ''}
             inputMode={inputModes.clientKey}
-            onToggleMode={() => toggleInputMode('clientKey')}
-            onContentChange={(value) => onAdvancedFormChange(SSL_KEYS.CLIENT_KEY_CONTENT, value)}
+            onToggleMode={() =>{  toggleInputMode('clientKey'); }}
+            onContentChange={(value) =>{  onAdvancedFormChange(SSL_KEYS.CLIENT_KEY_CONTENT, value); }}
             testIdPrefix="ssl-client-private-key"
             optional
             isPrivateKey
@@ -236,7 +237,7 @@ export const SSLConfig: FC<SSLConfigProps> = ({
           <Input
             id="ssl-server-name"
             value={advancedForm[SSL_KEYS.SERVER_NAME] || ''}
-            onChange={(e) => onAdvancedFormChange(SSL_KEYS.SERVER_NAME, e.target.value)}
+            onChange={(e) =>{  onAdvancedFormChange(SSL_KEYS.SERVER_NAME, e.target.value); }}
             placeholder={t('serverNamePlaceholder')}
             data-testid="ssl-server-name-input"
           />
@@ -407,7 +408,7 @@ const CertificateInput: FC<CertificateInputProps> = ({
       ) : (
         <TextArea
           value={contentValue}
-          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => onContentChange(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>{  onContentChange(e.target.value); }}
           placeholder={"-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"}
           className="font-mono text-xs h-24"
           data-testid={`${testIdPrefix}-content`}

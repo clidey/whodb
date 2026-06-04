@@ -14,7 +14,7 @@
 
 # WhoDB CLI Makefile
 
-.PHONY: build clean install test run dev help docker-build docker-run docker-compose-up docker-compose-down
+.PHONY: build clean install test run dev help lint lint-fix docker-build docker-run docker-compose-up docker-compose-down
 
 BINARY_NAME=clidey/whodb-cli
 BUILD_DIR=build
@@ -41,6 +41,7 @@ help:
 	@echo "  make run                - Build and run in interactive mode"
 	@echo "  make dev                - Run in development mode"
 	@echo "  make lint               - Run linters"
+	@echo "  make lint-fix           - Run linters with auto-fix"
 	@echo ""
 	@echo "Docker targets:"
 	@echo "  make docker-build       - Build Docker image"
@@ -85,7 +86,11 @@ dev:
 
 lint:
 	@echo "Running linters..."
-	@golangci-lint run ./...
+	@golangci-lint run --config .golangci.yml ./...
+
+lint-fix:
+	@echo "Running linters with auto-fix..."
+	@golangci-lint run --config .golangci.yml --fix ./...
 
 docker-build:
 	@echo "Building Docker image..."

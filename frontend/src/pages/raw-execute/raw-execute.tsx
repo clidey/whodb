@@ -30,6 +30,7 @@ import {
     Button,
     Card,
     cn,
+    CopyButton,
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
@@ -47,13 +48,14 @@ import {
     TabsTrigger,
     toast
 } from "@clidey/ux";
-import { RowsResult } from '@graphql';
+import type { RowsResult } from '@graphql';
 import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
-import {
+import type {
     ChangeEvent,
     FC,
-    ReactElement,
+    ReactElement} from "react";
+import {
     Suspense,
     useCallback,
     useEffect,
@@ -88,10 +90,9 @@ import { useContainerWidth } from "../../hooks/use-container-width";
 import { copyToClipboard } from "../../services/clipboard";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { ScratchpadActions } from "../../store/scratchpad";
-import { featureFlags } from "../../config/features";
 import { isDesktopApp } from "../../utils/external-links";
-import { useSourceContract } from "../../hooks/useSourceContract";
-import { IPluginProps, QueryView } from "./query-view";
+import type { IPluginProps} from "./query-view";
+import { QueryView } from "./query-view";
 import { ph } from "../../utils/privacy";
 
 /** Raw-execute extensions — set via registerRawExecuteExtensions(). */
@@ -137,7 +138,6 @@ const SQLHighlighter: FC<{ code: string }> = ({ code }) => {
     const parseSQL = (sql: string): React.ReactNode[] => {
         const tokens: Array<{ type: string; value: string; className?: string }> = [];
         let remaining = sql;
-        let position = 0;
 
         while (remaining.length > 0) {
             let matched = false;
@@ -262,10 +262,11 @@ const SQLHighlighter: FC<{ code: string }> = ({ code }) => {
             }
         }
 
-        return tokens.map((token, index) => {
+        const keyedTokens = tokens.map((token, i) => ({ ...token, _key: `${token.type}-${token.value}-${i}` }));
+        return keyedTokens.map((token) => {
             if (token.className) {
                 return (
-                    <span key={index} className={token.className}>
+                    <span key={token._key} className={token.className}>
                         {token.value}
                     </span>
                 );
@@ -277,43 +278,13 @@ const SQLHighlighter: FC<{ code: string }> = ({ code }) => {
     return <>{parseSQL(code)}</>;
 };
 
-const CopyButton: FC<{ text: string }> = ({text}) => {
-    const { t } = useTranslation('pages/raw-execute');
-    const [copied, setCopied] = useState(false);
-
-    const handleCopyToClipboard = useCallback(() => {
-        copyToClipboard(text).then(success => {
-            if (success) {
-                setCopied(true);
-                setTimeout(() => setCopied(false), 2000);
-            }
-        });
-    }, [text]);
-
-    return (
-        <Tip className="w-fit">
-            <Button
-                size="icon"
-                variant="secondary"
-                className="border border-input"
-                onClick={handleCopyToClipboard}
-                aria-label={copied ? t('copied') : t('copyToClipboard')}
-                type="button"
-                data-testid="copy-to-clipboard-button"
-            >
-                {copied ? <CheckCircleIcon className="w-4 h-4"/> : <ClipboardDocumentIcon className="w-4 h-4"/>}
-            </Button>
-            <p>{copied ? t('copied') : t('copyToClipboard')}</p>
-        </Tip>
-    );
-}
 
 const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, showTools, cellData }) => {
     const { t } = useTranslation('pages/raw-execute');
     const dispatch = useAppDispatch();
-    const [mode, setMode] = useState<string>(cellData?.mode || ActionOptions.Query);
-    const [code, setCode] = useState(cellData?.code || "");
-    const [submittedCode, setSubmittedCode] = useState("");
+    const [mode, setMode] = useState<string>(cellData?.mode ?? ActionOptions.Query);
+    const [code, setCode] = useState(cellData?.code ?? "");
+    const [, setSubmittedCode] = useState("");
     const [history, setHistory] = useState<{id: string, item: string, status: boolean, date: Date}[]>(() => {
         if (!cellData?.history) return [];
         // Ensure all dates are proper Date objects
@@ -322,8 +293,8 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
             date: item.date instanceof Date ? item.date : new Date(item.date)
         }));
     });
-    const current = useAppSelector(state => state.auth.current);
-    const { supportsAnalyze } = useSourceContract(current?.Type);
+    const currentDatabase = useAppSelector(state => state.auth.current?.Database);
+    const currentId = useAppSelector(state => state.auth.current?.Id);
     const handleExecute = useRef<(code: string) => Promise<any>>(() => Promise.resolve());
     const [historyOpen, setHistoryOpen] = useState(false);
     const [error, setError] = useState<Error | null>(null);
@@ -353,10 +324,10 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
     // Sync local state with Redux state
     useEffect(() => {
         if (cellData) {
-            setCode(cellData.code || "");
-            setMode(cellData.mode || ActionOptions.Query);
+            setCode(cellData.code ?? "");
+            setMode(cellData.mode ?? ActionOptions.Query);
             // Ensure all dates are proper Date objects
-            const processedHistory = (cellData.history || []).map((item: any) => ({
+            const processedHistory = (cellData.history ?? []).map((item: any) => ({
                 ...item,
                 date: item.date instanceof Date ? item.date : new Date(item.date)
             }));
@@ -396,7 +367,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
         },
     ]);
     const [allActionOptions, setAllActionOptions] = useState<Record<string, string>>({ ...ActionOptions });
-    const [allActionOptionIcons, setAllActionOptionIcons] = useState<Record<string, ReactElement>>({ ...ActionOptionIcons });
+    const [, setAllActionOptionIcons] = useState<Record<string, ReactElement>>({ ...ActionOptionIcons });
 
     // Merge extensions on mount (registered via registerRawExecuteExtensions)
     useEffect(() => {
@@ -435,7 +406,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
     }, [handleExecute, cellId, dispatch]);
 
     const handleRawExecute = useCallback((historyCode?: string) => {
-        if (current == null) {
+        if (currentId == null) {
             setLoading(false);
             return;
         }
@@ -446,7 +417,11 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
         } else {
             doExecute(currentCode);
         }
-    }, [code, current, mode, doExecute]);
+    }, [
+	code,
+	mode,
+	doExecute
+]);
 
     const handleConfirmExecute = useCallback(() => {
         if (pendingExecuteCode != null) {
@@ -531,7 +506,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
     // Use all plugins
     const output = useMemo(() => {
         const selectedPlugin = allPlugins.find((p: any) => p.type === mode);
-        if (selectedPlugin?.component == null || current == null) {
+        if (selectedPlugin?.component == null || currentId == null) {
             return null;
         }
         const Component = selectedPlugin.component as FC<IPluginProps>;
@@ -559,14 +534,25 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                     }}
                 >
                     <Suspense fallback={<Loading />}>
-                        <Component code={code} handleExecuteRef={handleExecute} modelType={modelType?.modelType || ''}
-                                   schema={current.Database} token={modelType?.token} providerId={current.Id}
+                        <Component code={code} handleExecuteRef={handleExecute} modelType={modelType?.modelType ?? ''}
+                                   schema={currentDatabase ?? ''} token={modelType?.token} providerId={currentId}
                                    containerWidth={containerWidth} />
                     </Suspense>
                 </div>
             </div>
         );
-    }, [mode, allActionOptions, allPlugins, code, modelType, current, userResizedHeight, isResizingResults, handleResultsResize, rows, containerWidth]);
+    }, [
+	mode,
+	allActionOptions,
+	allPlugins,
+	code,
+	modelType,
+	userResizedHeight,
+	isResizingResults,
+	handleResultsResize,
+	rows,
+	containerWidth
+]);
 
     // Reset user-resized height when new results come in so the container auto-fits
     useEffect(() => {
@@ -576,22 +562,6 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
         setUserResizedHeight(null);
     }, [rows]);
 
-    const isAnalyzeAvailable = useMemo(() => {
-        return featureFlags.analyzeView && supportsAnalyze && !!allActionOptions.Analyze;
-    }, [allActionOptions, supportsAnalyze]);
-
-    // Merge icons from all sources
-    const mergedActionOptionIcons = useMemo(() => {
-        return {
-            ...ActionOptionIcons,
-            ...allActionOptionIcons,
-        };
-    }, [allActionOptionIcons]);
-
-    const actionOptions = useMemo(() => {
-        return Object.keys(allActionOptions);
-    }, [allActionOptions]);
-
     return (
         <div className="flex flex-col grow group/cell relative">
             <div className="relative">
@@ -599,7 +569,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                     className={`flex grow border border-gray-200 rounded-md overflow-hidden dark:bg-white/10 dark:border-white/5 ${ph.noCapture}`}
                     style={{ height: `${editorHeight}px` }}
                 >
-                    <CodeEditor language="sql" value={code} setValue={setCode} onRun={(c) => handleRawExecute(c)} />
+                    <CodeEditor language="sql" value={code} setValue={setCode} onRun={(c) =>{  handleRawExecute(c); }} />
                 </div>
                 <div 
                     className="h-2 cursor-row-resize transition-all duration-200 relative group"
@@ -623,19 +593,19 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => setCode("")}>
+                            <DropdownMenuItem onClick={() =>{  setCode(""); }}>
                                 <ArrowPathIcon className="w-4 h-4"/>
                                 {t('clear')}
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => {
-                                copyToClipboard(code).then(success => {
+                                void copyToClipboard(code).then(success => {
                                     if (success) toast.success(t('copyCode'));
                                 });
                             }}>
                                 <ClipboardDocumentIcon className="w-4 h-4"/>
                                 {t('copyCode')}
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setHistoryOpen(true)}>
+                            <DropdownMenuItem onClick={() =>{  setHistoryOpen(true); }}>
                                 <ClockIcon className="w-4 h-4"/>
                                 {t('queryHistory')}
                             </DropdownMenuItem>
@@ -646,35 +616,6 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                     "opacity-100": showTools,
                 })}>
                     <div className="flex gap-sm pointer-events-auto">
-                        {/* {actionOptions.length > 1 && <Select
-                            value={mode}
-                            onValueChange={(val) => setMode(val as string)}
-                        >
-                            <SelectTrigger style={{
-                                background: "var(--secondary)",
-                            }}>
-                                <div className="flex items-center gap-sm w-full">
-                                    {mergedActionOptionIcons[mode] && cloneElement(mergedActionOptionIcons[mode], { className: "w-4 h-4" })}
-                                    <span>{mode}</span>
-                                </div>
-                            </SelectTrigger>
-                            <SelectContent>
-                                {actionOptions.map((item) => (
-                                    <SelectItem
-                                        key={item}
-                                        value={item}
-                                        className={classNames({
-                                            "hidden": !isAnalyzeAvailable && (item === allActionOptions.Analyze),
-                                        })}
-                                    >
-                                        <div className="flex items-center gap-2">
-                                            {mergedActionOptionIcons[item] && cloneElement(mergedActionOptionIcons[item], { className: "w-4 h-4" })}
-                                            <span>{item}</span>
-                                        </div>
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>} */}
                         <Tip className="w-fit">
                             <Button onClick={handleAdd} data-testid="add-cell-button" variant="secondary"
                                     className="border border-input" aria-label={t('addCell')}>
@@ -683,7 +624,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                             <p>{t('addCell')}</p>
                         </Tip>
                         <Tip className="w-fit">
-                            <Button onClick={() => setCode("")} data-testid="clear-cell-button" variant="secondary"
+                            <Button onClick={() =>{  setCode(""); }} data-testid="clear-cell-button" variant="secondary"
                                     className="border border-input" aria-label={t('clearEditor')}>
                                 <ArrowPathIcon className="w-4 h-4" />
                             </Button>
@@ -703,7 +644,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                     <div className="flex gap-sm items-center">
                         <Tip className="w-fit">
                             <Button
-                                onClick={() => setHistoryOpen(true)}
+                                onClick={() =>{  setHistoryOpen(true); }}
                                 data-testid="history-button"
                                 className={cn("pointer-events-auto border border-input", {
                                     "hidden": history.length === 0,
@@ -717,7 +658,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                             <p>{t('queryHistory')}</p>
                         </Tip>
                         <Tip className="w-fit">
-                            <Button onClick={() => handleRawExecute()} data-testid="query-cell-button"
+                            <Button onClick={() =>{  handleRawExecute(); }} data-testid="query-cell-button"
                                     className={cn("pointer-events-auto", {
                                 "hidden": code.length === 0,
                             })} disabled={code.length === 0} aria-label={t('executeQuery')}>
@@ -800,7 +741,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                                                                 size="icon"
                                                                 variant="secondary"
                                                                 className="border border-input"
-                                                                onClick={() => handleRawExecute(item)}
+                                                                onClick={() =>{  handleRawExecute(item); }}
                                                                 aria-label={t('run')}
                                                                 data-testid="run-history-button"
                                                             >
@@ -1002,8 +943,6 @@ export const RawExecutePage: FC = () => {
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [pageToDelete, setPageToDelete] = useState<string | null>(null);
 
-    const aiState = useAI();
-
     // Initialize scratchpad and ensure all pages have cells
     const hasInitialized = useRef(false);
     useEffect(() => {
@@ -1087,24 +1026,20 @@ export const RawExecutePage: FC = () => {
     return (
         <InternalPage routes={[InternalRoutes.RawExecute]}>
             <div className="flex flex-col w-full gap-2" data-testid="raw-execute-page">
-                {/* {featureFlags.analyzeView && <AIProvider 
-                    {...aiState}
-                    disableNewChat={true}
-                />} */}
                 <div className="flex justify-center items-center w-full mt-4">
                     <div className="w-full flex flex-col gap-4">
                         <div className="flex justify-between items-center">
-                            <Tabs className="w-full h-full" value={activePageId || ""}>
+                            <Tabs className="w-full h-full" value={activePageId ?? ""}>
                                 <div className="flex gap-sm w-full justify-between">
                                     <TabsList className="flex flex-wrap gap-sm" data-testid="page-tabs">
                                         {
                                             pages.map((page, index) => (
                                                     <TabsTrigger value={page.id} key={page.id}
-                                                                 onClick={() => handleSelect(page.id)}
+                                                                 onClick={() =>{  handleSelect(page.id); }}
                                                                  data-testid={`page-tab-${index}`}>
                                                         <div className="flex items-center gap-2 group">
                                                             <EditableInput page={page}
-                                                                setValue={(newName) => handleUpdatePageName(page, newName)}
+                                                                setValue={(newName) =>{  handleUpdatePageName(page, newName); }}
                                                                 isActive={page.id === activePageId} />
                                                             <Tip className="w-fit">
                                                                 <button
@@ -1136,7 +1071,7 @@ export const RawExecutePage: FC = () => {
                                         </Tip>
                                     </TabsList>
                                 </div>
-                                <TabsContent value={activePageId || ""} className="h-full w-full mt-4">
+                                <TabsContent value={activePageId ?? ""} className="h-full w-full mt-4">
                                     <AnimatePresence mode="wait">
                                         {pages.map((page) => (
                                             <motion.div

@@ -15,6 +15,7 @@
  */
 
 import type {PostHog} from 'posthog-js';
+import type * as PostHogModule from 'posthog-js';
 import {featureFlags} from './features';
 
 type ConsentState = 'granted' | 'denied' | 'unknown';
@@ -22,7 +23,7 @@ type ConsentState = 'granted' | 'denied' | 'unknown';
 const CONSENT_STORAGE_KEY = 'whodb.analytics.consent';
 const DISTINCT_ID_STORAGE_KEY = 'whodb.analytics.distinct_id';
 
-let posthogModulePromise: Promise<typeof import('posthog-js')> | null = null;
+let posthogModulePromise: Promise<typeof PostHogModule> | null = null;
 let initPromise: Promise<PostHog | null> | null = null;
 let activeClient: PostHog | null = null;
 let handlersRegistered = false;
@@ -88,7 +89,7 @@ const loadStoredDistinctId = (): string | null => {
         return null;
     }
     try {
-        cachedDistinctId = window.localStorage?.getItem(DISTINCT_ID_STORAGE_KEY) || null;
+        cachedDistinctId = window.localStorage?.getItem(DISTINCT_ID_STORAGE_KEY) ?? null;
     } catch (e) {
         console.warn('Failed to load distinct ID from localStorage:', e);
     }
@@ -96,12 +97,10 @@ const loadStoredDistinctId = (): string | null => {
 };
 
 const ensurePosthogModule = async () => {
-    if (!posthogModulePromise) {
-        posthogModulePromise = import('posthog-js').catch(err => {
-            console.warn('Failed to load PostHog module:', err);
-            throw err;
-        });
-    }
+    posthogModulePromise ??= import('posthog-js').catch(err => {
+        console.warn('Failed to load PostHog module:', err);
+        throw err;
+    });
     return posthogModulePromise;
 };
 
@@ -279,7 +278,7 @@ export const trackFrontendEvent = async (event: string, properties?: Record<stri
     try {
         const client = await ensureInitializedClient();
         client?.capture(event, properties ?? {});
-    } catch (error) {
+    } catch {
         // do nothing
     }
 };

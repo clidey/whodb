@@ -23,18 +23,21 @@ import { applyUICustomization } from '../utils/theme-customization';
  * This should be used at the root level of the application
  */
 export const useThemeCustomization = () => {
-  const settings = useAppSelector(state => state.settings);
+  const fontSize = useAppSelector(state => state.settings.fontSize);
+  const borderRadius = useAppSelector(state => state.settings.borderRadius);
+  const spacing = useAppSelector(state => state.settings.spacing);
+  const disableAnimations = useAppSelector(state => state.settings.disableAnimations);
 
   useEffect(() => {
-    applyUICustomization(settings);
-  }, [settings.fontSize, settings.borderRadius, settings.spacing]);
+    applyUICustomization({ fontSize, borderRadius, spacing });
+  }, [fontSize, borderRadius, spacing]);
 
   useEffect(() => {
-    if (settings.disableAnimations) {
+    if (disableAnimations) {
       document.body.classList.add('disable-animations');
     } else {
       document.body.classList.remove('disable-animations');
     }
-  }, [settings.disableAnimations]);
+  }, [disableAnimations]);
 
 };

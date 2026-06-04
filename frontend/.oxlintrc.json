@@ -1,0 +1,94 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": [],
+  "options": {
+    "typeAware": true
+  },
+  "env": {
+    "browser": true
+  },
+  "ignorePatterns": [
+    "**/dist/**",
+    "**/build/**",
+    "**/build-ee/**",
+    "**/node_modules/**",
+    "**/src/generated/**",
+    "**/coverage/**",
+    "**/.nyc_output/**",
+    "**/*.config.mjs",
+    "**/*.config.ts"
+  ],
+  "globals": {
+    "__dirname": "readonly",
+    "module": "readonly",
+    "process": "readonly",
+    "require": "readonly"
+  },
+  "overrides": [
+    {
+      "files": ["e2e/**/*.{ts,mjs}"],
+      "rules": {
+        "typescript/no-unsafe-member-access": "off",
+        "typescript/no-unsafe-assignment": "off",
+        "typescript/no-misused-promises": "off",
+        "typescript/no-floating-promises": "off"
+      }
+    },
+    {
+      "files": ["src/**/*.{ts,tsx}"],
+      "plugins": ["typescript", "react", "import"],
+      "rules": {
+        // TypeScript — active rules
+        "typescript/no-explicit-any": "off",
+        "typescript/no-non-null-assertion": "error",
+        "typescript/no-empty-object-type": "error",
+        "typescript/consistent-type-imports": ["error", { "prefer": "type-imports" }],
+        "typescript/consistent-generic-constructors": ["error", "constructor"],
+        "typescript/prefer-optional-chain": "error",
+        "typescript/prefer-nullish-coalescing": "error",
+        "typescript/restrict-template-expressions": "error",
+        "typescript/no-confusing-void-expression": "error",
+        "typescript/no-floating-promises": "error",
+        "typescript/no-misused-promises": "error",
+
+        // TypeScript — TODO: enable once any types are replaced with proper types
+        "typescript/no-unnecessary-condition": "off",
+        "typescript/no-unsafe-assignment": "off",
+        "typescript/no-unsafe-member-access": "off",
+        "typescript/no-unsafe-return": "off",
+        "typescript/no-unsafe-call": "off",
+        "typescript/no-unsafe-argument": "off",
+        "typescript/no-unused-vars": ["error", {
+          "argsIgnorePattern": "^_",
+          "varsIgnorePattern": "^_",
+          "caughtErrorsIgnorePattern": "^_"
+        }],
+
+        // React
+        "react/rules-of-hooks": "error",
+        "react/exhaustive-deps": "off",
+        "react/jsx-key": "error",
+        "react/no-direct-mutation-state": "error",
+        "react/no-array-index-key": "error",
+        "react/no-danger": "error",
+        "react/jsx-no-useless-fragment": "warn",
+
+        // Import
+        "import/no-duplicates": "error",
+        "import/no-cycle": "error",
+
+        // General
+        "no-console": ["warn", { "allow": ["warn", "error"] }],
+        "no-debugger": "error",
+        "no-alert": "off",
+        "eqeqeq": ["error", "always", { "null": "ignore" }],
+        "prefer-const": "error",
+        "no-var": "error",
+        "no-template-curly-in-string": "error",
+
+        // Style
+        "no-extra-boolean-cast": "error"
+      }
+    }
+  ]
+}

@@ -18,13 +18,15 @@ package mongodb
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 
-	"github.com/clidey/whodb/core/src/query"
-	"github.com/clidey/whodb/core/src/log"
 	"go.mongodb.org/mongo-driver/v2/bson"
+
+	"github.com/clidey/whodb/core/src/log"
+	"github.com/clidey/whodb/core/src/query"
 )
 
 func convertWhereConditionToMongoDB(where *query.WhereCondition) (bson.M, error) {
@@ -33,12 +35,12 @@ func convertWhereConditionToMongoDB(where *query.WhereCondition) (bson.M, error)
 	}
 
 	// Normalize operator to lower for comparisons
-	getOp := func(op string) string { return strings.ToLower(op) }
+	getOp := strings.ToLower
 
 	switch where.Type {
 	case query.WhereConditionTypeAtomic:
 		if where.Atomic == nil {
-			return nil, fmt.Errorf("atomic condition must have an atomicwherecondition")
+			return nil, errors.New("atomic condition must have an atomicwherecondition")
 		}
 
 		operator := getOp(where.Atomic.Operator)
@@ -78,12 +80,12 @@ func convertWhereConditionToMongoDB(where *query.WhereCondition) (bson.M, error)
 		case "mod":
 			parts := strings.Split(where.Atomic.Value, ",")
 			if len(parts) != 2 {
-				return nil, fmt.Errorf("mod expects 'divisor,remainder'")
+				return nil, errors.New("mod expects 'divisor,remainder'")
 			}
 			div, err1 := strconv.ParseInt(strings.TrimSpace(parts[0]), 10, 64)
 			rem, err2 := strconv.ParseInt(strings.TrimSpace(parts[1]), 10, 64)
 			if err1 != nil || err2 != nil {
-				return nil, fmt.Errorf("mod operands must be integers")
+				return nil, errors.New("mod operands must be integers")
 			}
 			return bson.M{where.Atomic.Key: bson.M{"$mod": []int64{div, rem}}}, nil
 
@@ -166,11 +168,7 @@ func convertWhereConditionToMongoDB(where *query.WhereCondition) (bson.M, error)
 // Used for query building where type hints are not available.
 func convertMongoValue(key string, raw string) any {
 	if key == "_id" {
-		id, err := normalizeMongoID(raw)
-		if err == nil {
-			return id
-		}
-		return raw
+		return normalizeMongoID(raw)
 	}
 	return coerceMongoValue(key, raw, "") // No type hint for queries
 }

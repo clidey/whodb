@@ -22,14 +22,15 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/clidey/whodb/core/src/common/ssl"
-	"github.com/clidey/whodb/core/src/engine"
-	"github.com/clidey/whodb/core/src/log"
-	"github.com/clidey/whodb/core/src/plugins"
 	mysqldriver "github.com/go-sql-driver/mysql"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+
+	"github.com/clidey/whodb/core/src/common/ssl"
+	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/log"
+	"github.com/clidey/whodb/core/src/plugins"
 )
 
 func (p *MySQLPlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {

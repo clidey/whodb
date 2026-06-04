@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { RootState } from '../store';
+import type { RootState } from '../store';
 
 // Font size mappings
 const fontSizeMap = {
@@ -114,26 +114,26 @@ const spacingMap = {
 /**
  * Applies UI customization settings to CSS variables
  */
-export const applyUICustomization = (settings: RootState['settings']) => {
+export const applyUICustomization = (settings: Pick<RootState['settings'], 'fontSize' | 'borderRadius' | 'spacing'>) => {
   const root = document.documentElement;
-  
+
   // Apply font size settings
   const fontSizeVars = fontSizeMap[settings.fontSize];
   Object.entries(fontSizeVars).forEach(([property, value]) => {
     root.style.setProperty(property, value);
   });
-  
+
   // Apply border radius settings
   const borderRadiusVars = borderRadiusMap[settings.borderRadius];
   Object.entries(borderRadiusVars).forEach(([property, value]) => {
     root.style.setProperty(property, value);
   });
-  
+
   // Apply spacing settings
   const spacingVars = spacingMap[settings.spacing];
   Object.entries(spacingVars).forEach(([property, value]) => {
     root.style.setProperty(property, value);
   });
-  
+
 };
 

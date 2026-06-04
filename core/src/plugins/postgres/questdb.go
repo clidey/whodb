@@ -22,12 +22,13 @@ import (
 	"slices"
 	"strings"
 
+	"gorm.io/gorm"
+
 	"github.com/clidey/whodb/core/src/common/ssl"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
-	"gorm.io/gorm"
 )
 
 // QuestDBPlugin extends PostgresPlugin with QuestDB-specific catalog behavior.
@@ -108,7 +109,7 @@ func (p *QuestDBPlugin) readQuestDBColumns(db *gorm.DB, schema string, tableName
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	columns := make([]questDBColumnMetadata, 0)
 	for rows.Next() {
@@ -119,6 +120,9 @@ func (p *QuestDBPlugin) readQuestDBColumns(db *gorm.DB, schema string, tableName
 			return nil, err
 		}
 		columns = append(columns, p.normalizeQuestDBColumnMetadata(columnName, dataType, isNullable))
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 	return columns, nil
 }
@@ -189,7 +193,7 @@ func (p *QuestDBPlugin) GetColumnConstraints(config *engine.PluginConfig, schema
 		if err != nil {
 			return false, nil
 		}
-		defer rows.Close()
+		defer func() { _ = rows.Close() }()
 
 		for rows.Next() {
 			var columnName, isNullable, dataType string
@@ -201,10 +205,13 @@ func (p *QuestDBPlugin) GetColumnConstraints(config *engine.PluginConfig, schema
 			entry["type"] = dataType
 			constraints[columnName] = entry
 		}
+		if err := rows.Err(); err != nil {
+			return false, err
+		}
 		return true, nil
 	})
 	if err != nil {
-		return constraints, nil
+		return constraints, nil //nolint:nilerr
 	}
 	return constraints, nil
 }

@@ -17,9 +17,10 @@
 package gorm_plugin
 
 import (
+	"gorm.io/gorm"
+
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/plugins"
-	"gorm.io/gorm"
 )
 
 // GetColumnConstraints gets column constraints using GORM's Migrator
@@ -31,7 +32,7 @@ func (p *GormPlugin) GetColumnConstraints(config *engine.PluginConfig, schema st
 		if err != nil {
 			// Fall back to empty constraints if Migrator fails
 			// This maintains backward compatibility
-			return make(map[string]map[string]any), nil
+			return make(map[string]map[string]any), nil //nolint:nilerr
 		}
 
 		constraints := make(map[string]map[string]any)

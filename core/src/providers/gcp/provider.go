@@ -201,7 +201,7 @@ func (p *Provider) initialize(ctx context.Context) error {
 
 	var opts []option.ClientOption
 	if p.config.AuthMethod == gcpinfra.AuthMethodServiceAccountKey && p.config.ServiceAccountKeyPath != "" {
-		opts = append(opts, option.WithCredentialsFile(p.config.ServiceAccountKeyPath))
+		opts = append(opts, option.WithAuthCredentialsFile(option.ServiceAccount, p.config.ServiceAccountKeyPath))
 	}
 
 	p.clientOpts = opts
@@ -392,13 +392,13 @@ func (p *Provider) Close(ctx context.Context) error {
 	defer p.initMu.Unlock()
 
 	if p.alloydbClient != nil {
-		p.alloydbClient.Close()
+		_ = p.alloydbClient.Close()
 	}
 	if p.memorystoreClient != nil {
-		p.memorystoreClient.Close()
+		_ = p.memorystoreClient.Close()
 	}
 	if p.memcachedClient != nil {
-		p.memcachedClient.Close()
+		_ = p.memcachedClient.Close()
 	}
 	return nil
 }

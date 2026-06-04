@@ -42,7 +42,8 @@ import {
     toast
 } from "@clidey/ux";
 import { SearchSelect } from "./ux";
-import { FC, ReactElement, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { FC, ReactElement, ReactNode} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GetAiModelsDocument, GetAiProvidersDocument } from "@graphql";
 import { AIModelsActions, availableExternalModelTypes, type IAIModelType } from "../store/ai-models";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
@@ -211,7 +212,7 @@ export const useAI = () => {
             isPlatformMode && overrides ? overrides.loadProviders() : Promise.resolve([]),
         ]);
 
-        const aiProviders = envResult.data?.AIProviders || [];
+        const aiProviders = envResult.data?.AIProviders ?? [];
 
         const initialModelTypes = userAddedProviders.filter(model =>
             model.token != null && model.token !== ""
@@ -256,7 +257,7 @@ export const useAI = () => {
             : null;
 
         if (!selectedProvider && shouldRestoreSelection) {
-            selectedProvider = finalModelTypes.find(m => m.id === persistedProviderId) || null;
+            selectedProvider = finalModelTypes.find(m => m.id === persistedProviderId) ?? null;
             if (selectedProvider) {
                 dispatch(AIModelsActions.setCurrentModelType({ id: selectedProvider.id }));
             }
@@ -324,9 +325,9 @@ export const useAI = () => {
     }, [loadProviders]);
 
     const modelTypesDropdownItems = useMemo(() => {
-        return modelTypes.filter(modelType => modelType != null && modelType.modelType != null).map(modelType => ({
+        return modelTypes.filter(modelType => modelType?.modelType != null).map(modelType => ({
             id: modelType.id,
-            label: modelType.name || modelType.modelType,
+            label: modelType.name ?? modelType.modelType,
             icon: modelType.isGeneric
                 ? <SparklesIcon className="w-4 h-4" data-testid="generic-sparkles-icon" />
                 : (Icons.Logos as Record<string, ReactElement>)[modelType.modelType.replace("-", "")],
@@ -373,21 +374,22 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
     disableClear?: boolean;
     onClear?: () => void;
     onAddExternalModel?: () => void;
+    footerAction?: ReactNode;
 }> = ({
     modelType,
-    modelTypes,
+    modelTypes: _modelTypes,
     currentModel,
-    models,
+    models: _models,
     loading,
     getAIModels,
     getAIModelsLoading,
-    modelAvailable,
+    modelAvailable: _modelAvailable,
     unavailableProviders,
     retryProvider,
     handleAIModelsError,
-    handleAIModelTypeChange,
+    handleAIModelTypeChange: _handleAIModelTypeChange,
     handleAIModelChange,
-    handleAIModelRemove,
+    handleAIModelRemove: _handleAIModelRemove,
     handleAIProviderChange,
     modelTypesDropdownItems,
     modelDropdownItems,
@@ -395,6 +397,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
     disableClear,
     onClear,
     onAddExternalModel,
+    footerAction,
 }) => {
     const { t } = useTranslation('components/ai');
     const newUIEnabled = useAppSelector(state => state.settings.newUIEnabled);
@@ -505,7 +508,34 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
         <Sheet open={addExternalModel} onOpenChange={setAddExternalModel}>
             <SheetContent className={cn("max-w-md mx-auto w-full flex flex-col gap-4", {
                 "px-8 py-10": !newUIEnabled,
-            })}>
+            })} footer={
+                <SheetFooter className="p-0">
+                    <div className="text-xs text-neutral-500 flex flex-col gap-2">
+                        <div className="font-bold">{t('localSetup')}</div>
+                        <div>
+                            {t('ollamaSetupText').split('<0>')[0]}
+                            <ExternalLink href="https://ollama.com/" className="font-semibold underline text-blue-600 hover:text-blue-800">Ollama</ExternalLink>
+                            {t('ollamaSetupText').split('</0>')[1]}
+                        </div>
+                        <div className="font-semibold">{t('downloadingModel')}</div>
+                        <div>
+                            {t('ollamaDownloadText').split('<0>')[0]}
+                            <ExternalLink href="https://ollama.com/library/llama3.1" className="font-semibold underline text-blue-600 hover:text-blue-800">Llama3.1 8b</ExternalLink>
+                            {t('ollamaDownloadText').split('</0>')[1]}
+                        </div>
+                        <div className="font-mono bg-neutral-100 dark:bg-neutral-900 rounded px-2 py-1 mb-1">
+                            {t('ollamaRunCommand')}
+                        </div>
+                        <div>
+                            {t('ollamaDocsText')}
+                        </div>
+                        <Button variant="secondary" className="w-full mt-2" onClick={handleOpenDocs}>
+                            {t('docs')}
+                            <ArrowTopRightOnSquareIcon className="w-4 h-4" />
+                        </Button>
+                    </div>
+                </SheetFooter>
+            }>
                 <div className="flex flex-col gap-4">
                     <div className="text-lg font-semibold mb-2">{t('addExternalModel')}</div>
                     <div className="flex flex-col gap-2">
@@ -533,7 +563,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                         <Label>{t('name')}</Label>
                         <Input
                             value={externalModelName ?? ""}
-                            onChange={e => setExternalModelName(e.target.value)}
+                            onChange={e =>{  setExternalModelName(e.target.value); }}
                             placeholder={externalModelType}
                         />
                     </div>
@@ -541,7 +571,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                         <Label>{t('token')}</Label>
                         <Input
                             value={externalModelToken ?? ""}
-                            onChange={e => setExternalModelToken(e.target.value)}
+                            onChange={e =>{  setExternalModelToken(e.target.value); }}
                             type="password"
                         />
                     </div>
@@ -564,32 +594,6 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                         <CheckCircleIcon className="w-4 h-4" /> {t('submit')}
                     </Button>
                 </div>
-                <SheetFooter className="p-0">
-                    <div className="text-xs text-neutral-500 mt-4 flex flex-col gap-2">
-                        <div className="font-bold">{t('localSetup')}</div>
-                        <div>
-                            {t('ollamaSetupText').split('<0>')[0]}
-                            <ExternalLink href="https://ollama.com/" className="font-semibold underline text-blue-600 hover:text-blue-800">Ollama</ExternalLink>
-                            {t('ollamaSetupText').split('</0>')[1]}
-                        </div>
-                        <div className="font-semibold">{t('downloadingModel')}</div>
-                        <div>
-                            {t('ollamaDownloadText').split('<0>')[0]}
-                            <ExternalLink href="https://ollama.com/library/llama3.1" className="font-semibold underline text-blue-600 hover:text-blue-800">Llama3.1 8b</ExternalLink>
-                            {t('ollamaDownloadText').split('</0>')[1]}
-                        </div>
-                        <div className="font-mono bg-neutral-100 dark:bg-neutral-900 rounded px-2 py-1 mb-1">
-                            {t('ollamaRunCommand')}
-                        </div>
-                        <div>
-                            {t('ollamaDocsText')}
-                        </div>
-                        <Button variant="secondary" className="w-full mt-2" onClick={handleOpenDocs}>
-                            {t('docs')}
-                            <ArrowTopRightOnSquareIcon className="w-4 h-4" />
-                        </Button>
-                    </div>
-                </SheetFooter>
             </SheetContent>
         </Sheet>
         <div className="flex w-full justify-between">
@@ -624,7 +628,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                                 <PlusCircleIcon className="w-4 h-4" />
                                 {t('addProvider')}
                             </CommandItem>
-                        </> : (<>
+                        </> : (
                             <CommandItem
                                 key="__add__"
                                 value="__add__"
@@ -634,7 +638,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                                     <PlusCircleIcon className="w-4 h-4 stroke-green-500" />
                                     {t('addProvider')}
                                 </span>
-                            </CommandItem></>
+                            </CommandItem>
                         )
                     }
                     rightIcon={<ChevronDownIcon className="w-4 h-4" />}
@@ -646,7 +650,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                     <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => retryProvider(modelType.id)}
+                        onClick={() =>{  retryProvider(modelType.id); }}
                         title={t('providerUnavailable')}
                         className="px-2"
                     >
@@ -661,7 +665,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                             label: item.label,
                             icon: item.icon,
                         }))}
-                        value={currentModel ? currentModel : undefined}
+                        value={currentModel ?? undefined}
                         onChange={id => {
                             const item = modelDropdownItems.find(i => i.id === id);
                             if (item) handleAIModelChange(item.id);
@@ -682,7 +686,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                         data-testid="chat-delete-provider"
                         variant="secondary"
                         className={cn({
-                            "hidden": disableNewChat || modelType?.isEnvironmentDefined || modelType?.isPlatformProvider,
+                            "hidden": disableNewChat ?? modelType?.isEnvironmentDefined ?? modelType?.isPlatformProvider,
                         })}
                     >
                         <TrashIcon className="w-4 h-4" /> {t('deleteProvider')}
@@ -700,7 +704,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                         <AlertDialogAction asChild>
                             <Button
                                 data-testid="chat-delete-provider-confirm"
-                                onClick={() => handleDeleteProvider(modelType?.id)}
+                                onClick={() => { void handleDeleteProvider(modelType?.id); }}
                                 variant="destructive"
                             >
                                 {t('delete')}
@@ -710,12 +714,15 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                 </AlertDialogContent>
             </AlertDialog>
         </div>
-        <div className={cn("flex items-center", {
-            "hidden": disableNewChat,
+        <div className={cn("flex flex-wrap items-center gap-3", {
+            "hidden": disableNewChat && footerAction == null,
         })}>
-            <Button onClick={handleClear} disabled={loading || disableClear} data-testid="chat-new-chat" variant="secondary">
-                <ArrowPathIcon className="w-4 h-4" /> {t('newChat')}
-            </Button>
+            {!disableNewChat && (
+                <Button onClick={handleClear} disabled={loading || disableClear} data-testid="chat-new-chat" variant="secondary">
+                    <ArrowPathIcon className="w-4 h-4" /> {t('newChat')}
+                </Button>
+            )}
+            {footerAction}
         </div>
     </div>
 }

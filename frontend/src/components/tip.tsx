@@ -15,7 +15,7 @@
  */
 
 import {cn, Tooltip, TooltipContent, TooltipTrigger} from "@clidey/ux";
-import {FC, ReactNode} from "react";
+import type {FC, ReactNode} from "react";
 
 export const Tip: FC<{
     className?: string;

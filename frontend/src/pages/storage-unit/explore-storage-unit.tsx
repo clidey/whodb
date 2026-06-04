@@ -45,25 +45,27 @@ import {
     toast,
 } from "@clidey/ux";
 import {skipToken, useLazyQuery, useMutation, useQuery} from "@apollo/client/react";
+import type {
+    GetStorageUnitsQuery,
+    RecordInput,
+    RowsResult,
+    SortCondition,
+    SourceObjectRefInput,
+    WhereCondition} from '@graphql';
 import {
     AddRowDocument,
     ColumnsDocument,
     DataShape,
     GetSourceContentDocument,
     GetStorageUnitRowsDocument,
-    GetStorageUnitsQuery,
-    RecordInput,
     RawExecuteDocument,
-    RowsResult,
-    SortCondition,
     SortDirection,
     SourceAction,
-    type SourceObjectRefInput,
     UpdateStorageUnitDocument,
-    WhereCondition,
     WhereConditionType
 } from '@graphql';
-import {FC, useCallback, useEffect, useMemo, useRef, useState} from "react";
+import type {FC} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {Navigate, useLocation, useNavigate} from "react-router-dom";
 import {CodeEditor} from "../../components/editor";
 import {ErrorState} from "../../components/error-state";
@@ -134,13 +136,14 @@ export const ExploreStorageUnit: FC = () => {
 
     let schema = useAppSelector(state => state.database.schema);
     const current = useAppSelector(state => state.auth.current);
+    const currentType = current?.Type;
     const {
         item,
         isNoSQL,
         storageUnitLabel,
         supportsScratchpad,
         usesDatabaseInsteadOfSchema,
-    } = useSourceContract(current?.Type);
+    } = useSourceContract(currentType);
     const whereConditionMode = useAppSelector(state => state.settings.whereConditionMode);
     const locationState = location.state as ExploreSourceState | undefined;
     const unit = locationState?.unit;
@@ -302,7 +305,7 @@ export const ExploreStorageUnit: FC = () => {
         const limitMatch = initialScratchpadQuery.match(/\s+LIMIT\s+\d+/i);
         if (limitMatch) {
             const beforeLimit = initialScratchpadQuery.substring(0, limitMatch.index);
-            const limitPart = initialScratchpadQuery.substring(limitMatch.index!);
+            const limitPart = initialScratchpadQuery.substring(limitMatch.index ?? 0);
             return `${beforeLimit} WHERE ${whereClause}${limitPart}`;
         }
 
@@ -347,7 +350,7 @@ export const ExploreStorageUnit: FC = () => {
         if (!isTabularObject) {
             return;
         }
-        const tableNameToUse = unitName || currentTableName;
+        const tableNameToUse = unitName ?? currentTableName;
         if (tableNameToUse) {
             setCurrentTableName(tableNameToUse);
         }
@@ -366,9 +369,9 @@ export const ExploreStorageUnit: FC = () => {
         // Merge EE search condition with user-defined where condition
         const mergedCondition = searchCondition && currentWhereCondition
             ? { Type: WhereConditionType.And, And: { Children: [currentWhereCondition, searchCondition] } }
-            : searchCondition || currentWhereCondition;
+            : searchCondition ?? currentWhereCondition;
 
-        getStorageUnitRows({
+        void getStorageUnitRows({
             variables: {
                 ref,
                 where: mergedCondition,
@@ -431,7 +434,8 @@ export const ExploreStorageUnit: FC = () => {
 
                 if (changedColumns.length === 0) {
                     // Nothing changed, skip
-                    return Promise.resolve();
+                    resolve();
+                    return;
                 }
 
                 // Build values for all columns
@@ -441,10 +445,11 @@ export const ExploreStorageUnit: FC = () => {
                     Value: row[col].toString(),
                 }));
                 if (!currentUnitRef) {
-                    return reject(new Error("Missing source object ref"));
+                    reject(new Error("Missing source object ref"));
+                    return;
                 }
 
-                updateStorageUnit({
+                void updateStorageUnit({
                     variables: {
                         ref: currentUnitRef,
                         values,
@@ -452,12 +457,13 @@ export const ExploreStorageUnit: FC = () => {
                     },
                     onCompleted: (data) => {
                         if (!data?.UpdateStorageUnit.Status) {
-                            return reject(new Error("Update failed"));
+                            reject(new Error("Update failed"));
+                            return;
                         }
-                        return resolve();
+                        resolve();
                     },
                     onError: (error) => {
-                        return reject(error);
+                        reject(error);
                     },
                 });
             });
@@ -560,7 +566,7 @@ export const ExploreStorageUnit: FC = () => {
 
     useEffect(() => {
         if (unit == null && !currentTableName) {
-            navigate(InternalRoutes.Dashboard.StorageUnit.path);
+            void navigate(InternalRoutes.Dashboard.StorageUnit.path);
         }
     }, [navigate, unit, currentTableName]);
 
@@ -630,7 +636,7 @@ export const ExploreStorageUnit: FC = () => {
     // Sheet logic for Add Row (like table.tsx)
     const handleOpenAddSheet = useCallback(() => {
         // Prepare empty values for empty addRowData values
-        let initialData: Record<string, any> = {};
+        const initialData: Record<string, any> = {};
         if (rows?.Columns) {
             // todo: add support for different functions for defaults like now(), gen_random_uuid(), etc
             for (const col of rows.Columns) {
@@ -651,7 +657,7 @@ export const ExploreStorageUnit: FC = () => {
 
     const handleAddRowSubmit = useCallback(() => {
         if (rows?.Columns == null) return;
-        let values: RecordInput[] = [];
+        const values: RecordInput[] = [];
         if (isNoSQL && rows.Columns.length === 1 && rows.Columns[0].Type === "Document") {
             try {
                 const json = JSON.parse(addRowData.document);
@@ -666,7 +672,7 @@ export const ExploreStorageUnit: FC = () => {
                         Value: stringValue,
                     });
                 }
-            } catch (e) {
+            } catch {
                 setAddRowError(t('invalidJson'));
                 return;
             }
@@ -685,9 +691,9 @@ export const ExploreStorageUnit: FC = () => {
             setAddRowError(t('fillAtLeastOneValue'));
             return;
         }
-        addRow({
+        void addRow({
             variables: {
-                ref: currentUnitRef ?? buildSourceObjectRef(item, current, schema, unit?.Name || unitName || currentTableName || ""),
+                ref: currentUnitRef ?? buildSourceObjectRef(item, current, schema, unit?.Name ?? unitName ?? currentTableName ?? ""),
                 values,
             },
             onCompleted() {
@@ -708,7 +714,7 @@ export const ExploreStorageUnit: FC = () => {
     const [pendingScratchpadQuery, setPendingScratchpadQuery] = useState<string | null>(null);
 
     const doScratchpadExecute = useCallback((query: string) => {
-        rawExecute({ variables: { query } });
+        void rawExecute({ variables: { query } });
     }, [rawExecute]);
 
     const handleScratchpad = useCallback((specificCode?: string) => {
@@ -747,7 +753,7 @@ export const ExploreStorageUnit: FC = () => {
 
     const getTargetTableName = useCallback((columnName: string) => {
         const column = getColumnByName(columnName);
-        return column?.ReferencedTable || null;
+        return column?.ReferencedTable ?? null;
     }, [getColumnByName]);
 
     // Entity search functionality
@@ -977,7 +983,7 @@ export const ExploreStorageUnit: FC = () => {
                                         min={1}
                                         className="w-24"
                                         value={customPageSizeInput}
-                                        onChange={(e) => setCustomPageSizeInput(e.target.value)}
+                                        onChange={(e) =>{  setCustomPageSizeInput(e.target.value); }}
                                         onBlur={handleCustomPageSizeApply}
                                         onKeyDown={(e) => {
                                             if (e.key === "Enter") {
@@ -1030,6 +1036,21 @@ export const ExploreStorageUnit: FC = () => {
                                 setShowAdd(false);
                             }
                         }}
+                        footer={
+                            <SheetFooter className="flex flex-row gap-sm px-0">
+                                <Button
+                                    className="flex-1"
+                                    variant="secondary"
+                                    onClick={() =>{  setShowAdd(false); }}
+                                    data-testid="cancel-add-row"
+                                >
+                                    {t('cancel')}
+                                </Button>
+                                <Button className="flex-1" onClick={handleAddRowSubmit} data-testid="submit-add-row-button" disabled={adding}>
+                                    <CheckCircleIcon className="w-4 h-4" /> {t('submit')}
+                                </Button>
+                            </SheetFooter>
+                        }
                     >
                         <SheetTitle className="flex items-center gap-2"><TableCellsIcon className="w-5 h-5" /> {t('addRowTitle')}</SheetTitle>
                         <div className="flex-1 overflow-y-auto pr-2">
@@ -1042,7 +1063,7 @@ export const ExploreStorageUnit: FC = () => {
                                         <CodeEditor
                                             language="json"
                                             value={addRowData.document ?? "{\n  \n}"}
-                                            setValue={(value) => handleAddRowFieldChange("document", value)}
+                                            setValue={(value) =>{  handleAddRowFieldChange("document", value); }}
                                         />
                                     </div>
                                 </div>
@@ -1063,7 +1084,7 @@ export const ExploreStorageUnit: FC = () => {
                                             </Tip>
                                             <Input
                                                 value={addRowData[col.Name] ?? ""}
-                                                onChange={e => handleAddRowFieldChange(col.Name, e.target.value)}
+                                                onChange={e =>{  handleAddRowFieldChange(col.Name, e.target.value); }}
                                                 placeholder={`Enter value for ${col.Name}`}
                                                 {...getInputPropsForColumnType(col.Type || '')}
                                             />
@@ -1075,19 +1096,6 @@ export const ExploreStorageUnit: FC = () => {
                                 <ErrorState error={addRowError} />
                             )}
                         </div>
-                        <SheetFooter className="flex flex-row gap-sm px-0 pt-4 border-t">
-                            <Button
-                                className="flex-1"
-                                variant="secondary"
-                                onClick={() => setShowAdd(false)}
-                                data-testid="cancel-add-row"
-                            >
-                                {t('cancel')}
-                            </Button>
-                            <Button className="flex-1" onClick={handleAddRowSubmit} data-testid="submit-add-row-button" disabled={adding}>
-                                <CheckCircleIcon className="w-4 h-4" /> {t('submit')}
-                            </Button>
-                        </SheetFooter>
                     </SheetContent>
                 </Sheet>
 
@@ -1152,7 +1160,7 @@ export const ExploreStorageUnit: FC = () => {
                     <DrawerTitle className="flex justify-between items-center">
                         <h2 className="text-lg font-semibold">{t('scratchpad')}</h2>
                         <div className="flex gap-sm items-center">
-                            <Button onClick={() => handleScratchpad()} data-testid="run-submit-button">
+                            <Button onClick={() =>{  handleScratchpad(); }} data-testid="run-submit-button">
                                 <PlayIcon className="w-4 h-4" />
                                 {t('run')}
                             </Button>
@@ -1199,7 +1207,7 @@ export const ExploreStorageUnit: FC = () => {
                             <AlertDialogDescription>{t('confirmOperationDescription')}</AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                            <AlertDialogCancel data-testid="execute-query-cancel" onClick={() => setPendingScratchpadQuery(null)}>{t('cancel')}</AlertDialogCancel>
+                            <AlertDialogCancel data-testid="execute-query-cancel" onClick={() =>{  setPendingScratchpadQuery(null); }}>{t('cancel')}</AlertDialogCancel>
                             <AlertDialogAction asChild>
                                 <Button variant="destructive" data-testid="execute-query-confirm" onClick={() => {
                                     if (pendingScratchpadQuery != null) {
@@ -1216,7 +1224,13 @@ export const ExploreStorageUnit: FC = () => {
             </DrawerContent>
         </Drawer>
         <Sheet open={showEntitySearchSheet} onOpenChange={setShowEntitySearchSheet}>
-            <SheetContent side="right" className="flex flex-col p-8 min-w-[600px]">
+            <SheetContent side="right" className="flex flex-col p-8 min-w-[600px]" footer={
+                <SheetFooter>
+                    <Button onClick={handleCloseEntitySearchSheet} variant="outline">
+                        {t('close')}
+                    </Button>
+                </SheetFooter>
+            }>
                 <div className="text-lg font-semibold mb-4 flex items-center gap-2">
                     <MagnifyingGlassIcon className="w-5 h-5" />
                     {t('searchAround')}
@@ -1257,11 +1271,6 @@ export const ExploreStorageUnit: FC = () => {
                         </div>
                     )}
                 </div>
-                <SheetFooter>
-                    <Button onClick={handleCloseEntitySearchSheet} variant="outline">
-                        {t('close')}
-                    </Button>
-                </SheetFooter>
             </SheetContent>
         </Sheet>
     </InternalPage>

@@ -15,7 +15,7 @@
  */
 
 import Dagre from '@dagrejs/dagre';
-import { Edge, Node } from 'reactflow';
+import type { Edge, Node } from 'reactflow';
 
 type ILayoutOption = {
     direction: "TB" | "LR";
@@ -87,8 +87,8 @@ const layoutComponent = (
 
     nodes.forEach((node) => {
         // Use node dimensions or fallback to defaults
-        const width = node.width || 400;
-        const height = node.height || 200;
+        const width = node.width ?? 400;
+        const height = node.height ?? 200;
 
         const nodeWithDimensions = {
             ...node,
@@ -104,12 +104,12 @@ const layoutComponent = (
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
     const layoutedNodes = nodes.map((node) => {
         const dagreNode = g.node(node.id);
-        const x = dagreNode?.x || 0;
-        const y = dagreNode?.y || 0;
+        const x = dagreNode?.x ?? 0;
+        const y = dagreNode?.y ?? 0;
 
         // Use node dimensions or fallback to defaults
-        const width = node.width || 400;
-        const height = node.height || 200;
+        const width = node.width ?? 400;
+        const height = node.height ?? 200;
 
         minX = Math.min(minX, x - width / 2);
         minY = Math.min(minY, y - height / 2);
@@ -143,8 +143,8 @@ const packComponents = (
         // Convert from Dagre center positions to React Flow top-left positions
         const component = components[0];
         return component.nodes.map(node => {
-            const width = node.width || 400;
-            const height = node.height || 200;
+            const width = node.width ?? 400;
+            const height = node.height ?? 200;
 
             // Dagre positions are centers, React Flow expects top-left
             const centerX = node.position.x - component.minX;
@@ -220,8 +220,8 @@ const packComponents = (
             // Position all nodes in this component
             // Convert from Dagre center positions to React Flow top-left positions
             component.nodes.forEach(node => {
-                const width = node.width || 400;
-                const height = node.height || 200;
+                const width = node.width ?? 400;
+                const height = node.height ?? 200;
 
                 // Dagre positions are centers, React Flow expects top-left
                 const centerX = node.position.x + offsetX;
@@ -276,8 +276,8 @@ export const getDagreLayoutedElements = (nodes: Node[] = [], edges: Edge[] = [],
 
         nodes.forEach((node) => {
             // Use node dimensions or fallback to defaults
-            const width = node.width || 400;
-            const height = node.height || 200;
+            const width = node.width ?? 400;
+            const height = node.height ?? 200;
 
             const nodeWithDimensions = {
                 ...node,
@@ -292,12 +292,12 @@ export const getDagreLayoutedElements = (nodes: Node[] = [], edges: Edge[] = [],
         return {
             nodes: nodes.map((node) => {
                 const dagreNode = g.node(node.id);
-                const width = node.width || 400;
-                const height = node.height || 200;
+                const width = node.width ?? 400;
+                const height = node.height ?? 200;
 
                 // Dagre positions are centers, React Flow expects top-left
-                const centerX = dagreNode?.x || 0;
-                const centerY = dagreNode?.y || 0;
+                const centerX = dagreNode?.x ?? 0;
+                const centerY = dagreNode?.y ?? 0;
                 const topLeftX = centerX - width / 2;
                 const topLeftY = centerY - height / 2;
 

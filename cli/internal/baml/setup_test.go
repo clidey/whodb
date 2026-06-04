@@ -91,16 +91,7 @@ func TestUnsupportedPlatforms(t *testing.T) {
 }
 
 func TestSetup_WithExistingEnvVar(t *testing.T) {
-	// Set BAML_LIBRARY_PATH
-	originalValue := os.Getenv("BAML_LIBRARY_PATH")
-	os.Setenv("BAML_LIBRARY_PATH", "/some/existing/path")
-	defer func() {
-		if originalValue == "" {
-			os.Unsetenv("BAML_LIBRARY_PATH")
-		} else {
-			os.Setenv("BAML_LIBRARY_PATH", originalValue)
-		}
-	}()
+	t.Setenv("BAML_LIBRARY_PATH", "/some/existing/path")
 
 	// Setup should return early when env var is set
 	err := Setup()

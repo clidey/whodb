@@ -17,10 +17,11 @@
 package postgres
 
 import (
+	"gorm.io/gorm"
+
 	"github.com/clidey/whodb/core/src/common/ssl"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/plugins"
-	"gorm.io/gorm"
 )
 
 // GetSSLStatus queries PostgreSQL to get the actual SSL status of the connection.
@@ -42,7 +43,7 @@ func (p *PostgresPlugin) GetSSLStatus(config *engine.PluginConfig) (*engine.SSLS
 
 		if query.RowsAffected == 0 {
 			// No row returned - might be permissions issue, fall back to config
-			sslConfig := ssl.ParseSSLConfig(engine.DatabaseType(p.Type), config.Credentials.Advanced, config.Credentials.Hostname, config.Credentials.IsProfile)
+			sslConfig := ssl.ParseSSLConfig(p.Type, config.Credentials.Advanced, config.Credentials.Hostname, config.Credentials.IsProfile)
 			if sslConfig != nil && sslConfig.IsEnabled() {
 				return &engine.SSLStatus{
 					IsEnabled: true,
@@ -62,7 +63,7 @@ func (p *PostgresPlugin) GetSSLStatus(config *engine.PluginConfig) (*engine.SSLS
 			}, nil
 		}
 
-		sslConfig := ssl.ParseSSLConfig(engine.DatabaseType(p.Type), config.Credentials.Advanced, config.Credentials.Hostname, config.Credentials.IsProfile)
+		sslConfig := ssl.ParseSSLConfig(p.Type, config.Credentials.Advanced, config.Credentials.Hostname, config.Credentials.IsProfile)
 		mode := "enabled"
 		if sslConfig != nil {
 			mode = string(sslConfig.Mode)

@@ -17,6 +17,7 @@
 package providers
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -75,9 +76,9 @@ func (p *OpenAIProvider) GetSupportedModels(config *ProviderConfig) ([]string, e
 		return nil, err
 	}
 
-	url := fmt.Sprintf("%s/models", config.Endpoint)
+	url := config.Endpoint + "/models"
 	headers := map[string]string{
-		"Authorization": fmt.Sprintf("Bearer %s", config.APIKey),
+		"Authorization": "Bearer " + config.APIKey,
 		"Content-Type":  "application/json",
 	}
 
@@ -86,7 +87,7 @@ func (p *OpenAIProvider) GetSupportedModels(config *ProviderConfig) ([]string, e
 		log.WithError(err).Errorf("Failed to fetch models from OpenAI at %s", url)
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
@@ -166,8 +167,8 @@ func (p *OpenAIProvider) supportsResponsesAPI(endpoint, apiKey string) bool {
 		log.Debugf("Responses API probe failed for %s (network error), falling back to Chat Completions", endpoint)
 		return false
 	}
-	defer resp.Body.Close()
-	io.ReadAll(resp.Body)
+	defer func() { _ = resp.Body.Close() }()
+	_, _ = io.ReadAll(resp.Body)
 
 	supports := resp.StatusCode != http.StatusNotFound && resp.StatusCode != http.StatusMethodNotAllowed
 	if supports {
@@ -221,7 +222,7 @@ func isNonChatModel(name string) bool {
 // This is duplicated from http_client.go to avoid circular dependencies.
 // TODO: Consider refactoring to a shared utility package.
 func sendHTTPRequest(method, url string, body []byte, headers map[string]string) (*http.Response, error) {
-	req, err := http.NewRequest(method, url, strings.NewReader(string(body)))
+	req, err := http.NewRequestWithContext(context.Background(), method, url, strings.NewReader(string(body)))
 	if err != nil {
 		return nil, err
 	}

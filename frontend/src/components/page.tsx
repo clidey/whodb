@@ -16,8 +16,7 @@
 
 import {Button, ModeToggle, SidebarProvider, Tooltip, TooltipContent, TooltipTrigger} from "@clidey/ux";
 import classNames from "classnames";
-import {AnimatePresence, motion} from "framer-motion";
-import {FC, ReactNode} from "react";
+import type {FC, ReactNode} from "react";
 import {twMerge} from "tailwind-merge";
 import type {IInternalRoute} from "../config/routes";
 import {useAppDispatch, useAppSelector} from "../store/hooks";
@@ -38,21 +37,11 @@ type IPageProps = {
 }
 
 export const Page: FC<IPageProps> = (props) => {
-    const disableAnimations = useAppSelector(state => state.settings.disableAnimations);
-    const animationProps = disableAnimations ? {} : {
-        initial: { opacity: 0 },
-        animate: { opacity: 100, transition: { duration: 0.5 } },
-        exit: { opacity: 0 }
-    };
-
     return <div className={twMerge("flex grow px-8 py-6 flex-col h-full w-full", props.wrapperClassName)}>
-        <AnimatePresence>
-            <motion.div className={twMerge("flex flex-row grow flex-wrap gap-sm w-full h-full overflow-y-auto", props.className)}
-                data-testid="page-scroll-container"
-                {...animationProps}>
-                    {props.children}
-            </motion.div>
-        </AnimatePresence>
+        <div className={twMerge("flex flex-row grow flex-wrap gap-sm w-full h-full overflow-y-auto", props.className)}
+            data-testid="page-scroll-container">
+                {props.children}
+        </div>
     </div>
 }
 
@@ -128,7 +117,7 @@ const KeyboardShortcutsHint: FC = () => {
 };
 
 export const InternalPage: FC<IInternalPageProps> = (props) => {
-    const current = useAppSelector(state => state.auth.current);
+    const isLoggedIn = useAppSelector(state => state.auth.current != null);
     const sidebarOpen = useAppSelector(state => state.settings.sidebarOpen);
     const dispatch = useAppDispatch();
 
@@ -159,7 +148,7 @@ export const InternalPage: FC<IInternalPageProps> = (props) => {
                         </div>
                     </div>
                     {
-                        current == null
+                        !isLoggedIn
                         ? <div className="flex justify-center items-center h-full">
                             <Loading size="lg" />
                         </div>

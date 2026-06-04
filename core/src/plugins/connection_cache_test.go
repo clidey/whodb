@@ -22,9 +22,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/clidey/whodb/core/src/engine"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+
+	"github.com/clidey/whodb/core/src/engine"
 )
 
 type invalidConnPool struct{}
@@ -219,7 +220,7 @@ func TestGetOrCreateConnectionReusesCachedHandleWithoutSQLDB(t *testing.T) {
 		if err != nil {
 			return nil, err
 		}
-		db.Config.ConnPool = invalidConnPool{}
+		db.ConnPool = invalidConnPool{}
 		if db.Statement != nil {
 			db.Statement.ConnPool = invalidConnPool{}
 		}

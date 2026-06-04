@@ -24,7 +24,8 @@ import {
     Dialog,
     DialogContent,
 } from "@clidey/ux";
-import {FC, useCallback, useEffect, useState} from "react";
+import type {FC} from "react";
+import { useCallback, useEffect, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {useTranslation} from "@/hooks/use-translation";
 import {useAppSelector} from "@/store/hooks";
@@ -61,12 +62,12 @@ interface CommandAction {
 const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
     const {t} = useTranslation('components/command-palette');
     const navigate = useNavigate();
-    const current = useAppSelector(state => state.auth.current);
+    const currentType = useAppSelector(state => state.auth.current?.Type);
     const isLoggedIn = useAppSelector(state => state.auth.status === "logged-in");
     const isEmbedded = useAppSelector(state => state.auth.isEmbedded);
     const isMac = useEffectiveIsMac();
     const [availableColumns, setAvailableColumns] = useState<string[]>([]);
-    const { supportsChat, supportsGraph, supportsScratchpad } = useSourceContract(current?.Type);
+    const { supportsChat, supportsGraph, supportsScratchpad } = useSourceContract(currentType);
 
     // Listen for columns broadcast from storage unit page
     useEffect(() => {
@@ -84,7 +85,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
     const tableActions: CommandAction[] = [];
     const sortActions: CommandAction[] = [];
 
-    if (isLoggedIn && current) {
+    if (isLoggedIn && currentType) {
         // Navigation actions - only show relevant ones based on database type
         const navDefs = [SHORTCUTS.navFirst, SHORTCUTS.navSecond, SHORTCUTS.navThird, SHORTCUTS.navFourth];
 
@@ -97,7 +98,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
                 icon: <ChatBubbleLeftRightIcon className="w-4 h-4" />,
                 shortcut: resolveShortcut(navDefs[shortcutIndex]).displayKeys,
                 onSelect: () => {
-                    navigate(InternalRoutes.Chat.path);
+                    void navigate(InternalRoutes.Chat.path);
                     onOpenChange(false);
                 },
             });
@@ -110,7 +111,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
             icon: <RectangleGroupIcon className="w-4 h-4" />,
             shortcut: resolveShortcut(navDefs[shortcutIndex]).displayKeys,
             onSelect: () => {
-                navigate(InternalRoutes.Dashboard.StorageUnit.path);
+                void navigate(InternalRoutes.Dashboard.StorageUnit.path);
                 onOpenChange(false);
             },
         });
@@ -123,7 +124,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
                 icon: <ShareIcon className="w-4 h-4" />,
                 shortcut: resolveShortcut(navDefs[shortcutIndex]).displayKeys,
                 onSelect: () => {
-                    navigate(InternalRoutes.Graph.path);
+                    void navigate(InternalRoutes.Graph.path);
                     onOpenChange(false);
                 },
             });
@@ -137,7 +138,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
                 icon: <CommandLineIcon className="w-4 h-4" />,
                 shortcut: resolveShortcut(navDefs[shortcutIndex]).displayKeys,
                 onSelect: () => {
-                    navigate(InternalRoutes.RawExecute.path);
+                    void navigate(InternalRoutes.RawExecute.path);
                     onOpenChange(false);
                 },
             });
@@ -194,7 +195,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
                 label: t('disconnect'),
                 icon: <ArrowLeftStartOnRectangleIcon className="w-4 h-4" />,
                 onSelect: () => {
-                    navigate(InternalRoutes.Logout.path);
+                    void navigate(InternalRoutes.Logout.path);
                     onOpenChange(false);
                 },
             });
@@ -219,7 +220,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
     const renderShortcut = (keys: string[]) => (
         <div className="ml-auto flex items-center gap-0.5">
             {keys.map((key, idx) => (
-                <span key={idx} className="flex items-center gap-0.5">
+                <span key={key} className="flex items-center gap-0.5">
                     <kbd className="inline-flex items-center justify-center min-w-[1.5rem] h-6 px-1.5 text-xs font-medium bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded shadow-sm">
                         {getKeyDisplay(key)}
                     </kbd>
@@ -333,13 +334,13 @@ export const useCommandPalette = () => {
 
     useEffect(() => {
         window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
+        return () => { window.removeEventListener('keydown', handleKeyDown); };
     }, [handleKeyDown]);
 
     useEffect(() => {
-        const handleOpen = () => setOpen(true);
+        const handleOpen = () => { setOpen(true); };
         window.addEventListener('command-palette:open', handleOpen);
-        return () => window.removeEventListener('command-palette:open', handleOpen);
+        return () => { window.removeEventListener('command-palette:open', handleOpen); };
     }, []);
 
     const PaletteComponent = commandPaletteOverride ?? CommandPalette;

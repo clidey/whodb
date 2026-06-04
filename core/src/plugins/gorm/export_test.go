@@ -22,9 +22,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/clidey/whodb/core/src/engine"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+
+	"github.com/clidey/whodb/core/src/engine"
 )
 
 type exportTestPlugin struct {
@@ -42,7 +43,7 @@ func newExportTestPlugin(t *testing.T) *exportTestPlugin {
 	if err != nil {
 		t.Fatalf("failed to open sqlite test database: %v", err)
 	}
-	if err := db.Exec(`CREATE TABLE orders (id INTEGER PRIMARY KEY, customer_name TEXT NOT NULL)`).Error; err != nil {
+	if err := db.Exec(`CREATE TABLE IF NOT EXISTS orders (id INTEGER PRIMARY KEY, customer_name TEXT NOT NULL)`).Error; err != nil {
 		t.Fatalf("failed to create orders table: %v", err)
 	}
 	if err := db.Exec(`INSERT INTO orders (customer_name) VALUES ('alice')`).Error; err != nil {

@@ -17,11 +17,12 @@
 package mongodb
 
 import (
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
+
 	"github.com/clidey/whodb/core/src/common/graphutil"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
-	"go.mongodb.org/mongo-driver/v2/bson"
-	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 func (p *MongoDBPlugin) GetGraph(config *engine.PluginConfig, database string) ([]engine.GraphUnit, error) {
@@ -46,7 +47,7 @@ func (p *MongoDBPlugin) GetGraph(config *engine.PluginConfig, database string) (
 		}).Error("Failed to list MongoDB collections for graph generation")
 		return nil, err
 	}
-	defer cursor.Close(ctx)
+	defer func() { _ = cursor.Close(ctx) }()
 
 	collections := []string{}
 	collectionTypes := make(map[string]string)
@@ -108,7 +109,7 @@ func (p *MongoDBPlugin) GetGraph(config *engine.PluginConfig, database string) (
 				}
 			}
 		}
-		cursorSample.Close(ctx)
+		_ = cursorSample.Close(ctx)
 
 		if len(fieldFrequency) == 0 {
 			log.WithField("collection", collectionName).Warn("MongoDB Graph: No documents found or empty collection")

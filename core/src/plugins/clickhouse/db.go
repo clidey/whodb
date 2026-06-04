@@ -17,6 +17,7 @@
 package clickhouse
 
 import (
+	"log/slog"
 	"net"
 	"strconv"
 	"time"
@@ -25,11 +26,12 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
+	gorm_clickhouse "gorm.io/driver/clickhouse"
+
 	"github.com/clidey/whodb/core/src/common/ssl"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
-	gorm_clickhouse "gorm.io/driver/clickhouse"
 )
 
 func (p *ClickHousePlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
@@ -63,7 +65,7 @@ func (p *ClickHousePlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 	}
 
 	if connectionInput.Debug != "disable" {
-		options.Debug = true
+		options.Logger = slog.Default()
 	}
 
 	switch connectionInput.ReadOnly {

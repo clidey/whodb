@@ -15,7 +15,7 @@
  */
 
 import { useMutation, useQuery } from "@apollo/client/react";
-import { FC, useCallback, useEffect, useMemo } from "react";
+import { type FC, type ReactElement, useCallback, useEffect, useMemo } from "react";
 import {
     Badge,
     Button,
@@ -33,7 +33,8 @@ import {
     RefreshCloudProviderDocument,
 } from "@graphql";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { ProvidersActions, LocalCloudProvider, LocalDiscoveredConnection } from "../../store/providers";
+import type { LocalCloudProvider, LocalDiscoveredConnection } from "../../store/providers";
+import { ProvidersActions } from "../../store/providers";
 import { useTranslation } from "@/hooks/use-translation";
 import { Icons } from "../icons";
 import { GcpProviderModal } from "./gcp-provider-modal";
@@ -44,9 +45,9 @@ import {
     PlusIcon,
     QuestionMarkCircleIcon,
 } from "../heroicons";
-import { ReactElement } from "react";
 import type { SourceTypeItem } from "@/config/source-types";
-import { buildConnectionPrefill, ConnectionPrefillData } from "@/utils/cloud-connection-prefill";
+import type { ConnectionPrefillData } from "@/utils/cloud-connection-prefill";
+import { buildConnectionPrefill } from "@/utils/cloud-connection-prefill";
 import { getAppName } from "@/config/features";
 
 export type GcpConnectionPrefillData = ConnectionPrefillData;
@@ -234,7 +235,7 @@ export const GcpConnectionPicker: FC<GcpConnectionPickerProps> = ({
                         <Button
                             variant="ghost"
                             size="sm"
-                            onClick={handleRefresh}
+                            onClick={() => { void handleRefresh(); }}
                             disabled={loading}
                             aria-label={t('refresh')}
                         >
@@ -269,7 +270,7 @@ export const GcpConnectionPicker: FC<GcpConnectionPickerProps> = ({
                         {gcpConnections.map((conn) => (
                             <button
                                 key={conn.Id}
-                                onClick={() => handleSelectConnection(conn)}
+                                onClick={() => { handleSelectConnection(conn); }}
                                 className="flex items-center gap-3 p-3 rounded-lg border text-left transition-colors border-border hover:border-brand/50 hover:bg-brand/5"
                                 data-testid={`gcp-connection-${conn.Id}`}
                             >

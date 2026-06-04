@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { RefObject, useEffect, useState } from "react";
+import type { RefObject} from "react";
+import { useEffect, useState } from "react";
 
 /**
  * Tracks the offsetWidth of a container element, updating on window resize.
@@ -36,7 +37,7 @@ export function useContainerWidth(ref: RefObject<HTMLElement | null>): number {
 
         update();
         window.addEventListener('resize', update);
-        return () => window.removeEventListener('resize', update);
+        return () => { window.removeEventListener('resize', update); };
     }, [ref]);
 
     return width;

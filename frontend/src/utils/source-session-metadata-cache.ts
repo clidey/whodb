@@ -16,8 +16,8 @@
 
 import { makeVar } from '@apollo/client';
 import { useReactiveVar } from '@apollo/client/react';
-import { SourceSessionMetadataQuery } from '@graphql';
-import { TypeDefinition } from '../config/source-types';
+import type { SourceSessionMetadataQuery } from '@graphql';
+import type { TypeDefinition } from '../config/source-types';
 
 type SourceSessionMetadataPayload = NonNullable<SourceSessionMetadataQuery['SourceSessionMetadata']>;
 

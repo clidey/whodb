@@ -20,6 +20,7 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/big"
 	"net"
@@ -27,14 +28,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/clidey/whodb/core/src/common"
-	"github.com/clidey/whodb/core/src/engine"
-	"github.com/clidey/whodb/core/src/log"
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/dromara/carbon/v2"
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
+
+	"github.com/clidey/whodb/core/src/common"
+	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/log"
 )
 
 var (
@@ -89,7 +91,7 @@ func (p *GormPlugin) GetPrimaryKeyColumns(db *gorm.DB, schema string, tableName 
 		log.Debug(fmt.Sprintf("No primary keys found for table %s.%s: %v", schema, tableName, err))
 		return primaryKeys, nil
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	for rows.Next() {
 		var columnName string
@@ -98,6 +100,9 @@ func (p *GormPlugin) GetPrimaryKeyColumns(db *gorm.DB, schema string, tableName 
 			continue
 		}
 		primaryKeys = append(primaryKeys, columnName)
+	}
+	if err := rows.Err(); err != nil {
+		log.WithError(err).Error(fmt.Sprintf("Error iterating primary key rows for table %s.%s", schema, tableName))
 	}
 
 	// It's ok if there are no primary keys - return empty array
@@ -314,7 +319,7 @@ func convertBool(_ *GormPlugin, value, _, _ string, isNullable bool) (any, error
 func convertDate(p *GormPlugin, value, _, _ string, isNullable bool) (any, error) {
 	date, err := p.parseDate(value)
 	if err != nil {
-		return nil, fmt.Errorf("invalid date format: %v", err)
+		return nil, fmt.Errorf("invalid date format: %w", err)
 	}
 	if isNullable {
 		return sql.NullTime{Time: date, Valid: true}, nil
@@ -332,7 +337,7 @@ func convertDateTime(p *GormPlugin, value, baseType, _ string, isNullable bool) 
 	}
 	datetime, err := p.parseDateTime(value)
 	if err != nil {
-		return nil, fmt.Errorf("invalid datetime format: %v", err)
+		return nil, fmt.Errorf("invalid datetime format: %w", err)
 	}
 	if isNullable {
 		return sql.NullTime{Time: datetime, Valid: true}, nil
@@ -365,7 +370,7 @@ func convertBinary(_ *GormPlugin, value, _, _ string, isNullable bool) (any, err
 	var blobData []byte
 	if decoded, hasHexPrefix, err := DecodeHexLiteral(value); hasHexPrefix {
 		if err != nil {
-			return nil, fmt.Errorf("invalid hex binary format: %v", err)
+			return nil, fmt.Errorf("invalid hex binary format: %w", err)
 		}
 		blobData = decoded
 	} else {
@@ -379,7 +384,7 @@ func convertBinary(_ *GormPlugin, value, _, _ string, isNullable bool) (any, err
 
 func convertUUID(_ *GormPlugin, value, _, _ string, isNullable bool) (any, error) {
 	if _, err := uuid.Parse(value); err != nil {
-		return nil, fmt.Errorf("invalid UUID format: %v", err)
+		return nil, fmt.Errorf("invalid UUID format: %w", err)
 	}
 	if isNullable {
 		return sql.NullString{String: value, Valid: true}, nil
@@ -389,7 +394,7 @@ func convertUUID(_ *GormPlugin, value, _, _ string, isNullable bool) (any, error
 
 func convertJSON(_ *GormPlugin, value, _, _ string, _ bool) (any, error) {
 	if !json.Valid([]byte(value)) {
-		return nil, fmt.Errorf("invalid JSON format")
+		return nil, errors.New("invalid JSON format")
 	}
 	return value, nil
 }
@@ -420,7 +425,7 @@ func convertString(_ *GormPlugin, value, _, _ string, isNullable bool) (any, err
 func (p *GormPlugin) parseDateTime(value string) (time.Time, error) {
 	c := carbon.Parse(value)
 	if c.Error != nil {
-		return time.Time{}, fmt.Errorf("could not parse datetime '%s': %v", value, c.Error)
+		return time.Time{}, fmt.Errorf("could not parse datetime '%s': %w", value, c.Error)
 	}
 	if c.IsInvalid() {
 		return time.Time{}, fmt.Errorf("could not parse datetime '%s': invalid date", value)
@@ -432,7 +437,7 @@ func (p *GormPlugin) parseDateTime(value string) (time.Time, error) {
 func (p *GormPlugin) parseDate(value string) (time.Time, error) {
 	c := carbon.Parse(value)
 	if c.Error != nil {
-		return time.Time{}, fmt.Errorf("could not parse date '%s': %v", value, c.Error)
+		return time.Time{}, fmt.Errorf("could not parse date '%s': %w", value, c.Error)
 	}
 	if c.IsInvalid() {
 		return time.Time{}, fmt.Errorf("could not parse date '%s': invalid date", value)
@@ -456,9 +461,7 @@ func (p *GormPlugin) ConvertArrayValue(value string, columnType string) (any, er
 	if strings.HasPrefix(upperType, "ARRAY(") {
 		columnType = columnType[6:] // strip "ARRAY(" (6 chars)
 	}
-	if strings.HasSuffix(columnType, ")") {
-		columnType = columnType[:len(columnType)-1]
-	}
+	columnType = strings.TrimSuffix(columnType, ")")
 	elementType := columnType
 
 	// Remove brackets and split by comma

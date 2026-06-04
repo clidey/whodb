@@ -19,11 +19,11 @@ package mongodb
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
-	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 func (p *MongoDBPlugin) DeleteRow(config *engine.PluginConfig, database string, storageUnit string, values map[string]string) (bool, error) {
@@ -76,10 +76,7 @@ func (p *MongoDBPlugin) DeleteRow(config *engine.PluginConfig, database string, 
 		return false, errors.New("missing '_id' field in the document")
 	}
 
-	objectID, err := normalizeMongoID(id)
-	if err != nil {
-		return false, fmt.Errorf("invalid '_id' value: %w", err)
-	}
+	objectID := normalizeMongoID(id)
 
 	delete(jsonValues, "_id")
 

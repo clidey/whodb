@@ -119,7 +119,7 @@ func SetupTestDatabase(t *testing.T) (*database.Manager, *config.Connection, fun
 	if err != nil {
 		t.Fatalf("Failed to create SQLite database file: %v", err)
 	}
-	dbFile.Close()
+	_ = dbFile.Close()
 
 	err = mgr.Connect(conn)
 	if err != nil {
@@ -127,7 +127,7 @@ func SetupTestDatabase(t *testing.T) (*database.Manager, *config.Connection, fun
 	}
 
 	cleanup := func() {
-		mgr.Disconnect()
+		_ = mgr.Disconnect()
 		cleanupEnv()
 	}
 

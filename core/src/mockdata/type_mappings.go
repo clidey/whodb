@@ -166,10 +166,10 @@ func GenerateByType(dbType string, databaseType string, constraints map[string]a
 		return genXML(faker)
 
 	case "line", "lseg", "box", "path", "polygon", "circle":
-		return genGeometry(normalizedType, faker)
+		return genGeometry(normalizedType)
 
 	case "geometry", "geography", "linestring", "multipoint", "multilinestring", "multipolygon", "geometrycollection":
-		return genSpatial(normalizedType, faker)
+		return genSpatial(normalizedType)
 
 	case "decimal32", "decimal64", "decimal128", "decimal256":
 		return genClickHouseDecimal(normalizedType, constraints, faker)
@@ -367,7 +367,7 @@ func genPoint(f *gofakeit.Faker) any {
 }
 
 // genGeometry generates PostgreSQL native geometry types
-func genGeometry(typeName string, f *gofakeit.Faker) any {
+func genGeometry(typeName string) any {
 	switch typeName {
 	case "line":
 		return "{1,2,3}"
@@ -387,7 +387,7 @@ func genGeometry(typeName string, f *gofakeit.Faker) any {
 }
 
 // genSpatial generates PostGIS/spatial types in WKT format
-func genSpatial(typeName string, f *gofakeit.Faker) any {
+func genSpatial(typeName string) any {
 	switch typeName {
 	case "geometry", "geography":
 		return "POINT(0 0)"
@@ -473,7 +473,7 @@ func genHstore(f *gofakeit.Faker) any {
 	for i := range pairs {
 		key := f.Word()
 		value := f.Word()
-		pairs[i] = fmt.Sprintf("\"%s\"=>\"%s\"", key, value)
+		pairs[i] = fmt.Sprintf("%q=>%q", key, value)
 	}
 	return strings.Join(pairs, ",")
 }
@@ -490,7 +490,7 @@ func genBinary(c map[string]any, f *gofakeit.Faker) any {
 
 	bytes := make([]byte, length)
 	for i := range bytes {
-		bytes[i] = byte(f.Number(0, 255))
+		bytes[i] = byte(f.Number(0, 255)) //nolint:gosec
 	}
 	// Return as hex string with 0x prefix for proper round-trip through string serialization
 	return fmt.Sprintf("0x%x", bytes)
@@ -643,11 +643,12 @@ func genText(c map[string]any, f *gofakeit.Faker) any {
 	}
 
 	var text string
-	if maxLen <= 10 {
+	switch {
+	case maxLen <= 10:
 		text = f.LetterN(uint(maxLen))
-	} else if maxLen <= 50 {
+	case maxLen <= 50:
 		text = f.LoremIpsumSentence(3)
-	} else {
+	default:
 		text = f.LoremIpsumSentence(f.Number(3, 10))
 	}
 

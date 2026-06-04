@@ -218,14 +218,11 @@ Connection Resolution:
 			cancel()
 		}()
 
-		// Initialize analytics (enabled by default)
-		if err := whodbmcp.InitializeAnalytics(&whodbmcp.AnalyticsConfig{
+		// Initialize analytics (enabled by default); failure is non-fatal.
+		_ = whodbmcp.InitializeAnalytics(&whodbmcp.AnalyticsConfig{
 			Enabled:    !mcpNoAnalytics,
 			AppVersion: version.Version,
-		}); err != nil {
-			// Analytics initialization failure is non-fatal
-			// Continue without analytics
-		}
+		})
 		defer whodbmcp.ShutdownAnalytics()
 
 		// Determine mode based on flags

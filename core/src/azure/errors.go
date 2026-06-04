@@ -27,18 +27,18 @@ import (
 var (
 	ErrAccessDenied          = errors.New("access denied: check Azure RBAC permissions for this operation")
 	ErrInvalidCredentials    = errors.New("invalid Azure credentials: check tenant ID, client ID, and secret")
-	ErrExpiredCredentials    = errors.New("Azure credentials have expired: re-authenticate or refresh token")
+	ErrExpiredCredentials    = errors.New("azure credentials have expired: re-authenticate or refresh token")
 	ErrSubscriptionNotFound  = errors.New("subscription not found: check the subscription ID and permissions")
 	ErrResourceNotFound      = errors.New("resource not found: check the resource name and subscription")
-	ErrServiceUnavailable    = errors.New("Azure service temporarily unavailable: try again later")
+	ErrServiceUnavailable    = errors.New("azure service temporarily unavailable: try again later")
 	ErrThrottling            = errors.New("request throttled: too many requests, try again later")
 	ErrConnectionFailed      = errors.New("connection failed: check network connectivity and endpoint")
-	ErrSubscriptionRequired  = errors.New("Azure subscription ID is required")
+	ErrSubscriptionRequired  = errors.New("azure subscription ID is required")
 	ErrTenantIDRequired      = errors.New("service principal auth requires a Tenant ID")
 	ErrClientIDRequired      = errors.New("service principal auth requires a Client ID")
 	ErrClientSecretRequired  = errors.New("service principal auth requires a Client Secret")
 	ErrInvalidAuthMethod     = errors.New("invalid auth method: must be one of: default, service-principal")
-	ErrAzureProviderDisabled = errors.New("Azure provider is disabled")
+	ErrAzureProviderDisabled = errors.New("azure provider is disabled")
 )
 
 // HandleAzureError maps Azure SDK errors to user-friendly sentinel errors.
@@ -99,5 +99,5 @@ func handleResponseError(respErr *azcore.ResponseError) error {
 		return ErrServiceUnavailable
 	}
 
-	return fmt.Errorf("Azure error [%s] (HTTP %d): %s", code, status, respErr.Error())
+	return fmt.Errorf("azure error [%s] (HTTP %d): %s", code, status, respErr.Error())
 }

@@ -1,0 +1,6 @@
+# Trivy ignore file for known false positives or accepted risks.
+# Add CVE IDs (one per line) to suppress them from image scans.
+# Document the reason for each suppression.
+#
+# Example:
+# CVE-2024-XXXXX  # accepted: not reachable in our usage of libfoo

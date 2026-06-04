@@ -52,11 +52,12 @@ func (ds *DateTimeString) Scan(value any) error {
 		// so we format back without the "+0000 UTC" suffix that fmt.Sprintf produces.
 		// Zero time (from failed parse of non-datetime text) is treated as empty.
 		if t, ok := value.(time.Time); ok {
-			if t.IsZero() {
+			switch {
+			case t.IsZero():
 				*ds = ""
-			} else if t.Nanosecond() > 0 {
+			case t.Nanosecond() > 0:
 				*ds = DateTimeString(t.Format("2006-01-02 15:04:05.999999999"))
-			} else {
+			default:
 				*ds = DateTimeString(t.Format("2006-01-02 15:04:05"))
 			}
 		} else {
@@ -95,7 +96,7 @@ func (p *Sqlite3Plugin) GetPrimaryKeyColumns(db *gorm.DB, schema string, tableNa
 	if err != nil {
 		return nil, nil
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var primaryKeys []string
 	for rows.Next() {
@@ -104,6 +105,9 @@ func (p *Sqlite3Plugin) GetPrimaryKeyColumns(db *gorm.DB, schema string, tableNa
 			continue
 		}
 		primaryKeys = append(primaryKeys, columnName)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 	return primaryKeys, nil
 }

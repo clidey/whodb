@@ -29,12 +29,9 @@ func TestAnalyticsConfig_DisabledByEnv(t *testing.T) {
 
 	cfg := &AnalyticsConfig{Enabled: true}
 
-	// Initialize should respect env var
-	err := InitializeAnalytics(cfg)
-	if err != nil {
-		// Initialization may fail due to missing PostHog client in test env, that's OK
-		// The important thing is it doesn't panic
-	}
+	// Initialization may fail due to missing PostHog client in test env, that's OK.
+	// The important thing is it doesn't panic.
+	_ = InitializeAnalytics(cfg)
 
 	// Clean up
 	ShutdownAnalytics()
@@ -43,10 +40,7 @@ func TestAnalyticsConfig_DisabledByEnv(t *testing.T) {
 func TestAnalyticsConfig_DisabledByFlag(t *testing.T) {
 	cfg := &AnalyticsConfig{Enabled: false}
 
-	err := InitializeAnalytics(cfg)
-	if err != nil {
-		// Initialization may fail, that's OK
-	}
+	_ = InitializeAnalytics(cfg)
 
 	ShutdownAnalytics()
 }

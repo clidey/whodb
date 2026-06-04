@@ -19,9 +19,10 @@ package gcp
 import (
 	"context"
 
+	"google.golang.org/api/option"
+
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
-	"google.golang.org/api/option"
 )
 
 // GCPConfig holds the resolved GCP configuration for creating service clients.
@@ -44,11 +45,11 @@ func LoadGCPConfig(ctx context.Context, creds *engine.Credentials) (*GCPConfig, 
 	return loadConfigFromGCPCredentials(ctx, gcpCreds)
 }
 
-func loadConfigFromGCPCredentials(ctx context.Context, gcpCreds *GCPCredentialConfig) (*GCPConfig, error) {
+func loadConfigFromGCPCredentials(_ context.Context, gcpCreds *GCPCredentialConfig) (*GCPConfig, error) {
 	var opts []option.ClientOption
 
 	if gcpCreds.IsServiceAccountKeyAuth() && gcpCreds.ServiceAccountKeyPath != "" {
-		opts = append(opts, option.WithCredentialsFile(gcpCreds.ServiceAccountKeyPath))
+		opts = append(opts, option.WithAuthCredentialsFile(option.ServiceAccount, gcpCreds.ServiceAccountKeyPath))
 	}
 	// For AuthMethodDefault, no explicit option needed — the SDK uses ADC automatically.
 

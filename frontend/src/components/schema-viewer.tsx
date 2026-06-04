@@ -15,6 +15,8 @@
  */
 
 import { skipToken, useQuery } from "@apollo/client/react";
+import type {
+    TreeDataItem} from "@clidey/ux";
 import {
     SearchInput,
     Sidebar as SidebarComponent,
@@ -22,12 +24,13 @@ import {
     SidebarGroup,
     SidebarHeader,
     toTitleCase,
-    Tree,
-    TreeDataItem,
+    Tree
 } from "@clidey/ux";
-import {GetStorageUnitsDocument, GetStorageUnitsQuery, SourceAction, type SourceObjectRefInput} from "@graphql";
+import type { GetStorageUnitsQuery, SourceObjectRefInput} from "@graphql";
+import {GetStorageUnitsDocument, SourceAction} from "@graphql";
 import {FolderIcon, TableCellsIcon} from "./heroicons";
-import {FC, useCallback, useEffect, useMemo, useState} from "react";
+import type {FC} from "react";
+import { useCallback, useEffect, useMemo, useState} from "react";
 import {useLocation, useNavigate} from "react-router-dom";
 import {InternalRoutes} from "../config/routes";
 import {useSourceContract} from "../hooks/useSourceContract";
@@ -59,8 +62,10 @@ function groupByType(units: SourceBrowserObject[]) {
 export const SchemaViewer: FC<SchemaViewerProps> = ({ parentRef: explicitParentRef, selectedName, trail = [] }) => {
     const { t } = useTranslation('components/schema-viewer');
     const current = useAppSelector(state => state.auth.current);
+    const currentType = current?.Type;
+    const currentDatabase = current?.Database;
     const selectedSchema = useAppSelector(state => state.database.schema);
-    const { item, storageUnitLabel, supportsSchema } = useSourceContract(current?.Type);
+    const { item, storageUnitLabel, supportsSchema } = useSourceContract(currentType);
     const navigate = useNavigate();
     const state = useLocation().state as { unit?: SourceBrowserObject } | undefined;
 
@@ -81,10 +86,9 @@ export const SchemaViewer: FC<SchemaViewerProps> = ({ parentRef: explicitParentR
 
     // Refetch when the connection context changes (profile switch or database switch)
     const currentProfileId = current?.Id;
-    const currentDatabase = current?.Database;
     useEffect(() => {
         if (currentProfileId) {
-            refetch();
+            void refetch();
         }
     }, [currentProfileId, currentDatabase, refetch]);
 
@@ -141,7 +145,7 @@ export const SchemaViewer: FC<SchemaViewerProps> = ({ parentRef: explicitParentR
             return;
         }
         if (unit.Actions.includes(SourceAction.Browse) && unit.HasChildren) {
-            navigate(InternalRoutes.Dashboard.StorageUnit.path, {
+            void navigate(InternalRoutes.Dashboard.StorageUnit.path, {
                 state: {
                     parent: unit,
                     trail: [...trail, unit],
@@ -149,7 +153,7 @@ export const SchemaViewer: FC<SchemaViewerProps> = ({ parentRef: explicitParentR
             });
             return;
         }
-        navigate(InternalRoutes.Dashboard.ExploreStorageUnit.path, {
+        void navigate(InternalRoutes.Dashboard.ExploreStorageUnit.path, {
             state: {
                 unit,
                 parentRef,
@@ -176,7 +180,7 @@ export const SchemaViewer: FC<SchemaViewerProps> = ({ parentRef: explicitParentR
                     <div className="px-4">
                         <SearchInput
                             value={search}
-                            onChange={e => setSearch(e.target.value)}
+                            onChange={(e) => { setSearch(e.target.value); }}
                             placeholder={t('searchTables')}
                             aria-label={t('searchTables')}
                         />

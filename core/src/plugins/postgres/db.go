@@ -20,15 +20,16 @@ import (
 	"maps"
 	"time"
 
-	"github.com/clidey/whodb/core/src/common/ssl"
-	"github.com/clidey/whodb/core/src/engine"
-	"github.com/clidey/whodb/core/src/log"
-	"github.com/clidey/whodb/core/src/plugins"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/stdlib"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+
+	"github.com/clidey/whodb/core/src/common/ssl"
+	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/log"
+	"github.com/clidey/whodb/core/src/plugins"
 )
 
 func (p *PostgresPlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
@@ -53,7 +54,7 @@ func (p *PostgresPlugin) openDB(config *engine.PluginConfig, multiStatement bool
 	}
 
 	pgxConfig.Host = connectionInput.Hostname
-	pgxConfig.Port = uint16(connectionInput.Port)
+	pgxConfig.Port = uint16(connectionInput.Port) //nolint:gosec
 	pgxConfig.User = connectionInput.Username
 	pgxConfig.Password = connectionInput.Password
 	pgxConfig.Database = connectionInput.Database

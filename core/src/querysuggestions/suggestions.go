@@ -47,7 +47,7 @@ func FromStorageUnits(units []source.StorageUnit) []Suggestion {
 	suggestions := make([]Suggestion, 0, len(units))
 	for i, unit := range units {
 		tableName := unit.Name
-		suggestion := Suggestion{}
+		var suggestion Suggestion
 		switch i % 3 {
 		case 0:
 			suggestion = Suggestion{
@@ -61,7 +61,7 @@ func FromStorageUnits(units []source.StorageUnit) []Suggestion {
 			}
 		default:
 			suggestion = Suggestion{
-				Description: fmt.Sprintf("Show me all the data in %s", tableName),
+				Description: "Show me all the data in " + tableName,
 				Category:    "SELECT",
 			}
 		}

@@ -17,9 +17,9 @@
 package version
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 	"sync"
@@ -94,7 +94,7 @@ func CheckForUpdate(currentVersion string, disabled bool) UpdateInfo {
 				CurrentVersion:  currentVersion,
 				LatestVersion:   release.TagName,
 				UpdateAvailable: true,
-				ReleaseURL:      fmt.Sprintf("https://github.com/clidey/whodb/releases/tag/%s", release.TagName),
+				ReleaseURL:      "https://github.com/clidey/whodb/releases/tag/" + release.TagName,
 			}
 		}
 	}
@@ -108,11 +108,15 @@ func CheckForUpdate(currentVersion string, disabled bool) UpdateInfo {
 
 func fetchLatestRelease() (*githubRelease, error) {
 	client := &http.Client{Timeout: httpTimeout}
-	resp, err := client.Get(githubReleasesURL)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, githubReleasesURL, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, errors.New("unexpected status")

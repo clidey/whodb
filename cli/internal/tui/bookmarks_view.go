@@ -27,10 +27,6 @@ import (
 	"github.com/clidey/whodb/cli/pkg/styles"
 )
 
-// saveCurrentOption is a sentinel index used to represent the
-// "Save current query" action at the top of the bookmarks list.
-const saveCurrentOption = -1
-
 // BookmarksView displays saved query bookmarks and allows loading,
 // saving, and deleting them.
 type BookmarksView struct {

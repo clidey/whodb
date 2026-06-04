@@ -20,12 +20,13 @@ import (
 	"regexp"
 	"strings"
 
+	"gorm.io/gorm"
+
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
-	"gorm.io/gorm"
 )
 
 // Pre-compiled regex for PostgreSQL/CockroachDB type casts like ::text, ::character varying, :::STRING
@@ -45,13 +46,16 @@ func (p *PostgresPlugin) GetColumnConstraints(config *engine.PluginConfig, schem
 			WHERE i.indrelid = $1::regclass AND i.indisprimary
 		`, fullTableName).Rows()
 		if err == nil {
-			defer primaryRows.Close()
+			defer func() { _ = primaryRows.Close() }()
 			for primaryRows.Next() {
 				var columnName string
 				if err := primaryRows.Scan(&columnName); err != nil {
 					continue
 				}
 				gorm_plugin.EnsureConstraintEntry(constraints, columnName)["primary"] = true
+			}
+			if err := primaryRows.Err(); err != nil {
+				return false, err
 			}
 		}
 
@@ -63,7 +67,7 @@ func (p *PostgresPlugin) GetColumnConstraints(config *engine.PluginConfig, schem
 		if err != nil {
 			return false, err
 		}
-		defer rows.Close()
+		defer func() { _ = rows.Close() }()
 
 		for rows.Next() {
 			var columnName, isNullable string
@@ -72,6 +76,9 @@ func (p *PostgresPlugin) GetColumnConstraints(config *engine.PluginConfig, schem
 			}
 
 			gorm_plugin.EnsureConstraintEntry(constraints, columnName)["nullable"] = strings.EqualFold(isNullable, "YES")
+		}
+		if err := rows.Err(); err != nil {
+			return false, err
 		}
 
 		// Get unique single-column indexes using GORM's query builder
@@ -85,7 +92,7 @@ func (p *PostgresPlugin) GetColumnConstraints(config *engine.PluginConfig, schem
 		if err != nil {
 			return false, err
 		}
-		defer uniqueRows.Close()
+		defer func() { _ = uniqueRows.Close() }()
 
 		for uniqueRows.Next() {
 			var columnName string
@@ -95,6 +102,9 @@ func (p *PostgresPlugin) GetColumnConstraints(config *engine.PluginConfig, schem
 
 			gorm_plugin.EnsureConstraintEntry(constraints, columnName)["unique"] = true
 		}
+		if err := uniqueRows.Err(); err != nil {
+			return false, err
+		}
 
 		// Get CHECK constraints using GORM's query builder
 		checkRows, err := db.Table("pg_constraint").
@@ -102,7 +112,7 @@ func (p *PostgresPlugin) GetColumnConstraints(config *engine.PluginConfig, schem
 			Where("contype = 'c' AND conrelid = ?::regclass", fullTableName).
 			Rows()
 		if err == nil {
-			defer checkRows.Close()
+			defer func() { _ = checkRows.Close() }()
 
 			for checkRows.Next() {
 				var constraintName, checkClause string
@@ -112,6 +122,9 @@ func (p *PostgresPlugin) GetColumnConstraints(config *engine.PluginConfig, schem
 
 				// Parse the CHECK clause to extract column and condition
 				p.parseCheckConstraint(checkClause, constraints)
+			}
+			if err := checkRows.Err(); err != nil {
+				return false, err
 			}
 		}
 		// Ignore error if query fails
@@ -126,7 +139,7 @@ func (p *PostgresPlugin) GetColumnConstraints(config *engine.PluginConfig, schem
 			ORDER BY c.column_name, e.enumsortorder
 		`, schema, storageUnit).Rows()
 		if err == nil {
-			defer enumRows.Close()
+			defer func() { _ = enumRows.Close() }()
 
 			// Group enum values by column name
 			enumValues := make(map[string][]string)
@@ -136,6 +149,9 @@ func (p *PostgresPlugin) GetColumnConstraints(config *engine.PluginConfig, schem
 					continue
 				}
 				enumValues[columnName] = append(enumValues[columnName], enumLabel)
+			}
+			if err := enumRows.Err(); err != nil {
+				return false, err
 			}
 
 			// Add enum values to constraints

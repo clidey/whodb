@@ -29,15 +29,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
+	"gorm.io/gorm"
+
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
 	sourcecatalogspecs "github.com/clidey/whodb/core/src/sourcecatalog/specs"
-	"github.com/google/uuid"
-	"github.com/shopspring/decimal"
-	"gorm.io/gorm"
 )
 
 var (
@@ -99,17 +100,13 @@ func (p *ClickHousePlugin) ConvertStringValue(value, columnType string, isNullab
 	if strings.HasPrefix(upperCheck, "NULLABLE(") {
 		isNullable = true
 		columnType = columnType[9:] // strip "Nullable(" (9 chars)
-		if strings.HasSuffix(columnType, ")") {
-			columnType = columnType[:len(columnType)-1]
-		}
+		columnType = strings.TrimSuffix(columnType, ")")
 	}
 
 	// Unwrap LowCardinality() wrapper
 	if strings.HasPrefix(strings.ToUpper(columnType), "LOWCARDINALITY(") {
 		columnType = columnType[15:] // strip "LowCardinality(" (15 chars)
-		if strings.HasSuffix(columnType, ")") {
-			columnType = columnType[:len(columnType)-1]
-		}
+		columnType = strings.TrimSuffix(columnType, ")")
 	}
 
 	normalized := strings.ToUpper(p.NormalizeType(columnType))
@@ -124,7 +121,7 @@ func (p *ClickHousePlugin) ConvertStringValue(value, columnType string, isNullab
 
 	if strings.Contains(normalized, "JSON") {
 		if !json.Valid([]byte(value)) {
-			return nil, fmt.Errorf("invalid JSON format")
+			return nil, errors.New("invalid JSON format")
 		}
 		return value, nil
 	}
@@ -265,11 +262,12 @@ func (p *ClickHousePlugin) UpdateStorageUnit(config *engine.PluginConfig, schema
 				converted = arrayToExpr(converted)
 			}
 
-			if isPK {
+			switch {
+			case isPK:
 				conditions[column] = converted
-			} else if isUpdated {
+			case isUpdated:
 				convertedValues[column] = converted
-			} else if len(pkColumns) == 0 {
+			case len(pkColumns) == 0:
 				conditions[column] = converted
 			}
 		}
@@ -302,7 +300,7 @@ func (p *ClickHousePlugin) executeRawSQL(config *engine.PluginConfig, query stri
 		}
 
 		// codeql[go/sql-injection]: RawExecute intentionally runs user-authored SQL from the query editor/import flow.
-		rows, err := db.Raw(query, params...).Rows()
+		rows, err := db.Raw(query, params...).Rows() //nolint:rowserrcheck
 		if err != nil {
 			// ClickHouse mutations (ALTER TABLE UPDATE/DELETE, INSERT, etc.) execute successfully
 			// but the driver returns "driver: bad connection" when trying to read the non-existent result set.
@@ -318,7 +316,7 @@ func (p *ClickHousePlugin) executeRawSQL(config *engine.PluginConfig, query stri
 			}
 			return nil, err
 		}
-		defer rows.Close()
+		defer func() { _ = rows.Close() }()
 
 		return p.ConvertRawToRows(rows)
 	})
@@ -439,13 +437,13 @@ func (p *ClickHousePlugin) GetColumnCodec(typeName string) gorm_plugin.ColumnCod
 					// using reflection so the display matches ClickHouse literal syntax
 					rv := reflect.ValueOf(actualValue)
 					if rv.Kind() == reflect.Map {
-						return formatReflectMap(rv, upperType), nil
+						return formatReflectMap(rv), nil
 					}
 					if rv.Kind() == reflect.Slice {
 						if strings.HasPrefix(upperType, "TUPLE") {
 							return formatReflectTuple(rv), nil
 						}
-						return formatReflectSlice(rv, upperType), nil
+						return formatReflectSlice(rv), nil
 					}
 					if stringer, ok := actualValue.(fmt.Stringer); ok {
 						return stringer.String(), nil

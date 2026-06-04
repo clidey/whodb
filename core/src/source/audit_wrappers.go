@@ -546,11 +546,11 @@ type auditedSourceAssistant struct {
 	next  SourceAssistant
 }
 
-func (a auditedSourceAssistant) Reply(ctx context.Context, ref *ObjectRef, previousConversation string, query string) ([]*ChatMessage, error) {
+func (a auditedSourceAssistant) Reply(ctx context.Context, ref *ObjectRef, previousConversation string, prompt string) ([]*ChatMessage, error) {
 	start := time.Now()
-	messages, err := a.next.Reply(ctx, ref, previousConversation, query)
+	messages, err := a.next.Reply(ctx, ref, previousConversation, prompt)
 	details := objectRefDetails(ref)
-	details["query_length"] = len(strings.TrimSpace(query))
+	details["query_length"] = len(strings.TrimSpace(prompt))
 	details["has_previous_conversation"] = strings.TrimSpace(previousConversation) != ""
 	details["message_count"] = len(messages)
 	a.scope.record(ctx, "source.reply", start, err, details)
@@ -562,11 +562,11 @@ type auditedModelAwareSourceAssistant struct {
 	next  ModelAwareSourceAssistant
 }
 
-func (a auditedModelAwareSourceAssistant) ReplyWithModel(ctx context.Context, ref *ObjectRef, previousConversation string, query string, model *ExternalModel) ([]*ChatMessage, error) {
+func (a auditedModelAwareSourceAssistant) ReplyWithModel(ctx context.Context, ref *ObjectRef, previousConversation string, prompt string, model *ExternalModel) ([]*ChatMessage, error) {
 	start := time.Now()
-	messages, err := a.next.ReplyWithModel(ctx, ref, previousConversation, query, model)
+	messages, err := a.next.ReplyWithModel(ctx, ref, previousConversation, prompt, model)
 	details := objectRefDetails(ref)
-	details["query_length"] = len(strings.TrimSpace(query))
+	details["query_length"] = len(strings.TrimSpace(prompt))
 	details["has_previous_conversation"] = strings.TrimSpace(previousConversation) != ""
 	details["message_count"] = len(messages)
 	if model != nil {

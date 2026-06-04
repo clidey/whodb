@@ -229,7 +229,7 @@ func (v *SchemaView) View() string {
 	b.WriteString("\n\n")
 
 	if v.filtering || v.filterInput.Value() != "" {
-		filterLabel := "Filter: "
+		var filterLabel string
 		if v.filtering {
 			filterLabel = styles.RenderKey("Filter: ")
 		} else {

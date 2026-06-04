@@ -161,9 +161,9 @@ export function buildConnectionPrefill(
     conn: DiscoveredConnectionPrefillSource,
     sourceType?: SourceTypeItem
 ): ConnectionPrefillData {
-    const endpoint = getMetadataValue(conn, "endpoint") || "";
+    const endpoint = getMetadataValue(conn, "endpoint") ?? "";
     const port = getMetadataValue(conn, "port");
-    const database = getMetadataValue(conn, "databaseName") || getMetadataValue(conn, "bucket");
+    const database = getMetadataValue(conn, "databaseName") ?? getMetadataValue(conn, "bucket");
 
     return {
         databaseType: conn.DatabaseType,

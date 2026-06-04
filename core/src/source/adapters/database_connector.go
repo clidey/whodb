@@ -20,6 +20,7 @@ package adapters
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"slices"
@@ -207,14 +208,14 @@ func (s *DatabaseSession) GetObject(ctx context.Context, ref source.ObjectRef) (
 		return nil, err
 	}
 
-	for _, object := range objects {
-		if object.Kind == ref.Kind && slices.Equal(object.Path, ref.Path) {
-			objectCopy := object
+	for i := range objects {
+		if objects[i].Kind == ref.Kind && slices.Equal(objects[i].Path, ref.Path) {
+			objectCopy := objects[i]
 			return &objectCopy, nil
 		}
 	}
 
-	return nil, fmt.Errorf("source object not found")
+	return nil, errors.New("source object not found")
 }
 
 // ReadRows returns rows for a tabular source object.
@@ -227,25 +228,25 @@ func (s *DatabaseSession) ReadRows(ctx context.Context, ref source.ObjectRef, wh
 	namespace := s.namespaceForRef(&ref)
 	name := objectName(ref)
 	log.WithFields(map[string]any{
-		"sourceType": s.spec.ID,
-		"connector":  s.spec.Connector,
-		"kind":       ref.Kind,
-		"path":       slices.Clone(ref.Path),
-		"namespace":  namespace,
-		"objectName": name,
-		"pageSize":   pageSize,
-		"pageOffset": pageOffset,
-		"hasWhere":   where != nil,
-		"sortCount":  len(sort),
+		"source_type": s.spec.ID,
+		"connector":   s.spec.Connector,
+		"kind":        ref.Kind,
+		"path":        slices.Clone(ref.Path),
+		"namespace":   namespace,
+		"objectName":  name,
+		"pageSize":    pageSize,
+		"pageOffset":  pageOffset,
+		"hasWhere":    where != nil,
+		"sortCount":   len(sort),
 	}).Debug("Source row read requested")
 	if err := s.validateObject(config, namespace, name); err != nil {
 		log.WithError(err).WithFields(map[string]any{
-			"sourceType": s.spec.ID,
-			"connector":  s.spec.Connector,
-			"kind":       ref.Kind,
-			"path":       slices.Clone(ref.Path),
-			"namespace":  namespace,
-			"objectName": name,
+			"source_type": s.spec.ID,
+			"connector":   s.spec.Connector,
+			"kind":        ref.Kind,
+			"path":        slices.Clone(ref.Path),
+			"namespace":   namespace,
+			"objectName":  name,
 		}).Debug("Source row read failed validation")
 		return nil, err
 	}
@@ -260,18 +261,18 @@ func (s *DatabaseSession) ReadRows(ctx context.Context, ref source.ObjectRef, wh
 	})
 	if err != nil {
 		log.WithError(err).WithFields(map[string]any{
-			"sourceType": s.spec.ID,
-			"connector":  s.spec.Connector,
-			"kind":       ref.Kind,
-			"path":       slices.Clone(ref.Path),
-			"namespace":  namespace,
-			"objectName": name,
+			"source_type": s.spec.ID,
+			"connector":   s.spec.Connector,
+			"kind":        ref.Kind,
+			"path":        slices.Clone(ref.Path),
+			"namespace":   namespace,
+			"objectName":  name,
 		}).Debug("Source row read failed in plugin")
 		return nil, err
 	}
 
 	log.WithFields(map[string]any{
-		"sourceType":  s.spec.ID,
+		"source_type": s.spec.ID,
 		"connector":   s.spec.Connector,
 		"kind":        ref.Kind,
 		"path":        slices.Clone(ref.Path),
@@ -411,18 +412,18 @@ func (s *DatabaseSession) FieldConstraints(ctx context.Context, ref source.Objec
 }
 
 // RunQuery executes a query against the source session.
-func (s *DatabaseSession) RunQuery(ctx context.Context, query string, params ...any) (*source.RowsResult, error) {
+func (s *DatabaseSession) RunQuery(ctx context.Context, sql string, params ...any) (*source.RowsResult, error) {
 	if err := s.ensureSurface(source.SurfaceQuery); err != nil {
 		return nil, err
 	}
 
 	config := s.pluginConfig(ctx, nil)
-	return s.plugin.RawExecute(config, query, params...)
+	return s.plugin.RawExecute(config, sql, params...)
 }
 
 // RunQueryStream executes a query through the active source session's
 // streaming path when supported.
-func (s *DatabaseSession) RunQueryStream(ctx context.Context, query string, writer source.QueryStreamWriter, params ...any) error {
+func (s *DatabaseSession) RunQueryStream(ctx context.Context, sql string, writer source.QueryStreamWriter, params ...any) error {
 	if err := s.ensureSurface(source.SurfaceQuery); err != nil {
 		return err
 	}
@@ -430,7 +431,7 @@ func (s *DatabaseSession) RunQueryStream(ctx context.Context, query string, writ
 		return fmt.Errorf("streaming queries are not supported for %s", s.spec.Label)
 	}
 	if writer == nil {
-		return fmt.Errorf("stream writer is required")
+		return errors.New("stream writer is required")
 	}
 
 	streamer, ok := s.plugin.PluginFunctions.(engine.QueryStreamer)
@@ -439,7 +440,7 @@ func (s *DatabaseSession) RunQueryStream(ctx context.Context, query string, writ
 	}
 
 	config := s.pluginConfig(ctx, nil)
-	return streamer.StreamRawExecute(config, query, &sourceQueryStreamWriterAdapter{writer: writer}, params...)
+	return streamer.StreamRawExecute(config, sql, &sourceQueryStreamWriterAdapter{writer: writer}, params...)
 }
 
 // RunScript executes a source-native script against the session.
@@ -480,7 +481,7 @@ func (s *DatabaseSession) ReadGraph(ctx context.Context, ref *source.ObjectRef) 
 }
 
 // Reply runs AI chat against the source session.
-func (s *DatabaseSession) Reply(ctx context.Context, ref *source.ObjectRef, previousConversation string, query string) ([]*source.ChatMessage, error) {
+func (s *DatabaseSession) Reply(ctx context.Context, ref *source.ObjectRef, previousConversation string, prompt string) ([]*source.ChatMessage, error) {
 	if err := s.ensureSurface(source.SurfaceChat); err != nil {
 		return nil, err
 	}
@@ -490,11 +491,11 @@ func (s *DatabaseSession) Reply(ctx context.Context, ref *source.ObjectRef, prev
 	if ref != nil {
 		scope = s.graphScopeForRef(*ref)
 	}
-	return s.plugin.Chat(config, scope, previousConversation, query)
+	return s.plugin.Chat(config, scope, previousConversation, prompt)
 }
 
 // ReplyWithModel runs AI chat against the source session with an explicit model.
-func (s *DatabaseSession) ReplyWithModel(ctx context.Context, ref *source.ObjectRef, previousConversation string, query string, model *source.ExternalModel) ([]*source.ChatMessage, error) {
+func (s *DatabaseSession) ReplyWithModel(ctx context.Context, ref *source.ObjectRef, previousConversation string, prompt string, model *source.ExternalModel) ([]*source.ChatMessage, error) {
 	if err := s.ensureSurface(source.SurfaceChat); err != nil {
 		return nil, err
 	}
@@ -505,7 +506,7 @@ func (s *DatabaseSession) ReplyWithModel(ctx context.Context, ref *source.Object
 	if ref != nil {
 		scope = s.graphScopeForRef(*ref)
 	}
-	return s.plugin.Chat(config, scope, previousConversation, query)
+	return s.plugin.Chat(config, scope, previousConversation, prompt)
 }
 
 // CreateObject creates a new source object.
@@ -597,7 +598,7 @@ func (s *DatabaseSession) ExportRowsNDJSON(ctx context.Context, ref source.Objec
 		ExportDataNDJSON(config *engine.PluginConfig, namespace string, objectName string, writer func(string) error, selectedRows []map[string]any) error
 	})
 	if !ok {
-		return fmt.Errorf("NDJSON export is not supported")
+		return errors.New("NDJSON export is not supported")
 	}
 
 	return exporter.ExportDataNDJSON(config, namespace, name, writer, selectedRows)
@@ -735,7 +736,8 @@ func (s *DatabaseSession) QuerySuggestions(ctx context.Context, ref *source.Obje
 
 func (s *DatabaseSession) engineCredentials(values map[string]string) *engine.Credentials {
 	mergedValues := s.credentials.CloneValues()
-	for _, field := range s.spec.ConnectionFields {
+	for i := range s.spec.ConnectionFields {
+		field := &s.spec.ConnectionFields[i]
 		if field.DefaultValue == "" {
 			continue
 		}
@@ -753,7 +755,8 @@ func (s *DatabaseSession) engineCredentials(values map[string]string) *engine.Cr
 	}
 
 	knownFields := map[string]bool{}
-	for _, field := range s.spec.ConnectionFields {
+	for i := range s.spec.ConnectionFields {
+		field := &s.spec.ConnectionFields[i]
 		value := mergedValues[field.Key]
 		if value == "" {
 			continue
@@ -900,35 +903,35 @@ func (s *DatabaseSession) validateObject(config *engine.PluginConfig, namespace 
 	}
 
 	log.WithFields(map[string]any{
-		"sourceType": s.spec.ID,
-		"connector":  s.spec.Connector,
-		"namespace":  namespace,
-		"objectName": name,
+		"source_type": s.spec.ID,
+		"connector":   s.spec.Connector,
+		"namespace":   namespace,
+		"objectName":  name,
 	}).Debug("Validating source object")
 	exists, err := s.plugin.StorageUnitExists(config, namespace, name)
 	if err != nil {
 		log.WithError(err).WithFields(map[string]any{
-			"sourceType": s.spec.ID,
-			"connector":  s.spec.Connector,
-			"namespace":  namespace,
-			"objectName": name,
+			"source_type": s.spec.ID,
+			"connector":   s.spec.Connector,
+			"namespace":   namespace,
+			"objectName":  name,
 		}).Debug("Source object validation errored")
 		return fmt.Errorf("failed to validate source object: %w", err)
 	}
 	if !exists {
 		log.WithFields(map[string]any{
-			"sourceType": s.spec.ID,
-			"connector":  s.spec.Connector,
-			"namespace":  namespace,
-			"objectName": name,
+			"source_type": s.spec.ID,
+			"connector":   s.spec.Connector,
+			"namespace":   namespace,
+			"objectName":  name,
 		}).Debug("Source object validation reported missing object")
 		return fmt.Errorf("source object %q not found", name)
 	}
 	log.WithFields(map[string]any{
-		"sourceType": s.spec.ID,
-		"connector":  s.spec.Connector,
-		"namespace":  namespace,
-		"objectName": name,
+		"source_type": s.spec.ID,
+		"connector":   s.spec.Connector,
+		"namespace":   namespace,
+		"objectName":  name,
 	}).Debug("Source object validation succeeded")
 	s.rememberValidatedObject(namespace, name)
 	return nil

@@ -76,7 +76,7 @@ func (m DuckDBMigrator) ColumnTypes(value any) ([]gorm.ColumnType, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var columnTypes []gorm.ColumnType
 	for rows.Next() {
@@ -113,9 +113,9 @@ func (m DuckDBMigrator) ColumnTypes(value any) ([]gorm.ColumnType, error) {
 			NameValue:          sql.NullString{String: name, Valid: true},
 			DataTypeValue:      sql.NullString{String: dataType, Valid: true},
 			ColumnTypeValue:    sql.NullString{String: dataType, Valid: true},
-			NullableValue:      sql.NullBool{Bool: nullable == "YES", Valid: true},
-			PrimaryKeyValue:    sql.NullBool{Bool: isPrimary == "YES", Valid: true},
-			AutoIncrementValue: sql.NullBool{Bool: isAutoIncrement == "YES", Valid: true},
+			NullableValue:      sql.NullBool{Bool: nullable == duckDBYes, Valid: true},
+			PrimaryKeyValue:    sql.NullBool{Bool: isPrimary == duckDBYes, Valid: true},
+			AutoIncrementValue: sql.NullBool{Bool: isAutoIncrement == duckDBYes, Valid: true},
 			DefaultValueValue:  columnDefault,
 			LengthValue:        charMaxLen,
 			DecimalSizeValue:   numericPrec,

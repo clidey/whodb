@@ -17,14 +17,16 @@
 package gorm_plugin
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 
-	"github.com/clidey/whodb/core/src/engine"
-	"github.com/clidey/whodb/core/src/plugins"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+
+	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/plugins"
 )
 
 // SQLBuilderInterface defines the methods that can be overridden by database-specific implementations
@@ -77,7 +79,7 @@ func (sb *SQLBuilder) QuoteIdentifier(identifier string) string {
 	// Prefer GORM dialect quoting when available
 	if sb.db != nil && sb.db.Dialector != nil {
 		var b strings.Builder
-		sb.db.Dialector.QuoteTo(&b, identifier)
+		sb.db.QuoteTo(&b, identifier)
 		return b.String()
 	}
 	// If no dialect is available (should be rare), return as-is
@@ -137,13 +139,14 @@ func (sb *SQLBuilder) BuildOrderBy(query *gorm.DB, sortList []plugins.Sort) *gor
 // CreateTableQuery builds a CREATE TABLE statement for DDL operations
 // DDL requires manual SQL building as GORM doesn't support dynamic table creation
 func (sb *SQLBuilder) CreateTableQuery(schema, table string, columns []ColumnDef) string {
-	columnDefs := make([]string, len(columns))
+	columnDefs := make([]string, 0, len(columns)+8)
 	var primaryKeys []string
 	var uniqueKeys []string
 	var checkDefs []string
 	var foreignKeys []string
 
-	for i, col := range columns {
+	for i := range columns {
+		col := columns[i]
 		def := sb.QuoteIdentifier(col.Name) + " " + col.Type
 
 		if col.Primary {
@@ -178,7 +181,7 @@ func (sb *SQLBuilder) CreateTableQuery(schema, table string, columns []ColumnDef
 			foreignKeys = append(foreignKeys, fmt.Sprintf("FOREIGN KEY (%s) REFERENCES %s (%s)", sb.QuoteIdentifier(col.Name), sb.quoteReferenceTableRef(schema, col.ReferencesTable), sb.QuoteIdentifier(col.ReferencesColumn)))
 		}
 
-		columnDefs[i] = def
+		columnDefs = append(columnDefs, def)
 	}
 
 	// Add primary key constraint if there are primary keys
@@ -247,7 +250,7 @@ func (sb *SQLBuilder) CreateTableQueryWithSuffix(schema, table string, columns [
 // GORM handles all escaping automatically
 func (sb *SQLBuilder) InsertRow(schema, table string, data map[string]any) error {
 	if table == "" {
-		return fmt.Errorf("table name cannot be empty when inserting row")
+		return errors.New("table name cannot be empty when inserting row")
 	}
 
 	// Let GORM handle the table name formatting

@@ -31,14 +31,15 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
+
 	"github.com/clidey/whodb/core/graph"
 	coreaudit "github.com/clidey/whodb/core/src/audit"
 	"github.com/clidey/whodb/core/src/auth"
 	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/log"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-	"github.com/go-chi/cors"
 )
 
 type OAuthLoginUrl struct {
@@ -244,14 +245,14 @@ func firstGraphQLArgumentValue(value any, wanted string) string {
 			}
 		}
 	case reflect.Slice, reflect.Array:
-		for index := 0; index < reflected.Len(); index++ {
+		for index := range reflected.Len() {
 			if nested := firstGraphQLArgumentValue(reflected.Index(index).Interface(), wanted); nested != "" {
 				return nested
 			}
 		}
 	case reflect.Struct:
 		reflectedType := reflected.Type()
-		for index := 0; index < reflected.NumField(); index++ {
+		for index := range reflected.NumField() {
 			field := reflectedType.Field(index)
 			if !field.IsExported() {
 				continue
@@ -333,7 +334,7 @@ func healthCheckMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet && r.URL.Path == "/health" {
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte("ok"))
+			_, _ = w.Write([]byte("ok"))
 			return
 		}
 		next.ServeHTTP(w, r)
@@ -361,7 +362,7 @@ func setupMiddlewares(router *chi.Mux, additionalMiddlewares []func(http.Handler
 		healthCheckMiddleware,
 		middleware.ThrottleBacklog(100, 50, time.Second*5),
 		middleware.RequestID,
-		middleware.RealIP,
+		middleware.ClientIPFromRemoteAddr,
 		middleware.RedirectSlashes,
 		middleware.Recoverer,
 		sseAwareTimeout(90 * time.Second),
@@ -427,20 +428,20 @@ func graphQLOperationName(opCtx *graphql.OperationContext) string {
 	return ""
 }
 
-func wrapWithBasePath(handler http.Handler, basePath string) *chi.Mux {
+func wrapWithBasePath(h http.Handler, basePath string) *chi.Mux {
 	router := chi.NewRouter()
 	redirectToBasePath := func(w http.ResponseWriter, r *http.Request) {
 		target := basePath + "/"
 		if r.URL.RawQuery != "" {
 			target += "?" + r.URL.RawQuery
 		}
-		http.Redirect(w, r, target, http.StatusMovedPermanently)
+		http.Redirect(w, r, target, http.StatusMovedPermanently) //nolint:gosec
 	}
 
 	router.Get(basePath, redirectToBasePath)
 	router.Head(basePath, redirectToBasePath)
-	router.Handle("/health", handler)
-	router.Handle(basePath+"/*", http.StripPrefix(basePath, handler))
+	router.Handle("/health", h)
+	router.Handle(basePath+"/*", http.StripPrefix(basePath, h))
 
 	return router
 }

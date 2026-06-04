@@ -17,14 +17,15 @@
 package sqlite3
 
 import (
-	"fmt"
+	"errors"
 	"strings"
+
+	"gorm.io/gorm"
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
-	"gorm.io/gorm"
 )
 
 // GetColumnConstraints retrieves column constraints for SQLite tables
@@ -35,7 +36,7 @@ func (p *Sqlite3Plugin) GetColumnConstraints(config *engine.PluginConfig, schema
 		// Use SQLite-specific SQL builder.
 		builder, ok := p.CreateSQLBuilder(db).(*SQLiteSQLBuilder)
 		if !ok {
-			return false, fmt.Errorf("failed to create SQLite SQL builder")
+			return false, errors.New("failed to create SQLite SQL builder")
 		}
 
 		// Get table schema including nullability
@@ -49,7 +50,7 @@ func (p *Sqlite3Plugin) GetColumnConstraints(config *engine.PluginConfig, schema
 		if err != nil {
 			return false, err
 		}
-		defer rows.Close()
+		defer func() { _ = rows.Close() }()
 
 		for rows.Next() {
 			var cid int
@@ -74,6 +75,9 @@ func (p *Sqlite3Plugin) GetColumnConstraints(config *engine.PluginConfig, schema
 				constraints[name]["unique"] = true
 			}
 		}
+		if err := rows.Err(); err != nil {
+			return false, err
+		}
 
 		// Get unique indexes
 		indexListQuery, err := builder.PragmaQuery("index_list", storageUnit)
@@ -87,7 +91,7 @@ func (p *Sqlite3Plugin) GetColumnConstraints(config *engine.PluginConfig, schema
 			// Some tables might not have indexes, that's ok
 			return true, nil
 		}
-		defer indexRows.Close()
+		defer func() { _ = indexRows.Close() }()
 
 		for indexRows.Next() {
 			var seq int
@@ -102,38 +106,46 @@ func (p *Sqlite3Plugin) GetColumnConstraints(config *engine.PluginConfig, schema
 
 			// Only process unique indexes
 			if unique == 1 {
-				// Get columns in this index
-				indexInfoQuery, err := builder.PragmaQuery("index_info", name)
-				if err != nil {
-					return false, err
-				}
-				infoRows, err := db.Raw(indexInfoQuery).Rows()
-				if err != nil {
-					continue
-				}
-
-				var columnCount int
-				var columnName string
-				for infoRows.Next() {
-					var seqno int
-					var cid int
-					var colName string
-					if err := infoRows.Scan(&seqno, &cid, &colName); err != nil {
-						continue
+				// Get columns in this index — wrapped in closure so defer is scoped per iteration
+				colName, colCount := func() (string, int) {
+					indexInfoQuery, err := builder.PragmaQuery("index_info", name)
+					if err != nil {
+						return "", 0
 					}
-					columnCount++
-					columnName = colName
-				}
-				infoRows.Close()
+					infoRows, err := db.Raw(indexInfoQuery).Rows()
+					if err != nil {
+						return "", 0
+					}
+					defer func() { _ = infoRows.Close() }()
+
+					var count int
+					var col string
+					for infoRows.Next() {
+						var seqno, cid int
+						var cn string
+						if err := infoRows.Scan(&seqno, &cid, &cn); err != nil {
+							continue
+						}
+						count++
+						col = cn
+					}
+					if infoRows.Err() != nil {
+						return "", 0
+					}
+					return col, count
+				}()
 
 				// Only mark as unique if it's a single-column index
-				if columnCount == 1 && columnName != "" {
-					if constraints[columnName] == nil {
-						constraints[columnName] = map[string]any{}
+				if colCount == 1 && colName != "" {
+					if constraints[colName] == nil {
+						constraints[colName] = map[string]any{}
 					}
-					constraints[columnName]["unique"] = true
+					constraints[colName]["unique"] = true
 				}
 			}
+		}
+		if err := indexRows.Err(); err != nil {
+			return false, err
 		}
 
 		// Get CHECK constraints from sqlite_master

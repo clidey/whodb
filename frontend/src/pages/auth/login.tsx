@@ -26,7 +26,8 @@ import {
     LoginWithSourceProfileDocument,
 } from '@graphql';
 import classNames from "classnames";
-import {FC, ReactElement, Suspense, useCallback, useEffect, useMemo, useRef, useState} from "react";
+import type {FC, ReactElement} from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {getComponent} from "../../config/component-registry";
 import {useNavigate, useSearchParams} from "react-router-dom";
 import logoImage from "../../../public/images/logo.svg";
@@ -44,7 +45,7 @@ import {Icons} from "../../components/icons";
 import {Loading} from "../../components/loading";
 import {Container} from "../../components/page";
 import {updateProfileLastAccessed} from "../../components/profile-info-tooltip";
-import {SourceTypeItem} from "../../config/source-types";
+import type {SourceTypeItem} from "../../config/source-types";
 import {extensions, featureFlags, getAppName, sources} from '../../config/features';
 import {InternalRoutes} from "../../config/routes";
 import {useSourceTypeItems} from "../../hooks/useSourceCatalog";
@@ -70,7 +71,8 @@ import {
     GcpConnectionPicker,
     isGcpConnection,
 } from '../../components/gcp';
-import {ConnectionPrefillData, isAwsHostname, isAzureHostname, isGcpHostname} from '../../utils/cloud-connection-prefill';
+import type {ConnectionPrefillData} from '../../utils/cloud-connection-prefill';
+import { isAwsHostname, isAzureHostname, isGcpHostname} from '../../utils/cloud-connection-prefill';
 import { SourceAdvancedFields } from '@/components/source-advanced-fields';
 import { clearGraphqlStore } from '@/config/graphql-client';
 import {
@@ -111,7 +113,7 @@ function getLoginUiSearchParams(searchParams: URLSearchParams): URLSearchParams 
     const uiParams = new URLSearchParams();
     LOGIN_UI_PARAMS.forEach(key => {
         if (searchParams.has(key)) {
-            uiParams.set(key, searchParams.get(key)!);
+            uiParams.set(key, searchParams.get(key) ?? "");
         }
     });
     return uiParams;
@@ -187,7 +189,7 @@ export const LoginForm: FC<LoginFormProps> = ({
     const appName = getAppName();
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
-    const currentProfile = useAppSelector(state => state.auth.current);
+    const currentProfileId = useAppSelector(state => state.auth.current?.Id);
     const shouldUpdateLastAccessed = useRef(false);
     const usernameInputRef = useRef<HTMLInputElement>(null);
     const handleSubmitRef = useRef<() => void>(() => {});
@@ -314,7 +316,7 @@ export const LoginForm: FC<LoginFormProps> = ({
 
         if (databaseType.id === "" || !credentialsAreComplete) {
             setIsAutoLoggingIn(false);
-            return setError(t('allFieldsRequired'));
+             setError(t('allFieldsRequired'));; return;
         }
         setError(undefined);
 
@@ -363,7 +365,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                 if (onLoginSuccess) {
                     onLoginSuccess();
                 } else {
-                    navigate(storageUnitPath);
+                    void navigate(storageUnitPath);
                 }
                 toast.success(t('loginSuccessful'));
             } catch (error) {
@@ -396,7 +398,7 @@ export const LoginForm: FC<LoginFormProps> = ({
     const handleLoginWithSourceProfileSubmit = useCallback((overrideProfileId?: string) => {
         const profileId = overrideProfileId ?? selectedAvailableProfile;
         if (profileId == null) {
-            return setError(t('selectProfile'));
+             setError(t('selectProfile'));; return;
         }
         setError(undefined);
 
@@ -435,7 +437,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                 if (onLoginSuccess) {
                     onLoginSuccess();
                 } else {
-                    navigate(storageUnitPath);
+                    void navigate(storageUnitPath);
                 }
                 toast.success(t('loginSuccessful'));
             } catch (error) {
@@ -482,7 +484,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                 if (onLoginSuccess) {
                     onLoginSuccess();
                 } else {
-                    navigate(InternalRoutes.Dashboard.StorageUnit.path);
+                    void navigate(InternalRoutes.Dashboard.StorageUnit.path);
                 }
                 toast.success(t('welcomeToWhodb', { appName }));
             } catch (error) {
@@ -510,7 +512,7 @@ export const LoginForm: FC<LoginFormProps> = ({
     // setFormResetKey causes a re-mount that resets the useLazyQuery hook state.
     useEffect(() => {
         if (supportsDatabaseFieldOptions(databaseType)) {
-            getDatabases({ variables: { sourceType: databaseType.id } });
+            void getDatabases({ variables: { sourceType: databaseType.id } });
         }
     }, [databaseType, getDatabases, formResetKey]);
 
@@ -635,11 +637,11 @@ export const LoginForm: FC<LoginFormProps> = ({
 
     // Update last accessed time when a new profile is created during login
     useEffect(() => {
-        if (shouldUpdateLastAccessed.current && currentProfile?.Id) {
-            updateProfileLastAccessed(currentProfile.Id);
+        if (shouldUpdateLastAccessed.current && currentProfileId) {
+            updateProfileLastAccessed(currentProfileId);
             shouldUpdateLastAccessed.current = false;
         }
-    }, [currentProfile]);
+    }, []);
 
     const availableProfiles = useMemo(() => {
         return profiles?.SourceProfiles
@@ -691,7 +693,7 @@ export const LoginForm: FC<LoginFormProps> = ({
         // Handle credentials parameter (base64 encoded JSON)
         if (searchParams.has("credentials")) {
             try {
-                const credentialsBase64 = searchParams.get("credentials")!;
+                const credentialsBase64 = searchParams.get("credentials") ?? "";
                 const credentialsJson = atob(credentialsBase64);
                 const credentials = JSON.parse(credentialsJson);
 
@@ -736,7 +738,7 @@ export const LoginForm: FC<LoginFormProps> = ({
         } else {
             // Handle individual URL parameters
             if (searchParams.has("type")) {
-                const typeParam = searchParams.get("type")!;
+                const typeParam = searchParams.get("type") ?? "";
                 const dbType = databaseTypeItems.find(item =>
                     item.id.toLowerCase() === typeParam.toLowerCase()
                 );
@@ -745,10 +747,10 @@ export const LoginForm: FC<LoginFormProps> = ({
                 }
             }
 
-            if (searchParams.has("host")) setHostName(searchParams.get("host")!);
-            if (searchParams.has("username")) setUsername(searchParams.get("username")!);
-            if (searchParams.has("password")) setPassword(searchParams.get("password")!);
-            if (searchParams.has("database")) setDatabase(searchParams.get("database")!);
+            if (searchParams.has("host")) setHostName(searchParams.get("host") ?? "");
+            if (searchParams.has("username")) setUsername(searchParams.get("username") ?? "");
+            if (searchParams.has("password")) setPassword(searchParams.get("password") ?? "");
+            if (searchParams.has("database")) setDatabase(searchParams.get("database") ?? "");
 
             // Merge known URL params into advancedForm with their canonical key names
             const hasPort = searchParams.has("port");
@@ -757,9 +759,9 @@ export const LoginForm: FC<LoginFormProps> = ({
             if (hasPort || hasRegion || hasSearchPath) {
                 setAdvancedForm(prev => ({
                     ...prev,
-                    ...(hasPort ? {'Port': searchParams.get("port")!} : {}),
-                    ...(hasRegion ? {'Region': searchParams.get("region")!} : {}),
-                    ...(hasSearchPath ? {'Search Path': searchParams.get("search_path")!} : {}),
+                    ...(hasPort ? {'Port': searchParams.get("port") ?? ""} : {}),
+                    ...(hasRegion ? {'Region': searchParams.get("region") ?? ""} : {}),
+                    ...(hasSearchPath ? {'Search Path': searchParams.get("search_path") ?? ""} : {}),
                 }));
                 setShowAdvanced(true);
             }
@@ -863,7 +865,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                 translate={t}
                 showPasswordToggle={!isEmbedded}
                 isDesktop={isDesktop}
-                onBrowseDatabaseFile={handleBrowseDatabaseFile}
+                onBrowseDatabaseFile={() => { void handleBrowseDatabaseFile(); }}
                 databaseOptions={buildDatabaseFieldOptions(foundDatabases?.SourceFieldOptions)}
                 databaseOptionsLoading={databasesLoading}
                 hasError={error != null}
@@ -1028,7 +1030,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                     <div className={cn("flex flex-col justify-end gap-2", {
                         "grow": availableProfiles.length === 0,
                     })}>
-                        {!disableCredentialForm && <>
+                        {!disableCredentialForm &&
                         <div className="flex gap-2">
                             <Button onClick={handleTestConnection} variant="secondary" disabled={!loginWithCredentialsEnabled || testConnectionLoading} className="flex-1">
                                 {t('testConnection')}
@@ -1037,7 +1039,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                                 <CheckCircleIcon className="w-4 h-4" /> {t('title')}
                             </Button>
                         </div>
-                        </>}
+                        }
                     </div>
                 )}
                 {
@@ -1057,7 +1059,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                                 }}
                                 rightIcon={<ChevronDownIcon className="w-4 h-4"/>}
                             />
-                            <Button onClick={() => handleLoginWithSourceProfileSubmit()} data-testid="login-with-profile-button" variant={loginWithSourceProfileEnabled ? "default" : "secondary"} disabled={!loginWithSourceProfileEnabled}>
+                            <Button onClick={() =>{  handleLoginWithSourceProfileSubmit(); }} data-testid="login-with-profile-button" variant={loginWithSourceProfileEnabled ? "default" : "secondary"} disabled={!loginWithSourceProfileEnabled}>
                                 <CheckCircleIcon className="w-4 h-4" /> {t('title')}
                             </Button>
                         </div>
@@ -1191,7 +1193,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                             setMissingDriver(null);
                             handleSubmit();
                         }}
-                        onCancel={() => setMissingDriver(null)}
+                        onCancel={() =>{  setMissingDriver(null); }}
                     />
                 </Suspense>
             );

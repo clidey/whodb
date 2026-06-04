@@ -15,7 +15,8 @@
  */
 
 import { useMutation } from "@apollo/client/react";
-import { FC, useCallback, useMemo } from "react";
+import type { FC} from "react";
+import { useCallback, useMemo } from "react";
 import { Badge, Button, cn, toast } from "@clidey/ux";
 import {
     CloudProviderStatus,
@@ -25,7 +26,8 @@ import {
     RemoveCloudProviderDocument,
 } from "@graphql";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { ProvidersActions, LocalCloudProvider } from "../../store/providers";
+import type { LocalCloudProvider } from "../../store/providers";
+import { ProvidersActions } from "../../store/providers";
 import { useTranslation } from "@/hooks/use-translation";
 import { GcpProviderModal } from "./gcp-provider-modal";
 import { Tip } from "../tip";
@@ -212,7 +214,7 @@ export const GcpProvidersSection: FC = () => {
                                         <Button
                                             variant="ghost"
                                             size="sm"
-                                            onClick={() => handleRefreshProvider(provider.Id)}
+                                            onClick={() => { void handleRefreshProvider(provider.Id); }}
                                             disabled={isLoading || provider.Status === CloudProviderStatus.Discovering}
                                             aria-label={t('refreshResources')}
                                             data-testid={`refresh-${provider.Id}`}
@@ -227,7 +229,7 @@ export const GcpProvidersSection: FC = () => {
                                         <Button
                                             variant="ghost"
                                             size="sm"
-                                            onClick={() => handleEditProvider(provider.Id)}
+                                            onClick={() => { handleEditProvider(provider.Id); }}
                                             disabled={isLoading}
                                             aria-label={t('edit')}
                                             data-testid={`edit-${provider.Id}`}
@@ -240,7 +242,7 @@ export const GcpProvidersSection: FC = () => {
                                         <Button
                                             variant="ghost"
                                             size="sm"
-                                            onClick={() => handleRemoveProvider(provider.Id, provider.Name)}
+                                            onClick={() => { void handleRemoveProvider(provider.Id, provider.Name); }}
                                             disabled={isLoading}
                                             aria-label={t('remove')}
                                             data-testid={`remove-${provider.Id}`}

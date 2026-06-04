@@ -20,9 +20,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/clidey/whodb/core/src/engine"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+
+	"github.com/clidey/whodb/core/src/engine"
 )
 
 func newSQLiteRuntimeTestFixture(t *testing.T, statements ...string) (*Sqlite3Plugin, *engine.PluginConfig, *gorm.DB) {

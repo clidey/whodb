@@ -17,25 +17,26 @@
 package elasticsearch
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
-	"github.com/clidey/whodb/core/src/query"
 	"github.com/clidey/whodb/core/src/log"
+	"github.com/clidey/whodb/core/src/query"
 )
 
 // convertAtomicConditionToES converts an atomic where condition to an Elasticsearch query clause
 func convertAtomicConditionToES(atomic *query.AtomicWhereCondition) (map[string]any, error) {
 	if atomic == nil {
-		return nil, fmt.Errorf("atomic condition is nil")
+		return nil, errors.New("atomic condition is nil")
 	}
 
 	// Handle different operators
 	switch atomic.Operator {
-	case "match", "MATCH":
+	case esOpMatch, "MATCH":
 		// Full-text search
 		return map[string]any{
-			"match": map[string]any{
+			esOpMatch: map[string]any{
 				atomic.Key: atomic.Value,
 			},
 		}, nil
@@ -49,9 +50,9 @@ func convertAtomicConditionToES(atomic *query.AtomicWhereCondition) (map[string]
 
 	case "=", "eq", "EQ", "equals", "EQUALS", "term", "TERM":
 		// Special handling for _id field - use ids query
-		if atomic.Key == "_id" {
+		if atomic.Key == esFieldID {
 			return map[string]any{
-				"ids": map[string]any{
+				esOpIDs: map[string]any{
 					"values": []any{atomic.Value},
 				},
 			}, nil
@@ -66,7 +67,7 @@ func convertAtomicConditionToES(atomic *query.AtomicWhereCondition) (map[string]
 	case "!=", "ne", "NE", "not equals", "NOT EQUALS":
 		// Not equal
 		return map[string]any{
-			"bool": map[string]any{
+			esTypeBool: map[string]any{
 				"must_not": []map[string]any{
 					{
 						"term": map[string]any{
@@ -88,7 +89,7 @@ func convertAtomicConditionToES(atomic *query.AtomicWhereCondition) (map[string]
 	case "not exists", "NOT EXISTS":
 		// Field does not exist
 		return map[string]any{
-			"bool": map[string]any{
+			esTypeBool: map[string]any{
 				"must_not": []map[string]any{
 					{
 						"exists": map[string]any{
@@ -102,7 +103,7 @@ func convertAtomicConditionToES(atomic *query.AtomicWhereCondition) (map[string]
 	case ">", "gt", "GT":
 		// Greater than
 		return map[string]any{
-			"range": map[string]any{
+			esOpRange: map[string]any{
 				atomic.Key: map[string]any{
 					"gt": atomic.Value,
 				},
@@ -112,7 +113,7 @@ func convertAtomicConditionToES(atomic *query.AtomicWhereCondition) (map[string]
 	case ">=", "gte", "GTE":
 		// Greater than or equal
 		return map[string]any{
-			"range": map[string]any{
+			esOpRange: map[string]any{
 				atomic.Key: map[string]any{
 					"gte": atomic.Value,
 				},
@@ -122,7 +123,7 @@ func convertAtomicConditionToES(atomic *query.AtomicWhereCondition) (map[string]
 	case "<", "lt", "LT":
 		// Less than
 		return map[string]any{
-			"range": map[string]any{
+			esOpRange: map[string]any{
 				atomic.Key: map[string]any{
 					"lt": atomic.Value,
 				},
@@ -132,7 +133,7 @@ func convertAtomicConditionToES(atomic *query.AtomicWhereCondition) (map[string]
 	case "<=", "lte", "LTE":
 		// Less than or equal
 		return map[string]any{
-			"range": map[string]any{
+			esOpRange: map[string]any{
 				atomic.Key: map[string]any{
 					"lte": atomic.Value,
 				},
@@ -142,7 +143,7 @@ func convertAtomicConditionToES(atomic *query.AtomicWhereCondition) (map[string]
 	case "like", "LIKE", "contains", "CONTAINS":
 		// Wildcard search
 		return map[string]any{
-			"wildcard": map[string]any{
+			esOpWildcard: map[string]any{
 				atomic.Key: map[string]any{
 					"value": fmt.Sprintf("*%v*", atomic.Value),
 				},
@@ -166,18 +167,18 @@ func convertAtomicConditionToES(atomic *query.AtomicWhereCondition) (map[string]
 			},
 		}, nil
 
-	case "ids", "IDS":
+	case esOpIDs, "IDS":
 		var ids []any
 		ids = parseCSVToSlice(atomic.Value)
 		return map[string]any{
-			"ids": map[string]any{
+			esOpIDs: map[string]any{
 				"values": ids,
 			},
 		}, nil
 
-	case "range", "RANGE":
+	case esOpRange, "RANGE":
 		// Expect "min,max" (empty allowed)
-		minBound, maxBound := parseRangeBounds(fmt.Sprintf("%v", atomic.Value))
+		minBound, maxBound := parseRangeBounds(atomic.Value)
 		rangeClause := map[string]any{}
 		if minBound != "" {
 			rangeClause["gte"] = minBound
@@ -186,7 +187,7 @@ func convertAtomicConditionToES(atomic *query.AtomicWhereCondition) (map[string]
 			rangeClause["lte"] = maxBound
 		}
 		return map[string]any{
-			"range": map[string]any{
+			esOpRange: map[string]any{
 				atomic.Key: rangeClause,
 			},
 		}, nil
@@ -199,10 +200,10 @@ func convertAtomicConditionToES(atomic *query.AtomicWhereCondition) (map[string]
 			},
 		}, nil
 
-	case "wildcard", "WILDCARD":
+	case esOpWildcard, "WILDCARD":
 		// Wildcard pattern match
 		return map[string]any{
-			"wildcard": map[string]any{
+			esOpWildcard: map[string]any{
 				atomic.Key: map[string]any{
 					"value": atomic.Value,
 				},
@@ -229,7 +230,7 @@ func convertAtomicConditionToES(atomic *query.AtomicWhereCondition) (map[string]
 		// Default to match query for unknown operators
 		log.WithField("operator", atomic.Operator).Warn("Unknown operator, defaulting to match query")
 		return map[string]any{
-			"match": map[string]any{
+			esOpMatch: map[string]any{
 				atomic.Key: atomic.Value,
 			},
 		}, nil
@@ -244,7 +245,7 @@ func convertWhereConditionToES(where *query.WhereCondition) (map[string]any, err
 	switch where.Type {
 	case query.WhereConditionTypeAtomic:
 		if where.Atomic == nil {
-			err := fmt.Errorf("atomic condition must have an atomicwherecondition")
+			err := errors.New("atomic condition must have an atomicwherecondition")
 			log.WithError(err).Error("Invalid atomic where condition: missing atomic condition")
 			return nil, err
 		}
@@ -283,7 +284,7 @@ func convertWhereConditionToES(where *query.WhereCondition) (map[string]any, err
 				}
 				// Wrap the child condition in a bool query
 				mustClauses = append(mustClauses, map[string]any{
-					"bool": childCondition,
+					esTypeBool: childCondition,
 				})
 			}
 		}
@@ -313,7 +314,7 @@ func convertWhereConditionToES(where *query.WhereCondition) (map[string]any, err
 				}
 				// Wrap the child condition in a bool query
 				shouldClauses = append(shouldClauses, map[string]any{
-					"bool": childCondition,
+					esTypeBool: childCondition,
 				})
 			}
 		}

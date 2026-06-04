@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
+
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src"
 	"github.com/clidey/whodb/core/src/analytics"
@@ -57,6 +58,7 @@ func (r *mutationResolver) LoginWithSourceProfile(ctx context.Context, profile m
 
 // Logout is the resolver for the Logout field.
 func (r *mutationResolver) Logout(ctx context.Context) (*model.StatusResponse, error) {
+	start := time.Now()
 	creds := auth.GetSourceCredentials(ctx)
 	identity := strings.TrimSpace(analytics.MetadataFromContext(ctx).DistinctID)
 	hasIdentity := identity != "" && identity != "disabled"
@@ -86,8 +88,9 @@ func (r *mutationResolver) Logout(ctx context.Context) (*model.StatusResponse, e
 		}
 		if creds != nil {
 			audit.RecordWithContext(ctx, audit.AuditEvent{
-				Timestamp: time.Now(),
+				Timestamp: start,
 				Action:    "logout.source",
+				Outcome:   audit.OutcomeFailure,
 				Severity:  audit.SeverityWarn,
 				Resource:  audit.SourceResource(sourceType, profileID),
 				Details: map[string]any{
@@ -95,6 +98,7 @@ func (r *mutationResolver) Logout(ctx context.Context) (*model.StatusResponse, e
 					"profile_id_present": hasProfile,
 					"error":              err.Error(),
 				},
+				Duration: time.Since(start),
 			})
 		}
 		return nil, err
@@ -109,14 +113,16 @@ func (r *mutationResolver) Logout(ctx context.Context) (*model.StatusResponse, e
 
 	if creds != nil {
 		audit.RecordWithContext(ctx, audit.AuditEvent{
-			Timestamp: time.Now(),
+			Timestamp: start,
 			Action:    "logout.source",
+			Outcome:   audit.OutcomeSuccess,
 			Severity:  audit.SeverityInfo,
 			Resource:  audit.SourceResource(sourceType, profileID),
 			Details: map[string]any{
 				"source_type":        sourceType,
 				"profile_id_present": hasProfile,
 			},
+			Duration: time.Since(start),
 		})
 	}
 
@@ -130,11 +136,18 @@ func (r *mutationResolver) TestSourceConnection(ctx context.Context, credentials
 
 // UpdateSettings is the resolver for the UpdateSettings field.
 func (r *mutationResolver) UpdateSettings(ctx context.Context, newSettings model.SettingsConfigInput) (*model.StatusResponse, error) {
+	start := time.Now()
+	before := settings.Get()
 	var fields []settings.ISettingsField
+	changedFields := make([]string, 0, 1)
+	details := map[string]any{}
 
 	if newSettings.MetricsEnabled != nil {
 		metricsEnabled := common.StrPtrToBool(newSettings.MetricsEnabled)
 		fields = append(fields, settings.MetricsEnabledField(metricsEnabled))
+		changedFields = append(changedFields, "metrics_enabled")
+		details["metrics_enabled_before"] = before.MetricsEnabled
+		details["metrics_enabled_after"] = metricsEnabled
 
 		analytics.TrackMutation(ctx, "UpdateSettings.metrics", map[string]any{
 			"metrics_enabled": metricsEnabled,
@@ -142,6 +155,23 @@ func (r *mutationResolver) UpdateSettings(ctx context.Context, newSettings model
 	}
 
 	updated := settings.UpdateSettings(fields...)
+	if len(changedFields) > 0 {
+		details["changed_fields"] = changedFields
+		details["updated"] = updated
+		audit.RecordWithContext(ctx, audit.AuditEvent{
+			Timestamp: start,
+			Action:    "settings.update",
+			Outcome:   audit.OutcomeSuccess,
+			Severity:  audit.SeverityInfo,
+			Resource: audit.Resource{
+				ID:   "global-settings",
+				Type: "settings_config",
+				Name: "settings",
+			},
+			Details:  details,
+			Duration: time.Since(start),
+		})
+	}
 	return &model.StatusResponse{
 		Status: updated,
 	}, nil
@@ -299,7 +329,7 @@ func (r *mutationResolver) ImportSQL(ctx context.Context, input model.ImportSQLI
 	if hasFile {
 		data, err := readUploadBytes(*input.File, maxImportFileSizeBytes)
 		if err != nil {
-			return importResult(false, importErrorSQLFileFailed), nil
+			return importResult(false, importErrorSQLFileFailed), nil //nolint:nilerr
 		}
 		script = string(data)
 	}
@@ -940,7 +970,7 @@ func (r *mutationResolver) GenerateAzureADToken(ctx context.Context, providerID 
 
 	scope, ok := sourcecatalog.ResolveAzureADScope(spec.ID, spec.Connector)
 	if !ok {
-		return "", fmt.Errorf("Azure AD authentication is not supported for source type: %s", sourceType)
+		return "", fmt.Errorf("azure AD authentication is not supported for source type: %s", sourceType)
 	}
 
 	registry := providers.GetDefaultRegistry()
@@ -1036,26 +1066,25 @@ func (r *queryResolver) Health(ctx context.Context) (*model.HealthStatus, error)
 				healthCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 				defer cancel()
 
-				done := make(chan bool, 1)
+				result := make(chan string, 1)
 
 				go func() {
 					defer func() {
 						if r := recover(); r != nil {
 							log.Errorf("Panic during health check for source: %v", r)
-							status.Database = "error"
+							result <- "error"
 						}
-						done <- true
 					}()
 
 					if availability.IsAvailable(healthCtx) {
-						status.Database = "healthy"
+						result <- "healthy"
 					} else {
-						status.Database = "error"
+						result <- "error"
 					}
 				}()
 
 				select {
-				case <-done:
+				case status.Database = <-result:
 				case <-healthCtx.Done():
 					status.Database = "error"
 				}
@@ -1075,8 +1104,8 @@ func (r *queryResolver) SourceProfiles(ctx context.Context) ([]*model.SourceProf
 func (r *queryResolver) SourceTypes(ctx context.Context) ([]*model.SourceType, error) {
 	specs := sourcecatalog.All()
 	types := make([]*model.SourceType, 0, len(specs))
-	for _, spec := range specs {
-		types = append(types, sourceTypeToModel(spec))
+	for i := range specs {
+		types = append(types, sourceTypeToModel(specs[i]))
 	}
 	return types, nil
 }
@@ -1194,13 +1223,13 @@ func (r *queryResolver) SourceObject(ctx context.Context, ref model.SourceObject
 // SourceRows is the resolver for the SourceRows field.
 func (r *queryResolver) SourceRows(ctx context.Context, ref model.SourceObjectRefInput, where *model.WhereCondition, sort []*model.SortCondition, pageSize int, pageOffset int) (*model.RowsResult, error) {
 	if pageSize <= 0 {
-		return nil, fmt.Errorf("pageSize must be greater than 0")
+		return nil, errors.New("pageSize must be greater than 0")
 	}
 	if pageSize > env.MaxPageSize {
 		return nil, fmt.Errorf("pageSize must not exceed %d", env.MaxPageSize)
 	}
 	if pageOffset < 0 {
-		return nil, fmt.Errorf("pageOffset must not be negative")
+		return nil, errors.New("pageOffset must not be negative")
 	}
 
 	spec, session, err := getSourceSessionForContext(ctx)
@@ -1382,7 +1411,7 @@ func (r *queryResolver) SourceGraph(ctx context.Context, ref *model.SourceObject
 // AIProviders is the resolver for the AIProviders field.
 func (r *queryResolver) AIProviders(ctx context.Context) ([]*model.AIProvider, error) {
 	chatProviders := envconfig.GetConfiguredChatProviders()
-	var aiProviders []*model.AIProvider
+	aiProviders := make([]*model.AIProvider, 0, len(chatProviders))
 	for _, provider := range chatProviders {
 		aiProviders = append(aiProviders, &model.AIProvider{
 			Type:                 provider.Type,
@@ -1542,7 +1571,7 @@ func (r *queryResolver) SSLStatus(ctx context.Context) (*model.SSLStatus, error)
 	spec, session, err := getSourceSessionForContext(ctx)
 	if err != nil {
 		log.Debug("[SSL] SSLStatus resolver: no plugin context")
-		return nil, nil
+		return nil, nil //nolint:nilerr
 	}
 	reader, ok := source.AsSecurityReader(sourceAuditScopeFromContext(ctx, spec), session)
 	if !ok {

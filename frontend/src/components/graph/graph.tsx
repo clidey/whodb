@@ -17,11 +17,12 @@
 import { Button, Tabs, TabsList, TabsTrigger } from '@clidey/ux';
 import { ArrowDownTrayIcon, RectangleGroupIcon } from '../heroicons';
 import classNames from 'classnames';
-import { Dispatch, FC, ReactNode, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import ReactFlow, { Background, Controls, Edge, Node, NodeProps, NodeTypes, OnInit, PanOnScrollMode, ReactFlowInstance, ReactFlowProps, useReactFlow } from 'reactflow';
+import type { Dispatch, FC, ReactNode, SetStateAction} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { Edge, Node, NodeProps, NodeTypes, OnInit, ReactFlowInstance, ReactFlowProps} from 'reactflow';
+import ReactFlow, { Background, Controls, PanOnScrollMode, useReactFlow } from 'reactflow';
 import { Tip } from '../tip';
 import { useTranslation } from '@/hooks/use-translation';
-import { GraphElements } from './constants';
 import { FloatingGraphEdge, GraphEdgeConnectionLine } from './edge';
 import { getDagreLayoutedElements } from './layouts';
 
@@ -115,7 +116,7 @@ export const Graph: FC<IGraphProps> = (props) => {
         // Check if nodes have dimensions, if not, wait a bit more
         const nodesWithoutDimensions = nodes.some(node => !node.width || !node.height);
         if (nodesWithoutDimensions) {
-            setTimeout(() => onLayout(type, padding), 100);
+            setTimeout(() => { onLayout(type, padding); }, 100);
             return;
         }
 
@@ -163,7 +164,7 @@ export const Graph: FC<IGraphProps> = (props) => {
           }
 
           setDownloading(true);
-          import('html-to-image').then(({ toPng }) => toPng(reactFlowWrapper.current!, {
+          import('html-to-image').then(({ toPng }) => toPng(reactFlowWrapper.current ?? document.createElement('div'), {
             pixelRatio: 5,
           }))
             .then((dataUrl) => {
@@ -242,7 +243,7 @@ export const Graph: FC<IGraphProps> = (props) => {
                                 <Button
                                     data-testid="graph-layout-button"
                                     variant="ghost"
-                                    onClick={() => onLayout("dagre")}
+                                    onClick={() => { onLayout("dagre"); }}
                                     aria-label={t('layout')}
                                 >
                                     <RectangleGroupIcon className="w-4 h-4 dark:text-white" />

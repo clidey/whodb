@@ -29,9 +29,10 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/xuri/excelize/v2"
+
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/plugins"
-	"github.com/xuri/excelize/v2"
 )
 
 const (
@@ -217,11 +218,11 @@ func ReadFile(path string, maxBytes int64) ([]byte, error) {
 		maxBytes = MaxFileSizeBytes
 	}
 
-	file, err := os.Open(path)
+	file, err := os.Open(path) //nolint:gosec
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	info, err := file.Stat()
 	if err == nil && info.Size() > maxBytes {
@@ -692,7 +693,7 @@ func parseExcel(data []byte, options *FileOptions, maxRows int, enforceRowCap bo
 	if err != nil {
 		return nil, newImportError(importValidationParseFailed, err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	sheetName := ""
 	if options.Sheet != nil {
@@ -710,7 +711,7 @@ func parseExcel(data []byte, options *FileOptions, maxRows int, enforceRowCap bo
 	if err != nil {
 		return nil, newImportError(importValidationParseFailed, err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	result := &ParsedFile{Sheet: sheetName}
 	firstRow := true

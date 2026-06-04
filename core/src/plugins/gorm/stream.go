@@ -19,9 +19,10 @@ package gorm_plugin
 import (
 	"fmt"
 
+	"gorm.io/gorm"
+
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/plugins"
-	"gorm.io/gorm"
 )
 
 // StreamRawExecute streams a raw SQL result row by row without materializing
@@ -37,7 +38,7 @@ func (p *GormPlugin) StreamRawExecute(config *engine.PluginConfig, query string,
 		if err != nil {
 			return false, err
 		}
-		defer rows.Close()
+		defer func() { _ = rows.Close() }()
 
 		columns, typeMap, resultColumns, err := p.describeRawColumns(rows)
 		if err != nil {

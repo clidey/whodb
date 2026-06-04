@@ -18,7 +18,9 @@ package memcached
 
 import (
 	"bufio"
+	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -58,7 +60,9 @@ const dialTimeout = 5 * time.Second
 
 // Dial connects to a memcached server at the given address.
 func Dial(address string) (*Client, error) {
-	conn, err := net.DialTimeout("tcp", address, dialTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), dialTimeout)
+	defer cancel()
+	conn, err := (&net.Dialer{}).DialContext(ctx, "tcp", address)
 	if err != nil {
 		return nil, fmt.Errorf("memcached dial: %w", err)
 	}
@@ -71,7 +75,9 @@ func Dial(address string) (*Client, error) {
 // DialTLS connects to a memcached server with TLS.
 func DialTLS(address string, tlsConfig *tls.Config) (*Client, error) {
 	dialer := &net.Dialer{Timeout: dialTimeout}
-	conn, err := tls.DialWithDialer(dialer, "tcp", address, tlsConfig)
+	ctx, cancel := context.WithTimeout(context.Background(), dialTimeout)
+	defer cancel()
+	conn, err := (&tls.Dialer{NetDialer: dialer, Config: tlsConfig}).DialContext(ctx, "tcp", address)
 	if err != nil {
 		return nil, fmt.Errorf("memcached TLS dial: %w", err)
 	}
@@ -167,7 +173,7 @@ func (c *Client) Delete(key string) error {
 		return fmt.Errorf("memcached delete read: %w", err)
 	}
 	if line == "NOT_FOUND" {
-		return fmt.Errorf("memcached delete: key not found")
+		return errors.New("memcached delete: key not found")
 	}
 	if line != "DELETED" {
 		return fmt.Errorf("memcached delete: %s", line)

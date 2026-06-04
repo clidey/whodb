@@ -80,8 +80,8 @@ type PluginFunctions interface {
 	GetRows(config *PluginConfig, req *GetRowsRequest) (*GetRowsResult, error)
 	GetRowCount(config *PluginConfig, schema string, storageUnit string, where *query.WhereCondition) (int64, error)
 	GetGraph(config *PluginConfig, schema string) ([]GraphUnit, error)
-	RawExecute(config *PluginConfig, query string, params ...any) (*GetRowsResult, error)
-	Chat(config *PluginConfig, schema string, previousConversation string, query string) ([]*ChatMessage, error)
+	RawExecute(config *PluginConfig, sql string, params ...any) (*GetRowsResult, error)
+	Chat(config *PluginConfig, schema string, previousConversation string, prompt string) ([]*ChatMessage, error)
 	ExportData(config *PluginConfig, schema string, storageUnit string, writer func([]string) error, selectedRows []map[string]any) error
 	FormatValue(val any) string
 	GetColumnsForTable(config *PluginConfig, schema string, storageUnit string) ([]Column, error)

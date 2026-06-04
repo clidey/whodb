@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
-import { combineReducers, configureStore, Reducer } from '@reduxjs/toolkit';
+import type { Reducer } from '@reduxjs/toolkit';
+import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import { persistReducer, persistStore, createTransform } from 'redux-persist';
-import storage from 'redux-persist/lib/storage';
+import storage from 'redux-persist/es/storage';
 import { authReducers } from './auth';
 import { databaseReducers } from './database';
 import { settingsReducers } from "./settings";
 import { houdiniReducers } from './chat';
 import { aiModelsReducers } from './ai-models';
-import { scratchpadReducers, IScratchpadState } from './scratchpad';
-import { IChatState } from './chat';
+import type { IScratchpadState } from './scratchpad';
+import { scratchpadReducers } from './scratchpad';
+import type { IChatState } from './chat';
 import { tourReducers } from './tour';
 import { providersReducers } from './providers';
 import { healthReducers } from './health';
@@ -39,10 +41,10 @@ if (typeof window !== 'undefined') {
     const scratchpadData = localStorage.getItem('persist:scratchpad');
     if (scratchpadData) {
       const parsed = JSON.parse(scratchpadData);
-      if (parsed && parsed.cells) {
+      if (parsed?.cells) {
         // Check if any cells have invalid date strings in history
         const hasInvalidDates = Object.values(parsed.cells).some((cell: any) => {
-          if (cell && cell.history && Array.isArray(cell.history)) {
+          if (cell?.history && Array.isArray(cell.history)) {
             return cell.history.some((item: any) => 
               item.date && typeof item.date === 'string' && isNaN(new Date(item.date).getTime())
             );
@@ -70,7 +72,7 @@ const scratchpadTransform = createTransform(
   },
   // Transform state being rehydrated
   (outboundState: any) => {
-    if (!outboundState || !outboundState.cells) {
+    if (!outboundState?.cells) {
       return outboundState;
     }
 
@@ -78,7 +80,7 @@ const scratchpadTransform = createTransform(
     const transformedCells: Record<string, any> = {};
     Object.keys(outboundState.cells).forEach(cellId => {
       const cell = outboundState.cells[cellId];
-      if (cell && cell.history && Array.isArray(cell.history)) {
+      if (cell?.history && Array.isArray(cell.history)) {
         transformedCells[cellId] = {
           ...cell,
           history: cell.history.map((historyItem: any) => {
@@ -120,7 +122,7 @@ const chatTransform = createTransform(
   },
   // Transform state being rehydrated
   (outboundState: any) => {
-    if (!outboundState || !outboundState.sessions) {
+    if (!outboundState?.sessions) {
       return outboundState;
     }
 
@@ -151,28 +153,10 @@ const chatTransform = createTransform(
   { whitelist: ['houdini'] }
 );
 
-const aiModelsPersistTransform = createTransform(
-  (inboundState: any) => {
-    if (!inboundState?.modelTypes) return inboundState;
-    // Only persist non-platform providers (user-added API keys)
-    const nonPlatformProviders = inboundState.modelTypes.filter((m: any) => !m.isPlatformProvider);
-    return {
-      ...inboundState,
-      modelTypes: nonPlatformProviders,
-      // Don't persist current selection for platform providers (goes in platform store instead)
-      current: inboundState.current?.isPlatformProvider ? undefined : inboundState.current,
-      currentModel: inboundState.current?.isPlatformProvider ? undefined : inboundState.currentModel,
-      models: inboundState.current?.isPlatformProvider ? [] : inboundState.models,
-    };
-  },
-  (outboundState: any) => outboundState,
-  { whitelist: ['aiModels'] }
-);
-
 const settingsPersistTransform = createTransform(
   (inboundState: any) => {
     if (!inboundState) return inboundState;
-    const { newUIEnabled, ...settingsToPersist } = inboundState;
+    const { newUIEnabled: _newUIEnabled, ...settingsToPersist } = inboundState;
     return settingsToPersist;
   },
   (outboundState: any) => outboundState,
