@@ -34,10 +34,8 @@ en_US:
   title: Feature Name
 ```
 
-Then run:
-```bash
-cd dev/translate && python3 detect.py && node translate.mjs
-```
+Do not add or update non-English locale entries unless the user explicitly asks
+for translation.
 
 ### 3. Add Route
 In the router configuration, add the new route. Follow existing patterns for layout and navigation guards.

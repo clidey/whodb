@@ -10,8 +10,11 @@ consistent. They receive a JSON payload on stdin containing the tool input.
 | `auto-format-go.sh` | `.go` files edited | Runs `gofmt -w` then `golangci-lint run --fix` |
 | `auto-lint-ts.sh` | `.ts`/`.tsx` files edited | Runs `oxlint --fix` |
 | `auto-graphql-codegen.sh` | `.graphqls` files edited | Runs `go generate` in `core/` and `pnpm generate` in `frontend/` |
-| `auto-translate.sh` | `locales/*.yaml` files edited | Runs translation drift detection + auto-translation |
 | `session-context.sh` | Session start | Injects branch name and uncommitted file count |
+
+Translation is intentionally not an automatic hook. Agents should add or update
+`en_US` strings only; run `dev/translate` tooling manually when translations are
+needed.
 
 ## Supporting Files
 

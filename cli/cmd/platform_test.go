@@ -130,3 +130,41 @@ func TestConfirmSourceDeleteSkipsPromptWhenApprovedByFlag(t *testing.T) {
 		t.Fatal("confirmSourceDelete() approved = false, want true")
 	}
 }
+
+func TestParseRequiredSourceObjectRefDatabasePath(t *testing.T) {
+	ref, err := parseRequiredSourceObjectRef("table:public.users")
+	if err != nil {
+		t.Fatalf("parseRequiredSourceObjectRef() error = %v", err)
+	}
+	if ref.Kind != "Table" {
+		t.Fatalf("kind = %q, want Table", ref.Kind)
+	}
+	if len(ref.Path) != 2 || ref.Path[0] != "public" || ref.Path[1] != "users" {
+		t.Fatalf("path = %#v, want public/users", ref.Path)
+	}
+}
+
+func TestParseRequiredSourceObjectRefObjectPath(t *testing.T) {
+	ref, err := parseRequiredSourceObjectRef("item:bucket/reports/users.csv")
+	if err != nil {
+		t.Fatalf("parseRequiredSourceObjectRef() error = %v", err)
+	}
+	if ref.Kind != "Item" {
+		t.Fatalf("kind = %q, want Item", ref.Kind)
+	}
+	if len(ref.Path) != 3 || ref.Path[0] != "bucket" || ref.Path[1] != "reports" || ref.Path[2] != "users.csv" {
+		t.Fatalf("path = %#v, want bucket/reports/users.csv", ref.Path)
+	}
+}
+
+func TestParseRequiredSourceObjectRefRejectsUnknownKind(t *testing.T) {
+	if _, err := parseRequiredSourceObjectRef("unknown:thing"); err == nil {
+		t.Fatal("parseRequiredSourceObjectRef() error = nil, want error")
+	}
+}
+
+func TestValidatePlatformPageRejectsLargeLimit(t *testing.T) {
+	if err := validatePlatformPage(1001, 0); err == nil {
+		t.Fatal("validatePlatformPage() error = nil, want error")
+	}
+}

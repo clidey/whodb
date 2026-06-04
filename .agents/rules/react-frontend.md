@@ -56,7 +56,8 @@ Before using an unfamiliar component, read its source directly:
 - All user-facing strings use `t('key')` from `useTranslation('component-path')`
 - No fallback strings — `t('key', 'fallback')` is a compile error
 - Check `common.yaml` first before adding keys — shared terms live there
-- After adding keys, run: `cd dev/translate && python3 detect.py && node translate.mjs`
+- Add or update `en_US` keys only unless the user explicitly asks for other languages
+- Do not run translation tooling automatically; non-English translation is manual
 
 ## Keyboard Shortcuts
 - Centralized in `frontend/src/utils/shortcuts.ts`

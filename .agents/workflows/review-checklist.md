@@ -49,7 +49,7 @@ cd frontend && pnpm exec vite build --config ../ee/frontend/vite.ee.config.mts
 - All user-facing strings use `t('key')`
 - No hardcoded English text
 - Translation keys added to appropriate YAML file
-- Ran: `cd dev/translate && python3 detect.py && node translate.mjs`
+- New or updated translation keys are limited to `en_US` unless the user explicitly asked for other languages
 
 ## 6. Testing
 - `data-testid` attributes preserved on refactored elements

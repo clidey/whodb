@@ -34,12 +34,6 @@
             "command": "bash \"$(git rev-parse --show-toplevel)/.agents/hooks/auto-graphql-codegen.sh\"",
             "statusMessage": "Regenerating GraphQL types",
             "timeout": 300
-          },
-          {
-            "type": "command",
-            "command": "bash \"$(git rev-parse --show-toplevel)/.agents/hooks/auto-translate.sh\"",
-            "statusMessage": "Updating translations",
-            "timeout": 300
           }
         ]
       }
