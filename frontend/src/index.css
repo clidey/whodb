@@ -44,6 +44,7 @@
   --muted: oklch(0.97 0 0);
   --primary: #11518E;
   --icon-foreground: #11518E;
+  --backdrop: oklch(0 0 0 / 50%);
 
   /* UI Customization defaults - these will be overridden by theme-customization.ts */
   --font-size-xs: 0.75rem;
@@ -72,6 +73,7 @@ body {
   --primary: #8EBFFB;
   --muted: oklch(0.269 0 0);
   --icon-foreground: #8EBFFB;
+  --backdrop: oklch(0 0 0 / 60%);
 }
 
 .bg-icon {

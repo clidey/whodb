@@ -21,7 +21,7 @@ import {Suspense, useEffect} from "react";
 import {Route, Routes} from "react-router-dom";
 import {getStoredConsentState, optInUser, optOutUser, resetAnalyticsIdentity} from "./config/posthog";
 import {getRoutes, PrivateRoute, PublicRoutes} from './config/routes';
-import {getRegisteredPublicRoutes} from './config/route-registry';
+import {getRegisteredPublicRoutes, getRegisteredScopedRoutes, getScopedLayout} from './config/route-registry';
 import {NavigateToDefault} from "./pages/chat/default-chat-route";
 import {useAppDispatch, useAppSelector} from "./store/hooks";
 import {SettingsActions} from "./store/settings";
@@ -155,6 +155,20 @@ export const App = () => {
         <DatabaseDownOverlay />
         <Routes>
           <Route path="/" element={<PrivateRoute />}>
+            {(() => {
+              const layout = getScopedLayout();
+              const scopedRoutes = getRegisteredScopedRoutes();
+              if (layout && scopedRoutes.length > 0) {
+                return (
+                  <Route path={layout.pathPattern} element={<Suspense fallback={null}><layout.lazyComponent /></Suspense>}>
+                    {scopedRoutes.map(route => (
+                      <Route key={route.path} path={route.path} element={<Suspense fallback={null}><route.lazyComponent /></Suspense>} />
+                    ))}
+                  </Route>
+                );
+              }
+              return null;
+            })()}
             {getRoutes().map(route => (
               <Route key={route.path} path={route.path} element={route.component} />
             ))}

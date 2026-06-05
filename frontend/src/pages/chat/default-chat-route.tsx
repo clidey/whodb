@@ -15,7 +15,7 @@
  */
 
 import {skipToken, useQuery} from "@apollo/client/react";
-import type { FC } from "react";
+import { Suspense, type FC } from "react";
 import { GetAiModelsDocument } from '@graphql';
 import { Loading } from "../../components/loading";
 import { Navigate } from "react-router-dom";
@@ -25,9 +25,10 @@ import { useSourceContract } from "../../hooks/useSourceContract";
 import { InternalPage } from "../../components/page";
 import { useAppSelector } from "../../store/hooks";
 import { availableInternalModelTypes } from "../../store/ai-models";
-import { hasComponent } from "../../config/component-registry";
+import { getComponent, hasComponent } from "../../config/component-registry";
 
 export const NavigateToDefault: FC = () => {
+    const DefaultNavigateOverride = getComponent('default-navigate');
     const currentType = useAppSelector(state => state.auth.current?.Type);
     const { supportsChat } = useSourceContract(currentType);
 
@@ -40,6 +41,10 @@ export const NavigateToDefault: FC = () => {
         }
         : skipToken;
     const { data, error } = useQuery(GetAiModelsDocument, aiModelsQueryOptions);
+
+    if (DefaultNavigateOverride) {
+        return <Suspense fallback={null}><DefaultNavigateOverride /></Suspense>;
+    }
 
     if (hasComponent('sql-agent')) {
         return <Navigate to={InternalRoutes.Chat.path} />

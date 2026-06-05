@@ -22,7 +22,7 @@ import { LogoutPage } from "../pages/auth/logout";
 import { getComponent } from "./component-registry";
 import { featureFlags } from "./features";
 import { LoadingPage } from "../components/loading";
-import { getRegisteredRoutes, getSurfaceFallbackPath } from "./route-registry";
+import { getRegisteredUnscopedRoutes, getSurfaceFallbackPath } from "./route-registry";
 import { useSourceContract } from "../hooks/useSourceContract";
 export { registerRoute } from "./route-registry";
 
@@ -177,7 +177,7 @@ export const getRoutes = (): IInternalRoute[] => {
         }
         currentRoutes.push(...Object.values((currentRoute)));
     }
-    const extra = getRegisteredRoutes().map(({ name, path, lazyComponent }) => ({
+    const extra = getRegisteredUnscopedRoutes().map(({ name, path, lazyComponent }) => ({
         name,
         path,
         component: <LazyRoute component={lazyComponent} />,
