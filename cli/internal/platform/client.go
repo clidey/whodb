@@ -204,6 +204,15 @@ func (c *Client) ProjectSources(ctx context.Context, projectID string) ([]Source
 	return resp.ProjectSources, err
 }
 
+// SourceTypes returns source types available on the hosted platform.
+func (c *Client) SourceTypes(ctx context.Context) ([]SourceType, error) {
+	var resp struct {
+		SourceTypes []SourceType `json:"SourceTypes"`
+	}
+	err := c.graphQL(ctx, operationSourceTypes, nil, &resp)
+	return resp.SourceTypes, err
+}
+
 // CreateSource creates a hosted source in one project.
 func (c *Client) CreateSource(ctx context.Context, input CreateSourceInput) (*Source, error) {
 	var resp struct {
@@ -234,6 +243,62 @@ func (c *Client) DeleteSource(ctx context.Context, projectID, sourceID string) e
 		return fmt.Errorf("platform did not confirm source deletion")
 	}
 	return nil
+}
+
+// SourceObjects returns browseable objects for one hosted source.
+func (c *Client) SourceObjects(ctx context.Context, projectID, sourceID string, parent *SourceObjectRefInput, kinds []SourceObjectKind, pageSize, pageOffset int) ([]SourceObject, error) {
+	var resp struct {
+		PlatformSourceObjects []SourceObject `json:"PlatformSourceObjects"`
+	}
+	var parentVariable any
+	if parent != nil {
+		parentVariable = parent.graphQLInput()
+	}
+	variables := map[string]any{
+		"projectId":  projectID,
+		"sourceId":   sourceID,
+		"parent":     parentVariable,
+		"kinds":      kinds,
+		"pageSize":   pageSize,
+		"pageOffset": pageOffset,
+	}
+	err := c.graphQL(ctx, operationPlatformSourceObjects, variables, &resp)
+	return resp.PlatformSourceObjects, err
+}
+
+// SourceColumns returns columns for one hosted source object.
+func (c *Client) SourceColumns(ctx context.Context, projectID, sourceID string, ref SourceObjectRefInput) ([]Column, error) {
+	var resp struct {
+		PlatformSourceColumns []Column `json:"PlatformSourceColumns"`
+	}
+	variables := map[string]any{
+		"projectId": projectID,
+		"sourceId":  sourceID,
+		"ref":       ref.graphQLInput(),
+	}
+	err := c.graphQL(ctx, operationPlatformSourceColumns, variables, &resp)
+	return resp.PlatformSourceColumns, err
+}
+
+// SourceRows returns rows for one hosted source object.
+func (c *Client) SourceRows(ctx context.Context, projectID, sourceID string, ref SourceObjectRefInput, pageSize, pageOffset int) (*RowsResult, error) {
+	var resp struct {
+		PlatformSourceRows *RowsResult `json:"PlatformSourceRows"`
+	}
+	variables := map[string]any{
+		"projectId":  projectID,
+		"sourceId":   sourceID,
+		"ref":        ref.graphQLInput(),
+		"pageSize":   pageSize,
+		"pageOffset": pageOffset,
+	}
+	if err := c.graphQL(ctx, operationPlatformSourceRows, variables, &resp); err != nil {
+		return nil, err
+	}
+	if resp.PlatformSourceRows == nil {
+		return nil, fmt.Errorf("platform returned no rows")
+	}
+	return resp.PlatformSourceRows, nil
 }
 
 func (c *Client) graphQL(ctx context.Context, query string, variables any, target any) error {

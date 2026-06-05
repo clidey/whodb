@@ -72,6 +72,27 @@ query CLIPlatformProjectSources($projectId: ID!) {
 }
 `
 
+const operationSourceTypes = `
+query CLIPlatformSourceTypes {
+  SourceTypes {
+    id: Id
+    label: Label
+    connector: Connector
+    category: Category
+    connectionFields: ConnectionFields {
+      key: Key
+      kind: Kind
+      section: Section
+      required: Required
+      labelKey: LabelKey
+      placeholderKey: PlaceholderKey
+      defaultValue: DefaultValue
+      supportsOptions: SupportsOptions
+    }
+  }
+}
+`
+
 const operationCreateSource = `
 mutation CLIPlatformCreateSource($input: CreateSourceInput!) {
   CreateSource(input: $input) {
@@ -93,12 +114,75 @@ mutation CLIPlatformDeleteSource($projectId: ID!, $id: ID!) {
 }
 `
 
+const sourceObjectFields = `
+  ref: Ref {
+    kind: Kind
+    locator: Locator
+    path: Path
+  }
+  kind: Kind
+  name: Name
+  path: Path
+  hasChildren: HasChildren
+  actions: Actions
+  metadata: Metadata {
+    key: Key
+    value: Value
+  }
+`
+
+const columnFields = `
+  type: Type
+  name: Name
+  metadataFidelity: MetadataFidelity
+  isPrimary: IsPrimary
+  isForeignKey: IsForeignKey
+  referencedTable: ReferencedTable
+  referencedColumn: ReferencedColumn
+  length: Length
+  precision: Precision
+  scale: Scale
+`
+
+const operationPlatformSourceObjects = `
+query CLIPlatformSourceObjects($projectId: ID!, $sourceId: ID!, $parent: SourceObjectRefInput, $kinds: [SourceObjectKind!], $pageSize: Int, $pageOffset: Int) {
+  PlatformSourceObjects(projectId: $projectId, sourceId: $sourceId, parent: $parent, kinds: $kinds, pageSize: $pageSize, pageOffset: $pageOffset) {
+` + sourceObjectFields + `
+  }
+}
+`
+
+const operationPlatformSourceColumns = `
+query CLIPlatformSourceColumns($projectId: ID!, $sourceId: ID!, $ref: SourceObjectRefInput!) {
+  PlatformSourceColumns(projectId: $projectId, sourceId: $sourceId, ref: $ref) {
+` + columnFields + `
+  }
+}
+`
+
+const operationPlatformSourceRows = `
+query CLIPlatformSourceRows($projectId: ID!, $sourceId: ID!, $ref: SourceObjectRefInput!, $pageSize: Int!, $pageOffset: Int!) {
+  PlatformSourceRows(projectId: $projectId, sourceId: $sourceId, ref: $ref, pageSize: $pageSize, pageOffset: $pageOffset) {
+    columns: Columns {
+` + columnFields + `
+    }
+    rows: Rows
+    disableUpdate: DisableUpdate
+    totalCount: TotalCount
+  }
+}
+`
+
 var platformOperations = map[string]string{
 	"me":                  operationMe,
 	"organizations":       operationOrganizations,
 	"projects":            operationProjects,
 	"switch_organization": operationSwitchOrganization,
 	"project_sources":     operationProjectSources,
+	"source_types":        operationSourceTypes,
 	"create_source":       operationCreateSource,
 	"delete_source":       operationDeleteSource,
+	"source_objects":      operationPlatformSourceObjects,
+	"source_columns":      operationPlatformSourceColumns,
+	"source_rows":         operationPlatformSourceRows,
 }

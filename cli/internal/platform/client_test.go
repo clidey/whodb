@@ -121,6 +121,45 @@ func TestProjectSourcesSendsProjectID(t *testing.T) {
 	}
 }
 
+func TestSourceTypesMapsConnectionFields(t *testing.T) {
+	var request struct {
+		Query string `json:"query"`
+	}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		if !strings.Contains(request.Query, "SourceTypes") {
+			t.Fatalf("query = %q, want SourceTypes", request.Query)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"data":{"SourceTypes":[{"id":"Postgres","label":"Postgres","connector":"Postgres","category":"Database","connectionFields":[{"key":"Hostname","kind":"Text","section":"Primary","required":true,"labelKey":"hostName","placeholderKey":"enterHostName","defaultValue":null,"supportsOptions":false},{"key":"Port","kind":"Text","section":"Primary","required":false,"labelKey":"advancedFields.port","placeholderKey":null,"defaultValue":"5432","supportsOptions":false},{"key":"Password","kind":"Password","section":"Primary","required":true,"labelKey":"password","placeholderKey":"enterPassword","defaultValue":null,"supportsOptions":false}]}]}}`))
+	}))
+	defer server.Close()
+
+	client, err := NewClient(server.URL, "token")
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
+	}
+	types, err := client.SourceTypes(context.Background())
+	if err != nil {
+		t.Fatalf("SourceTypes() error = %v", err)
+	}
+	if len(types) != 1 || types[0].ID != "Postgres" {
+		t.Fatalf("types = %#v, want Postgres", types)
+	}
+	if len(types[0].ConnectionFields) != 3 {
+		t.Fatalf("connection fields = %#v, want 3 fields", types[0].ConnectionFields)
+	}
+	port := types[0].ConnectionFields[1]
+	if port.DefaultValue == nil || *port.DefaultValue != "5432" {
+		t.Fatalf("port default = %#v, want 5432", port.DefaultValue)
+	}
+	if !types[0].ConnectionFields[2].Required || types[0].ConnectionFields[2].Kind != "Password" {
+		t.Fatalf("password field = %#v, want required password", types[0].ConnectionFields[2])
+	}
+}
+
 func TestCreateSourceMapsAdvancedRecords(t *testing.T) {
 	var request struct {
 		Query     string         `json:"query"`
@@ -179,5 +218,95 @@ func TestCreateSourceMapsAdvancedRecords(t *testing.T) {
 	first := advanced[0].(map[string]any)
 	if first["Key"] != "sslmode" || first["Value"] != "require" {
 		t.Fatalf("first advanced record = %#v, want sorted sslmode record", first)
+	}
+}
+
+func TestSourceObjectsMapsParentAndKinds(t *testing.T) {
+	var request struct {
+		Query     string         `json:"query"`
+		Variables map[string]any `json:"variables"`
+	}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		if !strings.Contains(request.Query, "PlatformSourceObjects") {
+			t.Fatalf("query = %q, want PlatformSourceObjects", request.Query)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"data":{"PlatformSourceObjects":[{"ref":{"kind":"Table","locator":"loc","path":["public","users"]},"kind":"Table","name":"users","path":["public","users"],"hasChildren":false,"actions":["ViewRows"],"metadata":[{"key":"rows","value":"10"}]}]}}`))
+	}))
+	defer server.Close()
+
+	client, err := NewClient(server.URL, "token")
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
+	}
+	objects, err := client.SourceObjects(context.Background(), "proj-1", "src-1", &SourceObjectRefInput{
+		Kind: "Schema",
+		Path: []string{"public"},
+	}, []SourceObjectKind{"Table", "View"}, 50, 10)
+	if err != nil {
+		t.Fatalf("SourceObjects() error = %v", err)
+	}
+	parent, ok := request.Variables["parent"].(map[string]any)
+	if !ok {
+		t.Fatalf("parent variable = %#v, want object", request.Variables["parent"])
+	}
+	if parent["Kind"] != "Schema" {
+		t.Fatalf("parent Kind = %#v, want Schema", parent["Kind"])
+	}
+	kinds, ok := request.Variables["kinds"].([]any)
+	if !ok || len(kinds) != 2 || kinds[0] != "Table" || kinds[1] != "View" {
+		t.Fatalf("kinds variable = %#v, want Table/View", request.Variables["kinds"])
+	}
+	if request.Variables["pageOffset"] != float64(10) {
+		t.Fatalf("pageOffset variable = %#v, want 10", request.Variables["pageOffset"])
+	}
+	if len(objects) != 1 || objects[0].Name != "users" {
+		t.Fatalf("objects = %#v, want users object", objects)
+	}
+}
+
+func TestSourceRowsMapsRefAndPagination(t *testing.T) {
+	var request struct {
+		Query     string         `json:"query"`
+		Variables map[string]any `json:"variables"`
+	}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		if !strings.Contains(request.Query, "PlatformSourceRows") {
+			t.Fatalf("query = %q, want PlatformSourceRows", request.Query)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"data":{"PlatformSourceRows":{"columns":[{"name":"id","type":"integer","metadataFidelity":"Exact","isPrimary":true,"isForeignKey":false}],"rows":[["1"]],"disableUpdate":false,"totalCount":1}}}`))
+	}))
+	defer server.Close()
+
+	client, err := NewClient(server.URL, "token")
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
+	}
+	result, err := client.SourceRows(context.Background(), "proj-1", "src-1", SourceObjectRefInput{
+		Kind: "Table",
+		Path: []string{"public", "users"},
+	}, 25, 5)
+	if err != nil {
+		t.Fatalf("SourceRows() error = %v", err)
+	}
+	ref, ok := request.Variables["ref"].(map[string]any)
+	if !ok {
+		t.Fatalf("ref variable = %#v, want object", request.Variables["ref"])
+	}
+	if ref["Kind"] != "Table" {
+		t.Fatalf("ref Kind = %#v, want Table", ref["Kind"])
+	}
+	if request.Variables["pageSize"] != float64(25) || request.Variables["pageOffset"] != float64(5) {
+		t.Fatalf("pagination variables = %#v, want pageSize=25 pageOffset=5", request.Variables)
+	}
+	if result.TotalCount != 1 || len(result.Rows) != 1 || result.Rows[0][0] != "1" {
+		t.Fatalf("result = %#v, want one row", result)
 	}
 }

@@ -32,26 +32,35 @@ import (
 )
 
 var (
-	platformHost      string
-	platformFormat    string
-	platformQuiet     bool
-	platformNoBrowser bool
-	platformLoginYes  bool
-	useOrg            string
-	useProject        string
-	projectsOrg       string
-	sourcesOrg        string
-	sourcesProject    string
-	sourceName        string
-	sourceType        string
-	sourceHostname    string
-	sourcePort        string
-	sourceUsername    string
-	sourceDatabase    string
-	sourceAdvanced    []string
-	sourcePasswordEnv string
-	sourcePasswordIn  bool
-	sourceDeleteYes   bool
+	platformHost       string
+	platformFormat     string
+	platformQuiet      bool
+	platformNoBrowser  bool
+	platformLoginYes   bool
+	useOrg             string
+	useProject         string
+	projectsOrg        string
+	sourcesOrg         string
+	sourcesProject     string
+	sourceName         string
+	sourceType         string
+	sourceHostname     string
+	sourcePort         string
+	sourceUsername     string
+	sourceDatabase     string
+	sourceFields       []string
+	sourceAdvanced     []string
+	sourcePasswordEnv  string
+	sourcePasswordIn   bool
+	sourceDeleteYes    bool
+	sourceObjectParent string
+	sourceObjectKinds  []string
+	sourceObjectLimit  int
+	sourceObjectOffset int
+	sourceColumnRef    string
+	sourceRowsRef      string
+	sourceRowsLimit    int
+	sourceRowsOffset   int
 )
 
 type platformSession struct {
@@ -380,6 +389,100 @@ var sourcesCmd = &cobra.Command{
 	Short: "Manage hosted WhoDB project sources",
 }
 
+var sourcesTypesCmd = &cobra.Command{
+	Use:           "types",
+	Short:         "List hosted WhoDB source types",
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := context.Background()
+		format, err := output.ParseFormat(platformFormat)
+		if err != nil {
+			return err
+		}
+		session, err := loadPlatformSession(ctx, platformHost)
+		if err != nil {
+			return err
+		}
+		types, err := session.Client.SourceTypes(ctx)
+		if err != nil {
+			return err
+		}
+		sortSourceTypes(types)
+		if format == output.FormatJSON {
+			return writeCommandJSON(cmd, types)
+		}
+		rows := make([][]any, len(types))
+		for i, sourceType := range types {
+			rows[i] = []any{sourceType.ID, sourceType.Label, sourceType.Category, sourceType.Connector, len(sourceType.ConnectionFields)}
+		}
+		return newCommandOutput(cmd, format, platformQuiet).WriteQueryResult(&output.QueryResult{
+			Columns: []output.Column{
+				{Name: "id", Type: "string"},
+				{Name: "label", Type: "string"},
+				{Name: "category", Type: "string"},
+				{Name: "connector", Type: "string"},
+				{Name: "fields", Type: "int"},
+			},
+			Rows: rows,
+		})
+	},
+}
+
+var sourcesFieldsCmd = &cobra.Command{
+	Use:           "fields <source-type>",
+	Short:         "Show hosted WhoDB source type fields",
+	Args:          cobra.ExactArgs(1),
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := context.Background()
+		format, err := output.ParseFormat(platformFormat)
+		if err != nil {
+			return err
+		}
+		session, err := loadPlatformSession(ctx, platformHost)
+		if err != nil {
+			return err
+		}
+		types, err := session.Client.SourceTypes(ctx)
+		if err != nil {
+			return err
+		}
+		sourceType, err := resolveSourceType(types, args[0])
+		if err != nil {
+			return err
+		}
+		if format == output.FormatJSON {
+			return writeCommandJSON(cmd, sourceType.ConnectionFields)
+		}
+		rows := make([][]any, len(sourceType.ConnectionFields))
+		for i, field := range sourceType.ConnectionFields {
+			rows[i] = []any{
+				field.Key,
+				field.Kind,
+				field.Section,
+				field.Required,
+				sourceFieldDefault(field),
+				sourceFieldSecret(field),
+				field.SupportsOptions,
+			}
+		}
+		return newCommandOutput(cmd, format, platformQuiet).WriteQueryResult(&output.QueryResult{
+			Columns: []output.Column{
+				{Name: "key", Type: "string"},
+				{Name: "kind", Type: "string"},
+				{Name: "section", Type: "string"},
+				{Name: "required", Type: "bool"},
+				{Name: "default", Type: "string"},
+				{Name: "secret", Type: "bool"},
+				{Name: "supports_options", Type: "bool"},
+			},
+			Rows: rows,
+		})
+	},
+}
+
 var sourcesListCmd = &cobra.Command{
 	Use:           "list",
 	Short:         "List hosted WhoDB project sources",
@@ -476,8 +579,9 @@ var sourcesGetCmd = &cobra.Command{
 }
 
 var sourcesCreateCmd = &cobra.Command{
-	Use:           "create",
+	Use:           "create [source-type]",
 	Short:         "Create a hosted WhoDB project source",
+	Args:          cobra.MaximumNArgs(1),
 	SilenceUsage:  true,
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -488,20 +592,7 @@ var sourcesCreateCmd = &cobra.Command{
 		}
 		quiet := platformQuiet || format == output.FormatJSON
 		out := newCommandOutput(cmd, format, quiet)
-		if strings.TrimSpace(sourceName) == "" {
-			return fmt.Errorf("--name is required")
-		}
-		if strings.TrimSpace(sourceType) == "" {
-			return fmt.Errorf("--type is required")
-		}
-		if strings.TrimSpace(sourceHostname) == "" {
-			return fmt.Errorf("--hostname is required")
-		}
-		advanced, err := parseSourceAdvanced(sourceAdvanced)
-		if err != nil {
-			return err
-		}
-		password, err := readSourcePassword(cmd)
+		sourceTypeValue, err := sourceTypeFromCreateArgs(args, sourceType)
 		if err != nil {
 			return err
 		}
@@ -509,21 +600,24 @@ var sourcesCreateCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+		types, err := session.Client.SourceTypes(ctx)
+		if err != nil {
+			return err
+		}
+		selectedType, err := resolveSourceType(types, sourceTypeValue)
+		if err != nil {
+			return err
+		}
+		input, err := collectSourceCreateInput(cmd, selectedType)
+		if err != nil {
+			return err
+		}
 		project, err := resolvePlatformProject(ctx, session, sourcesOrg, sourcesProject)
 		if err != nil {
 			return err
 		}
-		created, err := session.Client.CreateSource(ctx, platform.CreateSourceInput{
-			ProjectID:    project.ID,
-			Name:         strings.TrimSpace(sourceName),
-			DatabaseType: strings.TrimSpace(sourceType),
-			Hostname:     strings.TrimSpace(sourceHostname),
-			Port:         strings.TrimSpace(sourcePort),
-			Username:     strings.TrimSpace(sourceUsername),
-			Password:     password,
-			Database:     strings.TrimSpace(sourceDatabase),
-			Advanced:     advanced,
-		})
+		input.ProjectID = project.ID
+		created, err := session.Client.CreateSource(ctx, input)
 		if err != nil {
 			return err
 		}
@@ -580,6 +674,167 @@ var sourcesDeleteCmd = &cobra.Command{
 		}
 		out.Success("Deleted source %s from project %s", source.Name, project.Name)
 		return nil
+	},
+}
+
+var sourcesObjectsCmd = &cobra.Command{
+	Use:           "objects <source>",
+	Short:         "Browse hosted WhoDB source objects",
+	Args:          cobra.ExactArgs(1),
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := context.Background()
+		format, err := output.ParseFormat(platformFormat)
+		if err != nil {
+			return err
+		}
+		if err := validatePlatformPage(sourceObjectLimit, sourceObjectOffset); err != nil {
+			return err
+		}
+		parent, err := parseOptionalSourceObjectRef(sourceObjectParent)
+		if err != nil {
+			return err
+		}
+		kinds, err := parseSourceObjectKinds(sourceObjectKinds)
+		if err != nil {
+			return err
+		}
+		session, err := loadPlatformSession(ctx, platformHost)
+		if err != nil {
+			return err
+		}
+		project, source, err := resolvePlatformSource(ctx, session, sourcesOrg, sourcesProject, args[0])
+		if err != nil {
+			return err
+		}
+		objects, err := session.Client.SourceObjects(ctx, project.ID, source.ID, parent, kinds, sourceObjectLimit, sourceObjectOffset)
+		if err != nil {
+			return err
+		}
+		if format == output.FormatJSON {
+			return writeCommandJSON(cmd, objects)
+		}
+		rows := make([][]any, len(objects))
+		for i, object := range objects {
+			rows[i] = []any{
+				formatSourceObjectRef(object.Kind, object.Path),
+				object.Kind,
+				object.Name,
+				object.HasChildren,
+				strings.Join(object.Actions, ","),
+				formatSourceMetadata(object.Metadata),
+			}
+		}
+		return newCommandOutput(cmd, format, platformQuiet).WriteQueryResult(&output.QueryResult{
+			Columns: []output.Column{
+				{Name: "ref", Type: "string"},
+				{Name: "kind", Type: "string"},
+				{Name: "name", Type: "string"},
+				{Name: "has_children", Type: "bool"},
+				{Name: "actions", Type: "string"},
+				{Name: "metadata", Type: "string"},
+			},
+			Rows: rows,
+		})
+	},
+}
+
+var sourcesColumnsCmd = &cobra.Command{
+	Use:           "columns <source>",
+	Short:         "Show hosted WhoDB source object columns",
+	Args:          cobra.ExactArgs(1),
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := context.Background()
+		format, err := output.ParseFormat(platformFormat)
+		if err != nil {
+			return err
+		}
+		ref, err := parseRequiredSourceObjectRef(sourceColumnRef)
+		if err != nil {
+			return err
+		}
+		session, err := loadPlatformSession(ctx, platformHost)
+		if err != nil {
+			return err
+		}
+		project, source, err := resolvePlatformSource(ctx, session, sourcesOrg, sourcesProject, args[0])
+		if err != nil {
+			return err
+		}
+		columns, err := session.Client.SourceColumns(ctx, project.ID, source.ID, ref)
+		if err != nil {
+			return err
+		}
+		if format == output.FormatJSON {
+			return writeCommandJSON(cmd, columns)
+		}
+		rows := make([][]any, len(columns))
+		for i, column := range columns {
+			rows[i] = []any{
+				column.Name,
+				column.Type,
+				column.IsPrimary,
+				column.IsForeignKey,
+				formatColumnReference(column),
+				formatOptionalInt(column.Length),
+				formatOptionalInt(column.Precision),
+				formatOptionalInt(column.Scale),
+			}
+		}
+		return newCommandOutput(cmd, format, platformQuiet).WriteQueryResult(&output.QueryResult{
+			Columns: []output.Column{
+				{Name: "name", Type: "string"},
+				{Name: "type", Type: "string"},
+				{Name: "primary", Type: "bool"},
+				{Name: "foreign_key", Type: "bool"},
+				{Name: "references", Type: "string"},
+				{Name: "length", Type: "int"},
+				{Name: "precision", Type: "int"},
+				{Name: "scale", Type: "int"},
+			},
+			Rows: rows,
+		})
+	},
+}
+
+var sourcesRowsCmd = &cobra.Command{
+	Use:           "rows <source>",
+	Short:         "Preview hosted WhoDB source object rows",
+	Args:          cobra.ExactArgs(1),
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := context.Background()
+		format, err := output.ParseFormat(platformFormat)
+		if err != nil {
+			return err
+		}
+		if err := validatePlatformPage(sourceRowsLimit, sourceRowsOffset); err != nil {
+			return err
+		}
+		ref, err := parseRequiredSourceObjectRef(sourceRowsRef)
+		if err != nil {
+			return err
+		}
+		session, err := loadPlatformSession(ctx, platformHost)
+		if err != nil {
+			return err
+		}
+		project, source, err := resolvePlatformSource(ctx, session, sourcesOrg, sourcesProject, args[0])
+		if err != nil {
+			return err
+		}
+		result, err := session.Client.SourceRows(ctx, project.ID, source.ID, ref, sourceRowsLimit, sourceRowsOffset)
+		if err != nil {
+			return err
+		}
+		if format == output.FormatJSON {
+			return writeCommandJSON(cmd, result)
+		}
+		return newCommandOutput(cmd, format, platformQuiet).WriteStringQueryResult(platformRowsToOutput(result))
 	},
 }
 
@@ -663,10 +918,15 @@ func init() {
 	orgsCmd.AddCommand(orgsListCmd)
 	projectsCmd.AddCommand(projectsListCmd)
 	projectsListCmd.Flags().StringVar(&projectsOrg, "org", "", "organization id, slug, or name (defaults to selected organization)")
+	sourcesCmd.AddCommand(sourcesTypesCmd)
+	sourcesCmd.AddCommand(sourcesFieldsCmd)
 	sourcesCmd.AddCommand(sourcesListCmd)
 	sourcesCmd.AddCommand(sourcesGetCmd)
 	sourcesCmd.AddCommand(sourcesCreateCmd)
 	sourcesCmd.AddCommand(sourcesDeleteCmd)
+	sourcesCmd.AddCommand(sourcesObjectsCmd)
+	sourcesCmd.AddCommand(sourcesColumnsCmd)
+	sourcesCmd.AddCommand(sourcesRowsCmd)
 	sourcesCmd.PersistentFlags().StringVar(&sourcesOrg, "org", "", "organization id, slug, or name (defaults to selected organization)")
 	sourcesCmd.PersistentFlags().StringVar(&sourcesProject, "project", "", "project id, slug, or name (defaults to selected project)")
 	sourcesCreateCmd.Flags().StringVar(&sourceName, "name", "", "source display name")
@@ -675,10 +935,19 @@ func init() {
 	sourcesCreateCmd.Flags().StringVar(&sourcePort, "port", "", "source port")
 	sourcesCreateCmd.Flags().StringVar(&sourceUsername, "username", "", "source username")
 	sourcesCreateCmd.Flags().StringVar(&sourceDatabase, "database", "", "source database")
+	sourcesCreateCmd.Flags().StringArrayVar(&sourceFields, "field", nil, "source connection field as key=value; repeatable")
 	sourcesCreateCmd.Flags().StringArrayVar(&sourceAdvanced, "advanced", nil, "advanced connection option as key=value; repeatable")
 	sourcesCreateCmd.Flags().StringVar(&sourcePasswordEnv, "password-env", "", "environment variable containing the source password")
 	sourcesCreateCmd.Flags().BoolVar(&sourcePasswordIn, "password-stdin", false, "read the source password from stdin")
 	sourcesDeleteCmd.Flags().BoolVarP(&sourceDeleteYes, "yes", "y", false, "delete the source without prompting")
+	sourcesObjectsCmd.Flags().StringVar(&sourceObjectParent, "parent", "", "parent object ref as kind:path, for example schema:public")
+	sourcesObjectsCmd.Flags().StringArrayVar(&sourceObjectKinds, "kind", nil, "object kind to include; repeatable")
+	sourcesObjectsCmd.Flags().IntVar(&sourceObjectLimit, "limit", 50, "maximum objects to return")
+	sourcesObjectsCmd.Flags().IntVar(&sourceObjectOffset, "offset", 0, "object offset")
+	sourcesColumnsCmd.Flags().StringVar(&sourceColumnRef, "ref", "", "object ref as kind:path, for example table:public.users")
+	sourcesRowsCmd.Flags().StringVar(&sourceRowsRef, "ref", "", "object ref as kind:path, for example table:public.users")
+	sourcesRowsCmd.Flags().IntVar(&sourceRowsLimit, "limit", 50, "maximum rows to return")
+	sourcesRowsCmd.Flags().IntVar(&sourceRowsOffset, "offset", 0, "row offset")
 	useCmd.Flags().StringVar(&useOrg, "org", "", "organization id, slug, or name")
 	useCmd.Flags().StringVar(&useProject, "project", "", "project id, slug, or name")
 }
@@ -866,6 +1135,173 @@ func resolveSource(sources []platform.Source, value string) (*platform.Source, e
 		}
 	}
 	return nil, fmt.Errorf("source %q not found", needle)
+}
+
+func resolvePlatformSource(ctx context.Context, session *platformSession, orgValue, projectValue, sourceValue string) (*platform.Project, *platform.Source, error) {
+	project, err := resolvePlatformProject(ctx, session, orgValue, projectValue)
+	if err != nil {
+		return nil, nil, err
+	}
+	sources, err := session.Client.ProjectSources(ctx, project.ID)
+	if err != nil {
+		return nil, nil, err
+	}
+	source, err := resolveSource(sources, sourceValue)
+	if err != nil {
+		return nil, nil, err
+	}
+	return project, source, nil
+}
+
+func parseOptionalSourceObjectRef(value string) (*platform.SourceObjectRefInput, error) {
+	if strings.TrimSpace(value) == "" {
+		return nil, nil
+	}
+	ref, err := parseRequiredSourceObjectRef(value)
+	if err != nil {
+		return nil, err
+	}
+	return &ref, nil
+}
+
+func parseRequiredSourceObjectRef(value string) (platform.SourceObjectRefInput, error) {
+	kindValue, pathValue, ok := strings.Cut(strings.TrimSpace(value), ":")
+	if !ok {
+		return platform.SourceObjectRefInput{}, fmt.Errorf("object ref %q must use kind:path", value)
+	}
+	kind, err := parseSourceObjectKind(kindValue)
+	if err != nil {
+		return platform.SourceObjectRefInput{}, err
+	}
+	path := splitSourceObjectPath(pathValue)
+	if len(path) == 0 {
+		return platform.SourceObjectRefInput{}, fmt.Errorf("object ref %q must include a path", value)
+	}
+	return platform.SourceObjectRefInput{
+		Kind: kind,
+		Path: path,
+	}, nil
+}
+
+func parseSourceObjectKinds(values []string) ([]platform.SourceObjectKind, error) {
+	if len(values) == 0 {
+		return nil, nil
+	}
+	kinds := make([]platform.SourceObjectKind, 0, len(values))
+	for _, value := range values {
+		kind, err := parseSourceObjectKind(value)
+		if err != nil {
+			return nil, err
+		}
+		kinds = append(kinds, kind)
+	}
+	return kinds, nil
+}
+
+func parseSourceObjectKind(value string) (platform.SourceObjectKind, error) {
+	normalized := strings.ToLower(strings.TrimSpace(value))
+	kinds := map[string]platform.SourceObjectKind{
+		"database":   "Database",
+		"schema":     "Schema",
+		"table":      "Table",
+		"view":       "View",
+		"collection": "Collection",
+		"index":      "Index",
+		"key":        "Key",
+		"item":       "Item",
+		"function":   "Function",
+		"procedure":  "Procedure",
+		"trigger":    "Trigger",
+		"sequence":   "Sequence",
+	}
+	kind, ok := kinds[normalized]
+	if !ok {
+		return "", fmt.Errorf("unsupported object kind %q", value)
+	}
+	return kind, nil
+}
+
+func splitSourceObjectPath(value string) []string {
+	pathValue := strings.TrimSpace(value)
+	if pathValue == "" {
+		return nil
+	}
+	separator := "."
+	if strings.Contains(pathValue, "/") {
+		separator = "/"
+	}
+	rawParts := strings.Split(pathValue, separator)
+	parts := make([]string, 0, len(rawParts))
+	for _, part := range rawParts {
+		part = strings.TrimSpace(part)
+		if part != "" {
+			parts = append(parts, part)
+		}
+	}
+	return parts
+}
+
+func validatePlatformPage(limit, offset int) error {
+	if limit <= 0 {
+		return fmt.Errorf("--limit must be greater than 0")
+	}
+	if limit > 1000 {
+		return fmt.Errorf("--limit must be 1000 or less")
+	}
+	if offset < 0 {
+		return fmt.Errorf("--offset must be 0 or greater")
+	}
+	return nil
+}
+
+func formatSourceObjectRef(kind platform.SourceObjectKind, path []string) string {
+	if len(path) == 0 {
+		return strings.ToLower(string(kind)) + ":"
+	}
+	separator := "."
+	if kind == "Item" || kind == "Key" {
+		separator = "/"
+	}
+	return strings.ToLower(string(kind)) + ":" + strings.Join(path, separator)
+}
+
+func formatSourceMetadata(records []platform.Record) string {
+	if len(records) == 0 {
+		return ""
+	}
+	parts := make([]string, 0, len(records))
+	for _, record := range records {
+		parts = append(parts, record.Key+"="+record.Value)
+	}
+	return strings.Join(parts, ",")
+}
+
+func formatColumnReference(column platform.Column) string {
+	if column.ReferencedTable == "" && column.ReferencedColumn == "" {
+		return ""
+	}
+	if column.ReferencedColumn == "" {
+		return column.ReferencedTable
+	}
+	return column.ReferencedTable + "." + column.ReferencedColumn
+}
+
+func formatOptionalInt(value *int) any {
+	if value == nil {
+		return ""
+	}
+	return *value
+}
+
+func platformRowsToOutput(result *platform.RowsResult) *output.StringQueryResult {
+	columns := make([]output.Column, len(result.Columns))
+	for i, column := range result.Columns {
+		columns[i] = output.Column{Name: column.Name, Type: column.Type}
+	}
+	return &output.StringQueryResult{
+		Columns: columns,
+		Rows:    result.Rows,
+	}
 }
 
 func parseSourceAdvanced(values []string) (map[string]string, error) {

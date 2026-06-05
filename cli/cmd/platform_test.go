@@ -100,6 +100,81 @@ func TestParseSourceAdvancedRejectsMissingKey(t *testing.T) {
 	}
 }
 
+func TestSourceTypeFromCreateArgs(t *testing.T) {
+	got, err := sourceTypeFromCreateArgs([]string{"Postgres"}, "")
+	if err != nil {
+		t.Fatalf("sourceTypeFromCreateArgs() error = %v", err)
+	}
+	if got != "Postgres" {
+		t.Fatalf("source type = %q, want Postgres", got)
+	}
+	if _, err := sourceTypeFromCreateArgs([]string{"Postgres"}, "MySQL"); err == nil {
+		t.Fatal("sourceTypeFromCreateArgs() error = nil, want conflict")
+	}
+}
+
+func TestCollectSourceFieldValuesUsesDefaultsAndConsumesKnownAdvancedFields(t *testing.T) {
+	portDefault := "5432"
+	fields := []platform.SourceConnectionField{
+		{Key: "Hostname", Kind: "Text", Required: true},
+		{Key: "Port", Kind: "Text", DefaultValue: &portDefault},
+		{Key: "Password", Kind: "Password", Required: true},
+		{Key: "SSL Mode", Kind: "Text"},
+	}
+	values, advanced, err := collectSourceFieldValues(fields, map[string]string{
+		"Hostname": "localhost",
+		"Password": "secret",
+	}, map[string]string{
+		"SSL Mode":         "require",
+		"application_name": "whodb",
+	}, nil)
+	if err != nil {
+		t.Fatalf("collectSourceFieldValues() error = %v", err)
+	}
+	if values["Port"] != "5432" {
+		t.Fatalf("Port = %q, want default 5432", values["Port"])
+	}
+	if values["SSL Mode"] != "require" {
+		t.Fatalf("SSL Mode = %q, want require", values["SSL Mode"])
+	}
+	if _, ok := advanced["SSL Mode"]; ok {
+		t.Fatalf("advanced still contains consumed SSL Mode: %#v", advanced)
+	}
+	if advanced["application_name"] != "whodb" {
+		t.Fatalf("application_name = %q, want whodb", advanced["application_name"])
+	}
+}
+
+func TestCollectSourceFieldValuesRejectsUnknownExplicitField(t *testing.T) {
+	_, _, err := collectSourceFieldValues([]platform.SourceConnectionField{
+		{Key: "Hostname", Kind: "Text"},
+	}, map[string]string{"Database": "app"}, nil, nil)
+	if err == nil {
+		t.Fatal("collectSourceFieldValues() error = nil, want unknown field error")
+	}
+}
+
+func TestBuildCreateSourceInputMapsKnownFieldsAndAdvanced(t *testing.T) {
+	input := buildCreateSourceInput("proj-1", "Postgres", "Warehouse", map[string]string{
+		"Hostname": "localhost",
+		"Port":     "5432",
+		"Username": "postgres",
+		"Password": "secret",
+		"Database": "test_db",
+		"SSL Mode": "require",
+	}, map[string]string{"application_name": "whodb"})
+
+	if input.ProjectID != "proj-1" || input.DatabaseType != "Postgres" || input.Name != "Warehouse" {
+		t.Fatalf("basic input fields = %#v", input)
+	}
+	if input.Hostname != "localhost" || input.Port != "5432" || input.Username != "postgres" || input.Password != "secret" || input.Database != "test_db" {
+		t.Fatalf("connection input fields = %#v", input)
+	}
+	if input.Advanced["SSL Mode"] != "require" || input.Advanced["application_name"] != "whodb" {
+		t.Fatalf("advanced = %#v, want SSL Mode and application_name", input.Advanced)
+	}
+}
+
 func TestReadSourcePasswordFromStdin(t *testing.T) {
 	oldPasswordIn := sourcePasswordIn
 	oldPasswordEnv := sourcePasswordEnv
@@ -128,5 +203,43 @@ func TestConfirmSourceDeleteSkipsPromptWhenApprovedByFlag(t *testing.T) {
 	}
 	if !approved {
 		t.Fatal("confirmSourceDelete() approved = false, want true")
+	}
+}
+
+func TestParseRequiredSourceObjectRefDatabasePath(t *testing.T) {
+	ref, err := parseRequiredSourceObjectRef("table:public.users")
+	if err != nil {
+		t.Fatalf("parseRequiredSourceObjectRef() error = %v", err)
+	}
+	if ref.Kind != "Table" {
+		t.Fatalf("kind = %q, want Table", ref.Kind)
+	}
+	if len(ref.Path) != 2 || ref.Path[0] != "public" || ref.Path[1] != "users" {
+		t.Fatalf("path = %#v, want public/users", ref.Path)
+	}
+}
+
+func TestParseRequiredSourceObjectRefObjectPath(t *testing.T) {
+	ref, err := parseRequiredSourceObjectRef("item:bucket/reports/users.csv")
+	if err != nil {
+		t.Fatalf("parseRequiredSourceObjectRef() error = %v", err)
+	}
+	if ref.Kind != "Item" {
+		t.Fatalf("kind = %q, want Item", ref.Kind)
+	}
+	if len(ref.Path) != 3 || ref.Path[0] != "bucket" || ref.Path[1] != "reports" || ref.Path[2] != "users.csv" {
+		t.Fatalf("path = %#v, want bucket/reports/users.csv", ref.Path)
+	}
+}
+
+func TestParseRequiredSourceObjectRefRejectsUnknownKind(t *testing.T) {
+	if _, err := parseRequiredSourceObjectRef("unknown:thing"); err == nil {
+		t.Fatal("parseRequiredSourceObjectRef() error = nil, want error")
+	}
+}
+
+func TestValidatePlatformPageRejectsLargeLimit(t *testing.T) {
+	if err := validatePlatformPage(1001, 0); err == nil {
+		t.Fatal("validatePlatformPage() error = nil, want error")
 	}
 }
