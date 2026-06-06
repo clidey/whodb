@@ -52,6 +52,8 @@ type Config struct {
 	Host        string
 	Environment string
 	AppVersion  string
+	Deployment  string
+	Edition     string
 	// SuppressClientLogs disables PostHog background logger output. Useful for
 	// short-lived CLIs where network failures should stay silent.
 	SuppressClientLogs bool
@@ -322,6 +324,16 @@ func buildProperties(ctx context.Context, properties map[string]any) posthog.Pro
 	if cfg.AppVersion != "" {
 		if _, exists := props["app_version"]; !exists {
 			props.Set("app_version", cfg.AppVersion)
+		}
+	}
+	if cfg.Deployment != "" {
+		if _, exists := props["deployment"]; !exists {
+			props.Set("deployment", cfg.Deployment)
+		}
+	}
+	if cfg.Edition != "" {
+		if _, exists := props["build_edition"]; !exists {
+			props.Set("build_edition", cfg.Edition)
 		}
 	}
 

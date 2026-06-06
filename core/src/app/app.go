@@ -120,6 +120,10 @@ type AppConfig struct {
 	// IsSetupMode indicates the platform has no organization yet and is in first-run setup.
 	// The frontend uses this to redirect to the setup wizard.
 	IsSetupMode bool
+
+	// Analytics fields attached to every PostHog event from this instance.
+	AnalyticsDeployment string
+	AnalyticsEdition    string
 }
 
 // Run starts the WhoDB server with the given configuration.
@@ -151,6 +155,8 @@ func Run(config AppConfig, staticFiles embed.FS) {
 		Host:        env.PosthogHost,
 		Environment: env.ApplicationEnvironment,
 		AppVersion:  env.ApplicationVersion,
+		Deployment:  config.AnalyticsDeployment,
+		Edition:     config.AnalyticsEdition,
 	}); err == nil {
 		defer analytics.Shutdown()
 	}
