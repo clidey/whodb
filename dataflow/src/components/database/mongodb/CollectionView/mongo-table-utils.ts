@@ -4,6 +4,10 @@ import type {
   RenderedMongoDocument,
 } from './types'
 import { buildExistingRowKey } from './useDocumentChangesetManager'
+import {
+  buildMongoDocumentFieldOrder,
+  readMongoDocumentFieldOrder,
+} from '@/utils/mongodb-shell'
 
 export type MongoScalarValue = string | number | boolean | null
 export type MongoComplexValue = Record<string, unknown> | unknown[]
@@ -61,105 +65,12 @@ export function hasDocumentField(doc: Record<string, unknown>, field: string): b
   return Object.prototype.hasOwnProperty.call(doc, field)
 }
 
-function skipJsonWhitespace(content: string, startIndex: number): number {
-  let index = startIndex
-  while (index < content.length && /\s/.test(content[index])) index += 1
-  return index
-}
-
-function readJsonStringLiteral(content: string, startIndex: number): { value: string; nextIndex: number } {
-  for (let index = startIndex + 1; index < content.length; index += 1) {
-    if (content[index] === '\\') {
-      index += 1
-      continue
-    }
-
-    if (content[index] === '"') {
-      return {
-        value: JSON.parse(content.slice(startIndex, index + 1)) as string,
-        nextIndex: index + 1,
-      }
-    }
-  }
-
-  return { value: '', nextIndex: content.length }
-}
-
-function skipJsonValue(content: string, startIndex: number): number {
-  let depth = 0
-  let inString = false
-  let escaped = false
-
-  for (let index = skipJsonWhitespace(content, startIndex); index < content.length; index += 1) {
-    const character = content[index]
-
-    if (inString) {
-      if (escaped) {
-        escaped = false
-        continue
-      }
-      if (character === '\\') {
-        escaped = true
-        continue
-      }
-      if (character === '"') inString = false
-      continue
-    }
-
-    if (character === '"') {
-      inString = true
-      continue
-    }
-
-    if (character === '{' || character === '[') {
-      depth += 1
-      continue
-    }
-
-    if (character === '}' || character === ']') {
-      if (depth === 0) return index
-      depth -= 1
-      continue
-    }
-
-    if (character === ',' && depth === 0) return index
-  }
-
-  return content.length
-}
-
-function readTopLevelJsonObjectKeys(content: string): string[] {
-  const keys: string[] = []
-  let index = skipJsonWhitespace(content, 0)
-  if (content[index] !== '{') return keys
-
-  index += 1
-  while (index < content.length) {
-    index = skipJsonWhitespace(content, index)
-    if (content[index] === '}') return keys
-
-    const key = readJsonStringLiteral(content, index)
-    keys.push(key.value)
-
-    index = skipJsonWhitespace(content, key.nextIndex)
-    if (content[index] === ':') index += 1
-
-    index = skipJsonWhitespace(content, skipJsonValue(content, index))
-    if (content[index] === ',') {
-      index += 1
-      continue
-    }
-    if (content[index] === '}') return keys
-  }
-
-  return keys
-}
-
 /** Parses one MongoDB document row and preserves its top-level field order. */
 export function parseMongoDocumentRow(content: string): ParsedMongoDocumentRow {
+  const document = JSON.parse(content) as Record<string, unknown>
   return {
-    document: JSON.parse(content) as Record<string, unknown>,
-    fieldOrder: readTopLevelJsonObjectKeys(content),
+    document,
+    fieldOrder: buildMongoDocumentFieldOrder(document, readMongoDocumentFieldOrder(content)),
   }
 }
 
@@ -168,11 +79,13 @@ export function buildRenderedMongoDocuments({
   documents,
   changes,
   newRowOrder,
+  documentFieldOrders,
   pageOffset,
 }: {
   documents: Record<string, unknown>[]
   changes: Map<DocumentChangesetRowKey, DocumentChange>
   newRowOrder: DocumentChangesetRowKey[]
+  documentFieldOrders: string[][]
   pageOffset: number
 }): RenderedMongoDocument[] {
   const inserted = newRowOrder
@@ -183,7 +96,9 @@ export function buildRenderedMongoDocuments({
       return {
         rowKey,
         doc: change.document,
+        fieldOrder: change.fieldOrder,
         originalDocument: change.originalDocument,
+        originalFieldOrder: change.originalFieldOrder,
         changeType: change.type,
         isDeleted: false,
         isInserted: true,
@@ -195,10 +110,20 @@ export function buildRenderedMongoDocuments({
   const existing = documents.map((doc, idx): RenderedMongoDocument => {
     const rowKey = buildExistingRowKey(pageOffset, idx)
     const change = changes.get(rowKey)
+    const fieldOrder = buildMongoDocumentFieldOrder(
+      change?.document ?? doc,
+      change?.fieldOrder ?? documentFieldOrders[idx],
+    )
+    const originalFieldOrder = buildMongoDocumentFieldOrder(
+      change?.originalDocument ?? doc,
+      change?.originalFieldOrder ?? documentFieldOrders[idx],
+    )
     return {
       rowKey,
       doc: change?.document ?? doc,
+      fieldOrder,
       originalDocument: change?.originalDocument ?? doc,
+      originalFieldOrder,
       changeType: change?.type ?? null,
       isDeleted: change?.type === 'delete',
       isInserted: false,
@@ -237,7 +162,7 @@ export function buildMongoTableColumns({
   }
 
   for (const change of changes.values()) {
-    Object.keys(change.document).forEach(addField)
+    buildMongoDocumentFieldOrder(change.document, change.fieldOrder).forEach(addField)
   }
 
   return columns

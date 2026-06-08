@@ -40,8 +40,9 @@ export function CollectionViewTableGrid() {
     documents: state.documents as Record<string, unknown>[],
     changes: state.changes,
     newRowOrder: state.newRowOrder,
+    documentFieldOrders: state.documentFieldOrders,
     pageOffset,
-  }), [pageOffset, state.changes, state.documents, state.newRowOrder])
+  }), [pageOffset, state.changes, state.documentFieldOrders, state.documents, state.newRowOrder])
 
   const openCellEditor = useCallback((rowKey: string, column: string, value: unknown, fieldExists: boolean) => {
     if (column === '_id') return

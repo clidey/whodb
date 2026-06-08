@@ -6,7 +6,8 @@ import { cn } from '@/lib/utils'
 import { useCollectionView } from './CollectionViewProvider'
 import { useI18n } from '@/i18n/useI18n'
 import { FindBarContext } from '@/components/database/shared/FindBar.Provider'
-import { buildExistingRowKey } from './useDocumentChangesetManager'
+import { buildRenderedMongoDocuments } from './mongo-table-utils'
+import { stringifyMongoDocument } from '@/utils/mongodb-shell'
 
 /** List of MongoDB document cards with selection checkboxes and change indicators. */
 export function CollectionViewDocumentList() {
@@ -16,30 +17,13 @@ export function CollectionViewDocumentList() {
 
   const pageOffset = (state.currentPage - 1) * state.pageSize
 
-  const renderedDocs = useMemo(() => {
-    // Pending inserts first — use newRowOrder for stable ordering
-    const inserted = state.newRowOrder
-      .map((rowKey) => {
-        const change = state.changes.get(rowKey)
-        if (!change) return null
-        return { rowKey, doc: change.document, changeType: 'insert' as const, isDeleted: false }
-      })
-      .filter((item): item is NonNullable<typeof item> => item !== null)
-
-    // Existing documents
-    const existing = state.documents.map((doc, idx) => {
-      const rowKey = buildExistingRowKey(pageOffset, idx)
-      const change = state.changes.get(rowKey)
-      return {
-        rowKey,
-        doc: change?.document ?? doc,
-        changeType: change?.type ?? null,
-        isDeleted: change?.type === 'delete',
-      }
-    })
-
-    return [...inserted, ...existing]
-  }, [state.changes, state.newRowOrder, state.documents, pageOffset])
+  const renderedDocs = useMemo(() => buildRenderedMongoDocuments({
+    documents: state.documents as Record<string, unknown>[],
+    changes: state.changes,
+    newRowOrder: state.newRowOrder,
+    documentFieldOrders: state.documentFieldOrders,
+    pageOffset,
+  }), [pageOffset, state.changes, state.documentFieldOrders, state.documents, state.newRowOrder])
 
   if (state.documents.length === 0 && state.newRowOrder.length === 0) {
     return (
@@ -126,7 +110,7 @@ export function CollectionViewDocumentList() {
                 'text-sm overflow-x-auto font-mono text-foreground/80',
                 item.isDeleted && 'line-through',
               )}>
-                {JSON.stringify(item.doc, null, 2).replace(/^\{\n/, '').replace(/\n\}$/, '')}
+                {stringifyMongoDocument(item.doc, item.fieldOrder, 2).replace(/^\{\n/, '').replace(/\n\}$/, '')}
               </pre>
             </div>
           </div>

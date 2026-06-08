@@ -1,4 +1,8 @@
-import { buildMongoCollectionAccessor } from '@/utils/mongodb-shell'
+import {
+  buildMongoCollectionAccessor,
+  buildMongoDocumentFieldOrder,
+  stringifyMongoDocument,
+} from '@/utils/mongodb-shell'
 import type { DocumentChange, DocumentChangesetRowKey } from './types'
 
 export interface ChangesetSummary {
@@ -29,7 +33,7 @@ export function buildPreviewCommands(
 
   return [...changes.values()].map((change) => {
     if (change.type === 'insert') {
-      return `${accessor}.insertOne(${JSON.stringify(change.document, null, 2)});`
+      return `${accessor}.insertOne(${stringifyMongoDocument(change.document, change.fieldOrder, 2)});`
     }
 
     if (change.type === 'delete') {
@@ -39,6 +43,10 @@ export function buildPreviewCommands(
     // update
     const updateFields = { ...change.document }
     delete updateFields._id
-    return `${accessor}.updateOne(\n  { _id: ${JSON.stringify(change.originalDocument._id)} },\n  { $set: ${JSON.stringify(updateFields, null, 2)} }\n);`
+    const updateFieldOrder = buildMongoDocumentFieldOrder(
+      updateFields,
+      change.fieldOrder.filter((field) => field !== '_id'),
+    )
+    return `${accessor}.updateOne(\n  { _id: ${JSON.stringify(change.originalDocument._id)} },\n  { $set: ${stringifyMongoDocument(updateFields, updateFieldOrder, 2)} }\n);`
   })
 }

@@ -9,6 +9,12 @@ import {
   parseMongoDocumentRow,
   parseMongoFieldJsonDraft,
 } from '@/components/database/mongodb/CollectionView/mongo-table-utils'
+import { buildPreviewCommands } from '@/components/database/mongodb/CollectionView/changeset-mongo-preview'
+import {
+  buildMongoEditedDocumentFieldOrder,
+  parseMongoDocumentInputWithOrder,
+  stringifyMongoDocument,
+} from '@/utils/mongodb-shell'
 
 describe('buildMongoTableColumns', () => {
   it('keeps _id first and preserves first-seen document field order', () => {
@@ -35,7 +41,9 @@ describe('buildMongoTableColumns', () => {
         ['existing-0', {
           type: 'update',
           originalDocument: { _id: '1', name: 'Ada' },
+          originalFieldOrder: ['_id', 'name'],
           document: { _id: '1', name: 'Ada', role: 'admin' },
+          fieldOrder: ['_id', 'name', 'role'],
         }],
       ]),
     })
@@ -69,19 +77,28 @@ describe('buildRenderedMongoDocuments', () => {
         ['new-1', {
           type: 'insert',
           originalDocument: {},
+          originalFieldOrder: [],
           document: { name: 'Grace' },
+          fieldOrder: ['name'],
         }],
         ['existing-0', {
           type: 'update',
           originalDocument: { _id: '1', name: 'Ada' },
+          originalFieldOrder: ['_id', 'name'],
           document: { _id: '1', name: 'Ada Lovelace' },
+          fieldOrder: ['_id', 'name'],
         }],
       ]),
+      documentFieldOrders: [['_id', 'name']],
     })
 
     expect(rows.map((row) => row.doc)).toEqual([
       { name: 'Grace' },
       { _id: '1', name: 'Ada Lovelace' },
+    ])
+    expect(rows.map((row) => row.fieldOrder)).toEqual([
+      ['name'],
+      ['_id', 'name'],
     ])
     expect(rows[0].isInserted).toBe(true)
     expect(rows[1].changeType).toBe('update')
@@ -161,5 +178,59 @@ describe('MongoDB table cell helpers', () => {
 
   it('rejects empty field JSON edits instead of treating them as deletion', () => {
     expect(parseMongoFieldJsonDraft('')).toMatchObject({ ok: false })
+  })
+})
+
+describe('MongoDB document ordering helpers', () => {
+  it('parses and stringifies documents with explicit top-level field order', () => {
+    const parsed = parseMongoDocumentInputWithOrder('{"z":1,"_id":"1","a":2}')
+
+    expect(parsed.fieldOrder).toEqual(['z', '_id', 'a'])
+    expect(stringifyMongoDocument(parsed.document, parsed.fieldOrder, 2)).toBe(`{
+  "z": 1,
+  "_id": "1",
+  "a": 2
+}`)
+  })
+
+  it('omits hidden fields without moving the remaining fields', () => {
+    const document = { z: 1, _id: '1', a: 2 }
+
+    expect(stringifyMongoDocument(document, ['z', '_id', 'a'], 2, ['_id'])).toBe(`{
+  "z": 1,
+  "a": 2
+}`)
+  })
+
+  it('keeps existing fields in current order and appends new edited fields', () => {
+    const fieldOrder = buildMongoEditedDocumentFieldOrder(
+      { a: 1, b: 2, c: 3, z: 4, _id: '1' },
+      ['_id', 'a', 'b', 'c'],
+      ['c', 'z', 'a', 'b'],
+    )
+
+    expect(fieldOrder).toEqual(['_id', 'a', 'b', 'c', 'z'])
+  })
+})
+
+describe('buildPreviewCommands', () => {
+  it('uses the pending document field order in update previews', () => {
+    const commands = buildPreviewCommands('users', new Map([
+      ['existing-0', {
+        type: 'update',
+        originalDocument: { _id: '1', z: 1, a: 2 },
+        originalFieldOrder: ['_id', 'z', 'a'],
+        document: { z: 3, _id: '1', a: 2 },
+        fieldOrder: ['z', '_id', 'a'],
+      }],
+    ]))
+
+    expect(commands[0]).toBe(`db.users.updateOne(
+  { _id: "1" },
+  { $set: {
+  "z": 3,
+  "a": 2
+} }
+);`)
   })
 })

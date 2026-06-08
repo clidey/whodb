@@ -80,12 +80,13 @@ function CollectionDetailViewContent({ databaseName, collectionName, connectionI
         documents: state.documents as Record<string, unknown>[],
         changes: state.changes,
         newRowOrder: state.newRowOrder,
+        documentFieldOrders: state.documentFieldOrders,
         pageOffset,
       }).map((row) => row.doc)
     }
 
     return state.documents
-  }, [state.changes, state.currentPage, state.documents, state.newRowOrder, state.pageSize, state.viewMode])
+  }, [state.changes, state.currentPage, state.documentFieldOrders, state.documents, state.newRowOrder, state.pageSize, state.viewMode])
 
   return (
     <div

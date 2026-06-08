@@ -7,7 +7,13 @@ import {
   useRawExecuteLazyQuery,
 } from '@graphql'
 import { resolveSchemaParam } from '@/utils/database-features'
-import { buildMongoInsertOneCommand, parseMongoDocumentInput } from '@/utils/mongodb-shell'
+import {
+  buildMongoDocumentFieldOrder,
+  buildMongoEditedDocumentFieldOrder,
+  buildMongoInsertOneCommand,
+  parseMongoDocumentInputWithOrder,
+  stringifyMongoDocument,
+} from '@/utils/mongodb-shell'
 import type { Alert } from '@/components/database/shared/types'
 import type {
   DocumentChangesetRowKey,
@@ -53,12 +59,14 @@ function createInitialState(): ChangesetState {
 
 type ChangesetAction =
   | { type: 'toggle-selection'; rowKey: DocumentChangesetRowKey }
-  | { type: 'stage-add'; rowKey: DocumentChangesetRowKey; document: Record<string, unknown> }
+  | { type: 'stage-add'; rowKey: DocumentChangesetRowKey; document: Record<string, unknown>; fieldOrder: string[] }
   | {
       type: 'stage-edit'
       rowKey: DocumentChangesetRowKey
       originalDocument: Record<string, unknown>
+      originalFieldOrder: string[]
       document: Record<string, unknown>
+      fieldOrder: string[]
       isInsert: boolean
     }
   | {
@@ -66,6 +74,7 @@ type ChangesetAction =
       rows: Array<{
         rowKey: DocumentChangesetRowKey
         originalDocument: Record<string, unknown>
+        originalFieldOrder: string[]
         isInserted: boolean
       }>
     }
@@ -82,8 +91,21 @@ type ChangesetAction =
   | { type: 'set-edit-content'; content: string }
   | { type: 'close-edit-modal' }
 
-const sortedStringify = (obj: Record<string, unknown>) =>
-  JSON.stringify(obj, Object.keys(obj).sort())
+function sortDocumentValue(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(sortDocumentValue)
+  if (value === null || typeof value !== 'object') return value
+
+  const object = value as Record<string, unknown>
+  return Object.fromEntries(
+    Object.keys(object)
+      .sort()
+      .map((key) => [key, sortDocumentValue(object[key])]),
+  )
+}
+
+function documentsEqual(left: Record<string, unknown>, right: Record<string, unknown>): boolean {
+  return JSON.stringify(sortDocumentValue(left)) === JSON.stringify(sortDocumentValue(right))
+}
 
 function changesetReducer(state: ChangesetState, action: ChangesetAction): ChangesetState {
   switch (action.type) {
@@ -99,7 +121,9 @@ function changesetReducer(state: ChangesetState, action: ChangesetAction): Chang
       nextChanges.set(action.rowKey, {
         type: 'insert',
         originalDocument: {},
+        originalFieldOrder: [],
         document: action.document,
+        fieldOrder: action.fieldOrder,
       })
 
       return {
@@ -114,21 +138,35 @@ function changesetReducer(state: ChangesetState, action: ChangesetAction): Chang
 
     case 'stage-edit': {
       const nextChanges = new Map(state.changes)
-      const previousDocument = action.isInsert
-        ? (nextChanges.get(action.rowKey)!.document)
-        : action.originalDocument
+      const previousChange = nextChanges.get(action.rowKey)
+      const previousDocument = previousChange?.document ?? action.originalDocument
+      const previousFieldOrder = previousChange?.fieldOrder ?? action.originalFieldOrder
 
       if (action.isInsert) {
         nextChanges.set(action.rowKey, {
           type: 'insert',
           originalDocument: {},
+          originalFieldOrder: [],
           document: action.document,
+          fieldOrder: action.fieldOrder,
         })
       } else {
+        if (documentsEqual(action.document, action.originalDocument)) {
+          nextChanges.delete(action.rowKey)
+          return {
+            ...state,
+            changes: nextChanges,
+            editingRowKey: null,
+            editContent: '',
+          }
+        }
+
         nextChanges.set(action.rowKey, {
           type: 'update',
           originalDocument: action.originalDocument,
+          originalFieldOrder: action.originalFieldOrder,
           document: action.document,
+          fieldOrder: action.fieldOrder,
         })
       }
 
@@ -137,7 +175,7 @@ function changesetReducer(state: ChangesetState, action: ChangesetAction): Chang
         changes: nextChanges,
         undoStack: [
           ...state.undoStack,
-          { kind: 'edit', rowKey: action.rowKey, previousDocument },
+          { kind: 'edit', rowKey: action.rowKey, previousDocument, previousFieldOrder },
         ],
         editingRowKey: null,
         editContent: '',
@@ -165,7 +203,9 @@ function changesetReducer(state: ChangesetState, action: ChangesetAction): Chang
         nextChanges.set(row.rowKey, {
           type: 'delete',
           originalDocument: row.originalDocument,
+          originalFieldOrder: row.originalFieldOrder,
           document: row.originalDocument,
+          fieldOrder: row.originalFieldOrder,
         })
       }
 
@@ -197,14 +237,16 @@ function changesetReducer(state: ChangesetState, action: ChangesetAction): Chang
           nextChanges.set(lastEntry.rowKey, {
             ...current,
             document: lastEntry.previousDocument,
+            fieldOrder: lastEntry.previousFieldOrder,
           })
         } else if (current) {
-          if (sortedStringify(lastEntry.previousDocument) === sortedStringify(current.originalDocument)) {
+          if (documentsEqual(lastEntry.previousDocument, current.originalDocument)) {
             nextChanges.delete(lastEntry.rowKey)
           } else {
             nextChanges.set(lastEntry.rowKey, {
               ...current,
               document: lastEntry.previousDocument,
+              fieldOrder: lastEntry.previousFieldOrder,
             })
           }
         }
@@ -385,14 +427,14 @@ export function useDocumentChangesetManager({
 
   const handleAddSave = useCallback(async () => {
     try {
-      const newDoc = parseMongoDocumentInput(state.addContent)
-      if (Object.keys(newDoc).length === 0) {
+      const parsed = parseMongoDocumentInputWithOrder(state.addContent)
+      if (Object.keys(parsed.document).length === 0) {
         showAlert(t('common.alert.error'), t('mongodb.error.emptyDocument'), 'error')
         return
       }
 
       const rowKey = buildInsertedRowKey(state.newRowCounter)
-      dispatch({ type: 'stage-add', rowKey, document: newDoc })
+      dispatch({ type: 'stage-add', rowKey, document: parsed.document, fieldOrder: parsed.fieldOrder })
     } catch (e: any) {
       showAlert(t('common.alert.error'), t('mongodb.alert.invalidJsonAdd', { error: e.message }), 'error')
     }
@@ -411,7 +453,9 @@ export function useDocumentChangesetManager({
     if (change?.type === 'insert') {
       return {
         originalDocument: {},
+        originalFieldOrder: [],
         currentDocument: change.document,
+        currentFieldOrder: change.fieldOrder,
         isInsert: true,
       }
     }
@@ -419,7 +463,9 @@ export function useDocumentChangesetManager({
     if (change) {
       return {
         originalDocument: change.originalDocument,
+        originalFieldOrder: change.originalFieldOrder,
         currentDocument: change.type === 'delete' ? change.originalDocument : change.document,
+        currentFieldOrder: change.type === 'delete' ? change.originalFieldOrder : change.fieldOrder,
         isInsert: false,
       }
     }
@@ -433,20 +479,21 @@ export function useDocumentChangesetManager({
 
     return {
       originalDocument: document,
+      originalFieldOrder: buildMongoDocumentFieldOrder(document, documentFieldOrders[localIndex] ?? []),
       currentDocument: document,
+      currentFieldOrder: buildMongoDocumentFieldOrder(document, documentFieldOrders[localIndex] ?? []),
       isInsert: false,
     }
-  }, [documents, pageOffset, state.changes])
+  }, [documentFieldOrders, documents, pageOffset, state.changes])
 
   const handleEditClick = useCallback((rowKey: DocumentChangesetRowKey) => {
     const resolved = resolveDocumentForEdit(rowKey)
     if (!resolved) return
 
-    const { _id: _, ...rest } = resolved.currentDocument
     dispatch({
       type: 'open-edit-modal',
       rowKey,
-      content: JSON.stringify(rest, null, 2),
+      content: stringifyMongoDocument(resolved.currentDocument, resolved.currentFieldOrder, 2, ['_id']),
     })
   }, [resolveDocumentForEdit])
 
@@ -458,19 +505,26 @@ export function useDocumentChangesetManager({
     if (!state.editingRowKey) return
 
     try {
-      const parsed = parseMongoDocumentInput(state.editContent)
+      const parsed = parseMongoDocumentInputWithOrder(state.editContent)
       const resolved = resolveDocumentForEdit(state.editingRowKey)
       if (!resolved) return
 
       // Preserve _id from original document
       const { _id } = resolved.currentDocument
-      const document = _id !== undefined ? { ...parsed, _id } : parsed
+      const document = _id !== undefined ? { ...parsed.document, _id } : parsed.document
+      const fieldOrder = buildMongoEditedDocumentFieldOrder(
+        document,
+        resolved.currentFieldOrder,
+        parsed.fieldOrder,
+      )
 
       dispatch({
         type: 'stage-edit',
         rowKey: state.editingRowKey,
         originalDocument: resolved.originalDocument,
+        originalFieldOrder: resolved.originalFieldOrder,
         document,
+        fieldOrder,
         isInsert: resolved.isInsert,
       })
     } catch (e: any) {
@@ -486,7 +540,9 @@ export function useDocumentChangesetManager({
       type: 'stage-edit',
       rowKey,
       originalDocument: resolved.originalDocument,
+      originalFieldOrder: resolved.originalFieldOrder,
       document,
+      fieldOrder: buildMongoDocumentFieldOrder(document, resolved.currentFieldOrder),
       isInsert: resolved.isInsert,
     })
   }, [resolveDocumentForEdit])
@@ -503,19 +559,22 @@ export function useDocumentChangesetManager({
       const isInserted = change?.type === 'insert'
 
       let originalDocument: Record<string, unknown>
+      let originalFieldOrder: string[]
       if (change) {
         originalDocument = change.originalDocument
+        originalFieldOrder = change.originalFieldOrder
       } else {
         const match = rowKey.match(/^existing-(\d+)$/)
         const localIndex = match ? parseInt(match[1], 10) - pageOffset : -1
         originalDocument = documents[localIndex]
+        originalFieldOrder = buildMongoDocumentFieldOrder(originalDocument, documentFieldOrders[localIndex] ?? [])
       }
 
-      return { rowKey, originalDocument, isInserted: !!isInserted }
+      return { rowKey, originalDocument, originalFieldOrder, isInserted: !!isInserted }
     })
 
     dispatch({ type: 'delete-selected', rows })
-  }, [documents, pageOffset, state.changes, state.selectedRowKeys])
+  }, [documentFieldOrders, documents, pageOffset, state.changes, state.selectedRowKeys])
 
   // ---- Undo / Discard ----
 

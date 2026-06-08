@@ -316,6 +316,7 @@ export function CollectionViewProvider({ tabId, connectionId, databaseName, coll
   const state: CollectionViewContextValue['state'] = {
     loading,
     documents,
+    documentFieldOrders,
     error,
     viewMode,
     tableColumns,

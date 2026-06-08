@@ -88,6 +88,8 @@ _Avoid_: expand all, jump to item
 - A **Complex Document Field** in the **Collection Table View** can open a **Field JSON Editor**.
 - A **Field JSON Editor** accepts any valid JSON value, even when that changes an object or array field into a scalar or `null`.
 - A **MongoDB Document** is edited through a **Document JSON Editor**.
+- A **Document JSON Editor** preserves **Document Field Order** when a user edits field values.
+- Changing only **Document Field Order** is not a submitable database edit.
 - A **Complex Document Field** is not edited through a separate field-level interaction inside the **Document JSON Editor**.
 - The **Database Workspace** contains zero or more **Workspace Tabs**.
 - The **Dashboard Workspace** is separate from the **Database Workspace**.
@@ -145,6 +147,7 @@ _Avoid_: expand all, jump to item
 - Empty input or clearing an existing field is not field deletion; field deletion must be a distinct action.
 - Editing a `null` or **Unset Field** in the **Collection Table View** creates a string value unless the input is a complete, valid, unquoted JSON object or array.
 - Typing a complete, valid, unquoted JSON object or array into any **Editable Scalar Field** changes that field into a **Complex Document Field**.
+- Editing an existing field value must not move that field in the **Document Field Order**; newly created fields are appended to the document's visible field order.
 
 ### MongoDB View State
 

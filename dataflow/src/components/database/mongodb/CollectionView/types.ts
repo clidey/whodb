@@ -12,13 +12,16 @@ export type DocumentChangesetRowKey = string
 export interface DocumentChange {
   type: 'update' | 'insert' | 'delete'
   originalDocument: Record<string, unknown>
+  originalFieldOrder: string[]
   document: Record<string, unknown>
+  fieldOrder: string[]
 }
 
 export interface DocumentUndoEntryEdit {
   kind: 'edit'
   rowKey: DocumentChangesetRowKey
   previousDocument: Record<string, unknown>
+  previousFieldOrder: string[]
 }
 
 export interface DocumentUndoEntryAdd {
@@ -37,7 +40,9 @@ export type DocumentUndoEntry = DocumentUndoEntryEdit | DocumentUndoEntryAdd | D
 export interface RenderedMongoDocument {
   rowKey: DocumentChangesetRowKey
   doc: Record<string, unknown>
+  fieldOrder: string[]
   originalDocument: Record<string, unknown>
+  originalFieldOrder: string[]
   changeType: DocumentChange['type'] | null
   isDeleted: boolean
   isInserted: boolean
@@ -54,6 +59,7 @@ export interface CollectionViewContextValue {
 export interface CollectionViewState {
   loading: boolean
   documents: any[]
+  documentFieldOrders: string[][]
   error: string | null
   viewMode: MongoCollectionViewMode
   tableColumns: string[]
