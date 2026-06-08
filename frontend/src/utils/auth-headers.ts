@@ -18,10 +18,11 @@ import {reduxStore} from '../store';
 import {getAnalyticsDistinctId} from '../config/posthog';
 
 /**
- * Optional auth header provider registered by extensions (e.g. EE JWT-based auth).
+ * Optional auth header provider registered by extensions.
  * When set, it fully replaces the CE credential-based header logic.
  */
 let authHeaderProvider: (() => string | null) | null = null;
+let extraHeadersProvider: (() => Record<string, string>) | null = null;
 
 type SourceCredentialValueLike = {
     Key: string;
@@ -36,11 +37,18 @@ function mapSourceCredentialValues(values: readonly SourceCredentialValueLike[] 
 }
 
 /**
- * Registers an alternative auth header provider. Used by EE to send JWT tokens
- * instead of CE's base64-encoded database credentials.
+ * Registers an alternative auth header provider instead of CE's base64-encoded
+ * database credentials.
  */
 export const registerAuthHeaderProvider = (fn: () => string | null): void => {
     authHeaderProvider = fn;
+};
+
+/**
+ * Registers extra request headers supplied by an extension.
+ */
+export const registerAuthExtraHeadersProvider = (fn: () => Record<string, string>): void => {
+    extraHeadersProvider = fn;
 };
 
 const analyticsHeaderName = 'X-WhoDB-Analytics-Id';
@@ -130,6 +138,12 @@ export function addAuthHeader(headers: HeadersInit = {}): HeadersInit {
     headers = {
         ...headers,
         [analyticsHeaderName]: id ?? ""
+    }
+    if (extraHeadersProvider) {
+        headers = {
+            ...headers,
+            ...extraHeadersProvider(),
+        };
     }
     if (authHeader) {
         return {

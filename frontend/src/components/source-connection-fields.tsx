@@ -282,18 +282,6 @@ export function SourceConnectionFields({
                     />
                 </div>
             )}
-            {portField != null && layout === 'sheet' && (
-                <div className={fieldClassName}>
-                    <Label htmlFor="source-port">{translate(portField.LabelKey)}</Label>
-                    <Input
-                        id="source-port"
-                        value={port}
-                        onChange={(e) => { setPort(e.target.value); }}
-                        data-testid="port"
-                        placeholder={portField.DefaultValue ?? ''}
-                    />
-                </div>
-            )}
             {searchPathField != null && (
                 <div className={fieldClassName}>
                     <Label htmlFor="source-search-path">{translate(searchPathField.LabelKey)}</Label>
@@ -304,6 +292,18 @@ export function SourceConnectionFields({
                         data-testid="search-path"
                         placeholder={fieldPlaceholder(searchPathField, translate)}
                         aria-required={searchPathField.Required ? 'true' : undefined}
+                    />
+                </div>
+            )}
+            {portField != null && layout === 'sheet' && (
+                <div className={fieldClassName}>
+                    <Label htmlFor="source-port">{translate(portField.LabelKey)}</Label>
+                    <Input
+                        id="source-port"
+                        value={port}
+                        onChange={(e) => { setPort(e.target.value); }}
+                        data-testid="port"
+                        placeholder={portField.DefaultValue ?? ''}
                     />
                 </div>
             )}

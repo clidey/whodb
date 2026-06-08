@@ -149,16 +149,23 @@ export const InternalRoutes = {
 export const PrivateRoute: FC = () => {
     const loggedIn = useAppSelector(state => state.auth.status === "logged-in");
     const SetupGuard = getComponent('setup-guard') as FC<{ children: ReactNode }> | undefined;
+    const AuthSessionGuard = getComponent('auth-session-guard') as FC<{ loggedIn: boolean; children: ReactNode }> | undefined;
+    const children = SetupGuard ? (
+        <Suspense fallback={<LoadingPage />}>
+            <SetupGuard><Outlet /></SetupGuard>
+        </Suspense>
+    ) : <Outlet />;
+
+    if (AuthSessionGuard) {
+        return (
+            <Suspense fallback={<LoadingPage />}>
+                <AuthSessionGuard loggedIn={loggedIn}>{children}</AuthSessionGuard>
+            </Suspense>
+        );
+    }
 
     if(loggedIn) {
-        if (SetupGuard) {
-            return (
-                <Suspense fallback={<LoadingPage />}>
-                    <SetupGuard><Outlet /></SetupGuard>
-                </Suspense>
-            );
-        }
-        return <Outlet />;
+        return children;
     }
     return <Navigate to={PublicRoutes.Login.path} />
 }

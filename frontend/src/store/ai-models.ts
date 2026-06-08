@@ -28,6 +28,7 @@ export type IAIModelType = {
   isEnvironmentDefined?: boolean;
   isGeneric?: boolean;
   isPlatformProvider?: boolean;
+  icon?: string;
 }
 
 type IAIModelsState = {

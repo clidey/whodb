@@ -25,6 +25,7 @@ import {getRegisteredPublicRoutes, getRegisteredScopedRoutes, getScopedLayout} f
 import {NavigateToDefault} from "./pages/chat/default-chat-route";
 import {useAppDispatch, useAppSelector} from "./store/hooks";
 import {SettingsActions} from "./store/settings";
+import {settingsDefaults} from "./config/features";
 import {useThemeCustomization} from "./hooks/use-theme-customization";
 import {useDesktopMenu} from "./hooks/useDesktop";
 import {useSidebarShortcuts} from "./hooks/useSidebarShortcuts";
@@ -34,6 +35,7 @@ import {useCommandPalette} from "./components/command-palette";
 import {healthCheckService} from "./services/health-check";
 import {ServerDownOverlay, DatabaseDownOverlay} from "./components/health/health-overlays";
 import {HealthActions} from "./store/health";
+import {PageTitleUpdater} from "./hooks/use-page-title";
 
 export const App = () => {
     const [updateSettings] = useMutation(UpdateSettingsDocument);
@@ -42,7 +44,7 @@ export const App = () => {
   const metricsEnabled = useAppSelector(state => state.settings.metricsEnabled);
   const authStatus = useAppSelector(state => state.auth.status);
   const settingsConfig = settingsConfigData?.SettingsConfig;
-  const newUIEnabled = settingsConfig?.EnableNewUI === true;
+  const newUIEnabled = settingsDefaults.newUIEnabled === true || settingsConfig?.EnableNewUI === true;
 
   // Apply UI customization settings
   useThemeCustomization();
@@ -153,6 +155,7 @@ export const App = () => {
         {CommandPaletteModal}
         <ServerDownOverlay />
         <DatabaseDownOverlay />
+        <PageTitleUpdater />
         <Routes>
           <Route path="/" element={<PrivateRoute />}>
             {(() => {

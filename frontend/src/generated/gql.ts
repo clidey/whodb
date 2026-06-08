@@ -35,7 +35,7 @@ type Documents = {
     "mutation LoginSource($credentials: SourceLoginInput!) {\n  LoginSource(credentials: $credentials) {\n    Status\n  }\n}": typeof types.LoginSourceDocument,
     "mutation Logout {\n  Logout {\n    Status\n  }\n}": typeof types.LogoutDocument,
     "mutation TestSourceConnection($credentials: SourceLoginInput!) {\n  TestSourceConnection(credentials: $credentials) {\n    Status\n  }\n}": typeof types.TestSourceConnectionDocument,
-    "query GetAIProviders {\n  AIProviders {\n    Type\n    Name\n    ProviderId\n    IsEnvironmentDefined\n    IsGeneric\n  }\n}": typeof types.GetAiProvidersDocument,
+    "query GetAIProviders {\n  AIProviders {\n    Type\n    Name\n    ProviderId\n    IsEnvironmentDefined\n    IsGeneric\n    Icon\n  }\n}": typeof types.GetAiProvidersDocument,
     "query GetAIChat($providerId: String, $modelType: String!, $token: String, $ref: SourceObjectRefInput, $previousConversation: String!, $query: String!, $model: String!) {\n  AIChat(\n    providerId: $providerId\n    modelType: $modelType\n    token: $token\n    ref: $ref\n    input: {PreviousConversation: $previousConversation, Query: $query, Model: $model}\n  ) {\n    Type\n    Result {\n      Columns {\n        Type\n        Name\n        MetadataFidelity\n      }\n      Rows\n    }\n    Text\n  }\n}": typeof types.GetAiChatDocument,
     "query GetDatabaseQuerySuggestions($ref: SourceObjectRefInput) {\n  DatabaseQuerySuggestions: SourceQuerySuggestions(ref: $ref) {\n    description\n    category\n  }\n}": typeof types.GetDatabaseQuerySuggestionsDocument,
     "query GetAIModels($providerId: String, $modelType: String!, $token: String) {\n  AIModel(providerId: $providerId, modelType: $modelType, token: $token)\n}": typeof types.GetAiModelsDocument,
@@ -82,7 +82,7 @@ const documents: Documents = {
     "mutation LoginSource($credentials: SourceLoginInput!) {\n  LoginSource(credentials: $credentials) {\n    Status\n  }\n}": types.LoginSourceDocument,
     "mutation Logout {\n  Logout {\n    Status\n  }\n}": types.LogoutDocument,
     "mutation TestSourceConnection($credentials: SourceLoginInput!) {\n  TestSourceConnection(credentials: $credentials) {\n    Status\n  }\n}": types.TestSourceConnectionDocument,
-    "query GetAIProviders {\n  AIProviders {\n    Type\n    Name\n    ProviderId\n    IsEnvironmentDefined\n    IsGeneric\n  }\n}": types.GetAiProvidersDocument,
+    "query GetAIProviders {\n  AIProviders {\n    Type\n    Name\n    ProviderId\n    IsEnvironmentDefined\n    IsGeneric\n    Icon\n  }\n}": types.GetAiProvidersDocument,
     "query GetAIChat($providerId: String, $modelType: String!, $token: String, $ref: SourceObjectRefInput, $previousConversation: String!, $query: String!, $model: String!) {\n  AIChat(\n    providerId: $providerId\n    modelType: $modelType\n    token: $token\n    ref: $ref\n    input: {PreviousConversation: $previousConversation, Query: $query, Model: $model}\n  ) {\n    Type\n    Result {\n      Columns {\n        Type\n        Name\n        MetadataFidelity\n      }\n      Rows\n    }\n    Text\n  }\n}": types.GetAiChatDocument,
     "query GetDatabaseQuerySuggestions($ref: SourceObjectRefInput) {\n  DatabaseQuerySuggestions: SourceQuerySuggestions(ref: $ref) {\n    description\n    category\n  }\n}": types.GetDatabaseQuerySuggestionsDocument,
     "query GetAIModels($providerId: String, $modelType: String!, $token: String) {\n  AIModel(providerId: $providerId, modelType: $modelType, token: $token)\n}": types.GetAiModelsDocument,
@@ -209,7 +209,7 @@ export function graphql(source: "mutation TestSourceConnection($credentials: Sou
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "query GetAIProviders {\n  AIProviders {\n    Type\n    Name\n    ProviderId\n    IsEnvironmentDefined\n    IsGeneric\n  }\n}"): (typeof documents)["query GetAIProviders {\n  AIProviders {\n    Type\n    Name\n    ProviderId\n    IsEnvironmentDefined\n    IsGeneric\n  }\n}"];
+export function graphql(source: "query GetAIProviders {\n  AIProviders {\n    Type\n    Name\n    ProviderId\n    IsEnvironmentDefined\n    IsGeneric\n    Icon\n  }\n}"): (typeof documents)["query GetAIProviders {\n  AIProviders {\n    Type\n    Name\n    ProviderId\n    IsEnvironmentDefined\n    IsGeneric\n    Icon\n  }\n}"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

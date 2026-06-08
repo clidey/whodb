@@ -169,6 +169,7 @@ Connect any OpenAI-compatible provider. Configured via multiple variables per pr
 | `WHODB_AI_GENERIC_<ID>_BASE_URL` | Yes | | API base URL |
 | `WHODB_AI_GENERIC_<ID>_API_KEY` | No | | API key |
 | `WHODB_AI_GENERIC_<ID>_MODELS` | Yes | | Comma-separated list of model names |
+| `WHODB_AI_GENERIC_<ID>_ICON` | No | | Custom icon URL for the provider dropdown |
 
 ## Server Variables
 

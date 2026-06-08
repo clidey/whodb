@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
-
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src"
 	"github.com/clidey/whodb/core/src/analytics"
@@ -1413,13 +1412,18 @@ func (r *queryResolver) AIProviders(ctx context.Context) ([]*model.AIProvider, e
 	chatProviders := envconfig.GetConfiguredChatProviders()
 	aiProviders := make([]*model.AIProvider, 0, len(chatProviders))
 	for _, provider := range chatProviders {
-		aiProviders = append(aiProviders, &model.AIProvider{
+		ap := &model.AIProvider{
 			Type:                 provider.Type,
 			Name:                 provider.Name,
 			ProviderID:           provider.ProviderId,
 			IsEnvironmentDefined: true,
 			IsGeneric:            provider.IsGeneric,
-		})
+		}
+		if provider.Icon != "" {
+			icon := provider.Icon
+			ap.Icon = &icon
+		}
+		aiProviders = append(aiProviders, ap)
 	}
 	return aiProviders, nil
 }

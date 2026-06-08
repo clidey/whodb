@@ -395,8 +395,9 @@ function findConnectionField(
 function mapAdvancedDefaults(
 	connectionFields: BackendSourceType["connectionFields"],
 ): Record<string, string> {
+	const dedicatedFields = new Set(["Hostname", "Username", "Password", "Database"]);
 	return connectionFields.reduce<Record<string, string>>((acc, field) => {
-		if (field.Section === SourceConnectionFieldSection.Advanced) {
+		if (!dedicatedFields.has(field.Key)) {
 			acc[field.Key] = field.DefaultValue ?? "";
 		}
 		return acc;

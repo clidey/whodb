@@ -487,6 +487,7 @@ type AIProvider {
   ProviderId: String!
   IsEnvironmentDefined: Boolean!
   IsGeneric: Boolean!
+  Icon: String
 }
 
 enum TypeCategory {

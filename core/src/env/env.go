@@ -134,6 +134,7 @@ type ChatProvider struct {
 	ProviderId string
 	ClientType string // BAML client type (openai-generic, anthropic, aws-bedrock) - only for generic providers
 	IsGeneric  bool   // True for generic/custom providers, false for built-in providers
+	Icon       string // Optional URL to a custom icon for this provider
 }
 
 // GenericProviderConfig holds configuration for a generic AI provider.
@@ -144,6 +145,7 @@ type GenericProviderConfig struct {
 	BaseURL    string
 	APIKey     string
 	Models     []string
+	Icon       string // Optional URL to a custom icon
 }
 
 var GenericProviders []GenericProviderConfig

@@ -5,5 +5,6 @@ query GetAIProviders {
     ProviderId
     IsEnvironmentDefined
     IsGeneric
+    Icon
   }
 }

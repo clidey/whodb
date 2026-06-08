@@ -45,6 +45,7 @@ type ComplexityRoot struct {
 	}
 
 	AIProvider struct {
+		Icon                 func(childComplexity int) int
 		IsEnvironmentDefined func(childComplexity int) int
 		IsGeneric            func(childComplexity int) int
 		Name                 func(childComplexity int) int
@@ -720,6 +721,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.AIChatMessage.Type(childComplexity), true
 
+	case "AIProvider.Icon":
+		if e.ComplexityRoot.AIProvider.Icon == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIProvider.Icon(childComplexity), true
 	case "AIProvider.IsEnvironmentDefined":
 		if e.ComplexityRoot.AIProvider.IsEnvironmentDefined == nil {
 			break
@@ -3443,6 +3450,8 @@ func (ec *executionContext) childFields_AIProvider(ctx context.Context, field gr
 		return ec.fieldContext_AIProvider_IsEnvironmentDefined(ctx, field)
 	case "IsGeneric":
 		return ec.fieldContext_AIProvider_IsGeneric(ctx, field)
+	case "Icon":
+		return ec.fieldContext_AIProvider_Icon(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type AIProvider", field.Name)
 }
@@ -5785,6 +5794,29 @@ func (ec *executionContext) _AIProvider_IsGeneric(ctx context.Context, field gra
 }
 func (ec *executionContext) fieldContext_AIProvider_IsGeneric(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("AIProvider", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _AIProvider_Icon(ctx context.Context, field graphql.CollectedField, obj *model.AIProvider) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIProvider_Icon(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Icon, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AIProvider_Icon(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIProvider", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
 func (ec *executionContext) _AWSProvider_Id(ctx context.Context, field graphql.CollectedField, obj *model.AWSProvider) (ret graphql.Marshaler) {
@@ -18303,6 +18335,8 @@ func (ec *executionContext) _AIProvider(ctx context.Context, sel ast.SelectionSe
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "Icon":
+			out.Values[i] = ec._AIProvider_Icon(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
