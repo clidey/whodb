@@ -97,7 +97,7 @@ fi
 
 # Stop and remove CE Docker services
 echo "🐳 Stopping CE database services..."
-cd "$SCRIPT_DIR"
+cd "$SCRIPT_DIR" || exit 1
 
 # First, force remove all containers (even if they're not running)
 # Include --profile ssl to ensure SSL containers are also removed

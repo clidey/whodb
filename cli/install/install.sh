@@ -168,9 +168,9 @@ main() {
         # Detect shell and suggest appropriate config file
         local shell_config=""
         case "$SHELL" in
-            */zsh)  shell_config="~/.zshrc" ;;
-            */bash) shell_config="~/.bashrc" ;;
-            */fish) shell_config="~/.config/fish/config.fish" ;;
+            */zsh)  shell_config="$HOME/.zshrc" ;;
+            */bash) shell_config="$HOME/.bashrc" ;;
+            */fish) shell_config="$HOME/.config/fish/config.fish" ;;
             *)      shell_config="your shell config" ;;
         esac
 

@@ -16,6 +16,8 @@
 
 FROM golang:1.26-alpine3.23 AS builder
 
+SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
+
 ARG VERSION=dev
 
 RUN apk add --no-cache gcc g++ musl-dev git bash curl binutils upx

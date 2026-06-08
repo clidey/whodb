@@ -36,6 +36,7 @@ ARG TARGETARCH
 ARG PLATFORM=docker
 
 FROM golang:1.26-alpine3.23 AS backend-stage
+SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 RUN apk add --no-cache \
 	gcc \
 	g++ \
