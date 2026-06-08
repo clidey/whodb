@@ -328,29 +328,37 @@ func GetConfiguredChatProviders() []env.ChatProvider {
 		})
 	}
 
-	name := env.LMStudioName
-	if name == "" {
-		name = "LM Studio"
+	// Only show local providers (LM Studio, Ollama) when explicitly configured
+	// or when not running in hosted EE mode.
+	showLocalProviders := !env.IsEnterpriseEdition || env.LMStudioBaseURL != "" || env.LMStudioAPIKey != ""
+	if showLocalProviders {
+		name := env.LMStudioName
+		if name == "" {
+			name = "LM Studio"
+		}
+		providers = append(providers, env.ChatProvider{
+			Type:       "LMStudio",
+			Name:       name,
+			APIKey:     env.LMStudioAPIKey,
+			Endpoint:   env.GetLMStudioEndpoint(),
+			ProviderId: "lmstudio-1",
+		})
 	}
-	providers = append(providers, env.ChatProvider{
-		Type:       "LMStudio",
-		Name:       name,
-		APIKey:     env.LMStudioAPIKey,
-		Endpoint:   env.GetLMStudioEndpoint(),
-		ProviderId: "lmstudio-1",
-	})
 
-	name = env.OllamaName
-	if name == "" {
-		name = "Ollama"
+	showOllama := !env.IsEnterpriseEdition || env.OllamaHost != ""
+	if showOllama {
+		name := env.OllamaName
+		if name == "" {
+			name = "Ollama"
+		}
+		providers = append(providers, env.ChatProvider{
+			Type:       "Ollama",
+			Name:       name,
+			APIKey:     "",
+			Endpoint:   env.GetOllamaEndpoint(),
+			ProviderId: "ollama-1",
+		})
 	}
-	providers = append(providers, env.ChatProvider{
-		Type:       "Ollama",
-		Name:       name,
-		APIKey:     "",
-		Endpoint:   env.GetOllamaEndpoint(),
-		ProviderId: "ollama-1",
-	})
 
 	return providers
 }
