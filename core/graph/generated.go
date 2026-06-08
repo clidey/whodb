@@ -262,6 +262,7 @@ type ComplexityRoot struct {
 		Logout                  func(childComplexity int) int
 		RefreshCloudProvider    func(childComplexity int, id string) int
 		RemoveCloudProvider     func(childComplexity int, id string) int
+		ReplaceRow              func(childComplexity int, schema string, storageUnit string, values []*model.RecordInput) int
 		TestAWSCredentials      func(childComplexity int, input model.AWSProviderInput) int
 		TestCloudProvider       func(childComplexity int, id string) int
 		UpdateAWSProvider       func(childComplexity int, id string, input model.AWSProviderInput) int
@@ -379,6 +380,7 @@ type MutationResolver interface {
 	UpdateWidgetSnapshot(ctx context.Context, id string, snapshot model.SnapshotInput) (*model.StatusResponse, error)
 	AddStorageUnit(ctx context.Context, schema string, storageUnit string, fields []*model.RecordInput) (*model.StatusResponse, error)
 	UpdateStorageUnit(ctx context.Context, schema string, storageUnit string, values []*model.RecordInput, updatedColumns []string) (*model.StatusResponse, error)
+	ReplaceRow(ctx context.Context, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error)
 	AddRow(ctx context.Context, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error)
 	DeleteRow(ctx context.Context, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error)
 	GenerateMockData(ctx context.Context, input model.MockDataGenerationInput) (*model.MockDataGenerationStatus, error)
@@ -1470,6 +1472,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.RemoveCloudProvider(childComplexity, args["id"].(string)), true
+	case "Mutation.ReplaceRow":
+		if e.ComplexityRoot.Mutation.ReplaceRow == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_ReplaceRow_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.ReplaceRow(childComplexity, args["schema"].(string), args["storageUnit"].(string), args["values"].([]*model.RecordInput)), true
 	case "Mutation.TestAWSCredentials":
 		if e.ComplexityRoot.Mutation.TestAWSCredentials == nil {
 			break
@@ -2435,6 +2448,27 @@ func (ec *executionContext) field_Mutation_RemoveCloudProvider_args(ctx context.
 		return nil, err
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_ReplaceRow_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "schema", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["schema"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "storageUnit", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["storageUnit"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "values", ec.unmarshalNRecordInput2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐRecordInputᚄ)
+	if err != nil {
+		return nil, err
+	}
+	args["values"] = arg2
 	return args, nil
 }
 
@@ -7487,6 +7521,51 @@ func (ec *executionContext) fieldContext_Mutation_UpdateStorageUnit(ctx context.
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_UpdateStorageUnit_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_ReplaceRow(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_ReplaceRow,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().ReplaceRow(ctx, fc.Args["schema"].(string), fc.Args["storageUnit"].(string), fc.Args["values"].([]*model.RecordInput))
+		},
+		nil,
+		ec.marshalNStatusResponse2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐStatusResponse,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_ReplaceRow(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "Status":
+				return ec.fieldContext_StatusResponse_Status(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type StatusResponse", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_ReplaceRow_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -14668,6 +14747,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "UpdateStorageUnit":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_UpdateStorageUnit(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "ReplaceRow":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_ReplaceRow(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++

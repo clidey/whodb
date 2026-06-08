@@ -60,6 +60,11 @@ func (b *BasePlugin) UpdateStorageUnit(_ *PluginConfig, _ string, _ string, _ ma
 	return false, errors.ErrUnsupported
 }
 
+// ReplaceRow replaces one existing row or document using plugin-specific identity fields.
+func (b *BasePlugin) ReplaceRow(_ *PluginConfig, _ string, _ string, _ map[string]string) (bool, error) {
+	return false, errors.ErrUnsupported
+}
+
 func (b *BasePlugin) AddRow(_ *PluginConfig, _ string, _ string, _ []Record) (bool, error) {
 	return false, errors.ErrUnsupported
 }

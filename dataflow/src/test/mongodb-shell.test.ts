@@ -49,6 +49,12 @@ describe('buildMongoInsertOneCommand', () => {
 
     expect(command).toBe('db.getCollection("audit-log").insertOne({"ok":true})')
   })
+
+  it('uses explicit document field order when provided', () => {
+    const command = buildMongoInsertOneCommand('users', { a: 1, z: 2 }, ['z', 'a'])
+
+    expect(command).toBe('db.users.insertOne({"z":2,"a":1})')
+  })
 })
 
 describe('buildMongoCollectionAccessor', () => {

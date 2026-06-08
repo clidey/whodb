@@ -1,0 +1,5 @@
+mutation ReplaceRow($schema: String!, $storageUnit: String!, $values: [RecordInput!]!) {
+  ReplaceRow(schema: $schema, storageUnit: $storageUnit, values: $values) {
+    Status
+  }
+}

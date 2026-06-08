@@ -116,30 +116,15 @@ export function buildMongoDocumentFieldOrder(
   return fieldOrder
 }
 
-/** Preserves existing field order while appending fields introduced by an edited document. */
+/** Builds replacement order from authored JSON order, keeping MongoDB `_id` first. */
 export function buildMongoEditedDocumentFieldOrder(
   document: Record<string, unknown>,
-  currentFieldOrder: string[] = [],
   editedFieldOrder: string[] = [],
 ): string[] {
-  const existingFields = new Set(currentFieldOrder)
-  const fields = new Set<string>()
-  const fieldOrder: string[] = []
-
-  const addField = (field: string) => {
-    if (fields.has(field)) return
-    if (!Object.prototype.hasOwnProperty.call(document, field)) return
-    fields.add(field)
-    fieldOrder.push(field)
-  }
-
-  currentFieldOrder.forEach(addField)
-  editedFieldOrder.forEach((field) => {
-    if (!existingFields.has(field)) addField(field)
-  })
-  Object.keys(document).forEach(addField)
-
-  return fieldOrder
+  const preferredOrder = Object.prototype.hasOwnProperty.call(document, '_id')
+    ? ['_id', ...editedFieldOrder.filter((field) => field !== '_id')]
+    : editedFieldOrder
+  return buildMongoDocumentFieldOrder(document, preferredOrder)
 }
 
 function stringifyMongoValue(value: unknown, spaces: number): string {
@@ -220,8 +205,9 @@ export function parseMongoDocumentInputWithOrder(content: string): {
 export function buildMongoInsertOneCommand(
   collectionName: string,
   document: Record<string, unknown>,
+  fieldOrder: string[] = Object.keys(document),
 ): string {
-  return buildMongoCollectionCommand(collectionName, 'insertOne', JSON.stringify(document))
+  return buildMongoCollectionCommand(collectionName, 'insertOne', stringifyMongoDocument(document, fieldOrder, 0))
 }
 
 /** Build a MongoDB shell command that drops the current database. */

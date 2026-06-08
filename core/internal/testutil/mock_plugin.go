@@ -37,6 +37,7 @@ type PluginMock struct {
 	StorageUnitExistsFunc    func(*engine.PluginConfig, string, string) (bool, error)
 	AddStorageUnitFunc       func(*engine.PluginConfig, string, string, []engine.Record) (bool, error)
 	UpdateStorageUnitFunc    func(*engine.PluginConfig, string, string, map[string]string, []string) (bool, error)
+	ReplaceRowFunc           func(*engine.PluginConfig, string, string, map[string]string) (bool, error)
 	AddRowFunc               func(*engine.PluginConfig, string, string, []engine.Record) (bool, error)
 	AddRowReturningIDFunc    func(*engine.PluginConfig, string, string, []engine.Record) (int64, error)
 	BulkAddRowsFunc          func(*engine.PluginConfig, string, string, [][]engine.Record) (bool, error)
@@ -116,6 +117,14 @@ func (m *PluginMock) AddStorageUnit(config *engine.PluginConfig, schema string, 
 func (m *PluginMock) UpdateStorageUnit(config *engine.PluginConfig, schema string, storageUnit string, values map[string]string, updatedColumns []string) (bool, error) {
 	if m.UpdateStorageUnitFunc != nil {
 		return m.UpdateStorageUnitFunc(config, schema, storageUnit, values, updatedColumns)
+	}
+	return false, nil
+}
+
+// ReplaceRow invokes the configured replacement hook.
+func (m *PluginMock) ReplaceRow(config *engine.PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error) {
+	if m.ReplaceRowFunc != nil {
+		return m.ReplaceRowFunc(config, schema, storageUnit, values)
 	}
 	return false, nil
 }

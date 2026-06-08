@@ -154,6 +154,7 @@ type PluginFunctions interface {
 	StorageUnitExists(config *PluginConfig, schema string, storageUnit string) (bool, error)
 	AddStorageUnit(config *PluginConfig, schema string, storageUnit string, fields []Record) (bool, error)
 	UpdateStorageUnit(config *PluginConfig, schema string, storageUnit string, values map[string]string, updatedColumns []string) (bool, error)
+	ReplaceRow(config *PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error)
 	AddRow(config *PluginConfig, schema string, storageUnit string, values []Record) (bool, error)
 	AddRowReturningID(config *PluginConfig, schema string, storageUnit string, values []Record) (int64, error)
 	BulkAddRows(config *PluginConfig, schema string, storageUnit string, rows [][]Record) (bool, error)

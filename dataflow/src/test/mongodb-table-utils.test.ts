@@ -28,6 +28,7 @@ describe('buildMongoTableColumns', () => {
         ['_id', 'email', 'name', 'createdAt'],
       ],
       changes: new Map(),
+      pageOffset: 0,
     })
 
     expect(columns).toEqual(['_id', 'status', 'profile', 'name', 'age', 'email', 'createdAt'])
@@ -44,11 +45,33 @@ describe('buildMongoTableColumns', () => {
           originalFieldOrder: ['_id', 'name'],
           document: { _id: '1', name: 'Ada', role: 'admin' },
           fieldOrder: ['_id', 'name', 'role'],
+          saveMode: 'patch',
         }],
       ]),
+      pageOffset: 0,
     })
 
     expect(columns).toEqual(['_id', 'name', 'role'])
+  })
+
+  it('uses pending field order for visible replacement changes', () => {
+    const columns = buildMongoTableColumns({
+      documents: [{ _id: '1', a: 1, b: 2 }],
+      documentFieldOrders: [['_id', 'a', 'b']],
+      changes: new Map([
+        ['existing-0', {
+          type: 'update',
+          originalDocument: { _id: '1', a: 1, b: 2 },
+          originalFieldOrder: ['_id', 'a', 'b'],
+          document: { _id: '1', a: 10, b: 2 },
+          fieldOrder: ['_id', 'b', 'a'],
+          saveMode: 'replace',
+        }],
+      ]),
+      pageOffset: 0,
+    })
+
+    expect(columns).toEqual(['_id', 'b', 'a'])
   })
 })
 
@@ -87,6 +110,7 @@ describe('buildRenderedMongoDocuments', () => {
           originalFieldOrder: ['_id', 'name'],
           document: { _id: '1', name: 'Ada Lovelace' },
           fieldOrder: ['_id', 'name'],
+          saveMode: 'patch',
         }],
       ]),
       documentFieldOrders: [['_id', 'name']],
@@ -202,14 +226,13 @@ describe('MongoDB document ordering helpers', () => {
 }`)
   })
 
-  it('keeps existing fields in current order and appends new edited fields', () => {
+  it('uses authored replacement order while keeping _id first', () => {
     const fieldOrder = buildMongoEditedDocumentFieldOrder(
       { a: 1, b: 2, c: 3, z: 4, _id: '1' },
-      ['_id', 'a', 'b', 'c'],
       ['c', 'z', 'a', 'b'],
     )
 
-    expect(fieldOrder).toEqual(['_id', 'a', 'b', 'c', 'z'])
+    expect(fieldOrder).toEqual(['_id', 'c', 'z', 'a', 'b'])
   })
 })
 
@@ -221,16 +244,18 @@ describe('buildPreviewCommands', () => {
         originalDocument: { _id: '1', z: 1, a: 2 },
         originalFieldOrder: ['_id', 'z', 'a'],
         document: { z: 3, _id: '1', a: 2 },
-        fieldOrder: ['z', '_id', 'a'],
+        fieldOrder: ['_id', 'z', 'a'],
+        saveMode: 'replace',
       }],
     ]))
 
-    expect(commands[0]).toBe(`db.users.updateOne(
+    expect(commands[0]).toBe(`db.users.replaceOne(
   { _id: "1" },
-  { $set: {
+  {
+  "_id": "1",
   "z": 3,
   "a": 2
-} }
+}
 );`)
   })
 })

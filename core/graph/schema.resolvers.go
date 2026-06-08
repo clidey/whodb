@@ -605,6 +605,49 @@ func (r *mutationResolver) UpdateStorageUnit(ctx context.Context, schema string,
 	}, nil
 }
 
+// ReplaceRow is the resolver for the ReplaceRow field.
+func (r *mutationResolver) ReplaceRow(ctx context.Context, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error) {
+	plugin, config := GetPluginForContext(ctx)
+	typeArg := config.Credentials.Type
+
+	if err := ValidateStorageUnit(plugin, config, schema, storageUnit); err != nil {
+		return nil, err
+	}
+
+	valuesMap := map[string]string{}
+	for _, value := range values {
+		valuesMap[value.Key] = value.Value
+	}
+	status, err := plugin.ReplaceRow(config, schema, storageUnit, valuesMap)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"operation":     "ReplaceRow",
+			"schema":        schema,
+			"storage_unit":  storageUnit,
+			"database_type": typeArg,
+			"values_count":  len(values),
+		}).WithError(err).Error("Database operation failed")
+		analytics.CaptureError(ctx, "ReplaceRow", err, map[string]any{
+			"database_type": typeArg,
+			"schema_hash":   analytics.HashIdentifier(schema),
+			"storage_hash":  analytics.HashIdentifier(storageUnit),
+			"values_count":  len(values),
+		})
+		return nil, err
+	}
+
+	analytics.TrackMutation(ctx, "ReplaceRow", map[string]any{
+		"database_type": typeArg,
+		"schema_hash":   analytics.HashIdentifier(schema),
+		"storage_hash":  analytics.HashIdentifier(storageUnit),
+		"values_count":  len(values),
+	})
+
+	return &model.StatusResponse{
+		Status: status,
+	}, nil
+}
+
 // AddRow is the resolver for the AddRow field.
 func (r *mutationResolver) AddRow(ctx context.Context, schema string, storageUnit string, values []*model.RecordInput) (*model.StatusResponse, error) {
 	plugin, config := GetPluginForContext(ctx)

@@ -158,7 +158,8 @@ export function CollectionViewProvider({ tabId, connectionId, databaseName, coll
     documents: documents as Record<string, unknown>[],
     documentFieldOrders,
     changes: changesetState.changes,
-  }), [changesetState.changes, documentFieldOrders, documents])
+    pageOffset,
+  }), [changesetState.changes, documentFieldOrders, documents, pageOffset])
   const { columnWidths, resizingColumn, resizedColumns, handleResizeStart } = useColumnResize(tableColumns, {
     initialWidth: 160,
     minimumWidth: 80,

@@ -1,6 +1,7 @@
 import {
   buildMongoCollectionAccessor,
   buildMongoDocumentFieldOrder,
+  buildMongoEditedDocumentFieldOrder,
   stringifyMongoDocument,
 } from '@/utils/mongodb-shell'
 import type { DocumentChange, DocumentChangesetRowKey } from './types'
@@ -32,15 +33,19 @@ export function buildPreviewCommands(
   const accessor = buildMongoCollectionAccessor(collectionName)
 
   return [...changes.values()].map((change) => {
-    if (change.type === 'insert') {
-      return `${accessor}.insertOne(${stringifyMongoDocument(change.document, change.fieldOrder, 2)});`
-    }
-
-    if (change.type === 'delete') {
+    if (change.type !== 'update') {
+      if (change.type === 'insert') {
+        return `${accessor}.insertOne(${stringifyMongoDocument(change.document, change.fieldOrder, 2)});`
+      }
       return `${accessor}.deleteOne({ _id: ${JSON.stringify(change.originalDocument._id)} });`
     }
 
-    // update
+    if (change.saveMode === 'replace') {
+      const replacementDocument = { ...change.document, _id: change.originalDocument._id }
+      const replacementFieldOrder = buildMongoEditedDocumentFieldOrder(replacementDocument, change.fieldOrder)
+      return `${accessor}.replaceOne(\n  { _id: ${JSON.stringify(change.originalDocument._id)} },\n  ${stringifyMongoDocument(replacementDocument, replacementFieldOrder, 2)}\n);`
+    }
+
     const updateFields = { ...change.document }
     delete updateFields._id
     const updateFieldOrder = buildMongoDocumentFieldOrder(

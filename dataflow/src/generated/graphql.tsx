@@ -421,6 +421,7 @@ export type Mutation = {
   Logout: StatusResponse;
   RefreshCloudProvider: AwsProvider;
   RemoveCloudProvider: StatusResponse;
+  ReplaceRow: StatusResponse;
   TestAWSCredentials: CloudProviderStatus;
   TestCloudProvider: CloudProviderStatus;
   UpdateAWSProvider: AwsProvider;
@@ -553,6 +554,13 @@ export type MutationRefreshCloudProviderArgs = {
 
 export type MutationRemoveCloudProviderArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type MutationReplaceRowArgs = {
+  schema: Scalars['String']['input'];
+  storageUnit: Scalars['String']['input'];
+  values: Array<RecordInput>;
 };
 
 
@@ -961,6 +969,15 @@ export type LoginMutationVariables = Exact<{
 
 
 export type LoginMutation = { __typename?: 'Mutation', Login: { __typename?: 'StatusResponse', Status: boolean } };
+
+export type ReplaceRowMutationVariables = Exact<{
+  schema: Scalars['String']['input'];
+  storageUnit: Scalars['String']['input'];
+  values: Array<RecordInput> | RecordInput;
+}>;
+
+
+export type ReplaceRowMutation = { __typename?: 'Mutation', ReplaceRow: { __typename?: 'StatusResponse', Status: boolean } };
 
 export type UpdateDashboardMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1501,6 +1518,41 @@ export function useLoginMutation(baseOptions?: Apollo.MutationHookOptions<LoginM
 export type LoginMutationHookResult = ReturnType<typeof useLoginMutation>;
 export type LoginMutationResult = Apollo.MutationResult<LoginMutation>;
 export type LoginMutationOptions = Apollo.BaseMutationOptions<LoginMutation, LoginMutationVariables>;
+export const ReplaceRowDocument = gql`
+    mutation ReplaceRow($schema: String!, $storageUnit: String!, $values: [RecordInput!]!) {
+  ReplaceRow(schema: $schema, storageUnit: $storageUnit, values: $values) {
+    Status
+  }
+}
+    `;
+export type ReplaceRowMutationFn = Apollo.MutationFunction<ReplaceRowMutation, ReplaceRowMutationVariables>;
+
+/**
+ * __useReplaceRowMutation__
+ *
+ * To run a mutation, you first call `useReplaceRowMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useReplaceRowMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [replaceRowMutation, { data, loading, error }] = useReplaceRowMutation({
+ *   variables: {
+ *      schema: // value for 'schema'
+ *      storageUnit: // value for 'storageUnit'
+ *      values: // value for 'values'
+ *   },
+ * });
+ */
+export function useReplaceRowMutation(baseOptions?: Apollo.MutationHookOptions<ReplaceRowMutation, ReplaceRowMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<ReplaceRowMutation, ReplaceRowMutationVariables>(ReplaceRowDocument, options);
+      }
+export type ReplaceRowMutationHookResult = ReturnType<typeof useReplaceRowMutation>;
+export type ReplaceRowMutationResult = Apollo.MutationResult<ReplaceRowMutation>;
+export type ReplaceRowMutationOptions = Apollo.BaseMutationOptions<ReplaceRowMutation, ReplaceRowMutationVariables>;
 export const UpdateDashboardDocument = gql`
     mutation UpdateDashboard($id: ID!, $name: String, $description: String, $refreshRule: String) {
   UpdateDashboard(

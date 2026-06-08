@@ -116,6 +116,38 @@ func TestUpdateStorageUnitCallsPlugin(t *testing.T) {
 	}
 }
 
+func TestReplaceRowCallsPlugin(t *testing.T) {
+	resolver := &Resolver{}
+	mut := resolver.Mutation()
+
+	mock := testutil.NewPluginMock(engine.DatabaseType("Test"))
+	mock.StorageUnitExistsFunc = func(*engine.PluginConfig, string, string) (bool, error) { return true, nil }
+	replaceCalled := 0
+	mock.ReplaceRowFunc = func(_ *engine.PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error) {
+		replaceCalled++
+		if schema != "public" || storageUnit != "users" {
+			t.Fatalf("unexpected target %s.%s", schema, storageUnit)
+		}
+		if values["document"] != `{"_id":"1","name":"alice"}` {
+			t.Fatalf("unexpected document payload %q", values["document"])
+		}
+		return true, nil
+	}
+	setEngineMock(t, mock)
+	ctx := context.WithValue(context.Background(), auth.AuthKey_Credentials, &engine.Credentials{Type: "Test"})
+
+	resp, err := mut.ReplaceRow(ctx, "public", "users", []*model.RecordInput{{Key: "document", Value: `{"_id":"1","name":"alice"}`}})
+	if err != nil {
+		t.Fatalf("expected replace to succeed, got %v", err)
+	}
+	if resp == nil || !resp.Status {
+		t.Fatalf("expected true status, got %#v", resp)
+	}
+	if replaceCalled != 1 {
+		t.Fatalf("expected ReplaceRow to be called once, got %d", replaceCalled)
+	}
+}
+
 func TestQueryMockDataMaxRowCount(t *testing.T) {
 	resolver := &Resolver{}
 	query := resolver.Query()
@@ -220,7 +252,6 @@ func TestLoginFailsWhenPluginUnavailable(t *testing.T) {
 		t.Fatalf("expected login to fail when plugin unavailable")
 	}
 }
-
 
 func setEngineMock(t *testing.T, mock *testutil.PluginMock) {
 	t.Helper()

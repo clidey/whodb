@@ -139,13 +139,16 @@ export function buildMongoTableColumns({
   documents,
   documentFieldOrders,
   changes,
+  pageOffset,
 }: {
   documents: Record<string, unknown>[]
   documentFieldOrders: string[][]
   changes: Map<DocumentChangesetRowKey, DocumentChange>
+  pageOffset: number
 }): string[] {
   const columns = ['_id']
   const fields = new Set<string>(columns)
+  const consumedChangeKeys = new Set<DocumentChangesetRowKey>()
 
   const addField = (field: string) => {
     if (fields.has(field)) return
@@ -154,14 +157,20 @@ export function buildMongoTableColumns({
   }
 
   for (const [index, doc] of documents.entries()) {
-    const fieldOrder = documentFieldOrders[index] ?? []
-    fieldOrder.forEach((field) => {
-      if (hasDocumentField(doc, field)) addField(field)
+    const rowKey = buildExistingRowKey(pageOffset, index)
+    const change = changes.get(rowKey)
+    const currentDocument = change?.document ?? doc
+    const currentFieldOrder = change?.fieldOrder ?? documentFieldOrders[index] ?? []
+    consumedChangeKeys.add(rowKey)
+
+    currentFieldOrder.forEach((field) => {
+      if (hasDocumentField(currentDocument, field)) addField(field)
     })
-    Object.keys(doc).forEach(addField)
+    Object.keys(currentDocument).forEach(addField)
   }
 
-  for (const change of changes.values()) {
+  for (const [rowKey, change] of changes.entries()) {
+    if (consumedChangeKeys.has(rowKey)) continue
     buildMongoDocumentFieldOrder(change.document, change.fieldOrder).forEach(addField)
   }
 

@@ -583,6 +583,7 @@ type Mutation {
 
   AddStorageUnit(schema: String!, storageUnit: String!, fields: [RecordInput!]!): StatusResponse!
   UpdateStorageUnit(schema: String!, storageUnit: String!, values: [RecordInput!]!, updatedColumns: [String!]!): StatusResponse!
+  ReplaceRow(schema: String!, storageUnit: String!, values: [RecordInput!]!): StatusResponse!
   AddRow(schema: String!, storageUnit: String!, values: [RecordInput!]!): StatusResponse!
   DeleteRow(schema: String!, storageUnit: String!, values: [RecordInput!]!): StatusResponse!
   GenerateMockData(input: MockDataGenerationInput!): MockDataGenerationStatus!

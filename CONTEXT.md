@@ -48,6 +48,10 @@ _Avoid_: document table mode
 The editor for changing an entire **MongoDB Document** as JSON.
 _Avoid_: document table mode, field-level editor
 
+**Document Replacement Edit**:
+A **Document JSON Editor** edit that replaces the stored **MongoDB Document** shape while preserving the original `_id`.
+_Avoid_: field patch, `$set` edit
+
 **Workspace Tab**:
 A database exploration surface tied to a query or a storage unit.
 _Avoid_: browser tab, panel
@@ -88,7 +92,8 @@ _Avoid_: expand all, jump to item
 - A **Complex Document Field** in the **Collection Table View** can open a **Field JSON Editor**.
 - A **Field JSON Editor** accepts any valid JSON value, even when that changes an object or array field into a scalar or `null`.
 - A **MongoDB Document** is edited through a **Document JSON Editor**.
-- A **Document JSON Editor** preserves **Document Field Order** when a user edits field values.
+- A **Document JSON Editor** creates a **Document Replacement Edit** when the user changes values, adds fields, or removes fields.
+- A **Document Replacement Edit** persists the **Document Field Order** authored in the JSON editor, except MongoDB's `_id` field remains first and immutable.
 - Changing only **Document Field Order** is not a submitable database edit.
 - A **Complex Document Field** is not edited through a separate field-level interaction inside the **Document JSON Editor**.
 - The **Database Workspace** contains zero or more **Workspace Tabs**.
@@ -147,7 +152,8 @@ _Avoid_: expand all, jump to item
 - Empty input or clearing an existing field is not field deletion; field deletion must be a distinct action.
 - Editing a `null` or **Unset Field** in the **Collection Table View** creates a string value unless the input is a complete, valid, unquoted JSON object or array.
 - Typing a complete, valid, unquoted JSON object or array into any **Editable Scalar Field** changes that field into a **Complex Document Field**.
-- Editing an existing field value must not move that field in the **Document Field Order**; newly created fields are appended to the document's visible field order.
+- Editing an existing field value in the **Collection Table View** must not move that field in the **Document Field Order**; newly created fields from field-level edits are appended to the document's visible field order.
+- Editing through the **Document JSON Editor** treats field additions, field removals, and value changes as the authored **Document Replacement Edit**. **Document Field Order** changes are saved only as part of those content changes.
 
 ### MongoDB View State
 

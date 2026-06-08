@@ -3,6 +3,7 @@ import { useConnectionStore } from '@/stores/useConnectionStore'
 import { useI18n } from '@/i18n/useI18n'
 import {
   useDeleteRowMutation,
+  useReplaceRowMutation,
   useUpdateStorageUnitMutation,
   useRawExecuteLazyQuery,
 } from '@graphql'
@@ -68,6 +69,7 @@ type ChangesetAction =
       document: Record<string, unknown>
       fieldOrder: string[]
       isInsert: boolean
+      saveMode: 'patch' | 'replace'
     }
   | {
       type: 'delete-selected'
@@ -167,6 +169,7 @@ function changesetReducer(state: ChangesetState, action: ChangesetAction): Chang
           originalFieldOrder: action.originalFieldOrder,
           document: action.document,
           fieldOrder: action.fieldOrder,
+          saveMode: action.saveMode,
         })
       }
 
@@ -389,6 +392,7 @@ export function useDocumentChangesetManager({
   const { t } = useI18n()
   const { connections } = useConnectionStore()
   const [deleteRowMutation] = useDeleteRowMutation()
+  const [replaceRowMutation] = useReplaceRowMutation()
   const [updateStorageUnitMutation] = useUpdateStorageUnitMutation()
   const [rawExecute] = useRawExecuteLazyQuery({ fetchPolicy: 'no-cache' })
   const [state, dispatch] = useReducer(changesetReducer, undefined, createInitialState)
@@ -512,11 +516,7 @@ export function useDocumentChangesetManager({
       // Preserve _id from original document
       const { _id } = resolved.currentDocument
       const document = _id !== undefined ? { ...parsed.document, _id } : parsed.document
-      const fieldOrder = buildMongoEditedDocumentFieldOrder(
-        document,
-        resolved.currentFieldOrder,
-        parsed.fieldOrder,
-      )
+      const fieldOrder = buildMongoEditedDocumentFieldOrder(document, parsed.fieldOrder)
 
       dispatch({
         type: 'stage-edit',
@@ -526,6 +526,7 @@ export function useDocumentChangesetManager({
         document,
         fieldOrder,
         isInsert: resolved.isInsert,
+        saveMode: 'replace',
       })
     } catch (e: any) {
       showAlert(t('common.alert.error'), t('mongodb.alert.invalidJsonUpdate', { error: e.message }), 'error')
@@ -544,6 +545,7 @@ export function useDocumentChangesetManager({
       document,
       fieldOrder: buildMongoDocumentFieldOrder(document, resolved.currentFieldOrder),
       isInsert: resolved.isInsert,
+      saveMode: 'patch',
     })
   }, [resolveDocumentForEdit])
 
@@ -630,6 +632,21 @@ export function useDocumentChangesetManager({
           if (errors?.length || !result?.DeleteRow.Status) {
             throw new Error(errors?.[0]?.message ?? t('mongodb.alert.deleteFailed'))
           }
+        } else if (change.type === 'update' && change.saveMode === 'replace') {
+          const replacementDocument = { ...change.document, _id: change.originalDocument._id }
+          const replacementFieldOrder = buildMongoEditedDocumentFieldOrder(replacementDocument, change.fieldOrder)
+          const { data: result, errors } = await replaceRowMutation({
+            variables: {
+              schema: graphqlSchema,
+              storageUnit: collectionName,
+              values: [{ Key: 'document', Value: stringifyMongoDocument(replacementDocument, replacementFieldOrder, 0) }],
+            },
+            context: { database: databaseName },
+          })
+
+          if (errors?.length || !result?.ReplaceRow.Status) {
+            throw new Error(errors?.[0]?.message ?? t('mongodb.alert.updateFailed'))
+          }
         } else if (change.type === 'update') {
           const { data: result, errors } = await updateStorageUnitMutation({
             variables: {
@@ -647,7 +664,7 @@ export function useDocumentChangesetManager({
         } else {
           const { data: result, error } = await rawExecute({
             variables: {
-              query: buildMongoInsertOneCommand(collectionName, change.document),
+              query: buildMongoInsertOneCommand(collectionName, change.document, change.fieldOrder),
             },
             context: { database: databaseName },
           })
@@ -683,6 +700,7 @@ export function useDocumentChangesetManager({
     deleteRowMutation,
     rawExecute,
     refresh,
+    replaceRowMutation,
     showAlert,
     state.changes,
     t,

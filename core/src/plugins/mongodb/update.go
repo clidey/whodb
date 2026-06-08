@@ -130,3 +130,119 @@ func (p *MongoDBPlugin) UpdateStorageUnit(config *engine.PluginConfig, database 
 
 	return true, nil
 }
+
+// ReplaceRow replaces a MongoDB document while preserving the authored BSON field order.
+func (p *MongoDBPlugin) ReplaceRow(config *engine.PluginConfig, database string, storageUnit string, values map[string]string) (bool, error) {
+	ctx, cancel := opCtx()
+	defer cancel()
+	client, err := DB(config)
+	if err != nil {
+		log.WithError(err).WithFields(map[string]any{
+			"hostname":    config.Credentials.Hostname,
+			"database":    database,
+			"storageUnit": storageUnit,
+		}).Error("Failed to connect to MongoDB for row replacement")
+		return false, err
+	}
+	defer disconnectClient(client)
+
+	documentJSON, ok := values["document"]
+	if !ok {
+		log.WithFields(map[string]any{
+			"hostname":      config.Credentials.Hostname,
+			"database":      database,
+			"storageUnit":   storageUnit,
+			"availableKeys": getMapKeys(values),
+		}).Error("Missing 'document' key in values map for MongoDB row replacement")
+		return false, errors.New("missing 'document' key in values map")
+	}
+
+	replacement, objectID, err := parseMongoReplacementDocument(documentJSON)
+	if err != nil {
+		log.WithError(err).WithFields(map[string]any{
+			"hostname":    config.Credentials.Hostname,
+			"database":    database,
+			"storageUnit": storageUnit,
+		}).Error("Failed to parse MongoDB replacement document")
+		return false, err
+	}
+
+	collection := client.Database(database).Collection(storageUnit)
+	filter := bson.D{{Key: "_id", Value: objectID}}
+
+	result, err := collection.ReplaceOne(ctx, filter, replacement)
+	if err != nil {
+		log.WithError(err).WithFields(map[string]any{
+			"hostname":    config.Credentials.Hostname,
+			"database":    database,
+			"storageUnit": storageUnit,
+			"objectID":    formatMongoIDForLog(objectID),
+		}).Error("Failed to replace document in MongoDB collection")
+		return false, handleMongoError(err)
+	}
+
+	if result.MatchedCount == 0 {
+		log.WithFields(map[string]any{
+			"hostname":    config.Credentials.Hostname,
+			"database":    database,
+			"storageUnit": storageUnit,
+			"objectID":    formatMongoIDForLog(objectID),
+		}).Warn("No documents matched the filter for MongoDB row replacement")
+		return false, errors.New("no documents matched the filter")
+	}
+	if result.ModifiedCount == 0 {
+		log.WithFields(map[string]any{
+			"hostname":     config.Credentials.Hostname,
+			"database":     database,
+			"storageUnit":  storageUnit,
+			"objectID":     formatMongoIDForLog(objectID),
+			"matchedCount": result.MatchedCount,
+		}).Warn("No documents were modified during MongoDB row replacement")
+		return false, errors.New("no documents were replaced")
+	}
+
+	return true, nil
+}
+
+func parseMongoReplacementDocument(documentJSON string) (bson.D, any, error) {
+	var document bson.D
+	if err := bson.UnmarshalExtJSON([]byte(documentJSON), false, &document); err != nil {
+		return nil, nil, err
+	}
+
+	idIndex := -1
+	var idValue any
+	for index, element := range document {
+		if element.Key == "_id" {
+			idIndex = index
+			idValue = element.Value
+			break
+		}
+	}
+	if idIndex < 0 {
+		return nil, nil, errors.New("missing '_id' field in the document")
+	}
+
+	objectID, err := normalizeMongoID(idValue)
+	if err != nil {
+		return nil, nil, fmt.Errorf("invalid '_id' value: %w", err)
+	}
+
+	document[idIndex].Value = objectID
+	if idIndex > 0 {
+		idElement := document[idIndex]
+		copy(document[1:idIndex+1], document[0:idIndex])
+		document[0] = idElement
+	}
+
+	return document, objectID, nil
+}
+
+func formatMongoIDForLog(id any) string {
+	switch v := id.(type) {
+	case primitive.ObjectID:
+		return v.Hex()
+	default:
+		return fmt.Sprintf("%v", v)
+	}
+}

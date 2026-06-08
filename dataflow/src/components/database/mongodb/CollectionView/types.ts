@@ -9,13 +9,16 @@ export type MongoSortDirection = 'asc' | 'desc'
 
 export type DocumentChangesetRowKey = string
 
-export interface DocumentChange {
-  type: 'update' | 'insert' | 'delete'
+interface BaseDocumentChange {
   originalDocument: Record<string, unknown>
   originalFieldOrder: string[]
   document: Record<string, unknown>
   fieldOrder: string[]
 }
+
+export type DocumentChange =
+  | (BaseDocumentChange & { type: 'update'; saveMode: 'patch' | 'replace' })
+  | (BaseDocumentChange & { type: 'insert' | 'delete' })
 
 export interface DocumentUndoEntryEdit {
   kind: 'edit'
