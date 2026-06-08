@@ -4,7 +4,6 @@ import { useTabStore } from '@/stores/useTabStore'
 import {
   SortDirection,
   useGetStorageUnitRowsLazyQuery,
-  useGetColumnsLazyQuery,
   WhereConditionType,
   type SortCondition,
   type WhereCondition,
@@ -14,7 +13,7 @@ import type { CollectionViewContextValue, MongoCollectionViewMode, MongoSortDire
 import type { Alert } from '@/components/database/shared/types'
 import type { FlatMongoFilter } from '@/components/database/mongodb/filter-collection.types'
 import { useDocumentChangesetManager } from './useDocumentChangesetManager'
-import { buildMongoTableColumns } from './mongo-table-utils'
+import { buildMongoTableColumns, parseMongoDocumentRow } from './mongo-table-utils'
 import { useI18n } from '@/i18n/useI18n'
 import { useColumnResize } from '@/components/database/shared/useColumnResize'
 
@@ -44,19 +43,17 @@ export function CollectionViewProvider({ tabId, connectionId, databaseName, coll
 
   // ---- GraphQL hooks ----
   const [getRows] = useGetStorageUnitRowsLazyQuery({ fetchPolicy: 'no-cache' })
-  const [getColumns] = useGetColumnsLazyQuery({ fetchPolicy: 'no-cache' })
 
   // ---- Core state ----
   const [loading, setLoading] = useState(true)
   const [documents, setDocuments] = useState<any[]>([])
+  const [documentFieldOrders, setDocumentFieldOrders] = useState<string[][]>([])
   const [error, setError] = useState<string | null>(null)
   const [viewMode, setViewModeState] = useState<MongoCollectionViewMode>('table')
   const [currentPage, setCurrentPage] = useState(1)
   const [total, setTotal] = useState(0)
   const [pageSize, setPageSize] = useState(50)
   const [refreshKey, setRefreshKey] = useState(0)
-  const [sampledFields, setSampledFields] = useState<string[]>([])
-  const [hasSampledFields, setHasSampledFields] = useState(false)
 
   // ---- Sorting state ----
   const [sortColumn, setSortColumn] = useState<string | null>(null)
@@ -94,6 +91,7 @@ export function CollectionViewProvider({ tabId, connectionId, databaseName, coll
     databaseName,
     collectionName,
     documents,
+    documentFieldOrders,
     pageOffset,
     refresh,
     showAlert,
@@ -131,29 +129,6 @@ export function CollectionViewProvider({ tabId, connectionId, databaseName, coll
     setViewModeState(mode)
   }, [])
 
-  const sampleCollectionFields = useCallback(async () => {
-    const conn = connections.find(c => c.id === connectionId)
-    if (!conn) return
-
-    const graphqlSchema = resolveSchemaParam(conn.type, databaseName)
-    const { data: result, error: queryError } = await getColumns({
-      variables: {
-        schema: graphqlSchema,
-        storageUnit: collectionName,
-      },
-      context: { database: databaseName },
-    })
-
-    if (queryError) {
-      setError(queryError.message)
-      setHasSampledFields(true)
-      return
-    }
-
-    setSampledFields(result?.Columns.map((column) => column.Name) ?? [])
-    setHasSampledFields(true)
-  }, [collectionName, connectionId, connections, databaseName, getColumns])
-
   useEffect(() => {
     setViewModeState('table')
     setCurrentPage(1)
@@ -162,15 +137,9 @@ export function CollectionViewProvider({ tabId, connectionId, databaseName, coll
     setActiveColumnMenu(null)
     setActiveFilter({})
     setPreferredFilterField(null)
-    setSampledFields([])
-    setHasSampledFields(false)
+    setDocumentFieldOrders([])
     changesetActions.discardChanges()
   }, [changesetActions.discardChanges, collectionName, connectionId, databaseName])
-
-  useEffect(() => {
-    if (viewMode !== 'table' || hasSampledFields) return
-    void sampleCollectionFields()
-  }, [hasSampledFields, sampleCollectionFields, viewMode])
 
   // ---- beforeunload guard ----
   useEffect(() => {
@@ -186,10 +155,10 @@ export function CollectionViewProvider({ tabId, connectionId, databaseName, coll
   }, [changesetState.hasPendingChanges])
 
   const tableColumns = useMemo(() => buildMongoTableColumns({
-    sampledFields,
     documents: documents as Record<string, unknown>[],
+    documentFieldOrders,
     changes: changesetState.changes,
-  }), [changesetState.changes, documents, sampledFields])
+  }), [changesetState.changes, documentFieldOrders, documents])
   const { columnWidths, resizingColumn, resizedColumns, handleResizeStart } = useColumnResize(tableColumns, {
     initialWidth: 160,
     minimumWidth: 80,
@@ -271,14 +240,15 @@ export function CollectionViewProvider({ tabId, connectionId, databaseName, coll
         }
 
         if (result?.Row) {
-          const parsedDocs = result.Row.Rows.map(row => {
+          const parsedRows = result.Row.Rows.map(row => {
             try {
-              return JSON.parse(row[0])
+              return parseMongoDocumentRow(row[0])
             } catch {
-              return { _raw: row[0] }
+              return { document: { _raw: row[0] }, fieldOrder: ['_raw'] }
             }
           })
-          setDocuments(parsedDocs)
+          setDocuments(parsedRows.map((row) => row.document))
+          setDocumentFieldOrders(parsedRows.map((row) => row.fieldOrder))
           setTotal(result.Row.TotalCount)
         }
       } catch (err: any) {

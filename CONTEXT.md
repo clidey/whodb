@@ -12,6 +12,10 @@ _Avoid_: MongoDB table
 A single record inside a **MongoDB Collection**.
 _Avoid_: row, JSON row
 
+**Document Field Order**:
+The order in which top-level fields are represented by a **MongoDB Document**.
+_Avoid_: alphabetical field order, frontend object key order
+
 **JSON View**:
 The MongoDB collection view that shows each **MongoDB Document** as editable JSON.
 _Avoid_: card-only view
@@ -20,9 +24,9 @@ _Avoid_: card-only view
 A MongoDB collection view that presents documents in a grid using document fields as columns.
 _Avoid_: MongoDB table
 
-**Sampled Field Set**:
-A field list inferred from a limited sample of documents for the **Collection Table View**.
-_Avoid_: complete schema
+**Visible Field Set**:
+A field list built from the currently visible **MongoDB Documents** and pending document changes for the **Collection Table View**.
+_Avoid_: sampled schema, complete schema
 
 **Unset Field**:
 A field that exists as a column in the **Collection Table View** but is absent from a specific **MongoDB Document**.
@@ -71,9 +75,12 @@ _Avoid_: expand all, jump to item
 ## Relationships
 
 - A **MongoDB Collection** contains zero or more **MongoDB Documents**.
+- A **MongoDB Document** has a **Document Field Order**.
 - A **JSON View** displays **MongoDB Documents** in their native document shape.
 - A **Collection Table View** presents **MongoDB Documents** as rows while preserving MongoDB's flexible field model.
-- A **Sampled Field Set** guides the columns shown in a **Collection Table View** but does not represent a complete MongoDB schema.
+- A **Visible Field Set** guides the columns shown in a **Collection Table View** but does not represent a complete MongoDB schema.
+- A **Visible Field Set** follows **Document Field Order** by adding fields the first time they appear in visible documents.
+- A field outside the **Visible Field Set** is not shown as a **Collection Table View** column.
 - An **Unset Field** is distinct from a field whose stored value is `null`.
 - Editing an **Unset Field** creates that field on the affected **MongoDB Document**.
 - An **Editable Scalar Field** can be edited inline in the **Collection Table View**.
@@ -124,8 +131,11 @@ _Avoid_: expand all, jump to item
 - "focus" in the sidebar means **Sidebar Focus**, not hover state or keyboard focus.
 - "auto expand" in the sidebar means **Sidebar Reveal**, not expanding every folder in the tree.
 - "leave protection" means **Workspace Tab Leave Guard**, not only the browser's refresh or close-page warning.
+- "original fields" in MongoDB means **Document Field Order**, not alphabetical field order.
 - The **Collection Table View** is the default MongoDB collection view.
-- The **Collection Table View** should build its first column set from a limited default sample, not by scanning the full collection.
+- The **Collection Table View** should not infer fields from an extra collection sample.
+- The **Collection Table View** shows fields from the current visible documents and pending document changes.
+- The **Collection Table View** should preserve first-seen **Document Field Order** rather than sorting fields alphabetically.
 - The **Collection Table View** supports sorting and filtering on top-level document fields.
 
 ### MongoDB Table Editing

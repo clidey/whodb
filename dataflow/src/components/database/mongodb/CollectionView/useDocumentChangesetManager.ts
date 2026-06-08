@@ -328,6 +328,7 @@ interface UseDocumentChangesetManagerParams {
   databaseName: string
   collectionName: string
   documents: any[]
+  documentFieldOrders: string[][]
   pageOffset: number
   refresh: () => void
   showAlert: (title: string, message: string, type: Alert['type']) => void
@@ -338,6 +339,7 @@ export function useDocumentChangesetManager({
   databaseName,
   collectionName,
   documents,
+  documentFieldOrders,
   pageOffset,
   refresh,
   showAlert,
@@ -361,13 +363,21 @@ export function useDocumentChangesetManager({
     let content = '{\n  \n}'
     if (documents.length > 0 && typeof documents[0] === 'object' && documents[0] !== null) {
       const template: Record<string, string> = {}
-      for (const key of Object.keys(documents[0])) {
+      const firstDocument = documents[0] as Record<string, unknown>
+      const addTemplateField = (key: string) => {
+        if (!Object.prototype.hasOwnProperty.call(firstDocument, key)) return
         if (key !== '_id') template[key] = ''
+      }
+      for (const key of documentFieldOrders[0] ?? []) {
+        addTemplateField(key)
+      }
+      for (const key of Object.keys(firstDocument)) {
+        addTemplateField(key)
       }
       content = JSON.stringify(template, null, 2)
     }
     dispatch({ type: 'open-add-modal', content })
-  }, [documents])
+  }, [documentFieldOrders, documents])
 
   const setAddContent = useCallback((content: string) => {
     dispatch({ type: 'set-add-content', content })

@@ -14,6 +14,11 @@ export type MongoCellCoercionResult =
   | { ok: true; value: MongoCellValue }
   | { ok: false; error: MongoCellCoercionError }
 
+export interface ParsedMongoDocumentRow {
+  document: Record<string, unknown>
+  fieldOrder: string[]
+}
+
 export type MongoFieldJsonParseResult =
   | { ok: true; value: unknown }
   | { ok: false; error: string }
@@ -54,6 +59,108 @@ function parseMongoQuotedComplexLiteralDraft(draftValue: string): string | null 
 /** Returns whether a document owns the requested top-level field. */
 export function hasDocumentField(doc: Record<string, unknown>, field: string): boolean {
   return Object.prototype.hasOwnProperty.call(doc, field)
+}
+
+function skipJsonWhitespace(content: string, startIndex: number): number {
+  let index = startIndex
+  while (index < content.length && /\s/.test(content[index])) index += 1
+  return index
+}
+
+function readJsonStringLiteral(content: string, startIndex: number): { value: string; nextIndex: number } {
+  for (let index = startIndex + 1; index < content.length; index += 1) {
+    if (content[index] === '\\') {
+      index += 1
+      continue
+    }
+
+    if (content[index] === '"') {
+      return {
+        value: JSON.parse(content.slice(startIndex, index + 1)) as string,
+        nextIndex: index + 1,
+      }
+    }
+  }
+
+  return { value: '', nextIndex: content.length }
+}
+
+function skipJsonValue(content: string, startIndex: number): number {
+  let depth = 0
+  let inString = false
+  let escaped = false
+
+  for (let index = skipJsonWhitespace(content, startIndex); index < content.length; index += 1) {
+    const character = content[index]
+
+    if (inString) {
+      if (escaped) {
+        escaped = false
+        continue
+      }
+      if (character === '\\') {
+        escaped = true
+        continue
+      }
+      if (character === '"') inString = false
+      continue
+    }
+
+    if (character === '"') {
+      inString = true
+      continue
+    }
+
+    if (character === '{' || character === '[') {
+      depth += 1
+      continue
+    }
+
+    if (character === '}' || character === ']') {
+      if (depth === 0) return index
+      depth -= 1
+      continue
+    }
+
+    if (character === ',' && depth === 0) return index
+  }
+
+  return content.length
+}
+
+function readTopLevelJsonObjectKeys(content: string): string[] {
+  const keys: string[] = []
+  let index = skipJsonWhitespace(content, 0)
+  if (content[index] !== '{') return keys
+
+  index += 1
+  while (index < content.length) {
+    index = skipJsonWhitespace(content, index)
+    if (content[index] === '}') return keys
+
+    const key = readJsonStringLiteral(content, index)
+    keys.push(key.value)
+
+    index = skipJsonWhitespace(content, key.nextIndex)
+    if (content[index] === ':') index += 1
+
+    index = skipJsonWhitespace(content, skipJsonValue(content, index))
+    if (content[index] === ',') {
+      index += 1
+      continue
+    }
+    if (content[index] === '}') return keys
+  }
+
+  return keys
+}
+
+/** Parses one MongoDB document row and preserves its top-level field order. */
+export function parseMongoDocumentRow(content: string): ParsedMongoDocumentRow {
+  return {
+    document: JSON.parse(content) as Record<string, unknown>,
+    fieldOrder: readTopLevelJsonObjectKeys(content),
+  }
 }
 
 /** Builds the document rows that should be rendered after applying pending changes. */
@@ -102,28 +209,38 @@ export function buildRenderedMongoDocuments({
   return [...inserted, ...existing]
 }
 
-/** Builds the table column order from sampled fields, current documents, and pending changes. */
+/** Builds the table column order from current documents and pending changes. */
 export function buildMongoTableColumns({
-  sampledFields,
   documents,
+  documentFieldOrders,
   changes,
 }: {
-  sampledFields: string[]
   documents: Record<string, unknown>[]
+  documentFieldOrders: string[][]
   changes: Map<DocumentChangesetRowKey, DocumentChange>
 }): string[] {
-  const fields = new Set<string>(['_id', ...sampledFields])
+  const columns = ['_id']
+  const fields = new Set<string>(columns)
 
-  for (const doc of documents) {
-    Object.keys(doc).forEach((field) => fields.add(field))
+  const addField = (field: string) => {
+    if (fields.has(field)) return
+    fields.add(field)
+    columns.push(field)
+  }
+
+  for (const [index, doc] of documents.entries()) {
+    const fieldOrder = documentFieldOrders[index] ?? []
+    fieldOrder.forEach((field) => {
+      if (hasDocumentField(doc, field)) addField(field)
+    })
+    Object.keys(doc).forEach(addField)
   }
 
   for (const change of changes.values()) {
-    Object.keys(change.document).forEach((field) => fields.add(field))
+    Object.keys(change.document).forEach(addField)
   }
 
-  const sorted = [...fields].filter((field) => field !== '_id').sort((left, right) => left.localeCompare(right))
-  return ['_id', ...sorted]
+  return columns
 }
 
 /** Returns whether a rendered table cell differs from its original document value. */

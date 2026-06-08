@@ -1,3 +1,3 @@
-# Bound MongoDB Field Inference To A Document Sample
+# Build MongoDB Table Columns From Visible Fields
 
-MongoDB collection table columns are inferred from a bounded document sample so collection browsing stays responsive on large collections. The resulting **Sampled Field Set** is intentionally not a complete schema; fields outside the sample can still appear through the current page or pending document changes.
+MongoDB **Collection Table View** columns are built from the **Visible Field Set** so collection browsing reflects the documents currently on screen and any pending document changes. The view does not infer extra fields from a collection sample. The `_id` column remains first. Other visible fields are added in first-seen **Document Field Order** while scanning current visible documents from top to bottom; fields introduced only by pending document changes are appended afterward in change order.

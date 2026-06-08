@@ -17,6 +17,7 @@
 package mongodb
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -99,16 +100,6 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, req *engine.GetRows
 	}
 	defer cursor.Close(ctx)
 
-	var rowsResult []bson.M
-	if err = cursor.All(ctx, &rowsResult); err != nil {
-		log.WithError(err).WithFields(map[string]any{
-			"hostname":   config.Credentials.Hostname,
-			"database":   database,
-			"collection": collection,
-		}).Error("Failed to decode MongoDB query results")
-		return nil, err
-	}
-
 	result := &engine.GetRowsResult{
 		Columns: []engine.Column{
 			{Name: "document", Type: "Document"},
@@ -116,8 +107,18 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, req *engine.GetRows
 		Rows: [][]string{},
 	}
 
-	for _, doc := range rowsResult {
-		jsonBytes, err := json.Marshal(doc)
+	for cursor.Next(ctx) {
+		var doc bson.D
+		if err = cursor.Decode(&doc); err != nil {
+			log.WithError(err).WithFields(map[string]any{
+				"hostname":   config.Credentials.Hostname,
+				"database":   database,
+				"collection": collection,
+			}).Error("Failed to decode MongoDB query result")
+			return nil, err
+		}
+
+		jsonBytes, err := marshalMongoDocumentJSON(doc)
 		if err != nil {
 			log.WithError(err).WithFields(map[string]any{
 				"hostname":   config.Credentials.Hostname,
@@ -129,6 +130,15 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, req *engine.GetRows
 		result.Rows = append(result.Rows, []string{string(jsonBytes)})
 	}
 
+	if err := cursor.Err(); err != nil {
+		log.WithError(err).WithFields(map[string]any{
+			"hostname":   config.Credentials.Hostname,
+			"database":   database,
+			"collection": collection,
+		}).Error("MongoDB cursor error while retrieving rows")
+		return nil, err
+	}
+
 	// Wait for count query to complete
 	if countErr := <-countDone; countErr != nil {
 		log.WithError(countErr).Warn("Failed to get MongoDB document count")
@@ -137,6 +147,68 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, req *engine.GetRows
 	}
 
 	return result, nil
+}
+
+func marshalMongoDocumentJSON(doc bson.D) ([]byte, error) {
+	var buffer bytes.Buffer
+	if err := writeMongoDocumentJSON(&buffer, doc); err != nil {
+		return nil, err
+	}
+	return buffer.Bytes(), nil
+}
+
+func writeMongoDocumentJSON(buffer *bytes.Buffer, doc bson.D) error {
+	buffer.WriteByte('{')
+	for i, elem := range doc {
+		if i > 0 {
+			buffer.WriteByte(',')
+		}
+
+		keyBytes, err := json.Marshal(elem.Key)
+		if err != nil {
+			return err
+		}
+		buffer.Write(keyBytes)
+		buffer.WriteByte(':')
+
+		if err := writeMongoValueJSON(buffer, elem.Value); err != nil {
+			return err
+		}
+	}
+	buffer.WriteByte('}')
+	return nil
+}
+
+func writeMongoArrayJSON(buffer *bytes.Buffer, values []any) error {
+	buffer.WriteByte('[')
+	for i, value := range values {
+		if i > 0 {
+			buffer.WriteByte(',')
+		}
+		if err := writeMongoValueJSON(buffer, value); err != nil {
+			return err
+		}
+	}
+	buffer.WriteByte(']')
+	return nil
+}
+
+func writeMongoValueJSON(buffer *bytes.Buffer, value any) error {
+	switch v := value.(type) {
+	case bson.D:
+		return writeMongoDocumentJSON(buffer, v)
+	case bson.A:
+		return writeMongoArrayJSON(buffer, []any(v))
+	case []any:
+		return writeMongoArrayJSON(buffer, v)
+	default:
+		jsonBytes, err := json.Marshal(v)
+		if err != nil {
+			return err
+		}
+		buffer.Write(jsonBytes)
+		return nil
+	}
 }
 
 func (p *MongoDBPlugin) GetRowCount(config *engine.PluginConfig, database, collection string, where *model.WhereCondition) (int64, error) {

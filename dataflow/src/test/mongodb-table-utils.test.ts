@@ -6,24 +6,31 @@ import {
   coerceMongoCellDraft,
   hasDocumentField,
   isMongoCellChanged,
+  parseMongoDocumentRow,
   parseMongoFieldJsonDraft,
 } from '@/components/database/mongodb/CollectionView/mongo-table-utils'
 
 describe('buildMongoTableColumns', () => {
-  it('keeps _id first and sorts discovered fields alphabetically', () => {
+  it('keeps _id first and preserves first-seen document field order', () => {
     const columns = buildMongoTableColumns({
-      sampledFields: ['status', 'profile', 'name'],
-      documents: [{ _id: '1', age: 21 }],
+      documents: [
+        { _id: '1', status: 'active', profile: {}, name: 'Ada', age: 21 },
+        { _id: '2', email: 'ada@example.com', name: 'Ada', createdAt: '2026-01-01' },
+      ],
+      documentFieldOrders: [
+        ['_id', 'status', 'profile', 'name', 'age'],
+        ['_id', 'email', 'name', 'createdAt'],
+      ],
       changes: new Map(),
     })
 
-    expect(columns).toEqual(['_id', 'age', 'name', 'profile', 'status'])
+    expect(columns).toEqual(['_id', 'status', 'profile', 'name', 'age', 'email', 'createdAt'])
   })
 
   it('includes fields introduced by pending changes', () => {
     const columns = buildMongoTableColumns({
-      sampledFields: [],
       documents: [{ _id: '1', name: 'Ada' }],
+      documentFieldOrders: [['_id', 'name']],
       changes: new Map([
         ['existing-0', {
           type: 'update',
@@ -34,6 +41,21 @@ describe('buildMongoTableColumns', () => {
     })
 
     expect(columns).toEqual(['_id', 'name', 'role'])
+  })
+})
+
+describe('parseMongoDocumentRow', () => {
+  it('preserves top-level field order from the raw JSON document', () => {
+    const parsed = parseMongoDocumentRow('{"z":1,"nested":{"b":2,"a":1},"arr":[{"y":1,"x":2}],"_id":"1","a":3}')
+
+    expect(parsed.fieldOrder).toEqual(['z', 'nested', 'arr', '_id', 'a'])
+    expect(parsed.document).toEqual({
+      z: 1,
+      nested: { b: 2, a: 1 },
+      arr: [{ y: 1, x: 2 }],
+      _id: '1',
+      a: 3,
+    })
   })
 })
 
