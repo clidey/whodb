@@ -28,7 +28,7 @@ require (
 	github.com/brianvoe/gofakeit/v7 v7.15.0
 	github.com/deckarep/golang-set/v2 v2.9.0
 	github.com/dromara/carbon/v2 v2.6.16
-	github.com/duckdb/duckdb-go/v2 v2.10503.0
+	github.com/duckdb/duckdb-go/v2 v2.10503.1
 	github.com/elastic/elastic-transport-go/v8 v8.11.0
 	github.com/elastic/go-elasticsearch/v8 v8.19.6
 	github.com/go-chi/chi/v5 v5.3.0
