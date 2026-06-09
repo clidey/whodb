@@ -67,3 +67,5 @@ tools/
 frontend/build-ee
 frontend/.pi-lens
 core/.pi-lens
+.medusa
+.deepsec

@@ -19,6 +19,7 @@ package memcached
 import (
 	"reflect"
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/clidey/whodb/core/src/engine"
@@ -144,5 +145,35 @@ func TestMemcachedMetadataAndHelpers(t *testing.T) {
 	}
 	if pluginDef.PluginFunctions == nil {
 		t.Fatal("expected plugin functions to be configured")
+	}
+}
+
+func TestValidateMemcachedKey(t *testing.T) {
+	tests := []struct {
+		name    string
+		key     string
+		wantErr bool
+	}{
+		{"simple key", "order:1", false},
+		{"utf8 key", "cafe:été", false},
+		{"empty key", "", true},
+		{"space", "order 1", true},
+		{"tab", "order\t1", true},
+		{"newline", "order\nflush_all", true},
+		{"carriage return", "order\r\nflush_all", true},
+		{"delete control", "order" + string(rune(0x7f)), true},
+		{"too long", strings.Repeat("a", maxMemcachedKeyLength+1), true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateMemcachedKey(tt.key)
+			if tt.wantErr && err == nil {
+				t.Fatal("expected key validation error")
+			}
+			if !tt.wantErr && err != nil {
+				t.Fatalf("expected key to be valid, got %v", err)
+			}
+		})
 	}
 }
