@@ -268,7 +268,7 @@ func checkedMemcachedKey(key string) (string, error) {
 	if len(key) > maxMemcachedKeyLength {
 		return "", fmt.Errorf("memcached key exceeds %d bytes", maxMemcachedKeyLength)
 	}
-	for i := 0; i < len(key); i++ {
+	for i := range len(key) {
 		if key[i] <= ' ' || key[i] == 0x7f {
 			return "", errors.New("memcached key cannot contain whitespace or control characters")
 		}
