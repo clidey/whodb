@@ -1443,6 +1443,7 @@ func TestHistoryCmd_HasSubcommands(t *testing.T) {
 	subcommands := map[string]bool{
 		"list":   false,
 		"search": false,
+		"load":   false,
 		"clear":  false,
 	}
 
@@ -1513,6 +1514,52 @@ func TestHistoryClearCmd_NoError(t *testing.T) {
 	err := historyClearCmd.RunE(historyClearCmd, []string{})
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
+	}
+}
+
+func TestHistoryLoadCmd_PlainJSONAndMissingID(t *testing.T) {
+	cleanup := setupTestEnv(t)
+	defer cleanup()
+
+	mgr, err := history.NewManager()
+	if err != nil {
+		t.Fatalf("Failed to create history manager: %v", err)
+	}
+	if err := mgr.Add("SELECT * FROM users", true, "sqlite"); err != nil {
+		t.Fatalf("Failed to add history entry: %v", err)
+	}
+	entry := mgr.GetAll()[0]
+
+	historyFormat = "plain"
+	outBuf, errBuf := setCommandBuffers(t, historyLoadCmd)
+	if err := historyLoadCmd.RunE(historyLoadCmd, []string{entry.ID}); err != nil {
+		t.Fatalf("history load failed: %v", err)
+	}
+	if strings.TrimSpace(outBuf.String()) != entry.Query {
+		t.Fatalf("unexpected loaded query %q", outBuf.String())
+	}
+	if errBuf.Len() != 0 {
+		t.Fatalf("expected no stderr from plain load, got %q", errBuf.String())
+	}
+
+	historyFormat = "json"
+	jsonOut, jsonErr := setCommandBuffers(t, historyLoadCmd)
+	if err := historyLoadCmd.RunE(historyLoadCmd, []string{entry.ID}); err != nil {
+		t.Fatalf("history load json failed: %v", err)
+	}
+	var loaded history.Entry
+	if err := json.Unmarshal(jsonOut.Bytes(), &loaded); err != nil {
+		t.Fatalf("failed to decode loaded history entry: %v", err)
+	}
+	if loaded.ID != entry.ID || loaded.Query != entry.Query || loaded.Database != entry.Database || !loaded.Success {
+		t.Fatalf("unexpected loaded history entry: %+v", loaded)
+	}
+	if jsonErr.Len() != 0 {
+		t.Fatalf("expected no stderr from json load, got %q", jsonErr.String())
+	}
+
+	if err := historyLoadCmd.RunE(historyLoadCmd, []string{"missing-id"}); err == nil || !strings.Contains(err.Error(), "entry \"missing-id\" not found") {
+		t.Fatalf("expected missing-id error, got %v", err)
 	}
 }
 
