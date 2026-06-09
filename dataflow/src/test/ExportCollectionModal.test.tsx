@@ -32,9 +32,10 @@ describe('ExportCollectionModal', () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue(
-        new Response(new Blob(['xlsx']), {
+        new Response('xlsx', {
           status: 200,
           headers: {
+            'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'Content-Disposition': 'attachment; filename="analytics_events.xlsx"',
           },
         }),
@@ -76,7 +77,9 @@ describe('ExportCollectionModal', () => {
       )
     })
 
-    expect(downloadBlob).toHaveBeenCalledWith(expect.any(Blob), 'analytics_events.xlsx')
+    const [[blob, filename]] = vi.mocked(downloadBlob).mock.calls
+    expect(filename).toBe('analytics_events.xlsx')
+    expect(await blob.text()).toBe('xlsx')
   })
 
   it('includes the latest filter and limit when exporting', async () => {
