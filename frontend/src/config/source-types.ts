@@ -19,7 +19,6 @@ import {
 	DataShape,
 	type SourceTypesQuery,
 	SourceAction,
-	SourceConnectionFieldSection,
 	SourceModel,
 	SourceObjectKind,
 	SourceSurface,
