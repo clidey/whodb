@@ -52,7 +52,7 @@ RUN apk add --no-cache \
 # Extract DuckDB version from go.mod: duckdb-go/v2 v2.XYYYZ.0 → vX.YY.Z
 COPY ./core/go.mod /tmp/go.mod
 ARG TARGETARCH
-RUN ENCODED=$(grep 'github.com/duckdb/duckdb-go/v2 ' /tmp/go.mod | awk '{print $2}' | sed 's/v2\.//;s/\.0$//') && \
+RUN ENCODED=$(grep 'github.com/duckdb/duckdb-go/v2 ' /tmp/go.mod | awk '{print $2}' | sed 's/v2\.//;s/\.[0-9]*$//') && \
     MAJOR=$((ENCODED / 10000)) && MINOR=$(( (ENCODED % 10000) / 100 )) && PATCH=$((ENCODED % 100)) && \
     DUCKDB_VERSION="v${MAJOR}.${MINOR}.${PATCH}" && \
     echo "DuckDB version: $DUCKDB_VERSION" && \
