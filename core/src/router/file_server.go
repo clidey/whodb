@@ -79,6 +79,9 @@ func newStaticFileHandler(staticFS fs.FS, baseHref string) http.Handler {
 	server := http.FileServer(http.FS(staticFS))
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if hasExtension(r.URL.Path) {
+			if isHashedAsset(r.URL.Path) {
+				w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+			}
 			server.ServeHTTP(w, r)
 		} else {
 			data, err := renderIndexHTML(staticFS, baseHref)
@@ -89,6 +92,7 @@ func newStaticFileHandler(staticFS fs.FS, baseHref string) http.Handler {
 			}
 
 			w.Header().Set("Content-Type", "text/html")
+			w.Header().Set("Cache-Control", "no-cache")
 			_, err = w.Write(data)
 			if err != nil {
 				return
@@ -121,4 +125,8 @@ func renderIndexHTML(staticFS fs.FS, baseHref string) ([]byte, error) {
 func hasExtension(pathFile string) bool {
 	ext := strings.ToLower(path.Ext(pathFile))
 	return ext != ""
+}
+
+func isHashedAsset(urlPath string) bool {
+	return strings.Contains(urlPath, "/assets/")
 }
