@@ -31,6 +31,7 @@ export function CollectionViewColumnHeader({ column, index }: CollectionViewColu
   const isSorted = state.sortColumn === column
   const hasFilter = Object.prototype.hasOwnProperty.call(state.activeFilter, column)
   const width = state.columnWidths[column] || 160
+  const fieldType = state.fieldTypes[column]
 
   return (
     <th
@@ -53,9 +54,11 @@ export function CollectionViewColumnHeader({ column, index }: CollectionViewColu
             )}
             {hasFilter && <ListFilter className="h-3 w-3 shrink-0 text-primary" />}
           </div>
-          <span className="truncate text-xs font-normal text-muted-foreground/80">
-            {t('mongodb.table.fieldType')}
-          </span>
+          {fieldType && (
+            <span className="truncate text-xs font-normal text-muted-foreground/80">
+              {fieldType}
+            </span>
+          )}
         </div>
 
         <DropdownMenu

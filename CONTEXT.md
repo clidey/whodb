@@ -28,6 +28,10 @@ _Avoid_: MongoDB table
 A field list built from the currently visible **MongoDB Documents** and pending document changes for the **Collection Table View**.
 _Avoid_: sampled schema, complete schema
 
+**Visible Field Type Hint**:
+A type label shown for a field in the **Visible Field Set**.
+_Avoid_: schema type, fixed collection type
+
 **Unset Field**:
 A field that exists as a column in the **Collection Table View** but is absent from a specific **MongoDB Document**.
 _Avoid_: null, empty string
@@ -84,6 +88,8 @@ _Avoid_: expand all, jump to item
 - A **Collection Table View** presents **MongoDB Documents** as rows while preserving MongoDB's flexible field model.
 - A **Visible Field Set** guides the columns shown in a **Collection Table View** but does not represent a complete MongoDB schema.
 - A **Visible Field Set** follows **Document Field Order** by adding fields the first time they appear in visible documents.
+- A **Visible Field Type Hint** describes a field in the **Visible Field Set** and may be `mixed` when observed or inferred field values use multiple types.
+- A **Visible Field Type Hint** does not add fields to the **Visible Field Set**.
 - A field outside the **Visible Field Set** is not shown as a **Collection Table View** column.
 - An **Unset Field** is distinct from a field whose stored value is `null`.
 - Editing an **Unset Field** creates that field on the affected **MongoDB Document**.
@@ -141,6 +147,7 @@ _Avoid_: expand all, jump to item
 - "original fields" in MongoDB means **Document Field Order**, not alphabetical field order.
 - The **Collection Table View** is the default MongoDB collection view.
 - The **Collection Table View** should not infer fields from an extra collection sample.
+- Type information in the **Collection Table View** is a **Visible Field Type Hint**, not a complete schema guarantee.
 - The **Collection Table View** shows fields from the current visible documents and pending document changes.
 - The **Collection Table View** should preserve first-seen **Document Field Order** rather than sorting fields alphabetically.
 - The **Collection Table View** supports sorting and filtering on top-level document fields.

@@ -177,6 +177,90 @@ export function buildMongoTableColumns({
   return columns
 }
 
+function inferMongoVisibleFieldType(field: string, value: unknown): string {
+  if (value === null) return 'null'
+  if (Array.isArray(value)) return 'array'
+
+  switch (typeof value) {
+    case 'string':
+      return field === '_id' && /^[a-fA-F0-9]{24}$/.test(value) ? 'ObjectId' : 'string'
+    case 'number':
+      return Number.isInteger(value) ? 'int' : 'double'
+    case 'boolean':
+      return 'bool'
+    case 'object':
+      return 'object'
+    default:
+      return 'mixed'
+  }
+}
+
+function mergeMongoVisibleFieldTypes(current: string | undefined, next: string): string {
+  if (!current) return next
+  if (current === next) return current
+  return 'mixed'
+}
+
+function areMongoCellValuesEqual(left: unknown, right: unknown): boolean {
+  if (Object.is(left, right)) return true
+
+  if (Array.isArray(left) || Array.isArray(right)) {
+    if (!Array.isArray(left) || !Array.isArray(right)) return false
+    if (left.length !== right.length) return false
+    return left.every((item, index) => areMongoCellValuesEqual(item, right[index]))
+  }
+
+  if (left === null || right === null) return false
+  if (typeof left !== 'object' || typeof right !== 'object') return false
+
+  const leftObject = left as Record<string, unknown>
+  const rightObject = right as Record<string, unknown>
+  const leftKeys = Object.keys(leftObject)
+  const rightKeys = Object.keys(rightObject)
+  if (leftKeys.length !== rightKeys.length) return false
+
+  return leftKeys.every((key) => (
+    hasDocumentField(rightObject, key)
+    && areMongoCellValuesEqual(leftObject[key], rightObject[key])
+  ))
+}
+
+/** Builds MongoDB type hints from the currently visible documents and pending changes. */
+export function buildMongoVisibleFieldTypeMap({
+  documents,
+  documentFieldOrders,
+  changes,
+  newRowOrder,
+  pageOffset,
+}: {
+  documents: Record<string, unknown>[]
+  documentFieldOrders: string[][]
+  changes: Map<DocumentChangesetRowKey, DocumentChange>
+  newRowOrder: DocumentChangesetRowKey[]
+  pageOffset: number
+}): Record<string, string> {
+  const fieldTypes: Record<string, string> = {}
+  const renderedDocuments = buildRenderedMongoDocuments({
+    documents,
+    documentFieldOrders,
+    changes,
+    newRowOrder,
+    pageOffset,
+  })
+
+  for (const item of renderedDocuments) {
+    for (const field of buildMongoDocumentFieldOrder(item.doc, item.fieldOrder)) {
+      if (!hasDocumentField(item.doc, field)) continue
+      fieldTypes[field] = mergeMongoVisibleFieldTypes(
+        fieldTypes[field],
+        inferMongoVisibleFieldType(field, item.doc[field]),
+      )
+    }
+  }
+
+  return fieldTypes
+}
+
 /** Returns whether a rendered table cell differs from its original document value. */
 export function isMongoCellChanged(
   originalDocument: Record<string, unknown>,
@@ -186,7 +270,7 @@ export function isMongoCellChanged(
   const originalHasField = hasDocumentField(originalDocument, field)
   const nextHasField = hasDocumentField(document, field)
   if (originalHasField !== nextHasField) return true
-  return !Object.is(originalDocument[field], document[field])
+  return !areMongoCellValuesEqual(originalDocument[field], document[field])
 }
 
 /** Converts an edited cell draft back to the correct MongoDB scalar value. */

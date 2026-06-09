@@ -111,6 +111,38 @@ func TestRawExecuteQueryError(t *testing.T) {
 	}
 }
 
+func TestReplaceRowMutationErrorReturnsGraphQLResponse(t *testing.T) {
+	mock := testutil.NewPluginMock(engine.DatabaseType("Test"))
+	mock.StorageUnitExistsFunc = func(*engine.PluginConfig, string, string) (bool, error) { return true, nil }
+	mock.ReplaceRowFunc = func(*engine.PluginConfig, string, string, map[string]string) (bool, error) {
+		return false, errors.New("replace failed")
+	}
+	setEngineMock(t, mock)
+
+	srv := handler.NewDefaultServer(NewExecutableSchema(Config{Resolvers: &Resolver{}}))
+	body, _ := json.Marshal(map[string]any{
+		"query": `mutation ReplaceRow($schema: String!, $storageUnit: String!, $values: [RecordInput!]!) {
+			ReplaceRow(schema: $schema, storageUnit: $storageUnit, values: $values) { Status }
+		}`,
+		"variables": map[string]any{
+			"schema":      "public",
+			"storageUnit": "users",
+			"values": []map[string]any{
+				{"Key": "document", "Value": `{"_id":"1","name":"alice"}`},
+			},
+		},
+	})
+	req := httptest.NewRequest(http.MethodPost, "/api/query", bytes.NewBuffer(body))
+	req = req.WithContext(context.WithValue(req.Context(), auth.AuthKey_Credentials, &engine.Credentials{Type: "Test"}))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK || !strings.Contains(w.Body.String(), "replace failed") {
+		t.Fatalf("expected replace error in graphql response, got code=%d body=%s", w.Code, w.Body.String())
+	}
+}
+
 func TestAIModelQueryMissingAPIKey(t *testing.T) {
 	mock := testutil.NewPluginMock(engine.DatabaseType("Test"))
 	setEngineMock(t, mock)

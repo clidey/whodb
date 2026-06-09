@@ -66,6 +66,7 @@ export interface CollectionViewState {
   error: string | null
   viewMode: MongoCollectionViewMode
   tableColumns: string[]
+  fieldTypes: Record<string, string>
   currentPage: number
   pageSize: number
   total: number

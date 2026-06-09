@@ -76,7 +76,6 @@ export const enMongodbMessages = {
 
   'mongodb.error.uniqueFieldsOnly': 'Each field can only appear once in the filter conditions.',
   'mongodb.table.idBadge': 'ID',
-  'mongodb.table.fieldType': 'field',
   'mongodb.table.columnActions': 'Column Actions',
   'mongodb.table.sortAsc': 'Sort Ascending',
   'mongodb.table.sortDesc': 'Sort Descending',

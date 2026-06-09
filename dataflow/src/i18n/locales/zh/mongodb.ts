@@ -67,7 +67,6 @@ export const zhMongodbMessages = {
 
   'mongodb.error.uniqueFieldsOnly': '每个字段在筛选条件中只能出现一次。',
   'mongodb.table.idBadge': 'ID',
-  'mongodb.table.fieldType': '字段',
   'mongodb.table.columnActions': '列操作',
   'mongodb.table.sortAsc': '升序排序',
   'mongodb.table.sortDesc': '降序排序',

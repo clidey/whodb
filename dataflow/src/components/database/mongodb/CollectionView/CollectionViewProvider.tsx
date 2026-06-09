@@ -13,7 +13,7 @@ import type { CollectionViewContextValue, MongoCollectionViewMode, MongoSortDire
 import type { Alert } from '@/components/database/shared/types'
 import type { FlatMongoFilter } from '@/components/database/mongodb/filter-collection.types'
 import { useDocumentChangesetManager } from './useDocumentChangesetManager'
-import { buildMongoTableColumns, parseMongoDocumentRow } from './mongo-table-utils'
+import { buildMongoTableColumns, buildMongoVisibleFieldTypeMap, parseMongoDocumentRow } from './mongo-table-utils'
 import { useI18n } from '@/i18n/useI18n'
 import { useColumnResize } from '@/components/database/shared/useColumnResize'
 
@@ -160,6 +160,13 @@ export function CollectionViewProvider({ tabId, connectionId, databaseName, coll
     changes: changesetState.changes,
     pageOffset,
   }), [changesetState.changes, documentFieldOrders, documents, pageOffset])
+  const fieldTypes = useMemo(() => buildMongoVisibleFieldTypeMap({
+    documents: documents as Record<string, unknown>[],
+    documentFieldOrders,
+    changes: changesetState.changes,
+    newRowOrder: changesetState.newRowOrder,
+    pageOffset,
+  }), [changesetState.changes, changesetState.newRowOrder, documentFieldOrders, documents, pageOffset])
   const { columnWidths, resizingColumn, resizedColumns, handleResizeStart } = useColumnResize(tableColumns, {
     initialWidth: 160,
     minimumWidth: 80,
@@ -321,6 +328,7 @@ export function CollectionViewProvider({ tabId, connectionId, databaseName, coll
     error,
     viewMode,
     tableColumns,
+    fieldTypes,
     currentPage,
     pageSize,
     total,

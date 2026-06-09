@@ -8,6 +8,7 @@ import {
   useRawExecuteLazyQuery,
 } from '@graphql'
 import { resolveSchemaParam } from '@/utils/database-features'
+import { formatGraphQLErrorMessage } from '@/utils/graphql-error'
 import {
   buildMongoDocumentFieldOrder,
   buildMongoEditedDocumentFieldOrder,
@@ -676,7 +677,7 @@ export function useDocumentChangesetManager({
 
         successfulRowKeys.push(rowKey)
       } catch (error) {
-        failedMessages.push(error instanceof Error ? error.message : String(error))
+        failedMessages.push(formatGraphQLErrorMessage(error))
       }
     }
 

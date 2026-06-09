@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   buildMongoTableColumns,
+  buildMongoVisibleFieldTypeMap,
   buildRenderedMongoDocuments,
   coerceMongoCellDraft,
   hasDocumentField,
@@ -75,6 +76,41 @@ describe('buildMongoTableColumns', () => {
   })
 })
 
+describe('buildMongoVisibleFieldTypeMap', () => {
+  it('infers MongoDB field type hints from visible documents and pending changes', () => {
+    const fieldTypes = buildMongoVisibleFieldTypeMap({
+      documents: [
+        { _id: '507f1f77bcf86cd799439011', name: 'Ada', count: 1, profile: { role: 'admin' } },
+        { _id: '2', name: 'Grace', count: 1.5, active: true },
+      ],
+      documentFieldOrders: [
+        ['_id', 'name', 'count', 'profile'],
+        ['_id', 'name', 'count', 'active'],
+      ],
+      changes: new Map([
+        ['existing-0', {
+          type: 'update',
+          originalDocument: { _id: '507f1f77bcf86cd799439011', name: 'Ada', count: 1, profile: { role: 'admin' } },
+          originalFieldOrder: ['_id', 'name', 'count', 'profile'],
+          document: { _id: '507f1f77bcf86cd799439011', name: 'Ada', count: 2, tags: ['founder'] },
+          fieldOrder: ['_id', 'name', 'count', 'tags'],
+          saveMode: 'replace',
+        }],
+      ]),
+      newRowOrder: [],
+      pageOffset: 0,
+    })
+
+    expect(fieldTypes).toEqual({
+      _id: 'mixed',
+      name: 'string',
+      count: 'mixed',
+      tags: 'array',
+      active: 'bool',
+    })
+  })
+})
+
 describe('parseMongoDocumentRow', () => {
   it('preserves top-level field order from the raw JSON document', () => {
     const parsed = parseMongoDocumentRow('{"z":1,"nested":{"b":2,"a":1},"arr":[{"y":1,"x":2}],"_id":"1","a":3}')
@@ -139,6 +175,36 @@ describe('MongoDB table cell helpers', () => {
 
   it('detects fields added by editing an unset cell', () => {
     expect(isMongoCellChanged({ _id: '1' }, { _id: '1', status: 'active' }, 'status')).toBe(true)
+  })
+
+  it('does not mark unchanged complex values from JSON document edits as changed', () => {
+    const originalDocument = {
+      _id: '1',
+      tags: ['popular', 'new'],
+      metadata: { category: 'widgets', dimensions: { width: 10, height: 20 } },
+      name: 'Pro Widget',
+    }
+    const editedDocument = JSON.parse(JSON.stringify({
+      ...originalDocument,
+      name: 'Pro Widget Updated',
+    })) as Record<string, unknown>
+
+    expect(isMongoCellChanged(originalDocument, editedDocument, 'name')).toBe(true)
+    expect(isMongoCellChanged(originalDocument, editedDocument, 'tags')).toBe(false)
+    expect(isMongoCellChanged(originalDocument, editedDocument, 'metadata')).toBe(false)
+  })
+
+  it('detects nested complex value edits', () => {
+    expect(isMongoCellChanged(
+      { _id: '1', tags: ['popular', 'new'], metadata: { stock: 10 } },
+      { _id: '1', tags: ['popular', 'sale'], metadata: { stock: 10 } },
+      'tags',
+    )).toBe(true)
+    expect(isMongoCellChanged(
+      { _id: '1', tags: ['popular', 'new'], metadata: { stock: 10 } },
+      { _id: '1', tags: ['popular', 'new'], metadata: { stock: 11 } },
+      'metadata',
+    )).toBe(true)
   })
 
   it('preserves existing scalar types when coercing cell drafts', () => {
