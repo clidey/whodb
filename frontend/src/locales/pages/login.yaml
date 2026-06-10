@@ -56,6 +56,10 @@ en_US:
   advancedFields.debug: Debug
   advancedFields.urlParams: URL Params
   advancedFields.dnsEnabled: DNS Enabled
+  posthog.apiKey: API Key
+  posthog.enterApiKey: Enter PostHog API Key
+  posthog.projectId: Project ID
+  posthog.enterProjectId: Enter PostHog Project ID
   testConnection: Test
   testConnectionSuccess: Connection successful
   testConnectionFailed: "Connection failed: {error}"

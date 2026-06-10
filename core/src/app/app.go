@@ -71,6 +71,16 @@ func registeredPluginNames() []string {
 	return pluginNames
 }
 
+func registeredSourceNames() []string {
+	var names []string
+	for _, spec := range source.RegisteredTypes() {
+		if spec.DriverID != "" && spec.DriverID != "database" {
+			names = append(names, spec.Label)
+		}
+	}
+	return names
+}
+
 func resolvePort() string {
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -147,6 +157,10 @@ func Run(config AppConfig, staticFiles embed.FS) {
 	pluginNames := registeredPluginNames()
 	log.Alwaysf("go=%s os=%s arch=%s mode=%s plugins=[%s]",
 		runtime.Version(), runtime.GOOS, runtime.GOARCH, mode, strings.Join(pluginNames, ", "))
+
+	if sourceNames := registeredSourceNames(); len(sourceNames) > 0 {
+		log.Alwaysf("sources=[%s]", strings.Join(sourceNames, ", "))
+	}
 
 	settingsCfg := settings.Get()
 
