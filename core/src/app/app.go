@@ -72,13 +72,15 @@ func registeredPluginNames() []string {
 }
 
 func registeredSourceNames() []string {
-	var names []string
-	for _, spec := range source.RegisteredTypes() {
+	registeredNames := source.RegisteredTypes()
+	sourceNames := make([]string, 0, len(registeredNames))
+	for i := range registeredNames {
+		spec := registeredNames[i]
 		if spec.DriverID != "" && spec.DriverID != "database" {
-			names = append(names, spec.Label)
+			sourceNames = append(sourceNames, spec.Label)
 		}
 	}
-	return names
+	return sourceNames
 }
 
 func resolvePort() string {
