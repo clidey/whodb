@@ -331,9 +331,10 @@ export const useAI = () => {
             label: modelType.name ?? modelType.modelType,
             icon: modelType.icon
                 ? <img src={modelType.icon} alt="" className="w-4 h-4 rounded-xs" />
-                : modelType.isGeneric
-                    ? <SparklesIcon className="w-4 h-4" data-testid="generic-sparkles-icon" />
-                    : (Icons.Logos as Record<string, ReactElement>)[modelType.modelType.replace("-", "")],
+                : (Icons.Logos as Record<string, ReactElement>)[modelType.modelType.replace("-", "")]
+                    ?? (modelType.isGeneric
+                        ? <SparklesIcon className="w-4 h-4" data-testid="generic-sparkles-icon" />
+                        : undefined),
             extra: {
                 token: modelType.token,
                 isEnvironmentDefined: modelType.isEnvironmentDefined,

@@ -76,6 +76,7 @@ let eeLogos: Record<string, JSX.Element> = {};
 export function registerIcons(icons: { Logos?: Record<string, JSX.Element> }) {
     if (icons.Logos) {
         eeLogos = icons.Logos;
+        Object.assign(Icons.Logos, icons.Logos);
     }
 }
 
