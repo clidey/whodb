@@ -98,8 +98,8 @@ github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.29 h1:DRebniUG
 github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.29/go.mod h1:LfRkPCD8YHDM2E5eTkos2UpwYeZnBcVarTa8L59bJHA=
 github.com/aws/aws-sdk-go-v2/service/opensearch v1.70.0 h1:BlpYO3ceGJxl/FQwqauNj8n2VjlC8el1rrN0jAkOVqk=
 github.com/aws/aws-sdk-go-v2/service/opensearch v1.70.0/go.mod h1:m6jcW6ksKQtM4f/AsUbYdfbyM9xv4jjrBnRWWh1q0VQ=
-github.com/aws/aws-sdk-go-v2/service/rds v1.118.5 h1:Fz4mbK5H3DTCtmnQLsWRgVlg8yKJZPGFkX56EwmhOgw=
-github.com/aws/aws-sdk-go-v2/service/rds v1.118.5/go.mod h1:qz5z/1LvGQ1DyXGm/KAYfxBbTG7eVocSbkpiHVu+Mn4=
+github.com/aws/aws-sdk-go-v2/service/rds v1.119.2 h1:sqAj/4zLlTTqSgvzbRWbYKgaT/IyGVXtwJZKoWcgBdM=
+github.com/aws/aws-sdk-go-v2/service/rds v1.119.2/go.mod h1:zCRPUdp05FEZG3OO7LmJq9xkSDjMEhkiVrZV0oJs2a0=
 github.com/aws/aws-sdk-go-v2/service/signin v1.1.5 h1:6Xt6Ztjkwdia/7EtEaG7ki/qZUYlCcd7tGUotQed1QE=
 github.com/aws/aws-sdk-go-v2/service/signin v1.1.5/go.mod h1:LxYujSTLPRlp2vTtcUO/+1ilrew8ytt6SvQyOgejzFQ=
 github.com/aws/aws-sdk-go-v2/service/sso v1.31.3 h1:ey1XLTYXb9PcLt4535632o5kCGXNXEhNb620Dqwuylo=
