@@ -125,6 +125,10 @@ ar_AE:
   testConnection: "امتحان"
   testConnectionSuccess: "تم الاتصال بنجاح"
   testConnectionFailed: "فشل الاتصال: {error}"
+  posthog.apiKey: "مفتاح واجهة برمجة التطبيقات"
+  posthog.enterApiKey: "أدخل مفتاح PostHog API"
+  posthog.projectId: "معرف المشروع"
+  posthog.enterProjectId: "أدخل معرف مشروع PostHog"
 
 de_DE:
   enterHostName: "Geben Sie den Hostnamen ein"
@@ -187,6 +191,10 @@ de_DE:
   testConnection: "Prüfen"
   testConnectionSuccess: "Verbindung erfolgreich"
   testConnectionFailed: "Verbindung fehlgeschlagen: {error}"
+  posthog.apiKey: "API-Schlüssel"
+  posthog.enterApiKey: "Geben Sie den PostHog-API-Schlüssel ein"
+  posthog.projectId: "Projekt-ID"
+  posthog.enterProjectId: "Geben Sie die PostHog-Projekt-ID ein"
 
 el_GR:
   enterHostName: "Εισαγάγετε Όνομα κεντρικού υπολογιστή"
@@ -249,6 +257,10 @@ el_GR:
   testConnection: "Δοκιμή"
   testConnectionSuccess: "Επιτυχής σύνδεση"
   testConnectionFailed: "Η σύνδεση απέτυχε: {error}"
+  posthog.apiKey: "Κλειδί API"
+  posthog.enterApiKey: "Εισαγάγετε το κλειδί PostHog API"
+  posthog.projectId: "Αναγνωριστικό έργου"
+  posthog.enterProjectId: "Εισαγάγετε το αναγνωριστικό έργου PostHog"
 
 en_GB:
   enterHostName: "Enter Host Name"
@@ -311,6 +323,10 @@ en_GB:
   testConnection: "Test"
   testConnectionSuccess: "Connection successful"
   testConnectionFailed: "Connection failed: {error}"
+  posthog.apiKey: "API Key"
+  posthog.enterApiKey: "Enter PostHog API Key"
+  posthog.projectId: "Project ID"
+  posthog.enterProjectId: "Enter PostHog Project ID"
 
 es_ES:
   enterHostName: "Introduzca el nombre del host"
@@ -373,6 +389,10 @@ es_ES:
   testConnection: "Prueba"
   testConnectionSuccess: "Conexión exitosa"
   testConnectionFailed: "Error de conexión: {error}"
+  posthog.apiKey: "Clave API"
+  posthog.enterApiKey: "Ingrese la clave API de PostHog"
+  posthog.projectId: "ID del proyecto"
+  posthog.enterProjectId: "Ingrese el ID del proyecto PostHog"
 
 fi_FI:
   enterHostName: "Anna isäntänimi"
@@ -435,6 +455,10 @@ fi_FI:
   testConnection: "Testata"
   testConnectionSuccess: "Yhteys onnistui"
   testConnectionFailed: "Yhteys epäonnistui: {error}"
+  posthog.apiKey: "API-avain"
+  posthog.enterApiKey: "Anna PostHog API Key"
+  posthog.projectId: "Projektin tunnus"
+  posthog.enterProjectId: "Anna PostHog-projektin tunnus"
 
 fr_FR:
   enterHostName: "Entrez le nom d'hôte"
@@ -497,6 +521,10 @@ fr_FR:
   testConnection: "Test"
   testConnectionSuccess: "Connexion réussie"
   testConnectionFailed: "Échec de la connexion : {error}"
+  posthog.apiKey: "Clé API"
+  posthog.enterApiKey: "Entrez la clé API PostHog"
+  posthog.projectId: "ID du projet"
+  posthog.enterProjectId: "Entrez l'ID du projet PostHog"
 
 it_IT:
   enterHostName: "Inserisci il nome host"
@@ -559,6 +587,10 @@ it_IT:
   testConnection: "Test"
   testConnectionSuccess: "Connessione riuscita"
   testConnectionFailed: "Connessione non riuscita: {error}"
+  posthog.apiKey: "Chiave API"
+  posthog.enterApiKey: "Inserisci la chiave API PostHog"
+  posthog.projectId: "Identificativo del progetto"
+  posthog.enterProjectId: "Inserisci l'ID progetto PostHog"
 
 iw_IL:
   enterHostName: "הזן את שם המארח"
@@ -621,6 +653,10 @@ iw_IL:
   testConnection: "מִבְחָן"
   testConnectionSuccess: "החיבור הצליח"
   testConnectionFailed: "החיבור נכשל: {error}"
+  posthog.apiKey: "מפתח API"
+  posthog.enterApiKey: "הזן את מפתח ה-API של PostHog"
+  posthog.projectId: "מזהה פרויקט"
+  posthog.enterProjectId: "הזן את מזהה פרויקט PostHog"
 
 ja_JP:
   enterHostName: "ホスト名を入力してください"
@@ -683,6 +719,10 @@ ja_JP:
   testConnection: "テスト"
   testConnectionSuccess: "接続成功"
   testConnectionFailed: "接続に失敗しました: {error}"
+  posthog.apiKey: "APIキー"
+  posthog.enterApiKey: "PostHog API キーを入力してください"
+  posthog.projectId: "プロジェクトID"
+  posthog.enterProjectId: "PostHog プロジェクト ID を入力してください"
 
 ko_KR:
   enterHostName: "호스트 이름을 입력하세요"
@@ -745,6 +785,10 @@ ko_KR:
   testConnection: "시험"
   testConnectionSuccess: "연결 성공"
   testConnectionFailed: "연결 실패: {error}"
+  posthog.apiKey: "API 키"
+  posthog.enterApiKey: "PostHog API 키 입력"
+  posthog.projectId: "프로젝트 ID"
+  posthog.enterProjectId: "PostHog 프로젝트 ID를 입력하세요"
 
 nl_NL:
   enterHostName: "Voer de hostnaam in"
@@ -807,6 +851,10 @@ nl_NL:
   testConnection: "Test"
   testConnectionSuccess: "Verbinding succesvol"
   testConnectionFailed: "Verbinding mislukt: {error}"
+  posthog.apiKey: "API-sleutel"
+  posthog.enterApiKey: "Voer de PostHog API-sleutel in"
+  posthog.projectId: "Project-ID"
+  posthog.enterProjectId: "Voer de PostHog-project-ID in"
 
 pl_PL:
   enterHostName: "Wprowadź nazwę hosta"
@@ -869,6 +917,10 @@ pl_PL:
   testConnection: "Test"
   testConnectionSuccess: "Połączenie pomyślne"
   testConnectionFailed: "Połączenie nie powiodło się: {error}"
+  posthog.apiKey: "Klucz API"
+  posthog.enterApiKey: "Wprowadź klucz API PostHog"
+  posthog.projectId: "Identyfikator projektu"
+  posthog.enterProjectId: "Wprowadź identyfikator projektu PostHog"
 
 pt_BR:
   enterHostName: "Digite o nome do host"
@@ -931,6 +983,10 @@ pt_BR:
   testConnection: "Teste"
   testConnectionSuccess: "Conexão bem-sucedida"
   testConnectionFailed: "Falha na conexão: {error}"
+  posthog.apiKey: "Chave de API"
+  posthog.enterApiKey: "Insira a chave da API PostHog"
+  posthog.projectId: "ID do projeto"
+  posthog.enterProjectId: "Insira o ID do projeto PostHog"
 
 ro_RO:
   enterHostName: "Introduceți numele gazdei"
@@ -993,6 +1049,10 @@ ro_RO:
   testConnection: "Test"
   testConnectionSuccess: "Conexiune reușită"
   testConnectionFailed: "Conexiunea a eșuat: {error}"
+  posthog.apiKey: "Cheia API"
+  posthog.enterApiKey: "Introduceți cheia API PostHog"
+  posthog.projectId: "ID proiect"
+  posthog.enterProjectId: "Introdu ID-ul proiectului PostHog"
 
 ru_RU:
   enterHostName: "Введите имя хоста"
@@ -1055,6 +1115,10 @@ ru_RU:
   testConnection: "Тест"
   testConnectionSuccess: "Соединение успешно"
   testConnectionFailed: "Соединение не удалось: {error}"
+  posthog.apiKey: "API-ключ"
+  posthog.enterApiKey: "Введите ключ API PostHog"
+  posthog.projectId: "Идентификатор проекта"
+  posthog.enterProjectId: "Введите идентификатор проекта PostHog"
 
 sk_SK:
   enterHostName: "Zadajte názov hostiteľa"
@@ -1117,6 +1181,10 @@ sk_SK:
   testConnection: "Test"
   testConnectionSuccess: "Pripojenie úspešné"
   testConnectionFailed: "Pripojenie zlyhalo: {error}"
+  posthog.apiKey: "API kľúč"
+  posthog.enterApiKey: "Zadajte PostHog API Key"
+  posthog.projectId: "ID projektu"
+  posthog.enterProjectId: "Zadajte ID projektu PostHog"
 
 sv_SE:
   enterHostName: "Ange värdnamn"
@@ -1179,6 +1247,10 @@ sv_SE:
   testConnection: "Testa"
   testConnectionSuccess: "Anslutningen lyckades"
   testConnectionFailed: "Anslutning misslyckades: {error}"
+  posthog.apiKey: "API-nyckel"
+  posthog.enterApiKey: "Ange PostHog API Key"
+  posthog.projectId: "Projekt-ID"
+  posthog.enterProjectId: "Ange PostHog Project ID"
 
 zh_CN:
   enterHostName: "输入主机名"
@@ -1241,6 +1313,10 @@ zh_CN:
   testConnection: "测试"
   testConnectionSuccess: "连接成功"
   testConnectionFailed: "连接失败：{error}"
+  posthog.apiKey: "API密钥"
+  posthog.enterApiKey: "输入 PostHog API 密钥"
+  posthog.projectId: "项目编号"
+  posthog.enterProjectId: "输入 PostHog 项目 ID"
 
 zh_TW:
   enterHostName: "輸入主機名稱"
@@ -1303,6 +1379,10 @@ zh_TW:
   testConnection: "測試"
   testConnectionSuccess: "連線成功"
   testConnectionFailed: "連線失敗：{error}"
+  posthog.apiKey: "API金鑰"
+  posthog.enterApiKey: "輸入 PostHog API 金鑰"
+  posthog.projectId: "項目編號"
+  posthog.enterProjectId: "輸入 PostHog 項目 ID"
 
 bg_BG:
   enterHostName: "Въведете име на хост"
@@ -1365,6 +1445,10 @@ bg_BG:
   testConnection: "Тест"
   testConnectionSuccess: "Връзката е успешна"
   testConnectionFailed: "Неуспешна връзка: {error}"
+  posthog.apiKey: "API ключ"
+  posthog.enterApiKey: "Въведете PostHog API ключ"
+  posthog.projectId: "ID на проекта"
+  posthog.enterProjectId: "Въведете ID на проекта PostHog"
 
 bn_BD:
   enterHostName: "হোস্টের নাম লিখুন"
@@ -1427,6 +1511,10 @@ bn_BD:
   testConnection: "পরীক্ষা"
   testConnectionSuccess: "সংযোগ সফল"
   testConnectionFailed: "সংযোগ ব্যর্থ হয়েছে: {error}"
+  posthog.apiKey: "API কী"
+  posthog.enterApiKey: "পোস্টহগ API কী লিখুন"
+  posthog.projectId: "প্রকল্প আইডি"
+  posthog.enterProjectId: "পোস্টহগ প্রকল্প আইডি লিখুন"
 
 ca_ES:
   enterHostName: "Introduïu el nom de l'amfitrió"
@@ -1489,6 +1577,10 @@ ca_ES:
   testConnection: "Prova"
   testConnectionSuccess: "Connexió correcta"
   testConnectionFailed: "La connexió ha fallat: {error}"
+  posthog.apiKey: "Clau de l'API"
+  posthog.enterApiKey: "Introduïu la clau de l'API PostHog"
+  posthog.projectId: "ID del projecte"
+  posthog.enterProjectId: "Introduïu l'identificador del projecte PostHog"
 
 cs_CZ:
   enterHostName: "Zadejte název hostitele"
@@ -1551,6 +1643,10 @@ cs_CZ:
   testConnection: "Test"
   testConnectionSuccess: "Připojení úspěšné"
   testConnectionFailed: "Připojení se nezdařilo: {error}"
+  posthog.apiKey: "Klíč API"
+  posthog.enterApiKey: "Zadejte klíč API PostHog"
+  posthog.projectId: "ID projektu"
+  posthog.enterProjectId: "Zadejte ID projektu PostHog"
 
 da_DK:
   enterHostName: "Indtast værtsnavn"
@@ -1613,6 +1709,10 @@ da_DK:
   testConnection: "Prøve"
   testConnectionSuccess: "Forbindelsen lykkedes"
   testConnectionFailed: "Forbindelsen mislykkedes: {error}"
+  posthog.apiKey: "API nøgle"
+  posthog.enterApiKey: "Indtast PostHog API Key"
+  posthog.projectId: "Projekt ID"
+  posthog.enterProjectId: "Indtast PostHog Project ID"
 
 fa_IR:
   enterHostName: "نام میزبان را وارد کنید"
@@ -1675,6 +1775,10 @@ fa_IR:
   testConnection: "تست کنید"
   testConnectionSuccess: "اتصال با موفقیت انجام شد"
   testConnectionFailed: "اتصال ناموفق بود: {error}"
+  posthog.apiKey: "کلید API"
+  posthog.enterApiKey: "PostHog API Key را وارد کنید"
+  posthog.projectId: "شناسه پروژه"
+  posthog.enterProjectId: "شناسه پروژه PostHog را وارد کنید"
 
 hi_IN:
   enterHostName: "होस्ट नाम दर्ज करें"
@@ -1737,6 +1841,10 @@ hi_IN:
   testConnection: "परीक्षा"
   testConnectionSuccess: "कनेक्शन सफल"
   testConnectionFailed: "कनेक्शन विफल: {error}"
+  posthog.apiKey: "एपीआई कुंजी"
+  posthog.enterApiKey: "पोस्टहॉग एपीआई कुंजी दर्ज करें"
+  posthog.projectId: "प्रोजेक्ट आईडी"
+  posthog.enterProjectId: "पोस्टहॉग प्रोजेक्ट आईडी दर्ज करें"
 
 hr_HR:
   enterHostName: "Unesite naziv glavnog računala"
@@ -1799,6 +1907,10 @@ hr_HR:
   testConnection: "Test"
   testConnectionSuccess: "Povezivanje uspješno"
   testConnectionFailed: "Povezivanje nije uspjelo: {error}"
+  posthog.apiKey: "API ključ"
+  posthog.enterApiKey: "Unesite PostHog API ključ"
+  posthog.projectId: "ID projekta"
+  posthog.enterProjectId: "Unesite ID projekta PostHog"
 
 hu_HU:
   enterHostName: "Írja be a gazdagép nevét"
@@ -1861,6 +1973,10 @@ hu_HU:
   testConnection: "Teszt"
   testConnectionSuccess: "Sikeres csatlakozás"
   testConnectionFailed: "A csatlakozás sikertelen: {error}"
+  posthog.apiKey: "API kulcs"
+  posthog.enterApiKey: "Írja be a PostHog API kulcsot"
+  posthog.projectId: "Projektazonosító"
+  posthog.enterProjectId: "Írja be a PostHog projektazonosítót"
 
 id_ID:
   enterHostName: "Masukkan Nama Host"
@@ -1923,6 +2039,10 @@ id_ID:
   testConnection: "Tes"
   testConnectionSuccess: "Koneksi berhasil"
   testConnectionFailed: "Koneksi gagal: {error}"
+  posthog.apiKey: "Kunci API"
+  posthog.enterApiKey: "Masukkan Kunci API PostHog"
+  posthog.projectId: "ID Proyek"
+  posthog.enterProjectId: "Masukkan ID Proyek PostHog"
 
 ms_MY:
   enterHostName: "Masukkan Nama Hos"
@@ -1985,6 +2105,10 @@ ms_MY:
   testConnection: "Ujian"
   testConnectionSuccess: "Sambungan berjaya"
   testConnectionFailed: "Sambungan gagal: {error}"
+  posthog.apiKey: "Kunci API"
+  posthog.enterApiKey: "Masukkan Kunci API PostHog"
+  posthog.projectId: "ID Projek"
+  posthog.enterProjectId: "Masukkan ID Projek PostHog"
 
 nb_NO:
   enterHostName: "Skriv inn vertsnavn"
@@ -2047,6 +2171,10 @@ nb_NO:
   testConnection: "Test"
   testConnectionSuccess: "Tilkoblingen var vellykket"
   testConnectionFailed: "Tilkobling mislyktes: {error}"
+  posthog.apiKey: "API-nøkkel"
+  posthog.enterApiKey: "Skriv inn PostHog API-nøkkel"
+  posthog.projectId: "Prosjekt-ID"
+  posthog.enterProjectId: "Skriv inn PostHog Project ID"
 
 sw_KE:
   enterHostName: "Ingiza Jina la Mwenyeji"
@@ -2109,6 +2237,10 @@ sw_KE:
   testConnection: "Mtihani"
   testConnectionSuccess: "Muunganisho umefaulu"
   testConnectionFailed: "Muunganisho haukufaulu: {error}"
+  posthog.apiKey: "Ufunguo wa API"
+  posthog.enterApiKey: "Ingiza Ufunguo wa API ya PostHog"
+  posthog.projectId: "Kitambulisho cha mradi"
+  posthog.enterProjectId: "Weka Kitambulisho cha Mradi wa PostHog"
 
 ta_IN:
   enterHostName: "ஹோஸ்ட் பெயரை உள்ளிடவும்"
@@ -2171,6 +2303,10 @@ ta_IN:
   testConnection: "சோதனை"
   testConnectionSuccess: "இணைப்பு வெற்றிகரமாக உள்ளது"
   testConnectionFailed: "இணைப்பு தோல்வியடைந்தது: {error}"
+  posthog.apiKey: "API விசை"
+  posthog.enterApiKey: "PostHog API விசையை உள்ளிடவும்"
+  posthog.projectId: "திட்ட ஐடி"
+  posthog.enterProjectId: "PostHog திட்ட ஐடியை உள்ளிடவும்"
 
 th_TH:
   enterHostName: "ป้อนชื่อโฮสต์"
@@ -2233,6 +2369,10 @@ th_TH:
   testConnection: "ทดสอบ"
   testConnectionSuccess: "การเชื่อมต่อสำเร็จ"
   testConnectionFailed: "การเชื่อมต่อล้มเหลว: {error}"
+  posthog.apiKey: "คีย์ API"
+  posthog.enterApiKey: "ป้อนคีย์ PostHog API"
+  posthog.projectId: "รหัสโครงการ"
+  posthog.enterProjectId: "ป้อนรหัสโปรเจ็กต์ PostHog"
 
 tr_TR:
   enterHostName: "Ana Bilgisayar Adını Girin"
@@ -2295,6 +2435,10 @@ tr_TR:
   testConnection: "Test"
   testConnectionSuccess: "Bağlantı başarılı"
   testConnectionFailed: "Bağlantı başarısız oldu: {error}"
+  posthog.apiKey: "API Anahtarı"
+  posthog.enterApiKey: "PostHog API Anahtarını Girin"
+  posthog.projectId: "Proje Kimliği"
+  posthog.enterProjectId: "PostHog Proje Kimliğini girin"
 
 uk_UA:
   enterHostName: "Введіть ім'я хоста"
@@ -2357,6 +2501,10 @@ uk_UA:
   testConnection: "Тест"
   testConnectionSuccess: "Підключення успішне"
   testConnectionFailed: "Помилка підключення: {error}"
+  posthog.apiKey: "Ключ API"
+  posthog.enterApiKey: "Введіть ключ API PostHog"
+  posthog.projectId: "ID проекту"
+  posthog.enterProjectId: "Введіть ідентифікатор проекту PostHog"
 
 ur_PK:
   enterHostName: "میزبان کا نام درج کریں۔"
@@ -2419,6 +2567,10 @@ ur_PK:
   testConnection: "ٹیسٹ"
   testConnectionSuccess: "کنکشن کامیاب"
   testConnectionFailed: "کنکشن ناکام ہو گیا: {error}"
+  posthog.apiKey: "API کلید"
+  posthog.enterApiKey: "پوسٹ ہاگ API کلید درج کریں۔"
+  posthog.projectId: "پروجیکٹ ID"
+  posthog.enterProjectId: "پوسٹ ہاگ پروجیکٹ ID درج کریں۔"
 
 vi_VN:
   enterHostName: "Nhập tên máy chủ"
@@ -2481,6 +2633,10 @@ vi_VN:
   testConnection: "Bài kiểm tra"
   testConnectionSuccess: "Kết nối thành công"
   testConnectionFailed: "Kết nối không thành công: {error}"
+  posthog.apiKey: "Khóa API"
+  posthog.enterApiKey: "Nhập khóa API PostHog"
+  posthog.projectId: "Mã dự án"
+  posthog.enterProjectId: "Nhập ID dự án PostHog"
 
 af_ZA:
   enterHostName: "Voer gasheernaam in"
@@ -2543,6 +2699,10 @@ af_ZA:
   testConnection: "Toets"
   testConnectionSuccess: "Verbinding suksesvol"
   testConnectionFailed: "Konneksie het misluk: {error}"
+  posthog.apiKey: "API-sleutel"
+  posthog.enterApiKey: "Voer PostHog API-sleutel in"
+  posthog.projectId: "Projek ID"
+  posthog.enterProjectId: "Voer PostHog Project ID in"
 
 am_ET:
   enterHostName: "የአስተናጋጅ ስም ያስገቡ"
@@ -2605,6 +2765,10 @@ am_ET:
   testConnection: "ሙከራ"
   testConnectionSuccess: "ግንኙነት ተሳክቷል።"
   testConnectionFailed: "ግንኙነት አልተሳካም፦ {error}"
+  posthog.apiKey: "የኤፒአይ ቁልፍ"
+  posthog.enterApiKey: "PostHog API ቁልፍ አስገባ"
+  posthog.projectId: "የፕሮጀክት መታወቂያ"
+  posthog.enterProjectId: "የ PostHog ፕሮጀክት መታወቂያ ያስገቡ"
 
 az_AZ:
   enterHostName: "Host adını daxil edin"
@@ -2667,6 +2831,10 @@ az_AZ:
   testConnection: "Test"
   testConnectionSuccess: "Bağlantı uğurlu"
   testConnectionFailed: "Bağlantı uğursuz oldu: {error}"
+  posthog.apiKey: "API Açarı"
+  posthog.enterApiKey: "PostHog API Açarını daxil edin"
+  posthog.projectId: "Layihə ID"
+  posthog.enterProjectId: "PostHog Layihə ID-sini daxil edin"
 
 et_EE:
   enterHostName: "Sisestage hosti nimi"
@@ -2729,6 +2897,10 @@ et_EE:
   testConnection: "Test"
   testConnectionSuccess: "Ühendus õnnestus"
   testConnectionFailed: "Ühendus ebaõnnestus: {error}"
+  posthog.apiKey: "API võti"
+  posthog.enterApiKey: "Sisestage PostHog API võti"
+  posthog.projectId: "Projekti ID"
+  posthog.enterProjectId: "Sisestage PostHog projekti ID"
 
 gu_IN:
   enterHostName: "હોસ્ટનું નામ દાખલ કરો"
@@ -2791,6 +2963,10 @@ gu_IN:
   testConnection: "ટેસ્ટ"
   testConnectionSuccess: "કનેક્શન સફળ"
   testConnectionFailed: "કનેક્શન નિષ્ફળ થયું: {error}"
+  posthog.apiKey: "API કી"
+  posthog.enterApiKey: "પોસ્ટહોગ API કી દાખલ કરો"
+  posthog.projectId: "પ્રોજેક્ટ ID"
+  posthog.enterProjectId: "પોસ્ટહોગ પ્રોજેક્ટ ID દાખલ કરો"
 
 ha_NG:
   enterHostName: "Shigar da Sunan Mai watsa shiri"
@@ -2853,6 +3029,10 @@ ha_NG:
   testConnection: "Gwaji"
   testConnectionSuccess: "Haɗin ya yi nasara"
   testConnectionFailed: "Haɗin ya gaza: {error}"
+  posthog.apiKey: "Maɓallin API"
+  posthog.enterApiKey: "Shigar da Maɓallin API na PostHog"
+  posthog.projectId: "ID na aikin"
+  posthog.enterProjectId: "Shigar da ID na aikin PostHog"
 
 ka_GE:
   enterHostName: "შეიყვანეთ ჰოსტის სახელი"
@@ -2915,6 +3095,10 @@ ka_GE:
   testConnection: "ტესტი"
   testConnectionSuccess: "კავშირი წარმატებულია"
   testConnectionFailed: "კავშირი ვერ მოხერხდა: {error}"
+  posthog.apiKey: "API გასაღები"
+  posthog.enterApiKey: "შეიყვანეთ PostHog API გასაღები"
+  posthog.projectId: "პროექტის ID"
+  posthog.enterProjectId: "შეიყვანეთ PostHog პროექტის ID"
 
 km_KH:
   enterHostName: "បញ្ចូលឈ្មោះម៉ាស៊ីន"
@@ -2977,6 +3161,10 @@ km_KH:
   testConnection: "សាកល្បង"
   testConnectionSuccess: "ការតភ្ជាប់បានជោគជ័យ"
   testConnectionFailed: "ការតភ្ជាប់បានបរាជ័យ៖ {error}"
+  posthog.apiKey: "សោ API"
+  posthog.enterApiKey: "បញ្ចូល PostHog API Key"
+  posthog.projectId: "លេខសម្គាល់គម្រោង"
+  posthog.enterProjectId: "បញ្ចូលលេខសម្គាល់គម្រោង PostHog"
 
 kn_IN:
   enterHostName: "ಹೋಸ್ಟ್ ಹೆಸರನ್ನು ನಮೂದಿಸಿ"
@@ -3039,6 +3227,10 @@ kn_IN:
   testConnection: "ಪರೀಕ್ಷೆ"
   testConnectionSuccess: "ಸಂಪರ್ಕ ಯಶಸ್ವಿಯಾಗಿದೆ"
   testConnectionFailed: "ಸಂಪರ್ಕ ವಿಫಲವಾಗಿದೆ: {error}"
+  posthog.apiKey: "API ಕೀ"
+  posthog.enterApiKey: "PostHog API ಕೀಯನ್ನು ನಮೂದಿಸಿ"
+  posthog.projectId: "ಪ್ರಾಜೆಕ್ಟ್ ಐಡಿ"
+  posthog.enterProjectId: "ಪೋಸ್ಟ್‌ಹಾಗ್ ಪ್ರಾಜೆಕ್ಟ್ ಐಡಿಯನ್ನು ನಮೂದಿಸಿ"
 
 lt_LT:
   enterHostName: "Įveskite pagrindinio kompiuterio pavadinimą"
@@ -3101,6 +3293,10 @@ lt_LT:
   testConnection: "Testas"
   testConnectionSuccess: "Prisijungimas sėkmingas"
   testConnectionFailed: "Nepavyko prisijungti: {error}"
+  posthog.apiKey: "API raktas"
+  posthog.enterApiKey: "Įveskite PostHog API raktą"
+  posthog.projectId: "Projekto ID"
+  posthog.enterProjectId: "Įveskite „PostHog“ projekto ID"
 
 lv_LV:
   enterHostName: "Ievadiet resursdatora nosaukumu"
@@ -3163,6 +3359,10 @@ lv_LV:
   testConnection: "Test"
   testConnectionSuccess: "Savienojums veiksmīgs"
   testConnectionFailed: "Savienojums neizdevās: {error}"
+  posthog.apiKey: "API atslēga"
+  posthog.enterApiKey: "Ievadiet PostHog API atslēgu"
+  posthog.projectId: "Projekta ID"
+  posthog.enterProjectId: "Ievadiet PostHog projekta ID"
 
 ml_IN:
   enterHostName: "ഹോസ്റ്റിൻ്റെ പേര് നൽകുക"
@@ -3225,6 +3425,10 @@ ml_IN:
   testConnection: "ടെസ്റ്റ്"
   testConnectionSuccess: "കണക്ഷൻ വിജയിച്ചു"
   testConnectionFailed: "കണക്ഷൻ പരാജയപ്പെട്ടു: {error}"
+  posthog.apiKey: "API കീ"
+  posthog.enterApiKey: "PostHog API കീ നൽകുക"
+  posthog.projectId: "പ്രോജക്റ്റ് ഐഡി"
+  posthog.enterProjectId: "പോസ്റ്റ്ഹോഗ് പ്രോജക്റ്റ് ഐഡി നൽകുക"
 
 mr_IN:
   enterHostName: "होस्ट नाव प्रविष्ट करा"
@@ -3287,6 +3491,10 @@ mr_IN:
   testConnection: "चाचणी"
   testConnectionSuccess: "कनेक्शन यशस्वी झाले"
   testConnectionFailed: "कनेक्शन अयशस्वी: {error}"
+  posthog.apiKey: "API की"
+  posthog.enterApiKey: "PostHog API की प्रविष्ट करा"
+  posthog.projectId: "प्रकल्प आयडी"
+  posthog.enterProjectId: "पोस्टहॉग प्रोजेक्ट आयडी एंटर करा"
 
 ne_NP:
   enterHostName: "होस्ट नाम प्रविष्ट गर्नुहोस्"
@@ -3349,6 +3557,10 @@ ne_NP:
   testConnection: "परीक्षण"
   testConnectionSuccess: "जडान सफल भयो"
   testConnectionFailed: "जडान असफल भयो: {error}"
+  posthog.apiKey: "API कुञ्जी"
+  posthog.enterApiKey: "PostHog API कुञ्जी प्रविष्ट गर्नुहोस्"
+  posthog.projectId: "परियोजना आईडी"
+  posthog.enterProjectId: "PostHog परियोजना आईडी प्रविष्ट गर्नुहोस्"
 
 pa_IN:
   enterHostName: "ਮੇਜ਼ਬਾਨ ਦਾ ਨਾਮ ਦਰਜ ਕਰੋ"
@@ -3411,6 +3623,10 @@ pa_IN:
   testConnection: "ਟੈਸਟ"
   testConnectionSuccess: "ਕਨੈਕਸ਼ਨ ਸਫਲ ਰਿਹਾ"
   testConnectionFailed: "ਕਨੈਕਸ਼ਨ ਅਸਫਲ: {error}"
+  posthog.apiKey: "API Key"
+  posthog.enterApiKey: "Enter PostHog API Key"
+  posthog.projectId: "ਪ੍ਰੋਜੈਕਟ ਆਈ.ਡੀ"
+  posthog.enterProjectId: "PostHog ਪ੍ਰੋਜੈਕਟ ID ਦਾਖਲ ਕਰੋ"
 
 si_LK:
   enterHostName: "සත්කාරක නාමය ඇතුළත් කරන්න"
@@ -3473,6 +3689,10 @@ si_LK:
   testConnection: "පරීක්ෂණය"
   testConnectionSuccess: "සම්බන්ධතාවය සාර්ථකයි"
   testConnectionFailed: "සබැඳුම අසාර්ථක විය: {error}"
+  posthog.apiKey: "API යතුර"
+  posthog.enterApiKey: "PostHog API යතුර ඇතුළත් කරන්න"
+  posthog.projectId: "ව්යාපෘති හැඳුනුම්පත"
+  posthog.enterProjectId: "PostHog ව්‍යාපෘති හැඳුනුම්පත ඇතුළත් කරන්න"
 
 sl_SI:
   enterHostName: "Vnesite ime gostitelja"
@@ -3535,6 +3755,10 @@ sl_SI:
   testConnection: "Test"
   testConnectionSuccess: "Povezava uspešna"
   testConnectionFailed: "Povezava ni uspela: {error}"
+  posthog.apiKey: "API ključ"
+  posthog.enterApiKey: "Vnesite ključ API PostHog"
+  posthog.projectId: "ID projekta"
+  posthog.enterProjectId: "Vnesite ID projekta PostHog"
 
 sr_RS:
   enterHostName: "Унесите име хоста"
@@ -3597,6 +3821,10 @@ sr_RS:
   testConnection: "Тест"
   testConnectionSuccess: "Веза је успела"
   testConnectionFailed: "Повезивање није успело: {error}"
+  posthog.apiKey: "АПИ кључ"
+  posthog.enterApiKey: "Унесите ПостХог АПИ кључ"
+  posthog.projectId: "ИД пројекта"
+  posthog.enterProjectId: "Унесите ИД пројекта ПостХог"
 
 te_IN:
   enterHostName: "హోస్ట్ పేరును నమోదు చేయండి"
@@ -3659,6 +3887,10 @@ te_IN:
   testConnection: "పరీక్ష"
   testConnectionSuccess: "కనెక్షన్ విజయవంతమైంది"
   testConnectionFailed: "కనెక్షన్ విఫలమైంది: {error}"
+  posthog.apiKey: "API కీ"
+  posthog.enterApiKey: "PostHog API కీని నమోదు చేయండి"
+  posthog.projectId: "ప్రాజెక్ట్ ID"
+  posthog.enterProjectId: "PostHog ప్రాజెక్ట్ IDని నమోదు చేయండి"
 
 tl_PH:
   enterHostName: "Ilagay ang Host Name"
@@ -3721,6 +3953,10 @@ tl_PH:
   testConnection: "Pagsubok"
   testConnectionSuccess: "Matagumpay ang koneksyon"
   testConnectionFailed: "Nabigo ang koneksyon: {error}"
+  posthog.apiKey: "API Key"
+  posthog.enterApiKey: "Ipasok ang PostHog API Key"
+  posthog.projectId: "Project ID"
+  posthog.enterProjectId: "Ipasok ang PostHog Project ID"
 
 uz_UZ:
   enterHostName: "Xost nomini kiriting"
@@ -3783,6 +4019,10 @@ uz_UZ:
   testConnection: "Sinov"
   testConnectionSuccess: "Ulanish muvaffaqiyatli"
   testConnectionFailed: "Ulanish amalga oshmadi: {error}"
+  posthog.apiKey: "API kaliti"
+  posthog.enterApiKey: "PostHog API kalitini kiriting"
+  posthog.projectId: "Loyiha identifikatori"
+  posthog.enterProjectId: "PostHog loyihasi identifikatorini kiriting"
 
 yo_NG:
   enterHostName: "Tẹ Orukọ ogun sii"
@@ -3845,3 +4085,7 @@ yo_NG:
   testConnection: "Idanwo"
   testConnectionSuccess: "Asopọmọra ṣaṣeyọri"
   testConnectionFailed: "Asopọ ti kuna: {error}"
+  posthog.apiKey: "API Key"
+  posthog.enterApiKey: "Tẹ bọtini API PostHog sii"
+  posthog.projectId: "ID ise agbese"
+  posthog.enterProjectId: "Tẹ ID Project PostHog sii"
