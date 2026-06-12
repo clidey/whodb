@@ -145,8 +145,8 @@ func TestCockroachDBParseCheckConstraintWithStringCasts(t *testing.T) {
 func TestCockroachDBBulkInsertBatchSize(t *testing.T) {
 	plugin := NewCockroachDBPlugin().PluginFunctions.(*CockroachDBPlugin)
 
-	if batchSize := plugin.GetBulkInsertBatchSize(); batchSize != 1 {
-		t.Fatalf("expected CockroachDB bulk insert batch size 1, got %d", batchSize)
+	if batchSize := plugin.GetBulkInsertBatchSize(); batchSize != 10 {
+		t.Fatalf("expected CockroachDB bulk insert batch size 10, got %d", batchSize)
 	}
 }
 
