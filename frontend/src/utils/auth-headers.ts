@@ -23,6 +23,7 @@ import {getAnalyticsDistinctId} from '../config/posthog';
  */
 let authHeaderProvider: (() => string | null) | null = null;
 let extraHeadersProvider: (() => Record<string, string>) | null = null;
+let asyncExtraHeadersProvider: (() => Promise<Record<string, string>>) | null = null;
 
 type SourceCredentialValueLike = {
     Key: string;
@@ -49,6 +50,16 @@ export const registerAuthHeaderProvider = (fn: () => string | null): void => {
  */
 export const registerAuthExtraHeadersProvider = (fn: () => Record<string, string>): void => {
     extraHeadersProvider = fn;
+};
+
+/**
+ * Registers async request headers supplied by an extension.
+ *
+ * This is used by request paths that can wait for session state before sending,
+ * such as Apollo GraphQL operations.
+ */
+export const registerAsyncAuthExtraHeadersProvider = (fn: () => Promise<Record<string, string>>): void => {
+    asyncExtraHeadersProvider = fn;
 };
 
 const analyticsHeaderName = 'X-WhoDB-Analytics-Id';
@@ -140,6 +151,39 @@ export function addAuthHeader(headers: HeadersInit = {}): HeadersInit {
         [analyticsHeaderName]: id ?? ""
     }
     if (extraHeadersProvider) {
+        headers = {
+            ...headers,
+            ...extraHeadersProvider(),
+        };
+    }
+    if (authHeader) {
+        return {
+            ...headers,
+            Authorization: authHeader,
+        };
+    }
+    return headers;
+}
+
+/**
+ * Adds authentication headers after resolving any async extension headers.
+ *
+ * Use this for request pipelines that support async header preparation.
+ * Synchronous callers should continue using addAuthHeader().
+ */
+export async function addAuthHeaderAsync(headers: HeadersInit = {}): Promise<HeadersInit> {
+    const authHeader = getAuthorizationHeader();
+    const id = getAnalyticsDistinctId()
+    headers = {
+        ...headers,
+        [analyticsHeaderName]: id ?? ""
+    }
+    if (asyncExtraHeadersProvider) {
+        headers = {
+            ...headers,
+            ...await asyncExtraHeadersProvider(),
+        };
+    } else if (extraHeadersProvider) {
         headers = {
             ...headers,
             ...extraHeadersProvider(),
