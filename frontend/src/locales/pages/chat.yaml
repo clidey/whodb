@@ -22,6 +22,7 @@ en_US:
   createNewPage: Create New Page
   chatHistory: Chat History
   newChat: New Chat
+  clearChat: Clear Chat
   deleteChat: Delete Chat
   deleteChatTitle: Delete {chatName}?
   deleteChatDescription: This will permanently delete this chat and all its messages. This action cannot be undone.
