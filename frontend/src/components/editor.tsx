@@ -26,7 +26,7 @@ import classNames from "classnames";
 import {basicSetup} from "codemirror";
 import type {FC} from "react";
 import React, { useCallback, useEffect, useMemo, useRef, useState} from "react";
-import ReactJson from "react-json-view";
+import ReactJson from "@microlink/react-json-view";
 import MarkdownPreview from 'react-markdown';
 import remarkGfm from "remark-gfm";
 import {useApolloClient} from "@apollo/client/react";

@@ -18,6 +18,7 @@
     "@dagrejs/dagre": "1.1.5",
     "@emotion/is-prop-valid": "1.3.1",
     "@heroicons/react": "2.2.0",
+    "@microlink/react-json-view": "1.31.20",
     "@radix-ui/react-visually-hidden": "1.2.3",
     "@reduxjs/toolkit": "2.9.0",
     "@tailwindcss/vite": "4.3.0",
@@ -32,7 +33,6 @@
     "posthog-js": "1.342.1",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "react-json-view": "1.21.3",
     "react-markdown": "10.1.0",
     "react-redux": "9.2.0",
     "react-router-dom": "7.9.1",
@@ -42,7 +42,7 @@
     "rxjs": "7.8.2",
     "tailwind-merge": "3.3.1",
     "tailwindcss": "4.1.12",
-    "uuid": "13.0.0"
+    "uuid": "14.0.0"
   },
   "scripts": {
     "start": "vite --port 3000 --open",
