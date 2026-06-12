@@ -114,8 +114,9 @@ export function TypeSelector({
         onChange(finalValue);
     }, [sourceType, onChange]);
 
-    // Handle base type change
+    // Handle base type change — ignore deselect (empty string) from SearchSelect toggle
     const handleTypeChange = useCallback((newType: string) => {
+        if (!newType) return;
         setBaseType(newType);
 
         const typeDef = sourceType ? findColumnTypeDefinition(newType, sourceType) : undefined;

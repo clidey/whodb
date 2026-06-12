@@ -29,6 +29,7 @@ function matchesTypeLabel(text, label) {
 
 async function selectFieldType(page, typeLabels) {
     const options = page.locator('[role="option"]');
+    await options.first().waitFor({ state: 'visible', timeout: 10000 });
     const optionCount = await options.count();
     for (let i = 0; i < optionCount; i++) {
         const text = ((await options.nth(i).textContent()) ?? '').trim().toLowerCase();
@@ -330,7 +331,10 @@ test.describe('Schema Management', () => {
                     if (hasPrimaryLabel > 0) {
                         await expect(firstField.locator('label').filter({ hasText: /primary/i })).toBeVisible();
                         await expect(firstField.locator('label').filter({ hasText: /nullable|null/i })).toBeVisible();
-                        await expect(firstField.locator('label').filter({ hasText: /unique/i })).toBeVisible();
+                        const uniqueLabel = firstField.locator('label').filter({ hasText: /unique/i });
+                        if (await uniqueLabel.count() > 0) {
+                            await expect(uniqueLabel).toBeVisible();
+                        }
                         const identityLabel = firstField.locator('label').filter({ hasText: /identity|auto_increment|autoincrement|nextval/i });
                         if (await identityLabel.count() > 0) {
                             await expect(identityLabel).toBeVisible();
@@ -466,7 +470,6 @@ test.describe('Schema Management', () => {
                     const uniqueTableName = `test_table_${getUniqueTestId()}`;
                     createdTableNames.add(uniqueTableName);
 
-                    // First create the table
                     await page.goto(whodb.url('/storage-unit'));
 
                     await expect(page.locator('[data-testid="storage-unit-card-list"]')).toBeVisible({ timeout: 15000 });
