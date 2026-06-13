@@ -19,10 +19,12 @@ package cmd
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/clidey/whodb/cli/internal/config"
 	"github.com/clidey/whodb/cli/internal/platform"
@@ -32,35 +34,37 @@ import (
 )
 
 var (
-	platformHost       string
-	platformFormat     string
-	platformQuiet      bool
-	platformNoBrowser  bool
-	platformLoginYes   bool
-	useOrg             string
-	useProject         string
-	projectsOrg        string
-	sourcesOrg         string
-	sourcesProject     string
-	sourceName         string
-	sourceType         string
-	sourceHostname     string
-	sourcePort         string
-	sourceUsername     string
-	sourceDatabase     string
-	sourceFields       []string
-	sourceAdvanced     []string
-	sourcePasswordEnv  string
-	sourcePasswordIn   bool
-	sourceDeleteYes    bool
-	sourceObjectParent string
-	sourceObjectKinds  []string
-	sourceObjectLimit  int
-	sourceObjectOffset int
-	sourceColumnRef    string
-	sourceRowsRef      string
-	sourceRowsLimit    int
-	sourceRowsOffset   int
+	platformHost        string
+	platformFormat      string
+	platformQuiet       bool
+	platformNoBrowser   bool
+	platformLoginYes    bool
+	platformLogoutLocal bool
+	useOrg              string
+	useProject          string
+	projectsOrg         string
+	sourcesOrg          string
+	sourcesProject      string
+	sourceName          string
+	sourceType          string
+	sourceHostname      string
+	sourcePort          string
+	sourceUsername      string
+	sourceDatabase      string
+	sourceFields        []string
+	sourceAdvanced      []string
+	sourcePasswordEnv   string
+	sourcePasswordIn    bool
+	sourceDeleteYes     bool
+	sourceObjectParent  string
+	sourceObjectKinds   []string
+	sourceObjectLimit   int
+	sourceObjectOffset  int
+	sourceColumnRef     string
+	sourceRowsRef       string
+	sourceRowsLimit     int
+	sourceRowsOffset    int
+	manifestRefresh     bool
 )
 
 type platformSession struct {
@@ -81,9 +85,19 @@ type whoamiOutput struct {
 	ID             string `json:"id"`
 	Email          string `json:"email"`
 	DisplayName    string `json:"displayName"`
-	OrgID          string `json:"orgId"`
+	OrgID          string `json:"orgId,omitempty"`
 	DefaultOrg     string `json:"defaultOrg,omitempty"`
 	DefaultProject string `json:"defaultProject,omitempty"`
+}
+
+type manifestOutput struct {
+	Host                    string                               `json:"host"`
+	PlatformVersion         string                               `json:"platformVersion"`
+	ManifestProtocolVersion string                               `json:"manifestProtocolVersion"`
+	GeneratedAt             string                               `json:"generatedAt"`
+	FetchedAt               string                               `json:"fetchedAt,omitempty"`
+	Operations              []platform.PlatformManifestOperation `json:"operations"`
+	Types                   []platform.PlatformManifestType      `json:"types"`
 }
 
 var loginCmd = &cobra.Command{
@@ -123,7 +137,7 @@ var loginCmd = &cobra.Command{
 			}
 			for _, existing := range existingHosts {
 				if _, err := replacePlatformLogin(ctx, cfg, existing.URL, existing.AccountID); err != nil {
-					return fmt.Errorf("cannot replace existing hosted WhoDB login for %s: %w", existing.URL, err)
+					return fmt.Errorf("cannot replace existing hosted WhoDB login for %s: %w\n%s", existing.URL, err, localLogoutHint(existing.URL))
 				}
 			}
 		}
@@ -150,6 +164,8 @@ var loginCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+		manifest := fetchPlatformManifest(ctx, client)
+		client.SetPlatformManifest(manifest)
 		user, err := client.Me(ctx)
 		if err != nil {
 			return fmt.Errorf("login failed. Use an existing WhoDB account for this host: %w", err)
@@ -163,6 +179,11 @@ var loginCmd = &cobra.Command{
 			URL:       client.Host(),
 			AccountID: user.ID,
 			Email:     user.Email,
+		}
+		if manifest != nil {
+			if err := storePlatformManifest(&hostEntry, manifest); err != nil {
+				return err
+			}
 		}
 		cfg.SetOnlyPlatformHost(hostEntry)
 		if err := cfg.SavePlatformRefreshToken(client.Host(), user.ID, tokens.RefreshToken); err != nil {
@@ -210,12 +231,24 @@ var logoutCmd = &cobra.Command{
 		if !ok {
 			return fmt.Errorf("not logged in to %s", host)
 		}
-		status, err := revokePlatformLogin(ctx, cfg, host, entry.AccountID)
+		var status string
+		if platformLogoutLocal {
+			if err := clearPlatformLogin(cfg, host, entry.AccountID); err != nil {
+				return err
+			}
+			status = "local_only"
+		} else {
+			status, err = revokePlatformLogin(ctx, cfg, host, entry.AccountID)
+		}
 		if err != nil {
-			return err
+			return fmt.Errorf("%w\n%s", err, localLogoutHint(host))
 		}
 		if format == output.FormatJSON {
 			return writeAutomationEnvelope(cmd, "logout", map[string]string{"host": host, "status": status})
+		}
+		if status == "local_only" {
+			out.Success("Removed local credentials for %s; hosted session was not revoked", host)
+			return nil
 		}
 		if status == "already_revoked" {
 			out.Success("Signed out of %s; hosted session was already expired or revoked", host)
@@ -255,7 +288,7 @@ var whoamiCmd = &cobra.Command{
 			ID:             user.ID,
 			Email:          user.Email,
 			DisplayName:    user.DisplayName,
-			OrgID:          user.OrgID,
+			OrgID:          session.Host.DefaultOrgID,
 			DefaultOrg:     session.Host.DefaultOrgName,
 			DefaultProject: session.Host.DefaultProjectName,
 		}
@@ -269,6 +302,49 @@ var whoamiCmd = &cobra.Command{
 			{"active_org_id", data.OrgID},
 			{"default_org", data.DefaultOrg},
 			{"default_project", data.DefaultProject},
+		}
+		return newCommandOutput(cmd, format, platformQuiet).WriteQueryResult(&output.QueryResult{
+			Columns: []output.Column{{Name: "field", Type: "string"}, {Name: "value", Type: "string"}},
+			Rows:    rows,
+		})
+	},
+}
+
+var manifestCmd = &cobra.Command{
+	Use:           "manifest",
+	Short:         "Show the hosted WhoDB platform manifest",
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := context.Background()
+		format, err := output.ParseFormat(platformFormat)
+		if err != nil {
+			return err
+		}
+		session, err := loadPlatformSession(ctx, platformHost)
+		if err != nil {
+			return err
+		}
+
+		manifest := manifestFromCache(session.Host.Manifest)
+		if manifestRefresh || manifest == nil {
+			manifest, err = refreshPlatformManifest(ctx, session.Config, &session.Host, session.Client)
+			if err != nil {
+				return err
+			}
+		}
+		data := platformManifestOutput(session.Host, manifest)
+		if format == output.FormatJSON {
+			return writeCommandJSON(cmd, data)
+		}
+		rows := [][]any{
+			{"host", data.Host},
+			{"platform_version", data.PlatformVersion},
+			{"manifest_protocol_version", data.ManifestProtocolVersion},
+			{"generated_at", data.GeneratedAt},
+			{"fetched_at", data.FetchedAt},
+			{"operations", len(data.Operations)},
+			{"types", len(data.Types)},
 		}
 		return newCommandOutput(cmd, format, platformQuiet).WriteQueryResult(&output.QueryResult{
 			Columns: []output.Column{{Name: "field", Type: "string"}, {Name: "value", Type: "string"}},
@@ -870,9 +946,6 @@ var useCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		if _, err := session.Client.SwitchOrganization(ctx, org.ID); err != nil {
-			return err
-		}
 		session.Host.DefaultOrgID = org.ID
 		session.Host.DefaultOrgName = org.Name
 		session.Host.DefaultProjectID = project.ID
@@ -901,12 +974,13 @@ func init() {
 	rootCmd.AddCommand(loginCmd)
 	rootCmd.AddCommand(logoutCmd)
 	rootCmd.AddCommand(whoamiCmd)
+	rootCmd.AddCommand(manifestCmd)
 	rootCmd.AddCommand(orgsCmd)
 	rootCmd.AddCommand(projectsCmd)
 	rootCmd.AddCommand(sourcesCmd)
 	rootCmd.AddCommand(useCmd)
 
-	for _, command := range []*cobra.Command{loginCmd, logoutCmd, whoamiCmd, orgsCmd, projectsCmd, sourcesCmd, useCmd} {
+	for _, command := range []*cobra.Command{loginCmd, logoutCmd, whoamiCmd, manifestCmd, orgsCmd, projectsCmd, sourcesCmd, useCmd} {
 		command.PersistentFlags().StringVar(&platformHost, "host", "", "hosted WhoDB URL (default app.whodb.com)")
 		command.PersistentFlags().StringVarP(&platformFormat, "format", "f", "auto", "output format: auto, table, plain, json, ndjson, csv")
 		command.PersistentFlags().BoolVarP(&platformQuiet, "quiet", "q", false, "suppress informational messages")
@@ -915,6 +989,8 @@ func init() {
 
 	loginCmd.Flags().BoolVar(&platformNoBrowser, "no-browser", false, "print login URL without opening a browser")
 	loginCmd.Flags().BoolVarP(&platformLoginYes, "yes", "y", false, "replace an existing hosted WhoDB login without prompting")
+	logoutCmd.Flags().BoolVar(&platformLogoutLocal, "local", false, "remove local hosted WhoDB credentials without revoking the hosted session")
+	manifestCmd.Flags().BoolVar(&manifestRefresh, "refresh", false, "fetch and cache the current hosted platform manifest")
 	orgsCmd.AddCommand(orgsListCmd)
 	projectsCmd.AddCommand(projectsListCmd)
 	projectsListCmd.Flags().StringVar(&projectsOrg, "org", "", "organization id, slug, or name (defaults to selected organization)")
@@ -923,22 +999,18 @@ func init() {
 	sourcesCmd.AddCommand(sourcesListCmd)
 	sourcesCmd.AddCommand(sourcesGetCmd)
 	sourcesCmd.AddCommand(sourcesCreateCmd)
+	sourcesCmd.AddCommand(sourcesConfigCmd)
+	sourcesCmd.AddCommand(sourcesUpdateCmd)
+	sourcesCmd.AddCommand(sourcesTestCmd)
 	sourcesCmd.AddCommand(sourcesDeleteCmd)
 	sourcesCmd.AddCommand(sourcesObjectsCmd)
 	sourcesCmd.AddCommand(sourcesColumnsCmd)
 	sourcesCmd.AddCommand(sourcesRowsCmd)
 	sourcesCmd.PersistentFlags().StringVar(&sourcesOrg, "org", "", "organization id, slug, or name (defaults to selected organization)")
 	sourcesCmd.PersistentFlags().StringVar(&sourcesProject, "project", "", "project id, slug, or name (defaults to selected project)")
-	sourcesCreateCmd.Flags().StringVar(&sourceName, "name", "", "source display name")
-	sourcesCreateCmd.Flags().StringVar(&sourceType, "type", "", "source type, for example Postgres")
-	sourcesCreateCmd.Flags().StringVar(&sourceHostname, "hostname", "", "source hostname")
-	sourcesCreateCmd.Flags().StringVar(&sourcePort, "port", "", "source port")
-	sourcesCreateCmd.Flags().StringVar(&sourceUsername, "username", "", "source username")
-	sourcesCreateCmd.Flags().StringVar(&sourceDatabase, "database", "", "source database")
-	sourcesCreateCmd.Flags().StringArrayVar(&sourceFields, "field", nil, "source connection field as key=value; repeatable")
-	sourcesCreateCmd.Flags().StringArrayVar(&sourceAdvanced, "advanced", nil, "advanced connection option as key=value; repeatable")
-	sourcesCreateCmd.Flags().StringVar(&sourcePasswordEnv, "password-env", "", "environment variable containing the source password")
-	sourcesCreateCmd.Flags().BoolVar(&sourcePasswordIn, "password-stdin", false, "read the source password from stdin")
+	registerSourceInputFlags(sourcesCreateCmd, true, true)
+	registerSourceInputFlags(sourcesUpdateCmd, true, false)
+	registerSourceInputFlags(sourcesTestCmd, false, true)
 	sourcesDeleteCmd.Flags().BoolVarP(&sourceDeleteYes, "yes", "y", false, "delete the source without prompting")
 	sourcesObjectsCmd.Flags().StringVar(&sourceObjectParent, "parent", "", "parent object ref as kind:path, for example schema:public")
 	sourcesObjectsCmd.Flags().StringArrayVar(&sourceObjectKinds, "kind", nil, "object kind to include; repeatable")
@@ -950,6 +1022,23 @@ func init() {
 	sourcesRowsCmd.Flags().IntVar(&sourceRowsOffset, "offset", 0, "row offset")
 	useCmd.Flags().StringVar(&useOrg, "org", "", "organization id, slug, or name")
 	useCmd.Flags().StringVar(&useProject, "project", "", "project id, slug, or name")
+}
+
+func registerSourceInputFlags(command *cobra.Command, includeName bool, includeType bool) {
+	if includeName {
+		command.Flags().StringVar(&sourceName, "name", "", "source display name")
+	}
+	if includeType {
+		command.Flags().StringVar(&sourceType, "type", "", "source type, for example Postgres")
+	}
+	command.Flags().StringVar(&sourceHostname, "hostname", "", "source hostname")
+	command.Flags().StringVar(&sourcePort, "port", "", "source port")
+	command.Flags().StringVar(&sourceUsername, "username", "", "source username")
+	command.Flags().StringVar(&sourceDatabase, "database", "", "source database")
+	command.Flags().StringArrayVar(&sourceFields, "field", nil, "source connection field as key=value; repeatable")
+	command.Flags().StringArrayVar(&sourceAdvanced, "advanced", nil, "advanced connection option as key=value; repeatable")
+	command.Flags().StringVar(&sourcePasswordEnv, "password-env", "", "environment variable containing the source password")
+	command.Flags().BoolVar(&sourcePasswordIn, "password-stdin", false, "read the source password from stdin")
 }
 
 func loadPlatformSession(ctx context.Context, hostFlag string) (*platformSession, error) {
@@ -982,11 +1071,45 @@ func loadPlatformSession(ctx context.Context, hostFlag string) (*platformSession
 	if err != nil {
 		return nil, err
 	}
+	attachPlatformManifestRefresher(cfg, entry, client)
+	if manifest := resolveCachedPlatformManifest(ctx, client, entry.Manifest); manifest != nil {
+		client.SetPlatformManifest(manifest)
+	} else if manifest := fetchPlatformManifest(ctx, client); manifest != nil {
+		client.SetPlatformManifest(manifest)
+		if err := storePlatformManifest(entry, manifest); err != nil {
+			return nil, err
+		}
+		cfg.UpsertPlatformHost(*entry)
+		if err := cfg.Save(); err != nil {
+			return nil, err
+		}
+	}
 	return &platformSession{
 		Config: cfg,
 		Host:   *entry,
 		Client: client,
 	}, nil
+}
+
+func attachPlatformManifestRefresher(cfg *config.Config, host *config.PlatformHost, client *platform.Client) {
+	client.SetManifestRefresher(func(ctx context.Context, refreshedClient *platform.Client) (*platform.PlatformManifest, error) {
+		return refreshPlatformManifest(ctx, cfg, host, refreshedClient)
+	})
+}
+
+func refreshPlatformManifest(ctx context.Context, cfg *config.Config, host *config.PlatformHost, client *platform.Client) (*platform.PlatformManifest, error) {
+	manifest, err := client.PlatformManifest(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := storePlatformManifest(host, manifest); err != nil {
+		return nil, err
+	}
+	cfg.UpsertPlatformHost(*host)
+	if err := cfg.Save(); err != nil {
+		return nil, err
+	}
+	return manifest, nil
 }
 
 func resolvePlatformHost(cfg *config.Config, hostFlag string) (string, error) {
@@ -1003,6 +1126,72 @@ func updatePlatformHostUser(cfg *config.Config, host *config.PlatformHost, user 
 	host.AccountID = user.ID
 	host.Email = user.Email
 	cfg.UpsertPlatformHost(*host)
+}
+
+func fetchPlatformManifest(ctx context.Context, client *platform.Client) *platform.PlatformManifest {
+	manifest, err := client.PlatformManifest(ctx)
+	if err != nil {
+		return nil
+	}
+	return manifest
+}
+
+func resolveCachedPlatformManifest(ctx context.Context, client *platform.Client, cache *config.PlatformManifestCache) *platform.PlatformManifest {
+	manifest := manifestFromCache(cache)
+	if manifest == nil {
+		return nil
+	}
+	version, err := client.PlatformVersion(ctx)
+	if err != nil || version == "" {
+		return manifest
+	}
+	if version == cache.PlatformVersion {
+		return manifest
+	}
+	return nil
+}
+
+func storePlatformManifest(host *config.PlatformHost, manifest *platform.PlatformManifest) error {
+	raw, err := json.Marshal(manifest)
+	if err != nil {
+		return fmt.Errorf("cache platform manifest: %w", err)
+	}
+	host.Manifest = &config.PlatformManifestCache{
+		PlatformVersion:         manifest.PlatformVersion,
+		ManifestProtocolVersion: manifest.ManifestProtocolVersion,
+		FetchedAt:               time.Now().UTC().Format(time.RFC3339),
+		Raw:                     raw,
+	}
+	return nil
+}
+
+func manifestFromCache(cache *config.PlatformManifestCache) *platform.PlatformManifest {
+	if cache == nil || len(cache.Raw) == 0 {
+		return nil
+	}
+	var manifest platform.PlatformManifest
+	if err := json.Unmarshal(cache.Raw, &manifest); err != nil {
+		return nil
+	}
+	return &manifest
+}
+
+func platformManifestOutput(host config.PlatformHost, manifest *platform.PlatformManifest) manifestOutput {
+	if manifest == nil {
+		return manifestOutput{Host: host.URL}
+	}
+	out := manifestOutput{
+		Host:                    host.URL,
+		PlatformVersion:         manifest.PlatformVersion,
+		ManifestProtocolVersion: manifest.ManifestProtocolVersion,
+		GeneratedAt:             manifest.GeneratedAt,
+		Operations:              manifest.Operations,
+		Types:                   manifest.Types,
+	}
+	if host.Manifest != nil {
+		out.FetchedAt = host.Manifest.FetchedAt
+	}
+	return out
 }
 
 func platformHostsWithLogin(cfg *config.Config) []config.PlatformHost {
@@ -1103,6 +1292,10 @@ func clearPlatformLogin(cfg *config.Config, host, accountID string) error {
 	}
 	cfg.RemovePlatformHost(host)
 	return cfg.Save()
+}
+
+func localLogoutHint(host string) string {
+	return fmt.Sprintf("If this host is no longer reachable, remove only the local CLI credentials with:\n  whodb-cli logout --host %s --local", host)
 }
 
 func resolvePlatformProject(ctx context.Context, session *platformSession, orgValue, projectValue string) (*platform.Project, error) {

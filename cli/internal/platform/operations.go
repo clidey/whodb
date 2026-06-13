@@ -16,14 +16,52 @@
 
 package platform
 
+import (
+	"fmt"
+	"strings"
+)
+
 const operationMe = `
 query CLIPlatformMe {
   Me {
-    id
-    email
-    displayName
-    orgId
+    %s
   }
+}
+`
+
+const operationPlatformManifest = `
+query CLIPlatformManifest {
+  PlatformManifest {
+    platformVersion
+    manifestProtocolVersion
+    generatedAt
+    operations {
+      name
+      kind
+      returns
+      args {
+        name
+        type
+        required
+        list
+      }
+    }
+    types {
+      name
+      fields {
+        name
+        type
+        required
+        list
+      }
+    }
+  }
+}
+`
+
+const operationPlatformVersion = `
+query CLIPlatformVersion {
+  Version
 }
 `
 
@@ -45,16 +83,6 @@ query CLIPlatformProjects($orgId: ID!) {
     name
     slug
     description
-  }
-}
-`
-
-const operationSwitchOrganization = `
-mutation CLIPlatformSwitchOrganization($orgId: ID!) {
-  SwitchOrganization(orgId: $orgId) {
-    id
-    name
-    slug
   }
 }
 `
@@ -102,6 +130,43 @@ mutation CLIPlatformCreateSource($input: CreateSourceInput!) {
     databaseType
     createdBy
     createdAt
+  }
+}
+`
+
+const operationSourceConfig = `
+query CLIPlatformSourceConfig($projectId: ID!, $sourceId: ID!) {
+  SourceConfig(projectId: $projectId, sourceId: $sourceId) {
+    hostname
+    port
+    username
+    password
+    database
+    advanced {
+      key: Key
+      value: Value
+    }
+  }
+}
+`
+
+const operationUpdateSource = `
+mutation CLIPlatformUpdateSource($input: UpdateSourceInput!) {
+  UpdateSource(input: $input) {
+    id
+    projectId
+    name
+    databaseType
+    createdBy
+    createdAt
+  }
+}
+`
+
+const operationTestSourceConnection = `
+mutation CLIPlatformTestSourceConnection($credentials: SourceLoginInput!) {
+  TestSourceConnection(credentials: $credentials) {
+    Status
   }
 }
 `
@@ -174,15 +239,23 @@ query CLIPlatformSourceRows($projectId: ID!, $sourceId: ID!, $ref: SourceObjectR
 `
 
 var platformOperations = map[string]string{
-	"me":                  operationMe,
-	"organizations":       operationOrganizations,
-	"projects":            operationProjects,
-	"switch_organization": operationSwitchOrganization,
-	"project_sources":     operationProjectSources,
-	"source_types":        operationSourceTypes,
-	"create_source":       operationCreateSource,
-	"delete_source":       operationDeleteSource,
-	"source_objects":      operationPlatformSourceObjects,
-	"source_columns":      operationPlatformSourceColumns,
-	"source_rows":         operationPlatformSourceRows,
+	"me":                operationMeForFields([]string{"id", "email", "displayName"}),
+	"platform_manifest": operationPlatformManifest,
+	"platform_version":  operationPlatformVersion,
+	"organizations":     operationOrganizations,
+	"projects":          operationProjects,
+	"project_sources":   operationProjectSources,
+	"source_types":      operationSourceTypes,
+	"create_source":     operationCreateSource,
+	"source_config":     operationSourceConfig,
+	"update_source":     operationUpdateSource,
+	"test_source":       operationTestSourceConnection,
+	"delete_source":     operationDeleteSource,
+	"source_objects":    operationPlatformSourceObjects,
+	"source_columns":    operationPlatformSourceColumns,
+	"source_rows":       operationPlatformSourceRows,
+}
+
+func operationMeForFields(fields []string) string {
+	return fmt.Sprintf(operationMe, strings.Join(fields, "\n    "))
 }

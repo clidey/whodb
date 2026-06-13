@@ -58,6 +58,7 @@ jobs:
             sum.golang.org:443
             us.i.posthog.com:443
             us.posthog.com:443
+            mirror.gcr.io:443
 
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2

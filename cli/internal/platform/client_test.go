@@ -19,6 +19,7 @@ package platform
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -85,6 +86,175 @@ func TestResolveAuthHostRequiresMothergateURL(t *testing.T) {
 
 	if _, err := ResolveAuthHost(context.Background(), server.URL); err == nil {
 		t.Fatalf("ResolveAuthHost() error = nil, want error")
+	}
+}
+
+func TestMeMatchesPlatformUserSchema(t *testing.T) {
+	var request struct {
+		Query string `json:"query"`
+	}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		if !strings.Contains(request.Query, "Me") {
+			t.Fatalf("query = %q, want Me", request.Query)
+		}
+		if strings.Contains(request.Query, "orgId") {
+			t.Fatalf("query = %q, should not request PlatformUser.orgId", request.Query)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"data":{"Me":{"id":"user-1","email":"ada@example.com","displayName":"Ada"}}}`))
+	}))
+	defer server.Close()
+
+	client, err := NewClient(server.URL, "token")
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
+	}
+	user, err := client.Me(context.Background())
+	if err != nil {
+		t.Fatalf("Me() error = %v", err)
+	}
+	if user.ID != "user-1" || user.Email != "ada@example.com" {
+		t.Fatalf("user = %#v, want Ada", user)
+	}
+}
+
+func TestPlatformManifestFetchesContract(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"data":{"PlatformManifest":{"platformVersion":"1.2.3","manifestProtocolVersion":"1","generatedAt":"2026-06-13T00:00:00Z","operations":[{"name":"Me","kind":"Query","returns":"PlatformUser","args":[]}],"types":[{"name":"PlatformUser","fields":[{"name":"id","type":"ID","required":true,"list":false}]}]}}}`))
+	}))
+	defer server.Close()
+
+	client, err := NewClient(server.URL, "token")
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
+	}
+	manifest, err := client.PlatformManifest(context.Background())
+	if err != nil {
+		t.Fatalf("PlatformManifest() error = %v", err)
+	}
+	if manifest.PlatformVersion != "1.2.3" || !manifest.HasOperation("Query", "Me") {
+		t.Fatalf("manifest = %#v, want version and Me operation", manifest)
+	}
+	if fields := manifest.SelectFields("PlatformUser", []string{"id", "orgId"}); len(fields) != 1 || fields[0] != "id" {
+		t.Fatalf("selected fields = %#v, want only id", fields)
+	}
+}
+
+func TestRequireOperationBlocksUnsupportedFeature(t *testing.T) {
+	requests := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests++
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer server.Close()
+
+	client, err := NewClient(server.URL, "token")
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
+	}
+	client.SetPlatformManifest(&PlatformManifest{
+		Operations: []PlatformManifestOperation{
+			{Name: "Me", Kind: "Query"},
+		},
+	})
+	_, err = client.SourceConfig(context.Background(), "proj-1", "src-1")
+	var unsupported UnsupportedFeatureError
+	if !errors.As(err, &unsupported) {
+		t.Fatalf("SourceConfig() error = %T %v, want UnsupportedFeatureError", err, err)
+	}
+	if unsupported.Operation != "Query.SourceConfig" {
+		t.Fatalf("operation = %q, want Query.SourceConfig", unsupported.Operation)
+	}
+	if requests != 0 {
+		t.Fatalf("requests = %d, want no request for unsupported operation", requests)
+	}
+}
+
+func TestGraphQLValidationErrorRefreshesManifestAndRetriesOnce(t *testing.T) {
+	requests := 0
+	refreshes := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests++
+		w.Header().Set("Content-Type", "application/json")
+		if requests == 1 {
+			_, _ = w.Write([]byte(`{"errors":[{"message":"Cannot query field \"orgId\" on type \"PlatformUser\".","extensions":{"code":"GRAPHQL_VALIDATION_FAILED"}}],"data":null}`))
+			return
+		}
+		_, _ = w.Write([]byte(`{"data":{"MyOrganizations":[{"id":"org-1","name":"Acme","slug":"acme"}]}}`))
+	}))
+	defer server.Close()
+
+	client, err := NewClient(server.URL, "token")
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
+	}
+	client.SetManifestRefresher(func(ctx context.Context, refreshed *Client) (*PlatformManifest, error) {
+		refreshes++
+		manifest := &PlatformManifest{
+			Operations: []PlatformManifestOperation{{Name: "MyOrganizations", Kind: "Query"}},
+		}
+		refreshed.SetPlatformManifest(manifest)
+		return manifest, nil
+	})
+	orgs, err := client.Organizations(context.Background())
+	if err != nil {
+		t.Fatalf("Organizations() error = %v", err)
+	}
+	if len(orgs) != 1 || orgs[0].ID != "org-1" {
+		t.Fatalf("orgs = %#v, want org-1", orgs)
+	}
+	if requests != 2 || refreshes != 1 {
+		t.Fatalf("requests=%d refreshes=%d, want 2 requests and 1 refresh", requests, refreshes)
+	}
+}
+
+func TestGraphQLValidationErrorDetectsWrappedError(t *testing.T) {
+	err := errors.New("other")
+	if IsGraphQLValidationError(err) {
+		t.Fatal("IsGraphQLValidationError(non-graphql) = true, want false")
+	}
+	wrapped := errors.Join(GraphQLError{Code: "GRAPHQL_VALIDATION_FAILED", Message: "bad field"})
+	if !IsGraphQLValidationError(wrapped) {
+		t.Fatal("IsGraphQLValidationError(wrapped validation error) = false, want true")
+	}
+}
+
+func TestMeUsesManifestFields(t *testing.T) {
+	var request struct {
+		Query string `json:"query"`
+	}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		if strings.Contains(request.Query, "orgId") {
+			t.Fatalf("query = %q, should not request missing orgId", request.Query)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"data":{"Me":{"id":"user-1","email":"ada@example.com","displayName":"Ada"}}}`))
+	}))
+	defer server.Close()
+
+	client, err := NewClient(server.URL, "token")
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
+	}
+	client.SetPlatformManifest(&PlatformManifest{
+		Types: []PlatformManifestType{{
+			Name: "PlatformUser",
+			Fields: []PlatformManifestField{
+				{Name: "id", Type: "ID", Required: true},
+				{Name: "email", Type: "String", Required: true},
+				{Name: "displayName", Type: "String", Required: true},
+			},
+		}},
+	})
+	if _, err := client.Me(context.Background()); err != nil {
+		t.Fatalf("Me() error = %v", err)
 	}
 }
 
@@ -218,6 +388,138 @@ func TestCreateSourceMapsAdvancedRecords(t *testing.T) {
 	first := advanced[0].(map[string]any)
 	if first["Key"] != "sslmode" || first["Value"] != "require" {
 		t.Fatalf("first advanced record = %#v, want sorted sslmode record", first)
+	}
+}
+
+func TestSourceConfigMapsAdvancedRecords(t *testing.T) {
+	var request struct {
+		Query     string         `json:"query"`
+		Variables map[string]any `json:"variables"`
+	}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		if !strings.Contains(request.Query, "SourceConfig") {
+			t.Fatalf("query = %q, want SourceConfig", request.Query)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"data":{"SourceConfig":{"hostname":"db.example.com","port":"5432","username":"user","password":"********","database":"analytics","advanced":[{"key":"sslmode","value":"require"}]}}}`))
+	}))
+	defer server.Close()
+
+	client, err := NewClient(server.URL, "token")
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
+	}
+	config, err := client.SourceConfig(context.Background(), "proj-1", "src-1")
+	if err != nil {
+		t.Fatalf("SourceConfig() error = %v", err)
+	}
+	if request.Variables["projectId"] != "proj-1" || request.Variables["sourceId"] != "src-1" {
+		t.Fatalf("variables = %#v, want project/source IDs", request.Variables)
+	}
+	if config.Hostname != "db.example.com" || config.Advanced["sslmode"] != "require" {
+		t.Fatalf("config = %#v, want mapped source config", config)
+	}
+}
+
+func TestUpdateSourceMapsFullConfig(t *testing.T) {
+	var request struct {
+		Query     string         `json:"query"`
+		Variables map[string]any `json:"variables"`
+	}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		if !strings.Contains(request.Query, "UpdateSource") {
+			t.Fatalf("query = %q, want UpdateSource", request.Query)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"data":{"UpdateSource":{"id":"src-1","projectId":"proj-1","name":"Warehouse","databaseType":"Postgres","createdBy":"Ada","createdAt":"2026-06-02T00:00:00Z"}}}`))
+	}))
+	defer server.Close()
+
+	client, err := NewClient(server.URL, "token")
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
+	}
+	name := "Warehouse"
+	_, err = client.UpdateSource(context.Background(), UpdateSourceInput{
+		ID:   "src-1",
+		Name: &name,
+		Config: &SourceConfig{
+			Hostname: "db.example.com",
+			Port:     "5432",
+			Username: "user",
+			Password: "********",
+			Database: "analytics",
+			Advanced: map[string]string{"sslmode": "require"},
+		},
+	})
+	if err != nil {
+		t.Fatalf("UpdateSource() error = %v", err)
+	}
+	input := request.Variables["input"].(map[string]any)
+	if input["id"] != "src-1" || input["name"] != "Warehouse" {
+		t.Fatalf("input = %#v, want id/name", input)
+	}
+	config := input["config"].(map[string]any)
+	if config["password"] != "********" {
+		t.Fatalf("password = %#v, want masked password passthrough", config["password"])
+	}
+	advanced := config["advanced"].([]any)
+	if len(advanced) != 1 || advanced[0].(map[string]any)["Key"] != "sslmode" {
+		t.Fatalf("advanced = %#v, want sslmode record", advanced)
+	}
+}
+
+func TestTestSourceConnectionMapsValues(t *testing.T) {
+	var request struct {
+		Query     string         `json:"query"`
+		Variables map[string]any `json:"variables"`
+	}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		if !strings.Contains(request.Query, "TestSourceConnection") {
+			t.Fatalf("query = %q, want TestSourceConnection", request.Query)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"data":{"TestSourceConnection":{"Status":true}}}`))
+	}))
+	defer server.Close()
+
+	client, err := NewClient(server.URL, "token")
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
+	}
+	err = client.TestSourceConnection(context.Background(), CreateSourceInput{
+		DatabaseType: "Postgres",
+		Hostname:     "db.example.com",
+		Port:         "5432",
+		Username:     "user",
+		Password:     "secret",
+		Database:     "analytics",
+		Advanced:     map[string]string{"sslmode": "require"},
+	})
+	if err != nil {
+		t.Fatalf("TestSourceConnection() error = %v", err)
+	}
+	credentials := request.Variables["credentials"].(map[string]any)
+	if credentials["SourceType"] != "Postgres" {
+		t.Fatalf("SourceType = %#v, want Postgres", credentials["SourceType"])
+	}
+	values := credentials["Values"].([]any)
+	got := map[string]string{}
+	for _, value := range values {
+		record := value.(map[string]any)
+		got[record["Key"].(string)] = record["Value"].(string)
+	}
+	if got["Hostname"] != "db.example.com" || got["Password"] != "secret" || got["sslmode"] != "require" {
+		t.Fatalf("values = %#v, want host/password/sslmode", got)
 	}
 }
 

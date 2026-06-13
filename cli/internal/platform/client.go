@@ -21,6 +21,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -38,10 +39,15 @@ const (
 
 // Client sends authenticated requests to a hosted WhoDB platform endpoint.
 type Client struct {
-	host        string
-	accessToken string
-	httpClient  *http.Client
+	host              string
+	accessToken       string
+	httpClient        *http.Client
+	manifest          *PlatformManifest
+	manifestRefresher ManifestRefresher
 }
+
+// ManifestRefresher reloads a hosted platform manifest after schema validation drift.
+type ManifestRefresher func(context.Context, *Client) (*PlatformManifest, error)
 
 // AuthConfig is the public auth configuration advertised by a WhoDB platform host.
 type AuthConfig struct {
@@ -146,12 +152,66 @@ func (c *Client) Host() string {
 	return c.host
 }
 
+// SetPlatformManifest attaches a cached hosted platform manifest to the client.
+func (c *Client) SetPlatformManifest(manifest *PlatformManifest) {
+	c.manifest = manifest
+}
+
+// SetManifestRefresher sets the callback used for one-shot schema refresh retries.
+func (c *Client) SetManifestRefresher(refresher ManifestRefresher) {
+	c.manifestRefresher = refresher
+}
+
+// RequireOperation returns an error when the cached manifest does not publish an operation.
+func (c *Client) RequireOperation(kind, name, feature string) error {
+	if c.manifest == nil {
+		return nil
+	}
+	return c.manifest.RequireOperation(kind, name, feature)
+}
+
+// PlatformManifest returns the hosted platform contract advertised to the CLI.
+func (c *Client) PlatformManifest(ctx context.Context) (*PlatformManifest, error) {
+	var resp struct {
+		PlatformManifest *PlatformManifest `json:"PlatformManifest"`
+	}
+	if err := c.graphQLOnce(ctx, operationPlatformManifest, nil, &resp); err != nil {
+		return nil, err
+	}
+	if resp.PlatformManifest == nil {
+		return nil, fmt.Errorf("platform returned no manifest")
+	}
+	c.manifest = resp.PlatformManifest
+	return resp.PlatformManifest, nil
+}
+
+// PlatformVersion returns the hosted platform version string.
+func (c *Client) PlatformVersion(ctx context.Context) (string, error) {
+	var resp struct {
+		Version string `json:"Version"`
+	}
+	if err := c.graphQLOnce(ctx, operationPlatformVersion, nil, &resp); err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(resp.Version), nil
+}
+
 // Me returns the authenticated platform user.
 func (c *Client) Me(ctx context.Context) (*User, error) {
 	var resp struct {
 		Me *User `json:"Me"`
 	}
-	if err := c.graphQL(ctx, operationMe, nil, &resp); err != nil {
+	query := func() string {
+		fields := []string{"id", "email", "displayName"}
+		if c.manifest != nil {
+			fields = c.manifest.SelectFields("PlatformUser", []string{"id", "email", "displayName", "orgId"})
+		}
+		if len(fields) == 0 {
+			fields = []string{"id", "email", "displayName"}
+		}
+		return operationMeForFields(fields)
+	}
+	if err := c.graphQLWithRetry(ctx, query, nil, &resp); err != nil {
 		return nil, err
 	}
 	if resp.Me == nil {
@@ -162,6 +222,9 @@ func (c *Client) Me(ctx context.Context) (*User, error) {
 
 // Organizations returns organizations visible to the authenticated user.
 func (c *Client) Organizations(ctx context.Context) ([]Organization, error) {
+	if err := c.RequireOperation("Query", "MyOrganizations", "organization listing"); err != nil {
+		return nil, err
+	}
 	var resp struct {
 		MyOrganizations []Organization `json:"MyOrganizations"`
 	}
@@ -171,6 +234,9 @@ func (c *Client) Organizations(ctx context.Context) ([]Organization, error) {
 
 // Projects returns projects visible in one organization.
 func (c *Client) Projects(ctx context.Context, orgID string) ([]Project, error) {
+	if err := c.RequireOperation("Query", "Projects", "project listing"); err != nil {
+		return nil, err
+	}
 	var resp struct {
 		Projects []Project `json:"Projects"`
 	}
@@ -179,23 +245,11 @@ func (c *Client) Projects(ctx context.Context, orgID string) ([]Project, error) 
 	return resp.Projects, err
 }
 
-// SwitchOrganization updates the user's active organization on the hosted platform.
-func (c *Client) SwitchOrganization(ctx context.Context, orgID string) (*Organization, error) {
-	var resp struct {
-		SwitchOrganization *Organization `json:"SwitchOrganization"`
-	}
-	variables := map[string]any{"orgId": orgID}
-	if err := c.graphQL(ctx, operationSwitchOrganization, variables, &resp); err != nil {
-		return nil, err
-	}
-	if resp.SwitchOrganization == nil {
-		return nil, fmt.Errorf("platform returned no organization")
-	}
-	return resp.SwitchOrganization, nil
-}
-
 // ProjectSources returns sources visible to the user in one project.
 func (c *Client) ProjectSources(ctx context.Context, projectID string) ([]Source, error) {
+	if err := c.RequireOperation("Query", "ProjectSources", "source listing"); err != nil {
+		return nil, err
+	}
 	var resp struct {
 		ProjectSources []Source `json:"ProjectSources"`
 	}
@@ -206,6 +260,9 @@ func (c *Client) ProjectSources(ctx context.Context, projectID string) ([]Source
 
 // SourceTypes returns source types available on the hosted platform.
 func (c *Client) SourceTypes(ctx context.Context) ([]SourceType, error) {
+	if err := c.RequireOperation("Query", "SourceTypes", "source type discovery"); err != nil {
+		return nil, err
+	}
 	var resp struct {
 		SourceTypes []SourceType `json:"SourceTypes"`
 	}
@@ -215,6 +272,9 @@ func (c *Client) SourceTypes(ctx context.Context) ([]SourceType, error) {
 
 // CreateSource creates a hosted source in one project.
 func (c *Client) CreateSource(ctx context.Context, input CreateSourceInput) (*Source, error) {
+	if err := c.RequireOperation("Mutation", "CreateSource", "source creation"); err != nil {
+		return nil, err
+	}
 	var resp struct {
 		CreateSource *Source `json:"CreateSource"`
 	}
@@ -228,8 +288,86 @@ func (c *Client) CreateSource(ctx context.Context, input CreateSourceInput) (*So
 	return resp.CreateSource, nil
 }
 
+// SourceConfig returns one hosted source's connection configuration.
+func (c *Client) SourceConfig(ctx context.Context, projectID, sourceID string) (*SourceConfig, error) {
+	if err := c.RequireOperation("Query", "SourceConfig", "source config reads"); err != nil {
+		return nil, err
+	}
+	type sourceConfigResponse struct {
+		Hostname string   `json:"hostname"`
+		Port     string   `json:"port"`
+		Username string   `json:"username"`
+		Password string   `json:"password"`
+		Database string   `json:"database"`
+		Advanced []Record `json:"advanced"`
+	}
+	var resp struct {
+		SourceConfig *sourceConfigResponse `json:"SourceConfig"`
+	}
+	variables := map[string]any{"projectId": projectID, "sourceId": sourceID}
+	if err := c.graphQL(ctx, operationSourceConfig, variables, &resp); err != nil {
+		return nil, err
+	}
+	if resp.SourceConfig == nil {
+		return nil, fmt.Errorf("platform returned no source config")
+	}
+	config := &SourceConfig{
+		Hostname: resp.SourceConfig.Hostname,
+		Port:     resp.SourceConfig.Port,
+		Username: resp.SourceConfig.Username,
+		Password: resp.SourceConfig.Password,
+		Database: resp.SourceConfig.Database,
+		Advanced: map[string]string{},
+	}
+	for _, record := range resp.SourceConfig.Advanced {
+		config.Advanced[record.Key] = record.Value
+	}
+	return config, nil
+}
+
+// UpdateSource updates one hosted source's metadata or connection configuration.
+func (c *Client) UpdateSource(ctx context.Context, input UpdateSourceInput) (*Source, error) {
+	if err := c.RequireOperation("Mutation", "UpdateSource", "source updates"); err != nil {
+		return nil, err
+	}
+	var resp struct {
+		UpdateSource *Source `json:"UpdateSource"`
+	}
+	variables := map[string]any{"input": input.graphQLInput()}
+	if err := c.graphQL(ctx, operationUpdateSource, variables, &resp); err != nil {
+		return nil, err
+	}
+	if resp.UpdateSource == nil {
+		return nil, fmt.Errorf("platform returned no source")
+	}
+	return resp.UpdateSource, nil
+}
+
+// TestSourceConnection checks whether a draft source configuration can connect.
+func (c *Client) TestSourceConnection(ctx context.Context, input CreateSourceInput) error {
+	if err := c.RequireOperation("Mutation", "TestSourceConnection", "source connection tests"); err != nil {
+		return err
+	}
+	var resp struct {
+		TestSourceConnection *struct {
+			Status bool `json:"Status"`
+		} `json:"TestSourceConnection"`
+	}
+	variables := map[string]any{"credentials": input.sourceLoginInput()}
+	if err := c.graphQL(ctx, operationTestSourceConnection, variables, &resp); err != nil {
+		return err
+	}
+	if resp.TestSourceConnection == nil || !resp.TestSourceConnection.Status {
+		return fmt.Errorf("platform did not confirm source connection")
+	}
+	return nil
+}
+
 // DeleteSource deletes a hosted source from one project.
 func (c *Client) DeleteSource(ctx context.Context, projectID, sourceID string) error {
+	if err := c.RequireOperation("Mutation", "DeleteSource", "source deletion"); err != nil {
+		return err
+	}
 	var resp struct {
 		DeleteSource *struct {
 			Status bool `json:"Status"`
@@ -247,6 +385,9 @@ func (c *Client) DeleteSource(ctx context.Context, projectID, sourceID string) e
 
 // SourceObjects returns browseable objects for one hosted source.
 func (c *Client) SourceObjects(ctx context.Context, projectID, sourceID string, parent *SourceObjectRefInput, kinds []SourceObjectKind, pageSize, pageOffset int) ([]SourceObject, error) {
+	if err := c.RequireOperation("Query", "PlatformSourceObjects", "source object browsing"); err != nil {
+		return nil, err
+	}
 	var resp struct {
 		PlatformSourceObjects []SourceObject `json:"PlatformSourceObjects"`
 	}
@@ -268,6 +409,9 @@ func (c *Client) SourceObjects(ctx context.Context, projectID, sourceID string, 
 
 // SourceColumns returns columns for one hosted source object.
 func (c *Client) SourceColumns(ctx context.Context, projectID, sourceID string, ref SourceObjectRefInput) ([]Column, error) {
+	if err := c.RequireOperation("Query", "PlatformSourceColumns", "source column inspection"); err != nil {
+		return nil, err
+	}
 	var resp struct {
 		PlatformSourceColumns []Column `json:"PlatformSourceColumns"`
 	}
@@ -282,6 +426,9 @@ func (c *Client) SourceColumns(ctx context.Context, projectID, sourceID string, 
 
 // SourceRows returns rows for one hosted source object.
 func (c *Client) SourceRows(ctx context.Context, projectID, sourceID string, ref SourceObjectRefInput, pageSize, pageOffset int) (*RowsResult, error) {
+	if err := c.RequireOperation("Query", "PlatformSourceRows", "source row previews"); err != nil {
+		return nil, err
+	}
 	var resp struct {
 		PlatformSourceRows *RowsResult `json:"PlatformSourceRows"`
 	}
@@ -302,6 +449,21 @@ func (c *Client) SourceRows(ctx context.Context, projectID, sourceID string, ref
 }
 
 func (c *Client) graphQL(ctx context.Context, query string, variables any, target any) error {
+	return c.graphQLWithRetry(ctx, func() string { return query }, variables, target)
+}
+
+func (c *Client) graphQLWithRetry(ctx context.Context, query func() string, variables any, target any) error {
+	err := c.graphQLOnce(ctx, query(), variables, target)
+	if !IsGraphQLValidationError(err) || c.manifestRefresher == nil {
+		return err
+	}
+	if _, refreshErr := c.manifestRefresher(ctx, c); refreshErr != nil {
+		return err
+	}
+	return c.graphQLOnce(ctx, query(), variables, target)
+}
+
+func (c *Client) graphQLOnce(ctx context.Context, query string, variables any, target any) error {
 	body, err := json.Marshal(map[string]any{
 		"query":     query,
 		"variables": variables,
@@ -338,17 +500,40 @@ func (c *Client) graphQL(ctx context.Context, query string, variables any, targe
 	var envelope struct {
 		Data   json.RawMessage `json:"data"`
 		Errors []struct {
-			Message string `json:"message"`
+			Message    string `json:"message"`
+			Extensions struct {
+				Code string `json:"code"`
+			} `json:"extensions"`
 		} `json:"errors"`
 	}
 	if err := json.Unmarshal(raw, &envelope); err != nil {
 		return err
 	}
 	if len(envelope.Errors) > 0 {
-		return fmt.Errorf("platform GraphQL error: %s", envelope.Errors[0].Message)
+		first := envelope.Errors[0]
+		return GraphQLError{Message: first.Message, Code: first.Extensions.Code}
 	}
 	if len(envelope.Data) == 0 || string(envelope.Data) == "null" {
 		return fmt.Errorf("platform returned no data")
 	}
 	return json.Unmarshal(envelope.Data, target)
+}
+
+// GraphQLError is a GraphQL response error from the hosted platform.
+type GraphQLError struct {
+	Message string
+	Code    string
+}
+
+func (e GraphQLError) Error() string {
+	if e.Code == "" {
+		return fmt.Sprintf("platform GraphQL error: %s", e.Message)
+	}
+	return fmt.Sprintf("platform GraphQL error: %s: %s", e.Code, e.Message)
+}
+
+// IsGraphQLValidationError reports whether err is a GraphQL validation error.
+func IsGraphQLValidationError(err error) bool {
+	var graphErr GraphQLError
+	return errors.As(err, &graphErr) && graphErr.Code == "GRAPHQL_VALIDATION_FAILED"
 }

@@ -17,6 +17,7 @@
 package config
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -93,13 +94,22 @@ type SavedQuery struct {
 
 // PlatformHost stores non-secret hosted WhoDB account and workspace state.
 type PlatformHost struct {
-	URL                string `json:"url"`
-	AccountID          string `json:"account_id,omitempty"`
-	Email              string `json:"email,omitempty"`
-	DefaultOrgID       string `json:"default_org_id,omitempty"`
-	DefaultOrgName     string `json:"default_org_name,omitempty"`
-	DefaultProjectID   string `json:"default_project_id,omitempty"`
-	DefaultProjectName string `json:"default_project_name,omitempty"`
+	URL                string                 `json:"url"`
+	AccountID          string                 `json:"account_id,omitempty"`
+	Email              string                 `json:"email,omitempty"`
+	DefaultOrgID       string                 `json:"default_org_id,omitempty"`
+	DefaultOrgName     string                 `json:"default_org_name,omitempty"`
+	DefaultProjectID   string                 `json:"default_project_id,omitempty"`
+	DefaultProjectName string                 `json:"default_project_name,omitempty"`
+	Manifest           *PlatformManifestCache `json:"manifest,omitempty"`
+}
+
+// PlatformManifestCache stores non-secret hosted platform contract metadata.
+type PlatformManifestCache struct {
+	PlatformVersion         string          `json:"platform_version"`
+	ManifestProtocolVersion string          `json:"manifest_protocol_version"`
+	FetchedAt               string          `json:"fetched_at"`
+	Raw                     json.RawMessage `json:"raw"`
 }
 
 // PlatformConfig stores hosted WhoDB CLI configuration.

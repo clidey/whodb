@@ -17,6 +17,17 @@ type Query {
 }
 ```
 
+If the schema change affects hosted platform functionality that the public CLI
+can use, also update the EE `PlatformManifest` contract in
+`ee/core/graph/platform_manifest.go`. The CLI uses that manifest as the
+hosted-platform source of truth for available operations and fields, so new,
+renamed, or removed CLI-relevant GraphQL fields must stay tied to the manifest.
+Run the manifest contract test after changing it:
+
+```bash
+cd ee && PLATFORM_ENCRYPTION_KEY=0123456789abcdef0123456789abcdef go test ./core/graph -run TestPlatformManifestMatchesGraphQLSchema -count=1
+```
+
 ### 2. Run Backend Codegen
 ```bash
 cd core && go generate .

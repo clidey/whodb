@@ -138,7 +138,7 @@ func collectSourceFieldValues(fields []platform.SourceConnectionField, explicitV
 	for key, value := range explicitValues {
 		canonicalKey, ok := fieldKeyByLower[strings.ToLower(strings.TrimSpace(key))]
 		if !ok {
-			return nil, nil, fmt.Errorf("source type does not define connection field %q", key)
+			return nil, nil, fmt.Errorf("source type does not define connection field %q; run whodb-cli sources fields <source-type> to list valid fields", key)
 		}
 		values[canonicalKey] = value
 	}
@@ -161,7 +161,7 @@ func collectSourceFieldValues(fields []platform.SourceConnectionField, explicitV
 		}
 		if (!ok || strings.TrimSpace(value) == "") && field.Required {
 			if prompt == nil || !isInteractiveInput() {
-				return nil, nil, fmt.Errorf("source field %s is required; pass --field %s=value", field.Key, field.Key)
+				return nil, nil, fmt.Errorf("source field %s is required; pass --field %s=value or run whodb-cli sources fields <source-type> to inspect required fields", field.Key, field.Key)
 			}
 			prompted, err := prompt(field)
 			if err != nil {
@@ -171,7 +171,7 @@ func collectSourceFieldValues(fields []platform.SourceConnectionField, explicitV
 			ok = true
 		}
 		if field.Required && strings.TrimSpace(value) == "" {
-			return nil, nil, fmt.Errorf("source field %s is required", field.Key)
+			return nil, nil, fmt.Errorf("source field %s is required; run whodb-cli sources fields <source-type> to inspect required fields", field.Key)
 		}
 		if ok {
 			values[field.Key] = value
