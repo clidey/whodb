@@ -6,8 +6,8 @@ name: E2E Tests (CE)
 # single HTML report.
 
 on:
-  schedule:
-    - cron: '0 6 * * *'
+#  schedule:
+#    - cron: '0 6 * * *'
   workflow_dispatch:
 
 permissions:

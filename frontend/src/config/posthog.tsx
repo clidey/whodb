@@ -17,6 +17,7 @@
 import type {PostHog} from 'posthog-js';
 import type * as PostHogModule from 'posthog-js';
 import {featureFlags} from './features';
+import {getEdition} from './edition';
 
 type ConsentState = 'granted' | 'denied' | 'unknown';
 
@@ -29,10 +30,12 @@ let activeClient: PostHog | null = null;
 let handlersRegistered = false;
 let cachedDistinctId: string | null = null;
 
+let deploymentName: string | null = null; // eslint-disable-line prefer-const
+
 const posthogKey = "phc_hbXcCoPTdxm5ADL8PmLSYTIUvS6oRWFM2JAK8SMbfnH";
 const apiHost = "https://z.clidey.com";
 const getEnvEnvironment = () => import.meta.env.MODE ?? 'development';
-const getBuildEdition = () => 'ce';
+const getBuildEdition = () => getEdition();
 const isE2ETest = () => import.meta.env.VITE_E2E_TEST === 'true';
 
 const getStoredConsent = (): ConsentState => {
@@ -113,13 +116,17 @@ const registerContext = (client: PostHog) => {
     // Check if running as desktop app
     const isDesktop = !!(window as any).go?.main?.App || !!(window as any).go?.common?.App;
 
-    client.register({
+    const properties: Record<string, string> = {
         site_domain: domain,
         build_environment: getEnvEnvironment(),
         build_edition: getBuildEdition(),
         app_type: isDesktop ? 'desktop' : 'web',
         platform: isDesktop ? 'wails' : 'browser',
-    });
+    };
+    if (deploymentName) {
+        properties.deployment = deploymentName;
+    }
+    client.register(properties);
 };
 
 const captureClientException = (client: PostHog, error: unknown, properties: Record<string, unknown>) => {
@@ -352,4 +359,8 @@ export const captureException = async (error: unknown, properties?: Record<strin
     } catch {
         // best-effort — never throw from error reporting
     }
+};
+
+export const setDeploymentName = (name: string) => {
+    deploymentName = name;
 };

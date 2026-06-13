@@ -18,10 +18,12 @@ import {reduxStore} from '../store';
 import {getAnalyticsDistinctId} from '../config/posthog';
 
 /**
- * Optional auth header provider registered by extensions (e.g. EE JWT-based auth).
+ * Optional auth header provider registered by extensions.
  * When set, it fully replaces the CE credential-based header logic.
  */
 let authHeaderProvider: (() => string | null) | null = null;
+let extraHeadersProvider: (() => Record<string, string>) | null = null;
+let asyncExtraHeadersProvider: (() => Promise<Record<string, string>>) | null = null;
 
 type SourceCredentialValueLike = {
     Key: string;
@@ -36,11 +38,28 @@ function mapSourceCredentialValues(values: readonly SourceCredentialValueLike[] 
 }
 
 /**
- * Registers an alternative auth header provider. Used by EE to send JWT tokens
- * instead of CE's base64-encoded database credentials.
+ * Registers an alternative auth header provider instead of CE's base64-encoded
+ * database credentials.
  */
 export const registerAuthHeaderProvider = (fn: () => string | null): void => {
     authHeaderProvider = fn;
+};
+
+/**
+ * Registers extra request headers supplied by an extension.
+ */
+export const registerAuthExtraHeadersProvider = (fn: () => Record<string, string>): void => {
+    extraHeadersProvider = fn;
+};
+
+/**
+ * Registers async request headers supplied by an extension.
+ *
+ * This is used by request paths that can wait for session state before sending,
+ * such as Apollo GraphQL operations.
+ */
+export const registerAsyncAuthExtraHeadersProvider = (fn: () => Promise<Record<string, string>>): void => {
+    asyncExtraHeadersProvider = fn;
 };
 
 const analyticsHeaderName = 'X-WhoDB-Analytics-Id';
@@ -130,6 +149,45 @@ export function addAuthHeader(headers: HeadersInit = {}): HeadersInit {
     headers = {
         ...headers,
         [analyticsHeaderName]: id ?? ""
+    }
+    if (extraHeadersProvider) {
+        headers = {
+            ...headers,
+            ...extraHeadersProvider(),
+        };
+    }
+    if (authHeader) {
+        return {
+            ...headers,
+            Authorization: authHeader,
+        };
+    }
+    return headers;
+}
+
+/**
+ * Adds authentication headers after resolving any async extension headers.
+ *
+ * Use this for request pipelines that support async header preparation.
+ * Synchronous callers should continue using addAuthHeader().
+ */
+export async function addAuthHeaderAsync(headers: HeadersInit = {}): Promise<HeadersInit> {
+    const authHeader = getAuthorizationHeader();
+    const id = getAnalyticsDistinctId()
+    headers = {
+        ...headers,
+        [analyticsHeaderName]: id ?? ""
+    }
+    if (asyncExtraHeadersProvider) {
+        headers = {
+            ...headers,
+            ...await asyncExtraHeadersProvider(),
+        };
+    } else if (extraHeadersProvider) {
+        headers = {
+            ...headers,
+            ...extraHeadersProvider(),
+        };
     }
     if (authHeader) {
         return {

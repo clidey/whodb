@@ -245,7 +245,7 @@ export const extrasMethods = {
         const card = this.page.locator('[role="dialog"] [data-slot="card"]').nth(index);
         const textToCopy = (await card.locator("pre code").innerText()).trim();
 
-        await card.locator('[data-testid="copy-to-clipboard-button"]').click();
+        await card.locator('[data-slot="copy-button"]').click();
 
         const clipboardText = await this.page.evaluate(() => navigator.clipboard.readText());
         expect(clipboardText).toBe(textToCopy);

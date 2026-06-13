@@ -119,14 +119,13 @@ services:
     hostname: e2e_cockroachdb
     entrypoint: ["/cockroach/cockroach"]
     command:
-      - start
+      - start-single-node
       - --insecure
-      - --listen-addr=e2e_cockroachdb:26357
-      - --advertise-addr=e2e_cockroachdb:26357
-      - --sql-addr=e2e_cockroachdb:26257
-      - --http-addr=e2e_cockroachdb:8080
-      - --join=e2e_cockroachdb:26357
-      - --max-offset=5s
+      - --listen-addr=0.0.0.0:26357
+      - --sql-addr=0.0.0.0:26257
+      - --http-addr=0.0.0.0:8080
+      - --cache=128MiB
+      - --max-sql-memory=128MiB
     ports:
       - "26257:26257"
     volumes:
@@ -138,6 +137,8 @@ services:
     image: cockroachdb/cockroach:latest
     depends_on:
       - e2e_cockroachdb
+    environment:
+      - COCKROACH_SKIP_INIT=true
     volumes:
       - ./sample-data/cockroachdb/data.sql:/data.sql:ro
       - ./sample-data/cockroachdb/init.sh:/init.sh:ro

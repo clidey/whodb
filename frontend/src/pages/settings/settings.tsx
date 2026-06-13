@@ -143,7 +143,7 @@ export const SettingsPage: FC = () => {
                                     {t('telemetryDescription', { appName })}&nbsp;
                                     {t('dataCollectionDetails', {
                                         privacyPolicyLink: <ExternalLink
-                                            href={"https://clidey.com/privacy-policy"}
+                                            href={"https://whodb.com/privacy"}
                                             className={"underline text-blue-500"}>{t('privacyPolicy')}</ExternalLink>
                                     })}
                                     <br/>

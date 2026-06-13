@@ -135,6 +135,7 @@ export default defineConfig(async ({command}) => {
         '/api': {
           target: `http://localhost:${process.env.VITE_BACKEND_PORT || '8080'}`,
           changeOrigin: true,
+          xfwd: true,
         },
       },
     },

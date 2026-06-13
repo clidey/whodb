@@ -57,6 +57,7 @@ type MetadumpEntry struct {
 }
 
 const dialTimeout = 5 * time.Second
+const maxMemcachedKeyLength = 250
 
 // Dial connects to a memcached server at the given address.
 func Dial(address string) (*Client, error) {
@@ -134,7 +135,11 @@ func (c *Client) Ping() error {
 
 // Get retrieves a single item by key (without CAS token).
 func (c *Client) Get(key string) (*Item, error) {
-	if _, err := fmt.Fprintf(c.conn, "get %s\r\n", key); err != nil {
+	checkedKey, err := checkedMemcachedKey(key)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := fmt.Fprintf(c.conn, "get %s\r\n", checkedKey); err != nil {
 		return nil, fmt.Errorf("memcached get send: %w", err)
 	}
 	return c.readGetResponse(false)
@@ -142,7 +147,11 @@ func (c *Client) Get(key string) (*Item, error) {
 
 // Gets retrieves a single item by key (with CAS token).
 func (c *Client) Gets(key string) (*Item, error) {
-	if _, err := fmt.Fprintf(c.conn, "gets %s\r\n", key); err != nil {
+	checkedKey, err := checkedMemcachedKey(key)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := fmt.Fprintf(c.conn, "gets %s\r\n", checkedKey); err != nil {
 		return nil, fmt.Errorf("memcached gets send: %w", err)
 	}
 	return c.readGetResponse(true)
@@ -165,7 +174,11 @@ func (c *Client) Replace(item *Item) error {
 
 // Delete removes an item by key.
 func (c *Client) Delete(key string) error {
-	if _, err := fmt.Fprintf(c.conn, "delete %s\r\n", key); err != nil {
+	checkedKey, err := checkedMemcachedKey(key)
+	if err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintf(c.conn, "delete %s\r\n", checkedKey); err != nil {
 		return fmt.Errorf("memcached delete send: %w", err)
 	}
 	line, err := c.readLine()
@@ -219,7 +232,11 @@ func (c *Client) Metadump() ([]MetadumpEntry, error) {
 
 // storageCommand sends a set/add/replace command.
 func (c *Client) storageCommand(cmd string, item *Item) error {
-	header := fmt.Sprintf("%s %s %d %d %d\r\n", cmd, item.Key, item.Flags, item.Expiration, len(item.Value))
+	checkedKey, err := checkedMemcachedKey(item.Key)
+	if err != nil {
+		return err
+	}
+	header := fmt.Sprintf("%s %s %d %d %d\r\n", cmd, checkedKey, item.Flags, item.Expiration, len(item.Value))
 	if _, err := fmt.Fprint(c.conn, header); err != nil {
 		return fmt.Errorf("memcached %s send header: %w", cmd, err)
 	}
@@ -237,6 +254,26 @@ func (c *Client) storageCommand(cmd string, item *Item) error {
 		return fmt.Errorf("memcached %s: %s", cmd, line)
 	}
 	return nil
+}
+
+func validateMemcachedKey(key string) error {
+	_, err := checkedMemcachedKey(key)
+	return err
+}
+
+func checkedMemcachedKey(key string) (string, error) {
+	if key == "" {
+		return "", errors.New("memcached key is required")
+	}
+	if len(key) > maxMemcachedKeyLength {
+		return "", fmt.Errorf("memcached key exceeds %d bytes", maxMemcachedKeyLength)
+	}
+	for i := range len(key) {
+		if key[i] <= ' ' || key[i] == 0x7f {
+			return "", errors.New("memcached key cannot contain whitespace or control characters")
+		}
+	}
+	return key, nil
 }
 
 // readGetResponse parses a get/gets response. Returns nil if the key was not found.

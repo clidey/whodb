@@ -305,6 +305,14 @@ func (w *statusResponseWriter) WriteHeader(code int) {
 	w.ResponseWriter.WriteHeader(code)
 }
 
+func (w *statusResponseWriter) Write(b []byte) (int, error) {
+	if !w.wroteHeader {
+		w.wroteHeader = true
+		w.statusCode = http.StatusOK
+	}
+	return w.ResponseWriter.Write(b)
+}
+
 // Flush forwards to the underlying ResponseWriter if it supports flushing (required for SSE streaming).
 func (w *statusResponseWriter) Flush() {
 	if f, ok := w.ResponseWriter.(http.Flusher); ok {
@@ -365,6 +373,7 @@ func setupMiddlewares(router *chi.Mux, additionalMiddlewares []func(http.Handler
 		middleware.ClientIPFromRemoteAddr,
 		middleware.RedirectSlashes,
 		middleware.Recoverer,
+		middleware.Compress(5),
 		sseAwareTimeout(90 * time.Second),
 		cors.Handler(cors.Options{
 			AllowedOrigins:   allowedOrigins,

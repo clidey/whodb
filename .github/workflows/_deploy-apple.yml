@@ -632,6 +632,7 @@ jobs:
           APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          RELEASE_NOTES_INPUT: ${{ inputs.release-notes }}
         run: |
           set -e
 
@@ -644,7 +645,7 @@ jobs:
           BUNDLE_ID="com.clidey.whodb"
 
           # Prepare release notes - use input or default message
-          RELEASE_NOTES="${{ inputs.release-notes }}"
+          RELEASE_NOTES="$RELEASE_NOTES_INPUT"
           if [ -z "$RELEASE_NOTES" ]; then
             RELEASE_NOTES="Bug fixes and performance improvements."
           fi

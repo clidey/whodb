@@ -21,10 +21,11 @@ import "io"
 // ExternalModel contains the user-selected AI model configuration for chat and
 // assistant features.
 type ExternalModel struct {
-	Type     string
-	Token    string
-	Model    string
-	Endpoint string
+	Type          string
+	Token         string
+	Model         string
+	Endpoint      string
+	ContextWindow int64 // optional: model's context window in tokens (0 = unknown)
 }
 
 // Record represents a key-value pair with optional extra metadata.

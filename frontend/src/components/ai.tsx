@@ -229,6 +229,7 @@ export const useAI = () => {
                 name: provider.Name,
                 isEnvironmentDefined: provider.IsEnvironmentDefined,
                 isGeneric: provider.IsGeneric,
+                icon: provider.Icon ?? undefined,
             })),
             ...platformProviders,
             ...initialModelTypes,
@@ -328,9 +329,12 @@ export const useAI = () => {
         return modelTypes.filter(modelType => modelType?.modelType != null).map(modelType => ({
             id: modelType.id,
             label: modelType.name ?? modelType.modelType,
-            icon: modelType.isGeneric
-                ? <SparklesIcon className="w-4 h-4" data-testid="generic-sparkles-icon" />
-                : (Icons.Logos as Record<string, ReactElement>)[modelType.modelType.replace("-", "")],
+            icon: modelType.icon
+                ? <img src={modelType.icon} alt="" className="w-4 h-4 rounded-xs" />
+                : (Icons.Logos as Record<string, ReactElement>)[modelType.modelType.replace("-", "")]
+                    ?? (modelType.isGeneric
+                        ? <SparklesIcon className="w-4 h-4" data-testid="generic-sparkles-icon" />
+                        : undefined),
             extra: {
                 token: modelType.token,
                 isEnvironmentDefined: modelType.isEnvironmentDefined,

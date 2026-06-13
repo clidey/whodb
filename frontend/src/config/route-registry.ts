@@ -19,11 +19,17 @@ import { lazy } from "react";
 
 type RouteFactory = () => Promise<{ default: ComponentType<any> }>;
 
+export type RouteOptions = {
+    scoped?: boolean;
+};
+
 export type RegisteredRoute = {
     name: string;
     path: string;
     /** Stable lazy component created once at registration time. */
     lazyComponent: LazyExoticComponent<ComponentType<any>>;
+    /** If true, this route is scoped under /:orgSlug/:projectSlug */
+    scoped?: boolean;
 };
 
 const registrations: RegisteredRoute[] = [];
@@ -37,8 +43,8 @@ const publicRegistrations: RegisteredRoute[] = [];
  * The lazy() wrapper is created here (once) rather than in getRoutes() so that
  * React sees a stable component reference across re-renders.
  */
-export function registerRoute(name: string, path: string, factory: RouteFactory): void {
-    registrations.push({ name, path, lazyComponent: lazy(factory) });
+export function registerRoute(name: string, path: string, factory: RouteFactory, options?: RouteOptions): void {
+    registrations.push({ name, path, lazyComponent: lazy(factory), scoped: options?.scoped });
 }
 
 /** Registers a public route (no auth required). */
@@ -48,6 +54,14 @@ export function registerPublicRoute(name: string, path: string, factory: RouteFa
 
 export function getRegisteredRoutes(): RegisteredRoute[] {
     return registrations;
+}
+
+export function getRegisteredScopedRoutes(): RegisteredRoute[] {
+    return registrations.filter(r => r.scoped);
+}
+
+export function getRegisteredUnscopedRoutes(): RegisteredRoute[] {
+    return registrations.filter(r => !r.scoped);
 }
 
 export function getRegisteredPublicRoutes(): RegisteredRoute[] {
@@ -62,4 +76,20 @@ export function setSurfaceFallbackPath(path: string): void {
 
 export function getSurfaceFallbackPath(): string {
     return surfaceFallbackPath;
+}
+
+type ScopedLayoutConfig = {
+    pathPattern: string;
+    layoutFactory: () => Promise<{ default: ComponentType<any> }>;
+    lazyComponent: LazyExoticComponent<ComponentType<any>>;
+};
+
+let scopedLayout: ScopedLayoutConfig | null = null;
+
+export function registerScopedLayout(pathPattern: string, layoutFactory: () => Promise<{ default: ComponentType<any> }>): void {
+    scopedLayout = { pathPattern, layoutFactory, lazyComponent: lazy(layoutFactory) };
+}
+
+export function getScopedLayout(): ScopedLayoutConfig | null {
+    return scopedLayout;
 }

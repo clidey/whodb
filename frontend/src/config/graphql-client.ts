@@ -31,7 +31,7 @@ import {
 } from '@graphql';
 import type {LocalLoginProfile} from '../store/auth';
 import {reduxStore} from '../store';
-import {addAuthHeader} from '../utils/auth-headers';
+import {addAuthHeader, addAuthHeaderAsync} from '../utils/auth-headers';
 import {isOnRoute, navigateWithBasePath, withBasePath} from '../utils/base-path';
 import {isAwsHostname, isAzureHostname, isGcpHostname} from '../utils/cloud-connection-prefill';
 import {getTranslation, loadTranslationsSync} from '../utils/i18n';
@@ -81,9 +81,9 @@ const httpLink = new HttpLink({
 });
 
 // Add Authorization header in desktop/webview environments where cookies are not supported.
-const authLink = setContext((_, prevContext) => {
+const authLink = setContext(async (_, prevContext) => {
     return {
-        headers: addAuthHeader(prevContext.headers),
+        headers: await addAuthHeaderAsync(prevContext.headers),
     };
 });
 
@@ -101,16 +101,21 @@ const authLink = setContext((_, prevContext) => {
  * This ensures seamless user experience when sessions expire.
  */
 const errorLink = onError(({error}) => {
-    if (ServerError.is(error) && error.statusCode === 401) {
-        if (onUnauthorizedHandler) {
-            void onUnauthorizedHandler().then(handled => {
-                if (!handled) {
-                    fallbackAutoLogin();
-                }
-            });
+    if (ServerError.is(error)) {
+        if (error.statusCode === 401) {
+            if (onUnauthorizedHandler) {
+                void onUnauthorizedHandler().then(handled => {
+                    if (!handled) {
+                        fallbackAutoLogin();
+                    }
+                });
+                return;
+            }
+            fallbackAutoLogin();
             return;
         }
-        fallbackAutoLogin();
+
+        console.error('Network error:', error);
     } else if (!CombinedGraphQLErrors.is(error) && !CombinedProtocolErrors.is(error)) {
         console.error('Network error:', error);
     }

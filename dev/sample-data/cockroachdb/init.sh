@@ -36,29 +36,33 @@ else
     echo "Using insecure mode"
 fi
 
-echo "Initializing CockroachDB at ${COCKROACH_INIT_HOST}:${COCKROACH_INIT_PORT}..."
+# For single-node mode, no cluster init is needed — skip straight to SQL readiness.
+# For clustered mode, attempt cockroach init (idempotent if already initialized).
+if [ "${COCKROACH_SKIP_INIT:-}" != "true" ]; then
+    echo "Initializing CockroachDB at ${COCKROACH_INIT_HOST}:${COCKROACH_INIT_PORT}..."
 
-retries=0
-while [ $retries -lt $MAX_RETRIES ]; do
-    init_output="$(cockroach init $CONN_FLAGS --host="${COCKROACH_INIT_HOST}:${COCKROACH_INIT_PORT}" 2>&1)" && {
-        echo "CockroachDB cluster initialized!"
-        break
-    }
+    retries=0
+    while [ $retries -lt $MAX_RETRIES ]; do
+        init_output="$(cockroach init $CONN_FLAGS --host="${COCKROACH_INIT_HOST}:${COCKROACH_INIT_PORT}" 2>&1)" && {
+            echo "CockroachDB cluster initialized!"
+            break
+        }
 
-    if echo "$init_output" | grep -qi "already.*initialized"; then
-        echo "CockroachDB cluster is already initialized!"
-        break
+        if echo "$init_output" | grep -qi "already.*initialized"; then
+            echo "CockroachDB cluster is already initialized!"
+            break
+        fi
+
+        retries=$((retries + 1))
+        echo "Attempt $retries/$MAX_RETRIES - CockroachDB init not ready yet, retrying in ${RETRY_INTERVAL}s..."
+        sleep $RETRY_INTERVAL
+    done
+
+    if [ $retries -ge $MAX_RETRIES ]; then
+        echo "$init_output"
+        echo "ERROR: CockroachDB did not initialize within $((MAX_RETRIES * RETRY_INTERVAL))s"
+        exit 1
     fi
-
-    retries=$((retries + 1))
-    echo "Attempt $retries/$MAX_RETRIES - CockroachDB init not ready yet, retrying in ${RETRY_INTERVAL}s..."
-    sleep $RETRY_INTERVAL
-done
-
-if [ $retries -ge $MAX_RETRIES ]; then
-    echo "$init_output"
-    echo "ERROR: CockroachDB did not initialize within $((MAX_RETRIES * RETRY_INTERVAL))s"
-    exit 1
 fi
 
 echo "Waiting for CockroachDB SQL at ${COCKROACH_HOST}:${COCKROACH_PORT}..."
@@ -78,6 +82,17 @@ if [ $retries -ge $MAX_RETRIES ]; then
     echo "ERROR: CockroachDB SQL did not become ready within $((MAX_RETRIES * RETRY_INTERVAL))s"
     exit 1
 fi
+
+echo "Applying single-node performance optimizations..."
+cockroach sql $CONN_FLAGS --host="${COCKROACH_HOST}:${COCKROACH_PORT}" -e "
+SET CLUSTER SETTING kv.range_merge.queue_interval = '50ms';
+SET CLUSTER SETTING jobs.registry.interval.gc = '30s';
+SET CLUSTER SETTING jobs.retention_time = '15s';
+SET CLUSTER SETTING sql.stats.automatic_collection.enabled = false;
+SET CLUSTER SETTING kv.range_split.by_load_merge_delay = '5s';
+ALTER RANGE default CONFIGURE ZONE USING \"gc.ttlseconds\" = 600;
+ALTER DATABASE system CONFIGURE ZONE USING \"gc.ttlseconds\" = 600;
+"
 
 echo "Running init SQL..."
 cockroach sql $CONN_FLAGS --host="${COCKROACH_HOST}:${COCKROACH_PORT}" < /data.sql

@@ -64,7 +64,7 @@ const getInitialState = (): ISettingsState => {
         awsProviderEnabled: false,
         azureProviderEnabled: false,
         gcpProviderEnabled: false,
-        newUIEnabled: false,
+        newUIEnabled: settingsDefaults.newUIEnabled ?? false,
         storageUnitView: 'card',
         fontSize: 'medium',
         borderRadius: 'medium',

@@ -31,11 +31,12 @@ type AIChatMessage struct {
 }
 
 type AIProvider struct {
-	Type                 string `json:"Type"`
-	Name                 string `json:"Name"`
-	ProviderID           string `json:"ProviderId"`
-	IsEnvironmentDefined bool   `json:"IsEnvironmentDefined"`
-	IsGeneric            bool   `json:"IsGeneric"`
+	Type                 string  `json:"Type"`
+	Name                 string  `json:"Name"`
+	ProviderID           string  `json:"ProviderId"`
+	IsEnvironmentDefined bool    `json:"IsEnvironmentDefined"`
+	IsGeneric            bool    `json:"IsGeneric"`
+	Icon                 *string `json:"Icon,omitempty"`
 }
 
 type AWSProvider struct {

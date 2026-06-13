@@ -457,6 +457,7 @@ test.describe('Chat AI Integration', () => {
                     await expect(page.locator('[role="option"]')).toContainText(['OpenAI']);
                     await expect(page.locator('[role="option"]')).toContainText(['Anthropic']);
 
+                    await page.keyboard.press('Escape');
                     await page.locator('[data-testid="external-model-cancel"]').click();
                 });
             });

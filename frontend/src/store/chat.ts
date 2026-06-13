@@ -199,6 +199,15 @@ export const houdiniSlice = createSlice({
         state.sessions.unshift(newSession);
         state.activeSessionId = newId;
     },
+    clearChatSession: (state, action: PayloadAction<{ sessionId: string }>) => {
+        const session = state.sessions.find(s => s.id === action.payload.sessionId);
+        if (session) {
+            session.messages = [];
+            session.activeRunId = undefined;
+            session.lastEventSequence = undefined;
+            session.status = undefined;
+        }
+    },
     deleteChatSession: (state, action: PayloadAction<{ sessionId: string }>) => {
         const sessionIndex = state.sessions.findIndex(session => session.id === action.payload.sessionId);
         if (sessionIndex === -1) return;

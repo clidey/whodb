@@ -20,6 +20,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -141,6 +142,11 @@ func DB(config *engine.PluginConfig) (*elasticsearch.Client, error) {
 
 	log.Debug("[ES DB] Pinging Elasticsearch server")
 	res, err := client.Info(client.Info.WithContext(config.OperationContext()))
+	if res != nil {
+		defer func(body io.ReadCloser) {
+			_ = body.Close()
+		}(res.Body)
+	}
 	if err != nil || res.IsError() {
 		errMsg := "no error"
 		if err != nil {

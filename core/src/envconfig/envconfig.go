@@ -192,6 +192,7 @@ func GetGCPProvidersFromEnv() ([]env.GCPProviderEnvConfig, error) {
 //	WHODB_AI_GENERIC_<ID>_BASE_URL="https://api.example.com/v1"
 //	WHODB_AI_GENERIC_<ID>_API_KEY="sk-..."
 //	WHODB_AI_GENERIC_<ID>_MODELS="model-1,model-2,model-3"
+//	WHODB_AI_GENERIC_<ID>_ICON="https://example.com/icon.svg"
 func ParseGenericProviders() []env.GenericProviderConfig {
 	var providers []env.GenericProviderConfig
 	processed := make(map[string]bool)
@@ -226,6 +227,7 @@ func ParseGenericProviders() []env.GenericProviderConfig {
 		baseURL := os.Getenv(prefix + "BASE_URL")
 		apiKey := os.Getenv(prefix + "API_KEY")
 		modelsStr := os.Getenv(prefix + "MODELS")
+		icon := os.Getenv(prefix + "ICON")
 
 		// Validate required fields
 		if baseURL == "" || modelsStr == "" {
@@ -258,6 +260,7 @@ func ParseGenericProviders() []env.GenericProviderConfig {
 			BaseURL:    baseURL,
 			APIKey:     apiKey,
 			Models:     models,
+			Icon:       icon,
 		})
 
 		processed[providerID] = true
@@ -321,32 +324,41 @@ func GetConfiguredChatProviders() []env.ChatProvider {
 			ProviderId: genericProvider.ProviderId,
 			ClientType: genericProvider.ClientType,
 			IsGeneric:  true,
+			Icon:       genericProvider.Icon,
 		})
 	}
 
-	name := env.LMStudioName
-	if name == "" {
-		name = "LM Studio"
+	// Only show local providers (LM Studio, Ollama) when explicitly configured
+	// or when not running in hosted EE mode.
+	showLocalProviders := !env.IsEnterpriseEdition || env.LMStudioBaseURL != "" || env.LMStudioAPIKey != ""
+	if showLocalProviders {
+		name := env.LMStudioName
+		if name == "" {
+			name = "LM Studio"
+		}
+		providers = append(providers, env.ChatProvider{
+			Type:       "LMStudio",
+			Name:       name,
+			APIKey:     env.LMStudioAPIKey,
+			Endpoint:   env.GetLMStudioEndpoint(),
+			ProviderId: "lmstudio-1",
+		})
 	}
-	providers = append(providers, env.ChatProvider{
-		Type:       "LMStudio",
-		Name:       name,
-		APIKey:     env.LMStudioAPIKey,
-		Endpoint:   env.GetLMStudioEndpoint(),
-		ProviderId: "lmstudio-1",
-	})
 
-	name = env.OllamaName
-	if name == "" {
-		name = "Ollama"
+	showOllama := !env.IsEnterpriseEdition || env.OllamaHost != ""
+	if showOllama {
+		name := env.OllamaName
+		if name == "" {
+			name = "Ollama"
+		}
+		providers = append(providers, env.ChatProvider{
+			Type:       "Ollama",
+			Name:       name,
+			APIKey:     "",
+			Endpoint:   env.GetOllamaEndpoint(),
+			ProviderId: "ollama-1",
+		})
 	}
-	providers = append(providers, env.ChatProvider{
-		Type:       "Ollama",
-		Name:       name,
-		APIKey:     "",
-		Endpoint:   env.GetOllamaEndpoint(),
-		ProviderId: "ollama-1",
-	})
 
 	return providers
 }

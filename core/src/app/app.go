@@ -71,6 +71,18 @@ func registeredPluginNames() []string {
 	return pluginNames
 }
 
+func registeredSourceNames() []string {
+	registeredNames := source.RegisteredTypes()
+	sourceNames := make([]string, 0, len(registeredNames))
+	for i := range registeredNames {
+		spec := registeredNames[i]
+		if spec.DriverID != "" && spec.DriverID != "database" {
+			sourceNames = append(sourceNames, spec.Label)
+		}
+	}
+	return sourceNames
+}
+
 func resolvePort() string {
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -120,6 +132,10 @@ type AppConfig struct {
 	// IsSetupMode indicates the platform has no organization yet and is in first-run setup.
 	// The frontend uses this to redirect to the setup wizard.
 	IsSetupMode bool
+
+	// Analytics fields attached to every PostHog event from this instance.
+	AnalyticsDeployment string
+	AnalyticsEdition    string
 }
 
 // Run starts the WhoDB server with the given configuration.
@@ -144,6 +160,10 @@ func Run(config AppConfig, staticFiles embed.FS) {
 	log.Alwaysf("go=%s os=%s arch=%s mode=%s plugins=[%s]",
 		runtime.Version(), runtime.GOOS, runtime.GOARCH, mode, strings.Join(pluginNames, ", "))
 
+	if sourceNames := registeredSourceNames(); len(sourceNames) > 0 {
+		log.Alwaysf("sources=[%s]", strings.Join(sourceNames, ", "))
+	}
+
 	settingsCfg := settings.Get()
 
 	if err := analytics.Initialize(analytics.Config{
@@ -151,6 +171,8 @@ func Run(config AppConfig, staticFiles embed.FS) {
 		Host:        env.PosthogHost,
 		Environment: env.ApplicationEnvironment,
 		AppVersion:  env.ApplicationVersion,
+		Deployment:  config.AnalyticsDeployment,
+		Edition:     config.AnalyticsEdition,
 	}); err == nil {
 		defer analytics.Shutdown()
 	}

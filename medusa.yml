@@ -1,0 +1,81 @@
+version: 0.11.9
+scanners:
+  enabled: []
+  disabled: []
+  overrides: {}
+fail_on: high
+exclude:
+  paths:
+  - node_modules/
+  - bower_components/
+  - venv/
+  - .venv/
+  - env/
+  - .env/
+  - '*-env/'
+  - '*_env/'
+  - virtualenv/
+  - .virtualenv/
+  - site-packages/
+  - dist-packages/
+  - lib/python*/
+  - lib64/python*/
+  - vendor/bundle/
+  - .bundle/
+  - vendor/
+  - target/
+  - .gradle/
+  - .m2/
+  - build/libs/
+  - packages/
+  - bin/Debug/
+  - bin/Release/
+  - obj/
+  - .git/
+  - .svn/
+  - .hg/
+  - __pycache__/
+  - '*.egg-info/'
+  - dist/
+  - build/
+  - .tox/
+  - .nox/
+  - .pytest_cache/
+  - .mypy_cache/
+  - .ruff_cache/
+  - .cache/
+  - .coverage/
+  - htmlcov/
+  - .eggs/
+  - .idea/
+  - .vscode/
+  - '*.xcworkspace/'
+  - '*.xcodeproj/'
+  - tests/fixtures/
+  - test/fixtures/
+  - test-fixtures/
+  - __fixtures__/
+  - .medusa/
+  files:
+  - '*.min.js'
+  - '*.min.css'
+  - '*.bundle.js'
+  - '*.map'
+  - .medusa.yml
+  - medusa.yml
+  - .medusa-suppress.yml
+ide:
+  claude_code:
+    enabled: false
+  cursor:
+    enabled: false
+  vscode:
+    enabled: false
+  gemini_cli:
+    enabled: false
+  openai:
+    enabled: false
+  copilot:
+    enabled: false
+workers: null
+cache_enabled: true

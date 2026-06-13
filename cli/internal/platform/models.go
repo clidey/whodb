@@ -52,6 +52,27 @@ type Source struct {
 	CreatedAt    string `json:"createdAt"`
 }
 
+// SourceType describes one hosted WhoDB source type available for creation.
+type SourceType struct {
+	ID               string                  `json:"id"`
+	Label            string                  `json:"label"`
+	Connector        string                  `json:"connector"`
+	Category         string                  `json:"category"`
+	ConnectionFields []SourceConnectionField `json:"connectionFields"`
+}
+
+// SourceConnectionField describes one source credential/configuration field.
+type SourceConnectionField struct {
+	Key             string  `json:"key"`
+	Kind            string  `json:"kind"`
+	Section         string  `json:"section"`
+	Required        bool    `json:"required"`
+	LabelKey        string  `json:"labelKey"`
+	PlaceholderKey  *string `json:"placeholderKey,omitempty"`
+	DefaultValue    *string `json:"defaultValue,omitempty"`
+	SupportsOptions bool    `json:"supportsOptions"`
+}
+
 // SourceObjectKind identifies a source hierarchy object kind.
 type SourceObjectKind string
 

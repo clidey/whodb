@@ -22,6 +22,7 @@ en_US:
   createNewPage: Create New Page
   chatHistory: Chat History
   newChat: New Chat
+  clearChat: Clear Chat
   deleteChat: Delete Chat
   deleteChatTitle: Delete {chatName}?
   deleteChatDescription: This will permanently delete this chat and all its messages. This action cannot be undone.
@@ -189,6 +190,7 @@ ar_AE:
   "yes": "نعم"
   "no": "لا"
   autoScroll: "التمرير التلقائي"
+  clearChat: "مسح الدردشة"
 
 de_DE:
   placeholder: "Geben Sie hier Ihre Nachricht ein..."
@@ -285,6 +287,7 @@ de_DE:
   "yes": "Ja"
   "no": "NEIN"
   autoScroll: "Automatisches Scrollen"
+  clearChat: "Chat löschen"
 
 el_GR:
   placeholder: "Πληκτρολογήστε το μήνυμά σας εδώ..."
@@ -381,6 +384,7 @@ el_GR:
   "yes": "Ναί"
   "no": "Οχι"
   autoScroll: "Auto-scroll"
+  clearChat: "Εκκαθάριση συνομιλίας"
 
 en_GB:
   placeholder: "Type Your Message Here..."
@@ -477,6 +481,7 @@ en_GB:
   "yes": "Yes"
   "no": "No"
   autoScroll: "Auto-scroll"
+  clearChat: "Clear Chat"
 
 es_ES:
   placeholder: "Escriba su mensaje aquí..."
@@ -573,6 +578,7 @@ es_ES:
   "yes": "Sí"
   "no": "No"
   autoScroll: "Desplazamiento automático"
+  clearChat: "Borrar chat"
 
 fi_FI:
   placeholder: "Kirjoita viestisi tähän..."
@@ -669,6 +675,7 @@ fi_FI:
   "yes": "Kyllä"
   "no": "Ei"
   autoScroll: "Automaattinen vieritys"
+  clearChat: "Tyhjennä Chat"
 
 fr_FR:
   placeholder: "Tapez votre message ici..."
@@ -765,6 +772,7 @@ fr_FR:
   "yes": "Oui"
   "no": "Non"
   autoScroll: "Défilement automatique"
+  clearChat: "Effacer le chat"
 
 it_IT:
   placeholder: "Scrivi qui il tuo messaggio..."
@@ -861,6 +869,7 @@ it_IT:
   "yes": "SÌ"
   "no": "NO"
   autoScroll: "Scorrimento automatico"
+  clearChat: "Cancella chat"
 
 iw_IL:
   placeholder: "הקלד את הודעתך כאן..."
@@ -957,6 +966,7 @@ iw_IL:
   "yes": "כֵּן"
   "no": "לֹא"
   autoScroll: "גלילה אוטומטית"
+  clearChat: "נקה צ'אט"
 
 ja_JP:
   placeholder: "ここにメッセージを入力してください..."
@@ -1053,6 +1063,7 @@ ja_JP:
   "yes": "はい"
   "no": "いいえ"
   autoScroll: "自動スクロール"
+  clearChat: "チャットをクリアする"
 
 ko_KR:
   placeholder: "여기에 메시지를 입력하세요..."
@@ -1149,6 +1160,7 @@ ko_KR:
   "yes": "예"
   "no": "아니요"
   autoScroll: "자동 스크롤"
+  clearChat: "채팅 지우기"
 
 nl_NL:
   placeholder: "Typ hier uw bericht..."
@@ -1245,6 +1257,7 @@ nl_NL:
   "yes": "Ja"
   "no": "Nee"
   autoScroll: "Automatisch scrollen"
+  clearChat: "Chat wissen"
 
 pl_PL:
   placeholder: "Wpisz tutaj swoją wiadomość..."
@@ -1341,6 +1354,7 @@ pl_PL:
   "yes": "Tak"
   "no": "NIE"
   autoScroll: "Automatyczne przewijanie"
+  clearChat: "Wyczyść czat"
 
 pt_BR:
   placeholder: "Digite sua mensagem aqui..."
@@ -1437,6 +1451,7 @@ pt_BR:
   "yes": "Sim"
   "no": "Não"
   autoScroll: "Rolagem automática"
+  clearChat: "Limpar bate-papo"
 
 ro_RO:
   placeholder: "Introduceți mesajul dvs. aici..."
@@ -1533,6 +1548,7 @@ ro_RO:
   "yes": "Da"
   "no": "Nu"
   autoScroll: "Defilare automată"
+  clearChat: "Ștergeți chatul"
 
 ru_RU:
   placeholder: "Введите здесь свое сообщение..."
@@ -1629,6 +1645,7 @@ ru_RU:
   "yes": "Да"
   "no": "Нет"
   autoScroll: "Автопрокрутка"
+  clearChat: "Очистить чат"
 
 sk_SK:
   placeholder: "Sem napíšte svoju správu..."
@@ -1725,6 +1742,7 @@ sk_SK:
   "yes": "áno"
   "no": "Nie"
   autoScroll: "Automatické posúvanie"
+  clearChat: "Vymazať rozhovor"
 
 sv_SE:
   placeholder: "Skriv ditt meddelande här..."
@@ -1821,6 +1839,7 @@ sv_SE:
   "yes": "Ja"
   "no": "Inga"
   autoScroll: "Automatisk rullning"
+  clearChat: "Rensa chatt"
 
 zh_CN:
   placeholder: "在此输入您的消息..."
@@ -1917,6 +1936,7 @@ zh_CN:
   "yes": "是的"
   "no": "不"
   autoScroll: "自动滚动"
+  clearChat: "清除聊天"
 
 zh_TW:
   placeholder: "在此輸入您的訊息..."
@@ -2013,6 +2033,7 @@ zh_TW:
   "yes": "是的"
   "no": "不"
   autoScroll: "自動捲動"
+  clearChat: "清除聊天"
 
 bg_BG:
   placeholder: "Въведете вашето съобщение тук..."
@@ -2109,6 +2130,7 @@ bg_BG:
   "yes": "да"
   "no": "не"
   autoScroll: "Автоматично превъртане"
+  clearChat: "Изчистване на чата"
 
 bn_BD:
   placeholder: "এখানে আপনার বার্তা টাইপ করুন..."
@@ -2205,6 +2227,7 @@ bn_BD:
   "yes": "হ্যাঁ"
   "no": "না"
   autoScroll: "অটো-স্ক্রোল"
+  clearChat: "সাফ চ্যাট"
 
 ca_ES:
   placeholder: "Escriu el teu missatge aquí..."
@@ -2301,6 +2324,7 @@ ca_ES:
   "yes": "Sí"
   "no": "No"
   autoScroll: "Desplaçament automàtic"
+  clearChat: "Esborra el xat"
 
 cs_CZ:
   placeholder: "Sem napište svou zprávu..."
@@ -2397,6 +2421,7 @@ cs_CZ:
   "yes": "Ano"
   "no": "Žádný"
   autoScroll: "Automatické posouvání"
+  clearChat: "Vymazat chat"
 
 da_DK:
   placeholder: "Skriv din besked her..."
@@ -2493,6 +2518,7 @@ da_DK:
   "yes": "Ja"
   "no": "Ingen"
   autoScroll: "Auto-scroll"
+  clearChat: "Ryd chat"
 
 fa_IR:
   placeholder: "پیام خود را اینجا تایپ کنید..."
@@ -2589,6 +2615,7 @@ fa_IR:
   "yes": "بله"
   "no": "خیر"
   autoScroll: "اسکرول خودکار"
+  clearChat: "پاک کردن چت"
 
 hi_IN:
   placeholder: "यहाँ आपके संदेश लिखें..."
@@ -2685,6 +2712,7 @@ hi_IN:
   "yes": "हाँ"
   "no": "नहीं"
   autoScroll: "स्वतः स्क्रॉल"
+  clearChat: "यह स्पष्ट है कि"
 
 hr_HR:
   placeholder: "Ovdje upišite svoju poruku..."
@@ -2781,6 +2809,7 @@ hr_HR:
   "yes": "Da"
   "no": "Ne"
   autoScroll: "Automatsko pomicanje"
+  clearChat: "Obriši chat"
 
 hu_HU:
   placeholder: "Írja be üzenetét ide..."
@@ -2877,6 +2906,7 @@ hu_HU:
   "yes": "Igen"
   "no": "Nem"
   autoScroll: "Automatikus görgetés"
+  clearChat: "Csevegés törlése"
 
 id_ID:
   placeholder: "Ketik Pesan Anda Disini..."
@@ -2973,6 +3003,7 @@ id_ID:
   "yes": "Ya"
   "no": "TIDAK"
   autoScroll: "Gulir otomatis"
+  clearChat: "Hapus Obrolan"
 
 ms_MY:
   placeholder: "Taip Mesej Anda Di Sini..."
@@ -3069,6 +3100,7 @@ ms_MY:
   "yes": "ya"
   "no": "Tidak"
   autoScroll: "Tatal automatik"
+  clearChat: "Kosongkan Sembang"
 
 nb_NO:
   placeholder: "Skriv inn meldingen din her..."
@@ -3165,6 +3197,7 @@ nb_NO:
   "yes": "Ja"
   "no": "Ingen"
   autoScroll: "Automatisk rulling"
+  clearChat: "Fjern Chat"
 
 sw_KE:
   placeholder: "Andika Ujumbe wako Hapa..."
@@ -3261,6 +3294,7 @@ sw_KE:
   "yes": "Ndiyo"
   "no": "Hapana"
   autoScroll: "Sogeza kiotomatiki"
+  clearChat: "Futa Gumzo"
 
 ta_IN:
   placeholder: "உங்கள் செய்தியை இங்கே தட்டச்சு செய்யவும்..."
@@ -3357,6 +3391,7 @@ ta_IN:
   "yes": "ஆம்"
   "no": "இல்லை"
   autoScroll: "தானாக உருட்டும்"
+  clearChat: "அரட்டையை அழிக்கவும்"
 
 th_TH:
   placeholder: "พิมพ์ข้อความของคุณที่นี่..."
@@ -3453,6 +3488,7 @@ th_TH:
   "yes": "ใช่"
   "no": "เลขที่"
   autoScroll: "เลื่อนอัตโนมัติ"
+  clearChat: "ล้างแชท"
 
 tr_TR:
   placeholder: "Mesajınızı Buraya Yazın..."
@@ -3549,6 +3585,7 @@ tr_TR:
   "yes": "Evet"
   "no": "HAYIR"
   autoScroll: "Otomatik kaydırma"
+  clearChat: "Sohbeti Temizle"
 
 uk_UA:
   placeholder: "Введіть своє повідомлення тут..."
@@ -3645,6 +3682,7 @@ uk_UA:
   "yes": "так"
   "no": "немає"
   autoScroll: "Автопрокручування"
+  clearChat: "Очистити чат"
 
 ur_PK:
   placeholder: "اپنا پیغام یہاں ٹائپ کریں..."
@@ -3741,6 +3779,7 @@ ur_PK:
   "yes": "جی ہاں"
   "no": "نہیں"
   autoScroll: "آٹو سکرول"
+  clearChat: "چیٹ صاف کریں۔"
 
 vi_VN:
   placeholder: "Nhập tin nhắn của bạn ở đây..."
@@ -3837,6 +3876,7 @@ vi_VN:
   "yes": "Đúng"
   "no": "KHÔNG"
   autoScroll: "Tự động cuộn"
+  clearChat: "Xóa cuộc trò chuyện"
 
 af_ZA:
   placeholder: "Tik jou boodskap hier..."
@@ -3933,6 +3973,7 @@ af_ZA:
   "yes": "Ja"
   "no": "Nee"
   autoScroll: "Outo-blaai"
+  clearChat: "Vee klets uit"
 
 am_ET:
   placeholder: "መልእክትህን እዚህ ፃፍ..."
@@ -4029,6 +4070,7 @@ am_ET:
   "yes": "አዎ"
   "no": "አይ"
   autoScroll: "በራስ-ማሸብለል"
+  clearChat: "ውይይትን አጽዳ"
 
 az_AZ:
   placeholder: "Mesajınızı Bura Yazın..."
@@ -4125,6 +4167,7 @@ az_AZ:
   "yes": "Bəli"
   "no": "yox"
   autoScroll: "Avtomatik sürüşdürün"
+  clearChat: "Söhbəti silin"
 
 et_EE:
   placeholder: "Sisestage oma sõnum siia..."
@@ -4221,6 +4264,7 @@ et_EE:
   "yes": "Jah"
   "no": "Ei"
   autoScroll: "Automaatne kerimine"
+  clearChat: "Tühjenda vestlus"
 
 gu_IN:
   placeholder: "તમારો સંદેશ અહીં લખો..."
@@ -4317,6 +4361,7 @@ gu_IN:
   "yes": "હા"
   "no": "ના"
   autoScroll: "સ્વતઃ સ્ક્રોલ કરો"
+  clearChat: "ચેટ સાફ કરો"
 
 ha_NG:
   placeholder: "Buga Saƙonku Anan..."
@@ -4413,6 +4458,7 @@ ha_NG:
   "yes": "Ee"
   "no": "A'a"
   autoScroll: "Gungura ta atomatik"
+  clearChat: "Share Taɗi"
 
 ka_GE:
   placeholder: "ჩაწერეთ თქვენი შეტყობინება აქ..."
@@ -4509,6 +4555,7 @@ ka_GE:
   "yes": "დიახ"
   "no": "არა"
   autoScroll: "ავტომატური გადახვევა"
+  clearChat: "ჩატის გასუფთავება"
 
 km_KH:
   placeholder: "វាយបញ្ចូលសាររបស់អ្នកនៅទីនេះ..."
@@ -4605,6 +4652,7 @@ km_KH:
   "yes": "បាទ"
   "no": "ទេ"
   autoScroll: "រមូរដោយស្វ័យប្រវត្តិ"
+  clearChat: "ជម្រះការជជែក"
 
 kn_IN:
   placeholder: "ನಿಮ್ಮ ಸಂದೇಶವನ್ನು ಇಲ್ಲಿ ಟೈಪ್ ಮಾಡಿ..."
@@ -4701,6 +4749,7 @@ kn_IN:
   "yes": "ಹೌದು"
   "no": "ಸಂ"
   autoScroll: "ಸ್ವಯಂ-ಸ್ಕ್ರಾಲ್"
+  clearChat: "ಚಾಟ್ ತೆರವುಗೊಳಿಸಿ"
 
 lt_LT:
   placeholder: "Įveskite savo žinutę čia..."
@@ -4797,6 +4846,7 @@ lt_LT:
   "yes": "Taip"
   "no": "Nr"
   autoScroll: "Automatinis slinkimas"
+  clearChat: "Išvalyti pokalbį"
 
 lv_LV:
   placeholder: "Ierakstiet savu ziņojumu šeit..."
@@ -4893,6 +4943,7 @@ lv_LV:
   "yes": "Jā"
   "no": "Nē"
   autoScroll: "Automātiska ritināšana"
+  clearChat: "Notīrīt tērzēšanu"
 
 ml_IN:
   placeholder: "നിങ്ങളുടെ സന്ദേശം ഇവിടെ ടൈപ്പ് ചെയ്യുക..."
@@ -4989,6 +5040,7 @@ ml_IN:
   "yes": "അതെ"
   "no": "ഇല്ല"
   autoScroll: "സ്വയമേവ സ്ക്രോൾ ചെയ്യുക"
+  clearChat: "ചാറ്റ് മായ്‌ക്കുക"
 
 mr_IN:
   placeholder: "तुमचा संदेश येथे टाइप करा..."
@@ -5085,6 +5137,7 @@ mr_IN:
   "yes": "होय"
   "no": "नाही"
   autoScroll: "स्वयं-स्क्रोल करा"
+  clearChat: "चॅट साफ करा"
 
 ne_NP:
   placeholder: "यहाँ आफ्नो सन्देश टाइप गर्नुहोस्..."
@@ -5181,6 +5234,7 @@ ne_NP:
   "yes": "हो"
   "no": "छैन"
   autoScroll: "स्वतः स्क्रोल गर्नुहोस्"
+  clearChat: "च्याट खाली गर्नुहोस्"
 
 pa_IN:
   placeholder: "ਆਪਣਾ ਸੁਨੇਹਾ ਇੱਥੇ ਟਾਈਪ ਕਰੋ..."
@@ -5277,6 +5331,7 @@ pa_IN:
   "yes": "ਹਾਂ"
   "no": "ਨੰ"
   autoScroll: "ਆਟੋ-ਸਕ੍ਰੌਲ ਕਰੋ"
+  clearChat: "ਚੈਟ ਸਾਫ਼ ਕਰੋ"
 
 si_LK:
   placeholder: "ඔබගේ පණිවිඩය මෙහි ටයිප් කරන්න..."
@@ -5373,6 +5428,7 @@ si_LK:
   "yes": "ඔව්"
   "no": "නැත"
   autoScroll: "ස්වයංක්‍රීය අනුචලනය"
+  clearChat: "කතාබස් හිස් කරන්න"
 
 sl_SI:
   placeholder: "Tukaj vnesite svoje sporočilo ..."
@@ -5469,6 +5525,7 @@ sl_SI:
   "yes": "ja"
   "no": "št"
   autoScroll: "Samodejno pomikanje"
+  clearChat: "Počisti klepet"
 
 sr_RS:
   placeholder: "Унесите своју поруку овде..."
@@ -5565,6 +5622,7 @@ sr_RS:
   "yes": "Да"
   "no": "бр"
   autoScroll: "Ауто-сцролл"
+  clearChat: "Обриши ћаскање"
 
 te_IN:
   placeholder: "మీ సందేశాన్ని ఇక్కడ టైప్ చేయండి..."
@@ -5661,6 +5719,7 @@ te_IN:
   "yes": "అవును"
   "no": "సంఖ్య"
   autoScroll: "స్వయంచాలకంగా స్క్రోల్ చేయండి"
+  clearChat: "చాట్‌ని క్లియర్ చేయండి"
 
 tl_PH:
   placeholder: "I-type ang Iyong Mensahe Dito..."
@@ -5757,6 +5816,7 @@ tl_PH:
   "yes": "Oo"
   "no": "Hindi"
   autoScroll: "Auto-scroll"
+  clearChat: "I-clear ang Chat"
 
 uz_UZ:
   placeholder: "Xabaringizni shu yerga yozing..."
@@ -5853,6 +5913,7 @@ uz_UZ:
   "yes": "Ha"
   "no": "Yo'q"
   autoScroll: "Avtomatik aylantirish"
+  clearChat: "Chatni tozalash"
 
 yo_NG:
   placeholder: "Tẹ ifiranṣẹ rẹ Nibi ..."
@@ -5949,3 +6010,4 @@ yo_NG:
   "yes": "Bẹẹni"
   "no": "Rara"
   autoScroll: "Yi lọ laifọwọyi"
+  clearChat: "Ko iwiregbe kuro"

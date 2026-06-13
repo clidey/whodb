@@ -38,6 +38,8 @@ const (
 	CategoryObjectStore Category = "ObjectStore"
 	// CategoryFileStore is used for filesystem-like sources.
 	CategoryFileStore Category = "FileStore"
+	// CategoryAnalytics is used for product analytics sources.
+	CategoryAnalytics Category = "Analytics"
 )
 
 // Model identifies the primary data model of a source.

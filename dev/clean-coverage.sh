@@ -37,7 +37,7 @@ if [ -f "$PROJECT_ROOT/core/coverage.prev.out" ]; then
 fi
 
 # Clean frontend coverage
-cd "$PROJECT_ROOT/frontend"
+cd "$PROJECT_ROOT/frontend" || exit 1
 if [ -d ".nyc_output" ] || [ -d "coverage" ]; then
     npm run coverage:clean 2>/dev/null || rm -rf .nyc_output coverage
     echo "✅ Frontend coverage cleaned"

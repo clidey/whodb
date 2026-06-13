@@ -272,7 +272,7 @@ func (p *CockroachDBPlugin) MarkGeneratedColumns(config *engine.PluginConfig, sc
 
 // GetBulkInsertBatchSize returns a smaller row batch for CockroachDB bulk inserts.
 func (p *CockroachDBPlugin) GetBulkInsertBatchSize() int {
-	return 1
+	return 10
 }
 
 // HandleCustomDataType converts CockroachDB-specific writable values.

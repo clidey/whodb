@@ -174,14 +174,14 @@ func loadClientCerts(tlsConfig *tls.Config, clientCert, clientKey *CertificateIn
 	if err != nil {
 		return fmt.Errorf("failed to load client certificate: %w", err)
 	}
-	log.Debugf("[SSL] loadClientCerts: cert PEM loaded, %d bytes, starts with: %.50s", len(certPEM), string(certPEM))
+	log.Debugf("[SSL] loadClientCerts: cert PEM loaded, %d bytes", len(certPEM))
 
 	log.Debug("[SSL] loadClientCerts: loading client key")
 	keyPEM, err := clientKey.Load()
 	if err != nil {
 		return fmt.Errorf("failed to load client key: %w", err)
 	}
-	log.Debugf("[SSL] loadClientCerts: key PEM loaded, %d bytes, starts with: %.50s", len(keyPEM), string(keyPEM))
+	log.Debugf("[SSL] loadClientCerts: key PEM loaded, %d bytes", len(keyPEM))
 
 	cert, err := tls.X509KeyPair(certPEM, keyPEM)
 	if err != nil {
