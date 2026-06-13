@@ -24,6 +24,7 @@ An interactive, production-ready command-line interface for WhoDB with a Claude 
 - **Query History** - Persistent history with re-execution
 - **Shell Completion** - Bash/Zsh/Fish install plus PowerShell script generation
 - **Programmatic Mode** - JSON/NDJSON/CSV/plain output plus streamed query/export paths for scripting and automation
+- **Hosted Platform Commands** - Browser login, workspace selection, manifest inspection, and hosted source management
 - **Agent Manifest** - Machine-readable command, source, MCP, workflow, and safety metadata
 - **Database Doctor** - Redacted connection and metadata diagnostics for support and AI agents
 - **Built-in Runbooks** - Repeatable workflows for connection checks, schema audits, and schema diffs
@@ -116,6 +117,9 @@ whodb-cli --help
 ```
 
 ## Quick Start
+
+For hosted WhoDB platform login and source management, see
+[HOSTED_PLATFORM.md](HOSTED_PLATFORM.md).
 
 ### 1. Connect to a Database
 

@@ -96,6 +96,74 @@ func TestPlatformManifestOutputIncludesCacheMetadata(t *testing.T) {
 	}
 }
 
+func TestPlatformStatusForReadyWorkspace(t *testing.T) {
+	host := config.PlatformHost{
+		URL:                "https://app.whodb.com",
+		DefaultOrgID:       "org-1",
+		DefaultOrgName:     "Acme",
+		DefaultProjectID:   "proj-1",
+		DefaultProjectName: "Warehouse",
+		Manifest: &config.PlatformManifestCache{
+			FetchedAt: "2026-06-13T12:00:00Z",
+		},
+	}
+	manifest := &platform.PlatformManifest{
+		PlatformVersion:         "1.2.3",
+		ManifestProtocolVersion: "1",
+		Operations: []platform.PlatformManifestOperation{
+			{Name: "SourceTypes", Kind: "Query"},
+			{Name: "ProjectSources", Kind: "Query"},
+			{Name: "CreateSource", Kind: "Mutation"},
+			{Name: "SourceConfig", Kind: "Query"},
+			{Name: "UpdateSource", Kind: "Mutation"},
+			{Name: "DeleteSource", Kind: "Mutation"},
+			{Name: "TestSourceConnection", Kind: "Mutation"},
+			{Name: "PlatformSourceObjects", Kind: "Query"},
+			{Name: "PlatformSourceColumns", Kind: "Query"},
+			{Name: "PlatformSourceRows", Kind: "Query"},
+		},
+	}
+
+	status := platformStatusFor(host, &platform.User{ID: "user-1", Email: "ada@example.com"}, []platform.Organization{{ID: "org-1"}}, []platform.Project{{ID: "proj-1"}}, manifest)
+
+	if !status.WorkspaceSelected || !status.SourceManagementSupported {
+		t.Fatalf("platformStatusFor() = %#v, want selected workspace with source support", status)
+	}
+	if status.ManifestFetchedAt != host.Manifest.FetchedAt {
+		t.Fatalf("manifest fetched at = %q, want %q", status.ManifestFetchedAt, host.Manifest.FetchedAt)
+	}
+}
+
+func TestPlatformStatusForReportsUnselectedWorkspace(t *testing.T) {
+	host := config.PlatformHost{URL: "https://app.whodb.com"}
+	orgs := []platform.Organization{{ID: "org-1", Name: "Acme"}}
+	projects := []platform.Project{{ID: "proj-1", Name: "Warehouse"}}
+
+	status := platformStatusFor(host, &platform.User{ID: "user-1"}, orgs, projects, &platform.PlatformManifest{})
+
+	if status.WorkspaceSelected {
+		t.Fatalf("platformStatusFor() = %#v, want workspace not selected", status)
+	}
+}
+
+func TestPlatformStatusForReportsUnsupportedMissingCapability(t *testing.T) {
+	host := config.PlatformHost{URL: "https://app.whodb.com", DefaultOrgID: "org-1", DefaultProjectID: "proj-1"}
+	manifest := &platform.PlatformManifest{
+		Operations: []platform.PlatformManifestOperation{
+			{Name: "SourceTypes", Kind: "Query"},
+		},
+	}
+
+	status := platformStatusFor(host, &platform.User{ID: "user-1"}, nil, nil, manifest)
+
+	if status.SourceManagementSupported {
+		t.Fatalf("platformStatusFor() = %#v, want unsupported source management", status)
+	}
+	if len(status.Capabilities) == 0 {
+		t.Fatal("capabilities empty, want required operation report")
+	}
+}
+
 func TestIsAffirmativeConfirmation(t *testing.T) {
 	tests := []struct {
 		answer string
@@ -190,6 +258,32 @@ func TestCollectSourceFieldValuesRejectsUnknownExplicitField(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "sources fields") {
 		t.Fatalf("collectSourceFieldValues() error = %q, want fields hint", err)
+	}
+}
+
+func TestExplicitSourceConfigValuesRejectsUnknownFieldWithHint(t *testing.T) {
+	oldSourceFields := sourceFields
+	t.Cleanup(func() { sourceFields = oldSourceFields })
+	sourceFields = []string{"Unknown=value"}
+
+	cmd := &cobra.Command{}
+	cmd.Flags().StringArray("field", nil, "")
+	if err := cmd.Flags().Set("field", "Unknown=value"); err != nil {
+		t.Fatalf("set field flag: %v", err)
+	}
+	sourceType := &platform.SourceType{
+		ID: "Postgres",
+		ConnectionFields: []platform.SourceConnectionField{
+			{Key: "Hostname", Kind: "Text"},
+		},
+	}
+
+	_, _, err := explicitSourceConfigValues(cmd, sourceType)
+	if err == nil {
+		t.Fatal("explicitSourceConfigValues() error = nil, want unknown field error")
+	}
+	if !strings.Contains(err.Error(), "whodb-cli sources fields Postgres") {
+		t.Fatalf("explicitSourceConfigValues() error = %q, want fields hint", err)
 	}
 }
 

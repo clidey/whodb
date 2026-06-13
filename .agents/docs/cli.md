@@ -203,5 +203,6 @@ bash ../dev/run-cli-tests.sh
 ## Related Files
 
 - `cli/README.md` — user-facing usage guide
+- `cli/HOSTED_PLATFORM.md` — hosted platform login, manifest, source command, automation, and security contract
 - `cli/ARCHITECTURE.md` — broader architecture notes
 - `dev/run-cli-tests.sh` — CLI verification script

@@ -100,6 +100,32 @@ type manifestOutput struct {
 	Types                   []platform.PlatformManifestType      `json:"types"`
 }
 
+type platformStatusOutput struct {
+	Host                      string                     `json:"host"`
+	LoggedIn                  bool                       `json:"loggedIn"`
+	UserID                    string                     `json:"userId,omitempty"`
+	Email                     string                     `json:"email,omitempty"`
+	DefaultOrgID              string                     `json:"defaultOrgId,omitempty"`
+	DefaultOrgName            string                     `json:"defaultOrgName,omitempty"`
+	DefaultProjectID          string                     `json:"defaultProjectId,omitempty"`
+	DefaultProjectName        string                     `json:"defaultProjectName,omitempty"`
+	WorkspaceSelected         bool                       `json:"workspaceSelected"`
+	PlatformVersion           string                     `json:"platformVersion,omitempty"`
+	ManifestProtocolVersion   string                     `json:"manifestProtocolVersion,omitempty"`
+	ManifestFetchedAt         string                     `json:"manifestFetchedAt,omitempty"`
+	ManifestAvailable         bool                       `json:"manifestAvailable"`
+	SourceManagementSupported bool                       `json:"sourceManagementSupported"`
+	OrganizationCount         int                        `json:"organizationCount"`
+	ProjectCount              int                        `json:"projectCount,omitempty"`
+	Capabilities              []platformCapabilityStatus `json:"capabilities"`
+}
+
+type platformCapabilityStatus struct {
+	Name      string `json:"name"`
+	Operation string `json:"operation"`
+	Supported bool   `json:"supported"`
+}
+
 var loginCmd = &cobra.Command{
 	Use:           "login",
 	Short:         "Sign in to hosted WhoDB",
@@ -345,6 +371,65 @@ var manifestCmd = &cobra.Command{
 			{"fetched_at", data.FetchedAt},
 			{"operations", len(data.Operations)},
 			{"types", len(data.Types)},
+		}
+		return newCommandOutput(cmd, format, platformQuiet).WriteQueryResult(&output.QueryResult{
+			Columns: []output.Column{{Name: "field", Type: "string"}, {Name: "value", Type: "string"}},
+			Rows:    rows,
+		})
+	},
+}
+
+var statusCmd = &cobra.Command{
+	Use:           "status",
+	Short:         "Show hosted WhoDB CLI status",
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := context.Background()
+		format, err := output.ParseFormat(platformFormat)
+		if err != nil {
+			return err
+		}
+		session, err := loadPlatformSession(ctx, platformHost)
+		if err != nil {
+			return err
+		}
+		user, err := session.Client.Me(ctx)
+		if err != nil {
+			return err
+		}
+		updatePlatformHostUser(session.Config, &session.Host, user)
+
+		orgs, err := session.Client.Organizations(ctx)
+		if err != nil {
+			return err
+		}
+		projects, err := statusProjects(ctx, session, orgs)
+		if err != nil {
+			return err
+		}
+		manifest := manifestFromCache(session.Host.Manifest)
+		data := platformStatusFor(session.Host, user, orgs, projects, manifest)
+		session.Config.UpsertPlatformHost(session.Host)
+		if err := session.Config.Save(); err != nil {
+			return err
+		}
+		if format == output.FormatJSON {
+			return writeCommandJSON(cmd, data)
+		}
+		rows := [][]any{
+			{"host", data.Host},
+			{"logged_in", data.LoggedIn},
+			{"email", data.Email},
+			{"workspace_selected", data.WorkspaceSelected},
+			{"default_org", data.DefaultOrgName},
+			{"default_project", data.DefaultProjectName},
+			{"platform_version", data.PlatformVersion},
+			{"manifest_protocol_version", data.ManifestProtocolVersion},
+			{"manifest_fetched_at", data.ManifestFetchedAt},
+			{"source_management_supported", data.SourceManagementSupported},
+			{"organizations", data.OrganizationCount},
+			{"projects", data.ProjectCount},
 		}
 		return newCommandOutput(cmd, format, platformQuiet).WriteQueryResult(&output.QueryResult{
 			Columns: []output.Column{{Name: "field", Type: "string"}, {Name: "value", Type: "string"}},
@@ -975,12 +1060,13 @@ func init() {
 	rootCmd.AddCommand(logoutCmd)
 	rootCmd.AddCommand(whoamiCmd)
 	rootCmd.AddCommand(manifestCmd)
+	rootCmd.AddCommand(statusCmd)
 	rootCmd.AddCommand(orgsCmd)
 	rootCmd.AddCommand(projectsCmd)
 	rootCmd.AddCommand(sourcesCmd)
 	rootCmd.AddCommand(useCmd)
 
-	for _, command := range []*cobra.Command{loginCmd, logoutCmd, whoamiCmd, manifestCmd, orgsCmd, projectsCmd, sourcesCmd, useCmd} {
+	for _, command := range []*cobra.Command{loginCmd, logoutCmd, whoamiCmd, manifestCmd, statusCmd, orgsCmd, projectsCmd, sourcesCmd, useCmd} {
 		command.PersistentFlags().StringVar(&platformHost, "host", "", "hosted WhoDB URL (default app.whodb.com)")
 		command.PersistentFlags().StringVarP(&platformFormat, "format", "f", "auto", "output format: auto, table, plain, json, ndjson, csv")
 		command.PersistentFlags().BoolVarP(&platformQuiet, "quiet", "q", false, "suppress informational messages")
@@ -1192,6 +1278,83 @@ func platformManifestOutput(host config.PlatformHost, manifest *platform.Platfor
 		out.FetchedAt = host.Manifest.FetchedAt
 	}
 	return out
+}
+
+func statusProjects(ctx context.Context, session *platformSession, orgs []platform.Organization) ([]platform.Project, error) {
+	orgID := strings.TrimSpace(session.Host.DefaultOrgID)
+	if orgID == "" && len(orgs) == 1 {
+		orgID = orgs[0].ID
+	}
+	if orgID == "" {
+		return nil, nil
+	}
+	return session.Client.Projects(ctx, orgID)
+}
+
+func platformStatusFor(host config.PlatformHost, user *platform.User, orgs []platform.Organization, projects []platform.Project, manifest *platform.PlatformManifest) platformStatusOutput {
+	capabilities := platformStatusCapabilities(manifest)
+	sourceSupported := true
+	for _, capability := range capabilities {
+		if !capability.Supported {
+			sourceSupported = false
+			break
+		}
+	}
+	workspaceSelected := strings.TrimSpace(host.DefaultOrgID) != "" && strings.TrimSpace(host.DefaultProjectID) != ""
+	status := platformStatusOutput{
+		Host:                      host.URL,
+		LoggedIn:                  user != nil && user.ID != "",
+		DefaultOrgID:              host.DefaultOrgID,
+		DefaultOrgName:            host.DefaultOrgName,
+		DefaultProjectID:          host.DefaultProjectID,
+		DefaultProjectName:        host.DefaultProjectName,
+		WorkspaceSelected:         workspaceSelected,
+		ManifestAvailable:         manifest != nil,
+		SourceManagementSupported: manifest != nil && sourceSupported,
+		OrganizationCount:         len(orgs),
+		ProjectCount:              len(projects),
+		Capabilities:              capabilities,
+	}
+	if user != nil {
+		status.UserID = user.ID
+		status.Email = user.Email
+	}
+	if manifest != nil {
+		status.PlatformVersion = manifest.PlatformVersion
+		status.ManifestProtocolVersion = manifest.ManifestProtocolVersion
+	}
+	if host.Manifest != nil {
+		status.ManifestFetchedAt = host.Manifest.FetchedAt
+	}
+	return status
+}
+
+func platformStatusCapabilities(manifest *platform.PlatformManifest) []platformCapabilityStatus {
+	required := []struct {
+		name      string
+		kind      string
+		operation string
+	}{
+		{name: "source_types", kind: "Query", operation: "SourceTypes"},
+		{name: "source_list", kind: "Query", operation: "ProjectSources"},
+		{name: "source_create", kind: "Mutation", operation: "CreateSource"},
+		{name: "source_config", kind: "Query", operation: "SourceConfig"},
+		{name: "source_update", kind: "Mutation", operation: "UpdateSource"},
+		{name: "source_delete", kind: "Mutation", operation: "DeleteSource"},
+		{name: "source_test", kind: "Mutation", operation: "TestSourceConnection"},
+		{name: "source_browse", kind: "Query", operation: "PlatformSourceObjects"},
+		{name: "source_columns", kind: "Query", operation: "PlatformSourceColumns"},
+		{name: "source_rows", kind: "Query", operation: "PlatformSourceRows"},
+	}
+	capabilities := make([]platformCapabilityStatus, 0, len(required))
+	for _, item := range required {
+		capabilities = append(capabilities, platformCapabilityStatus{
+			Name:      item.name,
+			Operation: item.kind + "." + item.operation,
+			Supported: manifest != nil && manifest.HasOperation(item.kind, item.operation),
+		})
+	}
+	return capabilities
 }
 
 func platformHostsWithLogin(cfg *config.Config) []config.PlatformHost {
