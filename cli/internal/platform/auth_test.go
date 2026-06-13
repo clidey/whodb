@@ -28,7 +28,7 @@ import (
 func TestLogoutPostsBearerTokenToAuthHost(t *testing.T) {
 	var gotAuthorization string
 	authServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/auth/logout" {
+		if r.URL.Path != "/auth/revoke-current-session" {
 			t.Fatalf("unexpected auth path %q", r.URL.Path)
 		}
 		if r.Method != http.MethodPost {

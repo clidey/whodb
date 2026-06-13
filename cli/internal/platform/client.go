@@ -41,6 +41,7 @@ type Client struct {
 	host        string
 	accessToken string
 	httpClient  *http.Client
+	manifest    *PlatformManifest
 }
 
 // AuthConfig is the public auth configuration advertised by a WhoDB platform host.
@@ -146,12 +147,50 @@ func (c *Client) Host() string {
 	return c.host
 }
 
+// SetPlatformManifest attaches a cached hosted platform manifest to the client.
+func (c *Client) SetPlatformManifest(manifest *PlatformManifest) {
+	c.manifest = manifest
+}
+
+// PlatformManifest returns the hosted platform contract advertised to the CLI.
+func (c *Client) PlatformManifest(ctx context.Context) (*PlatformManifest, error) {
+	var resp struct {
+		PlatformManifest *PlatformManifest `json:"PlatformManifest"`
+	}
+	if err := c.graphQL(ctx, operationPlatformManifest, nil, &resp); err != nil {
+		return nil, err
+	}
+	if resp.PlatformManifest == nil {
+		return nil, fmt.Errorf("platform returned no manifest")
+	}
+	c.manifest = resp.PlatformManifest
+	return resp.PlatformManifest, nil
+}
+
+// PlatformVersion returns the hosted platform version string.
+func (c *Client) PlatformVersion(ctx context.Context) (string, error) {
+	var resp struct {
+		Version string `json:"Version"`
+	}
+	if err := c.graphQL(ctx, operationPlatformVersion, nil, &resp); err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(resp.Version), nil
+}
+
 // Me returns the authenticated platform user.
 func (c *Client) Me(ctx context.Context) (*User, error) {
 	var resp struct {
 		Me *User `json:"Me"`
 	}
-	if err := c.graphQL(ctx, operationMe, nil, &resp); err != nil {
+	fields := []string{"id", "email", "displayName"}
+	if c.manifest != nil {
+		fields = c.manifest.SelectFields("PlatformUser", []string{"id", "email", "displayName", "orgId"})
+	}
+	if len(fields) == 0 {
+		return nil, fmt.Errorf("platform manifest did not publish PlatformUser fields")
+	}
+	if err := c.graphQL(ctx, operationMeForFields(fields), nil, &resp); err != nil {
 		return nil, err
 	}
 	if resp.Me == nil {
@@ -177,21 +216,6 @@ func (c *Client) Projects(ctx context.Context, orgID string) ([]Project, error) 
 	variables := map[string]any{"orgId": orgID}
 	err := c.graphQL(ctx, operationProjects, variables, &resp)
 	return resp.Projects, err
-}
-
-// SwitchOrganization updates the user's active organization on the hosted platform.
-func (c *Client) SwitchOrganization(ctx context.Context, orgID string) (*Organization, error) {
-	var resp struct {
-		SwitchOrganization *Organization `json:"SwitchOrganization"`
-	}
-	variables := map[string]any{"orgId": orgID}
-	if err := c.graphQL(ctx, operationSwitchOrganization, variables, &resp); err != nil {
-		return nil, err
-	}
-	if resp.SwitchOrganization == nil {
-		return nil, fmt.Errorf("platform returned no organization")
-	}
-	return resp.SwitchOrganization, nil
 }
 
 // ProjectSources returns sources visible to the user in one project.
@@ -226,6 +250,72 @@ func (c *Client) CreateSource(ctx context.Context, input CreateSourceInput) (*So
 		return nil, fmt.Errorf("platform returned no source")
 	}
 	return resp.CreateSource, nil
+}
+
+// SourceConfig returns one hosted source's connection configuration.
+func (c *Client) SourceConfig(ctx context.Context, projectID, sourceID string) (*SourceConfig, error) {
+	type sourceConfigResponse struct {
+		Hostname string   `json:"hostname"`
+		Port     string   `json:"port"`
+		Username string   `json:"username"`
+		Password string   `json:"password"`
+		Database string   `json:"database"`
+		Advanced []Record `json:"advanced"`
+	}
+	var resp struct {
+		SourceConfig *sourceConfigResponse `json:"SourceConfig"`
+	}
+	variables := map[string]any{"projectId": projectID, "sourceId": sourceID}
+	if err := c.graphQL(ctx, operationSourceConfig, variables, &resp); err != nil {
+		return nil, err
+	}
+	if resp.SourceConfig == nil {
+		return nil, fmt.Errorf("platform returned no source config")
+	}
+	config := &SourceConfig{
+		Hostname: resp.SourceConfig.Hostname,
+		Port:     resp.SourceConfig.Port,
+		Username: resp.SourceConfig.Username,
+		Password: resp.SourceConfig.Password,
+		Database: resp.SourceConfig.Database,
+		Advanced: map[string]string{},
+	}
+	for _, record := range resp.SourceConfig.Advanced {
+		config.Advanced[record.Key] = record.Value
+	}
+	return config, nil
+}
+
+// UpdateSource updates one hosted source's metadata or connection configuration.
+func (c *Client) UpdateSource(ctx context.Context, input UpdateSourceInput) (*Source, error) {
+	var resp struct {
+		UpdateSource *Source `json:"UpdateSource"`
+	}
+	variables := map[string]any{"input": input.graphQLInput()}
+	if err := c.graphQL(ctx, operationUpdateSource, variables, &resp); err != nil {
+		return nil, err
+	}
+	if resp.UpdateSource == nil {
+		return nil, fmt.Errorf("platform returned no source")
+	}
+	return resp.UpdateSource, nil
+}
+
+// TestSourceConnection checks whether a draft source configuration can connect.
+func (c *Client) TestSourceConnection(ctx context.Context, input CreateSourceInput) error {
+	var resp struct {
+		TestSourceConnection *struct {
+			Status bool `json:"Status"`
+		} `json:"TestSourceConnection"`
+	}
+	variables := map[string]any{"credentials": input.sourceLoginInput()}
+	if err := c.graphQL(ctx, operationTestSourceConnection, variables, &resp); err != nil {
+		return err
+	}
+	if resp.TestSourceConnection == nil || !resp.TestSourceConnection.Status {
+		return fmt.Errorf("platform did not confirm source connection")
+	}
+	return nil
 }
 
 // DeleteSource deletes a hosted source from one project.

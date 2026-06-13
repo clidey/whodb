@@ -60,6 +60,13 @@ func TestConfirmPlatformLoginReplacementSkipsPromptWhenApprovedByFlag(t *testing
 	}
 }
 
+func TestLocalLogoutHintIncludesHost(t *testing.T) {
+	hint := localLogoutHint("http://localhost:8080")
+	if !bytes.Contains([]byte(hint), []byte("whodb-cli logout --host http://localhost:8080 --local")) {
+		t.Fatalf("localLogoutHint() = %q, want local logout command", hint)
+	}
+}
+
 func TestIsAffirmativeConfirmation(t *testing.T) {
 	tests := []struct {
 		answer string
@@ -172,6 +179,68 @@ func TestBuildCreateSourceInputMapsKnownFieldsAndAdvanced(t *testing.T) {
 	}
 	if input.Advanced["SSL Mode"] != "require" || input.Advanced["application_name"] != "whodb" {
 		t.Fatalf("advanced = %#v, want SSL Mode and application_name", input.Advanced)
+	}
+}
+
+func TestMergeSourceConfigPreservesUnchangedFields(t *testing.T) {
+	existing := &platform.SourceConfig{
+		Hostname: "db.example.com",
+		Port:     "5432",
+		Username: "postgres",
+		Password: "********",
+		Database: "app",
+		Advanced: map[string]string{
+			"sslmode":          "disable",
+			"application_name": "whodb",
+		},
+	}
+
+	merged := mergeSourceConfig(existing, map[string]string{
+		"Database": "analytics",
+		"SSL Mode": "require",
+	}, map[string]string{
+		"timezone": "UTC",
+	})
+
+	if merged.Hostname != "db.example.com" || merged.Port != "5432" || merged.Username != "postgres" || merged.Password != "********" {
+		t.Fatalf("connection fields = %#v, want existing values preserved", merged)
+	}
+	if merged.Database != "analytics" {
+		t.Fatalf("database = %q, want analytics", merged.Database)
+	}
+	if merged.Advanced["SSL Mode"] != "require" || merged.Advanced["application_name"] != "whodb" || merged.Advanced["timezone"] != "UTC" {
+		t.Fatalf("advanced = %#v, want merged advanced fields", merged.Advanced)
+	}
+}
+
+func TestRedactSourceConfigRedactsSecretFields(t *testing.T) {
+	sourceType := &platform.SourceType{
+		ConnectionFields: []platform.SourceConnectionField{
+			{Key: "Password", Kind: "Password"},
+			{Key: "Client Secret", Kind: "Password"},
+			{Key: "Region", Kind: "Text"},
+		},
+	}
+	config := &platform.SourceConfig{
+		Hostname: "db.example.com",
+		Password: "secret",
+		Advanced: map[string]string{
+			"Client Secret": "client-secret",
+			"api_token":     "token",
+			"Region":        "us-east-1",
+		},
+	}
+
+	safe := redactSourceConfig(config, sourceType)
+
+	if safe.Password != redactedValue {
+		t.Fatalf("password = %q, want redacted", safe.Password)
+	}
+	if safe.Advanced["Client Secret"] != redactedValue || safe.Advanced["api_token"] != redactedValue {
+		t.Fatalf("advanced = %#v, want secret fields redacted", safe.Advanced)
+	}
+	if safe.Advanced["Region"] != "us-east-1" {
+		t.Fatalf("Region = %q, want visible value", safe.Advanced["Region"])
 	}
 }
 

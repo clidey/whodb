@@ -23,7 +23,77 @@ type User struct {
 	ID          string `json:"id"`
 	Email       string `json:"email"`
 	DisplayName string `json:"displayName"`
-	OrgID       string `json:"orgId"`
+}
+
+// PlatformManifest describes the hosted CLI contract published by WhoDB.
+type PlatformManifest struct {
+	PlatformVersion         string                      `json:"platformVersion"`
+	ManifestProtocolVersion string                      `json:"manifestProtocolVersion"`
+	GeneratedAt             string                      `json:"generatedAt"`
+	Operations              []PlatformManifestOperation `json:"operations"`
+	Types                   []PlatformManifestType      `json:"types"`
+}
+
+// PlatformManifestOperation describes one hosted operation available to the CLI.
+type PlatformManifestOperation struct {
+	Name    string                  `json:"name"`
+	Kind    string                  `json:"kind"`
+	Args    []PlatformManifestField `json:"args"`
+	Returns string                  `json:"returns"`
+}
+
+// PlatformManifestType describes one hosted object type available to the CLI.
+type PlatformManifestType struct {
+	Name   string                  `json:"name"`
+	Fields []PlatformManifestField `json:"fields"`
+}
+
+// PlatformManifestField describes one field or argument in the hosted CLI contract.
+type PlatformManifestField struct {
+	Name     string `json:"name"`
+	Type     string `json:"type"`
+	Required bool   `json:"required"`
+	List     bool   `json:"list"`
+}
+
+// HasOperation reports whether the hosted platform published an operation.
+func (m *PlatformManifest) HasOperation(kind, name string) bool {
+	if m == nil {
+		return false
+	}
+	for _, operation := range m.Operations {
+		if operation.Kind == kind && operation.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
+// SelectFields returns desired fields that are present in the hosted type.
+func (m *PlatformManifest) SelectFields(typeName string, desired []string) []string {
+	if m == nil {
+		return append([]string(nil), desired...)
+	}
+	available := map[string]struct{}{}
+	for _, typ := range m.Types {
+		if typ.Name != typeName {
+			continue
+		}
+		for _, field := range typ.Fields {
+			available[field.Name] = struct{}{}
+		}
+		break
+	}
+	if len(available) == 0 {
+		return append([]string(nil), desired...)
+	}
+	selected := make([]string, 0, len(desired))
+	for _, field := range desired {
+		if _, ok := available[field]; ok {
+			selected = append(selected, field)
+		}
+	}
+	return selected
 }
 
 // Organization is a WhoDB platform organization visible to the user.
@@ -71,6 +141,16 @@ type SourceConnectionField struct {
 	PlaceholderKey  *string `json:"placeholderKey,omitempty"`
 	DefaultValue    *string `json:"defaultValue,omitempty"`
 	SupportsOptions bool    `json:"supportsOptions"`
+}
+
+// SourceConfig is a hosted source's connection configuration.
+type SourceConfig struct {
+	Hostname string            `json:"hostname"`
+	Port     string            `json:"port"`
+	Username string            `json:"username"`
+	Password string            `json:"password"`
+	Database string            `json:"database"`
+	Advanced map[string]string `json:"advanced"`
 }
 
 // SourceObjectKind identifies a source hierarchy object kind.
@@ -142,6 +222,13 @@ type CreateSourceInput struct {
 	Advanced     map[string]string
 }
 
+// UpdateSourceInput describes source metadata/config fields to update.
+type UpdateSourceInput struct {
+	ID     string
+	Name   *string
+	Config *SourceConfig
+}
+
 type recordInput struct {
 	Key   string `json:"Key"`
 	Value string `json:"Value"`
@@ -156,16 +243,6 @@ func (input SourceObjectRefInput) graphQLInput() map[string]any {
 }
 
 func (input CreateSourceInput) graphQLInput() map[string]any {
-	advanced := make([]recordInput, 0, len(input.Advanced))
-	keys := make([]string, 0, len(input.Advanced))
-	for key := range input.Advanced {
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
-	for _, key := range keys {
-		value := input.Advanced[key]
-		advanced = append(advanced, recordInput{Key: key, Value: value})
-	}
 	return map[string]any{
 		"projectId":    input.ProjectID,
 		"name":         input.Name,
@@ -175,6 +252,66 @@ func (input CreateSourceInput) graphQLInput() map[string]any {
 		"username":     input.Username,
 		"password":     input.Password,
 		"database":     input.Database,
-		"advanced":     advanced,
+		"advanced":     advancedGraphQLInput(input.Advanced),
 	}
+}
+
+func (input CreateSourceInput) sourceLoginInput() map[string]any {
+	values := map[string]string{}
+	for key, value := range input.Advanced {
+		values[key] = value
+	}
+	for key, value := range map[string]string{
+		"Hostname": input.Hostname,
+		"Port":     input.Port,
+		"Username": input.Username,
+		"Password": input.Password,
+		"Database": input.Database,
+	} {
+		if value != "" {
+			values[key] = value
+		}
+	}
+
+	return map[string]any{
+		"SourceType": input.DatabaseType,
+		"Values":     advancedGraphQLInput(values),
+	}
+}
+
+func (input UpdateSourceInput) graphQLInput() map[string]any {
+	result := map[string]any{
+		"id": input.ID,
+	}
+	if input.Name != nil {
+		result["name"] = *input.Name
+	}
+	if input.Config != nil {
+		result["config"] = input.Config.graphQLInput()
+	}
+	return result
+}
+
+func (config SourceConfig) graphQLInput() map[string]any {
+	return map[string]any{
+		"hostname": config.Hostname,
+		"port":     config.Port,
+		"username": config.Username,
+		"password": config.Password,
+		"database": config.Database,
+		"advanced": advancedGraphQLInput(config.Advanced),
+	}
+}
+
+func advancedGraphQLInput(advanced map[string]string) []recordInput {
+	records := make([]recordInput, 0, len(advanced))
+	keys := make([]string, 0, len(advanced))
+	for key := range advanced {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		records = append(records, recordInput{Key: key, Value: advanced[key]})
+	}
+	return records
 }

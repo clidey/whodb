@@ -198,7 +198,7 @@ func RefreshToken(ctx context.Context, host, refreshToken string) (*TokenRespons
 	return postAuth(ctx, authHost, "/auth/refresh", payload)
 }
 
-// Logout revokes all active sessions for the authenticated platform user.
+// Logout revokes the current authenticated platform session.
 func Logout(ctx context.Context, host, accessToken string) error {
 	authHost, err := ResolveAuthHost(ctx, host)
 	if err != nil {
@@ -212,7 +212,7 @@ func Logout(ctx context.Context, host, accessToken string) error {
 		return fmt.Errorf("access token is required")
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, normalized+"/auth/logout", nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, normalized+"/auth/revoke-current-session", nil)
 	if err != nil {
 		return err
 	}

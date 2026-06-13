@@ -111,6 +111,10 @@ Keep CE defaults in `cli/pkg/identity`. Do not add non-CE product-specific value
 6. **Shared Feature Surfaces** — Import, mock data, ERD graph, suggestions, and diff should reuse backend/shared logic rather than reimplementing locally
 7. **Structured Automation Output** — Machine-readable commands should keep stable JSON/NDJSON contracts and avoid spinner noise
 8. **Workspace Restore** — Persist only lightweight restorable UI state, not heavy query payloads
+9. **Hosted Platform Manifest** — Hosted-platform commands use EE
+   `PlatformManifest` as the source of truth for supported GraphQL operations
+   and fields. When EE hosted schema changes affect public CLI capabilities,
+   update `ee/core/graph/platform_manifest.go` and run its contract test.
 
 ## Current Capabilities
 
