@@ -19,6 +19,7 @@ package platform
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -140,6 +141,85 @@ func TestPlatformManifestFetchesContract(t *testing.T) {
 	}
 	if fields := manifest.SelectFields("PlatformUser", []string{"id", "orgId"}); len(fields) != 1 || fields[0] != "id" {
 		t.Fatalf("selected fields = %#v, want only id", fields)
+	}
+}
+
+func TestRequireOperationBlocksUnsupportedFeature(t *testing.T) {
+	requests := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests++
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer server.Close()
+
+	client, err := NewClient(server.URL, "token")
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
+	}
+	client.SetPlatformManifest(&PlatformManifest{
+		Operations: []PlatformManifestOperation{
+			{Name: "Me", Kind: "Query"},
+		},
+	})
+	_, err = client.SourceConfig(context.Background(), "proj-1", "src-1")
+	var unsupported UnsupportedFeatureError
+	if !errors.As(err, &unsupported) {
+		t.Fatalf("SourceConfig() error = %T %v, want UnsupportedFeatureError", err, err)
+	}
+	if unsupported.Operation != "Query.SourceConfig" {
+		t.Fatalf("operation = %q, want Query.SourceConfig", unsupported.Operation)
+	}
+	if requests != 0 {
+		t.Fatalf("requests = %d, want no request for unsupported operation", requests)
+	}
+}
+
+func TestGraphQLValidationErrorRefreshesManifestAndRetriesOnce(t *testing.T) {
+	requests := 0
+	refreshes := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests++
+		w.Header().Set("Content-Type", "application/json")
+		if requests == 1 {
+			_, _ = w.Write([]byte(`{"errors":[{"message":"Cannot query field \"orgId\" on type \"PlatformUser\".","extensions":{"code":"GRAPHQL_VALIDATION_FAILED"}}],"data":null}`))
+			return
+		}
+		_, _ = w.Write([]byte(`{"data":{"MyOrganizations":[{"id":"org-1","name":"Acme","slug":"acme"}]}}`))
+	}))
+	defer server.Close()
+
+	client, err := NewClient(server.URL, "token")
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
+	}
+	client.SetManifestRefresher(func(ctx context.Context, refreshed *Client) (*PlatformManifest, error) {
+		refreshes++
+		manifest := &PlatformManifest{
+			Operations: []PlatformManifestOperation{{Name: "MyOrganizations", Kind: "Query"}},
+		}
+		refreshed.SetPlatformManifest(manifest)
+		return manifest, nil
+	})
+	orgs, err := client.Organizations(context.Background())
+	if err != nil {
+		t.Fatalf("Organizations() error = %v", err)
+	}
+	if len(orgs) != 1 || orgs[0].ID != "org-1" {
+		t.Fatalf("orgs = %#v, want org-1", orgs)
+	}
+	if requests != 2 || refreshes != 1 {
+		t.Fatalf("requests=%d refreshes=%d, want 2 requests and 1 refresh", requests, refreshes)
+	}
+}
+
+func TestGraphQLValidationErrorDetectsWrappedError(t *testing.T) {
+	err := errors.New("other")
+	if IsGraphQLValidationError(err) {
+		t.Fatal("IsGraphQLValidationError(non-graphql) = true, want false")
+	}
+	wrapped := errors.Join(GraphQLError{Code: "GRAPHQL_VALIDATION_FAILED", Message: "bad field"})
+	if !IsGraphQLValidationError(wrapped) {
+		t.Fatal("IsGraphQLValidationError(wrapped validation error) = false, want true")
 	}
 }
 

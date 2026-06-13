@@ -167,7 +167,7 @@ var sourcesTestCmd = &cobra.Command{
 				return err
 			}
 			if _, err := session.Client.SourceObjects(ctx, project.ID, source.ID, nil, nil, 1, 0); err != nil {
-				return err
+				return fmt.Errorf("saved source connection failed: %w", err)
 			}
 			data := sourceTestOutput{Status: "ok", Source: source}
 			if format == output.FormatJSON {
@@ -194,7 +194,7 @@ var sourcesTestCmd = &cobra.Command{
 			return err
 		}
 		if err := session.Client.TestSourceConnection(ctx, input); err != nil {
-			return err
+			return fmt.Errorf("draft source configuration failed: %w", err)
 		}
 		data := sourceTestOutput{Status: "ok", SourceType: selectedType.ID}
 		if format == output.FormatJSON {
@@ -270,7 +270,7 @@ func explicitSourceConfigValues(cmd *cobra.Command, sourceType *platform.SourceT
 			var ok bool
 			canonicalKey, ok = fieldKeyByLower[strings.ToLower(strings.TrimSpace(key))]
 			if !ok {
-				return nil, nil, fmt.Errorf("source type does not define connection field %q", key)
+				return nil, nil, fmt.Errorf("source type does not define connection field %q; run whodb-cli sources fields %s to list valid fields", key, sourceType.ID)
 			}
 		}
 		values[canonicalKey] = value

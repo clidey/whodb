@@ -16,7 +16,10 @@
 
 package platform
 
-import "sort"
+import (
+	"fmt"
+	"sort"
+)
 
 // User is the platform identity returned by WhoDB.
 type User struct {
@@ -69,6 +72,20 @@ func (m *PlatformManifest) HasOperation(kind, name string) bool {
 	return false
 }
 
+// RequireOperation returns an error if the hosted platform did not publish an operation.
+func (m *PlatformManifest) RequireOperation(kind, name, feature string) error {
+	if m == nil {
+		return nil
+	}
+	if m.HasOperation(kind, name) {
+		return nil
+	}
+	return UnsupportedFeatureError{
+		Feature:   feature,
+		Operation: kind + "." + name,
+	}
+}
+
 // SelectFields returns desired fields that are present in the hosted type.
 func (m *PlatformManifest) SelectFields(typeName string, desired []string) []string {
 	if m == nil {
@@ -94,6 +111,19 @@ func (m *PlatformManifest) SelectFields(typeName string, desired []string) []str
 		}
 	}
 	return selected
+}
+
+// UnsupportedFeatureError reports that the host does not publish a CLI feature.
+type UnsupportedFeatureError struct {
+	Feature   string
+	Operation string
+}
+
+func (e UnsupportedFeatureError) Error() string {
+	if e.Feature == "" {
+		return fmt.Sprintf("this WhoDB host does not support %s yet", e.Operation)
+	}
+	return fmt.Sprintf("this WhoDB host does not support %s yet", e.Feature)
 }
 
 // Organization is a WhoDB platform organization visible to the user.

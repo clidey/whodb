@@ -19,6 +19,7 @@ package cmd
 import (
 	"bytes"
 	"io"
+	"strings"
 	"testing"
 
 	"github.com/clidey/whodb/cli/internal/config"
@@ -64,6 +65,34 @@ func TestLocalLogoutHintIncludesHost(t *testing.T) {
 	hint := localLogoutHint("http://localhost:8080")
 	if !bytes.Contains([]byte(hint), []byte("whodb-cli logout --host http://localhost:8080 --local")) {
 		t.Fatalf("localLogoutHint() = %q, want local logout command", hint)
+	}
+}
+
+func TestPlatformManifestOutputIncludesCacheMetadata(t *testing.T) {
+	host := config.PlatformHost{
+		URL: "https://app.whodb.com",
+		Manifest: &config.PlatformManifestCache{
+			FetchedAt: "2026-06-13T12:00:00Z",
+		},
+	}
+	manifest := &platform.PlatformManifest{
+		PlatformVersion:         "1.2.3",
+		ManifestProtocolVersion: "1",
+		GeneratedAt:             "2026-06-13T11:59:00Z",
+		Operations: []platform.PlatformManifestOperation{
+			{Name: "Me", Kind: "Query"},
+			{Name: "CreateSource", Kind: "Mutation"},
+		},
+		Types: []platform.PlatformManifestType{{Name: "PlatformUser"}},
+	}
+
+	output := platformManifestOutput(host, manifest)
+
+	if output.Host != host.URL || output.PlatformVersion != "1.2.3" || output.FetchedAt != host.Manifest.FetchedAt {
+		t.Fatalf("platformManifestOutput() = %#v, want host/version/fetched metadata", output)
+	}
+	if len(output.Operations) != 2 || len(output.Types) != 1 {
+		t.Fatalf("platformManifestOutput() = %#v, want operations and types", output)
 	}
 }
 
@@ -158,6 +187,9 @@ func TestCollectSourceFieldValuesRejectsUnknownExplicitField(t *testing.T) {
 	}, map[string]string{"Database": "app"}, nil, nil)
 	if err == nil {
 		t.Fatal("collectSourceFieldValues() error = nil, want unknown field error")
+	}
+	if !strings.Contains(err.Error(), "sources fields") {
+		t.Fatalf("collectSourceFieldValues() error = %q, want fields hint", err)
 	}
 }
 
