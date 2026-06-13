@@ -451,16 +451,16 @@ test.describe('Keyboard Shortcuts', () => {
                 // Set page size to a small value to see pagination (2 is available in E2E mode)
                 await whodb.setTablePageSize(2);
                 await page.locator('[data-testid="submit-button"]').click();
-                await expect(page.locator('[data-testid="table-page-number"]').first()).toBeAttached({ timeout: 10000 });
+                await expect(page.locator('[data-slot="pagination-link"]').first()).toBeAttached({ timeout: 10000 });
 
                 // Focus a row
                 await page.keyboard.press('ArrowDown');
                 await expect(page.locator('table tbody tr[data-focused="true"]')).toBeAttached();
 
                 // Go to next page (if available)
-                const pageNumbers = await page.locator('[data-testid="table-page-number"]').count();
+                const pageNumbers = await page.locator('[data-slot="pagination-link"]').count();
                 if (pageNumbers > 1) {
-                    await page.locator('[data-testid="table-page-number"]').nth(1).click();
+                    await page.locator('[data-slot="pagination-link"]').nth(1).click();
 
                     // Focus should be reset
                     await expect(page.locator('table tbody tr[data-focused="true"]')).not.toBeAttached();
@@ -475,16 +475,16 @@ test.describe('Keyboard Shortcuts', () => {
                 // Set page size to a small value to see pagination
                 await whodb.setTablePageSize(2);
                 await page.locator('[data-testid="submit-button"]').click();
-                await expect(page.locator('[data-testid="table-page-number"]').first()).toBeAttached({ timeout: 10000 });
+                await expect(page.locator('[data-slot="pagination-link"]').first()).toBeAttached({ timeout: 10000 });
 
                 // Check we're on page 1
-                await expect(page.locator('[data-testid="table-page-number"]').first()).toHaveAttribute('data-active', 'true');
+                await expect(page.locator('[data-slot="pagination-link"]').first()).toHaveAttribute('data-active', 'true');
 
                 // Press Cmd+ArrowRight (Mac) or Ctrl+ArrowRight (Win/Linux) to go to next page
                 await whodb.typeCmdShortcut('ArrowRight');
 
                 // Should now be on page 2
-                await expect(page.locator('[data-testid="table-page-number"]').nth(1)).toHaveAttribute('data-active', 'true');
+                await expect(page.locator('[data-slot="pagination-link"]').nth(1)).toHaveAttribute('data-active', 'true');
             });
 
             test('Cmd/Ctrl+ArrowLeft goes to previous page', async ({ whodb, page }) => {
@@ -493,17 +493,17 @@ test.describe('Keyboard Shortcuts', () => {
                 // Set page size to a small value to see pagination
                 await whodb.setTablePageSize(2);
                 await page.locator('[data-testid="submit-button"]').click();
-                await expect(page.locator('[data-testid="table-page-number"]').first()).toBeAttached({ timeout: 10000 });
+                await expect(page.locator('[data-slot="pagination-link"]').first()).toBeAttached({ timeout: 10000 });
 
                 // Go to page 2 first
-                await page.locator('[data-testid="table-page-number"]').nth(1).click();
-                await expect(page.locator('[data-testid="table-page-number"]').nth(1)).toHaveAttribute('data-active', 'true');
+                await page.locator('[data-slot="pagination-link"]').nth(1).click();
+                await expect(page.locator('[data-slot="pagination-link"]').nth(1)).toHaveAttribute('data-active', 'true');
 
                 // Press Cmd+ArrowLeft (Mac) or Ctrl+ArrowLeft (Win/Linux) to go to previous page
                 await whodb.typeCmdShortcut('ArrowLeft');
 
                 // Should now be on page 1
-                await expect(page.locator('[data-testid="table-page-number"]').first()).toHaveAttribute('data-active', 'true');
+                await expect(page.locator('[data-slot="pagination-link"]').first()).toHaveAttribute('data-active', 'true');
             });
 
             test('Cmd/Ctrl+ArrowLeft does nothing on first page', async ({ whodb, page }) => {
@@ -512,16 +512,16 @@ test.describe('Keyboard Shortcuts', () => {
                 // Set page size to a small value to see pagination
                 await whodb.setTablePageSize(2);
                 await page.locator('[data-testid="submit-button"]').click();
-                await expect(page.locator('[data-testid="table-page-number"]').first()).toBeAttached({ timeout: 10000 });
+                await expect(page.locator('[data-slot="pagination-link"]').first()).toBeAttached({ timeout: 10000 });
 
                 // Ensure we're on page 1
-                await expect(page.locator('[data-testid="table-page-number"]').first()).toHaveAttribute('data-active', 'true');
+                await expect(page.locator('[data-slot="pagination-link"]').first()).toHaveAttribute('data-active', 'true');
 
                 // Press Cmd/Ctrl+ArrowLeft - should stay on page 1
                 await whodb.typeCmdShortcut('ArrowLeft');
 
                 // Should still be on page 1
-                await expect(page.locator('[data-testid="table-page-number"]').first()).toHaveAttribute('data-active', 'true');
+                await expect(page.locator('[data-slot="pagination-link"]').first()).toHaveAttribute('data-active', 'true');
             });
         });
 
