@@ -295,7 +295,7 @@ export const tableMethods = {
      * @returns {Promise<string[]>}
      */
     async getPageNumbers() {
-        const els = this.page.locator('[data-slot="pagination-link"]');
+        const els = this.page.locator('[data-slot="pagination-link"][data-active]');
         const count = await els.count();
         const result = [];
         for (let i = 0; i < count; i++) {

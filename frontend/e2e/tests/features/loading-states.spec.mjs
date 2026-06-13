@@ -435,18 +435,18 @@ test.describe('Loading States & Spinners', () => {
                     await page.locator('table tbody tr').first().click();
 
                     // Check if row edit UI appears
-                    const saveBtnCount = await page.locator('[data-testid="save-button"]').count();
-                    const editPanelCount = await page.locator('[data-testid="edit-panel"]').count();
+                    const updateBtnCount = await page.locator('[data-testid="update-button"]').count();
+                    const editPanelCount = await page.locator('[data-testid="edit-row-dialog"]').count();
 
-                    if (saveBtnCount === 0 && editPanelCount === 0) {
+                    if (updateBtnCount === 0 && editPanelCount === 0) {
                         // Row click may just select, not open edit mode
                         test.skip();
                         return;
                     }
 
-                    if (saveBtnCount > 0) {
-                        // Save button exists - verify it's visible and functional
-                        await expect(page.locator('[data-testid="save-button"]')).toBeVisible();
+                    if (updateBtnCount > 0) {
+                        // Update button exists - verify it's visible and functional
+                        await expect(page.locator('[data-testid="update-button"]')).toBeVisible();
                     }
                 });
             });
