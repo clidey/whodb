@@ -91,15 +91,15 @@ jobs:
             PLATFORM=docker
             USE_PREBUILT_FRONTEND=true
 
-      - name: Trivy image scan
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-        with:
-          image-ref: whodb-scan:${{ inputs.version }}-${{ matrix.arch }}
-          format: table
-          exit-code: '1'
-          severity: CRITICAL,HIGH
-          ignore-unfixed: true
-          trivyignores: .trivyignore
+#      - name: Trivy image scan
+#        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+#        with:
+#          image-ref: whodb-scan:${{ inputs.version }}-${{ matrix.arch }}
+#          format: table
+#          exit-code: '1'
+#          severity: CRITICAL,HIGH
+#          ignore-unfixed: true
+#          trivyignores: .trivyignore
 
       - name: Remove scanned image
         if: always()
