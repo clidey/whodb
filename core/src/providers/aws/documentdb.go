@@ -99,7 +99,7 @@ func (p *Provider) discoverDocumentDB(ctx context.Context) ([]providers.Discover
 		}
 	}
 
-	log.Infof("DocumentDB: found %d connections in %v", len(connections), time.Since(start))
+	log.Debugf("DocumentDB: found %d connections in %v", len(connections), time.Since(start))
 	return connections, nil
 }
 

@@ -67,7 +67,7 @@ func RunApp(config RunConfig) error {
 	analytics.SetEnabled(settingsCfg.MetricsEnabled)
 
 	config.InitializeEngine()
-	log.Infof("Running WhoDB Desktop %s Edition", strings.ToUpper(config.Edition))
+	log.Debugf("Running WhoDB Desktop %s Edition", strings.ToUpper(config.Edition))
 
 	r := router.InitializeRouter(config.Schema, nil, nil, nil, config.Assets)
 	app := NewApp(config.Edition)

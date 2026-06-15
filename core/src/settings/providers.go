@@ -248,7 +248,7 @@ func TestAWSProvider(id string) (string, error) {
 // RefreshAWSProvider triggers a re-discovery of connections for the specified provider.
 // Updates the provider's status, discovered count, and last discovery time.
 func RefreshAWSProvider(id string) (*AWSProviderState, error) {
-	log.Infof("RefreshAWSProvider called for id=%s", id)
+	log.Debugf("RefreshAWSProvider called for id=%s", id)
 
 	awsProvidersMu.Lock()
 	state, exists := awsProviders[id]
@@ -258,7 +258,7 @@ func RefreshAWSProvider(id string) (*AWSProviderState, error) {
 		return nil, ErrProviderNotFound
 	}
 	state.Status = "Discovering"
-	log.Infof("RefreshAWSProvider: provider found, id=%s, region=%s, authMethod=%s",
+	log.Debugf("RefreshAWSProvider: provider found, id=%s, region=%s, authMethod=%s",
 		state.Config.ID, state.Config.Region, state.Config.AuthMethod)
 	awsProvidersMu.Unlock()
 
@@ -266,9 +266,9 @@ func RefreshAWSProvider(id string) (*AWSProviderState, error) {
 	defer cancel()
 
 	registry := providers.GetDefaultRegistry()
-	log.Infof("RefreshAWSProvider: calling registry.RefreshDiscovery for id=%s", id)
+	log.Debugf("RefreshAWSProvider: calling registry.RefreshDiscovery for id=%s", id)
 	conns, err := registry.RefreshDiscovery(ctx, id)
-	log.Infof("RefreshAWSProvider: registry.RefreshDiscovery returned %d connections, err=%v", len(conns), err)
+	log.Debugf("RefreshAWSProvider: registry.RefreshDiscovery returned %d connections, err=%v", len(conns), err)
 
 	// Run connectivity checks on refresh (not on cached reads)
 	if len(conns) > 0 {
@@ -386,7 +386,7 @@ func InitAWSProvidersFromEnv() error {
 		if _, err := AddAWSProvider(cfg); err != nil {
 			log.Warnf("Failed to initialize AWS provider %s: %v", name, err)
 		} else {
-			log.Infof("Initialized AWS provider: %s (%s)", name, envCfg.Region)
+			log.Debugf("Initialized AWS provider: %s (%s)", name, envCfg.Region)
 		}
 	}
 

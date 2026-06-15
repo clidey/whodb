@@ -70,7 +70,7 @@ func TestMain(m *testing.M) {
 		}
 	}()
 
-	log.Infof("🎉 WhoDB test server running at http://localhost:%s 🎉", port)
+	log.Debugf("🎉 WhoDB test server running at http://localhost:%s 🎉", port)
 
 	// Wait for SIGINT (Ctrl+C) or SIGTERM
 	quit := make(chan os.Signal, 1)

@@ -64,7 +64,7 @@ func DiscoverSubscriptions(ctx context.Context, cred azcore.TokenCredential) ([]
 		}
 	}
 
-	log.Infof("Azure subscriptions: discovered %d subscriptions", len(subscriptions))
+	log.Debugf("Azure subscriptions: discovered %d subscriptions", len(subscriptions))
 	return subscriptions, nil
 }
 

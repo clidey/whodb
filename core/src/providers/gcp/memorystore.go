@@ -66,7 +66,7 @@ func (p *Provider) discoverMemorystore(ctx context.Context) ([]providers.Discove
 		}
 	}
 
-	log.Infof("Memorystore: found %d instances in %v", len(connections), time.Since(start))
+	log.Debugf("Memorystore: found %d instances in %v", len(connections), time.Since(start))
 	return connections, nil
 }
 

@@ -136,7 +136,7 @@ func LoadAzureProvidersFromFile() error {
 	}
 
 	if loadedCount > 0 {
-		log.Infof("Loaded %d Azure provider(s) from config", loadedCount)
+		log.Debugf("Loaded %d Azure provider(s) from config", loadedCount)
 	}
 
 	return nil

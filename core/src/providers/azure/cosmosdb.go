@@ -79,7 +79,7 @@ func (p *Provider) discoverCosmosDB(ctx context.Context) ([]providers.Discovered
 		}
 	}
 
-	log.Infof("Azure CosmosDB: discovered %d MongoDB accounts in %v", len(connections), time.Since(start))
+	log.Debugf("Azure CosmosDB: discovered %d MongoDB accounts in %v", len(connections), time.Since(start))
 	return connections, nil
 }
 

@@ -37,7 +37,7 @@ const (
 // CheckConnectivity performs TCP dial tests on discovered connections.
 // Called during RefreshDiscovery (not cached DiscoverAll) to avoid slowing down page loads.
 func CheckConnectivity(connections []providers.DiscoveredConnection) {
-	log.Infof("Azure Connectivity: checking %d connections", len(connections))
+	log.Debugf("Azure Connectivity: checking %d connections", len(connections))
 	sem := make(chan struct{}, maxConcurrentChecks)
 	var wg sync.WaitGroup
 
@@ -75,5 +75,5 @@ func CheckConnectivity(connections []providers.DiscoveredConnection) {
 	}
 
 	wg.Wait()
-	log.Infof("Azure Connectivity: done — %d reachable, %d unreachable", reachable.Load(), unreachable.Load())
+	log.Debugf("Azure Connectivity: done — %d reachable, %d unreachable", reachable.Load(), unreachable.Load())
 }

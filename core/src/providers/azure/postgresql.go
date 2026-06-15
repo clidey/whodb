@@ -68,7 +68,7 @@ func (p *Provider) discoverPostgreSQL(ctx context.Context) ([]providers.Discover
 		}
 	}
 
-	log.Infof("Azure PostgreSQL: discovered %d servers in %v", len(connections), time.Since(start))
+	log.Debugf("Azure PostgreSQL: discovered %d servers in %v", len(connections), time.Since(start))
 	return connections, nil
 }
 

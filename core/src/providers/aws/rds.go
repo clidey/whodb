@@ -99,7 +99,7 @@ func (p *Provider) discoverRDS(ctx context.Context) ([]providers.DiscoveredConne
 		}
 	}
 
-	log.Infof("RDS discoverRDS: found %d connections in %v", len(connections), time.Since(start))
+	log.Debugf("RDS discoverRDS: found %d connections in %v", len(connections), time.Since(start))
 	return connections, nil
 }
 
@@ -252,7 +252,7 @@ func (p *Provider) discoverRDSClusters(ctx context.Context) ([]providers.Discove
 		}
 	}
 
-	log.Infof("RDS discoverRDSClusters: found %d cluster endpoints in %v", len(connections), time.Since(start))
+	log.Debugf("RDS discoverRDSClusters: found %d cluster endpoints in %v", len(connections), time.Since(start))
 	return connections, nil
 }
 
@@ -336,7 +336,7 @@ func (p *Provider) discoverRDSProxies(ctx context.Context) ([]providers.Discover
 		}
 	}
 
-	log.Infof("RDS discoverRDSProxies: found %d proxies in %v", len(connections), time.Since(start))
+	log.Debugf("RDS discoverRDSProxies: found %d proxies in %v", len(connections), time.Since(start))
 	return connections, nil
 }
 

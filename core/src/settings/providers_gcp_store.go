@@ -126,7 +126,7 @@ func LoadGCPProvidersFromFile() error {
 	}
 
 	if loadedCount > 0 {
-		log.Infof("Loaded %d GCP provider(s) from config", loadedCount)
+		log.Debugf("Loaded %d GCP provider(s) from config", loadedCount)
 	}
 
 	return nil

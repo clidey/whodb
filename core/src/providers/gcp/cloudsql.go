@@ -88,7 +88,7 @@ func (p *Provider) discoverCloudSQL(ctx context.Context) ([]providers.Discovered
 		}
 	}
 
-	log.Infof("Cloud SQL: found %d connections in %v", len(connections), time.Since(start))
+	log.Debugf("Cloud SQL: found %d instances in %v", len(connections), time.Since(start))
 	return connections, nil
 }
 

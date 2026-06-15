@@ -267,9 +267,9 @@ func ParseGenericProviders() []env.GenericProviderConfig {
 	}
 
 	if len(providers) > 0 {
-		log.Infof("Discovered %d generic AI provider(s)", len(providers))
+		log.Debugf("Discovered %d generic AI provider(s)", len(providers))
 		for _, provider := range providers {
-			log.Infof("  - %s (%s) with %d model(s)", provider.Name, provider.ProviderId, len(provider.Models))
+			log.Debugf("  - %s (%s) with %d model(s)", provider.Name, provider.ProviderId, len(provider.Models))
 		}
 	}
 

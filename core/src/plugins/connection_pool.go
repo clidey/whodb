@@ -127,7 +127,7 @@ func WithConnection[T any](config *engine.PluginConfig, dbFn DBCreationFunc, ope
 		log.WithFields(map[string]any{
 			"conn_id": connIdentifier(config),
 			"error":   err.Error(),
-		}).Error("WithConnection FAILED to get connection")
+		}).Warn("WithConnection FAILED to get connection")
 		var zero T
 		return zero, err
 	}
