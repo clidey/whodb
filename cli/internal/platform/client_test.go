@@ -161,7 +161,7 @@ func TestRequireOperationBlocksUnsupportedFeature(t *testing.T) {
 			{Name: "Me", Kind: "Query"},
 		},
 	})
-	_, err = client.SourceConfig(context.Background(), "proj-1", "src-1")
+	_, err = client.SourceConfig(context.Background(), "org-1", "proj-1", "src-1")
 	var unsupported UnsupportedFeatureError
 	if !errors.As(err, &unsupported) {
 		t.Fatalf("SourceConfig() error = %T %v, want UnsupportedFeatureError", err, err)
@@ -279,12 +279,15 @@ func TestProjectSourcesSendsProjectID(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewClient() error = %v", err)
 	}
-	sources, err := client.ProjectSources(context.Background(), "proj-1")
+	sources, err := client.ProjectSources(context.Background(), "org-1", "proj-1")
 	if err != nil {
 		t.Fatalf("ProjectSources() error = %v", err)
 	}
 	if request.Variables["projectId"] != "proj-1" {
 		t.Fatalf("projectId variable = %#v, want proj-1", request.Variables["projectId"])
+	}
+	if request.Variables["orgId"] != "org-1" {
+		t.Fatalf("orgId variable = %#v, want org-1", request.Variables["orgId"])
 	}
 	if len(sources) != 1 || sources[0].Name != "Warehouse" {
 		t.Fatalf("sources = %#v, want Warehouse source", sources)
@@ -352,6 +355,7 @@ func TestCreateSourceMapsAdvancedRecords(t *testing.T) {
 		t.Fatalf("NewClient() error = %v", err)
 	}
 	source, err := client.CreateSource(context.Background(), CreateSourceInput{
+		OrgID:        "org-1",
 		ProjectID:    "proj-1",
 		Name:         "Warehouse",
 		DatabaseType: "Postgres",
@@ -377,6 +381,9 @@ func TestCreateSourceMapsAdvancedRecords(t *testing.T) {
 	}
 	if input["password"] != "secret" {
 		t.Fatalf("password variable = %#v, want secret", input["password"])
+	}
+	if input["orgId"] != "org-1" || input["projectId"] != "proj-1" {
+		t.Fatalf("scope variables = %#v, want org/project IDs", input)
 	}
 	advanced, ok := input["advanced"].([]any)
 	if !ok {
@@ -412,12 +419,12 @@ func TestSourceConfigMapsAdvancedRecords(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewClient() error = %v", err)
 	}
-	config, err := client.SourceConfig(context.Background(), "proj-1", "src-1")
+	config, err := client.SourceConfig(context.Background(), "org-1", "proj-1", "src-1")
 	if err != nil {
 		t.Fatalf("SourceConfig() error = %v", err)
 	}
-	if request.Variables["projectId"] != "proj-1" || request.Variables["sourceId"] != "src-1" {
-		t.Fatalf("variables = %#v, want project/source IDs", request.Variables)
+	if request.Variables["orgId"] != "org-1" || request.Variables["projectId"] != "proj-1" || request.Variables["sourceId"] != "src-1" {
+		t.Fatalf("variables = %#v, want org/project/source IDs", request.Variables)
 	}
 	if config.Hostname != "db.example.com" || config.Advanced["sslmode"] != "require" {
 		t.Fatalf("config = %#v, want mapped source config", config)
@@ -447,8 +454,10 @@ func TestUpdateSourceMapsFullConfig(t *testing.T) {
 	}
 	name := "Warehouse"
 	_, err = client.UpdateSource(context.Background(), UpdateSourceInput{
-		ID:   "src-1",
-		Name: &name,
+		OrgID:     "org-1",
+		ProjectID: "proj-1",
+		ID:        "src-1",
+		Name:      &name,
 		Config: &SourceConfig{
 			Hostname: "db.example.com",
 			Port:     "5432",
@@ -462,8 +471,8 @@ func TestUpdateSourceMapsFullConfig(t *testing.T) {
 		t.Fatalf("UpdateSource() error = %v", err)
 	}
 	input := request.Variables["input"].(map[string]any)
-	if input["id"] != "src-1" || input["name"] != "Warehouse" {
-		t.Fatalf("input = %#v, want id/name", input)
+	if input["orgId"] != "org-1" || input["projectId"] != "proj-1" || input["id"] != "src-1" || input["name"] != "Warehouse" {
+		t.Fatalf("input = %#v, want org/project/id/name", input)
 	}
 	config := input["config"].(map[string]any)
 	if config["password"] != "********" {
@@ -544,7 +553,7 @@ func TestSourceObjectsMapsParentAndKinds(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewClient() error = %v", err)
 	}
-	objects, err := client.SourceObjects(context.Background(), "proj-1", "src-1", &SourceObjectRefInput{
+	objects, err := client.SourceObjects(context.Background(), "org-1", "proj-1", "src-1", &SourceObjectRefInput{
 		Kind: "Schema",
 		Path: []string{"public"},
 	}, []SourceObjectKind{"Table", "View"}, 50, 10)
@@ -557,6 +566,9 @@ func TestSourceObjectsMapsParentAndKinds(t *testing.T) {
 	}
 	if parent["Kind"] != "Schema" {
 		t.Fatalf("parent Kind = %#v, want Schema", parent["Kind"])
+	}
+	if request.Variables["orgId"] != "org-1" {
+		t.Fatalf("orgId variable = %#v, want org-1", request.Variables["orgId"])
 	}
 	kinds, ok := request.Variables["kinds"].([]any)
 	if !ok || len(kinds) != 2 || kinds[0] != "Table" || kinds[1] != "View" {
@@ -591,7 +603,7 @@ func TestSourceRowsMapsRefAndPagination(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewClient() error = %v", err)
 	}
-	result, err := client.SourceRows(context.Background(), "proj-1", "src-1", SourceObjectRefInput{
+	result, err := client.SourceRows(context.Background(), "org-1", "proj-1", "src-1", SourceObjectRefInput{
 		Kind: "Table",
 		Path: []string{"public", "users"},
 	}, 25, 5)
@@ -604,6 +616,9 @@ func TestSourceRowsMapsRefAndPagination(t *testing.T) {
 	}
 	if ref["Kind"] != "Table" {
 		t.Fatalf("ref Kind = %#v, want Table", ref["Kind"])
+	}
+	if request.Variables["orgId"] != "org-1" {
+		t.Fatalf("orgId variable = %#v, want org-1", request.Variables["orgId"])
 	}
 	if request.Variables["pageSize"] != float64(25) || request.Variables["pageOffset"] != float64(5) {
 		t.Fatalf("pagination variables = %#v, want pageSize=25 pageOffset=5", request.Variables)

@@ -60,7 +60,7 @@ var sourcesConfigCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		project, source, sourceType, config, err := loadSourceConfigContext(ctx, session, args[0])
+		_, project, source, sourceType, config, err := loadSourceConfigContext(ctx, session, args[0])
 		if err != nil {
 			return err
 		}
@@ -96,12 +96,12 @@ var sourcesUpdateCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		project, source, err := resolvePlatformSource(ctx, session, sourcesOrg, sourcesProject, args[0])
+		org, project, source, err := resolvePlatformSource(ctx, session, sourcesOrg, sourcesProject, args[0])
 		if err != nil {
 			return err
 		}
 
-		input := platform.UpdateSourceInput{ID: source.ID}
+		input := platform.UpdateSourceInput{OrgID: org.ID, ProjectID: project.ID, ID: source.ID}
 		if cmd.Flags().Changed("name") {
 			name := strings.TrimSpace(sourceName)
 			if name == "" {
@@ -115,7 +115,7 @@ var sourcesUpdateCmd = &cobra.Command{
 				return err
 			}
 			sourceType := findSourceType(types, source.DatabaseType)
-			existing, err := session.Client.SourceConfig(ctx, project.ID, source.ID)
+			existing, err := session.Client.SourceConfig(ctx, org.ID, project.ID, source.ID)
 			if err != nil {
 				return err
 			}
@@ -162,11 +162,11 @@ var sourcesTestCmd = &cobra.Command{
 			if strings.TrimSpace(sourceType) != "" || sourceConfigFlagsChanged(cmd) || cmd.Flags().Changed("name") {
 				return fmt.Errorf("saved source tests do not accept draft config flags; omit <source> to test a draft config")
 			}
-			project, source, err := resolvePlatformSource(ctx, session, sourcesOrg, sourcesProject, args[0])
+			org, project, source, err := resolvePlatformSource(ctx, session, sourcesOrg, sourcesProject, args[0])
 			if err != nil {
 				return err
 			}
-			if _, err := session.Client.SourceObjects(ctx, project.ID, source.ID, nil, nil, 1, 0); err != nil {
+			if _, err := session.Client.SourceObjects(ctx, org.ID, project.ID, source.ID, nil, nil, 1, 0); err != nil {
 				return fmt.Errorf("saved source connection failed: %w", err)
 			}
 			data := sourceTestOutput{Status: "ok", Source: source}
@@ -205,21 +205,21 @@ var sourcesTestCmd = &cobra.Command{
 	},
 }
 
-func loadSourceConfigContext(ctx context.Context, session *platformSession, sourceValue string) (*platform.Project, *platform.Source, *platform.SourceType, *platform.SourceConfig, error) {
-	project, source, err := resolvePlatformSource(ctx, session, sourcesOrg, sourcesProject, sourceValue)
+func loadSourceConfigContext(ctx context.Context, session *platformSession, sourceValue string) (*platform.Organization, *platform.Project, *platform.Source, *platform.SourceType, *platform.SourceConfig, error) {
+	org, project, source, err := resolvePlatformSource(ctx, session, sourcesOrg, sourcesProject, sourceValue)
 	if err != nil {
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, err
 	}
 	types, err := session.Client.SourceTypes(ctx)
 	if err != nil {
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, err
 	}
 	sourceType := findSourceType(types, source.DatabaseType)
-	config, err := session.Client.SourceConfig(ctx, project.ID, source.ID)
+	config, err := session.Client.SourceConfig(ctx, org.ID, project.ID, source.ID)
 	if err != nil {
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, err
 	}
-	return project, source, sourceType, config, nil
+	return org, project, source, sourceType, config, nil
 }
 
 func findSourceType(types []platform.SourceType, value string) *platform.SourceType {

@@ -241,6 +241,7 @@ type RowsResult struct {
 
 // CreateSourceInput describes a hosted WhoDB source to create in one project.
 type CreateSourceInput struct {
+	OrgID        string
 	ProjectID    string
 	Name         string
 	DatabaseType string
@@ -254,9 +255,11 @@ type CreateSourceInput struct {
 
 // UpdateSourceInput describes source metadata/config fields to update.
 type UpdateSourceInput struct {
-	ID     string
-	Name   *string
-	Config *SourceConfig
+	OrgID     string
+	ProjectID string
+	ID        string
+	Name      *string
+	Config    *SourceConfig
 }
 
 type recordInput struct {
@@ -274,6 +277,7 @@ func (input SourceObjectRefInput) graphQLInput() map[string]any {
 
 func (input CreateSourceInput) graphQLInput() map[string]any {
 	return map[string]any{
+		"orgId":        input.OrgID,
 		"projectId":    input.ProjectID,
 		"name":         input.Name,
 		"databaseType": input.DatabaseType,
@@ -311,7 +315,9 @@ func (input CreateSourceInput) sourceLoginInput() map[string]any {
 
 func (input UpdateSourceInput) graphQLInput() map[string]any {
 	result := map[string]any{
-		"id": input.ID,
+		"orgId":     input.OrgID,
+		"projectId": input.ProjectID,
+		"id":        input.ID,
 	}
 	if input.Name != nil {
 		result["name"] = *input.Name

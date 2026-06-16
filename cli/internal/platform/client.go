@@ -246,14 +246,14 @@ func (c *Client) Projects(ctx context.Context, orgID string) ([]Project, error) 
 }
 
 // ProjectSources returns sources visible to the user in one project.
-func (c *Client) ProjectSources(ctx context.Context, projectID string) ([]Source, error) {
+func (c *Client) ProjectSources(ctx context.Context, orgID, projectID string) ([]Source, error) {
 	if err := c.RequireOperation("Query", "ProjectSources", "source listing"); err != nil {
 		return nil, err
 	}
 	var resp struct {
 		ProjectSources []Source `json:"ProjectSources"`
 	}
-	variables := map[string]any{"projectId": projectID}
+	variables := map[string]any{"orgId": orgID, "projectId": projectID}
 	err := c.graphQL(ctx, operationProjectSources, variables, &resp)
 	return resp.ProjectSources, err
 }
@@ -289,7 +289,7 @@ func (c *Client) CreateSource(ctx context.Context, input CreateSourceInput) (*So
 }
 
 // SourceConfig returns one hosted source's connection configuration.
-func (c *Client) SourceConfig(ctx context.Context, projectID, sourceID string) (*SourceConfig, error) {
+func (c *Client) SourceConfig(ctx context.Context, orgID, projectID, sourceID string) (*SourceConfig, error) {
 	if err := c.RequireOperation("Query", "SourceConfig", "source config reads"); err != nil {
 		return nil, err
 	}
@@ -304,7 +304,7 @@ func (c *Client) SourceConfig(ctx context.Context, projectID, sourceID string) (
 	var resp struct {
 		SourceConfig *sourceConfigResponse `json:"SourceConfig"`
 	}
-	variables := map[string]any{"projectId": projectID, "sourceId": sourceID}
+	variables := map[string]any{"orgId": orgID, "projectId": projectID, "sourceId": sourceID}
 	if err := c.graphQL(ctx, operationSourceConfig, variables, &resp); err != nil {
 		return nil, err
 	}
@@ -364,7 +364,7 @@ func (c *Client) TestSourceConnection(ctx context.Context, input CreateSourceInp
 }
 
 // DeleteSource deletes a hosted source from one project.
-func (c *Client) DeleteSource(ctx context.Context, projectID, sourceID string) error {
+func (c *Client) DeleteSource(ctx context.Context, orgID, projectID, sourceID string) error {
 	if err := c.RequireOperation("Mutation", "DeleteSource", "source deletion"); err != nil {
 		return err
 	}
@@ -373,7 +373,7 @@ func (c *Client) DeleteSource(ctx context.Context, projectID, sourceID string) e
 			Status bool `json:"Status"`
 		} `json:"DeleteSource"`
 	}
-	variables := map[string]any{"projectId": projectID, "id": sourceID}
+	variables := map[string]any{"orgId": orgID, "projectId": projectID, "id": sourceID}
 	if err := c.graphQL(ctx, operationDeleteSource, variables, &resp); err != nil {
 		return err
 	}
@@ -384,7 +384,7 @@ func (c *Client) DeleteSource(ctx context.Context, projectID, sourceID string) e
 }
 
 // SourceObjects returns browseable objects for one hosted source.
-func (c *Client) SourceObjects(ctx context.Context, projectID, sourceID string, parent *SourceObjectRefInput, kinds []SourceObjectKind, pageSize, pageOffset int) ([]SourceObject, error) {
+func (c *Client) SourceObjects(ctx context.Context, orgID, projectID, sourceID string, parent *SourceObjectRefInput, kinds []SourceObjectKind, pageSize, pageOffset int) ([]SourceObject, error) {
 	if err := c.RequireOperation("Query", "PlatformSourceObjects", "source object browsing"); err != nil {
 		return nil, err
 	}
@@ -396,6 +396,7 @@ func (c *Client) SourceObjects(ctx context.Context, projectID, sourceID string, 
 		parentVariable = parent.graphQLInput()
 	}
 	variables := map[string]any{
+		"orgId":      orgID,
 		"projectId":  projectID,
 		"sourceId":   sourceID,
 		"parent":     parentVariable,
@@ -408,7 +409,7 @@ func (c *Client) SourceObjects(ctx context.Context, projectID, sourceID string, 
 }
 
 // SourceColumns returns columns for one hosted source object.
-func (c *Client) SourceColumns(ctx context.Context, projectID, sourceID string, ref SourceObjectRefInput) ([]Column, error) {
+func (c *Client) SourceColumns(ctx context.Context, orgID, projectID, sourceID string, ref SourceObjectRefInput) ([]Column, error) {
 	if err := c.RequireOperation("Query", "PlatformSourceColumns", "source column inspection"); err != nil {
 		return nil, err
 	}
@@ -416,6 +417,7 @@ func (c *Client) SourceColumns(ctx context.Context, projectID, sourceID string, 
 		PlatformSourceColumns []Column `json:"PlatformSourceColumns"`
 	}
 	variables := map[string]any{
+		"orgId":     orgID,
 		"projectId": projectID,
 		"sourceId":  sourceID,
 		"ref":       ref.graphQLInput(),
@@ -425,7 +427,7 @@ func (c *Client) SourceColumns(ctx context.Context, projectID, sourceID string, 
 }
 
 // SourceRows returns rows for one hosted source object.
-func (c *Client) SourceRows(ctx context.Context, projectID, sourceID string, ref SourceObjectRefInput, pageSize, pageOffset int) (*RowsResult, error) {
+func (c *Client) SourceRows(ctx context.Context, orgID, projectID, sourceID string, ref SourceObjectRefInput, pageSize, pageOffset int) (*RowsResult, error) {
 	if err := c.RequireOperation("Query", "PlatformSourceRows", "source row previews"); err != nil {
 		return nil, err
 	}
@@ -433,6 +435,7 @@ func (c *Client) SourceRows(ctx context.Context, projectID, sourceID string, ref
 		PlatformSourceRows *RowsResult `json:"PlatformSourceRows"`
 	}
 	variables := map[string]any{
+		"orgId":      orgID,
 		"projectId":  projectID,
 		"sourceId":   sourceID,
 		"ref":        ref.graphQLInput(),

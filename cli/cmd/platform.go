@@ -659,11 +659,11 @@ var sourcesListCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		project, err := resolvePlatformProject(ctx, session, sourcesOrg, sourcesProject)
+		org, project, err := resolvePlatformProject(ctx, session, sourcesOrg, sourcesProject)
 		if err != nil {
 			return err
 		}
-		sources, err := session.Client.ProjectSources(ctx, project.ID)
+		sources, err := session.Client.ProjectSources(ctx, org.ID, project.ID)
 		if err != nil {
 			return err
 		}
@@ -708,11 +708,11 @@ var sourcesGetCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		project, err := resolvePlatformProject(ctx, session, sourcesOrg, sourcesProject)
+		org, project, err := resolvePlatformProject(ctx, session, sourcesOrg, sourcesProject)
 		if err != nil {
 			return err
 		}
-		sources, err := session.Client.ProjectSources(ctx, project.ID)
+		sources, err := session.Client.ProjectSources(ctx, org.ID, project.ID)
 		if err != nil {
 			return err
 		}
@@ -773,10 +773,11 @@ var sourcesCreateCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		project, err := resolvePlatformProject(ctx, session, sourcesOrg, sourcesProject)
+		org, project, err := resolvePlatformProject(ctx, session, sourcesOrg, sourcesProject)
 		if err != nil {
 			return err
 		}
+		input.OrgID = org.ID
 		input.ProjectID = project.ID
 		created, err := session.Client.CreateSource(ctx, input)
 		if err != nil {
@@ -808,11 +809,11 @@ var sourcesDeleteCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		project, err := resolvePlatformProject(ctx, session, sourcesOrg, sourcesProject)
+		org, project, err := resolvePlatformProject(ctx, session, sourcesOrg, sourcesProject)
 		if err != nil {
 			return err
 		}
-		sources, err := session.Client.ProjectSources(ctx, project.ID)
+		sources, err := session.Client.ProjectSources(ctx, org.ID, project.ID)
 		if err != nil {
 			return err
 		}
@@ -827,7 +828,7 @@ var sourcesDeleteCmd = &cobra.Command{
 		if !approved {
 			return fmt.Errorf("delete cancelled")
 		}
-		if err := session.Client.DeleteSource(ctx, project.ID, source.ID); err != nil {
+		if err := session.Client.DeleteSource(ctx, org.ID, project.ID, source.ID); err != nil {
 			return err
 		}
 		if format == output.FormatJSON {
@@ -865,11 +866,11 @@ var sourcesObjectsCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		project, source, err := resolvePlatformSource(ctx, session, sourcesOrg, sourcesProject, args[0])
+		org, project, source, err := resolvePlatformSource(ctx, session, sourcesOrg, sourcesProject, args[0])
 		if err != nil {
 			return err
 		}
-		objects, err := session.Client.SourceObjects(ctx, project.ID, source.ID, parent, kinds, sourceObjectLimit, sourceObjectOffset)
+		objects, err := session.Client.SourceObjects(ctx, org.ID, project.ID, source.ID, parent, kinds, sourceObjectLimit, sourceObjectOffset)
 		if err != nil {
 			return err
 		}
@@ -921,11 +922,11 @@ var sourcesColumnsCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		project, source, err := resolvePlatformSource(ctx, session, sourcesOrg, sourcesProject, args[0])
+		org, project, source, err := resolvePlatformSource(ctx, session, sourcesOrg, sourcesProject, args[0])
 		if err != nil {
 			return err
 		}
-		columns, err := session.Client.SourceColumns(ctx, project.ID, source.ID, ref)
+		columns, err := session.Client.SourceColumns(ctx, org.ID, project.ID, source.ID, ref)
 		if err != nil {
 			return err
 		}
@@ -984,11 +985,11 @@ var sourcesRowsCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		project, source, err := resolvePlatformSource(ctx, session, sourcesOrg, sourcesProject, args[0])
+		org, project, source, err := resolvePlatformSource(ctx, session, sourcesOrg, sourcesProject, args[0])
 		if err != nil {
 			return err
 		}
-		result, err := session.Client.SourceRows(ctx, project.ID, source.ID, ref, sourceRowsLimit, sourceRowsOffset)
+		result, err := session.Client.SourceRows(ctx, org.ID, project.ID, source.ID, ref, sourceRowsLimit, sourceRowsOffset)
 		if err != nil {
 			return err
 		}
@@ -1461,23 +1462,27 @@ func localLogoutHint(host string) string {
 	return fmt.Sprintf("If this host is no longer reachable, remove only the local CLI credentials with:\n  whodb-cli logout --host %s --local", host)
 }
 
-func resolvePlatformProject(ctx context.Context, session *platformSession, orgValue, projectValue string) (*platform.Project, error) {
+func resolvePlatformProject(ctx context.Context, session *platformSession, orgValue, projectValue string) (*platform.Organization, *platform.Project, error) {
 	org, err := resolveOrganization(ctx, session.Client, session.Host, orgValue)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	projects, err := session.Client.Projects(ctx, org.ID)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	needle := strings.TrimSpace(projectValue)
 	if needle == "" {
 		needle = session.Host.DefaultProjectID
 	}
 	if needle == "" {
-		return nil, fmt.Errorf("no project selected; run use --org <org> --project <project> or pass --project")
+		return nil, nil, fmt.Errorf("no project selected; run use --org <org> --project <project> or pass --project")
 	}
-	return resolveProject(projects, needle, org.Name)
+	project, err := resolveProject(projects, needle, org.Name)
+	if err != nil {
+		return nil, nil, err
+	}
+	return org, project, nil
 }
 
 func resolveSource(sources []platform.Source, value string) (*platform.Source, error) {
@@ -1493,20 +1498,20 @@ func resolveSource(sources []platform.Source, value string) (*platform.Source, e
 	return nil, fmt.Errorf("source %q not found", needle)
 }
 
-func resolvePlatformSource(ctx context.Context, session *platformSession, orgValue, projectValue, sourceValue string) (*platform.Project, *platform.Source, error) {
-	project, err := resolvePlatformProject(ctx, session, orgValue, projectValue)
+func resolvePlatformSource(ctx context.Context, session *platformSession, orgValue, projectValue, sourceValue string) (*platform.Organization, *platform.Project, *platform.Source, error) {
+	org, project, err := resolvePlatformProject(ctx, session, orgValue, projectValue)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
-	sources, err := session.Client.ProjectSources(ctx, project.ID)
+	sources, err := session.Client.ProjectSources(ctx, org.ID, project.ID)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	source, err := resolveSource(sources, sourceValue)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
-	return project, source, nil
+	return org, project, source, nil
 }
 
 func parseOptionalSourceObjectRef(value string) (*platform.SourceObjectRefInput, error) {
