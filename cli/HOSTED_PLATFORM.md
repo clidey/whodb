@@ -159,6 +159,7 @@ Available hosted MCP tools:
 - `whodb_platform_source_create`
 - `whodb_platform_source_update`
 - `whodb_platform_source_delete`
+- `whodb_platform_pending`
 - `whodb_platform_confirm`
 
 `whodb_platform_source_config` returns redacted configuration only. Secret-looking
@@ -166,7 +167,8 @@ values such as passwords, tokens, client secrets, and private keys are masked.
 
 Hosted create, update, and delete tools do not execute immediately. They return a
 confirmation token, and the write runs only after approval through
-`whodb_platform_confirm`.
+`whodb_platform_confirm`. Use `whodb_platform_pending` to recover active
+confirmation tokens.
 
 For hosted source creation, agents should call `whodb_platform_source_types` and
 `whodb_platform_source_fields` first instead of guessing source type ids or
@@ -175,6 +177,19 @@ connection field names.
 When `--platform` is set, the MCP server exposes only hosted platform tools.
 Local database MCP tools such as `whodb_query` and `whodb_connections` are not
 registered.
+
+Example hosted platform MCP config:
+
+```json
+{
+  "mcpServers": {
+    "whodb-platform": {
+      "command": "whodb-cli",
+      "args": ["mcp", "serve", "--platform"]
+    }
+  }
+}
+```
 
 Local smoke test with the MCP inspector:
 
@@ -192,9 +207,9 @@ In the inspector, call:
 4. `whodb_platform_source_fields`
 5. `whodb_platform_source_config`
 6. `whodb_platform_source_test`
-7. `whodb_platform_source_create`, then `whodb_platform_confirm`
-8. `whodb_platform_source_update`, then `whodb_platform_confirm`
-9. `whodb_platform_source_delete`, then `whodb_platform_confirm`
+7. `whodb_platform_source_create`, then `whodb_platform_pending`, then `whodb_platform_confirm`
+8. `whodb_platform_source_update`, then `whodb_platform_pending`, then `whodb_platform_confirm`
+9. `whodb_platform_source_delete`, then `whodb_platform_pending`, then `whodb_platform_confirm`
 
 ## Automation Output
 

@@ -206,6 +206,7 @@ func buildMCPTools() []MCPTool {
 		{Name: "whodb_platform_source_create", Description: "Prepare hosted source creation for whodb_platform_confirm when MCP starts with --platform.", ReadOnly: false},
 		{Name: "whodb_platform_source_update", Description: "Prepare hosted source updates for whodb_platform_confirm when MCP starts with --platform.", ReadOnly: false},
 		{Name: "whodb_platform_source_delete", Description: "Prepare hosted source deletion for whodb_platform_confirm when MCP starts with --platform.", ReadOnly: false},
+		{Name: "whodb_platform_pending", Description: "List pending hosted platform source confirmations when MCP starts with --platform.", ReadOnly: true},
 		{Name: "whodb_platform_confirm", Description: "Confirm pending hosted platform source writes when MCP starts with --platform.", ReadOnly: false},
 	}
 	return tools

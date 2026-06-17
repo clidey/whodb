@@ -18,9 +18,11 @@ package mcp
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/clidey/whodb/cli/internal/config"
 	platformapi "github.com/clidey/whodb/cli/internal/platform"
@@ -135,8 +137,8 @@ func testPlatformSession(client platformClient) *platformToolSession {
 
 func TestPlatformToolDefinitions(t *testing.T) {
 	tools := platformToolDefinitions()
-	if len(tools) != 13 {
-		t.Fatalf("len(platformToolDefinitions()) = %d, want 13", len(tools))
+	if len(tools) != 14 {
+		t.Fatalf("len(platformToolDefinitions()) = %d, want 14", len(tools))
 	}
 	for _, tool := range tools {
 		if tool.Annotations == nil {
@@ -295,6 +297,110 @@ func TestHandlePlatformSourceCreateRequiresConfirmation(t *testing.T) {
 	consumePendingPlatformAction(output.ConfirmationToken)
 }
 
+func TestHandlePlatformSourceUpdateRequiresConfirmationPreview(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := HandlePlatformSourceUpdate(context.Background(), nil, PlatformSourceUpdateInput{
+		Source:   "Warehouse",
+		Name:     "Warehouse Updated",
+		Database: "analytics",
+		Password: "new-secret",
+		Advanced: map[string]string{"api_token": "new-token"},
+	})
+	if err != nil {
+		t.Fatalf("HandlePlatformSourceUpdate() error = %v", err)
+	}
+	if output.Error != "" {
+		t.Fatalf("HandlePlatformSourceUpdate() output error = %q", output.Error)
+	}
+	if !output.ConfirmationRequired || output.ConfirmationToken == "" {
+		t.Fatalf("confirmation output = %#v, want token", output)
+	}
+	preview := output.ConfirmationPreview
+	if preview == nil {
+		t.Fatal("confirmation preview is nil")
+	}
+	if preview.Operation != "update_source" || preview.SourceID != "src-1" || preview.SourceName != "Warehouse" || preview.SourceType != "Postgres" {
+		t.Fatalf("confirmation preview = %#v, want update metadata", preview)
+	}
+	if !containsAll(strings.Join(preview.Changes, ","), "Database", "Password", "api_token", "name") {
+		t.Fatalf("preview changes = %#v, want changed field names", preview.Changes)
+	}
+	previewJSON, err := json.Marshal(preview)
+	if err != nil {
+		t.Fatalf("json.Marshal(preview) error = %v", err)
+	}
+	if containsAll(string(previewJSON), "analytics") || containsAll(string(previewJSON), "new-secret") || containsAll(string(previewJSON), "new-token") {
+		t.Fatalf("preview JSON leaked update values: %s", previewJSON)
+	}
+	consumePendingPlatformAction(output.ConfirmationToken)
+}
+
+func TestHandlePlatformSourceDeleteRequiresConfirmationPreview(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := HandlePlatformSourceDelete(context.Background(), nil, PlatformSourceDeleteInput{Source: "Warehouse"})
+	if err != nil {
+		t.Fatalf("HandlePlatformSourceDelete() error = %v", err)
+	}
+	if output.Error != "" {
+		t.Fatalf("HandlePlatformSourceDelete() output error = %q", output.Error)
+	}
+	if !output.ConfirmationRequired || output.ConfirmationToken == "" {
+		t.Fatalf("confirmation output = %#v, want token", output)
+	}
+	preview := output.ConfirmationPreview
+	if preview == nil {
+		t.Fatal("confirmation preview is nil")
+	}
+	if preview.Operation != "delete_source" || preview.SourceID != "src-1" || preview.SourceName != "Warehouse" || preview.SourceType != "Postgres" {
+		t.Fatalf("confirmation preview = %#v, want delete metadata", preview)
+	}
+	if len(preview.Changes) != 1 || preview.Changes[0] != "delete source" {
+		t.Fatalf("preview changes = %#v, want delete source", preview.Changes)
+	}
+	consumePendingPlatformAction(output.ConfirmationToken)
+}
+
+func TestHandlePlatformPendingListsPendingActions(t *testing.T) {
+	clearPendingPlatformActions(t)
+	token, expiresAt := storePendingPlatformAction(&PendingPlatformAction{
+		Operation:   "delete_source",
+		Host:        "https://app.whodb.com",
+		OrgID:       "org-1",
+		ProjectID:   "proj-1",
+		ProjectName: "Customer",
+		SourceID:    "src-1",
+		SourceName:  "Warehouse",
+		SourceType:  "Postgres",
+		Changes:     []string{"delete source"},
+	})
+
+	_, output, err := HandlePlatformPending(context.Background(), nil, PlatformPendingInput{})
+	if err != nil {
+		t.Fatalf("HandlePlatformPending() error = %v", err)
+	}
+	if output.Error != "" {
+		t.Fatalf("HandlePlatformPending() output error = %q", output.Error)
+	}
+	if len(output.Pending) != 1 {
+		t.Fatalf("pending = %#v, want one action", output.Pending)
+	}
+	pending := output.Pending[0]
+	if pending.Token != token || pending.ExpiresAt != expiresAt.UTC().Format(time.RFC3339) {
+		t.Fatalf("pending = %#v, want token/expiry", pending)
+	}
+	if pending.Action.Operation != "delete_source" || pending.Action.SourceName != "Warehouse" {
+		t.Fatalf("pending action = %#v, want preview metadata", pending.Action)
+	}
+}
+
 func TestHandleConfirmExecutesPlatformDelete(t *testing.T) {
 	client := &fakePlatformClient{}
 	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
@@ -323,6 +429,18 @@ func TestHandleConfirmExecutesPlatformDelete(t *testing.T) {
 	if output.Message == "" || len(output.Rows) != 1 {
 		t.Fatalf("output = %#v, want confirmation rows", output)
 	}
+}
+
+func clearPendingPlatformActions(t *testing.T) {
+	t.Helper()
+	platformPendingMutex.Lock()
+	pendingPlatformActions = map[string]*PendingPlatformAction{}
+	platformPendingMutex.Unlock()
+	t.Cleanup(func() {
+		platformPendingMutex.Lock()
+		pendingPlatformActions = map[string]*PendingPlatformAction{}
+		platformPendingMutex.Unlock()
+	})
 }
 
 func containsAll(value string, parts ...string) bool {

@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -282,6 +283,32 @@ type PlatformSourceWriteOutput struct {
 	RequestID            string                 `json:"request_id,omitempty"`
 }
 
+// PlatformPendingInput is the input for the whodb_platform_pending tool.
+type PlatformPendingInput struct{}
+
+// PlatformPendingInfo represents a pending hosted platform confirmation.
+type PlatformPendingInfo struct {
+	Token     string                `json:"token"`
+	Action    PlatformActionPreview `json:"action"`
+	ExpiresAt string                `json:"expires_at"`
+}
+
+// PlatformPendingOutput lists pending hosted platform confirmations.
+type PlatformPendingOutput struct {
+	Pending   []PlatformPendingInfo `json:"pending"`
+	Error     string                `json:"error,omitempty"`
+	RequestID string                `json:"request_id,omitempty"`
+}
+
+// MarshalJSON ensures nil slices are serialized as [] instead of null.
+func (o PlatformPendingOutput) MarshalJSON() ([]byte, error) {
+	if o.Pending == nil {
+		o.Pending = []PlatformPendingInfo{}
+	}
+	type Alias PlatformPendingOutput
+	return json.Marshal(Alias(o))
+}
+
 // PlatformActionPreview describes a pending hosted source write without secrets.
 type PlatformActionPreview struct {
 	Operation   string   `json:"operation"`
@@ -351,6 +378,8 @@ func registerPlatformTools(server *mcp.Server, secOpts *SecurityOptions) {
 			mcp.AddTool(server, tool, createPlatformSourceUpdateHandler())
 		case "whodb_platform_source_delete":
 			mcp.AddTool(server, tool, createPlatformSourceDeleteHandler())
+		case "whodb_platform_pending":
+			mcp.AddTool(server, tool, createPlatformPendingHandler())
 		case "whodb_platform_confirm":
 			mcp.AddTool(server, tool, createPlatformConfirmHandler())
 		}
@@ -418,6 +447,11 @@ func platformToolDefinitions() []*mcp.Tool {
 			Name:        "whodb_platform_source_delete",
 			Description: descPlatformSourceDelete,
 			Annotations: platformDestructiveAnnotations("Delete Hosted Source"),
+		},
+		{
+			Name:        "whodb_platform_pending",
+			Description: descPlatformPending,
+			Annotations: platformReadOnlyAnnotations("List Pending Hosted Platform Writes"),
 		},
 		{
 			Name:        "whodb_platform_confirm",
@@ -515,6 +549,12 @@ func createPlatformSourceUpdateHandler() func(context.Context, *mcp.CallToolRequ
 func createPlatformSourceDeleteHandler() func(context.Context, *mcp.CallToolRequest, PlatformSourceDeleteInput) (*mcp.CallToolResult, PlatformSourceWriteOutput, error) {
 	return func(ctx context.Context, req *mcp.CallToolRequest, input PlatformSourceDeleteInput) (*mcp.CallToolResult, PlatformSourceWriteOutput, error) {
 		return HandlePlatformSourceDelete(ctx, req, input)
+	}
+}
+
+func createPlatformPendingHandler() func(context.Context, *mcp.CallToolRequest, PlatformPendingInput) (*mcp.CallToolResult, PlatformPendingOutput, error) {
+	return func(ctx context.Context, req *mcp.CallToolRequest, input PlatformPendingInput) (*mcp.CallToolResult, PlatformPendingOutput, error) {
+		return HandlePlatformPending(ctx, req, input)
 	}
 }
 
@@ -1224,6 +1264,28 @@ func consumePendingPlatformAction(token string) {
 	delete(pendingPlatformActions, token)
 }
 
+func listPendingPlatformActions() []*PendingPlatformAction {
+	now := time.Now()
+	platformPendingMutex.Lock()
+	defer platformPendingMutex.Unlock()
+
+	actions := make([]*PendingPlatformAction, 0, len(pendingPlatformActions))
+	for token, action := range pendingPlatformActions {
+		if action.ExpiresAt.Before(now) {
+			delete(pendingPlatformActions, token)
+			continue
+		}
+		actions = append(actions, action)
+	}
+	sort.Slice(actions, func(i, j int) bool {
+		if actions[i].ExpiresAt.Equal(actions[j].ExpiresAt) {
+			return actions[i].Token < actions[j].Token
+		}
+		return actions[i].ExpiresAt.Before(actions[j].ExpiresAt)
+	})
+	return actions
+}
+
 func (action *PendingPlatformAction) Preview() *PlatformActionPreview {
 	if action == nil {
 		return nil
@@ -1276,6 +1338,29 @@ func platformSourceConfirmationOutput(requestID, token string, expiresAt time.Ti
 		Warning:              "This hosted WhoDB source operation requires approval before it runs. Call whodb_platform_confirm with the confirmation_token to continue.",
 		RequestID:            requestID,
 	}
+}
+
+// HandlePlatformPending lists pending hosted platform confirmations.
+func HandlePlatformPending(ctx context.Context, req *mcp.CallToolRequest, input PlatformPendingInput) (*mcp.CallToolResult, PlatformPendingOutput, error) {
+	requestID := generateRequestID("platform_pending")
+	startTime := time.Now()
+
+	actions := listPendingPlatformActions()
+	pending := make([]PlatformPendingInfo, 0, len(actions))
+	for _, action := range actions {
+		preview := action.Preview()
+		if preview == nil {
+			continue
+		}
+		pending = append(pending, PlatformPendingInfo{
+			Token:     action.Token,
+			Action:    *preview,
+			ExpiresAt: action.ExpiresAt.UTC().Format(time.RFC3339),
+		})
+	}
+
+	TrackToolCall(ctx, "platform_pending", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"pending_count": len(pending)})
+	return nil, PlatformPendingOutput{Pending: pending, RequestID: requestID}, nil
 }
 
 // HandlePlatformConfirm confirms and executes a pending hosted platform write.
@@ -1465,6 +1550,10 @@ This changes nothing until the returned confirmation token is approved with whod
 const descPlatformSourceDelete = `Prepare deletion of a hosted WhoDB source.
 
 This deletes nothing until the returned confirmation token is approved with whodb_platform_confirm. Use whodb_platform_sources first to verify the target source.`
+
+const descPlatformPending = `List pending hosted WhoDB platform source writes awaiting confirmation.
+
+Use this to recover confirmation tokens returned by whodb_platform_source_create, whodb_platform_source_update, or whodb_platform_source_delete. Preview output contains metadata and changed field names only; it never includes source credential values.`
 
 const descPlatformConfirm = `Confirm and execute a pending hosted WhoDB platform source write.
 

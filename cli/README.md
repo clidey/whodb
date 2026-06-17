@@ -741,14 +741,29 @@ only hosted platform tools are exposed; local database tools are not registered.
 | `whodb_platform_source_create` | Prepare hosted source creation for `whodb_platform_confirm` |
 | `whodb_platform_source_update` | Prepare hosted source updates for `whodb_platform_confirm` |
 | `whodb_platform_source_delete` | Prepare hosted source deletion for `whodb_platform_confirm` |
+| `whodb_platform_pending` | List pending hosted platform source confirmations |
 | `whodb_platform_confirm` | Confirm pending hosted platform source writes |
 
 Hosted source create, update, and delete tools return confirmation tokens and do
-not execute until approved with `whodb_platform_confirm`.
+not execute until approved with `whodb_platform_confirm`. Use
+`whodb_platform_pending` to recover active confirmation tokens.
 
 For source creation, agents should call `whodb_platform_source_types` and
 `whodb_platform_source_fields` first so they use backend-published source type
 ids and field names.
+
+Example hosted platform MCP config:
+
+```json
+{
+  "mcpServers": {
+    "whodb-platform": {
+      "command": "whodb-cli",
+      "args": ["mcp", "serve", "--platform"]
+    }
+  }
+}
+```
 
 It also exposes these resources:
 

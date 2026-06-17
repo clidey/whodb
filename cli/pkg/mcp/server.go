@@ -1415,6 +1415,7 @@ Available tools:
 - whodb_platform_source_create: Prepare hosted source creation for confirmation
 - whodb_platform_source_update: Prepare hosted source updates for confirmation
 - whodb_platform_source_delete: Prepare hosted source deletion for confirmation
+- whodb_platform_pending: List pending hosted platform confirmations
 - whodb_platform_confirm: Confirm pending hosted platform source writes
 
 Setup:
@@ -1424,4 +1425,5 @@ Setup:
 
 Hosted source create, update, and delete operations return a confirmation token.
 They do not execute until whodb_platform_confirm is called with that token.
+Use whodb_platform_pending to recover active confirmation tokens.
 `
