@@ -336,6 +336,24 @@ func sseAwareTimeout(dt time.Duration) func(http.Handler) http.Handler {
 	}
 }
 
+// sseAwareCompress applies gzip compression to all responses except SSE streaming endpoints.
+// SSE payloads are tiny text fragments where compression saves nothing meaningful, and
+// buffering inside the compressor can prevent heartbeat bytes from reaching the wire —
+// causing load balancers to close idle connections.
+func sseAwareCompress(level int) func(http.Handler) http.Handler {
+	compressMiddleware := middleware.Compress(level)
+	return func(next http.Handler) http.Handler {
+		compressedHandler := compressMiddleware(next)
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if strings.HasSuffix(r.URL.Path, "/stream") {
+				next.ServeHTTP(w, r)
+				return
+			}
+			compressedHandler.ServeHTTP(w, r)
+		})
+	}
+}
+
 // healthCheckMiddleware responds to GET /health without requiring authentication.
 // Used by E2E setup scripts to verify the server is ready to handle requests.
 func healthCheckMiddleware(next http.Handler) http.Handler {
@@ -373,7 +391,7 @@ func setupMiddlewares(router *chi.Mux, additionalMiddlewares []func(http.Handler
 		middleware.ClientIPFromRemoteAddr,
 		middleware.RedirectSlashes,
 		middleware.Recoverer,
-		middleware.Compress(5),
+		sseAwareCompress(5),
 		sseAwareTimeout(90 * time.Second),
 		cors.Handler(cors.Options{
 			AllowedOrigins:   allowedOrigins,
