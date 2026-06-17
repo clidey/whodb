@@ -113,7 +113,7 @@
     "oxlint": "1.66.0",
     "oxlint-tsgolint": "0.23.0",
     "typescript": "5.8.3",
-    "vite": "8.0.14",
+    "vite": "8.0.16",
     "vite-plugin-istanbul": "8.0.0"
   },
   "packageManager": "pnpm@10.29.3+sha512.498e1fb4cca5aa06c1dcf2611e6fafc50972ffe7189998c409e90de74566444298ffe43e6cd2acdc775ba1aa7cc5e092a8b7054c811ba8c5770f84693d33d2dc"
