@@ -18,7 +18,11 @@ package cmd
 
 import (
 	"bytes"
+	"context"
+	"encoding/json"
 	"io"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -161,6 +165,68 @@ func TestPlatformStatusForReportsUnsupportedMissingCapability(t *testing.T) {
 	}
 	if len(status.Capabilities) == 0 {
 		t.Fatal("capabilities empty, want required operation report")
+	}
+}
+
+func TestResolvePlatformSourceUsesSavedOrgForProjectSources(t *testing.T) {
+	var projectSourcesVariables map[string]any
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var request struct {
+			Query     string         `json:"query"`
+			Variables map[string]any `json:"variables"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case strings.Contains(request.Query, "MyOrganizations"):
+			_, _ = w.Write([]byte(`{"data":{"MyOrganizations":[{"id":"org-1","name":"Clidey","slug":"clidey"}]}}`))
+		case strings.Contains(request.Query, "Projects"):
+			if request.Variables["orgId"] != "org-1" {
+				t.Fatalf("Projects orgId variable = %#v, want org-1", request.Variables["orgId"])
+			}
+			_, _ = w.Write([]byte(`{"data":{"Projects":[{"id":"proj-1","orgId":"org-1","name":"Customer","slug":"customer","description":""}]}}`))
+		case strings.Contains(request.Query, "ProjectSources"):
+			projectSourcesVariables = request.Variables
+			_, _ = w.Write([]byte(`{"data":{"ProjectSources":[{"id":"src-1","projectId":"proj-1","name":"Warehouse","databaseType":"Postgres","createdBy":"Ada","createdAt":"2026-06-17T00:00:00Z"}]}}`))
+		default:
+			t.Fatalf("unexpected query: %s", request.Query)
+		}
+	}))
+	defer server.Close()
+
+	client, err := platform.NewClient(server.URL, "token")
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
+	}
+	client.SetPlatformManifest(&platform.PlatformManifest{
+		Operations: []platform.PlatformManifestOperation{
+			{Name: "MyOrganizations", Kind: "Query"},
+			{Name: "Projects", Kind: "Query"},
+			{Name: "ProjectSources", Kind: "Query"},
+		},
+	})
+	session := &platformSession{
+		Host: config.PlatformHost{
+			URL:                server.URL,
+			DefaultOrgID:       "org-1",
+			DefaultOrgName:     "Clidey",
+			DefaultProjectID:   "proj-1",
+			DefaultProjectName: "Customer",
+		},
+		Client: client,
+	}
+
+	org, project, source, err := resolvePlatformSource(context.Background(), session, "", "", "Warehouse")
+	if err != nil {
+		t.Fatalf("resolvePlatformSource() error = %v", err)
+	}
+	if org.ID != "org-1" || project.ID != "proj-1" || source.ID != "src-1" {
+		t.Fatalf("resolved org/project/source = %#v %#v %#v", org, project, source)
+	}
+	if projectSourcesVariables["orgId"] != "org-1" || projectSourcesVariables["projectId"] != "proj-1" {
+		t.Fatalf("ProjectSources variables = %#v, want saved org/project IDs", projectSourcesVariables)
 	}
 }
 
