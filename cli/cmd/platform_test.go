@@ -387,7 +387,7 @@ func TestMergeSourceConfigPreservesUnchangedFields(t *testing.T) {
 		},
 	}
 
-	merged := mergeSourceConfig(existing, map[string]string{
+	merged := platform.MergeSourceConfig(existing, map[string]string{
 		"Database": "analytics",
 		"SSL Mode": "require",
 	}, map[string]string{
@@ -423,12 +423,12 @@ func TestRedactSourceConfigRedactsSecretFields(t *testing.T) {
 		},
 	}
 
-	safe := redactSourceConfig(config, sourceType)
+	safe := platform.RedactSourceConfig(config, sourceType)
 
-	if safe.Password != redactedValue {
+	if safe.Password != platform.RedactedValue() {
 		t.Fatalf("password = %q, want redacted", safe.Password)
 	}
-	if safe.Advanced["Client Secret"] != redactedValue || safe.Advanced["api_token"] != redactedValue {
+	if safe.Advanced["Client Secret"] != platform.RedactedValue() || safe.Advanced["api_token"] != platform.RedactedValue() {
 		t.Fatalf("advanced = %#v, want secret fields redacted", safe.Advanced)
 	}
 	if safe.Advanced["Region"] != "us-east-1" {

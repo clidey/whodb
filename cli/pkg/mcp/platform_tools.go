@@ -34,6 +34,12 @@ type platformClient interface {
 	Me(context.Context) (*platformapi.User, error)
 	PlatformManifest(context.Context) (*platformapi.PlatformManifest, error)
 	ProjectSources(context.Context, string, string) ([]platformapi.Source, error)
+	SourceTypes(context.Context) ([]platformapi.SourceType, error)
+	SourceConfig(context.Context, string, string, string) (*platformapi.SourceConfig, error)
+	CreateSource(context.Context, platformapi.CreateSourceInput) (*platformapi.Source, error)
+	UpdateSource(context.Context, platformapi.UpdateSourceInput) (*platformapi.Source, error)
+	TestSourceConnection(context.Context, platformapi.CreateSourceInput) error
+	DeleteSource(context.Context, string, string, string) error
 	SourceObjects(context.Context, string, string, string, *platformapi.SourceObjectRefInput, []platformapi.SourceObjectKind, int, int) ([]platformapi.SourceObject, error)
 	SourceColumns(context.Context, string, string, string, platformapi.SourceObjectRefInput) ([]platformapi.Column, error)
 	SourceRows(context.Context, string, string, string, platformapi.SourceObjectRefInput, int, int) (*platformapi.RowsResult, error)
@@ -152,6 +158,82 @@ type PlatformSourceRowsOutput struct {
 	RequestID string               `json:"request_id,omitempty"`
 }
 
+// PlatformSourceConfigInput is the input for the whodb_platform_source_config tool.
+type PlatformSourceConfigInput struct {
+	Source string `json:"source" jsonschema:"Hosted source id or name"`
+}
+
+// PlatformSourceConfigOutput returns redacted hosted source connection config.
+type PlatformSourceConfigOutput struct {
+	Source    *platformapi.Source              `json:"source,omitempty"`
+	Config    platformapi.RedactedSourceConfig `json:"config"`
+	Error     string                           `json:"error,omitempty"`
+	RequestID string                           `json:"request_id,omitempty"`
+}
+
+// PlatformSourceTestInput is the input for the whodb_platform_source_test tool.
+type PlatformSourceTestInput struct {
+	Source     string            `json:"source,omitempty" jsonschema:"Saved hosted source id or name. If omitted, source_type and config fields test a draft source."`
+	SourceType string            `json:"source_type,omitempty" jsonschema:"Hosted source type id for draft connection tests"`
+	Hostname   string            `json:"hostname,omitempty"`
+	Port       string            `json:"port,omitempty"`
+	Username   string            `json:"username,omitempty"`
+	Password   string            `json:"password,omitempty"`
+	Database   string            `json:"database,omitempty"`
+	Advanced   map[string]string `json:"advanced,omitempty"`
+}
+
+// PlatformSourceTestOutput reports hosted source connection test status.
+type PlatformSourceTestOutput struct {
+	Status     string              `json:"status,omitempty"`
+	Source     *platformapi.Source `json:"source,omitempty"`
+	SourceType string              `json:"source_type,omitempty"`
+	Error      string              `json:"error,omitempty"`
+	RequestID  string              `json:"request_id,omitempty"`
+}
+
+// PlatformSourceCreateInput is the input for the whodb_platform_source_create tool.
+type PlatformSourceCreateInput struct {
+	SourceType string            `json:"source_type" jsonschema:"Hosted source type id"`
+	Name       string            `json:"name" jsonschema:"Source display name"`
+	Hostname   string            `json:"hostname,omitempty"`
+	Port       string            `json:"port,omitempty"`
+	Username   string            `json:"username,omitempty"`
+	Password   string            `json:"password,omitempty"`
+	Database   string            `json:"database,omitempty"`
+	Advanced   map[string]string `json:"advanced,omitempty"`
+}
+
+// PlatformSourceUpdateInput is the input for the whodb_platform_source_update tool.
+type PlatformSourceUpdateInput struct {
+	Source   string            `json:"source" jsonschema:"Hosted source id or name"`
+	Name     string            `json:"name,omitempty" jsonschema:"New source display name"`
+	Hostname string            `json:"hostname,omitempty"`
+	Port     string            `json:"port,omitempty"`
+	Username string            `json:"username,omitempty"`
+	Password string            `json:"password,omitempty"`
+	Database string            `json:"database,omitempty"`
+	Advanced map[string]string `json:"advanced,omitempty"`
+}
+
+// PlatformSourceDeleteInput is the input for the whodb_platform_source_delete tool.
+type PlatformSourceDeleteInput struct {
+	Source string `json:"source" jsonschema:"Hosted source id or name"`
+}
+
+// PlatformSourceWriteOutput reports a hosted platform write prepared for confirmation.
+type PlatformSourceWriteOutput struct {
+	ConfirmationRequired bool                `json:"confirmation_required,omitempty"`
+	ConfirmationToken    string              `json:"confirmation_token,omitempty"`
+	ConfirmationAction   string              `json:"confirmation_action,omitempty"`
+	ConfirmationExpiry   string              `json:"confirmation_expiry,omitempty"`
+	Warning              string              `json:"warning,omitempty"`
+	Source               *platformapi.Source `json:"source,omitempty"`
+	Status               string              `json:"status,omitempty"`
+	Error                string              `json:"error,omitempty"`
+	RequestID            string              `json:"request_id,omitempty"`
+}
+
 // MarshalJSON ensures nil slices are serialized as [] instead of null.
 func (o PlatformSourceRowsOutput) MarshalJSON() ([]byte, error) {
 	if o.Columns == nil {
@@ -177,6 +259,18 @@ func registerPlatformTools(server *mcp.Server, secOpts *SecurityOptions) {
 			mcp.AddTool(server, tool, createPlatformSourceColumnsHandler())
 		case "whodb_platform_source_rows":
 			mcp.AddTool(server, tool, createPlatformSourceRowsHandler(secOpts))
+		case "whodb_platform_source_config":
+			mcp.AddTool(server, tool, createPlatformSourceConfigHandler())
+		case "whodb_platform_source_test":
+			mcp.AddTool(server, tool, createPlatformSourceTestHandler())
+		case "whodb_platform_source_create":
+			mcp.AddTool(server, tool, createPlatformSourceCreateHandler())
+		case "whodb_platform_source_update":
+			mcp.AddTool(server, tool, createPlatformSourceUpdateHandler())
+		case "whodb_platform_source_delete":
+			mcp.AddTool(server, tool, createPlatformSourceDeleteHandler())
+		case "whodb_platform_confirm":
+			mcp.AddTool(server, tool, createPlatformConfirmHandler())
 		}
 	}
 }
@@ -208,6 +302,36 @@ func platformToolDefinitions() []*mcp.Tool {
 			Description: descPlatformSourceRows,
 			Annotations: platformReadOnlyAnnotations("Preview Hosted Source Rows"),
 		},
+		{
+			Name:        "whodb_platform_source_config",
+			Description: descPlatformSourceConfig,
+			Annotations: platformReadOnlyAnnotations("Inspect Hosted Source Config"),
+		},
+		{
+			Name:        "whodb_platform_source_test",
+			Description: descPlatformSourceTest,
+			Annotations: platformReadOnlyAnnotations("Test Hosted Source Connection"),
+		},
+		{
+			Name:        "whodb_platform_source_create",
+			Description: descPlatformSourceCreate,
+			Annotations: platformDestructiveAnnotations("Create Hosted Source"),
+		},
+		{
+			Name:        "whodb_platform_source_update",
+			Description: descPlatformSourceUpdate,
+			Annotations: platformDestructiveAnnotations("Update Hosted Source"),
+		},
+		{
+			Name:        "whodb_platform_source_delete",
+			Description: descPlatformSourceDelete,
+			Annotations: platformDestructiveAnnotations("Delete Hosted Source"),
+		},
+		{
+			Name:        "whodb_platform_confirm",
+			Description: descPlatformConfirm,
+			Annotations: platformDestructiveAnnotations("Confirm Hosted Platform Write"),
+		},
 	}
 }
 
@@ -217,6 +341,16 @@ func platformReadOnlyAnnotations(title string) *mcp.ToolAnnotations {
 		ReadOnlyHint:   true,
 		IdempotentHint: true,
 		OpenWorldHint:  boolPtr(true),
+	}
+}
+
+func platformDestructiveAnnotations(title string) *mcp.ToolAnnotations {
+	return &mcp.ToolAnnotations{
+		Title:           title,
+		ReadOnlyHint:    false,
+		DestructiveHint: boolPtr(true),
+		IdempotentHint:  false,
+		OpenWorldHint:   boolPtr(true),
 	}
 }
 
@@ -247,6 +381,42 @@ func createPlatformSourceColumnsHandler() func(context.Context, *mcp.CallToolReq
 func createPlatformSourceRowsHandler(secOpts *SecurityOptions) func(context.Context, *mcp.CallToolRequest, PlatformSourceRowsInput) (*mcp.CallToolResult, PlatformSourceRowsOutput, error) {
 	return func(ctx context.Context, req *mcp.CallToolRequest, input PlatformSourceRowsInput) (*mcp.CallToolResult, PlatformSourceRowsOutput, error) {
 		return HandlePlatformSourceRows(ctx, req, input, secOpts)
+	}
+}
+
+func createPlatformSourceConfigHandler() func(context.Context, *mcp.CallToolRequest, PlatformSourceConfigInput) (*mcp.CallToolResult, PlatformSourceConfigOutput, error) {
+	return func(ctx context.Context, req *mcp.CallToolRequest, input PlatformSourceConfigInput) (*mcp.CallToolResult, PlatformSourceConfigOutput, error) {
+		return HandlePlatformSourceConfig(ctx, req, input)
+	}
+}
+
+func createPlatformSourceTestHandler() func(context.Context, *mcp.CallToolRequest, PlatformSourceTestInput) (*mcp.CallToolResult, PlatformSourceTestOutput, error) {
+	return func(ctx context.Context, req *mcp.CallToolRequest, input PlatformSourceTestInput) (*mcp.CallToolResult, PlatformSourceTestOutput, error) {
+		return HandlePlatformSourceTest(ctx, req, input)
+	}
+}
+
+func createPlatformSourceCreateHandler() func(context.Context, *mcp.CallToolRequest, PlatformSourceCreateInput) (*mcp.CallToolResult, PlatformSourceWriteOutput, error) {
+	return func(ctx context.Context, req *mcp.CallToolRequest, input PlatformSourceCreateInput) (*mcp.CallToolResult, PlatformSourceWriteOutput, error) {
+		return HandlePlatformSourceCreate(ctx, req, input)
+	}
+}
+
+func createPlatformSourceUpdateHandler() func(context.Context, *mcp.CallToolRequest, PlatformSourceUpdateInput) (*mcp.CallToolResult, PlatformSourceWriteOutput, error) {
+	return func(ctx context.Context, req *mcp.CallToolRequest, input PlatformSourceUpdateInput) (*mcp.CallToolResult, PlatformSourceWriteOutput, error) {
+		return HandlePlatformSourceUpdate(ctx, req, input)
+	}
+}
+
+func createPlatformSourceDeleteHandler() func(context.Context, *mcp.CallToolRequest, PlatformSourceDeleteInput) (*mcp.CallToolResult, PlatformSourceWriteOutput, error) {
+	return func(ctx context.Context, req *mcp.CallToolRequest, input PlatformSourceDeleteInput) (*mcp.CallToolResult, PlatformSourceWriteOutput, error) {
+		return HandlePlatformSourceDelete(ctx, req, input)
+	}
+}
+
+func createPlatformConfirmHandler() func(context.Context, *mcp.CallToolRequest, ConfirmInput) (*mcp.CallToolResult, ConfirmOutput, error) {
+	return func(ctx context.Context, req *mcp.CallToolRequest, input ConfirmInput) (*mcp.CallToolResult, ConfirmOutput, error) {
+		return HandlePlatformConfirm(ctx, req, input)
 	}
 }
 
@@ -413,6 +583,197 @@ func HandlePlatformSourceRows(ctx context.Context, req *mcp.CallToolRequest, inp
 	return nil, output, nil
 }
 
+// HandlePlatformSourceConfig returns redacted config for one hosted source.
+func HandlePlatformSourceConfig(ctx context.Context, req *mcp.CallToolRequest, input PlatformSourceConfigInput) (*mcp.CallToolResult, PlatformSourceConfigOutput, error) {
+	requestID := generateRequestID("platform_source_config")
+	startTime := time.Now()
+
+	session, source, err := loadPlatformSource(ctx, input.Source)
+	if err != nil {
+		TrackToolCall(ctx, "platform_source_config", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_source"})
+		return nil, PlatformSourceConfigOutput{Error: err.Error(), RequestID: requestID}, nil
+	}
+	sourceType, err := loadPlatformSourceType(ctx, session, source.DatabaseType)
+	if err != nil {
+		TrackToolCall(ctx, "platform_source_config", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "source_type"})
+		return nil, PlatformSourceConfigOutput{Error: err.Error(), RequestID: requestID}, nil
+	}
+	config, err := session.Client.SourceConfig(ctx, session.Host.DefaultOrgID, session.Host.DefaultProjectID, source.ID)
+	if err != nil {
+		TrackToolCall(ctx, "platform_source_config", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_query"})
+		return nil, PlatformSourceConfigOutput{Error: err.Error(), RequestID: requestID}, nil
+	}
+
+	TrackToolCall(ctx, "platform_source_config", requestID, true, time.Since(startTime).Milliseconds(), nil)
+	return nil, PlatformSourceConfigOutput{
+		Source:    source,
+		Config:    platformapi.RedactSourceConfig(config, sourceType),
+		RequestID: requestID,
+	}, nil
+}
+
+// HandlePlatformSourceTest checks a saved or draft hosted source connection.
+func HandlePlatformSourceTest(ctx context.Context, req *mcp.CallToolRequest, input PlatformSourceTestInput) (*mcp.CallToolResult, PlatformSourceTestOutput, error) {
+	requestID := generateRequestID("platform_source_test")
+	startTime := time.Now()
+
+	if strings.TrimSpace(input.Source) != "" {
+		session, source, err := loadPlatformSource(ctx, input.Source)
+		if err != nil {
+			TrackToolCall(ctx, "platform_source_test", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_source"})
+			return nil, PlatformSourceTestOutput{Error: err.Error(), RequestID: requestID}, nil
+		}
+		if _, err := session.Client.SourceObjects(ctx, session.Host.DefaultOrgID, session.Host.DefaultProjectID, source.ID, nil, nil, 1, 0); err != nil {
+			TrackToolCall(ctx, "platform_source_test", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_query"})
+			return nil, PlatformSourceTestOutput{Error: fmt.Sprintf("saved source connection failed: %v", err), RequestID: requestID}, nil
+		}
+		TrackToolCall(ctx, "platform_source_test", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"mode": "saved"})
+		return nil, PlatformSourceTestOutput{Status: "ok", Source: source, RequestID: requestID}, nil
+	}
+
+	session, err := loadPlatformWorkspace(ctx)
+	if err != nil {
+		TrackToolCall(ctx, "platform_source_test", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_session"})
+		return nil, PlatformSourceTestOutput{Error: err.Error(), RequestID: requestID}, nil
+	}
+	sourceType, err := loadPlatformSourceType(ctx, session, input.SourceType)
+	if err != nil {
+		TrackToolCall(ctx, "platform_source_test", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "source_type"})
+		return nil, PlatformSourceTestOutput{Error: err.Error(), RequestID: requestID}, nil
+	}
+	draft := platformSourceCreateInput(session, sourceType.ID, "connection-test", platformSourceConfigValues(input.Hostname, input.Port, input.Username, input.Password, input.Database), input.Advanced)
+	applyPlatformSourceDefaults(sourceType, &draft)
+	if err := validatePlatformSourceRequiredFields(sourceType, draft); err != nil {
+		TrackToolCall(ctx, "platform_source_test", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "validation"})
+		return nil, PlatformSourceTestOutput{Error: err.Error(), RequestID: requestID}, nil
+	}
+	if err := session.Client.TestSourceConnection(ctx, draft); err != nil {
+		TrackToolCall(ctx, "platform_source_test", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_query"})
+		return nil, PlatformSourceTestOutput{Error: fmt.Sprintf("draft source configuration failed: %v", err), RequestID: requestID}, nil
+	}
+	TrackToolCall(ctx, "platform_source_test", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"mode": "draft"})
+	return nil, PlatformSourceTestOutput{Status: "ok", SourceType: sourceType.ID, RequestID: requestID}, nil
+}
+
+// HandlePlatformSourceCreate prepares a hosted source creation for confirmation.
+func HandlePlatformSourceCreate(ctx context.Context, req *mcp.CallToolRequest, input PlatformSourceCreateInput) (*mcp.CallToolResult, PlatformSourceWriteOutput, error) {
+	requestID := generateRequestID("platform_source_create")
+	startTime := time.Now()
+
+	session, err := loadPlatformWorkspace(ctx)
+	if err != nil {
+		TrackToolCall(ctx, "platform_source_create", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_session"})
+		return nil, PlatformSourceWriteOutput{Error: err.Error(), RequestID: requestID}, nil
+	}
+	sourceType, err := loadPlatformSourceType(ctx, session, input.SourceType)
+	if err != nil {
+		TrackToolCall(ctx, "platform_source_create", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "source_type"})
+		return nil, PlatformSourceWriteOutput{Error: err.Error(), RequestID: requestID}, nil
+	}
+	createInput := platformSourceCreateInput(session, sourceType.ID, input.Name, platformSourceConfigValues(input.Hostname, input.Port, input.Username, input.Password, input.Database), input.Advanced)
+	applyPlatformSourceDefaults(sourceType, &createInput)
+	if strings.TrimSpace(createInput.Name) == "" {
+		return nil, PlatformSourceWriteOutput{Error: "name is required", RequestID: requestID}, nil
+	}
+	if err := validatePlatformSourceRequiredFields(sourceType, createInput); err != nil {
+		TrackToolCall(ctx, "platform_source_create", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "validation"})
+		return nil, PlatformSourceWriteOutput{Error: err.Error(), RequestID: requestID}, nil
+	}
+
+	actionLabel := fmt.Sprintf("create hosted source %q (%s) in %s", createInput.Name, sourceType.ID, session.Host.DefaultProjectName)
+	token, expiresAt := storePendingPlatformAction(actionLabel, &PendingPlatformAction{
+		Operation:   "create_source",
+		Host:        session.Host.URL,
+		OrgID:       session.Host.DefaultOrgID,
+		ProjectID:   session.Host.DefaultProjectID,
+		ProjectName: session.Host.DefaultProjectName,
+		SourceName:  createInput.Name,
+		CreateInput: createInput,
+	})
+	TrackToolCall(ctx, "platform_source_create", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"confirmation_required": true})
+	return nil, platformSourceConfirmationOutput(requestID, token, expiresAt, actionLabel), nil
+}
+
+// HandlePlatformSourceUpdate prepares a hosted source update for confirmation.
+func HandlePlatformSourceUpdate(ctx context.Context, req *mcp.CallToolRequest, input PlatformSourceUpdateInput) (*mcp.CallToolResult, PlatformSourceWriteOutput, error) {
+	requestID := generateRequestID("platform_source_update")
+	startTime := time.Now()
+
+	session, source, err := loadPlatformSource(ctx, input.Source)
+	if err != nil {
+		TrackToolCall(ctx, "platform_source_update", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_source"})
+		return nil, PlatformSourceWriteOutput{Error: err.Error(), RequestID: requestID}, nil
+	}
+
+	updateInput := platformapi.UpdateSourceInput{OrgID: session.Host.DefaultOrgID, ProjectID: session.Host.DefaultProjectID, ID: source.ID}
+	if strings.TrimSpace(input.Name) != "" {
+		name := strings.TrimSpace(input.Name)
+		updateInput.Name = &name
+	}
+	values := platformSourceConfigValues(input.Hostname, input.Port, input.Username, input.Password, input.Database)
+	if len(values) > 0 || len(input.Advanced) > 0 {
+		sourceType, err := loadPlatformSourceType(ctx, session, source.DatabaseType)
+		if err != nil {
+			TrackToolCall(ctx, "platform_source_update", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "source_type"})
+			return nil, PlatformSourceWriteOutput{Error: err.Error(), RequestID: requestID}, nil
+		}
+		existing, err := session.Client.SourceConfig(ctx, session.Host.DefaultOrgID, session.Host.DefaultProjectID, source.ID)
+		if err != nil {
+			TrackToolCall(ctx, "platform_source_update", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_query"})
+			return nil, PlatformSourceWriteOutput{Error: err.Error(), RequestID: requestID}, nil
+		}
+		advancedValues, remainingAdvanced := splitPlatformSourceAdvanced(sourceType, input.Advanced)
+		configValues := canonicalPlatformSourceValues(sourceType, values)
+		for key, value := range advancedValues {
+			configValues[key] = value
+		}
+		config := platformapi.MergeSourceConfig(existing, configValues, remainingAdvanced)
+		updateInput.Config = &config
+	}
+	if updateInput.Name == nil && updateInput.Config == nil {
+		return nil, PlatformSourceWriteOutput{Error: "nothing to update; pass name or a connection config field", RequestID: requestID}, nil
+	}
+
+	actionLabel := fmt.Sprintf("update hosted source %q in %s", source.Name, session.Host.DefaultProjectName)
+	token, expiresAt := storePendingPlatformAction(actionLabel, &PendingPlatformAction{
+		Operation:   "update_source",
+		Host:        session.Host.URL,
+		OrgID:       session.Host.DefaultOrgID,
+		ProjectID:   session.Host.DefaultProjectID,
+		ProjectName: session.Host.DefaultProjectName,
+		SourceID:    source.ID,
+		SourceName:  source.Name,
+		UpdateInput: updateInput,
+	})
+	TrackToolCall(ctx, "platform_source_update", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"confirmation_required": true})
+	return nil, platformSourceConfirmationOutput(requestID, token, expiresAt, actionLabel), nil
+}
+
+// HandlePlatformSourceDelete prepares a hosted source deletion for confirmation.
+func HandlePlatformSourceDelete(ctx context.Context, req *mcp.CallToolRequest, input PlatformSourceDeleteInput) (*mcp.CallToolResult, PlatformSourceWriteOutput, error) {
+	requestID := generateRequestID("platform_source_delete")
+	startTime := time.Now()
+
+	session, source, err := loadPlatformSource(ctx, input.Source)
+	if err != nil {
+		TrackToolCall(ctx, "platform_source_delete", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_source"})
+		return nil, PlatformSourceWriteOutput{Error: err.Error(), RequestID: requestID}, nil
+	}
+
+	actionLabel := fmt.Sprintf("delete hosted source %q from %s", source.Name, session.Host.DefaultProjectName)
+	token, expiresAt := storePendingPlatformAction(actionLabel, &PendingPlatformAction{
+		Operation:   "delete_source",
+		Host:        session.Host.URL,
+		OrgID:       session.Host.DefaultOrgID,
+		ProjectID:   session.Host.DefaultProjectID,
+		ProjectName: session.Host.DefaultProjectName,
+		SourceID:    source.ID,
+		SourceName:  source.Name,
+	})
+	TrackToolCall(ctx, "platform_source_delete", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"confirmation_required": true})
+	return nil, platformSourceConfirmationOutput(requestID, token, expiresAt, actionLabel), nil
+}
+
 func loadHostedPlatformToolSession(ctx context.Context) (*platformToolSession, error) {
 	cfg, err := config.LoadConfig()
 	if err != nil {
@@ -483,6 +844,282 @@ func loadPlatformSource(ctx context.Context, value string) (*platformToolSession
 		return nil, nil, err
 	}
 	return session, source, nil
+}
+
+func loadPlatformSourceType(ctx context.Context, session *platformToolSession, value string) (*platformapi.SourceType, error) {
+	needle := strings.TrimSpace(value)
+	if needle == "" {
+		return nil, fmt.Errorf("source_type is required")
+	}
+	types, err := session.Client.SourceTypes(ctx)
+	if err != nil {
+		return nil, err
+	}
+	for i := range types {
+		sourceType := &types[i]
+		if matchesPlatformSourceIdentifier(needle, sourceType.ID, sourceType.Connector, sourceType.Label) {
+			return sourceType, nil
+		}
+	}
+	return nil, fmt.Errorf("source type %q not found", needle)
+}
+
+func matchesPlatformSourceIdentifier(needle string, values ...string) bool {
+	needle = strings.TrimSpace(needle)
+	for _, value := range values {
+		if strings.EqualFold(needle, strings.TrimSpace(value)) {
+			return true
+		}
+	}
+	return false
+}
+
+func platformSourceCreateInput(session *platformToolSession, sourceType, name string, values map[string]string, advanced map[string]string) platformapi.CreateSourceInput {
+	input := platformapi.CreateSourceInput{
+		OrgID:        session.Host.DefaultOrgID,
+		ProjectID:    session.Host.DefaultProjectID,
+		Name:         strings.TrimSpace(name),
+		DatabaseType: sourceType,
+		Advanced:     map[string]string{},
+	}
+	for key, value := range advanced {
+		input.Advanced[key] = value
+	}
+	for key, value := range values {
+		assignPlatformSourceCreateField(&input, key, value)
+	}
+	return input
+}
+
+func applyPlatformSourceDefaults(sourceType *platformapi.SourceType, input *platformapi.CreateSourceInput) {
+	if sourceType == nil || input == nil {
+		return
+	}
+	for _, field := range sourceType.ConnectionFields {
+		if field.DefaultValue == nil || *field.DefaultValue == "" {
+			continue
+		}
+		if platformSourceInputFieldValue(input, field.Key) == "" {
+			assignPlatformSourceCreateField(input, field.Key, *field.DefaultValue)
+		}
+	}
+}
+
+func platformSourceInputFieldValue(input *platformapi.CreateSourceInput, key string) string {
+	switch strings.ToLower(strings.TrimSpace(key)) {
+	case "hostname":
+		return input.Hostname
+	case "port":
+		return input.Port
+	case "username":
+		return input.Username
+	case "password":
+		return input.Password
+	case "database":
+		return input.Database
+	default:
+		return input.Advanced[key]
+	}
+}
+
+func assignPlatformSourceCreateField(input *platformapi.CreateSourceInput, key, value string) {
+	switch strings.ToLower(strings.TrimSpace(key)) {
+	case "hostname":
+		input.Hostname = value
+	case "port":
+		input.Port = value
+	case "username":
+		input.Username = value
+	case "password":
+		input.Password = value
+	case "database":
+		input.Database = value
+	default:
+		if input.Advanced == nil {
+			input.Advanced = map[string]string{}
+		}
+		input.Advanced[key] = value
+	}
+}
+
+func platformSourceConfigValues(hostname, port, username, password, database string) map[string]string {
+	values := map[string]string{}
+	for key, value := range map[string]string{
+		"Hostname": hostname,
+		"Port":     port,
+		"Username": username,
+		"Password": password,
+		"Database": database,
+	} {
+		if strings.TrimSpace(value) != "" {
+			values[key] = value
+		}
+	}
+	return values
+}
+
+func canonicalPlatformSourceValues(sourceType *platformapi.SourceType, values map[string]string) map[string]string {
+	if sourceType == nil {
+		return values
+	}
+	known := sourceTypeFieldKeys(sourceType)
+	result := map[string]string{}
+	for key, value := range values {
+		if canonical, ok := known[strings.ToLower(strings.TrimSpace(key))]; ok {
+			result[canonical] = value
+			continue
+		}
+		result[key] = value
+	}
+	return result
+}
+
+func splitPlatformSourceAdvanced(sourceType *platformapi.SourceType, advanced map[string]string) (map[string]string, map[string]string) {
+	values := map[string]string{}
+	remaining := map[string]string{}
+	if sourceType == nil {
+		return values, advanced
+	}
+	known := sourceTypeFieldKeys(sourceType)
+	for key, value := range advanced {
+		if canonical, ok := known[strings.ToLower(strings.TrimSpace(key))]; ok {
+			values[canonical] = value
+			continue
+		}
+		remaining[key] = value
+	}
+	return values, remaining
+}
+
+func sourceTypeFieldKeys(sourceType *platformapi.SourceType) map[string]string {
+	keys := make(map[string]string, len(sourceType.ConnectionFields))
+	for _, field := range sourceType.ConnectionFields {
+		keys[strings.ToLower(strings.TrimSpace(field.Key))] = field.Key
+	}
+	return keys
+}
+
+func validatePlatformSourceRequiredFields(sourceType *platformapi.SourceType, input platformapi.CreateSourceInput) error {
+	values := map[string]string{}
+	for key, value := range input.Advanced {
+		values[strings.ToLower(strings.TrimSpace(key))] = value
+	}
+	for key, value := range map[string]string{
+		"hostname": input.Hostname,
+		"port":     input.Port,
+		"username": input.Username,
+		"password": input.Password,
+		"database": input.Database,
+	} {
+		values[key] = value
+	}
+	for _, field := range sourceType.ConnectionFields {
+		if !field.Required {
+			continue
+		}
+		value := strings.TrimSpace(values[strings.ToLower(strings.TrimSpace(field.Key))])
+		if value == "" && field.DefaultValue != nil {
+			value = strings.TrimSpace(*field.DefaultValue)
+		}
+		if value == "" {
+			return fmt.Errorf("source field %s is required", field.Key)
+		}
+	}
+	return nil
+}
+
+func platformSourceConfirmationOutput(requestID, token string, expiresAt time.Time, action string) PlatformSourceWriteOutput {
+	return PlatformSourceWriteOutput{
+		ConfirmationRequired: true,
+		ConfirmationToken:    token,
+		ConfirmationAction:   action,
+		ConfirmationExpiry:   expiresAt.UTC().Format(time.RFC3339),
+		Warning:              "This hosted WhoDB source operation requires approval before it runs. Call whodb_platform_confirm with the confirmation_token to continue.",
+		RequestID:            requestID,
+	}
+}
+
+// HandlePlatformConfirm confirms and executes a pending hosted platform write.
+func HandlePlatformConfirm(ctx context.Context, req *mcp.CallToolRequest, input ConfirmInput) (*mcp.CallToolResult, ConfirmOutput, error) {
+	requestID := generateRequestID("platform_confirm")
+	startTime := time.Now()
+
+	if err := ValidateConfirmInput(&input); err != nil {
+		TrackToolCall(ctx, "platform_confirm", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "validation"})
+		return nil, ConfirmOutput{Error: err.Error(), RequestID: requestID}, nil
+	}
+	pending, err := getPendingConfirmation(input.Token)
+	if err != nil {
+		TrackToolCall(ctx, "platform_confirm", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "token_invalid"})
+		return nil, ConfirmOutput{Error: err.Error(), RequestID: requestID}, nil
+	}
+	if pending.PlatformAction == nil {
+		TrackToolCall(ctx, "platform_confirm", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "token_type"})
+		return nil, ConfirmOutput{Error: "confirmation token is not for a hosted platform action", RequestID: requestID}, nil
+	}
+	output, err := executePendingPlatformAction(ctx, pending.PlatformAction, requestID)
+	if err != nil {
+		TrackToolCall(ctx, "platform_confirm", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_action"})
+		return nil, ConfirmOutput{Error: err.Error(), RequestID: requestID}, nil
+	}
+	consumePendingConfirmation(input.Token)
+	TrackToolCall(ctx, "platform_confirm", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"action": pending.Action})
+	return nil, output, nil
+}
+
+func executePendingPlatformAction(ctx context.Context, action *PendingPlatformAction, requestID string) (ConfirmOutput, error) {
+	session, err := loadPlatformWorkspace(ctx)
+	if err != nil {
+		return ConfirmOutput{}, err
+	}
+	if session.Host.URL != action.Host {
+		return ConfirmOutput{}, fmt.Errorf("hosted WhoDB login changed from %s to %s before confirmation", action.Host, session.Host.URL)
+	}
+	if session.Host.DefaultOrgID != action.OrgID || session.Host.DefaultProjectID != action.ProjectID {
+		return ConfirmOutput{}, fmt.Errorf("hosted WhoDB workspace changed before confirmation")
+	}
+
+	switch action.Operation {
+	case "create_source":
+		source, err := session.Client.CreateSource(ctx, action.CreateInput)
+		if err != nil {
+			return ConfirmOutput{}, err
+		}
+		return platformSourceConfirmOutput("create_source", source, requestID), nil
+	case "update_source":
+		source, err := session.Client.UpdateSource(ctx, action.UpdateInput)
+		if err != nil {
+			return ConfirmOutput{}, err
+		}
+		return platformSourceConfirmOutput("update_source", source, requestID), nil
+	case "delete_source":
+		if err := session.Client.DeleteSource(ctx, action.OrgID, action.ProjectID, action.SourceID); err != nil {
+			return ConfirmOutput{}, err
+		}
+		return ConfirmOutput{
+			Columns:   []string{"operation", "status", "source_id", "source_name", "project_id"},
+			Rows:      [][]any{{"delete_source", "ok", action.SourceID, action.SourceName, action.ProjectID}},
+			Message:   fmt.Sprintf("Deleted hosted source %s", action.SourceName),
+			RequestID: requestID,
+		}, nil
+	default:
+		return ConfirmOutput{}, fmt.Errorf("unknown platform action %q", action.Operation)
+	}
+}
+
+func platformSourceConfirmOutput(operation string, source *platformapi.Source, requestID string) ConfirmOutput {
+	return ConfirmOutput{
+		Columns: []string{"operation", "status", "source_id", "source_name", "project_id"},
+		Rows: [][]any{{
+			operation,
+			"ok",
+			source.ID,
+			source.Name,
+			source.ProjectID,
+		}},
+		Message:   fmt.Sprintf("Hosted source %s completed successfully", operation),
+		RequestID: requestID,
+	}
 }
 
 func hasPlatformWorkspace(session *platformToolSession) bool {
@@ -565,3 +1202,27 @@ Use a source name or id and an object ref such as table:public.users. This tool 
 const descPlatformSourceRows = `Preview rows for one hosted WhoDB source object.
 
 Use a source name or id and an object ref such as table:public.users. Results are capped by the requested limit and the MCP --max-rows setting when provided. This tool is read-only.`
+
+const descPlatformSourceConfig = `Return redacted connection configuration for one hosted WhoDB source.
+
+Secrets such as passwords, tokens, client secrets, and private keys are masked. Use this to understand source shape without exposing credentials.`
+
+const descPlatformSourceTest = `Test a hosted WhoDB source connection.
+
+Pass source to test an existing saved source. Omit source and pass source_type plus connection fields to test a draft config without saving it.`
+
+const descPlatformSourceCreate = `Prepare creation of a hosted WhoDB source in the selected project.
+
+This stores nothing until the returned confirmation token is approved with whodb_platform_confirm. Pass source_type, name, connection fields, and advanced options.`
+
+const descPlatformSourceUpdate = `Prepare update of a hosted WhoDB source.
+
+This changes nothing until the returned confirmation token is approved with whodb_platform_confirm. Omitted config fields preserve the existing hosted values.`
+
+const descPlatformSourceDelete = `Prepare deletion of a hosted WhoDB source.
+
+This deletes nothing until the returned confirmation token is approved with whodb_platform_confirm. Use whodb_platform_sources first to verify the target source.`
+
+const descPlatformConfirm = `Confirm and execute a pending hosted WhoDB platform source write.
+
+Use the confirmation_token returned by whodb_platform_source_create, whodb_platform_source_update, or whodb_platform_source_delete. Tokens expire after 5 minutes.`

@@ -18,6 +18,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -124,9 +125,10 @@ Available tools:
   whodb_confirm     - Confirm pending writes (only with --confirm-writes)
   whodb_pending     - List pending confirmation tokens
 
-Hosted platform tools are disabled by default. Start with --platform to add
-read-only whodb_platform_* tools backed by the current hosted login and selected
-workspace.
+Hosted platform mode is disabled by default. Start with --platform to expose only
+whodb_platform_* tools backed by the current hosted login and selected workspace.
+Local database tools such as whodb_query and whodb_connections are not registered
+in platform mode.
 
 TOOL SELECTION:
   --tools           - Comma-separated list of tools to enable (default: all)
@@ -197,7 +199,7 @@ Connection Resolution:
   # Restrict to specific connections (first becomes default)
   whodb-cli mcp serve --allowed-connections=prod,staging
 
-  # Add read-only hosted WhoDB platform tools
+  # Run hosted WhoDB platform MCP mode only
   whodb-cli mcp serve --platform
 
   # Set default connection without restricting access
@@ -219,6 +221,10 @@ Connection Resolution:
 		// Create context with signal handling
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
+
+		if mcpPlatform && (cmd.Flags().Changed("tools") || cmd.Flags().Changed("disable-tools")) {
+			return fmt.Errorf("--tools and --disable-tools apply only to local MCP mode; omit them when using --platform")
+		}
 
 		// Handle shutdown signals
 		sigChan := make(chan os.Signal, 1)
@@ -339,7 +345,7 @@ func init() {
 
 	// Platform flags
 	mcpServeCmd.Flags().BoolVar(&mcpPlatform, "platform", false,
-		"Enable read-only hosted WhoDB platform tools (requires whodb-cli login and use)")
+		"Run hosted platform MCP mode only (requires whodb-cli login and use)")
 
 	// Tool enablement flags
 	mcpServeCmd.Flags().StringSliceVar(&mcpEnabledTools, "tools", nil,

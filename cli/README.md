@@ -724,7 +724,8 @@ This starts an MCP server that exposes these tools:
 | `whodb_audit` | Run data quality audits for a schema or table |
 | `whodb_suggestions` | Get backend-generated starter queries |
 
-Start with `--platform` to add read-only hosted WhoDB platform tools:
+Start with `--platform` to run in hosted WhoDB platform mode. In this mode,
+only hosted platform tools are exposed; local database tools are not registered.
 
 | Tool | Description |
 |------|-------------|
@@ -733,6 +734,15 @@ Start with `--platform` to add read-only hosted WhoDB platform tools:
 | `whodb_platform_source_objects` | Browse hosted source objects |
 | `whodb_platform_source_columns` | Inspect hosted source object columns |
 | `whodb_platform_source_rows` | Preview hosted source object rows |
+| `whodb_platform_source_config` | Inspect redacted hosted source config |
+| `whodb_platform_source_test` | Test saved or draft hosted source connections |
+| `whodb_platform_source_create` | Prepare hosted source creation for `whodb_platform_confirm` |
+| `whodb_platform_source_update` | Prepare hosted source updates for `whodb_platform_confirm` |
+| `whodb_platform_source_delete` | Prepare hosted source deletion for `whodb_platform_confirm` |
+| `whodb_platform_confirm` | Confirm pending hosted platform source writes |
+
+Hosted source create, update, and delete tools return confirmation tokens and do
+not execute until approved with `whodb_platform_confirm`.
 
 It also exposes these resources:
 
@@ -794,7 +804,7 @@ HTTP mode exposes:
 - `--default-connection`: Default connection when not specified (does not restrict access)
 
 **Hosted Platform:**
-- `--platform`: Add read-only hosted WhoDB platform tools. Requires `whodb-cli login` and `whodb-cli use --org <org> --project <project>`.
+- `--platform`: Run hosted platform MCP mode only. Requires `whodb-cli login` and `whodb-cli use --org <org> --project <project>`.
 
 ```bash
 # Restrict AI to specific connections only

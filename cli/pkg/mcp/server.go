@@ -77,8 +77,8 @@ type ServerOptions struct {
 	// When set, only these connections are visible and accessible.
 	// If DefaultConnection is not set, the first allowed connection becomes the default.
 	AllowedConnections []string
-	// PlatformEnabled registers hosted WhoDB platform tools.
-	// These tools are read-only and use the user's hosted login plus selected org/project.
+	// PlatformEnabled runs hosted WhoDB platform mode.
+	// When enabled, only hosted platform tools are registered.
 	PlatformEnabled bool
 }
 
@@ -124,7 +124,9 @@ func NewServer(opts *ServerOptions) *mcp.Server {
 			Level: mapWhoDBLogLevel(),
 		}))
 	}
-	if opts.Instructions == "" {
+	if opts.Instructions == "" && opts.PlatformEnabled {
+		opts.Instructions = platformInstructions
+	} else if opts.Instructions == "" {
 		opts.Instructions = defaultInstructions
 	}
 	if opts.SecurityLevel == "" {
@@ -167,11 +169,13 @@ func NewServer(opts *ServerOptions) *mcp.Server {
 		DisabledTools: opts.DisabledTools,
 	}
 
-	// Register tools with security options and enablement
-	registerTools(server, secOpts, toolEnablement)
 	if opts.PlatformEnabled {
 		registerPlatformTools(server, secOpts)
+		return server
 	}
+
+	// Register tools with security options and enablement
+	registerTools(server, secOpts, toolEnablement)
 
 	// Register prompts for AI assistant guidance
 	registerPrompts(server)
@@ -1391,4 +1395,31 @@ Best practices:
 - For writes, explain to the user what will happen before proposing the query
 - Use parameterized queries when incorporating user input: whodb_query(query="SELECT * FROM users WHERE id = $1", parameters=[42])
   Placeholders: PostgreSQL uses $1, $2; MySQL/SQLite/DuckDB/ClickHouse use ?
+`
+
+const platformInstructions = `WhoDB MCP Server - Hosted Platform Tools
+
+This server is running in hosted platform mode. It exposes only whodb_platform_* tools
+backed by the current hosted WhoDB login and selected organization/project.
+
+Available tools:
+- whodb_platform_status: Show hosted login and selected workspace
+- whodb_platform_sources: List hosted sources in the selected project
+- whodb_platform_source_objects: Browse hosted source objects
+- whodb_platform_source_columns: Inspect hosted source object columns
+- whodb_platform_source_rows: Preview hosted source object rows
+- whodb_platform_source_config: Inspect redacted hosted source config
+- whodb_platform_source_test: Test saved or draft hosted source connections
+- whodb_platform_source_create: Prepare hosted source creation for confirmation
+- whodb_platform_source_update: Prepare hosted source updates for confirmation
+- whodb_platform_source_delete: Prepare hosted source deletion for confirmation
+- whodb_platform_confirm: Confirm pending hosted platform source writes
+
+Setup:
+1. Run whodb-cli login
+2. Run whodb-cli use --org <org> --project <project>
+3. Start this server with whodb-cli mcp serve --platform
+
+Hosted source create, update, and delete operations return a confirmation token.
+They do not execute until whodb_platform_confirm is called with that token.
 `

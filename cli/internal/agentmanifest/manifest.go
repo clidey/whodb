@@ -199,6 +199,12 @@ func buildMCPTools() []MCPTool {
 		{Name: "whodb_platform_source_objects", Description: "Browse hosted source objects when MCP starts with --platform.", ReadOnly: true},
 		{Name: "whodb_platform_source_columns", Description: "Inspect hosted source object columns when MCP starts with --platform.", ReadOnly: true},
 		{Name: "whodb_platform_source_rows", Description: "Preview hosted source object rows when MCP starts with --platform.", ReadOnly: true},
+		{Name: "whodb_platform_source_config", Description: "Inspect redacted hosted source config when MCP starts with --platform.", ReadOnly: true},
+		{Name: "whodb_platform_source_test", Description: "Test saved or draft hosted source connections when MCP starts with --platform.", ReadOnly: true},
+		{Name: "whodb_platform_source_create", Description: "Prepare hosted source creation for whodb_platform_confirm when MCP starts with --platform.", ReadOnly: false},
+		{Name: "whodb_platform_source_update", Description: "Prepare hosted source updates for whodb_platform_confirm when MCP starts with --platform.", ReadOnly: false},
+		{Name: "whodb_platform_source_delete", Description: "Prepare hosted source deletion for whodb_platform_confirm when MCP starts with --platform.", ReadOnly: false},
+		{Name: "whodb_platform_confirm", Description: "Confirm pending hosted platform source writes when MCP starts with --platform.", ReadOnly: false},
 	}
 	return tools
 }

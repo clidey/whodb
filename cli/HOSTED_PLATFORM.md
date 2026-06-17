@@ -132,7 +132,7 @@ whodb-cli sources delete local-postgres --yes
 
 ## MCP Platform Tools
 
-Hosted platform MCP tools are opt-in and read-only:
+Hosted platform MCP mode is opt-in:
 
 ```bash
 whodb-cli mcp serve --platform
@@ -152,9 +152,23 @@ Available hosted MCP tools:
 - `whodb_platform_source_objects`
 - `whodb_platform_source_columns`
 - `whodb_platform_source_rows`
+- `whodb_platform_source_config`
+- `whodb_platform_source_test`
+- `whodb_platform_source_create`
+- `whodb_platform_source_update`
+- `whodb_platform_source_delete`
+- `whodb_platform_confirm`
 
-These tools do not expose source configuration or secrets, and they do not add
-hosted create, update, or delete operations.
+`whodb_platform_source_config` returns redacted configuration only. Secret-looking
+values such as passwords, tokens, client secrets, and private keys are masked.
+
+Hosted create, update, and delete tools do not execute immediately. They return a
+confirmation token, and the write runs only after approval through
+`whodb_platform_confirm`.
+
+When `--platform` is set, the MCP server exposes only hosted platform tools.
+Local database MCP tools such as `whodb_query` and `whodb_connections` are not
+registered.
 
 ## Automation Output
 

@@ -27,17 +27,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const redactedValue = "********"
-
-type sourceConfigOutput struct {
-	Hostname string            `json:"hostname"`
-	Port     string            `json:"port"`
-	Username string            `json:"username"`
-	Password string            `json:"password"`
-	Database string            `json:"database"`
-	Advanced map[string]string `json:"advanced"`
-}
-
 type sourceTestOutput struct {
 	Status     string           `json:"status"`
 	Source     *platform.Source `json:"source,omitempty"`
@@ -64,7 +53,7 @@ var sourcesConfigCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		safe := redactSourceConfig(config, sourceType)
+		safe := platform.RedactSourceConfig(config, sourceType)
 		if format == output.FormatJSON {
 			return writeCommandJSON(cmd, safe)
 		}
@@ -123,7 +112,7 @@ var sourcesUpdateCmd = &cobra.Command{
 			if err != nil {
 				return err
 			}
-			config := mergeSourceConfig(existing, values, advanced)
+			config := platform.MergeSourceConfig(existing, values, advanced)
 			input.Config = &config
 		}
 
@@ -302,96 +291,7 @@ func sourceConfigFlagsChanged(cmd *cobra.Command) bool {
 	return false
 }
 
-func mergeSourceConfig(existing *platform.SourceConfig, values map[string]string, advanced map[string]string) platform.SourceConfig {
-	merged := platform.SourceConfig{}
-	if existing != nil {
-		merged = *existing
-		merged.Advanced = map[string]string{}
-		for key, value := range existing.Advanced {
-			merged.Advanced[key] = value
-		}
-	}
-	if merged.Advanced == nil {
-		merged.Advanced = map[string]string{}
-	}
-	for key, value := range values {
-		assignSourceConfigField(&merged, key, value)
-	}
-	for key, value := range advanced {
-		merged.Advanced[key] = value
-	}
-	return merged
-}
-
-func assignSourceConfigField(config *platform.SourceConfig, key, value string) {
-	switch strings.ToLower(strings.TrimSpace(key)) {
-	case "hostname":
-		config.Hostname = value
-	case "port":
-		config.Port = value
-	case "username":
-		config.Username = value
-	case "password":
-		config.Password = value
-	case "database":
-		config.Database = value
-	default:
-		if config.Advanced == nil {
-			config.Advanced = map[string]string{}
-		}
-		config.Advanced[key] = value
-	}
-}
-
-func redactSourceConfig(config *platform.SourceConfig, sourceType *platform.SourceType) sourceConfigOutput {
-	if config == nil {
-		return sourceConfigOutput{Advanced: map[string]string{}}
-	}
-	safe := sourceConfigOutput{
-		Hostname: config.Hostname,
-		Port:     config.Port,
-		Username: config.Username,
-		Password: redactValue("Password", config.Password, sourceType),
-		Database: config.Database,
-		Advanced: map[string]string{},
-	}
-	for key, value := range config.Advanced {
-		safe.Advanced[key] = redactValue(key, value, sourceType)
-	}
-	return safe
-}
-
-func redactValue(key, value string, sourceType *platform.SourceType) string {
-	if value == "" {
-		return ""
-	}
-	if sourceConfigFieldSecret(key, sourceType) {
-		return redactedValue
-	}
-	return value
-}
-
-func sourceConfigFieldSecret(key string, sourceType *platform.SourceType) bool {
-	if strings.EqualFold(key, "Password") {
-		return true
-	}
-	if sourceType != nil {
-		for _, field := range sourceType.ConnectionFields {
-			if strings.EqualFold(field.Key, key) {
-				return sourceFieldSecret(field)
-			}
-		}
-	}
-	normalized := strings.ToLower(strings.ReplaceAll(strings.TrimSpace(key), "_", " "))
-	for _, part := range []string{"password", "secret", "token", "private key"} {
-		if strings.Contains(normalized, part) {
-			return true
-		}
-	}
-	return false
-}
-
-func sourceConfigRows(source *platform.Source, project *platform.Project, config sourceConfigOutput) [][]any {
+func sourceConfigRows(source *platform.Source, project *platform.Project, config platform.RedactedSourceConfig) [][]any {
 	rows := [][]any{
 		{"source_id", source.ID},
 		{"source_name", source.Name},

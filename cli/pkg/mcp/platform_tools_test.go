@@ -30,6 +30,9 @@ type fakePlatformClient struct {
 	sourcesRowsProjectID string
 	rowsLimit            int
 	rowsOffset           int
+	createdSourceName    string
+	updatedSourceName    string
+	deletedSourceID      string
 }
 
 func (f *fakePlatformClient) Me(context.Context) (*platformapi.User, error) {
@@ -45,6 +48,49 @@ func (f *fakePlatformClient) ProjectSources(ctx context.Context, orgID, projectI
 	return []platformapi.Source{
 		{ID: "src-1", ProjectID: projectID, Name: "Warehouse", DatabaseType: "Postgres"},
 	}, nil
+}
+
+func (f *fakePlatformClient) SourceTypes(context.Context) ([]platformapi.SourceType, error) {
+	return []platformapi.SourceType{{
+		ID:        "Postgres",
+		Label:     "Postgres",
+		Connector: "Postgres",
+		ConnectionFields: []platformapi.SourceConnectionField{
+			{Key: "Hostname", Kind: "Text", Required: true},
+			{Key: "Password", Kind: "Password", Required: true},
+			{Key: "SSL Mode", Kind: "Text"},
+		},
+	}}, nil
+}
+
+func (f *fakePlatformClient) SourceConfig(ctx context.Context, orgID, projectID, sourceID string) (*platformapi.SourceConfig, error) {
+	return &platformapi.SourceConfig{
+		Hostname: "localhost",
+		Password: "secret",
+		Database: "postgres",
+		Advanced: map[string]string{"SSL Mode": "require", "api_token": "token"},
+	}, nil
+}
+
+func (f *fakePlatformClient) CreateSource(ctx context.Context, input platformapi.CreateSourceInput) (*platformapi.Source, error) {
+	f.createdSourceName = input.Name
+	return &platformapi.Source{ID: "src-created", ProjectID: input.ProjectID, Name: input.Name, DatabaseType: input.DatabaseType}, nil
+}
+
+func (f *fakePlatformClient) UpdateSource(ctx context.Context, input platformapi.UpdateSourceInput) (*platformapi.Source, error) {
+	if input.Name != nil {
+		f.updatedSourceName = *input.Name
+	}
+	return &platformapi.Source{ID: input.ID, ProjectID: input.ProjectID, Name: f.updatedSourceName, DatabaseType: "Postgres"}, nil
+}
+
+func (f *fakePlatformClient) TestSourceConnection(ctx context.Context, input platformapi.CreateSourceInput) error {
+	return nil
+}
+
+func (f *fakePlatformClient) DeleteSource(ctx context.Context, orgID, projectID, sourceID string) error {
+	f.deletedSourceID = sourceID
+	return nil
 }
 
 func (f *fakePlatformClient) SourceObjects(ctx context.Context, orgID, projectID, sourceID string, parent *platformapi.SourceObjectRefInput, kinds []platformapi.SourceObjectKind, pageSize, pageOffset int) ([]platformapi.SourceObject, error) {
@@ -89,12 +135,12 @@ func testPlatformSession(client platformClient) *platformToolSession {
 
 func TestPlatformToolDefinitions(t *testing.T) {
 	tools := platformToolDefinitions()
-	if len(tools) != 5 {
-		t.Fatalf("len(platformToolDefinitions()) = %d, want 5", len(tools))
+	if len(tools) != 11 {
+		t.Fatalf("len(platformToolDefinitions()) = %d, want 11", len(tools))
 	}
 	for _, tool := range tools {
-		if tool.Annotations == nil || !tool.Annotations.ReadOnlyHint {
-			t.Fatalf("tool %s is not marked read-only", tool.Name)
+		if tool.Annotations == nil {
+			t.Fatalf("tool %s has no annotations", tool.Name)
 		}
 	}
 }
@@ -154,6 +200,89 @@ func TestHandlePlatformSourcesReportsActionableLoginError(t *testing.T) {
 	}
 	if output.Error == "" || !containsAll(output.Error, "whodb-cli login", "app.whodb.com") {
 		t.Fatalf("output error = %q, want login guidance", output.Error)
+	}
+}
+
+func TestHandlePlatformSourceConfigRedactsSecrets(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := HandlePlatformSourceConfig(context.Background(), nil, PlatformSourceConfigInput{Source: "Warehouse"})
+	if err != nil {
+		t.Fatalf("HandlePlatformSourceConfig() error = %v", err)
+	}
+	if output.Error != "" {
+		t.Fatalf("HandlePlatformSourceConfig() output error = %q", output.Error)
+	}
+	if output.Config.Password != platformapi.RedactedValue() || output.Config.Advanced["api_token"] != platformapi.RedactedValue() {
+		t.Fatalf("config = %#v, want redacted secrets", output.Config)
+	}
+	if output.Config.Advanced["SSL Mode"] != "require" {
+		t.Fatalf("SSL Mode = %q, want visible non-secret value", output.Config.Advanced["SSL Mode"])
+	}
+}
+
+func TestHandlePlatformSourceCreateRequiresConfirmation(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := HandlePlatformSourceCreate(context.Background(), nil, PlatformSourceCreateInput{
+		SourceType: "Postgres",
+		Name:       "New Warehouse",
+		Hostname:   "localhost",
+		Password:   "secret",
+	})
+	if err != nil {
+		t.Fatalf("HandlePlatformSourceCreate() error = %v", err)
+	}
+	if output.Error != "" {
+		t.Fatalf("HandlePlatformSourceCreate() output error = %q", output.Error)
+	}
+	if !output.ConfirmationRequired || output.ConfirmationToken == "" {
+		t.Fatalf("confirmation output = %#v, want token", output)
+	}
+
+	pending, err := getPendingConfirmation(output.ConfirmationToken)
+	if err != nil {
+		t.Fatalf("getPendingConfirmation() error = %v", err)
+	}
+	if pending.PlatformAction == nil || pending.PlatformAction.CreateInput.Name != "New Warehouse" {
+		t.Fatalf("pending action = %#v, want create action", pending.PlatformAction)
+	}
+	consumePendingConfirmation(output.ConfirmationToken)
+}
+
+func TestHandleConfirmExecutesPlatformDelete(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+	token, _ := storePendingPlatformAction("delete hosted source Warehouse", &PendingPlatformAction{
+		Operation:   "delete_source",
+		Host:        "https://app.whodb.com",
+		OrgID:       "org-1",
+		ProjectID:   "proj-1",
+		ProjectName: "Customer",
+		SourceID:    "src-1",
+		SourceName:  "Warehouse",
+	})
+
+	_, output, err := HandlePlatformConfirm(context.Background(), nil, ConfirmInput{Token: token})
+	if err != nil {
+		t.Fatalf("HandlePlatformConfirm() error = %v", err)
+	}
+	if output.Error != "" {
+		t.Fatalf("HandlePlatformConfirm() output error = %q", output.Error)
+	}
+	if client.deletedSourceID != "src-1" {
+		t.Fatalf("deleted source = %q, want src-1", client.deletedSourceID)
+	}
+	if output.Message == "" || len(output.Rows) != 1 {
+		t.Fatalf("output = %#v, want confirmation rows", output)
 	}
 }
 

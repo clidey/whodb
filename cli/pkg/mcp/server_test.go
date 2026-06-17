@@ -226,6 +226,15 @@ func TestNewServer_WithPlatformEnabled(t *testing.T) {
 	}
 }
 
+func TestPlatformInstructionsExcludeLocalTools(t *testing.T) {
+	if !strings.Contains(platformInstructions, "whodb_platform_status") {
+		t.Fatal("platformInstructions should mention platform tools")
+	}
+	if strings.Contains(platformInstructions, "whodb_query") || strings.Contains(platformInstructions, "whodb_connections") {
+		t.Fatal("platformInstructions should not advertise local database tools")
+	}
+}
+
 func TestNewServer_WithDisabledTools(t *testing.T) {
 	server := NewServer(&ServerOptions{
 		DisabledTools: []string{"query", "confirm"},

@@ -183,11 +183,11 @@ func collectSourceFieldValues(fields []platform.SourceConnectionField, explicitV
 
 func promptSourceField(out io.Writer, field platform.SourceConnectionField) (string, error) {
 	label := field.Key
-	if field.DefaultValue != nil && *field.DefaultValue != "" && !sourceFieldSecret(field) {
+	if field.DefaultValue != nil && *field.DefaultValue != "" && !platform.SourceFieldSecret(field) {
 		label = fmt.Sprintf("%s [%s]", label, *field.DefaultValue)
 	}
 	fmt.Fprintf(out, "%s: ", label)
-	if sourceFieldSecret(field) {
+	if platform.SourceFieldSecret(field) {
 		value, err := term.ReadPassword(int(os.Stdin.Fd()))
 		fmt.Fprintln(out)
 		if err != nil {
@@ -267,5 +267,5 @@ func sourceFieldDefault(field platform.SourceConnectionField) string {
 }
 
 func sourceFieldSecret(field platform.SourceConnectionField) bool {
-	return strings.EqualFold(field.Kind, "Password")
+	return platform.SourceFieldSecret(field)
 }
