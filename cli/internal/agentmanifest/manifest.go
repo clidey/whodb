@@ -195,6 +195,8 @@ func buildMCPTools() []MCPTool {
 		{Name: "whodb_audit", Description: "Run data-quality audits.", ReadOnly: true},
 		{Name: "whodb_suggestions", Description: "Load backend query suggestions.", ReadOnly: true},
 		{Name: "whodb_platform_status", Description: "Show hosted WhoDB login and selected workspace when MCP starts with --platform.", ReadOnly: true},
+		{Name: "whodb_platform_orgs", Description: "List hosted WhoDB organizations when MCP starts with --platform.", ReadOnly: true},
+		{Name: "whodb_platform_projects", Description: "List hosted WhoDB projects when MCP starts with --platform.", ReadOnly: true},
 		{Name: "whodb_platform_sources", Description: "List hosted WhoDB sources when MCP starts with --platform.", ReadOnly: true},
 		{Name: "whodb_platform_source_types", Description: "List hosted source types when MCP starts with --platform.", ReadOnly: true},
 		{Name: "whodb_platform_source_fields", Description: "List hosted source type fields when MCP starts with --platform.", ReadOnly: true},

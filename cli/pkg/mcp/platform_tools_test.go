@@ -45,6 +45,20 @@ func (f *fakePlatformClient) PlatformManifest(context.Context) (*platformapi.Pla
 	return &platformapi.PlatformManifest{PlatformVersion: "1.2.3", ManifestProtocolVersion: "1"}, nil
 }
 
+func (f *fakePlatformClient) Organizations(context.Context) ([]platformapi.Organization, error) {
+	return []platformapi.Organization{
+		{ID: "org-1", Name: "Clidey", Slug: "clidey"},
+		{ID: "org-2", Name: "Acme", Slug: "acme"},
+	}, nil
+}
+
+func (f *fakePlatformClient) Projects(ctx context.Context, orgID string) ([]platformapi.Project, error) {
+	return []platformapi.Project{
+		{ID: "proj-1", OrgID: orgID, Name: "Customer", Slug: "customer", Description: "Customer data"},
+		{ID: "proj-2", OrgID: orgID, Name: "Internal", Slug: "internal"},
+	}, nil
+}
+
 func (f *fakePlatformClient) ProjectSources(ctx context.Context, orgID, projectID string) ([]platformapi.Source, error) {
 	f.sourcesRowsProjectID = projectID
 	return []platformapi.Source{
@@ -137,8 +151,8 @@ func testPlatformSession(client platformClient) *platformToolSession {
 
 func TestPlatformToolDefinitions(t *testing.T) {
 	tools := platformToolDefinitions()
-	if len(tools) != 14 {
-		t.Fatalf("len(platformToolDefinitions()) = %d, want 14", len(tools))
+	if len(tools) != 16 {
+		t.Fatalf("len(platformToolDefinitions()) = %d, want 16", len(tools))
 	}
 	for _, tool := range tools {
 		if tool.Annotations == nil {
@@ -162,6 +176,102 @@ func TestHandlePlatformSourcesUsesSelectedWorkspace(t *testing.T) {
 	}
 	if output.OrgID != "org-1" || output.ProjectID != "proj-1" || client.sourcesRowsProjectID != "proj-1" {
 		t.Fatalf("output/client scope = %#v project=%q, want selected workspace", output, client.sourcesRowsProjectID)
+	}
+}
+
+func TestHandlePlatformOrgsMarksSelectedOrg(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := HandlePlatformOrgs(context.Background(), nil, PlatformOrgsInput{})
+	if err != nil {
+		t.Fatalf("HandlePlatformOrgs() error = %v", err)
+	}
+	if output.Error != "" {
+		t.Fatalf("HandlePlatformOrgs() output error = %q", output.Error)
+	}
+	if len(output.Orgs) != 2 {
+		t.Fatalf("orgs = %#v, want two orgs", output.Orgs)
+	}
+	if !output.Orgs[0].Selected || output.Orgs[1].Selected {
+		t.Fatalf("org selection = %#v, want org-1 selected", output.Orgs)
+	}
+}
+
+func TestHandlePlatformProjectsUsesSelectedOrg(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := HandlePlatformProjects(context.Background(), nil, PlatformProjectsInput{})
+	if err != nil {
+		t.Fatalf("HandlePlatformProjects() error = %v", err)
+	}
+	if output.Error != "" {
+		t.Fatalf("HandlePlatformProjects() output error = %q", output.Error)
+	}
+	if output.OrgID != "org-1" || output.OrgName != "Clidey" {
+		t.Fatalf("project output org = %#v, want selected org", output)
+	}
+	if len(output.Projects) != 2 {
+		t.Fatalf("projects = %#v, want two projects", output.Projects)
+	}
+	if !output.Projects[0].Selected || output.Projects[1].Selected {
+		t.Fatalf("project selection = %#v, want proj-1 selected", output.Projects)
+	}
+}
+
+func TestHandlePlatformProjectsAcceptsOrgName(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := HandlePlatformProjects(context.Background(), nil, PlatformProjectsInput{Org: "Acme"})
+	if err != nil {
+		t.Fatalf("HandlePlatformProjects() error = %v", err)
+	}
+	if output.Error != "" {
+		t.Fatalf("HandlePlatformProjects() output error = %q", output.Error)
+	}
+	if output.OrgID != "org-2" || output.OrgName != "Acme" {
+		t.Fatalf("project output org = %#v, want Acme", output)
+	}
+}
+
+func TestAutoSelectPlatformToolWorkspaceSelectsOnlyOrgAndProject(t *testing.T) {
+	client := &singleWorkspacePlatformClient{}
+	host := config.PlatformHost{URL: "https://app.whodb.com"}
+
+	messages, changed, err := autoSelectPlatformToolWorkspace(context.Background(), client, &host)
+	if err != nil {
+		t.Fatalf("autoSelectPlatformToolWorkspace() error = %v", err)
+	}
+	if !changed || len(messages) != 2 {
+		t.Fatalf("changed/messages = %v/%#v, want two auto-selection messages", changed, messages)
+	}
+	if host.DefaultOrgID != "org-only" || host.DefaultOrgName != "Only Org" || host.DefaultProjectID != "project-only" || host.DefaultProjectName != "Only Project" {
+		t.Fatalf("host = %#v, want only workspace selected", host)
+	}
+}
+
+func TestHandlePlatformStatusReportsAutoSelection(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		session := testPlatformSession(client)
+		session.AutoSelected = []string{"Selected the only available organization: Clidey"}
+		return session, nil
+	})
+
+	_, output, err := HandlePlatformStatus(context.Background(), nil, PlatformStatusInput{})
+	if err != nil {
+		t.Fatalf("HandlePlatformStatus() error = %v", err)
+	}
+	if len(output.AutoSelected) != 1 || output.AutoSelected[0] != "Selected the only available organization: Clidey" {
+		t.Fatalf("AutoSelected = %#v, want auto-selection message", output.AutoSelected)
 	}
 }
 
@@ -441,6 +551,18 @@ func clearPendingPlatformActions(t *testing.T) {
 		pendingPlatformActions = map[string]*PendingPlatformAction{}
 		platformPendingMutex.Unlock()
 	})
+}
+
+type singleWorkspacePlatformClient struct {
+	fakePlatformClient
+}
+
+func (f *singleWorkspacePlatformClient) Organizations(context.Context) ([]platformapi.Organization, error) {
+	return []platformapi.Organization{{ID: "org-only", Name: "Only Org", Slug: "only-org"}}, nil
+}
+
+func (f *singleWorkspacePlatformClient) Projects(ctx context.Context, orgID string) ([]platformapi.Project, error) {
+	return []platformapi.Project{{ID: "project-only", OrgID: orgID, Name: "Only Project", Slug: "only-project"}}, nil
 }
 
 func containsAll(value string, parts ...string) bool {

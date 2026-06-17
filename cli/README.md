@@ -730,6 +730,8 @@ only hosted platform tools are exposed; local database tools are not registered.
 | Tool | Description |
 |------|-------------|
 | `whodb_platform_status` | Show hosted login and selected workspace |
+| `whodb_platform_orgs` | List hosted organizations visible to the signed-in user |
+| `whodb_platform_projects` | List hosted projects for an organization |
 | `whodb_platform_sources` | List hosted sources in the selected project |
 | `whodb_platform_source_types` | List hosted source types available for creation |
 | `whodb_platform_source_fields` | List connection fields for one hosted source type |
@@ -751,6 +753,12 @@ not execute until approved with `whodb_platform_confirm`. Use
 For source creation, agents should call `whodb_platform_source_types` and
 `whodb_platform_source_fields` first so they use backend-published source type
 ids and field names.
+
+If no workspace is selected yet, agents should call `whodb_platform_orgs` and
+`whodb_platform_projects`, then ask the user to run
+`whodb-cli use --org <org> --project <project>`.
+For single-workspace accounts, hosted `login` or `status` can select the only
+organization/project automatically and report what was selected.
 
 Example hosted platform MCP config:
 

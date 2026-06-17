@@ -40,6 +40,8 @@ var (
 type platformClient interface {
 	Me(context.Context) (*platformapi.User, error)
 	PlatformManifest(context.Context) (*platformapi.PlatformManifest, error)
+	Organizations(context.Context) ([]platformapi.Organization, error)
+	Projects(context.Context, string) ([]platformapi.Project, error)
 	ProjectSources(context.Context, string, string) ([]platformapi.Source, error)
 	SourceTypes(context.Context) ([]platformapi.SourceType, error)
 	SourceConfig(context.Context, string, string, string) (*platformapi.SourceConfig, error)
@@ -53,8 +55,9 @@ type platformClient interface {
 }
 
 type platformToolSession struct {
-	Host   config.PlatformHost
-	Client platformClient
+	Host         config.PlatformHost
+	Client       platformClient
+	AutoSelected []string
 }
 
 var loadPlatformToolSession = loadHostedPlatformToolSession
@@ -64,22 +67,86 @@ type PlatformStatusInput struct{}
 
 // PlatformStatusOutput reports hosted WhoDB login and selected workspace state.
 type PlatformStatusOutput struct {
-	Host                    string `json:"host,omitempty"`
-	UserID                  string `json:"user_id,omitempty"`
-	Email                   string `json:"email,omitempty"`
-	DefaultOrgID            string `json:"default_org_id,omitempty"`
-	DefaultOrgName          string `json:"default_org_name,omitempty"`
-	DefaultProjectID        string `json:"default_project_id,omitempty"`
-	DefaultProjectName      string `json:"default_project_name,omitempty"`
-	WorkspaceSelected       bool   `json:"workspace_selected"`
-	PlatformVersion         string `json:"platform_version,omitempty"`
-	ManifestProtocolVersion string `json:"manifest_protocol_version,omitempty"`
-	Error                   string `json:"error,omitempty"`
-	RequestID               string `json:"request_id,omitempty"`
+	Host                    string   `json:"host,omitempty"`
+	UserID                  string   `json:"user_id,omitempty"`
+	Email                   string   `json:"email,omitempty"`
+	DefaultOrgID            string   `json:"default_org_id,omitempty"`
+	DefaultOrgName          string   `json:"default_org_name,omitempty"`
+	DefaultProjectID        string   `json:"default_project_id,omitempty"`
+	DefaultProjectName      string   `json:"default_project_name,omitempty"`
+	WorkspaceSelected       bool     `json:"workspace_selected"`
+	PlatformVersion         string   `json:"platform_version,omitempty"`
+	ManifestProtocolVersion string   `json:"manifest_protocol_version,omitempty"`
+	AutoSelected            []string `json:"auto_selected,omitempty"`
+	Error                   string   `json:"error,omitempty"`
+	RequestID               string   `json:"request_id,omitempty"`
 }
 
 // PlatformSourcesInput is the input for the whodb_platform_sources tool.
 type PlatformSourcesInput struct{}
+
+// PlatformOrgsInput is the input for the whodb_platform_orgs tool.
+type PlatformOrgsInput struct{}
+
+// PlatformOrgInfo describes an organization visible to the hosted user.
+type PlatformOrgInfo struct {
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Slug     string `json:"slug"`
+	Selected bool   `json:"selected"`
+}
+
+// PlatformOrgsOutput lists organizations visible to the hosted user.
+type PlatformOrgsOutput struct {
+	Host      string            `json:"host,omitempty"`
+	Orgs      []PlatformOrgInfo `json:"orgs"`
+	Error     string            `json:"error,omitempty"`
+	RequestID string            `json:"request_id,omitempty"`
+}
+
+// MarshalJSON ensures nil slices are serialized as [] instead of null.
+func (o PlatformOrgsOutput) MarshalJSON() ([]byte, error) {
+	if o.Orgs == nil {
+		o.Orgs = []PlatformOrgInfo{}
+	}
+	type Alias PlatformOrgsOutput
+	return json.Marshal(Alias(o))
+}
+
+// PlatformProjectsInput is the input for the whodb_platform_projects tool.
+type PlatformProjectsInput struct {
+	Org string `json:"org,omitempty" jsonschema:"Organization id, slug, or name. Defaults to the selected organization when available."`
+}
+
+// PlatformProjectInfo describes a project visible to the hosted user.
+type PlatformProjectInfo struct {
+	ID          string `json:"id"`
+	OrgID       string `json:"org_id"`
+	OrgName     string `json:"org_name,omitempty"`
+	Name        string `json:"name"`
+	Slug        string `json:"slug"`
+	Description string `json:"description,omitempty"`
+	Selected    bool   `json:"selected"`
+}
+
+// PlatformProjectsOutput lists projects visible in one hosted organization.
+type PlatformProjectsOutput struct {
+	Host      string                `json:"host,omitempty"`
+	OrgID     string                `json:"org_id,omitempty"`
+	OrgName   string                `json:"org_name,omitempty"`
+	Projects  []PlatformProjectInfo `json:"projects"`
+	Error     string                `json:"error,omitempty"`
+	RequestID string                `json:"request_id,omitempty"`
+}
+
+// MarshalJSON ensures nil slices are serialized as [] instead of null.
+func (o PlatformProjectsOutput) MarshalJSON() ([]byte, error) {
+	if o.Projects == nil {
+		o.Projects = []PlatformProjectInfo{}
+	}
+	type Alias PlatformProjectsOutput
+	return json.Marshal(Alias(o))
+}
 
 // PlatformSourceTypesInput is the input for the whodb_platform_source_types tool.
 type PlatformSourceTypesInput struct{}
@@ -358,6 +425,10 @@ func registerPlatformTools(server *mcp.Server, secOpts *SecurityOptions) {
 			mcp.AddTool(server, tool, createPlatformStatusHandler())
 		case "whodb_platform_sources":
 			mcp.AddTool(server, tool, createPlatformSourcesHandler())
+		case "whodb_platform_orgs":
+			mcp.AddTool(server, tool, createPlatformOrgsHandler())
+		case "whodb_platform_projects":
+			mcp.AddTool(server, tool, createPlatformProjectsHandler())
 		case "whodb_platform_source_types":
 			mcp.AddTool(server, tool, createPlatformSourceTypesHandler())
 		case "whodb_platform_source_fields":
@@ -397,6 +468,16 @@ func platformToolDefinitions() []*mcp.Tool {
 			Name:        "whodb_platform_sources",
 			Description: descPlatformSources,
 			Annotations: platformReadOnlyAnnotations("List Hosted Sources"),
+		},
+		{
+			Name:        "whodb_platform_orgs",
+			Description: descPlatformOrgs,
+			Annotations: platformReadOnlyAnnotations("List Hosted Organizations"),
+		},
+		{
+			Name:        "whodb_platform_projects",
+			Description: descPlatformProjects,
+			Annotations: platformReadOnlyAnnotations("List Hosted Projects"),
 		},
 		{
 			Name:        "whodb_platform_source_types",
@@ -489,6 +570,18 @@ func createPlatformStatusHandler() func(context.Context, *mcp.CallToolRequest, P
 func createPlatformSourcesHandler() func(context.Context, *mcp.CallToolRequest, PlatformSourcesInput) (*mcp.CallToolResult, PlatformSourcesOutput, error) {
 	return func(ctx context.Context, req *mcp.CallToolRequest, input PlatformSourcesInput) (*mcp.CallToolResult, PlatformSourcesOutput, error) {
 		return HandlePlatformSources(ctx, req, input)
+	}
+}
+
+func createPlatformOrgsHandler() func(context.Context, *mcp.CallToolRequest, PlatformOrgsInput) (*mcp.CallToolResult, PlatformOrgsOutput, error) {
+	return func(ctx context.Context, req *mcp.CallToolRequest, input PlatformOrgsInput) (*mcp.CallToolResult, PlatformOrgsOutput, error) {
+		return HandlePlatformOrgs(ctx, req, input)
+	}
+}
+
+func createPlatformProjectsHandler() func(context.Context, *mcp.CallToolRequest, PlatformProjectsInput) (*mcp.CallToolResult, PlatformProjectsOutput, error) {
+	return func(ctx context.Context, req *mcp.CallToolRequest, input PlatformProjectsInput) (*mcp.CallToolResult, PlatformProjectsOutput, error) {
+		return HandlePlatformProjects(ctx, req, input)
 	}
 }
 
@@ -596,6 +689,7 @@ func HandlePlatformStatus(ctx context.Context, req *mcp.CallToolRequest, input P
 		WorkspaceSelected:       hasPlatformWorkspace(session),
 		PlatformVersion:         manifest.PlatformVersion,
 		ManifestProtocolVersion: manifest.ManifestProtocolVersion,
+		AutoSelected:            session.AutoSelected,
 		RequestID:               requestID,
 	}
 	TrackToolCall(ctx, "platform_status", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"workspace_selected": output.WorkspaceSelected})
@@ -626,6 +720,63 @@ func HandlePlatformSources(ctx context.Context, req *mcp.CallToolRequest, input 
 		Sources:   sources,
 		RequestID: requestID,
 	}, nil
+}
+
+// HandlePlatformOrgs lists hosted organizations visible to the authenticated user.
+func HandlePlatformOrgs(ctx context.Context, req *mcp.CallToolRequest, input PlatformOrgsInput) (*mcp.CallToolResult, PlatformOrgsOutput, error) {
+	requestID := generateRequestID("platform_orgs")
+	startTime := time.Now()
+
+	session, err := loadPlatformToolSession(ctx)
+	if err != nil {
+		TrackToolCall(ctx, "platform_orgs", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_session"})
+		return nil, PlatformOrgsOutput{Error: err.Error(), RequestID: requestID}, nil
+	}
+	orgs, err := session.Client.Organizations(ctx)
+	if err != nil {
+		TrackToolCall(ctx, "platform_orgs", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_query"})
+		return nil, PlatformOrgsOutput{Error: err.Error(), RequestID: requestID}, nil
+	}
+
+	output := PlatformOrgsOutput{
+		Host:      session.Host.URL,
+		Orgs:      platformOrgInfos(orgs, session.Host.DefaultOrgID),
+		RequestID: requestID,
+	}
+	TrackToolCall(ctx, "platform_orgs", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"org_count": len(output.Orgs)})
+	return nil, output, nil
+}
+
+// HandlePlatformProjects lists hosted projects in one organization.
+func HandlePlatformProjects(ctx context.Context, req *mcp.CallToolRequest, input PlatformProjectsInput) (*mcp.CallToolResult, PlatformProjectsOutput, error) {
+	requestID := generateRequestID("platform_projects")
+	startTime := time.Now()
+
+	session, err := loadPlatformToolSession(ctx)
+	if err != nil {
+		TrackToolCall(ctx, "platform_projects", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_session"})
+		return nil, PlatformProjectsOutput{Error: err.Error(), RequestID: requestID}, nil
+	}
+	org, err := resolvePlatformToolOrg(ctx, session, input.Org)
+	if err != nil {
+		TrackToolCall(ctx, "platform_projects", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_org"})
+		return nil, PlatformProjectsOutput{Error: err.Error(), RequestID: requestID}, nil
+	}
+	projects, err := session.Client.Projects(ctx, org.ID)
+	if err != nil {
+		TrackToolCall(ctx, "platform_projects", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_query"})
+		return nil, PlatformProjectsOutput{Error: err.Error(), RequestID: requestID}, nil
+	}
+
+	output := PlatformProjectsOutput{
+		Host:      session.Host.URL,
+		OrgID:     org.ID,
+		OrgName:   org.Name,
+		Projects:  platformProjectInfos(projects, org.Name, session.Host.DefaultProjectID),
+		RequestID: requestID,
+	}
+	TrackToolCall(ctx, "platform_projects", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"project_count": len(output.Projects)})
+	return nil, output, nil
 }
 
 // HandlePlatformSourceTypes lists hosted source types available for creation.
@@ -1011,7 +1162,18 @@ func loadHostedPlatformToolSession(ctx context.Context) (*platformToolSession, e
 		return nil, fmt.Errorf("cannot load hosted WhoDB platform manifest: %w", err)
 	}
 	client.SetPlatformManifest(manifest)
-	return &platformToolSession{Host: *host, Client: client}, nil
+	autoSelected, changed, err := autoSelectPlatformToolWorkspace(ctx, client, host)
+	if err != nil {
+		return nil, err
+	}
+	if changed {
+		cfg.UpsertPlatformHost(*host)
+		cfg.SetDefaultPlatformHost(host.URL)
+		if err := cfg.Save(); err != nil {
+			return nil, err
+		}
+	}
+	return &platformToolSession{Host: *host, Client: client, AutoSelected: autoSelected}, nil
 }
 
 func loadPlatformWorkspace(ctx context.Context) (*platformToolSession, error) {
@@ -1060,6 +1222,125 @@ func loadPlatformSourceType(ctx context.Context, session *platformToolSession, v
 		}
 	}
 	return nil, fmt.Errorf("source type %q not found", needle)
+}
+
+func autoSelectPlatformToolWorkspace(ctx context.Context, client platformClient, host *config.PlatformHost) ([]string, bool, error) {
+	if host == nil {
+		return nil, false, nil
+	}
+	messages := []string{}
+	changed := false
+	orgs, err := client.Organizations(ctx)
+	if err != nil {
+		return nil, false, err
+	}
+	if strings.TrimSpace(host.DefaultOrgID) == "" && len(orgs) == 1 {
+		org := orgs[0]
+		host.DefaultOrgID = org.ID
+		host.DefaultOrgName = org.Name
+		messages = append(messages, fmt.Sprintf("Selected the only available organization: %s", org.Name))
+		changed = true
+	} else if strings.TrimSpace(host.DefaultOrgID) != "" {
+		if org := findPlatformToolOrgByID(orgs, host.DefaultOrgID); org != nil && host.DefaultOrgName != org.Name {
+			host.DefaultOrgName = org.Name
+			changed = true
+		}
+	}
+	if strings.TrimSpace(host.DefaultOrgID) == "" {
+		return messages, changed, nil
+	}
+
+	projects, err := client.Projects(ctx, host.DefaultOrgID)
+	if err != nil {
+		return messages, changed, err
+	}
+	if strings.TrimSpace(host.DefaultProjectID) == "" && len(projects) == 1 {
+		project := projects[0]
+		host.DefaultProjectID = project.ID
+		host.DefaultProjectName = project.Name
+		messages = append(messages, fmt.Sprintf("Selected the only available project: %s", project.Name))
+		changed = true
+	} else if strings.TrimSpace(host.DefaultProjectID) != "" {
+		if project := findPlatformToolProjectByID(projects, host.DefaultProjectID); project != nil && host.DefaultProjectName != project.Name {
+			host.DefaultProjectName = project.Name
+			changed = true
+		}
+	}
+	return messages, changed, nil
+}
+
+func findPlatformToolOrgByID(orgs []platformapi.Organization, id string) *platformapi.Organization {
+	for i := range orgs {
+		if orgs[i].ID == id {
+			return &orgs[i]
+		}
+	}
+	return nil
+}
+
+func findPlatformToolProjectByID(projects []platformapi.Project, id string) *platformapi.Project {
+	for i := range projects {
+		if projects[i].ID == id {
+			return &projects[i]
+		}
+	}
+	return nil
+}
+
+func resolvePlatformToolOrg(ctx context.Context, session *platformToolSession, value string) (*platformapi.Organization, error) {
+	orgs, err := session.Client.Organizations(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if len(orgs) == 0 {
+		return nil, fmt.Errorf("signed in, but this account does not belong to any organization on %s", session.Host.URL)
+	}
+	needle := strings.TrimSpace(value)
+	if needle == "" {
+		needle = session.Host.DefaultOrgID
+	}
+	if needle == "" && len(orgs) == 1 {
+		needle = orgs[0].ID
+	}
+	if needle == "" {
+		return nil, fmt.Errorf("org is required because no hosted WhoDB organization is selected. Call whodb_platform_orgs, then run whodb-cli use --org <org> --project <project> or pass org")
+	}
+	for i := range orgs {
+		org := &orgs[i]
+		if matchesPlatformSourceIdentifier(needle, org.ID, org.Slug, org.Name) {
+			return org, nil
+		}
+	}
+	return nil, fmt.Errorf("organization %q not found", needle)
+}
+
+func platformOrgInfos(orgs []platformapi.Organization, selectedOrgID string) []PlatformOrgInfo {
+	result := make([]PlatformOrgInfo, 0, len(orgs))
+	for _, org := range orgs {
+		result = append(result, PlatformOrgInfo{
+			ID:       org.ID,
+			Name:     org.Name,
+			Slug:     org.Slug,
+			Selected: org.ID == selectedOrgID,
+		})
+	}
+	return result
+}
+
+func platformProjectInfos(projects []platformapi.Project, orgName, selectedProjectID string) []PlatformProjectInfo {
+	result := make([]PlatformProjectInfo, 0, len(projects))
+	for _, project := range projects {
+		result = append(result, PlatformProjectInfo{
+			ID:          project.ID,
+			OrgID:       project.OrgID,
+			OrgName:     orgName,
+			Name:        project.Name,
+			Slug:        project.Slug,
+			Description: project.Description,
+			Selected:    project.ID == selectedProjectID,
+		})
+	}
+	return result
 }
 
 func matchesPlatformSourceIdentifier(needle string, values ...string) bool {
@@ -1510,6 +1791,14 @@ Requires a prior hosted login with whodb-cli login. Use this before other whodb_
 const descPlatformSources = `List hosted WhoDB sources in the selected organization and project.
 
 Requires whodb-cli login and whodb-cli use --org <org> --project <project>. This tool is read-only and never exposes source credentials.`
+
+const descPlatformOrgs = `List hosted WhoDB organizations visible to the authenticated user.
+
+Use this after whodb-cli login to discover valid organization ids, slugs, and names before selecting a workspace. This tool is read-only.`
+
+const descPlatformProjects = `List hosted WhoDB projects in one organization.
+
+Pass org as an organization id, slug, or name. If omitted, the selected organization is used when available; when the account has exactly one organization, that organization is used. This tool is read-only.`
 
 const descPlatformSourceTypes = `List hosted WhoDB source types available for source creation.
 

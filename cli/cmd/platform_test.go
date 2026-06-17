@@ -150,6 +150,54 @@ func TestPlatformStatusForReportsUnselectedWorkspace(t *testing.T) {
 	}
 }
 
+func TestAutoSelectPlatformWorkspaceSelectsOnlyOrgAndProject(t *testing.T) {
+	client := newPlatformWorkspaceTestClient(t, `{"data":{"MyOrganizations":[{"id":"org-1","name":"Clidey","slug":"clidey"}]}}`, `{"data":{"Projects":[{"id":"proj-1","orgId":"org-1","name":"Customer","slug":"customer","description":""}]}}`)
+	host := config.PlatformHost{URL: client.Host()}
+
+	selection, err := autoSelectPlatformWorkspace(context.Background(), client, &host)
+	if err != nil {
+		t.Fatalf("autoSelectPlatformWorkspace() error = %v", err)
+	}
+	if host.DefaultOrgID != "org-1" || host.DefaultOrgName != "Clidey" || host.DefaultProjectID != "proj-1" || host.DefaultProjectName != "Customer" {
+		t.Fatalf("host = %#v, want only org/project selected", host)
+	}
+	if !selection.Changed || len(selection.Messages) != 2 {
+		t.Fatalf("selection = %#v, want changed with two messages", selection)
+	}
+}
+
+func TestAutoSelectPlatformWorkspaceSelectsOnlyProjectInSelectedOrg(t *testing.T) {
+	client := newPlatformWorkspaceTestClient(t, `{"data":{"MyOrganizations":[{"id":"org-1","name":"Clidey","slug":"clidey"},{"id":"org-2","name":"Acme","slug":"acme"}]}}`, `{"data":{"Projects":[{"id":"proj-1","orgId":"org-2","name":"Customer","slug":"customer","description":""}]}}`)
+	host := config.PlatformHost{URL: client.Host(), DefaultOrgID: "org-2", DefaultOrgName: "Acme"}
+
+	selection, err := autoSelectPlatformWorkspace(context.Background(), client, &host)
+	if err != nil {
+		t.Fatalf("autoSelectPlatformWorkspace() error = %v", err)
+	}
+	if host.DefaultOrgID != "org-2" || host.DefaultProjectID != "proj-1" || host.DefaultProjectName != "Customer" {
+		t.Fatalf("host = %#v, want selected org with only project selected", host)
+	}
+	if !selection.Changed || len(selection.Messages) != 1 {
+		t.Fatalf("selection = %#v, want one project selection message", selection)
+	}
+}
+
+func TestAutoSelectPlatformWorkspaceLeavesAmbiguousWorkspaceUnselected(t *testing.T) {
+	client := newPlatformWorkspaceTestClient(t, `{"data":{"MyOrganizations":[{"id":"org-1","name":"Clidey","slug":"clidey"},{"id":"org-2","name":"Acme","slug":"acme"}]}}`, `{"data":{"Projects":[]}}`)
+	host := config.PlatformHost{URL: client.Host()}
+
+	selection, err := autoSelectPlatformWorkspace(context.Background(), client, &host)
+	if err != nil {
+		t.Fatalf("autoSelectPlatformWorkspace() error = %v", err)
+	}
+	if host.DefaultOrgID != "" || host.DefaultProjectID != "" {
+		t.Fatalf("host = %#v, want workspace unselected", host)
+	}
+	if selection.Changed || len(selection.Messages) != 0 {
+		t.Fatalf("selection = %#v, want no auto-selection", selection)
+	}
+}
+
 func TestPlatformStatusForReportsUnsupportedMissingCapability(t *testing.T) {
 	host := config.PlatformHost{URL: "https://app.whodb.com", DefaultOrgID: "org-1", DefaultProjectID: "proj-1"}
 	manifest := &platform.PlatformManifest{
@@ -166,6 +214,39 @@ func TestPlatformStatusForReportsUnsupportedMissingCapability(t *testing.T) {
 	if len(status.Capabilities) == 0 {
 		t.Fatal("capabilities empty, want required operation report")
 	}
+}
+
+func newPlatformWorkspaceTestClient(t *testing.T, orgResponse, projectResponse string) *platform.Client {
+	t.Helper()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var request struct {
+			Query string `json:"query"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case strings.Contains(request.Query, "MyOrganizations"):
+			_, _ = w.Write([]byte(orgResponse))
+		case strings.Contains(request.Query, "Projects"):
+			_, _ = w.Write([]byte(projectResponse))
+		default:
+			t.Fatalf("unexpected query: %s", request.Query)
+		}
+	}))
+	t.Cleanup(server.Close)
+	client, err := platform.NewClient(server.URL, "token")
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
+	}
+	client.SetPlatformManifest(&platform.PlatformManifest{
+		Operations: []platform.PlatformManifestOperation{
+			{Name: "MyOrganizations", Kind: "Query"},
+			{Name: "Projects", Kind: "Query"},
+		},
+	})
+	return client
 }
 
 func TestResolvePlatformSourceUsesSavedOrgForProjectSources(t *testing.T) {

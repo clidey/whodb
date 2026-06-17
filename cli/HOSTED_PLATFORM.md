@@ -29,6 +29,10 @@ whodb-cli whoami
 whodb-cli logout
 ```
 
+If the account has exactly one organization, the CLI selects it automatically.
+If that selected organization has exactly one project, the CLI selects that
+project automatically and prints what it selected.
+
 If a host is no longer reachable and you only need to remove local credentials:
 
 ```bash
@@ -37,7 +41,9 @@ whodb-cli logout --host http://localhost:8080 --local
 
 ## Workspace Selection
 
-Hosted source commands need an organization and project. Select defaults once:
+Hosted source commands need an organization and project. When there is only one
+possible organization or project, the CLI can select it automatically. Otherwise,
+select defaults once:
 
 ```bash
 whodb-cli orgs list
@@ -145,9 +151,14 @@ whodb-cli login
 whodb-cli use --org <org-id-or-slug> --project <project-id-or-slug>
 ```
 
+For single-workspace accounts, `login` or `status` can select the workspace
+automatically and report what was selected.
+
 Available hosted MCP tools:
 
 - `whodb_platform_status`
+- `whodb_platform_orgs`
+- `whodb_platform_projects`
 - `whodb_platform_sources`
 - `whodb_platform_source_types`
 - `whodb_platform_source_fields`
@@ -173,6 +184,13 @@ confirmation tokens.
 For hosted source creation, agents should call `whodb_platform_source_types` and
 `whodb_platform_source_fields` first instead of guessing source type ids or
 connection field names.
+
+If no workspace is selected yet, agents should call `whodb_platform_orgs` and
+`whodb_platform_projects`, then ask the user to run:
+
+```bash
+whodb-cli use --org <org-id-or-slug> --project <project-id-or-slug>
+```
 
 When `--platform` is set, the MCP server exposes only hosted platform tools.
 Local database MCP tools such as `whodb_query` and `whodb_connections` are not
@@ -202,14 +220,16 @@ npx @modelcontextprotocol/inspector whodb-cli mcp serve --platform
 In the inspector, call:
 
 1. `whodb_platform_status`
-2. `whodb_platform_sources`
-3. `whodb_platform_source_types`
-4. `whodb_platform_source_fields`
-5. `whodb_platform_source_config`
-6. `whodb_platform_source_test`
-7. `whodb_platform_source_create`, then `whodb_platform_pending`, then `whodb_platform_confirm`
-8. `whodb_platform_source_update`, then `whodb_platform_pending`, then `whodb_platform_confirm`
-9. `whodb_platform_source_delete`, then `whodb_platform_pending`, then `whodb_platform_confirm`
+2. `whodb_platform_orgs`
+3. `whodb_platform_projects`
+4. `whodb_platform_sources`
+5. `whodb_platform_source_types`
+6. `whodb_platform_source_fields`
+7. `whodb_platform_source_config`
+8. `whodb_platform_source_test`
+9. `whodb_platform_source_create`, then `whodb_platform_pending`, then `whodb_platform_confirm`
+10. `whodb_platform_source_update`, then `whodb_platform_pending`, then `whodb_platform_confirm`
+11. `whodb_platform_source_delete`, then `whodb_platform_pending`, then `whodb_platform_confirm`
 
 ## Automation Output
 

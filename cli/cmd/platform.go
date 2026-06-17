@@ -74,10 +74,16 @@ type platformSession struct {
 }
 
 type loginOutput struct {
-	Host              string `json:"host"`
-	ID                string `json:"id"`
-	Email             string `json:"email"`
-	OrganizationCount int    `json:"organizationCount"`
+	Host               string `json:"host"`
+	ID                 string `json:"id"`
+	Email              string `json:"email"`
+	DefaultOrgID       string `json:"defaultOrgId,omitempty"`
+	DefaultOrgName     string `json:"defaultOrgName,omitempty"`
+	DefaultProjectID   string `json:"defaultProjectId,omitempty"`
+	DefaultProjectName string `json:"defaultProjectName,omitempty"`
+	WorkspaceSelected  bool   `json:"workspaceSelected"`
+	OrganizationCount  int    `json:"organizationCount"`
+	ProjectCount       int    `json:"projectCount,omitempty"`
 }
 
 type whoamiOutput struct {
@@ -124,6 +130,13 @@ type platformCapabilityStatus struct {
 	Name      string `json:"name"`
 	Operation string `json:"operation"`
 	Supported bool   `json:"supported"`
+}
+
+type platformWorkspaceSelection struct {
+	Orgs     []platform.Organization
+	Projects []platform.Project
+	Messages []string
+	Changed  bool
 }
 
 var loginCmd = &cobra.Command{
@@ -196,11 +209,6 @@ var loginCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("login failed. Use an existing WhoDB account for this host: %w", err)
 		}
-		orgs, err := client.Organizations(ctx)
-		if err != nil {
-			return err
-		}
-
 		hostEntry := config.PlatformHost{
 			URL:       client.Host(),
 			AccountID: user.ID,
@@ -211,6 +219,10 @@ var loginCmd = &cobra.Command{
 				return err
 			}
 		}
+		selection, err := autoSelectPlatformWorkspace(ctx, client, &hostEntry)
+		if err != nil {
+			return err
+		}
 		cfg.SetOnlyPlatformHost(hostEntry)
 		if err := cfg.SavePlatformRefreshToken(client.Host(), user.ID, tokens.RefreshToken); err != nil {
 			return err
@@ -219,12 +231,26 @@ var loginCmd = &cobra.Command{
 			return err
 		}
 
-		data := loginOutput{Host: client.Host(), ID: user.ID, Email: user.Email, OrganizationCount: len(orgs)}
+		data := loginOutput{
+			Host:               client.Host(),
+			ID:                 user.ID,
+			Email:              user.Email,
+			DefaultOrgID:       hostEntry.DefaultOrgID,
+			DefaultOrgName:     hostEntry.DefaultOrgName,
+			DefaultProjectID:   hostEntry.DefaultProjectID,
+			DefaultProjectName: hostEntry.DefaultProjectName,
+			WorkspaceSelected:  strings.TrimSpace(hostEntry.DefaultOrgID) != "" && strings.TrimSpace(hostEntry.DefaultProjectID) != "",
+			OrganizationCount:  len(selection.Orgs),
+			ProjectCount:       len(selection.Projects),
+		}
 		if format == output.FormatJSON {
 			return writeAutomationEnvelope(cmd, "login", data)
 		}
 		out.Success("Signed in to %s as %s", client.Host(), user.Email)
-		if len(orgs) == 0 {
+		for _, message := range selection.Messages {
+			out.Info(message)
+		}
+		if len(selection.Orgs) == 0 {
 			out.Info(noOrganizationAccessMessage(client.Host()))
 		}
 		return nil
@@ -404,12 +430,19 @@ var statusCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		projects, err := statusProjects(ctx, session, orgs)
+		selection, err := autoSelectPlatformWorkspaceWithOrgs(ctx, session.Client, &session.Host, orgs)
 		if err != nil {
 			return err
 		}
+		projects := selection.Projects
+		if projects == nil {
+			projects, err = statusProjects(ctx, session, selection.Orgs)
+			if err != nil {
+				return err
+			}
+		}
 		manifest := manifestFromCache(session.Host.Manifest)
-		data := platformStatusFor(session.Host, user, orgs, projects, manifest)
+		data := platformStatusFor(session.Host, user, selection.Orgs, projects, manifest)
 		session.Config.UpsertPlatformHost(session.Host)
 		if err := session.Config.Save(); err != nil {
 			return err
@@ -431,7 +464,11 @@ var statusCmd = &cobra.Command{
 			{"organizations", data.OrganizationCount},
 			{"projects", data.ProjectCount},
 		}
-		return newCommandOutput(cmd, format, platformQuiet).WriteQueryResult(&output.QueryResult{
+		out := newCommandOutput(cmd, format, platformQuiet)
+		for _, message := range selection.Messages {
+			out.Info(message)
+		}
+		return out.WriteQueryResult(&output.QueryResult{
 			Columns: []output.Column{{Name: "field", Type: "string"}, {Name: "value", Type: "string"}},
 			Rows:    rows,
 		})
@@ -1292,6 +1329,76 @@ func statusProjects(ctx context.Context, session *platformSession, orgs []platfo
 	return session.Client.Projects(ctx, orgID)
 }
 
+func autoSelectPlatformWorkspace(ctx context.Context, client *platform.Client, host *config.PlatformHost) (platformWorkspaceSelection, error) {
+	orgs, err := client.Organizations(ctx)
+	if err != nil {
+		return platformWorkspaceSelection{}, err
+	}
+	return autoSelectPlatformWorkspaceWithOrgs(ctx, client, host, orgs)
+}
+
+func autoSelectPlatformWorkspaceWithOrgs(ctx context.Context, client *platform.Client, host *config.PlatformHost, orgs []platform.Organization) (platformWorkspaceSelection, error) {
+	selection := platformWorkspaceSelection{Orgs: orgs}
+	if host == nil {
+		return selection, nil
+	}
+
+	if strings.TrimSpace(host.DefaultOrgID) == "" && len(orgs) == 1 {
+		org := orgs[0]
+		host.DefaultOrgID = org.ID
+		host.DefaultOrgName = org.Name
+		selection.Messages = append(selection.Messages, fmt.Sprintf("Selected the only available organization: %s", org.Name))
+		selection.Changed = true
+	} else if strings.TrimSpace(host.DefaultOrgID) != "" {
+		if org := findPlatformOrganization(orgs, host.DefaultOrgID); org != nil && host.DefaultOrgName != org.Name {
+			host.DefaultOrgName = org.Name
+			selection.Changed = true
+		}
+	}
+
+	if strings.TrimSpace(host.DefaultOrgID) == "" {
+		return selection, nil
+	}
+	projects, err := client.Projects(ctx, host.DefaultOrgID)
+	if err != nil {
+		return selection, err
+	}
+	selection.Projects = projects
+
+	if strings.TrimSpace(host.DefaultProjectID) == "" && len(projects) == 1 {
+		project := projects[0]
+		host.DefaultProjectID = project.ID
+		host.DefaultProjectName = project.Name
+		selection.Messages = append(selection.Messages, fmt.Sprintf("Selected the only available project: %s", project.Name))
+		selection.Changed = true
+	} else if strings.TrimSpace(host.DefaultProjectID) != "" {
+		if project := findPlatformProject(projects, host.DefaultProjectID); project != nil && host.DefaultProjectName != project.Name {
+			host.DefaultProjectName = project.Name
+			selection.Changed = true
+		}
+	}
+
+	return selection, nil
+}
+
+func findPlatformOrganization(orgs []platform.Organization, id string) *platform.Organization {
+	for i := range orgs {
+		if orgs[i].ID == id {
+			return &orgs[i]
+		}
+	}
+	return nil
+}
+
+func findPlatformProject(projects []platform.Project, id string) *platform.Project {
+	for i := range projects {
+		if projects[i].ID == id {
+			return &projects[i]
+		}
+	}
+	return nil
+}
+
 func platformStatusFor(host config.PlatformHost, user *platform.User, orgs []platform.Organization, projects []platform.Project, manifest *platform.PlatformManifest) platformStatusOutput {
 	capabilities := platformStatusCapabilities(manifest)
 	sourceSupported := true
@@ -1734,6 +1841,9 @@ func resolveOrganization(ctx context.Context, client *platform.Client, host conf
 	if needle == "" {
 		needle = host.DefaultOrgID
 	}
+	if needle == "" && len(orgs) == 1 {
+		return &orgs[0], nil
+	}
 	if needle == "" {
 		return nil, fmt.Errorf("no organization selected; run whodb-cli use --org <org> --project <project> or pass --org")
 	}
@@ -1750,6 +1860,9 @@ func resolveProject(projects []platform.Project, value, orgName string) (*platfo
 		return nil, fmt.Errorf("%s", noProjectsMessage(orgName))
 	}
 	needle := strings.TrimSpace(value)
+	if needle == "" && len(projects) == 1 {
+		return &projects[0], nil
+	}
 	if needle == "" {
 		return nil, fmt.Errorf("project is required")
 	}
