@@ -27,7 +27,6 @@ import (
 	"time"
 
 	dbmgr "github.com/clidey/whodb/cli/internal/database"
-	platformapi "github.com/clidey/whodb/cli/internal/platform"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/google/uuid"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -255,7 +254,6 @@ type PendingInfo struct {
 	Token      string `json:"token"`
 	Query      string `json:"query,omitempty"`
 	Connection string `json:"connection,omitempty"`
-	Action     string `json:"action,omitempty"`
 	ExpiresAt  string `json:"expires_at"` // ISO 8601
 }
 
@@ -277,25 +275,10 @@ func (o PendingOutput) MarshalJSON() ([]byte, error) {
 
 // PendingConfirmation stores a query awaiting user confirmation
 type PendingConfirmation struct {
-	Token          string
-	Query          string
-	Connection     string
-	Action         string
-	PlatformAction *PendingPlatformAction
-	ExpiresAt      time.Time
-}
-
-// PendingPlatformAction stores a hosted platform write awaiting confirmation.
-type PendingPlatformAction struct {
-	Operation   string
-	Host        string
-	OrgID       string
-	ProjectID   string
-	ProjectName string
-	SourceID    string
-	SourceName  string
-	CreateInput platformapi.CreateSourceInput
-	UpdateInput platformapi.UpdateSourceInput
+	Token      string
+	Query      string
+	Connection string
+	ExpiresAt  time.Time
 }
 
 // pendingConfirmations stores queries awaiting confirmation
@@ -330,32 +313,6 @@ func storePendingConfirmation(query, connection string) (string, time.Time) {
 		Query:      query,
 		Connection: connection,
 		ExpiresAt:  expiresAt,
-	}
-
-	return token, expiresAt
-}
-
-// storePendingPlatformAction stores a hosted platform write for later confirmation.
-func storePendingPlatformAction(action string, platformAction *PendingPlatformAction) (string, time.Time) {
-	token := generateConfirmationToken()
-
-	pendingMutex.Lock()
-	defer pendingMutex.Unlock()
-
-	now := time.Now()
-	for k, v := range pendingConfirmations {
-		if v.ExpiresAt.Before(now) {
-			delete(pendingConfirmations, k)
-		}
-	}
-
-	expiresAt := now.Add(5 * time.Minute)
-	pendingConfirmations[token] = &PendingConfirmation{
-		Token:          token,
-		Connection:     platformAction.Host,
-		Action:         action,
-		PlatformAction: platformAction,
-		ExpiresAt:      expiresAt,
 	}
 
 	return token, expiresAt
@@ -713,17 +670,6 @@ func HandleConfirm(ctx context.Context, req *mcp.CallToolRequest, input ConfirmI
 		return nil, ConfirmOutput{Error: err.Error(), RequestID: requestID}, nil
 	}
 
-	if pending.PlatformAction != nil {
-		output, err := executePendingPlatformAction(ctx, pending.PlatformAction, requestID)
-		if err != nil {
-			TrackToolCall(ctx, "confirm", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_action"})
-			return nil, ConfirmOutput{Error: err.Error(), RequestID: requestID}, nil
-		}
-		consumePendingConfirmation(input.Token)
-		TrackToolCall(ctx, "confirm", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"action": pending.Action})
-		return nil, output, nil
-	}
-
 	// Validate connection is still allowed (defense-in-depth)
 	if !secOpts.isConnectionAllowed(pending.Connection) {
 		TrackToolCall(ctx, "confirm", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "connection_not_allowed"})
@@ -804,7 +750,6 @@ func HandlePending(ctx context.Context, req *mcp.CallToolRequest, input PendingI
 			Token:      p.Token,
 			Query:      p.Query,
 			Connection: p.Connection,
-			Action:     p.Action,
 			ExpiresAt:  p.ExpiresAt.UTC().Format(time.RFC3339),
 		}
 	}

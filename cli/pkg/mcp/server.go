@@ -1405,6 +1405,8 @@ backed by the current hosted WhoDB login and selected organization/project.
 Available tools:
 - whodb_platform_status: Show hosted login and selected workspace
 - whodb_platform_sources: List hosted sources in the selected project
+- whodb_platform_source_types: List source types available for creation
+- whodb_platform_source_fields: List connection fields for one source type
 - whodb_platform_source_objects: Browse hosted source objects
 - whodb_platform_source_columns: Inspect hosted source object columns
 - whodb_platform_source_rows: Preview hosted source object rows

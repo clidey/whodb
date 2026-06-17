@@ -135,8 +135,8 @@ func testPlatformSession(client platformClient) *platformToolSession {
 
 func TestPlatformToolDefinitions(t *testing.T) {
 	tools := platformToolDefinitions()
-	if len(tools) != 11 {
-		t.Fatalf("len(platformToolDefinitions()) = %d, want 11", len(tools))
+	if len(tools) != 13 {
+		t.Fatalf("len(platformToolDefinitions()) = %d, want 13", len(tools))
 	}
 	for _, tool := range tools {
 		if tool.Annotations == nil {
@@ -160,6 +160,42 @@ func TestHandlePlatformSourcesUsesSelectedWorkspace(t *testing.T) {
 	}
 	if output.OrgID != "org-1" || output.ProjectID != "proj-1" || client.sourcesRowsProjectID != "proj-1" {
 		t.Fatalf("output/client scope = %#v project=%q, want selected workspace", output, client.sourcesRowsProjectID)
+	}
+}
+
+func TestHandlePlatformSourceTypes(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := HandlePlatformSourceTypes(context.Background(), nil, PlatformSourceTypesInput{})
+	if err != nil {
+		t.Fatalf("HandlePlatformSourceTypes() error = %v", err)
+	}
+	if output.Error != "" {
+		t.Fatalf("HandlePlatformSourceTypes() output error = %q", output.Error)
+	}
+	if len(output.SourceTypes) != 1 || output.SourceTypes[0].ID != "Postgres" {
+		t.Fatalf("source types = %#v, want Postgres", output.SourceTypes)
+	}
+}
+
+func TestHandlePlatformSourceFields(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := HandlePlatformSourceFields(context.Background(), nil, PlatformSourceFieldsInput{SourceType: "Postgres"})
+	if err != nil {
+		t.Fatalf("HandlePlatformSourceFields() error = %v", err)
+	}
+	if output.Error != "" {
+		t.Fatalf("HandlePlatformSourceFields() output error = %q", output.Error)
+	}
+	if output.SourceType != "Postgres" || len(output.Fields) != 3 {
+		t.Fatalf("source fields = %#v, want Postgres fields", output)
 	}
 }
 
@@ -246,14 +282,17 @@ func TestHandlePlatformSourceCreateRequiresConfirmation(t *testing.T) {
 		t.Fatalf("confirmation output = %#v, want token", output)
 	}
 
-	pending, err := getPendingConfirmation(output.ConfirmationToken)
+	pending, err := getPendingPlatformAction(output.ConfirmationToken)
 	if err != nil {
-		t.Fatalf("getPendingConfirmation() error = %v", err)
+		t.Fatalf("getPendingPlatformAction() error = %v", err)
 	}
-	if pending.PlatformAction == nil || pending.PlatformAction.CreateInput.Name != "New Warehouse" {
-		t.Fatalf("pending action = %#v, want create action", pending.PlatformAction)
+	if pending.CreateInput.Name != "New Warehouse" {
+		t.Fatalf("pending action = %#v, want create action", pending)
 	}
-	consumePendingConfirmation(output.ConfirmationToken)
+	if output.ConfirmationPreview == nil || output.ConfirmationPreview.SourceName != "New Warehouse" || output.ConfirmationPreview.SourceType != "Postgres" {
+		t.Fatalf("confirmation preview = %#v, want source name/type", output.ConfirmationPreview)
+	}
+	consumePendingPlatformAction(output.ConfirmationToken)
 }
 
 func TestHandleConfirmExecutesPlatformDelete(t *testing.T) {
@@ -261,7 +300,7 @@ func TestHandleConfirmExecutesPlatformDelete(t *testing.T) {
 	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
 		return testPlatformSession(client), nil
 	})
-	token, _ := storePendingPlatformAction("delete hosted source Warehouse", &PendingPlatformAction{
+	token, _ := storePendingPlatformAction(&PendingPlatformAction{
 		Operation:   "delete_source",
 		Host:        "https://app.whodb.com",
 		OrgID:       "org-1",

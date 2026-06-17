@@ -149,6 +149,8 @@ Available hosted MCP tools:
 
 - `whodb_platform_status`
 - `whodb_platform_sources`
+- `whodb_platform_source_types`
+- `whodb_platform_source_fields`
 - `whodb_platform_source_objects`
 - `whodb_platform_source_columns`
 - `whodb_platform_source_rows`
@@ -166,9 +168,33 @@ Hosted create, update, and delete tools do not execute immediately. They return 
 confirmation token, and the write runs only after approval through
 `whodb_platform_confirm`.
 
+For hosted source creation, agents should call `whodb_platform_source_types` and
+`whodb_platform_source_fields` first instead of guessing source type ids or
+connection field names.
+
 When `--platform` is set, the MCP server exposes only hosted platform tools.
 Local database MCP tools such as `whodb_query` and `whodb_connections` are not
 registered.
+
+Local smoke test with the MCP inspector:
+
+```bash
+whodb-cli login --host http://localhost:8080
+whodb-cli use --host http://localhost:8080 --org <org-id-or-slug> --project <project-id-or-slug>
+npx @modelcontextprotocol/inspector whodb-cli mcp serve --platform
+```
+
+In the inspector, call:
+
+1. `whodb_platform_status`
+2. `whodb_platform_sources`
+3. `whodb_platform_source_types`
+4. `whodb_platform_source_fields`
+5. `whodb_platform_source_config`
+6. `whodb_platform_source_test`
+7. `whodb_platform_source_create`, then `whodb_platform_confirm`
+8. `whodb_platform_source_update`, then `whodb_platform_confirm`
+9. `whodb_platform_source_delete`, then `whodb_platform_confirm`
 
 ## Automation Output
 

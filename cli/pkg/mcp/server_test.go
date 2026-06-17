@@ -17,12 +17,14 @@
 package mcp
 
 import (
+	"context"
 	"log/slog"
 	"os"
 	"strings"
 	"testing"
 
 	"github.com/clidey/whodb/cli/pkg/version"
+	mcpsdk "github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
 func TestNewServer_DefaultOptions(t *testing.T) {
@@ -233,6 +235,59 @@ func TestPlatformInstructionsExcludeLocalTools(t *testing.T) {
 	if strings.Contains(platformInstructions, "whodb_query") || strings.Contains(platformInstructions, "whodb_connections") {
 		t.Fatal("platformInstructions should not advertise local database tools")
 	}
+}
+
+func TestNewServer_PlatformModeListsOnlyPlatformTools(t *testing.T) {
+	ctx := context.Background()
+	server := NewServer(&ServerOptions{PlatformEnabled: true})
+	clientTransport, serverTransport := mcpsdk.NewInMemoryTransports()
+
+	serverSession, err := server.Connect(ctx, serverTransport, nil)
+	if err != nil {
+		t.Fatalf("server.Connect() error = %v", err)
+	}
+	t.Cleanup(func() {
+		_ = serverSession.Close()
+	})
+
+	client := mcpsdk.NewClient(&mcpsdk.Implementation{Name: "test-client", Version: "v0.0.1"}, nil)
+	clientSession, err := client.Connect(ctx, clientTransport, nil)
+	if err != nil {
+		t.Fatalf("client.Connect() error = %v", err)
+	}
+	t.Cleanup(func() {
+		_ = clientSession.Close()
+	})
+
+	result, err := clientSession.ListTools(ctx, nil)
+	if err != nil {
+		t.Fatalf("ListTools() error = %v", err)
+	}
+	if len(result.Tools) == 0 {
+		t.Fatal("ListTools() returned no tools")
+	}
+	for _, tool := range result.Tools {
+		if !strings.HasPrefix(tool.Name, "whodb_platform_") {
+			t.Fatalf("platform mode exposed non-platform tool %q", tool.Name)
+		}
+	}
+	for _, localTool := range []string{"whodb_query", "whodb_connections", "whodb_confirm"} {
+		if toolNamesContain(result.Tools, localTool) {
+			t.Fatalf("platform mode exposed local tool %q", localTool)
+		}
+	}
+	if !toolNamesContain(result.Tools, "whodb_platform_confirm") {
+		t.Fatal("platform mode did not expose whodb_platform_confirm")
+	}
+}
+
+func toolNamesContain(tools []*mcpsdk.Tool, name string) bool {
+	for _, tool := range tools {
+		if tool.Name == name {
+			return true
+		}
+	}
+	return false
 }
 
 func TestNewServer_WithDisabledTools(t *testing.T) {

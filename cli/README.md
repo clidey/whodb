@@ -731,6 +731,8 @@ only hosted platform tools are exposed; local database tools are not registered.
 |------|-------------|
 | `whodb_platform_status` | Show hosted login and selected workspace |
 | `whodb_platform_sources` | List hosted sources in the selected project |
+| `whodb_platform_source_types` | List hosted source types available for creation |
+| `whodb_platform_source_fields` | List connection fields for one hosted source type |
 | `whodb_platform_source_objects` | Browse hosted source objects |
 | `whodb_platform_source_columns` | Inspect hosted source object columns |
 | `whodb_platform_source_rows` | Preview hosted source object rows |
@@ -743,6 +745,10 @@ only hosted platform tools are exposed; local database tools are not registered.
 
 Hosted source create, update, and delete tools return confirmation tokens and do
 not execute until approved with `whodb_platform_confirm`.
+
+For source creation, agents should call `whodb_platform_source_types` and
+`whodb_platform_source_fields` first so they use backend-published source type
+ids and field names.
 
 It also exposes these resources:
 

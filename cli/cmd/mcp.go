@@ -128,7 +128,8 @@ Available tools:
 Hosted platform mode is disabled by default. Start with --platform to expose only
 whodb_platform_* tools backed by the current hosted login and selected workspace.
 Local database tools such as whodb_query and whodb_connections are not registered
-in platform mode.
+in platform mode. Hosted source writes return confirmation tokens and execute
+only through whodb_platform_confirm.
 
 TOOL SELECTION:
   --tools           - Comma-separated list of tools to enable (default: all)
