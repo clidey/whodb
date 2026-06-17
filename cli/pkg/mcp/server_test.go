@@ -217,6 +217,15 @@ func TestNewServer_WithToolEnablement(t *testing.T) {
 	}
 }
 
+func TestNewServer_WithPlatformEnabled(t *testing.T) {
+	server := NewServer(&ServerOptions{
+		PlatformEnabled: true,
+	})
+	if server == nil {
+		t.Fatal("NewServer() returned nil with platform tools enabled")
+	}
+}
+
 func TestNewServer_WithDisabledTools(t *testing.T) {
 	server := NewServer(&ServerOptions{
 		DisabledTools: []string{"query", "confirm"},

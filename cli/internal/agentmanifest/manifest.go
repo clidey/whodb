@@ -194,6 +194,11 @@ func buildMCPTools() []MCPTool {
 		{Name: "whodb_erd", Description: "Load graph and relationship metadata.", ReadOnly: true},
 		{Name: "whodb_audit", Description: "Run data-quality audits.", ReadOnly: true},
 		{Name: "whodb_suggestions", Description: "Load backend query suggestions.", ReadOnly: true},
+		{Name: "whodb_platform_status", Description: "Show hosted WhoDB login and selected workspace when MCP starts with --platform.", ReadOnly: true},
+		{Name: "whodb_platform_sources", Description: "List hosted WhoDB sources when MCP starts with --platform.", ReadOnly: true},
+		{Name: "whodb_platform_source_objects", Description: "Browse hosted source objects when MCP starts with --platform.", ReadOnly: true},
+		{Name: "whodb_platform_source_columns", Description: "Inspect hosted source object columns when MCP starts with --platform.", ReadOnly: true},
+		{Name: "whodb_platform_source_rows", Description: "Preview hosted source object rows when MCP starts with --platform.", ReadOnly: true},
 	}
 	return tools
 }

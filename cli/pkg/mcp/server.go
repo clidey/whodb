@@ -77,6 +77,9 @@ type ServerOptions struct {
 	// When set, only these connections are visible and accessible.
 	// If DefaultConnection is not set, the first allowed connection becomes the default.
 	AllowedConnections []string
+	// PlatformEnabled registers hosted WhoDB platform tools.
+	// These tools are read-only and use the user's hosted login plus selected org/project.
+	PlatformEnabled bool
 }
 
 // SecurityOptions contains runtime security settings for query execution
@@ -166,6 +169,9 @@ func NewServer(opts *ServerOptions) *mcp.Server {
 
 	// Register tools with security options and enablement
 	registerTools(server, secOpts, toolEnablement)
+	if opts.PlatformEnabled {
+		registerPlatformTools(server, secOpts)
+	}
 
 	// Register prompts for AI assistant guidance
 	registerPrompts(server)

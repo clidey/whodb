@@ -48,6 +48,9 @@ var (
 	mcpPort      int
 )
 
+// platform flags
+var mcpPlatform bool
+
 // tool enablement flags
 var (
 	mcpEnabledTools  []string
@@ -121,6 +124,10 @@ Available tools:
   whodb_confirm     - Confirm pending writes (only with --confirm-writes)
   whodb_pending     - List pending confirmation tokens
 
+Hosted platform tools are disabled by default. Start with --platform to add
+read-only whodb_platform_* tools backed by the current hosted login and selected
+workspace.
+
 TOOL SELECTION:
   --tools           - Comma-separated list of tools to enable (default: all)
                       Valid: query, schemas, tables, columns, connections, confirm, pending, explain, diff, erd, audit, suggestions
@@ -190,6 +197,9 @@ Connection Resolution:
   # Restrict to specific connections (first becomes default)
   whodb-cli mcp serve --allowed-connections=prod,staging
 
+  # Add read-only hosted WhoDB platform tools
+  whodb-cli mcp serve --platform
+
   # Set default connection without restricting access
   whodb-cli mcp serve --default-connection=prod
 
@@ -257,6 +267,7 @@ Connection Resolution:
 			DisabledTools:       mcpDisabledTools,
 			DefaultConnection:   mcpConnection,
 			AllowedConnections:  mcpAllowedConnections,
+			PlatformEnabled:     mcpPlatform,
 		}
 
 		server := whodbmcp.NewServer(opts)
@@ -276,6 +287,7 @@ Connection Resolution:
 			"enabled_tools":  mcpEnabledTools,
 			"disabled_tools": mcpDisabledTools,
 			"security_level": securityLevel,
+			"platform":       mcpPlatform,
 		})
 
 		// Run with selected transport
@@ -324,6 +336,10 @@ func init() {
 		"Host to bind to (only used with --transport=http)")
 	mcpServeCmd.Flags().IntVar(&mcpPort, "port", 3000,
 		"Port to listen on (only used with --transport=http)")
+
+	// Platform flags
+	mcpServeCmd.Flags().BoolVar(&mcpPlatform, "platform", false,
+		"Enable read-only hosted WhoDB platform tools (requires whodb-cli login and use)")
 
 	// Tool enablement flags
 	mcpServeCmd.Flags().StringSliceVar(&mcpEnabledTools, "tools", nil,

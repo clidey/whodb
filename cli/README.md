@@ -724,6 +724,16 @@ This starts an MCP server that exposes these tools:
 | `whodb_audit` | Run data quality audits for a schema or table |
 | `whodb_suggestions` | Get backend-generated starter queries |
 
+Start with `--platform` to add read-only hosted WhoDB platform tools:
+
+| Tool | Description |
+|------|-------------|
+| `whodb_platform_status` | Show hosted login and selected workspace |
+| `whodb_platform_sources` | List hosted sources in the selected project |
+| `whodb_platform_source_objects` | Browse hosted source objects |
+| `whodb_platform_source_columns` | Inspect hosted source object columns |
+| `whodb_platform_source_rows` | Preview hosted source object rows |
+
 It also exposes these resources:
 
 | Resource | Description |
@@ -782,6 +792,9 @@ HTTP mode exposes:
 **Connection Scoping:**
 - `--allowed-connections`: Comma-separated list of connections to allow (restricts access)
 - `--default-connection`: Default connection when not specified (does not restrict access)
+
+**Hosted Platform:**
+- `--platform`: Add read-only hosted WhoDB platform tools. Requires `whodb-cli login` and `whodb-cli use --org <org> --project <project>`.
 
 ```bash
 # Restrict AI to specific connections only

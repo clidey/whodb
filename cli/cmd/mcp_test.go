@@ -78,3 +78,9 @@ func TestMcpServeCmd_SilencesErrors(t *testing.T) {
 		t.Error("Expected SilenceErrors to be true")
 	}
 }
+
+func TestMcpServeCmd_HasPlatformFlag(t *testing.T) {
+	if mcpServeCmd.Flags().Lookup("platform") == nil {
+		t.Fatal("expected mcp serve to expose --platform")
+	}
+}
