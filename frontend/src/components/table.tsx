@@ -1382,6 +1382,11 @@ export const StorageUnitTable: FC<TableProps> = ({
     return (
         <div ref={tableRef} className="flex min-w-0 w-full">
             <div className="flex flex-col space-y-4 min-w-0 w-full" data-testid="table-container">
+                <div className="sr-only" aria-live="polite" aria-atomic="true">
+                    {paginatedRows.length > 0
+                        ? `${paginatedRows.length} rows loaded${totalCount != null ? ` of ${totalCount} total` : ''}`
+                        : ''}
+                </div>
                 <div className="overflow-x-auto" style={{
                     width: `${containerWidth}px`,
                 }}>

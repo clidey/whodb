@@ -144,7 +144,7 @@ export const InternalPage: FC<IInternalPageProps> = (props) => {
                             <div className="flex items-center gap-2 shrink-0">
                                 <CommandPaletteTrigger />
                                 <KeyboardShortcutsHint />
-                                <div data-testid="mode-toggle">
+                                <div data-testid="mode-toggle" role="group" aria-label="Theme toggle">
                                     <ModeToggle />
                                 </div>
                             </div>
