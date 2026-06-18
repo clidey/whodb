@@ -146,6 +146,8 @@ export const ExploreStorageUnit: FC = () => {
         usesDatabaseInsteadOfSchema,
     } = useSourceContract(currentType);
     const whereConditionMode = useAppSelector(state => state.settings.whereConditionMode);
+    const formatDatesLocale = useAppSelector(state => state.settings.formatDatesLocale);
+    const formatBooleansReadable = useAppSelector(state => state.settings.formatBooleansReadable);
     const locationState = location.state as ExploreSourceState | undefined;
     const unit = locationState?.unit;
     const browserTrail = locationState?.trail ?? [];
@@ -1150,6 +1152,8 @@ export const ExploreStorageUnit: FC = () => {
                         // Import control - enabled for explore view
                         allowImport={true}
                         enableKeyboardShortcuts={true}
+                        formatDatesLocale={formatDatesLocale}
+                        formatBooleansReadable={formatBooleansReadable}
                     >
                         {allowsInsertData && <div className="flex gap-2">
                             <Button onClick={handleOpenAddSheet} disabled={adding} data-testid="add-row-button">

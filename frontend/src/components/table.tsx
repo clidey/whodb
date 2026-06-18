@@ -276,6 +276,32 @@ export function getInputPropsForColumnType(rawType: string): {
     return { type: 'text', inputMode: 'text' };
 }
 
+interface FormatOptions {
+    dates?: boolean;
+    booleans?: boolean;
+}
+
+function formatCellDisplay(value: string, columnType: string | undefined, options: FormatOptions): string {
+    if (!columnType || !value) return value;
+    const type = stripTypeSuffix(columnType).toUpperCase();
+
+    if (options.dates && (dateTypes.has(type) || dateTimeTypes.has(type))) {
+        const parsed = Date.parse(value);
+        if (!Number.isNaN(parsed)) {
+            const date = new Date(parsed);
+            return dateTypes.has(type) ? date.toLocaleDateString() : date.toLocaleString();
+        }
+    }
+
+    if (options.booleans && boolTypes.has(type)) {
+        const lower = value.toLowerCase();
+        if (lower === 't' || lower === '1' || lower === 'true') return 'true';
+        if (lower === 'f' || lower === '0' || lower === 'false') return 'false';
+    }
+
+    return value;
+}
+
 
 interface TableProps {
     columns: string[];
@@ -317,6 +343,8 @@ interface TableProps {
     enforceMinHeight?: boolean;
     // Enable keyboard shortcuts - should only be true on the explore-storage-unit page
     enableKeyboardShortcuts?: boolean;
+    formatDatesLocale?: boolean;
+    formatBooleansReadable?: boolean;
 }
 
 export const StorageUnitTable: FC<TableProps> = ({
@@ -357,6 +385,8 @@ export const StorageUnitTable: FC<TableProps> = ({
     rawQuery,
     enforceMinHeight = false,
     enableKeyboardShortcuts = false,
+    formatDatesLocale = false,
+    formatBooleansReadable = false,
 }) => {
     const { t, language } = useTranslation('components/table');
     const [editIndex, setEditIndex] = useState<number | null>(null);
@@ -1196,24 +1226,29 @@ export const StorageUnitTable: FC<TableProps> = ({
                         <EllipsisVerticalIcon className="w-4 h-4" />
                     </Button>
                 </TableCell>
-                {paginatedRows[index]?.map((cell, cellIdx) => (
-                    <TableCell
-                        key={columns[cellIdx]}
-                        role="gridcell"
-                        className={cn(ph.mask, "cursor-pointer")}
-                        title={t('cellInteractionHint')}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            setFocusedRowIndex(index);
-                            handleCellClick(index, cellIdx);
-                        }}
-                        onDoubleClick={() => { handleCellDoubleClick(index); }}
-                        onContextMenu={() => { if (!limitContextMenu) { setContextMenuCellIdx(cellIdx); } }}
-                        data-col-idx={cellIdx}
-                    >
-                        {cell}
-                    </TableCell>
-                ))}
+                {paginatedRows[index]?.map((cell, cellIdx) => {
+                    const displayValue = (formatDatesLocale || formatBooleansReadable)
+                        ? formatCellDisplay(cell, columnTypes?.[cellIdx], { dates: formatDatesLocale, booleans: formatBooleansReadable })
+                        : cell;
+                    return (
+                        <TableCell
+                            key={columns[cellIdx]}
+                            role="gridcell"
+                            className={cn(ph.mask, "cursor-pointer")}
+                            title={displayValue !== cell ? cell : t('cellInteractionHint')}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setFocusedRowIndex(index);
+                                handleCellClick(index, cellIdx);
+                            }}
+                            onDoubleClick={() => { handleCellDoubleClick(index); }}
+                            onContextMenu={() => { if (!limitContextMenu) { setContextMenuCellIdx(cellIdx); } }}
+                            data-col-idx={cellIdx}
+                        >
+                            {displayValue}
+                        </TableCell>
+                    );
+                })}
             </TableRow>
         );
 

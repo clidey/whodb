@@ -45,6 +45,11 @@ en_US:
   disableAnimations: Disable Animations
   disableAnimationsEnabled: Animations are disabled
   disableAnimationsDisabled: Animations are enabled
+  dataDisplayTitle: Data Display
+  formatDates: "Format dates in locale (2025-01-15T10:30:00Z → 1/15/2025, 10:30 AM)"
+  formatBooleans: "Normalize booleans (t/1 → true, f/0 → false)"
+  formatDatesEnabled: Date formatting is enabled
+  formatDatesDisabled: Date formatting is disabled
 
 ar_AE:
   telemetryTitle: "القياس عن بعد ومقاييس الأداء"

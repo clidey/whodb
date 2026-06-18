@@ -58,6 +58,8 @@ export const SettingsPage: FC = () => {
     const borderRadius = useAppSelector(state => state.settings.borderRadius);
     const spacing = useAppSelector(state => state.settings.spacing);
     const whereConditionMode = useAppSelector(state => state.settings.whereConditionMode);
+    const formatDatesLocale = useAppSelector(state => state.settings.formatDatesLocale);
+    const formatBooleansReadable = useAppSelector(state => state.settings.formatBooleansReadable);
     const defaultPageSize = useAppSelector(state => state.settings.defaultPageSize);
     const maxPageSize = useAppSelector(state => state.settings.maxPageSize);
     const language = useAppSelector(state => state.settings.language);
@@ -132,6 +134,14 @@ export const SettingsPage: FC = () => {
         dispatch(SettingsActions.setDisableAnimations(disabled));
     }, [dispatch]);
 
+    const handleFormatDatesLocaleToggle = useCallback((enabled: boolean) => {
+        dispatch(SettingsActions.setFormatDatesLocale(enabled));
+    }, [dispatch]);
+
+    const handleFormatBooleansReadableToggle = useCallback((enabled: boolean) => {
+        dispatch(SettingsActions.setFormatBooleansReadable(enabled));
+    }, [dispatch]);
+
     const hasIntegrations = cloudProvidersEnabled || !!getComponent('bridge-driver-panel');
 
     return (
@@ -201,6 +211,18 @@ export const SettingsPage: FC = () => {
                         <div className="flex justify-between">
                             <Label>{disableAnimations ? t('disableAnimationsEnabled') : t('disableAnimationsDisabled')}</Label>
                             <Switch checked={disableAnimations} onCheckedChange={handleDisableAnimationsToggle}/>
+                        </div>
+                        <Separator className="my-2" />
+                        <div className="flex flex-col gap-sm">
+                            <p className="text-sm font-medium text-muted-foreground">{t('dataDisplayTitle')}</p>
+                        </div>
+                        <div className="flex justify-between">
+                            <Label>{t('formatDates')}</Label>
+                            <Switch checked={formatDatesLocale} onCheckedChange={handleFormatDatesLocaleToggle}/>
+                        </div>
+                        <div className="flex justify-between">
+                            <Label>{t('formatBooleans')}</Label>
+                            <Switch checked={formatBooleansReadable} onCheckedChange={handleFormatBooleansReadableToggle}/>
                         </div>
                     </TabsContent>
 
