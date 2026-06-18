@@ -22,6 +22,7 @@ import type {IInternalRoute} from "../config/routes";
 import {useAppDispatch, useAppSelector} from "../store/hooks";
 import {SettingsActions} from "../store/settings";
 import {Breadcrumb} from "./breadcrumbs";
+import {ConnectionContext} from "./connection-context";
 import {Loading} from "./loading";
 import {Sidebar} from "./sidebar/sidebar";
 import {useTranslation} from "@/hooks/use-translation";
@@ -137,15 +138,18 @@ export const InternalPage: FC<IInternalPageProps> = (props) => {
             </div>
             <Page wrapperClassName="p-0" {...props}>
                 <div className="flex flex-col grow py-6">
-                    <div className="flex w-full justify-between items-center px-8">
-                        <Breadcrumb routes={props.routes ?? []} active={props.routes?.at(-1)} />
-                        <div className="flex items-center gap-2">
-                            <CommandPaletteTrigger />
-                            <KeyboardShortcutsHint />
-                            <div data-testid="mode-toggle">
-                                <ModeToggle />
+                    <div className="flex flex-col gap-1 px-8">
+                        <div className="flex w-full justify-between items-center">
+                            <Breadcrumb routes={props.routes ?? []} active={props.routes?.at(-1)} />
+                            <div className="flex items-center gap-2 shrink-0">
+                                <CommandPaletteTrigger />
+                                <KeyboardShortcutsHint />
+                                <div data-testid="mode-toggle">
+                                    <ModeToggle />
+                                </div>
                             </div>
                         </div>
+                        <ConnectionContext />
                     </div>
                     {
                         !isLoggedIn
