@@ -39,6 +39,7 @@ import { useTranslation } from "../../hooks/use-translation";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import type { ChatSession} from "../../store/chat";
 import { HoudiniActions } from "../../store/chat";
+import { countBucket, trackFrontendIntent } from "../../config/frontend-analytics";
 
 type EditableSessionNameProps = {
     session: ChatSession;
@@ -169,12 +170,20 @@ export const ChatHistorySidebar: FC = () => {
     const [sessionToDelete, setSessionToDelete] = useState<string | null>(null);
 
     const handleAddSession = useCallback(() => {
+        trackFrontendIntent('chat.session_created', {
+            session_count_bucket: countBucket(sessions.length + 1),
+        });
         dispatch(HoudiniActions.addChatSession({ name: `Chat ${sessions.length + 1}` }));
     }, [dispatch, sessions.length]);
 
     const handleSelectSession = useCallback((sessionId: string) => {
+        const session = sessions.find(item => item.id === sessionId);
+        trackFrontendIntent('chat.session_selected', {
+            message_count_bucket: countBucket(session?.messages.length ?? 0),
+            session_count_bucket: countBucket(sessions.length),
+        });
         dispatch(HoudiniActions.setActiveSession({ sessionId }));
-    }, [dispatch]);
+    }, [dispatch, sessions]);
 
     const promptDelete = useCallback((sessionId: string) => {
         setSessionToDelete(sessionId);
@@ -183,13 +192,19 @@ export const ChatHistorySidebar: FC = () => {
 
     const handleDelete = useCallback(() => {
         if (sessionToDelete) {
+            const session = sessions.find(item => item.id === sessionToDelete);
+            trackFrontendIntent('chat.session_deleted', {
+                message_count_bucket: countBucket(session?.messages.length ?? 0),
+                session_count_bucket: countBucket(sessions.length),
+            });
             dispatch(HoudiniActions.deleteChatSession({ sessionId: sessionToDelete }));
         }
         setConfirmOpen(false);
         setSessionToDelete(null);
-    }, [dispatch, sessionToDelete]);
+    }, [dispatch, sessionToDelete, sessions]);
 
     const handleUpdateSessionName = useCallback((sessionId: string, newName: string) => {
+        trackFrontendIntent('chat.session_renamed');
         dispatch(HoudiniActions.updateSessionName({ sessionId, name: newName }));
     }, [dispatch]);
 

@@ -93,6 +93,14 @@ import {
 } from '@/utils/source-connection-form';
 import { buildDatabaseFieldOptions, SourceConnectionFields } from '@/components/source-connection-fields';
 import { SSL_KEYS } from '@/utils/source-ssl';
+import {
+    frontendAnalyticsErrorCode,
+    trackFormAbandoned,
+    trackFormOpened,
+    trackFormSubmitted,
+    trackFrontendIntent,
+    trackOptionChanged,
+} from '@/config/frontend-analytics';
 
 /**
  * URL params that are reserved for the standard login form fields and control flags.
@@ -194,6 +202,9 @@ export const LoginForm: FC<LoginFormProps> = ({
     const usernameInputRef = useRef<HTMLInputElement>(null);
     const handleSubmitRef = useRef<() => void>(() => {});
     const handleLoginWithSourceProfileSubmitRef = useRef<(overrideProfileId?: string) => void>(() => {});
+    const loginFormTouchedRef = useRef(false);
+    const loginSucceededRef = useRef(false);
+    const loginAnalyticsPropsRef = useRef<Record<string, unknown>>({});
     const [pendingAutoLogin, setPendingAutoLogin] = useState(false);
     const { setTheme } = useTheme();
 
@@ -272,6 +283,46 @@ export const LoginForm: FC<LoginFormProps> = ({
         return loginLoading || loginWithSourceProfileLoading || isAutoLoggingIn;
     }, [loginLoading, loginWithSourceProfileLoading, isAutoLoggingIn]);
 
+    const loginAnalyticsProps = useMemo(() => {
+        const filledAdvancedFields = Object.values(advancedForm).filter(value => value.trim().length > 0).length;
+        return {
+            auth_mode: selectedAvailableProfile ? 'profile' : 'credentials',
+            database_type: databaseType.id || 'unknown',
+            is_first_login: isFirstLogin,
+            is_embedded: isEmbedded,
+            has_profile: selectedAvailableProfile != null,
+            has_advanced_fields: filledAdvancedFields > 0,
+            advanced_field_count: filledAdvancedFields,
+            open: showAdvanced,
+        };
+    }, [advancedForm, databaseType.id, isEmbedded, isFirstLogin, selectedAvailableProfile, showAdvanced]);
+
+    useEffect(() => {
+        loginAnalyticsPropsRef.current = loginAnalyticsProps;
+    }, [loginAnalyticsProps]);
+
+    useEffect(() => {
+        trackFormOpened('source_login', loginAnalyticsPropsRef.current);
+        return () => {
+            if (loginFormTouchedRef.current && !loginSucceededRef.current) {
+                trackFormAbandoned('source_login', loginAnalyticsPropsRef.current);
+            }
+        };
+    }, []);
+
+    useEffect(() => {
+        if (
+            hostName.trim() ||
+            database.trim() ||
+            username.trim() ||
+            password.trim() ||
+            selectedAvailableProfile ||
+            Object.values(advancedForm).some(value => value.trim().length > 0)
+        ) {
+            loginFormTouchedRef.current = true;
+        }
+    }, [advancedForm, database, hostName, password, selectedAvailableProfile, username]);
+
     const markFirstLoginComplete = useCallback(() => {
         if (isFirstLogin) {
             localStorage.setItem(FIRST_LOGIN_KEY, 'true');
@@ -282,6 +333,10 @@ export const LoginForm: FC<LoginFormProps> = ({
 
     const handleLoginError = useCallback((loginError: unknown, allowDriverInstallPrompt = false) => {
         setIsAutoLoggingIn(false);
+        trackFrontendIntent('auth.login_failed', {
+            ...loginAnalyticsPropsRef.current,
+            error_code: frontendAnalyticsErrorCode(loginError),
+        });
 
         const errorMessage = loginError instanceof Error ? loginError.message : String(loginError);
 
@@ -310,12 +365,23 @@ export const LoginForm: FC<LoginFormProps> = ({
     }, [dispatch, t]);
 
     const handleSubmit = useCallback(() => {
+        loginFormTouchedRef.current = true;
+        trackFormSubmitted('source_login', {
+            ...loginAnalyticsPropsRef.current,
+            auth_mode: 'credentials',
+        });
+
         const credentialsAreComplete = databaseType.customFormRenderer != null
             ? canSubmitCustomConnectionForm(databaseType, hostName, username, password, advancedForm)
             : canSubmitStandardConnectionForm(databaseType, hostName, username, password, database, advancedForm);
 
         if (databaseType.id === "" || !credentialsAreComplete) {
             setIsAutoLoggingIn(false);
+            trackFrontendIntent('auth.login_blocked', {
+                ...loginAnalyticsPropsRef.current,
+                auth_mode: 'credentials',
+                error_code: 'invalid_input',
+            });
              setError(t('allFieldsRequired'));; return;
         }
         setError(undefined);
@@ -340,6 +406,11 @@ export const LoginForm: FC<LoginFormProps> = ({
 
                 if (!data?.LoginSource.Status) {
                     setIsAutoLoggingIn(false);
+                    trackFrontendIntent('auth.login_failed', {
+                        ...loginAnalyticsPropsRef.current,
+                        auth_mode: 'credentials',
+                        error_code: 'unknown',
+                    });
                     toast.error(t('loginFailed'));
                     return;
                 }
@@ -353,6 +424,13 @@ export const LoginForm: FC<LoginFormProps> = ({
                 shouldUpdateLastAccessed.current = true;
                 dispatch(AuthActions.login(profileData));
                 markFirstLoginComplete();
+                loginSucceededRef.current = true;
+                trackFrontendIntent('auth.login_succeeded', {
+                    ...loginAnalyticsPropsRef.current,
+                    auth_mode: 'credentials',
+                    database_type: databaseType.id,
+                    is_first_login: isFirstLogin,
+                });
 
                 const storageUnitPath = getStorageUnitPath(searchParams);
 
@@ -375,6 +453,11 @@ export const LoginForm: FC<LoginFormProps> = ({
     }, [advancedForm, database, databaseType, dispatch, handleLoginError, hostName, login, markFirstLoginComplete, navigate, onLoginSuccess, password, searchParams, setSearchParams, t, username]);
 
     const handleTestConnection = useCallback(() => {
+        loginFormTouchedRef.current = true;
+        trackFrontendIntent('auth.connection_test_submitted', {
+            ...loginAnalyticsPropsRef.current,
+            database_type: databaseType.id || 'unknown',
+        });
         const values = buildRecordInputs(hostName, database, username, password, advancedForm);
         void (async () => {
             try {
@@ -387,9 +470,18 @@ export const LoginForm: FC<LoginFormProps> = ({
                     },
                 });
                 if (data?.TestSourceConnection.Status) {
+                    trackFrontendIntent('auth.connection_test_succeeded', {
+                        ...loginAnalyticsPropsRef.current,
+                        database_type: databaseType.id || 'unknown',
+                    });
                     toast.success(t('testConnectionSuccess'));
                 }
             } catch (e: any) {
+                trackFrontendIntent('auth.connection_test_failed', {
+                    ...loginAnalyticsPropsRef.current,
+                    database_type: databaseType.id || 'unknown',
+                    error_code: frontendAnalyticsErrorCode(e),
+                });
                 toast.error(t('testConnectionFailed', { error: e?.message ?? '' }));
             }
         })();
@@ -397,7 +489,18 @@ export const LoginForm: FC<LoginFormProps> = ({
 
     const handleLoginWithSourceProfileSubmit = useCallback((overrideProfileId?: string) => {
         const profileId = overrideProfileId ?? selectedAvailableProfile;
+        loginFormTouchedRef.current = true;
+        trackFormSubmitted('source_login', {
+            ...loginAnalyticsPropsRef.current,
+            auth_mode: 'profile',
+            has_profile: profileId != null,
+        });
         if (profileId == null) {
+            trackFrontendIntent('auth.login_blocked', {
+                ...loginAnalyticsPropsRef.current,
+                auth_mode: 'profile',
+                error_code: 'invalid_input',
+            });
              setError(t('selectProfile'));; return;
         }
         setError(undefined);
@@ -416,6 +519,11 @@ export const LoginForm: FC<LoginFormProps> = ({
 
                 if (!data?.LoginWithSourceProfile.Status) {
                     setIsAutoLoggingIn(false);
+                    trackFrontendIntent('auth.login_failed', {
+                        ...loginAnalyticsPropsRef.current,
+                        auth_mode: 'profile',
+                        error_code: 'unknown',
+                    });
                     toast.error(t('loginFailed'));
                     return;
                 }
@@ -426,6 +534,13 @@ export const LoginForm: FC<LoginFormProps> = ({
                     dispatch(AuthActions.login(createProfilePayloadFromSourceProfile(profile)));
                 }
                 markFirstLoginComplete();
+                loginSucceededRef.current = true;
+                trackFrontendIntent('auth.login_succeeded', {
+                    ...loginAnalyticsPropsRef.current,
+                    auth_mode: 'profile',
+                    database_type: profile?.Type ?? 'unknown',
+                    is_first_login: isFirstLogin,
+                });
 
                 const storageUnitPath = getStorageUnitPath(searchParams);
 
@@ -452,7 +567,18 @@ export const LoginForm: FC<LoginFormProps> = ({
 
     const handleSampleDatabaseLogin = useCallback(() => {
         const sampleProfile = profiles?.SourceProfiles.find(p => p.Source === "builtin");
+        loginFormTouchedRef.current = true;
+        trackFormSubmitted('source_login', {
+            ...loginAnalyticsPropsRef.current,
+            auth_mode: 'sample',
+            database_type: sampleProfile?.Type ?? 'builtin',
+        });
         if (!sampleProfile) {
+            trackFrontendIntent('auth.login_blocked', {
+                ...loginAnalyticsPropsRef.current,
+                auth_mode: 'sample',
+                error_code: 'not_found',
+            });
             return toast.error(t('sampleDatabaseNotFound'));
         }
 
@@ -470,6 +596,11 @@ export const LoginForm: FC<LoginFormProps> = ({
 
                 if (!data?.LoginWithSourceProfile.Status) {
                     setIsAutoLoggingIn(false);
+                    trackFrontendIntent('auth.login_failed', {
+                        ...loginAnalyticsPropsRef.current,
+                        auth_mode: 'sample',
+                        error_code: 'unknown',
+                    });
                     toast.error(t('loginFailed'));
                     return;
                 }
@@ -478,6 +609,13 @@ export const LoginForm: FC<LoginFormProps> = ({
                 await clearGraphqlStore();
                 dispatch(AuthActions.login(createProfilePayloadFromSourceProfile(sampleProfile)));
                 markFirstLoginComplete();
+                loginSucceededRef.current = true;
+                trackFrontendIntent('auth.login_succeeded', {
+                    ...loginAnalyticsPropsRef.current,
+                    auth_mode: 'sample',
+                    database_type: sampleProfile.Type,
+                    is_first_login: isFirstLogin,
+                });
                 if (featureFlags.autoStartTourOnLogin) {
                     dispatch(TourActions.scheduleTourOnLoad('sample-database-tour'));
                 }
@@ -494,6 +632,10 @@ export const LoginForm: FC<LoginFormProps> = ({
     }, [appName, dispatch, handleLoginError, loginWithSourceProfile, markFirstLoginComplete, navigate, onLoginSuccess, profiles?.SourceProfiles, t]);
 
     const handleDatabaseTypeChange = useCallback((item: SourceTypeItem) => {
+        loginFormTouchedRef.current = true;
+        trackOptionChanged('database_type', item.id, {
+            database_type: item.id,
+        });
         setHostName("");
         setUsername("");
         setPassword("");
@@ -504,8 +646,12 @@ export const LoginForm: FC<LoginFormProps> = ({
     }, []);
 
     const handleAdvancedToggle = useCallback(() => {
-        setShowAdvanced(a => !a);
-    }, []);
+        const next = !showAdvanced;
+        trackOptionChanged('advanced_fields_visible', next, {
+            database_type: databaseType.id || 'unknown',
+        });
+        setShowAdvanced(next);
+    }, [databaseType.id, showAdvanced]);
 
     // Fetch available databases for file-based types after the form re-mounts.
     // This must be in useEffect (not in handleDatabaseTypeChange) because
@@ -525,6 +671,10 @@ export const LoginForm: FC<LoginFormProps> = ({
     }, []);
 
     const handleAvailableProfileChange = useCallback((itemId: string) => {
+        loginFormTouchedRef.current = true;
+        trackOptionChanged('source_profile_selected', true, {
+            has_profile: true,
+        });
         setSelectedAvailableProfile(itemId);
     }, []);
 
@@ -534,6 +684,13 @@ export const LoginForm: FC<LoginFormProps> = ({
      * then focuses the username field for easy credential entry.
      */
     const handleCloudConnectionPrefill = useCallback((data: ConnectionPrefillData) => {
+        loginFormTouchedRef.current = true;
+        trackFrontendIntent('auth.cloud_connection_prefilled', {
+            database_type: data.databaseType,
+            has_database: data.database != null && data.database.trim().length > 0,
+            has_advanced_fields: Object.keys(data.advanced).length > 0,
+            advanced_field_count: Object.keys(data.advanced).length,
+        });
         // Find the database type in our dropdown items
         const dbType = databaseTypeItems.find(item =>
             item.id.toLowerCase() === data.databaseType.toLowerCase()
@@ -570,9 +727,16 @@ export const LoginForm: FC<LoginFormProps> = ({
     }, [databaseTypeItems, handleDatabaseTypeChange]);
 
     const handleBrowseDatabaseFile = useCallback(async () => {
+        loginFormTouchedRef.current = true;
+        trackFrontendIntent('auth.database_file_picker_opened', {
+            database_type: databaseType.id || 'unknown',
+        });
         try {
             const filePath = await selectDatabaseFile(databaseType.id);
             if (filePath) {
+                trackFrontendIntent('auth.database_file_selected', {
+                    database_type: databaseType.id || 'unknown',
+                });
                 setDatabase(filePath);
             }
         } catch (error) {

@@ -47,6 +47,7 @@ import {AzureProvidersSection} from "../../components/azure";
 import {GcpProvidersSection} from "../../components/gcp";
 import {getComponent} from "../../config/component-registry";
 import {SettingsConfigDocument} from "@graphql";
+import {trackOptionChanged} from "@/config/frontend-analytics";
 
 export const SettingsPage: FC = () => {
     const {t} = useTranslation('pages/settings');
@@ -74,7 +75,10 @@ export const SettingsPage: FC = () => {
     const gcpProviderEnabled = settingsData?.SettingsConfig?.GCPProviderEnabled ?? false;
 
     const pageSizeOptions = useMemo(() => ({
-        onPageSizeChange: (size: number) => dispatch(SettingsActions.setDefaultPageSize(size)),
+        onPageSizeChange: (size: number) => {
+            trackOptionChanged('default_page_size', size);
+            dispatch(SettingsActions.setDefaultPageSize(size));
+        },
         maxPageSize,
     }), [dispatch, maxPageSize]);
 
@@ -103,51 +107,69 @@ export const SettingsPage: FC = () => {
     }, [dispatch]);
 
     const handleStorageUnitViewToggle = useCallback((view: 'list' | 'card') => {
+        trackOptionChanged('storage_unit_view', view, {
+            view_mode: view,
+        });
         dispatch(SettingsActions.setStorageUnitView(view));
     }, [dispatch]);
 
     const handleFontSizeChange = useCallback((size: 'small' | 'medium' | 'large') => {
+        trackOptionChanged('font_size', size);
         dispatch(SettingsActions.setFontSize(size));
     }, [dispatch]);
 
     const handleBorderRadiusChange = useCallback((radius: 'none' | 'small' | 'medium' | 'large') => {
+        trackOptionChanged('border_radius', radius);
         dispatch(SettingsActions.setBorderRadius(radius));
     }, [dispatch]);
 
     const handleSpacingChange = useCallback((space: 'compact' | 'comfortable' | 'spacious') => {
+        trackOptionChanged('spacing', space);
         dispatch(SettingsActions.setSpacing(space));
     }, [dispatch]);
 
     const handleWhereConditionModeChange = useCallback((mode: 'popover' | 'sheet') => {
+        trackOptionChanged('where_condition_mode', mode);
         dispatch(SettingsActions.setWhereConditionMode(mode));
     }, [dispatch]);
 
     const handleLanguageChange = useCallback((lang: SupportedLanguage) => {
+        trackOptionChanged('language', lang);
         dispatch(SettingsActions.setLanguage(lang));
     }, [dispatch]);
 
     const handleDatabaseSchemaTerminologyChange = useCallback((terminology: 'database' | 'schema') => {
+        trackOptionChanged('database_schema_terminology', terminology);
         dispatch(SettingsActions.setDatabaseSchemaTerminology(terminology));
     }, [dispatch]);
 
     const handleDisableAnimationsToggle = useCallback((disabled: boolean) => {
+        trackOptionChanged('disable_animations', disabled);
         dispatch(SettingsActions.setDisableAnimations(disabled));
     }, [dispatch]);
 
     const handleFormatDatesLocaleToggle = useCallback((enabled: boolean) => {
+        trackOptionChanged('format_dates_locale', enabled);
         dispatch(SettingsActions.setFormatDatesLocale(enabled));
     }, [dispatch]);
 
     const handleFormatBooleansReadableToggle = useCallback((enabled: boolean) => {
+        trackOptionChanged('format_booleans_readable', enabled);
         dispatch(SettingsActions.setFormatBooleansReadable(enabled));
     }, [dispatch]);
+
+    const handleTabChange = useCallback((tab: string) => {
+        trackOptionChanged('settings_tab', tab, {
+            tab,
+        });
+    }, []);
 
     const hasIntegrations = cloudProvidersEnabled || !!getComponent('bridge-driver-panel');
 
     return (
         <InternalPage routes={[InternalRoutes.Settings as IInternalRoute]}>
             <div className="flex flex-col items-center w-full max-w-2xl mx-auto py-10 gap-8">
-                <Tabs defaultValue="appearance" className="w-full">
+                <Tabs defaultValue="appearance" className="w-full" onValueChange={handleTabChange}>
                     <TabsList className="w-full">
                         <TabsTrigger value="appearance">{t('tabAppearance')}</TabsTrigger>
                         <TabsTrigger value="behavior">{t('tabBehavior')}</TabsTrigger>

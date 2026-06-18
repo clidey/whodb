@@ -39,6 +39,7 @@ import {
     TrashIcon,
 } from "../heroicons";
 import { removeCloudProviderCache, upsertCloudProviderCache } from "../../utils/apollo-provider-cache";
+import { countBucket, frontendAnalyticsErrorCode, trackFrontendIntent } from "../../config/frontend-analytics";
 
 /**
  * Returns the appropriate badge variant for a provider status.
@@ -79,14 +80,24 @@ export const GcpProvidersSection: FC = () => {
     const [removeProvider, { loading: removeLoading }] = useMutation(RemoveCloudProviderDocument);
 
     const handleAddProvider = useCallback(() => {
+        trackFrontendIntent('cloud_provider.create_opened', {
+            provider_type: 'gcp',
+            provider_count_bucket: countBucket(gcpProviders.length),
+        });
         dispatch(ProvidersActions.openAddProviderModal({ providerType: CloudProviderType.Gcp }));
-    }, [dispatch]);
+    }, [dispatch, gcpProviders.length]);
 
     const handleEditProvider = useCallback((id: string) => {
+        trackFrontendIntent('cloud_provider.edit_opened', {
+            provider_type: 'gcp',
+        });
         dispatch(ProvidersActions.openEditProviderModal({ id, providerType: CloudProviderType.Gcp }));
     }, [dispatch]);
 
     const handleRemoveProvider = useCallback(async (id: string, name: string) => {
+        trackFrontendIntent('cloud_provider.delete_clicked', {
+            provider_type: 'gcp',
+        });
         try {
             const { data } = await removeProvider({
                 variables: { id },
@@ -97,15 +108,25 @@ export const GcpProvidersSection: FC = () => {
             });
             if (data?.RemoveCloudProvider?.Status) {
                 dispatch(ProvidersActions.removeCloudProvider({ id }));
+                trackFrontendIntent('cloud_provider.deleted', {
+                    provider_type: 'gcp',
+                });
                 toast.success(t('providerRemoved', { name }));
             }
         } catch (error) {
+            trackFrontendIntent('cloud_provider.delete_failed', {
+                provider_type: 'gcp',
+                error_code: frontendAnalyticsErrorCode(error),
+            });
             const errorMessage = error instanceof Error ? error.message : t('unknownError');
             toast.error(t('removeFailed', { error: errorMessage }));
         }
     }, [removeProvider, dispatch, t]);
 
     const handleRefreshProvider = useCallback(async (id: string) => {
+        trackFrontendIntent('cloud_provider.refresh_clicked', {
+            provider_type: 'gcp',
+        });
         dispatch(ProvidersActions.setProviderStatus({ id, status: CloudProviderStatus.Discovering }));
         try {
             const { data } = await refreshProvider({
@@ -119,10 +140,19 @@ export const GcpProvidersSection: FC = () => {
             });
             if (data?.RefreshCloudProvider) {
                 dispatch(ProvidersActions.updateCloudProvider(data.RefreshCloudProvider as LocalCloudProvider));
+                trackFrontendIntent('cloud_provider.refreshed', {
+                    provider_type: 'gcp',
+                    discovered_count: data.RefreshCloudProvider.DiscoveredCount,
+                    discovered_count_bucket: countBucket(data.RefreshCloudProvider.DiscoveredCount),
+                });
                 toast.success(t('refreshComplete', { count: data.RefreshCloudProvider.DiscoveredCount }));
             }
         } catch (error) {
             dispatch(ProvidersActions.setProviderStatus({ id, status: CloudProviderStatus.Error }));
+            trackFrontendIntent('cloud_provider.refresh_failed', {
+                provider_type: 'gcp',
+                error_code: frontendAnalyticsErrorCode(error),
+            });
             const errorMessage = error instanceof Error ? error.message : t('unknownError');
             toast.error(t('refreshFailed', { error: errorMessage }));
         }

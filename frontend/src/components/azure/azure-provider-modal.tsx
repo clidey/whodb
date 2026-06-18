@@ -16,7 +16,7 @@
 
 import { skipToken, useMutation, useQuery } from "@apollo/client/react";
 import type { FC} from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     Badge,
     Button,
@@ -50,6 +50,14 @@ import { ProvidersActions } from "../../store/providers";
 import { useTranslation } from "@/hooks/use-translation";
 import { ChevronDownIcon, CloudIcon } from "../heroicons";
 import { upsertAzureProviderCache, upsertCloudProviderCache } from "../../utils/apollo-provider-cache";
+import {
+    frontendAnalyticsErrorCode,
+    trackFormAbandoned,
+    trackFormOpened,
+    trackFormSubmitted,
+    trackFrontendIntent,
+    trackOptionChanged,
+} from "../../config/frontend-analytics";
 
 export interface AzureProviderModalProps {
     open: boolean;
@@ -100,6 +108,8 @@ export const AzureProviderModal: FC<AzureProviderModalProps> = ({
     const [discoverMySQL, setDiscoverMySQL] = useState(true);
     const [discoverRedis, setDiscoverRedis] = useState(true);
     const [discoverCosmosDB, setDiscoverCosmosDB] = useState(true);
+    const dirtyRef = useRef(false);
+    const succeededRef = useRef(false);
 
     // GraphQL mutations
     const [addProvider, { loading: addLoading }] = useMutation(AddAzureProviderDocument, {
@@ -129,6 +139,13 @@ export const AzureProviderModal: FC<AzureProviderModalProps> = ({
     // Reset form when modal opens/closes or editingProvider changes
     useEffect(() => {
         if (open) {
+            succeededRef.current = false;
+            dirtyRef.current = false;
+            trackFormOpened('cloud_provider', {
+                provider_type: 'azure',
+                mode: isEditMode ? 'edit' : 'create',
+                auth_mode: authMethod,
+            });
             if (editingProvider) {
                 setName(editingProvider.Name);
                 setSubscriptionId(editingProvider.SubscriptionID);
@@ -160,6 +177,29 @@ export const AzureProviderModal: FC<AzureProviderModalProps> = ({
         }
     }, [open, editingProvider]);
 
+    useEffect(() => {
+        if (!open) {
+            return;
+        }
+        if (name.trim() || subscriptionId.trim() || tenantId.trim() || clientId.trim() || resourceGroup.trim()) {
+            dirtyRef.current = true;
+        }
+    }, [clientId, name, open, resourceGroup, subscriptionId, tenantId]);
+
+    useEffect(() => {
+        if (open) {
+            return;
+        }
+        if (dirtyRef.current && !succeededRef.current) {
+            trackFormAbandoned('cloud_provider', {
+                provider_type: 'azure',
+                mode: isEditMode ? 'edit' : 'create',
+                auth_mode: authMethod,
+            });
+        }
+        dirtyRef.current = false;
+    }, [authMethod, isEditMode, open]);
+
     const handleClose = useCallback(() => {
         onOpenChange(false);
         dispatch(ProvidersActions.closeProviderModal());
@@ -169,6 +209,11 @@ export const AzureProviderModal: FC<AzureProviderModalProps> = ({
     const handleSelectSubscription = useCallback((subId: string) => {
         const sub = subscriptions.find(s => s.Id === subId);
         if (!sub) return;
+        dirtyRef.current = true;
+        trackFrontendIntent('cloud_provider.subscription_selected', {
+            provider_type: 'azure',
+            auth_mode: authMethod,
+        });
 
         setSubscriptionId(sub.Id);
         if (!name) {
@@ -204,12 +249,30 @@ export const AzureProviderModal: FC<AzureProviderModalProps> = ({
     }, [name, subscriptionId, authMethod, tenantId, clientId, clientSecret, resourceGroup, discoverPostgreSQL, discoverMySQL, discoverRedis, discoverCosmosDB, isServicePrincipal]);
 
     const handleSubmit = useCallback(async () => {
+        dirtyRef.current = true;
+        trackFormSubmitted('cloud_provider', {
+            provider_type: 'azure',
+            mode: isEditMode ? 'edit' : 'create',
+            auth_mode: authMethod,
+        });
         if (!name.trim()) {
+            trackFrontendIntent('cloud_provider.save_blocked', {
+                provider_type: 'azure',
+                mode: isEditMode ? 'edit' : 'create',
+                auth_mode: authMethod,
+                error_code: 'invalid_input',
+            });
             toast.error(t('nameRequired'));
             return;
         }
 
         if (!subscriptionId.trim()) {
+            trackFrontendIntent('cloud_provider.save_blocked', {
+                provider_type: 'azure',
+                mode: isEditMode ? 'edit' : 'create',
+                auth_mode: authMethod,
+                error_code: 'invalid_input',
+            });
             toast.error(t('subscriptionRequired'));
             return;
         }
@@ -222,6 +285,12 @@ export const AzureProviderModal: FC<AzureProviderModalProps> = ({
                     variables: { id: editingProviderId, input },
                 });
                 if (data?.UpdateAzureProvider) {
+                    succeededRef.current = true;
+                    trackFrontendIntent('cloud_provider.saved', {
+                        provider_type: 'azure',
+                        mode: 'edit',
+                        auth_mode: authMethod,
+                    });
                     toast.success(t('providerUpdated'));
                     handleClose();
                 }
@@ -230,18 +299,41 @@ export const AzureProviderModal: FC<AzureProviderModalProps> = ({
                     variables: { input },
                 });
                 if (data?.AddAzureProvider) {
+                    succeededRef.current = true;
+                    trackFrontendIntent('cloud_provider.saved', {
+                        provider_type: 'azure',
+                        mode: 'create',
+                        auth_mode: authMethod,
+                    });
                     toast.success(t('providerAdded'));
                     handleClose();
                 }
             }
         } catch (error) {
+            trackFrontendIntent('cloud_provider.save_failed', {
+                provider_type: 'azure',
+                mode: isEditMode ? 'edit' : 'create',
+                auth_mode: authMethod,
+                error_code: frontendAnalyticsErrorCode(error),
+            });
             const errorMessage = error instanceof Error ? error.message : t('unknownError');
             toast.error(t('operationFailed', { error: errorMessage }));
         }
     }, [name, subscriptionId, buildInput, isEditMode, editingProviderId, updateProvider, addProvider, handleClose, t]);
 
     const handleTest = useCallback(async () => {
+        trackFrontendIntent('cloud_provider.test_clicked', {
+            provider_type: 'azure',
+            mode: isEditMode ? 'edit' : 'create',
+            auth_mode: authMethod,
+        });
         if (!name.trim() || !subscriptionId.trim()) {
+            trackFrontendIntent('cloud_provider.test_blocked', {
+                provider_type: 'azure',
+                mode: isEditMode ? 'edit' : 'create',
+                auth_mode: authMethod,
+                error_code: 'invalid_input',
+            });
             toast.error(t('nameRequired'));
             return;
         }
@@ -252,11 +344,28 @@ export const AzureProviderModal: FC<AzureProviderModalProps> = ({
                 variables: { input },
             });
             if (data?.TestAzureCredentials === CloudProviderStatus.Connected) {
+                trackFrontendIntent('cloud_provider.test_succeeded', {
+                    provider_type: 'azure',
+                    mode: isEditMode ? 'edit' : 'create',
+                    auth_mode: authMethod,
+                });
                 toast.success(t('connectionSuccessful'));
             } else {
+                trackFrontendIntent('cloud_provider.test_failed', {
+                    provider_type: 'azure',
+                    mode: isEditMode ? 'edit' : 'create',
+                    auth_mode: authMethod,
+                    error_code: 'connection_failed',
+                });
                 toast.error(t('connectionFailed'));
             }
         } catch (error) {
+            trackFrontendIntent('cloud_provider.test_failed', {
+                provider_type: 'azure',
+                mode: isEditMode ? 'edit' : 'create',
+                auth_mode: authMethod,
+                error_code: frontendAnalyticsErrorCode(error),
+            });
             const errorMessage = error instanceof Error ? error.message : t('unknownError');
             toast.error(t('testFailed', { error: errorMessage }));
         }
@@ -353,7 +462,14 @@ export const AzureProviderModal: FC<AzureProviderModalProps> = ({
                         <Label>{t('authMethod')}</Label>
                         <SearchSelect
                             value={authMethod}
-                            onChange={setAuthMethod}
+                            onChange={(nextAuthMethod) => {
+                                dirtyRef.current = true;
+                                trackOptionChanged('cloud_provider_auth_method', nextAuthMethod, {
+                                    provider_type: 'azure',
+                                    auth_mode: nextAuthMethod,
+                                });
+                                setAuthMethod(nextAuthMethod);
+                            }}
                             options={authMethodOptions}
                             placeholder={t('selectAuthMethod')}
                             contentClassName="w-[var(--radix-popover-trigger-width)]"

@@ -16,7 +16,7 @@
 
 import { skipToken, useMutation, useQuery } from "@apollo/client/react";
 import type { FC} from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     Badge,
     Button,
@@ -54,6 +54,13 @@ import { useTranslation } from "@/hooks/use-translation";
 import { useSourceTypeItems } from "@/hooks/useSourceCatalog";
 import { ChevronDownIcon, CloudIcon } from "../heroicons";
 import { upsertCloudProviderCache } from "../../utils/apollo-provider-cache";
+import {
+    frontendAnalyticsErrorCode,
+    trackFormAbandoned,
+    trackFormOpened,
+    trackFormSubmitted,
+    trackFrontendIntent,
+} from "../../config/frontend-analytics";
 
 export interface AwsProviderModalProps {
     open: boolean;
@@ -98,6 +105,8 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
     const [discoverElastiCache, setDiscoverElastiCache] = useState(true);
     const [discoverDocumentDB, setDiscoverDocumentDB] = useState(true);
     const [discoverS3, setDiscoverS3] = useState(true);
+    const dirtyRef = useRef(false);
+    const succeededRef = useRef(false);
 
     // GraphQL mutations - refetch providers and connections after add/update
     const [addProvider, { loading: addLoading }] = useMutation(AddAwsProviderDocument, {
@@ -125,6 +134,12 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
     // Reset form when modal opens/closes or editingProvider changes
     useEffect(() => {
         if (open) {
+            succeededRef.current = false;
+            dirtyRef.current = false;
+            trackFormOpened('cloud_provider', {
+                provider_type: 'aws',
+                mode: isEditMode ? 'edit' : 'create',
+            });
             if (editingProvider) {
                 setName(editingProvider.Name);
                 // Check if region is in the predefined list
@@ -155,6 +170,28 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
         }
     }, [open, editingProvider]);
 
+    useEffect(() => {
+        if (!open) {
+            return;
+        }
+        if (name.trim() || profileName.trim() || customRegion.trim()) {
+            dirtyRef.current = true;
+        }
+    }, [customRegion, name, open, profileName]);
+
+    useEffect(() => {
+        if (open) {
+            return;
+        }
+        if (dirtyRef.current && !succeededRef.current) {
+            trackFormAbandoned('cloud_provider', {
+                provider_type: 'aws',
+                mode: isEditMode ? 'edit' : 'create',
+            });
+        }
+        dirtyRef.current = false;
+    }, [isEditMode, open]);
+
     const handleClose = useCallback(() => {
         onOpenChange(false);
         dispatch(ProvidersActions.closeProviderModal());
@@ -162,6 +199,11 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
 
     /** Auto-fill form from a discovered local profile. */
     const handleSelectLocalProfile = useCallback((profile: LocalAwsProfile) => {
+        dirtyRef.current = true;
+        trackFrontendIntent('cloud_provider.local_profile_selected', {
+            provider_type: 'aws',
+            auth_mode: profile.AuthType ?? 'unknown',
+        });
         // Set name based on profile
         const displayName = profile.IsDefault
             ? t('defaultAwsName')
@@ -210,13 +252,29 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
     }, [name, getEffectiveRegion, profileName, discoverRDS, discoverElastiCache, discoverDocumentDB, discoverS3]);
 
     const handleSubmit = useCallback(async () => {
+        dirtyRef.current = true;
+        trackFormSubmitted('cloud_provider', {
+            provider_type: 'aws',
+            mode: isEditMode ? 'edit' : 'create',
+            has_profile: profileName.trim().length > 0,
+        });
         if (!name.trim()) {
+            trackFrontendIntent('cloud_provider.save_blocked', {
+                provider_type: 'aws',
+                mode: isEditMode ? 'edit' : 'create',
+                error_code: 'invalid_input',
+            });
             toast.error(t('nameRequired'));
             return;
         }
 
         const effectiveRegion = getEffectiveRegion();
         if (!effectiveRegion.trim()) {
+            trackFrontendIntent('cloud_provider.save_blocked', {
+                provider_type: 'aws',
+                mode: isEditMode ? 'edit' : 'create',
+                error_code: 'invalid_input',
+            });
             toast.error(t('regionRequired'));
             return;
         }
@@ -230,6 +288,11 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
                 });
                 if (data?.UpdateAWSProvider) {
                     dispatch(ProvidersActions.updateCloudProvider(data.UpdateAWSProvider as LocalCloudProvider));
+                    succeededRef.current = true;
+                    trackFrontendIntent('cloud_provider.saved', {
+                        provider_type: 'aws',
+                        mode: 'edit',
+                    });
                     toast.success(t('providerUpdated'));
                     handleClose();
                 }
@@ -239,19 +302,38 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
                 });
                 if (data?.AddAWSProvider) {
                     dispatch(ProvidersActions.addCloudProvider(data.AddAWSProvider as LocalCloudProvider));
+                    succeededRef.current = true;
+                    trackFrontendIntent('cloud_provider.saved', {
+                        provider_type: 'aws',
+                        mode: 'create',
+                    });
                     toast.success(t('providerAdded'));
                     handleClose();
                 }
             }
         } catch (error) {
+            trackFrontendIntent('cloud_provider.save_failed', {
+                provider_type: 'aws',
+                mode: isEditMode ? 'edit' : 'create',
+                error_code: frontendAnalyticsErrorCode(error),
+            });
             const errorMessage = error instanceof Error ? error.message : t('unknownError');
             toast.error(t('operationFailed', { error: errorMessage }));
         }
     }, [name, getEffectiveRegion, buildInput, isEditMode, editingProviderId, updateProvider, addProvider, dispatch, handleClose, t]);
 
     const handleTest = useCallback(async () => {
+        trackFrontendIntent('cloud_provider.test_clicked', {
+            provider_type: 'aws',
+            mode: isEditMode ? 'edit' : 'create',
+        });
         const effectiveRegion = getEffectiveRegion();
         if (!name.trim() || !effectiveRegion.trim()) {
+            trackFrontendIntent('cloud_provider.test_blocked', {
+                provider_type: 'aws',
+                mode: isEditMode ? 'edit' : 'create',
+                error_code: 'invalid_input',
+            });
             toast.error(t('nameRequired'));
             return;
         }
@@ -263,12 +345,21 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
                     variables: { id: editingProviderId },
                 });
                 if (data?.TestCloudProvider === CloudProviderStatus.Connected) {
+                    trackFrontendIntent('cloud_provider.test_succeeded', {
+                        provider_type: 'aws',
+                        mode: 'edit',
+                    });
                     dispatch(ProvidersActions.setProviderStatus({
                         id: editingProviderId,
                         status: CloudProviderStatus.Connected,
                     }));
                     toast.success(t('connectionSuccessful'));
                 } else {
+                    trackFrontendIntent('cloud_provider.test_failed', {
+                        provider_type: 'aws',
+                        mode: 'edit',
+                        error_code: 'connection_failed',
+                    });
                     dispatch(ProvidersActions.setProviderStatus({
                         id: editingProviderId,
                         status: CloudProviderStatus.Error,
@@ -282,12 +373,26 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
                     variables: { input },
                 });
                 if (data?.TestAWSCredentials === CloudProviderStatus.Connected) {
+                    trackFrontendIntent('cloud_provider.test_succeeded', {
+                        provider_type: 'aws',
+                        mode: 'create',
+                    });
                     toast.success(t('connectionSuccessful'));
                 } else {
+                    trackFrontendIntent('cloud_provider.test_failed', {
+                        provider_type: 'aws',
+                        mode: 'create',
+                        error_code: 'connection_failed',
+                    });
                     toast.error(t('connectionFailed'));
                 }
             }
         } catch (error) {
+            trackFrontendIntent('cloud_provider.test_failed', {
+                provider_type: 'aws',
+                mode: isEditMode ? 'edit' : 'create',
+                error_code: frontendAnalyticsErrorCode(error),
+            });
             const errorMessage = error instanceof Error ? error.message : t('unknownError');
             toast.error(t('testFailed', { error: errorMessage }));
         }

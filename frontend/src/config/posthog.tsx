@@ -37,6 +37,131 @@ type AnalyticsUserIdentity = {
     groups?: AnalyticsGroupIdentity[];
 };
 
+type SafePropertyValue = string | number | boolean | null;
+
+const SAFE_PROPERTY_KEYS = new Set([
+    'action',
+    'app_type',
+    'auth_mode',
+    'auto_scroll_enabled',
+    'billing_interval',
+    'build_edition',
+    'build_environment',
+    'connection_mode',
+    'database_type',
+    'decision',
+    'deployment',
+    'direction',
+    'enabled',
+    'error_code',
+    'field',
+    'form',
+    'has_advanced_fields',
+    'has_custom_slug',
+    'has_database',
+    'has_model',
+    'has_password',
+    'has_profile',
+    'has_provider',
+    'has_source',
+    'has_token',
+    'input_method',
+    'interval',
+    'is_desktop',
+    'is_embedded',
+    'is_first_login',
+    'is_template',
+    'language',
+    'mode',
+    'model_type',
+    'node_type',
+    'open',
+    'operation_type',
+    'outcome',
+    'plan',
+    'platform',
+    'provider_type',
+    'route',
+    'scope',
+    'section',
+    'selected',
+    'source',
+    'status',
+    'step',
+    'tab',
+    'trigger',
+    'view_mode',
+]);
+
+const SAFE_PROPERTY_SUFFIXES = [
+    '_bucket',
+    '_count',
+    '_enabled',
+    '_index',
+    '_mode',
+    '_present',
+    '_selected',
+    '_type',
+    '_visible',
+];
+
+const SENSITIVE_PROPERTY_PATTERN = /(api[_-]?key|credential|email|host|hostname|name|password|path|prompt|query|secret|sql|text|token|url|username|value)/i;
+
+const isDesktopApp = () => (
+    typeof window !== 'undefined' &&
+    (!!(window as any).go?.main?.App || !!(window as any).go?.common?.App)
+);
+
+const safePropertyValue = (value: unknown): SafePropertyValue | undefined => {
+    if (value == null) {
+        return null;
+    }
+    if (typeof value === 'string') {
+        const trimmed = value.trim();
+        if (!trimmed) {
+            return undefined;
+        }
+        return trimmed.length > 96 ? trimmed.slice(0, 96) : trimmed;
+    }
+    if (typeof value === 'number') {
+        return Number.isFinite(value) ? value : undefined;
+    }
+    if (typeof value === 'boolean') {
+        return value;
+    }
+    return undefined;
+};
+
+const isSafePropertyKey = (key: string) => {
+    if (SENSITIVE_PROPERTY_PATTERN.test(key)) {
+        return key.endsWith('_present') || key.endsWith('_bucket') || key.endsWith('_count') || key.endsWith('_type');
+    }
+    return SAFE_PROPERTY_KEYS.has(key) || SAFE_PROPERTY_SUFFIXES.some(suffix => key.endsWith(suffix));
+};
+
+const sanitizeAnalyticsProperties = (properties?: Record<string, unknown>): Record<string, SafePropertyValue> => {
+    const base: Record<string, SafePropertyValue> = {
+        build_edition: getBuildEdition(),
+        build_environment: getEnvEnvironment(),
+        app_type: isDesktopApp() ? 'desktop' : 'web',
+        platform: isDesktopApp() ? 'wails' : 'browser',
+    };
+    if (deploymentName) {
+        base.deployment = deploymentName;
+    }
+
+    for (const [key, value] of Object.entries(properties ?? {})) {
+        if (!isSafePropertyKey(key)) {
+            continue;
+        }
+        const safeValue = safePropertyValue(value);
+        if (safeValue !== undefined) {
+            base[key] = safeValue;
+        }
+    }
+    return base;
+};
+
 let posthogModulePromise: Promise<typeof PostHogModule> | null = null;
 let initPromise: Promise<PostHog | null> | null = null;
 let activeClient: PostHog | null = null;
@@ -154,8 +279,7 @@ const registerContext = (client: PostHog) => {
     }
     const domain = window.location.hostname || 'localhost';
 
-    // Check if running as desktop app
-    const isDesktop = !!(window as any).go?.main?.App || !!(window as any).go?.common?.App;
+    const isDesktop = isDesktopApp();
 
     const properties: Record<string, string> = {
         site_domain: domain,
@@ -295,11 +419,9 @@ const ensureInitializedClient = async (): Promise<PostHog | null> => {
                 if (isDesktop) {
                     // Track desktop app launch
                     if (consent === 'granted') {
-                        client.capture('desktop_app_launched', {
+                        client.capture('desktop_app_launched', sanitizeAnalyticsProperties({
                             platform: 'wails',
-                            build_edition: getBuildEdition(),
-                            build_environment: getEnvEnvironment(),
-                        });
+                        }));
                     }
                 }
             },
@@ -339,7 +461,7 @@ export const trackFrontendEvent = async (event: string, properties?: Record<stri
 
     try {
         const client = await ensureInitializedClient();
-        client?.capture(event, properties ?? {});
+        client?.capture(event, sanitizeAnalyticsProperties(properties));
     } catch {
         // do nothing
     }

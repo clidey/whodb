@@ -42,12 +42,20 @@ import {
     type SourceObjectRefInput,
 } from "@graphql";
 import type { FC} from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { TypeSelector } from "../../components/type-selector";
 import { CheckCircleIcon, PlusCircleIcon, XCircleIcon } from "../../components/heroicons";
 import { findColumnTypeDefinition } from "../../utils/source-column-types";
 import { trackFrontendEvent } from "../../config/posthog";
 import { useTranslation } from "../../hooks/use-translation";
+import {
+    countBucket,
+    frontendAnalyticsErrorCode,
+    trackFormAbandoned,
+    trackFormOpened,
+    trackFormSubmitted,
+    trackFrontendIntent,
+} from "../../config/frontend-analytics";
 
 type ColumnFormState = {
     Name: string;
@@ -70,6 +78,7 @@ type CreateSourceObjectCardProps = {
     referenceColumnsByName?: Record<string, string[]>;
     referenceObjects?: { name: string }[];
     singularStorageUnitLabel: string;
+    isOpen: boolean;
     onCreated: () => void;
     onErrorChange: (error?: string) => void;
     onClose: () => void;
@@ -129,6 +138,7 @@ export const CreateSourceObjectCard: FC<CreateSourceObjectCardProps> = ({
     referenceColumnsByName,
     referenceObjects = [],
     singularStorageUnitLabel,
+    isOpen,
     onCreated,
     onErrorChange,
     onClose,
@@ -146,6 +156,42 @@ export const CreateSourceObjectCard: FC<CreateSourceObjectCardProps> = ({
     const capabilities = metadata?.ColumnCapabilities;
     const labels = metadata?.ColumnLabels;
     const typeDefinitions = metadata?.TypeDefinitions ?? [];
+    const openedRef = useRef(false);
+    const dirtyRef = useRef(false);
+    const succeededRef = useRef(false);
+
+    const formAnalyticsProps = useMemo(() => ({
+        database_type: databaseType ?? "unknown",
+        field_count: columns.length,
+        field_count_bucket: countBucket(columns.length),
+        has_advanced_fields: Object.values(tableOptions).some(value => value.trim().length > 0),
+    }), [columns.length, databaseType, tableOptions]);
+
+    useEffect(() => {
+        if (isOpen && !openedRef.current) {
+            openedRef.current = true;
+            succeededRef.current = false;
+            trackFormOpened('storage_unit_create', formAnalyticsProps);
+            return;
+        }
+
+        if (!isOpen && openedRef.current) {
+            if (dirtyRef.current && !succeededRef.current) {
+                trackFormAbandoned('storage_unit_create', formAnalyticsProps);
+            }
+            openedRef.current = false;
+            dirtyRef.current = false;
+        }
+    }, [formAnalyticsProps, isOpen]);
+
+    useEffect(() => {
+        if (!isOpen) {
+            return;
+        }
+        if (name.trim().length > 0 || columns.length > 1 || columns.some(column => column.Name.trim().length > 0)) {
+            dirtyRef.current = true;
+        }
+    }, [columns, isOpen, name]);
 
     useEffect(() => {
         if (!firstType) {
@@ -168,6 +214,7 @@ export const CreateSourceObjectCard: FC<CreateSourceObjectCardProps> = ({
     }, []);
 
     const handleAddColumn = useCallback(() => {
+        dirtyRef.current = true;
         setColumns(current => [...current, emptyColumn(firstType)]);
         void trackFrontendEvent("ui.storage_unit_field_added", {
             database_type: databaseType ?? "unknown",
@@ -175,6 +222,7 @@ export const CreateSourceObjectCard: FC<CreateSourceObjectCardProps> = ({
     }, [databaseType, firstType]);
 
     const handleRemoveColumn = useCallback((index: number) => {
+        dirtyRef.current = true;
         setColumns(current => current.length <= 1 ? current : current.filter((_, columnIndex) => columnIndex !== index));
     }, []);
 
@@ -214,11 +262,20 @@ export const CreateSourceObjectCard: FC<CreateSourceObjectCardProps> = ({
     }, [tableOptions]);
 
     const handleSubmit = useCallback(() => {
+        trackFormSubmitted('storage_unit_create', formAnalyticsProps);
         if (name.trim().length === 0) {
+            trackFrontendIntent('ui.storage_unit_create_blocked', {
+                ...formAnalyticsProps,
+                error_code: 'invalid_input',
+            });
             onErrorChange(t("nameRequired"));
             return;
         }
         if (metadata?.RequiresColumns && definitionColumns.some(column => column.Name.trim().length === 0 || column.Type.trim().length === 0)) {
+            trackFrontendIntent('ui.storage_unit_create_blocked', {
+                ...formAnalyticsProps,
+                error_code: 'invalid_input',
+            });
             onErrorChange(t("fieldsCannotBeEmpty"));
             return;
         }
@@ -233,6 +290,7 @@ export const CreateSourceObjectCard: FC<CreateSourceObjectCardProps> = ({
                 },
             },
             onCompleted() {
+                succeededRef.current = true;
                 toast.success(t("createSuccessMessage", { storageUnit: `${singularStorageUnitLabel} ${name.trim()}` }));
                 void trackFrontendEvent("ui.storage_unit_created", {
                     database_type: databaseType ?? "unknown",
@@ -244,6 +302,10 @@ export const CreateSourceObjectCard: FC<CreateSourceObjectCardProps> = ({
                 onClose();
             },
             onError(error) {
+                trackFrontendIntent('ui.storage_unit_create_failed', {
+                    ...formAnalyticsProps,
+                    error_code: frontendAnalyticsErrorCode(error),
+                });
                 toast.error(error.message);
             },
         });
@@ -253,6 +315,7 @@ export const CreateSourceObjectCard: FC<CreateSourceObjectCardProps> = ({
 	definitionColumns,
 	definitionTableOptions,
 	firstType,
+	formAnalyticsProps,
 	metadata?.RequiresColumns,
 	name,
 	onClose,

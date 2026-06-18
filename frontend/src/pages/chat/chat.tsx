@@ -89,6 +89,14 @@ import {matchesShortcut, SHORTCUTS} from "../../utils/shortcuts";
 import {useContainerWidth} from "../../hooks/use-container-width";
 import {buildSourceScopeRef} from "../../utils/source-refs";
 import {ph} from "../../utils/privacy";
+import {
+    countBucket,
+    frontendAnalyticsErrorCode,
+    textLengthBucket,
+    trackFrontendIntent,
+    trackOptionChanged,
+    trackScreenViewed,
+} from "../../config/frontend-analytics";
 
 // Chart components from the component registry
 const LineChart = getComponent('line-chart');
@@ -372,6 +380,8 @@ export const ChatPage: FC = () => {
     const messageIdCounter = useRef(0);
     const sourceScopeRef = useMemo(() => buildSourceScopeRef(item, authProfile, schemaFromState), [authProfileDatabase, item, schemaFromState]);
     const [currentSearchIndex, setCurrentSearchIndex] = useState<number>();
+    const draftAbandonedRef = useRef(false);
+    const draftAnalyticsPropsRef = useRef<Record<string, unknown>>({});
 
     const dispatch = useAppDispatch();
 
@@ -401,6 +411,33 @@ export const ChatPage: FC = () => {
     const [databaseSuggestions, setDatabaseSuggestions] = useState<Array<{ description: string; category: string }>>([]);
     const [useDatabaseSuggestions, setUseDatabaseSuggestions] = useState(false);
     const hasFetchedSuggestionsRef = useRef(false);
+
+    useEffect(() => {
+        trackScreenViewed('chat', {
+            has_model: currentModel != null,
+            has_provider: modelType?.id != null,
+            model_type: modelType?.modelType ?? 'unknown',
+            message_count_bucket: countBucket(chats.length),
+        });
+    }, []);
+
+    useEffect(() => {
+        draftAbandonedRef.current = query.trim().length > 0;
+        draftAnalyticsPropsRef.current = {
+            input_length_bucket: textLengthBucket(query),
+            message_count_bucket: countBucket(chats.length),
+            model_type: modelType?.modelType ?? 'unknown',
+            has_model: currentModel != null,
+        };
+    }, [chats.length, currentModel, modelType?.modelType, query]);
+
+    useEffect(() => {
+        return () => {
+            if (draftAbandonedRef.current) {
+                trackFrontendIntent('chat.message_draft_abandoned', draftAnalyticsPropsRef.current);
+            }
+        };
+    }, []);
 
     // Store random indices in a ref so they remain stable across re-renders
     const exampleIndicesRef = useRef<number[] | null>(null);
@@ -453,6 +490,15 @@ export const ChatPage: FC = () => {
         if (modelType == null || sanitizedQuery.length === 0) {
             return;
         }
+        draftAbandonedRef.current = false;
+        trackFrontendIntent('chat.message_submitted', {
+            input_length_bucket: textLengthBucket(sanitizedQuery),
+            message_count_bucket: countBucket(chats.length),
+            model_type: modelType.modelType,
+            has_model: currentModel != null,
+            has_provider: modelType.id != null,
+            has_source: sourceScopeRef != null,
+        });
 
         // Check if we should try to generate a title:
         // - Session still has default name (matches "Chat X" pattern)
@@ -509,11 +555,23 @@ export const ChatPage: FC = () => {
             });
 
             if (!response.ok) {
+                trackFrontendIntent('chat.message_failed', {
+                    input_length_bucket: textLengthBucket(sanitizedQuery),
+                    message_count_bucket: countBucket(chats.length),
+                    model_type: modelType.modelType,
+                    error_code: 'connection_failed',
+                });
                 setLoading(false);
                 return;
             }
 
             if (!response.body) {
+                trackFrontendIntent('chat.message_failed', {
+                    input_length_bucket: textLengthBucket(sanitizedQuery),
+                    message_count_bucket: countBucket(chats.length),
+                    model_type: modelType.modelType,
+                    error_code: 'unknown',
+                });
                 setLoading(false);
                 return;
             }
@@ -612,6 +670,13 @@ export const ChatPage: FC = () => {
                                     }));
                                 }
                                 setLoading(false);
+                                trackFrontendIntent('chat.message_completed', {
+                                    input_length_bucket: textLengthBucket(sanitizedQuery),
+                                    response_length_bucket: textLengthBucket(streamingText),
+                                    message_count_bucket: countBucket(chats.length + 1),
+                                    model_type: modelType.modelType,
+                                    has_model: currentModel != null,
+                                });
 
                                 // Try to generate title if session still has default name
                                 if (shouldTryTitle) {
@@ -624,6 +689,12 @@ export const ChatPage: FC = () => {
                                     ? parsed.error
                                     : parsed.error?.message ?? parsed.message ?? 'Unknown error';
                                 toast.error(t('unableToQuery') + " " + errorMessage);
+                                trackFrontendIntent('chat.message_failed', {
+                                    input_length_bucket: textLengthBucket(sanitizedQuery),
+                                    message_count_bucket: countBucket(chats.length),
+                                    model_type: modelType.modelType,
+                                    error_code: frontendAnalyticsErrorCode(errorMessage),
+                                });
                                 setLoading(false);
                                 streamDone = true;
                             }
@@ -647,6 +718,12 @@ export const ChatPage: FC = () => {
                 ? error
                 : 'Unknown error';
             toast.error(t('unableToQuery') + " " + errorMessage);
+            trackFrontendIntent('chat.message_failed', {
+                input_length_bucket: textLengthBucket(sanitizedQuery),
+                message_count_bucket: countBucket(chats.length),
+                model_type: modelType.modelType,
+                error_code: frontendAnalyticsErrorCode(error),
+            });
             setLoading(false);
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -757,10 +834,18 @@ export const ChatPage: FC = () => {
     }, [chats, currentSearchIndex, query, handleSubmitQuery, disableChat]);
 
     const handleSelectExample = useCallback((example: string) => {
+        draftAbandonedRef.current = false;
+        trackFrontendIntent('chat.example_selected', {
+            input_length_bucket: textLengthBucket(example),
+            source: useDatabaseSuggestions ? 'database' : 'generic',
+        });
         setQuery(example);
-    }, []);
+    }, [useDatabaseSuggestions]);
 
     const handleClear = useCallback(() => {
+        trackFrontendIntent('chat.cleared', {
+            message_count_bucket: countBucket(chats.length),
+        });
         dispatch(HoudiniActions.clear());
         setQuery("");
         setCurrentSearchIndex(undefined);
@@ -768,10 +853,13 @@ export const ChatPage: FC = () => {
         hasFetchedSuggestionsRef.current = false;
         setDatabaseSuggestions([]);
         setUseDatabaseSuggestions(false);
-    }, [dispatch]);
+    }, [chats.length, dispatch]);
 
     const handleConfirmSQL = useCallback(async (messageId: number, sql: string, operationType: string) => {
         setExecutingConfirmedId(messageId);
+        trackFrontendIntent('chat.sql_confirmation_accepted', {
+            operation_type: operationType,
+        });
         try {
             const { data, error } = await executeConfirmedSql({
                 variables: {
@@ -823,6 +911,7 @@ export const ChatPage: FC = () => {
     }, [autoScrollEnabled, executeConfirmedSql, dispatch, t, scrollContainerRef]);
 
     const handleCancelSQL = useCallback((messageId: number) => {
+        trackFrontendIntent('chat.sql_confirmation_declined');
         dispatch(HoudiniActions.removeChatMessage(messageId));
         toast.info(t('queryCancelled') || 'Query cancelled');
     }, [dispatch, t]);
@@ -852,6 +941,7 @@ export const ChatPage: FC = () => {
             dispatch(HoudiniActions.updateSessionAutoScroll({ sessionId: activeSessionId, autoScrollEnabled: enabled }));
             void reduxStorePersistor.flush();
         }
+        trackOptionChanged('chat_auto_scroll', enabled);
         if (!enabled) {
             return;
         }
@@ -1029,7 +1119,13 @@ export const ChatPage: FC = () => {
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
-                                                            onClick={() =>{  setShowQueryForId(showQuery ? null : (chat.id ?? null)); }}
+                                                            onClick={() => {
+                                                                trackFrontendIntent('chat.sql_confirmation_query_toggled', {
+                                                                    open: !showQuery,
+                                                                    operation_type: chat.Type,
+                                                                });
+                                                                setShowQueryForId(showQuery ? null : (chat.id ?? null));
+                                                            }}
                                                             className="w-fit"
                                                         >
                                                             <CodeBracketIcon className="w-4 h-4 mr-2" />
