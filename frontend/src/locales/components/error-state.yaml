@@ -2,6 +2,16 @@ en_US:
   title: Error
   unknownError: An unknown error occurred.
   copyLabel: Copy Error Message
+  hint.columnNotFound: A column referenced in the query does not exist. Check for typos in column names.
+  hint.tableNotFound: The table or relation does not exist. Verify the table name and schema.
+  hint.syntaxError: There is a syntax error in the query. Check for missing keywords, commas, or quotes.
+  hint.permissionDenied: Access denied. The current user does not have permission for this operation.
+  hint.duplicateKey: A row with this key already exists. The value must be unique.
+  hint.notNull: A required column is missing a value. Provide a value for all non-nullable fields.
+  hint.foreignKey: The value references a record that does not exist, or deletion is blocked by a dependent record.
+  hint.timeout: The operation timed out. The query may be too complex or the server is under load.
+  hint.connectionRefused: Cannot reach the database server. Check that the host and port are correct.
+  hint.authFailed: Authentication failed. Verify the username and password.
 
 ar_AE:
   title: "خطأ"
