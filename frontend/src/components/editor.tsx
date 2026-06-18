@@ -190,6 +190,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
   const apolloClient = useApolloClient();
   const currentSchema = useAppSelector(state => state.database.schema);
   const currentDatabase = useAppSelector(state => state.auth.current?.Database);
+  const runQueryLabel = t('runQuery');
 
   // For databases like MySQL where database and schema are the same,
   // use the connection database as fallback if no schema is selected
@@ -269,7 +270,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
                   if (lineText) {
                     onRunReference.current?.(lineText);
                   }
-                }, query, t('runQuery'));
+                }, query, runQueryLabel);
                 
                 ranges.push({ from: startLineObj.from, to: startLineObj.from, value: playMarker });
               }
@@ -378,7 +379,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
       view.destroy();
       viewRef.current = null;
     };
-  }, [language, apolloClient, darkModeEnabled, defaultSchema, disabled, t]);
+  }, [language, apolloClient, darkModeEnabled, defaultSchema, disabled, runQueryLabel]);
 
   const handlePreviewToggle = useCallback(() => {
     setShowPreview((prev) => !prev);
