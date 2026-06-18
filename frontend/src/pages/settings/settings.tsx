@@ -33,6 +33,10 @@ import {
     SelectValue,
     Separator,
     Switch,
+    Tabs,
+    TabsContent,
+    TabsList,
+    TabsTrigger,
 } from "@clidey/ux";
 import {optInUser, optOutUser, trackFrontendEvent} from "@/config/posthog";
 import {type SupportedLanguage, SUPPORTED_LANGUAGES} from "@/utils/languages";
@@ -128,47 +132,20 @@ export const SettingsPage: FC = () => {
         dispatch(SettingsActions.setDisableAnimations(disabled));
     }, [dispatch]);
 
+    const hasIntegrations = cloudProvidersEnabled || !!getComponent('bridge-driver-panel');
+
     return (
         <InternalPage routes={[InternalRoutes.Settings as IInternalRoute]}>
             <div className="flex flex-col items-center w-full max-w-2xl mx-auto py-10 gap-8">
-                <div className="w-full flex flex-col gap-0">
-                    <div className="flex flex-col gap-2">
-                        <p className="text-2xl font-bold flex items-center gap-2">
-                            {t('telemetryTitle')}
-                        </p>
-                    </div>
-                    <div className="flex flex-col gap-xl py-6">
-                        <div className="flex flex-col gap-4">
-                                <h3 className="text-base">
-                                    {t('telemetryDescription', { appName })}&nbsp;
-                                    {t('dataCollectionDetails', {
-                                        privacyPolicyLink: <ExternalLink
-                                            href={"https://whodb.com/privacy"}
-                                            className={"underline text-blue-500"}>{t('privacyPolicy')}</ExternalLink>
-                                    })}
-                                    <br/>
-                                    <br/>
-                                    {t('posthogInfo', { appName })}&nbsp;
-                                    {t('sensitiveDataInfo')}
-                                    <br/>
-                                    <br/>
-                                    {t('contactUsInfo')}
-                                </h3>
-                                <br/>
-                                <div className="flex justify-between">
-                                    <Label>{metricsEnabled ? t('enableTelemetry') : t('disableTelemetry')}</Label>
-                                    <Switch checked={metricsEnabled} onCheckedChange={handleMetricsToggle}/>
-                                </div>
-                                <Separator className="mt-4" />
-                            </div>
-                        <div className="flex flex-col gap-sm mb-2">
-                            <p className="text-lg font-bold">
-                                {t('personalizeTitle')}
-                            </p>
-                            <p className="text-base">
-                                {t('personalizeDescription', { appName })}
-                            </p>
-                        </div>
+                <Tabs defaultValue="appearance" className="w-full">
+                    <TabsList className="w-full">
+                        <TabsTrigger value="appearance">{t('tabAppearance')}</TabsTrigger>
+                        <TabsTrigger value="behavior">{t('tabBehavior')}</TabsTrigger>
+                        {hasIntegrations && <TabsTrigger value="integrations">{t('tabIntegrations')}</TabsTrigger>}
+                        <TabsTrigger value="privacy">{t('tabPrivacy')}</TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="appearance" className="flex flex-col gap-xl pt-6">
                         <div className="flex justify-between">
                             <Label>{t('storageUnitView')}</Label>
                             <Select value={storageUnitView} onValueChange={handleStorageUnitViewToggle}>
@@ -225,6 +202,9 @@ export const SettingsPage: FC = () => {
                             <Label>{disableAnimations ? t('disableAnimationsEnabled') : t('disableAnimationsDisabled')}</Label>
                             <Switch checked={disableAnimations} onCheckedChange={handleDisableAnimationsToggle}/>
                         </div>
+                    </TabsContent>
+
+                    <TabsContent value="behavior" className="flex flex-col gap-xl pt-6">
                         <div className="flex justify-between">
                             <Label>{t('whereConditionMode')}</Label>
                             <Select value={whereConditionMode} onValueChange={handleWhereConditionModeChange}>
@@ -300,42 +280,67 @@ export const SettingsPage: FC = () => {
                                 </SelectContent>
                             </Select>
                         </div>
-                        {cloudProvidersEnabled && (
-                            <>
-                                {awsProviderEnabled && (
-                                    <>
-                                        <Separator className="my-6" />
-                                        <AwsProvidersSection />
-                                    </>
-                                )}
-                                {azureProviderEnabled && (
-                                    <>
-                                        <Separator className="my-6" />
-                                        <AzureProvidersSection />
-                                    </>
-                                )}
-                                {gcpProviderEnabled && (
-                                    <>
-                                        <Separator className="my-6" />
-                                        <GcpProvidersSection />
-                                    </>
-                                )}
-                            </>
-                        )}
-                        {(() => {
-                            const BridgeDriverPanel = getComponent('bridge-driver-panel');
-                            if (!BridgeDriverPanel) return null;
-                            return (
+                    </TabsContent>
+
+                    {hasIntegrations && (
+                        <TabsContent value="integrations" className="flex flex-col gap-xl pt-6">
+                            {cloudProvidersEnabled && (
                                 <>
-                                    <Separator className="my-6" />
-                                    <Suspense fallback={null}>
-                                        <BridgeDriverPanel />
-                                    </Suspense>
+                                    {awsProviderEnabled && <AwsProvidersSection />}
+                                    {azureProviderEnabled && (
+                                        <>
+                                            {awsProviderEnabled && <Separator className="my-6" />}
+                                            <AzureProvidersSection />
+                                        </>
+                                    )}
+                                    {gcpProviderEnabled && (
+                                        <>
+                                            {(awsProviderEnabled || azureProviderEnabled) && <Separator className="my-6" />}
+                                            <GcpProvidersSection />
+                                        </>
+                                    )}
                                 </>
-                            );
-                        })()}
-                    </div>
-                </div>
+                            )}
+                            {(() => {
+                                const BridgeDriverPanel = getComponent('bridge-driver-panel');
+                                if (!BridgeDriverPanel) return null;
+                                return (
+                                    <>
+                                        {cloudProvidersEnabled && <Separator className="my-6" />}
+                                        <Suspense fallback={null}>
+                                            <BridgeDriverPanel />
+                                        </Suspense>
+                                    </>
+                                );
+                            })()}
+                        </TabsContent>
+                    )}
+
+                    <TabsContent value="privacy" className="flex flex-col gap-xl pt-6">
+                        <div className="flex flex-col gap-4">
+                            <h3 className="text-base">
+                                {t('telemetryDescription', { appName })}&nbsp;
+                                {t('dataCollectionDetails', {
+                                    privacyPolicyLink: <ExternalLink
+                                        href={"https://whodb.com/privacy"}
+                                        className={"underline text-blue-500"}>{t('privacyPolicy')}</ExternalLink>
+                                })}
+                                <br/>
+                                <br/>
+                                {t('posthogInfo', { appName })}&nbsp;
+                                {t('sensitiveDataInfo')}
+                                <br/>
+                                <br/>
+                                {t('contactUsInfo')}
+                            </h3>
+                            <br/>
+                            <div className="flex justify-between">
+                                <Label>{metricsEnabled ? t('enableTelemetry') : t('disableTelemetry')}</Label>
+                                <Switch checked={metricsEnabled} onCheckedChange={handleMetricsToggle}/>
+                            </div>
+                        </div>
+                    </TabsContent>
+                </Tabs>
             </div>
         </InternalPage>
     );
