@@ -6,7 +6,7 @@
     "translate": "node translate.mjs"
   },
   "dependencies": {
-    "google-translate-api-x": "^10.7.0",
-    "js-yaml": "^4.2.0"
+    "google-translate-api-x": "10.7.3",
+    "js-yaml": "4.2.0"
   }
 }
