@@ -46,6 +46,7 @@
     "zustand": "^5.0.9"
   },
   "devDependencies": {
+    "@csstools/postcss-oklab-function": "^5.0.5",
     "@graphql-codegen/cli": "5.0.7",
     "@graphql-codegen/typescript": "4.1.6",
     "@graphql-codegen/typescript-operations": "4.6.1",
@@ -53,16 +54,20 @@
     "@tailwindcss/vite": "^4",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.1.0",
-    "jsdom": "^25.0.1",
-    "vitest": "^4.1.2",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^4.7.0",
     "eslint": "^9",
+    "jsdom": "^25.0.1",
     "monaco-editor": "^0.55.1",
+    "postcss": "^8.5.15",
+    "postcss-media-minmax": "^5.0.0",
+    "postcss-nesting": "^14.0.0",
+    "postcss-value-parser": "^4.2.0",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "vite": "^7"
+    "vite": "^7",
+    "vitest": "^4.1.2"
   }
 }
