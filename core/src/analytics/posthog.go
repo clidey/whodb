@@ -70,6 +70,13 @@ type Metadata struct {
 	RequestID  string
 }
 
+// GroupIdentity describes a PostHog group and its safe group properties.
+type GroupIdentity struct {
+	Type       string
+	Key        string
+	Properties map[string]any
+}
+
 var (
 	clientMu sync.RWMutex
 	client   posthog.Client
@@ -189,6 +196,7 @@ func CaptureWithDistinctID(ctx context.Context, distinctID string, event string,
 		DistinctId: distinctID,
 		Timestamp:  time.Now().UTC(),
 		Properties: buildProperties(ctx, properties),
+		Groups:     buildGroups(properties),
 	}
 
 	enqueue(message)
@@ -219,6 +227,24 @@ func IdentifyWithDistinctID(ctx context.Context, distinctID string, traits map[s
 		DistinctId: distinctID,
 		Timestamp:  time.Now().UTC(),
 		Properties: buildIdentifyTraits(ctx, traits),
+	}
+
+	enqueue(message)
+}
+
+// IdentifyGroup creates or updates a PostHog group with safe group properties.
+func IdentifyGroup(ctx context.Context, group GroupIdentity) {
+	group.Type = strings.TrimSpace(group.Type)
+	group.Key = strings.TrimSpace(group.Key)
+	if !Enabled() || group.Type == "" || group.Key == "" {
+		return
+	}
+
+	message := posthog.GroupIdentify{
+		Type:       group.Type,
+		Key:        group.Key,
+		Timestamp:  time.Now().UTC(),
+		Properties: buildIdentifyTraits(ctx, group.Properties),
 	}
 
 	enqueue(message)
@@ -343,6 +369,35 @@ func buildProperties(ctx context.Context, properties map[string]any) posthog.Pro
 	}
 
 	return props
+}
+
+func buildGroups(properties map[string]any) posthog.Groups {
+	raw, ok := properties["$groups"]
+	if !ok {
+		return nil
+	}
+
+	groups := posthog.NewGroups()
+	switch typed := raw.(type) {
+	case map[string]any:
+		for key, value := range typed {
+			if groupType := strings.TrimSpace(key); groupType != "" {
+				groups.Set(groupType, value)
+			}
+		}
+	case map[string]string:
+		for key, value := range typed {
+			groupType := strings.TrimSpace(key)
+			groupKey := strings.TrimSpace(value)
+			if groupType != "" && groupKey != "" {
+				groups.Set(groupType, groupKey)
+			}
+		}
+	}
+	if len(groups) == 0 {
+		return nil
+	}
+	return groups
 }
 
 func buildIdentifyTraits(ctx context.Context, traits map[string]any) posthog.Properties {

@@ -208,3 +208,61 @@ func TestCaptureWithDistinctIDRequiresEnabledAndConfigured(t *testing.T) {
 		t.Fatalf("capture payload did not match expectations: %#v", capture)
 	}
 }
+
+func TestCaptureBuildsGroupsFromProperties(t *testing.T) {
+	t.Cleanup(resetAnalyticsState)
+
+	client := &fakePosthogClient{}
+	storeClient(client)
+	enabled.Store(true)
+
+	CaptureWithDistinctID(context.Background(), "abc123", "event-with-groups", map[string]any{
+		"$groups": map[string]any{
+			"organization": "org_1",
+			"project":      "project_1",
+		},
+	})
+
+	if len(client.messages) != 1 {
+		t.Fatalf("expected one event to be enqueued, got %d", len(client.messages))
+	}
+
+	capture, ok := client.messages[0].(posthog.Capture)
+	if !ok {
+		t.Fatalf("expected capture message, got %T", client.messages[0])
+	}
+	if capture.Groups["organization"] != "org_1" || capture.Groups["project"] != "project_1" {
+		t.Fatalf("expected groups to be attached to capture, got %#v", capture.Groups)
+	}
+}
+
+func TestIdentifyGroupEnqueuesGroupIdentify(t *testing.T) {
+	t.Cleanup(resetAnalyticsState)
+
+	client := &fakePosthogClient{}
+	storeClient(client)
+	enabled.Store(true)
+
+	IdentifyGroup(context.Background(), GroupIdentity{
+		Type: "organization",
+		Key:  "org_1",
+		Properties: map[string]any{
+			"plan": "team",
+		},
+	})
+
+	if len(client.messages) != 1 {
+		t.Fatalf("expected one event to be enqueued, got %d", len(client.messages))
+	}
+
+	groupIdentify, ok := client.messages[0].(posthog.GroupIdentify)
+	if !ok {
+		t.Fatalf("expected group identify message, got %T", client.messages[0])
+	}
+	if groupIdentify.Type != "organization" || groupIdentify.Key != "org_1" {
+		t.Fatalf("group identify payload did not match expectations: %#v", groupIdentify)
+	}
+	if groupIdentify.Properties["plan"] != "team" {
+		t.Fatalf("expected group properties to be preserved, got %#v", groupIdentify.Properties)
+	}
+}

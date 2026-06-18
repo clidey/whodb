@@ -23,6 +23,7 @@ type ConsentState = 'granted' | 'denied' | 'unknown';
 
 const CONSENT_STORAGE_KEY = 'whodb.analytics.consent';
 const DISTINCT_ID_STORAGE_KEY = 'whodb.analytics.distinct_id';
+const SESSION_REPLAY_SAMPLE_KEY = 'whodb.analytics.session_replay_sampled';
 
 type AnalyticsGroupIdentity = {
     type: string;
@@ -49,6 +50,34 @@ const apiHost = "https://z.clidey.com";
 const getEnvEnvironment = () => import.meta.env.MODE ?? 'development';
 const getBuildEdition = () => getEdition();
 const isE2ETest = () => import.meta.env.VITE_E2E_TEST === 'true';
+const isSessionReplayEnabled = () => getBuildEdition() === 'ee' && import.meta.env.VITE_POSTHOG_SESSION_REPLAY === 'true';
+const sessionReplaySampleRate = () => {
+    const parsed = Number(import.meta.env.VITE_POSTHOG_SESSION_REPLAY_SAMPLE_RATE ?? '0.1');
+    if (!Number.isFinite(parsed)) {
+        return 0.1;
+    }
+    return Math.min(1, Math.max(0, parsed));
+};
+const sessionReplaySampled = () => {
+    if (typeof window === 'undefined') {
+        return false;
+    }
+    try {
+        const stored = window.sessionStorage?.getItem(SESSION_REPLAY_SAMPLE_KEY);
+        if (stored === 'true') {
+            return true;
+        }
+        if (stored === 'false') {
+            return false;
+        }
+        const sampled = Math.random() < sessionReplaySampleRate();
+        window.sessionStorage?.setItem(SESSION_REPLAY_SAMPLE_KEY, String(sampled));
+        return sampled;
+    } catch {
+        return Math.random() < sessionReplaySampleRate();
+    }
+};
+const shouldRecordSession = (consent: ConsentState) => consent === 'granted' && isSessionReplayEnabled() && sessionReplaySampled();
 
 const getStoredConsent = (): ConsentState => {
     if (typeof window === 'undefined') {
@@ -134,6 +163,7 @@ const registerContext = (client: PostHog) => {
         build_edition: getBuildEdition(),
         app_type: isDesktop ? 'desktop' : 'web',
         platform: isDesktop ? 'wails' : 'browser',
+        session_replay_enabled: String(isSessionReplayEnabled()),
     };
     if (deploymentName) {
         properties.deployment = deploymentName;
@@ -230,6 +260,14 @@ const ensureInitializedClient = async (): Promise<PostHog | null> => {
             autocapture: enabled,
             capture_pageview: enabled,
             enable_heatmaps: enabled,
+            //@ts-ignore session replay options are available in the installed SDK runtime.
+            disable_session_recording: !shouldRecordSession(consent),
+            //@ts-ignore session replay options are available in the installed SDK runtime.
+            session_recording: {
+                maskAllInputs: true,
+                maskTextSelector: '*',
+                blockSelector: '[data-ph-no-capture], [data-sensitive], .ph-no-capture',
+            },
             disable_web_experiments: enabled,
             disable_surveys: enabled,
             //@ts-ignore
@@ -247,6 +285,11 @@ const ensureInitializedClient = async (): Promise<PostHog | null> => {
                 }
 
                 persistDistinctId(client.get_distinct_id());
+                if (shouldRecordSession(consent)) {
+                    client.startSessionRecording?.();
+                } else {
+                    client.stopSessionRecording?.();
+                }
 
                 // Log successful initialization for desktop
                 if (isDesktop) {
@@ -369,7 +412,11 @@ export const optInUser = async (): Promise<void> => {
     client.config.capture_pageleave = true;
     client.config.enable_heatmaps = true;
     client.opt_in_capturing();
-    client.startSessionRecording?.();
+    if (shouldRecordSession('granted')) {
+        client.startSessionRecording?.();
+    } else {
+        client.stopSessionRecording?.();
+    }
     persistDistinctId(client.get_distinct_id());
 };
 
