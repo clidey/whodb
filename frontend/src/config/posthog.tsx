@@ -24,6 +24,18 @@ type ConsentState = 'granted' | 'denied' | 'unknown';
 const CONSENT_STORAGE_KEY = 'whodb.analytics.consent';
 const DISTINCT_ID_STORAGE_KEY = 'whodb.analytics.distinct_id';
 
+type AnalyticsGroupIdentity = {
+    type: string;
+    key: string;
+    properties?: Record<string, unknown>;
+};
+
+type AnalyticsUserIdentity = {
+    distinctId: string;
+    properties?: Record<string, unknown>;
+    groups?: AnalyticsGroupIdentity[];
+};
+
 let posthogModulePromise: Promise<typeof PostHogModule> | null = null;
 let initPromise: Promise<PostHog | null> | null = null;
 let activeClient: PostHog | null = null;
@@ -287,6 +299,36 @@ export const trackFrontendEvent = async (event: string, properties?: Record<stri
         client?.capture(event, properties ?? {});
     } catch {
         // do nothing
+    }
+};
+
+/** Identifies the current analytics person and optional group memberships. */
+export const identifyAnalyticsUser = async (identity: AnalyticsUserIdentity): Promise<boolean> => {
+    const distinctId = identity.distinctId.trim();
+    if (!distinctId || getStoredConsentState() !== 'granted') {
+        return false;
+    }
+
+    try {
+        const client = await ensureInitializedClient();
+        if (!client) {
+            return false;
+        }
+
+        client.identify(distinctId, identity.properties ?? {});
+        for (const group of identity.groups ?? []) {
+            const groupType = group.type.trim();
+            const groupKey = group.key.trim();
+            if (!groupType || !groupKey) {
+                continue;
+            }
+            client.group(groupType, groupKey, group.properties ?? {});
+        }
+        persistDistinctId(client.get_distinct_id());
+        return true;
+    } catch {
+        // best-effort — never block app auth on analytics
+        return false;
     }
 };
 
