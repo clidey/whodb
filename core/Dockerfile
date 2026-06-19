@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM node:25.6.0-alpine3.23 AS build-stage
+FROM node:26-alpine3.24 AS build-stage
 RUN npm i -g pnpm@10.29.3
 WORKDIR /app
 COPY ./frontend/package.json ./frontend/pnpm-lock.yaml ./
@@ -35,7 +35,7 @@ RUN if [ "${USE_PREBUILT_FRONTEND}" = "true" ]; then \
 ARG TARGETARCH
 ARG PLATFORM=docker
 
-FROM golang:1.26-alpine3.23 AS backend-stage
+FROM golang:1.26-alpine3.24 AS backend-stage
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 RUN apk add --no-cache \
 	gcc \
@@ -112,7 +112,7 @@ RUN BAML_VERSION=$(grep 'github.com/boundaryml/baml ' go.mod | awk '{print $2}' 
     cp /baml-lib/libbaml_cffi.so /runtime-libs/ && \
     echo "Downloaded BAML musl library for ${BAML_ARCH}"
 
-FROM alpine:3.23
+FROM alpine:3.24
 RUN apk add --no-cache ca-certificates libgcc libstdc++
 WORKDIR /app
 COPY --from=backend-stage /core /core
