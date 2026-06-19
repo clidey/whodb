@@ -169,8 +169,7 @@ body {
   z-index: 5;
 }
 
-/* Accessibility: Reduced motion support */
-/* @media (prefers-reduced-motion: reduce) {
+@media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
@@ -179,7 +178,7 @@ body {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-} */
+}
 
 /* Disable all animations when user preference is set */
 /* body.disable-animations *,
