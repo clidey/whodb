@@ -41,6 +41,7 @@ import {
     TrashIcon,
 } from "../heroicons";
 import { removeAzureProviderCache, removeCloudProviderCache, upsertAzureProviderCache, upsertCloudProviderCache } from "../../utils/apollo-provider-cache";
+import { countBucket, frontendAnalyticsErrorCode, trackFrontendIntent } from "../../config/frontend-analytics";
 
 /**
  * Local Azure provider with optional environment-defined flag.
@@ -86,14 +87,24 @@ export const AzureProvidersSection: FC = () => {
     const azureProviders: LocalAzureProvider[] = (data?.AzureProviders as LocalAzureProvider[] | undefined) ?? [];
 
     const handleAddProvider = useCallback(() => {
+        trackFrontendIntent('cloud_provider.create_opened', {
+            provider_type: 'azure',
+            provider_count_bucket: countBucket(azureProviders.length),
+        });
         dispatch(ProvidersActions.openAddProviderModal({ providerType: CloudProviderType.Azure }));
-    }, [dispatch]);
+    }, [azureProviders.length, dispatch]);
 
     const handleEditProvider = useCallback((id: string) => {
+        trackFrontendIntent('cloud_provider.edit_opened', {
+            provider_type: 'azure',
+        });
         dispatch(ProvidersActions.openEditProviderModal({ id, providerType: CloudProviderType.Azure }));
     }, [dispatch]);
 
     const handleRemoveProvider = useCallback(async (id: string, name: string) => {
+        trackFrontendIntent('cloud_provider.delete_clicked', {
+            provider_type: 'azure',
+        });
         try {
             const { data } = await removeProvider({
                 variables: { id },
@@ -104,15 +115,25 @@ export const AzureProvidersSection: FC = () => {
                 },
             });
             if (data?.RemoveCloudProvider?.Status) {
+                trackFrontendIntent('cloud_provider.deleted', {
+                    provider_type: 'azure',
+                });
                 toast.success(t('providerRemoved', { name }));
             }
         } catch (error) {
+            trackFrontendIntent('cloud_provider.delete_failed', {
+                provider_type: 'azure',
+                error_code: frontendAnalyticsErrorCode(error),
+            });
             const errorMessage = error instanceof Error ? error.message : t('unknownError');
             toast.error(t('removeFailed', { error: errorMessage }));
         }
     }, [removeProvider, t]);
 
     const handleRefreshProvider = useCallback(async (id: string) => {
+        trackFrontendIntent('cloud_provider.refresh_clicked', {
+            provider_type: 'azure',
+        });
         try {
             const { data } = await refreshProvider({
                 variables: { id },
@@ -125,9 +146,18 @@ export const AzureProvidersSection: FC = () => {
                 },
             });
             if (data?.RefreshAzureProvider) {
+                trackFrontendIntent('cloud_provider.refreshed', {
+                    provider_type: 'azure',
+                    discovered_count: data.RefreshAzureProvider.DiscoveredCount,
+                    discovered_count_bucket: countBucket(data.RefreshAzureProvider.DiscoveredCount),
+                });
                 toast.success(t('refreshComplete', { count: data.RefreshAzureProvider.DiscoveredCount }));
             }
         } catch (error) {
+            trackFrontendIntent('cloud_provider.refresh_failed', {
+                provider_type: 'azure',
+                error_code: frontendAnalyticsErrorCode(error),
+            });
             const errorMessage = error instanceof Error ? error.message : t('unknownError');
             toast.error(t('refreshFailed', { error: errorMessage }));
         }

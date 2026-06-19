@@ -219,8 +219,8 @@ func (o ConnectionsOutput) MarshalJSON() ([]byte, error) {
 
 // ConfirmInput is the input for the whodb_confirm tool.
 type ConfirmInput struct {
-	// Token is the confirmation token from a previous query response
-	Token string `json:"token" jsonschema:"Confirmation token from a previous whodb_query response"`
+	// Token is the confirmation token from a previous write response.
+	Token string `json:"token" jsonschema:"Confirmation token from a previous whodb_query or hosted platform write response"`
 }
 
 // ConfirmOutput is the output for the whodb_confirm tool.
@@ -252,8 +252,8 @@ type PendingInput struct{}
 // PendingInfo represents a pending confirmation visible to the LLM.
 type PendingInfo struct {
 	Token      string `json:"token"`
-	Query      string `json:"query"`
-	Connection string `json:"connection"`
+	Query      string `json:"query,omitempty"`
+	Connection string `json:"connection,omitempty"`
 	ExpiresAt  string `json:"expires_at"` // ISO 8601
 }
 

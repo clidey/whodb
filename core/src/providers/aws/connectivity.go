@@ -37,7 +37,7 @@ const (
 // CheckConnectivity performs a TCP dial to test network reachability.
 // This is called during RefreshDiscovery (not cached DiscoverAll) to avoid slowing down page loads.
 func CheckConnectivity(connections []providers.DiscoveredConnection) {
-	log.Infof("Connectivity: checking %d connections", len(connections))
+	log.Debugf("Connectivity: checking %d connections", len(connections))
 	sem := make(chan struct{}, maxConcurrentChecks)
 	var wg sync.WaitGroup
 
@@ -75,5 +75,5 @@ func CheckConnectivity(connections []providers.DiscoveredConnection) {
 	}
 
 	wg.Wait()
-	log.Infof("Connectivity: done — %d reachable, %d unreachable", reachable.Load(), unreachable.Load())
+	log.Debugf("Connectivity: done — %d reachable, %d unreachable", reachable.Load(), unreachable.Load())
 }

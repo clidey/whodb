@@ -251,14 +251,14 @@ type discoveryResult struct {
 // DiscoverConnections implements providers.ConnectionProvider.
 // Discovery runs in parallel across all enabled services for faster results.
 func (p *Provider) DiscoverConnections(ctx context.Context) ([]providers.DiscoveredConnection, error) {
-	log.Infof("GCP Provider DiscoverConnections called for id=%s, projectID=%s, region=%s, authMethod=%s",
+	log.Debugf("GCP Provider DiscoverConnections called for id=%s, projectID=%s, region=%s, authMethod=%s",
 		p.config.ID, p.config.ProjectID, p.config.Region, p.config.AuthMethod)
 
 	if err := p.initialize(ctx); err != nil {
 		log.Errorf("GCP Provider initialize failed: %v", err)
 		return nil, err
 	}
-	log.Infof("GCP Provider initialized successfully")
+	log.Debug("GCP Provider initialized successfully")
 
 	taskCount := len(discoveryExtensions)
 	if p.config.DiscoverCloudSQL && p.sqladminService != nil {
@@ -346,7 +346,7 @@ func (p *Provider) DiscoverConnections(ctx context.Context) ([]providers.Discove
 			log.Errorf("GCP Provider: %s discovery failed: %v", r.name, r.err)
 			allErrs = append(allErrs, fmt.Errorf("%s: %w", r.name, r.err))
 		} else {
-			log.Infof("GCP Provider: %s discovery found %d resources", r.name, len(r.conns))
+			log.Debugf("GCP Provider: %s discovery found %d resources", r.name, len(r.conns))
 			allConns = append(allConns, r.conns...)
 		}
 	}

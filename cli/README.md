@@ -24,6 +24,7 @@ An interactive, production-ready command-line interface for WhoDB with a Claude 
 - **Query History** - Persistent history with re-execution
 - **Shell Completion** - Bash/Zsh/Fish install plus PowerShell script generation
 - **Programmatic Mode** - JSON/NDJSON/CSV/plain output plus streamed query/export paths for scripting and automation
+- **Hosted Platform Commands** - Browser login, workspace selection, manifest inspection, and hosted source management
 - **Agent Manifest** - Machine-readable command, source, MCP, workflow, and safety metadata
 - **Database Doctor** - Redacted connection and metadata diagnostics for support and AI agents
 - **Built-in Runbooks** - Repeatable workflows for connection checks, schema audits, and schema diffs
@@ -116,6 +117,9 @@ whodb-cli --help
 ```
 
 ## Quick Start
+
+For hosted WhoDB platform login and source management, see
+[HOSTED_PLATFORM.md](HOSTED_PLATFORM.md).
 
 ### 1. Connect to a Database
 
@@ -720,6 +724,55 @@ This starts an MCP server that exposes these tools:
 | `whodb_audit` | Run data quality audits for a schema or table |
 | `whodb_suggestions` | Get backend-generated starter queries |
 
+Start with `--platform` to run in hosted WhoDB platform mode. In this mode,
+only hosted platform tools are exposed; local database tools are not registered.
+
+| Tool | Description |
+|------|-------------|
+| `whodb_platform_status` | Show hosted login and selected workspace |
+| `whodb_platform_orgs` | List hosted organizations visible to the signed-in user |
+| `whodb_platform_projects` | List hosted projects for an organization |
+| `whodb_platform_sources` | List hosted sources in the selected project |
+| `whodb_platform_source_types` | List hosted source types available for creation |
+| `whodb_platform_source_fields` | List connection fields for one hosted source type |
+| `whodb_platform_source_objects` | Browse hosted source objects |
+| `whodb_platform_source_columns` | Inspect hosted source object columns |
+| `whodb_platform_source_rows` | Preview hosted source object rows |
+| `whodb_platform_source_config` | Inspect redacted hosted source config |
+| `whodb_platform_source_test` | Test saved or draft hosted source connections |
+| `whodb_platform_source_create` | Prepare hosted source creation for `whodb_platform_confirm` |
+| `whodb_platform_source_update` | Prepare hosted source updates for `whodb_platform_confirm` |
+| `whodb_platform_source_delete` | Prepare hosted source deletion for `whodb_platform_confirm` |
+| `whodb_platform_pending` | List pending hosted platform source confirmations |
+| `whodb_platform_confirm` | Confirm pending hosted platform source writes |
+
+Hosted source create, update, and delete tools return confirmation tokens and do
+not execute until approved with `whodb_platform_confirm`. Use
+`whodb_platform_pending` to recover active confirmation tokens.
+
+For source creation, agents should call `whodb_platform_source_types` and
+`whodb_platform_source_fields` first so they use backend-published source type
+ids and field names.
+
+If no workspace is selected yet, agents should call `whodb_platform_orgs` and
+`whodb_platform_projects`, then ask the user to run
+`whodb-cli use --org <org> --project <project>`.
+For single-workspace accounts, hosted `login` or `status` can select the only
+organization/project automatically and report what was selected.
+
+Example hosted platform MCP config:
+
+```json
+{
+  "mcpServers": {
+    "whodb-platform": {
+      "command": "whodb-cli",
+      "args": ["mcp", "serve", "--platform"]
+    }
+  }
+}
+```
+
 It also exposes these resources:
 
 | Resource | Description |
@@ -778,6 +831,9 @@ HTTP mode exposes:
 **Connection Scoping:**
 - `--allowed-connections`: Comma-separated list of connections to allow (restricts access)
 - `--default-connection`: Default connection when not specified (does not restrict access)
+
+**Hosted Platform:**
+- `--platform`: Run hosted platform MCP mode only. Requires `whodb-cli login` and `whodb-cli use --org <org> --project <project>`.
 
 ```bash
 # Restrict AI to specific connections only

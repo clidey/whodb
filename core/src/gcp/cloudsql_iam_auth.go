@@ -34,7 +34,7 @@ import (
 //
 // See: https://cloud.google.com/sql/docs/mysql/iam-authentication
 func GenerateCloudSQLIAMAuthToken(ctx context.Context, serviceAccountKeyPath, username string) (string, error) {
-	log.Infof("Cloud SQL IAM Auth: generating token for user=%s", username)
+	log.Debugf("Cloud SQL IAM Auth: generating token for user=%s", username)
 
 	scopes := []string{"https://www.googleapis.com/auth/sqlservice.login"}
 
@@ -62,6 +62,6 @@ func GenerateCloudSQLIAMAuthToken(ctx context.Context, serviceAccountKeyPath, us
 		return "", HandleGCPError(err)
 	}
 
-	log.Infof("Cloud SQL IAM Auth: token generated successfully for user=%s (token length=%d)", username, len(token.AccessToken))
+	log.Debugf("Cloud SQL IAM Auth: token generated successfully for user=%s (token length=%d)", username, len(token.AccessToken))
 	return token.AccessToken, nil
 }

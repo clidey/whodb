@@ -242,7 +242,7 @@ func TestAzureProvider(id string) (string, error) {
 
 // RefreshAzureProvider triggers a re-discovery of connections for the specified provider.
 func RefreshAzureProvider(id string) (*AzureProviderState, error) {
-	log.Infof("RefreshAzureProvider called for id=%s", id)
+	log.Debugf("RefreshAzureProvider called for id=%s", id)
 
 	azureProvidersMu.Lock()
 	state, exists := azureProviders[id]
@@ -378,7 +378,7 @@ func InitAzureProvidersFromEnv() error {
 		if _, err := AddAzureProvider(cfg, envCfg.ClientSecret); err != nil {
 			log.Warnf("Failed to initialize Azure provider %s: %v", name, err)
 		} else {
-			log.Infof("Initialized Azure provider: %s (%s)", name, envCfg.SubscriptionID)
+			log.Debugf("Initialized Azure provider: %s (%s)", name, envCfg.SubscriptionID)
 		}
 	}
 

@@ -224,7 +224,7 @@ func Run(config AppConfig, staticFiles embed.FS) {
 	}
 
 	go func() {
-		log.Info("Almost there...")
+		log.Debug("Almost there...")
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("server error: %s\n", err)
 		}

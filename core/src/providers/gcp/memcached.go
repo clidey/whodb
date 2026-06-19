@@ -65,7 +65,7 @@ func (p *Provider) discoverMemcached(ctx context.Context) ([]providers.Discovere
 		}
 	}
 
-	log.Infof("Memcached: found %d instances in %v", len(connections), time.Since(start))
+	log.Debugf("Memcached: found %d instances in %v", len(connections), time.Since(start))
 	return connections, nil
 }
 

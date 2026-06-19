@@ -30,12 +30,12 @@ import (
 // The token acts as a password and is valid for ~15 minutes.
 func GenerateRDSAuthToken(ctx context.Context, cfg awssdk.Config, endpoint string, port int, region, username string) (string, error) {
 	addr := fmt.Sprintf("%s:%d", endpoint, port)
-	log.Infof("RDS IAM Auth: generating token for %s (region=%s, user=%s)", addr, region, username)
+	log.Debugf("RDS IAM Auth: generating token for %s (region=%s, user=%s)", addr, region, username)
 	token, err := auth.BuildAuthToken(ctx, addr, region, username, cfg.Credentials)
 	if err != nil {
 		log.Errorf("RDS IAM Auth: token generation failed for %s: %v", addr, err)
 		return "", HandleAWSError(err)
 	}
-	log.Infof("RDS IAM Auth: token generated successfully for %s (token length=%d)", addr, len(token))
+	log.Debugf("RDS IAM Auth: token generated successfully for %s (token length=%d)", addr, len(token))
 	return token, nil
 }

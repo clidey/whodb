@@ -131,7 +131,7 @@ func (p *Provider) discoverElastiCacheServerless(ctx context.Context) ([]provide
 		}
 	}
 
-	log.Infof("ElastiCache Serverless: found %d caches in %v", len(connections), time.Since(start))
+	log.Debugf("ElastiCache Serverless: found %d caches in %v", len(connections), time.Since(start))
 	return connections, nil
 }
 
@@ -189,7 +189,7 @@ func (p *Provider) discoverElastiCacheReplicationGroups(ctx context.Context) ([]
 		}
 	}
 
-	log.Infof("ElastiCache ReplicationGroups: found %d groups in %v", len(connections), time.Since(start))
+	log.Debugf("ElastiCache ReplicationGroups: found %d groups in %v", len(connections), time.Since(start))
 	return connections, nil
 }
 
@@ -256,7 +256,7 @@ func (p *Provider) discoverElastiCacheClusters(ctx context.Context) ([]providers
 		}
 	}
 
-	log.Infof("ElastiCache Clusters: found %d clusters in %v", len(connections), time.Since(start))
+	log.Debugf("ElastiCache Clusters: found %d clusters in %v", len(connections), time.Since(start))
 	return connections, nil
 }
 

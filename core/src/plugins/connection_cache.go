@@ -253,10 +253,10 @@ func getOrCreateConnection(config *engine.PluginConfig, createDB DBCreationFunc)
 	createStart := time.Now()
 	db, err := createDB(config)
 	if err != nil {
-		l.WithFields(map[string]any{"duration_ms": time.Since(createStart).Milliseconds(), "error": err.Error()}).Error("Failed to create connection")
+		l.WithFields(map[string]any{"duration_ms": time.Since(createStart).Milliseconds(), "error": err.Error()}).Warn("Failed to create connection")
 		return nil, err
 	}
-	l.WithField("duration_ms", time.Since(createStart).Milliseconds()).Info("Connection created successfully")
+	l.WithField("duration_ms", time.Since(createStart).Milliseconds()).Debug("Connection created successfully")
 
 	// Store in cache (with lock)
 	connectionCacheMu.Lock()

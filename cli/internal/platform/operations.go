@@ -88,8 +88,8 @@ query CLIPlatformProjects($orgId: ID!) {
 `
 
 const operationProjectSources = `
-query CLIPlatformProjectSources($projectId: ID!) {
-  ProjectSources(projectId: $projectId) {
+query CLIPlatformProjectSources($orgId: ID, $projectId: ID!) {
+  ProjectSources(orgId: $orgId, projectId: $projectId) {
     id
     projectId
     name
@@ -135,8 +135,8 @@ mutation CLIPlatformCreateSource($input: CreateSourceInput!) {
 `
 
 const operationSourceConfig = `
-query CLIPlatformSourceConfig($projectId: ID!, $sourceId: ID!) {
-  SourceConfig(projectId: $projectId, sourceId: $sourceId) {
+query CLIPlatformSourceConfig($orgId: ID, $projectId: ID!, $sourceId: ID!) {
+  SourceConfig(orgId: $orgId, projectId: $projectId, sourceId: $sourceId) {
     hostname
     port
     username
@@ -172,8 +172,8 @@ mutation CLIPlatformTestSourceConnection($credentials: SourceLoginInput!) {
 `
 
 const operationDeleteSource = `
-mutation CLIPlatformDeleteSource($projectId: ID!, $id: ID!) {
-  DeleteSource(projectId: $projectId, id: $id) {
+mutation CLIPlatformDeleteSource($orgId: ID, $projectId: ID!, $id: ID!) {
+  DeleteSource(orgId: $orgId, projectId: $projectId, id: $id) {
     Status
   }
 }
@@ -210,24 +210,24 @@ const columnFields = `
 `
 
 const operationPlatformSourceObjects = `
-query CLIPlatformSourceObjects($projectId: ID!, $sourceId: ID!, $parent: SourceObjectRefInput, $kinds: [SourceObjectKind!], $pageSize: Int, $pageOffset: Int) {
-  PlatformSourceObjects(projectId: $projectId, sourceId: $sourceId, parent: $parent, kinds: $kinds, pageSize: $pageSize, pageOffset: $pageOffset) {
+query CLIPlatformSourceObjects($orgId: ID, $projectId: ID!, $sourceId: ID!, $parent: SourceObjectRefInput, $kinds: [SourceObjectKind!], $pageSize: Int, $pageOffset: Int) {
+  PlatformSourceObjects(orgId: $orgId, projectId: $projectId, sourceId: $sourceId, parent: $parent, kinds: $kinds, pageSize: $pageSize, pageOffset: $pageOffset) {
 ` + sourceObjectFields + `
   }
 }
 `
 
 const operationPlatformSourceColumns = `
-query CLIPlatformSourceColumns($projectId: ID!, $sourceId: ID!, $ref: SourceObjectRefInput!) {
-  PlatformSourceColumns(projectId: $projectId, sourceId: $sourceId, ref: $ref) {
+query CLIPlatformSourceColumns($orgId: ID, $projectId: ID!, $sourceId: ID!, $ref: SourceObjectRefInput!) {
+  PlatformSourceColumns(orgId: $orgId, projectId: $projectId, sourceId: $sourceId, ref: $ref) {
 ` + columnFields + `
   }
 }
 `
 
 const operationPlatformSourceRows = `
-query CLIPlatformSourceRows($projectId: ID!, $sourceId: ID!, $ref: SourceObjectRefInput!, $pageSize: Int!, $pageOffset: Int!) {
-  PlatformSourceRows(projectId: $projectId, sourceId: $sourceId, ref: $ref, pageSize: $pageSize, pageOffset: $pageOffset) {
+query CLIPlatformSourceRows($orgId: ID, $projectId: ID!, $sourceId: ID!, $ref: SourceObjectRefInput!, $pageSize: Int!, $pageOffset: Int!) {
+  PlatformSourceRows(orgId: $orgId, projectId: $projectId, sourceId: $sourceId, ref: $ref, pageSize: $pageSize, pageOffset: $pageOffset) {
     columns: Columns {
 ` + columnFields + `
     }

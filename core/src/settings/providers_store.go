@@ -146,7 +146,7 @@ func LoadProvidersFromFile() error {
 	}
 
 	if loadedCount > 0 {
-		log.Infof("Loaded %d AWS provider(s) from config", loadedCount)
+		log.Debugf("Loaded %d AWS provider(s) from config", loadedCount)
 	}
 
 	return nil

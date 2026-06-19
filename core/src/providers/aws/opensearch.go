@@ -100,7 +100,7 @@ func (p *Provider) discoverOpenSearch(ctx context.Context) ([]providers.Discover
 		connections = append(connections, conn)
 	}
 
-	log.Infof("OpenSearch: discovered %d domains in %v", len(connections), time.Since(start))
+	log.Debugf("OpenSearch: discovered %d domains in %v", len(connections), time.Since(start))
 	return connections, nil
 }
 

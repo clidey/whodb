@@ -16,7 +16,7 @@
 
 import { skipToken, useMutation, useQuery } from "@apollo/client/react";
 import type { FC} from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     Badge,
     Button,
@@ -53,6 +53,13 @@ import { ProvidersActions } from "../../store/providers";
 import { useTranslation } from "@/hooks/use-translation";
 import { ChevronDownIcon, CloudIcon } from "../heroicons";
 import { upsertCloudProviderCache } from "../../utils/apollo-provider-cache";
+import {
+    frontendAnalyticsErrorCode,
+    trackFormAbandoned,
+    trackFormOpened,
+    trackFormSubmitted,
+    trackFrontendIntent,
+} from "../../config/frontend-analytics";
 
 export interface GcpProviderModalProps {
     open: boolean;
@@ -95,6 +102,8 @@ export const GcpProviderModal: FC<GcpProviderModalProps> = ({
     const [discoverCloudSQL, setDiscoverCloudSQL] = useState(true);
     const [discoverAlloyDB, setDiscoverAlloyDB] = useState(true);
     const [discoverMemorystore, setDiscoverMemorystore] = useState(true);
+    const dirtyRef = useRef(false);
+    const succeededRef = useRef(false);
 
     // GraphQL mutations
     const [addProvider, { loading: addLoading }] = useMutation(AddGcpProviderDocument, {
@@ -121,6 +130,12 @@ export const GcpProviderModal: FC<GcpProviderModalProps> = ({
     // Reset form when modal opens/closes or editingProvider changes
     useEffect(() => {
         if (open) {
+            succeededRef.current = false;
+            dirtyRef.current = false;
+            trackFormOpened('cloud_provider', {
+                provider_type: 'gcp',
+                mode: isEditMode ? 'edit' : 'create',
+            });
             if (editingProvider) {
                 setName(editingProvider.Name);
                 setProjectId(editingProvider.ProjectID);
@@ -141,6 +156,28 @@ export const GcpProviderModal: FC<GcpProviderModalProps> = ({
         }
     }, [open, editingProvider]);
 
+    useEffect(() => {
+        if (!open) {
+            return;
+        }
+        if (name.trim() || projectId.trim() || serviceAccountKeyPath.trim()) {
+            dirtyRef.current = true;
+        }
+    }, [name, open, projectId, serviceAccountKeyPath]);
+
+    useEffect(() => {
+        if (open) {
+            return;
+        }
+        if (dirtyRef.current && !succeededRef.current) {
+            trackFormAbandoned('cloud_provider', {
+                provider_type: 'gcp',
+                mode: isEditMode ? 'edit' : 'create',
+            });
+        }
+        dirtyRef.current = false;
+    }, [isEditMode, open]);
+
     const handleClose = useCallback(() => {
         onOpenChange(false);
         dispatch(ProvidersActions.closeProviderModal());
@@ -148,6 +185,10 @@ export const GcpProviderModal: FC<GcpProviderModalProps> = ({
 
     /** Auto-fill form from a discovered local project. */
     const handleSelectLocalProject = useCallback((project: LocalGcpProject) => {
+        dirtyRef.current = true;
+        trackFrontendIntent('cloud_provider.local_project_selected', {
+            provider_type: 'gcp',
+        });
         const displayName = project.IsDefault
             ? t('defaultGcpName')
             : t('gcpProjectName', { name: project.Name });
@@ -173,17 +214,38 @@ export const GcpProviderModal: FC<GcpProviderModalProps> = ({
     }, [name, projectId, region, serviceAccountKeyPath, discoverCloudSQL, discoverAlloyDB, discoverMemorystore]);
 
     const handleSubmit = useCallback(async () => {
+        dirtyRef.current = true;
+        trackFormSubmitted('cloud_provider', {
+            provider_type: 'gcp',
+            mode: isEditMode ? 'edit' : 'create',
+            has_token: serviceAccountKeyPath.trim().length > 0,
+        });
         if (!name.trim()) {
+            trackFrontendIntent('cloud_provider.save_blocked', {
+                provider_type: 'gcp',
+                mode: isEditMode ? 'edit' : 'create',
+                error_code: 'invalid_input',
+            });
             toast.error(t('nameRequired'));
             return;
         }
 
         if (!projectId.trim()) {
+            trackFrontendIntent('cloud_provider.save_blocked', {
+                provider_type: 'gcp',
+                mode: isEditMode ? 'edit' : 'create',
+                error_code: 'invalid_input',
+            });
             toast.error(t('projectIdRequired'));
             return;
         }
 
         if (!region.trim()) {
+            trackFrontendIntent('cloud_provider.save_blocked', {
+                provider_type: 'gcp',
+                mode: isEditMode ? 'edit' : 'create',
+                error_code: 'invalid_input',
+            });
             toast.error(t('regionRequired'));
             return;
         }
@@ -197,6 +259,11 @@ export const GcpProviderModal: FC<GcpProviderModalProps> = ({
                 });
                 if (data?.UpdateGCPProvider) {
                     dispatch(ProvidersActions.updateCloudProvider(data.UpdateGCPProvider as LocalCloudProvider));
+                    succeededRef.current = true;
+                    trackFrontendIntent('cloud_provider.saved', {
+                        provider_type: 'gcp',
+                        mode: 'edit',
+                    });
                     toast.success(t('providerUpdated'));
                     handleClose();
                 }
@@ -206,18 +273,37 @@ export const GcpProviderModal: FC<GcpProviderModalProps> = ({
                 });
                 if (data?.AddGCPProvider) {
                     dispatch(ProvidersActions.addCloudProvider(data.AddGCPProvider as LocalCloudProvider));
+                    succeededRef.current = true;
+                    trackFrontendIntent('cloud_provider.saved', {
+                        provider_type: 'gcp',
+                        mode: 'create',
+                    });
                     toast.success(t('providerAdded'));
                     handleClose();
                 }
             }
         } catch (error) {
+            trackFrontendIntent('cloud_provider.save_failed', {
+                provider_type: 'gcp',
+                mode: isEditMode ? 'edit' : 'create',
+                error_code: frontendAnalyticsErrorCode(error),
+            });
             const errorMessage = error instanceof Error ? error.message : t('unknownError');
             toast.error(t('operationFailed', { error: errorMessage }));
         }
     }, [name, projectId, region, buildInput, isEditMode, editingProviderId, updateProvider, addProvider, dispatch, handleClose, t]);
 
     const handleTest = useCallback(async () => {
+        trackFrontendIntent('cloud_provider.test_clicked', {
+            provider_type: 'gcp',
+            mode: isEditMode ? 'edit' : 'create',
+        });
         if (!name.trim() || !projectId.trim() || !region.trim()) {
+            trackFrontendIntent('cloud_provider.test_blocked', {
+                provider_type: 'gcp',
+                mode: isEditMode ? 'edit' : 'create',
+                error_code: 'invalid_input',
+            });
             toast.error(t('nameRequired'));
             return;
         }
@@ -228,12 +314,21 @@ export const GcpProviderModal: FC<GcpProviderModalProps> = ({
                     variables: { id: editingProviderId },
                 });
                 if (data?.TestCloudProvider === CloudProviderStatus.Connected) {
+                    trackFrontendIntent('cloud_provider.test_succeeded', {
+                        provider_type: 'gcp',
+                        mode: 'edit',
+                    });
                     dispatch(ProvidersActions.setProviderStatus({
                         id: editingProviderId,
                         status: CloudProviderStatus.Connected,
                     }));
                     toast.success(t('connectionSuccessful'));
                 } else {
+                    trackFrontendIntent('cloud_provider.test_failed', {
+                        provider_type: 'gcp',
+                        mode: 'edit',
+                        error_code: 'connection_failed',
+                    });
                     dispatch(ProvidersActions.setProviderStatus({
                         id: editingProviderId,
                         status: CloudProviderStatus.Error,
@@ -246,12 +341,26 @@ export const GcpProviderModal: FC<GcpProviderModalProps> = ({
                     variables: { input },
                 });
                 if (data?.TestGCPCredentials === CloudProviderStatus.Connected) {
+                    trackFrontendIntent('cloud_provider.test_succeeded', {
+                        provider_type: 'gcp',
+                        mode: 'create',
+                    });
                     toast.success(t('connectionSuccessful'));
                 } else {
+                    trackFrontendIntent('cloud_provider.test_failed', {
+                        provider_type: 'gcp',
+                        mode: 'create',
+                        error_code: 'connection_failed',
+                    });
                     toast.error(t('connectionFailed'));
                 }
             }
         } catch (error) {
+            trackFrontendIntent('cloud_provider.test_failed', {
+                provider_type: 'gcp',
+                mode: isEditMode ? 'edit' : 'create',
+                error_code: frontendAnalyticsErrorCode(error),
+            });
             const errorMessage = error instanceof Error ? error.message : t('unknownError');
             toast.error(t('testFailed', { error: errorMessage }));
         }

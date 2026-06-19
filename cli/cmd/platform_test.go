@@ -18,7 +18,11 @@ package cmd
 
 import (
 	"bytes"
+	"context"
+	"encoding/json"
 	"io"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -93,6 +97,217 @@ func TestPlatformManifestOutputIncludesCacheMetadata(t *testing.T) {
 	}
 	if len(output.Operations) != 2 || len(output.Types) != 1 {
 		t.Fatalf("platformManifestOutput() = %#v, want operations and types", output)
+	}
+}
+
+func TestPlatformStatusForReadyWorkspace(t *testing.T) {
+	host := config.PlatformHost{
+		URL:                "https://app.whodb.com",
+		DefaultOrgID:       "org-1",
+		DefaultOrgName:     "Acme",
+		DefaultProjectID:   "proj-1",
+		DefaultProjectName: "Warehouse",
+		Manifest: &config.PlatformManifestCache{
+			FetchedAt: "2026-06-13T12:00:00Z",
+		},
+	}
+	manifest := &platform.PlatformManifest{
+		PlatformVersion:         "1.2.3",
+		ManifestProtocolVersion: "1",
+		Operations: []platform.PlatformManifestOperation{
+			{Name: "SourceTypes", Kind: "Query"},
+			{Name: "ProjectSources", Kind: "Query"},
+			{Name: "CreateSource", Kind: "Mutation"},
+			{Name: "SourceConfig", Kind: "Query"},
+			{Name: "UpdateSource", Kind: "Mutation"},
+			{Name: "DeleteSource", Kind: "Mutation"},
+			{Name: "TestSourceConnection", Kind: "Mutation"},
+			{Name: "PlatformSourceObjects", Kind: "Query"},
+			{Name: "PlatformSourceColumns", Kind: "Query"},
+			{Name: "PlatformSourceRows", Kind: "Query"},
+		},
+	}
+
+	status := platformStatusFor(host, &platform.User{ID: "user-1", Email: "ada@example.com"}, []platform.Organization{{ID: "org-1"}}, []platform.Project{{ID: "proj-1"}}, manifest)
+
+	if !status.WorkspaceSelected || !status.SourceManagementSupported {
+		t.Fatalf("platformStatusFor() = %#v, want selected workspace with source support", status)
+	}
+	if status.ManifestFetchedAt != host.Manifest.FetchedAt {
+		t.Fatalf("manifest fetched at = %q, want %q", status.ManifestFetchedAt, host.Manifest.FetchedAt)
+	}
+}
+
+func TestPlatformStatusForReportsUnselectedWorkspace(t *testing.T) {
+	host := config.PlatformHost{URL: "https://app.whodb.com"}
+	orgs := []platform.Organization{{ID: "org-1", Name: "Acme"}}
+	projects := []platform.Project{{ID: "proj-1", Name: "Warehouse"}}
+
+	status := platformStatusFor(host, &platform.User{ID: "user-1"}, orgs, projects, &platform.PlatformManifest{})
+
+	if status.WorkspaceSelected {
+		t.Fatalf("platformStatusFor() = %#v, want workspace not selected", status)
+	}
+}
+
+func TestAutoSelectPlatformWorkspaceSelectsOnlyOrgAndProject(t *testing.T) {
+	client := newPlatformWorkspaceTestClient(t, `{"data":{"MyOrganizations":[{"id":"org-1","name":"Clidey","slug":"clidey"}]}}`, `{"data":{"Projects":[{"id":"proj-1","orgId":"org-1","name":"Customer","slug":"customer","description":""}]}}`)
+	host := config.PlatformHost{URL: client.Host()}
+
+	selection, err := autoSelectPlatformWorkspace(context.Background(), client, &host)
+	if err != nil {
+		t.Fatalf("autoSelectPlatformWorkspace() error = %v", err)
+	}
+	if host.DefaultOrgID != "org-1" || host.DefaultOrgName != "Clidey" || host.DefaultProjectID != "proj-1" || host.DefaultProjectName != "Customer" {
+		t.Fatalf("host = %#v, want only org/project selected", host)
+	}
+	if !selection.Changed || len(selection.Messages) != 2 {
+		t.Fatalf("selection = %#v, want changed with two messages", selection)
+	}
+}
+
+func TestAutoSelectPlatformWorkspaceSelectsOnlyProjectInSelectedOrg(t *testing.T) {
+	client := newPlatformWorkspaceTestClient(t, `{"data":{"MyOrganizations":[{"id":"org-1","name":"Clidey","slug":"clidey"},{"id":"org-2","name":"Acme","slug":"acme"}]}}`, `{"data":{"Projects":[{"id":"proj-1","orgId":"org-2","name":"Customer","slug":"customer","description":""}]}}`)
+	host := config.PlatformHost{URL: client.Host(), DefaultOrgID: "org-2", DefaultOrgName: "Acme"}
+
+	selection, err := autoSelectPlatformWorkspace(context.Background(), client, &host)
+	if err != nil {
+		t.Fatalf("autoSelectPlatformWorkspace() error = %v", err)
+	}
+	if host.DefaultOrgID != "org-2" || host.DefaultProjectID != "proj-1" || host.DefaultProjectName != "Customer" {
+		t.Fatalf("host = %#v, want selected org with only project selected", host)
+	}
+	if !selection.Changed || len(selection.Messages) != 1 {
+		t.Fatalf("selection = %#v, want one project selection message", selection)
+	}
+}
+
+func TestAutoSelectPlatformWorkspaceLeavesAmbiguousWorkspaceUnselected(t *testing.T) {
+	client := newPlatformWorkspaceTestClient(t, `{"data":{"MyOrganizations":[{"id":"org-1","name":"Clidey","slug":"clidey"},{"id":"org-2","name":"Acme","slug":"acme"}]}}`, `{"data":{"Projects":[]}}`)
+	host := config.PlatformHost{URL: client.Host()}
+
+	selection, err := autoSelectPlatformWorkspace(context.Background(), client, &host)
+	if err != nil {
+		t.Fatalf("autoSelectPlatformWorkspace() error = %v", err)
+	}
+	if host.DefaultOrgID != "" || host.DefaultProjectID != "" {
+		t.Fatalf("host = %#v, want workspace unselected", host)
+	}
+	if selection.Changed || len(selection.Messages) != 0 {
+		t.Fatalf("selection = %#v, want no auto-selection", selection)
+	}
+}
+
+func TestPlatformStatusForReportsUnsupportedMissingCapability(t *testing.T) {
+	host := config.PlatformHost{URL: "https://app.whodb.com", DefaultOrgID: "org-1", DefaultProjectID: "proj-1"}
+	manifest := &platform.PlatformManifest{
+		Operations: []platform.PlatformManifestOperation{
+			{Name: "SourceTypes", Kind: "Query"},
+		},
+	}
+
+	status := platformStatusFor(host, &platform.User{ID: "user-1"}, nil, nil, manifest)
+
+	if status.SourceManagementSupported {
+		t.Fatalf("platformStatusFor() = %#v, want unsupported source management", status)
+	}
+	if len(status.Capabilities) == 0 {
+		t.Fatal("capabilities empty, want required operation report")
+	}
+}
+
+func newPlatformWorkspaceTestClient(t *testing.T, orgResponse, projectResponse string) *platform.Client {
+	t.Helper()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var request struct {
+			Query string `json:"query"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case strings.Contains(request.Query, "MyOrganizations"):
+			_, _ = w.Write([]byte(orgResponse))
+		case strings.Contains(request.Query, "Projects"):
+			_, _ = w.Write([]byte(projectResponse))
+		default:
+			t.Fatalf("unexpected query: %s", request.Query)
+		}
+	}))
+	t.Cleanup(server.Close)
+	client, err := platform.NewClient(server.URL, "token")
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
+	}
+	client.SetPlatformManifest(&platform.PlatformManifest{
+		Operations: []platform.PlatformManifestOperation{
+			{Name: "MyOrganizations", Kind: "Query"},
+			{Name: "Projects", Kind: "Query"},
+		},
+	})
+	return client
+}
+
+func TestResolvePlatformSourceUsesSavedOrgForProjectSources(t *testing.T) {
+	var projectSourcesVariables map[string]any
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var request struct {
+			Query     string         `json:"query"`
+			Variables map[string]any `json:"variables"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case strings.Contains(request.Query, "MyOrganizations"):
+			_, _ = w.Write([]byte(`{"data":{"MyOrganizations":[{"id":"org-1","name":"Clidey","slug":"clidey"}]}}`))
+		case strings.Contains(request.Query, "Projects"):
+			if request.Variables["orgId"] != "org-1" {
+				t.Fatalf("Projects orgId variable = %#v, want org-1", request.Variables["orgId"])
+			}
+			_, _ = w.Write([]byte(`{"data":{"Projects":[{"id":"proj-1","orgId":"org-1","name":"Customer","slug":"customer","description":""}]}}`))
+		case strings.Contains(request.Query, "ProjectSources"):
+			projectSourcesVariables = request.Variables
+			_, _ = w.Write([]byte(`{"data":{"ProjectSources":[{"id":"src-1","projectId":"proj-1","name":"Warehouse","databaseType":"Postgres","createdBy":"Ada","createdAt":"2026-06-17T00:00:00Z"}]}}`))
+		default:
+			t.Fatalf("unexpected query: %s", request.Query)
+		}
+	}))
+	defer server.Close()
+
+	client, err := platform.NewClient(server.URL, "token")
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
+	}
+	client.SetPlatformManifest(&platform.PlatformManifest{
+		Operations: []platform.PlatformManifestOperation{
+			{Name: "MyOrganizations", Kind: "Query"},
+			{Name: "Projects", Kind: "Query"},
+			{Name: "ProjectSources", Kind: "Query"},
+		},
+	})
+	session := &platformSession{
+		Host: config.PlatformHost{
+			URL:                server.URL,
+			DefaultOrgID:       "org-1",
+			DefaultOrgName:     "Clidey",
+			DefaultProjectID:   "proj-1",
+			DefaultProjectName: "Customer",
+		},
+		Client: client,
+	}
+
+	org, project, source, err := resolvePlatformSource(context.Background(), session, "", "", "Warehouse")
+	if err != nil {
+		t.Fatalf("resolvePlatformSource() error = %v", err)
+	}
+	if org.ID != "org-1" || project.ID != "proj-1" || source.ID != "src-1" {
+		t.Fatalf("resolved org/project/source = %#v %#v %#v", org, project, source)
+	}
+	if projectSourcesVariables["orgId"] != "org-1" || projectSourcesVariables["projectId"] != "proj-1" {
+		t.Fatalf("ProjectSources variables = %#v, want saved org/project IDs", projectSourcesVariables)
 	}
 }
 
@@ -193,6 +408,32 @@ func TestCollectSourceFieldValuesRejectsUnknownExplicitField(t *testing.T) {
 	}
 }
 
+func TestExplicitSourceConfigValuesRejectsUnknownFieldWithHint(t *testing.T) {
+	oldSourceFields := sourceFields
+	t.Cleanup(func() { sourceFields = oldSourceFields })
+	sourceFields = []string{"Unknown=value"}
+
+	cmd := &cobra.Command{}
+	cmd.Flags().StringArray("field", nil, "")
+	if err := cmd.Flags().Set("field", "Unknown=value"); err != nil {
+		t.Fatalf("set field flag: %v", err)
+	}
+	sourceType := &platform.SourceType{
+		ID: "Postgres",
+		ConnectionFields: []platform.SourceConnectionField{
+			{Key: "Hostname", Kind: "Text"},
+		},
+	}
+
+	_, _, err := explicitSourceConfigValues(cmd, sourceType)
+	if err == nil {
+		t.Fatal("explicitSourceConfigValues() error = nil, want unknown field error")
+	}
+	if !strings.Contains(err.Error(), "whodb-cli sources fields Postgres") {
+		t.Fatalf("explicitSourceConfigValues() error = %q, want fields hint", err)
+	}
+}
+
 func TestBuildCreateSourceInputMapsKnownFieldsAndAdvanced(t *testing.T) {
 	input := buildCreateSourceInput("proj-1", "Postgres", "Warehouse", map[string]string{
 		"Hostname": "localhost",
@@ -227,7 +468,7 @@ func TestMergeSourceConfigPreservesUnchangedFields(t *testing.T) {
 		},
 	}
 
-	merged := mergeSourceConfig(existing, map[string]string{
+	merged := platform.MergeSourceConfig(existing, map[string]string{
 		"Database": "analytics",
 		"SSL Mode": "require",
 	}, map[string]string{
@@ -263,12 +504,12 @@ func TestRedactSourceConfigRedactsSecretFields(t *testing.T) {
 		},
 	}
 
-	safe := redactSourceConfig(config, sourceType)
+	safe := platform.RedactSourceConfig(config, sourceType)
 
-	if safe.Password != redactedValue {
+	if safe.Password != platform.RedactedValue() {
 		t.Fatalf("password = %q, want redacted", safe.Password)
 	}
-	if safe.Advanced["Client Secret"] != redactedValue || safe.Advanced["api_token"] != redactedValue {
+	if safe.Advanced["Client Secret"] != platform.RedactedValue() || safe.Advanced["api_token"] != platform.RedactedValue() {
 		t.Fatalf("advanced = %#v, want secret fields redacted", safe.Advanced)
 	}
 	if safe.Advanced["Region"] != "us-east-1" {

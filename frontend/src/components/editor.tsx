@@ -190,6 +190,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
   const apolloClient = useApolloClient();
   const currentSchema = useAppSelector(state => state.database.schema);
   const currentDatabase = useAppSelector(state => state.auth.current?.Database);
+  const runQueryLabel = t('runQuery');
 
   // For databases like MySQL where database and schema are the same,
   // use the connection database as fallback if no schema is selected
@@ -204,7 +205,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
   useEffect(() => {
     const handleExecuteTrigger = () => {
       // Execute the entire content when triggered from menu
-      if (onRun && value) {
+      if (!disabled && onRun && value) {
         onRun(value);
       }
     };
@@ -213,7 +214,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
     return () => {
       window.removeEventListener('menu:trigger-execute-query', handleExecuteTrigger);
     };
-  }, [value, onRun]);
+  }, [disabled, value, onRun]);
 
   useEffect(() => {
     if (viewRef.current && value !== viewRef.current.state.doc.toString()) {
@@ -246,7 +247,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
 
     // Create custom gutter for SQL queries
     const createPlayButtonGutter = () => {
-      if (language !== "sql" || !onRun) {
+      if (disabled || language !== "sql" || !onRun) {
         return [];
       }
 
@@ -269,7 +270,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
                   if (lineText) {
                     onRunReference.current?.(lineText);
                   }
-                }, query, t('runQuery'));
+                }, query, runQueryLabel);
                 
                 ranges.push({ from: startLineObj.from, to: startLineObj.from, value: playMarker });
               }
@@ -286,7 +287,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
         extensions: [
           EditorView.domEventHandlers({
               keydown(event) {
-                if (matchesShortcut(event, SHORTCUTS.clearEditor) && setValue != null) {
+                if (!disabled && matchesShortcut(event, SHORTCUTS.clearEditor) && setValue != null) {
                   view.dispatch({
                     changes: { from: 0, to: view.state.doc.length, insert: "" }
                   });
@@ -295,7 +296,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
                   return true;
                 }
 
-                if (matchesShortcut(event, SHORTCUTS.executeQuery) && onRunReference.current != null) {
+                if (!disabled && matchesShortcut(event, SHORTCUTS.executeQuery) && onRunReference.current != null) {
                       // Get the selected text if any, otherwise use the entire content
                       const selection = view.state.selection;
                       let textToExecute = '';
@@ -315,6 +316,8 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
               },
           }),
             basicSetup,
+            EditorState.readOnly.of(!!disabled),
+            EditorView.editable.of(!disabled),
             languageExtension ?? [],
             // Add autocomplete for SQL in EE mode, but allow disabling it during E2E tests to prevent flakiness.
             (language === "sql" && createSQLAutocomplete && !(window as any).__E2E_DISABLE_AUTOCOMPLETE) ? createSQLAutocomplete({apolloClient, defaultSchema}) : [],
@@ -356,7 +359,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
               },
             })],
             EditorView.updateListener.of((update) => {
-              if (update.docChanged && update.changes && setValue != null) {
+              if (!disabled && update.docChanged && update.changes && setValue != null) {
                   setValue(update.state.doc.toString());
               }
             }),
@@ -376,7 +379,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
       view.destroy();
       viewRef.current = null;
     };
-  }, [language, apolloClient, darkModeEnabled, defaultSchema]);
+  }, [language, apolloClient, darkModeEnabled, defaultSchema, disabled, runQueryLabel]);
 
   const handlePreviewToggle = useCallback(() => {
     setShowPreview((prev) => !prev);
@@ -430,14 +433,9 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
   }, [handlePreviewToggle, showPreview, t]);
 
   return (
-    <div className={classNames("relative h-full w-full", {
-      "pointer-events-none": disabled,
-    })}>
+    <div className="relative h-full w-full">
       {children}
-      <div ref={editorRef} className={classNames("h-full w-full [&>.cm-editor]:h-full [&>.cm-editor]:p-2 transition-all opacity-100", {
-        "opacity-0 pointer-events-none": hidePreview && disabled,
-        }
-      )} data-testid="code-editor"></div>
+      <div ref={editorRef} className="h-full w-full [&>.cm-editor]:h-full [&>.cm-editor]:p-2 transition-all opacity-100" data-testid="code-editor"></div>
       <div
         className={classNames("absolute right-6 bottom-2 z-20", {
           hidden: hidePreview,

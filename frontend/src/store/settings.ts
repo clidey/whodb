@@ -38,6 +38,8 @@ type ISettingsState = {
     language: SupportedLanguage;
     databaseSchemaTerminology: 'database' | 'schema';
     disableAnimations: boolean;
+    formatDatesLocale: boolean;
+    formatBooleansReadable: boolean;
     /** Visual theme name. Currently only 'default' is supported. */
     appTheme: 'default';
     /** OS override for keyboard shortcuts. Undefined means use system detection. */
@@ -77,6 +79,8 @@ const getInitialState = (): ISettingsState => {
         databaseSchemaTerminology: 'database',  // Default to "Database" label for databases where database=schema
         // Use extension default if available, otherwise default to false (animations enabled)
         disableAnimations: settingsDefaults.disableAnimations ?? false,
+        formatDatesLocale: false,
+        formatBooleansReadable: false,
         appTheme: 'default',
         os: undefined,
         sidebarOpen: true,
@@ -137,6 +141,12 @@ export const settingsSlice = createSlice({
         },
         setDisableAnimations: (state, action: PayloadAction<ISettingsState["disableAnimations"]>) => {
             state.disableAnimations = action.payload;
+        },
+        setFormatDatesLocale: (state, action: PayloadAction<ISettingsState["formatDatesLocale"]>) => {
+            state.formatDatesLocale = action.payload;
+        },
+        setFormatBooleansReadable: (state, action: PayloadAction<ISettingsState["formatBooleansReadable"]>) => {
+            state.formatBooleansReadable = action.payload;
         },
         setAppTheme: (state, action: PayloadAction<ISettingsState["appTheme"]>) => {
             state.appTheme = action.payload;

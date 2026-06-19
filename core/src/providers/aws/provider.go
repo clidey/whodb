@@ -256,14 +256,14 @@ type discoveryResult struct {
 // DiscoverConnections implements providers.ConnectionProvider.
 // Discovery runs in parallel across all enabled services for faster results.
 func (p *Provider) DiscoverConnections(ctx context.Context) ([]providers.DiscoveredConnection, error) {
-	log.Infof("AWS Provider DiscoverConnections called for id=%s, region=%s, authMethod=%s, profileName=%s",
+	log.Debugf("AWS Provider DiscoverConnections called for id=%s, region=%s, authMethod=%s, profileName=%s",
 		p.config.ID, p.config.Region, p.config.AuthMethod, p.config.ProfileName)
 
 	if err := p.initialize(ctx); err != nil {
 		log.Errorf("AWS Provider initialize failed: %v", err)
 		return nil, err
 	}
-	log.Infof("AWS Provider initialized successfully, rdsClient=%v", p.rdsClient != nil)
+	log.Debugf("AWS Provider initialized successfully, rdsClient=%v", p.rdsClient != nil)
 
 	// Count how many discovery tasks we'll run
 	taskCount := len(discoveryExtensions)
@@ -363,7 +363,7 @@ func (p *Provider) DiscoverConnections(ctx context.Context) ([]providers.Discove
 			log.Errorf("AWS Provider: %s discovery failed: %v", r.name, r.err)
 			allErrs = append(allErrs, fmt.Errorf("%s: %w", r.name, r.err))
 		} else {
-			log.Infof("AWS Provider: %s discovery found %d resources", r.name, len(r.conns))
+			log.Debugf("AWS Provider: %s discovery found %d resources", r.name, len(r.conns))
 			allConns = append(allConns, r.conns...)
 		}
 	}

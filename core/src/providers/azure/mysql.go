@@ -68,7 +68,7 @@ func (p *Provider) discoverMySQL(ctx context.Context) ([]providers.DiscoveredCon
 		}
 	}
 
-	log.Infof("Azure MySQL: discovered %d servers in %v", len(connections), time.Since(start))
+	log.Debugf("Azure MySQL: discovered %d servers in %v", len(connections), time.Since(start))
 	return connections, nil
 }
 

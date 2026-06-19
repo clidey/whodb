@@ -18,6 +18,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -47,6 +48,9 @@ var (
 	mcpHost      string
 	mcpPort      int
 )
+
+// platform flags
+var mcpPlatform bool
 
 // tool enablement flags
 var (
@@ -121,6 +125,12 @@ Available tools:
   whodb_confirm     - Confirm pending writes (only with --confirm-writes)
   whodb_pending     - List pending confirmation tokens
 
+Hosted platform mode is disabled by default. Start with --platform to expose only
+whodb_platform_* tools backed by the current hosted login and selected workspace.
+Local database tools such as whodb_query and whodb_connections are not registered
+in platform mode. Hosted source writes return confirmation tokens and execute
+only through whodb_platform_confirm.
+
 TOOL SELECTION:
   --tools           - Comma-separated list of tools to enable (default: all)
                       Valid: query, schemas, tables, columns, connections, confirm, pending, explain, diff, erd, audit, suggestions
@@ -190,6 +200,9 @@ Connection Resolution:
   # Restrict to specific connections (first becomes default)
   whodb-cli mcp serve --allowed-connections=prod,staging
 
+  # Run hosted WhoDB platform MCP mode only
+  whodb-cli mcp serve --platform
+
   # Set default connection without restricting access
   whodb-cli mcp serve --default-connection=prod
 
@@ -209,6 +222,10 @@ Connection Resolution:
 		// Create context with signal handling
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
+
+		if mcpPlatform && (cmd.Flags().Changed("tools") || cmd.Flags().Changed("disable-tools")) {
+			return fmt.Errorf("--tools and --disable-tools apply only to local MCP mode; omit them when using --platform")
+		}
 
 		// Handle shutdown signals
 		sigChan := make(chan os.Signal, 1)
@@ -257,6 +274,7 @@ Connection Resolution:
 			DisabledTools:       mcpDisabledTools,
 			DefaultConnection:   mcpConnection,
 			AllowedConnections:  mcpAllowedConnections,
+			PlatformEnabled:     mcpPlatform,
 		}
 
 		server := whodbmcp.NewServer(opts)
@@ -276,6 +294,7 @@ Connection Resolution:
 			"enabled_tools":  mcpEnabledTools,
 			"disabled_tools": mcpDisabledTools,
 			"security_level": securityLevel,
+			"platform":       mcpPlatform,
 		})
 
 		// Run with selected transport
@@ -324,6 +343,10 @@ func init() {
 		"Host to bind to (only used with --transport=http)")
 	mcpServeCmd.Flags().IntVar(&mcpPort, "port", 3000,
 		"Port to listen on (only used with --transport=http)")
+
+	// Platform flags
+	mcpServeCmd.Flags().BoolVar(&mcpPlatform, "platform", false,
+		"Run hosted platform MCP mode only (requires whodb-cli login and use)")
 
 	// Tool enablement flags
 	mcpServeCmd.Flags().StringSliceVar(&mcpEnabledTools, "tools", nil,

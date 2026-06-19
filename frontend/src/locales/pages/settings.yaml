@@ -1,4 +1,8 @@
 en_US:
+  tabAppearance: Appearance
+  tabBehavior: Behavior
+  tabIntegrations: Integrations
+  tabPrivacy: Privacy
   telemetryTitle: Telemetry and Performance Metrics
   telemetryDescription: We use this information solely to enhance the performance of {appName}.
   dataCollectionDetails: For details on what data we collect, how it's collected, stored, and used, please refer to our {privacyPolicyLink}.
@@ -41,6 +45,11 @@ en_US:
   disableAnimations: Disable Animations
   disableAnimationsEnabled: Animations are disabled
   disableAnimationsDisabled: Animations are enabled
+  dataDisplayTitle: Data Display
+  formatDates: "Format dates in locale (2025-01-15T10:30:00Z → 1/15/2025, 10:30 AM)"
+  formatBooleans: "Normalize booleans (t/1 → true, f/0 → false)"
+  formatDatesEnabled: Date formatting is enabled
+  formatDatesDisabled: Date formatting is disabled
 
 ar_AE:
   telemetryTitle: "القياس عن بعد ومقاييس الأداء"
@@ -85,6 +94,15 @@ ar_AE:
   disableAnimations: "تعطيل الرسوم المتحركة"
   disableAnimationsEnabled: "تم تعطيل الرسوم المتحركة"
   disableAnimationsDisabled: "تم تمكين الرسوم المتحركة"
+  tabAppearance: "مظهر"
+  tabBehavior: "سلوك"
+  tabIntegrations: "التكامل"
+  tabPrivacy: "خصوصية"
+  dataDisplayTitle: "عرض البيانات"
+  formatDates: "تنسيق التواريخ باللغة المحلية (2025-01-15T10:30:00Z → 15/1/2025، 10:30 صباحًا)"
+  formatBooleans: "تطبيع القيم المنطقية (t/1 → صحيح، f/0 → خطأ)"
+  formatDatesEnabled: "تم تمكين تنسيق التاريخ"
+  formatDatesDisabled: "تم تعطيل تنسيق التاريخ"
 
 de_DE:
   telemetryTitle: "Telemetrie und Leistungsmetriken"
@@ -129,6 +147,15 @@ de_DE:
   disableAnimations: "Animationen deaktivieren"
   disableAnimationsEnabled: "Animationen sind deaktiviert"
   disableAnimationsDisabled: "Animationen sind aktiviert"
+  tabAppearance: "Aussehen"
+  tabBehavior: "Verhalten"
+  tabIntegrations: "Integrationen"
+  tabPrivacy: "Privatsphäre"
+  dataDisplayTitle: "Datenanzeige"
+  formatDates: "Datumsangaben im Gebietsschema formatieren (2025-01-15T10:30:00Z → 15.01.2025, 10:30 Uhr)"
+  formatBooleans: "Boolesche Werte normalisieren (t/1 → wahr, f/0 → falsch)"
+  formatDatesEnabled: "Die Datumsformatierung ist aktiviert"
+  formatDatesDisabled: "Die Datumsformatierung ist deaktiviert"
 
 el_GR:
   telemetryTitle: "Τηλεμετρία και μετρήσεις απόδοσης"
@@ -173,6 +200,15 @@ el_GR:
   disableAnimations: "Απενεργοποίηση κινούμενων εικόνων"
   disableAnimationsEnabled: "Οι κινούμενες εικόνες είναι απενεργοποιημένες"
   disableAnimationsDisabled: "Τα κινούμενα σχέδια είναι ενεργοποιημένα"
+  tabAppearance: "Εμφάνιση"
+  tabBehavior: "Συμπεριφορά"
+  tabIntegrations: "Ενσωματώσεις"
+  tabPrivacy: "Μυστικότητα"
+  dataDisplayTitle: "Εμφάνιση δεδομένων"
+  formatDates: "Μορφοποίηση ημερομηνιών σε τοπικές ρυθμίσεις (2025-01-15T10:30:00Z → 15/1/2025, 10:30 π.μ.)"
+  formatBooleans: "Κανονικοποίηση Booleans (t/1 → true, f/0 → false)"
+  formatDatesEnabled: "Η μορφοποίηση ημερομηνίας είναι ενεργοποιημένη"
+  formatDatesDisabled: "Η μορφοποίηση ημερομηνίας είναι απενεργοποιημένη"
 
 en_GB:
   telemetryTitle: "Telemetry and Performance Metrics"
@@ -217,6 +253,15 @@ en_GB:
   disableAnimations: "Disable Animations"
   disableAnimationsEnabled: "Animations are disabled"
   disableAnimationsDisabled: "Animations are enabled"
+  tabAppearance: "Appearance"
+  tabBehavior: "Behaviour"
+  tabIntegrations: "Integrations"
+  tabPrivacy: "Privacy"
+  dataDisplayTitle: "Data Display"
+  formatDates: "Format dates in locale (2025-01-15T10:30:00Z → 1/15/2025, 10:30 AM)"
+  formatBooleans: "Normalize booleans (t/1 → true, f/0 → false)"
+  formatDatesEnabled: "Date formatting is enabled"
+  formatDatesDisabled: "Date formatting is disabled"
 
 es_ES:
   telemetryTitle: "Telemetría y métricas de rendimiento"
@@ -261,6 +306,15 @@ es_ES:
   disableAnimations: "Deshabilitar animaciones"
   disableAnimationsEnabled: "Las animaciones están deshabilitadas."
   disableAnimationsDisabled: "Las animaciones están habilitadas."
+  tabAppearance: "Apariencia"
+  tabBehavior: "Comportamiento"
+  tabIntegrations: "Integraciones"
+  tabPrivacy: "Privacidad"
+  dataDisplayTitle: "Visualización de datos"
+  formatDates: "Dar formato a las fechas en la configuración regional (2025-01-15T10:30:00Z → 15/01/2025, 10:30 a. m.)"
+  formatBooleans: "Normalizar valores booleanos (t/1 → verdadero, f/0 → falso)"
+  formatDatesEnabled: "El formato de fecha está habilitado"
+  formatDatesDisabled: "El formato de fecha está deshabilitado"
 
 fi_FI:
   telemetryTitle: "Telemetria ja suorituskykymittarit"
@@ -305,6 +359,15 @@ fi_FI:
   disableAnimations: "Poista animaatiot käytöstä"
   disableAnimationsEnabled: "Animaatiot on poistettu käytöstä"
   disableAnimationsDisabled: "Animaatiot ovat käytössä"
+  tabAppearance: "Ulkonäkö"
+  tabBehavior: "Käyttäytyminen"
+  tabIntegrations: "Integraatiot"
+  tabPrivacy: "Yksityisyys"
+  dataDisplayTitle: "Datanäyttö"
+  formatDates: "Muotoile päivämäärät kielellä (2025-01-15T10:30:00Z → 1/15/2025, 10:30)"
+  formatBooleans: "Normalisoi loogiset arvot (t/1 → tosi, f/0 → epätosi)"
+  formatDatesEnabled: "Päivämäärän muotoilu on käytössä"
+  formatDatesDisabled: "Päivämäärän muotoilu on poistettu käytöstä"
 
 fr_FR:
   telemetryTitle: "Télémétrie et mesures de performances"
@@ -349,6 +412,15 @@ fr_FR:
   disableAnimations: "Désactiver les animations"
   disableAnimationsEnabled: "Les animations sont désactivées"
   disableAnimationsDisabled: "Les animations sont activées"
+  tabAppearance: "Apparence"
+  tabBehavior: "Comportement"
+  tabIntegrations: "Intégrations"
+  tabPrivacy: "Confidentialité"
+  dataDisplayTitle: "Affichage des données"
+  formatDates: "Formater les dates dans les paramètres régionaux (2025-01-15T10:30:00Z → 15/01/2025, 10h30)"
+  formatBooleans: "Normaliser les booléens (t/1 → vrai, f/0 → faux)"
+  formatDatesEnabled: "Le formatage de la date est activé"
+  formatDatesDisabled: "Le formatage de la date est désactivé"
 
 it_IT:
   telemetryTitle: "Telemetria e metriche delle prestazioni"
@@ -393,6 +465,15 @@ it_IT:
   disableAnimations: "Disabilita animazioni"
   disableAnimationsEnabled: "Le animazioni sono disabilitate"
   disableAnimationsDisabled: "Le animazioni sono abilitate"
+  tabAppearance: "Aspetto"
+  tabBehavior: "Comportamento"
+  tabIntegrations: "Integrazioni"
+  tabPrivacy: "Privacy"
+  dataDisplayTitle: "Visualizzazione dei dati"
+  formatDates: "Formato le date nelle impostazioni locali (2025-01-15T10:30:00Z → 1/15/2025, 10:30 AM)"
+  formatBooleans: "Normalizza i booleani (t/1 → vero, f/0 → falso)"
+  formatDatesEnabled: "La formattazione della data è abilitata"
+  formatDatesDisabled: "La formattazione della data è disabilitata"
 
 iw_IL:
   telemetryTitle: "טלמטריה ומדדי ביצועים"
@@ -437,6 +518,15 @@ iw_IL:
   disableAnimations: "השבת אנימציות"
   disableAnimationsEnabled: "אנימציות מושבתות"
   disableAnimationsDisabled: "אנימציות מופעלות"
+  tabAppearance: "הוֹפָעָה"
+  tabBehavior: "הִתְנַהֲגוּת"
+  tabIntegrations: "אינטגרציות"
+  tabPrivacy: "פְּרָטִיוּת"
+  dataDisplayTitle: "Data Display"
+  formatDates: "עיצוב תאריכים במקום (2025-01-15T10:30:00Z → 15/1/2025, 10:30)"
+  formatBooleans: "נרמל בוליאנים (t/1 → נכון, f/0 → false)"
+  formatDatesEnabled: "עיצוב תאריך מופעל"
+  formatDatesDisabled: "עיצוב התאריך מושבת"
 
 ja_JP:
   telemetryTitle: "テレメトリとパフォーマンスのメトリクス"
@@ -481,6 +571,15 @@ ja_JP:
   disableAnimations: "アニメーションを無効にする"
   disableAnimationsEnabled: "アニメーションは無効になっています"
   disableAnimationsDisabled: "アニメーションが有効になっています"
+  tabAppearance: "外観"
+  tabBehavior: "行動"
+  tabIntegrations: "統合"
+  tabPrivacy: "プライバシー"
+  dataDisplayTitle: "データ表示"
+  formatDates: "日付をロケールでフォーマットする (2025-01-15T10:30:00Z → 1/15/2025, 10:30 AM)"
+  formatBooleans: "ブール値の正規化 (t/1 → true、f/0 → false)"
+  formatDatesEnabled: "日付の書式設定が有効になっています"
+  formatDatesDisabled: "日付の書式設定が無効になっています"
 
 ko_KR:
   telemetryTitle: "원격 측정 및 성능 측정항목"
@@ -525,6 +624,15 @@ ko_KR:
   disableAnimations: "애니메이션 비활성화"
   disableAnimationsEnabled: "애니메이션이 비활성화되었습니다."
   disableAnimationsDisabled: "애니메이션이 활성화되었습니다."
+  tabAppearance: "모습"
+  tabBehavior: "행동"
+  tabIntegrations: "통합"
+  tabPrivacy: "은둔"
+  dataDisplayTitle: "데이터 표시"
+  formatDates: "로캘 날짜 형식 지정(2025-01-15T10:30:00Z → 2025년 1월 15일, 오전 10:30)"
+  formatBooleans: "부울 정규화(t/1 → true, f/0 → false)"
+  formatDatesEnabled: "날짜 형식이 활성화되었습니다"
+  formatDatesDisabled: "날짜 형식이 비활성화되었습니다."
 
 nl_NL:
   telemetryTitle: "Telemetrie en prestatiestatistieken"
@@ -569,6 +677,15 @@ nl_NL:
   disableAnimations: "Schakel animaties uit"
   disableAnimationsEnabled: "Animaties zijn uitgeschakeld"
   disableAnimationsDisabled: "Animaties zijn ingeschakeld"
+  tabAppearance: "Verschijning"
+  tabBehavior: "Gedrag"
+  tabIntegrations: "Integraties"
+  tabPrivacy: "Privacy"
+  dataDisplayTitle: "Gegevensweergave"
+  formatDates: "Datums in landinstelling noteren (2025-01-15T10:30:00Z → 15-1-2025, 10:30 uur)"
+  formatBooleans: "Normaliseer booleaanse waarden (t/1 → waar, f/0 → onwaar)"
+  formatDatesEnabled: "Datumnotatie is ingeschakeld"
+  formatDatesDisabled: "Datumnotatie is uitgeschakeld"
 
 pl_PL:
   telemetryTitle: "Dane telemetryczne i wydajnościowe"
@@ -613,6 +730,15 @@ pl_PL:
   disableAnimations: "Wyłącz animacje"
   disableAnimationsEnabled: "Animacje są wyłączone"
   disableAnimationsDisabled: "Animacje są włączone"
+  tabAppearance: "Wygląd"
+  tabBehavior: "Zachowanie"
+  tabIntegrations: "Integracje"
+  tabPrivacy: "Prywatność"
+  dataDisplayTitle: "Wyświetlanie danych"
+  formatDates: "Formatuj daty w ustawieniach regionalnych (2025-01-15T10:30:00Z → 15.1.2025, 10:30)"
+  formatBooleans: "Normalizuj wartości logiczne (t/1 → prawda, f/0 → fałsz)"
+  formatDatesEnabled: "Formatowanie daty jest włączone"
+  formatDatesDisabled: "Formatowanie daty jest wyłączone"
 
 pt_BR:
   telemetryTitle: "Telemetria e métricas de desempenho"
@@ -657,6 +783,15 @@ pt_BR:
   disableAnimations: "Desativar animações"
   disableAnimationsEnabled: "As animações estão desativadas"
   disableAnimationsDisabled: "As animações estão habilitadas"
+  tabAppearance: "Aparência"
+  tabBehavior: "Comportamento"
+  tabIntegrations: "Integrações"
+  tabPrivacy: "Privacidade"
+  dataDisplayTitle: "Exibição de dados"
+  formatDates: "Formatar datas no local (2025-01-15T10:30:00Z → 15/01/2025, 10h30)"
+  formatBooleans: "Normalizar booleanos (t/1 → verdadeiro, f/0 → falso)"
+  formatDatesEnabled: "A formatação de data está ativada"
+  formatDatesDisabled: "A formatação de data está desativada"
 
 ro_RO:
   telemetryTitle: "Telemetrie și valori de performanță"
@@ -701,6 +836,15 @@ ro_RO:
   disableAnimations: "Dezactivați animațiile"
   disableAnimationsEnabled: "Animațiile sunt dezactivate"
   disableAnimationsDisabled: "Animațiile sunt activate"
+  tabAppearance: "Aspect"
+  tabBehavior: "Comportament"
+  tabIntegrations: "Integrari"
+  tabPrivacy: "Confidențialitate"
+  dataDisplayTitle: "Afișarea datelor"
+  formatDates: "Formatați datele în local (2025-01-15T10:30:00Z → 1/15/2025, 10:30 AM)"
+  formatBooleans: "Normalizați valorile booleene (t/1 → adevărat, f/0 → fals)"
+  formatDatesEnabled: "Formatarea datei este activată"
+  formatDatesDisabled: "Formatarea datei este dezactivată"
 
 ru_RU:
   telemetryTitle: "Телеметрия и показатели производительности"
@@ -745,6 +889,15 @@ ru_RU:
   disableAnimations: "Отключить анимацию"
   disableAnimationsEnabled: "Анимации отключены"
   disableAnimationsDisabled: "Анимации включены"
+  tabAppearance: "Появление"
+  tabBehavior: "Поведение"
+  tabIntegrations: "Интеграции"
+  tabPrivacy: "Конфиденциальность"
+  dataDisplayTitle: "Отображение данных"
+  formatDates: "Форматирование дат в локали (2025-01-15T10:30:00Z → 15.01.2025, 10:30)"
+  formatBooleans: "Нормализовать логические значения (t/1 → true, f/0 → false)"
+  formatDatesEnabled: "Форматирование даты включено"
+  formatDatesDisabled: "Форматирование даты отключено"
 
 sk_SK:
   telemetryTitle: "Telemetria a metriky výkonu"
@@ -789,6 +942,15 @@ sk_SK:
   disableAnimations: "Zakázať animácie"
   disableAnimationsEnabled: "Animácie sú zakázané"
   disableAnimationsDisabled: "Animácie sú povolené"
+  tabAppearance: "Vzhľad"
+  tabBehavior: "Správanie"
+  tabIntegrations: "integrácií"
+  tabPrivacy: "Ochrana osobných údajov"
+  dataDisplayTitle: "Zobrazenie údajov"
+  formatDates: "Formátovať dátumy v miestnom nastavení (2025-01-15T10:30:00Z → 1/15/2025, 10:30 AM)"
+  formatBooleans: "Normalizovať boolovské hodnoty (t/1 → pravda, f/0 → nepravda)"
+  formatDatesEnabled: "Formátovanie dátumu je povolené"
+  formatDatesDisabled: "Formátovanie dátumu je zakázané"
 
 sv_SE:
   telemetryTitle: "Telemetri och prestandamått"
@@ -833,6 +995,15 @@ sv_SE:
   disableAnimations: "Inaktivera animationer"
   disableAnimationsEnabled: "Animationer är inaktiverade"
   disableAnimationsDisabled: "Animationer är aktiverade"
+  tabAppearance: "Utseende"
+  tabBehavior: "Beteende"
+  tabIntegrations: "Integrationer"
+  tabPrivacy: "Privatliv"
+  dataDisplayTitle: "Datavisning"
+  formatDates: "Formatera datum i språk (2025-01-15T10:30:00Z → 1/15/2025, 10:30)"
+  formatBooleans: "Normalisera booleaner (t/1 → sant, f/0 → falskt)"
+  formatDatesEnabled: "Datumformatering är aktiverad"
+  formatDatesDisabled: "Datumformatering är inaktiverad"
 
 zh_CN:
   telemetryTitle: "遥测和性能指标"
@@ -877,6 +1048,15 @@ zh_CN:
   disableAnimations: "禁用动画"
   disableAnimationsEnabled: "动画被禁用"
   disableAnimationsDisabled: "动画已启用"
+  tabAppearance: "外貌"
+  tabBehavior: "行为"
+  tabIntegrations: "集成"
+  tabPrivacy: "隐私"
+  dataDisplayTitle: "数据显示"
+  formatDates: "按语言环境设置日期格式（2025-01-15T10:30:00Z → 1/15/2025, 10:30 AM）"
+  formatBooleans: "标准化布尔值（t/1 → true，f/0 → false）"
+  formatDatesEnabled: "日期格式已启用"
+  formatDatesDisabled: "日期格式已禁用"
 
 zh_TW:
   telemetryTitle: "遙測和性能指標"
@@ -921,6 +1101,15 @@ zh_TW:
   disableAnimations: "停用動畫"
   disableAnimationsEnabled: "動畫被禁用"
   disableAnimationsDisabled: "Animations are enabled"
+  tabAppearance: "外貌"
+  tabBehavior: "行為"
+  tabIntegrations: "整合"
+  tabPrivacy: "隱私"
+  dataDisplayTitle: "數據顯示"
+  formatDates: "依語言環境設定日期格式（2025-01-15T10:30:00Z → 1/15/2025, 10:30 AM）"
+  formatBooleans: "標準化布林值（t/1 → true，f/0 → false）"
+  formatDatesEnabled: "日期格式已啟用"
+  formatDatesDisabled: "日期格式已停用"
 
 bg_BG:
   telemetryTitle: "Телеметрия и показатели за ефективност"
@@ -965,6 +1154,15 @@ bg_BG:
   disableAnimations: "Деактивирайте анимациите"
   disableAnimationsEnabled: "Анимациите са деактивирани"
   disableAnimationsDisabled: "Анимациите са активирани"
+  tabAppearance: "Външен вид"
+  tabBehavior: "Поведение"
+  tabIntegrations: "Интеграции"
+  tabPrivacy: "Поверителност"
+  dataDisplayTitle: "Показване на данни"
+  formatDates: "Форматиране на дати в локал (2025-01-15T10:30:00Z → 1/15/2025, 10:30 ч.)"
+  formatBooleans: "Нормализиране на булеви стойности (t/1 → true, f/0 → false)"
+  formatDatesEnabled: "Форматирането на датата е активирано"
+  formatDatesDisabled: "Форматирането на датата е деактивирано"
 
 bn_BD:
   telemetryTitle: "টেলিমেট্রি এবং পারফরম্যান্স মেট্রিক্স"
@@ -1009,6 +1207,15 @@ bn_BD:
   disableAnimations: "অ্যানিমেশন অক্ষম করুন"
   disableAnimationsEnabled: "অ্যানিমেশনগুলি অক্ষম করা হয়েছে৷"
   disableAnimationsDisabled: "অ্যানিমেশন সক্রিয় করা হয়"
+  tabAppearance: "চেহারা"
+  tabBehavior: "আচরণ"
+  tabIntegrations: "ইন্টিগ্রেশন"
+  tabPrivacy: "গোপনীয়তা"
+  dataDisplayTitle: "ডেটা প্রদর্শন"
+  formatDates: "লোকেলে তারিখগুলি ফর্ম্যাট করুন (2025-01-15T10:30:00Z → 1/15/2025, 10:30 AM)"
+  formatBooleans: "বুলিয়ানকে স্বাভাবিক করুন (t/1 → সত্য, f/0 → মিথ্যা)"
+  formatDatesEnabled: "তারিখ বিন্যাস সক্ষম করা হয়েছে"
+  formatDatesDisabled: "তারিখ বিন্যাস অক্ষম করা হয়েছে৷"
 
 ca_ES:
   telemetryTitle: "Telemetria i mètriques de rendiment"
@@ -1053,6 +1260,15 @@ ca_ES:
   disableAnimations: "Desactiva les animacions"
   disableAnimationsEnabled: "Les animacions estan desactivades"
   disableAnimationsDisabled: "Les animacions estan habilitades"
+  tabAppearance: "Aparença"
+  tabBehavior: "Comportament"
+  tabIntegrations: "Integracions"
+  tabPrivacy: "Privadesa"
+  dataDisplayTitle: "Visualització de dades"
+  formatDates: "Format les dates a la configuració regional (2025-01-15T10:30:00Z → 1/15/2025, 10:30 AM)"
+  formatBooleans: "Normalitzar booleans (t/1 → cert, f/0 → fals)"
+  formatDatesEnabled: "El format de data està habilitat"
+  formatDatesDisabled: "El format de la data està desactivat"
 
 cs_CZ:
   telemetryTitle: "Telemetrie a metriky výkonu"
@@ -1097,6 +1313,15 @@ cs_CZ:
   disableAnimations: "Zakázat animace"
   disableAnimationsEnabled: "Animace jsou zakázány"
   disableAnimationsDisabled: "Animace jsou povoleny"
+  tabAppearance: "Vzhled"
+  tabBehavior: "Chování"
+  tabIntegrations: "Integrace"
+  tabPrivacy: "Soukromí"
+  dataDisplayTitle: "Zobrazení dat"
+  formatDates: "Formátovat data v národním prostředí (2025-01-15T10:30:00Z → 1/15/2025, 10:30 AM)"
+  formatBooleans: "Normalizovat booleovské hodnoty (t/1 → pravda, f/0 → nepravda)"
+  formatDatesEnabled: "Formátování data je povoleno"
+  formatDatesDisabled: "Formátování data je zakázáno"
 
 da_DK:
   telemetryTitle: "Telemetri og præstationsmålinger"
@@ -1141,6 +1366,15 @@ da_DK:
   disableAnimations: "Deaktiver animationer"
   disableAnimationsEnabled: "Animationer er deaktiveret"
   disableAnimationsDisabled: "Animationer er aktiveret"
+  tabAppearance: "Udseende"
+  tabBehavior: "Opførsel"
+  tabIntegrations: "Integrationer"
+  tabPrivacy: "Privatliv"
+  dataDisplayTitle: "Data Display"
+  formatDates: "Formatér datoer i lokalitet (2025-01-15T10:30:00Z → 15/1/2025, 10:30)"
+  formatBooleans: "Normaliser booleaner (t/1 → sand, f/0 → falsk)"
+  formatDatesEnabled: "Datoformatering er aktiveret"
+  formatDatesDisabled: "Datoformatering er deaktiveret"
 
 fa_IR:
   telemetryTitle: "تله متری و معیارهای عملکرد"
@@ -1185,6 +1419,15 @@ fa_IR:
   disableAnimations: "غیرفعال کردن انیمیشن ها"
   disableAnimationsEnabled: "انیمیشن ها غیرفعال هستند"
   disableAnimationsDisabled: "انیمیشن ها فعال هستند"
+  tabAppearance: "ظاهر"
+  tabBehavior: "رفتار"
+  tabIntegrations: "ادغام ها"
+  tabPrivacy: "حریم خصوصی"
+  dataDisplayTitle: "نمایش داده ها"
+  formatDates: "قالب‌بندی تاریخ‌ها به زبان محلی (2025-01-15T10:30:00Z → 1/15/2025، 10:30 صبح)"
+  formatBooleans: "عادی کردن بولی ها (t/1 → true، f/0 → false)"
+  formatDatesEnabled: "قالب بندی تاریخ فعال است"
+  formatDatesDisabled: "قالب بندی تاریخ غیرفعال است"
 
 hi_IN:
   telemetryTitle: "टेलीमेट्री और प्रदर्शन मेट्रिक्स"
@@ -1229,6 +1472,15 @@ hi_IN:
   disableAnimations: "एनिमेशन अक्षम करें"
   disableAnimationsEnabled: "एनिमेशन अक्षम हैं"
   disableAnimationsDisabled: "एनिमेशन सक्षम हैं"
+  tabAppearance: "उपस्थिति"
+  tabBehavior: "व्यवहार"
+  tabIntegrations: "एकीकरण"
+  tabPrivacy: "गोपनीयता"
+  dataDisplayTitle: "डेटा प्रदर्शन"
+  formatDates: "स्थान में प्रारूप दिनांक (2025-01-15T10:30:00Z → 1/15/2025, 10:30 पूर्वाह्न)"
+  formatBooleans: "बूलियन्स को सामान्यीकृत करें (t/1 → सत्य, f/0 → गलत)"
+  formatDatesEnabled: "दिनांक स्वरूपण सक्षम है"
+  formatDatesDisabled: "दिनांक स्वरूपण अक्षम है"
 
 hr_HR:
   telemetryTitle: "Telemetrija i metrika performansi"
@@ -1273,6 +1525,15 @@ hr_HR:
   disableAnimations: "Onemogući animacije"
   disableAnimationsEnabled: "Animacije su onemogućene"
   disableAnimationsDisabled: "Animacije su omogućene"
+  tabAppearance: "Izgled"
+  tabBehavior: "Ponašanje"
+  tabIntegrations: "Integracije"
+  tabPrivacy: "Privatnost"
+  dataDisplayTitle: "Prikaz podataka"
+  formatDates: "Formatirajte datume prema lokalnoj postavci (2025-01-15T10:30:00Z → 1/15/2025, 10:30 AM)"
+  formatBooleans: "Normaliziraj booleove vrijednosti (t/1 → točno, f/0 → lažno)"
+  formatDatesEnabled: "Formatiranje datuma je omogućeno"
+  formatDatesDisabled: "Formatiranje datuma je onemogućeno"
 
 hu_HU:
   telemetryTitle: "Telemetria és teljesítménymérők"
@@ -1317,6 +1578,15 @@ hu_HU:
   disableAnimations: "Animációk letiltása"
   disableAnimationsEnabled: "Az animációk le vannak tiltva"
   disableAnimationsDisabled: "Az animációk engedélyezve vannak"
+  tabAppearance: "Megjelenés"
+  tabBehavior: "Viselkedés"
+  tabIntegrations: "Integrációk"
+  tabPrivacy: "Magánélet"
+  dataDisplayTitle: "Adatok megjelenítése"
+  formatDates: "Dátumok formázása a nyelvben (2025-01-15T10:30:00Z → 1/15/2025, 10:30)"
+  formatBooleans: "Logikai értékek normalizálása (t/1 → igaz, f/0 → hamis)"
+  formatDatesEnabled: "A dátum formázása engedélyezve van"
+  formatDatesDisabled: "A dátum formázása le van tiltva"
 
 id_ID:
   telemetryTitle: "Telemetri dan Metrik Kinerja"
@@ -1361,6 +1631,15 @@ id_ID:
   disableAnimations: "Nonaktifkan Animasi"
   disableAnimationsEnabled: "Animasi dinonaktifkan"
   disableAnimationsDisabled: "Animasi diaktifkan"
+  tabAppearance: "Penampilan"
+  tabBehavior: "Perilaku"
+  tabIntegrations: "Integrasi"
+  tabPrivacy: "Pribadi"
+  dataDisplayTitle: "Tampilan Data"
+  formatDates: "Format tanggal dalam lokal (2025-01-15T10:30:00Z → 15/1/2025, 10:30)"
+  formatBooleans: "Normalisasikan boolean (t/1 → true, f/0 → false)"
+  formatDatesEnabled: "Pemformatan tanggal diaktifkan"
+  formatDatesDisabled: "Pemformatan tanggal dinonaktifkan"
 
 ms_MY:
   telemetryTitle: "Telemetri dan Metrik Prestasi"
@@ -1405,6 +1684,15 @@ ms_MY:
   disableAnimations: "Lumpuhkan Animasi"
   disableAnimationsEnabled: "Animasi dilumpuhkan"
   disableAnimationsDisabled: "Animasi didayakan"
+  tabAppearance: "Penampilan"
+  tabBehavior: "Tingkah laku"
+  tabIntegrations: "Integrasi"
+  tabPrivacy: "Privasi"
+  dataDisplayTitle: "Paparan Data"
+  formatDates: "Format tarikh dalam tempat (15-01-2025T10:30:00Z → 15/1/2025, 10:30 PG)"
+  formatBooleans: "Normalkan boolean (t/1 → true, f/0 → false)"
+  formatDatesEnabled: "Pemformatan tarikh didayakan"
+  formatDatesDisabled: "Pemformatan tarikh dilumpuhkan"
 
 nb_NO:
   telemetryTitle: "Telemetri og ytelsesmålinger"
@@ -1449,6 +1737,15 @@ nb_NO:
   disableAnimations: "Deaktiver animasjoner"
   disableAnimationsEnabled: "Animasjoner er deaktivert"
   disableAnimationsDisabled: "Animasjoner er aktivert"
+  tabAppearance: "Utseende"
+  tabBehavior: "Oppførsel"
+  tabIntegrations: "Integrasjoner"
+  tabPrivacy: "Privatliv"
+  dataDisplayTitle: "Datavisning"
+  formatDates: "Formater datoer i lokalitet (2025-01-15T10:30:00Z → 15/1/2025, 10:30)"
+  formatBooleans: "Normaliser boolske verdier (t/1 → sant, f/0 → usant)"
+  formatDatesEnabled: "Datoformatering er aktivert"
+  formatDatesDisabled: "Datoformatering er deaktivert"
 
 sw_KE:
   telemetryTitle: "Vipimo vya Telemetry na Utendaji"
@@ -1493,6 +1790,15 @@ sw_KE:
   disableAnimations: "Lemaza Uhuishaji"
   disableAnimationsEnabled: "Uhuishaji umezimwa"
   disableAnimationsDisabled: "Uhuishaji umewashwa"
+  tabAppearance: "Muonekano"
+  tabBehavior: "Tabia"
+  tabIntegrations: "Ushirikiano"
+  tabPrivacy: "Faragha"
+  dataDisplayTitle: "Onyesho la Data"
+  formatDates: "Umbizo la tarehe katika lugha (2025-01-15T10:30:00Z → 1/15/2025, 10:30 AM)"
+  formatBooleans: "Kurekebisha booleans (t/1 → kweli, f/0 → uongo)"
+  formatDatesEnabled: "Uumbizaji wa tarehe umewashwa"
+  formatDatesDisabled: "Uumbizaji wa tarehe umezimwa"
 
 ta_IN:
   telemetryTitle: "டெலிமெட்ரி மற்றும் செயல்திறன் அளவீடுகள்"
@@ -1537,6 +1843,15 @@ ta_IN:
   disableAnimations: "அனிமேஷன்களை முடக்கு"
   disableAnimationsEnabled: "அனிமேஷன்கள் முடக்கப்பட்டுள்ளன"
   disableAnimationsDisabled: "அனிமேஷன் இயக்கப்பட்டது"
+  tabAppearance: "தோற்றம்"
+  tabBehavior: "நடத்தை"
+  tabIntegrations: "ஒருங்கிணைப்புகள்"
+  tabPrivacy: "தனியுரிமை"
+  dataDisplayTitle: "தரவு காட்சி"
+  formatDates: "லோகேலில் தேதிகளை வடிவமைக்கவும் (2025-01-15T10:30:00Z → 1/15/2025, 10:30 AM)"
+  formatBooleans: "பூலியன்களை இயல்பாக்கவும் (t/1 → true, f/0 → false)"
+  formatDatesEnabled: "தேதி வடிவமைப்பு இயக்கப்பட்டது"
+  formatDatesDisabled: "தேதி வடிவமைப்பு முடக்கப்பட்டுள்ளது"
 
 th_TH:
   telemetryTitle: "การวัดและส่งข้อมูลทางไกลและการวัดประสิทธิภาพ"
@@ -1581,6 +1896,15 @@ th_TH:
   disableAnimations: "ปิดการใช้งานภาพเคลื่อนไหว"
   disableAnimationsEnabled: "ภาพเคลื่อนไหวถูกปิดใช้งาน"
   disableAnimationsDisabled: "เปิดใช้งานภาพเคลื่อนไหวแล้ว"
+  tabAppearance: "รูปร่าง"
+  tabBehavior: "พฤติกรรม"
+  tabIntegrations: "บูรณาการ"
+  tabPrivacy: "ความเป็นส่วนตัว"
+  dataDisplayTitle: "การแสดงข้อมูล"
+  formatDates: "จัดรูปแบบวันที่เป็นภาษา (2025-01-15T10:30:00Z → 15/1/2568, 10:30 น.)"
+  formatBooleans: "ทำให้บูลีนเป็นมาตรฐาน (t/1 → จริง, f/0 → เท็จ)"
+  formatDatesEnabled: "เปิดใช้งานการจัดรูปแบบวันที่แล้ว"
+  formatDatesDisabled: "การจัดรูปแบบวันที่ถูกปิดใช้งาน"
 
 tr_TR:
   telemetryTitle: "Telemetri ve Performans Metrikleri"
@@ -1625,6 +1949,15 @@ tr_TR:
   disableAnimations: "Animasyonları Devre Dışı Bırak"
   disableAnimationsEnabled: "Animasyonlar devre dışı"
   disableAnimationsDisabled: "Animasyonlar etkinleştirildi"
+  tabAppearance: "Dış görünüş"
+  tabBehavior: "Davranış"
+  tabIntegrations: "Entegrasyonlar"
+  tabPrivacy: "Mahremiyet"
+  dataDisplayTitle: "Veri Gösterimi"
+  formatDates: "Tarihleri ​​yerel ayarda biçimlendirin (2025-01-15T10:30:00Z → 15.01.2025, 10:30)"
+  formatBooleans: "Boole değerlerini normalleştir (t/1 → doğru, f/0 → yanlış)"
+  formatDatesEnabled: "Tarih biçimlendirmesi etkin"
+  formatDatesDisabled: "Tarih biçimlendirmesi devre dışı"
 
 uk_UA:
   telemetryTitle: "Телеметрія та показники продуктивності"
@@ -1669,6 +2002,15 @@ uk_UA:
   disableAnimations: "Вимкнути анімацію"
   disableAnimationsEnabled: "Анімації вимкнено"
   disableAnimationsDisabled: "Анімації включені"
+  tabAppearance: "Зовнішній вигляд"
+  tabBehavior: "Поведінка"
+  tabIntegrations: "Інтеграції"
+  tabPrivacy: "Конфіденційність"
+  dataDisplayTitle: "Відображення даних"
+  formatDates: "Форматувати дати відповідно до мови (2025-01-15T10:30:00Z → 1/15/2025, 10:30 AM)"
+  formatBooleans: "Нормалізація логічних значень (t/1 → true, f/0 → false)"
+  formatDatesEnabled: "Форматування дати ввімкнено"
+  formatDatesDisabled: "Форматування дати вимкнено"
 
 ur_PK:
   telemetryTitle: "ٹیلی میٹری اور پرفارمنس میٹرکس"
@@ -1713,6 +2055,15 @@ ur_PK:
   disableAnimations: "متحرک تصاویر کو غیر فعال کریں۔"
   disableAnimationsEnabled: "متحرک تصاویر غیر فعال ہیں۔"
   disableAnimationsDisabled: "متحرک تصاویر فعال ہیں۔"
+  tabAppearance: "ظاہری شکل"
+  tabBehavior: "رویہ"
+  tabIntegrations: "انضمام"
+  tabPrivacy: "رازداری"
+  dataDisplayTitle: "ڈیٹا ڈسپلے"
+  formatDates: "تاریخیں لوکل میں فارمیٹ کریں (2025-01-15T10:30:00Z → 1/15/2025، 10:30 AM)"
+  formatBooleans: "بولین کو معمول بنائیں (t/1 → سچ، f/0 → غلط)"
+  formatDatesEnabled: "تاریخ کی فارمیٹنگ فعال ہے۔"
+  formatDatesDisabled: "تاریخ کی فارمیٹنگ غیر فعال ہے۔"
 
 vi_VN:
   telemetryTitle: "Đo lường từ xa và hiệu suất"
@@ -1757,6 +2108,15 @@ vi_VN:
   disableAnimations: "Tắt ảnh động"
   disableAnimationsEnabled: "Hoạt ảnh bị tắt"
   disableAnimationsDisabled: "Hoạt ảnh được bật"
+  tabAppearance: "Vẻ bề ngoài"
+  tabBehavior: "Hành vi"
+  tabIntegrations: "Tích hợp"
+  tabPrivacy: "Sự riêng tư"
+  dataDisplayTitle: "Hiển thị dữ liệu"
+  formatDates: "Định dạng ngày theo ngôn ngữ (2025-01-15T10:30:00Z → 15/1/2025, 10:30 AM)"
+  formatBooleans: "Chuẩn hóa booleans (t/1 → true, f/0 → false)"
+  formatDatesEnabled: "Định dạng ngày được bật"
+  formatDatesDisabled: "Định dạng ngày bị vô hiệu hóa"
 
 af_ZA:
   telemetryTitle: "Telemetrie en prestasiemaatstawwe"
@@ -1801,6 +2161,15 @@ af_ZA:
   disableAnimations: "Deaktiveer animasies"
   disableAnimationsEnabled: "Animasies is gedeaktiveer"
   disableAnimationsDisabled: "Animasies is geaktiveer"
+  tabAppearance: "Voorkoms"
+  tabBehavior: "Gedrag"
+  tabIntegrations: "Integrasies"
+  tabPrivacy: "Privaatheid"
+  dataDisplayTitle: "Data vertoon"
+  formatDates: "Formateer datums in plek (2025-01-15T10:30:00Z → 1/15/2025, 10:30)"
+  formatBooleans: "Normaliseer booleans (t/1 → waar, f/0 → onwaar)"
+  formatDatesEnabled: "Datumformatering is geaktiveer"
+  formatDatesDisabled: "Datumformatering is gedeaktiveer"
 
 am_ET:
   telemetryTitle: "ቴሌሜትሪ እና የአፈጻጸም መለኪያዎች"
@@ -1845,6 +2214,15 @@ am_ET:
   disableAnimations: "እነማዎችን አሰናክል"
   disableAnimationsEnabled: "እነማዎች ተሰናክለዋል።"
   disableAnimationsDisabled: "እነማዎች ነቅተዋል።"
+  tabAppearance: "መልክ"
+  tabBehavior: "ባህሪ"
+  tabIntegrations: "ውህደቶች"
+  tabPrivacy: "ግላዊነት"
+  dataDisplayTitle: "የውሂብ ማሳያ"
+  formatDates: "ቀኖችን በአካባቢ (2025-01-15T10:30:00Z → 1/15/2025, 10:30 AM)"
+  formatBooleans: "ቡሊያንስን መደበኛ አድርግ (t/1 → እውነት፣ f/0 → ሐሰት)"
+  formatDatesEnabled: "የቀን ቅርጸት ነቅቷል።"
+  formatDatesDisabled: "የቀን ቅርጸት ተሰናክሏል።"
 
 az_AZ:
   telemetryTitle: "Telemetriya və Performans Metrikləri"
@@ -1889,6 +2267,15 @@ az_AZ:
   disableAnimations: "Animasiyaları söndürün"
   disableAnimationsEnabled: "Animasiyalar deaktiv edilib"
   disableAnimationsDisabled: "Animasiyalar aktivləşdirilib"
+  tabAppearance: "Görünüş"
+  tabBehavior: "Davranış"
+  tabIntegrations: "İnteqrasiyalar"
+  tabPrivacy: "Məxfilik"
+  dataDisplayTitle: "Data Ekranı"
+  formatDates: "Tarixləri yerli dildə formatlayın (2025-01-15T10:30:00Z → 15/1/2025, 10:30)"
+  formatBooleans: "Booleanları normallaşdırın (t/1 → doğru, f/0 → yanlış)"
+  formatDatesEnabled: "Tarixin formatlaşdırılması aktivdir"
+  formatDatesDisabled: "Tarixin formatlaşdırılması deaktiv edilib"
 
 et_EE:
   telemetryTitle: "Telemeetria ja jõudlusmõõdikud"
@@ -1933,6 +2320,15 @@ et_EE:
   disableAnimations: "Keela animatsioonid"
   disableAnimationsEnabled: "Animatsioonid on keelatud"
   disableAnimationsDisabled: "Animatsioonid on lubatud"
+  tabAppearance: "Välimus"
+  tabBehavior: "Käitumine"
+  tabIntegrations: "Integratsioonid"
+  tabPrivacy: "Privaatsus"
+  dataDisplayTitle: "Andmete kuvamine"
+  formatDates: "Kuupäevade vormindamine lokaadis (2025-01-15T10:30:00Z → 1/15/2025, 10:30)"
+  formatBooleans: "Normaliseeri tõeväärtused (t/1 → tõene, f/0 → väär)"
+  formatDatesEnabled: "Kuupäeva vormindamine on lubatud"
+  formatDatesDisabled: "Kuupäeva vormindamine on keelatud"
 
 gu_IN:
   telemetryTitle: "ટેલિમેટ્રી અને પર્ફોર્મન્સ મેટ્રિક્સ"
@@ -1977,6 +2373,15 @@ gu_IN:
   disableAnimations: "એનિમેશન અક્ષમ કરો"
   disableAnimationsEnabled: "એનિમેશન અક્ષમ છે"
   disableAnimationsDisabled: "એનિમેશન સક્ષમ છે"
+  tabAppearance: "દેખાવ"
+  tabBehavior: "વર્તન"
+  tabIntegrations: "એકીકરણ"
+  tabPrivacy: "ગોપનીયતા"
+  dataDisplayTitle: "ડેટા ડિસ્પ્લે"
+  formatDates: "લોકેલમાં તારીખો ફોર્મેટ કરો (2025-01-15T10:30:00Z → 1/15/2025, 10:30 AM)"
+  formatBooleans: "બુલિયનને સામાન્ય બનાવો (t/1 → સાચું, f/0 → ખોટું)"
+  formatDatesEnabled: "તારીખ ફોર્મેટિંગ સક્ષમ છે"
+  formatDatesDisabled: "તારીખ ફોર્મેટિંગ અક્ષમ છે"
 
 ha_NG:
   telemetryTitle: "Telemetry da Ma'aunin Aiki"
@@ -2021,6 +2426,15 @@ ha_NG:
   disableAnimations: "Kashe raye-raye"
   disableAnimationsEnabled: "An kashe rayarwa"
   disableAnimationsDisabled: "An kunna raye-raye"
+  tabAppearance: "Bayyanar"
+  tabBehavior: "Hali"
+  tabIntegrations: "Haɗin kai"
+  tabPrivacy: "Keɓantawa"
+  dataDisplayTitle: "Nuni bayanai"
+  formatDates: "Tsarin kwanan wata a cikin gida (2025-01-15T10:30:00Z → 1/15/2025, 10:30 AM)"
+  formatBooleans: "Daidaita booleans (t/1 → gaskiya, f/0 → ƙarya)"
+  formatDatesEnabled: "An kunna tsara kwanan wata"
+  formatDatesDisabled: "An kashe tsara kwanan wata"
 
 ka_GE:
   telemetryTitle: "ტელემეტრია და შესრულების მეტრიკა"
@@ -2065,6 +2479,15 @@ ka_GE:
   disableAnimations: "გამორთეთ ანიმაციები"
   disableAnimationsEnabled: "ანიმაციები გამორთულია"
   disableAnimationsDisabled: "ანიმაციები ჩართულია"
+  tabAppearance: "გარეგნობა"
+  tabBehavior: "ქცევა"
+  tabIntegrations: "ინტეგრაციები"
+  tabPrivacy: "კონფიდენციალურობა"
+  dataDisplayTitle: "მონაცემთა ჩვენება"
+  formatDates: "თარიღების ფორმატირება ლოკალურად (2025-01-15T10:30:00Z → 1/15/2025, 10:30 AM)"
+  formatBooleans: "ლოგინების ნორმალიზება (t/1 → true, f/0 → false)"
+  formatDatesEnabled: "თარიღის ფორმატირება ჩართულია"
+  formatDatesDisabled: "თარიღის ფორმატირება გამორთულია"
 
 km_KH:
   telemetryTitle: "Telemetry និង​ម៉ែត្រ​ការ​អនុវត្ត"
@@ -2109,6 +2532,15 @@ km_KH:
   disableAnimations: "បិទចលនា"
   disableAnimationsEnabled: "ចលនាត្រូវបានបិទ"
   disableAnimationsDisabled: "ចលនាត្រូវបានបើក"
+  tabAppearance: "រូបរាង"
+  tabBehavior: "អាកប្បកិរិយា"
+  tabIntegrations: "សមាហរណកម្ម"
+  tabPrivacy: "ឯកជនភាព"
+  dataDisplayTitle: "ការបង្ហាញទិន្នន័យ"
+  formatDates: "ទម្រង់កាលបរិច្ឆេទក្នុងមូលដ្ឋាន (2025-01-15T10:30:00Z → 1/15/2025, 10:30 AM)"
+  formatBooleans: "ធ្វើឱ្យប៊ូលីនធម្មតា (t/1 → true, f/0 → មិនពិត)"
+  formatDatesEnabled: "ការធ្វើទ្រង់ទ្រាយកាលបរិច្ឆេទត្រូវបានបើក"
+  formatDatesDisabled: "ការធ្វើទ្រង់ទ្រាយកាលបរិច្ឆេទត្រូវបានបិទ"
 
 kn_IN:
   telemetryTitle: "ಟೆಲಿಮೆಟ್ರಿ ಮತ್ತು ಕಾರ್ಯಕ್ಷಮತೆಯ ಮೆಟ್ರಿಕ್ಸ್"
@@ -2153,6 +2585,15 @@ kn_IN:
   disableAnimations: "ಅನಿಮೇಷನ್‌ಗಳನ್ನು ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಿ"
   disableAnimationsEnabled: "ಅನಿಮೇಷನ್‌ಗಳನ್ನು ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಲಾಗಿದೆ"
   disableAnimationsDisabled: "ಅನಿಮೇಷನ್‌ಗಳನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಲಾಗಿದೆ"
+  tabAppearance: "ಗೋಚರತೆ"
+  tabBehavior: "ನಡವಳಿಕೆ"
+  tabIntegrations: "ಏಕೀಕರಣಗಳು"
+  tabPrivacy: "ಗೌಪ್ಯತೆ"
+  dataDisplayTitle: "ಡೇಟಾ ಪ್ರದರ್ಶನ"
+  formatDates: "ಲೊಕೇಲ್‌ನಲ್ಲಿ ದಿನಾಂಕಗಳನ್ನು ಫಾರ್ಮ್ಯಾಟ್ ಮಾಡಿ (2025-01-15T10:30:00Z → 1/15/2025, 10:30 AM)"
+  formatBooleans: "ಬೂಲಿಯನ್‌ಗಳನ್ನು ಸಾಧಾರಣಗೊಳಿಸಿ (t/1 → true, f/0 → ತಪ್ಪು)"
+  formatDatesEnabled: "ದಿನಾಂಕ ಫಾರ್ಮ್ಯಾಟಿಂಗ್ ಅನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಲಾಗಿದೆ"
+  formatDatesDisabled: "ದಿನಾಂಕ ಫಾರ್ಮ್ಯಾಟಿಂಗ್ ಅನ್ನು ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಲಾಗಿದೆ"
 
 lt_LT:
   telemetryTitle: "Telemetrija ir našumo metrika"
@@ -2197,6 +2638,15 @@ lt_LT:
   disableAnimations: "Išjungti animacijas"
   disableAnimationsEnabled: "Animacijos išjungtos"
   disableAnimationsDisabled: "Animacijos įjungtos"
+  tabAppearance: "Išvaizda"
+  tabBehavior: "Elgesys"
+  tabIntegrations: "Integracijos"
+  tabPrivacy: "Privatumas"
+  dataDisplayTitle: "Duomenų rodymas"
+  formatDates: "Formatuoti datas lokale (2025-01-15T10:30:00Z → 2025-01-15, 10:30)"
+  formatBooleans: "Normalizuoti loginius parametrus (t/1 → tiesa, f/0 → klaidinga)"
+  formatDatesEnabled: "Datos formatavimas įjungtas"
+  formatDatesDisabled: "Datos formatavimas išjungtas"
 
 lv_LV:
   telemetryTitle: "Telemetrija un veiktspējas metrika"
@@ -2241,6 +2691,15 @@ lv_LV:
   disableAnimations: "Atspējot animācijas"
   disableAnimationsEnabled: "Animācijas ir atspējotas"
   disableAnimationsDisabled: "Animācijas ir iespējotas"
+  tabAppearance: "Izskats"
+  tabBehavior: "Uzvedība"
+  tabIntegrations: "Integrācijas"
+  tabPrivacy: "Privātums"
+  dataDisplayTitle: "Datu displejs"
+  formatDates: "Formatēt datumus lokalizācijā (2025-01-15T10:30:00Z → 1/15/2025, 10:30)"
+  formatBooleans: "Normalizēt Būla vērtības (t/1 → patiess, f/0 → nepatiess)"
+  formatDatesEnabled: "Datuma formatēšana ir iespējota"
+  formatDatesDisabled: "Datuma formatēšana ir atspējota"
 
 ml_IN:
   telemetryTitle: "ടെലിമെട്രി, പെർഫോമൻസ് മെട്രിക്‌സ്"
@@ -2285,6 +2744,15 @@ ml_IN:
   disableAnimations: "ആനിമേഷനുകൾ പ്രവർത്തനരഹിതമാക്കുക"
   disableAnimationsEnabled: "ആനിമേഷനുകൾ പ്രവർത്തനരഹിതമാക്കി"
   disableAnimationsDisabled: "ആനിമേഷനുകൾ പ്രവർത്തനക്ഷമമാക്കി"
+  tabAppearance: "രൂപഭാവം"
+  tabBehavior: "പെരുമാറ്റം"
+  tabIntegrations: "സംയോജനങ്ങൾ"
+  tabPrivacy: "സ്വകാര്യത"
+  dataDisplayTitle: "ഡാറ്റ ഡിസ്പ്ലേ"
+  formatDates: "ലൊക്കേലിൽ തീയതികൾ ഫോർമാറ്റ് ചെയ്യുക (2025-01-15T10:30:00Z → 1/15/2025, 10:30 AM)"
+  formatBooleans: "ബൂലിയൻസ് സാധാരണമാക്കുക (t/1 → true, f/0 → false)"
+  formatDatesEnabled: "തീയതി ഫോർമാറ്റിംഗ് പ്രവർത്തനക്ഷമമാക്കി"
+  formatDatesDisabled: "തീയതി ഫോർമാറ്റിംഗ് പ്രവർത്തനരഹിതമാക്കി"
 
 mr_IN:
   telemetryTitle: "टेलीमेट्री आणि परफॉर्मन्स मेट्रिक्स"
@@ -2329,6 +2797,15 @@ mr_IN:
   disableAnimations: "ॲनिमेशन अक्षम करा"
   disableAnimationsEnabled: "ॲनिमेशन अक्षम केले आहेत"
   disableAnimationsDisabled: "ॲनिमेशन सक्षम केले आहेत"
+  tabAppearance: "देखावा"
+  tabBehavior: "वागणूक"
+  tabIntegrations: "एकत्रीकरण"
+  tabPrivacy: "गोपनीयता"
+  dataDisplayTitle: "डेटा डिस्प्ले"
+  formatDates: "लोकॅलमध्ये तारखा फॉरमॅट करा (2025-01-15T10:30:00Z → 1/15/2025, 10:30 AM)"
+  formatBooleans: "बूलियन्स सामान्य करा (t/1 → सत्य, f/0 → असत्य)"
+  formatDatesEnabled: "तारीख स्वरूपन सक्षम केले आहे"
+  formatDatesDisabled: "तारीख स्वरूपन अक्षम केले आहे"
 
 ne_NP:
   telemetryTitle: "टेलिमेट्री र प्रदर्शन मेट्रिक्स"
@@ -2373,6 +2850,15 @@ ne_NP:
   disableAnimations: "एनिमेसन असक्षम पार्नुहोस्"
   disableAnimationsEnabled: "एनिमेसनहरू असक्षम छन्"
   disableAnimationsDisabled: "एनिमेसनहरू सक्षम छन्"
+  tabAppearance: "उपस्थिति"
+  tabBehavior: "व्यवहार"
+  tabIntegrations: "एकीकरण"
+  tabPrivacy: "गोपनीयता"
+  dataDisplayTitle: "डाटा प्रदर्शन"
+  formatDates: "लोकेलमा मितिहरू ढाँचा गर्नुहोस् (2025-01-15T10:30:00Z → 1/15/2025, 10:30 AM)"
+  formatBooleans: "बुलियनलाई सामान्य बनाउनुहोस् (t/1 → true, f/0 → false)"
+  formatDatesEnabled: "मिति ढाँचा सक्षम गरिएको छ"
+  formatDatesDisabled: "मिति ढाँचा असक्षम गरिएको छ"
 
 pa_IN:
   telemetryTitle: "ਟੈਲੀਮੈਟਰੀ ਅਤੇ ਪ੍ਰਦਰਸ਼ਨ ਮੈਟ੍ਰਿਕਸ"
@@ -2417,6 +2903,15 @@ pa_IN:
   disableAnimations: "ਐਨੀਮੇਸ਼ਨਾਂ ਨੂੰ ਅਸਮਰੱਥ ਬਣਾਓ"
   disableAnimationsEnabled: "ਐਨੀਮੇਸ਼ਨ ਅਸਮਰਥਿਤ ਹਨ"
   disableAnimationsDisabled: "ਐਨੀਮੇਸ਼ਨ ਚਾਲੂ ਹਨ"
+  tabAppearance: "ਦਿੱਖ"
+  tabBehavior: "ਵਿਵਹਾਰ"
+  tabIntegrations: "ਏਕੀਕਰਣ"
+  tabPrivacy: "ਗੋਪਨੀਯਤਾ"
+  dataDisplayTitle: "ਡਾਟਾ ਡਿਸਪਲੇਅ"
+  formatDates: "ਲੋਕੇਲ ਵਿੱਚ ਤਾਰੀਖਾਂ ਨੂੰ ਫਾਰਮੈਟ ਕਰੋ (2025-01-15T10:30:00Z → 1/15/2025, 10:30 AM)"
+  formatBooleans: "ਬੂਲੀਅਨ ਨੂੰ ਆਮ ਬਣਾਓ (t/1 → ਸਹੀ, f/0 → ਗਲਤ)"
+  formatDatesEnabled: "ਮਿਤੀ ਫਾਰਮੈਟਿੰਗ ਚਾਲੂ ਹੈ"
+  formatDatesDisabled: "ਮਿਤੀ ਫਾਰਮੈਟਿੰਗ ਅਸਮਰਥਿਤ ਹੈ"
 
 si_LK:
   telemetryTitle: "Telemetry සහ කාර්ය සාධන මිතික"
@@ -2461,6 +2956,15 @@ si_LK:
   disableAnimations: "සජීවිකරණ අක්රිය කරන්න"
   disableAnimationsEnabled: "සජීවිකරණ අබල කර ඇත"
   disableAnimationsDisabled: "සජීවිකරණ සබල කර ඇත"
+  tabAppearance: "පෙනුම"
+  tabBehavior: "හැසිරීම"
+  tabIntegrations: "ඒකාබද්ධ කිරීම්"
+  tabPrivacy: "පෞද්ගලිකත්වය"
+  dataDisplayTitle: "දත්ත සංදර්ශකය"
+  formatDates: "පෙදෙසියේ දිනයන් ආකෘති කරන්න (2025-01-15T10:30:00Z → 1/15/2025, 10:30 AM)"
+  formatBooleans: "බූලියන් සාමාන්‍යකරණය කරන්න (t/1 → true, f/0 → බොරු)"
+  formatDatesEnabled: "දින හැඩතල ගැන්වීම සබල කර ඇත"
+  formatDatesDisabled: "දින හැඩතල ගැන්වීම අබල කර ඇත"
 
 sl_SI:
   telemetryTitle: "Telemetrija in meritve zmogljivosti"
@@ -2505,6 +3009,15 @@ sl_SI:
   disableAnimations: "Onemogoči animacije"
   disableAnimationsEnabled: "Animacije so onemogočene"
   disableAnimationsDisabled: "Animacije so omogočene"
+  tabAppearance: "Videz"
+  tabBehavior: "Vedenje"
+  tabIntegrations: "Integracije"
+  tabPrivacy: "Zasebnost"
+  dataDisplayTitle: "Prikaz podatkov"
+  formatDates: "Oblikovanje datumov v področnih nastavitvah (2025-01-15T10:30:00Z → 1/15/2025, 10:30 AM)"
+  formatBooleans: "Normaliziraj logične vrednosti (t/1 → resnično, f/0 → napačno)"
+  formatDatesEnabled: "Oblikovanje datuma je omogočeno"
+  formatDatesDisabled: "Oblikovanje datuma je onemogočeno"
 
 sr_RS:
   telemetryTitle: "Телеметрија и метрика перформанси"
@@ -2549,6 +3062,15 @@ sr_RS:
   disableAnimations: "Онемогући анимације"
   disableAnimationsEnabled: "Анимације су онемогућене"
   disableAnimationsDisabled: "Анимације су омогућене"
+  tabAppearance: "Изглед"
+  tabBehavior: "Понашање"
+  tabIntegrations: "Интегратионс"
+  tabPrivacy: "Приватност"
+  dataDisplayTitle: "Приказ података"
+  formatDates: "Форматирајте датуме у локалу (2025-01-15Т10:30:00З → 15.1.2025, 10:30)"
+  formatBooleans: "Нормализовати логичке вредности (т/1 → тачно, ф/0 → нетачно)"
+  formatDatesEnabled: "Форматирање датума је омогућено"
+  formatDatesDisabled: "Форматирање датума је онемогућено"
 
 te_IN:
   telemetryTitle: "టెలిమెట్రీ మరియు పనితీరు కొలమానాలు"
@@ -2593,6 +3115,15 @@ te_IN:
   disableAnimations: "యానిమేషన్‌లను నిలిపివేయండి"
   disableAnimationsEnabled: "యానిమేషన్‌లు నిలిపివేయబడ్డాయి"
   disableAnimationsDisabled: "యానిమేషన్లు ప్రారంభించబడ్డాయి"
+  tabAppearance: "స్వరూపం"
+  tabBehavior: "ప్రవర్తన"
+  tabIntegrations: "ఇంటిగ్రేషన్లు"
+  tabPrivacy: "గోప్యత"
+  dataDisplayTitle: "డేటా డిస్ప్లే"
+  formatDates: "లొకేల్‌లో తేదీలను ఫార్మాట్ చేయండి (2025-01-15T10:30:00Z → 1/15/2025, 10:30 AM)"
+  formatBooleans: "బూలియన్‌లను సాధారణీకరించండి (t/1 → ఒప్పు, f/0 → తప్పు)"
+  formatDatesEnabled: "తేదీ ఫార్మాటింగ్ ప్రారంభించబడింది"
+  formatDatesDisabled: "తేదీ ఫార్మాటింగ్ నిలిపివేయబడింది"
 
 tl_PH:
   telemetryTitle: "Telemetry at Mga Sukatan ng Pagganap"
@@ -2637,6 +3168,15 @@ tl_PH:
   disableAnimations: "Huwag paganahin ang mga animation"
   disableAnimationsEnabled: "Naka-disable ang mga animation"
   disableAnimationsDisabled: "Ang mga animation ay pinagana"
+  tabAppearance: "Hitsura"
+  tabBehavior: "Pag-uugali"
+  tabIntegrations: "Mga pagsasama"
+  tabPrivacy: "Pagkapribado"
+  dataDisplayTitle: "Pagpapakita ng Data"
+  formatDates: "I-format ang mga petsa sa lokal (2025-01-15T10:30:00Z → 1/15/2025, 10:30 AM)"
+  formatBooleans: "I-normalize ang mga boolean (t/1 → true, f/0 → false)"
+  formatDatesEnabled: "Pinagana ang pag-format ng petsa"
+  formatDatesDisabled: "Naka-disable ang pag-format ng petsa"
 
 uz_UZ:
   telemetryTitle: "Telemetriya va ishlash ko'rsatkichlari"
@@ -2681,6 +3221,15 @@ uz_UZ:
   disableAnimations: "Animatsiyalarni o'chiring"
   disableAnimationsEnabled: "Animatsiyalar o‘chirilgan"
   disableAnimationsDisabled: "Animatsiyalar yoqilgan"
+  tabAppearance: "Tashqi ko'rinish"
+  tabBehavior: "Xulq-atvor"
+  tabIntegrations: "Integratsiyalar"
+  tabPrivacy: "Maxfiylik"
+  dataDisplayTitle: "Ma'lumotlarni ko'rsatish"
+  formatDates: "Sanalarni mahalliy tilda formatlash (2025-01-15T10:30:00Z → 15.01.2025, 10:30)"
+  formatBooleans: "Mantiqiy qiymatlarni normallashtirish (t/1 → rost, f/0 → noto‘g‘ri)"
+  formatDatesEnabled: "Sana formatlash yoqilgan"
+  formatDatesDisabled: "Sana formatlash o‘chirilgan"
 
 yo_NG:
   telemetryTitle: "Telemetry ati Awọn Metiriki Iṣẹ"
@@ -2725,3 +3274,12 @@ yo_NG:
   disableAnimations: "Pa awọn ohun idanilaraya"
   disableAnimationsEnabled: "Awọn ohun idanilaraya jẹ alaabo"
   disableAnimationsDisabled: "Awọn ohun idanilaraya ṣiṣẹ"
+  tabAppearance: "Ifarahan"
+  tabBehavior: "Iwa"
+  tabIntegrations: "Awọn akojọpọ"
+  tabPrivacy: "Asiri"
+  dataDisplayTitle: "Ifihan data"
+  formatDates: "Awọn ọjọ kika ni agbegbe (2025-01-15T10:30:00Z → 1/15/2025, 10:30 AM)"
+  formatBooleans: "Ṣe deede awọn booleans (t/1 → otitọ, f/0 → eke)"
+  formatDatesEnabled: "Ti ṣe ọna kika ọjọ ṣiṣẹ"
+  formatDatesDisabled: "Tipa akoonu ọjọ jẹ alaabo"

@@ -152,7 +152,7 @@ func (r *Registry) DiscoverAll(ctx context.Context) ([]DiscoveredConnection, err
 	}
 	r.mu.RUnlock()
 
-	log.Infof("DiscoverAll: found %d registered providers", len(providers))
+	log.Debugf("DiscoverAll: found %d registered providers", len(providers))
 
 	var allConns []DiscoveredConnection
 	var errs []error
@@ -166,22 +166,22 @@ func (r *Registry) DiscoverAll(ctx context.Context) ([]DiscoveredConnection, err
 
 		if hasCached && time.Since(cached.discoveredAt) < DefaultDiscoveryCacheTTL {
 			age := time.Since(cached.discoveredAt).Round(time.Second)
-			log.Infof("DiscoverAll: using %d cached connections for provider %s (age=%s, ttl=%s)", len(cached.connections), providerID, age, DefaultDiscoveryCacheTTL)
+			log.Debugf("DiscoverAll: using %d cached connections for provider %s (age=%s, ttl=%s)", len(cached.connections), providerID, age, DefaultDiscoveryCacheTTL)
 			allConns = append(allConns, cached.connections...)
 			continue
 		}
 
 		if hasCached {
 			age := time.Since(cached.discoveredAt).Round(time.Second)
-			log.Infof("DiscoverAll: cache expired for provider %s (age=%s, ttl=%s), re-discovering", providerID, age, DefaultDiscoveryCacheTTL)
+			log.Debugf("DiscoverAll: cache expired for provider %s (age=%s, ttl=%s), re-discovering", providerID, age, DefaultDiscoveryCacheTTL)
 		} else {
-			log.Infof("DiscoverAll: no cache for provider %s, discovering", providerID)
+			log.Debugf("DiscoverAll: no cache for provider %s, discovering", providerID)
 		}
 
 		conns, err := p.DiscoverConnections(ctx)
 
 		if len(conns) > 0 {
-			log.Infof("DiscoverAll: got %d connections from provider %s", len(conns), providerID)
+			log.Debugf("DiscoverAll: got %d connections from provider %s", len(conns), providerID)
 			r.cacheMu.Lock()
 			r.connCache[providerID] = &cachedDiscovery{connections: conns, discoveredAt: time.Now()}
 			r.cacheMu.Unlock()
@@ -194,7 +194,7 @@ func (r *Registry) DiscoverAll(ctx context.Context) ([]DiscoveredConnection, err
 		}
 	}
 
-	log.Infof("DiscoverAll: returning %d total connections", len(allConns))
+	log.Debugf("DiscoverAll: returning %d total connections", len(allConns))
 
 	if len(errs) > 0 {
 		return allConns, errors.Join(errs...)

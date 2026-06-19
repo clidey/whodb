@@ -61,6 +61,7 @@ import {
     RawExecuteDocument,
     SortDirection,
     SourceAction,
+    SourceFieldConstraintsDocument,
     UpdateStorageUnitDocument,
     WhereConditionType
 } from '@graphql';
@@ -145,6 +146,8 @@ export const ExploreStorageUnit: FC = () => {
         usesDatabaseInsteadOfSchema,
     } = useSourceContract(currentType);
     const whereConditionMode = useAppSelector(state => state.settings.whereConditionMode);
+    const formatDatesLocale = useAppSelector(state => state.settings.formatDatesLocale);
+    const formatBooleansReadable = useAppSelector(state => state.settings.formatBooleansReadable);
     const locationState = location.state as ExploreSourceState | undefined;
     const unit = locationState?.unit;
     const browserTrail = locationState?.trail ?? [];
@@ -213,6 +216,7 @@ export const ExploreStorageUnit: FC = () => {
     // For add row sheet logic
     const [addRowData, setAddRowData] = useState<Record<string, any>>({});
     const [addRowError, setAddRowError] = useState<string | null>(null);
+    const [fetchConstraints, { data: constraintsData }] = useLazyQuery(SourceFieldConstraintsDocument);
 
     // Entity search sheet state
     const [showEntitySearchSheet, setShowEntitySearchSheet] = useState(false);
@@ -635,18 +639,19 @@ export const ExploreStorageUnit: FC = () => {
 
     // Sheet logic for Add Row (like table.tsx)
     const handleOpenAddSheet = useCallback(() => {
-        // Prepare empty values for empty addRowData values
         const initialData: Record<string, any> = {};
         if (rows?.Columns) {
-            // todo: add support for different functions for defaults like now(), gen_random_uuid(), etc
             for (const col of rows.Columns) {
                 initialData[col.Name] = "";
             }
         }
         setAddRowData(initialData);
         setAddRowError(null);
+        if (currentUnitRef) {
+            void fetchConstraints({ variables: { ref: currentUnitRef } });
+        }
         setShowAdd(true);
-    }, [rows?.Columns]);
+    }, [rows?.Columns, currentUnitRef, fetchConstraints]);
 
     const handleAddRowFieldChange = useCallback((key: string, value: string) => {
         setAddRowData(prev => ({
@@ -1070,26 +1075,35 @@ export const ExploreStorageUnit: FC = () => {
                             ) : (
                                 /* Regular column-based input for SQL databases */
                                 <div className="flex flex-col gap-4">
-                                    {rows?.Columns?.map((col, index) => (
-                                        <div key={col.Name} className="flex flex-col gap-2"
-                                             data-testid={`add-row-field-${col.Name}`}>
-                                            <Tip>
-                                                <div className="flex items-center gap-xs">
-                                                    {columnIcons[index]}
-                                                    <Label className="w-fit">
-                                                        {col.Name}
-                                                    </Label>
-                                                </div>
-                                                <p className="text-xs">{col.Type?.toLowerCase()}</p>
-                                            </Tip>
-                                            <Input
-                                                value={addRowData[col.Name] ?? ""}
-                                                onChange={e =>{  handleAddRowFieldChange(col.Name, e.target.value); }}
-                                                placeholder={`Enter value for ${col.Name}`}
-                                                {...getInputPropsForColumnType(col.Type || '')}
-                                            />
-                                        </div>
-                                    ))}
+                                    {rows?.Columns?.map((col, index) => {
+                                        const constraint = constraintsData?.SourceFieldConstraints?.find(c => c.Name === col.Name);
+                                        const isRequired = constraint ? (constraint.Nullable !== true && !constraint.Identity && constraint.DefaultValue == null) : false;
+                                        const isIdentity = constraint?.Identity === true;
+                                        const hasDefault = constraint?.DefaultValue != null;
+                                        return (
+                                            <div key={col.Name} className="flex flex-col gap-2"
+                                                 data-testid={`add-row-field-${col.Name}`}>
+                                                <Tip>
+                                                    <div className="flex items-center gap-xs">
+                                                        {columnIcons[index]}
+                                                        <Label className="w-fit">
+                                                            {col.Name}
+                                                        </Label>
+                                                        {isRequired && <Badge variant="secondary" className="text-[10px] px-1 py-0">{t('required')}</Badge>}
+                                                        {isIdentity && <Badge variant="outline" className="text-[10px] px-1 py-0">{t('autoGenerated')}</Badge>}
+                                                        {hasDefault && !isIdentity && <Badge variant="outline" className="text-[10px] px-1 py-0">{t('hasDefault')}</Badge>}
+                                                    </div>
+                                                    <p className="text-xs">{col.Type?.toLowerCase()}</p>
+                                                </Tip>
+                                                <Input
+                                                    value={addRowData[col.Name] ?? ""}
+                                                    onChange={e =>{  handleAddRowFieldChange(col.Name, e.target.value); }}
+                                                    placeholder={hasDefault ? `Default: ${constraint?.DefaultValue}` : isIdentity ? t('autoGeneratedPlaceholder') : `Enter value for ${col.Name}`}
+                                                    {...getInputPropsForColumnType(col.Type || '')}
+                                                />
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             )}
                             {addRowError && (
@@ -1138,6 +1152,8 @@ export const ExploreStorageUnit: FC = () => {
                         // Import control - enabled for explore view
                         allowImport={true}
                         enableKeyboardShortcuts={true}
+                        formatDatesLocale={formatDatesLocale}
+                        formatBooleansReadable={formatBooleansReadable}
                     >
                         {allowsInsertData && <div className="flex gap-2">
                             <Button onClick={handleOpenAddSheet} disabled={adding} data-testid="add-row-button">

@@ -17,6 +17,8 @@ updates:
 #    open-pull-requests-limit: 20
     schedule:
       interval: "daily"
+    cooldown:
+      default-days: 7
 
   - package-ecosystem: "gomod"
     directory: "/desktop-ce"
@@ -25,6 +27,8 @@ updates:
 #    open-pull-requests-limit: 20
     schedule:
       interval: "daily"
+    cooldown:
+      default-days: 7
 
   - package-ecosystem: "gomod"
     directory: "/desktop-common"
@@ -33,6 +37,8 @@ updates:
 #    open-pull-requests-limit: 20
     schedule:
       interval: "daily"
+    cooldown:
+      default-days: 7
 
   - package-ecosystem: "gomod"
     directory: "/cli"
@@ -41,12 +47,16 @@ updates:
 #    open-pull-requests-limit: 20
     schedule:
       interval: "daily"
+    cooldown:
+      default-days: 7
 
   - package-ecosystem: "npm"
     directory: "/frontend"
 #    open-pull-requests-limit: 20
     schedule:
       interval: "daily"
+    cooldown:
+      default-days: 7
 #    groups:
 #      all-npm:
 #        patterns: ["*"]
@@ -58,6 +68,8 @@ updates:
 #    open-pull-requests-limit: 20
     schedule:
       interval: "weekly"
+    cooldown:
+      default-days: 7
 
   - package-ecosystem: "docker"
     directory: "/docs"
@@ -66,12 +78,16 @@ updates:
 #    open-pull-requests-limit: 20
     schedule:
       interval: "weekly"
+    cooldown:
+      default-days: 7
 
   - package-ecosystem: "github-actions"
     directory: "/.github"
 #    open-pull-requests-limit: 20
     schedule:
       interval: "weekly"
+    cooldown:
+      default-days: 7
 #    groups:
 #      all-actions:
 #        patterns: ["*"]

@@ -241,7 +241,7 @@ func TestGCPProvider(id string) (string, error) {
 
 // RefreshGCPProvider triggers a re-discovery of connections for the specified provider.
 func RefreshGCPProvider(id string) (*GCPProviderState, error) {
-	log.Infof("RefreshGCPProvider called for id=%s", id)
+	log.Debugf("RefreshGCPProvider called for id=%s", id)
 
 	gcpProvidersMu.Lock()
 	state, exists := gcpProviders[id]
@@ -251,7 +251,7 @@ func RefreshGCPProvider(id string) (*GCPProviderState, error) {
 		return nil, ErrGCPProviderNotFound
 	}
 	state.Status = "Discovering"
-	log.Infof("RefreshGCPProvider: provider found, id=%s, projectID=%s, region=%s, authMethod=%s",
+	log.Debugf("RefreshGCPProvider: provider found, id=%s, projectID=%s, region=%s, authMethod=%s",
 		state.Config.ID, state.Config.ProjectID, state.Config.Region, state.Config.AuthMethod)
 	gcpProvidersMu.Unlock()
 
@@ -259,9 +259,9 @@ func RefreshGCPProvider(id string) (*GCPProviderState, error) {
 	defer cancel()
 
 	registry := providers.GetDefaultRegistry()
-	log.Infof("RefreshGCPProvider: calling registry.RefreshDiscovery for id=%s", id)
+	log.Debugf("RefreshGCPProvider: calling registry.RefreshDiscovery for id=%s", id)
 	conns, err := registry.RefreshDiscovery(ctx, id)
-	log.Infof("RefreshGCPProvider: registry.RefreshDiscovery returned %d connections, err=%v", len(conns), err)
+	log.Debugf("RefreshGCPProvider: registry.RefreshDiscovery returned %d connections, err=%v", len(conns), err)
 
 	// Run connectivity checks on refresh
 	if len(conns) > 0 {
@@ -393,7 +393,7 @@ func InitGCPProvidersFromEnv() error {
 		if _, err := AddGCPProvider(cfg); err != nil {
 			log.Warnf("Failed to initialize GCP provider %s: %v", name, err)
 		} else {
-			log.Infof("Initialized GCP provider: %s (%s/%s)", name, envCfg.ProjectID, envCfg.Region)
+			log.Debugf("Initialized GCP provider: %s (%s/%s)", name, envCfg.ProjectID, envCfg.Region)
 		}
 	}
 

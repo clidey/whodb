@@ -37,7 +37,7 @@ const (
 // GenerateADToken obtains a short-lived Azure AD access token for database authentication.
 // The token acts as a password — the username is the Azure AD identity.
 func GenerateADToken(ctx context.Context, cred azcore.TokenCredential, scope string) (string, error) {
-	log.Infof("Azure AD Auth: generating token for scope %s", scope)
+	log.Debugf("Azure AD Auth: generating token for scope %s", scope)
 
 	token, err := cred.GetToken(ctx, policy.TokenRequestOptions{
 		Scopes: []string{scope},
@@ -47,6 +47,6 @@ func GenerateADToken(ctx context.Context, cred azcore.TokenCredential, scope str
 		return "", HandleAzureError(err)
 	}
 
-	log.Infof("Azure AD Auth: token generated successfully (token length=%d)", len(token.Token))
+	log.Debugf("Azure AD Auth: token generated successfully (token length=%d)", len(token.Token))
 	return token.Token, nil
 }

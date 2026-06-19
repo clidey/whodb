@@ -540,7 +540,7 @@ func (r *mutationResolver) TestAWSCredentials(ctx context.Context, input model.A
 		profileName = *input.ProfileName
 	}
 
-	log.Infof("TestAWSCredentials: testing region=%s, authMethod=%s, profileName=%s", input.Region, authMethod, profileName)
+	log.Debugf("TestAWSCredentials: testing region=%s, authMethod=%s, profileName=%s", input.Region, authMethod, profileName)
 
 	cfg := &awsprovider.Config{
 		ID:          "test-temp",
@@ -563,7 +563,7 @@ func (r *mutationResolver) TestAWSCredentials(ctx context.Context, input model.A
 		log.Warnf("TestAWSCredentials: connection test failed: %v", err)
 		return model.CloudProviderStatusError, err
 	}
-	log.Infof("TestAWSCredentials: connection successful for region=%s", input.Region)
+	log.Debugf("TestAWSCredentials: connection successful for region=%s", input.Region)
 	return model.CloudProviderStatusConnected, nil
 }
 
@@ -797,7 +797,7 @@ func (r *mutationResolver) GenerateRDSAuthToken(ctx context.Context, providerID 
 		return "", aws.ErrAWSProviderDisabled
 	}
 
-	log.Infof("GenerateRDSAuthToken: providerID=%s, endpoint=%s, port=%d, region=%s, username=%s", providerID, endpoint, port, region, username)
+	log.Debugf("GenerateRDSAuthToken: providerID=%s, endpoint=%s, port=%d, region=%s, username=%s", providerID, endpoint, port, region, username)
 
 	registry := providers.GetDefaultRegistry()
 	provider, err := registry.Get(providerID)
@@ -820,7 +820,7 @@ func (r *mutationResolver) GenerateRDSAuthToken(ctx context.Context, providerID 
 		log.Errorf("GenerateRDSAuthToken: failed: %v", err)
 		return "", err
 	}
-	log.Infof("GenerateRDSAuthToken: token generated successfully (length=%d)", len(token))
+	log.Debugf("GenerateRDSAuthToken: token generated successfully (length=%d)", len(token))
 	return token, nil
 }
 
@@ -1596,7 +1596,7 @@ func (r *queryResolver) SSLStatus(ctx context.Context) (*model.SSLStatus, error)
 		return nil, nil
 	}
 
-	log.Infof("[SSL] SSLStatus resolver: %s connection SSL enabled=%t, mode=%s",
+	log.Debugf("[SSL] SSLStatus resolver: %s connection SSL enabled=%t, mode=%s",
 		spec.ID, status.IsEnabled, status.Mode)
 
 	return &model.SSLStatus{

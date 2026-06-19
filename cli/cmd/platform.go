@@ -74,10 +74,16 @@ type platformSession struct {
 }
 
 type loginOutput struct {
-	Host              string `json:"host"`
-	ID                string `json:"id"`
-	Email             string `json:"email"`
-	OrganizationCount int    `json:"organizationCount"`
+	Host               string `json:"host"`
+	ID                 string `json:"id"`
+	Email              string `json:"email"`
+	DefaultOrgID       string `json:"defaultOrgId,omitempty"`
+	DefaultOrgName     string `json:"defaultOrgName,omitempty"`
+	DefaultProjectID   string `json:"defaultProjectId,omitempty"`
+	DefaultProjectName string `json:"defaultProjectName,omitempty"`
+	WorkspaceSelected  bool   `json:"workspaceSelected"`
+	OrganizationCount  int    `json:"organizationCount"`
+	ProjectCount       int    `json:"projectCount,omitempty"`
 }
 
 type whoamiOutput struct {
@@ -98,6 +104,39 @@ type manifestOutput struct {
 	FetchedAt               string                               `json:"fetchedAt,omitempty"`
 	Operations              []platform.PlatformManifestOperation `json:"operations"`
 	Types                   []platform.PlatformManifestType      `json:"types"`
+}
+
+type platformStatusOutput struct {
+	Host                      string                     `json:"host"`
+	LoggedIn                  bool                       `json:"loggedIn"`
+	UserID                    string                     `json:"userId,omitempty"`
+	Email                     string                     `json:"email,omitempty"`
+	DefaultOrgID              string                     `json:"defaultOrgId,omitempty"`
+	DefaultOrgName            string                     `json:"defaultOrgName,omitempty"`
+	DefaultProjectID          string                     `json:"defaultProjectId,omitempty"`
+	DefaultProjectName        string                     `json:"defaultProjectName,omitempty"`
+	WorkspaceSelected         bool                       `json:"workspaceSelected"`
+	PlatformVersion           string                     `json:"platformVersion,omitempty"`
+	ManifestProtocolVersion   string                     `json:"manifestProtocolVersion,omitempty"`
+	ManifestFetchedAt         string                     `json:"manifestFetchedAt,omitempty"`
+	ManifestAvailable         bool                       `json:"manifestAvailable"`
+	SourceManagementSupported bool                       `json:"sourceManagementSupported"`
+	OrganizationCount         int                        `json:"organizationCount"`
+	ProjectCount              int                        `json:"projectCount,omitempty"`
+	Capabilities              []platformCapabilityStatus `json:"capabilities"`
+}
+
+type platformCapabilityStatus struct {
+	Name      string `json:"name"`
+	Operation string `json:"operation"`
+	Supported bool   `json:"supported"`
+}
+
+type platformWorkspaceSelection struct {
+	Orgs     []platform.Organization
+	Projects []platform.Project
+	Messages []string
+	Changed  bool
 }
 
 var loginCmd = &cobra.Command{
@@ -170,11 +209,6 @@ var loginCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("login failed. Use an existing WhoDB account for this host: %w", err)
 		}
-		orgs, err := client.Organizations(ctx)
-		if err != nil {
-			return err
-		}
-
 		hostEntry := config.PlatformHost{
 			URL:       client.Host(),
 			AccountID: user.ID,
@@ -185,6 +219,10 @@ var loginCmd = &cobra.Command{
 				return err
 			}
 		}
+		selection, err := autoSelectPlatformWorkspace(ctx, client, &hostEntry)
+		if err != nil {
+			return err
+		}
 		cfg.SetOnlyPlatformHost(hostEntry)
 		if err := cfg.SavePlatformRefreshToken(client.Host(), user.ID, tokens.RefreshToken); err != nil {
 			return err
@@ -193,12 +231,26 @@ var loginCmd = &cobra.Command{
 			return err
 		}
 
-		data := loginOutput{Host: client.Host(), ID: user.ID, Email: user.Email, OrganizationCount: len(orgs)}
+		data := loginOutput{
+			Host:               client.Host(),
+			ID:                 user.ID,
+			Email:              user.Email,
+			DefaultOrgID:       hostEntry.DefaultOrgID,
+			DefaultOrgName:     hostEntry.DefaultOrgName,
+			DefaultProjectID:   hostEntry.DefaultProjectID,
+			DefaultProjectName: hostEntry.DefaultProjectName,
+			WorkspaceSelected:  strings.TrimSpace(hostEntry.DefaultOrgID) != "" && strings.TrimSpace(hostEntry.DefaultProjectID) != "",
+			OrganizationCount:  len(selection.Orgs),
+			ProjectCount:       len(selection.Projects),
+		}
 		if format == output.FormatJSON {
 			return writeAutomationEnvelope(cmd, "login", data)
 		}
 		out.Success("Signed in to %s as %s", client.Host(), user.Email)
-		if len(orgs) == 0 {
+		for _, message := range selection.Messages {
+			out.Info(message)
+		}
+		if len(selection.Orgs) == 0 {
 			out.Info(noOrganizationAccessMessage(client.Host()))
 		}
 		return nil
@@ -347,6 +399,76 @@ var manifestCmd = &cobra.Command{
 			{"types", len(data.Types)},
 		}
 		return newCommandOutput(cmd, format, platformQuiet).WriteQueryResult(&output.QueryResult{
+			Columns: []output.Column{{Name: "field", Type: "string"}, {Name: "value", Type: "string"}},
+			Rows:    rows,
+		})
+	},
+}
+
+var statusCmd = &cobra.Command{
+	Use:           "status",
+	Short:         "Show hosted WhoDB CLI status",
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := context.Background()
+		format, err := output.ParseFormat(platformFormat)
+		if err != nil {
+			return err
+		}
+		session, err := loadPlatformSession(ctx, platformHost)
+		if err != nil {
+			return err
+		}
+		user, err := session.Client.Me(ctx)
+		if err != nil {
+			return err
+		}
+		updatePlatformHostUser(session.Config, &session.Host, user)
+
+		orgs, err := session.Client.Organizations(ctx)
+		if err != nil {
+			return err
+		}
+		selection, err := autoSelectPlatformWorkspaceWithOrgs(ctx, session.Client, &session.Host, orgs)
+		if err != nil {
+			return err
+		}
+		projects := selection.Projects
+		if projects == nil {
+			projects, err = statusProjects(ctx, session, selection.Orgs)
+			if err != nil {
+				return err
+			}
+		}
+		manifest := manifestFromCache(session.Host.Manifest)
+		data := platformStatusFor(session.Host, user, selection.Orgs, projects, manifest)
+		session.Config.UpsertPlatformHost(session.Host)
+		if err := session.Config.Save(); err != nil {
+			return err
+		}
+		if format == output.FormatJSON {
+			return writeCommandJSON(cmd, data)
+		}
+		rows := [][]any{
+			{"host", data.Host},
+			{"logged_in", data.LoggedIn},
+			{"email", data.Email},
+			{"workspace_selected", data.WorkspaceSelected},
+			{"default_org", data.DefaultOrgName},
+			{"default_project", data.DefaultProjectName},
+			{"platform_version", data.PlatformVersion},
+			{"manifest_protocol_version", data.ManifestProtocolVersion},
+			{"manifest_fetched_at", data.ManifestFetchedAt},
+			{"source_management_supported", data.SourceManagementSupported},
+			{"organizations", data.OrganizationCount},
+			{"projects", data.ProjectCount},
+		}
+		out := newCommandOutput(cmd, format, platformQuiet)
+		for _, message := range selection.Messages {
+			out.Info(message)
+		}
+		return out.WriteQueryResult(&output.QueryResult{
 			Columns: []output.Column{{Name: "field", Type: "string"}, {Name: "value", Type: "string"}},
 			Rows:    rows,
 		})
@@ -574,11 +696,11 @@ var sourcesListCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		project, err := resolvePlatformProject(ctx, session, sourcesOrg, sourcesProject)
+		org, project, err := resolvePlatformProject(ctx, session, sourcesOrg, sourcesProject)
 		if err != nil {
 			return err
 		}
-		sources, err := session.Client.ProjectSources(ctx, project.ID)
+		sources, err := session.Client.ProjectSources(ctx, org.ID, project.ID)
 		if err != nil {
 			return err
 		}
@@ -623,11 +745,11 @@ var sourcesGetCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		project, err := resolvePlatformProject(ctx, session, sourcesOrg, sourcesProject)
+		org, project, err := resolvePlatformProject(ctx, session, sourcesOrg, sourcesProject)
 		if err != nil {
 			return err
 		}
-		sources, err := session.Client.ProjectSources(ctx, project.ID)
+		sources, err := session.Client.ProjectSources(ctx, org.ID, project.ID)
 		if err != nil {
 			return err
 		}
@@ -688,10 +810,11 @@ var sourcesCreateCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		project, err := resolvePlatformProject(ctx, session, sourcesOrg, sourcesProject)
+		org, project, err := resolvePlatformProject(ctx, session, sourcesOrg, sourcesProject)
 		if err != nil {
 			return err
 		}
+		input.OrgID = org.ID
 		input.ProjectID = project.ID
 		created, err := session.Client.CreateSource(ctx, input)
 		if err != nil {
@@ -723,11 +846,11 @@ var sourcesDeleteCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		project, err := resolvePlatformProject(ctx, session, sourcesOrg, sourcesProject)
+		org, project, err := resolvePlatformProject(ctx, session, sourcesOrg, sourcesProject)
 		if err != nil {
 			return err
 		}
-		sources, err := session.Client.ProjectSources(ctx, project.ID)
+		sources, err := session.Client.ProjectSources(ctx, org.ID, project.ID)
 		if err != nil {
 			return err
 		}
@@ -742,7 +865,7 @@ var sourcesDeleteCmd = &cobra.Command{
 		if !approved {
 			return fmt.Errorf("delete cancelled")
 		}
-		if err := session.Client.DeleteSource(ctx, project.ID, source.ID); err != nil {
+		if err := session.Client.DeleteSource(ctx, org.ID, project.ID, source.ID); err != nil {
 			return err
 		}
 		if format == output.FormatJSON {
@@ -780,11 +903,11 @@ var sourcesObjectsCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		project, source, err := resolvePlatformSource(ctx, session, sourcesOrg, sourcesProject, args[0])
+		org, project, source, err := resolvePlatformSource(ctx, session, sourcesOrg, sourcesProject, args[0])
 		if err != nil {
 			return err
 		}
-		objects, err := session.Client.SourceObjects(ctx, project.ID, source.ID, parent, kinds, sourceObjectLimit, sourceObjectOffset)
+		objects, err := session.Client.SourceObjects(ctx, org.ID, project.ID, source.ID, parent, kinds, sourceObjectLimit, sourceObjectOffset)
 		if err != nil {
 			return err
 		}
@@ -836,11 +959,11 @@ var sourcesColumnsCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		project, source, err := resolvePlatformSource(ctx, session, sourcesOrg, sourcesProject, args[0])
+		org, project, source, err := resolvePlatformSource(ctx, session, sourcesOrg, sourcesProject, args[0])
 		if err != nil {
 			return err
 		}
-		columns, err := session.Client.SourceColumns(ctx, project.ID, source.ID, ref)
+		columns, err := session.Client.SourceColumns(ctx, org.ID, project.ID, source.ID, ref)
 		if err != nil {
 			return err
 		}
@@ -899,11 +1022,11 @@ var sourcesRowsCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		project, source, err := resolvePlatformSource(ctx, session, sourcesOrg, sourcesProject, args[0])
+		org, project, source, err := resolvePlatformSource(ctx, session, sourcesOrg, sourcesProject, args[0])
 		if err != nil {
 			return err
 		}
-		result, err := session.Client.SourceRows(ctx, project.ID, source.ID, ref, sourceRowsLimit, sourceRowsOffset)
+		result, err := session.Client.SourceRows(ctx, org.ID, project.ID, source.ID, ref, sourceRowsLimit, sourceRowsOffset)
 		if err != nil {
 			return err
 		}
@@ -975,12 +1098,13 @@ func init() {
 	rootCmd.AddCommand(logoutCmd)
 	rootCmd.AddCommand(whoamiCmd)
 	rootCmd.AddCommand(manifestCmd)
+	rootCmd.AddCommand(statusCmd)
 	rootCmd.AddCommand(orgsCmd)
 	rootCmd.AddCommand(projectsCmd)
 	rootCmd.AddCommand(sourcesCmd)
 	rootCmd.AddCommand(useCmd)
 
-	for _, command := range []*cobra.Command{loginCmd, logoutCmd, whoamiCmd, manifestCmd, orgsCmd, projectsCmd, sourcesCmd, useCmd} {
+	for _, command := range []*cobra.Command{loginCmd, logoutCmd, whoamiCmd, manifestCmd, statusCmd, orgsCmd, projectsCmd, sourcesCmd, useCmd} {
 		command.PersistentFlags().StringVar(&platformHost, "host", "", "hosted WhoDB URL (default app.whodb.com)")
 		command.PersistentFlags().StringVarP(&platformFormat, "format", "f", "auto", "output format: auto, table, plain, json, ndjson, csv")
 		command.PersistentFlags().BoolVarP(&platformQuiet, "quiet", "q", false, "suppress informational messages")
@@ -1194,6 +1318,153 @@ func platformManifestOutput(host config.PlatformHost, manifest *platform.Platfor
 	return out
 }
 
+func statusProjects(ctx context.Context, session *platformSession, orgs []platform.Organization) ([]platform.Project, error) {
+	orgID := strings.TrimSpace(session.Host.DefaultOrgID)
+	if orgID == "" && len(orgs) == 1 {
+		orgID = orgs[0].ID
+	}
+	if orgID == "" {
+		return nil, nil
+	}
+	return session.Client.Projects(ctx, orgID)
+}
+
+func autoSelectPlatformWorkspace(ctx context.Context, client *platform.Client, host *config.PlatformHost) (platformWorkspaceSelection, error) {
+	orgs, err := client.Organizations(ctx)
+	if err != nil {
+		return platformWorkspaceSelection{}, err
+	}
+	return autoSelectPlatformWorkspaceWithOrgs(ctx, client, host, orgs)
+}
+
+func autoSelectPlatformWorkspaceWithOrgs(ctx context.Context, client *platform.Client, host *config.PlatformHost, orgs []platform.Organization) (platformWorkspaceSelection, error) {
+	selection := platformWorkspaceSelection{Orgs: orgs}
+	if host == nil {
+		return selection, nil
+	}
+
+	if strings.TrimSpace(host.DefaultOrgID) == "" && len(orgs) == 1 {
+		org := orgs[0]
+		host.DefaultOrgID = org.ID
+		host.DefaultOrgName = org.Name
+		selection.Messages = append(selection.Messages, fmt.Sprintf("Selected the only available organization: %s", org.Name))
+		selection.Changed = true
+	} else if strings.TrimSpace(host.DefaultOrgID) != "" {
+		if org := findPlatformOrganization(orgs, host.DefaultOrgID); org != nil && host.DefaultOrgName != org.Name {
+			host.DefaultOrgName = org.Name
+			selection.Changed = true
+		}
+	}
+
+	if strings.TrimSpace(host.DefaultOrgID) == "" {
+		return selection, nil
+	}
+	projects, err := client.Projects(ctx, host.DefaultOrgID)
+	if err != nil {
+		return selection, err
+	}
+	selection.Projects = projects
+
+	if strings.TrimSpace(host.DefaultProjectID) == "" && len(projects) == 1 {
+		project := projects[0]
+		host.DefaultProjectID = project.ID
+		host.DefaultProjectName = project.Name
+		selection.Messages = append(selection.Messages, fmt.Sprintf("Selected the only available project: %s", project.Name))
+		selection.Changed = true
+	} else if strings.TrimSpace(host.DefaultProjectID) != "" {
+		if project := findPlatformProject(projects, host.DefaultProjectID); project != nil && host.DefaultProjectName != project.Name {
+			host.DefaultProjectName = project.Name
+			selection.Changed = true
+		}
+	}
+
+	return selection, nil
+}
+
+func findPlatformOrganization(orgs []platform.Organization, id string) *platform.Organization {
+	for i := range orgs {
+		if orgs[i].ID == id {
+			return &orgs[i]
+		}
+	}
+	return nil
+}
+
+func findPlatformProject(projects []platform.Project, id string) *platform.Project {
+	for i := range projects {
+		if projects[i].ID == id {
+			return &projects[i]
+		}
+	}
+	return nil
+}
+
+func platformStatusFor(host config.PlatformHost, user *platform.User, orgs []platform.Organization, projects []platform.Project, manifest *platform.PlatformManifest) platformStatusOutput {
+	capabilities := platformStatusCapabilities(manifest)
+	sourceSupported := true
+	for _, capability := range capabilities {
+		if !capability.Supported {
+			sourceSupported = false
+			break
+		}
+	}
+	workspaceSelected := strings.TrimSpace(host.DefaultOrgID) != "" && strings.TrimSpace(host.DefaultProjectID) != ""
+	status := platformStatusOutput{
+		Host:                      host.URL,
+		LoggedIn:                  user != nil && user.ID != "",
+		DefaultOrgID:              host.DefaultOrgID,
+		DefaultOrgName:            host.DefaultOrgName,
+		DefaultProjectID:          host.DefaultProjectID,
+		DefaultProjectName:        host.DefaultProjectName,
+		WorkspaceSelected:         workspaceSelected,
+		ManifestAvailable:         manifest != nil,
+		SourceManagementSupported: manifest != nil && sourceSupported,
+		OrganizationCount:         len(orgs),
+		ProjectCount:              len(projects),
+		Capabilities:              capabilities,
+	}
+	if user != nil {
+		status.UserID = user.ID
+		status.Email = user.Email
+	}
+	if manifest != nil {
+		status.PlatformVersion = manifest.PlatformVersion
+		status.ManifestProtocolVersion = manifest.ManifestProtocolVersion
+	}
+	if host.Manifest != nil {
+		status.ManifestFetchedAt = host.Manifest.FetchedAt
+	}
+	return status
+}
+
+func platformStatusCapabilities(manifest *platform.PlatformManifest) []platformCapabilityStatus {
+	required := []struct {
+		name      string
+		kind      string
+		operation string
+	}{
+		{name: "source_types", kind: "Query", operation: "SourceTypes"},
+		{name: "source_list", kind: "Query", operation: "ProjectSources"},
+		{name: "source_create", kind: "Mutation", operation: "CreateSource"},
+		{name: "source_config", kind: "Query", operation: "SourceConfig"},
+		{name: "source_update", kind: "Mutation", operation: "UpdateSource"},
+		{name: "source_delete", kind: "Mutation", operation: "DeleteSource"},
+		{name: "source_test", kind: "Mutation", operation: "TestSourceConnection"},
+		{name: "source_browse", kind: "Query", operation: "PlatformSourceObjects"},
+		{name: "source_columns", kind: "Query", operation: "PlatformSourceColumns"},
+		{name: "source_rows", kind: "Query", operation: "PlatformSourceRows"},
+	}
+	capabilities := make([]platformCapabilityStatus, 0, len(required))
+	for _, item := range required {
+		capabilities = append(capabilities, platformCapabilityStatus{
+			Name:      item.name,
+			Operation: item.kind + "." + item.operation,
+			Supported: manifest != nil && manifest.HasOperation(item.kind, item.operation),
+		})
+	}
+	return capabilities
+}
+
 func platformHostsWithLogin(cfg *config.Config) []config.PlatformHost {
 	if cfg == nil {
 		return nil
@@ -1298,23 +1569,27 @@ func localLogoutHint(host string) string {
 	return fmt.Sprintf("If this host is no longer reachable, remove only the local CLI credentials with:\n  whodb-cli logout --host %s --local", host)
 }
 
-func resolvePlatformProject(ctx context.Context, session *platformSession, orgValue, projectValue string) (*platform.Project, error) {
+func resolvePlatformProject(ctx context.Context, session *platformSession, orgValue, projectValue string) (*platform.Organization, *platform.Project, error) {
 	org, err := resolveOrganization(ctx, session.Client, session.Host, orgValue)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	projects, err := session.Client.Projects(ctx, org.ID)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	needle := strings.TrimSpace(projectValue)
 	if needle == "" {
 		needle = session.Host.DefaultProjectID
 	}
 	if needle == "" {
-		return nil, fmt.Errorf("no project selected; run use --org <org> --project <project> or pass --project")
+		return nil, nil, fmt.Errorf("no project selected; run use --org <org> --project <project> or pass --project")
 	}
-	return resolveProject(projects, needle, org.Name)
+	project, err := resolveProject(projects, needle, org.Name)
+	if err != nil {
+		return nil, nil, err
+	}
+	return org, project, nil
 }
 
 func resolveSource(sources []platform.Source, value string) (*platform.Source, error) {
@@ -1330,20 +1605,20 @@ func resolveSource(sources []platform.Source, value string) (*platform.Source, e
 	return nil, fmt.Errorf("source %q not found", needle)
 }
 
-func resolvePlatformSource(ctx context.Context, session *platformSession, orgValue, projectValue, sourceValue string) (*platform.Project, *platform.Source, error) {
-	project, err := resolvePlatformProject(ctx, session, orgValue, projectValue)
+func resolvePlatformSource(ctx context.Context, session *platformSession, orgValue, projectValue, sourceValue string) (*platform.Organization, *platform.Project, *platform.Source, error) {
+	org, project, err := resolvePlatformProject(ctx, session, orgValue, projectValue)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
-	sources, err := session.Client.ProjectSources(ctx, project.ID)
+	sources, err := session.Client.ProjectSources(ctx, org.ID, project.ID)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	source, err := resolveSource(sources, sourceValue)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
-	return project, source, nil
+	return org, project, source, nil
 }
 
 func parseOptionalSourceObjectRef(value string) (*platform.SourceObjectRefInput, error) {
@@ -1566,6 +1841,9 @@ func resolveOrganization(ctx context.Context, client *platform.Client, host conf
 	if needle == "" {
 		needle = host.DefaultOrgID
 	}
+	if needle == "" && len(orgs) == 1 {
+		return &orgs[0], nil
+	}
 	if needle == "" {
 		return nil, fmt.Errorf("no organization selected; run whodb-cli use --org <org> --project <project> or pass --org")
 	}
@@ -1582,6 +1860,9 @@ func resolveProject(projects []platform.Project, value, orgName string) (*platfo
 		return nil, fmt.Errorf("%s", noProjectsMessage(orgName))
 	}
 	needle := strings.TrimSpace(value)
+	if needle == "" && len(projects) == 1 {
+		return &projects[0], nil
+	}
 	if needle == "" {
 		return nil, fmt.Errorf("project is required")
 	}

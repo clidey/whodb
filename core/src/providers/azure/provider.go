@@ -290,7 +290,7 @@ type discoveryResult struct {
 // DiscoverConnections implements providers.ConnectionProvider.
 // Discovery runs in parallel across all enabled services.
 func (p *Provider) DiscoverConnections(ctx context.Context) ([]providers.DiscoveredConnection, error) {
-	log.Infof("Azure Provider DiscoverConnections called for id=%s, subscription=%s, authMethod=%s",
+	log.Debugf("Azure Provider DiscoverConnections called for id=%s, subscription=%s, authMethod=%s",
 		p.config.ID, p.config.SubscriptionID, p.config.AuthMethod)
 
 	if err := p.initialize(ctx); err != nil {
@@ -384,7 +384,7 @@ func (p *Provider) DiscoverConnections(ctx context.Context) ([]providers.Discove
 			log.Errorf("Azure Provider: %s discovery failed: %v", r.name, r.err)
 			allErrs = append(allErrs, fmt.Errorf("%s: %w", r.name, r.err))
 		} else {
-			log.Infof("Azure Provider: %s discovery found %d resources", r.name, len(r.conns))
+			log.Debugf("Azure Provider: %s discovery found %d resources", r.name, len(r.conns))
 			allConns = append(allConns, r.conns...)
 		}
 	}

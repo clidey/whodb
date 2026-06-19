@@ -69,7 +69,7 @@ func (p *Provider) discoverRedis(ctx context.Context) ([]providers.DiscoveredCon
 		}
 	}
 
-	log.Infof("Azure Redis: discovered %d caches in %v", len(connections), time.Since(start))
+	log.Debugf("Azure Redis: discovered %d caches in %v", len(connections), time.Since(start))
 	return connections, nil
 }
 

@@ -1,0 +1,149 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-06-18T00:00:00Z",
+  "title": "Design System: WhoDB",
+  "extensions": {
+    "colorMeta": {
+      "brand-blue": {
+        "role": "primary",
+        "displayName": "Steady Blue",
+        "canonical": "oklch(40% 0.12 240)",
+        "tonalRamp": ["#071e34", "#0c3052", "#11518e", "#2b6faf", "#5a9cd4", "#8ebffb", "#b8d8fd", "#e3f0ff"]
+      },
+      "brand-blue-light": {
+        "role": "primary",
+        "displayName": "Lifted Blue",
+        "canonical": "oklch(78% 0.1 240)",
+        "tonalRamp": ["#1a3a5c", "#2b5a8a", "#4a7fba", "#6ea0d8", "#8ebffb", "#aed4fd", "#cfe6fe", "#eef5ff"]
+      },
+      "muted-light": {
+        "role": "neutral",
+        "displayName": "Muted Surface",
+        "canonical": "oklch(97% 0 0)",
+        "tonalRamp": ["#1a1a1a", "#3a3a3a", "#6b6b6b", "#9a9a9a", "#c8c8c8", "#e8e8e8", "#f5f5f5", "#f8f8f8"]
+      },
+      "muted-dark": {
+        "role": "neutral",
+        "displayName": "Dark Muted",
+        "canonical": "oklch(15% 0 0)",
+        "tonalRamp": ["#0a0a0a", "#121212", "#1a1a1a", "#252525", "#3a3a3a", "#555555", "#808080", "#b0b0b0"]
+      },
+      "surface-light": {
+        "role": "neutral",
+        "displayName": "Surface",
+        "canonical": "oklch(100% 0 0)",
+        "tonalRamp": ["#0f0f0f", "#333333", "#666666", "#999999", "#cccccc", "#e8e8e8", "#f5f5f5", "#ffffff"]
+      },
+      "foreground-light": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "oklch(10% 0 0)",
+        "tonalRamp": ["#000000", "#0f0f0f", "#1a1a1a", "#333333", "#555555", "#808080", "#b0b0b0", "#e0e0e0"]
+      }
+    },
+    "typographyMeta": {
+      "body": { "displayName": "Body", "purpose": "Default readable text. Max 65-75ch line length." },
+      "label": { "displayName": "Label", "purpose": "Form labels, table headers, metadata captions." },
+      "title": { "displayName": "Title", "purpose": "Card titles, dialog headers, sidebar section labels." },
+      "headline": { "displayName": "Headline", "purpose": "Page titles, section headers." }
+    },
+    "shadows": [
+      { "name": "highlight", "value": "0 25px 50px -12px rgba(0, 0, 0, 0.25)", "purpose": "Transient attention pulse on highlighted cards. Fades after 3s." }
+    ],
+    "motion": [
+      { "name": "ease-standard", "value": "cubic-bezier(0.4, 0, 0.2, 1)", "purpose": "Default easing for state transitions." },
+      { "name": "fade-in", "value": "opacity 0.3s ease-out", "purpose": "Streaming chat message appearance." },
+      { "name": "highlight-bg", "value": "background-color 0.3s ease-in-out", "purpose": "Table search match highlighting." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Main CTA button. Used for login, connect, execute actions.",
+      "html": "<button class=\"ds-btn-primary\">Connect</button>",
+      "css": ".ds-btn-primary { background: #11518E; color: #fff; padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 500; font-family: Inter, ui-sans-serif, system-ui, sans-serif; border: none; border-radius: 0.5rem; cursor: pointer; transition: background-color 0.15s ease-out; } .ds-btn-primary:hover { background: #0d4070; } .ds-btn-primary:focus-visible { outline: 2px solid #8EBFFB; outline-offset: 2px; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Secondary action. Toolbar items, cancel actions, low-emphasis controls.",
+      "html": "<button class=\"ds-btn-ghost\">Cancel</button>",
+      "css": ".ds-btn-ghost { background: transparent; color: #0f0f0f; padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 500; font-family: Inter, ui-sans-serif, system-ui, sans-serif; border: none; border-radius: 0.5rem; cursor: pointer; transition: background-color 0.15s ease-out; } .ds-btn-ghost:hover { background: #f5f5f5; } .ds-btn-ghost:focus-visible { outline: 2px solid #8EBFFB; outline-offset: 2px; }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Storage unit cards, database type selectors. Click to expand or navigate.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-icon\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><ellipse cx=\"12\" cy=\"5\" rx=\"9\" ry=\"3\"/><path d=\"M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5\"/><path d=\"M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3\"/></svg></div><div class=\"ds-card-content\"><span class=\"ds-card-title\">users</span><span class=\"ds-card-meta\">12 columns</span></div></div>",
+      "css": ".ds-card { background: #ffffff; border: 1px solid #e5e7eb; border-radius: 0.625rem; padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem; cursor: pointer; transition: border-color 0.15s ease-out; } .ds-card:hover { border-color: #11518E; } .ds-card-icon { width: 40px; height: 40px; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; background: #f5f5f5; border: 1px solid #11518E; color: #11518E; } .ds-card-content { display: flex; flex-direction: column; gap: 0.25rem; } .ds-card-title { font-size: 0.875rem; font-weight: 500; color: #0f0f0f; } .ds-card-meta { font-size: 0.75rem; color: #6b7280; }"
+    },
+    {
+      "name": "Input Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Text inputs for connection forms, query parameters, search fields.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"localhost\" />",
+      "css": ".ds-input { background: #ffffff; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 0.5rem 0.75rem; font-size: 0.875rem; font-family: Inter, ui-sans-serif, system-ui, sans-serif; color: #0f0f0f; width: 100%; transition: border-color 0.15s ease-out; } .ds-input::placeholder { color: #6b7280; } .ds-input:focus { border-color: #11518E; outline: 2px solid #8EBFFB; outline-offset: 0; } .ds-input:hover:not(:focus) { border-color: #9ca3af; }"
+    },
+    {
+      "name": "Sidebar Nav Item",
+      "kind": "nav",
+      "refersTo": "nav-item",
+      "description": "Sidebar navigation items. Active shows brand color; inactive is muted.",
+      "html": "<div class=\"ds-nav-item ds-nav-active\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"2\"/><path d=\"M3 9h18\"/><path d=\"M9 21V9\"/></svg><span>Tables</span></div>",
+      "css": ".ds-nav-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; border-radius: 0.375rem; font-size: 0.875rem; font-weight: 500; color: #6b7280; cursor: pointer; transition: background-color 0.15s ease-out, color 0.15s ease-out; } .ds-nav-item:hover { background: #f5f5f5; color: #0f0f0f; } .ds-nav-active { background: #f0f7ff; color: #11518E; } .ds-nav-active:hover { background: #e3f0ff; }"
+    },
+    {
+      "name": "Keyboard Shortcut Badge",
+      "kind": "chip",
+      "refersTo": "kbd-badge",
+      "description": "Keyboard shortcut indicators shown next to actions.",
+      "html": "<div class=\"ds-kbd-group\"><kbd class=\"ds-kbd\">⌘</kbd><kbd class=\"ds-kbd\">K</kbd></div>",
+      "css": ".ds-kbd-group { display: flex; align-items: center; gap: 2px; } .ds-kbd { display: inline-flex; align-items: center; justify-content: center; min-width: 1.25rem; height: 1.25rem; padding: 0 0.25rem; font-size: 0.75rem; font-weight: 500; font-family: Inter, ui-sans-serif, system-ui, sans-serif; background: #f5f5f5; border: 1px solid #d1d5db; border-radius: 0.25rem; color: #6b7280; box-shadow: 0 1px 0 #e5e7eb; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Clean Terminal",
+    "overview": "Terminal efficiency meets modern interface. WhoDB's visual system channels the clarity of a well-configured terminal — functional density, monochrome confidence, and zero decorative noise — while maintaining the approachability of a modern product UI. Every pixel serves comprehension or interaction; nothing exists for ornament.\n\nThe system rejects the cluttered chaos of legacy database tools (phpMyAdmin, pgAdmin) and the bloated menu hierarchies of enterprise software (Oracle, IBM tooling). It equally rejects playful SaaS illustration-fests that undermine credibility with infrastructure professionals.\n\nInformation is the interface. The design removes itself so data can speak. Controls are discoverable but unobtrusive. State changes are immediate. The system assumes expertise and rewards it.",
+    "keyCharacteristics": [
+      "Monochrome-dominant with a single blue accent used sparingly",
+      "Flat surfaces differentiated by tonal layering, not shadows",
+      "Inter variable font at multiple weights for clear hierarchy without font pairing",
+      "Configurable density (compact / comfortable / spacious spacing)",
+      "Dark and light modes as equal citizens"
+    ],
+    "rules": [
+      { "name": "The 10% Rule", "body": "The primary blue is used on ≤10% of any given screen. Its rarity gives it authority. When everything is blue, nothing is.", "section": "colors" },
+      { "name": "The Flat-By-Default Rule", "body": "Surfaces are flat at rest. The only shadows in the system are transient state indicators (highlight pulse) or floating-layer signals (popovers, modals). No ambient shadows on cards, no resting-state elevation.", "section": "elevation" },
+      { "name": "The Weight-Not-Size Rule", "body": "Hierarchy within a section is conveyed through weight changes (400 → 500 → 600) before reaching for size changes. Size jumps are reserved for structural boundaries (page title vs card content), not inline emphasis.", "section": "typography" }
+    ],
+    "dos": [
+      "Do use Inter at multiple weights (400, 500, 600) to create hierarchy without introducing additional typefaces.",
+      "Do differentiate surfaces with tonal steps (surface → muted → code) rather than shadows.",
+      "Do keep the brand blue to ≤10% of any screen. Active nav items, primary CTAs, brand marks only.",
+      "Do provide full keyboard navigation for all interactive elements.",
+      "Do respect the configurable density system (compact/comfortable/spacious) — spacing variables, not hardcoded values.",
+      "Do test both light and dark mode as equal citizens. Neither is derived from the other."
+    ],
+    "donts": [
+      "Don't add ambient shadows to resting cards or surfaces. Flat-by-default is the system.",
+      "Don't use gradient fills on buttons, backgrounds, or text. Solid, single-tone fills only.",
+      "Don't add illustrations, mascots, or decorative graphics. The data IS the content.",
+      "Don't introduce additional typefaces. Inter handles the entire hierarchy.",
+      "Don't create cluttered toolbars with dozens of visible buttons (phpMyAdmin pattern).",
+      "Don't gate features behind wizard flows or multi-step modals (enterprise bloat pattern).",
+      "Don't use playful rounded corners (≥1rem on small elements), pastel accent colors, or illustration-heavy empty states.",
+      "Don't add loading skeletons or spinners where instant rendering is achievable."
+    ]
+  }
+}

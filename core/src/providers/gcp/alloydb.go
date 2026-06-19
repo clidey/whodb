@@ -99,7 +99,7 @@ func (p *Provider) discoverAlloyDB(ctx context.Context) ([]providers.DiscoveredC
 		}
 	}
 
-	log.Infof("AlloyDB: found %d instances across %d clusters in %v", len(connections), clusterCount, time.Since(start))
+	log.Debugf("AlloyDB: found %d instances across %d clusters in %v", len(connections), clusterCount, time.Since(start))
 	return connections, nil
 }
 

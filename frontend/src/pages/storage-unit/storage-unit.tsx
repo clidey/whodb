@@ -68,6 +68,7 @@ import {InternalPage} from "../../components/page";
 import {InternalRoutes} from "../../config/routes";
 import {useSourceContract} from "../../hooks/useSourceContract";
 import {trackFrontendEvent} from "../../config/posthog";
+import {trackOptionChanged} from "../../config/frontend-analytics";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {Tip} from '../../components/tip';
 import {SettingsActions} from '../../store/settings';
@@ -556,7 +557,13 @@ export const StorageUnitPage: FC = () => {
                         <CommandLineIcon className="w-4 h-4" /> {t('scratchpad')}
                     </Button>
                 }
-                <Tabs value={view} onValueChange={value => dispatch(SettingsActions.setStorageUnitView(value as 'list' | 'card'))}>
+                <Tabs value={view} onValueChange={value => {
+                    trackOptionChanged('storage_unit_view', value, {
+                        view_mode: value,
+                        database_type: currentType ?? 'unknown',
+                    });
+                    dispatch(SettingsActions.setStorageUnitView(value as 'list' | 'card'));
+                }}>
                     <TabsList>
                         <Tip className="w-fit">
                             <TabsTrigger value="card" data-testid="icon-button" aria-label={t('cardView')}><Squares2X2Icon className="w-4 h-4" /></TabsTrigger>
@@ -586,6 +593,7 @@ export const StorageUnitPage: FC = () => {
                     referenceColumnsByName={referenceColumnsByName}
                     referenceObjects={referenceStorageUnits.map(unit => ({ name: unit.Name }))}
                     singularStorageUnitLabel={singularStorageUnitLabel}
+                    isOpen={create}
                     onCreated={() => { void refetch(); }}
                     onErrorChange={setError}
                     onClose={() => { setCreate(false); }}

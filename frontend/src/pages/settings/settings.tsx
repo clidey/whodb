@@ -33,6 +33,10 @@ import {
     SelectValue,
     Separator,
     Switch,
+    Tabs,
+    TabsContent,
+    TabsList,
+    TabsTrigger,
 } from "@clidey/ux";
 import {optInUser, optOutUser, trackFrontendEvent} from "@/config/posthog";
 import {type SupportedLanguage, SUPPORTED_LANGUAGES} from "@/utils/languages";
@@ -43,6 +47,7 @@ import {AzureProvidersSection} from "../../components/azure";
 import {GcpProvidersSection} from "../../components/gcp";
 import {getComponent} from "../../config/component-registry";
 import {SettingsConfigDocument} from "@graphql";
+import {trackOptionChanged} from "@/config/frontend-analytics";
 
 export const SettingsPage: FC = () => {
     const {t} = useTranslation('pages/settings');
@@ -54,6 +59,8 @@ export const SettingsPage: FC = () => {
     const borderRadius = useAppSelector(state => state.settings.borderRadius);
     const spacing = useAppSelector(state => state.settings.spacing);
     const whereConditionMode = useAppSelector(state => state.settings.whereConditionMode);
+    const formatDatesLocale = useAppSelector(state => state.settings.formatDatesLocale);
+    const formatBooleansReadable = useAppSelector(state => state.settings.formatBooleansReadable);
     const defaultPageSize = useAppSelector(state => state.settings.defaultPageSize);
     const maxPageSize = useAppSelector(state => state.settings.maxPageSize);
     const language = useAppSelector(state => state.settings.language);
@@ -68,7 +75,10 @@ export const SettingsPage: FC = () => {
     const gcpProviderEnabled = settingsData?.SettingsConfig?.GCPProviderEnabled ?? false;
 
     const pageSizeOptions = useMemo(() => ({
-        onPageSizeChange: (size: number) => dispatch(SettingsActions.setDefaultPageSize(size)),
+        onPageSizeChange: (size: number) => {
+            trackOptionChanged('default_page_size', size);
+            dispatch(SettingsActions.setDefaultPageSize(size));
+        },
         maxPageSize,
     }), [dispatch, maxPageSize]);
 
@@ -97,78 +107,77 @@ export const SettingsPage: FC = () => {
     }, [dispatch]);
 
     const handleStorageUnitViewToggle = useCallback((view: 'list' | 'card') => {
+        trackOptionChanged('storage_unit_view', view, {
+            view_mode: view,
+        });
         dispatch(SettingsActions.setStorageUnitView(view));
     }, [dispatch]);
 
     const handleFontSizeChange = useCallback((size: 'small' | 'medium' | 'large') => {
+        trackOptionChanged('font_size', size);
         dispatch(SettingsActions.setFontSize(size));
     }, [dispatch]);
 
     const handleBorderRadiusChange = useCallback((radius: 'none' | 'small' | 'medium' | 'large') => {
+        trackOptionChanged('border_radius', radius);
         dispatch(SettingsActions.setBorderRadius(radius));
     }, [dispatch]);
 
     const handleSpacingChange = useCallback((space: 'compact' | 'comfortable' | 'spacious') => {
+        trackOptionChanged('spacing', space);
         dispatch(SettingsActions.setSpacing(space));
     }, [dispatch]);
 
     const handleWhereConditionModeChange = useCallback((mode: 'popover' | 'sheet') => {
+        trackOptionChanged('where_condition_mode', mode);
         dispatch(SettingsActions.setWhereConditionMode(mode));
     }, [dispatch]);
 
     const handleLanguageChange = useCallback((lang: SupportedLanguage) => {
+        trackOptionChanged('language', lang);
         dispatch(SettingsActions.setLanguage(lang));
     }, [dispatch]);
 
     const handleDatabaseSchemaTerminologyChange = useCallback((terminology: 'database' | 'schema') => {
+        trackOptionChanged('database_schema_terminology', terminology);
         dispatch(SettingsActions.setDatabaseSchemaTerminology(terminology));
     }, [dispatch]);
 
     const handleDisableAnimationsToggle = useCallback((disabled: boolean) => {
+        trackOptionChanged('disable_animations', disabled);
         dispatch(SettingsActions.setDisableAnimations(disabled));
     }, [dispatch]);
+
+    const handleFormatDatesLocaleToggle = useCallback((enabled: boolean) => {
+        trackOptionChanged('format_dates_locale', enabled);
+        dispatch(SettingsActions.setFormatDatesLocale(enabled));
+    }, [dispatch]);
+
+    const handleFormatBooleansReadableToggle = useCallback((enabled: boolean) => {
+        trackOptionChanged('format_booleans_readable', enabled);
+        dispatch(SettingsActions.setFormatBooleansReadable(enabled));
+    }, [dispatch]);
+
+    const handleTabChange = useCallback((tab: string) => {
+        trackOptionChanged('settings_tab', tab, {
+            tab,
+        });
+    }, []);
+
+    const hasIntegrations = cloudProvidersEnabled || !!getComponent('bridge-driver-panel');
 
     return (
         <InternalPage routes={[InternalRoutes.Settings as IInternalRoute]}>
             <div className="flex flex-col items-center w-full max-w-2xl mx-auto py-10 gap-8">
-                <div className="w-full flex flex-col gap-0">
-                    <div className="flex flex-col gap-2">
-                        <p className="text-2xl font-bold flex items-center gap-2">
-                            {t('telemetryTitle')}
-                        </p>
-                    </div>
-                    <div className="flex flex-col gap-xl py-6">
-                        <div className="flex flex-col gap-4">
-                                <h3 className="text-base">
-                                    {t('telemetryDescription', { appName })}&nbsp;
-                                    {t('dataCollectionDetails', {
-                                        privacyPolicyLink: <ExternalLink
-                                            href={"https://whodb.com/privacy"}
-                                            className={"underline text-blue-500"}>{t('privacyPolicy')}</ExternalLink>
-                                    })}
-                                    <br/>
-                                    <br/>
-                                    {t('posthogInfo', { appName })}&nbsp;
-                                    {t('sensitiveDataInfo')}
-                                    <br/>
-                                    <br/>
-                                    {t('contactUsInfo')}
-                                </h3>
-                                <br/>
-                                <div className="flex justify-between">
-                                    <Label>{metricsEnabled ? t('enableTelemetry') : t('disableTelemetry')}</Label>
-                                    <Switch checked={metricsEnabled} onCheckedChange={handleMetricsToggle}/>
-                                </div>
-                                <Separator className="mt-4" />
-                            </div>
-                        <div className="flex flex-col gap-sm mb-2">
-                            <p className="text-lg font-bold">
-                                {t('personalizeTitle')}
-                            </p>
-                            <p className="text-base">
-                                {t('personalizeDescription', { appName })}
-                            </p>
-                        </div>
+                <Tabs defaultValue="appearance" className="w-full" onValueChange={handleTabChange}>
+                    <TabsList className="w-full">
+                        <TabsTrigger value="appearance">{t('tabAppearance')}</TabsTrigger>
+                        <TabsTrigger value="behavior">{t('tabBehavior')}</TabsTrigger>
+                        {hasIntegrations && <TabsTrigger value="integrations">{t('tabIntegrations')}</TabsTrigger>}
+                        <TabsTrigger value="privacy">{t('tabPrivacy')}</TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="appearance" className="flex flex-col gap-xl pt-6">
                         <div className="flex justify-between">
                             <Label>{t('storageUnitView')}</Label>
                             <Select value={storageUnitView} onValueChange={handleStorageUnitViewToggle}>
@@ -225,6 +234,21 @@ export const SettingsPage: FC = () => {
                             <Label>{disableAnimations ? t('disableAnimationsEnabled') : t('disableAnimationsDisabled')}</Label>
                             <Switch checked={disableAnimations} onCheckedChange={handleDisableAnimationsToggle}/>
                         </div>
+                        <Separator className="my-2" />
+                        <div className="flex flex-col gap-sm">
+                            <p className="text-sm font-medium text-muted-foreground">{t('dataDisplayTitle')}</p>
+                        </div>
+                        <div className="flex justify-between">
+                            <Label>{t('formatDates')}</Label>
+                            <Switch checked={formatDatesLocale} onCheckedChange={handleFormatDatesLocaleToggle}/>
+                        </div>
+                        <div className="flex justify-between">
+                            <Label>{t('formatBooleans')}</Label>
+                            <Switch checked={formatBooleansReadable} onCheckedChange={handleFormatBooleansReadableToggle}/>
+                        </div>
+                    </TabsContent>
+
+                    <TabsContent value="behavior" className="flex flex-col gap-xl pt-6">
                         <div className="flex justify-between">
                             <Label>{t('whereConditionMode')}</Label>
                             <Select value={whereConditionMode} onValueChange={handleWhereConditionModeChange}>
@@ -300,42 +324,67 @@ export const SettingsPage: FC = () => {
                                 </SelectContent>
                             </Select>
                         </div>
-                        {cloudProvidersEnabled && (
-                            <>
-                                {awsProviderEnabled && (
-                                    <>
-                                        <Separator className="my-6" />
-                                        <AwsProvidersSection />
-                                    </>
-                                )}
-                                {azureProviderEnabled && (
-                                    <>
-                                        <Separator className="my-6" />
-                                        <AzureProvidersSection />
-                                    </>
-                                )}
-                                {gcpProviderEnabled && (
-                                    <>
-                                        <Separator className="my-6" />
-                                        <GcpProvidersSection />
-                                    </>
-                                )}
-                            </>
-                        )}
-                        {(() => {
-                            const BridgeDriverPanel = getComponent('bridge-driver-panel');
-                            if (!BridgeDriverPanel) return null;
-                            return (
+                    </TabsContent>
+
+                    {hasIntegrations && (
+                        <TabsContent value="integrations" className="flex flex-col gap-xl pt-6">
+                            {cloudProvidersEnabled && (
                                 <>
-                                    <Separator className="my-6" />
-                                    <Suspense fallback={null}>
-                                        <BridgeDriverPanel />
-                                    </Suspense>
+                                    {awsProviderEnabled && <AwsProvidersSection />}
+                                    {azureProviderEnabled && (
+                                        <>
+                                            {awsProviderEnabled && <Separator className="my-6" />}
+                                            <AzureProvidersSection />
+                                        </>
+                                    )}
+                                    {gcpProviderEnabled && (
+                                        <>
+                                            {(awsProviderEnabled || azureProviderEnabled) && <Separator className="my-6" />}
+                                            <GcpProvidersSection />
+                                        </>
+                                    )}
                                 </>
-                            );
-                        })()}
-                    </div>
-                </div>
+                            )}
+                            {(() => {
+                                const BridgeDriverPanel = getComponent('bridge-driver-panel');
+                                if (!BridgeDriverPanel) return null;
+                                return (
+                                    <>
+                                        {cloudProvidersEnabled && <Separator className="my-6" />}
+                                        <Suspense fallback={null}>
+                                            <BridgeDriverPanel />
+                                        </Suspense>
+                                    </>
+                                );
+                            })()}
+                        </TabsContent>
+                    )}
+
+                    <TabsContent value="privacy" className="flex flex-col gap-xl pt-6">
+                        <div className="flex flex-col gap-4">
+                            <h3 className="text-base">
+                                {t('telemetryDescription', { appName })}&nbsp;
+                                {t('dataCollectionDetails', {
+                                    privacyPolicyLink: <ExternalLink
+                                        href={"https://whodb.com/privacy"}
+                                        className={"underline text-blue-500"}>{t('privacyPolicy')}</ExternalLink>
+                                })}
+                                <br/>
+                                <br/>
+                                {t('posthogInfo', { appName })}&nbsp;
+                                {t('sensitiveDataInfo')}
+                                <br/>
+                                <br/>
+                                {t('contactUsInfo')}
+                            </h3>
+                            <br/>
+                            <div className="flex justify-between">
+                                <Label>{metricsEnabled ? t('enableTelemetry') : t('disableTelemetry')}</Label>
+                                <Switch checked={metricsEnabled} onCheckedChange={handleMetricsToggle}/>
+                            </div>
+                        </div>
+                    </TabsContent>
+                </Tabs>
             </div>
         </InternalPage>
     );

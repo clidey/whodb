@@ -18,6 +18,8 @@
 
 interface ImportMetaEnv {
   readonly VITE_E2E_TEST: 'true' | 'false' | undefined
+  readonly VITE_POSTHOG_ENABLED: 'true' | 'false' | undefined
+  readonly VITE_POSTHOG_DEPLOYMENT: string | undefined
   // Add other env variables as needed
 }
 
