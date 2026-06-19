@@ -1,0 +1,8 @@
+[allowlist]
+paths = [
+    '''frontend/pnpm-lock\.yaml''',
+    '''core/go\.sum''',
+    '''.*_test\.go''',
+    '''frontend/e2e/.*''',
+    '''dev/certs/.*''',
+]
