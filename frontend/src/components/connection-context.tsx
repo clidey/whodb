@@ -78,7 +78,7 @@ export const ConnectionContext: FC = () => {
                         className: "w-3.5 h-3.5 shrink-0 text-primary",
                     })}
                     {segments.map((segment, i) => (
-                        <span key={i} className="flex items-center gap-1 shrink-0">
+                        <span key={segment} className="flex items-center gap-1 shrink-0">
                             {i > 0 && <ChevronRightIcon className="w-3 h-3 shrink-0 opacity-40" />}
                             <span>{segment}</span>
                         </span>
