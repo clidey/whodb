@@ -78,7 +78,8 @@
     "lint:fix": "oxlint --fix src/",
     "oxlint": "oxlint src/",
     "oxlint:fix": "oxlint --fix src/",
-    "typecheck": "tsc -p tsconfig.ce.json --noEmit"
+    "typecheck": "tsc -p tsconfig.ce.json --noEmit",
+    "test:analytics": "node scripts/run-analytics-tests.mjs"
   },
   "browserslist": {
     "production": [

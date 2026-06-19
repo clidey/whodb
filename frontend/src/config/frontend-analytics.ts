@@ -15,17 +15,18 @@
  */
 
 import { trackFrontendEvent } from './posthog';
+import { ANALYTICS_EVENTS, type AnalyticsEventName } from './analytics-events';
 
 export type FrontendAnalyticsProperties = Record<string, unknown>;
 
 /** Emits a safe frontend analytics event without blocking the current UI action. */
-export const trackFrontendIntent = (event: string, properties?: FrontendAnalyticsProperties): void => {
+export const trackFrontendIntent = (event: AnalyticsEventName | string, properties?: FrontendAnalyticsProperties): void => {
     void trackFrontendEvent(event, properties);
 };
 
 /** Emits a screen-view event with low-cardinality route metadata. */
 export const trackScreenViewed = (route: string, properties?: FrontendAnalyticsProperties): void => {
-    trackFrontendIntent('ui.screen_viewed', {
+    trackFrontendIntent(ANALYTICS_EVENTS.UI_SCREEN_VIEWED, {
         route,
         ...properties,
     });
@@ -33,7 +34,7 @@ export const trackScreenViewed = (route: string, properties?: FrontendAnalyticsP
 
 /** Emits a form-open event for funnel and abandonment analysis. */
 export const trackFormOpened = (form: string, properties?: FrontendAnalyticsProperties): void => {
-    trackFrontendIntent('ui.form_opened', {
+    trackFrontendIntent(ANALYTICS_EVENTS.UI_FORM_OPENED, {
         form,
         ...properties,
     });
@@ -41,7 +42,7 @@ export const trackFormOpened = (form: string, properties?: FrontendAnalyticsProp
 
 /** Emits a form-submission intent event before the backend outcome is known. */
 export const trackFormSubmitted = (form: string, properties?: FrontendAnalyticsProperties): void => {
-    trackFrontendIntent('ui.form_submitted', {
+    trackFrontendIntent(ANALYTICS_EVENTS.UI_FORM_SUBMITTED, {
         form,
         ...properties,
     });
@@ -49,7 +50,7 @@ export const trackFormSubmitted = (form: string, properties?: FrontendAnalyticsP
 
 /** Emits a form-abandonment event when the user leaves after changing safe form state. */
 export const trackFormAbandoned = (form: string, properties?: FrontendAnalyticsProperties): void => {
-    trackFrontendIntent('ui.form_abandoned', {
+    trackFrontendIntent(ANALYTICS_EVENTS.UI_FORM_ABANDONED, {
         form,
         ...properties,
     });
@@ -57,7 +58,7 @@ export const trackFormAbandoned = (form: string, properties?: FrontendAnalyticsP
 
 /** Emits a user option change event with a bounded field/value pair. */
 export const trackOptionChanged = (field: string, selected: string | boolean | number, properties?: FrontendAnalyticsProperties): void => {
-    trackFrontendIntent('ui.option_changed', {
+    trackFrontendIntent(ANALYTICS_EVENTS.UI_OPTION_CHANGED, {
         field,
         selected,
         ...properties,

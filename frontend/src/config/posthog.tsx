@@ -18,6 +18,13 @@ import type {PostHog} from 'posthog-js';
 import type * as PostHogModule from 'posthog-js';
 import {featureFlags} from './features';
 import {getEdition} from './edition';
+import { ANALYTICS_EVENTS } from './analytics-events';
+import {
+    sanitizeAnalyticsIdentityProperties,
+    sanitizeAnalyticsProperties,
+    type AnalyticsRuntimeContext,
+    type SafeAnalyticsPropertyValue,
+} from './analytics-sanitize';
 
 type ConsentState = 'granted' | 'denied' | 'unknown';
 
@@ -37,130 +44,10 @@ type AnalyticsUserIdentity = {
     groups?: AnalyticsGroupIdentity[];
 };
 
-type SafePropertyValue = string | number | boolean | null;
-
-const SAFE_PROPERTY_KEYS = new Set([
-    'action',
-    'app_type',
-    'auth_mode',
-    'auto_scroll_enabled',
-    'billing_interval',
-    'build_edition',
-    'build_environment',
-    'connection_mode',
-    'database_type',
-    'decision',
-    'deployment',
-    'direction',
-    'enabled',
-    'error_code',
-    'field',
-    'form',
-    'has_advanced_fields',
-    'has_custom_slug',
-    'has_database',
-    'has_model',
-    'has_password',
-    'has_profile',
-    'has_provider',
-    'has_source',
-    'has_token',
-    'input_method',
-    'interval',
-    'is_desktop',
-    'is_embedded',
-    'is_first_login',
-    'is_template',
-    'language',
-    'mode',
-    'model_type',
-    'node_type',
-    'open',
-    'operation_type',
-    'outcome',
-    'plan',
-    'platform',
-    'provider_type',
-    'route',
-    'scope',
-    'section',
-    'selected',
-    'source',
-    'status',
-    'step',
-    'tab',
-    'trigger',
-    'view_mode',
-]);
-
-const SAFE_PROPERTY_SUFFIXES = [
-    '_bucket',
-    '_count',
-    '_enabled',
-    '_index',
-    '_mode',
-    '_present',
-    '_selected',
-    '_type',
-    '_visible',
-];
-
-const SENSITIVE_PROPERTY_PATTERN = /(api[_-]?key|credential|email|host|hostname|name|password|path|prompt|query|secret|sql|text|token|url|username|value)/i;
-
 const isDesktopApp = () => (
     typeof window !== 'undefined' &&
     (!!(window as any).go?.main?.App || !!(window as any).go?.common?.App)
 );
-
-const safePropertyValue = (value: unknown): SafePropertyValue | undefined => {
-    if (value == null) {
-        return null;
-    }
-    if (typeof value === 'string') {
-        const trimmed = value.trim();
-        if (!trimmed) {
-            return undefined;
-        }
-        return trimmed.length > 96 ? trimmed.slice(0, 96) : trimmed;
-    }
-    if (typeof value === 'number') {
-        return Number.isFinite(value) ? value : undefined;
-    }
-    if (typeof value === 'boolean') {
-        return value;
-    }
-    return undefined;
-};
-
-const isSafePropertyKey = (key: string) => {
-    if (SENSITIVE_PROPERTY_PATTERN.test(key)) {
-        return key.endsWith('_present') || key.endsWith('_bucket') || key.endsWith('_count') || key.endsWith('_type');
-    }
-    return SAFE_PROPERTY_KEYS.has(key) || SAFE_PROPERTY_SUFFIXES.some(suffix => key.endsWith(suffix));
-};
-
-const sanitizeAnalyticsProperties = (properties?: Record<string, unknown>): Record<string, SafePropertyValue> => {
-    const base: Record<string, SafePropertyValue> = {
-        build_edition: getBuildEdition(),
-        build_environment: getEnvEnvironment(),
-        app_type: isDesktopApp() ? 'desktop' : 'web',
-        platform: isDesktopApp() ? 'wails' : 'browser',
-    };
-    if (deploymentName) {
-        base.deployment = deploymentName;
-    }
-
-    for (const [key, value] of Object.entries(properties ?? {})) {
-        if (!isSafePropertyKey(key)) {
-            continue;
-        }
-        const safeValue = safePropertyValue(value);
-        if (safeValue !== undefined) {
-            base[key] = safeValue;
-        }
-    }
-    return base;
-};
 
 let posthogModulePromise: Promise<typeof PostHogModule> | null = null;
 let initPromise: Promise<PostHog | null> | null = null;
@@ -168,21 +55,18 @@ let activeClient: PostHog | null = null;
 let handlersRegistered = false;
 let cachedDistinctId: string | null = null;
 
-let deploymentName: string | null = null; // eslint-disable-line prefer-const
+const configuredDeploymentName = import.meta.env.VITE_POSTHOG_DEPLOYMENT?.trim();
+
+let deploymentName: string | null = configuredDeploymentName?.length ? configuredDeploymentName : null;
 
 const posthogKey = "phc_hbXcCoPTdxm5ADL8PmLSYTIUvS6oRWFM2JAK8SMbfnH";
 const apiHost = "https://z.clidey.com";
+const HOSTED_SESSION_REPLAY_SAMPLE_RATE = 0.1;
 const getEnvEnvironment = () => import.meta.env.MODE ?? 'development';
 const getBuildEdition = () => getEdition();
 const isE2ETest = () => import.meta.env.VITE_E2E_TEST === 'true';
-const isSessionReplayEnabled = () => getBuildEdition() === 'ee' && import.meta.env.VITE_POSTHOG_SESSION_REPLAY === 'true';
-const sessionReplaySampleRate = () => {
-    const parsed = Number(import.meta.env.VITE_POSTHOG_SESSION_REPLAY_SAMPLE_RATE ?? '0.1');
-    if (!Number.isFinite(parsed)) {
-        return 0.1;
-    }
-    return Math.min(1, Math.max(0, parsed));
-};
+const remoteAnalyticsEnabled = () => import.meta.env.VITE_POSTHOG_ENABLED === 'true';
+const isSessionReplayEnabled = () => getBuildEdition() === 'ee' && deploymentName === 'whodb-platform-prod';
 const sessionReplaySampled = () => {
     if (typeof window === 'undefined') {
         return false;
@@ -195,14 +79,67 @@ const sessionReplaySampled = () => {
         if (stored === 'false') {
             return false;
         }
-        const sampled = Math.random() < sessionReplaySampleRate();
+        const sampled = Math.random() < HOSTED_SESSION_REPLAY_SAMPLE_RATE;
         window.sessionStorage?.setItem(SESSION_REPLAY_SAMPLE_KEY, String(sampled));
         return sampled;
     } catch {
-        return Math.random() < sessionReplaySampleRate();
+        return Math.random() < HOSTED_SESSION_REPLAY_SAMPLE_RATE;
     }
 };
 const shouldRecordSession = (consent: ConsentState) => consent === 'granted' && isSessionReplayEnabled() && sessionReplaySampled();
+
+const localHostPattern = /^(localhost|127(?:\.\d{1,3}){3}|0\.0\.0\.0|\[?::1\]?|.+\.local)$/i;
+const privateHostPattern = /^(10(?:\.\d{1,3}){3}|192\.168(?:\.\d{1,3}){2}|172\.(?:1[6-9]|2\d|3[01])(?:\.\d{1,3}){2})$/;
+
+const isLocalAnalyticsHost = () => {
+    if (typeof window === 'undefined') {
+        return true;
+    }
+    const hostname = window.location.hostname;
+    return localHostPattern.test(hostname) || privateHostPattern.test(hostname);
+};
+
+const remoteAnalyticsAllowed = () => {
+    if (isE2ETest() || !remoteAnalyticsEnabled()) {
+        return false;
+    }
+    return getEnvEnvironment() === 'production' && !isLocalAnalyticsHost();
+};
+
+const analyticsRuntimeContext = (): AnalyticsRuntimeContext => ({
+    buildEdition: getBuildEdition(),
+    buildEnvironment: getEnvEnvironment(),
+    appType: isDesktopApp() ? 'desktop' : 'web',
+    platform: isDesktopApp() ? 'wails' : 'browser',
+    deployment: deploymentName,
+});
+
+const sanitizeEventProperties = (properties?: Record<string, unknown>) => sanitizeAnalyticsProperties(properties, analyticsRuntimeContext());
+
+const debugSinkEnabled = () => !remoteAnalyticsAllowed();
+
+const emitDebugAnalytics = (
+    kind: 'event' | 'identify' | 'group',
+    name: string,
+    properties: Record<string, SafeAnalyticsPropertyValue>
+) => {
+    if (!debugSinkEnabled()) {
+        return;
+    }
+    if (typeof window !== 'undefined') {
+        const debugWindow = window as typeof window & {
+            __WHODB_ANALYTICS_DEBUG__?: Array<{
+                kind: string;
+                name: string;
+                properties: Record<string, SafeAnalyticsPropertyValue>;
+            }>;
+        };
+        debugWindow.__WHODB_ANALYTICS_DEBUG__ ??= [];
+        debugWindow.__WHODB_ANALYTICS_DEBUG__.push({ kind, name, properties });
+    }
+    // eslint-disable-next-line no-console
+    console.info('[analytics]', kind, name, properties);
+};
 
 const getStoredConsent = (): ConsentState => {
     if (typeof window === 'undefined') {
@@ -345,6 +282,10 @@ const ensureInitializedClient = async (): Promise<PostHog | null> => {
     if (isE2ETest()) {
         return null;
     }
+    if (!remoteAnalyticsAllowed()) {
+        activeClient = null;
+        return null;
+    }
     if (!posthogKey) {
         return null;
     }
@@ -371,7 +312,7 @@ const ensureInitializedClient = async (): Promise<PostHog | null> => {
         const {default: posthog} = await ensurePosthogModule();
 
         // Debug logging for desktop environments
-        const isDesktop = !!(window as any).go?.main?.App || !!(window as any).go?.common?.App;
+        const isDesktop = isDesktopApp();
 
         const enabled = consent === 'granted';
 
@@ -419,7 +360,7 @@ const ensureInitializedClient = async (): Promise<PostHog | null> => {
                 if (isDesktop) {
                     // Track desktop app launch
                     if (consent === 'granted') {
-                        client.capture('desktop_app_launched', sanitizeAnalyticsProperties({
+                        client.capture(ANALYTICS_EVENTS.DESKTOP_APP_LAUNCHED, sanitizeEventProperties({
                             platform: 'wails',
                         }));
                     }
@@ -459,9 +400,15 @@ export const trackFrontendEvent = async (event: string, properties?: Record<stri
         return;
     }
 
+    const safeProperties = sanitizeEventProperties(properties);
+    emitDebugAnalytics('event', event, safeProperties);
+    if (!remoteAnalyticsAllowed()) {
+        return;
+    }
+
     try {
         const client = await ensureInitializedClient();
-        client?.capture(event, sanitizeAnalyticsProperties(properties));
+        client?.capture(event, safeProperties);
     } catch {
         // do nothing
     }
@@ -474,20 +421,35 @@ export const identifyAnalyticsUser = async (identity: AnalyticsUserIdentity): Pr
         return false;
     }
 
+    const identityProperties = sanitizeAnalyticsIdentityProperties(identity.properties);
+    emitDebugAnalytics('identify', distinctId, identityProperties);
+    for (const group of identity.groups ?? []) {
+        const groupType = group.type.trim();
+        const groupKey = group.key.trim();
+        if (!groupType || !groupKey) {
+            continue;
+        }
+        emitDebugAnalytics('group', `${groupType}:${groupKey}`, sanitizeAnalyticsIdentityProperties(group.properties));
+    }
+    if (!remoteAnalyticsAllowed()) {
+        return true;
+    }
+
     try {
         const client = await ensureInitializedClient();
         if (!client) {
             return false;
         }
 
-        client.identify(distinctId, identity.properties ?? {});
+        client.identify(distinctId, identityProperties);
         for (const group of identity.groups ?? []) {
             const groupType = group.type.trim();
             const groupKey = group.key.trim();
             if (!groupType || !groupKey) {
                 continue;
             }
-            client.group(groupType, groupKey, group.properties ?? {});
+            const groupProperties = sanitizeAnalyticsIdentityProperties(group.properties);
+            client.group(groupType, groupKey, groupProperties);
         }
         persistDistinctId(client.get_distinct_id());
         return true;
