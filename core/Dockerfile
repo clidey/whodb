@@ -112,7 +112,7 @@ RUN BAML_VERSION=$(grep 'github.com/boundaryml/baml ' go.mod | awk '{print $2}' 
     cp /baml-lib/libbaml_cffi.so /runtime-libs/ && \
     echo "Downloaded BAML musl library for ${BAML_ARCH}"
 
-FROM alpine:3.24
+FROM alpine:3.24.1
 RUN apk add --no-cache ca-certificates libgcc libstdc++
 WORKDIR /app
 COPY --from=backend-stage /core /core
