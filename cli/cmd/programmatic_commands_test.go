@@ -1443,6 +1443,7 @@ func TestHistoryCmd_HasSubcommands(t *testing.T) {
 	subcommands := map[string]bool{
 		"list":   false,
 		"search": false,
+		"load":   false,
 		"clear":  false,
 	}
 
@@ -1500,6 +1501,106 @@ func TestHistorySearchCmd_RequiresPattern(t *testing.T) {
 	err := historySearchCmd.Args(historySearchCmd, []string{})
 	if err == nil {
 		t.Error("Expected error when pattern is not provided")
+	}
+}
+
+func TestHistoryLoadCmd_PrintsFullQuery(t *testing.T) {
+	cleanup := setupTestEnv(t)
+	defer cleanup()
+
+	query := "SELECT id, name, email, created_at, updated_at\nFROM users\nWHERE email LIKE '%@example.com'\nORDER BY created_at DESC"
+	mgr, err := history.NewManager()
+	if err != nil {
+		t.Fatalf("Failed to create history manager: %v", err)
+	}
+	if err := mgr.Add(query, true, "sqlite"); err != nil {
+		t.Fatalf("Failed to add history entry: %v", err)
+	}
+	entries := mgr.GetAll()
+	if len(entries) != 1 {
+		t.Fatalf("Expected 1 history entry, got %d", len(entries))
+	}
+	historyFormat = "plain"
+	historyQuiet = false
+
+	outBuf, errBuf := setCommandBuffers(t, historyLoadCmd)
+	if err := historyLoadCmd.RunE(historyLoadCmd, []string{entries[0].ID}); err != nil {
+		t.Fatalf("History load failed: %v", err)
+	}
+	if outBuf.String() != query+"\n" {
+		t.Fatalf("Expected full query output, got %q", outBuf.String())
+	}
+	if errBuf.Len() != 0 {
+		t.Fatalf("Expected no stderr output, got %q", errBuf.String())
+	}
+}
+
+func TestHistoryLoadCmd_JSON(t *testing.T) {
+	cleanup := setupTestEnv(t)
+	defer cleanup()
+
+	query := "SELECT * FROM users WHERE notes = 'full history entry'"
+	mgr, err := history.NewManager()
+	if err != nil {
+		t.Fatalf("Failed to create history manager: %v", err)
+	}
+	if err := mgr.Add(query, false, "postgres"); err != nil {
+		t.Fatalf("Failed to add history entry: %v", err)
+	}
+	entries := mgr.GetAll()
+	if len(entries) != 1 {
+		t.Fatalf("Expected 1 history entry, got %d", len(entries))
+	}
+	historyFormat = "json"
+	historyQuiet = false
+
+	outBuf, errBuf := setCommandBuffers(t, historyLoadCmd)
+	if err := historyLoadCmd.RunE(historyLoadCmd, []string{entries[0].ID}); err != nil {
+		t.Fatalf("History load failed: %v", err)
+	}
+	var loaded history.Entry
+	if err := json.Unmarshal(outBuf.Bytes(), &loaded); err != nil {
+		t.Fatalf("Failed to parse history entry JSON: %v", err)
+	}
+
+	if loaded.ID != entries[0].ID {
+		t.Fatalf("Expected ID %q, got %q", entries[0].ID, loaded.ID)
+	}
+	if loaded.Query != query {
+		t.Fatalf("Expected query %q, got %q", query, loaded.Query)
+	}
+	if loaded.Success {
+		t.Fatalf("Expected success to be false")
+	}
+	if loaded.Database != "postgres" {
+		t.Fatalf("Expected database postgres, got %q", loaded.Database)
+	}
+	if errBuf.Len() != 0 {
+		t.Fatalf("Expected no stderr output, got %q", errBuf.String())
+	}
+}
+
+func TestHistoryLoadCmd_MissingID(t *testing.T) {
+	cleanup := setupTestEnv(t)
+	defer cleanup()
+
+	historyFormat = "plain"
+	historyQuiet = false
+
+	outBuf, errBuf := setCommandBuffers(t, historyLoadCmd)
+	err := historyLoadCmd.RunE(historyLoadCmd, []string{"missing-id"})
+	if err == nil {
+		t.Fatal("Expected missing history entry error")
+	}
+
+	if !strings.Contains(err.Error(), `history entry "missing-id" not found`) {
+		t.Fatalf("Expected clear missing ID error, got %q", err.Error())
+	}
+	if outBuf.Len() != 0 {
+		t.Fatalf("Expected no stdout output, got %q", outBuf.String())
+	}
+	if errBuf.Len() != 0 {
+		t.Fatalf("Expected no stderr output, got %q", errBuf.String())
 	}
 }
 
