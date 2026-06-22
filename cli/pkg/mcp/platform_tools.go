@@ -56,7 +56,7 @@ type platformClient interface {
 	SourceContent(context.Context, string, string, platformapi.SourceObjectRefInput) (*platformapi.SourceContent, error)
 	ProjectSecrets(context.Context, string) ([]platformapi.ProjectSecret, error)
 	AIProviders(context.Context, string) ([]platformapi.AIProvider, error)
-	AIProviderModels(context.Context, string) ([]string, error)
+	AIProviderModels(context.Context, string, string) ([]string, error)
 	Ontologies(context.Context, string) ([]platformapi.Ontology, error)
 	Ontology(context.Context, string, string) (*platformapi.Ontology, error)
 	OntologyFastLookups(context.Context, string, string) ([]platformapi.OntologyFastLookup, error)

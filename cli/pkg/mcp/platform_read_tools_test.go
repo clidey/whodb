@@ -48,7 +48,7 @@ func (f *fakePlatformClient) AIProviders(ctx context.Context, projectID string) 
 	return []platformapi.AIProvider{{ID: "provider-1", ProjectID: projectID, Name: "OpenAI", ProviderType: "openai"}}, nil
 }
 
-func (f *fakePlatformClient) AIProviderModels(ctx context.Context, providerID string) ([]string, error) {
+func (f *fakePlatformClient) AIProviderModels(ctx context.Context, projectID, providerID string) ([]string, error) {
 	return []string{"gpt-4.1"}, nil
 }
 

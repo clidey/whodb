@@ -74,14 +74,14 @@ func (c *Client) AIProviders(ctx context.Context, projectID string) ([]AIProvide
 }
 
 // AIProviderModels returns model names advertised by one hosted AI provider.
-func (c *Client) AIProviderModels(ctx context.Context, providerID string) ([]string, error) {
+func (c *Client) AIProviderModels(ctx context.Context, projectID, providerID string) ([]string, error) {
 	if err := c.RequireOperation("Query", "AIProviderModels", "AI provider model listing"); err != nil {
 		return nil, err
 	}
 	var resp struct {
 		AIProviderModels []string `json:"AIProviderModels"`
 	}
-	err := c.graphQL(ctx, operationAIProviderModels, map[string]any{"providerId": providerID}, &resp)
+	err := c.graphQL(ctx, operationAIProviderModels, map[string]any{"projectId": projectID, "providerId": providerID}, &resp)
 	return resp.AIProviderModels, err
 }
 

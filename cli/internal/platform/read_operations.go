@@ -267,8 +267,8 @@ query CLIPlatformAIProviders($projectId: ID!) {
 `
 
 const operationAIProviderModels = `
-query CLIPlatformAIProviderModels($providerId: ID!) {
-  AIProviderModels(providerId: $providerId)
+query CLIPlatformAIProviderModels($projectId: ID!, $providerId: ID!) {
+  AIProviderModels(projectId: $projectId, providerId: $providerId)
 }
 `
 

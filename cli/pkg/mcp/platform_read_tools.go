@@ -295,7 +295,7 @@ func HandlePlatformAIProviderModels(ctx context.Context, req *mcp.CallToolReques
 		return nil, PlatformReadOutput{Error: "provider_id is required", RequestID: generateRequestID("platform_ai_provider_models")}, nil
 	}
 	return platformProjectRead(ctx, "platform_ai_provider_models", func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
-		models, err := session.Client.AIProviderModels(ctx, strings.TrimSpace(input.ProviderID))
+		models, err := session.Client.AIProviderModels(ctx, session.Host.DefaultProjectID, strings.TrimSpace(input.ProviderID))
 		return models, len(models), false, err
 	})
 }
