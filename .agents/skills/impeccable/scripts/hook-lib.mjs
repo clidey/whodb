@@ -959,13 +959,114 @@ export function resolveTargetFiles(event, projectCwd) {
 export function resolveHarness(env = {}, event = null) {
   const explicit = env?.IMPECCABLE_HOOK_HARNESS;
   if (explicit === 'cursor') return 'cursor';
+  if (explicit === 'github') return 'github';
   if (explicit === 'claude' || explicit === 'codex') return 'claude';
+  // GitHub Copilot's postToolUse event uses camelCase `toolName`/`toolArgs` and
+  // has no `tool_name`/`tool_input`. That shape is the discriminator.
+  if (event && typeof event === 'object'
+    && (typeof event.toolName === 'string' || event.toolArgs !== undefined)
+    && event.tool_name === undefined && event.tool_input === undefined) {
+    return 'github';
+  }
   if (typeof event?.conversation_id === 'string' && event.conversation_id) return 'cursor';
   return 'claude';
 }
 
+// GitHub Copilot's postToolUse payload is
+//   { sessionId, timestamp, cwd, toolName, toolArgs, toolResult }
+// mapped onto the internal `{ tool_name, tool_input, cwd, session_id }` shape.
+// `toolArgs` shape depends on the tool: the `edit`/`create`/`view` tools send a
+// JSON *string* (double-encoded) carrying the file under `path`, e.g.
+//   "{\"path\":\"/abs/app.tsx\",\"old_str\":\"...\",\"new_str\":\"...\"}",
+// while `apply_patch` sends a raw OpenAI-format patch string (handled below in
+// normalizeGitHubEvent). The detector reads the file from disk after the tool
+// ran, so only the path (not the proposed content) is needed here.
+export function parseGitHubToolArgs(toolArgs) {
+  if (toolArgs && typeof toolArgs === 'object' && !Array.isArray(toolArgs)) return toolArgs;
+  if (typeof toolArgs === 'string' && toolArgs.trim()) {
+    try {
+      const parsed = JSON.parse(toolArgs);
+      return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+    } catch {
+      return {};
+    }
+  }
+  return {};
+}
+
+// Copilot's `apply_patch` tool (used by interactive sessions and the cloud
+// agent) sends a raw OpenAI-format patch string in toolArgs, not JSON:
+//   *** Begin Patch
+//   *** Add File: /abs/app.css
+//   +body { ... }
+//   *** End Patch
+// The `view`/`edit`/`create` tools (seen in `copilot -p` runs) instead send a
+// JSON string with the path under `path`. Both must map onto the internal shape.
+const APPLY_PATCH_MARKER = /\*\*\* (?:Begin Patch|Add File:|Update File:|Delete File:)/;
+
+function looksLikeApplyPatch(rawArgs) {
+  if (typeof rawArgs !== 'string' || !APPLY_PATCH_MARKER.test(rawArgs)) return false;
+  // Guard against an edit/create payload whose edited *content* happens to
+  // contain patch markers: that payload is a JSON object string, whereas a real
+  // apply_patch payload is a raw patch string that does not parse as JSON. Only
+  // treat non-JSON-object strings as apply_patch so edit events still get their
+  // `path` extracted.
+  try {
+    const parsed = JSON.parse(rawArgs);
+    if (parsed && typeof parsed === 'object') return false;
+  } catch { /* not JSON → genuine raw patch */ }
+  return true;
+}
+
+function applyPatchText(rawArgs) {
+  if (typeof rawArgs === 'string') {
+    if (APPLY_PATCH_MARKER.test(rawArgs)) return rawArgs;
+    // Defensive: a future Copilot build might JSON-wrap the patch.
+    const parsed = parseGitHubToolArgs(rawArgs);
+    return parsed.patch || parsed.input || parsed.command || '';
+  }
+  if (rawArgs && typeof rawArgs === 'object' && !Array.isArray(rawArgs)) {
+    return rawArgs.patch || rawArgs.input || rawArgs.command || '';
+  }
+  return '';
+}
+
+function normalizeGitHubEvent(event, projectCwd) {
+  const cwd = event.cwd || envProjectDir(projectCwd) || projectCwd;
+  const sessionId = event.sessionId || event.session_id || 'unknown';
+  const toolName = event.toolName || event.tool_name || null;
+  const toolInput = event.tool_input && typeof event.tool_input === 'object' ? { ...event.tool_input } : {};
+  const rawArgs = event.toolArgs;
+
+  let normalizedToolName = toolName;
+  if (toolName === 'apply_patch' || looksLikeApplyPatch(rawArgs)) {
+    // resolveTargetFiles() reads the touched paths from tool_input.command when
+    // tool_name is 'apply_patch', so normalize the name even if a future build
+    // sends the patch under a different tool label.
+    const patch = applyPatchText(rawArgs);
+    if (patch) {
+      toolInput.command = patch;
+      normalizedToolName = 'apply_patch';
+    }
+  } else {
+    const args = parseGitHubToolArgs(rawArgs);
+    const filePath = args.path || args.file_path || args.filePath || args.target_file;
+    if (typeof filePath === 'string' && filePath) toolInput.file_path = filePath;
+  }
+
+  return {
+    ...event,
+    cwd,
+    session_id: sessionId,
+    tool_name: normalizedToolName,
+    tool_input: toolInput,
+  };
+}
+
 export function normalizeHookEvent(event, projectCwd, harness = 'claude') {
-  if (!event || typeof event !== 'object' || harness !== 'cursor') return event;
+  if (!event || typeof event !== 'object') return event;
+  if (harness === 'github') return normalizeGitHubEvent(event, projectCwd);
+  if (harness !== 'cursor') return event;
 
   const cwd = event.cwd
     || (Array.isArray(event.workspace_roots) && event.workspace_roots[0])
@@ -1200,12 +1301,12 @@ export function setDetectorForTesting(impl) {
 // session" so the model knows it's a re-mind, not a new finding.
 // ────────────────────────────────────────────────────────────────────────
 
-const STEER_LINE = 'Keep typography hierarchy, spacing rhythm, and color contrast intentional on the next change.';
+const STEER_LINE = 'That does not mean the design is good: keep following the project design system and the impeccable skill guidance.';
 
 export function renderCleanAck(filePath, opts = {}) {
   const cwd = opts.cwd || process.cwd();
   const display = relativize(filePath, cwd);
-  return `${ENVELOPE_PREFIX} Design hook scanned ${display}. No anti-patterns. ${STEER_LINE}`;
+  return `${ENVELOPE_PREFIX} Design hook scanned ${display}. No deterministic design-quality issues found. ${STEER_LINE}`;
 }
 
 export function renderPendingAck(filePath, knownFindings, opts = {}) {
@@ -1261,7 +1362,7 @@ function directiveFooter(display, opts = {}) {
     '',
     'Use context judgment before editing. A finding is not automatically a defect; literal or domain-appropriate motion, intentional demos or fixtures, documentation of bad design, and user-confirmed choices can be valid as-is.',
     '',
-    `Do not change intentional design just to satisfy the hook. Do not add source comments such as \`impeccable: ignore\`; those pollute the code and do not suppress hook findings. Persist hook ignores only after the user explicitly confirms the finding is intentional. Prefer the narrowest persisted exception: run the exact \`/impeccable hooks ignore-value ... --shared\` command shown next to a value-specific finding. For \`overused-font\`, use \`ignore-value\` for a specific font and use \`/impeccable hooks ignore-rule overused-font --all-values\` only when the user asks to ignore overused fonts generally. For file-specific findings without an ignore-value command, ${fileIgnoreGuidance}; use \`/impeccable hooks ignore-rule <id>\` only when the user asks to suppress the whole non-value-specific rule. Run /impeccable audit for the full pass.`,
+    `Do not change intentional design just to satisfy the hook, and do not silence a real finding with an inline ignore comment to skip fixing it. Suppress a finding only after the user explicitly confirms it is intentional. Prefer a config ignore (one reviewable place, the commands below); reach for an inline \`impeccable-disable <rule>\` comment only when the waiver must travel with a file that leaves the repo, such as an exported or standalone document. Prefer the narrowest persisted exception: run the exact \`/impeccable hooks ignore-value ... --shared\` command shown next to a value-specific finding. For \`overused-font\`, use \`ignore-value\` for a specific font and use \`/impeccable hooks ignore-rule overused-font --all-values\` only when the user asks to ignore overused fonts generally. For file-specific findings without an ignore-value command, ${fileIgnoreGuidance}; use \`/impeccable hooks ignore-rule <id>\` only when the user asks to suppress the whole non-value-specific rule. Run /impeccable audit for the full pass.`,
   ].join('\n');
 }
 
@@ -1519,6 +1620,11 @@ export async function runHook({ stdinJson, env = {}, cwd = process.cwd(), now = 
 export function payload(text, eventName = 'PostToolUse', harness = 'claude') {
   if (harness === 'cursor') {
     return JSON.stringify({ additional_context: text });
+  }
+  // GitHub Copilot's postToolUse hook injects context via a top-level
+  // `additionalContext` string (alongside an optional `modifiedResult`).
+  if (harness === 'github') {
+    return JSON.stringify({ additionalContext: text });
   }
   return JSON.stringify({
     hookSpecificOutput: { hookEventName: eventName, additionalContext: text },
