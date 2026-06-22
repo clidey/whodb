@@ -474,6 +474,13 @@ jobs:
           path: artifacts/cli-binaries/
 
       - name: Download signatures
+        if: |
+          needs.calculate-version.outputs.deploy-snap == 'true' ||
+          needs.calculate-version.outputs.deploy-microsoft == 'true' ||
+          needs.calculate-version.outputs.deploy-apple == 'true' ||
+          needs.calculate-version.outputs.deploy-linux-terminal == 'true' ||
+          needs.calculate-version.outputs.deploy-cli == 'true' ||
+          needs.calculate-version.outputs.deploy-npm == 'true'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           digest-mismatch: warn
@@ -492,6 +499,10 @@ jobs:
           set -euo pipefail
 
           mkdir -p final-assets
+          HAS_FILE_ASSETS=false
+          if [ "$DEPLOY_SNAP" = "true" ] || [ "$DEPLOY_MICROSOFT" = "true" ] || [ "$DEPLOY_APPLE" = "true" ] || [ "$DEPLOY_LINUX_TERMINAL" = "true" ] || [ "$DEPLOY_CLI" = "true" ] || [ "$DEPLOY_NPM" = "true" ]; then
+            HAS_FILE_ASSETS=true
+          fi
 
           copy_release_assets() {
             local description="$1"
@@ -537,15 +548,19 @@ jobs:
             copy_release_assets "CLI binaries" "artifacts/cli-binaries" 1 -name "whodb-cli-*"
           fi
 
-          # Copy signatures (extract and copy only files, not directories)
-          if [ -f artifacts/signatures/signatures.tar.gz ]; then
-            mkdir -p /tmp/sig-extract
-            tar -xzf artifacts/signatures/signatures.tar.gz -C /tmp/sig-extract/
-            copy_release_assets "signature bundles" "/tmp/sig-extract" 1 -name "*.bundle"
-            rm -rf /tmp/sig-extract
+          if [ "$HAS_FILE_ASSETS" = "true" ]; then
+            # Copy signatures (extract and copy only files, not directories)
+            if [ -f artifacts/signatures/signatures.tar.gz ]; then
+              mkdir -p /tmp/sig-extract
+              tar -xzf artifacts/signatures/signatures.tar.gz -C /tmp/sig-extract/
+              copy_release_assets "signature bundles" "/tmp/sig-extract" 1 -name "*.bundle"
+              rm -rf /tmp/sig-extract
+            else
+              echo "::error::Missing signature archive: artifacts/signatures/signatures.tar.gz was not downloaded"
+              exit 1
+            fi
           else
-            echo "::error::Missing signature archive: artifacts/signatures/signatures.tar.gz was not downloaded"
-            exit 1
+            echo "No file assets selected; skipping signature bundle staging"
           fi
 
           echo "📦 Release assets prepared:"
@@ -563,6 +578,10 @@ jobs:
           set -euo pipefail
 
           missing=false
+          HAS_FILE_ASSETS=false
+          if [ "$DEPLOY_SNAP" = "true" ] || [ "$DEPLOY_MICROSOFT" = "true" ] || [ "$DEPLOY_APPLE" = "true" ] || [ "$DEPLOY_LINUX_TERMINAL" = "true" ] || [ "$DEPLOY_CLI" = "true" ] || [ "$DEPLOY_NPM" = "true" ]; then
+            HAS_FILE_ASSETS=true
+          fi
 
           require_count() {
             local description="$1"
@@ -600,7 +619,11 @@ jobs:
             require_count "CLI binaries" 1 -name "whodb-cli-*"
           fi
 
-          require_count "signature bundles" 1 -name "*.bundle"
+          if [ "$HAS_FILE_ASSETS" = "true" ]; then
+            require_count "signature bundles" 1 -name "*.bundle"
+          else
+            echo "No file assets selected; skipping signature bundle validation"
+          fi
 
           if [ "$missing" = "true" ]; then
             echo "::error::Release asset manifest validation failed"
@@ -662,7 +685,14 @@ jobs:
           echo "Preview:"
           cat /tmp/release-body.md
 
-      - name: Create GitHub release (as draft)
+      - name: Create GitHub release with assets (as draft)
+        if: |
+          needs.calculate-version.outputs.deploy-snap == 'true' ||
+          needs.calculate-version.outputs.deploy-microsoft == 'true' ||
+          needs.calculate-version.outputs.deploy-apple == 'true' ||
+          needs.calculate-version.outputs.deploy-linux-terminal == 'true' ||
+          needs.calculate-version.outputs.deploy-cli == 'true' ||
+          needs.calculate-version.outputs.deploy-npm == 'true'
         uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd # v1.21.0
         with:
           tag: ${{ needs.calculate-version.outputs.version }}
@@ -674,6 +704,23 @@ jobs:
           prerelease: false
           generateReleaseNotes: true
           artifacts: final-assets/*
+          bodyFile: /tmp/release-body.md
+
+      - name: Create GitHub release without assets (as draft)
+        if: |
+          needs.calculate-version.outputs.deploy-snap != 'true' &&
+          needs.calculate-version.outputs.deploy-microsoft != 'true' &&
+          needs.calculate-version.outputs.deploy-apple != 'true' &&
+          needs.calculate-version.outputs.deploy-linux-terminal != 'true' &&
+          needs.calculate-version.outputs.deploy-cli != 'true' &&
+          needs.calculate-version.outputs.deploy-npm != 'true'
+        uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd # v1.21.0
+        with:
+          tag: ${{ needs.calculate-version.outputs.version }}
+          name: Release ${{ needs.calculate-version.outputs.version }}
+          draft: true
+          prerelease: false
+          generateReleaseNotes: true
           bodyFile: /tmp/release-body.md
 
       # Verify and publish the draft release (production runs only)
@@ -691,6 +738,10 @@ jobs:
           DEPLOY_NPM: ${{ needs.calculate-version.outputs.deploy-npm }}
         run: |
           set -euo pipefail
+          HAS_FILE_ASSETS=false
+          if [ "$DEPLOY_SNAP" = "true" ] || [ "$DEPLOY_MICROSOFT" = "true" ] || [ "$DEPLOY_APPLE" = "true" ] || [ "$DEPLOY_LINUX_TERMINAL" = "true" ] || [ "$DEPLOY_CLI" = "true" ] || [ "$DEPLOY_NPM" = "true" ]; then
+            HAS_FILE_ASSETS=true
+          fi
 
           echo "🔍 Verifying draft release ${VERSION} before publishing..."
 
@@ -724,10 +775,12 @@ jobs:
           ASSET_COUNT=$(echo "$RELEASE_INFO" | jq '.assets | length')
           echo "📦 Found ${ASSET_COUNT} assets attached to release"
 
-          if [ "$ASSET_COUNT" -eq 0 ]; then
+          if [ "$HAS_FILE_ASSETS" = "true" ] && [ "$ASSET_COUNT" -eq 0 ]; then
             echo "❌ ERROR: No assets found on draft release!"
             echo "This may indicate an upload failure. Check previous steps."
             exit 1
+          elif [ "$HAS_FILE_ASSETS" != "true" ]; then
+            echo "No file assets selected; skipping release asset count requirement"
           fi
 
           if [ "$DEPLOY_SNAP" = "true" ]; then
@@ -751,8 +804,12 @@ jobs:
             require_uploaded_count "CLI binaries" 1 'startswith("whodb-cli-")'
           fi
 
-          require_uploaded_count "signature bundles" 1 'endswith(".bundle")'
-          echo "✅ Assets verified (${ASSET_COUNT} files)"
+          if [ "$HAS_FILE_ASSETS" = "true" ]; then
+            require_uploaded_count "signature bundles" 1 'endswith(".bundle")'
+            echo "✅ Assets verified (${ASSET_COUNT} files)"
+          else
+            echo "✅ Docker-only release verified without file assets"
+          fi
 
           # Verify release body is present
           BODY_LENGTH=$(echo "$RELEASE_INFO" | jq '.body | length')
