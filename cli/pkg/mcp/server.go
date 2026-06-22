@@ -1402,6 +1402,11 @@ const platformInstructions = `WhoDB MCP Server - Hosted Platform Tools
 This server is running in hosted platform mode. It exposes only whodb_platform_* tools
 backed by the current hosted WhoDB login and selected organization/project.
 
+Read tools return stable metadata such as count, request_id, scope, warnings, and
+truncated where applicable. Most read tools accept an optional fields array to
+project top-level output fields, for example ["id", "name"], when an agent only
+needs a compact result.
+
 Available tools:
 - whodb_platform_status: Show hosted login and selected workspace
 - whodb_platform_orgs: List hosted organizations visible to the user

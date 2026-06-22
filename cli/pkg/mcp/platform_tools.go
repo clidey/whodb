@@ -109,10 +109,14 @@ type PlatformStatusOutput struct {
 }
 
 // PlatformSourcesInput is the input for the whodb_platform_sources tool.
-type PlatformSourcesInput struct{}
+type PlatformSourcesInput struct {
+	Fields []string `json:"fields,omitempty" jsonschema:"Optional top-level output fields to include in items"`
+}
 
 // PlatformOrgsInput is the input for the whodb_platform_orgs tool.
-type PlatformOrgsInput struct{}
+type PlatformOrgsInput struct {
+	Fields []string `json:"fields,omitempty" jsonschema:"Optional top-level output fields to include in items"`
+}
 
 // PlatformOrgInfo describes an organization visible to the hosted user.
 type PlatformOrgInfo struct {
@@ -124,10 +128,15 @@ type PlatformOrgInfo struct {
 
 // PlatformOrgsOutput lists organizations visible to the hosted user.
 type PlatformOrgsOutput struct {
-	Host      string            `json:"host,omitempty"`
-	Orgs      []PlatformOrgInfo `json:"orgs"`
-	Error     string            `json:"error,omitempty"`
-	RequestID string            `json:"request_id,omitempty"`
+	Host      string               `json:"host,omitempty"`
+	Orgs      []PlatformOrgInfo    `json:"orgs"`
+	Items     any                  `json:"items,omitempty"`
+	Count     int                  `json:"count"`
+	Scope     *PlatformOutputScope `json:"scope,omitempty"`
+	Fields    []string             `json:"fields,omitempty"`
+	Warnings  []string             `json:"warnings,omitempty"`
+	Error     string               `json:"error,omitempty"`
+	RequestID string               `json:"request_id,omitempty"`
 }
 
 // MarshalJSON ensures nil slices are serialized as [] instead of null.
@@ -141,7 +150,8 @@ func (o PlatformOrgsOutput) MarshalJSON() ([]byte, error) {
 
 // PlatformProjectsInput is the input for the whodb_platform_projects tool.
 type PlatformProjectsInput struct {
-	Org string `json:"org,omitempty" jsonschema:"Organization id, slug, or name. Defaults to the selected organization when available."`
+	Org    string   `json:"org,omitempty" jsonschema:"Organization id, slug, or name. Defaults to the selected organization when available."`
+	Fields []string `json:"fields,omitempty" jsonschema:"Optional top-level output fields to include in items"`
 }
 
 // PlatformProjectInfo describes a project visible to the hosted user.
@@ -161,6 +171,11 @@ type PlatformProjectsOutput struct {
 	OrgID     string                `json:"org_id,omitempty"`
 	OrgName   string                `json:"org_name,omitempty"`
 	Projects  []PlatformProjectInfo `json:"projects"`
+	Items     any                   `json:"items,omitempty"`
+	Count     int                   `json:"count"`
+	Scope     *PlatformOutputScope  `json:"scope,omitempty"`
+	Fields    []string              `json:"fields,omitempty"`
+	Warnings  []string              `json:"warnings,omitempty"`
 	Error     string                `json:"error,omitempty"`
 	RequestID string                `json:"request_id,omitempty"`
 }
@@ -175,11 +190,18 @@ func (o PlatformProjectsOutput) MarshalJSON() ([]byte, error) {
 }
 
 // PlatformSourceTypesInput is the input for the whodb_platform_source_types tool.
-type PlatformSourceTypesInput struct{}
+type PlatformSourceTypesInput struct {
+	Fields []string `json:"fields,omitempty" jsonschema:"Optional top-level output fields to include in items"`
+}
 
 // PlatformSourceTypesOutput lists hosted source types available for creation.
 type PlatformSourceTypesOutput struct {
 	SourceTypes []platformapi.SourceType `json:"source_types"`
+	Items       any                      `json:"items,omitempty"`
+	Count       int                      `json:"count"`
+	Scope       *PlatformOutputScope     `json:"scope,omitempty"`
+	Fields      []string                 `json:"fields,omitempty"`
+	Warnings    []string                 `json:"warnings,omitempty"`
 	Error       string                   `json:"error,omitempty"`
 	RequestID   string                   `json:"request_id,omitempty"`
 }
@@ -195,15 +217,21 @@ func (o PlatformSourceTypesOutput) MarshalJSON() ([]byte, error) {
 
 // PlatformSourceFieldsInput is the input for the whodb_platform_source_fields tool.
 type PlatformSourceFieldsInput struct {
-	SourceType string `json:"source_type" jsonschema:"Hosted source type id"`
+	SourceType string   `json:"source_type" jsonschema:"Hosted source type id"`
+	Fields     []string `json:"fields,omitempty" jsonschema:"Optional top-level output fields to include in items"`
 }
 
 // PlatformSourceFieldsOutput lists connection fields for one hosted source type.
 type PlatformSourceFieldsOutput struct {
-	SourceType string                              `json:"source_type,omitempty"`
-	Fields     []platformapi.SourceConnectionField `json:"fields"`
-	Error      string                              `json:"error,omitempty"`
-	RequestID  string                              `json:"request_id,omitempty"`
+	SourceType     string                              `json:"source_type,omitempty"`
+	Fields         []platformapi.SourceConnectionField `json:"fields"`
+	Items          any                                 `json:"items,omitempty"`
+	Count          int                                 `json:"count"`
+	Scope          *PlatformOutputScope                `json:"scope,omitempty"`
+	SelectedFields []string                            `json:"selected_fields,omitempty"`
+	Warnings       []string                            `json:"warnings,omitempty"`
+	Error          string                              `json:"error,omitempty"`
+	RequestID      string                              `json:"request_id,omitempty"`
 }
 
 // MarshalJSON ensures nil slices are serialized as [] instead of null.
@@ -221,6 +249,11 @@ type PlatformSourcesOutput struct {
 	OrgID     string               `json:"org_id,omitempty"`
 	ProjectID string               `json:"project_id,omitempty"`
 	Sources   []platformapi.Source `json:"sources"`
+	Items     any                  `json:"items,omitempty"`
+	Count     int                  `json:"count"`
+	Scope     *PlatformOutputScope `json:"scope,omitempty"`
+	Fields    []string             `json:"fields,omitempty"`
+	Warnings  []string             `json:"warnings,omitempty"`
 	Error     string               `json:"error,omitempty"`
 	RequestID string               `json:"request_id,omitempty"`
 }
@@ -241,11 +274,17 @@ type PlatformSourceObjectsInput struct {
 	Kinds      []string `json:"kinds,omitempty" jsonschema:"Object kinds to include, for example Table or View"`
 	PageSize   int      `json:"page_size,omitempty" jsonschema:"Maximum objects to return"`
 	PageOffset int      `json:"page_offset,omitempty" jsonschema:"Object offset"`
+	Fields     []string `json:"fields,omitempty" jsonschema:"Optional top-level output fields to include in items"`
 }
 
 // PlatformSourceObjectsOutput lists hosted source objects.
 type PlatformSourceObjectsOutput struct {
 	Objects   []platformapi.SourceObject `json:"objects"`
+	Items     any                        `json:"items,omitempty"`
+	Count     int                        `json:"count"`
+	Scope     *PlatformOutputScope       `json:"scope,omitempty"`
+	Fields    []string                   `json:"fields,omitempty"`
+	Warnings  []string                   `json:"warnings,omitempty"`
 	Error     string                     `json:"error,omitempty"`
 	RequestID string                     `json:"request_id,omitempty"`
 }
@@ -261,13 +300,19 @@ func (o PlatformSourceObjectsOutput) MarshalJSON() ([]byte, error) {
 
 // PlatformSourceColumnsInput is the input for the whodb_platform_source_columns tool.
 type PlatformSourceColumnsInput struct {
-	Source string `json:"source" jsonschema:"Hosted source id or name"`
-	Ref    string `json:"ref" jsonschema:"Object ref as kind:path, for example table:public.users"`
+	Source string   `json:"source" jsonschema:"Hosted source id or name"`
+	Ref    string   `json:"ref" jsonschema:"Object ref as kind:path, for example table:public.users"`
+	Fields []string `json:"fields,omitempty" jsonschema:"Optional top-level output fields to include in items"`
 }
 
 // PlatformSourceColumnsOutput lists columns for one hosted source object.
 type PlatformSourceColumnsOutput struct {
 	Columns   []platformapi.Column `json:"columns"`
+	Items     any                  `json:"items,omitempty"`
+	Count     int                  `json:"count"`
+	Scope     *PlatformOutputScope `json:"scope,omitempty"`
+	Fields    []string             `json:"fields,omitempty"`
+	Warnings  []string             `json:"warnings,omitempty"`
 	Error     string               `json:"error,omitempty"`
 	RequestID string               `json:"request_id,omitempty"`
 }
@@ -741,12 +786,18 @@ func HandlePlatformSources(ctx context.Context, req *mcp.CallToolRequest, input 
 		return nil, PlatformSourcesOutput{Error: err.Error(), RequestID: requestID}, nil
 	}
 
+	readOutput := platformReadOutput(session, "platform_sources", sources, len(sources), false, requestID, input.Fields)
 	TrackToolCall(ctx, "platform_sources", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"source_count": len(sources)})
 	return nil, PlatformSourcesOutput{
 		Host:      session.Host.URL,
 		OrgID:     session.Host.DefaultOrgID,
 		ProjectID: session.Host.DefaultProjectID,
 		Sources:   sources,
+		Items:     readOutput.Items,
+		Count:     readOutput.Count,
+		Scope:     readOutput.Scope,
+		Fields:    readOutput.Fields,
+		Warnings:  readOutput.Warnings,
 		RequestID: requestID,
 	}, nil
 }
@@ -772,6 +823,12 @@ func HandlePlatformOrgs(ctx context.Context, req *mcp.CallToolRequest, input Pla
 		Orgs:      platformOrgInfos(orgs, session.Host.DefaultOrgID),
 		RequestID: requestID,
 	}
+	readOutput := platformReadOutput(session, "platform_orgs", output.Orgs, len(output.Orgs), false, requestID, input.Fields)
+	output.Items = readOutput.Items
+	output.Count = readOutput.Count
+	output.Scope = readOutput.Scope
+	output.Fields = readOutput.Fields
+	output.Warnings = readOutput.Warnings
 	TrackToolCall(ctx, "platform_orgs", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"org_count": len(output.Orgs)})
 	return nil, output, nil
 }
@@ -804,6 +861,12 @@ func HandlePlatformProjects(ctx context.Context, req *mcp.CallToolRequest, input
 		Projects:  platformProjectInfos(projects, org.Name, session.Host.DefaultProjectID),
 		RequestID: requestID,
 	}
+	readOutput := platformReadOutput(session, "platform_projects", output.Projects, len(output.Projects), false, requestID, input.Fields)
+	output.Items = readOutput.Items
+	output.Count = readOutput.Count
+	output.Scope = readOutput.Scope
+	output.Fields = readOutput.Fields
+	output.Warnings = readOutput.Warnings
 	TrackToolCall(ctx, "platform_projects", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"project_count": len(output.Projects)})
 	return nil, output, nil
 }
@@ -824,8 +887,17 @@ func HandlePlatformSourceTypes(ctx context.Context, req *mcp.CallToolRequest, in
 		return nil, PlatformSourceTypesOutput{Error: err.Error(), RequestID: requestID}, nil
 	}
 
+	readOutput := platformReadOutput(session, "platform_source_types", types, len(types), false, requestID, input.Fields)
 	TrackToolCall(ctx, "platform_source_types", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"source_type_count": len(types)})
-	return nil, PlatformSourceTypesOutput{SourceTypes: types, RequestID: requestID}, nil
+	return nil, PlatformSourceTypesOutput{
+		SourceTypes: types,
+		Items:       readOutput.Items,
+		Count:       readOutput.Count,
+		Scope:       readOutput.Scope,
+		Fields:      readOutput.Fields,
+		Warnings:    readOutput.Warnings,
+		RequestID:   requestID,
+	}, nil
 }
 
 // HandlePlatformSourceFields lists connection fields for one hosted source type.
@@ -844,8 +916,18 @@ func HandlePlatformSourceFields(ctx context.Context, req *mcp.CallToolRequest, i
 		return nil, PlatformSourceFieldsOutput{Error: err.Error(), RequestID: requestID}, nil
 	}
 
+	readOutput := platformReadOutput(session, "platform_source_fields", sourceType.ConnectionFields, len(sourceType.ConnectionFields), false, requestID, input.Fields)
 	TrackToolCall(ctx, "platform_source_fields", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"field_count": len(sourceType.ConnectionFields)})
-	return nil, PlatformSourceFieldsOutput{SourceType: sourceType.ID, Fields: sourceType.ConnectionFields, RequestID: requestID}, nil
+	return nil, PlatformSourceFieldsOutput{
+		SourceType:     sourceType.ID,
+		Fields:         sourceType.ConnectionFields,
+		Items:          readOutput.Items,
+		Count:          readOutput.Count,
+		Scope:          readOutput.Scope,
+		SelectedFields: readOutput.Fields,
+		Warnings:       readOutput.Warnings,
+		RequestID:      requestID,
+	}, nil
 }
 
 // HandlePlatformSourceObjects lists objects in one hosted source.
@@ -882,8 +964,17 @@ func HandlePlatformSourceObjects(ctx context.Context, req *mcp.CallToolRequest, 
 		return nil, PlatformSourceObjectsOutput{Error: err.Error(), RequestID: requestID}, nil
 	}
 
+	readOutput := platformReadOutput(session, "platform_source_objects", objects, len(objects), false, requestID, input.Fields)
 	TrackToolCall(ctx, "platform_source_objects", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"object_count": len(objects)})
-	return nil, PlatformSourceObjectsOutput{Objects: objects, RequestID: requestID}, nil
+	return nil, PlatformSourceObjectsOutput{
+		Objects:   objects,
+		Items:     readOutput.Items,
+		Count:     readOutput.Count,
+		Scope:     readOutput.Scope,
+		Fields:    readOutput.Fields,
+		Warnings:  readOutput.Warnings,
+		RequestID: requestID,
+	}, nil
 }
 
 // HandlePlatformSourceColumns returns columns for one hosted source object.
@@ -907,8 +998,17 @@ func HandlePlatformSourceColumns(ctx context.Context, req *mcp.CallToolRequest, 
 		return nil, PlatformSourceColumnsOutput{Error: err.Error(), RequestID: requestID}, nil
 	}
 
+	readOutput := platformReadOutput(session, "platform_source_columns", columns, len(columns), false, requestID, input.Fields)
 	TrackToolCall(ctx, "platform_source_columns", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"column_count": len(columns)})
-	return nil, PlatformSourceColumnsOutput{Columns: columns, RequestID: requestID}, nil
+	return nil, PlatformSourceColumnsOutput{
+		Columns:   columns,
+		Items:     readOutput.Items,
+		Count:     readOutput.Count,
+		Scope:     readOutput.Scope,
+		Fields:    readOutput.Fields,
+		Warnings:  readOutput.Warnings,
+		RequestID: requestID,
+	}, nil
 }
 
 // HandlePlatformSourceRows previews rows for one hosted source object.

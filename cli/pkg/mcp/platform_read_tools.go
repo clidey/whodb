@@ -29,88 +29,106 @@ const defaultPlatformContentLimit = 64 * 1024
 
 // PlatformSourceConstraintsInput is the input for the whodb_platform_source_constraints tool.
 type PlatformSourceConstraintsInput struct {
-	Source string `json:"source" jsonschema:"Hosted source id or name"`
-	Ref    string `json:"ref" jsonschema:"Object ref as kind:path, for example table:public.users"`
+	Source string   `json:"source" jsonschema:"Hosted source id or name"`
+	Ref    string   `json:"ref" jsonschema:"Object ref as kind:path, for example table:public.users"`
+	Fields []string `json:"fields,omitempty" jsonschema:"Optional top-level output fields to include"`
 }
 
 // PlatformSourceContentInput is the input for the whodb_platform_source_content tool.
 type PlatformSourceContentInput struct {
-	Source string `json:"source" jsonschema:"Hosted source id or name"`
-	Ref    string `json:"ref" jsonschema:"Object ref as kind:path, for example file:notes/report.txt"`
+	Source string   `json:"source" jsonschema:"Hosted source id or name"`
+	Ref    string   `json:"ref" jsonschema:"Object ref as kind:path, for example file:notes/report.txt"`
+	Fields []string `json:"fields,omitempty" jsonschema:"Optional top-level output fields to include"`
 }
 
 // PlatformEntityInput is a selected-project input with one resource id.
 type PlatformEntityInput struct {
-	ID string `json:"id" jsonschema:"Resource id"`
+	ID     string   `json:"id" jsonschema:"Resource id"`
+	Fields []string `json:"fields,omitempty" jsonschema:"Optional top-level output fields to include"`
 }
 
 // PlatformProviderModelsInput is the input for the whodb_platform_ai_provider_models tool.
 type PlatformProviderModelsInput struct {
-	ProviderID string `json:"provider_id" jsonschema:"Hosted AI provider id"`
+	ProviderID string   `json:"provider_id" jsonschema:"Hosted AI provider id"`
+	Fields     []string `json:"fields,omitempty" jsonschema:"Optional top-level output fields to include"`
 }
 
 // PlatformRowsInput is a selected-project row-preview input.
 type PlatformRowsInput struct {
-	ID     string `json:"id" jsonschema:"Resource id"`
-	Limit  int    `json:"limit,omitempty" jsonschema:"Maximum rows to return"`
-	Offset int    `json:"offset,omitempty" jsonschema:"Row offset"`
+	ID     string   `json:"id" jsonschema:"Resource id"`
+	Limit  int      `json:"limit,omitempty" jsonschema:"Maximum rows to return"`
+	Offset int      `json:"offset,omitempty" jsonschema:"Row offset"`
+	Fields []string `json:"fields,omitempty" jsonschema:"Optional top-level output fields to include"`
 }
 
 // PlatformOntologyFollowLinkInput is the input for the whodb_platform_ontology_follow_link tool.
 type PlatformOntologyFollowLinkInput struct {
-	EntityID    string `json:"entity_id" jsonschema:"Ontology id"`
-	PrimaryKey  string `json:"primary_key" jsonschema:"Primary key value of the source ontology row"`
-	LinkAPIName string `json:"link_api_name" jsonschema:"Ontology link apiName to follow"`
-	Limit       int    `json:"limit,omitempty" jsonschema:"Maximum rows to return"`
-	Offset      int    `json:"offset,omitempty" jsonschema:"Row offset"`
+	EntityID    string   `json:"entity_id" jsonschema:"Ontology id"`
+	PrimaryKey  string   `json:"primary_key" jsonschema:"Primary key value of the source ontology row"`
+	LinkAPIName string   `json:"link_api_name" jsonschema:"Ontology link apiName to follow"`
+	Limit       int      `json:"limit,omitempty" jsonschema:"Maximum rows to return"`
+	Offset      int      `json:"offset,omitempty" jsonschema:"Row offset"`
+	Fields      []string `json:"fields,omitempty" jsonschema:"Optional top-level output fields to include"`
 }
 
 // PlatformLineageInput is the input for the whodb_platform_lineage tool.
 type PlatformLineageInput struct {
-	RootID    string `json:"root_id" jsonschema:"Root node id"`
-	RootType  string `json:"root_type" jsonschema:"Root node type"`
-	Direction string `json:"direction,omitempty" jsonschema:"Optional lineage direction"`
-	MaxDepth  int    `json:"max_depth,omitempty" jsonschema:"Optional maximum graph depth"`
+	RootID    string   `json:"root_id" jsonschema:"Root node id"`
+	RootType  string   `json:"root_type" jsonschema:"Root node type"`
+	Direction string   `json:"direction,omitempty" jsonschema:"Optional lineage direction"`
+	MaxDepth  int      `json:"max_depth,omitempty" jsonschema:"Optional maximum graph depth"`
+	Fields    []string `json:"fields,omitempty" jsonschema:"Optional top-level output fields to include"`
 }
 
 // PlatformLineageNeighborsInput is the input for the whodb_platform_lineage_neighbors tool.
 type PlatformLineageNeighborsInput struct {
-	NodeID   string `json:"node_id" jsonschema:"Node id"`
-	NodeType string `json:"node_type" jsonschema:"Node type"`
+	NodeID   string   `json:"node_id" jsonschema:"Node id"`
+	NodeType string   `json:"node_type" jsonschema:"Node type"`
+	Fields   []string `json:"fields,omitempty" jsonschema:"Optional top-level output fields to include"`
 }
 
 // PlatformTransformRunsInput is the input for the whodb_platform_transform_runs tool.
 type PlatformTransformRunsInput struct {
-	TransformID string `json:"transform_id" jsonschema:"Transform id"`
-	Limit       int    `json:"limit,omitempty" jsonschema:"Maximum runs to return"`
+	TransformID string   `json:"transform_id" jsonschema:"Transform id"`
+	Limit       int      `json:"limit,omitempty" jsonschema:"Maximum runs to return"`
+	Fields      []string `json:"fields,omitempty" jsonschema:"Optional top-level output fields to include"`
 }
 
 // PlatformFilesInput is the input for the whodb_platform_files tool.
 type PlatformFilesInput struct {
-	FolderID string `json:"folder_id,omitempty" jsonschema:"Folder id. Omit for project root."`
+	FolderID string   `json:"folder_id,omitempty" jsonschema:"Folder id. Omit for project root."`
+	Fields   []string `json:"fields,omitempty" jsonschema:"Optional top-level output fields to include"`
 }
 
 // PlatformFilePreviewInput is the input for the whodb_platform_file_preview tool.
 type PlatformFilePreviewInput struct {
-	FileID     string `json:"file_id" jsonschema:"Project file id"`
-	SheetIndex *int   `json:"sheet_index,omitempty" jsonschema:"Optional spreadsheet sheet index"`
+	FileID     string   `json:"file_id" jsonschema:"Project file id"`
+	SheetIndex *int     `json:"sheet_index,omitempty" jsonschema:"Optional spreadsheet sheet index"`
+	Fields     []string `json:"fields,omitempty" jsonschema:"Optional top-level output fields to include"`
 }
 
 // PlatformFileSearchInput is the input for the whodb_platform_file_search tool.
 type PlatformFileSearchInput struct {
-	Query string `json:"query" jsonschema:"File search query"`
+	Query  string   `json:"query" jsonschema:"File search query"`
+	Fields []string `json:"fields,omitempty" jsonschema:"Optional top-level output fields to include"`
 }
 
 // PlatformEmptyInput is the input for selected-project list tools.
-type PlatformEmptyInput struct{}
+type PlatformEmptyInput struct {
+	Fields []string `json:"fields,omitempty" jsonschema:"Optional top-level output fields to include"`
+}
 
 // PlatformReadOutput is the common output for read-only hosted platform tools.
 type PlatformReadOutput struct {
-	Data      any    `json:"data,omitempty"`
-	Count     int    `json:"count,omitempty"`
-	Truncated bool   `json:"truncated,omitempty"`
-	Error     string `json:"error,omitempty"`
-	RequestID string `json:"request_id,omitempty"`
+	Data      any                  `json:"data,omitempty"`
+	Items     any                  `json:"items,omitempty"`
+	Count     int                  `json:"count"`
+	Scope     *PlatformOutputScope `json:"scope,omitempty"`
+	Fields    []string             `json:"fields,omitempty"`
+	Warnings  []string             `json:"warnings,omitempty"`
+	Truncated bool                 `json:"truncated"`
+	Error     string               `json:"error,omitempty"`
+	RequestID string               `json:"request_id,omitempty"`
 }
 
 func registerPlatformReadTool(server *mcp.Server, tool *mcp.Tool, secOpts *SecurityOptions) {
@@ -255,7 +273,7 @@ func platformReadToolDefinitions() []*mcp.Tool {
 
 // HandlePlatformSourceConstraints returns field constraints for one hosted source object.
 func HandlePlatformSourceConstraints(ctx context.Context, req *mcp.CallToolRequest, input PlatformSourceConstraintsInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
-	return platformSourceRefRead(ctx, "platform_source_constraints", input.Source, input.Ref, func(ctx context.Context, session *platformToolSession, source *platformapi.Source, ref platformapi.SourceObjectRefInput) (any, int, bool, error) {
+	return platformSourceRefRead(ctx, "platform_source_constraints", input.Source, input.Ref, input.Fields, func(ctx context.Context, session *platformToolSession, source *platformapi.Source, ref platformapi.SourceObjectRefInput) (any, int, bool, error) {
 		constraints, err := session.Client.SourceFieldConstraints(ctx, session.Host.DefaultProjectID, source.ID, ref)
 		return constraints, len(constraints), false, err
 	})
@@ -263,7 +281,7 @@ func HandlePlatformSourceConstraints(ctx context.Context, req *mcp.CallToolReque
 
 // HandlePlatformSourceContent returns content for one hosted source object.
 func HandlePlatformSourceContent(ctx context.Context, req *mcp.CallToolRequest, input PlatformSourceContentInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
-	return platformSourceRefRead(ctx, "platform_source_content", input.Source, input.Ref, func(ctx context.Context, session *platformToolSession, source *platformapi.Source, ref platformapi.SourceObjectRefInput) (any, int, bool, error) {
+	return platformSourceRefRead(ctx, "platform_source_content", input.Source, input.Ref, input.Fields, func(ctx context.Context, session *platformToolSession, source *platformapi.Source, ref platformapi.SourceObjectRefInput) (any, int, bool, error) {
 		content, err := session.Client.SourceContent(ctx, session.Host.DefaultProjectID, source.ID, ref)
 		if err != nil || content == nil {
 			return content, 0, false, err
@@ -275,7 +293,7 @@ func HandlePlatformSourceContent(ctx context.Context, req *mcp.CallToolRequest, 
 
 // HandlePlatformSecrets lists secret metadata and usage without values.
 func HandlePlatformSecrets(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
-	return platformProjectRead(ctx, "platform_secrets", func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
+	return platformProjectRead(ctx, "platform_secrets", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
 		secrets, err := session.Client.ProjectSecrets(ctx, session.Host.DefaultProjectID)
 		return secrets, len(secrets), false, err
 	})
@@ -283,7 +301,7 @@ func HandlePlatformSecrets(ctx context.Context, req *mcp.CallToolRequest, input 
 
 // HandlePlatformAIProviders lists hosted AI provider metadata.
 func HandlePlatformAIProviders(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
-	return platformProjectRead(ctx, "platform_ai_providers", func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
+	return platformProjectRead(ctx, "platform_ai_providers", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
 		providers, err := session.Client.AIProviders(ctx, session.Host.DefaultProjectID)
 		return providers, len(providers), false, err
 	})
@@ -294,7 +312,7 @@ func HandlePlatformAIProviderModels(ctx context.Context, req *mcp.CallToolReques
 	if strings.TrimSpace(input.ProviderID) == "" {
 		return nil, PlatformReadOutput{Error: "provider_id is required", RequestID: generateRequestID("platform_ai_provider_models")}, nil
 	}
-	return platformProjectRead(ctx, "platform_ai_provider_models", func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
+	return platformProjectRead(ctx, "platform_ai_provider_models", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
 		models, err := session.Client.AIProviderModels(ctx, session.Host.DefaultProjectID, strings.TrimSpace(input.ProviderID))
 		return models, len(models), false, err
 	})
@@ -302,7 +320,7 @@ func HandlePlatformAIProviderModels(ctx context.Context, req *mcp.CallToolReques
 
 // HandlePlatformOntologies lists hosted ontology object types.
 func HandlePlatformOntologies(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
-	return platformProjectRead(ctx, "platform_ontologies", func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
+	return platformProjectRead(ctx, "platform_ontologies", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
 		ontologies, err := session.Client.Ontologies(ctx, session.Host.DefaultProjectID)
 		return ontologies, len(ontologies), false, err
 	})
@@ -310,7 +328,7 @@ func HandlePlatformOntologies(ctx context.Context, req *mcp.CallToolRequest, inp
 
 // HandlePlatformOntology returns one hosted ontology object type.
 func HandlePlatformOntology(ctx context.Context, req *mcp.CallToolRequest, input PlatformEntityInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
-	return platformIDRead(ctx, "platform_ontology", input.ID, func(ctx context.Context, session *platformToolSession, id string) (any, int, bool, error) {
+	return platformIDRead(ctx, "platform_ontology", input.ID, input.Fields, func(ctx context.Context, session *platformToolSession, id string) (any, int, bool, error) {
 		ontology, err := session.Client.Ontology(ctx, session.Host.DefaultProjectID, id)
 		return ontology, 1, false, err
 	})
@@ -318,7 +336,7 @@ func HandlePlatformOntology(ctx context.Context, req *mcp.CallToolRequest, input
 
 // HandlePlatformOntologyFastLookups lists fast lookups for one ontology.
 func HandlePlatformOntologyFastLookups(ctx context.Context, req *mcp.CallToolRequest, input PlatformEntityInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
-	return platformIDRead(ctx, "platform_ontology_fast_lookups", input.ID, func(ctx context.Context, session *platformToolSession, id string) (any, int, bool, error) {
+	return platformIDRead(ctx, "platform_ontology_fast_lookups", input.ID, input.Fields, func(ctx context.Context, session *platformToolSession, id string) (any, int, bool, error) {
 		lookups, err := session.Client.OntologyFastLookups(ctx, session.Host.DefaultProjectID, id)
 		return lookups, len(lookups), false, err
 	})
@@ -326,7 +344,7 @@ func HandlePlatformOntologyFastLookups(ctx context.Context, req *mcp.CallToolReq
 
 // HandlePlatformOntologyFastLookupSuggestions lists suggested fast lookups for one ontology.
 func HandlePlatformOntologyFastLookupSuggestions(ctx context.Context, req *mcp.CallToolRequest, input PlatformEntityInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
-	return platformIDRead(ctx, "platform_ontology_fast_lookup_suggestions", input.ID, func(ctx context.Context, session *platformToolSession, id string) (any, int, bool, error) {
+	return platformIDRead(ctx, "platform_ontology_fast_lookup_suggestions", input.ID, input.Fields, func(ctx context.Context, session *platformToolSession, id string) (any, int, bool, error) {
 		suggestions, err := session.Client.OntologyFastLookupSuggestions(ctx, session.Host.DefaultProjectID, id)
 		return suggestions, len(suggestions), false, err
 	})
@@ -344,7 +362,7 @@ func HandlePlatformOntologyFollowLink(ctx context.Context, req *mcp.CallToolRequ
 	if strings.TrimSpace(input.EntityID) == "" || strings.TrimSpace(input.PrimaryKey) == "" || strings.TrimSpace(input.LinkAPIName) == "" {
 		return nil, PlatformReadOutput{Error: "entity_id, primary_key, and link_api_name are required", RequestID: generateRequestID("platform_ontology_follow_link")}, nil
 	}
-	rowsInput := PlatformRowsInput{ID: input.EntityID, Limit: input.Limit, Offset: input.Offset}
+	rowsInput := PlatformRowsInput{ID: input.EntityID, Limit: input.Limit, Offset: input.Offset, Fields: input.Fields}
 	return platformRowsRead(ctx, "platform_ontology_follow_link", rowsInput, secOpts, func(ctx context.Context, session *platformToolSession, id string, limit, offset int) (*platformapi.DatasetQueryResult, error) {
 		return session.Client.OntologyFollowLink(ctx, session.Host.DefaultProjectID, id, input.PrimaryKey, input.LinkAPIName, limit, offset)
 	})
@@ -352,7 +370,7 @@ func HandlePlatformOntologyFollowLink(ctx context.Context, req *mcp.CallToolRequ
 
 // HandlePlatformDatasets lists hosted datasets.
 func HandlePlatformDatasets(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
-	return platformProjectRead(ctx, "platform_datasets", func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
+	return platformProjectRead(ctx, "platform_datasets", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
 		datasets, err := session.Client.Datasets(ctx, session.Host.DefaultProjectID)
 		return datasets, len(datasets), false, err
 	})
@@ -360,7 +378,7 @@ func HandlePlatformDatasets(ctx context.Context, req *mcp.CallToolRequest, input
 
 // HandlePlatformDataset returns one hosted dataset.
 func HandlePlatformDataset(ctx context.Context, req *mcp.CallToolRequest, input PlatformEntityInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
-	return platformIDRead(ctx, "platform_dataset", input.ID, func(ctx context.Context, session *platformToolSession, id string) (any, int, bool, error) {
+	return platformIDRead(ctx, "platform_dataset", input.ID, input.Fields, func(ctx context.Context, session *platformToolSession, id string) (any, int, bool, error) {
 		dataset, err := session.Client.Dataset(ctx, session.Host.DefaultProjectID, id)
 		return dataset, 1, false, err
 	})
@@ -378,7 +396,7 @@ func HandlePlatformLineage(ctx context.Context, req *mcp.CallToolRequest, input 
 	if strings.TrimSpace(input.RootID) == "" || strings.TrimSpace(input.RootType) == "" {
 		return nil, PlatformReadOutput{Error: "root_id and root_type are required", RequestID: generateRequestID("platform_lineage")}, nil
 	}
-	return platformProjectRead(ctx, "platform_lineage", func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
+	return platformProjectRead(ctx, "platform_lineage", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
 		graph, err := session.Client.Lineage(ctx, session.Host.DefaultProjectID, input.RootID, input.RootType, input.Direction, input.MaxDepth)
 		return graph, lineageNodeCount(graph), false, err
 	})
@@ -389,7 +407,7 @@ func HandlePlatformLineageNeighbors(ctx context.Context, req *mcp.CallToolReques
 	if strings.TrimSpace(input.NodeID) == "" || strings.TrimSpace(input.NodeType) == "" {
 		return nil, PlatformReadOutput{Error: "node_id and node_type are required", RequestID: generateRequestID("platform_lineage_neighbors")}, nil
 	}
-	return platformProjectRead(ctx, "platform_lineage_neighbors", func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
+	return platformProjectRead(ctx, "platform_lineage_neighbors", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
 		graph, err := session.Client.LineageNeighbors(ctx, session.Host.DefaultProjectID, input.NodeID, input.NodeType)
 		return graph, lineageNodeCount(graph), false, err
 	})
@@ -397,7 +415,7 @@ func HandlePlatformLineageNeighbors(ctx context.Context, req *mcp.CallToolReques
 
 // HandlePlatformProjectLineage returns hosted project lineage.
 func HandlePlatformProjectLineage(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
-	return platformProjectRead(ctx, "platform_project_lineage", func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
+	return platformProjectRead(ctx, "platform_project_lineage", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
 		graph, err := session.Client.ProjectLineage(ctx, session.Host.DefaultProjectID)
 		return graph, lineageNodeCount(graph), false, err
 	})
@@ -405,7 +423,7 @@ func HandlePlatformProjectLineage(ctx context.Context, req *mcp.CallToolRequest,
 
 // HandlePlatformTransforms lists hosted transforms.
 func HandlePlatformTransforms(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
-	return platformProjectRead(ctx, "platform_transforms", func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
+	return platformProjectRead(ctx, "platform_transforms", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
 		transforms, err := session.Client.Transforms(ctx, session.Host.DefaultProjectID)
 		return transforms, len(transforms), false, err
 	})
@@ -416,7 +434,7 @@ func HandlePlatformTransformRuns(ctx context.Context, req *mcp.CallToolRequest, 
 	if strings.TrimSpace(input.TransformID) == "" {
 		return nil, PlatformReadOutput{Error: "transform_id is required", RequestID: generateRequestID("platform_transform_runs")}, nil
 	}
-	return platformProjectRead(ctx, "platform_transform_runs", func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
+	return platformProjectRead(ctx, "platform_transform_runs", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
 		runs, err := session.Client.TransformRuns(ctx, session.Host.DefaultProjectID, input.TransformID, input.Limit)
 		return runs, len(runs), false, err
 	})
@@ -424,7 +442,7 @@ func HandlePlatformTransformRuns(ctx context.Context, req *mcp.CallToolRequest, 
 
 // HandlePlatformFunctions lists hosted ontology functions.
 func HandlePlatformFunctions(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
-	return platformProjectRead(ctx, "platform_functions", func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
+	return platformProjectRead(ctx, "platform_functions", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
 		functions, err := session.Client.Functions(ctx, session.Host.DefaultProjectID)
 		functions, truncated := truncateFunctions(functions, defaultPlatformContentLimit)
 		return functions, len(functions), truncated, err
@@ -433,7 +451,7 @@ func HandlePlatformFunctions(ctx context.Context, req *mcp.CallToolRequest, inpu
 
 // HandlePlatformFunction returns one hosted ontology function.
 func HandlePlatformFunction(ctx context.Context, req *mcp.CallToolRequest, input PlatformEntityInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
-	return platformIDRead(ctx, "platform_function", input.ID, func(ctx context.Context, session *platformToolSession, id string) (any, int, bool, error) {
+	return platformIDRead(ctx, "platform_function", input.ID, input.Fields, func(ctx context.Context, session *platformToolSession, id string) (any, int, bool, error) {
 		function, err := session.Client.Function(ctx, session.Host.DefaultProjectID, id)
 		if err != nil || function == nil {
 			return function, 0, false, err
@@ -445,7 +463,7 @@ func HandlePlatformFunction(ctx context.Context, req *mcp.CallToolRequest, input
 
 // HandlePlatformFiles lists hosted files in one project folder.
 func HandlePlatformFiles(ctx context.Context, req *mcp.CallToolRequest, input PlatformFilesInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
-	return platformProjectRead(ctx, "platform_files", func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
+	return platformProjectRead(ctx, "platform_files", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
 		contents, err := session.Client.FolderContents(ctx, session.Host.DefaultProjectID, input.FolderID)
 		if contents == nil {
 			return contents, 0, false, err
@@ -459,7 +477,7 @@ func HandlePlatformFilePreview(ctx context.Context, req *mcp.CallToolRequest, in
 	if strings.TrimSpace(input.FileID) == "" {
 		return nil, PlatformReadOutput{Error: "file_id is required", RequestID: generateRequestID("platform_file_preview")}, nil
 	}
-	return platformProjectRead(ctx, "platform_file_preview", func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
+	return platformProjectRead(ctx, "platform_file_preview", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
 		preview, err := session.Client.FilePreview(ctx, session.Host.DefaultProjectID, input.FileID, input.SheetIndex)
 		if err != nil || preview == nil {
 			return preview, 0, false, err
@@ -474,7 +492,7 @@ func HandlePlatformFileSearch(ctx context.Context, req *mcp.CallToolRequest, inp
 	if strings.TrimSpace(input.Query) == "" {
 		return nil, PlatformReadOutput{Error: "query is required", RequestID: generateRequestID("platform_file_search")}, nil
 	}
-	return platformProjectRead(ctx, "platform_file_search", func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
+	return platformProjectRead(ctx, "platform_file_search", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
 		files, err := session.Client.SearchProjectFiles(ctx, session.Host.DefaultProjectID, input.Query)
 		return files, len(files), false, err
 	})
@@ -482,7 +500,7 @@ func HandlePlatformFileSearch(ctx context.Context, req *mcp.CallToolRequest, inp
 
 // HandlePlatformTabularFiles lists hosted tabular project files.
 func HandlePlatformTabularFiles(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
-	return platformProjectRead(ctx, "platform_tabular_files", func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
+	return platformProjectRead(ctx, "platform_tabular_files", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
 		files, err := session.Client.ProjectTabularFiles(ctx, session.Host.DefaultProjectID)
 		return files, len(files), false, err
 	})
@@ -490,13 +508,13 @@ func HandlePlatformTabularFiles(ctx context.Context, req *mcp.CallToolRequest, i
 
 // HandlePlatformStorageUsage returns hosted project storage usage in bytes.
 func HandlePlatformStorageUsage(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
-	return platformProjectRead(ctx, "platform_storage_usage", func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
+	return platformProjectRead(ctx, "platform_storage_usage", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
 		usage, err := session.Client.ProjectStorageUsage(ctx, session.Host.DefaultProjectID)
 		return map[string]int{"storage_used": usage}, 1, false, err
 	})
 }
 
-func platformProjectRead(ctx context.Context, toolName string, read func(context.Context, *platformToolSession) (any, int, bool, error)) (*mcp.CallToolResult, PlatformReadOutput, error) {
+func platformProjectRead(ctx context.Context, toolName string, fields []string, read func(context.Context, *platformToolSession) (any, int, bool, error)) (*mcp.CallToolResult, PlatformReadOutput, error) {
 	requestID := generateRequestID(toolName)
 	startTime := time.Now()
 	session, err := loadPlatformWorkspace(ctx)
@@ -510,15 +528,15 @@ func platformProjectRead(ctx context.Context, toolName string, read func(context
 		return nil, PlatformReadOutput{Error: err.Error(), RequestID: requestID}, nil
 	}
 	TrackToolCall(ctx, toolName, requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"count": count, "truncated": truncated})
-	return nil, PlatformReadOutput{Data: data, Count: count, Truncated: truncated, RequestID: requestID}, nil
+	return nil, platformReadOutput(session, toolName, data, count, truncated, requestID, fields), nil
 }
 
-func platformIDRead(ctx context.Context, toolName, id string, read func(context.Context, *platformToolSession, string) (any, int, bool, error)) (*mcp.CallToolResult, PlatformReadOutput, error) {
+func platformIDRead(ctx context.Context, toolName, id string, fields []string, read func(context.Context, *platformToolSession, string) (any, int, bool, error)) (*mcp.CallToolResult, PlatformReadOutput, error) {
 	id = strings.TrimSpace(id)
 	if id == "" {
 		return nil, PlatformReadOutput{Error: "id is required", RequestID: generateRequestID(toolName)}, nil
 	}
-	return platformProjectRead(ctx, toolName, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
+	return platformProjectRead(ctx, toolName, fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
 		return read(ctx, session, id)
 	})
 }
@@ -531,7 +549,7 @@ func platformRowsRead(ctx context.Context, toolName string, input PlatformRowsIn
 	if input.Offset < 0 {
 		return nil, PlatformReadOutput{Error: "offset must be non-negative", RequestID: generateRequestID(toolName)}, nil
 	}
-	return platformProjectRead(ctx, toolName, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
+	return platformProjectRead(ctx, toolName, input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
 		limit := platformRowsLimit(input.Limit, secOpts)
 		rows, err := read(ctx, session, id, limit, input.Offset)
 		if rows == nil {
@@ -541,7 +559,7 @@ func platformRowsRead(ctx context.Context, toolName string, input PlatformRowsIn
 	})
 }
 
-func platformSourceRefRead(ctx context.Context, toolName, sourceValue, refValue string, read func(context.Context, *platformToolSession, *platformapi.Source, platformapi.SourceObjectRefInput) (any, int, bool, error)) (*mcp.CallToolResult, PlatformReadOutput, error) {
+func platformSourceRefRead(ctx context.Context, toolName, sourceValue, refValue string, fields []string, read func(context.Context, *platformToolSession, *platformapi.Source, platformapi.SourceObjectRefInput) (any, int, bool, error)) (*mcp.CallToolResult, PlatformReadOutput, error) {
 	requestID := generateRequestID(toolName)
 	startTime := time.Now()
 	session, source, err := loadPlatformSource(ctx, sourceValue)
@@ -560,7 +578,7 @@ func platformSourceRefRead(ctx context.Context, toolName, sourceValue, refValue 
 		return nil, PlatformReadOutput{Error: err.Error(), RequestID: requestID}, nil
 	}
 	TrackToolCall(ctx, toolName, requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"count": count, "truncated": truncated})
-	return nil, PlatformReadOutput{Data: data, Count: count, Truncated: truncated, RequestID: requestID}, nil
+	return nil, platformReadOutput(session, toolName, data, count, truncated, requestID, fields), nil
 }
 
 func truncateFunctions(functions []platformapi.Function, limit int) ([]platformapi.Function, bool) {

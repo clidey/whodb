@@ -208,3 +208,52 @@ func TestHandlePlatformDatasetRowsCapsLimit(t *testing.T) {
 		t.Fatalf("output.Truncated = false, want true")
 	}
 }
+
+func TestHandlePlatformDatasetsProjectsFieldsAndScope(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := HandlePlatformDatasets(context.Background(), nil, PlatformEmptyInput{Fields: []string{"id", "name"}})
+	if err != nil {
+		t.Fatalf("HandlePlatformDatasets() error = %v", err)
+	}
+	if output.Error != "" {
+		t.Fatalf("HandlePlatformDatasets() output error = %q", output.Error)
+	}
+	if output.Count != 1 {
+		t.Fatalf("output.Count = %d, want 1", output.Count)
+	}
+	if output.Scope == nil || output.Scope.ProjectID != "proj-1" || output.Scope.ProjectName != "Customer" {
+		t.Fatalf("output.Scope = %#v, want selected project scope", output.Scope)
+	}
+	items, ok := output.Items.([]any)
+	if !ok || len(items) != 1 {
+		t.Fatalf("output.Items = %#v, want one projected item", output.Items)
+	}
+	item, ok := items[0].(map[string]any)
+	if !ok {
+		t.Fatalf("output.Items[0] = %T, want map", items[0])
+	}
+	if item["id"] != "dataset-1" || item["name"] != "Customers" {
+		t.Fatalf("projected item = %#v, want id/name", item)
+	}
+	if _, ok := item["projectId"]; ok {
+		t.Fatalf("projected item includes unrequested projectId: %#v", item)
+	}
+}
+
+func TestPlatformReadOutputWarnsOnEmptyList(t *testing.T) {
+	session := testPlatformSession(&fakePlatformClient{})
+	output := platformReadOutput(session, "platform_datasets", []platformapi.Dataset{}, 0, false, "req-1", nil)
+	if output.Count != 0 {
+		t.Fatalf("output.Count = %d, want 0", output.Count)
+	}
+	if len(output.Warnings) != 1 {
+		t.Fatalf("output.Warnings = %#v, want one warning", output.Warnings)
+	}
+	if !strings.Contains(output.Warnings[0], "Clidey / Customer") {
+		t.Fatalf("warning = %q, want workspace name", output.Warnings[0])
+	}
+}
