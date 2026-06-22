@@ -368,6 +368,7 @@ jobs:
     if: |
       always() &&
       needs.calculate-version.result == 'success' &&
+      needs.calculate-version.outputs.has-file-assets == 'true' &&
       (needs.build-docker.result == 'success' || needs.build-docker.result == 'skipped' || needs.build-docker.result == 'failure') &&
       (needs.build-docker-cli.result == 'success' || needs.build-docker-cli.result == 'skipped' || needs.build-docker-cli.result == 'failure') &&
       (needs.build-windows.result == 'success' || needs.build-windows.result == 'skipped' || needs.build-windows.result == 'failure') &&
@@ -411,7 +412,10 @@ jobs:
     if: |
       always() &&
       needs.calculate-version.result == 'success' &&
-      needs.sign-and-validate.result == 'success' &&
+      (
+        (needs.calculate-version.outputs.has-file-assets == 'true' && needs.sign-and-validate.result == 'success') ||
+        (needs.calculate-version.outputs.has-file-assets != 'true' && needs.sign-and-validate.result == 'skipped')
+      ) &&
       (needs.calculate-version.outputs.deploy-docker != 'true' || needs.build-docker.result == 'success') &&
       (needs.calculate-version.outputs.deploy-docker != 'true' || needs.build-docker-cli.result == 'success') &&
       (needs.calculate-version.outputs.deploy-snap != 'true' || needs.build-snap.result == 'success') &&
@@ -897,7 +901,10 @@ jobs:
       always() &&
       needs.calculate-version.outputs.deploy-docker == 'true' &&
       needs.build-docker.result == 'success' &&
-      needs.sign-and-validate.result == 'success'
+      (
+        (needs.calculate-version.outputs.has-file-assets == 'true' && needs.sign-and-validate.result == 'success') ||
+        (needs.calculate-version.outputs.has-file-assets != 'true' && needs.sign-and-validate.result == 'skipped')
+      )
     permissions:
       contents: read
       actions: read
@@ -916,7 +923,10 @@ jobs:
       always() &&
       needs.calculate-version.outputs.deploy-docker == 'true' &&
       needs.build-docker-cli.result == 'success' &&
-      needs.sign-and-validate.result == 'success'
+      (
+        (needs.calculate-version.outputs.has-file-assets == 'true' && needs.sign-and-validate.result == 'success') ||
+        (needs.calculate-version.outputs.has-file-assets != 'true' && needs.sign-and-validate.result == 'skipped')
+      )
     permissions:
       contents: read
       actions: read
