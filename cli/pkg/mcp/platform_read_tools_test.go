@@ -209,6 +209,26 @@ func TestHandlePlatformDatasetRowsCapsLimit(t *testing.T) {
 	}
 }
 
+func TestHandlePlatformDatasetsReportsMissingWorkspaceAction(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		session := testPlatformSession(client)
+		session.Host.DefaultOrgID = ""
+		session.Host.DefaultOrgName = ""
+		session.Host.DefaultProjectID = ""
+		session.Host.DefaultProjectName = ""
+		return session, nil
+	})
+
+	_, output, err := HandlePlatformDatasets(context.Background(), nil, PlatformEmptyInput{})
+	if err != nil {
+		t.Fatalf("HandlePlatformDatasets() error = %v", err)
+	}
+	if !strings.Contains(output.Error, "whodb-cli use --org <org> --project <project>") {
+		t.Fatalf("output.Error = %q, want whodb-cli use action", output.Error)
+	}
+}
+
 func TestHandlePlatformDatasetsProjectsFieldsAndScope(t *testing.T) {
 	client := &fakePlatformClient{}
 	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {

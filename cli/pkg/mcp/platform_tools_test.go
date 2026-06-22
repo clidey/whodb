@@ -29,12 +29,15 @@ import (
 )
 
 type fakePlatformClient struct {
-	sourcesRowsProjectID string
-	rowsLimit            int
-	rowsOffset           int
-	createdSourceName    string
-	updatedSourceName    string
-	deletedSourceID      string
+	projectSourcesOrgID     string
+	projectSourcesProjectID string
+	sourceRowsOrgID         string
+	sourceRowsProjectID     string
+	rowsLimit               int
+	rowsOffset              int
+	createdSourceName       string
+	updatedSourceName       string
+	deletedSourceID         string
 }
 
 func (f *fakePlatformClient) Me(context.Context) (*platformapi.User, error) {
@@ -60,7 +63,8 @@ func (f *fakePlatformClient) Projects(ctx context.Context, orgID string) ([]plat
 }
 
 func (f *fakePlatformClient) ProjectSources(ctx context.Context, orgID, projectID string) ([]platformapi.Source, error) {
-	f.sourcesRowsProjectID = projectID
+	f.projectSourcesOrgID = orgID
+	f.projectSourcesProjectID = projectID
 	return []platformapi.Source{
 		{ID: "src-1", ProjectID: projectID, Name: "Warehouse", DatabaseType: "Postgres"},
 	}, nil
@@ -118,6 +122,8 @@ func (f *fakePlatformClient) SourceColumns(ctx context.Context, orgID, projectID
 }
 
 func (f *fakePlatformClient) SourceRows(ctx context.Context, orgID, projectID, sourceID string, ref platformapi.SourceObjectRefInput, pageSize, pageOffset int) (*platformapi.RowsResult, error) {
+	f.sourceRowsOrgID = orgID
+	f.sourceRowsProjectID = projectID
 	f.rowsLimit = pageSize
 	f.rowsOffset = pageOffset
 	return &platformapi.RowsResult{
@@ -174,8 +180,28 @@ func TestHandlePlatformSourcesUsesSelectedWorkspace(t *testing.T) {
 	if output.Error != "" {
 		t.Fatalf("HandlePlatformSources() output error = %q", output.Error)
 	}
-	if output.OrgID != "org-1" || output.ProjectID != "proj-1" || client.sourcesRowsProjectID != "proj-1" {
-		t.Fatalf("output/client scope = %#v project=%q, want selected workspace", output, client.sourcesRowsProjectID)
+	if output.OrgID != "org-1" || output.ProjectID != "proj-1" || client.projectSourcesOrgID != "org-1" || client.projectSourcesProjectID != "proj-1" {
+		t.Fatalf("output/client scope = %#v client=%q/%q, want selected workspace", output, client.projectSourcesOrgID, client.projectSourcesProjectID)
+	}
+}
+
+func TestHandlePlatformSourcesReportsMissingWorkspaceAction(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		session := testPlatformSession(client)
+		session.Host.DefaultOrgID = ""
+		session.Host.DefaultOrgName = ""
+		session.Host.DefaultProjectID = ""
+		session.Host.DefaultProjectName = ""
+		return session, nil
+	})
+
+	_, output, err := HandlePlatformSources(context.Background(), nil, PlatformSourcesInput{})
+	if err != nil {
+		t.Fatalf("HandlePlatformSources() error = %v", err)
+	}
+	if !strings.Contains(output.Error, "whodb-cli use --org <org> --project <project>") {
+		t.Fatalf("output.Error = %q, want whodb-cli use action", output.Error)
 	}
 }
 
@@ -331,6 +357,9 @@ func TestHandlePlatformSourceRowsCapsLimit(t *testing.T) {
 	}
 	if client.rowsLimit != 10 || client.rowsOffset != 2 {
 		t.Fatalf("rows limit/offset = %d/%d, want 10/2", client.rowsLimit, client.rowsOffset)
+	}
+	if client.sourceRowsOrgID != "org-1" || client.sourceRowsProjectID != "proj-1" {
+		t.Fatalf("source rows workspace = %q/%q, want selected workspace", client.sourceRowsOrgID, client.sourceRowsProjectID)
 	}
 	if !output.Truncated {
 		t.Fatalf("output.Truncated = false, want true")
