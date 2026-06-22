@@ -40,10 +40,6 @@ import {
     SidebarMenuItem,
     SidebarSeparator,
     SidebarTrigger,
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
     useSidebar
 } from "@clidey/ux";
 import {SearchSelect} from "../ux";
@@ -79,7 +75,6 @@ import {
     ChevronDownIcon,
     CogIcon,
     CommandLineIcon,
-    InformationCircleIcon,
     PlusCircleIcon,
     QuestionMarkCircleIcon,
     RectangleGroupIcon,
