@@ -42,12 +42,6 @@ on:
         required: false
         type: boolean
         default: false
-      # DISABLED: AppImage builds disabled - requires system WebKit2GTK
-      validate-appimage:
-        description: 'Whether to validate AppImage builds'
-        required: false
-        type: boolean
-        default: false
 
 jobs:
   sign-with-sigstore:
@@ -124,20 +118,6 @@ jobs:
           name: server-binaries-ce
           path: artifacts/server-binaries-ce/
 
-      # DISABLED: AppImage builds disabled
-      # - name: Download AppImages
-      #   uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-      #   continue-on-error: true
-      #   with:
-      #     pattern: appimage-*
-      #     path: artifacts/
-
-      # - name: Restore executable permissions
-      #   run: |
-      #     echo "Restoring executable permissions for AppImages..."
-      #     find artifacts -name "*.AppImage" -type f -exec chmod +x {} \;
-      #     echo "✅ Permissions restored"
-
       - name: Install Cosign
         uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
 
@@ -146,7 +126,7 @@ jobs:
           echo "🔏 Signing artifacts with Sigstore..."
 
           # Find all artifacts to sign (excluding Docker .tar files)
-          find artifacts -type f \( -name "*.snap" -o -name "*.AppImage" -o -name "*.exe" -o -name "*.dmg" -o -name "*.pkg" -o -name "*.msix" -o -name "*.msixbundle" -o -name "whodb-*-linux-*" \) | while read -r file; do
+          find artifacts -type f \( -name "*.snap" -o -name "*.exe" -o -name "*.dmg" -o -name "*.pkg" -o -name "*.msix" -o -name "*.msixbundle" -o -name "whodb-*-linux-*" \) | while read -r file; do
             echo "Signing: $file"
 
             # Sign the artifact using bundle format (modern cosign approach)
@@ -233,20 +213,6 @@ jobs:
           digest-mismatch: warn
           name: desktop-darwin-mas-app
           path: artifacts/desktop-darwin-mas-app/
-
-      # DISABLED: AppImage builds disabled
-      # - name: Download AppImages
-      #   uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-      #   continue-on-error: true
-      #   with:
-      #     pattern: appimage-*
-      #     path: artifacts/
-
-      # - name: Restore executable permissions
-      #   run: |
-      #     echo "Restoring executable permissions for AppImages..."
-      #     find artifacts -name "*.AppImage" -type f -exec chmod +x {} \;
-      #     echo "✅ Permissions restored"
 
       - name: Download signatures
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
@@ -359,58 +325,6 @@ jobs:
             exit 1
           fi
 
-      # DISABLED: AppImage builds disabled - requires system WebKit2GTK
-      - name: Validate AppImage artifacts
-        if: inputs.validate-appimage  # Will be false - AppImage disabled
-        run: |
-          echo "🐧 Validating AppImage artifacts..."
-          FAILED=false
-
-          for arch in amd64 arm64; do
-            ARTIFACT_DIR="artifacts/appimage-ce-${arch}"
-            if [ -d "$ARTIFACT_DIR" ]; then
-              APPIMAGE_FILE=$(find "$ARTIFACT_DIR" -name "*.AppImage" | head -1)
-              if [ -n "$APPIMAGE_FILE" ]; then
-                echo "✅ Found AppImage ${arch}: $(basename "$APPIMAGE_FILE")"
-
-                # Verify signature
-                SIG_FILE="signatures/$(basename "$APPIMAGE_FILE").sig"
-                CERT_FILE="signatures/$(basename "$APPIMAGE_FILE").pem"
-                if [ -f "$SIG_FILE" ] && [ -f "$CERT_FILE" ]; then
-                  echo "Verifying signature..."
-                  cosign verify-blob \
-                    --signature "$SIG_FILE" \
-                    --certificate "$CERT_FILE" \
-                    --certificate-identity-regexp ".*" \
-                    --certificate-oidc-issuer-regexp ".*" \
-                    "$APPIMAGE_FILE"
-                  echo "✅ Signature verified"
-                else
-                  echo "⚠️ No signature found for AppImage ${arch}"
-                fi
-
-                # Verify it's executable
-                if [ -x "$APPIMAGE_FILE" ]; then
-                  echo "✅ AppImage is executable"
-                else
-                  echo "❌ AppImage is not executable"
-                  FAILED=true
-                fi
-              else
-                echo "❌ AppImage ${arch} missing"
-                FAILED=true
-              fi
-            else
-              echo "❌ AppImage ${arch} artifact directory missing"
-              FAILED=true
-            fi
-          done
-
-          if [ "$FAILED" = "true" ]; then
-            echo "::error::AppImage validation failed"
-            exit 1
-          fi
-
       - name: Create validation manifest
         run: |
           cat > validation_manifest.json <<EOF
@@ -422,8 +336,7 @@ jobs:
               "desktop": ${{ inputs.validate-desktop }},
               "windows": ${{ inputs.validate-windows }},
               "apple": ${{ inputs.validate-apple }},
-              "linux_terminal": ${{ inputs.validate-linux-terminal }},
-              "appimage": ${{ inputs.validate-appimage }}
+              "linux_terminal": ${{ inputs.validate-linux-terminal }}
             },
             "artifacts": $(find artifacts -type f -name "*.snap" -o -name "*.exe" -o -name "*.dmg" | wc -l)
           }

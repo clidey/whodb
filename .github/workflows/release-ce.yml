@@ -76,12 +76,6 @@ on:
         required: false
         type: boolean
         default: false
-      # DISABLED: AppImage requires system WebKit2GTK - not truly portable
-      # deploy-appimage:
-      #   description: 'Build AppImage (for GitHub Release)'
-      #   required: false
-      #   type: boolean
-      #   default: false
       deploy-linux-terminal:
         description: 'Build Linux terminal binaries (amd64, arm64, riscv64, armv6, armv7)'
         required: false
@@ -111,7 +105,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # Step 1: Calculate version and deployment parameters
+  # Calculate version and deployment parameters
   calculate-version:
     name: Calculate Version
     runs-on: ubuntu-latest
@@ -125,7 +119,6 @@ jobs:
       deploy-snap: ${{ steps.calc.outputs.deploy-snap }}
       deploy-microsoft: ${{ steps.calc.outputs.deploy-microsoft }}
       deploy-apple: ${{ steps.calc.outputs.deploy-apple }}
-      # deploy-appimage: ${{ steps.calc.outputs.deploy-appimage }}  # DISABLED
       deploy-linux-terminal: ${{ steps.calc.outputs.deploy-linux-terminal }}
       deploy-cli: ${{ steps.calc.outputs.deploy-cli }}
       deploy-npm: ${{ steps.calc.outputs.deploy-npm }}
@@ -174,7 +167,6 @@ jobs:
           deploy-snap: ${{ github.event_name == 'push' && 'true' || (inputs.deploy-snap && 'true' || 'false') }}
           deploy-microsoft: ${{ github.event_name == 'push' && 'true' || (inputs.deploy-microsoft && 'true' || 'false') }}
           deploy-apple: ${{ github.event_name == 'push' && 'true' || (inputs.deploy-apple && 'true' || 'false') }}
-          deploy-appimage: 'false'  # DISABLED: AppImage requires system WebKit2GTK
           deploy-linux-terminal: ${{ github.event_name == 'push' && 'true' || (inputs.deploy-linux-terminal && 'true' || 'false') }}
           deploy-cli: ${{ github.event_name == 'push' && 'true' || (inputs.deploy-cli && 'true' || 'false') }}
           deploy-npm: ${{ github.event_name == 'push' && 'true' || (inputs.deploy-npm && 'true' || 'false') }}
@@ -244,7 +236,7 @@ jobs:
           fi
           } >> "$GITHUB_STEP_SUMMARY"
 
-  # Step 2a: Build frontend once (shared by all platform builds)
+  # Build frontend once for all CE platform builds
   build-frontend:
     name: Build Frontend
     needs: [ calculate-version ]
@@ -255,7 +247,7 @@ jobs:
       version: ${{ needs.calculate-version.outputs.version }}
     secrets: inherit
 
-  # Step 2b: Build platform artifacts in parallel (only what's selected)
+  # Build selected platform artifacts in parallel
   build-docker:
     name: Build Docker
     needs: [ calculate-version, build-frontend ]
@@ -305,16 +297,6 @@ jobs:
       version: ${{ needs.calculate-version.outputs.version }}
     secrets: inherit
 
-  # DISABLED: AppImage requires system WebKit2GTK - not truly portable
-  # build-appimage:
-  #   name: Build AppImage
-  #   needs: [ calculate-version ]
-  #   if: needs.calculate-version.outputs.deploy-appimage == 'true'
-  #   uses: ./.github/workflows/_build-appimage.yml
-  #   with:
-  #     version: ${{ needs.calculate-version.outputs.version }}
-  #   secrets: inherit
-
   build-linux-terminal:
     name: Build Linux Terminal
     needs: [ calculate-version, build-frontend ]
@@ -351,7 +333,7 @@ jobs:
       version: ${{ needs.calculate-version.outputs.version }}
     secrets: inherit
 
-  # Step 3: Sign and validate all builds (best effort - continues even if any build fails)
+  # Sign and validate selected artifacts
   sign-and-validate:
     name: Sign and Validate
     needs: [ calculate-version, build-docker, build-docker-cli, build-windows, build-apple, build-snap, build-linux-terminal, build-cli ]
@@ -376,9 +358,8 @@ jobs:
       validate-windows: ${{ needs.build-windows.result == 'success' }}
       validate-apple: ${{ needs.build-apple.result == 'success' }}
       validate-linux-terminal: ${{ needs.build-linux-terminal.result == 'success' }}
-      validate-appimage: false  # DISABLED: AppImage builds disabled
 
-  # Step 9: Create GitHub release (only after ALL selected platforms built and deployed successfully)
+  # Final GitHub release gate after selected builds and deploys succeed
   create-github-release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
@@ -475,14 +456,6 @@ jobs:
           digest-mismatch: warn
           name: desktop-darwin-dmg
           path: artifacts/desktop-darwin-dmg/
-
-      # DISABLED: AppImage builds disabled
-      # - name: Download AppImages
-      #   uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-      #   continue-on-error: true
-      #   with:
-      #     pattern: appimage-*
-      #     path: artifacts/
 
       - name: Download Linux server binaries
         if: needs.calculate-version.outputs.deploy-linux-terminal == 'true'
@@ -689,7 +662,7 @@ jobs:
             echo "✅ Uploaded ${description}: found ${count}"
           }
 
-          # Step 1: Verify release exists and is a draft
+          # Verify release exists and is a draft
           RELEASE_INFO=$(gh release view "${VERSION}" --json isDraft,assets,body)
           IS_DRAFT=$(echo "$RELEASE_INFO" | jq -r '.isDraft')
 
@@ -700,7 +673,7 @@ jobs:
           fi
           echo "✅ Release is in draft state"
 
-          # Step 2: Verify assets were uploaded
+          # Verify assets were uploaded
           ASSET_COUNT=$(echo "$RELEASE_INFO" | jq '.assets | length')
           echo "📦 Found ${ASSET_COUNT} assets attached to release"
 
@@ -734,7 +707,7 @@ jobs:
           require_uploaded_count "signature bundles" 1 'endswith(".bundle")'
           echo "✅ Assets verified (${ASSET_COUNT} files)"
 
-          # Step 3: Verify release body is present
+          # Verify release body is present
           BODY_LENGTH=$(echo "$RELEASE_INFO" | jq '.body | length')
           if [ "$BODY_LENGTH" -lt 50 ]; then
             echo "⚠️ Warning: Release body seems short (${BODY_LENGTH} chars)"
@@ -742,13 +715,13 @@ jobs:
             echo "✅ Release body present (${BODY_LENGTH} chars)"
           fi
 
-          # Step 4: Publish the release
+          # Publish the release
           echo ""
           echo "🚀 Publishing release ${VERSION}..."
           gh release edit "${VERSION}" --draft=false
           echo "✅ Release ${VERSION} published successfully!"
 
-          # Step 5: Final verification
+          # Final verification
           FINAL_STATE=$(gh release view "${VERSION}" --json isDraft --jq '.isDraft')
           if [ "$FINAL_STATE" = "false" ]; then
             echo "✅ Verified: Release is now public and immutable"
@@ -757,7 +730,7 @@ jobs:
             exit 1
           fi
 
-  # Step 5: Deploy to various platforms (after selected builds and signing validation)
+  # Deploy selected stores after their builds and signing validation
   deploy-snap:
     name: Deploy Snap
     needs: [ calculate-version, build-snap, sign-and-validate ]
@@ -810,7 +783,7 @@ jobs:
       release-notes: ${{ needs.calculate-version.outputs.release-notes }}
     secrets: inherit
 
-  # Step 6: Deploy to Docker Hub
+  # Deploy to Docker Hub
   # Rebuilds from GHA buildx cache populated by build-docker and pushes with attestations.
   deploy-docker:
     name: Deploy Docker
@@ -830,7 +803,7 @@ jobs:
       stage-only: ${{ needs.calculate-version.outputs.stage-only == 'true' }}
     secrets: inherit
 
-  # Step 6b: Deploy CLI to Docker Hub
+  # Deploy CLI image to Docker Hub
   deploy-docker-cli:
     name: Deploy CLI Docker
     needs: [ calculate-version, build-docker-cli, sign-and-validate ]
@@ -849,7 +822,7 @@ jobs:
       stage-only: ${{ needs.calculate-version.outputs.stage-only == 'true' }}
     secrets: inherit
 
-  # Step 7: Deploy to npm
+  # Deploy CLI packages to npm
   deploy-npm:
     name: Deploy npm
     needs: [ calculate-version, build-cli, sign-and-validate ]
@@ -866,7 +839,7 @@ jobs:
     with:
       version: ${{ needs.calculate-version.outputs.version }}
 
-  # Step 10: Stamp plugin.json version on main after successful release
+  # Post-release housekeeping
   stamp-plugin-version:
     name: Stamp Plugin Version on Main
     runs-on: ubuntu-latest
@@ -907,7 +880,7 @@ jobs:
             echo "Stamped plugin.json to $VERSION on main"
           fi
 
-  # Step 11: Final summary
+  # Release summary
   deployment-summary:
     name: Deployment Summary
     runs-on: ubuntu-latest
