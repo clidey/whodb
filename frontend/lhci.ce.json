@@ -6,7 +6,7 @@
         "http://127.0.0.1:4173/login"
       ],
       "startServerCommand": "pnpm exec vite preview --port 4173 --strictPort --host 127.0.0.1",
-      "startServerReadyPattern": "127.0.0.1:4173",
+      "startServerReadyPattern": "Local:",
       "startServerReadyTimeout": 60000,
       "settings": {
         "chromeFlags": [

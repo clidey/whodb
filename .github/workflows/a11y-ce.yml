@@ -329,11 +329,38 @@ jobs:
         working-directory: frontend
         run: pnpm run build:ce
 
+      - name: Prepare Vite preview base href
+        working-directory: frontend
+        run: |
+          perl -0pi -e 's#__WHODB_BASE_HREF__#/#g' build/index.html
+
       - name: Run Lighthouse CI (login page)
         id: lhci
         continue-on-error: true
         working-directory: frontend
         run: pnpm exec lhci autorun --config=lhci.ce.json
+
+      - name: Ensure Lighthouse report exists
+        if: ${{ always() }}
+        working-directory: frontend
+        run: |
+          mkdir -p lhci
+          if [ -z "$(find lhci -type f -print -quit)" ]; then
+            cat > lhci/index.html <<'EOF'
+          <!doctype html>
+          <html lang="en">
+            <head>
+              <meta charset="utf-8" />
+              <meta name="viewport" content="width=device-width, initial-scale=1" />
+              <title>Lighthouse Report</title>
+            </head>
+            <body>
+              <h1>Lighthouse report unavailable</h1>
+              <p>LHCI did not produce files for this run.</p>
+            </body>
+          </html>
+          EOF
+          fi
 
       - name: Upload Lighthouse report
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -416,7 +443,7 @@ jobs:
     environment: deploy-docker
     timeout-minutes: 15
     needs: [dockerhub-report]
-    if: ${{ always() }}
+    if: ${{ needs.dockerhub-report.result == 'success' }}
 
     steps:
       - name: Harden Runner
