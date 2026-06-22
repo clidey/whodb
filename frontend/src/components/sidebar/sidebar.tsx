@@ -40,6 +40,10 @@ import {
     SidebarMenuItem,
     SidebarSeparator,
     SidebarTrigger,
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
     useSidebar
 } from "@clidey/ux";
 import {SearchSelect} from "../ux";
@@ -75,6 +79,7 @@ import {
     ChevronDownIcon,
     CogIcon,
     CommandLineIcon,
+    InformationCircleIcon,
     PlusCircleIcon,
     QuestionMarkCircleIcon,
     RectangleGroupIcon,
@@ -824,60 +829,69 @@ export const Sidebar: FC = () => {
                                 )}
                                 <div className="grow" />
                                 {!isEmbedded && (
-                                    <SidebarMenuItem className="flex justify-between items-center w-full">
-                                        <SidebarMenuButton asChild tooltip={t('logOutProfile')}>
+                                    <SidebarMenuItem className="flex justify-between items-center w-full overflow-hidden">
+                                        <SidebarMenuButton asChild tooltip={t('logOutProfile')} className="flex-1 min-w-0">
                                             <div className="flex items-center gap-sm text-nowrap w-fit cursor-pointer" onClick={handleLogoutProfile}>
                                                 <ArrowLeftStartOnRectangleIcon className="w-4 h-4" />
                                                 {open && <span>{t('logOutProfile')}</span>}
                                             </div>
                                         </SidebarMenuButton>
-                                        <SidebarMenuButton asChild>
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger className={cn({
-                                                    "hidden": !open,
-                                                })}>
-                                                    <Button
-                                                        className="flex items-center justify-center p-1 rounded hover:bg-gray-100 dark:hover:bg-neutral-800 ml-2"
-                                                        aria-label={t('moreLogoutOptions')}
-                                                        variant="ghost"
-                                                    >
-                                                        <ChevronDownIcon className="w-4 h-4" />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent side="right" align="start">
-                                                    <DropdownMenuItem onClick={handleLogoutAll}>
-                                                        <ArrowLeftStartOnRectangleIcon className="w-4 h-4" />
-                                                        <span className="ml-2">{t('logoutAllProfiles')}</span>
-                                                    </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        </SidebarMenuButton>
+                                        <div className="flex items-center gap-1 shrink-0">
+                                            <SidebarMenuButton asChild className="w-auto">
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger className={cn({
+                                                        "hidden": !open,
+                                                    })}>
+                                                        <Button
+                                                            className="flex items-center justify-center p-1 rounded hover:bg-gray-100 dark:hover:bg-neutral-800"
+                                                            aria-label={t('moreLogoutOptions')}
+                                                            variant="ghost"
+                                                        >
+                                                            <ChevronDownIcon className="w-4 h-4" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent side="right" align="start">
+                                                        <DropdownMenuItem onClick={handleLogoutAll}>
+                                                            <ArrowLeftStartOnRectangleIcon className="w-4 h-4" />
+                                                            <span className="ml-2">{t('logoutAllProfiles')}</span>
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </SidebarMenuButton>
+                                            {open && (
+                                                <TooltipProvider delayDuration={200}>
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <span
+                                                                className="rounded-full p-1 text-muted-foreground/60 hover:text-muted-foreground transition-colors cursor-pointer"
+                                                                data-testid="sidebar-version-info"
+                                                            >
+                                                                <InformationCircleIcon className="w-4 h-4" />
+                                                            </span>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent side="top" align="end">
+                                                            <p className="text-xs">{t('version')} {__APP_VERSION__}</p>
+                                                            {updateInfo?.UpdateInfo?.updateAvailable && (
+                                                                <a
+                                                                    href={updateInfo.UpdateInfo.releaseURL}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="mt-1 block text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                                                                >
+                                                                    {t('updateAvailable', { version: updateInfo.UpdateInfo.latestVersion })}
+                                                                </a>
+                                                            )}
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                            )}
+                                        </div>
                                     </SidebarMenuItem>
                                 )}
                             </SidebarMenu>
                         </SidebarGroup>
                     )}
                 </SidebarContent>
-                {newUIEnabled ? (
-                    <div className="hidden" />
-                ) : (
-                    <div className={cn("absolute right-4 bottom-4 text-xs text-muted-foreground", {
-                        "hidden": !open,
-                    })}>
-                        {t('version')} {__APP_VERSION__}
-                        {updateInfo?.UpdateInfo?.updateAvailable && (
-                            <a
-                                href={updateInfo.UpdateInfo.releaseURL}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="ml-2 text-blue-500 hover:text-blue-400 transition-colors"
-                                title={t('updateAvailable', { version: updateInfo.UpdateInfo.latestVersion })}
-                            >
-                                &uarr; {updateInfo.UpdateInfo.latestVersion}
-                            </a>
-                        )}
-                    </div>
-                )}
             </SidebarComponent>
             <Sheet open={showLoginCard} onOpenChange={setShowLoginCard}>
                 <SheetContent side="right" className="p-8">
