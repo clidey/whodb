@@ -73,7 +73,15 @@ jobs:
           echo "version=$BAML_VERSION" >> "$GITHUB_OUTPUT"
           echo "BAML version: $BAML_VERSION"
 
+      - name: Cache BAML libraries
+        id: cache-baml-libs
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: baml-libs
+          key: ${{ runner.os }}-baml-libs-${{ steps.baml-version.outputs.version }}
+
       - name: Download BAML libraries
+        if: steps.cache-baml-libs.outputs.cache-hit != 'true'
         env:
           BAML_VERSION: ${{ steps.baml-version.outputs.version }}
         run: |
