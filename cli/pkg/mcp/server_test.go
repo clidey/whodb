@@ -18,6 +18,7 @@ package mcp
 
 import (
 	"context"
+	"encoding/json"
 	"log/slog"
 	"os"
 	"strings"
@@ -279,12 +280,112 @@ func TestNewServer_PlatformModeListsOnlyPlatformTools(t *testing.T) {
 	if !toolNamesContain(result.Tools, "whodb_platform_confirm") {
 		t.Fatal("platform mode did not expose whodb_platform_confirm")
 	}
+	for _, flexibleReadTool := range []string{
+		"whodb_platform_secrets",
+		"whodb_platform_datasets",
+		"whodb_platform_functions",
+		"whodb_platform_files",
+	} {
+		tool := findToolByName(result.Tools, flexibleReadTool)
+		if tool == nil {
+			t.Fatalf("platform mode did not expose %s", flexibleReadTool)
+		}
+		if tool.OutputSchema != nil {
+			t.Fatalf("%s output schema = %#v, want nil for flexible read payloads", flexibleReadTool, tool.OutputSchema)
+		}
+	}
+	for _, tool := range result.Tools {
+		assertToolOutputSchemaPropertiesTyped(t, tool)
+	}
 }
 
 func toolNamesContain(tools []*mcpsdk.Tool, name string) bool {
+	return findToolByName(tools, name) != nil
+}
+
+func findToolByName(tools []*mcpsdk.Tool, name string) *mcpsdk.Tool {
 	for _, tool := range tools {
 		if tool.Name == name {
+			return tool
+		}
+	}
+	return nil
+}
+
+func assertToolOutputSchemaPropertiesTyped(t *testing.T, tool *mcpsdk.Tool) {
+	t.Helper()
+	if tool.OutputSchema == nil {
+		return
+	}
+	raw, err := json.Marshal(tool.OutputSchema)
+	if err != nil {
+		t.Fatalf("%s output schema marshal error: %v", tool.Name, err)
+	}
+	var schema map[string]any
+	if err := json.Unmarshal(raw, &schema); err != nil {
+		t.Fatalf("%s output schema unmarshal error: %v", tool.Name, err)
+	}
+	assertSchemaPropertiesTyped(t, tool.Name, "outputSchema", schema)
+}
+
+func assertSchemaPropertiesTyped(t *testing.T, toolName, path string, schema map[string]any) {
+	t.Helper()
+	properties, ok := schema["properties"].(map[string]any)
+	if !ok {
+		return
+	}
+	for name, rawProperty := range properties {
+		property, ok := rawProperty.(map[string]any)
+		if !ok {
+			t.Fatalf("%s %s.properties.%s schema is %T, want object", toolName, path, name, rawProperty)
+		}
+		if !hasConcreteSchemaType(property) {
+			t.Fatalf("%s %s.properties.%s has no concrete schema type: %#v", toolName, path, name, property)
+		}
+		if isArraySchema(property) {
+			switch items := property["items"].(type) {
+			case map[string]any:
+				if !hasConcreteSchemaType(items) {
+					t.Fatalf("%s %s.properties.%s.items has no concrete schema type: %#v", toolName, path, name, items)
+				}
+				assertSchemaPropertiesTyped(t, toolName, path+".properties."+name+".items", items)
+			case bool:
+				if !items {
+					t.Fatalf("%s %s.properties.%s.items is false", toolName, path, name)
+				}
+			default:
+				t.Fatalf("%s %s.properties.%s.items has invalid schema: %#v", toolName, path, name, property["items"])
+			}
+		}
+		assertSchemaPropertiesTyped(t, toolName, path+".properties."+name, property)
+	}
+}
+
+func hasConcreteSchemaType(schema map[string]any) bool {
+	if schema == nil {
+		return false
+	}
+	switch schema["type"].(type) {
+	case string, []any:
+		return true
+	}
+	for _, key := range []string{"$ref", "anyOf", "oneOf", "allOf"} {
+		if _, ok := schema[key]; ok {
 			return true
+		}
+	}
+	return false
+}
+
+func isArraySchema(schema map[string]any) bool {
+	switch typed := schema["type"].(type) {
+	case string:
+		return typed == "array"
+	case []any:
+		for _, value := range typed {
+			if value == "array" {
+				return true
+			}
 		}
 	}
 	return false

@@ -216,6 +216,14 @@ jobs:
           name: desktop-darwin-mas-app
           path: artifacts/desktop-darwin-mas-app/
 
+      - name: Download Linux server binaries
+        if: inputs.validate-linux-terminal
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          digest-mismatch: warn
+          name: server-binaries-ce
+          path: artifacts/server-binaries-ce/
+
       - name: Download signatures
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
