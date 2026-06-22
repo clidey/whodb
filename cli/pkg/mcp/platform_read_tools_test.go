@@ -228,14 +228,10 @@ func TestHandlePlatformDatasetsProjectsFieldsAndScope(t *testing.T) {
 	if output.Scope == nil || output.Scope.ProjectID != "proj-1" || output.Scope.ProjectName != "Customer" {
 		t.Fatalf("output.Scope = %#v, want selected project scope", output.Scope)
 	}
-	items, ok := output.Items.([]any)
-	if !ok || len(items) != 1 {
+	if len(output.Items) != 1 {
 		t.Fatalf("output.Items = %#v, want one projected item", output.Items)
 	}
-	item, ok := items[0].(map[string]any)
-	if !ok {
-		t.Fatalf("output.Items[0] = %T, want map", items[0])
-	}
+	item := output.Items[0]
 	if item["id"] != "dataset-1" || item["name"] != "Customers" {
 		t.Fatalf("projected item = %#v, want id/name", item)
 	}

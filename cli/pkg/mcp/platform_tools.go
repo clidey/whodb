@@ -130,7 +130,7 @@ type PlatformOrgInfo struct {
 type PlatformOrgsOutput struct {
 	Host      string               `json:"host,omitempty"`
 	Orgs      []PlatformOrgInfo    `json:"orgs"`
-	Items     any                  `json:"items,omitempty"`
+	Items     []map[string]any     `json:"items,omitempty"`
 	Count     int                  `json:"count"`
 	Scope     *PlatformOutputScope `json:"scope,omitempty"`
 	Fields    []string             `json:"fields,omitempty"`
@@ -171,7 +171,7 @@ type PlatformProjectsOutput struct {
 	OrgID     string                `json:"org_id,omitempty"`
 	OrgName   string                `json:"org_name,omitempty"`
 	Projects  []PlatformProjectInfo `json:"projects"`
-	Items     any                   `json:"items,omitempty"`
+	Items     []map[string]any      `json:"items,omitempty"`
 	Count     int                   `json:"count"`
 	Scope     *PlatformOutputScope  `json:"scope,omitempty"`
 	Fields    []string              `json:"fields,omitempty"`
@@ -197,7 +197,7 @@ type PlatformSourceTypesInput struct {
 // PlatformSourceTypesOutput lists hosted source types available for creation.
 type PlatformSourceTypesOutput struct {
 	SourceTypes []platformapi.SourceType `json:"source_types"`
-	Items       any                      `json:"items,omitempty"`
+	Items       []map[string]any         `json:"items,omitempty"`
 	Count       int                      `json:"count"`
 	Scope       *PlatformOutputScope     `json:"scope,omitempty"`
 	Fields      []string                 `json:"fields,omitempty"`
@@ -225,7 +225,7 @@ type PlatformSourceFieldsInput struct {
 type PlatformSourceFieldsOutput struct {
 	SourceType     string                              `json:"source_type,omitempty"`
 	Fields         []platformapi.SourceConnectionField `json:"fields"`
-	Items          any                                 `json:"items,omitempty"`
+	Items          []map[string]any                    `json:"items,omitempty"`
 	Count          int                                 `json:"count"`
 	Scope          *PlatformOutputScope                `json:"scope,omitempty"`
 	SelectedFields []string                            `json:"selected_fields,omitempty"`
@@ -249,7 +249,7 @@ type PlatformSourcesOutput struct {
 	OrgID     string               `json:"org_id,omitempty"`
 	ProjectID string               `json:"project_id,omitempty"`
 	Sources   []platformapi.Source `json:"sources"`
-	Items     any                  `json:"items,omitempty"`
+	Items     []map[string]any     `json:"items,omitempty"`
 	Count     int                  `json:"count"`
 	Scope     *PlatformOutputScope `json:"scope,omitempty"`
 	Fields    []string             `json:"fields,omitempty"`
@@ -280,7 +280,7 @@ type PlatformSourceObjectsInput struct {
 // PlatformSourceObjectsOutput lists hosted source objects.
 type PlatformSourceObjectsOutput struct {
 	Objects   []platformapi.SourceObject `json:"objects"`
-	Items     any                        `json:"items,omitempty"`
+	Items     []map[string]any           `json:"items,omitempty"`
 	Count     int                        `json:"count"`
 	Scope     *PlatformOutputScope       `json:"scope,omitempty"`
 	Fields    []string                   `json:"fields,omitempty"`
@@ -308,7 +308,7 @@ type PlatformSourceColumnsInput struct {
 // PlatformSourceColumnsOutput lists columns for one hosted source object.
 type PlatformSourceColumnsOutput struct {
 	Columns   []platformapi.Column `json:"columns"`
-	Items     any                  `json:"items,omitempty"`
+	Items     []map[string]any     `json:"items,omitempty"`
 	Count     int                  `json:"count"`
 	Scope     *PlatformOutputScope `json:"scope,omitempty"`
 	Fields    []string             `json:"fields,omitempty"`

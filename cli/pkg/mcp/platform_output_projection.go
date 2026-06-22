@@ -162,11 +162,19 @@ func isListLike(value any) bool {
 	return v.Kind() == reflect.Slice || v.Kind() == reflect.Array
 }
 
-func listItems(original, projected any) any {
-	if isListLike(original) {
-		return projected
+func listItems(original, projected any) []map[string]any {
+	if !isListLike(original) {
+		return nil
 	}
-	return nil
+	raw, err := json.Marshal(projected)
+	if err != nil {
+		return nil
+	}
+	var items []map[string]any
+	if err := json.Unmarshal(raw, &items); err != nil {
+		return nil
+	}
+	return items
 }
 
 func emptyPlatformReadWarning(toolName string, scope *PlatformOutputScope) string {

@@ -121,7 +121,7 @@ type PlatformEmptyInput struct {
 // PlatformReadOutput is the common output for read-only hosted platform tools.
 type PlatformReadOutput struct {
 	Data      any                  `json:"data,omitempty"`
-	Items     any                  `json:"items,omitempty"`
+	Items     []map[string]any     `json:"items,omitempty"`
 	Count     int                  `json:"count"`
 	Scope     *PlatformOutputScope `json:"scope,omitempty"`
 	Fields    []string             `json:"fields,omitempty"`
