@@ -122,7 +122,7 @@ function getProfileIcon(profile: LocalLoginProfile) {
 export const NavSectionHeader: FC<{ label: string; open: boolean; disabled?: boolean }> = ({ label, open, disabled }) => {
     if (!open) return <div className="h-4" />;
     return (
-        <div className="flex items-center gap-2 px-1 pt-5 pb-1">
+        <div className="flex items-center gap-2 px-1 pt-3 pb-1">
             <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-neutral-600 select-none">
                 {label}
             </span>
@@ -525,7 +525,7 @@ export const Sidebar: FC = () => {
                         <SidebarTrigger className="px-0" />
                     </div>
                 </SidebarHeader>
-                <SidebarContent className={cn("mt-8 mb-16 overflow-y-auto", { "mx-4": open })}>
+                <SidebarContent className={cn("mt-4 mb-4 overflow-y-auto", { "mx-4": open })}>
                     {newUIEnabled ? (
                     <SidebarGroup className="grow">
                         <SidebarMenu className="gap-0 grow">
@@ -864,33 +864,7 @@ export const Sidebar: FC = () => {
                     )}
                 </SidebarContent>
                 {newUIEnabled ? (
-                    <div className="absolute right-3 bottom-3">
-                        <TooltipProvider delayDuration={200}>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <button className={cn(
-                                        "rounded-full p-1 text-muted-foreground/60 hover:text-muted-foreground transition-colors",
-                                        updateInfo?.UpdateInfo?.updateAvailable && "text-blue-500/70 hover:text-blue-400"
-                                    )} data-testid="sidebar-version-info">
-                                        <InformationCircleIcon className="w-4 h-4" />
-                                    </button>
-                                </TooltipTrigger>
-                                <TooltipContent side="top" align="end">
-                                    <p className="text-xs">{t('version')} {__APP_VERSION__}</p>
-                                    {updateInfo?.UpdateInfo?.updateAvailable && (
-                                        <a
-                                            href={updateInfo.UpdateInfo.releaseURL}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-xs text-blue-500 hover:text-blue-400 transition-colors"
-                                        >
-                                            {t('updateAvailable', { version: updateInfo.UpdateInfo.latestVersion })}
-                                        </a>
-                                    )}
-                                </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                    </div>
+                    <div className="hidden" />
                 ) : (
                     <div className={cn("absolute right-4 bottom-4 text-xs text-muted-foreground", {
                         "hidden": !open,
