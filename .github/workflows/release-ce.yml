@@ -97,6 +97,10 @@ permissions:
   actions: write
   id-token: write
 
+concurrency:
+  group: release-ce
+  cancel-in-progress: false
+
 jobs:
   # Step 1: Calculate version and deployment parameters
   calculate-version:
