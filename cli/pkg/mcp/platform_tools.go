@@ -53,7 +53,7 @@ type platformClient interface {
 	SourceColumns(context.Context, string, string, string, platformapi.SourceObjectRefInput) ([]platformapi.Column, error)
 	SourceRows(context.Context, string, string, string, platformapi.SourceObjectRefInput, int, int) (*platformapi.RowsResult, error)
 	SourceFieldConstraints(context.Context, string, string, platformapi.SourceObjectRefInput) ([]platformapi.SourceFieldConstraints, error)
-	SourceContent(context.Context, string, string, platformapi.SourceObjectRefInput) (*platformapi.SourceContent, error)
+	SourceContent(context.Context, string, string, platformapi.SourceObjectRefInput, []string) (*platformapi.SourceContent, error)
 	ProjectSecrets(context.Context, string) ([]platformapi.ProjectSecret, error)
 	AIProviders(context.Context, string) ([]platformapi.AIProvider, error)
 	AIProviderModels(context.Context, string, string) ([]string, error)
@@ -71,10 +71,10 @@ type platformClient interface {
 	ProjectLineage(context.Context, string) (*platformapi.LineageGraph, error)
 	Transforms(context.Context, string) ([]platformapi.Transform, error)
 	TransformRuns(context.Context, string, string, int) ([]platformapi.TransformRun, error)
-	Functions(context.Context, string) ([]platformapi.Function, error)
-	Function(context.Context, string, string) (*platformapi.Function, error)
-	FolderContents(context.Context, string, string) (*platformapi.FolderContents, error)
-	FilePreview(context.Context, string, string, *int) (*platformapi.FilePreviewResult, error)
+	Functions(context.Context, string, []string) ([]platformapi.Function, error)
+	Function(context.Context, string, string, []string) (*platformapi.Function, error)
+	FolderContents(context.Context, string, string, []string) (*platformapi.FolderContents, error)
+	FilePreview(context.Context, string, string, *int, []string) (*platformapi.FilePreviewResult, error)
 	SearchProjectFiles(context.Context, string, string) ([]platformapi.ProjectFile, error)
 	ProjectTabularFiles(context.Context, string) ([]platformapi.ProjectFile, error)
 	ProjectStorageUsage(context.Context, string) (int, error)
@@ -515,15 +515,25 @@ func registerPlatformTools(server *mcp.Server, secOpts *SecurityOptions) {
 		case "whodb_platform_source_test":
 			mcp.AddTool(server, tool, createPlatformSourceTestHandler())
 		case "whodb_platform_source_create":
-			mcp.AddTool(server, tool, createPlatformSourceCreateHandler())
+			if !secOpts.ReadOnly {
+				mcp.AddTool(server, tool, createPlatformSourceCreateHandler(secOpts))
+			}
 		case "whodb_platform_source_update":
-			mcp.AddTool(server, tool, createPlatformSourceUpdateHandler())
+			if !secOpts.ReadOnly {
+				mcp.AddTool(server, tool, createPlatformSourceUpdateHandler(secOpts))
+			}
 		case "whodb_platform_source_delete":
-			mcp.AddTool(server, tool, createPlatformSourceDeleteHandler())
+			if !secOpts.ReadOnly {
+				mcp.AddTool(server, tool, createPlatformSourceDeleteHandler(secOpts))
+			}
 		case "whodb_platform_pending":
-			mcp.AddTool(server, tool, createPlatformPendingHandler())
+			if secOpts.ConfirmWrites {
+				mcp.AddTool(server, tool, createPlatformPendingHandler())
+			}
 		case "whodb_platform_confirm":
-			mcp.AddTool(server, tool, createPlatformConfirmHandler())
+			if secOpts.ConfirmWrites {
+				mcp.AddTool(server, tool, createPlatformConfirmHandler())
+			}
 		default:
 			registerPlatformReadTool(server, tool, secOpts)
 		}
@@ -701,21 +711,21 @@ func createPlatformSourceTestHandler() func(context.Context, *mcp.CallToolReques
 	}
 }
 
-func createPlatformSourceCreateHandler() func(context.Context, *mcp.CallToolRequest, PlatformSourceCreateInput) (*mcp.CallToolResult, PlatformSourceWriteOutput, error) {
+func createPlatformSourceCreateHandler(secOpts *SecurityOptions) func(context.Context, *mcp.CallToolRequest, PlatformSourceCreateInput) (*mcp.CallToolResult, PlatformSourceWriteOutput, error) {
 	return func(ctx context.Context, req *mcp.CallToolRequest, input PlatformSourceCreateInput) (*mcp.CallToolResult, PlatformSourceWriteOutput, error) {
-		return HandlePlatformSourceCreate(ctx, req, input)
+		return handlePlatformSourceCreate(ctx, req, input, secOpts.ConfirmWrites)
 	}
 }
 
-func createPlatformSourceUpdateHandler() func(context.Context, *mcp.CallToolRequest, PlatformSourceUpdateInput) (*mcp.CallToolResult, PlatformSourceWriteOutput, error) {
+func createPlatformSourceUpdateHandler(secOpts *SecurityOptions) func(context.Context, *mcp.CallToolRequest, PlatformSourceUpdateInput) (*mcp.CallToolResult, PlatformSourceWriteOutput, error) {
 	return func(ctx context.Context, req *mcp.CallToolRequest, input PlatformSourceUpdateInput) (*mcp.CallToolResult, PlatformSourceWriteOutput, error) {
-		return HandlePlatformSourceUpdate(ctx, req, input)
+		return handlePlatformSourceUpdate(ctx, req, input, secOpts.ConfirmWrites)
 	}
 }
 
-func createPlatformSourceDeleteHandler() func(context.Context, *mcp.CallToolRequest, PlatformSourceDeleteInput) (*mcp.CallToolResult, PlatformSourceWriteOutput, error) {
+func createPlatformSourceDeleteHandler(secOpts *SecurityOptions) func(context.Context, *mcp.CallToolRequest, PlatformSourceDeleteInput) (*mcp.CallToolResult, PlatformSourceWriteOutput, error) {
 	return func(ctx context.Context, req *mcp.CallToolRequest, input PlatformSourceDeleteInput) (*mcp.CallToolResult, PlatformSourceWriteOutput, error) {
-		return HandlePlatformSourceDelete(ctx, req, input)
+		return handlePlatformSourceDelete(ctx, req, input, secOpts.ConfirmWrites)
 	}
 }
 
@@ -1121,6 +1131,10 @@ func HandlePlatformSourceTest(ctx context.Context, req *mcp.CallToolRequest, inp
 
 // HandlePlatformSourceCreate prepares a hosted source creation for confirmation.
 func HandlePlatformSourceCreate(ctx context.Context, req *mcp.CallToolRequest, input PlatformSourceCreateInput) (*mcp.CallToolResult, PlatformSourceWriteOutput, error) {
+	return handlePlatformSourceCreate(ctx, req, input, true)
+}
+
+func handlePlatformSourceCreate(ctx context.Context, req *mcp.CallToolRequest, input PlatformSourceCreateInput, confirmWrites bool) (*mcp.CallToolResult, PlatformSourceWriteOutput, error) {
 	requestID := generateRequestID("platform_source_create")
 	startTime := time.Now()
 
@@ -1156,6 +1170,15 @@ func HandlePlatformSourceCreate(ctx context.Context, req *mcp.CallToolRequest, i
 		Changes:     []string{"create source"},
 		CreateInput: createInput,
 	}
+	if !confirmWrites {
+		source, err := session.Client.CreateSource(ctx, createInput)
+		if err != nil {
+			TrackToolCall(ctx, "platform_source_create", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_action"})
+			return nil, PlatformSourceWriteOutput{Error: err.Error(), RequestID: requestID}, nil
+		}
+		TrackToolCall(ctx, "platform_source_create", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"confirmation_required": false})
+		return nil, platformSourceWriteCompletedOutput(requestID, "create_source", source, action.Preview()), nil
+	}
 	token, expiresAt := storePendingPlatformAction(action)
 	TrackToolCall(ctx, "platform_source_create", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"confirmation_required": true})
 	return nil, platformSourceConfirmationOutput(requestID, token, expiresAt, actionLabel, action.Preview()), nil
@@ -1163,6 +1186,10 @@ func HandlePlatformSourceCreate(ctx context.Context, req *mcp.CallToolRequest, i
 
 // HandlePlatformSourceUpdate prepares a hosted source update for confirmation.
 func HandlePlatformSourceUpdate(ctx context.Context, req *mcp.CallToolRequest, input PlatformSourceUpdateInput) (*mcp.CallToolResult, PlatformSourceWriteOutput, error) {
+	return handlePlatformSourceUpdate(ctx, req, input, true)
+}
+
+func handlePlatformSourceUpdate(ctx context.Context, req *mcp.CallToolRequest, input PlatformSourceUpdateInput, confirmWrites bool) (*mcp.CallToolResult, PlatformSourceWriteOutput, error) {
 	requestID := generateRequestID("platform_source_update")
 	startTime := time.Now()
 
@@ -1219,6 +1246,15 @@ func HandlePlatformSourceUpdate(ctx context.Context, req *mcp.CallToolRequest, i
 		Changes:     changes,
 		UpdateInput: updateInput,
 	}
+	if !confirmWrites {
+		updated, err := session.Client.UpdateSource(ctx, updateInput)
+		if err != nil {
+			TrackToolCall(ctx, "platform_source_update", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_action"})
+			return nil, PlatformSourceWriteOutput{Error: err.Error(), RequestID: requestID}, nil
+		}
+		TrackToolCall(ctx, "platform_source_update", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"confirmation_required": false})
+		return nil, platformSourceWriteCompletedOutput(requestID, "update_source", updated, action.Preview()), nil
+	}
 	token, expiresAt := storePendingPlatformAction(action)
 	TrackToolCall(ctx, "platform_source_update", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"confirmation_required": true})
 	return nil, platformSourceConfirmationOutput(requestID, token, expiresAt, actionLabel, action.Preview()), nil
@@ -1226,6 +1262,10 @@ func HandlePlatformSourceUpdate(ctx context.Context, req *mcp.CallToolRequest, i
 
 // HandlePlatformSourceDelete prepares a hosted source deletion for confirmation.
 func HandlePlatformSourceDelete(ctx context.Context, req *mcp.CallToolRequest, input PlatformSourceDeleteInput) (*mcp.CallToolResult, PlatformSourceWriteOutput, error) {
+	return handlePlatformSourceDelete(ctx, req, input, true)
+}
+
+func handlePlatformSourceDelete(ctx context.Context, req *mcp.CallToolRequest, input PlatformSourceDeleteInput, confirmWrites bool) (*mcp.CallToolResult, PlatformSourceWriteOutput, error) {
 	requestID := generateRequestID("platform_source_delete")
 	startTime := time.Now()
 
@@ -1246,6 +1286,19 @@ func HandlePlatformSourceDelete(ctx context.Context, req *mcp.CallToolRequest, i
 		SourceName:  source.Name,
 		SourceType:  source.DatabaseType,
 		Changes:     []string{"delete source"},
+	}
+	if !confirmWrites {
+		if err := session.Client.DeleteSource(ctx, session.Host.DefaultOrgID, session.Host.DefaultProjectID, source.ID); err != nil {
+			TrackToolCall(ctx, "platform_source_delete", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_action"})
+			return nil, PlatformSourceWriteOutput{Error: err.Error(), RequestID: requestID}, nil
+		}
+		TrackToolCall(ctx, "platform_source_delete", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"confirmation_required": false})
+		return nil, PlatformSourceWriteOutput{
+			Status:              "ok",
+			ConfirmationAction:  "delete_source",
+			ConfirmationPreview: action.Preview(),
+			RequestID:           requestID,
+		}, nil
 	}
 	token, expiresAt := storePendingPlatformAction(action)
 	TrackToolCall(ctx, "platform_source_delete", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"confirmation_required": true})
@@ -1748,6 +1801,16 @@ func platformSourceConfirmationOutput(requestID, token string, expiresAt time.Ti
 		ConfirmationExpiry:   expiresAt.UTC().Format(time.RFC3339),
 		Warning:              "This hosted WhoDB source operation requires approval before it runs. Call whodb_platform_confirm with the confirmation_token to continue.",
 		RequestID:            requestID,
+	}
+}
+
+func platformSourceWriteCompletedOutput(requestID, action string, source *platformapi.Source, preview *PlatformActionPreview) PlatformSourceWriteOutput {
+	return PlatformSourceWriteOutput{
+		Status:              "ok",
+		ConfirmationAction:  action,
+		ConfirmationPreview: preview,
+		Source:              source,
+		RequestID:           requestID,
 	}
 }
 

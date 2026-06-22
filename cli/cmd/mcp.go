@@ -128,8 +128,10 @@ Available tools:
 Hosted platform mode is disabled by default. Start with --platform to expose only
 whodb_platform_* tools backed by the current hosted login and selected workspace.
 Local database tools such as whodb_query and whodb_connections are not registered
-in platform mode. Hosted source writes return confirmation tokens and execute
-only through whodb_platform_confirm.
+in platform mode. Platform mode uses the same permission modes: default
+confirm-writes returns confirmation tokens, --read-only and --safe-mode hide
+hosted source write tools, and --allow-write executes hosted source writes
+without confirmation.
 
 TOOL SELECTION:
   --tools           - Comma-separated list of tools to enable (default: all)
@@ -265,6 +267,7 @@ Connection Resolution:
 		opts := &whodbmcp.ServerOptions{
 			ReadOnly:            readOnly,
 			ConfirmWrites:       confirmWrites,
+			AllowWrite:          mcpAllowWrite,
 			SecurityLevel:       whodbmcp.SecurityLevel(securityLevel),
 			QueryTimeout:        mcpTimeout,
 			MaxRows:             mcpMaxRows,

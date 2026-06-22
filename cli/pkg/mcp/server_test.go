@@ -299,6 +299,72 @@ func TestNewServer_PlatformModeListsOnlyPlatformTools(t *testing.T) {
 	}
 }
 
+func TestNewServer_PlatformReadOnlyHidesWriteTools(t *testing.T) {
+	tools := listServerToolNames(t, NewServer(&ServerOptions{PlatformEnabled: true, ReadOnly: true}))
+	for _, name := range []string{
+		"whodb_platform_source_create",
+		"whodb_platform_source_update",
+		"whodb_platform_source_delete",
+		"whodb_platform_confirm",
+		"whodb_platform_pending",
+	} {
+		if _, ok := tools[name]; ok {
+			t.Fatalf("platform read-only mode exposed %s", name)
+		}
+	}
+	if _, ok := tools["whodb_platform_sources"]; !ok {
+		t.Fatal("platform read-only mode did not expose read tools")
+	}
+}
+
+func TestNewServer_PlatformAllowWriteHidesConfirmationTools(t *testing.T) {
+	tools := listServerToolNames(t, NewServer(&ServerOptions{PlatformEnabled: true, AllowWrite: true}))
+	for _, name := range []string{
+		"whodb_platform_source_create",
+		"whodb_platform_source_update",
+		"whodb_platform_source_delete",
+	} {
+		if _, ok := tools[name]; !ok {
+			t.Fatalf("platform allow-write mode did not expose %s", name)
+		}
+	}
+	for _, name := range []string{"whodb_platform_confirm", "whodb_platform_pending"} {
+		if _, ok := tools[name]; ok {
+			t.Fatalf("platform allow-write mode exposed %s", name)
+		}
+	}
+}
+
+func listServerToolNames(t *testing.T, server *mcpsdk.Server) map[string]struct{} {
+	t.Helper()
+	ctx := context.Background()
+	clientTransport, serverTransport := mcpsdk.NewInMemoryTransports()
+	serverSession, err := server.Connect(ctx, serverTransport, nil)
+	if err != nil {
+		t.Fatalf("server.Connect() error = %v", err)
+	}
+	t.Cleanup(func() {
+		_ = serverSession.Close()
+	})
+	client := mcpsdk.NewClient(&mcpsdk.Implementation{Name: "test-client", Version: "v0.0.1"}, nil)
+	clientSession, err := client.Connect(ctx, clientTransport, nil)
+	if err != nil {
+		t.Fatalf("client.Connect() error = %v", err)
+	}
+	t.Cleanup(func() {
+		_ = clientSession.Close()
+	})
+	result, err := clientSession.ListTools(ctx, nil)
+	if err != nil {
+		t.Fatalf("ListTools() error = %v", err)
+	}
+	names := map[string]struct{}{}
+	for _, tool := range result.Tools {
+		names[tool.Name] = struct{}{}
+	}
+	return names
+}
+
 func toolNamesContain(tools []*mcpsdk.Tool, name string) bool {
 	return findToolByName(tools, name) != nil
 }

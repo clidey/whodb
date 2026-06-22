@@ -45,6 +45,9 @@ type ServerOptions struct {
 	// When enabled, write operations return a confirmation token that must be approved.
 	// Default: false
 	ConfirmWrites bool
+	// AllowWrite permits write operations without confirmation.
+	// Default: false
+	AllowWrite bool
 	// SecurityLevel controls the strictness of query validation.
 	// Options: "strict", "standard", "minimal". Default: "standard"
 	SecurityLevel SecurityLevel
@@ -123,6 +126,9 @@ func NewServer(opts *ServerOptions) *mcp.Server {
 		opts.Logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
 			Level: mapWhoDBLogLevel(),
 		}))
+	}
+	if !opts.ReadOnly && !opts.ConfirmWrites && !opts.AllowWrite {
+		opts.ConfirmWrites = true
 	}
 	if opts.Instructions == "" && opts.PlatformEnabled {
 		opts.Instructions = platformInstructions
@@ -1404,8 +1410,9 @@ backed by the current hosted WhoDB login and selected organization/project.
 
 Read tools return stable metadata such as count, request_id, scope, warnings, and
 truncated where applicable. Most read tools accept an optional fields array to
-project top-level output fields, for example ["id", "name"], when an agent only
-needs a compact result.
+project top-level output fields, for example ["id", "name"]. Prefer fields on
+read calls: request only the fields needed for the current answer, then make a
+second read with additional fields only if more detail is required.
 
 Available tools:
 - whodb_platform_status: Show hosted login and selected workspace
@@ -1430,7 +1437,9 @@ Setup:
 2. Run whodb-cli use --org <org> --project <project>
 3. Start this server with whodb-cli mcp serve --platform
 
-Hosted source create, update, and delete operations return a confirmation token.
-They do not execute until whodb_platform_confirm is called with that token.
-Use whodb_platform_pending to recover active confirmation tokens.
+Hosted source create, update, and delete follow the same permission mode as local
+MCP writes. In default confirm-writes mode, they return confirmation tokens and
+do not execute until whodb_platform_confirm is called. In --read-only or
+--safe-mode, source write tools are not exposed. In --allow-write, source writes
+execute immediately without confirmation.
 `

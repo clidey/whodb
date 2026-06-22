@@ -35,6 +35,11 @@ type fakePlatformClient struct {
 	sourceRowsProjectID     string
 	rowsLimit               int
 	rowsOffset              int
+	sourceContentFields     []string
+	functionsFields         []string
+	functionFields          []string
+	folderContentsFields    []string
+	filePreviewFields       []string
 	createdSourceName       string
 	updatedSourceName       string
 	deletedSourceID         string
@@ -363,6 +368,27 @@ func TestHandlePlatformSourceRowsCapsLimit(t *testing.T) {
 	}
 	if !output.Truncated {
 		t.Fatalf("output.Truncated = false, want true")
+	}
+}
+
+func TestHandlePlatformSourceDeleteAllowWriteExecutesImmediately(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := handlePlatformSourceDelete(context.Background(), nil, PlatformSourceDeleteInput{Source: "Warehouse"}, false)
+	if err != nil {
+		t.Fatalf("handlePlatformSourceDelete() error = %v", err)
+	}
+	if output.Error != "" {
+		t.Fatalf("handlePlatformSourceDelete() output error = %q", output.Error)
+	}
+	if output.ConfirmationRequired {
+		t.Fatal("ConfirmationRequired = true, want false in allow-write mode")
+	}
+	if output.Status != "ok" || client.deletedSourceID != "src-1" {
+		t.Fatalf("output/client = %#v deleted=%q, want immediate delete", output, client.deletedSourceID)
 	}
 }
 
