@@ -35,15 +35,20 @@ const (
 	// DefaultHost is the hosted WhoDB platform URL used when no host is provided.
 	DefaultHost = "https://app.whodb.com"
 	defaultPath = "/api/query"
+
+	workspaceOrgHeader     = "X-Whodb-Org-Id"
+	workspaceProjectHeader = "X-Whodb-Project-Id"
 )
 
 // Client sends authenticated requests to a hosted WhoDB platform endpoint.
 type Client struct {
-	host              string
-	accessToken       string
-	httpClient        *http.Client
-	manifest          *PlatformManifest
-	manifestRefresher ManifestRefresher
+	host               string
+	accessToken        string
+	httpClient         *http.Client
+	manifest           *PlatformManifest
+	manifestRefresher  ManifestRefresher
+	workspaceOrgID     string
+	workspaceProjectID string
 }
 
 // ManifestRefresher reloads a hosted platform manifest after schema validation drift.
@@ -155,6 +160,12 @@ func (c *Client) Host() string {
 // SetPlatformManifest attaches a cached hosted platform manifest to the client.
 func (c *Client) SetPlatformManifest(manifest *PlatformManifest) {
 	c.manifest = manifest
+}
+
+// SetWorkspaceContext attaches the selected hosted workspace to future platform requests.
+func (c *Client) SetWorkspaceContext(orgID, projectID string) {
+	c.workspaceOrgID = strings.TrimSpace(orgID)
+	c.workspaceProjectID = strings.TrimSpace(projectID)
 }
 
 // SetManifestRefresher sets the callback used for one-shot schema refresh retries.
@@ -484,6 +495,12 @@ func (c *Client) graphQLOnce(ctx context.Context, query string, variables any, t
 	req.Header.Set("Accept", "application/json")
 	if c.accessToken != "" {
 		req.Header.Set("Authorization", "Bearer "+c.accessToken)
+	}
+	if c.workspaceOrgID != "" {
+		req.Header.Set(workspaceOrgHeader, c.workspaceOrgID)
+	}
+	if c.workspaceProjectID != "" {
+		req.Header.Set(workspaceProjectHeader, c.workspaceProjectID)
 	}
 
 	resp, err := c.httpClient.Do(req)

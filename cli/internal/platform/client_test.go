@@ -294,6 +294,33 @@ func TestProjectSourcesSendsProjectID(t *testing.T) {
 	}
 }
 
+func TestGraphQLSendsWorkspaceContextHeaders(t *testing.T) {
+	var gotOrgID string
+	var gotProjectID string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotOrgID = r.Header.Get(workspaceOrgHeader)
+		gotProjectID = r.Header.Get(workspaceProjectHeader)
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"data":{"ProjectSecrets":[]}}`))
+	}))
+	defer server.Close()
+
+	client, err := NewClient(server.URL, "token")
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
+	}
+	client.SetWorkspaceContext(" org-1 ", " proj-1 ")
+	if _, err := client.ProjectSecrets(context.Background(), "proj-1"); err != nil {
+		t.Fatalf("ProjectSecrets() error = %v", err)
+	}
+	if gotOrgID != "org-1" {
+		t.Fatalf("%s = %q, want org-1", workspaceOrgHeader, gotOrgID)
+	}
+	if gotProjectID != "proj-1" {
+		t.Fatalf("%s = %q, want proj-1", workspaceProjectHeader, gotProjectID)
+	}
+}
+
 func TestSourceTypesMapsConnectionFields(t *testing.T) {
 	var request struct {
 		Query string `json:"query"`

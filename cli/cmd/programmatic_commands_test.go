@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -2157,7 +2158,7 @@ func TestSkillsInstall_AssistantIntegrationTargets(t *testing.T) {
 		{name: "windsurf", checkPath: filepath.Join(testHome, ".codeium", "mcp_config.json")},
 		{name: "opencode", checkPath: filepath.Join(testHome, ".config", "opencode", "opencode.json")},
 		{name: "cline", checkPath: filepath.Join(testHome, ".cline", "data", "settings", "cline_mcp_settings.json")},
-		{name: "zed", checkPath: filepath.Join(configDir, "zed", "settings.json")},
+		{name: "zed", checkPath: expectedZedSettingsPath(t)},
 		{name: "continue", checkPath: filepath.Join(testHome, ".continue", "config.yaml")},
 		{name: "aider", checkPath: filepath.Join(testHome, ".aider.conf.yml")},
 	}
@@ -2200,6 +2201,14 @@ func TestSkillsInstall_AssistantIntegrationTargets(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(testHome, ".gemini", "extensions", "whodb", "GEMINI.md")); err != nil {
 		t.Fatalf("expected Gemini context file: %v", err)
 	}
+}
+
+func expectedZedSettingsPath(t *testing.T) string {
+	t.Helper()
+	if runtime.GOOS == "linux" && os.Getenv("XDG_CONFIG_HOME") != "" {
+		return filepath.Join(os.Getenv("XDG_CONFIG_HOME"), "zed", "settings.json")
+	}
+	return filepath.Join(testHome, ".config", "zed", "settings.json")
 }
 
 func TestSkillsInstall_AssistantIntegrationPreservesExistingJSONConfig(t *testing.T) {

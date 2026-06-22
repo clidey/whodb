@@ -223,6 +223,7 @@ var loginCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+		client.SetWorkspaceContext(hostEntry.DefaultOrgID, hostEntry.DefaultProjectID)
 		cfg.SetOnlyPlatformHost(hostEntry)
 		if err := cfg.SavePlatformRefreshToken(client.Host(), user.ID, tokens.RefreshToken); err != nil {
 			return err
@@ -434,6 +435,7 @@ var statusCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+		session.Client.SetWorkspaceContext(session.Host.DefaultOrgID, session.Host.DefaultProjectID)
 		projects := selection.Projects
 		if projects == nil {
 			projects, err = statusProjects(ctx, session, selection.Orgs)
@@ -1073,6 +1075,7 @@ var useCmd = &cobra.Command{
 		session.Host.DefaultOrgName = org.Name
 		session.Host.DefaultProjectID = project.ID
 		session.Host.DefaultProjectName = project.Name
+		session.Client.SetWorkspaceContext(org.ID, project.ID)
 		session.Config.UpsertPlatformHost(session.Host)
 		session.Config.SetDefaultPlatformHost(session.Host.URL)
 		if err := session.Config.Save(); err != nil {
@@ -1208,6 +1211,7 @@ func loadPlatformSession(ctx context.Context, hostFlag string) (*platformSession
 			return nil, err
 		}
 	}
+	client.SetWorkspaceContext(entry.DefaultOrgID, entry.DefaultProjectID)
 	return &platformSession{
 		Config: cfg,
 		Host:   *entry,

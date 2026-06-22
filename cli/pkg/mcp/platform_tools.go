@@ -52,6 +52,32 @@ type platformClient interface {
 	SourceObjects(context.Context, string, string, string, *platformapi.SourceObjectRefInput, []platformapi.SourceObjectKind, int, int) ([]platformapi.SourceObject, error)
 	SourceColumns(context.Context, string, string, string, platformapi.SourceObjectRefInput) ([]platformapi.Column, error)
 	SourceRows(context.Context, string, string, string, platformapi.SourceObjectRefInput, int, int) (*platformapi.RowsResult, error)
+	SourceFieldConstraints(context.Context, string, string, platformapi.SourceObjectRefInput) ([]platformapi.SourceFieldConstraints, error)
+	SourceContent(context.Context, string, string, platformapi.SourceObjectRefInput) (*platformapi.SourceContent, error)
+	ProjectSecrets(context.Context, string) ([]platformapi.ProjectSecret, error)
+	AIProviders(context.Context, string) ([]platformapi.AIProvider, error)
+	AIProviderModels(context.Context, string) ([]string, error)
+	Ontologies(context.Context, string) ([]platformapi.Ontology, error)
+	Ontology(context.Context, string, string) (*platformapi.Ontology, error)
+	OntologyFastLookups(context.Context, string, string) ([]platformapi.OntologyFastLookup, error)
+	OntologyFastLookupSuggestions(context.Context, string, string) ([]platformapi.OntologyFastLookupSuggestion, error)
+	OntologyRows(context.Context, string, string, int, int) (*platformapi.DatasetQueryResult, error)
+	OntologyFollowLink(context.Context, string, string, string, string, int, int) (*platformapi.DatasetQueryResult, error)
+	Datasets(context.Context, string) ([]platformapi.Dataset, error)
+	Dataset(context.Context, string, string) (*platformapi.Dataset, error)
+	DatasetRows(context.Context, string, string, int, int) (*platformapi.DatasetQueryResult, error)
+	Lineage(context.Context, string, string, string, string, int) (*platformapi.LineageGraph, error)
+	LineageNeighbors(context.Context, string, string, string) (*platformapi.LineageGraph, error)
+	ProjectLineage(context.Context, string) (*platformapi.LineageGraph, error)
+	Transforms(context.Context, string) ([]platformapi.Transform, error)
+	TransformRuns(context.Context, string, string, int) ([]platformapi.TransformRun, error)
+	Functions(context.Context, string) ([]platformapi.Function, error)
+	Function(context.Context, string, string) (*platformapi.Function, error)
+	FolderContents(context.Context, string, string) (*platformapi.FolderContents, error)
+	FilePreview(context.Context, string, string, *int) (*platformapi.FilePreviewResult, error)
+	SearchProjectFiles(context.Context, string, string) ([]platformapi.ProjectFile, error)
+	ProjectTabularFiles(context.Context, string) ([]platformapi.ProjectFile, error)
+	ProjectStorageUsage(context.Context, string) (int, error)
 }
 
 type platformToolSession struct {
@@ -453,12 +479,14 @@ func registerPlatformTools(server *mcp.Server, secOpts *SecurityOptions) {
 			mcp.AddTool(server, tool, createPlatformPendingHandler())
 		case "whodb_platform_confirm":
 			mcp.AddTool(server, tool, createPlatformConfirmHandler())
+		default:
+			registerPlatformReadTool(server, tool, secOpts)
 		}
 	}
 }
 
 func platformToolDefinitions() []*mcp.Tool {
-	return []*mcp.Tool{
+	tools := []*mcp.Tool{
 		{
 			Name:        "whodb_platform_status",
 			Description: descPlatformStatus,
@@ -540,6 +568,7 @@ func platformToolDefinitions() []*mcp.Tool {
 			Annotations: platformDestructiveAnnotations("Confirm Hosted Platform Write"),
 		},
 	}
+	return append(tools, platformReadToolDefinitions()...)
 }
 
 func platformReadOnlyAnnotations(title string) *mcp.ToolAnnotations {
@@ -1173,6 +1202,7 @@ func loadHostedPlatformToolSession(ctx context.Context) (*platformToolSession, e
 			return nil, err
 		}
 	}
+	client.SetWorkspaceContext(host.DefaultOrgID, host.DefaultProjectID)
 	return &platformToolSession{Host: *host, Client: client, AutoSelected: autoSelected}, nil
 }
 

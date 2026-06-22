@@ -279,15 +279,33 @@ func TestNewServer_PlatformModeListsOnlyPlatformTools(t *testing.T) {
 	if !toolNamesContain(result.Tools, "whodb_platform_confirm") {
 		t.Fatal("platform mode did not expose whodb_platform_confirm")
 	}
+	for _, flexibleReadTool := range []string{
+		"whodb_platform_secrets",
+		"whodb_platform_datasets",
+		"whodb_platform_functions",
+		"whodb_platform_files",
+	} {
+		tool := findToolByName(result.Tools, flexibleReadTool)
+		if tool == nil {
+			t.Fatalf("platform mode did not expose %s", flexibleReadTool)
+		}
+		if tool.OutputSchema != nil {
+			t.Fatalf("%s output schema = %#v, want nil for flexible read payloads", flexibleReadTool, tool.OutputSchema)
+		}
+	}
 }
 
 func toolNamesContain(tools []*mcpsdk.Tool, name string) bool {
+	return findToolByName(tools, name) != nil
+}
+
+func findToolByName(tools []*mcpsdk.Tool, name string) *mcpsdk.Tool {
 	for _, tool := range tools {
 		if tool.Name == name {
-			return true
+			return tool
 		}
 	}
-	return false
+	return nil
 }
 
 func TestNewServer_WithDisabledTools(t *testing.T) {
