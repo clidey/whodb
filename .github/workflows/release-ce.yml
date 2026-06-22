@@ -870,6 +870,7 @@ jobs:
   stamp-plugin-version:
     name: Stamp Plugin Version on Main
     runs-on: ubuntu-latest
+    continue-on-error: true
     needs: [calculate-version, create-github-release]
     if: |
       needs.create-github-release.result == 'success' &&
@@ -1044,6 +1045,26 @@ jobs:
           else
             echo "| GitHub Release | ❌ Failed | Check release job logs |"
           fi
+
+          echo ""
+
+          echo "## 🧹 Post-release Housekeeping"
+          echo "| Task | Status | Notes |"
+          echo "|------|--------|-------|"
+          case "${{ needs.stamp-plugin-version.result }}" in
+            success)
+              echo "| Plugin version stamp | ✅ Complete | plugin.json updated or already current |"
+              ;;
+            skipped)
+              echo "| Plugin version stamp | ⏭️ Skipped | Stage-only run or GitHub release did not complete |"
+              ;;
+            failure|cancelled)
+              echo "| Plugin version stamp | ⚠️ Needs follow-up | Release completed; plugin.json stamp failed separately |"
+              ;;
+            *)
+              echo "| Plugin version stamp | ❓ Unknown | Check stamp-plugin-version logs |"
+              ;;
+          esac
 
           echo ""
 
