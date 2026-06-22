@@ -255,6 +255,7 @@ jobs:
     permissions:
       contents: read
       actions: write
+      security-events: write
     uses: ./.github/workflows/_build-docker.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
@@ -328,6 +329,7 @@ jobs:
     permissions:
       contents: read
       actions: write
+      security-events: write
     uses: ./.github/workflows/_build-docker-cli.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}

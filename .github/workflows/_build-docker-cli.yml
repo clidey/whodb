@@ -22,6 +22,7 @@ on:
 permissions:
   contents: read
   actions: write
+  security-events: write
 
 jobs:
   build-docker-cli:
@@ -92,15 +93,24 @@ jobs:
       - name: Load image for scan
         run: docker load -i /tmp/whodb-cli-docker-${{ matrix.arch }}.tar
 
-#      - name: Trivy image scan
-#        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-#        with:
-#          image-ref: clidey/whodb-cli:${{ inputs.version }}-${{ matrix.arch }}
-#          format: table
-#          exit-code: '1'
-#          severity: CRITICAL,HIGH
-#          ignore-unfixed: true
-#          trivyignores: .trivyignore
+      - name: Generate Trivy SARIF report
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        with:
+          image-ref: clidey/whodb-cli:${{ inputs.version }}-${{ matrix.arch }}
+          format: sarif
+          output: trivy-results.sarif
+          exit-code: '0'
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          trivyignores: .trivyignore
+
+      - name: Upload Trivy SARIF report
+        if: always() && hashFiles('trivy-results.sarif') != ''
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@411bbbe57033eedfc1a82d68c01345aa96c737d7 # v4
+        with:
+          sarif_file: trivy-results.sarif
+          category: whodb-cli-docker-${{ matrix.arch }}
 
       - name: Upload Docker artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
