@@ -441,10 +441,10 @@ jobs:
         with:
           egress-policy: block
           allowed-endpoints: >
+            100.23.248.170:443
             api.github.com:443
-            deb.debian.org:443
-            deb.debian.org:80
             github.com:443
+            release-assets.githubusercontent.com:443
             uploads.github.com:443
 
       - name: Checkout
@@ -972,7 +972,9 @@ jobs:
       - name: Harden Runner
         uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >
+            github.com:443
 
       - name: Checkout main
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -1028,8 +1030,7 @@ jobs:
         with:
           egress-policy: block
           allowed-endpoints: >
-            deb.debian.org:443
-            deb.debian.org:80
+            100.23.248.170:443
 
       - name: Generate comprehensive summary
         run: |

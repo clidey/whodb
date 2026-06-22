@@ -40,9 +40,13 @@ jobs:
         with:
           egress-policy: block
           allowed-endpoints: >
+            100.20.106.61:443
+            44.225.180.214:443
+            44.236.18.214:443
             api.github.com:443
             app.posthog.com:443
             auth.docker.io:443
+            check.trivy.dev:443
             deb.debian.org:443
             deb.debian.org:80
             dl-cdn.alpinelinux.org:443

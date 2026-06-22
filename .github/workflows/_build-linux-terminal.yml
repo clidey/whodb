@@ -37,6 +37,7 @@ jobs:
             deb.debian.org:80
             esm.ubuntu.com:443
             github.com:443
+            motd.ubuntu.com:443
             packages.microsoft.com:443
             proxy.golang.org:443
             registry.npmjs.org:443

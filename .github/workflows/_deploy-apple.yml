@@ -39,9 +39,59 @@ jobs:
         with:
           egress-policy: block
           allowed-endpoints: >
-            deb.debian.org:443
-            deb.debian.org:80
+            0.pool.ntp.org:443
+            api.apple-cloudkit.com:443
+            api.apple-cloudkit.fe2.apple-dns.net:443
+            apple-relay.cloudflare.com:443
+            apple-relay.fastly-edge.com:443
+            apps.mzstatic.com:443
+            bag.itunes.apple.com:443
+            blob.bn9prdstrz04a.store.core.windows.net:443
+            c.apple.news:443
+            calendars.icloud.com:443
+            certs.apple.com:80
+            cf.iadsdk.apple.com:443
+            configuration-row-lb.apple.com.akadns.net:443
+            configuration.apple.com:443
+            configuration.ls.apple.com:443
+            device-config.pcms.apple.com:443
+            experiments.apple.com:443
+            fbs.smoot.apple.com:443
+            fpinit.itunes.apple.com:443
+            gateway.icloud.com:443
+            gdmf.apple.com:443
             github.com:443
+            gsa.apple.com:443
+            gspe1-ssl.ls.apple.com:443
+            gspe35-ssl.ls.apple.com:443
+            humb.apple.com:443
+            iadsdk.apple.com:443
+            init.itunes.apple.com:443
+            ipcdn.apple.com:443
+            mask-api.icloud.com:443
+            mask.icloud.com:443
+            mesu.apple.com:443
+            news-edge.apple.com:443
+            ocsp.comodoca.com:443
+            ocsp.digicert.com:443
+            ocsp.digicert.com:80
+            ocsp.usertrust.com:80
+            ocsp2.apple.com:443
+            ocsp2.g.aaplimg.com:443
+            pancake.apple.com:443
+            publicassets.cdn-apple.com:443
+            release-assets.githubusercontent.com:443
+            s.mzstatic.com:443
+            sas.pcms.apple.com:443
+            setup.icloud.com:443
+            sf-api-token-service.itunes.apple.com:443
+            stocks-data-service.apple.com:443
+            swdist.apple.com:443
+            swscan.apple.com:443
+            updates.cdn-apple.com:443
+            www.apple.com:443
+            xp-cdn-lb.itunes-apple.com.akadns.net:443
+            xp.apple.com:443
 
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -234,14 +284,69 @@ jobs:
         with:
           egress-policy: block
           allowed-endpoints: >
+            0.pool.ntp.org:123
+            0.pool.ntp.org:443
+            amp-api.media.apple.com:443
+            api.apple-cloudkit.com:443
+            api.apple-cloudkit.fe2.apple-dns.net:443
             api.appstoreconnect.apple.com:443
+            apple-relay.cloudflare.com:443
+            apple-relay.fastly-edge.com:443
+            apps.mzstatic.com:443
             appstoreconnect.apple.com:443
+            bag.itunes.apple.com:443
+            c.apple.news:443
+            calendars.icloud.com:443
+            cds.apple.com:443
+            certs.apple.com:80
+            cf.iadsdk.apple.com:443
+            configuration-row-lb.apple.com.akadns.net:443
+            configuration.apple.com.akadns.net:443
+            configuration.apple.com:443
+            configuration.ls.apple.com:443
             contentdelivery.itunes.apple.com:443
-            deb.debian.org:443
-            deb.debian.org:80
+            device-config.pcms.apple.com:443
+            experiments.apple.com:443
+            fbs.smoot.apple.com:443
             files.pythonhosted.org:443
+            fpinit.itunes.apple.com:443
+            gateway.icloud.com:443
+            gdmf.apple.com:443
             github.com:443
+            gsa.apple.com:443
+            gspe1-ssl.ls.apple.com:443
+            help.apple.com:443
+            iadsdk.apple.com:443
+            ipcdn-lb.apple.com.akadns.net:443
+            ipcdn.apple.com:443
+            mask-api.icloud.com:443
+            mask.icloud.com:443
+            mesu-cdn.origin-apple.com.akadns.net:443
+            mesu.apple.com:443
+            metrics.icloud.com:443
+            news-edge.apple.com:443
+            northamerica-1.object-storage.apple.com:443
+            northamerica-1.object-storage.v.aaplimg.com:443
+            ocsp.digicert.com:80
+            ocsp2.apple.com:443
+            ocsp2.g.aaplimg.com:443
+            pancake.apple.com:443
             pypi.org:443
+            release-assets.githubusercontent.com:443
+            s.mzstatic.com:443
+            sas.pcms.apple.com:443
+            sf-api-token-service.itunes.apple.com:443
+            stocks-data-service.apple.com:443
+            swallow.apple.com:443
+            swdist.apple.com:443
+            swdist.g.aaplimg.com:443
+            swscan.apple.com:443
+            updates.cdn-apple.com:443
+            valid.apple.com:443
+            weather-edge.apple.com:443
+            www.apple.com:443
+            xp-cdn-lb.itunes-apple.com.akadns.net:443
+            xp.apple.com:443
 
       - name: Checkout for scripts
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0

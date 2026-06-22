@@ -42,18 +42,40 @@ jobs:
         with:
           egress-policy: block
           allowed-endpoints: >
+            adl.windows.com:80
             api.github.com:443
             app.posthog.com:443
+            au.download.windowsupdate.com:80
+            cp601.prod.do.dsp.mp.microsoft.com:443
+            cp801.prod.do.dsp.mp.microsoft.com:443
+            dc.services.visualstudio.com:443
             deb.debian.org:443
             deb.debian.org:80
+            download.windowsupdate.com:80
+            fe2cr.update.microsoft.com:443
+            fs.microsoft.com:443
+            geo.prod.do.dsp.mp.microsoft.com:443
             github.com:443
+            incoming.telemetry.mozilla.org:443
+            kv601.prod.do.dsp.mp.microsoft.com:443
+            kv801.prod.do.dsp.mp.microsoft.com:443
+            login.live.com:443
+            mobile.events.data.microsoft.com:443
             objects.githubusercontent.com:443
+            ocsp.digicert.com:80
+            ocsp.sectigo.com:80
             proxy.golang.org:443
             registry.npmjs.org:443
+            release-assets.githubusercontent.com:443
+            settings-win.data.microsoft.com:443
             storage.googleapis.com:443
             sum.golang.org:443
+            tas02.sls.update.microsoft.com:443
+            telemetry-incoming.r53-2.services.mozilla.com:443
             us.i.posthog.com:443
             us.posthog.com:443
+            v1.ta2.fe2cr.update.microsoft.com:443
+            www.microsoft.com:80
 
       - name: Skip if not enabled
         if: matrix.enabled == false

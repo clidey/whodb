@@ -27,15 +27,16 @@ jobs:
         with:
           egress-policy: block
           allowed-endpoints: >
+            44.242.41.160:443
+            54.68.178.98:443
             api.github.com:443
-            deb.debian.org:443
-            deb.debian.org:80
             fulcio.sigstore.dev:443
             github.com:443
             nodejs.org:443
             objects.githubusercontent.com:443
             registry.npmjs.org:443
             rekor.sigstore.dev:443
+            release-assets.githubusercontent.com:443
             token.actions.githubusercontent.com:443
             tuf-repo-cdn.sigstore.dev:443
 

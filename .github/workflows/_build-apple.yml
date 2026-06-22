@@ -43,18 +43,104 @@ jobs:
         with:
           egress-policy: block
           allowed-endpoints: >
+            0.pool.ntp.org:123
+            0.pool.ntp.org:443
+            _dns.resolver.arpa:443
+            ab.apple.com.akadns.net:443
+            amp-api.media-lb.apple.com.akadns.net:443
+            amp-api.media.apple.com:443
+            api.apple-cloudkit.com:443
+            api.apple-cloudkit.fe2.apple-dns.net:443
             api.github.com:443
+            apple-relay.cloudflare.com:443
+            apple-relay.fastly-edge.com:443
             app.posthog.com:443
-            deb.debian.org:443
-            deb.debian.org:80
+            apps-mzstatic-cdn.itunes-apple.com.akadns.net:443
+            apps.mzstatic.com:443
+            appstoreconnect.apple.com:443
+            assets-mercury.mzstatic.com:443
+            bag.itunes.apple.com:443
+            blob.bn9prdstrz04a.store.core.windows.net:443
+            c.apple.news:443
+            calendars.icloud.com:443
+            cdn-h3.g.aaplimg.com:443
+            cds-cdn.v.aaplimg.com:443
+            cds.apple.com:443
+            cf.iadsdk.apple.com:443
+            configuration-lb.ls-apple.com.akadns.net:443
+            configuration-row-lb.apple.com.akadns.net:443
+            configuration.apple.com.akadns.net:443
+            configuration.apple.com:443
+            configuration.ls.apple.com:443
+            device-config.pcms.apple.com:443
+            dns.google:443
+            dns.google:853
+            e673.dsce9.akamaiedge.net:443
+            experiments.apple.com:443
+            fbs.smoot.apple.com:443
+            fpinit.itunes.apple.com:443
+            gateway.fe2.apple-dns.net:443
+            gateway.icloud.com:443
+            gdmf.apple.com:443
             github.com:443
+            gsa.apple.com:443
+            gsp-ssl.ls.apple.com:443
+            gspe1-ssl.ls.apple.com:443
+            help.apple.com:443
+            help.origin-apple.com.akadns.net:443
+            humb.apple.com:443
+            iadsdk.apple.com:443
+            init.itunes.apple.com:443
+            int1.stepsecurity.io:443
+            ipcdn-lb.apple.com.akadns.net:443
+            ipcdn.apple.com:443
+            mask-api.icloud.com:443
+            mask-h2.icloud.com:443
+            mask.icloud.com:443
+            mesu-cdn.apple.com.akadns.net:443
+            mesu-cdn.origin-apple.com.akadns.net:443
+            mesu.apple.com:443
+            metrics.icloud.com:443
+            news-edge.apple.com:443
+            notary-submissions-prod.s3-accelerate.amazonaws.com:443
             objects.githubusercontent.com:443
+            ocsp.digicert.com:443
+            ocsp.digicert.com:80
+            ocsp.edge.digicert.com:80
+            ocsp.rootca1.amazontrust.com:80
+            ocsp.sectigo.com:80
+            ocsp.usertrust.com:80
+            ocsp2.apple.com:443
+            ocsp2.g.aaplimg.com:443
+            pancake.apple.com:443
             proxy.golang.org:443
             registry.npmjs.org:443
+            release-assets.githubusercontent.com:443
+            s.mzstatic.com:443
+            sas.pcms.apple.com:443
+            setup.icloud.com:443
+            sf-api-token-service.itunes.apple.com:443
+            stocks-data-service.apple.com:443
+            stocks-edge.apple.com:443
             storage.googleapis.com:443
             sum.golang.org:443
+            swallow.apple.com:443
+            swdist.apple.com:443
+            swdist.g.aaplimg.com:443
+            swscan-cdn.apple.com.akadns.net:443
+            swscan.apple.com:443
+            timestamp.apple.com:80
+            updates.cdn-apple.com:443
             us.i.posthog.com:443
             us.posthog.com:443
+            valid.apple.com:443
+            weather-edge.apple.com:443
+            www.apple.com:443
+            xp-cdn-lb.itunes-apple.com.akadns.net:443
+            xp.apple.com:443
+            xp.g.aaplimg.com:443
+            xp.itunes-apple.com.akadns.net:443
+            xp.v.aaplimg.com:443
 
       - name: Skip if not enabled
         if: matrix.enabled == false

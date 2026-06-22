@@ -44,8 +44,11 @@ jobs:
         with:
           egress-policy: block
           allowed-endpoints: >
+            44.225.180.214:443
+            44.231.40.74:443
             api.github.com:443
             auth.docker.io:443
+            check.trivy.dev:443
             dl-cdn.alpinelinux.org:443
             get.trivy.dev:443
             ghcr.io:443
