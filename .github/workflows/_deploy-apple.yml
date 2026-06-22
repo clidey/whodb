@@ -141,6 +141,7 @@ jobs:
           echo "app_path=$APP_PATH" >> "$GITHUB_OUTPUT"
 
       - name: Import Mac App Store Installer Certificate
+        shell: bash
         env:
           MAS_CERTIFICATE_P12_BASE64: ${{ secrets.APPLE_MAS_CERTIFICATES_P12 }}
           MAS_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_MAS_CERTIFICATES_PASSWORD }}
@@ -177,7 +178,10 @@ jobs:
             -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
 
           # Set keychain search list
-          mapfile -t EXISTING_KEYCHAINS < <(security list-keychains -d user | sed 's/"//g')
+          EXISTING_KEYCHAINS=()
+          while IFS= read -r keychain; do
+            EXISTING_KEYCHAINS+=("$keychain")
+          done < <(security list-keychains -d user | sed 's/"//g')
           security list-keychains -d user -s "$KEYCHAIN_PATH" "${EXISTING_KEYCHAINS[@]}"
 
           # Allow productbuild to access keychain
