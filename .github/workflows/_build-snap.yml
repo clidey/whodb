@@ -54,25 +54,12 @@ jobs:
             desktop-ce/go.sum
             desktop-ce/go.mod
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@26f6d4f2c533a43e6b5da0b4a5dd983f98f7b49a # v6.0.4
+      - name: Download frontend build artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          package_json_file: frontend/package.json
-          run_install: false
-
-      - name: Get pnpm store directory
-        id: pnpm-cache
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
-
-      - name: Setup pnpm cache
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
-        with:
-          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('frontend/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+          digest-mismatch: warn
+          name: frontend-build-ce
+          path: frontend/build
 
       - name: Cache Wails binary
         id: cache-wails
@@ -91,6 +78,10 @@ jobs:
         id: build_snap
         run: |
           echo "Building snap with release-version: ${{ inputs.version }}"
+
+          test -f frontend/build/index.html
+          test -f frontend/build/.whodb-edition
+          grep -qx 'ce' frontend/build/.whodb-edition
 
           echo "${{ inputs.version }}" > .snap_version
 

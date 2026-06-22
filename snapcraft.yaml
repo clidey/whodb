@@ -76,41 +76,6 @@ apps:
       - home
 
 parts:
-  # Build Node/frontend dependencies first
-  frontend:
-    plugin: nil
-    source: frontend
-    source-type: local
-    build-packages:
-      - curl
-      - ca-certificates
-      - gnupg
-    build-environment:
-      # Skip Cypress binary installation - not needed for production builds
-      - PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
-    override-build: |
-      # Install Node.js
-      curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
-      apt-get install -y nodejs
-
-      # Install pnpm
-      npm install -g pnpm@10.29.3
-
-      # Read version for frontend build
-      if [ -f "${SNAPCRAFT_PROJECT_DIR}/.snap_version" ]; then
-        export VITE_APP_VERSION=$(cat "${SNAPCRAFT_PROJECT_DIR}/.snap_version" | tr -d '[:space:]')
-      else
-        export VITE_APP_VERSION="development"
-      fi
-
-      # Build frontend (Cypress binary will be skipped)
-      pnpm install
-      pnpm run build:ce
-
-      # Stage the build output for the next part
-      mkdir -p $SNAPCRAFT_PART_INSTALL/frontend-dist
-      cp -r build/* $SNAPCRAFT_PART_INSTALL/frontend-dist/
-
   versioner:
     plugin: nil
     override-pull: |
@@ -129,7 +94,6 @@ parts:
       fi
 
   whodb:
-    after: [ frontend ]
     plugin: nil
     source: .
     source-type: local
@@ -473,12 +437,12 @@ parts:
       # Export VERSION for make
       export VERSION
 
-      # Copy frontend build to the location the Makefile expects (../frontend/build from desktop-ce/)
-      mkdir -p frontend/build
-      cp -r $SNAPCRAFT_STAGE/frontend-dist/* frontend/build/
+      # The CI workflow downloads the shared frontend build before snapcraft
+      # packs this local source.
+      test -f "${SNAPCRAFT_PART_SRC}/frontend/build/index.html"
 
       # Change to desktop-ce directory
-      cd desktop-ce
+      cd "${SNAPCRAFT_PART_SRC}/desktop-ce"
 
       # Use the Makefile's CI build target (which handles all proper configuration)
       make ci-build-prod-linux VERSION="$VERSION"

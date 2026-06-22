@@ -264,7 +264,7 @@ jobs:
 
   build-snap:
     name: Build Snap
-    needs: [ calculate-version ]
+    needs: [ calculate-version, build-frontend ]
     if: needs.calculate-version.outputs.deploy-snap == 'true'
     uses: ./.github/workflows/_build-snap.yml
     with:
