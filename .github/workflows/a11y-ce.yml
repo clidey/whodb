@@ -429,10 +429,10 @@ jobs:
         id: check_creds
         run: |
           if [ -n "${{ secrets.DOCKERHUB_TOKEN }}" ]; then
-            echo "has_creds=true" >> $GITHUB_OUTPUT
+            echo "has_creds=true" >> "$GITHUB_OUTPUT"
             echo "✅ Docker credentials are configured"
           else
-            echo "has_creds=false" >> $GITHUB_OUTPUT
+            echo "has_creds=false" >> "$GITHUB_OUTPUT"
             echo "::error::Docker credentials not configured"
             exit 1
           fi
