@@ -40,28 +40,13 @@ jobs:
           cache: pnpm
           cache-dependency-path: frontend/pnpm-lock.yaml
 
-      - name: Cache Go security tools
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+      - name: Install Go security tools
+        uses: ./.github/actions/install-go-tools
         with:
-          path: ~/.cache/whodb-go-tools/bin
-          key: ${{ runner.os }}-go-security-tools-gosec-v2.27.1-govulncheck-v1.3.0
-
-      - name: Add Go tools to PATH
-        run: echo "$HOME/.cache/whodb-go-tools/bin" >> "$GITHUB_PATH"
-
-      - name: Install gosec
-        run: |
-          mkdir -p "$HOME/.cache/whodb-go-tools/bin"
-          if [ ! -x "$HOME/.cache/whodb-go-tools/bin/gosec" ]; then
-            GOBIN="$HOME/.cache/whodb-go-tools/bin" go install github.com/securego/gosec/v2/cmd/gosec@v2.27.1
-          fi
-
-      - name: Install govulncheck
-        run: |
-          mkdir -p "$HOME/.cache/whodb-go-tools/bin"
-          if [ ! -x "$HOME/.cache/whodb-go-tools/bin/govulncheck" ]; then
-            GOBIN="$HOME/.cache/whodb-go-tools/bin" go install golang.org/x/vuln/cmd/govulncheck@v1.3.0
-          fi
+          cache-key: go-security-tools-gosec-v2.27.1-govulncheck-v1.3.0
+          tools: |
+            gosec|github.com/securego/gosec/v2/cmd/gosec|v2.27.1
+            govulncheck|golang.org/x/vuln/cmd/govulncheck|v1.3.0
 
       - name: Gitleaks
         uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
@@ -229,7 +214,7 @@ jobs:
             gosec.json
             govulncheck.json
             audit.json
-          retention-days: 30
+          retention-days: 7
 
   trivy-image:
     name: Trivy Image Scan (${{ matrix.image }})
@@ -270,4 +255,4 @@ jobs:
         with:
           name: trivy-${{ matrix.image }}-report
           path: trivy-${{ matrix.image }}.json
-          retention-days: 30
+          retention-days: 7

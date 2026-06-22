@@ -1,0 +1,52 @@
+name: Install Go tools
+description: Restore cached Go tool binaries and install any missing tools.
+
+inputs:
+  cache-key:
+    description: Cache key suffix for the requested tool set.
+    required: true
+  tools:
+    description: Newline-separated tool specs in binary|package|version format.
+    required: true
+  add-to-path:
+    description: Add the Go tool bin directory to PATH.
+    required: false
+    default: 'true'
+
+runs:
+  using: composite
+  steps:
+    - name: Cache Go tools
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+      with:
+        path: ~/.cache/whodb-go-tools/bin
+        key: ${{ runner.os }}-${{ inputs.cache-key }}
+
+    - name: Install missing Go tools
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        bin_dir="$HOME/.cache/whodb-go-tools/bin"
+        mkdir -p "$bin_dir"
+
+        while IFS='|' read -r binary package version; do
+          if [ -z "${binary:-}" ]; then
+            continue
+          fi
+
+          if [ -z "${package:-}" ] || [ -z "${version:-}" ]; then
+            echo "Invalid Go tool spec: ${binary}|${package:-}|${version:-}" >&2
+            exit 1
+          fi
+
+          if [ ! -x "$bin_dir/$binary" ]; then
+            GOBIN="$bin_dir" go install "${package}@${version}"
+          fi
+        done <<'TOOLS'
+        ${{ inputs.tools }}
+        TOOLS
+
+        if [ "${{ inputs.add-to-path }}" = "true" ]; then
+          echo "$bin_dir" >> "$GITHUB_PATH"
+        fi
