@@ -412,6 +412,12 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
     const [externalModelName, setExternalModelName] = useState<string>("");
 
     const handleAddExternalModel = useCallback(() => {
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        const overrides = getAIProviderOverrides();
+        if (overrides?.isActive() && overrides.openAddProvider) {
+            overrides.openAddProvider();
+            return;
+        }
         setAddExternalModel(status => !status);
         onAddExternalModel?.();
     }, [onAddExternalModel]);

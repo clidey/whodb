@@ -15,6 +15,17 @@ name: Release CE
 #   - Can deploy to all stores or just specific ones
 #   - Stage deploys to: Docker (tag only), Snap (edge), MS Store (draft), Apple (TestFlight)
 #   - Production deploys to: Docker (latest), Snap (stable), MS Store (prod), Apple (App Store)
+#
+# Artifact contract:
+#   - frontend-build-ce feeds all CE platform builds
+#   - snap-package-amd64/snap-package-arm64 feed Snap deploy, signing, and release assets
+#   - desktop-windows-amd64 feeds Microsoft packaging and release assets
+#   - windows-msix feeds release assets after Microsoft packaging
+#   - desktop-darwin-dmg feeds Apple signing and release assets
+#   - desktop-darwin-mas-app feeds Apple deploy/signing
+#   - server-binaries-ce feeds Linux terminal release assets
+#   - cli-binaries feeds npm deploy and release assets
+#   - signatures feeds release assets
 
 on:
   push:
@@ -65,19 +76,13 @@ on:
         required: false
         type: boolean
         default: false
-      # DISABLED: AppImage requires system WebKit2GTK - not truly portable
-      # deploy-appimage:
-      #   description: 'Build AppImage (for GitHub Release)'
-      #   required: false
-      #   type: boolean
-      #   default: false
       deploy-linux-terminal:
         description: 'Build Linux terminal binaries (amd64, arm64, riscv64, armv6, armv7)'
         required: false
         type: boolean
         default: false
       deploy-cli:
-        description: 'Build CLI binaries (all platforms) - also generates Homebrew formula'
+        description: 'Build CLI binaries (all platforms)'
         required: false
         type: boolean
         default: false
@@ -93,12 +98,14 @@ on:
         default: false
 
 permissions:
-  contents: write
-  actions: write
-  id-token: write
+  contents: read
+
+concurrency:
+  group: release-ce
+  cancel-in-progress: false
 
 jobs:
-  # Step 1: Calculate version and deployment parameters
+  # Calculate version and deployment parameters
   calculate-version:
     name: Calculate Version
     runs-on: ubuntu-latest
@@ -112,21 +119,27 @@ jobs:
       deploy-snap: ${{ steps.calc.outputs.deploy-snap }}
       deploy-microsoft: ${{ steps.calc.outputs.deploy-microsoft }}
       deploy-apple: ${{ steps.calc.outputs.deploy-apple }}
-      # deploy-appimage: ${{ steps.calc.outputs.deploy-appimage }}  # DISABLED
       deploy-linux-terminal: ${{ steps.calc.outputs.deploy-linux-terminal }}
       deploy-cli: ${{ steps.calc.outputs.deploy-cli }}
       deploy-npm: ${{ steps.calc.outputs.deploy-npm }}
       publish-github-release: ${{ steps.calc.outputs.publish-github-release }}
+      has-file-assets: ${{ steps.release_flags.outputs.has-file-assets }}
       release-notes: ${{ steps.release_notes.outputs.notes }}
+    permissions:
+      contents: read
+      pull-requests: read
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@8d3c67de8e2fe68ef647c8db1e6a09f647780f40 # v2.19.0
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
 
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           fetch-depth: 0
           submodules: false
@@ -142,8 +155,10 @@ jobs:
             MODE="production"
             VERSION_BUMP="minor"
           fi
-          echo "mode=$MODE" >> $GITHUB_OUTPUT
-          echo "version_bump=$VERSION_BUMP" >> $GITHUB_OUTPUT
+          {
+            echo "mode=$MODE"
+            echo "version_bump=$VERSION_BUMP"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Calculate version and parameters
         id: calc
@@ -152,15 +167,39 @@ jobs:
           deployment-mode: ${{ steps.deployment_mode.outputs.mode }}
           version-bump: ${{ steps.deployment_mode.outputs.version_bump }}
           explicit-version: ${{ inputs.explicit-version }}
-          deploy-docker: ${{ github.event_name == 'push' && 'true' || (fromJSON(inputs.deploy-docker) && 'true' || 'false') }}
-          deploy-snap: ${{ github.event_name == 'push' && 'true' || (fromJSON(inputs.deploy-snap) && 'true' || 'false') }}
-          deploy-microsoft: ${{ github.event_name == 'push' && 'true' || (fromJSON(inputs.deploy-microsoft) && 'true' || 'false') }}
-          deploy-apple: ${{ github.event_name == 'push' && 'true' || (fromJSON(inputs.deploy-apple) && 'true' || 'false') }}
-          deploy-appimage: 'false'  # DISABLED: AppImage requires system WebKit2GTK
-          deploy-linux-terminal: ${{ github.event_name == 'push' && 'true' || (fromJSON(inputs.deploy-linux-terminal) && 'true' || 'false') }}
-          deploy-cli: ${{ github.event_name == 'push' && 'true' || (fromJSON(inputs.deploy-cli) && 'true' || 'false') }}
-          deploy-npm: ${{ github.event_name == 'push' && 'true' || (fromJSON(inputs.deploy-npm) && 'true' || 'false') }}
-          publish-github-release: ${{ github.event_name == 'push' && 'true' || (fromJSON(inputs.publish-github-release) && 'true' || 'false') }}
+          deploy-docker: ${{ github.event_name == 'push' && 'true' || (inputs.deploy-docker && 'true' || 'false') }}
+          deploy-snap: ${{ github.event_name == 'push' && 'true' || (inputs.deploy-snap && 'true' || 'false') }}
+          deploy-microsoft: ${{ github.event_name == 'push' && 'true' || (inputs.deploy-microsoft && 'true' || 'false') }}
+          deploy-apple: ${{ github.event_name == 'push' && 'true' || (inputs.deploy-apple && 'true' || 'false') }}
+          deploy-linux-terminal: ${{ github.event_name == 'push' && 'true' || (inputs.deploy-linux-terminal && 'true' || 'false') }}
+          deploy-cli: ${{ github.event_name == 'push' && 'true' || (inputs.deploy-cli && 'true' || 'false') }}
+          deploy-npm: ${{ github.event_name == 'push' && 'true' || (inputs.deploy-npm && 'true' || 'false') }}
+          publish-github-release: ${{ github.event_name == 'push' && 'true' || (inputs.publish-github-release && 'true' || 'false') }}
+
+      - name: Validate release target selection
+        id: release_flags
+        env:
+          DEPLOY_DOCKER: ${{ steps.calc.outputs.deploy-docker }}
+          DEPLOY_SNAP: ${{ steps.calc.outputs.deploy-snap }}
+          DEPLOY_MICROSOFT: ${{ steps.calc.outputs.deploy-microsoft }}
+          DEPLOY_APPLE: ${{ steps.calc.outputs.deploy-apple }}
+          DEPLOY_LINUX_TERMINAL: ${{ steps.calc.outputs.deploy-linux-terminal }}
+          DEPLOY_CLI: ${{ steps.calc.outputs.deploy-cli }}
+          DEPLOY_NPM: ${{ steps.calc.outputs.deploy-npm }}
+        run: |
+          set -euo pipefail
+
+          HAS_FILE_ASSETS=false
+          if [ "$DEPLOY_SNAP" = "true" ] || [ "$DEPLOY_MICROSOFT" = "true" ] || [ "$DEPLOY_APPLE" = "true" ] || [ "$DEPLOY_LINUX_TERMINAL" = "true" ] || [ "$DEPLOY_CLI" = "true" ] || [ "$DEPLOY_NPM" = "true" ]; then
+            HAS_FILE_ASSETS=true
+          fi
+
+          if [ "$DEPLOY_DOCKER" != "true" ] && [ "$HAS_FILE_ASSETS" != "true" ]; then
+            echo "::error::Select at least one release target: Docker, Snap, Microsoft, Apple, Linux Terminal, CLI, or npm."
+            exit 1
+          fi
+
+          echo "has-file-assets=$HAS_FILE_ASSETS" >> "$GITHUB_OUTPUT"
 
       - name: Extract release notes from PR
         id: release_notes
@@ -192,52 +231,60 @@ jobs:
             echo "notes<<EOF"
             echo "$NOTES"
             echo "EOF"
-          } >> $GITHUB_OUTPUT
+          } >> "$GITHUB_OUTPUT"
 
       - name: Display configuration
         run: |
-          echo "# 🎯 Release Configuration" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Parameter | Value |" >> $GITHUB_STEP_SUMMARY
-          echo "|-----------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| **Version** | ${{ steps.calc.outputs.version }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Mode** | ${{ steps.calc.outputs.deployment-mode }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Stage Only** | ${{ steps.calc.outputs.stage-only }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Publish GitHub Release** | ${{ steps.calc.outputs.publish-github-release }} |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## Deployment Targets" >> $GITHUB_STEP_SUMMARY
+          {
+          echo "# 🎯 Release Configuration"
+          echo ""
+          echo "| Parameter | Value |"
+          echo "|-----------|-------|"
+          echo "| **Version** | ${{ steps.calc.outputs.version }} |"
+          echo "| **Mode** | ${{ steps.calc.outputs.deployment-mode }} |"
+          echo "| **Stage Only** | ${{ steps.calc.outputs.stage-only }} |"
+          echo "| **Publish GitHub Release** | ${{ steps.calc.outputs.publish-github-release }} |"
+          echo ""
+          echo "## Deployment Targets"
 
           MODE="${{ steps.calc.outputs.deployment-mode }}"
           if [ "$MODE" = "production" ]; then
-            echo "| Store | Deploy | Channel |" >> $GITHUB_STEP_SUMMARY
-            echo "|-------|--------|---------|" >> $GITHUB_STEP_SUMMARY
-            echo "| Docker Hub | ${{ steps.calc.outputs.deploy-docker }} | latest |" >> $GITHUB_STEP_SUMMARY
-            echo "| Snap Store | ${{ steps.calc.outputs.deploy-snap }} | stable |" >> $GITHUB_STEP_SUMMARY
-            echo "| Microsoft Store | ${{ steps.calc.outputs.deploy-microsoft }} | production |" >> $GITHUB_STEP_SUMMARY
-            echo "| Apple App Store | ${{ steps.calc.outputs.deploy-apple }} | App Store |" >> $GITHUB_STEP_SUMMARY
+            echo "| Store | Deploy | Channel |"
+            echo "|-------|--------|---------|"
+            echo "| Docker Hub | ${{ steps.calc.outputs.deploy-docker }} | latest |"
+            echo "| Snap Store | ${{ steps.calc.outputs.deploy-snap }} | stable |"
+            echo "| Microsoft Store | ${{ steps.calc.outputs.deploy-microsoft }} | production |"
+            echo "| Apple App Store | ${{ steps.calc.outputs.deploy-apple }} | App Store |"
           else
-            echo "| Store | Deploy | Channel |" >> $GITHUB_STEP_SUMMARY
-            echo "|-------|--------|---------|" >> $GITHUB_STEP_SUMMARY
-            echo "| Docker Hub | ${{ steps.calc.outputs.deploy-docker }} | version tag |" >> $GITHUB_STEP_SUMMARY
-            echo "| Snap Store | ${{ steps.calc.outputs.deploy-snap }} | edge |" >> $GITHUB_STEP_SUMMARY
-            echo "| Microsoft Store | ${{ steps.calc.outputs.deploy-microsoft }} | draft |" >> $GITHUB_STEP_SUMMARY
-            echo "| Apple App Store | ${{ steps.calc.outputs.deploy-apple }} | TestFlight |" >> $GITHUB_STEP_SUMMARY
+            echo "| Store | Deploy | Channel |"
+            echo "|-------|--------|---------|"
+            echo "| Docker Hub | ${{ steps.calc.outputs.deploy-docker }} | version tag |"
+            echo "| Snap Store | ${{ steps.calc.outputs.deploy-snap }} | edge |"
+            echo "| Microsoft Store | ${{ steps.calc.outputs.deploy-microsoft }} | draft |"
+            echo "| Apple App Store | ${{ steps.calc.outputs.deploy-apple }} | TestFlight |"
           fi
+          } >> "$GITHUB_STEP_SUMMARY"
 
-  # Step 2a: Build frontend once (shared by all platform builds)
+  # Build frontend once for all CE platform builds
   build-frontend:
     name: Build Frontend
     needs: [ calculate-version ]
+    permissions:
+      contents: read
     uses: ./.github/workflows/_build-frontend.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
     secrets: inherit
 
-  # Step 2b: Build platform artifacts in parallel (only what's selected)
+  # Build selected platform artifacts in parallel
   build-docker:
     name: Build Docker
     needs: [ calculate-version, build-frontend ]
     if: needs.calculate-version.outputs.deploy-docker == 'true'
+    permissions:
+      contents: read
+      actions: write
+      security-events: write
     uses: ./.github/workflows/_build-docker.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
@@ -247,6 +294,9 @@ jobs:
     name: Build Windows
     needs: [ calculate-version, build-frontend ]
     if: needs.calculate-version.outputs.deploy-microsoft == 'true'
+    permissions:
+      contents: read
+      actions: write
     uses: ./.github/workflows/_build-windows.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
@@ -257,6 +307,9 @@ jobs:
     name: Build Apple
     needs: [ calculate-version, build-frontend ]
     if: needs.calculate-version.outputs.deploy-apple == 'true'
+    permissions:
+      contents: read
+      actions: write
     uses: ./.github/workflows/_build-apple.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
@@ -264,27 +317,23 @@ jobs:
 
   build-snap:
     name: Build Snap
-    needs: [ calculate-version ]
+    needs: [ calculate-version, build-frontend ]
     if: needs.calculate-version.outputs.deploy-snap == 'true'
+    permissions:
+      contents: read
+      actions: write
     uses: ./.github/workflows/_build-snap.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
     secrets: inherit
 
-  # DISABLED: AppImage requires system WebKit2GTK - not truly portable
-  # build-appimage:
-  #   name: Build AppImage
-  #   needs: [ calculate-version ]
-  #   if: needs.calculate-version.outputs.deploy-appimage == 'true'
-  #   uses: ./.github/workflows/_build-appimage.yml
-  #   with:
-  #     version: ${{ needs.calculate-version.outputs.version }}
-  #   secrets: inherit
-
   build-linux-terminal:
     name: Build Linux Terminal
     needs: [ calculate-version, build-frontend ]
     if: needs.calculate-version.outputs.deploy-linux-terminal == 'true'
+    permissions:
+      contents: read
+      actions: write
     uses: ./.github/workflows/_build-linux-terminal.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
@@ -294,6 +343,9 @@ jobs:
     name: Build CLI
     needs: [ calculate-version ]
     if: needs.calculate-version.outputs.deploy-cli == 'true' || needs.calculate-version.outputs.deploy-npm == 'true'
+    permissions:
+      contents: read
+      actions: write
     uses: ./.github/workflows/_build-cli.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
@@ -303,18 +355,23 @@ jobs:
     name: Build CLI Docker
     needs: [ calculate-version ]
     if: needs.calculate-version.outputs.deploy-docker == 'true'
+    permissions:
+      contents: read
+      actions: write
+      security-events: write
     uses: ./.github/workflows/_build-docker-cli.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
     secrets: inherit
 
-  # Step 3: Sign and validate all builds (best effort - continues even if any build fails)
+  # Sign and validate selected artifacts
   sign-and-validate:
     name: Sign and Validate
     needs: [ calculate-version, build-docker, build-docker-cli, build-windows, build-apple, build-snap, build-linux-terminal, build-cli ]
     if: |
       always() &&
       needs.calculate-version.result == 'success' &&
+      needs.calculate-version.outputs.has-file-assets == 'true' &&
       (needs.build-docker.result == 'success' || needs.build-docker.result == 'skipped' || needs.build-docker.result == 'failure') &&
       (needs.build-docker-cli.result == 'success' || needs.build-docker-cli.result == 'skipped' || needs.build-docker-cli.result == 'failure') &&
       (needs.build-windows.result == 'success' || needs.build-windows.result == 'skipped' || needs.build-windows.result == 'failure') &&
@@ -322,119 +379,279 @@ jobs:
       (needs.build-snap.result == 'success' || needs.build-snap.result == 'skipped' || needs.build-snap.result == 'failure') &&
       (needs.build-linux-terminal.result == 'success' || needs.build-linux-terminal.result == 'skipped' || needs.build-linux-terminal.result == 'failure') &&
       (needs.build-cli.result == 'success' || needs.build-cli.result == 'skipped' || needs.build-cli.result == 'failure')
+    permissions:
+      contents: read
+      id-token: write
     uses: ./.github/workflows/_sign-validate.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
       validate-snap: ${{ needs.build-snap.result == 'success' }}
       validate-desktop: ${{ needs.build-windows.result == 'success' || needs.build-apple.result == 'success' }}
-      validate-appimage: false  # DISABLED: AppImage builds disabled
+      validate-windows: ${{ needs.build-windows.result == 'success' }}
+      validate-apple: ${{ needs.build-apple.result == 'success' }}
+      validate-linux-terminal: ${{ needs.build-linux-terminal.result == 'success' }}
 
-  # Step 4: Create GitHub release (only if ALL selected platforms built successfully)
+  # Final GitHub release gate after selected builds and deploys succeed
   create-github-release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
-    needs: [ calculate-version, build-docker, build-docker-cli, build-windows, build-apple, build-snap, build-linux-terminal, build-cli, sign-and-validate ]
+    needs: [
+      calculate-version,
+      build-docker,
+      build-docker-cli,
+      build-windows,
+      build-apple,
+      build-snap,
+      build-linux-terminal,
+      build-cli,
+      sign-and-validate,
+      deploy-docker,
+      deploy-docker-cli,
+      deploy-snap,
+      deploy-microsoft,
+      deploy-apple,
+      deploy-npm
+    ]
     if: |
       always() &&
       needs.calculate-version.result == 'success' &&
-      needs.sign-and-validate.result == 'success' &&
+      (
+        (needs.calculate-version.outputs.has-file-assets == 'true' && needs.sign-and-validate.result == 'success') ||
+        (needs.calculate-version.outputs.has-file-assets != 'true' && needs.sign-and-validate.result == 'skipped')
+      ) &&
       (needs.calculate-version.outputs.deploy-docker != 'true' || needs.build-docker.result == 'success') &&
       (needs.calculate-version.outputs.deploy-docker != 'true' || needs.build-docker-cli.result == 'success') &&
       (needs.calculate-version.outputs.deploy-snap != 'true' || needs.build-snap.result == 'success') &&
       (needs.calculate-version.outputs.deploy-microsoft != 'true' || needs.build-windows.result == 'success') &&
       (needs.calculate-version.outputs.deploy-apple != 'true' || needs.build-apple.result == 'success') &&
       (needs.calculate-version.outputs.deploy-linux-terminal != 'true' || needs.build-linux-terminal.result == 'success') &&
-      (needs.calculate-version.outputs.deploy-cli != 'true' || needs.build-cli.result == 'success')
+      (needs.calculate-version.outputs.deploy-cli != 'true' || needs.build-cli.result == 'success') &&
+      (needs.calculate-version.outputs.deploy-docker != 'true' || needs.deploy-docker.result == 'success') &&
+      (needs.calculate-version.outputs.deploy-docker != 'true' || needs.deploy-docker-cli.result == 'success') &&
+      (needs.calculate-version.outputs.deploy-snap != 'true' || needs.deploy-snap.result == 'success') &&
+      (needs.calculate-version.outputs.deploy-microsoft != 'true' || needs.deploy-microsoft.result == 'success') &&
+      (needs.calculate-version.outputs.deploy-apple != 'true' || needs.deploy-apple.result == 'success') &&
+      (needs.calculate-version.outputs.deploy-npm != 'true' || needs.deploy-npm.result == 'success')
     permissions:
       contents: write
+      pull-requests: read
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@8d3c67de8e2fe68ef647c8db1e6a09f647780f40 # v2.19.0
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
           egress-policy: block
           allowed-endpoints: >
+            100.23.248.170:443
             api.github.com:443
-            deb.debian.org:443
-            deb.debian.org:80
             github.com:443
+            release-assets.githubusercontent.com:443
             uploads.github.com:443
 
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           submodules: false
 
-      - name: Download Snap packages
+      - name: Download Snap amd64 package
+        if: needs.calculate-version.outputs.deploy-snap == 'true'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        continue-on-error: true
         with:
           digest-mismatch: warn
-          pattern: snap-package-*
-          path: artifacts/
+          name: snap-package-amd64
+          path: artifacts/snap-package-amd64/
 
-      - name: Download Desktop builds
+      - name: Download Snap arm64 package
+        if: needs.calculate-version.outputs.deploy-snap == 'true'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        continue-on-error: true
         with:
           digest-mismatch: warn
-          pattern: desktop-*
-          path: artifacts/
+          name: snap-package-arm64
+          path: artifacts/snap-package-arm64/
 
-      # DISABLED: AppImage builds disabled
-      # - name: Download AppImages
-      #   uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-      #   continue-on-error: true
-      #   with:
-      #     pattern: appimage-*
-      #     path: artifacts/
+      - name: Download Windows executable
+        if: needs.calculate-version.outputs.deploy-microsoft == 'true'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          digest-mismatch: warn
+          name: desktop-windows-amd64
+          path: artifacts/desktop-windows-amd64/
+
+      - name: Download Windows MSIX bundle
+        if: needs.calculate-version.outputs.deploy-microsoft == 'true'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          digest-mismatch: warn
+          name: windows-msix
+          path: artifacts/windows-msix/
+
+      - name: Download macOS DMG
+        if: needs.calculate-version.outputs.deploy-apple == 'true'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          digest-mismatch: warn
+          name: desktop-darwin-dmg
+          path: artifacts/desktop-darwin-dmg/
 
       - name: Download Linux server binaries
+        if: needs.calculate-version.outputs.deploy-linux-terminal == 'true'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        continue-on-error: true
         with:
           digest-mismatch: warn
-          pattern: server-binaries-*
-          path: artifacts/
+          name: server-binaries-ce
+          path: artifacts/server-binaries-ce/
 
       - name: Download CLI binaries
+        if: needs.calculate-version.outputs.deploy-cli == 'true' || needs.calculate-version.outputs.deploy-npm == 'true'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        continue-on-error: true
         with:
           digest-mismatch: warn
           name: cli-binaries
           path: artifacts/cli-binaries/
 
       - name: Download signatures
+        if: needs.calculate-version.outputs.has-file-assets == 'true'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        continue-on-error: true
         with:
           digest-mismatch: warn
           name: signatures
           path: artifacts/signatures/
 
       - name: Prepare release assets
+        env:
+          DEPLOY_SNAP: ${{ needs.calculate-version.outputs.deploy-snap }}
+          DEPLOY_MICROSOFT: ${{ needs.calculate-version.outputs.deploy-microsoft }}
+          DEPLOY_APPLE: ${{ needs.calculate-version.outputs.deploy-apple }}
+          DEPLOY_LINUX_TERMINAL: ${{ needs.calculate-version.outputs.deploy-linux-terminal }}
+          DEPLOY_CLI: ${{ needs.calculate-version.outputs.deploy-cli }}
+          DEPLOY_NPM: ${{ needs.calculate-version.outputs.deploy-npm }}
+          HAS_FILE_ASSETS: ${{ needs.calculate-version.outputs.has-file-assets }}
         run: |
+          set -euo pipefail
+
           mkdir -p final-assets
 
-          # Copy desktop builds (exe, dmg, msixbundle)
-          find artifacts -type f \( -name "*.exe" -o -name "*.dmg" -o -name "*.msixbundle" \) -exec cp {} final-assets/ \; 2>/dev/null || true
+          copy_release_assets() {
+            local description="$1"
+            local source_dir="$2"
+            local min_count="$3"
+            shift 3
+            local count
 
-          # Copy Linux server binaries
-          find artifacts -type f -name "whodb-*-linux-*" -exec cp {} final-assets/ \; 2>/dev/null || true
+            if [ ! -d "$source_dir" ]; then
+              echo "::error::Missing ${description}: artifact directory ${source_dir} was not downloaded"
+              exit 1
+            fi
 
-          # Copy CLI binaries
-          find artifacts/cli-binaries -type f -name "whodb-cli-*" -exec cp {} final-assets/ \; 2>/dev/null || true
+            count=$(find "$source_dir" "$@" -type f | wc -l | tr -d ' ')
+            if [ "$count" -lt "$min_count" ]; then
+              echo "::error::Missing ${description}: expected at least ${min_count}, found ${count}"
+              exit 1
+            fi
 
-          # Copy signatures (extract and copy only files, not directories)
-          if [ -f artifacts/signatures/signatures.tar.gz ]; then
-            mkdir -p /tmp/sig-extract
-            tar -xzf artifacts/signatures/signatures.tar.gz -C /tmp/sig-extract/
-            find /tmp/sig-extract -type f -exec cp {} final-assets/ \; 2>/dev/null || true
-            rm -rf /tmp/sig-extract
+            find "$source_dir" "$@" -type f -exec cp {} final-assets/ \;
+            echo "✅ Staged ${description}: copied ${count}"
+          }
+
+          if [ "$DEPLOY_SNAP" = "true" ]; then
+            copy_release_assets "Snap amd64 package" "artifacts/snap-package-amd64" 1 -name "*.snap"
+            copy_release_assets "Snap arm64 package" "artifacts/snap-package-arm64" 1 -name "*.snap"
+          fi
+
+          if [ "$DEPLOY_MICROSOFT" = "true" ]; then
+            copy_release_assets "Windows executable" "artifacts/desktop-windows-amd64" 1 -name "*.exe"
+            copy_release_assets "Windows MSIX bundle" "artifacts/windows-msix" 1 -name "*.msixbundle"
+          fi
+
+          if [ "$DEPLOY_APPLE" = "true" ]; then
+            copy_release_assets "macOS DMG" "artifacts/desktop-darwin-dmg" 1 -name "*.dmg"
+          fi
+
+          if [ "$DEPLOY_LINUX_TERMINAL" = "true" ]; then
+            copy_release_assets "Linux server binaries" "artifacts/server-binaries-ce" 1 -name "whodb-*-linux-*"
+          fi
+
+          if [ "$DEPLOY_CLI" = "true" ] || [ "$DEPLOY_NPM" = "true" ]; then
+            copy_release_assets "CLI binaries" "artifacts/cli-binaries" 1 -name "whodb-cli-*"
+          fi
+
+          if [ "$HAS_FILE_ASSETS" = "true" ]; then
+            # Copy signatures (extract and copy only files, not directories)
+            if [ -f artifacts/signatures/signatures.tar.gz ]; then
+              mkdir -p /tmp/sig-extract
+              tar -xzf artifacts/signatures/signatures.tar.gz -C /tmp/sig-extract/
+              copy_release_assets "signature bundles" "/tmp/sig-extract" 1 -name "*.bundle"
+              rm -rf /tmp/sig-extract
+            else
+              echo "::error::Missing signature archive: artifacts/signatures/signatures.tar.gz was not downloaded"
+              exit 1
+            fi
+          else
+            echo "No file assets selected; skipping signature bundle staging"
           fi
 
           echo "📦 Release assets prepared:"
           ls -la final-assets/ || echo "No assets found"
+
+      - name: Validate release asset manifest
+        env:
+          DEPLOY_SNAP: ${{ needs.calculate-version.outputs.deploy-snap }}
+          DEPLOY_MICROSOFT: ${{ needs.calculate-version.outputs.deploy-microsoft }}
+          DEPLOY_APPLE: ${{ needs.calculate-version.outputs.deploy-apple }}
+          DEPLOY_LINUX_TERMINAL: ${{ needs.calculate-version.outputs.deploy-linux-terminal }}
+          DEPLOY_CLI: ${{ needs.calculate-version.outputs.deploy-cli }}
+          DEPLOY_NPM: ${{ needs.calculate-version.outputs.deploy-npm }}
+          HAS_FILE_ASSETS: ${{ needs.calculate-version.outputs.has-file-assets }}
+        run: |
+          set -euo pipefail
+
+          missing=false
+
+          require_count() {
+            local description="$1"
+            local min_count="$2"
+            shift 2
+            local count
+
+            count=$(find final-assets "$@" -type f | wc -l | tr -d ' ')
+            if [ "$count" -lt "$min_count" ]; then
+              echo "::error::Missing ${description}: expected at least ${min_count}, found ${count}"
+              missing=true
+            else
+              echo "✅ ${description}: found ${count}"
+            fi
+          }
+
+          if [ "$DEPLOY_SNAP" = "true" ]; then
+            require_count "Snap packages" 2 -name "*.snap"
+          fi
+
+          if [ "$DEPLOY_MICROSOFT" = "true" ]; then
+            require_count "Windows executable" 1 -name "*.exe"
+            require_count "Windows MSIX bundle" 1 -name "*.msixbundle"
+          fi
+
+          if [ "$DEPLOY_APPLE" = "true" ]; then
+            require_count "macOS DMG" 1 -name "*.dmg"
+          fi
+
+          if [ "$DEPLOY_LINUX_TERMINAL" = "true" ]; then
+            require_count "Linux server binaries" 1 -name "whodb-*-linux-*"
+          fi
+
+          if [ "$DEPLOY_CLI" = "true" ] || [ "$DEPLOY_NPM" = "true" ]; then
+            require_count "CLI binaries" 1 -name "whodb-cli-*"
+          fi
+
+          if [ "$HAS_FILE_ASSETS" = "true" ]; then
+            require_count "signature bundles" 1 -name "*.bundle"
+          else
+            echo "No file assets selected; skipping signature bundle validation"
+          fi
+
+          if [ "$missing" = "true" ]; then
+            echo "::error::Release asset manifest validation failed"
+            exit 1
+          fi
 
       - name: Prepare release body
         id: release_body
@@ -453,7 +670,7 @@ jobs:
             # Find the most recently merged PR to release branch
             PR_NUMBER=$(gh pr list --state merged --base release --limit 1 --json number --jq '.[0].number // empty')
             if [ -n "$PR_NUMBER" ]; then
-              PR_DESCRIPTION=$(gh pr view $PR_NUMBER --json body --jq '.body')
+              PR_DESCRIPTION=$(gh pr view "$PR_NUMBER" --json body --jq '.body')
               echo "Using PR #$PR_NUMBER description"
             else
               echo "No merged PR found"
@@ -491,7 +708,8 @@ jobs:
           echo "Preview:"
           cat /tmp/release-body.md
 
-      - name: Create GitHub release (as draft)
+      - name: Create GitHub release with assets (as draft)
+        if: needs.calculate-version.outputs.has-file-assets == 'true'
         uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd # v1.21.0
         with:
           tag: ${{ needs.calculate-version.outputs.version }}
@@ -505,6 +723,17 @@ jobs:
           artifacts: final-assets/*
           bodyFile: /tmp/release-body.md
 
+      - name: Create GitHub release without assets (as draft)
+        if: needs.calculate-version.outputs.has-file-assets != 'true'
+        uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd # v1.21.0
+        with:
+          tag: ${{ needs.calculate-version.outputs.version }}
+          name: Release ${{ needs.calculate-version.outputs.version }}
+          draft: true
+          prerelease: false
+          generateReleaseNotes: true
+          bodyFile: /tmp/release-body.md
+
       # Verify and publish the draft release (production runs only)
       # This step runs AFTER assets are uploaded by the release-action above
       - name: Verify and publish release (if not stage-only)
@@ -512,10 +741,34 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ needs.calculate-version.outputs.version }}
+          DEPLOY_SNAP: ${{ needs.calculate-version.outputs.deploy-snap }}
+          DEPLOY_MICROSOFT: ${{ needs.calculate-version.outputs.deploy-microsoft }}
+          DEPLOY_APPLE: ${{ needs.calculate-version.outputs.deploy-apple }}
+          DEPLOY_LINUX_TERMINAL: ${{ needs.calculate-version.outputs.deploy-linux-terminal }}
+          DEPLOY_CLI: ${{ needs.calculate-version.outputs.deploy-cli }}
+          DEPLOY_NPM: ${{ needs.calculate-version.outputs.deploy-npm }}
+          HAS_FILE_ASSETS: ${{ needs.calculate-version.outputs.has-file-assets }}
         run: |
+          set -euo pipefail
+
           echo "🔍 Verifying draft release ${VERSION} before publishing..."
 
-          # Step 1: Verify release exists and is a draft
+          require_uploaded_count() {
+            local description="$1"
+            local min_count="$2"
+            local jq_filter="$3"
+            local count
+
+            count=$(jq "[.assets[].name | select(${jq_filter})] | length" <<< "$RELEASE_INFO")
+            if [ "$count" -lt "$min_count" ]; then
+              echo "❌ ERROR: Missing uploaded ${description}: expected at least ${min_count}, found ${count}"
+              return 1
+            fi
+
+            echo "✅ Uploaded ${description}: found ${count}"
+          }
+
+          # Verify release exists and is a draft
           RELEASE_INFO=$(gh release view "${VERSION}" --json isDraft,assets,body)
           IS_DRAFT=$(echo "$RELEASE_INFO" | jq -r '.isDraft')
 
@@ -526,18 +779,47 @@ jobs:
           fi
           echo "✅ Release is in draft state"
 
-          # Step 2: Verify assets were uploaded
+          # Verify assets were uploaded
           ASSET_COUNT=$(echo "$RELEASE_INFO" | jq '.assets | length')
           echo "📦 Found ${ASSET_COUNT} assets attached to release"
 
-          if [ "$ASSET_COUNT" -eq 0 ]; then
+          if [ "$HAS_FILE_ASSETS" = "true" ] && [ "$ASSET_COUNT" -eq 0 ]; then
             echo "❌ ERROR: No assets found on draft release!"
             echo "This may indicate an upload failure. Check previous steps."
             exit 1
+          elif [ "$HAS_FILE_ASSETS" != "true" ]; then
+            echo "No file assets selected; skipping release asset count requirement"
           fi
-          echo "✅ Assets verified (${ASSET_COUNT} files)"
 
-          # Step 3: Verify release body is present
+          if [ "$DEPLOY_SNAP" = "true" ]; then
+            require_uploaded_count "Snap packages" 2 'endswith(".snap")'
+          fi
+
+          if [ "$DEPLOY_MICROSOFT" = "true" ]; then
+            require_uploaded_count "Windows executable" 1 'endswith(".exe")'
+            require_uploaded_count "Windows MSIX bundle" 1 'endswith(".msixbundle")'
+          fi
+
+          if [ "$DEPLOY_APPLE" = "true" ]; then
+            require_uploaded_count "macOS DMG" 1 'endswith(".dmg")'
+          fi
+
+          if [ "$DEPLOY_LINUX_TERMINAL" = "true" ]; then
+            require_uploaded_count "Linux server binaries" 1 'test("^whodb-.*-linux-.*$")'
+          fi
+
+          if [ "$DEPLOY_CLI" = "true" ] || [ "$DEPLOY_NPM" = "true" ]; then
+            require_uploaded_count "CLI binaries" 1 'startswith("whodb-cli-")'
+          fi
+
+          if [ "$HAS_FILE_ASSETS" = "true" ]; then
+            require_uploaded_count "signature bundles" 1 'endswith(".bundle")'
+            echo "✅ Assets verified (${ASSET_COUNT} files)"
+          else
+            echo "✅ Docker-only release verified without file assets"
+          fi
+
+          # Verify release body is present
           BODY_LENGTH=$(echo "$RELEASE_INFO" | jq '.body | length')
           if [ "$BODY_LENGTH" -lt 50 ]; then
             echo "⚠️ Warning: Release body seems short (${BODY_LENGTH} chars)"
@@ -545,13 +827,13 @@ jobs:
             echo "✅ Release body present (${BODY_LENGTH} chars)"
           fi
 
-          # Step 4: Publish the release
+          # Publish the release
           echo ""
           echo "🚀 Publishing release ${VERSION}..."
           gh release edit "${VERSION}" --draft=false
           echo "✅ Release ${VERSION} published successfully!"
 
-          # Step 5: Final verification
+          # Final verification
           FINAL_STATE=$(gh release view "${VERSION}" --json isDraft --jq '.isDraft')
           if [ "$FINAL_STATE" = "false" ]; then
             echo "✅ Verified: Release is now public and immutable"
@@ -560,14 +842,18 @@ jobs:
             exit 1
           fi
 
-  # Step 5: Deploy to various platforms (after GitHub release created)
+  # Deploy selected stores after their builds and signing validation
   deploy-snap:
     name: Deploy Snap
-    needs: [ calculate-version, create-github-release ]
+    needs: [ calculate-version, build-snap, sign-and-validate ]
     if: |
       always() &&
       needs.calculate-version.outputs.deploy-snap == 'true' &&
-      needs.create-github-release.result == 'success'
+      needs.build-snap.result == 'success' &&
+      needs.sign-and-validate.result == 'success'
+    permissions:
+      contents: read
+      actions: read
     uses: ./.github/workflows/_deploy-snap.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
@@ -576,11 +862,15 @@ jobs:
 
   deploy-microsoft:
     name: Deploy Microsoft
-    needs: [ calculate-version, create-github-release ]
+    needs: [ calculate-version, build-windows, sign-and-validate ]
     if: |
       always() &&
       needs.calculate-version.outputs.deploy-microsoft == 'true' &&
-      needs.create-github-release.result == 'success'
+      needs.build-windows.result == 'success' &&
+      needs.sign-and-validate.result == 'success'
+    permissions:
+      contents: read
+      actions: write
     uses: ./.github/workflows/_deploy-microsoft.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
@@ -589,11 +879,15 @@ jobs:
 
   deploy-apple:
     name: Deploy Apple
-    needs: [ calculate-version, create-github-release ]
+    needs: [ calculate-version, build-apple, sign-and-validate ]
     if: |
       always() &&
       needs.calculate-version.outputs.deploy-apple == 'true' &&
-      needs.create-github-release.result == 'success'
+      needs.build-apple.result == 'success' &&
+      needs.sign-and-validate.result == 'success'
+    permissions:
+      contents: read
+      actions: write
     uses: ./.github/workflows/_deploy-apple.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
@@ -601,76 +895,73 @@ jobs:
       release-notes: ${{ needs.calculate-version.outputs.release-notes }}
     secrets: inherit
 
-  # Step 6: Deploy to Docker Hub (after GitHub release)
+  # Deploy to Docker Hub
   # Rebuilds from GHA buildx cache populated by build-docker and pushes with attestations.
   deploy-docker:
     name: Deploy Docker
-    needs: [ calculate-version, build-docker, create-github-release ]
+    needs: [ calculate-version, build-docker, sign-and-validate ]
     if: |
       always() &&
       needs.calculate-version.outputs.deploy-docker == 'true' &&
       needs.build-docker.result == 'success' &&
-      needs.create-github-release.result == 'success'
+      (
+        (needs.calculate-version.outputs.has-file-assets == 'true' && needs.sign-and-validate.result == 'success') ||
+        (needs.calculate-version.outputs.has-file-assets != 'true' && needs.sign-and-validate.result == 'skipped')
+      )
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
     uses: ./.github/workflows/_deploy-docker.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
       stage-only: ${{ needs.calculate-version.outputs.stage-only == 'true' }}
     secrets: inherit
 
-  # Step 6b: Deploy CLI to Docker Hub (after GitHub release)
+  # Deploy CLI image to Docker Hub
   deploy-docker-cli:
     name: Deploy CLI Docker
-    needs: [ calculate-version, create-github-release ]
+    needs: [ calculate-version, build-docker-cli, sign-and-validate ]
     if: |
       always() &&
       needs.calculate-version.outputs.deploy-docker == 'true' &&
-      needs.create-github-release.result == 'success'
+      needs.build-docker-cli.result == 'success' &&
+      (
+        (needs.calculate-version.outputs.has-file-assets == 'true' && needs.sign-and-validate.result == 'success') ||
+        (needs.calculate-version.outputs.has-file-assets != 'true' && needs.sign-and-validate.result == 'skipped')
+      )
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
     uses: ./.github/workflows/_deploy-docker-cli.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
       stage-only: ${{ needs.calculate-version.outputs.stage-only == 'true' }}
     secrets: inherit
 
-  # Step 7: Deploy to npm (after CLI build and GitHub release)
+  # Deploy CLI packages to npm
   deploy-npm:
     name: Deploy npm
-    needs: [ calculate-version, build-cli, create-github-release ]
+    needs: [ calculate-version, build-cli, sign-and-validate ]
     if: |
       always() &&
       needs.calculate-version.outputs.deploy-npm == 'true' &&
       needs.build-cli.result == 'success' &&
-      needs.create-github-release.result == 'success'
+      needs.sign-and-validate.result == 'success'
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
     uses: ./.github/workflows/_deploy-npm.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
 
-  # Step 8: Generate Homebrew formula for CLI (disabled - homebrew-core auto-updates via livecheck)
-  # To generate manually: .github/scripts/generate-homebrew-formula.sh <version>
-  deploy-homebrew-formula:
-    name: Deploy Homebrew Formula
-    needs: [ calculate-version, create-github-release ]
-    if: false
-    uses: ./.github/workflows/_deploy-homebrew-formula.yml
-    with:
-      version: ${{ needs.calculate-version.outputs.version }}
-
-  # Step 8b: Generate Homebrew cask for desktop app (disabled - run manually when needed)
-  generate-homebrew-cask:
-    name: Generate Homebrew Cask
-    needs: [ calculate-version, create-github-release ]
-    if: |
-      false &&
-      needs.calculate-version.outputs.stage-only != 'true' &&
-      needs.calculate-version.outputs.deployment-mode == 'production' &&
-      needs.create-github-release.result == 'success'
-    uses: ./.github/workflows/_deploy-homebrew.yml
-    with:
-      version: ${{ needs.calculate-version.outputs.version }}
-
-  # Step 10: Stamp plugin.json version on main after successful release
+  # Post-release housekeeping
   stamp-plugin-version:
     name: Stamp Plugin Version on Main
     runs-on: ubuntu-latest
+    continue-on-error: true
     needs: [calculate-version, create-github-release]
     if: |
       needs.create-github-release.result == 'success' &&
@@ -679,12 +970,14 @@ jobs:
       contents: write
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@8d3c67de8e2fe68ef647c8db1e6a09f647780f40 # v2.19.0
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >
+            github.com:443
 
       - name: Checkout main
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           ref: main
           submodules: false
@@ -707,7 +1000,7 @@ jobs:
             echo "Stamped plugin.json to $VERSION on main"
           fi
 
-  # Step 11: Final summary
+  # Release summary
   deployment-summary:
     name: Deployment Summary
     runs-on: ubuntu-latest
@@ -722,7 +1015,6 @@ jobs:
       build-linux-terminal,
       build-cli,
       sign-and-validate,
-      deploy-homebrew-formula,
       deploy-docker,
       deploy-docker-cli,
       deploy-snap,
@@ -730,223 +1022,167 @@ jobs:
       deploy-apple,
       deploy-npm,
       create-github-release,
-      generate-homebrew-cask,
       stamp-plugin-version
     ]
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@8d3c67de8e2fe68ef647c8db1e6a09f647780f40 # v2.19.0
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
           egress-policy: block
           allowed-endpoints: >
-            deb.debian.org:443
-            deb.debian.org:80
+            100.23.248.170:443
 
       - name: Generate comprehensive summary
         run: |
-          echo "# 📊 Release Summary for ${{ needs.calculate-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Deployment Mode:** ${{ needs.calculate-version.outputs.deployment-mode }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Timestamp:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          {
+          status_label() {
+            case "$1" in
+              success) echo "✅ Success" ;;
+              skipped) echo "⏭️ Skipped" ;;
+              failure|cancelled) echo "❌ Failed" ;;
+              *) echo "❓ Unknown" ;;
+            esac
+          }
+
+          build_row() {
+            local name="$1"
+            local result="$2"
+            echo "| ${name} | $(status_label "$result") |"
+          }
+
+          deploy_row() {
+            local name="$1"
+            local result="$2"
+            local selected="$3"
+            local success_note="$4"
+
+            case "$result" in
+              success)
+                echo "| ${name} | ✅ Deployed | ${success_note} |"
+                ;;
+              skipped)
+                if [ "$selected" = "true" ]; then
+                  echo "| ${name} | ⏭️ Skipped | Blocked before deploy |"
+                else
+                  echo "| ${name} | ⏭️ Skipped | Not selected |"
+                fi
+                ;;
+              failure|cancelled)
+                echo "| ${name} | ❌ Failed | GitHub release blocked |"
+                ;;
+              *)
+                echo "| ${name} | ❓ Unknown | Check logs |"
+                ;;
+            esac
+          }
+
+          release_result="${{ needs.create-github-release.result }}"
+          stage_only="${{ needs.calculate-version.outputs.stage-only }}"
+          publish_release="${{ needs.calculate-version.outputs.publish-github-release }}"
+          release_succeeded="false"
+
+          echo "# 📊 Release Summary for ${{ needs.calculate-version.outputs.version }}"
+          echo ""
+          echo "**Deployment Mode:** ${{ needs.calculate-version.outputs.deployment-mode }}"
+          echo "**Timestamp:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+          echo ""
 
           # Build Status
-          echo "## 🔨 Build Status" >> $GITHUB_STEP_SUMMARY
-          echo "| Component | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "## 🔨 Build Status"
+          echo "| Component | Status |"
+          echo "|-----------|--------|"
 
-          if [ "${{ needs.build-docker.result }}" = "success" ]; then
-            echo "| Docker | ✅ Success |" >> $GITHUB_STEP_SUMMARY
-          elif [ "${{ needs.build-docker.result }}" = "skipped" ]; then
-            echo "| Docker | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| Docker | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
-          fi
+          build_row "Docker" "${{ needs.build-docker.result }}"
+          build_row "CLI Docker" "${{ needs.build-docker-cli.result }}"
+          build_row "Windows" "${{ needs.build-windows.result }}"
+          build_row "Apple" "${{ needs.build-apple.result }}"
+          build_row "Snap" "${{ needs.build-snap.result }}"
+          build_row "Linux Terminal" "${{ needs.build-linux-terminal.result }}"
+          build_row "CLI (MCP Server)" "${{ needs.build-cli.result }}"
+          build_row "Sign and Validate" "${{ needs.sign-and-validate.result }}"
 
-          if [ "${{ needs.build-docker-cli.result }}" = "success" ]; then
-            echo "| CLI Docker | ✅ Success |" >> $GITHUB_STEP_SUMMARY
-          elif [ "${{ needs.build-docker-cli.result }}" = "skipped" ]; then
-            echo "| CLI Docker | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| CLI Docker | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          if [ "${{ needs.build-windows.result }}" = "success" ]; then
-            echo "| Windows | ✅ Success |" >> $GITHUB_STEP_SUMMARY
-          elif [ "${{ needs.build-windows.result }}" = "skipped" ]; then
-            echo "| Windows | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| Windows | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          if [ "${{ needs.build-apple.result }}" = "success" ]; then
-            echo "| Apple | ✅ Success |" >> $GITHUB_STEP_SUMMARY
-          elif [ "${{ needs.build-apple.result }}" = "skipped" ]; then
-            echo "| Apple | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| Apple | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          if [ "${{ needs.build-snap.result }}" = "success" ]; then
-            echo "| Snap | ✅ Success |" >> $GITHUB_STEP_SUMMARY
-          elif [ "${{ needs.build-snap.result }}" = "skipped" ]; then
-            echo "| Snap | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| Snap | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          if [ "${{ needs.build-linux-terminal.result }}" = "success" ]; then
-            echo "| Linux Terminal | ✅ Success |" >> $GITHUB_STEP_SUMMARY
-          elif [ "${{ needs.build-linux-terminal.result }}" = "skipped" ]; then
-            echo "| Linux Terminal | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| Linux Terminal | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          if [ "${{ needs.build-cli.result }}" = "success" ]; then
-            echo "| CLI (MCP Server) | ✅ Success |" >> $GITHUB_STEP_SUMMARY
-          elif [ "${{ needs.build-cli.result }}" = "skipped" ]; then
-            echo "| CLI (MCP Server) | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| CLI (MCP Server) | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          echo "" >> $GITHUB_STEP_SUMMARY
+          echo ""
 
           # Deployment Status
-          echo "## 🚀 Deployment Status" >> $GITHUB_STEP_SUMMARY
-          echo "| Platform | Status | Notes |" >> $GITHUB_STEP_SUMMARY
-          echo "|----------|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "## 🚀 Deployment Status"
+          echo "| Platform | Status | Notes |"
+          echo "|----------|--------|-------|"
 
-          # Docker Hub
-          if [ "${{ needs.deploy-docker.result }}" = "success" ]; then
-            echo "| Docker Hub | ✅ Deployed | Latest tag updated |" >> $GITHUB_STEP_SUMMARY
-          elif [ "${{ needs.deploy-docker.result }}" = "skipped" ]; then
-            if [ "${{ needs.calculate-version.outputs.stage-only }}" = "true" ]; then
-              echo "| Docker Hub | ⏭️ Skipped | Stage-only mode |" >> $GITHUB_STEP_SUMMARY
+          deploy_row "Docker Hub" "${{ needs.deploy-docker.result }}" "${{ needs.calculate-version.outputs.deploy-docker }}" "Version tag updated"
+          deploy_row "Docker Hub (CLI)" "${{ needs.deploy-docker-cli.result }}" "${{ needs.calculate-version.outputs.deploy-docker }}" "Version tag updated"
+          deploy_row "Snap Store" "${{ needs.deploy-snap.result }}" "${{ needs.calculate-version.outputs.deploy-snap }}" "${{ needs.calculate-version.outputs.stage-only == 'true' && 'edge channel' || 'stable channel' }}"
+          deploy_row "Microsoft Store" "${{ needs.deploy-microsoft.result }}" "${{ needs.calculate-version.outputs.deploy-microsoft }}" "${{ needs.calculate-version.outputs.stage-only == 'true' && 'Draft submission' || 'Submitted for certification' }}"
+          deploy_row "Apple App Store" "${{ needs.deploy-apple.result }}" "${{ needs.calculate-version.outputs.deploy-apple }}" "${{ needs.calculate-version.outputs.stage-only == 'true' && 'TestFlight only' || 'Submitted for review' }}"
+          deploy_row "npm (@clidey/whodb-cli)" "${{ needs.deploy-npm.result }}" "${{ needs.calculate-version.outputs.deploy-npm }}" "All platform packages"
+
+          echo ""
+
+          echo "## 🧾 Final Release Gate"
+          echo "| Gate | Status | Notes |"
+          echo "|------|--------|-------|"
+
+          if [ "$release_result" = "success" ]; then
+            release_succeeded="true"
+            if [ "$stage_only" = "true" ] || [ "$publish_release" != "true" ]; then
+              release_note="Draft release"
             else
-              echo "| Docker Hub | ⏭️ Skipped | Not selected |" >> $GITHUB_STEP_SUMMARY
-            fi
-          else
-            echo "| Docker Hub | ❌ Failed | Check logs |" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          # Docker Hub CLI
-          if [ "${{ needs.deploy-docker-cli.result }}" = "success" ]; then
-            echo "| Docker Hub (CLI) | ✅ Deployed | Latest tag updated |" >> $GITHUB_STEP_SUMMARY
-          elif [ "${{ needs.deploy-docker-cli.result }}" = "skipped" ]; then
-            if [ "${{ needs.calculate-version.outputs.stage-only }}" = "true" ]; then
-              echo "| Docker Hub (CLI) | ⏭️ Skipped | Stage-only mode |" >> $GITHUB_STEP_SUMMARY
-            else
-              echo "| Docker Hub (CLI) | ⏭️ Skipped | Not selected |" >> $GITHUB_STEP_SUMMARY
-            fi
-          else
-            echo "| Docker Hub (CLI) | ❌ Failed | Check logs |" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          # Snap Store
-          if [ "${{ needs.deploy-snap.result }}" = "success" ]; then
-            CHANNEL="${{ needs.calculate-version.outputs.stage-only == 'true' && 'edge' || 'stable' }}"
-            echo "| Snap Store | ✅ Deployed | ${CHANNEL} channel |" >> $GITHUB_STEP_SUMMARY
-          elif [ "${{ needs.deploy-snap.result }}" = "skipped" ]; then
-            echo "| Snap Store | ⏭️ Skipped | Not selected |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| Snap Store | ❌ Failed | Check logs |" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          # Microsoft Store
-          if [ "${{ needs.deploy-microsoft.result }}" = "success" ]; then
-            if [ "${{ needs.calculate-version.outputs.stage-only }}" = "true" ]; then
-              echo "| Microsoft Store | ✅ Deployed | Draft submission |" >> $GITHUB_STEP_SUMMARY
-            else
-              echo "| Microsoft Store | ✅ Deployed | Submitted for certification |" >> $GITHUB_STEP_SUMMARY
-            fi
-          elif [ "${{ needs.deploy-microsoft.result }}" = "skipped" ]; then
-            echo "| Microsoft Store | ⏭️ Skipped | Not selected |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| Microsoft Store | ❌ Failed | Check logs |" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          # Apple App Store
-          if [ "${{ needs.deploy-apple.result }}" = "success" ]; then
-            if [ "${{ needs.calculate-version.outputs.stage-only }}" = "true" ]; then
-              echo "| Apple App Store | ✅ Deployed | TestFlight only |" >> $GITHUB_STEP_SUMMARY
-            else
-              echo "| Apple App Store | ✅ Deployed | Submitted for review |" >> $GITHUB_STEP_SUMMARY
-            fi
-          elif [ "${{ needs.deploy-apple.result }}" = "skipped" ]; then
-            echo "| Apple App Store | ⏭️ Skipped | Not selected |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| Apple App Store | ❌ Failed | Check logs |" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          # GitHub Release
-          if [ "${{ needs.create-github-release.result }}" = "success" ]; then
-            if [ "${{ needs.calculate-version.outputs.stage-only }}" = "true" ] || [ "${{ needs.calculate-version.outputs.publish-github-release }}" != "true" ]; then
-              RELEASE_NOTE="Draft release"
-            else
-              RELEASE_NOTE="Published"
+              release_note="Published"
             fi
             if [ "${{ needs.calculate-version.outputs.deploy-linux-terminal }}" = "true" ]; then
-              RELEASE_NOTE="$RELEASE_NOTE (includes Linux Terminal)"
+              release_note="${release_note} (includes Linux Terminal)"
             fi
-            echo "| GitHub Release | ✅ Created | $RELEASE_NOTE |" >> $GITHUB_STEP_SUMMARY
-          elif [ "${{ needs.create-github-release.result }}" = "skipped" ]; then
-            echo "| GitHub Release | ⏭️ Skipped | Stage-only mode |" >> $GITHUB_STEP_SUMMARY
+            echo "| GitHub Release | ✅ Created | ${release_note} |"
+          elif [ "$release_result" = "skipped" ]; then
+            echo "| GitHub Release | ⏭️ Blocked | A selected build, deploy, or validation job did not succeed |"
           else
-            echo "| GitHub Release | ❌ Failed | Check logs |" >> $GITHUB_STEP_SUMMARY
+            echo "| GitHub Release | ❌ Failed | Check release job logs |"
           fi
 
-          # Homebrew Formula (CLI)
-          if [ "${{ needs.deploy-homebrew-formula.result }}" = "success" ]; then
-            echo "| Homebrew Formula | ✅ Generated | brew install clidey/tap/whodb-cli |" >> $GITHUB_STEP_SUMMARY
-          elif [ "${{ needs.deploy-homebrew-formula.result }}" = "skipped" ]; then
-            echo "| Homebrew Formula | ⏭️ Skipped | CLI not selected |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| Homebrew Formula | ❌ Failed | Check logs |" >> $GITHUB_STEP_SUMMARY
-          fi
+          echo ""
 
-          # Homebrew Cask (Desktop App - disabled)
-          if [ "${{ needs.generate-homebrew-cask.result }}" = "success" ]; then
-            echo "| Homebrew Cask | ✅ Generated | Desktop app cask |" >> $GITHUB_STEP_SUMMARY
-          elif [ "${{ needs.generate-homebrew-cask.result }}" = "skipped" ]; then
-            echo "| Homebrew Cask | ⏭️ Skipped | Disabled |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| Homebrew Cask | ❌ Failed | Check logs |" >> $GITHUB_STEP_SUMMARY
-          fi
+          echo "## 🧹 Post-release Housekeeping"
+          echo "| Task | Status | Notes |"
+          echo "|------|--------|-------|"
+          case "${{ needs.stamp-plugin-version.result }}" in
+            success)
+              echo "| Plugin version stamp | ✅ Complete | plugin.json updated or already current |"
+              ;;
+            skipped)
+              echo "| Plugin version stamp | ⏭️ Skipped | Stage-only run or GitHub release did not complete |"
+              ;;
+            failure|cancelled)
+              echo "| Plugin version stamp | ⚠️ Needs follow-up | Release completed; plugin.json stamp failed separately |"
+              ;;
+            *)
+              echo "| Plugin version stamp | ❓ Unknown | Check stamp-plugin-version logs |"
+              ;;
+          esac
 
-          # npm
-          if [ "${{ needs.deploy-npm.result }}" = "success" ]; then
-            echo "| npm (@clidey/whodb-cli) | ✅ Published | All platform packages |" >> $GITHUB_STEP_SUMMARY
-          elif [ "${{ needs.deploy-npm.result }}" = "skipped" ]; then
-            echo "| npm | ⏭️ Skipped | CLI not selected |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| npm | ❌ Failed | Check logs |" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          echo "" >> $GITHUB_STEP_SUMMARY
+          echo ""
 
           # Next Steps
-          echo "## 📝 Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "## 📝 Next Steps"
 
-          if [ "${{ needs.calculate-version.outputs.stage-only }}" = "true" ]; then
-            echo "Stage deployments completed. To promote to production:" >> $GITHUB_STEP_SUMMARY
-            echo "1. Test the edge/draft releases" >> $GITHUB_STEP_SUMMARY
-            echo "2. Promote Snap from edge to stable channel" >> $GITHUB_STEP_SUMMARY
-            echo "3. Submit Microsoft Store draft for certification" >> $GITHUB_STEP_SUMMARY
-            echo "4. Submit Apple TestFlight build for App Store review" >> $GITHUB_STEP_SUMMARY
-            echo "5. Publish GitHub draft release" >> $GITHUB_STEP_SUMMARY
-            echo "6. Deploy to Docker Hub" >> $GITHUB_STEP_SUMMARY
+          if [ "$release_succeeded" != "true" ]; then
+            echo "GitHub release was blocked. Resolve the failed selected build, deploy, or validation job, then rerun the release."
+          elif [ "$stage_only" = "true" ]; then
+            echo "Stage deployments completed and a draft GitHub release was created. To promote to production:"
+            echo "1. Test the edge/draft releases"
+            echo "2. Promote Snap from edge to stable channel"
+            echo "3. Submit Microsoft Store draft for certification"
+            echo "4. Submit Apple TestFlight build for App Store review"
+            echo "5. Publish the GitHub draft release after all channels are ready"
           else
-            echo "Production deployment completed!" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "**Monitor the following:**" >> $GITHUB_STEP_SUMMARY
-            echo "- Microsoft Store certification status" >> $GITHUB_STEP_SUMMARY
-            echo "- Apple App Store review status" >> $GITHUB_STEP_SUMMARY
-            echo "- User feedback on new release" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "**If any platform failed:**" >> $GITHUB_STEP_SUMMARY
-            echo "1. Check the logs for the failed job" >> $GITHUB_STEP_SUMMARY
-            echo "2. Fix the issue" >> $GITHUB_STEP_SUMMARY
-            echo "3. Re-run the failed job from Actions → Re-run jobs → Re-run failed jobs" >> $GITHUB_STEP_SUMMARY
+            echo "Production deployment completed!"
+            echo ""
+            echo "**Monitor the following:**"
+            echo "- Microsoft Store certification status"
+            echo "- Apple App Store review status"
+            echo "- User feedback on new release"
+            echo ""
+            echo "**If any platform failed:**"
+            echo "1. Check the logs for the failed job"
+            echo "2. Fix the issue"
+            echo "3. Re-run the failed job from Actions → Re-run jobs → Re-run failed jobs"
           fi
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -244,6 +244,12 @@ services:
       # - WHODB_AI_GENERIC_OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
       # - WHODB_AI_GENERIC_OPENROUTER_API_KEY=your_key_here
       # - WHODB_AI_GENERIC_OPENROUTER_MODELS=google/gemini-2.0-flash-001,anthropic/claude-3.5-sonnet
+      #
+      # Requesty example:
+      # - WHODB_AI_GENERIC_REQUESTY_NAME=Requesty
+      # - WHODB_AI_GENERIC_REQUESTY_BASE_URL=https://router.requesty.ai/v1
+      # - WHODB_AI_GENERIC_REQUESTY_API_KEY=your_key_here
+      # - WHODB_AI_GENERIC_REQUESTY_MODELS=openai/gpt-4o-mini,anthropic/claude-3.5-sonnet
     # volumes: # (Optional for SQLite)
     #   - ./sample.db:/db/sample.db
 ```
@@ -376,7 +382,7 @@ To enable natural language queries:
    WhoDB will auto-detect installed models and show a **Chat** option in the sidebar.
 
 2. **OpenAI/Anthropic** - Set environment variables (see Docker Compose example above)
-3. **Any OpenAI-compatible provider** - Use `WHODB_AI_GENERIC_<ID>_*` environment variables to connect to LM Studio, OpenRouter, or any provider with an OpenAI-compatible API (see Docker Compose example above)
+3. **Any OpenAI-compatible provider** - Use `WHODB_AI_GENERIC_<ID>_*` environment variables to connect to LM Studio, OpenRouter, Requesty, or any provider with an OpenAI-compatible API (see Docker Compose example above)
 
 #### 3. Start Backend Service
 
@@ -512,7 +518,7 @@ Yes! WhoDB integrates with:
 - **Ollama** - For local, private AI models
 - **OpenAI** - GPT-4 and other OpenAI models
 - **Anthropic** - Claude models
-- **Any OpenAI-compatible provider** - LM Studio, OpenRouter, vLLM, and more via `WHODB_AI_GENERIC_<ID>_*` environment variables
+- **Any OpenAI-compatible provider** - LM Studio, OpenRouter, Requesty, vLLM, and more via `WHODB_AI_GENERIC_<ID>_*` environment variables
 
 These integrations allow you to query your database using natural language instead of SQL.
 

@@ -28,11 +28,6 @@ inputs:
     description: 'Deploy to Apple App Store'
     required: false
     default: 'false'
-  # DISABLED: AppImage requires system WebKit2GTK - not truly portable
-  deploy-appimage:
-    description: 'Build AppImage (DISABLED)'
-    required: false
-    default: 'false'
   deploy-linux-terminal:
     description: 'Build Linux Terminal binaries'
     required: false
@@ -74,10 +69,6 @@ outputs:
   deploy-apple:
     description: 'Deploy Apple flag'
     value: ${{ steps.stores.outputs.deploy-apple }}
-  # DISABLED: AppImage builds disabled
-  deploy-appimage:
-    description: 'Deploy AppImage flag (DISABLED)'
-    value: 'false'
   deploy-linux-terminal:
     description: 'Deploy Linux Terminal flag'
     value: ${{ steps.stores.outputs.deploy-linux-terminal }}
@@ -94,13 +85,6 @@ outputs:
 runs:
   using: 'composite'
   steps:
-    - name: Harden Runner
-      uses: step-security/harden-runner@8d3c67de8e2fe68ef647c8db1e6a09f647780f40 # v2.19.0
-      with:
-        egress-policy: block
-        allowed-endpoints: >
-          github.com:443
-
     - name: Set deployment mode
       id: mode
       shell: bash
@@ -216,7 +200,6 @@ runs:
         echo "deploy-snap=${{ inputs.deploy-snap }}" >> $GITHUB_OUTPUT
         echo "deploy-microsoft=${{ inputs.deploy-microsoft }}" >> $GITHUB_OUTPUT
         echo "deploy-apple=${{ inputs.deploy-apple }}" >> $GITHUB_OUTPUT
-        echo "deploy-appimage=false" >> $GITHUB_OUTPUT  # DISABLED: AppImage requires system WebKit2GTK
         echo "deploy-linux-terminal=${{ inputs.deploy-linux-terminal }}" >> $GITHUB_OUTPUT
         echo "deploy-cli=${{ inputs.deploy-cli }}" >> $GITHUB_OUTPUT
         echo "deploy-npm=${{ inputs.deploy-npm }}" >> $GITHUB_OUTPUT

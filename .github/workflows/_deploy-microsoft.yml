@@ -1,5 +1,11 @@
 name: Deploy to Microsoft Store
 
+# Consumes:
+# - desktop-windows-amd64
+# - desktop-windows-arm64 (optional)
+# Produces:
+# - windows-msix: MSIX bundle consumed by Microsoft Store deploy and GitHub release.
+
 on:
   workflow_call:
     inputs:
@@ -24,17 +30,23 @@ jobs:
     environment: deploy-microsoft
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@8d3c67de8e2fe68ef647c8db1e6a09f647780f40 # v2.19.0
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
           egress-policy: block
           allowed-endpoints: >-
             api.github.com:443
-            deb.debian.org:443
-            deb.debian.org:80
+            dns.msftncsi.com:443
             github.com:443
+            incoming.telemetry.mozilla.org:443
+            ocsp.digicert.com:80
+            ocsp.sectigo.com:80
+            release-assets.githubusercontent.com:443
+            settings-win.data.microsoft.com:443
+            telemetry-incoming.r53-2.services.mozilla.com:443
+            www.microsoft.com:80
 
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Setup Windows SDK
         shell: pwsh
@@ -333,7 +345,7 @@ jobs:
         with:
           name: windows-msix
           path: "*.msixbundle"
-          retention-days: 1
+          retention-days: 7
 
   deploy-microsoft-store:
     name: Submit to Microsoft Store
@@ -343,17 +355,42 @@ jobs:
     continue-on-error: ${{ inputs.stage-only }}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@8d3c67de8e2fe68ef647c8db1e6a09f647780f40 # v2.19.0
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
           egress-policy: block
           allowed-endpoints: >-
+            api.nuget.org:443
             api.github.com:443
-            deb.debian.org:443
-            deb.debian.org:80
+            au.download.windowsupdate.com:80
+            cdn.powershellgallery.com:443
+            cp801.prod.do.dsp.mp.microsoft.com:443
+            crl.microsoft.com:80
+            dc.services.visualstudio.com:443
+            dist.nuget.org:443
+            download.windowsupdate.com:80
+            geo.prod.do.dsp.mp.microsoft.com:443
             github.com:443
+            incoming.telemetry.mozilla.org:443
+            ingestionpackagesprod1.blob.core.windows.net:443
+            kv801.prod.do.dsp.mp.microsoft.com:443
+            login.live.com:443
+            login.windows.net:443
+            manage.devcenter.microsoft.com:443
+            ocsp.digicert.com:80
+            ocsp.sectigo.com:80
+            release-assets.githubusercontent.com:443
+            s.symcb.com:80
+            s.symcd.com:80
+            settings-win.data.microsoft.com:443
+            tas02.cws.update.microsoft.com:443
+            telemetry-incoming.r53-2.services.mozilla.com:443
+            ts-ocsp.ws.symantec.com:80
+            v1.ta2.fe2cr.update.microsoft.com:443
+            www.microsoft.com:80
+            www.powershellgallery.com:443
 
       - name: Checkout for scripts
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Check Microsoft Store credentials
         id: check_creds

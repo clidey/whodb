@@ -195,3 +195,6 @@ All interactive components are sourced from `@clidey/ux` (a shadcn/ui-derived li
 - **Don't** gate features behind wizard flows or multi-step modals (enterprise bloat pattern). Surface power directly.
 - **Don't** use playful rounded corners (≥1rem on small elements), pastel accent colors, or illustration-heavy empty states. This is infrastructure tooling.
 - **Don't** add loading skeletons or spinners where instant rendering is achievable. Speed is the feature.
+- **Don't** apply `backdrop-filter` or translucent backgrounds to static surfaces (cards, buttons, inputs, badges). Reserve glassmorphism for floating layers only (command palette, sheets, popovers).
+- **Don't** override `@clidey/ux` component styles with `!important`. Extend via CSS custom properties and the token system.
+- **Don't** use hardcoded color values (`bg-white`, `dark:bg-gray-800`). Use semantic tokens (`bg-popover`, `bg-card`, `border-border`).

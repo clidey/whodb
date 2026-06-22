@@ -1,5 +1,15 @@
 name: Sign and Validate Builds
 
+# Consumes selected build artifacts:
+# - snap-package-amd64
+# - snap-package-arm64
+# - desktop-windows-amd64
+# - desktop-darwin-dmg
+# - desktop-darwin-mas-app
+# - server-binaries-ce
+# Produces:
+# - signatures: Sigstore bundles consumed by GitHub release.
+
 on:
   workflow_call:
     inputs:
@@ -17,9 +27,18 @@ on:
         required: false
         type: boolean
         default: true
-      # DISABLED: AppImage builds disabled - requires system WebKit2GTK
-      validate-appimage:
-        description: 'Whether to validate AppImage builds'
+      validate-windows:
+        description: 'Whether to validate Windows desktop builds'
+        required: false
+        type: boolean
+        default: false
+      validate-apple:
+        description: 'Whether to validate Apple desktop builds'
+        required: false
+        type: boolean
+        default: false
+      validate-linux-terminal:
+        description: 'Whether to validate Linux server binaries'
         required: false
         type: boolean
         default: false
@@ -33,12 +52,12 @@ jobs:
       id-token: write
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@8d3c67de8e2fe68ef647c8db1e6a09f647780f40 # v2.19.0
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
           egress-policy: block
           allowed-endpoints: >
-            deb.debian.org:443
-            deb.debian.org:80
+            44.225.180.214:443
+            54.68.178.98:443
             fulcio.sigstore.dev:443
             github.com:443
             rekor.sigstore.dev:443
@@ -47,57 +66,67 @@ jobs:
             tuf-repo-cdn.sigstore.dev:443
 
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           submodules: false
 
-      - name: Download Snap packages
+      - name: Download Snap amd64 package
+        if: inputs.validate-snap
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        continue-on-error: true
         with:
           digest-mismatch: warn
-          pattern: snap-package-*
-          path: artifacts/
+          name: snap-package-amd64
+          path: artifacts/snap-package-amd64/
 
-      - name: Download Desktop builds
+      - name: Download Snap arm64 package
+        if: inputs.validate-snap
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        continue-on-error: true
         with:
           digest-mismatch: warn
-          pattern: desktop-*
-          path: artifacts/
+          name: snap-package-arm64
+          path: artifacts/snap-package-arm64/
+
+      - name: Download Windows desktop build
+        if: inputs.validate-windows
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          digest-mismatch: warn
+          name: desktop-windows-amd64
+          path: artifacts/desktop-windows-amd64/
+
+      - name: Download macOS DMG
+        if: inputs.validate-apple
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          digest-mismatch: warn
+          name: desktop-darwin-dmg
+          path: artifacts/desktop-darwin-dmg/
+
+      - name: Download macOS App Store bundle
+        if: inputs.validate-apple
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          digest-mismatch: warn
+          name: desktop-darwin-mas-app
+          path: artifacts/desktop-darwin-mas-app/
 
       - name: Download Linux server binaries
+        if: inputs.validate-linux-terminal
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        continue-on-error: true
         with:
           digest-mismatch: warn
-          pattern: server-binaries-*
-          path: artifacts/
-
-      # DISABLED: AppImage builds disabled
-      # - name: Download AppImages
-      #   uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-      #   continue-on-error: true
-      #   with:
-      #     pattern: appimage-*
-      #     path: artifacts/
-
-      # - name: Restore executable permissions
-      #   run: |
-      #     echo "Restoring executable permissions for AppImages..."
-      #     find artifacts -name "*.AppImage" -type f -exec chmod +x {} \;
-      #     echo "✅ Permissions restored"
+          name: server-binaries-ce
+          path: artifacts/server-binaries-ce/
 
       - name: Install Cosign
-        uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
 
       - name: Sign artifacts
         run: |
           echo "🔏 Signing artifacts with Sigstore..."
 
           # Find all artifacts to sign (excluding Docker .tar files)
-          find artifacts -type f \( -name "*.snap" -o -name "*.AppImage" -o -name "*.exe" -o -name "*.dmg" -o -name "*.pkg" -o -name "*.msix" -o -name "*.msixbundle" -o -name "whodb-*-linux-*" \) | while read -r file; do
+          find artifacts -type f \( -name "*.snap" -o -name "*.exe" -o -name "*.dmg" -o -name "*.pkg" -o -name "*.msix" -o -name "*.msixbundle" -o -name "whodb-*-linux-*" \) | while read -r file; do
             echo "Signing: $file"
 
             # Sign the artifact using bundle format (modern cosign approach)
@@ -131,49 +160,61 @@ jobs:
       contents: read
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@8d3c67de8e2fe68ef647c8db1e6a09f647780f40 # v2.19.0
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
           egress-policy: block
           allowed-endpoints: >
-            deb.debian.org:443
-            deb.debian.org:80
+            100.20.106.61:443
+            184.33.59.158:443
+            44.225.180.214:443
+            44.231.9.16:443
             github.com:443
             release-assets.githubusercontent.com:443
 
       - name: Checkout for scripts
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           submodules: false
 
-      - name: Download Snap packages
+      - name: Download Snap amd64 package
+        if: inputs.validate-snap
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        continue-on-error: true
         with:
           digest-mismatch: warn
-          pattern: snap-package-*
-          path: artifacts/
+          name: snap-package-amd64
+          path: artifacts/snap-package-amd64/
 
-      - name: Download Desktop builds
+      - name: Download Snap arm64 package
+        if: inputs.validate-snap
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        continue-on-error: true
         with:
           digest-mismatch: warn
-          pattern: desktop-*
-          path: artifacts/
+          name: snap-package-arm64
+          path: artifacts/snap-package-arm64/
 
-      # DISABLED: AppImage builds disabled
-      # - name: Download AppImages
-      #   uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-      #   continue-on-error: true
-      #   with:
-      #     pattern: appimage-*
-      #     path: artifacts/
+      - name: Download Windows desktop build
+        if: inputs.validate-windows
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          digest-mismatch: warn
+          name: desktop-windows-amd64
+          path: artifacts/desktop-windows-amd64/
 
-      # - name: Restore executable permissions
-      #   run: |
-      #     echo "Restoring executable permissions for AppImages..."
-      #     find artifacts -name "*.AppImage" -type f -exec chmod +x {} \;
-      #     echo "✅ Permissions restored"
+      - name: Download macOS DMG
+        if: inputs.validate-apple
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          digest-mismatch: warn
+          name: desktop-darwin-dmg
+          path: artifacts/desktop-darwin-dmg/
+
+      - name: Download macOS App Store bundle
+        if: inputs.validate-apple
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          digest-mismatch: warn
+          name: desktop-darwin-mas-app
+          path: artifacts/desktop-darwin-mas-app/
 
       - name: Download signatures
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
@@ -186,7 +227,7 @@ jobs:
         run: tar xzf signatures.tar.gz
 
       - name: Install Cosign for verification
-        uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
 
       - name: Validate Snap artifacts
         if: inputs.validate-snap
@@ -235,22 +276,30 @@ jobs:
           FAILED=false
 
           # Check Windows builds
-          if [ -d "artifacts/desktop-windows-amd64" ]; then
-            echo "✅ Windows AMD64 desktop build found"
-          else
-            echo "⚠️ Windows AMD64 desktop build missing (may be expected)"
+          if [ "${{ inputs.validate-windows }}" = "true" ]; then
+            if find artifacts/desktop-windows-amd64 -name "whodb.exe" -type f | grep -q .; then
+              echo "✅ Windows AMD64 desktop executable found"
+            else
+              echo "❌ Windows AMD64 desktop executable missing"
+              FAILED=true
+            fi
           fi
 
           # Check macOS builds
-          if [ -d "artifacts/desktop-darwin-universal" ]; then
-            if [ -f "artifacts/desktop-darwin-universal/build/darwin/universal/whodb.dmg" ]; then
+          if [ "${{ inputs.validate-apple }}" = "true" ]; then
+            if find artifacts/desktop-darwin-dmg -name "*.dmg" -type f | grep -q .; then
               echo "✅ macOS DMG found"
             else
               echo "❌ macOS DMG missing"
               FAILED=true
             fi
-          else
-            echo "⚠️ macOS desktop build missing (may be expected)"
+
+            if find artifacts/desktop-darwin-mas-app -name "*.app" -type d | grep -q .; then
+              echo "✅ macOS App Store bundle found"
+            else
+              echo "❌ macOS App Store bundle missing"
+              FAILED=true
+            fi
           fi
 
           if [ "$FAILED" = "true" ]; then
@@ -258,55 +307,23 @@ jobs:
             exit 1
           fi
 
-      # DISABLED: AppImage builds disabled - requires system WebKit2GTK
-      - name: Validate AppImage artifacts
-        if: inputs.validate-appimage  # Will be false - AppImage disabled
+      - name: Validate Linux server binaries
+        if: inputs.validate-linux-terminal
         run: |
-          echo "🐧 Validating AppImage artifacts..."
+          echo "🐧 Validating Linux server binaries..."
           FAILED=false
 
-          for arch in amd64 arm64; do
-            ARTIFACT_DIR="artifacts/appimage-ce-${arch}"
-            if [ -d "$ARTIFACT_DIR" ]; then
-              APPIMAGE_FILE=$(find "$ARTIFACT_DIR" -name "*.AppImage" | head -1)
-              if [ -n "$APPIMAGE_FILE" ]; then
-                echo "✅ Found AppImage ${arch}: $(basename "$APPIMAGE_FILE")"
-
-                # Verify signature
-                SIG_FILE="signatures/$(basename "$APPIMAGE_FILE").sig"
-                CERT_FILE="signatures/$(basename "$APPIMAGE_FILE").pem"
-                if [ -f "$SIG_FILE" ] && [ -f "$CERT_FILE" ]; then
-                  echo "Verifying signature..."
-                  cosign verify-blob \
-                    --signature "$SIG_FILE" \
-                    --certificate "$CERT_FILE" \
-                    --certificate-identity-regexp ".*" \
-                    --certificate-oidc-issuer-regexp ".*" \
-                    "$APPIMAGE_FILE"
-                  echo "✅ Signature verified"
-                else
-                  echo "⚠️ No signature found for AppImage ${arch}"
-                fi
-
-                # Verify it's executable
-                if [ -x "$APPIMAGE_FILE" ]; then
-                  echo "✅ AppImage is executable"
-                else
-                  echo "❌ AppImage is not executable"
-                  FAILED=true
-                fi
-              else
-                echo "❌ AppImage ${arch} missing"
-                FAILED=true
-              fi
+          for arch in amd64 arm64 armv7 riscv64; do
+            if find artifacts/server-binaries-ce -name "whodb-*-linux-${arch}" -type f | grep -q .; then
+              echo "✅ Linux ${arch} server binary found"
             else
-              echo "❌ AppImage ${arch} artifact directory missing"
+              echo "❌ Linux ${arch} server binary missing"
               FAILED=true
             fi
           done
 
           if [ "$FAILED" = "true" ]; then
-            echo "::error::AppImage validation failed"
+            echo "::error::Linux server binary validation failed"
             exit 1
           fi
 
@@ -319,7 +336,9 @@ jobs:
             "validation": {
               "snap": ${{ inputs.validate-snap }},
               "desktop": ${{ inputs.validate-desktop }},
-              "appimage": ${{ inputs.validate-appimage }}
+              "windows": ${{ inputs.validate-windows }},
+              "apple": ${{ inputs.validate-apple }},
+              "linux_terminal": ${{ inputs.validate-linux-terminal }}
             },
             "artifacts": $(find artifacts -type f -name "*.snap" -o -name "*.exe" -o -name "*.dmg" | wc -l)
           }
@@ -330,4 +349,4 @@ jobs:
         with:
           name: deployment-manifest-validated
           path: validation_manifest.json
-          retention-days: 1
+          retention-days: 7

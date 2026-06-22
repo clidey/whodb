@@ -3,6 +3,9 @@ name: Build Docker Images
 # Builds Docker images and populates the GHA buildx cache.
 # Images are NOT pushed here — the deploy workflow rebuilds from cache
 # and pushes with SBOM/provenance attestations.
+#
+# Produces:
+# - GHA buildx cache entries consumed by _deploy-docker.yml.
 
 on:
   workflow_call:
@@ -15,6 +18,7 @@ on:
 permissions:
   contents: read
   actions: write
+  security-events: write
 
 jobs:
   build-docker:
@@ -32,13 +36,17 @@ jobs:
             arch: arm64
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@8d3c67de8e2fe68ef647c8db1e6a09f647780f40 # v2.19.0
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
           egress-policy: block
           allowed-endpoints: >
+            100.20.106.61:443
+            44.225.180.214:443
+            44.236.18.214:443
             api.github.com:443
             app.posthog.com:443
             auth.docker.io:443
+            check.trivy.dev:443
             deb.debian.org:443
             deb.debian.org:80
             dl-cdn.alpinelinux.org:443
@@ -61,7 +69,7 @@ jobs:
             mirror.gcr.io:443
 
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           submodules: false
 
@@ -73,10 +81,10 @@ jobs:
           path: frontend/build
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
 
-      - name: Build Docker image (cache + load for scan)
-        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
+      - name: Build Docker image (cache + local scan image)
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
         with:
           context: .
           file: ./core/Dockerfile
@@ -84,23 +92,41 @@ jobs:
           push: false
           load: true
           tags: whodb-scan:${{ inputs.version }}-${{ matrix.arch }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=ce-docker-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=ce-docker-${{ matrix.arch }}
           build-args: |
             VERSION=${{ inputs.version }}
             PLATFORM=docker
             USE_PREBUILT_FRONTEND=true
 
-#      - name: Trivy image scan
-#        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-#        with:
-#          image-ref: whodb-scan:${{ inputs.version }}-${{ matrix.arch }}
-#          format: table
-#          exit-code: '1'
-#          severity: CRITICAL,HIGH
-#          ignore-unfixed: true
-#          trivyignores: .trivyignore
+      - name: Generate Trivy SARIF report
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: whodb-scan:${{ inputs.version }}-${{ matrix.arch }}
+          format: sarif
+          output: trivy-results.sarif
+          exit-code: '0'
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          trivyignores: .trivyignore
 
-      - name: Remove scanned image
+      - name: Upload Trivy SARIF report
+        if: always() && hashFiles('trivy-results.sarif') != ''
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@411bbbe57033eedfc1a82d68c01345aa96c737d7 # v4
+        with:
+          sarif_file: trivy-results.sarif
+          category: whodb-docker-${{ matrix.arch }}
+
+      - name: Upload Trivy SARIF artifact
+        if: always() && hashFiles('trivy-results.sarif') != ''
+        continue-on-error: true
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: trivy-sarif-whodb-docker-${{ matrix.arch }}
+          path: trivy-results.sarif
+          retention-days: 7
+
+      - name: Remove local scan image
         if: always()
         run: docker rmi whodb-scan:${{ inputs.version }}-${{ matrix.arch }} 2>/dev/null || true

@@ -115,8 +115,14 @@ const errorLink = onError(({error}) => {
             return;
         }
 
+        if (error.statusCode >= 500) {
+            toast.error('Server error. Please try again.');
+        }
         console.error('Network error:', error);
     } else if (!CombinedGraphQLErrors.is(error) && !CombinedProtocolErrors.is(error)) {
+        if (error && 'message' in error && (error as any).message?.includes('Failed to fetch')) {
+            toast.error('Connection lost. Check your network.');
+        }
         console.error('Network error:', error);
     }
 });

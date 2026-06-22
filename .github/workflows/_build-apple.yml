@@ -1,5 +1,11 @@
 name: Build Apple Applications
 
+# Produces:
+# - desktop-darwin-dmg: notarized macOS DMG consumed by signing, validation, and GitHub release.
+# - desktop-darwin-app: transient app bundle from DMG build retained for debugging.
+# - desktop-darwin-mas-app: Mac App Store bundle consumed by Apple deploy.
+# - desktop-darwin-entitlements: transient MAS entitlements retained with the MAS bundle.
+
 on:
   workflow_call:
     inputs:
@@ -33,22 +39,108 @@ jobs:
             enabled: ${{ contains(inputs.platforms, 'darwin-universal') }}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@8d3c67de8e2fe68ef647c8db1e6a09f647780f40 # v2.19.0
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
           egress-policy: block
           allowed-endpoints: >
+            0.pool.ntp.org:123
+            0.pool.ntp.org:443
+            _dns.resolver.arpa:443
+            ab.apple.com.akadns.net:443
+            amp-api.media-lb.apple.com.akadns.net:443
+            amp-api.media.apple.com:443
+            api.apple-cloudkit.com:443
+            api.apple-cloudkit.fe2.apple-dns.net:443
             api.github.com:443
+            apple-relay.cloudflare.com:443
+            apple-relay.fastly-edge.com:443
             app.posthog.com:443
-            deb.debian.org:443
-            deb.debian.org:80
+            apps-mzstatic-cdn.itunes-apple.com.akadns.net:443
+            apps.mzstatic.com:443
+            appstoreconnect.apple.com:443
+            assets-mercury.mzstatic.com:443
+            bag.itunes.apple.com:443
+            blob.bn9prdstrz04a.store.core.windows.net:443
+            c.apple.news:443
+            calendars.icloud.com:443
+            cdn-h3.g.aaplimg.com:443
+            cds-cdn.v.aaplimg.com:443
+            cds.apple.com:443
+            cf.iadsdk.apple.com:443
+            configuration-lb.ls-apple.com.akadns.net:443
+            configuration-row-lb.apple.com.akadns.net:443
+            configuration.apple.com.akadns.net:443
+            configuration.apple.com:443
+            configuration.ls.apple.com:443
+            device-config.pcms.apple.com:443
+            dns.google:443
+            dns.google:853
+            e673.dsce9.akamaiedge.net:443
+            experiments.apple.com:443
+            fbs.smoot.apple.com:443
+            fpinit.itunes.apple.com:443
+            gateway.fe2.apple-dns.net:443
+            gateway.icloud.com:443
+            gdmf.apple.com:443
             github.com:443
+            gsa.apple.com:443
+            gsp-ssl.ls.apple.com:443
+            gspe1-ssl.ls.apple.com:443
+            help.apple.com:443
+            help.origin-apple.com.akadns.net:443
+            humb.apple.com:443
+            iadsdk.apple.com:443
+            init.itunes.apple.com:443
+            int1.stepsecurity.io:443
+            ipcdn-lb.apple.com.akadns.net:443
+            ipcdn.apple.com:443
+            mask-api.icloud.com:443
+            mask-h2.icloud.com:443
+            mask.icloud.com:443
+            mesu-cdn.apple.com.akadns.net:443
+            mesu-cdn.origin-apple.com.akadns.net:443
+            mesu.apple.com:443
+            metrics.icloud.com:443
+            news-edge.apple.com:443
+            notary-submissions-prod.s3-accelerate.amazonaws.com:443
             objects.githubusercontent.com:443
+            ocsp.digicert.com:443
+            ocsp.digicert.com:80
+            ocsp.edge.digicert.com:80
+            ocsp.rootca1.amazontrust.com:80
+            ocsp.sectigo.com:80
+            ocsp.usertrust.com:80
+            ocsp2.apple.com:443
+            ocsp2.g.aaplimg.com:443
+            pancake.apple.com:443
             proxy.golang.org:443
             registry.npmjs.org:443
+            release-assets.githubusercontent.com:443
+            s.mzstatic.com:443
+            sas.pcms.apple.com:443
+            setup.icloud.com:443
+            sf-api-token-service.itunes.apple.com:443
+            stocks-data-service.apple.com:443
+            stocks-edge.apple.com:443
             storage.googleapis.com:443
             sum.golang.org:443
+            swallow.apple.com:443
+            swdist.apple.com:443
+            swdist.g.aaplimg.com:443
+            swscan-cdn.apple.com.akadns.net:443
+            swscan.apple.com:443
+            timestamp.apple.com:80
+            updates.cdn-apple.com:443
             us.i.posthog.com:443
             us.posthog.com:443
+            valid.apple.com:443
+            weather-edge.apple.com:443
+            www.apple.com:443
+            xp-cdn-lb.itunes-apple.com.akadns.net:443
+            xp.apple.com:443
+            xp.g.aaplimg.com:443
+            xp.itunes-apple.com.akadns.net:443
+            xp.v.aaplimg.com:443
 
       - name: Skip if not enabled
         if: matrix.enabled == false
@@ -56,13 +148,13 @@ jobs:
 
       - name: Checkout
         if: matrix.enabled != false
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           submodules: false
 
       - name: Setup Go
         if: matrix.enabled != false
-        uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
         with:
           go-version-file: 'desktop-ce/go.mod'
           cache: true
@@ -80,11 +172,19 @@ jobs:
           name: frontend-build-ce
           path: frontend/build
 
-      - name: Install Wails CLI
+      - name: Cache Wails binary
         if: matrix.enabled != false
+        id: cache-wails
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: ~/go/bin/wails
+          key: ${{ runner.os }}-${{ runner.arch }}-wails-${{ hashFiles('desktop-common/go.mod') }}
+
+      - name: Install Wails CLI
+        if: matrix.enabled != false && steps.cache-wails.outputs.cache-hit != 'true'
         run: |
           WAILS_VERSION=$(grep 'github.com/wailsapp/wails/v2' desktop-common/go.mod | awk '{print $2}')
-          go install github.com/wailsapp/wails/v2/cmd/wails@${WAILS_VERSION}
+          go install "github.com/wailsapp/wails/v2/cmd/wails@${WAILS_VERSION}"
 
       # Import Apple Developer certificates for macOS DMG signing
       - name: Import Apple Developer Certificates (Developer ID)
@@ -108,8 +208,8 @@ jobs:
           echo "🔐 Setting up keychain for code signing..."
 
           # Create variables
-          CERTIFICATE_PATH=$RUNNER_TEMP/certificate.p12
-          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          CERTIFICATE_PATH="$RUNNER_TEMP/certificate.p12"
+          KEYCHAIN_PATH="$RUNNER_TEMP/app-signing.keychain-db"
           KEYCHAIN_PASSWORD_VALUE="${KEYCHAIN_PASSWORD:-$(uuidgen)}"
 
           # Decode certificate
@@ -125,7 +225,8 @@ jobs:
             -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
 
           # Set keychain search list
-          security list-keychain -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | sed s/\"//g)
+          mapfile -t EXISTING_KEYCHAINS < <(security list-keychains -d user | sed 's/"//g')
+          security list-keychains -d user -s "$KEYCHAIN_PATH" "${EXISTING_KEYCHAINS[@]}"
 
           # Allow codesign to access keychain
           security set-key-partition-list -S apple-tool:,apple:,codesign: \
@@ -362,8 +463,8 @@ jobs:
           echo "🔐 Setting up keychain for Mac App Store code signing..."
 
           # Create variables
-          CERTIFICATE_PATH=$RUNNER_TEMP/mas_certificate.p12
-          KEYCHAIN_PATH=$RUNNER_TEMP/mas-signing.keychain-db
+          CERTIFICATE_PATH="$RUNNER_TEMP/mas_certificate.p12"
+          KEYCHAIN_PATH="$RUNNER_TEMP/mas-signing.keychain-db"
           KEYCHAIN_PASSWORD_VALUE="${KEYCHAIN_PASSWORD:-$(uuidgen)}"
 
           # Decode certificate
@@ -379,7 +480,8 @@ jobs:
             -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
 
           # Set keychain search list
-          security list-keychain -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | sed s/\"//g)
+          mapfile -t EXISTING_KEYCHAINS < <(security list-keychains -d user | sed 's/"//g')
+          security list-keychains -d user -s "$KEYCHAIN_PATH" "${EXISTING_KEYCHAINS[@]}"
 
           # Allow codesign to access keychain
           security set-key-partition-list -S apple-tool:,apple:,codesign: \
@@ -389,7 +491,7 @@ jobs:
 
           # Save MAS certificate name for signing step
           MAS_CERT=$(security find-identity -v -p codesigning "$KEYCHAIN_PATH" | grep "3rd Party Mac Developer Application" | head -1 | awk '{print $2}')
-          echo "MAS_CERT_ID=$MAS_CERT" >> $GITHUB_ENV
+          echo "MAS_CERT_ID=$MAS_CERT" >> "$GITHUB_ENV"
           echo "Using certificate: $MAS_CERT"
 
       - name: Patch Bundle ID, Embed Profile, and Sign (MAS)
@@ -601,7 +703,7 @@ jobs:
         with:
           name: desktop-darwin-dmg
           path: desktop-ce/build/darwin/universal/*.dmg
-          retention-days: 1
+          retention-days: 7
 
       - name: Upload macOS App Bundle (DMG)
         if: matrix.build-type == 'dmg' && matrix.enabled != false
@@ -609,7 +711,7 @@ jobs:
         with:
           name: desktop-darwin-app
           path: desktop-ce/build/darwin/universal/*.app
-          retention-days: 1
+          retention-days: 7
 
       # Upload MAS artifacts (only for MAS builds)
       - name: Upload macOS App Bundle (MAS)
@@ -618,7 +720,7 @@ jobs:
         with:
           name: desktop-darwin-mas-app
           path: desktop-ce/build/darwin/universal/*.app
-          retention-days: 1
+          retention-days: 7
 
       - name: Upload macOS MAS Entitlements
         if: matrix.build-type == 'mas' && matrix.enabled != false
@@ -626,7 +728,7 @@ jobs:
         with:
           name: desktop-darwin-entitlements
           path: desktop-ce/build/darwin/entitlements.plist
-          retention-days: 1
+          retention-days: 7
 
       # Cleanup keychain
       - name: Cleanup Keychain

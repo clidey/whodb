@@ -1,5 +1,9 @@
 name: Build CLI Binaries
 
+# Produces:
+# - cli-binary-*: transient per-platform CLI binary artifacts consumed by combine-cli-binaries.
+# - cli-binaries: combined CLI binaries consumed by npm deploy and GitHub release.
+
 on:
   workflow_call:
     inputs:
@@ -30,7 +34,7 @@ jobs:
             binary_name: whodb-cli-linux-arm64
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@8d3c67de8e2fe68ef647c8db1e6a09f647780f40 # v2.19.0
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
           egress-policy: block
           allowed-endpoints: >
@@ -41,20 +45,29 @@ jobs:
             github.com:443
             go.dev:443
             golang.org:443
+            hosted-compute-watchdog-prod-eus-02.githubapp.com:443
+            hosted-compute-watchdog-prod-iad-01.githubapp.com:443
             objects.githubusercontent.com:443
             proxy.golang.org:443
+            release-assets.githubusercontent.com:443
             storage.googleapis.com:443
             sum.golang.org:443
 
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           submodules: false
 
       - name: Set up Go
-        uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
         with:
           go-version-file: 'cli/go.mod'
+          cache: true
+          cache-dependency-path: |
+            cli/go.sum
+            cli/go.mod
+            core/go.sum
+            core/go.mod
 
       - name: Stamp plugin.json version
         run: |
@@ -71,7 +84,7 @@ jobs:
         with:
           name: cli-binary-${{ matrix.binary_name }}
           path: cli/build/${{ matrix.binary_name }}
-          retention-days: 1
+          retention-days: 7
 
   build-cli-linux-armv7:
     name: Build CLI (Linux armv7)
@@ -79,10 +92,12 @@ jobs:
     environment: permission-required
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@8d3c67de8e2fe68ef647c8db1e6a09f647780f40 # v2.19.0
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
           egress-policy: block
           allowed-endpoints: >
+            184.33.59.158:443
+            44.225.180.214:443
             api.github.com:443
             archive.ubuntu.com:80
             archive.ubuntu.com:443
@@ -90,26 +105,36 @@ jobs:
             deb.debian.org:443
             deb.debian.org:80
             dl.google.com:443
+            esm.ubuntu.com:443
             github.com:443
             go.dev:443
             golang.org:443
+            hosted-compute-watchdog-prod-eus-02.githubapp.com:443
+            motd.ubuntu.com:443
             objects.githubusercontent.com:443
             packages.microsoft.com:443
             proxy.golang.org:443
+            release-assets.githubusercontent.com:443
             security.ubuntu.com:80
             security.ubuntu.com:443
             storage.googleapis.com:443
             sum.golang.org:443
 
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           submodules: false
 
       - name: Set up Go
-        uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
         with:
           go-version-file: 'cli/go.mod'
+          cache: true
+          cache-dependency-path: |
+            cli/go.sum
+            cli/go.mod
+            core/go.sum
+            core/go.mod
 
       - name: Install cross-compiler
         run: |
@@ -143,7 +168,7 @@ jobs:
         with:
           name: cli-binary-whodb-cli-linux-armv7
           path: cli/build/whodb-cli-linux-armv7
-          retention-days: 1
+          retention-days: 7
 
   build-cli-macos:
     name: Build CLI (macOS)
@@ -151,31 +176,97 @@ jobs:
     environment: permission-required
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@8d3c67de8e2fe68ef647c8db1e6a09f647780f40 # v2.19.0
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
           egress-policy: block
           allowed-endpoints: >
+            0.pool.ntp.org:123
+            0.pool.ntp.org:443
+            _dns.resolver.arpa:443
+            ab.apple.com.akadns.net:443
+            amp-api.media.apple.com:443
+            api.apple-cloudkit.com:443
+            api.apple-cloudkit.fe2.apple-dns.net:443
             api.github.com:443
+            apple-relay.cloudflare.com:443
+            apple-relay.fastly-edge.com:443
+            apps.mzstatic.com:443
+            bag.itunes.apple.com:443
+            c.apple.news:443
+            calendars.icloud.com:443
+            cds.apple.com:443
+            configuration-row-lb.apple.com.akadns.net:443
+            configuration.apple.com.akadns.net:443
+            configuration.apple.com:443
+            configuration.ls.apple.com:443
             deb.debian.org:443
             deb.debian.org:80
+            device-config.pcms.apple.com:443
             dl.google.com:443
+            dns.google:443
+            dns.google:853
+            experiments.apple.com:443
+            fbs.smoot.apple.com:443
+            fpinit.itunes.apple.com:443
+            gateway.icloud.com:443
+            gdmf.apple.com:443
             github.com:443
             go.dev:443
             golang.org:443
+            gsa.apple.com:443
+            help.apple.com:443
+            help.origin-apple.com.akadns.net:443
+            humb.apple.com:443
+            init.itunes.apple.com:443
+            ipcdn-lb.apple.com.akadns.net:443
+            ipcdn.apple.com:443
+            mask-api.icloud.com:443
+            mask.icloud.com:443
+            mesu-cdn.apple.com.akadns.net:443
+            mesu-cdn.origin-apple.com.akadns.net:443
+            mesu.apple.com:443
+            metrics.icloud.com:443
+            news-edge.apple.com:443
             objects.githubusercontent.com:443
+            ocsp.comodoca.com:80
+            ocsp.digicert.com:80
+            ocsp2.apple.com:443
+            ocsp2.g.aaplimg.com:443
+            pancake.apple.com:443
             proxy.golang.org:443
+            release-assets.githubusercontent.com:443
+            s.mzstatic.com:443
+            sf-api-token-service.itunes.apple.com:443
+            stocks-data-service.apple.com:443
             storage.googleapis.com:443
+            swallow.apple.com:443
+            swdist.apple.com:443
+            swscan.apple.com:443
             sum.golang.org:443
+            updates.cdn-apple.com:443
+            valid.apple.com:443
+            weather-edge.apple.com:443
+            www.apple.com:443
+            xp-cdn-lb.itunes-apple.com.akadns.net:443
+            xp.apple.com:443
+            xp.itunes-apple.com.akadns.net:443
+            xp.v.aaplimg.com:443
 
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           submodules: false
 
       - name: Set up Go
-        uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
         with:
           go-version-file: 'cli/go.mod'
+          cache: true
+          cache-dependency-path: |
+            cli/go.sum
+            cli/go.mod
+            core/go.sum
+            core/go.mod
 
       - name: Stamp plugin.json version
         run: |
@@ -188,22 +279,22 @@ jobs:
         env:
           VERSION: ${{ inputs.version }}
         run: |
-          make ci-build-darwin-arm64 VERSION=$VERSION
-          make ci-build-darwin-amd64 VERSION=$VERSION
+          make ci-build-darwin-arm64 VERSION="$VERSION"
+          make ci-build-darwin-amd64 VERSION="$VERSION"
 
       - name: Upload ARM64 artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: cli-binary-whodb-cli-darwin-arm64
           path: cli/build/whodb-cli-darwin-arm64
-          retention-days: 1
+          retention-days: 7
 
       - name: Upload AMD64 artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: cli-binary-whodb-cli-darwin-amd64
           path: cli/build/whodb-cli-darwin-amd64
-          retention-days: 1
+          retention-days: 7
 
   build-cli-windows:
     name: Build CLI (Windows ${{ matrix.arch }})
@@ -223,31 +314,51 @@ jobs:
           #   binary_name: whodb-cli-windows-arm64.exe
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@8d3c67de8e2fe68ef647c8db1e6a09f647780f40 # v2.19.0
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
           egress-policy: block
           allowed-endpoints: >
             api.github.com:443
-            deb.debian.org:443
-            deb.debian.org:80
-            dl.google.com:443
+            au.download.windowsupdate.com:80
+            client.wns.windows.com:443
+            cp501.prod.do.dsp.mp.microsoft.com:443
+            dc.services.visualstudio.com:443
+            download.windowsupdate.com:80
+            fe2cr.update.microsoft.com:443
+            fs.microsoft.com:443
+            geo.prod.do.dsp.mp.microsoft.com:443
             github.com:443
-            go.dev:443
-            golang.org:443
+            incoming.telemetry.mozilla.org:443
+            kv501.prod.do.dsp.mp.microsoft.com:443
+            login.live.com:443
+            mobile.events.data.microsoft.com:443
             objects.githubusercontent.com:443
+            ocsp.digicert.com:80
+            ocsp.sectigo.com:80
+            oneocsp.microsoft.com:80
             proxy.golang.org:443
+            release-assets.githubusercontent.com:443
+            settings-win.data.microsoft.com:443
             storage.googleapis.com:443
+            telemetry-incoming.r53-2.services.mozilla.com:443
             sum.golang.org:443
+            v1.ta2.fe2cr.update.microsoft.com:443
 
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           submodules: false
 
       - name: Set up Go
-        uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
         with:
           go-version-file: 'cli/go.mod'
+          cache: true
+          cache-dependency-path: |
+            cli/go.sum
+            cli/go.mod
+            core/go.sum
+            core/go.mod
 
       - name: Stamp plugin.json version
         shell: pwsh
@@ -266,7 +377,7 @@ jobs:
         with:
           name: cli-binary-${{ matrix.binary_name }}
           path: cli/build/${{ matrix.binary_name }}
-          retention-days: 1
+          retention-days: 7
 
   # Combine all binaries into single artifact for downstream jobs
   combine-cli-binaries:
@@ -275,15 +386,17 @@ jobs:
     needs: [build-cli-linux, build-cli-linux-armv7, build-cli-macos, build-cli-windows]
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@8d3c67de8e2fe68ef647c8db1e6a09f647780f40 # v2.19.0
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
           egress-policy: block
           allowed-endpoints: >
+            16.144.218.77:443
+            44.231.9.16:443
             api.github.com:443
-            deb.debian.org:443
-            deb.debian.org:80
+            github.com:443
+            release-assets.githubusercontent.com:443
 
-      - name: Download all CLI binaries
+      - name: Download CLI artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           digest-mismatch: warn
@@ -301,4 +414,4 @@ jobs:
         with:
           name: cli-binaries
           path: binaries/
-          retention-days: 1
+          retention-days: 7

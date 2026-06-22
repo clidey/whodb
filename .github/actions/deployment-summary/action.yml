@@ -31,9 +31,6 @@ inputs:
   github-release:
     description: 'GitHub release result'
     required: true
-  homebrew-cask:
-    description: 'Homebrew cask result'
-    required: true
   verification:
     description: 'Verification result'
     required: true
@@ -134,15 +131,6 @@ runs:
           echo "| GitHub Release | ⏭️ Skipped | Stage-only mode |" >> $GITHUB_STEP_SUMMARY
         else
           echo "| GitHub Release | ❌ Failed | Check logs |" >> $GITHUB_STEP_SUMMARY
-        fi
-
-        # Homebrew
-        if [ "${{ inputs.homebrew-cask }}" = "success" ]; then
-          echo "| Homebrew Cask | ✅ Generated | Ready for PR |" >> $GITHUB_STEP_SUMMARY
-        elif [ "${{ inputs.homebrew-cask }}" = "skipped" ]; then
-          echo "| Homebrew Cask | ⏭️ Skipped | Not production |" >> $GITHUB_STEP_SUMMARY
-        else
-          echo "| Homebrew Cask | ❌ Failed | Check logs |" >> $GITHUB_STEP_SUMMARY
         fi
 
         echo "" >> $GITHUB_STEP_SUMMARY

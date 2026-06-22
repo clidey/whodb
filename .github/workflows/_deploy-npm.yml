@@ -1,5 +1,8 @@
 name: Deploy npm Packages
 
+# Consumes:
+# - cli-binaries
+
 on:
   workflow_call:
     inputs:
@@ -20,24 +23,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@8d3c67de8e2fe68ef647c8db1e6a09f647780f40 # v2.19.0
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
           egress-policy: block
           allowed-endpoints: >
+            44.242.41.160:443
+            54.68.178.98:443
             api.github.com:443
-            deb.debian.org:443
-            deb.debian.org:80
             fulcio.sigstore.dev:443
             github.com:443
             nodejs.org:443
             objects.githubusercontent.com:443
             registry.npmjs.org:443
             rekor.sigstore.dev:443
+            release-assets.githubusercontent.com:443
             token.actions.githubusercontent.com:443
             tuf-repo-cdn.sigstore.dev:443
 
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           submodules: false
 
@@ -67,10 +71,18 @@ jobs:
         id: baml-version
         run: |
           BAML_VERSION=$(grep 'github.com/boundaryml/baml ' core/go.mod | awk '{print $2}' | sed 's/^v//')
-          echo "version=$BAML_VERSION" >> $GITHUB_OUTPUT
+          echo "version=$BAML_VERSION" >> "$GITHUB_OUTPUT"
           echo "BAML version: $BAML_VERSION"
 
+      - name: Cache BAML libraries
+        id: cache-baml-libs
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: baml-libs
+          key: ${{ runner.os }}-baml-libs-${{ steps.baml-version.outputs.version }}
+
       - name: Download BAML libraries
+        if: steps.cache-baml-libs.outputs.cache-hit != 'true'
         env:
           BAML_VERSION: ${{ steps.baml-version.outputs.version }}
         run: |
@@ -95,7 +107,7 @@ jobs:
               echo "Warning: Failed to download BAML library for $pkg_dir"
               continue
             }
-            echo "Downloaded: baml-libs/${pkg_dir}-${lib_name} ($(ls -lh "baml-libs/${pkg_dir}-${lib_name}" | awk '{print $5}'))"
+            echo "Downloaded: baml-libs/${pkg_dir}-${lib_name} ($(find "baml-libs/${pkg_dir}-${lib_name}" -maxdepth 0 -printf '%s bytes'))"
           done
 
           echo "BAML libraries downloaded:"
@@ -154,7 +166,7 @@ jobs:
                 baml_src="../../../baml-libs/${pkg_dir}-${baml_lib}"
                 if [ -f "$baml_src" ]; then
                   cp "$baml_src" "$pkg_dir/bin/$baml_lib"
-                  echo "  Bundled BAML library: $baml_lib ($(ls -lh "$pkg_dir/bin/$baml_lib" | awk '{print $5}'))"
+                  echo "  Bundled BAML library: $baml_lib ($(find "$pkg_dir/bin/$baml_lib" -maxdepth 0 -printf '%s bytes'))"
                 else
                   echo "  Warning: BAML library not found for $pkg_dir (will use runtime download)"
                 fi
@@ -164,7 +176,7 @@ jobs:
               jq --arg v "$VERSION" '.version = $v' "$pkg_dir/package.json" > "$pkg_dir/package.json.tmp"
               mv "$pkg_dir/package.json.tmp" "$pkg_dir/package.json"
 
-              echo "Prepared $pkg_dir ($(ls -lh "$pkg_dir/bin/$target_name" | awk '{print $5}'))"
+              echo "Prepared $pkg_dir ($(find "$pkg_dir/bin/$target_name" -maxdepth 0 -printf '%s bytes'))"
             else
               echo "Binary not found: $binary_path"
             fi
