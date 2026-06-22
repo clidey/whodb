@@ -35,7 +35,7 @@ if [[ -n "$STAGED_TS" ]]; then
   echo "pre-commit: running frontend lint on staged files..."
   # oxlint with explicit files triggers stricter resolution — use --fix and
   # fail if anything can't be auto-fixed
-  (cd "$REPO_ROOT/frontend" && pnpm lint:staged $(echo "$STAGED_TS" | sed 's|^frontend/||' | tr '\n' ' ')) || {
+  (cd "$REPO_ROOT/frontend" && pnpm exec oxlint --fix $(echo "$STAGED_TS" | sed 's|^frontend/||' | tr '\n' ' ')) || {
     echo "pre-commit: oxlint failed. Run 'pnpm lint:fix' to auto-fix."
     exit 1
   }

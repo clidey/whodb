@@ -79,6 +79,8 @@ Transform tasks into verifiable goals:
 - "Fix the bug" → "Write a test that reproduces it, then make it pass"
 - "Refactor X" → "Ensure tests pass before and after"
 
+For debugging, confirm the root cause with evidence (a log, trace, or minimal repro) before changing code. Don't fix-and-see; if the first fix doesn't hold, re-diagnose rather than trying another speculative fix.
+
 For multi-step tasks, state a brief plan:
 ```
 1. [Step] → verify: [check]
