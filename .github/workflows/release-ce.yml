@@ -803,6 +803,52 @@ jobs:
       - name: Generate comprehensive summary
         run: |
           {
+          status_label() {
+            case "$1" in
+              success) echo "✅ Success" ;;
+              skipped) echo "⏭️ Skipped" ;;
+              failure|cancelled) echo "❌ Failed" ;;
+              *) echo "❓ Unknown" ;;
+            esac
+          }
+
+          build_row() {
+            local name="$1"
+            local result="$2"
+            echo "| ${name} | $(status_label "$result") |"
+          }
+
+          deploy_row() {
+            local name="$1"
+            local result="$2"
+            local selected="$3"
+            local success_note="$4"
+
+            case "$result" in
+              success)
+                echo "| ${name} | ✅ Deployed | ${success_note} |"
+                ;;
+              skipped)
+                if [ "$selected" = "true" ]; then
+                  echo "| ${name} | ⏭️ Skipped | Blocked before deploy |"
+                else
+                  echo "| ${name} | ⏭️ Skipped | Not selected |"
+                fi
+                ;;
+              failure|cancelled)
+                echo "| ${name} | ❌ Failed | GitHub release blocked |"
+                ;;
+              *)
+                echo "| ${name} | ❓ Unknown | Check logs |"
+                ;;
+            esac
+          }
+
+          release_result="${{ needs.create-github-release.result }}"
+          stage_only="${{ needs.calculate-version.outputs.stage-only }}"
+          publish_release="${{ needs.calculate-version.outputs.publish-github-release }}"
+          release_succeeded="false"
+
           echo "# 📊 Release Summary for ${{ needs.calculate-version.outputs.version }}"
           echo ""
           echo "**Deployment Mode:** ${{ needs.calculate-version.outputs.deployment-mode }}"
@@ -814,61 +860,14 @@ jobs:
           echo "| Component | Status |"
           echo "|-----------|--------|"
 
-          if [ "${{ needs.build-docker.result }}" = "success" ]; then
-            echo "| Docker | ✅ Success |"
-          elif [ "${{ needs.build-docker.result }}" = "skipped" ]; then
-            echo "| Docker | ⏭️ Skipped |"
-          else
-            echo "| Docker | ❌ Failed |"
-          fi
-
-          if [ "${{ needs.build-docker-cli.result }}" = "success" ]; then
-            echo "| CLI Docker | ✅ Success |"
-          elif [ "${{ needs.build-docker-cli.result }}" = "skipped" ]; then
-            echo "| CLI Docker | ⏭️ Skipped |"
-          else
-            echo "| CLI Docker | ❌ Failed |"
-          fi
-
-          if [ "${{ needs.build-windows.result }}" = "success" ]; then
-            echo "| Windows | ✅ Success |"
-          elif [ "${{ needs.build-windows.result }}" = "skipped" ]; then
-            echo "| Windows | ⏭️ Skipped |"
-          else
-            echo "| Windows | ❌ Failed |"
-          fi
-
-          if [ "${{ needs.build-apple.result }}" = "success" ]; then
-            echo "| Apple | ✅ Success |"
-          elif [ "${{ needs.build-apple.result }}" = "skipped" ]; then
-            echo "| Apple | ⏭️ Skipped |"
-          else
-            echo "| Apple | ❌ Failed |"
-          fi
-
-          if [ "${{ needs.build-snap.result }}" = "success" ]; then
-            echo "| Snap | ✅ Success |"
-          elif [ "${{ needs.build-snap.result }}" = "skipped" ]; then
-            echo "| Snap | ⏭️ Skipped |"
-          else
-            echo "| Snap | ❌ Failed |"
-          fi
-
-          if [ "${{ needs.build-linux-terminal.result }}" = "success" ]; then
-            echo "| Linux Terminal | ✅ Success |"
-          elif [ "${{ needs.build-linux-terminal.result }}" = "skipped" ]; then
-            echo "| Linux Terminal | ⏭️ Skipped |"
-          else
-            echo "| Linux Terminal | ❌ Failed |"
-          fi
-
-          if [ "${{ needs.build-cli.result }}" = "success" ]; then
-            echo "| CLI (MCP Server) | ✅ Success |"
-          elif [ "${{ needs.build-cli.result }}" = "skipped" ]; then
-            echo "| CLI (MCP Server) | ⏭️ Skipped |"
-          else
-            echo "| CLI (MCP Server) | ❌ Failed |"
-          fi
+          build_row "Docker" "${{ needs.build-docker.result }}"
+          build_row "CLI Docker" "${{ needs.build-docker-cli.result }}"
+          build_row "Windows" "${{ needs.build-windows.result }}"
+          build_row "Apple" "${{ needs.build-apple.result }}"
+          build_row "Snap" "${{ needs.build-snap.result }}"
+          build_row "Linux Terminal" "${{ needs.build-linux-terminal.result }}"
+          build_row "CLI (MCP Server)" "${{ needs.build-cli.result }}"
+          build_row "Sign and Validate" "${{ needs.sign-and-validate.result }}"
 
           echo ""
 
@@ -877,92 +876,34 @@ jobs:
           echo "| Platform | Status | Notes |"
           echo "|----------|--------|-------|"
 
-          # Docker Hub
-          if [ "${{ needs.deploy-docker.result }}" = "success" ]; then
-            echo "| Docker Hub | ✅ Deployed | Latest tag updated |"
-          elif [ "${{ needs.deploy-docker.result }}" = "skipped" ]; then
-            if [ "${{ needs.calculate-version.outputs.stage-only }}" = "true" ]; then
-              echo "| Docker Hub | ⏭️ Skipped | Stage-only mode |"
-            else
-              echo "| Docker Hub | ⏭️ Skipped | Not selected |"
-            fi
-          else
-            echo "| Docker Hub | ❌ Failed | Check logs |"
-          fi
+          deploy_row "Docker Hub" "${{ needs.deploy-docker.result }}" "${{ needs.calculate-version.outputs.deploy-docker }}" "Version tag updated"
+          deploy_row "Docker Hub (CLI)" "${{ needs.deploy-docker-cli.result }}" "${{ needs.calculate-version.outputs.deploy-docker }}" "Version tag updated"
+          deploy_row "Snap Store" "${{ needs.deploy-snap.result }}" "${{ needs.calculate-version.outputs.deploy-snap }}" "${{ needs.calculate-version.outputs.stage-only == 'true' && 'edge channel' || 'stable channel' }}"
+          deploy_row "Microsoft Store" "${{ needs.deploy-microsoft.result }}" "${{ needs.calculate-version.outputs.deploy-microsoft }}" "${{ needs.calculate-version.outputs.stage-only == 'true' && 'Draft submission' || 'Submitted for certification' }}"
+          deploy_row "Apple App Store" "${{ needs.deploy-apple.result }}" "${{ needs.calculate-version.outputs.deploy-apple }}" "${{ needs.calculate-version.outputs.stage-only == 'true' && 'TestFlight only' || 'Submitted for review' }}"
+          deploy_row "npm (@clidey/whodb-cli)" "${{ needs.deploy-npm.result }}" "${{ needs.calculate-version.outputs.deploy-npm }}" "All platform packages"
 
-          # Docker Hub CLI
-          if [ "${{ needs.deploy-docker-cli.result }}" = "success" ]; then
-            echo "| Docker Hub (CLI) | ✅ Deployed | Latest tag updated |"
-          elif [ "${{ needs.deploy-docker-cli.result }}" = "skipped" ]; then
-            if [ "${{ needs.calculate-version.outputs.stage-only }}" = "true" ]; then
-              echo "| Docker Hub (CLI) | ⏭️ Skipped | Stage-only mode |"
-            else
-              echo "| Docker Hub (CLI) | ⏭️ Skipped | Not selected |"
-            fi
-          else
-            echo "| Docker Hub (CLI) | ❌ Failed | Check logs |"
-          fi
+          echo ""
 
-          # Snap Store
-          if [ "${{ needs.deploy-snap.result }}" = "success" ]; then
-            CHANNEL="${{ needs.calculate-version.outputs.stage-only == 'true' && 'edge' || 'stable' }}"
-            echo "| Snap Store | ✅ Deployed | ${CHANNEL} channel |"
-          elif [ "${{ needs.deploy-snap.result }}" = "skipped" ]; then
-            echo "| Snap Store | ⏭️ Skipped | Not selected |"
-          else
-            echo "| Snap Store | ❌ Failed | Check logs |"
-          fi
+          echo "## 🧾 Final Release Gate"
+          echo "| Gate | Status | Notes |"
+          echo "|------|--------|-------|"
 
-          # Microsoft Store
-          if [ "${{ needs.deploy-microsoft.result }}" = "success" ]; then
-            if [ "${{ needs.calculate-version.outputs.stage-only }}" = "true" ]; then
-              echo "| Microsoft Store | ✅ Deployed | Draft submission |"
+          if [ "$release_result" = "success" ]; then
+            release_succeeded="true"
+            if [ "$stage_only" = "true" ] || [ "$publish_release" != "true" ]; then
+              release_note="Draft release"
             else
-              echo "| Microsoft Store | ✅ Deployed | Submitted for certification |"
-            fi
-          elif [ "${{ needs.deploy-microsoft.result }}" = "skipped" ]; then
-            echo "| Microsoft Store | ⏭️ Skipped | Not selected |"
-          else
-            echo "| Microsoft Store | ❌ Failed | Check logs |"
-          fi
-
-          # Apple App Store
-          if [ "${{ needs.deploy-apple.result }}" = "success" ]; then
-            if [ "${{ needs.calculate-version.outputs.stage-only }}" = "true" ]; then
-              echo "| Apple App Store | ✅ Deployed | TestFlight only |"
-            else
-              echo "| Apple App Store | ✅ Deployed | Submitted for review |"
-            fi
-          elif [ "${{ needs.deploy-apple.result }}" = "skipped" ]; then
-            echo "| Apple App Store | ⏭️ Skipped | Not selected |"
-          else
-            echo "| Apple App Store | ❌ Failed | Check logs |"
-          fi
-
-          # GitHub Release
-          if [ "${{ needs.create-github-release.result }}" = "success" ]; then
-            if [ "${{ needs.calculate-version.outputs.stage-only }}" = "true" ] || [ "${{ needs.calculate-version.outputs.publish-github-release }}" != "true" ]; then
-              RELEASE_NOTE="Draft release"
-            else
-              RELEASE_NOTE="Published"
+              release_note="Published"
             fi
             if [ "${{ needs.calculate-version.outputs.deploy-linux-terminal }}" = "true" ]; then
-              RELEASE_NOTE="$RELEASE_NOTE (includes Linux Terminal)"
+              release_note="${release_note} (includes Linux Terminal)"
             fi
-            echo "| GitHub Release | ✅ Created | $RELEASE_NOTE |"
-          elif [ "${{ needs.create-github-release.result }}" = "skipped" ]; then
-            echo "| GitHub Release | ⏭️ Skipped | Stage-only mode |"
+            echo "| GitHub Release | ✅ Created | ${release_note} |"
+          elif [ "$release_result" = "skipped" ]; then
+            echo "| GitHub Release | ⏭️ Blocked | A selected build, deploy, or validation job did not succeed |"
           else
-            echo "| GitHub Release | ❌ Failed | Check logs |"
-          fi
-
-          # npm
-          if [ "${{ needs.deploy-npm.result }}" = "success" ]; then
-            echo "| npm (@clidey/whodb-cli) | ✅ Published | All platform packages |"
-          elif [ "${{ needs.deploy-npm.result }}" = "skipped" ]; then
-            echo "| npm | ⏭️ Skipped | CLI not selected |"
-          else
-            echo "| npm | ❌ Failed | Check logs |"
+            echo "| GitHub Release | ❌ Failed | Check release job logs |"
           fi
 
           echo ""
@@ -970,14 +911,15 @@ jobs:
           # Next Steps
           echo "## 📝 Next Steps"
 
-          if [ "${{ needs.calculate-version.outputs.stage-only }}" = "true" ]; then
-            echo "Stage deployments completed. To promote to production:"
+          if [ "$release_succeeded" != "true" ]; then
+            echo "GitHub release was blocked. Resolve the failed selected build, deploy, or validation job, then rerun the release."
+          elif [ "$stage_only" = "true" ]; then
+            echo "Stage deployments completed and a draft GitHub release was created. To promote to production:"
             echo "1. Test the edge/draft releases"
             echo "2. Promote Snap from edge to stable channel"
             echo "3. Submit Microsoft Store draft for certification"
             echo "4. Submit Apple TestFlight build for App Store review"
-            echo "5. Publish GitHub draft release"
-            echo "6. Deploy to Docker Hub"
+            echo "5. Publish the GitHub draft release after all channels are ready"
           else
             echo "Production deployment completed!"
             echo ""
