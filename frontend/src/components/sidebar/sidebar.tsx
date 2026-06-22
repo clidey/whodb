@@ -510,7 +510,7 @@ export const Sidebar: FC = () => {
     }, [open, toggleSidebar]);
 
     return (
-        <nav className="dark" aria-label={t('mainNavigation')}>
+        <nav aria-label={t('mainNavigation')}>
             <SidebarComponent
                 variant="sidebar"
                 collapsible="icon"
