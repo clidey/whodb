@@ -88,7 +88,7 @@ jobs:
           sbom: true
           provenance: mode=max
           tags: clidey/whodb-cli:${{ inputs.version }}-${{ matrix.arch }}
-          cache-from: type=gha
+          cache-from: type=gha,scope=ce-cli-docker-${{ matrix.arch }}
           build-args: |
             VERSION=${{ inputs.version }}
 

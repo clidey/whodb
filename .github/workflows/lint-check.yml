@@ -20,11 +20,20 @@ jobs:
         with:
           go-version-file: core/go.mod
 
+      - name: Cache golangci-lint
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: ~/.cache/whodb-go-tools/bin
+          key: ${{ runner.os }}-golangci-lint-v2.12.2
+
       - name: Lint
         run: |
           cd core
-          GOBIN=/tmp go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2
-          /tmp/golangci-lint custom
+          mkdir -p "$HOME/.cache/whodb-go-tools/bin"
+          if [ ! -x "$HOME/.cache/whodb-go-tools/bin/golangci-lint" ]; then
+            GOBIN="$HOME/.cache/whodb-go-tools/bin" go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2
+          fi
+          "$HOME/.cache/whodb-go-tools/bin/golangci-lint" custom
           ./custom-gcl run ./...
 
   cli-lint:
@@ -37,11 +46,20 @@ jobs:
         with:
           go-version-file: cli/go.mod
 
+      - name: Cache golangci-lint
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: ~/.cache/whodb-go-tools/bin
+          key: ${{ runner.os }}-golangci-lint-v2.12.2
+
       - name: Lint
         run: |
-          GOBIN=/tmp go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2
+          mkdir -p "$HOME/.cache/whodb-go-tools/bin"
+          if [ ! -x "$HOME/.cache/whodb-go-tools/bin/golangci-lint" ]; then
+            GOBIN="$HOME/.cache/whodb-go-tools/bin" go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2
+          fi
           cd cli
-          /tmp/golangci-lint run --config .golangci.yml ./...
+          "$HOME/.cache/whodb-go-tools/bin/golangci-lint" run --config .golangci.yml ./...
 
   go-vet:
     name: Go Vet

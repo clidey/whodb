@@ -85,8 +85,8 @@ jobs:
           push: false
           tags: clidey/whodb-cli:${{ inputs.version }}-${{ matrix.arch }}
           outputs: type=docker,dest=/tmp/whodb-cli-docker-${{ matrix.arch }}.tar
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=ce-cli-docker-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=ce-cli-docker-${{ matrix.arch }}
           build-args: |
             VERSION=${{ inputs.version }}
 

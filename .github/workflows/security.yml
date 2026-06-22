@@ -40,11 +40,28 @@ jobs:
           cache: pnpm
           cache-dependency-path: frontend/pnpm-lock.yaml
 
+      - name: Cache Go security tools
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: ~/.cache/whodb-go-tools/bin
+          key: ${{ runner.os }}-go-security-tools-gosec-v2.27.1-govulncheck-v1.3.0
+
+      - name: Add Go tools to PATH
+        run: echo "$HOME/.cache/whodb-go-tools/bin" >> "$GITHUB_PATH"
+
       - name: Install gosec
-        run: go install github.com/securego/gosec/v2/cmd/gosec@v2.27.1
+        run: |
+          mkdir -p "$HOME/.cache/whodb-go-tools/bin"
+          if [ ! -x "$HOME/.cache/whodb-go-tools/bin/gosec" ]; then
+            GOBIN="$HOME/.cache/whodb-go-tools/bin" go install github.com/securego/gosec/v2/cmd/gosec@v2.27.1
+          fi
 
       - name: Install govulncheck
-        run: go install golang.org/x/vuln/cmd/govulncheck@v1.3.0
+        run: |
+          mkdir -p "$HOME/.cache/whodb-go-tools/bin"
+          if [ ! -x "$HOME/.cache/whodb-go-tools/bin/govulncheck" ]; then
+            GOBIN="$HOME/.cache/whodb-go-tools/bin" go install golang.org/x/vuln/cmd/govulncheck@v1.3.0
+          fi
 
       - name: Gitleaks
         uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0

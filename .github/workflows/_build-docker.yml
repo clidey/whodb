@@ -88,8 +88,8 @@ jobs:
           push: false
           load: true
           tags: whodb-scan:${{ inputs.version }}-${{ matrix.arch }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=ce-docker-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=ce-docker-${{ matrix.arch }}
           build-args: |
             VERSION=${{ inputs.version }}
             PLATFORM=docker
