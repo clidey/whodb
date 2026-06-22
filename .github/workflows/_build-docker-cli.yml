@@ -1,5 +1,9 @@
 name: Build CLI Docker Images
 
+# Produces:
+# - docker-cli-image-amd64: transient scan handoff artifact.
+# - docker-cli-image-arm64: transient scan handoff artifact.
+
 on:
   workflow_call:
     inputs:
@@ -103,4 +107,4 @@ jobs:
         with:
           name: docker-cli-image-${{ matrix.arch }}
           path: /tmp/whodb-cli-docker-${{ matrix.arch }}.tar
-          retention-days: 1
+          retention-days: 7

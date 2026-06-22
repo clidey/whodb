@@ -1,5 +1,15 @@
 name: Sign and Validate Builds
 
+# Consumes selected build artifacts:
+# - snap-package-amd64
+# - snap-package-arm64
+# - desktop-windows-amd64
+# - desktop-darwin-dmg
+# - desktop-darwin-mas-app
+# - server-binaries-ce
+# Produces:
+# - signatures: Sigstore bundles consumed by GitHub release.
+
 on:
   workflow_call:
     inputs:
@@ -17,6 +27,21 @@ on:
         required: false
         type: boolean
         default: true
+      validate-windows:
+        description: 'Whether to validate Windows desktop builds'
+        required: false
+        type: boolean
+        default: false
+      validate-apple:
+        description: 'Whether to validate Apple desktop builds'
+        required: false
+        type: boolean
+        default: false
+      validate-linux-terminal:
+        description: 'Whether to validate Linux server binaries'
+        required: false
+        type: boolean
+        default: false
       # DISABLED: AppImage builds disabled - requires system WebKit2GTK
       validate-appimage:
         description: 'Whether to validate AppImage builds'
@@ -51,29 +76,53 @@ jobs:
         with:
           submodules: false
 
-      - name: Download Snap packages
+      - name: Download Snap amd64 package
+        if: inputs.validate-snap
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        continue-on-error: true
         with:
           digest-mismatch: warn
-          pattern: snap-package-*
-          path: artifacts/
+          name: snap-package-amd64
+          path: artifacts/snap-package-amd64/
 
-      - name: Download Desktop builds
+      - name: Download Snap arm64 package
+        if: inputs.validate-snap
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        continue-on-error: true
         with:
           digest-mismatch: warn
-          pattern: desktop-*
-          path: artifacts/
+          name: snap-package-arm64
+          path: artifacts/snap-package-arm64/
+
+      - name: Download Windows desktop build
+        if: inputs.validate-windows
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          digest-mismatch: warn
+          name: desktop-windows-amd64
+          path: artifacts/desktop-windows-amd64/
+
+      - name: Download macOS DMG
+        if: inputs.validate-apple
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          digest-mismatch: warn
+          name: desktop-darwin-dmg
+          path: artifacts/desktop-darwin-dmg/
+
+      - name: Download macOS App Store bundle
+        if: inputs.validate-apple
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          digest-mismatch: warn
+          name: desktop-darwin-mas-app
+          path: artifacts/desktop-darwin-mas-app/
 
       - name: Download Linux server binaries
+        if: inputs.validate-linux-terminal
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        continue-on-error: true
         with:
           digest-mismatch: warn
-          pattern: server-binaries-*
-          path: artifacts/
+          name: server-binaries-ce
+          path: artifacts/server-binaries-ce/
 
       # DISABLED: AppImage builds disabled
       # - name: Download AppImages
@@ -145,21 +194,45 @@ jobs:
         with:
           submodules: false
 
-      - name: Download Snap packages
+      - name: Download Snap amd64 package
+        if: inputs.validate-snap
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        continue-on-error: true
         with:
           digest-mismatch: warn
-          pattern: snap-package-*
-          path: artifacts/
+          name: snap-package-amd64
+          path: artifacts/snap-package-amd64/
 
-      - name: Download Desktop builds
+      - name: Download Snap arm64 package
+        if: inputs.validate-snap
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        continue-on-error: true
         with:
           digest-mismatch: warn
-          pattern: desktop-*
-          path: artifacts/
+          name: snap-package-arm64
+          path: artifacts/snap-package-arm64/
+
+      - name: Download Windows desktop build
+        if: inputs.validate-windows
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          digest-mismatch: warn
+          name: desktop-windows-amd64
+          path: artifacts/desktop-windows-amd64/
+
+      - name: Download macOS DMG
+        if: inputs.validate-apple
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          digest-mismatch: warn
+          name: desktop-darwin-dmg
+          path: artifacts/desktop-darwin-dmg/
+
+      - name: Download macOS App Store bundle
+        if: inputs.validate-apple
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          digest-mismatch: warn
+          name: desktop-darwin-mas-app
+          path: artifacts/desktop-darwin-mas-app/
 
       # DISABLED: AppImage builds disabled
       # - name: Download AppImages
@@ -235,26 +308,54 @@ jobs:
           FAILED=false
 
           # Check Windows builds
-          if [ -d "artifacts/desktop-windows-amd64" ]; then
-            echo "✅ Windows AMD64 desktop build found"
-          else
-            echo "⚠️ Windows AMD64 desktop build missing (may be expected)"
+          if [ "${{ inputs.validate-windows }}" = "true" ]; then
+            if find artifacts/desktop-windows-amd64 -name "whodb.exe" -type f | grep -q .; then
+              echo "✅ Windows AMD64 desktop executable found"
+            else
+              echo "❌ Windows AMD64 desktop executable missing"
+              FAILED=true
+            fi
           fi
 
           # Check macOS builds
-          if [ -d "artifacts/desktop-darwin-universal" ]; then
-            if [ -f "artifacts/desktop-darwin-universal/build/darwin/universal/whodb.dmg" ]; then
+          if [ "${{ inputs.validate-apple }}" = "true" ]; then
+            if find artifacts/desktop-darwin-dmg -name "*.dmg" -type f | grep -q .; then
               echo "✅ macOS DMG found"
             else
               echo "❌ macOS DMG missing"
               FAILED=true
             fi
-          else
-            echo "⚠️ macOS desktop build missing (may be expected)"
+
+            if find artifacts/desktop-darwin-mas-app -name "*.app" -type d | grep -q .; then
+              echo "✅ macOS App Store bundle found"
+            else
+              echo "❌ macOS App Store bundle missing"
+              FAILED=true
+            fi
           fi
 
           if [ "$FAILED" = "true" ]; then
             echo "::error::Desktop validation failed"
+            exit 1
+          fi
+
+      - name: Validate Linux server binaries
+        if: inputs.validate-linux-terminal
+        run: |
+          echo "🐧 Validating Linux server binaries..."
+          FAILED=false
+
+          for arch in amd64 arm64 armv7 riscv64; do
+            if find artifacts/server-binaries-ce -name "whodb-*-linux-${arch}" -type f | grep -q .; then
+              echo "✅ Linux ${arch} server binary found"
+            else
+              echo "❌ Linux ${arch} server binary missing"
+              FAILED=true
+            fi
+          done
+
+          if [ "$FAILED" = "true" ]; then
+            echo "::error::Linux server binary validation failed"
             exit 1
           fi
 
@@ -319,6 +420,9 @@ jobs:
             "validation": {
               "snap": ${{ inputs.validate-snap }},
               "desktop": ${{ inputs.validate-desktop }},
+              "windows": ${{ inputs.validate-windows }},
+              "apple": ${{ inputs.validate-apple }},
+              "linux_terminal": ${{ inputs.validate-linux-terminal }},
               "appimage": ${{ inputs.validate-appimage }}
             },
             "artifacts": $(find artifacts -type f -name "*.snap" -o -name "*.exe" -o -name "*.dmg" | wc -l)
@@ -330,4 +434,4 @@ jobs:
         with:
           name: deployment-manifest-validated
           path: validation_manifest.json
-          retention-days: 1
+          retention-days: 7

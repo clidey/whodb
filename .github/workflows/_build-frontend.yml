@@ -14,6 +14,9 @@
 
 # Shared frontend build workflow.
 # Builds the frontend once and uploads it as an artifact for other jobs to download.
+#
+# Produces:
+# - frontend-build-ce: compiled CE frontend consumed by platform build/deploy jobs.
 
 name: Build Frontend
 
@@ -77,4 +80,4 @@ jobs:
           name: frontend-build-ce
           path: frontend/build
           include-hidden-files: true
-          retention-days: 1
+          retention-days: 7

@@ -1,5 +1,8 @@
 name: Build Linux Server Binaries
 
+# Produces:
+# - server-binaries-ce: Linux server binaries consumed by signing, validation, and GitHub release.
+
 on:
   workflow_call:
     inputs:
@@ -90,7 +93,7 @@ jobs:
         env:
           VERSION: ${{ inputs.version }}
         run: |
-          make server-all VERSION=${{ inputs.version }}
+          make server-all VERSION="$VERSION"
 
       - name: Verify server binaries
         run: |
@@ -99,7 +102,7 @@ jobs:
 
           for binary in desktop-common/build-server/whodb-*-linux-*; do
             if [ -f "$binary" ]; then
-              echo "✅ Binary: $(basename $binary)"
+              echo "✅ Binary: $(basename "$binary")"
               file "$binary"
             else
               echo "❌ Missing binary: $binary"
@@ -112,4 +115,4 @@ jobs:
         with:
           name: server-binaries-ce
           path: desktop-common/build-server/whodb-*-linux-*
-          retention-days: 1
+          retention-days: 7

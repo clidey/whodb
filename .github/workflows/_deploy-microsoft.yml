@@ -1,5 +1,11 @@
 name: Deploy to Microsoft Store
 
+# Consumes:
+# - desktop-windows-amd64
+# - desktop-windows-arm64 (optional)
+# Produces:
+# - windows-msix: MSIX bundle consumed by Microsoft Store deploy and GitHub release.
+
 on:
   workflow_call:
     inputs:
@@ -333,7 +339,7 @@ jobs:
         with:
           name: windows-msix
           path: "*.msixbundle"
-          retention-days: 1
+          retention-days: 7
 
   deploy-microsoft-store:
     name: Submit to Microsoft Store

@@ -3,6 +3,9 @@ name: Build Docker Images
 # Builds Docker images and populates the GHA buildx cache.
 # Images are NOT pushed here — the deploy workflow rebuilds from cache
 # and pushes with SBOM/provenance attestations.
+#
+# Produces:
+# - GHA buildx cache entries consumed by _deploy-docker.yml.
 
 on:
   workflow_call:

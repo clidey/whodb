@@ -15,6 +15,17 @@ name: Release CE
 #   - Can deploy to all stores or just specific ones
 #   - Stage deploys to: Docker (tag only), Snap (edge), MS Store (draft), Apple (TestFlight)
 #   - Production deploys to: Docker (latest), Snap (stable), MS Store (prod), Apple (App Store)
+#
+# Artifact contract:
+#   - frontend-build-ce feeds all CE platform builds
+#   - snap-package-amd64/snap-package-arm64 feed Snap deploy, signing, and release assets
+#   - desktop-windows-amd64 feeds Microsoft packaging and release assets
+#   - windows-msix feeds release assets after Microsoft packaging
+#   - desktop-darwin-dmg feeds Apple signing and release assets
+#   - desktop-darwin-mas-app feeds Apple deploy/signing
+#   - server-binaries-ce feeds Linux terminal release assets
+#   - cli-binaries feeds npm deploy and release assets
+#   - signatures feeds release assets
 
 on:
   push:
@@ -362,6 +373,9 @@ jobs:
       version: ${{ needs.calculate-version.outputs.version }}
       validate-snap: ${{ needs.build-snap.result == 'success' }}
       validate-desktop: ${{ needs.build-windows.result == 'success' || needs.build-apple.result == 'success' }}
+      validate-windows: ${{ needs.build-windows.result == 'success' }}
+      validate-apple: ${{ needs.build-apple.result == 'success' }}
+      validate-linux-terminal: ${{ needs.build-linux-terminal.result == 'success' }}
       validate-appimage: false  # DISABLED: AppImage builds disabled
 
   # Step 9: Create GitHub release (only after ALL selected platforms built and deployed successfully)
@@ -422,21 +436,45 @@ jobs:
         with:
           submodules: false
 
-      - name: Download Snap packages
+      - name: Download Snap amd64 package
+        if: needs.calculate-version.outputs.deploy-snap == 'true'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        continue-on-error: true
         with:
           digest-mismatch: warn
-          pattern: snap-package-*
-          path: artifacts/
+          name: snap-package-amd64
+          path: artifacts/snap-package-amd64/
 
-      - name: Download Desktop builds
+      - name: Download Snap arm64 package
+        if: needs.calculate-version.outputs.deploy-snap == 'true'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        continue-on-error: true
         with:
           digest-mismatch: warn
-          pattern: desktop-*
-          path: artifacts/
+          name: snap-package-arm64
+          path: artifacts/snap-package-arm64/
+
+      - name: Download Windows executable
+        if: needs.calculate-version.outputs.deploy-microsoft == 'true'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          digest-mismatch: warn
+          name: desktop-windows-amd64
+          path: artifacts/desktop-windows-amd64/
+
+      - name: Download Windows MSIX bundle
+        if: needs.calculate-version.outputs.deploy-microsoft == 'true'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          digest-mismatch: warn
+          name: windows-msix
+          path: artifacts/windows-msix/
+
+      - name: Download macOS DMG
+        if: needs.calculate-version.outputs.deploy-apple == 'true'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          digest-mismatch: warn
+          name: desktop-darwin-dmg
+          path: artifacts/desktop-darwin-dmg/
 
       # DISABLED: AppImage builds disabled
       # - name: Download AppImages
@@ -447,16 +485,16 @@ jobs:
       #     path: artifacts/
 
       - name: Download Linux server binaries
+        if: needs.calculate-version.outputs.deploy-linux-terminal == 'true'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        continue-on-error: true
         with:
           digest-mismatch: warn
-          pattern: server-binaries-*
-          path: artifacts/
+          name: server-binaries-ce
+          path: artifacts/server-binaries-ce/
 
       - name: Download CLI binaries
+        if: needs.calculate-version.outputs.deploy-cli == 'true' || needs.calculate-version.outputs.deploy-npm == 'true'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        continue-on-error: true
         with:
           digest-mismatch: warn
           name: cli-binaries
@@ -464,7 +502,6 @@ jobs:
 
       - name: Download signatures
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        continue-on-error: true
         with:
           digest-mismatch: warn
           name: signatures

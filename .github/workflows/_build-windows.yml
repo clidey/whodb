@@ -1,5 +1,8 @@
 name: Build Windows Applications
 
+# Produces:
+# - desktop-windows-amd64: Windows executable consumed by Microsoft packaging and GitHub release.
+
 on:
   workflow_call:
     inputs:
@@ -87,7 +90,7 @@ jobs:
         shell: bash
         run: |
           WAILS_VERSION=$(grep 'github.com/wailsapp/wails/v2' desktop-common/go.mod | awk '{print $2}')
-          go install github.com/wailsapp/wails/v2/cmd/wails@${WAILS_VERSION}
+          go install "github.com/wailsapp/wails/v2/cmd/wails@${WAILS_VERSION}"
 
       # Windows AMD64 Build
       - name: Build Windows AMD64
@@ -131,4 +134,4 @@ jobs:
           name: desktop-windows-${{ matrix.arch }}
           path: |
             desktop-ce/build/
-          retention-days: 1
+          retention-days: 7

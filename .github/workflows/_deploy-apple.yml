@@ -1,5 +1,11 @@
 name: Deploy to Apple App Store
 
+# Consumes:
+# - desktop-darwin-dmg
+# - desktop-darwin-mas-app
+# Produces:
+# - mac-app-store-package: transient signed PKG consumed by App Store upload.
+
 on:
   workflow_call:
     inputs:
@@ -204,7 +210,7 @@ jobs:
         with:
           name: mac-app-store-package
           path: "*.pkg"
-          retention-days: 1
+          retention-days: 7
 
       - name: Cleanup Keychain
         if: always()

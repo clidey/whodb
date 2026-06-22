@@ -1,5 +1,9 @@
 name: Build Snap Packages
 
+# Produces:
+# - snap-package-amd64: Snap package consumed by Snap deploy, signing, validation, and GitHub release.
+# - snap-package-arm64: Snap package consumed by Snap deploy, signing, validation, and GitHub release.
+
 on:
   workflow_call:
     inputs:
@@ -88,11 +92,11 @@ jobs:
           sudo -E snapcraft pack --destructive-mode --verbosity=debug
 
           echo "Snap built successfully"
-          echo "build_method=destructive" >> $GITHUB_OUTPUT
+          echo "build_method=destructive" >> "$GITHUB_OUTPUT"
 
       - name: Verify Snap
         run: |
-          SNAP_FILE=$(ls *.snap 2>/dev/null | head -1)
+          SNAP_FILE=$(find . -maxdepth 1 -name "*.snap" -type f -print -quit)
           if [ -z "$SNAP_FILE" ]; then
             echo "❌ No snap file found after build"
             exit 1
@@ -120,4 +124,4 @@ jobs:
         with:
           name: snap-package-${{ matrix.arch }}
           path: "*.snap"
-          retention-days: 1
+          retention-days: 7

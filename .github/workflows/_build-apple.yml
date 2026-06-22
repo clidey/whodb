@@ -1,5 +1,11 @@
 name: Build Apple Applications
 
+# Produces:
+# - desktop-darwin-dmg: notarized macOS DMG consumed by signing, validation, and GitHub release.
+# - desktop-darwin-app: transient app bundle from DMG build retained for debugging.
+# - desktop-darwin-mas-app: Mac App Store bundle consumed by Apple deploy.
+# - desktop-darwin-entitlements: transient MAS entitlements retained with the MAS bundle.
+
 on:
   workflow_call:
     inputs:
@@ -84,7 +90,7 @@ jobs:
         if: matrix.enabled != false
         run: |
           WAILS_VERSION=$(grep 'github.com/wailsapp/wails/v2' desktop-common/go.mod | awk '{print $2}')
-          go install github.com/wailsapp/wails/v2/cmd/wails@${WAILS_VERSION}
+          go install "github.com/wailsapp/wails/v2/cmd/wails@${WAILS_VERSION}"
 
       # Import Apple Developer certificates for macOS DMG signing
       - name: Import Apple Developer Certificates (Developer ID)
@@ -108,8 +114,8 @@ jobs:
           echo "🔐 Setting up keychain for code signing..."
 
           # Create variables
-          CERTIFICATE_PATH=$RUNNER_TEMP/certificate.p12
-          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          CERTIFICATE_PATH="$RUNNER_TEMP/certificate.p12"
+          KEYCHAIN_PATH="$RUNNER_TEMP/app-signing.keychain-db"
           KEYCHAIN_PASSWORD_VALUE="${KEYCHAIN_PASSWORD:-$(uuidgen)}"
 
           # Decode certificate
@@ -125,7 +131,8 @@ jobs:
             -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
 
           # Set keychain search list
-          security list-keychain -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | sed s/\"//g)
+          mapfile -t EXISTING_KEYCHAINS < <(security list-keychains -d user | sed 's/"//g')
+          security list-keychains -d user -s "$KEYCHAIN_PATH" "${EXISTING_KEYCHAINS[@]}"
 
           # Allow codesign to access keychain
           security set-key-partition-list -S apple-tool:,apple:,codesign: \
@@ -362,8 +369,8 @@ jobs:
           echo "🔐 Setting up keychain for Mac App Store code signing..."
 
           # Create variables
-          CERTIFICATE_PATH=$RUNNER_TEMP/mas_certificate.p12
-          KEYCHAIN_PATH=$RUNNER_TEMP/mas-signing.keychain-db
+          CERTIFICATE_PATH="$RUNNER_TEMP/mas_certificate.p12"
+          KEYCHAIN_PATH="$RUNNER_TEMP/mas-signing.keychain-db"
           KEYCHAIN_PASSWORD_VALUE="${KEYCHAIN_PASSWORD:-$(uuidgen)}"
 
           # Decode certificate
@@ -379,7 +386,8 @@ jobs:
             -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
 
           # Set keychain search list
-          security list-keychain -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | sed s/\"//g)
+          mapfile -t EXISTING_KEYCHAINS < <(security list-keychains -d user | sed 's/"//g')
+          security list-keychains -d user -s "$KEYCHAIN_PATH" "${EXISTING_KEYCHAINS[@]}"
 
           # Allow codesign to access keychain
           security set-key-partition-list -S apple-tool:,apple:,codesign: \
@@ -389,7 +397,7 @@ jobs:
 
           # Save MAS certificate name for signing step
           MAS_CERT=$(security find-identity -v -p codesigning "$KEYCHAIN_PATH" | grep "3rd Party Mac Developer Application" | head -1 | awk '{print $2}')
-          echo "MAS_CERT_ID=$MAS_CERT" >> $GITHUB_ENV
+          echo "MAS_CERT_ID=$MAS_CERT" >> "$GITHUB_ENV"
           echo "Using certificate: $MAS_CERT"
 
       - name: Patch Bundle ID, Embed Profile, and Sign (MAS)
@@ -601,7 +609,7 @@ jobs:
         with:
           name: desktop-darwin-dmg
           path: desktop-ce/build/darwin/universal/*.dmg
-          retention-days: 1
+          retention-days: 7
 
       - name: Upload macOS App Bundle (DMG)
         if: matrix.build-type == 'dmg' && matrix.enabled != false
@@ -609,7 +617,7 @@ jobs:
         with:
           name: desktop-darwin-app
           path: desktop-ce/build/darwin/universal/*.app
-          retention-days: 1
+          retention-days: 7
 
       # Upload MAS artifacts (only for MAS builds)
       - name: Upload macOS App Bundle (MAS)
@@ -618,7 +626,7 @@ jobs:
         with:
           name: desktop-darwin-mas-app
           path: desktop-ce/build/darwin/universal/*.app
-          retention-days: 1
+          retention-days: 7
 
       - name: Upload macOS MAS Entitlements
         if: matrix.build-type == 'mas' && matrix.enabled != false
@@ -626,7 +634,7 @@ jobs:
         with:
           name: desktop-darwin-entitlements
           path: desktop-ce/build/darwin/entitlements.plist
-          retention-days: 1
+          retention-days: 7
 
       # Cleanup keychain
       - name: Cleanup Keychain
