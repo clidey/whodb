@@ -673,7 +673,7 @@ export const Sidebar: FC = () => {
                                     </SidebarMenuButton>
                                     <SidebarMenuButton asChild>
                                         <DropdownMenu>
-                                            <DropdownMenuTrigger className={cn({ "hidden": !open })}>
+                                            <DropdownMenuTrigger asChild className={cn({ "hidden": !open })}>
                                                 <Button
                                                     className="flex items-center justify-center p-1 rounded hover:bg-gray-100 dark:hover:bg-neutral-800 ml-2"
                                                     aria-label={t('moreLogoutOptions')}
@@ -839,7 +839,7 @@ export const Sidebar: FC = () => {
                                         <div className="flex items-center gap-1 shrink-0">
                                             <SidebarMenuButton asChild className="w-auto">
                                                 <DropdownMenu>
-                                                    <DropdownMenuTrigger className={cn({
+                                                    <DropdownMenuTrigger asChild className={cn({
                                                         "hidden": !open,
                                                     })}>
                                                         <Button

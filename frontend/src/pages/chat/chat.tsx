@@ -238,7 +238,7 @@ const TablePreview: FC<{ type: string, data: TableData, text: string, containerW
             "opacity-100": dropdownOpen,
         })}>
             <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
-                <DropdownMenuTrigger>
+                <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="sm" data-testid="icon-button" aria-label={t('actions')}>
                         <EllipsisHorizontalIcon className="w-5 h-5" aria-hidden="true" />
                     </Button>
