@@ -23,6 +23,7 @@ export interface AIProviderOverrides {
     addProvider: (provider: { modelType: string; name: string; token: string }) => Promise<{ id: string } | null>;
     deleteProvider: (id: string) => Promise<boolean>;
     onActivate?: (callback: () => void) => () => void;
+    openAddProvider?: () => void;
 }
 
 let overrides: AIProviderOverrides | null = null;
