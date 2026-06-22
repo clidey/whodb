@@ -19,6 +19,7 @@ import type {FC} from "react";
 import { useCallback, useEffect, useState, useMemo} from "react";
 import {useTranslation} from "@/hooks/use-translation";
 import {getKeyDisplay, getEffectiveIsMac, formatShortcut} from "@/utils/platform";
+import {featureFlags} from "@/config/features";
 import {matchesShortcut, resolveShortcut, SHORTCUTS} from "@/utils/shortcuts";
 
 interface ShortcutEntry {
@@ -204,6 +205,7 @@ export const useKeyboardShortcutsHelp = () => {
     }, []);
 
     useEffect(() => {
+        if (!featureFlags.keyboardShortcutsHelp) return;
         window.addEventListener("keydown", handleKeyDown);
         return () => { window.removeEventListener("keydown", handleKeyDown); };
     }, [handleKeyDown]);
