@@ -82,7 +82,7 @@ on:
         type: boolean
         default: false
       deploy-cli:
-        description: 'Build CLI binaries (all platforms) - also generates Homebrew formula'
+        description: 'Build CLI binaries (all platforms)'
         required: false
         type: boolean
         default: false
@@ -481,24 +481,71 @@ jobs:
           path: artifacts/signatures/
 
       - name: Prepare release assets
+        env:
+          DEPLOY_SNAP: ${{ needs.calculate-version.outputs.deploy-snap }}
+          DEPLOY_MICROSOFT: ${{ needs.calculate-version.outputs.deploy-microsoft }}
+          DEPLOY_APPLE: ${{ needs.calculate-version.outputs.deploy-apple }}
+          DEPLOY_LINUX_TERMINAL: ${{ needs.calculate-version.outputs.deploy-linux-terminal }}
+          DEPLOY_CLI: ${{ needs.calculate-version.outputs.deploy-cli }}
+          DEPLOY_NPM: ${{ needs.calculate-version.outputs.deploy-npm }}
         run: |
+          set -euo pipefail
+
           mkdir -p final-assets
 
-          # Copy desktop builds (exe, dmg, msixbundle)
-          find artifacts -type f \( -name "*.exe" -o -name "*.dmg" -o -name "*.msixbundle" \) -exec cp {} final-assets/ \; 2>/dev/null || true
+          copy_release_assets() {
+            local description="$1"
+            local source_dir="$2"
+            local min_count="$3"
+            shift 3
+            local count
 
-          # Copy Linux server binaries
-          find artifacts -type f -name "whodb-*-linux-*" -exec cp {} final-assets/ \; 2>/dev/null || true
+            if [ ! -d "$source_dir" ]; then
+              echo "::error::Missing ${description}: artifact directory ${source_dir} was not downloaded"
+              exit 1
+            fi
 
-          # Copy CLI binaries
-          find artifacts/cli-binaries -type f -name "whodb-cli-*" -exec cp {} final-assets/ \; 2>/dev/null || true
+            count=$(find "$source_dir" "$@" -type f | wc -l | tr -d ' ')
+            if [ "$count" -lt "$min_count" ]; then
+              echo "::error::Missing ${description}: expected at least ${min_count}, found ${count}"
+              exit 1
+            fi
+
+            find "$source_dir" "$@" -type f -exec cp {} final-assets/ \;
+            echo "✅ Staged ${description}: copied ${count}"
+          }
+
+          if [ "$DEPLOY_SNAP" = "true" ]; then
+            copy_release_assets "Snap amd64 package" "artifacts/snap-package-amd64" 1 -name "*.snap"
+            copy_release_assets "Snap arm64 package" "artifacts/snap-package-arm64" 1 -name "*.snap"
+          fi
+
+          if [ "$DEPLOY_MICROSOFT" = "true" ]; then
+            copy_release_assets "Windows executable" "artifacts/desktop-windows-amd64" 1 -name "*.exe"
+            copy_release_assets "Windows MSIX bundle" "artifacts/windows-msix" 1 -name "*.msixbundle"
+          fi
+
+          if [ "$DEPLOY_APPLE" = "true" ]; then
+            copy_release_assets "macOS DMG" "artifacts/desktop-darwin-dmg" 1 -name "*.dmg"
+          fi
+
+          if [ "$DEPLOY_LINUX_TERMINAL" = "true" ]; then
+            copy_release_assets "Linux server binaries" "artifacts/server-binaries-ce" 1 -name "whodb-*-linux-*"
+          fi
+
+          if [ "$DEPLOY_CLI" = "true" ] || [ "$DEPLOY_NPM" = "true" ]; then
+            copy_release_assets "CLI binaries" "artifacts/cli-binaries" 1 -name "whodb-cli-*"
+          fi
 
           # Copy signatures (extract and copy only files, not directories)
           if [ -f artifacts/signatures/signatures.tar.gz ]; then
             mkdir -p /tmp/sig-extract
             tar -xzf artifacts/signatures/signatures.tar.gz -C /tmp/sig-extract/
-            find /tmp/sig-extract -type f -exec cp {} final-assets/ \; 2>/dev/null || true
+            copy_release_assets "signature bundles" "/tmp/sig-extract" 1 -name "*.bundle"
             rm -rf /tmp/sig-extract
+          else
+            echo "::error::Missing signature archive: artifacts/signatures/signatures.tar.gz was not downloaded"
+            exit 1
           fi
 
           echo "📦 Release assets prepared:"
