@@ -114,6 +114,15 @@ jobs:
           sarif_file: trivy-results.sarif
           category: whodb-docker-${{ matrix.arch }}
 
+      - name: Upload Trivy SARIF artifact
+        if: always() && hashFiles('trivy-results.sarif') != ''
+        continue-on-error: true
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: trivy-sarif-whodb-docker-${{ matrix.arch }}
+          path: trivy-results.sarif
+          retention-days: 7
+
       - name: Remove local scan image
         if: always()
         run: docker rmi whodb-scan:${{ inputs.version }}-${{ matrix.arch }} 2>/dev/null || true

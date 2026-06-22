@@ -123,6 +123,7 @@ jobs:
       deploy-cli: ${{ steps.calc.outputs.deploy-cli }}
       deploy-npm: ${{ steps.calc.outputs.deploy-npm }}
       publish-github-release: ${{ steps.calc.outputs.publish-github-release }}
+      has-file-assets: ${{ steps.release_flags.outputs.has-file-assets }}
       release-notes: ${{ steps.release_notes.outputs.notes }}
     permissions:
       contents: read
@@ -171,6 +172,31 @@ jobs:
           deploy-cli: ${{ github.event_name == 'push' && 'true' || (inputs.deploy-cli && 'true' || 'false') }}
           deploy-npm: ${{ github.event_name == 'push' && 'true' || (inputs.deploy-npm && 'true' || 'false') }}
           publish-github-release: ${{ github.event_name == 'push' && 'true' || (inputs.publish-github-release && 'true' || 'false') }}
+
+      - name: Validate release target selection
+        id: release_flags
+        env:
+          DEPLOY_DOCKER: ${{ steps.calc.outputs.deploy-docker }}
+          DEPLOY_SNAP: ${{ steps.calc.outputs.deploy-snap }}
+          DEPLOY_MICROSOFT: ${{ steps.calc.outputs.deploy-microsoft }}
+          DEPLOY_APPLE: ${{ steps.calc.outputs.deploy-apple }}
+          DEPLOY_LINUX_TERMINAL: ${{ steps.calc.outputs.deploy-linux-terminal }}
+          DEPLOY_CLI: ${{ steps.calc.outputs.deploy-cli }}
+          DEPLOY_NPM: ${{ steps.calc.outputs.deploy-npm }}
+        run: |
+          set -euo pipefail
+
+          HAS_FILE_ASSETS=false
+          if [ "$DEPLOY_SNAP" = "true" ] || [ "$DEPLOY_MICROSOFT" = "true" ] || [ "$DEPLOY_APPLE" = "true" ] || [ "$DEPLOY_LINUX_TERMINAL" = "true" ] || [ "$DEPLOY_CLI" = "true" ] || [ "$DEPLOY_NPM" = "true" ]; then
+            HAS_FILE_ASSETS=true
+          fi
+
+          if [ "$DEPLOY_DOCKER" != "true" ] && [ "$HAS_FILE_ASSETS" != "true" ]; then
+            echo "::error::Select at least one release target: Docker, Snap, Microsoft, Apple, Linux Terminal, CLI, or npm."
+            exit 1
+          fi
+
+          echo "has-file-assets=$HAS_FILE_ASSETS" >> "$GITHUB_OUTPUT"
 
       - name: Extract release notes from PR
         id: release_notes
@@ -476,13 +502,7 @@ jobs:
           path: artifacts/cli-binaries/
 
       - name: Download signatures
-        if: |
-          needs.calculate-version.outputs.deploy-snap == 'true' ||
-          needs.calculate-version.outputs.deploy-microsoft == 'true' ||
-          needs.calculate-version.outputs.deploy-apple == 'true' ||
-          needs.calculate-version.outputs.deploy-linux-terminal == 'true' ||
-          needs.calculate-version.outputs.deploy-cli == 'true' ||
-          needs.calculate-version.outputs.deploy-npm == 'true'
+        if: needs.calculate-version.outputs.has-file-assets == 'true'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           digest-mismatch: warn
@@ -497,14 +517,11 @@ jobs:
           DEPLOY_LINUX_TERMINAL: ${{ needs.calculate-version.outputs.deploy-linux-terminal }}
           DEPLOY_CLI: ${{ needs.calculate-version.outputs.deploy-cli }}
           DEPLOY_NPM: ${{ needs.calculate-version.outputs.deploy-npm }}
+          HAS_FILE_ASSETS: ${{ needs.calculate-version.outputs.has-file-assets }}
         run: |
           set -euo pipefail
 
           mkdir -p final-assets
-          HAS_FILE_ASSETS=false
-          if [ "$DEPLOY_SNAP" = "true" ] || [ "$DEPLOY_MICROSOFT" = "true" ] || [ "$DEPLOY_APPLE" = "true" ] || [ "$DEPLOY_LINUX_TERMINAL" = "true" ] || [ "$DEPLOY_CLI" = "true" ] || [ "$DEPLOY_NPM" = "true" ]; then
-            HAS_FILE_ASSETS=true
-          fi
 
           copy_release_assets() {
             local description="$1"
@@ -576,14 +593,11 @@ jobs:
           DEPLOY_LINUX_TERMINAL: ${{ needs.calculate-version.outputs.deploy-linux-terminal }}
           DEPLOY_CLI: ${{ needs.calculate-version.outputs.deploy-cli }}
           DEPLOY_NPM: ${{ needs.calculate-version.outputs.deploy-npm }}
+          HAS_FILE_ASSETS: ${{ needs.calculate-version.outputs.has-file-assets }}
         run: |
           set -euo pipefail
 
           missing=false
-          HAS_FILE_ASSETS=false
-          if [ "$DEPLOY_SNAP" = "true" ] || [ "$DEPLOY_MICROSOFT" = "true" ] || [ "$DEPLOY_APPLE" = "true" ] || [ "$DEPLOY_LINUX_TERMINAL" = "true" ] || [ "$DEPLOY_CLI" = "true" ] || [ "$DEPLOY_NPM" = "true" ]; then
-            HAS_FILE_ASSETS=true
-          fi
 
           require_count() {
             local description="$1"
@@ -688,13 +702,7 @@ jobs:
           cat /tmp/release-body.md
 
       - name: Create GitHub release with assets (as draft)
-        if: |
-          needs.calculate-version.outputs.deploy-snap == 'true' ||
-          needs.calculate-version.outputs.deploy-microsoft == 'true' ||
-          needs.calculate-version.outputs.deploy-apple == 'true' ||
-          needs.calculate-version.outputs.deploy-linux-terminal == 'true' ||
-          needs.calculate-version.outputs.deploy-cli == 'true' ||
-          needs.calculate-version.outputs.deploy-npm == 'true'
+        if: needs.calculate-version.outputs.has-file-assets == 'true'
         uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd # v1.21.0
         with:
           tag: ${{ needs.calculate-version.outputs.version }}
@@ -709,13 +717,7 @@ jobs:
           bodyFile: /tmp/release-body.md
 
       - name: Create GitHub release without assets (as draft)
-        if: |
-          needs.calculate-version.outputs.deploy-snap != 'true' &&
-          needs.calculate-version.outputs.deploy-microsoft != 'true' &&
-          needs.calculate-version.outputs.deploy-apple != 'true' &&
-          needs.calculate-version.outputs.deploy-linux-terminal != 'true' &&
-          needs.calculate-version.outputs.deploy-cli != 'true' &&
-          needs.calculate-version.outputs.deploy-npm != 'true'
+        if: needs.calculate-version.outputs.has-file-assets != 'true'
         uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd # v1.21.0
         with:
           tag: ${{ needs.calculate-version.outputs.version }}
@@ -738,12 +740,9 @@ jobs:
           DEPLOY_LINUX_TERMINAL: ${{ needs.calculate-version.outputs.deploy-linux-terminal }}
           DEPLOY_CLI: ${{ needs.calculate-version.outputs.deploy-cli }}
           DEPLOY_NPM: ${{ needs.calculate-version.outputs.deploy-npm }}
+          HAS_FILE_ASSETS: ${{ needs.calculate-version.outputs.has-file-assets }}
         run: |
           set -euo pipefail
-          HAS_FILE_ASSETS=false
-          if [ "$DEPLOY_SNAP" = "true" ] || [ "$DEPLOY_MICROSOFT" = "true" ] || [ "$DEPLOY_APPLE" = "true" ] || [ "$DEPLOY_LINUX_TERMINAL" = "true" ] || [ "$DEPLOY_CLI" = "true" ] || [ "$DEPLOY_NPM" = "true" ]; then
-            HAS_FILE_ASSETS=true
-          fi
 
           echo "🔍 Verifying draft release ${VERSION} before publishing..."
 
