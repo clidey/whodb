@@ -86,8 +86,16 @@ jobs:
           name: frontend-build-ce
           path: frontend/build
 
-      - name: Install Wails CLI
+      - name: Cache Wails binary
         if: matrix.enabled != false
+        id: cache-wails
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: ~/go/bin/wails
+          key: ${{ runner.os }}-${{ runner.arch }}-wails-${{ hashFiles('desktop-common/go.mod') }}
+
+      - name: Install Wails CLI
+        if: matrix.enabled != false && steps.cache-wails.outputs.cache-hit != 'true'
         run: |
           WAILS_VERSION=$(grep 'github.com/wailsapp/wails/v2' desktop-common/go.mod | awk '{print $2}')
           go install "github.com/wailsapp/wails/v2/cmd/wails@${WAILS_VERSION}"
