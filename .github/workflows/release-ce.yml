@@ -364,11 +364,27 @@ jobs:
       validate-desktop: ${{ needs.build-windows.result == 'success' || needs.build-apple.result == 'success' }}
       validate-appimage: false  # DISABLED: AppImage builds disabled
 
-  # Step 4: Create GitHub release (only if ALL selected platforms built successfully)
+  # Step 9: Create GitHub release (only after ALL selected platforms built and deployed successfully)
   create-github-release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
-    needs: [ calculate-version, build-docker, build-docker-cli, build-windows, build-apple, build-snap, build-linux-terminal, build-cli, sign-and-validate ]
+    needs: [
+      calculate-version,
+      build-docker,
+      build-docker-cli,
+      build-windows,
+      build-apple,
+      build-snap,
+      build-linux-terminal,
+      build-cli,
+      sign-and-validate,
+      deploy-docker,
+      deploy-docker-cli,
+      deploy-snap,
+      deploy-microsoft,
+      deploy-apple,
+      deploy-npm
+    ]
     if: |
       always() &&
       needs.calculate-version.result == 'success' &&
@@ -379,7 +395,13 @@ jobs:
       (needs.calculate-version.outputs.deploy-microsoft != 'true' || needs.build-windows.result == 'success') &&
       (needs.calculate-version.outputs.deploy-apple != 'true' || needs.build-apple.result == 'success') &&
       (needs.calculate-version.outputs.deploy-linux-terminal != 'true' || needs.build-linux-terminal.result == 'success') &&
-      (needs.calculate-version.outputs.deploy-cli != 'true' || needs.build-cli.result == 'success')
+      (needs.calculate-version.outputs.deploy-cli != 'true' || needs.build-cli.result == 'success') &&
+      (needs.calculate-version.outputs.deploy-docker != 'true' || needs.deploy-docker.result == 'success') &&
+      (needs.calculate-version.outputs.deploy-docker != 'true' || needs.deploy-docker-cli.result == 'success') &&
+      (needs.calculate-version.outputs.deploy-snap != 'true' || needs.deploy-snap.result == 'success') &&
+      (needs.calculate-version.outputs.deploy-microsoft != 'true' || needs.deploy-microsoft.result == 'success') &&
+      (needs.calculate-version.outputs.deploy-apple != 'true' || needs.deploy-apple.result == 'success') &&
+      (needs.calculate-version.outputs.deploy-npm != 'true' || needs.deploy-npm.result == 'success')
     permissions:
       contents: write
       pull-requests: read
@@ -596,14 +618,15 @@ jobs:
             exit 1
           fi
 
-  # Step 5: Deploy to various platforms (after GitHub release created)
+  # Step 5: Deploy to various platforms (after selected builds and signing validation)
   deploy-snap:
     name: Deploy Snap
-    needs: [ calculate-version, create-github-release ]
+    needs: [ calculate-version, build-snap, sign-and-validate ]
     if: |
       always() &&
       needs.calculate-version.outputs.deploy-snap == 'true' &&
-      needs.create-github-release.result == 'success'
+      needs.build-snap.result == 'success' &&
+      needs.sign-and-validate.result == 'success'
     permissions:
       contents: read
       actions: read
@@ -615,11 +638,12 @@ jobs:
 
   deploy-microsoft:
     name: Deploy Microsoft
-    needs: [ calculate-version, create-github-release ]
+    needs: [ calculate-version, build-windows, sign-and-validate ]
     if: |
       always() &&
       needs.calculate-version.outputs.deploy-microsoft == 'true' &&
-      needs.create-github-release.result == 'success'
+      needs.build-windows.result == 'success' &&
+      needs.sign-and-validate.result == 'success'
     permissions:
       contents: read
       actions: write
@@ -631,11 +655,12 @@ jobs:
 
   deploy-apple:
     name: Deploy Apple
-    needs: [ calculate-version, create-github-release ]
+    needs: [ calculate-version, build-apple, sign-and-validate ]
     if: |
       always() &&
       needs.calculate-version.outputs.deploy-apple == 'true' &&
-      needs.create-github-release.result == 'success'
+      needs.build-apple.result == 'success' &&
+      needs.sign-and-validate.result == 'success'
     permissions:
       contents: read
       actions: write
@@ -646,16 +671,16 @@ jobs:
       release-notes: ${{ needs.calculate-version.outputs.release-notes }}
     secrets: inherit
 
-  # Step 6: Deploy to Docker Hub (after GitHub release)
+  # Step 6: Deploy to Docker Hub
   # Rebuilds from GHA buildx cache populated by build-docker and pushes with attestations.
   deploy-docker:
     name: Deploy Docker
-    needs: [ calculate-version, build-docker, create-github-release ]
+    needs: [ calculate-version, build-docker, sign-and-validate ]
     if: |
       always() &&
       needs.calculate-version.outputs.deploy-docker == 'true' &&
       needs.build-docker.result == 'success' &&
-      needs.create-github-release.result == 'success'
+      needs.sign-and-validate.result == 'success'
     permissions:
       contents: read
       actions: read
@@ -666,14 +691,15 @@ jobs:
       stage-only: ${{ needs.calculate-version.outputs.stage-only == 'true' }}
     secrets: inherit
 
-  # Step 6b: Deploy CLI to Docker Hub (after GitHub release)
+  # Step 6b: Deploy CLI to Docker Hub
   deploy-docker-cli:
     name: Deploy CLI Docker
-    needs: [ calculate-version, create-github-release ]
+    needs: [ calculate-version, build-docker-cli, sign-and-validate ]
     if: |
       always() &&
       needs.calculate-version.outputs.deploy-docker == 'true' &&
-      needs.create-github-release.result == 'success'
+      needs.build-docker-cli.result == 'success' &&
+      needs.sign-and-validate.result == 'success'
     permissions:
       contents: read
       actions: read
@@ -684,36 +710,20 @@ jobs:
       stage-only: ${{ needs.calculate-version.outputs.stage-only == 'true' }}
     secrets: inherit
 
-  # Step 7: Deploy to npm (after CLI build and GitHub release)
+  # Step 7: Deploy to npm
   deploy-npm:
     name: Deploy npm
-    needs: [ calculate-version, build-cli, create-github-release ]
+    needs: [ calculate-version, build-cli, sign-and-validate ]
     if: |
       always() &&
       needs.calculate-version.outputs.deploy-npm == 'true' &&
       needs.build-cli.result == 'success' &&
-      needs.create-github-release.result == 'success'
+      needs.sign-and-validate.result == 'success'
     permissions:
       contents: read
       actions: read
       id-token: write
     uses: ./.github/workflows/_deploy-npm.yml
-    with:
-      version: ${{ needs.calculate-version.outputs.version }}
-
-  # Step 8b: Generate Homebrew cask for desktop app (disabled - run manually when needed)
-  generate-homebrew-cask:
-    name: Generate Homebrew Cask
-    needs: [ calculate-version, create-github-release ]
-    if: |
-      vars.ENABLE_HOMEBREW_CASK == 'true' &&
-      needs.calculate-version.outputs.stage-only != 'true' &&
-      needs.calculate-version.outputs.deployment-mode == 'production' &&
-      needs.create-github-release.result == 'success'
-    permissions:
-      contents: read
-      actions: write
-    uses: ./.github/workflows/_deploy-homebrew.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
 
@@ -779,7 +789,6 @@ jobs:
       deploy-apple,
       deploy-npm,
       create-github-release,
-      generate-homebrew-cask,
       stamp-plugin-version
     ]
     steps:
@@ -945,15 +954,6 @@ jobs:
             echo "| GitHub Release | ⏭️ Skipped | Stage-only mode |"
           else
             echo "| GitHub Release | ❌ Failed | Check logs |"
-          fi
-
-          # Homebrew Cask (Desktop App - disabled)
-          if [ "${{ needs.generate-homebrew-cask.result }}" = "success" ]; then
-            echo "| Homebrew Cask | ✅ Generated | Desktop app cask |"
-          elif [ "${{ needs.generate-homebrew-cask.result }}" = "skipped" ]; then
-            echo "| Homebrew Cask | ⏭️ Skipped | Disabled |"
-          else
-            echo "| Homebrew Cask | ❌ Failed | Check logs |"
           fi
 
           # npm

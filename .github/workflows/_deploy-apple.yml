@@ -56,65 +56,6 @@ jobs:
 
       # No need to download entitlements - the app is already signed with them
 
-      - name: Generate Homebrew cask
-        run: |
-          VERSION="${{ inputs.version }}"
-
-          # Find DMG file
-          DMG_PATH=$(find desktop-builds -name "*.dmg" | head -1)
-
-          if [ -z "$DMG_PATH" ]; then
-            echo "⚠️  No DMG file found, skipping Homebrew cask generation"
-            exit 0
-          fi
-
-          # Generate cask using script
-          .github/scripts/generate-homebrew-cask.sh "$VERSION" "$DMG_PATH" whodb.rb
-
-          # Create usage instructions
-          cat > HOMEBREW_TESTING.md <<EOF
-          # Local Homebrew Cask Testing
-
-          This cask file was generated for WhoDB v${VERSION}.
-
-          ## Local Testing Instructions:
-
-          1. Download the whodb.rb file from this workflow run
-          2. Install locally:
-             \`\`\`bash
-             brew install --cask whodb.rb
-             \`\`\`
-
-          3. Test the app:
-             \`\`\`bash
-             open -a WhoDB
-             \`\`\`
-
-          4. Uninstall when done:
-             \`\`\`bash
-             brew uninstall --cask whodb
-             \`\`\`
-
-          ## Submit to Homebrew (after production release):
-
-          1. Fork homebrew-cask repository
-          2. Create branch: \`update-whodb-${VERSION}\`
-          3. Add/update \`Casks/w/whodb.rb\` with this file
-          4. Submit PR with title: \`whodb ${VERSION}\` (or \`whodb ${VERSION} (new cask)\` if first submission)
-          EOF
-
-          echo ""
-          echo "📋 Testing instructions created"
-
-      - name: Upload Homebrew cask
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: homebrew-cask-apple
-          path: |
-            whodb.rb
-            HOMEBREW_TESTING.md
-          retention-days: 30
-
       - name: Check for MAS app bundle
         id: check_app
         run: |
@@ -141,7 +82,7 @@ jobs:
             exit 1
           fi
 
-          echo "app_path=$APP_PATH" >> $GITHUB_OUTPUT
+          echo "app_path=$APP_PATH" >> "$GITHUB_OUTPUT"
 
       - name: Import Mac App Store Installer Certificate
         env:
@@ -163,8 +104,8 @@ jobs:
           echo "🔐 Setting up keychain for Mac App Store PKG signing..."
 
           # Create variables
-          CERTIFICATE_PATH=$RUNNER_TEMP/mas_certificate.p12
-          KEYCHAIN_PATH=$RUNNER_TEMP/mas-signing.keychain-db
+          CERTIFICATE_PATH="$RUNNER_TEMP/mas_certificate.p12"
+          KEYCHAIN_PATH="$RUNNER_TEMP/mas-signing.keychain-db"
           KEYCHAIN_PASSWORD_VALUE="${KEYCHAIN_PASSWORD:-$(uuidgen)}"
 
           # Decode certificate
@@ -180,7 +121,8 @@ jobs:
             -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
 
           # Set keychain search list
-          security list-keychain -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | sed s/\"//g)
+          mapfile -t EXISTING_KEYCHAINS < <(security list-keychains -d user | sed 's/"//g')
+          security list-keychains -d user -s "$KEYCHAIN_PATH" "${EXISTING_KEYCHAINS[@]}"
 
           # Allow productbuild to access keychain
           security set-key-partition-list -S apple-tool:,apple:,productbuild: \
@@ -300,19 +242,23 @@ jobs:
 
       - name: Check Apple Store credentials
         id: check_creds
+        env:
+          APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
         run: |
           echo "🔍 Checking Apple Store credentials..."
 
-          if [ -z "${{ secrets.APP_STORE_CONNECT_API_KEY }}" ] || \
-             [ -z "${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}" ] || \
-             [ -z "${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}" ]; then
+          if [ -z "$APP_STORE_CONNECT_API_KEY" ] || \
+             [ -z "$APP_STORE_CONNECT_API_KEY_ID" ] || \
+             [ -z "$APP_STORE_CONNECT_ISSUER_ID" ]; then
             echo "❌ ERROR: App Store Connect API credentials are required"
             echo "Please configure APP_STORE_CONNECT_API_KEY, APP_STORE_CONNECT_API_KEY_ID, and APP_STORE_CONNECT_ISSUER_ID secrets"
             exit 1
           fi
 
           echo "✅ All App Store Connect API credentials configured"
-          echo "has_creds=true" >> $GITHUB_OUTPUT
+          echo "has_creds=true" >> "$GITHUB_OUTPUT"
 
       - name: Download Mac App Store package
         if: steps.check_creds.outputs.has_creds == 'true'
@@ -332,13 +278,14 @@ jobs:
           echo "📝 Setting up App Store Connect API key..."
 
           # Create private keys directory
-          mkdir -p ~/.appstoreconnect/private_keys
+          mkdir -p "$HOME/.appstoreconnect/private_keys"
 
           # Write the API key to file
-          echo "$APP_STORE_CONNECT_API_KEY" > ~/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8
+          API_KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8"
+          echo "$APP_STORE_CONNECT_API_KEY" > "$API_KEY_PATH"
 
           # Set proper permissions
-          chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8
+          chmod 600 "$API_KEY_PATH"
 
           echo "✅ API key configured"
 
@@ -355,7 +302,7 @@ jobs:
           echo "═══════════════════════════════════════════════════════════"
 
           # Find PKG file
-          PKG_FILE=$(ls *.pkg 2>/dev/null | head -1)
+          PKG_FILE=$(find . -maxdepth 1 -name "*.pkg" -type f -print -quit)
 
           if [ -z "$PKG_FILE" ]; then
             echo "❌ ERROR: No PKG file found in current directory"
@@ -621,8 +568,8 @@ jobs:
       - name: Setup Python virtual environment
         if: steps.check_creds.outputs.has_creds == 'true' && inputs.stage-only != true
         run: |
-          python3 -m venv $RUNNER_TEMP/venv
-          source $RUNNER_TEMP/venv/bin/activate
+          python3 -m venv "$RUNNER_TEMP/venv"
+          source "$RUNNER_TEMP/venv/bin/activate"
           pip install PyJWT cryptography
           echo "✅ Python virtual environment created with PyJWT and cryptography"
 
@@ -637,7 +584,7 @@ jobs:
           set -e
 
           # Activate virtual environment with PyJWT for JWT token generation
-          source $RUNNER_TEMP/venv/bin/activate
+          source "$RUNNER_TEMP/venv/bin/activate"
 
           VERSION="${{ inputs.version }}"
           # Strip 'v' prefix if present for build number
@@ -670,31 +617,33 @@ jobs:
       - name: Clean up API key
         if: always() && steps.check_creds.outputs.has_creds == 'true'
         run: |
-          rm -rf ~/.appstoreconnect/private_keys
+          rm -rf "$HOME/.appstoreconnect/private_keys"
           echo "🧹 API key cleaned up"
 
       - name: Summary
         if: always()
         run: |
-          echo "## Apple App Store Deployment Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          {
+          echo "## Apple App Store Deployment Summary"
+          echo ""
 
           if [ "${{ steps.check_creds.outputs.has_creds }}" = "false" ]; then
-            echo "⏭️ **Status:** Skipped (no credentials)" >> $GITHUB_STEP_SUMMARY
+            echo "⏭️ **Status:** Skipped (no credentials)"
           elif [ "${{ inputs.stage-only }}" = "true" ]; then
-            echo "📦 **Status:** TestFlight upload completed" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "Package is available for TestFlight testing." >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "**Next steps:**" >> $GITHUB_STEP_SUMMARY
-            echo "- Wait for build processing to complete" >> $GITHUB_STEP_SUMMARY
-            echo "- Add testers in TestFlight" >> $GITHUB_STEP_SUMMARY
-            echo "- Submit for App Store review when ready" >> $GITHUB_STEP_SUMMARY
+            echo "📦 **Status:** TestFlight upload completed"
+            echo ""
+            echo "Package is available for TestFlight testing."
+            echo ""
+            echo "**Next steps:**"
+            echo "- Wait for build processing to complete"
+            echo "- Add testers in TestFlight"
+            echo "- Submit for App Store review when ready"
           else
-            echo "🚀 **Status:** Submitted for App Store review" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "The app has been automatically submitted for review." >> $GITHUB_STEP_SUMMARY
-            echo "Apple typically reviews apps within 24-48 hours." >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "Monitor status: [App Store Connect](https://appstoreconnect.apple.com/apps)" >> $GITHUB_STEP_SUMMARY
+            echo "🚀 **Status:** Submitted for App Store review"
+            echo ""
+            echo "The app has been automatically submitted for review."
+            echo "Apple typically reviews apps within 24-48 hours."
+            echo ""
+            echo "Monitor status: [App Store Connect](https://appstoreconnect.apple.com/apps)"
           fi
+          } >> "$GITHUB_STEP_SUMMARY"
