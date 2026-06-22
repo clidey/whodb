@@ -663,8 +663,31 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ needs.calculate-version.outputs.version }}
+          DEPLOY_SNAP: ${{ needs.calculate-version.outputs.deploy-snap }}
+          DEPLOY_MICROSOFT: ${{ needs.calculate-version.outputs.deploy-microsoft }}
+          DEPLOY_APPLE: ${{ needs.calculate-version.outputs.deploy-apple }}
+          DEPLOY_LINUX_TERMINAL: ${{ needs.calculate-version.outputs.deploy-linux-terminal }}
+          DEPLOY_CLI: ${{ needs.calculate-version.outputs.deploy-cli }}
+          DEPLOY_NPM: ${{ needs.calculate-version.outputs.deploy-npm }}
         run: |
+          set -euo pipefail
+
           echo "🔍 Verifying draft release ${VERSION} before publishing..."
+
+          require_uploaded_count() {
+            local description="$1"
+            local min_count="$2"
+            local jq_filter="$3"
+            local count
+
+            count=$(jq "[.assets[].name | select(${jq_filter})] | length" <<< "$RELEASE_INFO")
+            if [ "$count" -lt "$min_count" ]; then
+              echo "❌ ERROR: Missing uploaded ${description}: expected at least ${min_count}, found ${count}"
+              return 1
+            fi
+
+            echo "✅ Uploaded ${description}: found ${count}"
+          }
 
           # Step 1: Verify release exists and is a draft
           RELEASE_INFO=$(gh release view "${VERSION}" --json isDraft,assets,body)
@@ -686,6 +709,29 @@ jobs:
             echo "This may indicate an upload failure. Check previous steps."
             exit 1
           fi
+
+          if [ "$DEPLOY_SNAP" = "true" ]; then
+            require_uploaded_count "Snap packages" 2 'endswith(".snap")'
+          fi
+
+          if [ "$DEPLOY_MICROSOFT" = "true" ]; then
+            require_uploaded_count "Windows executable" 1 'endswith(".exe")'
+            require_uploaded_count "Windows MSIX bundle" 1 'endswith(".msixbundle")'
+          fi
+
+          if [ "$DEPLOY_APPLE" = "true" ]; then
+            require_uploaded_count "macOS DMG" 1 'endswith(".dmg")'
+          fi
+
+          if [ "$DEPLOY_LINUX_TERMINAL" = "true" ]; then
+            require_uploaded_count "Linux server binaries" 1 'test("^whodb-.*-linux-.*$")'
+          fi
+
+          if [ "$DEPLOY_CLI" = "true" ] || [ "$DEPLOY_NPM" = "true" ]; then
+            require_uploaded_count "CLI binaries" 1 'startswith("whodb-cli-")'
+          fi
+
+          require_uploaded_count "signature bundles" 1 'endswith(".bundle")'
           echo "✅ Assets verified (${ASSET_COUNT} files)"
 
           # Step 3: Verify release body is present
