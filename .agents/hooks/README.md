@@ -10,6 +10,7 @@ consistent. They receive a JSON payload on stdin containing the tool input.
 | `auto-format-go.sh` | `.go` files edited | Runs `gofmt -w` then `golangci-lint run --fix` |
 | `auto-lint-ts.sh` | `.ts`/`.tsx` files edited | Runs `oxlint --fix` |
 | `auto-graphql-codegen.sh` | `.graphqls` files edited | Runs `go generate` in `core/` and `pnpm generate` in `frontend/` |
+| `verify-build.sh` | Agent stop (turn end) | Compiles/type-checks only the areas changed this turn (CE/EE Go via `go build`, CE/EE frontend via `pnpm typecheck`) and blocks the turn (exit 2) if any fail. Debounces repeated identical errors to avoid loops. |
 | `session-context.sh` | Session start | Injects branch name and uncommitted file count |
 
 Translation is intentionally not an automatic hook. Agents should add or update

@@ -28,6 +28,16 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/.agents/hooks/verify-build.sh\""
+          }
+        ]
+      }
     ]
   }
 }

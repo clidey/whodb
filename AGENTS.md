@@ -11,6 +11,10 @@ of duplicating these instructions.
 
 If the `ee/` directory is present, read `ee/AGENTS.md` for additional context. Do not add any code, comments, or references to `ee/` in the CE codebase.
 
+## Terminology
+
+- **"EE agent" / "ee agent"** means the in-app WhoDB EE browser AI agent feature (under `ee/`), NOT the coding-agent (Claude/Codex) configuration or any MCP server. When in doubt, ask which is meant before acting.
+
 ## Non-Negotiable Rules
 
 1. **GraphQL-first** - All new API functionality via GraphQL. Never add HTTP resolvers unless explicitly needed (e.g., file downloads)
@@ -46,6 +50,7 @@ Before implementing:
 - No fallback logic unless explicitly asked — if you think it's needed, ask first.
 - No defensive programming — if an edge case needs handling, ask first.
 - If you write 200 lines and it could be 50, rewrite it.
+- Right-size architecture. Start with the simplest surgical fix. Do not propose heavyweight patterns (Temporal workflows, outbox, saga, new infra) unless the simple fix is shown to be insufficient — and explain why before building it.
 
 Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
 
@@ -82,6 +87,14 @@ For multi-step tasks, state a brief plan:
 ```
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
+
+### 5. CSS and Styling Changes
+
+**Diagnose before editing. One targeted change at a time.**
+
+- For a styling fix, state the specific approach (which selector/property/value and why) before editing.
+- Make one targeted change at a time; don't broadly rewrite styles speculatively.
+- If a styling fix fails twice, stop and ask for guidance (or a reference screenshot / exact value) rather than continuing to guess.
 
 ## Execution Workflow
 
