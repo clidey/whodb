@@ -83,6 +83,10 @@ func (p *OpenAIProvider) GetSupportedModels(config *ProviderConfig) ([]string, e
 
 func fetchOpenAICompatibleModels(endpoint string, apiKey string, providerName string) ([]string, error) {
 	url := strings.TrimRight(endpoint, "/") + "/models"
+	return fetchOpenAICompatibleModelsFromURL(url, apiKey, providerName)
+}
+
+func fetchOpenAICompatibleModelsFromURL(url string, apiKey string, providerName string) ([]string, error) {
 	headers := map[string]string{
 		"Authorization": "Bearer " + apiKey,
 		"Content-Type":  "application/json",

@@ -239,6 +239,29 @@ func TestOpenAICompatibleProvider_GetSupportedModels_UsesModelsEndpoint(t *testi
 	}
 }
 
+func TestOpenAICompatibleProvider_GetSupportedModels_UsesCustomModelsEndpoint(t *testing.T) {
+	provider := NewOpenAICompatibleProviderWithModelsEndpoint("Perplexity", "https://perplexity.test", "https://perplexity.test/v1/models")
+	withTestHTTPClient(t, func(r *http.Request) (*http.Response, error) {
+		if r.URL.String() != "https://perplexity.test/v1/models" {
+			t.Fatalf("unexpected URL %s", r.URL.String())
+		}
+		return httpResponse(http.StatusOK, `{
+			"data": [
+				{"id": "perplexity/sonar"},
+				{"id": "openai/gpt-5.5"}
+			]
+		}`), nil
+	})
+
+	models, err := provider.GetSupportedModels(&ProviderConfig{APIKey: "perplexity-key"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(models) != 2 || models[0] != "perplexity/sonar" || models[1] != "openai/gpt-5.5" {
+		t.Fatalf("expected models from custom endpoint, got %#v", models)
+	}
+}
+
 func TestGetBAMLConfig_ErrorsForUnregisteredProvider(t *testing.T) {
 	_, _, err := GetBAMLConfig("nonexistent-provider", "", "", "model")
 	if err == nil {

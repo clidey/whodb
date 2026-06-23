@@ -24,13 +24,20 @@ import (
 type OpenAICompatibleProvider struct {
 	providerType    LLMType
 	defaultEndpoint string
+	modelsEndpoint  string
 }
 
 // NewOpenAICompatibleProvider creates a provider backed by the OpenAI-compatible adapter.
 func NewOpenAICompatibleProvider(providerType LLMType, defaultEndpoint string) *OpenAICompatibleProvider {
+	return NewOpenAICompatibleProviderWithModelsEndpoint(providerType, defaultEndpoint, "")
+}
+
+// NewOpenAICompatibleProviderWithModelsEndpoint creates a provider with a custom model discovery endpoint.
+func NewOpenAICompatibleProviderWithModelsEndpoint(providerType LLMType, defaultEndpoint string, modelsEndpoint string) *OpenAICompatibleProvider {
 	return &OpenAICompatibleProvider{
 		providerType:    providerType,
 		defaultEndpoint: defaultEndpoint,
+		modelsEndpoint:  modelsEndpoint,
 	}
 }
 
@@ -64,6 +71,9 @@ func (p *OpenAICompatibleProvider) ValidateConfig(config *ProviderConfig) error 
 func (p *OpenAICompatibleProvider) GetSupportedModels(config *ProviderConfig) ([]string, error) {
 	if err := p.ValidateConfig(config); err != nil {
 		return nil, err
+	}
+	if p.modelsEndpoint != "" && config.Endpoint == p.GetDefaultEndpoint() {
+		return fetchOpenAICompatibleModelsFromURL(p.modelsEndpoint, config.APIKey, string(p.providerType))
 	}
 	return fetchOpenAICompatibleModels(config.Endpoint, config.APIKey, string(p.providerType))
 }
