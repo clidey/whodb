@@ -17,9 +17,10 @@
 schema: ../core/graph/schema.graphqls
 documents: src/**/*.graphql
 generates:
-  src/generated/:
-    preset: client
-    presetConfig:
-      fragmentMasking: false
+  src/generated/graphql.ts:
+    plugins:
+      - typescript
+      - typescript-operations
+      - typed-document-node
     config:
       useTypeImports: true

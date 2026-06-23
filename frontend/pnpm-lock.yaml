@@ -135,9 +135,9 @@ importers:
       '@graphql-codegen/cli':
         specifier: 5.0.7
         version: 5.0.7(@parcel/watcher@2.5.1)(@types/node@25.9.1)(enquirer@2.4.1)(graphql-sock@1.0.1(graphql@16.11.0))(graphql@16.11.0)(typescript@5.8.3)
-      '@graphql-codegen/client-preset':
-        specifier: 4.8.3
-        version: 4.8.3(graphql-sock@1.0.1(graphql@16.11.0))(graphql@16.11.0)
+      '@graphql-codegen/typed-document-node':
+        specifier: 5.1.2
+        version: 5.1.2(graphql@16.11.0)
       '@graphql-codegen/typescript':
         specifier: 4.1.6
         version: 4.1.6(graphql@16.11.0)

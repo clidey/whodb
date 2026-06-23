@@ -97,7 +97,7 @@
     "@axe-core/playwright": "4.11.1",
     "@babel/core": "7.28.0",
     "@graphql-codegen/cli": "5.0.7",
-    "@graphql-codegen/client-preset": "4.8.3",
+    "@graphql-codegen/typed-document-node": "5.1.2",
     "@graphql-codegen/typescript": "4.1.6",
     "@graphql-codegen/typescript-operations": "4.6.1",
     "@graphql-typed-document-node/core": "3.2.0",
