@@ -114,14 +114,11 @@ func (p *GeminiProvider) GetSupportedModels(config *ProviderConfig) ([]string, e
 		_ = resp.Body.Close()
 
 		for _, model := range modelsResp.Models {
-			if !supportsGeminiGenerateContent(model.SupportedGenerationMethods) {
-				continue
-			}
 			name := model.BaseModelID
 			if name == "" {
 				name = strings.TrimPrefix(model.Name, "models/")
 			}
-			if name == "" {
+			if !isGeminiTextGenerationModel(name, model.SupportedGenerationMethods) {
 				continue
 			}
 			if _, ok := seen[name]; ok {
@@ -168,6 +165,31 @@ func geminiModelsURL(endpoint string, apiKey string, pageToken string) (string, 
 	}
 	modelsURL.RawQuery = query.Encode()
 	return modelsURL.String(), nil
+}
+
+func isGeminiTextGenerationModel(name string, methods []string) bool {
+	if name == "" || !supportsGeminiGenerateContent(methods) {
+		return false
+	}
+
+	normalized := strings.ToLower(name)
+	if strings.Contains(normalized, "embedding") ||
+		strings.Contains(normalized, "image") ||
+		strings.Contains(normalized, "nano-banana") ||
+		strings.Contains(normalized, "imagen") ||
+		strings.Contains(normalized, "veo") ||
+		strings.Contains(normalized, "lyria") ||
+		strings.Contains(normalized, "tts") ||
+		strings.Contains(normalized, "live") ||
+		strings.Contains(normalized, "robotics") ||
+		strings.Contains(normalized, "deep-research") ||
+		strings.Contains(normalized, "antigravity") ||
+		strings.Contains(normalized, "computer-use") {
+		return false
+	}
+
+	return strings.HasPrefix(normalized, "gemini-") ||
+		strings.HasPrefix(normalized, "gemma-")
 }
 
 func supportsGeminiGenerateContent(methods []string) bool {

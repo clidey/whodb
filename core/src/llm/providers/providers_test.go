@@ -132,6 +132,34 @@ func TestGeminiProvider_GetSupportedModels_FetchesGenerateContentModels(t *testi
 				{
 					"name": "models/gemini-2.5-flash",
 					"supportedGenerationMethods": ["generateContent"]
+				},
+				{
+					"name": "models/deep-research-preview-04-2026",
+					"supportedGenerationMethods": ["generateContent"]
+				},
+				{
+					"name": "models/antigravity-preview-05-2026",
+					"supportedGenerationMethods": ["generateContent"]
+				},
+				{
+					"name": "models/gemini-robotics-er-1.6-preview",
+					"supportedGenerationMethods": ["generateContent"]
+				},
+				{
+					"name": "models/gemini-3-pro-image",
+					"supportedGenerationMethods": ["generateContent"]
+				},
+				{
+					"name": "models/nano-banana-pro",
+					"supportedGenerationMethods": ["generateContent"]
+				},
+				{
+					"name": "models/gemini-3.1-flash-tts-preview",
+					"supportedGenerationMethods": ["generateContent"]
+				},
+				{
+					"name": "models/gemma-4-31b-it",
+					"supportedGenerationMethods": ["generateContent"]
 				}
 			]
 		}`), nil
@@ -144,10 +172,10 @@ func TestGeminiProvider_GetSupportedModels_FetchesGenerateContentModels(t *testi
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if len(models) != 2 {
-		t.Fatalf("expected two Gemini generation models, got %#v", models)
+	if len(models) != 3 {
+		t.Fatalf("expected three text generation models, got %#v", models)
 	}
-	if models[0] != "gemini-3.5-flash" || models[1] != "gemini-2.5-flash" {
+	if models[0] != "gemini-3.5-flash" || models[1] != "gemini-2.5-flash" || models[2] != "gemma-4-31b-it" {
 		t.Fatalf("expected model IDs without models/ prefix, got %#v", models)
 	}
 }

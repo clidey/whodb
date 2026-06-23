@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/clidey/whodb/core/src/log"
 )
@@ -32,7 +33,9 @@ import (
 // responsesAPICache caches whether a given endpoint supports the Responses API.
 // Keyed by endpoint URL, value is bool (true = supports Responses API).
 var responsesAPICache sync.Map
-var httpClientFactory = func() *http.Client { return &http.Client{} }
+var httpClientFactory = func() *http.Client {
+	return &http.Client{Timeout: 20 * time.Second}
+}
 
 const (
 	OpenAI_LLMType LLMType = "OpenAI"

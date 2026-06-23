@@ -368,6 +368,7 @@ export const useAI = () => {
         handleAIModelRemove,
         handleAIProviderChange,
         markProviderAvailable,
+        markProviderUnavailable,
         retryProvider,
         modelTypesDropdownItems,
         modelDropdownItems,
@@ -396,6 +397,8 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
     handleAIModelChange,
     handleAIModelRemove: _handleAIModelRemove,
     handleAIProviderChange,
+    markProviderAvailable,
+    markProviderUnavailable,
     modelTypesDropdownItems,
     modelDropdownItems,
     disableNewChat,
@@ -411,6 +414,8 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
     const [externalModelType, setExternalModel] = useState<string>(externalModelTypes[0].id);
     const [externalModelToken, setExternalModelToken] = useState<string>("");
     const [externalModelName, setExternalModelName] = useState<string>("");
+    const selectedProviderIdRef = useRef<string | undefined>(modelType?.id);
+    selectedProviderIdRef.current = modelType?.id;
 
     const handleAddExternalModel = useCallback(() => {
         document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
@@ -434,65 +439,91 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
             return;
         }
 
+        const selectedExternalModelType = externalModelType;
+        const selectedExternalModelToken = externalModelToken;
+        const selectedExternalModelName = externalModelName || externalModelType;
+
         dispatch(AIModelsActions.setCurrentModel(undefined));
         dispatch(AIModelsActions.setModels([]));
         const overrides = getAIProviderOverrides();
         const isPlatformMode = overrides?.isActive() ?? false;
 
-        void getAIModels({
-            variables: {
-                modelType: externalModelType,
-                token: externalModelToken,
-            }
-        }).then(async ({ data, error }) => {
-            if (error) {
-                throw error;
-            }
-
-            const aiModels = data?.AIModel ?? [];
-            dispatch(AIModelsActions.setModels(aiModels));
-
+        const addProviderAndFetchModels = async () => {
             let id: string;
             if (isPlatformMode && overrides) {
                 const result = await overrides.addProvider({
-                    modelType: externalModelType,
-                    name: externalModelName || externalModelType,
-                    token: externalModelToken,
+                    modelType: selectedExternalModelType,
+                    name: selectedExternalModelName,
+                    token: selectedExternalModelToken,
                 });
                 if (!result) throw new Error('Failed to create provider');
                 id = result.id;
                 dispatch(AIModelsActions.addAIModelType({
                     id,
-                    modelType: externalModelType,
-                    name: externalModelName || externalModelType,
+                    modelType: selectedExternalModelType,
+                    name: selectedExternalModelName,
                     isPlatformProvider: true,
                 }));
             } else {
                 id = uuidv4();
                 dispatch(AIModelsActions.addAIModelType({
                     id,
-                    modelType: externalModelType,
-                    name: externalModelName || externalModelType,
-                    token: externalModelToken,
+                    modelType: selectedExternalModelType,
+                    name: selectedExternalModelName,
+                    token: selectedExternalModelToken,
                 }));
             }
 
             dispatch(AIModelsActions.setCurrentModelType({ id }));
+            selectedProviderIdRef.current = id;
             setExternalModel(externalModelTypes[0].id);
             setExternalModelToken("");
             setExternalModelName("");
             setAddExternalModel(false);
-            if (aiModels.length > 0) {
-                dispatch(AIModelsActions.setCurrentModel(aiModels[0]));
-            }
-        }).catch((error: unknown) => {
+
+            void getAIModels({
+                variables: {
+                    modelType: selectedExternalModelType,
+                    token: selectedExternalModelToken,
+                }
+            }).then(({ data, error }) => {
+                if (error) {
+                    throw error;
+                }
+
+                const aiModels = data?.AIModel ?? [];
+                if (aiModels.length > 0) {
+                    markProviderAvailable(id);
+                } else {
+                    markProviderUnavailable(id);
+                }
+                if (selectedProviderIdRef.current !== id) {
+                    return;
+                }
+                dispatch(AIModelsActions.setModels(aiModels));
+                if (aiModels.length > 0) {
+                    dispatch(AIModelsActions.setCurrentModel(aiModels[0]));
+                }
+            }).catch((error: unknown) => {
+                markProviderUnavailable(id);
+                if (selectedProviderIdRef.current === id) {
+                    handleAIModelsError();
+                }
+                const errorMessage = error instanceof Error
+                    ? error.message
+                    : String((error as { message?: string }).message ?? t('unknownError'));
+                toast.error(`${t('unableToConnect')}: ${errorMessage}`);
+            });
+        };
+
+        void addProviderAndFetchModels().catch((error: unknown) => {
             handleAIModelsError();
             const errorMessage = error instanceof Error
                 ? error.message
                 : String((error as { message?: string }).message ?? t('unknownError'));
             toast.error(`${t('unableToConnect')}: ${errorMessage}`);
         });
-    }, [dispatch, externalModelName, externalModelToken, externalModelType, getAIModels, handleAIModelsError, t]);
+    }, [dispatch, externalModelName, externalModelToken, externalModelType, getAIModels, handleAIModelsError, markProviderAvailable, markProviderUnavailable, t]);
 
     const handleOpenDocs = useCallback(() => {
         window.open("https://docs.whodb.com/ai/introduction", "_blank");
