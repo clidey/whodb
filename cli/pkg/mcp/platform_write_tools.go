@@ -206,7 +206,11 @@ func buildPlatformGenericWrite(session *platformToolSession, input PlatformGener
 			payload["projectId"] = session.Host.DefaultProjectID
 		}
 		if spec.NeedsID {
-			payload["id"] = id
+			if spec.Mutation == "PromoteFileToDataset" {
+				payload["fileId"] = firstPayloadString(payload, "fileId", id)
+			} else {
+				payload["id"] = id
+			}
 		}
 		if spec.Action == "move" && spec.Resource == "file" {
 			payload["newFolderId"] = nullablePayloadString(payload, "newFolderId")
@@ -290,6 +294,14 @@ func nullablePayloadString(payload map[string]any, key string) any {
 		return nil
 	}
 	return value
+}
+
+func firstPayloadString(payload map[string]any, key string, fallback string) string {
+	value, ok := payload[key].(string)
+	if ok && strings.TrimSpace(value) != "" {
+		return strings.TrimSpace(value)
+	}
+	return fallback
 }
 
 func normalizePlatformWriteToken(value string) string {
