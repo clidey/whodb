@@ -42,6 +42,13 @@ func withTestHTTPClient(t *testing.T, transport roundTripFunc) {
 	})
 }
 
+func TestDefaultHTTPClientHasTimeout(t *testing.T) {
+	client := httpClientFactory()
+	if client.Timeout <= 0 {
+		t.Fatalf("expected default provider HTTP client to have a timeout")
+	}
+}
+
 func httpResponse(status int, body string) *http.Response {
 	return &http.Response{
 		StatusCode: status,

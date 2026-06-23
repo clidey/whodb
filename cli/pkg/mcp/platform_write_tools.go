@@ -43,6 +43,7 @@ type PlatformGenericWriteOutput struct {
 	ConfirmationAction   string                 `json:"confirmation_action,omitempty"`
 	ConfirmationPreview  *PlatformActionPreview `json:"confirmation_preview,omitempty"`
 	ConfirmationExpiry   string                 `json:"confirmation_expiry,omitempty"`
+	Warning              string                 `json:"warning,omitempty"`
 	Status               string                 `json:"status,omitempty"`
 	ResultJSON           string                 `json:"result_json,omitempty"`
 	Error                string                 `json:"error,omitempty"`
@@ -343,6 +344,7 @@ func platformGenericConfirmationOutput(requestID, token string, expiresAt time.T
 		ConfirmationAction:   mutation,
 		ConfirmationPreview:  preview,
 		ConfirmationExpiry:   expiresAt.UTC().Format(time.RFC3339),
+		Warning:              platformConfirmationWarning(preview),
 		RequestID:            requestID,
 	}
 }
@@ -362,16 +364,24 @@ func platformGenericWriteCompletedOutput(requestID, mutation string, result *pla
 
 const descPlatformCreate = `Create a hosted platform resource through the selected project.
 
-Supported resources: secret, ai_provider, ontology, ontology_fast_lookup, dataset, transform, folder, function, source_object. Pass payload_json as a JSON object matching the hosted platform mutation input. The selected projectId is injected automatically when applicable. Permission checks are enforced by the hosted platform.`
+Supported resources: secret, ai_provider, ontology, ontology_fast_lookup, dataset, transform, folder, function, source_object.
+Pass payload_json as a JSON object matching the hosted platform mutation input. The selected projectId is injected automatically when applicable.
+Default mode returns a confirmation token; do not call whodb_platform_confirm until the user approves the preview. Permission checks are enforced by the hosted platform.`
 
 const descPlatformUpdate = `Update a hosted platform resource through the selected project.
 
-Supported resources: secret, ai_provider, ontology, dataset, transform, function, source_object. Pass id when required and payload_json with changed fields only. Secret-like payload fields are never shown in confirmation previews. Permission checks are enforced by the hosted platform.`
+Supported resources: secret, ai_provider, ontology, dataset, transform, function, source_object.
+Pass id when required and payload_json with changed fields only. Secret-like payload fields are never shown in confirmation previews.
+Default mode returns a confirmation token; do not call whodb_platform_confirm until the user approves the preview. Permission checks are enforced by the hosted platform.`
 
 const descPlatformDelete = `Delete a hosted platform resource through the selected project.
 
-Supported resources: secret, ai_provider, ontology, ontology_fast_lookup, dataset, transform, file, folder, function, source_object. Pass id for normal resources. For source_object, pass payload_json with sourceId, ref, and values. Permission checks are enforced by the hosted platform.`
+Supported resources: secret, ai_provider, ontology, ontology_fast_lookup, dataset, transform, file, folder, function, source_object.
+This is destructive. Pass id for normal resources. For source_object, pass payload_json with sourceId, ref, and values.
+Default mode returns a confirmation token; explain exactly what will be deleted and do not call whodb_platform_confirm until the user approves the preview. Permission checks are enforced by the hosted platform.`
 
 const descPlatformAction = `Run a hosted platform resource action through the selected project.
 
-Supported actions include transform/run, file/upload, file/rename, file/move, file/promote_to_dataset, folder/rename, folder/move, function/deploy, and function/redeploy. Pass id and payload_json as required by the action. For file/upload, payload_json requires file_path and may include folderId. Permission checks are enforced by the hosted platform.`
+Supported actions include transform/run, file/upload, file/rename, file/move, file/promote_to_dataset, folder/rename, folder/move, function/deploy, and function/redeploy.
+Some actions create, move, deploy, or otherwise mutate hosted resources. Pass id and payload_json as required by the action. For file/upload, payload_json requires file_path and may include folderId.
+Default mode returns a confirmation token; do not call whodb_platform_confirm until the user approves the preview. Permission checks are enforced by the hosted platform.`

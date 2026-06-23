@@ -1412,7 +1412,9 @@ Read tools return stable metadata such as count, request_id, scope, warnings, an
 truncated where applicable. Most read tools accept an optional fields array to
 project top-level output fields, for example ["id", "name"]. Prefer fields on
 read calls: request only the fields needed for the current answer, then make a
-second read with additional fields only if more detail is required.
+second read with additional fields only if more detail is required. Heavy fields
+such as function files, file text, tabular rows, or source content should be
+requested only when needed.
 
 Available tools:
 - whodb_platform_status: Show hosted login and selected workspace
@@ -1424,8 +1426,25 @@ Available tools:
 - whodb_platform_source_objects: Browse hosted source objects
 - whodb_platform_source_columns: Inspect hosted source object columns
 - whodb_platform_source_rows: Preview hosted source object rows
+- whodb_platform_source_constraints: Inspect editable source field constraints
+- whodb_platform_source_content: Read hosted source content when supported
 - whodb_platform_source_config: Inspect redacted hosted source config
 - whodb_platform_source_test: Test saved or draft hosted source connections
+- whodb_platform_secrets: List secret metadata without secret values
+- whodb_platform_ai_providers: List AI provider metadata without API keys
+- whodb_platform_ai_provider_models: List models for one AI provider
+- whodb_platform_ontologies / whodb_platform_ontology: List or inspect ontologies
+- whodb_platform_ontology_fast_lookups: List saved fast lookups for an ontology
+- whodb_platform_ontology_fast_lookup_suggestions: List suggested fast lookups
+- whodb_platform_ontology_rows: Preview ontology rows
+- whodb_platform_ontology_follow_link: Follow an ontology link from a row
+- whodb_platform_datasets / whodb_platform_dataset: List or inspect datasets
+- whodb_platform_dataset_rows: Preview dataset rows
+- whodb_platform_lineage / whodb_platform_lineage_neighbors / whodb_platform_project_lineage: Inspect lineage
+- whodb_platform_transforms / whodb_platform_transform_runs: List transforms and runs
+- whodb_platform_functions / whodb_platform_function: List or inspect ontology functions
+- whodb_platform_files / whodb_platform_file_preview / whodb_platform_file_search / whodb_platform_tabular_files: Browse project files
+- whodb_platform_storage_usage: Inspect project storage usage
 - whodb_platform_source_create: Prepare hosted source creation for confirmation
 - whodb_platform_source_update: Prepare hosted source updates for confirmation
 - whodb_platform_source_delete: Prepare hosted source deletion for confirmation
@@ -1441,9 +1460,10 @@ Setup:
 2. Run whodb-cli use --org <org> --project <project>
 3. Start this server with whodb-cli mcp serve --platform
 
-Hosted source create, update, and delete follow the same permission mode as local
-MCP writes. In default confirm-writes mode, they return confirmation tokens and
-do not execute until whodb_platform_confirm is called. In --read-only or
---safe-mode, hosted platform write tools are not exposed. In --allow-write, writes
-execute immediately without confirmation.
+Hosted create, update, delete, and action tools follow the same permission mode
+as local MCP writes. In default confirm-writes mode, they return confirmation
+tokens and do not execute until whodb_platform_confirm is called. The assistant
+must explain confirmation_preview and ask the user before confirming destructive
+or mutating operations. In --read-only or --safe-mode, hosted platform write tools
+are not exposed. In --allow-write, writes execute immediately without confirmation.
 `

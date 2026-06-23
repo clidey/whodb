@@ -724,8 +724,34 @@ This starts an MCP server that exposes these tools:
 | `whodb_audit` | Run data quality audits for a schema or table |
 | `whodb_suggestions` | Get backend-generated starter queries |
 
-Start with `--platform` to run in hosted WhoDB platform mode. In this mode,
-only hosted platform tools are exposed; local database tools are not registered.
+Start with `--platform` to run hosted WhoDB platform mode. In this mode, only
+hosted platform tools are exposed; local database tools are not registered.
+
+Hosted setup:
+
+```bash
+# Sign in to app.whodb.com
+whodb-cli login
+
+# Select the hosted workspace used by platform tools
+whodb-cli use --org <org> --project <project>
+
+# Start stdio MCP for your MCP client
+whodb-cli mcp serve --platform
+```
+
+Local or staging setup:
+
+```bash
+whodb-cli login --host http://localhost:8080
+whodb-cli use --host http://localhost:8080 --org <org> --project <project>
+whodb-cli mcp serve --platform
+```
+
+Most hosted read tools accept a `fields` array. Agents should request only the
+fields needed for the current answer, for example `["id", "name"]`, then call
+again with additional fields only when needed. Backend permissions still decide
+what the signed-in user can see or change.
 
 | Tool | Description |
 |------|-------------|
@@ -738,17 +764,49 @@ only hosted platform tools are exposed; local database tools are not registered.
 | `whodb_platform_source_objects` | Browse hosted source objects |
 | `whodb_platform_source_columns` | Inspect hosted source object columns |
 | `whodb_platform_source_rows` | Preview hosted source object rows |
+| `whodb_platform_source_constraints` | Inspect editable source field constraints |
+| `whodb_platform_source_content` | Read hosted source object content when supported |
 | `whodb_platform_source_config` | Inspect redacted hosted source config |
 | `whodb_platform_source_test` | Test saved or draft hosted source connections |
+| `whodb_platform_secrets` | List secret metadata without secret values |
+| `whodb_platform_ai_providers` | List hosted AI provider metadata without API keys |
+| `whodb_platform_ai_provider_models` | List models for one hosted AI provider |
+| `whodb_platform_ontologies` | List hosted ontology object types |
+| `whodb_platform_ontology` | Inspect one hosted ontology object type |
+| `whodb_platform_ontology_fast_lookups` | List saved fast lookups for one ontology |
+| `whodb_platform_ontology_fast_lookup_suggestions` | List suggested fast lookups |
+| `whodb_platform_ontology_rows` | Preview rows for one ontology |
+| `whodb_platform_ontology_follow_link` | Follow one ontology link from a row |
+| `whodb_platform_datasets` | List hosted datasets |
+| `whodb_platform_dataset` | Inspect one hosted dataset |
+| `whodb_platform_dataset_rows` | Preview hosted dataset rows |
+| `whodb_platform_lineage` | Inspect lineage around one root node |
+| `whodb_platform_lineage_neighbors` | Inspect immediate lineage neighbors |
+| `whodb_platform_project_lineage` | Inspect project-level lineage |
+| `whodb_platform_transforms` | List hosted transforms |
+| `whodb_platform_transform_runs` | List recent runs for one transform |
+| `whodb_platform_functions` | List hosted ontology functions |
+| `whodb_platform_function` | Inspect one hosted ontology function |
+| `whodb_platform_files` | List hosted project folders and files |
+| `whodb_platform_file_preview` | Preview one hosted project file |
+| `whodb_platform_file_search` | Search hosted project files |
+| `whodb_platform_tabular_files` | List tabular hosted project files |
+| `whodb_platform_storage_usage` | Show project storage usage in bytes |
 | `whodb_platform_source_create` | Prepare hosted source creation for `whodb_platform_confirm` |
 | `whodb_platform_source_update` | Prepare hosted source updates for `whodb_platform_confirm` |
 | `whodb_platform_source_delete` | Prepare hosted source deletion for `whodb_platform_confirm` |
-| `whodb_platform_pending` | List pending hosted platform source confirmations |
-| `whodb_platform_confirm` | Confirm pending hosted platform source writes |
+| `whodb_platform_create` | Prepare generic hosted resource creation |
+| `whodb_platform_update` | Prepare generic hosted resource updates |
+| `whodb_platform_delete` | Prepare generic hosted resource deletion |
+| `whodb_platform_action` | Prepare generic hosted actions such as upload, move, run, deploy |
+| `whodb_platform_pending` | List pending hosted platform confirmations |
+| `whodb_platform_confirm` | Confirm pending hosted platform writes after user approval |
 
-Hosted source create, update, and delete tools return confirmation tokens and do
-not execute until approved with `whodb_platform_confirm`. Use
-`whodb_platform_pending` to recover active confirmation tokens.
+Hosted create, update, delete, and action tools return confirmation tokens by
+default and do not execute until approved with `whodb_platform_confirm`. Use
+`whodb_platform_pending` to recover active confirmation tokens. Agents should
+explain the returned `confirmation_preview` to the user before confirming,
+especially for delete, deploy, move, and source/object changes.
 
 For source creation, agents should call `whodb_platform_source_types` and
 `whodb_platform_source_fields` first so they use backend-published source type
@@ -772,6 +830,23 @@ Example hosted platform MCP config:
   }
 }
 ```
+
+Example local platform MCP config:
+
+```json
+{
+  "mcpServers": {
+    "whodb-platform-local": {
+      "command": "whodb-cli",
+      "args": ["mcp", "serve", "--platform"]
+    }
+  }
+}
+```
+
+The server uses the single active hosted login selected by `whodb-cli login` and
+`whodb-cli use`. If you switch hosts, run `login --host ...` and `use --host ...`
+before starting the MCP server.
 
 It also exposes these resources:
 

@@ -1813,9 +1813,29 @@ func platformSourceConfirmationOutput(requestID, token string, expiresAt time.Ti
 		ConfirmationAction:   action,
 		ConfirmationPreview:  preview,
 		ConfirmationExpiry:   expiresAt.UTC().Format(time.RFC3339),
-		Warning:              "This hosted WhoDB source operation requires approval before it runs. Call whodb_platform_confirm with the confirmation_token to continue.",
+		Warning:              platformConfirmationWarning(preview),
 		RequestID:            requestID,
 	}
+}
+
+func platformConfirmationWarning(preview *PlatformActionPreview) string {
+	if preview == nil {
+		return "This hosted WhoDB platform write requires approval before it runs. Explain the pending change to the user, then call whodb_platform_confirm with the confirmation_token only after the user approves."
+	}
+	target := preview.Resource
+	if target == "" {
+		target = "source"
+	}
+	if preview.SourceName != "" {
+		target = target + " " + preview.SourceName
+	}
+	if preview.ProjectName != "" {
+		target = target + " in project " + preview.ProjectName
+	}
+	if preview.Action == "delete" || strings.Contains(strings.ToLower(preview.Operation), "delete") {
+		return "Destructive hosted WhoDB platform write pending: " + target + " will be deleted. Explain this deletion to the user, then call whodb_platform_confirm with the confirmation_token only after the user approves."
+	}
+	return "Hosted WhoDB platform write pending for " + target + ". Explain the pending change to the user, then call whodb_platform_confirm with the confirmation_token only after the user approves."
 }
 
 func platformSourceWriteCompletedOutput(requestID, action string, source *platformapi.Source, preview *PlatformActionPreview) PlatformSourceWriteOutput {
@@ -2013,27 +2033,33 @@ Requires a prior hosted login with whodb-cli login. Use this before other whodb_
 
 const descPlatformSources = `List hosted WhoDB sources in the selected organization and project.
 
-Requires whodb-cli login and whodb-cli use --org <org> --project <project>. This tool is read-only and never exposes source credentials.`
+Requires whodb-cli login and whodb-cli use --org <org> --project <project>. This tool is read-only and never exposes source credentials.
+Prefer fields such as ["id", "name", "type"] for discovery; request more fields only when needed.`
 
 const descPlatformOrgs = `List hosted WhoDB organizations visible to the authenticated user.
 
-Use this after whodb-cli login to discover valid organization ids, slugs, and names before selecting a workspace. This tool is read-only.`
+Use this after whodb-cli login to discover valid organization ids, slugs, and names before selecting a workspace. This tool is read-only.
+Prefer fields such as ["id", "name", "slug", "selected"] for discovery.`
 
 const descPlatformProjects = `List hosted WhoDB projects in one organization.
 
-Pass org as an organization id, slug, or name. If omitted, the selected organization is used when available; when the account has exactly one organization, that organization is used. This tool is read-only.`
+Pass org as an organization id, slug, or name. If omitted, the selected organization is used when available; when the account has exactly one organization, that organization is used. This tool is read-only.
+Prefer fields such as ["id", "name", "slug", "selected"] for discovery.`
 
 const descPlatformSourceTypes = `List hosted WhoDB source types available for source creation.
 
-Use this before whodb_platform_source_create or draft whodb_platform_source_test to discover valid source_type values. This tool is read-only.`
+Use this before whodb_platform_source_create or draft whodb_platform_source_test to discover valid source_type values. This tool is read-only.
+Prefer fields such as ["id", "label"] before requesting full source type metadata.`
 
 const descPlatformSourceFields = `List connection fields for one hosted WhoDB source type.
 
-Use this before source creation or draft connection tests to discover required fields and defaults. This tool is read-only and does not expose credentials.`
+Use this before source creation or draft connection tests to discover required fields and defaults. This tool is read-only and does not expose credentials.
+Prefer fields such as ["Key", "Kind", "Required", "LabelKey"] unless full field metadata is needed.`
 
 const descPlatformSourceObjects = `Browse objects in one hosted WhoDB source.
 
-Use the source name or id from whodb_platform_sources. Parent refs use kind:path, for example schema:public. This tool is read-only.`
+Use the source name or id from whodb_platform_sources. Parent refs use kind:path, for example schema:public. This tool is read-only.
+Prefer fields such as ["Name", "Kind", "HasChildren"] while browsing.`
 
 const descPlatformSourceColumns = `Describe columns for one hosted WhoDB source object.
 
@@ -2053,15 +2079,18 @@ Pass source to test an existing saved source. Omit source and pass source_type p
 
 const descPlatformSourceCreate = `Prepare creation of a hosted WhoDB source in the selected project.
 
-This stores nothing until the returned confirmation token is approved with whodb_platform_confirm. Pass source_type, name, connection fields, and advanced options.`
+This stores nothing until the returned confirmation token is approved with whodb_platform_confirm. Pass source_type, name, connection fields, and advanced options.
+Do not call whodb_platform_confirm until the user approves the confirmation preview.`
 
 const descPlatformSourceUpdate = `Prepare update of a hosted WhoDB source.
 
-This changes nothing until the returned confirmation token is approved with whodb_platform_confirm. Omitted config fields preserve the existing hosted values.`
+This changes nothing until the returned confirmation token is approved with whodb_platform_confirm. Omitted config fields preserve the existing hosted values.
+Do not call whodb_platform_confirm until the user approves the confirmation preview.`
 
 const descPlatformSourceDelete = `Prepare deletion of a hosted WhoDB source.
 
-This deletes nothing until the returned confirmation token is approved with whodb_platform_confirm. Use whodb_platform_sources first to verify the target source.`
+This deletes nothing until the returned confirmation token is approved with whodb_platform_confirm. Use whodb_platform_sources first to verify the target source.
+This is destructive. Explain the deletion target and do not call whodb_platform_confirm until the user approves the confirmation preview.`
 
 const descPlatformPending = `List pending hosted WhoDB platform writes awaiting confirmation.
 
@@ -2069,4 +2098,4 @@ Use this to recover confirmation tokens returned by hosted platform write tools.
 
 const descPlatformConfirm = `Confirm and execute a pending hosted WhoDB platform write.
 
-Use the confirmation_token returned by hosted platform write tools. Tokens expire after 5 minutes.`
+Use the confirmation_token returned by hosted platform write tools. Tokens expire after 5 minutes. Only call this after the user has approved the pending write preview.`
