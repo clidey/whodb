@@ -459,7 +459,6 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
     const [externalModelType, setExternalModel] = useState<string>(externalModelTypes[0].id);
     const [externalModelToken, setExternalModelToken] = useState<string>("");
     const [externalModelName, setExternalModelName] = useState<string>("");
-    const [providerSelectKey, setProviderSelectKey] = useState(0);
     const selectedProviderIdRef = useRef<string | undefined>(modelType?.id);
     selectedProviderIdRef.current = modelType?.id;
 
@@ -469,10 +468,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
             overrides.openAddProvider();
             return;
         }
-        setProviderSelectKey(key => key + 1);
-        window.setTimeout(() => {
-            setAddExternalModel(true);
-        }, 0);
+        setAddExternalModel(true);
         onAddExternalModel?.();
     }, [onAddExternalModel]);
 
@@ -687,7 +683,6 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
         <div className="flex w-full flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap gap-2">
                 <SearchSelect
-                    key={providerSelectKey}
                     options={modelTypesDropdownItems.map(item => ({
                         value: item.id,
                         label: item.label,
