@@ -740,6 +740,12 @@ whodb-cli use --org <org> --project <project>
 
 # Start stdio MCP for your MCP client
 whodb-cli mcp serve --platform
+
+# Read-only hosted platform MCP
+whodb-cli mcp serve --platform --read-only
+
+# Hosted writes without confirmation; use only for trusted automation
+whodb-cli mcp serve --platform --allow-write
 ```
 
 Local or staging setup:
@@ -749,6 +755,21 @@ whodb-cli login --host http://localhost:8080
 whodb-cli use --host http://localhost:8080 --org <org> --project <project>
 whodb-cli mcp serve --platform
 ```
+
+Recommended MCP client behavior:
+
+1. Read `whodb://platform/tool-guide` to understand the active platform MCP
+   mode, available tool categories, field projection guidance, and write
+   behavior.
+2. Call `whodb_platform_status` before project-scoped reads or writes.
+3. Use `fields` on hosted read tools whenever supported. Start narrow, for
+   example `["id", "name", "type"]`, and request heavier fields only when
+   needed.
+4. For writes in default mode, explain `confirmation_preview` to the user and
+   call `whodb_platform_confirm` only after the user approves that exact
+   preview.
+5. In `--allow-write`, hosted writes execute immediately, so ask the user before
+   calling the mutating tool itself.
 
 Most hosted read tools accept a `fields` array. Agents should request only the
 fields needed for the current answer, for example `["id", "name"]`, then call
@@ -850,7 +871,20 @@ Example hosted platform MCP config:
 }
 ```
 
-Example local platform MCP config:
+Example read-only hosted platform MCP config:
+
+```json
+{
+  "mcpServers": {
+    "whodb-platform-readonly": {
+      "command": "whodb-cli",
+      "args": ["mcp", "serve", "--platform", "--read-only"]
+    }
+  }
+}
+```
+
+Example local or staging platform MCP config:
 
 ```json
 {
@@ -865,14 +899,23 @@ Example local platform MCP config:
 
 The server uses the single active hosted login selected by `whodb-cli login` and
 `whodb-cli use`. If you switch hosts, run `login --host ...` and `use --host ...`
-before starting the MCP server.
+before starting the MCP server. The MCP server does not need a host flag because
+it reads the active hosted login from the CLI config.
 
-It also exposes these resources:
+Local MCP exposes these resources:
 
 | Resource | Description |
 |----------|-------------|
 | `whodb://connections` | Available connection names |
 | `whodb://agent/schema` | Machine-readable WhoDB agent capability manifest |
+
+Platform MCP exposes these resources instead:
+
+| Resource | Description |
+|----------|-------------|
+| `whodb://platform/schema` | Machine-readable platform MCP contract, enabled tools, platform prompts, and platform resources |
+| `whodb://platform/workspace` | Current hosted login and selected workspace metadata |
+| `whodb://platform/tool-guide` | Platform tool categories, recommended usage, field projection guidance, and write behavior |
 
 The same metadata is available from `whodb-cli agent schema --format json`.
 Its `platform_mcp` section describes the `--platform` flag, default host,
