@@ -74,6 +74,51 @@ export const externalModelTypes = availableExternalModelTypes.map((model) => ({
     icon: (Icons.Logos as Record<string, ReactElement>)[findAIProviderCatalogEntry(model)?.iconKey ?? model],
 }));
 
+const getAIProviderErrorMessage = (error: unknown, translate: (key: string) => string) => {
+    const rawMessage = error instanceof Error
+        ? error.message
+        : String((error as { message?: string }).message ?? translate('unknownError'));
+    const sanitizedMessage = sanitizeAIProviderErrorMessage(rawMessage);
+    const providerMessage = extractProviderErrorMessage(sanitizedMessage);
+
+    if (
+        sanitizedMessage.includes("API_KEY_INVALID") ||
+        providerMessage.toLowerCase().includes("api key not valid") ||
+        sanitizedMessage.toLowerCase().includes("invalid x-api-key")
+    ) {
+        return translate('invalidProviderToken');
+    }
+
+    if (sanitizedMessage.includes("failed to fetch models")) {
+        return providerMessage || translate('modelDiscoveryFailed');
+    }
+
+    return sanitizedMessage.length > 180 ? translate('modelDiscoveryFailed') : sanitizedMessage;
+};
+
+const extractProviderErrorMessage = (message: string) => {
+    const marker = "failed to fetch models:";
+    const markerIndex = message.indexOf(marker);
+    if (markerIndex < 0) {
+        return "";
+    }
+
+    const payload = message.slice(markerIndex + marker.length).trim();
+    try {
+        const parsed = JSON.parse(payload) as { error?: { message?: string } };
+        return parsed.error?.message ?? "";
+    } catch {
+        return "";
+    }
+};
+
+const sanitizeAIProviderErrorMessage = (message: string) => {
+    return message
+        .replace(/([?&](?:key|api_key|apikey|token|access_token)=)[^&\s"']+/gi, "$1[redacted]")
+        .replace(/(Authorization:\s*Bearer\s+)[^\s"']+/gi, "$1[redacted]")
+        .replace(/(x-(?:api-)?key[":\s=]+)[^,\s"'}]+/gi, "$1[redacted]");
+};
+
 export const useAI = () => {
     const modelType = useAppSelector(state => state.aiModels.current);
     const currentModel = useAppSelector(state => state.aiModels.currentModel);
@@ -414,19 +459,26 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
     const [externalModelType, setExternalModel] = useState<string>(externalModelTypes[0].id);
     const [externalModelToken, setExternalModelToken] = useState<string>("");
     const [externalModelName, setExternalModelName] = useState<string>("");
+    const [providerSelectKey, setProviderSelectKey] = useState(0);
     const selectedProviderIdRef = useRef<string | undefined>(modelType?.id);
     selectedProviderIdRef.current = modelType?.id;
 
     const handleAddExternalModel = useCallback(() => {
-        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
         const overrides = getAIProviderOverrides();
         if (overrides?.isActive() && overrides.openAddProvider) {
             overrides.openAddProvider();
             return;
         }
-        setAddExternalModel(status => !status);
+        setProviderSelectKey(key => key + 1);
+        window.setTimeout(() => {
+            setAddExternalModel(true);
+        }, 0);
         onAddExternalModel?.();
     }, [onAddExternalModel]);
+
+    const handleCloseExternalModel = useCallback(() => {
+        setAddExternalModel(false);
+    }, []);
 
     const handleExternalModelChange = useCallback((item: string) => {
         setExternalModel(item);
@@ -509,18 +561,14 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                 if (selectedProviderIdRef.current === id) {
                     handleAIModelsError();
                 }
-                const errorMessage = error instanceof Error
-                    ? error.message
-                    : String((error as { message?: string }).message ?? t('unknownError'));
+                const errorMessage = getAIProviderErrorMessage(error, t);
                 toast.error(`${t('unableToConnect')}: ${errorMessage}`);
             });
         };
 
         void addProviderAndFetchModels().catch((error: unknown) => {
             handleAIModelsError();
-            const errorMessage = error instanceof Error
-                ? error.message
-                : String((error as { message?: string }).message ?? t('unknownError'));
+            const errorMessage = getAIProviderErrorMessage(error, t);
             toast.error(`${t('unableToConnect')}: ${errorMessage}`);
         });
     }, [dispatch, externalModelName, externalModelToken, externalModelType, getAIModels, handleAIModelsError, markProviderAvailable, markProviderUnavailable, t]);
@@ -620,7 +668,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                 </div>
                 <div className="flex items-center gap-sm self-end mt-4">
                     <Button
-                        onClick={handleAddExternalModel}
+                        onClick={handleCloseExternalModel}
                         data-testid="external-model-cancel"
                         variant="secondary"
                     >
@@ -639,6 +687,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
         <div className="flex w-full flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap gap-2">
                 <SearchSelect
+                    key={providerSelectKey}
                     options={modelTypesDropdownItems.map(item => ({
                         value: item.id,
                         label: item.label,

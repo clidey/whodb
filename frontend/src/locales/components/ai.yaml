@@ -19,6 +19,8 @@ en_US:
   ollamaRunCommand: ollama run llama3.1
   ollamaDocsText: Check our documentation for more information on how to setup Ollama.
   unableToConnect: Unable to Connect to the Model
+  invalidProviderToken: The API key is invalid. Check the token and try again.
+  modelDiscoveryFailed: Could not fetch models for this provider.
   tokenRequired: Token is required to connect to the provider
   providerUnavailable: "Unavailable"
   environmentDefined: "Configured via environment"
