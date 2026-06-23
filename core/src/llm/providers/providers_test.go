@@ -76,6 +76,45 @@ func TestGetBAMLConfig_RoutesToGenericProvider(t *testing.T) {
 	}
 }
 
+func TestGeminiProvider_CreateBAMLClient_UsesOpenAICompatibleEndpoint(t *testing.T) {
+	provider := NewGeminiProvider()
+	config := &ProviderConfig{APIKey: "gemini-key"}
+
+	clientType, opts, err := provider.CreateBAMLClient(config, "gemini-3.5-flash")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if clientType != "openai-generic" {
+		t.Fatalf("expected client type 'openai-generic', got %q", clientType)
+	}
+	if opts["base_url"] != provider.GetDefaultEndpoint() {
+		t.Fatalf("expected Gemini default endpoint, got %v", opts["base_url"])
+	}
+	if opts["api_key"] != "gemini-key" {
+		t.Fatalf("expected api_key, got %v", opts["api_key"])
+	}
+	if opts["model"] != "gemini-3.5-flash" {
+		t.Fatalf("expected model, got %v", opts["model"])
+	}
+}
+
+func TestGeminiProvider_GetSupportedModels_RequiresAPIKey(t *testing.T) {
+	provider := NewGeminiProvider()
+
+	if _, err := provider.GetSupportedModels(&ProviderConfig{}); err == nil {
+		t.Fatalf("expected error when API key is missing")
+	}
+
+	models, err := provider.GetSupportedModels(&ProviderConfig{APIKey: "gemini-key"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(models) == 0 {
+		t.Fatalf("expected Gemini models")
+	}
+}
+
 func TestGetBAMLConfig_ErrorsForUnregisteredProvider(t *testing.T) {
 	_, _, err := GetBAMLConfig("nonexistent-provider", "", "", "model")
 	if err == nil {
