@@ -25,7 +25,7 @@ import {EyeIcon, EyeSlashIcon} from "./heroicons";
 import classNames from "classnames";
 import {basicSetup} from "codemirror";
 import type {FC} from "react";
-import React, { useCallback, useEffect, useMemo, useRef, useState} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState} from "react";
 import ReactJson from "@microlink/react-json-view";
 import MarkdownPreview from 'react-markdown';
 import remarkGfm from "remark-gfm";
@@ -423,9 +423,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
           onClick={handlePreviewToggle}
           aria-label={label}
         >
-          {React.cloneElement(showPreview ? <EyeSlashIcon className="w-4 h-4" /> : <EyeIcon className="w-4 h-4" />, {
-            className: "stroke-teal-500 w-8 h-8",
-          })}
+          {showPreview ? <EyeSlashIcon className="stroke-teal-500 w-8 h-8" /> : <EyeIcon className="stroke-teal-500 w-8 h-8" />}
         </button>
         <p>{label}</p>
       </Tip>
