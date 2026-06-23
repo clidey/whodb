@@ -905,22 +905,6 @@ func assertToolSchemaIsObject(t *testing.T, toolName, schemaName string, rawSche
 	assertSchemaPropertiesTyped(t, toolName, schemaName, schema)
 }
 
-func assertToolOutputSchemaPropertiesTyped(t *testing.T, tool *mcpsdk.Tool) {
-	t.Helper()
-	if tool.OutputSchema == nil {
-		return
-	}
-	raw, err := json.Marshal(tool.OutputSchema)
-	if err != nil {
-		t.Fatalf("%s output schema marshal error: %v", tool.Name, err)
-	}
-	var schema map[string]any
-	if err := json.Unmarshal(raw, &schema); err != nil {
-		t.Fatalf("%s output schema unmarshal error: %v", tool.Name, err)
-	}
-	assertSchemaPropertiesTyped(t, tool.Name, "outputSchema", schema)
-}
-
 func assertSchemaPropertiesTyped(t *testing.T, toolName, path string, schema map[string]any) {
 	t.Helper()
 	properties, ok := schema["properties"].(map[string]any)
