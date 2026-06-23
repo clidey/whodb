@@ -708,17 +708,8 @@ func registerPlatformResources(server *mcp.Server, secOpts *SecurityOptions) {
 			Version:     manifest.Version,
 			PlatformMCP: manifest.PlatformMCP,
 			Tools:       tools,
-			Resources: []string{
-				"whodb://platform/schema",
-				"whodb://platform/workspace",
-				"whodb://platform/tool-guide",
-			},
-			Prompts: []string{
-				"whodb_platform_overview",
-				"whodb_platform_read_workflow",
-				"whodb_platform_write_safety",
-				"whodb_platform_source_workflow",
-			},
+			Resources:   manifest.PlatformMCP.Resources,
+			Prompts:     manifest.PlatformMCP.Prompts,
 		})
 	})
 
@@ -746,12 +737,12 @@ func registerPlatformResources(server *mcp.Server, secOpts *SecurityOptions) {
 }
 
 type platformSchemaResource struct {
-	Name        string                    `json:"name"`
-	Version     string                    `json:"version"`
-	PlatformMCP agentmanifest.PlatformMCP `json:"platform_mcp"`
-	Tools       []agentmanifest.MCPTool   `json:"tools"`
-	Resources   []string                  `json:"resources"`
-	Prompts     []string                  `json:"prompts"`
+	Name        string                      `json:"name"`
+	Version     string                      `json:"version"`
+	PlatformMCP agentmanifest.PlatformMCP   `json:"platform_mcp"`
+	Tools       []agentmanifest.MCPTool     `json:"tools"`
+	Resources   []agentmanifest.MCPResource `json:"resources"`
+	Prompts     []agentmanifest.MCPPrompt   `json:"prompts"`
 }
 
 type platformToolGuideResource struct {

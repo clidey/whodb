@@ -355,7 +355,7 @@ These commands output structured data for scripting, automation, and AI integrat
 
 ### agent schema
 
-Emit a machine-readable manifest of WhoDB's agent-facing surface. The manifest includes source types, connection fields, programmatic commands, MCP tools, safety modes, and built-in workflows.
+Emit a machine-readable manifest of WhoDB's agent-facing surface. The manifest includes source types, connection fields, programmatic commands, MCP tools, platform MCP prompts/resources, safety modes, and built-in workflows.
 
 ```bash
 whodb-cli agent schema --format json
@@ -920,7 +920,8 @@ Platform MCP exposes these resources instead:
 The same metadata is available from `whodb-cli agent schema --format json`.
 Its `platform_mcp` section describes the `--platform` flag, default host,
 login/workspace requirements, field projection support, platform-only tool
-prefix, and write behavior for confirm, read-only, safe, and allow-write modes.
+prefix, platform prompts/resources, and write behavior for confirm, read-only,
+safe, and allow-write modes.
 
 Write operations require confirmation by default. Use `--allow-write` to disable confirmations, or `--read-only` to block writes entirely.
 

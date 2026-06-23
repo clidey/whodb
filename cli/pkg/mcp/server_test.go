@@ -551,6 +551,57 @@ func TestAgentManifestIncludesPlatformMCPTools(t *testing.T) {
 	}
 }
 
+func TestAgentManifestIncludesPlatformMCPPromptsAndResources(t *testing.T) {
+	manifest := agentmanifest.Build()
+	server := NewServer(&ServerOptions{PlatformEnabled: true})
+
+	listedPrompts := listServerPrompts(t, server).Prompts
+	if len(manifest.PlatformMCP.Prompts) != len(listedPrompts) {
+		t.Fatalf("agent manifest has %d platform prompts, want %d", len(manifest.PlatformMCP.Prompts), len(listedPrompts))
+	}
+	for _, prompt := range manifest.PlatformMCP.Prompts {
+		if !strings.HasPrefix(prompt.Name, manifest.PlatformMCP.ToolPrefix) {
+			t.Fatalf("platform prompt %s does not match manifest prefix %s", prompt.Name, manifest.PlatformMCP.ToolPrefix)
+		}
+		if strings.TrimSpace(prompt.Description) == "" {
+			t.Fatalf("agent manifest platform prompt %s has empty description", prompt.Name)
+		}
+		listed := findPromptByName(listedPrompts, prompt.Name)
+		if listed == nil {
+			t.Fatalf("agent manifest platform prompt %s is not listed by MCP server", prompt.Name)
+		}
+		if listed.Description != prompt.Description {
+			t.Fatalf("platform prompt %s description = %q, want %q", prompt.Name, listed.Description, prompt.Description)
+		}
+	}
+
+	listedResources := listServerResources(t, server).Resources
+	if len(manifest.PlatformMCP.Resources) != len(listedResources) {
+		t.Fatalf("agent manifest has %d platform resources, want %d", len(manifest.PlatformMCP.Resources), len(listedResources))
+	}
+	for _, resource := range manifest.PlatformMCP.Resources {
+		if !strings.HasPrefix(resource.URI, "whodb://platform/") {
+			t.Fatalf("platform resource %s does not use platform URI prefix", resource.URI)
+		}
+		if strings.TrimSpace(resource.Description) == "" {
+			t.Fatalf("agent manifest platform resource %s has empty description", resource.URI)
+		}
+		if resource.MIMEType != "application/json" {
+			t.Fatalf("agent manifest platform resource %s MIME type = %q, want application/json", resource.URI, resource.MIMEType)
+		}
+		listed := findResourceByURI(listedResources, resource.URI)
+		if listed == nil {
+			t.Fatalf("agent manifest platform resource %s is not listed by MCP server", resource.URI)
+		}
+		if listed.Description != resource.Description {
+			t.Fatalf("platform resource %s description = %q, want %q", resource.URI, listed.Description, resource.Description)
+		}
+		if listed.MIMEType != resource.MIMEType {
+			t.Fatalf("platform resource %s MIME type = %q, want %q", resource.URI, listed.MIMEType, resource.MIMEType)
+		}
+	}
+}
+
 func TestNewServer_PlatformReadOnlyHidesWriteTools(t *testing.T) {
 	tools := listServerToolNames(t, NewServer(&ServerOptions{PlatformEnabled: true, ReadOnly: true}))
 	for _, name := range []string{
@@ -739,12 +790,16 @@ func connectTestMCP(t *testing.T, ctx context.Context, server *mcpsdk.Server) (*
 }
 
 func promptNamesContain(prompts []*mcpsdk.Prompt, name string) bool {
+	return findPromptByName(prompts, name) != nil
+}
+
+func findPromptByName(prompts []*mcpsdk.Prompt, name string) *mcpsdk.Prompt {
 	for _, prompt := range prompts {
 		if prompt.Name == name {
-			return true
+			return prompt
 		}
 	}
-	return false
+	return nil
 }
 
 func promptText(t *testing.T, result *mcpsdk.GetPromptResult) string {
@@ -760,12 +815,16 @@ func promptText(t *testing.T, result *mcpsdk.GetPromptResult) string {
 }
 
 func resourceURIsContain(resources []*mcpsdk.Resource, uri string) bool {
+	return findResourceByURI(resources, uri) != nil
+}
+
+func findResourceByURI(resources []*mcpsdk.Resource, uri string) *mcpsdk.Resource {
 	for _, resource := range resources {
 		if resource.URI == uri {
-			return true
+			return resource
 		}
 	}
-	return false
+	return nil
 }
 
 func resourceText(t *testing.T, result *mcpsdk.ReadResourceResult) string {

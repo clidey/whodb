@@ -78,6 +78,19 @@ type MCPTool struct {
 	ReadOnly    bool   `json:"read_only"`
 }
 
+// MCPPrompt describes one MCP prompt exposed by the WhoDB MCP server.
+type MCPPrompt struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
+// MCPResource describes one MCP resource exposed by the WhoDB MCP server.
+type MCPResource struct {
+	URI         string `json:"uri"`
+	Description string `json:"description"`
+	MIMEType    string `json:"mime_type"`
+}
+
 // PlatformMCP describes hosted-platform MCP mode for agent consumers.
 type PlatformMCP struct {
 	EnabledByFlag           string           `json:"enabled_by_flag"`
@@ -90,6 +103,8 @@ type PlatformMCP struct {
 	LocalToolSelectionFlags []string         `json:"local_tool_selection_flags"`
 	SetupCommands           []string         `json:"setup_commands"`
 	WriteModes              PlatformMCPModes `json:"write_modes"`
+	Prompts                 []MCPPrompt      `json:"prompts"`
+	Resources               []MCPResource    `json:"resources"`
 }
 
 // PlatformMCPModes describes hosted-platform write behavior by MCP mode.
@@ -289,6 +304,17 @@ func buildPlatformMCP() PlatformMCP {
 			ReadOnly:   "write_tools_hidden",
 			SafeMode:   "write_tools_hidden",
 			AllowWrite: "executes_immediately",
+		},
+		Prompts: []MCPPrompt{
+			{Name: "whodb_platform_overview", Description: "Understand hosted WhoDB platform MCP mode, workspace selection, permissions, and field projection."},
+			{Name: "whodb_platform_read_workflow", Description: "Use hosted WhoDB platform read tools safely and efficiently."},
+			{Name: "whodb_platform_write_safety", Description: "Handle hosted WhoDB platform write confirmations and destructive actions safely."},
+			{Name: "whodb_platform_source_workflow", Description: "Manage hosted WhoDB platform sources from discovery through create, update, and delete."},
+		},
+		Resources: []MCPResource{
+			{URI: "whodb://platform/schema", Description: "Machine-readable hosted WhoDB platform MCP contract and enabled platform tools", MIMEType: "application/json"},
+			{URI: "whodb://platform/workspace", Description: "Current hosted WhoDB login and selected workspace metadata", MIMEType: "application/json"},
+			{URI: "whodb://platform/tool-guide", Description: "Hosted WhoDB platform MCP tool categories, read/write behavior, and field projection guidance", MIMEType: "application/json"},
 		},
 	}
 }
