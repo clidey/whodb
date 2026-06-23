@@ -22,14 +22,15 @@ export type AIProviderCatalogEntry = {
   iconKey?: string;
   status: AIProviderStatus;
   requiresEndpoint?: boolean;
+  defaultEndpoint?: string;
 };
 
 const providerCatalog: AIProviderCatalogEntry[] = [
-  { id: "OpenAI", label: "OpenAI", iconKey: "OpenAI", status: "available" },
-  { id: "Anthropic", label: "Anthropic", iconKey: "Anthropic", status: "available" },
-  { id: "Gemini", label: "Gemini API / AI Studio", iconKey: "Gemini", status: "available" },
-  { id: "Ollama", label: "Ollama", iconKey: "Ollama", status: "available" },
-  { id: "LMStudio", label: "LM Studio", iconKey: "LMStudio", status: "available" },
+  { id: "OpenAI", label: "OpenAI", iconKey: "OpenAI", status: "available", defaultEndpoint: "https://api.openai.com/v1" },
+  { id: "Anthropic", label: "Anthropic", iconKey: "Anthropic", status: "available", defaultEndpoint: "https://api.anthropic.com/v1" },
+  { id: "Gemini", label: "Gemini API / AI Studio", iconKey: "Gemini", status: "available", defaultEndpoint: "https://generativelanguage.googleapis.com/v1beta/openai/" },
+  { id: "Ollama", label: "Ollama", iconKey: "Ollama", status: "available", defaultEndpoint: "http://localhost:11434/api" },
+  { id: "LMStudio", label: "LM Studio", iconKey: "LMStudio", status: "available", defaultEndpoint: "http://localhost:1234/v1" },
 ];
 
 /** Returns AI provider catalog entries visible in this edition. */
