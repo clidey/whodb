@@ -24,6 +24,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/clidey/whodb/cli/internal/agentmanifest"
 	"github.com/clidey/whodb/cli/pkg/version"
 	mcpsdk "github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -281,6 +282,34 @@ func TestNewServer_PlatformModeListsOnlyPlatformTools(t *testing.T) {
 	}
 	for _, tool := range result.Tools {
 		assertToolSchemasAreInspectorCompatible(t, tool)
+	}
+}
+
+func TestAgentManifestIncludesPlatformMCPTools(t *testing.T) {
+	manifest := agentmanifest.Build()
+	manifestTools := map[string]agentmanifest.MCPTool{}
+	for _, tool := range manifest.MCPTools {
+		if strings.HasPrefix(tool.Name, "whodb_platform_") {
+			manifestTools[tool.Name] = tool
+		}
+	}
+	for _, expected := range platformToolDefinitions() {
+		tool, ok := manifestTools[expected.Name]
+		if !ok {
+			t.Fatalf("agent manifest missing platform tool %s", expected.Name)
+		}
+		if strings.TrimSpace(tool.Description) == "" {
+			t.Fatalf("agent manifest platform tool %s has empty description", expected.Name)
+		}
+		if expected.Annotations == nil {
+			continue
+		}
+		if tool.ReadOnly != expected.Annotations.ReadOnlyHint {
+			t.Fatalf("agent manifest platform tool %s read_only = %v, want %v", expected.Name, tool.ReadOnly, expected.Annotations.ReadOnlyHint)
+		}
+	}
+	if len(manifestTools) != len(platformToolDefinitions()) {
+		t.Fatalf("agent manifest has %d platform MCP tools, want %d", len(manifestTools), len(platformToolDefinitions()))
 	}
 }
 

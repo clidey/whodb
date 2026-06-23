@@ -726,6 +726,8 @@ This starts an MCP server that exposes these tools:
 
 Start with `--platform` to run hosted WhoDB platform mode. In this mode, only
 hosted platform tools are exposed; local database tools are not registered.
+Local tool selection flags such as `--tools` and `--disable-tools` do not apply
+to platform mode.
 
 Hosted setup:
 
@@ -752,6 +754,12 @@ Most hosted read tools accept a `fields` array. Agents should request only the
 fields needed for the current answer, for example `["id", "name"]`, then call
 again with additional fields only when needed. Backend permissions still decide
 what the signed-in user can see or change.
+
+Platform mode uses the same permission modes as local MCP. By default, hosted
+create, update, delete, and action tools return confirmation tokens and do not
+execute until approved with `whodb_platform_confirm`. `--read-only` and
+`--safe-mode` hide hosted write tools entirely. `--allow-write` executes hosted
+writes immediately without confirmation.
 
 | Tool | Description |
 |------|-------------|
@@ -807,6 +815,17 @@ default and do not execute until approved with `whodb_platform_confirm`. Use
 `whodb_platform_pending` to recover active confirmation tokens. Agents should
 explain the returned `confirmation_preview` to the user before confirming,
 especially for delete, deploy, move, and source/object changes.
+
+Security model:
+
+- The hosted platform remains the authorization boundary. The CLI sends the
+  signed-in user's token and selected workspace; the backend still decides what
+  that user may read or mutate.
+- Workspace IDs are selectors, not proof of access. Pending confirmations store
+  the host, organization, and project and re-check them before execution.
+- Source config reads return redacted values, secret listing tools return
+  metadata only, and confirmation previews include changed field names rather
+  than credential values.
 
 For source creation, agents should call `whodb_platform_source_types` and
 `whodb_platform_source_fields` first so they use backend-published source type
