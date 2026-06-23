@@ -47,7 +47,7 @@ func (c *Client) SourceFieldConstraints(ctx context.Context, projectID, sourceID
 }
 
 // SourceContent returns content for one hosted source object.
-func (c *Client) SourceContent(ctx context.Context, projectID, sourceID string, ref SourceObjectRefInput) (*SourceContent, error) {
+func (c *Client) SourceContent(ctx context.Context, projectID, sourceID string, ref SourceObjectRefInput, fields []string) (*SourceContent, error) {
 	if err := c.RequireOperation("Query", "PlatformSourceContent", "source content reads"); err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func (c *Client) SourceContent(ctx context.Context, projectID, sourceID string, 
 		PlatformSourceContent *SourceContent `json:"PlatformSourceContent"`
 	}
 	variables := map[string]any{"projectId": projectID, "sourceId": sourceID, "ref": ref.graphQLInput()}
-	if err := c.graphQL(ctx, operationPlatformSourceContent, variables, &resp); err != nil {
+	if err := c.graphQL(ctx, operationPlatformSourceContentForFields(fields), variables, &resp); err != nil {
 		return nil, err
 	}
 	return resp.PlatformSourceContent, nil
@@ -320,26 +320,26 @@ func (c *Client) TransformRuns(ctx context.Context, projectID, transformID strin
 }
 
 // Functions returns hosted ontology functions in one project.
-func (c *Client) Functions(ctx context.Context, projectID string) ([]Function, error) {
+func (c *Client) Functions(ctx context.Context, projectID string, fields []string) ([]Function, error) {
 	if err := c.RequireOperation("Query", "ProjectFunctions", "function listing"); err != nil {
 		return nil, err
 	}
 	var resp struct {
 		ProjectFunctions []Function `json:"ProjectFunctions"`
 	}
-	err := c.graphQL(ctx, operationProjectFunctions, map[string]any{"projectId": projectID}, &resp)
+	err := c.graphQL(ctx, operationProjectFunctionsForFields(fields), map[string]any{"projectId": projectID}, &resp)
 	return resp.ProjectFunctions, err
 }
 
 // Function returns one hosted ontology function.
-func (c *Client) Function(ctx context.Context, projectID, id string) (*Function, error) {
+func (c *Client) Function(ctx context.Context, projectID, id string, fields []string) (*Function, error) {
 	if err := c.RequireOperation("Query", "FunctionDetail", "function detail"); err != nil {
 		return nil, err
 	}
 	var resp struct {
 		FunctionDetail *Function `json:"FunctionDetail"`
 	}
-	if err := c.graphQL(ctx, operationFunctionDetail, map[string]any{"projectId": projectID, "id": id}, &resp); err != nil {
+	if err := c.graphQL(ctx, operationFunctionDetailForFields(fields), map[string]any{"projectId": projectID, "id": id}, &resp); err != nil {
 		return nil, err
 	}
 	if resp.FunctionDetail == nil {
@@ -349,7 +349,7 @@ func (c *Client) Function(ctx context.Context, projectID, id string) (*Function,
 }
 
 // FolderContents returns hosted project folder contents.
-func (c *Client) FolderContents(ctx context.Context, projectID, folderID string) (*FolderContents, error) {
+func (c *Client) FolderContents(ctx context.Context, projectID, folderID string, fields []string) (*FolderContents, error) {
 	if err := c.RequireOperation("Query", "FolderContents", "project files"); err != nil {
 		return nil, err
 	}
@@ -357,7 +357,7 @@ func (c *Client) FolderContents(ctx context.Context, projectID, folderID string)
 		FolderContents *FolderContents `json:"FolderContents"`
 	}
 	variables := map[string]any{"projectId": projectID, "folderId": optionalString(folderID)}
-	if err := c.graphQL(ctx, operationFolderContents, variables, &resp); err != nil {
+	if err := c.graphQL(ctx, operationFolderContentsForFields(fields), variables, &resp); err != nil {
 		return nil, err
 	}
 	if resp.FolderContents == nil {
@@ -367,7 +367,7 @@ func (c *Client) FolderContents(ctx context.Context, projectID, folderID string)
 }
 
 // FilePreview returns a hosted project file preview.
-func (c *Client) FilePreview(ctx context.Context, projectID, fileID string, sheetIndex *int) (*FilePreviewResult, error) {
+func (c *Client) FilePreview(ctx context.Context, projectID, fileID string, sheetIndex *int, fields []string) (*FilePreviewResult, error) {
 	if err := c.RequireOperation("Query", "FilePreview", "file preview"); err != nil {
 		return nil, err
 	}
@@ -375,7 +375,7 @@ func (c *Client) FilePreview(ctx context.Context, projectID, fileID string, shee
 		FilePreview *FilePreviewResult `json:"FilePreview"`
 	}
 	variables := map[string]any{"projectId": projectID, "fileId": fileID, "sheetIndex": sheetIndex}
-	if err := c.graphQL(ctx, operationFilePreview, variables, &resp); err != nil {
+	if err := c.graphQL(ctx, operationFilePreviewForFields(fields), variables, &resp); err != nil {
 		return nil, err
 	}
 	if resp.FilePreview == nil {

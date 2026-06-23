@@ -19,6 +19,8 @@ en_US:
   ollamaRunCommand: ollama run llama3.1
   ollamaDocsText: Check our documentation for more information on how to setup Ollama.
   unableToConnect: Unable to Connect to the Model
+  invalidProviderToken: The API key is invalid. Check the token and try again.
+  modelDiscoveryFailed: Could not fetch models for this provider.
   tokenRequired: Token is required to connect to the provider
   providerUnavailable: "Unavailable"
   environmentDefined: "Configured via environment"
@@ -47,6 +49,8 @@ ar_AE:
   tokenRequired: "الرمز المميز مطلوب للاتصال بالموفر"
   providerUnavailable: "غير متاح"
   environmentDefined: "تم تكوينه عبر البيئة"
+  invalidProviderToken: "مفتاح API غير صالح. تحقق من الرمز وحاول مرة أخرى."
+  modelDiscoveryFailed: "تعذر جلب النماذج لهذا الموفر."
 
 de_DE:
   title: "KI-Assistent"
@@ -72,6 +76,8 @@ de_DE:
   tokenRequired: "Für die Verbindung zum Anbieter ist ein Token erforderlich"
   providerUnavailable: "Nicht verfügbar"
   environmentDefined: "Configured via environment"
+  invalidProviderToken: "Der API-Schlüssel ist ungültig. Überprüfen Sie das Token und versuchen Sie es erneut."
+  modelDiscoveryFailed: "Für diesen Anbieter konnten keine Modelle abgerufen werden."
 
 el_GR:
   title: "Βοηθός AI"
@@ -97,6 +103,8 @@ el_GR:
   tokenRequired: "Απαιτείται διακριτικό για σύνδεση με τον πάροχο"
   providerUnavailable: "Δυσεύρετος"
   environmentDefined: "Διαμόρφωση μέσω περιβάλλοντος"
+  invalidProviderToken: "The API key is invalid. Ελέγξτε το διακριτικό και δοκιμάστε ξανά."
+  modelDiscoveryFailed: "Δεν ήταν δυνατή η ανάκτηση μοντέλων για αυτόν τον πάροχο."
 
 en_GB:
   title: "AI Assistant"
@@ -122,6 +130,8 @@ en_GB:
   tokenRequired: "Token is required to connect to the provider"
   providerUnavailable: "Unavailable"
   environmentDefined: "Configured via environment"
+  invalidProviderToken: "The API key is invalid. Check the token and try again."
+  modelDiscoveryFailed: "Could not fetch models for this provider."
 
 es_ES:
   title: "Asistente de IA"
@@ -147,6 +157,8 @@ es_ES:
   tokenRequired: "Se requiere token para conectarse al proveedor"
   providerUnavailable: "Indisponible"
   environmentDefined: "Configurado a través del entorno"
+  invalidProviderToken: "La clave API no es válida. Verifique el token e inténtelo nuevamente."
+  modelDiscoveryFailed: "No se pudieron recuperar modelos para este proveedor."
 
 fi_FI:
   title: "AI Assistant"
@@ -172,6 +184,8 @@ fi_FI:
   tokenRequired: "Token tarvitaan yhteyden muodostamiseen palveluntarjoajaan"
   providerUnavailable: "Ei saatavilla"
   environmentDefined: "Konfiguroitu ympäristön kautta"
+  invalidProviderToken: "API-avain on virheellinen. Tarkista tunnus ja yritä uudelleen."
+  modelDiscoveryFailed: "Tämän palveluntarjoajan malleja ei voitu hakea."
 
 fr_FR:
   title: "Assistant IA"
@@ -197,6 +211,8 @@ fr_FR:
   tokenRequired: "Un jeton est requis pour se connecter au fournisseur"
   providerUnavailable: "Indisponible"
   environmentDefined: "Configuré via l'environnement"
+  invalidProviderToken: "La clé API n'est pas valide. Vérifiez le jeton et réessayez."
+  modelDiscoveryFailed: "Impossible de récupérer des modèles pour ce fournisseur."
 
 it_IT:
   title: "Assistente AI"
@@ -222,6 +238,8 @@ it_IT:
   tokenRequired: "Il token è necessario per connettersi al provider"
   providerUnavailable: "Non disponibile"
   environmentDefined: "Configurato tramite ambiente"
+  invalidProviderToken: "La chiave API non è valida. Controlla il token e riprova."
+  modelDiscoveryFailed: "Impossibile recuperare i modelli per questo fornitore."
 
 iw_IL:
   title: "עוזר AI"
@@ -247,6 +265,8 @@ iw_IL:
   tokenRequired: "נדרש אסימון כדי להתחבר לספק"
   providerUnavailable: "לא זמין"
   environmentDefined: "מוגדר באמצעות סביבה"
+  invalidProviderToken: "מפתח ה-API לא חוקי. בדוק את האסימון ונסה שוב."
+  modelDiscoveryFailed: "לא ניתן היה להביא דגמים עבור ספק זה."
 
 ja_JP:
   title: "AIアシスタント"
@@ -272,6 +292,8 @@ ja_JP:
   tokenRequired: "プロバイダーに接続するにはトークンが必要です"
   providerUnavailable: "利用不可"
   environmentDefined: "環境経由で設定"
+  invalidProviderToken: "APIキーが無効です。 トークンを確認して再試行してください。"
+  modelDiscoveryFailed: "このプロバイダーのモデルを取得できませんでした。"
 
 ko_KR:
   title: "AI 어시스턴트"
@@ -297,6 +319,8 @@ ko_KR:
   tokenRequired: "공급자에 연결하려면 토큰이 필요합니다."
   providerUnavailable: "없는"
   environmentDefined: "환경을 통해 구성됨"
+  invalidProviderToken: "API 키가 잘못되었습니다. 토큰을 확인하고 다시 시도하세요."
+  modelDiscoveryFailed: "이 제공업체의 모델을 가져올 수 없습니다."
 
 nl_NL:
   title: "AI-assistent"
@@ -322,6 +346,8 @@ nl_NL:
   tokenRequired: "Token is vereist om verbinding te maken met de provider"
   providerUnavailable: "Niet beschikbaar"
   environmentDefined: "Geconfigureerd via omgeving"
+  invalidProviderToken: "De API-sleutel is ongeldig. Controleer het token en probeer het opnieuw."
+  modelDiscoveryFailed: "Kan modellen voor deze provider niet ophalen."
 
 pl_PL:
   title: "Asystent AI"
@@ -347,6 +373,8 @@ pl_PL:
   tokenRequired: "Aby połączyć się z dostawcą, wymagany jest token"
   providerUnavailable: "Nie płynny"
   environmentDefined: "Konfiguracja poprzez środowisko"
+  invalidProviderToken: "Klucz API jest nieprawidłowy. Sprawdź token i spróbuj ponownie."
+  modelDiscoveryFailed: "Nie można pobrać modeli dla tego dostawcy."
 
 pt_BR:
   title: "Assistente de IA"
@@ -372,6 +400,8 @@ pt_BR:
   tokenRequired: "O token é necessário para se conectar ao provedor"
   providerUnavailable: "Indisponível"
   environmentDefined: "Configurado via ambiente"
+  invalidProviderToken: "A chave de API é inválida. Verifique o token e tente novamente."
+  modelDiscoveryFailed: "Não foi possível buscar modelos para este provedor."
 
 ro_RO:
   title: "Asistent AI"
@@ -397,6 +427,8 @@ ro_RO:
   tokenRequired: "Tokenul este necesar pentru a vă conecta la furnizor"
   providerUnavailable: "Indisponibil"
   environmentDefined: "Configurat prin mediu"
+  invalidProviderToken: "Cheia API este nevalidă. Verificați jetonul și încercați din nou."
+  modelDiscoveryFailed: "Nu s-au putut prelua modele pentru acest furnizor."
 
 ru_RU:
   title: "ИИ-помощник"
@@ -422,6 +454,8 @@ ru_RU:
   tokenRequired: "Токен необходим для подключения к провайдеру"
   providerUnavailable: "Недоступно"
   environmentDefined: "Настраивается через среду"
+  invalidProviderToken: "Ключ API недействителен. Проверьте токен и повторите попытку."
+  modelDiscoveryFailed: "Не удалось получить модели для этого поставщика."
 
 sk_SK:
   title: "Asistent AI"
@@ -447,6 +481,8 @@ sk_SK:
   tokenRequired: "Na pripojenie k poskytovateľovi je potrebný token"
   providerUnavailable: "nedostupné"
   environmentDefined: "Konfigurované cez prostredie"
+  invalidProviderToken: "Kľúč API je neplatný. Skontrolujte token a skúste to znova."
+  modelDiscoveryFailed: "Nepodarilo sa načítať modely pre tohto poskytovateľa."
 
 sv_SE:
   title: "AI-assistent"
@@ -472,6 +508,8 @@ sv_SE:
   tokenRequired: "Token krävs för att ansluta till leverantören"
   providerUnavailable: "Inte tillgänglig"
   environmentDefined: "Konfigurerad via miljö"
+  invalidProviderToken: "API-nyckeln är ogiltig. Kontrollera token och försök igen."
+  modelDiscoveryFailed: "Det gick inte att hämta modeller för den här leverantören."
 
 zh_CN:
   title: "人工智能助手"
@@ -497,6 +535,8 @@ zh_CN:
   tokenRequired: "连接到提供商需要令牌"
   providerUnavailable: "不可用"
   environmentDefined: "通过环境配置"
+  invalidProviderToken: "API 密钥无效。 检查令牌并重试。"
+  modelDiscoveryFailed: "无法获取该提供商的模型。"
 
 zh_TW:
   title: "人工智慧助手"
@@ -522,6 +562,8 @@ zh_TW:
   tokenRequired: "連接到提供商需要令牌"
   providerUnavailable: "不可用"
   environmentDefined: "透過環境配置"
+  invalidProviderToken: "API 金鑰無效。 檢查令牌並重試。"
+  modelDiscoveryFailed: "無法取得該提供者的模型。"
 
 bg_BG:
   title: "AI асистент"
@@ -547,6 +589,8 @@ bg_BG:
   tokenRequired: "За свързване с доставчика е необходим токен"
   providerUnavailable: "Недостъпен"
   environmentDefined: "Конфигуриран чрез среда"
+  invalidProviderToken: "API ключът е невалиден. Проверете токена и опитайте отново."
+  modelDiscoveryFailed: "Неуспешно извличане на модели за този доставчик."
 
 bn_BD:
   title: "এআই সহকারী"
@@ -572,6 +616,8 @@ bn_BD:
   tokenRequired: "প্রদানকারীর সাথে সংযোগ করতে টোকেন প্রয়োজন"
   providerUnavailable: "অনুপলব্ধ"
   environmentDefined: "পরিবেশের মাধ্যমে কনফিগার করা হয়েছে"
+  invalidProviderToken: "API কীটি অবৈধ৷ টোকেন চেক করুন এবং আবার চেষ্টা করুন।"
+  modelDiscoveryFailed: "এই প্রদানকারীর জন্য মডেল আনা যায়নি."
 
 ca_ES:
   title: "Assistent d'IA"
@@ -597,6 +643,8 @@ ca_ES:
   tokenRequired: "El testimoni és necessari per connectar-se al proveïdor"
   providerUnavailable: "No disponible"
   environmentDefined: "Configurat mitjançant l'entorn"
+  invalidProviderToken: "La clau de l'API no és vàlida. Comproveu el testimoni i torneu-ho a provar."
+  modelDiscoveryFailed: "No s'han pogut obtenir models per a aquest proveïdor."
 
 cs_CZ:
   title: "Asistent AI"
@@ -622,6 +670,8 @@ cs_CZ:
   tokenRequired: "Pro připojení k poskytovateli je vyžadován token"
   providerUnavailable: "Není k dispozici"
   environmentDefined: "Konfigurováno prostřednictvím prostředí"
+  invalidProviderToken: "Klíč API je neplatný. Zkontrolujte token a zkuste to znovu."
+  modelDiscoveryFailed: "Modely pro tohoto poskytovatele nelze načíst."
 
 da_DK:
   title: "AI assistent"
@@ -647,6 +697,8 @@ da_DK:
   tokenRequired: "Token er påkrævet for at oprette forbindelse til udbyderen"
   providerUnavailable: "Ikke tilgængelig"
   environmentDefined: "Konfigureret via miljø"
+  invalidProviderToken: "API-nøglen er ugyldig. Tjek tokenet, og prøv igen."
+  modelDiscoveryFailed: "Kunne ikke hente modeller for denne udbyder."
 
 fa_IR:
   title: "دستیار هوش مصنوعی"
@@ -672,6 +724,8 @@ fa_IR:
   tokenRequired: "رمز برای اتصال به ارائه دهنده مورد نیاز است"
   providerUnavailable: "در دسترس نیست"
   environmentDefined: "از طریق محیط پیکربندی شده است"
+  invalidProviderToken: "The API key is invalid. رمز را بررسی کنید و دوباره امتحان کنید."
+  modelDiscoveryFailed: "مدل‌های این ارائه‌دهنده واکشی نشد."
 
 hi_IN:
   title: "एआई सहायक"
@@ -697,6 +751,8 @@ hi_IN:
   tokenRequired: "प्रदाता से जुड़ने के लिए टोकन आवश्यक है"
   providerUnavailable: "अनुपलब्ध"
   environmentDefined: "पर्यावरण के माध्यम से कॉन्फ़िगर किया गया"
+  invalidProviderToken: "एपीआई कुंजी अमान्य है. टोकन की जाँच करें और पुनः प्रयास करें।"
+  modelDiscoveryFailed: "इस प्रदाता के लिए मॉडल नहीं लाया जा सका."
 
 hr_HR:
   title: "AI pomoćnik"
@@ -722,6 +778,8 @@ hr_HR:
   tokenRequired: "Token je potreban za povezivanje s pružateljem usluga"
   providerUnavailable: "Nedostupan"
   environmentDefined: "Konfigurirano putem okruženja"
+  invalidProviderToken: "API ključ je nevažeći. Provjerite token i pokušajte ponovno."
+  modelDiscoveryFailed: "Nije moguće dohvatiti modele za ovog pružatelja usluga."
 
 hu_HU:
   title: "AI-asszisztens"
@@ -747,6 +805,8 @@ hu_HU:
   tokenRequired: "Token is required to connect to the provider"
   providerUnavailable: "Nem elérhető"
   environmentDefined: "Környezeten keresztül konfigurálva"
+  invalidProviderToken: "Az API-kulcs érvénytelen. Ellenőrizze a tokent, és próbálja újra."
+  modelDiscoveryFailed: "Nem sikerült lekérni a modelleket ehhez a szolgáltatóhoz."
 
 id_ID:
   title: "Asisten AI"
@@ -772,6 +832,8 @@ id_ID:
   tokenRequired: "Token diperlukan untuk terhubung ke penyedia"
   providerUnavailable: "Tidak tersedia"
   environmentDefined: "Dikonfigurasi melalui lingkungan"
+  invalidProviderToken: "Kunci API tidak valid. Periksa token dan coba lagi."
+  modelDiscoveryFailed: "Tidak dapat mengambil model untuk penyedia ini."
 
 ms_MY:
   title: "Penolong AI"
@@ -797,6 +859,8 @@ ms_MY:
   tokenRequired: "Token diperlukan untuk menyambung kepada pembekal"
   providerUnavailable: "Tidak tersedia"
   environmentDefined: "Dikonfigurasikan melalui persekitaran"
+  invalidProviderToken: "Kunci API tidak sah. Semak token dan cuba lagi."
+  modelDiscoveryFailed: "Tidak dapat mengambil model untuk pembekal ini."
 
 nb_NO:
   title: "AI-assistent"
@@ -822,6 +886,8 @@ nb_NO:
   tokenRequired: "Token kreves for å koble til leverandøren"
   providerUnavailable: "Utilgjengelig"
   environmentDefined: "Konfigurert via miljø"
+  invalidProviderToken: "API-nøkkelen er ugyldig. Sjekk tokenet og prøv igjen."
+  modelDiscoveryFailed: "Kunne ikke hente modeller for denne leverandøren."
 
 sw_KE:
   title: "Msaidizi wa AI"
@@ -847,6 +913,8 @@ sw_KE:
   tokenRequired: "Tokeni inahitajika ili kuunganisha kwa mtoa huduma"
   providerUnavailable: "Haipatikani"
   environmentDefined: "Imesanidiwa kupitia mazingira"
+  invalidProviderToken: "Ufunguo wa API ni batili. Angalia tokeni na ujaribu tena."
+  modelDiscoveryFailed: "Haikuweza kuleta miundo ya mtoa huduma huyu."
 
 ta_IN:
   title: "AI உதவியாளர்"
@@ -872,6 +940,8 @@ ta_IN:
   tokenRequired: "வழங்குநருடன் இணைக்க டோக்கன் தேவை"
   providerUnavailable: "கிடைக்கவில்லை"
   environmentDefined: "சூழல் மூலம் கட்டமைக்கப்பட்டது"
+  invalidProviderToken: "API விசை தவறானது. டோக்கனைச் சரிபார்த்து மீண்டும் முயற்சிக்கவும்."
+  modelDiscoveryFailed: "இந்த வழங்குநருக்கான மாதிரிகளைப் பெற முடியவில்லை."
 
 th_TH:
   title: "ผู้ช่วยเอไอ"
@@ -897,6 +967,8 @@ th_TH:
   tokenRequired: "ต้องใช้โทเค็นเพื่อเชื่อมต่อกับผู้ให้บริการ"
   providerUnavailable: "ไม่พร้อมใช้งาน"
   environmentDefined: "กำหนดค่าผ่านสภาพแวดล้อม"
+  invalidProviderToken: "คีย์ API ไม่ถูกต้อง Check the token and try again."
+  modelDiscoveryFailed: "ไม่สามารถดึงโมเดลสำหรับผู้ให้บริการรายนี้"
 
 tr_TR:
   title: "Yapay Zeka Asistanı"
@@ -922,6 +994,8 @@ tr_TR:
   tokenRequired: "Sağlayıcıya bağlanmak için jeton gereklidir"
   providerUnavailable: "Kullanılamıyor"
   environmentDefined: "Ortam aracılığıyla yapılandırıldı"
+  invalidProviderToken: "API anahtarı geçersiz. Jetonu kontrol edip tekrar deneyin."
+  modelDiscoveryFailed: "Bu sağlayıcı için modeller getirilemedi."
 
 uk_UA:
   title: "ШІ помічник"
@@ -947,6 +1021,8 @@ uk_UA:
   tokenRequired: "Для підключення до провайдера потрібен токен"
   providerUnavailable: "Недоступний"
   environmentDefined: "Налаштовано через середовище"
+  invalidProviderToken: "Ключ API недійсний. Перевірте маркер і повторіть спробу."
+  modelDiscoveryFailed: "Не вдалося отримати моделі для цього постачальника."
 
 ur_PK:
   title: "اے آئی اسسٹنٹ"
@@ -972,6 +1048,8 @@ ur_PK:
   tokenRequired: "فراہم کنندہ سے جڑنے کے لیے ٹوکن درکار ہے۔"
   providerUnavailable: "دستیاب نہیں۔"
   environmentDefined: "ماحول کے ذریعے ترتیب دیا گیا ہے۔"
+  invalidProviderToken: "API کلید غلط ہے۔ ٹوکن چیک کریں اور دوبارہ کوشش کریں۔"
+  modelDiscoveryFailed: "اس فراہم کنندہ کے لیے ماڈلز حاصل نہیں کیے جا سکے۔"
 
 vi_VN:
   title: "Trợ lý AI"
@@ -997,6 +1075,8 @@ vi_VN:
   tokenRequired: "Cần có mã thông báo để kết nối với nhà cung cấp"
   providerUnavailable: "Không có sẵn"
   environmentDefined: "Cấu hình thông qua môi trường"
+  invalidProviderToken: "Khóa API không hợp lệ. Hãy kiểm tra mã thông báo và thử lại."
+  modelDiscoveryFailed: "Không thể tìm nạp mô hình cho nhà cung cấp này."
 
 af_ZA:
   title: "KI assistent"
@@ -1022,6 +1102,8 @@ af_ZA:
   tokenRequired: "Token word vereis om aan die verskaffer te koppel"
   providerUnavailable: "Onbeskikbaar"
   environmentDefined: "Gekonfigureer via omgewing"
+  invalidProviderToken: "Die API-sleutel is ongeldig. Gaan die teken na en probeer weer."
+  modelDiscoveryFailed: "Kon nie modelle vir hierdie verskaffer gaan haal nie."
 
 am_ET:
   title: "AI ረዳት"
@@ -1047,6 +1129,8 @@ am_ET:
   tokenRequired: "ከአቅራቢው ጋር ለመገናኘት ማስመሰያ ያስፈልጋል"
   providerUnavailable: "አይገኝም"
   environmentDefined: "በአከባቢ በኩል የተዋቀረ"
+  invalidProviderToken: "የኤፒአይ ቁልፉ ልክ ያልሆነ ነው። ማስመሰያውን ይፈትሹ እና እንደገና ይሞክሩ።"
+  modelDiscoveryFailed: "ለዚህ አቅራቢ ሞዴሎችን ማምጣት አልተቻለም።"
 
 az_AZ:
   title: "AI köməkçisi"
@@ -1072,6 +1156,8 @@ az_AZ:
   tokenRequired: "Provayderə qoşulmaq üçün token tələb olunur"
   providerUnavailable: "Əlçatan deyil"
   environmentDefined: "Ətraf mühit vasitəsilə konfiqurasiya edilmişdir"
+  invalidProviderToken: "API açarı yanlışdır. Tokeni yoxlayın və yenidən cəhd edin."
+  modelDiscoveryFailed: "Bu provayder üçün modelləri əldə etmək mümkün olmadı."
 
 et_EE:
   title: "AI assistent"
@@ -1097,6 +1183,8 @@ et_EE:
   tokenRequired: "Pakkujaga ühenduse loomiseks on vaja Token"
   providerUnavailable: "Pole saadaval"
   environmentDefined: "Seadistatud keskkonna kaudu"
+  invalidProviderToken: "API võti on kehtetu. Kontrollige tunnust ja proovige uuesti."
+  modelDiscoveryFailed: "Selle teenusepakkuja mudeleid ei saanud tuua."
 
 gu_IN:
   title: "એઆઈ સહાયક"
@@ -1122,6 +1210,8 @@ gu_IN:
   tokenRequired: "પ્રદાતા સાથે જોડાવા માટે ટોકન જરૂરી છે"
   providerUnavailable: "અનુપલબ્ધ"
   environmentDefined: "પર્યાવરણ દ્વારા રૂપરેખાંકિત"
+  invalidProviderToken: "API કી અમાન્ય છે. ટોકન તપાસો અને ફરી પ્રયાસ કરો."
+  modelDiscoveryFailed: "આ પ્રદાતા માટે મોડેલો આનયન કરી શકાયું નથી."
 
 ha_NG:
   title: "AI Mataimakin"
@@ -1147,6 +1237,8 @@ ha_NG:
   tokenRequired: "Ana buƙatar alamar don haɗi zuwa mai badawa"
   providerUnavailable: "Babu"
   environmentDefined: "An saita ta hanyar muhalli"
+  invalidProviderToken: "Maɓallin API ba daidai ba ne. Duba alamar kuma a sake gwadawa."
+  modelDiscoveryFailed: "An kasa debo samfuri don wannan mai bada."
 
 ka_GE:
   title: "AI ასისტენტი"
@@ -1172,6 +1264,8 @@ ka_GE:
   tokenRequired: "პროვაიდერთან დასაკავშირებლად საჭიროა ჟეტონი"
   providerUnavailable: "მიუწვდომელია"
   environmentDefined: "კონფიგურირებულია გარემოს საშუალებით"
+  invalidProviderToken: "API გასაღები არასწორია. შეამოწმეთ ჟეტონი და სცადეთ ხელახლა."
+  modelDiscoveryFailed: "ამ პროვაიდერისთვის მოდელების მოძიება ვერ მოხერხდა."
 
 km_KH:
   title: "ជំនួយការ AI"
@@ -1197,6 +1291,8 @@ km_KH:
   tokenRequired: "Token ត្រូវបានទាមទារដើម្បីភ្ជាប់ទៅអ្នកផ្តល់សេវា"
   providerUnavailable: "មិនអាចប្រើបាន"
   environmentDefined: "កំណត់រចនាសម្ព័ន្ធតាមរយៈបរិស្ថាន"
+  invalidProviderToken: "សោ API មិនត្រឹមត្រូវទេ។ ពិនិត្យសញ្ញាសម្ងាត់ ហើយព្យាយាមម្តងទៀត។"
+  modelDiscoveryFailed: "មិនអាចទៅយកគំរូសម្រាប់អ្នកផ្តល់សេវានេះទេ។"
 
 kn_IN:
   title: "AI ಸಹಾಯಕ"
@@ -1222,6 +1318,8 @@ kn_IN:
   tokenRequired: "ಒದಗಿಸುವವರಿಗೆ ಸಂಪರ್ಕಿಸಲು ಟೋಕನ್ ಅಗತ್ಯವಿದೆ"
   providerUnavailable: "ಲಭ್ಯವಿಲ್ಲ"
   environmentDefined: "ಪರಿಸರದ ಮೂಲಕ ಕಾನ್ಫಿಗರ್ ಮಾಡಲಾಗಿದೆ"
+  invalidProviderToken: "API ಕೀ ಅಮಾನ್ಯವಾಗಿದೆ. ಟೋಕನ್ ಪರಿಶೀಲಿಸಿ ಮತ್ತು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ."
+  modelDiscoveryFailed: "ಈ ಪೂರೈಕೆದಾರರಿಗೆ ಮಾದರಿಗಳನ್ನು ತರಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ."
 
 lt_LT:
   title: "AI asistentas"
@@ -1247,6 +1345,8 @@ lt_LT:
   tokenRequired: "Norint prisijungti prie teikėjo, reikalingas prieigos raktas"
   providerUnavailable: "Nepasiekiamas"
   environmentDefined: "Konfigūruojama per aplinką"
+  invalidProviderToken: "API raktas neteisingas. Patikrinkite prieigos raktą ir bandykite dar kartą."
+  modelDiscoveryFailed: "Nepavyko gauti šio teikėjo modelių."
 
 lv_LV:
   title: "AI palīgs"
@@ -1272,6 +1372,8 @@ lv_LV:
   tokenRequired: "Lai izveidotu savienojumu ar pakalpojumu sniedzēju, ir nepieciešams marķieris"
   providerUnavailable: "Nav pieejams"
   environmentDefined: "Konfigurēts, izmantojot vidi"
+  invalidProviderToken: "API atslēga nav derīga. Pārbaudiet marķieri un mēģiniet vēlreiz."
+  modelDiscoveryFailed: "Nevarēja ienest šī pakalpojumu sniedzēja modeļus."
 
 ml_IN:
   title: "AI അസിസ്റ്റൻ്റ്"
@@ -1297,6 +1399,8 @@ ml_IN:
   tokenRequired: "ദാതാവുമായി ബന്ധിപ്പിക്കുന്നതിന് ടോക്കൺ ആവശ്യമാണ്"
   providerUnavailable: "ലഭ്യമല്ല"
   environmentDefined: "പരിസ്ഥിതി വഴി ക്രമീകരിച്ചത്"
+  invalidProviderToken: "API കീ അസാധുവാണ്. ടോക്കൺ പരിശോധിച്ച് വീണ്ടും ശ്രമിക്കുക."
+  modelDiscoveryFailed: "ഈ ദാതാവിനായി മോഡലുകൾ ലഭ്യമാക്കാൻ കഴിഞ്ഞില്ല."
 
 mr_IN:
   title: "एआय सहाय्यक"
@@ -1322,6 +1426,8 @@ mr_IN:
   tokenRequired: "प्रदात्याशी कनेक्ट होण्यासाठी टोकन आवश्यक आहे"
   providerUnavailable: "अनुपलब्ध"
   environmentDefined: "पर्यावरणाद्वारे कॉन्फिगर केले"
+  invalidProviderToken: "API की अवैध आहे. टोकन तपासा आणि पुन्हा प्रयत्न करा."
+  modelDiscoveryFailed: "या प्रदात्यासाठी मॉडेल आणू शकलो नाही."
 
 ne_NP:
   title: "एआई सहायक"
@@ -1347,6 +1453,8 @@ ne_NP:
   tokenRequired: "प्रदायकसँग जडान गर्न टोकन आवश्यक छ"
   providerUnavailable: "अनुपलब्ध"
   environmentDefined: "वातावरण मार्फत कन्फिगर गरियो"
+  invalidProviderToken: "API कुञ्जी अमान्य छ। टोकन जाँच गर्नुहोस् र फेरि प्रयास गर्नुहोस्।"
+  modelDiscoveryFailed: "यस प्रदायकको लागि मोडेलहरू ल्याउन सकिएन।"
 
 pa_IN:
   title: "AI ਸਹਾਇਕ"
@@ -1372,6 +1480,8 @@ pa_IN:
   tokenRequired: "ਪ੍ਰਦਾਤਾ ਨਾਲ ਜੁੜਨ ਲਈ ਟੋਕਨ ਦੀ ਲੋੜ ਹੈ"
   providerUnavailable: "ਅਣਉਪਲਬਧ"
   environmentDefined: "ਵਾਤਾਵਰਣ ਦੁਆਰਾ ਸੰਰਚਿਤ ਕੀਤਾ ਗਿਆ"
+  invalidProviderToken: "API ਕੁੰਜੀ ਅਵੈਧ ਹੈ। ਟੋਕਨ ਦੀ ਜਾਂਚ ਕਰੋ ਅਤੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।"
+  modelDiscoveryFailed: "ਇਸ ਪ੍ਰਦਾਤਾ ਲਈ ਮਾਡਲਾਂ ਨੂੰ ਪ੍ਰਾਪਤ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ।"
 
 si_LK:
   title: "AI සහකාර"
@@ -1397,6 +1507,8 @@ si_LK:
   tokenRequired: "සපයන්නා වෙත සම්බන්ධ වීමට ටෝකනය අවශ්‍ය වේ"
   providerUnavailable: "ලබා ගත නොහැක"
   environmentDefined: "පරිසරය හරහා වින්‍යාස කර ඇත"
+  invalidProviderToken: "API යතුර වලංගු නොවේ. ටෝකනය පරීක්ෂා කර නැවත උත්සාහ කරන්න."
+  modelDiscoveryFailed: "මෙම සැපයුම්කරු සඳහා ආකෘති ලබා ගැනීමට නොහැකි විය."
 
 sl_SI:
   title: "Pomočnik AI"
@@ -1422,6 +1534,8 @@ sl_SI:
   tokenRequired: "Za povezavo s ponudnikom je potreben žeton"
   providerUnavailable: "Ni na voljo"
   environmentDefined: "Konfigurirano prek okolja"
+  invalidProviderToken: "Ključ API je neveljaven. Preverite žeton in poskusite znova."
+  modelDiscoveryFailed: "Ni bilo mogoče pridobiti modelov za tega ponudnika."
 
 sr_RS:
   title: "АИ Ассистант"
@@ -1447,6 +1561,8 @@ sr_RS:
   tokenRequired: "Токен је неопходан за повезивање са провајдером"
   providerUnavailable: "Недоступно"
   environmentDefined: "Конфигурисано преко окружења"
+  invalidProviderToken: "АПИ кључ је неважећи. Проверите токен и покушајте поново."
+  modelDiscoveryFailed: "Није могуће преузети моделе за овог провајдера."
 
 te_IN:
   title: "AI అసిస్టెంట్"
@@ -1472,6 +1588,8 @@ te_IN:
   tokenRequired: "ప్రొవైడర్‌కి కనెక్ట్ చేయడానికి టోకెన్ అవసరం"
   providerUnavailable: "అందుబాటులో లేదు"
   environmentDefined: "పర్యావరణం ద్వారా కాన్ఫిగర్ చేయబడింది"
+  invalidProviderToken: "API కీ చెల్లదు. టోకెన్‌ని తనిఖీ చేసి, మళ్లీ ప్రయత్నించండి."
+  modelDiscoveryFailed: "ఈ ప్రొవైడర్ కోసం మోడల్‌లను పొందడం సాధ్యపడలేదు."
 
 tl_PH:
   title: "AI Assistant"
@@ -1497,6 +1615,8 @@ tl_PH:
   tokenRequired: "Kinakailangan ang Token para kumonekta sa provider"
   providerUnavailable: "Hindi magagamit"
   environmentDefined: "Na-configure sa pamamagitan ng kapaligiran"
+  invalidProviderToken: "Ang API key ay hindi wasto. Suriin ang token at subukang muli."
+  modelDiscoveryFailed: "Hindi makakuha ng mga modelo para sa provider na ito."
 
 uz_UZ:
   title: "AI yordamchisi"
@@ -1522,6 +1642,8 @@ uz_UZ:
   tokenRequired: "Provayderga ulanish uchun token talab qilinadi"
   providerUnavailable: "Mavjud emas"
   environmentDefined: "Atrof-muhit orqali sozlangan"
+  invalidProviderToken: "API kaliti yaroqsiz. Tokenni tekshiring va qayta urinib ko'ring."
+  modelDiscoveryFailed: "Bu provayder uchun modellarni olib bo‘lmadi."
 
 yo_NG:
   title: "AI Iranlọwọ"
@@ -1547,3 +1669,5 @@ yo_NG:
   tokenRequired: "Tokini nilo lati sopọ si olupese"
   providerUnavailable: "Ko si"
   environmentDefined: "Tunto nipasẹ ayika"
+  invalidProviderToken: "Bọtini API ko wulo. Ṣayẹwo ami naa ki o tun gbiyanju lẹẹkansi."
+  modelDiscoveryFailed: "Ko le mu awọn awoṣe fun olupese yii."

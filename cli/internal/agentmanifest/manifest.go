@@ -21,6 +21,7 @@ package agentmanifest
 import (
 	"slices"
 
+	platformapi "github.com/clidey/whodb/cli/internal/platform"
 	"github.com/clidey/whodb/cli/internal/sourcetypes"
 	"github.com/clidey/whodb/cli/pkg/version"
 	"github.com/clidey/whodb/core/src/source"
@@ -33,6 +34,7 @@ type Manifest struct {
 	SourceTypes []SourceType      `json:"source_types"`
 	Commands    []Command         `json:"commands"`
 	MCPTools    []MCPTool         `json:"mcp_tools"`
+	PlatformMCP PlatformMCP       `json:"platform_mcp"`
 	SafetyModes []SafetyMode      `json:"safety_modes"`
 	Workflows   []WorkflowSummary `json:"workflows"`
 }
@@ -76,6 +78,43 @@ type MCPTool struct {
 	ReadOnly    bool   `json:"read_only"`
 }
 
+// MCPPrompt describes one MCP prompt exposed by the WhoDB MCP server.
+type MCPPrompt struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
+// MCPResource describes one MCP resource exposed by the WhoDB MCP server.
+type MCPResource struct {
+	URI         string `json:"uri"`
+	Description string `json:"description"`
+	MIMEType    string `json:"mime_type"`
+}
+
+// PlatformMCP describes hosted-platform MCP mode for agent consumers.
+type PlatformMCP struct {
+	EnabledByFlag           string           `json:"enabled_by_flag"`
+	RequiresLogin           bool             `json:"requires_login"`
+	RequiresWorkspace       bool             `json:"requires_workspace"`
+	DefaultHost             string           `json:"default_host"`
+	ToolPrefix              string           `json:"tool_prefix"`
+	LocalToolsExposed       bool             `json:"local_tools_exposed"`
+	SupportsFields          bool             `json:"supports_fields_projection"`
+	LocalToolSelectionFlags []string         `json:"local_tool_selection_flags"`
+	SetupCommands           []string         `json:"setup_commands"`
+	WriteModes              PlatformMCPModes `json:"write_modes"`
+	Prompts                 []MCPPrompt      `json:"prompts"`
+	Resources               []MCPResource    `json:"resources"`
+}
+
+// PlatformMCPModes describes hosted-platform write behavior by MCP mode.
+type PlatformMCPModes struct {
+	Default    string `json:"default"`
+	ReadOnly   string `json:"read_only"`
+	SafeMode   string `json:"safe_mode"`
+	AllowWrite string `json:"allow_write"`
+}
+
 // SafetyMode describes an MCP query-execution safety mode.
 type SafetyMode struct {
 	Name        string `json:"name"`
@@ -96,6 +135,7 @@ func Build() Manifest {
 		SourceTypes: buildSourceTypes(),
 		Commands:    buildCommands(),
 		MCPTools:    buildMCPTools(),
+		PlatformMCP: buildPlatformMCP(),
 		SafetyModes: buildSafetyModes(),
 		Workflows:   buildWorkflows(),
 	}
@@ -195,23 +235,88 @@ func buildMCPTools() []MCPTool {
 		{Name: "whodb_audit", Description: "Run data-quality audits.", ReadOnly: true},
 		{Name: "whodb_suggestions", Description: "Load backend query suggestions.", ReadOnly: true},
 		{Name: "whodb_platform_status", Description: "Show hosted WhoDB login and selected workspace when MCP starts with --platform.", ReadOnly: true},
-		{Name: "whodb_platform_orgs", Description: "List hosted WhoDB organizations when MCP starts with --platform.", ReadOnly: true},
-		{Name: "whodb_platform_projects", Description: "List hosted WhoDB projects when MCP starts with --platform.", ReadOnly: true},
-		{Name: "whodb_platform_sources", Description: "List hosted WhoDB sources when MCP starts with --platform.", ReadOnly: true},
-		{Name: "whodb_platform_source_types", Description: "List hosted source types when MCP starts with --platform.", ReadOnly: true},
-		{Name: "whodb_platform_source_fields", Description: "List hosted source type fields when MCP starts with --platform.", ReadOnly: true},
-		{Name: "whodb_platform_source_objects", Description: "Browse hosted source objects when MCP starts with --platform.", ReadOnly: true},
+		{Name: "whodb_platform_orgs", Description: "List hosted WhoDB organizations visible to the signed-in user when MCP starts with --platform.", ReadOnly: true},
+		{Name: "whodb_platform_projects", Description: "List hosted WhoDB projects for an organization when MCP starts with --platform.", ReadOnly: true},
+		{Name: "whodb_platform_sources", Description: "List hosted WhoDB sources in the selected project when MCP starts with --platform; accepts fields for projection.", ReadOnly: true},
+		{Name: "whodb_platform_source_types", Description: "List hosted source types available for creation when MCP starts with --platform; accepts fields for projection.", ReadOnly: true},
+		{Name: "whodb_platform_source_fields", Description: "List connection fields for one hosted source type when MCP starts with --platform; accepts fields for projection.", ReadOnly: true},
+		{Name: "whodb_platform_source_objects", Description: "Browse hosted source objects when MCP starts with --platform; accepts fields for projection.", ReadOnly: true},
 		{Name: "whodb_platform_source_columns", Description: "Inspect hosted source object columns when MCP starts with --platform.", ReadOnly: true},
 		{Name: "whodb_platform_source_rows", Description: "Preview hosted source object rows when MCP starts with --platform.", ReadOnly: true},
-		{Name: "whodb_platform_source_config", Description: "Inspect redacted hosted source config when MCP starts with --platform.", ReadOnly: true},
+		{Name: "whodb_platform_source_constraints", Description: "Inspect editable hosted source field constraints when MCP starts with --platform.", ReadOnly: true},
+		{Name: "whodb_platform_source_content", Description: "Read hosted source object content when supported and MCP starts with --platform; request content fields only when needed.", ReadOnly: true},
+		{Name: "whodb_platform_source_config", Description: "Inspect redacted hosted source config when MCP starts with --platform; secrets are masked.", ReadOnly: true},
 		{Name: "whodb_platform_source_test", Description: "Test saved or draft hosted source connections when MCP starts with --platform.", ReadOnly: true},
-		{Name: "whodb_platform_source_create", Description: "Prepare hosted source creation for whodb_platform_confirm when MCP starts with --platform.", ReadOnly: false},
-		{Name: "whodb_platform_source_update", Description: "Prepare hosted source updates for whodb_platform_confirm when MCP starts with --platform.", ReadOnly: false},
-		{Name: "whodb_platform_source_delete", Description: "Prepare hosted source deletion for whodb_platform_confirm when MCP starts with --platform.", ReadOnly: false},
-		{Name: "whodb_platform_pending", Description: "List pending hosted platform source confirmations when MCP starts with --platform.", ReadOnly: true},
-		{Name: "whodb_platform_confirm", Description: "Confirm pending hosted platform source writes when MCP starts with --platform.", ReadOnly: false},
+		{Name: "whodb_platform_secrets", Description: "List hosted secret metadata without secret values when MCP starts with --platform; accepts fields for projection.", ReadOnly: true},
+		{Name: "whodb_platform_ai_providers", Description: "List hosted AI provider metadata without API keys when MCP starts with --platform; accepts fields for projection.", ReadOnly: true},
+		{Name: "whodb_platform_ai_provider_models", Description: "List models for one hosted AI provider when MCP starts with --platform.", ReadOnly: true},
+		{Name: "whodb_platform_ontologies", Description: "List hosted ontology object types when MCP starts with --platform; accepts fields for projection.", ReadOnly: true},
+		{Name: "whodb_platform_ontology", Description: "Inspect one hosted ontology object type when MCP starts with --platform; accepts fields for projection.", ReadOnly: true},
+		{Name: "whodb_platform_ontology_fast_lookups", Description: "List saved fast lookups for one ontology when MCP starts with --platform.", ReadOnly: true},
+		{Name: "whodb_platform_ontology_fast_lookup_suggestions", Description: "List suggested fast lookups for one ontology when MCP starts with --platform.", ReadOnly: true},
+		{Name: "whodb_platform_ontology_rows", Description: "Preview rows for one hosted ontology when MCP starts with --platform.", ReadOnly: true},
+		{Name: "whodb_platform_ontology_follow_link", Description: "Follow one hosted ontology link from a row when MCP starts with --platform.", ReadOnly: true},
+		{Name: "whodb_platform_datasets", Description: "List hosted datasets when MCP starts with --platform; accepts fields for projection.", ReadOnly: true},
+		{Name: "whodb_platform_dataset", Description: "Inspect one hosted dataset when MCP starts with --platform; accepts fields for projection.", ReadOnly: true},
+		{Name: "whodb_platform_dataset_rows", Description: "Preview hosted dataset rows when MCP starts with --platform.", ReadOnly: true},
+		{Name: "whodb_platform_lineage", Description: "Inspect hosted lineage around one root node when MCP starts with --platform.", ReadOnly: true},
+		{Name: "whodb_platform_lineage_neighbors", Description: "Inspect immediate hosted lineage neighbors when MCP starts with --platform.", ReadOnly: true},
+		{Name: "whodb_platform_project_lineage", Description: "Inspect hosted project-level lineage when MCP starts with --platform.", ReadOnly: true},
+		{Name: "whodb_platform_transforms", Description: "List hosted transforms when MCP starts with --platform; accepts fields for projection.", ReadOnly: true},
+		{Name: "whodb_platform_transform_runs", Description: "List recent runs for one hosted transform when MCP starts with --platform.", ReadOnly: true},
+		{Name: "whodb_platform_functions", Description: "List hosted ontology functions when MCP starts with --platform; accepts fields for projection.", ReadOnly: true},
+		{Name: "whodb_platform_function", Description: "Inspect one hosted ontology function when MCP starts with --platform; request file content fields only when needed.", ReadOnly: true},
+		{Name: "whodb_platform_files", Description: "List hosted project folders and files when MCP starts with --platform; accepts fields for projection.", ReadOnly: true},
+		{Name: "whodb_platform_file_preview", Description: "Preview one hosted project file when MCP starts with --platform; request text or tabular payload fields only when needed.", ReadOnly: true},
+		{Name: "whodb_platform_file_search", Description: "Search hosted project files when MCP starts with --platform.", ReadOnly: true},
+		{Name: "whodb_platform_tabular_files", Description: "List tabular hosted project files when MCP starts with --platform.", ReadOnly: true},
+		{Name: "whodb_platform_storage_usage", Description: "Show hosted project storage usage in bytes when MCP starts with --platform.", ReadOnly: true},
+		{Name: "whodb_platform_source_create", Description: "Create hosted sources when MCP starts with --platform; returns a confirmation token by default, executes immediately with --allow-write, and is hidden in --read-only and --safe-mode.", ReadOnly: false},
+		{Name: "whodb_platform_source_update", Description: "Update hosted sources when MCP starts with --platform; returns a confirmation token by default, executes immediately with --allow-write, and is hidden in --read-only and --safe-mode.", ReadOnly: false},
+		{Name: "whodb_platform_source_delete", Description: "Delete hosted sources when MCP starts with --platform; returns a confirmation token by default, executes immediately with --allow-write, and is hidden in --read-only and --safe-mode.", ReadOnly: false},
+		{Name: "whodb_platform_create", Description: "Create hosted resources when MCP starts with --platform; returns a confirmation token by default, executes immediately with --allow-write, and is hidden in --read-only and --safe-mode.", ReadOnly: false},
+		{Name: "whodb_platform_update", Description: "Update hosted resources when MCP starts with --platform; returns a confirmation token by default, executes immediately with --allow-write, and is hidden in --read-only and --safe-mode.", ReadOnly: false},
+		{Name: "whodb_platform_delete", Description: "Delete hosted resources when MCP starts with --platform; returns a confirmation token by default, executes immediately with --allow-write, and is hidden in --read-only and --safe-mode.", ReadOnly: false},
+		{Name: "whodb_platform_action", Description: "Run hosted actions such as upload, move, run, or deploy when MCP starts with --platform; returns a confirmation token by default, executes immediately with --allow-write, and is hidden in --read-only and --safe-mode.", ReadOnly: false},
+		{Name: "whodb_platform_pending", Description: "List pending hosted platform confirmations when MCP starts with --platform; preview metadata never includes credential or secret values, and the tool is not exposed with --allow-write, --read-only, or --safe-mode.", ReadOnly: true},
+		{Name: "whodb_platform_confirm", Description: "Confirm pending hosted platform writes when MCP starts with --platform after user approval; not exposed with --allow-write, --read-only, or --safe-mode.", ReadOnly: false},
 	}
 	return tools
+}
+
+func buildPlatformMCP() PlatformMCP {
+	return PlatformMCP{
+		EnabledByFlag:           "--platform",
+		RequiresLogin:           true,
+		RequiresWorkspace:       true,
+		DefaultHost:             platformapi.DefaultHost,
+		ToolPrefix:              "whodb_platform_",
+		LocalToolsExposed:       false,
+		SupportsFields:          true,
+		LocalToolSelectionFlags: []string{"--tools", "--disable-tools"},
+		SetupCommands: []string{
+			"whodb-cli login",
+			"whodb-cli use --org <org> --project <project>",
+			"whodb-cli mcp serve --platform",
+		},
+		WriteModes: PlatformMCPModes{
+			Default:    "confirmation_required",
+			ReadOnly:   "write_tools_hidden",
+			SafeMode:   "write_tools_hidden",
+			AllowWrite: "executes_immediately",
+		},
+		Prompts: []MCPPrompt{
+			{Name: "whodb_platform_overview", Description: "Understand hosted WhoDB platform MCP mode, workspace selection, permissions, and field projection."},
+			{Name: "whodb_platform_read_workflow", Description: "Use hosted WhoDB platform read tools safely and efficiently."},
+			{Name: "whodb_platform_write_safety", Description: "Handle hosted WhoDB platform write confirmations and destructive actions safely."},
+			{Name: "whodb_platform_source_workflow", Description: "Manage hosted WhoDB platform sources from discovery through create, update, and delete."},
+		},
+		Resources: []MCPResource{
+			{URI: "whodb://platform/schema", Description: "Machine-readable hosted WhoDB platform MCP contract and enabled platform tools", MIMEType: "application/json"},
+			{URI: "whodb://platform/workspace", Description: "Current hosted WhoDB login and selected workspace metadata", MIMEType: "application/json"},
+			{URI: "whodb://platform/tool-guide", Description: "Hosted WhoDB platform MCP tool categories, read/write behavior, and field projection guidance", MIMEType: "application/json"},
+		},
+	}
 }
 
 func buildSafetyModes() []SafetyMode {

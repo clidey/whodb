@@ -6,6 +6,17 @@ blockExoticSubdeps: true
 
 trustPolicy: "no-downgrade"
 
+# reselect dropped provenance attestation in 5.1.1 (pulled in transitively via recharts).
+# Long-standing widely-used release; allowlist this exact version to satisfy no-downgrade.
+trustPolicyExclude:
+  # @reduxjs/toolkit dropped provenance attestation in 2.9.0 (pulled in transitively via recharts).
+  # Long-standing widely-used release; allowlist this exact version to satisfy no-downgrade.
+  - '@reduxjs/toolkit@2.9.0'
+  # react-redux dropped provenance attestation in 9.2.0 (pulled in transitively via recharts).
+  # Long-standing widely-used release; allowlist this exact version to satisfy no-downgrade.
+  - 'react-redux@9.2.0'
+  - 'reselect@5.1.1'
+
 strictDepBuilds: true
 
 ignoreScripts: true

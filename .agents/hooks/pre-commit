@@ -21,21 +21,22 @@ STAGED_GO="$(echo "$STAGED_FILES" | grep '\.go$' | grep '^core/' || true)"
 if [[ -n "$STAGED_GO" ]]; then
   echo "pre-commit: running Go lint on staged files..."
   # golangci-lint needs to run from the module root (core/)
-  # but paths are relative to repo root, so strip the core/ prefix
-  GO_FILES="$(echo "$STAGED_GO" | sed 's|^core/||' | tr '\n' ' ')"
-  (cd "$REPO_ROOT/core" && ./lint.sh run $GO_FILES) || {
+  # but paths are relative to repo root, so lint the touched package dirs
+  GO_PACKAGES="$(echo "$STAGED_GO" | sed 's|^core/||' | xargs -n1 dirname | sort -u | sed 's|^|./|' | tr '\n' ' ')"
+  (cd "$REPO_ROOT/core" && ./lint.sh run $GO_PACKAGES) || {
     echo "pre-commit: Go lint failed."
     exit 1
   }
 fi
 
 # --- Frontend lint ---
-STAGED_TS="$(echo "$STAGED_FILES" | grep -E '\.(ts|tsx)$' | grep '^frontend/' || true)"
+STAGED_TS="$(echo "$STAGED_FILES" | grep -E '^frontend/src/.*\.(ts|tsx)$' | grep -v '^frontend/src/generated/' || true)"
 if [[ -n "$STAGED_TS" ]]; then
   echo "pre-commit: running frontend lint on staged files..."
   # oxlint with explicit files triggers stricter resolution — use --fix and
   # fail if anything can't be auto-fixed
-  (cd "$REPO_ROOT/frontend" && pnpm exec oxlint --fix $(echo "$STAGED_TS" | sed 's|^frontend/||' | tr '\n' ' ')) || {
+  TS_FILES="$(echo "$STAGED_TS" | sed 's|^frontend/||' | tr '\n' ' ')"
+  (cd "$REPO_ROOT/frontend" && pnpm exec oxlint --fix -- $TS_FILES) || {
     echo "pre-commit: oxlint failed. Run 'pnpm lint:fix' to auto-fix."
     exit 1
   }

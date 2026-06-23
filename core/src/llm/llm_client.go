@@ -27,6 +27,7 @@ func init() {
 	// Register built-in providers
 	providers.RegisterProvider(providers.NewOpenAIProvider())
 	providers.RegisterProvider(providers.NewAnthropicProvider())
+	providers.RegisterProvider(providers.NewGeminiProvider())
 	providers.RegisterProvider(providers.NewOllamaProvider())
 	providers.RegisterProvider(providers.NewLMStudioProvider())
 
@@ -61,6 +62,7 @@ const (
 	Ollama_LLMType    = providers.Ollama_LLMType
 	OpenAI_LLMType    = providers.OpenAI_LLMType
 	Anthropic_LLMType = providers.Anthropic_LLMType
+	Gemini_LLMType    = providers.Gemini_LLMType
 	LMStudio_LLMType  = providers.LMStudio_LLMType
 )
 
@@ -77,6 +79,8 @@ func getEndpointForProvider(providerType LLMType) string {
 		return env.GetOpenAIEndpoint()
 	case Anthropic_LLMType:
 		return env.GetAnthropicEndpoint()
+	case Gemini_LLMType:
+		return env.GetGeminiEndpoint()
 	case Ollama_LLMType:
 		return env.GetOllamaEndpoint()
 	case LMStudio_LLMType:

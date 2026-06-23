@@ -47,6 +47,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GetAiModelsDocument, GetAiProvidersDocument } from "@graphql";
 import { AIModelsActions, availableExternalModelTypes, type IAIModelType } from "../store/ai-models";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { findAIProviderCatalogEntry } from "../config/ai-provider-catalog";
 import { ensureModelsArray, ensureModelTypesArray } from "../utils/ai-models-helper";
 import { ExternalLink } from "../utils/external-links";
 import { v4 as uuidv4 } from 'uuid';
@@ -69,9 +70,54 @@ import { Icons } from "./icons";
 
 export const externalModelTypes = availableExternalModelTypes.map((model) => ({
     id: model,
-    label: model,
-    icon: (Icons.Logos as Record<string, ReactElement>)[model],
+    label: findAIProviderCatalogEntry(model)?.label ?? model,
+    icon: (Icons.Logos as Record<string, ReactElement>)[findAIProviderCatalogEntry(model)?.iconKey ?? model],
 }));
+
+const getAIProviderErrorMessage = (error: unknown, translate: (key: string) => string) => {
+    const rawMessage = error instanceof Error
+        ? error.message
+        : String((error as { message?: string }).message ?? translate('unknownError'));
+    const sanitizedMessage = sanitizeAIProviderErrorMessage(rawMessage);
+    const providerMessage = extractProviderErrorMessage(sanitizedMessage);
+
+    if (
+        sanitizedMessage.includes("API_KEY_INVALID") ||
+        providerMessage.toLowerCase().includes("api key not valid") ||
+        sanitizedMessage.toLowerCase().includes("invalid x-api-key")
+    ) {
+        return translate('invalidProviderToken');
+    }
+
+    if (sanitizedMessage.includes("failed to fetch models")) {
+        return providerMessage || translate('modelDiscoveryFailed');
+    }
+
+    return sanitizedMessage.length > 180 ? translate('modelDiscoveryFailed') : sanitizedMessage;
+};
+
+const extractProviderErrorMessage = (message: string) => {
+    const marker = "failed to fetch models:";
+    const markerIndex = message.indexOf(marker);
+    if (markerIndex < 0) {
+        return "";
+    }
+
+    const payload = message.slice(markerIndex + marker.length).trim();
+    try {
+        const parsed = JSON.parse(payload) as { error?: { message?: string } };
+        return parsed.error?.message ?? "";
+    } catch {
+        return "";
+    }
+};
+
+const sanitizeAIProviderErrorMessage = (message: string) => {
+    return message
+        .replace(/([?&](?:key|api_key|apikey|token|access_token)=)[^&\s"']+/gi, "$1[redacted]")
+        .replace(/(Authorization:\s*Bearer\s+)[^\s"']+/gi, "$1[redacted]")
+        .replace(/(x-(?:api-)?key[":\s=]+)[^,\s"'}]+/gi, "$1[redacted]");
+};
 
 export const useAI = () => {
     const modelType = useAppSelector(state => state.aiModels.current);
@@ -367,6 +413,7 @@ export const useAI = () => {
         handleAIModelRemove,
         handleAIProviderChange,
         markProviderAvailable,
+        markProviderUnavailable,
         retryProvider,
         modelTypesDropdownItems,
         modelDropdownItems,
@@ -395,6 +442,8 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
     handleAIModelChange,
     handleAIModelRemove: _handleAIModelRemove,
     handleAIProviderChange,
+    markProviderAvailable,
+    markProviderUnavailable,
     modelTypesDropdownItems,
     modelDropdownItems,
     disableNewChat,
@@ -410,17 +459,22 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
     const [externalModelType, setExternalModel] = useState<string>(externalModelTypes[0].id);
     const [externalModelToken, setExternalModelToken] = useState<string>("");
     const [externalModelName, setExternalModelName] = useState<string>("");
+    const selectedProviderIdRef = useRef<string | undefined>(modelType?.id);
+    selectedProviderIdRef.current = modelType?.id;
 
     const handleAddExternalModel = useCallback(() => {
-        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
         const overrides = getAIProviderOverrides();
         if (overrides?.isActive() && overrides.openAddProvider) {
             overrides.openAddProvider();
             return;
         }
-        setAddExternalModel(status => !status);
+        setAddExternalModel(true);
         onAddExternalModel?.();
     }, [onAddExternalModel]);
+
+    const handleCloseExternalModel = useCallback(() => {
+        setAddExternalModel(false);
+    }, []);
 
     const handleExternalModelChange = useCallback((item: string) => {
         setExternalModel(item);
@@ -433,65 +487,87 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
             return;
         }
 
+        const selectedExternalModelType = externalModelType;
+        const selectedExternalModelToken = externalModelToken;
+        const selectedExternalModelName = externalModelName || externalModelType;
+
         dispatch(AIModelsActions.setCurrentModel(undefined));
         dispatch(AIModelsActions.setModels([]));
         const overrides = getAIProviderOverrides();
         const isPlatformMode = overrides?.isActive() ?? false;
 
-        void getAIModels({
-            variables: {
-                modelType: externalModelType,
-                token: externalModelToken,
-            }
-        }).then(async ({ data, error }) => {
-            if (error) {
-                throw error;
-            }
-
-            const aiModels = data?.AIModel ?? [];
-            dispatch(AIModelsActions.setModels(aiModels));
-
+        const addProviderAndFetchModels = async () => {
             let id: string;
             if (isPlatformMode && overrides) {
                 const result = await overrides.addProvider({
-                    modelType: externalModelType,
-                    name: externalModelName || externalModelType,
-                    token: externalModelToken,
+                    modelType: selectedExternalModelType,
+                    name: selectedExternalModelName,
+                    token: selectedExternalModelToken,
                 });
                 if (!result) throw new Error('Failed to create provider');
                 id = result.id;
                 dispatch(AIModelsActions.addAIModelType({
                     id,
-                    modelType: externalModelType,
-                    name: externalModelName || externalModelType,
+                    modelType: selectedExternalModelType,
+                    name: selectedExternalModelName,
                     isPlatformProvider: true,
                 }));
             } else {
                 id = uuidv4();
                 dispatch(AIModelsActions.addAIModelType({
                     id,
-                    modelType: externalModelType,
-                    name: externalModelName || externalModelType,
-                    token: externalModelToken,
+                    modelType: selectedExternalModelType,
+                    name: selectedExternalModelName,
+                    token: selectedExternalModelToken,
                 }));
             }
 
             dispatch(AIModelsActions.setCurrentModelType({ id }));
+            selectedProviderIdRef.current = id;
             setExternalModel(externalModelTypes[0].id);
             setExternalModelToken("");
             setExternalModelName("");
             setAddExternalModel(false);
-            if (aiModels.length > 0) {
-                dispatch(AIModelsActions.setCurrentModel(aiModels[0]));
-            }
-        }).catch((error: unknown) => {
+
+            void getAIModels({
+                variables: {
+                    modelType: selectedExternalModelType,
+                    token: selectedExternalModelToken,
+                }
+            }).then(({ data, error }) => {
+                if (error) {
+                    throw error;
+                }
+
+                const aiModels = data?.AIModel ?? [];
+                if (aiModels.length > 0) {
+                    markProviderAvailable(id);
+                } else {
+                    markProviderUnavailable(id);
+                }
+                if (selectedProviderIdRef.current !== id) {
+                    return;
+                }
+                dispatch(AIModelsActions.setModels(aiModels));
+                if (aiModels.length > 0) {
+                    dispatch(AIModelsActions.setCurrentModel(aiModels[0]));
+                }
+            }).catch((error: unknown) => {
+                markProviderUnavailable(id);
+                if (selectedProviderIdRef.current === id) {
+                    handleAIModelsError();
+                }
+                const errorMessage = getAIProviderErrorMessage(error, t);
+                toast.error(`${t('unableToConnect')}: ${errorMessage}`);
+            });
+        };
+
+        void addProviderAndFetchModels().catch((error: unknown) => {
             handleAIModelsError();
-            const errorMessage = error instanceof Error
-                ? error.message
-                : String((error as { message?: string }).message ?? t('unknownError'));
+            const errorMessage = getAIProviderErrorMessage(error, t);
             toast.error(`${t('unableToConnect')}: ${errorMessage}`);
         });
-    }, [dispatch, externalModelName, externalModelToken, externalModelType, getAIModels, handleAIModelsError, t]);
+    }, [dispatch, externalModelName, externalModelToken, externalModelType, getAIModels, handleAIModelsError, markProviderAvailable, markProviderUnavailable, t]);
 
     const handleOpenDocs = useCallback(() => {
         window.open("https://docs.whodb.com/ai/introduction", "_blank");
@@ -514,7 +590,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
         dispatch(AIModelsActions.setCurrentModel(undefined));
     }, [dispatch]);
 
-    return <div className="flex flex-col gap-4" data-testid="ai-provider">
+    return <div className="flex w-full min-w-0 flex-col gap-4" data-testid="ai-provider">
         <Sheet open={addExternalModel} onOpenChange={setAddExternalModel}>
             <SheetContent className={cn("max-w-md mx-auto w-full flex flex-col gap-4", {
                 "px-8 py-10": !newUIEnabled,
@@ -586,11 +662,9 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                         />
                     </div>
                 </div>
-                <div className={cn("flex items-center gap-sm self-end", {
-                    "mt-4": newUIEnabled,
-                })}>
+                <div className="flex items-center gap-sm self-end mt-4">
                     <Button
-                        onClick={handleAddExternalModel}
+                        onClick={handleCloseExternalModel}
                         data-testid="external-model-cancel"
                         variant="secondary"
                     >
@@ -606,8 +680,8 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                 </div>
             </SheetContent>
         </Sheet>
-        <div className="flex w-full justify-between">
-            <div className="flex gap-2">
+        <div className="flex w-full flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap gap-2">
                 <SearchSelect
                     options={modelTypesDropdownItems.map(item => ({
                         value: item.id,
@@ -690,49 +764,51 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                     />
                 )}
             </div>
-            <AlertDialog>
-                <AlertDialogTrigger asChild>
-                    <Button
-                        data-testid="chat-delete-provider"
-                        variant="secondary"
-                        className={cn({
-                            "hidden": disableNewChat ?? modelType?.isEnvironmentDefined ?? modelType?.isPlatformProvider,
-                        })}
-                    >
-                        <TrashIcon className="w-4 h-4" /> {t('deleteProvider')}
+            <div className={cn("flex flex-1 flex-wrap items-center gap-3", {
+                "hidden": disableNewChat && footerAction == null,
+            })}>
+                {!disableNewChat && (
+                    <Button onClick={handleClear} disabled={loading || disableClear} data-testid="chat-new-chat" variant="secondary">
+                        <ArrowPathIcon className="w-4 h-4" /> {t('newChat')}
                     </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>{t('deleteProvider')}</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            {t('deleteProviderConfirm')}
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
-                        <AlertDialogAction asChild>
+                )}
+                {footerAction}
+                <div className="ml-auto">
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
                             <Button
-                                data-testid="chat-delete-provider-confirm"
-                                onClick={() => { void handleDeleteProvider(modelType?.id); }}
-                                variant="destructive"
+                                data-testid="chat-delete-provider"
+                                variant="secondary"
+                                className={cn({
+                                    "hidden": disableNewChat ?? modelType?.isEnvironmentDefined ?? modelType?.isPlatformProvider,
+                                })}
                             >
-                                {t('delete')}
+                                <TrashIcon className="w-4 h-4" /> {t('deleteProvider')}
                             </Button>
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-        </div>
-        <div className={cn("flex flex-wrap items-center gap-3", {
-            "hidden": disableNewChat && footerAction == null,
-        })}>
-            {!disableNewChat && (
-                <Button onClick={handleClear} disabled={loading || disableClear} data-testid="chat-new-chat" variant="secondary">
-                    <ArrowPathIcon className="w-4 h-4" /> {t('newChat')}
-                </Button>
-            )}
-            {footerAction}
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>{t('deleteProvider')}</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    {t('deleteProviderConfirm')}
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+                                <AlertDialogAction asChild>
+                                    <Button
+                                        data-testid="chat-delete-provider-confirm"
+                                        onClick={() => { void handleDeleteProvider(modelType?.id); }}
+                                        variant="destructive"
+                                    >
+                                        {t('delete')}
+                                    </Button>
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                </div>
+            </div>
         </div>
     </div>
 }

@@ -33,9 +33,16 @@ import (
 )
 
 var (
-	globalUseKeyring bool
-	keyringAvailable *bool // Cached result of keyring availability check
+	globalUseKeyring                  bool
+	keyringAvailable                  *bool // Cached result of keyring availability check
+	platformRefreshTokenStoreOverride platformRefreshTokenStore
 )
+
+type platformRefreshTokenStore interface {
+	Save(hostURL, accountID, refreshToken string) error
+	Get(hostURL, accountID string) (string, error)
+	Delete(hostURL, accountID string) error
+}
 
 type Connection struct {
 	Name        string            `json:"name"`
@@ -411,6 +418,9 @@ func (c *Config) SetDefaultPlatformHost(url string) {
 
 // SavePlatformRefreshToken stores a hosted WhoDB refresh token in the OS keyring.
 func (c *Config) SavePlatformRefreshToken(hostURL, accountID, refreshToken string) error {
+	if platformRefreshTokenStoreOverride != nil {
+		return platformRefreshTokenStoreOverride.Save(hostURL, accountID, refreshToken)
+	}
 	if !c.useKeyring {
 		return errors.New("OS keyring is required for hosted WhoDB refresh tokens")
 	}
@@ -419,6 +429,9 @@ func (c *Config) SavePlatformRefreshToken(hostURL, accountID, refreshToken strin
 
 // GetPlatformRefreshToken loads a hosted WhoDB refresh token from the OS keyring.
 func (c *Config) GetPlatformRefreshToken(hostURL, accountID string) (string, error) {
+	if platformRefreshTokenStoreOverride != nil {
+		return platformRefreshTokenStoreOverride.Get(hostURL, accountID)
+	}
 	if !c.useKeyring {
 		return "", errors.New("OS keyring is required for hosted WhoDB refresh tokens")
 	}
@@ -427,6 +440,9 @@ func (c *Config) GetPlatformRefreshToken(hostURL, accountID string) (string, err
 
 // DeletePlatformRefreshToken removes a hosted WhoDB refresh token from the OS keyring.
 func (c *Config) DeletePlatformRefreshToken(hostURL, accountID string) error {
+	if platformRefreshTokenStoreOverride != nil {
+		return platformRefreshTokenStoreOverride.Delete(hostURL, accountID)
+	}
 	if !c.useKeyring {
 		return nil
 	}

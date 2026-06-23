@@ -128,13 +128,15 @@ Available tools:
 Hosted platform mode is disabled by default. Start with --platform to expose only
 whodb_platform_* tools backed by the current hosted login and selected workspace.
 Local database tools such as whodb_query and whodb_connections are not registered
-in platform mode. Hosted source writes return confirmation tokens and execute
-only through whodb_platform_confirm.
+in platform mode. Platform mode uses the same permission modes: default
+confirm-writes returns confirmation tokens, --read-only and --safe-mode hide
+hosted platform write tools, and --allow-write executes hosted platform writes
+without confirmation.
 
 TOOL SELECTION:
-  --tools           - Comma-separated list of tools to enable (default: all)
+  --tools           - Comma-separated list of local MCP tools to enable (default: all)
                       Valid: query, schemas, tables, columns, connections, confirm, pending, explain, diff, erd, audit, suggestions
-  --disable-tools   - Comma-separated list of tools to disable (takes precedence)
+  --disable-tools   - Comma-separated list of local MCP tools to disable (takes precedence)
 
 ANALYTICS:
   Anonymous usage analytics are enabled by default to help improve WhoDB.
@@ -203,6 +205,16 @@ Connection Resolution:
   # Run hosted WhoDB platform MCP mode only
   whodb-cli mcp serve --platform
 
+  # Hosted platform MCP config (stdio):
+  {
+    "mcpServers": {
+      "whodb-platform": {
+        "command": "whodb-cli",
+        "args": ["mcp", "serve", "--platform"]
+      }
+    }
+  }
+
   # Set default connection without restricting access
   whodb-cli mcp serve --default-connection=prod
 
@@ -265,6 +277,7 @@ Connection Resolution:
 		opts := &whodbmcp.ServerOptions{
 			ReadOnly:            readOnly,
 			ConfirmWrites:       confirmWrites,
+			AllowWrite:          mcpAllowWrite,
 			SecurityLevel:       whodbmcp.SecurityLevel(securityLevel),
 			QueryTimeout:        mcpTimeout,
 			MaxRows:             mcpMaxRows,
@@ -350,9 +363,9 @@ func init() {
 
 	// Tool enablement flags
 	mcpServeCmd.Flags().StringSliceVar(&mcpEnabledTools, "tools", nil,
-		"Comma-separated list of tools to enable (default: all). Valid: query, schemas, tables, columns, connections, confirm")
+		"Comma-separated list of local MCP tools to enable (default: all). Valid: query, schemas, tables, columns, connections, confirm, pending, explain, diff, erd, audit, suggestions")
 	mcpServeCmd.Flags().StringSliceVar(&mcpDisabledTools, "disable-tools", nil,
-		"Comma-separated list of tools to disable (takes precedence over --tools)")
+		"Comma-separated list of local MCP tools to disable (takes precedence over --tools)")
 
 	// Connection scoping
 	mcpServeCmd.Flags().StringVar(&mcpConnection, "default-connection", "",

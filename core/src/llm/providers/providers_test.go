@@ -17,6 +17,7 @@
 package providers
 
 import (
+	"net/http"
 	"testing"
 )
 
@@ -73,6 +74,191 @@ func TestGetBAMLConfig_RoutesToGenericProvider(t *testing.T) {
 	}
 	if opts["request_timeout_ms"] != 60000 {
 		t.Fatalf("expected request_timeout_ms 60000 for generic provider, got %v", opts["request_timeout_ms"])
+	}
+}
+
+func TestGeminiProvider_CreateBAMLClient_UsesOpenAICompatibleEndpoint(t *testing.T) {
+	provider := NewGeminiProvider()
+	config := &ProviderConfig{APIKey: "gemini-key"}
+
+	clientType, opts, err := provider.CreateBAMLClient(config, "gemini-3.5-flash")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if clientType != "openai-generic" {
+		t.Fatalf("expected client type 'openai-generic', got %q", clientType)
+	}
+	if opts["base_url"] != provider.GetDefaultEndpoint() {
+		t.Fatalf("expected Gemini default endpoint, got %v", opts["base_url"])
+	}
+	if opts["api_key"] != "gemini-key" {
+		t.Fatalf("expected api_key, got %v", opts["api_key"])
+	}
+	if opts["model"] != "gemini-3.5-flash" {
+		t.Fatalf("expected model, got %v", opts["model"])
+	}
+	if _, ok := opts["request_timeout_ms"]; ok {
+		t.Fatalf("did not expect request_timeout_ms in Gemini opts")
+	}
+}
+
+func TestGeminiProvider_GetSupportedModels_RequiresAPIKey(t *testing.T) {
+	provider := NewGeminiProvider()
+
+	if _, err := provider.GetSupportedModels(&ProviderConfig{}); err == nil {
+		t.Fatalf("expected error when API key is missing")
+	}
+}
+
+func TestGeminiProvider_GetSupportedModels_FetchesGenerateContentModels(t *testing.T) {
+	provider := NewGeminiProvider()
+	withTestHTTPClient(t, func(r *http.Request) (*http.Response, error) {
+		if r.URL.String() != "https://gemini.test/v1beta/models?key=gemini-key&pageSize=1000" {
+			t.Fatalf("unexpected URL %s", r.URL.String())
+		}
+		return httpResponse(http.StatusOK, `{
+			"models": [
+				{
+					"name": "models/gemini-3.5-flash",
+					"baseModelId": "gemini-3.5-flash",
+					"supportedGenerationMethods": ["generateContent"]
+				},
+				{
+					"name": "models/gemini-embedding",
+					"baseModelId": "gemini-embedding",
+					"supportedGenerationMethods": ["embedContent"]
+				},
+				{
+					"name": "models/gemini-2.5-flash",
+					"supportedGenerationMethods": ["generateContent"]
+				},
+				{
+					"name": "models/deep-research-preview-04-2026",
+					"supportedGenerationMethods": ["generateContent"]
+				},
+				{
+					"name": "models/antigravity-preview-05-2026",
+					"supportedGenerationMethods": ["generateContent"]
+				},
+				{
+					"name": "models/gemini-robotics-er-1.6-preview",
+					"supportedGenerationMethods": ["generateContent"]
+				},
+				{
+					"name": "models/gemini-3-pro-image",
+					"supportedGenerationMethods": ["generateContent"]
+				},
+				{
+					"name": "models/nano-banana-pro",
+					"supportedGenerationMethods": ["generateContent"]
+				},
+				{
+					"name": "models/gemini-3.1-flash-tts-preview",
+					"supportedGenerationMethods": ["generateContent"]
+				},
+				{
+					"name": "models/gemma-4-31b-it",
+					"supportedGenerationMethods": ["generateContent"]
+				}
+			]
+		}`), nil
+	})
+
+	models, err := provider.GetSupportedModels(&ProviderConfig{
+		APIKey:   "gemini-key",
+		Endpoint: "https://gemini.test/v1beta/openai/",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(models) != 3 {
+		t.Fatalf("expected three text generation models, got %#v", models)
+	}
+	if models[0] != "gemini-3.5-flash" || models[1] != "gemini-2.5-flash" || models[2] != "gemma-4-31b-it" {
+		t.Fatalf("expected model IDs without models/ prefix, got %#v", models)
+	}
+}
+
+func TestOpenAICompatibleProvider_CreateBAMLClient_UsesDefaultEndpoint(t *testing.T) {
+	provider := NewOpenAICompatibleProvider("Groq", "https://api.groq.com/openai/v1")
+	config := &ProviderConfig{APIKey: "groq-key"}
+
+	clientType, opts, err := provider.CreateBAMLClient(config, "llama-3.3-70b-versatile")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if clientType != "openai-generic" {
+		t.Fatalf("expected client type 'openai-generic', got %q", clientType)
+	}
+	if opts["base_url"] != provider.GetDefaultEndpoint() {
+		t.Fatalf("expected default endpoint, got %v", opts["base_url"])
+	}
+	if opts["api_key"] != "groq-key" {
+		t.Fatalf("expected api_key, got %v", opts["api_key"])
+	}
+	if opts["model"] != "llama-3.3-70b-versatile" {
+		t.Fatalf("expected model, got %v", opts["model"])
+	}
+	if opts["default_role"] != "user" {
+		t.Fatalf("expected default_role 'user', got %v", opts["default_role"])
+	}
+	if _, ok := opts["request_timeout_ms"]; ok {
+		t.Fatalf("did not expect request_timeout_ms in OpenAI-compatible opts")
+	}
+}
+
+func TestOpenAICompatibleProvider_GetSupportedModels_UsesModelsEndpoint(t *testing.T) {
+	provider := NewOpenAICompatibleProvider("DeepSeek", "https://deepseek.test")
+	withTestHTTPClient(t, func(r *http.Request) (*http.Response, error) {
+		if r.Method != http.MethodGet {
+			t.Fatalf("unexpected method %s", r.Method)
+		}
+		if r.URL.String() != "https://deepseek.test/models" {
+			t.Fatalf("unexpected URL %s", r.URL.String())
+		}
+		if r.Header.Get("Authorization") != "Bearer deepseek-key" {
+			t.Fatalf("expected bearer auth header, got %q", r.Header.Get("Authorization"))
+		}
+		return httpResponse(http.StatusOK, `{
+			"data": [
+				{"id": "deepseek-chat"},
+				{"id": "text-embedding-3-small"},
+				{"id": "deepseek-reasoner"}
+			]
+		}`), nil
+	})
+
+	models, err := provider.GetSupportedModels(&ProviderConfig{APIKey: "deepseek-key"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(models) != 2 || models[0] != "deepseek-chat" || models[1] != "deepseek-reasoner" {
+		t.Fatalf("expected chat models only, got %#v", models)
+	}
+}
+
+func TestOpenAICompatibleProvider_GetSupportedModels_UsesCustomModelsEndpoint(t *testing.T) {
+	provider := NewOpenAICompatibleProviderWithModelsEndpoint("Perplexity", "https://perplexity.test", "https://perplexity.test/v1/models")
+	withTestHTTPClient(t, func(r *http.Request) (*http.Response, error) {
+		if r.URL.String() != "https://perplexity.test/v1/models" {
+			t.Fatalf("unexpected URL %s", r.URL.String())
+		}
+		return httpResponse(http.StatusOK, `{
+			"data": [
+				{"id": "perplexity/sonar"},
+				{"id": "openai/gpt-5.5"}
+			]
+		}`), nil
+	})
+
+	models, err := provider.GetSupportedModels(&ProviderConfig{APIKey: "perplexity-key"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(models) != 2 || models[0] != "perplexity/sonar" || models[1] != "openai/gpt-5.5" {
+		t.Fatalf("expected models from custom endpoint, got %#v", models)
 	}
 }
 

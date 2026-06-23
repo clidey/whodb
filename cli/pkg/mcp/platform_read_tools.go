@@ -38,13 +38,13 @@ type PlatformSourceConstraintsInput struct {
 type PlatformSourceContentInput struct {
 	Source string   `json:"source" jsonschema:"Hosted source id or name"`
 	Ref    string   `json:"ref" jsonschema:"Object ref as kind:path, for example file:notes/report.txt"`
-	Fields []string `json:"fields,omitempty" jsonschema:"Optional top-level output fields to include"`
+	Fields []string `json:"fields,omitempty" jsonschema:"Top-level output fields to include. Prefer only fields needed now; call again with more fields if needed."`
 }
 
 // PlatformEntityInput is a selected-project input with one resource id.
 type PlatformEntityInput struct {
 	ID     string   `json:"id" jsonschema:"Resource id"`
-	Fields []string `json:"fields,omitempty" jsonschema:"Optional top-level output fields to include"`
+	Fields []string `json:"fields,omitempty" jsonschema:"Top-level output fields to include. Prefer only fields needed now; call again with more fields if needed."`
 }
 
 // PlatformProviderModelsInput is the input for the whodb_platform_ai_provider_models tool.
@@ -97,14 +97,14 @@ type PlatformTransformRunsInput struct {
 // PlatformFilesInput is the input for the whodb_platform_files tool.
 type PlatformFilesInput struct {
 	FolderID string   `json:"folder_id,omitempty" jsonschema:"Folder id. Omit for project root."`
-	Fields   []string `json:"fields,omitempty" jsonschema:"Optional top-level output fields to include"`
+	Fields   []string `json:"fields,omitempty" jsonschema:"Top-level output fields to include. Prefer only fields needed now; call again with more fields if needed."`
 }
 
 // PlatformFilePreviewInput is the input for the whodb_platform_file_preview tool.
 type PlatformFilePreviewInput struct {
 	FileID     string   `json:"file_id" jsonschema:"Project file id"`
 	SheetIndex *int     `json:"sheet_index,omitempty" jsonschema:"Optional spreadsheet sheet index"`
-	Fields     []string `json:"fields,omitempty" jsonschema:"Optional top-level output fields to include"`
+	Fields     []string `json:"fields,omitempty" jsonschema:"Top-level output fields to include. Prefer metadata first; call again with body fields only if needed."`
 }
 
 // PlatformFileSearchInput is the input for the whodb_platform_file_search tool.
@@ -115,7 +115,7 @@ type PlatformFileSearchInput struct {
 
 // PlatformEmptyInput is the input for selected-project list tools.
 type PlatformEmptyInput struct {
-	Fields []string `json:"fields,omitempty" jsonschema:"Optional top-level output fields to include"`
+	Fields []string `json:"fields,omitempty" jsonschema:"Top-level output fields to include. Prefer only fields needed now; call again with more fields if needed."`
 }
 
 // PlatformReadOutput is the common output for read-only hosted platform tools.
@@ -282,7 +282,7 @@ func HandlePlatformSourceConstraints(ctx context.Context, req *mcp.CallToolReque
 // HandlePlatformSourceContent returns content for one hosted source object.
 func HandlePlatformSourceContent(ctx context.Context, req *mcp.CallToolRequest, input PlatformSourceContentInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
 	return platformSourceRefRead(ctx, "platform_source_content", input.Source, input.Ref, input.Fields, func(ctx context.Context, session *platformToolSession, source *platformapi.Source, ref platformapi.SourceObjectRefInput) (any, int, bool, error) {
-		content, err := session.Client.SourceContent(ctx, session.Host.DefaultProjectID, source.ID, ref)
+		content, err := session.Client.SourceContent(ctx, session.Host.DefaultProjectID, source.ID, ref, input.Fields)
 		if err != nil || content == nil {
 			return content, 0, false, err
 		}
@@ -443,7 +443,7 @@ func HandlePlatformTransformRuns(ctx context.Context, req *mcp.CallToolRequest, 
 // HandlePlatformFunctions lists hosted ontology functions.
 func HandlePlatformFunctions(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
 	return platformProjectRead(ctx, "platform_functions", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
-		functions, err := session.Client.Functions(ctx, session.Host.DefaultProjectID)
+		functions, err := session.Client.Functions(ctx, session.Host.DefaultProjectID, input.Fields)
 		functions, truncated := truncateFunctions(functions, defaultPlatformContentLimit)
 		return functions, len(functions), truncated, err
 	})
@@ -452,7 +452,7 @@ func HandlePlatformFunctions(ctx context.Context, req *mcp.CallToolRequest, inpu
 // HandlePlatformFunction returns one hosted ontology function.
 func HandlePlatformFunction(ctx context.Context, req *mcp.CallToolRequest, input PlatformEntityInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
 	return platformIDRead(ctx, "platform_function", input.ID, input.Fields, func(ctx context.Context, session *platformToolSession, id string) (any, int, bool, error) {
-		function, err := session.Client.Function(ctx, session.Host.DefaultProjectID, id)
+		function, err := session.Client.Function(ctx, session.Host.DefaultProjectID, id, input.Fields)
 		if err != nil || function == nil {
 			return function, 0, false, err
 		}
@@ -464,7 +464,7 @@ func HandlePlatformFunction(ctx context.Context, req *mcp.CallToolRequest, input
 // HandlePlatformFiles lists hosted files in one project folder.
 func HandlePlatformFiles(ctx context.Context, req *mcp.CallToolRequest, input PlatformFilesInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
 	return platformProjectRead(ctx, "platform_files", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
-		contents, err := session.Client.FolderContents(ctx, session.Host.DefaultProjectID, input.FolderID)
+		contents, err := session.Client.FolderContents(ctx, session.Host.DefaultProjectID, input.FolderID, input.Fields)
 		if contents == nil {
 			return contents, 0, false, err
 		}
@@ -478,7 +478,7 @@ func HandlePlatformFilePreview(ctx context.Context, req *mcp.CallToolRequest, in
 		return nil, PlatformReadOutput{Error: "file_id is required", RequestID: generateRequestID("platform_file_preview")}, nil
 	}
 	return platformProjectRead(ctx, "platform_file_preview", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
-		preview, err := session.Client.FilePreview(ctx, session.Host.DefaultProjectID, input.FileID, input.SheetIndex)
+		preview, err := session.Client.FilePreview(ctx, session.Host.DefaultProjectID, input.FileID, input.SheetIndex, input.Fields)
 		if err != nil || preview == nil {
 			return preview, 0, false, err
 		}
@@ -647,7 +647,7 @@ Use a source name or id and an object ref such as table:public.users. This tool 
 
 const descPlatformSourceContent = `Read content for one hosted source object when the source supports content reads.
 
-Use a source name or id and an object ref such as file:notes/report.txt. Text content is capped in MCP output.`
+Use a source name or id and an object ref such as file:notes/report.txt. Prefer fields to request only the content metadata or body fields needed now, then call again with more fields only if needed. Text content is capped in MCP output.`
 
 const descPlatformSecrets = `List hosted project secret metadata and usage.
 
@@ -695,19 +695,19 @@ const descPlatformTransformRuns = `List recent runs for one hosted transform.`
 
 const descPlatformFunctions = `List ontology functions in the selected hosted project.
 
-Function source file content is capped in MCP output. Secret bindings include secret ids only, never secret values.`
+Prefer fields such as ["id", "name", "description", "isDeployed"] for discovery. Request heavier fields such as "files" only when source code is needed. Function source file content is capped in MCP output. Secret bindings include secret ids only, never secret values.`
 
 const descPlatformFunction = `Inspect one ontology function by id.
 
-Function source file content is capped in MCP output. Secret bindings include secret ids only, never secret values.`
+Prefer fields to request only the details needed now, for example ["id", "name", "description"]. Request heavier fields such as "files" only when source code is needed. Function source file content is capped in MCP output. Secret bindings include secret ids only, never secret values.`
 
 const descPlatformFiles = `List folders and files in a hosted project folder.
 
-Omit folder_id to list the project root.`
+Omit folder_id to list the project root. Prefer fields such as ["files", "folders"] or ["storageUsed"] to request only the folder data needed now.`
 
 const descPlatformFilePreview = `Preview one hosted project file.
 
-Text content is capped in MCP output. Tabular previews are returned as provided by the hosted platform.`
+Prefer fields such as ["mimeType", "sizeBytes", "isTabular"] before requesting body fields. Request "textContent" or "tabular" only when the file body or rows are needed. Text content is capped in MCP output. Tabular previews are returned as provided by the hosted platform.`
 
 const descPlatformFileSearch = `Search files in the selected hosted project.`
 

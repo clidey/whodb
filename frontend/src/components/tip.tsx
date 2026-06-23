@@ -23,7 +23,7 @@ export const Tip: FC<{
 }> = ({children, className}) => {
     return (
         <Tooltip>
-            <TooltipTrigger className={cn("w-full", className)}>
+            <TooltipTrigger asChild className={cn("w-full", className)}>
                 {children[0]}
             </TooltipTrigger>
             <TooltipContent>

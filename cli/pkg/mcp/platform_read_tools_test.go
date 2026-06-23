@@ -19,6 +19,7 @@ package mcp
 import (
 	"context"
 	"encoding/json"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -29,7 +30,8 @@ func (f *fakePlatformClient) SourceFieldConstraints(ctx context.Context, project
 	return []platformapi.SourceFieldConstraints{{Name: "id", Type: "integer", Primary: true}}, nil
 }
 
-func (f *fakePlatformClient) SourceContent(ctx context.Context, projectID, sourceID string, ref platformapi.SourceObjectRefInput) (*platformapi.SourceContent, error) {
+func (f *fakePlatformClient) SourceContent(ctx context.Context, projectID, sourceID string, ref platformapi.SourceObjectRefInput, fields []string) (*platformapi.SourceContent, error) {
+	f.sourceContentFields = append([]string(nil), fields...)
 	text := strings.Repeat("a", defaultPlatformContentLimit+1)
 	return &platformapi.SourceContent{Text: &text, MIMEType: "text/plain", FileName: "large.txt", SizeBytes: "65537"}, nil
 }
@@ -112,19 +114,23 @@ func (f *fakePlatformClient) TransformRuns(ctx context.Context, projectID, trans
 	return []platformapi.TransformRun{{ID: "run-1", TransformID: transformID, Status: "success"}}, nil
 }
 
-func (f *fakePlatformClient) Functions(ctx context.Context, projectID string) ([]platformapi.Function, error) {
+func (f *fakePlatformClient) Functions(ctx context.Context, projectID string, fields []string) ([]platformapi.Function, error) {
+	f.functionsFields = append([]string(nil), fields...)
 	return []platformapi.Function{{ID: "fn-1", ProjectID: projectID, Name: "Enrich", Files: []platformapi.FunctionFile{{ID: "file-1", Path: "main.py", Content: strings.Repeat("x", defaultPlatformContentLimit+1)}}}}, nil
 }
 
-func (f *fakePlatformClient) Function(ctx context.Context, projectID, id string) (*platformapi.Function, error) {
+func (f *fakePlatformClient) Function(ctx context.Context, projectID, id string, fields []string) (*platformapi.Function, error) {
+	f.functionFields = append([]string(nil), fields...)
 	return &platformapi.Function{ID: id, ProjectID: projectID, Name: "Enrich", Files: []platformapi.FunctionFile{{ID: "file-1", Path: "main.py", Content: strings.Repeat("x", defaultPlatformContentLimit+1)}}}, nil
 }
 
-func (f *fakePlatformClient) FolderContents(ctx context.Context, projectID, folderID string) (*platformapi.FolderContents, error) {
+func (f *fakePlatformClient) FolderContents(ctx context.Context, projectID, folderID string, fields []string) (*platformapi.FolderContents, error) {
+	f.folderContentsFields = append([]string(nil), fields...)
 	return &platformapi.FolderContents{Files: []platformapi.ProjectFile{{ID: "file-1", ProjectID: projectID, Name: "customers.csv", IsTabular: true}}}, nil
 }
 
-func (f *fakePlatformClient) FilePreview(ctx context.Context, projectID, fileID string, sheetIndex *int) (*platformapi.FilePreviewResult, error) {
+func (f *fakePlatformClient) FilePreview(ctx context.Context, projectID, fileID string, sheetIndex *int, fields []string) (*platformapi.FilePreviewResult, error) {
+	f.filePreviewFields = append([]string(nil), fields...)
 	text := strings.Repeat("z", defaultPlatformContentLimit+1)
 	return &platformapi.FilePreviewResult{MIMEType: "text/plain", SizeBytes: len(text), TextContent: &text}, nil
 }
@@ -188,6 +194,44 @@ func TestHandlePlatformFunctionTruncatesFileContent(t *testing.T) {
 	}
 }
 
+func TestHandlePlatformFunctionPassesFieldsToClient(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	fields := []string{"id", "name"}
+	_, output, err := HandlePlatformFunction(context.Background(), nil, PlatformEntityInput{ID: "fn-1", Fields: fields})
+	if err != nil {
+		t.Fatalf("HandlePlatformFunction() error = %v", err)
+	}
+	if output.Error != "" {
+		t.Fatalf("HandlePlatformFunction() output error = %q", output.Error)
+	}
+	if !reflect.DeepEqual(client.functionFields, fields) {
+		t.Fatalf("function fields = %#v, want %#v", client.functionFields, fields)
+	}
+}
+
+func TestHandlePlatformSourceContentPassesFieldsToClient(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	fields := []string{"fileName", "sizeBytes"}
+	_, output, err := HandlePlatformSourceContent(context.Background(), nil, PlatformSourceContentInput{Source: "Warehouse", Ref: "file:notes/report.txt", Fields: fields})
+	if err != nil {
+		t.Fatalf("HandlePlatformSourceContent() error = %v", err)
+	}
+	if output.Error != "" {
+		t.Fatalf("HandlePlatformSourceContent() output error = %q", output.Error)
+	}
+	if !reflect.DeepEqual(client.sourceContentFields, fields) {
+		t.Fatalf("source content fields = %#v, want %#v", client.sourceContentFields, fields)
+	}
+}
+
 func TestHandlePlatformDatasetRowsCapsLimit(t *testing.T) {
 	client := &fakePlatformClient{}
 	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
@@ -213,6 +257,7 @@ func TestHandlePlatformDatasetsReportsMissingWorkspaceAction(t *testing.T) {
 	client := &fakePlatformClient{}
 	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
 		session := testPlatformSession(client)
+		session.Host.URL = "http://localhost:8080"
 		session.Host.DefaultOrgID = ""
 		session.Host.DefaultOrgName = ""
 		session.Host.DefaultProjectID = ""
@@ -224,8 +269,9 @@ func TestHandlePlatformDatasetsReportsMissingWorkspaceAction(t *testing.T) {
 	if err != nil {
 		t.Fatalf("HandlePlatformDatasets() error = %v", err)
 	}
-	if !strings.Contains(output.Error, "whodb-cli use --org <org> --project <project>") {
-		t.Fatalf("output.Error = %q, want whodb-cli use action", output.Error)
+	want := "whodb-cli use --host http://localhost:8080 --org <org> --project <project>"
+	if !strings.Contains(output.Error, want) {
+		t.Fatalf("output.Error = %q, want %q", output.Error, want)
 	}
 }
 

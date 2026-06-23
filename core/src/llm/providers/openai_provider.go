@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/clidey/whodb/core/src/log"
 )
@@ -32,7 +33,9 @@ import (
 // responsesAPICache caches whether a given endpoint supports the Responses API.
 // Keyed by endpoint URL, value is bool (true = supports Responses API).
 var responsesAPICache sync.Map
-var httpClientFactory = func() *http.Client { return &http.Client{} }
+var httpClientFactory = func() *http.Client {
+	return &http.Client{Timeout: 20 * time.Second}
+}
 
 const (
 	OpenAI_LLMType LLMType = "OpenAI"
@@ -75,23 +78,30 @@ func (p *OpenAIProvider) GetSupportedModels(config *ProviderConfig) ([]string, e
 	if err := p.ValidateConfig(config); err != nil {
 		return nil, err
 	}
+	return fetchOpenAICompatibleModels(config.Endpoint, config.APIKey, "OpenAI")
+}
 
-	url := config.Endpoint + "/models"
+func fetchOpenAICompatibleModels(endpoint string, apiKey string, providerName string) ([]string, error) {
+	url := strings.TrimRight(endpoint, "/") + "/models"
+	return fetchOpenAICompatibleModelsFromURL(url, apiKey, providerName)
+}
+
+func fetchOpenAICompatibleModelsFromURL(url string, apiKey string, providerName string) ([]string, error) {
 	headers := map[string]string{
-		"Authorization": "Bearer " + config.APIKey,
+		"Authorization": "Bearer " + apiKey,
 		"Content-Type":  "application/json",
 	}
 
 	resp, err := sendHTTPRequest("GET", url, nil, headers)
 	if err != nil {
-		log.WithError(err).Errorf("Failed to fetch models from OpenAI at %s", url)
+		log.WithError(err).Errorf("Failed to fetch models from %s at %s", providerName, url)
 		return nil, err
 	}
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		log.Errorf("OpenAI models endpoint returned non-OK status: %d, body: %s", resp.StatusCode, string(body))
+		log.Errorf("%s models endpoint returned non-OK status: %d, body: %s", providerName, resp.StatusCode, string(body))
 		return nil, fmt.Errorf("failed to fetch models: %s", string(body))
 	}
 

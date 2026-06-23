@@ -117,6 +117,8 @@
     "ollamaRunCommand": "e1c0a1af4370",
     "ollamaDocsText": "bc560d184c9e",
     "unableToConnect": "8637cff3f1cb",
+    "invalidProviderToken": "5049bf1296ce",
+    "modelDiscoveryFailed": "7ac8d966a11f",
     "tokenRequired": "ac1806c43d4d",
     "providerUnavailable": "ca1844969742",
     "environmentDefined": "4da6d302309f"
@@ -2243,6 +2245,11 @@
     "availableModels": "144945601de4",
     "loadingModels": "802435241f0a",
     "noModels": "60b16d12eda5",
+    "deployments": "842a4697fd0d",
+    "deploymentsPlaceholder": "1256dacb9eb8",
+    "deploymentsHint": "dd5bfa33828d",
+    "comingSoon": "be10b2f905f8",
+    "soon": "cf0ee3547a4e",
     "bedrockRegion": "7e489ee639b8",
     "bedrockCredentials": "3f12303fc98b",
     "bedrockCredentialsHint": "9a911b08feb9"

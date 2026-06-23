@@ -258,7 +258,7 @@ export interface SourceTypeItem {
 	id: string;
 	label: string;
 	connector: string;
-	icon: ReactElement;
+	icon: ReactElement<{ className?: string }>;
 	extra: Record<string, string>;
 	category?: SourceTypesQuery["SourceTypes"][number]["category"];
 	traits?: SourceTraitsDescriptor;
@@ -403,8 +403,8 @@ function mapAdvancedDefaults(
 	}, {});
 }
 
-function resolveIcon(sourceType: string, connector: string): ReactElement {
-	const logos = Icons.Logos as Record<string, ReactElement>;
+function resolveIcon(sourceType: string, connector: string): ReactElement<{ className?: string }> {
+	const logos = Icons.Logos as Record<string, ReactElement<{ className?: string }>>;
 	const icon = logos[sourceType] ?? logos[connector];
 	if (!icon && import.meta.env.DEV) {
 		console.warn(

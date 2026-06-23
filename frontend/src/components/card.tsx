@@ -33,7 +33,7 @@ import {useTranslation} from "@/hooks/use-translation";
 
 type ICardProps = {
   className?: string;
-  icon?: ReactElement;
+  icon?: ReactElement<{ className?: string }>;
   tag?: ReactElement;
   children: ReactElement[] | ReactElement | ReactNode;
   loading?: boolean;

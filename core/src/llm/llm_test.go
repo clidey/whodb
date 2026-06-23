@@ -39,6 +39,14 @@ func TestInstanceReturnsCorrectClient(t *testing.T) {
 	if client2.APIKey != "key2" {
 		t.Fatalf("expected API key 'key2', got %s", client2.APIKey)
 	}
+
+	client3 := ClientForModel(&source.ExternalModel{Type: string(Gemini_LLMType), Token: "key3"})
+	if client3.Type != Gemini_LLMType {
+		t.Fatalf("expected type %s, got %s", Gemini_LLMType, client3.Type)
+	}
+	if client3.APIKey != "key3" {
+		t.Fatalf("expected API key 'key3', got %s", client3.APIKey)
+	}
 }
 
 func TestGetSupportedModelsReturnsErrorForUnsupportedType(t *testing.T) {

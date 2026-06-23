@@ -321,6 +321,203 @@ func TestGraphQLSendsWorkspaceContextHeaders(t *testing.T) {
 	}
 }
 
+func TestFunctionsBuildsDynamicSelection(t *testing.T) {
+	var request struct {
+		Query string `json:"query"`
+	}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		if !strings.Contains(request.Query, "ProjectFunctions") {
+			t.Fatalf("query = %q, want ProjectFunctions", request.Query)
+		}
+		if !strings.Contains(request.Query, "\n    id\n") || !strings.Contains(request.Query, "\n    name\n") {
+			t.Fatalf("query = %q, want id and name selections", request.Query)
+		}
+		if strings.Contains(request.Query, "files") || strings.Contains(request.Query, "content") || strings.Contains(request.Query, "dependencies") {
+			t.Fatalf("query = %q, should not request heavy function fields", request.Query)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"data":{"ProjectFunctions":[{"id":"fn-1","name":"Enrich"}]}}`))
+	}))
+	defer server.Close()
+
+	client, err := NewClient(server.URL, "token")
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
+	}
+	functions, err := client.Functions(context.Background(), "proj-1", []string{"id", "name"})
+	if err != nil {
+		t.Fatalf("Functions() error = %v", err)
+	}
+	if len(functions) != 1 || functions[0].ID != "fn-1" || functions[0].Name != "Enrich" {
+		t.Fatalf("functions = %#v, want minimal function", functions)
+	}
+}
+
+func TestFunctionBuildsNestedDynamicSelection(t *testing.T) {
+	var request struct {
+		Query string `json:"query"`
+	}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		if !strings.Contains(request.Query, "FunctionDetail") {
+			t.Fatalf("query = %q, want FunctionDetail", request.Query)
+		}
+		if !strings.Contains(request.Query, "files {") || !strings.Contains(request.Query, "content") {
+			t.Fatalf("query = %q, want files content selection", request.Query)
+		}
+		if strings.Contains(request.Query, "dependencies") {
+			t.Fatalf("query = %q, should not request dependencies", request.Query)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"data":{"FunctionDetail":{"id":"fn-1","files":[{"id":"file-1","path":"main.py","content":"print(1)"}]}}}`))
+	}))
+	defer server.Close()
+
+	client, err := NewClient(server.URL, "token")
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
+	}
+	function, err := client.Function(context.Background(), "proj-1", "fn-1", []string{"id", "files"})
+	if err != nil {
+		t.Fatalf("Function() error = %v", err)
+	}
+	if function == nil || len(function.Files) != 1 || function.Files[0].Content != "print(1)" {
+		t.Fatalf("function = %#v, want file content", function)
+	}
+}
+
+func TestSourceContentBuildsDynamicSelection(t *testing.T) {
+	var request struct {
+		Query string `json:"query"`
+	}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		if !strings.Contains(request.Query, "fileName: FileName") || !strings.Contains(request.Query, "sizeBytes: SizeBytes") {
+			t.Fatalf("query = %q, want fileName and sizeBytes aliases", request.Query)
+		}
+		if strings.Contains(request.Query, "text: Text") {
+			t.Fatalf("query = %q, should not request text", request.Query)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"data":{"PlatformSourceContent":{"fileName":"report.txt","sizeBytes":"42"}}}`))
+	}))
+	defer server.Close()
+
+	client, err := NewClient(server.URL, "token")
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
+	}
+	content, err := client.SourceContent(context.Background(), "proj-1", "src-1", SourceObjectRefInput{Kind: "File", Path: []string{"report.txt"}}, []string{"fileName", "sizeBytes"})
+	if err != nil {
+		t.Fatalf("SourceContent() error = %v", err)
+	}
+	if content == nil || content.FileName != "report.txt" || content.SizeBytes != "42" {
+		t.Fatalf("content = %#v, want report metadata", content)
+	}
+}
+
+func TestFilePreviewBuildsDynamicSelection(t *testing.T) {
+	var request struct {
+		Query string `json:"query"`
+	}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		if !strings.Contains(request.Query, "\n    mimeType\n") || !strings.Contains(request.Query, "\n    sizeBytes\n") {
+			t.Fatalf("query = %q, want mimeType and sizeBytes", request.Query)
+		}
+		if strings.Contains(request.Query, "textContent") || strings.Contains(request.Query, "tabular") {
+			t.Fatalf("query = %q, should not request preview body fields", request.Query)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"data":{"FilePreview":{"mimeType":"text/plain","sizeBytes":42}}}`))
+	}))
+	defer server.Close()
+
+	client, err := NewClient(server.URL, "token")
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
+	}
+	preview, err := client.FilePreview(context.Background(), "proj-1", "file-1", nil, []string{"mimeType", "sizeBytes"})
+	if err != nil {
+		t.Fatalf("FilePreview() error = %v", err)
+	}
+	if preview == nil || preview.MIMEType != "text/plain" || preview.SizeBytes != 42 {
+		t.Fatalf("preview = %#v, want file metadata", preview)
+	}
+}
+
+func TestFolderContentsBuildsDynamicSelection(t *testing.T) {
+	var request struct {
+		Query string `json:"query"`
+	}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		if !strings.Contains(request.Query, "FolderContents") {
+			t.Fatalf("query = %q, want FolderContents", request.Query)
+		}
+		if !strings.Contains(request.Query, "storageUsed") || !strings.Contains(request.Query, "files {") {
+			t.Fatalf("query = %q, want storageUsed and files", request.Query)
+		}
+		if strings.Contains(request.Query, "breadcrumbs") || strings.Contains(request.Query, "folders {") {
+			t.Fatalf("query = %q, should not request unselected folder fields", request.Query)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"data":{"FolderContents":{"storageUsed":42,"files":[{"id":"file-1","projectId":"proj-1","name":"customers.csv","mimeType":"text/csv","sizeBytes":10,"isTabular":true,"uploadedBy":"ada","createdAt":"2026-06-01T00:00:00Z","updatedAt":"2026-06-01T00:00:00Z"}]}}}`))
+	}))
+	defer server.Close()
+
+	client, err := NewClient(server.URL, "token")
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
+	}
+	contents, err := client.FolderContents(context.Background(), "proj-1", "", []string{"storageUsed", "files"})
+	if err != nil {
+		t.Fatalf("FolderContents() error = %v", err)
+	}
+	if contents == nil || contents.StorageUsed != 42 || len(contents.Files) != 1 {
+		t.Fatalf("contents = %#v, want storage with one file", contents)
+	}
+}
+
+func TestDynamicSelectionFallsBackForUnknownFields(t *testing.T) {
+	var request struct {
+		Query string `json:"query"`
+	}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		if !strings.Contains(request.Query, "\n    id\n") {
+			t.Fatalf("query = %q, want id fallback", request.Query)
+		}
+		if strings.Contains(request.Query, "bogus") {
+			t.Fatalf("query = %q, should not include unknown field", request.Query)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"data":{"ProjectFunctions":[{"id":"fn-1"}]}}`))
+	}))
+	defer server.Close()
+
+	client, err := NewClient(server.URL, "token")
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
+	}
+	if _, err := client.Functions(context.Background(), "proj-1", []string{"bogus"}); err != nil {
+		t.Fatalf("Functions() error = %v", err)
+	}
+}
+
 func TestSourceTypesMapsConnectionFields(t *testing.T) {
 	var request struct {
 		Query string `json:"query"`

@@ -61,6 +61,8 @@ var AnthropicAPIKey = os.Getenv("WHODB_ANTHROPIC_API_KEY")
 var AnthropicEndpoint = os.Getenv("WHODB_ANTHROPIC_ENDPOINT")
 var AnthropicName = os.Getenv("WHODB_ANTHROPIC_NAME")
 
+var GeminiEndpoint = os.Getenv("WHODB_GEMINI_ENDPOINT")
+
 var OpenAIAPIKey = os.Getenv("WHODB_OPENAI_API_KEY")
 var OpenAIEndpoint = os.Getenv("WHODB_OPENAI_ENDPOINT")
 var OpenAIName = os.Getenv("WHODB_OPENAI_NAME")
@@ -189,6 +191,13 @@ func GetOpenAIEndpoint() string {
 		return OpenAIEndpoint
 	}
 	return "https://api.openai.com/v1"
+}
+
+func GetGeminiEndpoint() string {
+	if GeminiEndpoint != "" {
+		return GeminiEndpoint
+	}
+	return "https://generativelanguage.googleapis.com/v1beta/openai/"
 }
 
 // GetLMStudioEndpoint returns the configured LM Studio base URL, or the
