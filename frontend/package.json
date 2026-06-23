@@ -100,7 +100,6 @@
     "@graphql-codegen/client-preset": "4.8.3",
     "@graphql-codegen/typescript": "4.1.6",
     "@graphql-codegen/typescript-operations": "4.6.1",
-    "@graphql-codegen/typescript-react-apollo": "4.3.2",
     "@graphql-typed-document-node/core": "3.2.0",
     "@lhci/cli": "0.15.1",
     "@oxlint/migrate": "1.66.0",
