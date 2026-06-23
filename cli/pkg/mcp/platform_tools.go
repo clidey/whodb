@@ -49,6 +49,8 @@ type platformClient interface {
 	UpdateSource(context.Context, platformapi.UpdateSourceInput) (*platformapi.Source, error)
 	TestSourceConnection(context.Context, platformapi.CreateSourceInput) error
 	DeleteSource(context.Context, string, string, string) error
+	PlatformMutation(context.Context, string, map[string]any) (*platformapi.PlatformMutationResult, error)
+	UploadProjectFile(context.Context, string, *string, string) (*platformapi.ProjectFile, error)
 	SourceObjects(context.Context, string, string, string, *platformapi.SourceObjectRefInput, []platformapi.SourceObjectKind, int, int) ([]platformapi.SourceObject, error)
 	SourceColumns(context.Context, string, string, string, platformapi.SourceObjectRefInput) ([]platformapi.Column, error)
 	SourceRows(context.Context, string, string, string, platformapi.SourceObjectRefInput, int, int) (*platformapi.RowsResult, error)
@@ -450,6 +452,8 @@ func (o PlatformPendingOutput) MarshalJSON() ([]byte, error) {
 // PlatformActionPreview describes a pending hosted source write without secrets.
 type PlatformActionPreview struct {
 	Operation   string   `json:"operation"`
+	Resource    string   `json:"resource,omitempty"`
+	Action      string   `json:"action,omitempty"`
 	Host        string   `json:"host"`
 	OrgID       string   `json:"org_id"`
 	ProjectID   string   `json:"project_id"`
@@ -464,6 +468,8 @@ type PlatformActionPreview struct {
 type PendingPlatformAction struct {
 	Token       string
 	Operation   string
+	Resource    string
+	Action      string
 	Host        string
 	OrgID       string
 	ProjectID   string
@@ -474,6 +480,8 @@ type PendingPlatformAction struct {
 	Changes     []string
 	CreateInput platformapi.CreateSourceInput
 	UpdateInput platformapi.UpdateSourceInput
+	Mutation    string
+	Variables   map[string]any
 	ExpiresAt   time.Time
 }
 
@@ -491,6 +499,9 @@ func (o PlatformSourceRowsOutput) MarshalJSON() ([]byte, error) {
 
 func registerPlatformTools(server *mcp.Server, secOpts *SecurityOptions) {
 	for _, tool := range platformToolDefinitions() {
+		if !secOpts.ReadOnly && registerPlatformGenericWriteTool(server, tool, secOpts) {
+			continue
+		}
 		switch tool.Name {
 		case "whodb_platform_status":
 			mcp.AddTool(server, tool, createPlatformStatusHandler())
@@ -623,6 +634,7 @@ func platformToolDefinitions() []*mcp.Tool {
 			Annotations: platformDestructiveAnnotations("Confirm Hosted Platform Write"),
 		},
 	}
+	tools = append(tools, platformGenericWriteToolDefinitions()...)
 	return append(tools, platformReadToolDefinitions()...)
 }
 
@@ -1757,6 +1769,8 @@ func (action *PendingPlatformAction) Preview() *PlatformActionPreview {
 	changes := append([]string(nil), action.Changes...)
 	return &PlatformActionPreview{
 		Operation:   action.Operation,
+		Resource:    action.Resource,
+		Action:      action.Action,
 		Host:        action.Host,
 		OrgID:       action.OrgID,
 		ProjectID:   action.ProjectID,
@@ -1871,6 +1885,22 @@ func executePendingPlatformAction(ctx context.Context, action *PendingPlatformAc
 	}
 	if session.Host.DefaultOrgID != action.OrgID || session.Host.DefaultProjectID != action.ProjectID {
 		return ConfirmOutput{}, fmt.Errorf("hosted WhoDB workspace changed before confirmation")
+	}
+	if action.Mutation != "" {
+		result, err := executePlatformMutation(ctx, session.Client, action.Mutation, action.ProjectID, action.Variables)
+		if err != nil {
+			return ConfirmOutput{}, err
+		}
+		resultJSON := ""
+		if result != nil {
+			resultJSON = string(result.Data)
+		}
+		return ConfirmOutput{
+			Columns:   []string{"operation", "status", "resource", "action", "project_id", "result_json"},
+			Rows:      [][]any{{action.Mutation, "ok", action.Resource, action.Action, action.ProjectID, resultJSON}},
+			Message:   fmt.Sprintf("Hosted platform mutation %s completed successfully", action.Mutation),
+			RequestID: requestID,
+		}, nil
 	}
 
 	switch action.Operation {
@@ -2033,10 +2063,10 @@ const descPlatformSourceDelete = `Prepare deletion of a hosted WhoDB source.
 
 This deletes nothing until the returned confirmation token is approved with whodb_platform_confirm. Use whodb_platform_sources first to verify the target source.`
 
-const descPlatformPending = `List pending hosted WhoDB platform source writes awaiting confirmation.
+const descPlatformPending = `List pending hosted WhoDB platform writes awaiting confirmation.
 
-Use this to recover confirmation tokens returned by whodb_platform_source_create, whodb_platform_source_update, or whodb_platform_source_delete. Preview output contains metadata and changed field names only; it never includes source credential values.`
+Use this to recover confirmation tokens returned by hosted platform write tools. Preview output contains metadata and changed field names only; it never includes credential or secret values.`
 
-const descPlatformConfirm = `Confirm and execute a pending hosted WhoDB platform source write.
+const descPlatformConfirm = `Confirm and execute a pending hosted WhoDB platform write.
 
-Use the confirmation_token returned by whodb_platform_source_create, whodb_platform_source_update, or whodb_platform_source_delete. Tokens expire after 5 minutes.`
+Use the confirmation_token returned by hosted platform write tools. Tokens expire after 5 minutes.`

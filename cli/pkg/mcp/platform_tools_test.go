@@ -43,6 +43,11 @@ type fakePlatformClient struct {
 	createdSourceName       string
 	updatedSourceName       string
 	deletedSourceID         string
+	mutationName            string
+	mutationVariables       map[string]any
+	uploadedProjectID       string
+	uploadedFolderID        *string
+	uploadedFilePath        string
 }
 
 func (f *fakePlatformClient) Me(context.Context) (*platformapi.User, error) {
@@ -118,6 +123,20 @@ func (f *fakePlatformClient) DeleteSource(ctx context.Context, orgID, projectID,
 	return nil
 }
 
+func (f *fakePlatformClient) PlatformMutation(ctx context.Context, operation string, variables map[string]any) (*platformapi.PlatformMutationResult, error) {
+	f.mutationName = operation
+	f.mutationVariables = variables
+	return &platformapi.PlatformMutationResult{Operation: operation, Data: json.RawMessage(`{"id":"result-1","name":"Result"}`)}, nil
+}
+
+func (f *fakePlatformClient) UploadProjectFile(ctx context.Context, projectID string, folderID *string, filePath string) (*platformapi.ProjectFile, error) {
+	f.mutationName = "UploadProjectFile"
+	f.uploadedProjectID = projectID
+	f.uploadedFolderID = folderID
+	f.uploadedFilePath = filePath
+	return &platformapi.ProjectFile{ID: "file-1", ProjectID: projectID, Name: "upload.csv"}, nil
+}
+
 func (f *fakePlatformClient) SourceObjects(ctx context.Context, orgID, projectID, sourceID string, parent *platformapi.SourceObjectRefInput, kinds []platformapi.SourceObjectKind, pageSize, pageOffset int) ([]platformapi.SourceObject, error) {
 	return []platformapi.SourceObject{{Name: "users", Kind: "Table", Path: []string{"public", "users"}}}, nil
 }
@@ -162,8 +181,8 @@ func testPlatformSession(client platformClient) *platformToolSession {
 
 func TestPlatformToolDefinitions(t *testing.T) {
 	tools := platformToolDefinitions()
-	if len(tools) != 42 {
-		t.Fatalf("len(platformToolDefinitions()) = %d, want 42", len(tools))
+	if len(tools) != 46 {
+		t.Fatalf("len(platformToolDefinitions()) = %d, want 46", len(tools))
 	}
 	for _, tool := range tools {
 		if tool.Annotations == nil {
@@ -389,6 +408,146 @@ func TestHandlePlatformSourceDeleteAllowWriteExecutesImmediately(t *testing.T) {
 	}
 	if output.Status != "ok" || client.deletedSourceID != "src-1" {
 		t.Fatalf("output/client = %#v deleted=%q, want immediate delete", output, client.deletedSourceID)
+	}
+}
+
+func TestHandlePlatformGenericCreateConfirmWritesRedactsPreview(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := handlePlatformGenericWrite(context.Background(), "platform_create", PlatformGenericWriteInput{
+		Resource:    "secret",
+		PayloadJSON: `{"name":"OPENAI_API_KEY","value":"secret-value"}`,
+	}, "create", true)
+	if err != nil {
+		t.Fatalf("handlePlatformGenericWrite() error = %v", err)
+	}
+	if output.Error != "" {
+		t.Fatalf("handlePlatformGenericWrite() output error = %q", output.Error)
+	}
+	if !output.ConfirmationRequired || output.ConfirmationToken == "" {
+		t.Fatalf("output = %#v, want confirmation token", output)
+	}
+	raw, err := json.Marshal(output)
+	if err != nil {
+		t.Fatalf("json.Marshal(output) error = %v", err)
+	}
+	if strings.Contains(string(raw), "secret-value") {
+		t.Fatalf("confirmation preview leaked secret value: %s", raw)
+	}
+	if output.ConfirmationPreview == nil || output.ConfirmationPreview.Resource != "secret" || output.ConfirmationPreview.Action != "create" {
+		t.Fatalf("preview = %#v, want secret create preview", output.ConfirmationPreview)
+	}
+	if client.mutationName != "" {
+		t.Fatalf("mutation executed in confirm-writes mode: %q", client.mutationName)
+	}
+}
+
+func TestHandlePlatformGenericCreateAllowWriteExecutesImmediately(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := handlePlatformGenericWrite(context.Background(), "platform_create", PlatformGenericWriteInput{
+		Resource:    "secret",
+		PayloadJSON: `{"name":"OPENAI_API_KEY","value":"secret-value"}`,
+	}, "create", false)
+	if err != nil {
+		t.Fatalf("handlePlatformGenericWrite() error = %v", err)
+	}
+	if output.Error != "" {
+		t.Fatalf("handlePlatformGenericWrite() output error = %q", output.Error)
+	}
+	if output.ConfirmationRequired {
+		t.Fatalf("ConfirmationRequired = true, want false")
+	}
+	if client.mutationName != "CreateSecret" {
+		t.Fatalf("mutation = %q, want CreateSecret", client.mutationName)
+	}
+	input, ok := client.mutationVariables["input"].(map[string]any)
+	if !ok {
+		t.Fatalf("mutation input = %#v, want object", client.mutationVariables["input"])
+	}
+	if input["projectId"] != "proj-1" {
+		t.Fatalf("projectId = %#v, want selected project", input["projectId"])
+	}
+	if output.ResultJSON == "" {
+		t.Fatalf("ResultJSON empty, want platform result")
+	}
+}
+
+func TestHandlePlatformGenericFileUploadConfirmWritesRedactsPreview(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := handlePlatformGenericWrite(context.Background(), "platform_action", PlatformGenericWriteInput{
+		Resource:    "file",
+		Action:      "upload",
+		PayloadJSON: `{"file_path":"/tmp/private.csv","folderId":"folder-1"}`,
+	}, "action", true)
+	if err != nil {
+		t.Fatalf("handlePlatformGenericWrite() error = %v", err)
+	}
+	if output.Error != "" {
+		t.Fatalf("handlePlatformGenericWrite() output error = %q", output.Error)
+	}
+	if !output.ConfirmationRequired || output.ConfirmationToken == "" {
+		t.Fatalf("output = %#v, want confirmation token", output)
+	}
+	raw, err := json.Marshal(output)
+	if err != nil {
+		t.Fatalf("json.Marshal(output) error = %v", err)
+	}
+	if strings.Contains(string(raw), "/tmp/private.csv") {
+		t.Fatalf("confirmation preview leaked local file path: %s", raw)
+	}
+	if output.ConfirmationPreview == nil || output.ConfirmationPreview.Resource != "file" || output.ConfirmationPreview.Action != "upload" {
+		t.Fatalf("preview = %#v, want file upload preview", output.ConfirmationPreview)
+	}
+	if client.mutationName != "" {
+		t.Fatalf("mutation executed in confirm-writes mode: %q", client.mutationName)
+	}
+}
+
+func TestHandlePlatformGenericFileUploadAllowWriteExecutesImmediately(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := handlePlatformGenericWrite(context.Background(), "platform_action", PlatformGenericWriteInput{
+		Resource:    "file",
+		Action:      "upload",
+		PayloadJSON: `{"file_path":"/tmp/upload.csv","folderId":"folder-1"}`,
+	}, "action", false)
+	if err != nil {
+		t.Fatalf("handlePlatformGenericWrite() error = %v", err)
+	}
+	if output.Error != "" {
+		t.Fatalf("handlePlatformGenericWrite() output error = %q", output.Error)
+	}
+	if output.ConfirmationRequired {
+		t.Fatalf("ConfirmationRequired = true, want false")
+	}
+	if client.mutationName != "UploadProjectFile" {
+		t.Fatalf("mutation = %q, want UploadProjectFile", client.mutationName)
+	}
+	if client.uploadedProjectID != "proj-1" {
+		t.Fatalf("uploaded project = %q, want selected project", client.uploadedProjectID)
+	}
+	if client.uploadedFolderID == nil || *client.uploadedFolderID != "folder-1" {
+		t.Fatalf("uploaded folder = %#v, want folder-1", client.uploadedFolderID)
+	}
+	if client.uploadedFilePath != "/tmp/upload.csv" {
+		t.Fatalf("uploaded path = %q, want /tmp/upload.csv", client.uploadedFilePath)
+	}
+	if output.ResultJSON == "" {
+		t.Fatalf("ResultJSON empty, want uploaded file result")
 	}
 }
 

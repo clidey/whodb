@@ -305,6 +305,10 @@ func TestNewServer_PlatformReadOnlyHidesWriteTools(t *testing.T) {
 		"whodb_platform_source_create",
 		"whodb_platform_source_update",
 		"whodb_platform_source_delete",
+		"whodb_platform_create",
+		"whodb_platform_update",
+		"whodb_platform_delete",
+		"whodb_platform_action",
 		"whodb_platform_confirm",
 		"whodb_platform_pending",
 	} {
@@ -323,6 +327,10 @@ func TestNewServer_PlatformAllowWriteHidesConfirmationTools(t *testing.T) {
 		"whodb_platform_source_create",
 		"whodb_platform_source_update",
 		"whodb_platform_source_delete",
+		"whodb_platform_create",
+		"whodb_platform_update",
+		"whodb_platform_delete",
+		"whodb_platform_action",
 	} {
 		if _, ok := tools[name]; !ok {
 			t.Fatalf("platform allow-write mode did not expose %s", name)

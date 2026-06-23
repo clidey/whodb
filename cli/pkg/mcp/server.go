@@ -1429,8 +1429,12 @@ Available tools:
 - whodb_platform_source_create: Prepare hosted source creation for confirmation
 - whodb_platform_source_update: Prepare hosted source updates for confirmation
 - whodb_platform_source_delete: Prepare hosted source deletion for confirmation
+- whodb_platform_create: Create hosted resources such as secrets, AI providers, ontology, datasets, transforms, folders, functions, and source objects
+- whodb_platform_update: Update hosted resources such as secrets, AI providers, ontology, datasets, transforms, functions, and source objects
+- whodb_platform_delete: Delete hosted resources such as secrets, AI providers, ontology, datasets, transforms, files, folders, functions, and source objects
+- whodb_platform_action: Run hosted actions such as transform/run, file upload/rename/move/promote_to_dataset, folder rename/move, and function deploy/redeploy
 - whodb_platform_pending: List pending hosted platform confirmations
-- whodb_platform_confirm: Confirm pending hosted platform source writes
+- whodb_platform_confirm: Confirm pending hosted platform writes
 
 Setup:
 1. Run whodb-cli login
@@ -1440,6 +1444,6 @@ Setup:
 Hosted source create, update, and delete follow the same permission mode as local
 MCP writes. In default confirm-writes mode, they return confirmation tokens and
 do not execute until whodb_platform_confirm is called. In --read-only or
---safe-mode, source write tools are not exposed. In --allow-write, source writes
+--safe-mode, hosted platform write tools are not exposed. In --allow-write, writes
 execute immediately without confirmation.
 `
