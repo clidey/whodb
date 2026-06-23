@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import type { JSX } from "react";
+
 const ceLogos = {
     Postgres: <svg className="w-6 h-6" viewBox="-4 0 264 264" xmlns="http://www.w3.org/2000/svg"
                    preserveAspectRatio="xMinYMin meet">

@@ -184,7 +184,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
   const [showPreview, setShowPreview] = useState(defaultShowPreview);
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
-  const onRunReference = useRef<Function>();
+  const onRunReference = useRef<Function | undefined>(undefined);
   const { theme } = useTheme();
   const darkModeEnabled = theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
   const apolloClient = useApolloClient();

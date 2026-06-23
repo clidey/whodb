@@ -162,7 +162,7 @@ export const GraphPage: FC = () => {
     const { t } = useTranslation('pages/graph');
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-    const reactFlowRef = useRef<IGraphInstance>();
+    const reactFlowRef = useRef<IGraphInstance | undefined>(undefined);
     const schema = useAppSelector(state => state.database.schema);
     const current = useAppSelector(state => state.auth.current);
     const currentType = current?.Type;

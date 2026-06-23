@@ -228,7 +228,7 @@ export const ExploreStorageUnit: FC = () => {
     const [entitySearchResults, setEntitySearchResults] = useState<RowsResult | null>(null);
 
     // Track pending add-row timeout so it can be cancelled on unmount
-    const addRowTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+    const addRowTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
     // Track table container height for responsive sizing
     const tableContainerRef = useRef<HTMLDivElement>(null);
