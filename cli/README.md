@@ -874,6 +874,11 @@ It also exposes these resources:
 | `whodb://connections` | Available connection names |
 | `whodb://agent/schema` | Machine-readable WhoDB agent capability manifest |
 
+The same metadata is available from `whodb-cli agent schema --format json`.
+Its `platform_mcp` section describes the `--platform` flag, default host,
+login/workspace requirements, field projection support, platform-only tool
+prefix, and write behavior for confirm, read-only, safe, and allow-write modes.
+
 Write operations require confirmation by default. Use `--allow-write` to disable confirmations, or `--read-only` to block writes entirely.
 
 ### Transport Modes

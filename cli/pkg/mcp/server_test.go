@@ -287,13 +287,37 @@ func TestNewServer_PlatformModeListsOnlyPlatformTools(t *testing.T) {
 
 func TestAgentManifestIncludesPlatformMCPTools(t *testing.T) {
 	manifest := agentmanifest.Build()
+	if manifest.PlatformMCP.EnabledByFlag != "--platform" {
+		t.Fatalf("agent manifest platform flag = %q, want --platform", manifest.PlatformMCP.EnabledByFlag)
+	}
+	if manifest.PlatformMCP.DefaultHost == "" {
+		t.Fatal("agent manifest platform default host is empty")
+	}
+	if manifest.PlatformMCP.ToolPrefix != "whodb_platform_" {
+		t.Fatalf("agent manifest platform tool prefix = %q, want whodb_platform_", manifest.PlatformMCP.ToolPrefix)
+	}
+	if manifest.PlatformMCP.LocalToolsExposed {
+		t.Fatal("agent manifest platform mode says local tools are exposed")
+	}
+	if !manifest.PlatformMCP.SupportsFields {
+		t.Fatal("agent manifest platform mode should advertise fields projection")
+	}
+	if manifest.PlatformMCP.WriteModes.Default != "confirmation_required" ||
+		manifest.PlatformMCP.WriteModes.ReadOnly != "write_tools_hidden" ||
+		manifest.PlatformMCP.WriteModes.SafeMode != "write_tools_hidden" ||
+		manifest.PlatformMCP.WriteModes.AllowWrite != "executes_immediately" {
+		t.Fatalf("agent manifest platform write modes = %#v", manifest.PlatformMCP.WriteModes)
+	}
 	manifestTools := map[string]agentmanifest.MCPTool{}
 	for _, tool := range manifest.MCPTools {
-		if strings.HasPrefix(tool.Name, "whodb_platform_") {
+		if strings.HasPrefix(tool.Name, manifest.PlatformMCP.ToolPrefix) {
 			manifestTools[tool.Name] = tool
 		}
 	}
 	for _, expected := range platformToolDefinitions() {
+		if !strings.HasPrefix(expected.Name, manifest.PlatformMCP.ToolPrefix) {
+			t.Fatalf("platform tool %s does not match manifest prefix %s", expected.Name, manifest.PlatformMCP.ToolPrefix)
+		}
 		tool, ok := manifestTools[expected.Name]
 		if !ok {
 			t.Fatalf("agent manifest missing platform tool %s", expected.Name)

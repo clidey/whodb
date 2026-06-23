@@ -21,6 +21,7 @@ package agentmanifest
 import (
 	"slices"
 
+	platformapi "github.com/clidey/whodb/cli/internal/platform"
 	"github.com/clidey/whodb/cli/internal/sourcetypes"
 	"github.com/clidey/whodb/cli/pkg/version"
 	"github.com/clidey/whodb/core/src/source"
@@ -33,6 +34,7 @@ type Manifest struct {
 	SourceTypes []SourceType      `json:"source_types"`
 	Commands    []Command         `json:"commands"`
 	MCPTools    []MCPTool         `json:"mcp_tools"`
+	PlatformMCP PlatformMCP       `json:"platform_mcp"`
 	SafetyModes []SafetyMode      `json:"safety_modes"`
 	Workflows   []WorkflowSummary `json:"workflows"`
 }
@@ -76,6 +78,28 @@ type MCPTool struct {
 	ReadOnly    bool   `json:"read_only"`
 }
 
+// PlatformMCP describes hosted-platform MCP mode for agent consumers.
+type PlatformMCP struct {
+	EnabledByFlag           string           `json:"enabled_by_flag"`
+	RequiresLogin           bool             `json:"requires_login"`
+	RequiresWorkspace       bool             `json:"requires_workspace"`
+	DefaultHost             string           `json:"default_host"`
+	ToolPrefix              string           `json:"tool_prefix"`
+	LocalToolsExposed       bool             `json:"local_tools_exposed"`
+	SupportsFields          bool             `json:"supports_fields_projection"`
+	LocalToolSelectionFlags []string         `json:"local_tool_selection_flags"`
+	SetupCommands           []string         `json:"setup_commands"`
+	WriteModes              PlatformMCPModes `json:"write_modes"`
+}
+
+// PlatformMCPModes describes hosted-platform write behavior by MCP mode.
+type PlatformMCPModes struct {
+	Default    string `json:"default"`
+	ReadOnly   string `json:"read_only"`
+	SafeMode   string `json:"safe_mode"`
+	AllowWrite string `json:"allow_write"`
+}
+
 // SafetyMode describes an MCP query-execution safety mode.
 type SafetyMode struct {
 	Name        string `json:"name"`
@@ -96,6 +120,7 @@ func Build() Manifest {
 		SourceTypes: buildSourceTypes(),
 		Commands:    buildCommands(),
 		MCPTools:    buildMCPTools(),
+		PlatformMCP: buildPlatformMCP(),
 		SafetyModes: buildSafetyModes(),
 		Workflows:   buildWorkflows(),
 	}
@@ -242,6 +267,30 @@ func buildMCPTools() []MCPTool {
 		{Name: "whodb_platform_confirm", Description: "Confirm pending hosted platform writes when MCP starts with --platform after user approval; not exposed with --allow-write, --read-only, or --safe-mode.", ReadOnly: false},
 	}
 	return tools
+}
+
+func buildPlatformMCP() PlatformMCP {
+	return PlatformMCP{
+		EnabledByFlag:           "--platform",
+		RequiresLogin:           true,
+		RequiresWorkspace:       true,
+		DefaultHost:             platformapi.DefaultHost,
+		ToolPrefix:              "whodb_platform_",
+		LocalToolsExposed:       false,
+		SupportsFields:          true,
+		LocalToolSelectionFlags: []string{"--tools", "--disable-tools"},
+		SetupCommands: []string{
+			"whodb-cli login",
+			"whodb-cli use --org <org> --project <project>",
+			"whodb-cli mcp serve --platform",
+		},
+		WriteModes: PlatformMCPModes{
+			Default:    "confirmation_required",
+			ReadOnly:   "write_tools_hidden",
+			SafeMode:   "write_tools_hidden",
+			AllowWrite: "executes_immediately",
+		},
+	}
 }
 
 func buildSafetyModes() []SafetyMode {

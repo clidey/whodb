@@ -1886,6 +1886,12 @@ func TestAgentSchemaCmd_JSON(t *testing.T) {
 	if len(manifest.MCPTools) == 0 {
 		t.Fatal("expected MCP tools in manifest")
 	}
+	if manifest.PlatformMCP.EnabledByFlag != "--platform" {
+		t.Fatalf("expected platform MCP flag --platform, got %q", manifest.PlatformMCP.EnabledByFlag)
+	}
+	if !manifest.PlatformMCP.RequiresLogin || !manifest.PlatformMCP.RequiresWorkspace {
+		t.Fatalf("expected platform MCP to require login and workspace, got %#v", manifest.PlatformMCP)
+	}
 	if errBuf.Len() != 0 {
 		t.Fatalf("expected no stderr output, got %q", errBuf.String())
 	}
