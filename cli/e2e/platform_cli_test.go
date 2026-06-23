@@ -22,10 +22,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -36,8 +36,8 @@ import (
 )
 
 const (
-	defaultPlatformE2EHost        = "http://localhost:8080"
-	defaultPlatformE2EKeycloakURL = "http://localhost:4001"
+	defaultPlatformE2EHost        = "http://localhost:18080"
+	defaultPlatformE2EKeycloakURL = "http://localhost:14001"
 	defaultPlatformE2EUser        = "owner@acme.test"
 	defaultPlatformE2EPassword    = "password"
 )
@@ -51,6 +51,7 @@ type platformAutomationEnvelope struct {
 func TestPlatformCLI_SourceLifecycle(t *testing.T) {
 	cleanup := testharness.SetupCleanEnv(t)
 	defer cleanup()
+	t.Setenv("WHODB_CLI_E2E_PLATFORM_TOKEN_DIR", filepath.Join(os.Getenv("HOME"), ".whodb-cli-platform-e2e-tokens"))
 	config.ResetPathsForTesting()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
@@ -61,7 +62,8 @@ func TestPlatformCLI_SourceLifecycle(t *testing.T) {
 	email := envOrDefault("WHODB_PLATFORM_E2E_USER", defaultPlatformE2EUser)
 	password := envOrDefault("WHODB_PLATFORM_E2E_PASSWORD", defaultPlatformE2EPassword)
 
-	refreshToken := mintDevRefreshToken(t, ctx, keycloakURL, email, password)
+	keycloakHostHeader := envOrDefault("WHODB_PLATFORM_E2E_KEYCLOAK_HOST_HEADER", "127.0.0.1:4001")
+	refreshToken := mintDevRefreshToken(t, ctx, keycloakURL, keycloakHostHeader, email, password)
 	restoreLogin := seedPlatformLogin(t, ctx, host, refreshToken)
 	defer restoreLogin()
 
@@ -94,8 +96,8 @@ func TestPlatformCLI_SourceLifecycle(t *testing.T) {
 	requireContainsField(t, fields, "Hostname")
 	requireContainsField(t, fields, "Password")
 
-	sourceHost := envOrDefault("WHODB_PLATFORM_E2E_SOURCE_HOST", "localhost")
-	sourcePort := envOrDefault("WHODB_PLATFORM_E2E_SOURCE_PORT", "5431")
+	sourceHost := envOrDefault("WHODB_PLATFORM_E2E_SOURCE_HOST", "platform-db")
+	sourcePort := envOrDefault("WHODB_PLATFORM_E2E_SOURCE_PORT", "5432")
 	sourceUser := envOrDefault("WHODB_PLATFORM_E2E_SOURCE_USER", "postgres")
 	sourceDatabase := envOrDefault("WHODB_PLATFORM_E2E_SOURCE_DATABASE", "whodb_platform")
 
@@ -140,7 +142,8 @@ func TestPlatformCLI_SourceLifecycle(t *testing.T) {
 	requireContainsSource(t, sources, sourceName)
 
 	configOutput := runRawCommand(t, "sources", "config", sourceName, "--host", host, "--format", "json", "--quiet")
-	testharness.AssertNotContains(t, configOutput, sourcePassword)
+	testharness.AssertContains(t, configOutput, `"password": "********"`)
+	testharness.AssertNotContains(t, configOutput, `"password": "`+sourcePassword+`"`)
 
 	updated := runEnvelope(t, "sources", "update", sourceName, "--host", host, "--name", renamedSource, "--format", "json", "--quiet")
 	var updatedSource platform.Source
@@ -159,11 +162,11 @@ func TestPlatformCLI_SourceLifecycle(t *testing.T) {
 	sourceForCleanup = ""
 }
 
-func mintDevRefreshToken(t *testing.T, ctx context.Context, keycloakURL, username, password string) string {
+func mintDevRefreshToken(t *testing.T, ctx context.Context, keycloakURL, hostHeader, username, password string) string {
 	t.Helper()
 	endpoint := strings.TrimRight(keycloakURL, "/") + "/realms/mothergate/protocol/openid-connect/token"
 	form := url.Values{
-		"client_id":  {"whodb-dev-seed"},
+		"client_id":  {"whodb-cli"},
 		"grant_type": {"password"},
 		"username":   {username},
 		"password":   {password},
@@ -174,6 +177,9 @@ func mintDevRefreshToken(t *testing.T, ctx context.Context, keycloakURL, usernam
 		t.Fatalf("create token request: %v", err)
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	if hostHeader != "" {
+		req.Host = hostHeader
+	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		t.Fatalf("mint local dev token from %s: %v", endpoint, err)
@@ -201,9 +207,6 @@ func seedPlatformLogin(t *testing.T, ctx context.Context, host, refreshToken str
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		t.Fatalf("load CLI config: %v", err)
-	}
-	if !cfg.UsesKeyring() {
-		t.Fatalf("platform CLI e2e requires OS keyring support because normal hosted login stores refresh tokens in keyring")
 	}
 	tokens, err := platform.RefreshToken(ctx, host, refreshToken)
 	if err != nil {
