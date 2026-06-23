@@ -78,23 +78,26 @@ func (p *OpenAIProvider) GetSupportedModels(config *ProviderConfig) ([]string, e
 	if err := p.ValidateConfig(config); err != nil {
 		return nil, err
 	}
+	return fetchOpenAICompatibleModels(config.Endpoint, config.APIKey, "OpenAI")
+}
 
-	url := config.Endpoint + "/models"
+func fetchOpenAICompatibleModels(endpoint string, apiKey string, providerName string) ([]string, error) {
+	url := strings.TrimRight(endpoint, "/") + "/models"
 	headers := map[string]string{
-		"Authorization": "Bearer " + config.APIKey,
+		"Authorization": "Bearer " + apiKey,
 		"Content-Type":  "application/json",
 	}
 
 	resp, err := sendHTTPRequest("GET", url, nil, headers)
 	if err != nil {
-		log.WithError(err).Errorf("Failed to fetch models from OpenAI at %s", url)
+		log.WithError(err).Errorf("Failed to fetch models from %s at %s", providerName, url)
 		return nil, err
 	}
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		log.Errorf("OpenAI models endpoint returned non-OK status: %d, body: %s", resp.StatusCode, string(body))
+		log.Errorf("%s models endpoint returned non-OK status: %d, body: %s", providerName, resp.StatusCode, string(body))
 		return nil, fmt.Errorf("failed to fetch models: %s", string(body))
 	}
 

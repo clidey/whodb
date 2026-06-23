@@ -180,6 +180,65 @@ func TestGeminiProvider_GetSupportedModels_FetchesGenerateContentModels(t *testi
 	}
 }
 
+func TestOpenAICompatibleProvider_CreateBAMLClient_UsesDefaultEndpoint(t *testing.T) {
+	provider := NewOpenAICompatibleProvider("Groq", "https://api.groq.com/openai/v1")
+	config := &ProviderConfig{APIKey: "groq-key"}
+
+	clientType, opts, err := provider.CreateBAMLClient(config, "llama-3.3-70b-versatile")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if clientType != "openai-generic" {
+		t.Fatalf("expected client type 'openai-generic', got %q", clientType)
+	}
+	if opts["base_url"] != provider.GetDefaultEndpoint() {
+		t.Fatalf("expected default endpoint, got %v", opts["base_url"])
+	}
+	if opts["api_key"] != "groq-key" {
+		t.Fatalf("expected api_key, got %v", opts["api_key"])
+	}
+	if opts["model"] != "llama-3.3-70b-versatile" {
+		t.Fatalf("expected model, got %v", opts["model"])
+	}
+	if opts["default_role"] != "user" {
+		t.Fatalf("expected default_role 'user', got %v", opts["default_role"])
+	}
+	if _, ok := opts["request_timeout_ms"]; ok {
+		t.Fatalf("did not expect request_timeout_ms in OpenAI-compatible opts")
+	}
+}
+
+func TestOpenAICompatibleProvider_GetSupportedModels_UsesModelsEndpoint(t *testing.T) {
+	provider := NewOpenAICompatibleProvider("DeepSeek", "https://deepseek.test")
+	withTestHTTPClient(t, func(r *http.Request) (*http.Response, error) {
+		if r.Method != http.MethodGet {
+			t.Fatalf("unexpected method %s", r.Method)
+		}
+		if r.URL.String() != "https://deepseek.test/models" {
+			t.Fatalf("unexpected URL %s", r.URL.String())
+		}
+		if r.Header.Get("Authorization") != "Bearer deepseek-key" {
+			t.Fatalf("expected bearer auth header, got %q", r.Header.Get("Authorization"))
+		}
+		return httpResponse(http.StatusOK, `{
+			"data": [
+				{"id": "deepseek-chat"},
+				{"id": "text-embedding-3-small"},
+				{"id": "deepseek-reasoner"}
+			]
+		}`), nil
+	})
+
+	models, err := provider.GetSupportedModels(&ProviderConfig{APIKey: "deepseek-key"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(models) != 2 || models[0] != "deepseek-chat" || models[1] != "deepseek-reasoner" {
+		t.Fatalf("expected chat models only, got %#v", models)
+	}
+}
+
 func TestGetBAMLConfig_ErrorsForUnregisteredProvider(t *testing.T) {
 	_, _, err := GetBAMLConfig("nonexistent-provider", "", "", "model")
 	if err == nil {
