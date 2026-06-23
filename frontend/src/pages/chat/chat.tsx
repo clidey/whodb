@@ -995,7 +995,7 @@ export const ChatPage: FC = () => {
     return (
         <InternalPage routes={[InternalRoutes.Chat]} className="h-full min-w-0" sidebar={<ChatHistorySidebar />}>
             <div className="flex flex-col w-full h-full gap-2 min-w-[30%]">
-                <div className="flex items-center">
+                <div className="flex w-full items-center">
                     <AIProvider
                         {...aiState}
                         onClear={handleClear}
@@ -1082,7 +1082,7 @@ export const ChatPage: FC = () => {
                                                 </div>
                                             } else if (chat.Type === "error") {
                                                 return (
-                                                    <div key={`chat-${chat.id}`} className="flex overflow-hidden break-words leading-6 shrink-0 pt-6 relative self-start" data-testid="error-message">
+                                                    <div key={`chat-${chat.id}`} className="flex gap-2 overflow-hidden break-words leading-6 shrink-0 pt-6 relative self-start" data-testid="error-message">
                                                         {!chat.isUserInput && chats[i-1]?.isUserInput
                                                             ? extensions.MetaIcon ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />
                                                             : null}

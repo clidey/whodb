@@ -47,6 +47,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GetAiModelsDocument, GetAiProvidersDocument } from "@graphql";
 import { AIModelsActions, availableExternalModelTypes, type IAIModelType } from "../store/ai-models";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { findAIProviderCatalogEntry } from "../config/ai-provider-catalog";
 import { ensureModelsArray, ensureModelTypesArray } from "../utils/ai-models-helper";
 import { ExternalLink } from "../utils/external-links";
 import { v4 as uuidv4 } from 'uuid';
@@ -69,8 +70,8 @@ import { Icons } from "./icons";
 
 export const externalModelTypes = availableExternalModelTypes.map((model) => ({
     id: model,
-    label: model,
-    icon: (Icons.Logos as Record<string, ReactElement>)[model],
+    label: findAIProviderCatalogEntry(model)?.label ?? model,
+    icon: (Icons.Logos as Record<string, ReactElement>)[findAIProviderCatalogEntry(model)?.iconKey ?? model],
 }));
 
 export const useAI = () => {
@@ -514,7 +515,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
         dispatch(AIModelsActions.setCurrentModel(undefined));
     }, [dispatch]);
 
-    return <div className="flex flex-col gap-4" data-testid="ai-provider">
+    return <div className="flex w-full min-w-0 flex-col gap-4" data-testid="ai-provider">
         <Sheet open={addExternalModel} onOpenChange={setAddExternalModel}>
             <SheetContent className={cn("max-w-md mx-auto w-full flex flex-col gap-4", {
                 "px-8 py-10": !newUIEnabled,
@@ -586,9 +587,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                         />
                     </div>
                 </div>
-                <div className={cn("flex items-center gap-sm self-end", {
-                    "mt-4": newUIEnabled,
-                })}>
+                <div className="flex items-center gap-sm self-end mt-4">
                     <Button
                         onClick={handleAddExternalModel}
                         data-testid="external-model-cancel"
@@ -606,8 +605,8 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                 </div>
             </SheetContent>
         </Sheet>
-        <div className="flex w-full justify-between">
-            <div className="flex gap-2">
+        <div className="flex w-full flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap gap-2">
                 <SearchSelect
                     options={modelTypesDropdownItems.map(item => ({
                         value: item.id,
@@ -690,49 +689,51 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                     />
                 )}
             </div>
-            <AlertDialog>
-                <AlertDialogTrigger asChild>
-                    <Button
-                        data-testid="chat-delete-provider"
-                        variant="secondary"
-                        className={cn({
-                            "hidden": disableNewChat ?? modelType?.isEnvironmentDefined ?? modelType?.isPlatformProvider,
-                        })}
-                    >
-                        <TrashIcon className="w-4 h-4" /> {t('deleteProvider')}
+            <div className={cn("flex flex-1 flex-wrap items-center gap-3", {
+                "hidden": disableNewChat && footerAction == null,
+            })}>
+                {!disableNewChat && (
+                    <Button onClick={handleClear} disabled={loading || disableClear} data-testid="chat-new-chat" variant="secondary">
+                        <ArrowPathIcon className="w-4 h-4" /> {t('newChat')}
                     </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>{t('deleteProvider')}</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            {t('deleteProviderConfirm')}
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
-                        <AlertDialogAction asChild>
+                )}
+                {footerAction}
+                <div className="ml-auto">
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
                             <Button
-                                data-testid="chat-delete-provider-confirm"
-                                onClick={() => { void handleDeleteProvider(modelType?.id); }}
-                                variant="destructive"
+                                data-testid="chat-delete-provider"
+                                variant="secondary"
+                                className={cn({
+                                    "hidden": disableNewChat ?? modelType?.isEnvironmentDefined ?? modelType?.isPlatformProvider,
+                                })}
                             >
-                                {t('delete')}
+                                <TrashIcon className="w-4 h-4" /> {t('deleteProvider')}
                             </Button>
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-        </div>
-        <div className={cn("flex flex-wrap items-center gap-3", {
-            "hidden": disableNewChat && footerAction == null,
-        })}>
-            {!disableNewChat && (
-                <Button onClick={handleClear} disabled={loading || disableClear} data-testid="chat-new-chat" variant="secondary">
-                    <ArrowPathIcon className="w-4 h-4" /> {t('newChat')}
-                </Button>
-            )}
-            {footerAction}
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>{t('deleteProvider')}</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    {t('deleteProviderConfirm')}
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+                                <AlertDialogAction asChild>
+                                    <Button
+                                        data-testid="chat-delete-provider-confirm"
+                                        onClick={() => { void handleDeleteProvider(modelType?.id); }}
+                                        variant="destructive"
+                                    >
+                                        {t('delete')}
+                                    </Button>
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                </div>
+            </div>
         </div>
     </div>
 }

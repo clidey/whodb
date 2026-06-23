@@ -17,6 +17,7 @@
 package providers
 
 import (
+	"net/http"
 	"testing"
 )
 
@@ -97,6 +98,9 @@ func TestGeminiProvider_CreateBAMLClient_UsesOpenAICompatibleEndpoint(t *testing
 	if opts["model"] != "gemini-3.5-flash" {
 		t.Fatalf("expected model, got %v", opts["model"])
 	}
+	if _, ok := opts["request_timeout_ms"]; ok {
+		t.Fatalf("did not expect request_timeout_ms in Gemini opts")
+	}
 }
 
 func TestGeminiProvider_GetSupportedModels_RequiresAPIKey(t *testing.T) {
@@ -105,13 +109,46 @@ func TestGeminiProvider_GetSupportedModels_RequiresAPIKey(t *testing.T) {
 	if _, err := provider.GetSupportedModels(&ProviderConfig{}); err == nil {
 		t.Fatalf("expected error when API key is missing")
 	}
+}
 
-	models, err := provider.GetSupportedModels(&ProviderConfig{APIKey: "gemini-key"})
+func TestGeminiProvider_GetSupportedModels_FetchesGenerateContentModels(t *testing.T) {
+	provider := NewGeminiProvider()
+	withTestHTTPClient(t, func(r *http.Request) (*http.Response, error) {
+		if r.URL.String() != "https://gemini.test/v1beta/models?key=gemini-key&pageSize=1000" {
+			t.Fatalf("unexpected URL %s", r.URL.String())
+		}
+		return httpResponse(http.StatusOK, `{
+			"models": [
+				{
+					"name": "models/gemini-3.5-flash",
+					"baseModelId": "gemini-3.5-flash",
+					"supportedGenerationMethods": ["generateContent"]
+				},
+				{
+					"name": "models/gemini-embedding",
+					"baseModelId": "gemini-embedding",
+					"supportedGenerationMethods": ["embedContent"]
+				},
+				{
+					"name": "models/gemini-2.5-flash",
+					"supportedGenerationMethods": ["generateContent"]
+				}
+			]
+		}`), nil
+	})
+
+	models, err := provider.GetSupportedModels(&ProviderConfig{
+		APIKey:   "gemini-key",
+		Endpoint: "https://gemini.test/v1beta/openai/",
+	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if len(models) == 0 {
-		t.Fatalf("expected Gemini models")
+	if len(models) != 2 {
+		t.Fatalf("expected two Gemini generation models, got %#v", models)
+	}
+	if models[0] != "gemini-3.5-flash" || models[1] != "gemini-2.5-flash" {
+		t.Fatalf("expected model IDs without models/ prefix, got %#v", models)
 	}
 }
 

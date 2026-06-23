@@ -18,7 +18,7 @@ import type { PayloadAction} from '@reduxjs/toolkit';
 import { createSlice } from '@reduxjs/toolkit';
 
 export const availableInternalModelTypes = ["Ollama"];
-export const availableExternalModelTypes = ["OpenAI", "Anthropic"];
+export const availableExternalModelTypes = ["OpenAI", "Anthropic", "Gemini"];
 
 export type IAIModelType = {
   id: string;

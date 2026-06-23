@@ -92,3 +92,15 @@ func TestGetOllamaEndpointRespectsOverrides(t *testing.T) {
 		t.Fatalf("expected custom ollama endpoint to be honored, got %s", endpoint)
 	}
 }
+
+func TestGetGeminiEndpointRespectsOverrides(t *testing.T) {
+	origEndpoint := GeminiEndpoint
+	t.Cleanup(func() { GeminiEndpoint = origEndpoint })
+
+	GeminiEndpoint = "https://gemini.example.com/v1beta/openai/"
+
+	endpoint := GetGeminiEndpoint()
+	if endpoint != GeminiEndpoint {
+		t.Fatalf("expected custom gemini endpoint to be honored, got %s", endpoint)
+	}
+}
