@@ -333,6 +333,83 @@ func TestPlatformPromptContent(t *testing.T) {
 	}
 }
 
+func TestNewServer_PlatformModeListsOnlyPlatformResources(t *testing.T) {
+	result := listServerResources(t, NewServer(&ServerOptions{PlatformEnabled: true}))
+	expectedResources := []string{
+		"whodb://platform/schema",
+		"whodb://platform/workspace",
+		"whodb://platform/tool-guide",
+	}
+	if len(result.Resources) != len(expectedResources) {
+		t.Fatalf("platform mode exposed %d resources, want %d", len(result.Resources), len(expectedResources))
+	}
+	for _, resource := range result.Resources {
+		if !strings.HasPrefix(resource.URI, "whodb://platform/") {
+			t.Fatalf("platform mode exposed non-platform resource %q", resource.URI)
+		}
+		if strings.TrimSpace(resource.Description) == "" {
+			t.Fatalf("platform resource %q has empty description", resource.URI)
+		}
+	}
+	for _, expected := range expectedResources {
+		if !resourceURIsContain(result.Resources, expected) {
+			t.Fatalf("platform mode did not expose resource %s", expected)
+		}
+	}
+	for _, localResource := range []string{"whodb://connections", "whodb://agent/schema"} {
+		if resourceURIsContain(result.Resources, localResource) {
+			t.Fatalf("platform mode exposed local resource %q", localResource)
+		}
+	}
+}
+
+func TestPlatformResourcesReadJSON(t *testing.T) {
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(&fakePlatformClient{}), nil
+	})
+	server := NewServer(&ServerOptions{PlatformEnabled: true})
+
+	for _, uri := range []string{
+		"whodb://platform/schema",
+		"whodb://platform/workspace",
+		"whodb://platform/tool-guide",
+	} {
+		text := resourceText(t, readServerResource(t, server, uri))
+		var payload map[string]any
+		if err := json.Unmarshal([]byte(text), &payload); err != nil {
+			t.Fatalf("resource %s returned invalid JSON: %v\n%s", uri, err, text)
+		}
+	}
+
+	schema := resourceText(t, readServerResource(t, server, "whodb://platform/schema"))
+	if !strings.Contains(schema, `"whodb_platform_status"`) || strings.Contains(schema, `"whodb_query"`) {
+		t.Fatalf("platform schema resource should include platform tools and exclude local tools: %s", schema)
+	}
+	workspace := resourceText(t, readServerResource(t, server, "whodb://platform/workspace"))
+	for _, expected := range []string{`"host": "https://app.whodb.com"`, `"email": "ada@example.com"`, `"workspace_selected": true`} {
+		if !strings.Contains(workspace, expected) {
+			t.Fatalf("platform workspace resource should contain %s: %s", expected, workspace)
+		}
+	}
+	guide := resourceText(t, readServerResource(t, server, "whodb://platform/tool-guide"))
+	for _, expected := range []string{`"sources"`, `"field_projection"`, `"whodb_platform_source_create"`} {
+		if !strings.Contains(guide, expected) {
+			t.Fatalf("platform tool guide resource should contain %s: %s", expected, guide)
+		}
+	}
+}
+
+func TestPlatformResourcesReflectReadOnlyMode(t *testing.T) {
+	server := NewServer(&ServerOptions{PlatformEnabled: true, ReadOnly: true})
+	guide := resourceText(t, readServerResource(t, server, "whodb://platform/tool-guide"))
+	if !strings.Contains(guide, `"mode": "read_only"`) {
+		t.Fatalf("platform tool guide should report read_only mode: %s", guide)
+	}
+	if strings.Contains(guide, `"whodb_platform_source_create"`) || strings.Contains(guide, `"whodb_platform_confirm"`) {
+		t.Fatalf("platform read-only guide should not include write tools: %s", guide)
+	}
+}
+
 func TestAgentManifestIncludesPlatformMCPTools(t *testing.T) {
 	manifest := agentmanifest.Build()
 	if manifest.PlatformMCP.EnabledByFlag != "--platform" {
@@ -523,6 +600,55 @@ func getServerPrompt(t *testing.T, server *mcpsdk.Server, name string) *mcpsdk.G
 	return result
 }
 
+func listServerResources(t *testing.T, server *mcpsdk.Server) *mcpsdk.ListResourcesResult {
+	t.Helper()
+	ctx := context.Background()
+	clientSession, serverSession := connectTestMCP(t, ctx, server)
+	t.Cleanup(func() {
+		_ = clientSession.Close()
+		_ = serverSession.Close()
+	})
+	result, err := clientSession.ListResources(ctx, nil)
+	if err != nil {
+		t.Fatalf("ListResources() error = %v", err)
+	}
+	if len(result.Resources) == 0 {
+		t.Fatal("ListResources() returned no resources")
+	}
+	return result
+}
+
+func readServerResource(t *testing.T, server *mcpsdk.Server, uri string) *mcpsdk.ReadResourceResult {
+	t.Helper()
+	ctx := context.Background()
+	clientSession, serverSession := connectTestMCP(t, ctx, server)
+	t.Cleanup(func() {
+		_ = clientSession.Close()
+		_ = serverSession.Close()
+	})
+	result, err := clientSession.ReadResource(ctx, &mcpsdk.ReadResourceParams{URI: uri})
+	if err != nil {
+		t.Fatalf("ReadResource(%q) error = %v", uri, err)
+	}
+	return result
+}
+
+func connectTestMCP(t *testing.T, ctx context.Context, server *mcpsdk.Server) (*mcpsdk.ClientSession, *mcpsdk.ServerSession) {
+	t.Helper()
+	clientTransport, serverTransport := mcpsdk.NewInMemoryTransports()
+	serverSession, err := server.Connect(ctx, serverTransport, nil)
+	if err != nil {
+		t.Fatalf("server.Connect() error = %v", err)
+	}
+	client := mcpsdk.NewClient(&mcpsdk.Implementation{Name: "test-client", Version: "v0.0.1"}, nil)
+	clientSession, err := client.Connect(ctx, clientTransport, nil)
+	if err != nil {
+		_ = serverSession.Close()
+		t.Fatalf("client.Connect() error = %v", err)
+	}
+	return clientSession, serverSession
+}
+
 func promptNamesContain(prompts []*mcpsdk.Prompt, name string) bool {
 	for _, prompt := range prompts {
 		if prompt.Name == name {
@@ -542,6 +668,26 @@ func promptText(t *testing.T, result *mcpsdk.GetPromptResult) string {
 		t.Fatalf("GetPrompt returned content type %T, want *mcp.TextContent", result.Messages[0].Content)
 	}
 	return content.Text
+}
+
+func resourceURIsContain(resources []*mcpsdk.Resource, uri string) bool {
+	for _, resource := range resources {
+		if resource.URI == uri {
+			return true
+		}
+	}
+	return false
+}
+
+func resourceText(t *testing.T, result *mcpsdk.ReadResourceResult) string {
+	t.Helper()
+	if len(result.Contents) != 1 {
+		t.Fatalf("ReadResource returned %d contents, want 1", len(result.Contents))
+	}
+	if result.Contents[0].MIMEType != "application/json" {
+		t.Fatalf("ReadResource MIMEType = %q, want application/json", result.Contents[0].MIMEType)
+	}
+	return result.Contents[0].Text
 }
 
 func toolNamesContain(tools []*mcpsdk.Tool, name string) bool {
