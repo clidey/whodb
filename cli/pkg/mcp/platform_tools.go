@@ -1377,9 +1377,17 @@ func loadPlatformWorkspace(ctx context.Context) (*platformToolSession, error) {
 		return nil, err
 	}
 	if !hasPlatformWorkspace(session) {
-		return nil, fmt.Errorf("no hosted WhoDB workspace selected. Run: whodb-cli use --org <org> --project <project>")
+		return nil, fmt.Errorf("no hosted WhoDB workspace selected. Run: %s", platformUseCommand(session.Host.URL))
 	}
 	return session, nil
+}
+
+func platformUseCommand(host string) string {
+	host = strings.TrimSpace(host)
+	if host == "" {
+		return "whodb-cli use --org <org> --project <project>"
+	}
+	return fmt.Sprintf("whodb-cli use --host %s --org <org> --project <project>", host)
 }
 
 func loadPlatformSource(ctx context.Context, value string) (*platformToolSession, *platformapi.Source, error) {

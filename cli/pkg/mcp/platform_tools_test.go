@@ -224,8 +224,9 @@ func TestHandlePlatformSourcesReportsMissingWorkspaceAction(t *testing.T) {
 	if err != nil {
 		t.Fatalf("HandlePlatformSources() error = %v", err)
 	}
-	if !strings.Contains(output.Error, "whodb-cli use --org <org> --project <project>") {
-		t.Fatalf("output.Error = %q, want whodb-cli use action", output.Error)
+	want := "whodb-cli use --host https://app.whodb.com --org <org> --project <project>"
+	if !strings.Contains(output.Error, want) {
+		t.Fatalf("output.Error = %q, want %q", output.Error, want)
 	}
 }
 
