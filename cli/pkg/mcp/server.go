@@ -813,75 +813,87 @@ func buildPlatformToolGuide(secOpts *SecurityOptions) platformToolGuideResource 
 		}
 	}
 
+	categories := []platformToolGuideCategory{
+		platformToolCategory(toolByName, "workspace", "Login, organization, and project discovery.", "Start here before any project-scoped read or write.", nil, nil,
+			"whodb_platform_status", "whodb_platform_orgs", "whodb_platform_projects"),
+		platformToolCategory(toolByName, "sources", "Hosted source discovery, connection metadata, data previews, and source writes.", "List sources with id/name/type first; inspect config only when needed because secrets are redacted.", []string{"id", "name", "type"}, []platformToolGuideMutation{
+			{Tool: "whodb_platform_source_create", Resources: []string{"source"}},
+			{Tool: "whodb_platform_source_update", Resources: []string{"source"}},
+			{Tool: "whodb_platform_source_delete", Resources: []string{"source"}},
+		},
+			"whodb_platform_sources", "whodb_platform_source_types", "whodb_platform_source_fields", "whodb_platform_source_objects", "whodb_platform_source_columns", "whodb_platform_source_rows", "whodb_platform_source_constraints", "whodb_platform_source_content", "whodb_platform_source_config", "whodb_platform_source_test", "whodb_platform_source_create", "whodb_platform_source_update", "whodb_platform_source_delete"),
+		platformToolCategory(toolByName, "secrets", "Secret metadata only. Secret values are not returned.", "Use for secret names, ids, provider references, and configuration shape; never expect secret values.", []string{"id", "name", "type"}, []platformToolGuideMutation{
+			{Tool: "whodb_platform_create", Resources: []string{"secret"}},
+			{Tool: "whodb_platform_update", Resources: []string{"secret"}},
+			{Tool: "whodb_platform_delete", Resources: []string{"secret"}},
+		},
+			"whodb_platform_secrets"),
+		platformToolCategory(toolByName, "ai_providers", "AI provider metadata and provider model discovery. API keys are not returned.", "Use provider lists before selecting models or making provider changes.", []string{"id", "name", "providerType"}, []platformToolGuideMutation{
+			{Tool: "whodb_platform_create", Resources: []string{"ai_provider"}},
+			{Tool: "whodb_platform_delete", Resources: []string{"ai_provider"}},
+		},
+			"whodb_platform_ai_providers", "whodb_platform_ai_provider_models"),
+		platformToolCategory(toolByName, "ontology", "Ontology object types, fast lookups, rows, and linked records.", "List ontologies first, then inspect one ontology or preview rows only when needed.", []string{"id", "apiName", "displayName"}, []platformToolGuideMutation{
+			{Tool: "whodb_platform_create", Resources: []string{"ontology", "ontology_fast_lookup"}},
+			{Tool: "whodb_platform_update", Resources: []string{"ontology"}},
+			{Tool: "whodb_platform_delete", Resources: []string{"ontology", "ontology_fast_lookup"}},
+		},
+			"whodb_platform_ontologies", "whodb_platform_ontology", "whodb_platform_ontology_fast_lookups", "whodb_platform_ontology_fast_lookup_suggestions", "whodb_platform_ontology_rows", "whodb_platform_ontology_follow_link"),
+		platformToolCategory(toolByName, "datasets", "Dataset metadata and dataset row previews.", "List datasets first; preview rows only when needed for the user request.", []string{"id", "name"}, []platformToolGuideMutation{
+			{Tool: "whodb_platform_create", Resources: []string{"dataset"}},
+			{Tool: "whodb_platform_update", Resources: []string{"dataset"}},
+			{Tool: "whodb_platform_delete", Resources: []string{"dataset"}},
+		},
+			"whodb_platform_datasets", "whodb_platform_dataset", "whodb_platform_dataset_rows"),
+		platformToolCategory(toolByName, "lineage", "Project and node lineage graph inspection.", "Use project lineage for broad context and neighbor/root lineage for focused graph expansion.", nil, nil,
+			"whodb_platform_lineage", "whodb_platform_lineage_neighbors", "whodb_platform_project_lineage"),
+		platformToolCategory(toolByName, "transforms", "Transform metadata, runs, and run actions.", "List transforms before run history; run transforms only after explicit user approval.", []string{"id", "name"}, []platformToolGuideMutation{
+			{Tool: "whodb_platform_create", Resources: []string{"transform"}},
+			{Tool: "whodb_platform_update", Resources: []string{"transform"}},
+			{Tool: "whodb_platform_delete", Resources: []string{"transform"}},
+			{Tool: "whodb_platform_action", Resources: []string{"transform"}, Actions: []string{"run"}},
+		},
+			"whodb_platform_transforms", "whodb_platform_transform_runs"),
+		platformToolCategory(toolByName, "functions", "Function metadata, function files, deploy and redeploy actions.", "List functions with narrow fields; request files/content only when needed.", []string{"id", "name"}, []platformToolGuideMutation{
+			{Tool: "whodb_platform_create", Resources: []string{"function"}},
+			{Tool: "whodb_platform_update", Resources: []string{"function"}},
+			{Tool: "whodb_platform_delete", Resources: []string{"function"}},
+			{Tool: "whodb_platform_action", Resources: []string{"function"}, Actions: []string{"deploy", "redeploy"}},
+		},
+			"whodb_platform_functions", "whodb_platform_function"),
+		platformToolCategory(toolByName, "files", "Project file browsing, previews, search, tabular file discovery, and storage usage.", "Search or list files first; preview file contents only when required.", []string{"id", "name", "isTabular"}, []platformToolGuideMutation{
+			{Tool: "whodb_platform_create", Resources: []string{"folder"}},
+			{Tool: "whodb_platform_delete", Resources: []string{"file", "folder"}},
+			{Tool: "whodb_platform_action", Resources: []string{"file", "folder"}, Actions: []string{"upload", "rename", "move", "promote_to_dataset"}},
+		},
+			"whodb_platform_files", "whodb_platform_file_preview", "whodb_platform_file_search", "whodb_platform_tabular_files", "whodb_platform_storage_usage"),
+		platformToolCategory(toolByName, "generic_writes", "Generic hosted create, update, delete, and action tools for supported platform resources.", "Use only after reading current state and obtaining user approval for the exact confirmation preview.", nil, []platformToolGuideMutation{
+			{Tool: "whodb_platform_create", Resources: []string{"secret", "ai_provider", "ontology", "ontology_fast_lookup", "dataset", "transform", "folder", "function", "source_object"}},
+			{Tool: "whodb_platform_update", Resources: []string{"secret", "ontology", "dataset", "transform", "function", "source_object"}},
+			{Tool: "whodb_platform_delete", Resources: []string{"secret", "ai_provider", "ontology", "ontology_fast_lookup", "dataset", "transform", "file", "folder", "function", "source_object"}},
+			{Tool: "whodb_platform_action", Resources: []string{"transform", "file", "folder", "function"}, Actions: []string{"run", "upload", "rename", "move", "promote_to_dataset", "deploy", "redeploy"}},
+		},
+			"whodb_platform_create", "whodb_platform_update", "whodb_platform_delete", "whodb_platform_action", "whodb_platform_pending", "whodb_platform_confirm"),
+	}
+
 	return platformToolGuideResource{
 		Mode:              platformResourceMode(secOpts),
 		FieldProjection:   "Use fields on supported read tools to request only the top-level fields needed, then call again with more fields if needed.",
 		WriteBehavior:     platformResourceWriteBehavior(secOpts),
 		PermissionModel:   "The hosted platform is authoritative for permissions. Workspace selection only scopes requests after token-backed authorization.",
 		WorkspaceBehavior: "Use whodb_platform_status first. If no workspace is selected, use whodb_platform_orgs and whodb_platform_projects, then run whodb-cli use --org <org> --project <project>.",
-		Categories: []platformToolGuideCategory{
-			platformToolCategory(toolByName, "workspace", "Login, organization, and project discovery.", "Start here before any project-scoped read or write.", nil, nil,
-				"whodb_platform_status", "whodb_platform_orgs", "whodb_platform_projects"),
-			platformToolCategory(toolByName, "sources", "Hosted source discovery, connection metadata, data previews, and source writes.", "List sources with id/name/type first; inspect config only when needed because secrets are redacted.", []string{"id", "name", "type"}, []platformToolGuideMutation{
-				{Tool: "whodb_platform_source_create", Resources: []string{"source"}},
-				{Tool: "whodb_platform_source_update", Resources: []string{"source"}},
-				{Tool: "whodb_platform_source_delete", Resources: []string{"source"}},
-			},
-				"whodb_platform_sources", "whodb_platform_source_types", "whodb_platform_source_fields", "whodb_platform_source_objects", "whodb_platform_source_columns", "whodb_platform_source_rows", "whodb_platform_source_constraints", "whodb_platform_source_content", "whodb_platform_source_config", "whodb_platform_source_test", "whodb_platform_source_create", "whodb_platform_source_update", "whodb_platform_source_delete"),
-			platformToolCategory(toolByName, "secrets", "Secret metadata only. Secret values are not returned.", "Use for secret names, ids, provider references, and configuration shape; never expect secret values.", []string{"id", "name", "type"}, []platformToolGuideMutation{
-				{Tool: "whodb_platform_create", Resources: []string{"secret"}},
-				{Tool: "whodb_platform_update", Resources: []string{"secret"}},
-				{Tool: "whodb_platform_delete", Resources: []string{"secret"}},
-			},
-				"whodb_platform_secrets"),
-			platformToolCategory(toolByName, "ai_providers", "AI provider metadata and provider model discovery. API keys are not returned.", "Use provider lists before selecting models or making provider changes.", []string{"id", "name", "providerType"}, []platformToolGuideMutation{
-				{Tool: "whodb_platform_create", Resources: []string{"ai_provider"}},
-				{Tool: "whodb_platform_delete", Resources: []string{"ai_provider"}},
-			},
-				"whodb_platform_ai_providers", "whodb_platform_ai_provider_models"),
-			platformToolCategory(toolByName, "ontology", "Ontology object types, fast lookups, rows, and linked records.", "List ontologies first, then inspect one ontology or preview rows only when needed.", []string{"id", "apiName", "displayName"}, []platformToolGuideMutation{
-				{Tool: "whodb_platform_create", Resources: []string{"ontology", "ontology_fast_lookup"}},
-				{Tool: "whodb_platform_update", Resources: []string{"ontology"}},
-				{Tool: "whodb_platform_delete", Resources: []string{"ontology", "ontology_fast_lookup"}},
-			},
-				"whodb_platform_ontologies", "whodb_platform_ontology", "whodb_platform_ontology_fast_lookups", "whodb_platform_ontology_fast_lookup_suggestions", "whodb_platform_ontology_rows", "whodb_platform_ontology_follow_link"),
-			platformToolCategory(toolByName, "datasets", "Dataset metadata and dataset row previews.", "List datasets first; preview rows only when needed for the user request.", []string{"id", "name"}, []platformToolGuideMutation{
-				{Tool: "whodb_platform_create", Resources: []string{"dataset"}},
-				{Tool: "whodb_platform_update", Resources: []string{"dataset"}},
-				{Tool: "whodb_platform_delete", Resources: []string{"dataset"}},
-			},
-				"whodb_platform_datasets", "whodb_platform_dataset", "whodb_platform_dataset_rows"),
-			platformToolCategory(toolByName, "lineage", "Project and node lineage graph inspection.", "Use project lineage for broad context and neighbor/root lineage for focused graph expansion.", nil, nil,
-				"whodb_platform_lineage", "whodb_platform_lineage_neighbors", "whodb_platform_project_lineage"),
-			platformToolCategory(toolByName, "transforms", "Transform metadata, runs, and run actions.", "List transforms before run history; run transforms only after explicit user approval.", []string{"id", "name"}, []platformToolGuideMutation{
-				{Tool: "whodb_platform_create", Resources: []string{"transform"}},
-				{Tool: "whodb_platform_update", Resources: []string{"transform"}},
-				{Tool: "whodb_platform_delete", Resources: []string{"transform"}},
-				{Tool: "whodb_platform_action", Resources: []string{"transform"}, Actions: []string{"run"}},
-			},
-				"whodb_platform_transforms", "whodb_platform_transform_runs"),
-			platformToolCategory(toolByName, "functions", "Function metadata, function files, deploy and redeploy actions.", "List functions with narrow fields; request files/content only when needed.", []string{"id", "name"}, []platformToolGuideMutation{
-				{Tool: "whodb_platform_create", Resources: []string{"function"}},
-				{Tool: "whodb_platform_update", Resources: []string{"function"}},
-				{Tool: "whodb_platform_delete", Resources: []string{"function"}},
-				{Tool: "whodb_platform_action", Resources: []string{"function"}, Actions: []string{"deploy", "redeploy"}},
-			},
-				"whodb_platform_functions", "whodb_platform_function"),
-			platformToolCategory(toolByName, "files", "Project file browsing, previews, search, tabular file discovery, and storage usage.", "Search or list files first; preview file contents only when required.", []string{"id", "name", "isTabular"}, []platformToolGuideMutation{
-				{Tool: "whodb_platform_create", Resources: []string{"folder"}},
-				{Tool: "whodb_platform_delete", Resources: []string{"file", "folder"}},
-				{Tool: "whodb_platform_action", Resources: []string{"file", "folder"}, Actions: []string{"upload", "rename", "move", "promote_to_dataset"}},
-			},
-				"whodb_platform_files", "whodb_platform_file_preview", "whodb_platform_file_search", "whodb_platform_tabular_files", "whodb_platform_storage_usage"),
-			platformToolCategory(toolByName, "generic_writes", "Generic hosted create, update, delete, and action tools for supported platform resources.", "Use only after reading current state and obtaining user approval for the exact confirmation preview.", nil, []platformToolGuideMutation{
-				{Tool: "whodb_platform_create", Resources: []string{"secret", "ai_provider", "ontology", "ontology_fast_lookup", "dataset", "transform", "folder", "function", "source_object"}},
-				{Tool: "whodb_platform_update", Resources: []string{"secret", "ontology", "dataset", "transform", "function", "source_object"}},
-				{Tool: "whodb_platform_delete", Resources: []string{"secret", "ai_provider", "ontology", "ontology_fast_lookup", "dataset", "transform", "file", "folder", "function", "source_object"}},
-				{Tool: "whodb_platform_action", Resources: []string{"transform", "file", "folder", "function"}, Actions: []string{"run", "upload", "rename", "move", "promote_to_dataset", "deploy", "redeploy"}},
-			},
-				"whodb_platform_create", "whodb_platform_update", "whodb_platform_delete", "whodb_platform_action", "whodb_platform_pending", "whodb_platform_confirm"),
-		},
+		Categories:        filterPlatformToolGuideCategories(categories),
 	}
+}
+
+func filterPlatformToolGuideCategories(categories []platformToolGuideCategory) []platformToolGuideCategory {
+	result := make([]platformToolGuideCategory, 0, len(categories))
+	for _, category := range categories {
+		if len(category.Tools) > 0 || len(category.SupportedWrites) > 0 {
+			result = append(result, category)
+		}
+	}
+	return result
 }
 
 func platformToolCategory(toolByName map[string]platformToolGuideTool, name, description, recommendedUse string, defaultFields []string, writes []platformToolGuideMutation, toolNames ...string) platformToolGuideCategory {

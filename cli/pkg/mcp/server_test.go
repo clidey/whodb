@@ -410,6 +410,95 @@ func TestPlatformResourcesReflectReadOnlyMode(t *testing.T) {
 	}
 }
 
+func TestPlatformToolGuideReferencesOnlyListedTools(t *testing.T) {
+	tests := []struct {
+		name               string
+		opts               *ServerOptions
+		wantMode           string
+		wantTools          []string
+		wantMissingTools   []string
+		wantSupportedWrite bool
+	}{
+		{
+			name:               "default confirm writes",
+			opts:               &ServerOptions{PlatformEnabled: true},
+			wantMode:           "confirm_writes",
+			wantTools:          []string{"whodb_platform_source_create", "whodb_platform_confirm", "whodb_platform_pending"},
+			wantSupportedWrite: true,
+		},
+		{
+			name:               "read only",
+			opts:               &ServerOptions{PlatformEnabled: true, ReadOnly: true},
+			wantMode:           "read_only",
+			wantMissingTools:   []string{"whodb_platform_source_create", "whodb_platform_confirm", "whodb_platform_pending"},
+			wantSupportedWrite: false,
+		},
+		{
+			name:               "allow write",
+			opts:               &ServerOptions{PlatformEnabled: true, AllowWrite: true},
+			wantMode:           "allow_write",
+			wantTools:          []string{"whodb_platform_source_create", "whodb_platform_create", "whodb_platform_action"},
+			wantMissingTools:   []string{"whodb_platform_confirm", "whodb_platform_pending"},
+			wantSupportedWrite: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			server := NewServer(tt.opts)
+			listedTools := listServerToolNames(t, server)
+			guide := readPlatformToolGuide(t, server)
+			if guide.Mode != tt.wantMode {
+				t.Fatalf("guide mode = %q, want %q", guide.Mode, tt.wantMode)
+			}
+			if len(guide.Categories) == 0 {
+				t.Fatal("guide has no categories")
+			}
+
+			supportedWrites := 0
+			for _, category := range guide.Categories {
+				if len(category.Tools) == 0 && len(category.SupportedWrites) == 0 {
+					t.Fatalf("guide category %q is empty", category.Name)
+				}
+				for _, tool := range category.Tools {
+					if _, ok := listedTools[tool.Name]; !ok {
+						t.Fatalf("guide category %q references unlisted tool %q", category.Name, tool.Name)
+					}
+				}
+				for _, write := range category.SupportedWrites {
+					supportedWrites++
+					if _, ok := listedTools[write.Tool]; !ok {
+						t.Fatalf("guide category %q references unlisted write tool %q", category.Name, write.Tool)
+					}
+				}
+			}
+
+			for _, name := range tt.wantTools {
+				if _, ok := listedTools[name]; !ok {
+					t.Fatalf("tools/list is missing expected tool %q", name)
+				}
+				if !platformGuideContainsTool(guide, name) {
+					t.Fatalf("guide is missing expected tool %q", name)
+				}
+			}
+			for _, name := range tt.wantMissingTools {
+				if _, ok := listedTools[name]; ok {
+					t.Fatalf("tools/list unexpectedly contains %q", name)
+				}
+				if platformGuideContainsTool(guide, name) {
+					t.Fatalf("guide unexpectedly contains %q", name)
+				}
+			}
+			if tt.wantSupportedWrite && supportedWrites == 0 {
+				t.Fatal("guide should include supported write entries")
+			}
+			if !tt.wantSupportedWrite && supportedWrites != 0 {
+				t.Fatalf("guide has %d supported write entries, want 0", supportedWrites)
+			}
+		})
+	}
+}
+
 func TestAgentManifestIncludesPlatformMCPTools(t *testing.T) {
 	manifest := agentmanifest.Build()
 	if manifest.PlatformMCP.EnabledByFlag != "--platform" {
@@ -688,6 +777,32 @@ func resourceText(t *testing.T, result *mcpsdk.ReadResourceResult) string {
 		t.Fatalf("ReadResource MIMEType = %q, want application/json", result.Contents[0].MIMEType)
 	}
 	return result.Contents[0].Text
+}
+
+func readPlatformToolGuide(t *testing.T, server *mcpsdk.Server) platformToolGuideResource {
+	t.Helper()
+	text := resourceText(t, readServerResource(t, server, "whodb://platform/tool-guide"))
+	var guide platformToolGuideResource
+	if err := json.Unmarshal([]byte(text), &guide); err != nil {
+		t.Fatalf("tool guide returned invalid JSON: %v\n%s", err, text)
+	}
+	return guide
+}
+
+func platformGuideContainsTool(guide platformToolGuideResource, name string) bool {
+	for _, category := range guide.Categories {
+		for _, tool := range category.Tools {
+			if tool.Name == name {
+				return true
+			}
+		}
+		for _, write := range category.SupportedWrites {
+			if write.Tool == name {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func toolNamesContain(tools []*mcpsdk.Tool, name string) bool {
