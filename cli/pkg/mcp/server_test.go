@@ -285,6 +285,54 @@ func TestNewServer_PlatformModeListsOnlyPlatformTools(t *testing.T) {
 	}
 }
 
+func TestNewServer_PlatformModeListsOnlyPlatformPrompts(t *testing.T) {
+	result := listServerPrompts(t, NewServer(&ServerOptions{PlatformEnabled: true}))
+	for _, prompt := range result.Prompts {
+		if !strings.HasPrefix(prompt.Name, "whodb_platform_") {
+			t.Fatalf("platform mode exposed non-platform prompt %q", prompt.Name)
+		}
+		if strings.TrimSpace(prompt.Description) == "" {
+			t.Fatalf("platform prompt %q has empty description", prompt.Name)
+		}
+	}
+	for _, localPrompt := range []string{"query_help", "schema_exploration_help", "workflow_help"} {
+		if promptNamesContain(result.Prompts, localPrompt) {
+			t.Fatalf("platform mode exposed local prompt %q", localPrompt)
+		}
+	}
+	expectedPrompts := []string{
+		"whodb_platform_overview",
+		"whodb_platform_read_workflow",
+		"whodb_platform_write_safety",
+		"whodb_platform_source_workflow",
+	}
+	if len(result.Prompts) != len(expectedPrompts) {
+		t.Fatalf("platform mode exposed %d prompts, want %d", len(result.Prompts), len(expectedPrompts))
+	}
+	for _, expected := range expectedPrompts {
+		if !promptNamesContain(result.Prompts, expected) {
+			t.Fatalf("platform mode did not expose prompt %s", expected)
+		}
+	}
+}
+
+func TestPlatformPromptContent(t *testing.T) {
+	server := NewServer(&ServerOptions{PlatformEnabled: true})
+	writeSafety := promptText(t, getServerPrompt(t, server, "whodb_platform_write_safety"))
+	for _, expected := range []string{"whodb_platform_confirm", "confirmation_preview", "--allow-write"} {
+		if !strings.Contains(writeSafety, expected) {
+			t.Fatalf("write safety prompt should mention %q", expected)
+		}
+	}
+
+	sourceWorkflow := promptText(t, getServerPrompt(t, server, "whodb_platform_source_workflow"))
+	for _, expected := range []string{"whodb_platform_source_fields", "secrets are redacted", "source_type"} {
+		if !strings.Contains(sourceWorkflow, expected) {
+			t.Fatalf("source workflow prompt should mention %q", expected)
+		}
+	}
+}
+
 func TestAgentManifestIncludesPlatformMCPTools(t *testing.T) {
 	manifest := agentmanifest.Build()
 	if manifest.PlatformMCP.EnabledByFlag != "--platform" {
@@ -418,6 +466,82 @@ func listServerTools(t *testing.T, server *mcpsdk.Server) *mcpsdk.ListToolsResul
 		t.Fatal("ListTools() returned no tools")
 	}
 	return result
+}
+
+func listServerPrompts(t *testing.T, server *mcpsdk.Server) *mcpsdk.ListPromptsResult {
+	t.Helper()
+	ctx := context.Background()
+	clientTransport, serverTransport := mcpsdk.NewInMemoryTransports()
+	serverSession, err := server.Connect(ctx, serverTransport, nil)
+	if err != nil {
+		t.Fatalf("server.Connect() error = %v", err)
+	}
+	t.Cleanup(func() {
+		_ = serverSession.Close()
+	})
+	client := mcpsdk.NewClient(&mcpsdk.Implementation{Name: "test-client", Version: "v0.0.1"}, nil)
+	clientSession, err := client.Connect(ctx, clientTransport, nil)
+	if err != nil {
+		t.Fatalf("client.Connect() error = %v", err)
+	}
+	t.Cleanup(func() {
+		_ = clientSession.Close()
+	})
+	result, err := clientSession.ListPrompts(ctx, nil)
+	if err != nil {
+		t.Fatalf("ListPrompts() error = %v", err)
+	}
+	if len(result.Prompts) == 0 {
+		t.Fatal("ListPrompts() returned no prompts")
+	}
+	return result
+}
+
+func getServerPrompt(t *testing.T, server *mcpsdk.Server, name string) *mcpsdk.GetPromptResult {
+	t.Helper()
+	ctx := context.Background()
+	clientTransport, serverTransport := mcpsdk.NewInMemoryTransports()
+	serverSession, err := server.Connect(ctx, serverTransport, nil)
+	if err != nil {
+		t.Fatalf("server.Connect() error = %v", err)
+	}
+	t.Cleanup(func() {
+		_ = serverSession.Close()
+	})
+	client := mcpsdk.NewClient(&mcpsdk.Implementation{Name: "test-client", Version: "v0.0.1"}, nil)
+	clientSession, err := client.Connect(ctx, clientTransport, nil)
+	if err != nil {
+		t.Fatalf("client.Connect() error = %v", err)
+	}
+	t.Cleanup(func() {
+		_ = clientSession.Close()
+	})
+	result, err := clientSession.GetPrompt(ctx, &mcpsdk.GetPromptParams{Name: name})
+	if err != nil {
+		t.Fatalf("GetPrompt(%q) error = %v", name, err)
+	}
+	return result
+}
+
+func promptNamesContain(prompts []*mcpsdk.Prompt, name string) bool {
+	for _, prompt := range prompts {
+		if prompt.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
+func promptText(t *testing.T, result *mcpsdk.GetPromptResult) string {
+	t.Helper()
+	if len(result.Messages) != 1 {
+		t.Fatalf("GetPrompt returned %d messages, want 1", len(result.Messages))
+	}
+	content, ok := result.Messages[0].Content.(*mcpsdk.TextContent)
+	if !ok {
+		t.Fatalf("GetPrompt returned content type %T, want *mcp.TextContent", result.Messages[0].Content)
+	}
+	return content.Text
 }
 
 func toolNamesContain(tools []*mcpsdk.Tool, name string) bool {

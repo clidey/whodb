@@ -177,6 +177,7 @@ func NewServer(opts *ServerOptions) *mcp.Server {
 
 	if opts.PlatformEnabled {
 		registerPlatformTools(server, secOpts)
+		registerPlatformPrompts(server)
 		return server
 	}
 
@@ -729,6 +730,126 @@ func registerPrompts(server *mcp.Server) {
 			},
 		},
 	}, handleWorkflowHelpPrompt)
+}
+
+func registerPlatformPrompts(server *mcp.Server) {
+	server.AddPrompt(&mcp.Prompt{
+		Name:        "whodb_platform_overview",
+		Title:       "WhoDB Platform Overview",
+		Description: "Understand hosted WhoDB platform MCP mode, workspace selection, permissions, and field projection.",
+	}, handlePlatformOverviewPrompt)
+
+	server.AddPrompt(&mcp.Prompt{
+		Name:        "whodb_platform_read_workflow",
+		Title:       "WhoDB Platform Read Workflow",
+		Description: "Use hosted WhoDB platform read tools safely and efficiently.",
+	}, handlePlatformReadWorkflowPrompt)
+
+	server.AddPrompt(&mcp.Prompt{
+		Name:        "whodb_platform_write_safety",
+		Title:       "WhoDB Platform Write Safety",
+		Description: "Handle hosted WhoDB platform write confirmations and destructive actions safely.",
+	}, handlePlatformWriteSafetyPrompt)
+
+	server.AddPrompt(&mcp.Prompt{
+		Name:        "whodb_platform_source_workflow",
+		Title:       "WhoDB Platform Source Workflow",
+		Description: "Manage hosted WhoDB platform sources from discovery through create, update, and delete.",
+	}, handlePlatformSourceWorkflowPrompt)
+}
+
+func platformPromptResult(description, content string) (*mcp.GetPromptResult, error) {
+	return &mcp.GetPromptResult{
+		Description: description,
+		Messages: []*mcp.PromptMessage{
+			{
+				Role:    "user",
+				Content: &mcp.TextContent{Text: content},
+			},
+		},
+	}, nil
+}
+
+func handlePlatformOverviewPrompt(ctx context.Context, req *mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
+	const content = `You are using WhoDB hosted platform MCP mode.
+
+Only whodb_platform_* tools are available. Local database tools such as whodb_query and whodb_connections are not exposed in this mode.
+
+Use the active whodb-cli hosted login and selected workspace. Start with whodb_platform_status to confirm host, signed-in user, organization, and project. If no workspace is selected, call whodb_platform_orgs and whodb_platform_projects, then ask the user to run whodb-cli use --org <org> --project <project>.
+
+Backend permissions are authoritative. The CLI may select a workspace, but the hosted platform decides what the signed-in user can read or change.
+
+For read tools that accept fields, request only fields needed for the current answer, then request more fields only if needed.`
+
+	return platformPromptResult("WhoDB hosted platform MCP mode guidance", content)
+}
+
+func handlePlatformReadWorkflowPrompt(ctx context.Context, req *mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
+	const content = `Use this read workflow for WhoDB hosted platform data.
+
+1. Call whodb_platform_status.
+2. If needed, discover workspace with whodb_platform_orgs and whodb_platform_projects.
+3. Use narrow list tools first:
+   - whodb_platform_sources for sources
+   - whodb_platform_datasets for datasets
+   - whodb_platform_ontologies for ontology types
+   - whodb_platform_transforms for transforms
+   - whodb_platform_functions for functions
+   - whodb_platform_files for files
+   - whodb_platform_ai_providers for AI provider metadata
+   - whodb_platform_secrets for secret metadata only
+4. Use detail tools only after selecting a specific id/name.
+5. Use fields to request only what you need. Avoid file contents, function files, source content, and row previews unless the user asks for them or they are required.
+6. Never treat absence of returned data as proof the resource does not exist unless the hosted platform returned a successful response for the selected workspace.`
+
+	return platformPromptResult("WhoDB hosted platform read workflow", content)
+}
+
+func handlePlatformWriteSafetyPrompt(ctx context.Context, req *mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
+	const content = `Use this safety workflow before hosted platform writes.
+
+Hosted create, update, delete, and action tools are mutating operations. In default mode, they return confirmation_required, confirmation_token, confirmation_preview, and confirmation_expiry. They do not execute until whodb_platform_confirm is called.
+
+Before confirming:
+1. Explain the confirmation_preview to the user.
+2. Call out destructive or high-impact actions explicitly, including delete, move, deploy, redeploy, run, upload, source changes, source object changes, secret changes, and AI provider changes.
+3. Do not call whodb_platform_confirm unless the user clearly approves that exact preview.
+4. If the user changes their mind or asks for edits, rerun the write tool to produce a new confirmation token.
+5. Use whodb_platform_pending only to recover pending tokens; do not use it as approval.
+
+In --read-only or --safe-mode, hosted write tools are hidden. In --allow-write, writes execute immediately, so ask for user confirmation before calling the mutating tool itself.`
+
+	return platformPromptResult("WhoDB hosted platform write safety workflow", content)
+}
+
+func handlePlatformSourceWorkflowPrompt(ctx context.Context, req *mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
+	const content = `Use this workflow for hosted source management.
+
+For discovery:
+1. Call whodb_platform_sources with fields such as ["id", "name", "type"].
+2. Use whodb_platform_source_config only when you need saved connection shape; secrets are redacted.
+3. Use whodb_platform_source_objects, whodb_platform_source_columns, and whodb_platform_source_rows to inspect data.
+
+For creating a source:
+1. Call whodb_platform_source_types.
+2. Call whodb_platform_source_fields for the chosen source_type.
+3. Ask the user for required connection fields. Treat password, token, secret, key, and private-key fields as sensitive.
+4. Optionally call whodb_platform_source_test with draft config.
+5. Call whodb_platform_source_create.
+6. Explain the confirmation_preview and call whodb_platform_confirm only after approval.
+
+For updating a source:
+1. Call whodb_platform_sources to select the source.
+2. Call whodb_platform_source_config if you need to preserve existing redacted fields.
+3. Send only changed fields to whodb_platform_source_update.
+4. Confirm only after user approval.
+
+For deleting a source:
+1. Call whodb_platform_sources to verify id/name.
+2. Call whodb_platform_source_delete.
+3. Explain that deletion is destructive and confirm only after user approval.`
+
+	return platformPromptResult("WhoDB hosted platform source workflow", content)
 }
 
 // handleQueryHelpPrompt returns guidance for writing SQL queries.
