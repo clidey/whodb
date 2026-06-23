@@ -16,7 +16,10 @@
 
 package cmd
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 // TestMcpCmd_Exists verifies the mcp command is registered
 func TestMcpCmd_Exists(t *testing.T) {
@@ -83,4 +86,64 @@ func TestMcpServeCmd_HasPlatformFlag(t *testing.T) {
 	if mcpServeCmd.Flags().Lookup("platform") == nil {
 		t.Fatal("expected mcp serve to expose --platform")
 	}
+}
+
+func TestPlatformMCP_ServeRejectsLocalToolSelection(t *testing.T) {
+	for _, tt := range []struct {
+		name  string
+		flag  string
+		value string
+	}{
+		{name: "tools", flag: "tools", value: "schemas"},
+		{name: "disable tools", flag: "disable-tools", value: "query"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			cleanup := setupTestEnv(t)
+			defer cleanup()
+			resetMCPServeFlagsForTest(t)
+
+			if err := mcpServeCmd.Flags().Set("platform", "true"); err != nil {
+				t.Fatalf("set platform flag: %v", err)
+			}
+			if err := mcpServeCmd.Flags().Set(tt.flag, tt.value); err != nil {
+				t.Fatalf("set %s flag: %v", tt.flag, err)
+			}
+
+			err := mcpServeCmd.RunE(mcpServeCmd, nil)
+			if err == nil {
+				t.Fatal("mcp serve --platform with local tool selection returned nil error")
+			}
+			if !strings.Contains(err.Error(), "--tools and --disable-tools apply only to local MCP mode") {
+				t.Fatalf("error = %q, want local MCP mode rejection", err)
+			}
+		})
+	}
+}
+
+func resetMCPServeFlagsForTest(t *testing.T) {
+	t.Helper()
+	flags := mcpServeCmd.Flags()
+	for _, name := range []string{"platform", "tools", "disable-tools"} {
+		flag := flags.Lookup(name)
+		if flag == nil {
+			t.Fatalf("missing %s flag", name)
+		}
+		if err := flag.Value.Set(flag.DefValue); err != nil {
+			t.Fatalf("reset %s flag: %v", name, err)
+		}
+		flag.Changed = false
+	}
+	mcpPlatform = false
+	mcpEnabledTools = nil
+	mcpDisabledTools = nil
+	t.Cleanup(func() {
+		for _, name := range []string{"platform", "tools", "disable-tools"} {
+			flag := flags.Lookup(name)
+			_ = flag.Value.Set(flag.DefValue)
+			flag.Changed = false
+		}
+		mcpPlatform = false
+		mcpEnabledTools = nil
+		mcpDisabledTools = nil
+	})
 }

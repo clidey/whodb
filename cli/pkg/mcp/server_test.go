@@ -239,37 +239,16 @@ func TestPlatformInstructionsExcludeLocalTools(t *testing.T) {
 }
 
 func TestNewServer_PlatformModeListsOnlyPlatformTools(t *testing.T) {
-	ctx := context.Background()
-	server := NewServer(&ServerOptions{PlatformEnabled: true})
-	clientTransport, serverTransport := mcpsdk.NewInMemoryTransports()
-
-	serverSession, err := server.Connect(ctx, serverTransport, nil)
-	if err != nil {
-		t.Fatalf("server.Connect() error = %v", err)
-	}
-	t.Cleanup(func() {
-		_ = serverSession.Close()
-	})
-
-	client := mcpsdk.NewClient(&mcpsdk.Implementation{Name: "test-client", Version: "v0.0.1"}, nil)
-	clientSession, err := client.Connect(ctx, clientTransport, nil)
-	if err != nil {
-		t.Fatalf("client.Connect() error = %v", err)
-	}
-	t.Cleanup(func() {
-		_ = clientSession.Close()
-	})
-
-	result, err := clientSession.ListTools(ctx, nil)
-	if err != nil {
-		t.Fatalf("ListTools() error = %v", err)
-	}
-	if len(result.Tools) == 0 {
-		t.Fatal("ListTools() returned no tools")
-	}
+	result := listServerTools(t, NewServer(&ServerOptions{PlatformEnabled: true}))
 	for _, tool := range result.Tools {
 		if !strings.HasPrefix(tool.Name, "whodb_platform_") {
 			t.Fatalf("platform mode exposed non-platform tool %q", tool.Name)
+		}
+		if strings.TrimSpace(tool.Description) == "" {
+			t.Fatalf("platform tool %q has empty description", tool.Name)
+		}
+		if tool.Annotations == nil {
+			t.Fatalf("platform tool %q has no annotations", tool.Name)
 		}
 	}
 	for _, localTool := range []string{"whodb_query", "whodb_connections", "whodb_confirm"} {
@@ -277,8 +256,14 @@ func TestNewServer_PlatformModeListsOnlyPlatformTools(t *testing.T) {
 			t.Fatalf("platform mode exposed local tool %q", localTool)
 		}
 	}
-	if !toolNamesContain(result.Tools, "whodb_platform_confirm") {
-		t.Fatal("platform mode did not expose whodb_platform_confirm")
+	expectedTools := platformToolDefinitions()
+	if len(result.Tools) != len(expectedTools) {
+		t.Fatalf("platform mode exposed %d tools, want %d", len(result.Tools), len(expectedTools))
+	}
+	for _, expected := range expectedTools {
+		if !toolNamesContain(result.Tools, expected.Name) {
+			t.Fatalf("platform mode did not expose %s", expected.Name)
+		}
 	}
 	for _, flexibleReadTool := range []string{
 		"whodb_platform_secrets",
@@ -295,7 +280,7 @@ func TestNewServer_PlatformModeListsOnlyPlatformTools(t *testing.T) {
 		}
 	}
 	for _, tool := range result.Tools {
-		assertToolOutputSchemaPropertiesTyped(t, tool)
+		assertToolSchemasAreInspectorCompatible(t, tool)
 	}
 }
 
@@ -345,6 +330,16 @@ func TestNewServer_PlatformAllowWriteHidesConfirmationTools(t *testing.T) {
 
 func listServerToolNames(t *testing.T, server *mcpsdk.Server) map[string]struct{} {
 	t.Helper()
+	result := listServerTools(t, server)
+	names := map[string]struct{}{}
+	for _, tool := range result.Tools {
+		names[tool.Name] = struct{}{}
+	}
+	return names
+}
+
+func listServerTools(t *testing.T, server *mcpsdk.Server) *mcpsdk.ListToolsResult {
+	t.Helper()
 	ctx := context.Background()
 	clientTransport, serverTransport := mcpsdk.NewInMemoryTransports()
 	serverSession, err := server.Connect(ctx, serverTransport, nil)
@@ -366,11 +361,10 @@ func listServerToolNames(t *testing.T, server *mcpsdk.Server) map[string]struct{
 	if err != nil {
 		t.Fatalf("ListTools() error = %v", err)
 	}
-	names := map[string]struct{}{}
-	for _, tool := range result.Tools {
-		names[tool.Name] = struct{}{}
+	if len(result.Tools) == 0 {
+		t.Fatal("ListTools() returned no tools")
 	}
-	return names
+	return result
 }
 
 func toolNamesContain(tools []*mcpsdk.Tool, name string) bool {
@@ -384,6 +378,34 @@ func findToolByName(tools []*mcpsdk.Tool, name string) *mcpsdk.Tool {
 		}
 	}
 	return nil
+}
+
+func assertToolSchemasAreInspectorCompatible(t *testing.T, tool *mcpsdk.Tool) {
+	t.Helper()
+	assertToolSchemaIsObject(t, tool.Name, "inputSchema", tool.InputSchema, true)
+	assertToolSchemaIsObject(t, tool.Name, "outputSchema", tool.OutputSchema, false)
+}
+
+func assertToolSchemaIsObject(t *testing.T, toolName, schemaName string, rawSchema any, required bool) {
+	t.Helper()
+	if rawSchema == nil {
+		if required {
+			t.Fatalf("%s %s is nil", toolName, schemaName)
+		}
+		return
+	}
+	raw, err := json.Marshal(rawSchema)
+	if err != nil {
+		t.Fatalf("%s %s marshal error: %v", toolName, schemaName, err)
+	}
+	var schema map[string]any
+	if err := json.Unmarshal(raw, &schema); err != nil {
+		t.Fatalf("%s %s unmarshal error: %v", toolName, schemaName, err)
+	}
+	if schemaType, _ := schema["type"].(string); schemaType != "object" {
+		t.Fatalf("%s %s type = %#v, want object", toolName, schemaName, schema["type"])
+	}
+	assertSchemaPropertiesTyped(t, toolName, schemaName, schema)
 }
 
 func assertToolOutputSchemaPropertiesTyped(t *testing.T, tool *mcpsdk.Tool) {
