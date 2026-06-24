@@ -32,6 +32,7 @@ export interface FeatureFlags {
     autoStartTourOnLogin: boolean;
     sqlAgent: boolean;
     keyboardShortcutsHelp: boolean;
+    platformFunnel: boolean;
 }
 
 const defaultFeatures: FeatureFlags = {
@@ -49,6 +50,7 @@ const defaultFeatures: FeatureFlags = {
     autoStartTourOnLogin: true, // Enabled in CE
     sqlAgent: false,
     keyboardShortcutsHelp: true, // Enabled in CE
+    platformFunnel: false,
 };
 
 export let featureFlags: FeatureFlags = {} as FeatureFlags;
