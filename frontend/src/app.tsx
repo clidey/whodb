@@ -18,6 +18,7 @@ import {useMutation, useQuery} from "@apollo/client/react";
 import {Toaster} from "@clidey/ux";
 import {SettingsConfigDocument, UpdateSettingsDocument} from '@graphql';
 import {Suspense, useEffect} from "react";
+import {createPortal} from "react-dom";
 import {Route, Routes} from "react-router-dom";
 import {getStoredConsentState, optInUser, optOutUser, resetAnalyticsIdentity} from "./config/posthog";
 import {getRoutes, PrivateRoute, PublicRoutes} from './config/routes';
@@ -149,7 +150,7 @@ export const App = () => {
 
   return (
     <TourProvider>
-      <Toaster position="bottom-center" />
+      {createPortal(<Toaster position="bottom-center" />, document.body)}
       <div className="h-[100vh] w-[100vw]" id="whodb-app-container">
         {KeyboardShortcutsHelpModal}
         {CommandPaletteModal}
