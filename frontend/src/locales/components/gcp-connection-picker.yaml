@@ -264,7 +264,7 @@ fr_FR:
   helpIntro: "{appName} peut découvrir automatiquement vos bases de données GCP. Ajoutez un compte GCP pour commencer."
   helpAuthDefault: "Par défaut (ADC)"
   helpAuthDefaultDesc: "utilise les informations d'identification par défaut de l'application (authentification gcloud, variables d'environnement ou serveur de métadonnées)"
-  helpAuthServiceAccount: "Compte de services"
+  helpAuthServiceAccount: "Compte de service"
   helpAuthServiceAccountDesc: "utilise un fichier JSON de clé de compte de service"
   helpCloudSqlDesc: "PostgreSQL, MySQL"
   helpCredentialNote: "Remarque : {appName} découvre les points de terminaison de connexion à partir de GCP mais ne peut pas accéder aux mots de passe de la base de données. Vous devrez saisir vos informations d'identification lors de la connexion."

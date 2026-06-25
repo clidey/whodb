@@ -28,7 +28,7 @@ fi_FI:
 
 fr_FR:
   loading: Chargement...
-  pleaseWait: S'il vous plaît, attendez
+  pleaseWait: Veuillez patienter
 
 it_IT:
   loading: Caricamento...

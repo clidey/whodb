@@ -35,7 +35,7 @@ fi_FI:
 
 fr_FR:
   expand: "Développer"
-  collapse: "Effondrement"
+  collapse: "Réduire"
   details: "Détails de la carte"
 
 it_IT:

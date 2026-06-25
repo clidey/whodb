@@ -131,7 +131,7 @@ fr_FR:
   awsConnections: "Connexions AWS"
   noDiscoveredConnections: "Aucune source AWS découverte. Ajoutez un compte AWS pour découvrir automatiquement les ressources RDS, ElastiCache, DocumentDB et S3."
   refreshPartialError: "Certains services AWS n'ont pas pu être découverts. Vérifiez les autorisations IAM."
-  proxy: "Procuration"
+  proxy: "Proxy"
   readOnly: "Lecture seule"
   unreachableTooltip: "WhoDB ne peut pas atteindre ce point de terminaison. Assurez-vous que WhoDB dispose d'un accès au réseau (même VPC, peering ou tunnel)."
   helpLabel: "Comment configurer AWS"
