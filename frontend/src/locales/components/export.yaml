@@ -174,7 +174,7 @@ fr_FR:
   excelHeaders: "En-têtes formatés avec style"
   excelColumns: "Colonnes dimensionnées automatiquement"
   formatCsv: "CSV – Valeurs séparées par des virgules"
-  formatExcel: "Excel-Format XLSX"
+  formatExcel: "Excel - Format XLSX"
   formatJson: "JSON (NDJSON) - Ligne par enregistrement"
   delimiterComma: "Virgule (,) - CSV standard"
   delimiterSemicolon: "Point-virgule (;) – Excel dans certaines régions"

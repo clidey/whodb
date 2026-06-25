@@ -41,7 +41,7 @@ fi_FI:
   runQuery: "Suorita kysely"
 
 fr_FR:
-  confirmOperationDescription: "Cette requête modifiera les données ou le schéma. Etes-vous sûr de vouloir l'exécuter ? Cette action ne peut pas être annulée."
+  confirmOperationDescription: "Cette requête modifiera les données ou le schéma. Êtes-vous sûr de vouloir l'exécuter ? Cette action ne peut pas être annulée."
   showPreview: "Afficher l'aperçu"
   hidePreview: "Masquer l'aperçu"
   runQuery: "Exécuter une requête"

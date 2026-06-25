@@ -41,10 +41,10 @@ fi_FI:
   finish: "Valmis"
 
 fr_FR:
-  next: "Suivante"
-  previous: "Précédente"
-  skip: "Sauter"
-  finish: "Finition"
+  next: "Suivant"
+  previous: "Précédent"
+  skip: "Passer"
+  finish: "Terminer"
 
 it_IT:
   next: "Prossima"

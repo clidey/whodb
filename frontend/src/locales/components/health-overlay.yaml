@@ -81,7 +81,7 @@ fr_FR:
   databaseDownTitle: "Connexion à la base de données perdue"
   databaseDownMessage: "La connexion à la base de données n'est pas disponible. Vous pouvez passer à un autre profil ou vous déconnecter."
   selectProfilePlaceholder: "Choisissez un profil..."
-  switching: "Commutation..."
+  switching: "Changement..."
   switchSuccessful: "Changement de profil réussi"
   switchFailed: "Échec du changement de profil"
   switchFailedWithError: "Échec du changement de profil : {error}"
