@@ -111,7 +111,7 @@ fi_FI:
   urgentNoteEnd: "sähköpostisi aiheessa."
 
 fr_FR:
-  description: "Nous sommes là pour vous aider ! Contactez-nous pour obtenir de l'aide, des questions ou des commentaires."
+  description: "Nous sommes là pour vous aider ! Contactez-nous pour obtenir de l'aide, poser vos questions ou nous faire part de vos commentaires."
   emailTitle: "E-mail"
   emailAddress: "support@clidey.com"
   emailDescription: "Notre équipe d'assistance répond généralement dans un délai d'un jour ouvrable."
@@ -120,11 +120,11 @@ fr_FR:
   communityDescription: "Pour les rapports de bogues, les demandes de fonctionnalités ou pour rejoindre la discussion, visitez notre page des problèmes GitHub."
   liveChatTitle: "Chat en direct (à venir)"
   chatButton: "Discutez avec l'assistance"
-  liveChatDescription: "L'assistance par chat en direct sera bientôt disponible. Restez à l'écoute!"
+  liveChatDescription: "L'assistance par chat en direct sera bientôt disponible. Restez à l'écoute !"
   companyInfo: "Clidey, Inc. · 2025 · Tous droits réservés."
   urgentNote: "Pour les questions urgentes, veuillez mentionner"
-  urgentLabel: "[URGENTE]"
-  urgentNoteEnd: "dans le sujet de votre email."
+  urgentLabel: "[URGENT]"
+  urgentNoteEnd: "dans l'objet de votre e-mail."
 
 it_IT:
   description: "Siamo qui per aiutarti! Contattaci per supporto, domande o feedback."

@@ -237,7 +237,7 @@ func (p *RedisPlugin) ExportDataNDJSON(config *engine.PluginConfig, schema strin
 		}
 		rows := make([]map[string]any, 0, len(values))
 		for i, v := range values {
-			rows = append(rows, map[string]any{"index": i, redisKeyValue: v})
+			rows = append(rows, map[string]any{redisKeyIndex: i, redisKeyValue: v})
 		}
 		return emit(rows)
 
@@ -249,7 +249,7 @@ func (p *RedisPlugin) ExportDataNDJSON(config *engine.PluginConfig, schema strin
 		sort.Strings(values)
 		rows := make([]map[string]any, 0, len(values))
 		for i, v := range values {
-			rows = append(rows, map[string]any{"index": i, redisKeyValue: v})
+			rows = append(rows, map[string]any{redisKeyIndex: i, redisKeyValue: v})
 		}
 		return emit(rows)
 
@@ -261,9 +261,9 @@ func (p *RedisPlugin) ExportDataNDJSON(config *engine.PluginConfig, schema strin
 		rows := make([]map[string]any, 0, len(values))
 		for i, m := range values {
 			rows = append(rows, map[string]any{
-				"index":  i,
-				"member": m.Member,
-				"score":  fmt.Sprintf("%.2f", m.Score),
+				redisKeyIndex: i,
+				"member":      m.Member,
+				"score":       fmt.Sprintf("%.2f", m.Score),
 			})
 		}
 		return emit(rows)

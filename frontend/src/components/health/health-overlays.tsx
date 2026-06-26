@@ -71,6 +71,7 @@ export const ServerDownOverlay = () => {
     return createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm">
             <div
+                data-testid="health-overlay"
                 className={cn(
                     'w-full max-w-md rounded-lg border border-destructive/50 bg-background p-6 shadow-2xl',
                     'animate-in fade-in zoom-in-95 duration-300'
@@ -165,6 +166,7 @@ export const DatabaseDownOverlay = () => {
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
             <div
+                data-health-overlay
                 className={cn(
                     'w-full max-w-md rounded-lg border border-destructive/50 bg-background p-6 shadow-2xl',
                     'animate-in fade-in zoom-in-95 duration-300'

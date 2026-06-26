@@ -85,6 +85,46 @@ func TestDatabaseSessionRunQueryStreamRejectsUnsupportedExecutionTraits(t *testi
 	}
 }
 
+func TestQueryLanguagesForSpecUsesNativeLanguages(t *testing.T) {
+	tests := []struct {
+		name string
+		spec source.TypeSpec
+		want string
+	}{
+		{
+			name: "sql",
+			spec: testTypeSpec("Postgres", []source.Surface{source.SurfaceBrowser, source.SurfaceQuery}),
+			want: "sql",
+		},
+		{
+			name: "mongodb",
+			spec: testTypeSpec("MongoDB", []source.Surface{source.SurfaceBrowser, source.SurfaceQuery}),
+			want: "mongodb",
+		},
+		{
+			name: "redis",
+			spec: testTypeSpec("Redis", []source.Surface{source.SurfaceBrowser, source.SurfaceQuery}),
+			want: "redis",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got := queryLanguagesForSpec(test.spec)
+			if len(got) != 1 || got[0] != test.want {
+				t.Fatalf("expected query language %q, got %#v", test.want, got)
+			}
+		})
+	}
+}
+
+func TestQueryLanguagesForSpecRejectsUnsupportedSurface(t *testing.T) {
+	got := queryLanguagesForSpec(testTypeSpec("MongoDB", []source.Surface{source.SurfaceBrowser}))
+	if len(got) != 0 {
+		t.Fatalf("expected no query languages without query surface, got %#v", got)
+	}
+}
+
 func TestDatabaseSessionReadGraphRejectsUnsupportedSurface(t *testing.T) {
 	mock := testutil.NewPluginMock(engine.DatabaseType("MySQL"))
 	mock.GetGraphFunc = func(*engine.PluginConfig, string) ([]engine.GraphUnit, error) {

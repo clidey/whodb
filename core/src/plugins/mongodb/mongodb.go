@@ -142,9 +142,9 @@ func (p *MongoDBPlugin) GetStorageUnits(config *engine.PluginConfig, database st
 			stats := bson.M{}
 			if err := db.RunCommand(ctx, bson.D{{Key: "collStats", Value: collectionName}}).Decode(&stats); err != nil {
 				log.WithError(err).WithFields(map[string]any{
-					"hostname":   config.Credentials.Hostname,
-					"database":   database,
-					"collection": collectionName,
+					"hostname":           config.Credentials.Hostname,
+					"database":           database,
+					mongoFieldCollection: collectionName,
 				}).Warn("collStats unavailable for MongoDB collection; omitting size/count")
 				storageUnit.Attributes = attrs
 			} else {
@@ -244,7 +244,7 @@ func (p *MongoDBPlugin) GetColumnConstraints(config *engine.PluginConfig, schema
 		return make(map[string]map[string]any), nil
 	}
 	if err := cursor.Decode(&collInfo); err != nil {
-		log.WithError(err).WithField("collection", storageUnit).Debug("Failed to decode collection info")
+		log.WithError(err).WithField(mongoFieldCollection, storageUnit).Debug("Failed to decode collection info")
 		return make(map[string]map[string]any), nil
 	}
 
@@ -267,8 +267,8 @@ func (p *MongoDBPlugin) GetColumnConstraints(config *engine.PluginConfig, schema
 
 	constraints := parseMongoDBJsonSchema(jsonSchema)
 	log.WithFields(map[string]any{
-		"collection":      storageUnit,
-		"constraintCount": len(constraints),
+		mongoFieldCollection: storageUnit,
+		"constraintCount":    len(constraints),
 	}).Debug("Parsed MongoDB schema validation constraints")
 
 	return constraints, nil

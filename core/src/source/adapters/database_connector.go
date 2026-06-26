@@ -1015,10 +1015,17 @@ func (s *DatabaseSession) ensureGraphSupported(ref *source.ObjectRef) error {
 }
 
 func queryLanguagesForSpec(spec source.TypeSpec) []string {
-	if spec.Contract.SupportsSurface(source.SurfaceQuery) {
+	if !spec.Contract.SupportsSurface(source.SurfaceQuery) {
+		return []string{}
+	}
+	switch engine.DatabaseType(spec.Connector) {
+	case engine.DatabaseType_MongoDB:
+		return []string{"mongodb"}
+	case engine.DatabaseType_Redis:
+		return []string{"redis"}
+	default:
 		return []string{"sql"}
 	}
-	return []string{}
 }
 
 func cloneAliasMap(aliasMap map[string]string) map[string]string {

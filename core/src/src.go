@@ -79,6 +79,7 @@ func GetLoginProfiles() []types.DatabaseCredentials {
 		for i := range databaseProfiles {
 			databaseProfiles[i].Type = databaseType
 			databaseProfiles[i].IsProfile = true
+			databaseProfiles[i].Source = "environment"
 			profiles = append(profiles, databaseProfiles[i])
 		}
 	}

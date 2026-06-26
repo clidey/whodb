@@ -405,6 +405,40 @@ func TestBuildTypeSpecExposesSourceTraits(t *testing.T) {
 				if spec.Traits.Metadata.Columns != source.MetadataFidelitySampled {
 					t.Fatalf("expected MongoDB column metadata fidelity %q, got %q", source.MetadataFidelitySampled, spec.Traits.Metadata.Columns)
 				}
+				if !spec.Contract.SupportsSurface(source.SurfaceQuery) || !spec.Contract.SupportsRootAction(source.ActionExecute) {
+					t.Fatalf("expected MongoDB query/execute support, got contract %#v", spec.Contract)
+				}
+				if spec.Traits.Query.SupportsStreaming || spec.Traits.Query.SupportsMultiStatement || spec.Traits.Query.SupportsSqlImport {
+					t.Fatalf("expected MongoDB native execution traits without streaming, multi-statement, or SQL import, got %#v", spec.Traits.Query)
+				}
+				viewType, ok := spec.Contract.ObjectTypeForKind(source.ObjectKindView)
+				if !ok {
+					t.Fatalf("expected MongoDB view object type")
+				}
+				if viewType.DataShape != source.DataShapeDocument {
+					t.Fatalf("expected MongoDB views to use document data shape, got %q", viewType.DataShape)
+				}
+				if !slices.Contains(viewType.Actions, source.ActionViewRows) {
+					t.Fatalf("expected MongoDB views to support row reads, got %#v", viewType.Actions)
+				}
+				if slices.Contains(viewType.Actions, source.ActionUpdateData) || slices.Contains(viewType.Actions, source.ActionDeleteData) {
+					t.Fatalf("expected MongoDB views to remain read-only, got %#v", viewType.Actions)
+				}
+			},
+		},
+		{
+			id: "Redis",
+			want: func(t *testing.T, spec source.TypeSpec) {
+				t.Helper()
+				if !spec.Contract.SupportsSurface(source.SurfaceQuery) || !spec.Contract.SupportsRootAction(source.ActionExecute) {
+					t.Fatalf("expected Redis query/execute support, got contract %#v", spec.Contract)
+				}
+				if !spec.Traits.Query.SupportsScripts {
+					t.Fatalf("expected Redis script execution support")
+				}
+				if spec.Traits.Query.SupportsStreaming || spec.Traits.Query.SupportsMultiStatement || spec.Traits.Query.SupportsSqlImport {
+					t.Fatalf("expected Redis native execution traits without streaming, multi-statement, or SQL import, got %#v", spec.Traits.Query)
+				}
 			},
 		},
 		{

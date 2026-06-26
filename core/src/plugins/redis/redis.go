@@ -294,7 +294,7 @@ func (p *RedisPlugin) GetRows(
 			}
 		}
 		result = &engine.GetRowsResult{
-			Columns: []engine.Column{{Name: "index", Type: redisTypeString}, {Name: redisKeyValue, Type: redisTypeString}},
+			Columns: []engine.Column{{Name: redisKeyIndex, Type: redisTypeString}, {Name: redisKeyValue, Type: redisTypeString}},
 			Rows:    rows,
 		}
 	case "set":
@@ -310,7 +310,7 @@ func (p *RedisPlugin) GetRows(
 			}
 		}
 		result = &engine.GetRowsResult{
-			Columns:       []engine.Column{{Name: "index", Type: redisTypeString}, {Name: redisKeyValue, Type: redisTypeString}},
+			Columns:       []engine.Column{{Name: redisKeyIndex, Type: redisTypeString}, {Name: redisKeyValue, Type: redisTypeString}},
 			Rows:          rows,
 			DisableUpdate: true,
 		}
@@ -329,7 +329,7 @@ func (p *RedisPlugin) GetRows(
 			}
 		}
 		result = &engine.GetRowsResult{
-			Columns: []engine.Column{{Name: "index", Type: redisTypeString}, {Name: "member", Type: redisTypeString}, {Name: "score", Type: redisTypeString}},
+			Columns: []engine.Column{{Name: redisKeyIndex, Type: redisTypeString}, {Name: "member", Type: redisTypeString}, {Name: "score", Type: redisTypeString}},
 			Rows:    rows,
 		}
 	default:
@@ -411,11 +411,11 @@ func (p *RedisPlugin) GetColumnsForTable(config *engine.PluginConfig, schema str
 	case redisTypeHash:
 		return []engine.Column{{Name: "field", Type: redisTypeString}, {Name: redisKeyValue, Type: redisTypeString}}, nil
 	case redisTypeList:
-		return []engine.Column{{Name: "index", Type: redisTypeString}, {Name: redisKeyValue, Type: redisTypeString}}, nil
+		return []engine.Column{{Name: redisKeyIndex, Type: redisTypeString}, {Name: redisKeyValue, Type: redisTypeString}}, nil
 	case "set":
-		return []engine.Column{{Name: "index", Type: redisTypeString}, {Name: redisKeyValue, Type: redisTypeString}}, nil
+		return []engine.Column{{Name: redisKeyIndex, Type: redisTypeString}, {Name: redisKeyValue, Type: redisTypeString}}, nil
 	case redisTypeZSet:
-		return []engine.Column{{Name: "index", Type: redisTypeString}, {Name: "member", Type: redisTypeString}, {Name: "score", Type: redisTypeString}}, nil
+		return []engine.Column{{Name: redisKeyIndex, Type: redisTypeString}, {Name: "member", Type: redisTypeString}, {Name: "score", Type: redisTypeString}}, nil
 	default:
 		return nil, errors.New("unsupported Redis data type")
 	}

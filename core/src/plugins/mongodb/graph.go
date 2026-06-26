@@ -81,7 +81,7 @@ func (p *MongoDBPlugin) GetGraph(config *engine.PluginConfig, database string) (
 		collectionType := collectionTypes[collectionName]
 
 		if collectionType == "view" {
-			log.WithField("collection", collectionName).Info("MongoDB Graph: Skipping view")
+			log.WithField(mongoFieldCollection, collectionName).Info("MongoDB Graph: Skipping view")
 			continue
 		}
 
@@ -89,7 +89,7 @@ func (p *MongoDBPlugin) GetGraph(config *engine.PluginConfig, database string) (
 
 		cursorSample, err := collection.Find(ctx, bson.M{}, options.Find().SetLimit(100))
 		if err != nil {
-			log.WithError(err).WithField("collection", collectionName).Warn("MongoDB Graph: Unable to sample documents")
+			log.WithError(err).WithField(mongoFieldCollection, collectionName).Warn("MongoDB Graph: Unable to sample documents")
 			continue
 		}
 
@@ -112,7 +112,7 @@ func (p *MongoDBPlugin) GetGraph(config *engine.PluginConfig, database string) (
 		_ = cursorSample.Close(ctx)
 
 		if len(fieldFrequency) == 0 {
-			log.WithField("collection", collectionName).Warn("MongoDB Graph: No documents found or empty collection")
+			log.WithField(mongoFieldCollection, collectionName).Warn("MongoDB Graph: No documents found or empty collection")
 			continue
 		}
 
@@ -125,9 +125,9 @@ func (p *MongoDBPlugin) GetGraph(config *engine.PluginConfig, database string) (
 
 		for fk, fieldName := range foreignKeys {
 			log.WithFields(map[string]any{
-				"collection": collectionName,
-				"field":      fieldName,
-				"references": fk,
+				mongoFieldCollection: collectionName,
+				"field":              fieldName,
+				"references":         fk,
 			}).Info("MongoDB Graph: FOUND FK RELATIONSHIP")
 
 			relKey := collectionName + ":" + fk + ":ManyToOne"

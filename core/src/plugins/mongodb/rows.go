@@ -17,7 +17,6 @@
 package mongodb
 
 import (
-	"encoding/json"
 	"fmt"
 	"sort"
 
@@ -36,9 +35,9 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, req *engine.GetRows
 	client, err := DB(config)
 	if err != nil {
 		log.WithError(err).WithFields(map[string]any{
-			"hostname":   config.Credentials.Hostname,
-			"database":   database,
-			"collection": collection,
+			"hostname":           config.Credentials.Hostname,
+			"database":           database,
+			mongoFieldCollection: collection,
 		}).Error("Failed to connect to MongoDB for row retrieval")
 		return nil, err
 	}
@@ -52,9 +51,9 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, req *engine.GetRows
 	bsonFilter, err := convertWhereConditionToMongoDB(where)
 	if err != nil {
 		log.WithError(err).WithFields(map[string]any{
-			"hostname":   config.Credentials.Hostname,
-			"database":   database,
-			"collection": collection,
+			"hostname":           config.Credentials.Hostname,
+			"database":           database,
+			mongoFieldCollection: collection,
 		}).Error("Failed to convert where condition to MongoDB filter")
 		return nil, fmt.Errorf("error converting where condition: %w", err)
 	}
@@ -89,25 +88,15 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, req *engine.GetRows
 	cursor, err := coll.Find(ctx, bsonFilter, findOptions)
 	if err != nil {
 		log.WithError(err).WithFields(map[string]any{
-			"hostname":   config.Credentials.Hostname,
-			"database":   database,
-			"collection": collection,
-			"pageSize":   pageSize,
-			"pageOffset": pageOffset,
+			"hostname":           config.Credentials.Hostname,
+			"database":           database,
+			mongoFieldCollection: collection,
+			"pageSize":           pageSize,
+			"pageOffset":         pageOffset,
 		}).Error("Failed to execute MongoDB find query")
 		return nil, err
 	}
 	defer func() { _ = cursor.Close(ctx) }()
-
-	var rowsResult []bson.M
-	if err = cursor.All(ctx, &rowsResult); err != nil {
-		log.WithError(err).WithFields(map[string]any{
-			"hostname":   config.Credentials.Hostname,
-			"database":   database,
-			"collection": collection,
-		}).Error("Failed to decode MongoDB query results")
-		return nil, err
-	}
 
 	result := &engine.GetRowsResult{
 		Columns: []engine.Column{
@@ -116,17 +105,35 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, req *engine.GetRows
 		Rows: [][]string{},
 	}
 
-	for _, doc := range rowsResult {
-		jsonBytes, err := json.Marshal(doc)
+	for cursor.Next(ctx) {
+		var doc bson.D
+		if err = cursor.Decode(&doc); err != nil {
+			log.WithError(err).WithFields(map[string]any{
+				"hostname":           config.Credentials.Hostname,
+				"database":           database,
+				mongoFieldCollection: collection,
+			}).Error("Failed to decode MongoDB query result")
+			return nil, err
+		}
+
+		jsonBytes, err := marshalMongoDocumentJSON(doc)
 		if err != nil {
 			log.WithError(err).WithFields(map[string]any{
-				"hostname":   config.Credentials.Hostname,
-				"database":   database,
-				"collection": collection,
+				"hostname":           config.Credentials.Hostname,
+				"database":           database,
+				mongoFieldCollection: collection,
 			}).Error("Failed to marshal MongoDB document to JSON")
 			return nil, err
 		}
 		result.Rows = append(result.Rows, []string{string(jsonBytes)})
+	}
+	if err := cursor.Err(); err != nil {
+		log.WithError(err).WithFields(map[string]any{
+			"hostname":           config.Credentials.Hostname,
+			"database":           database,
+			mongoFieldCollection: collection,
+		}).Error("MongoDB cursor error while retrieving rows")
+		return nil, err
 	}
 
 	// Wait for count query to complete
@@ -137,6 +144,10 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, req *engine.GetRows
 	}
 
 	return result, nil
+}
+
+func marshalMongoDocumentJSON(doc bson.D) ([]byte, error) {
+	return bson.MarshalExtJSON(doc, false, false)
 }
 
 func (p *MongoDBPlugin) GetRowCount(config *engine.PluginConfig, database, collection string, where *query.WhereCondition) (int64, error) {
@@ -171,9 +182,9 @@ func (p *MongoDBPlugin) GetColumnsForTable(config *engine.PluginConfig, schema s
 	client, err := DB(config)
 	if err != nil {
 		log.WithError(err).WithFields(map[string]any{
-			"hostname":   config.Credentials.Hostname,
-			"database":   schema,
-			"collection": storageUnit,
+			"hostname":           config.Credentials.Hostname,
+			"database":           schema,
+			mongoFieldCollection: storageUnit,
 		}).Error("Failed to connect to MongoDB for column inference")
 		return nil, err
 	}
@@ -206,7 +217,7 @@ func (p *MongoDBPlugin) GetColumnsForTable(config *engine.PluginConfig, schema s
 	}
 
 	if len(fieldTypes) == 0 {
-		log.WithField("collection", storageUnit).Warn("MongoDB GetColumns: No documents found, returning empty schema")
+		log.WithField(mongoFieldCollection, storageUnit).Warn("MongoDB GetColumns: No documents found, returning empty schema")
 		return []engine.Column{}, nil
 	}
 
@@ -279,7 +290,7 @@ func inferMongoDBType(value any) string {
 	case bson.ObjectID:
 		return "ObjectId"
 	case string:
-		return "string"
+		return mongoTypeString
 	case int, int32, int64:
 		return "int"
 	case float32, float64:

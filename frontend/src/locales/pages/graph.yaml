@@ -41,9 +41,9 @@ fi_FI:
   createButton: "Luo {storageUnit}"
 
 fr_FR:
-  noItems: "Aucun article"
+  noItems: "Aucun élément"
   noNodesTitle: "Aucun nœud sélectionné"
-  noNodesDescription: "Sélectionnez {storageUnit} sur la gauche pour les ajouter au graphique."
+  noNodesDescription: "Sélectionnez {storageUnit} sur la gauche pour les ajouter au graphe."
   createButton: "Créer {storageUnit}"
 
 it_IT:

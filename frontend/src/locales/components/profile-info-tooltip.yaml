@@ -34,7 +34,7 @@ fi_FI:
   profileInfo: "Profiilitiedot: {profileId}"
 
 fr_FR:
-  port: "Port:"
+  port: "Port :"
   lastLoggedIn: "Dernière connexion :"
   profileInfo: "Informations de profil pour {profileId}"
 

@@ -216,23 +216,24 @@ var familySpecs = map[string]FamilySpec{
 	},
 	connectorMongoDB: {
 		Category:       source.CategoryDatabase,
-		Traits:         mongoTraits(),
+		Traits:         withNativeExecutionTraits(mongoTraits()),
 		Model:          source.ModelDocument,
-		Surfaces:       []source.Surface{source.SurfaceBrowser, source.SurfaceGraph},
+		Surfaces:       []source.Surface{source.SurfaceBrowser, source.SurfaceQuery, source.SurfaceGraph},
 		BrowsePath:     []source.ObjectKind{objectKindDatabase, objectKindColl},
 		DefaultObject:  objectKindColl,
 		GraphScopeKind: new(objectKindDatabase),
 		ObjectTypes: []source.ObjectType{
 			metadataObjectType(objectKindDatabase, "Database", "Databases", true),
 			documentObjectType(objectKindColl, "Collection", "Collections", source.ActionGenerateMockData),
+			documentReadOnlyObjectType(objectKindView, "View", "Views"),
 			metadataObjectType(objectKindIndex, "Index", "Indexes", false),
 		},
 	},
 	connectorRedis: {
 		Category:      source.CategoryCache,
-		Traits:        networkTraitsWithProfileLabel(source.HostInputModeHostname, source.HostInputURLParserNone, source.ProfileLabelStrategyHostname),
+		Traits:        withNativeExecutionTraits(networkTraitsWithProfileLabel(source.HostInputModeHostname, source.HostInputURLParserNone, source.ProfileLabelStrategyHostname)),
 		Model:         source.ModelKeyValue,
-		Surfaces:      []source.Surface{source.SurfaceBrowser},
+		Surfaces:      []source.Surface{source.SurfaceBrowser, source.SurfaceQuery},
 		BrowsePath:    []source.ObjectKind{objectKindDatabase, objectKindKey},
 		DefaultObject: objectKindKey,
 		ObjectTypes: []source.ObjectType{
@@ -757,6 +758,20 @@ func documentObjectType(kind source.ObjectKind, singular string, plural string, 
 	}
 }
 
+func documentReadOnlyObjectType(kind source.ObjectKind, singular string, plural string) source.ObjectType {
+	return source.ObjectType{
+		Kind:      kind,
+		DataShape: source.DataShapeDocument,
+		Actions: []source.Action{
+			source.ActionInspect,
+			source.ActionViewRows,
+		},
+		Views:         []source.View{source.ViewGrid, source.ViewJSON, source.ViewMetadata},
+		SingularLabel: singular,
+		PluralLabel:   plural,
+	}
+}
+
 func keyValueObjectType(kind source.ObjectKind, singular string, plural string) source.ObjectType {
 	return source.ObjectType{
 		Kind:      kind,
@@ -1008,6 +1023,14 @@ func withExecutionTraits(traits source.TypeTraits, streaming bool, multiStatemen
 	traits.Query.SupportsStreaming = streaming
 	traits.Query.SupportsMultiStatement = multiStatement
 	traits.Query.SupportsSqlImport = true
+	return traits
+}
+
+func withNativeExecutionTraits(traits source.TypeTraits) source.TypeTraits {
+	traits.Query.SupportsScripts = true
+	traits.Query.SupportsStreaming = false
+	traits.Query.SupportsMultiStatement = false
+	traits.Query.SupportsSqlImport = false
 	return traits
 }
 

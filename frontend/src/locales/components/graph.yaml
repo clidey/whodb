@@ -28,7 +28,7 @@ fi_FI:
 
 fr_FR:
   download: Télécharger
-  layout: Mise en page
+  layout: Disposition
 
 it_IT:
   download: Scaricamento

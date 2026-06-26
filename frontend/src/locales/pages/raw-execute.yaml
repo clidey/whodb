@@ -193,7 +193,7 @@ fr_FR:
   success: "Succès"
   error: "Erreur"
   copyToClipboard: "Copier dans le Presse-papiers"
-  copied: "Copié!"
+  copied: "Copié !"
   cloneToEditor: "Cloner vers l'éditeur"
   clearHistory: "Effacer l'historique"
   clearHistoryTitle: "Effacer l'historique des requêtes"
@@ -202,7 +202,7 @@ fr_FR:
   deletePageDescription: "Cette action ne peut pas être annulée. Cela supprimera définitivement \"{pageName}\" et supprimera ses données."
   doubleClickEdit: "Double-cliquez pour modifier"
   deletePageButton: "Supprimer la page"
-  options: "Possibilités"
+  options: "Options"
   addPage: "Ajouter une page"
   confirmExecutionDescription: "Cette requête modifiera votre base de données. Cette action ne peut pas être annulée."
 

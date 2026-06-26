@@ -691,7 +691,19 @@ jobs:
             --wait
 
           echo "📎 Stapling notarization ticket..."
-          xcrun stapler staple "$DMG_FILE"
+          staple_attempt=1
+          max_staple_attempts=5
+          until xcrun stapler staple "$DMG_FILE"; do
+            if [ "$staple_attempt" -ge "$max_staple_attempts" ]; then
+              echo "❌ Failed to staple notarization ticket after $max_staple_attempts attempts"
+              exit 1
+            fi
+
+            sleep_seconds=$((staple_attempt * 30))
+            echo "⚠️ Stapling failed on attempt $staple_attempt; retrying in ${sleep_seconds}s..."
+            sleep "$sleep_seconds"
+            staple_attempt=$((staple_attempt + 1))
+          done
           echo "✅ DMG signed and notarized"
 
       - name: Cleanup build artifacts before upload

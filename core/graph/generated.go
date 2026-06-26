@@ -19,7 +19,7 @@ import (
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
-// region    ************************** generated!.gotpl **************************
+// region    ***************************** api!.gotpl *****************************
 
 // NewExecutableSchema creates an ExecutableSchema from the ResolverRoot interface.
 func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
@@ -605,6 +605,10 @@ type ComplexityRoot struct {
 	}
 }
 
+// endregion ***************************** api!.gotpl *****************************
+
+// region    ************************** generated!.gotpl **************************
+
 type MutationResolver interface {
 	LoginSource(ctx context.Context, credentials model.SourceLoginInput) (*model.StatusResponse, error)
 	LoginWithSourceProfile(ctx context.Context, profile model.SourceProfileLoginInput) (*model.StatusResponse, error)
@@ -681,6 +685,10 @@ type QueryResolver interface {
 	LocalGCPProjects(ctx context.Context) ([]*model.LocalGCPProject, error)
 	GCPRegions(ctx context.Context) ([]*model.GCPRegion, error)
 }
+
+// endregion ************************** generated!.gotpl **************************
+
+// region    ************************** internal!.gotpl ***************************
 
 type executableSchema graphql.ExecutableSchemaState[ResolverRoot, DirectiveRoot, ComplexityRoot]
 
@@ -4504,7 +4512,7 @@ func (ec *executionContext) childFields___Type(ctx context.Context, field graphq
 	return nil, fmt.Errorf("no field named %q was found under type __Type", field.Name)
 }
 
-// endregion ************************** generated!.gotpl **************************
+// endregion ************************** internal!.gotpl ***************************
 
 // region    ***************************** args.gotpl *****************************
 
@@ -5573,10 +5581,6 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 }
 
 // endregion ***************************** args.gotpl *****************************
-
-// region    ************************** directives.gotpl **************************
-
-// endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
 
@@ -18266,6 +18270,9 @@ func (ec *executionContext) _AIChatMessage(ctx context.Context, sel ast.Selectio
 			}
 		case "Result":
 			out.Values[i] = ec._AIChatMessage_Result(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "Text":
 			out.Values[i] = ec._AIChatMessage_Text(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -18337,6 +18344,9 @@ func (ec *executionContext) _AIProvider(ctx context.Context, sel ast.SelectionSe
 			}
 		case "Icon":
 			out.Values[i] = ec._AIProvider_Icon(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -18398,6 +18408,9 @@ func (ec *executionContext) _AWSProvider(ctx context.Context, sel ast.SelectionS
 			}
 		case "LastDiscoveryAt":
 			out.Values[i] = ec._AWSProvider_LastDiscoveryAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "DiscoveredCount":
 			out.Values[i] = ec._AWSProvider_DiscoveredCount(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -18405,8 +18418,14 @@ func (ec *executionContext) _AWSProvider(ctx context.Context, sel ast.SelectionS
 			}
 		case "Error":
 			out.Values[i] = ec._AWSProvider_Error(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "ProfileName":
 			out.Values[i] = ec._AWSProvider_ProfileName(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "DiscoverRDS":
 			out.Values[i] = ec._AWSProvider_DiscoverRDS(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -18537,6 +18556,9 @@ func (ec *executionContext) _AzureProvider(ctx context.Context, sel ast.Selectio
 			}
 		case "LastDiscoveryAt":
 			out.Values[i] = ec._AzureProvider_LastDiscoveryAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "DiscoveredCount":
 			out.Values[i] = ec._AzureProvider_DiscoveredCount(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -18544,6 +18566,9 @@ func (ec *executionContext) _AzureProvider(ctx context.Context, sel ast.Selectio
 			}
 		case "Error":
 			out.Values[i] = ec._AzureProvider_Error(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "SubscriptionID":
 			out.Values[i] = ec._AzureProvider_SubscriptionID(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -18551,8 +18576,14 @@ func (ec *executionContext) _AzureProvider(ctx context.Context, sel ast.Selectio
 			}
 		case "TenantID":
 			out.Values[i] = ec._AzureProvider_TenantID(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "ResourceGroup":
 			out.Values[i] = ec._AzureProvider_ResourceGroup(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "DiscoverPostgreSQL":
 			out.Values[i] = ec._AzureProvider_DiscoverPostgreSQL(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -18737,14 +18768,29 @@ func (ec *executionContext) _Column(ctx context.Context, sel ast.SelectionSet, o
 			}
 		case "ReferencedTable":
 			out.Values[i] = ec._Column_ReferencedTable(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "ReferencedColumn":
 			out.Values[i] = ec._Column_ReferencedColumn(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "Length":
 			out.Values[i] = ec._Column_Length(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "Precision":
 			out.Values[i] = ec._Column_Precision(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "Scale":
 			out.Values[i] = ec._Column_Scale(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -19023,6 +19069,9 @@ func (ec *executionContext) _DiscoveredConnection(ctx context.Context, sel ast.S
 			}
 		case "Region":
 			out.Values[i] = ec._DiscoveredConnection_Region(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "Status":
 			out.Values[i] = ec._DiscoveredConnection_Status(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -19138,6 +19187,9 @@ func (ec *executionContext) _GCPProvider(ctx context.Context, sel ast.SelectionS
 			}
 		case "LastDiscoveryAt":
 			out.Values[i] = ec._GCPProvider_LastDiscoveryAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "DiscoveredCount":
 			out.Values[i] = ec._GCPProvider_DiscoveredCount(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -19145,6 +19197,9 @@ func (ec *executionContext) _GCPProvider(ctx context.Context, sel ast.SelectionS
 			}
 		case "Error":
 			out.Values[i] = ec._GCPProvider_Error(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "ProjectID":
 			out.Values[i] = ec._GCPProvider_ProjectID(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -19152,6 +19207,9 @@ func (ec *executionContext) _GCPProvider(ctx context.Context, sel ast.SelectionS
 			}
 		case "ServiceAccountKeyPath":
 			out.Values[i] = ec._GCPProvider_ServiceAccountKeyPath(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "DiscoverCloudSQL":
 			out.Values[i] = ec._GCPProvider_DiscoverCloudSQL(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -19345,8 +19403,14 @@ func (ec *executionContext) _GraphUnitRelationship(ctx context.Context, sel ast.
 			}
 		case "SourceColumn":
 			out.Values[i] = ec._GraphUnitRelationship_SourceColumn(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "TargetColumn":
 			out.Values[i] = ec._GraphUnitRelationship_TargetColumn(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -19471,6 +19535,9 @@ func (ec *executionContext) _ImportPreview(ctx context.Context, sel ast.Selectio
 			out.Values[i] = graphql.MarshalString("ImportPreview")
 		case "Sheet":
 			out.Values[i] = ec._ImportPreview_Sheet(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "Columns":
 			out.Values[i] = ec._ImportPreview_Columns(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -19488,8 +19555,14 @@ func (ec *executionContext) _ImportPreview(ctx context.Context, sel ast.Selectio
 			}
 		case "ValidationError":
 			out.Values[i] = ec._ImportPreview_ValidationError(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "Mapping":
 			out.Values[i] = ec._ImportPreview_Mapping(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "RequiresAllowAutoGenerated":
 			out.Values[i] = ec._ImportPreview_RequiresAllowAutoGenerated(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -19546,6 +19619,9 @@ func (ec *executionContext) _ImportResult(ctx context.Context, sel ast.Selection
 			}
 		case "Detail":
 			out.Values[i] = ec._ImportResult_Detail(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -19587,6 +19663,9 @@ func (ec *executionContext) _LocalAWSProfile(ctx context.Context, sel ast.Select
 			}
 		case "Region":
 			out.Values[i] = ec._LocalAWSProfile_Region(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "Source":
 			out.Values[i] = ec._LocalAWSProfile_Source(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -19712,6 +19791,9 @@ func (ec *executionContext) _MockDataDependencyAnalysis(ctx context.Context, sel
 			}
 		case "Error":
 			out.Values[i] = ec._MockDataDependencyAnalysis_Error(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -19753,6 +19835,9 @@ func (ec *executionContext) _MockDataGenerationStatus(ctx context.Context, sel a
 			}
 		case "Details":
 			out.Values[i] = ec._MockDataGenerationStatus_Details(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -20380,13 +20465,16 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "SourceSessionMetadata":
 			field := field
 
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Query_SourceSessionMetadata(ctx, field)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
@@ -20443,13 +20531,16 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "SourceObject":
 			field := field
 
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Query_SourceObject(ctx, field)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
@@ -20484,13 +20575,16 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "SourceContent":
 			field := field
 
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Query_SourceContent(ctx, field)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
@@ -20745,13 +20839,16 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "SSLStatus":
 			field := field
 
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Query_SSLStatus(ctx, field)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
@@ -20808,13 +20905,16 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "CloudProvider":
 			field := field
 
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Query_CloudProvider(ctx, field)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
@@ -20937,13 +21037,16 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "AzureProvider":
 			field := field
 
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Query_AzureProvider(ctx, field)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
@@ -21022,13 +21125,16 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "GCPProvider":
 			field := field
 
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Query_GCPProvider(ctx, field)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
@@ -21086,10 +21192,16 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___type(ctx, field)
 			})
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "__schema":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___schema(ctx, field)
 			})
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -21268,6 +21380,9 @@ func (ec *executionContext) _SettingsConfig(ctx context.Context, sel ast.Selecti
 			out.Values[i] = graphql.MarshalString("SettingsConfig")
 		case "MetricsEnabled":
 			out.Values[i] = ec._SettingsConfig_MetricsEnabled(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "CloudProvidersEnabled":
 			out.Values[i] = ec._SettingsConfig_CloudProvidersEnabled(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -21364,8 +21479,14 @@ func (ec *executionContext) _SourceConnectionField(ctx context.Context, sel ast.
 			}
 		case "PlaceholderKey":
 			out.Values[i] = ec._SourceConnectionField_PlaceholderKey(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "DefaultValue":
 			out.Values[i] = ec._SourceConnectionField_DefaultValue(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "SupportsOptions":
 			out.Values[i] = ec._SourceConnectionField_SupportsOptions(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -21461,6 +21582,9 @@ func (ec *executionContext) _SourceContent(ctx context.Context, sel ast.Selectio
 			out.Values[i] = graphql.MarshalString("SourceContent")
 		case "Text":
 			out.Values[i] = ec._SourceContent_Text(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "MIMEType":
 			out.Values[i] = ec._SourceContent_MIMEType(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -21488,6 +21612,9 @@ func (ec *executionContext) _SourceContent(ctx context.Context, sel ast.Selectio
 			}
 		case "ModifiedAt":
 			out.Values[i] = ec._SourceContent_ModifiedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -21549,6 +21676,9 @@ func (ec *executionContext) _SourceContract(ctx context.Context, sel ast.Selecti
 			}
 		case "GraphScopeKind":
 			out.Values[i] = ec._SourceContract_GraphScopeKind(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "ObjectTypes":
 			out.Values[i] = ec._SourceContract_ObjectTypes(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -21752,6 +21882,9 @@ func (ec *executionContext) _SourceFieldConstraints(ctx context.Context, sel ast
 			}
 		case "Nullable":
 			out.Values[i] = ec._SourceFieldConstraints_Nullable(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "Primary":
 			out.Values[i] = ec._SourceFieldConstraints_Primary(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -21769,6 +21902,9 @@ func (ec *executionContext) _SourceFieldConstraints(ctx context.Context, sel ast
 			}
 		case "DefaultValue":
 			out.Values[i] = ec._SourceFieldConstraints_DefaultValue(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "AllowedValues":
 			out.Values[i] = ec._SourceFieldConstraints_AllowedValues(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -21776,16 +21912,34 @@ func (ec *executionContext) _SourceFieldConstraints(ctx context.Context, sel ast
 			}
 		case "CheckMin":
 			out.Values[i] = ec._SourceFieldConstraints_CheckMin(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "CheckMax":
 			out.Values[i] = ec._SourceFieldConstraints_CheckMax(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "ForeignKey":
 			out.Values[i] = ec._SourceFieldConstraints_ForeignKey(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "Length":
 			out.Values[i] = ec._SourceFieldConstraints_Length(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "Precision":
 			out.Values[i] = ec._SourceFieldConstraints_Precision(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "Scale":
 			out.Values[i] = ec._SourceFieldConstraints_Scale(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -22770,8 +22924,14 @@ func (ec *executionContext) _TypeDefinition(ctx context.Context, sel ast.Selecti
 			}
 		case "defaultLength":
 			out.Values[i] = ec._TypeDefinition_defaultLength(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "defaultPrecision":
 			out.Values[i] = ec._TypeDefinition_defaultPrecision(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "category":
 			out.Values[i] = ec._TypeDefinition_category(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -22779,8 +22939,14 @@ func (ec *executionContext) _TypeDefinition(ctx context.Context, sel ast.Selecti
 			}
 		case "insertFunc":
 			out.Values[i] = ec._TypeDefinition_insertFunc(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "tableModel":
 			out.Values[i] = ec._TypeDefinition_tableModel(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -22876,6 +23042,9 @@ func (ec *executionContext) ___Directive(ctx context.Context, sel ast.SelectionS
 			}
 		case "description":
 			out.Values[i] = ec.___Directive_description(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "isRepeatable":
 			out.Values[i] = ec.___Directive_isRepeatable(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -22932,6 +23101,9 @@ func (ec *executionContext) ___EnumValue(ctx context.Context, sel ast.SelectionS
 			}
 		case "description":
 			out.Values[i] = ec.___EnumValue_description(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "isDeprecated":
 			out.Values[i] = ec.___EnumValue_isDeprecated(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -22939,6 +23111,9 @@ func (ec *executionContext) ___EnumValue(ctx context.Context, sel ast.SelectionS
 			}
 		case "deprecationReason":
 			out.Values[i] = ec.___EnumValue_deprecationReason(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -22980,6 +23155,9 @@ func (ec *executionContext) ___Field(ctx context.Context, sel ast.SelectionSet, 
 			}
 		case "description":
 			out.Values[i] = ec.___Field_description(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "args":
 			out.Values[i] = ec.___Field_args(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -22997,6 +23175,9 @@ func (ec *executionContext) ___Field(ctx context.Context, sel ast.SelectionSet, 
 			}
 		case "deprecationReason":
 			out.Values[i] = ec.___Field_deprecationReason(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -23038,6 +23219,9 @@ func (ec *executionContext) ___InputValue(ctx context.Context, sel ast.Selection
 			}
 		case "description":
 			out.Values[i] = ec.___InputValue_description(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "type":
 			out.Values[i] = ec.___InputValue_type(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -23045,6 +23229,9 @@ func (ec *executionContext) ___InputValue(ctx context.Context, sel ast.Selection
 			}
 		case "defaultValue":
 			out.Values[i] = ec.___InputValue_defaultValue(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "isDeprecated":
 			out.Values[i] = ec.___InputValue_isDeprecated(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -23052,6 +23239,9 @@ func (ec *executionContext) ___InputValue(ctx context.Context, sel ast.Selection
 			}
 		case "deprecationReason":
 			out.Values[i] = ec.___InputValue_deprecationReason(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -23088,6 +23278,9 @@ func (ec *executionContext) ___Schema(ctx context.Context, sel ast.SelectionSet,
 			out.Values[i] = graphql.MarshalString("__Schema")
 		case "description":
 			out.Values[i] = ec.___Schema_description(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "types":
 			out.Values[i] = ec.___Schema_types(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -23100,8 +23293,14 @@ func (ec *executionContext) ___Schema(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "mutationType":
 			out.Values[i] = ec.___Schema_mutationType(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "subscriptionType":
 			out.Values[i] = ec.___Schema_subscriptionType(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "directives":
 			out.Values[i] = ec.___Schema_directives(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -23148,24 +23347,54 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 			}
 		case "name":
 			out.Values[i] = ec.___Type_name(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "description":
 			out.Values[i] = ec.___Type_description(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "specifiedByURL":
 			out.Values[i] = ec.___Type_specifiedByURL(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "fields":
 			out.Values[i] = ec.___Type_fields(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "interfaces":
 			out.Values[i] = ec.___Type_interfaces(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "possibleTypes":
 			out.Values[i] = ec.___Type_possibleTypes(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "enumValues":
 			out.Values[i] = ec.___Type_enumValues(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "inputFields":
 			out.Values[i] = ec.___Type_inputFields(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "ofType":
 			out.Values[i] = ec.___Type_ofType(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "isOneOf":
 			out.Values[i] = ec.___Type_isOneOf(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

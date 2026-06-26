@@ -88,7 +88,7 @@ fr_FR:
   sortBy: "Trier par"
   goToChat: "Aller au chat"
   goToStorageUnits: "Aller aux unités de stockage"
-  goToGraph: "Aller au graphique"
+  goToGraph: "Aller au graphe"
   goToScratchpad: "Aller au Bloc-notes"
   toggleSidebar: "Basculer la barre latérale"
   disconnect: "Déconnecter"
