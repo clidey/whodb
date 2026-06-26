@@ -516,3 +516,9 @@ func importResult(success bool, detail string) *model.ImportResult {
 	}
 	return result
 }
+
+func importResultWithMessage(success bool, detail string, message string) *model.ImportResult {
+	result := importResult(success, detail)
+	result.Message = message
+	return result
+}

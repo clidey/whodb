@@ -34,6 +34,7 @@ interface DatabaseImportContextValue {
 interface ImportResultState {
   status: boolean
   detail?: string | null
+  message?: string | null
 }
 
 const DatabaseImportContext = createContext<DatabaseImportContextValue | null>(null)
@@ -194,7 +195,7 @@ function DatabaseImportProvider({
         return
       }
 
-      setResult({ status: importResult.Status, detail: importResult.Detail })
+      setResult({ status: importResult.Status, detail: importResult.Detail, message: importResult.Message })
       if (importResult.Status) {
         onSuccess?.(targetDatabase === databaseName
           ? { databaseName: targetDatabase, schema, tableName }
@@ -461,7 +462,12 @@ function ImportResultFeedback() {
   return (
     <div role="alert" className="flex items-start gap-2 rounded-md border border-destructive/20 bg-destructive/5 p-3 text-sm text-destructive">
       <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-      <span>{formatImportFailure(t, result.detail)}</span>
+      <div className="min-w-0">
+        <span>{formatImportFailure(t, result.detail)}</span>
+        {result.detail === 'import.error.sql_failed' && result.message && (
+          <pre className="mt-2 whitespace-pre-wrap break-words font-mono text-xs leading-relaxed">{result.message}</pre>
+        )}
+      </div>
     </div>
   )
 }
