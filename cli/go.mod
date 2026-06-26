@@ -10,12 +10,13 @@ require (
 	github.com/clidey/whodb/core v0.0.0
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/go-version v1.9.0
+	github.com/jackc/pgx/v5 v5.9.2
 	github.com/modelcontextprotocol/go-sdk v1.6.1
 	github.com/muesli/termenv v0.16.0
 	github.com/sahilm/fuzzy v0.1.3
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
-	github.com/vektah/gqlparser/v2 v2.5.33
+	github.com/vektah/gqlparser/v2 v2.5.35
 	github.com/xuri/excelize/v2 v2.10.1
 	github.com/zalando/go-keyring v0.2.8
 	go.yaml.in/yaml/v3 v3.0.4
@@ -114,7 +115,6 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
-	github.com/jackc/pgx/v5 v5.9.2 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
