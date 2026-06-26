@@ -48,6 +48,7 @@ export type ModalState =
   | { type: "create_collection"; params: { connectionId: string; databaseName: string } }
   | { type: "edit_database"; params: { connectionId: string; databaseName: string } }
   | { type: "delete_database"; params: { connectionId: string; databaseName: string } }
+  | { type: "import_database"; params: { connectionId: string; databaseName: string; schema?: string | null; tableName?: string | null } }
   | { type: "edit_table"; params: { connectionId: string; databaseName: string; schema?: string; tableName: string } }
   | { type: "delete_table"; params: { connectionId: string; databaseName: string; schema?: string; tableName: string } }
   | { type: "export_data"; params: { connectionId: string; databaseName: string; schema: string | null; tableName: string } }
@@ -294,6 +295,21 @@ function SidebarInner() {
           });
           break;
         }
+        case "import_database": {
+          const importDatabaseName = node.type === "database" ? node.name : node.metadata.database!;
+          const importSchema = node.type === "schema" ? node.name : node.metadata?.schema ?? null;
+          const importTableName = node.type === "table" ? node.name : null;
+          openModal({
+            type: "import_database",
+            params: {
+              connectionId: node.connectionId,
+              databaseName: importDatabaseName,
+              schema: importSchema,
+              tableName: importTableName,
+            },
+          });
+          break;
+        }
         case "clear_table_data":
           openModal({
             type: "clear_table_data",
@@ -427,7 +443,10 @@ function SidebarInner() {
           sysState,
         );
       case "schema":
-        return getSchemaMenuItems(callbacks);
+        return getSchemaMenuItems(
+          connections.find((c) => c.id === node.connectionId)!.type,
+          callbacks,
+        );
       case "table_folder":
         return getTableFolderMenuItems(callbacks);
       case "view_folder":

@@ -963,6 +963,13 @@ export type ExecuteConfirmedSqlMutationVariables = Exact<{
 
 export type ExecuteConfirmedSqlMutation = { __typename?: 'Mutation', ExecuteConfirmedSQL: { __typename?: 'AIChatMessage', Type: string, Text: string, RequiresConfirmation: boolean, Result?: { __typename?: 'RowsResult', Rows: Array<Array<string>>, TotalCount: number, Columns: Array<{ __typename?: 'Column', Type: string, Name: string }> } | null } };
 
+export type ImportSqlMutationVariables = Exact<{
+  input: ImportSqlInput;
+}>;
+
+
+export type ImportSqlMutation = { __typename?: 'Mutation', ImportSQL: { __typename?: 'ImportResult', Status: boolean, Message: string, Detail?: string | null } };
+
 export type LoginMutationVariables = Exact<{
   credentials: LoginCredentials;
 }>;
@@ -1485,6 +1492,41 @@ export function useExecuteConfirmedSqlMutation(baseOptions?: Apollo.MutationHook
 export type ExecuteConfirmedSqlMutationHookResult = ReturnType<typeof useExecuteConfirmedSqlMutation>;
 export type ExecuteConfirmedSqlMutationResult = Apollo.MutationResult<ExecuteConfirmedSqlMutation>;
 export type ExecuteConfirmedSqlMutationOptions = Apollo.BaseMutationOptions<ExecuteConfirmedSqlMutation, ExecuteConfirmedSqlMutationVariables>;
+export const ImportSqlDocument = gql`
+    mutation ImportSQL($input: ImportSQLInput!) {
+  ImportSQL(input: $input) {
+    Status
+    Message
+    Detail
+  }
+}
+    `;
+export type ImportSqlMutationFn = Apollo.MutationFunction<ImportSqlMutation, ImportSqlMutationVariables>;
+
+/**
+ * __useImportSqlMutation__
+ *
+ * To run a mutation, you first call `useImportSqlMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useImportSqlMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [importSqlMutation, { data, loading, error }] = useImportSqlMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useImportSqlMutation(baseOptions?: Apollo.MutationHookOptions<ImportSqlMutation, ImportSqlMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<ImportSqlMutation, ImportSqlMutationVariables>(ImportSqlDocument, options);
+      }
+export type ImportSqlMutationHookResult = ReturnType<typeof useImportSqlMutation>;
+export type ImportSqlMutationResult = Apollo.MutationResult<ImportSqlMutation>;
+export type ImportSqlMutationOptions = Apollo.BaseMutationOptions<ImportSqlMutation, ImportSqlMutationVariables>;
 export const LoginDocument = gql`
     mutation Login($credentials: LoginCredentials!) {
   Login(credentials: $credentials) {

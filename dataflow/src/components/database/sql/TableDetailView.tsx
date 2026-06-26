@@ -6,11 +6,13 @@ import { DataView } from '@/components/database/shared/DataView'
 import { FindBar } from '@/components/database/shared/FindBar'
 import { FilterTableModal } from './FilterTableModal'
 import { ExportDataModal } from './ExportDataModal'
+import { DatabaseImportModal } from '@/components/database/import/DatabaseImportModal'
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal'
 import { AlertModal } from '@/components/ui/AlertModal'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useI18n } from '@/i18n/useI18n'
+import { useConnectionStore } from '@/stores/useConnectionStore'
 
 interface TableDetailViewProps {
   tabId: string
@@ -92,6 +94,21 @@ function TableDetailViewContent({ connectionId, databaseName, tableName, schema 
           databaseName={databaseName}
           schema={schema}
           tableName={tableName}
+        />
+      )}
+
+      {state.showImportModal && (
+        <DatabaseImportModal
+          open={state.showImportModal}
+          onOpenChange={(open) => { if (!open) actions.setShowImportModal(false) }}
+          connectionId={connectionId}
+          databaseName={databaseName}
+          schema={schema}
+          tableName={tableName}
+          onSuccess={() => {
+            useConnectionStore.getState().triggerSidebarRefresh()
+            actions.refresh()
+          }}
         />
       )}
 

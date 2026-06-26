@@ -76,4 +76,28 @@ describe('graphql client auth fetch', () => {
       'X-WhoDB-Retry-Attempt': '1',
     })
   })
+
+  it('builds a GraphQL multipart request body for upload variables', async () => {
+    const { createGraphQLMultipartForm, hasUploadVariable } = await import('@/config/graphql-client')
+    const file = new File(['SELECT 1;'], 'seed.sql', { type: 'application/sql' })
+
+    expect(hasUploadVariable({ input: { File: file } })).toBe(true)
+    expect(hasUploadVariable({ input: { Script: 'SELECT 1;' } })).toBe(false)
+
+    const form = createGraphQLMultipartForm({
+      query: 'mutation ImportSQL($input: ImportSQLInput!) { ImportSQL(input: $input) { Status } }',
+      operationName: 'ImportSQL',
+      variables: { input: { File: file, Filename: file.name } },
+    })
+
+    expect(JSON.parse(String(form.get('operations')))).toEqual({
+      query: 'mutation ImportSQL($input: ImportSQLInput!) { ImportSQL(input: $input) { Status } }',
+      operationName: 'ImportSQL',
+      variables: { input: { File: null, Filename: 'seed.sql' } },
+    })
+    expect(JSON.parse(String(form.get('map')))).toEqual({
+      '0': ['variables.input.File'],
+    })
+    expect((form.get('0') as File).name).toBe('seed.sql')
+  })
 })

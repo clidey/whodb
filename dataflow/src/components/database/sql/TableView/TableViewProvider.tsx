@@ -56,6 +56,7 @@ export function TableViewProvider({ tabId, connectionId, databaseName, tableName
   const [filterConditions, setFilterConditions] = useState<FilterCondition[]>([])
 
   // ---- Modal state ----
+  const [showImportModal, setShowImportModal] = useState(false)
   const [showExportModal, setShowExportModal] = useState(false)
 
   // ---- Alert state ----
@@ -219,6 +220,7 @@ export function TableViewProvider({ tabId, connectionId, databaseName, tableName
     columnWidths,
     resizingColumn,
     resizedColumns,
+    showImportModal,
     showExportModal,
     isFilterModalOpen,
     alert,
@@ -236,6 +238,7 @@ export function TableViewProvider({ tabId, connectionId, databaseName, tableName
     handleResizeStart,
     setIsFilterModalOpen,
     handleFilterApply,
+    setShowImportModal,
     setShowExportModal,
     confirmDiscardAndContinue,
     showAlert,

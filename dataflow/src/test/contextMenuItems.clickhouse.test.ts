@@ -28,6 +28,7 @@ describe('ClickHouse table menu exposure', () => {
     const items = getTableMenuItems('CLICKHOUSE', callbacks)
     const itemLabels = labels(items)
 
+    expect(itemLabels).toContain('sidebar.menu.import')
     expect(itemLabels).toContain('sidebar.menu.exportData')
     expect(itemLabels).toContain('sidebar.menu.clearData')
     expect(itemLabels).toContain('sidebar.menu.deleteTable')

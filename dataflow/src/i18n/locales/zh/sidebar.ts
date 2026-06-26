@@ -4,6 +4,7 @@ export const zhSidebarMessages = {
   'sidebar.menu.newDatabase': '新建数据库',
   'sidebar.menu.newTable': '新建数据表',
   'sidebar.menu.newCollection': '新建集合',
+  'sidebar.menu.import': '导入',
   'sidebar.menu.exportData': '导出数据',
   'sidebar.menu.clearData': '清空数据',
   'sidebar.menu.duplicateTable': '复制数据表',

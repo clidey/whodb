@@ -9,6 +9,7 @@ import { CreateDatabaseModal } from '@/components/database/CreateDatabaseModal'
 import { EditDatabaseModal } from '@/components/database/EditDatabaseModal'
 import { DeleteDatabaseModal } from '@/components/database/DeleteDatabaseModal'
 import { ExportDatabaseModal } from '@/components/database/ExportDatabaseModal'
+import { DatabaseImportModal } from '@/components/database/import/DatabaseImportModal'
 import { CreateTableModal } from '@/components/database/sql/CreateTableModal'
 import { EditTableModal } from '@/components/database/sql/EditTable/EditTableModal'
 import { DeleteTableModal } from '@/components/database/sql/DeleteTableModal'
@@ -214,6 +215,28 @@ export function SidebarModals({
           connectionId={activeModal.params.connectionId}
           databaseName={activeModal.params.databaseName}
           schema={activeModal.params.schema}
+        />
+      )}
+
+      {/* Import Database */}
+      {activeModal?.type === "import_database" && (
+        <DatabaseImportModal
+          open
+          onOpenChange={onOpenChange}
+          connectionId={activeModal.params.connectionId}
+          databaseName={activeModal.params.databaseName}
+          schema={activeModal.params.schema}
+          tableName={activeModal.params.tableName}
+          onSuccess={(context) => {
+            refreshSchemaOrDb(
+              activeModal.params.connectionId,
+              context.databaseName,
+              context.schema ?? undefined,
+            )
+            if (context.tableName) {
+              useConnectionStore.getState().triggerTableRefresh()
+            }
+          }}
         />
       )}
 

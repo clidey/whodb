@@ -80,6 +80,38 @@ _Avoid_: hover state, keyboard focus
 The behavior that makes the **Sidebar Focus** visible in the sidebar tree.
 _Avoid_: expand all, jump to item
 
+**Database Import**:
+A database operation where a user brings external database content into the active database connection.
+_Avoid_: SQL import as the top-level flow, restore-only flow
+
+**Import Method**:
+The kind of external content a **Database Import** uses.
+_Avoid_: import mode, export format
+
+**Import Entry Point**:
+A UI action that opens **Database Import** from the user's current database context.
+_Avoid_: separate import feature, method-specific shortcut
+
+**Import Target Context**:
+The target selected for the active **Import Method** in a **Database Import** run.
+_Avoid_: fixed entry context, sidebar selection
+
+**SQL Script Import**:
+A **Database Import** method where a user provides SQL statements to execute against the active SQL database connection.
+_Avoid_: SQL data import, table file import, CSV import, database dump import
+
+**SQL Script Source**:
+The user-provided SQL content for a **SQL Script Import**, supplied either by uploading a SQL file or pasting SQL text.
+_Avoid_: import method, execution result
+
+**Import Result State**:
+The post-execution state of a **Database Import** that tells the user whether the import succeeded or failed.
+_Avoid_: toast-only feedback, auto-close
+
+**Table File Import**:
+A **Database Import** method where a user maps rows from a CSV or Excel file into one target table.
+_Avoid_: SQL script import, database dump import
+
 ## Relationships
 
 - A **MongoDB Collection** contains zero or more **MongoDB Documents**.
@@ -120,6 +152,29 @@ _Avoid_: expand all, jump to item
 - Confirming a **Workspace Tab Leave Guard** discards the protected **Workspace Tab**'s unsaved database edits before the leave action continues.
 - A **Workspace Tab Leave Guard** does not apply when returning from the **Dashboard Workspace** to the **Database Workspace**.
 - A **Sidebar Reveal** expands collapsed ancestors of the **Sidebar Focus** and scrolls the focus into view.
+- A **Database Import** has exactly one **Import Method** for a single import run.
+- A **Database Import** can start from multiple **Import Entry Points** before the user chooses an **Import Method**.
+- An **Import Entry Point** can appear in supported import contexts even when that context does not currently have a comparable export action.
+- When a comparable export action exists, the **Import Entry Point** should appear near it.
+- An **Import Entry Point** may preselect context such as a table, but it should not hide valid **Import Methods** only because the entry came from that context.
+- An **Import Entry Point** provides the initial **Import Target Context**.
+- A user can change the **Import Target Context** inside **Database Import** before execution when the active **Import Method** uses that target.
+- A **SQL Script Import** is an **Import Method** that executes SQL statements rather than mapping file rows to table columns.
+- A **SQL Script Import** uses database context; schema and table context from an **Import Entry Point** do not change SQL execution target.
+- A **SQL Script Import** lets users change the target database before execution.
+- A **SQL Script Import** does not use table context.
+- A **SQL Script Import** has exactly one **SQL Script Source**.
+- A **SQL Script Source** can be an uploaded SQL file or pasted SQL text.
+- A **SQL Script Import** shows an uploaded SQL file as a read-only review before execution.
+- A user can convert an uploaded SQL file source into editable pasted SQL text; after conversion, the **SQL Script Source** is pasted SQL text, not the uploaded file.
+- A **SQL Script Import** review is the confirmation step for execution; it does not require a second confirmation modal or a required acknowledgement checkbox.
+- A **SQL Script Import** submits the script as one backend import operation; the frontend does not split the script into individual statements.
+- A **Database Import** stays open after execution and shows an **Import Result State**.
+- A successful **Database Import** refreshes database navigation state and any relevant active table context.
+- A **Table File Import** maps CSV or Excel rows to columns in exactly one target table.
+- A **SQL Script Import** and a **Table File Import** are separate **Import Methods** under **Database Import**.
+- A disabled **Table File Import** option is shown from every first-release SQL **Import Entry Point**, so the **Database Import** flow communicates multiple import methods consistently.
+- A ClickHouse **SQL Script Import** accepts one SQL statement; multi-statement ClickHouse scripts are outside the first supported flow.
 
 ## Example Dialogue
 
@@ -134,6 +189,42 @@ _Avoid_: expand all, jump to item
 >
 > **Dev:** "If a user edits rows in one **Workspace Tab** and clicks another open tab, should we block the switch?"
 > **Domain expert:** "No. Keep the edits in their original **Workspace Tab** and allow ordinary tab switching. Use the **Workspace Tab Leave Guard** only when edits would be discarded by closing the tab, closing or refreshing the browser page, or switching to the dashboard."
+>
+> **Dev:** "Should uploading a `.sql` file use the same flow as uploading a CSV file?"
+> **Domain expert:** "They belong to the same **Database Import** entry point, but use different **Import Methods**. A `.sql` file is a **SQL Script Import** because the user is providing statements to execute. A CSV or Excel file is a **Table File Import** because the user is mapping rows into one table."
+>
+> **Dev:** "Should Import only be available from the database menu?"
+> **Domain expert:** "No. Use multiple **Import Entry Points**. When a SQL database or table context has an export action, place an import action beside it and open the same **Database Import** flow with that context preselected."
+>
+> **Dev:** "If Import opens from a table, should SQL import disappear?"
+> **Domain expert:** "No. A table **Import Entry Point** can preselect that table for table-aware methods, but **SQL Script Import** remains available because a SQL script can still be the chosen **Import Method**."
+>
+> **Dev:** "If Import opens from a table, is that target fixed?"
+> **Domain expert:** "No. The entry point provides initial context, but the active **Import Method** decides which parts matter. **SQL Script Import** uses database context only, while schema and table context belong to table-aware methods such as **Table File Import**."
+>
+> **Dev:** "Can users change where a **SQL Script Import** runs?"
+> **Domain expert:** "They can change the target database before execution. They cannot change schema or table target for **SQL Script Import**."
+>
+> **Dev:** "Should the first Import modal hide CSV and Excel until they work?"
+> **Domain expert:** "No. Show **Table File Import** as a disabled **Import Method** from every first-release SQL **Import Entry Point** so users understand Import supports multiple methods, while only **SQL Script Import** is enabled."
+>
+> **Dev:** "Should a SQL file import execute immediately after upload?"
+> **Domain expert:** "No. A **SQL Script Import** should show the uploaded script first, then execute only after the user confirms the import."
+>
+> **Dev:** "After users review the SQL, should we show another confirmation dialog before execution?"
+> **Domain expert:** "No. The **SQL Script Import** review is the confirmation step. Use a clear execution button and inline risk message instead of another modal or required checkbox."
+>
+> **Dev:** "Can users edit the SQL after uploading a file?"
+> **Domain expert:** "Not directly in the uploaded file review. They can convert the uploaded file into editable pasted SQL text, making the edited text the active **SQL Script Source**."
+>
+> **Dev:** "Should users be able to paste SQL instead of uploading a `.sql` file?"
+> **Domain expert:** "Yes. A **SQL Script Import** can use either uploaded file content or pasted SQL text as its **SQL Script Source**, but a single import run uses only one source."
+>
+> **Dev:** "Should the frontend split a SQL script into statements before import?"
+> **Domain expert:** "No. A **SQL Script Import** submits the **SQL Script Source** as one backend import operation so SQL parsing stays out of the frontend."
+>
+> **Dev:** "Should the Import modal close automatically after success?"
+> **Domain expert:** "No. Keep the **Database Import** open and show an **Import Result State** so users can see success or failure before leaving."
 
 ## Flagged Ambiguities
 
@@ -144,6 +235,15 @@ _Avoid_: expand all, jump to item
 - "focus" in the sidebar means **Sidebar Focus**, not hover state or keyboard focus.
 - "auto expand" in the sidebar means **Sidebar Reveal**, not expanding every folder in the tree.
 - "leave protection" means **Workspace Tab Leave Guard**, not only the browser's refresh or close-page warning.
+- "SQL import" means the **SQL Script Import** method inside **Database Import**, not the top-level import flow.
+- "Import entry" means an **Import Entry Point** into the same **Database Import** flow, not a separate method-specific import feature.
+- "Table import entry" means an **Import Entry Point** opened from table context, not a restriction to **Table File Import** only.
+- "Import target" means the chosen **Import Target Context** in the modal, not necessarily the sidebar node that opened the modal.
+- "SQL import target" means database context, not schema or table context.
+- "Postgres schema context" in **SQL Script Import** means entry metadata only; the first enabled SQL flow does not provide schema switching or implicitly apply schema context.
+- "Editing an uploaded SQL file" means converting the file review into pasted SQL text; it does not mutate the uploaded file or keep the file as the active source.
+- "SQL import confirmation" means pressing the execution button from the reviewed SQL state, not completing an additional modal or checkbox.
+- "ClickHouse SQL import" means a single-statement **SQL Script Import** unless multi-statement support is explicitly added later.
 - "original fields" in MongoDB means **Document Field Order**, not alphabetical field order.
 - The **Collection Table View** is the default MongoDB collection view.
 - The **Collection Table View** should not infer fields from an extra collection sample.
