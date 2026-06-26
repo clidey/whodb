@@ -285,6 +285,6 @@ func mapMongoFieldType(typeStr string) string {
 	case strings.Contains(lower, "object"), strings.Contains(lower, "json"):
 		return "object"
 	default:
-		return "string"
+		return mongoTypeString
 	}
 }

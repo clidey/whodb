@@ -402,7 +402,7 @@
       },
       "Query": {
         "SupportsAnalyze": false,
-        "SupportsScripts": false,
+        "SupportsScripts": true,
         "SupportsStreaming": false,
         "SupportsMultiStatement": false,
         "SupportsSqlImport": false,
@@ -477,10 +477,12 @@
       "Model": "Document",
       "Surfaces": [
         "Browser",
-        "Graph"
+        "Graph",
+        "Query"
       ],
       "RootActions": [
-        "Browse"
+        "Browse",
+        "Execute"
       ],
       "BrowsePath": [
         "Collection",
@@ -534,6 +536,21 @@
           ],
           "SingularLabel": "Index",
           "PluralLabel": "Indexes"
+        },
+        {
+          "Kind": "View",
+          "DataShape": "Document",
+          "Actions": [
+            "Inspect",
+            "ViewRows"
+          ],
+          "Views": [
+            "Grid",
+            "JSON",
+            "Metadata"
+          ],
+          "SingularLabel": "View",
+          "PluralLabel": "Views"
         }
       ]
     },
@@ -583,7 +600,7 @@
       },
       "Query": {
         "SupportsAnalyze": false,
-        "SupportsScripts": false,
+        "SupportsScripts": true,
         "SupportsStreaming": false,
         "SupportsMultiStatement": false,
         "SupportsSqlImport": false,
@@ -640,10 +657,12 @@
     "Contract": {
       "Model": "KeyValue",
       "Surfaces": [
-        "Browser"
+        "Browser",
+        "Query"
       ],
       "RootActions": [
-        "Browse"
+        "Browse",
+        "Execute"
       ],
       "BrowsePath": [
         "Database",
@@ -853,7 +872,7 @@
       },
       "Query": {
         "SupportsAnalyze": false,
-        "SupportsScripts": false,
+        "SupportsScripts": true,
         "SupportsStreaming": false,
         "SupportsMultiStatement": false,
         "SupportsSqlImport": false,
@@ -919,10 +938,12 @@
     "Contract": {
       "Model": "KeyValue",
       "Surfaces": [
-        "Browser"
+        "Browser",
+        "Query"
       ],
       "RootActions": [
-        "Browse"
+        "Browse",
+        "Execute"
       ],
       "BrowsePath": [
         "Database",
@@ -1141,7 +1162,7 @@
       },
       "Query": {
         "SupportsAnalyze": false,
-        "SupportsScripts": false,
+        "SupportsScripts": true,
         "SupportsStreaming": false,
         "SupportsMultiStatement": false,
         "SupportsSqlImport": false,
@@ -1226,10 +1247,12 @@
       "Model": "Document",
       "Surfaces": [
         "Browser",
-        "Graph"
+        "Graph",
+        "Query"
       ],
       "RootActions": [
-        "Browse"
+        "Browse",
+        "Execute"
       ],
       "BrowsePath": [
         "Collection",
@@ -1283,6 +1306,21 @@
           ],
           "SingularLabel": "Index",
           "PluralLabel": "Indexes"
+        },
+        {
+          "Kind": "View",
+          "DataShape": "Document",
+          "Actions": [
+            "Inspect",
+            "ViewRows"
+          ],
+          "Views": [
+            "Grid",
+            "JSON",
+            "Metadata"
+          ],
+          "SingularLabel": "View",
+          "PluralLabel": "Views"
         }
       ]
     },
@@ -1680,7 +1718,7 @@
       },
       "Query": {
         "SupportsAnalyze": false,
-        "SupportsScripts": false,
+        "SupportsScripts": true,
         "SupportsStreaming": false,
         "SupportsMultiStatement": false,
         "SupportsSqlImport": false,
@@ -1765,10 +1803,12 @@
       "Model": "Document",
       "Surfaces": [
         "Browser",
-        "Graph"
+        "Graph",
+        "Query"
       ],
       "RootActions": [
-        "Browse"
+        "Browse",
+        "Execute"
       ],
       "BrowsePath": [
         "Collection",
@@ -1822,6 +1862,21 @@
           ],
           "SingularLabel": "Index",
           "PluralLabel": "Indexes"
+        },
+        {
+          "Kind": "View",
+          "DataShape": "Document",
+          "Actions": [
+            "Inspect",
+            "ViewRows"
+          ],
+          "Views": [
+            "Grid",
+            "JSON",
+            "Metadata"
+          ],
+          "SingularLabel": "View",
+          "PluralLabel": "Views"
         }
       ]
     },
@@ -2581,7 +2636,7 @@
       },
       "Query": {
         "SupportsAnalyze": false,
-        "SupportsScripts": false,
+        "SupportsScripts": true,
         "SupportsStreaming": false,
         "SupportsMultiStatement": false,
         "SupportsSqlImport": false,
@@ -2638,10 +2693,12 @@
     "Contract": {
       "Model": "KeyValue",
       "Surfaces": [
-        "Browser"
+        "Browser",
+        "Query"
       ],
       "RootActions": [
-        "Browse"
+        "Browse",
+        "Execute"
       ],
       "BrowsePath": [
         "Database",
@@ -3035,7 +3092,7 @@
       },
       "Query": {
         "SupportsAnalyze": false,
-        "SupportsScripts": false,
+        "SupportsScripts": true,
         "SupportsStreaming": false,
         "SupportsMultiStatement": false,
         "SupportsSqlImport": false,
@@ -3092,10 +3149,12 @@
     "Contract": {
       "Model": "KeyValue",
       "Surfaces": [
-        "Browser"
+        "Browser",
+        "Query"
       ],
       "RootActions": [
-        "Browse"
+        "Browse",
+        "Execute"
       ],
       "BrowsePath": [
         "Database",

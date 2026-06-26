@@ -110,6 +110,23 @@ type ExploreSourceState = {
     trail?: SourceBrowserObject[];
 };
 
+const mongoIdentifierPattern = /^[A-Za-z_]\w*$/;
+const redisSimpleArgumentPattern = /^[^\s'"]+$/;
+
+function buildMongoScratchpadQuery(collectionName: string): string {
+    if (mongoIdentifierPattern.test(collectionName)) {
+        return `db.${collectionName}.find({})`;
+    }
+    return `db.getCollection(${JSON.stringify(collectionName)}).find({})`;
+}
+
+function buildRedisScratchpadQuery(keyName: string): string {
+    if (redisSimpleArgumentPattern.test(keyName)) {
+        return `TYPE ${keyName}`;
+    }
+    return `TYPE ${JSON.stringify(keyName)}`;
+}
+
 type EESearchBarProps = {
     columns: string[];
     columnTypes: (string | undefined)[];
@@ -295,11 +312,24 @@ export const ExploreStorageUnit: FC = () => {
     }, [sourceContent?.MIMEType, sourceContent?.Text]);
 
     const initialScratchpadQuery = useMemo(() => {
-        const qualified = schema ? `${schema}.${unitName}` : unitName;
+        const scratchpadUnitName = unitName ?? currentTableName;
+        if (!scratchpadUnitName) {
+            return "";
+        }
+        if (currentType === "MongoDB") {
+            return buildMongoScratchpadQuery(scratchpadUnitName);
+        }
+        if (currentType === "Redis") {
+            return buildRedisScratchpadQuery(scratchpadUnitName);
+        }
+        const qualified = schema ? `${schema}.${scratchpadUnitName}` : scratchpadUnitName;
         return `SELECT * FROM ${qualified} LIMIT 5`;
-    }, [schema, unitName]);
+    }, [currentTableName, currentType, schema, unitName]);
 
     const scratchpadQueryWithConditions = useMemo(() => {
+        if (currentType === "MongoDB" || currentType === "Redis") {
+            return initialScratchpadQuery;
+        }
         const whereClause = whereConditionToSql(whereCondition);
 
         if (!whereClause) {
@@ -314,7 +344,7 @@ export const ExploreStorageUnit: FC = () => {
         }
 
         return `${initialScratchpadQuery} WHERE ${whereClause}`;
-    }, [initialScratchpadQuery, whereCondition]);
+    }, [currentType, initialScratchpadQuery, whereCondition]);
 
     const [code, setCode] = useState(initialScratchpadQuery);
 
@@ -727,7 +757,7 @@ export const ExploreStorageUnit: FC = () => {
             return;
         }
         const query = specificCode ?? code;
-        if (isDestructiveQuery(query)) {
+        if (isDestructiveQuery(query, current.Type)) {
             setPendingScratchpadQuery(query);
         } else {
             doScratchpadExecute(query);
@@ -1193,7 +1223,7 @@ export const ExploreStorageUnit: FC = () => {
                         </div>
                     )}
                     {rawExecuteData != null && (
-                        !isDestructiveQuery(code) || rawExecuteData.RawExecute.Rows.length > 0 ? (
+                        !isDestructiveQuery(code, current?.Type) || rawExecuteData.RawExecute.Rows.length > 0 ? (
                             <StorageUnitTable
                                 key={scratchpadContainerWidth}
                                 columns={rawExecuteData.RawExecute.Columns.map(c => c.Name)}

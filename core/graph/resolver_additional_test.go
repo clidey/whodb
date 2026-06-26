@@ -352,11 +352,11 @@ func TestMutationExecuteConfirmedSQLMapsResultsAndErrors(t *testing.T) {
 }
 
 func TestMutationExecuteConfirmedSQLRejectsUnsupportedSourceScripts(t *testing.T) {
-	mock := testutil.NewPluginMock(engine.DatabaseType("Redis"))
+	mock := testutil.NewPluginMock(engine.DatabaseType("Memcached"))
 	setEngineMock(t, mock)
 
-	ctx := testSourceContext("Redis", nil)
-	if _, err := (&Resolver{}).Mutation().ExecuteConfirmedSQL(ctx, "DEL key", "sql:delete"); err == nil || !strings.Contains(err.Error(), "querying is not supported") {
+	ctx := testSourceContext("Memcached", nil)
+	if _, err := (&Resolver{}).Mutation().ExecuteConfirmedSQL(ctx, "delete key", "sql:delete"); err == nil || !strings.Contains(err.Error(), "querying is not supported") {
 		t.Fatalf("expected confirmed SQL to reject unsupported source scripts, got %v", err)
 	}
 }
@@ -431,11 +431,11 @@ func TestMutationImportSQLValidatesSourcesAndExecutesScripts(t *testing.T) {
 	})
 
 	t.Run("rejects sources without script execution", func(t *testing.T) {
-		mock := testutil.NewPluginMock(engine.DatabaseType("Redis"))
+		mock := testutil.NewPluginMock(engine.DatabaseType("Memcached"))
 		setEngineMock(t, mock)
 
-		script := "DEL key"
-		result, err := mutation.ImportSQL(testSourceContext("Redis", nil), model.ImportSQLInput{Script: &script})
+		script := "delete key"
+		result, err := mutation.ImportSQL(testSourceContext("Memcached", nil), model.ImportSQLInput{Script: &script})
 		if err == nil || result != nil || !strings.Contains(err.Error(), "querying is not supported") {
 			t.Fatalf("expected SQL import to reject unsupported source scripts, result=%#v err=%v", result, err)
 		}

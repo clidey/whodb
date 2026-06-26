@@ -17,7 +17,6 @@
 package mongodb
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -56,53 +55,26 @@ func (p *MongoDBPlugin) UpdateStorageUnit(config *engine.PluginConfig, database 
 		return false, errors.New("missing 'document' key in values map")
 	}
 
-	var jsonValues bson.M
-	if err := json.Unmarshal([]byte(documentJSON), &jsonValues); err != nil {
+	replacement, objectID, err := parseMongoReplacementDocument(documentJSON)
+	if err != nil {
 		log.WithError(err).WithFields(map[string]any{
-			"hostname":     config.Credentials.Hostname,
-			"database":     database,
-			"storageUnit":  storageUnit,
-			"documentJSON": documentJSON,
-		}).Error("Failed to unmarshal document JSON for MongoDB storage unit update")
+			"hostname":    config.Credentials.Hostname,
+			"database":    database,
+			"storageUnit": storageUnit,
+		}).Error("Failed to parse MongoDB replacement document")
 		return false, err
 	}
 
-	id, ok := jsonValues["_id"]
-	if !ok {
-		log.WithFields(map[string]any{
-			"hostname":       config.Credentials.Hostname,
-			"database":       database,
-			"storageUnit":    storageUnit,
-			"documentFields": getDocumentFieldNames(jsonValues),
-		}).Error("Missing '_id' field in document for MongoDB storage unit update")
-		return false, errors.New("missing '_id' field in the document")
-	}
-
-	objectID := normalizeMongoID(id)
-
-	delete(jsonValues, "_id")
-
-	filter := bson.M{"_id": objectID}
-	update := bson.M{"$set": jsonValues}
-
-	var objectIDLog string
-	switch v := objectID.(type) {
-	case bson.ObjectID:
-		objectIDLog = v.Hex()
-	default:
-		objectIDLog = fmt.Sprintf("%v", v)
-	}
-
 	// codeql[go/sql-injection]: MongoDB row updates intentionally apply the user-authored document body to the selected document.
-	result, err := collection.UpdateOne(ctx, filter, update)
+	result, err := collection.ReplaceOne(ctx, bson.D{{Key: "_id", Value: objectID}}, replacement)
 	if err != nil {
 		log.WithError(err).WithFields(map[string]any{
 			"hostname":       config.Credentials.Hostname,
 			"database":       database,
 			"storageUnit":    storageUnit,
-			"objectID":       objectIDLog,
+			"objectID":       formatMongoIDForLog(objectID),
 			"updatedColumns": updatedColumns,
-		}).Error("Failed to update document in MongoDB collection")
+		}).Error("Failed to replace document in MongoDB collection")
 		return false, handleMongoError(err)
 	}
 
@@ -111,8 +83,8 @@ func (p *MongoDBPlugin) UpdateStorageUnit(config *engine.PluginConfig, database 
 			"hostname":    config.Credentials.Hostname,
 			"database":    database,
 			"storageUnit": storageUnit,
-			"objectID":    objectIDLog,
-		}).Warn("No documents matched the filter for MongoDB storage unit update")
+			"objectID":    formatMongoIDForLog(objectID),
+		}).Warn("No documents matched the filter for MongoDB row replacement")
 		return false, errors.New("no documents matched the filter")
 	}
 	if result.ModifiedCount == 0 {
@@ -120,11 +92,50 @@ func (p *MongoDBPlugin) UpdateStorageUnit(config *engine.PluginConfig, database 
 			"hostname":     config.Credentials.Hostname,
 			"database":     database,
 			"storageUnit":  storageUnit,
-			"objectID":     objectIDLog,
+			"objectID":     formatMongoIDForLog(objectID),
 			"matchedCount": result.MatchedCount,
-		}).Warn("No documents were modified during MongoDB storage unit update")
-		return false, errors.New("no documents were updated")
+		}).Warn("No documents were modified during MongoDB row replacement")
+		return false, errors.New("no documents were replaced")
 	}
 
 	return true, nil
+}
+
+func parseMongoReplacementDocument(documentJSON string) (bson.D, any, error) {
+	var document bson.D
+	if err := bson.UnmarshalExtJSON([]byte(documentJSON), false, &document); err != nil {
+		return nil, nil, err
+	}
+
+	idIndex := -1
+	var idValue any
+	for index, element := range document {
+		if element.Key == "_id" {
+			idIndex = index
+			idValue = element.Value
+			break
+		}
+	}
+	if idIndex < 0 {
+		return nil, nil, errors.New("missing '_id' field in the document")
+	}
+
+	objectID := normalizeMongoID(idValue)
+	document[idIndex].Value = objectID
+	if idIndex > 0 {
+		idElement := document[idIndex]
+		copy(document[1:idIndex+1], document[0:idIndex])
+		document[0] = idElement
+	}
+
+	return document, objectID, nil
+}
+
+func formatMongoIDForLog(id any) string {
+	switch v := id.(type) {
+	case bson.ObjectID:
+		return v.Hex()
+	default:
+		return fmt.Sprintf("%v", v)
+	}
 }

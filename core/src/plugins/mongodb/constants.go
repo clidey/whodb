@@ -14,13 +14,9 @@
  * limitations under the License.
  */
 
-package redis
+package mongodb
 
 const (
-	redisTypeString = "string"
-	redisTypeHash   = "hash"
-	redisTypeList   = "list"
-	redisKeyIndex   = "index"
-	redisKeyValue   = "value"
-	redisTypeZSet   = "zset"
+	mongoFieldCollection = "collection"
+	mongoTypeString      = "string"
 )

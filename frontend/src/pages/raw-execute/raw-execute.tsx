@@ -284,7 +284,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
     const dispatch = useAppDispatch();
     const [mode, setMode] = useState<string>(cellData?.mode ?? ActionOptions.Query);
     const [code, setCode] = useState(cellData?.code ?? "");
-    const [, setSubmittedCode] = useState("");
+    const [submittedCode, setSubmittedCode] = useState("");
     const [history, setHistory] = useState<{id: string, item: string, status: boolean, date: Date}[]>(() => {
         if (!cellData?.history) return [];
         // Ensure all dates are proper Date objects
@@ -295,6 +295,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
     });
     const currentDatabase = useAppSelector(state => state.auth.current?.Database);
     const currentId = useAppSelector(state => state.auth.current?.Id);
+    const currentType = useAppSelector(state => state.auth.current?.Type);
     const handleExecute = useRef<(code: string) => Promise<any>>(() => Promise.resolve());
     const [historyOpen, setHistoryOpen] = useState(false);
     const [error, setError] = useState<Error | null>(null);
@@ -411,7 +412,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
             return;
         }
         const currentCode = historyCode ?? code;
-        const needsConfirmation = mode !== ActionOptions.Query || isDestructiveQuery(currentCode);
+        const needsConfirmation = mode !== ActionOptions.Query || isDestructiveQuery(currentCode, currentType);
         if (needsConfirmation) {
             setPendingExecuteCode(currentCode);
         } else {
@@ -419,6 +420,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
         }
     }, [
 	code,
+	currentType,
 	mode,
 	doExecute
 ]);
@@ -534,7 +536,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                     }}
                 >
                     <Suspense fallback={<Loading />}>
-                        <Component code={code} handleExecuteRef={handleExecute} modelType={modelType?.modelType ?? ''}
+                        <Component code={submittedCode} handleExecuteRef={handleExecute} modelType={modelType?.modelType ?? ''}
                                    schema={currentDatabase ?? ''} token={modelType?.token} providerId={currentId}
                                    containerWidth={containerWidth} />
                     </Suspense>
@@ -545,7 +547,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
 	mode,
 	allActionOptions,
 	allPlugins,
-	code,
+	submittedCode,
 	modelType,
 	userResizedHeight,
 	isResizingResults,

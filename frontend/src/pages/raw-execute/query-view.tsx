@@ -21,6 +21,7 @@ import {StorageUnitTable} from "../../components/table";
 import {RawExecuteDocument} from "../../generated/graphql";
 import {CheckCircleIcon} from "../../components/heroicons";
 import {useAppSelector} from "../../store/hooks";
+import {isDestructiveQuery} from "../../utils/query-utils";
 
 type PromiseFunction = (code: string) => Promise<any>;
 
@@ -32,24 +33,6 @@ export type IPluginProps = {
     token?: string;
     schema: string;
     containerWidth?: number;
-}
-
-function isSQLQueryAction(code?: string): boolean {
-    if (code == null) {
-        return true;
-    }
-    // Remove comments and trim
-    const cleaned = code
-        .split("\n")
-        .filter((text: string) => !text.trim().startsWith("--"))
-        .join("\n")
-        .trim()
-        .toLowerCase();
-
-    // Match common SQL query starting keywords
-    // Accepts: select, with, values, show, explain, describe, etc.
-    // (add more as needed)
-    return /^(select|with|values|show|explain|describe)\b/.test(cleaned);
 }
 
 export const QueryView: FC<IPluginProps> = ({ code, handleExecuteRef, containerWidth }) => {
@@ -68,18 +51,18 @@ export const QueryView: FC<IPluginProps> = ({ code, handleExecuteRef, containerW
                 throw result.error;
             }
             const data = result.data;
-            if (isSQLQueryAction(code) || (data?.RawExecute?.Rows?.length ?? 0) > 0) {
+            if (!isDestructiveQuery(code, currentType)) {
                 return data?.RawExecute ?? null;
             }
             return null;
         };
-    }, [rawExecute, handleExecuteRef, code]);
+    }, [rawExecute, handleExecuteRef, currentType]);
 
     if (data == null) {
         return null;
     }
 
-    if (isSQLQueryAction(code) || data.RawExecute.Rows.length > 0) {
+    if (!isDestructiveQuery(code, currentType)) {
         return (
             <div className="flex flex-col w-full" data-testid="cell-query-output">
                 {
