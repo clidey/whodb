@@ -92,6 +92,34 @@ func TestPerformSourceLoginDisabledCredentialsEmitsDeniedAudit(t *testing.T) {
 	}
 }
 
+func TestPerformSourceLoginPreconfiguredProfileBypassesDisabledCredentials(t *testing.T) {
+	originalDisableCredentialForm := env.DisableCredentialForm
+	env.DisableCredentialForm = true
+	t.Cleanup(func() {
+		env.DisableCredentialForm = originalDisableCredentialForm
+	})
+
+	audit.SetAuditService(nil)
+	audit.SetActorProvider(nil)
+	t.Cleanup(func() {
+		audit.SetAuditService(nil)
+		audit.SetActorProvider(nil)
+	})
+
+	// A login originating from a preconfigured profile carries a non-empty
+	// profileSource and must not be rejected by the disabled credential form
+	// gate. An unknown source type is used so execution stops at the catalog
+	// lookup (returning "unauthorized") rather than attempting a real
+	// connection; the key assertion is that the gate did not reject it.
+	_, err := performSourceLogin(context.Background(), &source.Credentials{SourceType: "nonexistent-source"}, "environment")
+	if err == nil {
+		t.Fatal("expected an error for an unknown source type")
+	}
+	if err.Error() == "login with credentials is disabled; use preconfigured connections" {
+		t.Fatal("preconfigured profile login should bypass the disabled credential form gate")
+	}
+}
+
 func strPtr(value string) *string {
 	return &value
 }

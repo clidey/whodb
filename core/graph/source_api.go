@@ -65,7 +65,11 @@ func performSourceLogin(ctx context.Context, credentials *source.Credentials, pr
 		})
 	}
 
-	if env.DisableCredentialForm {
+	// DisableCredentialForm only forbids logging in with manually entered
+	// credentials. Logins originating from a preconfigured profile (env vars,
+	// config file, cloud discovery) carry a non-empty profileSource and must
+	// still be allowed, otherwise enabling the flag makes login impossible.
+	if env.DisableCredentialForm && profileSource == "" {
 		log.WithField("sourceType", credentials.SourceType).Error("Login with credentials is disabled; use preconfigured connections")
 		err := errors.New("login with credentials is disabled; use preconfigured connections")
 		recordAudit(err)
