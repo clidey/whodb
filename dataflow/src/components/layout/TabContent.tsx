@@ -63,6 +63,7 @@ export function TabContent() {
                         databaseName={tab.databaseName}
                         tableName={tab.tableName}
                         schema={tab.schemaName}
+                        storageUnitType={tab.storageUnitType}
                     />
                 );
             case 'collection':

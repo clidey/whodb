@@ -101,6 +101,8 @@ export const zhCommonMessages = {
   'database.import.uploadSqlFile': '上传 SQL 文件',
   'database.import.selectedFile': '已选择：{filename}',
   'database.import.editAsText': '转成编辑',
+  'database.import.sqlFilePreview': 'SQL 文件预览',
+  'database.import.sqlTextInput': 'SQL 文本输入',
   'database.import.pastePlaceholder': '粘贴要执行的 SQL 脚本...',
   'database.import.running': '导入中...',
   'database.import.reviewWarning': '请在执行前检查 SQL 内容。执行后可能创建、修改或删除数据库对象。',

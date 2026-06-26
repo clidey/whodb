@@ -107,6 +107,8 @@ export const enCommonMessages = {
   'database.import.uploadSqlFile': 'Upload SQL file',
   'database.import.selectedFile': 'Selected: {filename}',
   'database.import.editAsText': 'Edit as text',
+  'database.import.sqlFilePreview': 'SQL file preview',
+  'database.import.sqlTextInput': 'SQL text input',
   'database.import.pastePlaceholder': 'Paste the SQL script to execute...',
   'database.import.running': 'Importing...',
   'database.import.reviewWarning': 'Review the SQL before running it. Execution may create, modify, or delete database objects.',

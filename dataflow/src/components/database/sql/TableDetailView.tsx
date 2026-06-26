@@ -20,6 +20,7 @@ interface TableDetailViewProps {
   databaseName: string
   tableName: string
   schema?: string
+  storageUnitType?: 'table' | 'view'
 }
 
 export function TableDetailView(props: TableDetailViewProps) {
@@ -30,7 +31,7 @@ export function TableDetailView(props: TableDetailViewProps) {
   )
 }
 
-function TableDetailViewContent({ connectionId, databaseName, tableName, schema }: TableDetailViewProps) {
+function TableDetailViewContent({ connectionId, databaseName, tableName, schema, storageUnitType }: TableDetailViewProps) {
   const { t } = useI18n()
   const { state, actions } = useTableView()
 
@@ -51,7 +52,13 @@ function TableDetailViewContent({ connectionId, databaseName, tableName, schema 
       data-qa-resource-type="table"
       data-qa-resource-id={tableName}
     >
-      <TableViewToolbar connectionId={connectionId} databaseName={databaseName} tableName={tableName} schema={schema} />
+      <TableViewToolbar
+        connectionId={connectionId}
+        databaseName={databaseName}
+        tableName={tableName}
+        schema={schema}
+        storageUnitType={storageUnitType}
+      />
 
       {state.error ? (
         <DataView.Error message={state.error} onRetry={() => actions.handleSubmitRequest()} />

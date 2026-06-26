@@ -340,6 +340,7 @@ function SqlSourceSelector() {
           type="button"
           onClick={() => setSourceKind('file')}
           disabled={state.isSubmitting}
+          aria-pressed={sourceKind === 'file'}
           className={cn(
             'rounded-sm px-3 py-1.5 text-sm transition-colors',
             sourceKind === 'file' ? 'bg-highlight-background text-foreground' : 'text-muted-foreground hover:text-foreground',
@@ -351,6 +352,7 @@ function SqlSourceSelector() {
           type="button"
           onClick={() => setSourceKind('text')}
           disabled={state.isSubmitting}
+          aria-pressed={sourceKind === 'text'}
           className={cn(
             'rounded-sm px-3 py-1.5 text-sm transition-colors',
             sourceKind === 'text' ? 'bg-highlight-background text-foreground' : 'text-muted-foreground hover:text-foreground',
@@ -397,6 +399,7 @@ function SqlFileSource() {
             value={fileSource.preview}
             readOnly
             aria-readonly="true"
+            aria-label={t('database.import.sqlFilePreview')}
             className="h-52 resize-none font-mono text-xs"
           />
         </div>
@@ -416,6 +419,7 @@ function SqlTextSource() {
       value={script}
       onChange={(event) => handleScriptChange(event.target.value)}
       disabled={state.isSubmitting}
+      aria-label={t('database.import.sqlTextInput')}
       placeholder={t('database.import.pastePlaceholder')}
       className="h-60 resize-none font-mono text-xs"
     />
@@ -429,7 +433,7 @@ function ImportResultFeedback() {
 
   if (state.isSubmitting) {
     return (
-      <div className="flex items-center gap-2 rounded-md border border-primary/20 bg-primary/5 p-3 text-sm text-primary">
+      <div role="status" className="flex items-center gap-2 rounded-md border border-primary/20 bg-primary/5 p-3 text-sm text-primary">
         <Loader2 className="h-4 w-4 animate-spin" />
         <span>{t('database.import.running')}</span>
       </div>
@@ -447,7 +451,7 @@ function ImportResultFeedback() {
 
   if (result.status) {
     return (
-      <div className="flex items-center gap-2 rounded-md border border-success/20 bg-success/5 p-3 text-sm text-success">
+      <div role="status" className="flex items-center gap-2 rounded-md border border-success/20 bg-success/5 p-3 text-sm text-success">
         <CheckCircle className="h-4 w-4" />
         <span>{t('database.import.successMessage')}</span>
       </div>
