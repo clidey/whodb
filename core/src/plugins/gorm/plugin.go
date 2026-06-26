@@ -232,6 +232,12 @@ type GormPluginFunctions interface {
 	// GetDatabaseType returns the database type
 	GetDatabaseType() engine.DatabaseType
 
+	// GetColumnsForTable returns ordered table columns with relational metadata.
+	GetColumnsForTable(config *engine.PluginConfig, schema string, storageUnit string) ([]engine.Column, error)
+
+	// MarkGeneratedColumns enriches columns with auto-increment and computed column flags.
+	MarkGeneratedColumns(config *engine.PluginConfig, schema string, storageUnit string, columns []engine.Column) error
+
 	// GetColumnConstraints retrieves column constraints for a table
 	GetColumnConstraints(config *engine.PluginConfig, schema string, storageUnit string) (map[string]map[string]any, error)
 

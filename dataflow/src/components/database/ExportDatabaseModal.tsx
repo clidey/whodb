@@ -1,7 +1,8 @@
 import { createContext, use, useCallback, useState, type ReactNode } from 'react'
 import { Database, FileJson, FileSpreadsheet, FileCode, FileText } from 'lucide-react'
-import { useRawExecuteLazyQuery } from '@/generated/graphql'
-import { toCSV, toJSON, toSQL, toExcel, downloadBlob } from '@/utils/export-utils'
+import { SqlDataExportMode, useCreateSqlDataExportMutation, useRawExecuteLazyQuery } from '@/generated/graphql'
+import { toCSV, toJSON, toExcel, downloadBlob } from '@/utils/export-utils'
+import { fetchExportDownloadBlob } from '@/utils/export-download'
 import JSZip from 'jszip'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { ModalForm, useModalForm } from '@/components/ui/ModalForm'
@@ -10,6 +11,7 @@ import { ExportProgress, ExportFooter } from '@/components/database/shared/Expor
 import { useI18n } from '@/i18n/useI18n'
 import { useConnectionStore } from '@/stores/useConnectionStore'
 import { buildStorageUnitReference } from '@/utils/ddl-sql'
+import { resolveSchemaParam } from '@/utils/database-features'
 import {
   buildDatabaseExportPlan,
   formatDatabaseExportEntryName,
@@ -29,11 +31,8 @@ const FORMAT_OPTIONS: FormatOption<ExportFormat>[] = [
   { id: 'excel', label: 'Excel', icon: FileSpreadsheet },
 ]
 
-const FORMAT_EXTENSIONS: Record<ExportFormat, string> = {
-  csv: 'csv',
-  json: 'json',
-  sql: 'sql',
-  excel: 'xlsx',
+function isViewStorageUnit(type: string): boolean {
+  return type.toLowerCase().includes('view')
 }
 
 // ---------------------------------------------------------------------------
@@ -107,6 +106,7 @@ function ExportDatabaseBridge({
   const [statusText, setStatusText] = useState('')
   const { actions } = useModalForm()
   const [executeQuery] = useRawExecuteLazyQuery({ fetchPolicy: 'no-cache' })
+  const [createSQLDataExport] = useCreateSqlDataExportMutation()
   const connections = useConnectionStore((s) => s.connections)
   const fetchSchemas = useConnectionStore((s) => s.fetchSchemas)
   const fetchTables = useConnectionStore((s) => s.fetchTables)
@@ -137,6 +137,7 @@ function ExportDatabaseBridge({
       for (const schemaName of schemasToExport) {
         const tables = await fetchTables(connectionId, databaseName, schemaName)
         for (const table of tables) {
+          if (format === 'sql' && isViewStorageUnit(table.type)) continue
           exportTargets.push({ schema: schemaName, tableName: table.name })
         }
       }
@@ -156,6 +157,29 @@ function ExportDatabaseBridge({
         }))
 
         try {
+          if (format === 'sql') {
+            const graphqlSchema = resolveSchemaParam(connectionType, databaseName, target.schema)
+            const { data } = await createSQLDataExport({
+              variables: {
+                input: {
+                  Schema: graphqlSchema,
+                  StorageUnit: target.tableName,
+                  Mode: SqlDataExportMode.Insert,
+                },
+              },
+              context: { database: databaseName },
+            })
+
+            if (!data?.CreateSQLDataExport) {
+              failedTables.push(targetLabel)
+              continue
+            }
+
+            const blob = await fetchExportDownloadBlob(data.CreateSQLDataExport, databaseName)
+            zip.file(formatDatabaseExportEntryName(connectionType, target.schema, target.tableName, format), blob)
+            continue
+          }
+
           const qualifiedName = buildStorageUnitReference(connectionType, target.tableName, target.schema)
           const { data, error } = await executeQuery({
             variables: { query: `SELECT * FROM ${qualifiedName}` },
@@ -173,7 +197,6 @@ function ExportDatabaseBridge({
           switch (format) {
             case 'csv': blob = toCSV(Columns, Rows); break
             case 'json': blob = toJSON(Columns, Rows); break
-            case 'sql': blob = toSQL(qualifiedName, Columns, Rows); break
             case 'excel': blob = toExcel(target.tableName, Columns, Rows); break
           }
 
@@ -214,6 +237,7 @@ function ExportDatabaseBridge({
     actions,
     connectionId,
     connections,
+    createSQLDataExport,
     databaseName,
     executeQuery,
     fetchSchemas,

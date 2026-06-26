@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 
 	"github.com/clidey/whodb/core/graph/model"
 )
@@ -53,6 +54,16 @@ func (b *BasePlugin) StorageUnitExists(_ *PluginConfig, _ string, _ string) (boo
 }
 
 func (b *BasePlugin) AddStorageUnit(_ *PluginConfig, _ string, _ string, _ []Record) (bool, error) {
+	return false, errors.ErrUnsupported
+}
+
+// AddStorageUnitWithOptions returns unsupported for plugins that do not create storage units with options.
+func (b *BasePlugin) AddStorageUnitWithOptions(_ *PluginConfig, _ string, _ string, _ []Record, _ CreateStorageUnitOptions) (bool, error) {
+	return false, errors.ErrUnsupported
+}
+
+// DropStorageUnit returns unsupported for plugins that do not drop storage units.
+func (b *BasePlugin) DropStorageUnit(_ *PluginConfig, _ string, _ string) (bool, error) {
 	return false, errors.ErrUnsupported
 }
 
@@ -102,6 +113,11 @@ func (b *BasePlugin) Chat(_ *PluginConfig, _ string, _ string, _ string) ([]*Cha
 }
 
 func (b *BasePlugin) ExportData(_ *PluginConfig, _ string, _ string, _ func([]string) error, _ []map[string]any) error {
+	return errors.ErrUnsupported
+}
+
+// ExportSQLData returns unsupported for plugins that do not provide SQL Data Export.
+func (b *BasePlugin) ExportSQLData(_ *PluginConfig, _ *SQLDataExportRequest, _ io.Writer) error {
 	return errors.ErrUnsupported
 }
 

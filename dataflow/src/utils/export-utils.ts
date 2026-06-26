@@ -54,31 +54,6 @@ export function toJSON(
 }
 
 /**
- * Converts query result columns + rows to SQL INSERT statements.
- * Value quoting heuristic: NULL string → NULL keyword,
- * finite number → unquoted, otherwise → single-quoted with escaping.
- */
-export function toSQL(
-    tableName: string,
-    columns: Array<{ Name: string }>,
-    rows: string[][]
-): Blob {
-    const colNames = columns.map(c => c.Name).join(', ');
-    const lines = rows.map(row => {
-        const values = row.map(val => {
-            if (val === null || val === undefined || val === 'NULL') return 'NULL';
-            if (val === '') return "''";
-            const num = Number(val);
-            if (Number.isFinite(num)) return val;
-            return "'" + val.replace(/'/g, "''") + "'";
-        });
-        return `INSERT INTO ${tableName} (${colNames}) VALUES (${values.join(', ')});`;
-    });
-    const sql = lines.join('\n');
-    return new Blob([sql], { type: 'text/sql;charset=utf-8' });
-}
-
-/**
  * Converts query result columns + rows to an Excel (.xlsx) Blob.
  */
 export function toExcel(

@@ -2,6 +2,7 @@ import { TableViewProvider, useTableView } from './TableView/TableViewProvider'
 import { TableViewDataGrid } from './TableView/TableView.DataGrid'
 import { TableViewToolbar } from './TableView/TableView.Toolbar'
 import { buildPreviewSql, summarizeChanges } from './TableView/changeset-sql-preview'
+import { buildTableSortInput, buildTableWhereInput } from './TableView/query-inputs'
 import { DataView } from '@/components/database/shared/DataView'
 import { FindBar } from '@/components/database/shared/FindBar'
 import { FilterTableModal } from './FilterTableModal'
@@ -37,6 +38,8 @@ function TableDetailViewContent({ connectionId, databaseName, tableName, schema,
 
   const previewStatements = buildPreviewSql(tableName, state.changes)
   const summary = summarizeChanges(state.changes)
+  const exportWhere = buildTableWhereInput(state.filterConditions, state.data?.columnTypes)
+  const exportSort = buildTableSortInput(state.sortColumn, state.sortDirection)
 
   return (
     <div
@@ -101,6 +104,10 @@ function TableDetailViewContent({ connectionId, databaseName, tableName, schema,
           databaseName={databaseName}
           schema={schema}
           tableName={tableName}
+          storageUnitType={storageUnitType}
+          primaryKeyColumns={state.data?.primaryKeyColumns ?? []}
+          where={exportWhere}
+          sort={exportSort}
         />
       )}
 

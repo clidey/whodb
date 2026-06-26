@@ -346,3 +346,140 @@ func TestBuildImportMappingInputs(t *testing.T) {
 		}
 	})
 }
+
+func TestBuildNewTablePreview(t *testing.T) {
+	metadata := &engine.DatabaseMetadata{
+		TypeDefinitions: []engine.TypeDefinition{
+			{ID: "VARCHAR", Category: engine.TypeCategoryText},
+			{ID: "TEXT", Category: engine.TypeCategoryText},
+		},
+	}
+
+	preview := buildNewTablePreview("Customer Import.csv", []string{"Full Name", "E-mail", "123 Code"}, metadata)
+	if preview.TableName != "customer_import" {
+		t.Fatalf("unexpected table name: %q", preview.TableName)
+	}
+	if len(preview.Columns) != 3 {
+		t.Fatalf("expected 3 columns, got %d", len(preview.Columns))
+	}
+	if preview.Columns[0].TargetColumn != "full_name" || preview.Columns[1].TargetColumn != "e_mail" || preview.Columns[2].TargetColumn != "_123_code" {
+		t.Fatalf("unexpected target columns: %#v", preview.Columns)
+	}
+	if preview.Columns[0].Type != "TEXT" {
+		t.Fatalf("expected TEXT default type, got %q", preview.Columns[0].Type)
+	}
+	if len(preview.Issues) != 0 {
+		t.Fatalf("expected no issues, got %#v", preview.Issues)
+	}
+
+	duplicatePreview := buildNewTablePreview("!!!.csv", []string{"A B", "A-B"}, metadata)
+	if duplicatePreview.TableName != "" {
+		t.Fatalf("expected empty table name, got %q", duplicatePreview.TableName)
+	}
+	if len(duplicatePreview.Issues) != 3 {
+		t.Fatalf("expected table-name plus duplicate issues, got %#v", duplicatePreview.Issues)
+	}
+}
+
+func TestResolveNewTableImportColumns(t *testing.T) {
+	metadata := &engine.DatabaseMetadata{
+		TypeDefinitions: []engine.TypeDefinition{
+			{ID: "TEXT", Category: engine.TypeCategoryText},
+			{ID: "INT", Category: engine.TypeCategoryNumeric},
+		},
+	}
+	source := []string{"id", "name", "notes"}
+
+	inputs := []*model.ImportNewTableColumnInput{
+		{
+			SourceColumn: "id",
+			TargetColumn: stringPointer("id"),
+			Type:         stringPointer("INT"),
+			Nullable:     false,
+			Primary:      true,
+		},
+		{
+			SourceColumn: "name",
+			TargetColumn: stringPointer("name"),
+			Type:         stringPointer("TEXT"),
+			Nullable:     true,
+		},
+		{
+			SourceColumn: "notes",
+			TargetColumn: stringPointer("notes"),
+			Type:         stringPointer("TEXT"),
+			Nullable:     true,
+			Skip:         true,
+		},
+	}
+
+	resolved, fields, err := resolveNewTableImportColumns(source, inputs, metadata)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(resolved) != 3 || !resolved[2].skip {
+		t.Fatalf("unexpected resolved columns: %#v", resolved)
+	}
+	if len(fields) != 2 {
+		t.Fatalf("expected 2 fields after skipping one column, got %d", len(fields))
+	}
+	if fields[0].Extra["Primary"] != "true" || fields[0].Extra["Nullable"] != "false" {
+		t.Fatalf("unexpected primary field metadata: %#v", fields[0].Extra)
+	}
+
+	t.Run("all columns skipped", func(t *testing.T) {
+		_, _, err := resolveNewTableImportColumns([]string{"a"}, []*model.ImportNewTableColumnInput{
+			{SourceColumn: "a", Skip: true, Nullable: true},
+		}, metadata)
+		if err == nil || validationKeyFromError(err) != importValidationAllColumnsSkipped {
+			t.Fatalf("expected %q error, got %v", importValidationAllColumnsSkipped, err)
+		}
+	})
+
+	t.Run("primary skipped", func(t *testing.T) {
+		_, _, err := resolveNewTableImportColumns([]string{"a"}, []*model.ImportNewTableColumnInput{
+			{SourceColumn: "a", Primary: true, Skip: true},
+		}, metadata)
+		if err == nil || validationKeyFromError(err) != importValidationPrimarySkipped {
+			t.Fatalf("expected %q error, got %v", importValidationPrimarySkipped, err)
+		}
+	})
+
+	t.Run("primary nullable", func(t *testing.T) {
+		_, _, err := resolveNewTableImportColumns([]string{"a"}, []*model.ImportNewTableColumnInput{
+			{
+				SourceColumn: "a",
+				TargetColumn: stringPointer("a"),
+				Type:         stringPointer("INT"),
+				Nullable:     true,
+				Primary:      true,
+			},
+		}, metadata)
+		if err == nil || validationKeyFromError(err) != importValidationPrimaryNullable {
+			t.Fatalf("expected %q error, got %v", importValidationPrimaryNullable, err)
+		}
+	})
+
+	t.Run("duplicate target column", func(t *testing.T) {
+		_, _, err := resolveNewTableImportColumns([]string{"a", "b"}, []*model.ImportNewTableColumnInput{
+			{SourceColumn: "a", TargetColumn: stringPointer("same"), Type: stringPointer("TEXT"), Nullable: true},
+			{SourceColumn: "b", TargetColumn: stringPointer("same"), Type: stringPointer("TEXT"), Nullable: true},
+		}, metadata)
+		if err == nil || validationKeyFromError(err) != importValidationColumnDuplicate {
+			t.Fatalf("expected %q error, got %v", importValidationColumnDuplicate, err)
+		}
+	})
+
+	t.Run("invalid column type", func(t *testing.T) {
+		_, _, err := resolveNewTableImportColumns([]string{"a"}, []*model.ImportNewTableColumnInput{
+			{SourceColumn: "a", TargetColumn: stringPointer("a"), Type: stringPointer("NOPE"), Nullable: true},
+		}, metadata)
+		if err == nil || validationKeyFromError(err) != importValidationColumnTypeInvalid {
+			t.Fatalf("expected %q error, got %v", importValidationColumnTypeInvalid, err)
+		}
+	})
+}
+
+func stringPointer(value string) *string {
+	return &value
+}

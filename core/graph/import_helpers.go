@@ -21,8 +21,10 @@ import (
 	"encoding/csv"
 	"errors"
 	"io"
+	"path/filepath"
 	"sort"
 	"strings"
+	"unicode"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/clidey/whodb/core/graph/model"
@@ -42,6 +44,16 @@ type importMapping struct {
 	targetName  string
 	targetType  string
 	isNullable  bool
+}
+
+type importNewTableColumn struct {
+	sourceIndex  int
+	sourceColumn string
+	targetName   string
+	targetType   string
+	isNullable   bool
+	isPrimary    bool
+	skip         bool
 }
 
 type importValidationError struct {
@@ -507,6 +519,214 @@ func buildImportMappingInputs(
 		return nil, nil, err
 	}
 	return mappings, nil, nil
+}
+
+func buildNewTablePreview(filename string, sourceColumns []string, metadata *engine.DatabaseMetadata) *model.ImportNewTablePreview {
+	tableName := normalizeImportIdentifier(strings.TrimSuffix(filepath.Base(filename), filepath.Ext(filename)))
+	defaultType := defaultImportTextType(metadata)
+	columns := make([]*model.ImportNewTableColumnPreview, 0, len(sourceColumns))
+	issues := make([]*model.ImportSuggestionIssue, 0)
+
+	if tableName == "" {
+		issues = append(issues, importSuggestionIssue(importValidationTableNameEmpty, "tableName", nil))
+	}
+
+	seenTargets := make(map[string]string, len(sourceColumns))
+	for _, sourceColumn := range sourceColumns {
+		targetColumn := normalizeImportIdentifier(sourceColumn)
+		if targetColumn == "" {
+			sourceCopy := sourceColumn
+			issues = append(issues, importSuggestionIssue(importValidationColumnNameEmpty, "targetColumn", &sourceCopy))
+		} else if firstSource, exists := seenTargets[targetColumn]; exists {
+			sourceCopy := sourceColumn
+			issues = append(issues, importSuggestionIssue(importValidationColumnDuplicate, "targetColumn", &sourceCopy))
+			firstSourceCopy := firstSource
+			issues = append(issues, importSuggestionIssue(importValidationColumnDuplicate, "targetColumn", &firstSourceCopy))
+		} else {
+			seenTargets[targetColumn] = sourceColumn
+		}
+
+		columns = append(columns, &model.ImportNewTableColumnPreview{
+			SourceColumn: sourceColumn,
+			TargetColumn: targetColumn,
+			Type:         defaultType,
+			Nullable:     true,
+			Primary:      false,
+			Skip:         false,
+		})
+	}
+
+	return &model.ImportNewTablePreview{
+		TableName: tableName,
+		Columns:   columns,
+		Issues:    issues,
+	}
+}
+
+func importSuggestionIssue(key string, field string, sourceColumn *string) *model.ImportSuggestionIssue {
+	return &model.ImportSuggestionIssue{
+		Key:          key,
+		Field:        field,
+		SourceColumn: sourceColumn,
+	}
+}
+
+func normalizeImportIdentifier(value string) string {
+	var builder strings.Builder
+	lastUnderscore := false
+
+	for _, r := range strings.ToLower(strings.TrimSpace(value)) {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+			builder.WriteRune(r)
+			lastUnderscore = false
+			continue
+		}
+		if r == '_' || unicode.IsSpace(r) || r == '-' {
+			if builder.Len() > 0 && !lastUnderscore {
+				builder.WriteByte('_')
+				lastUnderscore = true
+			}
+			continue
+		}
+		if builder.Len() > 0 && !lastUnderscore {
+			builder.WriteByte('_')
+			lastUnderscore = true
+		}
+	}
+
+	normalized := strings.Trim(builder.String(), "_")
+	if normalized == "" {
+		return ""
+	}
+	if normalized[0] >= '0' && normalized[0] <= '9' {
+		return "_" + normalized
+	}
+	return normalized
+}
+
+func defaultImportTextType(metadata *engine.DatabaseMetadata) string {
+	if metadata == nil {
+		return ""
+	}
+	for _, preferred := range []string{"TEXT", "String"} {
+		for _, typeDefinition := range metadata.TypeDefinitions {
+			if typeDefinition.ID == preferred {
+				return typeDefinition.ID
+			}
+		}
+	}
+	for _, typeDefinition := range metadata.TypeDefinitions {
+		if typeDefinition.Category == engine.TypeCategoryText {
+			return typeDefinition.ID
+		}
+	}
+	return ""
+}
+
+func resolveNewTableImportColumns(sourceColumns []string, inputs []*model.ImportNewTableColumnInput, metadata *engine.DatabaseMetadata) ([]importNewTableColumn, []engine.Record, error) {
+	if len(inputs) == 0 || len(inputs) != len(sourceColumns) {
+		return nil, nil, newImportValidationError(importValidationMappingInvalid)
+	}
+
+	sourceIndex := make(map[string]int, len(sourceColumns))
+	for idx, column := range sourceColumns {
+		if _, exists := sourceIndex[column]; exists {
+			return nil, nil, newImportValidationError(importValidationMappingInvalid)
+		}
+		sourceIndex[column] = idx
+	}
+
+	seenSources := make(map[string]struct{}, len(sourceColumns))
+	seenTargets := make(map[string]struct{}, len(sourceColumns))
+	resolved := make([]importNewTableColumn, 0, len(inputs))
+	fields := make([]engine.Record, 0, len(inputs))
+	includedCount := 0
+
+	for _, input := range inputs {
+		if input == nil {
+			return nil, nil, newImportValidationError(importValidationMappingInvalid)
+		}
+		idx, exists := sourceIndex[input.SourceColumn]
+		if !exists {
+			return nil, nil, newImportValidationError(importValidationMappingInvalid)
+		}
+		if _, exists := seenSources[input.SourceColumn]; exists {
+			return nil, nil, newImportValidationError(importValidationMappingInvalid)
+		}
+		seenSources[input.SourceColumn] = struct{}{}
+
+		if input.Skip {
+			if input.Primary {
+				return nil, nil, newImportValidationError(importValidationPrimarySkipped)
+			}
+			resolved = append(resolved, importNewTableColumn{
+				sourceIndex:  idx,
+				sourceColumn: input.SourceColumn,
+				skip:         true,
+			})
+			continue
+		}
+
+		targetName := ""
+		if input.TargetColumn != nil {
+			targetName = strings.TrimSpace(*input.TargetColumn)
+		}
+		if targetName == "" {
+			return nil, nil, newImportValidationError(importValidationColumnNameEmpty)
+		}
+		if _, exists := seenTargets[targetName]; exists {
+			return nil, nil, newImportValidationError(importValidationColumnDuplicate)
+		}
+		seenTargets[targetName] = struct{}{}
+
+		targetType := ""
+		if input.Type != nil {
+			targetType = strings.TrimSpace(*input.Type)
+		}
+		if targetType == "" {
+			return nil, nil, newImportValidationError(importValidationColumnTypeInvalid)
+		}
+		if err := engine.ValidateColumnType(targetType, metadata); err != nil {
+			return nil, nil, newImportValidationError(importValidationColumnTypeInvalid)
+		}
+		if input.Primary && input.Nullable {
+			return nil, nil, newImportValidationError(importValidationPrimaryNullable)
+		}
+
+		resolved = append(resolved, importNewTableColumn{
+			sourceIndex:  idx,
+			sourceColumn: input.SourceColumn,
+			targetName:   targetName,
+			targetType:   targetType,
+			isNullable:   input.Nullable,
+			isPrimary:    input.Primary,
+		})
+		fields = append(fields, engine.Record{
+			Key:   targetName,
+			Value: targetType,
+			Extra: map[string]string{
+				"Nullable": boolString(input.Nullable),
+				"Primary":  boolString(input.Primary),
+			},
+		})
+		includedCount++
+	}
+
+	if len(seenSources) != len(sourceColumns) {
+		return nil, nil, newImportValidationError(importValidationMappingInvalid)
+	}
+	if includedCount == 0 {
+		return nil, nil, newImportValidationError(importValidationAllColumnsSkipped)
+	}
+
+	return resolved, fields, nil
+}
+
+func boolString(value bool) string {
+	if value {
+		return "true"
+	}
+	return "false"
 }
 
 func importResult(success bool, detail string) *model.ImportResult {

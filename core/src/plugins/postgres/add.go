@@ -29,7 +29,7 @@ func (p *PostgresPlugin) GetCreateTableQuery(db *gorm.DB, schema string, storage
 
 	columnDefs := gorm_plugin.RecordsToColumnDefs(columns, func(def gorm_plugin.ColumnDef, column engine.Record) gorm_plugin.ColumnDef {
 		lowerType := strings.ToLower(column.Value)
-		if strings.Contains(lowerType, "int") || strings.Contains(lowerType, "integer") {
+		if column.Extra[gorm_plugin.PrimaryKeysUseSourceValuesExtraKey] != "true" && (strings.Contains(lowerType, "int") || strings.Contains(lowerType, "integer")) {
 			def.Extra = "PRIMARY KEY GENERATED ALWAYS AS IDENTITY"
 		} else {
 			def.Primary = true

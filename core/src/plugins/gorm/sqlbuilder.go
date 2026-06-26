@@ -35,6 +35,7 @@ type SQLBuilderInterface interface {
 	BuildOrderBy(query *gorm.DB, sortList []plugins.Sort) *gorm.DB
 	CreateTableQuery(schema, table string, columns []ColumnDef) string
 	CreateTableQueryWithSuffix(schema, table string, columns []ColumnDef, suffix string) string
+	DropTableQuery(schema, table string) string
 	InsertRow(schema, table string, data map[string]any) error
 	UpdateQuery(schema, table string, updates map[string]any, conditions map[string]any) *gorm.DB
 	DeleteQuery(schema, table string, conditions map[string]any) *gorm.DB
@@ -176,6 +177,14 @@ func (sb *SQLBuilder) CreateTableQueryWithSuffix(schema, table string, columns [
 		return baseQuery + " " + suffix
 	}
 	return baseQuery
+}
+
+// DropTableQuery builds a DROP TABLE statement with dialect identifier quoting.
+func (sb *SQLBuilder) DropTableQuery(schema, table string) string {
+	if schema == "" {
+		return fmt.Sprintf("DROP TABLE IF EXISTS %s", sb.QuoteIdentifier(table))
+	}
+	return fmt.Sprintf("DROP TABLE IF EXISTS %s.%s", sb.QuoteIdentifier(schema), sb.QuoteIdentifier(table))
 }
 
 // InsertRow inserts a row using GORM's Create method
