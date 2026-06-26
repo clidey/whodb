@@ -26,7 +26,7 @@ const SQL_ALL_KEYWORDS = [
     'INSERT', 'UPDATE', 'DELETE', 'CREATE', 'DROP', 'ALTER', 'SET',
 ];
 
-const MONGO_SAFE_METHODS = new Set(['find', 'findOne', 'countDocuments', 'distinct']);
+const MONGO_SAFE_METHODS = new Set(['find', 'findOne', 'countDocuments', 'aggregate', 'distinct']);
 const MONGO_SOURCE_TYPES = new Set(['mongodb', 'documentdb', 'ferretdb']);
 
 const REDIS_SAFE_COMMANDS = new Set([
@@ -43,6 +43,7 @@ const REDIS_SAFE_COMMANDS = new Set([
 const REDIS_SOURCE_TYPES = new Set(['redis', 'elasticache', 'valkey', 'dragonfly']);
 
 const MONGO_SHELL_METHOD_PATTERN = /^\s*db(?:\.getCollection\(\s*(?:"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')\s*\)|\.[A-Za-z_][\w.]*)\.(\w+)\s*\(/s;
+const MONGO_AGGREGATE_WRITE_STAGE_PATTERN = /(?:^|[{,]\s*)(?:"\$out"|'\$out'|\$out|"\$merge"|'\$merge'|\$merge)\s*:/s;
 
 export const isValidSQLQuery = (text: string): boolean => {
     const trimmed = text.trim();
@@ -78,6 +79,9 @@ function isDestructiveMongoQuery(text: string): boolean {
     const methodMatch = text.match(MONGO_SHELL_METHOD_PATTERN);
     if (methodMatch == null) {
         return true;
+    }
+    if (methodMatch[1] === 'aggregate') {
+        return MONGO_AGGREGATE_WRITE_STAGE_PATTERN.test(text);
     }
     return !MONGO_SAFE_METHODS.has(methodMatch[1]);
 }

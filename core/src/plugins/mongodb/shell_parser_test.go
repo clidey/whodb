@@ -80,6 +80,17 @@ func TestParseMongoShellCommandRejectsJavaScript(t *testing.T) {
 	}
 }
 
+func TestParseMongoShellArgsRejectsChainedCommand(t *testing.T) {
+	cmd, err := parseMongoShellCommand(`db.users.find({}); db.dropDatabase()`)
+	if err != nil {
+		t.Fatalf("expected command wrapper to parse, got %v", err)
+	}
+	_, err = parseMongoShellArgs(cmd.RawArgs)
+	if err == nil || !strings.Contains(err.Error(), "failed to parse arguments") {
+		t.Fatalf("expected chained command args to be rejected, got %v", err)
+	}
+}
+
 func TestParseMongoShellArgsSupportsCommonShellLiterals(t *testing.T) {
 	args, err := parseMongoShellArgs(`{_id: ObjectId("507f1f77bcf86cd799439011"), name: 'Ada', createdAt: ISODate("2026-01-02T03:04:05Z"), count: NumberInt(2), nested: {flag: true,},}`)
 	if err != nil {

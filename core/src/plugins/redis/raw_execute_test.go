@@ -28,6 +28,7 @@ func TestTokenizeRedisCommand(t *testing.T) {
 		{name: "double quoted", input: `SET mykey "hello world"`, want: []string{"SET", "mykey", "hello world"}},
 		{name: "single quoted", input: "SET mykey 'hello world'", want: []string{"SET", "mykey", "hello world"}},
 		{name: "multiline", input: "SET\n  mykey\n  myvalue", want: []string{"SET", "mykey", "myvalue"}},
+		{name: "chained command becomes arguments", input: "GET mykey\nFLUSHDB", want: []string{"GET", "mykey", "FLUSHDB"}},
 		{name: "empty", input: "", want: nil},
 	}
 
