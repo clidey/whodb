@@ -223,9 +223,9 @@ test.describe('Sidebar Navigation', () => {
                     await expect(page.locator('[href="/chat"]')).not.toBeAttached();
                 });
 
-                test('hides scratchpad option for key-value databases', async ({ whodb, page }) => {
-                    // Key-value stores don't support SQL scratchpad
-                    await expect(page.locator('[href="/scratchpad"]')).not.toBeAttached();
+                test('shows scratchpad option for key-value databases', async ({ whodb, page }) => {
+                    // Key-value stores support native command execution via the scratchpad
+                    await expect(page.locator('[href="/scratchpad"]')).toBeAttached();
                 });
 
                 test('hides graph option for key-value databases without graph support', async ({ whodb, page }) => {

@@ -78,13 +78,22 @@ export function getDocumentField(row, field) {
 }
 
 /**
- * Get document _id from row
+ * Get document _id from row.
+ *
+ * MongoDB serializes _id as MongoDB Extended JSON (e.g. {"$oid": "..."}),
+ * while Elasticsearch uses a plain string. Normalize both to the underlying
+ * id string so it can be used in where conditions.
+ *
  * @param {Array} row - Row data
  * @returns {string} Document ID
  */
 export function getDocumentId(row) {
     const doc = parseDocument(row);
-    return doc._id;
+    const id = doc._id;
+    if (id && typeof id === 'object' && typeof id.$oid === 'string') {
+        return id.$oid;
+    }
+    return id;
 }
 
 /**
