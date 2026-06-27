@@ -34,7 +34,13 @@ import (
 // responsesAPICache caches whether a given endpoint supports the Responses API.
 // Keyed by endpoint URL, value is bool (true = supports Responses API).
 var responsesAPICache sync.Map
-var httpClientFactory = func() *http.Client {
+
+// HTTPClientFactory builds the HTTP client used for outbound provider requests.
+// It is a package-level seam so callers (and tests) can substitute a client;
+// swap it and restore the original when overriding. The default installs an
+// SSRF-aware transport that does its own dialing, so replacing
+// http.DefaultTransport does not affect provider requests.
+var HTTPClientFactory = func() *http.Client {
 	return &http.Client{
 		Timeout: 20 * time.Second,
 		// Re-validate the dialed IP to block SSRF to internal/metadata addresses
@@ -251,5 +257,5 @@ func sendHTTPRequest(method, url string, body []byte, headers map[string]string)
 		req.Header.Set(key, value)
 	}
 
-	return httpClientFactory().Do(req)
+	return HTTPClientFactory().Do(req)
 }

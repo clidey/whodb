@@ -144,8 +144,17 @@ func SafeDialContext(timeout time.Duration) func(ctx context.Context, network, a
 // (preserving proxy support, HTTP/2, and connection-pool defaults) with the
 // SSRF-aware dialer installed. Use this instead of constructing a bare
 // http.Transport, which would silently drop those defaults.
+//
+// http.DefaultTransport is typed as http.RoundTripper and may be replaced with
+// a non-*http.Transport implementation (e.g. by tests or instrumentation), so
+// fall back to a fresh transport rather than panicking on the type assertion.
 func SafeHTTPTransport(timeout time.Duration) *http.Transport {
-	transport := http.DefaultTransport.(*http.Transport).Clone()
+	var transport *http.Transport
+	if defaultTransport, ok := http.DefaultTransport.(*http.Transport); ok {
+		transport = defaultTransport.Clone()
+	} else {
+		transport = &http.Transport{}
+	}
 	transport.DialContext = SafeDialContext(timeout)
 	return transport
 }
