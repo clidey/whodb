@@ -29,6 +29,7 @@ import (
 	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/migrate"
+	"github.com/clidey/whodb/core/src/security"
 	"github.com/clidey/whodb/core/src/types"
 )
 
@@ -378,6 +379,14 @@ func RegisterSupplementalCredentialResolver(fn SupplementalCredentialResolver) {
 // ResolveProviderCredentials looks up a provider by ID and resolves credentials.
 // Request-level values take precedence over environment-configured values.
 func ResolveProviderCredentials(providerId, requestToken, requestEndpoint, requestModelType string) env.ResolvedCredentials {
+	// In hosted/production deployments, never let a client choose the outbound
+	// endpoint for a server-configured provider: that would be an SSRF vector
+	// (and could exfiltrate the shared provider API key). Drop the per-request
+	// endpoint override and rely only on server-configured endpoints.
+	if security.EgressRestricted() {
+		requestEndpoint = ""
+	}
+
 	result := env.ResolvedCredentials{
 		ModelType: requestModelType,
 		Token:     requestToken,

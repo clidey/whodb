@@ -394,10 +394,33 @@ func accessLogMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+// originsContainWildcard reports whether any configured CORS origin is the "*"
+// literal or a wildcard pattern (e.g. "https://*"). go-chi/cors reflects the
+// caller's Origin for wildcard patterns, which must never be paired with
+// Access-Control-Allow-Credentials.
+func originsContainWildcard(origins []string) bool {
+	for _, o := range origins {
+		if strings.Contains(o, "*") {
+			return true
+		}
+	}
+	return false
+}
+
 func setupMiddlewares(router *chi.Mux, additionalMiddlewares []func(http.Handler) http.Handler, publicPaths []string) {
+	// CORS must fail closed. Reflecting an arbitrary Origin together with
+	// Access-Control-Allow-Credentials:true lets any website issue credentialed
+	// cross-origin requests and read the responses, which would expose the
+	// session/credential cookies. We therefore:
+	//   - never default to a wildcard origin (an unset allowlist disables CORS);
+	//   - only send Allow-Credentials when the configured origins are explicit
+	//     (no "*" / wildcard pattern), since credentials + wildcard is unsafe.
 	allowedOrigins := env.AllowedOrigins
+	allowCredentials := len(allowedOrigins) > 0 && !originsContainWildcard(allowedOrigins)
 	if len(allowedOrigins) == 0 {
-		allowedOrigins = append(allowedOrigins, "https://*", "http://*")
+		log.Warnf("WHODB_ALLOWED_ORIGINS is unset; cross-origin requests are disabled. Set it to your app origin (e.g. https://app.example.com) to enable CORS.")
+	} else if !allowCredentials {
+		log.Warnf("WHODB_ALLOWED_ORIGINS contains a wildcard (%v); Access-Control-Allow-Credentials is disabled because credentialed wildcard CORS is unsafe. Use explicit origins to allow credentials.", allowedOrigins)
 	}
 
 	middlewares := []func(http.Handler) http.Handler{
@@ -415,7 +438,7 @@ func setupMiddlewares(router *chi.Mux, additionalMiddlewares []func(http.Handler
 			AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 			AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 			ExposedHeaders:   []string{},
-			AllowCredentials: true,
+			AllowCredentials: allowCredentials,
 			MaxAge:           300,
 		}),
 		contextMiddleware,

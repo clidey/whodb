@@ -101,6 +101,12 @@ var DisableMockDataGeneration = os.Getenv("WHODB_DISABLE_MOCK_DATA_GENERATION")
 
 var ApplicationEnvironment = os.Getenv("WHODB_APPLICATION_ENVIRONMENT")
 
+// BlockInternalAIEndpoints enables SSRF protection on user-supplied AI provider
+// endpoints (rejects loopback/link-local/private/metadata destinations). Off by
+// default so self-hosted deployments can use local model servers (Ollama, etc.);
+// multi-tenant/hosted deployments should set this to "true".
+var BlockInternalAIEndpoints = os.Getenv("WHODB_BLOCK_INTERNAL_AI_ENDPOINTS") == "true"
+
 var ApplicationVersion string
 
 var PosthogAPIKey = "phc_hbXcCoPTdxm5ADL8PmLSYTIUvS6oRWFM2JAK8SMbfnH"
