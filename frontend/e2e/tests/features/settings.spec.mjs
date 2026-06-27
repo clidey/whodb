@@ -244,6 +244,10 @@ test.describe('Settings', () => {
         });
 
         test.describe('Where Condition Mode', () => {
+            test.beforeEach(async ({ whodb }) => {
+                await whodb.gotoSettingsTab('behavior');
+            });
+
             test('can change where condition mode to popover', async ({ whodb, page }) => {
                 // First set to sheet to ensure we're changing from a known state
                 await page.locator('#where-condition-mode').click();
@@ -272,6 +276,10 @@ test.describe('Settings', () => {
         });
 
         test.describe('Default Page Size', () => {
+            test.beforeEach(async ({ whodb }) => {
+                await whodb.gotoSettingsTab('behavior');
+            });
+
             test('can change default page size', async ({ whodb, page }) => {
                 // First set to 100 to ensure we're changing from a known state
                 await page.locator('#default-page-size').click();
@@ -309,8 +317,13 @@ test.describe('Settings', () => {
         });
 
         test.describe('Telemetry Toggle', () => {
+            test.beforeEach(async ({ whodb }) => {
+                await whodb.gotoSettingsTab('privacy');
+            });
+
             test('can toggle telemetry off and persists to localStorage', async ({ whodb, page }) => {
-                const telemetryButton = 'button[role="switch"]';
+                // Scope to the active privacy tab so other tabs' switches aren't matched.
+                const telemetryButton = '[data-slot="tabs-content"][data-state="active"] button[role="switch"]';
 
                 // Check if telemetry toggle exists (CE only - not available in EE)
                 const toggleCount = await page.locator(telemetryButton).count();
@@ -359,7 +372,7 @@ test.describe('Settings', () => {
 
         test.describe('Schema Terminology', () => {
             test.beforeEach(async ({ whodb }) => {
-                await whodb.goto('settings');
+                await whodb.gotoSettingsTab('behavior');
             });
 
             test('can change terminology to schema', async ({ whodb, page }) => {
@@ -400,8 +413,8 @@ test.describe('Settings', () => {
                 await whodb.goto('storage-unit');
                 await page.locator('[data-testid="storage-unit-card"]').first().waitFor({ timeout: 10000 });
 
-                // Come back to settings
-                await whodb.goto('settings');
+                // Come back to settings (behavior tab hosts the terminology select)
+                await whodb.gotoSettingsTab('behavior');
 
                 // Verify the select still shows "schema"
                 await expect(page.locator('#database-schema-terminology')).toContainText('Schema');

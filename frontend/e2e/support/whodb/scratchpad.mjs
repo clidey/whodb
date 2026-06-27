@@ -173,6 +173,10 @@ export const scratchpadMethods = {
     async deleteScratchpadPage(index, cancel = true) {
         await this.page.locator(`[data-testid="delete-page-tab-${index}"]`).click();
 
+        // Wait for the AlertDialog overlay to finish its open animation; clicking
+        // mid-animation lets the overlay intercept pointer events.
+        await this.page.locator('[data-slot="alert-dialog-overlay"][data-state="open"]').waitFor({ state: "visible" });
+
         if (cancel) {
             await this.page.locator('[data-testid="delete-page-button-cancel"]').click();
         } else {

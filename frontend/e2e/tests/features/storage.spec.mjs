@@ -245,7 +245,7 @@ describeOrSkip('Browser Storage', () => {
         });
 
         test('persists where condition mode preference', async ({ whodb, page }) => {
-            await whodb.goto('settings');
+            await whodb.gotoSettingsTab('behavior');
             await page.locator('#where-condition-mode').click();
             await page.locator('[data-value="sheet"]').click();
 
@@ -256,7 +256,7 @@ describeOrSkip('Browser Storage', () => {
         });
 
         test('persists default page size preference', async ({ whodb, page }) => {
-            await whodb.goto('settings');
+            await whodb.gotoSettingsTab('behavior');
             await page.locator('#default-page-size').click();
             await page.locator('[data-value="50"]').click();
 
