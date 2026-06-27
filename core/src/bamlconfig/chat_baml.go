@@ -25,6 +25,8 @@ import (
 
 	"github.com/clidey/whodb/core/baml_client"
 	"github.com/clidey/whodb/core/baml_client/types"
+	"github.com/clidey/whodb/core/src/log"
+	"github.com/clidey/whodb/core/src/security"
 	"github.com/clidey/whodb/core/src/source"
 )
 
@@ -190,6 +192,16 @@ func SetupAIClient(externalModel *source.ExternalModel) []baml_client.CallOption
 func CreateDynamicBAMLClient(externalModel *source.ExternalModel) *baml.ClientRegistry {
 	if externalModel == nil {
 		return nil
+	}
+
+	// Block SSRF via a user-supplied endpoint. The actual HTTP call happens
+	// inside the BAML CFFI layer (no Go dialer to wrap), so validate the URL
+	// before handing it off; on failure fall back to the default client.
+	if externalModel.Endpoint != "" {
+		if err := security.EnforceOutboundURL(externalModel.Endpoint); err != nil {
+			log.Errorf("blocked AI provider endpoint: %v", err)
+			return nil
+		}
 	}
 
 	registry := baml.NewClientRegistry()

@@ -28,13 +28,20 @@ import (
 	"time"
 
 	"github.com/clidey/whodb/core/src/log"
+	"github.com/clidey/whodb/core/src/security"
 )
 
 // responsesAPICache caches whether a given endpoint supports the Responses API.
 // Keyed by endpoint URL, value is bool (true = supports Responses API).
 var responsesAPICache sync.Map
 var httpClientFactory = func() *http.Client {
-	return &http.Client{Timeout: 20 * time.Second}
+	return &http.Client{
+		Timeout: 20 * time.Second,
+		// Re-validate the dialed IP to block SSRF to internal/metadata addresses
+		// even if DNS rebinds between validation and connection. Cloned from the
+		// default transport so proxy/HTTP2/pool defaults are preserved.
+		Transport: security.SafeHTTPTransport(20 * time.Second),
+	}
 }
 
 const (
@@ -232,6 +239,9 @@ func isNonChatModel(name string) bool {
 // This is duplicated from http_client.go to avoid circular dependencies.
 // TODO: Consider refactoring to a shared utility package.
 func sendHTTPRequest(method, url string, body []byte, headers map[string]string) (*http.Response, error) {
+	if err := security.EnforceOutboundURL(url); err != nil {
+		return nil, fmt.Errorf("blocked outbound request: %w", err)
+	}
 	req, err := http.NewRequestWithContext(context.Background(), method, url, strings.NewReader(string(body)))
 	if err != nil {
 		return nil, err

@@ -394,14 +394,88 @@ func accessLogMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+// cspReportOnlyPolicy is the full Content-Security-Policy we want to enforce.
+// It is shipped in Report-Only mode first: browsers report violations (visible
+// in DevTools / a report endpoint) without blocking anything, so we can confirm
+// it does not break the SPA before switching to enforcement. Notes on each
+// directive's necessity (verified against the frontend):
+//   - script-src 'self': the app loads no inline/eval scripts (no eval/new
+//     Function/wasm found); Vite emits module scripts from same-origin.
+//   - style-src 'unsafe-inline': Tailwind v4 + @emotion inject runtime inline
+//     styles, so this cannot be dropped without nonces they don't support.
+//   - connect-src 'self': the browser only talks to the same-origin backend
+//     (which proxies AI/SSE); external provider hosts are server-side only.
+//   - img-src 'self' data: https:: DB cell content and provider icons can be
+//     arbitrary https/data URLs.
+const cspReportOnlyPolicy = "default-src 'self'; " +
+	"script-src 'self'; " +
+	"style-src 'self' 'unsafe-inline'; " +
+	"img-src 'self' data: https:; " +
+	"font-src 'self' data:; " +
+	"connect-src 'self'; " +
+	"frame-ancestors 'none'; " +
+	"base-uri 'self'; " +
+	"form-action 'self'"
+
+// securityHeadersMiddleware adds defense-in-depth response headers:
+//   - X-Frame-Options/frame-ancestors: block clickjacking by disallowing framing
+//   - X-Content-Type-Options: stop MIME sniffing
+//   - Referrer-Policy: avoid leaking full URLs cross-origin
+//   - Strict-Transport-Security: enforce HTTPS once seen over TLS
+//   - Content-Security-Policy: enforced frame-ancestors (safe) + a full policy
+//     in Report-Only mode (observe-before-enforce)
+//
+// HSTS is only emitted when the request arrived over TLS so local HTTP dev is
+// unaffected.
+func securityHeadersMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		h := w.Header()
+		h.Set("X-Content-Type-Options", "nosniff")
+		h.Set("X-Frame-Options", "DENY")
+		h.Set("Referrer-Policy", "strict-origin-when-cross-origin")
+		// Enforce only the anti-clickjacking directive (cannot break resource
+		// loading). The full resource policy ships Report-Only until validated.
+		h.Set("Content-Security-Policy", "frame-ancestors 'none'")
+		h.Set("Content-Security-Policy-Report-Only", cspReportOnlyPolicy)
+		if r.TLS != nil || strings.EqualFold(r.Header.Get("X-Forwarded-Proto"), "https") {
+			h.Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+// originsContainWildcard reports whether any configured CORS origin is the "*"
+// literal or a wildcard pattern (e.g. "https://*"). go-chi/cors reflects the
+// caller's Origin for wildcard patterns, which must never be paired with
+// Access-Control-Allow-Credentials.
+func originsContainWildcard(origins []string) bool {
+	for _, o := range origins {
+		if strings.Contains(o, "*") {
+			return true
+		}
+	}
+	return false
+}
+
 func setupMiddlewares(router *chi.Mux, additionalMiddlewares []func(http.Handler) http.Handler, publicPaths []string) {
+	// CORS must fail closed. Reflecting an arbitrary Origin together with
+	// Access-Control-Allow-Credentials:true lets any website issue credentialed
+	// cross-origin requests and read the responses, which would expose the
+	// session/credential cookies. We therefore:
+	//   - never default to a wildcard origin (an unset allowlist disables CORS);
+	//   - only send Allow-Credentials when the configured origins are explicit
+	//     (no "*" / wildcard pattern), since credentials + wildcard is unsafe.
 	allowedOrigins := env.AllowedOrigins
+	allowCredentials := len(allowedOrigins) > 0 && !originsContainWildcard(allowedOrigins)
 	if len(allowedOrigins) == 0 {
-		allowedOrigins = append(allowedOrigins, "https://*", "http://*")
+		log.Warnf("WHODB_ALLOWED_ORIGINS is unset; cross-origin requests are disabled. Set it to your app origin (e.g. https://app.example.com) to enable CORS.")
+	} else if !allowCredentials {
+		log.Warnf("WHODB_ALLOWED_ORIGINS contains a wildcard (%v); Access-Control-Allow-Credentials is disabled because credentialed wildcard CORS is unsafe. Use explicit origins to allow credentials.", allowedOrigins)
 	}
 
 	middlewares := []func(http.Handler) http.Handler{
 		accessLogMiddleware,
+		securityHeadersMiddleware,
 		healthCheckMiddleware,
 		sseAwareThrottle(100, 50, time.Second*5),
 		middleware.RequestID,
@@ -415,7 +489,7 @@ func setupMiddlewares(router *chi.Mux, additionalMiddlewares []func(http.Handler
 			AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 			AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 			ExposedHeaders:   []string{},
-			AllowCredentials: true,
+			AllowCredentials: allowCredentials,
 			MaxAge:           300,
 		}),
 		contextMiddleware,
