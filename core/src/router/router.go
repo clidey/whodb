@@ -394,6 +394,56 @@ func accessLogMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+// cspReportOnlyPolicy is the full Content-Security-Policy we want to enforce.
+// It is shipped in Report-Only mode first: browsers report violations (visible
+// in DevTools / a report endpoint) without blocking anything, so we can confirm
+// it does not break the SPA before switching to enforcement. Notes on each
+// directive's necessity (verified against the frontend):
+//   - script-src 'self': the app loads no inline/eval scripts (no eval/new
+//     Function/wasm found); Vite emits module scripts from same-origin.
+//   - style-src 'unsafe-inline': Tailwind v4 + @emotion inject runtime inline
+//     styles, so this cannot be dropped without nonces they don't support.
+//   - connect-src 'self': the browser only talks to the same-origin backend
+//     (which proxies AI/SSE); external provider hosts are server-side only.
+//   - img-src 'self' data: https:: DB cell content and provider icons can be
+//     arbitrary https/data URLs.
+const cspReportOnlyPolicy = "default-src 'self'; " +
+	"script-src 'self'; " +
+	"style-src 'self' 'unsafe-inline'; " +
+	"img-src 'self' data: https:; " +
+	"font-src 'self' data:; " +
+	"connect-src 'self'; " +
+	"frame-ancestors 'none'; " +
+	"base-uri 'self'; " +
+	"form-action 'self'"
+
+// securityHeadersMiddleware adds defense-in-depth response headers:
+//   - X-Frame-Options/frame-ancestors: block clickjacking by disallowing framing
+//   - X-Content-Type-Options: stop MIME sniffing
+//   - Referrer-Policy: avoid leaking full URLs cross-origin
+//   - Strict-Transport-Security: enforce HTTPS once seen over TLS
+//   - Content-Security-Policy: enforced frame-ancestors (safe) + a full policy
+//     in Report-Only mode (observe-before-enforce)
+//
+// HSTS is only emitted when the request arrived over TLS so local HTTP dev is
+// unaffected.
+func securityHeadersMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		h := w.Header()
+		h.Set("X-Content-Type-Options", "nosniff")
+		h.Set("X-Frame-Options", "DENY")
+		h.Set("Referrer-Policy", "strict-origin-when-cross-origin")
+		// Enforce only the anti-clickjacking directive (cannot break resource
+		// loading). The full resource policy ships Report-Only until validated.
+		h.Set("Content-Security-Policy", "frame-ancestors 'none'")
+		h.Set("Content-Security-Policy-Report-Only", cspReportOnlyPolicy)
+		if r.TLS != nil || strings.EqualFold(r.Header.Get("X-Forwarded-Proto"), "https") {
+			h.Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
 // originsContainWildcard reports whether any configured CORS origin is the "*"
 // literal or a wildcard pattern (e.g. "https://*"). go-chi/cors reflects the
 // caller's Origin for wildcard patterns, which must never be paired with
@@ -425,6 +475,7 @@ func setupMiddlewares(router *chi.Mux, additionalMiddlewares []func(http.Handler
 
 	middlewares := []func(http.Handler) http.Handler{
 		accessLogMiddleware,
+		securityHeadersMiddleware,
 		healthCheckMiddleware,
 		sseAwareThrottle(100, 50, time.Second*5),
 		middleware.RequestID,
