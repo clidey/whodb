@@ -28,7 +28,7 @@ import type { FC, ReactNode } from "react";
 import { useCallback, useState } from "react";
 import logoImage from "../../../public/images/logo.svg";
 import { useTranslation } from "@/hooks/use-translation";
-import type { LocalLoginProfile } from "@/store/auth";
+import { useAppSelector } from "@/store/hooks";
 import { PLATFORM_URL } from "@/utils/platform-funnel";
 import { ArrowTopRightOnSquareIcon, ChevronRightIcon, CircleStackIcon, RectangleGroupIcon, Squares2X2Icon } from "../heroicons";
 import { PlatformImportSheet } from "./platform-import-sheet";
@@ -37,8 +37,6 @@ import { PlatformImportSheet } from "./platform-import-sheet";
 export type PlatformExplainerDialogProps = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    /** The currently selected connection, when one exists. Drives the primary action. */
-    profile: LocalLoginProfile | undefined;
 };
 
 /** A single step card in the three-step funnel flow. */
@@ -63,8 +61,9 @@ type Slide = { image: string; title: string; caption: string };
  * CE user already has. Opened from the sidebar footer; one click deep and
  * dismissible. Not a banner and not shown before any connection exists.
  */
-export const PlatformExplainerDialog: FC<PlatformExplainerDialogProps> = ({ open, onOpenChange, profile }) => {
+export const PlatformExplainerDialog: FC<PlatformExplainerDialogProps> = ({ open, onOpenChange }) => {
     const { t } = useTranslation("components/sidebar");
+    const hasProfiles = useAppSelector(state => state.auth.profiles.length > 0);
     const [activeSlide, setActiveSlide] = useState(0);
     const [showImport, setShowImport] = useState(false);
 
@@ -83,8 +82,8 @@ export const PlatformExplainerDialog: FC<PlatformExplainerDialogProps> = ({ open
         onOpenChange(false);
     };
 
-    // When a connection is selected, the primary action carries it across:
-    // the import sheet shows the non-secret preview before opening the platform.
+    // When saved connections exist, the primary action opens the import sheet,
+    // which lets the user pick which connections to carry to the platform.
     const handleBringConnection = () => {
         setShowImport(true);
     };
@@ -172,7 +171,7 @@ export const PlatformExplainerDialog: FC<PlatformExplainerDialogProps> = ({ open
                 </ul>
 
                 <DialogFooter className="flex flex-row justify-end gap-2">
-                    {profile ? (
+                    {hasProfiles ? (
                         <>
                             <Button variant="ghost" onClick={handleOpenPlatform} className="flex items-center gap-2">
                                 {t("platformLearnMore")}
@@ -199,7 +198,6 @@ export const PlatformExplainerDialog: FC<PlatformExplainerDialogProps> = ({ open
             <PlatformImportSheet
                 open={showImport}
                 onOpenChange={setShowImport}
-                profile={profile}
             />
         </Dialog>
     );

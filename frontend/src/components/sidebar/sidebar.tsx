@@ -945,7 +945,7 @@ export const Sidebar: FC = () => {
                     <LoginForm advancedDirection="vertical" onLoginSuccess={handleLoginSuccess}/>
                 </SheetContent>
             </Sheet>
-            <PlatformExplainerDialog open={showPlatformExplainer} onOpenChange={setShowPlatformExplainer} profile={current} />
+            <PlatformExplainerDialog open={showPlatformExplainer} onOpenChange={setShowPlatformExplainer} />
             <Dialog open={showProfileSwitchDialog} onOpenChange={handleProfileSwitchDialogChange}>
                 <DialogContent className="max-w-sm" onInteractOutside={(e) => { e.preventDefault(); }} onEscapeKeyDown={(e) => { e.preventDefault(); }}>
                     <DialogHeader>

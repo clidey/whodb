@@ -19,53 +19,80 @@ import type { LocalLoginProfile } from "@/store/auth";
 /** The WhoDB Platform (hosted) base URL. */
 export const PLATFORM_URL = "https://app.whodb.com";
 
-/**
- * The non-secret connection identity carried to WhoDB Platform when a CE user
- * chooses to use a connection there. The password is intentionally omitted —
- * secrets must never travel in a URL.
- */
-export type PlatformImportPrefill = {
-    type: string;
-    hostname: string;
-    port: string;
-    database: string;
-    username: string;
-    displayName: string;
+/** Endpoint that stages CE connections and returns a short-lived import token. */
+export const PLATFORM_IMPORT_ENDPOINT = `${PLATFORM_URL}/api/ce-import`;
+
+/** A key/value advanced field carried alongside a connection. */
+export type PlatformImportAdvanced = {
+    Key: string;
+    Value: string;
 };
 
 /**
- * Extracts the non-secret prefill fields from a saved CE connection profile.
- * Port is read from the profile's advanced values where connectors store it.
+ * A single connection handed to WhoDB Platform for import. Mirrors the platform
+ * `CreateSourceInput`. `password` is included only when the user explicitly
+ * consents; otherwise it is omitted and re-entered on the hosted side.
  */
-export const buildPlatformImportPrefill = (profile: LocalLoginProfile): PlatformImportPrefill => {
-    const port = profile.Advanced?.find(value => value.Key === "Port")?.Value ?? "";
+export type PlatformImportConnection = {
+    name: string;
+    databaseType: string;
+    hostname: string;
+    port: string;
+    username: string;
+    password?: string;
+    database: string;
+    advanced: PlatformImportAdvanced[];
+};
+
+/** The staging response returned by the platform import endpoint. */
+export type PlatformImportStageResult = {
+    token: string;
+    expiresAt: string;
+};
+
+/**
+ * Maps a saved CE connection profile to the platform import shape. Port is
+ * pulled out of the profile's advanced values (where connectors store it) and
+ * the remaining advanced entries are carried through. The password travels only
+ * when `includePassword` is true.
+ */
+export const buildImportConnection = (profile: LocalLoginProfile, includePassword: boolean): PlatformImportConnection => {
+    const advanced = profile.Advanced ?? [];
+    const port = advanced.find(value => value.Key === "Port")?.Value ?? "";
+    const rest = advanced
+        .filter(value => value.Key !== "Port")
+        .map(value => ({ Key: value.Key, Value: value.Value }));
     return {
-        type: profile.Type,
+        name: profile.DisplayName ?? profile.Id,
+        databaseType: profile.Type,
         hostname: profile.Hostname,
         port,
-        database: profile.Database,
         username: profile.Username,
-        displayName: profile.DisplayName ?? profile.Id,
+        ...(includePassword && profile.Password ? { password: profile.Password } : {}),
+        database: profile.Database,
+        advanced: rest,
     };
 };
 
 /**
- * Builds the deep-link a CE user opens to bring a connection into WhoDB
- * Platform as a managed source. Only non-secret identity fields are encoded;
- * the user re-enters the password on the hosted side.
+ * Stages the selected connections on WhoDB Platform and returns a short-lived
+ * token. Sent as a `text/plain` POST so the browser issues a simple request
+ * with no CORS preflight; the platform endpoint is public and origin-permissive.
  */
-export const buildPlatformImportUrl = (profile: LocalLoginProfile): string => {
-    const prefill = buildPlatformImportPrefill(profile);
-    const params = new URLSearchParams({
-        source: "ce",
-        type: prefill.type,
-        hostname: prefill.hostname,
-        database: prefill.database,
-        username: prefill.username,
-        name: prefill.displayName,
+export const postConnectionsToPlatform = async (connections: PlatformImportConnection[]): Promise<PlatformImportStageResult> => {
+    const response = await fetch(PLATFORM_IMPORT_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({ connections }),
     });
-    if (prefill.port) {
-        params.set("port", prefill.port);
+    if (!response.ok) {
+        throw new Error(`Platform import staging failed with status ${response.status}`);
     }
+    return response.json() as Promise<PlatformImportStageResult>;
+};
+
+/** Builds the landing URL a CE user opens after staging connections. */
+export const buildPlatformImportLandingUrl = (token: string): string => {
+    const params = new URLSearchParams({ token });
     return `${PLATFORM_URL}/import?${params.toString()}`;
 };

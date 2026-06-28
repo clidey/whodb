@@ -17,19 +17,17 @@ en_US:
   sslSecured: "SSL: {mode}"
   switchProfileDescription: "Choose a profile to continue, or add a new one."
   platformTitle: WhoDB Platform
-  platformImportTitle: Use this connection in WhoDB Platform
-  platformImportDescription: "Carry this connection to the hosted platform as a managed source. Your local copy stays here, fully editable — nothing is locked or removed."
-  platformFieldName: Name
-  platformFieldType: Type
-  platformFieldHostname: Host
-  platformFieldPort: Port
-  platformFieldDatabase: Database
-  platformFieldUsername: Username
-  platformFieldPassword: Password
-  platformPasswordReentry: Re-entered securely on the platform
-  platformDestinationNote: "Opens {host} in a new tab. Your password is never sent in the link."
+  platformImportTitle: Import connections into WhoDB Platform
+  platformImportDescription: "Choose which saved connections to carry to the hosted platform as managed sources. Your local copies stay here, fully editable — nothing is locked or removed."
+  platformImportSelectAll: Select all
+  platformImportSendCredentials: Send passwords so I don't re-enter them
+  platformImportCredentialsSent: "Passwords are sent securely so the platform can connect right away."
+  platformImportCredentialsReentry: "Passwords stay on this device — you'll re-enter them on the platform."
+  platformImportError: "Couldn't reach WhoDB Platform. Please try again."
+  platformImporting: Opening Platform…
+  platformDestinationNote: "Opens {host} in a new tab to finish the import."
   platformCancel: Cancel
-  platformOpenInPlatform: Open in Platform
+  platformOpenInPlatform: Import in Platform
   platformExplainerTitle: WhoDB Platform
   platformExplainerIntro: "WhoDB Platform is the hosted data layer that builds on the connections you already have — turn a database login into managed sources, shareable datasets, and a workspace your whole team can use."
   platformSlideManagedTitle: Managed sources
