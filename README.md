@@ -2,7 +2,7 @@
 
 # <img src="./docs/logo/logo.svg" width="30px" height="auto" />  WhoDB
 
-### *Lightweight, Fast, and Beautiful Database Management*
+### *The open-source entry point to the WhoDB AI data platform*
 
 <!-- [![Build Status](https://hello.clidey.com/api/flows/status?id=b32257fa-1415-4847-a0f3-e684f5f76608&secret=cd74dbd5-36ec-42f9-b4f0-12ce9fcc762b)](https://clidey.com) -->
 ![Release workflow](https://img.shields.io/github/actions/workflow/status/clidey/whodb/release-ce.yml?branch=main)
@@ -35,7 +35,7 @@
 [![Snap](https://img.shields.io/badge/Snap-available-brightgreen)](http://snapcraft.io/whodb)
 [![CLI](https://img.shields.io/badge/CLI-available-brightgreen)](./cli/README.md)
 
-[🚀 Quick Start](#quick-start) • [📖 Documentation](https://docs.whodb.com/) • [🎮 Live Demo](https://demo.whodb.com/login?host=quick-container-491288b0-3138-48fa-93b4-1e730296c0b7.hello.svc.cluster.local&username=user&password=password&database=Adventureworks) • [💬 Community](https://github.com/clidey/whodb/discussions)
+[🚀 Quick Start](#quick-start) • [🏢 WhoDB EE Platform](#from-ce-to-the-whodb-ee-platform) • [📖 Documentation](https://docs.whodb.com/) • [🎮 Live Demo](https://demo.whodb.com/login?host=quick-container-491288b0-3138-48fa-93b4-1e730296c0b7.hello.svc.cluster.local&username=user&password=password&database=Adventureworks) • [💬 Community](https://github.com/clidey/whodb/discussions)
 
 </div>
 
@@ -45,9 +45,11 @@
 
 ## 🎯 What is WhoDB?
 
-**WhoDB is the modern database management tool that developers actually want to use.**
+**WhoDB CE is the open-source data workspace that grows into the WhoDB EE AI platform.**
 
-Built with GoLang and React, WhoDB is a lightweight (<50MB) yet powerful database client that combines blazing-fast performance with an intuitive, beautiful interface. Whether you're debugging a production issue, exploring a new database schema, or managing data for your next feature, WhoDB makes database management feel effortless.
+Built with Go and React, WhoDB CE gives developers a fast, lightweight (<50MB) way to connect to operational data, inspect sources, query with SQL or AI, and understand how data is shaped. It is the first step in the larger WhoDB platform: an AI data layer for sources, ETLs, ontology, governance, and internal apps.
+
+Start with CE when you need a better way to work with databases. Move into WhoDB EE when your team needs governed AI decisions across many systems, not another dashboard.
 
 ### Why WhoDB?
 
@@ -55,13 +57,13 @@ Built with GoLang and React, WhoDB is a lightweight (<50MB) yet powerful databas
 <tr>
 <td width="50%">
 
-**🚀 Lightning Fast**
+**🚀 Fast Source Access**
 - Instant startup (<1s)
 - Real-time query results
 - Efficient table virtualization
 - 90% less resource usage than traditional tools
 
-**🎨 Beautiful & Intuitive**
+**🎨 Clear Operational Context**
 - Clean, modern interface
 - Spreadsheet-like data grid
 - Interactive schema visualization
@@ -70,23 +72,23 @@ Built with GoLang and React, WhoDB is a lightweight (<50MB) yet powerful databas
 </td>
 <td width="50%">
 
-**🤖 AI-Powered**
+**🤖 AI-Ready Foundation**
 - Natural language to SQL
 - Talk to your data conversationally
 - Supports Ollama, OpenAI, Anthropic, and any OpenAI-compatible provider
 - No complex query writing needed
 
-**🔧 Developer-Friendly**
+**🔧 Platform Path**
 - Multi-database support
 - Query history & management
 - Mock data generation
-- Flexible export options
+- Enterprise platform for more sources, governance, and apps
 
 </td>
 </tr>
 </table>
 
-## ✨ Key Features
+## ✨ Start With CE: Source Access, Querying, and Exploration
 
 ### 📊 Visual Data Management
 
@@ -145,7 +147,7 @@ Built with GoLang and React, WhoDB is a lightweight (<50MB) yet powerful databas
 </tr>
 </table>
 
-### 🗄️ Multi-Database Support
+### 🗄️ Multi-Source Foundation
 
 **Community Edition (CE):** PostgreSQL, MySQL, SQLite3, MongoDB, Redis, MariaDB, ElasticSearch
 
@@ -157,6 +159,34 @@ Built with GoLang and React, WhoDB is a lightweight (<50MB) yet powerful databas
 - **Flexible Export Options** - Export to CSV, Excel, JSON, or SQL
 - **Advanced Filtering** - Build complex WHERE conditions visually
 - **AI-Powered Queries** - Convert natural language to SQL with Ollama, OpenAI, Anthropic, or any OpenAI-compatible provider
+
+---
+
+## From CE to the WhoDB EE Platform
+
+CE is the sharp wedge: connect to your data quickly, understand it visually, and query it without fighting a heavy desktop client.
+
+WhoDB EE turns that foundation into a platform for faster decisions across the company.
+
+The platform direction is built around:
+
+- **All sources** - Bring operational systems into one governed data layer
+- **ETLs** - Move and shape data so teams and AI agents can use it reliably
+- **Ontology** - Map raw tables, collections, and events into business objects like customers, accounts, orders, tickets, incidents, invoices, and workflows
+- **Governance** - Control who can see, query, change, and act on data
+- **Apps** - Build internal operational apps on top of shared source context
+- **WhoDB AI Agent** - Ask questions and take action across sources with the right context and permissions
+
+The point is not to make people write SQL faster. The point is to help teams reach decisions faster:
+
+- Which customer is blocked and why?
+- Which account is at risk this week?
+- Which workflow failed?
+- Which deploy affected paying users?
+- Which support tickets need engineering context?
+- What should the team do next?
+
+Think of CE as the open-source on-ramp. Think of WhoDB EE as the AI data platform for teams that want Palantir-like operational intelligence without enterprise lock-in.
 
 ---
 
@@ -256,10 +286,10 @@ services:
 
 ### What's Next?
 
-1. **Connect to your database** - Enter your database credentials on the login page
-2. **Explore your schema** - Browse tables and visualize relationships
-3. **Run queries** - Use the Scratchpad to execute SQL queries
-4. **Manage data** - Edit, add, and delete records with ease
+1. **Connect to a source** - Enter your database credentials on the login page
+2. **Understand the shape** - Browse objects and visualize relationships
+3. **Ask or query** - Use the Scratchpad, SQL, or AI chat to inspect live data
+4. **Act with context** - Edit records, export results, seed test data, or move into the EE platform for governed workflows
 
 📖 **For detailed installation options and configuration**, see our [Documentation](https://docs.whodb.com/)
 
@@ -267,12 +297,13 @@ services:
 
 ## 💻 WhoDB CLI
 
-WhoDB also offers a powerful command-line interface with an interactive TUI (Terminal User Interface) and MCP server support for AI assistants.
+WhoDB also offers a command-line interface with an interactive TUI (Terminal User Interface) and MCP server support for AI assistants. The CLI helps developers bring source context into local workflows, scripts, and AI tools.
 
 ### Features
 
-- **Interactive TUI** - Full-featured terminal interface for database management
+- **Interactive TUI** - Full-featured terminal interface for source exploration
 - **MCP Server** - Model Context Protocol support for Claude, Cursor, and other AI tools
+- **Programmatic Access** - Query and export data from scripts
 - **Cross-Platform** - Available for macOS, Linux, and Windows
 
 ### Quick Install
@@ -317,17 +348,19 @@ whodb-cli mcp serve
 <td width="50%">
 
 **Community Edition (CE)**
+- Open-source source exploration
 - PostgreSQL
 - MySQL / MariaDB
 - SQLite3
 - MongoDB
 - Redis
 - ElasticSearch
+- AI chat and query workflows
 
 </td>
 <td width="50%">
 
-**Enterprise Edition (EE)**
+**Enterprise Edition (EE) Platform**
 - All CE databases
 - Oracle
 - SQL Server
@@ -335,7 +368,8 @@ whodb-cli mcp serve
 - Athena
 - Snowflake
 - Cassandra
-- And more...
+- More sources
+- Governance, apps, and platform workflows
 
 </td>
 </tr>
@@ -407,7 +441,7 @@ The backend will start on `http://localhost:8080`
 - Quick database inspection during development
 - Debug production issues with read-only access
 - Test API endpoints with real data
-- Explore schema changes
+- Explore source and schema changes
 
 </td>
 <td width="50%">
@@ -422,12 +456,12 @@ The backend will start on `http://localhost:8080`
 </tr>
 </table>
 
-### 📊 For Data Analysts
+### 📊 For Operators and Analysts
 
-- Run ad-hoc SQL queries quickly
-- Export data to Excel for analysis
+- Answer operational questions without waiting on a custom dashboard
+- Export data to Excel, CSV, JSON, or SQL when needed
 - Build complex filters visually
-- Visualize table relationships
+- Visualize relationships before making a decision
 
 ### 🧪 For QA Engineers
 
@@ -443,6 +477,14 @@ The backend will start on `http://localhost:8080`
 - Quick schema exploration
 - Emergency data fixes
 
+### 🏢 For Teams Moving to the EE Platform
+
+- Connect more source types as the company grows
+- Govern who can see, query, change, and act on data
+- Build shared ontology around business objects
+- Give AI agents controlled source context
+- Turn repeated data lookups into operational apps
+
 ---
 
 ## ❓ Frequently Asked Questions
@@ -451,7 +493,17 @@ The backend will start on `http://localhost:8080`
 <summary><strong>What makes WhoDB different from other database tools?</strong></summary>
 <br>
 
-WhoDB combines the lightweight nature of tools like Adminer with modern UX, powerful visualizations, and AI capabilities. Unlike resource-heavy tools like DBeaver, WhoDB uses 90% less memory while providing a faster, more intuitive experience.
+WhoDB CE starts where database tools usually stop. It gives you fast source access, modern UX, visual schema exploration, and AI-assisted querying in a lightweight open-source package. The larger WhoDB EE platform builds on that source layer with more sources, governance, apps, and AI workflows for team decisions.
+
+</details>
+
+<details>
+<summary><strong>Why is WhoDB open-core instead of only open source?</strong></summary>
+<br>
+
+We want the open-source parts of WhoDB to provide complete, useful value on their own. CE is not a toy demo. It is a real source exploration and query workspace developers can run today.
+
+The full platform value comes when sources, ETLs, ontology, governance, apps, and the WhoDB AI Agent work together. That is where teams move from data access to faster decisions. As more parts become complete standalone value for the community, we plan to open-source more of them.
 
 </details>
 
@@ -484,7 +536,7 @@ WhoDB implements several performance optimizations:
 
 **Community Edition:** PostgreSQL, MySQL, MariaDB, SQLite3, MongoDB, Redis, ElasticSearch
 
-**Enterprise Edition:** All CE databases plus Oracle, SQL Server, DynamoDB, Athena, Snowflake, Cassandra, and more
+**Enterprise Edition Platform:** All CE databases plus Oracle, SQL Server, DynamoDB, Athena, Snowflake, Cassandra, and more source types for teams building governed operational workflows
 
 </details>
 
@@ -520,7 +572,7 @@ Yes! WhoDB integrates with:
 - **Anthropic** - Claude models
 - **Any OpenAI-compatible provider** - LM Studio, OpenRouter, Requesty, vLLM, and more via `WHODB_AI_GENERIC_<ID>_*` environment variables
 
-These integrations allow you to query your database using natural language instead of SQL.
+These integrations allow you to query your database using natural language instead of SQL. The EE platform expands the AI story toward governed source access, ontology, apps, and the WhoDB AI Agent for team workflows.
 
 </details>
 
@@ -593,9 +645,9 @@ WhoDB's deployment and CI/CD are powered by [Clidey](https://clidey.com), a no-c
 
 <div align="center">
 
-### ⭐ Star Us on GitHub!
+### ⭐ Start With CE. Grow Into the Platform.
 
-If you find WhoDB useful, please consider giving us a star on GitHub. It helps us grow the community and continue improving WhoDB.
+Run WhoDB CE when you need fast, open-source access to your operational data. Talk to us when your team needs the EE platform for more sources, governance, apps, and AI decisions.
 
 [![GitHub stars](https://img.shields.io/github/stars/clidey/whodb?style=social)](https://github.com/clidey/whodb/stargazers)
 
