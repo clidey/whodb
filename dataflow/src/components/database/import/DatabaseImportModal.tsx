@@ -1087,12 +1087,7 @@ function TableImportPreview() {
   }
 
   if (!tablePreview) {
-    return (
-      <div className="flex items-start gap-2 rounded-md border border-warning/20 bg-warning/5 p-3 text-sm text-warning">
-        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-        <span>{t('database.import.table.previewRequired')}</span>
-      </div>
-    )
+    return null
   }
 
   if (tablePreview.ValidationError) {
@@ -1297,10 +1292,11 @@ function ImportResultFeedback() {
   }
 
   if (!result) {
+    if (method !== 'sql') return null
     return (
       <div className="flex items-start gap-2 rounded-md border border-warning/20 bg-warning/5 p-3 text-sm text-warning">
         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-        <span>{t(method === 'tableFile' ? 'database.import.table.reviewWarning' : 'database.import.reviewWarning')}</span>
+        <span>{t('database.import.reviewWarning')}</span>
       </div>
     )
   }
