@@ -2,7 +2,7 @@
 
 # <img src="./docs/logo/logo.svg" width="30px" height="auto" />  WhoDB
 
-### *The Data Operating System*
+### *The open-source entry point to the WhoDB AI data platform*
 
 <!-- [![Build Status](https://hello.clidey.com/api/flows/status?id=b32257fa-1415-4847-a0f3-e684f5f76608&secret=cd74dbd5-36ec-42f9-b4f0-12ce9fcc762b)](https://clidey.com) -->
 ![Release workflow](https://img.shields.io/github/actions/workflow/status/clidey/whodb/release-ce.yml?branch=main)
@@ -45,11 +45,11 @@
 
 ## What is WhoDB?
 
-**WhoDB is the data operating system. It connects your databases, runs pipelines, governs access, and gets answers to your team, all from a single deployment on your own infrastructure.**
+**WhoDB Community is the open-source data workspace. WhoDB Platform is the AI data platform for teams that need governed access, pipelines, and operational intelligence across every system they run.**
 
-Built in Go and React, WhoDB ships as a single binary under 100MB. WhoDB Community covers the essentials: schema exploration, a scratchpad query editor, and a spreadsheet-style data grid for PostgreSQL, MySQL, MongoDB, Redis, and more. WhoDB Platform extends that with visual pipelines, live dashboards, access controls, an audit trail, and 50+ connectors.
+Start with WhoDB Community when you need a fast, lightweight way to connect to a database, understand its shape, and query it without a heavy desktop client. Move to WhoDB Platform when your team needs more than a better SQL editor — when the question is no longer "how do I query this data" but "which customer is blocked, which account is at risk, which deploy broke something, and what should we do about it."
 
-WhoDB starts in under a second, ships under 100MB, and uses around 90% less memory than tools like DBeaver or DataGrip. Just run `docker run -it -p 8080:8080 clidey/whodb` and you're in.
+Built in Go and React, WhoDB starts in under a second, ships under 100MB, and uses around 90% less memory than tools like DBeaver or DataGrip. Just run `docker run -it -p 8080:8080 clidey/whodb` and you're in.
 
 For local AI: connect Ollama and type questions in plain English. For enterprise governance: AES-256-GCM credential storage, SSO through Okta/Azure AD/Google Workspace, access controls down to the data-view level, and a complete audit trail, all on your own servers.
 
@@ -397,6 +397,10 @@ Browse table structures, inspect indexes, manage user data, and run ad-hoc queri
 - Data classification with automatic enforcement: set a label, access is blocked for anyone without clearance
 - Pull a compliance report in minutes rather than spending weeks chasing logs
 - SSO with Okta, Azure AD, Google Workspace, Auth0
+
+### Teams outgrowing a database viewer
+
+WhoDB Community handles most of what individual developers and small teams need. The signal that it's time to look at WhoDB Platform is usually one of these: you're running data across more than two or three systems and joining them manually in spreadsheets, your data team is a bottleneck for every report, or someone in the company asked "why did that happen" and it took a week to find out. That's the problem WhoDB Platform is built to close.
 
 ---
 
