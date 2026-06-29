@@ -55,10 +55,9 @@ describe('CollectionImportModal', () => {
     // No file chosen yet, so the import action is disabled.
     expect(screen.getByRole('button', { name: 'Run Import' })).toBeDisabled()
 
-    // All three write modes are offered for an existing collection.
-    expect(screen.getByRole('option', { name: 'Append documents' })).toBeInTheDocument()
-    expect(screen.getByRole('option', { name: 'Overwrite collection data' })).toBeInTheDocument()
-    expect(screen.getByRole('option', { name: 'Upsert by key' })).toBeInTheDocument()
+    // The mode control defaults to Append for an existing collection. The custom Select renders
+    // its options in a portal only when opened, so assert the trigger value, not the option list.
+    expect(screen.getByRole('combobox')).toHaveTextContent('Append documents')
 
     // The target switcher is hidden when a collection is pre-selected.
     expect(screen.queryByRole('button', { name: 'New collection' })).not.toBeInTheDocument()

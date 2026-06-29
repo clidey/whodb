@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
-import { AlertTriangle, CheckCircle, Database, Loader2 } from 'lucide-react'
+import { Database, Loader2 } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -9,10 +9,15 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/Button'
-import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/Input'
+import { ImportFilePicker } from '@/components/database/shared/import/ImportFilePicker'
+import { ImportModeSelect } from '@/components/database/shared/import/ImportModeSelect'
+import { ImportNotice } from '@/components/database/shared/import/ImportNotice'
+import { ImportPreviewTable } from '@/components/database/shared/import/ImportPreviewTable'
+import { ImportSourceOptions } from '@/components/database/shared/import/ImportSourceOptions'
+import { ImportTargetModeToggle } from '@/components/database/shared/import/ImportTargetModeToggle'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useI18n } from '@/i18n/useI18n'
-import { cn } from '@/lib/utils'
 import { useConnectionStore } from '@/stores/useConnectionStore'
 import { resolveSchemaParam } from '@/utils/database-features'
 import {
@@ -25,9 +30,6 @@ import {
   type CollectionImportPreview,
   type CollectionImportResult,
 } from '@graphql'
-
-const SELECT_CLASS =
-  'h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-50'
 
 const CSV_DELIMITER_OPTIONS = [
   { value: '', labelKey: 'database.import.collection.delimiter.auto' },
@@ -94,6 +96,7 @@ export function CollectionImportModal({
   const [upsertKeys, setUpsertKeys] = useState('_id')
   const [delimiter, setDelimiter] = useState('')
   const [sheet, setSheet] = useState('')
+  const [sheetOptions, setSheetOptions] = useState<string[]>([])
   const [skippedColumns, setSkippedColumns] = useState<Set<string>>(new Set())
   const [preview, setPreview] = useState<CollectionImportPreview | null>(null)
   const [result, setResult] = useState<CollectionImportResult | null>(null)
@@ -123,6 +126,7 @@ export function CollectionImportModal({
     setUpsertKeys('_id')
     setDelimiter('')
     setSheet('')
+    setSheetOptions([])
     setSkippedColumns(new Set())
     setPreview(null)
     setResult(null)
@@ -135,6 +139,12 @@ export function CollectionImportModal({
 
   const loadPreview = useCallback(
     async (nextFile: File, nextFormat: CollectionImportFormat) => {
+      setResult(null)
+      setPreview(null)
+      if (nextFormat !== CollectionImportFormat.Excel) {
+        setSheetOptions([])
+      }
+
       const response = await runPreview({
         variables: {
           input: {
@@ -148,6 +158,7 @@ export function CollectionImportModal({
       })
       const nextPreview = response.data?.ImportCollectionPreview ?? null
       setPreview(nextPreview)
+      setSheetOptions(nextPreview?.Sheets ?? [])
       setSkippedColumns(new Set())
     },
     [runPreview, delimiter, sheet, databaseName],
@@ -161,22 +172,32 @@ export function CollectionImportModal({
       if (!selected) {
         setFile(null)
         setFormat(null)
+        setSheet('')
+        setSheetOptions([])
         return
       }
       const inferred = inferCollectionFormat(selected.name)
       if (!inferred) {
         setFile(null)
         setFormat(null)
+        setSheet('')
+        setSheetOptions([])
         setFileError(t('database.import.collection.invalidFile'))
         return
       }
       setFileError(null)
+      setSheet('')
+      setSheetOptions([])
       setFile(selected)
       setFormat(inferred)
-      void loadPreview(selected, inferred)
     },
-    [loadPreview, t],
+    [t],
   )
+
+  useEffect(() => {
+    if (!file || !format) return
+    void loadPreview(file, format)
+  }, [delimiter, file, format, loadPreview, sheet])
 
   const toggleColumn = useCallback((column: string) => {
     setSkippedColumns((current) => {
@@ -193,8 +214,10 @@ export function CollectionImportModal({
   const canRun =
     file != null &&
     format != null &&
+    preview != null &&
     targetCollection.length > 0 &&
     !preview?.ValidationError &&
+    !previewLoading &&
     !importing
 
   const executeImport = useCallback(async () => {
@@ -229,7 +252,8 @@ export function CollectionImportModal({
   ])
 
   const showDelimiter = format === CollectionImportFormat.Csv
-  const showSheet = format === CollectionImportFormat.Excel
+  const showSheet = format === CollectionImportFormat.Excel && sheetOptions.length > 0
+  const selectedSheet = sheet || preview?.Sheet || sheetOptions[0] || ''
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -245,70 +269,42 @@ export function CollectionImportModal({
         </DialogHeader>
 
         <div className="flex max-h-[60vh] flex-col gap-4 overflow-y-auto pr-1">
-          {/* File */}
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-foreground">{t('database.import.collection.file')}</label>
-            <Input
-              ref={fileInputRef}
-              type="file"
-              accept=".json,.ndjson,.jsonl,.csv,.xls,.xlsx"
-              onChange={handleFileChange}
-              disabled={importing}
-              aria-label={t('database.import.collection.uploadFile')}
-            />
-            {file && (
-              <span className="truncate text-xs text-muted-foreground">
-                {t('database.import.collection.selectedFile', { filename: file.name })}
-              </span>
-            )}
-            {fileError && <span className="text-xs text-destructive">{fileError}</span>}
-          </div>
+          <ImportFilePicker
+            label={t('database.import.collection.file')}
+            accept=".json,.ndjson,.jsonl,.csv,.xls,.xlsx"
+            ariaLabel={t('database.import.collection.uploadFile')}
+            onChange={handleFileChange}
+            selectedFileName={file ? t('database.import.collection.selectedFile', { filename: file.name }) : null}
+            error={fileError}
+            disabled={importing}
+            inputRef={fileInputRef}
+          />
 
-          {/* Target */}
           {!lockedCollection && (
             <div className="flex flex-col gap-2">
-              <span className="text-sm font-medium text-foreground">{t('database.import.collection.targetMode')}</span>
-              <div className="inline-flex w-fit rounded-md border border-input p-1">
-                <button
-                  type="button"
-                  onClick={() => setTargetMode('existing')}
-                  aria-pressed={targetMode === 'existing'}
-                  className={cn(
-                    'rounded-sm px-3 py-1.5 text-sm transition-colors',
-                    targetMode === 'existing' ? 'bg-highlight-background text-foreground' : 'text-muted-foreground hover:text-foreground',
-                  )}
-                >
-                  {t('database.import.collection.targetModeExisting')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTargetMode('new')}
-                  aria-pressed={targetMode === 'new'}
-                  className={cn(
-                    'rounded-sm px-3 py-1.5 text-sm transition-colors',
-                    targetMode === 'new' ? 'bg-highlight-background text-foreground' : 'text-muted-foreground hover:text-foreground',
-                  )}
-                >
-                  {t('database.import.collection.targetModeNew')}
-                </button>
-              </div>
+              <ImportTargetModeToggle
+                label={t('database.import.collection.targetMode')}
+                mode={targetMode}
+                onModeChange={setTargetMode}
+                existingLabel={t('database.import.collection.targetModeExisting')}
+                newLabel={t('database.import.collection.targetModeNew')}
+                disabled={importing}
+              />
               {targetMode === 'existing' ? (
-                <select
-                  value={selectedCollection}
-                  onChange={(event) => setSelectedCollection(event.target.value)}
-                  disabled={importing}
-                  className={SELECT_CLASS}
-                  aria-label={t('database.import.collection.target')}
-                >
-                  <option value="" disabled>
-                    {existingCollections.length === 0
-                      ? t('database.import.collection.noCollections')
-                      : t('database.import.collection.selectCollection')}
-                  </option>
-                  {existingCollections.map((name) => (
-                    <option key={name} value={name}>{name}</option>
-                  ))}
-                </select>
+                <Select value={selectedCollection || undefined} onValueChange={setSelectedCollection} disabled={importing}>
+                  <SelectTrigger className="w-full" aria-label={t('database.import.collection.target')}>
+                    <SelectValue
+                      placeholder={existingCollections.length === 0
+                        ? t('database.import.collection.noCollections')
+                        : t('database.import.collection.selectCollection')}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {existingCollections.map((name) => (
+                      <SelectItem key={name} value={name}>{name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               ) : (
                 <Input
                   value={newCollectionName}
@@ -321,25 +317,19 @@ export function CollectionImportModal({
             </div>
           )}
 
-          {/* Mode */}
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-foreground">{t('database.import.collection.mode')}</label>
-            <select
-              value={effectiveMode}
-              onChange={(event) => setMode(event.target.value as ImportMode)}
-              disabled={importing || targetMode === 'new'}
-              className={SELECT_CLASS}
-            >
-              <option value={ImportMode.Append}>{t('database.import.collection.mode.append')}</option>
-              <option value={ImportMode.Overwrite}>{t('database.import.collection.mode.overwrite')}</option>
-              <option value={ImportMode.Upsert}>{t('database.import.collection.mode.upsert')}</option>
-            </select>
-            {targetMode === 'new' && (
-              <span className="text-xs text-muted-foreground">{t('database.import.collection.newCollectionAppendOnly')}</span>
-            )}
-          </div>
+          <ImportModeSelect
+            label={t('database.import.collection.mode')}
+            value={effectiveMode}
+            onChange={setMode}
+            disabled={importing || targetMode === 'new'}
+            note={targetMode === 'new' ? t('database.import.collection.newCollectionAppendOnly') : undefined}
+            options={[
+              { value: ImportMode.Append, label: t('database.import.collection.mode.append') },
+              { value: ImportMode.Overwrite, label: t('database.import.collection.mode.overwrite') },
+              { value: ImportMode.Upsert, label: t('database.import.collection.mode.upsert') },
+            ]}
+          />
 
-          {/* Upsert keys */}
           {effectiveMode === ImportMode.Upsert && (
             <div className="flex flex-col gap-2">
               <label className="text-sm font-medium text-foreground">{t('database.import.collection.upsertKeys')}</label>
@@ -353,39 +343,21 @@ export function CollectionImportModal({
             </div>
           )}
 
-          {/* CSV delimiter / Excel sheet */}
-          {(showDelimiter || showSheet) && (
-            <div className="flex flex-wrap items-end gap-3">
-              {showDelimiter && (
-                <div className="flex flex-1 flex-col gap-2">
-                  <label className="text-sm font-medium text-foreground">{t('database.import.collection.csvDelimiter')}</label>
-                  <select value={delimiter} onChange={(event) => setDelimiter(event.target.value)} disabled={importing} className={SELECT_CLASS}>
-                    {CSV_DELIMITER_OPTIONS.map((option) => (
-                      <option key={option.labelKey} value={option.value}>{t(option.labelKey)}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-              {showSheet && (
-                <div className="flex flex-1 flex-col gap-2">
-                  <label className="text-sm font-medium text-foreground">{t('database.import.collection.excelSheet')}</label>
-                  <Input
-                    value={sheet}
-                    onChange={(event) => setSheet(event.target.value)}
-                    placeholder={t('database.import.collection.excelSheetPlaceholder')}
-                    disabled={importing}
-                  />
-                </div>
-              )}
-              {file && format && (
-                <Button type="button" variant="outline" size="sm" onClick={() => void loadPreview(file, format)} disabled={previewLoading || importing}>
-                  {t('database.import.collection.refreshPreview')}
-                </Button>
-              )}
-            </div>
-          )}
+          <ImportSourceOptions
+            showDelimiter={showDelimiter}
+            showSheet={showSheet}
+            delimiterLabel={t('database.import.collection.csvDelimiter')}
+            delimiterOptions={CSV_DELIMITER_OPTIONS.map((option) => ({ value: option.value, label: t(option.labelKey) }))}
+            delimiter={delimiter}
+            onDelimiterChange={setDelimiter}
+            sheetLabel={t('database.import.collection.excelSheet')}
+            sheetPlaceholder={t('database.import.collection.excelSheetPlaceholder')}
+            sheetOptions={sheetOptions}
+            sheet={selectedSheet}
+            onSheetChange={setSheet}
+            disabled={importing}
+          />
 
-          {/* Preview */}
           {previewLoading && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -400,15 +372,10 @@ export function CollectionImportModal({
             />
           )}
 
-          {/* Overwrite warning */}
           {effectiveMode === ImportMode.Overwrite && (
-            <div className="flex items-start gap-2 rounded-md border border-warning/20 bg-warning/5 p-3 text-sm text-warning">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-              <span>{t('database.import.collection.overwriteWarning')}</span>
-            </div>
+            <ImportNotice tone="warning">{t('database.import.collection.overwriteWarning')}</ImportNotice>
           )}
 
-          {/* Result */}
           {result && <CollectionImportResultView result={result} />}
         </div>
 
@@ -439,12 +406,7 @@ function CollectionImportPreviewView({
   const { t } = useI18n()
 
   if (preview.ValidationError) {
-    return (
-      <div role="alert" className="flex items-start gap-2 rounded-md border border-destructive/20 bg-destructive/5 p-3 text-sm text-destructive">
-        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-        <span>{formatCollectionImportError(t, preview.ValidationError)}</span>
-      </div>
-    )
+    return <ImportNotice tone="error">{formatCollectionImportError(t, preview.ValidationError)}</ImportNotice>
   }
 
   if (preview.Format === CollectionImportFormat.Json) {
@@ -466,40 +428,16 @@ function CollectionImportPreviewView({
   }
 
   return (
-    <div className="flex flex-col gap-2">
-      <span className="text-sm font-medium text-foreground">{t('database.import.collection.skipColumns')}</span>
-      <div className="overflow-x-auto rounded-md border border-input">
-        <table className="w-full text-xs">
-          <thead>
-            <tr className="border-b border-input">
-              {preview.Columns.map((column) => (
-                <th key={column} className="px-2 py-1.5 text-left font-medium">
-                  <label className="flex items-center gap-1.5">
-                    <Checkbox
-                      checked={!skippedColumns.has(column)}
-                      onCheckedChange={() => onToggleColumn(column)}
-                    />
-                    <span className={cn('truncate', skippedColumns.has(column) && 'text-muted-foreground line-through')}>{column}</span>
-                  </label>
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {preview.Rows.map((row, rowIndex) => (
-              <tr key={rowIndex} className="border-b border-input/50 last:border-0">
-                {preview.Columns.map((column, columnIndex) => (
-                  <td key={column} className={cn('px-2 py-1', skippedColumns.has(column) && 'text-muted-foreground/50')}>
-                    {row[columnIndex] ?? ''}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      {preview.Truncated && <span className="text-xs text-muted-foreground">{t('database.import.collection.truncated')}</span>}
-    </div>
+    <ImportPreviewTable
+      caption={t('database.import.collection.skipColumns')}
+      columns={preview.Columns}
+      rows={preview.Rows}
+      skippable
+      skipped={skippedColumns}
+      onToggleColumn={onToggleColumn}
+      truncated={preview.Truncated}
+      truncatedText={t('database.import.collection.truncated')}
+    />
   )
 }
 
@@ -509,15 +447,12 @@ function CollectionImportResultView({ result }: { result: CollectionImportResult
 
   if (!result.Status) {
     return (
-      <div role="alert" className="flex items-start gap-2 rounded-md border border-destructive/20 bg-destructive/5 p-3 text-sm text-destructive">
-        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-        <div className="min-w-0">
-          <span>{formatCollectionImportError(t, result.Detail)}</span>
-          {result.Message && (
-            <pre className="mt-2 whitespace-pre-wrap break-words font-mono text-xs leading-relaxed">{result.Message}</pre>
-          )}
-        </div>
-      </div>
+      <ImportNotice tone="error">
+        <span>{formatCollectionImportError(t, result.Detail)}</span>
+        {result.Message && (
+          <pre className="mt-2 whitespace-pre-wrap break-words font-mono text-xs leading-relaxed">{result.Message}</pre>
+        )}
+      </ImportNotice>
     )
   }
 
@@ -527,31 +462,30 @@ function CollectionImportResultView({ result }: { result: CollectionImportResult
       : t('database.import.collection.successMessage', { imported: result.ImportedCount })
 
   return (
-    <div role="status" className="flex flex-col gap-2 rounded-md border border-success/20 bg-success/5 p-3 text-sm text-success">
-      <div className="flex items-center gap-2">
-        <CheckCircle className="h-4 w-4 shrink-0" />
+    <ImportNotice tone="success">
+      <div className="flex flex-col gap-2">
         <span>{summary}</span>
+        {result.MatchedCount != null && (
+          <span className="text-xs">
+            {t('database.import.collection.upsertSummary', {
+              matched: result.MatchedCount,
+              modified: result.ModifiedCount ?? 0,
+              upserted: result.UpsertedCount ?? 0,
+            })}
+          </span>
+        )}
+        {result.Errors.length > 0 && (
+          <div className="mt-1 flex flex-col gap-1 text-xs text-warning">
+            <span>{t('database.import.collection.skippedErrors')}</span>
+            {result.Errors.map((error: CollectionImportError) => (
+              <span key={error.Index} className="font-mono">
+                {t('database.import.collection.skippedError', { index: error.Index, reason: error.Reason })}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
-      {result.MatchedCount != null && (
-        <span className="text-xs">
-          {t('database.import.collection.upsertSummary', {
-            matched: result.MatchedCount,
-            modified: result.ModifiedCount ?? 0,
-            upserted: result.UpsertedCount ?? 0,
-          })}
-        </span>
-      )}
-      {result.Errors.length > 0 && (
-        <div className="mt-1 flex flex-col gap-1 text-xs text-warning">
-          <span>{t('database.import.collection.skippedErrors')}</span>
-          {result.Errors.map((error: CollectionImportError) => (
-            <span key={error.Index} className="font-mono">
-              {t('database.import.collection.skippedError', { index: error.Index, reason: error.Reason })}
-            </span>
-          ))}
-        </div>
-      )}
-    </div>
+    </ImportNotice>
   )
 }
 

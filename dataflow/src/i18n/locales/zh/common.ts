@@ -145,6 +145,7 @@ export const zhCommonMessages = {
   'database.import.table.targetColumn': '目标列',
   'database.import.table.previewRows': '预览数据行',
   'database.import.table.truncated': '预览已截断为前几行。',
+  'database.import.table.overwriteWarning': '覆盖模式会先清空目标表中的全部数据。',
   'database.import.table.newTableName': '新表名',
   'database.import.table.newTableNamePlaceholder': 'imported_table',
   'database.import.table.newTableColumns': '新表字段',

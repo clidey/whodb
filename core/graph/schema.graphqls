@@ -200,6 +200,8 @@ input ImportCollectionPreviewInput {
 
 type CollectionImportPreview {
   Format: CollectionImportFormat!
+  Sheet: String
+  Sheets: [String!]!
   Columns: [String!]!
   Rows: [[String!]!]!
   Documents: [String!]!
@@ -386,6 +388,7 @@ input SnapshotInput {
 
 type ImportPreview {
   Sheet: String
+  Sheets: [String!]!
   Columns: [String!]!
   Rows: [[String!]!]!
   Truncated: Boolean!

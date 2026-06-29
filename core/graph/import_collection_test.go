@@ -177,8 +177,12 @@ func TestBuildCollectionImportPreviewCSV(t *testing.T) {
 func TestBuildCollectionImportPreviewExcel(t *testing.T) {
 	f := excelize.NewFile()
 	sheet := f.GetSheetName(0)
+	secondSheet := "Second"
+	_, _ = f.NewSheet(secondSheet)
 	_ = f.SetSheetRow(sheet, "A1", &[]any{"name", "age"})
 	_ = f.SetSheetRow(sheet, "A2", &[]any{"Alice", "30"})
+	_ = f.SetSheetRow(secondSheet, "A1", &[]any{"title"})
+	_ = f.SetSheetRow(secondSheet, "A2", &[]any{"Report"})
 	buf, err := f.WriteToBuffer()
 	if err != nil {
 		t.Fatalf("failed to build excel: %v", err)
@@ -189,6 +193,26 @@ func TestBuildCollectionImportPreviewExcel(t *testing.T) {
 	}
 	if len(preview.Columns) != 2 {
 		t.Fatalf("expected 2 columns, got %+v", preview.Columns)
+	}
+	if preview.Sheet == nil || *preview.Sheet != sheet {
+		t.Fatalf("expected default sheet %q, got %v", sheet, preview.Sheet)
+	}
+	if len(preview.Sheets) != 2 || preview.Sheets[0] != sheet || preview.Sheets[1] != secondSheet {
+		t.Fatalf("unexpected sheets: %+v", preview.Sheets)
+	}
+
+	preview = buildCollectionImportPreview(buf.Bytes(), model.ImportCollectionPreviewInput{
+		Format: model.CollectionImportFormatExcel,
+		Sheet:  &secondSheet,
+	})
+	if preview.ValidationError != nil {
+		t.Fatalf("unexpected selected sheet validation error: %v", *preview.ValidationError)
+	}
+	if preview.Sheet == nil || *preview.Sheet != secondSheet {
+		t.Fatalf("expected selected sheet %q, got %v", secondSheet, preview.Sheet)
+	}
+	if len(preview.Columns) != 1 || preview.Columns[0] != "title" {
+		t.Fatalf("unexpected selected sheet columns: %+v", preview.Columns)
 	}
 }
 

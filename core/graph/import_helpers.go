@@ -37,6 +37,7 @@ type importParseResult struct {
 	rows      [][]string
 	truncated bool
 	sheet     string
+	sheets    []string
 }
 
 type importMapping struct {
@@ -146,7 +147,7 @@ func parseCSVImport(data []byte, options *model.ImportFileOptions, maxRows int, 
 	reader.Comma = rune(delimiter[0])
 	reader.FieldsPerRecord = -1
 
-	result := &importParseResult{}
+	result := &importParseResult{sheets: []string{}}
 	firstRow := true
 
 	for {
@@ -173,12 +174,9 @@ func parseCSVImport(data []byte, options *model.ImportFileOptions, maxRows int, 
 		}
 
 		result.rows = append(result.rows, normalized)
-		if enforceRowCap && len(result.rows) > maxImportRows {
-			return nil, newImportValidationError(importValidationRowLimitExceeded)
-		}
-
-		if maxRows > 0 && len(result.rows) >= maxRows {
-			result.truncated = true
+		if stop, err := applyRowLimit(result, maxRows, enforceRowCap); err != nil {
+			return nil, err
+		} else if stop {
 			break
 		}
 	}
@@ -204,11 +202,11 @@ func parseExcelImport(data []byte, options *model.ImportFileOptions, maxRows int
 	if options.Sheet != nil {
 		sheetName = *options.Sheet
 	}
+	sheets := file.GetSheetList()
+	if len(sheets) == 0 {
+		return nil, newImportValidationError(importValidationNoColumns)
+	}
 	if sheetName == "" {
-		sheets := file.GetSheetList()
-		if len(sheets) == 0 {
-			return nil, newImportValidationError(importValidationNoColumns)
-		}
 		sheetName = sheets[0]
 	}
 
@@ -218,7 +216,7 @@ func parseExcelImport(data []byte, options *model.ImportFileOptions, maxRows int
 	}
 	defer rows.Close()
 
-	result := &importParseResult{sheet: sheetName}
+	result := &importParseResult{sheet: sheetName, sheets: sheets}
 	firstRow := true
 
 	for rows.Next() {
@@ -242,12 +240,9 @@ func parseExcelImport(data []byte, options *model.ImportFileOptions, maxRows int
 		}
 
 		result.rows = append(result.rows, normalized)
-		if enforceRowCap && len(result.rows) > maxImportRows {
-			return nil, newImportValidationError(importValidationRowLimitExceeded)
-		}
-
-		if maxRows > 0 && len(result.rows) >= maxRows {
-			result.truncated = true
+		if stop, err := applyRowLimit(result, maxRows, enforceRowCap); err != nil {
+			return nil, err
+		} else if stop {
 			break
 		}
 	}
@@ -257,6 +252,23 @@ func parseExcelImport(data []byte, options *model.ImportFileOptions, maxRows int
 	}
 
 	return result, nil
+}
+
+// applyRowLimit enforces the row threshold after a row was appended to result.
+// maxRows is the single threshold: when the source exceeds it, enforceRowCap
+// (commit) rejects the file, otherwise (preview) the rows are trimmed back to
+// maxRows and the result is marked truncated. Returns stop=true when reading
+// should halt. maxRows <= 0 means no limit.
+func applyRowLimit(result *importParseResult, maxRows int, enforceRowCap bool) (bool, error) {
+	if maxRows <= 0 || len(result.rows) <= maxRows {
+		return false, nil
+	}
+	if enforceRowCap {
+		return false, newImportValidationError(importValidationRowLimitExceeded)
+	}
+	result.rows = result.rows[:maxRows]
+	result.truncated = true
+	return true, nil
 }
 
 func normalizeRow(row []string, columnCount int) ([]string, error) {

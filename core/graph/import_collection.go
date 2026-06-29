@@ -126,6 +126,7 @@ func buildDocumentsFromRows(parsed *importParseResult, skipColumns []string) []m
 func buildCollectionImportPreview(data []byte, input model.ImportCollectionPreviewInput) *model.CollectionImportPreview {
 	preview := &model.CollectionImportPreview{
 		Format:    input.Format,
+		Sheets:    []string{},
 		Columns:   []string{},
 		Rows:      [][]string{},
 		Documents: []string{},
@@ -169,6 +170,10 @@ func buildCollectionImportPreview(data []byte, input model.ImportCollectionPrevi
 		preview.ValidationError = validationKeyPtr(err)
 		return preview
 	}
+	if parsed.sheet != "" {
+		preview.Sheet = &parsed.sheet
+	}
+	preview.Sheets = parsed.sheets
 	preview.Columns = parsed.columns
 	preview.Rows = parsed.rows
 	preview.Truncated = parsed.truncated

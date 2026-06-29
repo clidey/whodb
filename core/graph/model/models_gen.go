@@ -118,6 +118,8 @@ type CollectionImportError struct {
 
 type CollectionImportPreview struct {
 	Format          CollectionImportFormat `json:"Format"`
+	Sheet           *string                `json:"Sheet,omitempty"`
+	Sheets          []string               `json:"Sheets"`
 	Columns         []string               `json:"Columns"`
 	Rows            [][]string             `json:"Rows"`
 	Documents       []string               `json:"Documents"`
@@ -330,6 +332,7 @@ type ImportNewTablePreviewInput struct {
 
 type ImportPreview struct {
 	Sheet                      *string                       `json:"Sheet,omitempty"`
+	Sheets                     []string                      `json:"Sheets"`
 	Columns                    []string                      `json:"Columns"`
 	Rows                       [][]string                    `json:"Rows"`
 	Truncated                  bool                          `json:"Truncated"`

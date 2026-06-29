@@ -1,6 +1,8 @@
 mutation ImportCollectionPreview($input: ImportCollectionPreviewInput!) {
   ImportCollectionPreview(input: $input) {
     Format
+    Sheet
+    Sheets
     Columns
     Rows
     Documents

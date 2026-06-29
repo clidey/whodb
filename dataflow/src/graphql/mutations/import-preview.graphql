@@ -1,6 +1,7 @@
 mutation ImportPreview($input: ImportPreviewInput!) {
   ImportPreview(input: $input) {
     Sheet
+    Sheets
     Columns
     Rows
     Truncated

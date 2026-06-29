@@ -110,6 +110,12 @@
       "skillPath": "skills/productivity/teach/SKILL.md",
       "computedHash": "9cd31ea42b40915ea5fd3949ed229b217d1dfad07dd93d9b0db771dcdd6a6c8a"
     },
+    "thermo-nuclear-code-quality-review": {
+      "source": "aimeritething/skills",
+      "sourceType": "github",
+      "skillPath": "skills/thermo-nuclear-code-quality-review/SKILL.md",
+      "computedHash": "e77e5de8320a61e2d08f0762844fa50884f95e5eec5035dc6591f062beb3b9ec"
+    },
     "to-issues": {
       "source": "mattpocock/skills",
       "sourceType": "github",

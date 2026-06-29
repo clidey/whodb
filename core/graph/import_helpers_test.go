@@ -190,6 +190,10 @@ func TestParseCSVImport(t *testing.T) {
 func TestParseExcelImport(t *testing.T) {
 	file := excelize.NewFile()
 	sheet := file.GetSheetName(file.GetActiveSheetIndex())
+	secondSheet := "Second"
+	if _, err := file.NewSheet(secondSheet); err != nil {
+		t.Fatalf("create sheet failed: %v", err)
+	}
 	if err := file.SetCellValue(sheet, "A1", "a"); err != nil {
 		t.Fatalf("set cell failed: %v", err)
 	}
@@ -202,6 +206,12 @@ func TestParseExcelImport(t *testing.T) {
 	if err := file.SetCellValue(sheet, "B2", "2"); err != nil {
 		t.Fatalf("set cell failed: %v", err)
 	}
+	if err := file.SetCellValue(secondSheet, "A1", "name"); err != nil {
+		t.Fatalf("set second sheet cell failed: %v", err)
+	}
+	if err := file.SetCellValue(secondSheet, "A2", "alice"); err != nil {
+		t.Fatalf("set second sheet cell failed: %v", err)
+	}
 
 	buf, err := file.WriteToBuffer()
 	if err != nil {
@@ -213,14 +223,63 @@ func TestParseExcelImport(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if res.sheet == "" {
-		t.Fatalf("expected detected sheet name")
+	if res.sheet != sheet {
+		t.Fatalf("expected default sheet %q, got %q", sheet, res.sheet)
+	}
+	if len(res.sheets) != 2 || res.sheets[0] != sheet || res.sheets[1] != secondSheet {
+		t.Fatalf("expected detected sheet list, got %#v selected=%q", res.sheets, res.sheet)
 	}
 	if len(res.columns) != 2 || res.columns[0] != "a" || res.columns[1] != "b" {
 		t.Fatalf("unexpected columns: %#v", res.columns)
 	}
 	if len(res.rows) != 1 || len(res.rows[0]) != 2 || res.rows[0][0] != "1" || res.rows[0][1] != "2" {
 		t.Fatalf("unexpected rows: %#v", res.rows)
+	}
+
+	opts.Sheet = &secondSheet
+	res, err = parseImportFile(buf.Bytes(), opts, 0, false)
+	if err != nil {
+		t.Fatalf("unexpected second sheet error: %v", err)
+	}
+	if res.sheet != secondSheet {
+		t.Fatalf("expected selected sheet %q, got %q", secondSheet, res.sheet)
+	}
+	if len(res.columns) != 1 || res.columns[0] != "name" {
+		t.Fatalf("unexpected second sheet columns: %#v", res.columns)
+	}
+	if len(res.rows) != 1 || res.rows[0][0] != "alice" {
+		t.Fatalf("unexpected second sheet rows: %#v", res.rows)
+	}
+}
+
+func TestParseImportFileRowCap(t *testing.T) {
+	opts := &model.ImportFileOptions{Format: model.ImportFileFormatCSV}
+	// Header plus three data rows; the cap threshold is two rows.
+	data := []byte("a,b\n1,1\n2,2\n3,3\n")
+
+	// Commit semantics: exceeding the cap is rejected rather than silently
+	// dropping the overflow rows.
+	if _, err := parseImportFile(data, opts, 2, true); err == nil || validationKeyFromError(err) != importValidationRowLimitExceeded {
+		t.Fatalf("expected row limit error, got %v", err)
+	}
+
+	// Preview semantics: the same overflow truncates to the cap.
+	res, err := parseImportFile(data, opts, 2, false)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !res.truncated || len(res.rows) != 2 {
+		t.Fatalf("expected truncation to 2 rows, got %d truncated=%v", len(res.rows), res.truncated)
+	}
+
+	// At exactly the cap nothing is dropped and the commit succeeds.
+	exact := []byte("a,b\n1,1\n2,2\n")
+	res, err = parseImportFile(exact, opts, 2, true)
+	if err != nil {
+		t.Fatalf("unexpected error at exact cap: %v", err)
+	}
+	if res.truncated || len(res.rows) != 2 {
+		t.Fatalf("expected 2 rows without truncation, got %d truncated=%v", len(res.rows), res.truncated)
 	}
 }
 

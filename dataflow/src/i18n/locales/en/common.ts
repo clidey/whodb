@@ -151,6 +151,7 @@ export const enCommonMessages = {
   'database.import.table.targetColumn': 'Target Column',
   'database.import.table.previewRows': 'Preview Rows',
   'database.import.table.truncated': 'Preview truncated to the first rows.',
+  'database.import.table.overwriteWarning': 'Overwrite first clears all existing rows in the target table.',
   'database.import.table.newTableName': 'New Table Name',
   'database.import.table.newTableNamePlaceholder': 'imported_table',
   'database.import.table.newTableColumns': 'New Table Columns',
