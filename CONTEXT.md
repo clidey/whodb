@@ -1,168 +1,155 @@
-# WhoDB Data Exploration Context
+# WhoDB DataFlow Context
 
-WhoDB helps users inspect and manipulate database storage units across relational and document databases. This context records product language for database exploration views.
+DataFlow is the database workspace in WhoDB: users explore connected databases, run database commands, edit data, import or export data, and turn results into analysis dashboards. This context records stable product language only; feature acceptance details and implementation trade-offs belong in specs, tests, or ADRs.
 
 ## Language
 
+**Database Workspace**:
+The workspace area for browsing database resources, running commands, and editing data.
+_Avoid_: connections tab, database page
+
+**Dashboard Workspace**:
+The workspace area for creating and editing analysis dashboards.
+_Avoid_: analysis tab, chart page
+
+**Database Connection**:
+A configured access path to one database engine or database service.
+_Avoid_: account, cluster, datasource
+
+**Database Resource**:
+A user-visible database object that can be located and acted on from the workspace.
+_Avoid_: storage unit, file, asset
+
+**Workspace Tab**:
+An open database exploration surface tied to a query or a **Database Resource**.
+_Avoid_: browser tab, panel
+
+**SQL Table**:
+A relational **Database Resource** made of rows and columns.
+_Avoid_: dataset, spreadsheet
+
+**SQL View**:
+A relational **Database Resource** whose rows are derived from a stored database query.
+_Avoid_: table
+
 **MongoDB Collection**:
-A MongoDB storage unit made of documents that may not all share the same fields.
+A MongoDB **Database Resource** made of documents that may not all share the same fields.
 _Avoid_: MongoDB table
 
 **MongoDB Document**:
 A single record inside a **MongoDB Collection**.
 _Avoid_: row, JSON row
 
-**Document Field Order**:
-The order in which top-level fields are represented by a **MongoDB Document**.
-_Avoid_: alphabetical field order, frontend object key order
-
-**JSON View**:
-The MongoDB collection view that shows each **MongoDB Document** as editable JSON.
-_Avoid_: card-only view
-
 **Collection Table View**:
-A MongoDB collection view that presents documents in a grid using document fields as columns.
+A MongoDB collection view that presents documents in a grid while preserving MongoDB document terminology.
 _Avoid_: MongoDB table
 
-**Visible Field Set**:
-A field list built from the currently visible **MongoDB Documents** and pending document changes for the **Collection Table View**.
-_Avoid_: sampled schema, complete schema
+**JSON View**:
+A MongoDB collection view that shows each **MongoDB Document** as editable JSON.
+_Avoid_: card-only view
 
-**Visible Field Type Hint**:
-A type label shown for a field in the **Visible Field Set**.
-_Avoid_: schema type, fixed collection type
+**Redis Key**:
+A Redis **Database Resource** addressed by key name.
+_Avoid_: table, collection
 
-**Unset Field**:
-A field that exists as a column in the **Collection Table View** but is absent from a specific **MongoDB Document**.
-_Avoid_: null, empty string
+**Database Export**:
+A database operation where a user extracts database content from the active **Database Connection** into a downloadable format.
+_Avoid_: backup when the export is not restorable, dump when only row data is exported
 
-**Editable Scalar Field**:
-A top-level document field whose value can be edited directly in a **Collection Table View** cell.
-_Avoid_: editable nested field
+**SQL Data Export**:
+A **Database Export** where relational row data is written as SQL INSERT statements.
+_Avoid_: database dump, backup, restore script
 
-**Complex Document Field**:
-A top-level document field whose value is an object or array and should not be edited inline in a **Collection Table View** cell.
-_Avoid_: inline JSON cell
+**SQL Update Export**:
+A **SQL Data Export** where relational row data is written as SQL UPDATE statements that identify rows by primary key.
+_Avoid_: upsert export, import mapping, freeform update script
 
-**Field JSON Editor**:
-A focused editor for changing a single object or array field from the **Collection Table View**.
-_Avoid_: document table mode
+**Database Dump**:
+A **Database Export** intended to recreate database content from database-native or database-equivalent script output.
+_Avoid_: SQL data export, CSV export, table export
 
-**Document JSON Editor**:
-The editor for changing an entire **MongoDB Document** as JSON.
-_Avoid_: document table mode, field-level editor
+**Database Import**:
+A database operation where a user brings external database content into the active **Database Connection**.
+_Avoid_: restore-only flow, SQL import as the top-level flow
 
-**Document Replacement Edit**:
-A **Document JSON Editor** edit that replaces the stored **MongoDB Document** shape while preserving the original `_id`.
-_Avoid_: field patch, `$set` edit
+**Import Method**:
+The kind of external content a **Database Import** uses.
+_Avoid_: import mode, export format
 
-**Workspace Tab**:
-A database exploration surface tied to a query or a storage unit.
-_Avoid_: browser tab, panel
+**SQL Script Import**:
+A **Database Import** method where a user provides SQL statements to execute against a SQL database.
+_Avoid_: table file import, CSV import, database dump import
 
-**Database Workspace**:
-The workbench area where users explore connections, queries, and storage-unit **Workspace Tabs**.
-_Avoid_: connections tab, sidebar mode
+**Table File Import**:
+A **Database Import** method where a user maps rows from a CSV or Excel file into one existing or newly created **SQL Table**.
+_Avoid_: SQL script import, database dump import
 
-**Dashboard Workspace**:
-The dashboard area where users view and edit analysis dashboards.
-_Avoid_: analysis tab, chart sidebar
+**Collection File Import**:
+A **Database Import** method where a user loads records from a JSON, CSV, or Excel file into one existing or newly created **MongoDB Collection**.
+_Avoid_: table file import, SQL script import
 
-**Workspace Tab Leave Guard**:
-A confirmation step shown before an action would discard unsaved database edits by closing a **Workspace Tab**, closing or refreshing the browser page, or switching from the database workspace to the dashboard.
-_Avoid_: route guard, ordinary tab switch blocker, dirty tab blocker
+**Dashboard**:
+An analysis surface made of charts created from database query results.
+_Avoid_: report, database view
 
-**Sidebar Focus**:
-The sidebar tree item that represents the active **Workspace Tab**'s closest database context.
-_Avoid_: hover state, keyboard focus
-
-**Sidebar Reveal**:
-The behavior that makes the **Sidebar Focus** visible in the sidebar tree.
-_Avoid_: expand all, jump to item
+**Chart**:
+A visual summary of query result data used inside a **Dashboard**.
+_Avoid_: widget when the data visualization is meant
 
 ## Relationships
 
+- The **Database Workspace** and **Dashboard Workspace** are separate workspace areas.
+- A **Database Workspace** uses one or more **Database Connections**.
+- A **Database Connection** exposes zero or more **Database Resources**.
+- A **Workspace Tab** belongs to the **Database Workspace**.
+- A **Workspace Tab** can be tied to one **Database Resource**.
+- A **SQL Table**, **SQL View**, **MongoDB Collection**, and **Redis Key** are each a kind of **Database Resource**.
 - A **MongoDB Collection** contains zero or more **MongoDB Documents**.
-- A **MongoDB Document** has a **Document Field Order**.
-- A **JSON View** displays **MongoDB Documents** in their native document shape.
-- A **Collection Table View** presents **MongoDB Documents** as rows while preserving MongoDB's flexible field model.
-- A **Visible Field Set** guides the columns shown in a **Collection Table View** but does not represent a complete MongoDB schema.
-- A **Visible Field Set** follows **Document Field Order** by adding fields the first time they appear in visible documents.
-- A **Visible Field Type Hint** describes a field in the **Visible Field Set** and may be `mixed` when observed or inferred field values use multiple types.
-- A **Visible Field Type Hint** does not add fields to the **Visible Field Set**.
-- A field outside the **Visible Field Set** is not shown as a **Collection Table View** column.
-- An **Unset Field** is distinct from a field whose stored value is `null`.
-- Editing an **Unset Field** creates that field on the affected **MongoDB Document**.
-- An **Editable Scalar Field** can be edited inline in the **Collection Table View**.
-- Editing an **Editable Scalar Field** preserves the existing field type when the field already exists, except when the input is a complete, valid, unquoted JSON object or array.
-- A **Complex Document Field** in the **Collection Table View** can open a **Field JSON Editor**.
-- A **Field JSON Editor** accepts any valid JSON value, even when that changes an object or array field into a scalar or `null`.
-- A **MongoDB Document** is edited through a **Document JSON Editor**.
-- A **Document JSON Editor** creates a **Document Replacement Edit** when the user changes values, adds fields, or removes fields.
-- A **Document Replacement Edit** persists the **Document Field Order** authored in the JSON editor, except MongoDB's `_id` field remains first and immutable.
-- Changing only **Document Field Order** is not a submitable database edit.
-- A **Complex Document Field** is not edited through a separate field-level interaction inside the **Document JSON Editor**.
-- The **Database Workspace** contains zero or more **Workspace Tabs**.
-- The **Dashboard Workspace** is separate from the **Database Workspace**.
-- A **Workspace Tab** has zero or one **Sidebar Focus**.
-- A storage-unit **Workspace Tab** focuses its table, view, collection, or Redis key.
-- A query **Workspace Tab** focuses the schema, database, or connection, whichever is most specific.
-- A **Workspace Tab Leave Guard** protects unsaved edits in SQL table and MongoDB collection **Workspace Tabs**.
-- A **Workspace Tab Leave Guard** does not apply to switching between open **Workspace Tabs**.
-- A **Workspace Tab Leave Guard** applies when a protected **Workspace Tab** would be closed, the browser page would close or refresh, or the **Database Workspace** would be replaced by the **Dashboard Workspace**.
-- A **Workspace Tab Leave Guard** does not submit database edits; users submit edits through the storage unit's normal review and apply flow before leaving.
-- A **Workspace Tab Leave Guard** protects unsaved database edits, not unsaved query text.
-- A **Workspace Tab Leave Guard** protects storage-unit data edits, not SQL table-structure edits made in a modal.
-- A **Workspace Tab Leave Guard** is triggered by unsaved database edits only, even when a **Workspace Tab** also has unsaved query text.
-- A **Workspace Tab** indicates when it has unsaved database edits, even though ordinary switching between open **Workspace Tabs** remains allowed.
-- A protected **Workspace Tab** owns how its unsaved database edits are discarded; the **Workspace Tab Leave Guard** only coordinates the confirmed discard before continuing the leave action.
-- A **Workspace Tab Leave Guard** shows one summary confirmation when one action would close multiple protected **Workspace Tabs** or switch away from the database workspace while multiple protected **Workspace Tabs** have unsaved edits.
-- Confirming a **Workspace Tab Leave Guard** discards the protected **Workspace Tab**'s unsaved database edits before the leave action continues.
-- A **Workspace Tab Leave Guard** does not apply when returning from the **Dashboard Workspace** to the **Database Workspace**.
-- A **Sidebar Reveal** expands collapsed ancestors of the **Sidebar Focus** and scrolls the focus into view.
+- A **Collection Table View** and a **JSON View** are alternate views of a **MongoDB Collection**.
+- A **Database Export** extracts content from exactly one active **Database Connection**.
+- A **SQL Data Export** is a **Database Export** and is not a **Database Dump**.
+- A **SQL Update Export** is a **SQL Data Export** and requires the source **SQL Table** to have a primary key.
+- A **Database Dump** is a **Database Export** and may include database structure as well as data.
+- A **Database Import** has exactly one **Import Method** for a single import run.
+- A **SQL Script Import**, a **Table File Import**, and a **Collection File Import** are separate **Import Methods**.
+- A **Table File Import** targets exactly one **SQL Table**.
+- A **Table File Import** does not target a **MongoDB Collection** or **Redis Key**.
+- A **Collection File Import** targets exactly one **MongoDB Collection** and does not target a **SQL Table** or **Redis Key**.
+- A **Table File Import** that creates a new **SQL Table** may create that table without a primary key.
+- When a **Table File Import** creates a new **SQL Table**, any selected primary key columns come from the source file columns rather than from DataFlow-generated columns.
+- A **Dashboard** contains one or more **Charts**.
+- A **Chart** is created from database query result data.
 
 ## Example Dialogue
 
-> **Dev:** "Should MongoDB open in the table by default?"
-> **Domain expert:** "Yes. Open MongoDB collections in the **Collection Table View** by default because users expect a grid for browsing. Keep the **JSON View** available as a switchable document-focused view."
+> **Dev:** "Can we call every browsable thing a table in the sidebar?"
+> **Domain expert:** "No. Use **Database Resource** only when you need a generic term. Say **SQL Table**, **MongoDB Collection**, or **Redis Key** when the database model matters."
 >
-> **Dev:** "When users switch between **Workspace Tabs**, should the sidebar keep the last clicked tree item?"
-> **Domain expert:** "No. The sidebar should show the **Sidebar Focus** for the active **Workspace Tab**."
+> **Dev:** "Should MongoDB browsing use the same language as relational browsing?"
+> **Domain expert:** "No. The grid is a **Collection Table View**, but the stored records are still **MongoDB Documents**, not rows."
 >
-> **Dev:** "If that focus is hidden under a collapsed folder or outside the visible sidebar area, should we leave the tree as-is?"
-> **Domain expert:** "No. Use **Sidebar Reveal** so the focused item is visible without expanding unrelated branches."
+> **Dev:** "When users upload SQL, is that the whole import feature?"
+> **Domain expert:** "No. **SQL Script Import** is one **Import Method** inside **Database Import**. A CSV or Excel upload into a table is a **Table File Import**."
 >
-> **Dev:** "If a user edits rows in one **Workspace Tab** and clicks another open tab, should we block the switch?"
-> **Domain expert:** "No. Keep the edits in their original **Workspace Tab** and allow ordinary tab switching. Use the **Workspace Tab Leave Guard** only when edits would be discarded by closing the tab, closing or refreshing the browser page, or switching to the dashboard."
+> **Dev:** "Can we call exported INSERT statements a dump?"
+> **Domain expert:** "No. That is a **SQL Data Export**. A **Database Dump** is the restorable export path and has a stronger product promise."
+>
+> **Dev:** "If SQL export can generate UPDATE statements, are we configuring an import?"
+> **Domain expert:** "No. A **SQL Update Export** still exports a script; it simply requires a primary key so each exported UPDATE statement targets one existing row."
+>
+> **Dev:** "Are charts part of database browsing?"
+> **Domain expert:** "They start from query result data, but a saved analysis surface belongs to the **Dashboard Workspace** as a **Dashboard**."
 
 ## Flagged Ambiguities
 
-### Terminology
-
-- "table view" in MongoDB means **Collection Table View**, not a relational database table.
-- The document editor should be a **Document JSON Editor**, not a table view, field list, or field-level editor.
-- "focus" in the sidebar means **Sidebar Focus**, not hover state or keyboard focus.
-- "auto expand" in the sidebar means **Sidebar Reveal**, not expanding every folder in the tree.
-- "leave protection" means **Workspace Tab Leave Guard**, not only the browser's refresh or close-page warning.
-- "original fields" in MongoDB means **Document Field Order**, not alphabetical field order.
-- The **Collection Table View** is the default MongoDB collection view.
-- The **Collection Table View** should not infer fields from an extra collection sample.
-- Type information in the **Collection Table View** is a **Visible Field Type Hint**, not a complete schema guarantee.
-- The **Collection Table View** shows fields from the current visible documents and pending document changes.
-- The **Collection Table View** should preserve first-seen **Document Field Order** rather than sorting fields alphabetically.
-- The **Collection Table View** supports sorting and filtering on top-level document fields.
-
-### MongoDB Table Editing
-
-- MongoDB inline editing is limited to **Editable Scalar Fields**; object and array cells in the **Collection Table View** open a **Field JSON Editor**.
-- A **Field JSON Editor** validates JSON syntax only. It does not force the edited value to remain an object or array.
-- Empty input or clearing an existing field is not field deletion; field deletion must be a distinct action.
-- Editing a `null` or **Unset Field** in the **Collection Table View** creates a string value unless the input is a complete, valid, unquoted JSON object or array.
-- Typing a complete, valid, unquoted JSON object or array into any **Editable Scalar Field** changes that field into a **Complex Document Field**.
-- Editing an existing field value in the **Collection Table View** must not move that field in the **Document Field Order**; newly created fields from field-level edits are appended to the document's visible field order.
-- Editing through the **Document JSON Editor** treats field additions, field removals, and value changes as the authored **Document Replacement Edit**. **Document Field Order** changes are saved only as part of those content changes.
-
-### MongoDB View State
-
-- Switching between **Collection Table View** and **JSON View** preserves pending document changes.
-- Pending changes from **Collection Table View** and **JSON View** share the same document-level preview and submission flow.
+- "table" means **SQL Table** unless explicitly referring to the MongoDB **Collection Table View**.
+- "MongoDB table" is not a domain term; use **MongoDB Collection** or **Collection Table View** depending on whether the discussion is about storage or UI.
+- "row" means a relational row unless the discussion is explicitly about a grid rendering; a stored MongoDB record is a **MongoDB Document**.
+- "storage unit" is an internal or old documentation term; use **Database Resource** in product context.
+- "import" means **Database Import** unless a specific **Import Method** such as **SQL Script Import** or **Table File Import** is named.
+- "CSV/Excel import" means **Table File Import** when the target is a **SQL Table**.
+- "primary key" in a new-table **Table File Import** means a source file column selected as the new **SQL Table** primary key; it does not mean DataFlow adds a generated id column.
+- "SQL export" means **SQL Data Export** unless the discussion explicitly includes database structure or restore semantics.
+- "update export" means **SQL Update Export**, not upsert or an import workflow.
+- "dump" means **Database Dump**, not **SQL Data Export**.
+- "dashboard" means an analysis surface in the **Dashboard Workspace**, not the database browsing workspace.

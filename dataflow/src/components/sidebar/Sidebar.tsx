@@ -48,6 +48,7 @@ export type ModalState =
   | { type: "create_collection"; params: { connectionId: string; databaseName: string } }
   | { type: "edit_database"; params: { connectionId: string; databaseName: string } }
   | { type: "delete_database"; params: { connectionId: string; databaseName: string } }
+  | { type: "import_database"; params: { connectionId: string; databaseName: string; schema?: string | null; tableName?: string | null } }
   | { type: "edit_table"; params: { connectionId: string; databaseName: string; schema?: string; tableName: string } }
   | { type: "delete_table"; params: { connectionId: string; databaseName: string; schema?: string; tableName: string } }
   | { type: "export_data"; params: { connectionId: string; databaseName: string; schema: string | null; tableName: string } }
@@ -57,6 +58,7 @@ export type ModalState =
   | { type: "rename_table"; params: { connectionId: string; databaseName: string; schema?: string; tableName: string } }
   | { type: "export_collection"; params: { connectionId: string; databaseName: string; collectionName: string } }
   | { type: "drop_collection"; params: { connectionId: string; databaseName: string; collectionName: string } }
+  | { type: "import_collection"; params: { connectionId: string; databaseName: string; collectionName: string | null } }
   | { type: "create_redis_key"; params: { connectionId: string; databaseName: string } }
   | { type: "delete_redis_key"; params: { connectionId: string; databaseName: string; keyName: string } }
   | { type: "export_redis_key"; params: { connectionId: string; databaseName: string; keyName: string } };
@@ -294,6 +296,21 @@ function SidebarInner() {
           });
           break;
         }
+        case "import_database": {
+          const importDatabaseName = node.type === "database" ? node.name : node.metadata.database!;
+          const importSchema = node.type === "schema" ? node.name : node.metadata?.schema ?? null;
+          const importTableName = node.type === "table" ? node.name : null;
+          openModal({
+            type: "import_database",
+            params: {
+              connectionId: node.connectionId,
+              databaseName: importDatabaseName,
+              schema: importSchema,
+              tableName: importTableName,
+            },
+          });
+          break;
+        }
         case "clear_table_data":
           openModal({
             type: "clear_table_data",
@@ -347,6 +364,18 @@ function SidebarInner() {
             },
           });
           break;
+        case "import_collection": {
+          const isDatabaseNode = node.type === "database";
+          openModal({
+            type: "import_collection",
+            params: {
+              connectionId: node.connectionId,
+              databaseName: isDatabaseNode ? node.name : node.metadata.database!,
+              collectionName: isDatabaseNode ? null : node.name,
+            },
+          });
+          break;
+        }
         case "new_redis_key":
           openModal({
             type: "create_redis_key",
@@ -427,7 +456,10 @@ function SidebarInner() {
           sysState,
         );
       case "schema":
-        return getSchemaMenuItems(callbacks);
+        return getSchemaMenuItems(
+          connections.find((c) => c.id === node.connectionId)!.type,
+          callbacks,
+        );
       case "table_folder":
         return getTableFolderMenuItems(callbacks);
       case "view_folder":

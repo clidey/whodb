@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Download, Plus, Minus, Undo2, Eye, ArrowBigUp, RefreshCw, TerminalSquare, BarChart3, Table2, FileJson } from 'lucide-react'
+import { Download, Upload, Plus, Minus, Undo2, Eye, ArrowBigUp, RefreshCw, TerminalSquare, BarChart3, Table2, FileJson } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import { useCollectionView } from './CollectionViewProvider'
 import type { MongoCollectionViewMode } from './types'
@@ -203,6 +203,17 @@ export function CollectionViewToolbar({ connectionId, databaseName, collectionNa
           onClick={() => actions.setIsFilterModalOpen(true)}
           count={Object.keys(state.activeFilter).length}
         />
+        <Button
+          className="rounded-lg gap-2.5 min-w-[86px]"
+          onClick={() => actions.setShowImportModal(true)}
+          data-testid="mongodb.collection.import-button"
+          data-qa-module="mongodb"
+          data-qa-object="collection-data"
+          data-qa-action="import"
+        >
+          <Upload className="h-4 w-4" />
+          {t('common.actions.import')}
+        </Button>
         <Button
           className="rounded-lg gap-2.5 min-w-[86px]"
           onClick={() => actions.setShowExportModal(true)}

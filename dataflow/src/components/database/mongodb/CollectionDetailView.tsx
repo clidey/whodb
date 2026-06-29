@@ -10,6 +10,7 @@ import { buildRenderedMongoDocuments } from './CollectionView/mongo-table-utils'
 import { DataView } from '@/components/database/shared/DataView'
 import { FindBar } from '@/components/database/shared/FindBar'
 import { ExportCollectionModal } from './ExportCollectionModal'
+import { CollectionImportModal } from './CollectionImportModal'
 import { FilterCollectionModal } from './FilterCollectionModal'
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal'
 import { AlertModal } from '@/components/ui/AlertModal'
@@ -166,6 +167,17 @@ function CollectionDetailViewContent({ databaseName, collectionName, connectionI
         connectionId={connectionId}
         databaseName={databaseName}
         collectionName={collectionName}
+      />
+
+      <CollectionImportModal
+        open={state.showImportModal}
+        onOpenChange={(open) => {
+          if (!open) actions.setShowImportModal(false)
+        }}
+        connectionId={connectionId}
+        databaseName={databaseName}
+        collectionName={collectionName}
+        onSuccess={actions.refresh}
       />
 
       <FilterCollectionModal

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Minus, Download, RefreshCw, Undo2, Eye, ArrowBigUp, TerminalSquare, BarChart3 } from 'lucide-react'
+import { Plus, Minus, Download, Upload, RefreshCw, Undo2, Eye, ArrowBigUp, TerminalSquare, BarChart3 } from 'lucide-react'
 import { useTableView } from './TableViewProvider'
 import { DataView } from '@/components/database/shared/DataView'
 import { Button } from '@/components/ui/Button'
@@ -17,14 +17,16 @@ interface TableViewToolbarProps {
   databaseName: string
   tableName: string
   schema?: string
+  storageUnitType?: 'table' | 'view'
 }
 
-export function TableViewToolbar({ connectionId, databaseName, tableName, schema }: TableViewToolbarProps) {
+export function TableViewToolbar({ connectionId, databaseName, tableName, schema, storageUnitType }: TableViewToolbarProps) {
   const { t } = useI18n()
   const { state, actions } = useTableView()
   const openTab = useTabStore((s) => s.openTab)
   const connections = useConnectionStore((s) => s.connections)
   const [isChartModalOpen, setIsChartModalOpen] = useState(false)
+  const canImport = storageUnitType !== 'view'
 
   const handleOpenQuery = () => {
     const connectionType = connections.find((connection) => connection.id === connectionId)?.type
@@ -207,6 +209,20 @@ export function TableViewToolbar({ connectionId, databaseName, tableName, schema
           onClick={() => actions.setIsFilterModalOpen(true)}
           count={state.filterConditions.length}
         />
+        {canImport && (
+          <Button
+            className="rounded-lg gap-2.5 min-w-[86px]"
+            onClick={() => actions.setShowImportModal(true)}
+            data-testid="sql.table.import-button"
+            data-qa-module="sql"
+            data-qa-object="table-data"
+            data-qa-action="import"
+            data-qa-risk="resource_mutation"
+          >
+            <Upload className="h-4 w-4" />
+            {t('common.actions.import')}
+          </Button>
+        )}
         <Button
           className="rounded-lg gap-2.5 min-w-[86px]"
           onClick={() => actions.setShowExportModal(true)}

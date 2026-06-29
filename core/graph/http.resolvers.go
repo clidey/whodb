@@ -46,6 +46,7 @@ func SetupHTTPServer(router chi.Router) {
 	router.Delete("/api/rows", deleteRowHandler)
 
 	router.Post("/api/export", HandleExport)
+	router.Get("/api/exports/{id}/download", handleSQLDataExportDownload)
 
 	// AI chat streaming endpoint is registered via build tags in http_ai_stream.go (!arm) / http_ai_stream_arm.go (arm)
 }

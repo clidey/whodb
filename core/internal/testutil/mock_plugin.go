@@ -19,6 +19,7 @@ package testutil
 import (
 	"context"
 	"fmt"
+	"io"
 
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/engine"
@@ -30,33 +31,36 @@ import (
 type PluginMock struct {
 	Type engine.DatabaseType
 
-	GetDatabasesFunc         func(*engine.PluginConfig) ([]string, error)
-	IsAvailableFunc          func(context.Context, *engine.PluginConfig) bool
-	GetAllSchemasFunc        func(*engine.PluginConfig) ([]string, error)
-	GetStorageUnitsFunc      func(*engine.PluginConfig, string) ([]engine.StorageUnit, error)
-	StorageUnitExistsFunc    func(*engine.PluginConfig, string, string) (bool, error)
-	AddStorageUnitFunc       func(*engine.PluginConfig, string, string, []engine.Record) (bool, error)
-	UpdateStorageUnitFunc    func(*engine.PluginConfig, string, string, map[string]string, []string) (bool, error)
-	ReplaceRowFunc           func(*engine.PluginConfig, string, string, map[string]string) (bool, error)
-	AddRowFunc               func(*engine.PluginConfig, string, string, []engine.Record) (bool, error)
-	AddRowReturningIDFunc    func(*engine.PluginConfig, string, string, []engine.Record) (int64, error)
-	BulkAddRowsFunc          func(*engine.PluginConfig, string, string, [][]engine.Record) (bool, error)
-	DeleteRowFunc            func(*engine.PluginConfig, string, string, map[string]string) (bool, error)
-	GetRowsFunc              func(*engine.PluginConfig, *engine.GetRowsRequest) (*engine.GetRowsResult, error)
-	GetRowCountFunc          func(*engine.PluginConfig, string, string, *model.WhereCondition) (int64, error)
-	GetGraphFunc             func(*engine.PluginConfig, string) ([]engine.GraphUnit, error)
-	RawExecuteFunc           func(*engine.PluginConfig, string, ...any) (*engine.GetRowsResult, error)
-	ChatFunc                 func(*engine.PluginConfig, string, string, string) ([]*engine.ChatMessage, error)
-	ExportDataFunc           func(*engine.PluginConfig, string, string, func([]string) error, []map[string]any) error
-	FormatValueFunc          func(any) string
-	GetColumnsForTableFunc   func(*engine.PluginConfig, string, string) ([]engine.Column, error)
-	MarkGeneratedColumnsFunc func(*engine.PluginConfig, string, string, []engine.Column) error
-	GetColumnConstraintsFunc func(*engine.PluginConfig, string, string) (map[string]map[string]any, error)
-	ClearTableDataFunc       func(*engine.PluginConfig, string, string) (bool, error)
-	GetForeignKeysFunc       func(*engine.PluginConfig, string, string) (map[string]*engine.ForeignKeyRelationship, error)
-	WithTransactionFunc      func(*engine.PluginConfig, func(tx any) error) error
-	GetDatabaseMetadataFunc  func() *engine.DatabaseMetadata
-	GetSSLStatusFunc         func(*engine.PluginConfig) (*engine.SSLStatus, error)
+	GetDatabasesFunc          func(*engine.PluginConfig) ([]string, error)
+	IsAvailableFunc           func(context.Context, *engine.PluginConfig) bool
+	GetAllSchemasFunc         func(*engine.PluginConfig) ([]string, error)
+	GetStorageUnitsFunc       func(*engine.PluginConfig, string) ([]engine.StorageUnit, error)
+	StorageUnitExistsFunc     func(*engine.PluginConfig, string, string) (bool, error)
+	AddStorageUnitFunc        func(*engine.PluginConfig, string, string, []engine.Record) (bool, error)
+	AddStorageUnitOptionsFunc func(*engine.PluginConfig, string, string, []engine.Record, engine.CreateStorageUnitOptions) (bool, error)
+	DropStorageUnitFunc       func(*engine.PluginConfig, string, string) (bool, error)
+	UpdateStorageUnitFunc     func(*engine.PluginConfig, string, string, map[string]string, []string) (bool, error)
+	ReplaceRowFunc            func(*engine.PluginConfig, string, string, map[string]string) (bool, error)
+	AddRowFunc                func(*engine.PluginConfig, string, string, []engine.Record) (bool, error)
+	AddRowReturningIDFunc     func(*engine.PluginConfig, string, string, []engine.Record) (int64, error)
+	BulkAddRowsFunc           func(*engine.PluginConfig, string, string, [][]engine.Record) (bool, error)
+	DeleteRowFunc             func(*engine.PluginConfig, string, string, map[string]string) (bool, error)
+	GetRowsFunc               func(*engine.PluginConfig, *engine.GetRowsRequest) (*engine.GetRowsResult, error)
+	GetRowCountFunc           func(*engine.PluginConfig, string, string, *model.WhereCondition) (int64, error)
+	GetGraphFunc              func(*engine.PluginConfig, string) ([]engine.GraphUnit, error)
+	RawExecuteFunc            func(*engine.PluginConfig, string, ...any) (*engine.GetRowsResult, error)
+	ChatFunc                  func(*engine.PluginConfig, string, string, string) ([]*engine.ChatMessage, error)
+	ExportDataFunc            func(*engine.PluginConfig, string, string, func([]string) error, []map[string]any) error
+	ExportSQLDataFunc         func(*engine.PluginConfig, *engine.SQLDataExportRequest, io.Writer) error
+	FormatValueFunc           func(any) string
+	GetColumnsForTableFunc    func(*engine.PluginConfig, string, string) ([]engine.Column, error)
+	MarkGeneratedColumnsFunc  func(*engine.PluginConfig, string, string, []engine.Column) error
+	GetColumnConstraintsFunc  func(*engine.PluginConfig, string, string) (map[string]map[string]any, error)
+	ClearTableDataFunc        func(*engine.PluginConfig, string, string) (bool, error)
+	GetForeignKeysFunc        func(*engine.PluginConfig, string, string) (map[string]*engine.ForeignKeyRelationship, error)
+	WithTransactionFunc       func(*engine.PluginConfig, func(tx any) error) error
+	GetDatabaseMetadataFunc   func() *engine.DatabaseMetadata
+	GetSSLStatusFunc          func(*engine.PluginConfig) (*engine.SSLStatus, error)
 }
 
 // NewPluginMock creates a PluginMock with the provided database type.
@@ -110,6 +114,20 @@ func (m *PluginMock) StorageUnitExists(config *engine.PluginConfig, schema strin
 func (m *PluginMock) AddStorageUnit(config *engine.PluginConfig, schema string, storageUnit string, fields []engine.Record) (bool, error) {
 	if m.AddStorageUnitFunc != nil {
 		return m.AddStorageUnitFunc(config, schema, storageUnit, fields)
+	}
+	return false, nil
+}
+
+func (m *PluginMock) AddStorageUnitWithOptions(config *engine.PluginConfig, schema string, storageUnit string, fields []engine.Record, options engine.CreateStorageUnitOptions) (bool, error) {
+	if m.AddStorageUnitOptionsFunc != nil {
+		return m.AddStorageUnitOptionsFunc(config, schema, storageUnit, fields, options)
+	}
+	return m.AddStorageUnit(config, schema, storageUnit, fields)
+}
+
+func (m *PluginMock) DropStorageUnit(config *engine.PluginConfig, schema string, storageUnit string) (bool, error) {
+	if m.DropStorageUnitFunc != nil {
+		return m.DropStorageUnitFunc(config, schema, storageUnit)
 	}
 	return false, nil
 }
@@ -201,6 +219,14 @@ func (m *PluginMock) Chat(config *engine.PluginConfig, schema string, previousCo
 func (m *PluginMock) ExportData(config *engine.PluginConfig, schema string, storageUnit string, writer func([]string) error, selectedRows []map[string]any) error {
 	if m.ExportDataFunc != nil {
 		return m.ExportDataFunc(config, schema, storageUnit, writer, selectedRows)
+	}
+	return nil
+}
+
+// ExportSQLData invokes the configured SQL data export hook.
+func (m *PluginMock) ExportSQLData(config *engine.PluginConfig, req *engine.SQLDataExportRequest, writer io.Writer) error {
+	if m.ExportSQLDataFunc != nil {
+		return m.ExportSQLDataFunc(config, req, writer)
 	}
 	return nil
 }

@@ -14,6 +14,8 @@ export interface TableData {
   rows: Record<string, string>[];
   /** Primary key column name, if any. */
   primaryKey: string | null;
+  /** All primary key column names in result column order. */
+  primaryKeyColumns: string[];
   /** Column names that are foreign keys. */
   foreignKeyColumns: string[];
   /** Total row count (server-side, for pagination). */
@@ -41,7 +43,10 @@ export function transformRowsResult(result: GetStorageUnitRowsQuery['Row']): Tab
     return obj;
   });
 
-  const primaryKey = result.Columns.find((c) => c.IsPrimary)?.Name ?? null;
+  const primaryKeyColumns = result.Columns
+    .filter((c) => c.IsPrimary)
+    .map((c) => c.Name);
+  const primaryKey = primaryKeyColumns[0] ?? null;
 
   const foreignKeyColumns = result.Columns
     .filter((c) => c.IsForeignKey)
@@ -52,6 +57,7 @@ export function transformRowsResult(result: GetStorageUnitRowsQuery['Row']): Tab
     columnTypes,
     rows,
     primaryKey,
+    primaryKeyColumns,
     foreignKeyColumns,
     total: result.TotalCount,
     disableUpdate: result.DisableUpdate,

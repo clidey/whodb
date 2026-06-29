@@ -27,7 +27,15 @@ import (
 	"gorm.io/gorm"
 )
 
+// PrimaryKeysUseSourceValuesExtraKey marks primary key columns that should use imported source values.
+const PrimaryKeysUseSourceValuesExtraKey = "primaryKeysUseSourceValues"
+
 func (p *GormPlugin) AddStorageUnit(config *engine.PluginConfig, schema string, storageUnit string, fields []engine.Record) (bool, error) {
+	return p.AddStorageUnitWithOptions(config, schema, storageUnit, fields, engine.CreateStorageUnitOptions{})
+}
+
+// AddStorageUnitWithOptions creates a SQL table using database-specific DDL options.
+func (p *GormPlugin) AddStorageUnitWithOptions(config *engine.PluginConfig, schema string, storageUnit string, fields []engine.Record, options engine.CreateStorageUnitOptions) (bool, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
 		if len(fields) == 0 {
 			return false, errors.New("no fields provided for table creation")
@@ -72,12 +80,26 @@ func (p *GormPlugin) AddStorageUnit(config *engine.PluginConfig, schema string, 
 					"nullable": strconv.FormatBool(nullable),
 				},
 			})
+			if primaryKey && options.PrimaryKeysUseSourceValues {
+				columns[len(columns)-1].Extra[PrimaryKeysUseSourceValuesExtraKey] = "true"
+			}
 		}
 
 		createTableQuery := p.GetCreateTableQuery(db, schema, storageUnit, columns)
 
 		if err := db.Exec(createTableQuery).Error; err != nil {
 			log.WithError(err).Error(fmt.Sprintf("Failed to create table %s.%s with query: %s", schema, storageUnit, createTableQuery))
+			return false, err
+		}
+		return true, nil
+	})
+}
+
+// DropStorageUnit drops a SQL table using database-specific identifier quoting.
+func (p *GormPlugin) DropStorageUnit(config *engine.PluginConfig, schema string, storageUnit string) (bool, error) {
+	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
+		builder := p.GormPluginFunctions.CreateSQLBuilder(db)
+		if err := db.Exec(builder.DropTableQuery(schema, storageUnit)).Error; err != nil {
 			return false, err
 		}
 		return true, nil

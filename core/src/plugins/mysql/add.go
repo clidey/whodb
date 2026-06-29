@@ -29,7 +29,7 @@ func (p *MySQLPlugin) GetCreateTableQuery(db *gorm.DB, schema string, storageUni
 
 	columnDefs := gorm_plugin.RecordsToColumnDefs(columns, func(def gorm_plugin.ColumnDef, column engine.Record) gorm_plugin.ColumnDef {
 		def.Primary = true
-		if strings.Contains(strings.ToLower(column.Value), "int") {
+		if column.Extra[gorm_plugin.PrimaryKeysUseSourceValuesExtraKey] != "true" && strings.Contains(strings.ToLower(column.Value), "int") {
 			def.Extra = "AUTO_INCREMENT"
 		}
 		return def

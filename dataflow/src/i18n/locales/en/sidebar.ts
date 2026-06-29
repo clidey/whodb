@@ -10,6 +10,7 @@ export const enSidebarMessages = {
   'sidebar.menu.newDatabase': 'New Database',
   'sidebar.menu.newTable': 'New Table',
   'sidebar.menu.newCollection': 'New Collection',
+  'sidebar.menu.import': 'Import',
   'sidebar.menu.exportData': 'Export Data',
   'sidebar.menu.clearData': 'Clear Data',
   'sidebar.menu.duplicateTable': 'Duplicate Table',

@@ -112,6 +112,7 @@ export interface TableViewState {
   columnWidths: Record<string, number>
   resizingColumn: string | null
   resizedColumns: Set<string>
+  showImportModal: boolean
   showExportModal: boolean
   isFilterModalOpen: boolean
   alert: Alert | null
@@ -143,6 +144,7 @@ export interface TableViewActions {
   handleResizeStart: (e: React.MouseEvent, column: string) => void
   setIsFilterModalOpen: (open: boolean) => void
   handleFilterApply: (cols: string[], conditions: FilterCondition[]) => void
+  setShowImportModal: (open: boolean) => void
   setShowExportModal: (open: boolean) => void
   confirmDiscardAndContinue: () => void
   showAlert: (title: string, message: string, type: Alert['type']) => void

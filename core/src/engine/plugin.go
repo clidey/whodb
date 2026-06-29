@@ -19,6 +19,7 @@ package engine
 import (
 	"context"
 	"errors"
+	"io"
 
 	"github.com/clidey/whodb/core/graph/model"
 )
@@ -144,6 +145,33 @@ type GetRowsRequest struct {
 	PageOffset  int
 }
 
+// SQLDataExportMode identifies which row write statements a SQL Data Export emits.
+type SQLDataExportMode string
+
+const (
+	// SQLDataExportModeInsert emits INSERT statements.
+	SQLDataExportModeInsert SQLDataExportMode = "INSERT"
+	// SQLDataExportModeUpdate emits UPDATE statements.
+	SQLDataExportModeUpdate SQLDataExportMode = "UPDATE"
+)
+
+// SQLDataExportRequest describes the SQL Table rows and statement mode to export.
+type SQLDataExportRequest struct {
+	Schema      string
+	StorageUnit string
+	Mode        SQLDataExportMode
+	Where       *model.WhereCondition
+	Sort        []*model.SortCondition
+	Limit       *int
+}
+
+// CreateStorageUnitOptions configures plugin-specific table creation behavior.
+type CreateStorageUnitOptions struct {
+	// PrimaryKeysUseSourceValues disables plugin defaults that generate primary
+	// key values automatically when rows will provide those values directly.
+	PrimaryKeysUseSourceValues bool
+}
+
 // PluginFunctions defines the interface that all database plugins must implement.
 // Each method provides a specific database operation capability.
 type PluginFunctions interface {
@@ -153,6 +181,8 @@ type PluginFunctions interface {
 	GetStorageUnits(config *PluginConfig, schema string) ([]StorageUnit, error)
 	StorageUnitExists(config *PluginConfig, schema string, storageUnit string) (bool, error)
 	AddStorageUnit(config *PluginConfig, schema string, storageUnit string, fields []Record) (bool, error)
+	AddStorageUnitWithOptions(config *PluginConfig, schema string, storageUnit string, fields []Record, options CreateStorageUnitOptions) (bool, error)
+	DropStorageUnit(config *PluginConfig, schema string, storageUnit string) (bool, error)
 	UpdateStorageUnit(config *PluginConfig, schema string, storageUnit string, values map[string]string, updatedColumns []string) (bool, error)
 	ReplaceRow(config *PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error)
 	AddRow(config *PluginConfig, schema string, storageUnit string, values []Record) (bool, error)
@@ -165,6 +195,7 @@ type PluginFunctions interface {
 	RawExecute(config *PluginConfig, query string, params ...any) (*GetRowsResult, error)
 	Chat(config *PluginConfig, schema string, previousConversation string, query string) ([]*ChatMessage, error)
 	ExportData(config *PluginConfig, schema string, storageUnit string, writer func([]string) error, selectedRows []map[string]any) error
+	ExportSQLData(config *PluginConfig, req *SQLDataExportRequest, writer io.Writer) error
 	FormatValue(val any) string
 	GetColumnsForTable(config *PluginConfig, schema string, storageUnit string) ([]Column, error)
 

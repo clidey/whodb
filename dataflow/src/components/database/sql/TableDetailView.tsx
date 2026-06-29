@@ -2,15 +2,18 @@ import { TableViewProvider, useTableView } from './TableView/TableViewProvider'
 import { TableViewDataGrid } from './TableView/TableView.DataGrid'
 import { TableViewToolbar } from './TableView/TableView.Toolbar'
 import { buildPreviewSql, summarizeChanges } from './TableView/changeset-sql-preview'
+import { buildTableSortInput, buildTableWhereInput } from './TableView/query-inputs'
 import { DataView } from '@/components/database/shared/DataView'
 import { FindBar } from '@/components/database/shared/FindBar'
 import { FilterTableModal } from './FilterTableModal'
 import { ExportDataModal } from './ExportDataModal'
+import { DatabaseImportModal } from '@/components/database/import/DatabaseImportModal'
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal'
 import { AlertModal } from '@/components/ui/AlertModal'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useI18n } from '@/i18n/useI18n'
+import { useConnectionStore } from '@/stores/useConnectionStore'
 
 interface TableDetailViewProps {
   tabId: string
@@ -18,6 +21,7 @@ interface TableDetailViewProps {
   databaseName: string
   tableName: string
   schema?: string
+  storageUnitType?: 'table' | 'view'
 }
 
 export function TableDetailView(props: TableDetailViewProps) {
@@ -28,12 +32,14 @@ export function TableDetailView(props: TableDetailViewProps) {
   )
 }
 
-function TableDetailViewContent({ connectionId, databaseName, tableName, schema }: TableDetailViewProps) {
+function TableDetailViewContent({ connectionId, databaseName, tableName, schema, storageUnitType }: TableDetailViewProps) {
   const { t } = useI18n()
   const { state, actions } = useTableView()
 
   const previewStatements = buildPreviewSql(tableName, state.changes)
   const summary = summarizeChanges(state.changes)
+  const exportWhere = buildTableWhereInput(state.filterConditions, state.data?.columnTypes)
+  const exportSort = buildTableSortInput(state.sortColumn, state.sortDirection)
 
   return (
     <div
@@ -49,7 +55,13 @@ function TableDetailViewContent({ connectionId, databaseName, tableName, schema 
       data-qa-resource-type="table"
       data-qa-resource-id={tableName}
     >
-      <TableViewToolbar connectionId={connectionId} databaseName={databaseName} tableName={tableName} schema={schema} />
+      <TableViewToolbar
+        connectionId={connectionId}
+        databaseName={databaseName}
+        tableName={tableName}
+        schema={schema}
+        storageUnitType={storageUnitType}
+      />
 
       {state.error ? (
         <DataView.Error message={state.error} onRetry={() => actions.handleSubmitRequest()} />
@@ -92,6 +104,25 @@ function TableDetailViewContent({ connectionId, databaseName, tableName, schema 
           databaseName={databaseName}
           schema={schema}
           tableName={tableName}
+          storageUnitType={storageUnitType}
+          primaryKeyColumns={state.data?.primaryKeyColumns ?? []}
+          where={exportWhere}
+          sort={exportSort}
+        />
+      )}
+
+      {state.showImportModal && (
+        <DatabaseImportModal
+          open={state.showImportModal}
+          onOpenChange={(open) => { if (!open) actions.setShowImportModal(false) }}
+          connectionId={connectionId}
+          databaseName={databaseName}
+          schema={schema}
+          tableName={tableName}
+          onSuccess={() => {
+            useConnectionStore.getState().triggerSidebarRefresh()
+            actions.refresh()
+          }}
         />
       )}
 

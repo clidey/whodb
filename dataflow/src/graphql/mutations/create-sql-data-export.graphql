@@ -1,0 +1,9 @@
+mutation CreateSQLDataExport($input: SQLDataExportInput!) {
+  CreateSQLDataExport(input: $input) {
+    ID
+    Filename
+    ContentType
+    DownloadURL
+    Size
+  }
+}

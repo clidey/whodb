@@ -1,4 +1,4 @@
-import { createContext, use, useState, useCallback, type ReactNode } from 'react'
+import { createContext, use, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Table, Plus, Trash2 } from 'lucide-react'
 import { useConnectionStore } from '@/stores/useConnectionStore'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
@@ -10,7 +10,8 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { ModalForm, useModalForm } from '@/components/ui/ModalForm'
 import { useI18n } from '@/i18n/useI18n'
 import { resolveSchemaParam } from '@/utils/database-features'
-import type { RecordInput } from '@graphql'
+import { getColumnTypeOptions, getDefaultPrimaryColumnType, getDefaultTextColumnType, type ColumnTypeOption } from '@/utils/database-types'
+import { useGetDatabaseMetadataQuery, type RecordInput } from '@graphql'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -24,10 +25,6 @@ interface ColumnDefinition {
   isNullable: boolean
 }
 
-const COLUMN_TYPES = [
-  'INT', 'VARCHAR(255)', 'TEXT', 'BOOLEAN', 'DATE', 'DATETIME', 'DECIMAL', 'FLOAT', 'JSON',
-]
-
 // ---------------------------------------------------------------------------
 // Context
 // ---------------------------------------------------------------------------
@@ -36,6 +33,9 @@ interface CreateTableCtxValue {
   tableName: string
   setTableName: (v: string) => void
   columns: ColumnDefinition[]
+  typeOptions: ColumnTypeOption[]
+  metadataLoading: boolean
+  metadataFailed: boolean
   addColumn: () => void
   removeColumn: (id: string) => void
   updateColumn: (id: string, field: keyof ColumnDefinition, value: string | boolean) => void
@@ -71,9 +71,20 @@ function CreateTableProvider({
   const { t } = useI18n()
   const { createTable, connections } = useConnectionStore()
   const [tableName, setTableName] = useState('')
-  const [columns, setColumns] = useState<ColumnDefinition[]>([
-    { id: '1', name: 'id', type: 'INT', isPrimaryKey: true, isNullable: false },
-  ])
+  const [columns, setColumns] = useState<ColumnDefinition[]>([])
+  const { data: metadataData, loading: metadataLoading, error: metadataError } = useGetDatabaseMetadataQuery({
+    context: { database: databaseName },
+  })
+  const metadata = metadataData?.DatabaseMetadata ?? null
+  const typeOptions = useMemo(() => getColumnTypeOptions(metadata), [metadata])
+  const defaultTextType = useMemo(() => getDefaultTextColumnType(metadata), [metadata])
+  const defaultPrimaryType = useMemo(() => getDefaultPrimaryColumnType(metadata), [metadata])
+  const metadataFailed = Boolean(metadataError) || (!metadataLoading && typeOptions.length === 0)
+
+  useEffect(() => {
+    if (columns.length > 0 || !defaultPrimaryType) return
+    setColumns([{ id: '1', name: 'id', type: defaultPrimaryType, isPrimaryKey: true, isNullable: false }])
+  }, [columns.length, defaultPrimaryType])
 
   const addColumn = useCallback(() => {
     setColumns(prev => [
@@ -81,12 +92,12 @@ function CreateTableProvider({
       {
         id: Math.random().toString(36).substring(2, 11),
         name: '',
-        type: 'VARCHAR(255)',
+        type: defaultTextType,
         isPrimaryKey: false,
         isNullable: true,
       },
     ])
-  }, [])
+  }, [defaultTextType])
 
   const removeColumn = useCallback((id: string) => {
     setColumns(prev => prev.filter(c => c.id !== id))
@@ -94,13 +105,21 @@ function CreateTableProvider({
 
   const updateColumn = useCallback(
     (id: string, field: keyof ColumnDefinition, value: string | boolean) => {
-      setColumns(prev => prev.map(c => (c.id === id ? { ...c, [field]: value } : c)))
+      setColumns(prev => prev.map((column) => {
+        if (column.id !== id) return column
+        if (field === 'isPrimaryKey') {
+          return { ...column, isPrimaryKey: value === true, isNullable: value === true ? false : column.isNullable }
+        }
+        if (field === 'isNullable' && column.isPrimaryKey) return column
+        return { ...column, [field]: value }
+      }))
     },
     [],
   )
 
   const handleSubmit = useCallback(async () => {
-    if (!tableName || columns.length === 0) return
+    const hasInvalidColumn = columns.some((column) => !column.name.trim() || !column.type.trim())
+    if (!tableName.trim() || columns.length === 0 || hasInvalidColumn || metadataFailed) return
 
     const conn = connections.find(c => c.id === connectionId)
     const schemaParam = resolveSchemaParam(conn?.type, databaseName, schema)
@@ -119,10 +138,20 @@ function CreateTableProvider({
     } else {
       throw new Error(result.message ?? t('common.unknownError'))
     }
-  }, [tableName, columns, connections, connectionId, databaseName, schema, createTable, onSuccess, t])
+  }, [tableName, columns, metadataFailed, connections, connectionId, databaseName, schema, createTable, onSuccess, t])
 
   return (
-    <CreateTableCtx value={{ tableName, setTableName, columns, addColumn, removeColumn, updateColumn }}>
+    <CreateTableCtx value={{
+      tableName,
+      setTableName,
+      columns,
+      typeOptions,
+      metadataLoading,
+      metadataFailed,
+      addColumn,
+      removeColumn,
+      updateColumn,
+    }}>
       <ModalForm.Provider
         onSubmit={handleSubmit}
         meta={{ title: t('sql.createTable.title'), icon: Table }}
@@ -162,8 +191,9 @@ function CreateTableNameField() {
 /** Editable table of column definitions with add/remove/update. */
 function CreateTableColumnEditor() {
   const { t } = useI18n()
-  const { columns, addColumn, removeColumn, updateColumn } = useCreateTableCtx()
+  const { columns, typeOptions, metadataLoading, metadataFailed, addColumn, removeColumn, updateColumn } = useCreateTableCtx()
   const { state } = useModalForm()
+  const controlsDisabled = state.isSubmitting || metadataLoading || metadataFailed
 
   return (
     <div className="flex flex-col gap-2">
@@ -176,13 +206,24 @@ function CreateTableColumnEditor() {
           variant="ghost"
           size="sm"
           onClick={addColumn}
-          disabled={state.isSubmitting}
+          disabled={controlsDisabled}
           className="h-7 gap-1 px-2 text-xs text-primary hover:text-primary"
         >
           <Plus className="h-3 w-3" />
           {t('sql.createTable.addColumn')}
         </Button>
       </div>
+
+      {metadataLoading && (
+        <div className="rounded-md border border-primary/20 bg-primary/5 px-3 py-2 text-sm text-primary">
+          {t('sql.createTable.loadingTypes')}
+        </div>
+      )}
+      {metadataFailed && (
+        <div className="rounded-md border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+          {t('sql.createTable.loadTypesFailed')}
+        </div>
+      )}
 
       <div className="rounded-md border">
         <table className="w-full text-sm">
@@ -204,7 +245,7 @@ function CreateTableColumnEditor() {
                     value={col.name}
                     onChange={(e) => updateColumn(col.id, 'name', e.target.value)}
                     placeholder={t('sql.createTable.columnNamePlaceholder')}
-                    disabled={state.isSubmitting}
+                    disabled={controlsDisabled}
                     className="w-full rounded border-transparent bg-transparent px-2 py-1 text-sm focus:border-primary focus:bg-background outline-none"
                   />
                 </td>
@@ -212,14 +253,14 @@ function CreateTableColumnEditor() {
                   <Select
                     value={col.type}
                     onValueChange={(v) => updateColumn(col.id, 'type', v)}
-                    disabled={state.isSubmitting}
+                    disabled={controlsDisabled}
                   >
                     <SelectTrigger size="sm" className="w-full bg-transparent">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {COLUMN_TYPES.map(t => (
-                        <SelectItem key={t} value={t}>{t}</SelectItem>
+                      {typeOptions.map(option => (
+                        <SelectItem key={option.id} value={option.id}>{option.label}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -228,14 +269,14 @@ function CreateTableColumnEditor() {
                   <Checkbox
                     checked={col.isPrimaryKey}
                     onCheckedChange={(checked) => updateColumn(col.id, 'isPrimaryKey', checked === true)}
-                    disabled={state.isSubmitting}
+                    disabled={controlsDisabled}
                   />
                 </td>
                 <td className="p-2 text-center">
                   <Checkbox
                     checked={col.isNullable}
                     onCheckedChange={(checked) => updateColumn(col.id, 'isNullable', checked === true)}
-                    disabled={state.isSubmitting}
+                    disabled={controlsDisabled || col.isPrimaryKey}
                   />
                 </td>
                 <td className="p-2 text-center">
@@ -246,7 +287,7 @@ function CreateTableColumnEditor() {
                         variant="ghost"
                         size="icon-sm"
                         onClick={() => removeColumn(col.id)}
-                        disabled={state.isSubmitting}
+                        disabled={controlsDisabled}
                         className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -267,8 +308,15 @@ function CreateTableColumnEditor() {
 /** Submit button disabled when table name or columns are empty. */
 function CreateTableSubmitButton() {
   const { t } = useI18n()
-  const { tableName, columns } = useCreateTableCtx()
-  return <ModalForm.SubmitButton label={t('sql.createTable.submit')} disabled={!tableName || columns.length === 0} />
+  const { tableName, columns, metadataLoading, metadataFailed } = useCreateTableCtx()
+  const hasInvalidColumn = columns.some((column) => !column.name.trim() || !column.type.trim())
+
+  return (
+    <ModalForm.SubmitButton
+      label={t('sql.createTable.submit')}
+      disabled={!tableName.trim() || columns.length === 0 || hasInvalidColumn || metadataLoading || metadataFailed}
+    />
+  )
 }
 
 // ---------------------------------------------------------------------------

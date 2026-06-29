@@ -1,0 +1,11 @@
+mutation ImportCollectionPreview($input: ImportCollectionPreviewInput!) {
+  ImportCollectionPreview(input: $input) {
+    Format
+    Columns
+    Rows
+    Documents
+    Count
+    Truncated
+    ValidationError
+  }
+}

@@ -63,6 +63,9 @@ export function CollectionViewProvider({ tabId, connectionId, databaseName, coll
   // ---- Export state ----
   const [showExportModal, setShowExportModal] = useState(false)
 
+  // ---- Import state ----
+  const [showImportModal, setShowImportModal] = useState(false)
+
   // ---- Filter state ----
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false)
   const [activeFilter, setActiveFilter] = useState<FlatMongoFilter>({})
@@ -340,6 +343,7 @@ export function CollectionViewProvider({ tabId, connectionId, databaseName, coll
     availableFields,
     preferredFilterField,
     showExportModal,
+    showImportModal,
     isFilterModalOpen,
     alert,
     columnWidths,
@@ -360,6 +364,7 @@ export function CollectionViewProvider({ tabId, connectionId, databaseName, coll
     openFilterForField,
     handleFilterApply,
     setShowExportModal,
+    setShowImportModal,
     handleResizeStart,
     showAlert,
     closeAlert,

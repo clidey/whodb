@@ -1,0 +1,7 @@
+mutation ImportSQL($input: ImportSQLInput!) {
+  ImportSQL(input: $input) {
+    Status
+    Message
+    Detail
+  }
+}
