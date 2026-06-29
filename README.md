@@ -2,7 +2,7 @@
 
 # <img src="./docs/logo/logo.svg" width="30px" height="auto" />  WhoDB
 
-### *The open-source entry point to the WhoDB AI data platform*
+### *The Data Operating System*
 
 <!-- [![Build Status](https://hello.clidey.com/api/flows/status?id=b32257fa-1415-4847-a0f3-e684f5f76608&secret=cd74dbd5-36ec-42f9-b4f0-12ce9fcc762b)](https://clidey.com) -->
 ![Release workflow](https://img.shields.io/github/actions/workflow/status/clidey/whodb/release-ce.yml?branch=main)
@@ -35,7 +35,7 @@
 [![Snap](https://img.shields.io/badge/Snap-available-brightgreen)](http://snapcraft.io/whodb)
 [![CLI](https://img.shields.io/badge/CLI-available-brightgreen)](./cli/README.md)
 
-[🚀 Quick Start](#quick-start) • [🏢 WhoDB EE Platform](#from-ce-to-the-whodb-ee-platform) • [📖 Documentation](https://docs.whodb.com/) • [🎮 Live Demo](https://demo.whodb.com/login?host=quick-container-491288b0-3138-48fa-93b4-1e730296c0b7.hello.svc.cluster.local&username=user&password=password&database=Adventureworks) • [💬 Community](https://github.com/clidey/whodb/discussions)
+[Quick Start](#quick-start) • [Documentation](https://docs.whodb.com/) • [Live Demo](https://demo.whodb.com/login?host=quick-container-491288b0-3138-48fa-93b4-1e730296c0b7.hello.svc.cluster.local&username=user&password=password&database=Adventureworks) • [Community](https://github.com/clidey/whodb/discussions)
 
 </div>
 
@@ -43,54 +43,21 @@
 
 <p align="center"><img src="./docs/images/06-storage-unit-list-with-sidebar.png" alt="WhoDB Interface" width="100%" height="auto" /></p>
 
-## 🎯 What is WhoDB?
+## What is WhoDB?
 
-**WhoDB CE is the open-source data workspace that grows into the WhoDB EE AI platform.**
+**WhoDB is the data operating system. It connects your databases, runs pipelines, governs access, and gets answers to your team, all from a single deployment on your own infrastructure.**
 
-Built with Go and React, WhoDB CE gives developers a fast, lightweight (<50MB) way to connect to operational data, inspect sources, query with SQL or AI, and understand how data is shaped. It is the first step in the larger WhoDB platform: an AI data layer for sources, ETLs, ontology, governance, and internal apps.
+Built in Go and React, WhoDB ships as a single binary under 100MB. WhoDB Community covers the essentials: schema exploration, a scratchpad query editor, and a spreadsheet-style data grid for PostgreSQL, MySQL, MongoDB, Redis, and more. WhoDB Platform extends that with visual pipelines, live dashboards, access controls, an audit trail, and 50+ connectors.
 
-Start with CE when you need a better way to work with databases. Move into WhoDB EE when your team needs governed AI decisions across many systems, not another dashboard.
+WhoDB starts in under a second, ships under 100MB, and uses around 90% less memory than tools like DBeaver or DataGrip. Just run `docker run -it -p 8080:8080 clidey/whodb` and you're in.
 
-### Why WhoDB?
+For local AI: connect Ollama and type questions in plain English. For enterprise governance: AES-256-GCM credential storage, SSO through Okta/Azure AD/Google Workspace, access controls down to the data-view level, and a complete audit trail, all on your own servers.
 
-<table>
-<tr>
-<td width="50%">
+---
 
-**🚀 Fast Source Access**
-- Instant startup (<1s)
-- Real-time query results
-- Efficient table virtualization
-- 90% less resource usage than traditional tools
+## Key Features
 
-**🎨 Clear Operational Context**
-- Clean, modern interface
-- Spreadsheet-like data grid
-- Interactive schema visualization
-- No training required
-
-</td>
-<td width="50%">
-
-**🤖 AI-Ready Foundation**
-- Natural language to SQL
-- Talk to your data conversationally
-- Supports Ollama, OpenAI, Anthropic, and any OpenAI-compatible provider
-- No complex query writing needed
-
-**🔧 Platform Path**
-- Multi-database support
-- Query history & management
-- Mock data generation
-- Enterprise platform for more sources, governance, and apps
-
-</td>
-</tr>
-</table>
-
-## ✨ Start With CE: Source Access, Querying, and Exploration
-
-### 📊 Visual Data Management
+### Data grid and schema explorer
 
 <table>
 <tr>
@@ -99,27 +66,17 @@ Start with CE when you need a better way to work with databases. Move into WhoDB
 </td>
 <td width="50%">
 
-**Spreadsheet-Like Data Grid**
-- View, edit, and manage data intuitively
-- Sort, filter, and search with ease
-- Inline editing with real-time updates
-- Bulk operations for efficiency
+A spreadsheet-style grid for browsing and editing rows. Sort, filter, inline-edit, bulk-delete. The schema graph follows foreign keys visually so you can see how tables relate without reading `INFORMATION_SCHEMA`.
 
 </td>
 </tr>
 </table>
 
-### 🔍 Interactive Schema Explorer
-
 <table>
 <tr>
 <td width="50%">
 
-**Visual Schema Topology**
-- Interactive graph visualization
-- Explore table relationships
-- Understand foreign keys instantly
-- Pan, zoom, and navigate easily
+Click any node in the schema graph to pan and zoom to that table. Foreign key relationships render as edges, so tracing a join path is a visual operation rather than a mental one.
 
 </td>
 <td width="50%">
@@ -128,7 +85,7 @@ Start with CE when you need a better way to work with databases. Move into WhoDB
 </tr>
 </table>
 
-### 💻 Powerful Query Interface
+### Query Scratchpad
 
 <table>
 <tr>
@@ -137,45 +94,41 @@ Start with CE when you need a better way to work with databases. Move into WhoDB
 </td>
 <td width="50%">
 
-**Scratchpad Query Editor**
-- Jupyter-like notebook interface
-- Syntax highlighting & auto-completion
-- Query history & reuse
-- Multi-cell organization
+A Jupyter-style multi-cell query editor with syntax highlighting, autocomplete, and history. Run one cell at a time or the whole notebook. Results stay visible below each cell.
 
 </td>
 </tr>
 </table>
 
-### 🗄️ Multi-Source Foundation
+### More
 
-**Community Edition (CE):** PostgreSQL, MySQL, SQLite3, MongoDB, Redis, MariaDB, ElasticSearch
+- Mock data generation for development and testing
+- Export to CSV, Excel, JSON, or SQL
+- Visual WHERE condition builder (no SQL required)
+- Natural language to SQL via Ollama, OpenAI, Anthropic, or any OpenAI-compatible provider
+- Visual pipeline builder with 12 step types and cross-system joins (WhoDB Platform)
+- Centralized file management for exports and reports, with version history and access controls (WhoDB Platform)
 
-**Enterprise Edition (EE):** All CE databases plus Oracle, SQL Server, DynamoDB, Athena, Snowflake, Cassandra, and more
+### Supported databases
 
-### 🎯 Advanced Capabilities
+**WhoDB Community:** PostgreSQL, MySQL, SQLite3, MongoDB, Redis, MariaDB, ElasticSearch, ClickHouse, CockroachDB, DuckDB, Memcached, TiDB, Valkey, Dragonfly, OpenSearch, YugabyteDB, QuestDB, FerretDB
 
-- **Mock Data Generation** - Generate realistic test data for development
-- **Flexible Export Options** - Export to CSV, Excel, JSON, or SQL
-- **Advanced Filtering** - Build complex WHERE conditions visually
-- **AI-Powered Queries** - Convert natural language to SQL with Ollama, OpenAI, Anthropic, or any OpenAI-compatible provider
+**WhoDB Platform:** All Community databases plus Oracle, SQL Server, DynamoDB, Athena, Snowflake, Cassandra, TallyPrime, PostHog, Google Analytics, ElastiCache, DocumentDB, Azure Data Lake Storage, Azure Blob, Azure Files, Azure Cosmos DB, Dynamics 365 Business Central, AWS S3, GCS, IBM DB2, Trino, Databricks, Neo4j, Memgraph, GaussDB, StarRocks, SAP HANA, BigQuery, Spanner, Redshift, Aurora, MemoryDB, SingleStore, Firestore, and more
 
 ---
 
-## From CE to the WhoDB EE Platform
+## WhoDB Platform
 
-CE is the sharp wedge: connect to your data quickly, understand it visually, and query it without fighting a heavy desktop client.
+WhoDB Community is the sharp wedge: connect to your data quickly, understand it visually, and query it without fighting a heavy desktop client. WhoDB Platform turns that foundation into a layer for faster decisions across the company.
 
-WhoDB EE turns that foundation into a platform for faster decisions across the company.
+The platform is built around six things:
 
-The platform direction is built around:
-
-- **All sources** - Bring operational systems into one governed data layer
-- **ETLs** - Move and shape data so teams and AI agents can use it reliably
-- **Ontology** - Map raw tables, collections, and events into business objects like customers, accounts, orders, tickets, incidents, invoices, and workflows
-- **Governance** - Control who can see, query, change, and act on data
-- **Apps** - Build internal operational apps on top of shared source context
-- **WhoDB AI Agent** - Ask questions and take action across sources with the right context and permissions
+- **All sources:** bring operational systems into one governed data layer
+- **ETLs:** move and shape data so teams and AI agents can use it reliably
+- **Ontology:** map raw tables, collections, and events into business objects — customers, accounts, orders, tickets, incidents, invoices, workflows
+- **Governance:** control who can see, query, change, and act on data
+- **Apps:** build internal operational tools on top of shared source context
+- **WhoDB AI Agent:** ask questions and take action across sources with the right context and permissions
 
 The point is not to make people write SQL faster. The point is to help teams reach decisions faster:
 
@@ -186,35 +139,84 @@ The point is not to make people write SQL faster. The point is to help teams rea
 - Which support tickets need engineering context?
 - What should the team do next?
 
-Think of CE as the open-source on-ramp. Think of WhoDB EE as the AI data platform for teams that want Palantir-like operational intelligence without enterprise lock-in.
+It is Palantir-like operational intelligence without the enterprise lock-in. Runs on your infrastructure; pricing is per deployment, not per seat.
+
+### Data Integration
+
+Register a database once; every team gets a scoped view of it. Finance sees financial data, marketing sees campaign data. The relationship map shows at a glance how everything connects. Credentials are encrypted with AES-256-GCM and stored centrally, decrypted only at the moment of use, never in plain text, never shared across teams.
+
+### Pipeline Automation
+
+Visual pipeline builder with 12 step types and cross-system joins. Runs on a schedule or reacts to events. Built for scale — the processing engine handles enterprise data volumes and recovers automatically from failures without data loss.
+
+### Live Reporting and Dashboards
+
+Pull from multiple systems into a single report without exports or spreadsheet joins. Dashboards update in real time. Describe what you want to the AI assistant and get a working dashboard back. Automated report delivery runs on a schedule: daily revenue summaries, weekly KPI packs, monthly board decks.
+
+### Data Catalog and Ontology
+
+A shared data dictionary your whole org works from. Map relationships between entities. Trace any number in a report back to the source row that produced it. If a figure looks wrong, you find the root cause in seconds rather than hours.
+
+### Security and Governance
+
+- AES-256-GCM credential encryption, decrypted only at the moment of use
+- Data classification labels (PII, Confidential, Restricted, Internal, or custom); access blocked automatically for anyone without the right clearance
+- Data quality rules that reject bad data before it reaches reports
+- Full audit trail: every access, execution, permission change, and login recorded with context
+- SSO via Okta, Azure AD, Google Workspace, Auth0
+- Authorization at workspace, project, data view, and classification level
+- Read-only source access; WhoDB never writes to your source systems
+- Air-gapped and isolated deployment supported
+
+### Internal App Builder
+
+Describe what you need and the AI builds a working dashboard, tracker, or tool. Access controls and data classification are enforced on every app from the start. Share with your team without a deployment process or IT ticket.
+
+### Pricing
+
+| Plan | Price | Best for |
+|---|---|---|
+| **Community** | Free, forever | Developers and small teams (production-ready, no restrictions) |
+| **Starter** | $20/mo per deployment | Small teams needing SSO and basic governance |
+| **Team** | $50/mo per deployment | Growing teams that need classification, quality rules, and cross-system reporting |
+| **Enterprise** | Custom per deployment | Unlimited scale, full governance, air-gapped deployment, compliance documentation |
+
+No per-seat pricing on any plan. Full pricing at [whodb.com/pricing](https://whodb.com/pricing/) · [Request a demo](https://whodb.com/platform/)
+
+### Who uses WhoDB Platform
+
+Common in industries where the data can't leave the building:
+
+- **Financial services:** trading, risk management, and regulatory reporting from one governed platform
+- **Healthcare:** patient data stays on-premises with a full audit trail for compliance reviews
+- **Government and defense:** isolated deployments with complete data sovereignty
+- **Manufacturing:** sensor data to executive dashboards, with full data lineage
+- **Retail and e-commerce:** customer 360 without sending data to a third-party cloud
+- **Telecom:** network and business data at scale
 
 ---
 
-## 🎮 Try WhoDB Now
+## Try it
 
 <div align="center">
-
-**Experience WhoDB in action without any setup**
 
 <table>
 <tr>
 <td align="center" width="50%">
-<h3>🌐 Live Demo</h3>
-<p>Try WhoDB instantly with our sample database</p>
+<h3>Live Demo</h3>
+<p>Pre-filled with a sample PostgreSQL database</p>
 <a href="https://whodb.com/demo/login?host=quick-container-491288b0-3138-48fa-93b4-1e730296c0b7.hello.svc.cluster.local&username=user&password=password&database=Adventureworks">
 <img src="./docs/images/01-login-page.png" alt="Login Page" width="80%"/>
 </a>
 <p><a href="https://whodb.com/demo/login?host=quick-container-491288b0-3138-48fa-93b4-1e730296c0b7.hello.svc.cluster.local&username=user&password=password&database=Adventureworks"><strong>Launch Demo →</strong></a></p>
-<p><em>Pre-filled with sample PostgreSQL database</em></p>
 </td>
 <td align="center" width="50%">
-<h3>🎥 Video Demo</h3>
-<p>Watch WhoDB in action</p>
+<h3>Video walkthrough</h3>
+<p>Full feature walkthrough</p>
 <a href="https://youtu.be/hnAQcYYzcLo">
 <img src="https://img.youtube.com/vi/hnAQcYYzcLo/maxresdefault.jpg" alt="WhoDB Demo Video" width="80%"/>
 </a>
-<p><a href="https://youtu.be/hnAQcYYzcLo"><strong>Watch Video →</strong></a></p>
-<p><em>Complete walkthrough of features</em></p>
+<p><a href="https://youtu.be/hnAQcYYzcLo"><strong>Watch →</strong></a></p>
 </td>
 </tr>
 </table>
@@ -223,21 +225,17 @@ Think of CE as the open-source on-ramp. Think of WhoDB EE as the AI data platfor
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
-### Option 1: Docker (Recommended)
-
-The fastest way to get started with WhoDB:
+### Docker
 
 ```bash
 docker run -it -p 8080:8080 clidey/whodb
 ```
 
-Then open [http://localhost:8080](http://localhost:8080) in your browser.
+Open [http://localhost:8080](http://localhost:8080) and connect a database.
 
-### Option 2: Docker Compose
-
-For more control and configuration:
+### Docker Compose
 
 ```yaml
 version: "3.8"
@@ -247,99 +245,62 @@ services:
     ports:
       - "8080:8080"
     environment:
-      # AI Integration (Optional)
-      # Ollama Configuration
+      # Ollama (local AI)
       - WHODB_OLLAMA_HOST=localhost
       - WHODB_OLLAMA_PORT=11434
 
-      # Anthropic Configuration
+      # Anthropic
       - WHODB_ANTHROPIC_API_KEY=your_key_here
       # - WHODB_ANTHROPIC_ENDPOINT=https://api.anthropic.com/v1
 
-      # OpenAI Configuration
+      # OpenAI
       - WHODB_OPENAI_API_KEY=your_key_here
       # - WHODB_OPENAI_ENDPOINT=https://api.openai.com/v1
 
-      # Generic AI Providers (OpenAI-compatible endpoints)
-      # Use WHODB_AI_GENERIC_<ID>_* to add any OpenAI-compatible provider.
-      # <ID> can be any unique identifier (e.g., LMSTUDIO, OPENROUTER).
-      #
-      # LM Studio example:
+      # Any OpenAI-compatible provider (LM Studio, OpenRouter, Requesty, etc.)
       # - WHODB_AI_GENERIC_LMSTUDIO_NAME=LM Studio
       # - WHODB_AI_GENERIC_LMSTUDIO_BASE_URL=http://host.docker.internal:1234/v1
       # - WHODB_AI_GENERIC_LMSTUDIO_MODELS=mistral-7b,llama-3-8b
       #
-      # OpenRouter example:
       # - WHODB_AI_GENERIC_OPENROUTER_NAME=OpenRouter
       # - WHODB_AI_GENERIC_OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
       # - WHODB_AI_GENERIC_OPENROUTER_API_KEY=your_key_here
       # - WHODB_AI_GENERIC_OPENROUTER_MODELS=google/gemini-2.0-flash-001,anthropic/claude-3.5-sonnet
-      #
-      # Requesty example:
-      # - WHODB_AI_GENERIC_REQUESTY_NAME=Requesty
-      # - WHODB_AI_GENERIC_REQUESTY_BASE_URL=https://router.requesty.ai/v1
-      # - WHODB_AI_GENERIC_REQUESTY_API_KEY=your_key_here
-      # - WHODB_AI_GENERIC_REQUESTY_MODELS=openai/gpt-4o-mini,anthropic/claude-3.5-sonnet
-    # volumes: # (Optional for SQLite)
+    # volumes:
     #   - ./sample.db:/db/sample.db
 ```
 
-### What's Next?
-
-1. **Connect to a source** - Enter your database credentials on the login page
-2. **Understand the shape** - Browse objects and visualize relationships
-3. **Ask or query** - Use the Scratchpad, SQL, or AI chat to inspect live data
-4. **Act with context** - Edit records, export results, seed test data, or move into the EE platform for governed workflows
-
-📖 **For detailed installation options and configuration**, see our [Documentation](https://docs.whodb.com/)
+📖 For full installation and configuration options, see the [Documentation](https://docs.whodb.com/)
 
 ---
 
-## 💻 WhoDB CLI
+## CLI
 
-WhoDB also offers a command-line interface with an interactive TUI (Terminal User Interface) and MCP server support for AI assistants. The CLI helps developers bring source context into local workflows, scripts, and AI tools.
-
-### Features
-
-- **Interactive TUI** - Full-featured terminal interface for source exploration
-- **MCP Server** - Model Context Protocol support for Claude, Cursor, and other AI tools
-- **Programmatic Access** - Query and export data from scripts
-- **Cross-Platform** - Available for macOS, Linux, and Windows
-
-### Quick Install
+The CLI has an interactive TUI for browsing databases in the terminal, and an MCP server mode for Claude, Cursor, and other AI tools. Runs on macOS, Linux, and Windows.
 
 ```bash
 # macOS/Linux
 curl -fsSL https://raw.githubusercontent.com/clidey/whodb/main/cli/install/install.sh | bash
 
-# Homebrew (coming soon)
-brew install whodb-cli
-
 # npm
 npm install -g @clidey/whodb-cli
 ```
 
-### Usage
-
 ```bash
-# Launch interactive TUI
-whodb-cli
-
-# Run as MCP server for AI assistants
-whodb-cli mcp serve
+whodb-cli              # launch TUI
+whodb-cli mcp serve    # run as MCP server
 ```
 
-📖 **For full CLI documentation**, see the [CLI README](./cli/README.md)
+📖 See the [CLI README](./cli/README.md) for full usage.
 
 ---
 
-## 🛠️ Development Setup
+## Development Setup
 
 ### Prerequisites
 
-- **GoLang** - Latest version recommended
-- **PNPM** - For frontend package management
-- **Node.js** - Version 16 or higher
+- **GoLang** (latest)
+- **PNPM** and **Node.js 16+** (frontend)
 
 ### Editions
 
@@ -347,39 +308,31 @@ whodb-cli mcp serve
 <tr>
 <td width="50%">
 
-**Community Edition (CE)**
-- Open-source source exploration
+**WhoDB Community**
 - PostgreSQL
 - MySQL / MariaDB
 - SQLite3
 - MongoDB
 - Redis
 - ElasticSearch
-- AI chat and query workflows
 
 </td>
 <td width="50%">
 
-**Enterprise Edition (EE) Platform**
-- All CE databases
-- Oracle
-- SQL Server
-- DynamoDB
-- Athena
-- Snowflake
-- Cassandra
-- More sources
-- Governance, apps, and platform workflows
+**WhoDB Platform**
+- All Community databases
+- Oracle, SQL Server, Snowflake
+- DynamoDB, Athena, Redshift
+- Cassandra, Neo4j, Databricks
+- 50+ total connectors
 
 </td>
 </tr>
 </table>
 
-📚 See [BUILD_AND_RUN.md](./BUILD_AND_RUN.md) for detailed build instructions and [ARCHITECTURE.md](./ARCHITECTURE.md) for architecture details.
+📚 See [BUILD_AND_RUN.md](./BUILD_AND_RUN.md) for build instructions.
 
-### Frontend Development
-
-Navigate to the `frontend/` directory and start the development server:
+### Frontend
 
 ```bash
 cd frontend
@@ -387,123 +340,111 @@ pnpm i
 pnpm start
 ```
 
-### Backend Development
+### Backend
 
-#### 1. Build Frontend (First-Time Setup)
-
-If the `core/build/` directory doesn't exist, build the frontend first:
+If `core/build/` doesn't exist yet, build the frontend first (Go embeds it at compile time):
 
 ```bash
-cd frontend
-pnpm install
-pnpm run build
-rm -rf ../core/build/
-cp -r ./build ../core/
+cd frontend && pnpm install && pnpm run build
+rm -rf ../core/build/ && cp -r ./build ../core/
 cd ..
 ```
 
-> **Note:** This is only required once, as Go embeds the `build/` folder on startup.
+To enable natural language queries, set up an AI provider:
 
-#### 2. Setup AI Integration (Optional)
+1. **Ollama:** Download from [ollama.com](https://ollama.com/), then `ollama pull llama3.1`. WhoDB auto-detects installed models and adds a Chat option in the sidebar.
+2. **OpenAI/Anthropic:** Set environment variables (see Docker Compose above)
+3. **Any OpenAI-compatible provider:** Use `WHODB_AI_GENERIC_<ID>_*` env vars (LM Studio, OpenRouter, Requesty, vLLM, etc.)
 
-To enable natural language queries:
-
-1. **Ollama** - Download from [ollama.com](https://ollama.com/)
-   ```bash
-   # Install Llama 3.1 8b model
-   ollama pull llama3.1
-   ```
-   WhoDB will auto-detect installed models and show a **Chat** option in the sidebar.
-
-2. **OpenAI/Anthropic** - Set environment variables (see Docker Compose example above)
-3. **Any OpenAI-compatible provider** - Use `WHODB_AI_GENERIC_<ID>_*` environment variables to connect to LM Studio, OpenRouter, Requesty, or any provider with an OpenAI-compatible API (see Docker Compose example above)
-
-#### 3. Start Backend Service
+Then start the backend:
 
 ```bash
 cd core
 go run ./cmd/whodb
+# starts on http://localhost:8080
 ```
 
-The backend will start on `http://localhost:8080`
+---
+
+## Use Cases
+
+### Developers
+
+Good for local development — spin it up against a dev database, browse schema, run queries, generate mock data. Also works well for debugging production issues when you want a read-only view without installing anything heavy.
+
+**Local development:** quick schema inspection, explore changes after a migration, test query performance against real data
+
+**API development:** validate data transformations, generate mock data for integration tests, export fixtures
+
+### Data analysts and operations teams
+
+- Query across CRM, payments, warehouses, and 20+ systems from one interface
+- Build automated reports visually without writing code or filing an engineering ticket
+- Replace emailed spreadsheets with live dashboards
+- Ask questions in plain English using the AI assistant
+
+### QA engineers
+
+Verify database state during test runs, generate realistic seed data, validate migrations. The read-only mode means there's no risk of accidentally mutating production data.
+
+### Database administrators
+
+Browse table structures, inspect indexes, manage user data, and run ad-hoc queries without a full desktop client install. The schema graph is useful when onboarding to an unfamiliar database.
+
+### Compliance and security teams
+
+- Full audit trail of every access, execution, and permission change
+- Data classification with automatic enforcement: set a label, access is blocked for anyone without clearance
+- Pull a compliance report in minutes rather than spending weeks chasing logs
+- SSO with Okta, Azure AD, Google Workspace, Auth0
 
 ---
 
-## 💼 Use Cases
-
-### 👨‍💻 For Developers
-
-<table>
-<tr>
-<td width="50%">
-
-**Local Development**
-- Quick database inspection during development
-- Debug production issues with read-only access
-- Test API endpoints with real data
-- Explore source and schema changes
-
-</td>
-<td width="50%">
-
-**API Development**
-- Validate data transformations
-- Test query performance
-- Generate mock data for testing
-- Export data for integration tests
-
-</td>
-</tr>
-</table>
-
-### 📊 For Operators and Analysts
-
-- Answer operational questions without waiting on a custom dashboard
-- Export data to Excel, CSV, JSON, or SQL when needed
-- Build complex filters visually
-- Visualize relationships before making a decision
-
-### 🧪 For QA Engineers
-
-- Generate realistic test data
-- Verify database state during testing
-- Debug test failures quickly
-- Validate data migrations
-
-### 🛠️ For Database Administrators
-
-- Monitor table structures and indexes
-- Manage user data efficiently
-- Quick schema exploration
-- Emergency data fixes
-
-### 🏢 For Teams Moving to the EE Platform
-
-- Connect more source types as the company grows
-- Govern who can see, query, change, and act on data
-- Build shared ontology around business objects
-- Give AI agents controlled source context
-- Turn repeated data lookups into operational apps
-
----
-
-## ❓ Frequently Asked Questions
+## FAQ
 
 <details>
-<summary><strong>What makes WhoDB different from other database tools?</strong></summary>
+<summary><strong>How does WhoDB compare to DBeaver, TablePlus, or DataGrip?</strong></summary>
 <br>
 
-WhoDB CE starts where database tools usually stop. It gives you fast source access, modern UX, visual schema exploration, and AI-assisted querying in a lightweight open-source package. The larger WhoDB EE platform builds on that source layer with more sources, governance, apps, and AI workflows for team decisions.
+WhoDB is lighter (under 100MB, starts in under a second) and self-hosted via Docker, so it works well in environments where you don't want a desktop client installed on every machine. It doesn't have the query plan visualization or advanced debugger that DataGrip has, but it adds things those tools don't: AI-powered SQL, a schema graph, mock data generation, and — in WhoDB Platform — pipelines, dashboards, and access governance.
+
+If you need a full-featured desktop SQL IDE, DataGrip is hard to beat. If you need something fast, self-hosted, and browser-accessible that your whole team can use without per-seat licensing, WhoDB fits better.
 
 </details>
 
 <details>
-<summary><strong>Why is WhoDB open-core instead of only open source?</strong></summary>
+<summary><strong>How do I connect WhoDB to PostgreSQL / MySQL / MongoDB?</strong></summary>
 <br>
 
-We want the open-source parts of WhoDB to provide complete, useful value on their own. CE is not a toy demo. It is a real source exploration and query workspace developers can run today.
+Run the Docker container, open `http://localhost:8080`, and fill in the connection form. Host, port, username, password, and database name — same fields as any other client. For SSL connections, see the [documentation](https://docs.whodb.com/).
 
-The full platform value comes when sources, ETLs, ontology, governance, apps, and the WhoDB AI Agent work together. That is where teams move from data access to faster decisions. As more parts become complete standalone value for the community, we plan to open-source more of them.
+For persistent connections across restarts, use the Docker Compose setup and optionally configure connection profiles in the UI.
+
+</details>
+
+<details>
+<summary><strong>Can I use WhoDB with a local AI model (Ollama, LM Studio)?</strong></summary>
+<br>
+
+Yes. For Ollama, install it locally, pull a model (`ollama pull llama3.1`), then set `WHODB_OLLAMA_HOST` and `WHODB_OLLAMA_PORT` when running WhoDB. It auto-detects installed models and adds a Chat option in the sidebar.
+
+For LM Studio or any other OpenAI-compatible endpoint, use the `WHODB_AI_GENERIC_<ID>_*` env vars:
+
+```
+WHODB_AI_GENERIC_LMSTUDIO_NAME=LM Studio
+WHODB_AI_GENERIC_LMSTUDIO_BASE_URL=http://host.docker.internal:1234/v1
+WHODB_AI_GENERIC_LMSTUDIO_MODELS=mistral-7b
+```
+
+Your data never leaves your network regardless of which provider you use.
+
+</details>
+
+<details>
+<summary><strong>Does WhoDB work with OpenAI or Anthropic?</strong></summary>
+<br>
+
+Yes — set `WHODB_OPENAI_API_KEY` or `WHODB_ANTHROPIC_API_KEY` and the corresponding models become available in the Chat sidebar. You can also use OpenRouter, Requesty, Azure OpenAI, or any endpoint that speaks the OpenAI API format.
 
 </details>
 
@@ -511,147 +452,148 @@ The full platform value comes when sources, ETLs, ontology, governance, apps, an
 <summary><strong>Is WhoDB suitable for production use?</strong></summary>
 <br>
 
-Yes, WhoDB is production-ready and used by thousands of developers. For production environments, we recommend:
-- Using read-only database accounts when possible
-- Enabling SSL/TLS connections
-- Consider Enterprise Edition for audit logging and advanced security features
+It's in production at a range of companies. For sensitive environments, we'd suggest a read-only database account where possible and SSL/TLS on the connection. Audit logging and access controls are in WhoDB Platform if you need them.
 
 </details>
 
 <details>
-<summary><strong>How does WhoDB handle large datasets?</strong></summary>
+<summary><strong>How does WhoDB handle large tables?</strong></summary>
 <br>
 
-WhoDB implements several performance optimizations:
-- Table virtualization for efficient rendering
-- Lazy loading for large result sets
-- Pagination controls
-- Query result streaming
+The grid uses virtual rendering, so scrolling through large result sets doesn't lock up the browser. Results are paginated and streamed rather than loaded all at once. For very large exports, WhoDB Platform adds scheduled report generation so you're not doing it interactively.
 
 </details>
 
 <details>
-<summary><strong>Which databases are supported?</strong></summary>
+<summary><strong>Does WhoDB store my database credentials?</strong></summary>
 <br>
 
-**Community Edition:** PostgreSQL, MySQL, MariaDB, SQLite3, MongoDB, Redis, ElasticSearch
+In WhoDB Community, connections are session-scoped and cleared when you close the browser. You can optionally save connection profiles in local browser storage — nothing leaves your machine.
 
-**Enterprise Edition Platform:** All CE databases plus Oracle, SQL Server, DynamoDB, Athena, Snowflake, Cassandra, and more source types for teams building governed operational workflows
+In WhoDB Platform, credentials are encrypted with AES-256-GCM and stored centrally, decrypted only at the moment of use. No plain text storage, no shared passwords across teams.
 
 </details>
 
 <details>
-<summary><strong>How do I deploy WhoDB?</strong></summary>
+<summary><strong>Can I self-host WhoDB in an air-gapped environment?</strong></summary>
 <br>
 
-WhoDB can be deployed in multiple ways:
-- **Docker** - Single command deployment
-- **Docker Compose** - For production setups
-- **Kubernetes** - For enterprise environments
-- **Binary** - Direct installation on servers
-
-See our [Quick Start](#quick-start) section for details.
+WhoDB Community runs in any environment including air-gapped networks — there's no license server and no telemetry by default. WhoDB Platform supports fully isolated deployments with offline activation.
 
 </details>
 
 <details>
-<summary><strong>Does WhoDB store my credentials?</strong></summary>
+<summary><strong>What is the difference between WhoDB Community and WhoDB Platform?</strong></summary>
 <br>
 
-No. WhoDB does not store database credentials by default. Connections are temporary and credentials are cleared when you close the browser. You can optionally configure connection profiles stored locally in your browser.
+WhoDB Community is free and open-source. It covers database browsing, schema visualization, the Scratchpad query editor, mock data generation, exports, and AI-powered SQL via any provider you connect. No usage limits.
+
+WhoDB Platform adds the full platform layer: visual pipelines, live dashboards, cross-system reporting, an AI app builder, a data catalog with lineage, data classification and quality rules, a complete audit trail, SSO, granular authorization, air-gapped deployment, and 50+ connectors including Oracle, SQL Server, Snowflake, Athena, and Cassandra.
+
+See [whodb.com/pricing](https://whodb.com/pricing/) for the full breakdown.
 
 </details>
 
 <details>
-<summary><strong>Can I use WhoDB with AI features?</strong></summary>
+<summary><strong>Why is WhoDB open-core instead of fully open source?</strong></summary>
 <br>
 
-Yes! WhoDB integrates with:
-- **Ollama** - For local, private AI models
-- **OpenAI** - GPT-4 and other OpenAI models
-- **Anthropic** - Claude models
-- **Any OpenAI-compatible provider** - LM Studio, OpenRouter, Requesty, vLLM, and more via `WHODB_AI_GENERIC_<ID>_*` environment variables
+WhoDB Community is not a toy demo or a restricted trial — it's a real source exploration and query workspace that developers can run in production today.
 
-These integrations allow you to query your database using natural language instead of SQL. The EE platform expands the AI story toward governed source access, ontology, apps, and the WhoDB AI Agent for team workflows.
+The full platform value comes when sources, ETLs, ontology, governance, apps, and the WhoDB AI Agent work together. That's where teams move from data access to faster decisions. As more parts become complete standalone value for the community, we plan to open-source more of them.
 
 </details>
 
-## 🤝 Contributing
+<details>
+<summary><strong>Does my data ever leave my network?</strong></summary>
+<br>
 
-We welcome contributions from the community! Whether it's bug reports, feature requests, or code contributions, we appreciate your help in making WhoDB better.
+No. WhoDB runs on your infrastructure. On paid plans, only the license key communicates externally. Your data, queries, reports, and credentials stay on your servers. WhoDB never writes to your source systems — any outputs (exports, reports) go to separate governed storage.
 
-### How to Contribute
+</details>
 
-1. **Report Issues** - Found a bug? [Open an issue](https://github.com/clidey/whodb/issues)
-2. **Request Features** - Have an idea? [Start a discussion](https://github.com/clidey/whodb/discussions)
-3. **Submit PRs** - Want to contribute code? Check our [Contributing Guide](CONTRIBUTING.md)
-4. **Improve Docs** - Help us improve documentation
+<details>
+<summary><strong>Is there a no-per-seat pricing option?</strong></summary>
+<br>
 
-### Development Resources
+All plans are priced per deployment, not per seat. Add as many team members as you need without cost increasing. The Enterprise plan has no team size cap.
 
-- [Contributing Guide](CONTRIBUTING.md) - Detailed contribution guidelines
-- [Architecture](ARCHITECTURE.md) - Understanding the codebase
-- [Build & Run](BUILD_AND_RUN.md) - Development setup instructions
+</details>
 
 ---
 
-## 📸 Screenshots
+## Contributing
+
+Bug reports, feature requests, and PRs are welcome.
+
+1. **Found a bug?** [Open an issue](https://github.com/clidey/whodb/issues)
+2. **Have an idea?** [Start a discussion](https://github.com/clidey/whodb/discussions)
+3. **Want to contribute code?** Check the [Contributing Guide](CONTRIBUTING.md) first
+4. **Documentation PRs** are especially appreciated
+
+---
+
+## Screenshots
 
 <details>
-<summary><strong>View More Screenshots</strong></summary>
+<summary>View screenshots</summary>
 
-### Data Management
+### Data grid
 <img src="./docs/images/09-data-view-users-table.png" alt="Data View" width="100%"/>
 
-### Add/Edit Records
+### Add / edit records
 <img src="./docs/images/11-data-view-add-row-dialog.png" alt="Add Row" width="100%"/>
 
-### Advanced Filtering
+### WHERE condition builder
 <img src="./docs/images/16-data-view-where-conditions-popover.png" alt="Where Conditions" width="100%"/>
 
-### Export Options
+### Export dialog
 <img src="./docs/images/20-data-view-export-dialog.png" alt="Export Dialog" width="100%"/>
 
-### Schema Graph Visualization
+### Schema graph
 <img src="./docs/images/25-graph-view-with-controls.png" alt="Graph View" width="100%"/>
 
-### Scratchpad Query Editor
+### Scratchpad
 <img src="./docs/images/28-scratchpad-code-editor.png" alt="Scratchpad" width="100%"/>
 
-### Query Results
+### Query results
 <img src="./docs/images/29-scratchpad-query-results.png" alt="Query Results" width="100%"/>
 
-### Multiple Database Support
+### Database selector
 <img src="./docs/images/51-login-database-types-all-options.png" alt="Database Types" width="100%"/>
 
 </details>
 
 ---
 
-## 🏢 Infrastructure & Support
+## Infrastructure and Support
 
-WhoDB's deployment and CI/CD are powered by [Clidey](https://clidey.com), a no-code DevOps platform.
+WhoDB's deployment and CI/CD are powered by [Clidey](https://clidey.com).
 
 <!-- **Build Status:** [![Build Status](https://hello.clidey.com/api/flows/status?id=b32257fa-1415-4847-a0f3-e684f5f76608&secret=cd74dbd5-36ec-42f9-b4f0-12ce9fcc762b)](https://clidey.com) -->
 
-### Contact & Support
+### WhoDB Platform
+
+Looking to go beyond WhoDB Community? WhoDB Platform runs on your infrastructure and adds pipelines, live dashboards, data catalog, governance, SSO, and air-gapped deployment support.
+
+- **Platform overview:** [whodb.com/platform](https://whodb.com/platform/)
+- **Pricing:** [whodb.com/pricing](https://whodb.com/pricing/)
+- **Contact sales:** [support@clidey.com](mailto:support@clidey.com)
+
+### Support
 
 - **Email:** [support@clidey.com](mailto:support@clidey.com)
-- **GitHub Issues:** [Report a bug](https://github.com/clidey/whodb/issues)
-- **Discussions:** [Join the conversation](https://github.com/clidey/whodb/discussions)
-- **Documentation:** [docs.whodb.com](https://docs.whodb.com/)
+- **GitHub Issues:** [github.com/clidey/whodb/issues](https://github.com/clidey/whodb/issues)
+- **Discussions:** [github.com/clidey/whodb/discussions](https://github.com/clidey/whodb/discussions)
+- **Docs:** [docs.whodb.com](https://docs.whodb.com/)
 
 ---
 
 <div align="center">
 
-### ⭐ Start With CE. Grow Into the Platform.
-
-Run WhoDB CE when you need fast, open-source access to your operational data. Talk to us when your team needs the EE platform for more sources, governance, apps, and AI decisions.
+If WhoDB has saved you time, a star helps the project reach more people.
 
 [![GitHub stars](https://img.shields.io/github/stars/clidey/whodb?style=social)](https://github.com/clidey/whodb/stargazers)
-
----
 
 **Built with ❤️ by the Clidey team**
 
