@@ -991,6 +991,40 @@ func (r *mutationResolver) ImportTableFile(ctx context.Context, input model.Impo
 	}
 }
 
+// ImportCollectionPreview is the resolver for the ImportCollectionPreview field.
+func (r *mutationResolver) ImportCollectionPreview(ctx context.Context, input model.ImportCollectionPreviewInput) (*model.CollectionImportPreview, error) {
+	data, err := readUploadBytes(input.File, maxImportFileSizeBytes)
+	if err != nil {
+		return nil, err
+	}
+	return buildCollectionImportPreview(data, input), nil
+}
+
+// ImportCollectionFile is the resolver for the ImportCollectionFile field.
+func (r *mutationResolver) ImportCollectionFile(ctx context.Context, input model.ImportCollectionFileInput) (*model.CollectionImportResult, error) {
+	plugin, config := GetPluginForContext(ctx)
+
+	importer, ok := plugin.PluginFunctions.(engine.CollectionImporter)
+	if !ok {
+		return collectionImportFailure(importErrorCollectionUnsupported), nil
+	}
+
+	data, err := readUploadBytes(input.File, maxImportFileSizeBytes)
+	if err != nil {
+		return collectionImportFailure(validationKeyFromError(err)), nil
+	}
+
+	documents, _, err := parseCollectionDocuments(data, input.Format, input.Delimiter, input.Sheet, input.SkipColumns, maxImportRows, true)
+	if err != nil {
+		return collectionImportFailure(validationKeyFromError(err)), nil
+	}
+	if len(documents) == 0 {
+		return collectionImportFailure(importErrorNoRows), nil
+	}
+
+	return runCollectionImport(plugin, config, importer, input, documents)
+}
+
 // ExecuteConfirmedSQL is the resolver for the ExecuteConfirmedSQL field.
 func (r *mutationResolver) ExecuteConfirmedSQL(ctx context.Context, query string, operationType string) (*model.AIChatMessage, error) {
 	// Get plugin and config from context

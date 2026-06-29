@@ -185,6 +185,58 @@ input ImportSQLInput {
   Filename: String
 }
 
+enum CollectionImportFormat {
+  JSON
+  CSV
+  EXCEL
+}
+
+input ImportCollectionPreviewInput {
+  Format: CollectionImportFormat!
+  Delimiter: String
+  Sheet: String
+  File: Upload!
+}
+
+type CollectionImportPreview {
+  Format: CollectionImportFormat!
+  Columns: [String!]!
+  Rows: [[String!]!]!
+  Documents: [String!]!
+  Count: Int
+  Truncated: Boolean!
+  ValidationError: String
+}
+
+input ImportCollectionFileInput {
+  Schema: String!
+  Collection: String!
+  Format: CollectionImportFormat!
+  Mode: ImportMode!
+  UpsertKeys: [String!]
+  SkipColumns: [String!]
+  Delimiter: String
+  Sheet: String
+  File: Upload!
+}
+
+type CollectionImportError {
+  Index: Int!
+  Reason: String!
+}
+
+type CollectionImportResult {
+  Status: Boolean!
+  ImportedCount: Int!
+  SkippedCount: Int!
+  MatchedCount: Int
+  ModifiedCount: Int
+  UpsertedCount: Int
+  Errors: [CollectionImportError!]!
+  Message: String
+  Detail: String
+}
+
 type StorageUnit {
   Name: String!
   Attributes: [Record!]!
@@ -680,6 +732,8 @@ type Mutation {
   ImportSQL(input: ImportSQLInput!): ImportResult!
   ImportPreview(input: ImportPreviewInput!): ImportPreview!
   ImportTableFile(input: ImportFileInput!): ImportResult!
+  ImportCollectionPreview(input: ImportCollectionPreviewInput!): CollectionImportPreview!
+  ImportCollectionFile(input: ImportCollectionFileInput!): CollectionImportResult!
 
   # AI Chat Mutations
   ExecuteConfirmedSQL(query: String!, operationType: String!): AIChatMessage!

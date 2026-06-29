@@ -1,0 +1,16 @@
+mutation ImportCollectionFile($input: ImportCollectionFileInput!) {
+  ImportCollectionFile(input: $input) {
+    Status
+    ImportedCount
+    SkippedCount
+    MatchedCount
+    ModifiedCount
+    UpsertedCount
+    Errors {
+      Index
+      Reason
+    }
+    Message
+    Detail
+  }
+}

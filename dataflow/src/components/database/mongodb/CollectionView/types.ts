@@ -78,6 +78,7 @@ export interface CollectionViewState {
   availableFields: string[]
   preferredFilterField: string | null
   showExportModal: boolean
+  showImportModal: boolean
   isFilterModalOpen: boolean
   alert: Alert | null
   columnWidths: Record<string, number>
@@ -115,6 +116,7 @@ export interface CollectionViewActions {
   openFilterForField: (field: string) => void
   handleFilterApply: (filter: FlatMongoFilter) => void
   setShowExportModal: (open: boolean) => void
+  setShowImportModal: (open: boolean) => void
   handleResizeStart: (event: ReactMouseEvent, column: string) => void
   showAlert: (title: string, message: string, type: Alert['type']) => void
   closeAlert: () => void

@@ -111,6 +111,33 @@ type ChatInput struct {
 	Token                *string `json:"Token,omitempty"`
 }
 
+type CollectionImportError struct {
+	Index  int    `json:"Index"`
+	Reason string `json:"Reason"`
+}
+
+type CollectionImportPreview struct {
+	Format          CollectionImportFormat `json:"Format"`
+	Columns         []string               `json:"Columns"`
+	Rows            [][]string             `json:"Rows"`
+	Documents       []string               `json:"Documents"`
+	Count           *int                   `json:"Count,omitempty"`
+	Truncated       bool                   `json:"Truncated"`
+	ValidationError *string                `json:"ValidationError,omitempty"`
+}
+
+type CollectionImportResult struct {
+	Status        bool                     `json:"Status"`
+	ImportedCount int                      `json:"ImportedCount"`
+	SkippedCount  int                      `json:"SkippedCount"`
+	MatchedCount  *int                     `json:"MatchedCount,omitempty"`
+	ModifiedCount *int                     `json:"ModifiedCount,omitempty"`
+	UpsertedCount *int                     `json:"UpsertedCount,omitempty"`
+	Errors        []*CollectionImportError `json:"Errors"`
+	Message       *string                  `json:"Message,omitempty"`
+	Detail        *string                  `json:"Detail,omitempty"`
+}
+
 type Column struct {
 	Type             string  `json:"Type"`
 	Name             string  `json:"Name"`
@@ -207,6 +234,25 @@ type GraphUnitRelationship struct {
 type HealthStatus struct {
 	Server   string `json:"Server"`
 	Database string `json:"Database"`
+}
+
+type ImportCollectionFileInput struct {
+	Schema      string                 `json:"Schema"`
+	Collection  string                 `json:"Collection"`
+	Format      CollectionImportFormat `json:"Format"`
+	Mode        ImportMode             `json:"Mode"`
+	UpsertKeys  []string               `json:"UpsertKeys,omitempty"`
+	SkipColumns []string               `json:"SkipColumns,omitempty"`
+	Delimiter   *string                `json:"Delimiter,omitempty"`
+	Sheet       *string                `json:"Sheet,omitempty"`
+	File        graphql.Upload         `json:"File"`
+}
+
+type ImportCollectionPreviewInput struct {
+	Format    CollectionImportFormat `json:"Format"`
+	Delimiter *string                `json:"Delimiter,omitempty"`
+	Sheet     *string                `json:"Sheet,omitempty"`
+	File      graphql.Upload         `json:"File"`
 }
 
 type ImportColumnMapping struct {
@@ -639,6 +685,63 @@ func (e *CloudProviderType) UnmarshalJSON(b []byte) error {
 }
 
 func (e CloudProviderType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type CollectionImportFormat string
+
+const (
+	CollectionImportFormatJSON  CollectionImportFormat = "JSON"
+	CollectionImportFormatCSV   CollectionImportFormat = "CSV"
+	CollectionImportFormatExcel CollectionImportFormat = "EXCEL"
+)
+
+var AllCollectionImportFormat = []CollectionImportFormat{
+	CollectionImportFormatJSON,
+	CollectionImportFormatCSV,
+	CollectionImportFormatExcel,
+}
+
+func (e CollectionImportFormat) IsValid() bool {
+	switch e {
+	case CollectionImportFormatJSON, CollectionImportFormatCSV, CollectionImportFormatExcel:
+		return true
+	}
+	return false
+}
+
+func (e CollectionImportFormat) String() string {
+	return string(e)
+}
+
+func (e *CollectionImportFormat) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = CollectionImportFormat(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid CollectionImportFormat", str)
+	}
+	return nil
+}
+
+func (e CollectionImportFormat) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *CollectionImportFormat) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e CollectionImportFormat) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

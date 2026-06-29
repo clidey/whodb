@@ -124,6 +124,42 @@ export enum CloudProviderType {
   Aws = 'AWS'
 }
 
+export type CollectionImportError = {
+  __typename?: 'CollectionImportError';
+  Index: Scalars['Int']['output'];
+  Reason: Scalars['String']['output'];
+};
+
+export enum CollectionImportFormat {
+  Csv = 'CSV',
+  Excel = 'EXCEL',
+  Json = 'JSON'
+}
+
+export type CollectionImportPreview = {
+  __typename?: 'CollectionImportPreview';
+  Columns: Array<Scalars['String']['output']>;
+  Count?: Maybe<Scalars['Int']['output']>;
+  Documents: Array<Scalars['String']['output']>;
+  Format: CollectionImportFormat;
+  Rows: Array<Array<Scalars['String']['output']>>;
+  Truncated: Scalars['Boolean']['output'];
+  ValidationError?: Maybe<Scalars['String']['output']>;
+};
+
+export type CollectionImportResult = {
+  __typename?: 'CollectionImportResult';
+  Detail?: Maybe<Scalars['String']['output']>;
+  Errors: Array<CollectionImportError>;
+  ImportedCount: Scalars['Int']['output'];
+  MatchedCount?: Maybe<Scalars['Int']['output']>;
+  Message?: Maybe<Scalars['String']['output']>;
+  ModifiedCount?: Maybe<Scalars['Int']['output']>;
+  SkippedCount: Scalars['Int']['output'];
+  Status: Scalars['Boolean']['output'];
+  UpsertedCount?: Maybe<Scalars['Int']['output']>;
+};
+
 export type Column = {
   __typename?: 'Column';
   IsForeignKey: Scalars['Boolean']['output'];
@@ -259,6 +295,25 @@ export type HealthStatus = {
   __typename?: 'HealthStatus';
   Database: Scalars['String']['output'];
   Server: Scalars['String']['output'];
+};
+
+export type ImportCollectionFileInput = {
+  Collection: Scalars['String']['input'];
+  Delimiter?: InputMaybe<Scalars['String']['input']>;
+  File: Scalars['Upload']['input'];
+  Format: CollectionImportFormat;
+  Mode: ImportMode;
+  Schema: Scalars['String']['input'];
+  Sheet?: InputMaybe<Scalars['String']['input']>;
+  SkipColumns?: InputMaybe<Array<Scalars['String']['input']>>;
+  UpsertKeys?: InputMaybe<Array<Scalars['String']['input']>>;
+};
+
+export type ImportCollectionPreviewInput = {
+  Delimiter?: InputMaybe<Scalars['String']['input']>;
+  File: Scalars['Upload']['input'];
+  Format: CollectionImportFormat;
+  Sheet?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type ImportColumnMapping = {
@@ -492,6 +547,8 @@ export type Mutation = {
   GenerateChatTitle: GenerateChatTitleResponse;
   GenerateMockData: MockDataGenerationStatus;
   GenerateRDSAuthToken: Scalars['String']['output'];
+  ImportCollectionFile: CollectionImportResult;
+  ImportCollectionPreview: CollectionImportPreview;
   ImportPreview: ImportPreview;
   ImportSQL: ImportResult;
   ImportTableFile: ImportResult;
@@ -599,6 +656,16 @@ export type MutationGenerateRdsAuthTokenArgs = {
   providerID: Scalars['ID']['input'];
   region: Scalars['String']['input'];
   username: Scalars['String']['input'];
+};
+
+
+export type MutationImportCollectionFileArgs = {
+  input: ImportCollectionFileInput;
+};
+
+
+export type MutationImportCollectionPreviewArgs = {
+  input: ImportCollectionPreviewInput;
 };
 
 
@@ -1063,6 +1130,20 @@ export type ExecuteConfirmedSqlMutationVariables = Exact<{
 
 
 export type ExecuteConfirmedSqlMutation = { __typename?: 'Mutation', ExecuteConfirmedSQL: { __typename?: 'AIChatMessage', Type: string, Text: string, RequiresConfirmation: boolean, Result?: { __typename?: 'RowsResult', Rows: Array<Array<string>>, TotalCount: number, Columns: Array<{ __typename?: 'Column', Type: string, Name: string }> } | null } };
+
+export type ImportCollectionFileMutationVariables = Exact<{
+  input: ImportCollectionFileInput;
+}>;
+
+
+export type ImportCollectionFileMutation = { __typename?: 'Mutation', ImportCollectionFile: { __typename?: 'CollectionImportResult', Status: boolean, ImportedCount: number, SkippedCount: number, MatchedCount?: number | null, ModifiedCount?: number | null, UpsertedCount?: number | null, Message?: string | null, Detail?: string | null, Errors: Array<{ __typename?: 'CollectionImportError', Index: number, Reason: string }> } };
+
+export type ImportCollectionPreviewMutationVariables = Exact<{
+  input: ImportCollectionPreviewInput;
+}>;
+
+
+export type ImportCollectionPreviewMutation = { __typename?: 'Mutation', ImportCollectionPreview: { __typename?: 'CollectionImportPreview', Format: CollectionImportFormat, Columns: Array<string>, Rows: Array<Array<string>>, Documents: Array<string>, Count?: number | null, Truncated: boolean, ValidationError?: string | null } };
 
 export type ImportPreviewMutationVariables = Exact<{
   input: ImportPreviewInput;
@@ -1644,6 +1725,89 @@ export function useExecuteConfirmedSqlMutation(baseOptions?: Apollo.MutationHook
 export type ExecuteConfirmedSqlMutationHookResult = ReturnType<typeof useExecuteConfirmedSqlMutation>;
 export type ExecuteConfirmedSqlMutationResult = Apollo.MutationResult<ExecuteConfirmedSqlMutation>;
 export type ExecuteConfirmedSqlMutationOptions = Apollo.BaseMutationOptions<ExecuteConfirmedSqlMutation, ExecuteConfirmedSqlMutationVariables>;
+export const ImportCollectionFileDocument = gql`
+    mutation ImportCollectionFile($input: ImportCollectionFileInput!) {
+  ImportCollectionFile(input: $input) {
+    Status
+    ImportedCount
+    SkippedCount
+    MatchedCount
+    ModifiedCount
+    UpsertedCount
+    Errors {
+      Index
+      Reason
+    }
+    Message
+    Detail
+  }
+}
+    `;
+export type ImportCollectionFileMutationFn = Apollo.MutationFunction<ImportCollectionFileMutation, ImportCollectionFileMutationVariables>;
+
+/**
+ * __useImportCollectionFileMutation__
+ *
+ * To run a mutation, you first call `useImportCollectionFileMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useImportCollectionFileMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [importCollectionFileMutation, { data, loading, error }] = useImportCollectionFileMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useImportCollectionFileMutation(baseOptions?: Apollo.MutationHookOptions<ImportCollectionFileMutation, ImportCollectionFileMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<ImportCollectionFileMutation, ImportCollectionFileMutationVariables>(ImportCollectionFileDocument, options);
+      }
+export type ImportCollectionFileMutationHookResult = ReturnType<typeof useImportCollectionFileMutation>;
+export type ImportCollectionFileMutationResult = Apollo.MutationResult<ImportCollectionFileMutation>;
+export type ImportCollectionFileMutationOptions = Apollo.BaseMutationOptions<ImportCollectionFileMutation, ImportCollectionFileMutationVariables>;
+export const ImportCollectionPreviewDocument = gql`
+    mutation ImportCollectionPreview($input: ImportCollectionPreviewInput!) {
+  ImportCollectionPreview(input: $input) {
+    Format
+    Columns
+    Rows
+    Documents
+    Count
+    Truncated
+    ValidationError
+  }
+}
+    `;
+export type ImportCollectionPreviewMutationFn = Apollo.MutationFunction<ImportCollectionPreviewMutation, ImportCollectionPreviewMutationVariables>;
+
+/**
+ * __useImportCollectionPreviewMutation__
+ *
+ * To run a mutation, you first call `useImportCollectionPreviewMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useImportCollectionPreviewMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [importCollectionPreviewMutation, { data, loading, error }] = useImportCollectionPreviewMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useImportCollectionPreviewMutation(baseOptions?: Apollo.MutationHookOptions<ImportCollectionPreviewMutation, ImportCollectionPreviewMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<ImportCollectionPreviewMutation, ImportCollectionPreviewMutationVariables>(ImportCollectionPreviewDocument, options);
+      }
+export type ImportCollectionPreviewMutationHookResult = ReturnType<typeof useImportCollectionPreviewMutation>;
+export type ImportCollectionPreviewMutationResult = Apollo.MutationResult<ImportCollectionPreviewMutation>;
+export type ImportCollectionPreviewMutationOptions = Apollo.BaseMutationOptions<ImportCollectionPreviewMutation, ImportCollectionPreviewMutationVariables>;
 export const ImportPreviewDocument = gql`
     mutation ImportPreview($input: ImportPreviewInput!) {
   ImportPreview(input: $input) {

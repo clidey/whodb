@@ -66,4 +66,11 @@ const (
 	importErrorInsertFailed                 = "import.error.insert_failed"
 	importErrorUpsertNoPK                   = "import.error.upsert_no_pk"
 	importErrorUpsertNotSupported           = "import.error.upsert_not_supported"
+
+	// Collection (document) import error keys
+	importErrorCollectionUnsupported = "import.error.collection_unsupported"
+
+	// collectionImportErrorLimit caps how many per-document failures are returned
+	// to the client; SkippedCount still reflects the true total.
+	collectionImportErrorLimit = 50
 )

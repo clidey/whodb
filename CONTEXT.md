@@ -84,6 +84,10 @@ _Avoid_: table file import, CSV import, database dump import
 A **Database Import** method where a user maps rows from a CSV or Excel file into one existing or newly created **SQL Table**.
 _Avoid_: SQL script import, database dump import
 
+**Collection File Import**:
+A **Database Import** method where a user loads records from a JSON, CSV, or Excel file into one existing or newly created **MongoDB Collection**.
+_Avoid_: table file import, SQL script import
+
 **Dashboard**:
 An analysis surface made of charts created from database query results.
 _Avoid_: report, database view
@@ -107,9 +111,10 @@ _Avoid_: widget when the data visualization is meant
 - A **SQL Update Export** is a **SQL Data Export** and requires the source **SQL Table** to have a primary key.
 - A **Database Dump** is a **Database Export** and may include database structure as well as data.
 - A **Database Import** has exactly one **Import Method** for a single import run.
-- A **SQL Script Import** and a **Table File Import** are separate **Import Methods**.
+- A **SQL Script Import**, a **Table File Import**, and a **Collection File Import** are separate **Import Methods**.
 - A **Table File Import** targets exactly one **SQL Table**.
 - A **Table File Import** does not target a **MongoDB Collection** or **Redis Key**.
+- A **Collection File Import** targets exactly one **MongoDB Collection** and does not target a **SQL Table** or **Redis Key**.
 - A **Table File Import** that creates a new **SQL Table** may create that table without a primary key.
 - When a **Table File Import** creates a new **SQL Table**, any selected primary key columns come from the source file columns rather than from DataFlow-generated columns.
 - A **Dashboard** contains one or more **Charts**.

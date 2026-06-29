@@ -30,7 +30,8 @@ describe('MongoDB context menu items', () => {
 
     expect(itemLabels).toContain('sidebar.menu.newCollection')
     expect(itemLabels).toContain('sidebar.menu.deleteDatabase')
-    expect(itemLabels).not.toContain('sidebar.menu.import')
+    // Collection File Import is offered from the MongoDB database node.
+    expect(itemLabels).toContain('sidebar.menu.import')
     expect(itemLabels).not.toContain('sidebar.menu.renameDatabase')
   })
 })

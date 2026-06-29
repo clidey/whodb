@@ -20,6 +20,7 @@ import { RenameTableModal } from '@/components/database/sql/RenameTableModal'
 import { ExportCollectionModal } from '@/components/database/mongodb/ExportCollectionModal'
 import { CreateCollectionModal } from '@/components/database/mongodb/CreateCollectionModal'
 import { DropCollectionModal } from '@/components/database/mongodb/DropCollectionModal'
+import { CollectionImportModal } from '@/components/database/mongodb/CollectionImportModal'
 import { RedisKeyModal } from '@/components/database/redis/RedisKeyModal'
 import { DeleteRedisKeyModal } from '@/components/database/redis/DeleteRedisKeyModal'
 import { ExportRedisKeyModal } from '@/components/database/redis/ExportRedisKeyModal'
@@ -303,6 +304,21 @@ export function SidebarModals({
           onSuccess={() => {
             selectItem(null)
             refreshSchemaOrDb(activeModal.params.connectionId, activeModal.params.databaseName)
+          }}
+        />
+      )}
+
+      {/* Import Collection */}
+      {activeModal?.type === "import_collection" && (
+        <CollectionImportModal
+          open
+          onOpenChange={onOpenChange}
+          connectionId={activeModal.params.connectionId}
+          databaseName={activeModal.params.databaseName}
+          collectionName={activeModal.params.collectionName}
+          onSuccess={() => {
+            refreshSchemaOrDb(activeModal.params.connectionId, activeModal.params.databaseName)
+            useConnectionStore.getState().triggerTableRefresh()
           }}
         />
       )}

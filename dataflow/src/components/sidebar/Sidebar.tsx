@@ -58,6 +58,7 @@ export type ModalState =
   | { type: "rename_table"; params: { connectionId: string; databaseName: string; schema?: string; tableName: string } }
   | { type: "export_collection"; params: { connectionId: string; databaseName: string; collectionName: string } }
   | { type: "drop_collection"; params: { connectionId: string; databaseName: string; collectionName: string } }
+  | { type: "import_collection"; params: { connectionId: string; databaseName: string; collectionName: string | null } }
   | { type: "create_redis_key"; params: { connectionId: string; databaseName: string } }
   | { type: "delete_redis_key"; params: { connectionId: string; databaseName: string; keyName: string } }
   | { type: "export_redis_key"; params: { connectionId: string; databaseName: string; keyName: string } };
@@ -363,6 +364,18 @@ function SidebarInner() {
             },
           });
           break;
+        case "import_collection": {
+          const isDatabaseNode = node.type === "database";
+          openModal({
+            type: "import_collection",
+            params: {
+              connectionId: node.connectionId,
+              databaseName: isDatabaseNode ? node.name : node.metadata.database!,
+              collectionName: isDatabaseNode ? null : node.name,
+            },
+          });
+          break;
+        }
         case "new_redis_key":
           openModal({
             type: "create_redis_key",

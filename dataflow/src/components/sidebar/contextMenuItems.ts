@@ -152,6 +152,11 @@ export function getDatabaseMenuItems(
           { label: t("sidebar.menu.import"), onClick: () => onAction("import_database"), icon: React.createElement(Upload, { className: "h-4 w-4" }) },
         ] as ContextMenuItem[]
       : []),
+    ...(connectionType === "MONGODB"
+      ? [
+          { label: t("sidebar.menu.import"), onClick: () => onAction("import_collection"), icon: React.createElement(Upload, { className: "h-4 w-4" }) },
+        ] as ContextMenuItem[]
+      : []),
     ...(canExportDatabase
       ? [
           { label: t("sidebar.menu.exportDatabase"), onClick: () => onAction("export_database"), icon: React.createElement(Download, { className: "h-4 w-4" }) },
@@ -253,6 +258,7 @@ export function getViewMenuItems(callbacks: MenuCallbacks): ContextMenuItem[] {
 export function getCollectionMenuItems(callbacks: MenuCallbacks): ContextMenuItem[] {
   const { onAction, t } = callbacks;
   return [
+    { label: t("sidebar.menu.import"), onClick: () => onAction("import_collection"), icon: React.createElement(Upload, { className: "h-4 w-4" }) },
     { label: t("sidebar.menu.exportCollection"), onClick: () => onAction("export_collection"), icon: React.createElement(Download, { className: "h-4 w-4" }) },
     { separator: true },
     { label: t("sidebar.menu.dropCollection"), onClick: () => onAction("drop_collection"), icon: React.createElement(Trash2, { className: "h-4 w-4 text-red-500" }), danger: true },
