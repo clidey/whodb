@@ -87,7 +87,7 @@ export function CollectionImportModal({
   const [file, setFile] = useState<File | null>(null)
   const [format, setFormat] = useState<CollectionImportFormat | null>(null)
   const [fileError, setFileError] = useState<string | null>(null)
-  const [targetMode, setTargetMode] = useState<TargetMode>(lockedCollection ? 'existing' : 'existing')
+  const [targetMode, setTargetMode] = useState<TargetMode>('existing')
   const [selectedCollection, setSelectedCollection] = useState(lockedCollection ?? '')
   const [newCollectionName, setNewCollectionName] = useState('')
   const [mode, setMode] = useState<ImportMode>(ImportMode.Append)
@@ -230,7 +230,6 @@ export function CollectionImportModal({
 
   const showDelimiter = format === CollectionImportFormat.Csv
   const showSheet = format === CollectionImportFormat.Excel
-  const isTabular = format === CollectionImportFormat.Csv || format === CollectionImportFormat.Excel
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
