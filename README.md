@@ -2,7 +2,7 @@
 
 # <img src="./docs/logo/logo.svg" width="30px" height="auto" />  WhoDB
 
-### *The open-source entry point to the WhoDB AI data platform*
+### *Where data access meets operational intelligence*
 
 <!-- [![Build Status](https://hello.clidey.com/api/flows/status?id=b32257fa-1415-4847-a0f3-e684f5f76608&secret=cd74dbd5-36ec-42f9-b4f0-12ce9fcc762b)](https://clidey.com) -->
 ![Release workflow](https://img.shields.io/github/actions/workflow/status/clidey/whodb/release-ce.yml?branch=main)
