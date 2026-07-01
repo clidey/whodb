@@ -19,14 +19,14 @@ require (
 	cloud.google.com/go/redis v1.23.0 // indirect
 	git.sr.ht/~jackmordaunt/go-toast/v2 v2.0.3 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.22.0 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.13.1 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.14.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.12.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/cosmos/armcosmos/v3 v3.4.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/mysql/armmysqlflexibleservers v1.2.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/postgresql/armpostgresqlflexibleservers v1.1.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/redis/armredis v1.0.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions v1.3.0 // indirect
-	github.com/AzureAD/microsoft-authentication-library-for-go v1.6.0 // indirect
+	github.com/AzureAD/microsoft-authentication-library-for-go v1.7.2 // indirect
 	github.com/agnivade/levenshtein v1.2.1 // indirect
 	github.com/apache/arrow-go/v18 v18.5.2 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.42.0 // indirect
@@ -56,13 +56,13 @@ require (
 	github.com/danieljoos/wincred v1.2.3 // indirect
 	github.com/deckarep/golang-set/v2 v2.9.0 // indirect
 	github.com/dromara/carbon/v2 v2.6.16 // indirect
-	github.com/duckdb/duckdb-go-bindings v0.10503.0 // indirect
-	github.com/duckdb/duckdb-go-bindings/lib/darwin-amd64 v0.10503.0 // indirect
-	github.com/duckdb/duckdb-go-bindings/lib/darwin-arm64 v0.10503.0 // indirect
-	github.com/duckdb/duckdb-go-bindings/lib/linux-amd64 v0.10503.0 // indirect
-	github.com/duckdb/duckdb-go-bindings/lib/linux-arm64 v0.10503.0 // indirect
-	github.com/duckdb/duckdb-go-bindings/lib/windows-amd64 v0.10503.0 // indirect
-	github.com/duckdb/duckdb-go/v2 v2.10503.1 // indirect
+	github.com/duckdb/duckdb-go-bindings v0.10504.0 // indirect
+	github.com/duckdb/duckdb-go-bindings/lib/darwin-amd64 v0.10504.0 // indirect
+	github.com/duckdb/duckdb-go-bindings/lib/darwin-arm64 v0.10504.0 // indirect
+	github.com/duckdb/duckdb-go-bindings/lib/linux-amd64 v0.10504.0 // indirect
+	github.com/duckdb/duckdb-go-bindings/lib/linux-arm64 v0.10504.0 // indirect
+	github.com/duckdb/duckdb-go-bindings/lib/windows-amd64 v0.10504.0 // indirect
+	github.com/duckdb/duckdb-go/v2 v2.10504.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/go-chi/chi/v5 v5.3.0 // indirect
 	github.com/go-chi/cors v1.2.2 // indirect
@@ -126,22 +126,22 @@ require (
 	go.opentelemetry.io/otel v1.44.0 // indirect
 	go.opentelemetry.io/otel/metric v1.44.0 // indirect
 	go.opentelemetry.io/otel/trace v1.44.0 // indirect
-	golang.org/x/crypto v0.52.0 // indirect
+	golang.org/x/crypto v0.53.0 // indirect
 	golang.org/x/exp v0.0.0-20260410095643-746e56fc9e2f // indirect
 	golang.org/x/mod v0.36.0 // indirect
-	golang.org/x/net v0.55.0 // indirect
+	golang.org/x/net v0.56.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
 	golang.org/x/sync v0.21.0 // indirect
-	golang.org/x/sys v0.45.0 // indirect
+	golang.org/x/sys v0.46.0 // indirect
 	golang.org/x/telemetry v0.0.0-20260508192327-42602be52be6 // indirect
-	golang.org/x/text v0.37.0 // indirect
+	golang.org/x/text v0.38.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 	golang.org/x/tools v0.45.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
-	google.golang.org/api v0.284.0 // indirect
+	google.golang.org/api v0.286.0 // indirect
 	google.golang.org/genproto v0.0.0-20260319201613-d00831a3d3e7 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260526163538-3dc84a4a5aaa // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260526163538-3dc84a4a5aaa // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260610212136-7ab31c22f7ad // indirect
 	google.golang.org/grpc v1.81.1 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 	gorm.io/driver/sqlite v1.6.0 // indirect
