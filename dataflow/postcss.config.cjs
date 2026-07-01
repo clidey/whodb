@@ -100,10 +100,12 @@ const colorMixVarResolverPlugin = () => {
                 if (!varName) return;
 
                 const resolvedVarName = cssVariables[varName] === undefined ? 'black' : cssVariables[varName];
-                const resolved = `${resolvedVarName} `;
 
+                // No trailing space: it would produce `<color>  <pct>` (double space) inside
+                // color-mix(), which @csstools/postcss-color-mix-function fails to parse, leaving
+                // the color-mix() uncomputed.
                 childNode.type = 'word';
-                childNode.value = resolved;
+                childNode.value = resolvedVarName;
                 childNode.nodes = [];
                 modified = true;
               }
@@ -223,10 +225,44 @@ const addSpaceForEmptyVarFallback = () => {
 
 addSpaceForEmptyVarFallback.postcss = true;
 
+// Tailwind v4 emits opacity-modified colors (e.g. `bg-warning/5`) as a solid `var(--color)`
+// base declaration plus an `@supports (color: color-mix(...))` block holding the real
+// translucent value. Browsers without color-mix() (Chrome < 111) fail the @supports test and
+// fall back to the solid base, so the color renders at full opacity. Unwrap these guards so the
+// resolved value applies unconditionally and wins by source order over the solid base. Runs as
+// Once — before @csstools/postcss-color-mix-function below — because that plugin deliberately
+// skips declarations nested inside a color-mix() feature query, so the guard must be gone first.
+const flattenColorMixSupports = () => {
+  return {
+    postcssPlugin: 'postcss-flatten-color-mix-supports',
+    Once(root) {
+      root.walkAtRules('supports', (atRule) => {
+        if (!atRule.params.includes('color-mix(')) {
+          return;
+        }
+
+        if (atRule.nodes && atRule.nodes.length > 0) {
+          atRule.replaceWith(...atRule.nodes);
+        } else {
+          atRule.remove();
+        }
+      });
+    },
+  };
+};
+
+flattenColorMixSupports.postcss = true;
+
 const config = {
   plugins: [
     propertyInjectPlugin(),
     colorMixVarResolverPlugin(),
+    // Unwrap Tailwind's `@supports (color-mix())` guards before computing color-mix() below.
+    flattenColorMixSupports(),
+    // Resolve color-mix() to a static rgb()/rgba(). Runs before postcss-oklab-function: oklab
+    // splits each color into an rgb + color(display-p3) pair, and color-mix-function leaves the
+    // display-p3 half as an uncomputed color-mix(), so the color-mix() must be collapsed first.
+    require('@csstools/postcss-color-mix-function')({ preserve: false }),
     transformShortcutPlugin(),
     addSpaceForEmptyVarFallback(),
     require('postcss-media-minmax'),
