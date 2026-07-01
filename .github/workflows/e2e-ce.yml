@@ -9,11 +9,43 @@ on:
 #  schedule:
 #    - cron: '0 6 * * *'
   workflow_dispatch:
+    inputs:
+      databases:
+        description: 'Comma-separated databases to test, or "all"'
+        required: false
+        type: string
+        default: 'all'
+  workflow_call:
+    inputs:
+      databases:
+        description: 'Comma-separated databases to test, or "all"'
+        required: false
+        type: string
+        default: 'all'
 
 permissions:
   contents: read
 
 jobs:
+  resolve-matrix:
+    name: Resolve Matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.resolve.outputs.matrix }}
+    steps:
+      - name: Resolve database matrix
+        id: resolve
+        env:
+          DATABASES_INPUT: ${{ inputs.databases }}
+        run: |
+          ALL='["postgres","mysql","mysql8","mariadb","tidb","sqlite","duckdb","mongodb","redis","elasticsearch","cockroachdb","clickhouse","memcached","valkey","dragonfly","opensearch","yugabytedb","questdb","ferretdb"]'
+          if [ -z "$DATABASES_INPUT" ] || [ "$DATABASES_INPUT" = "all" ]; then
+            MATRIX=$ALL
+          else
+            MATRIX=$(printf '%s' "$DATABASES_INPUT" | python3 -c "import sys,json;dbs=[d.strip() for d in sys.stdin.read().split(',') if d.strip()];print(json.dumps(dbs))")
+          fi
+          echo "matrix={\"database\":$MATRIX}" >> "$GITHUB_OUTPUT"
+
   build:
     name: Build Test Binary
     runs-on: ubuntu-latest
@@ -51,32 +83,12 @@ jobs:
 
   e2e:
     name: E2E - ${{ matrix.database }}
-    needs: [build]
+    needs: [resolve-matrix, build]
     runs-on: ubuntu-latest
     timeout-minutes: 360
     strategy:
       fail-fast: false
-      matrix:
-        database:
-          - postgres
-          - mysql
-          - mysql8
-          - mariadb
-          - tidb
-          - sqlite
-          - duckdb
-          - mongodb
-          - redis
-          - elasticsearch
-          - cockroachdb
-          - clickhouse
-          - memcached
-          - valkey
-          - dragonfly
-          - opensearch
-          - yugabytedb
-          - questdb
-          - ferretdb
+      matrix: ${{ fromJSON(needs.resolve-matrix.outputs.matrix) }}
 
     steps:
       - name: Harden Runner
