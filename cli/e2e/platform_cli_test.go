@@ -162,6 +162,170 @@ func TestPlatformCLI_SourceLifecycle(t *testing.T) {
 	sourceForCleanup = ""
 }
 
+func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
+	cleanup := testharness.SetupCleanEnv(t)
+	defer cleanup()
+	t.Setenv("WHODB_CLI_E2E_PLATFORM_TOKEN_DIR", filepath.Join(os.Getenv("HOME"), ".whodb-cli-platform-e2e-tokens"))
+	config.ResetPathsForTesting()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+
+	host := envOrDefault("WHODB_PLATFORM_E2E_HOST", defaultPlatformE2EHost)
+	keycloakURL := envOrDefault("WHODB_PLATFORM_E2E_KEYCLOAK_URL", defaultPlatformE2EKeycloakURL)
+	email := envOrDefault("WHODB_PLATFORM_E2E_USER", defaultPlatformE2EUser)
+	password := envOrDefault("WHODB_PLATFORM_E2E_PASSWORD", defaultPlatformE2EPassword)
+
+	keycloakHostHeader := envOrDefault("WHODB_PLATFORM_E2E_KEYCLOAK_HOST_HEADER", "127.0.0.1:4001")
+	refreshToken := mintDevRefreshToken(t, ctx, keycloakURL, keycloakHostHeader, email, password)
+	restoreLogin := seedPlatformLogin(t, ctx, host, refreshToken)
+	defer restoreLogin()
+
+	orgSlug := envOrDefault("WHODB_PLATFORM_E2E_ORG", "acme")
+	projectSlug := envOrDefault("WHODB_PLATFORM_E2E_PROJECT", "default")
+	_ = runEnvelope(t, "use", "--host", host, "--org", orgSlug, "--project", projectSlug, "--format", "json", "--quiet")
+
+	suffix := strings.ReplaceAll(time.Now().UTC().Format("20060102150405.000000000"), ".", "")
+	baseArgs := []string{"--host", host, "--yes", "--format", "json", "--quiet"}
+
+	t.Setenv("WHODB_PLATFORM_E2E_TYPED_SECRET", "secret-value-"+suffix)
+	secretID := runMutationID(t, append([]string{
+		"secrets", "create",
+		"--name", "cli-e2e-secret-" + suffix,
+		"--description", "CLI e2e secret",
+		"--value-env", "WHODB_PLATFORM_E2E_TYPED_SECRET",
+	}, baseArgs...)...)
+	defer bestEffortCLIResourceDelete(t, host, "secret", secretID)
+	secrets := runJSONCommand[[]platform.ProjectSecret](t, "secrets", "list", "--host", host, "--format", "json", "--quiet")
+	requireContainsSecret(t, secrets, secretID)
+	_ = runMutationID(t, append([]string{
+		"secrets", "update", secretID,
+		"--name", "cli-e2e-secret-updated-" + suffix,
+		"--description", "updated",
+		"--value-env", "WHODB_PLATFORM_E2E_TYPED_SECRET",
+	}, baseArgs...)...)
+
+	t.Setenv("WHODB_PLATFORM_E2E_TYPED_PROVIDER_KEY", "test-key-"+suffix)
+	providerID := runMutationID(t, append([]string{
+		"ai-providers", "create",
+		"--name", "cli-e2e-provider-" + suffix,
+		"--type", "openai",
+		"--endpoint", "http://127.0.0.1:1/v1",
+		"--api-key-env", "WHODB_PLATFORM_E2E_TYPED_PROVIDER_KEY",
+		"--model", "gpt-4.1",
+	}, baseArgs...)...)
+	defer bestEffortCLIResourceDelete(t, host, "ai_provider", providerID)
+	providers := runJSONCommand[[]platform.AIProvider](t, "ai-providers", "list", "--host", host, "--format", "json", "--quiet")
+	requireContainsAIProvider(t, providers, providerID)
+	_ = runMutationID(t, append([]string{
+		"ai-providers", "update", providerID,
+		"--name", "cli-e2e-provider-updated-" + suffix,
+		"--endpoint", "http://127.0.0.1:1/v1",
+		"--model", "gpt-4.1-mini",
+	}, baseArgs...)...)
+
+	datasetID := runMutationID(t, append([]string{
+		"datasets", "create",
+		"--name", "cli-e2e-dataset-" + suffix,
+		"--description", "CLI e2e dataset",
+		"--schema-mode", "manual",
+		"--column", "id:text:primary",
+		"--column", "name:text:nullable",
+	}, baseArgs...)...)
+	defer bestEffortCLIResourceDelete(t, host, "dataset", datasetID)
+	datasets := runJSONCommand[[]platform.Dataset](t, "datasets", "list", "--host", host, "--format", "json", "--quiet")
+	requireContainsDataset(t, datasets, datasetID)
+	_ = runJSONCommand[platform.Dataset](t, "datasets", "get", datasetID, "--host", host, "--format", "json", "--quiet")
+	_ = runJSONCommand[platform.DatasetQueryResult](t, "datasets", "rows", datasetID, "--host", host, "--limit", "5", "--format", "json", "--quiet")
+	_ = runMutationID(t, append([]string{
+		"datasets", "update", datasetID,
+		"--description", "updated",
+		"--schema-mode", "manual",
+		"--column", "id:text:primary",
+	}, baseArgs...)...)
+
+	transformID := runMutationID(t, append([]string{
+		"resources", "create", "transform",
+		"--payload-json", jsonPayload(t, map[string]any{
+			"name":         "cli-e2e-transform-" + suffix,
+			"description":  "CLI e2e transform",
+			"graphJson":    `{"nodes":[],"edges":[]}`,
+			"scheduleCron": "",
+			"triggerMode":  "manual",
+		}),
+	}, baseArgs...)...)
+	defer bestEffortCLIResourceDelete(t, host, "transform", transformID)
+	_ = runMutationID(t, append([]string{"transforms", "run", transformID}, baseArgs...)...)
+	_ = runJSONCommand[[]platform.TransformRun](t, "transforms", "runs", transformID, "--host", host, "--format", "json", "--quiet")
+
+	functionID := runMutationID(t, append([]string{
+		"resources", "create", "function",
+		"--payload-json", jsonPayload(t, map[string]any{
+			"name":           "cli-e2e-function-" + suffix,
+			"description":    "CLI e2e function",
+			"language":       "python",
+			"entryPoint":     "main",
+			"timeoutSeconds": 30,
+			"memory":         "128Mi",
+			"cpu":            "100m",
+			"files":          []map[string]any{{"path": "main.py", "content": "def main(input):\n    return input\n"}},
+			"dependencies":   []map[string]any{},
+		}),
+	}, baseArgs...)...)
+	defer bestEffortCLIResourceDelete(t, host, "function", functionID)
+	_ = runJSONCommand[platform.Function](t, "functions", "get", functionID, "--host", host, "--format", "json", "--quiet")
+
+	folderAID := runMutationID(t, append([]string{
+		"resources", "create", "folder",
+		"--payload-json", jsonPayload(t, map[string]any{"name": "cli-e2e-folder-a-" + suffix}),
+	}, baseArgs...)...)
+	defer bestEffortCLIResourceDelete(t, host, "folder", folderAID)
+	folderBID := runMutationID(t, append([]string{
+		"resources", "create", "folder",
+		"--payload-json", jsonPayload(t, map[string]any{"name": "cli-e2e-folder-b-" + suffix}),
+	}, baseArgs...)...)
+	defer bestEffortCLIResourceDelete(t, host, "folder", folderBID)
+
+	csvPath := filepath.Join(t.TempDir(), "cli-e2e-"+suffix+".csv")
+	if err := os.WriteFile(csvPath, []byte("id,name\n1,Ada\n"), 0600); err != nil {
+		t.Fatalf("write csv fixture: %v", err)
+	}
+	uploaded := runEnvelope(t, append([]string{
+		"files", "upload",
+		"--path", csvPath,
+		"--folder-id", folderAID,
+	}, baseArgs...)...)
+	var uploadedFile platform.ProjectFile
+	decodeEnvelopeData(t, uploaded, &uploadedFile)
+	if uploadedFile.ID == "" {
+		t.Fatalf("uploaded file did not include id: %#v", uploadedFile)
+	}
+	fileID := uploadedFile.ID
+	defer bestEffortCLIResourceDelete(t, host, "file", fileID)
+	_ = runJSONCommand[platform.FolderContents](t, "files", "list", "--host", host, "--folder-id", folderAID, "--format", "json", "--quiet")
+	_ = runRawCommand(t, "files", "preview", fileID, "--host", host, "--format", "json", "--quiet")
+	_ = runMutationID(t, append([]string{"files", "rename", fileID, "--name", "cli-e2e-renamed-" + suffix + ".csv"}, baseArgs...)...)
+	_ = runMutationID(t, append([]string{"files", "move", fileID, "--folder-id", folderBID}, baseArgs...)...)
+	_ = runJSONCommand[platform.LineageGraph](t, "lineage", "project", "--host", host, "--format", "json", "--quiet")
+
+	runMutationOK(t, append([]string{"files", "delete", fileID}, baseArgs...)...)
+	fileID = ""
+	runMutationOK(t, append([]string{"resources", "delete", "folder", folderAID}, baseArgs...)...)
+	folderAID = ""
+	runMutationOK(t, append([]string{"resources", "delete", "folder", folderBID}, baseArgs...)...)
+	folderBID = ""
+	runMutationOK(t, append([]string{"functions", "delete", functionID}, baseArgs...)...)
+	functionID = ""
+	runMutationOK(t, append([]string{"transforms", "delete", transformID}, baseArgs...)...)
+	transformID = ""
+	runMutationOK(t, append([]string{"datasets", "delete", datasetID}, baseArgs...)...)
+	datasetID = ""
+	runMutationOK(t, append([]string{"ai-providers", "delete", providerID}, baseArgs...)...)
+	providerID = ""
+	runMutationOK(t, append([]string{"secrets", "delete", secretID}, baseArgs...)...)
+	secretID = ""
+}
+
 func mintDevRefreshToken(t *testing.T, ctx context.Context, keycloakURL, hostHeader, username, password string) string {
 	t.Helper()
 	endpoint := strings.TrimRight(keycloakURL, "/") + "/realms/mothergate/protocol/openid-connect/token"
@@ -314,6 +478,54 @@ func decodeEnvelopeData(t *testing.T, envelope platformAutomationEnvelope, targe
 	}
 }
 
+func runMutationID(t *testing.T, args ...string) string {
+	t.Helper()
+	data := runMutationOK(t, args...)
+	var decoded struct {
+		ID string `json:"id"`
+	}
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		t.Fatalf("decode mutation result for whodb-cli %s: %v\nraw:\n%s", strings.Join(args, " "), err, string(data))
+	}
+	if decoded.ID == "" {
+		t.Fatalf("mutation result for whodb-cli %s did not include id: %s", strings.Join(args, " "), string(data))
+	}
+	return decoded.ID
+}
+
+func runMutationOK(t *testing.T, args ...string) json.RawMessage {
+	t.Helper()
+	envelope := runEnvelope(t, args...)
+	var mutation struct {
+		Operation string          `json:"Operation"`
+		Data      json.RawMessage `json:"Data"`
+	}
+	if err := json.Unmarshal(envelope.Data, &mutation); err != nil {
+		t.Fatalf("decode mutation envelope data for whodb-cli %s: %v\nraw:\n%s", strings.Join(args, " "), err, string(envelope.Data))
+	}
+	if len(mutation.Data) == 0 {
+		t.Fatalf("mutation envelope for whodb-cli %s did not include data: %s", strings.Join(args, " "), string(envelope.Data))
+	}
+	return mutation.Data
+}
+
+func jsonPayload(t *testing.T, value any) string {
+	t.Helper()
+	raw, err := json.Marshal(value)
+	if err != nil {
+		t.Fatalf("marshal JSON payload: %v", err)
+	}
+	return string(raw)
+}
+
+func bestEffortCLIResourceDelete(t *testing.T, host, resource, id string) {
+	t.Helper()
+	if strings.TrimSpace(id) == "" {
+		return
+	}
+	_, _, _ = testharness.RunCLI(t, "resources", "delete", resource, id, "--host", host, "--yes", "--format", "json", "--quiet")
+}
+
 func envOrDefault(key, fallback string) string {
 	if value := strings.TrimSpace(os.Getenv(key)); value != "" {
 		return value
@@ -376,4 +588,34 @@ func requireContainsSource(t *testing.T, sources []platform.Source, name string)
 		}
 	}
 	t.Fatalf("source %q not found in %#v", name, sources)
+}
+
+func requireContainsSecret(t *testing.T, secrets []platform.ProjectSecret, id string) {
+	t.Helper()
+	for _, secret := range secrets {
+		if secret.ID == id {
+			return
+		}
+	}
+	t.Fatalf("secret %q not found in %#v", id, secrets)
+}
+
+func requireContainsAIProvider(t *testing.T, providers []platform.AIProvider, id string) {
+	t.Helper()
+	for _, provider := range providers {
+		if provider.ID == id {
+			return
+		}
+	}
+	t.Fatalf("AI provider %q not found in %#v", id, providers)
+}
+
+func requireContainsDataset(t *testing.T, datasets []platform.Dataset, id string) {
+	t.Helper()
+	for _, dataset := range datasets {
+		if dataset.ID == id {
+			return
+		}
+	}
+	t.Fatalf("dataset %q not found in %#v", id, datasets)
 }
