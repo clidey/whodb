@@ -340,6 +340,36 @@ It exposes:
 - `/mcp`
 - `/health`
 
+## Hosted Platform MCP
+
+Hosted WhoDB platform MCP mode is opt-in and uses the existing CLI hosted login:
+
+```bash
+whodb-cli login
+whodb-cli use --org <org-id-or-slug> --project <project-id-or-slug>
+whodb-cli mcp serve --platform
+```
+
+When `--platform` is set, the MCP server exposes hosted platform tools only.
+Local database tools such as `whodb_query` and `whodb_connections` are not
+registered.
+
+Platform MCP clients should read these resources before selecting tools:
+
+- `whodb://platform/workspace` for the current host, signed-in user,
+  organization, project, and readiness state
+- `whodb://platform/schema` for enabled tools, resources, prompts, generic
+  write specs, and payload shapes
+- `whodb://platform/tool-guide` for read/write behavior, confirmation behavior,
+  row limits, and field projection guidance
+
+For tools that accept `fields`, request only the fields needed for the current
+answer and request more only when needed. Hosted platform writes return a
+confirmation token by default and execute only after confirmation.
+
+See `cli/HOSTED_PLATFORM.md` in the repository for the full hosted platform CLI
+and MCP workflow.
+
 ## Related Pages
 
 <CardGroup cols={2}>

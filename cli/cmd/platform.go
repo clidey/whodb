@@ -1113,6 +1113,7 @@ func init() {
 	rootCmd.AddCommand(transformsCmd)
 	rootCmd.AddCommand(functionsCmd)
 	rootCmd.AddCommand(filesCmd)
+	rootCmd.AddCommand(foldersCmd)
 	rootCmd.AddCommand(resourcesCmd)
 	rootCmd.AddCommand(useCmd)
 

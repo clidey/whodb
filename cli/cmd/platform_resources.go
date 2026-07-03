@@ -67,6 +67,36 @@ var (
 	datasetSourceID         string
 	datasetSchemaMode       string
 	datasetColumns          []string
+	transformName           string
+	transformDescription    string
+	transformGraphJSON      string
+	transformGraphFile      string
+	transformScheduleCron   string
+	transformTriggerMode    string
+	functionName            string
+	functionDescription     string
+	functionLanguage        string
+	functionEntryPoint      string
+	functionTimeoutSeconds  int
+	functionMemory          string
+	functionCPU             string
+	functionFiles           []string
+	functionDependencies    []string
+	ontologyAPIName         string
+	ontologyDisplayName     string
+	ontologyPluralName      string
+	ontologyDescription     string
+	ontologyPrimaryKey      string
+	ontologyTableName       string
+	ontologySchemaName      string
+	ontologyStatus          string
+	ontologyIcon            string
+	ontologyColor           string
+	ontologyPropertiesJSON  []string
+	ontologyLinksJSON       []string
+	folderName              string
+	folderParentID          string
+	folderNewParentID       string
 	filePath                string
 	fileNewName             string
 	fileNewFolderID         string
@@ -80,6 +110,7 @@ var lineageCmd = &cobra.Command{Use: "lineage", Short: "Inspect hosted WhoDB lin
 var transformsCmd = &cobra.Command{Use: "transforms", Short: "Manage hosted WhoDB transforms"}
 var functionsCmd = &cobra.Command{Use: "functions", Short: "Manage hosted WhoDB functions"}
 var filesCmd = &cobra.Command{Use: "files", Short: "Manage hosted WhoDB project files"}
+var foldersCmd = &cobra.Command{Use: "folders", Short: "Manage hosted WhoDB project folders"}
 var resourcesCmd = &cobra.Command{Use: "resources", Short: "Run advanced hosted WhoDB platform resource writes"}
 
 var secretsListCmd = platformProjectListCommand("list", "List hosted WhoDB secret metadata", func(ctx context.Context, session *platformSession, _ *platform.Project) (any, *output.QueryResult, error) {
@@ -94,6 +125,20 @@ var secretsListCmd = platformProjectListCommand("list", "List hosted WhoDB secre
 	return secrets, tableResult([]string{"id", "name", "description", "used_by", "updated_at"}, rows), nil
 })
 
+var secretsGetCmd = platformIDCommand("get <secret>", "Show hosted WhoDB secret metadata", func(ctx context.Context, session *platformSession, id string) (any, *output.QueryResult, error) {
+	secrets, err := session.Client.ProjectSecrets(ctx, session.Host.DefaultProjectID)
+	if err != nil {
+		return nil, nil, err
+	}
+	for _, secret := range secrets {
+		if secret.ID == id || secret.Name == id {
+			rows := [][]any{{"id", secret.ID}, {"name", secret.Name}, {"description", secret.Description}, {"used_by", len(secret.UsedBy)}, {"updated_at", secret.UpdatedAt}}
+			return secret, tableResult([]string{"field", "value"}, rows), nil
+		}
+	}
+	return nil, nil, fmt.Errorf("secret %q not found", id)
+})
+
 var aiProvidersListCmd = platformProjectListCommand("list", "List hosted WhoDB AI providers", func(ctx context.Context, session *platformSession, _ *platform.Project) (any, *output.QueryResult, error) {
 	providers, err := session.Client.AIProviders(ctx, session.Host.DefaultProjectID)
 	if err != nil {
@@ -104,6 +149,20 @@ var aiProvidersListCmd = platformProjectListCommand("list", "List hosted WhoDB A
 		rows[i] = []any{provider.ID, provider.Name, provider.ProviderType, provider.Endpoint, provider.UpdatedAt}
 	}
 	return providers, tableResult([]string{"id", "name", "type", "endpoint", "updated_at"}, rows), nil
+})
+
+var aiProviderGetCmd = platformIDCommand("get <provider>", "Show hosted WhoDB AI provider metadata", func(ctx context.Context, session *platformSession, id string) (any, *output.QueryResult, error) {
+	providers, err := session.Client.AIProviders(ctx, session.Host.DefaultProjectID)
+	if err != nil {
+		return nil, nil, err
+	}
+	for _, provider := range providers {
+		if provider.ID == id || provider.Name == id {
+			rows := [][]any{{"id", provider.ID}, {"name", provider.Name}, {"type", provider.ProviderType}, {"endpoint", provider.Endpoint}, {"updated_at", provider.UpdatedAt}}
+			return provider, tableResult([]string{"field", "value"}, rows), nil
+		}
+	}
+	return nil, nil, fmt.Errorf("AI provider %q not found", id)
 })
 
 var aiProviderModelsCmd = &cobra.Command{
@@ -265,6 +324,20 @@ var transformsListCmd = platformProjectListCommand("list", "List hosted WhoDB tr
 	return transforms, tableResult([]string{"id", "name", "trigger_mode", "schedule", "updated_at"}, rows), nil
 })
 
+var transformGetCmd = platformIDCommand("get <transform>", "Show hosted WhoDB transform details", func(ctx context.Context, session *platformSession, id string) (any, *output.QueryResult, error) {
+	transforms, err := session.Client.Transforms(ctx, session.Host.DefaultProjectID)
+	if err != nil {
+		return nil, nil, err
+	}
+	for _, transform := range transforms {
+		if transform.ID == id || transform.Name == id {
+			rows := [][]any{{"id", transform.ID}, {"name", transform.Name}, {"trigger_mode", transform.TriggerMode}, {"schedule", transform.ScheduleCron}, {"updated_at", transform.UpdatedAt}}
+			return transform, tableResult([]string{"field", "value"}, rows), nil
+		}
+	}
+	return nil, nil, fmt.Errorf("transform %q not found", id)
+})
+
 var transformRunsCmd = &cobra.Command{
 	Use:           "runs <transform>",
 	Short:         "List hosted WhoDB transform runs",
@@ -368,10 +441,75 @@ var storageUsageCmd = platformProjectListCommand("storage-usage", "Show hosted W
 	return map[string]int{"storage_used": usage}, tableResult([]string{"field", "value"}, [][]any{{"storage_used", usage}}), err
 })
 
+var foldersListCmd = platformProjectListCommand("list", "List hosted WhoDB project folders", func(ctx context.Context, session *platformSession, _ *platform.Project) (any, *output.QueryResult, error) {
+	contents, err := session.Client.FolderContents(ctx, session.Host.DefaultProjectID, platformFolderID, platformFields)
+	if err != nil {
+		return nil, nil, err
+	}
+	rows := make([][]any, len(contents.Folders))
+	for i, folder := range contents.Folders {
+		parentID := ""
+		if folder.ParentID != nil {
+			parentID = *folder.ParentID
+		}
+		rows[i] = []any{folder.ID, folder.Name, parentID, folder.CreatedAt}
+	}
+	return contents.Folders, tableResult([]string{"id", "name", "parent_id", "created_at"}, rows), nil
+})
+
 var resourcesCreateCmd = genericResourceWriteCommand("create <resource>", "Create a hosted WhoDB platform resource", "create")
 var resourcesUpdateCmd = genericResourceWriteCommand("update <resource> <id>", "Update a hosted WhoDB platform resource", "update")
 var resourcesDeleteCmd = genericResourceWriteCommand("delete <resource> <id>", "Delete a hosted WhoDB platform resource", "delete")
 var resourcesActionCmd = genericResourceWriteCommand("action <resource> <action> [id]", "Run a hosted WhoDB platform resource action", "action")
+var resourcesSpecsCmd = &cobra.Command{
+	Use:           "specs",
+	Short:         "List supported hosted WhoDB generic resource writes",
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		format, err := output.ParseFormat(platformFormat)
+		if err != nil {
+			return err
+		}
+		specs := make([]platformKeyedGenericWriteSpec, 0, len(platform.GenericWriteSpecs))
+		rows := make([][]any, 0, len(platform.GenericWriteSpecs))
+		for _, key := range sortedPlatformWriteSpecKeys() {
+			spec := platform.GenericWriteSpecs[key]
+			specs = append(specs, platformKeyedGenericWriteSpec{Key: key, GenericWriteSpec: spec})
+			rows = append(rows, []any{key, spec.Resource, spec.Action, spec.Mutation, spec.Mode, spec.NeedsID})
+		}
+		if format == output.FormatJSON {
+			return writeCommandJSON(cmd, specs)
+		}
+		return newCommandOutput(cmd, format, platformQuiet).WriteQueryResult(tableResult([]string{"key", "resource", "action", "mutation", "mode", "needs_id"}, rows))
+	},
+}
+var resourcesShapeCmd = &cobra.Command{
+	Use:           "shape <write-key>",
+	Short:         "Show payload shape for a hosted WhoDB generic resource write",
+	Args:          cobra.ExactArgs(1),
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		format, err := output.ParseFormat(platformFormat)
+		if err != nil {
+			return err
+		}
+		key := normalizePlatformResourceKey(args[0])
+		shape, ok := platform.PayloadShapes[key]
+		if !ok {
+			return fmt.Errorf("payload shape %q not found", args[0])
+		}
+		if format == output.FormatJSON {
+			return writeCommandJSON(cmd, shape)
+		}
+		rows := make([][]any, len(shape.Fields))
+		for i, field := range shape.Fields {
+			rows[i] = []any{field.Name, field.Type, field.Required, field.Secret, field.Description}
+		}
+		return newCommandOutput(cmd, format, platformQuiet).WriteQueryResult(tableResult([]string{"field", "type", "required", "secret", "description"}, rows))
+	},
+}
 var secretsCreateCmd = withExample(typedResourceWriteCommand("create", "Create a hosted WhoDB secret", "create", "secret", "", buildSecretCreatePayload), `  whodb-cli secrets create --name OPENAI_API_KEY --value-env OPENAI_API_KEY
   printf %s "$TOKEN" | whodb-cli secrets create --name SERVICE_TOKEN --value-stdin`)
 var secretsUpdateCmd = withExample(typedResourceWriteCommand("update <secret>", "Update a hosted WhoDB secret", "update", "secret", "", buildSecretUpdatePayload), `  whodb-cli secrets update sec_123 --description "rotated key" --value-env OPENAI_API_KEY
@@ -386,11 +524,24 @@ var datasetsCreateCmd = withExample(typedResourceWriteCommand("create", "Create 
 var datasetsUpdateCmd = withExample(typedResourceWriteCommand("update <dataset>", "Update a hosted WhoDB dataset", "update", "dataset", "", buildDatasetUpdatePayload), `  whodb-cli datasets update dataset_123 --description "Customer import"
   whodb-cli datasets update dataset_123 --column id:text:primary --column email:text:nullable`)
 var datasetsDeleteCmd = withExample(typedResourceWriteCommand("delete <dataset>", "Delete a hosted WhoDB dataset", "delete", "dataset", "", emptyTypedPayload), `  whodb-cli datasets delete dataset_123 --yes`)
+var ontologiesCreateCmd = withExample(typedResourceWriteCommand("create", "Create a hosted WhoDB ontology", "create", "ontology", "", buildOntologyCreatePayload), `  whodb-cli ontologies create --api-name customer --display-name Customer --plural-display-name Customers --primary-key id --table-name customers --schema-name public --property-json '{"apiName":"id","displayName":"ID","columnName":"id","dataType":"String","isRequired":true}'`)
+var ontologiesUpdateCmd = withExample(typedResourceWriteCommand("update <ontology>", "Update a hosted WhoDB ontology", "update", "ontology", "", buildOntologyUpdatePayload), `  whodb-cli ontologies update ontology_123 --display-name "Customer Account" --status active`)
+var ontologiesDeleteCmd = withExample(typedResourceWriteCommand("delete <ontology>", "Delete a hosted WhoDB ontology", "delete", "ontology", "", emptyTypedPayload), `  whodb-cli ontologies delete ontology_123 --yes`)
+var transformsCreateCmd = withExample(typedResourceWriteCommand("create", "Create a hosted WhoDB transform", "create", "transform", "", buildTransformCreatePayload), `  whodb-cli transforms create --name daily-load --trigger-mode manual --graph-file ./transform.json`)
+var transformsUpdateCmd = withExample(typedResourceWriteCommand("update <transform>", "Update a hosted WhoDB transform", "update", "transform", "", buildTransformUpdatePayload), `  whodb-cli transforms update transform_123 --description "Daily customer load" --graph-file ./transform.json`)
 var transformsRunCmd = withExample(typedResourceWriteCommand("run <transform>", "Run a hosted WhoDB transform", "action", "transform", "run", emptyTypedPayload), `  whodb-cli transforms run transform_123`)
 var transformsDeleteCmd = withExample(typedResourceWriteCommand("delete <transform>", "Delete a hosted WhoDB transform", "delete", "transform", "", emptyTypedPayload), `  whodb-cli transforms delete transform_123 --yes`)
+var functionsCreateCmd = withExample(typedResourceWriteCommand("create", "Create a hosted WhoDB function", "create", "function", "", buildFunctionCreatePayload), `  whodb-cli functions create --name enrich-customer --language python --entry-point main --file main.py=./main.py`)
+var functionsUpdateCmd = withExample(typedResourceWriteCommand("update <function>", "Update a hosted WhoDB function", "update", "function", "", buildFunctionUpdatePayload), `  whodb-cli functions update function_123 --description "Updated enrichment" --file main.py=./main.py`)
 var functionsDeployCmd = withExample(typedResourceWriteCommand("deploy <function>", "Deploy a hosted WhoDB function", "action", "function", "deploy", emptyTypedPayload), `  whodb-cli functions deploy function_123`)
 var functionsRedeployCmd = withExample(typedResourceWriteCommand("redeploy <function>", "Redeploy a hosted WhoDB function", "action", "function", "redeploy", emptyTypedPayload), `  whodb-cli functions redeploy function_123`)
 var functionsDeleteCmd = withExample(typedResourceWriteCommand("delete <function>", "Delete a hosted WhoDB function", "delete", "function", "", emptyTypedPayload), `  whodb-cli functions delete function_123 --yes`)
+var foldersCreateCmd = withExample(typedResourceWriteCommand("create", "Create a hosted WhoDB project folder", "create", "folder", "", buildFolderCreatePayload), `  whodb-cli folders create --name imports
+  whodb-cli folders create --name january --parent-id folder_123`)
+var foldersRenameCmd = withExample(typedResourceWriteCommand("rename <folder>", "Rename a hosted WhoDB project folder", "action", "folder", "rename", buildFolderRenamePayload), `  whodb-cli folders rename folder_123 --name imports-2026`)
+var foldersMoveCmd = withExample(typedResourceWriteCommand("move <folder>", "Move a hosted WhoDB project folder", "action", "folder", "move", buildFolderMovePayload), `  whodb-cli folders move folder_123 --parent-id folder_456
+  whodb-cli folders move folder_123`)
+var foldersDeleteCmd = withExample(typedResourceWriteCommand("delete <folder>", "Delete a hosted WhoDB project folder", "delete", "folder", "", emptyTypedPayload), `  whodb-cli folders delete folder_123 --yes`)
 var filesUploadCmd = withExample(typedResourceWriteCommand("upload", "Upload a hosted WhoDB project file", "action", "file", "upload", buildFileUploadPayload), `  whodb-cli files upload --path ./customers.csv
   whodb-cli files upload --path ./customers.csv --folder-id folder_123`)
 var filesDeleteCmd = withExample(typedResourceWriteCommand("delete <file>", "Delete a hosted WhoDB project file", "delete", "file", "", emptyTypedPayload), `  whodb-cli files delete file_123 --yes`)
@@ -399,20 +550,21 @@ var filesMoveCmd = withExample(typedResourceWriteCommand("move <file>", "Move a 
   whodb-cli files move file_123`)
 
 func registerPlatformResourceCommands() {
-	for _, command := range []*cobra.Command{secretsCmd, aiProvidersCmd, ontologiesCmd, datasetsCmd, lineageCmd, transformsCmd, functionsCmd, filesCmd, resourcesCmd} {
+	for _, command := range []*cobra.Command{secretsCmd, aiProvidersCmd, ontologiesCmd, datasetsCmd, lineageCmd, transformsCmd, functionsCmd, filesCmd, foldersCmd, resourcesCmd} {
 		command.PersistentFlags().StringVar(&platformResourceOrg, "org", "", "organization id, slug, or name (defaults to selected organization)")
 		command.PersistentFlags().StringVar(&platformResourceProject, "project", "", "project id, slug, or name (defaults to selected project)")
 	}
 
-	secretsCmd.AddCommand(secretsListCmd, secretsCreateCmd, secretsUpdateCmd, secretsDeleteCmd)
-	aiProvidersCmd.AddCommand(aiProvidersListCmd, aiProviderModelsCmd, aiProvidersCreateCmd, aiProvidersUpdateCmd, aiProvidersDeleteCmd)
-	ontologiesCmd.AddCommand(ontologiesListCmd, ontologyGetCmd, ontologyFastLookupsCmd, ontologyFastLookupSuggestionsCmd, ontologyRowsCmd, ontologyFollowLinkCmd)
+	secretsCmd.AddCommand(secretsListCmd, secretsGetCmd, secretsCreateCmd, secretsUpdateCmd, secretsDeleteCmd)
+	aiProvidersCmd.AddCommand(aiProvidersListCmd, aiProviderGetCmd, aiProviderModelsCmd, aiProvidersCreateCmd, aiProvidersUpdateCmd, aiProvidersDeleteCmd)
+	ontologiesCmd.AddCommand(ontologiesListCmd, ontologyGetCmd, ontologyFastLookupsCmd, ontologyFastLookupSuggestionsCmd, ontologyRowsCmd, ontologyFollowLinkCmd, ontologiesCreateCmd, ontologiesUpdateCmd, ontologiesDeleteCmd)
 	datasetsCmd.AddCommand(datasetsListCmd, datasetGetCmd, datasetRowsCmd, datasetsCreateCmd, datasetsUpdateCmd, datasetsDeleteCmd)
 	lineageCmd.AddCommand(lineageProjectCmd, lineageRootCmd, lineageNeighborsCmd)
-	transformsCmd.AddCommand(transformsListCmd, transformRunsCmd, transformsRunCmd, transformsDeleteCmd)
-	functionsCmd.AddCommand(functionsListCmd, functionGetCmd, functionsDeployCmd, functionsRedeployCmd, functionsDeleteCmd)
+	transformsCmd.AddCommand(transformsListCmd, transformGetCmd, transformRunsCmd, transformsCreateCmd, transformsUpdateCmd, transformsRunCmd, transformsDeleteCmd)
+	functionsCmd.AddCommand(functionsListCmd, functionGetCmd, functionsCreateCmd, functionsUpdateCmd, functionsDeployCmd, functionsRedeployCmd, functionsDeleteCmd)
 	filesCmd.AddCommand(filesListCmd, filePreviewCmd, fileSearchCmd, tabularFilesCmd, storageUsageCmd, filesUploadCmd, filesDeleteCmd, filesRenameCmd, filesMoveCmd)
-	resourcesCmd.AddCommand(resourcesCreateCmd, resourcesUpdateCmd, resourcesDeleteCmd, resourcesActionCmd)
+	foldersCmd.AddCommand(foldersListCmd, foldersCreateCmd, foldersRenameCmd, foldersMoveCmd, foldersDeleteCmd)
+	resourcesCmd.AddCommand(resourcesSpecsCmd, resourcesShapeCmd, resourcesCreateCmd, resourcesUpdateCmd, resourcesDeleteCmd, resourcesActionCmd)
 
 	for _, command := range []*cobra.Command{functionsListCmd, functionGetCmd, filesListCmd, filePreviewCmd} {
 		command.Flags().StringArrayVar(&platformFields, "field", nil, "top-level field to request; repeatable")
@@ -423,6 +575,7 @@ func registerPlatformResourceCommands() {
 	}
 	transformRunsCmd.Flags().IntVar(&platformLimit, "limit", 20, "maximum runs to return")
 	filesListCmd.Flags().StringVar(&platformFolderID, "folder-id", "", "folder id to list; omitted means project root")
+	foldersListCmd.Flags().StringVar(&platformFolderID, "folder-id", "", "parent folder id to list; omitted means project root")
 	filePreviewCmd.Flags().IntVar(&platformSheetIndex, "sheet-index", 0, "tabular sheet index to preview")
 	lineageRootCmd.Flags().StringVar(&platformRootID, "root-id", "", "root node id")
 	lineageRootCmd.Flags().StringVar(&platformRootType, "root-type", "", "root node type")
@@ -445,9 +598,11 @@ func registerTypedWriteFlags() {
 	for _, command := range []*cobra.Command{
 		secretsCreateCmd, secretsUpdateCmd, secretsDeleteCmd,
 		aiProvidersCreateCmd, aiProvidersUpdateCmd, aiProvidersDeleteCmd,
+		ontologiesCreateCmd, ontologiesUpdateCmd, ontologiesDeleteCmd,
 		datasetsCreateCmd, datasetsUpdateCmd, datasetsDeleteCmd,
-		transformsRunCmd, transformsDeleteCmd,
-		functionsDeployCmd, functionsRedeployCmd, functionsDeleteCmd,
+		transformsCreateCmd, transformsUpdateCmd, transformsRunCmd, transformsDeleteCmd,
+		functionsCreateCmd, functionsUpdateCmd, functionsDeployCmd, functionsRedeployCmd, functionsDeleteCmd,
+		foldersCreateCmd, foldersRenameCmd, foldersMoveCmd, foldersDeleteCmd,
 		filesUploadCmd, filesDeleteCmd, filesRenameCmd, filesMoveCmd,
 	} {
 		command.Flags().BoolVarP(&platformWriteYes, "yes", "y", false, "run the write without prompting")
@@ -480,6 +635,24 @@ func registerTypedWriteFlags() {
 	datasetsUpdateCmd.Flags().StringVar(&datasetSchemaMode, "schema-mode", "", "dataset schema mode")
 	datasetsUpdateCmd.Flags().StringArrayVar(&datasetColumns, "column", nil, "dataset column as name:type[:nullable][:primary]; repeatable")
 
+	registerOntologyWriteFlags(ontologiesCreateCmd)
+	registerOntologyWriteFlags(ontologiesUpdateCmd)
+
+	transformsCreateCmd.Flags().StringVar(&transformName, "name", "", "transform name")
+	registerTransformWriteFlags(transformsCreateCmd)
+	transformsUpdateCmd.Flags().StringVar(&transformName, "name", "", "transform name")
+	registerTransformWriteFlags(transformsUpdateCmd)
+
+	functionsCreateCmd.Flags().StringVar(&functionName, "name", "", "function name")
+	registerFunctionWriteFlags(functionsCreateCmd)
+	functionsUpdateCmd.Flags().StringVar(&functionName, "name", "", "function name")
+	registerFunctionWriteFlags(functionsUpdateCmd)
+
+	foldersCreateCmd.Flags().StringVar(&folderName, "name", "", "folder name")
+	foldersCreateCmd.Flags().StringVar(&folderParentID, "parent-id", "", "parent folder id")
+	foldersRenameCmd.Flags().StringVar(&folderName, "name", "", "new folder name")
+	foldersMoveCmd.Flags().StringVar(&folderNewParentID, "parent-id", "", "destination parent folder id; empty moves to project root")
+
 	filesUploadCmd.Flags().StringVar(&filePath, "path", "", "local file path to upload")
 	filesUploadCmd.Flags().StringVar(&platformFolderID, "folder-id", "", "destination folder id")
 	filesRenameCmd.Flags().StringVar(&fileNewName, "name", "", "new file name")
@@ -496,6 +669,40 @@ func registerAIProviderAPIKeyFlags(command *cobra.Command) {
 	command.Flags().StringVar(&aiProviderAPIKey, "api-key", "", "AI provider API key")
 	command.Flags().StringVar(&aiProviderAPIKeyEnv, "api-key-env", "", "environment variable containing the AI provider API key")
 	command.Flags().BoolVar(&aiProviderAPIKeyStdin, "api-key-stdin", false, "read the AI provider API key from stdin")
+}
+
+func registerOntologyWriteFlags(command *cobra.Command) {
+	command.Flags().StringVar(&ontologyAPIName, "api-name", "", "ontology API name")
+	command.Flags().StringVar(&ontologyDisplayName, "display-name", "", "ontology display name")
+	command.Flags().StringVar(&ontologyPluralName, "plural-display-name", "", "ontology plural display name")
+	command.Flags().StringVar(&ontologyDescription, "description", "", "ontology description")
+	command.Flags().StringVar(&ontologyPrimaryKey, "primary-key", "", "ontology primary key property")
+	command.Flags().StringVar(&ontologyTableName, "table-name", "", "backing table name")
+	command.Flags().StringVar(&ontologySchemaName, "schema-name", "", "backing schema name")
+	command.Flags().StringVar(&ontologyStatus, "status", "", "ontology status")
+	command.Flags().StringVar(&ontologyIcon, "icon", "", "ontology icon")
+	command.Flags().StringVar(&ontologyColor, "color", "", "ontology color")
+	command.Flags().StringArrayVar(&ontologyPropertiesJSON, "property-json", nil, "ontology property JSON object; repeatable")
+	command.Flags().StringArrayVar(&ontologyLinksJSON, "link-json", nil, "ontology link JSON object; repeatable")
+}
+
+func registerTransformWriteFlags(command *cobra.Command) {
+	command.Flags().StringVar(&transformDescription, "description", "", "transform description")
+	command.Flags().StringVar(&transformGraphJSON, "graph-json", "", "transform graph JSON")
+	command.Flags().StringVar(&transformGraphFile, "graph-file", "", "path to transform graph JSON file")
+	command.Flags().StringVar(&transformScheduleCron, "schedule-cron", "", "transform schedule cron")
+	command.Flags().StringVar(&transformTriggerMode, "trigger-mode", "", "transform trigger mode")
+}
+
+func registerFunctionWriteFlags(command *cobra.Command) {
+	command.Flags().StringVar(&functionDescription, "description", "", "function description")
+	command.Flags().StringVar(&functionLanguage, "language", "", "function language")
+	command.Flags().StringVar(&functionEntryPoint, "entry-point", "", "function entry point")
+	command.Flags().IntVar(&functionTimeoutSeconds, "timeout-seconds", 0, "function timeout in seconds")
+	command.Flags().StringVar(&functionMemory, "memory", "", "function memory request")
+	command.Flags().StringVar(&functionCPU, "cpu", "", "function CPU request")
+	command.Flags().StringArrayVar(&functionFiles, "file", nil, "function file as target-path=local-path; repeatable")
+	command.Flags().StringArrayVar(&functionDependencies, "dependency", nil, "function dependency as name[:version]; repeatable")
 }
 
 func platformProjectListCommand(use, short string, read func(context.Context, *platformSession, *platform.Project) (any, *output.QueryResult, error)) *cobra.Command {
@@ -712,6 +919,11 @@ type genericResourceWriteInput struct {
 	ID       string
 }
 
+type platformKeyedGenericWriteSpec struct {
+	Key string `json:"key"`
+	platform.GenericWriteSpec
+}
+
 func genericResourceInputFromArgs(args []string, operationKind string) genericResourceWriteInput {
 	input := genericResourceWriteInput{Resource: args[0], Action: operationKind}
 	switch operationKind {
@@ -898,6 +1110,216 @@ func buildDatasetUpdatePayload(cmd *cobra.Command) (map[string]any, error) {
 	return payload, nil
 }
 
+func buildOntologyCreatePayload(cmd *cobra.Command) (map[string]any, error) {
+	payload := map[string]any{}
+	for flag, value := range map[string]string{
+		"api-name":            ontologyAPIName,
+		"display-name":        ontologyDisplayName,
+		"plural-display-name": ontologyPluralName,
+		"primary-key":         ontologyPrimaryKey,
+		"table-name":          ontologyTableName,
+		"schema-name":         ontologySchemaName,
+	} {
+		if strings.TrimSpace(value) == "" {
+			return nil, fmt.Errorf("--%s is required", flag)
+		}
+	}
+	payload["apiName"] = strings.TrimSpace(ontologyAPIName)
+	payload["displayName"] = strings.TrimSpace(ontologyDisplayName)
+	payload["pluralDisplayName"] = strings.TrimSpace(ontologyPluralName)
+	payload["primaryKey"] = strings.TrimSpace(ontologyPrimaryKey)
+	payload["tableName"] = strings.TrimSpace(ontologyTableName)
+	payload["schemaName"] = strings.TrimSpace(ontologySchemaName)
+	payload["description"] = ontologyDescription
+	payload["icon"] = defaultString(strings.TrimSpace(ontologyIcon), "table")
+	payload["color"] = defaultString(strings.TrimSpace(ontologyColor), "#3366ff")
+	if strings.TrimSpace(ontologyStatus) != "" {
+		payload["status"] = strings.TrimSpace(ontologyStatus)
+	}
+	properties, err := parseJSONObjectFlags(ontologyPropertiesJSON, "property-json")
+	if err != nil {
+		return nil, err
+	}
+	if len(properties) == 0 {
+		return nil, fmt.Errorf("--property-json is required at least once")
+	}
+	links, err := parseJSONObjectFlags(ontologyLinksJSON, "link-json")
+	if err != nil {
+		return nil, err
+	}
+	payload["properties"] = properties
+	payload["links"] = links
+	return payload, nil
+}
+
+func buildOntologyUpdatePayload(cmd *cobra.Command) (map[string]any, error) {
+	payload := map[string]any{}
+	addChangedStringPayload(cmd, payload, "api-name", "apiName", ontologyAPIName)
+	addChangedStringPayload(cmd, payload, "display-name", "displayName", ontologyDisplayName)
+	addChangedStringPayload(cmd, payload, "plural-display-name", "pluralDisplayName", ontologyPluralName)
+	addChangedStringPayload(cmd, payload, "description", "description", ontologyDescription)
+	addChangedStringPayload(cmd, payload, "primary-key", "primaryKey", ontologyPrimaryKey)
+	addChangedStringPayload(cmd, payload, "table-name", "tableName", ontologyTableName)
+	addChangedStringPayload(cmd, payload, "schema-name", "schemaName", ontologySchemaName)
+	addChangedStringPayload(cmd, payload, "status", "status", ontologyStatus)
+	addChangedStringPayload(cmd, payload, "icon", "icon", ontologyIcon)
+	addChangedStringPayload(cmd, payload, "color", "color", ontologyColor)
+	if cmd.Flags().Changed("property-json") {
+		properties, err := parseJSONObjectFlags(ontologyPropertiesJSON, "property-json")
+		if err != nil {
+			return nil, err
+		}
+		payload["properties"] = properties
+	}
+	if cmd.Flags().Changed("link-json") {
+		links, err := parseJSONObjectFlags(ontologyLinksJSON, "link-json")
+		if err != nil {
+			return nil, err
+		}
+		payload["links"] = links
+	}
+	if len(payload) == 0 {
+		return nil, fmt.Errorf("nothing to update; pass ontology fields, --property-json, or --link-json")
+	}
+	return payload, nil
+}
+
+func buildTransformCreatePayload(cmd *cobra.Command) (map[string]any, error) {
+	name := strings.TrimSpace(transformName)
+	if name == "" {
+		return nil, fmt.Errorf("--name is required")
+	}
+	graphJSON, err := readTransformGraphJSON(cmd, true)
+	if err != nil {
+		return nil, err
+	}
+	payload := map[string]any{
+		"name":         name,
+		"description":  transformDescription,
+		"graphJson":    graphJSON,
+		"scheduleCron": transformScheduleCron,
+		"triggerMode":  defaultString(strings.TrimSpace(transformTriggerMode), "manual"),
+	}
+	return payload, nil
+}
+
+func buildTransformUpdatePayload(cmd *cobra.Command) (map[string]any, error) {
+	payload := map[string]any{}
+	addChangedStringPayload(cmd, payload, "name", "name", transformName)
+	addChangedStringPayload(cmd, payload, "description", "description", transformDescription)
+	addChangedStringPayload(cmd, payload, "schedule-cron", "scheduleCron", transformScheduleCron)
+	addChangedStringPayload(cmd, payload, "trigger-mode", "triggerMode", transformTriggerMode)
+	if cmd.Flags().Changed("graph-json") || cmd.Flags().Changed("graph-file") {
+		graphJSON, err := readTransformGraphJSON(cmd, false)
+		if err != nil {
+			return nil, err
+		}
+		payload["graphJson"] = graphJSON
+	}
+	if len(payload) == 0 {
+		return nil, fmt.Errorf("nothing to update; pass --name, --description, --graph-json, --graph-file, --schedule-cron, or --trigger-mode")
+	}
+	return payload, nil
+}
+
+func buildFunctionCreatePayload(cmd *cobra.Command) (map[string]any, error) {
+	name := strings.TrimSpace(functionName)
+	language := strings.TrimSpace(functionLanguage)
+	entryPoint := strings.TrimSpace(functionEntryPoint)
+	if name == "" || language == "" || entryPoint == "" {
+		return nil, fmt.Errorf("--name, --language, and --entry-point are required")
+	}
+	files, err := parseFunctionFiles(functionFiles)
+	if err != nil {
+		return nil, err
+	}
+	if len(files) == 0 {
+		return nil, fmt.Errorf("--file is required at least once")
+	}
+	deps, err := parseFunctionDependencies(functionDependencies)
+	if err != nil {
+		return nil, err
+	}
+	timeoutSeconds := functionTimeoutSeconds
+	if timeoutSeconds == 0 {
+		timeoutSeconds = 30
+	}
+	payload := map[string]any{
+		"name":           name,
+		"description":    functionDescription,
+		"language":       language,
+		"entryPoint":     entryPoint,
+		"timeoutSeconds": timeoutSeconds,
+		"memory":         defaultString(strings.TrimSpace(functionMemory), "128Mi"),
+		"cpu":            defaultString(strings.TrimSpace(functionCPU), "100m"),
+		"files":          files,
+		"dependencies":   deps,
+	}
+	return payload, nil
+}
+
+func buildFunctionUpdatePayload(cmd *cobra.Command) (map[string]any, error) {
+	payload := map[string]any{}
+	addChangedStringPayload(cmd, payload, "name", "name", functionName)
+	addChangedStringPayload(cmd, payload, "description", "description", functionDescription)
+	addChangedStringPayload(cmd, payload, "language", "language", functionLanguage)
+	addChangedStringPayload(cmd, payload, "entry-point", "entryPoint", functionEntryPoint)
+	addChangedStringPayload(cmd, payload, "memory", "memory", functionMemory)
+	addChangedStringPayload(cmd, payload, "cpu", "cpu", functionCPU)
+	if cmd.Flags().Changed("timeout-seconds") {
+		if functionTimeoutSeconds <= 0 {
+			return nil, fmt.Errorf("--timeout-seconds must be positive")
+		}
+		payload["timeoutSeconds"] = functionTimeoutSeconds
+	}
+	if cmd.Flags().Changed("file") {
+		files, err := parseFunctionFiles(functionFiles)
+		if err != nil {
+			return nil, err
+		}
+		payload["files"] = files
+	}
+	if cmd.Flags().Changed("dependency") {
+		deps, err := parseFunctionDependencies(functionDependencies)
+		if err != nil {
+			return nil, err
+		}
+		payload["dependencies"] = deps
+	}
+	if len(payload) == 0 {
+		return nil, fmt.Errorf("nothing to update; pass function fields, --file, or --dependency")
+	}
+	return payload, nil
+}
+
+func buildFolderCreatePayload(cmd *cobra.Command) (map[string]any, error) {
+	name := strings.TrimSpace(folderName)
+	if name == "" {
+		return nil, fmt.Errorf("--name is required")
+	}
+	payload := map[string]any{"name": name}
+	if strings.TrimSpace(folderParentID) != "" {
+		payload["parentId"] = strings.TrimSpace(folderParentID)
+	}
+	return payload, nil
+}
+
+func buildFolderRenamePayload(cmd *cobra.Command) (map[string]any, error) {
+	name := strings.TrimSpace(folderName)
+	if name == "" {
+		return nil, fmt.Errorf("--name is required")
+	}
+	return map[string]any{"name": name}, nil
+}
+
+func buildFolderMovePayload(cmd *cobra.Command) (map[string]any, error) {
+	payload := map[string]any{}
+	if cmd.Flags().Changed("parent-id") {
+		payload["newParentId"] = strings.TrimSpace(folderNewParentID)
+	}
+	return payload, nil
+}
+
 func buildFileUploadPayload(cmd *cobra.Command) (map[string]any, error) {
 	if strings.TrimSpace(filePath) == "" {
 		return nil, fmt.Errorf("--path is required")
@@ -996,6 +1418,97 @@ func parseDatasetColumns(values []string) ([]map[string]any, error) {
 	return columns, nil
 }
 
+func parseJSONObjectFlags(values []string, label string) ([]map[string]any, error) {
+	objects := make([]map[string]any, 0, len(values))
+	for _, value := range values {
+		var object map[string]any
+		if err := json.Unmarshal([]byte(value), &object); err != nil {
+			return nil, fmt.Errorf("invalid --%s JSON object: %w", label, err)
+		}
+		if len(object) == 0 {
+			return nil, fmt.Errorf("--%s cannot be an empty object", label)
+		}
+		objects = append(objects, object)
+	}
+	return objects, nil
+}
+
+func readTransformGraphJSON(cmd *cobra.Command, useDefault bool) (string, error) {
+	if cmd.Flags().Changed("graph-json") && cmd.Flags().Changed("graph-file") {
+		return "", fmt.Errorf("pass only one of --graph-json or --graph-file")
+	}
+	if cmd.Flags().Changed("graph-file") {
+		raw, err := os.ReadFile(strings.TrimSpace(transformGraphFile))
+		if err != nil {
+			return "", fmt.Errorf("read --graph-file: %w", err)
+		}
+		graph := strings.TrimSpace(string(raw))
+		if graph == "" {
+			return "", fmt.Errorf("--graph-file cannot be empty")
+		}
+		return graph, nil
+	}
+	if cmd.Flags().Changed("graph-json") {
+		graph := strings.TrimSpace(transformGraphJSON)
+		if graph == "" {
+			return "", fmt.Errorf("--graph-json cannot be empty")
+		}
+		return graph, nil
+	}
+	if useDefault {
+		return `{"nodes":[],"edges":[]}`, nil
+	}
+	return "", fmt.Errorf("--graph-json or --graph-file is required")
+}
+
+func parseFunctionFiles(values []string) ([]map[string]any, error) {
+	files := make([]map[string]any, 0, len(values))
+	for _, value := range values {
+		target, localPath, ok := strings.Cut(value, "=")
+		target = strings.TrimSpace(target)
+		localPath = strings.TrimSpace(localPath)
+		if !ok || target == "" || localPath == "" {
+			return nil, fmt.Errorf("--file must be target-path=local-path")
+		}
+		raw, err := os.ReadFile(localPath)
+		if err != nil {
+			return nil, fmt.Errorf("read function file %q: %w", localPath, err)
+		}
+		files = append(files, map[string]any{"path": target, "content": string(raw)})
+	}
+	return files, nil
+}
+
+func parseFunctionDependencies(values []string) ([]map[string]any, error) {
+	deps := make([]map[string]any, 0, len(values))
+	for _, value := range values {
+		name := strings.TrimSpace(value)
+		version := ""
+		if before, after, ok := strings.Cut(value, ":"); ok {
+			name = strings.TrimSpace(before)
+			version = strings.TrimSpace(after)
+		}
+		if name == "" {
+			return nil, fmt.Errorf("--dependency must include a name")
+		}
+		deps = append(deps, map[string]any{"name": name, "version": version})
+	}
+	return deps, nil
+}
+
+func addChangedStringPayload(cmd *cobra.Command, payload map[string]any, flag, key, value string) {
+	if cmd.Flags().Changed(flag) {
+		payload[key] = strings.TrimSpace(value)
+	}
+}
+
+func defaultString(value, fallback string) string {
+	if strings.TrimSpace(value) == "" {
+		return fallback
+	}
+	return value
+}
+
 func buildGenericResourceVariables(projectID string, input genericResourceWriteInput, payload map[string]any) (platform.GenericWriteSpec, map[string]any, error) {
 	resource := normalizePlatformResourceToken(input.Resource)
 	action := normalizePlatformResourceToken(input.Action)
@@ -1077,6 +1590,14 @@ func confirmPlatformResourceWrite(stdin io.Reader, stderr io.Writer, spec platfo
 
 func normalizePlatformResourceToken(value string) string {
 	return strings.ToLower(strings.TrimSpace(strings.ReplaceAll(value, "-", "_")))
+}
+
+func normalizePlatformResourceKey(value string) string {
+	parts := strings.Split(strings.TrimSpace(value), ":")
+	for i, part := range parts {
+		parts[i] = normalizePlatformResourceToken(part)
+	}
+	return strings.Join(parts, ":")
 }
 
 func titlePlatformAction(value string) string {
