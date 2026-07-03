@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
 	"sort"
 	"strings"
 
@@ -49,6 +50,26 @@ var (
 	platformPayloadJSON     string
 	platformPayloadStdin    bool
 	platformWriteYes        bool
+	secretName              string
+	secretDescription       string
+	secretValue             string
+	secretValueEnv          string
+	secretValueStdin        bool
+	aiProviderName          string
+	aiProviderType          string
+	aiProviderEndpoint      string
+	aiProviderAPIKey        string
+	aiProviderAPIKeyEnv     string
+	aiProviderAPIKeyStdin   bool
+	aiProviderModels        []string
+	datasetName             string
+	datasetDescription      string
+	datasetSourceID         string
+	datasetSchemaMode       string
+	datasetColumns          []string
+	filePath                string
+	fileNewName             string
+	fileNewFolderID         string
 )
 
 var secretsCmd = &cobra.Command{Use: "secrets", Short: "Manage hosted WhoDB project secrets"}
@@ -351,6 +372,24 @@ var resourcesCreateCmd = genericResourceWriteCommand("create <resource>", "Creat
 var resourcesUpdateCmd = genericResourceWriteCommand("update <resource> <id>", "Update a hosted WhoDB platform resource", "update")
 var resourcesDeleteCmd = genericResourceWriteCommand("delete <resource> <id>", "Delete a hosted WhoDB platform resource", "delete")
 var resourcesActionCmd = genericResourceWriteCommand("action <resource> <action> [id]", "Run a hosted WhoDB platform resource action", "action")
+var secretsCreateCmd = typedResourceWriteCommand("create", "Create a hosted WhoDB secret", "create", "secret", "", buildSecretCreatePayload)
+var secretsUpdateCmd = typedResourceWriteCommand("update <secret>", "Update a hosted WhoDB secret", "update", "secret", "", buildSecretUpdatePayload)
+var secretsDeleteCmd = typedResourceWriteCommand("delete <secret>", "Delete a hosted WhoDB secret", "delete", "secret", "", emptyTypedPayload)
+var aiProvidersCreateCmd = typedResourceWriteCommand("create", "Create a hosted WhoDB AI provider", "create", "ai_provider", "", buildAIProviderCreatePayload)
+var aiProvidersUpdateCmd = typedResourceWriteCommand("update <provider>", "Update a hosted WhoDB AI provider", "update", "ai_provider", "", buildAIProviderUpdatePayload)
+var aiProvidersDeleteCmd = typedResourceWriteCommand("delete <provider>", "Delete a hosted WhoDB AI provider", "delete", "ai_provider", "", emptyTypedPayload)
+var datasetsCreateCmd = typedResourceWriteCommand("create", "Create a hosted WhoDB dataset", "create", "dataset", "", buildDatasetCreatePayload)
+var datasetsUpdateCmd = typedResourceWriteCommand("update <dataset>", "Update a hosted WhoDB dataset", "update", "dataset", "", buildDatasetUpdatePayload)
+var datasetsDeleteCmd = typedResourceWriteCommand("delete <dataset>", "Delete a hosted WhoDB dataset", "delete", "dataset", "", emptyTypedPayload)
+var transformsRunCmd = typedResourceWriteCommand("run <transform>", "Run a hosted WhoDB transform", "action", "transform", "run", emptyTypedPayload)
+var transformsDeleteCmd = typedResourceWriteCommand("delete <transform>", "Delete a hosted WhoDB transform", "delete", "transform", "", emptyTypedPayload)
+var functionsDeployCmd = typedResourceWriteCommand("deploy <function>", "Deploy a hosted WhoDB function", "action", "function", "deploy", emptyTypedPayload)
+var functionsRedeployCmd = typedResourceWriteCommand("redeploy <function>", "Redeploy a hosted WhoDB function", "action", "function", "redeploy", emptyTypedPayload)
+var functionsDeleteCmd = typedResourceWriteCommand("delete <function>", "Delete a hosted WhoDB function", "delete", "function", "", emptyTypedPayload)
+var filesUploadCmd = typedResourceWriteCommand("upload", "Upload a hosted WhoDB project file", "action", "file", "upload", buildFileUploadPayload)
+var filesDeleteCmd = typedResourceWriteCommand("delete <file>", "Delete a hosted WhoDB project file", "delete", "file", "", emptyTypedPayload)
+var filesRenameCmd = typedResourceWriteCommand("rename <file>", "Rename a hosted WhoDB project file", "action", "file", "rename", buildFileRenamePayload)
+var filesMoveCmd = typedResourceWriteCommand("move <file>", "Move a hosted WhoDB project file", "action", "file", "move", buildFileMovePayload)
 
 func registerPlatformResourceCommands() {
 	for _, command := range []*cobra.Command{secretsCmd, aiProvidersCmd, ontologiesCmd, datasetsCmd, lineageCmd, transformsCmd, functionsCmd, filesCmd, resourcesCmd} {
@@ -358,14 +397,14 @@ func registerPlatformResourceCommands() {
 		command.PersistentFlags().StringVar(&platformResourceProject, "project", "", "project id, slug, or name (defaults to selected project)")
 	}
 
-	secretsCmd.AddCommand(secretsListCmd)
-	aiProvidersCmd.AddCommand(aiProvidersListCmd, aiProviderModelsCmd)
+	secretsCmd.AddCommand(secretsListCmd, secretsCreateCmd, secretsUpdateCmd, secretsDeleteCmd)
+	aiProvidersCmd.AddCommand(aiProvidersListCmd, aiProviderModelsCmd, aiProvidersCreateCmd, aiProvidersUpdateCmd, aiProvidersDeleteCmd)
 	ontologiesCmd.AddCommand(ontologiesListCmd, ontologyGetCmd, ontologyFastLookupsCmd, ontologyFastLookupSuggestionsCmd, ontologyRowsCmd, ontologyFollowLinkCmd)
-	datasetsCmd.AddCommand(datasetsListCmd, datasetGetCmd, datasetRowsCmd)
+	datasetsCmd.AddCommand(datasetsListCmd, datasetGetCmd, datasetRowsCmd, datasetsCreateCmd, datasetsUpdateCmd, datasetsDeleteCmd)
 	lineageCmd.AddCommand(lineageProjectCmd, lineageRootCmd, lineageNeighborsCmd)
-	transformsCmd.AddCommand(transformsListCmd, transformRunsCmd)
-	functionsCmd.AddCommand(functionsListCmd, functionGetCmd)
-	filesCmd.AddCommand(filesListCmd, filePreviewCmd, fileSearchCmd, tabularFilesCmd, storageUsageCmd)
+	transformsCmd.AddCommand(transformsListCmd, transformRunsCmd, transformsRunCmd, transformsDeleteCmd)
+	functionsCmd.AddCommand(functionsListCmd, functionGetCmd, functionsDeployCmd, functionsRedeployCmd, functionsDeleteCmd)
+	filesCmd.AddCommand(filesListCmd, filePreviewCmd, fileSearchCmd, tabularFilesCmd, storageUsageCmd, filesUploadCmd, filesDeleteCmd, filesRenameCmd, filesMoveCmd)
 	resourcesCmd.AddCommand(resourcesCreateCmd, resourcesUpdateCmd, resourcesDeleteCmd, resourcesActionCmd)
 
 	for _, command := range []*cobra.Command{functionsListCmd, functionGetCmd, filesListCmd, filePreviewCmd} {
@@ -392,6 +431,64 @@ func registerPlatformResourceCommands() {
 		command.Flags().BoolVar(&platformPayloadStdin, "payload-stdin", false, "read JSON object payload from stdin")
 		command.Flags().BoolVarP(&platformWriteYes, "yes", "y", false, "run the write without prompting")
 	}
+	registerTypedWriteFlags()
+}
+
+func registerTypedWriteFlags() {
+	for _, command := range []*cobra.Command{
+		secretsCreateCmd, secretsUpdateCmd, secretsDeleteCmd,
+		aiProvidersCreateCmd, aiProvidersUpdateCmd, aiProvidersDeleteCmd,
+		datasetsCreateCmd, datasetsUpdateCmd, datasetsDeleteCmd,
+		transformsRunCmd, transformsDeleteCmd,
+		functionsDeployCmd, functionsRedeployCmd, functionsDeleteCmd,
+		filesUploadCmd, filesDeleteCmd, filesRenameCmd, filesMoveCmd,
+	} {
+		command.Flags().BoolVarP(&platformWriteYes, "yes", "y", false, "run the write without prompting")
+	}
+
+	secretsCreateCmd.Flags().StringVar(&secretName, "name", "", "secret name")
+	secretsCreateCmd.Flags().StringVar(&secretDescription, "description", "", "secret description")
+	registerSecretValueFlags(secretsCreateCmd)
+	secretsUpdateCmd.Flags().StringVar(&secretName, "name", "", "secret name")
+	secretsUpdateCmd.Flags().StringVar(&secretDescription, "description", "", "secret description")
+	registerSecretValueFlags(secretsUpdateCmd)
+
+	aiProvidersCreateCmd.Flags().StringVar(&aiProviderName, "name", "", "AI provider name")
+	aiProvidersCreateCmd.Flags().StringVar(&aiProviderType, "type", "", "AI provider type")
+	aiProvidersCreateCmd.Flags().StringVar(&aiProviderEndpoint, "endpoint", "", "AI provider endpoint")
+	aiProvidersCreateCmd.Flags().StringArrayVar(&aiProviderModels, "model", nil, "allowed model name; repeatable")
+	registerAIProviderAPIKeyFlags(aiProvidersCreateCmd)
+	aiProvidersUpdateCmd.Flags().StringVar(&aiProviderName, "name", "", "AI provider name")
+	aiProvidersUpdateCmd.Flags().StringVar(&aiProviderEndpoint, "endpoint", "", "AI provider endpoint")
+	aiProvidersUpdateCmd.Flags().StringArrayVar(&aiProviderModels, "model", nil, "allowed model name; repeatable")
+	registerAIProviderAPIKeyFlags(aiProvidersUpdateCmd)
+
+	datasetsCreateCmd.Flags().StringVar(&datasetName, "name", "", "dataset name")
+	datasetsCreateCmd.Flags().StringVar(&datasetDescription, "description", "", "dataset description")
+	datasetsCreateCmd.Flags().StringVar(&datasetSourceID, "source-id", "", "source id for source-backed dataset")
+	datasetsCreateCmd.Flags().StringVar(&datasetSchemaMode, "schema-mode", "", "dataset schema mode")
+	datasetsCreateCmd.Flags().StringArrayVar(&datasetColumns, "column", nil, "dataset column as name:type[:nullable][:primary]; repeatable")
+	datasetsUpdateCmd.Flags().StringVar(&datasetName, "name", "", "dataset name")
+	datasetsUpdateCmd.Flags().StringVar(&datasetDescription, "description", "", "dataset description")
+	datasetsUpdateCmd.Flags().StringVar(&datasetSchemaMode, "schema-mode", "", "dataset schema mode")
+	datasetsUpdateCmd.Flags().StringArrayVar(&datasetColumns, "column", nil, "dataset column as name:type[:nullable][:primary]; repeatable")
+
+	filesUploadCmd.Flags().StringVar(&filePath, "path", "", "local file path to upload")
+	filesUploadCmd.Flags().StringVar(&platformFolderID, "folder-id", "", "destination folder id")
+	filesRenameCmd.Flags().StringVar(&fileNewName, "name", "", "new file name")
+	filesMoveCmd.Flags().StringVar(&fileNewFolderID, "folder-id", "", "destination folder id; empty moves to project root")
+}
+
+func registerSecretValueFlags(command *cobra.Command) {
+	command.Flags().StringVar(&secretValue, "value", "", "secret value")
+	command.Flags().StringVar(&secretValueEnv, "value-env", "", "environment variable containing the secret value")
+	command.Flags().BoolVar(&secretValueStdin, "value-stdin", false, "read the secret value from stdin")
+}
+
+func registerAIProviderAPIKeyFlags(command *cobra.Command) {
+	command.Flags().StringVar(&aiProviderAPIKey, "api-key", "", "AI provider API key")
+	command.Flags().StringVar(&aiProviderAPIKeyEnv, "api-key-env", "", "environment variable containing the AI provider API key")
+	command.Flags().BoolVar(&aiProviderAPIKeyStdin, "api-key-stdin", false, "read the AI provider API key from stdin")
 }
 
 func platformProjectListCommand(use, short string, read func(context.Context, *platformSession, *platform.Project) (any, *output.QueryResult, error)) *cobra.Command {
@@ -497,7 +594,54 @@ func genericResourceWriteCommand(use, short, operationKind string) *cobra.Comman
 	}
 }
 
+func typedResourceWriteCommand(use, short, operationKind, resource, action string, buildPayload func(*cobra.Command) (map[string]any, error)) *cobra.Command {
+	return &cobra.Command{
+		Use:           use,
+		Short:         short,
+		SilenceUsage:  true,
+		SilenceErrors: true,
+		Args: func(cmd *cobra.Command, args []string) error {
+			switch operationKind {
+			case "create":
+				return cobra.NoArgs(cmd, args)
+			case "update", "delete":
+				return cobra.ExactArgs(1)(cmd, args)
+			case "action":
+				if action == "upload" {
+					return cobra.NoArgs(cmd, args)
+				}
+				return cobra.ExactArgs(1)(cmd, args)
+			default:
+				return fmt.Errorf("unsupported resource write operation %q", operationKind)
+			}
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			payload, err := buildPayload(cmd)
+			if err != nil {
+				return err
+			}
+			input := genericResourceWriteInput{Resource: resource, Action: operationKind}
+			if operationKind == "action" {
+				input.Action = action
+			}
+			if len(args) > 0 {
+				input.ID = args[0]
+			}
+			return runPlatformResourceWrite(cmd, input, operationKind, payload)
+		},
+	}
+}
+
 func runGenericResourceWrite(cmd *cobra.Command, args []string, operationKind string) error {
+	input := genericResourceInputFromArgs(args, operationKind)
+	payload, err := readPlatformPayload(cmd)
+	if err != nil {
+		return err
+	}
+	return runPlatformResourceWrite(cmd, input, operationKind, payload)
+}
+
+func runPlatformResourceWrite(cmd *cobra.Command, input genericResourceWriteInput, operationKind string, payload map[string]any) error {
 	ctx := context.Background()
 	format, err := output.ParseFormat(platformFormat)
 	if err != nil {
@@ -510,11 +654,6 @@ func runGenericResourceWrite(cmd *cobra.Command, args []string, operationKind st
 		return err
 	}
 	_, project, err := resolvePlatformProject(ctx, session, platformResourceOrg, platformResourceProject)
-	if err != nil {
-		return err
-	}
-	input := genericResourceInputFromArgs(args, operationKind)
-	payload, err := readPlatformPayload(cmd)
 	if err != nil {
 		return err
 	}
@@ -592,6 +731,257 @@ func readPlatformPayload(cmd *cobra.Command) (map[string]any, error) {
 		return nil, fmt.Errorf("invalid payload JSON: %w", err)
 	}
 	return payload, nil
+}
+
+func emptyTypedPayload(cmd *cobra.Command) (map[string]any, error) {
+	return map[string]any{}, nil
+}
+
+func buildSecretCreatePayload(cmd *cobra.Command) (map[string]any, error) {
+	name := strings.TrimSpace(secretName)
+	if name == "" {
+		return nil, fmt.Errorf("--name is required")
+	}
+	value, err := readSensitiveFlagValue(cmd, secretValue, secretValueEnv, secretValueStdin, "secret value")
+	if err != nil {
+		return nil, err
+	}
+	payload := map[string]any{"name": name, "value": value}
+	if cmd.Flags().Changed("description") {
+		payload["description"] = secretDescription
+	}
+	return payload, nil
+}
+
+func buildSecretUpdatePayload(cmd *cobra.Command) (map[string]any, error) {
+	payload := map[string]any{}
+	if cmd.Flags().Changed("name") {
+		name := strings.TrimSpace(secretName)
+		if name == "" {
+			return nil, fmt.Errorf("--name cannot be empty")
+		}
+		payload["name"] = name
+	}
+	if cmd.Flags().Changed("description") {
+		payload["description"] = secretDescription
+	}
+	if cmd.Flags().Changed("value") || secretValueEnv != "" || secretValueStdin {
+		value, err := readSensitiveFlagValue(cmd, secretValue, secretValueEnv, secretValueStdin, "secret value")
+		if err != nil {
+			return nil, err
+		}
+		payload["value"] = value
+	}
+	if len(payload) == 0 {
+		return nil, fmt.Errorf("nothing to update; pass --name, --description, or a value flag")
+	}
+	return payload, nil
+}
+
+func buildAIProviderCreatePayload(cmd *cobra.Command) (map[string]any, error) {
+	name := strings.TrimSpace(aiProviderName)
+	providerType := strings.TrimSpace(aiProviderType)
+	endpoint := strings.TrimSpace(aiProviderEndpoint)
+	if name == "" || providerType == "" || endpoint == "" {
+		return nil, fmt.Errorf("--name, --type, and --endpoint are required")
+	}
+	apiKey, err := readSensitiveFlagValue(cmd, aiProviderAPIKey, aiProviderAPIKeyEnv, aiProviderAPIKeyStdin, "AI provider API key")
+	if err != nil {
+		return nil, err
+	}
+	payload := map[string]any{
+		"name":         name,
+		"providerType": providerType,
+		"endpoint":     endpoint,
+		"apiKey":       apiKey,
+	}
+	if len(aiProviderModels) > 0 {
+		payload["models"] = normalizedStringList(aiProviderModels)
+	}
+	return payload, nil
+}
+
+func buildAIProviderUpdatePayload(cmd *cobra.Command) (map[string]any, error) {
+	payload := map[string]any{}
+	if cmd.Flags().Changed("name") {
+		name := strings.TrimSpace(aiProviderName)
+		if name == "" {
+			return nil, fmt.Errorf("--name cannot be empty")
+		}
+		payload["name"] = name
+	}
+	if cmd.Flags().Changed("endpoint") {
+		endpoint := strings.TrimSpace(aiProviderEndpoint)
+		if endpoint == "" {
+			return nil, fmt.Errorf("--endpoint cannot be empty")
+		}
+		payload["endpoint"] = endpoint
+	}
+	if cmd.Flags().Changed("model") {
+		payload["models"] = normalizedStringList(aiProviderModels)
+	}
+	if cmd.Flags().Changed("api-key") || aiProviderAPIKeyEnv != "" || aiProviderAPIKeyStdin {
+		apiKey, err := readSensitiveFlagValue(cmd, aiProviderAPIKey, aiProviderAPIKeyEnv, aiProviderAPIKeyStdin, "AI provider API key")
+		if err != nil {
+			return nil, err
+		}
+		payload["apiKey"] = apiKey
+	}
+	if len(payload) == 0 {
+		return nil, fmt.Errorf("nothing to update; pass --name, --endpoint, --model, or an API key flag")
+	}
+	return payload, nil
+}
+
+func buildDatasetCreatePayload(cmd *cobra.Command) (map[string]any, error) {
+	name := strings.TrimSpace(datasetName)
+	if name == "" {
+		return nil, fmt.Errorf("--name is required")
+	}
+	payload := map[string]any{"name": name}
+	if cmd.Flags().Changed("description") {
+		payload["description"] = datasetDescription
+	}
+	if strings.TrimSpace(datasetSourceID) != "" {
+		payload["sourceId"] = strings.TrimSpace(datasetSourceID)
+	}
+	if strings.TrimSpace(datasetSchemaMode) != "" {
+		payload["schemaMode"] = strings.TrimSpace(datasetSchemaMode)
+	}
+	columns, err := parseDatasetColumns(datasetColumns)
+	if err != nil {
+		return nil, err
+	}
+	if len(columns) > 0 {
+		payload["columns"] = columns
+	}
+	return payload, nil
+}
+
+func buildDatasetUpdatePayload(cmd *cobra.Command) (map[string]any, error) {
+	payload := map[string]any{}
+	if cmd.Flags().Changed("name") {
+		name := strings.TrimSpace(datasetName)
+		if name == "" {
+			return nil, fmt.Errorf("--name cannot be empty")
+		}
+		payload["name"] = name
+	}
+	if cmd.Flags().Changed("description") {
+		payload["description"] = datasetDescription
+	}
+	if cmd.Flags().Changed("schema-mode") {
+		payload["schemaMode"] = strings.TrimSpace(datasetSchemaMode)
+	}
+	if cmd.Flags().Changed("column") {
+		columns, err := parseDatasetColumns(datasetColumns)
+		if err != nil {
+			return nil, err
+		}
+		payload["columns"] = columns
+	}
+	if len(payload) == 0 {
+		return nil, fmt.Errorf("nothing to update; pass --name, --description, --schema-mode, or --column")
+	}
+	return payload, nil
+}
+
+func buildFileUploadPayload(cmd *cobra.Command) (map[string]any, error) {
+	if strings.TrimSpace(filePath) == "" {
+		return nil, fmt.Errorf("--path is required")
+	}
+	payload := map[string]any{"file_path": strings.TrimSpace(filePath)}
+	if strings.TrimSpace(platformFolderID) != "" {
+		payload["folderId"] = strings.TrimSpace(platformFolderID)
+	}
+	return payload, nil
+}
+
+func buildFileRenamePayload(cmd *cobra.Command) (map[string]any, error) {
+	name := strings.TrimSpace(fileNewName)
+	if name == "" {
+		return nil, fmt.Errorf("--name is required")
+	}
+	return map[string]any{"name": name}, nil
+}
+
+func buildFileMovePayload(cmd *cobra.Command) (map[string]any, error) {
+	payload := map[string]any{}
+	if cmd.Flags().Changed("folder-id") {
+		payload["newFolderId"] = strings.TrimSpace(fileNewFolderID)
+	}
+	return payload, nil
+}
+
+func readSensitiveFlagValue(cmd *cobra.Command, directValue, envName string, useStdin bool, label string) (string, error) {
+	if useStdin {
+		body, err := io.ReadAll(cmd.InOrStdin())
+		if err != nil {
+			return "", fmt.Errorf("reading %s from stdin: %w", label, err)
+		}
+		value := strings.TrimRight(string(body), "\r\n")
+		if value == "" {
+			return "", fmt.Errorf("%s from stdin cannot be empty", label)
+		}
+		return value, nil
+	}
+	if strings.TrimSpace(envName) != "" {
+		value := os.Getenv(strings.TrimSpace(envName))
+		if value == "" {
+			return "", fmt.Errorf("environment variable %s for %s is empty or unset", strings.TrimSpace(envName), label)
+		}
+		return value, nil
+	}
+	if directValue != "" {
+		return directValue, nil
+	}
+	return "", fmt.Errorf("%s requires stdin, env, or direct value flag", label)
+}
+
+func normalizedStringList(values []string) []string {
+	normalized := make([]string, 0, len(values))
+	for _, value := range values {
+		value = strings.TrimSpace(value)
+		if value != "" {
+			normalized = append(normalized, value)
+		}
+	}
+	return normalized
+}
+
+func parseDatasetColumns(values []string) ([]map[string]any, error) {
+	columns := make([]map[string]any, 0, len(values))
+	for _, value := range values {
+		parts := strings.Split(value, ":")
+		if len(parts) < 2 {
+			return nil, fmt.Errorf("dataset column %q must be name:type[:nullable][:primary]", value)
+		}
+		name := strings.TrimSpace(parts[0])
+		typ := strings.TrimSpace(parts[1])
+		if name == "" || typ == "" {
+			return nil, fmt.Errorf("dataset column %q must include a name and type", value)
+		}
+		column := map[string]any{
+			"name":       name,
+			"type":       typ,
+			"isNullable": false,
+			"isPrimary":  false,
+		}
+		for _, option := range parts[2:] {
+			switch strings.ToLower(strings.TrimSpace(option)) {
+			case "", "required", "notnull", "not_null":
+				column["isNullable"] = false
+			case "nullable", "null":
+				column["isNullable"] = true
+			case "primary", "pk":
+				column["isPrimary"] = true
+			default:
+				return nil, fmt.Errorf("unsupported dataset column option %q in %q", option, value)
+			}
+		}
+		columns = append(columns, column)
+	}
+	return columns, nil
 }
 
 func buildGenericResourceVariables(projectID string, input genericResourceWriteInput, payload map[string]any) (platform.GenericWriteSpec, map[string]any, error) {

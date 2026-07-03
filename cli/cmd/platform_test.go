@@ -218,14 +218,14 @@ func TestPlatformStatusForReportsUnsupportedMissingCapability(t *testing.T) {
 
 func TestPlatformResourceCommandsRegistered(t *testing.T) {
 	expected := map[string][]string{
-		"secrets":      {"list"},
-		"ai-providers": {"list", "models"},
+		"secrets":      {"list", "create", "update", "delete"},
+		"ai-providers": {"list", "models", "create", "update", "delete"},
 		"ontologies":   {"list", "get", "fast-lookups", "fast-lookup-suggestions", "rows", "follow-link"},
-		"datasets":     {"list", "get", "rows"},
+		"datasets":     {"list", "get", "rows", "create", "update", "delete"},
 		"lineage":      {"project", "root", "neighbors"},
-		"transforms":   {"list", "runs"},
-		"functions":    {"list", "get"},
-		"files":        {"list", "preview", "search", "tabular", "storage-usage"},
+		"transforms":   {"list", "runs", "run", "delete"},
+		"functions":    {"list", "get", "deploy", "redeploy", "delete"},
+		"files":        {"list", "preview", "search", "tabular", "storage-usage", "upload", "delete", "rename", "move"},
 		"resources":    {"create", "update", "delete", "action"},
 	}
 
@@ -282,6 +282,53 @@ func TestBuildGenericResourceVariablesSupportsHyphenatedTokens(t *testing.T) {
 	}
 	if input["id"] != "provider-1" || input["projectId"] != nil {
 		t.Fatalf("input = %#v, want id and no project injection for ai provider update", input)
+	}
+}
+
+func TestBuildGenericResourceVariablesFileUpload(t *testing.T) {
+	spec, variables, err := buildGenericResourceVariables("proj-1", genericResourceWriteInput{
+		Resource: "file",
+		Action:   "upload",
+	}, map[string]any{"file_path": "/tmp/report.csv", "folderId": "folder-1"})
+	if err != nil {
+		t.Fatalf("buildGenericResourceVariables() error = %v", err)
+	}
+	if spec.Mutation != "UploadProjectFile" {
+		t.Fatalf("mutation = %q, want UploadProjectFile", spec.Mutation)
+	}
+	if variables["filePath"] != "/tmp/report.csv" {
+		t.Fatalf("filePath = %#v, want path", variables["filePath"])
+	}
+	folderID, ok := variables["folderId"].(*string)
+	if !ok || folderID == nil || *folderID != "folder-1" {
+		t.Fatalf("folderId = %#v, want folder pointer", variables["folderId"])
+	}
+}
+
+func TestParseDatasetColumns(t *testing.T) {
+	columns, err := parseDatasetColumns([]string{"id:text:primary", "name:text:nullable"})
+	if err != nil {
+		t.Fatalf("parseDatasetColumns() error = %v", err)
+	}
+	if len(columns) != 2 {
+		t.Fatalf("columns = %#v, want 2", columns)
+	}
+	if columns[0]["name"] != "id" || columns[0]["isPrimary"] != true || columns[0]["isNullable"] != false {
+		t.Fatalf("first column = %#v, want primary required id", columns[0])
+	}
+	if columns[1]["name"] != "name" || columns[1]["isNullable"] != true {
+		t.Fatalf("second column = %#v, want nullable name", columns[1])
+	}
+}
+
+func TestReadSensitiveFlagValueUsesEnv(t *testing.T) {
+	t.Setenv("WHODB_TEST_SECRET", "secret-value")
+	value, err := readSensitiveFlagValue(&cobra.Command{}, "", "WHODB_TEST_SECRET", false, "secret value")
+	if err != nil {
+		t.Fatalf("readSensitiveFlagValue() error = %v", err)
+	}
+	if value != "secret-value" {
+		t.Fatalf("value = %q, want secret-value", value)
 	}
 }
 
