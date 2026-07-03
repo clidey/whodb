@@ -32,6 +32,7 @@ import (
 	"github.com/clidey/whodb/core/internal/testutil"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/env"
+	"github.com/clidey/whodb/core/src/llm/providers"
 )
 
 type roundTripperFunc func(*http.Request) (*http.Response, error)
@@ -101,20 +102,27 @@ func TestRESTHandlersHandleErrors(t *testing.T) {
 func TestRESTHandlersAIModelsAndChat(t *testing.T) {
 	// Avoid httptest.NewServer() to keep this test hermetic in environments where
 	// binding a local TCP port is not permitted.
-	previousTransport := http.DefaultTransport
-	t.Cleanup(func() { http.DefaultTransport = previousTransport })
-	http.DefaultTransport = roundTripperFunc(func(r *http.Request) (*http.Response, error) {
-		if r.Method == http.MethodGet && r.URL.Scheme == "http" && r.URL.Host == "ollama.test:11434" && r.URL.Path == "/api/tags" {
-			body := io.NopCloser(strings.NewReader(`{"models":[]}`))
-			return &http.Response{
-				StatusCode: http.StatusOK,
-				Header:     http.Header{"Content-Type": []string{"application/json"}},
-				Body:       body,
-				Request:    r,
-			}, nil
+	// The provider HTTP client uses an SSRF-aware transport that does its own
+	// dialing, so inject the mock through the provider client factory rather than
+	// swapping http.DefaultTransport (which the transport bypasses).
+	originalFactory := providers.HTTPClientFactory
+	t.Cleanup(func() { providers.HTTPClientFactory = originalFactory })
+	providers.HTTPClientFactory = func() *http.Client {
+		return &http.Client{
+			Transport: roundTripperFunc(func(r *http.Request) (*http.Response, error) {
+				if r.Method == http.MethodGet && r.URL.Scheme == "http" && r.URL.Host == "ollama.test:11434" && r.URL.Path == "/api/tags" {
+					body := io.NopCloser(strings.NewReader(`{"models":[]}`))
+					return &http.Response{
+						StatusCode: http.StatusOK,
+						Header:     http.Header{"Content-Type": []string{"application/json"}},
+						Body:       body,
+						Request:    r,
+					}, nil
+				}
+				return nil, fmt.Errorf("unexpected http request: %s %s", r.Method, r.URL.String())
+			}),
 		}
-		return nil, fmt.Errorf("unexpected http request: %s %s", r.Method, r.URL.String())
-	})
+	}
 
 	originalOllamaHost := env.OllamaHost
 	originalOllamaPort := env.OllamaPort

@@ -296,6 +296,7 @@ export type GenerateChatTitleInput = {
   ModelType: Scalars['String']['input'];
   ProviderId?: InputMaybe<Scalars['String']['input']>;
   Query: Scalars['String']['input'];
+  SessionId?: InputMaybe<Scalars['String']['input']>;
   Token?: InputMaybe<Scalars['String']['input']>;
 };
 

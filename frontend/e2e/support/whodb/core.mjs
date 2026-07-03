@@ -86,6 +86,31 @@ export const coreMethods = {
     },
 
     /**
+     * Navigate to the settings page and activate one of its tabs.
+     *
+     * The settings page is organized into tabs ("appearance", "behavior",
+     * "integrations", "privacy"). Controls only render while their tab is
+     * active, so tests must select the tab before interacting with them.
+     * Radix renders each trigger as role="tab" with the label as its
+     * accessible name (tests run in en_US).
+     *
+     * @param {"appearance"|"behavior"|"integrations"|"privacy"} tab
+     */
+    async gotoSettingsTab(tab) {
+        const tabLabels = {
+            appearance: "Appearance",
+            behavior: "Behavior",
+            integrations: "Integrations",
+            privacy: "Privacy",
+        };
+        await this.goto("settings");
+        const trigger = this.page.getByRole("tab", { name: tabLabels[tab], exact: true });
+        await trigger.waitFor({ state: "visible" });
+        await trigger.click();
+        await expect(trigger).toHaveAttribute("data-state", "active");
+    },
+
+    /**
      * Login to the application
      */
     async login(databaseType, hostname, username, password, database, advanced = {}, schema = null, loginForm = null) {

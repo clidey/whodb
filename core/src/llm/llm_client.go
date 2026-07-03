@@ -92,7 +92,11 @@ func getEndpointForProvider(providerType LLMType) string {
 				return provider.BaseURL
 			}
 		}
-		log.Warnf("No endpoint found for provider type: %s", providerType)
+		// Platform-managed providers (Bedrock, Azure OpenAI, Vertex AI, etc.)
+		// store their endpoint on the provider row rather than in env, so a
+		// miss here is expected — the caller supplies the endpoint via the
+		// ProviderConfig it constructs from the platform record.
+		log.Debugf("No global endpoint for provider type %s (expected for platform-managed providers)", providerType)
 		return ""
 	}
 }

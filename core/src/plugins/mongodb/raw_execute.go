@@ -216,12 +216,74 @@ func execMongoAggregate(ctx context.Context, collection *mongo.Collection, args 
 	if !ok {
 		return nil, errors.New("aggregate: first argument must be an array")
 	}
+	if err := rejectDangerousPipelineStages(pipeline); err != nil {
+		return nil, err
+	}
 	cursor, err := collection.Aggregate(ctx, pipeline)
 	if err != nil {
 		return nil, err
 	}
 	defer func() { _ = cursor.Close(ctx) }()
 	return mongoCursorToRows(ctx, cursor)
+}
+
+// dangerousPipelineOperators are aggregation operators/stages that allow
+// server-side JavaScript execution ($where/$function/$accumulator) or writes
+// to other collections ($out/$merge). They are rejected anywhere in a
+// user-supplied aggregation pipeline.
+var dangerousPipelineOperators = map[string]struct{}{
+	"$where":       {},
+	"$function":    {},
+	"$accumulator": {},
+	"$out":         {},
+	"$merge":       {},
+}
+
+// rejectDangerousPipelineStages walks a decoded aggregation pipeline and returns
+// an error if any dangerous operator/stage key is present at any depth.
+func rejectDangerousPipelineStages(v any) error {
+	switch val := v.(type) {
+	case bson.A:
+		for _, item := range val {
+			if err := rejectDangerousPipelineStages(item); err != nil {
+				return err
+			}
+		}
+	case []any:
+		for _, item := range val {
+			if err := rejectDangerousPipelineStages(item); err != nil {
+				return err
+			}
+		}
+	case bson.D:
+		for _, e := range val {
+			if _, bad := dangerousPipelineOperators[e.Key]; bad {
+				return fmt.Errorf("aggregation operator %q is not allowed", e.Key)
+			}
+			if err := rejectDangerousPipelineStages(e.Value); err != nil {
+				return err
+			}
+		}
+	case bson.M:
+		for k, sub := range val {
+			if _, bad := dangerousPipelineOperators[k]; bad {
+				return fmt.Errorf("aggregation operator %q is not allowed", k)
+			}
+			if err := rejectDangerousPipelineStages(sub); err != nil {
+				return err
+			}
+		}
+	case map[string]any:
+		for k, sub := range val {
+			if _, bad := dangerousPipelineOperators[k]; bad {
+				return fmt.Errorf("aggregation operator %q is not allowed", k)
+			}
+			if err := rejectDangerousPipelineStages(sub); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func execMongoDistinct(ctx context.Context, collection *mongo.Collection, args []any) (*engine.GetRowsResult, error) {

@@ -196,6 +196,9 @@ formatters:
   enable:
     - gofmt
     - goimports
+  exclusions:
+    paths:
+      - graph/
   settings:
     goimports:
       local-prefixes:

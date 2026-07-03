@@ -163,7 +163,7 @@ export const extrasMethods = {
     },
 
     async confirmSqlImport() {
-        await this.page.locator('[data-testid="import-sql-confirm-checkbox"]').click({ force: true });
+        await this.page.locator('[data-testid="import-sql-confirm-checkbox"]').click();
         const btn = this.page.locator('[data-testid="import-submit-button"]');
         await expect(btn).toBeEnabled();
         await btn.click();
@@ -202,7 +202,7 @@ export const extrasMethods = {
         const btn = this.page.locator('[data-testid="mock-data-generate-button"]');
         await expect(btn).toBeEnabled({ timeout: TIMEOUT.SLOW });
         await btn.scrollIntoViewIfNeeded();
-        await btn.click({ force: true });
+        await btn.click();
     },
 
     async confirmMockDataOverwrite() {

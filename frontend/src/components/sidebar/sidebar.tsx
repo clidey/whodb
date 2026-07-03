@@ -77,6 +77,7 @@ import {useSourceTypeItems} from "../../hooks/useSourceCatalog";
 import {
     ArrowLeftStartOnRectangleIcon,
     ChevronDownIcon,
+    CloudIcon,
     CogIcon,
     CommandLineIcon,
     InformationCircleIcon,
@@ -86,6 +87,7 @@ import {
     SparklesIcon,
     TableCellsIcon
 } from "../heroicons";
+import {PlatformExplainerDialog} from "./platform-explainer-dialog";
 import {Icons} from "../icons";
 import {Loading} from "../loading";
 import {DatabaseIconWithBadge, isAwsConnection} from "../aws";
@@ -139,13 +141,15 @@ export const NavSectionHeader: FC<{ label: string; open: boolean; disabled?: boo
 export const NavItem: FC<{
     icon: React.ReactNode;
     label: string;
-    path: string;
+    path?: string;
     pathname: string;
     open: boolean;
     tooltip: string;
     disabled?: boolean;
-}> = ({ icon, label, path, pathname, open, tooltip, disabled }) => {
-    const isActive = pathname === path;
+    onClick?: () => void;
+    "data-testid"?: string;
+}> = ({ icon, label, path, pathname, open, tooltip, disabled, onClick, "data-testid": dataTestId }) => {
+    const isActive = path != null && pathname === path;
 
     if (disabled) {
         return (
@@ -158,27 +162,38 @@ export const NavItem: FC<{
         );
     }
 
+    const inner = (
+        <>
+            <span className={cn(
+                "flex-shrink-0",
+                isActive ? "text-blue-400" : "text-neutral-600"
+            )}>{icon}</span>
+            {open && <span className="text-sm">{label}</span>}
+            {open && isActive && (
+                <span className="ml-auto w-1 h-1 rounded-full bg-blue-400" />
+            )}
+        </>
+    );
+
+    const className = cn(
+        "flex items-center gap-2 transition-all duration-150",
+        isActive
+            ? "text-blue-300 font-medium"
+            : "text-neutral-500 hover:text-neutral-200"
+    );
+
     return (
         <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip={tooltip}>
-                <Link
-                    to={path}
-                    className={cn(
-                        "flex items-center gap-2 transition-all duration-150",
-                        isActive
-                            ? "text-blue-300 font-medium"
-                            : "text-neutral-500 hover:text-neutral-200"
-                    )}
-                >
-                    <span className={cn(
-                        "flex-shrink-0",
-                        isActive ? "text-blue-400" : "text-neutral-600"
-                    )}>{icon}</span>
-                    {open && <span className="text-sm">{label}</span>}
-                    {open && isActive && (
-                        <span className="ml-auto w-1 h-1 rounded-full bg-blue-400" />
-                    )}
-                </Link>
+                {onClick != null ? (
+                    <button type="button" onClick={onClick} className={cn(className, "w-full cursor-pointer")} data-testid={dataTestId}>
+                        {inner}
+                    </button>
+                ) : (
+                    <Link to={path ?? "#"} className={className} data-testid={dataTestId}>
+                        {inner}
+                    </Link>
+                )}
             </SidebarMenuButton>
         </SidebarMenuItem>
     );
@@ -264,6 +279,7 @@ export const Sidebar: FC = () => {
     const [showLoginCard, setShowLoginCard] = useState(false);
     const [showProfileSwitchDialog, setShowProfileSwitchDialog] = useState(false);
     const [logoutProfileId, setLogoutProfileId] = useState<string | null>(null);
+    const [showPlatformExplainer, setShowPlatformExplainer] = useState(false);
     const { toggleSidebar, open } = useSidebar();
     const isInitialMount = useRef(true);
     const { switchProfile } = useProfileSwitch({
@@ -445,6 +461,19 @@ export const Sidebar: FC = () => {
 
     // Load EE sidebar nav component if registered
     const EESidebarNav = getComponent('ee-sidebar-nav') as LazyExoticComponent<FC<EESidebarNavProps>> | undefined;
+
+    // Footer entry that opens the WhoDB Platform explainer.
+    const platformFooterItem = featureFlags.platformFunnel && !isEmbedded ? (
+        <NavItem
+            icon={<CloudIcon className="w-4 h-4" />}
+            label={t('platformTitle')}
+            pathname={pathname}
+            open={open}
+            tooltip={t('platformTitle')}
+            onClick={() => { setShowPlatformExplainer(true); }}
+            data-testid="sidebar-platform-funnel"
+        />
+    ) : null;
 
     // Compute the label for the database dropdown based on the database type and user terminology preference
     const databaseDropdownLabel = useMemo(() => {
@@ -652,6 +681,7 @@ export const Sidebar: FC = () => {
 
                                     <SidebarSeparator className={cn("my-4", { "mx-0": !open })} />
 
+                                    {platformFooterItem}
                                     {featureFlags.contactUsPage && InternalRoutes.ContactUs && (
                                         <NavItem icon={<QuestionMarkCircleIcon className="w-4 h-4" />} label={t('contactUs')} path={InternalRoutes.ContactUs.path} pathname={pathname} open={open} tooltip={t('contactUs')} />
                                     )}
@@ -797,6 +827,20 @@ export const Sidebar: FC = () => {
                                     "mx-0": !open,
                                 })} />
 
+                                {featureFlags.platformFunnel && !isEmbedded && (
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton asChild tooltip={t('platformTitle')}>
+                                            <div
+                                                onClick={() => { setShowPlatformExplainer(true); }}
+                                                className="flex items-center gap-2 cursor-pointer"
+                                                data-testid="sidebar-platform-funnel"
+                                            >
+                                                <CloudIcon className="w-4 h-4" />
+                                                {open && <span>{t('platformTitle')}</span>}
+                                            </div>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                )}
                                 {featureFlags.contactUsPage && InternalRoutes.ContactUs && (
                                     <SidebarMenuItem>
                                         <SidebarMenuButton asChild tooltip={t('contactUs')}>
@@ -901,6 +945,7 @@ export const Sidebar: FC = () => {
                     <LoginForm advancedDirection="vertical" onLoginSuccess={handleLoginSuccess}/>
                 </SheetContent>
             </Sheet>
+            <PlatformExplainerDialog open={showPlatformExplainer} onOpenChange={setShowPlatformExplainer} />
             <Dialog open={showProfileSwitchDialog} onOpenChange={handleProfileSwitchDialogChange}>
                 <DialogContent className="max-w-sm" onInteractOutside={(e) => { e.preventDefault(); }} onEscapeKeyDown={(e) => { e.preventDefault(); }}>
                     <DialogHeader>

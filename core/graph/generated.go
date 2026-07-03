@@ -17533,7 +17533,7 @@ func (ec *executionContext) unmarshalInputGenerateChatTitleInput(ctx context.Con
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"Query", "ModelType", "ProviderId", "Token", "Model", "Endpoint"}
+	fieldsInOrder := [...]string{"Query", "ModelType", "ProviderId", "Token", "Model", "Endpoint", "SessionId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -17582,6 +17582,13 @@ func (ec *executionContext) unmarshalInputGenerateChatTitleInput(ctx context.Con
 				return it, err
 			}
 			it.Endpoint = data
+		case "SessionId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("SessionId"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SessionID = data
 		}
 	}
 	return it, nil

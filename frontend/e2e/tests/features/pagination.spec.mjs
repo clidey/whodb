@@ -84,7 +84,7 @@ test.describe('Pagination', () => {
 
         test('respects custom page size from settings', async ({ whodb, page }) => {
             // Set custom page size to 2 via the settings page UI
-            await whodb.goto('settings');
+            await whodb.gotoSettingsTab('behavior');
             await page.locator('#default-page-size').click();
             await page.locator('[data-value="custom"]').click();
             await page.locator('input[type="number"]').clear();

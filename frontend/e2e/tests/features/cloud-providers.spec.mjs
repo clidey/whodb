@@ -105,7 +105,7 @@ test.describe('Cloud Providers', () => {
                     gcpEnabled: false,
                     providers: [],
                 });
-                await whodb.goto('settings');
+                await whodb.gotoSettingsTab('integrations');
 
                 await expect(page.locator('[data-testid="add-aws-provider"]')).toBeVisible({ timeout: TIMEOUT.ACTION });
                 await expect(page.locator('[data-testid="add-azure-provider"]')).not.toBeAttached();
@@ -142,7 +142,7 @@ test.describe('Cloud Providers', () => {
                 };
 
                 await mockCloudProviders(page, { enabled: true, providers: [testProvider] });
-                await whodb.goto('settings');
+                await whodb.gotoSettingsTab('integrations');
 
                 // Provider card should be visible with the provider name
                 const providerCard = page.locator('[data-testid="aws-provider-test-provider-1"]');
@@ -172,7 +172,7 @@ test.describe('Cloud Providers', () => {
                 };
 
                 await mockCloudProviders(page, { enabled: true, providers: [testProvider] });
-                await whodb.goto('settings');
+                await whodb.gotoSettingsTab('integrations');
 
                 // Verify provider is visible
                 const providerCard = page.locator('[data-testid="aws-provider-remove-me"]');

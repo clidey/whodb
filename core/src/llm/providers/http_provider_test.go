@@ -33,17 +33,17 @@ func (fn roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
 func withTestHTTPClient(t *testing.T, transport roundTripFunc) {
 	t.Helper()
 
-	originalFactory := httpClientFactory
-	httpClientFactory = func() *http.Client {
+	originalFactory := HTTPClientFactory
+	HTTPClientFactory = func() *http.Client {
 		return &http.Client{Transport: transport}
 	}
 	t.Cleanup(func() {
-		httpClientFactory = originalFactory
+		HTTPClientFactory = originalFactory
 	})
 }
 
 func TestDefaultHTTPClientHasTimeout(t *testing.T) {
-	client := httpClientFactory()
+	client := HTTPClientFactory()
 	if client.Timeout <= 0 {
 		t.Fatalf("expected default provider HTTP client to have a timeout")
 	}

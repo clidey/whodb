@@ -17,7 +17,6 @@
 package mongodb
 
 import (
-	"encoding/json"
 	"errors"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -55,7 +54,9 @@ func (p *MongoDBPlugin) DeleteRow(config *engine.PluginConfig, database string, 
 	}
 
 	var jsonValues bson.M
-	if err := json.Unmarshal([]byte(documentJSON), &jsonValues); err != nil {
+	// Rows are serialized as MongoDB Extended JSON (e.g. _id as {"$oid": "..."}),
+	// so decode with the BSON parser to recover typed values like ObjectID.
+	if err := bson.UnmarshalExtJSON([]byte(documentJSON), false, &jsonValues); err != nil {
 		log.WithError(err).WithFields(map[string]any{
 			"hostname":     config.Credentials.Hostname,
 			"database":     database,

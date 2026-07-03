@@ -1,0 +1,52 @@
+name: E2E Tests (Dependabot)
+
+# Runs selective E2E tests for Dependabot PRs that update a known DB driver in
+# core/go.mod. Detects which module changed, maps it to the relevant matrix
+# database(s), and calls the reusable e2e-ce.yml with only those databases.
+#
+# If the changed package is not a DB driver (e.g. google/uuid), no E2E tests run.
+# If gorm.io/gorm itself changes, the full suite runs.
+
+on:
+  pull_request:
+    paths:
+      - 'core/go.mod'
+
+permissions:
+  contents: read
+
+jobs:
+  detect:
+    name: Detect Changed DB Packages
+    if: github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    outputs:
+      databases: ${{ steps.map.outputs.databases }}
+      skip: ${{ steps.map.outputs.skip }}
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+          submodules: false
+
+      - name: Map changed packages to databases
+        id: map
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: python3 .github/scripts/detect-db-deps.py
+
+  run-e2e:
+    name: Run Selective E2E
+    needs: [detect]
+    if: needs.detect.outputs.skip == 'false'
+    uses: ./.github/workflows/e2e-ce.yml
+    with:
+      databases: ${{ needs.detect.outputs.databases }}

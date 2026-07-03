@@ -16,6 +16,41 @@ en_US:
   updateAvailable: "Update available: {version}"
   sslSecured: "SSL: {mode}"
   switchProfileDescription: "Choose a profile to continue, or add a new one."
+  platformTitle: WhoDB Platform
+  platformImportTitle: Import connections into WhoDB Platform
+  platformImportDescription: "Choose which saved connections to carry to the hosted platform as managed sources. Your local copies stay here, fully editable — nothing is locked or removed."
+  platformImportSelectAll: Select all
+  platformImportSendCredentials: Send passwords so I don't re-enter them
+  platformImportCredentialsSent: "Passwords are sent securely so the platform can connect right away."
+  platformImportCredentialsReentry: "Passwords stay on this device — you'll re-enter them on the platform."
+  platformImportError: "Couldn't reach WhoDB Platform. Please try again."
+  platformImporting: Opening Platform…
+  platformDestinationNote: "Opens {host} in a new tab to finish the import."
+  platformCancel: Cancel
+  platformOpenInPlatform: Import in Platform
+  platformExplainerTitle: WhoDB Platform
+  platformExplainerIntro: "WhoDB Platform is the hosted data layer that builds on the connections you already have — turn a database login into managed sources, shareable datasets, and a workspace your whole team can use."
+  platformSlideManagedTitle: Managed sources
+  platformSlideManagedCaption: "Bring a connection across and the platform manages credentials and access for you."
+  platformSlideDatasetsTitle: Shareable datasets
+  platformSlideDatasetsCaption: "Publish a live, governed dataset instead of emailing a CSV export."
+  platformSlideAgentsTitle: Agent-ready schemas
+  platformSlideAgentsCaption: "Give AI agents a real, typed schema to query against — no hallucinated tables."
+  platformCarouselPrev: Previous slide
+  platformCarouselNext: Next slide
+  platformCarouselGoTo: "Go to slide {index}"
+  platformStep1Title: Connect
+  platformStep1Caption: here, today
+  platformStep2Title: Carry across
+  platformStep2Caption: one click
+  platformStep3Title: Build
+  platformStep3Caption: datasets & more
+  platformBenefitCredentials: "Stop sharing raw database credentials — give teammates managed access."
+  platformBenefitDatasets: "Hand a stakeholder a live dataset instead of a stale CSV export."
+  platformBenefitAgents: "Give AI agents a real schema to work against, not a hallucinated one."
+  platformMaybeLater: Maybe later
+  platformLearnMore: Learn more
+  platformImportConnection: Import connection
 
 ar_AE:
   mainNavigation: "الملاحة الرئيسية"

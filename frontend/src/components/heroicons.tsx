@@ -27,6 +27,7 @@ import {
   ArrowPathRoundedSquareIcon as ArrowPathRoundedSquareIconCE,
   ArrowTopRightOnSquareIcon as ArrowTopRightOnSquareIconCE,
   ArrowUpCircleIcon as ArrowUpCircleIconCE,
+  ArrowUpIcon as ArrowUpIconCE,
   BanknotesIcon as BanknotesIconCE,
   BellAlertIcon as BellAlertIconCE,
   BookOpenIcon as BookOpenIconCE,
@@ -111,6 +112,7 @@ export const ArrowPathIcon = iconOverrides.ArrowPathIcon ?? ArrowPathIconCE;
 export const ArrowPathRoundedSquareIcon = iconOverrides.ArrowPathRoundedSquareIcon ?? ArrowPathRoundedSquareIconCE;
 export const ArrowTopRightOnSquareIcon = iconOverrides.ArrowTopRightOnSquareIcon ?? ArrowTopRightOnSquareIconCE;
 export const ArrowUpCircleIcon = iconOverrides.ArrowUpCircleIcon ?? ArrowUpCircleIconCE;
+export const ArrowUpIcon = iconOverrides.ArrowUpIcon ?? ArrowUpIconCE;
 export const BanknotesIcon = iconOverrides.BanknotesIcon ?? BanknotesIconCE;
 export const BellAlertIcon = iconOverrides.BellAlertIcon ?? BellAlertIconCE;
 export const BookOpenIcon = iconOverrides.BookOpenIcon ?? BookOpenIconCE;
