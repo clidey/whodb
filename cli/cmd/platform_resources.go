@@ -372,24 +372,31 @@ var resourcesCreateCmd = genericResourceWriteCommand("create <resource>", "Creat
 var resourcesUpdateCmd = genericResourceWriteCommand("update <resource> <id>", "Update a hosted WhoDB platform resource", "update")
 var resourcesDeleteCmd = genericResourceWriteCommand("delete <resource> <id>", "Delete a hosted WhoDB platform resource", "delete")
 var resourcesActionCmd = genericResourceWriteCommand("action <resource> <action> [id]", "Run a hosted WhoDB platform resource action", "action")
-var secretsCreateCmd = typedResourceWriteCommand("create", "Create a hosted WhoDB secret", "create", "secret", "", buildSecretCreatePayload)
-var secretsUpdateCmd = typedResourceWriteCommand("update <secret>", "Update a hosted WhoDB secret", "update", "secret", "", buildSecretUpdatePayload)
-var secretsDeleteCmd = typedResourceWriteCommand("delete <secret>", "Delete a hosted WhoDB secret", "delete", "secret", "", emptyTypedPayload)
-var aiProvidersCreateCmd = typedResourceWriteCommand("create", "Create a hosted WhoDB AI provider", "create", "ai_provider", "", buildAIProviderCreatePayload)
-var aiProvidersUpdateCmd = typedResourceWriteCommand("update <provider>", "Update a hosted WhoDB AI provider", "update", "ai_provider", "", buildAIProviderUpdatePayload)
-var aiProvidersDeleteCmd = typedResourceWriteCommand("delete <provider>", "Delete a hosted WhoDB AI provider", "delete", "ai_provider", "", emptyTypedPayload)
-var datasetsCreateCmd = typedResourceWriteCommand("create", "Create a hosted WhoDB dataset", "create", "dataset", "", buildDatasetCreatePayload)
-var datasetsUpdateCmd = typedResourceWriteCommand("update <dataset>", "Update a hosted WhoDB dataset", "update", "dataset", "", buildDatasetUpdatePayload)
-var datasetsDeleteCmd = typedResourceWriteCommand("delete <dataset>", "Delete a hosted WhoDB dataset", "delete", "dataset", "", emptyTypedPayload)
-var transformsRunCmd = typedResourceWriteCommand("run <transform>", "Run a hosted WhoDB transform", "action", "transform", "run", emptyTypedPayload)
-var transformsDeleteCmd = typedResourceWriteCommand("delete <transform>", "Delete a hosted WhoDB transform", "delete", "transform", "", emptyTypedPayload)
-var functionsDeployCmd = typedResourceWriteCommand("deploy <function>", "Deploy a hosted WhoDB function", "action", "function", "deploy", emptyTypedPayload)
-var functionsRedeployCmd = typedResourceWriteCommand("redeploy <function>", "Redeploy a hosted WhoDB function", "action", "function", "redeploy", emptyTypedPayload)
-var functionsDeleteCmd = typedResourceWriteCommand("delete <function>", "Delete a hosted WhoDB function", "delete", "function", "", emptyTypedPayload)
-var filesUploadCmd = typedResourceWriteCommand("upload", "Upload a hosted WhoDB project file", "action", "file", "upload", buildFileUploadPayload)
-var filesDeleteCmd = typedResourceWriteCommand("delete <file>", "Delete a hosted WhoDB project file", "delete", "file", "", emptyTypedPayload)
-var filesRenameCmd = typedResourceWriteCommand("rename <file>", "Rename a hosted WhoDB project file", "action", "file", "rename", buildFileRenamePayload)
-var filesMoveCmd = typedResourceWriteCommand("move <file>", "Move a hosted WhoDB project file", "action", "file", "move", buildFileMovePayload)
+var secretsCreateCmd = withExample(typedResourceWriteCommand("create", "Create a hosted WhoDB secret", "create", "secret", "", buildSecretCreatePayload), `  whodb-cli secrets create --name OPENAI_API_KEY --value-env OPENAI_API_KEY
+  printf %s "$TOKEN" | whodb-cli secrets create --name SERVICE_TOKEN --value-stdin`)
+var secretsUpdateCmd = withExample(typedResourceWriteCommand("update <secret>", "Update a hosted WhoDB secret", "update", "secret", "", buildSecretUpdatePayload), `  whodb-cli secrets update sec_123 --description "rotated key" --value-env OPENAI_API_KEY
+  printf %s "$TOKEN" | whodb-cli secrets update sec_123 --value-stdin`)
+var secretsDeleteCmd = withExample(typedResourceWriteCommand("delete <secret>", "Delete a hosted WhoDB secret", "delete", "secret", "", emptyTypedPayload), `  whodb-cli secrets delete sec_123
+  whodb-cli secrets delete sec_123 --yes`)
+var aiProvidersCreateCmd = withExample(typedResourceWriteCommand("create", "Create a hosted WhoDB AI provider", "create", "ai_provider", "", buildAIProviderCreatePayload), `  whodb-cli ai-providers create --name OpenAI --type openai --endpoint https://api.openai.com/v1 --api-key-env OPENAI_API_KEY --model gpt-4.1`)
+var aiProvidersUpdateCmd = withExample(typedResourceWriteCommand("update <provider>", "Update a hosted WhoDB AI provider", "update", "ai_provider", "", buildAIProviderUpdatePayload), `  whodb-cli ai-providers update provider_123 --endpoint https://api.openai.com/v1 --model gpt-4.1 --model gpt-4.1-mini
+  whodb-cli ai-providers update provider_123 --api-key-env OPENAI_API_KEY`)
+var aiProvidersDeleteCmd = withExample(typedResourceWriteCommand("delete <provider>", "Delete a hosted WhoDB AI provider", "delete", "ai_provider", "", emptyTypedPayload), `  whodb-cli ai-providers delete provider_123 --yes`)
+var datasetsCreateCmd = withExample(typedResourceWriteCommand("create", "Create a hosted WhoDB dataset", "create", "dataset", "", buildDatasetCreatePayload), `  whodb-cli datasets create --name Customers --schema-mode manual --column id:text:primary --column email:text:nullable`)
+var datasetsUpdateCmd = withExample(typedResourceWriteCommand("update <dataset>", "Update a hosted WhoDB dataset", "update", "dataset", "", buildDatasetUpdatePayload), `  whodb-cli datasets update dataset_123 --description "Customer import"
+  whodb-cli datasets update dataset_123 --column id:text:primary --column email:text:nullable`)
+var datasetsDeleteCmd = withExample(typedResourceWriteCommand("delete <dataset>", "Delete a hosted WhoDB dataset", "delete", "dataset", "", emptyTypedPayload), `  whodb-cli datasets delete dataset_123 --yes`)
+var transformsRunCmd = withExample(typedResourceWriteCommand("run <transform>", "Run a hosted WhoDB transform", "action", "transform", "run", emptyTypedPayload), `  whodb-cli transforms run transform_123`)
+var transformsDeleteCmd = withExample(typedResourceWriteCommand("delete <transform>", "Delete a hosted WhoDB transform", "delete", "transform", "", emptyTypedPayload), `  whodb-cli transforms delete transform_123 --yes`)
+var functionsDeployCmd = withExample(typedResourceWriteCommand("deploy <function>", "Deploy a hosted WhoDB function", "action", "function", "deploy", emptyTypedPayload), `  whodb-cli functions deploy function_123`)
+var functionsRedeployCmd = withExample(typedResourceWriteCommand("redeploy <function>", "Redeploy a hosted WhoDB function", "action", "function", "redeploy", emptyTypedPayload), `  whodb-cli functions redeploy function_123`)
+var functionsDeleteCmd = withExample(typedResourceWriteCommand("delete <function>", "Delete a hosted WhoDB function", "delete", "function", "", emptyTypedPayload), `  whodb-cli functions delete function_123 --yes`)
+var filesUploadCmd = withExample(typedResourceWriteCommand("upload", "Upload a hosted WhoDB project file", "action", "file", "upload", buildFileUploadPayload), `  whodb-cli files upload --path ./customers.csv
+  whodb-cli files upload --path ./customers.csv --folder-id folder_123`)
+var filesDeleteCmd = withExample(typedResourceWriteCommand("delete <file>", "Delete a hosted WhoDB project file", "delete", "file", "", emptyTypedPayload), `  whodb-cli files delete file_123 --yes`)
+var filesRenameCmd = withExample(typedResourceWriteCommand("rename <file>", "Rename a hosted WhoDB project file", "action", "file", "rename", buildFileRenamePayload), `  whodb-cli files rename file_123 --name customers-2026.csv`)
+var filesMoveCmd = withExample(typedResourceWriteCommand("move <file>", "Move a hosted WhoDB project file", "action", "file", "move", buildFileMovePayload), `  whodb-cli files move file_123 --folder-id folder_123
+  whodb-cli files move file_123`)
 
 func registerPlatformResourceCommands() {
 	for _, command := range []*cobra.Command{secretsCmd, aiProvidersCmd, ontologiesCmd, datasetsCmd, lineageCmd, transformsCmd, functionsCmd, filesCmd, resourcesCmd} {
@@ -630,6 +637,11 @@ func typedResourceWriteCommand(use, short, operationKind, resource, action strin
 			return runPlatformResourceWrite(cmd, input, operationKind, payload)
 		},
 	}
+}
+
+func withExample(command *cobra.Command, example string) *cobra.Command {
+	command.Example = example
+	return command
 }
 
 func runGenericResourceWrite(cmd *cobra.Command, args []string, operationKind string) error {

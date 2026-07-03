@@ -385,7 +385,7 @@ func TestPlatformResourcesReadJSON(t *testing.T) {
 	if !strings.Contains(schema, `"whodb_platform_status"`) || strings.Contains(schema, `"whodb_query"`) {
 		t.Fatalf("platform schema resource should include platform tools and exclude local tools: %s", schema)
 	}
-	for _, expected := range []string{`"write_specs"`, `"key": "update:ai_provider"`, `"mutation": "UpdateAIProvider"`} {
+	for _, expected := range []string{`"write_specs"`, `"payload_shapes"`, `"key": "update:ai_provider"`, `"mutation": "UpdateAIProvider"`, `"secret": true`, `"examples"`} {
 		if !strings.Contains(schema, expected) {
 			t.Fatalf("platform schema resource should contain %s: %s", expected, schema)
 		}

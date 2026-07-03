@@ -243,6 +243,25 @@ func TestPlatformResourceCommandsRegistered(t *testing.T) {
 	}
 }
 
+func TestTypedPlatformWriteCommandsHaveExamples(t *testing.T) {
+	commands := []*cobra.Command{
+		secretsCreateCmd, secretsUpdateCmd, secretsDeleteCmd,
+		aiProvidersCreateCmd, aiProvidersUpdateCmd, aiProvidersDeleteCmd,
+		datasetsCreateCmd, datasetsUpdateCmd, datasetsDeleteCmd,
+		transformsRunCmd, transformsDeleteCmd,
+		functionsDeployCmd, functionsRedeployCmd, functionsDeleteCmd,
+		filesUploadCmd, filesDeleteCmd, filesRenameCmd, filesMoveCmd,
+	}
+	for _, command := range commands {
+		if strings.TrimSpace(command.Example) == "" {
+			t.Fatalf("%s example is empty", command.CommandPath())
+		}
+		if !strings.Contains(command.Example, "whodb-cli") {
+			t.Fatalf("%s example = %q, want whodb-cli command", command.CommandPath(), command.Example)
+		}
+	}
+}
+
 func TestBuildGenericResourceVariablesInjectsProjectAndID(t *testing.T) {
 	spec, variables, err := buildGenericResourceVariables("proj-1", genericResourceWriteInput{
 		Resource: "dataset",

@@ -706,13 +706,14 @@ func registerPlatformResources(server *mcp.Server, secOpts *SecurityOptions) {
 			}
 		}
 		return jsonResource("whodb://platform/schema", platformSchemaResource{
-			Name:        manifest.Name,
-			Version:     manifest.Version,
-			PlatformMCP: manifest.PlatformMCP,
-			Tools:       tools,
-			Resources:   manifest.PlatformMCP.Resources,
-			Prompts:     manifest.PlatformMCP.Prompts,
-			WriteSpecs:  buildPlatformWriteSpecResources(),
+			Name:          manifest.Name,
+			Version:       manifest.Version,
+			PlatformMCP:   manifest.PlatformMCP,
+			Tools:         tools,
+			Resources:     manifest.PlatformMCP.Resources,
+			Prompts:       manifest.PlatformMCP.Prompts,
+			WriteSpecs:    buildPlatformWriteSpecResources(),
+			PayloadShapes: buildPlatformPayloadShapeResources(),
 		})
 	})
 
@@ -740,13 +741,14 @@ func registerPlatformResources(server *mcp.Server, secOpts *SecurityOptions) {
 }
 
 type platformSchemaResource struct {
-	Name        string                      `json:"name"`
-	Version     string                      `json:"version"`
-	PlatformMCP agentmanifest.PlatformMCP   `json:"platform_mcp"`
-	Tools       []agentmanifest.MCPTool     `json:"tools"`
-	Resources   []agentmanifest.MCPResource `json:"resources"`
-	Prompts     []agentmanifest.MCPPrompt   `json:"prompts"`
-	WriteSpecs  []platformWriteSpecResource `json:"write_specs"`
+	Name          string                         `json:"name"`
+	Version       string                         `json:"version"`
+	PlatformMCP   agentmanifest.PlatformMCP      `json:"platform_mcp"`
+	Tools         []agentmanifest.MCPTool        `json:"tools"`
+	Resources     []agentmanifest.MCPResource    `json:"resources"`
+	Prompts       []agentmanifest.MCPPrompt      `json:"prompts"`
+	WriteSpecs    []platformWriteSpecResource    `json:"write_specs"`
+	PayloadShapes []platformPayloadShapeResource `json:"payload_shapes"`
 }
 
 type platformWriteSpecResource struct {
@@ -757,6 +759,23 @@ type platformWriteSpecResource struct {
 	Mode            string `json:"mode"`
 	NeedsID         bool   `json:"needs_id"`
 	InjectProjectID bool   `json:"inject_project_id"`
+}
+
+type platformPayloadShapeResource struct {
+	Key         string                         `json:"key"`
+	Resource    string                         `json:"resource"`
+	Action      string                         `json:"action"`
+	Description string                         `json:"description"`
+	Fields      []platformPayloadFieldResource `json:"fields,omitempty"`
+	Examples    []string                       `json:"examples,omitempty"`
+}
+
+type platformPayloadFieldResource struct {
+	Name        string `json:"name"`
+	Type        string `json:"type"`
+	Required    bool   `json:"required"`
+	Secret      bool   `json:"secret,omitempty"`
+	Description string `json:"description"`
 }
 
 func buildPlatformWriteSpecResources() []platformWriteSpecResource {
@@ -779,6 +798,37 @@ func buildPlatformWriteSpecResources() []platformWriteSpecResource {
 		})
 	}
 	return specs
+}
+
+func buildPlatformPayloadShapeResources() []platformPayloadShapeResource {
+	keys := make([]string, 0, len(platformapi.PayloadShapes))
+	for key := range platformapi.PayloadShapes {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	shapes := make([]platformPayloadShapeResource, 0, len(keys))
+	for _, key := range keys {
+		shape := platformapi.PayloadShapes[key]
+		fields := make([]platformPayloadFieldResource, 0, len(shape.Fields))
+		for _, field := range shape.Fields {
+			fields = append(fields, platformPayloadFieldResource{
+				Name:        field.Name,
+				Type:        field.Type,
+				Required:    field.Required,
+				Secret:      field.Secret,
+				Description: field.Description,
+			})
+		}
+		shapes = append(shapes, platformPayloadShapeResource{
+			Key:         shape.Key,
+			Resource:    shape.Resource,
+			Action:      shape.Action,
+			Description: shape.Description,
+			Fields:      fields,
+			Examples:    shape.Examples,
+		})
+	}
+	return shapes
 }
 
 type platformToolGuideResource struct {
@@ -907,7 +957,7 @@ func buildPlatformToolGuide(secOpts *SecurityOptions) platformToolGuideResource 
 	return platformToolGuideResource{
 		Mode:              platformResourceMode(secOpts),
 		FieldProjection:   "Use fields on supported read tools to request only the top-level fields needed, then call again with more fields if needed.",
-		WriteBehavior:     platformResourceWriteBehavior(secOpts),
+		WriteBehavior:     platformResourceWriteBehavior(secOpts) + " Read whodb://platform/schema payload_shapes before using generic write tools.",
 		PermissionModel:   "The hosted platform is authoritative for permissions. Workspace selection only scopes requests after token-backed authorization.",
 		WorkspaceBehavior: "Use whodb_platform_status first. If no workspace is selected, use whodb_platform_orgs and whodb_platform_projects, then run whodb-cli use --org <org> --project <project>.",
 		Categories:        filterPlatformToolGuideCategories(categories),
