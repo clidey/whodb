@@ -943,6 +943,7 @@ input GenerateChatTitleInput {
   Token: String
   Model: String!
   Endpoint: String
+  SessionId: String
 }
 
 type GenerateChatTitleResponse {

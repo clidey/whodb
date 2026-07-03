@@ -278,6 +278,7 @@ type GenerateChatTitleInput struct {
 	Token      *string `json:"Token,omitempty"`
 	Model      string  `json:"Model"`
 	Endpoint   *string `json:"Endpoint,omitempty"`
+	SessionID  *string `json:"SessionId,omitempty"`
 }
 
 type GenerateChatTitleResponse struct {
