@@ -385,6 +385,11 @@ func TestPlatformResourcesReadJSON(t *testing.T) {
 	if !strings.Contains(schema, `"whodb_platform_status"`) || strings.Contains(schema, `"whodb_query"`) {
 		t.Fatalf("platform schema resource should include platform tools and exclude local tools: %s", schema)
 	}
+	for _, expected := range []string{`"write_specs"`, `"key": "update:ai_provider"`, `"mutation": "UpdateAIProvider"`} {
+		if !strings.Contains(schema, expected) {
+			t.Fatalf("platform schema resource should contain %s: %s", expected, schema)
+		}
+	}
 	workspace := resourceText(t, readServerResource(t, server, "whodb://platform/workspace"))
 	for _, expected := range []string{`"host": "https://app.whodb.com"`, `"email": "ada@example.com"`, `"workspace_selected": true`} {
 		if !strings.Contains(workspace, expected) {
@@ -494,6 +499,9 @@ func TestPlatformToolGuideReferencesOnlyListedTools(t *testing.T) {
 			}
 			if !tt.wantSupportedWrite && supportedWrites != 0 {
 				t.Fatalf("guide has %d supported write entries, want 0", supportedWrites)
+			}
+			if tt.wantSupportedWrite && !platformGuideContainsWrite(guide, "whodb_platform_update", "ai_provider") {
+				t.Fatal("guide should document ai_provider update support")
 			}
 		})
 	}
@@ -858,6 +866,22 @@ func platformGuideContainsTool(guide platformToolGuideResource, name string) boo
 		for _, write := range category.SupportedWrites {
 			if write.Tool == name {
 				return true
+			}
+		}
+	}
+	return false
+}
+
+func platformGuideContainsWrite(guide platformToolGuideResource, toolName, resource string) bool {
+	for _, category := range guide.Categories {
+		for _, write := range category.SupportedWrites {
+			if write.Tool != toolName {
+				continue
+			}
+			for _, candidate := range write.Resources {
+				if candidate == resource {
+					return true
+				}
 			}
 		}
 	}

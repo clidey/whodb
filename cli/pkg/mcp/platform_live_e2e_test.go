@@ -75,7 +75,7 @@ func (c *livePlatformMCPExhaustiveCoverage) Assert(t *testing.T) {
 	}
 
 	var missingSpecs []string
-	for key := range platformGenericWriteSpecs {
+	for key := range platformapi.GenericWriteSpecs {
 		if !c.writeSpecs[key] {
 			missingSpecs = append(missingSpecs, key)
 		}

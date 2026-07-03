@@ -24,10 +24,12 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
 	"github.com/clidey/whodb/cli/internal/agentmanifest"
+	platformapi "github.com/clidey/whodb/cli/internal/platform"
 	"github.com/clidey/whodb/cli/pkg/version"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -710,6 +712,7 @@ func registerPlatformResources(server *mcp.Server, secOpts *SecurityOptions) {
 			Tools:       tools,
 			Resources:   manifest.PlatformMCP.Resources,
 			Prompts:     manifest.PlatformMCP.Prompts,
+			WriteSpecs:  buildPlatformWriteSpecResources(),
 		})
 	})
 
@@ -743,6 +746,39 @@ type platformSchemaResource struct {
 	Tools       []agentmanifest.MCPTool     `json:"tools"`
 	Resources   []agentmanifest.MCPResource `json:"resources"`
 	Prompts     []agentmanifest.MCPPrompt   `json:"prompts"`
+	WriteSpecs  []platformWriteSpecResource `json:"write_specs"`
+}
+
+type platformWriteSpecResource struct {
+	Key             string `json:"key"`
+	Resource        string `json:"resource"`
+	Action          string `json:"action"`
+	Mutation        string `json:"mutation"`
+	Mode            string `json:"mode"`
+	NeedsID         bool   `json:"needs_id"`
+	InjectProjectID bool   `json:"inject_project_id"`
+}
+
+func buildPlatformWriteSpecResources() []platformWriteSpecResource {
+	keys := make([]string, 0, len(platformapi.GenericWriteSpecs))
+	for key := range platformapi.GenericWriteSpecs {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	specs := make([]platformWriteSpecResource, 0, len(keys))
+	for _, key := range keys {
+		spec := platformapi.GenericWriteSpecs[key]
+		specs = append(specs, platformWriteSpecResource{
+			Key:             key,
+			Resource:        spec.Resource,
+			Action:          spec.Action,
+			Mutation:        spec.Mutation,
+			Mode:            string(spec.Mode),
+			NeedsID:         spec.NeedsID,
+			InjectProjectID: spec.InjectProjectID,
+		})
+	}
+	return specs
 }
 
 type platformToolGuideResource struct {
@@ -821,6 +857,7 @@ func buildPlatformToolGuide(secOpts *SecurityOptions) platformToolGuideResource 
 			"whodb_platform_secrets"),
 		platformToolCategory(toolByName, "ai_providers", "AI provider metadata and provider model discovery. API keys are not returned.", "Use provider lists before selecting models or making provider changes.", []string{"id", "name", "providerType"}, []platformToolGuideMutation{
 			{Tool: "whodb_platform_create", Resources: []string{"ai_provider"}},
+			{Tool: "whodb_platform_update", Resources: []string{"ai_provider"}},
 			{Tool: "whodb_platform_delete", Resources: []string{"ai_provider"}},
 		},
 			"whodb_platform_ai_providers", "whodb_platform_ai_provider_models"),
@@ -860,7 +897,7 @@ func buildPlatformToolGuide(secOpts *SecurityOptions) platformToolGuideResource 
 			"whodb_platform_files", "whodb_platform_file_preview", "whodb_platform_file_search", "whodb_platform_tabular_files", "whodb_platform_storage_usage"),
 		platformToolCategory(toolByName, "generic_writes", "Generic hosted create, update, delete, and action tools for supported platform resources.", "Use only after reading current state and obtaining user approval for the exact confirmation preview.", nil, []platformToolGuideMutation{
 			{Tool: "whodb_platform_create", Resources: []string{"secret", "ai_provider", "ontology", "ontology_fast_lookup", "dataset", "transform", "folder", "function", "source_object"}},
-			{Tool: "whodb_platform_update", Resources: []string{"secret", "ontology", "dataset", "transform", "function", "source_object"}},
+			{Tool: "whodb_platform_update", Resources: []string{"secret", "ai_provider", "ontology", "dataset", "transform", "function", "source_object"}},
 			{Tool: "whodb_platform_delete", Resources: []string{"secret", "ai_provider", "ontology", "ontology_fast_lookup", "dataset", "transform", "file", "folder", "function", "source_object"}},
 			{Tool: "whodb_platform_action", Resources: []string{"transform", "file", "folder", "function"}, Actions: []string{"run", "upload", "rename", "move", "promote_to_dataset", "deploy", "redeploy"}},
 		},

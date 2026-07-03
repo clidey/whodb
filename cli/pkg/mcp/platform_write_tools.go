@@ -50,62 +50,6 @@ type PlatformGenericWriteOutput struct {
 	RequestID            string                 `json:"request_id,omitempty"`
 }
 
-type platformGenericWriteSpec struct {
-	Resource        string
-	Action          string
-	Mutation        string
-	Mode            string
-	NeedsID         bool
-	InjectProjectID bool
-}
-
-const (
-	platformWriteModeInput         = "input"
-	platformWriteModeProjectID     = "project_id"
-	platformWriteModeID            = "id"
-	platformWriteModeProjectIDName = "project_id_name"
-	platformWriteModeDirect        = "direct"
-	platformWriteModeFileUpload    = "file_upload"
-)
-
-var platformGenericWriteSpecs = map[string]platformGenericWriteSpec{
-	"create:secret":                  {Resource: "secret", Action: "create", Mutation: "CreateSecret", Mode: platformWriteModeInput, InjectProjectID: true},
-	"update:secret":                  {Resource: "secret", Action: "update", Mutation: "UpdateSecret", Mode: platformWriteModeInput, NeedsID: true, InjectProjectID: true},
-	"delete:secret":                  {Resource: "secret", Action: "delete", Mutation: "DeleteSecret", Mode: platformWriteModeProjectID, NeedsID: true},
-	"create:ai_provider":             {Resource: "ai_provider", Action: "create", Mutation: "CreateAIProvider", Mode: platformWriteModeInput, InjectProjectID: true},
-	"update:ai_provider":             {Resource: "ai_provider", Action: "update", Mutation: "UpdateAIProvider", Mode: platformWriteModeInput, NeedsID: true},
-	"delete:ai_provider":             {Resource: "ai_provider", Action: "delete", Mutation: "DeleteAIProvider", Mode: platformWriteModeID, NeedsID: true},
-	"create:ontology":                {Resource: "ontology", Action: "create", Mutation: "CreateOntology", Mode: platformWriteModeInput, InjectProjectID: true},
-	"update:ontology":                {Resource: "ontology", Action: "update", Mutation: "UpdateOntology", Mode: platformWriteModeInput, NeedsID: true, InjectProjectID: true},
-	"delete:ontology":                {Resource: "ontology", Action: "delete", Mutation: "DeleteOntology", Mode: platformWriteModeProjectID, NeedsID: true},
-	"create:ontology_fast_lookup":    {Resource: "ontology_fast_lookup", Action: "create", Mutation: "CreateOntologyFastLookup", Mode: platformWriteModeInput, InjectProjectID: true},
-	"delete:ontology_fast_lookup":    {Resource: "ontology_fast_lookup", Action: "delete", Mutation: "RemoveOntologyFastLookup", Mode: platformWriteModeProjectID, NeedsID: true},
-	"create:dataset":                 {Resource: "dataset", Action: "create", Mutation: "CreateDataset", Mode: platformWriteModeInput, InjectProjectID: true},
-	"update:dataset":                 {Resource: "dataset", Action: "update", Mutation: "UpdateDataset", Mode: platformWriteModeInput, NeedsID: true, InjectProjectID: true},
-	"delete:dataset":                 {Resource: "dataset", Action: "delete", Mutation: "DeleteDataset", Mode: platformWriteModeProjectID, NeedsID: true},
-	"create:transform":               {Resource: "transform", Action: "create", Mutation: "SaveTransform", Mode: platformWriteModeInput, InjectProjectID: true},
-	"update:transform":               {Resource: "transform", Action: "update", Mutation: "SaveTransform", Mode: platformWriteModeInput, NeedsID: true, InjectProjectID: true},
-	"delete:transform":               {Resource: "transform", Action: "delete", Mutation: "DeleteTransform", Mode: platformWriteModeProjectID, NeedsID: true},
-	"create:folder":                  {Resource: "folder", Action: "create", Mutation: "CreateProjectFolder", Mode: platformWriteModeInput, InjectProjectID: true},
-	"delete:folder":                  {Resource: "folder", Action: "delete", Mutation: "DeleteProjectFolder", Mode: platformWriteModeProjectID, NeedsID: true},
-	"delete:file":                    {Resource: "file", Action: "delete", Mutation: "DeleteProjectFile", Mode: platformWriteModeProjectID, NeedsID: true},
-	"create:function":                {Resource: "function", Action: "create", Mutation: "CreateFunction", Mode: platformWriteModeInput, InjectProjectID: true},
-	"update:function":                {Resource: "function", Action: "update", Mutation: "UpdateFunction", Mode: platformWriteModeInput, NeedsID: true, InjectProjectID: true},
-	"delete:function":                {Resource: "function", Action: "delete", Mutation: "DeleteFunction", Mode: platformWriteModeProjectID, NeedsID: true},
-	"create:source_object":           {Resource: "source_object", Action: "create", Mutation: "CreatePlatformSourceObject", Mode: platformWriteModeDirect, InjectProjectID: true},
-	"update:source_object":           {Resource: "source_object", Action: "update", Mutation: "UpdatePlatformSourceObject", Mode: platformWriteModeDirect, InjectProjectID: true},
-	"delete:source_object":           {Resource: "source_object", Action: "delete", Mutation: "DeletePlatformSourceObject", Mode: platformWriteModeDirect, InjectProjectID: true},
-	"action:run:transform":           {Resource: "transform", Action: "run", Mutation: "RunTransform", Mode: platformWriteModeProjectID, NeedsID: true},
-	"action:upload:file":             {Resource: "file", Action: "upload", Mutation: "UploadProjectFile", Mode: platformWriteModeFileUpload, InjectProjectID: true},
-	"action:rename:file":             {Resource: "file", Action: "rename", Mutation: "RenameProjectFile", Mode: platformWriteModeProjectIDName, NeedsID: true},
-	"action:rename:folder":           {Resource: "folder", Action: "rename", Mutation: "RenameProjectFolder", Mode: platformWriteModeProjectIDName, NeedsID: true},
-	"action:move:file":               {Resource: "file", Action: "move", Mutation: "MoveProjectFile", Mode: platformWriteModeInput, NeedsID: true, InjectProjectID: true},
-	"action:move:folder":             {Resource: "folder", Action: "move", Mutation: "MoveProjectFolder", Mode: platformWriteModeInput, NeedsID: true, InjectProjectID: true},
-	"action:promote_to_dataset:file": {Resource: "file", Action: "promote_to_dataset", Mutation: "PromoteFileToDataset", Mode: platformWriteModeInput, NeedsID: true, InjectProjectID: true},
-	"action:deploy:function":         {Resource: "function", Action: "deploy", Mutation: "DeployFunction", Mode: platformWriteModeProjectID, NeedsID: true},
-	"action:redeploy:function":       {Resource: "function", Action: "redeploy", Mutation: "RedeployFunction", Mode: platformWriteModeProjectID, NeedsID: true},
-}
-
 func registerPlatformGenericWriteTool(server *mcp.Server, tool *mcp.Tool, secOpts *SecurityOptions) bool {
 	switch tool.Name {
 	case "whodb_platform_create":
@@ -178,7 +122,7 @@ func handlePlatformGenericWrite(ctx context.Context, toolName string, input Plat
 	return nil, platformGenericConfirmationOutput(requestID, token, expiresAt, spec.Mutation, action.Preview()), nil
 }
 
-func buildPlatformGenericWrite(session *platformToolSession, input PlatformGenericWriteInput, operationKind string) (platformGenericWriteSpec, map[string]any, error) {
+func buildPlatformGenericWrite(session *platformToolSession, input PlatformGenericWriteInput, operationKind string) (platformapi.GenericWriteSpec, map[string]any, error) {
 	resource := normalizePlatformWriteToken(input.Resource)
 	action := normalizePlatformWriteToken(operationKind)
 	if operationKind == "action" {
@@ -188,21 +132,21 @@ func buildPlatformGenericWrite(session *platformToolSession, input PlatformGener
 	if operationKind == "action" {
 		key = "action:" + action + ":" + resource
 	}
-	spec, ok := platformGenericWriteSpecs[key]
+	spec, ok := platformapi.GenericWriteSpecs[key]
 	if !ok {
-		return platformGenericWriteSpec{}, nil, fmt.Errorf("unsupported platform %s for resource %q", action, resource)
+		return platformapi.GenericWriteSpec{}, nil, fmt.Errorf("unsupported platform %s for resource %q", action, resource)
 	}
 	payload, err := parsePayloadJSON(input.PayloadJSON)
 	if err != nil {
-		return platformGenericWriteSpec{}, nil, err
+		return platformapi.GenericWriteSpec{}, nil, err
 	}
 	id := strings.TrimSpace(input.ID)
 	if spec.NeedsID && id == "" {
-		return platformGenericWriteSpec{}, nil, fmt.Errorf("id is required for %s %s", spec.Action, spec.Resource)
+		return platformapi.GenericWriteSpec{}, nil, fmt.Errorf("id is required for %s %s", spec.Action, spec.Resource)
 	}
 	variables := map[string]any{}
 	switch spec.Mode {
-	case platformWriteModeInput:
+	case platformapi.GenericWriteModeInput:
 		if spec.InjectProjectID {
 			payload["projectId"] = session.Host.DefaultProjectID
 		}
@@ -220,35 +164,35 @@ func buildPlatformGenericWrite(session *platformToolSession, input PlatformGener
 			payload["newParentId"] = nullablePayloadString(payload, "newParentId")
 		}
 		variables["input"] = payload
-	case platformWriteModeProjectID:
+	case platformapi.GenericWriteModeProjectID:
 		variables["projectId"] = session.Host.DefaultProjectID
 		variables["id"] = id
-	case platformWriteModeID:
+	case platformapi.GenericWriteModeID:
 		variables["id"] = id
-	case platformWriteModeProjectIDName:
+	case platformapi.GenericWriteModeProjectIDName:
 		name, _ := payload["name"].(string)
 		if strings.TrimSpace(name) == "" {
-			return platformGenericWriteSpec{}, nil, fmt.Errorf("payload_json.name is required")
+			return platformapi.GenericWriteSpec{}, nil, fmt.Errorf("payload_json.name is required")
 		}
 		variables["projectId"] = session.Host.DefaultProjectID
 		variables["id"] = id
 		variables["name"] = strings.TrimSpace(name)
-	case platformWriteModeDirect:
+	case platformapi.GenericWriteModeDirect:
 		for key, value := range payload {
 			variables[key] = value
 		}
 		if spec.InjectProjectID {
 			variables["projectId"] = session.Host.DefaultProjectID
 		}
-	case platformWriteModeFileUpload:
+	case platformapi.GenericWriteModeFileUpload:
 		filePath, _ := payload["file_path"].(string)
 		if strings.TrimSpace(filePath) == "" {
-			return platformGenericWriteSpec{}, nil, fmt.Errorf("payload_json.file_path is required")
+			return platformapi.GenericWriteSpec{}, nil, fmt.Errorf("payload_json.file_path is required")
 		}
 		variables["filePath"] = strings.TrimSpace(filePath)
 		variables["folderId"] = nullablePayloadString(payload, "folderId")
 	default:
-		return platformGenericWriteSpec{}, nil, fmt.Errorf("unsupported write mode %q", spec.Mode)
+		return platformapi.GenericWriteSpec{}, nil, fmt.Errorf("unsupported write mode %q", spec.Mode)
 	}
 	return spec, variables, nil
 }

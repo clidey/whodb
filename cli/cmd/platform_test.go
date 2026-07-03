@@ -216,6 +216,75 @@ func TestPlatformStatusForReportsUnsupportedMissingCapability(t *testing.T) {
 	}
 }
 
+func TestPlatformResourceCommandsRegistered(t *testing.T) {
+	expected := map[string][]string{
+		"secrets":      {"list"},
+		"ai-providers": {"list", "models"},
+		"ontologies":   {"list", "get", "fast-lookups", "fast-lookup-suggestions", "rows", "follow-link"},
+		"datasets":     {"list", "get", "rows"},
+		"lineage":      {"project", "root", "neighbors"},
+		"transforms":   {"list", "runs"},
+		"functions":    {"list", "get"},
+		"files":        {"list", "preview", "search", "tabular", "storage-usage"},
+		"resources":    {"create", "update", "delete", "action"},
+	}
+
+	for parentName, childNames := range expected {
+		parent, _, err := rootCmd.Find([]string{parentName})
+		if err != nil || parent == nil || parent.Name() != parentName {
+			t.Fatalf("root command %q not registered: cmd=%v err=%v", parentName, parent, err)
+		}
+		for _, childName := range childNames {
+			child, _, err := parent.Find([]string{childName})
+			if err != nil || child == nil || child.Name() != childName {
+				t.Fatalf("%s subcommand %q not registered: cmd=%v err=%v", parentName, childName, child, err)
+			}
+		}
+	}
+}
+
+func TestBuildGenericResourceVariablesInjectsProjectAndID(t *testing.T) {
+	spec, variables, err := buildGenericResourceVariables("proj-1", genericResourceWriteInput{
+		Resource: "dataset",
+		Action:   "update",
+		ID:       "dataset-1",
+	}, map[string]any{"name": "Customers"})
+	if err != nil {
+		t.Fatalf("buildGenericResourceVariables() error = %v", err)
+	}
+	if spec.Mutation != "UpdateDataset" {
+		t.Fatalf("mutation = %q, want UpdateDataset", spec.Mutation)
+	}
+	input, ok := variables["input"].(map[string]any)
+	if !ok {
+		t.Fatalf("variables = %#v, want input object", variables)
+	}
+	if input["projectId"] != "proj-1" || input["id"] != "dataset-1" || input["name"] != "Customers" {
+		t.Fatalf("input = %#v, want project/id/name injected", input)
+	}
+}
+
+func TestBuildGenericResourceVariablesSupportsHyphenatedTokens(t *testing.T) {
+	spec, variables, err := buildGenericResourceVariables("proj-1", genericResourceWriteInput{
+		Resource: "ai-provider",
+		Action:   "update",
+		ID:       "provider-1",
+	}, map[string]any{"name": "Provider"})
+	if err != nil {
+		t.Fatalf("buildGenericResourceVariables() error = %v", err)
+	}
+	if spec.Mutation != "UpdateAIProvider" {
+		t.Fatalf("mutation = %q, want UpdateAIProvider", spec.Mutation)
+	}
+	input, ok := variables["input"].(map[string]any)
+	if !ok {
+		t.Fatalf("variables = %#v, want input object", variables)
+	}
+	if input["id"] != "provider-1" || input["projectId"] != nil {
+		t.Fatalf("input = %#v, want id and no project injection for ai provider update", input)
+	}
+}
+
 func newPlatformWorkspaceTestClient(t *testing.T, orgResponse, projectResponse string) *platform.Client {
 	t.Helper()
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
