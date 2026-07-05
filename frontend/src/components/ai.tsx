@@ -182,10 +182,12 @@ export const useAI = () => {
     const handleAIModelTypeChange = useCallback((item: string) => {
         const modelType = modelTypes.find(model => model.id === item);
         if (modelType == null) {
-            return;
+            return Promise.resolve<string | undefined>(undefined);
         }
+        dispatch(AIModelsActions.setCurrentModelType({ id: item }));
+        dispatch(AIModelsActions.setCurrentModel(undefined));
         setModelAvailable(true);
-        void fetchAIModels({
+        return fetchAIModels({
                 providerId: modelType.id,
                 modelType: modelType.modelType,
                 token: modelType.token,
@@ -193,17 +195,23 @@ export const useAI = () => {
             .then((aiModels) => {
                 dispatch(AIModelsActions.setModels(aiModels));
                 if (aiModels.length > 0) {
-                    dispatch(AIModelsActions.setCurrentModel(aiModels[0]));
+                    const selectedModel = aiModels[0];
+                    dispatch(AIModelsActions.setCurrentModel(selectedModel));
+                    persistAISelection({ providerId: modelType.id, model: selectedModel });
                     markProviderAvailable(modelType.id);
+                    return selectedModel;
                 } else {
                     markProviderUnavailable(modelType.id);
+                    persistAISelection({ providerId: modelType.id, model: null });
+                    return undefined;
                 }
             })
             .catch(() => {
                 markProviderUnavailable(modelType.id);
                 handleAIModelsError();
+                return undefined;
             });
-    }, [dispatch, fetchAIModels, handleAIModelsError, modelTypes]);
+    }, [dispatch, fetchAIModels, handleAIModelsError, markProviderAvailable, markProviderUnavailable, modelTypes]);
 
     const handleAIModelChange = useCallback((item: string) => {
         dispatch(AIModelsActions.setCurrentModel(item));
@@ -222,14 +230,12 @@ export const useAI = () => {
     }, [dispatch, modelType?.id]);
 
     const handleAIProviderChange = useCallback((item: string) => {
-        dispatch(AIModelsActions.setCurrentModelType({ id: item }));
-        handleAIModelTypeChange(item);
-
         persistAISelection({ providerId: item, model: null });
-    }, [handleAIModelTypeChange, dispatch]);
+        return handleAIModelTypeChange(item);
+    }, [handleAIModelTypeChange]);
 
     const retryProvider = useCallback((providerId: string) => {
-        handleAIModelTypeChange(providerId);
+        void handleAIModelTypeChange(providerId);
     }, [handleAIModelTypeChange]);
 
     const stateRef = useRef({ modelType, currentModel, modelTypes });
@@ -322,10 +328,13 @@ export const useAI = () => {
                 .then((aiModels) => {
                     dispatch(AIModelsActions.setModels(aiModels));
                     if (aiModels.length > 0) {
-                        dispatch(AIModelsActions.setCurrentModel(aiModels[0]));
+                        const selectedModel = aiModels[0];
+                        dispatch(AIModelsActions.setCurrentModel(selectedModel));
+                        persistAISelection({ providerId: firstProvider.id, model: selectedModel });
                         markProviderAvailable(firstProvider.id);
                     } else {
                         markProviderUnavailable(firstProvider.id);
+                        persistAISelection({ providerId: firstProvider.id, model: null });
                     }
                 })
                 .catch(() => {
@@ -349,9 +358,11 @@ export const useAI = () => {
                                 ? savedModel
                                 : aiModels[0];
                         dispatch(AIModelsActions.setCurrentModel(modelToSelect));
+                        persistAISelection({ providerId: selectedProvider.id, model: modelToSelect });
                         markProviderAvailable(selectedProvider.id);
                     } else {
                         markProviderUnavailable(selectedProvider.id);
+                        persistAISelection({ providerId: selectedProvider.id, model: null });
                     }
                 })
                 .catch(() => {
@@ -695,7 +706,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                     value={modelType?.id}
                     onChange={id => {
                         const item = modelTypesDropdownItems.find(i => i.id === id);
-                        if (item) handleAIProviderChange(item.id);
+                        if (item) void handleAIProviderChange(item.id);
                     }}
                     placeholder={t('selectProvider')}
                     side="right"
