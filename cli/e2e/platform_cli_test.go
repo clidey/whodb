@@ -299,10 +299,66 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 	if fn.ID != functionID {
 		t.Fatalf("functions get by name returned id %q, want %q", fn.ID, functionID)
 	}
+	versions := runJSONCommand[[]platform.ObjectVersion](t, "functions", "versions", functionName, "--host", host, "--format", "json", "--quiet")
+	if len(versions) != 0 {
+		t.Fatalf("new function versions = %#v, want empty", versions)
+	}
+	active := runJSONCommand[map[string]any](t, "functions", "active", functionName, "--host", host, "--format", "json", "--quiet")
+	if got, _ := active["active"].(bool); got {
+		t.Fatalf("new function active = %#v, want inactive", active)
+	}
+	promotedV1 := runEnvelope(t, append([]string{
+		"functions", "promote", functionName,
+		"--message", "initial version",
+	}, baseArgs...)...)
+	var version1 platform.ObjectVersion
+	decodeEnvelopeData(t, promotedV1, &version1)
+	if version1.Version != 1 || version1.ObjectID != functionID {
+		t.Fatalf("promote v1 = %#v, want version 1 for %q", version1, functionID)
+	}
+	activeV1 := runJSONCommand[platform.ActiveProdVersion](t, "functions", "active", functionName, "--host", host, "--format", "json", "--quiet")
+	if activeV1.Version != 1 || activeV1.ObjectID != functionID {
+		t.Fatalf("active v1 = %#v, want version 1 for %q", activeV1, functionID)
+	}
 	_ = runMutationID(t, append([]string{
 		"functions", "update", functionName,
 		"--description", "updated",
 	}, baseArgs...)...)
+	promotedV2 := runEnvelope(t, append([]string{
+		"functions", "promote", functionName,
+		"--message", "updated version",
+	}, baseArgs...)...)
+	var version2 platform.ObjectVersion
+	decodeEnvelopeData(t, promotedV2, &version2)
+	if version2.Version != 2 || version2.ObjectID != functionID {
+		t.Fatalf("promote v2 = %#v, want version 2 for %q", version2, functionID)
+	}
+	versions = runJSONCommand[[]platform.ObjectVersion](t, "functions", "versions", functionName, "--host", host, "--format", "json", "--quiet")
+	requireFunctionVersions(t, versions, 1, 2)
+	_ = runMutationID(t, append([]string{
+		"functions", "update", functionName,
+		"--description", "temporary draft",
+	}, baseArgs...)...)
+	setActiveV1 := runEnvelope(t, append([]string{
+		"functions", "set-active", functionName,
+		"--version", "1",
+	}, baseArgs...)...)
+	decodeEnvelopeData(t, setActiveV1, &activeV1)
+	if activeV1.Version != 1 || activeV1.ObjectID != functionID {
+		t.Fatalf("set-active v1 = %#v, want version 1 for %q", activeV1, functionID)
+	}
+	restoredDraft := runEnvelope(t, append([]string{
+		"functions", "restore-draft", functionName,
+		"--version", "2",
+	}, baseArgs...)...)
+	decodeEnvelopeData(t, restoredDraft, &fn)
+	if fn.Description != "updated" {
+		t.Fatalf("restored function description = %q, want updated", fn.Description)
+	}
+	fn = runJSONCommand[platform.Function](t, "functions", "get", functionName, "--host", host, "--format", "json", "--quiet")
+	if fn.Description != "updated" {
+		t.Fatalf("function draft after restore = %q, want updated", fn.Description)
+	}
 
 	folderAName := "cli-e2e-folder-a-" + suffix
 	folderBName := "cli-e2e-folder-b-" + suffix
@@ -663,6 +719,19 @@ func requireContainsDataset(t *testing.T, datasets []platform.Dataset, id string
 		}
 	}
 	t.Fatalf("dataset %q not found in %#v", id, datasets)
+}
+
+func requireFunctionVersions(t *testing.T, versions []platform.ObjectVersion, expected ...int) {
+	t.Helper()
+	seen := make(map[int]bool, len(versions))
+	for _, version := range versions {
+		seen[version.Version] = true
+	}
+	for _, version := range expected {
+		if !seen[version] {
+			t.Fatalf("function version %d not found in %#v", version, versions)
+		}
+	}
 }
 
 func requireTreeContainsID(t *testing.T, tree []map[string]any, id string) {

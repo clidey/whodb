@@ -371,6 +371,34 @@ func (c *Client) ExecuteFunction(ctx context.Context, projectID, functionID, inp
 	return resp.ExecuteFunction, nil
 }
 
+// ObjectVersions returns promoted versions for one hosted platform object.
+func (c *Client) ObjectVersions(ctx context.Context, projectID, objectID, objectType string) ([]ObjectVersion, error) {
+	if err := c.RequireOperation("Query", "ObjectVersions", "object version history"); err != nil {
+		return nil, err
+	}
+	var resp struct {
+		ObjectVersions []ObjectVersion `json:"ObjectVersions"`
+	}
+	variables := map[string]any{"projectId": projectID, "objectId": objectID, "objectType": objectType}
+	err := c.graphQL(ctx, operationObjectVersions, variables, &resp)
+	return resp.ObjectVersions, err
+}
+
+// ActiveProdVersion returns the currently active version for one hosted platform object.
+func (c *Client) ActiveProdVersion(ctx context.Context, projectID, objectID, objectType string) (*ActiveProdVersion, error) {
+	if err := c.RequireOperation("Query", "ActiveProdVersion", "active object version"); err != nil {
+		return nil, err
+	}
+	var resp struct {
+		ActiveProdVersion *ActiveProdVersion `json:"ActiveProdVersion"`
+	}
+	variables := map[string]any{"projectId": projectID, "objectId": objectID, "objectType": objectType}
+	if err := c.graphQL(ctx, operationActiveProdVersion, variables, &resp); err != nil {
+		return nil, err
+	}
+	return resp.ActiveProdVersion, nil
+}
+
 // FolderContents returns hosted project folder contents.
 func (c *Client) FolderContents(ctx context.Context, projectID, folderID string, fields []string) (*FolderContents, error) {
 	if err := c.RequireOperation("Query", "FolderContents", "project files"); err != nil {

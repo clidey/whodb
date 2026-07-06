@@ -85,6 +85,8 @@ var (
 	functionCPU             string
 	functionFiles           []string
 	functionDependencies    []string
+	functionVersion         int
+	functionPromoteMessage  string
 	ontologyAPIName         string
 	ontologyDisplayName     string
 	ontologyPluralName      string
@@ -433,6 +435,92 @@ var functionGetCmd = platformIDCommand("get <function>", "Show hosted WhoDB func
 	return fn, tableResult([]string{"field", "value"}, rows), nil
 })
 
+var functionsVersionsCmd = platformIDCommand("versions <function>", "List promoted versions for a hosted WhoDB function", func(ctx context.Context, session *platformSession, id string) (any, *output.QueryResult, error) {
+	functionID, err := resolvePlatformResourceID(ctx, session, session.Host.DefaultProjectID, "function", id)
+	if err != nil {
+		return nil, nil, err
+	}
+	versions, err := session.Client.ObjectVersions(ctx, session.Host.DefaultProjectID, functionID, "function")
+	if err != nil {
+		return nil, nil, err
+	}
+	active, err := session.Client.ActiveProdVersion(ctx, session.Host.DefaultProjectID, functionID, "function")
+	if err != nil {
+		return nil, nil, err
+	}
+	activeVersion := 0
+	if active != nil {
+		activeVersion = active.Version
+	}
+	rows := make([][]any, len(versions))
+	for i, version := range versions {
+		rows[i] = []any{version.Version, version.Version == activeVersion, version.Message, version.PromotedBy, version.CreatedAt}
+	}
+	return versions, tableResult([]string{"version", "active", "message", "promoted_by", "created_at"}, rows), nil
+})
+
+var functionsActiveCmd = platformIDCommand("active <function>", "Show the active promoted version for a hosted WhoDB function", func(ctx context.Context, session *platformSession, id string) (any, *output.QueryResult, error) {
+	functionID, err := resolvePlatformResourceID(ctx, session, session.Host.DefaultProjectID, "function", id)
+	if err != nil {
+		return nil, nil, err
+	}
+	active, err := session.Client.ActiveProdVersion(ctx, session.Host.DefaultProjectID, functionID, "function")
+	if err != nil {
+		return nil, nil, err
+	}
+	if active == nil {
+		value := map[string]any{"objectId": functionID, "objectType": "function", "active": false}
+		return value, tableResult([]string{"field", "value"}, [][]any{{"object_id", functionID}, {"object_type", "function"}, {"active", false}}), nil
+	}
+	rows := [][]any{
+		{"object_id", active.ObjectID},
+		{"object_type", active.ObjectType},
+		{"version", active.Version},
+		{"activated_by", active.ActivatedBy},
+		{"activated_at", active.ActivatedAt},
+	}
+	return active, tableResult([]string{"field", "value"}, rows), nil
+})
+
+var functionsPromoteCmd = &cobra.Command{
+	Use:           "promote <function>",
+	Short:         "Promote a hosted WhoDB function draft and make the new version active",
+	Args:          cobra.ExactArgs(1),
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return runPlatformFunctionLifecycleWrite(cmd, args[0], "promote")
+	},
+}
+
+var functionsSetActiveCmd = &cobra.Command{
+	Use:           "set-active <function>",
+	Short:         "Set an existing hosted WhoDB function version active",
+	Args:          cobra.ExactArgs(1),
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if functionVersion <= 0 {
+			return fmt.Errorf("--version must be greater than 0")
+		}
+		return runPlatformFunctionLifecycleWrite(cmd, args[0], "set-active")
+	},
+}
+
+var functionsRestoreDraftCmd = &cobra.Command{
+	Use:           "restore-draft <function>",
+	Short:         "Restore a promoted hosted WhoDB function version into the draft",
+	Args:          cobra.ExactArgs(1),
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if functionVersion <= 0 {
+			return fmt.Errorf("--version must be greater than 0")
+		}
+		return runPlatformFunctionLifecycleWrite(cmd, args[0], "restore-draft")
+	},
+}
+
 var functionsRunCmd = &cobra.Command{
 	Use:           "run <function>",
 	Short:         "Run a hosted WhoDB function",
@@ -744,7 +832,7 @@ func registerPlatformResourceCommands() {
 	datasetsCmd.AddCommand(datasetsListCmd, datasetGetCmd, datasetRowsCmd, datasetQueryCmd, datasetsCreateCmd, datasetsUpdateCmd, datasetsDeleteCmd)
 	lineageCmd.AddCommand(lineageProjectCmd, lineageRootCmd, lineageNeighborsCmd)
 	transformsCmd.AddCommand(transformsListCmd, transformGetCmd, transformRunsCmd, transformsCreateCmd, transformsUpdateCmd, transformsRunCmd, transformsDeleteCmd)
-	functionsCmd.AddCommand(functionsListCmd, functionGetCmd, functionsRunCmd, functionsCreateCmd, functionsUpdateCmd, functionsDeployCmd, functionsRedeployCmd, functionsDeleteCmd)
+	functionsCmd.AddCommand(functionsListCmd, functionGetCmd, functionsVersionsCmd, functionsActiveCmd, functionsPromoteCmd, functionsSetActiveCmd, functionsRestoreDraftCmd, functionsRunCmd, functionsCreateCmd, functionsUpdateCmd, functionsDeployCmd, functionsRedeployCmd, functionsDeleteCmd)
 	filesCmd.AddCommand(filesListCmd, fileGetCmd, filePreviewCmd, fileDownloadCmd, fileSearchCmd, tabularFilesCmd, storageUsageCmd, filesUploadCmd, filesDeleteCmd, filesRenameCmd, filesMoveCmd)
 	foldersCmd.AddCommand(foldersListCmd, folderGetCmd, foldersTreeCmd, foldersCreateCmd, foldersRenameCmd, foldersMoveCmd, foldersDeleteCmd)
 	resourcesCmd.AddCommand(resourcesSpecsCmd, resourcesShapeCmd, resourcesCreateCmd, resourcesUpdateCmd, resourcesDeleteCmd, resourcesActionCmd)
@@ -765,6 +853,12 @@ func registerPlatformResourceCommands() {
 	functionsRunCmd.Flags().StringVar(&functionInputJSON, "input-json", "{}", "function input JSON string")
 	functionsRunCmd.Flags().StringVar(&functionInputFile, "input-file", "", "path to function input JSON file")
 	functionsRunCmd.Flags().StringArrayVar(&functionInputFileIDs, "input-file-id", nil, "hosted project file id to pass to the function; repeatable")
+	functionsPromoteCmd.Flags().StringVar(&functionPromoteMessage, "message", "", "promotion message")
+	functionsPromoteCmd.Flags().BoolVarP(&platformWriteYes, "yes", "y", false, "promote without prompting")
+	functionsSetActiveCmd.Flags().IntVar(&functionVersion, "version", 0, "promoted version to set active")
+	functionsSetActiveCmd.Flags().BoolVarP(&platformWriteYes, "yes", "y", false, "set active without prompting")
+	functionsRestoreDraftCmd.Flags().IntVar(&functionVersion, "version", 0, "promoted version to restore into the draft")
+	functionsRestoreDraftCmd.Flags().BoolVarP(&platformWriteYes, "yes", "y", false, "restore draft without prompting")
 	lineageRootCmd.Flags().StringVar(&platformRootID, "root-id", "", "root node id")
 	lineageRootCmd.Flags().StringVar(&platformRootType, "root-type", "", "root node type")
 	lineageRootCmd.Flags().StringVar(&platformDirection, "direction", "", "lineage direction")
@@ -1114,6 +1208,87 @@ func runPlatformResourceWrite(cmd *cobra.Command, input genericResourceWriteInpu
 	}
 	out.Success("%s %s %s in project %s", titlePlatformAction(spec.Action), spec.Resource, spec.Mutation, project.Name)
 	return nil
+}
+
+func runPlatformFunctionLifecycleWrite(cmd *cobra.Command, functionRef, action string) error {
+	ctx := context.Background()
+	format, err := output.ParseFormat(platformFormat)
+	if err != nil {
+		return err
+	}
+	quiet := platformQuiet || format == output.FormatJSON
+	out := newCommandOutput(cmd, format, quiet)
+	session, err := loadPlatformSession(ctx, platformHost)
+	if err != nil {
+		return err
+	}
+	_, project, err := resolvePlatformProject(ctx, session, platformResourceOrg, platformResourceProject)
+	if err != nil {
+		return err
+	}
+	functionID, err := resolvePlatformResourceID(ctx, session, project.ID, "function", functionRef)
+	if err != nil {
+		return err
+	}
+	if !platformWriteYes {
+		approved, err := confirmPlatformFunctionLifecycle(cmd.InOrStdin(), cmd.ErrOrStderr(), action, functionRef, project.Name, functionVersion)
+		if err != nil {
+			return err
+		}
+		if !approved {
+			return fmt.Errorf("write cancelled")
+		}
+	}
+	switch action {
+	case "promote":
+		version, err := session.Client.PromoteObject(ctx, project.ID, functionID, "function", functionPromoteMessage)
+		if err != nil {
+			return err
+		}
+		if format == output.FormatJSON {
+			return writeAutomationEnvelope(cmd, "functions.promote", version)
+		}
+		return out.WriteQueryResult(tableResult([]string{"field", "value"}, [][]any{
+			{"function_id", version.ObjectID},
+			{"version", version.Version},
+			{"active", true},
+			{"message", version.Message},
+			{"promoted_by", version.PromotedBy},
+			{"created_at", version.CreatedAt},
+		}))
+	case "set-active":
+		active, err := session.Client.SetActiveObjectVersion(ctx, project.ID, functionID, "function", functionVersion)
+		if err != nil {
+			return err
+		}
+		if format == output.FormatJSON {
+			return writeAutomationEnvelope(cmd, "functions.set-active", active)
+		}
+		return out.WriteQueryResult(tableResult([]string{"field", "value"}, [][]any{
+			{"function_id", active.ObjectID},
+			{"version", active.Version},
+			{"activated_by", active.ActivatedBy},
+			{"activated_at", active.ActivatedAt},
+		}))
+	case "restore-draft":
+		fn, err := session.Client.RestoreFunctionVersionToDraft(ctx, project.ID, functionID, functionVersion)
+		if err != nil {
+			return err
+		}
+		if format == output.FormatJSON {
+			return writeAutomationEnvelope(cmd, "functions.restore-draft", fn)
+		}
+		return out.WriteQueryResult(tableResult([]string{"field", "value"}, [][]any{
+			{"function_id", fn.ID},
+			{"name", fn.Name},
+			{"restored_version", functionVersion},
+			{"files", len(fn.Files)},
+			{"dependencies", len(fn.Dependencies)},
+			{"updated_at", fn.UpdatedAt},
+		}))
+	default:
+		return fmt.Errorf("unsupported function lifecycle action %q", action)
+	}
 }
 
 func prepareTypedResourcePayload(ctx context.Context, session *platformSession, projectID string, input genericResourceWriteInput, payload map[string]any) error {
@@ -1808,6 +1983,28 @@ func buildGenericResourceVariables(projectID string, input genericResourceWriteI
 
 func confirmPlatformResourceWrite(stdin io.Reader, stderr io.Writer, spec platform.GenericWriteSpec, projectName string) (bool, error) {
 	if _, err := fmt.Fprintf(stderr, "%s %s in project %s? [y/N]: ", titlePlatformAction(spec.Action), spec.Resource, projectName); err != nil {
+		return false, err
+	}
+	var answer string
+	if _, err := fmt.Fscan(stdin, &answer); err != nil && err != io.EOF {
+		return false, err
+	}
+	return isAffirmativeConfirmation(answer), nil
+}
+
+func confirmPlatformFunctionLifecycle(stdin io.Reader, stderr io.Writer, action, functionRef, projectName string, version int) (bool, error) {
+	var prompt string
+	switch action {
+	case "promote":
+		prompt = fmt.Sprintf("Promote function %s in project %s and make the new version active? [y/N]: ", functionRef, projectName)
+	case "set-active":
+		prompt = fmt.Sprintf("Set function %s version %d active in project %s? [y/N]: ", functionRef, version, projectName)
+	case "restore-draft":
+		prompt = fmt.Sprintf("Restore function %s version %d into the draft in project %s? [y/N]: ", functionRef, version, projectName)
+	default:
+		prompt = fmt.Sprintf("Run %s on function %s in project %s? [y/N]: ", action, functionRef, projectName)
+	}
+	if _, err := fmt.Fprint(stderr, prompt); err != nil {
 		return false, err
 	}
 	var answer string

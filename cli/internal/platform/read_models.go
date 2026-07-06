@@ -301,6 +301,26 @@ type FunctionExecutionResult struct {
 	Error      *string `json:"error,omitempty"`
 }
 
+// ObjectVersion describes one promoted hosted platform object version.
+type ObjectVersion struct {
+	ID         string `json:"id"`
+	ObjectID   string `json:"objectId"`
+	ObjectType string `json:"objectType"`
+	Version    int    `json:"version"`
+	Message    string `json:"message"`
+	PromotedBy string `json:"promotedBy"`
+	CreatedAt  string `json:"createdAt"`
+}
+
+// ActiveProdVersion describes the currently active hosted platform object version.
+type ActiveProdVersion struct {
+	ObjectID    string `json:"objectId"`
+	ObjectType  string `json:"objectType"`
+	Version     int    `json:"version"`
+	ActivatedAt string `json:"activatedAt"`
+	ActivatedBy string `json:"activatedBy"`
+}
+
 // ProjectFolder describes one hosted project folder.
 type ProjectFolder struct {
 	ID        string  `json:"id"`
