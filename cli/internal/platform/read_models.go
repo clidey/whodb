@@ -292,6 +292,15 @@ type Function struct {
 	IsDeployed          bool                     `json:"isDeployed"`
 }
 
+// FunctionExecutionResult describes one hosted function execution result.
+type FunctionExecutionResult struct {
+	Output     *string `json:"output,omitempty"`
+	Logs       string  `json:"logs"`
+	DurationMS int     `json:"durationMs"`
+	Success    bool    `json:"success"`
+	Error      *string `json:"error,omitempty"`
+}
+
 // ProjectFolder describes one hosted project folder.
 type ProjectFolder struct {
 	ID        string  `json:"id"`

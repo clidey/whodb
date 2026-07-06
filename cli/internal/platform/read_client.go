@@ -348,6 +348,29 @@ func (c *Client) Function(ctx context.Context, projectID, id string, fields []st
 	return resp.FunctionDetail, nil
 }
 
+// ExecuteFunction runs one hosted ontology function with a JSON input string.
+func (c *Client) ExecuteFunction(ctx context.Context, projectID, functionID, input string, inputFileIDs []string) (*FunctionExecutionResult, error) {
+	if err := c.RequireOperation("Mutation", "ExecuteFunction", "function execution"); err != nil {
+		return nil, err
+	}
+	var resp struct {
+		ExecuteFunction *FunctionExecutionResult `json:"ExecuteFunction"`
+	}
+	variables := map[string]any{
+		"projectId":    projectID,
+		"functionId":   functionID,
+		"input":        input,
+		"inputFileIds": inputFileIDs,
+	}
+	if err := c.graphQL(ctx, operationExecuteFunction, variables, &resp); err != nil {
+		return nil, err
+	}
+	if resp.ExecuteFunction == nil {
+		return nil, fmt.Errorf("platform returned no function execution result")
+	}
+	return resp.ExecuteFunction, nil
+}
+
 // FolderContents returns hosted project folder contents.
 func (c *Client) FolderContents(ctx context.Context, projectID, folderID string, fields []string) (*FolderContents, error) {
 	if err := c.RequireOperation("Query", "FolderContents", "project files"); err != nil {

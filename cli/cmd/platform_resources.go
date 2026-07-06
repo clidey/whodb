@@ -17,11 +17,14 @@
 package cmd
 
 import (
+	"bytes"
 	"context"
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -98,8 +101,15 @@ var (
 	folderParentID          string
 	folderNewParentID       string
 	filePath                string
+	fileOutPath             string
 	fileNewName             string
 	fileNewFolderID         string
+	fileDatasetName         string
+	fileDatasetDescription  string
+	fileColumnMappings      []string
+	functionInputJSON       string
+	functionInputFile       string
+	functionInputFileIDs    []string
 )
 
 var secretsCmd = &cobra.Command{Use: "secrets", Short: "Manage hosted WhoDB project secrets"}
@@ -173,7 +183,11 @@ var aiProviderModelsCmd = &cobra.Command{
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return runPlatformProjectRead(cmd, func(ctx context.Context, session *platformSession, _ *platform.Project) (any, *output.QueryResult, error) {
-			models, err := session.Client.AIProviderModels(ctx, session.Host.DefaultProjectID, args[0])
+			providerID, err := resolvePlatformResourceID(ctx, session, session.Host.DefaultProjectID, "ai_provider", args[0])
+			if err != nil {
+				return nil, nil, err
+			}
+			models, err := session.Client.AIProviderModels(ctx, session.Host.DefaultProjectID, providerID)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -199,7 +213,11 @@ var ontologiesListCmd = platformProjectListCommand("list", "List hosted WhoDB on
 })
 
 var ontologyGetCmd = platformIDCommand("get <ontology>", "Show hosted WhoDB ontology details", func(ctx context.Context, session *platformSession, id string) (any, *output.QueryResult, error) {
-	ontology, err := session.Client.Ontology(ctx, session.Host.DefaultProjectID, id)
+	resolvedID, err := resolvePlatformResourceID(ctx, session, session.Host.DefaultProjectID, "ontology", id)
+	if err != nil {
+		return nil, nil, err
+	}
+	ontology, err := session.Client.Ontology(ctx, session.Host.DefaultProjectID, resolvedID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -208,7 +226,11 @@ var ontologyGetCmd = platformIDCommand("get <ontology>", "Show hosted WhoDB onto
 })
 
 var ontologyFastLookupsCmd = platformIDCommand("fast-lookups <ontology>", "List hosted WhoDB ontology fast lookups", func(ctx context.Context, session *platformSession, id string) (any, *output.QueryResult, error) {
-	lookups, err := session.Client.OntologyFastLookups(ctx, session.Host.DefaultProjectID, id)
+	resolvedID, err := resolvePlatformResourceID(ctx, session, session.Host.DefaultProjectID, "ontology", id)
+	if err != nil {
+		return nil, nil, err
+	}
+	lookups, err := session.Client.OntologyFastLookups(ctx, session.Host.DefaultProjectID, resolvedID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -220,7 +242,11 @@ var ontologyFastLookupsCmd = platformIDCommand("fast-lookups <ontology>", "List 
 })
 
 var ontologyFastLookupSuggestionsCmd = platformIDCommand("fast-lookup-suggestions <ontology>", "Suggest hosted WhoDB ontology fast lookups", func(ctx context.Context, session *platformSession, id string) (any, *output.QueryResult, error) {
-	suggestions, err := session.Client.OntologyFastLookupSuggestions(ctx, session.Host.DefaultProjectID, id)
+	resolvedID, err := resolvePlatformResourceID(ctx, session, session.Host.DefaultProjectID, "ontology", id)
+	if err != nil {
+		return nil, nil, err
+	}
+	suggestions, err := session.Client.OntologyFastLookupSuggestions(ctx, session.Host.DefaultProjectID, resolvedID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -232,7 +258,11 @@ var ontologyFastLookupSuggestionsCmd = platformIDCommand("fast-lookup-suggestion
 })
 
 var ontologyRowsCmd = pagedIDRowsCommand("rows <ontology>", "Preview hosted WhoDB ontology rows", func(ctx context.Context, session *platformSession, id string) (*platform.DatasetQueryResult, error) {
-	return session.Client.OntologyRows(ctx, session.Host.DefaultProjectID, id, platformLimit, platformOffset)
+	resolvedID, err := resolvePlatformResourceID(ctx, session, session.Host.DefaultProjectID, "ontology", id)
+	if err != nil {
+		return nil, err
+	}
+	return session.Client.OntologyRows(ctx, session.Host.DefaultProjectID, resolvedID, platformLimit, platformOffset)
 })
 
 var ontologyFollowLinkCmd = &cobra.Command{
@@ -263,7 +293,11 @@ var datasetsListCmd = platformProjectListCommand("list", "List hosted WhoDB data
 })
 
 var datasetGetCmd = platformIDCommand("get <dataset>", "Show hosted WhoDB dataset details", func(ctx context.Context, session *platformSession, id string) (any, *output.QueryResult, error) {
-	dataset, err := session.Client.Dataset(ctx, session.Host.DefaultProjectID, id)
+	resolvedID, err := resolvePlatformResourceID(ctx, session, session.Host.DefaultProjectID, "dataset", id)
+	if err != nil {
+		return nil, nil, err
+	}
+	dataset, err := session.Client.Dataset(ctx, session.Host.DefaultProjectID, resolvedID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -272,7 +306,18 @@ var datasetGetCmd = platformIDCommand("get <dataset>", "Show hosted WhoDB datase
 })
 
 var datasetRowsCmd = pagedIDRowsCommand("rows <dataset>", "Preview hosted WhoDB dataset rows", func(ctx context.Context, session *platformSession, id string) (*platform.DatasetQueryResult, error) {
-	return session.Client.DatasetRows(ctx, session.Host.DefaultProjectID, id, platformLimit, platformOffset)
+	resolvedID, err := resolvePlatformResourceID(ctx, session, session.Host.DefaultProjectID, "dataset", id)
+	if err != nil {
+		return nil, err
+	}
+	return session.Client.DatasetRows(ctx, session.Host.DefaultProjectID, resolvedID, platformLimit, platformOffset)
+})
+var datasetQueryCmd = pagedIDRowsCommand("query <dataset>", "Query hosted WhoDB dataset rows", func(ctx context.Context, session *platformSession, id string) (*platform.DatasetQueryResult, error) {
+	resolvedID, err := resolvePlatformResourceID(ctx, session, session.Host.DefaultProjectID, "dataset", id)
+	if err != nil {
+		return nil, err
+	}
+	return session.Client.DatasetRows(ctx, session.Host.DefaultProjectID, resolvedID, platformLimit, platformOffset)
 })
 
 var lineageProjectCmd = platformProjectListCommand("project", "Show hosted WhoDB project lineage", func(ctx context.Context, session *platformSession, _ *platform.Project) (any, *output.QueryResult, error) {
@@ -346,7 +391,11 @@ var transformRunsCmd = &cobra.Command{
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return runPlatformProjectRead(cmd, func(ctx context.Context, session *platformSession, _ *platform.Project) (any, *output.QueryResult, error) {
-			runs, err := session.Client.TransformRuns(ctx, session.Host.DefaultProjectID, args[0], platformLimit)
+			transformID, err := resolvePlatformResourceID(ctx, session, session.Host.DefaultProjectID, "transform", args[0])
+			if err != nil {
+				return nil, nil, err
+			}
+			runs, err := session.Client.TransformRuns(ctx, session.Host.DefaultProjectID, transformID, platformLimit)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -372,13 +421,51 @@ var functionsListCmd = platformProjectListCommand("list", "List hosted WhoDB fun
 })
 
 var functionGetCmd = platformIDCommand("get <function>", "Show hosted WhoDB function details", func(ctx context.Context, session *platformSession, id string) (any, *output.QueryResult, error) {
-	fn, err := session.Client.Function(ctx, session.Host.DefaultProjectID, id, platformFields)
+	resolvedID, err := resolvePlatformResourceID(ctx, session, session.Host.DefaultProjectID, "function", id)
+	if err != nil {
+		return nil, nil, err
+	}
+	fn, err := session.Client.Function(ctx, session.Host.DefaultProjectID, resolvedID, platformFields)
 	if err != nil {
 		return nil, nil, err
 	}
 	rows := [][]any{{"id", fn.ID}, {"name", fn.Name}, {"language", fn.Language}, {"entry_point", fn.EntryPoint}, {"deployed", fn.IsDeployed}, {"files", len(fn.Files)}, {"dependencies", len(fn.Dependencies)}}
 	return fn, tableResult([]string{"field", "value"}, rows), nil
 })
+
+var functionsRunCmd = &cobra.Command{
+	Use:           "run <function>",
+	Short:         "Run a hosted WhoDB function",
+	Args:          cobra.ExactArgs(1),
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return runPlatformProjectRead(cmd, func(ctx context.Context, session *platformSession, _ *platform.Project) (any, *output.QueryResult, error) {
+			input, err := readFunctionInput(cmd)
+			if err != nil {
+				return nil, nil, err
+			}
+			functionID, err := resolvePlatformResourceID(ctx, session, session.Host.DefaultProjectID, "function", args[0])
+			if err != nil {
+				return nil, nil, err
+			}
+			result, err := session.Client.ExecuteFunction(ctx, session.Host.DefaultProjectID, functionID, input, normalizedStringList(functionInputFileIDs))
+			if err != nil {
+				return nil, nil, err
+			}
+			errorText := ""
+			if result.Error != nil {
+				errorText = *result.Error
+			}
+			outputText := ""
+			if result.Output != nil {
+				outputText = *result.Output
+			}
+			rows := [][]any{{"success", result.Success}, {"duration_ms", result.DurationMS}, {"output", outputText}, {"logs", result.Logs}, {"error", errorText}}
+			return result, tableResult([]string{"field", "value"}, rows), nil
+		})
+	},
+}
 
 var filesListCmd = platformProjectListCommand("list", "List hosted WhoDB project files", func(ctx context.Context, session *platformSession, _ *platform.Project) (any, *output.QueryResult, error) {
 	contents, err := session.Client.FolderContents(ctx, session.Host.DefaultProjectID, platformFolderID, platformFields)
@@ -395,6 +482,33 @@ var filesListCmd = platformProjectListCommand("list", "List hosted WhoDB project
 	return contents, tableResult([]string{"id", "kind", "name", "mime_type", "bytes", "created_at"}, rows), nil
 })
 
+var fileGetCmd = platformIDCommand("get <file>", "Show hosted WhoDB project file metadata", func(ctx context.Context, session *platformSession, id string) (any, *output.QueryResult, error) {
+	file, err := resolveProjectFile(ctx, session, session.Host.DefaultProjectID, id)
+	if err != nil {
+		return nil, nil, err
+	}
+	folderID := ""
+	if file.FolderID != nil {
+		folderID = *file.FolderID
+	}
+	datasetID := ""
+	if file.DatasetID != nil {
+		datasetID = *file.DatasetID
+	}
+	rows := [][]any{
+		{"id", file.ID},
+		{"name", file.Name},
+		{"folder_id", folderID},
+		{"mime_type", file.MIMEType},
+		{"size_bytes", file.SizeBytes},
+		{"is_tabular", file.IsTabular},
+		{"dataset_id", datasetID},
+		{"created_at", file.CreatedAt},
+		{"updated_at", file.UpdatedAt},
+	}
+	return file, tableResult([]string{"field", "value"}, rows), nil
+})
+
 var filePreviewCmd = &cobra.Command{
 	Use:           "preview <file>",
 	Short:         "Preview a hosted WhoDB project file",
@@ -403,17 +517,61 @@ var filePreviewCmd = &cobra.Command{
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return runPlatformProjectRead(cmd, func(ctx context.Context, session *platformSession, _ *platform.Project) (any, *output.QueryResult, error) {
+			fileID, err := resolvePlatformResourceID(ctx, session, session.Host.DefaultProjectID, "file", args[0])
+			if err != nil {
+				return nil, nil, err
+			}
 			var sheetIndex *int
 			if cmd.Flags().Changed("sheet-index") {
 				sheetIndex = &platformSheetIndex
 			}
-			preview, err := session.Client.FilePreview(ctx, session.Host.DefaultProjectID, args[0], sheetIndex, platformFields)
+			preview, err := session.Client.FilePreview(ctx, session.Host.DefaultProjectID, fileID, sheetIndex, platformFields)
 			if err != nil {
 				return nil, nil, err
 			}
 			rows := [][]any{{"mime_type", preview.MIMEType}, {"size_bytes", preview.SizeBytes}, {"is_tabular", preview.IsTabular}, {"has_text", preview.TextContent != nil}, {"has_tabular", preview.Tabular != nil}}
 			return preview, tableResult([]string{"field", "value"}, rows), nil
 		})
+	},
+}
+
+var fileDownloadCmd = &cobra.Command{
+	Use:           "download <file>",
+	Short:         "Download previewable hosted WhoDB file content",
+	Args:          cobra.ExactArgs(1),
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := context.Background()
+		session, err := loadPlatformSession(ctx, platformHost)
+		if err != nil {
+			return err
+		}
+		_, project, err := resolvePlatformProject(ctx, session, platformResourceOrg, platformResourceProject)
+		if err != nil {
+			return err
+		}
+		file, err := resolveProjectFile(ctx, session, project.ID, args[0])
+		if err != nil {
+			return err
+		}
+		var sheetIndex *int
+		if cmd.Flags().Changed("sheet-index") {
+			sheetIndex = &platformSheetIndex
+		}
+		preview, err := session.Client.FilePreview(ctx, project.ID, file.ID, sheetIndex, nil)
+		if err != nil {
+			return err
+		}
+		content, err := previewFileDownloadContent(preview)
+		if err != nil {
+			return err
+		}
+		if strings.TrimSpace(fileOutPath) == "" {
+			_, err = cmd.OutOrStdout().Write(content)
+			return err
+		}
+		return os.WriteFile(filepath.Clean(fileOutPath), content, 0600)
 	},
 }
 
@@ -455,6 +613,31 @@ var foldersListCmd = platformProjectListCommand("list", "List hosted WhoDB proje
 		rows[i] = []any{folder.ID, folder.Name, parentID, folder.CreatedAt}
 	}
 	return contents.Folders, tableResult([]string{"id", "name", "parent_id", "created_at"}, rows), nil
+})
+
+var folderGetCmd = platformIDCommand("get <folder>", "Show hosted WhoDB project folder metadata", func(ctx context.Context, session *platformSession, id string) (any, *output.QueryResult, error) {
+	folder, err := resolveProjectFolder(ctx, session, session.Host.DefaultProjectID, id)
+	if err != nil {
+		return nil, nil, err
+	}
+	parentID := ""
+	if folder.ParentID != nil {
+		parentID = *folder.ParentID
+	}
+	rows := [][]any{{"id", folder.ID}, {"name", folder.Name}, {"parent_id", parentID}, {"created_by", folder.CreatedBy}, {"created_at", folder.CreatedAt}}
+	return folder, tableResult([]string{"field", "value"}, rows), nil
+})
+
+var foldersTreeCmd = platformProjectListCommand("tree", "Show hosted WhoDB project folder tree", func(ctx context.Context, session *platformSession, _ *platform.Project) (any, *output.QueryResult, error) {
+	entries, err := loadProjectFolderTree(ctx, session, session.Host.DefaultProjectID)
+	if err != nil {
+		return nil, nil, err
+	}
+	rows := make([][]any, len(entries))
+	for i, entry := range entries {
+		rows[i] = []any{entry.ID, entry.Kind, entry.Name, entry.ParentID, entry.Depth, entry.Path}
+	}
+	return entries, tableResult([]string{"id", "kind", "name", "parent_id", "depth", "path"}, rows), nil
 })
 
 var resourcesCreateCmd = genericResourceWriteCommand("create <resource>", "Create a hosted WhoDB platform resource", "create")
@@ -558,18 +741,18 @@ func registerPlatformResourceCommands() {
 	secretsCmd.AddCommand(secretsListCmd, secretsGetCmd, secretsCreateCmd, secretsUpdateCmd, secretsDeleteCmd)
 	aiProvidersCmd.AddCommand(aiProvidersListCmd, aiProviderGetCmd, aiProviderModelsCmd, aiProvidersCreateCmd, aiProvidersUpdateCmd, aiProvidersDeleteCmd)
 	ontologiesCmd.AddCommand(ontologiesListCmd, ontologyGetCmd, ontologyFastLookupsCmd, ontologyFastLookupSuggestionsCmd, ontologyRowsCmd, ontologyFollowLinkCmd, ontologiesCreateCmd, ontologiesUpdateCmd, ontologiesDeleteCmd)
-	datasetsCmd.AddCommand(datasetsListCmd, datasetGetCmd, datasetRowsCmd, datasetsCreateCmd, datasetsUpdateCmd, datasetsDeleteCmd)
+	datasetsCmd.AddCommand(datasetsListCmd, datasetGetCmd, datasetRowsCmd, datasetQueryCmd, datasetsCreateCmd, datasetsUpdateCmd, datasetsDeleteCmd)
 	lineageCmd.AddCommand(lineageProjectCmd, lineageRootCmd, lineageNeighborsCmd)
 	transformsCmd.AddCommand(transformsListCmd, transformGetCmd, transformRunsCmd, transformsCreateCmd, transformsUpdateCmd, transformsRunCmd, transformsDeleteCmd)
-	functionsCmd.AddCommand(functionsListCmd, functionGetCmd, functionsCreateCmd, functionsUpdateCmd, functionsDeployCmd, functionsRedeployCmd, functionsDeleteCmd)
-	filesCmd.AddCommand(filesListCmd, filePreviewCmd, fileSearchCmd, tabularFilesCmd, storageUsageCmd, filesUploadCmd, filesDeleteCmd, filesRenameCmd, filesMoveCmd)
-	foldersCmd.AddCommand(foldersListCmd, foldersCreateCmd, foldersRenameCmd, foldersMoveCmd, foldersDeleteCmd)
+	functionsCmd.AddCommand(functionsListCmd, functionGetCmd, functionsRunCmd, functionsCreateCmd, functionsUpdateCmd, functionsDeployCmd, functionsRedeployCmd, functionsDeleteCmd)
+	filesCmd.AddCommand(filesListCmd, fileGetCmd, filePreviewCmd, fileDownloadCmd, fileSearchCmd, tabularFilesCmd, storageUsageCmd, filesUploadCmd, filesDeleteCmd, filesRenameCmd, filesMoveCmd)
+	foldersCmd.AddCommand(foldersListCmd, folderGetCmd, foldersTreeCmd, foldersCreateCmd, foldersRenameCmd, foldersMoveCmd, foldersDeleteCmd)
 	resourcesCmd.AddCommand(resourcesSpecsCmd, resourcesShapeCmd, resourcesCreateCmd, resourcesUpdateCmd, resourcesDeleteCmd, resourcesActionCmd)
 
 	for _, command := range []*cobra.Command{functionsListCmd, functionGetCmd, filesListCmd, filePreviewCmd} {
 		command.Flags().StringArrayVar(&platformFields, "field", nil, "top-level field to request; repeatable")
 	}
-	for _, command := range []*cobra.Command{ontologyRowsCmd, datasetRowsCmd, ontologyFollowLinkCmd} {
+	for _, command := range []*cobra.Command{ontologyRowsCmd, datasetRowsCmd, datasetQueryCmd, ontologyFollowLinkCmd} {
 		command.Flags().IntVar(&platformLimit, "limit", 50, "maximum rows to return")
 		command.Flags().IntVar(&platformOffset, "offset", 0, "row offset")
 	}
@@ -577,6 +760,11 @@ func registerPlatformResourceCommands() {
 	filesListCmd.Flags().StringVar(&platformFolderID, "folder-id", "", "folder id to list; omitted means project root")
 	foldersListCmd.Flags().StringVar(&platformFolderID, "folder-id", "", "parent folder id to list; omitted means project root")
 	filePreviewCmd.Flags().IntVar(&platformSheetIndex, "sheet-index", 0, "tabular sheet index to preview")
+	fileDownloadCmd.Flags().StringVar(&fileOutPath, "out", "", "destination path; omitted writes content to stdout")
+	fileDownloadCmd.Flags().IntVar(&platformSheetIndex, "sheet-index", 0, "tabular sheet index to download")
+	functionsRunCmd.Flags().StringVar(&functionInputJSON, "input-json", "{}", "function input JSON string")
+	functionsRunCmd.Flags().StringVar(&functionInputFile, "input-file", "", "path to function input JSON file")
+	functionsRunCmd.Flags().StringArrayVar(&functionInputFileIDs, "input-file-id", nil, "hosted project file id to pass to the function; repeatable")
 	lineageRootCmd.Flags().StringVar(&platformRootID, "root-id", "", "root node id")
 	lineageRootCmd.Flags().StringVar(&platformRootType, "root-type", "", "root node type")
 	lineageRootCmd.Flags().StringVar(&platformDirection, "direction", "", "lineage direction")
@@ -760,10 +948,15 @@ func runPlatformProjectRead(cmd *cobra.Command, read func(context.Context, *plat
 	if err != nil {
 		return err
 	}
-	_, project, err := resolvePlatformProject(ctx, session, platformResourceOrg, platformResourceProject)
+	org, project, err := resolvePlatformProject(ctx, session, platformResourceOrg, platformResourceProject)
 	if err != nil {
 		return err
 	}
+	session.Host.DefaultOrgID = org.ID
+	session.Host.DefaultOrgName = org.Name
+	session.Host.DefaultProjectID = project.ID
+	session.Host.DefaultProjectName = project.Name
+	session.Client.SetWorkspaceContext(org.ID, project.ID)
 	value, result, err := read(ctx, session, project)
 	if err != nil {
 		return err
@@ -876,6 +1069,16 @@ func runPlatformResourceWrite(cmd *cobra.Command, input genericResourceWriteInpu
 	if err != nil {
 		return err
 	}
+	if strings.TrimSpace(input.ID) != "" {
+		resolvedID, err := resolvePlatformResourceID(ctx, session, project.ID, input.Resource, input.ID)
+		if err != nil {
+			return err
+		}
+		input.ID = resolvedID
+	}
+	if err := prepareTypedResourcePayload(ctx, session, project.ID, input, payload); err != nil {
+		return err
+	}
 	spec, variables, err := buildGenericResourceVariables(project.ID, input, payload)
 	if err != nil {
 		return err
@@ -910,6 +1113,32 @@ func runPlatformResourceWrite(cmd *cobra.Command, input genericResourceWriteInpu
 		return writeAutomationEnvelope(cmd, "resources."+operationKind, result)
 	}
 	out.Success("%s %s %s in project %s", titlePlatformAction(spec.Action), spec.Resource, spec.Mutation, project.Name)
+	return nil
+}
+
+func prepareTypedResourcePayload(ctx context.Context, session *platformSession, projectID string, input genericResourceWriteInput, payload map[string]any) error {
+	resource := normalizePlatformResourceToken(input.Resource)
+	action := normalizePlatformResourceToken(input.Action)
+	if action != "update" || resource != "transform" {
+		return nil
+	}
+	existing, err := resolveTransform(ctx, session, projectID, input.ID)
+	if err != nil {
+		return err
+	}
+	complete := map[string]any{
+		"name":         existing.Name,
+		"description":  existing.Description,
+		"graphJson":    existing.GraphJSON,
+		"scheduleCron": existing.ScheduleCron,
+		"triggerMode":  existing.TriggerMode,
+	}
+	for key, value := range payload {
+		complete[key] = value
+	}
+	for key, value := range complete {
+		payload[key] = value
+	}
 	return nil
 }
 
@@ -1628,6 +1857,316 @@ func nullableResourceString(payload map[string]any, key string) *string {
 	}
 	trimmed := strings.TrimSpace(text)
 	return &trimmed
+}
+
+func resolvePlatformResourceID(ctx context.Context, session *platformSession, projectID, resource, value string) (string, error) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return "", fmt.Errorf("%s id or name is required", resource)
+	}
+	switch normalizePlatformResourceToken(resource) {
+	case "secret":
+		items, err := session.Client.ProjectSecrets(ctx, projectID)
+		if err != nil {
+			return "", err
+		}
+		return resolveNamedResource(value, "secret", items, func(item platform.ProjectSecret) (string, string) { return item.ID, item.Name })
+	case "ai_provider":
+		items, err := session.Client.AIProviders(ctx, projectID)
+		if err != nil {
+			return "", err
+		}
+		return resolveNamedResource(value, "AI provider", items, func(item platform.AIProvider) (string, string) { return item.ID, item.Name })
+	case "ontology":
+		items, err := session.Client.Ontologies(ctx, projectID)
+		if err != nil {
+			return "", err
+		}
+		var matches []string
+		for _, item := range items {
+			if item.ID == value {
+				return item.ID, nil
+			}
+			if item.APIName == value || item.DisplayName == value {
+				matches = append(matches, item.ID)
+			}
+		}
+		switch len(matches) {
+		case 0:
+			return "", fmt.Errorf("ontology %q not found", value)
+		case 1:
+			return matches[0], nil
+		default:
+			return "", fmt.Errorf("ontology %q is ambiguous; use an id", value)
+		}
+	case "dataset":
+		items, err := session.Client.Datasets(ctx, projectID)
+		if err != nil {
+			return "", err
+		}
+		return resolveNamedResource(value, "dataset", items, func(item platform.Dataset) (string, string) { return item.ID, item.Name })
+	case "transform":
+		items, err := session.Client.Transforms(ctx, projectID)
+		if err != nil {
+			return "", err
+		}
+		return resolveNamedResource(value, "transform", items, func(item platform.Transform) (string, string) { return item.ID, item.Name })
+	case "function":
+		items, err := session.Client.Functions(ctx, projectID, []string{"id", "name"})
+		if err != nil {
+			return "", err
+		}
+		return resolveNamedResource(value, "function", items, func(item platform.Function) (string, string) { return item.ID, item.Name })
+	case "file":
+		file, err := resolveProjectFile(ctx, session, projectID, value)
+		if err != nil {
+			return "", err
+		}
+		return file.ID, nil
+	case "folder":
+		folder, err := resolveProjectFolder(ctx, session, projectID, value)
+		if err != nil {
+			return "", err
+		}
+		return folder.ID, nil
+	default:
+		return value, nil
+	}
+}
+
+func resolveTransform(ctx context.Context, session *platformSession, projectID, value string) (*platform.Transform, error) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return nil, fmt.Errorf("transform id or name is required")
+	}
+	items, err := session.Client.Transforms(ctx, projectID)
+	if err != nil {
+		return nil, err
+	}
+	var matches []platform.Transform
+	for _, item := range items {
+		if item.ID == value {
+			return &item, nil
+		}
+		if item.Name == value {
+			matches = append(matches, item)
+		}
+	}
+	switch len(matches) {
+	case 0:
+		return nil, fmt.Errorf("transform %q not found", value)
+	case 1:
+		return &matches[0], nil
+	default:
+		return nil, fmt.Errorf("transform name %q is ambiguous; use an id", value)
+	}
+}
+
+func resolveNamedResource[T any](value, label string, items []T, identity func(T) (string, string)) (string, error) {
+	var matches []string
+	for _, item := range items {
+		id, name := identity(item)
+		if id == value {
+			return id, nil
+		}
+		if name == value {
+			matches = append(matches, id)
+		}
+	}
+	switch len(matches) {
+	case 0:
+		return "", fmt.Errorf("%s %q not found", label, value)
+	case 1:
+		return matches[0], nil
+	default:
+		return "", fmt.Errorf("%s name %q is ambiguous; use an id", label, value)
+	}
+}
+
+func resolveProjectFile(ctx context.Context, session *platformSession, projectID, value string) (*platform.ProjectFile, error) {
+	value = strings.TrimSpace(value)
+	contents, err := session.Client.FolderContents(ctx, projectID, "", nil)
+	if err != nil {
+		return nil, err
+	}
+	if file, err := matchProjectFile(value, contents.Files); err == nil {
+		return file, nil
+	}
+	files, err := session.Client.SearchProjectFiles(ctx, projectID, value)
+	if err != nil {
+		return nil, err
+	}
+	return matchProjectFile(value, files)
+}
+
+func matchProjectFile(value string, files []platform.ProjectFile) (*platform.ProjectFile, error) {
+	var matches []platform.ProjectFile
+	for _, file := range files {
+		if file.ID == value {
+			return &file, nil
+		}
+		if file.Name == value {
+			matches = append(matches, file)
+		}
+	}
+	switch len(matches) {
+	case 0:
+		return nil, fmt.Errorf("file %q not found", value)
+	case 1:
+		return &matches[0], nil
+	default:
+		return nil, fmt.Errorf("file name %q is ambiguous; use an id", value)
+	}
+}
+
+func resolveProjectFolder(ctx context.Context, session *platformSession, projectID, value string) (*platform.ProjectFolder, error) {
+	entries, err := loadProjectFolderTree(ctx, session, projectID)
+	if err != nil {
+		return nil, err
+	}
+	var matches []platformFolderTreeEntry
+	for _, entry := range entries {
+		if entry.Kind != "folder" {
+			continue
+		}
+		if entry.ID == value {
+			folder := entry.Folder
+			return &folder, nil
+		}
+		if entry.Name == value || entry.Path == value {
+			matches = append(matches, entry)
+		}
+	}
+	switch len(matches) {
+	case 0:
+		return nil, fmt.Errorf("folder %q not found", value)
+	case 1:
+		folder := matches[0].Folder
+		return &folder, nil
+	default:
+		return nil, fmt.Errorf("folder %q is ambiguous; use an id", value)
+	}
+}
+
+type platformFolderTreeEntry struct {
+	ID       string                 `json:"id"`
+	Kind     string                 `json:"kind"`
+	Name     string                 `json:"name"`
+	ParentID string                 `json:"parentId,omitempty"`
+	Depth    int                    `json:"depth"`
+	Path     string                 `json:"path"`
+	Folder   platform.ProjectFolder `json:"-"`
+	File     platform.ProjectFile   `json:"-"`
+}
+
+func loadProjectFolderTree(ctx context.Context, session *platformSession, projectID string) ([]platformFolderTreeEntry, error) {
+	var entries []platformFolderTreeEntry
+	if err := appendProjectFolderTree(ctx, session, projectID, "", "", 0, &entries); err != nil {
+		return nil, err
+	}
+	return entries, nil
+}
+
+func appendProjectFolderTree(ctx context.Context, session *platformSession, projectID, folderID, basePath string, depth int, entries *[]platformFolderTreeEntry) error {
+	contents, err := session.Client.FolderContents(ctx, projectID, folderID, nil)
+	if err != nil {
+		return err
+	}
+	for _, folder := range contents.Folders {
+		parentID := ""
+		if folder.ParentID != nil {
+			parentID = *folder.ParentID
+		}
+		path := joinPlatformTreePath(basePath, folder.Name)
+		*entries = append(*entries, platformFolderTreeEntry{
+			ID:       folder.ID,
+			Kind:     "folder",
+			Name:     folder.Name,
+			ParentID: parentID,
+			Depth:    depth,
+			Path:     path,
+			Folder:   folder,
+		})
+		if err := appendProjectFolderTree(ctx, session, projectID, folder.ID, path, depth+1, entries); err != nil {
+			return err
+		}
+	}
+	for _, file := range contents.Files {
+		parentID := folderID
+		if file.FolderID != nil {
+			parentID = *file.FolderID
+		}
+		*entries = append(*entries, platformFolderTreeEntry{
+			ID:       file.ID,
+			Kind:     "file",
+			Name:     file.Name,
+			ParentID: parentID,
+			Depth:    depth,
+			Path:     joinPlatformTreePath(basePath, file.Name),
+			File:     file,
+		})
+	}
+	return nil
+}
+
+func joinPlatformTreePath(basePath, name string) string {
+	if strings.TrimSpace(basePath) == "" {
+		return name
+	}
+	return strings.TrimRight(basePath, "/") + "/" + name
+}
+
+func previewFileDownloadContent(preview *platform.FilePreviewResult) ([]byte, error) {
+	if preview == nil {
+		return nil, fmt.Errorf("platform returned no file preview")
+	}
+	if preview.TextContent != nil {
+		return []byte(*preview.TextContent), nil
+	}
+	if preview.Tabular != nil {
+		var buffer bytes.Buffer
+		writer := csv.NewWriter(&buffer)
+		headers := make([]string, len(preview.Tabular.Columns))
+		for i, column := range preview.Tabular.Columns {
+			headers[i] = column.Name
+		}
+		if err := writer.Write(headers); err != nil {
+			return nil, err
+		}
+		for _, row := range preview.Tabular.Rows {
+			if err := writer.Write(row); err != nil {
+				return nil, err
+			}
+		}
+		writer.Flush()
+		if err := writer.Error(); err != nil {
+			return nil, err
+		}
+		return buffer.Bytes(), nil
+	}
+	return nil, fmt.Errorf("file preview does not expose downloadable text or tabular content")
+}
+
+func readFunctionInput(cmd *cobra.Command) (string, error) {
+	if cmd.Flags().Changed("input-json") && cmd.Flags().Changed("input-file") {
+		return "", fmt.Errorf("pass only one of --input-json or --input-file")
+	}
+	raw := strings.TrimSpace(functionInputJSON)
+	if cmd.Flags().Changed("input-file") {
+		body, err := os.ReadFile(filepath.Clean(functionInputFile))
+		if err != nil {
+			return "", fmt.Errorf("read --input-file: %w", err)
+		}
+		raw = strings.TrimSpace(string(body))
+	}
+	if raw == "" {
+		raw = "{}"
+	}
+	var decoded any
+	if err := json.Unmarshal([]byte(raw), &decoded); err != nil {
+		return "", fmt.Errorf("function input must be valid JSON: %w", err)
+	}
+	return raw, nil
 }
 
 func tableResult(columnNames []string, rows [][]any) *output.QueryResult {

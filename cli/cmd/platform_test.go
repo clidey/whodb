@@ -218,15 +218,16 @@ func TestPlatformStatusForReportsUnsupportedMissingCapability(t *testing.T) {
 
 func TestPlatformResourceCommandsRegistered(t *testing.T) {
 	expected := map[string][]string{
-		"secrets":      {"list", "create", "update", "delete"},
-		"ai-providers": {"list", "models", "create", "update", "delete"},
-		"ontologies":   {"list", "get", "fast-lookups", "fast-lookup-suggestions", "rows", "follow-link"},
-		"datasets":     {"list", "get", "rows", "create", "update", "delete"},
+		"secrets":      {"list", "get", "create", "update", "delete"},
+		"ai-providers": {"list", "get", "models", "create", "update", "delete"},
+		"ontologies":   {"list", "get", "fast-lookups", "fast-lookup-suggestions", "rows", "follow-link", "create", "update", "delete"},
+		"datasets":     {"list", "get", "rows", "query", "create", "update", "delete"},
 		"lineage":      {"project", "root", "neighbors"},
-		"transforms":   {"list", "runs", "run", "delete"},
-		"functions":    {"list", "get", "deploy", "redeploy", "delete"},
-		"files":        {"list", "preview", "search", "tabular", "storage-usage", "upload", "delete", "rename", "move"},
-		"resources":    {"create", "update", "delete", "action"},
+		"transforms":   {"list", "get", "runs", "create", "update", "run", "delete"},
+		"functions":    {"list", "get", "run", "create", "update", "deploy", "redeploy", "delete"},
+		"files":        {"list", "get", "preview", "download", "search", "tabular", "storage-usage", "upload", "delete", "rename", "move"},
+		"folders":      {"list", "get", "tree", "create", "rename", "move", "delete"},
+		"resources":    {"specs", "shape", "create", "update", "delete", "action"},
 	}
 
 	for parentName, childNames := range expected {

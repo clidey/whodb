@@ -1117,7 +1117,7 @@ func init() {
 	rootCmd.AddCommand(resourcesCmd)
 	rootCmd.AddCommand(useCmd)
 
-	for _, command := range []*cobra.Command{loginCmd, logoutCmd, whoamiCmd, manifestCmd, statusCmd, orgsCmd, projectsCmd, sourcesCmd, secretsCmd, aiProvidersCmd, ontologiesCmd, datasetsCmd, lineageCmd, transformsCmd, functionsCmd, filesCmd, resourcesCmd, useCmd} {
+	for _, command := range []*cobra.Command{loginCmd, logoutCmd, whoamiCmd, manifestCmd, statusCmd, orgsCmd, projectsCmd, sourcesCmd, secretsCmd, aiProvidersCmd, ontologiesCmd, datasetsCmd, lineageCmd, transformsCmd, functionsCmd, filesCmd, foldersCmd, resourcesCmd, useCmd} {
 		command.PersistentFlags().StringVar(&platformHost, "host", "", "hosted WhoDB URL (default app.whodb.com)")
 		command.PersistentFlags().StringVarP(&platformFormat, "format", "f", "auto", "output format: auto, table, plain, json, ndjson, csv")
 		command.PersistentFlags().BoolVarP(&platformQuiet, "quiet", "q", false, "suppress informational messages")

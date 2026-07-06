@@ -189,9 +189,11 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 	baseArgs := []string{"--host", host, "--yes", "--format", "json", "--quiet"}
 
 	t.Setenv("WHODB_PLATFORM_E2E_TYPED_SECRET", "secret-value-"+suffix)
+	secretName := "cli-e2e-secret-" + suffix
+	updatedSecretName := "cli-e2e-secret-updated-" + suffix
 	secretID := runMutationID(t, append([]string{
 		"secrets", "create",
-		"--name", "cli-e2e-secret-" + suffix,
+		"--name", secretName,
 		"--description", "CLI e2e secret",
 		"--value-env", "WHODB_PLATFORM_E2E_TYPED_SECRET",
 	}, baseArgs...)...)
@@ -199,16 +201,22 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 	secrets := runJSONCommand[[]platform.ProjectSecret](t, "secrets", "list", "--host", host, "--format", "json", "--quiet")
 	requireContainsSecret(t, secrets, secretID)
 	_ = runMutationID(t, append([]string{
-		"secrets", "update", secretID,
-		"--name", "cli-e2e-secret-updated-" + suffix,
+		"secrets", "update", secretName,
+		"--name", updatedSecretName,
 		"--description", "updated",
 		"--value-env", "WHODB_PLATFORM_E2E_TYPED_SECRET",
 	}, baseArgs...)...)
+	secret := runJSONCommand[platform.ProjectSecret](t, "secrets", "get", updatedSecretName, "--host", host, "--format", "json", "--quiet")
+	if secret.ID != secretID {
+		t.Fatalf("secrets get by name returned id %q, want %q", secret.ID, secretID)
+	}
 
 	t.Setenv("WHODB_PLATFORM_E2E_TYPED_PROVIDER_KEY", "test-key-"+suffix)
+	providerName := "cli-e2e-provider-" + suffix
+	updatedProviderName := "cli-e2e-provider-updated-" + suffix
 	providerID := runMutationID(t, append([]string{
 		"ai-providers", "create",
-		"--name", "cli-e2e-provider-" + suffix,
+		"--name", providerName,
 		"--type", "openai",
 		"--endpoint", "http://127.0.0.1:1/v1",
 		"--api-key-env", "WHODB_PLATFORM_E2E_TYPED_PROVIDER_KEY",
@@ -218,15 +226,20 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 	providers := runJSONCommand[[]platform.AIProvider](t, "ai-providers", "list", "--host", host, "--format", "json", "--quiet")
 	requireContainsAIProvider(t, providers, providerID)
 	_ = runMutationID(t, append([]string{
-		"ai-providers", "update", providerID,
-		"--name", "cli-e2e-provider-updated-" + suffix,
+		"ai-providers", "update", providerName,
+		"--name", updatedProviderName,
 		"--endpoint", "http://127.0.0.1:1/v1",
 		"--model", "gpt-4.1-mini",
 	}, baseArgs...)...)
+	provider := runJSONCommand[platform.AIProvider](t, "ai-providers", "get", updatedProviderName, "--host", host, "--format", "json", "--quiet")
+	if provider.ID != providerID {
+		t.Fatalf("ai-providers get by name returned id %q, want %q", provider.ID, providerID)
+	}
 
+	datasetName := "cli-e2e-dataset-" + suffix
 	datasetID := runMutationID(t, append([]string{
 		"datasets", "create",
-		"--name", "cli-e2e-dataset-" + suffix,
+		"--name", datasetName,
 		"--description", "CLI e2e dataset",
 		"--schema-mode", "manual",
 		"--column", "id:text:primary",
@@ -235,56 +248,80 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 	defer bestEffortCLIResourceDelete(t, host, "dataset", datasetID)
 	datasets := runJSONCommand[[]platform.Dataset](t, "datasets", "list", "--host", host, "--format", "json", "--quiet")
 	requireContainsDataset(t, datasets, datasetID)
-	_ = runJSONCommand[platform.Dataset](t, "datasets", "get", datasetID, "--host", host, "--format", "json", "--quiet")
-	_ = runJSONCommand[platform.DatasetQueryResult](t, "datasets", "rows", datasetID, "--host", host, "--limit", "5", "--format", "json", "--quiet")
+	dataset := runJSONCommand[platform.Dataset](t, "datasets", "get", datasetName, "--host", host, "--format", "json", "--quiet")
+	if dataset.ID != datasetID {
+		t.Fatalf("datasets get by name returned id %q, want %q", dataset.ID, datasetID)
+	}
+	_ = runJSONCommand[platform.DatasetQueryResult](t, "datasets", "rows", datasetName, "--host", host, "--limit", "5", "--format", "json", "--quiet")
+	_ = runJSONCommand[platform.DatasetQueryResult](t, "datasets", "query", datasetName, "--host", host, "--limit", "5", "--format", "json", "--quiet")
 	_ = runMutationID(t, append([]string{
-		"datasets", "update", datasetID,
+		"datasets", "update", datasetName,
 		"--description", "updated",
 		"--schema-mode", "manual",
 		"--column", "id:text:primary",
 	}, baseArgs...)...)
 
+	transformName := "cli-e2e-transform-" + suffix
 	transformID := runMutationID(t, append([]string{
-		"resources", "create", "transform",
-		"--payload-json", jsonPayload(t, map[string]any{
-			"name":         "cli-e2e-transform-" + suffix,
-			"description":  "CLI e2e transform",
-			"graphJson":    `{"nodes":[],"edges":[]}`,
-			"scheduleCron": "",
-			"triggerMode":  "manual",
-		}),
+		"transforms", "create",
+		"--name", transformName,
+		"--description", "CLI e2e transform",
+		"--graph-json", `{"nodes":[],"edges":[]}`,
+		"--trigger-mode", "manual",
 	}, baseArgs...)...)
 	defer bestEffortCLIResourceDelete(t, host, "transform", transformID)
-	_ = runMutationID(t, append([]string{"transforms", "run", transformID}, baseArgs...)...)
-	_ = runJSONCommand[[]platform.TransformRun](t, "transforms", "runs", transformID, "--host", host, "--format", "json", "--quiet")
+	transform := runJSONCommand[platform.Transform](t, "transforms", "get", transformName, "--host", host, "--format", "json", "--quiet")
+	if transform.ID != transformID {
+		t.Fatalf("transforms get by name returned id %q, want %q", transform.ID, transformID)
+	}
+	_ = runMutationID(t, append([]string{
+		"transforms", "update", transformName,
+		"--description", "updated",
+	}, baseArgs...)...)
+	_ = runMutationID(t, append([]string{"transforms", "run", transformName}, baseArgs...)...)
+	_ = runJSONCommand[[]platform.TransformRun](t, "transforms", "runs", transformName, "--host", host, "--format", "json", "--quiet")
 
+	functionName := "cli-e2e-function-" + suffix
+	functionPath := filepath.Join(t.TempDir(), "main.py")
+	if err := os.WriteFile(functionPath, []byte("def main(input):\n    return input\n"), 0600); err != nil {
+		t.Fatalf("write function fixture: %v", err)
+	}
 	functionID := runMutationID(t, append([]string{
-		"resources", "create", "function",
-		"--payload-json", jsonPayload(t, map[string]any{
-			"name":           "cli-e2e-function-" + suffix,
-			"description":    "CLI e2e function",
-			"language":       "python",
-			"entryPoint":     "main",
-			"timeoutSeconds": 30,
-			"memory":         "128Mi",
-			"cpu":            "100m",
-			"files":          []map[string]any{{"path": "main.py", "content": "def main(input):\n    return input\n"}},
-			"dependencies":   []map[string]any{},
-		}),
+		"functions", "create",
+		"--name", functionName,
+		"--description", "CLI e2e function",
+		"--language", "python",
+		"--entry-point", "main",
+		"--file", "main.py=" + functionPath,
 	}, baseArgs...)...)
 	defer bestEffortCLIResourceDelete(t, host, "function", functionID)
-	_ = runJSONCommand[platform.Function](t, "functions", "get", functionID, "--host", host, "--format", "json", "--quiet")
+	fn := runJSONCommand[platform.Function](t, "functions", "get", functionName, "--host", host, "--format", "json", "--quiet")
+	if fn.ID != functionID {
+		t.Fatalf("functions get by name returned id %q, want %q", fn.ID, functionID)
+	}
+	_ = runMutationID(t, append([]string{
+		"functions", "update", functionName,
+		"--description", "updated",
+	}, baseArgs...)...)
 
+	folderAName := "cli-e2e-folder-a-" + suffix
+	folderBName := "cli-e2e-folder-b-" + suffix
 	folderAID := runMutationID(t, append([]string{
-		"resources", "create", "folder",
-		"--payload-json", jsonPayload(t, map[string]any{"name": "cli-e2e-folder-a-" + suffix}),
+		"folders", "create",
+		"--name", folderAName,
 	}, baseArgs...)...)
 	defer bestEffortCLIResourceDelete(t, host, "folder", folderAID)
 	folderBID := runMutationID(t, append([]string{
-		"resources", "create", "folder",
-		"--payload-json", jsonPayload(t, map[string]any{"name": "cli-e2e-folder-b-" + suffix}),
+		"folders", "create",
+		"--name", folderBName,
 	}, baseArgs...)...)
 	defer bestEffortCLIResourceDelete(t, host, "folder", folderBID)
+	folder := runJSONCommand[platform.ProjectFolder](t, "folders", "get", folderAName, "--host", host, "--format", "json", "--quiet")
+	if folder.ID != folderAID {
+		t.Fatalf("folders get by name returned id %q, want %q", folder.ID, folderAID)
+	}
+	tree := runJSONCommand[[]map[string]any](t, "folders", "tree", "--host", host, "--format", "json", "--quiet")
+	requireTreeContainsID(t, tree, folderAID)
 
 	csvPath := filepath.Join(t.TempDir(), "cli-e2e-"+suffix+".csv")
 	if err := os.WriteFile(csvPath, []byte("id,name\n1,Ada\n"), 0600); err != nil {
@@ -303,26 +340,34 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 	fileID := uploadedFile.ID
 	defer bestEffortCLIResourceDelete(t, host, "file", fileID)
 	_ = runJSONCommand[platform.FolderContents](t, "files", "list", "--host", host, "--folder-id", folderAID, "--format", "json", "--quiet")
-	_ = runRawCommand(t, "files", "preview", fileID, "--host", host, "--format", "json", "--quiet")
-	_ = runMutationID(t, append([]string{"files", "rename", fileID, "--name", "cli-e2e-renamed-" + suffix + ".csv"}, baseArgs...)...)
-	_ = runMutationID(t, append([]string{"files", "move", fileID, "--folder-id", folderBID}, baseArgs...)...)
+	file := runJSONCommand[platform.ProjectFile](t, "files", "get", uploadedFile.Name, "--host", host, "--format", "json", "--quiet")
+	if file.ID != fileID {
+		t.Fatalf("files get by name returned id %q, want %q", file.ID, fileID)
+	}
+	_ = runRawCommand(t, "files", "preview", uploadedFile.Name, "--host", host, "--format", "json", "--quiet")
+	downloadPath := filepath.Join(t.TempDir(), "downloaded.csv")
+	_ = runRawCommand(t, "files", "download", uploadedFile.Name, "--host", host, "--out", downloadPath, "--quiet")
+	testharness.AssertFileContains(t, downloadPath, "Ada")
+	renamedFileName := "cli-e2e-renamed-" + suffix + ".csv"
+	_ = runMutationID(t, append([]string{"files", "rename", uploadedFile.Name, "--name", renamedFileName}, baseArgs...)...)
+	_ = runMutationID(t, append([]string{"files", "move", renamedFileName, "--folder-id", folderBID}, baseArgs...)...)
 	_ = runJSONCommand[platform.LineageGraph](t, "lineage", "project", "--host", host, "--format", "json", "--quiet")
 
-	runMutationOK(t, append([]string{"files", "delete", fileID}, baseArgs...)...)
+	runMutationOK(t, append([]string{"files", "delete", renamedFileName}, baseArgs...)...)
 	fileID = ""
-	runMutationOK(t, append([]string{"resources", "delete", "folder", folderAID}, baseArgs...)...)
+	runMutationOK(t, append([]string{"folders", "delete", folderAName}, baseArgs...)...)
 	folderAID = ""
-	runMutationOK(t, append([]string{"resources", "delete", "folder", folderBID}, baseArgs...)...)
+	runMutationOK(t, append([]string{"folders", "delete", folderBName}, baseArgs...)...)
 	folderBID = ""
-	runMutationOK(t, append([]string{"functions", "delete", functionID}, baseArgs...)...)
+	runMutationOK(t, append([]string{"functions", "delete", functionName}, baseArgs...)...)
 	functionID = ""
-	runMutationOK(t, append([]string{"transforms", "delete", transformID}, baseArgs...)...)
+	runMutationOK(t, append([]string{"transforms", "delete", transformName}, baseArgs...)...)
 	transformID = ""
-	runMutationOK(t, append([]string{"datasets", "delete", datasetID}, baseArgs...)...)
+	runMutationOK(t, append([]string{"datasets", "delete", datasetName}, baseArgs...)...)
 	datasetID = ""
-	runMutationOK(t, append([]string{"ai-providers", "delete", providerID}, baseArgs...)...)
+	runMutationOK(t, append([]string{"ai-providers", "delete", updatedProviderName}, baseArgs...)...)
 	providerID = ""
-	runMutationOK(t, append([]string{"secrets", "delete", secretID}, baseArgs...)...)
+	runMutationOK(t, append([]string{"secrets", "delete", updatedSecretName}, baseArgs...)...)
 	secretID = ""
 }
 
@@ -618,4 +663,14 @@ func requireContainsDataset(t *testing.T, datasets []platform.Dataset, id string
 		}
 	}
 	t.Fatalf("dataset %q not found in %#v", id, datasets)
+}
+
+func requireTreeContainsID(t *testing.T, tree []map[string]any, id string) {
+	t.Helper()
+	for _, entry := range tree {
+		if got, _ := entry["id"].(string); got == id {
+			return
+		}
+	}
+	t.Fatalf("tree entry %q not found in %#v", id, tree)
 }
