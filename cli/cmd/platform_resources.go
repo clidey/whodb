@@ -541,16 +541,73 @@ var functionsRunCmd = &cobra.Command{
 			if err != nil {
 				return nil, nil, err
 			}
-			errorText := ""
-			if result.Error != nil {
-				errorText = *result.Error
+			return result, functionExecutionTable(result), nil
+		})
+	},
+}
+
+var functionsTestCmd = &cobra.Command{
+	Use:           "test <function>",
+	Short:         "Test a hosted WhoDB function draft",
+	Args:          cobra.ExactArgs(1),
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return runPlatformProjectRead(cmd, func(ctx context.Context, session *platformSession, _ *platform.Project) (any, *output.QueryResult, error) {
+			input, err := readFunctionInput(cmd)
+			if err != nil {
+				return nil, nil, err
 			}
-			outputText := ""
-			if result.Output != nil {
-				outputText = *result.Output
+			files, err := parseFunctionFileInputs(functionFiles)
+			if err != nil {
+				return nil, nil, err
 			}
-			rows := [][]any{{"success", result.Success}, {"duration_ms", result.DurationMS}, {"output", outputText}, {"logs", result.Logs}, {"error", errorText}}
-			return result, tableResult([]string{"field", "value"}, rows), nil
+			functionID, err := resolvePlatformResourceID(ctx, session, session.Host.DefaultProjectID, "function", args[0])
+			if err != nil {
+				return nil, nil, err
+			}
+			result, err := session.Client.TestFunction(ctx, session.Host.DefaultProjectID, functionID, input, files, normalizedStringList(functionInputFileIDs))
+			if err != nil {
+				return nil, nil, err
+			}
+			return result, functionExecutionTable(result), nil
+		})
+	},
+}
+
+var functionsPreviewCmd = &cobra.Command{
+	Use:           "preview",
+	Short:         "Preview an unsaved hosted WhoDB function definition",
+	Args:          cobra.NoArgs,
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return runPlatformProjectRead(cmd, func(ctx context.Context, session *platformSession, _ *platform.Project) (any, *output.QueryResult, error) {
+			language := strings.TrimSpace(functionLanguage)
+			entryPoint := strings.TrimSpace(functionEntryPoint)
+			if language == "" || entryPoint == "" {
+				return nil, nil, fmt.Errorf("--language and --entry-point are required")
+			}
+			input, err := readFunctionInput(cmd)
+			if err != nil {
+				return nil, nil, err
+			}
+			files, err := parseFunctionFileInputs(functionFiles)
+			if err != nil {
+				return nil, nil, err
+			}
+			if len(files) == 0 {
+				return nil, nil, fmt.Errorf("--file is required at least once")
+			}
+			dependencies, err := parseFunctionDependencyNames(functionDependencies)
+			if err != nil {
+				return nil, nil, err
+			}
+			result, err := session.Client.PreviewFunction(ctx, session.Host.DefaultProjectID, language, entryPoint, input, files, dependencies)
+			if err != nil {
+				return nil, nil, err
+			}
+			return result, functionExecutionTable(result), nil
 		})
 	},
 }
@@ -804,8 +861,8 @@ var transformsRunCmd = withExample(typedResourceWriteCommand("run <transform>", 
 var transformsDeleteCmd = withExample(typedResourceWriteCommand("delete <transform>", "Delete a hosted WhoDB transform", "delete", "transform", "", emptyTypedPayload), `  whodb-cli transforms delete transform_123 --yes`)
 var functionsCreateCmd = withExample(typedResourceWriteCommand("create", "Create a hosted WhoDB function", "create", "function", "", buildFunctionCreatePayload), `  whodb-cli functions create --name enrich-customer --language python --entry-point main --file main.py=./main.py`)
 var functionsUpdateCmd = withExample(typedResourceWriteCommand("update <function>", "Update a hosted WhoDB function", "update", "function", "", buildFunctionUpdatePayload), `  whodb-cli functions update function_123 --description "Updated enrichment" --file main.py=./main.py`)
-var functionsDeployCmd = withExample(typedResourceWriteCommand("deploy <function>", "Deploy a hosted WhoDB function", "action", "function", "deploy", emptyTypedPayload), `  whodb-cli functions deploy function_123`)
-var functionsRedeployCmd = withExample(typedResourceWriteCommand("redeploy <function>", "Redeploy a hosted WhoDB function", "action", "function", "redeploy", emptyTypedPayload), `  whodb-cli functions redeploy function_123`)
+var functionsDeployCmd = withExample(platformFunctionDeployCommand("deploy <function>", "Deploy a hosted WhoDB function", "DeployFunction", "deploy"), `  whodb-cli functions deploy function_123`)
+var functionsRedeployCmd = withExample(platformFunctionDeployCommand("redeploy <function>", "Redeploy a hosted WhoDB function", "RedeployFunction", "redeploy"), `  whodb-cli functions redeploy function_123`)
 var functionsDeleteCmd = withExample(typedResourceWriteCommand("delete <function>", "Delete a hosted WhoDB function", "delete", "function", "", emptyTypedPayload), `  whodb-cli functions delete function_123 --yes`)
 var foldersCreateCmd = withExample(typedResourceWriteCommand("create", "Create a hosted WhoDB project folder", "create", "folder", "", buildFolderCreatePayload), `  whodb-cli folders create --name imports
   whodb-cli folders create --name january --parent-id folder_123`)
@@ -832,7 +889,7 @@ func registerPlatformResourceCommands() {
 	datasetsCmd.AddCommand(datasetsListCmd, datasetGetCmd, datasetRowsCmd, datasetQueryCmd, datasetsCreateCmd, datasetsUpdateCmd, datasetsDeleteCmd)
 	lineageCmd.AddCommand(lineageProjectCmd, lineageRootCmd, lineageNeighborsCmd)
 	transformsCmd.AddCommand(transformsListCmd, transformGetCmd, transformRunsCmd, transformsCreateCmd, transformsUpdateCmd, transformsRunCmd, transformsDeleteCmd)
-	functionsCmd.AddCommand(functionsListCmd, functionGetCmd, functionsVersionsCmd, functionsActiveCmd, functionsPromoteCmd, functionsSetActiveCmd, functionsRestoreDraftCmd, functionsRunCmd, functionsCreateCmd, functionsUpdateCmd, functionsDeployCmd, functionsRedeployCmd, functionsDeleteCmd)
+	functionsCmd.AddCommand(functionsListCmd, functionGetCmd, functionsVersionsCmd, functionsActiveCmd, functionsPromoteCmd, functionsSetActiveCmd, functionsRestoreDraftCmd, functionsRunCmd, functionsTestCmd, functionsPreviewCmd, functionsCreateCmd, functionsUpdateCmd, functionsDeployCmd, functionsRedeployCmd, functionsDeleteCmd)
 	filesCmd.AddCommand(filesListCmd, fileGetCmd, filePreviewCmd, fileDownloadCmd, fileSearchCmd, tabularFilesCmd, storageUsageCmd, filesUploadCmd, filesDeleteCmd, filesRenameCmd, filesMoveCmd)
 	foldersCmd.AddCommand(foldersListCmd, folderGetCmd, foldersTreeCmd, foldersCreateCmd, foldersRenameCmd, foldersMoveCmd, foldersDeleteCmd)
 	resourcesCmd.AddCommand(resourcesSpecsCmd, resourcesShapeCmd, resourcesCreateCmd, resourcesUpdateCmd, resourcesDeleteCmd, resourcesActionCmd)
@@ -853,6 +910,16 @@ func registerPlatformResourceCommands() {
 	functionsRunCmd.Flags().StringVar(&functionInputJSON, "input-json", "{}", "function input JSON string")
 	functionsRunCmd.Flags().StringVar(&functionInputFile, "input-file", "", "path to function input JSON file")
 	functionsRunCmd.Flags().StringArrayVar(&functionInputFileIDs, "input-file-id", nil, "hosted project file id to pass to the function; repeatable")
+	functionsTestCmd.Flags().StringVar(&functionInputJSON, "input-json", "{}", "function input JSON string")
+	functionsTestCmd.Flags().StringVar(&functionInputFile, "input-file", "", "path to function input JSON file")
+	functionsTestCmd.Flags().StringArrayVar(&functionInputFileIDs, "input-file-id", nil, "hosted project file id to pass to the function; repeatable")
+	functionsTestCmd.Flags().StringArrayVar(&functionFiles, "file", nil, "function file override as target-path=local-path; repeatable")
+	functionsPreviewCmd.Flags().StringVar(&functionLanguage, "language", "", "function language")
+	functionsPreviewCmd.Flags().StringVar(&functionEntryPoint, "entry-point", "", "function entry point")
+	functionsPreviewCmd.Flags().StringArrayVar(&functionFiles, "file", nil, "function file as target-path=local-path; repeatable")
+	functionsPreviewCmd.Flags().StringArrayVar(&functionDependencies, "dependency", nil, "function dependency name or name:version; repeatable")
+	functionsPreviewCmd.Flags().StringVar(&functionInputJSON, "input-json", "{}", "function input JSON string")
+	functionsPreviewCmd.Flags().StringVar(&functionInputFile, "input-file", "", "path to function input JSON file")
 	functionsPromoteCmd.Flags().StringVar(&functionPromoteMessage, "message", "", "promotion message")
 	functionsPromoteCmd.Flags().BoolVarP(&platformWriteYes, "yes", "y", false, "promote without prompting")
 	functionsSetActiveCmd.Flags().IntVar(&functionVersion, "version", 0, "promoted version to set active")
@@ -1133,6 +1200,19 @@ func typedResourceWriteCommand(use, short, operationKind, resource, action strin
 	}
 }
 
+func platformFunctionDeployCommand(use, short, mutation, action string) *cobra.Command {
+	return &cobra.Command{
+		Use:           use,
+		Short:         short,
+		Args:          cobra.ExactArgs(1),
+		SilenceUsage:  true,
+		SilenceErrors: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runPlatformFunctionDeployWrite(cmd, args[0], mutation, action)
+		},
+	}
+}
+
 func withExample(command *cobra.Command, example string) *cobra.Command {
 	command.Example = example
 	return command
@@ -1289,6 +1369,83 @@ func runPlatformFunctionLifecycleWrite(cmd *cobra.Command, functionRef, action s
 	default:
 		return fmt.Errorf("unsupported function lifecycle action %q", action)
 	}
+}
+
+type platformFunctionDeployOutput struct {
+	FunctionID    string `json:"functionId"`
+	FunctionName  string `json:"functionName"`
+	Operation     string `json:"operation"`
+	ActiveVersion int    `json:"activeVersion"`
+	Deployed      bool   `json:"deployed"`
+}
+
+func runPlatformFunctionDeployWrite(cmd *cobra.Command, functionRef, mutation, action string) error {
+	ctx := context.Background()
+	format, err := output.ParseFormat(platformFormat)
+	if err != nil {
+		return err
+	}
+	quiet := platformQuiet || format == output.FormatJSON
+	out := newCommandOutput(cmd, format, quiet)
+	session, err := loadPlatformSession(ctx, platformHost)
+	if err != nil {
+		return err
+	}
+	_, project, err := resolvePlatformProject(ctx, session, platformResourceOrg, platformResourceProject)
+	if err != nil {
+		return err
+	}
+	functionID, err := resolvePlatformResourceID(ctx, session, project.ID, "function", functionRef)
+	if err != nil {
+		return err
+	}
+	if !platformWriteYes {
+		approved, err := confirmPlatformFunctionLifecycle(cmd.InOrStdin(), cmd.ErrOrStderr(), action, functionRef, project.Name, 0)
+		if err != nil {
+			return err
+		}
+		if !approved {
+			return fmt.Errorf("write cancelled")
+		}
+	}
+	if _, err := session.Client.PlatformMutation(ctx, mutation, map[string]any{"projectId": project.ID, "id": functionID}); err != nil {
+		return friendlyFunctionDeployError(functionRef, err)
+	}
+	active, err := session.Client.ActiveProdVersion(ctx, project.ID, functionID, "function")
+	if err != nil {
+		return err
+	}
+	fn, err := session.Client.Function(ctx, project.ID, functionID, nil)
+	if err != nil {
+		return err
+	}
+	result := platformFunctionDeployOutput{
+		FunctionID:   functionID,
+		FunctionName: fn.Name,
+		Operation:    action,
+		Deployed:     fn.IsDeployed,
+	}
+	if active != nil {
+		result.ActiveVersion = active.Version
+	}
+	if format == output.FormatJSON {
+		return writeAutomationEnvelope(cmd, "functions."+action, result)
+	}
+	return out.WriteQueryResult(tableResult([]string{"field", "value"}, [][]any{
+		{"function_id", result.FunctionID},
+		{"name", result.FunctionName},
+		{"operation", result.Operation},
+		{"active_version", result.ActiveVersion},
+		{"deployed", result.Deployed},
+	}))
+}
+
+func friendlyFunctionDeployError(functionRef string, err error) error {
+	message := strings.ToLower(err.Error())
+	if strings.Contains(message, "no active version") || strings.Contains(message, "promote") && strings.Contains(message, "active") {
+		return fmt.Errorf("function %s has no active version. Promote it first:\n  whodb-cli functions promote %s --message \"initial version\"\n  whodb-cli functions deploy %s", functionRef, functionRef, functionRef)
+	}
+	return err
 }
 
 func prepareTypedResourcePayload(ctx context.Context, session *platformSession, projectID string, input genericResourceWriteInput, payload map[string]any) error {
@@ -1865,8 +2022,8 @@ func readTransformGraphJSON(cmd *cobra.Command, useDefault bool) (string, error)
 	return "", fmt.Errorf("--graph-json or --graph-file is required")
 }
 
-func parseFunctionFiles(values []string) ([]map[string]any, error) {
-	files := make([]map[string]any, 0, len(values))
+func parseFunctionFileInputs(values []string) ([]platform.FunctionFile, error) {
+	files := make([]platform.FunctionFile, 0, len(values))
 	for _, value := range values {
 		target, localPath, ok := strings.Cut(value, "=")
 		target = strings.TrimSpace(target)
@@ -1878,7 +2035,19 @@ func parseFunctionFiles(values []string) ([]map[string]any, error) {
 		if err != nil {
 			return nil, fmt.Errorf("read function file %q: %w", localPath, err)
 		}
-		files = append(files, map[string]any{"path": target, "content": string(raw)})
+		files = append(files, platform.FunctionFile{Path: target, Content: string(raw)})
+	}
+	return files, nil
+}
+
+func parseFunctionFiles(values []string) ([]map[string]any, error) {
+	inputs, err := parseFunctionFileInputs(values)
+	if err != nil {
+		return nil, err
+	}
+	files := make([]map[string]any, len(inputs))
+	for i, input := range inputs {
+		files[i] = map[string]any{"path": input.Path, "content": input.Content}
 	}
 	return files, nil
 }
@@ -1898,6 +2067,37 @@ func parseFunctionDependencies(values []string) ([]map[string]any, error) {
 		deps = append(deps, map[string]any{"name": name, "version": version})
 	}
 	return deps, nil
+}
+
+func parseFunctionDependencyNames(values []string) ([]string, error) {
+	deps, err := parseFunctionDependencies(values)
+	if err != nil {
+		return nil, err
+	}
+	names := make([]string, len(deps))
+	for i, dep := range deps {
+		name, _ := dep["name"].(string)
+		names[i] = name
+	}
+	return names, nil
+}
+
+func functionExecutionTable(result *platform.FunctionExecutionResult) *output.QueryResult {
+	errorText := ""
+	if result.Error != nil {
+		errorText = *result.Error
+	}
+	outputText := ""
+	if result.Output != nil {
+		outputText = *result.Output
+	}
+	return tableResult([]string{"field", "value"}, [][]any{
+		{"success", result.Success},
+		{"duration_ms", result.DurationMS},
+		{"output", outputText},
+		{"logs", result.Logs},
+		{"error", errorText},
+	})
 }
 
 func addChangedStringPayload(cmd *cobra.Command, payload map[string]any, flag, key, value string) {
@@ -2001,6 +2201,10 @@ func confirmPlatformFunctionLifecycle(stdin io.Reader, stderr io.Writer, action,
 		prompt = fmt.Sprintf("Set function %s version %d active in project %s? [y/N]: ", functionRef, version, projectName)
 	case "restore-draft":
 		prompt = fmt.Sprintf("Restore function %s version %d into the draft in project %s? [y/N]: ", functionRef, version, projectName)
+	case "deploy":
+		prompt = fmt.Sprintf("Deploy function %s in project %s? [y/N]: ", functionRef, projectName)
+	case "redeploy":
+		prompt = fmt.Sprintf("Redeploy function %s in project %s? [y/N]: ", functionRef, projectName)
 	default:
 		prompt = fmt.Sprintf("Run %s on function %s in project %s? [y/N]: ", action, functionRef, projectName)
 	}

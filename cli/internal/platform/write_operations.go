@@ -107,6 +107,8 @@ var platformMutationSpecs = map[string]platformMutationSpec{
 	"DeleteFunction":           mutationSpecWithProjectID("DeleteFunction", statusResponseFields),
 	"DeployFunction":           mutationSpecWithProjectID("DeployFunction", statusResponseFields),
 	"RedeployFunction":         mutationSpecWithProjectID("RedeployFunction", statusResponseFields),
+	"TestFunction":             mutationSpecWithInput("TestFunction", "TestFunctionInput", functionTestResultFields),
+	"PreviewFunction":          mutationSpecWithInput("PreviewFunction", "PreviewFunctionInput", functionTestResultFields),
 	"PromoteObject":            mutationSpecWithInput("PromoteObject", "PromoteObjectInput", objectVersionFields),
 	"RollbackObject":           mutationSpecWithInput("RollbackObject", "RollbackObjectInput", activeProdVersionFields),
 	"RestoreFunctionVersionToDraft": mutationSpecWithDirect(
@@ -167,6 +169,14 @@ const functionWriteFields = `
   defaultMaxTokens
   defaultTemperature
   isDeployed
+`
+
+const functionTestResultFields = `
+  output
+  logs
+  durationMs
+  success
+  error
 `
 
 func mutationSpecWithInput(operation, inputType, fields string) platformMutationSpec {
@@ -308,6 +318,57 @@ func (c *Client) RestoreFunctionVersionToDraft(ctx context.Context, projectID, f
 		return nil, fmt.Errorf("decode RestoreFunctionVersionToDraft result: %w", err)
 	}
 	return &fn, nil
+}
+
+// TestFunction runs a saved function draft with optional local file overrides.
+func (c *Client) TestFunction(ctx context.Context, projectID, functionID, input string, files []FunctionFile, inputFileIDs []string) (*FunctionExecutionResult, error) {
+	payload := map[string]any{
+		"projectId":    projectID,
+		"functionId":   functionID,
+		"input":        input,
+		"inputFileIds": inputFileIDs,
+	}
+	if len(files) > 0 {
+		payload["files"] = functionFileInputPayload(files)
+	}
+	result, err := c.PlatformMutation(ctx, "TestFunction", map[string]any{"input": payload})
+	if err != nil {
+		return nil, err
+	}
+	var execution FunctionExecutionResult
+	if err := json.Unmarshal(result.Data, &execution); err != nil {
+		return nil, fmt.Errorf("decode TestFunction result: %w", err)
+	}
+	return &execution, nil
+}
+
+// PreviewFunction runs an unsaved function definition without persisting it.
+func (c *Client) PreviewFunction(ctx context.Context, projectID, language, entryPoint, input string, files []FunctionFile, dependencies []string) (*FunctionExecutionResult, error) {
+	payload := map[string]any{
+		"projectId":    projectID,
+		"language":     language,
+		"entryPoint":   entryPoint,
+		"input":        input,
+		"files":        functionFileInputPayload(files),
+		"dependencies": dependencies,
+	}
+	result, err := c.PlatformMutation(ctx, "PreviewFunction", map[string]any{"input": payload})
+	if err != nil {
+		return nil, err
+	}
+	var execution FunctionExecutionResult
+	if err := json.Unmarshal(result.Data, &execution); err != nil {
+		return nil, fmt.Errorf("decode PreviewFunction result: %w", err)
+	}
+	return &execution, nil
+}
+
+func functionFileInputPayload(files []FunctionFile) []map[string]string {
+	payload := make([]map[string]string, len(files))
+	for i, file := range files {
+		payload[i] = map[string]string{"path": file.Path, "content": file.Content}
+	}
+	return payload
 }
 
 // UploadProjectFile uploads one local file to hosted project storage.

@@ -22,6 +22,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 	"os"
@@ -299,6 +300,10 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 	if fn.ID != functionID {
 		t.Fatalf("functions get by name returned id %q, want %q", fn.ID, functionID)
 	}
+	testResult := runJSONCommand[platform.FunctionExecutionResult](t, "functions", "test", functionName, "--host", host, "--input-json", `{"hello":"draft"}`, "--format", "json", "--quiet")
+	requireFunctionExecutionResult(t, "functions test", testResult)
+	previewResult := runJSONCommand[platform.FunctionExecutionResult](t, "functions", "preview", "--host", host, "--language", "python", "--entry-point", "main", "--file", "main.py="+functionPath, "--input-json", `{"hello":"preview"}`, "--format", "json", "--quiet")
+	requireFunctionExecutionResult(t, "functions preview", previewResult)
 	versions := runJSONCommand[[]platform.ObjectVersion](t, "functions", "versions", functionName, "--host", host, "--format", "json", "--quiet")
 	if len(versions) != 0 {
 		t.Fatalf("new function versions = %#v, want empty", versions)
@@ -306,6 +311,10 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 	active := runJSONCommand[map[string]any](t, "functions", "active", functionName, "--host", host, "--format", "json", "--quiet")
 	if got, _ := active["active"].(bool); got {
 		t.Fatalf("new function active = %#v, want inactive", active)
+	}
+	_, deployErr, deployExitCode := runCommandFailure(t, append([]string{"functions", "deploy", functionName}, baseArgs...)...)
+	if deployExitCode == 0 || !strings.Contains(deployErr, "Promote it first") {
+		t.Fatalf("functions deploy without active version stderr = %q exit = %d, want friendly promote guidance", deployErr, deployExitCode)
 	}
 	promotedV1 := runEnvelope(t, append([]string{
 		"functions", "promote", functionName,
@@ -552,6 +561,34 @@ func runRawCommand(t *testing.T, args ...string) string {
 		t.Fatalf("CLI command failed: whodb-cli %s\nstdout:\n%s\nstderr:\n%s", strings.Join(args, " "), stdout, stderr)
 	}
 	return stdout
+}
+
+func runCommandFailure(t *testing.T, args ...string) (string, string, int) {
+	t.Helper()
+	stdout, stderr, exitCode := testharness.RunCLI(t, args...)
+	if exitCode == 0 {
+		t.Fatalf("CLI command succeeded unexpectedly: whodb-cli %s\nstdout:\n%s\nstderr:\n%s", strings.Join(args, " "), stdout, stderr)
+	}
+	return stdout, stderr, exitCode
+}
+
+func functionExecutionError(result platform.FunctionExecutionResult) string {
+	if result.Error != nil {
+		return *result.Error
+	}
+	return fmt.Sprintf("%#v", result)
+}
+
+func requireFunctionExecutionResult(t *testing.T, label string, result platform.FunctionExecutionResult) {
+	t.Helper()
+	if result.Success {
+		return
+	}
+	errText := functionExecutionError(result)
+	if strings.Contains(errText, "neither docker nor podman found in PATH") {
+		return
+	}
+	t.Fatalf("%s returned unsuccessful result: %s", label, errText)
 }
 
 func runJSONCommand[T any](t *testing.T, args ...string) T {

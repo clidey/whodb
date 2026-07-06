@@ -224,7 +224,7 @@ func TestPlatformResourceCommandsRegistered(t *testing.T) {
 		"datasets":     {"list", "get", "rows", "query", "create", "update", "delete"},
 		"lineage":      {"project", "root", "neighbors"},
 		"transforms":   {"list", "get", "runs", "create", "update", "run", "delete"},
-		"functions":    {"list", "get", "run", "create", "update", "deploy", "redeploy", "delete"},
+		"functions":    {"list", "get", "versions", "active", "promote", "set-active", "restore-draft", "run", "test", "preview", "create", "update", "deploy", "redeploy", "delete"},
 		"files":        {"list", "get", "preview", "download", "search", "tabular", "storage-usage", "upload", "delete", "rename", "move"},
 		"folders":      {"list", "get", "tree", "create", "rename", "move", "delete"},
 		"resources":    {"specs", "shape", "create", "update", "delete", "action"},
