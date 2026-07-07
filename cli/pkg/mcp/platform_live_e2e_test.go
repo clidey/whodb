@@ -595,6 +595,7 @@ func TestPlatformMCP_RealReadWriteLifecycle(t *testing.T) {
 		return out.Count, out.Error
 	})
 	liveCoverTool("whodb_platform_project_lineage")
+	liveMustWorkspaceIntelligence(t, ctx)
 	liveMustBundleTools(t, ctx, suffix)
 
 	liveMustGenericWrite(t, ctx, "platform_delete", "delete", PlatformGenericWriteInput{Resource: "file", ID: fileID})
@@ -717,6 +718,36 @@ func liveMustBundleTools(t *testing.T, ctx context.Context, suffix string) {
 		_, out, err := HandlePlatformDataset(ctx, nil, PlatformEntityInput{ID: importedDatasetID, Fields: []string{"data", "scope"}})
 		return out.Error, err
 	})
+}
+
+func liveMustWorkspaceIntelligence(t *testing.T, ctx context.Context) {
+	t.Helper()
+	_, workspaceMap, err := HandlePlatformWorkspaceMap(ctx, nil, PlatformWorkspaceMapInput{Fields: []string{"counts", "warnings", "lineage"}})
+	if err != nil {
+		t.Fatalf("HandlePlatformWorkspaceMap() error = %v", err)
+	}
+	if workspaceMap.Error != "" || workspaceMap.Count == 0 {
+		t.Fatalf("workspace map = %#v, want mapped resources without error", workspaceMap)
+	}
+	liveCoverTool("whodb_platform_workspace_map")
+
+	_, graph, err := HandlePlatformResourceGraph(ctx, nil, PlatformResourceGraphInput{Fields: []string{"nodes", "edges", "counts"}})
+	if err != nil {
+		t.Fatalf("HandlePlatformResourceGraph() error = %v", err)
+	}
+	if graph.Error != "" || graph.Count == 0 {
+		t.Fatalf("resource graph = %#v, want graph nodes without error", graph)
+	}
+	liveCoverTool("whodb_platform_resource_graph")
+
+	_, actions, err := HandlePlatformNextActions(ctx, nil, PlatformNextActionsInput{Goal: "validate e2e workspace", Fields: []string{"actions", "warnings", "goal"}})
+	if err != nil {
+		t.Fatalf("HandlePlatformNextActions() error = %v", err)
+	}
+	if actions.Error != "" || actions.Count == 0 {
+		t.Fatalf("next actions = %#v, want suggested actions without error", actions)
+	}
+	liveCoverTool("whodb_platform_next_actions")
 }
 
 func liveMustReadOrgsProjects(t *testing.T, ctx context.Context) {

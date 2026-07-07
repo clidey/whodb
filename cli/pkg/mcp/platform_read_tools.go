@@ -149,6 +149,18 @@ type PlatformReadOutput struct {
 
 func registerPlatformReadTool(server *mcp.Server, tool *mcp.Tool, secOpts *SecurityOptions) {
 	switch tool.Name {
+	case "whodb_platform_workspace_map":
+		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformWorkspaceMapInput) (*mcp.CallToolResult, any, error) {
+			return HandlePlatformWorkspaceMap(ctx, req, input)
+		})
+	case "whodb_platform_resource_graph":
+		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformResourceGraphInput) (*mcp.CallToolResult, any, error) {
+			return HandlePlatformResourceGraph(ctx, req, input)
+		})
+	case "whodb_platform_next_actions":
+		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformNextActionsInput) (*mcp.CallToolResult, any, error) {
+			return HandlePlatformNextActions(ctx, req, input)
+		})
 	case "whodb_platform_source_constraints":
 		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformSourceConstraintsInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformSourceConstraints(ctx, req, input)
@@ -266,6 +278,9 @@ func registerPlatformReadTool(server *mcp.Server, tool *mcp.Tool, secOpts *Secur
 
 func platformReadToolDefinitions() []*mcp.Tool {
 	return []*mcp.Tool{
+		{Name: "whodb_platform_workspace_map", Description: descPlatformWorkspaceMap, Annotations: platformReadOnlyAnnotations("Map Hosted Workspace")},
+		{Name: "whodb_platform_resource_graph", Description: descPlatformResourceGraph, Annotations: platformReadOnlyAnnotations("Graph Hosted Resources")},
+		{Name: "whodb_platform_next_actions", Description: descPlatformNextActions, Annotations: platformReadOnlyAnnotations("Suggest Hosted Next Actions")},
 		{Name: "whodb_platform_source_constraints", Description: descPlatformSourceConstraints, Annotations: platformReadOnlyAnnotations("Inspect Hosted Source Constraints")},
 		{Name: "whodb_platform_source_content", Description: descPlatformSourceContent, Annotations: platformReadOnlyAnnotations("Read Hosted Source Content")},
 		{Name: "whodb_platform_secrets", Description: descPlatformSecrets, Annotations: platformReadOnlyAnnotations("List Hosted Secret Metadata")},
@@ -773,6 +788,18 @@ func platformReadMatchesBool(value bool, filter string) bool {
 		return false
 	}
 }
+
+const descPlatformWorkspaceMap = `Return a compact selected-project map across hosted sources, secrets, AI providers, datasets, ontologies, transforms, functions, root files, storage, and lineage.
+
+Use this as the first workspace-level context tool when the user asks what exists or what to work on next. It is read-only and never returns secret values.`
+
+const descPlatformResourceGraph = `Return a normalized graph of hosted platform resources and relationships in the selected project.
+
+Use this when an agent needs to understand how sources, datasets, files, ontologies, functions, secrets, AI providers, and lineage relate before proposing changes.`
+
+const descPlatformNextActions = `Return deterministic suggested next actions for the selected hosted project.
+
+Use this after workspace discovery to choose the next read or write tool. Suggestions are advisory only; backend permissions and write confirmations still apply.`
 
 const descPlatformSourceConstraints = `Describe editable field constraints for one hosted source object.
 

@@ -959,6 +959,8 @@ func buildPlatformToolGuide(secOpts *SecurityOptions) platformToolGuideResource 
 			{Tool: "whodb_platform_project_delete", Resources: []string{"project"}},
 		},
 			"whodb_platform_status", "whodb_platform_orgs", "whodb_platform_projects", "whodb_platform_project_create", "whodb_platform_project_rename", "whodb_platform_project_delete"),
+		platformToolCategory(toolByName, "workspace_intelligence", "Workspace-level maps, relationship graph, and suggested next actions.", "Use these before per-resource reads when the user asks what exists, what is connected, or what should happen next.", []string{"counts", "warnings"}, nil,
+			"whodb_platform_workspace_map", "whodb_platform_resource_graph", "whodb_platform_next_actions"),
 		platformToolCategory(toolByName, "sources", "Hosted source discovery, connection metadata, data previews, and source writes.", "List sources with id/name/type first; inspect config only when needed because secrets are redacted.", []string{"id", "name", "type"}, []platformToolGuideMutation{
 			{Tool: "whodb_platform_source_create", Resources: []string{"source"}},
 			{Tool: "whodb_platform_source_update", Resources: []string{"source"}},
@@ -1974,6 +1976,9 @@ Available tools:
 - whodb_platform_status: Show hosted login and selected workspace
 - whodb_platform_orgs: List hosted organizations visible to the user
 - whodb_platform_projects: List hosted projects for an organization
+- whodb_platform_workspace_map: Summarize the selected project across resources
+- whodb_platform_resource_graph: Show relationships between hosted resources
+- whodb_platform_next_actions: Suggest deterministic next platform steps
 - whodb_platform_sources: List hosted sources in the selected project
 - whodb_platform_source_types: List source types available for creation
 - whodb_platform_source_fields: List connection fields for one source type
