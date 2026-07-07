@@ -168,6 +168,37 @@ var PayloadShapes = map[string]PayloadShape{
 		},
 		Examples: []string{`{"description":"Customer import","schemaMode":"manual"}`},
 	},
+	"create:ontology_fast_lookup": {
+		Key: "create:ontology_fast_lookup", Resource: "ontology_fast_lookup", Action: "create", Description: "Create an ontology fast lookup. projectId is injected from the selected workspace.",
+		Fields: []PayloadField{
+			{Name: "entityId", Type: "string", Required: true, Description: "Ontology id"},
+			{Name: "fields", Type: "[string]", Required: true, Description: "Ontology properties to include"},
+			{Name: "reason", Type: "string", Description: "Optional reason"},
+		},
+		Examples: []string{`{"entityId":"ontology_123","fields":["id","email"],"reason":"common lookup"}`},
+	},
+	"action:add_record:ontology": {
+		Key: "action:add_record:ontology", Resource: "ontology", Action: "add_record", Description: "Add an ontology row. id becomes entityId and projectId is injected.",
+		Fields: []PayloadField{
+			{Name: "values", Type: "[RecordInput]", Required: true, Description: "Record values as key/value entries"},
+		},
+		Examples: []string{`{"values":[{"key":"id","value":"1"},{"key":"name","value":"Ada"}]}`},
+	},
+	"action:update_record:ontology": {
+		Key: "action:update_record:ontology", Resource: "ontology", Action: "update_record", Description: "Update an ontology row. id becomes entityId and projectId is injected.",
+		Fields: []PayloadField{
+			{Name: "values", Type: "[RecordInput]", Required: true, Description: "Matcher and replacement values as key/value entries"},
+			{Name: "updatedColumns", Type: "[string]", Required: true, Description: "Ontology properties to update"},
+		},
+		Examples: []string{`{"values":[{"key":"id","value":"1"},{"key":"name","value":"Grace"}],"updatedColumns":["name"]}`},
+	},
+	"action:delete_record:ontology": {
+		Key: "action:delete_record:ontology", Resource: "ontology", Action: "delete_record", Description: "Delete an ontology row. id becomes entityId and projectId is injected.",
+		Fields: []PayloadField{
+			{Name: "values", Type: "[RecordInput]", Required: true, Description: "Matcher values, usually primary key values"},
+		},
+		Examples: []string{`{"values":[{"key":"id","value":"1"}]}`},
+	},
 	"action:run:transform": {
 		Key: "action:run:transform", Resource: "transform", Action: "run", Description: "Run an existing transform. id and projectId are injected.",
 	},
@@ -188,6 +219,16 @@ var PayloadShapes = map[string]PayloadShape{
 		Key: "action:move:file", Resource: "file", Action: "move", Description: "Move a file. id and projectId are injected.",
 		Fields:   []PayloadField{{Name: "newFolderId", Type: "string|null", Description: "Destination folder id; null or empty means project root"}},
 		Examples: []string{`{"newFolderId":"folder_123"}`},
+	},
+	"action:promote_to_dataset:file": {
+		Key: "action:promote_to_dataset:file", Resource: "file", Action: "promote_to_dataset", Description: "Promote a tabular file to a dataset. id becomes fileId and projectId is injected.",
+		Fields: []PayloadField{
+			{Name: "datasetName", Type: "string", Required: true, Description: "Dataset name"},
+			{Name: "description", Type: "string", Description: "Dataset description"},
+			{Name: "sheetIndex", Type: "int", Description: "Optional tabular sheet index"},
+			{Name: "columnMap", Type: "[FileColumnMapInput]", Required: true, Description: "Column mappings, usually from file inspection"},
+		},
+		Examples: []string{`{"datasetName":"Customers","columnMap":[{"sourceColumn":"id","datasetColumn":"id","dataType":"text","isNullable":false,"isPrimary":true}]}`},
 	},
 	"action:deploy:function": {
 		Key: "action:deploy:function", Resource: "function", Action: "deploy", Description: "Deploy an existing function. id and projectId are injected.",

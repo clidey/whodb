@@ -107,6 +107,8 @@ var (
 	ontologyColor               string
 	ontologyPropertiesJSON      []string
 	ontologyLinksJSON           []string
+	ontologyFastLookupFields    []string
+	ontologyFastLookupReason    string
 	ontologyRecordValues        []string
 	ontologyRecordUpdateColumns []string
 	folderName                  string
@@ -302,6 +304,37 @@ var ontologyFastLookupSuggestionsCmd = platformIDCommand("fast-lookup-suggestion
 	}
 	return suggestions, tableResult([]string{"display_name", "fields", "can_create", "reason"}, rows), nil
 })
+
+var ontologyFastLookupsCreateCmd = withExample(&cobra.Command{
+	Use:           "create <ontology>",
+	Short:         "Create a hosted WhoDB ontology fast lookup",
+	Args:          cobra.ExactArgs(1),
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		payload, err := buildOntologyFastLookupCreatePayload(cmd)
+		if err != nil {
+			return err
+		}
+		ctx := context.Background()
+		session, err := loadPlatformSession(ctx, platformHost)
+		if err != nil {
+			return err
+		}
+		_, project, err := resolvePlatformProject(ctx, session, platformResourceOrg, platformResourceProject)
+		if err != nil {
+			return err
+		}
+		entityID, err := resolvePlatformResourceID(ctx, session, project.ID, "ontology", args[0])
+		if err != nil {
+			return err
+		}
+		payload["entityId"] = entityID
+		return runPlatformResourceWrite(cmd, genericResourceWriteInput{Resource: "ontology_fast_lookup", Action: "create"}, "create", payload)
+	},
+}, `  whodb-cli ontologies fast-lookups create customers --field id --field email`)
+
+var ontologyFastLookupsDeleteCmd = withExample(typedResourceWriteCommand("delete <lookup>", "Delete a hosted WhoDB ontology fast lookup", "delete", "ontology_fast_lookup", "", emptyTypedPayload), `  whodb-cli ontologies fast-lookups delete lookup_123 --yes`)
 
 var ontologyRowsCmd = pagedIDRowsCommand("rows <ontology>", "Preview hosted WhoDB ontology rows", func(ctx context.Context, session *platformSession, id string) (*platform.DatasetQueryResult, error) {
 	resolvedID, err := resolvePlatformResourceID(ctx, session, session.Host.DefaultProjectID, "ontology", id)
@@ -988,6 +1021,7 @@ func registerPlatformResourceCommands() {
 
 	secretsCmd.AddCommand(secretsListCmd, secretsGetCmd, secretsCreateCmd, secretsUpdateCmd, secretsDeleteCmd)
 	aiProvidersCmd.AddCommand(aiProvidersListCmd, aiProviderGetCmd, aiProviderModelsCmd, aiProvidersCreateCmd, aiProvidersUpdateCmd, aiProvidersDeleteCmd)
+	ontologyFastLookupsCmd.AddCommand(ontologyFastLookupsCreateCmd, ontologyFastLookupsDeleteCmd)
 	ontologyRecordsCmd.AddCommand(ontologyRecordsAddCmd, ontologyRecordsUpdateCmd, ontologyRecordsDeleteCmd)
 	ontologiesCmd.AddCommand(ontologiesListCmd, ontologyGetCmd, ontologyFastLookupsCmd, ontologyFastLookupSuggestionsCmd, ontologyRowsCmd, ontologyFollowLinkCmd, ontologyRecordsCmd, ontologiesCreateCmd, ontologiesUpdateCmd, ontologiesDeleteCmd)
 	datasetsCmd.AddCommand(datasetsListCmd, datasetGetCmd, datasetSchemaCmd, datasetRowsCmd, datasetQueryCmd, datasetsCreateCmd, datasetsUpdateCmd, datasetsDeleteCmd)
@@ -1055,6 +1089,7 @@ func registerTypedWriteFlags() {
 		secretsCreateCmd, secretsUpdateCmd, secretsDeleteCmd,
 		aiProvidersCreateCmd, aiProvidersUpdateCmd, aiProvidersDeleteCmd,
 		ontologiesCreateCmd, ontologiesUpdateCmd, ontologiesDeleteCmd,
+		ontologyFastLookupsCreateCmd, ontologyFastLookupsDeleteCmd,
 		ontologyRecordsAddCmd, ontologyRecordsUpdateCmd, ontologyRecordsDeleteCmd,
 		datasetsCreateCmd, datasetsUpdateCmd, datasetsDeleteCmd,
 		transformsCreateCmd, transformsUpdateCmd, transformsRunCmd, transformsDeleteCmd,
@@ -1094,6 +1129,8 @@ func registerTypedWriteFlags() {
 
 	registerOntologyWriteFlags(ontologiesCreateCmd)
 	registerOntologyWriteFlags(ontologiesUpdateCmd)
+	ontologyFastLookupsCreateCmd.Flags().StringArrayVar(&ontologyFastLookupFields, "field", nil, "ontology property to include in the fast lookup; repeatable")
+	ontologyFastLookupsCreateCmd.Flags().StringVar(&ontologyFastLookupReason, "reason", "", "reason for the fast lookup")
 	ontologyRecordsAddCmd.Flags().StringArrayVar(&ontologyRecordValues, "value", nil, "record value as key=value; repeatable")
 	ontologyRecordsUpdateCmd.Flags().StringArrayVar(&ontologyRecordValues, "value", nil, "record value as key=value; repeatable")
 	ontologyRecordsUpdateCmd.Flags().StringArrayVar(&ontologyRecordUpdateColumns, "update-column", nil, "ontology property to update; repeatable")
@@ -2359,6 +2396,18 @@ func parseFileColumnMappings(values []string) ([]map[string]any, error) {
 		mappings = append(mappings, mapping)
 	}
 	return mappings, nil
+}
+
+func buildOntologyFastLookupCreatePayload(cmd *cobra.Command) (map[string]any, error) {
+	fields := normalizedStringList(ontologyFastLookupFields)
+	if len(fields) == 0 {
+		return nil, fmt.Errorf("--field is required")
+	}
+	payload := map[string]any{"fields": fields}
+	if cmd.Flags().Changed("reason") {
+		payload["reason"] = strings.TrimSpace(ontologyFastLookupReason)
+	}
+	return payload, nil
 }
 
 func buildOntologyRecordAddPayload(cmd *cobra.Command) (map[string]any, error) {

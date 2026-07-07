@@ -915,14 +915,20 @@ func buildPlatformToolGuide(secOpts *SecurityOptions) platformToolGuideResource 
 			{Tool: "whodb_platform_create", Resources: []string{"ontology", "ontology_fast_lookup"}},
 			{Tool: "whodb_platform_update", Resources: []string{"ontology"}},
 			{Tool: "whodb_platform_delete", Resources: []string{"ontology", "ontology_fast_lookup"}},
+			{Tool: "whodb_platform_create_ontology_fast_lookup", Resources: []string{"ontology_fast_lookup"}},
+			{Tool: "whodb_platform_delete_ontology_fast_lookup", Resources: []string{"ontology_fast_lookup"}},
+			{Tool: "whodb_platform_add_ontology_record", Resources: []string{"ontology"}},
+			{Tool: "whodb_platform_update_ontology_record", Resources: []string{"ontology"}},
+			{Tool: "whodb_platform_delete_ontology_record", Resources: []string{"ontology"}},
 		},
-			"whodb_platform_ontologies", "whodb_platform_ontology", "whodb_platform_ontology_fast_lookups", "whodb_platform_ontology_fast_lookup_suggestions", "whodb_platform_ontology_rows", "whodb_platform_ontology_follow_link"),
+			"whodb_platform_ontologies", "whodb_platform_ontology", "whodb_platform_ontology_fast_lookups", "whodb_platform_ontology_fast_lookup_suggestions", "whodb_platform_ontology_rows", "whodb_platform_ontology_follow_link", "whodb_platform_create_ontology_fast_lookup", "whodb_platform_delete_ontology_fast_lookup", "whodb_platform_add_ontology_record", "whodb_platform_update_ontology_record", "whodb_platform_delete_ontology_record"),
 		platformToolCategory(toolByName, "datasets", "Dataset metadata and dataset row previews.", "List datasets first; preview rows only when needed for the user request.", []string{"id", "name"}, []platformToolGuideMutation{
 			{Tool: "whodb_platform_create", Resources: []string{"dataset"}},
 			{Tool: "whodb_platform_update", Resources: []string{"dataset"}},
 			{Tool: "whodb_platform_delete", Resources: []string{"dataset"}},
+			{Tool: "whodb_platform_create_dataset", Resources: []string{"dataset"}},
 		},
-			"whodb_platform_datasets", "whodb_platform_dataset", "whodb_platform_dataset_rows"),
+			"whodb_platform_datasets", "whodb_platform_dataset", "whodb_platform_dataset_rows", "whodb_platform_create_dataset"),
 		platformToolCategory(toolByName, "lineage", "Project and node lineage graph inspection.", "Use project lineage for broad context and neighbor/root lineage for focused graph expansion.", nil, nil,
 			"whodb_platform_lineage", "whodb_platform_lineage_neighbors", "whodb_platform_project_lineage"),
 		platformToolCategory(toolByName, "transforms", "Transform metadata, runs, and run actions.", "List transforms before run history; run transforms only after explicit user approval.", []string{"id", "name"}, []platformToolGuideMutation{
@@ -943,8 +949,9 @@ func buildPlatformToolGuide(secOpts *SecurityOptions) platformToolGuideResource 
 			{Tool: "whodb_platform_create", Resources: []string{"folder"}},
 			{Tool: "whodb_platform_delete", Resources: []string{"file", "folder"}},
 			{Tool: "whodb_platform_action", Resources: []string{"file", "folder"}, Actions: []string{"upload", "rename", "move", "promote_to_dataset"}},
+			{Tool: "whodb_platform_promote_file_to_dataset", Resources: []string{"file"}},
 		},
-			"whodb_platform_files", "whodb_platform_file_preview", "whodb_platform_file_inspect", "whodb_platform_file_search", "whodb_platform_tabular_files", "whodb_platform_storage_usage"),
+			"whodb_platform_files", "whodb_platform_file_preview", "whodb_platform_file_inspect", "whodb_platform_file_search", "whodb_platform_tabular_files", "whodb_platform_storage_usage", "whodb_platform_promote_file_to_dataset"),
 		platformToolCategory(toolByName, "generic_writes", "Generic hosted create, update, delete, and action tools for supported platform resources.", "Use only after reading current state and obtaining user approval for the exact confirmation preview.", nil, []platformToolGuideMutation{
 			{Tool: "whodb_platform_create", Resources: []string{"secret", "ai_provider", "ontology", "ontology_fast_lookup", "dataset", "transform", "folder", "function", "source_object"}},
 			{Tool: "whodb_platform_update", Resources: []string{"secret", "ai_provider", "ontology", "dataset", "transform", "function", "source_object"}},
@@ -1007,7 +1014,10 @@ func platformToolEnabledForMode(name string, secOpts *SecurityOptions) bool {
 	}
 	switch name {
 	case "whodb_platform_source_create", "whodb_platform_source_update", "whodb_platform_source_delete",
-		"whodb_platform_create", "whodb_platform_update", "whodb_platform_delete", "whodb_platform_action":
+		"whodb_platform_create", "whodb_platform_update", "whodb_platform_delete", "whodb_platform_action",
+		"whodb_platform_create_dataset", "whodb_platform_promote_file_to_dataset",
+		"whodb_platform_add_ontology_record", "whodb_platform_update_ontology_record", "whodb_platform_delete_ontology_record",
+		"whodb_platform_create_ontology_fast_lookup", "whodb_platform_delete_ontology_fast_lookup":
 		return !secOpts.ReadOnly
 	case "whodb_platform_pending", "whodb_platform_confirm":
 		return secOpts.ConfirmWrites
@@ -1920,6 +1930,9 @@ Available tools:
 - whodb_platform_functions / whodb_platform_function: List or inspect ontology functions
 - whodb_platform_files / whodb_platform_file_preview / whodb_platform_file_inspect / whodb_platform_file_search / whodb_platform_tabular_files: Browse project files
 - whodb_platform_storage_usage: Inspect project storage usage
+- whodb_platform_create_dataset / whodb_platform_promote_file_to_dataset: Typed dataset writes
+- whodb_platform_add_ontology_record / whodb_platform_update_ontology_record / whodb_platform_delete_ontology_record: Typed ontology record writes
+- whodb_platform_create_ontology_fast_lookup / whodb_platform_delete_ontology_fast_lookup: Typed ontology fast lookup writes
 - whodb_platform_source_create: Prepare hosted source creation for confirmation
 - whodb_platform_source_update: Prepare hosted source updates for confirmation
 - whodb_platform_source_delete: Prepare hosted source deletion for confirmation

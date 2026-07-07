@@ -249,6 +249,7 @@ func TestTypedPlatformWriteCommandsHaveExamples(t *testing.T) {
 		secretsCreateCmd, secretsUpdateCmd, secretsDeleteCmd,
 		aiProvidersCreateCmd, aiProvidersUpdateCmd, aiProvidersDeleteCmd,
 		datasetsCreateCmd, datasetsUpdateCmd, datasetsDeleteCmd,
+		ontologyFastLookupsCreateCmd, ontologyFastLookupsDeleteCmd,
 		ontologyRecordsAddCmd, ontologyRecordsUpdateCmd, ontologyRecordsDeleteCmd,
 		transformsRunCmd, transformsDeleteCmd,
 		functionsDeployCmd, functionsRedeployCmd, functionsDeleteCmd,
@@ -260,6 +261,19 @@ func TestTypedPlatformWriteCommandsHaveExamples(t *testing.T) {
 		}
 		if !strings.Contains(command.Example, "whodb-cli") {
 			t.Fatalf("%s example = %q, want whodb-cli command", command.CommandPath(), command.Example)
+		}
+	}
+}
+
+func TestPlatformOntologyFastLookupSubcommandsRegistered(t *testing.T) {
+	parent, _, err := rootCmd.Find([]string{"ontologies", "fast-lookups"})
+	if err != nil || parent == nil || parent.Name() != "fast-lookups" {
+		t.Fatalf("fast-lookups command not registered: cmd=%v err=%v", parent, err)
+	}
+	for _, childName := range []string{"create", "delete"} {
+		child, _, err := parent.Find([]string{childName})
+		if err != nil || child == nil || child.Name() != childName {
+			t.Fatalf("fast-lookups subcommand %q not registered: cmd=%v err=%v", childName, child, err)
 		}
 	}
 }
@@ -397,6 +411,31 @@ func TestParseOntologyRecordValues(t *testing.T) {
 	}
 	if _, err := parseOntologyRecordValues([]string{"broken"}); err == nil {
 		t.Fatal("parseOntologyRecordValues() error = nil, want error")
+	}
+}
+
+func TestBuildOntologyFastLookupCreatePayload(t *testing.T) {
+	ontologyFastLookupFields = []string{"id", " email "}
+	ontologyFastLookupReason = "common lookup"
+	t.Cleanup(func() {
+		ontologyFastLookupFields = nil
+		ontologyFastLookupReason = ""
+	})
+	cmd := &cobra.Command{}
+	cmd.Flags().String("reason", "", "")
+	if err := cmd.Flags().Set("reason", "common lookup"); err != nil {
+		t.Fatalf("set reason flag: %v", err)
+	}
+	payload, err := buildOntologyFastLookupCreatePayload(cmd)
+	if err != nil {
+		t.Fatalf("buildOntologyFastLookupCreatePayload() error = %v", err)
+	}
+	fields, ok := payload["fields"].([]string)
+	if !ok || len(fields) != 2 || fields[1] != "email" {
+		t.Fatalf("fields = %#v, want normalized fields", payload["fields"])
+	}
+	if payload["reason"] != "common lookup" {
+		t.Fatalf("reason = %#v, want reason", payload["reason"])
 	}
 }
 

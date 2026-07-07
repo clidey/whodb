@@ -442,7 +442,7 @@ func TestPlatformToolGuideReferencesOnlyListedTools(t *testing.T) {
 			name:               "allow write",
 			opts:               &ServerOptions{PlatformEnabled: true, AllowWrite: true},
 			wantMode:           "allow_write",
-			wantTools:          []string{"whodb_platform_source_create", "whodb_platform_create", "whodb_platform_action"},
+			wantTools:          []string{"whodb_platform_source_create", "whodb_platform_create", "whodb_platform_action", "whodb_platform_create_dataset", "whodb_platform_promote_file_to_dataset"},
 			wantMissingTools:   []string{"whodb_platform_confirm", "whodb_platform_pending"},
 			wantSupportedWrite: true,
 		},
@@ -620,6 +620,13 @@ func TestNewServer_PlatformReadOnlyHidesWriteTools(t *testing.T) {
 		"whodb_platform_update",
 		"whodb_platform_delete",
 		"whodb_platform_action",
+		"whodb_platform_create_dataset",
+		"whodb_platform_promote_file_to_dataset",
+		"whodb_platform_add_ontology_record",
+		"whodb_platform_update_ontology_record",
+		"whodb_platform_delete_ontology_record",
+		"whodb_platform_create_ontology_fast_lookup",
+		"whodb_platform_delete_ontology_fast_lookup",
 		"whodb_platform_confirm",
 		"whodb_platform_pending",
 	} {
@@ -642,6 +649,13 @@ func TestNewServer_PlatformAllowWriteHidesConfirmationTools(t *testing.T) {
 		"whodb_platform_update",
 		"whodb_platform_delete",
 		"whodb_platform_action",
+		"whodb_platform_create_dataset",
+		"whodb_platform_promote_file_to_dataset",
+		"whodb_platform_add_ontology_record",
+		"whodb_platform_update_ontology_record",
+		"whodb_platform_delete_ontology_record",
+		"whodb_platform_create_ontology_fast_lookup",
+		"whodb_platform_delete_ontology_fast_lookup",
 	} {
 		if _, ok := tools[name]; !ok {
 			t.Fatalf("platform allow-write mode did not expose %s", name)

@@ -181,8 +181,8 @@ func testPlatformSession(client platformClient) *platformToolSession {
 
 func TestPlatformToolDefinitions(t *testing.T) {
 	tools := platformToolDefinitions()
-	if len(tools) != 47 {
-		t.Fatalf("len(platformToolDefinitions()) = %d, want 47", len(tools))
+	if len(tools) != 54 {
+		t.Fatalf("len(platformToolDefinitions()) = %d, want 54", len(tools))
 	}
 	for _, tool := range tools {
 		if tool.Annotations == nil {
@@ -549,6 +549,62 @@ func TestHandlePlatformGenericFileUploadAllowWriteExecutesImmediately(t *testing
 	}
 	if output.ResultJSON == "" {
 		t.Fatalf("ResultJSON empty, want uploaded file result")
+	}
+}
+
+func TestHandlePlatformCreateDatasetTypedConfirmWrites(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := handlePlatformCreateDataset(context.Background(), PlatformCreateDatasetInput{
+		Name:       "Customers",
+		SchemaMode: "manual",
+		Columns:    []PlatformDatasetColumnInput{{Name: "id", Type: "text", IsPrimary: true}},
+	}, true)
+	if err != nil {
+		t.Fatalf("handlePlatformCreateDataset() error = %v", err)
+	}
+	if output.Error != "" {
+		t.Fatalf("handlePlatformCreateDataset() output error = %q", output.Error)
+	}
+	if !output.ConfirmationRequired || output.ConfirmationPreview == nil {
+		t.Fatalf("output = %#v, want confirmation preview", output)
+	}
+	if output.ConfirmationPreview.Resource != "dataset" || output.ConfirmationPreview.Action != "create" {
+		t.Fatalf("preview = %#v, want dataset create", output.ConfirmationPreview)
+	}
+	if client.mutationName != "" {
+		t.Fatalf("mutation executed in confirm-writes mode: %q", client.mutationName)
+	}
+}
+
+func TestHandlePlatformOntologyRecordTypedAllowWriteUsesEntityID(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := handlePlatformOntologyRecordWrite(context.Background(), "whodb_platform_add_ontology_record", PlatformOntologyRecordInput{
+		EntityID: "ontology-1",
+		Values:   map[string]string{"id": "1", "name": "Ada"},
+	}, "add_record", false)
+	if err != nil {
+		t.Fatalf("handlePlatformOntologyRecordWrite() error = %v", err)
+	}
+	if output.Error != "" {
+		t.Fatalf("handlePlatformOntologyRecordWrite() output error = %q", output.Error)
+	}
+	if client.mutationName != "OntologyAddRow" {
+		t.Fatalf("mutation = %q, want OntologyAddRow", client.mutationName)
+	}
+	if client.mutationVariables["projectId"] != "proj-1" || client.mutationVariables["entityId"] != "ontology-1" {
+		t.Fatalf("variables = %#v, want projectId/entityId", client.mutationVariables)
+	}
+	values, ok := client.mutationVariables["values"].([]any)
+	if !ok || len(values) != 2 {
+		t.Fatalf("values = %#v, want record input values", client.mutationVariables["values"])
 	}
 }
 
