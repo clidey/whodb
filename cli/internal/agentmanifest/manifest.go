@@ -91,20 +91,28 @@ type MCPResource struct {
 	MIMEType    string `json:"mime_type"`
 }
 
+// MCPResourceTemplate describes one MCP resource template exposed by the WhoDB MCP server.
+type MCPResourceTemplate struct {
+	URITemplate string `json:"uri_template"`
+	Description string `json:"description"`
+	MIMEType    string `json:"mime_type"`
+}
+
 // PlatformMCP describes hosted-platform MCP mode for agent consumers.
 type PlatformMCP struct {
-	EnabledByFlag           string           `json:"enabled_by_flag"`
-	RequiresLogin           bool             `json:"requires_login"`
-	RequiresWorkspace       bool             `json:"requires_workspace"`
-	DefaultHost             string           `json:"default_host"`
-	ToolPrefix              string           `json:"tool_prefix"`
-	LocalToolsExposed       bool             `json:"local_tools_exposed"`
-	SupportsFields          bool             `json:"supports_fields_projection"`
-	LocalToolSelectionFlags []string         `json:"local_tool_selection_flags"`
-	SetupCommands           []string         `json:"setup_commands"`
-	WriteModes              PlatformMCPModes `json:"write_modes"`
-	Prompts                 []MCPPrompt      `json:"prompts"`
-	Resources               []MCPResource    `json:"resources"`
+	EnabledByFlag           string                `json:"enabled_by_flag"`
+	RequiresLogin           bool                  `json:"requires_login"`
+	RequiresWorkspace       bool                  `json:"requires_workspace"`
+	DefaultHost             string                `json:"default_host"`
+	ToolPrefix              string                `json:"tool_prefix"`
+	LocalToolsExposed       bool                  `json:"local_tools_exposed"`
+	SupportsFields          bool                  `json:"supports_fields_projection"`
+	LocalToolSelectionFlags []string              `json:"local_tool_selection_flags"`
+	SetupCommands           []string              `json:"setup_commands"`
+	WriteModes              PlatformMCPModes      `json:"write_modes"`
+	Prompts                 []MCPPrompt           `json:"prompts"`
+	Resources               []MCPResource         `json:"resources"`
+	ResourceTemplates       []MCPResourceTemplate `json:"resource_templates"`
 }
 
 // PlatformMCPModes describes hosted-platform write behavior by MCP mode.
@@ -263,6 +271,7 @@ func buildMCPTools() []MCPTool {
 		{Name: "whodb_platform_lineage_neighbors", Description: "Inspect immediate hosted lineage neighbors when MCP starts with --platform.", ReadOnly: true},
 		{Name: "whodb_platform_project_lineage", Description: "Inspect hosted project-level lineage when MCP starts with --platform.", ReadOnly: true},
 		{Name: "whodb_platform_transforms", Description: "List hosted transforms when MCP starts with --platform; accepts fields for projection.", ReadOnly: true},
+		{Name: "whodb_platform_transform", Description: "Inspect one hosted transform when MCP starts with --platform; accepts fields for projection.", ReadOnly: true},
 		{Name: "whodb_platform_transform_runs", Description: "List recent runs for one hosted transform when MCP starts with --platform.", ReadOnly: true},
 		{Name: "whodb_platform_functions", Description: "List hosted ontology functions when MCP starts with --platform; accepts fields for projection.", ReadOnly: true},
 		{Name: "whodb_platform_function", Description: "Inspect one hosted ontology function when MCP starts with --platform; request file content fields only when needed.", ReadOnly: true},
@@ -332,6 +341,13 @@ func buildPlatformMCP() PlatformMCP {
 			{URI: "whodb://platform/schema", Description: "Machine-readable hosted WhoDB platform MCP contract and enabled platform tools", MIMEType: "application/json"},
 			{URI: "whodb://platform/workspace", Description: "Current hosted WhoDB login and selected workspace metadata", MIMEType: "application/json"},
 			{URI: "whodb://platform/tool-guide", Description: "Hosted WhoDB platform MCP tool categories, read/write behavior, and field projection guidance", MIMEType: "application/json"},
+		},
+		ResourceTemplates: []MCPResourceTemplate{
+			{URITemplate: "whodb://platform/datasets/{id}", Description: "Read one hosted dataset from the selected project", MIMEType: "application/json"},
+			{URITemplate: "whodb://platform/ontologies/{id}", Description: "Read one hosted ontology from the selected project", MIMEType: "application/json"},
+			{URITemplate: "whodb://platform/transforms/{id}", Description: "Read one hosted transform from the selected project", MIMEType: "application/json"},
+			{URITemplate: "whodb://platform/functions/{id}", Description: "Read one hosted function from the selected project", MIMEType: "application/json"},
+			{URITemplate: "whodb://platform/files/{id}/preview", Description: "Preview one hosted project file from the selected project", MIMEType: "application/json"},
 		},
 	}
 }

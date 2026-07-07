@@ -329,6 +329,7 @@ type ProjectFolder struct {
 	Name      string  `json:"name"`
 	CreatedBy string  `json:"createdBy"`
 	CreatedAt string  `json:"createdAt"`
+	Path      string  `json:"path,omitempty"`
 }
 
 // ProjectFile describes one hosted project file.
@@ -349,6 +350,8 @@ type ProjectFile struct {
 	Content     string  `json:"content,omitempty"`
 	ContentType string  `json:"contentType,omitempty"`
 	Truncated   bool    `json:"truncated,omitempty"`
+	Path        string  `json:"path,omitempty"`
+	FolderPath  string  `json:"folderPath,omitempty"`
 }
 
 // FolderContents describes a hosted project folder listing.

@@ -373,6 +373,7 @@ func executePlatformBundlePlan(ctx context.Context, session *platformToolSession
 			rows = append(rows, []any{action.Resource, action.Name, action.Action, action.Reason, action.TargetID})
 			continue
 		}
+		platformapi.ApplyBundleDependencyMap(action, dependencies)
 		if action.Resource == "file" {
 			file, err := uploadPlatformBundleFileAction(ctx, session, action)
 			if err != nil {
@@ -386,8 +387,7 @@ func executePlatformBundlePlan(ctx context.Context, session *platformToolSession
 			rows = append(rows, []any{action.Resource, action.Name, action.Action, action.Reason, action.TargetID})
 			continue
 		}
-		platformapi.ApplyBundleDependencyMap(action, dependencies)
-		raw, err := json.Marshal(action.Payload)
+		raw, err := json.Marshal(platformapi.BundleMutationPayload(action))
 		if err != nil {
 			action.Action = "failed"
 			action.Reason = err.Error()
@@ -445,7 +445,11 @@ func uploadPlatformBundleFileAction(ctx context.Context, session *platformToolSe
 	if err := os.WriteFile(path, []byte(content), 0600); err != nil {
 		return nil, err
 	}
-	return session.Client.UploadProjectFile(ctx, session.Host.DefaultProjectID, nil, path)
+	folderID, _ := action.Payload["folderId"].(string)
+	if strings.TrimSpace(folderID) == "" {
+		return session.Client.UploadProjectFile(ctx, session.Host.DefaultProjectID, nil, path)
+	}
+	return session.Client.UploadProjectFile(ctx, session.Host.DefaultProjectID, &folderID, path)
 }
 
 func platformMutationResultID(result *platformapi.PlatformMutationResult) string {

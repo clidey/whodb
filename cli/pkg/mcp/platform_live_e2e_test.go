@@ -268,6 +268,10 @@ func TestPlatformMCP_RealReadWriteLifecycle(t *testing.T) {
 		ID:          transformID,
 		PayloadJSON: liveJSON(t, map[string]any{"name": "mcp-e2e-transform-updated-" + suffix, "description": "updated", "graphJson": `{"nodes":[],"edges":[]}`, "scheduleCron": "", "triggerMode": "manual"}),
 	})
+	liveMustReadEntity(t, ctx, "transform", transformID, func() (string, error) {
+		_, out, err := HandlePlatformTransform(ctx, nil, PlatformEntityInput{ID: transformID, Fields: []string{"data", "scope"}})
+		return out.Error, err
+	})
 	liveMustGenericWrite(t, ctx, "platform_action", "action", PlatformGenericWriteInput{
 		Resource: "transform",
 		Action:   "run",
@@ -278,6 +282,7 @@ func TestPlatformMCP_RealReadWriteLifecycle(t *testing.T) {
 		return out.Error, err
 	})
 	liveCoverTool("whodb_platform_transforms")
+	liveCoverTool("whodb_platform_transform")
 	liveCoverTool("whodb_platform_transform_runs")
 
 	targetOntologyID := liveMustGenericWriteID(t, ctx, "platform_create", "create", PlatformGenericWriteInput{

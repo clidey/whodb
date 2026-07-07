@@ -608,6 +608,32 @@ func TestAgentManifestIncludesPlatformMCPPromptsAndResources(t *testing.T) {
 			t.Fatalf("platform resource %s MIME type = %q, want %q", resource.URI, listed.MIMEType, resource.MIMEType)
 		}
 	}
+
+	listedTemplates := listServerResourceTemplates(t, server).ResourceTemplates
+	if len(manifest.PlatformMCP.ResourceTemplates) != len(listedTemplates) {
+		t.Fatalf("agent manifest has %d platform resource templates, want %d", len(manifest.PlatformMCP.ResourceTemplates), len(listedTemplates))
+	}
+	for _, template := range manifest.PlatformMCP.ResourceTemplates {
+		if !strings.HasPrefix(template.URITemplate, "whodb://platform/") {
+			t.Fatalf("platform resource template %s does not use platform URI prefix", template.URITemplate)
+		}
+		if strings.TrimSpace(template.Description) == "" {
+			t.Fatalf("agent manifest platform resource template %s has empty description", template.URITemplate)
+		}
+		if template.MIMEType != "application/json" {
+			t.Fatalf("agent manifest platform resource template %s MIME type = %q, want application/json", template.URITemplate, template.MIMEType)
+		}
+		listed := findResourceTemplateByURI(listedTemplates, template.URITemplate)
+		if listed == nil {
+			t.Fatalf("agent manifest platform resource template %s is not listed by MCP server", template.URITemplate)
+		}
+		if listed.Description != template.Description {
+			t.Fatalf("platform resource template %s description = %q, want %q", template.URITemplate, listed.Description, template.Description)
+		}
+		if listed.MIMEType != template.MIMEType {
+			t.Fatalf("platform resource template %s MIME type = %q, want %q", template.URITemplate, listed.MIMEType, template.MIMEType)
+		}
+	}
 }
 
 func TestNewServer_PlatformReadOnlyHidesWriteTools(t *testing.T) {
@@ -795,6 +821,24 @@ func readServerResource(t *testing.T, server *mcpsdk.Server, uri string) *mcpsdk
 	return result
 }
 
+func listServerResourceTemplates(t *testing.T, server *mcpsdk.Server) *mcpsdk.ListResourceTemplatesResult {
+	t.Helper()
+	ctx := context.Background()
+	clientSession, serverSession := connectTestMCP(t, ctx, server)
+	t.Cleanup(func() {
+		_ = clientSession.Close()
+		_ = serverSession.Close()
+	})
+	result, err := clientSession.ListResourceTemplates(ctx, nil)
+	if err != nil {
+		t.Fatalf("ListResourceTemplates() error = %v", err)
+	}
+	if len(result.ResourceTemplates) == 0 {
+		t.Fatal("ListResourceTemplates() returned no resource templates")
+	}
+	return result
+}
+
 func connectTestMCP(t *testing.T, ctx context.Context, server *mcpsdk.Server) (*mcpsdk.ClientSession, *mcpsdk.ServerSession) {
 	t.Helper()
 	clientTransport, serverTransport := mcpsdk.NewInMemoryTransports()
@@ -844,6 +888,15 @@ func findResourceByURI(resources []*mcpsdk.Resource, uri string) *mcpsdk.Resourc
 	for _, resource := range resources {
 		if resource.URI == uri {
 			return resource
+		}
+	}
+	return nil
+}
+
+func findResourceTemplateByURI(templates []*mcpsdk.ResourceTemplate, uri string) *mcpsdk.ResourceTemplate {
+	for _, template := range templates {
+		if template.URITemplate == uri {
+			return template
 		}
 	}
 	return nil

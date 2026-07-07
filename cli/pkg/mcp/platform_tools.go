@@ -484,6 +484,7 @@ type PlatformActionPreview struct {
 	SourceName  string   `json:"source_name,omitempty"`
 	SourceType  string   `json:"source_type,omitempty"`
 	Changes     []string `json:"changes,omitempty"`
+	WillAffect  []string `json:"will_affect,omitempty"`
 }
 
 // PendingPlatformAction stores a hosted platform write awaiting confirmation.
@@ -2012,6 +2013,7 @@ func (action *PendingPlatformAction) Preview() *PlatformActionPreview {
 		return nil
 	}
 	changes := append([]string(nil), action.Changes...)
+	willAffect := platformActionWillAffect(action, changes)
 	return &PlatformActionPreview{
 		Operation:   action.Operation,
 		Resource:    action.Resource,
@@ -2025,7 +2027,33 @@ func (action *PendingPlatformAction) Preview() *PlatformActionPreview {
 		SourceName:  action.SourceName,
 		SourceType:  action.SourceType,
 		Changes:     changes,
+		WillAffect:  willAffect,
 	}
+}
+
+func platformActionWillAffect(action *PendingPlatformAction, changes []string) []string {
+	if action == nil {
+		return nil
+	}
+	targets := make([]string, 0, 3+len(changes))
+	if strings.TrimSpace(action.ProjectName) != "" {
+		targets = append(targets, "project "+action.ProjectName)
+	} else if strings.TrimSpace(action.ProjectID) != "" {
+		targets = append(targets, "project "+action.ProjectID)
+	}
+	if strings.TrimSpace(action.Resource) != "" {
+		target := action.Resource
+		if strings.TrimSpace(action.SourceName) != "" {
+			target += " " + action.SourceName
+		}
+		targets = append(targets, target)
+	}
+	for _, change := range changes {
+		if strings.TrimSpace(change) != "" {
+			targets = append(targets, change)
+		}
+	}
+	return targets
 }
 
 func platformSourceConfigChangeNames(values, advanced map[string]string) []string {

@@ -221,6 +221,10 @@ func registerPlatformReadTool(server *mcp.Server, tool *mcp.Tool, secOpts *Secur
 		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformTransforms(ctx, req, input)
 		})
+	case "whodb_platform_transform":
+		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformEntityInput) (*mcp.CallToolResult, any, error) {
+			return HandlePlatformTransform(ctx, req, input)
+		})
 	case "whodb_platform_transform_runs":
 		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformTransformRunsInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformTransformRuns(ctx, req, input)
@@ -280,6 +284,7 @@ func platformReadToolDefinitions() []*mcp.Tool {
 		{Name: "whodb_platform_lineage_neighbors", Description: descPlatformLineageNeighbors, Annotations: platformReadOnlyAnnotations("Inspect Hosted Lineage Neighbors")},
 		{Name: "whodb_platform_project_lineage", Description: descPlatformProjectLineage, Annotations: platformReadOnlyAnnotations("Inspect Hosted Project Lineage")},
 		{Name: "whodb_platform_transforms", Description: descPlatformTransforms, Annotations: platformReadOnlyAnnotations("List Hosted Transforms")},
+		{Name: "whodb_platform_transform", Description: descPlatformTransform, Annotations: platformReadOnlyAnnotations("Inspect Hosted Transform")},
 		{Name: "whodb_platform_transform_runs", Description: descPlatformTransformRuns, Annotations: platformReadOnlyAnnotations("List Hosted Transform Runs")},
 		{Name: "whodb_platform_functions", Description: descPlatformFunctions, Annotations: platformReadOnlyAnnotations("List Hosted Functions")},
 		{Name: "whodb_platform_function", Description: descPlatformFunction, Annotations: platformReadOnlyAnnotations("Inspect Hosted Function")},
@@ -463,6 +468,14 @@ func HandlePlatformTransforms(ctx context.Context, req *mcp.CallToolRequest, inp
 			return platformReadMatchesSubstring(transform.Name, input.Name) && platformReadMatchesEqual(transform.TriggerMode, input.Type)
 		})
 		return transforms, len(transforms), false, err
+	})
+}
+
+// HandlePlatformTransform returns one hosted transform.
+func HandlePlatformTransform(ctx context.Context, req *mcp.CallToolRequest, input PlatformEntityInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
+	return platformIDRead(ctx, "platform_transform", input.ID, input.Fields, func(ctx context.Context, session *platformToolSession, id string) (any, int, bool, error) {
+		transform, err := platformapi.ResolveTransform(ctx, session.Client, session.Host.DefaultProjectID, id)
+		return transform, 1, false, err
 	})
 }
 
@@ -810,6 +823,8 @@ const descPlatformLineageNeighbors = `Return immediate lineage neighbors for one
 const descPlatformProjectLineage = `Return project-level lineage for the selected hosted project.`
 
 const descPlatformTransforms = `List transforms in the selected hosted project. Use name and type filters when known; type maps to trigger mode for this tool.`
+
+const descPlatformTransform = `Inspect one transform in the selected hosted project. Use fields to request only the top-level fields needed for the current task.`
 
 const descPlatformTransformRuns = `List recent runs for one hosted transform.`
 

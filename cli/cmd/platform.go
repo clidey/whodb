@@ -1357,10 +1357,13 @@ func init() {
 	rootCmd.AddCommand(filesCmd)
 	rootCmd.AddCommand(foldersCmd)
 	rootCmd.AddCommand(resourcesCmd)
+	rootCmd.AddCommand(backupProjectCmd)
+	rootCmd.AddCommand(restoreProjectCmd)
+	rootCmd.AddCommand(cloneProjectCmd)
 	rootCmd.AddCommand(useCmd)
 	rootCmd.AddCommand(workspaceCmd)
 
-	for _, command := range []*cobra.Command{loginCmd, logoutCmd, whoamiCmd, manifestCmd, statusCmd, capabilitiesCmd, orgsCmd, projectsCmd, sourcesCmd, secretsCmd, aiProvidersCmd, ontologiesCmd, datasetsCmd, lineageCmd, transformsCmd, functionsCmd, filesCmd, foldersCmd, resourcesCmd, useCmd, workspaceCmd} {
+	for _, command := range []*cobra.Command{loginCmd, logoutCmd, whoamiCmd, manifestCmd, statusCmd, capabilitiesCmd, orgsCmd, projectsCmd, sourcesCmd, secretsCmd, aiProvidersCmd, ontologiesCmd, datasetsCmd, lineageCmd, transformsCmd, functionsCmd, filesCmd, foldersCmd, resourcesCmd, backupProjectCmd, restoreProjectCmd, cloneProjectCmd, useCmd, workspaceCmd} {
 		command.PersistentFlags().StringVar(&platformHost, "host", "", "hosted WhoDB URL (default app.whodb.com)")
 		command.PersistentFlags().StringVarP(&platformFormat, "format", "f", "auto", "output format: auto, table, plain, json, ndjson, csv")
 		command.PersistentFlags().BoolVarP(&platformQuiet, "quiet", "q", false, "suppress informational messages")
@@ -1414,6 +1417,27 @@ func init() {
 	workspaceCmd.AddCommand(workspaceShowCmd, workspaceClearCmd, workspaceSwitchCmd)
 	workspaceSwitchCmd.Flags().StringVar(&useOrg, "org", "", "organization id, slug, or name")
 	workspaceSwitchCmd.Flags().StringVar(&useProject, "project", "", "project id, slug, or name")
+	for _, command := range []*cobra.Command{backupProjectCmd, restoreProjectCmd, cloneProjectCmd} {
+		command.Flags().StringVar(&platformResourceOrg, "org", "", "source organization id, slug, or name (defaults to selected organization)")
+		command.Flags().StringVar(&platformResourceProject, "project", "", "source project id, slug, or name (defaults to selected project)")
+	}
+	backupProjectCmd.Flags().StringVar(&platformExportOutPath, "out", "", "destination path; omitted writes JSON to stdout")
+	backupProjectCmd.Flags().BoolVar(&platformBundleIncludeFiles, "include-files", false, "include previewable uploaded file content in the bundle")
+	backupProjectCmd.Flags().IntVar(&platformBundleMaxFileBytes, "max-file-bytes", 1<<20, "maximum bytes to include per uploaded file when --include-files is set")
+	restoreProjectCmd.Flags().StringVar(&platformBundlePath, "file", "", "project bundle JSON file")
+	restoreProjectCmd.Flags().BoolVar(&platformImportDryRun, "dry-run", false, "show the import plan without writing")
+	restoreProjectCmd.Flags().StringVar(&platformBundlePrefix, "prefix", "", "prefix added to imported resource names")
+	restoreProjectCmd.Flags().BoolVar(&platformRenameConflicts, "rename-conflicts", false, "create unique names for resources that conflict with existing resources")
+	restoreProjectCmd.Flags().BoolVar(&platformOverwriteConflicts, "overwrite-conflicts", false, "update resources that conflict with existing resources")
+	restoreProjectCmd.Flags().BoolVarP(&platformWriteYes, "yes", "y", false, "run the restore without prompting")
+	cloneProjectCmd.Flags().StringVar(&platformBundleToOrg, "to-org", "", "target organization id, slug, or name (defaults to selected organization)")
+	cloneProjectCmd.Flags().StringVar(&platformBundleToProject, "to-project", "", "target project id, slug, or name")
+	cloneProjectCmd.Flags().StringVar(&platformBundlePrefix, "prefix", "", "prefix added to cloned resource names")
+	cloneProjectCmd.Flags().BoolVar(&platformRenameConflicts, "rename-conflicts", false, "create unique names for resources that conflict with existing resources")
+	cloneProjectCmd.Flags().BoolVar(&platformOverwriteConflicts, "overwrite-conflicts", false, "update resources that conflict with existing resources")
+	cloneProjectCmd.Flags().BoolVar(&platformBundleIncludeFiles, "include-files", false, "include previewable uploaded file content in the bundle")
+	cloneProjectCmd.Flags().IntVar(&platformBundleMaxFileBytes, "max-file-bytes", 1<<20, "maximum bytes to include per uploaded file when --include-files is set")
+	cloneProjectCmd.Flags().BoolVarP(&platformWriteYes, "yes", "y", false, "run the clone without first printing the plan")
 }
 
 func registerSourceInputFlags(command *cobra.Command, includeName bool, includeType bool) {

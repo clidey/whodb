@@ -706,14 +706,15 @@ func registerPlatformResources(server *mcp.Server, secOpts *SecurityOptions) {
 			}
 		}
 		return jsonResource("whodb://platform/schema", platformSchemaResource{
-			Name:          manifest.Name,
-			Version:       manifest.Version,
-			PlatformMCP:   manifest.PlatformMCP,
-			Tools:         tools,
-			Resources:     manifest.PlatformMCP.Resources,
-			Prompts:       manifest.PlatformMCP.Prompts,
-			WriteSpecs:    buildPlatformWriteSpecResources(),
-			PayloadShapes: buildPlatformPayloadShapeResources(),
+			Name:              manifest.Name,
+			Version:           manifest.Version,
+			PlatformMCP:       manifest.PlatformMCP,
+			Tools:             tools,
+			Resources:         manifest.PlatformMCP.Resources,
+			ResourceTemplates: manifest.PlatformMCP.ResourceTemplates,
+			Prompts:           manifest.PlatformMCP.Prompts,
+			WriteSpecs:        buildPlatformWriteSpecResources(),
+			PayloadShapes:     buildPlatformPayloadShapeResources(),
 		})
 	})
 
@@ -738,17 +739,78 @@ func registerPlatformResources(server *mcp.Server, secOpts *SecurityOptions) {
 	}, func(ctx context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
 		return jsonResource("whodb://platform/tool-guide", buildPlatformToolGuide(secOpts))
 	})
+
+	for _, template := range platformResourceTemplates() {
+		server.AddResourceTemplate(template, readPlatformTemplatedResource)
+	}
+}
+
+func platformResourceTemplates() []*mcp.ResourceTemplate {
+	return []*mcp.ResourceTemplate{
+		{Name: "platform-dataset", URITemplate: "whodb://platform/datasets/{id}", Description: "Read one hosted dataset from the selected project", MIMEType: "application/json"},
+		{Name: "platform-ontology", URITemplate: "whodb://platform/ontologies/{id}", Description: "Read one hosted ontology from the selected project", MIMEType: "application/json"},
+		{Name: "platform-transform", URITemplate: "whodb://platform/transforms/{id}", Description: "Read one hosted transform from the selected project", MIMEType: "application/json"},
+		{Name: "platform-function", URITemplate: "whodb://platform/functions/{id}", Description: "Read one hosted function from the selected project", MIMEType: "application/json"},
+		{Name: "platform-file-preview", URITemplate: "whodb://platform/files/{id}/preview", Description: "Preview one hosted project file from the selected project", MIMEType: "application/json"},
+	}
+}
+
+func readPlatformTemplatedResource(ctx context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
+	uri := req.Params.URI
+	kind, id, ok := parsePlatformResourceTemplateURI(uri)
+	if !ok {
+		return jsonResource(uri, PlatformReadOutput{Error: "unsupported platform resource URI"})
+	}
+	var output PlatformReadOutput
+	var err error
+	switch kind {
+	case "datasets":
+		_, output, err = HandlePlatformDataset(ctx, nil, PlatformEntityInput{ID: id})
+	case "ontologies":
+		_, output, err = HandlePlatformOntology(ctx, nil, PlatformEntityInput{ID: id})
+	case "transforms":
+		_, output, err = HandlePlatformTransform(ctx, nil, PlatformEntityInput{ID: id})
+	case "functions":
+		_, output, err = HandlePlatformFunction(ctx, nil, PlatformEntityInput{ID: id})
+	case "files":
+		_, output, err = HandlePlatformFilePreview(ctx, nil, PlatformFilePreviewInput{FileID: id})
+	default:
+		return jsonResource(uri, PlatformReadOutput{Error: "unsupported platform resource kind"})
+	}
+	if err != nil {
+		return nil, err
+	}
+	return jsonResource(uri, output)
+}
+
+func parsePlatformResourceTemplateURI(uri string) (string, string, bool) {
+	rest := strings.TrimPrefix(uri, "whodb://platform/")
+	if rest == uri {
+		return "", "", false
+	}
+	parts := strings.Split(rest, "/")
+	if len(parts) == 2 && strings.TrimSpace(parts[1]) != "" {
+		switch parts[0] {
+		case "datasets", "ontologies", "transforms", "functions":
+			return parts[0], parts[1], true
+		}
+	}
+	if len(parts) == 3 && parts[0] == "files" && parts[2] == "preview" && strings.TrimSpace(parts[1]) != "" {
+		return parts[0], parts[1], true
+	}
+	return "", "", false
 }
 
 type platformSchemaResource struct {
-	Name          string                         `json:"name"`
-	Version       string                         `json:"version"`
-	PlatformMCP   agentmanifest.PlatformMCP      `json:"platform_mcp"`
-	Tools         []agentmanifest.MCPTool        `json:"tools"`
-	Resources     []agentmanifest.MCPResource    `json:"resources"`
-	Prompts       []agentmanifest.MCPPrompt      `json:"prompts"`
-	WriteSpecs    []platformWriteSpecResource    `json:"write_specs"`
-	PayloadShapes []platformPayloadShapeResource `json:"payload_shapes"`
+	Name              string                              `json:"name"`
+	Version           string                              `json:"version"`
+	PlatformMCP       agentmanifest.PlatformMCP           `json:"platform_mcp"`
+	Tools             []agentmanifest.MCPTool             `json:"tools"`
+	Resources         []agentmanifest.MCPResource         `json:"resources"`
+	ResourceTemplates []agentmanifest.MCPResourceTemplate `json:"resource_templates"`
+	Prompts           []agentmanifest.MCPPrompt           `json:"prompts"`
+	WriteSpecs        []platformWriteSpecResource         `json:"write_specs"`
+	PayloadShapes     []platformPayloadShapeResource      `json:"payload_shapes"`
 }
 
 type platformWriteSpecResource struct {
@@ -941,7 +1003,7 @@ func buildPlatformToolGuide(secOpts *SecurityOptions) platformToolGuideResource 
 			{Tool: "whodb_platform_delete", Resources: []string{"transform"}},
 			{Tool: "whodb_platform_action", Resources: []string{"transform"}, Actions: []string{"run"}},
 		},
-			"whodb_platform_transforms", "whodb_platform_transform_runs"),
+			"whodb_platform_transforms", "whodb_platform_transform", "whodb_platform_transform_runs"),
 		platformToolCategory(toolByName, "functions", "Function metadata, function files, deploy and redeploy actions.", "List functions with narrow fields; request files/content only when needed.", []string{"id", "name"}, []platformToolGuideMutation{
 			{Tool: "whodb_platform_create", Resources: []string{"function"}},
 			{Tool: "whodb_platform_update", Resources: []string{"function"}},

@@ -167,7 +167,7 @@ func BuildProjectBundleWithOptions(ctx context.Context, client BundleClient, hos
 		"AI provider API keys are not exported. Import reads provider keys from WHODB_IMPORT_AI_PROVIDER_KEY_<PROVIDER_NAME> environment variables.",
 	}
 	if options.IncludeFiles {
-		notes = append(notes, "Previewable uploaded file content is included up to the configured size cap. Imported files are uploaded into the target project root.")
+		notes = append(notes, "Previewable uploaded file content is included up to the configured size cap. Imported files preserve exported folder paths when imported.")
 	} else {
 		notes = append(notes, "Uploaded file bytes are not exported. File metadata is included for planning only.")
 	}
@@ -244,10 +244,14 @@ func PlanBundleImportWithOptions(ctx context.Context, client BundleClient, host 
 	ontologyNames := resourceNamesBy(currentOntologies, func(ontology Ontology) string { return ontology.APIName })
 	transformNames := resourceNamesBy(currentTransforms, func(transform Transform) string { return transform.Name })
 	functionNames := resourceNamesBy(currentFunctions, func(fn Function) string { return fn.Name })
-	fileNames := resourceNames{}
+	folderPaths := resourceNames{}
+	filePaths := resourceNames{}
 	for _, entry := range currentTree {
-		if entry.Kind == "file" {
-			fileNames.add(entry.File.Name, entry.File.ID)
+		switch entry.Kind {
+		case "folder":
+			folderPaths.add(bundleFolderPath(entry.Folder), entry.Folder.ID)
+		case "file":
+			filePaths.add(bundleFilePath(entry.File), entry.File.ID)
 		}
 	}
 	if options.Getenv == nil {
@@ -440,15 +444,43 @@ func PlanBundleImportWithOptions(ctx context.Context, client BundleClient, host 
 		plan.Actions = append(plan.Actions, action)
 	}
 	for _, folder := range bundle.Folders {
-		plan.Actions = append(plan.Actions, BundleAction{Resource: "folder", Name: folder.Name, Action: "skip", Reason: "folder metadata import is not implemented in v1"})
+		name := bundleTargetName(folder.Name, options.Prefix)
+		path := bundleTargetFolderPath(folder, options.Prefix)
+		action := BundleAction{Resource: "folder", SourceID: folder.ID, Name: name}
+		if existing, ok := folderPaths.lookup(path); ok && !options.RenameConflicts {
+			action.Action = "skip"
+			action.TargetID = existing
+			action.Reason = "folder already exists"
+			action.Impacts = append(action.Impacts, "Existing folder path "+path+" will be reused by imported files.")
+		} else {
+			if options.RenameConflicts {
+				pathNames := resourceNames{}
+				for key, id := range folderPaths {
+					pathNames.add(key, id)
+				}
+				path = uniqueResourceName(path, pathNames)
+				name = pathBase(path)
+				action.Name = name
+				action.Impacts = append(action.Impacts, "Folder path will be renamed to avoid a target-project conflict.")
+			}
+			action.Action = "create"
+			action.Payload = map[string]any{"name": name, "path": path}
+			if folder.ParentID != nil {
+				action.Payload["parentId"] = *folder.ParentID
+			}
+			action.Impacts = append(action.Impacts, "Folder path "+path+" will be created before dependent files.")
+			folderPaths.add(path, folder.ID)
+		}
+		plan.Actions = append(plan.Actions, action)
 	}
 	for _, file := range bundle.Files {
 		name := bundleTargetName(file.Name, options.Prefix)
 		action := BundleAction{Resource: "file", SourceID: file.ID, Name: name}
+		path := bundleTargetFilePath(file, options.Prefix)
 		if strings.TrimSpace(file.Content) == "" {
 			action.Action = "skip"
 			action.Reason = "file bytes are not included in bundle"
-		} else if existing, ok := fileNames.lookup(name); ok && !options.RenameConflicts {
+		} else if existing, ok := filePaths.lookup(path); ok && !options.RenameConflicts {
 			action.Action = "skip"
 			action.TargetID = existing
 			action.Reason = "file already exists"
@@ -459,13 +491,21 @@ func PlanBundleImportWithOptions(ctx context.Context, client BundleClient, host 
 			}
 		} else {
 			if options.RenameConflicts {
-				name = uniqueResourceName(name, fileNames)
+				pathNames := resourceNames{}
+				for key, id := range filePaths {
+					pathNames.add(key, id)
+				}
+				path = uniqueResourceName(path, pathNames)
+				name = pathBase(path)
 				action.Name = name
 				action.Impacts = append(action.Impacts, "File will be renamed to avoid a target-project conflict.")
 			}
 			action.Action = "create"
-			action.Payload = map[string]any{"name": name, "content": file.Content}
-			action.Impacts = append(action.Impacts, "File content will be uploaded into the target project root.")
+			action.Payload = map[string]any{"name": name, "path": path, "folderPath": pathDir(path), "content": file.Content}
+			if file.FolderID != nil {
+				action.Payload["folderId"] = *file.FolderID
+			}
+			action.Impacts = append(action.Impacts, "File content will be uploaded to "+path+".")
 			if file.Truncated {
 				action.Impacts = append(action.Impacts, "Exported file content was truncated by the bundle size cap.")
 			}
@@ -728,6 +768,18 @@ func ApplyBundleDependencyMap(action *BundleAction, dependencies BundleDependenc
 		return
 	}
 	switch action.Resource {
+	case "folder":
+		if parentID, ok := action.Payload["parentId"].(string); ok && parentID != "" {
+			if targetID := dependencies[parentID]; targetID != "" {
+				action.Payload["parentId"] = targetID
+			}
+		}
+	case "file":
+		if folderID, ok := action.Payload["folderId"].(string); ok && folderID != "" {
+			if targetID := dependencies[folderID]; targetID != "" {
+				action.Payload["folderId"] = targetID
+			}
+		}
 	case "transform":
 		if graphJSON, ok := action.Payload["graphJson"].(string); ok && graphJSON != "" {
 			action.Payload["graphJson"] = replaceKnownIDs(graphJSON, dependencies)
@@ -748,6 +800,23 @@ func AddBundleDependencyMapping(dependencies BundleDependencyMap, sourceID, targ
 	if sourceID != "" && targetID != "" {
 		dependencies[sourceID] = targetID
 	}
+}
+
+// BundleMutationPayload returns a copy of an import action payload suitable for GraphQL mutations.
+func BundleMutationPayload(action *BundleAction) map[string]any {
+	if action == nil || len(action.Payload) == 0 {
+		return nil
+	}
+	payload := make(map[string]any, len(action.Payload))
+	for key, value := range action.Payload {
+		switch key {
+		case "path", "folderPath", "content", "contentType":
+			continue
+		default:
+			payload[key] = value
+		}
+	}
+	return payload
 }
 
 func replaceKnownIDs(value string, dependencies BundleDependencyMap) string {
@@ -992,8 +1061,8 @@ func resolveNamedResource[T any](value, resource string, values []T, identity fu
 
 func loadBundleFolderTree(ctx context.Context, client BundleClient, projectID string) ([]bundleTreeEntry, error) {
 	var tree []bundleTreeEntry
-	var walk func(string) error
-	walk = func(folderID string) error {
+	var walk func(string, string) error
+	walk = func(folderID, parentPath string) error {
 		contents, err := client.FolderContents(ctx, projectID, folderID, nil)
 		if err != nil {
 			return err
@@ -1002,20 +1071,105 @@ func loadBundleFolderTree(ctx context.Context, client BundleClient, projectID st
 			return nil
 		}
 		for _, folder := range contents.Folders {
+			folder.Path = joinBundlePath(parentPath, folder.Name)
 			tree = append(tree, bundleTreeEntry{Kind: "folder", Folder: folder})
-			if err := walk(folder.ID); err != nil {
+			if err := walk(folder.ID, folder.Path); err != nil {
 				return err
 			}
 		}
 		for _, file := range contents.Files {
+			file.FolderPath = parentPath
+			file.Path = joinBundlePath(parentPath, file.Name)
 			tree = append(tree, bundleTreeEntry{Kind: "file", File: file})
 		}
 		return nil
 	}
-	if err := walk(""); err != nil {
+	if err := walk("", ""); err != nil {
 		return nil, err
 	}
 	return tree, nil
+}
+
+func bundleFolderPath(folder ProjectFolder) string {
+	if strings.TrimSpace(folder.Path) != "" {
+		return cleanBundlePath(folder.Path)
+	}
+	return cleanBundlePath(folder.Name)
+}
+
+func bundleFilePath(file ProjectFile) string {
+	if strings.TrimSpace(file.Path) != "" {
+		return cleanBundlePath(file.Path)
+	}
+	return joinBundlePath(file.FolderPath, file.Name)
+}
+
+func bundleTargetFolderPath(folder ProjectFolder, prefix string) string {
+	path := bundleFolderPath(folder)
+	if strings.TrimSpace(prefix) == "" {
+		return path
+	}
+	parts := strings.Split(path, "/")
+	if len(parts) == 0 {
+		return bundleTargetName(folder.Name, prefix)
+	}
+	parts[len(parts)-1] = bundleTargetName(parts[len(parts)-1], prefix)
+	return cleanBundlePath(strings.Join(parts, "/"))
+}
+
+func bundleTargetFilePath(file ProjectFile, prefix string) string {
+	path := bundleFilePath(file)
+	if strings.TrimSpace(prefix) == "" {
+		return path
+	}
+	parts := strings.Split(path, "/")
+	if len(parts) == 0 {
+		return bundleTargetName(file.Name, prefix)
+	}
+	parts[len(parts)-1] = bundleTargetName(parts[len(parts)-1], prefix)
+	return cleanBundlePath(strings.Join(parts, "/"))
+}
+
+func cleanBundlePath(value string) string {
+	parts := strings.FieldsFunc(strings.TrimSpace(value), func(r rune) bool {
+		return r == '/' || r == '\\'
+	})
+	cleaned := make([]string, 0, len(parts))
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part != "" && part != "." && part != ".." {
+			cleaned = append(cleaned, part)
+		}
+	}
+	return strings.Join(cleaned, "/")
+}
+
+func joinBundlePath(parent, name string) string {
+	parent = cleanBundlePath(parent)
+	name = cleanBundlePath(name)
+	if parent == "" {
+		return name
+	}
+	if name == "" {
+		return parent
+	}
+	return parent + "/" + name
+}
+
+func pathDir(path string) string {
+	path = cleanBundlePath(path)
+	if idx := strings.LastIndex(path, "/"); idx >= 0 {
+		return path[:idx]
+	}
+	return ""
+}
+
+func pathBase(path string) string {
+	path = cleanBundlePath(path)
+	if idx := strings.LastIndex(path, "/"); idx >= 0 {
+		return path[idx+1:]
+	}
+	return path
 }
 
 func exportProjectFileContent(ctx context.Context, client BundleClient, projectID string, file ProjectFile, maxBytes int) ProjectFile {

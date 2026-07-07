@@ -37,6 +37,8 @@ var (
 	platformOverwriteConflicts bool
 	platformBundleIncludeFiles bool
 	platformBundleMaxFileBytes int
+	platformBundleToOrg        string
+	platformBundleToProject    string
 )
 
 var resourcesExportCmd = &cobra.Command{
@@ -45,44 +47,7 @@ var resourcesExportCmd = &cobra.Command{
 	SilenceUsage:  true,
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		ctx := context.Background()
-		format, err := output.ParseFormat(platformFormat)
-		if err != nil {
-			return err
-		}
-		session, err := loadPlatformSession(ctx, platformHost)
-		if err != nil {
-			return err
-		}
-		org, project, err := resolvePlatformProject(ctx, session, platformResourceOrg, platformResourceProject)
-		if err != nil {
-			return err
-		}
-		session.Host.DefaultOrgID = org.ID
-		session.Host.DefaultOrgName = org.Name
-		session.Host.DefaultProjectID = project.ID
-		session.Host.DefaultProjectName = project.Name
-		session.Client.SetWorkspaceContext(org.ID, project.ID)
-		bundle, err := buildPlatformProjectBundle(ctx, session, project)
-		if err != nil {
-			return err
-		}
-		raw, err := json.MarshalIndent(bundle, "", "  ")
-		if err != nil {
-			return err
-		}
-		raw = append(raw, '\n')
-		if strings.TrimSpace(platformExportOutPath) == "" {
-			_, err = cmd.OutOrStdout().Write(raw)
-			return err
-		}
-		if err := os.WriteFile(filepath.Clean(platformExportOutPath), raw, 0600); err != nil {
-			return err
-		}
-		if format == output.FormatJSON {
-			return writeCommandJSON(cmd, map[string]any{"out": filepath.Clean(platformExportOutPath), "bundle": bundle})
-		}
-		return newCommandOutput(cmd, format, platformQuiet).WriteQueryResult(platformBundleSummaryTable(bundle))
+		return runPlatformBundleExport(cmd)
 	},
 }
 
@@ -104,6 +69,77 @@ var resourcesImportCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return runPlatformBundlePlan(cmd, platformImportDryRun)
 	},
+}
+
+var backupProjectCmd = &cobra.Command{
+	Use:           "backup-project",
+	Short:         "Back up the selected hosted WhoDB project as a portable bundle",
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return runPlatformBundleExport(cmd)
+	},
+}
+
+var restoreProjectCmd = &cobra.Command{
+	Use:           "restore-project",
+	Short:         "Restore a hosted WhoDB project from a portable bundle",
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return runPlatformBundlePlan(cmd, platformImportDryRun)
+	},
+}
+
+var cloneProjectCmd = &cobra.Command{
+	Use:           "clone-project",
+	Short:         "Clone the selected hosted WhoDB project bundle into an existing target project",
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return runPlatformProjectClone(cmd)
+	},
+}
+
+func runPlatformBundleExport(cmd *cobra.Command) error {
+	ctx := context.Background()
+	format, err := output.ParseFormat(platformFormat)
+	if err != nil {
+		return err
+	}
+	session, err := loadPlatformSession(ctx, platformHost)
+	if err != nil {
+		return err
+	}
+	org, project, err := resolvePlatformProject(ctx, session, platformResourceOrg, platformResourceProject)
+	if err != nil {
+		return err
+	}
+	session.Host.DefaultOrgID = org.ID
+	session.Host.DefaultOrgName = org.Name
+	session.Host.DefaultProjectID = project.ID
+	session.Host.DefaultProjectName = project.Name
+	session.Client.SetWorkspaceContext(org.ID, project.ID)
+	bundle, err := buildPlatformProjectBundle(ctx, session, project)
+	if err != nil {
+		return err
+	}
+	raw, err := json.MarshalIndent(bundle, "", "  ")
+	if err != nil {
+		return err
+	}
+	raw = append(raw, '\n')
+	if strings.TrimSpace(platformExportOutPath) == "" {
+		_, err = cmd.OutOrStdout().Write(raw)
+		return err
+	}
+	if err := os.WriteFile(filepath.Clean(platformExportOutPath), raw, 0600); err != nil {
+		return err
+	}
+	if format == output.FormatJSON {
+		return writeCommandJSON(cmd, map[string]any{"out": filepath.Clean(platformExportOutPath), "bundle": bundle})
+	}
+	return newCommandOutput(cmd, format, platformQuiet).WriteQueryResult(platformBundleSummaryTable(bundle))
 }
 
 func buildPlatformProjectBundle(ctx context.Context, session *platformSession, project *platform.Project) (*platform.ProjectBundle, error) {
@@ -153,44 +189,7 @@ func runPlatformBundlePlan(cmd *cobra.Command, dryRun bool) error {
 		return fmt.Errorf("import requires --yes; run resources diff --file %s first to review the plan", platformBundlePath)
 	}
 	if !dryRun {
-		for i := range plan.Actions {
-			action := &plan.Actions[i]
-			if action.Action != "create" && action.Action != "update" {
-				continue
-			}
-			if action.Resource == "file" {
-				file, err := uploadBundleFileAction(ctx, session, project.ID, action)
-				if err != nil {
-					action.Action = "failed"
-					action.Reason = err.Error()
-					continue
-				}
-				action.TargetID = file.ID
-				action.Action = "created"
-				continue
-			}
-			platform.ApplyBundleDependencyMap(action, bundleDependenciesFromPlan(plan))
-			spec, variables, err := buildGenericResourceVariables(project.ID, genericResourceWriteInput{Resource: action.Resource, Action: action.Action, ID: action.TargetID}, action.Payload)
-			if err != nil {
-				action.Action = "failed"
-				action.Reason = err.Error()
-				continue
-			}
-			result, err := session.Client.PlatformMutation(ctx, spec.Mutation, variables)
-			if err != nil {
-				action.Action = "failed"
-				action.Reason = err.Error()
-				continue
-			}
-			if id := platformMutationResultID(result); id != "" {
-				action.TargetID = id
-			}
-			if action.Action == "create" {
-				action.Action = "created"
-			} else {
-				action.Action = "updated"
-			}
-		}
+		executePlatformBundlePlanCLI(ctx, session, project.ID, plan)
 	}
 	if format == output.FormatJSON {
 		return writeCommandJSON(cmd, plan)
@@ -215,6 +214,105 @@ func readPlatformProjectBundle(path string) (*platform.ProjectBundle, error) {
 
 func planPlatformBundleImport(ctx context.Context, session *platformSession, project *platform.Project, bundle *platform.ProjectBundle, options platform.BundleImportOptions) (*platform.BundlePlan, error) {
 	return platform.PlanBundleImportWithOptions(ctx, session.Client, session.Host.URL, project, bundle, options)
+}
+
+func runPlatformProjectClone(cmd *cobra.Command) error {
+	if strings.TrimSpace(platformBundleToProject) == "" {
+		return fmt.Errorf("--to-project is required")
+	}
+	ctx := context.Background()
+	format, err := output.ParseFormat(platformFormat)
+	if err != nil {
+		return err
+	}
+	session, err := loadPlatformSession(ctx, platformHost)
+	if err != nil {
+		return err
+	}
+	sourceOrg, sourceProject, err := resolvePlatformProject(ctx, session, platformResourceOrg, platformResourceProject)
+	if err != nil {
+		return err
+	}
+	session.Host.DefaultOrgID = sourceOrg.ID
+	session.Host.DefaultOrgName = sourceOrg.Name
+	session.Host.DefaultProjectID = sourceProject.ID
+	session.Host.DefaultProjectName = sourceProject.Name
+	session.Client.SetWorkspaceContext(sourceOrg.ID, sourceProject.ID)
+	bundle, err := buildPlatformProjectBundle(ctx, session, sourceProject)
+	if err != nil {
+		return err
+	}
+	targetOrg, targetProject, err := resolvePlatformProject(ctx, session, platformBundleToOrg, platformBundleToProject)
+	if err != nil {
+		return err
+	}
+	session.Host.DefaultOrgID = targetOrg.ID
+	session.Host.DefaultOrgName = targetOrg.Name
+	session.Host.DefaultProjectID = targetProject.ID
+	session.Host.DefaultProjectName = targetProject.Name
+	session.Client.SetWorkspaceContext(targetOrg.ID, targetProject.ID)
+	plan, err := planPlatformBundleImport(ctx, session, targetProject, bundle, platform.BundleImportOptions{
+		DryRun:             !platformWriteYes,
+		Prefix:             platformBundlePrefix,
+		RenameConflicts:    platformRenameConflicts,
+		OverwriteConflicts: platformOverwriteConflicts,
+		Getenv:             os.Getenv,
+	})
+	if err != nil {
+		return err
+	}
+	if !platformWriteYes {
+		if format == output.FormatJSON {
+			return writeCommandJSON(cmd, plan)
+		}
+		return newCommandOutput(cmd, format, platformQuiet).WriteQueryResult(platformBundlePlanTable(plan))
+	}
+	executePlatformBundlePlanCLI(ctx, session, targetProject.ID, plan)
+	if format == output.FormatJSON {
+		return writeCommandJSON(cmd, plan)
+	}
+	return newCommandOutput(cmd, format, platformQuiet).WriteQueryResult(platformBundlePlanTable(plan))
+}
+
+func executePlatformBundlePlanCLI(ctx context.Context, session *platformSession, projectID string, plan *platform.BundlePlan) {
+	for i := range plan.Actions {
+		action := &plan.Actions[i]
+		if action.Action != "create" && action.Action != "update" {
+			continue
+		}
+		platform.ApplyBundleDependencyMap(action, bundleDependenciesFromPlan(plan))
+		if action.Resource == "file" {
+			file, err := uploadBundleFileAction(ctx, session, projectID, action)
+			if err != nil {
+				action.Action = "failed"
+				action.Reason = err.Error()
+				continue
+			}
+			action.TargetID = file.ID
+			action.Action = "created"
+			continue
+		}
+		spec, variables, err := buildGenericResourceVariables(projectID, genericResourceWriteInput{Resource: action.Resource, Action: action.Action, ID: action.TargetID}, platform.BundleMutationPayload(action))
+		if err != nil {
+			action.Action = "failed"
+			action.Reason = err.Error()
+			continue
+		}
+		result, err := session.Client.PlatformMutation(ctx, spec.Mutation, variables)
+		if err != nil {
+			action.Action = "failed"
+			action.Reason = err.Error()
+			continue
+		}
+		if id := platformMutationResultID(result); id != "" {
+			action.TargetID = id
+		}
+		if action.Action == "create" {
+			action.Action = "created"
+		} else {
+			action.Action = "updated"
+		}
+	}
 }
 
 func platformBundlePlanTable(plan *platform.BundlePlan) *output.QueryResult {
@@ -294,5 +392,9 @@ func uploadBundleFileAction(ctx context.Context, session *platformSession, proje
 	if err := os.WriteFile(path, []byte(content), 0600); err != nil {
 		return nil, err
 	}
-	return session.Client.UploadProjectFile(ctx, projectID, nil, path)
+	folderID, _ := action.Payload["folderId"].(string)
+	if strings.TrimSpace(folderID) == "" {
+		return session.Client.UploadProjectFile(ctx, projectID, nil, path)
+	}
+	return session.Client.UploadProjectFile(ctx, projectID, &folderID, path)
 }

@@ -193,18 +193,24 @@ var secretsListCmd = platformProjectListCommand("list", "List hosted WhoDB secre
 })
 
 var secretsGetCmd = platformIDCommand("get <secret>", "Show hosted WhoDB secret metadata", func(ctx context.Context, session *platformSession, id string) (any, *output.QueryResult, error) {
+	return readPlatformSecretDetail(ctx, session, id)
+})
+var secretDescribeCmd = platformIDCommand("describe <secret>", "Describe a hosted WhoDB secret", readPlatformSecretDetail)
+
+func readPlatformSecretDetail(ctx context.Context, session *platformSession, id string) (any, *output.QueryResult, error) {
 	secrets, err := session.Client.ProjectSecrets(ctx, session.Host.DefaultProjectID)
 	if err != nil {
 		return nil, nil, err
 	}
 	for _, secret := range secrets {
 		if secret.ID == id || secret.Name == id {
-			rows := [][]any{{"id", secret.ID}, {"name", secret.Name}, {"description", secret.Description}, {"used_by", len(secret.UsedBy)}, {"updated_at", secret.UpdatedAt}}
-			return secret, tableResult([]string{"field", "value"}, rows), nil
+			related := platformRelatedLineage(ctx, session, session.Host.DefaultProjectID, secret.ID, "secret")
+			rows := [][]any{{"id", secret.ID}, {"name", secret.Name}, {"description", secret.Description}, {"used_by", len(secret.UsedBy)}, {"updated_at", secret.UpdatedAt}, {"upstream", len(related.Upstream)}, {"downstream", len(related.Downstream)}}
+			return platformSecretDescribe{ProjectSecret: secret, Related: related}, tableResult([]string{"field", "value"}, rows), nil
 		}
 	}
 	return nil, nil, fmt.Errorf("secret %q not found", id)
-})
+}
 
 var aiProvidersListCmd = platformProjectListCommand("list", "List hosted WhoDB AI providers", func(ctx context.Context, session *platformSession, _ *platform.Project) (any, *output.QueryResult, error) {
 	providers, err := session.Client.AIProviders(ctx, session.Host.DefaultProjectID)
@@ -220,18 +226,24 @@ var aiProvidersListCmd = platformProjectListCommand("list", "List hosted WhoDB A
 })
 
 var aiProviderGetCmd = platformIDCommand("get <provider>", "Show hosted WhoDB AI provider metadata", func(ctx context.Context, session *platformSession, id string) (any, *output.QueryResult, error) {
+	return readPlatformAIProviderDetail(ctx, session, id)
+})
+var aiProviderDescribeCmd = platformIDCommand("describe <provider>", "Describe a hosted WhoDB AI provider", readPlatformAIProviderDetail)
+
+func readPlatformAIProviderDetail(ctx context.Context, session *platformSession, id string) (any, *output.QueryResult, error) {
 	providers, err := session.Client.AIProviders(ctx, session.Host.DefaultProjectID)
 	if err != nil {
 		return nil, nil, err
 	}
 	for _, provider := range providers {
 		if provider.ID == id || provider.Name == id {
-			rows := [][]any{{"id", provider.ID}, {"name", provider.Name}, {"type", provider.ProviderType}, {"endpoint", provider.Endpoint}, {"updated_at", provider.UpdatedAt}}
-			return provider, tableResult([]string{"field", "value"}, rows), nil
+			related := platformRelatedLineage(ctx, session, session.Host.DefaultProjectID, provider.ID, "ai_provider")
+			rows := [][]any{{"id", provider.ID}, {"name", provider.Name}, {"type", provider.ProviderType}, {"endpoint", provider.Endpoint}, {"updated_at", provider.UpdatedAt}, {"upstream", len(related.Upstream)}, {"downstream", len(related.Downstream)}}
+			return platformAIProviderDescribe{AIProvider: provider, Related: related}, tableResult([]string{"field", "value"}, rows), nil
 		}
 	}
 	return nil, nil, fmt.Errorf("AI provider %q not found", id)
-})
+}
 
 var aiProviderModelsCmd = &cobra.Command{
 	Use:           "models <provider>",
@@ -936,6 +948,11 @@ var foldersListCmd = platformProjectListCommand("list", "List hosted WhoDB proje
 })
 
 var folderGetCmd = platformIDCommand("get <folder>", "Show hosted WhoDB project folder metadata", func(ctx context.Context, session *platformSession, id string) (any, *output.QueryResult, error) {
+	return readPlatformFolderDetail(ctx, session, id)
+})
+var folderDescribeCmd = platformIDCommand("describe <folder>", "Describe hosted WhoDB project folder metadata", readPlatformFolderDetail)
+
+func readPlatformFolderDetail(ctx context.Context, session *platformSession, id string) (any, *output.QueryResult, error) {
 	folder, err := resolveProjectFolder(ctx, session, session.Host.DefaultProjectID, id)
 	if err != nil {
 		return nil, nil, err
@@ -944,9 +961,10 @@ var folderGetCmd = platformIDCommand("get <folder>", "Show hosted WhoDB project 
 	if folder.ParentID != nil {
 		parentID = *folder.ParentID
 	}
-	rows := [][]any{{"id", folder.ID}, {"name", folder.Name}, {"parent_id", parentID}, {"created_by", folder.CreatedBy}, {"created_at", folder.CreatedAt}}
-	return folder, tableResult([]string{"field", "value"}, rows), nil
-})
+	related := platformRelatedLineage(ctx, session, session.Host.DefaultProjectID, folder.ID, "project_folder")
+	rows := [][]any{{"id", folder.ID}, {"name", folder.Name}, {"parent_id", parentID}, {"created_by", folder.CreatedBy}, {"created_at", folder.CreatedAt}, {"upstream", len(related.Upstream)}, {"downstream", len(related.Downstream)}}
+	return platformFolderDescribe{ProjectFolder: *folder, Related: related}, tableResult([]string{"field", "value"}, rows), nil
+}
 
 var foldersTreeCmd = platformProjectListCommand("tree", "Show hosted WhoDB project folder tree", func(ctx context.Context, session *platformSession, _ *platform.Project) (any, *output.QueryResult, error) {
 	entries, err := loadProjectFolderTree(ctx, session, session.Host.DefaultProjectID)
@@ -1059,8 +1077,8 @@ func registerPlatformResourceCommands() {
 		command.PersistentFlags().StringVar(&platformResourceProject, "project", "", "project id, slug, or name (defaults to selected project)")
 	}
 
-	secretsCmd.AddCommand(secretsListCmd, secretsGetCmd, secretsCreateCmd, secretsUpdateCmd, secretsDeleteCmd)
-	aiProvidersCmd.AddCommand(aiProvidersListCmd, aiProviderGetCmd, aiProviderModelsCmd, aiProvidersCreateCmd, aiProvidersUpdateCmd, aiProvidersDeleteCmd)
+	secretsCmd.AddCommand(secretsListCmd, secretsGetCmd, secretDescribeCmd, secretsCreateCmd, secretsUpdateCmd, secretsDeleteCmd)
+	aiProvidersCmd.AddCommand(aiProvidersListCmd, aiProviderGetCmd, aiProviderDescribeCmd, aiProviderModelsCmd, aiProvidersCreateCmd, aiProvidersUpdateCmd, aiProvidersDeleteCmd)
 	ontologyFastLookupsCmd.AddCommand(ontologyFastLookupsCreateCmd, ontologyFastLookupsDeleteCmd)
 	ontologyRecordsCmd.AddCommand(ontologyRecordsAddCmd, ontologyRecordsUpdateCmd, ontologyRecordsDeleteCmd)
 	ontologiesCmd.AddCommand(ontologiesListCmd, ontologyGetCmd, ontologyDescribeCmd, ontologyExportCmd, ontologyCloneCmd, ontologyFastLookupsCmd, ontologyFastLookupSuggestionsCmd, ontologyRowsCmd, ontologyFollowLinkCmd, ontologyRecordsCmd, ontologiesCreateCmd, ontologiesUpdateCmd, ontologiesDeleteCmd)
@@ -1069,7 +1087,7 @@ func registerPlatformResourceCommands() {
 	transformsCmd.AddCommand(transformsListCmd, transformGetCmd, transformDescribeCmd, transformExportCmd, transformCloneCmd, transformRunsCmd, transformsCreateCmd, transformsUpdateCmd, transformsRunCmd, transformsDeleteCmd)
 	functionsCmd.AddCommand(functionsListCmd, functionGetCmd, functionDescribeCmd, functionExportCmd, functionCloneCmd, functionsVersionsCmd, functionsActiveCmd, functionsPromoteCmd, functionsSetActiveCmd, functionsRestoreDraftCmd, functionsRunCmd, functionsTestCmd, functionsPreviewCmd, functionsCreateCmd, functionsUpdateCmd, functionsDeployCmd, functionsRedeployCmd, functionsDeleteCmd)
 	filesCmd.AddCommand(filesListCmd, fileGetCmd, fileDescribeCmd, filePreviewCmd, fileInspectCmd, fileColumnsCmd, fileDownloadCmd, fileSearchCmd, tabularFilesCmd, storageUsageCmd, filesUploadCmd, filesPromoteDatasetCmd, filesDeleteCmd, filesRenameCmd, filesMoveCmd)
-	foldersCmd.AddCommand(foldersListCmd, folderGetCmd, foldersTreeCmd, foldersCreateCmd, foldersRenameCmd, foldersMoveCmd, foldersDeleteCmd)
+	foldersCmd.AddCommand(foldersListCmd, folderGetCmd, folderDescribeCmd, foldersTreeCmd, foldersCreateCmd, foldersRenameCmd, foldersMoveCmd, foldersDeleteCmd)
 	resourcesCmd.AddCommand(resourcesSpecsCmd, resourcesShapeCmd, resourcesExportCmd, resourcesDiffCmd, resourcesImportCmd, resourcesCreateCmd, resourcesUpdateCmd, resourcesDeleteCmd, resourcesActionCmd)
 
 	for _, command := range []*cobra.Command{functionsListCmd, functionGetCmd, functionDescribeCmd, functionExportCmd, filesListCmd, filePreviewCmd} {
