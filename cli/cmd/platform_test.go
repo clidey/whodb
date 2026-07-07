@@ -220,12 +220,12 @@ func TestPlatformResourceCommandsRegistered(t *testing.T) {
 	expected := map[string][]string{
 		"secrets":      {"list", "get", "create", "update", "delete"},
 		"ai-providers": {"list", "get", "models", "create", "update", "delete"},
-		"ontologies":   {"list", "get", "fast-lookups", "fast-lookup-suggestions", "rows", "follow-link", "create", "update", "delete"},
-		"datasets":     {"list", "get", "rows", "query", "create", "update", "delete"},
+		"ontologies":   {"list", "get", "fast-lookups", "fast-lookup-suggestions", "rows", "follow-link", "records", "create", "update", "delete"},
+		"datasets":     {"list", "get", "schema", "rows", "query", "create", "update", "delete"},
 		"lineage":      {"project", "root", "neighbors"},
 		"transforms":   {"list", "get", "runs", "create", "update", "run", "delete"},
 		"functions":    {"list", "get", "versions", "active", "promote", "set-active", "restore-draft", "run", "test", "preview", "create", "update", "deploy", "redeploy", "delete"},
-		"files":        {"list", "get", "preview", "download", "search", "tabular", "storage-usage", "upload", "promote-to-dataset", "delete", "rename", "move"},
+		"files":        {"list", "get", "preview", "inspect", "columns", "download", "search", "tabular", "storage-usage", "upload", "promote-to-dataset", "delete", "rename", "move"},
 		"folders":      {"list", "get", "tree", "create", "rename", "move", "delete"},
 		"resources":    {"specs", "shape", "create", "update", "delete", "action"},
 	}
@@ -249,6 +249,7 @@ func TestTypedPlatformWriteCommandsHaveExamples(t *testing.T) {
 		secretsCreateCmd, secretsUpdateCmd, secretsDeleteCmd,
 		aiProvidersCreateCmd, aiProvidersUpdateCmd, aiProvidersDeleteCmd,
 		datasetsCreateCmd, datasetsUpdateCmd, datasetsDeleteCmd,
+		ontologyRecordsAddCmd, ontologyRecordsUpdateCmd, ontologyRecordsDeleteCmd,
 		transformsRunCmd, transformsDeleteCmd,
 		functionsDeployCmd, functionsRedeployCmd, functionsDeleteCmd,
 		filesUploadCmd, filesPromoteDatasetCmd, filesDeleteCmd, filesRenameCmd, filesMoveCmd,
@@ -351,6 +352,25 @@ func TestBuildGenericResourceVariablesPromoteFileToDataset(t *testing.T) {
 	}
 }
 
+func TestBuildGenericResourceVariablesOntologyRecordUsesEntityID(t *testing.T) {
+	spec, variables, err := buildGenericResourceVariables("proj-1", genericResourceWriteInput{
+		Resource: "ontology",
+		Action:   "add_record",
+		ID:       "ontology-1",
+	}, map[string]any{
+		"values": []map[string]any{{"key": "id", "value": "1"}},
+	})
+	if err != nil {
+		t.Fatalf("buildGenericResourceVariables() error = %v", err)
+	}
+	if spec.Mutation != "OntologyAddRow" {
+		t.Fatalf("mutation = %q, want OntologyAddRow", spec.Mutation)
+	}
+	if variables["projectId"] != "proj-1" || variables["entityId"] != "ontology-1" {
+		t.Fatalf("variables = %#v, want projectId/entityId", variables)
+	}
+}
+
 func TestParseDatasetColumns(t *testing.T) {
 	columns, err := parseDatasetColumns([]string{"id:text:primary", "name:text:nullable"})
 	if err != nil {
@@ -364,6 +384,19 @@ func TestParseDatasetColumns(t *testing.T) {
 	}
 	if columns[1]["name"] != "name" || columns[1]["isNullable"] != true {
 		t.Fatalf("second column = %#v, want nullable name", columns[1])
+	}
+}
+
+func TestParseOntologyRecordValues(t *testing.T) {
+	values, err := parseOntologyRecordValues([]string{"id=1", "name=Ada"})
+	if err != nil {
+		t.Fatalf("parseOntologyRecordValues() error = %v", err)
+	}
+	if len(values) != 2 || values[0]["key"] != "id" || values[0]["value"] != "1" || values[1]["key"] != "name" || values[1]["value"] != "Ada" {
+		t.Fatalf("values = %#v, want record inputs", values)
+	}
+	if _, err := parseOntologyRecordValues([]string{"broken"}); err == nil {
+		t.Fatal("parseOntologyRecordValues() error = nil, want error")
 	}
 }
 

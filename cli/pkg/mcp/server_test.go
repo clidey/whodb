@@ -397,7 +397,7 @@ func TestPlatformResourcesReadJSON(t *testing.T) {
 		}
 	}
 	guide := resourceText(t, readServerResource(t, server, "whodb://platform/tool-guide"))
-	for _, expected := range []string{`"sources"`, `"field_projection"`, `"whodb_platform_source_create"`} {
+	for _, expected := range []string{`"sources"`, `"field_projection"`, `"whodb_platform_source_create"`, `"whodb_platform_file_inspect"`} {
 		if !strings.Contains(guide, expected) {
 			t.Fatalf("platform tool guide resource should contain %s: %s", expected, guide)
 		}

@@ -465,6 +465,17 @@ func TestPlatformMCP_RealReadWriteLifecycle(t *testing.T) {
 		return out.Error, err
 	})
 	liveCoverTool("whodb_platform_file_preview")
+	liveMustReadEntity(t, ctx, "file inspect", fileID, func() (string, error) {
+		_, out, err := HandlePlatformFileInspect(ctx, nil, PlatformFileInspectInput{FileID: fileID, Fields: []string{"columns", "columnMapExample"}})
+		if out.Error == "" {
+			inspection, ok := out.Data.(*platformapi.FileInspection)
+			if !ok || len(inspection.Columns) == 0 || inspection.ColumnMapExample == "" {
+				return fmt.Sprintf("unexpected inspection payload: %#v", out.Data), err
+			}
+		}
+		return out.Error, err
+	})
+	liveCoverTool("whodb_platform_file_inspect")
 	liveMustGenericWrite(t, ctx, "platform_action", "action", PlatformGenericWriteInput{
 		Resource:    "file",
 		Action:      "rename",

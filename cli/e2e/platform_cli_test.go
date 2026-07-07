@@ -255,6 +255,10 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 	}
 	_ = runJSONCommand[platform.DatasetQueryResult](t, "datasets", "rows", datasetName, "--host", host, "--limit", "5", "--format", "json", "--quiet")
 	_ = runJSONCommand[platform.DatasetQueryResult](t, "datasets", "query", datasetName, "--host", host, "--limit", "5", "--format", "json", "--quiet")
+	datasetSchema := runJSONCommand[[]platform.ColumnDef](t, "datasets", "schema", datasetName, "--host", host, "--format", "json", "--quiet")
+	if len(datasetSchema) == 0 || datasetSchema[0].Name != "id" {
+		t.Fatalf("datasets schema = %#v, want id column", datasetSchema)
+	}
 	_ = runMutationID(t, append([]string{
 		"datasets", "update", datasetName,
 		"--description", "updated",
@@ -417,6 +421,14 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 		t.Fatalf("files get by name returned id %q, want %q", file.ID, fileID)
 	}
 	_ = runRawCommand(t, "files", "preview", uploadedFile.Name, "--host", host, "--format", "json", "--quiet")
+	inspection := runJSONCommand[platform.FileInspection](t, "files", "inspect", uploadedFile.Name, "--host", host, "--format", "json", "--quiet")
+	if len(inspection.Columns) != 2 || !strings.Contains(inspection.ColumnMapExample, "--column-map id:id") {
+		t.Fatalf("files inspect = %#v, want inferred column maps", inspection)
+	}
+	columns := runJSONCommand[[]platform.FileColumnInspection](t, "files", "columns", uploadedFile.Name, "--host", host, "--format", "json", "--quiet")
+	if len(columns) != 2 || columns[1].DatasetColumn != "name" {
+		t.Fatalf("files columns = %#v, want inferred name column", columns)
+	}
 	downloadPath := filepath.Join(t.TempDir(), "downloaded.csv")
 	_ = runRawCommand(t, "files", "download", uploadedFile.Name, "--host", host, "--out", downloadPath, "--quiet")
 	testharness.AssertFileContains(t, downloadPath, "Ada")
@@ -437,6 +449,10 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 	promotedDataset := runJSONCommand[platform.Dataset](t, "datasets", "get", promotedDatasetName, "--host", host, "--format", "json", "--quiet")
 	if promotedDataset.ID != promotedDatasetID {
 		t.Fatalf("promoted dataset id = %q, want %q", promotedDataset.ID, promotedDatasetID)
+	}
+	promotedSchema := runJSONCommand[[]platform.ColumnDef](t, "datasets", "schema", promotedDatasetName, "--host", host, "--format", "json", "--quiet")
+	if len(promotedSchema) != 2 {
+		t.Fatalf("promoted dataset schema = %#v, want two columns", promotedSchema)
 	}
 	_ = runJSONCommand[platform.LineageGraph](t, "lineage", "project", "--host", host, "--format", "json", "--quiet")
 

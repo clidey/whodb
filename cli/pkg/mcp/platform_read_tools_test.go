@@ -132,7 +132,17 @@ func (f *fakePlatformClient) FolderContents(ctx context.Context, projectID, fold
 func (f *fakePlatformClient) FilePreview(ctx context.Context, projectID, fileID string, sheetIndex *int, fields []string) (*platformapi.FilePreviewResult, error) {
 	f.filePreviewFields = append([]string(nil), fields...)
 	text := strings.Repeat("z", defaultPlatformContentLimit+1)
-	return &platformapi.FilePreviewResult{MIMEType: "text/plain", SizeBytes: len(text), TextContent: &text}, nil
+	return &platformapi.FilePreviewResult{
+		MIMEType:    "text/csv",
+		SizeBytes:   len(text),
+		IsTabular:   true,
+		TextContent: &text,
+		Tabular: &platformapi.TabularPreviewData{
+			Columns: []platformapi.FilePreviewColumn{{Name: "id", Type: "integer"}, {Name: "Customer Name", Type: "string"}},
+			Rows:    [][]string{{"1", "Ada"}},
+			Total:   1,
+		},
+	}, nil
 }
 
 func (f *fakePlatformClient) SearchProjectFiles(ctx context.Context, projectID, query string) ([]platformapi.ProjectFile, error) {
@@ -191,6 +201,34 @@ func TestHandlePlatformFunctionTruncatesFileContent(t *testing.T) {
 	}
 	if len(function.Files) != 1 || len(function.Files[0].Content) != defaultPlatformContentLimit {
 		t.Fatalf("function file content length = %d, want %d", len(function.Files[0].Content), defaultPlatformContentLimit)
+	}
+}
+
+func TestHandlePlatformFileInspectOmitsRowsByDefault(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := HandlePlatformFileInspect(context.Background(), nil, PlatformFileInspectInput{FileID: "file-1"})
+	if err != nil {
+		t.Fatalf("HandlePlatformFileInspect() error = %v", err)
+	}
+	if output.Error != "" {
+		t.Fatalf("HandlePlatformFileInspect() output error = %q", output.Error)
+	}
+	inspection, ok := output.Data.(*platformapi.FileInspection)
+	if !ok {
+		t.Fatalf("output.Data = %T, want *platformapi.FileInspection", output.Data)
+	}
+	if len(inspection.Columns) != 2 {
+		t.Fatalf("columns = %#v, want inferred columns", inspection.Columns)
+	}
+	if inspection.Rows != nil {
+		t.Fatalf("rows = %#v, want omitted by default", inspection.Rows)
+	}
+	if inspection.ColumnMapExample == "" {
+		t.Fatal("column map example empty")
 	}
 }
 

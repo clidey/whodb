@@ -50,6 +50,7 @@ var (
 	platformPrimaryKey          string
 	platformLinkAPIName         string
 	platformSheetIndex          int
+	platformIncludeRows         bool
 	platformPayloadJSON         string
 	platformPayloadStdin        bool
 	platformWriteYes            bool
@@ -106,6 +107,8 @@ var (
 	ontologyColor               string
 	ontologyPropertiesJSON      []string
 	ontologyLinksJSON           []string
+	ontologyRecordValues        []string
+	ontologyRecordUpdateColumns []string
 	folderName                  string
 	folderParentID              string
 	folderNewParentID           string
@@ -131,6 +134,40 @@ var functionsCmd = &cobra.Command{Use: "functions", Short: "Manage hosted WhoDB 
 var filesCmd = &cobra.Command{Use: "files", Short: "Manage hosted WhoDB project files"}
 var foldersCmd = &cobra.Command{Use: "folders", Short: "Manage hosted WhoDB project folders"}
 var resourcesCmd = &cobra.Command{Use: "resources", Short: "Run advanced hosted WhoDB platform resource writes"}
+
+var capabilitiesCmd = &cobra.Command{
+	Use:           "capabilities",
+	Short:         "Show hosted WhoDB platform capabilities",
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := context.Background()
+		format, err := output.ParseFormat(platformFormat)
+		if err != nil {
+			return err
+		}
+		session, err := loadPlatformSession(ctx, platformHost)
+		if err != nil {
+			return err
+		}
+		manifest := manifestFromCache(session.Host.Manifest)
+		if manifest == nil {
+			manifest, err = refreshPlatformManifest(ctx, session.Config, &session.Host, session.Client)
+			if err != nil {
+				return err
+			}
+		}
+		capabilities := platformStatusCapabilities(manifest)
+		if format == output.FormatJSON {
+			return writeCommandJSON(cmd, capabilities)
+		}
+		rows := make([][]any, len(capabilities))
+		for i, capability := range capabilities {
+			rows[i] = []any{capability.Name, capability.Operation, capability.Supported}
+		}
+		return newCommandOutput(cmd, format, platformQuiet).WriteQueryResult(tableResult([]string{"name", "operation", "supported"}, rows))
+	},
+}
 
 var secretsListCmd = platformProjectListCommand("list", "List hosted WhoDB secret metadata", func(ctx context.Context, session *platformSession, _ *platform.Project) (any, *output.QueryResult, error) {
 	secrets, err := session.Client.ProjectSecrets(ctx, session.Host.DefaultProjectID)
@@ -274,6 +311,11 @@ var ontologyRowsCmd = pagedIDRowsCommand("rows <ontology>", "Preview hosted WhoD
 	return session.Client.OntologyRows(ctx, session.Host.DefaultProjectID, resolvedID, platformLimit, platformOffset)
 })
 
+var ontologyRecordsCmd = &cobra.Command{Use: "records", Short: "Manage hosted WhoDB ontology records"}
+var ontologyRecordsAddCmd = withExample(typedResourceWriteCommand("add <ontology>", "Add a hosted WhoDB ontology record", "action", "ontology", "add_record", buildOntologyRecordAddPayload), `  whodb-cli ontologies records add customers --value id=1 --value name=Ada`)
+var ontologyRecordsUpdateCmd = withExample(typedResourceWriteCommand("update <ontology>", "Update a hosted WhoDB ontology record", "action", "ontology", "update_record", buildOntologyRecordUpdatePayload), `  whodb-cli ontologies records update customers --value id=1 --value name=Grace --update-column name`)
+var ontologyRecordsDeleteCmd = withExample(typedResourceWriteCommand("delete <ontology>", "Delete a hosted WhoDB ontology record", "action", "ontology", "delete_record", buildOntologyRecordDeletePayload), `  whodb-cli ontologies records delete customers --value id=1`)
+
 var ontologyFollowLinkCmd = &cobra.Command{
 	Use:           "follow-link",
 	Short:         "Follow a hosted WhoDB ontology link",
@@ -312,6 +354,22 @@ var datasetGetCmd = platformIDCommand("get <dataset>", "Show hosted WhoDB datase
 	}
 	rows := [][]any{{"id", dataset.ID}, {"name", dataset.Name}, {"schema_mode", dataset.SchemaMode}, {"row_count", dataset.RowCount}, {"size_bytes", dataset.SizeBytes}, {"columns", len(dataset.Schema)}}
 	return dataset, tableResult([]string{"field", "value"}, rows), nil
+})
+
+var datasetSchemaCmd = platformIDCommand("schema <dataset>", "Show hosted WhoDB dataset schema", func(ctx context.Context, session *platformSession, id string) (any, *output.QueryResult, error) {
+	resolvedID, err := resolvePlatformResourceID(ctx, session, session.Host.DefaultProjectID, "dataset", id)
+	if err != nil {
+		return nil, nil, err
+	}
+	dataset, err := session.Client.Dataset(ctx, session.Host.DefaultProjectID, resolvedID)
+	if err != nil {
+		return nil, nil, err
+	}
+	rows := make([][]any, len(dataset.Schema))
+	for i, column := range dataset.Schema {
+		rows[i] = []any{column.Name, column.Type, column.IsNullable, column.IsPrimary}
+	}
+	return dataset.Schema, tableResult([]string{"name", "type", "nullable", "primary"}, rows), nil
 })
 
 var datasetRowsCmd = pagedIDRowsCommand("rows <dataset>", "Preview hosted WhoDB dataset rows", func(ctx context.Context, session *platformSession, id string) (*platform.DatasetQueryResult, error) {
@@ -687,6 +745,43 @@ var filePreviewCmd = &cobra.Command{
 	},
 }
 
+var fileInspectCmd = &cobra.Command{
+	Use:           "inspect <file>",
+	Short:         "Inspect hosted WhoDB tabular file columns for dataset promotion",
+	Args:          cobra.ExactArgs(1),
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return runPlatformProjectRead(cmd, func(ctx context.Context, session *platformSession, _ *platform.Project) (any, *output.QueryResult, error) {
+			inspection, err := inspectPlatformFile(ctx, cmd, session, args[0])
+			if err != nil {
+				return nil, nil, err
+			}
+			if !platformIncludeRows {
+				inspection.Rows = nil
+			}
+			return inspection, fileInspectionTable(inspection), nil
+		})
+	},
+}
+
+var fileColumnsCmd = &cobra.Command{
+	Use:           "columns <file>",
+	Short:         "Show hosted WhoDB tabular file columns and promotion mappings",
+	Args:          cobra.ExactArgs(1),
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return runPlatformProjectRead(cmd, func(ctx context.Context, session *platformSession, _ *platform.Project) (any, *output.QueryResult, error) {
+			inspection, err := inspectPlatformFile(ctx, cmd, session, args[0])
+			if err != nil {
+				return nil, nil, err
+			}
+			return inspection.Columns, fileInspectionColumnsTable(inspection), nil
+		})
+	},
+}
+
 var fileDownloadCmd = &cobra.Command{
 	Use:           "download <file>",
 	Short:         "Download previewable hosted WhoDB file content",
@@ -893,12 +988,13 @@ func registerPlatformResourceCommands() {
 
 	secretsCmd.AddCommand(secretsListCmd, secretsGetCmd, secretsCreateCmd, secretsUpdateCmd, secretsDeleteCmd)
 	aiProvidersCmd.AddCommand(aiProvidersListCmd, aiProviderGetCmd, aiProviderModelsCmd, aiProvidersCreateCmd, aiProvidersUpdateCmd, aiProvidersDeleteCmd)
-	ontologiesCmd.AddCommand(ontologiesListCmd, ontologyGetCmd, ontologyFastLookupsCmd, ontologyFastLookupSuggestionsCmd, ontologyRowsCmd, ontologyFollowLinkCmd, ontologiesCreateCmd, ontologiesUpdateCmd, ontologiesDeleteCmd)
-	datasetsCmd.AddCommand(datasetsListCmd, datasetGetCmd, datasetRowsCmd, datasetQueryCmd, datasetsCreateCmd, datasetsUpdateCmd, datasetsDeleteCmd)
+	ontologyRecordsCmd.AddCommand(ontologyRecordsAddCmd, ontologyRecordsUpdateCmd, ontologyRecordsDeleteCmd)
+	ontologiesCmd.AddCommand(ontologiesListCmd, ontologyGetCmd, ontologyFastLookupsCmd, ontologyFastLookupSuggestionsCmd, ontologyRowsCmd, ontologyFollowLinkCmd, ontologyRecordsCmd, ontologiesCreateCmd, ontologiesUpdateCmd, ontologiesDeleteCmd)
+	datasetsCmd.AddCommand(datasetsListCmd, datasetGetCmd, datasetSchemaCmd, datasetRowsCmd, datasetQueryCmd, datasetsCreateCmd, datasetsUpdateCmd, datasetsDeleteCmd)
 	lineageCmd.AddCommand(lineageProjectCmd, lineageRootCmd, lineageNeighborsCmd)
 	transformsCmd.AddCommand(transformsListCmd, transformGetCmd, transformRunsCmd, transformsCreateCmd, transformsUpdateCmd, transformsRunCmd, transformsDeleteCmd)
 	functionsCmd.AddCommand(functionsListCmd, functionGetCmd, functionsVersionsCmd, functionsActiveCmd, functionsPromoteCmd, functionsSetActiveCmd, functionsRestoreDraftCmd, functionsRunCmd, functionsTestCmd, functionsPreviewCmd, functionsCreateCmd, functionsUpdateCmd, functionsDeployCmd, functionsRedeployCmd, functionsDeleteCmd)
-	filesCmd.AddCommand(filesListCmd, fileGetCmd, filePreviewCmd, fileDownloadCmd, fileSearchCmd, tabularFilesCmd, storageUsageCmd, filesUploadCmd, filesPromoteDatasetCmd, filesDeleteCmd, filesRenameCmd, filesMoveCmd)
+	filesCmd.AddCommand(filesListCmd, fileGetCmd, filePreviewCmd, fileInspectCmd, fileColumnsCmd, fileDownloadCmd, fileSearchCmd, tabularFilesCmd, storageUsageCmd, filesUploadCmd, filesPromoteDatasetCmd, filesDeleteCmd, filesRenameCmd, filesMoveCmd)
 	foldersCmd.AddCommand(foldersListCmd, folderGetCmd, foldersTreeCmd, foldersCreateCmd, foldersRenameCmd, foldersMoveCmd, foldersDeleteCmd)
 	resourcesCmd.AddCommand(resourcesSpecsCmd, resourcesShapeCmd, resourcesCreateCmd, resourcesUpdateCmd, resourcesDeleteCmd, resourcesActionCmd)
 
@@ -913,6 +1009,9 @@ func registerPlatformResourceCommands() {
 	filesListCmd.Flags().StringVar(&platformFolderID, "folder-id", "", "folder id to list; omitted means project root")
 	foldersListCmd.Flags().StringVar(&platformFolderID, "folder-id", "", "parent folder id to list; omitted means project root")
 	filePreviewCmd.Flags().IntVar(&platformSheetIndex, "sheet-index", 0, "tabular sheet index to preview")
+	fileInspectCmd.Flags().IntVar(&platformSheetIndex, "sheet-index", 0, "tabular sheet index to inspect")
+	fileInspectCmd.Flags().BoolVar(&platformIncludeRows, "include-rows", false, "include preview rows in JSON output")
+	fileColumnsCmd.Flags().IntVar(&platformSheetIndex, "sheet-index", 0, "tabular sheet index to inspect")
 	fileDownloadCmd.Flags().StringVar(&fileOutPath, "out", "", "destination path; omitted writes content to stdout")
 	fileDownloadCmd.Flags().IntVar(&platformSheetIndex, "sheet-index", 0, "tabular sheet index to download")
 	functionsRunCmd.Flags().StringVar(&functionInputJSON, "input-json", "{}", "function input JSON string")
@@ -956,6 +1055,7 @@ func registerTypedWriteFlags() {
 		secretsCreateCmd, secretsUpdateCmd, secretsDeleteCmd,
 		aiProvidersCreateCmd, aiProvidersUpdateCmd, aiProvidersDeleteCmd,
 		ontologiesCreateCmd, ontologiesUpdateCmd, ontologiesDeleteCmd,
+		ontologyRecordsAddCmd, ontologyRecordsUpdateCmd, ontologyRecordsDeleteCmd,
 		datasetsCreateCmd, datasetsUpdateCmd, datasetsDeleteCmd,
 		transformsCreateCmd, transformsUpdateCmd, transformsRunCmd, transformsDeleteCmd,
 		functionsCreateCmd, functionsUpdateCmd, functionsDeployCmd, functionsRedeployCmd, functionsDeleteCmd,
@@ -994,6 +1094,10 @@ func registerTypedWriteFlags() {
 
 	registerOntologyWriteFlags(ontologiesCreateCmd)
 	registerOntologyWriteFlags(ontologiesUpdateCmd)
+	ontologyRecordsAddCmd.Flags().StringArrayVar(&ontologyRecordValues, "value", nil, "record value as key=value; repeatable")
+	ontologyRecordsUpdateCmd.Flags().StringArrayVar(&ontologyRecordValues, "value", nil, "record value as key=value; repeatable")
+	ontologyRecordsUpdateCmd.Flags().StringArrayVar(&ontologyRecordUpdateColumns, "update-column", nil, "ontology property to update; repeatable")
+	ontologyRecordsDeleteCmd.Flags().StringArrayVar(&ontologyRecordValues, "value", nil, "record matcher as key=value; repeatable")
 
 	transformsCreateCmd.Flags().StringVar(&transformName, "name", "", "transform name")
 	registerTransformWriteFlags(transformsCreateCmd)
@@ -2257,6 +2361,63 @@ func parseFileColumnMappings(values []string) ([]map[string]any, error) {
 	return mappings, nil
 }
 
+func buildOntologyRecordAddPayload(cmd *cobra.Command) (map[string]any, error) {
+	values, err := parseOntologyRecordValues(ontologyRecordValues)
+	if err != nil {
+		return nil, err
+	}
+	if len(values) == 0 {
+		return nil, fmt.Errorf("--value is required")
+	}
+	return map[string]any{"values": values}, nil
+}
+
+func buildOntologyRecordUpdatePayload(cmd *cobra.Command) (map[string]any, error) {
+	values, err := parseOntologyRecordValues(ontologyRecordValues)
+	if err != nil {
+		return nil, err
+	}
+	if len(values) == 0 {
+		return nil, fmt.Errorf("--value is required")
+	}
+	updatedColumns := make([]string, 0, len(ontologyRecordUpdateColumns))
+	for _, column := range ontologyRecordUpdateColumns {
+		column = strings.TrimSpace(column)
+		if column == "" {
+			return nil, fmt.Errorf("--update-column cannot be empty")
+		}
+		updatedColumns = append(updatedColumns, column)
+	}
+	if len(updatedColumns) == 0 {
+		return nil, fmt.Errorf("--update-column is required")
+	}
+	return map[string]any{"values": values, "updatedColumns": updatedColumns}, nil
+}
+
+func buildOntologyRecordDeletePayload(cmd *cobra.Command) (map[string]any, error) {
+	values, err := parseOntologyRecordValues(ontologyRecordValues)
+	if err != nil {
+		return nil, err
+	}
+	if len(values) == 0 {
+		return nil, fmt.Errorf("--value is required")
+	}
+	return map[string]any{"values": values}, nil
+}
+
+func parseOntologyRecordValues(values []string) ([]map[string]any, error) {
+	records := make([]map[string]any, 0, len(values))
+	for _, value := range values {
+		key, recordValue, ok := strings.Cut(value, "=")
+		key = strings.TrimSpace(key)
+		if !ok || key == "" {
+			return nil, fmt.Errorf("--value must be key=value")
+		}
+		records = append(records, map[string]any{"key": key, "value": strings.TrimSpace(recordValue)})
+	}
+	return records, nil
+}
+
 func functionExecutionTable(result *platform.FunctionExecutionResult) *output.QueryResult {
 	errorText := ""
 	if result.Error != nil {
@@ -2344,6 +2505,14 @@ func buildGenericResourceVariables(projectID string, input genericResourceWriteI
 		}
 		if spec.InjectProjectID {
 			variables["projectId"] = projectID
+		}
+		if spec.NeedsID {
+			switch spec.Mutation {
+			case "OntologyAddRow", "OntologyUpdateRow", "OntologyDeleteRow":
+				variables["entityId"] = id
+			default:
+				variables["id"] = id
+			}
 		}
 	case platform.GenericWriteModeFileUpload:
 		filePath := firstResourceString(payload, "file_path", "filePath", "path")
@@ -2796,6 +2965,63 @@ func datasetRowsTable(result *platform.DatasetQueryResult) *output.QueryResult {
 		rows[i] = values
 	}
 	return &output.QueryResult{Columns: columns, Rows: rows}
+}
+
+func inspectPlatformFile(ctx context.Context, cmd *cobra.Command, session *platformSession, fileRef string) (*platform.FileInspection, error) {
+	fileID, err := resolvePlatformResourceID(ctx, session, session.Host.DefaultProjectID, "file", fileRef)
+	if err != nil {
+		return nil, err
+	}
+	var sheetIndex *int
+	if cmd.Flags().Changed("sheet-index") {
+		sheetIndex = &platformSheetIndex
+	}
+	preview, err := session.Client.FilePreview(ctx, session.Host.DefaultProjectID, fileID, sheetIndex, nil)
+	if err != nil {
+		return nil, err
+	}
+	return platform.InspectFilePreview(fileID, preview), nil
+}
+
+func fileInspectionTable(inspection *platform.FileInspection) *output.QueryResult {
+	if inspection == nil {
+		return tableResult([]string{"field", "value"}, nil)
+	}
+	sheetName := ""
+	if inspection.SheetName != nil {
+		sheetName = *inspection.SheetName
+	}
+	sheetIndex := ""
+	if inspection.SheetIndex != nil {
+		sheetIndex = fmt.Sprint(*inspection.SheetIndex)
+	}
+	sheetCount := ""
+	if inspection.SheetCount != nil {
+		sheetCount = fmt.Sprint(*inspection.SheetCount)
+	}
+	return tableResult([]string{"field", "value"}, [][]any{
+		{"file_id", inspection.FileID},
+		{"mime_type", inspection.MIMEType},
+		{"size_bytes", inspection.SizeBytes},
+		{"is_tabular", inspection.IsTabular},
+		{"sheet_name", sheetName},
+		{"sheet_index", sheetIndex},
+		{"sheet_count", sheetCount},
+		{"columns", len(inspection.Columns)},
+		{"rows", inspection.Total},
+		{"column_map_example", inspection.ColumnMapExample},
+	})
+}
+
+func fileInspectionColumnsTable(inspection *platform.FileInspection) *output.QueryResult {
+	if inspection == nil {
+		return tableResult([]string{"source_column", "dataset_column", "type", "nullable", "primary", "column_map"}, nil)
+	}
+	rows := make([][]any, len(inspection.Columns))
+	for i, column := range inspection.Columns {
+		rows[i] = []any{column.SourceColumn, column.DatasetColumn, column.DataType, column.IsNullable, column.IsPrimary, column.ColumnMapSnippet}
+	}
+	return tableResult([]string{"source_column", "dataset_column", "type", "nullable", "primary", "column_map"}, rows)
 }
 
 func lineageTable(graph *platform.LineageGraph) *output.QueryResult {

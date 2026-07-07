@@ -1102,6 +1102,7 @@ func init() {
 	rootCmd.AddCommand(whoamiCmd)
 	rootCmd.AddCommand(manifestCmd)
 	rootCmd.AddCommand(statusCmd)
+	rootCmd.AddCommand(capabilitiesCmd)
 	rootCmd.AddCommand(orgsCmd)
 	rootCmd.AddCommand(projectsCmd)
 	rootCmd.AddCommand(sourcesCmd)
@@ -1117,7 +1118,7 @@ func init() {
 	rootCmd.AddCommand(resourcesCmd)
 	rootCmd.AddCommand(useCmd)
 
-	for _, command := range []*cobra.Command{loginCmd, logoutCmd, whoamiCmd, manifestCmd, statusCmd, orgsCmd, projectsCmd, sourcesCmd, secretsCmd, aiProvidersCmd, ontologiesCmd, datasetsCmd, lineageCmd, transformsCmd, functionsCmd, filesCmd, foldersCmd, resourcesCmd, useCmd} {
+	for _, command := range []*cobra.Command{loginCmd, logoutCmd, whoamiCmd, manifestCmd, statusCmd, capabilitiesCmd, orgsCmd, projectsCmd, sourcesCmd, secretsCmd, aiProvidersCmd, ontologiesCmd, datasetsCmd, lineageCmd, transformsCmd, functionsCmd, filesCmd, foldersCmd, resourcesCmd, useCmd} {
 		command.PersistentFlags().StringVar(&platformHost, "host", "", "hosted WhoDB URL (default app.whodb.com)")
 		command.PersistentFlags().StringVarP(&platformFormat, "format", "f", "auto", "output format: auto, table, plain, json, ndjson, csv")
 		command.PersistentFlags().BoolVarP(&platformQuiet, "quiet", "q", false, "suppress informational messages")
@@ -1418,7 +1419,7 @@ func platformStatusFor(host config.PlatformHost, user *platform.User, orgs []pla
 	capabilities := platformStatusCapabilities(manifest)
 	sourceSupported := true
 	for _, capability := range capabilities {
-		if !capability.Supported {
+		if strings.HasPrefix(capability.Name, "source_") && !capability.Supported {
 			sourceSupported = false
 			break
 		}
@@ -1468,6 +1469,21 @@ func platformStatusCapabilities(manifest *platform.PlatformManifest) []platformC
 		{name: "source_browse", kind: "Query", operation: "PlatformSourceObjects"},
 		{name: "source_columns", kind: "Query", operation: "PlatformSourceColumns"},
 		{name: "source_rows", kind: "Query", operation: "PlatformSourceRows"},
+		{name: "secret_list", kind: "Query", operation: "ProjectSecrets"},
+		{name: "ai_provider_list", kind: "Query", operation: "PlatformAIProviders"},
+		{name: "ontology_list", kind: "Query", operation: "OntologyEntities"},
+		{name: "ontology_rows", kind: "Query", operation: "OntologyRows"},
+		{name: "ontology_record_add", kind: "Mutation", operation: "OntologyAddRow"},
+		{name: "ontology_record_update", kind: "Mutation", operation: "OntologyUpdateRow"},
+		{name: "ontology_record_delete", kind: "Mutation", operation: "OntologyDeleteRow"},
+		{name: "dataset_list", kind: "Query", operation: "ProjectDatasets"},
+		{name: "dataset_rows", kind: "Query", operation: "QueryDataset"},
+		{name: "lineage", kind: "Query", operation: "ProjectLineage"},
+		{name: "transform_list", kind: "Query", operation: "ProjectTransforms"},
+		{name: "function_list", kind: "Query", operation: "ProjectFunctions"},
+		{name: "file_list", kind: "Query", operation: "FolderContents"},
+		{name: "file_preview", kind: "Query", operation: "FilePreview"},
+		{name: "file_promote_to_dataset", kind: "Mutation", operation: "PromoteFileToDataset"},
 	}
 	capabilities := make([]platformCapabilityStatus, 0, len(required))
 	for _, item := range required {

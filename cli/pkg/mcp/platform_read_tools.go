@@ -107,6 +107,14 @@ type PlatformFilePreviewInput struct {
 	Fields     []string `json:"fields,omitempty" jsonschema:"Top-level output fields to include. Prefer metadata first; call again with body fields only if needed."`
 }
 
+// PlatformFileInspectInput is the input for the whodb_platform_file_inspect tool.
+type PlatformFileInspectInput struct {
+	FileID      string   `json:"file_id" jsonschema:"Project file id"`
+	SheetIndex  *int     `json:"sheet_index,omitempty" jsonschema:"Optional spreadsheet sheet index"`
+	IncludeRows bool     `json:"include_rows,omitempty" jsonschema:"Include preview rows. Defaults to false to keep context compact."`
+	Fields      []string `json:"fields,omitempty" jsonschema:"Top-level output fields to include. Prefer columns and columnMapExample before requesting rows."`
+}
+
 // PlatformFileSearchInput is the input for the whodb_platform_file_search tool.
 type PlatformFileSearchInput struct {
 	Query  string   `json:"query" jsonschema:"File search query"`
@@ -225,6 +233,10 @@ func registerPlatformReadTool(server *mcp.Server, tool *mcp.Tool, secOpts *Secur
 		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformFilePreviewInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformFilePreview(ctx, req, input)
 		})
+	case "whodb_platform_file_inspect":
+		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformFileInspectInput) (*mcp.CallToolResult, any, error) {
+			return HandlePlatformFileInspect(ctx, req, input)
+		})
 	case "whodb_platform_file_search":
 		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformFileSearchInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformFileSearch(ctx, req, input)
@@ -265,6 +277,7 @@ func platformReadToolDefinitions() []*mcp.Tool {
 		{Name: "whodb_platform_function", Description: descPlatformFunction, Annotations: platformReadOnlyAnnotations("Inspect Hosted Function")},
 		{Name: "whodb_platform_files", Description: descPlatformFiles, Annotations: platformReadOnlyAnnotations("List Hosted Files")},
 		{Name: "whodb_platform_file_preview", Description: descPlatformFilePreview, Annotations: platformReadOnlyAnnotations("Preview Hosted File")},
+		{Name: "whodb_platform_file_inspect", Description: descPlatformFileInspect, Annotations: platformReadOnlyAnnotations("Inspect Hosted File Columns")},
 		{Name: "whodb_platform_file_search", Description: descPlatformFileSearch, Annotations: platformReadOnlyAnnotations("Search Hosted Files")},
 		{Name: "whodb_platform_tabular_files", Description: descPlatformTabularFiles, Annotations: platformReadOnlyAnnotations("List Hosted Tabular Files")},
 		{Name: "whodb_platform_storage_usage", Description: descPlatformStorageUsage, Annotations: platformReadOnlyAnnotations("Inspect Hosted Storage Usage")},
@@ -484,6 +497,24 @@ func HandlePlatformFilePreview(ctx context.Context, req *mcp.CallToolRequest, in
 		}
 		truncated := truncateFilePreview(preview, defaultPlatformContentLimit)
 		return preview, 1, truncated, nil
+	})
+}
+
+// HandlePlatformFileInspect inspects one hosted tabular file for dataset promotion.
+func HandlePlatformFileInspect(ctx context.Context, req *mcp.CallToolRequest, input PlatformFileInspectInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
+	if strings.TrimSpace(input.FileID) == "" {
+		return nil, PlatformReadOutput{Error: "file_id is required", RequestID: generateRequestID("platform_file_inspect")}, nil
+	}
+	return platformProjectRead(ctx, "platform_file_inspect", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
+		preview, err := session.Client.FilePreview(ctx, session.Host.DefaultProjectID, input.FileID, input.SheetIndex, nil)
+		if err != nil {
+			return nil, 0, false, err
+		}
+		inspection := platformapi.InspectFilePreview(input.FileID, preview)
+		if !input.IncludeRows {
+			inspection.Rows = nil
+		}
+		return inspection, len(inspection.Columns), false, nil
 	})
 }
 
@@ -708,6 +739,10 @@ Omit folder_id to list the project root. Prefer fields such as ["files", "folder
 const descPlatformFilePreview = `Preview one hosted project file.
 
 Prefer fields such as ["mimeType", "sizeBytes", "isTabular"] before requesting body fields. Request "textContent" or "tabular" only when the file body or rows are needed. Text content is capped in MCP output. Tabular previews are returned as provided by the hosted platform.`
+
+const descPlatformFileInspect = `Inspect one hosted tabular file and infer promote-to-dataset column mappings.
+
+Use this before whodb_platform_action with resource "file" and action "promote_to_dataset". Prefer fields such as ["columns", "columnMapExample", "columnMapFlags"] first. Set include_rows only when sample row values are needed. The suggested mappings are convenience output; the hosted platform still validates promotion writes.`
 
 const descPlatformFileSearch = `Search files in the selected hosted project.`
 

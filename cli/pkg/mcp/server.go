@@ -939,12 +939,12 @@ func buildPlatformToolGuide(secOpts *SecurityOptions) platformToolGuideResource 
 			{Tool: "whodb_platform_action", Resources: []string{"function"}, Actions: []string{"deploy", "redeploy"}},
 		},
 			"whodb_platform_functions", "whodb_platform_function"),
-		platformToolCategory(toolByName, "files", "Project file browsing, previews, search, tabular file discovery, and storage usage.", "Search or list files first; preview file contents only when required.", []string{"id", "name", "isTabular"}, []platformToolGuideMutation{
+		platformToolCategory(toolByName, "files", "Project file browsing, previews, column inspection, search, tabular file discovery, and storage usage.", "Search or list files first; inspect tabular columns before promotion; preview file contents only when required.", []string{"id", "name", "isTabular"}, []platformToolGuideMutation{
 			{Tool: "whodb_platform_create", Resources: []string{"folder"}},
 			{Tool: "whodb_platform_delete", Resources: []string{"file", "folder"}},
 			{Tool: "whodb_platform_action", Resources: []string{"file", "folder"}, Actions: []string{"upload", "rename", "move", "promote_to_dataset"}},
 		},
-			"whodb_platform_files", "whodb_platform_file_preview", "whodb_platform_file_search", "whodb_platform_tabular_files", "whodb_platform_storage_usage"),
+			"whodb_platform_files", "whodb_platform_file_preview", "whodb_platform_file_inspect", "whodb_platform_file_search", "whodb_platform_tabular_files", "whodb_platform_storage_usage"),
 		platformToolCategory(toolByName, "generic_writes", "Generic hosted create, update, delete, and action tools for supported platform resources.", "Use only after reading current state and obtaining user approval for the exact confirmation preview.", nil, []platformToolGuideMutation{
 			{Tool: "whodb_platform_create", Resources: []string{"secret", "ai_provider", "ontology", "ontology_fast_lookup", "dataset", "transform", "folder", "function", "source_object"}},
 			{Tool: "whodb_platform_update", Resources: []string{"secret", "ai_provider", "ontology", "dataset", "transform", "function", "source_object"}},
@@ -1918,7 +1918,7 @@ Available tools:
 - whodb_platform_lineage / whodb_platform_lineage_neighbors / whodb_platform_project_lineage: Inspect lineage
 - whodb_platform_transforms / whodb_platform_transform_runs: List transforms and runs
 - whodb_platform_functions / whodb_platform_function: List or inspect ontology functions
-- whodb_platform_files / whodb_platform_file_preview / whodb_platform_file_search / whodb_platform_tabular_files: Browse project files
+- whodb_platform_files / whodb_platform_file_preview / whodb_platform_file_inspect / whodb_platform_file_search / whodb_platform_tabular_files: Browse project files
 - whodb_platform_storage_usage: Inspect project storage usage
 - whodb_platform_source_create: Prepare hosted source creation for confirmation
 - whodb_platform_source_update: Prepare hosted source updates for confirmation

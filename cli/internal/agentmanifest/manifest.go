@@ -268,6 +268,7 @@ func buildMCPTools() []MCPTool {
 		{Name: "whodb_platform_function", Description: "Inspect one hosted ontology function when MCP starts with --platform; request file content fields only when needed.", ReadOnly: true},
 		{Name: "whodb_platform_files", Description: "List hosted project folders and files when MCP starts with --platform; accepts fields for projection.", ReadOnly: true},
 		{Name: "whodb_platform_file_preview", Description: "Preview one hosted project file when MCP starts with --platform; request text or tabular payload fields only when needed.", ReadOnly: true},
+		{Name: "whodb_platform_file_inspect", Description: "Inspect hosted tabular file columns and inferred promote-to-dataset mappings when MCP starts with --platform.", ReadOnly: true},
 		{Name: "whodb_platform_file_search", Description: "Search hosted project files when MCP starts with --platform.", ReadOnly: true},
 		{Name: "whodb_platform_tabular_files", Description: "List tabular hosted project files when MCP starts with --platform.", ReadOnly: true},
 		{Name: "whodb_platform_storage_usage", Description: "Show hosted project storage usage in bytes when MCP starts with --platform.", ReadOnly: true},
