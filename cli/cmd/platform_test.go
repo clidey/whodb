@@ -220,12 +220,12 @@ func TestPlatformResourceCommandsRegistered(t *testing.T) {
 	expected := map[string][]string{
 		"secrets":      {"list", "get", "create", "update", "delete"},
 		"ai-providers": {"list", "get", "models", "create", "update", "delete"},
-		"ontologies":   {"list", "get", "fast-lookups", "fast-lookup-suggestions", "rows", "follow-link", "records", "create", "update", "delete"},
-		"datasets":     {"list", "get", "schema", "rows", "query", "create", "update", "delete"},
+		"ontologies":   {"list", "get", "describe", "export", "fast-lookups", "fast-lookup-suggestions", "rows", "follow-link", "records", "create", "update", "delete"},
+		"datasets":     {"list", "get", "describe", "schema", "export", "rows", "query", "create", "update", "delete"},
 		"lineage":      {"project", "root", "neighbors"},
-		"transforms":   {"list", "get", "runs", "create", "update", "run", "delete"},
-		"functions":    {"list", "get", "versions", "active", "promote", "set-active", "restore-draft", "run", "test", "preview", "create", "update", "deploy", "redeploy", "delete"},
-		"files":        {"list", "get", "preview", "inspect", "columns", "download", "search", "tabular", "storage-usage", "upload", "promote-to-dataset", "delete", "rename", "move"},
+		"transforms":   {"list", "get", "describe", "export", "runs", "create", "update", "run", "delete"},
+		"functions":    {"list", "get", "describe", "export", "versions", "active", "promote", "set-active", "restore-draft", "run", "test", "preview", "create", "update", "deploy", "redeploy", "delete"},
+		"files":        {"list", "get", "describe", "preview", "inspect", "columns", "download", "search", "tabular", "storage-usage", "upload", "promote-to-dataset", "delete", "rename", "move"},
 		"folders":      {"list", "get", "tree", "create", "rename", "move", "delete"},
 		"resources":    {"specs", "shape", "create", "update", "delete", "action"},
 	}
@@ -366,6 +366,23 @@ func TestBuildGenericResourceVariablesPromoteFileToDataset(t *testing.T) {
 	}
 }
 
+func TestBuildGenericResourceVariablesFolderDeleteConfirmsNestedDeletion(t *testing.T) {
+	spec, variables, err := buildGenericResourceVariables("proj-1", genericResourceWriteInput{
+		Resource: "folder",
+		Action:   "delete",
+		ID:       "folder-1",
+	}, map[string]any{})
+	if err != nil {
+		t.Fatalf("buildGenericResourceVariables() error = %v", err)
+	}
+	if spec.Mutation != "DeleteProjectFolder" {
+		t.Fatalf("mutation = %q, want DeleteProjectFolder", spec.Mutation)
+	}
+	if variables["confirmDeletion"] != true {
+		t.Fatalf("confirmDeletion = %#v, want true", variables["confirmDeletion"])
+	}
+}
+
 func TestBuildGenericResourceVariablesOntologyRecordUsesEntityID(t *testing.T) {
 	spec, variables, err := buildGenericResourceVariables("proj-1", genericResourceWriteInput{
 		Resource: "ontology",
@@ -436,6 +453,74 @@ func TestBuildOntologyFastLookupCreatePayload(t *testing.T) {
 	}
 	if payload["reason"] != "common lookup" {
 		t.Fatalf("reason = %#v, want reason", payload["reason"])
+	}
+}
+
+func TestPlatformListFilters(t *testing.T) {
+	platformFilterName = "cust"
+	platformFilterSchemaMode = "manual"
+	platformFilterStatus = "active"
+	platformFilterType = "python"
+	platformFilterMIMEType = "csv"
+	platformFilterKind = "file"
+	platformFilterDeployed = "true"
+	t.Cleanup(func() {
+		platformFilterName = ""
+		platformFilterSchemaMode = ""
+		platformFilterStatus = ""
+		platformFilterType = ""
+		platformFilterMIMEType = ""
+		platformFilterKind = ""
+		platformFilterDeployed = ""
+	})
+
+	datasets := filterDatasets([]platform.Dataset{
+		{ID: "dataset-1", Name: "Customers", SchemaMode: "manual"},
+		{ID: "dataset-2", Name: "Orders", SchemaMode: "manual"},
+		{ID: "dataset-3", Name: "Customer Import", SchemaMode: "inferred"},
+	})
+	if len(datasets) != 1 || datasets[0].ID != "dataset-1" {
+		t.Fatalf("filterDatasets() = %#v, want dataset-1", datasets)
+	}
+	ontologies := filterOntologies([]platform.Ontology{
+		{ID: "ontology-1", APIName: "customer", DisplayName: "Customer", Status: "active"},
+		{ID: "ontology-2", APIName: "customer_draft", DisplayName: "Customer Draft", Status: "draft"},
+	})
+	if len(ontologies) != 1 || ontologies[0].ID != "ontology-1" {
+		t.Fatalf("filterOntologies() = %#v, want ontology-1", ontologies)
+	}
+	functions := filterFunctions([]platform.Function{
+		{ID: "fn-1", Name: "Customer Enrich", Language: "python", IsDeployed: true},
+		{ID: "fn-2", Name: "Customer TS", Language: "typescript", IsDeployed: true},
+		{ID: "fn-3", Name: "Customer Draft", Language: "python", IsDeployed: false},
+	})
+	if len(functions) != 1 || functions[0].ID != "fn-1" {
+		t.Fatalf("filterFunctions() = %#v, want fn-1", functions)
+	}
+	contents := filterFolderContents(&platform.FolderContents{
+		Folders: []platform.ProjectFolder{{ID: "folder-1", Name: "Customers"}},
+		Files: []platform.ProjectFile{
+			{ID: "file-1", Name: "customers.csv", MIMEType: "text/csv"},
+			{ID: "file-2", Name: "customers.json", MIMEType: "application/json"},
+		},
+	})
+	if len(contents.Folders) != 0 || len(contents.Files) != 1 || contents.Files[0].ID != "file-1" {
+		t.Fatalf("filterFolderContents() = %#v, want only csv file", contents)
+	}
+}
+
+func TestPlatformResourceWriteSummaryUsesSafeName(t *testing.T) {
+	got := platformResourceWriteSummary(platform.GenericWriteSpec{Resource: "dataset", Action: "create", Mutation: "CreateDataset"}, map[string]any{
+		"name": "Customers",
+	})
+	if got != `Create dataset "Customers"` {
+		t.Fatalf("platformResourceWriteSummary() = %q", got)
+	}
+	got = platformResourceWriteSummary(platform.GenericWriteSpec{Resource: "file", Action: "promote_to_dataset", Mutation: "PromoteFileToDataset"}, map[string]any{
+		"datasetName": "Customers",
+	})
+	if got != `Promote file to dataset "Customers"` {
+		t.Fatalf("platformResourceWriteSummary() = %q", got)
 	}
 }
 

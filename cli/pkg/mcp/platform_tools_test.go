@@ -441,6 +441,9 @@ func TestHandlePlatformGenericCreateConfirmWritesRedactsPreview(t *testing.T) {
 	if output.ConfirmationPreview == nil || output.ConfirmationPreview.Resource != "secret" || output.ConfirmationPreview.Action != "create" {
 		t.Fatalf("preview = %#v, want secret create preview", output.ConfirmationPreview)
 	}
+	if output.ConfirmationPreview.Summary != `Create secret "OPENAI_API_KEY"` {
+		t.Fatalf("preview summary = %q, want safe secret name summary", output.ConfirmationPreview.Summary)
+	}
 	if client.mutationName != "" {
 		t.Fatalf("mutation executed in confirm-writes mode: %q", client.mutationName)
 	}
@@ -480,6 +483,30 @@ func TestHandlePlatformGenericCreateAllowWriteExecutesImmediately(t *testing.T) 
 	}
 }
 
+func TestHandlePlatformGenericFolderDeleteConfirmsNestedDeletion(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := handlePlatformGenericWrite(context.Background(), "platform_delete", PlatformGenericWriteInput{
+		Resource: "folder",
+		ID:       "folder-1",
+	}, "delete", false)
+	if err != nil {
+		t.Fatalf("handlePlatformGenericWrite() error = %v", err)
+	}
+	if output.Error != "" {
+		t.Fatalf("handlePlatformGenericWrite() output error = %q", output.Error)
+	}
+	if client.mutationName != "DeleteProjectFolder" {
+		t.Fatalf("mutation = %q, want DeleteProjectFolder", client.mutationName)
+	}
+	if client.mutationVariables["confirmDeletion"] != true {
+		t.Fatalf("confirmDeletion = %#v, want true", client.mutationVariables["confirmDeletion"])
+	}
+}
+
 func TestHandlePlatformGenericFileUploadConfirmWritesRedactsPreview(t *testing.T) {
 	client := &fakePlatformClient{}
 	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
@@ -510,8 +537,30 @@ func TestHandlePlatformGenericFileUploadConfirmWritesRedactsPreview(t *testing.T
 	if output.ConfirmationPreview == nil || output.ConfirmationPreview.Resource != "file" || output.ConfirmationPreview.Action != "upload" {
 		t.Fatalf("preview = %#v, want file upload preview", output.ConfirmationPreview)
 	}
+	if output.ConfirmationPreview.Summary != "Upload file" {
+		t.Fatalf("preview summary = %q, want generic upload summary", output.ConfirmationPreview.Summary)
+	}
 	if client.mutationName != "" {
 		t.Fatalf("mutation executed in confirm-writes mode: %q", client.mutationName)
+	}
+}
+
+func TestPlatformGenericWriteSummaryUnwrapsInputPayload(t *testing.T) {
+	got := platformGenericWriteSummary(platformapi.GenericWriteSpec{
+		Resource: "dataset",
+		Action:   "create",
+		Mutation: "CreateDataset",
+	}, map[string]any{"input": map[string]any{"name": "Customers", "projectId": "proj-1"}})
+	if got != `Create dataset "Customers"` {
+		t.Fatalf("platformGenericWriteSummary() = %q", got)
+	}
+	got = platformGenericWriteSummary(platformapi.GenericWriteSpec{
+		Resource: "file",
+		Action:   "promote_to_dataset",
+		Mutation: "PromoteFileToDataset",
+	}, map[string]any{"input": map[string]any{"datasetName": "Customers"}})
+	if got != `Promote file to dataset "Customers"` {
+		t.Fatalf("platformGenericWriteSummary() = %q", got)
 	}
 }
 

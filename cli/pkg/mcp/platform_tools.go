@@ -454,6 +454,7 @@ type PlatformActionPreview struct {
 	Operation   string   `json:"operation"`
 	Resource    string   `json:"resource,omitempty"`
 	Action      string   `json:"action,omitempty"`
+	Summary     string   `json:"summary,omitempty"`
 	Host        string   `json:"host"`
 	OrgID       string   `json:"org_id"`
 	ProjectID   string   `json:"project_id"`
@@ -470,6 +471,7 @@ type PendingPlatformAction struct {
 	Operation   string
 	Resource    string
 	Action      string
+	Summary     string
 	Host        string
 	OrgID       string
 	ProjectID   string
@@ -1779,6 +1781,7 @@ func (action *PendingPlatformAction) Preview() *PlatformActionPreview {
 		Operation:   action.Operation,
 		Resource:    action.Resource,
 		Action:      action.Action,
+		Summary:     action.Summary,
 		Host:        action.Host,
 		OrgID:       action.OrgID,
 		ProjectID:   action.ProjectID,

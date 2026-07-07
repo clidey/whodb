@@ -249,10 +249,21 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 	defer bestEffortCLIResourceDelete(t, host, "dataset", datasetID)
 	datasets := runJSONCommand[[]platform.Dataset](t, "datasets", "list", "--host", host, "--format", "json", "--quiet")
 	requireContainsDataset(t, datasets, datasetID)
+	filteredDatasets := runJSONCommand[[]platform.Dataset](t, "datasets", "list", "--host", host, "--name", datasetName, "--schema-mode", "manual", "--format", "json", "--quiet")
+	if len(filteredDatasets) != 1 || filteredDatasets[0].ID != datasetID {
+		t.Fatalf("filtered datasets = %#v, want only %q", filteredDatasets, datasetID)
+	}
 	dataset := runJSONCommand[platform.Dataset](t, "datasets", "get", datasetName, "--host", host, "--format", "json", "--quiet")
 	if dataset.ID != datasetID {
 		t.Fatalf("datasets get by name returned id %q, want %q", dataset.ID, datasetID)
 	}
+	datasetDescribe := runJSONCommand[platform.Dataset](t, "datasets", "describe", datasetName, "--host", host, "--format", "json", "--quiet")
+	if datasetDescribe.ID != datasetID {
+		t.Fatalf("datasets describe returned id %q, want %q", datasetDescribe.ID, datasetID)
+	}
+	datasetExportPath := filepath.Join(t.TempDir(), "dataset-export.json")
+	_ = runRawCommand(t, "datasets", "export", datasetName, "--host", host, "--out", datasetExportPath, "--quiet")
+	testharness.AssertFileContains(t, datasetExportPath, datasetName)
 	_ = runJSONCommand[platform.DatasetQueryResult](t, "datasets", "rows", datasetName, "--host", host, "--limit", "5", "--format", "json", "--quiet")
 	_ = runJSONCommand[platform.DatasetQueryResult](t, "datasets", "query", datasetName, "--host", host, "--limit", "5", "--format", "json", "--quiet")
 	datasetSchema := runJSONCommand[[]platform.ColumnDef](t, "datasets", "schema", datasetName, "--host", host, "--format", "json", "--quiet")
@@ -279,6 +290,17 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 	if transform.ID != transformID {
 		t.Fatalf("transforms get by name returned id %q, want %q", transform.ID, transformID)
 	}
+	filteredTransforms := runJSONCommand[[]platform.Transform](t, "transforms", "list", "--host", host, "--name", transformName, "--trigger-mode", "manual", "--format", "json", "--quiet")
+	if len(filteredTransforms) != 1 || filteredTransforms[0].ID != transformID {
+		t.Fatalf("filtered transforms = %#v, want only %q", filteredTransforms, transformID)
+	}
+	transformDescribe := runJSONCommand[platform.Transform](t, "transforms", "describe", transformName, "--host", host, "--format", "json", "--quiet")
+	if transformDescribe.ID != transformID {
+		t.Fatalf("transforms describe returned id %q, want %q", transformDescribe.ID, transformID)
+	}
+	transformExportPath := filepath.Join(t.TempDir(), "transform-export.json")
+	_ = runRawCommand(t, "transforms", "export", transformName, "--host", host, "--out", transformExportPath, "--quiet")
+	testharness.AssertFileContains(t, transformExportPath, transformName)
 	_ = runMutationID(t, append([]string{
 		"transforms", "update", transformName,
 		"--description", "updated",
@@ -309,6 +331,17 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 	if fn.ID != functionID {
 		t.Fatalf("functions get by name returned id %q, want %q", fn.ID, functionID)
 	}
+	filteredFunctions := runJSONCommand[[]platform.Function](t, "functions", "list", "--host", host, "--name", functionName, "--language", "python", "--deployed", "false", "--format", "json", "--quiet")
+	if len(filteredFunctions) != 1 || filteredFunctions[0].ID != functionID {
+		t.Fatalf("filtered functions = %#v, want only %q", filteredFunctions, functionID)
+	}
+	functionDescribe := runJSONCommand[platform.Function](t, "functions", "describe", functionName, "--host", host, "--format", "json", "--quiet")
+	if functionDescribe.ID != functionID {
+		t.Fatalf("functions describe returned id %q, want %q", functionDescribe.ID, functionID)
+	}
+	functionExportPath := filepath.Join(t.TempDir(), "function-export.json")
+	_ = runRawCommand(t, "functions", "export", functionName, "--host", host, "--out", functionExportPath, "--quiet")
+	testharness.AssertFileContains(t, functionExportPath, functionName)
 	testResult := runJSONCommand[platform.FunctionExecutionResult](t, "functions", "test", functionName, "--host", host, "--input-json", `{"hello":"draft"}`, "--format", "json", "--quiet")
 	requireFunctionExecutionResult(t, "functions test", testResult)
 	previewResult := runJSONCommand[platform.FunctionExecutionResult](t, "functions", "preview", "--host", host, "--language", "python", "--entry-point", "main", "--file", "main.py="+functionPath, "--input-json", `{"hello":"preview"}`, "--format", "json", "--quiet")
@@ -416,9 +449,17 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 	fileID := uploadedFile.ID
 	defer bestEffortCLIResourceDelete(t, host, "file", fileID)
 	_ = runJSONCommand[platform.FolderContents](t, "files", "list", "--host", host, "--folder-id", folderAID, "--format", "json", "--quiet")
+	filteredContents := runJSONCommand[platform.FolderContents](t, "files", "list", "--host", host, "--folder-id", folderAID, "--name", uploadedFile.Name, "--kind", "file", "--mime-type", "csv", "--format", "json", "--quiet")
+	if len(filteredContents.Files) != 1 || filteredContents.Files[0].ID != fileID || len(filteredContents.Folders) != 0 {
+		t.Fatalf("filtered file contents = %#v, want only uploaded file %q", filteredContents, fileID)
+	}
 	file := runJSONCommand[platform.ProjectFile](t, "files", "get", uploadedFile.Name, "--host", host, "--format", "json", "--quiet")
 	if file.ID != fileID {
 		t.Fatalf("files get by name returned id %q, want %q", file.ID, fileID)
+	}
+	fileDescribe := runJSONCommand[platform.ProjectFile](t, "files", "describe", uploadedFile.Name, "--host", host, "--format", "json", "--quiet")
+	if fileDescribe.ID != fileID {
+		t.Fatalf("files describe returned id %q, want %q", fileDescribe.ID, fileID)
 	}
 	_ = runRawCommand(t, "files", "preview", uploadedFile.Name, "--host", host, "--format", "json", "--quiet")
 	inspection := runJSONCommand[platform.FileInspection](t, "files", "inspect", uploadedFile.Name, "--host", host, "--format", "json", "--quiet")

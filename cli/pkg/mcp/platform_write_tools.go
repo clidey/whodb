@@ -193,6 +193,7 @@ func handlePlatformGenericWrite(ctx context.Context, toolName string, input Plat
 		OrgID:       session.Host.DefaultOrgID,
 		ProjectID:   session.Host.DefaultProjectID,
 		ProjectName: session.Host.DefaultProjectName,
+		Summary:     platformGenericWriteSummary(spec, payload),
 		Changes:     genericWriteChanges(payload),
 		Mutation:    spec.Mutation,
 		Variables:   payload,
@@ -415,6 +416,7 @@ func buildPlatformGenericWrite(session *platformToolSession, input PlatformGener
 	case platformapi.GenericWriteModeProjectID:
 		variables["projectId"] = session.Host.DefaultProjectID
 		variables["id"] = id
+		addPlatformConfirmDeletionVariable(spec.Mutation, variables)
 	case platformapi.GenericWriteModeID:
 		variables["id"] = id
 	case platformapi.GenericWriteModeProjectIDName:
@@ -451,6 +453,13 @@ func buildPlatformGenericWrite(session *platformToolSession, input PlatformGener
 		return platformapi.GenericWriteSpec{}, nil, fmt.Errorf("unsupported write mode %q", spec.Mode)
 	}
 	return spec, variables, nil
+}
+
+func addPlatformConfirmDeletionVariable(mutation string, variables map[string]any) {
+	switch mutation {
+	case "DeleteOntology", "DeleteProjectFolder":
+		variables["confirmDeletion"] = true
+	}
 }
 
 func executePlatformMutation(ctx context.Context, client platformClient, mutation, projectID string, variables map[string]any) (*platformapi.PlatformMutationResult, error) {
@@ -530,6 +539,45 @@ func genericWriteChanges(variables map[string]any) []string {
 	}
 	sort.Strings(redacted)
 	return redacted
+}
+
+func platformGenericWriteSummary(spec platformapi.GenericWriteSpec, payload map[string]any) string {
+	action := titlePlatformWriteAction(spec.Action)
+	resource := strings.ReplaceAll(spec.Resource, "_", " ")
+	details := payload
+	if input, ok := payload["input"].(map[string]any); ok {
+		details = input
+	}
+	switch spec.Mutation {
+	case "PromoteFileToDataset":
+		if name := firstPayloadString(details, "datasetName", ""); name != "" {
+			return fmt.Sprintf("Promote file to dataset %q", name)
+		}
+	case "OntologyAddRow":
+		return "Add ontology record"
+	case "OntologyUpdateRow":
+		return "Update ontology record"
+	case "OntologyDeleteRow":
+		return "Delete ontology record"
+	}
+	if name := firstPayloadString(details, "name", ""); name != "" {
+		return fmt.Sprintf("%s %s %q", action, resource, name)
+	}
+	if name := firstPayloadString(details, "displayName", ""); name != "" {
+		return fmt.Sprintf("%s %s %q", action, resource, name)
+	}
+	if name := firstPayloadString(details, "apiName", ""); name != "" {
+		return fmt.Sprintf("%s %s %q", action, resource, name)
+	}
+	return fmt.Sprintf("%s %s", action, resource)
+}
+
+func titlePlatformWriteAction(value string) string {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return value
+	}
+	return strings.ToUpper(value[:1]) + value[1:]
 }
 
 func sensitivePlatformWriteKey(key string) bool {

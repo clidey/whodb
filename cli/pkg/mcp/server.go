@@ -1900,6 +1900,8 @@ read calls: request only the fields needed for the current answer, then make a
 second read with additional fields only if more detail is required. Heavy fields
 such as function files, file text, tabular rows, or source content should be
 requested only when needed.
+When list tools expose filters such as name, type, status, schema_mode, kind,
+mime_type, or deployed, pass them instead of listing the whole project.
 
 Available tools:
 - whodb_platform_status: Show hosted login and selected workspace

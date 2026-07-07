@@ -85,7 +85,7 @@ var platformMutationSpecs = map[string]platformMutationSpec{
 	"DeleteAIProvider":         mutationSpecWithID("DeleteAIProvider", statusResponseFields),
 	"CreateOntology":           mutationSpecWithInput("CreateOntology", "CreateOntologyInput", ontologyFields),
 	"UpdateOntology":           mutationSpecWithInput("UpdateOntology", "UpdateOntologyEntityInput", ontologyFields),
-	"DeleteOntology":           mutationSpecWithProjectID("DeleteOntology", statusResponseFields),
+	"DeleteOntology":           mutationSpecWithProjectIDConfirmDeletion("DeleteOntology", statusResponseFields),
 	"CreateOntologyFastLookup": mutationSpecWithInput("CreateOntologyFastLookup", "CreateOntologyFastLookupInput", ontologyFastLookupFields),
 	"RemoveOntologyFastLookup": mutationSpecWithProjectID("RemoveOntologyFastLookup", statusResponseFields),
 	"OntologyAddRow":           mutationSpecWithDirect("OntologyAddRow", "$projectId: ID!, $entityId: ID!, $values: [RecordInput!]!", "projectId: $projectId, entityId: $entityId, values: $values", statusResponseFields),
@@ -103,7 +103,7 @@ var platformMutationSpecs = map[string]platformMutationSpec{
 	"MoveProjectFile":          mutationSpecWithInput("MoveProjectFile", "MoveFileInput", projectFileFields),
 	"MoveProjectFolder":        mutationSpecWithInput("MoveProjectFolder", "MoveFolderInput", projectFolderFields),
 	"DeleteProjectFile":        mutationSpecWithProjectID("DeleteProjectFile", statusResponseFields),
-	"DeleteProjectFolder":      mutationSpecWithProjectID("DeleteProjectFolder", statusResponseFields),
+	"DeleteProjectFolder":      mutationSpecWithProjectIDConfirmDeletion("DeleteProjectFolder", statusResponseFields),
 	"PromoteFileToDataset":     mutationSpecWithInput("PromoteFileToDataset", "PromoteFileInput", datasetFields),
 	"CreateFunction":           mutationSpecWithInput("CreateFunction", "CreateFunctionInput", functionWriteFields),
 	"UpdateFunction":           mutationSpecWithInput("UpdateFunction", "UpdateFunctionInput", functionWriteFields),
@@ -201,6 +201,19 @@ func mutationSpecWithProjectID(operation, fields string) platformMutationSpec {
 		Query: fmt.Sprintf(`
 mutation CLIPlatform%s($projectId: ID!, $id: ID!) {
   %s(projectId: $projectId, id: $id) {
+%s
+  }
+}
+`, operation, operation, fields),
+	}
+}
+
+func mutationSpecWithProjectIDConfirmDeletion(operation, fields string) platformMutationSpec {
+	return platformMutationSpec{
+		Operation: operation,
+		Query: fmt.Sprintf(`
+mutation CLIPlatform%s($projectId: ID!, $id: ID!, $confirmDeletion: Boolean) {
+  %s(projectId: $projectId, id: $id, confirmDeletion: $confirmDeletion) {
 %s
   }
 }

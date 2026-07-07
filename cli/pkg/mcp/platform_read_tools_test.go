@@ -126,7 +126,7 @@ func (f *fakePlatformClient) Function(ctx context.Context, projectID, id string,
 
 func (f *fakePlatformClient) FolderContents(ctx context.Context, projectID, folderID string, fields []string) (*platformapi.FolderContents, error) {
 	f.folderContentsFields = append([]string(nil), fields...)
-	return &platformapi.FolderContents{Files: []platformapi.ProjectFile{{ID: "file-1", ProjectID: projectID, Name: "customers.csv", IsTabular: true}}}, nil
+	return &platformapi.FolderContents{Files: []platformapi.ProjectFile{{ID: "file-1", ProjectID: projectID, Name: "customers.csv", MIMEType: "text/csv", IsTabular: true}}}, nil
 }
 
 func (f *fakePlatformClient) FilePreview(ctx context.Context, projectID, fileID string, sheetIndex *int, fields []string) (*platformapi.FilePreviewResult, error) {
@@ -176,6 +176,58 @@ func TestHandlePlatformSecretsDoesNotExposeValues(t *testing.T) {
 	}
 	if strings.Contains(strings.ToLower(string(raw)), "value") || strings.Contains(string(raw), "secret-value") {
 		t.Fatalf("secret output exposed value-like fields: %s", raw)
+	}
+}
+
+func TestHandlePlatformListFilters(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, datasets, err := HandlePlatformDatasets(context.Background(), nil, PlatformEmptyInput{Name: "cust"})
+	if err != nil {
+		t.Fatalf("HandlePlatformDatasets() error = %v", err)
+	}
+	if datasets.Count != 1 {
+		t.Fatalf("filtered dataset count = %d, want 1", datasets.Count)
+	}
+	_, datasets, err = HandlePlatformDatasets(context.Background(), nil, PlatformEmptyInput{Name: "orders"})
+	if err != nil {
+		t.Fatalf("HandlePlatformDatasets() error = %v", err)
+	}
+	if datasets.Count != 0 {
+		t.Fatalf("filtered dataset count = %d, want 0", datasets.Count)
+	}
+
+	_, files, err := HandlePlatformFiles(context.Background(), nil, PlatformFilesInput{Name: "customers", Kind: "file", MIMEType: "csv"})
+	if err != nil {
+		t.Fatalf("HandlePlatformFiles() error = %v", err)
+	}
+	if files.Count != 1 {
+		t.Fatalf("filtered file count = %d, want 1", files.Count)
+	}
+	_, files, err = HandlePlatformFiles(context.Background(), nil, PlatformFilesInput{Kind: "folder"})
+	if err != nil {
+		t.Fatalf("HandlePlatformFiles() error = %v", err)
+	}
+	if files.Count != 0 {
+		t.Fatalf("filtered folder count = %d, want 0", files.Count)
+	}
+
+	_, functions, err := HandlePlatformFunctions(context.Background(), nil, PlatformEmptyInput{Name: "enrich", Deployed: "false"})
+	if err != nil {
+		t.Fatalf("HandlePlatformFunctions() error = %v", err)
+	}
+	if functions.Count != 1 {
+		t.Fatalf("filtered function count = %d, want 1", functions.Count)
+	}
+	_, functions, err = HandlePlatformFunctions(context.Background(), nil, PlatformEmptyInput{Deployed: "true"})
+	if err != nil {
+		t.Fatalf("HandlePlatformFunctions() error = %v", err)
+	}
+	if functions.Count != 0 {
+		t.Fatalf("filtered function count = %d, want 0", functions.Count)
 	}
 }
 

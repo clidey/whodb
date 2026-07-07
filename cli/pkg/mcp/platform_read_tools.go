@@ -97,6 +97,9 @@ type PlatformTransformRunsInput struct {
 // PlatformFilesInput is the input for the whodb_platform_files tool.
 type PlatformFilesInput struct {
 	FolderID string   `json:"folder_id,omitempty" jsonschema:"Folder id. Omit for project root."`
+	Name     string   `json:"name,omitempty" jsonschema:"Optional case-insensitive name substring filter"`
+	Kind     string   `json:"kind,omitempty" jsonschema:"Optional entry kind filter: file or folder"`
+	MIMEType string   `json:"mime_type,omitempty" jsonschema:"Optional file MIME type substring filter"`
 	Fields   []string `json:"fields,omitempty" jsonschema:"Top-level output fields to include. Prefer only fields needed now; call again with more fields if needed."`
 }
 
@@ -123,7 +126,12 @@ type PlatformFileSearchInput struct {
 
 // PlatformEmptyInput is the input for selected-project list tools.
 type PlatformEmptyInput struct {
-	Fields []string `json:"fields,omitempty" jsonschema:"Top-level output fields to include. Prefer only fields needed now; call again with more fields if needed."`
+	Name       string   `json:"name,omitempty" jsonschema:"Optional case-insensitive name substring filter for list tools"`
+	Type       string   `json:"type,omitempty" jsonschema:"Optional type filter, for example provider type, transform trigger mode, or function language"`
+	Status     string   `json:"status,omitempty" jsonschema:"Optional status filter for resources that expose status"`
+	SchemaMode string   `json:"schema_mode,omitempty" jsonschema:"Optional dataset schema mode filter"`
+	Deployed   string   `json:"deployed,omitempty" jsonschema:"Optional function deployment filter: true or false"`
+	Fields     []string `json:"fields,omitempty" jsonschema:"Top-level output fields to include. Prefer only fields needed now; call again with more fields if needed."`
 }
 
 // PlatformReadOutput is the common output for read-only hosted platform tools.
@@ -308,6 +316,9 @@ func HandlePlatformSourceContent(ctx context.Context, req *mcp.CallToolRequest, 
 func HandlePlatformSecrets(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
 	return platformProjectRead(ctx, "platform_secrets", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
 		secrets, err := session.Client.ProjectSecrets(ctx, session.Host.DefaultProjectID)
+		secrets = filterPlatformReadSlice(secrets, func(secret platformapi.ProjectSecret) bool {
+			return platformReadMatchesSubstring(secret.Name, input.Name)
+		})
 		return secrets, len(secrets), false, err
 	})
 }
@@ -316,6 +327,9 @@ func HandlePlatformSecrets(ctx context.Context, req *mcp.CallToolRequest, input 
 func HandlePlatformAIProviders(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
 	return platformProjectRead(ctx, "platform_ai_providers", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
 		providers, err := session.Client.AIProviders(ctx, session.Host.DefaultProjectID)
+		providers = filterPlatformReadSlice(providers, func(provider platformapi.AIProvider) bool {
+			return platformReadMatchesSubstring(provider.Name, input.Name) && platformReadMatchesEqual(provider.ProviderType, input.Type)
+		})
 		return providers, len(providers), false, err
 	})
 }
@@ -335,6 +349,10 @@ func HandlePlatformAIProviderModels(ctx context.Context, req *mcp.CallToolReques
 func HandlePlatformOntologies(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
 	return platformProjectRead(ctx, "platform_ontologies", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
 		ontologies, err := session.Client.Ontologies(ctx, session.Host.DefaultProjectID)
+		ontologies = filterPlatformReadSlice(ontologies, func(ontology platformapi.Ontology) bool {
+			nameMatch := platformReadMatchesSubstring(ontology.DisplayName, input.Name) || platformReadMatchesSubstring(ontology.APIName, input.Name)
+			return nameMatch && platformReadMatchesEqual(ontology.Status, input.Status)
+		})
 		return ontologies, len(ontologies), false, err
 	})
 }
@@ -385,6 +403,9 @@ func HandlePlatformOntologyFollowLink(ctx context.Context, req *mcp.CallToolRequ
 func HandlePlatformDatasets(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
 	return platformProjectRead(ctx, "platform_datasets", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
 		datasets, err := session.Client.Datasets(ctx, session.Host.DefaultProjectID)
+		datasets = filterPlatformReadSlice(datasets, func(dataset platformapi.Dataset) bool {
+			return platformReadMatchesSubstring(dataset.Name, input.Name) && platformReadMatchesEqual(dataset.SchemaMode, input.SchemaMode)
+		})
 		return datasets, len(datasets), false, err
 	})
 }
@@ -438,6 +459,9 @@ func HandlePlatformProjectLineage(ctx context.Context, req *mcp.CallToolRequest,
 func HandlePlatformTransforms(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
 	return platformProjectRead(ctx, "platform_transforms", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
 		transforms, err := session.Client.Transforms(ctx, session.Host.DefaultProjectID)
+		transforms = filterPlatformReadSlice(transforms, func(transform platformapi.Transform) bool {
+			return platformReadMatchesSubstring(transform.Name, input.Name) && platformReadMatchesEqual(transform.TriggerMode, input.Type)
+		})
 		return transforms, len(transforms), false, err
 	})
 }
@@ -457,6 +481,9 @@ func HandlePlatformTransformRuns(ctx context.Context, req *mcp.CallToolRequest, 
 func HandlePlatformFunctions(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
 	return platformProjectRead(ctx, "platform_functions", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
 		functions, err := session.Client.Functions(ctx, session.Host.DefaultProjectID, input.Fields)
+		functions = filterPlatformReadSlice(functions, func(fn platformapi.Function) bool {
+			return platformReadMatchesSubstring(fn.Name, input.Name) && platformReadMatchesEqual(fn.Language, input.Type) && platformReadMatchesBool(fn.IsDeployed, input.Deployed)
+		})
 		functions, truncated := truncateFunctions(functions, defaultPlatformContentLimit)
 		return functions, len(functions), truncated, err
 	})
@@ -481,6 +508,7 @@ func HandlePlatformFiles(ctx context.Context, req *mcp.CallToolRequest, input Pl
 		if contents == nil {
 			return contents, 0, false, err
 		}
+		contents = filterPlatformFileContents(contents, input)
 		return contents, len(contents.Folders) + len(contents.Files), false, err
 	})
 }
@@ -672,6 +700,67 @@ func lineageNodeCount(graph *platformapi.LineageGraph) int {
 	return len(graph.Nodes)
 }
 
+func filterPlatformReadSlice[T any](values []T, keep func(T) bool) []T {
+	filtered := make([]T, 0, len(values))
+	for _, value := range values {
+		if keep(value) {
+			filtered = append(filtered, value)
+		}
+	}
+	return filtered
+}
+
+func filterPlatformFileContents(contents *platformapi.FolderContents, input PlatformFilesInput) *platformapi.FolderContents {
+	if contents == nil {
+		return nil
+	}
+	filtered := *contents
+	filtered.Folders = nil
+	filtered.Files = nil
+	if platformReadMatchesEqual("folder", input.Kind) {
+		filtered.Folders = filterPlatformReadSlice(contents.Folders, func(folder platformapi.ProjectFolder) bool {
+			return platformReadMatchesSubstring(folder.Name, input.Name)
+		})
+	}
+	if platformReadMatchesEqual("file", input.Kind) {
+		filtered.Files = filterPlatformReadSlice(contents.Files, func(file platformapi.ProjectFile) bool {
+			return platformReadMatchesSubstring(file.Name, input.Name) && platformReadMatchesSubstring(file.MIMEType, input.MIMEType)
+		})
+	}
+	return &filtered
+}
+
+func platformReadMatchesSubstring(value, filter string) bool {
+	needle := strings.TrimSpace(filter)
+	if needle == "" {
+		return true
+	}
+	return strings.Contains(strings.ToLower(value), strings.ToLower(needle))
+}
+
+func platformReadMatchesEqual(value, filter string) bool {
+	expected := strings.TrimSpace(filter)
+	if expected == "" {
+		return true
+	}
+	return strings.EqualFold(strings.TrimSpace(value), expected)
+}
+
+func platformReadMatchesBool(value bool, filter string) bool {
+	expected := strings.TrimSpace(filter)
+	if expected == "" {
+		return true
+	}
+	switch strings.ToLower(expected) {
+	case "true", "yes", "1":
+		return value
+	case "false", "no", "0":
+		return !value
+	default:
+		return false
+	}
+}
+
 const descPlatformSourceConstraints = `Describe editable field constraints for one hosted source object.
 
 Use a source name or id and an object ref such as table:public.users. This tool is read-only.`
@@ -680,17 +769,17 @@ const descPlatformSourceContent = `Read content for one hosted source object whe
 
 Use a source name or id and an object ref such as file:notes/report.txt. Prefer fields to request only the content metadata or body fields needed now, then call again with more fields only if needed. Text content is capped in MCP output.`
 
-const descPlatformSecrets = `List hosted project secret metadata and usage.
+const descPlatformSecrets = `List hosted project secret metadata and usage. Use name to filter by secret name when known.
 
 This tool never returns secret values, redacted placeholders, or credential material. Authorization is enforced by the hosted platform.`
 
-const descPlatformAIProviders = `List hosted AI provider metadata in the selected project.
+const descPlatformAIProviders = `List hosted AI provider metadata in the selected project. Use name and type filters when known.
 
 This tool never returns provider API keys.`
 
 const descPlatformAIProviderModels = `List model names available from one hosted AI provider.`
 
-const descPlatformOntologies = `List ontology object types in the selected hosted project.`
+const descPlatformOntologies = `List ontology object types in the selected hosted project. Use name and status filters when known.`
 
 const descPlatformOntology = `Inspect one ontology object type by id.`
 
@@ -706,7 +795,7 @@ const descPlatformOntologyFollowLink = `Follow one ontology link from a row prim
 
 Results are capped by the requested limit and the MCP --max-rows setting when provided.`
 
-const descPlatformDatasets = `List datasets in the selected hosted project.`
+const descPlatformDatasets = `List datasets in the selected hosted project. Use name and schema_mode filters when known.`
 
 const descPlatformDataset = `Inspect one hosted dataset by id.`
 
@@ -720,13 +809,13 @@ const descPlatformLineageNeighbors = `Return immediate lineage neighbors for one
 
 const descPlatformProjectLineage = `Return project-level lineage for the selected hosted project.`
 
-const descPlatformTransforms = `List transforms in the selected hosted project.`
+const descPlatformTransforms = `List transforms in the selected hosted project. Use name and type filters when known; type maps to trigger mode for this tool.`
 
 const descPlatformTransformRuns = `List recent runs for one hosted transform.`
 
 const descPlatformFunctions = `List ontology functions in the selected hosted project.
 
-Prefer fields such as ["id", "name", "description", "isDeployed"] for discovery. Request heavier fields such as "files" only when source code is needed. Function source file content is capped in MCP output. Secret bindings include secret ids only, never secret values.`
+Use name, type, and deployed filters when known; type maps to language for this tool. Prefer fields such as ["id", "name", "description", "isDeployed"] for discovery. Request heavier fields such as "files" only when source code is needed. Function source file content is capped in MCP output. Secret bindings include secret ids only, never secret values.`
 
 const descPlatformFunction = `Inspect one ontology function by id.
 
@@ -734,7 +823,7 @@ Prefer fields to request only the details needed now, for example ["id", "name",
 
 const descPlatformFiles = `List folders and files in a hosted project folder.
 
-Omit folder_id to list the project root. Prefer fields such as ["files", "folders"] or ["storageUsed"] to request only the folder data needed now.`
+Omit folder_id to list the project root. Use name, kind, and mime_type filters when known. Prefer fields such as ["files", "folders"] or ["storageUsed"] to request only the folder data needed now.`
 
 const descPlatformFilePreview = `Preview one hosted project file.
 
