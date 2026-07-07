@@ -1079,6 +1079,8 @@ func registerPlatformResourceCommands() {
 		command.Flags().StringVar(&platformExportOutPath, "out", "", "destination path; omitted writes JSON to stdout")
 	}
 	resourcesExportCmd.Flags().StringVar(&platformExportOutPath, "out", "", "destination path; omitted writes JSON to stdout")
+	resourcesExportCmd.Flags().BoolVar(&platformBundleIncludeFiles, "include-files", false, "include previewable uploaded file content in the bundle")
+	resourcesExportCmd.Flags().IntVar(&platformBundleMaxFileBytes, "max-file-bytes", 1<<20, "maximum bytes to include per uploaded file when --include-files is set")
 	resourcesDiffCmd.Flags().StringVar(&platformBundlePath, "file", "", "project bundle JSON file")
 	resourcesDiffCmd.Flags().StringVar(&platformBundlePrefix, "prefix", "", "prefix added to imported resource names in the plan")
 	resourcesDiffCmd.Flags().BoolVar(&platformRenameConflicts, "rename-conflicts", false, "plan unique names for resources that conflict with existing resources")

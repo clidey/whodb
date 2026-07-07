@@ -346,6 +346,9 @@ type ProjectFile struct {
 	UploadedBy  string  `json:"uploadedBy"`
 	CreatedAt   string  `json:"createdAt"`
 	UpdatedAt   string  `json:"updatedAt"`
+	Content     string  `json:"content,omitempty"`
+	ContentType string  `json:"contentType,omitempty"`
+	Truncated   bool    `json:"truncated,omitempty"`
 }
 
 // FolderContents describes a hosted project folder listing.

@@ -17,7 +17,9 @@
 package platform
 
 import (
+	"bytes"
 	"context"
+	"encoding/csv"
 	"fmt"
 	"regexp"
 	"strings"
@@ -33,6 +35,7 @@ type BundleClient interface {
 	Transforms(context.Context, string) ([]Transform, error)
 	Functions(context.Context, string, []string) ([]Function, error)
 	FolderContents(context.Context, string, string, []string) (*FolderContents, error)
+	FilePreview(context.Context, string, string, *int, []string) (*FilePreviewResult, error)
 }
 
 // CloneClient is the platform API surface needed to clone project resources.
@@ -74,6 +77,7 @@ type BundleAction struct {
 	TargetID string         `json:"targetId,omitempty"`
 	Action   string         `json:"action"`
 	Reason   string         `json:"reason,omitempty"`
+	Impacts  []string       `json:"impacts,omitempty"`
 	Payload  map[string]any `json:"payload,omitempty"`
 }
 
@@ -97,6 +101,12 @@ type BundleImportOptions struct {
 	Getenv             func(string) string
 }
 
+// BundleExportOptions controls project bundle export behavior.
+type BundleExportOptions struct {
+	IncludeFiles bool
+	MaxFileBytes int
+}
+
 type bundleTreeEntry struct {
 	Folder ProjectFolder
 	File   ProjectFile
@@ -105,6 +115,11 @@ type bundleTreeEntry struct {
 
 // BuildProjectBundle exports project metadata into a portable bundle.
 func BuildProjectBundle(ctx context.Context, client BundleClient, host, orgID, orgName string, project *Project) (*ProjectBundle, error) {
+	return BuildProjectBundleWithOptions(ctx, client, host, orgID, orgName, project, BundleExportOptions{})
+}
+
+// BuildProjectBundleWithOptions exports project metadata into a portable bundle.
+func BuildProjectBundleWithOptions(ctx context.Context, client BundleClient, host, orgID, orgName string, project *Project, options BundleExportOptions) (*ProjectBundle, error) {
 	secrets, err := client.ProjectSecrets(ctx, project.ID)
 	if err != nil {
 		return nil, err
@@ -140,8 +155,21 @@ func BuildProjectBundle(ctx context.Context, client BundleClient, host, orgID, o
 		case "folder":
 			folders = append(folders, entry.Folder)
 		case "file":
-			files = append(files, entry.File)
+			file := entry.File
+			if options.IncludeFiles {
+				file = exportProjectFileContent(ctx, client, project.ID, file, options.MaxFileBytes)
+			}
+			files = append(files, file)
 		}
+	}
+	notes := []string{
+		"Secret values are not exported. Import reads secret values from WHODB_IMPORT_SECRET_<SECRET_NAME> environment variables.",
+		"AI provider API keys are not exported. Import reads provider keys from WHODB_IMPORT_AI_PROVIDER_KEY_<PROVIDER_NAME> environment variables.",
+	}
+	if options.IncludeFiles {
+		notes = append(notes, "Previewable uploaded file content is included up to the configured size cap. Imported files are uploaded into the target project root.")
+	} else {
+		notes = append(notes, "Uploaded file bytes are not exported. File metadata is included for planning only.")
 	}
 	return &ProjectBundle{
 		BundleVersion: 1,
@@ -159,11 +187,7 @@ func BuildProjectBundle(ctx context.Context, client BundleClient, host, orgID, o
 		Functions:     functions,
 		Folders:       folders,
 		Files:         files,
-		Notes: []string{
-			"Secret values are not exported. Import reads secret values from WHODB_IMPORT_SECRET_<SECRET_NAME> environment variables.",
-			"AI provider API keys are not exported. Import reads provider keys from WHODB_IMPORT_AI_PROVIDER_KEY_<PROVIDER_NAME> environment variables.",
-			"Uploaded file bytes are not exported. File metadata is included for planning only.",
-		},
+		Notes:         notes,
 	}, nil
 }
 
@@ -201,6 +225,10 @@ func PlanBundleImportWithOptions(ctx context.Context, client BundleClient, host 
 	if err != nil {
 		return nil, err
 	}
+	currentTree, err := loadBundleFolderTree(ctx, client, project.ID)
+	if err != nil {
+		return nil, err
+	}
 
 	plan := &BundlePlan{
 		Host:              host,
@@ -216,6 +244,12 @@ func PlanBundleImportWithOptions(ctx context.Context, client BundleClient, host 
 	ontologyNames := resourceNamesBy(currentOntologies, func(ontology Ontology) string { return ontology.APIName })
 	transformNames := resourceNamesBy(currentTransforms, func(transform Transform) string { return transform.Name })
 	functionNames := resourceNamesBy(currentFunctions, func(fn Function) string { return fn.Name })
+	fileNames := resourceNames{}
+	for _, entry := range currentTree {
+		if entry.Kind == "file" {
+			fileNames.add(entry.File.Name, entry.File.ID)
+		}
+	}
 	if options.Getenv == nil {
 		options.Getenv = func(string) string { return "" }
 	}
@@ -228,23 +262,30 @@ func PlanBundleImportWithOptions(ctx context.Context, client BundleClient, host 
 			action.Action = "skip"
 			action.TargetID = existing
 			action.Reason = "secret already exists"
+			action.Impacts = append(action.Impacts, "Existing secret will be reused by dependent imported resources.")
 		} else if existing, ok := secretNames.lookup(name); ok && options.OverwriteConflicts {
 			action.Action = "update"
 			action.TargetID = existing
 			action.Payload = map[string]any{"name": name, "description": secret.Description}
 			if value := options.Getenv(envName); value != "" {
 				action.Payload["value"] = value
+				action.Impacts = append(action.Impacts, "Secret value will be replaced from "+envName+".")
+			} else {
+				action.Impacts = append(action.Impacts, "Secret metadata will be updated; value is unchanged because "+envName+" is not set.")
 			}
 		} else if options.Getenv(envName) == "" {
 			action.Action = "skip"
 			action.Reason = "missing " + envName
+			action.Impacts = append(action.Impacts, "Set "+envName+" to import this secret and bind dependent resources to it.")
 		} else {
 			if options.RenameConflicts {
 				name = uniqueResourceName(name, secretNames)
 				action.Name = name
+				action.Impacts = append(action.Impacts, "Secret will be renamed to avoid a target-project conflict.")
 			}
 			action.Action = "create"
 			action.Payload = map[string]any{"name": name, "description": secret.Description, "value": options.Getenv(envName)}
+			action.Impacts = append(action.Impacts, "Secret value will be read from "+envName+".")
 		}
 		plan.Actions = append(plan.Actions, action)
 	}
@@ -258,25 +299,32 @@ func PlanBundleImportWithOptions(ctx context.Context, client BundleClient, host 
 			action.Action = "skip"
 			action.TargetID = existing
 			action.Reason = "AI provider already exists"
+			action.Impacts = append(action.Impacts, "Existing AI provider will be reused by dependent imported functions.")
 		} else if existing, ok := aiProviderNames.lookup(name); ok && options.OverwriteConflicts {
 			action.Action = "update"
 			action.TargetID = existing
 			action.Payload = payload
 			if value := options.Getenv(envName); value != "" {
 				action.Payload["apiKey"] = value
+				action.Impacts = append(action.Impacts, "AI provider key will be replaced from "+envName+".")
+			} else {
+				action.Impacts = append(action.Impacts, "AI provider metadata will be updated; key is unchanged because "+envName+" is not set.")
 			}
 		} else if options.Getenv(envName) == "" {
 			action.Action = "skip"
 			action.Reason = "missing " + envName
+			action.Impacts = append(action.Impacts, "Set "+envName+" to import this AI provider and bind dependent functions to it.")
 		} else {
 			if options.RenameConflicts {
 				name = uniqueResourceName(name, aiProviderNames)
 				action.Name = name
 				payload["name"] = name
+				action.Impacts = append(action.Impacts, "AI provider will be renamed to avoid a target-project conflict.")
 			}
 			action.Action = "create"
 			payload["apiKey"] = options.Getenv(envName)
 			action.Payload = payload
+			action.Impacts = append(action.Impacts, "AI provider key will be read from "+envName+".")
 		}
 		plan.Actions = append(plan.Actions, action)
 	}
@@ -289,15 +337,18 @@ func PlanBundleImportWithOptions(ctx context.Context, client BundleClient, host 
 			action.Action = "skip"
 			action.TargetID = existing
 			action.Reason = "dataset already exists"
+			action.Impacts = append(action.Impacts, "Existing dataset will be reused by dependent imported resources.")
 		} else if existing, ok := datasetNames.lookup(name); ok && options.OverwriteConflicts {
 			action.Action = "update"
 			action.TargetID = existing
 			action.Payload = payload
+			action.Impacts = append(action.Impacts, "Dataset metadata/schema will be updated in place.")
 		} else {
 			if options.RenameConflicts {
 				name = uniqueResourceName(name, datasetNames)
 				action.Name = name
 				payload["name"] = name
+				action.Impacts = append(action.Impacts, "Dataset will be renamed to avoid a target-project conflict.")
 			}
 			action.Action = "create"
 			action.Payload = payload
@@ -313,16 +364,19 @@ func PlanBundleImportWithOptions(ctx context.Context, client BundleClient, host 
 			action.Action = "skip"
 			action.TargetID = existing
 			action.Reason = "ontology already exists"
+			action.Impacts = append(action.Impacts, "Existing ontology will be reused by dependent imported functions.")
 		} else if existing, ok := ontologyNames.lookup(name); ok && options.OverwriteConflicts {
 			action.Action = "update"
 			action.TargetID = existing
 			action.Payload = payload
+			action.Impacts = append(action.Impacts, "Ontology metadata/properties will be updated in place.")
 		} else {
 			if options.RenameConflicts {
 				name = uniqueResourceName(name, ontologyNames)
 				action.Name = name
 				payload["apiName"] = name
 				payload["tableName"] = name
+				action.Impacts = append(action.Impacts, "Ontology API name will be renamed to avoid a target-project conflict.")
 			}
 			action.Action = "create"
 			action.Payload = payload
@@ -338,15 +392,18 @@ func PlanBundleImportWithOptions(ctx context.Context, client BundleClient, host 
 			action.Action = "skip"
 			action.TargetID = existing
 			action.Reason = "transform already exists"
+			action.Impacts = append(action.Impacts, "Existing transform will be reused where referenced.")
 		} else if existing, ok := transformNames.lookup(name); ok && options.OverwriteConflicts {
 			action.Action = "update"
 			action.TargetID = existing
 			action.Payload = payload
+			action.Impacts = append(action.Impacts, "Transform graph/configuration will be updated in place.")
 		} else {
 			if options.RenameConflicts {
 				name = uniqueResourceName(name, transformNames)
 				action.Name = name
 				payload["name"] = name
+				action.Impacts = append(action.Impacts, "Transform will be renamed to avoid a target-project conflict.")
 			}
 			action.Action = "create"
 			action.Payload = payload
@@ -362,18 +419,23 @@ func PlanBundleImportWithOptions(ctx context.Context, client BundleClient, host 
 			action.Action = "skip"
 			action.TargetID = existing
 			action.Reason = "function already exists"
+			action.Impacts = append(action.Impacts, "Existing function will remain unchanged.")
 		} else if existing, ok := functionNames.lookup(name); ok && options.OverwriteConflicts {
 			action.Action = "update"
 			action.TargetID = existing
 			action.Payload = payload
+			action.Impacts = append(action.Impacts, bundleFunctionImpacts(fn)...)
+			action.Impacts = append(action.Impacts, "Function code/configuration will be updated in place.")
 		} else {
 			if options.RenameConflicts {
 				name = uniqueResourceName(name, functionNames)
 				action.Name = name
 				payload["name"] = name
+				action.Impacts = append(action.Impacts, "Function will be renamed to avoid a target-project conflict.")
 			}
 			action.Action = "create"
 			action.Payload = payload
+			action.Impacts = append(action.Impacts, bundleFunctionImpacts(fn)...)
 		}
 		plan.Actions = append(plan.Actions, action)
 	}
@@ -381,7 +443,34 @@ func PlanBundleImportWithOptions(ctx context.Context, client BundleClient, host 
 		plan.Actions = append(plan.Actions, BundleAction{Resource: "folder", Name: folder.Name, Action: "skip", Reason: "folder metadata import is not implemented in v1"})
 	}
 	for _, file := range bundle.Files {
-		plan.Actions = append(plan.Actions, BundleAction{Resource: "file", Name: file.Name, Action: "skip", Reason: "file bytes are not included in bundles"})
+		name := bundleTargetName(file.Name, options.Prefix)
+		action := BundleAction{Resource: "file", SourceID: file.ID, Name: name}
+		if strings.TrimSpace(file.Content) == "" {
+			action.Action = "skip"
+			action.Reason = "file bytes are not included in bundle"
+		} else if existing, ok := fileNames.lookup(name); ok && !options.RenameConflicts {
+			action.Action = "skip"
+			action.TargetID = existing
+			action.Reason = "file already exists"
+			if options.OverwriteConflicts {
+				action.Impacts = append(action.Impacts, "File overwrite is not supported by bundle import; existing file will remain unchanged.")
+			} else {
+				action.Impacts = append(action.Impacts, "Existing file will remain unchanged.")
+			}
+		} else {
+			if options.RenameConflicts {
+				name = uniqueResourceName(name, fileNames)
+				action.Name = name
+				action.Impacts = append(action.Impacts, "File will be renamed to avoid a target-project conflict.")
+			}
+			action.Action = "create"
+			action.Payload = map[string]any{"name": name, "content": file.Content}
+			action.Impacts = append(action.Impacts, "File content will be uploaded into the target project root.")
+			if file.Truncated {
+				action.Impacts = append(action.Impacts, "Exported file content was truncated by the bundle size cap.")
+			}
+		}
+		plan.Actions = append(plan.Actions, action)
 	}
 	return plan, nil
 }
@@ -927,4 +1016,68 @@ func loadBundleFolderTree(ctx context.Context, client BundleClient, projectID st
 		return nil, err
 	}
 	return tree, nil
+}
+
+func exportProjectFileContent(ctx context.Context, client BundleClient, projectID string, file ProjectFile, maxBytes int) ProjectFile {
+	preview, err := client.FilePreview(ctx, projectID, file.ID, nil, nil)
+	if err != nil {
+		file.Truncated = true
+		return file
+	}
+	content, contentType, ok := bundleFilePreviewContent(preview)
+	if !ok {
+		return file
+	}
+	if maxBytes > 0 && len([]byte(content)) > maxBytes {
+		content = string([]byte(content)[:maxBytes])
+		file.Truncated = true
+	}
+	file.Content = content
+	file.ContentType = contentType
+	return file
+}
+
+func bundleFilePreviewContent(preview *FilePreviewResult) (string, string, bool) {
+	if preview == nil {
+		return "", "", false
+	}
+	if preview.TextContent != nil {
+		return *preview.TextContent, "text", true
+	}
+	if preview.Tabular == nil {
+		return "", "", false
+	}
+	var buffer bytes.Buffer
+	writer := csv.NewWriter(&buffer)
+	headers := make([]string, len(preview.Tabular.Columns))
+	for i, column := range preview.Tabular.Columns {
+		headers[i] = column.Name
+	}
+	if err := writer.Write(headers); err != nil {
+		return "", "", false
+	}
+	for _, row := range preview.Tabular.Rows {
+		if err := writer.Write(row); err != nil {
+			return "", "", false
+		}
+	}
+	writer.Flush()
+	if writer.Error() != nil {
+		return "", "", false
+	}
+	return buffer.String(), "csv", true
+}
+
+func bundleFunctionImpacts(fn Function) []string {
+	var impacts []string
+	if len(fn.ProviderIDs) > 0 || len(fn.ProviderConfigs) > 0 {
+		impacts = append(impacts, "Function AI provider references will be remapped when matching imported or existing providers are available.")
+	}
+	if len(fn.OntologyIDs) > 0 || len(fn.ReadOnlyOntologyIDs) > 0 {
+		impacts = append(impacts, "Function ontology references will be remapped when matching imported or existing ontologies are available.")
+	}
+	if len(fn.SecretBindings) > 0 {
+		impacts = append(impacts, "Function secret bindings will be remapped when matching imported or existing secrets are available.")
+	}
+	return impacts
 }

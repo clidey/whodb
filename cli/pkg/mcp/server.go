@@ -891,8 +891,12 @@ func buildPlatformToolGuide(secOpts *SecurityOptions) platformToolGuideResource 
 	}
 
 	categories := []platformToolGuideCategory{
-		platformToolCategory(toolByName, "workspace", "Login, organization, and project discovery.", "Start here before any project-scoped read or write.", nil, nil,
-			"whodb_platform_status", "whodb_platform_orgs", "whodb_platform_projects"),
+		platformToolCategory(toolByName, "workspace", "Login, organization, and project discovery.", "Start here before any project-scoped read or write.", nil, []platformToolGuideMutation{
+			{Tool: "whodb_platform_project_create", Resources: []string{"project"}},
+			{Tool: "whodb_platform_project_rename", Resources: []string{"project"}},
+			{Tool: "whodb_platform_project_delete", Resources: []string{"project"}},
+		},
+			"whodb_platform_status", "whodb_platform_orgs", "whodb_platform_projects", "whodb_platform_project_create", "whodb_platform_project_rename", "whodb_platform_project_delete"),
 		platformToolCategory(toolByName, "sources", "Hosted source discovery, connection metadata, data previews, and source writes.", "List sources with id/name/type first; inspect config only when needed because secrets are redacted.", []string{"id", "name", "type"}, []platformToolGuideMutation{
 			{Tool: "whodb_platform_source_create", Resources: []string{"source"}},
 			{Tool: "whodb_platform_source_update", Resources: []string{"source"}},
@@ -1013,7 +1017,8 @@ func platformToolEnabledForMode(name string, secOpts *SecurityOptions) bool {
 		secOpts = &SecurityOptions{ConfirmWrites: true}
 	}
 	switch name {
-	case "whodb_platform_source_create", "whodb_platform_source_update", "whodb_platform_source_delete",
+	case "whodb_platform_project_create", "whodb_platform_project_rename", "whodb_platform_project_delete",
+		"whodb_platform_source_create", "whodb_platform_source_update", "whodb_platform_source_delete",
 		"whodb_platform_create", "whodb_platform_update", "whodb_platform_delete", "whodb_platform_action",
 		"whodb_platform_create_dataset", "whodb_platform_promote_file_to_dataset",
 		"whodb_platform_add_ontology_record", "whodb_platform_update_ontology_record", "whodb_platform_delete_ontology_record",

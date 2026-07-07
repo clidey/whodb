@@ -19,6 +19,9 @@ package mcp
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -47,7 +50,10 @@ type PlatformDoctorOutput struct {
 }
 
 // PlatformBundleExportInput is the input for whodb_platform_bundle_export.
-type PlatformBundleExportInput struct{}
+type PlatformBundleExportInput struct {
+	IncludeFiles bool `json:"include_files,omitempty" jsonschema:"Include previewable uploaded file content up to max_file_bytes per file"`
+	MaxFileBytes int  `json:"max_file_bytes,omitempty" jsonschema:"Maximum bytes to include per uploaded file when include_files is true"`
+}
 
 // PlatformBundleExportOutput returns a selected-project metadata bundle.
 type PlatformBundleExportOutput struct {
@@ -183,7 +189,10 @@ func HandlePlatformBundleExport(ctx context.Context, req *mcp.CallToolRequest, i
 		return nil, PlatformBundleExportOutput{Error: err.Error(), RequestID: requestID}, nil
 	}
 	project := selectedPlatformProject(session)
-	bundle, err := platformapi.BuildProjectBundle(ctx, session.Client, session.Host.URL, session.Host.DefaultOrgID, session.Host.DefaultOrgName, project)
+	bundle, err := platformapi.BuildProjectBundleWithOptions(ctx, session.Client, session.Host.URL, session.Host.DefaultOrgID, session.Host.DefaultOrgName, project, platformapi.BundleExportOptions{
+		IncludeFiles: input.IncludeFiles,
+		MaxFileBytes: input.MaxFileBytes,
+	})
 	if err != nil {
 		TrackToolCall(ctx, "platform_bundle_export", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_query"})
 		return nil, PlatformBundleExportOutput{Error: err.Error(), RequestID: requestID}, nil
@@ -342,6 +351,11 @@ func platformBundlePlanChanges(plan *platformapi.BundlePlan) []string {
 	for _, action := range plan.Actions {
 		if action.Action == "create" || action.Action == "update" {
 			changes = append(changes, action.Action+" "+action.Resource+" "+action.Name)
+			for _, impact := range action.Impacts {
+				if strings.TrimSpace(impact) != "" {
+					changes = append(changes, action.Resource+" "+action.Name+": "+impact)
+				}
+			}
 		}
 	}
 	return changes
@@ -356,6 +370,19 @@ func executePlatformBundlePlan(ctx context.Context, session *platformToolSession
 	for i := range plan.Actions {
 		action := &plan.Actions[i]
 		if action.Action != "create" && action.Action != "update" {
+			rows = append(rows, []any{action.Resource, action.Name, action.Action, action.Reason, action.TargetID})
+			continue
+		}
+		if action.Resource == "file" {
+			file, err := uploadPlatformBundleFileAction(ctx, session, action)
+			if err != nil {
+				action.Action = "failed"
+				action.Reason = err.Error()
+				rows = append(rows, []any{action.Resource, action.Name, action.Action, action.Reason, action.TargetID})
+				continue
+			}
+			action.TargetID = file.ID
+			action.Action = "created"
 			rows = append(rows, []any{action.Resource, action.Name, action.Action, action.Reason, action.TargetID})
 			continue
 		}
@@ -404,6 +431,23 @@ func executePlatformBundlePlan(ctx context.Context, session *platformToolSession
 	}, nil
 }
 
+func uploadPlatformBundleFileAction(ctx context.Context, session *platformToolSession, action *platformapi.BundleAction) (*platformapi.ProjectFile, error) {
+	content, _ := action.Payload["content"].(string)
+	if strings.TrimSpace(action.Name) == "" {
+		return nil, fmt.Errorf("file name is required")
+	}
+	tmpDir, err := os.MkdirTemp("", "whodb-mcp-bundle-file-*")
+	if err != nil {
+		return nil, err
+	}
+	defer os.RemoveAll(tmpDir)
+	path := filepath.Join(tmpDir, filepath.Base(action.Name))
+	if err := os.WriteFile(path, []byte(content), 0600); err != nil {
+		return nil, err
+	}
+	return session.Client.UploadProjectFile(ctx, session.Host.DefaultProjectID, nil, path)
+}
+
 func platformMutationResultID(result *platformapi.PlatformMutationResult) string {
 	if result == nil || len(result.Data) == 0 {
 		return ""
@@ -439,7 +483,7 @@ Use this when platform tools fail or before a workflow. It reports login, select
 
 const descPlatformBundleExport = `Export selected hosted project metadata as a portable bundle.
 
-The bundle includes metadata for secrets, datasets, ontologies, transforms, functions, folders, and files. Secret values and file bytes are not exported.`
+The bundle includes metadata for secrets, datasets, ontologies, transforms, functions, folders, and files. Secret values are never exported. File content is only exported when include_files is true and is capped by max_file_bytes.`
 
 const descPlatformBundleDiff = `Compare a project bundle against the selected hosted project.
 

@@ -143,6 +143,7 @@ func TestPlatformMCP_RealReadWriteLifecycle(t *testing.T) {
 	}
 	liveMustPlatformDoctor(t, ctx)
 	liveMustReadOrgsProjects(t, ctx)
+	liveMustProjectTools(t, ctx, suffix)
 	liveMustReadSourceTypes(t, ctx)
 
 	sourceID := liveMustCreateSource(t, ctx, sourceName, sourceHost, sourcePort, sourceUser, sourcePassword, sourceDatabase)
@@ -733,6 +734,45 @@ func liveMustReadOrgsProjects(t *testing.T, ctx context.Context) {
 	liveCoverTool("whodb_platform_projects")
 }
 
+func liveMustProjectTools(t *testing.T, ctx context.Context, suffix string) {
+	t.Helper()
+	projectName := "mcp-e2e-project-" + suffix
+	renamedProjectName := projectName + "-renamed"
+	_, createOutput, err := HandlePlatformProjectCreate(ctx, nil, PlatformProjectCreateInput{Name: projectName, Description: "MCP e2e project"}, true)
+	if err != nil {
+		t.Fatalf("HandlePlatformProjectCreate() error = %v", err)
+	}
+	if createOutput.Error != "" || !createOutput.ConfirmationRequired {
+		t.Fatalf("project create output = %#v, want pending confirmation", createOutput)
+	}
+	liveCoverTool("whodb_platform_project_create")
+	liveMustReadPending(t, ctx)
+	createConfirm := liveMustConfirm(t, ctx, createOutput.ConfirmationToken)
+	projectID := liveConfirmResultID(t, createConfirm, "project create")
+
+	_, renameOutput, err := HandlePlatformProjectRename(ctx, nil, PlatformProjectRenameInput{Project: projectID, Name: renamedProjectName}, true)
+	if err != nil {
+		t.Fatalf("HandlePlatformProjectRename() error = %v", err)
+	}
+	if renameOutput.Error != "" || !renameOutput.ConfirmationRequired {
+		t.Fatalf("project rename output = %#v, want pending confirmation", renameOutput)
+	}
+	liveCoverTool("whodb_platform_project_rename")
+	liveMustReadPending(t, ctx)
+	_ = liveMustConfirm(t, ctx, renameOutput.ConfirmationToken)
+
+	_, deleteOutput, err := HandlePlatformProjectDelete(ctx, nil, PlatformProjectDeleteInput{Project: projectID}, true)
+	if err != nil {
+		t.Fatalf("HandlePlatformProjectDelete() error = %v", err)
+	}
+	if deleteOutput.Error != "" || !deleteOutput.ConfirmationRequired {
+		t.Fatalf("project delete output = %#v, want pending confirmation", deleteOutput)
+	}
+	liveCoverTool("whodb_platform_project_delete")
+	liveMustReadPending(t, ctx)
+	_ = liveMustConfirm(t, ctx, deleteOutput.ConfirmationToken)
+}
+
 func liveMustReadSourceTypes(t *testing.T, ctx context.Context) {
 	t.Helper()
 	_, output, err := HandlePlatformSourceTypes(ctx, nil, PlatformSourceTypesInput{Fields: []string{"id", "label"}})
@@ -1178,6 +1218,21 @@ func liveConfirmColumn(t *testing.T, output ConfirmOutput, column string) string
 		t.Fatalf("confirm %s = %#v, want non-empty string", column, output.Rows[0][index])
 	}
 	return value
+}
+
+func liveConfirmResultID(t *testing.T, output ConfirmOutput, label string) string {
+	t.Helper()
+	result := liveConfirmColumn(t, output, "result_json")
+	var decoded struct {
+		ID string `json:"id"`
+	}
+	if err := json.Unmarshal([]byte(result), &decoded); err != nil {
+		t.Fatalf("decode %s result JSON: %v\n%s", label, err, result)
+	}
+	if decoded.ID == "" {
+		t.Fatalf("%s result JSON did not include id: %s", label, result)
+	}
+	return decoded.ID
 }
 
 func liveConfirmRowColumn(t *testing.T, output ConfirmOutput, resource, name, column string) string {

@@ -1247,6 +1247,96 @@ var useCmd = &cobra.Command{
 	},
 }
 
+var workspaceCmd = &cobra.Command{
+	Use:   "workspace",
+	Short: "Inspect or change the selected hosted WhoDB workspace",
+}
+
+var workspaceShowCmd = &cobra.Command{
+	Use:           "show",
+	Short:         "Show the selected hosted WhoDB workspace",
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := context.Background()
+		format, err := output.ParseFormat(platformFormat)
+		if err != nil {
+			return err
+		}
+		session, err := loadPlatformSession(ctx, platformHost)
+		if err != nil {
+			return err
+		}
+		data := map[string]any{
+			"host":              session.Host.URL,
+			"orgId":             session.Host.DefaultOrgID,
+			"org":               session.Host.DefaultOrgName,
+			"projectId":         session.Host.DefaultProjectID,
+			"project":           session.Host.DefaultProjectName,
+			"workspaceSelected": strings.TrimSpace(session.Host.DefaultOrgID) != "" && strings.TrimSpace(session.Host.DefaultProjectID) != "",
+		}
+		if format == output.FormatJSON {
+			return writeCommandJSON(cmd, data)
+		}
+		return newCommandOutput(cmd, format, platformQuiet).WriteQueryResult(tableResult([]string{"field", "value"}, [][]any{
+			{"host", data["host"]},
+			{"org", data["org"]},
+			{"org_id", data["orgId"]},
+			{"project", data["project"]},
+			{"project_id", data["projectId"]},
+			{"workspace_selected", data["workspaceSelected"]},
+		}))
+	},
+}
+
+var workspaceClearCmd = &cobra.Command{
+	Use:           "clear",
+	Short:         "Clear the selected hosted WhoDB workspace",
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		format, err := output.ParseFormat(platformFormat)
+		if err != nil {
+			return err
+		}
+		cfg, err := config.LoadConfig()
+		if err != nil {
+			return fmt.Errorf("cannot load config: %w", err)
+		}
+		hostURL, err := resolvePlatformHost(cfg, platformHost)
+		if err != nil {
+			return err
+		}
+		host, ok := cfg.GetPlatformHost(hostURL)
+		if !ok {
+			return fmt.Errorf("not signed in to %s", hostURL)
+		}
+		host.DefaultOrgID = ""
+		host.DefaultOrgName = ""
+		host.DefaultProjectID = ""
+		host.DefaultProjectName = ""
+		cfg.UpsertPlatformHost(*host)
+		if err := cfg.Save(); err != nil {
+			return err
+		}
+		if format == output.FormatJSON {
+			return writeAutomationEnvelope(cmd, "workspace.clear", map[string]any{"host": host.URL, "workspaceSelected": false})
+		}
+		newCommandOutput(cmd, format, platformQuiet).Success("Cleared workspace for %s", host.URL)
+		return nil
+	},
+}
+
+var workspaceSwitchCmd = &cobra.Command{
+	Use:           "switch",
+	Short:         "Select the default hosted WhoDB organization and project",
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return useCmd.RunE(cmd, args)
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(loginCmd)
 	rootCmd.AddCommand(logoutCmd)
@@ -1268,8 +1358,9 @@ func init() {
 	rootCmd.AddCommand(foldersCmd)
 	rootCmd.AddCommand(resourcesCmd)
 	rootCmd.AddCommand(useCmd)
+	rootCmd.AddCommand(workspaceCmd)
 
-	for _, command := range []*cobra.Command{loginCmd, logoutCmd, whoamiCmd, manifestCmd, statusCmd, capabilitiesCmd, orgsCmd, projectsCmd, sourcesCmd, secretsCmd, aiProvidersCmd, ontologiesCmd, datasetsCmd, lineageCmd, transformsCmd, functionsCmd, filesCmd, foldersCmd, resourcesCmd, useCmd} {
+	for _, command := range []*cobra.Command{loginCmd, logoutCmd, whoamiCmd, manifestCmd, statusCmd, capabilitiesCmd, orgsCmd, projectsCmd, sourcesCmd, secretsCmd, aiProvidersCmd, ontologiesCmd, datasetsCmd, lineageCmd, transformsCmd, functionsCmd, filesCmd, foldersCmd, resourcesCmd, useCmd, workspaceCmd} {
 		command.PersistentFlags().StringVar(&platformHost, "host", "", "hosted WhoDB URL (default app.whodb.com)")
 		command.PersistentFlags().StringVarP(&platformFormat, "format", "f", "auto", "output format: auto, table, plain, json, ndjson, csv")
 		command.PersistentFlags().BoolVarP(&platformQuiet, "quiet", "q", false, "suppress informational messages")
@@ -1320,6 +1411,9 @@ func init() {
 	registerPlatformResourceCommands()
 	useCmd.Flags().StringVar(&useOrg, "org", "", "organization id, slug, or name")
 	useCmd.Flags().StringVar(&useProject, "project", "", "project id, slug, or name")
+	workspaceCmd.AddCommand(workspaceShowCmd, workspaceClearCmd, workspaceSwitchCmd)
+	workspaceSwitchCmd.Flags().StringVar(&useOrg, "org", "", "organization id, slug, or name")
+	workspaceSwitchCmd.Flags().StringVar(&useProject, "project", "", "project id, slug, or name")
 }
 
 func registerSourceInputFlags(command *cobra.Command, includeName bool, includeType bool) {

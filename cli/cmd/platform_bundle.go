@@ -35,6 +35,8 @@ var (
 	platformBundlePrefix       string
 	platformRenameConflicts    bool
 	platformOverwriteConflicts bool
+	platformBundleIncludeFiles bool
+	platformBundleMaxFileBytes int
 )
 
 var resourcesExportCmd = &cobra.Command{
@@ -105,7 +107,10 @@ var resourcesImportCmd = &cobra.Command{
 }
 
 func buildPlatformProjectBundle(ctx context.Context, session *platformSession, project *platform.Project) (*platform.ProjectBundle, error) {
-	return platform.BuildProjectBundle(ctx, session.Client, session.Host.URL, session.Host.DefaultOrgID, session.Host.DefaultOrgName, project)
+	return platform.BuildProjectBundleWithOptions(ctx, session.Client, session.Host.URL, session.Host.DefaultOrgID, session.Host.DefaultOrgName, project, platform.BundleExportOptions{
+		IncludeFiles: platformBundleIncludeFiles,
+		MaxFileBytes: platformBundleMaxFileBytes,
+	})
 }
 
 func runPlatformBundlePlan(cmd *cobra.Command, dryRun bool) error {
@@ -151,6 +156,17 @@ func runPlatformBundlePlan(cmd *cobra.Command, dryRun bool) error {
 		for i := range plan.Actions {
 			action := &plan.Actions[i]
 			if action.Action != "create" && action.Action != "update" {
+				continue
+			}
+			if action.Resource == "file" {
+				file, err := uploadBundleFileAction(ctx, session, project.ID, action)
+				if err != nil {
+					action.Action = "failed"
+					action.Reason = err.Error()
+					continue
+				}
+				action.TargetID = file.ID
+				action.Action = "created"
 				continue
 			}
 			platform.ApplyBundleDependencyMap(action, bundleDependenciesFromPlan(plan))
@@ -204,9 +220,9 @@ func planPlatformBundleImport(ctx context.Context, session *platformSession, pro
 func platformBundlePlanTable(plan *platform.BundlePlan) *output.QueryResult {
 	rows := make([][]any, len(plan.Actions))
 	for i, action := range plan.Actions {
-		rows[i] = []any{action.Resource, action.Name, action.Action, action.Reason}
+		rows[i] = []any{action.Resource, action.Name, action.Action, action.Reason, strings.Join(action.Impacts, "; ")}
 	}
-	return tableResult([]string{"resource", "name", "action", "reason"}, rows)
+	return tableResult([]string{"resource", "name", "action", "reason", "impacts"}, rows)
 }
 
 func platformBundleSummaryTable(bundle *platform.ProjectBundle) *output.QueryResult {
@@ -262,4 +278,21 @@ func platformMutationResultID(result *platform.PlatformMutationResult) string {
 		return id
 	}
 	return ""
+}
+
+func uploadBundleFileAction(ctx context.Context, session *platformSession, projectID string, action *platform.BundleAction) (*platform.ProjectFile, error) {
+	content, _ := action.Payload["content"].(string)
+	if strings.TrimSpace(action.Name) == "" {
+		return nil, fmt.Errorf("file name is required")
+	}
+	tmpDir, err := os.MkdirTemp("", "whodb-bundle-file-*")
+	if err != nil {
+		return nil, err
+	}
+	defer os.RemoveAll(tmpDir)
+	path := filepath.Join(tmpDir, filepath.Base(action.Name))
+	if err := os.WriteFile(path, []byte(content), 0600); err != nil {
+		return nil, err
+	}
+	return session.Client.UploadProjectFile(ctx, projectID, nil, path)
 }

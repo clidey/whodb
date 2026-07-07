@@ -185,6 +185,17 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 	orgSlug := envOrDefault("WHODB_PLATFORM_E2E_ORG", "acme")
 	projectSlug := envOrDefault("WHODB_PLATFORM_E2E_PROJECT", "default")
 	_ = runEnvelope(t, "use", "--host", host, "--org", orgSlug, "--project", projectSlug, "--format", "json", "--quiet")
+	workspace := runJSONCommand[map[string]any](t, "workspace", "show", "--host", host, "--format", "json", "--quiet")
+	if selected, _ := workspace["workspaceSelected"].(bool); !selected {
+		t.Fatalf("workspace show = %#v, want selected workspace", workspace)
+	}
+	cleared := runEnvelope(t, "workspace", "clear", "--host", host, "--format", "json", "--quiet")
+	var clearedWorkspace map[string]any
+	decodeEnvelopeData(t, cleared, &clearedWorkspace)
+	if selected, _ := clearedWorkspace["workspaceSelected"].(bool); selected {
+		t.Fatalf("workspace clear = %#v, want unselected workspace", clearedWorkspace)
+	}
+	_ = runEnvelope(t, "workspace", "switch", "--host", host, "--org", orgSlug, "--project", projectSlug, "--format", "json", "--quiet")
 	doctorReport := runJSONCommand[map[string]any](t, "doctor", "platform", "--host", host, "--format", "json", "--quiet")
 	if ok, _ := doctorReport["ok"].(bool); !ok {
 		t.Fatalf("doctor platform report = %#v, want ok", doctorReport)
@@ -536,6 +547,9 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 	downloadPath := filepath.Join(t.TempDir(), "downloaded.csv")
 	_ = runRawCommand(t, "files", "download", uploadedFile.Name, "--host", host, "--out", downloadPath, "--quiet")
 	testharness.AssertFileContains(t, downloadPath, "Ada")
+	fileBundlePath := filepath.Join(t.TempDir(), "project-bundle-with-files.json")
+	_ = runRawCommand(t, "resources", "export", "--host", host, "--out", fileBundlePath, "--include-files", "--max-file-bytes", "4096", "--quiet")
+	testharness.AssertFileContains(t, fileBundlePath, "Ada")
 	fileBeforePromote := runJSONCommand[platform.ProjectFile](t, "files", "get", fileID, "--host", host, "--format", "json", "--quiet")
 	if fileBeforePromote.ID != fileID {
 		t.Fatalf("files get by id before promote returned id %q, want %q", fileBeforePromote.ID, fileID)
