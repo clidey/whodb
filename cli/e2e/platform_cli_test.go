@@ -185,6 +185,10 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 	orgSlug := envOrDefault("WHODB_PLATFORM_E2E_ORG", "acme")
 	projectSlug := envOrDefault("WHODB_PLATFORM_E2E_PROJECT", "default")
 	_ = runEnvelope(t, "use", "--host", host, "--org", orgSlug, "--project", projectSlug, "--format", "json", "--quiet")
+	doctorReport := runJSONCommand[map[string]any](t, "doctor", "platform", "--host", host, "--format", "json", "--quiet")
+	if ok, _ := doctorReport["ok"].(bool); !ok {
+		t.Fatalf("doctor platform report = %#v, want ok", doctorReport)
+	}
 
 	suffix := strings.ReplaceAll(time.Now().UTC().Format("20060102150405.000000000"), ".", "")
 	baseArgs := []string{"--host", host, "--yes", "--format", "json", "--quiet"}
@@ -264,6 +268,9 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 	datasetExportPath := filepath.Join(t.TempDir(), "dataset-export.json")
 	_ = runRawCommand(t, "datasets", "export", datasetName, "--host", host, "--out", datasetExportPath, "--quiet")
 	testharness.AssertFileContains(t, datasetExportPath, datasetName)
+	datasetCloneName := datasetName + "-clone"
+	datasetCloneID := runMutationID(t, append([]string{"datasets", "clone", datasetName, datasetCloneName}, baseArgs...)...)
+	defer bestEffortCLIResourceDelete(t, host, "dataset", datasetCloneID)
 	_ = runJSONCommand[platform.DatasetQueryResult](t, "datasets", "rows", datasetName, "--host", host, "--limit", "5", "--format", "json", "--quiet")
 	_ = runJSONCommand[platform.DatasetQueryResult](t, "datasets", "query", datasetName, "--host", host, "--limit", "5", "--format", "json", "--quiet")
 	datasetSchema := runJSONCommand[[]platform.ColumnDef](t, "datasets", "schema", datasetName, "--host", host, "--format", "json", "--quiet")
@@ -301,6 +308,9 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 	transformExportPath := filepath.Join(t.TempDir(), "transform-export.json")
 	_ = runRawCommand(t, "transforms", "export", transformName, "--host", host, "--out", transformExportPath, "--quiet")
 	testharness.AssertFileContains(t, transformExportPath, transformName)
+	transformCloneName := transformName + "-clone"
+	transformCloneID := runMutationID(t, append([]string{"transforms", "clone", transformName, transformCloneName}, baseArgs...)...)
+	defer bestEffortCLIResourceDelete(t, host, "transform", transformCloneID)
 	_ = runMutationID(t, append([]string{
 		"transforms", "update", transformName,
 		"--description", "updated",
@@ -342,6 +352,9 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 	functionExportPath := filepath.Join(t.TempDir(), "function-export.json")
 	_ = runRawCommand(t, "functions", "export", functionName, "--host", host, "--out", functionExportPath, "--quiet")
 	testharness.AssertFileContains(t, functionExportPath, functionName)
+	functionCloneName := functionName + "-clone"
+	functionCloneID := runMutationID(t, append([]string{"functions", "clone", functionName, functionCloneName}, baseArgs...)...)
+	defer bestEffortCLIResourceDelete(t, host, "function", functionCloneID)
 	testResult := runJSONCommand[platform.FunctionExecutionResult](t, "functions", "test", functionName, "--host", host, "--input-json", `{"hello":"draft"}`, "--format", "json", "--quiet")
 	requireFunctionExecutionResult(t, "functions test", testResult)
 	previewResult := runJSONCommand[platform.FunctionExecutionResult](t, "functions", "preview", "--host", host, "--language", "python", "--entry-point", "main", "--file", "main.py="+functionPath, "--input-json", `{"hello":"preview"}`, "--format", "json", "--quiet")
@@ -496,6 +509,18 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 		t.Fatalf("promoted dataset schema = %#v, want two columns", promotedSchema)
 	}
 	_ = runJSONCommand[platform.LineageGraph](t, "lineage", "project", "--host", host, "--format", "json", "--quiet")
+
+	bundlePath := filepath.Join(t.TempDir(), "project-bundle.json")
+	_ = runRawCommand(t, "resources", "export", "--host", host, "--out", bundlePath, "--quiet")
+	testharness.AssertFileContains(t, bundlePath, datasetName)
+	diffPlan := runJSONCommand[map[string]any](t, "resources", "diff", "--host", host, "--file", bundlePath, "--format", "json", "--quiet")
+	if actions, _ := diffPlan["actions"].([]any); len(actions) == 0 {
+		t.Fatalf("resources diff plan = %#v, want actions", diffPlan)
+	}
+	importPlan := runJSONCommand[map[string]any](t, "resources", "import", "--host", host, "--file", bundlePath, "--dry-run", "--format", "json", "--quiet")
+	if dryRun, _ := importPlan["dryRun"].(bool); !dryRun {
+		t.Fatalf("resources import --dry-run plan = %#v, want dryRun true", importPlan)
+	}
 
 	runMutationOK(t, append([]string{"datasets", "delete", promotedDatasetName}, baseArgs...)...)
 	promotedDatasetID = ""

@@ -220,14 +220,14 @@ func TestPlatformResourceCommandsRegistered(t *testing.T) {
 	expected := map[string][]string{
 		"secrets":      {"list", "get", "create", "update", "delete"},
 		"ai-providers": {"list", "get", "models", "create", "update", "delete"},
-		"ontologies":   {"list", "get", "describe", "export", "fast-lookups", "fast-lookup-suggestions", "rows", "follow-link", "records", "create", "update", "delete"},
-		"datasets":     {"list", "get", "describe", "schema", "export", "rows", "query", "create", "update", "delete"},
+		"ontologies":   {"list", "get", "describe", "export", "clone", "fast-lookups", "fast-lookup-suggestions", "rows", "follow-link", "records", "create", "update", "delete"},
+		"datasets":     {"list", "get", "describe", "schema", "export", "clone", "rows", "query", "create", "update", "delete"},
 		"lineage":      {"project", "root", "neighbors"},
-		"transforms":   {"list", "get", "describe", "export", "runs", "create", "update", "run", "delete"},
-		"functions":    {"list", "get", "describe", "export", "versions", "active", "promote", "set-active", "restore-draft", "run", "test", "preview", "create", "update", "deploy", "redeploy", "delete"},
+		"transforms":   {"list", "get", "describe", "export", "clone", "runs", "create", "update", "run", "delete"},
+		"functions":    {"list", "get", "describe", "export", "clone", "versions", "active", "promote", "set-active", "restore-draft", "run", "test", "preview", "create", "update", "deploy", "redeploy", "delete"},
 		"files":        {"list", "get", "describe", "preview", "inspect", "columns", "download", "search", "tabular", "storage-usage", "upload", "promote-to-dataset", "delete", "rename", "move"},
 		"folders":      {"list", "get", "tree", "create", "rename", "move", "delete"},
-		"resources":    {"specs", "shape", "create", "update", "delete", "action"},
+		"resources":    {"specs", "shape", "export", "diff", "import", "create", "update", "delete", "action"},
 	}
 
 	for parentName, childNames := range expected {
@@ -241,6 +241,13 @@ func TestPlatformResourceCommandsRegistered(t *testing.T) {
 				t.Fatalf("%s subcommand %q not registered: cmd=%v err=%v", parentName, childName, child, err)
 			}
 		}
+	}
+}
+
+func TestPlatformDoctorCommandRegistered(t *testing.T) {
+	command, _, err := rootCmd.Find([]string{"doctor", "platform"})
+	if err != nil || command == nil || command.Name() != "platform" {
+		t.Fatalf("doctor platform command not registered: cmd=%v err=%v", command, err)
 	}
 }
 
@@ -562,6 +569,71 @@ func TestReadSensitiveFlagValueUsesEnv(t *testing.T) {
 	}
 	if value != "secret-value" {
 		t.Fatalf("value = %q, want secret-value", value)
+	}
+}
+
+func TestImportSecretEnvNameSanitizesName(t *testing.T) {
+	got := importSecretEnvName("OpenAI API-Key")
+	if got != "WHODB_IMPORT_SECRET_OPENAI_API_KEY" {
+		t.Fatalf("importSecretEnvName() = %q, want sanitized env name", got)
+	}
+}
+
+func TestDatasetCreatePayloadFromExportOmitsSourceID(t *testing.T) {
+	payload := datasetCreatePayloadFromExport(platform.Dataset{
+		Name:        "Customers",
+		Description: "Customer import",
+		SourceID:    "source-from-other-project",
+		SchemaMode:  "manual",
+		Schema:      []platform.ColumnDef{{Name: "id", Type: "text", IsPrimary: true}},
+	})
+	if payload["sourceId"] != nil {
+		t.Fatalf("payload sourceId = %#v, want omitted for portable import", payload["sourceId"])
+	}
+	columns, ok := payload["columns"].([]map[string]any)
+	if !ok || len(columns) != 1 || columns[0]["name"] != "id" {
+		t.Fatalf("columns = %#v, want exported schema", payload["columns"])
+	}
+}
+
+func TestFunctionCreatePayloadFromExportStripsReferencesForBundleImport(t *testing.T) {
+	payload := functionCreatePayloadFromExport(platform.Function{
+		Name:                "enrich",
+		Language:            "python",
+		EntryPoint:          "main",
+		ProviderIDs:         []string{"provider-1"},
+		OntologyIDs:         []string{"ontology-1"},
+		ReadOnlyOntologyIDs: []string{"ontology-2"},
+		SecretBindings:      []platform.FunctionSecretBinding{{Name: "API_KEY", SecretID: "secret-1", Target: "ENV"}},
+		Files:               []platform.FunctionFile{{Path: "main.py", Content: "def main(): pass"}},
+	}, false)
+	for _, key := range []string{"providerIds", "ontologyIds", "readOnlyOntologyIds", "secretBindings"} {
+		if _, ok := payload[key]; ok {
+			t.Fatalf("payload[%q] present for portable import: %#v", key, payload[key])
+		}
+	}
+	files, ok := payload["files"].([]map[string]any)
+	if !ok || len(files) != 1 || files[0]["path"] != "main.py" {
+		t.Fatalf("files = %#v, want function files preserved", payload["files"])
+	}
+}
+
+func TestFunctionCreatePayloadFromExportKeepsReferencesForClone(t *testing.T) {
+	payload := functionCreatePayloadFromExport(platform.Function{
+		Name:        "enrich",
+		Language:    "python",
+		EntryPoint:  "main",
+		ProviderIDs: []string{"provider-1"},
+	}, true)
+	providerIDs, ok := payload["providerIds"].([]string)
+	if !ok || len(providerIDs) != 1 || providerIDs[0] != "provider-1" {
+		t.Fatalf("providerIds = %#v, want same-project references preserved", payload["providerIds"])
+	}
+}
+
+func TestSafePlatformIdentifier(t *testing.T) {
+	if got := safePlatformIdentifier("123 Customer Type!"); got != "x_123_customer_type" {
+		t.Fatalf("safePlatformIdentifier() = %q, want normalized identifier", got)
 	}
 }
 

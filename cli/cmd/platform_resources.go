@@ -1063,14 +1063,14 @@ func registerPlatformResourceCommands() {
 	aiProvidersCmd.AddCommand(aiProvidersListCmd, aiProviderGetCmd, aiProviderModelsCmd, aiProvidersCreateCmd, aiProvidersUpdateCmd, aiProvidersDeleteCmd)
 	ontologyFastLookupsCmd.AddCommand(ontologyFastLookupsCreateCmd, ontologyFastLookupsDeleteCmd)
 	ontologyRecordsCmd.AddCommand(ontologyRecordsAddCmd, ontologyRecordsUpdateCmd, ontologyRecordsDeleteCmd)
-	ontologiesCmd.AddCommand(ontologiesListCmd, ontologyGetCmd, ontologyDescribeCmd, ontologyExportCmd, ontologyFastLookupsCmd, ontologyFastLookupSuggestionsCmd, ontologyRowsCmd, ontologyFollowLinkCmd, ontologyRecordsCmd, ontologiesCreateCmd, ontologiesUpdateCmd, ontologiesDeleteCmd)
-	datasetsCmd.AddCommand(datasetsListCmd, datasetGetCmd, datasetDescribeCmd, datasetSchemaCmd, datasetExportCmd, datasetRowsCmd, datasetQueryCmd, datasetsCreateCmd, datasetsUpdateCmd, datasetsDeleteCmd)
+	ontologiesCmd.AddCommand(ontologiesListCmd, ontologyGetCmd, ontologyDescribeCmd, ontologyExportCmd, ontologyCloneCmd, ontologyFastLookupsCmd, ontologyFastLookupSuggestionsCmd, ontologyRowsCmd, ontologyFollowLinkCmd, ontologyRecordsCmd, ontologiesCreateCmd, ontologiesUpdateCmd, ontologiesDeleteCmd)
+	datasetsCmd.AddCommand(datasetsListCmd, datasetGetCmd, datasetDescribeCmd, datasetSchemaCmd, datasetExportCmd, datasetCloneCmd, datasetRowsCmd, datasetQueryCmd, datasetsCreateCmd, datasetsUpdateCmd, datasetsDeleteCmd)
 	lineageCmd.AddCommand(lineageProjectCmd, lineageRootCmd, lineageNeighborsCmd)
-	transformsCmd.AddCommand(transformsListCmd, transformGetCmd, transformDescribeCmd, transformExportCmd, transformRunsCmd, transformsCreateCmd, transformsUpdateCmd, transformsRunCmd, transformsDeleteCmd)
-	functionsCmd.AddCommand(functionsListCmd, functionGetCmd, functionDescribeCmd, functionExportCmd, functionsVersionsCmd, functionsActiveCmd, functionsPromoteCmd, functionsSetActiveCmd, functionsRestoreDraftCmd, functionsRunCmd, functionsTestCmd, functionsPreviewCmd, functionsCreateCmd, functionsUpdateCmd, functionsDeployCmd, functionsRedeployCmd, functionsDeleteCmd)
+	transformsCmd.AddCommand(transformsListCmd, transformGetCmd, transformDescribeCmd, transformExportCmd, transformCloneCmd, transformRunsCmd, transformsCreateCmd, transformsUpdateCmd, transformsRunCmd, transformsDeleteCmd)
+	functionsCmd.AddCommand(functionsListCmd, functionGetCmd, functionDescribeCmd, functionExportCmd, functionCloneCmd, functionsVersionsCmd, functionsActiveCmd, functionsPromoteCmd, functionsSetActiveCmd, functionsRestoreDraftCmd, functionsRunCmd, functionsTestCmd, functionsPreviewCmd, functionsCreateCmd, functionsUpdateCmd, functionsDeployCmd, functionsRedeployCmd, functionsDeleteCmd)
 	filesCmd.AddCommand(filesListCmd, fileGetCmd, fileDescribeCmd, filePreviewCmd, fileInspectCmd, fileColumnsCmd, fileDownloadCmd, fileSearchCmd, tabularFilesCmd, storageUsageCmd, filesUploadCmd, filesPromoteDatasetCmd, filesDeleteCmd, filesRenameCmd, filesMoveCmd)
 	foldersCmd.AddCommand(foldersListCmd, folderGetCmd, foldersTreeCmd, foldersCreateCmd, foldersRenameCmd, foldersMoveCmd, foldersDeleteCmd)
-	resourcesCmd.AddCommand(resourcesSpecsCmd, resourcesShapeCmd, resourcesCreateCmd, resourcesUpdateCmd, resourcesDeleteCmd, resourcesActionCmd)
+	resourcesCmd.AddCommand(resourcesSpecsCmd, resourcesShapeCmd, resourcesExportCmd, resourcesDiffCmd, resourcesImportCmd, resourcesCreateCmd, resourcesUpdateCmd, resourcesDeleteCmd, resourcesActionCmd)
 
 	for _, command := range []*cobra.Command{functionsListCmd, functionGetCmd, functionDescribeCmd, functionExportCmd, filesListCmd, filePreviewCmd} {
 		command.Flags().StringArrayVar(&platformFields, "field", nil, "top-level field to request; repeatable")
@@ -1078,6 +1078,11 @@ func registerPlatformResourceCommands() {
 	for _, command := range []*cobra.Command{ontologyExportCmd, datasetExportCmd, transformExportCmd, functionExportCmd} {
 		command.Flags().StringVar(&platformExportOutPath, "out", "", "destination path; omitted writes JSON to stdout")
 	}
+	resourcesExportCmd.Flags().StringVar(&platformExportOutPath, "out", "", "destination path; omitted writes JSON to stdout")
+	resourcesDiffCmd.Flags().StringVar(&platformBundlePath, "file", "", "project bundle JSON file")
+	resourcesImportCmd.Flags().StringVar(&platformBundlePath, "file", "", "project bundle JSON file")
+	resourcesImportCmd.Flags().BoolVar(&platformImportDryRun, "dry-run", false, "show the import plan without writing")
+	resourcesImportCmd.Flags().BoolVarP(&platformWriteYes, "yes", "y", false, "run the import without prompting")
 	for _, command := range []*cobra.Command{secretsListCmd, aiProvidersListCmd, ontologiesListCmd, datasetsListCmd, transformsListCmd, functionsListCmd, filesListCmd, foldersListCmd} {
 		command.Flags().StringVar(&platformFilterName, "name", "", "case-insensitive name substring filter")
 	}
@@ -1143,11 +1148,12 @@ func registerTypedWriteFlags() {
 		secretsCreateCmd, secretsUpdateCmd, secretsDeleteCmd,
 		aiProvidersCreateCmd, aiProvidersUpdateCmd, aiProvidersDeleteCmd,
 		ontologiesCreateCmd, ontologiesUpdateCmd, ontologiesDeleteCmd,
+		ontologyCloneCmd,
 		ontologyFastLookupsCreateCmd, ontologyFastLookupsDeleteCmd,
 		ontologyRecordsAddCmd, ontologyRecordsUpdateCmd, ontologyRecordsDeleteCmd,
-		datasetsCreateCmd, datasetsUpdateCmd, datasetsDeleteCmd,
-		transformsCreateCmd, transformsUpdateCmd, transformsRunCmd, transformsDeleteCmd,
-		functionsCreateCmd, functionsUpdateCmd, functionsDeployCmd, functionsRedeployCmd, functionsDeleteCmd,
+		datasetsCreateCmd, datasetsUpdateCmd, datasetsDeleteCmd, datasetCloneCmd,
+		transformsCreateCmd, transformsUpdateCmd, transformsRunCmd, transformsDeleteCmd, transformCloneCmd,
+		functionsCreateCmd, functionsUpdateCmd, functionsDeployCmd, functionsRedeployCmd, functionsDeleteCmd, functionCloneCmd,
 		foldersCreateCmd, foldersRenameCmd, foldersMoveCmd, foldersDeleteCmd,
 		filesUploadCmd, filesPromoteDatasetCmd, filesDeleteCmd, filesRenameCmd, filesMoveCmd,
 	} {
@@ -1362,8 +1368,9 @@ func readPlatformOntologyDetail(ctx context.Context, session *platformSession, i
 	if err != nil {
 		return nil, nil, err
 	}
-	rows := [][]any{{"id", ontology.ID}, {"api_name", ontology.APIName}, {"display_name", ontology.DisplayName}, {"table", ontology.TableName}, {"status", ontology.Status}, {"properties", len(ontology.Properties)}, {"links", len(ontology.Links)}}
-	return ontology, tableResult([]string{"field", "value"}, rows), nil
+	related := platformRelatedLineage(ctx, session, session.Host.DefaultProjectID, ontology.ID, "ontology_type")
+	rows := [][]any{{"id", ontology.ID}, {"api_name", ontology.APIName}, {"display_name", ontology.DisplayName}, {"table", ontology.TableName}, {"status", ontology.Status}, {"properties", len(ontology.Properties)}, {"links", len(ontology.Links)}, {"upstream", len(related.Upstream)}, {"downstream", len(related.Downstream)}}
+	return platformOntologyDescribe{Ontology: *ontology, Related: related}, tableResult([]string{"field", "value"}, rows), nil
 }
 
 func readPlatformDatasetDetail(ctx context.Context, session *platformSession, id string) (any, *output.QueryResult, error) {
@@ -1375,8 +1382,9 @@ func readPlatformDatasetDetail(ctx context.Context, session *platformSession, id
 	if err != nil {
 		return nil, nil, err
 	}
-	rows := [][]any{{"id", dataset.ID}, {"name", dataset.Name}, {"schema_mode", dataset.SchemaMode}, {"row_count", dataset.RowCount}, {"size_bytes", dataset.SizeBytes}, {"columns", len(dataset.Schema)}}
-	return dataset, tableResult([]string{"field", "value"}, rows), nil
+	related := platformRelatedLineage(ctx, session, session.Host.DefaultProjectID, dataset.ID, "dataset")
+	rows := [][]any{{"id", dataset.ID}, {"name", dataset.Name}, {"schema_mode", dataset.SchemaMode}, {"row_count", dataset.RowCount}, {"size_bytes", dataset.SizeBytes}, {"columns", len(dataset.Schema)}, {"upstream", len(related.Upstream)}, {"downstream", len(related.Downstream)}}
+	return platformDatasetDescribe{Dataset: *dataset, Related: related}, tableResult([]string{"field", "value"}, rows), nil
 }
 
 func readPlatformTransformDetail(ctx context.Context, session *platformSession, id string) (any, *output.QueryResult, error) {
@@ -1384,8 +1392,9 @@ func readPlatformTransformDetail(ctx context.Context, session *platformSession, 
 	if err != nil {
 		return nil, nil, err
 	}
-	rows := [][]any{{"id", transform.ID}, {"name", transform.Name}, {"trigger_mode", transform.TriggerMode}, {"schedule", transform.ScheduleCron}, {"updated_at", transform.UpdatedAt}}
-	return transform, tableResult([]string{"field", "value"}, rows), nil
+	related := platformRelatedLineage(ctx, session, session.Host.DefaultProjectID, transform.ID, "transform")
+	rows := [][]any{{"id", transform.ID}, {"name", transform.Name}, {"trigger_mode", transform.TriggerMode}, {"schedule", transform.ScheduleCron}, {"updated_at", transform.UpdatedAt}, {"upstream", len(related.Upstream)}, {"downstream", len(related.Downstream)}}
+	return platformTransformDescribe{Transform: *transform, Related: related}, tableResult([]string{"field", "value"}, rows), nil
 }
 
 func readPlatformFunctionDetail(ctx context.Context, session *platformSession, id string) (any, *output.QueryResult, error) {
@@ -1397,8 +1406,9 @@ func readPlatformFunctionDetail(ctx context.Context, session *platformSession, i
 	if err != nil {
 		return nil, nil, err
 	}
-	rows := [][]any{{"id", fn.ID}, {"name", fn.Name}, {"language", fn.Language}, {"entry_point", fn.EntryPoint}, {"deployed", fn.IsDeployed}, {"files", len(fn.Files)}, {"dependencies", len(fn.Dependencies)}}
-	return fn, tableResult([]string{"field", "value"}, rows), nil
+	related := platformRelatedLineage(ctx, session, session.Host.DefaultProjectID, fn.ID, "ontology_function")
+	rows := [][]any{{"id", fn.ID}, {"name", fn.Name}, {"language", fn.Language}, {"entry_point", fn.EntryPoint}, {"deployed", fn.IsDeployed}, {"files", len(fn.Files)}, {"dependencies", len(fn.Dependencies)}, {"upstream", len(related.Upstream)}, {"downstream", len(related.Downstream)}}
+	return platformFunctionDescribe{Function: *fn, Related: related}, tableResult([]string{"field", "value"}, rows), nil
 }
 
 func readPlatformFileDetail(ctx context.Context, session *platformSession, id string) (any, *output.QueryResult, error) {
@@ -1425,7 +1435,9 @@ func readPlatformFileDetail(ctx context.Context, session *platformSession, id st
 		{"created_at", file.CreatedAt},
 		{"updated_at", file.UpdatedAt},
 	}
-	return file, tableResult([]string{"field", "value"}, rows), nil
+	related := platformRelatedLineage(ctx, session, session.Host.DefaultProjectID, file.ID, "project_file")
+	rows = append(rows, []any{"upstream", len(related.Upstream)}, []any{"downstream", len(related.Downstream)})
+	return platformFileDescribe{ProjectFile: *file, Related: related}, tableResult([]string{"field", "value"}, rows), nil
 }
 
 func runPlatformProjectRead(cmd *cobra.Command, read func(context.Context, *platformSession, *platform.Project) (any, *output.QueryResult, error)) error {
