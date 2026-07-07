@@ -34,84 +34,91 @@ import (
 )
 
 var (
-	platformResourceOrg     string
-	platformResourceProject string
-	platformFields          []string
-	platformLimit           int
-	platformOffset          int
-	platformRootID          string
-	platformRootType        string
-	platformNodeID          string
-	platformNodeType        string
-	platformDirection       string
-	platformMaxDepth        int
-	platformFolderID        string
-	platformEntityID        string
-	platformPrimaryKey      string
-	platformLinkAPIName     string
-	platformSheetIndex      int
-	platformPayloadJSON     string
-	platformPayloadStdin    bool
-	platformWriteYes        bool
-	secretName              string
-	secretDescription       string
-	secretValue             string
-	secretValueEnv          string
-	secretValueStdin        bool
-	aiProviderName          string
-	aiProviderType          string
-	aiProviderEndpoint      string
-	aiProviderAPIKey        string
-	aiProviderAPIKeyEnv     string
-	aiProviderAPIKeyStdin   bool
-	aiProviderModels        []string
-	datasetName             string
-	datasetDescription      string
-	datasetSourceID         string
-	datasetSchemaMode       string
-	datasetColumns          []string
-	transformName           string
-	transformDescription    string
-	transformGraphJSON      string
-	transformGraphFile      string
-	transformScheduleCron   string
-	transformTriggerMode    string
-	functionName            string
-	functionDescription     string
-	functionLanguage        string
-	functionEntryPoint      string
-	functionTimeoutSeconds  int
-	functionMemory          string
-	functionCPU             string
-	functionFiles           []string
-	functionDependencies    []string
-	functionVersion         int
-	functionPromoteMessage  string
-	ontologyAPIName         string
-	ontologyDisplayName     string
-	ontologyPluralName      string
-	ontologyDescription     string
-	ontologyPrimaryKey      string
-	ontologyTableName       string
-	ontologySchemaName      string
-	ontologyStatus          string
-	ontologyIcon            string
-	ontologyColor           string
-	ontologyPropertiesJSON  []string
-	ontologyLinksJSON       []string
-	folderName              string
-	folderParentID          string
-	folderNewParentID       string
-	filePath                string
-	fileOutPath             string
-	fileNewName             string
-	fileNewFolderID         string
-	fileDatasetName         string
-	fileDatasetDescription  string
-	fileColumnMappings      []string
-	functionInputJSON       string
-	functionInputFile       string
-	functionInputFileIDs    []string
+	platformResourceOrg         string
+	platformResourceProject     string
+	platformFields              []string
+	platformLimit               int
+	platformOffset              int
+	platformRootID              string
+	platformRootType            string
+	platformNodeID              string
+	platformNodeType            string
+	platformDirection           string
+	platformMaxDepth            int
+	platformFolderID            string
+	platformEntityID            string
+	platformPrimaryKey          string
+	platformLinkAPIName         string
+	platformSheetIndex          int
+	platformPayloadJSON         string
+	platformPayloadStdin        bool
+	platformWriteYes            bool
+	secretName                  string
+	secretDescription           string
+	secretValue                 string
+	secretValueEnv              string
+	secretValueStdin            bool
+	aiProviderName              string
+	aiProviderType              string
+	aiProviderEndpoint          string
+	aiProviderAPIKey            string
+	aiProviderAPIKeyEnv         string
+	aiProviderAPIKeyStdin       bool
+	aiProviderModels            []string
+	datasetName                 string
+	datasetDescription          string
+	datasetSourceID             string
+	datasetSchemaMode           string
+	datasetColumns              []string
+	transformName               string
+	transformDescription        string
+	transformGraphJSON          string
+	transformGraphFile          string
+	transformScheduleCron       string
+	transformTriggerMode        string
+	functionName                string
+	functionDescription         string
+	functionLanguage            string
+	functionEntryPoint          string
+	functionTimeoutSeconds      int
+	functionMemory              string
+	functionCPU                 string
+	functionFiles               []string
+	functionDependencies        []string
+	functionProviderIDs         []string
+	functionOntologyIDs         []string
+	functionReadOnlyOntologyIDs []string
+	functionProviderConfigs     []string
+	functionSecretBindings      []string
+	functionDefaultMaxTokens    int
+	functionDefaultTemperature  float64
+	functionVersion             int
+	functionPromoteMessage      string
+	ontologyAPIName             string
+	ontologyDisplayName         string
+	ontologyPluralName          string
+	ontologyDescription         string
+	ontologyPrimaryKey          string
+	ontologyTableName           string
+	ontologySchemaName          string
+	ontologyStatus              string
+	ontologyIcon                string
+	ontologyColor               string
+	ontologyPropertiesJSON      []string
+	ontologyLinksJSON           []string
+	folderName                  string
+	folderParentID              string
+	folderNewParentID           string
+	filePath                    string
+	fileOutPath                 string
+	fileNewName                 string
+	fileNewFolderID             string
+	fileDatasetName             string
+	fileDatasetDescription      string
+	fileColumnMappings          []string
+	functionInputJSON           string
+	functionInputFile           string
+	functionInputFileIDs        []string
 )
 
 var secretsCmd = &cobra.Command{Use: "secrets", Short: "Manage hosted WhoDB project secrets"}
@@ -876,6 +883,7 @@ var filesDeleteCmd = withExample(typedResourceWriteCommand("delete <file>", "Del
 var filesRenameCmd = withExample(typedResourceWriteCommand("rename <file>", "Rename a hosted WhoDB project file", "action", "file", "rename", buildFileRenamePayload), `  whodb-cli files rename file_123 --name customers-2026.csv`)
 var filesMoveCmd = withExample(typedResourceWriteCommand("move <file>", "Move a hosted WhoDB project file", "action", "file", "move", buildFileMovePayload), `  whodb-cli files move file_123 --folder-id folder_123
   whodb-cli files move file_123`)
+var filesPromoteDatasetCmd = withExample(typedResourceWriteCommand("promote-to-dataset <file>", "Promote a hosted WhoDB project file to a dataset", "action", "file", "promote_to_dataset", buildFilePromoteDatasetPayload), `  whodb-cli files promote-to-dataset customers.csv --name Customers --column-map id:id:text:primary --column-map name:name:text:nullable`)
 
 func registerPlatformResourceCommands() {
 	for _, command := range []*cobra.Command{secretsCmd, aiProvidersCmd, ontologiesCmd, datasetsCmd, lineageCmd, transformsCmd, functionsCmd, filesCmd, foldersCmd, resourcesCmd} {
@@ -890,7 +898,7 @@ func registerPlatformResourceCommands() {
 	lineageCmd.AddCommand(lineageProjectCmd, lineageRootCmd, lineageNeighborsCmd)
 	transformsCmd.AddCommand(transformsListCmd, transformGetCmd, transformRunsCmd, transformsCreateCmd, transformsUpdateCmd, transformsRunCmd, transformsDeleteCmd)
 	functionsCmd.AddCommand(functionsListCmd, functionGetCmd, functionsVersionsCmd, functionsActiveCmd, functionsPromoteCmd, functionsSetActiveCmd, functionsRestoreDraftCmd, functionsRunCmd, functionsTestCmd, functionsPreviewCmd, functionsCreateCmd, functionsUpdateCmd, functionsDeployCmd, functionsRedeployCmd, functionsDeleteCmd)
-	filesCmd.AddCommand(filesListCmd, fileGetCmd, filePreviewCmd, fileDownloadCmd, fileSearchCmd, tabularFilesCmd, storageUsageCmd, filesUploadCmd, filesDeleteCmd, filesRenameCmd, filesMoveCmd)
+	filesCmd.AddCommand(filesListCmd, fileGetCmd, filePreviewCmd, fileDownloadCmd, fileSearchCmd, tabularFilesCmd, storageUsageCmd, filesUploadCmd, filesPromoteDatasetCmd, filesDeleteCmd, filesRenameCmd, filesMoveCmd)
 	foldersCmd.AddCommand(foldersListCmd, folderGetCmd, foldersTreeCmd, foldersCreateCmd, foldersRenameCmd, foldersMoveCmd, foldersDeleteCmd)
 	resourcesCmd.AddCommand(resourcesSpecsCmd, resourcesShapeCmd, resourcesCreateCmd, resourcesUpdateCmd, resourcesDeleteCmd, resourcesActionCmd)
 
@@ -952,7 +960,7 @@ func registerTypedWriteFlags() {
 		transformsCreateCmd, transformsUpdateCmd, transformsRunCmd, transformsDeleteCmd,
 		functionsCreateCmd, functionsUpdateCmd, functionsDeployCmd, functionsRedeployCmd, functionsDeleteCmd,
 		foldersCreateCmd, foldersRenameCmd, foldersMoveCmd, foldersDeleteCmd,
-		filesUploadCmd, filesDeleteCmd, filesRenameCmd, filesMoveCmd,
+		filesUploadCmd, filesPromoteDatasetCmd, filesDeleteCmd, filesRenameCmd, filesMoveCmd,
 	} {
 		command.Flags().BoolVarP(&platformWriteYes, "yes", "y", false, "run the write without prompting")
 	}
@@ -1004,6 +1012,10 @@ func registerTypedWriteFlags() {
 
 	filesUploadCmd.Flags().StringVar(&filePath, "path", "", "local file path to upload")
 	filesUploadCmd.Flags().StringVar(&platformFolderID, "folder-id", "", "destination folder id")
+	filesPromoteDatasetCmd.Flags().StringVar(&datasetName, "name", "", "dataset name")
+	filesPromoteDatasetCmd.Flags().StringVar(&datasetDescription, "description", "", "dataset description")
+	filesPromoteDatasetCmd.Flags().IntVar(&platformSheetIndex, "sheet-index", 0, "tabular sheet index to promote")
+	filesPromoteDatasetCmd.Flags().StringArrayVar(&fileColumnMappings, "column-map", nil, "column mapping as source:dataset:type[:nullable][:primary]; repeatable")
 	filesRenameCmd.Flags().StringVar(&fileNewName, "name", "", "new file name")
 	filesMoveCmd.Flags().StringVar(&fileNewFolderID, "folder-id", "", "destination folder id; empty moves to project root")
 }
@@ -1052,6 +1064,13 @@ func registerFunctionWriteFlags(command *cobra.Command) {
 	command.Flags().StringVar(&functionCPU, "cpu", "", "function CPU request")
 	command.Flags().StringArrayVar(&functionFiles, "file", nil, "function file as target-path=local-path; repeatable")
 	command.Flags().StringArrayVar(&functionDependencies, "dependency", nil, "function dependency as name[:version]; repeatable")
+	command.Flags().StringArrayVar(&functionProviderIDs, "provider-id", nil, "AI provider id allowed for the function; repeatable")
+	command.Flags().StringArrayVar(&functionOntologyIDs, "ontology-id", nil, "ontology id writable by the function; repeatable")
+	command.Flags().StringArrayVar(&functionReadOnlyOntologyIDs, "read-only-ontology-id", nil, "ontology id readable by the function; repeatable")
+	command.Flags().StringArrayVar(&functionProviderConfigs, "provider-config", nil, "provider model binding as provider-id=model; repeatable")
+	command.Flags().StringArrayVar(&functionSecretBindings, "secret-binding", nil, "secret binding as NAME=secret-id[:target]; target defaults to ENV; repeatable")
+	command.Flags().IntVar(&functionDefaultMaxTokens, "default-max-tokens", 0, "default max tokens for function AI calls")
+	command.Flags().Float64Var(&functionDefaultTemperature, "default-temperature", 0, "default temperature for function AI calls")
 }
 
 func platformProjectListCommand(use, short string, read func(context.Context, *platformSession, *platform.Project) (any, *output.QueryResult, error)) *cobra.Command {
@@ -1244,11 +1263,19 @@ func runPlatformResourceWrite(cmd *cobra.Command, input genericResourceWriteInpu
 		return err
 	}
 	if strings.TrimSpace(input.ID) != "" {
-		resolvedID, err := resolvePlatformResourceID(ctx, session, project.ID, input.Resource, input.ID)
-		if err != nil {
-			return err
+		if normalizePlatformResourceToken(input.Resource) == "file" && normalizePlatformResourceToken(input.Action) == "promote_to_dataset" {
+			if resolvedID, err := resolvePlatformResourceID(ctx, session, project.ID, input.Resource, input.ID); err == nil {
+				input.ID = resolvedID
+			} else {
+				input.ID = strings.TrimSpace(input.ID)
+			}
+		} else {
+			resolvedID, err := resolvePlatformResourceID(ctx, session, project.ID, input.Resource, input.ID)
+			if err != nil {
+				return err
+			}
+			input.ID = resolvedID
 		}
-		input.ID = resolvedID
 	}
 	if err := prepareTypedResourcePayload(ctx, session, project.ID, input, payload); err != nil {
 		return err
@@ -1801,6 +1828,14 @@ func buildFunctionCreatePayload(cmd *cobra.Command) (map[string]any, error) {
 	if err != nil {
 		return nil, err
 	}
+	providerConfigs, err := parseFunctionProviderConfigs(functionProviderConfigs)
+	if err != nil {
+		return nil, err
+	}
+	secretBindings, err := parseFunctionSecretBindings(functionSecretBindings)
+	if err != nil {
+		return nil, err
+	}
 	timeoutSeconds := functionTimeoutSeconds
 	if timeoutSeconds == 0 {
 		timeoutSeconds = 30
@@ -1815,6 +1850,13 @@ func buildFunctionCreatePayload(cmd *cobra.Command) (map[string]any, error) {
 		"cpu":            defaultString(strings.TrimSpace(functionCPU), "100m"),
 		"files":          files,
 		"dependencies":   deps,
+	}
+	addFunctionConfigPayload(cmd, payload)
+	if len(providerConfigs) > 0 {
+		payload["providerConfigs"] = providerConfigs
+	}
+	if len(secretBindings) > 0 {
+		payload["secretBindings"] = secretBindings
 	}
 	return payload, nil
 }
@@ -1847,10 +1889,43 @@ func buildFunctionUpdatePayload(cmd *cobra.Command) (map[string]any, error) {
 		}
 		payload["dependencies"] = deps
 	}
+	if cmd.Flags().Changed("provider-config") {
+		configs, err := parseFunctionProviderConfigs(functionProviderConfigs)
+		if err != nil {
+			return nil, err
+		}
+		payload["providerConfigs"] = configs
+	}
+	if cmd.Flags().Changed("secret-binding") {
+		bindings, err := parseFunctionSecretBindings(functionSecretBindings)
+		if err != nil {
+			return nil, err
+		}
+		payload["secretBindings"] = bindings
+	}
+	addFunctionConfigPayload(cmd, payload)
 	if len(payload) == 0 {
-		return nil, fmt.Errorf("nothing to update; pass function fields, --file, or --dependency")
+		return nil, fmt.Errorf("nothing to update; pass function fields, --file, --dependency, or configuration flags")
 	}
 	return payload, nil
+}
+
+func addFunctionConfigPayload(cmd *cobra.Command, payload map[string]any) {
+	if cmd.Flags().Changed("provider-id") {
+		payload["providerIds"] = normalizedStringList(functionProviderIDs)
+	}
+	if cmd.Flags().Changed("ontology-id") {
+		payload["ontologyIds"] = normalizedStringList(functionOntologyIDs)
+	}
+	if cmd.Flags().Changed("read-only-ontology-id") {
+		payload["readOnlyOntologyIds"] = normalizedStringList(functionReadOnlyOntologyIDs)
+	}
+	if cmd.Flags().Changed("default-max-tokens") {
+		payload["defaultMaxTokens"] = functionDefaultMaxTokens
+	}
+	if cmd.Flags().Changed("default-temperature") {
+		payload["defaultTemperature"] = functionDefaultTemperature
+	}
 }
 
 func buildFolderCreatePayload(cmd *cobra.Command) (map[string]any, error) {
@@ -1888,6 +1963,29 @@ func buildFileUploadPayload(cmd *cobra.Command) (map[string]any, error) {
 	payload := map[string]any{"file_path": strings.TrimSpace(filePath)}
 	if strings.TrimSpace(platformFolderID) != "" {
 		payload["folderId"] = strings.TrimSpace(platformFolderID)
+	}
+	return payload, nil
+}
+
+func buildFilePromoteDatasetPayload(cmd *cobra.Command) (map[string]any, error) {
+	name := strings.TrimSpace(datasetName)
+	if name == "" {
+		return nil, fmt.Errorf("--name is required")
+	}
+	columnMap, err := parseFileColumnMappings(fileColumnMappings)
+	if err != nil {
+		return nil, err
+	}
+	if len(columnMap) == 0 {
+		return nil, fmt.Errorf("--column-map is required at least once")
+	}
+	payload := map[string]any{
+		"datasetName": name,
+		"description": datasetDescription,
+		"columnMap":   columnMap,
+	}
+	if cmd.Flags().Changed("sheet-index") {
+		payload["sheetIndex"] = platformSheetIndex
 	}
 	return payload, nil
 }
@@ -2069,6 +2167,46 @@ func parseFunctionDependencies(values []string) ([]map[string]any, error) {
 	return deps, nil
 }
 
+func parseFunctionProviderConfigs(values []string) ([]map[string]any, error) {
+	configs := make([]map[string]any, 0, len(values))
+	for _, value := range values {
+		providerID, model, ok := strings.Cut(value, "=")
+		providerID = strings.TrimSpace(providerID)
+		model = strings.TrimSpace(model)
+		if !ok || providerID == "" || model == "" {
+			return nil, fmt.Errorf("--provider-config must be provider-id=model")
+		}
+		configs = append(configs, map[string]any{"providerId": providerID, "model": model})
+	}
+	return configs, nil
+}
+
+func parseFunctionSecretBindings(values []string) ([]map[string]any, error) {
+	bindings := make([]map[string]any, 0, len(values))
+	for _, value := range values {
+		name, rest, ok := strings.Cut(value, "=")
+		name = strings.TrimSpace(name)
+		rest = strings.TrimSpace(rest)
+		if !ok || name == "" || rest == "" {
+			return nil, fmt.Errorf("--secret-binding must be NAME=secret-id[:target]")
+		}
+		secretID := rest
+		target := "ENV"
+		if before, after, ok := strings.Cut(rest, ":"); ok {
+			secretID = strings.TrimSpace(before)
+			target = strings.ToUpper(strings.TrimSpace(after))
+		}
+		if secretID == "" {
+			return nil, fmt.Errorf("--secret-binding must include a secret id")
+		}
+		if target == "" {
+			target = "ENV"
+		}
+		bindings = append(bindings, map[string]any{"name": name, "secretId": secretID, "target": target})
+	}
+	return bindings, nil
+}
+
 func parseFunctionDependencyNames(values []string) ([]string, error) {
 	deps, err := parseFunctionDependencies(values)
 	if err != nil {
@@ -2080,6 +2218,43 @@ func parseFunctionDependencyNames(values []string) ([]string, error) {
 		names[i] = name
 	}
 	return names, nil
+}
+
+func parseFileColumnMappings(values []string) ([]map[string]any, error) {
+	mappings := make([]map[string]any, 0, len(values))
+	for _, value := range values {
+		parts := strings.Split(value, ":")
+		if len(parts) < 3 {
+			return nil, fmt.Errorf("--column-map %q must be source:dataset:type[:nullable][:primary]", value)
+		}
+		sourceColumn := strings.TrimSpace(parts[0])
+		datasetColumn := strings.TrimSpace(parts[1])
+		dataType := strings.TrimSpace(parts[2])
+		if sourceColumn == "" || datasetColumn == "" || dataType == "" {
+			return nil, fmt.Errorf("--column-map %q must include source, dataset, and type", value)
+		}
+		mapping := map[string]any{
+			"sourceColumn":  sourceColumn,
+			"datasetColumn": datasetColumn,
+			"dataType":      dataType,
+			"isNullable":    false,
+			"isPrimary":     false,
+		}
+		for _, option := range parts[3:] {
+			switch strings.ToLower(strings.TrimSpace(option)) {
+			case "", "required", "notnull", "not_null":
+				mapping["isNullable"] = false
+			case "nullable", "null":
+				mapping["isNullable"] = true
+			case "primary", "pk":
+				mapping["isPrimary"] = true
+			default:
+				return nil, fmt.Errorf("unsupported --column-map option %q in %q", option, value)
+			}
+		}
+		mappings = append(mappings, mapping)
+	}
+	return mappings, nil
 }
 
 func functionExecutionTable(result *platform.FunctionExecutionResult) *output.QueryResult {
@@ -2136,7 +2311,9 @@ func buildGenericResourceVariables(projectID string, input genericResourceWriteI
 		}
 		if spec.NeedsID {
 			if spec.Mutation == "PromoteFileToDataset" {
-				payload["fileId"] = firstResourceString(payload, "fileId", id)
+				if strings.TrimSpace(firstResourceString(payload, "fileId")) == "" {
+					payload["fileId"] = id
+				}
 			} else {
 				payload["id"] = id
 			}
@@ -2397,7 +2574,34 @@ func resolveProjectFile(ctx context.Context, session *platformSession, projectID
 	if err != nil {
 		return nil, err
 	}
-	return matchProjectFile(value, files)
+	if file, err := matchProjectFile(value, files); err == nil {
+		return file, nil
+	}
+	entries, err := loadProjectFolderTree(ctx, session, projectID)
+	if err != nil {
+		return nil, err
+	}
+	var matches []platform.ProjectFile
+	for _, entry := range entries {
+		if entry.Kind != "file" {
+			continue
+		}
+		if entry.ID == value {
+			file := entry.File
+			return &file, nil
+		}
+		if entry.Name == value || entry.Path == value {
+			matches = append(matches, entry.File)
+		}
+	}
+	switch len(matches) {
+	case 0:
+		return nil, fmt.Errorf("file %q not found", value)
+	case 1:
+		return &matches[0], nil
+	default:
+		return nil, fmt.Errorf("file %q is ambiguous; use an id or path", value)
+	}
 }
 
 func matchProjectFile(value string, files []platform.ProjectFile) (*platform.ProjectFile, error) {

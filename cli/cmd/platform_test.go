@@ -225,7 +225,7 @@ func TestPlatformResourceCommandsRegistered(t *testing.T) {
 		"lineage":      {"project", "root", "neighbors"},
 		"transforms":   {"list", "get", "runs", "create", "update", "run", "delete"},
 		"functions":    {"list", "get", "versions", "active", "promote", "set-active", "restore-draft", "run", "test", "preview", "create", "update", "deploy", "redeploy", "delete"},
-		"files":        {"list", "get", "preview", "download", "search", "tabular", "storage-usage", "upload", "delete", "rename", "move"},
+		"files":        {"list", "get", "preview", "download", "search", "tabular", "storage-usage", "upload", "promote-to-dataset", "delete", "rename", "move"},
 		"folders":      {"list", "get", "tree", "create", "rename", "move", "delete"},
 		"resources":    {"specs", "shape", "create", "update", "delete", "action"},
 	}
@@ -251,7 +251,7 @@ func TestTypedPlatformWriteCommandsHaveExamples(t *testing.T) {
 		datasetsCreateCmd, datasetsUpdateCmd, datasetsDeleteCmd,
 		transformsRunCmd, transformsDeleteCmd,
 		functionsDeployCmd, functionsRedeployCmd, functionsDeleteCmd,
-		filesUploadCmd, filesDeleteCmd, filesRenameCmd, filesMoveCmd,
+		filesUploadCmd, filesPromoteDatasetCmd, filesDeleteCmd, filesRenameCmd, filesMoveCmd,
 	}
 	for _, command := range commands {
 		if strings.TrimSpace(command.Example) == "" {
@@ -325,6 +325,32 @@ func TestBuildGenericResourceVariablesFileUpload(t *testing.T) {
 	}
 }
 
+func TestBuildGenericResourceVariablesPromoteFileToDataset(t *testing.T) {
+	spec, variables, err := buildGenericResourceVariables("proj-1", genericResourceWriteInput{
+		Resource: "file",
+		Action:   "promote_to_dataset",
+		ID:       "file-1",
+	}, map[string]any{
+		"datasetName": "Customers",
+		"columnMap": []map[string]any{
+			{"sourceColumn": "id", "datasetColumn": "id", "dataType": "text", "isNullable": false, "isPrimary": true},
+		},
+	})
+	if err != nil {
+		t.Fatalf("buildGenericResourceVariables() error = %v", err)
+	}
+	if spec.Mutation != "PromoteFileToDataset" {
+		t.Fatalf("mutation = %q, want PromoteFileToDataset", spec.Mutation)
+	}
+	input, ok := variables["input"].(map[string]any)
+	if !ok {
+		t.Fatalf("variables = %#v, want input object", variables)
+	}
+	if input["projectId"] != "proj-1" || input["fileId"] != "file-1" || input["datasetName"] != "Customers" {
+		t.Fatalf("input = %#v, want project/file/dataset injected", input)
+	}
+}
+
 func TestParseDatasetColumns(t *testing.T) {
 	columns, err := parseDatasetColumns([]string{"id:text:primary", "name:text:nullable"})
 	if err != nil {
@@ -338,6 +364,36 @@ func TestParseDatasetColumns(t *testing.T) {
 	}
 	if columns[1]["name"] != "name" || columns[1]["isNullable"] != true {
 		t.Fatalf("second column = %#v, want nullable name", columns[1])
+	}
+}
+
+func TestParseFunctionProviderConfigs(t *testing.T) {
+	configs, err := parseFunctionProviderConfigs([]string{"provider-1=gpt-4.1"})
+	if err != nil {
+		t.Fatalf("parseFunctionProviderConfigs() error = %v", err)
+	}
+	if len(configs) != 1 || configs[0]["providerId"] != "provider-1" || configs[0]["model"] != "gpt-4.1" {
+		t.Fatalf("configs = %#v, want provider/model", configs)
+	}
+}
+
+func TestParseFunctionSecretBindings(t *testing.T) {
+	bindings, err := parseFunctionSecretBindings([]string{"API_KEY=secret-1"})
+	if err != nil {
+		t.Fatalf("parseFunctionSecretBindings() error = %v", err)
+	}
+	if len(bindings) != 1 || bindings[0]["name"] != "API_KEY" || bindings[0]["secretId"] != "secret-1" || bindings[0]["target"] != "ENV" {
+		t.Fatalf("bindings = %#v, want env secret binding", bindings)
+	}
+}
+
+func TestParseFileColumnMappings(t *testing.T) {
+	mappings, err := parseFileColumnMappings([]string{"id:id:text:primary", "name:name:text:nullable"})
+	if err != nil {
+		t.Fatalf("parseFileColumnMappings() error = %v", err)
+	}
+	if len(mappings) != 2 || mappings[0]["sourceColumn"] != "id" || mappings[0]["isPrimary"] != true || mappings[1]["isNullable"] != true {
+		t.Fatalf("mappings = %#v, want parsed column mappings", mappings)
 	}
 }
 

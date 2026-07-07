@@ -294,6 +294,11 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 		"--language", "python",
 		"--entry-point", "main",
 		"--file", "main.py=" + functionPath,
+		"--provider-id", providerID,
+		"--provider-config", providerID + "=gpt-4.1-mini",
+		"--secret-binding", "CLI_E2E_SECRET=" + secretID,
+		"--default-max-tokens", "256",
+		"--default-temperature", "0.2",
 	}, baseArgs...)...)
 	defer bestEffortCLIResourceDelete(t, host, "function", functionID)
 	fn := runJSONCommand[platform.Function](t, "functions", "get", functionName, "--host", host, "--format", "json", "--quiet")
@@ -332,6 +337,8 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 	_ = runMutationID(t, append([]string{
 		"functions", "update", functionName,
 		"--description", "updated",
+		"--default-max-tokens", "128",
+		"--default-temperature", "0.1",
 	}, baseArgs...)...)
 	promotedV2 := runEnvelope(t, append([]string{
 		"functions", "promote", functionName,
@@ -413,13 +420,53 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 	downloadPath := filepath.Join(t.TempDir(), "downloaded.csv")
 	_ = runRawCommand(t, "files", "download", uploadedFile.Name, "--host", host, "--out", downloadPath, "--quiet")
 	testharness.AssertFileContains(t, downloadPath, "Ada")
-	renamedFileName := "cli-e2e-renamed-" + suffix + ".csv"
-	_ = runMutationID(t, append([]string{"files", "rename", uploadedFile.Name, "--name", renamedFileName}, baseArgs...)...)
-	_ = runMutationID(t, append([]string{"files", "move", renamedFileName, "--folder-id", folderBID}, baseArgs...)...)
+	fileBeforePromote := runJSONCommand[platform.ProjectFile](t, "files", "get", fileID, "--host", host, "--format", "json", "--quiet")
+	if fileBeforePromote.ID != fileID {
+		t.Fatalf("files get by id before promote returned id %q, want %q", fileBeforePromote.ID, fileID)
+	}
+
+	promotedDatasetName := "cli-e2e-file-dataset-" + suffix
+	promotedDatasetID := runMutationID(t, append([]string{
+		"files", "promote-to-dataset", fileID,
+		"--name", promotedDatasetName,
+		"--description", "Promoted from CLI e2e CSV",
+		"--column-map", "id:id:text:primary",
+		"--column-map", "name:name:text:nullable",
+	}, baseArgs...)...)
+	defer bestEffortCLIResourceDelete(t, host, "dataset", promotedDatasetID)
+	promotedDataset := runJSONCommand[platform.Dataset](t, "datasets", "get", promotedDatasetName, "--host", host, "--format", "json", "--quiet")
+	if promotedDataset.ID != promotedDatasetID {
+		t.Fatalf("promoted dataset id = %q, want %q", promotedDataset.ID, promotedDatasetID)
+	}
 	_ = runJSONCommand[platform.LineageGraph](t, "lineage", "project", "--host", host, "--format", "json", "--quiet")
 
-	runMutationOK(t, append([]string{"files", "delete", renamedFileName}, baseArgs...)...)
+	runMutationOK(t, append([]string{"datasets", "delete", promotedDatasetName}, baseArgs...)...)
+	promotedDatasetID = ""
+	runMutationOK(t, append([]string{"files", "delete", uploadedFile.Name}, baseArgs...)...)
 	fileID = ""
+
+	moveCSVPath := filepath.Join(t.TempDir(), "cli-e2e-move-"+suffix+".csv")
+	if err := os.WriteFile(moveCSVPath, []byte("id,name\n2,Grace\n"), 0600); err != nil {
+		t.Fatalf("write move csv fixture: %v", err)
+	}
+	moveUploaded := runEnvelope(t, append([]string{
+		"files", "upload",
+		"--path", moveCSVPath,
+		"--folder-id", folderAID,
+	}, baseArgs...)...)
+	var moveFile platform.ProjectFile
+	decodeEnvelopeData(t, moveUploaded, &moveFile)
+	moveFileID := moveFile.ID
+	defer bestEffortCLIResourceDelete(t, host, "file", moveFileID)
+	renamedFileName := "cli-e2e-renamed-" + suffix + ".csv"
+	moveFileID = runMutationID(t, append([]string{"files", "rename", moveFile.Name, "--name", renamedFileName}, baseArgs...)...)
+	moveFileID = runMutationID(t, append([]string{"files", "move", renamedFileName, "--folder-id", folderBID}, baseArgs...)...)
+	if moveFileID == "" {
+		t.Fatalf("moved file did not include id")
+	}
+	runMutationOK(t, append([]string{"files", "delete", renamedFileName}, baseArgs...)...)
+	moveFileID = ""
+
 	runMutationOK(t, append([]string{"folders", "delete", folderAName}, baseArgs...)...)
 	folderAID = ""
 	runMutationOK(t, append([]string{"folders", "delete", folderBName}, baseArgs...)...)
