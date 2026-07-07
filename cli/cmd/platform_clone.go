@@ -19,8 +19,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"regexp"
-	"strings"
 
 	"github.com/clidey/whodb/cli/internal/platform"
 	"github.com/clidey/whodb/cli/pkg/output"
@@ -99,74 +97,11 @@ func runPlatformClone(cmd *cobra.Command, resource, sourceRef, newName string) e
 }
 
 func buildPlatformClonePayload(ctx context.Context, session *platformSession, projectID, resource, sourceRef, newName string) (map[string]any, error) {
-	newName = strings.TrimSpace(newName)
-	if newName == "" {
-		return nil, fmt.Errorf("new name cannot be empty")
-	}
-	switch resource {
-	case "dataset":
-		id, err := resolvePlatformResourceID(ctx, session, projectID, "dataset", sourceRef)
-		if err != nil {
-			return nil, err
-		}
-		dataset, err := session.Client.Dataset(ctx, projectID, id)
-		if err != nil {
-			return nil, err
-		}
-		payload := datasetCreatePayloadFromExport(*dataset)
-		payload["name"] = newName
-		return payload, nil
-	case "ontology":
-		id, err := resolvePlatformResourceID(ctx, session, projectID, "ontology", sourceRef)
-		if err != nil {
-			return nil, err
-		}
-		ontology, err := session.Client.Ontology(ctx, projectID, id)
-		if err != nil {
-			return nil, err
-		}
-		payload := ontologyCreatePayloadFromExport(*ontology)
-		identifier := safePlatformIdentifier(newName)
-		payload["apiName"] = identifier
-		payload["displayName"] = newName
-		payload["pluralDisplayName"] = newName + "s"
-		payload["tableName"] = identifier
-		return payload, nil
-	case "transform":
-		transform, err := resolveTransform(ctx, session, projectID, sourceRef)
-		if err != nil {
-			return nil, err
-		}
-		payload := transformCreatePayloadFromExport(*transform)
-		payload["name"] = newName
-		return payload, nil
-	case "function":
-		id, err := resolvePlatformResourceID(ctx, session, projectID, "function", sourceRef)
-		if err != nil {
-			return nil, err
-		}
-		fn, err := session.Client.Function(ctx, projectID, id, nil)
-		if err != nil {
-			return nil, err
-		}
-		payload := functionCreatePayloadFromExport(*fn, true)
-		payload["name"] = newName
-		return payload, nil
-	default:
-		return nil, fmt.Errorf("unsupported clone resource %q", resource)
-	}
+	return platform.BuildClonePayload(ctx, session.Client, projectID, resource, sourceRef, newName)
 }
 
 func safePlatformIdentifier(value string) string {
-	re := regexp.MustCompile(`[^a-zA-Z0-9_]+`)
-	identifier := strings.Trim(re.ReplaceAllString(strings.ToLower(strings.TrimSpace(value)), "_"), "_")
-	if identifier == "" {
-		return "clone"
-	}
-	if identifier[0] >= '0' && identifier[0] <= '9' {
-		return "x_" + identifier
-	}
-	return identifier
+	return platform.SafeIdentifier(value)
 }
 
 func clonePayload(payload map[string]any) map[string]any {

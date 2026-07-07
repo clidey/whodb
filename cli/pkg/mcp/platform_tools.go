@@ -501,6 +501,9 @@ func (o PlatformSourceRowsOutput) MarshalJSON() ([]byte, error) {
 
 func registerPlatformTools(server *mcp.Server, secOpts *SecurityOptions) {
 	for _, tool := range platformToolDefinitions() {
+		if registerPlatformBundleTool(server, tool, secOpts) {
+			continue
+		}
 		if !secOpts.ReadOnly && registerPlatformGenericWriteTool(server, tool, secOpts) {
 			continue
 		}
@@ -637,6 +640,7 @@ func platformToolDefinitions() []*mcp.Tool {
 		},
 	}
 	tools = append(tools, platformGenericWriteToolDefinitions()...)
+	tools = append(tools, platformBundleToolDefinitions()...)
 	return append(tools, platformReadToolDefinitions()...)
 }
 

@@ -288,6 +288,11 @@ func buildMCPTools() []MCPTool {
 		{Name: "whodb_platform_delete_ontology_fast_lookup", Description: "Delete hosted ontology fast lookups with typed input when MCP starts with --platform; uses the same confirmation behavior as generic writes.", ReadOnly: false},
 		{Name: "whodb_platform_pending", Description: "List pending hosted platform confirmations when MCP starts with --platform; preview metadata never includes credential or secret values, and the tool is not exposed with --allow-write, --read-only, or --safe-mode.", ReadOnly: true},
 		{Name: "whodb_platform_confirm", Description: "Confirm pending hosted platform writes when MCP starts with --platform after user approval; not exposed with --allow-write, --read-only, or --safe-mode.", ReadOnly: false},
+		{Name: "whodb_platform_doctor", Description: "Check hosted platform MCP readiness, including login, selected workspace, and manifest availability.", ReadOnly: true},
+		{Name: "whodb_platform_bundle_export", Description: "Export selected hosted project metadata as a portable bundle without secret values or file bytes.", ReadOnly: true},
+		{Name: "whodb_platform_bundle_diff", Description: "Compare a project bundle against the selected hosted project and return create or skip actions.", ReadOnly: true},
+		{Name: "whodb_platform_bundle_import_plan", Description: "Plan a bundle import into the selected hosted project without executing writes.", ReadOnly: true},
+		{Name: "whodb_platform_clone", Description: "Clone a hosted dataset, ontology, transform, or function; returns a confirmation token by default and is hidden in --read-only and --safe-mode.", ReadOnly: false},
 	}
 	return tools
 }

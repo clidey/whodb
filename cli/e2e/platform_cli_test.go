@@ -318,6 +318,34 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 	_ = runMutationID(t, append([]string{"transforms", "run", transformName}, baseArgs...)...)
 	_ = runJSONCommand[[]platform.TransformRun](t, "transforms", "runs", transformName, "--host", host, "--format", "json", "--quiet")
 
+	ontologyAPIName := "cli_e2e_ontology_" + suffix
+	ontologyID := runMutationID(t, append([]string{
+		"ontologies", "create",
+		"--api-name", ontologyAPIName,
+		"--display-name", "CLI E2E Ontology " + suffix,
+		"--plural-display-name", "CLI E2E Ontologies " + suffix,
+		"--description", "CLI e2e ontology",
+		"--primary-key", "id",
+		"--table-name", ontologyAPIName,
+		"--schema-name", "public",
+		"--property-json", `{"apiName":"id","displayName":"ID","description":"ID","columnName":"id","dataType":"String","isRequired":true,"visibility":"normal","isSearchable":true,"isSortable":true,"isEditOnly":false}`,
+	}, baseArgs...)...)
+	defer bestEffortCLIResourceDelete(t, host, "ontology", ontologyID)
+	ontology := runJSONCommand[platform.Ontology](t, "ontologies", "get", ontologyAPIName, "--host", host, "--format", "json", "--quiet")
+	if ontology.ID != ontologyID {
+		t.Fatalf("ontologies get by api name returned id %q, want %q", ontology.ID, ontologyID)
+	}
+	ontologyDescribe := runJSONCommand[platform.Ontology](t, "ontologies", "describe", ontologyAPIName, "--host", host, "--format", "json", "--quiet")
+	if ontologyDescribe.ID != ontologyID {
+		t.Fatalf("ontologies describe returned id %q, want %q", ontologyDescribe.ID, ontologyID)
+	}
+	ontologyExportPath := filepath.Join(t.TempDir(), "ontology-export.json")
+	_ = runRawCommand(t, "ontologies", "export", ontologyAPIName, "--host", host, "--out", ontologyExportPath, "--quiet")
+	testharness.AssertFileContains(t, ontologyExportPath, ontologyAPIName)
+	ontologyCloneName := "cli_e2e_ontology_clone_" + suffix
+	ontologyCloneID := runMutationID(t, append([]string{"ontologies", "clone", ontologyAPIName, ontologyCloneName}, baseArgs...)...)
+	defer bestEffortCLIResourceDelete(t, host, "ontology", ontologyCloneID)
+
 	functionName := "cli-e2e-function-" + suffix
 	functionPath := filepath.Join(t.TempDir(), "main.py")
 	if err := os.WriteFile(functionPath, []byte("def main(input):\n    return input\n"), 0600); err != nil {
@@ -522,6 +550,102 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 		t.Fatalf("resources import --dry-run plan = %#v, want dryRun true", importPlan)
 	}
 
+	runMutationOK(t, append([]string{"datasets", "delete", datasetCloneName}, baseArgs...)...)
+	datasetCloneID = ""
+	runMutationOK(t, append([]string{"transforms", "delete", transformCloneName}, baseArgs...)...)
+	transformCloneID = ""
+	if transformID != "" {
+		runMutationOK(t, append([]string{"transforms", "delete", transformName}, baseArgs...)...)
+		transformID = ""
+	}
+	runMutationOK(t, append([]string{"ontologies", "delete", ontologyCloneName}, baseArgs...)...)
+	ontologyCloneID = ""
+	runMutationOK(t, append([]string{"functions", "delete", functionCloneName}, baseArgs...)...)
+	functionCloneID = ""
+
+	importSecretName := "cli-e2e-import-secret-" + suffix
+	importDatasetName := "cli-e2e-import-dataset-" + suffix
+	importOntologyAPIName := "cli_e2e_import_ontology_" + suffix
+	importTransformName := "cli-e2e-import-transform-" + suffix
+	importFunctionName := "cli-e2e-import-function-" + suffix
+	t.Setenv(platform.ImportSecretEnvName(importSecretName), "import-secret-value-"+suffix)
+	executableBundle := platform.ProjectBundle{
+		BundleVersion: 1,
+		Secrets:       []platform.ProjectSecret{{Name: importSecretName, Description: "CLI e2e imported secret"}},
+		Datasets: []platform.Dataset{{
+			Name:        importDatasetName,
+			Description: "CLI e2e imported dataset",
+			SchemaMode:  "manual",
+			Schema: []platform.ColumnDef{
+				{Name: "id", Type: "text", IsPrimary: true},
+				{Name: "name", Type: "text", IsNullable: true},
+			},
+		}},
+		Ontologies: []platform.Ontology{{
+			APIName:           importOntologyAPIName,
+			DisplayName:       "CLI E2E Import Ontology " + suffix,
+			PluralDisplayName: "CLI E2E Import Ontologies " + suffix,
+			Description:       "CLI e2e imported ontology",
+			PrimaryKey:        "id",
+			TableName:         importOntologyAPIName,
+			SchemaName:        "public",
+			Status:            "active",
+			Icon:              "table",
+			Color:             "#3366ff",
+			Properties: []platform.OntologyProperty{{
+				APIName: "id", DisplayName: "ID", Description: "ID", ColumnName: "id", DataType: "String",
+				IsRequired: true, Visibility: "normal", IsSearchable: true, IsSortable: true,
+			}},
+		}},
+		Transforms: []platform.Transform{{
+			Name:        importTransformName,
+			Description: "CLI e2e imported transform",
+			GraphJSON:   `{"nodes":[],"edges":[]}`,
+			TriggerMode: "manual",
+		}},
+		Functions: []platform.Function{{
+			Name:           importFunctionName,
+			Description:    "CLI e2e imported function",
+			Language:       "python",
+			EntryPoint:     "main",
+			TimeoutSeconds: 30,
+			Memory:         "128Mi",
+			CPU:            "100m",
+			Files:          []platform.FunctionFile{{Path: "main.py", Content: "def main(input):\n    return input\n"}},
+		}},
+	}
+	executableBundlePath := filepath.Join(t.TempDir(), "project-bundle-executable.json")
+	rawExecutableBundle, err := json.Marshal(executableBundle)
+	if err != nil {
+		t.Fatalf("marshal executable bundle: %v", err)
+	}
+	if err := os.WriteFile(executableBundlePath, rawExecutableBundle, 0600); err != nil {
+		t.Fatalf("write executable bundle: %v", err)
+	}
+	executedImportPlan := runJSONCommand[map[string]any](t, "resources", "import", "--host", host, "--file", executableBundlePath, "--yes", "--format", "json", "--quiet")
+	requireImportCreated(t, executedImportPlan, "secret", importSecretName)
+	requireImportCreated(t, executedImportPlan, "dataset", importDatasetName)
+	requireImportCreated(t, executedImportPlan, "ontology", importOntologyAPIName)
+	requireImportCreated(t, executedImportPlan, "transform", importTransformName)
+	requireImportCreated(t, executedImportPlan, "function", importFunctionName)
+	defer bestEffortCLIResourceDelete(t, host, "secret", importSecretName)
+	defer bestEffortCLIResourceDelete(t, host, "dataset", importDatasetName)
+	defer bestEffortCLIResourceDelete(t, host, "ontology", importOntologyAPIName)
+	defer bestEffortCLIResourceDelete(t, host, "transform", importTransformName)
+	defer bestEffortCLIResourceDelete(t, host, "function", importFunctionName)
+	if got := runJSONCommand[platform.Dataset](t, "datasets", "get", importDatasetName, "--host", host, "--format", "json", "--quiet"); got.Name != importDatasetName {
+		t.Fatalf("imported dataset = %#v, want %q", got, importDatasetName)
+	}
+	if got := runJSONCommand[platform.Ontology](t, "ontologies", "get", importOntologyAPIName, "--host", host, "--format", "json", "--quiet"); got.APIName != importOntologyAPIName {
+		t.Fatalf("imported ontology = %#v, want %q", got, importOntologyAPIName)
+	}
+	if got := runJSONCommand[platform.Transform](t, "transforms", "get", importTransformName, "--host", host, "--format", "json", "--quiet"); got.Name != importTransformName {
+		t.Fatalf("imported transform = %#v, want %q", got, importTransformName)
+	}
+	if got := runJSONCommand[platform.Function](t, "functions", "get", importFunctionName, "--host", host, "--format", "json", "--quiet"); got.Name != importFunctionName {
+		t.Fatalf("imported function = %#v, want %q", got, importFunctionName)
+	}
+
 	runMutationOK(t, append([]string{"datasets", "delete", promotedDatasetName}, baseArgs...)...)
 	promotedDatasetID = ""
 	runMutationOK(t, append([]string{"files", "delete", uploadedFile.Name}, baseArgs...)...)
@@ -555,8 +679,16 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 	folderBID = ""
 	runMutationOK(t, append([]string{"functions", "delete", functionName}, baseArgs...)...)
 	functionID = ""
-	runMutationOK(t, append([]string{"transforms", "delete", transformName}, baseArgs...)...)
-	transformID = ""
+	if ontologyCloneID != "" {
+		runMutationOK(t, append([]string{"ontologies", "delete", ontologyCloneName}, baseArgs...)...)
+		ontologyCloneID = ""
+	}
+	runMutationOK(t, append([]string{"ontologies", "delete", ontologyAPIName}, baseArgs...)...)
+	ontologyID = ""
+	if transformID != "" {
+		runMutationOK(t, append([]string{"transforms", "delete", transformName}, baseArgs...)...)
+		transformID = ""
+	}
 	runMutationOK(t, append([]string{"datasets", "delete", datasetName}, baseArgs...)...)
 	datasetID = ""
 	runMutationOK(t, append([]string{"ai-providers", "delete", updatedProviderName}, baseArgs...)...)
@@ -783,6 +915,27 @@ func jsonPayload(t *testing.T, value any) string {
 		t.Fatalf("marshal JSON payload: %v", err)
 	}
 	return string(raw)
+}
+
+func requireImportCreated(t *testing.T, plan map[string]any, resource, name string) {
+	t.Helper()
+	actions, ok := plan["actions"].([]any)
+	if !ok {
+		t.Fatalf("import plan actions = %#v, want array", plan["actions"])
+	}
+	for _, rawAction := range actions {
+		action, ok := rawAction.(map[string]any)
+		if !ok {
+			continue
+		}
+		if action["resource"] == resource && action["name"] == name {
+			if action["action"] != "created" {
+				t.Fatalf("import action for %s %s = %#v, want created", resource, name, action)
+			}
+			return
+		}
+	}
+	t.Fatalf("import plan did not include %s %s: %#v", resource, name, plan)
 }
 
 func bestEffortCLIResourceDelete(t *testing.T, host, resource, id string) {
