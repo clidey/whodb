@@ -30,8 +30,11 @@ import (
 )
 
 var (
-	platformBundlePath   string
-	platformImportDryRun bool
+	platformBundlePath         string
+	platformImportDryRun       bool
+	platformBundlePrefix       string
+	platformRenameConflicts    bool
+	platformOverwriteConflicts bool
 )
 
 var resourcesExportCmd = &cobra.Command{
@@ -131,7 +134,13 @@ func runPlatformBundlePlan(cmd *cobra.Command, dryRun bool) error {
 	if err != nil {
 		return err
 	}
-	plan, err := planPlatformBundleImport(ctx, session, project, bundle, dryRun)
+	plan, err := planPlatformBundleImport(ctx, session, project, bundle, platform.BundleImportOptions{
+		DryRun:             dryRun,
+		Prefix:             platformBundlePrefix,
+		RenameConflicts:    platformRenameConflicts,
+		OverwriteConflicts: platformOverwriteConflicts,
+		Getenv:             os.Getenv,
+	})
 	if err != nil {
 		return err
 	}
@@ -141,21 +150,30 @@ func runPlatformBundlePlan(cmd *cobra.Command, dryRun bool) error {
 	if !dryRun {
 		for i := range plan.Actions {
 			action := &plan.Actions[i]
-			if action.Action != "create" {
+			if action.Action != "create" && action.Action != "update" {
 				continue
 			}
-			spec, variables, err := buildGenericResourceVariables(project.ID, genericResourceWriteInput{Resource: action.Resource, Action: "create"}, action.Payload)
+			platform.ApplyBundleDependencyMap(action, bundleDependenciesFromPlan(plan))
+			spec, variables, err := buildGenericResourceVariables(project.ID, genericResourceWriteInput{Resource: action.Resource, Action: action.Action, ID: action.TargetID}, action.Payload)
 			if err != nil {
 				action.Action = "failed"
 				action.Reason = err.Error()
 				continue
 			}
-			if _, err := session.Client.PlatformMutation(ctx, spec.Mutation, variables); err != nil {
+			result, err := session.Client.PlatformMutation(ctx, spec.Mutation, variables)
+			if err != nil {
 				action.Action = "failed"
 				action.Reason = err.Error()
 				continue
 			}
-			action.Action = "created"
+			if id := platformMutationResultID(result); id != "" {
+				action.TargetID = id
+			}
+			if action.Action == "create" {
+				action.Action = "created"
+			} else {
+				action.Action = "updated"
+			}
 		}
 	}
 	if format == output.FormatJSON {
@@ -179,8 +197,8 @@ func readPlatformProjectBundle(path string) (*platform.ProjectBundle, error) {
 	return &bundle, nil
 }
 
-func planPlatformBundleImport(ctx context.Context, session *platformSession, project *platform.Project, bundle *platform.ProjectBundle, dryRun bool) (*platform.BundlePlan, error) {
-	return platform.PlanBundleImport(ctx, session.Client, session.Host.URL, project, bundle, dryRun, os.Getenv)
+func planPlatformBundleImport(ctx context.Context, session *platformSession, project *platform.Project, bundle *platform.ProjectBundle, options platform.BundleImportOptions) (*platform.BundlePlan, error) {
+	return platform.PlanBundleImportWithOptions(ctx, session.Client, session.Host.URL, project, bundle, options)
 }
 
 func platformBundlePlanTable(plan *platform.BundlePlan) *output.QueryResult {
@@ -194,6 +212,7 @@ func platformBundlePlanTable(plan *platform.BundlePlan) *output.QueryResult {
 func platformBundleSummaryTable(bundle *platform.ProjectBundle) *output.QueryResult {
 	return tableResult([]string{"resource", "count"}, [][]any{
 		{"secrets", len(bundle.Secrets)},
+		{"ai_providers", len(bundle.AIProviders)},
 		{"datasets", len(bundle.Datasets)},
 		{"ontologies", len(bundle.Ontologies)},
 		{"transforms", len(bundle.Transforms)},
@@ -221,4 +240,26 @@ func transformCreatePayloadFromExport(transform platform.Transform) map[string]a
 
 func functionCreatePayloadFromExport(fn platform.Function, keepProjectReferences bool) map[string]any {
 	return platform.FunctionCreatePayloadFromExport(fn, keepProjectReferences)
+}
+
+func bundleDependenciesFromPlan(plan *platform.BundlePlan) platform.BundleDependencyMap {
+	dependencies := platform.BundleDependencyMap{}
+	for _, action := range plan.Actions {
+		platform.AddBundleDependencyMapping(dependencies, action.SourceID, action.TargetID)
+	}
+	return dependencies
+}
+
+func platformMutationResultID(result *platform.PlatformMutationResult) string {
+	if result == nil || len(result.Data) == 0 {
+		return ""
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(result.Data, &payload); err != nil {
+		return ""
+	}
+	if id, _ := payload["id"].(string); id != "" {
+		return id
+	}
+	return ""
 }

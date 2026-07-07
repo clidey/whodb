@@ -192,6 +192,28 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 
 	suffix := strings.ReplaceAll(time.Now().UTC().Format("20060102150405.000000000"), ".", "")
 	baseArgs := []string{"--host", host, "--yes", "--format", "json", "--quiet"}
+	queryArgs := []string{"--host", host, "--format", "json", "--quiet"}
+
+	importProjectName := "cli-e2e-import-project-" + suffix
+	importProjectRenamedName := importProjectName + "-renamed"
+	importProjectID := runMutationID(t, append([]string{
+		"projects", "create",
+		"--org", orgSlug,
+		"--name", importProjectName,
+		"--description", "CLI e2e import target project",
+	}, queryArgs...)...)
+	defer bestEffortCLIProjectDelete(t, host, orgSlug, importProjectRenamedName)
+	defer bestEffortCLIProjectDelete(t, host, orgSlug, importProjectName)
+	projects := runJSONCommand[[]platform.Project](t, "projects", "list", "--host", host, "--org", orgSlug, "--format", "json", "--quiet")
+	requireContainsProjectID(t, projects, importProjectID)
+	renamedImportProjectID := runMutationID(t, append([]string{
+		"projects", "rename", importProjectName,
+		"--org", orgSlug,
+		"--name", importProjectRenamedName,
+	}, queryArgs...)...)
+	if renamedImportProjectID != importProjectID {
+		t.Fatalf("projects rename returned id %q, want %q", renamedImportProjectID, importProjectID)
+	}
 
 	t.Setenv("WHODB_PLATFORM_E2E_TYPED_SECRET", "secret-value-"+suffix)
 	secretName := "cli-e2e-secret-" + suffix
@@ -622,29 +644,33 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 	if err := os.WriteFile(executableBundlePath, rawExecutableBundle, 0600); err != nil {
 		t.Fatalf("write executable bundle: %v", err)
 	}
-	executedImportPlan := runJSONCommand[map[string]any](t, "resources", "import", "--host", host, "--file", executableBundlePath, "--yes", "--format", "json", "--quiet")
+	targetArgs := []string{"--host", host, "--org", orgSlug, "--project", importProjectRenamedName, "--format", "json", "--quiet"}
+	executedImportPlan := runJSONCommand[map[string]any](t, "resources", "import", "--host", host, "--org", orgSlug, "--project", importProjectRenamedName, "--file", executableBundlePath, "--yes", "--format", "json", "--quiet")
 	requireImportCreated(t, executedImportPlan, "secret", importSecretName)
 	requireImportCreated(t, executedImportPlan, "dataset", importDatasetName)
 	requireImportCreated(t, executedImportPlan, "ontology", importOntologyAPIName)
 	requireImportCreated(t, executedImportPlan, "transform", importTransformName)
 	requireImportCreated(t, executedImportPlan, "function", importFunctionName)
-	defer bestEffortCLIResourceDelete(t, host, "secret", importSecretName)
-	defer bestEffortCLIResourceDelete(t, host, "dataset", importDatasetName)
-	defer bestEffortCLIResourceDelete(t, host, "ontology", importOntologyAPIName)
-	defer bestEffortCLIResourceDelete(t, host, "transform", importTransformName)
-	defer bestEffortCLIResourceDelete(t, host, "function", importFunctionName)
-	if got := runJSONCommand[platform.Dataset](t, "datasets", "get", importDatasetName, "--host", host, "--format", "json", "--quiet"); got.Name != importDatasetName {
+	prefixPlan := runJSONCommand[map[string]any](t, "resources", "diff", "--host", host, "--org", orgSlug, "--project", importProjectRenamedName, "--file", executableBundlePath, "--prefix", "copy-", "--format", "json", "--quiet")
+	requireImportAction(t, prefixPlan, "dataset", "copy-"+importDatasetName, "create")
+	renamePlan := runJSONCommand[map[string]any](t, "resources", "diff", "--host", host, "--org", orgSlug, "--project", importProjectRenamedName, "--file", executableBundlePath, "--rename-conflicts", "--format", "json", "--quiet")
+	requireImportActionWithDifferentName(t, renamePlan, "dataset", importDatasetName, "create")
+	overwritePlan := runJSONCommand[map[string]any](t, "resources", "diff", "--host", host, "--org", orgSlug, "--project", importProjectRenamedName, "--file", executableBundlePath, "--overwrite-conflicts", "--format", "json", "--quiet")
+	requireImportAction(t, overwritePlan, "dataset", importDatasetName, "update")
+	if got := runJSONCommand[platform.Dataset](t, append([]string{"datasets", "get", importDatasetName}, targetArgs...)...); got.Name != importDatasetName {
 		t.Fatalf("imported dataset = %#v, want %q", got, importDatasetName)
 	}
-	if got := runJSONCommand[platform.Ontology](t, "ontologies", "get", importOntologyAPIName, "--host", host, "--format", "json", "--quiet"); got.APIName != importOntologyAPIName {
+	if got := runJSONCommand[platform.Ontology](t, append([]string{"ontologies", "get", importOntologyAPIName}, targetArgs...)...); got.APIName != importOntologyAPIName {
 		t.Fatalf("imported ontology = %#v, want %q", got, importOntologyAPIName)
 	}
-	if got := runJSONCommand[platform.Transform](t, "transforms", "get", importTransformName, "--host", host, "--format", "json", "--quiet"); got.Name != importTransformName {
+	if got := runJSONCommand[platform.Transform](t, append([]string{"transforms", "get", importTransformName}, targetArgs...)...); got.Name != importTransformName {
 		t.Fatalf("imported transform = %#v, want %q", got, importTransformName)
 	}
-	if got := runJSONCommand[platform.Function](t, "functions", "get", importFunctionName, "--host", host, "--format", "json", "--quiet"); got.Name != importFunctionName {
+	if got := runJSONCommand[platform.Function](t, append([]string{"functions", "get", importFunctionName}, targetArgs...)...); got.Name != importFunctionName {
 		t.Fatalf("imported function = %#v, want %q", got, importFunctionName)
 	}
+	runMutationOK(t, "projects", "delete", importProjectRenamedName, "--host", host, "--org", orgSlug, "--yes", "--format", "json", "--quiet")
+	importProjectID = ""
 
 	runMutationOK(t, append([]string{"datasets", "delete", promotedDatasetName}, baseArgs...)...)
 	promotedDatasetID = ""
@@ -919,6 +945,11 @@ func jsonPayload(t *testing.T, value any) string {
 
 func requireImportCreated(t *testing.T, plan map[string]any, resource, name string) {
 	t.Helper()
+	requireImportAction(t, plan, resource, name, "created")
+}
+
+func requireImportAction(t *testing.T, plan map[string]any, resource, name, wantAction string) {
+	t.Helper()
 	actions, ok := plan["actions"].([]any)
 	if !ok {
 		t.Fatalf("import plan actions = %#v, want array", plan["actions"])
@@ -929,13 +960,32 @@ func requireImportCreated(t *testing.T, plan map[string]any, resource, name stri
 			continue
 		}
 		if action["resource"] == resource && action["name"] == name {
-			if action["action"] != "created" {
-				t.Fatalf("import action for %s %s = %#v, want created", resource, name, action)
+			if action["action"] != wantAction {
+				t.Fatalf("import action for %s %s = %#v, want %s", resource, name, action, wantAction)
 			}
 			return
 		}
 	}
-	t.Fatalf("import plan did not include %s %s: %#v", resource, name, plan)
+	t.Fatalf("import plan did not include %s %s with action %s: %#v", resource, name, wantAction, plan)
+}
+
+func requireImportActionWithDifferentName(t *testing.T, plan map[string]any, resource, originalName, wantAction string) {
+	t.Helper()
+	actions, ok := plan["actions"].([]any)
+	if !ok {
+		t.Fatalf("import plan actions = %#v, want array", plan["actions"])
+	}
+	for _, rawAction := range actions {
+		action, ok := rawAction.(map[string]any)
+		if !ok {
+			continue
+		}
+		name, _ := action["name"].(string)
+		if action["resource"] == resource && action["action"] == wantAction && name != "" && name != originalName {
+			return
+		}
+	}
+	t.Fatalf("import plan did not include renamed %s action %s different from %q: %#v", resource, wantAction, originalName, plan)
 }
 
 func bestEffortCLIResourceDelete(t *testing.T, host, resource, id string) {
@@ -944,6 +994,14 @@ func bestEffortCLIResourceDelete(t *testing.T, host, resource, id string) {
 		return
 	}
 	_, _, _ = testharness.RunCLI(t, "resources", "delete", resource, id, "--host", host, "--yes", "--format", "json", "--quiet")
+}
+
+func bestEffortCLIProjectDelete(t *testing.T, host, org, project string) {
+	t.Helper()
+	if strings.TrimSpace(project) == "" {
+		return
+	}
+	_, _, _ = testharness.RunCLI(t, "projects", "delete", project, "--host", host, "--org", org, "--yes", "--format", "json", "--quiet")
 }
 
 func envOrDefault(key, fallback string) string {
@@ -978,6 +1036,16 @@ func requireContainsProject(t *testing.T, projects []platform.Project, slug stri
 		}
 	}
 	t.Fatalf("project slug %q not found in %#v", slug, projects)
+}
+
+func requireContainsProjectID(t *testing.T, projects []platform.Project, id string) {
+	t.Helper()
+	for _, project := range projects {
+		if project.ID == id {
+			return
+		}
+	}
+	t.Fatalf("project id %q not found in %#v", id, projects)
 }
 
 func requireContainsSourceType(t *testing.T, types []platform.SourceType, id string) {

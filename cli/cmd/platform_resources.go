@@ -1080,8 +1080,14 @@ func registerPlatformResourceCommands() {
 	}
 	resourcesExportCmd.Flags().StringVar(&platformExportOutPath, "out", "", "destination path; omitted writes JSON to stdout")
 	resourcesDiffCmd.Flags().StringVar(&platformBundlePath, "file", "", "project bundle JSON file")
+	resourcesDiffCmd.Flags().StringVar(&platformBundlePrefix, "prefix", "", "prefix added to imported resource names in the plan")
+	resourcesDiffCmd.Flags().BoolVar(&platformRenameConflicts, "rename-conflicts", false, "plan unique names for resources that conflict with existing resources")
+	resourcesDiffCmd.Flags().BoolVar(&platformOverwriteConflicts, "overwrite-conflicts", false, "plan updates for resources that conflict with existing resources")
 	resourcesImportCmd.Flags().StringVar(&platformBundlePath, "file", "", "project bundle JSON file")
 	resourcesImportCmd.Flags().BoolVar(&platformImportDryRun, "dry-run", false, "show the import plan without writing")
+	resourcesImportCmd.Flags().StringVar(&platformBundlePrefix, "prefix", "", "prefix added to imported resource names")
+	resourcesImportCmd.Flags().BoolVar(&platformRenameConflicts, "rename-conflicts", false, "create unique names for resources that conflict with existing resources")
+	resourcesImportCmd.Flags().BoolVar(&platformOverwriteConflicts, "overwrite-conflicts", false, "update resources that conflict with existing resources")
 	resourcesImportCmd.Flags().BoolVarP(&platformWriteYes, "yes", "y", false, "run the import without prompting")
 	for _, command := range []*cobra.Command{secretsListCmd, aiProvidersListCmd, ontologiesListCmd, datasetsListCmd, transformsListCmd, functionsListCmd, filesListCmd, foldersListCmd} {
 		command.Flags().StringVar(&platformFilterName, "name", "", "case-insensitive name substring filter")

@@ -484,6 +484,7 @@ type PendingPlatformAction struct {
 	UpdateInput platformapi.UpdateSourceInput
 	Mutation    string
 	Variables   map[string]any
+	BundlePlan  *platformapi.BundlePlan
 	ExpiresAt   time.Time
 }
 
@@ -1936,6 +1937,9 @@ func executePendingPlatformAction(ctx context.Context, action *PendingPlatformAc
 			Message:   fmt.Sprintf("Hosted platform mutation %s completed successfully", action.Mutation),
 			RequestID: requestID,
 		}, nil
+	}
+	if action.BundlePlan != nil {
+		return executePlatformBundlePlan(ctx, session, action.BundlePlan, requestID)
 	}
 
 	switch action.Operation {

@@ -27,6 +27,7 @@ import (
 // BundleClient is the platform API surface needed to export and plan project bundles.
 type BundleClient interface {
 	ProjectSecrets(context.Context, string) ([]ProjectSecret, error)
+	AIProviders(context.Context, string) ([]AIProvider, error)
 	Datasets(context.Context, string) ([]Dataset, error)
 	Ontologies(context.Context, string) ([]Ontology, error)
 	Transforms(context.Context, string) ([]Transform, error)
@@ -55,6 +56,7 @@ type ProjectBundle struct {
 	ProjectID     string          `json:"projectId"`
 	ProjectName   string          `json:"projectName"`
 	Secrets       []ProjectSecret `json:"secrets"`
+	AIProviders   []AIProvider    `json:"aiProviders"`
 	Datasets      []Dataset       `json:"datasets"`
 	Ontologies    []Ontology      `json:"ontologies"`
 	Transforms    []Transform     `json:"transforms"`
@@ -68,6 +70,8 @@ type ProjectBundle struct {
 type BundleAction struct {
 	Resource string         `json:"resource"`
 	Name     string         `json:"name"`
+	SourceID string         `json:"sourceId,omitempty"`
+	TargetID string         `json:"targetId,omitempty"`
 	Action   string         `json:"action"`
 	Reason   string         `json:"reason,omitempty"`
 	Payload  map[string]any `json:"payload,omitempty"`
@@ -75,11 +79,22 @@ type BundleAction struct {
 
 // BundlePlan describes how a bundle would apply to a selected project.
 type BundlePlan struct {
-	Host        string         `json:"host"`
-	ProjectID   string         `json:"projectId"`
-	ProjectName string         `json:"projectName"`
-	DryRun      bool           `json:"dryRun"`
-	Actions     []BundleAction `json:"actions"`
+	Host              string         `json:"host"`
+	SourceProjectID   string         `json:"sourceProjectId,omitempty"`
+	SourceProjectName string         `json:"sourceProjectName,omitempty"`
+	TargetProjectID   string         `json:"targetProjectId"`
+	TargetProjectName string         `json:"targetProjectName"`
+	DryRun            bool           `json:"dryRun"`
+	Actions           []BundleAction `json:"actions"`
+}
+
+// BundleImportOptions controls how a project bundle is planned.
+type BundleImportOptions struct {
+	DryRun             bool
+	Prefix             string
+	RenameConflicts    bool
+	OverwriteConflicts bool
+	Getenv             func(string) string
 }
 
 type bundleTreeEntry struct {
@@ -91,6 +106,10 @@ type bundleTreeEntry struct {
 // BuildProjectBundle exports project metadata into a portable bundle.
 func BuildProjectBundle(ctx context.Context, client BundleClient, host, orgID, orgName string, project *Project) (*ProjectBundle, error) {
 	secrets, err := client.ProjectSecrets(ctx, project.ID)
+	if err != nil {
+		return nil, err
+	}
+	aiProviders, err := client.AIProviders(ctx, project.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -133,6 +152,7 @@ func BuildProjectBundle(ctx context.Context, client BundleClient, host, orgID, o
 		ProjectID:     project.ID,
 		ProjectName:   project.Name,
 		Secrets:       secrets,
+		AIProviders:   aiProviders,
 		Datasets:      datasets,
 		Ontologies:    ontologies,
 		Transforms:    transforms,
@@ -141,6 +161,7 @@ func BuildProjectBundle(ctx context.Context, client BundleClient, host, orgID, o
 		Files:         files,
 		Notes: []string{
 			"Secret values are not exported. Import reads secret values from WHODB_IMPORT_SECRET_<SECRET_NAME> environment variables.",
+			"AI provider API keys are not exported. Import reads provider keys from WHODB_IMPORT_AI_PROVIDER_KEY_<PROVIDER_NAME> environment variables.",
 			"Uploaded file bytes are not exported. File metadata is included for planning only.",
 		},
 	}, nil
@@ -148,7 +169,19 @@ func BuildProjectBundle(ctx context.Context, client BundleClient, host, orgID, o
 
 // PlanBundleImport returns create/skip actions for applying a bundle to a project.
 func PlanBundleImport(ctx context.Context, client BundleClient, host string, project *Project, bundle *ProjectBundle, dryRun bool, getenv func(string) string) (*BundlePlan, error) {
+	return PlanBundleImportWithOptions(ctx, client, host, project, bundle, BundleImportOptions{DryRun: dryRun, Getenv: getenv})
+}
+
+// PlanBundleImportWithOptions returns actions for applying a bundle to a project.
+func PlanBundleImportWithOptions(ctx context.Context, client BundleClient, host string, project *Project, bundle *ProjectBundle, options BundleImportOptions) (*BundlePlan, error) {
+	if options.RenameConflicts && options.OverwriteConflicts {
+		return nil, fmt.Errorf("rename conflicts and overwrite conflicts cannot both be enabled")
+	}
 	currentSecrets, err := client.ProjectSecrets(ctx, project.ID)
+	if err != nil {
+		return nil, err
+	}
+	currentAIProviders, err := client.AIProviders(ctx, project.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -169,72 +202,178 @@ func PlanBundleImport(ctx context.Context, client BundleClient, host string, pro
 		return nil, err
 	}
 
-	plan := &BundlePlan{Host: host, ProjectID: project.ID, ProjectName: project.Name, DryRun: dryRun}
-	secretNames := NamesBy(currentSecrets, func(secret ProjectSecret) string { return secret.Name })
-	datasetNames := NamesBy(currentDatasets, func(dataset Dataset) string { return dataset.Name })
-	ontologyNames := NamesBy(currentOntologies, func(ontology Ontology) string { return ontology.APIName })
-	transformNames := NamesBy(currentTransforms, func(transform Transform) string { return transform.Name })
-	functionNames := NamesBy(currentFunctions, func(fn Function) string { return fn.Name })
-	if getenv == nil {
-		getenv = func(string) string { return "" }
+	plan := &BundlePlan{
+		Host:              host,
+		SourceProjectID:   bundle.ProjectID,
+		SourceProjectName: bundle.ProjectName,
+		TargetProjectID:   project.ID,
+		TargetProjectName: project.Name,
+		DryRun:            options.DryRun,
+	}
+	secretNames := resourceNamesBy(currentSecrets, func(secret ProjectSecret) string { return secret.Name })
+	aiProviderNames := resourceNamesBy(currentAIProviders, func(provider AIProvider) string { return provider.Name })
+	datasetNames := resourceNamesBy(currentDatasets, func(dataset Dataset) string { return dataset.Name })
+	ontologyNames := resourceNamesBy(currentOntologies, func(ontology Ontology) string { return ontology.APIName })
+	transformNames := resourceNamesBy(currentTransforms, func(transform Transform) string { return transform.Name })
+	functionNames := resourceNamesBy(currentFunctions, func(fn Function) string { return fn.Name })
+	if options.Getenv == nil {
+		options.Getenv = func(string) string { return "" }
 	}
 
 	for _, secret := range bundle.Secrets {
-		action := BundleAction{Resource: "secret", Name: secret.Name}
+		name := bundleTargetName(secret.Name, options.Prefix)
+		action := BundleAction{Resource: "secret", SourceID: secret.ID, Name: name}
 		envName := ImportSecretEnvName(secret.Name)
-		if secretNames[secret.Name] {
+		if existing, ok := secretNames.lookup(name); ok && !options.RenameConflicts && !options.OverwriteConflicts {
 			action.Action = "skip"
+			action.TargetID = existing
 			action.Reason = "secret already exists"
-		} else if getenv(envName) == "" {
+		} else if existing, ok := secretNames.lookup(name); ok && options.OverwriteConflicts {
+			action.Action = "update"
+			action.TargetID = existing
+			action.Payload = map[string]any{"name": name, "description": secret.Description}
+			if value := options.Getenv(envName); value != "" {
+				action.Payload["value"] = value
+			}
+		} else if options.Getenv(envName) == "" {
 			action.Action = "skip"
 			action.Reason = "missing " + envName
 		} else {
+			if options.RenameConflicts {
+				name = uniqueResourceName(name, secretNames)
+				action.Name = name
+			}
 			action.Action = "create"
-			action.Payload = map[string]any{"name": secret.Name, "description": secret.Description, "value": getenv(envName)}
+			action.Payload = map[string]any{"name": name, "description": secret.Description, "value": options.Getenv(envName)}
+		}
+		plan.Actions = append(plan.Actions, action)
+	}
+	for _, provider := range bundle.AIProviders {
+		name := bundleTargetName(provider.Name, options.Prefix)
+		action := BundleAction{Resource: "ai_provider", SourceID: provider.ID, Name: name}
+		envName := ImportAIProviderKeyEnvName(provider.Name)
+		payload := AIProviderCreatePayloadFromExport(provider)
+		payload["name"] = name
+		if existing, ok := aiProviderNames.lookup(name); ok && !options.RenameConflicts && !options.OverwriteConflicts {
+			action.Action = "skip"
+			action.TargetID = existing
+			action.Reason = "AI provider already exists"
+		} else if existing, ok := aiProviderNames.lookup(name); ok && options.OverwriteConflicts {
+			action.Action = "update"
+			action.TargetID = existing
+			action.Payload = payload
+			if value := options.Getenv(envName); value != "" {
+				action.Payload["apiKey"] = value
+			}
+		} else if options.Getenv(envName) == "" {
+			action.Action = "skip"
+			action.Reason = "missing " + envName
+		} else {
+			if options.RenameConflicts {
+				name = uniqueResourceName(name, aiProviderNames)
+				action.Name = name
+				payload["name"] = name
+			}
+			action.Action = "create"
+			payload["apiKey"] = options.Getenv(envName)
+			action.Payload = payload
 		}
 		plan.Actions = append(plan.Actions, action)
 	}
 	for _, dataset := range bundle.Datasets {
-		action := BundleAction{Resource: "dataset", Name: dataset.Name}
-		if datasetNames[dataset.Name] {
+		name := bundleTargetName(dataset.Name, options.Prefix)
+		action := BundleAction{Resource: "dataset", SourceID: dataset.ID, Name: name}
+		payload := DatasetCreatePayloadFromExport(dataset)
+		payload["name"] = name
+		if existing, ok := datasetNames.lookup(name); ok && !options.RenameConflicts && !options.OverwriteConflicts {
 			action.Action = "skip"
+			action.TargetID = existing
 			action.Reason = "dataset already exists"
+		} else if existing, ok := datasetNames.lookup(name); ok && options.OverwriteConflicts {
+			action.Action = "update"
+			action.TargetID = existing
+			action.Payload = payload
 		} else {
+			if options.RenameConflicts {
+				name = uniqueResourceName(name, datasetNames)
+				action.Name = name
+				payload["name"] = name
+			}
 			action.Action = "create"
-			action.Payload = DatasetCreatePayloadFromExport(dataset)
+			action.Payload = payload
 		}
 		plan.Actions = append(plan.Actions, action)
 	}
 	for _, ontology := range bundle.Ontologies {
-		action := BundleAction{Resource: "ontology", Name: ontology.APIName}
-		if ontologyNames[ontology.APIName] {
+		name := SafeIdentifier(bundleTargetName(ontology.APIName, options.Prefix))
+		action := BundleAction{Resource: "ontology", SourceID: ontology.ID, Name: name}
+		payload := OntologyCreatePayloadFromExport(ontology)
+		payload["apiName"] = name
+		if existing, ok := ontologyNames.lookup(name); ok && !options.RenameConflicts && !options.OverwriteConflicts {
 			action.Action = "skip"
+			action.TargetID = existing
 			action.Reason = "ontology already exists"
+		} else if existing, ok := ontologyNames.lookup(name); ok && options.OverwriteConflicts {
+			action.Action = "update"
+			action.TargetID = existing
+			action.Payload = payload
 		} else {
+			if options.RenameConflicts {
+				name = uniqueResourceName(name, ontologyNames)
+				action.Name = name
+				payload["apiName"] = name
+				payload["tableName"] = name
+			}
 			action.Action = "create"
-			action.Payload = OntologyCreatePayloadFromExport(ontology)
+			action.Payload = payload
 		}
 		plan.Actions = append(plan.Actions, action)
 	}
 	for _, transform := range bundle.Transforms {
-		action := BundleAction{Resource: "transform", Name: transform.Name}
-		if transformNames[transform.Name] {
+		name := bundleTargetName(transform.Name, options.Prefix)
+		action := BundleAction{Resource: "transform", SourceID: transform.ID, Name: name}
+		payload := TransformCreatePayloadFromExport(transform)
+		payload["name"] = name
+		if existing, ok := transformNames.lookup(name); ok && !options.RenameConflicts && !options.OverwriteConflicts {
 			action.Action = "skip"
+			action.TargetID = existing
 			action.Reason = "transform already exists"
+		} else if existing, ok := transformNames.lookup(name); ok && options.OverwriteConflicts {
+			action.Action = "update"
+			action.TargetID = existing
+			action.Payload = payload
 		} else {
+			if options.RenameConflicts {
+				name = uniqueResourceName(name, transformNames)
+				action.Name = name
+				payload["name"] = name
+			}
 			action.Action = "create"
-			action.Payload = TransformCreatePayloadFromExport(transform)
+			action.Payload = payload
 		}
 		plan.Actions = append(plan.Actions, action)
 	}
 	for _, fn := range bundle.Functions {
-		action := BundleAction{Resource: "function", Name: fn.Name}
-		if functionNames[fn.Name] {
+		name := bundleTargetName(fn.Name, options.Prefix)
+		action := BundleAction{Resource: "function", SourceID: fn.ID, Name: name}
+		payload := FunctionCreatePayloadFromExport(fn, true)
+		payload["name"] = name
+		if existing, ok := functionNames.lookup(name); ok && !options.RenameConflicts && !options.OverwriteConflicts {
 			action.Action = "skip"
+			action.TargetID = existing
 			action.Reason = "function already exists"
+		} else if existing, ok := functionNames.lookup(name); ok && options.OverwriteConflicts {
+			action.Action = "update"
+			action.TargetID = existing
+			action.Payload = payload
 		} else {
+			if options.RenameConflicts {
+				name = uniqueResourceName(name, functionNames)
+				action.Name = name
+				payload["name"] = name
+			}
 			action.Action = "create"
-			action.Payload = FunctionCreatePayloadFromExport(fn, false)
+			action.Payload = payload
 		}
 		plan.Actions = append(plan.Actions, action)
 	}
@@ -391,6 +530,15 @@ func TransformCreatePayloadFromExport(transform Transform) map[string]any {
 	}
 }
 
+// AIProviderCreatePayloadFromExport converts exported AI provider metadata to a create payload.
+func AIProviderCreatePayloadFromExport(provider AIProvider) map[string]any {
+	return map[string]any{
+		"name":         provider.Name,
+		"providerType": provider.ProviderType,
+		"endpoint":     provider.Endpoint,
+	}
+}
+
 // FunctionCreatePayloadFromExport converts exported function metadata to a create payload.
 func FunctionCreatePayloadFromExport(fn Function, keepProjectReferences bool) map[string]any {
 	files := make([]map[string]any, len(fn.Files))
@@ -433,12 +581,21 @@ func FunctionCreatePayloadFromExport(fn Function, keepProjectReferences bool) ma
 
 // ImportSecretEnvName returns the environment variable used for importing a secret value.
 func ImportSecretEnvName(name string) string {
+	return importEnvName("WHODB_IMPORT_SECRET_", name)
+}
+
+// ImportAIProviderKeyEnvName returns the environment variable used for importing an AI provider API key.
+func ImportAIProviderKeyEnvName(name string) string {
+	return importEnvName("WHODB_IMPORT_AI_PROVIDER_KEY_", name)
+}
+
+func importEnvName(prefix, name string) string {
 	re := regexp.MustCompile(`[^A-Za-z0-9]+`)
 	sanitized := strings.Trim(re.ReplaceAllString(strings.ToUpper(name), "_"), "_")
 	if sanitized == "" {
 		sanitized = "VALUE"
 	}
-	return "WHODB_IMPORT_SECRET_" + sanitized
+	return prefix + sanitized
 }
 
 // SafeIdentifier returns a lower-case API-safe identifier for cloned resources.
@@ -471,6 +628,212 @@ func NamesBy[T any](values []T, name func(T) string) map[string]bool {
 		}
 	}
 	return names
+}
+
+// BundleDependencyMap maps exported resource ids to target resource ids during import.
+type BundleDependencyMap map[string]string
+
+// ApplyBundleDependencyMap rewrites project-local ids in a bundle action payload.
+func ApplyBundleDependencyMap(action *BundleAction, dependencies BundleDependencyMap) {
+	if action == nil || len(dependencies) == 0 || len(action.Payload) == 0 {
+		return
+	}
+	switch action.Resource {
+	case "transform":
+		if graphJSON, ok := action.Payload["graphJson"].(string); ok && graphJSON != "" {
+			action.Payload["graphJson"] = replaceKnownIDs(graphJSON, dependencies)
+		}
+	case "function":
+		action.Payload["providerIds"] = remapStringSlice(action.Payload["providerIds"], dependencies)
+		action.Payload["ontologyIds"] = remapStringSlice(action.Payload["ontologyIds"], dependencies)
+		action.Payload["readOnlyOntologyIds"] = remapStringSlice(action.Payload["readOnlyOntologyIds"], dependencies)
+		action.Payload["providerConfigs"] = remapProviderConfigs(action.Payload["providerConfigs"], dependencies)
+		action.Payload["secretBindings"] = remapSecretBindings(action.Payload["secretBindings"], dependencies)
+	}
+}
+
+// AddBundleDependencyMapping records a source to target id mapping.
+func AddBundleDependencyMapping(dependencies BundleDependencyMap, sourceID, targetID string) {
+	sourceID = strings.TrimSpace(sourceID)
+	targetID = strings.TrimSpace(targetID)
+	if sourceID != "" && targetID != "" {
+		dependencies[sourceID] = targetID
+	}
+}
+
+func replaceKnownIDs(value string, dependencies BundleDependencyMap) string {
+	for sourceID, targetID := range dependencies {
+		value = strings.ReplaceAll(value, sourceID, targetID)
+	}
+	return value
+}
+
+func remapStringSlice(value any, dependencies BundleDependencyMap) []string {
+	values := anyStringSlice(value)
+	out := make([]string, 0, len(values))
+	for _, item := range values {
+		if targetID := dependencies[item]; targetID != "" {
+			out = append(out, targetID)
+		}
+	}
+	return out
+}
+
+func remapProviderConfigs(value any, dependencies BundleDependencyMap) []map[string]any {
+	items := anyMapSlice(value)
+	out := make([]map[string]any, 0, len(items))
+	for _, item := range items {
+		providerID, _ := item["providerId"].(string)
+		targetID := dependencies[providerID]
+		if targetID == "" {
+			continue
+		}
+		next := copyMap(item)
+		next["providerId"] = targetID
+		out = append(out, next)
+	}
+	return out
+}
+
+func remapSecretBindings(value any, dependencies BundleDependencyMap) []map[string]any {
+	items := anyMapSlice(value)
+	out := make([]map[string]any, 0, len(items))
+	for _, item := range items {
+		secretID, _ := item["secretId"].(string)
+		targetID := dependencies[secretID]
+		if targetID == "" {
+			continue
+		}
+		next := copyMap(item)
+		next["secretId"] = targetID
+		out = append(out, next)
+	}
+	return out
+}
+
+func anyStringSlice(value any) []string {
+	switch typed := value.(type) {
+	case []string:
+		return typed
+	case []any:
+		out := make([]string, 0, len(typed))
+		for _, item := range typed {
+			if str, ok := item.(string); ok {
+				out = append(out, str)
+			}
+		}
+		return out
+	default:
+		return nil
+	}
+}
+
+func anyMapSlice(value any) []map[string]any {
+	switch typed := value.(type) {
+	case []map[string]any:
+		return typed
+	case []FunctionProviderConfig:
+		out := make([]map[string]any, 0, len(typed))
+		for _, item := range typed {
+			out = append(out, map[string]any{"providerId": item.ProviderID, "model": item.Model})
+		}
+		return out
+	case []FunctionSecretBinding:
+		out := make([]map[string]any, 0, len(typed))
+		for _, item := range typed {
+			out = append(out, map[string]any{"name": item.Name, "secretId": item.SecretID, "target": item.Target})
+		}
+		return out
+	case []any:
+		out := make([]map[string]any, 0, len(typed))
+		for _, item := range typed {
+			if mapped, ok := item.(map[string]any); ok {
+				out = append(out, mapped)
+			}
+		}
+		return out
+	default:
+		return nil
+	}
+}
+
+func copyMap(value map[string]any) map[string]any {
+	out := make(map[string]any, len(value))
+	for key, item := range value {
+		out[key] = item
+	}
+	return out
+}
+
+type resourceNames map[string]string
+
+func resourceNamesBy[T any](values []T, name func(T) string) resourceNames {
+	names := resourceNames{}
+	for _, value := range values {
+		id, resourceName := namedResourceIdentity(value, name)
+		if resourceName != "" {
+			names[strings.ToLower(resourceName)] = id
+		}
+	}
+	return names
+}
+
+func namedResourceIdentity[T any](value T, name func(T) string) (string, string) {
+	resourceName := strings.TrimSpace(name(value))
+	switch typed := any(value).(type) {
+	case ProjectSecret:
+		return typed.ID, resourceName
+	case AIProvider:
+		return typed.ID, resourceName
+	case Dataset:
+		return typed.ID, resourceName
+	case Ontology:
+		return typed.ID, resourceName
+	case Transform:
+		return typed.ID, resourceName
+	case Function:
+		return typed.ID, resourceName
+	default:
+		return "", resourceName
+	}
+}
+
+func (names resourceNames) lookup(name string) (string, bool) {
+	id, ok := names[strings.ToLower(strings.TrimSpace(name))]
+	return id, ok
+}
+
+func (names resourceNames) add(name, id string) {
+	name = strings.TrimSpace(name)
+	if name != "" {
+		names[strings.ToLower(name)] = id
+	}
+}
+
+func bundleTargetName(name, prefix string) string {
+	name = strings.TrimSpace(name)
+	if prefix = strings.TrimSpace(prefix); prefix != "" {
+		return prefix + name
+	}
+	return name
+}
+
+func uniqueResourceName(base string, names resourceNames) string {
+	base = strings.TrimSpace(base)
+	if base == "" {
+		base = "imported"
+	}
+	if _, ok := names.lookup(base); !ok {
+		names.add(base, "")
+		return base
+	}
+	for i := 2; ; i++ {
+		candidate := fmt.Sprintf("%s-%d", base, i)
+		if _, ok := names.lookup(candidate); !ok {
+			names.add(candidate, "")
+			return candidate
+		}
+	}
 }
 
 // ResolveResourceID resolves a project resource by id or common display name.

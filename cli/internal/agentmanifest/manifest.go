@@ -292,6 +292,7 @@ func buildMCPTools() []MCPTool {
 		{Name: "whodb_platform_bundle_export", Description: "Export selected hosted project metadata as a portable bundle without secret values or file bytes.", ReadOnly: true},
 		{Name: "whodb_platform_bundle_diff", Description: "Compare a project bundle against the selected hosted project and return create or skip actions.", ReadOnly: true},
 		{Name: "whodb_platform_bundle_import_plan", Description: "Plan a bundle import into the selected hosted project without executing writes.", ReadOnly: true},
+		{Name: "whodb_platform_bundle_import", Description: "Import a project bundle into the selected hosted project; returns a confirmation token by default and is hidden in --read-only and --safe-mode.", ReadOnly: false},
 		{Name: "whodb_platform_clone", Description: "Clone a hosted dataset, ontology, transform, or function; returns a confirmation token by default and is hidden in --read-only and --safe-mode.", ReadOnly: false},
 	}
 	return tools

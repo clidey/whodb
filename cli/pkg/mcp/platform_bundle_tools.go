@@ -59,7 +59,10 @@ type PlatformBundleExportOutput struct {
 
 // PlatformBundlePlanInput is the input for bundle diff and import-plan tools.
 type PlatformBundlePlanInput struct {
-	BundleJSON string `json:"bundle_json" jsonschema:"Project bundle JSON from whodb_platform_bundle_export or resources export"`
+	BundleJSON         string `json:"bundle_json" jsonschema:"Project bundle JSON from whodb_platform_bundle_export or resources export"`
+	Prefix             string `json:"prefix,omitempty" jsonschema:"Optional prefix added to imported resource names"`
+	RenameConflicts    bool   `json:"rename_conflicts,omitempty" jsonschema:"Create unique names for resources that conflict with existing resources"`
+	OverwriteConflicts bool   `json:"overwrite_conflicts,omitempty" jsonschema:"Update resources that conflict with existing resources"`
 }
 
 // PlatformBundlePlanOutput returns a bundle import plan for the selected project.
@@ -95,6 +98,13 @@ func registerPlatformBundleTool(server *mcp.Server, tool *mcp.Tool, secOpts *Sec
 		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformBundlePlanInput) (*mcp.CallToolResult, PlatformBundlePlanOutput, error) {
 			return HandlePlatformBundlePlan(ctx, req, input, true, "platform_bundle_import_plan")
 		})
+	case "whodb_platform_bundle_import":
+		if secOpts.ReadOnly {
+			return true
+		}
+		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformBundlePlanInput) (*mcp.CallToolResult, PlatformGenericWriteOutput, error) {
+			return HandlePlatformBundleImport(ctx, req, input, secOpts.ConfirmWrites)
+		})
 	case "whodb_platform_clone":
 		if secOpts.ReadOnly {
 			return true
@@ -114,6 +124,7 @@ func platformBundleToolDefinitions() []*mcp.Tool {
 		{Name: "whodb_platform_bundle_export", Description: descPlatformBundleExport, Annotations: platformReadOnlyAnnotations("Export Hosted Project Bundle")},
 		{Name: "whodb_platform_bundle_diff", Description: descPlatformBundleDiff, Annotations: platformReadOnlyAnnotations("Diff Hosted Project Bundle")},
 		{Name: "whodb_platform_bundle_import_plan", Description: descPlatformBundleImportPlan, Annotations: platformReadOnlyAnnotations("Plan Hosted Project Bundle Import")},
+		{Name: "whodb_platform_bundle_import", Description: descPlatformBundleImport, Annotations: platformDestructiveAnnotations("Import Hosted Project Bundle")},
 		{Name: "whodb_platform_clone", Description: descPlatformClone, Annotations: platformDestructiveAnnotations("Clone Hosted Platform Resource")},
 	}
 }
@@ -200,7 +211,12 @@ func HandlePlatformBundlePlan(ctx context.Context, req *mcp.CallToolRequest, inp
 		TrackToolCall(ctx, toolName, requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_session"})
 		return nil, PlatformBundlePlanOutput{Error: err.Error(), RequestID: requestID}, nil
 	}
-	plan, err := platformapi.PlanBundleImport(ctx, session.Client, session.Host.URL, selectedPlatformProject(session), &bundle, dryRun, nil)
+	plan, err := platformapi.PlanBundleImportWithOptions(ctx, session.Client, session.Host.URL, selectedPlatformProject(session), &bundle, platformapi.BundleImportOptions{
+		DryRun:             dryRun,
+		Prefix:             input.Prefix,
+		RenameConflicts:    input.RenameConflicts,
+		OverwriteConflicts: input.OverwriteConflicts,
+	})
 	if err != nil {
 		TrackToolCall(ctx, toolName, requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_query"})
 		return nil, PlatformBundlePlanOutput{Error: err.Error(), RequestID: requestID}, nil
@@ -208,6 +224,62 @@ func HandlePlatformBundlePlan(ctx context.Context, req *mcp.CallToolRequest, inp
 	counts := platformBundlePlanCounts(plan)
 	TrackToolCall(ctx, toolName, requestID, true, time.Since(startTime).Milliseconds(), platformBundlePlanTelemetryCounts(plan))
 	return nil, PlatformBundlePlanOutput{Plan: plan, Counts: counts, RequestID: requestID}, nil
+}
+
+// HandlePlatformBundleImport prepares or executes a bundle import into the selected project.
+func HandlePlatformBundleImport(ctx context.Context, req *mcp.CallToolRequest, input PlatformBundlePlanInput, confirmWrites bool) (*mcp.CallToolResult, PlatformGenericWriteOutput, error) {
+	requestID := generateRequestID("platform_bundle_import")
+	startTime := time.Now()
+	var bundle platformapi.ProjectBundle
+	if strings.TrimSpace(input.BundleJSON) == "" {
+		return nil, PlatformGenericWriteOutput{Error: "bundle_json is required", RequestID: requestID}, nil
+	}
+	if err := json.Unmarshal([]byte(input.BundleJSON), &bundle); err != nil {
+		return nil, PlatformGenericWriteOutput{Error: "decode bundle_json: " + err.Error(), RequestID: requestID}, nil
+	}
+	if bundle.BundleVersion != 1 {
+		return nil, PlatformGenericWriteOutput{Error: "unsupported bundle version", RequestID: requestID}, nil
+	}
+	session, err := loadPlatformWorkspace(ctx)
+	if err != nil {
+		TrackToolCall(ctx, "platform_bundle_import", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_session"})
+		return nil, PlatformGenericWriteOutput{Error: err.Error(), RequestID: requestID}, nil
+	}
+	plan, err := platformapi.PlanBundleImportWithOptions(ctx, session.Client, session.Host.URL, selectedPlatformProject(session), &bundle, platformapi.BundleImportOptions{
+		DryRun:             false,
+		Prefix:             input.Prefix,
+		RenameConflicts:    input.RenameConflicts,
+		OverwriteConflicts: input.OverwriteConflicts,
+	})
+	if err != nil {
+		TrackToolCall(ctx, "platform_bundle_import", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_query"})
+		return nil, PlatformGenericWriteOutput{Error: err.Error(), RequestID: requestID}, nil
+	}
+	action := &PendingPlatformAction{
+		Operation:   "bundle_import",
+		Resource:    "bundle",
+		Action:      "import",
+		Host:        session.Host.URL,
+		OrgID:       session.Host.DefaultOrgID,
+		ProjectID:   session.Host.DefaultProjectID,
+		ProjectName: session.Host.DefaultProjectName,
+		Summary:     "Import hosted project bundle",
+		Changes:     platformBundlePlanChanges(plan),
+		BundlePlan:  plan,
+	}
+	if !confirmWrites {
+		output, err := executePendingPlatformAction(ctx, action, requestID)
+		if err != nil {
+			TrackToolCall(ctx, "platform_bundle_import", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_action"})
+			return nil, PlatformGenericWriteOutput{Error: err.Error(), RequestID: requestID}, nil
+		}
+		raw, _ := json.Marshal(output)
+		TrackToolCall(ctx, "platform_bundle_import", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"confirmation_required": false})
+		return nil, PlatformGenericWriteOutput{Status: "ok", ResultJSON: string(raw), RequestID: requestID}, nil
+	}
+	token, expiresAt := storePendingPlatformAction(action)
+	TrackToolCall(ctx, "platform_bundle_import", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"confirmation_required": true})
+	return nil, platformGenericConfirmationOutput(requestID, token, expiresAt, "bundle_import", action.Preview()), nil
 }
 
 // HandlePlatformClone clones a dataset, ontology, transform, or function.
@@ -242,13 +314,14 @@ func selectedPlatformProject(session *platformToolSession) *platformapi.Project 
 
 func platformBundleCounts(bundle *platformapi.ProjectBundle) map[string]int {
 	return map[string]int{
-		"secrets":    len(bundle.Secrets),
-		"datasets":   len(bundle.Datasets),
-		"ontologies": len(bundle.Ontologies),
-		"transforms": len(bundle.Transforms),
-		"functions":  len(bundle.Functions),
-		"folders":    len(bundle.Folders),
-		"files":      len(bundle.Files),
+		"secrets":      len(bundle.Secrets),
+		"ai_providers": len(bundle.AIProviders),
+		"datasets":     len(bundle.Datasets),
+		"ontologies":   len(bundle.Ontologies),
+		"transforms":   len(bundle.Transforms),
+		"functions":    len(bundle.Functions),
+		"folders":      len(bundle.Folders),
+		"files":        len(bundle.Files),
 	}
 }
 
@@ -259,6 +332,88 @@ func platformBundleTelemetryCounts(bundle *platformapi.ProjectBundle) map[string
 		telemetry[key] = value
 	}
 	return telemetry
+}
+
+func platformBundlePlanChanges(plan *platformapi.BundlePlan) []string {
+	if plan == nil {
+		return nil
+	}
+	changes := make([]string, 0, len(plan.Actions))
+	for _, action := range plan.Actions {
+		if action.Action == "create" || action.Action == "update" {
+			changes = append(changes, action.Action+" "+action.Resource+" "+action.Name)
+		}
+	}
+	return changes
+}
+
+func executePlatformBundlePlan(ctx context.Context, session *platformToolSession, plan *platformapi.BundlePlan, requestID string) (ConfirmOutput, error) {
+	dependencies := platformapi.BundleDependencyMap{}
+	for _, action := range plan.Actions {
+		platformapi.AddBundleDependencyMapping(dependencies, action.SourceID, action.TargetID)
+	}
+	rows := make([][]any, 0, len(plan.Actions))
+	for i := range plan.Actions {
+		action := &plan.Actions[i]
+		if action.Action != "create" && action.Action != "update" {
+			rows = append(rows, []any{action.Resource, action.Name, action.Action, action.Reason, action.TargetID})
+			continue
+		}
+		platformapi.ApplyBundleDependencyMap(action, dependencies)
+		raw, err := json.Marshal(action.Payload)
+		if err != nil {
+			action.Action = "failed"
+			action.Reason = err.Error()
+			rows = append(rows, []any{action.Resource, action.Name, action.Action, action.Reason, action.TargetID})
+			continue
+		}
+		spec, variables, err := buildPlatformGenericWrite(session, PlatformGenericWriteInput{
+			Resource:    action.Resource,
+			ID:          action.TargetID,
+			PayloadJSON: string(raw),
+		}, action.Action)
+		if err != nil {
+			action.Action = "failed"
+			action.Reason = err.Error()
+			rows = append(rows, []any{action.Resource, action.Name, action.Action, action.Reason, action.TargetID})
+			continue
+		}
+		result, err := executePlatformMutation(ctx, session.Client, spec.Mutation, session.Host.DefaultProjectID, variables)
+		if err != nil {
+			action.Action = "failed"
+			action.Reason = err.Error()
+			rows = append(rows, []any{action.Resource, action.Name, action.Action, action.Reason, action.TargetID})
+			continue
+		}
+		if id := platformMutationResultID(result); id != "" {
+			action.TargetID = id
+			platformapi.AddBundleDependencyMapping(dependencies, action.SourceID, action.TargetID)
+		}
+		if action.Action == "create" {
+			action.Action = "created"
+		} else {
+			action.Action = "updated"
+		}
+		rows = append(rows, []any{action.Resource, action.Name, action.Action, action.Reason, action.TargetID})
+	}
+	return ConfirmOutput{
+		Columns:   []string{"resource", "name", "action", "reason", "target_id"},
+		Rows:      rows,
+		Message:   "Hosted platform bundle import completed",
+		RequestID: requestID,
+	}, nil
+}
+
+func platformMutationResultID(result *platformapi.PlatformMutationResult) string {
+	if result == nil || len(result.Data) == 0 {
+		return ""
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(result.Data, &payload); err != nil {
+		return ""
+	}
+	id, _ := payload["id"].(string)
+	return id
 }
 
 func platformBundlePlanCounts(plan *platformapi.BundlePlan) map[string]int {
@@ -293,6 +448,10 @@ Pass bundle_json from whodb_platform_bundle_export or the CLI resources export c
 const descPlatformBundleImportPlan = `Plan how a project bundle would import into the selected hosted project.
 
 This MCP tool is intentionally plan-only. Use the CLI resources import --yes command for execution after review.`
+
+const descPlatformBundleImport = `Import a project bundle into the selected hosted project.
+
+Use whodb_platform_bundle_import_plan first when possible. Default mode returns a confirmation token; do not call whodb_platform_confirm until the user approves the import preview. Supports prefix, rename_conflicts, and overwrite_conflicts.`
 
 const descPlatformClone = `Clone a hosted dataset, ontology, transform, or function in the selected project.
 

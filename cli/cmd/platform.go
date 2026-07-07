@@ -43,6 +43,9 @@ var (
 	useOrg              string
 	useProject          string
 	projectsOrg         string
+	projectName         string
+	projectDescription  string
+	projectSlug         string
 	sourcesOrg          string
 	sourcesProject      string
 	sourceName          string
@@ -581,6 +584,154 @@ var projectsListCmd = &cobra.Command{
 			},
 			Rows: rows,
 		})
+	},
+}
+
+var projectsCreateCmd = &cobra.Command{
+	Use:           "create",
+	Short:         "Create a hosted WhoDB project",
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if strings.TrimSpace(projectName) == "" {
+			return fmt.Errorf("--name is required")
+		}
+		ctx := context.Background()
+		format, err := output.ParseFormat(platformFormat)
+		if err != nil {
+			return err
+		}
+		session, err := loadPlatformSession(ctx, platformHost)
+		if err != nil {
+			return err
+		}
+		org, err := resolveOrganization(ctx, session.Client, session.Host, projectsOrg)
+		if err != nil {
+			return err
+		}
+		variables := map[string]any{"input": map[string]any{
+			"orgId":       org.ID,
+			"name":        strings.TrimSpace(projectName),
+			"description": strings.TrimSpace(projectDescription),
+		}}
+		result, err := session.Client.PlatformMutation(ctx, "CreateProject", variables)
+		if err != nil {
+			return err
+		}
+		if format == output.FormatJSON {
+			return writeAutomationEnvelope(cmd, "projects.create", result)
+		}
+		newCommandOutput(cmd, format, platformQuiet).Success("Created project %s in %s", strings.TrimSpace(projectName), org.Name)
+		return nil
+	},
+}
+
+var projectsRenameCmd = &cobra.Command{
+	Use:           "rename <project>",
+	Short:         "Rename a hosted WhoDB project",
+	Args:          cobra.ExactArgs(1),
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if strings.TrimSpace(projectName) == "" {
+			return fmt.Errorf("--name is required")
+		}
+		ctx := context.Background()
+		format, err := output.ParseFormat(platformFormat)
+		if err != nil {
+			return err
+		}
+		session, err := loadPlatformSession(ctx, platformHost)
+		if err != nil {
+			return err
+		}
+		org, err := resolveOrganization(ctx, session.Client, session.Host, projectsOrg)
+		if err != nil {
+			return err
+		}
+		projects, err := session.Client.Projects(ctx, org.ID)
+		if err != nil {
+			return err
+		}
+		project, err := resolveProject(projects, args[0], org.Name)
+		if err != nil {
+			return err
+		}
+		variables := map[string]any{"id": project.ID, "name": strings.TrimSpace(projectName)}
+		if strings.TrimSpace(projectSlug) != "" {
+			variables["slug"] = strings.TrimSpace(projectSlug)
+		}
+		result, err := session.Client.PlatformMutation(ctx, "RenameProject", variables)
+		if err != nil {
+			return err
+		}
+		if session.Host.DefaultProjectID == project.ID {
+			session.Host.DefaultProjectName = strings.TrimSpace(projectName)
+			session.Config.UpsertPlatformHost(session.Host)
+			if err := session.Config.Save(); err != nil {
+				return err
+			}
+		}
+		if format == output.FormatJSON {
+			return writeAutomationEnvelope(cmd, "projects.rename", result)
+		}
+		newCommandOutput(cmd, format, platformQuiet).Success("Renamed project %s to %s", project.Name, strings.TrimSpace(projectName))
+		return nil
+	},
+}
+
+var projectsDeleteCmd = &cobra.Command{
+	Use:           "delete <project>",
+	Short:         "Delete a hosted WhoDB project",
+	Args:          cobra.ExactArgs(1),
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := context.Background()
+		format, err := output.ParseFormat(platformFormat)
+		if err != nil {
+			return err
+		}
+		session, err := loadPlatformSession(ctx, platformHost)
+		if err != nil {
+			return err
+		}
+		org, err := resolveOrganization(ctx, session.Client, session.Host, projectsOrg)
+		if err != nil {
+			return err
+		}
+		projects, err := session.Client.Projects(ctx, org.ID)
+		if err != nil {
+			return err
+		}
+		project, err := resolveProject(projects, args[0], org.Name)
+		if err != nil {
+			return err
+		}
+		if !platformWriteYes {
+			if ok, err := confirmPlatformProjectDelete(cmd.InOrStdin(), cmd.ErrOrStderr(), project.Name, org.Name); err != nil {
+				return err
+			} else if !ok {
+				return fmt.Errorf("delete cancelled")
+			}
+		}
+		result, err := session.Client.PlatformMutation(ctx, "DeleteProject", map[string]any{"id": project.ID, "orgId": org.ID, "confirmDeletion": true})
+		if err != nil {
+			return err
+		}
+		if session.Host.DefaultProjectID == project.ID {
+			session.Host.DefaultProjectID = ""
+			session.Host.DefaultProjectName = ""
+			session.Config.UpsertPlatformHost(session.Host)
+			if err := session.Config.Save(); err != nil {
+				return err
+			}
+		}
+		if format == output.FormatJSON {
+			return writeAutomationEnvelope(cmd, "projects.delete", result)
+		}
+		newCommandOutput(cmd, format, platformQuiet).Success("Deleted project %s from %s", project.Name, org.Name)
+		return nil
 	},
 }
 
@@ -1130,8 +1281,16 @@ func init() {
 	logoutCmd.Flags().BoolVar(&platformLogoutLocal, "local", false, "remove local hosted WhoDB credentials without revoking the hosted session")
 	manifestCmd.Flags().BoolVar(&manifestRefresh, "refresh", false, "fetch and cache the current hosted platform manifest")
 	orgsCmd.AddCommand(orgsListCmd)
-	projectsCmd.AddCommand(projectsListCmd)
+	projectsCmd.AddCommand(projectsListCmd, projectsCreateCmd, projectsRenameCmd, projectsDeleteCmd)
 	projectsListCmd.Flags().StringVar(&projectsOrg, "org", "", "organization id, slug, or name (defaults to selected organization)")
+	for _, command := range []*cobra.Command{projectsCreateCmd, projectsRenameCmd, projectsDeleteCmd} {
+		command.Flags().StringVar(&projectsOrg, "org", "", "organization id, slug, or name (defaults to selected organization)")
+	}
+	projectsCreateCmd.Flags().StringVar(&projectName, "name", "", "project name")
+	projectsCreateCmd.Flags().StringVar(&projectDescription, "description", "", "project description")
+	projectsRenameCmd.Flags().StringVar(&projectName, "name", "", "new project name")
+	projectsRenameCmd.Flags().StringVar(&projectSlug, "slug", "", "optional project slug")
+	projectsDeleteCmd.Flags().BoolVarP(&platformWriteYes, "yes", "y", false, "delete the project without prompting")
 	sourcesCmd.AddCommand(sourcesTypesCmd)
 	sourcesCmd.AddCommand(sourcesFieldsCmd)
 	sourcesCmd.AddCommand(sourcesListCmd)
@@ -1914,6 +2073,17 @@ func matchesPlatformIdentifier(value, id, slug, name string) bool {
 
 func noOrganizationAccessMessage(host string) string {
 	return fmt.Sprintf("Signed in, but this account does not belong to any organization on %s. Ask an admin for access in WhoDB.", host)
+}
+
+func confirmPlatformProjectDelete(stdin io.Reader, stderr io.Writer, projectName, orgName string) (bool, error) {
+	if _, err := fmt.Fprintf(stderr, "Delete project %s in organization %s? [y/N]: ", projectName, orgName); err != nil {
+		return false, err
+	}
+	var answer string
+	if _, err := fmt.Fscan(stdin, &answer); err != nil && err != io.EOF {
+		return false, err
+	}
+	return isAffirmativeConfirmation(answer), nil
 }
 
 func noProjectsMessage(orgName string) string {

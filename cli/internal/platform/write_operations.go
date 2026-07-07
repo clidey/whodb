@@ -44,6 +44,14 @@ const aiProviderFields = `
   updatedAt
 `
 
+const projectFields = `
+  id
+  orgId
+  name
+  slug
+  description
+`
+
 const ontologyFastLookupFields = `
   id
   entityId
@@ -77,6 +85,9 @@ type platformMutationSpec struct {
 }
 
 var platformMutationSpecs = map[string]platformMutationSpec{
+	"CreateProject":            mutationSpecWithInput("CreateProject", "CreateProjectInput", projectFields),
+	"RenameProject":            mutationSpecWithDirect("RenameProject", "$id: ID!, $name: String!, $slug: String", "id: $id, name: $name, slug: $slug", projectFields),
+	"DeleteProject":            mutationSpecWithDirect("DeleteProject", "$id: ID!, $orgId: ID, $confirmDeletion: Boolean", "id: $id, orgId: $orgId, confirmDeletion: $confirmDeletion", statusResponseFields),
 	"CreateSecret":             mutationSpecWithInput("CreateSecret", "CreateSecretInput", projectSecretFields),
 	"UpdateSecret":             mutationSpecWithInput("UpdateSecret", "UpdateSecretInput", projectSecretFields),
 	"DeleteSecret":             mutationSpecWithProjectID("DeleteSecret", statusResponseFields),

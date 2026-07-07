@@ -589,7 +589,7 @@ func TestPlatformMCP_RealReadWriteLifecycle(t *testing.T) {
 		return out.Count, out.Error
 	})
 	liveCoverTool("whodb_platform_project_lineage")
-	liveMustBundleTools(t, ctx)
+	liveMustBundleTools(t, ctx, suffix)
 
 	liveMustGenericWrite(t, ctx, "platform_delete", "delete", PlatformGenericWriteInput{Resource: "file", ID: fileID})
 	fileID = ""
@@ -647,7 +647,7 @@ func liveMustPlatformDoctor(t *testing.T, ctx context.Context) {
 	liveCoverTool("whodb_platform_doctor")
 }
 
-func liveMustBundleTools(t *testing.T, ctx context.Context) {
+func liveMustBundleTools(t *testing.T, ctx context.Context, suffix string) {
 	t.Helper()
 	_, exported, err := HandlePlatformBundleExport(ctx, nil, PlatformBundleExportInput{})
 	if err != nil {
@@ -677,6 +677,40 @@ func liveMustBundleTools(t *testing.T, ctx context.Context) {
 		t.Fatalf("bundle import plan = %#v, want plan actions without error", plan)
 	}
 	liveCoverTool("whodb_platform_bundle_import_plan")
+
+	importDatasetName := "mcp-e2e-bundle-import-dataset-" + suffix
+	importBundle := platformapi.ProjectBundle{
+		BundleVersion: 1,
+		Datasets: []platformapi.Dataset{{
+			Name:        importDatasetName,
+			Description: "MCP e2e bundle imported dataset",
+			SchemaMode:  "manual",
+			Schema: []platformapi.ColumnDef{
+				{Name: "id", Type: "text", IsPrimary: true},
+				{Name: "name", Type: "text", IsNullable: true},
+			},
+		}},
+	}
+	rawImportBundle, err := json.Marshal(importBundle)
+	if err != nil {
+		t.Fatalf("marshal import bundle: %v", err)
+	}
+	_, importOutput, err := HandlePlatformBundleImport(ctx, nil, PlatformBundlePlanInput{BundleJSON: string(rawImportBundle)}, true)
+	if err != nil {
+		t.Fatalf("HandlePlatformBundleImport() error = %v", err)
+	}
+	if importOutput.Error != "" || !importOutput.ConfirmationRequired {
+		t.Fatalf("bundle import output = %#v, want pending confirmation", importOutput)
+	}
+	liveCoverTool("whodb_platform_bundle_import")
+	liveMustReadPending(t, ctx)
+	confirm := liveMustConfirm(t, ctx, importOutput.ConfirmationToken)
+	importedDatasetID := liveConfirmRowColumn(t, confirm, "dataset", importDatasetName, "target_id")
+	defer liveBestEffortGenericDelete(ctx, "dataset", importedDatasetID)
+	liveMustReadEntity(t, ctx, "bundle imported dataset", importedDatasetID, func() (string, error) {
+		_, out, err := HandlePlatformDataset(ctx, nil, PlatformEntityInput{ID: importedDatasetID, Fields: []string{"data", "scope"}})
+		return out.Error, err
+	})
 }
 
 func liveMustReadOrgsProjects(t *testing.T, ctx context.Context) {
@@ -1144,6 +1178,43 @@ func liveConfirmColumn(t *testing.T, output ConfirmOutput, column string) string
 		t.Fatalf("confirm %s = %#v, want non-empty string", column, output.Rows[0][index])
 	}
 	return value
+}
+
+func liveConfirmRowColumn(t *testing.T, output ConfirmOutput, resource, name, column string) string {
+	t.Helper()
+	resourceIndex := -1
+	nameIndex := -1
+	columnIndex := -1
+	for i, columnName := range output.Columns {
+		switch columnName {
+		case "resource":
+			resourceIndex = i
+		case "name":
+			nameIndex = i
+		case column:
+			columnIndex = i
+		}
+	}
+	if resourceIndex < 0 || nameIndex < 0 || columnIndex < 0 {
+		t.Fatalf("confirm columns = %#v, missing resource/name/%s", output.Columns, column)
+	}
+	for _, row := range output.Rows {
+		if len(row) <= resourceIndex || len(row) <= nameIndex || len(row) <= columnIndex {
+			continue
+		}
+		rowResource, _ := row[resourceIndex].(string)
+		rowName, _ := row[nameIndex].(string)
+		if rowResource != resource || rowName != name {
+			continue
+		}
+		value, _ := row[columnIndex].(string)
+		if strings.TrimSpace(value) == "" {
+			t.Fatalf("confirm row for %s %s has empty %s: %#v", resource, name, column, row)
+		}
+		return value
+	}
+	t.Fatalf("confirm rows = %#v, missing %s %s", output.Rows, resource, name)
+	return ""
 }
 
 func liveBestEffortSourceDelete(ctx context.Context, source string) {
