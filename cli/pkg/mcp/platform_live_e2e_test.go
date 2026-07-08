@@ -137,6 +137,7 @@ func TestPlatformMCP_RealReadWriteLifecycle(t *testing.T) {
 	sourceDatabase := liveEnvOrDefault("WHODB_PLATFORM_E2E_SOURCE_DATABASE", "whodb_platform")
 	sourceLocalPort := liveEnvOrDefault("WHODB_PLATFORM_E2E_SOURCE_LOCAL_PORT", defaultLivePlatformE2EDBPort)
 
+	liveMustPlatformSetupStatus(t, ctx)
 	status := liveMustPlatformStatus(t, ctx)
 	if status.Email != email || !status.WorkspaceSelected {
 		t.Fatalf("platform status = %#v, want %s with selected workspace", status, email)
@@ -640,6 +641,18 @@ func liveMustPlatformStatus(t *testing.T, ctx context.Context) PlatformStatusOut
 	}
 	liveCoverTool("whodb_platform_status")
 	return output
+}
+
+func liveMustPlatformSetupStatus(t *testing.T, ctx context.Context) {
+	t.Helper()
+	_, output, err := HandlePlatformSetupStatus(ctx, nil, PlatformSetupStatusInput{})
+	if err != nil {
+		t.Fatalf("HandlePlatformSetupStatus() error = %v", err)
+	}
+	if output.Error != "" || output.Status != "ready" || !output.Authenticated || !output.WorkspaceSelected {
+		t.Fatalf("platform setup status = %#v, want ready authenticated workspace", output)
+	}
+	liveCoverTool("whodb_platform_setup_status")
 }
 
 func liveMustPlatformDoctor(t *testing.T, ctx context.Context) {

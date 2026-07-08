@@ -965,7 +965,7 @@ func buildPlatformLifecycle() []platformLifecycleStep {
 			Stage:       "workspace_scope",
 			Description: "Select and confirm the signed-in user's hosted organization and project. All later reads and writes are scoped here, while backend permissions remain authoritative.",
 			Concepts:    []string{"organization", "project", "permissions"},
-			Tools:       []string{"whodb_platform_status", "whodb_platform_orgs", "whodb_platform_projects"},
+			Tools:       []string{"whodb_platform_setup_status", "whodb_platform_status", "whodb_platform_orgs", "whodb_platform_projects"},
 		},
 		{
 			Stage:       "ingest",
@@ -1014,8 +1014,8 @@ func buildPlatformLifecycle() []platformLifecycleStep {
 
 func buildPlatformConcepts() []platformConceptResource {
 	return []platformConceptResource{
-		{Name: "organization", Description: "Tenant boundary containing hosted WhoDB projects.", Role: "scope", Tools: []string{"whodb_platform_orgs"}},
-		{Name: "project", Description: "Workspace containing sources, files, datasets, ontologies, transforms, functions, secrets, providers, lineage, and bundles.", Role: "scope", Tools: []string{"whodb_platform_projects", "whodb_platform_workspace_map", "whodb_platform_project_health"}},
+		{Name: "organization", Description: "Tenant boundary containing hosted WhoDB projects.", Role: "scope", Tools: []string{"whodb_platform_setup_status", "whodb_platform_orgs"}},
+		{Name: "project", Description: "Workspace containing sources, files, datasets, ontologies, transforms, functions, secrets, providers, lineage, and bundles.", Role: "scope", Tools: []string{"whodb_platform_setup_status", "whodb_platform_projects", "whodb_platform_workspace_map", "whodb_platform_project_health"}},
 		{Name: "source", Description: "Connection to an external data system. It is an input layer, not the whole platform.", Role: "ingest", Tools: []string{"whodb_platform_sources", "whodb_platform_source_objects", "whodb_platform_source_columns", "whodb_platform_source_rows"}},
 		{Name: "file", Description: "Uploaded project asset that can be browsed, previewed, inspected, moved, deleted, or promoted into a dataset.", Role: "ingest", Tools: []string{"whodb_platform_files", "whodb_platform_file_preview", "whodb_platform_file_inspect", "whodb_platform_tabular_files"}},
 		{Name: "dataset", Description: "Durable project data asset used for previews, modeling, transforms, ontology backing data, and downstream workflows.", Role: "persist", Tools: []string{"whodb_platform_datasets", "whodb_platform_dataset", "whodb_platform_dataset_rows"}},
@@ -1037,7 +1037,7 @@ func buildPlatformWorkflowRecipes() []platformWorkflowRecipe {
 			Goal:        "Create a project-level semantic app from source/file data with datasets, ontologies, transforms, functions, runtime support, lineage checks, and safe write confirmation.",
 			Stages:      []string{"workspace_scope", "ingest", "persist", "model", "automate", "runtime_support", "govern_and_change", "package"},
 			Steps: []platformWorkflowRecipeStep{
-				{Phase: "scope", Description: "Confirm login, organization, project, and current project health.", Tools: []string{"whodb_platform_status", "whodb_platform_project_health", "whodb_platform_workspace_map"}},
+				{Phase: "scope", Description: "Confirm setup, login, organization, project, and current project health.", Tools: []string{"whodb_platform_setup_status", "whodb_platform_status", "whodb_platform_project_health", "whodb_platform_workspace_map"}},
 				{Phase: "ingest", Description: "Choose whether data starts from a hosted source or uploaded files; inspect shape before creating durable assets.", Tools: []string{"whodb_platform_sources", "whodb_platform_source_objects", "whodb_platform_source_columns", "whodb_platform_files", "whodb_platform_file_inspect"}, WriteTools: []string{"whodb_platform_source_create", "whodb_platform_action", "whodb_platform_promote_file_to_dataset"}, Notes: []string{"Use file upload or source creation only after user supplies required connection/file details."}},
 				{Phase: "persist", Description: "Create or verify datasets that represent durable project data.", Tools: []string{"whodb_platform_data_model_summary", "whodb_platform_datasets", "whodb_platform_dataset", "whodb_platform_dataset_rows"}, WriteTools: []string{"whodb_platform_create_dataset", "whodb_platform_create", "whodb_platform_update"}, VerifyTools: []string{"whodb_platform_dataset", "whodb_platform_dataset_rows"}},
 				{Phase: "model", Description: "Create or refine ontologies, properties, links, records, and fast lookups over datasets.", Tools: []string{"whodb_platform_ontologies", "whodb_platform_ontology", "whodb_platform_ontology_fast_lookup_suggestions"}, WriteTools: []string{"whodb_platform_create", "whodb_platform_update", "whodb_platform_create_ontology_fast_lookup", "whodb_platform_add_ontology_record"}, VerifyTools: []string{"whodb_platform_ontology", "whodb_platform_ontology_rows", "whodb_platform_ontology_fast_lookups"}},
@@ -1053,7 +1053,7 @@ func buildPlatformWorkflowRecipes() []platformWorkflowRecipe {
 			Goal:        "Move from an external source connection to a project dataset without treating source preview as durable app state.",
 			Stages:      []string{"workspace_scope", "ingest", "persist", "govern_and_change"},
 			Steps: []platformWorkflowRecipeStep{
-				{Phase: "discover", Description: "Check project context and available source types/fields.", Tools: []string{"whodb_platform_status", "whodb_platform_source_types", "whodb_platform_source_fields"}},
+				{Phase: "discover", Description: "Check project context and available source types/fields.", Tools: []string{"whodb_platform_setup_status", "whodb_platform_status", "whodb_platform_source_types", "whodb_platform_source_fields"}},
 				{Phase: "connect", Description: "Create or update the source using supplied connection fields, then test it.", Tools: []string{"whodb_platform_source_test"}, WriteTools: []string{"whodb_platform_source_create", "whodb_platform_source_update"}, VerifyTools: []string{"whodb_platform_sources", "whodb_platform_source_config"}},
 				{Phase: "inspect", Description: "Browse objects and columns before creating datasets.", Tools: []string{"whodb_platform_source_objects", "whodb_platform_source_columns", "whodb_platform_source_rows"}},
 				{Phase: "persist", Description: "Create or update dataset metadata/schema after inspection.", Tools: []string{"whodb_platform_write_plan"}, WriteTools: []string{"whodb_platform_create_dataset", "whodb_platform_create", "whodb_platform_update"}, VerifyTools: []string{"whodb_platform_dataset", "whodb_platform_dataset_rows"}},
@@ -1194,12 +1194,12 @@ func buildPlatformToolGuide(secOpts *SecurityOptions) platformToolGuideResource 
 	}
 
 	categories := []platformToolGuideCategory{
-		platformToolCategory(toolByName, "workspace", "Login, organization, and project discovery.", "Start here before any project-scoped read or write.", nil, []platformToolGuideMutation{
+		platformToolCategory(toolByName, "workspace", "Login, organization, and project discovery.", "Start here before any project-scoped read or write. Use setup_status first when the MCP client may not be logged in or may not have a selected workspace.", nil, []platformToolGuideMutation{
 			{Tool: "whodb_platform_project_create", Resources: []string{"project"}},
 			{Tool: "whodb_platform_project_rename", Resources: []string{"project"}},
 			{Tool: "whodb_platform_project_delete", Resources: []string{"project"}},
 		},
-			"whodb_platform_status", "whodb_platform_orgs", "whodb_platform_projects", "whodb_platform_project_create", "whodb_platform_project_rename", "whodb_platform_project_delete"),
+			"whodb_platform_setup_status", "whodb_platform_status", "whodb_platform_orgs", "whodb_platform_projects", "whodb_platform_project_create", "whodb_platform_project_rename", "whodb_platform_project_delete"),
 		platformToolCategory(toolByName, "workspace_intelligence", "Workspace-level maps, relationship graph, and suggested next actions.", "Use these before per-resource reads when the user asks what exists, what is connected, or what should happen next.", []string{"counts", "warnings"}, nil,
 			"whodb_platform_workspace_map", "whodb_platform_resource_graph", "whodb_platform_next_actions", "whodb_platform_project_health", "whodb_platform_data_model_summary", "whodb_platform_runtime_readiness", "whodb_platform_change_impact", "whodb_platform_write_plan"),
 		platformToolCategory(toolByName, "sources", "Hosted source discovery, connection metadata, data previews, and source writes.", "List sources with id/name/type first; inspect config only when needed because secrets are redacted.", []string{"id", "name", "type"}, []platformToolGuideMutation{
@@ -1514,7 +1514,7 @@ WhoDB EE is a hosted data workspace and semantic application platform. Do not tr
 
 Only whodb_platform_* tools are available. Local database tools such as whodb_query and whodb_connections are not exposed in this mode.
 
-Use the active whodb-cli hosted login and selected workspace. Start with whodb_platform_status to confirm host, signed-in user, organization, and project. If no workspace is selected, call whodb_platform_orgs and whodb_platform_projects, then ask the user to run whodb-cli use --org <org> --project <project>.
+Use the active whodb-cli hosted login and selected workspace. Start with whodb_platform_setup_status when setup may be unknown, then use whodb_platform_status to confirm host, signed-in user, organization, and project. If no workspace is selected, call whodb_platform_orgs and whodb_platform_projects, then ask the user to run whodb-cli use --org <org> --project <project>.
 
 Backend permissions are authoritative. The CLI may select a workspace, but the hosted platform decides what the signed-in user can read or change.
 
@@ -1528,14 +1528,15 @@ For read tools that accept fields, request only fields needed for the current an
 func handlePlatformReadWorkflowPrompt(ctx context.Context, req *mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
 	const content = `Use this read workflow for WhoDB hosted platform data.
 
-1. Call whodb_platform_status.
-2. If needed, discover workspace with whodb_platform_orgs and whodb_platform_projects.
-3. Build project-level context first when the user asks about the workspace, data model, readiness, risks, or next steps:
+1. Call whodb_platform_setup_status if login/workspace setup may be unknown.
+2. Call whodb_platform_status.
+3. If needed, discover workspace with whodb_platform_orgs and whodb_platform_projects.
+4. Build project-level context first when the user asks about the workspace, data model, readiness, risks, or next steps:
    - whodb_platform_project_health for checks, counts, warnings, and next steps
    - whodb_platform_data_model_summary for sources, files, datasets, ontologies, and relationships
    - whodb_platform_runtime_readiness for functions, transforms, secrets, and AI providers
    - whodb_platform_resource_graph for connected project resources
-4. Use narrow list tools when the task is already about one resource family:
+5. Use narrow list tools when the task is already about one resource family:
    - whodb_platform_sources for sources
    - whodb_platform_datasets for datasets
    - whodb_platform_ontologies for ontology types
@@ -1544,9 +1545,9 @@ func handlePlatformReadWorkflowPrompt(ctx context.Context, req *mcp.GetPromptReq
    - whodb_platform_files for files
    - whodb_platform_ai_providers for AI provider metadata
    - whodb_platform_secrets for secret metadata only
-5. Use detail tools only after selecting a specific id/name.
-6. Use fields to request only what you need. Avoid file contents, function files, source content, and row previews unless the user asks for them or they are required.
-7. Never treat absence of returned data as proof the resource does not exist unless the hosted platform returned a successful response for the selected workspace.`
+6. Use detail tools only after selecting a specific id/name.
+7. Use fields to request only what you need. Avoid file contents, function files, source content, and row previews unless the user asks for them or they are required.
+8. Never treat absence of returned data as proof the resource does not exist unless the hosted platform returned a successful response for the selected workspace.`
 
 	return platformPromptResult("WhoDB hosted platform read workflow", content)
 }
@@ -1603,13 +1604,14 @@ func handlePlatformAnalyzeProjectPrompt(ctx context.Context, req *mcp.GetPromptR
 
 Think in WhoDB EE lifecycle terms: scope -> ingest -> persist -> model -> automate -> runtime support -> govern/change -> package. Sources are only ingestion endpoints.
 
-1. Call whodb_platform_status to confirm host, user, organization, and project.
-2. Read whodb://platform/concepts if you need the product model or a workflow recipe such as zero_to_app, connect_source_to_dataset, file_to_dataset_to_ontology, debug_transform, prepare_function_deploy, safe_delete_resource, or project_import_export.
-3. Call whodb_platform_project_health with fields ["counts","checks","warnings","next"].
-4. Call whodb_platform_data_model_summary when the task involves sources, files, datasets, ontologies, or lineage.
-5. Call whodb_platform_runtime_readiness when the task involves transforms, functions, AI providers, or secrets.
-6. Use whodb_platform_resource_graph or whodb_platform_change_impact before recommending updates, deletes, deploys, runs, moves, or promotions.
-7. Only then use per-resource tools, requesting narrow fields first.`
+1. Call whodb_platform_setup_status if the MCP session may not be configured yet.
+2. Call whodb_platform_status to confirm host, user, organization, and project.
+3. Read whodb://platform/concepts if you need the product model or a workflow recipe such as zero_to_app, connect_source_to_dataset, file_to_dataset_to_ontology, debug_transform, prepare_function_deploy, safe_delete_resource, or project_import_export.
+4. Call whodb_platform_project_health with fields ["counts","checks","warnings","next"].
+5. Call whodb_platform_data_model_summary when the task involves sources, files, datasets, ontologies, or lineage.
+6. Call whodb_platform_runtime_readiness when the task involves transforms, functions, AI providers, or secrets.
+7. Use whodb_platform_resource_graph or whodb_platform_change_impact before recommending updates, deletes, deploys, runs, moves, or promotions.
+8. Only then use per-resource tools, requesting narrow fields first.`
 
 	return platformPromptResult("WhoDB hosted platform project analysis workflow", content)
 }
@@ -2359,6 +2361,10 @@ whodb_platform_data_model_summary, whodb_platform_runtime_readiness, and
 whodb_platform_resource_graph before drilling into a single resource unless the
 user already named the exact resource.
 
+Start with whodb_platform_setup_status when a session may be fresh or when any
+platform tool reports login/workspace errors. It does not require a valid hosted
+session and returns exact whodb-cli login/use commands for the user.
+
 Read tools return stable metadata such as count, request_id, scope, warnings, and
 truncated where applicable. Most read tools accept an optional fields array to
 project top-level output fields, for example ["id", "name"]. Prefer fields on
@@ -2370,6 +2376,7 @@ When list tools expose filters such as name, type, status, schema_mode, kind,
 mime_type, or deployed, pass them instead of listing the whole project.
 
 Available tools:
+- whodb_platform_setup_status: Diagnose local hosted MCP setup before auth-dependent tools
 - whodb_platform_status: Show hosted login and selected workspace
 - whodb_platform_orgs: List hosted organizations visible to the user
 - whodb_platform_projects: List hosted projects for an organization

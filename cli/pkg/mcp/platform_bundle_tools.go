@@ -25,9 +25,31 @@ import (
 	"strings"
 	"time"
 
+	"github.com/clidey/whodb/cli/internal/config"
 	platformapi "github.com/clidey/whodb/cli/internal/platform"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
+
+// PlatformSetupStatusInput is the input for whodb_platform_setup_status.
+type PlatformSetupStatusInput struct{}
+
+// PlatformSetupStatusOutput reports local hosted platform MCP setup state.
+type PlatformSetupStatusOutput struct {
+	Host              string   `json:"host"`
+	Status            string   `json:"status"`
+	Authenticated     bool     `json:"authenticated"`
+	WorkspaceSelected bool     `json:"workspace_selected"`
+	Email             string   `json:"email,omitempty"`
+	AccountID         string   `json:"account_id,omitempty"`
+	OrgID             string   `json:"org_id,omitempty"`
+	OrgName           string   `json:"org_name,omitempty"`
+	ProjectID         string   `json:"project_id,omitempty"`
+	ProjectName       string   `json:"project_name,omitempty"`
+	Commands          []string `json:"commands"`
+	NextSteps         []string `json:"next_steps"`
+	Error             string   `json:"error,omitempty"`
+	RequestID         string   `json:"request_id,omitempty"`
+}
 
 // PlatformDoctorInput is the input for whodb_platform_doctor.
 type PlatformDoctorInput struct{}
@@ -45,6 +67,8 @@ type PlatformDoctorOutput struct {
 	ManifestProtocolVersion string   `json:"manifest_protocol_version,omitempty"`
 	Checks                  []string `json:"checks"`
 	Warnings                []string `json:"warnings,omitempty"`
+	NextSteps               []string `json:"next_steps,omitempty"`
+	Commands                []string `json:"commands,omitempty"`
 	Error                   string   `json:"error,omitempty"`
 	RequestID               string   `json:"request_id,omitempty"`
 }
@@ -88,6 +112,10 @@ type PlatformCloneInput struct {
 
 func registerPlatformBundleTool(server *mcp.Server, tool *mcp.Tool, secOpts *SecurityOptions) bool {
 	switch tool.Name {
+	case "whodb_platform_setup_status":
+		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformSetupStatusInput) (*mcp.CallToolResult, PlatformSetupStatusOutput, error) {
+			return HandlePlatformSetupStatus(ctx, req, input)
+		})
 	case "whodb_platform_doctor":
 		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformDoctorInput) (*mcp.CallToolResult, PlatformDoctorOutput, error) {
 			return HandlePlatformDoctor(ctx, req, input)
@@ -126,6 +154,7 @@ func registerPlatformBundleTool(server *mcp.Server, tool *mcp.Tool, secOpts *Sec
 
 func platformBundleToolDefinitions() []*mcp.Tool {
 	return []*mcp.Tool{
+		{Name: "whodb_platform_setup_status", Description: descPlatformSetupStatus, Annotations: platformReadOnlyAnnotations("Check Hosted Platform MCP Setup")},
 		{Name: "whodb_platform_doctor", Description: descPlatformDoctor, Annotations: platformReadOnlyAnnotations("Check Hosted Platform MCP Readiness")},
 		{Name: "whodb_platform_bundle_export", Description: descPlatformBundleExport, Annotations: platformReadOnlyAnnotations("Export Hosted Project Bundle")},
 		{Name: "whodb_platform_bundle_diff", Description: descPlatformBundleDiff, Annotations: platformReadOnlyAnnotations("Diff Hosted Project Bundle")},
@@ -135,14 +164,133 @@ func platformBundleToolDefinitions() []*mcp.Tool {
 	}
 }
 
+// HandlePlatformSetupStatus reports local hosted platform setup without requiring a valid session.
+func HandlePlatformSetupStatus(ctx context.Context, req *mcp.CallToolRequest, input PlatformSetupStatusInput) (*mcp.CallToolResult, PlatformSetupStatusOutput, error) {
+	requestID := generateRequestID("platform_setup_status")
+	startTime := time.Now()
+	output := buildPlatformSetupStatus(requestID)
+	success := output.Status == "ready"
+	TrackToolCall(ctx, "platform_setup_status", requestID, success, time.Since(startTime).Milliseconds(), map[string]any{"status": output.Status})
+	return nil, output, nil
+}
+
+func buildPlatformSetupStatus(requestID string) PlatformSetupStatusOutput {
+	host := platformapi.DefaultHost
+	cfg, err := config.LoadConfigWithoutSecrets()
+	if err != nil {
+		output := platformSetupStatusFor(host, "config_error")
+		output.Error = fmt.Sprintf("cannot load hosted WhoDB config: %v", err)
+		output.RequestID = requestID
+		return output
+	}
+	if strings.TrimSpace(cfg.Platform.DefaultHost) != "" {
+		host = cfg.Platform.DefaultHost
+	}
+	normalizedHost, err := platformapi.NormalizeHost(host)
+	if err != nil {
+		output := platformSetupStatusFor(platformapi.DefaultHost, "config_error")
+		output.Error = err.Error()
+		output.RequestID = requestID
+		return output
+	}
+	host = normalizedHost
+	entry, ok := cfg.GetPlatformHost(host)
+	if !ok || strings.TrimSpace(entry.AccountID) == "" {
+		output := platformSetupStatusFor(host, "needs_login")
+		output.RequestID = requestID
+		return output
+	}
+
+	output := platformSetupStatusFor(host, "")
+	output.Authenticated = true
+	output.Email = entry.Email
+	output.AccountID = entry.AccountID
+	output.OrgID = entry.DefaultOrgID
+	output.OrgName = entry.DefaultOrgName
+	output.ProjectID = entry.DefaultProjectID
+	output.ProjectName = entry.DefaultProjectName
+	output.WorkspaceSelected = strings.TrimSpace(entry.DefaultOrgID) != "" && strings.TrimSpace(entry.DefaultProjectID) != ""
+
+	if _, err := cfg.GetPlatformRefreshToken(host, entry.AccountID); err != nil {
+		output.Authenticated = false
+		output.Status = "needs_login"
+		output.Error = fmt.Sprintf("cannot load hosted WhoDB refresh token: %v", err)
+	} else if !output.WorkspaceSelected {
+		output.Status = "needs_workspace"
+	} else {
+		output.Status = "ready"
+	}
+	applyPlatformSetupGuidance(&output)
+	output.RequestID = requestID
+	return output
+}
+
+func platformSetupStatusFor(host, status string) PlatformSetupStatusOutput {
+	output := PlatformSetupStatusOutput{
+		Host:   host,
+		Status: status,
+	}
+	applyPlatformSetupGuidance(&output)
+	return output
+}
+
+func applyPlatformSetupGuidance(output *PlatformSetupStatusOutput) {
+	host := strings.TrimSpace(output.Host)
+	if host == "" {
+		host = platformapi.DefaultHost
+		output.Host = host
+	}
+	loginCommand := fmt.Sprintf("whodb-cli login --host %s", host)
+	useCommand := platformUseCommand(host)
+	switch output.Status {
+	case "ready":
+		output.Commands = []string{}
+		output.NextSteps = []string{
+			"Use whodb_platform_project_health for broad project context.",
+			"Read whodb://platform/concepts for the product model and workflow recipes.",
+		}
+	case "needs_workspace":
+		output.Commands = []string{useCommand}
+		output.NextSteps = []string{
+			"Run whodb_platform_orgs to list available organizations.",
+			"Run whodb_platform_projects with the selected organization.",
+			"Ask the user to run: " + useCommand,
+		}
+	default:
+		output.Commands = []string{loginCommand, useCommand}
+		output.NextSteps = []string{
+			"Ask the user to run: " + loginCommand,
+			"Then ask the user to select a workspace with: " + useCommand,
+		}
+		if output.Status == "" {
+			output.Status = "needs_login"
+		}
+	}
+}
+
 // HandlePlatformDoctor reports whether hosted platform MCP tools are ready to use.
 func HandlePlatformDoctor(ctx context.Context, req *mcp.CallToolRequest, input PlatformDoctorInput) (*mcp.CallToolResult, PlatformDoctorOutput, error) {
 	requestID := generateRequestID("platform_doctor")
 	startTime := time.Now()
 	session, err := loadPlatformToolSession(ctx)
 	if err != nil {
+		setup := buildPlatformSetupStatus(requestID)
 		TrackToolCall(ctx, "platform_doctor", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_session"})
-		return nil, PlatformDoctorOutput{Error: err.Error(), RequestID: requestID}, nil
+		return nil, PlatformDoctorOutput{
+			Host:              setup.Host,
+			Email:             setup.Email,
+			WorkspaceSelected: setup.WorkspaceSelected,
+			OrgID:             setup.OrgID,
+			OrgName:           setup.OrgName,
+			ProjectID:         setup.ProjectID,
+			ProjectName:       setup.ProjectName,
+			Checks:            []string{"setup_status:" + setup.Status},
+			Warnings:          setup.NextSteps,
+			NextSteps:         setup.NextSteps,
+			Commands:          setup.Commands,
+			Error:             err.Error(),
+			RequestID:         requestID,
+		}, nil
 	}
 	output := PlatformDoctorOutput{
 		Host:              session.Host.URL,
@@ -173,7 +321,10 @@ func HandlePlatformDoctor(ctx context.Context, req *mcp.CallToolRequest, input P
 	if output.WorkspaceSelected {
 		output.Checks = append(output.Checks, "workspace_selected")
 	} else {
-		output.Warnings = append(output.Warnings, "No hosted org/project is selected. Run whodb-cli use --org <org> --project <project> before project-scoped tools.")
+		setup := platformSetupStatusFor(session.Host.URL, "needs_workspace")
+		output.Warnings = append(output.Warnings, setup.NextSteps...)
+		output.NextSteps = setup.NextSteps
+		output.Commands = setup.Commands
 	}
 	TrackToolCall(ctx, "platform_doctor", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"workspace_selected": output.WorkspaceSelected})
 	return nil, output, nil
@@ -480,6 +631,10 @@ func platformBundlePlanTelemetryCounts(plan *platformapi.BundlePlan) map[string]
 	}
 	return telemetry
 }
+
+const descPlatformSetupStatus = `Check hosted WhoDB MCP setup before auth-dependent tools.
+
+Use this as the first tool in hosted platform mode, or whenever another platform tool reports login/workspace errors. It does not require a valid hosted session. It reports whether the local CLI is logged in, whether an organization/project is selected, and exact commands the user can run to fix setup.`
 
 const descPlatformDoctor = `Check hosted WhoDB MCP readiness.
 

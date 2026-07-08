@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -181,13 +182,69 @@ func testPlatformSession(client platformClient) *platformToolSession {
 
 func TestPlatformToolDefinitions(t *testing.T) {
 	tools := platformToolDefinitions()
-	if len(tools) != 72 {
-		t.Fatalf("len(platformToolDefinitions()) = %d, want 72", len(tools))
+	if len(tools) != 73 {
+		t.Fatalf("len(platformToolDefinitions()) = %d, want 73", len(tools))
 	}
 	for _, tool := range tools {
 		if tool.Annotations == nil {
 			t.Fatalf("tool %s has no annotations", tool.Name)
 		}
+	}
+}
+
+func TestHandlePlatformSetupStatusReportsLoginCommandWithoutConfig(t *testing.T) {
+	setupTestEnv(t)
+
+	_, output, err := HandlePlatformSetupStatus(context.Background(), nil, PlatformSetupStatusInput{})
+	if err != nil {
+		t.Fatalf("HandlePlatformSetupStatus() error = %v", err)
+	}
+	if output.Status != "needs_login" || output.Authenticated {
+		t.Fatalf("setup status = %#v, want needs_login without auth", output)
+	}
+	for _, expected := range []string{"whodb-cli login --host https://app.whodb.com", "whodb-cli use --host https://app.whodb.com --org <org> --project <project>"} {
+		if !slices.Contains(output.Commands, expected) {
+			t.Fatalf("commands = %#v, want %q", output.Commands, expected)
+		}
+	}
+}
+
+func TestPlatformSetupStatusGuidance(t *testing.T) {
+	workspace := platformSetupStatusFor("https://app.whodb.com", "needs_workspace")
+	if len(workspace.Commands) != 1 || !strings.Contains(workspace.Commands[0], "use --host https://app.whodb.com") {
+		t.Fatalf("workspace commands = %#v, want use command", workspace.Commands)
+	}
+	if !strings.Contains(strings.Join(workspace.NextSteps, " "), "whodb_platform_orgs") {
+		t.Fatalf("workspace next steps = %#v, want org/project discovery", workspace.NextSteps)
+	}
+
+	ready := platformSetupStatusFor("https://app.whodb.com", "ready")
+	if len(ready.Commands) != 0 {
+		t.Fatalf("ready commands = %#v, want none", ready.Commands)
+	}
+	if !strings.Contains(strings.Join(ready.NextSteps, " "), "whodb_platform_project_health") {
+		t.Fatalf("ready next steps = %#v, want project health guidance", ready.NextSteps)
+	}
+}
+
+func TestHandlePlatformDoctorIncludesSetupGuidanceOnSessionError(t *testing.T) {
+	setupTestEnv(t)
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return nil, errors.New("not logged in")
+	})
+
+	_, output, err := HandlePlatformDoctor(context.Background(), nil, PlatformDoctorInput{})
+	if err != nil {
+		t.Fatalf("HandlePlatformDoctor() error = %v", err)
+	}
+	if output.Error != "not logged in" {
+		t.Fatalf("doctor error = %q, want loader error", output.Error)
+	}
+	if len(output.Commands) == 0 || !strings.Contains(output.Commands[0], "whodb-cli login") {
+		t.Fatalf("doctor commands = %#v, want login command", output.Commands)
+	}
+	if !strings.Contains(strings.Join(output.NextSteps, " "), "whodb-cli login") {
+		t.Fatalf("doctor next steps = %#v, want login guidance", output.NextSteps)
 	}
 }
 
