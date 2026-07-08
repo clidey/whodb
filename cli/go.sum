@@ -94,10 +94,10 @@ github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.12 h1:ZD2+BS
 github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.12/go.mod h1:Ms4zlcVBbXbiP7EVLhl+lgjvA/a7YphqQ3Ih3174EmI=
 github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.29 h1:DRebniUGZ2MqiiIVmQJ04vIXr918hubdHMnarSLEWyU=
 github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.29/go.mod h1:LfRkPCD8YHDM2E5eTkos2UpwYeZnBcVarTa8L59bJHA=
-github.com/aws/aws-sdk-go-v2/service/opensearch v1.70.8 h1:66o2sSE1gikkOVp3zuf+AcYUdWn4bag2emWogj5bEXs=
-github.com/aws/aws-sdk-go-v2/service/opensearch v1.70.8/go.mod h1:pZl7CQeOUcOJUFJRx9HxyGL+dsrOuPc72jHQNSw6AiQ=
-github.com/aws/aws-sdk-go-v2/service/rds v1.119.2 h1:sqAj/4zLlTTqSgvzbRWbYKgaT/IyGVXtwJZKoWcgBdM=
-github.com/aws/aws-sdk-go-v2/service/rds v1.119.2/go.mod h1:zCRPUdp05FEZG3OO7LmJq9xkSDjMEhkiVrZV0oJs2a0=
+github.com/aws/aws-sdk-go-v2/service/opensearch v1.72.1 h1:aQ+RrYSHFrLeU0je/BQZ9qaQ5MnktLwvFgKdff+0MAc=
+github.com/aws/aws-sdk-go-v2/service/opensearch v1.72.1/go.mod h1:pZl7CQeOUcOJUFJRx9HxyGL+dsrOuPc72jHQNSw6AiQ=
+github.com/aws/aws-sdk-go-v2/service/rds v1.119.3 h1:SIGdk+wA+xGXgN+L7Jr3Ot83Mjh3jpjyJIwZd3DqAnU=
+github.com/aws/aws-sdk-go-v2/service/rds v1.119.3/go.mod h1:zCRPUdp05FEZG3OO7LmJq9xkSDjMEhkiVrZV0oJs2a0=
 github.com/aws/aws-sdk-go-v2/service/signin v1.2.0 h1:3nXpRcFwRCW8n7HgO2QGy0Dc20eQNfBuUemGQhpF8m8=
 github.com/aws/aws-sdk-go-v2/service/signin v1.2.0/go.mod h1:LxYujSTLPRlp2vTtcUO/+1ilrew8ytt6SvQyOgejzFQ=
 github.com/aws/aws-sdk-go-v2/service/sso v1.31.3 h1:ey1XLTYXb9PcLt4535632o5kCGXNXEhNb620Dqwuylo=
@@ -303,8 +303,8 @@ github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10/go.mod h1
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 h1:Jamvg5psRIccs7FGNTlIRMkT8wgtp5eCXdBlqhYGL6U=
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
-github.com/posthog/posthog-go v1.15.0 h1:Fizkdct7zGg050hnYpxEiq/iD/OJO7tVaQE9Vyoh0q0=
-github.com/posthog/posthog-go v1.15.0/go.mod h1:xsVOW9YImilUcazwPNEq4PJDqEZf2KeCS758zXjwkPg=
+github.com/posthog/posthog-go v1.16.1 h1:uEbaaYT361a3ImI0D1DYUyNLWN7Y9V9gLqCbQ/z5SxQ=
+github.com/posthog/posthog-go v1.16.1/go.mod h1:xsVOW9YImilUcazwPNEq4PJDqEZf2KeCS758zXjwkPg=
 github.com/richardlehane/mscfb v1.0.6 h1:eN3bvvZCp00bs7Zf52bxNwAx5lJDBK1tCuH19qq5aC8=
 github.com/richardlehane/mscfb v1.0.6/go.mod h1:pe0+IUIc0AHh0+teNzBlJCtSyZdFOGgV4ZK9bsoV+Jo=
 github.com/richardlehane/msoleps v1.0.6 h1:9BvkpjvD+iUBalUY4esMwv6uBkfOip/Lzvd93jvR9gg=
