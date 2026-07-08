@@ -709,6 +709,10 @@ func registerPlatformResources(server *mcp.Server, secOpts *SecurityOptions) {
 			Name:              manifest.Name,
 			Version:           manifest.Version,
 			PlatformMCP:       manifest.PlatformMCP,
+			ProductModel:      buildPlatformProductModel(),
+			Concepts:          buildPlatformConcepts(),
+			Lifecycle:         buildPlatformLifecycle(),
+			Recipes:           buildPlatformWorkflowRecipes(),
 			Tools:             tools,
 			Resources:         manifest.PlatformMCP.Resources,
 			ResourceTemplates: manifest.PlatformMCP.ResourceTemplates,
@@ -738,6 +742,21 @@ func registerPlatformResources(server *mcp.Server, secOpts *SecurityOptions) {
 		MIMEType:    "application/json",
 	}, func(ctx context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
 		return jsonResource("whodb://platform/tool-guide", buildPlatformToolGuide(secOpts))
+	})
+
+	server.AddResource(&mcp.Resource{
+		Name:        "platform-concepts",
+		URI:         "whodb://platform/concepts",
+		Description: "WhoDB EE hosted platform concepts, lifecycle, and agent operating model",
+		MIMEType:    "application/json",
+	}, func(ctx context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
+		return jsonResource("whodb://platform/concepts", platformConceptsResource{
+			ProductModel: buildPlatformProductModel(),
+			Lifecycle:    buildPlatformLifecycle(),
+			Concepts:     buildPlatformConcepts(),
+			Recipes:      buildPlatformWorkflowRecipes(),
+			Rules:        buildPlatformOperatingRules(),
+		})
 	})
 
 	for _, template := range platformResourceTemplates() {
@@ -805,12 +824,55 @@ type platformSchemaResource struct {
 	Name              string                              `json:"name"`
 	Version           string                              `json:"version"`
 	PlatformMCP       agentmanifest.PlatformMCP           `json:"platform_mcp"`
+	ProductModel      string                              `json:"product_model"`
+	Concepts          []platformConceptResource           `json:"concepts"`
+	Lifecycle         []platformLifecycleStep             `json:"lifecycle"`
+	Recipes           []platformWorkflowRecipe            `json:"recipes"`
 	Tools             []agentmanifest.MCPTool             `json:"tools"`
 	Resources         []agentmanifest.MCPResource         `json:"resources"`
 	ResourceTemplates []agentmanifest.MCPResourceTemplate `json:"resource_templates"`
 	Prompts           []agentmanifest.MCPPrompt           `json:"prompts"`
 	WriteSpecs        []platformWriteSpecResource         `json:"write_specs"`
 	PayloadShapes     []platformPayloadShapeResource      `json:"payload_shapes"`
+}
+
+type platformConceptsResource struct {
+	ProductModel string                    `json:"product_model"`
+	Lifecycle    []platformLifecycleStep   `json:"lifecycle"`
+	Concepts     []platformConceptResource `json:"concepts"`
+	Recipes      []platformWorkflowRecipe  `json:"recipes"`
+	Rules        []string                  `json:"rules"`
+}
+
+type platformLifecycleStep struct {
+	Stage       string   `json:"stage"`
+	Description string   `json:"description"`
+	Concepts    []string `json:"concepts"`
+	Tools       []string `json:"tools"`
+}
+
+type platformConceptResource struct {
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	Role        string   `json:"role"`
+	Tools       []string `json:"tools"`
+}
+
+type platformWorkflowRecipe struct {
+	Name        string                       `json:"name"`
+	Description string                       `json:"description"`
+	Goal        string                       `json:"goal"`
+	Stages      []string                     `json:"stages"`
+	Steps       []platformWorkflowRecipeStep `json:"steps"`
+}
+
+type platformWorkflowRecipeStep struct {
+	Phase       string   `json:"phase"`
+	Description string   `json:"description"`
+	Tools       []string `json:"tools,omitempty"`
+	WriteTools  []string `json:"write_tools,omitempty"`
+	VerifyTools []string `json:"verify_tools,omitempty"`
+	Notes       []string `json:"notes,omitempty"`
 }
 
 type platformWriteSpecResource struct {
@@ -893,7 +955,186 @@ func buildPlatformPayloadShapeResources() []platformPayloadShapeResource {
 	return shapes
 }
 
+func buildPlatformProductModel() string {
+	return "WhoDB EE is a hosted data workspace and semantic application platform. Sources and files bring data into a project; datasets make project data durable; ontologies model business objects and relationships; transforms move and shape data; functions add executable behavior; secrets and AI providers support runtime execution; lineage shows dependencies; bundles move project metadata between workspaces. Agents should operate on the whole project lifecycle, not treat WhoDB as only a source browser."
+}
+
+func buildPlatformLifecycle() []platformLifecycleStep {
+	return []platformLifecycleStep{
+		{
+			Stage:       "workspace_scope",
+			Description: "Select and confirm the signed-in user's hosted organization and project. All later reads and writes are scoped here, while backend permissions remain authoritative.",
+			Concepts:    []string{"organization", "project", "permissions"},
+			Tools:       []string{"whodb_platform_status", "whodb_platform_orgs", "whodb_platform_projects"},
+		},
+		{
+			Stage:       "ingest",
+			Description: "Bring data into the project through hosted sources or uploaded files. Sources expose external systems; files are project assets that can be inspected or promoted.",
+			Concepts:    []string{"source", "file"},
+			Tools:       []string{"whodb_platform_sources", "whodb_platform_source_objects", "whodb_platform_source_columns", "whodb_platform_files", "whodb_platform_file_inspect", "whodb_platform_promote_file_to_dataset"},
+		},
+		{
+			Stage:       "persist",
+			Description: "Create durable project-level datasets from source data, manual schemas, transforms, or promoted files.",
+			Concepts:    []string{"dataset"},
+			Tools:       []string{"whodb_platform_datasets", "whodb_platform_dataset", "whodb_platform_dataset_rows", "whodb_platform_create_dataset"},
+		},
+		{
+			Stage:       "model",
+			Description: "Represent business objects, properties, links, records, and lookup patterns with ontologies.",
+			Concepts:    []string{"ontology", "ontology_record", "fast_lookup"},
+			Tools:       []string{"whodb_platform_ontologies", "whodb_platform_ontology", "whodb_platform_ontology_rows", "whodb_platform_ontology_follow_link", "whodb_platform_ontology_fast_lookup_suggestions"},
+		},
+		{
+			Stage:       "automate",
+			Description: "Use transforms for repeatable pipelines and functions for executable behavior around the semantic model.",
+			Concepts:    []string{"transform", "function"},
+			Tools:       []string{"whodb_platform_transforms", "whodb_platform_transform", "whodb_platform_transform_runs", "whodb_platform_functions", "whodb_platform_function"},
+		},
+		{
+			Stage:       "runtime_support",
+			Description: "Configure secret metadata and AI provider metadata that runtime resources can reference without exposing credential values.",
+			Concepts:    []string{"secret", "ai_provider"},
+			Tools:       []string{"whodb_platform_secrets", "whodb_platform_ai_providers", "whodb_platform_ai_provider_models", "whodb_platform_runtime_readiness"},
+		},
+		{
+			Stage:       "govern_and_change",
+			Description: "Use lineage, resource graphs, change impact, and write plans before modifying connected platform assets.",
+			Concepts:    []string{"lineage", "resource_graph", "write_plan"},
+			Tools:       []string{"whodb_platform_project_health", "whodb_platform_resource_graph", "whodb_platform_project_lineage", "whodb_platform_change_impact", "whodb_platform_write_plan"},
+		},
+		{
+			Stage:       "package",
+			Description: "Export, diff, import, or clone selected project metadata when moving or reproducing workspace shape.",
+			Concepts:    []string{"bundle", "clone"},
+			Tools:       []string{"whodb_platform_bundle_export", "whodb_platform_bundle_diff", "whodb_platform_bundle_import_plan", "whodb_platform_bundle_import", "whodb_platform_clone"},
+		},
+	}
+}
+
+func buildPlatformConcepts() []platformConceptResource {
+	return []platformConceptResource{
+		{Name: "organization", Description: "Tenant boundary containing hosted WhoDB projects.", Role: "scope", Tools: []string{"whodb_platform_orgs"}},
+		{Name: "project", Description: "Workspace containing sources, files, datasets, ontologies, transforms, functions, secrets, providers, lineage, and bundles.", Role: "scope", Tools: []string{"whodb_platform_projects", "whodb_platform_workspace_map", "whodb_platform_project_health"}},
+		{Name: "source", Description: "Connection to an external data system. It is an input layer, not the whole platform.", Role: "ingest", Tools: []string{"whodb_platform_sources", "whodb_platform_source_objects", "whodb_platform_source_columns", "whodb_platform_source_rows"}},
+		{Name: "file", Description: "Uploaded project asset that can be browsed, previewed, inspected, moved, deleted, or promoted into a dataset.", Role: "ingest", Tools: []string{"whodb_platform_files", "whodb_platform_file_preview", "whodb_platform_file_inspect", "whodb_platform_tabular_files"}},
+		{Name: "dataset", Description: "Durable project data asset used for previews, modeling, transforms, ontology backing data, and downstream workflows.", Role: "persist", Tools: []string{"whodb_platform_datasets", "whodb_platform_dataset", "whodb_platform_dataset_rows"}},
+		{Name: "ontology", Description: "Semantic/business object model with properties, links, records, fast lookups, and relationships over project data.", Role: "model", Tools: []string{"whodb_platform_ontologies", "whodb_platform_ontology", "whodb_platform_ontology_rows", "whodb_platform_ontology_follow_link"}},
+		{Name: "transform", Description: "Repeatable pipeline that reads, writes, or moves data between files, datasets, ontologies, sources, and functions.", Role: "automate", Tools: []string{"whodb_platform_transforms", "whodb_platform_transform", "whodb_platform_transform_runs"}},
+		{Name: "function", Description: "Executable behavior around ontology/data workflows, optionally using AI providers, secrets, and deployment actions.", Role: "automate", Tools: []string{"whodb_platform_functions", "whodb_platform_function"}},
+		{Name: "secret", Description: "Runtime secret metadata for bindings and execution. Values are not exposed through MCP.", Role: "runtime_support", Tools: []string{"whodb_platform_secrets"}},
+		{Name: "ai_provider", Description: "AI provider metadata and model discovery for AI-backed functions and workflows. API keys are not exposed.", Role: "runtime_support", Tools: []string{"whodb_platform_ai_providers", "whodb_platform_ai_provider_models"}},
+		{Name: "lineage", Description: "Relationship and dependency evidence across project resources.", Role: "govern", Tools: []string{"whodb_platform_project_lineage", "whodb_platform_lineage", "whodb_platform_lineage_neighbors", "whodb_platform_resource_graph"}},
+		{Name: "bundle", Description: "Portable metadata package for project export, diff, import planning, and import.", Role: "package", Tools: []string{"whodb_platform_bundle_export", "whodb_platform_bundle_diff", "whodb_platform_bundle_import_plan", "whodb_platform_bundle_import"}},
+	}
+}
+
+func buildPlatformWorkflowRecipes() []platformWorkflowRecipe {
+	return []platformWorkflowRecipe{
+		{
+			Name:        "zero_to_app",
+			Description: "End-to-end WhoDB EE path from an empty or unknown project to a modeled, automated, runtime-ready application workspace.",
+			Goal:        "Create a project-level semantic app from source/file data with datasets, ontologies, transforms, functions, runtime support, lineage checks, and safe write confirmation.",
+			Stages:      []string{"workspace_scope", "ingest", "persist", "model", "automate", "runtime_support", "govern_and_change", "package"},
+			Steps: []platformWorkflowRecipeStep{
+				{Phase: "scope", Description: "Confirm login, organization, project, and current project health.", Tools: []string{"whodb_platform_status", "whodb_platform_project_health", "whodb_platform_workspace_map"}},
+				{Phase: "ingest", Description: "Choose whether data starts from a hosted source or uploaded files; inspect shape before creating durable assets.", Tools: []string{"whodb_platform_sources", "whodb_platform_source_objects", "whodb_platform_source_columns", "whodb_platform_files", "whodb_platform_file_inspect"}, WriteTools: []string{"whodb_platform_source_create", "whodb_platform_action", "whodb_platform_promote_file_to_dataset"}, Notes: []string{"Use file upload or source creation only after user supplies required connection/file details."}},
+				{Phase: "persist", Description: "Create or verify datasets that represent durable project data.", Tools: []string{"whodb_platform_data_model_summary", "whodb_platform_datasets", "whodb_platform_dataset", "whodb_platform_dataset_rows"}, WriteTools: []string{"whodb_platform_create_dataset", "whodb_platform_create", "whodb_platform_update"}, VerifyTools: []string{"whodb_platform_dataset", "whodb_platform_dataset_rows"}},
+				{Phase: "model", Description: "Create or refine ontologies, properties, links, records, and fast lookups over datasets.", Tools: []string{"whodb_platform_ontologies", "whodb_platform_ontology", "whodb_platform_ontology_fast_lookup_suggestions"}, WriteTools: []string{"whodb_platform_create", "whodb_platform_update", "whodb_platform_create_ontology_fast_lookup", "whodb_platform_add_ontology_record"}, VerifyTools: []string{"whodb_platform_ontology", "whodb_platform_ontology_rows", "whodb_platform_ontology_fast_lookups"}},
+				{Phase: "automate", Description: "Add transforms and functions only after the data model is understood.", Tools: []string{"whodb_platform_runtime_readiness", "whodb_platform_transforms", "whodb_platform_functions"}, WriteTools: []string{"whodb_platform_create", "whodb_platform_update", "whodb_platform_action"}, VerifyTools: []string{"whodb_platform_transform_runs", "whodb_platform_function"}},
+				{Phase: "runtime_support", Description: "Configure secret metadata and AI provider metadata for runtime behavior without exposing values.", Tools: []string{"whodb_platform_secrets", "whodb_platform_ai_providers", "whodb_platform_ai_provider_models"}, WriteTools: []string{"whodb_platform_create", "whodb_platform_update"}, VerifyTools: []string{"whodb_platform_runtime_readiness"}},
+				{Phase: "govern_change", Description: "Before any mutating operation, understand relationships, plan the write, then use confirmation flow.", Tools: []string{"whodb_platform_resource_graph", "whodb_platform_change_impact", "whodb_platform_write_plan"}, WriteTools: []string{"whodb_platform_create", "whodb_platform_update", "whodb_platform_delete", "whodb_platform_action"}, VerifyTools: []string{"whodb_platform_project_health", "whodb_platform_resource_graph"}, Notes: []string{"Never call whodb_platform_confirm without explicit user approval of the exact preview."}},
+				{Phase: "package", Description: "Optionally export, diff, import, or clone project metadata for reuse.", Tools: []string{"whodb_platform_bundle_export", "whodb_platform_bundle_diff", "whodb_platform_bundle_import_plan"}, WriteTools: []string{"whodb_platform_bundle_import", "whodb_platform_clone"}, VerifyTools: []string{"whodb_platform_project_health", "whodb_platform_workspace_map"}},
+			},
+		},
+		{
+			Name:        "connect_source_to_dataset",
+			Description: "Connect a hosted source, inspect source shape, and create or update a durable dataset.",
+			Goal:        "Move from an external source connection to a project dataset without treating source preview as durable app state.",
+			Stages:      []string{"workspace_scope", "ingest", "persist", "govern_and_change"},
+			Steps: []platformWorkflowRecipeStep{
+				{Phase: "discover", Description: "Check project context and available source types/fields.", Tools: []string{"whodb_platform_status", "whodb_platform_source_types", "whodb_platform_source_fields"}},
+				{Phase: "connect", Description: "Create or update the source using supplied connection fields, then test it.", Tools: []string{"whodb_platform_source_test"}, WriteTools: []string{"whodb_platform_source_create", "whodb_platform_source_update"}, VerifyTools: []string{"whodb_platform_sources", "whodb_platform_source_config"}},
+				{Phase: "inspect", Description: "Browse objects and columns before creating datasets.", Tools: []string{"whodb_platform_source_objects", "whodb_platform_source_columns", "whodb_platform_source_rows"}},
+				{Phase: "persist", Description: "Create or update dataset metadata/schema after inspection.", Tools: []string{"whodb_platform_write_plan"}, WriteTools: []string{"whodb_platform_create_dataset", "whodb_platform_create", "whodb_platform_update"}, VerifyTools: []string{"whodb_platform_dataset", "whodb_platform_dataset_rows"}},
+			},
+		},
+		{
+			Name:        "file_to_dataset_to_ontology",
+			Description: "Inspect uploaded tabular files, promote one to a dataset, then model it as ontology objects.",
+			Goal:        "Turn a project file into durable data and semantic object model.",
+			Stages:      []string{"ingest", "persist", "model", "govern_and_change"},
+			Steps: []platformWorkflowRecipeStep{
+				{Phase: "inspect_file", Description: "List/search files and inspect tabular shape before requesting file contents.", Tools: []string{"whodb_platform_files", "whodb_platform_tabular_files", "whodb_platform_file_inspect"}},
+				{Phase: "promote", Description: "Plan and promote the file to a dataset with explicit column mappings.", Tools: []string{"whodb_platform_write_plan"}, WriteTools: []string{"whodb_platform_promote_file_to_dataset", "whodb_platform_action"}, VerifyTools: []string{"whodb_platform_dataset", "whodb_platform_dataset_rows"}},
+				{Phase: "model", Description: "Create or update ontology and fast lookup definitions based on the dataset shape.", Tools: []string{"whodb_platform_data_model_summary", "whodb_platform_ontology_fast_lookup_suggestions"}, WriteTools: []string{"whodb_platform_create", "whodb_platform_update", "whodb_platform_create_ontology_fast_lookup"}, VerifyTools: []string{"whodb_platform_ontology", "whodb_platform_ontology_rows"}},
+			},
+		},
+		{
+			Name:        "debug_transform",
+			Description: "Understand and debug a transform using runtime readiness, graph relationships, and run history.",
+			Goal:        "Find why a transform is missing data, failing, or not updating downstream assets.",
+			Stages:      []string{"automate", "runtime_support", "govern_and_change"},
+			Steps: []platformWorkflowRecipeStep{
+				{Phase: "orient", Description: "Check runtime readiness and selected transform metadata.", Tools: []string{"whodb_platform_runtime_readiness", "whodb_platform_transforms", "whodb_platform_transform"}},
+				{Phase: "trace", Description: "Inspect resource graph and lineage around transform inputs/outputs.", Tools: []string{"whodb_platform_resource_graph", "whodb_platform_project_lineage", "whodb_platform_lineage_neighbors"}},
+				{Phase: "runs", Description: "Inspect recent runs before rerunning or editing.", Tools: []string{"whodb_platform_transform_runs"}},
+				{Phase: "change", Description: "Plan updates or reruns only after impact analysis.", Tools: []string{"whodb_platform_change_impact", "whodb_platform_write_plan"}, WriteTools: []string{"whodb_platform_update", "whodb_platform_action"}, VerifyTools: []string{"whodb_platform_transform_runs", "whodb_platform_resource_graph"}},
+			},
+		},
+		{
+			Name:        "prepare_function_deploy",
+			Description: "Review function dependencies, runtime support, and impact before deploy or redeploy.",
+			Goal:        "Deploy function behavior safely with provider/secret/ontology context.",
+			Stages:      []string{"automate", "runtime_support", "govern_and_change"},
+			Steps: []platformWorkflowRecipeStep{
+				{Phase: "inspect", Description: "Read function metadata narrowly first; request files/content only when required.", Tools: []string{"whodb_platform_functions", "whodb_platform_function"}},
+				{Phase: "dependencies", Description: "Check providers, secrets, ontologies, runtime readiness, and graph links.", Tools: []string{"whodb_platform_runtime_readiness", "whodb_platform_ai_providers", "whodb_platform_secrets", "whodb_platform_resource_graph"}},
+				{Phase: "plan_deploy", Description: "Analyze impact and dry-run the deploy/redeploy action.", Tools: []string{"whodb_platform_change_impact", "whodb_platform_write_plan"}, WriteTools: []string{"whodb_platform_action"}, VerifyTools: []string{"whodb_platform_function", "whodb_platform_runtime_readiness"}},
+			},
+		},
+		{
+			Name:        "safe_delete_resource",
+			Description: "Safely delete a resource only after graph/lineage impact and explicit confirmation.",
+			Goal:        "Avoid deleting connected platform assets blindly.",
+			Stages:      []string{"govern_and_change"},
+			Steps: []platformWorkflowRecipeStep{
+				{Phase: "identify", Description: "Resolve the exact resource id/name in the selected project.", Tools: []string{"whodb_platform_workspace_map", "whodb_platform_resource_graph"}},
+				{Phase: "impact", Description: "Read direct impact and lineage before delete.", Tools: []string{"whodb_platform_change_impact", "whodb_platform_project_lineage", "whodb_platform_lineage_neighbors"}},
+				{Phase: "plan", Description: "Use write_plan with operation delete before calling the real delete tool.", Tools: []string{"whodb_platform_write_plan"}, WriteTools: []string{"whodb_platform_delete", "whodb_platform_source_delete"}, VerifyTools: []string{"whodb_platform_workspace_map", "whodb_platform_resource_graph"}, Notes: []string{"Explain affected resources and ask for explicit approval before confirmation."}},
+			},
+		},
+		{
+			Name:        "project_import_export",
+			Description: "Export, diff, plan, import, and verify project metadata bundles.",
+			Goal:        "Move or reproduce project shape while keeping import writes reviewable.",
+			Stages:      []string{"package", "govern_and_change"},
+			Steps: []platformWorkflowRecipeStep{
+				{Phase: "snapshot", Description: "Export project metadata; include file content only when explicitly needed.", Tools: []string{"whodb_platform_project_health", "whodb_platform_bundle_export"}},
+				{Phase: "compare", Description: "Diff bundle against selected project and build a dry-run import plan.", Tools: []string{"whodb_platform_bundle_diff", "whodb_platform_bundle_import_plan"}},
+				{Phase: "import", Description: "Import only after user approval of the plan.", WriteTools: []string{"whodb_platform_bundle_import"}, VerifyTools: []string{"whodb_platform_project_health", "whodb_platform_workspace_map", "whodb_platform_resource_graph"}},
+			},
+		},
+	}
+}
+
+func buildPlatformOperatingRules() []string {
+	return []string{
+		"Treat sources as ingestion endpoints, not as the whole product.",
+		"Start broad with project health, workspace map, data model summary, runtime readiness, or resource graph before drilling into individual resources.",
+		"Use datasets and ontologies to understand durable and semantic project state.",
+		"Use transforms and functions to understand automation and executable behavior.",
+		"Use secrets and AI providers as runtime metadata only; never expect credential values.",
+		"Use lineage, change impact, and write plan before mutating connected resources.",
+		"Do not infer authorization from MCP output; hosted backend permissions are authoritative for every operation.",
+		"Default writes require user approval through the confirmation flow.",
+	}
+}
+
 type platformToolGuideResource struct {
+	ProductModel      string                      `json:"product_model"`
+	Lifecycle         []platformLifecycleStep     `json:"lifecycle"`
+	Recipes           []platformWorkflowRecipe    `json:"recipes"`
 	Mode              string                      `json:"mode"`
 	FieldProjection   string                      `json:"field_projection"`
 	WriteBehavior     string                      `json:"write_behavior"`
@@ -1030,6 +1271,9 @@ func buildPlatformToolGuide(secOpts *SecurityOptions) platformToolGuideResource 
 	}
 
 	return platformToolGuideResource{
+		ProductModel:      buildPlatformProductModel(),
+		Lifecycle:         buildPlatformLifecycle(),
+		Recipes:           filterPlatformWorkflowRecipes(buildPlatformWorkflowRecipes(), toolByName),
 		Mode:              platformResourceMode(secOpts),
 		FieldProjection:   "Use fields on supported read tools to request only the top-level fields needed, then call again with more fields if needed.",
 		WriteBehavior:     platformResourceWriteBehavior(secOpts) + " Read whodb://platform/schema payload_shapes before using generic write tools.",
@@ -1037,6 +1281,36 @@ func buildPlatformToolGuide(secOpts *SecurityOptions) platformToolGuideResource 
 		WorkspaceBehavior: "Use whodb_platform_status first. If no workspace is selected, use whodb_platform_orgs and whodb_platform_projects, then run whodb-cli use --org <org> --project <project>.",
 		Categories:        filterPlatformToolGuideCategories(categories),
 	}
+}
+
+func filterPlatformWorkflowRecipes(recipes []platformWorkflowRecipe, toolByName map[string]platformToolGuideTool) []platformWorkflowRecipe {
+	filtered := make([]platformWorkflowRecipe, 0, len(recipes))
+	for _, recipe := range recipes {
+		recipe.Steps = filterPlatformWorkflowRecipeSteps(recipe.Steps, toolByName)
+		filtered = append(filtered, recipe)
+	}
+	return filtered
+}
+
+func filterPlatformWorkflowRecipeSteps(steps []platformWorkflowRecipeStep, toolByName map[string]platformToolGuideTool) []platformWorkflowRecipeStep {
+	filtered := make([]platformWorkflowRecipeStep, 0, len(steps))
+	for _, step := range steps {
+		step.Tools = filterPlatformToolNames(step.Tools, toolByName)
+		step.WriteTools = filterPlatformToolNames(step.WriteTools, toolByName)
+		step.VerifyTools = filterPlatformToolNames(step.VerifyTools, toolByName)
+		filtered = append(filtered, step)
+	}
+	return filtered
+}
+
+func filterPlatformToolNames(toolNames []string, toolByName map[string]platformToolGuideTool) []string {
+	filtered := make([]string, 0, len(toolNames))
+	for _, toolName := range toolNames {
+		if _, ok := toolByName[toolName]; ok {
+			filtered = append(filtered, toolName)
+		}
+	}
+	return filtered
 }
 
 func filterPlatformToolGuideCategories(categories []platformToolGuideCategory) []platformToolGuideCategory {
@@ -1236,11 +1510,15 @@ func platformPromptResult(description, content string) (*mcp.GetPromptResult, er
 func handlePlatformOverviewPrompt(ctx context.Context, req *mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
 	const content = `You are using WhoDB hosted platform MCP mode.
 
+WhoDB EE is a hosted data workspace and semantic application platform. Do not treat it as only a data-source browser. Data enters through sources and files, becomes durable datasets, is modeled as ontologies, moves through transforms, gains executable behavior through functions, uses secrets and AI providers at runtime, and is governed by lineage, project scope, and permissions.
+
 Only whodb_platform_* tools are available. Local database tools such as whodb_query and whodb_connections are not exposed in this mode.
 
 Use the active whodb-cli hosted login and selected workspace. Start with whodb_platform_status to confirm host, signed-in user, organization, and project. If no workspace is selected, call whodb_platform_orgs and whodb_platform_projects, then ask the user to run whodb-cli use --org <org> --project <project>.
 
 Backend permissions are authoritative. The CLI may select a workspace, but the hosted platform decides what the signed-in user can read or change.
+
+For platform-wide understanding and workflow recipes, read whodb://platform/concepts or call whodb_platform_project_health, whodb_platform_data_model_summary, whodb_platform_runtime_readiness, and whodb_platform_resource_graph before drilling into a single resource.
 
 For read tools that accept fields, request only fields needed for the current answer, then request more fields only if needed.`
 
@@ -1252,7 +1530,12 @@ func handlePlatformReadWorkflowPrompt(ctx context.Context, req *mcp.GetPromptReq
 
 1. Call whodb_platform_status.
 2. If needed, discover workspace with whodb_platform_orgs and whodb_platform_projects.
-3. Use narrow list tools first:
+3. Build project-level context first when the user asks about the workspace, data model, readiness, risks, or next steps:
+   - whodb_platform_project_health for checks, counts, warnings, and next steps
+   - whodb_platform_data_model_summary for sources, files, datasets, ontologies, and relationships
+   - whodb_platform_runtime_readiness for functions, transforms, secrets, and AI providers
+   - whodb_platform_resource_graph for connected project resources
+4. Use narrow list tools when the task is already about one resource family:
    - whodb_platform_sources for sources
    - whodb_platform_datasets for datasets
    - whodb_platform_ontologies for ontology types
@@ -1261,9 +1544,9 @@ func handlePlatformReadWorkflowPrompt(ctx context.Context, req *mcp.GetPromptReq
    - whodb_platform_files for files
    - whodb_platform_ai_providers for AI provider metadata
    - whodb_platform_secrets for secret metadata only
-4. Use detail tools only after selecting a specific id/name.
-5. Use fields to request only what you need. Avoid file contents, function files, source content, and row previews unless the user asks for them or they are required.
-6. Never treat absence of returned data as proof the resource does not exist unless the hosted platform returned a successful response for the selected workspace.`
+5. Use detail tools only after selecting a specific id/name.
+6. Use fields to request only what you need. Avoid file contents, function files, source content, and row previews unless the user asks for them or they are required.
+7. Never treat absence of returned data as proof the resource does not exist unless the hosted platform returned a successful response for the selected workspace.`
 
 	return platformPromptResult("WhoDB hosted platform read workflow", content)
 }
@@ -1318,12 +1601,15 @@ For deleting a source:
 func handlePlatformAnalyzeProjectPrompt(ctx context.Context, req *mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
 	const content = `Analyze the selected WhoDB hosted project as a whole.
 
+Think in WhoDB EE lifecycle terms: scope -> ingest -> persist -> model -> automate -> runtime support -> govern/change -> package. Sources are only ingestion endpoints.
+
 1. Call whodb_platform_status to confirm host, user, organization, and project.
-2. Call whodb_platform_project_health with fields ["counts","checks","warnings","next"].
-3. Call whodb_platform_data_model_summary when the task involves sources, datasets, ontologies, files, or lineage.
-4. Call whodb_platform_runtime_readiness when the task involves functions, transforms, AI providers, or secrets.
-5. Use whodb_platform_resource_graph or whodb_platform_change_impact before recommending updates, deletes, deploys, runs, moves, or promotions.
-6. Only then use per-resource tools, requesting narrow fields first.`
+2. Read whodb://platform/concepts if you need the product model or a workflow recipe such as zero_to_app, connect_source_to_dataset, file_to_dataset_to_ontology, debug_transform, prepare_function_deploy, safe_delete_resource, or project_import_export.
+3. Call whodb_platform_project_health with fields ["counts","checks","warnings","next"].
+4. Call whodb_platform_data_model_summary when the task involves sources, files, datasets, ontologies, or lineage.
+5. Call whodb_platform_runtime_readiness when the task involves transforms, functions, AI providers, or secrets.
+6. Use whodb_platform_resource_graph or whodb_platform_change_impact before recommending updates, deletes, deploys, runs, moves, or promotions.
+7. Only then use per-resource tools, requesting narrow fields first.`
 
 	return platformPromptResult("WhoDB hosted platform project analysis workflow", content)
 }
@@ -2055,6 +2341,23 @@ const platformInstructions = `WhoDB MCP Server - Hosted Platform Tools
 
 This server is running in hosted platform mode. It exposes only whodb_platform_* tools
 backed by the current hosted WhoDB login and selected organization/project.
+
+WhoDB EE is a hosted data workspace and semantic application platform, not just
+a source connector. Agents should understand the project lifecycle:
+1. Scope: organizations and projects establish tenancy and workspace context.
+2. Ingest: sources connect external systems, and files are uploaded project assets.
+3. Persist: datasets are durable project data assets.
+4. Model: ontologies define business objects, properties, links, records, and lookups.
+5. Automate: transforms define repeatable pipelines, and functions add executable behavior.
+6. Support runtime: secrets and AI providers support execution without exposing credentials.
+7. Govern change: lineage, resource graphs, change impact, and write plans explain dependencies.
+8. Package: bundles and clone workflows move or reproduce project metadata.
+
+Use whodb://platform/concepts for the machine-readable product model. Prefer
+project-level tools such as whodb_platform_project_health,
+whodb_platform_data_model_summary, whodb_platform_runtime_readiness, and
+whodb_platform_resource_graph before drilling into a single resource unless the
+user already named the exact resource.
 
 Read tools return stable metadata such as count, request_id, scope, warnings, and
 truncated where applicable. Most read tools accept an optional fields array to

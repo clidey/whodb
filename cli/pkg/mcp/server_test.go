@@ -234,6 +234,11 @@ func TestPlatformInstructionsExcludeLocalTools(t *testing.T) {
 	if !strings.Contains(platformInstructions, "whodb_platform_status") {
 		t.Fatal("platformInstructions should mention platform tools")
 	}
+	for _, expected := range []string{"semantic application platform", "ontologies define business objects", "whodb://platform/concepts"} {
+		if !strings.Contains(platformInstructions, expected) {
+			t.Fatalf("platformInstructions should mention platform concept %q", expected)
+		}
+	}
 	if strings.Contains(platformInstructions, "whodb_query") || strings.Contains(platformInstructions, "whodb_connections") {
 		t.Fatal("platformInstructions should not advertise local database tools")
 	}
@@ -336,6 +341,20 @@ func TestPlatformPromptContent(t *testing.T) {
 			t.Fatalf("source workflow prompt should mention %q", expected)
 		}
 	}
+
+	overview := promptText(t, getServerPrompt(t, server, "whodb_platform_overview"))
+	for _, expected := range []string{"semantic application platform", "durable datasets", "ontologies", "whodb://platform/concepts"} {
+		if !strings.Contains(overview, expected) {
+			t.Fatalf("overview prompt should mention %q", expected)
+		}
+	}
+
+	analyze := promptText(t, getServerPrompt(t, server, "whodb_platform_analyze_project"))
+	for _, expected := range []string{"scope -> ingest -> persist -> model", "Sources are only ingestion endpoints"} {
+		if !strings.Contains(analyze, expected) {
+			t.Fatalf("analyze project prompt should mention %q", expected)
+		}
+	}
 }
 
 func TestNewServer_PlatformModeListsOnlyPlatformResources(t *testing.T) {
@@ -344,6 +363,7 @@ func TestNewServer_PlatformModeListsOnlyPlatformResources(t *testing.T) {
 		"whodb://platform/schema",
 		"whodb://platform/workspace",
 		"whodb://platform/tool-guide",
+		"whodb://platform/concepts",
 	}
 	if len(result.Resources) != len(expectedResources) {
 		t.Fatalf("platform mode exposed %d resources, want %d", len(result.Resources), len(expectedResources))
@@ -378,6 +398,7 @@ func TestPlatformResourcesReadJSON(t *testing.T) {
 		"whodb://platform/schema",
 		"whodb://platform/workspace",
 		"whodb://platform/tool-guide",
+		"whodb://platform/concepts",
 	} {
 		text := resourceText(t, readServerResource(t, server, uri))
 		var payload map[string]any
@@ -390,7 +411,7 @@ func TestPlatformResourcesReadJSON(t *testing.T) {
 	if !strings.Contains(schema, `"whodb_platform_status"`) || strings.Contains(schema, `"whodb_query"`) {
 		t.Fatalf("platform schema resource should include platform tools and exclude local tools: %s", schema)
 	}
-	for _, expected := range []string{`"write_specs"`, `"payload_shapes"`, `"key": "update:ai_provider"`, `"mutation": "UpdateAIProvider"`, `"secret": true`, `"examples"`} {
+	for _, expected := range []string{`"product_model"`, `"concepts"`, `"lifecycle"`, `"recipes"`, `"zero_to_app"`, `"write_specs"`, `"payload_shapes"`, `"key": "update:ai_provider"`, `"mutation": "UpdateAIProvider"`, `"secret": true`, `"examples"`} {
 		if !strings.Contains(schema, expected) {
 			t.Fatalf("platform schema resource should contain %s: %s", expected, schema)
 		}
@@ -402,9 +423,15 @@ func TestPlatformResourcesReadJSON(t *testing.T) {
 		}
 	}
 	guide := resourceText(t, readServerResource(t, server, "whodb://platform/tool-guide"))
-	for _, expected := range []string{`"sources"`, `"field_projection"`, `"whodb_platform_source_create"`, `"whodb_platform_file_inspect"`} {
+	for _, expected := range []string{`"product_model"`, `"lifecycle"`, `"recipes"`, `"zero_to_app"`, `"sources"`, `"field_projection"`, `"whodb_platform_source_create"`, `"whodb_platform_file_inspect"`} {
 		if !strings.Contains(guide, expected) {
 			t.Fatalf("platform tool guide resource should contain %s: %s", expected, guide)
+		}
+	}
+	concepts := resourceText(t, readServerResource(t, server, "whodb://platform/concepts"))
+	for _, expected := range []string{`semantic application platform`, `"source"`, `"ontology"`, `"transform"`, `"bundle"`, `"recipes"`, `"zero_to_app"`, `"file_to_dataset_to_ontology"`, `"safe_delete_resource"`, `Treat sources as ingestion endpoints`} {
+		if !strings.Contains(concepts, expected) {
+			t.Fatalf("platform concepts resource should contain %s: %s", expected, concepts)
 		}
 	}
 }

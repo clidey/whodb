@@ -354,6 +354,7 @@ func buildPlatformMCP() PlatformMCP {
 			{URI: "whodb://platform/schema", Description: "Machine-readable hosted WhoDB platform MCP contract and enabled platform tools", MIMEType: "application/json"},
 			{URI: "whodb://platform/workspace", Description: "Current hosted WhoDB login and selected workspace metadata", MIMEType: "application/json"},
 			{URI: "whodb://platform/tool-guide", Description: "Hosted WhoDB platform MCP tool categories, read/write behavior, and field projection guidance", MIMEType: "application/json"},
+			{URI: "whodb://platform/concepts", Description: "WhoDB EE hosted platform concepts, lifecycle, and agent operating model", MIMEType: "application/json"},
 		},
 		ResourceTemplates: []MCPResourceTemplate{
 			{URITemplate: "whodb://platform/datasets/{id}", Description: "Read one hosted dataset from the selected project", MIMEType: "application/json"},
