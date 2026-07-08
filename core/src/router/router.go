@@ -175,7 +175,6 @@ func setupServer(router *chi.Mux, schema graphql.ExecutableSchema, httpHandlers 
 	}
 
 	server := NewGraphQLServer(schema)
-	server.AddTransport(&transport.Websocket{})
 	graph.SetupHTTPServer(router)
 	setupPlaygroundHandler(router, server)
 
