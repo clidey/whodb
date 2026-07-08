@@ -305,6 +305,11 @@ func TestNewServer_PlatformModeListsOnlyPlatformPrompts(t *testing.T) {
 		"whodb_platform_read_workflow",
 		"whodb_platform_write_safety",
 		"whodb_platform_source_workflow",
+		"whodb_platform_analyze_project",
+		"whodb_platform_prepare_safe_write",
+		"whodb_platform_debug_missing_data",
+		"whodb_platform_build_ontology_workflow",
+		"whodb_platform_import_export_workflow",
 	}
 	if len(result.Prompts) != len(expectedPrompts) {
 		t.Fatalf("platform mode exposed %d prompts, want %d", len(result.Prompts), len(expectedPrompts))

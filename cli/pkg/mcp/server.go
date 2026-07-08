@@ -960,7 +960,7 @@ func buildPlatformToolGuide(secOpts *SecurityOptions) platformToolGuideResource 
 		},
 			"whodb_platform_status", "whodb_platform_orgs", "whodb_platform_projects", "whodb_platform_project_create", "whodb_platform_project_rename", "whodb_platform_project_delete"),
 		platformToolCategory(toolByName, "workspace_intelligence", "Workspace-level maps, relationship graph, and suggested next actions.", "Use these before per-resource reads when the user asks what exists, what is connected, or what should happen next.", []string{"counts", "warnings"}, nil,
-			"whodb_platform_workspace_map", "whodb_platform_resource_graph", "whodb_platform_next_actions"),
+			"whodb_platform_workspace_map", "whodb_platform_resource_graph", "whodb_platform_next_actions", "whodb_platform_project_health", "whodb_platform_data_model_summary", "whodb_platform_runtime_readiness", "whodb_platform_change_impact", "whodb_platform_write_plan"),
 		platformToolCategory(toolByName, "sources", "Hosted source discovery, connection metadata, data previews, and source writes.", "List sources with id/name/type first; inspect config only when needed because secrets are redacted.", []string{"id", "name", "type"}, []platformToolGuideMutation{
 			{Tool: "whodb_platform_source_create", Resources: []string{"source"}},
 			{Tool: "whodb_platform_source_update", Resources: []string{"source"}},
@@ -1026,7 +1026,7 @@ func buildPlatformToolGuide(secOpts *SecurityOptions) platformToolGuideResource 
 			{Tool: "whodb_platform_delete", Resources: []string{"secret", "ai_provider", "ontology", "ontology_fast_lookup", "dataset", "transform", "file", "folder", "function", "source_object"}},
 			{Tool: "whodb_platform_action", Resources: []string{"transform", "file", "folder", "function"}, Actions: []string{"run", "upload", "rename", "move", "promote_to_dataset", "deploy", "redeploy"}},
 		},
-			"whodb_platform_create", "whodb_platform_update", "whodb_platform_delete", "whodb_platform_action", "whodb_platform_pending", "whodb_platform_confirm"),
+			"whodb_platform_write_plan", "whodb_platform_create", "whodb_platform_update", "whodb_platform_delete", "whodb_platform_action", "whodb_platform_pending", "whodb_platform_confirm"),
 	}
 
 	return platformToolGuideResource{
@@ -1189,6 +1189,36 @@ func registerPlatformPrompts(server *mcp.Server) {
 		Title:       "WhoDB Platform Source Workflow",
 		Description: "Manage hosted WhoDB platform sources from discovery through create, update, and delete.",
 	}, handlePlatformSourceWorkflowPrompt)
+
+	server.AddPrompt(&mcp.Prompt{
+		Name:        "whodb_platform_analyze_project",
+		Title:       "Analyze WhoDB Platform Project",
+		Description: "Analyze a selected hosted project as a whole before choosing per-resource tools.",
+	}, handlePlatformAnalyzeProjectPrompt)
+
+	server.AddPrompt(&mcp.Prompt{
+		Name:        "whodb_platform_prepare_safe_write",
+		Title:       "Prepare Safe WhoDB Platform Write",
+		Description: "Plan and explain hosted platform writes before using mutating tools.",
+	}, handlePlatformPrepareSafeWritePrompt)
+
+	server.AddPrompt(&mcp.Prompt{
+		Name:        "whodb_platform_debug_missing_data",
+		Title:       "Debug Missing WhoDB Platform Data",
+		Description: "Trace missing or unexpected hosted project data across sources, files, datasets, ontologies, transforms, and lineage.",
+	}, handlePlatformDebugMissingDataPrompt)
+
+	server.AddPrompt(&mcp.Prompt{
+		Name:        "whodb_platform_build_ontology_workflow",
+		Title:       "Build WhoDB Platform Ontology Workflow",
+		Description: "Create or improve ontology workflows from hosted sources, files, datasets, and relationships.",
+	}, handlePlatformBuildOntologyWorkflowPrompt)
+
+	server.AddPrompt(&mcp.Prompt{
+		Name:        "whodb_platform_import_export_workflow",
+		Title:       "WhoDB Platform Import Export Workflow",
+		Description: "Prepare bundle export, diff, import planning, and import confirmation workflows.",
+	}, handlePlatformImportExportWorkflowPrompt)
 }
 
 func platformPromptResult(description, content string) (*mcp.GetPromptResult, error) {
@@ -1283,6 +1313,70 @@ For deleting a source:
 3. Explain that deletion is destructive and confirm only after user approval.`
 
 	return platformPromptResult("WhoDB hosted platform source workflow", content)
+}
+
+func handlePlatformAnalyzeProjectPrompt(ctx context.Context, req *mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
+	const content = `Analyze the selected WhoDB hosted project as a whole.
+
+1. Call whodb_platform_status to confirm host, user, organization, and project.
+2. Call whodb_platform_project_health with fields ["counts","checks","warnings","next"].
+3. Call whodb_platform_data_model_summary when the task involves sources, datasets, ontologies, files, or lineage.
+4. Call whodb_platform_runtime_readiness when the task involves functions, transforms, AI providers, or secrets.
+5. Use whodb_platform_resource_graph or whodb_platform_change_impact before recommending updates, deletes, deploys, runs, moves, or promotions.
+6. Only then use per-resource tools, requesting narrow fields first.`
+
+	return platformPromptResult("WhoDB hosted platform project analysis workflow", content)
+}
+
+func handlePlatformPrepareSafeWritePrompt(ctx context.Context, req *mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
+	const content = `Prepare hosted platform writes safely.
+
+1. Read current state with the narrowest relevant read tool.
+2. Call whodb_platform_change_impact for existing resources before update, delete, deploy, run, move, or promotion work.
+3. Call whodb_platform_write_plan with the same resource, operation, action, id, and payload_json you intend to use for the real write.
+4. Explain the returned preview, payload_keys, affected resources, warnings, and suggested_reads to the user.
+5. If the user approves, call the real mutating tool. In default mode it returns a confirmation token; do not call whodb_platform_confirm until the user approves that exact confirmation preview.`
+
+	return platformPromptResult("WhoDB hosted platform safe write planning workflow", content)
+}
+
+func handlePlatformDebugMissingDataPrompt(ctx context.Context, req *mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
+	const content = `Debug missing or unexpected hosted project data.
+
+1. Confirm workspace with whodb_platform_status.
+2. Call whodb_platform_project_health and inspect warnings.
+3. Use whodb_platform_data_model_summary for missing datasets, ontologies, file promotion, or source-to-model relationships.
+4. Use whodb_platform_resource_graph to find whether the resource exists under another connected node.
+5. For source-backed issues, inspect whodb_platform_sources, whodb_platform_source_objects, whodb_platform_source_columns, and row previews only if needed.
+6. For transform/function issues, inspect whodb_platform_runtime_readiness, transform runs, function deployment status, and change impact.`
+
+	return platformPromptResult("WhoDB hosted platform missing data debugging workflow", content)
+}
+
+func handlePlatformBuildOntologyWorkflowPrompt(ctx context.Context, req *mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
+	const content = `Build or improve ontology workflows in WhoDB hosted platform.
+
+1. Start with whodb_platform_data_model_summary to understand existing sources, datasets, ontologies, and relationships.
+2. Inspect candidate datasets with whodb_platform_dataset and preview rows only when needed.
+3. Inspect existing ontologies with whodb_platform_ontology and whodb_platform_ontology_fast_lookup_suggestions.
+4. Use whodb_platform_change_impact before changing ontology definitions or linked resources.
+5. Use whodb_platform_write_plan before creating or updating ontology resources, records, or fast lookups.
+6. Keep backend permissions authoritative and use confirmation flow for every write.`
+
+	return platformPromptResult("WhoDB hosted platform ontology workflow", content)
+}
+
+func handlePlatformImportExportWorkflowPrompt(ctx context.Context, req *mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
+	const content = `Use this workflow for hosted project import and export.
+
+1. Call whodb_platform_status and whodb_platform_project_health.
+2. Use whodb_platform_bundle_export to capture current metadata; include file content only when the user explicitly needs it.
+3. Use whodb_platform_bundle_diff before importing into a selected project.
+4. Use whodb_platform_bundle_import_plan to review create/skip actions without writing.
+5. Explain the plan and ask for user approval before whodb_platform_bundle_import.
+6. After import, rerun whodb_platform_project_health and whodb_platform_resource_graph to verify the workspace shape.`
+
+	return platformPromptResult("WhoDB hosted platform import export workflow", content)
 }
 
 // handleQueryHelpPrompt returns guidance for writing SQL queries.
@@ -1979,6 +2073,11 @@ Available tools:
 - whodb_platform_workspace_map: Summarize the selected project across resources
 - whodb_platform_resource_graph: Show relationships between hosted resources
 - whodb_platform_next_actions: Suggest deterministic next platform steps
+- whodb_platform_project_health: Summarize project-wide health, checks, warnings, and next steps
+- whodb_platform_data_model_summary: Summarize sources, datasets, ontologies, relationships, and gaps
+- whodb_platform_runtime_readiness: Check transforms, functions, AI providers, and secret metadata readiness
+- whodb_platform_change_impact: Analyze direct graph impact before changing a resource
+- whodb_platform_write_plan: Validate and preview a hosted write without executing it
 - whodb_platform_sources: List hosted sources in the selected project
 - whodb_platform_source_types: List source types available for creation
 - whodb_platform_source_fields: List connection fields for one source type

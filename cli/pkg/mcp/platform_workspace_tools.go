@@ -18,6 +18,8 @@ package mcp
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"sort"
 	"strconv"
 	"strings"
@@ -46,6 +48,28 @@ type PlatformNextActionsInput struct {
 	OmitFiles   bool     `json:"omit_files,omitempty" jsonschema:"Omit root folder file and folder summaries. Defaults to false."`
 	OmitLineage bool     `json:"omit_lineage,omitempty" jsonschema:"Omit project lineage summary. Defaults to false."`
 	Fields      []string `json:"fields,omitempty" jsonschema:"Top-level output fields to include, for example actions, warnings, goal."`
+}
+
+// PlatformChangeImpactInput is the input for the whodb_platform_change_impact tool.
+type PlatformChangeImpactInput struct {
+	Resource    string   `json:"resource" jsonschema:"Resource type, for example dataset, ontology, function, transform, file, source, secret, ai_provider"`
+	ID          string   `json:"id" jsonschema:"Resource id"`
+	Action      string   `json:"action,omitempty" jsonschema:"Optional planned action, for example update, delete, run, deploy, promote_to_dataset"`
+	OmitFiles   bool     `json:"omit_files,omitempty" jsonschema:"Omit root folder file and folder nodes. Defaults to false."`
+	OmitLineage bool     `json:"omit_lineage,omitempty" jsonschema:"Omit hosted lineage edges. Defaults to false."`
+	Fields      []string `json:"fields,omitempty" jsonschema:"Top-level output fields to include, for example target, affected, warnings."`
+}
+
+// PlatformWritePlanInput is the input for the whodb_platform_write_plan tool.
+type PlatformWritePlanInput struct {
+	Resource    string   `json:"resource" jsonschema:"Resource type, for example secret, ai_provider, ontology, dataset, transform, folder, file, function, source_object"`
+	ID          string   `json:"id,omitempty" jsonschema:"Resource id for update, delete, or action operations"`
+	Action      string   `json:"action,omitempty" jsonschema:"Action name when operation is action, for example deploy, run, rename, move, promote_to_dataset"`
+	Operation   string   `json:"operation" jsonschema:"Write operation: create, update, delete, or action"`
+	PayloadJSON string   `json:"payload_json,omitempty" jsonschema:"JSON object payload. This is validated and summarized but never executed by this read-only tool."`
+	OmitFiles   bool     `json:"omit_files,omitempty" jsonschema:"Omit root folder file and folder nodes for impact lookup. Defaults to false."`
+	OmitLineage bool     `json:"omit_lineage,omitempty" jsonschema:"Omit hosted lineage edges for impact lookup. Defaults to false."`
+	Fields      []string `json:"fields,omitempty" jsonschema:"Top-level output fields to include, for example preview, affected, warnings."`
 }
 
 // PlatformWorkspaceItem is a compact platform resource summary for agents.
@@ -127,6 +151,68 @@ type PlatformNextActions struct {
 	Warnings []string             `json:"warnings"`
 }
 
+// PlatformWorkflowCheck describes one workspace workflow readiness check.
+type PlatformWorkflowCheck struct {
+	Name     string `json:"name"`
+	Status   string `json:"status"`
+	Reason   string `json:"reason,omitempty"`
+	ToolHint string `json:"tool_hint,omitempty"`
+}
+
+// PlatformProjectHealth summarizes project-level health for agents.
+type PlatformProjectHealth struct {
+	Counts   map[string]int          `json:"counts"`
+	Checks   []PlatformWorkflowCheck `json:"checks"`
+	Warnings []string                `json:"warnings"`
+	Scope    *PlatformOutputScope    `json:"scope,omitempty"`
+	Next     []PlatformNextAction    `json:"next,omitempty"`
+	Graph    *PlatformLineageSummary `json:"graph,omitempty"`
+}
+
+// PlatformDataModelSummary summarizes data-model resources and gaps.
+type PlatformDataModelSummary struct {
+	Sources        []PlatformWorkspaceItem     `json:"sources"`
+	Datasets       []PlatformWorkspaceItem     `json:"datasets"`
+	Ontologies     []PlatformWorkspaceItem     `json:"ontologies"`
+	Relationships  []PlatformResourceGraphEdge `json:"relationships"`
+	Gaps           []string                    `json:"gaps"`
+	SuggestedTools []string                    `json:"suggested_tools"`
+}
+
+// PlatformRuntimeReadiness summarizes executable/runtime readiness.
+type PlatformRuntimeReadiness struct {
+	AIProviders []PlatformWorkspaceItem `json:"ai_providers"`
+	Secrets     []PlatformWorkspaceItem `json:"secrets"`
+	Functions   []PlatformWorkspaceItem `json:"functions"`
+	Transforms  []PlatformWorkspaceItem `json:"transforms"`
+	Checks      []PlatformWorkflowCheck `json:"checks"`
+	Warnings    []string                `json:"warnings"`
+}
+
+// PlatformChangeImpact summarizes direct graph impact for a planned change.
+type PlatformChangeImpact struct {
+	Target         PlatformResourceGraphNode   `json:"target"`
+	Action         string                      `json:"action,omitempty"`
+	Affected       []PlatformResourceGraphNode `json:"affected"`
+	Edges          []PlatformResourceGraphEdge `json:"edges"`
+	SuggestedReads []string                    `json:"suggested_reads"`
+	Warnings       []string                    `json:"warnings"`
+}
+
+// PlatformWritePlan validates and summarizes a hosted write without executing it.
+type PlatformWritePlan struct {
+	Operation            string                      `json:"operation"`
+	Resource             string                      `json:"resource"`
+	Action               string                      `json:"action,omitempty"`
+	Mutation             string                      `json:"mutation"`
+	ConfirmationRequired bool                        `json:"confirmation_required"`
+	Preview              *PlatformActionPreview      `json:"preview,omitempty"`
+	PayloadKeys          []string                    `json:"payload_keys,omitempty"`
+	SuggestedReads       []string                    `json:"suggested_reads"`
+	Affected             []PlatformResourceGraphNode `json:"affected,omitempty"`
+	Warnings             []string                    `json:"warnings"`
+}
+
 type platformWorkspaceSnapshot struct {
 	session     *platformToolSession
 	sources     []platformapi.Source
@@ -143,6 +229,22 @@ type platformWorkspaceSnapshot struct {
 	warnings    []string
 	omitFiles   bool
 	omitLineage bool
+}
+
+type platformTransformGraph struct {
+	Nodes []platformTransformNode `json:"nodes"`
+	Edges []platformTransformEdge `json:"edges"`
+}
+
+type platformTransformNode struct {
+	ID     string         `json:"id"`
+	Type   string         `json:"type"`
+	Config map[string]any `json:"config"`
+}
+
+type platformTransformEdge struct {
+	Source string `json:"source"`
+	Target string `json:"target"`
 }
 
 // HandlePlatformWorkspaceMap returns a compact selected-project workspace map.
@@ -178,6 +280,82 @@ func HandlePlatformNextActions(ctx context.Context, req *mcp.CallToolRequest, in
 		}
 		next := buildPlatformNextActions(snapshot, input.Goal)
 		return next, len(next.Actions), false, nil
+	})
+}
+
+// HandlePlatformProjectHealth returns an agent-focused project health summary.
+func HandlePlatformProjectHealth(ctx context.Context, req *mcp.CallToolRequest, input PlatformNextActionsInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
+	return platformProjectRead(ctx, "platform_project_health", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
+		snapshot, err := loadPlatformWorkspaceSnapshot(ctx, session, input.OmitFiles, input.OmitLineage)
+		if err != nil {
+			return nil, 0, false, err
+		}
+		health := buildPlatformProjectHealth(snapshot)
+		return health, len(health.Checks), false, nil
+	})
+}
+
+// HandlePlatformDataModelSummary returns an agent-focused data model summary.
+func HandlePlatformDataModelSummary(ctx context.Context, req *mcp.CallToolRequest, input PlatformResourceGraphInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
+	return platformProjectRead(ctx, "platform_data_model_summary", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
+		snapshot, err := loadPlatformWorkspaceSnapshot(ctx, session, input.OmitFiles, input.OmitLineage)
+		if err != nil {
+			return nil, 0, false, err
+		}
+		summary := buildPlatformDataModelSummary(snapshot)
+		return summary, len(summary.Datasets) + len(summary.Ontologies), false, nil
+	})
+}
+
+// HandlePlatformRuntimeReadiness returns an agent-focused runtime readiness summary.
+func HandlePlatformRuntimeReadiness(ctx context.Context, req *mcp.CallToolRequest, input PlatformNextActionsInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
+	return platformProjectRead(ctx, "platform_runtime_readiness", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
+		snapshot, err := loadPlatformWorkspaceSnapshot(ctx, session, input.OmitFiles, input.OmitLineage)
+		if err != nil {
+			return nil, 0, false, err
+		}
+		readiness := buildPlatformRuntimeReadiness(snapshot)
+		return readiness, len(readiness.Checks), false, nil
+	})
+}
+
+// HandlePlatformChangeImpact returns direct graph impact for a planned resource change.
+func HandlePlatformChangeImpact(ctx context.Context, req *mcp.CallToolRequest, input PlatformChangeImpactInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
+	if strings.TrimSpace(input.Resource) == "" || strings.TrimSpace(input.ID) == "" {
+		return nil, PlatformReadOutput{Error: "resource and id are required", RequestID: generateRequestID("platform_change_impact")}, nil
+	}
+	return platformProjectRead(ctx, "platform_change_impact", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
+		snapshot, err := loadPlatformWorkspaceSnapshot(ctx, session, input.OmitFiles, input.OmitLineage)
+		if err != nil {
+			return nil, 0, false, err
+		}
+		impact := buildPlatformChangeImpact(snapshot, input.Resource, input.ID, input.Action)
+		return impact, len(impact.Affected), false, nil
+	})
+}
+
+// HandlePlatformWritePlan validates and summarizes a hosted write without executing it.
+func HandlePlatformWritePlan(ctx context.Context, req *mcp.CallToolRequest, input PlatformWritePlanInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
+	return platformProjectRead(ctx, "platform_write_plan", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
+		operation := normalizePlatformWriteToken(input.Operation)
+		if operation == "" {
+			return nil, 0, false, errors.New("operation is required")
+		}
+		spec, payload, err := buildPlatformGenericWrite(session, PlatformGenericWriteInput{
+			Resource:    input.Resource,
+			ID:          input.ID,
+			Action:      input.Action,
+			PayloadJSON: input.PayloadJSON,
+		}, operation)
+		if err != nil {
+			return nil, 0, false, err
+		}
+		snapshot, err := loadPlatformWorkspaceSnapshot(ctx, session, input.OmitFiles, input.OmitLineage)
+		if err != nil {
+			return nil, 0, false, err
+		}
+		plan := buildPlatformWritePlan(snapshot, session, spec, payload, input.ID)
+		return plan, len(plan.Affected), false, nil
 	})
 }
 
@@ -321,6 +499,7 @@ func buildPlatformResourceGraph(snapshot *platformWorkspaceSnapshot) PlatformRes
 	}
 	for _, transform := range snapshot.transforms {
 		addNode(transform.ID, "transform", transform.Name, map[string]string{"trigger_mode": transform.TriggerMode})
+		addTransformGraphNodes(transform, addNode, addEdge)
 	}
 	for _, fn := range snapshot.functions {
 		addNode(fn.ID, "function", fn.Name, map[string]string{"language": fn.Language, "deployed": boolString(fn.IsDeployed)})
@@ -435,6 +614,339 @@ func buildPlatformNextActions(snapshot *platformWorkspaceSnapshot, goal string) 
 	}
 	sort.Slice(actions, func(i, j int) bool { return actions[i].Priority < actions[j].Priority })
 	return PlatformNextActions{Goal: goal, Actions: actions, Warnings: append([]string(nil), snapshot.warnings...)}
+}
+
+func addTransformGraphNodes(transform platformapi.Transform, addNode func(string, string, string, map[string]string), addEdge func(string, string, string, string, string)) {
+	if strings.TrimSpace(transform.GraphJSON) == "" {
+		return
+	}
+	var graph platformTransformGraph
+	if err := json.Unmarshal([]byte(transform.GraphJSON), &graph); err != nil {
+		return
+	}
+	for _, node := range graph.Nodes {
+		nodeID := transformGraphNodeID(transform.ID, node.ID)
+		if nodeID == "" {
+			continue
+		}
+		nodeType := strings.TrimSpace(node.Type)
+		addNode(nodeID, "transform_node", nodeType, map[string]string{"transform_id": transform.ID, "node_type": nodeType})
+		addEdge(transform.ID, "transform", nodeID, "transform_node", "contains_transform_node")
+		addTransformGraphResourceEdges(node, nodeID, addEdge)
+	}
+	for _, edge := range graph.Edges {
+		fromID := transformGraphNodeID(transform.ID, edge.Source)
+		toID := transformGraphNodeID(transform.ID, edge.Target)
+		addEdge(fromID, "transform_node", toID, "transform_node", "transform_pipeline_edge")
+	}
+}
+
+func addTransformGraphResourceEdges(node platformTransformNode, nodeID string, addEdge func(string, string, string, string, string)) {
+	sourceID := transformConfigString(node.Config, "sourceId")
+	fileID := transformConfigString(node.Config, "fileId")
+	datasetID := transformConfigString(node.Config, "datasetId")
+	targetDatasetID := transformConfigString(node.Config, "targetDatasetId")
+	ontologyID := transformConfigString(node.Config, "ontologyId")
+	functionID := transformConfigString(node.Config, "functionId")
+
+	addEdge(sourceID, "source", nodeID, "transform_node", "transform_reads_source")
+	addEdge(fileID, "file", nodeID, "transform_node", "transform_reads_file")
+	addEdge(datasetID, "dataset", nodeID, "transform_node", "transform_reads_dataset")
+	addEdge(targetDatasetID, "transform_node", targetDatasetID, "dataset", "transform_writes_dataset")
+	if normalizeGraphType(node.Type) == "ontology" {
+		addEdge(nodeID, "transform_node", ontologyID, "ontology", "transform_writes_ontology")
+	} else {
+		addEdge(ontologyID, "ontology", nodeID, "transform_node", "transform_reads_ontology")
+	}
+	addEdge(nodeID, "transform_node", functionID, "function", "transform_calls_function")
+}
+
+func transformGraphNodeID(transformID, nodeID string) string {
+	transformID = strings.TrimSpace(transformID)
+	nodeID = strings.TrimSpace(nodeID)
+	if transformID == "" || nodeID == "" {
+		return ""
+	}
+	return transformID + ":" + nodeID
+}
+
+func transformConfigString(config map[string]any, key string) string {
+	value, ok := config[key]
+	if !ok {
+		return ""
+	}
+	text, ok := value.(string)
+	if !ok {
+		return ""
+	}
+	return strings.TrimSpace(text)
+}
+
+func buildPlatformProjectHealth(snapshot *platformWorkspaceSnapshot) PlatformProjectHealth {
+	counts := platformWorkspaceCounts(snapshot)
+	checks := []PlatformWorkflowCheck{
+		workspaceCheck("sources", len(snapshot.sources) > 0, "At least one hosted source is available.", "No hosted sources were returned for this project.", "whodb_platform_sources"),
+		workspaceCheck("data_model", len(snapshot.datasets) > 0 || len(snapshot.ontologies) > 0, "Datasets or ontologies are available for modeling.", "No datasets or ontologies were returned.", "whodb_platform_data_model_summary"),
+		workspaceCheck("runtime", len(snapshot.transforms) > 0 || len(snapshot.functions) > 0 || len(snapshot.providers) > 0, "Runtime resources are available.", "No transforms, functions, or AI providers were returned.", "whodb_platform_runtime_readiness"),
+		workspaceCheck("storage", snapshot.storageUsed >= 0, "Project storage usage is available.", "Project storage usage was not available.", "whodb_platform_storage_usage"),
+	}
+	if snapshot.lineage != nil {
+		checks = append(checks, workspaceCheck("lineage", len(snapshot.lineage.Edges) > 0, "Project lineage has relationship edges.", "Project lineage returned no relationship edges.", "whodb_platform_project_lineage"))
+	} else {
+		checks = append(checks, PlatformWorkflowCheck{Name: "lineage", Status: "unknown", Reason: "Lineage was omitted or unavailable.", ToolHint: "whodb_platform_project_lineage"})
+	}
+	next := buildPlatformNextActions(snapshot, "").Actions
+	if len(next) > 5 {
+		next = next[:5]
+	}
+	health := PlatformProjectHealth{
+		Counts:   counts,
+		Checks:   checks,
+		Warnings: append([]string(nil), snapshot.warnings...),
+		Scope:    platformScope(snapshot.session),
+		Next:     next,
+	}
+	if snapshot.lineage != nil {
+		health.Graph = &PlatformLineageSummary{NodeCount: len(snapshot.lineage.Nodes), EdgeCount: len(snapshot.lineage.Edges)}
+	}
+	return health
+}
+
+func buildPlatformDataModelSummary(snapshot *platformWorkspaceSnapshot) PlatformDataModelSummary {
+	graph := buildPlatformResourceGraph(snapshot)
+	relationships := make([]PlatformResourceGraphEdge, 0)
+	for _, edge := range graph.Edges {
+		if dataModelRelationship(edge) {
+			relationships = append(relationships, edge)
+		}
+	}
+	gaps := make([]string, 0)
+	if len(snapshot.datasets) == 0 {
+		gaps = append(gaps, "no datasets returned")
+	}
+	if len(snapshot.ontologies) == 0 {
+		gaps = append(gaps, "no ontologies returned")
+	}
+	if len(relationships) == 0 {
+		gaps = append(gaps, "no data-model relationships found")
+	}
+	return PlatformDataModelSummary{
+		Sources:        sourceItems(snapshot.sources),
+		Datasets:       datasetItems(snapshot.datasets),
+		Ontologies:     ontologyItems(snapshot.ontologies),
+		Relationships:  relationships,
+		Gaps:           gaps,
+		SuggestedTools: []string{"whodb_platform_datasets", "whodb_platform_ontologies", "whodb_platform_resource_graph", "whodb_platform_project_lineage"},
+	}
+}
+
+func dataModelRelationship(edge PlatformResourceGraphEdge) bool {
+	if strings.HasPrefix(edge.Kind, "ontology_link") {
+		return true
+	}
+	switch edge.Kind {
+	case "source_dataset", "source_ontology", "promoted_to_dataset", "lineage", "transform_reads_dataset", "transform_writes_dataset", "transform_reads_ontology", "transform_writes_ontology":
+		return true
+	default:
+		return false
+	}
+}
+
+func buildPlatformRuntimeReadiness(snapshot *platformWorkspaceSnapshot) PlatformRuntimeReadiness {
+	checks := []PlatformWorkflowCheck{
+		workspaceCheck("ai_providers", len(snapshot.providers) > 0, "AI provider metadata is available.", "No AI providers were returned.", "whodb_platform_ai_providers"),
+		workspaceCheck("secrets", len(snapshot.secrets) > 0, "Secret metadata is available.", "No secrets were returned. This is fine unless runtime resources need secret bindings.", "whodb_platform_secrets"),
+		workspaceCheck("functions", len(snapshot.functions) > 0, "Functions are available.", "No functions were returned.", "whodb_platform_functions"),
+		workspaceCheck("transforms", len(snapshot.transforms) > 0, "Transforms are available.", "No transforms were returned.", "whodb_platform_transforms"),
+	}
+	undeployed := undeployedFunctionCount(snapshot.functions)
+	warnings := append([]string(nil), snapshot.warnings...)
+	if undeployed > 0 {
+		warnings = append(warnings, intString(undeployed)+" function(s) are not deployed")
+	}
+	return PlatformRuntimeReadiness{
+		AIProviders: providerItems(snapshot.providers),
+		Secrets:     secretItems(snapshot.secrets),
+		Functions:   functionItems(snapshot.functions),
+		Transforms:  transformItems(snapshot.transforms),
+		Checks:      checks,
+		Warnings:    warnings,
+	}
+}
+
+func buildPlatformChangeImpact(snapshot *platformWorkspaceSnapshot, resource, id, action string) PlatformChangeImpact {
+	resourceType := normalizeGraphType(resource)
+	id = strings.TrimSpace(id)
+	action = strings.TrimSpace(action)
+	graph := buildPlatformResourceGraph(snapshot)
+	target := PlatformResourceGraphNode{ID: id, Type: resourceType}
+	for _, node := range graph.Nodes {
+		if node.ID == id && node.Type == resourceType {
+			target = node
+			break
+		}
+	}
+	edges := make([]PlatformResourceGraphEdge, 0)
+	affectedByKey := map[string]PlatformResourceGraphNode{}
+	for _, edge := range graph.Edges {
+		fromMatches := edge.FromID == id && edge.FromType == resourceType
+		toMatches := edge.ToID == id && edge.ToType == resourceType
+		if !fromMatches && !toMatches {
+			continue
+		}
+		edges = append(edges, edge)
+		if fromMatches {
+			addAffectedGraphNode(affectedByKey, graph.Nodes, edge.ToID, edge.ToType)
+		}
+		if toMatches {
+			addAffectedGraphNode(affectedByKey, graph.Nodes, edge.FromID, edge.FromType)
+		}
+	}
+	affected := make([]PlatformResourceGraphNode, 0, len(affectedByKey))
+	for _, node := range affectedByKey {
+		affected = append(affected, node)
+	}
+	sortGraphNodes(affected)
+	warnings := make([]string, 0)
+	if target.Name == "" && len(edges) == 0 {
+		warnings = append(warnings, "resource was not found in the selected project graph")
+	}
+	if isHighImpactPlatformAction(action) {
+		warnings = append(warnings, "planned action is destructive or high impact; read affected resources before executing")
+	}
+	return PlatformChangeImpact{
+		Target:         target,
+		Action:         action,
+		Affected:       affected,
+		Edges:          edges,
+		SuggestedReads: suggestedReadsForResource(resourceType, action),
+		Warnings:       warnings,
+	}
+}
+
+func buildPlatformWritePlan(snapshot *platformWorkspaceSnapshot, session *platformToolSession, spec platformapi.GenericWriteSpec, payload map[string]any, targetID string) PlatformWritePlan {
+	action := &PendingPlatformAction{
+		Operation:   spec.Mutation,
+		Resource:    spec.Resource,
+		Action:      spec.Action,
+		Host:        session.Host.URL,
+		OrgID:       session.Host.DefaultOrgID,
+		ProjectID:   session.Host.DefaultProjectID,
+		ProjectName: session.Host.DefaultProjectName,
+		Summary:     platformGenericWriteSummary(spec, payload),
+		Changes:     genericWriteChanges(payload),
+		Mutation:    spec.Mutation,
+		Variables:   payload,
+	}
+	preview := action.Preview()
+	affected := []PlatformResourceGraphNode(nil)
+	if strings.TrimSpace(targetID) != "" {
+		affected = buildPlatformChangeImpact(snapshot, spec.Resource, targetID, spec.Action).Affected
+	}
+	warnings := []string{"plan only; no write executed and no confirmation token was created", "hosted platform permissions still apply when the write runs"}
+	if isHighImpactPlatformAction(spec.Action) {
+		warnings = append(warnings, "planned action is destructive or high impact")
+	}
+	return PlatformWritePlan{
+		Operation:            spec.Action,
+		Resource:             spec.Resource,
+		Action:               spec.Action,
+		Mutation:             spec.Mutation,
+		ConfirmationRequired: true,
+		Preview:              preview,
+		PayloadKeys:          genericWriteChanges(payload),
+		SuggestedReads:       suggestedReadsForResource(spec.Resource, spec.Action),
+		Affected:             affected,
+		Warnings:             warnings,
+	}
+}
+
+func workspaceCheck(name string, ok bool, okReason, missingReason, toolHint string) PlatformWorkflowCheck {
+	status := "ok"
+	reason := okReason
+	if !ok {
+		status = "warning"
+		reason = missingReason
+	}
+	return PlatformWorkflowCheck{Name: name, Status: status, Reason: reason, ToolHint: toolHint}
+}
+
+func addAffectedGraphNode(target map[string]PlatformResourceGraphNode, nodes []PlatformResourceGraphNode, id, nodeType string) {
+	if id == "" {
+		return
+	}
+	key := nodeType + ":" + id
+	if _, ok := target[key]; ok {
+		return
+	}
+	for _, node := range nodes {
+		if node.ID == id && node.Type == nodeType {
+			target[key] = node
+			return
+		}
+	}
+	target[key] = PlatformResourceGraphNode{ID: id, Type: nodeType}
+}
+
+func sortGraphNodes(nodes []PlatformResourceGraphNode) {
+	sort.Slice(nodes, func(i, j int) bool {
+		if nodes[i].Type == nodes[j].Type {
+			return nodes[i].ID < nodes[j].ID
+		}
+		return nodes[i].Type < nodes[j].Type
+	})
+}
+
+func isHighImpactPlatformAction(action string) bool {
+	switch normalizeGraphType(action) {
+	case "delete", "move", "deploy", "redeploy", "run", "upload", "promote_to_dataset":
+		return true
+	default:
+		return false
+	}
+}
+
+func suggestedReadsForResource(resource, action string) []string {
+	tools := []string{"whodb_platform_resource_graph"}
+	switch normalizeGraphType(resource) {
+	case "dataset":
+		tools = append(tools, "whodb_platform_dataset", "whodb_platform_dataset_rows", "whodb_platform_project_lineage")
+	case "ontology":
+		tools = append(tools, "whodb_platform_ontology", "whodb_platform_ontology_fast_lookups", "whodb_platform_project_lineage")
+	case "function":
+		tools = append(tools, "whodb_platform_function", "whodb_platform_runtime_readiness")
+	case "transform":
+		tools = append(tools, "whodb_platform_transform", "whodb_platform_transform_runs", "whodb_platform_project_lineage")
+	case "file":
+		tools = append(tools, "whodb_platform_files", "whodb_platform_file_inspect", "whodb_platform_file_preview")
+	case "folder":
+		tools = append(tools, "whodb_platform_files")
+	case "source":
+		tools = append(tools, "whodb_platform_sources", "whodb_platform_source_config", "whodb_platform_source_test")
+	case "secret":
+		tools = append(tools, "whodb_platform_secrets", "whodb_platform_runtime_readiness")
+	case "ai_provider":
+		tools = append(tools, "whodb_platform_ai_providers", "whodb_platform_ai_provider_models", "whodb_platform_runtime_readiness")
+	case "source_object":
+		tools = append(tools, "whodb_platform_sources", "whodb_platform_source_objects")
+	}
+	if isHighImpactPlatformAction(action) {
+		tools = append(tools, "whodb_platform_change_impact")
+	}
+	return uniqueStrings(tools)
+}
+
+func uniqueStrings(values []string) []string {
+	seen := map[string]bool{}
+	result := make([]string, 0, len(values))
+	for _, value := range values {
+		if seen[value] {
+			continue
+		}
+		seen[value] = true
+		result = append(result, value)
+	}
+	return result
 }
 
 func platformWorkspaceCounts(snapshot *platformWorkspaceSnapshot) map[string]int {

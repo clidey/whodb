@@ -344,14 +344,6 @@ func datasetCreatePayloadFromExport(dataset platform.Dataset) map[string]any {
 	return platform.DatasetCreatePayloadFromExport(dataset)
 }
 
-func ontologyCreatePayloadFromExport(ontology platform.Ontology) map[string]any {
-	return platform.OntologyCreatePayloadFromExport(ontology)
-}
-
-func transformCreatePayloadFromExport(transform platform.Transform) map[string]any {
-	return platform.TransformCreatePayloadFromExport(transform)
-}
-
 func functionCreatePayloadFromExport(fn platform.Function, keepProjectReferences bool) map[string]any {
 	return platform.FunctionCreatePayloadFromExport(fn, keepProjectReferences)
 }

@@ -161,6 +161,26 @@ func registerPlatformReadTool(server *mcp.Server, tool *mcp.Tool, secOpts *Secur
 		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformNextActionsInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformNextActions(ctx, req, input)
 		})
+	case "whodb_platform_project_health":
+		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformNextActionsInput) (*mcp.CallToolResult, any, error) {
+			return HandlePlatformProjectHealth(ctx, req, input)
+		})
+	case "whodb_platform_data_model_summary":
+		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformResourceGraphInput) (*mcp.CallToolResult, any, error) {
+			return HandlePlatformDataModelSummary(ctx, req, input)
+		})
+	case "whodb_platform_runtime_readiness":
+		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformNextActionsInput) (*mcp.CallToolResult, any, error) {
+			return HandlePlatformRuntimeReadiness(ctx, req, input)
+		})
+	case "whodb_platform_change_impact":
+		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformChangeImpactInput) (*mcp.CallToolResult, any, error) {
+			return HandlePlatformChangeImpact(ctx, req, input)
+		})
+	case "whodb_platform_write_plan":
+		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformWritePlanInput) (*mcp.CallToolResult, any, error) {
+			return HandlePlatformWritePlan(ctx, req, input)
+		})
 	case "whodb_platform_source_constraints":
 		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformSourceConstraintsInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformSourceConstraints(ctx, req, input)
@@ -281,6 +301,11 @@ func platformReadToolDefinitions() []*mcp.Tool {
 		{Name: "whodb_platform_workspace_map", Description: descPlatformWorkspaceMap, Annotations: platformReadOnlyAnnotations("Map Hosted Workspace")},
 		{Name: "whodb_platform_resource_graph", Description: descPlatformResourceGraph, Annotations: platformReadOnlyAnnotations("Graph Hosted Resources")},
 		{Name: "whodb_platform_next_actions", Description: descPlatformNextActions, Annotations: platformReadOnlyAnnotations("Suggest Hosted Next Actions")},
+		{Name: "whodb_platform_project_health", Description: descPlatformProjectHealth, Annotations: platformReadOnlyAnnotations("Summarize Hosted Project Health")},
+		{Name: "whodb_platform_data_model_summary", Description: descPlatformDataModelSummary, Annotations: platformReadOnlyAnnotations("Summarize Hosted Data Model")},
+		{Name: "whodb_platform_runtime_readiness", Description: descPlatformRuntimeReadiness, Annotations: platformReadOnlyAnnotations("Check Hosted Runtime Readiness")},
+		{Name: "whodb_platform_change_impact", Description: descPlatformChangeImpact, Annotations: platformReadOnlyAnnotations("Analyze Hosted Change Impact")},
+		{Name: "whodb_platform_write_plan", Description: descPlatformWritePlan, Annotations: platformReadOnlyAnnotations("Plan Hosted Write")},
 		{Name: "whodb_platform_source_constraints", Description: descPlatformSourceConstraints, Annotations: platformReadOnlyAnnotations("Inspect Hosted Source Constraints")},
 		{Name: "whodb_platform_source_content", Description: descPlatformSourceContent, Annotations: platformReadOnlyAnnotations("Read Hosted Source Content")},
 		{Name: "whodb_platform_secrets", Description: descPlatformSecrets, Annotations: platformReadOnlyAnnotations("List Hosted Secret Metadata")},
@@ -800,6 +825,26 @@ Use this when an agent needs to understand how sources, datasets, files, ontolog
 const descPlatformNextActions = `Return deterministic suggested next actions for the selected hosted project.
 
 Use this after workspace discovery to choose the next read or write tool. Suggestions are advisory only; backend permissions and write confirmations still apply.`
+
+const descPlatformProjectHealth = `Return a compact health summary for the selected hosted project.
+
+Use this when the user asks whether the workspace is ready, what is missing, or where to start. It combines project counts, readiness checks, warnings, selected scope, and top suggested next actions.`
+
+const descPlatformDataModelSummary = `Summarize selected-project data-model resources.
+
+Use this before ontology, dataset, or lineage work. It returns sources, datasets, ontologies, graph relationships, modeling gaps, and the read tools an agent should call next.`
+
+const descPlatformRuntimeReadiness = `Summarize selected-project runtime readiness.
+
+Use this before function, transform, AI provider, or secret work. It returns runtime resources, deployment/readiness checks, and warnings without exposing secret values.`
+
+const descPlatformChangeImpact = `Analyze direct graph impact for a planned change.
+
+Pass resource, id, and optional action before update, delete, deploy, run, move, or promotion work. It returns directly connected resources and recommended reads; it does not execute any change.`
+
+const descPlatformWritePlan = `Validate and preview a hosted platform write without executing it.
+
+Use this before calling mutating tools when the agent needs a safe dry-run summary. It reuses the same generic write specs as real writes, returns payload keys, suggested reads, and direct impact, but does not create a confirmation token.`
 
 const descPlatformSourceConstraints = `Describe editable field constraints for one hosted source object.
 

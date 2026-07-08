@@ -595,7 +595,7 @@ func TestPlatformMCP_RealReadWriteLifecycle(t *testing.T) {
 		return out.Count, out.Error
 	})
 	liveCoverTool("whodb_platform_project_lineage")
-	liveMustWorkspaceIntelligence(t, ctx)
+	liveMustWorkspaceIntelligence(t, ctx, promotedDatasetID)
 	liveMustBundleTools(t, ctx, suffix)
 
 	liveMustGenericWrite(t, ctx, "platform_delete", "delete", PlatformGenericWriteInput{Resource: "file", ID: fileID})
@@ -720,7 +720,7 @@ func liveMustBundleTools(t *testing.T, ctx context.Context, suffix string) {
 	})
 }
 
-func liveMustWorkspaceIntelligence(t *testing.T, ctx context.Context) {
+func liveMustWorkspaceIntelligence(t *testing.T, ctx context.Context, datasetID string) {
 	t.Helper()
 	_, workspaceMap, err := HandlePlatformWorkspaceMap(ctx, nil, PlatformWorkspaceMapInput{Fields: []string{"counts", "warnings", "lineage"}})
 	if err != nil {
@@ -748,6 +748,57 @@ func liveMustWorkspaceIntelligence(t *testing.T, ctx context.Context) {
 		t.Fatalf("next actions = %#v, want suggested actions without error", actions)
 	}
 	liveCoverTool("whodb_platform_next_actions")
+
+	_, health, err := HandlePlatformProjectHealth(ctx, nil, PlatformNextActionsInput{Fields: []string{"counts", "checks", "warnings", "next"}})
+	if err != nil {
+		t.Fatalf("HandlePlatformProjectHealth() error = %v", err)
+	}
+	if health.Error != "" || health.Count == 0 {
+		t.Fatalf("project health = %#v, want checks without error", health)
+	}
+	liveCoverTool("whodb_platform_project_health")
+
+	_, model, err := HandlePlatformDataModelSummary(ctx, nil, PlatformResourceGraphInput{Fields: []string{"datasets", "ontologies", "relationships", "gaps"}})
+	if err != nil {
+		t.Fatalf("HandlePlatformDataModelSummary() error = %v", err)
+	}
+	if model.Error != "" {
+		t.Fatalf("data model summary = %#v, want no error", model)
+	}
+	liveCoverTool("whodb_platform_data_model_summary")
+
+	_, readiness, err := HandlePlatformRuntimeReadiness(ctx, nil, PlatformNextActionsInput{Fields: []string{"checks", "warnings", "functions", "transforms"}})
+	if err != nil {
+		t.Fatalf("HandlePlatformRuntimeReadiness() error = %v", err)
+	}
+	if readiness.Error != "" || readiness.Count == 0 {
+		t.Fatalf("runtime readiness = %#v, want checks without error", readiness)
+	}
+	liveCoverTool("whodb_platform_runtime_readiness")
+
+	_, impact, err := HandlePlatformChangeImpact(ctx, nil, PlatformChangeImpactInput{Resource: "dataset", ID: datasetID, Action: "update", Fields: []string{"target", "affected", "suggested_reads", "warnings"}})
+	if err != nil {
+		t.Fatalf("HandlePlatformChangeImpact() error = %v", err)
+	}
+	if impact.Error != "" {
+		t.Fatalf("change impact = %#v, want no error", impact)
+	}
+	liveCoverTool("whodb_platform_change_impact")
+
+	_, plan, err := HandlePlatformWritePlan(ctx, nil, PlatformWritePlanInput{
+		Operation:   "update",
+		Resource:    "dataset",
+		ID:          datasetID,
+		PayloadJSON: `{"description":"planned by MCP e2e"}`,
+		Fields:      []string{"preview", "payload_keys", "suggested_reads", "warnings"},
+	})
+	if err != nil {
+		t.Fatalf("HandlePlatformWritePlan() error = %v", err)
+	}
+	if plan.Error != "" {
+		t.Fatalf("write plan = %#v, want no error", plan)
+	}
+	liveCoverTool("whodb_platform_write_plan")
 }
 
 func liveMustReadOrgsProjects(t *testing.T, ctx context.Context) {

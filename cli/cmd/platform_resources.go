@@ -126,8 +126,6 @@ var (
 	fileOutPath                 string
 	fileNewName                 string
 	fileNewFolderID             string
-	fileDatasetName             string
-	fileDatasetDescription      string
 	fileColumnMappings          []string
 	functionInputJSON           string
 	functionInputFile           string

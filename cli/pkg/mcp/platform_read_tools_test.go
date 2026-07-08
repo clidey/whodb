@@ -113,7 +113,12 @@ func (f *fakePlatformClient) ProjectLineage(ctx context.Context, projectID strin
 }
 
 func (f *fakePlatformClient) Transforms(ctx context.Context, projectID string) ([]platformapi.Transform, error) {
-	return []platformapi.Transform{{ID: "transform-1", ProjectID: projectID, Name: "Daily Load"}}, nil
+	return []platformapi.Transform{{
+		ID:        "transform-1",
+		ProjectID: projectID,
+		Name:      "Daily Load",
+		GraphJSON: `{"nodes":[{"id":"file","type":"file","config":{"fileId":"file-1"}},{"id":"dataset","type":"dataset","config":{"datasetId":"dataset-1"}},{"id":"output","type":"output","config":{"targetDatasetId":"dataset-1"}}],"edges":[{"source":"file","target":"dataset"},{"source":"dataset","target":"output"}]}`,
+	}}, nil
 }
 
 func (f *fakePlatformClient) TransformRuns(ctx context.Context, projectID, transformID string, limit int) ([]platformapi.TransformRun, error) {
@@ -258,6 +263,95 @@ func TestHandlePlatformResourceGraphBuildsRelationships(t *testing.T) {
 	}
 	if !hasPlatformGraphEdge(graph.Edges, "file-1", "file", "dataset-1", "dataset", "promoted_to_dataset") {
 		t.Fatalf("edges = %#v, want file dataset edge", graph.Edges)
+	}
+	if !hasPlatformGraphEdge(graph.Edges, "file-1", "file", "transform-1:file", "transform_node", "transform_reads_file") {
+		t.Fatalf("edges = %#v, want transform file read edge", graph.Edges)
+	}
+	if !hasPlatformGraphEdge(graph.Edges, "transform-1:file", "transform_node", "transform-1:dataset", "transform_node", "transform_pipeline_edge") {
+		t.Fatalf("edges = %#v, want transform internal edge", graph.Edges)
+	}
+}
+
+func TestHandlePlatformProjectHealthSummarizesChecks(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := HandlePlatformProjectHealth(context.Background(), nil, PlatformNextActionsInput{})
+	if err != nil {
+		t.Fatalf("HandlePlatformProjectHealth() error = %v", err)
+	}
+	if output.Error != "" {
+		t.Fatalf("HandlePlatformProjectHealth() output error = %q", output.Error)
+	}
+	health, ok := output.Data.(PlatformProjectHealth)
+	if !ok {
+		t.Fatalf("output.Data = %T, want PlatformProjectHealth", output.Data)
+	}
+	if health.Counts["datasets"] != 1 || len(health.Checks) == 0 || len(health.Next) == 0 {
+		t.Fatalf("health = %#v, want counts checks and next actions", health)
+	}
+}
+
+func TestHandlePlatformChangeImpactFindsAffectedNodes(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := HandlePlatformChangeImpact(context.Background(), nil, PlatformChangeImpactInput{Resource: "file", ID: "file-1", Action: "promote_to_dataset"})
+	if err != nil {
+		t.Fatalf("HandlePlatformChangeImpact() error = %v", err)
+	}
+	if output.Error != "" {
+		t.Fatalf("HandlePlatformChangeImpact() output error = %q", output.Error)
+	}
+	impact, ok := output.Data.(PlatformChangeImpact)
+	if !ok {
+		t.Fatalf("output.Data = %T, want PlatformChangeImpact", output.Data)
+	}
+	if impact.Target.ID != "file-1" || len(impact.Affected) == 0 {
+		t.Fatalf("impact = %#v, want file target and affected nodes", impact)
+	}
+	if !strings.Contains(strings.Join(impact.SuggestedReads, ","), "whodb_platform_change_impact") {
+		t.Fatalf("suggested reads = %#v, want change impact for high-impact action", impact.SuggestedReads)
+	}
+}
+
+func TestHandlePlatformWritePlanDoesNotCreatePendingAction(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+	platformPendingMutex.Lock()
+	pendingPlatformActions = map[string]*PendingPlatformAction{}
+	platformPendingMutex.Unlock()
+
+	_, output, err := HandlePlatformWritePlan(context.Background(), nil, PlatformWritePlanInput{
+		Operation:   "update",
+		Resource:    "dataset",
+		ID:          "dataset-1",
+		PayloadJSON: `{"description":"planned"}`,
+	})
+	if err != nil {
+		t.Fatalf("HandlePlatformWritePlan() error = %v", err)
+	}
+	if output.Error != "" {
+		t.Fatalf("HandlePlatformWritePlan() output error = %q", output.Error)
+	}
+	plan, ok := output.Data.(PlatformWritePlan)
+	if !ok {
+		t.Fatalf("output.Data = %T, want PlatformWritePlan", output.Data)
+	}
+	if plan.Mutation == "" || plan.Preview == nil || !plan.ConfirmationRequired {
+		t.Fatalf("plan = %#v, want preview and mutation", plan)
+	}
+	platformPendingMutex.RLock()
+	pendingCount := len(pendingPlatformActions)
+	platformPendingMutex.RUnlock()
+	if pendingCount != 0 {
+		t.Fatalf("pending action count = %d, want 0", pendingCount)
 	}
 }
 
