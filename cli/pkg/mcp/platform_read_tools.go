@@ -832,7 +832,7 @@ func platformReadMatchesBool(value bool, filter string) bool {
 
 const descPlatformWorkspaceMap = `Return a compact selected-project map across hosted sources, secrets, AI providers, datasets, ontologies, transforms, functions, root files, storage, and lineage.
 
-Use this as the first workspace-level context tool when the user asks what exists or what to work on next. It is read-only and never returns secret values.`
+Use this when the agent needs a full resource inventory after first checking whodb_platform_workspace_summary. It is read-only and never returns secret values.`
 
 const descPlatformResourceGraph = `Return a normalized graph of hosted platform resources and relationships in the selected project.
 
@@ -840,7 +840,7 @@ Use this when an agent needs to understand how sources, datasets, files, ontolog
 
 const descPlatformNextActions = `Return deterministic suggested next actions for the selected hosted project.
 
-Use this after workspace discovery to choose the next read or write tool. Suggestions are advisory only; backend permissions and write confirmations still apply.`
+Use this as a deeper action-ranking view after whodb_platform_workspace_summary or whodb_platform_gap_analysis. Suggestions are advisory only; backend permissions and write confirmations still apply.`
 
 const descPlatformWorkspaceSummary = `Return a compact, goal-aware summary of the selected hosted project.
 
@@ -856,7 +856,7 @@ Use this when the agent needs to explain what is missing before building an app,
 
 const descPlatformProjectHealth = `Return a compact health summary for the selected hosted project.
 
-Use this when the user asks whether the workspace is ready, what is missing, or where to start. It combines project counts, readiness checks, warnings, selected scope, and top suggested next actions.`
+Use this for readiness diagnostics after whodb_platform_workspace_summary or whodb_platform_gap_analysis. It combines project counts, readiness checks, warnings, selected scope, and top suggested next actions.`
 
 const descPlatformDataModelSummary = `Summarize selected-project data-model resources.
 

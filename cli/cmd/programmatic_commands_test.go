@@ -469,7 +469,7 @@ func TestConnectionsAddAndList(t *testing.T) {
 	connAddHost = "localhost"
 	connAddPort = 5432
 	connAddUser = "testuser"
-	connAddPassword = "testpass"
+	connAddPassword = ""
 	connAddDatabase = "testdb"
 	connAddSchema = "public"
 	connectionsQuiet = true
@@ -520,7 +520,7 @@ func TestConnectionsAddCmd_JSONEnvelope(t *testing.T) {
 	connAddHost = "localhost"
 	connAddPort = 5432
 	connAddUser = "testuser"
-	connAddPassword = "testpass"
+	connAddPassword = ""
 	connAddDatabase = "testdb"
 	connAddSchema = "public"
 
@@ -591,7 +591,7 @@ func TestConnectionsAddCmd_SSLAdvanced(t *testing.T) {
 	connAddHost = "localhost"
 	connAddPort = 5432
 	connAddUser = "alice"
-	connAddPassword = "secret"
+	connAddPassword = ""
 	connAddDatabase = "app"
 	connAddSchema = "public"
 	connAddSSLMode = "verify-identity"
@@ -698,7 +698,7 @@ func TestConnectionsAddCmd_FromDiscovered(t *testing.T) {
 	connAddName = ""
 	connAddType = ""
 	connAddUser = "alice"
-	connAddPassword = "secret"
+	connAddPassword = ""
 	connAddDatabase = "app"
 	connAddFromDiscovered = "aws-prod/prod-db"
 
