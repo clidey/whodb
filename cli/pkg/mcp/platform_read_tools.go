@@ -162,6 +162,18 @@ func registerPlatformReadTool(server *mcp.Server, tool *mcp.Tool, secOpts *Secur
 		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformNextActionsInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformNextActions(ctx, req, input)
 		})
+	case "whodb_platform_workspace_summary":
+		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformWorkspaceSummaryInput) (*mcp.CallToolResult, any, error) {
+			return HandlePlatformWorkspaceSummary(ctx, req, input)
+		})
+	case "whodb_platform_build_plan":
+		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformBuildPlanInput) (*mcp.CallToolResult, any, error) {
+			return HandlePlatformBuildPlan(ctx, req, input)
+		})
+	case "whodb_platform_gap_analysis":
+		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformGapAnalysisInput) (*mcp.CallToolResult, any, error) {
+			return HandlePlatformGapAnalysis(ctx, req, input)
+		})
 	case "whodb_platform_project_health":
 		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformNextActionsInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformProjectHealth(ctx, req, input)
@@ -302,6 +314,9 @@ func platformReadToolDefinitions() []*mcp.Tool {
 		{Name: "whodb_platform_workspace_map", Description: descPlatformWorkspaceMap, Annotations: platformReadOnlyAnnotations("Map Hosted Workspace")},
 		{Name: "whodb_platform_resource_graph", Description: descPlatformResourceGraph, Annotations: platformReadOnlyAnnotations("Graph Hosted Resources")},
 		{Name: "whodb_platform_next_actions", Description: descPlatformNextActions, Annotations: platformReadOnlyAnnotations("Suggest Hosted Next Actions")},
+		{Name: "whodb_platform_workspace_summary", Description: descPlatformWorkspaceSummary, Annotations: platformReadOnlyAnnotations("Summarize Hosted Workspace")},
+		{Name: "whodb_platform_build_plan", Description: descPlatformBuildPlan, Annotations: platformReadOnlyAnnotations("Plan Hosted Build")},
+		{Name: "whodb_platform_gap_analysis", Description: descPlatformGapAnalysis, Annotations: platformReadOnlyAnnotations("Analyze Hosted Gaps")},
 		{Name: "whodb_platform_project_health", Description: descPlatformProjectHealth, Annotations: platformReadOnlyAnnotations("Summarize Hosted Project Health")},
 		{Name: "whodb_platform_data_model_summary", Description: descPlatformDataModelSummary, Annotations: platformReadOnlyAnnotations("Summarize Hosted Data Model")},
 		{Name: "whodb_platform_runtime_readiness", Description: descPlatformRuntimeReadiness, Annotations: platformReadOnlyAnnotations("Check Hosted Runtime Readiness")},
@@ -826,6 +841,18 @@ Use this when an agent needs to understand how sources, datasets, files, ontolog
 const descPlatformNextActions = `Return deterministic suggested next actions for the selected hosted project.
 
 Use this after workspace discovery to choose the next read or write tool. Suggestions are advisory only; backend permissions and write confirmations still apply.`
+
+const descPlatformWorkspaceSummary = `Return a compact, goal-aware summary of the selected hosted project.
+
+Use this when the user asks what the platform project contains or what can be built. It combines scope, counts, highlights, gaps, next actions, recommended tools, warnings, and lineage summary without drilling into every item.`
+
+const descPlatformBuildPlan = `Return an end-to-end hosted platform build plan for a user goal.
+
+Use this before coordinating a cross-resource workflow. It plans scope, ingest, persist, model, automate, runtime support, and governance phases using existing WhoDB platform terminology. It is read-only and never creates confirmation tokens.`
+
+const descPlatformGapAnalysis = `Return a goal-aware gap analysis for the selected hosted project.
+
+Use this when the agent needs to explain what is missing before building an app, data product, ontology workflow, transform pipeline, or AI-backed function. It returns ready areas, gaps, suggested tools, and next actions.`
 
 const descPlatformProjectHealth = `Return a compact health summary for the selected hosted project.
 

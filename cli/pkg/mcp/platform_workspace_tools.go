@@ -50,6 +50,30 @@ type PlatformNextActionsInput struct {
 	Fields      []string `json:"fields,omitempty" jsonschema:"Top-level output fields to include, for example actions, warnings, goal."`
 }
 
+// PlatformWorkspaceSummaryInput is the input for the whodb_platform_workspace_summary tool.
+type PlatformWorkspaceSummaryInput struct {
+	Goal        string   `json:"goal,omitempty" jsonschema:"Optional user goal used to tailor highlights and recommended next tools."`
+	OmitFiles   bool     `json:"omit_files,omitempty" jsonschema:"Omit root folder file and folder summaries. Defaults to false."`
+	OmitLineage bool     `json:"omit_lineage,omitempty" jsonschema:"Omit project lineage summary. Defaults to false."`
+	Fields      []string `json:"fields,omitempty" jsonschema:"Top-level output fields to include, for example scope, counts, highlights, gaps, next_actions."`
+}
+
+// PlatformBuildPlanInput is the input for the whodb_platform_build_plan tool.
+type PlatformBuildPlanInput struct {
+	Goal        string   `json:"goal" jsonschema:"User goal or desired app/data workflow to plan against."`
+	OmitFiles   bool     `json:"omit_files,omitempty" jsonschema:"Omit root folder file and folder summaries. Defaults to false."`
+	OmitLineage bool     `json:"omit_lineage,omitempty" jsonschema:"Omit project lineage summary. Defaults to false."`
+	Fields      []string `json:"fields,omitempty" jsonschema:"Top-level output fields to include, for example phases, prerequisites, warnings."`
+}
+
+// PlatformGapAnalysisInput is the input for the whodb_platform_gap_analysis tool.
+type PlatformGapAnalysisInput struct {
+	Goal        string   `json:"goal,omitempty" jsonschema:"Optional user goal or desired app/data workflow to analyze gaps against."`
+	OmitFiles   bool     `json:"omit_files,omitempty" jsonschema:"Omit root folder file and folder summaries. Defaults to false."`
+	OmitLineage bool     `json:"omit_lineage,omitempty" jsonschema:"Omit project lineage summary. Defaults to false."`
+	Fields      []string `json:"fields,omitempty" jsonschema:"Top-level output fields to include, for example gaps, ready, counts, next_actions."`
+}
+
 // PlatformChangeImpactInput is the input for the whodb_platform_change_impact tool.
 type PlatformChangeImpactInput struct {
 	Resource    string   `json:"resource" jsonschema:"Resource type, for example dataset, ontology, function, transform, file, source, secret, ai_provider"`
@@ -149,6 +173,59 @@ type PlatformNextActions struct {
 	Goal     string               `json:"goal,omitempty"`
 	Actions  []PlatformNextAction `json:"actions"`
 	Warnings []string             `json:"warnings"`
+}
+
+// PlatformWorkspaceSummary is a compact, goal-aware workspace overview for agents.
+type PlatformWorkspaceSummary struct {
+	Goal             string                  `json:"goal,omitempty"`
+	Scope            *PlatformOutputScope    `json:"scope,omitempty"`
+	Counts           map[string]int          `json:"counts"`
+	Highlights       []string                `json:"highlights"`
+	Gaps             []PlatformWorkflowGap   `json:"gaps"`
+	NextActions      []PlatformNextAction    `json:"next_actions"`
+	RecommendedTools []string                `json:"recommended_tools"`
+	Lineage          *PlatformLineageSummary `json:"lineage,omitempty"`
+	Warnings         []string                `json:"warnings"`
+}
+
+// PlatformBuildPlan is an end-to-end platform workflow plan for a user goal.
+type PlatformBuildPlan struct {
+	Goal          string                  `json:"goal"`
+	Scope         *PlatformOutputScope    `json:"scope,omitempty"`
+	Prerequisites []PlatformWorkflowCheck `json:"prerequisites"`
+	Phases        []PlatformPlanPhase     `json:"phases"`
+	Gaps          []PlatformWorkflowGap   `json:"gaps"`
+	Warnings      []string                `json:"warnings"`
+}
+
+// PlatformPlanPhase is one phase in a recommended platform workflow.
+type PlatformPlanPhase struct {
+	Phase       string   `json:"phase"`
+	Objective   string   `json:"objective"`
+	ReadTools   []string `json:"read_tools,omitempty"`
+	WriteTools  []string `json:"write_tools,omitempty"`
+	VerifyTools []string `json:"verify_tools,omitempty"`
+	Notes       []string `json:"notes,omitempty"`
+}
+
+// PlatformGapAnalysis is a goal-aware readiness and missing-capability report.
+type PlatformGapAnalysis struct {
+	Goal        string                `json:"goal,omitempty"`
+	Scope       *PlatformOutputScope  `json:"scope,omitempty"`
+	Counts      map[string]int        `json:"counts"`
+	Ready       []string              `json:"ready"`
+	Gaps        []PlatformWorkflowGap `json:"gaps"`
+	NextActions []PlatformNextAction  `json:"next_actions"`
+	Warnings    []string              `json:"warnings"`
+}
+
+// PlatformWorkflowGap describes one missing or weak platform capability.
+type PlatformWorkflowGap struct {
+	Area           string   `json:"area"`
+	Severity       string   `json:"severity"`
+	Missing        string   `json:"missing"`
+	Reason         string   `json:"reason"`
+	SuggestedTools []string `json:"suggested_tools"`
 }
 
 // PlatformWorkflowCheck describes one workspace workflow readiness check.
@@ -280,6 +357,45 @@ func HandlePlatformNextActions(ctx context.Context, req *mcp.CallToolRequest, in
 		}
 		next := buildPlatformNextActions(snapshot, input.Goal)
 		return next, len(next.Actions), false, nil
+	})
+}
+
+// HandlePlatformWorkspaceSummary returns a compact workspace-wide summary for agents.
+func HandlePlatformWorkspaceSummary(ctx context.Context, req *mcp.CallToolRequest, input PlatformWorkspaceSummaryInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
+	return platformProjectRead(ctx, "platform_workspace_summary", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
+		snapshot, err := loadPlatformWorkspaceSnapshot(ctx, session, input.OmitFiles, input.OmitLineage)
+		if err != nil {
+			return nil, 0, false, err
+		}
+		summary := buildPlatformWorkspaceSummary(snapshot, input.Goal)
+		return summary, len(summary.Highlights) + len(summary.Gaps), false, nil
+	})
+}
+
+// HandlePlatformBuildPlan returns an end-to-end platform plan for a user goal.
+func HandlePlatformBuildPlan(ctx context.Context, req *mcp.CallToolRequest, input PlatformBuildPlanInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
+	if strings.TrimSpace(input.Goal) == "" {
+		return nil, PlatformReadOutput{Error: "goal is required", RequestID: generateRequestID("platform_build_plan")}, nil
+	}
+	return platformProjectRead(ctx, "platform_build_plan", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
+		snapshot, err := loadPlatformWorkspaceSnapshot(ctx, session, input.OmitFiles, input.OmitLineage)
+		if err != nil {
+			return nil, 0, false, err
+		}
+		plan := buildPlatformBuildPlan(snapshot, input.Goal)
+		return plan, len(plan.Phases), false, nil
+	})
+}
+
+// HandlePlatformGapAnalysis returns a goal-aware workspace gap analysis.
+func HandlePlatformGapAnalysis(ctx context.Context, req *mcp.CallToolRequest, input PlatformGapAnalysisInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
+	return platformProjectRead(ctx, "platform_gap_analysis", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
+		snapshot, err := loadPlatformWorkspaceSnapshot(ctx, session, input.OmitFiles, input.OmitLineage)
+		if err != nil {
+			return nil, 0, false, err
+		}
+		analysis := buildPlatformGapAnalysis(snapshot, input.Goal)
+		return analysis, len(analysis.Gaps), false, nil
 	})
 }
 
@@ -710,6 +826,242 @@ func buildPlatformProjectHealth(snapshot *platformWorkspaceSnapshot) PlatformPro
 		health.Graph = &PlatformLineageSummary{NodeCount: len(snapshot.lineage.Nodes), EdgeCount: len(snapshot.lineage.Edges)}
 	}
 	return health
+}
+
+func buildPlatformWorkspaceSummary(snapshot *platformWorkspaceSnapshot, goal string) PlatformWorkspaceSummary {
+	goal = strings.TrimSpace(goal)
+	next := buildPlatformNextActions(snapshot, goal).Actions
+	if len(next) > 6 {
+		next = next[:6]
+	}
+	gaps := platformWorkflowGaps(snapshot, goal)
+	summary := PlatformWorkspaceSummary{
+		Goal:             goal,
+		Scope:            platformScope(snapshot.session),
+		Counts:           platformWorkspaceCounts(snapshot),
+		Highlights:       platformWorkspaceHighlights(snapshot),
+		Gaps:             gaps,
+		NextActions:      next,
+		RecommendedTools: recommendedWorkspaceTools(snapshot, goal),
+		Warnings:         append([]string(nil), snapshot.warnings...),
+	}
+	if snapshot.lineage != nil {
+		summary.Lineage = &PlatformLineageSummary{NodeCount: len(snapshot.lineage.Nodes), EdgeCount: len(snapshot.lineage.Edges)}
+	}
+	return summary
+}
+
+func buildPlatformBuildPlan(snapshot *platformWorkspaceSnapshot, goal string) PlatformBuildPlan {
+	goal = strings.TrimSpace(goal)
+	return PlatformBuildPlan{
+		Goal:          goal,
+		Scope:         platformScope(snapshot.session),
+		Prerequisites: platformBuildPrerequisites(snapshot),
+		Phases:        platformBuildPlanPhases(goal),
+		Gaps:          platformWorkflowGaps(snapshot, goal),
+		Warnings:      append([]string{"plan only; no write executed and no confirmation token was created", "hosted platform permissions and write confirmations still apply"}, snapshot.warnings...),
+	}
+}
+
+func buildPlatformGapAnalysis(snapshot *platformWorkspaceSnapshot, goal string) PlatformGapAnalysis {
+	goal = strings.TrimSpace(goal)
+	next := buildPlatformNextActions(snapshot, goal).Actions
+	if len(next) > 5 {
+		next = next[:5]
+	}
+	return PlatformGapAnalysis{
+		Goal:        goal,
+		Scope:       platformScope(snapshot.session),
+		Counts:      platformWorkspaceCounts(snapshot),
+		Ready:       platformReadyAreas(snapshot),
+		Gaps:        platformWorkflowGaps(snapshot, goal),
+		NextActions: next,
+		Warnings:    append([]string(nil), snapshot.warnings...),
+	}
+}
+
+func platformWorkspaceHighlights(snapshot *platformWorkspaceSnapshot) []string {
+	highlights := make([]string, 0)
+	if len(snapshot.sources) > 0 {
+		highlights = append(highlights, intString(len(snapshot.sources))+" source(s) connected")
+	}
+	if len(snapshot.datasets) > 0 {
+		highlights = append(highlights, intString(len(snapshot.datasets))+" dataset(s) available")
+	}
+	if len(snapshot.ontologies) > 0 {
+		highlights = append(highlights, intString(len(snapshot.ontologies))+" ontology object type(s) modeled")
+	}
+	if len(snapshot.transforms) > 0 {
+		highlights = append(highlights, intString(len(snapshot.transforms))+" transform(s) available")
+	}
+	if len(snapshot.functions) > 0 {
+		highlights = append(highlights, intString(len(snapshot.functions))+" function(s) available")
+	}
+	if len(snapshot.providers) > 0 {
+		highlights = append(highlights, intString(len(snapshot.providers))+" AI provider(s) configured")
+	}
+	if len(snapshot.files) > 0 {
+		highlights = append(highlights, intString(len(snapshot.files))+" root file(s) available")
+	}
+	if snapshot.lineage != nil && len(snapshot.lineage.Edges) > 0 {
+		highlights = append(highlights, intString(len(snapshot.lineage.Edges))+" lineage edge(s) found")
+	}
+	if len(highlights) == 0 {
+		highlights = append(highlights, "no major platform resources returned for the selected project")
+	}
+	return highlights
+}
+
+func platformBuildPrerequisites(snapshot *platformWorkspaceSnapshot) []PlatformWorkflowCheck {
+	return []PlatformWorkflowCheck{
+		workspaceCheck("workspace", snapshot.session.Host.DefaultOrgID != "" && snapshot.session.Host.DefaultProjectID != "", "Organization and project are selected.", "No selected organization/project was found.", "whodb_platform_setup_status"),
+		workspaceCheck("ingestion", len(snapshot.sources) > 0 || len(snapshot.files) > 0, "A source or project file is available for data ingestion.", "No source or project file was returned.", "whodb_platform_workspace_summary"),
+		workspaceCheck("data_model", len(snapshot.datasets) > 0 || len(snapshot.ontologies) > 0, "Dataset or ontology resources are available.", "No dataset or ontology resources were returned.", "whodb_platform_gap_analysis"),
+		workspaceCheck("runtime", len(snapshot.transforms) > 0 || len(snapshot.functions) > 0 || len(snapshot.providers) > 0, "Runtime resource metadata is available.", "Runtime resources are not yet represented.", "whodb_platform_runtime_readiness"),
+	}
+}
+
+func platformBuildPlanPhases(goal string) []PlatformPlanPhase {
+	goal = strings.ToLower(goal)
+	phases := []PlatformPlanPhase{
+		{
+			Phase:       "scope",
+			Objective:   "Confirm the selected org/project, inventory resources, and identify gaps before touching single resources.",
+			ReadTools:   []string{"whodb_platform_setup_status", "whodb_platform_workspace_summary", "whodb_platform_gap_analysis"},
+			VerifyTools: []string{"whodb_platform_project_health"},
+		},
+		{
+			Phase:       "ingest",
+			Objective:   "Choose an input path: connected source objects or uploaded/tabular project files.",
+			ReadTools:   []string{"whodb_platform_sources", "whodb_platform_source_objects", "whodb_platform_files", "whodb_platform_file_inspect"},
+			WriteTools:  []string{"whodb_platform_source_create", "whodb_platform_promote_file_to_dataset"},
+			VerifyTools: []string{"whodb_platform_source_test", "whodb_platform_datasets"},
+		},
+		{
+			Phase:       "persist",
+			Objective:   "Create or verify durable datasets that represent the data the workflow will operate on.",
+			ReadTools:   []string{"whodb_platform_data_model_summary", "whodb_platform_dataset", "whodb_platform_dataset_rows"},
+			WriteTools:  []string{"whodb_platform_create_dataset", "whodb_platform_create", "whodb_platform_update"},
+			VerifyTools: []string{"whodb_platform_dataset", "whodb_platform_dataset_rows"},
+		},
+		{
+			Phase:       "model",
+			Objective:   "Model business objects as ontologies and add lookup/link structure only after the data shape is known.",
+			ReadTools:   []string{"whodb_platform_ontologies", "whodb_platform_ontology", "whodb_platform_ontology_fast_lookup_suggestions"},
+			WriteTools:  []string{"whodb_platform_create", "whodb_platform_update", "whodb_platform_create_ontology_fast_lookup"},
+			VerifyTools: []string{"whodb_platform_ontology", "whodb_platform_ontology_rows"},
+		},
+		{
+			Phase:       "automate",
+			Objective:   "Add transforms and functions for repeatable computation or behavior around the modeled data.",
+			ReadTools:   []string{"whodb_platform_runtime_readiness", "whodb_platform_transforms", "whodb_platform_functions"},
+			WriteTools:  []string{"whodb_platform_create", "whodb_platform_update", "whodb_platform_action"},
+			VerifyTools: []string{"whodb_platform_transform_runs", "whodb_platform_function"},
+		},
+		{
+			Phase:       "govern",
+			Objective:   "Before writes, inspect graph impact and preview the exact mutation; after writes, verify graph and health.",
+			ReadTools:   []string{"whodb_platform_resource_graph", "whodb_platform_change_impact", "whodb_platform_write_plan"},
+			WriteTools:  []string{"whodb_platform_create", "whodb_platform_update", "whodb_platform_delete", "whodb_platform_action", "whodb_platform_confirm"},
+			VerifyTools: []string{"whodb_platform_project_health", "whodb_platform_resource_graph"},
+			Notes:       []string{"Never call whodb_platform_confirm without explicit user approval of the exact confirmation preview."},
+		},
+	}
+	if strings.Contains(goal, "app") || strings.Contains(goal, "agent") || strings.Contains(goal, "function") {
+		phases = append(phases, PlatformPlanPhase{
+			Phase:       "runtime_support",
+			Objective:   "Configure secret metadata and AI provider metadata needed by functions or app behavior.",
+			ReadTools:   []string{"whodb_platform_runtime_readiness", "whodb_platform_secrets", "whodb_platform_ai_providers", "whodb_platform_ai_provider_models"},
+			WriteTools:  []string{"whodb_platform_create", "whodb_platform_update"},
+			VerifyTools: []string{"whodb_platform_runtime_readiness"},
+			Notes:       []string{"Secret values are never returned by read tools."},
+		})
+	}
+	return phases
+}
+
+func platformWorkflowGaps(snapshot *platformWorkspaceSnapshot, goal string) []PlatformWorkflowGap {
+	goal = strings.ToLower(strings.TrimSpace(goal))
+	gaps := make([]PlatformWorkflowGap, 0)
+	add := func(area, severity, missing, reason string, tools ...string) {
+		gaps = append(gaps, PlatformWorkflowGap{Area: area, Severity: severity, Missing: missing, Reason: reason, SuggestedTools: tools})
+	}
+	if len(snapshot.sources) == 0 && len(snapshot.files) == 0 {
+		add("ingestion", "high", "source or file", "No connected source or root project file was returned, so there is no obvious input data path.", "whodb_platform_source_types", "whodb_platform_source_create", "whodb_platform_files")
+	}
+	if len(snapshot.datasets) == 0 {
+		severity := "medium"
+		if len(snapshot.sources) > 0 || len(snapshot.files) > 0 {
+			severity = "high"
+		}
+		add("datasets", severity, "dataset", "No durable dataset was returned for the selected project.", "whodb_platform_create_dataset", "whodb_platform_promote_file_to_dataset", "whodb_platform_datasets")
+	}
+	if len(snapshot.ontologies) == 0 {
+		add("ontology", "medium", "ontology", "No ontology object type was returned, so business objects are not modeled yet.", "whodb_platform_data_model_summary", "whodb_platform_create")
+	}
+	if len(snapshot.transforms) == 0 && (strings.Contains(goal, "sync") || strings.Contains(goal, "pipeline") || strings.Contains(goal, "transform") || strings.Contains(goal, "automation")) {
+		add("transforms", "medium", "transform", "The goal appears to need repeatable data movement, but no transforms were returned.", "whodb_platform_transforms", "whodb_platform_create")
+	}
+	if len(snapshot.functions) == 0 && (strings.Contains(goal, "app") || strings.Contains(goal, "agent") || strings.Contains(goal, "function") || strings.Contains(goal, "workflow")) {
+		add("functions", "medium", "function", "The goal appears to need runtime behavior, but no functions were returned.", "whodb_platform_functions", "whodb_platform_create")
+	}
+	if len(snapshot.providers) == 0 && (strings.Contains(goal, "ai") || strings.Contains(goal, "agent") || strings.Contains(goal, "llm")) {
+		add("ai_providers", "medium", "AI provider", "The goal appears to need model calls, but no AI providers were returned.", "whodb_platform_ai_providers", "whodb_platform_create")
+	}
+	if snapshot.lineage == nil || len(snapshot.lineage.Edges) == 0 {
+		add("lineage", "low", "lineage relationships", "No lineage edges were returned, so change impact may be incomplete.", "whodb_platform_resource_graph", "whodb_platform_project_lineage")
+	}
+	return gaps
+}
+
+func platformReadyAreas(snapshot *platformWorkspaceSnapshot) []string {
+	ready := make([]string, 0)
+	if len(snapshot.sources) > 0 {
+		ready = append(ready, "sources")
+	}
+	if len(snapshot.files) > 0 {
+		ready = append(ready, "files")
+	}
+	if len(snapshot.datasets) > 0 {
+		ready = append(ready, "datasets")
+	}
+	if len(snapshot.ontologies) > 0 {
+		ready = append(ready, "ontologies")
+	}
+	if len(snapshot.transforms) > 0 {
+		ready = append(ready, "transforms")
+	}
+	if len(snapshot.functions) > 0 {
+		ready = append(ready, "functions")
+	}
+	if len(snapshot.providers) > 0 {
+		ready = append(ready, "ai_providers")
+	}
+	if len(snapshot.secrets) > 0 {
+		ready = append(ready, "secrets")
+	}
+	if snapshot.lineage != nil && len(snapshot.lineage.Edges) > 0 {
+		ready = append(ready, "lineage")
+	}
+	return ready
+}
+
+func recommendedWorkspaceTools(snapshot *platformWorkspaceSnapshot, goal string) []string {
+	tools := []string{"whodb_platform_project_health", "whodb_platform_resource_graph", "whodb_platform_gap_analysis"}
+	goal = strings.ToLower(strings.TrimSpace(goal))
+	if len(snapshot.datasets) > 0 || len(snapshot.ontologies) > 0 || strings.Contains(goal, "data") || strings.Contains(goal, "model") {
+		tools = append(tools, "whodb_platform_data_model_summary")
+	}
+	if len(snapshot.transforms) > 0 || len(snapshot.functions) > 0 || len(snapshot.providers) > 0 || strings.Contains(goal, "app") || strings.Contains(goal, "runtime") || strings.Contains(goal, "agent") {
+		tools = append(tools, "whodb_platform_runtime_readiness")
+	}
+	if len(snapshot.sources) > 0 {
+		tools = append(tools, "whodb_platform_sources", "whodb_platform_source_objects")
+	}
+	if len(snapshot.files) > 0 {
+		tools = append(tools, "whodb_platform_files", "whodb_platform_file_inspect")
+	}
+	return uniqueStrings(tools)
 }
 
 func buildPlatformDataModelSummary(snapshot *platformWorkspaceSnapshot) PlatformDataModelSummary {

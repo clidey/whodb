@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 
@@ -291,6 +292,91 @@ func TestHandlePlatformProjectHealthSummarizesChecks(t *testing.T) {
 	}
 	if health.Counts["datasets"] != 1 || len(health.Checks) == 0 || len(health.Next) == 0 {
 		t.Fatalf("health = %#v, want counts checks and next actions", health)
+	}
+}
+
+func TestHandlePlatformWorkspaceSummaryReturnsGoalAwareOverview(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := HandlePlatformWorkspaceSummary(context.Background(), nil, PlatformWorkspaceSummaryInput{Goal: "build a customer app"})
+	if err != nil {
+		t.Fatalf("HandlePlatformWorkspaceSummary() error = %v", err)
+	}
+	if output.Error != "" {
+		t.Fatalf("HandlePlatformWorkspaceSummary() output error = %q", output.Error)
+	}
+	summary, ok := output.Data.(PlatformWorkspaceSummary)
+	if !ok {
+		t.Fatalf("output.Data = %T, want PlatformWorkspaceSummary", output.Data)
+	}
+	if summary.Goal != "build a customer app" || summary.Counts["datasets"] != 1 || len(summary.Highlights) == 0 || len(summary.RecommendedTools) == 0 {
+		t.Fatalf("summary = %#v, want goal counts highlights and recommended tools", summary)
+	}
+	if !strings.Contains(strings.Join(summary.RecommendedTools, ","), "whodb_platform_runtime_readiness") {
+		t.Fatalf("recommended tools = %#v, want runtime readiness for app goal", summary.RecommendedTools)
+	}
+}
+
+func TestHandlePlatformBuildPlanReturnsWorkflowPhases(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := HandlePlatformBuildPlan(context.Background(), nil, PlatformBuildPlanInput{Goal: "build a customer app"})
+	if err != nil {
+		t.Fatalf("HandlePlatformBuildPlan() error = %v", err)
+	}
+	if output.Error != "" {
+		t.Fatalf("HandlePlatformBuildPlan() output error = %q", output.Error)
+	}
+	plan, ok := output.Data.(PlatformBuildPlan)
+	if !ok {
+		t.Fatalf("output.Data = %T, want PlatformBuildPlan", output.Data)
+	}
+	if plan.Goal != "build a customer app" || len(plan.Phases) < 6 || len(plan.Prerequisites) == 0 {
+		t.Fatalf("plan = %#v, want goal prerequisites and phases", plan)
+	}
+	if !hasPlatformPlanPhase(plan.Phases, "runtime_support") {
+		t.Fatalf("phases = %#v, want runtime_support for app goal", plan.Phases)
+	}
+}
+
+func TestHandlePlatformBuildPlanRequiresGoal(t *testing.T) {
+	_, output, err := HandlePlatformBuildPlan(context.Background(), nil, PlatformBuildPlanInput{})
+	if err != nil {
+		t.Fatalf("HandlePlatformBuildPlan() error = %v", err)
+	}
+	if output.Error != "goal is required" {
+		t.Fatalf("output error = %q, want goal required", output.Error)
+	}
+}
+
+func TestHandlePlatformGapAnalysisReportsReadyAndGaps(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := HandlePlatformGapAnalysis(context.Background(), nil, PlatformGapAnalysisInput{Goal: "build an AI app"})
+	if err != nil {
+		t.Fatalf("HandlePlatformGapAnalysis() error = %v", err)
+	}
+	if output.Error != "" {
+		t.Fatalf("HandlePlatformGapAnalysis() output error = %q", output.Error)
+	}
+	analysis, ok := output.Data.(PlatformGapAnalysis)
+	if !ok {
+		t.Fatalf("output.Data = %T, want PlatformGapAnalysis", output.Data)
+	}
+	if !slices.Contains(analysis.Ready, "datasets") || !slices.Contains(analysis.Ready, "ai_providers") {
+		t.Fatalf("ready = %#v, want datasets and ai_providers", analysis.Ready)
+	}
+	if len(analysis.NextActions) == 0 {
+		t.Fatalf("analysis = %#v, want next actions", analysis)
 	}
 }
 
@@ -629,6 +715,15 @@ func hasPlatformNextActionTool(actions []PlatformNextAction, toolName string) bo
 			if suggested == toolName {
 				return true
 			}
+		}
+	}
+	return false
+}
+
+func hasPlatformPlanPhase(phases []PlatformPlanPhase, phase string) bool {
+	for _, item := range phases {
+		if item.Phase == phase {
+			return true
 		}
 	}
 	return false

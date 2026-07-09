@@ -1201,7 +1201,7 @@ func buildPlatformToolGuide(secOpts *SecurityOptions) platformToolGuideResource 
 		},
 			"whodb_platform_setup_status", "whodb_platform_status", "whodb_platform_orgs", "whodb_platform_projects", "whodb_platform_project_create", "whodb_platform_project_rename", "whodb_platform_project_delete"),
 		platformToolCategory(toolByName, "workspace_intelligence", "Workspace-level maps, relationship graph, and suggested next actions.", "Use these before per-resource reads when the user asks what exists, what is connected, or what should happen next.", []string{"counts", "warnings"}, nil,
-			"whodb_platform_workspace_map", "whodb_platform_resource_graph", "whodb_platform_next_actions", "whodb_platform_project_health", "whodb_platform_data_model_summary", "whodb_platform_runtime_readiness", "whodb_platform_change_impact", "whodb_platform_write_plan"),
+			"whodb_platform_workspace_summary", "whodb_platform_build_plan", "whodb_platform_gap_analysis", "whodb_platform_workspace_map", "whodb_platform_resource_graph", "whodb_platform_next_actions", "whodb_platform_project_health", "whodb_platform_data_model_summary", "whodb_platform_runtime_readiness", "whodb_platform_change_impact", "whodb_platform_write_plan"),
 		platformToolCategory(toolByName, "sources", "Hosted source discovery, connection metadata, data previews, and source writes.", "List sources with id/name/type first; inspect config only when needed because secrets are redacted.", []string{"id", "name", "type"}, []platformToolGuideMutation{
 			{Tool: "whodb_platform_source_create", Resources: []string{"source"}},
 			{Tool: "whodb_platform_source_update", Resources: []string{"source"}},
@@ -1518,7 +1518,7 @@ Use the active whodb-cli hosted login and selected workspace. Start with whodb_p
 
 Backend permissions are authoritative. The CLI may select a workspace, but the hosted platform decides what the signed-in user can read or change.
 
-For platform-wide understanding and workflow recipes, read whodb://platform/concepts or call whodb_platform_project_health, whodb_platform_data_model_summary, whodb_platform_runtime_readiness, and whodb_platform_resource_graph before drilling into a single resource.
+For platform-wide understanding and workflow recipes, read whodb://platform/concepts or call whodb_platform_workspace_summary, whodb_platform_build_plan, whodb_platform_gap_analysis, whodb_platform_project_health, and whodb_platform_resource_graph before drilling into a single resource.
 
 For read tools that accept fields, request only fields needed for the current answer, then request more fields only if needed.`
 
@@ -1532,6 +1532,9 @@ func handlePlatformReadWorkflowPrompt(ctx context.Context, req *mcp.GetPromptReq
 2. Call whodb_platform_status.
 3. If needed, discover workspace with whodb_platform_orgs and whodb_platform_projects.
 4. Build project-level context first when the user asks about the workspace, data model, readiness, risks, or next steps:
+   - whodb_platform_workspace_summary for a compact goal-aware overview
+   - whodb_platform_build_plan when the user asks how to build an app, workflow, data product, ontology flow, transform pipeline, or AI-backed function
+   - whodb_platform_gap_analysis for missing capabilities and ready areas
    - whodb_platform_project_health for checks, counts, warnings, and next steps
    - whodb_platform_data_model_summary for sources, files, datasets, ontologies, and relationships
    - whodb_platform_runtime_readiness for functions, transforms, secrets, and AI providers
@@ -2383,6 +2386,9 @@ Available tools:
 - whodb_platform_workspace_map: Summarize the selected project across resources
 - whodb_platform_resource_graph: Show relationships between hosted resources
 - whodb_platform_next_actions: Suggest deterministic next platform steps
+- whodb_platform_workspace_summary: Compact goal-aware project overview with highlights, gaps, next actions, and recommended tools
+- whodb_platform_build_plan: End-to-end hosted platform build plan for a user goal
+- whodb_platform_gap_analysis: Goal-aware ready areas and missing platform capabilities
 - whodb_platform_project_health: Summarize project-wide health, checks, warnings, and next steps
 - whodb_platform_data_model_summary: Summarize sources, datasets, ontologies, relationships, and gaps
 - whodb_platform_runtime_readiness: Check transforms, functions, AI providers, and secret metadata readiness

@@ -762,6 +762,33 @@ func liveMustWorkspaceIntelligence(t *testing.T, ctx context.Context, datasetID 
 	}
 	liveCoverTool("whodb_platform_next_actions")
 
+	_, summary, err := HandlePlatformWorkspaceSummary(ctx, nil, PlatformWorkspaceSummaryInput{Goal: "build a customer app", Fields: []string{"counts", "highlights", "gaps", "next_actions", "recommended_tools"}})
+	if err != nil {
+		t.Fatalf("HandlePlatformWorkspaceSummary() error = %v", err)
+	}
+	if summary.Error != "" || summary.Count == 0 {
+		t.Fatalf("workspace summary = %#v, want summary without error", summary)
+	}
+	liveCoverTool("whodb_platform_workspace_summary")
+
+	_, buildPlan, err := HandlePlatformBuildPlan(ctx, nil, PlatformBuildPlanInput{Goal: "build a customer app", Fields: []string{"phases", "prerequisites", "gaps", "warnings"}})
+	if err != nil {
+		t.Fatalf("HandlePlatformBuildPlan() error = %v", err)
+	}
+	if buildPlan.Error != "" || buildPlan.Count == 0 {
+		t.Fatalf("build plan = %#v, want phases without error", buildPlan)
+	}
+	liveCoverTool("whodb_platform_build_plan")
+
+	_, gaps, err := HandlePlatformGapAnalysis(ctx, nil, PlatformGapAnalysisInput{Goal: "build a customer app", Fields: []string{"ready", "gaps", "counts", "next_actions"}})
+	if err != nil {
+		t.Fatalf("HandlePlatformGapAnalysis() error = %v", err)
+	}
+	if gaps.Error != "" {
+		t.Fatalf("gap analysis = %#v, want no error", gaps)
+	}
+	liveCoverTool("whodb_platform_gap_analysis")
+
 	_, health, err := HandlePlatformProjectHealth(ctx, nil, PlatformNextActionsInput{Fields: []string{"counts", "checks", "warnings", "next"}})
 	if err != nil {
 		t.Fatalf("HandlePlatformProjectHealth() error = %v", err)
