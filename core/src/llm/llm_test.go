@@ -19,30 +19,31 @@ package llm
 import (
 	"testing"
 
+	"github.com/clidey/whodb/core/src/llm/providers"
 	"github.com/clidey/whodb/core/src/source"
 )
 
 func TestInstanceReturnsCorrectClient(t *testing.T) {
-	client := ClientForModel(&source.ExternalModel{Type: string(OpenAI_LLMType), Token: "key1"})
-	if client.Type != OpenAI_LLMType {
-		t.Fatalf("expected type %s, got %s", OpenAI_LLMType, client.Type)
+	client := ClientForModel(&source.ExternalModel{Type: string(providers.OpenAI_LLMType), Token: "key1"})
+	if client.Type != providers.OpenAI_LLMType {
+		t.Fatalf("expected type %s, got %s", providers.OpenAI_LLMType, client.Type)
 	}
 	if client.APIKey != "key1" {
 		t.Fatalf("expected API key 'key1', got %s", client.APIKey)
 	}
 
 	// Different config produces a client with the new values
-	client2 := ClientForModel(&source.ExternalModel{Type: string(Ollama_LLMType), Token: "key2"})
-	if client2.Type != Ollama_LLMType {
-		t.Fatalf("expected type %s, got %s", Ollama_LLMType, client2.Type)
+	client2 := ClientForModel(&source.ExternalModel{Type: string(providers.Ollama_LLMType), Token: "key2"})
+	if client2.Type != providers.Ollama_LLMType {
+		t.Fatalf("expected type %s, got %s", providers.Ollama_LLMType, client2.Type)
 	}
 	if client2.APIKey != "key2" {
 		t.Fatalf("expected API key 'key2', got %s", client2.APIKey)
 	}
 
-	client3 := ClientForModel(&source.ExternalModel{Type: string(Gemini_LLMType), Token: "key3"})
-	if client3.Type != Gemini_LLMType {
-		t.Fatalf("expected type %s, got %s", Gemini_LLMType, client3.Type)
+	client3 := ClientForModel(&source.ExternalModel{Type: string(providers.Gemini_LLMType), Token: "key3"})
+	if client3.Type != providers.Gemini_LLMType {
+		t.Fatalf("expected type %s, got %s", providers.Gemini_LLMType, client3.Type)
 	}
 	if client3.APIKey != "key3" {
 		t.Fatalf("expected API key 'key3', got %s", client3.APIKey)
@@ -50,7 +51,7 @@ func TestInstanceReturnsCorrectClient(t *testing.T) {
 }
 
 func TestGetSupportedModelsReturnsErrorForUnsupportedType(t *testing.T) {
-	client := LLMClient{Type: LLMType("Unknown")}
+	client := LLMClient{Type: providers.LLMType("Unknown")}
 	if _, err := client.GetSupportedModels(); err == nil {
 		t.Fatalf("expected error for unsupported type")
 	}

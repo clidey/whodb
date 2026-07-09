@@ -54,36 +54,23 @@ func RegisterGenericProviders(name string, providerId string, models []string, c
 	})
 }
 
-// Type aliases for backward compatibility with llm package
-type LLMType = providers.LLMType
-type LLMModel = providers.LLMModel
-
-const (
-	Ollama_LLMType    = providers.Ollama_LLMType
-	OpenAI_LLMType    = providers.OpenAI_LLMType
-	Anthropic_LLMType = providers.Anthropic_LLMType
-	Gemini_LLMType    = providers.Gemini_LLMType
-	LMStudio_LLMType  = providers.LMStudio_LLMType
-)
-
 type LLMClient struct {
-	Type      LLMType
-	APIKey    string
-	ProfileId string
+	Type   providers.LLMType
+	APIKey string
 }
 
 // getEndpointForProvider returns the appropriate endpoint for a provider type
-func getEndpointForProvider(providerType LLMType) string {
+func getEndpointForProvider(providerType providers.LLMType) string {
 	switch providerType {
-	case OpenAI_LLMType:
+	case providers.OpenAI_LLMType:
 		return env.GetOpenAIEndpoint()
-	case Anthropic_LLMType:
+	case providers.Anthropic_LLMType:
 		return env.GetAnthropicEndpoint()
-	case Gemini_LLMType:
+	case providers.Gemini_LLMType:
 		return env.GetGeminiEndpoint()
-	case Ollama_LLMType:
+	case providers.Ollama_LLMType:
 		return env.GetOllamaEndpoint()
-	case LMStudio_LLMType:
+	case providers.LMStudio_LLMType:
 		return env.GetLMStudioEndpoint()
 	default:
 		// For generic providers, look up endpoint from environment configuration
