@@ -18,6 +18,10 @@ package graph
 
 import "github.com/go-chi/chi/v5"
 
+func init() {
+	RegisterLongLivedHTTPRoute("/api/ai-chat/stream")
+}
+
 // SetupHTTPServer registers HTTP endpoints that are not served through GraphQL.
 func SetupHTTPServer(router chi.Router) {
 	router.Post("/api/ai-chat/stream", aiChatStreamHandler)

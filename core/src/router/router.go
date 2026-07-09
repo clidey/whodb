@@ -326,7 +326,7 @@ func sseAwareTimeout(dt time.Duration) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		timedHandler := timeoutMiddleware(next)
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if strings.HasSuffix(r.URL.Path, "/stream") {
+			if graph.IsLongLivedHTTPRoute(r.URL.Path) {
 				next.ServeHTTP(w, r)
 				return
 			}
@@ -343,7 +343,7 @@ func sseAwareThrottle(limit, backlog int, timeout time.Duration) func(http.Handl
 	return func(next http.Handler) http.Handler {
 		throttledHandler := throttleMiddleware(next)
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if strings.HasSuffix(r.URL.Path, "/stream") {
+			if graph.IsLongLivedHTTPRoute(r.URL.Path) {
 				next.ServeHTTP(w, r)
 				return
 			}
@@ -361,7 +361,7 @@ func sseAwareCompress(level int) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		compressedHandler := compressMiddleware(next)
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if strings.HasSuffix(r.URL.Path, "/stream") {
+			if graph.IsLongLivedHTTPRoute(r.URL.Path) {
 				next.ServeHTTP(w, r)
 				return
 			}

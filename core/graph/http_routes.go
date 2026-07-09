@@ -28,6 +28,7 @@ type HTTPRouteRegistrar func(chi.Router)
 var (
 	httpRouteRegistrarsMu sync.RWMutex
 	httpRouteRegistrars   []HTTPRouteRegistrar
+	longLivedHTTPRoutes   = map[string]struct{}{}
 )
 
 // RegisterHTTPRoutes adds an HTTP route registrar for platform or edition extensions.
@@ -38,6 +39,24 @@ func RegisterHTTPRoutes(register HTTPRouteRegistrar) {
 	httpRouteRegistrarsMu.Lock()
 	defer httpRouteRegistrarsMu.Unlock()
 	httpRouteRegistrars = append(httpRouteRegistrars, register)
+}
+
+// RegisterLongLivedHTTPRoute marks a route as a long-lived HTTP stream.
+func RegisterLongLivedHTTPRoute(path string) {
+	if path == "" {
+		return
+	}
+	httpRouteRegistrarsMu.Lock()
+	defer httpRouteRegistrarsMu.Unlock()
+	longLivedHTTPRoutes[path] = struct{}{}
+}
+
+// IsLongLivedHTTPRoute reports whether a route should bypass transactional middleware.
+func IsLongLivedHTTPRoute(path string) bool {
+	httpRouteRegistrarsMu.RLock()
+	defer httpRouteRegistrarsMu.RUnlock()
+	_, ok := longLivedHTTPRoutes[path]
+	return ok
 }
 
 func registerExtensionHTTPRoutes(router chi.Router) {

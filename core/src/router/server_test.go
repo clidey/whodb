@@ -82,6 +82,45 @@ func TestSetupMiddlewaresPublicPathsBypassAuth(t *testing.T) {
 	}
 }
 
+func TestSSEAwareCompressUsesLongLivedRouteRegistry(t *testing.T) {
+	graphapi.RegisterLongLivedHTTPRoute("/api/test-long-lived")
+
+	handler := sseAwareCompress(5)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusAccepted)
+		_, _ = w.Write([]byte(strings.Repeat("long-lived ", 100)))
+	}))
+
+	req := httptest.NewRequest(http.MethodPost, "/api/test-long-lived", nil)
+	req.Header.Set("Accept-Encoding", "gzip")
+	rr := httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusAccepted {
+		t.Fatalf("expected registered long-lived route to return 202, got %d", rr.Code)
+	}
+	if encoding := rr.Header().Get("Content-Encoding"); encoding != "" {
+		t.Fatalf("expected registered long-lived route to bypass compression, got %q", encoding)
+	}
+}
+
+func TestSSEAwareCompressDoesNotBypassByStreamSuffix(t *testing.T) {
+	handler := sseAwareCompress(5)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusAccepted)
+		_, _ = w.Write([]byte(strings.Repeat("ordinary stream ", 100)))
+	}))
+
+	req := httptest.NewRequest(http.MethodPost, "/api/not-registered/stream", nil)
+	req.Header.Set("Accept-Encoding", "gzip")
+	rr := httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	if encoding := rr.Header().Get("Content-Encoding"); encoding != "gzip" {
+		t.Fatalf("expected unregistered /stream suffix route to use compression middleware, got %q", encoding)
+	}
+}
+
 func TestNewGraphQLServerTogglesIntrospectionByEnvironment(t *testing.T) {
 	queryBody, err := json.Marshal(map[string]any{
 		"query": `query IntrospectionQuery { __schema { queryType { name } } }`,
