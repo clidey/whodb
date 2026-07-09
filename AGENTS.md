@@ -219,6 +219,7 @@ See `.agents/docs/commands.md` for full reference.
 - **Plugin self-registration** — each plugin has `init() { engine.RegisterPlugin(...) }`. The entry point's blank imports control which plugins are registered
 - **Source-first public API** — new public GraphQL/frontend work should use `SourceTypes`, `SourceProfiles`, `SourceFieldOptions`, `SourceSessionMetadata`, `SourceObjects`, `SourceRows`, `RunSourceQuery`, and `SourceGraph`. Do not add new public `Database*` queries or capability surfaces
 - **AppConfig DI** — `core/src/app/app.go` defines `AppConfig` (schema, HTTP handlers). The entry point calls `app.Run(config, staticFiles)`
+- **HTTP route extensions** — CE-owned HTTP routes live in `core/graph/SetupHTTPServer`. Edition or platform add-ons register their own non-GraphQL routes with `graph.RegisterHTTPRoutes`; do not add add-on route names or unsupported stubs to CE.
 - **Frontend registries** — components (`registerComponent`), source types (`registerSourceTypeOverrides`), icons (`registerIcons`), and source utilities (`registerSourceUtilities`) can be registered at boot. The frontend renders from registries — if something isn't registered, it's not shown
 - **Import cycle note** — `src` → `router` → `graph` → `src` cycle exists. `Run()` lives in `src/app/` (not `src/`) to avoid it. Never add router/graph imports to `src/`
 

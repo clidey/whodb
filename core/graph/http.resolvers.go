@@ -21,11 +21,8 @@ import "github.com/go-chi/chi/v5"
 // SetupHTTPServer registers HTTP endpoints that are not served through GraphQL.
 func SetupHTTPServer(router chi.Router) {
 	router.Post("/api/ai-chat/stream", aiChatStreamHandler)
-	router.Post("/api/agent/stream", agentStreamHandler)
-	router.Post("/api/agent/permit", agentPermitHandler)
-	router.Post("/api/app/generate", appGenerateHandler)
-	router.Post("/api/function/stream", functionStreamHandler)
 	router.Post("/api/export", HandleExport)
+	registerExtensionHTTPRoutes(router)
 
 	// AI chat streaming endpoint is registered via build tags in http_ai_stream.go (!arm) / http_ai_stream_arm.go (arm)
 }
