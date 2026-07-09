@@ -126,25 +126,3 @@ func TestAIModelQueryMissingAPIKey(t *testing.T) {
 		t.Fatalf("expected API key error, got code=%d body=%s", w.Code, w.Body.String())
 	}
 }
-
-func TestAIChatQueryError(t *testing.T) {
-	mock := testutil.NewPluginMock(engine.DatabaseType("Postgres"))
-	mock.ChatFunc = func(*engine.PluginConfig, string, string, string) ([]*engine.ChatMessage, error) {
-		return nil, errors.New("chat failed")
-	}
-	setEngineMock(t, mock)
-
-	srv := handler.NewDefaultServer(NewExecutableSchema(Config{Resolvers: &Resolver{}}))
-	body, _ := json.Marshal(map[string]any{
-		"query": `query { AIChat(modelType:"Test", ref:{Kind:Schema, Path:["app","public"]}, input:{PreviousConversation:"", Query:"hi", Model:"m"}){ Text } }`,
-	})
-	req := httptest.NewRequest(http.MethodPost, "/api/query", bytes.NewBuffer(body))
-	req = req.WithContext(testSourceContext("Postgres", map[string]string{"Database": "app"}))
-	req.Header.Set("Content-Type", "application/json")
-	w := httptest.NewRecorder()
-	srv.ServeHTTP(w, req)
-
-	if w.Code != http.StatusOK || !strings.Contains(w.Body.String(), "chat failed") {
-		t.Fatalf("expected chat error surfaced, got code=%d body=%s", w.Code, w.Body.String())
-	}
-}

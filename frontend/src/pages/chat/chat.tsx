@@ -43,7 +43,7 @@ import {
     toast
 } from "@clidey/ux";
 import {ChatHistorySidebar} from "./chat-history-sidebar";
-import type { GetAiChatQuery} from '@graphql';
+import type {RowsResult} from '@graphql';
 import {ExecuteConfirmedSqlDocument, GenerateChatTitleDocument, GetDatabaseQuerySuggestionsDocument} from '@graphql';
 import {
     ArrowUpCircleIcon,
@@ -152,7 +152,7 @@ const CodeBlock: FC<{ children: string }> = ({ children }) => {
     );
 };
 
-type TableData = GetAiChatQuery["AIChat"][0]["Result"];
+type TableData = RowsResult | null | undefined;
 
 const TablePreview: FC<{ type: string, data: TableData, text: string, containerWidth?: number }> = memo(({ type, data, text, containerWidth }) => {
     const { t } = useTranslation('pages/chat');

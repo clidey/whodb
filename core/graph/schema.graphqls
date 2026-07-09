@@ -906,7 +906,6 @@ type Query {
   SourceGraph(ref: SourceObjectRefInput): [GraphUnit!]!
   AIProviders: [AIProvider!]!
   AIModel(providerId: String, modelType: String!, token: String): [String!]!
-  AIChat(providerId: String, modelType: String!, token: String, ref: SourceObjectRefInput, input: ChatInput!): [AIChatMessage!]!
   SettingsConfig: SettingsConfig!
   MockDataMaxRowCount: Int!
   AnalyzeMockDataDependencies(ref: SourceObjectRefInput!, rowCount: Int!, fkDensityRatio: Int): MockDataDependencyAnalysis!

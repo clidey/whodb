@@ -136,6 +136,7 @@ type PlatformEmptyInput struct {
 
 // PlatformReadOutput is the common output for read-only hosted platform tools.
 type PlatformReadOutput struct {
+	PlatformSetupGuidance
 	Data      any                  `json:"data,omitempty"`
 	Items     []map[string]any     `json:"items,omitempty"`
 	Count     int                  `json:"count"`
@@ -632,7 +633,7 @@ func platformProjectRead(ctx context.Context, toolName string, fields []string, 
 	session, err := loadPlatformWorkspace(ctx)
 	if err != nil {
 		TrackToolCall(ctx, toolName, requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_session"})
-		return nil, PlatformReadOutput{Error: err.Error(), RequestID: requestID}, nil
+		return nil, PlatformReadOutput{PlatformSetupGuidance: platformSetupGuidanceForCurrentConfig(requestID), Error: err.Error(), RequestID: requestID}, nil
 	}
 	data, count, truncated, err := read(ctx, session)
 	if err != nil {
