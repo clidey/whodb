@@ -51,6 +51,13 @@ type PlatformSetupStatusOutput struct {
 	RequestID         string   `json:"request_id,omitempty"`
 }
 
+// PlatformSetupGuidance gives agents recovery instructions for setup-related failures.
+type PlatformSetupGuidance struct {
+	SetupStatus string   `json:"setup_status,omitempty"`
+	Commands    []string `json:"commands,omitempty"`
+	NextSteps   []string `json:"next_steps,omitempty"`
+}
+
 // PlatformDoctorInput is the input for whodb_platform_doctor.
 type PlatformDoctorInput struct{}
 
@@ -81,6 +88,7 @@ type PlatformBundleExportInput struct {
 
 // PlatformBundleExportOutput returns a selected-project metadata bundle.
 type PlatformBundleExportOutput struct {
+	PlatformSetupGuidance
 	Bundle    *platformapi.ProjectBundle `json:"bundle,omitempty"`
 	Counts    map[string]int             `json:"counts,omitempty"`
 	Error     string                     `json:"error,omitempty"`
@@ -97,6 +105,7 @@ type PlatformBundlePlanInput struct {
 
 // PlatformBundlePlanOutput returns a bundle import plan for the selected project.
 type PlatformBundlePlanOutput struct {
+	PlatformSetupGuidance
 	Plan      *platformapi.BundlePlan `json:"plan,omitempty"`
 	Counts    map[string]int          `json:"counts,omitempty"`
 	Error     string                  `json:"error,omitempty"`
@@ -234,6 +243,34 @@ func platformSetupStatusFor(host, status string) PlatformSetupStatusOutput {
 	return output
 }
 
+func platformSetupGuidanceFromStatus(output PlatformSetupStatusOutput) PlatformSetupGuidance {
+	return PlatformSetupGuidance{
+		SetupStatus: output.Status,
+		Commands:    output.Commands,
+		NextSteps:   output.NextSteps,
+	}
+}
+
+func platformSetupGuidanceForCurrentConfig(requestID string) PlatformSetupGuidance {
+	return platformSetupGuidanceFromStatus(buildPlatformSetupStatus(requestID))
+}
+
+func platformSetupGuidanceForError(err error, requestID string) PlatformSetupGuidance {
+	if err == nil || !isPlatformSetupError(err) {
+		return PlatformSetupGuidance{}
+	}
+	return platformSetupGuidanceForCurrentConfig(requestID)
+}
+
+func isPlatformSetupError(err error) bool {
+	message := strings.ToLower(err.Error())
+	return strings.Contains(message, "not logged in") ||
+		strings.Contains(message, "refresh token") ||
+		strings.Contains(message, "refresh hosted whodb login") ||
+		strings.Contains(message, "no hosted whodb workspace selected") ||
+		strings.Contains(message, "cannot load hosted whodb config")
+}
+
 func applyPlatformSetupGuidance(output *PlatformSetupStatusOutput) {
 	host := strings.TrimSpace(output.Host)
 	if host == "" {
@@ -337,7 +374,7 @@ func HandlePlatformBundleExport(ctx context.Context, req *mcp.CallToolRequest, i
 	session, err := loadPlatformWorkspace(ctx)
 	if err != nil {
 		TrackToolCall(ctx, "platform_bundle_export", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_session"})
-		return nil, PlatformBundleExportOutput{Error: err.Error(), RequestID: requestID}, nil
+		return nil, PlatformBundleExportOutput{PlatformSetupGuidance: platformSetupGuidanceForCurrentConfig(requestID), Error: err.Error(), RequestID: requestID}, nil
 	}
 	project := selectedPlatformProject(session)
 	bundle, err := platformapi.BuildProjectBundleWithOptions(ctx, session.Client, session.Host.URL, session.Host.DefaultOrgID, session.Host.DefaultOrgName, project, platformapi.BundleExportOptions{
@@ -369,7 +406,7 @@ func HandlePlatformBundlePlan(ctx context.Context, req *mcp.CallToolRequest, inp
 	session, err := loadPlatformWorkspace(ctx)
 	if err != nil {
 		TrackToolCall(ctx, toolName, requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_session"})
-		return nil, PlatformBundlePlanOutput{Error: err.Error(), RequestID: requestID}, nil
+		return nil, PlatformBundlePlanOutput{PlatformSetupGuidance: platformSetupGuidanceForCurrentConfig(requestID), Error: err.Error(), RequestID: requestID}, nil
 	}
 	plan, err := platformapi.PlanBundleImportWithOptions(ctx, session.Client, session.Host.URL, selectedPlatformProject(session), &bundle, platformapi.BundleImportOptions{
 		DryRun:             dryRun,
@@ -403,7 +440,7 @@ func HandlePlatformBundleImport(ctx context.Context, req *mcp.CallToolRequest, i
 	session, err := loadPlatformWorkspace(ctx)
 	if err != nil {
 		TrackToolCall(ctx, "platform_bundle_import", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_session"})
-		return nil, PlatformGenericWriteOutput{Error: err.Error(), RequestID: requestID}, nil
+		return nil, platformGenericWriteSetupError(err, requestID), nil
 	}
 	plan, err := platformapi.PlanBundleImportWithOptions(ctx, session.Client, session.Host.URL, selectedPlatformProject(session), &bundle, platformapi.BundleImportOptions{
 		DryRun:             false,
@@ -431,7 +468,7 @@ func HandlePlatformBundleImport(ctx context.Context, req *mcp.CallToolRequest, i
 		output, err := executePendingPlatformAction(ctx, action, requestID)
 		if err != nil {
 			TrackToolCall(ctx, "platform_bundle_import", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_action"})
-			return nil, PlatformGenericWriteOutput{Error: err.Error(), RequestID: requestID}, nil
+			return nil, PlatformGenericWriteOutput{PlatformSetupGuidance: platformSetupGuidanceForError(err, requestID), Error: err.Error(), RequestID: requestID}, nil
 		}
 		raw, _ := json.Marshal(output)
 		TrackToolCall(ctx, "platform_bundle_import", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"confirmation_required": false})
@@ -451,7 +488,7 @@ func HandlePlatformClone(ctx context.Context, req *mcp.CallToolRequest, input Pl
 	}
 	session, err := loadPlatformWorkspace(ctx)
 	if err != nil {
-		return nil, PlatformGenericWriteOutput{Error: err.Error(), RequestID: requestID}, nil
+		return nil, platformGenericWriteSetupError(err, requestID), nil
 	}
 	payload, err := platformapi.BuildClonePayload(ctx, session.Client, session.Host.DefaultProjectID, resource, input.Source, input.NewName)
 	if err != nil {

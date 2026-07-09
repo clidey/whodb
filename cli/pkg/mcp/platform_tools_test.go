@@ -715,6 +715,7 @@ func TestHandlePlatformOntologyRecordTypedAllowWriteUsesEntityID(t *testing.T) {
 }
 
 func TestHandlePlatformSourcesReportsActionableLoginError(t *testing.T) {
+	setupTestEnv(t)
 	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
 		return nil, errors.New("hosted WhoDB is not logged in for https://app.whodb.com. Run: whodb-cli login --host https://app.whodb.com")
 	})
@@ -726,6 +727,42 @@ func TestHandlePlatformSourcesReportsActionableLoginError(t *testing.T) {
 	if output.Error == "" || !containsAll(output.Error, "whodb-cli login", "app.whodb.com") {
 		t.Fatalf("output error = %q, want login guidance", output.Error)
 	}
+	assertPlatformSetupGuidance(t, output.PlatformSetupGuidance, "needs_login", "whodb-cli login --host https://app.whodb.com")
+}
+
+func TestHandlePlatformProjectHealthReportsSetupGuidanceOnSessionError(t *testing.T) {
+	setupTestEnv(t)
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return nil, errors.New("hosted WhoDB is not logged in for https://app.whodb.com")
+	})
+
+	_, output, err := HandlePlatformProjectHealth(context.Background(), nil, PlatformNextActionsInput{})
+	if err != nil {
+		t.Fatalf("HandlePlatformProjectHealth() error = %v", err)
+	}
+	if output.Error == "" {
+		t.Fatal("HandlePlatformProjectHealth() output error is empty, want session error")
+	}
+	assertPlatformSetupGuidance(t, output.PlatformSetupGuidance, "needs_login", "whodb-cli login --host https://app.whodb.com")
+}
+
+func TestHandlePlatformGenericWriteReportsSetupGuidanceOnSessionError(t *testing.T) {
+	setupTestEnv(t)
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return nil, errors.New("hosted WhoDB is not logged in for https://app.whodb.com")
+	})
+
+	_, output, err := handlePlatformGenericWrite(context.Background(), "platform_create", PlatformGenericWriteInput{
+		Resource:    "secret",
+		PayloadJSON: `{"name":"OPENAI_API_KEY","value":"secret-value"}`,
+	}, "create", true)
+	if err != nil {
+		t.Fatalf("handlePlatformGenericWrite() error = %v", err)
+	}
+	if output.Error == "" {
+		t.Fatal("handlePlatformGenericWrite() output error is empty, want session error")
+	}
+	assertPlatformSetupGuidance(t, output.PlatformSetupGuidance, "needs_login", "whodb-cli login --host https://app.whodb.com")
 }
 
 func TestHandlePlatformSourceConfigRedactsSecrets(t *testing.T) {
@@ -915,6 +952,45 @@ func TestHandleConfirmExecutesPlatformDelete(t *testing.T) {
 	}
 	if output.Message == "" || len(output.Rows) != 1 {
 		t.Fatalf("output = %#v, want confirmation rows", output)
+	}
+}
+
+func TestHandlePlatformConfirmReportsSetupGuidanceOnSessionError(t *testing.T) {
+	setupTestEnv(t)
+	clearPendingPlatformActions(t)
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return nil, errors.New("hosted WhoDB is not logged in for https://app.whodb.com")
+	})
+	token, _ := storePendingPlatformAction(&PendingPlatformAction{
+		Operation:   "delete_source",
+		Host:        "https://app.whodb.com",
+		OrgID:       "org-1",
+		ProjectID:   "proj-1",
+		ProjectName: "Customer",
+		SourceID:    "src-1",
+		SourceName:  "Warehouse",
+	})
+
+	_, output, err := HandlePlatformConfirm(context.Background(), nil, ConfirmInput{Token: token})
+	if err != nil {
+		t.Fatalf("HandlePlatformConfirm() error = %v", err)
+	}
+	if output.Error == "" {
+		t.Fatal("HandlePlatformConfirm() output error is empty, want session error")
+	}
+	assertPlatformSetupGuidance(t, output.PlatformSetupGuidance, "needs_login", "whodb-cli login --host https://app.whodb.com")
+}
+
+func assertPlatformSetupGuidance(t *testing.T, guidance PlatformSetupGuidance, wantStatus, wantCommand string) {
+	t.Helper()
+	if guidance.SetupStatus != wantStatus {
+		t.Fatalf("setup_status = %q, want %q", guidance.SetupStatus, wantStatus)
+	}
+	if !slices.Contains(guidance.Commands, wantCommand) {
+		t.Fatalf("commands = %#v, want %q", guidance.Commands, wantCommand)
+	}
+	if len(guidance.NextSteps) == 0 {
+		t.Fatal("next_steps is empty, want setup recovery guidance")
 	}
 }
 

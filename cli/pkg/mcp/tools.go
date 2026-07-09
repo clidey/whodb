@@ -225,6 +225,7 @@ type ConfirmInput struct {
 
 // ConfirmOutput is the output for the whodb_confirm tool.
 type ConfirmOutput struct {
+	PlatformSetupGuidance
 	Columns     []string `json:"columns"`
 	ColumnTypes []string `json:"column_types,omitempty"`
 	Rows        [][]any  `json:"rows"`

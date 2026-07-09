@@ -92,6 +92,7 @@ type PlatformEntityWriteInput struct {
 
 // PlatformGenericWriteOutput reports a hosted platform write result or pending confirmation.
 type PlatformGenericWriteOutput struct {
+	PlatformSetupGuidance
 	ConfirmationRequired bool                   `json:"confirmation_required,omitempty"`
 	ConfirmationToken    string                 `json:"confirmation_token,omitempty"`
 	ConfirmationAction   string                 `json:"confirmation_action,omitempty"`
@@ -178,7 +179,7 @@ func handlePlatformGenericWrite(ctx context.Context, toolName string, input Plat
 	session, err := loadPlatformWorkspace(ctx)
 	if err != nil {
 		TrackToolCall(ctx, toolName, requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_session"})
-		return nil, PlatformGenericWriteOutput{Error: err.Error(), RequestID: requestID}, nil
+		return nil, platformGenericWriteSetupError(err, requestID), nil
 	}
 	spec, payload, err := buildPlatformGenericWrite(session, input, operationKind)
 	if err != nil {
@@ -210,6 +211,14 @@ func handlePlatformGenericWrite(ctx context.Context, toolName string, input Plat
 	token, expiresAt := storePendingPlatformAction(action)
 	TrackToolCall(ctx, toolName, requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"confirmation_required": true, "mutation": spec.Mutation})
 	return nil, platformGenericConfirmationOutput(requestID, token, expiresAt, spec.Mutation, action.Preview()), nil
+}
+
+func platformGenericWriteSetupError(err error, requestID string) PlatformGenericWriteOutput {
+	return PlatformGenericWriteOutput{
+		PlatformSetupGuidance: platformSetupGuidanceForCurrentConfig(requestID),
+		Error:                 err.Error(),
+		RequestID:             requestID,
+	}
 }
 
 func handlePlatformTypedGenericWrite(ctx context.Context, toolName string, input PlatformGenericWriteInput, operationKind string, confirmWrites bool) (*mcp.CallToolResult, PlatformGenericWriteOutput, error) {
