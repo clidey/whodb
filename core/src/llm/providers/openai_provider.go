@@ -107,7 +107,7 @@ func fetchOpenAICompatibleModelsFromURL(url string, apiKey string, providerName 
 
 	resp, err := sendHTTPRequest("GET", url, nil, headers)
 	if err != nil {
-		log.WithError(err).Errorf("Failed to fetch models from %s at %s", providerName, url)
+		log.WithError(err).Errorf("Failed to fetch models from %s at %s", providerName, redactURL(url))
 		return nil, err
 	}
 	defer func() { _ = resp.Body.Close() }()
