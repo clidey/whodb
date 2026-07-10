@@ -19,7 +19,38 @@ package providers
 import (
 	"errors"
 	"fmt"
+	"net/url"
 )
+
+// sensitiveURLQueryKeys are query parameter names that may carry credentials and
+// must be redacted before a URL is logged.
+var sensitiveURLQueryKeys = []string{"key", "api_key", "apikey", "access_token", "token"}
+
+// redactURL returns a loggable form of a URL with any credential-bearing query
+// parameters and userinfo removed. Some providers (e.g. Gemini) pass the API key
+// as a query parameter, so raw URLs must never be logged. If the input cannot be
+// parsed it is returned unchanged, since it then contains no structured query.
+func redactURL(raw string) string {
+	parsed, err := url.Parse(raw)
+	if err != nil {
+		return raw
+	}
+	if parsed.User != nil {
+		parsed.User = url.User("redacted")
+	}
+	query := parsed.Query()
+	redacted := false
+	for _, key := range sensitiveURLQueryKeys {
+		if query.Has(key) {
+			query.Set(key, "redacted")
+			redacted = true
+		}
+	}
+	if redacted {
+		parsed.RawQuery = query.Encode()
+	}
+	return parsed.String()
+}
 
 // LLMType represents the type of LLM provider.
 type LLMType string

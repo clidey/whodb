@@ -230,15 +230,26 @@ jobs:
           path: all-logs
 
       - name: Flatten blob reports
+        env:
+          DATABASES: ${{ inputs.databases }}
         run: |
           mkdir -p merged-blobs
-          for dir in all-blobs/blob-report-*; do
-            db=$(basename "$dir")
-            db=${db#blob-report-}
-            for f in "$dir"/*.zip; do
-              [ -f "$f" ] && cp "$f" "merged-blobs/${db}-$(basename "$f")"
+          if ls all-blobs/blob-report-* 1>/dev/null 2>&1; then
+            # Multiple artifacts: download-artifact created per-artifact subdirectories
+            for dir in all-blobs/blob-report-*; do
+              [ -d "$dir" ] || continue
+              db=$(basename "$dir")
+              db=${db#blob-report-}
+              for f in "$dir"/*.zip; do
+                [ -f "$f" ] && cp "$f" "merged-blobs/${db}-$(basename "$f")"
+              done
             done
-          done
+          else
+            # Single artifact: download-artifact extracted directly into all-blobs/
+            for f in all-blobs/*.zip; do
+              [ -f "$f" ] && cp "$f" "merged-blobs/${DATABASES}-$(basename "$f")"
+            done
+          fi
 
       - name: Merge reports
         run: |

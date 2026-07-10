@@ -75,7 +75,7 @@ func (p *OllamaProvider) GetSupportedModels(config *ProviderConfig) ([]string, e
 
 	resp, err := sendHTTPRequest("GET", url, nil, nil)
 	if err != nil {
-		log.WithError(err).Errorf("Failed to fetch models from Ollama at %s", url)
+		log.WithError(err).Errorf("Failed to fetch models from Ollama at %s", redactURL(url))
 		return nil, err
 	}
 	defer func() { _ = resp.Body.Close() }()

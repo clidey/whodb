@@ -395,12 +395,19 @@ func ResolveProviderCredentials(providerId, requestToken, requestEndpoint, reque
 	if providerId == "" {
 		return result
 	}
+	// A server-configured API key must never be paired with a client-supplied
+	// endpoint: that would send the shared secret to an attacker-chosen host.
+	// When falling back to the server's key, also use the server's endpoint.
+	clientSuppliedEndpoint := requestEndpoint != ""
 	for _, provider := range GetConfiguredChatProviders() {
 		if provider.ProviderId != providerId {
 			continue
 		}
 		if result.Token == "" {
 			result.Token = provider.APIKey
+			if clientSuppliedEndpoint {
+				result.Endpoint = provider.Endpoint
+			}
 		}
 		if result.Endpoint == "" {
 			result.Endpoint = provider.Endpoint
@@ -411,7 +418,8 @@ func ResolveProviderCredentials(providerId, requestToken, requestEndpoint, reque
 		token, endpoint, found := supplementalResolver(providerId)
 		if found {
 			result.Token = token
-			if result.Endpoint == "" {
+			// As above, don't pair a server-resolved key with a client endpoint.
+			if result.Endpoint == "" || clientSuppliedEndpoint {
 				result.Endpoint = endpoint
 			}
 		}

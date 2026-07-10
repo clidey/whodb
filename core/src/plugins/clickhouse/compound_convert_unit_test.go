@@ -2,7 +2,10 @@ package clickhouse
 
 import (
 	"reflect"
+	"strings"
 	"testing"
+
+	"gorm.io/gorm/clause"
 )
 
 func TestSplitTopLevelRespectsQuotesAndNesting(t *testing.T) {
@@ -38,6 +41,40 @@ func TestConvertMapLiteralTypedMap(t *testing.T) {
 	}
 	if m["key1"] != 10 || m["key2"] != 20 {
 		t.Fatalf("unexpected map: %#v", m)
+	}
+}
+
+func TestFormatLiteralEscapesQuotesAndBackslashes(t *testing.T) {
+	cases := []struct {
+		in   string
+		want string
+	}{
+		{"plain", "'plain'"},
+		{"O'Brien", `'O\'Brien'`},
+		{`back\slash`, `'back\\slash'`},
+		{`'); DROP TABLE users; --`, `'\'); DROP TABLE users; --'`},
+	}
+	for _, tc := range cases {
+		if got := formatLiteral(tc.in); got != tc.want {
+			t.Errorf("formatLiteral(%q) = %q, want %q", tc.in, got, tc.want)
+		}
+	}
+}
+
+// TestArrayToExprEscapesMaliciousValues verifies the raw-SQL sink for Array-column
+// UPDATEs cannot be broken out of via a crafted string element.
+func TestArrayToExprEscapesMaliciousValues(t *testing.T) {
+	expr, ok := arrayToExpr([]string{"ok", "'); DROP TABLE users; --"}).(clause.Expr)
+	if !ok {
+		t.Fatalf("expected clause.Expr, got %T", arrayToExpr([]string{}))
+	}
+	// The malicious quote must be escaped, so no unescaped closing quote can
+	// terminate the literal early. The dangerous SQL stays inside the string.
+	if strings.Contains(expr.SQL, "'); DROP") && !strings.Contains(expr.SQL, `\'); DROP`) {
+		t.Fatalf("array element quote not escaped: %s", expr.SQL)
+	}
+	if !strings.Contains(expr.SQL, `\'`) {
+		t.Fatalf("expected escaped single quote in %s", expr.SQL)
 	}
 }
 

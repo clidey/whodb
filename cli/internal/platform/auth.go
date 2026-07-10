@@ -145,7 +145,7 @@ func Login(ctx context.Context, opts LoginOptions) (*TokenResponse, error) {
 	defer server.Shutdown(context.Background())
 
 	go func() {
-		if err := server.Serve(listener); err != nil && err != http.ErrServerClosed {
+		if err := server.Serve(listener); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			errCh <- err
 		}
 	}()

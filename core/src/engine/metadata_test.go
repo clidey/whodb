@@ -57,3 +57,43 @@ func TestValidateColumnTypeResolvesAliases(t *testing.T) {
 		t.Fatalf("expected parametrized type to validate, got %v", err)
 	}
 }
+
+func TestValidateColumnTypeParams(t *testing.T) {
+	meta := &source.TypeSessionMetadata{
+		TypeDefinitions: []TypeDefinition{
+			{ID: "VARCHAR", HasLength: true},
+			{ID: "DECIMAL", HasPrecision: true},
+			{ID: "DATETIME64"},
+			{ID: "ENUM8"},
+		},
+		AliasMap: map[string]string{},
+	}
+
+	valid := []string{
+		"VARCHAR(255)",
+		"DECIMAL(10, 2)",
+		"DATETIME64(3, 'UTC')",
+		"ENUM8('active' = 1, 'inactive' = 2)",
+	}
+	for _, tn := range valid {
+		if err := ValidateColumnType(tn, "TestDB", meta); err != nil {
+			t.Errorf("expected %q to validate, got %v", tn, err)
+		}
+	}
+
+	// Injection attempts: valid base type, malicious parameter section.
+	invalid := []string{
+		"VARCHAR(255); DROP TABLE users; --",
+		"VARCHAR(255) DEFAULT (SELECT 1)",
+		"DECIMAL(10)) ; DROP TABLE users; --",
+		"VARCHAR(255) /* comment */",
+		"ENUM8('a'=1) UNION SELECT",
+	}
+	for _, tn := range invalid {
+		err := ValidateColumnType(tn, "TestDB", meta)
+		var unsupported *UnsupportedTypeError
+		if err == nil || !errors.As(err, &unsupported) {
+			t.Errorf("expected %q to be rejected, got %v", tn, err)
+		}
+	}
+}

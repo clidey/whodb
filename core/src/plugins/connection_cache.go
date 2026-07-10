@@ -306,7 +306,9 @@ func evictOldestConnection(excludeKey string, excludeSecret string) {
 
 	if oldestKey != "" {
 		cached := deleteCachedConnectionLocked(oldestKey, oldestSecret)
-		closeGormDB(cached.db)
+		if cached != nil {
+			closeGormDB(cached.db)
+		}
 		log.WithField("cache_key", shortKey(oldestKey)).Debug("Evicted oldest connection to stay under limit")
 	}
 }

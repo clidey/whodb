@@ -18,6 +18,7 @@ package mcp
 
 import (
 	"context"
+	"crypto/subtle"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -225,11 +226,6 @@ func (te *ToolEnablement) isToolEnabled(toolName string) bool {
 	return false
 }
 
-// boolPtr returns a pointer to a bool value (helper for ToolAnnotations).
-func boolPtr(b bool) *bool {
-	return &b
-}
-
 // isConnectionAllowed checks if a connection name is in the allowed list.
 // Returns true if AllowedConnections is empty (no restrictions) or if the connection is in the list.
 func (so *SecurityOptions) isConnectionAllowed(connection string) bool {
@@ -262,10 +258,10 @@ func registerTools(server *mcp.Server, secOpts *SecurityOptions, toolEnablement 
 			Description: queryDesc,
 			Annotations: &mcp.ToolAnnotations{
 				Title:           "Execute SQL Query",
-				ReadOnlyHint:    secOpts.ReadOnly,                                     // If server is read-only, this tool is read-only
-				DestructiveHint: boolPtr(!secOpts.ReadOnly && !secOpts.ConfirmWrites), // Destructive only if writes allowed without confirmation
-				IdempotentHint:  false,                                                // Queries can have side effects
-				OpenWorldHint:   boolPtr(false),                                       // Closed world (database only)
+				ReadOnlyHint:    secOpts.ReadOnly,                                 // If server is read-only, this tool is read-only
+				DestructiveHint: new(!secOpts.ReadOnly && !secOpts.ConfirmWrites), // Destructive only if writes allowed without confirmation
+				IdempotentHint:  false,                                            // Queries can have side effects
+				OpenWorldHint:   new(false),                                       // Closed world (database only)
 			},
 		}, createQueryHandler(secOpts))
 	}
@@ -280,7 +276,7 @@ func registerTools(server *mcp.Server, secOpts *SecurityOptions, toolEnablement 
 				Title:          "List Database Schemas",
 				ReadOnlyHint:   true,
 				IdempotentHint: true,
-				OpenWorldHint:  boolPtr(false),
+				OpenWorldHint:  new(false),
 			},
 		}, createSchemasHandler(secOpts))
 	}
@@ -295,7 +291,7 @@ func registerTools(server *mcp.Server, secOpts *SecurityOptions, toolEnablement 
 				Title:          "List Database Tables",
 				ReadOnlyHint:   true,
 				IdempotentHint: true,
-				OpenWorldHint:  boolPtr(false),
+				OpenWorldHint:  new(false),
 			},
 		}, createTablesHandler(secOpts))
 	}
@@ -310,7 +306,7 @@ func registerTools(server *mcp.Server, secOpts *SecurityOptions, toolEnablement 
 				Title:          "Describe Table Columns",
 				ReadOnlyHint:   true,
 				IdempotentHint: true,
-				OpenWorldHint:  boolPtr(false),
+				OpenWorldHint:  new(false),
 			},
 		}, createColumnsHandler(secOpts))
 	}
@@ -325,7 +321,7 @@ func registerTools(server *mcp.Server, secOpts *SecurityOptions, toolEnablement 
 				Title:          "List Database Connections",
 				ReadOnlyHint:   true,
 				IdempotentHint: true,
-				OpenWorldHint:  boolPtr(false),
+				OpenWorldHint:  new(false),
 			},
 		}, createConnectionsHandler(secOpts))
 	}
@@ -339,9 +335,9 @@ func registerTools(server *mcp.Server, secOpts *SecurityOptions, toolEnablement 
 			Annotations: &mcp.ToolAnnotations{
 				Title:           "Confirm Write Operation",
 				ReadOnlyHint:    false,
-				DestructiveHint: boolPtr(true), // Can execute destructive operations
-				IdempotentHint:  false,         // Tokens are single-use
-				OpenWorldHint:   boolPtr(false),
+				DestructiveHint: new(true), // Can execute destructive operations
+				IdempotentHint:  false,     // Tokens are single-use
+				OpenWorldHint:   new(false),
 			},
 		}, createConfirmHandler(secOpts))
 	}
@@ -356,7 +352,7 @@ func registerTools(server *mcp.Server, secOpts *SecurityOptions, toolEnablement 
 				Title:          "List Pending Confirmations",
 				ReadOnlyHint:   true,
 				IdempotentHint: true,
-				OpenWorldHint:  boolPtr(false),
+				OpenWorldHint:  new(false),
 			},
 		}, createPendingHandler(secOpts))
 	}
@@ -370,7 +366,7 @@ func registerTools(server *mcp.Server, secOpts *SecurityOptions, toolEnablement 
 				Title:          "Explain SQL Query",
 				ReadOnlyHint:   true,
 				IdempotentHint: true,
-				OpenWorldHint:  boolPtr(false),
+				OpenWorldHint:  new(false),
 			},
 		}, createExplainHandler(secOpts))
 	}
@@ -384,7 +380,7 @@ func registerTools(server *mcp.Server, secOpts *SecurityOptions, toolEnablement 
 				Title:          "Compare Schemas",
 				ReadOnlyHint:   true,
 				IdempotentHint: true,
-				OpenWorldHint:  boolPtr(false),
+				OpenWorldHint:  new(false),
 			},
 		}, createSchemaDiffHandler(secOpts))
 	}
@@ -398,7 +394,7 @@ func registerTools(server *mcp.Server, secOpts *SecurityOptions, toolEnablement 
 				Title:          "Load ER Diagram Metadata",
 				ReadOnlyHint:   true,
 				IdempotentHint: true,
-				OpenWorldHint:  boolPtr(false),
+				OpenWorldHint:  new(false),
 			},
 		}, createERDHandler(secOpts))
 	}
@@ -412,7 +408,7 @@ func registerTools(server *mcp.Server, secOpts *SecurityOptions, toolEnablement 
 				Title:          "Run Data Quality Audit",
 				ReadOnlyHint:   true,
 				IdempotentHint: true,
-				OpenWorldHint:  boolPtr(false),
+				OpenWorldHint:  new(false),
 			},
 		}, createAuditHandler(secOpts))
 	}
@@ -426,7 +422,7 @@ func registerTools(server *mcp.Server, secOpts *SecurityOptions, toolEnablement 
 				Title:          "Load Query Suggestions",
 				ReadOnlyHint:   true,
 				IdempotentHint: true,
-				OpenWorldHint:  boolPtr(false),
+				OpenWorldHint:  new(false),
 			},
 		}, createSuggestionsHandler(secOpts))
 	}
@@ -1987,6 +1983,26 @@ type HTTPOptions struct {
 	Host string
 	// Port to listen on (default: 3000).
 	Port int
+	// AuthToken, when non-empty, requires every /mcp request to present a matching
+	// "Authorization: Bearer <token>" header. Recommended whenever the server binds
+	// to a non-loopback interface.
+	AuthToken string
+}
+
+// requireBearerToken wraps a handler so that requests must present a matching
+// bearer token. The comparison is constant-time to avoid leaking the token via
+// timing.
+func requireBearerToken(token string, next http.Handler) http.Handler {
+	expected := []byte("Bearer " + token)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		provided := []byte(r.Header.Get("Authorization"))
+		if subtle.ConstantTimeCompare(provided, expected) != 1 {
+			w.Header().Set("WWW-Authenticate", "Bearer")
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 // Run starts the MCP server with stdio transport.
@@ -2009,17 +2025,23 @@ func RunHTTP(ctx context.Context, server *mcp.Server, opts *HTTPOptions, logger 
 		logger = slog.New(slog.NewTextHandler(os.Stderr, nil))
 	}
 
-	// Warn if binding to non-localhost (network exposure)
-	if opts.Host != "localhost" && opts.Host != "127.0.0.1" {
-		logger.Warn("MCP server binding to network interface - no authentication is configured",
+	// Warn about network exposure. Binding to a non-loopback interface without a
+	// token exposes full configured database access to anyone who can reach it.
+	isLoopback := opts.Host == "localhost" || opts.Host == "127.0.0.1"
+	if !isLoopback && opts.AuthToken == "" {
+		logger.Warn("MCP server binding to a network interface with NO authentication configured",
 			"host", opts.Host,
-			"recommendation", "Use --host=localhost for local development, or add authentication for production")
+			"recommendation", "Set --auth-token (or WHODB_MCP_AUTH_TOKEN), or use --host=localhost")
 	}
 
 	// Create HTTP handler for MCP
-	handler := mcp.NewStreamableHTTPHandler(func(r *http.Request) *mcp.Server {
+	var handler http.Handler = mcp.NewStreamableHTTPHandler(func(r *http.Request) *mcp.Server {
 		return server
 	}, nil)
+	if opts.AuthToken != "" {
+		handler = requireBearerToken(opts.AuthToken, handler)
+		logger.Info("MCP HTTP transport requires bearer token authentication")
+	}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {

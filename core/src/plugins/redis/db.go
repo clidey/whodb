@@ -71,6 +71,7 @@ func DB(config *engine.PluginConfig) (*redis.Client, error) {
 
 	client := redis.NewClient(opts)
 	if _, err := client.Ping(ctx).Result(); err != nil {
+		_ = client.Close()
 		log.WithError(err).WithFields(map[string]any{
 			"hostname": config.Credentials.Hostname,
 			"database": database,

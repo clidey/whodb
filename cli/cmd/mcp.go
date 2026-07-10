@@ -47,6 +47,7 @@ var (
 	mcpTransport string
 	mcpHost      string
 	mcpPort      int
+	mcpAuthToken string
 )
 
 // platform flags
@@ -86,8 +87,11 @@ TRANSPORT:
   --transport http   Run as HTTP service for cloud/shared deployments
 
   HTTP mode options:
-    --host HOST      Bind address (default: localhost)
-    --port PORT      Listen port (default: 3000)
+    --host HOST         Bind address (default: localhost)
+    --port PORT         Listen port (default: 3000)
+    --auth-token TOKEN  Require this bearer token on /mcp requests
+                        (can also set WHODB_MCP_AUTH_TOKEN); strongly
+                        recommended when binding to a network interface
 
   HTTP mode exposes:
     /mcp      - MCP endpoint (streaming HTTP)
@@ -313,9 +317,14 @@ Connection Resolution:
 		// Run with selected transport
 		switch whodbmcp.TransportType(mcpTransport) {
 		case whodbmcp.TransportHTTP:
+			authToken := mcpAuthToken
+			if authToken == "" {
+				authToken = os.Getenv("WHODB_MCP_AUTH_TOKEN")
+			}
 			return whodbmcp.RunHTTP(ctx, server, &whodbmcp.HTTPOptions{
-				Host: mcpHost,
-				Port: mcpPort,
+				Host:      mcpHost,
+				Port:      mcpPort,
+				AuthToken: authToken,
 			}, opts.Logger)
 		default:
 			return whodbmcp.Run(ctx, server)
@@ -356,6 +365,8 @@ func init() {
 		"Host to bind to (only used with --transport=http)")
 	mcpServeCmd.Flags().IntVar(&mcpPort, "port", 3000,
 		"Port to listen on (only used with --transport=http)")
+	mcpServeCmd.Flags().StringVar(&mcpAuthToken, "auth-token", "",
+		"Require this bearer token on HTTP requests (can also set WHODB_MCP_AUTH_TOKEN); strongly recommended when binding to a network interface")
 
 	// Platform flags
 	mcpServeCmd.Flags().BoolVar(&mcpPlatform, "platform", false,

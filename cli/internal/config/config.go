@@ -300,14 +300,17 @@ func loadConfig(includeSecrets, showWarnings bool) (*Config, error) {
 		return nil, fmt.Errorf("error reading config: %w", err)
 	}
 
-	// Load passwords only when the caller needs secrets.
+	// Load secrets only when the caller needs them.
 	if includeSecrets && cfg.useKeyring {
 		for i := range cfg.Connections {
-			if cfg.Connections[i].Name != "" {
-				password, err := keyring.Get(identity.Current().KeyringService, "connection:"+cfg.Connections[i].Name)
-				if err == nil {
-					cfg.Connections[i].Password = password
-				}
+			if cfg.Connections[i].Name == "" {
+				continue
+			}
+			if password, err := keyring.Get(identity.Current().KeyringService, "connection:"+cfg.Connections[i].Name); err == nil {
+				cfg.Connections[i].Password = password
+			}
+			if sshPassword, err := keyring.Get(identity.Current().KeyringService, "connection-ssh:"+cfg.Connections[i].Name); err == nil {
+				cfg.Connections[i].SSHPassword = sshPassword
 			}
 		}
 	}
@@ -326,7 +329,7 @@ func (c *Config) UsesKeyring() bool {
 func (c *Config) showKeyringWarning() {
 	if !c.useKeyring && !c.keyringWarningShown {
 		fmt.Fprintf(os.Stderr, "\n⚠️  WARNING: OS keyring not available.\n")
-		fmt.Fprintf(os.Stderr, "   Passwords will be stored in plaintext in config file.\n")
+		fmt.Fprintf(os.Stderr, "   Database and SSH passwords will be stored in plaintext in config file.\n")
 		fmt.Fprintf(os.Stderr, "   File permissions: 0600 (user read/write only)\n\n")
 		c.keyringWarningShown = true
 	}
@@ -337,25 +340,35 @@ func (c *Config) Save() error {
 
 	if c.useKeyring {
 		for _, conn := range c.Connections {
-			if conn.Name != "" && conn.Password != "" {
-				err := keyring.Set(identity.Current().KeyringService, "connection:"+conn.Name, conn.Password)
-				if err != nil {
+			if conn.Name == "" {
+				continue
+			}
+			if conn.Password != "" {
+				if err := keyring.Set(identity.Current().KeyringService, "connection:"+conn.Name, conn.Password); err != nil {
 					fmt.Fprintf(os.Stderr, "Warning: Could not save password to keyring for %s: %v\n", conn.Name, err)
 					fmt.Fprintf(os.Stderr, "Password will be saved in config file.\n")
+					globalUseKeyring = false
+				}
+			}
+			if conn.SSHPassword != "" {
+				if err := keyring.Set(identity.Current().KeyringService, "connection-ssh:"+conn.Name, conn.SSHPassword); err != nil {
+					fmt.Fprintf(os.Stderr, "Warning: Could not save SSH password to keyring for %s: %v\n", conn.Name, err)
+					fmt.Fprintf(os.Stderr, "SSH password will be saved in config file.\n")
 					globalUseKeyring = false
 				}
 			}
 		}
 	}
 
-	// Prepare section for saving (strip passwords if using keyring)
+	// Prepare section for saving (strip secrets if using keyring)
 	section := c.CLISection
 	if globalUseKeyring {
-		// Create a copy with passwords stripped
+		// Create a copy with secrets stripped so they are not written to disk.
 		section.Connections = make([]Connection, len(c.Connections))
 		for i, conn := range c.Connections {
 			section.Connections[i] = conn
 			section.Connections[i].Password = ""
+			section.Connections[i].SSHPassword = ""
 		}
 	}
 
@@ -479,6 +492,7 @@ func (c *Config) RemoveConnection(name string) bool {
 
 			if c.useKeyring {
 				_ = keyring.Delete(identity.Current().KeyringService, "connection:"+name)
+				_ = keyring.Delete(identity.Current().KeyringService, "connection-ssh:"+name)
 			}
 
 			return true

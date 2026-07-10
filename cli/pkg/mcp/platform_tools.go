@@ -520,6 +520,7 @@ type PendingPlatformAction struct {
 	Variables   map[string]any
 	BundlePlan  *platformapi.BundlePlan
 	ExpiresAt   time.Time
+	inFlight    bool // true while a confirm is actively executing this action
 }
 
 // MarshalJSON ensures nil slices are serialized as [] instead of null.
@@ -711,7 +712,7 @@ func platformReadOnlyAnnotations(title string) *mcp.ToolAnnotations {
 		Title:          title,
 		ReadOnlyHint:   true,
 		IdempotentHint: true,
-		OpenWorldHint:  boolPtr(true),
+		OpenWorldHint:  new(true),
 	}
 }
 
@@ -719,9 +720,9 @@ func platformDestructiveAnnotations(title string) *mcp.ToolAnnotations {
 	return &mcp.ToolAnnotations{
 		Title:           title,
 		ReadOnlyHint:    false,
-		DestructiveHint: boolPtr(true),
+		DestructiveHint: new(true),
 		IdempotentHint:  false,
-		OpenWorldHint:   boolPtr(true),
+		OpenWorldHint:   new(true),
 	}
 }
 
@@ -2010,6 +2011,10 @@ func storePendingPlatformAction(action *PendingPlatformAction) (string, time.Tim
 	return token, expiresAt
 }
 
+// getPendingPlatformAction claims a pending action for execution, marking it
+// in-flight so concurrent confirm calls with the same token are rejected. This
+// prevents a get/consume race from executing the mutation twice. The token is
+// released on failure (allowing retry) and consumed only on success.
 func getPendingPlatformAction(token string) (*PendingPlatformAction, error) {
 	platformPendingMutex.Lock()
 	defer platformPendingMutex.Unlock()
@@ -2021,7 +2026,21 @@ func getPendingPlatformAction(token string) (*PendingPlatformAction, error) {
 		delete(pendingPlatformActions, token)
 		return nil, fmt.Errorf("confirmation token has expired")
 	}
+	if action.inFlight {
+		return nil, fmt.Errorf("confirmation is already being executed")
+	}
+	action.inFlight = true
 	return action, nil
+}
+
+// releasePendingPlatformAction clears the in-flight claim without deleting the
+// action, so a failed confirm can be retried.
+func releasePendingPlatformAction(token string) {
+	platformPendingMutex.Lock()
+	defer platformPendingMutex.Unlock()
+	if action, ok := pendingPlatformActions[token]; ok {
+		action.inFlight = false
+	}
 }
 
 func consumePendingPlatformAction(token string) {
@@ -2220,12 +2239,19 @@ func HandlePlatformConfirm(ctx context.Context, req *mcp.CallToolRequest, input 
 		TrackToolCall(ctx, "platform_confirm", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "token_invalid"})
 		return nil, ConfirmOutput{Error: err.Error(), RequestID: requestID}, nil
 	}
+	consumed := false
+	defer func() {
+		if !consumed {
+			releasePendingPlatformAction(input.Token)
+		}
+	}()
 	output, err := executePendingPlatformAction(ctx, action, requestID)
 	if err != nil {
 		TrackToolCall(ctx, "platform_confirm", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_action"})
 		return nil, ConfirmOutput{PlatformSetupGuidance: platformSetupGuidanceForError(err, requestID), Error: err.Error(), RequestID: requestID}, nil
 	}
 	consumePendingPlatformAction(input.Token)
+	consumed = true
 	TrackToolCall(ctx, "platform_confirm", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"action": action.Operation})
 	return nil, output, nil
 }
