@@ -49,7 +49,7 @@ const (
 	KeySSLClientKeyContent  = "SSL Client Key Content"
 	KeySSLServerName        = "SSL Server Name"
 
-	// Path keys - only for profile-based connections (server-side, admin-controlled)
+	// KeySSLCACertPath is used by profile-based, server-side connections.
 	KeySSLCACertPath     = "SSL CA Path"
 	KeySSLClientCertPath = "SSL Client Cert Path"
 	KeySSLClientKeyPath  = "SSL Client Key Path"
