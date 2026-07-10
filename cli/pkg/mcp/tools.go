@@ -280,6 +280,7 @@ type PendingConfirmation struct {
 	Query      string
 	Connection string
 	ExpiresAt  time.Time
+	inFlight   bool // true while a confirm is actively executing this token
 }
 
 // pendingConfirmations stores queries awaiting confirmation
@@ -319,7 +320,12 @@ func storePendingConfirmation(query, connection string) (string, time.Time) {
 	return token, expiresAt
 }
 
-// getPendingConfirmation retrieves and removes a pending confirmation
+// getPendingConfirmation claims a pending confirmation for execution. It marks
+// the token in-flight so concurrent confirm calls with the same token are
+// rejected, preventing a get/consume race from executing the (non-idempotent)
+// write twice. The token is not deleted here — it stays valid until consumed by
+// consumePendingConfirmation on success, or released by releasePendingConfirmation
+// on failure so the caller can retry (e.g. after a connection error or timeout).
 func getPendingConfirmation(token string) (*PendingConfirmation, error) {
 	pendingMutex.Lock()
 	defer pendingMutex.Unlock()
@@ -334,11 +340,22 @@ func getPendingConfirmation(token string) (*PendingConfirmation, error) {
 		return nil, errors.New("confirmation token has expired")
 	}
 
-	// Token is NOT deleted here — it stays valid until consumed by
-	// consumePendingConfirmation after successful execution.
-	// This allows retrying whodb_confirm if the first attempt fails
-	// (e.g., connection error, timeout).
+	if pending.inFlight {
+		return nil, errors.New("confirmation is already being executed")
+	}
+	pending.inFlight = true
+
 	return pending, nil
+}
+
+// releasePendingConfirmation clears the in-flight claim on a token without
+// deleting it, so a failed confirm can be retried.
+func releasePendingConfirmation(token string) {
+	pendingMutex.Lock()
+	defer pendingMutex.Unlock()
+	if pending, ok := pendingConfirmations[token]; ok {
+		pending.inFlight = false
+	}
 }
 
 // consumePendingConfirmation removes a token after successful execution.
@@ -667,12 +684,19 @@ func HandleConfirm(ctx context.Context, req *mcp.CallToolRequest, input ConfirmI
 		return nil, ConfirmOutput{Error: err.Error(), RequestID: requestID}, nil
 	}
 
-	// Get the pending confirmation
+	// Claim the pending confirmation. The claim is released on any failure path
+	// (allowing retry) and only cleared permanently once the query succeeds.
 	pending, err := getPendingConfirmation(input.Token)
 	if err != nil {
 		TrackToolCall(ctx, "confirm", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "token_invalid"})
 		return nil, ConfirmOutput{Error: err.Error(), RequestID: requestID}, nil
 	}
+	consumed := false
+	defer func() {
+		if !consumed {
+			releasePendingConfirmation(input.Token)
+		}
+	}()
 
 	// Validate connection is still allowed (defense-in-depth)
 	if !secOpts.isConnectionAllowed(pending.Connection) {
@@ -712,6 +736,7 @@ func HandleConfirm(ctx context.Context, req *mcp.CallToolRequest, input ConfirmI
 
 	// Query executed successfully — consume the token so it can't be reused
 	consumePendingConfirmation(input.Token)
+	consumed = true
 
 	columns := convertColumns(result)
 	columnTypes := convertColumnTypes(result)
