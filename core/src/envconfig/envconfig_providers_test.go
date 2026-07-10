@@ -73,6 +73,33 @@ func TestResolveProviderCredentials_RequestValuesOverrideConfig(t *testing.T) {
 	}
 }
 
+func TestResolveProviderCredentials_ServerKeyNotSentToClientEndpoint(t *testing.T) {
+	origProviders := env.GenericProviders
+	t.Cleanup(func() { env.GenericProviders = origProviders })
+
+	env.GenericProviders = []env.GenericProviderConfig{
+		{
+			ProviderId: "test-provider",
+			Name:       "Test",
+			ClientType: "openai-generic",
+			BaseURL:    "http://config-url",
+			APIKey:     "config-key",
+		},
+	}
+
+	// Client supplies an endpoint but no token. The server-configured key must
+	// not be paired with the client's endpoint (credential-exfiltration vector);
+	// the server's own endpoint must be used instead.
+	result := ResolveProviderCredentials("test-provider", "", "http://attacker-url", "test-provider")
+
+	if result.Token != "config-key" {
+		t.Fatalf("expected server-configured token, got %q", result.Token)
+	}
+	if result.Endpoint != "http://config-url" {
+		t.Fatalf("expected server endpoint when using server key, got %q", result.Endpoint)
+	}
+}
+
 func TestGetConfiguredChatProviders(t *testing.T) {
 	originalOpenAI := env.OpenAIAPIKey
 	originalOpenAIEndpoint := env.OpenAIEndpoint
