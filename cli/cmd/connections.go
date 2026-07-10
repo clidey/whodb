@@ -99,10 +99,9 @@ var connectionsListCmd = &cobra.Command{
 		if len(connections) == 0 {
 			if effectiveCommandOutputFormat(cmd, format) == output.FormatJSON {
 				return writeEmptyJSONArray(cmd)
-			} else {
-				out.Info("No connections available. Create one with:")
-				out.Info("  whodb-cli connect --type postgres --host localhost --user myuser --database mydb --name myconn")
 			}
+			out.Info("No connections available. Create one with:")
+			out.Info("  whodb-cli connect --type postgres --host localhost --user myuser --database mydb --name myconn")
 			return nil
 		}
 
