@@ -432,8 +432,10 @@ jobs:
         if: steps.check_creds.outputs.has_creds == 'true'
         shell: pwsh
         run: |
-          if (!(Get-Module -ListAvailable -Name StoreBroker)) {
-            Install-Module -Name StoreBroker -Force -Scope CurrentUser -AllowClobber
+          $required = "1.21.2"
+          $installed = Get-Module -ListAvailable -Name StoreBroker | Sort-Object Version -Descending | Select-Object -First 1
+          if (-not $installed -or $installed.Version -lt [version]$required) {
+            Install-Module -Name StoreBroker -RequiredVersion $required -Force -Scope CurrentUser -AllowClobber
           }
           Write-Host "StoreBroker ready"
 
@@ -467,10 +469,19 @@ jobs:
           }
           Write-Host "Using package: $($packagePath.FullName)"
 
-          # Clone latest submission
-          $submission = New-ApplicationSubmission -AppId $appId -NoStatus
+          # Clone latest submission (retry up to 3 times — Partner Center API is flaky)
+          $submission = $null
+          for ($attempt = 1; $attempt -le 3; $attempt++) {
+            try {
+              $submission = New-ApplicationSubmission -AppId $appId -NoStatus
+              if ($submission) { break }
+            } catch {
+              Write-Host "Attempt $attempt failed: $_"
+            }
+            if ($attempt -lt 3) { Start-Sleep -Seconds (15 * $attempt) }
+          }
           if (-not $submission) {
-            Write-Error "Failed to clone latest submission for application $appId"
+            Write-Error "Failed to clone latest submission for application $appId after 3 attempts"
             exit 1
           }
 
