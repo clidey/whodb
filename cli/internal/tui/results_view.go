@@ -122,11 +122,11 @@ func (v *ResultsView) Update(msg tea.Msg) (*ResultsView, tea.Cmd) {
 		return v, nil
 
 	case tea.MouseMsg:
-		switch msg.Type {
-		case tea.MouseWheelUp:
+		switch msg.Button {
+		case tea.MouseButtonWheelUp:
 			v.moveSelectionUp()
 			return v, nil
-		case tea.MouseWheelDown:
+		case tea.MouseButtonWheelDown:
 			v.moveSelectionDown()
 			return v, nil
 		}

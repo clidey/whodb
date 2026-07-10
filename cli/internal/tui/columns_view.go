@@ -70,8 +70,8 @@ func (v *ColumnsView) Update(msg tea.Msg) (*ColumnsView, tea.Cmd) {
 		return v, nil
 
 	case tea.MouseMsg:
-		switch msg.Type {
-		case tea.MouseWheelUp:
+		switch msg.Button {
+		case tea.MouseButtonWheelUp:
 			if v.scrollOffset > 0 {
 				v.scrollOffset--
 				// If selected item is now below viewport, move selection up
@@ -87,7 +87,7 @@ func (v *ColumnsView) Update(msg tea.Msg) (*ColumnsView, tea.Cmd) {
 				}
 			}
 			return v, nil
-		case tea.MouseWheelDown:
+		case tea.MouseButtonWheelDown:
 			maxVisible := v.height - 12
 			if maxVisible < 1 {
 				maxVisible = 10

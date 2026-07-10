@@ -771,11 +771,11 @@ func TestResultsView_MouseScroll(t *testing.T) {
 	v.updateTable()
 
 	// Mouse wheel down
-	msg := tea.MouseMsg{Type: tea.MouseWheelDown}
+	msg := tea.MouseMsg{Button: tea.MouseButtonWheelDown}
 	v, _ = v.Update(msg)
 
 	// Mouse wheel up
-	msg = tea.MouseMsg{Type: tea.MouseWheelUp}
+	msg = tea.MouseMsg{Button: tea.MouseButtonWheelUp}
 	_, _ = v.Update(msg)
 
 	// Just ensure no panic - table handles internal cursor state
