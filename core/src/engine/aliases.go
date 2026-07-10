@@ -119,30 +119,30 @@ func CreationListSeparator() string {
 
 const (
 	// TypeCategoryNumeric groups numeric types.
-	TypeCategoryNumeric TypeCategory = source.TypeCategoryNumeric
+	TypeCategoryNumeric = source.TypeCategoryNumeric
 	// TypeCategoryText groups text types.
-	TypeCategoryText TypeCategory = source.TypeCategoryText
+	TypeCategoryText = source.TypeCategoryText
 	// TypeCategoryBinary groups binary types.
-	TypeCategoryBinary TypeCategory = source.TypeCategoryBinary
+	TypeCategoryBinary = source.TypeCategoryBinary
 	// TypeCategoryDatetime groups date/time types.
-	TypeCategoryDatetime TypeCategory = source.TypeCategoryDatetime
+	TypeCategoryDatetime = source.TypeCategoryDatetime
 	// TypeCategoryBoolean groups boolean types.
-	TypeCategoryBoolean TypeCategory = source.TypeCategoryBoolean
+	TypeCategoryBoolean = source.TypeCategoryBoolean
 	// TypeCategoryJSON groups JSON/document types.
-	TypeCategoryJSON TypeCategory = source.TypeCategoryJSON
+	TypeCategoryJSON = source.TypeCategoryJSON
 	// TypeCategoryOther groups uncategorised types.
-	TypeCategoryOther TypeCategory = source.TypeCategoryOther
+	TypeCategoryOther = source.TypeCategoryOther
 )
 
 const (
 	// GraphUnitRelationshipTypeOneToOne identifies a one-to-one relationship.
-	GraphUnitRelationshipTypeOneToOne GraphUnitRelationshipType = source.GraphRelationshipTypeOneToOne
+	GraphUnitRelationshipTypeOneToOne = source.GraphRelationshipTypeOneToOne
 	// GraphUnitRelationshipTypeOneToMany identifies a one-to-many relationship.
-	GraphUnitRelationshipTypeOneToMany GraphUnitRelationshipType = source.GraphRelationshipTypeOneToMany
+	GraphUnitRelationshipTypeOneToMany = source.GraphRelationshipTypeOneToMany
 	// GraphUnitRelationshipTypeManyToOne identifies a many-to-one relationship.
-	GraphUnitRelationshipTypeManyToOne GraphUnitRelationshipType = source.GraphRelationshipTypeManyToOne
+	GraphUnitRelationshipTypeManyToOne = source.GraphRelationshipTypeManyToOne
 	// GraphUnitRelationshipTypeManyToMany identifies a many-to-many relationship.
-	GraphUnitRelationshipTypeManyToMany GraphUnitRelationshipType = source.GraphRelationshipTypeManyToMany
+	GraphUnitRelationshipTypeManyToMany = source.GraphRelationshipTypeManyToMany
 	// GraphUnitRelationshipTypeUnknown identifies an unknown relationship.
-	GraphUnitRelationshipTypeUnknown GraphUnitRelationshipType = source.GraphRelationshipTypeUnknown
+	GraphUnitRelationshipTypeUnknown = source.GraphRelationshipTypeUnknown
 )
