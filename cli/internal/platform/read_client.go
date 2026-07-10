@@ -348,6 +348,57 @@ func (c *Client) Function(ctx context.Context, projectID, id string, fields []st
 	return resp.FunctionDetail, nil
 }
 
+// ExecuteFunction runs one hosted ontology function with a JSON input string.
+func (c *Client) ExecuteFunction(ctx context.Context, projectID, functionID, input string, inputFileIDs []string) (*FunctionExecutionResult, error) {
+	if err := c.RequireOperation("Mutation", "ExecuteFunction", "function execution"); err != nil {
+		return nil, err
+	}
+	var resp struct {
+		ExecuteFunction *FunctionExecutionResult `json:"ExecuteFunction"`
+	}
+	variables := map[string]any{
+		"projectId":    projectID,
+		"functionId":   functionID,
+		"input":        input,
+		"inputFileIds": inputFileIDs,
+	}
+	if err := c.graphQL(ctx, operationExecuteFunction, variables, &resp); err != nil {
+		return nil, err
+	}
+	if resp.ExecuteFunction == nil {
+		return nil, fmt.Errorf("platform returned no function execution result")
+	}
+	return resp.ExecuteFunction, nil
+}
+
+// ObjectVersions returns promoted versions for one hosted platform object.
+func (c *Client) ObjectVersions(ctx context.Context, projectID, objectID, objectType string) ([]ObjectVersion, error) {
+	if err := c.RequireOperation("Query", "ObjectVersions", "object version history"); err != nil {
+		return nil, err
+	}
+	var resp struct {
+		ObjectVersions []ObjectVersion `json:"ObjectVersions"`
+	}
+	variables := map[string]any{"projectId": projectID, "objectId": objectID, "objectType": objectType}
+	err := c.graphQL(ctx, operationObjectVersions, variables, &resp)
+	return resp.ObjectVersions, err
+}
+
+// ActiveProdVersion returns the currently active version for one hosted platform object.
+func (c *Client) ActiveProdVersion(ctx context.Context, projectID, objectID, objectType string) (*ActiveProdVersion, error) {
+	if err := c.RequireOperation("Query", "ActiveProdVersion", "active object version"); err != nil {
+		return nil, err
+	}
+	var resp struct {
+		ActiveProdVersion *ActiveProdVersion `json:"ActiveProdVersion"`
+	}
+	variables := map[string]any{"projectId": projectID, "objectId": objectID, "objectType": objectType}
+	if err := c.graphQL(ctx, operationActiveProdVersion, variables, &resp); err != nil {
+		return nil, err
+	}
+	return resp.ActiveProdVersion, nil
+}
+
 // FolderContents returns hosted project folder contents.
 func (c *Client) FolderContents(ctx context.Context, projectID, folderID string, fields []string) (*FolderContents, error) {
 	if err := c.RequireOperation("Query", "FolderContents", "project files"); err != nil {

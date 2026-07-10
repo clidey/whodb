@@ -83,7 +83,7 @@ func (p *LMStudioProvider) GetSupportedModels(config *ProviderConfig) ([]string,
 
 	resp, err := sendHTTPRequest("GET", url, nil, headers)
 	if err != nil {
-		log.WithError(err).Errorf("Failed to fetch models from LM Studio at %s", url)
+		log.WithError(err).Errorf("Failed to fetch models from LM Studio at %s", redactURL(url))
 		return nil, err
 	}
 	defer func() { _ = resp.Body.Close() }()

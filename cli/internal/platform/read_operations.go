@@ -479,6 +479,52 @@ query CLIPlatformProjectStorageUsage($projectId: ID!) {
 }
 `
 
+const operationExecuteFunction = `
+mutation CLIPlatformExecuteFunction($projectId: ID!, $functionId: ID!, $input: String!, $inputFileIds: [ID!]) {
+  ExecuteFunction(projectId: $projectId, functionId: $functionId, input: $input, inputFileIds: $inputFileIds) {
+    output
+    logs
+    durationMs
+    success
+    error
+  }
+}
+`
+
+const objectVersionFields = `
+  id
+  objectId
+  objectType
+  version
+  message
+  promotedBy
+  createdAt
+`
+
+const activeProdVersionFields = `
+  objectId
+  objectType
+  version
+  activatedAt
+  activatedBy
+`
+
+const operationObjectVersions = `
+query CLIPlatformObjectVersions($projectId: ID!, $objectId: ID!, $objectType: VersionableObjectType!) {
+  ObjectVersions(projectId: $projectId, objectId: $objectId, objectType: $objectType) {
+` + objectVersionFields + `
+  }
+}
+`
+
+const operationActiveProdVersion = `
+query CLIPlatformActiveProdVersion($projectId: ID!, $objectId: ID!, $objectType: VersionableObjectType!) {
+  ActiveProdVersion(projectId: $projectId, objectId: $objectId, objectType: $objectType) {
+` + activeProdVersionFields + `
+  }
+}
+`
+
 func init() {
 	platformOperations["project_secrets"] = operationProjectSecrets
 	platformOperations["source_constraints"] = operationPlatformSourceFieldConstraints
@@ -506,4 +552,7 @@ func init() {
 	platformOperations["file_search"] = operationSearchProjectFiles
 	platformOperations["tabular_files"] = operationProjectTabularFiles
 	platformOperations["storage_usage"] = operationProjectStorageUsage
+	platformOperations["function_execute"] = operationExecuteFunction
+	platformOperations["object_versions"] = operationObjectVersions
+	platformOperations["active_prod_version"] = operationActiveProdVersion
 }

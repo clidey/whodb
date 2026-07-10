@@ -34,10 +34,10 @@ import (
 )
 
 const (
-	// Maximum rows for Excel export to prevent memory issues
+	// MaxExcelRows is the maximum number of rows allowed in an Excel export.
 	MaxExcelRows = 100000 // 100k rows
 
-	// Default CSV delimiter
+	// DefaultCSVDelimiter is the delimiter used for CSV exports.
 	DefaultCSVDelimiter = ","
 )
 

@@ -234,6 +234,11 @@ func TestPlatformInstructionsExcludeLocalTools(t *testing.T) {
 	if !strings.Contains(platformInstructions, "whodb_platform_status") {
 		t.Fatal("platformInstructions should mention platform tools")
 	}
+	for _, expected := range []string{"semantic application platform", "ontologies define business objects", "whodb://platform/concepts"} {
+		if !strings.Contains(platformInstructions, expected) {
+			t.Fatalf("platformInstructions should mention platform concept %q", expected)
+		}
+	}
 	if strings.Contains(platformInstructions, "whodb_query") || strings.Contains(platformInstructions, "whodb_connections") {
 		t.Fatal("platformInstructions should not advertise local database tools")
 	}
@@ -305,6 +310,11 @@ func TestNewServer_PlatformModeListsOnlyPlatformPrompts(t *testing.T) {
 		"whodb_platform_read_workflow",
 		"whodb_platform_write_safety",
 		"whodb_platform_source_workflow",
+		"whodb_platform_analyze_project",
+		"whodb_platform_prepare_safe_write",
+		"whodb_platform_debug_missing_data",
+		"whodb_platform_build_ontology_workflow",
+		"whodb_platform_import_export_workflow",
 	}
 	if len(result.Prompts) != len(expectedPrompts) {
 		t.Fatalf("platform mode exposed %d prompts, want %d", len(result.Prompts), len(expectedPrompts))
@@ -331,6 +341,20 @@ func TestPlatformPromptContent(t *testing.T) {
 			t.Fatalf("source workflow prompt should mention %q", expected)
 		}
 	}
+
+	overview := promptText(t, getServerPrompt(t, server, "whodb_platform_overview"))
+	for _, expected := range []string{"semantic application platform", "durable datasets", "ontologies", "whodb://platform/concepts"} {
+		if !strings.Contains(overview, expected) {
+			t.Fatalf("overview prompt should mention %q", expected)
+		}
+	}
+
+	analyze := promptText(t, getServerPrompt(t, server, "whodb_platform_analyze_project"))
+	for _, expected := range []string{"scope -> ingest -> persist -> model", "Sources are only ingestion endpoints"} {
+		if !strings.Contains(analyze, expected) {
+			t.Fatalf("analyze project prompt should mention %q", expected)
+		}
+	}
 }
 
 func TestNewServer_PlatformModeListsOnlyPlatformResources(t *testing.T) {
@@ -339,6 +363,7 @@ func TestNewServer_PlatformModeListsOnlyPlatformResources(t *testing.T) {
 		"whodb://platform/schema",
 		"whodb://platform/workspace",
 		"whodb://platform/tool-guide",
+		"whodb://platform/concepts",
 	}
 	if len(result.Resources) != len(expectedResources) {
 		t.Fatalf("platform mode exposed %d resources, want %d", len(result.Resources), len(expectedResources))
@@ -373,6 +398,7 @@ func TestPlatformResourcesReadJSON(t *testing.T) {
 		"whodb://platform/schema",
 		"whodb://platform/workspace",
 		"whodb://platform/tool-guide",
+		"whodb://platform/concepts",
 	} {
 		text := resourceText(t, readServerResource(t, server, uri))
 		var payload map[string]any
@@ -385,6 +411,11 @@ func TestPlatformResourcesReadJSON(t *testing.T) {
 	if !strings.Contains(schema, `"whodb_platform_status"`) || strings.Contains(schema, `"whodb_query"`) {
 		t.Fatalf("platform schema resource should include platform tools and exclude local tools: %s", schema)
 	}
+	for _, expected := range []string{`"product_model"`, `"concepts"`, `"lifecycle"`, `"recipes"`, `"zero_to_app"`, `"write_specs"`, `"payload_shapes"`, `"key": "update:ai_provider"`, `"mutation": "UpdateAIProvider"`, `"secret": true`, `"examples"`} {
+		if !strings.Contains(schema, expected) {
+			t.Fatalf("platform schema resource should contain %s: %s", expected, schema)
+		}
+	}
 	workspace := resourceText(t, readServerResource(t, server, "whodb://platform/workspace"))
 	for _, expected := range []string{`"host": "https://app.whodb.com"`, `"email": "ada@example.com"`, `"workspace_selected": true`} {
 		if !strings.Contains(workspace, expected) {
@@ -392,9 +423,15 @@ func TestPlatformResourcesReadJSON(t *testing.T) {
 		}
 	}
 	guide := resourceText(t, readServerResource(t, server, "whodb://platform/tool-guide"))
-	for _, expected := range []string{`"sources"`, `"field_projection"`, `"whodb_platform_source_create"`} {
+	for _, expected := range []string{`"product_model"`, `"lifecycle"`, `"recipes"`, `"zero_to_app"`, `"sources"`, `"field_projection"`, `"whodb_platform_source_create"`, `"whodb_platform_file_inspect"`} {
 		if !strings.Contains(guide, expected) {
 			t.Fatalf("platform tool guide resource should contain %s: %s", expected, guide)
+		}
+	}
+	concepts := resourceText(t, readServerResource(t, server, "whodb://platform/concepts"))
+	for _, expected := range []string{`semantic application platform`, `"source"`, `"ontology"`, `"transform"`, `"bundle"`, `"recipes"`, `"zero_to_app"`, `"file_to_dataset_to_ontology"`, `"safe_delete_resource"`, `Treat sources as ingestion endpoints`} {
+		if !strings.Contains(concepts, expected) {
+			t.Fatalf("platform concepts resource should contain %s: %s", expected, concepts)
 		}
 	}
 }
@@ -437,7 +474,7 @@ func TestPlatformToolGuideReferencesOnlyListedTools(t *testing.T) {
 			name:               "allow write",
 			opts:               &ServerOptions{PlatformEnabled: true, AllowWrite: true},
 			wantMode:           "allow_write",
-			wantTools:          []string{"whodb_platform_source_create", "whodb_platform_create", "whodb_platform_action"},
+			wantTools:          []string{"whodb_platform_source_create", "whodb_platform_create", "whodb_platform_action", "whodb_platform_create_dataset", "whodb_platform_promote_file_to_dataset"},
 			wantMissingTools:   []string{"whodb_platform_confirm", "whodb_platform_pending"},
 			wantSupportedWrite: true,
 		},
@@ -494,6 +531,9 @@ func TestPlatformToolGuideReferencesOnlyListedTools(t *testing.T) {
 			}
 			if !tt.wantSupportedWrite && supportedWrites != 0 {
 				t.Fatalf("guide has %d supported write entries, want 0", supportedWrites)
+			}
+			if tt.wantSupportedWrite && !platformGuideContainsWrite(guide, "whodb_platform_update", "ai_provider") {
+				t.Fatal("guide should document ai_provider update support")
 			}
 		})
 	}
@@ -600,6 +640,32 @@ func TestAgentManifestIncludesPlatformMCPPromptsAndResources(t *testing.T) {
 			t.Fatalf("platform resource %s MIME type = %q, want %q", resource.URI, listed.MIMEType, resource.MIMEType)
 		}
 	}
+
+	listedTemplates := listServerResourceTemplates(t, server).ResourceTemplates
+	if len(manifest.PlatformMCP.ResourceTemplates) != len(listedTemplates) {
+		t.Fatalf("agent manifest has %d platform resource templates, want %d", len(manifest.PlatformMCP.ResourceTemplates), len(listedTemplates))
+	}
+	for _, template := range manifest.PlatformMCP.ResourceTemplates {
+		if !strings.HasPrefix(template.URITemplate, "whodb://platform/") {
+			t.Fatalf("platform resource template %s does not use platform URI prefix", template.URITemplate)
+		}
+		if strings.TrimSpace(template.Description) == "" {
+			t.Fatalf("agent manifest platform resource template %s has empty description", template.URITemplate)
+		}
+		if template.MIMEType != "application/json" {
+			t.Fatalf("agent manifest platform resource template %s MIME type = %q, want application/json", template.URITemplate, template.MIMEType)
+		}
+		listed := findResourceTemplateByURI(listedTemplates, template.URITemplate)
+		if listed == nil {
+			t.Fatalf("agent manifest platform resource template %s is not listed by MCP server", template.URITemplate)
+		}
+		if listed.Description != template.Description {
+			t.Fatalf("platform resource template %s description = %q, want %q", template.URITemplate, listed.Description, template.Description)
+		}
+		if listed.MIMEType != template.MIMEType {
+			t.Fatalf("platform resource template %s MIME type = %q, want %q", template.URITemplate, listed.MIMEType, template.MIMEType)
+		}
+	}
 }
 
 func TestNewServer_PlatformReadOnlyHidesWriteTools(t *testing.T) {
@@ -612,6 +678,13 @@ func TestNewServer_PlatformReadOnlyHidesWriteTools(t *testing.T) {
 		"whodb_platform_update",
 		"whodb_platform_delete",
 		"whodb_platform_action",
+		"whodb_platform_create_dataset",
+		"whodb_platform_promote_file_to_dataset",
+		"whodb_platform_add_ontology_record",
+		"whodb_platform_update_ontology_record",
+		"whodb_platform_delete_ontology_record",
+		"whodb_platform_create_ontology_fast_lookup",
+		"whodb_platform_delete_ontology_fast_lookup",
 		"whodb_platform_confirm",
 		"whodb_platform_pending",
 	} {
@@ -634,6 +707,13 @@ func TestNewServer_PlatformAllowWriteHidesConfirmationTools(t *testing.T) {
 		"whodb_platform_update",
 		"whodb_platform_delete",
 		"whodb_platform_action",
+		"whodb_platform_create_dataset",
+		"whodb_platform_promote_file_to_dataset",
+		"whodb_platform_add_ontology_record",
+		"whodb_platform_update_ontology_record",
+		"whodb_platform_delete_ontology_record",
+		"whodb_platform_create_ontology_fast_lookup",
+		"whodb_platform_delete_ontology_fast_lookup",
 	} {
 		if _, ok := tools[name]; !ok {
 			t.Fatalf("platform allow-write mode did not expose %s", name)
@@ -773,6 +853,24 @@ func readServerResource(t *testing.T, server *mcpsdk.Server, uri string) *mcpsdk
 	return result
 }
 
+func listServerResourceTemplates(t *testing.T, server *mcpsdk.Server) *mcpsdk.ListResourceTemplatesResult {
+	t.Helper()
+	ctx := context.Background()
+	clientSession, serverSession := connectTestMCP(t, ctx, server)
+	t.Cleanup(func() {
+		_ = clientSession.Close()
+		_ = serverSession.Close()
+	})
+	result, err := clientSession.ListResourceTemplates(ctx, nil)
+	if err != nil {
+		t.Fatalf("ListResourceTemplates() error = %v", err)
+	}
+	if len(result.ResourceTemplates) == 0 {
+		t.Fatal("ListResourceTemplates() returned no resource templates")
+	}
+	return result
+}
+
 func connectTestMCP(t *testing.T, ctx context.Context, server *mcpsdk.Server) (*mcpsdk.ClientSession, *mcpsdk.ServerSession) {
 	t.Helper()
 	clientTransport, serverTransport := mcpsdk.NewInMemoryTransports()
@@ -827,6 +925,15 @@ func findResourceByURI(resources []*mcpsdk.Resource, uri string) *mcpsdk.Resourc
 	return nil
 }
 
+func findResourceTemplateByURI(templates []*mcpsdk.ResourceTemplate, uri string) *mcpsdk.ResourceTemplate {
+	for _, template := range templates {
+		if template.URITemplate == uri {
+			return template
+		}
+	}
+	return nil
+}
+
 func resourceText(t *testing.T, result *mcpsdk.ReadResourceResult) string {
 	t.Helper()
 	if len(result.Contents) != 1 {
@@ -858,6 +965,22 @@ func platformGuideContainsTool(guide platformToolGuideResource, name string) boo
 		for _, write := range category.SupportedWrites {
 			if write.Tool == name {
 				return true
+			}
+		}
+	}
+	return false
+}
+
+func platformGuideContainsWrite(guide platformToolGuideResource, toolName, resource string) bool {
+	for _, category := range guide.Categories {
+		for _, write := range category.SupportedWrites {
+			if write.Tool != toolName {
+				continue
+			}
+			for _, candidate := range write.Resources {
+				if candidate == resource {
+					return true
+				}
 			}
 		}
 	}
@@ -974,20 +1097,6 @@ func TestNewServer_WithDisabledTools(t *testing.T) {
 	})
 	if server == nil {
 		t.Fatal("NewServer() returned nil with disabled tools")
-	}
-}
-
-// Helper function tests
-
-func TestBoolPtr(t *testing.T) {
-	truePtr := boolPtr(true)
-	falsePtr := boolPtr(false)
-
-	if truePtr == nil || *truePtr != true {
-		t.Error("boolPtr(true) should return pointer to true")
-	}
-	if falsePtr == nil || *falsePtr != false {
-		t.Error("boolPtr(false) should return pointer to false")
 	}
 }
 

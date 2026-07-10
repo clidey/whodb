@@ -44,6 +44,14 @@ const aiProviderFields = `
   updatedAt
 `
 
+const projectFields = `
+  id
+  orgId
+  name
+  slug
+  description
+`
+
 const ontologyFastLookupFields = `
   id
   entityId
@@ -77,36 +85,52 @@ type platformMutationSpec struct {
 }
 
 var platformMutationSpecs = map[string]platformMutationSpec{
-	"CreateSecret":               mutationSpecWithInput("CreateSecret", "CreateSecretInput", projectSecretFields),
-	"UpdateSecret":               mutationSpecWithInput("UpdateSecret", "UpdateSecretInput", projectSecretFields),
-	"DeleteSecret":               mutationSpecWithProjectID("DeleteSecret", statusResponseFields),
-	"CreateAIProvider":           mutationSpecWithInput("CreateAIProvider", "CreateAIProviderInput", aiProviderFields),
-	"UpdateAIProvider":           mutationSpecWithInput("UpdateAIProvider", "UpdateAIProviderInput", aiProviderFields),
-	"DeleteAIProvider":           mutationSpecWithID("DeleteAIProvider", statusResponseFields),
-	"CreateOntology":             mutationSpecWithInput("CreateOntology", "CreateOntologyInput", ontologyFields),
-	"UpdateOntology":             mutationSpecWithInput("UpdateOntology", "UpdateOntologyEntityInput", ontologyFields),
-	"DeleteOntology":             mutationSpecWithProjectID("DeleteOntology", statusResponseFields),
-	"CreateOntologyFastLookup":   mutationSpecWithInput("CreateOntologyFastLookup", "CreateOntologyFastLookupInput", ontologyFastLookupFields),
-	"RemoveOntologyFastLookup":   mutationSpecWithProjectID("RemoveOntologyFastLookup", statusResponseFields),
-	"CreateDataset":              mutationSpecWithInput("CreateDataset", "CreateDatasetInput", datasetFields),
-	"UpdateDataset":              mutationSpecWithInput("UpdateDataset", "UpdateDatasetInput", datasetFields),
-	"DeleteDataset":              mutationSpecWithProjectID("DeleteDataset", statusResponseFields),
-	"SaveTransform":              mutationSpecWithInput("SaveTransform", "SaveTransformInput", transformFields),
-	"DeleteTransform":            mutationSpecWithProjectID("DeleteTransform", statusResponseFields),
-	"RunTransform":               mutationSpecWithProjectID("RunTransform", transformRunFields),
-	"CreateProjectFolder":        mutationSpecWithInput("CreateProjectFolder", "CreateFolderInput", projectFolderFields),
-	"RenameProjectFile":          mutationSpecWithProjectIDAndName("RenameProjectFile", projectFileFields),
-	"RenameProjectFolder":        mutationSpecWithProjectIDAndName("RenameProjectFolder", projectFolderFields),
-	"MoveProjectFile":            mutationSpecWithInput("MoveProjectFile", "MoveFileInput", projectFileFields),
-	"MoveProjectFolder":          mutationSpecWithInput("MoveProjectFolder", "MoveFolderInput", projectFolderFields),
-	"DeleteProjectFile":          mutationSpecWithProjectID("DeleteProjectFile", statusResponseFields),
-	"DeleteProjectFolder":        mutationSpecWithProjectID("DeleteProjectFolder", statusResponseFields),
-	"PromoteFileToDataset":       mutationSpecWithInput("PromoteFileToDataset", "PromoteFileInput", datasetFields),
-	"CreateFunction":             mutationSpecWithInput("CreateFunction", "CreateFunctionInput", functionWriteFields),
-	"UpdateFunction":             mutationSpecWithInput("UpdateFunction", "UpdateFunctionInput", functionWriteFields),
-	"DeleteFunction":             mutationSpecWithProjectID("DeleteFunction", statusResponseFields),
-	"DeployFunction":             mutationSpecWithProjectID("DeployFunction", statusResponseFields),
-	"RedeployFunction":           mutationSpecWithProjectID("RedeployFunction", statusResponseFields),
+	"CreateProject":            mutationSpecWithInput("CreateProject", "CreateProjectInput", projectFields),
+	"RenameProject":            mutationSpecWithDirect("RenameProject", "$id: ID!, $name: String!, $slug: String", "id: $id, name: $name, slug: $slug", projectFields),
+	"DeleteProject":            mutationSpecWithDirect("DeleteProject", "$id: ID!, $orgId: ID, $confirmDeletion: Boolean", "id: $id, orgId: $orgId, confirmDeletion: $confirmDeletion", statusResponseFields),
+	"CreateSecret":             mutationSpecWithInput("CreateSecret", "CreateSecretInput", projectSecretFields),
+	"UpdateSecret":             mutationSpecWithInput("UpdateSecret", "UpdateSecretInput", projectSecretFields),
+	"DeleteSecret":             mutationSpecWithProjectID("DeleteSecret", statusResponseFields),
+	"CreateAIProvider":         mutationSpecWithInput("CreateAIProvider", "CreateAIProviderInput", aiProviderFields),
+	"UpdateAIProvider":         mutationSpecWithInput("UpdateAIProvider", "UpdateAIProviderInput", aiProviderFields),
+	"DeleteAIProvider":         mutationSpecWithID("DeleteAIProvider", statusResponseFields),
+	"CreateOntology":           mutationSpecWithInput("CreateOntology", "CreateOntologyInput", ontologyFields),
+	"UpdateOntology":           mutationSpecWithInput("UpdateOntology", "UpdateOntologyEntityInput", ontologyFields),
+	"DeleteOntology":           mutationSpecWithProjectIDConfirmDeletion("DeleteOntology", statusResponseFields),
+	"CreateOntologyFastLookup": mutationSpecWithInput("CreateOntologyFastLookup", "CreateOntologyFastLookupInput", ontologyFastLookupFields),
+	"RemoveOntologyFastLookup": mutationSpecWithProjectID("RemoveOntologyFastLookup", statusResponseFields),
+	"OntologyAddRow":           mutationSpecWithDirect("OntologyAddRow", "$projectId: ID!, $entityId: ID!, $values: [RecordInput!]!", "projectId: $projectId, entityId: $entityId, values: $values", statusResponseFields),
+	"OntologyUpdateRow":        mutationSpecWithDirect("OntologyUpdateRow", "$projectId: ID!, $entityId: ID!, $values: [RecordInput!]!, $updatedColumns: [String!]!", "projectId: $projectId, entityId: $entityId, values: $values, updatedColumns: $updatedColumns", statusResponseFields),
+	"OntologyDeleteRow":        mutationSpecWithDirect("OntologyDeleteRow", "$projectId: ID!, $entityId: ID!, $values: [RecordInput!]!", "projectId: $projectId, entityId: $entityId, values: $values", statusResponseFields),
+	"CreateDataset":            mutationSpecWithInput("CreateDataset", "CreateDatasetInput", datasetFields),
+	"UpdateDataset":            mutationSpecWithInput("UpdateDataset", "UpdateDatasetInput", datasetFields),
+	"DeleteDataset":            mutationSpecWithProjectID("DeleteDataset", statusResponseFields),
+	"SaveTransform":            mutationSpecWithInput("SaveTransform", "SaveTransformInput", transformFields),
+	"DeleteTransform":          mutationSpecWithProjectID("DeleteTransform", statusResponseFields),
+	"RunTransform":             mutationSpecWithProjectID("RunTransform", transformRunFields),
+	"CreateProjectFolder":      mutationSpecWithInput("CreateProjectFolder", "CreateFolderInput", projectFolderFields),
+	"RenameProjectFile":        mutationSpecWithProjectIDAndName("RenameProjectFile", projectFileFields),
+	"RenameProjectFolder":      mutationSpecWithProjectIDAndName("RenameProjectFolder", projectFolderFields),
+	"MoveProjectFile":          mutationSpecWithInput("MoveProjectFile", "MoveFileInput", projectFileFields),
+	"MoveProjectFolder":        mutationSpecWithInput("MoveProjectFolder", "MoveFolderInput", projectFolderFields),
+	"DeleteProjectFile":        mutationSpecWithProjectID("DeleteProjectFile", statusResponseFields),
+	"DeleteProjectFolder":      mutationSpecWithProjectIDConfirmDeletion("DeleteProjectFolder", statusResponseFields),
+	"PromoteFileToDataset":     mutationSpecWithInput("PromoteFileToDataset", "PromoteFileInput", datasetFields),
+	"CreateFunction":           mutationSpecWithInput("CreateFunction", "CreateFunctionInput", functionWriteFields),
+	"UpdateFunction":           mutationSpecWithInput("UpdateFunction", "UpdateFunctionInput", functionWriteFields),
+	"DeleteFunction":           mutationSpecWithProjectID("DeleteFunction", statusResponseFields),
+	"DeployFunction":           mutationSpecWithProjectID("DeployFunction", statusResponseFields),
+	"RedeployFunction":         mutationSpecWithProjectID("RedeployFunction", statusResponseFields),
+	"TestFunction":             mutationSpecWithInput("TestFunction", "TestFunctionInput", functionTestResultFields),
+	"PreviewFunction":          mutationSpecWithInput("PreviewFunction", "PreviewFunctionInput", functionTestResultFields),
+	"PromoteObject":            mutationSpecWithInput("PromoteObject", "PromoteObjectInput", objectVersionFields),
+	"RollbackObject":           mutationSpecWithInput("RollbackObject", "RollbackObjectInput", activeProdVersionFields),
+	"RestoreFunctionVersionToDraft": mutationSpecWithDirect(
+		"RestoreFunctionVersionToDraft",
+		"$projectId: ID!, $functionId: ID!, $version: Int!",
+		"projectId: $projectId, functionId: $functionId, version: $version",
+		functionWriteFields,
+	),
 	"CreatePlatformSourceObject": mutationSpecWithDirect("CreatePlatformSourceObject", "$projectId: ID!, $sourceId: ID!, $parent: SourceObjectRefInput, $name: String!, $fields: [RecordInput!]!", "projectId: $projectId, sourceId: $sourceId, parent: $parent, name: $name, fields: $fields", statusResponseFields),
 	"UpdatePlatformSourceObject": mutationSpecWithDirect("UpdatePlatformSourceObject", "$projectId: ID!, $sourceId: ID!, $ref: SourceObjectRefInput!, $values: [RecordInput!]!, $updatedColumns: [String!]!", "projectId: $projectId, sourceId: $sourceId, ref: $ref, values: $values, updatedColumns: $updatedColumns", statusResponseFields),
 	"DeletePlatformSourceObject": mutationSpecWithDirect("DeletePlatformSourceObject", "$projectId: ID!, $sourceId: ID!, $ref: SourceObjectRefInput!, $values: [RecordInput!]!", "projectId: $projectId, sourceId: $sourceId, ref: $ref, values: $values", statusResponseFields),
@@ -161,6 +185,14 @@ const functionWriteFields = `
   isDeployed
 `
 
+const functionTestResultFields = `
+  output
+  logs
+  durationMs
+  success
+  error
+`
+
 func mutationSpecWithInput(operation, inputType, fields string) platformMutationSpec {
 	return platformMutationSpec{
 		Operation: operation,
@@ -180,6 +212,19 @@ func mutationSpecWithProjectID(operation, fields string) platformMutationSpec {
 		Query: fmt.Sprintf(`
 mutation CLIPlatform%s($projectId: ID!, $id: ID!) {
   %s(projectId: $projectId, id: $id) {
+%s
+  }
+}
+`, operation, operation, fields),
+	}
+}
+
+func mutationSpecWithProjectIDConfirmDeletion(operation, fields string) platformMutationSpec {
+	return platformMutationSpec{
+		Operation: operation,
+		Query: fmt.Sprintf(`
+mutation CLIPlatform%s($projectId: ID!, $id: ID!, $confirmDeletion: Boolean) {
+  %s(projectId: $projectId, id: $id, confirmDeletion: $confirmDeletion) {
 %s
   }
 }
@@ -244,6 +289,113 @@ func (c *Client) PlatformMutation(ctx context.Context, operation string, variabl
 		return nil, fmt.Errorf("platform returned no %s result", operation)
 	}
 	return &PlatformMutationResult{Operation: operation, Data: raw}, nil
+}
+
+// PromoteObject snapshots a draft object and makes the new version active.
+func (c *Client) PromoteObject(ctx context.Context, projectID, objectID, objectType, message string) (*ObjectVersion, error) {
+	variables := map[string]any{
+		"input": map[string]any{
+			"projectId":  projectID,
+			"objectId":   objectID,
+			"objectType": objectType,
+			"message":    optionalString(message),
+		},
+	}
+	result, err := c.PlatformMutation(ctx, "PromoteObject", variables)
+	if err != nil {
+		return nil, err
+	}
+	var version ObjectVersion
+	if err := json.Unmarshal(result.Data, &version); err != nil {
+		return nil, fmt.Errorf("decode PromoteObject result: %w", err)
+	}
+	return &version, nil
+}
+
+// SetActiveObjectVersion makes an existing promoted object version active.
+func (c *Client) SetActiveObjectVersion(ctx context.Context, projectID, objectID, objectType string, version int) (*ActiveProdVersion, error) {
+	variables := map[string]any{
+		"input": map[string]any{
+			"projectId":  projectID,
+			"objectId":   objectID,
+			"objectType": objectType,
+			"version":    version,
+		},
+	}
+	result, err := c.PlatformMutation(ctx, "RollbackObject", variables)
+	if err != nil {
+		return nil, err
+	}
+	var active ActiveProdVersion
+	if err := json.Unmarshal(result.Data, &active); err != nil {
+		return nil, fmt.Errorf("decode RollbackObject result: %w", err)
+	}
+	return &active, nil
+}
+
+// RestoreFunctionVersionToDraft copies a promoted function version back into the draft function.
+func (c *Client) RestoreFunctionVersionToDraft(ctx context.Context, projectID, functionID string, version int) (*Function, error) {
+	variables := map[string]any{"projectId": projectID, "functionId": functionID, "version": version}
+	result, err := c.PlatformMutation(ctx, "RestoreFunctionVersionToDraft", variables)
+	if err != nil {
+		return nil, err
+	}
+	var fn Function
+	if err := json.Unmarshal(result.Data, &fn); err != nil {
+		return nil, fmt.Errorf("decode RestoreFunctionVersionToDraft result: %w", err)
+	}
+	return &fn, nil
+}
+
+// TestFunction runs a saved function draft with optional local file overrides.
+func (c *Client) TestFunction(ctx context.Context, projectID, functionID, input string, files []FunctionFile, inputFileIDs []string) (*FunctionExecutionResult, error) {
+	payload := map[string]any{
+		"projectId":    projectID,
+		"functionId":   functionID,
+		"input":        input,
+		"inputFileIds": inputFileIDs,
+	}
+	if len(files) > 0 {
+		payload["files"] = functionFileInputPayload(files)
+	}
+	result, err := c.PlatformMutation(ctx, "TestFunction", map[string]any{"input": payload})
+	if err != nil {
+		return nil, err
+	}
+	var execution FunctionExecutionResult
+	if err := json.Unmarshal(result.Data, &execution); err != nil {
+		return nil, fmt.Errorf("decode TestFunction result: %w", err)
+	}
+	return &execution, nil
+}
+
+// PreviewFunction runs an unsaved function definition without persisting it.
+func (c *Client) PreviewFunction(ctx context.Context, projectID, language, entryPoint, input string, files []FunctionFile, dependencies []string) (*FunctionExecutionResult, error) {
+	payload := map[string]any{
+		"projectId":    projectID,
+		"language":     language,
+		"entryPoint":   entryPoint,
+		"input":        input,
+		"files":        functionFileInputPayload(files),
+		"dependencies": dependencies,
+	}
+	result, err := c.PlatformMutation(ctx, "PreviewFunction", map[string]any{"input": payload})
+	if err != nil {
+		return nil, err
+	}
+	var execution FunctionExecutionResult
+	if err := json.Unmarshal(result.Data, &execution); err != nil {
+		return nil, fmt.Errorf("decode PreviewFunction result: %w", err)
+	}
+	return &execution, nil
+}
+
+func functionFileInputPayload(files []FunctionFile) []map[string]string {
+	payload := make([]map[string]string, len(files))
+	for i, file := range files {
+		payload[i] = map[string]string{"path": file.Path, "content": file.Content}
+	}
+	return payload
 }
 
 // UploadProjectFile uploads one local file to hosted project storage.

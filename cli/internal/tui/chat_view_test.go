@@ -392,7 +392,7 @@ func TestChatView_MouseScroll(t *testing.T) {
 	v.height = 30
 
 	// Mouse wheel up
-	msg := tea.MouseMsg{Type: tea.MouseWheelUp}
+	msg := tea.MouseMsg{Button: tea.MouseButtonWheelUp}
 	v, _ = v.Update(msg)
 
 	if v.scrollOffset != 4 {
@@ -400,7 +400,7 @@ func TestChatView_MouseScroll(t *testing.T) {
 	}
 
 	// Mouse wheel down
-	msg = tea.MouseMsg{Type: tea.MouseWheelDown}
+	msg = tea.MouseMsg{Button: tea.MouseButtonWheelDown}
 	v, _ = v.Update(msg)
 
 	if v.scrollOffset != 5 {
@@ -420,7 +420,7 @@ func TestChatView_MouseScroll_WorksFromAnyField(t *testing.T) {
 	// Scroll should work even when focused on provider field
 	v.focusField = focusFieldProvider
 
-	msg := tea.MouseMsg{Type: tea.MouseWheelUp}
+	msg := tea.MouseMsg{Button: tea.MouseButtonWheelUp}
 	v, _ = v.Update(msg)
 
 	if v.scrollOffset != 4 {
@@ -444,7 +444,7 @@ func TestChatView_MouseScrollUp_AtTop(t *testing.T) {
 	v.consented = true
 	v.scrollOffset = 0
 
-	msg := tea.MouseMsg{Type: tea.MouseWheelUp}
+	msg := tea.MouseMsg{Button: tea.MouseButtonWheelUp}
 	v, _ = v.Update(msg)
 
 	if v.scrollOffset != 0 {

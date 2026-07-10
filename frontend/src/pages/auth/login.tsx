@@ -103,7 +103,7 @@ import {
 } from '@/config/frontend-analytics';
 
 /**
- * URL params that are reserved for the standard login form fields and control flags.
+ * URL params that are reserved for the standard login form fields and ignored legacy flags.
  * These are never treated as advanced database fields.
  */
 const LOGIN_RESERVED_PARAMS = new Set([
@@ -200,12 +200,9 @@ export const LoginForm: FC<LoginFormProps> = ({
     const currentProfileId = useAppSelector(state => state.auth.current?.Id);
     const shouldUpdateLastAccessed = useRef(false);
     const usernameInputRef = useRef<HTMLInputElement>(null);
-    const handleSubmitRef = useRef<() => void>(() => {});
-    const handleLoginWithSourceProfileSubmitRef = useRef<(overrideProfileId?: string) => void>(() => {});
     const loginFormTouchedRef = useRef(false);
     const loginSucceededRef = useRef(false);
     const loginAnalyticsPropsRef = useRef<Record<string, unknown>>({});
-    const [pendingAutoLogin, setPendingAutoLogin] = useState(false);
     const { setTheme } = useTheme();
 
     const FIRST_LOGIN_KEY = 'whodb_has_logged_in';
@@ -244,12 +241,8 @@ export const LoginForm: FC<LoginFormProps> = ({
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [formResetKey, setFormResetKey] = useState(0);
     const [selectedAvailableProfile, setSelectedAvailableProfile] = useState<string>();
-    const [isAutoLoggingIn, setIsAutoLoggingIn] = useState(() => {
-        // Detect auto-login on initial render to prevent flash of login form
-        return searchParams.has("resource") || searchParams.has("login");
-    });
     const [isEmbedded] = useState(() => {
-        return searchParams.has("credentials") || searchParams.has("resource") || searchParams.has("login");
+        return searchParams.has("credentials");
     });
     const { isDesktop, selectDatabaseFile } = useDesktopFile();
 
@@ -280,8 +273,8 @@ export const LoginForm: FC<LoginFormProps> = ({
     }, [databaseTypesError]);
 
     const loading = useMemo(() => {
-        return loginLoading || loginWithSourceProfileLoading || isAutoLoggingIn;
-    }, [loginLoading, loginWithSourceProfileLoading, isAutoLoggingIn]);
+        return loginLoading || loginWithSourceProfileLoading;
+    }, [loginLoading, loginWithSourceProfileLoading]);
 
     const loginAnalyticsProps = useMemo(() => {
         const filledAdvancedFields = Object.values(advancedForm).filter(value => value.trim().length > 0).length;
@@ -332,7 +325,6 @@ export const LoginForm: FC<LoginFormProps> = ({
     }, [isFirstLogin, FIRST_LOGIN_KEY]);
 
     const handleLoginError = useCallback((loginError: unknown, allowDriverInstallPrompt = false) => {
-        setIsAutoLoggingIn(false);
         trackFrontendIntent('auth.login_failed', {
             ...loginAnalyticsPropsRef.current,
             error_code: frontendAnalyticsErrorCode(loginError),
@@ -376,7 +368,6 @@ export const LoginForm: FC<LoginFormProps> = ({
             : canSubmitStandardConnectionForm(databaseType, hostName, username, password, database, advancedForm);
 
         if (databaseType.id === "" || !credentialsAreComplete) {
-            setIsAutoLoggingIn(false);
             trackFrontendIntent('auth.login_blocked', {
                 ...loginAnalyticsPropsRef.current,
                 auth_mode: 'credentials',
@@ -405,7 +396,6 @@ export const LoginForm: FC<LoginFormProps> = ({
                 });
 
                 if (!data?.LoginSource.Status) {
-                    setIsAutoLoggingIn(false);
                     trackFrontendIntent('auth.login_failed', {
                         ...loginAnalyticsPropsRef.current,
                         auth_mode: 'credentials',
@@ -518,7 +508,6 @@ export const LoginForm: FC<LoginFormProps> = ({
                 });
 
                 if (!data?.LoginWithSourceProfile.Status) {
-                    setIsAutoLoggingIn(false);
                     trackFrontendIntent('auth.login_failed', {
                         ...loginAnalyticsPropsRef.current,
                         auth_mode: 'profile',
@@ -544,11 +533,6 @@ export const LoginForm: FC<LoginFormProps> = ({
 
                 const storageUnitPath = getStorageUnitPath(searchParams);
 
-                // Clear login-related URL params before navigation
-                if (searchParams.has("resource")) {
-                    setSearchParams(getLoginUiSearchParams(searchParams), { replace: true });
-                }
-
                 if (onLoginSuccess) {
                     onLoginSuccess();
                 } else {
@@ -560,10 +544,6 @@ export const LoginForm: FC<LoginFormProps> = ({
             }
         })();
     }, [dispatch, handleLoginError, loginWithSourceProfile, markFirstLoginComplete, navigate, onLoginSuccess, profiles?.SourceProfiles, searchParams, selectedAvailableProfile, setSearchParams, t]);
-
-    // Keep refs in sync with latest callback versions each render to avoid stale closures
-    handleSubmitRef.current = handleSubmit;
-    handleLoginWithSourceProfileSubmitRef.current = handleLoginWithSourceProfileSubmit;
 
     const handleSampleDatabaseLogin = useCallback(() => {
         const sampleProfile = profiles?.SourceProfiles.find(p => p.Source === "builtin");
@@ -595,7 +575,6 @@ export const LoginForm: FC<LoginFormProps> = ({
                 });
 
                 if (!data?.LoginWithSourceProfile.Status) {
-                    setIsAutoLoggingIn(false);
                     trackFrontendIntent('auth.login_failed', {
                         ...loginAnalyticsPropsRef.current,
                         auth_mode: 'sample',
@@ -749,12 +728,9 @@ export const LoginForm: FC<LoginFormProps> = ({
         dispatch(DatabaseActions.setSchema(""));
     }, [dispatch]);
 
-    // Detect embedded mode from URL parameters
+    // Detect embedded mode from the credentials URL parameter.
     useEffect(() => {
-        const hasAutoLoginParams = searchParams.has("credentials") ||
-                                   searchParams.has("resource") ||
-                                   searchParams.has("login");
-        if (hasAutoLoginParams) {
+        if (searchParams.has("credentials")) {
             dispatch(AuthActions.setEmbedded(true));
         }
     }, [searchParams, dispatch]);
@@ -838,7 +814,7 @@ export const LoginForm: FC<LoginFormProps> = ({
         return profiles?.SourceProfiles.find(p => p.Source === "builtin");
     }, [profiles?.SourceProfiles]);
 
-    // Handle URL parameters for pre-filling credentials or auto-login
+    // Handle URL parameters for pre-filling credentials.
     // Note: This effect intentionally does NOT clear selectedAvailableProfile because:
     // 1. Initial state is already undefined via useState
     // 2. Clearing on re-runs would reset user's manual profile selection
@@ -848,7 +824,7 @@ export const LoginForm: FC<LoginFormProps> = ({
             return;
         }
 
-        // Wait until database types have finished loading before processing auto-login.
+        // Wait until database types have finished loading before applying URL values.
         // This ensures all registered types are available for type lookup.
         if (!databaseTypesLoaded) {
             return;
@@ -943,30 +919,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                 setShowAdvanced(true);
             }
         }
-
-        // Handle auto-login with profile from URL
-        if (searchParams.has("resource")) {
-            const selectedProfile = availableProfiles.find(profile => profile.value === searchParams.get("resource"));
-            if (selectedProfile?.value) {
-                setSelectedAvailableProfile(selectedProfile.value);
-                handleLoginWithSourceProfileSubmitRef.current(selectedProfile.value);
-            }
-        } else if (searchParams.has("login")) {
-            setPendingAutoLogin(true);
-            const newParams = new URLSearchParams(searchParams);
-            newParams.delete("login");
-            setSearchParams(newParams, { replace: true });
-        }
-    }, [searchParams, databaseTypeItems, databaseTypesLoaded, profiles?.SourceProfiles, availableProfiles, handleDatabaseTypeChange]);
-
-    // Fire credential-based login after React has committed all form-field state updates.
-    // Using a state flag (not a ref) ensures this effect runs on the render AFTER the parsing
-    // effect, so handleSubmitRef.current has fresh field values instead of the stale initial ones.
-    useEffect(() => {
-        if (!pendingAutoLogin) return;
-        setPendingAutoLogin(false);
-        handleSubmitRef.current();
-    }, [pendingAutoLogin]);
+    }, [searchParams, databaseTypeItems, databaseTypesLoaded, handleDatabaseTypeChange]);
 
     const handleHostNameChange = useCallback((newHostName: string) => {
         setHostName(newHostName);
@@ -1057,9 +1010,7 @@ export const LoginForm: FC<LoginFormProps> = ({
         return buildSourceAdvancedSectionState(databaseType, advancedForm, promotedConnectionFieldKeys);
     }, [advancedForm, databaseType, promotedConnectionFieldKeys]);
 
-    // Always show loading during auto-login, regardless of mutation or profile loading state
-    // Only show form if auto-login fails (isAutoLoggingIn set to false in error handlers)
-    if (!databaseTypesLoaded || isAutoLoggingIn || loading || profilesLoading)  {
+    if (!databaseTypesLoaded || loading || profilesLoading)  {
         return (
             <div className={classNames("flex flex-col justify-center items-center gap-lg w-full", className)}>
                 <div>

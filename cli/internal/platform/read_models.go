@@ -292,6 +292,35 @@ type Function struct {
 	IsDeployed          bool                     `json:"isDeployed"`
 }
 
+// FunctionExecutionResult describes one hosted function execution result.
+type FunctionExecutionResult struct {
+	Output     *string `json:"output,omitempty"`
+	Logs       string  `json:"logs"`
+	DurationMS int     `json:"durationMs"`
+	Success    bool    `json:"success"`
+	Error      *string `json:"error,omitempty"`
+}
+
+// ObjectVersion describes one promoted hosted platform object version.
+type ObjectVersion struct {
+	ID         string `json:"id"`
+	ObjectID   string `json:"objectId"`
+	ObjectType string `json:"objectType"`
+	Version    int    `json:"version"`
+	Message    string `json:"message"`
+	PromotedBy string `json:"promotedBy"`
+	CreatedAt  string `json:"createdAt"`
+}
+
+// ActiveProdVersion describes the currently active hosted platform object version.
+type ActiveProdVersion struct {
+	ObjectID    string `json:"objectId"`
+	ObjectType  string `json:"objectType"`
+	Version     int    `json:"version"`
+	ActivatedAt string `json:"activatedAt"`
+	ActivatedBy string `json:"activatedBy"`
+}
+
 // ProjectFolder describes one hosted project folder.
 type ProjectFolder struct {
 	ID        string  `json:"id"`
@@ -300,6 +329,7 @@ type ProjectFolder struct {
 	Name      string  `json:"name"`
 	CreatedBy string  `json:"createdBy"`
 	CreatedAt string  `json:"createdAt"`
+	Path      string  `json:"path,omitempty"`
 }
 
 // ProjectFile describes one hosted project file.
@@ -317,6 +347,11 @@ type ProjectFile struct {
 	UploadedBy  string  `json:"uploadedBy"`
 	CreatedAt   string  `json:"createdAt"`
 	UpdatedAt   string  `json:"updatedAt"`
+	Content     string  `json:"content,omitempty"`
+	ContentType string  `json:"contentType,omitempty"`
+	Truncated   bool    `json:"truncated,omitempty"`
+	Path        string  `json:"path,omitempty"`
+	FolderPath  string  `json:"folderPath,omitempty"`
 }
 
 // FolderContents describes a hosted project folder listing.

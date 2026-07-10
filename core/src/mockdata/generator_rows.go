@@ -249,7 +249,6 @@ func (g *Generator) generateRowsSingle(
 
 	generated := 0
 	failedGenerate := 0
-	failedInsert := 0
 	pkCollisions := 0
 
 	for i := range rowCount {
@@ -324,11 +323,10 @@ func (g *Generator) generateRowsSingle(
 		}
 	}
 
-	if failedGenerate > 0 || failedInsert > 0 {
+	if failedGenerate > 0 {
 		log.WithFields(map[string]any{
 			"table":          table,
 			"failedGenerate": failedGenerate,
-			"failedInsert":   failedInsert,
 			"pkCollisions":   pkCollisions,
 		}).Warn("Some rows failed during generation")
 	}

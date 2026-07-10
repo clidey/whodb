@@ -49,24 +49,21 @@ func formatSQL(sql string) string {
 	}
 
 	var b strings.Builder
-	prevWasNewline := false
 
 	for i, tok := range tokens {
 		upper := strings.ToUpper(tok.text)
 
 		if tok.kind == tokenString || tok.kind == tokenQuoted {
 			b.WriteString(tok.text)
-			prevWasNewline = false
 			continue
 		}
 
 		if tok.kind == tokenWord {
 			if newlineKeywords[upper] {
-				if i > 0 && !prevWasNewline {
+				if i > 0 {
 					b.WriteString("\n")
 				}
 				b.WriteString(upper)
-				prevWasNewline = false
 				continue
 			}
 			if indentKeywords[upper] {
@@ -82,15 +79,13 @@ func formatSQL(sql string) string {
 
 				if joinModifiers[upper] {
 					// Start a new indented line for JOIN modifiers (LEFT, INNER, etc.)
-					if !prevWasNewline {
-						b.WriteString("\n  ")
-					}
+					b.WriteString("\n  ")
 					b.WriteString(upper)
 				} else if upper == "JOIN" {
 					// JOIN stays on same line as its modifier (LEFT JOIN, INNER JOIN)
 					if joinModifiers[prevUpper] {
 						b.WriteString(" ")
-					} else if !prevWasNewline {
+					} else {
 						b.WriteString("\n  ")
 					}
 					b.WriteString(upper)
@@ -101,12 +96,9 @@ func formatSQL(sql string) string {
 					b.WriteString(" ")
 					b.WriteString(upper)
 				} else {
-					if !prevWasNewline {
-						b.WriteString("\n  ")
-					}
+					b.WriteString("\n  ")
 					b.WriteString(upper)
 				}
-				prevWasNewline = false
 				continue
 			}
 			// Regular word — uppercase if it's a SQL keyword
@@ -115,7 +107,6 @@ func formatSQL(sql string) string {
 			} else {
 				b.WriteString(tok.text)
 			}
-			prevWasNewline = false
 			continue
 		}
 
@@ -128,14 +119,11 @@ func formatSQL(sql string) string {
 					continue
 				}
 			}
-			if !prevWasNewline {
-				b.WriteString(" ")
-			}
+			b.WriteString(" ")
 			continue
 		}
 
 		b.WriteString(tok.text)
-		prevWasNewline = false
 	}
 
 	return strings.TrimSpace(b.String())

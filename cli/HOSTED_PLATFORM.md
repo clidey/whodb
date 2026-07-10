@@ -154,36 +154,80 @@ whodb-cli use --org <org-id-or-slug> --project <project-id-or-slug>
 For single-workspace accounts, `login` or `status` can select the workspace
 automatically and report what was selected.
 
-Available hosted MCP tools:
+Platform mode also exposes MCP resources and prompts that agents should read
+before choosing tools:
 
-- `whodb_platform_status`
-- `whodb_platform_orgs`
-- `whodb_platform_projects`
-- `whodb_platform_sources`
-- `whodb_platform_source_types`
-- `whodb_platform_source_fields`
-- `whodb_platform_source_objects`
-- `whodb_platform_source_columns`
-- `whodb_platform_source_rows`
-- `whodb_platform_source_config`
-- `whodb_platform_source_test`
-- `whodb_platform_source_create`
-- `whodb_platform_source_update`
-- `whodb_platform_source_delete`
-- `whodb_platform_pending`
-- `whodb_platform_confirm`
+- `whodb://platform/schema` — exact enabled tool list, resource metadata,
+  prompt metadata, generic write specs, and payload shapes for the current
+  server mode.
+- `whodb://platform/workspace` — current host, signed-in user, selected
+  organization, selected project, and readiness state.
+- `whodb://platform/tool-guide` — tool categories, read/write behavior, row
+  limits, field projection guidance, and confirmation behavior.
+
+Platform prompts:
+
+- `whodb_platform_overview`
+- `whodb_platform_read_workflow`
+- `whodb_platform_write_safety`
+- `whodb_platform_source_workflow`
+
+Hosted MCP tool groups:
+
+- Workspace and readiness: `whodb_platform_status`,
+  `whodb_platform_orgs`, `whodb_platform_projects`
+- Sources: `whodb_platform_sources`, `whodb_platform_source_types`,
+  `whodb_platform_source_fields`, `whodb_platform_source_objects`,
+  `whodb_platform_source_columns`, `whodb_platform_source_rows`,
+  `whodb_platform_source_constraints`, `whodb_platform_source_content`,
+  `whodb_platform_source_config`, `whodb_platform_source_test`,
+  `whodb_platform_source_create`, `whodb_platform_source_update`,
+  `whodb_platform_source_delete`
+- Project resources: `whodb_platform_secrets`,
+  `whodb_platform_ai_providers`, `whodb_platform_ai_provider_models`,
+  `whodb_platform_datasets`, `whodb_platform_dataset`,
+  `whodb_platform_dataset_rows`, `whodb_platform_ontologies`,
+  `whodb_platform_ontology`, `whodb_platform_ontology_fast_lookups`,
+  `whodb_platform_ontology_fast_lookup_suggestions`,
+  `whodb_platform_ontology_rows`, `whodb_platform_ontology_follow_link`
+- Lineage and transforms: `whodb_platform_project_lineage`,
+  `whodb_platform_lineage`, `whodb_platform_lineage_neighbors`,
+  `whodb_platform_transforms`, `whodb_platform_transform_runs`
+- Functions and files: `whodb_platform_functions`,
+  `whodb_platform_function`, `whodb_platform_files`,
+  `whodb_platform_file_preview`, `whodb_platform_file_search`,
+  `whodb_platform_tabular_files`, `whodb_platform_storage_usage`
+- Generic writes and confirmations: `whodb_platform_create`,
+  `whodb_platform_update`, `whodb_platform_delete`,
+  `whodb_platform_action`, `whodb_platform_pending`,
+  `whodb_platform_confirm`
+
+Read `whodb://platform/schema` at runtime for the authoritative list. Some
+write and confirmation tools are hidden in read-only or safe modes.
 
 `whodb_platform_source_config` returns redacted configuration only. Secret-looking
 values such as passwords, tokens, client secrets, and private keys are masked.
 
-Hosted create, update, and delete tools do not execute immediately. They return a
-confirmation token, and the write runs only after approval through
-`whodb_platform_confirm`. Use `whodb_platform_pending` to recover active
-confirmation tokens.
+Hosted create, update, delete, and action tools do not execute immediately in
+the default mode. They return a confirmation token, and the write runs only
+after approval through `whodb_platform_confirm`. Use `whodb_platform_pending`
+to recover active confirmation tokens.
+
+Generic write tools are capability-backed. Before using
+`whodb_platform_create`, `whodb_platform_update`, `whodb_platform_delete`, or
+`whodb_platform_action`, agents should read `whodb://platform/schema` and use
+the `write_specs` and `payload_shapes` entries instead of guessing GraphQL
+mutation names or payload fields.
 
 For hosted source creation, agents should call `whodb_platform_source_types` and
 `whodb_platform_source_fields` first instead of guessing source type ids or
 connection field names.
+
+For read tools that accept a `fields` parameter, agents should request only the
+fields needed for the current answer, then call the tool again with more fields
+only if needed. Avoid broad details such as source content, file previews,
+function files, row previews, and large lineage graphs unless the user asks for
+them or they are required for the task.
 
 If no workspace is selected yet, agents should call `whodb_platform_orgs` and
 `whodb_platform_projects`, then ask the user to run:
@@ -220,16 +264,19 @@ npx @modelcontextprotocol/inspector whodb-cli mcp serve --platform
 In the inspector, call:
 
 1. `whodb_platform_status`
-2. `whodb_platform_orgs`
-3. `whodb_platform_projects`
-4. `whodb_platform_sources`
-5. `whodb_platform_source_types`
-6. `whodb_platform_source_fields`
-7. `whodb_platform_source_config`
-8. `whodb_platform_source_test`
-9. `whodb_platform_source_create`, then `whodb_platform_pending`, then `whodb_platform_confirm`
-10. `whodb_platform_source_update`, then `whodb_platform_pending`, then `whodb_platform_confirm`
-11. `whodb_platform_source_delete`, then `whodb_platform_pending`, then `whodb_platform_confirm`
+2. Read `whodb://platform/workspace`
+3. Read `whodb://platform/schema`
+4. Read `whodb://platform/tool-guide`
+5. `whodb_platform_orgs`
+6. `whodb_platform_projects`
+7. `whodb_platform_sources`
+8. `whodb_platform_source_types`
+9. `whodb_platform_source_fields`
+10. `whodb_platform_datasets` with narrow `fields`
+11. `whodb_platform_files` with narrow `fields`
+12. `whodb_platform_create`, then `whodb_platform_pending`, then `whodb_platform_confirm`
+13. `whodb_platform_update`, then `whodb_platform_pending`, then `whodb_platform_confirm`
+14. `whodb_platform_delete`, then `whodb_platform_pending`, then `whodb_platform_confirm`
 
 ## Automation Output
 

@@ -69,29 +69,99 @@ var dangerousFunctions = []string{
 	"COPY",
 }
 
-// DetectStatementType returns the type of SQL statement.
-func DetectStatementType(query string) StatementType {
-	q := strings.ToUpper(strings.TrimSpace(query))
+// dataModifyingKeywords are verbs that can write data, execute code, or exfiltrate
+// data. They gate the read-only and confirmation checks so that statements which
+// execute writes (including inside CTEs or EXPLAIN ANALYZE) cannot slip through.
+var dataModifyingKeywords = []string{
+	"INSERT", "UPDATE", "DELETE", "MERGE", "DROP", "TRUNCATE", "ALTER",
+	"CREATE", "GRANT", "REVOKE", "REPLACE", "UPSERT", "CALL", "DO", "COPY",
+}
 
-	keywords := []struct {
-		kw  string
-		typ StatementType
-	}{
-		{"SELECT ", StatementSelect}, {"INSERT ", StatementInsert},
-		{"UPDATE ", StatementUpdate}, {"DELETE ", StatementDelete},
-		{"DROP ", StatementDrop}, {"CREATE ", StatementCreate},
-		{"ALTER ", StatementAlter}, {"TRUNCATE ", StatementTruncate},
-		{"SHOW ", StatementShow}, {"DESCRIBE ", StatementDescribe},
-		{"DESC ", StatementDescribe}, {"EXPLAIN ", StatementExplain},
-		{"WITH ", StatementWith},
-	}
-
-	for _, k := range keywords {
-		if strings.HasPrefix(q, k.kw) {
-			return k.typ
+// sqlTokens splits a query into uppercased, punctuation-trimmed tokens. It splits
+// on any whitespace, so a tab or newline separator cannot hide a keyword the way a
+// literal-space prefix check would.
+func sqlTokens(query string) []string {
+	fields := strings.Fields(strings.ToUpper(query))
+	tokens := make([]string, 0, len(fields))
+	for _, f := range fields {
+		if f = strings.Trim(f, "(),;"); f != "" {
+			tokens = append(tokens, f)
 		}
 	}
-	return StatementUnknown
+	return tokens
+}
+
+// containsSQLKeyword reports whether any whole-word token equals one of the given
+// keywords. Whole-word matching avoids false positives on identifiers that merely
+// contain a keyword as a substring (e.g. "backdrop" containing "DROP").
+func containsSQLKeyword(query string, keywords ...string) bool {
+	set := make(map[string]bool, len(keywords))
+	for _, k := range keywords {
+		set[k] = true
+	}
+	for _, tok := range sqlTokens(query) {
+		if set[tok] {
+			return true
+		}
+	}
+	return false
+}
+
+// isSafeReadOnly reports whether a query cannot modify data. WITH is safe only when
+// it contains no data-modifying statement, because Postgres data-modifying CTEs
+// (WITH ... AS (DELETE ...)) execute writes. EXPLAIN is safe unless it uses ANALYZE
+// over a data-modifying statement, because EXPLAIN ANALYZE executes the statement.
+func isSafeReadOnly(query string) bool {
+	switch DetectStatementType(query) {
+	case StatementSelect, StatementShow, StatementDescribe:
+		return true
+	case StatementWith:
+		return !containsSQLKeyword(query, dataModifyingKeywords...)
+	case StatementExplain:
+		if containsSQLKeyword(query, "ANALYZE") {
+			return !containsSQLKeyword(query, dataModifyingKeywords...)
+		}
+		return true // plain EXPLAIN does not execute the statement
+	}
+	return false
+}
+
+// DetectStatementType returns the type of SQL statement based on its first
+// significant token. Tokenizing (rather than prefix matching) makes detection
+// robust to tab/newline separators between the verb and the rest of the statement.
+func DetectStatementType(query string) StatementType {
+	tokens := sqlTokens(query)
+	if len(tokens) == 0 {
+		return StatementUnknown
+	}
+	switch tokens[0] {
+	case "SELECT":
+		return StatementSelect
+	case "INSERT":
+		return StatementInsert
+	case "UPDATE":
+		return StatementUpdate
+	case "DELETE":
+		return StatementDelete
+	case "DROP":
+		return StatementDrop
+	case "CREATE":
+		return StatementCreate
+	case "ALTER":
+		return StatementAlter
+	case "TRUNCATE":
+		return StatementTruncate
+	case "SHOW":
+		return StatementShow
+	case "DESCRIBE", "DESC":
+		return StatementDescribe
+	case "EXPLAIN":
+		return StatementExplain
+	case "WITH":
+		return StatementWith
+	default:
+		return StatementUnknown
+	}
 }
 
 // ValidateSQLStatement validates a SQL statement against security rules.
@@ -106,11 +176,10 @@ func ValidateSQLStatement(query string, allowWrite bool, securityLevel SecurityL
 
 	// block DROP/TRUNCATE unless explicitly allowed
 	if !allowDestructive {
-		upper := strings.ToUpper(query)
-		if strings.Contains(upper, "DROP ") {
+		if containsSQLKeyword(query, "DROP") {
 			return fmt.Errorf("%w: DROP detected (use --confirm-writes or --allow-drop to enable)", ErrDestructiveOperation)
 		}
-		if strings.Contains(upper, "TRUNCATE ") {
+		if containsSQLKeyword(query, "TRUNCATE") {
 			return fmt.Errorf("%w: TRUNCATE detected (use --confirm-writes or --allow-drop to enable)", ErrDestructiveOperation)
 		}
 	}
@@ -152,19 +221,12 @@ func ValidateSQLStatement(query string, allowWrite bool, securityLevel SecurityL
 		return nil
 	}
 
-	// Read-only mode: only allow safe statements
-	switch stmtType {
-	case StatementSelect, StatementShow, StatementDescribe, StatementExplain, StatementWith:
-		return nil
-	case StatementInsert, StatementUpdate, StatementDelete, StatementDrop,
-		StatementCreate, StatementAlter, StatementTruncate:
-		return fmt.Errorf("%w: %s", ErrWriteNotAllowed, stmtType)
-	default:
-		if securityLevel != SecurityLevelMinimal {
-			return fmt.Errorf("%w: unknown statement type", ErrWriteNotAllowed)
-		}
+	// Read-only mode: only allow statements that cannot modify data. This rejects
+	// writable CTEs, EXPLAIN ANALYZE over writes, and unrecognized statement types.
+	if isSafeReadOnly(query) {
 		return nil
 	}
+	return fmt.Errorf("%w: %s", ErrWriteNotAllowed, stmtType)
 }
 
 // IsReadOnlyStatement returns true if the statement type is read-only.

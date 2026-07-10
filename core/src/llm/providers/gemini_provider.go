@@ -87,7 +87,7 @@ func (p *GeminiProvider) GetSupportedModels(config *ProviderConfig) ([]string, e
 			"Content-Type": "application/json",
 		})
 		if err != nil {
-			log.WithError(err).Errorf("Failed to fetch models from Gemini at %s", modelsURL)
+			log.WithError(err).Errorf("Failed to fetch models from Gemini at %s", redactURL(modelsURL))
 			return nil, err
 		}
 

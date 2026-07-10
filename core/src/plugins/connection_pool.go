@@ -103,8 +103,13 @@ func GetGormLogConfig() logger.LogLevel {
 // If config.Transaction is set (as a *gorm.DB), it will be used instead of creating a new connection.
 // Multi-statement connections bypass the cache and are closed immediately after use.
 func WithConnection[T any](config *engine.PluginConfig, dbFn DBCreationFunc, operation DBOperation[T]) (T, error) {
+	if config == nil {
+		var zero T
+		return zero, errors.New("plugin configuration is required")
+	}
+
 	// Check if we're operating within a transaction
-	if config != nil && config.Transaction != nil {
+	if config.Transaction != nil {
 		if tx, ok := config.Transaction.(*gorm.DB); ok {
 			return operation(tx.WithContext(config.OperationContext()))
 		}
@@ -112,7 +117,7 @@ func WithConnection[T any](config *engine.PluginConfig, dbFn DBCreationFunc, ope
 
 	// Multi-statement connections are one-off (e.g., SQL imports). Create a fresh
 	// connection, run the operation, and close it — no caching.
-	if config != nil && config.MultiStatement {
+	if config.MultiStatement {
 		db, err := dbFn(config)
 		if err != nil {
 			var zero T

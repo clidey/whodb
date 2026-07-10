@@ -97,6 +97,9 @@ type PlatformTransformRunsInput struct {
 // PlatformFilesInput is the input for the whodb_platform_files tool.
 type PlatformFilesInput struct {
 	FolderID string   `json:"folder_id,omitempty" jsonschema:"Folder id. Omit for project root."`
+	Name     string   `json:"name,omitempty" jsonschema:"Optional case-insensitive name substring filter"`
+	Kind     string   `json:"kind,omitempty" jsonschema:"Optional entry kind filter: file or folder"`
+	MIMEType string   `json:"mime_type,omitempty" jsonschema:"Optional file MIME type substring filter"`
 	Fields   []string `json:"fields,omitempty" jsonschema:"Top-level output fields to include. Prefer only fields needed now; call again with more fields if needed."`
 }
 
@@ -107,6 +110,14 @@ type PlatformFilePreviewInput struct {
 	Fields     []string `json:"fields,omitempty" jsonschema:"Top-level output fields to include. Prefer metadata first; call again with body fields only if needed."`
 }
 
+// PlatformFileInspectInput is the input for the whodb_platform_file_inspect tool.
+type PlatformFileInspectInput struct {
+	FileID      string   `json:"file_id" jsonschema:"Project file id"`
+	SheetIndex  *int     `json:"sheet_index,omitempty" jsonschema:"Optional spreadsheet sheet index"`
+	IncludeRows bool     `json:"include_rows,omitempty" jsonschema:"Include preview rows. Defaults to false to keep context compact."`
+	Fields      []string `json:"fields,omitempty" jsonschema:"Top-level output fields to include. Prefer columns and columnMapExample before requesting rows."`
+}
+
 // PlatformFileSearchInput is the input for the whodb_platform_file_search tool.
 type PlatformFileSearchInput struct {
 	Query  string   `json:"query" jsonschema:"File search query"`
@@ -115,11 +126,17 @@ type PlatformFileSearchInput struct {
 
 // PlatformEmptyInput is the input for selected-project list tools.
 type PlatformEmptyInput struct {
-	Fields []string `json:"fields,omitempty" jsonschema:"Top-level output fields to include. Prefer only fields needed now; call again with more fields if needed."`
+	Name       string   `json:"name,omitempty" jsonschema:"Optional case-insensitive name substring filter for list tools"`
+	Type       string   `json:"type,omitempty" jsonschema:"Optional type filter, for example provider type, transform trigger mode, or function language"`
+	Status     string   `json:"status,omitempty" jsonschema:"Optional status filter for resources that expose status"`
+	SchemaMode string   `json:"schema_mode,omitempty" jsonschema:"Optional dataset schema mode filter"`
+	Deployed   string   `json:"deployed,omitempty" jsonschema:"Optional function deployment filter: true or false"`
+	Fields     []string `json:"fields,omitempty" jsonschema:"Top-level output fields to include. Prefer only fields needed now; call again with more fields if needed."`
 }
 
 // PlatformReadOutput is the common output for read-only hosted platform tools.
 type PlatformReadOutput struct {
+	PlatformSetupGuidance
 	Data      any                  `json:"data,omitempty"`
 	Items     []map[string]any     `json:"items,omitempty"`
 	Count     int                  `json:"count"`
@@ -133,6 +150,50 @@ type PlatformReadOutput struct {
 
 func registerPlatformReadTool(server *mcp.Server, tool *mcp.Tool, secOpts *SecurityOptions) {
 	switch tool.Name {
+	case "whodb_platform_workspace_map":
+		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformWorkspaceMapInput) (*mcp.CallToolResult, any, error) {
+			return HandlePlatformWorkspaceMap(ctx, req, input)
+		})
+	case "whodb_platform_resource_graph":
+		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformResourceGraphInput) (*mcp.CallToolResult, any, error) {
+			return HandlePlatformResourceGraph(ctx, req, input)
+		})
+	case "whodb_platform_next_actions":
+		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformNextActionsInput) (*mcp.CallToolResult, any, error) {
+			return HandlePlatformNextActions(ctx, req, input)
+		})
+	case "whodb_platform_workspace_summary":
+		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformWorkspaceSummaryInput) (*mcp.CallToolResult, any, error) {
+			return HandlePlatformWorkspaceSummary(ctx, req, input)
+		})
+	case "whodb_platform_build_plan":
+		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformBuildPlanInput) (*mcp.CallToolResult, any, error) {
+			return HandlePlatformBuildPlan(ctx, req, input)
+		})
+	case "whodb_platform_gap_analysis":
+		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformGapAnalysisInput) (*mcp.CallToolResult, any, error) {
+			return HandlePlatformGapAnalysis(ctx, req, input)
+		})
+	case "whodb_platform_project_health":
+		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformNextActionsInput) (*mcp.CallToolResult, any, error) {
+			return HandlePlatformProjectHealth(ctx, req, input)
+		})
+	case "whodb_platform_data_model_summary":
+		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformResourceGraphInput) (*mcp.CallToolResult, any, error) {
+			return HandlePlatformDataModelSummary(ctx, req, input)
+		})
+	case "whodb_platform_runtime_readiness":
+		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformNextActionsInput) (*mcp.CallToolResult, any, error) {
+			return HandlePlatformRuntimeReadiness(ctx, req, input)
+		})
+	case "whodb_platform_change_impact":
+		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformChangeImpactInput) (*mcp.CallToolResult, any, error) {
+			return HandlePlatformChangeImpact(ctx, req, input)
+		})
+	case "whodb_platform_write_plan":
+		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformWritePlanInput) (*mcp.CallToolResult, any, error) {
+			return HandlePlatformWritePlan(ctx, req, input)
+		})
 	case "whodb_platform_source_constraints":
 		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformSourceConstraintsInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformSourceConstraints(ctx, req, input)
@@ -205,6 +266,10 @@ func registerPlatformReadTool(server *mcp.Server, tool *mcp.Tool, secOpts *Secur
 		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformTransforms(ctx, req, input)
 		})
+	case "whodb_platform_transform":
+		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformEntityInput) (*mcp.CallToolResult, any, error) {
+			return HandlePlatformTransform(ctx, req, input)
+		})
 	case "whodb_platform_transform_runs":
 		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformTransformRunsInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformTransformRuns(ctx, req, input)
@@ -225,6 +290,10 @@ func registerPlatformReadTool(server *mcp.Server, tool *mcp.Tool, secOpts *Secur
 		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformFilePreviewInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformFilePreview(ctx, req, input)
 		})
+	case "whodb_platform_file_inspect":
+		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformFileInspectInput) (*mcp.CallToolResult, any, error) {
+			return HandlePlatformFileInspect(ctx, req, input)
+		})
 	case "whodb_platform_file_search":
 		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformFileSearchInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformFileSearch(ctx, req, input)
@@ -242,6 +311,17 @@ func registerPlatformReadTool(server *mcp.Server, tool *mcp.Tool, secOpts *Secur
 
 func platformReadToolDefinitions() []*mcp.Tool {
 	return []*mcp.Tool{
+		{Name: "whodb_platform_workspace_map", Description: descPlatformWorkspaceMap, Annotations: platformReadOnlyAnnotations("Map Hosted Workspace")},
+		{Name: "whodb_platform_resource_graph", Description: descPlatformResourceGraph, Annotations: platformReadOnlyAnnotations("Graph Hosted Resources")},
+		{Name: "whodb_platform_next_actions", Description: descPlatformNextActions, Annotations: platformReadOnlyAnnotations("Suggest Hosted Next Actions")},
+		{Name: "whodb_platform_workspace_summary", Description: descPlatformWorkspaceSummary, Annotations: platformReadOnlyAnnotations("Summarize Hosted Workspace")},
+		{Name: "whodb_platform_build_plan", Description: descPlatformBuildPlan, Annotations: platformReadOnlyAnnotations("Plan Hosted Build")},
+		{Name: "whodb_platform_gap_analysis", Description: descPlatformGapAnalysis, Annotations: platformReadOnlyAnnotations("Analyze Hosted Gaps")},
+		{Name: "whodb_platform_project_health", Description: descPlatformProjectHealth, Annotations: platformReadOnlyAnnotations("Summarize Hosted Project Health")},
+		{Name: "whodb_platform_data_model_summary", Description: descPlatformDataModelSummary, Annotations: platformReadOnlyAnnotations("Summarize Hosted Data Model")},
+		{Name: "whodb_platform_runtime_readiness", Description: descPlatformRuntimeReadiness, Annotations: platformReadOnlyAnnotations("Check Hosted Runtime Readiness")},
+		{Name: "whodb_platform_change_impact", Description: descPlatformChangeImpact, Annotations: platformReadOnlyAnnotations("Analyze Hosted Change Impact")},
+		{Name: "whodb_platform_write_plan", Description: descPlatformWritePlan, Annotations: platformReadOnlyAnnotations("Plan Hosted Write")},
 		{Name: "whodb_platform_source_constraints", Description: descPlatformSourceConstraints, Annotations: platformReadOnlyAnnotations("Inspect Hosted Source Constraints")},
 		{Name: "whodb_platform_source_content", Description: descPlatformSourceContent, Annotations: platformReadOnlyAnnotations("Read Hosted Source Content")},
 		{Name: "whodb_platform_secrets", Description: descPlatformSecrets, Annotations: platformReadOnlyAnnotations("List Hosted Secret Metadata")},
@@ -260,11 +340,13 @@ func platformReadToolDefinitions() []*mcp.Tool {
 		{Name: "whodb_platform_lineage_neighbors", Description: descPlatformLineageNeighbors, Annotations: platformReadOnlyAnnotations("Inspect Hosted Lineage Neighbors")},
 		{Name: "whodb_platform_project_lineage", Description: descPlatformProjectLineage, Annotations: platformReadOnlyAnnotations("Inspect Hosted Project Lineage")},
 		{Name: "whodb_platform_transforms", Description: descPlatformTransforms, Annotations: platformReadOnlyAnnotations("List Hosted Transforms")},
+		{Name: "whodb_platform_transform", Description: descPlatformTransform, Annotations: platformReadOnlyAnnotations("Inspect Hosted Transform")},
 		{Name: "whodb_platform_transform_runs", Description: descPlatformTransformRuns, Annotations: platformReadOnlyAnnotations("List Hosted Transform Runs")},
 		{Name: "whodb_platform_functions", Description: descPlatformFunctions, Annotations: platformReadOnlyAnnotations("List Hosted Functions")},
 		{Name: "whodb_platform_function", Description: descPlatformFunction, Annotations: platformReadOnlyAnnotations("Inspect Hosted Function")},
 		{Name: "whodb_platform_files", Description: descPlatformFiles, Annotations: platformReadOnlyAnnotations("List Hosted Files")},
 		{Name: "whodb_platform_file_preview", Description: descPlatformFilePreview, Annotations: platformReadOnlyAnnotations("Preview Hosted File")},
+		{Name: "whodb_platform_file_inspect", Description: descPlatformFileInspect, Annotations: platformReadOnlyAnnotations("Inspect Hosted File Columns")},
 		{Name: "whodb_platform_file_search", Description: descPlatformFileSearch, Annotations: platformReadOnlyAnnotations("Search Hosted Files")},
 		{Name: "whodb_platform_tabular_files", Description: descPlatformTabularFiles, Annotations: platformReadOnlyAnnotations("List Hosted Tabular Files")},
 		{Name: "whodb_platform_storage_usage", Description: descPlatformStorageUsage, Annotations: platformReadOnlyAnnotations("Inspect Hosted Storage Usage")},
@@ -295,6 +377,9 @@ func HandlePlatformSourceContent(ctx context.Context, req *mcp.CallToolRequest, 
 func HandlePlatformSecrets(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
 	return platformProjectRead(ctx, "platform_secrets", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
 		secrets, err := session.Client.ProjectSecrets(ctx, session.Host.DefaultProjectID)
+		secrets = filterPlatformReadSlice(secrets, func(secret platformapi.ProjectSecret) bool {
+			return platformReadMatchesSubstring(secret.Name, input.Name)
+		})
 		return secrets, len(secrets), false, err
 	})
 }
@@ -303,6 +388,9 @@ func HandlePlatformSecrets(ctx context.Context, req *mcp.CallToolRequest, input 
 func HandlePlatformAIProviders(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
 	return platformProjectRead(ctx, "platform_ai_providers", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
 		providers, err := session.Client.AIProviders(ctx, session.Host.DefaultProjectID)
+		providers = filterPlatformReadSlice(providers, func(provider platformapi.AIProvider) bool {
+			return platformReadMatchesSubstring(provider.Name, input.Name) && platformReadMatchesEqual(provider.ProviderType, input.Type)
+		})
 		return providers, len(providers), false, err
 	})
 }
@@ -322,6 +410,10 @@ func HandlePlatformAIProviderModels(ctx context.Context, req *mcp.CallToolReques
 func HandlePlatformOntologies(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
 	return platformProjectRead(ctx, "platform_ontologies", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
 		ontologies, err := session.Client.Ontologies(ctx, session.Host.DefaultProjectID)
+		ontologies = filterPlatformReadSlice(ontologies, func(ontology platformapi.Ontology) bool {
+			nameMatch := platformReadMatchesSubstring(ontology.DisplayName, input.Name) || platformReadMatchesSubstring(ontology.APIName, input.Name)
+			return nameMatch && platformReadMatchesEqual(ontology.Status, input.Status)
+		})
 		return ontologies, len(ontologies), false, err
 	})
 }
@@ -372,6 +464,9 @@ func HandlePlatformOntologyFollowLink(ctx context.Context, req *mcp.CallToolRequ
 func HandlePlatformDatasets(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
 	return platformProjectRead(ctx, "platform_datasets", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
 		datasets, err := session.Client.Datasets(ctx, session.Host.DefaultProjectID)
+		datasets = filterPlatformReadSlice(datasets, func(dataset platformapi.Dataset) bool {
+			return platformReadMatchesSubstring(dataset.Name, input.Name) && platformReadMatchesEqual(dataset.SchemaMode, input.SchemaMode)
+		})
 		return datasets, len(datasets), false, err
 	})
 }
@@ -425,7 +520,18 @@ func HandlePlatformProjectLineage(ctx context.Context, req *mcp.CallToolRequest,
 func HandlePlatformTransforms(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
 	return platformProjectRead(ctx, "platform_transforms", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
 		transforms, err := session.Client.Transforms(ctx, session.Host.DefaultProjectID)
+		transforms = filterPlatformReadSlice(transforms, func(transform platformapi.Transform) bool {
+			return platformReadMatchesSubstring(transform.Name, input.Name) && platformReadMatchesEqual(transform.TriggerMode, input.Type)
+		})
 		return transforms, len(transforms), false, err
+	})
+}
+
+// HandlePlatformTransform returns one hosted transform.
+func HandlePlatformTransform(ctx context.Context, req *mcp.CallToolRequest, input PlatformEntityInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
+	return platformIDRead(ctx, "platform_transform", input.ID, input.Fields, func(ctx context.Context, session *platformToolSession, id string) (any, int, bool, error) {
+		transform, err := platformapi.ResolveTransform(ctx, session.Client, session.Host.DefaultProjectID, id)
+		return transform, 1, false, err
 	})
 }
 
@@ -444,6 +550,9 @@ func HandlePlatformTransformRuns(ctx context.Context, req *mcp.CallToolRequest, 
 func HandlePlatformFunctions(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
 	return platformProjectRead(ctx, "platform_functions", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
 		functions, err := session.Client.Functions(ctx, session.Host.DefaultProjectID, input.Fields)
+		functions = filterPlatformReadSlice(functions, func(fn platformapi.Function) bool {
+			return platformReadMatchesSubstring(fn.Name, input.Name) && platformReadMatchesEqual(fn.Language, input.Type) && platformReadMatchesBool(fn.IsDeployed, input.Deployed)
+		})
 		functions, truncated := truncateFunctions(functions, defaultPlatformContentLimit)
 		return functions, len(functions), truncated, err
 	})
@@ -468,6 +577,7 @@ func HandlePlatformFiles(ctx context.Context, req *mcp.CallToolRequest, input Pl
 		if contents == nil {
 			return contents, 0, false, err
 		}
+		contents = filterPlatformFileContents(contents, input)
 		return contents, len(contents.Folders) + len(contents.Files), false, err
 	})
 }
@@ -484,6 +594,24 @@ func HandlePlatformFilePreview(ctx context.Context, req *mcp.CallToolRequest, in
 		}
 		truncated := truncateFilePreview(preview, defaultPlatformContentLimit)
 		return preview, 1, truncated, nil
+	})
+}
+
+// HandlePlatformFileInspect inspects one hosted tabular file for dataset promotion.
+func HandlePlatformFileInspect(ctx context.Context, req *mcp.CallToolRequest, input PlatformFileInspectInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
+	if strings.TrimSpace(input.FileID) == "" {
+		return nil, PlatformReadOutput{Error: "file_id is required", RequestID: generateRequestID("platform_file_inspect")}, nil
+	}
+	return platformProjectRead(ctx, "platform_file_inspect", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
+		preview, err := session.Client.FilePreview(ctx, session.Host.DefaultProjectID, input.FileID, input.SheetIndex, nil)
+		if err != nil {
+			return nil, 0, false, err
+		}
+		inspection := platformapi.InspectFilePreview(input.FileID, preview)
+		if !input.IncludeRows {
+			inspection.Rows = nil
+		}
+		return inspection, len(inspection.Columns), false, nil
 	})
 }
 
@@ -520,7 +648,7 @@ func platformProjectRead(ctx context.Context, toolName string, fields []string, 
 	session, err := loadPlatformWorkspace(ctx)
 	if err != nil {
 		TrackToolCall(ctx, toolName, requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_session"})
-		return nil, PlatformReadOutput{Error: err.Error(), RequestID: requestID}, nil
+		return nil, PlatformReadOutput{PlatformSetupGuidance: platformSetupGuidanceForCurrentConfig(requestID), Error: err.Error(), RequestID: requestID}, nil
 	}
 	data, count, truncated, err := read(ctx, session)
 	if err != nil {
@@ -641,6 +769,111 @@ func lineageNodeCount(graph *platformapi.LineageGraph) int {
 	return len(graph.Nodes)
 }
 
+func filterPlatformReadSlice[T any](values []T, keep func(T) bool) []T {
+	filtered := make([]T, 0, len(values))
+	for _, value := range values {
+		if keep(value) {
+			filtered = append(filtered, value)
+		}
+	}
+	return filtered
+}
+
+func filterPlatformFileContents(contents *platformapi.FolderContents, input PlatformFilesInput) *platformapi.FolderContents {
+	if contents == nil {
+		return nil
+	}
+	filtered := *contents
+	filtered.Folders = nil
+	filtered.Files = nil
+	if platformReadMatchesEqual("folder", input.Kind) {
+		filtered.Folders = filterPlatformReadSlice(contents.Folders, func(folder platformapi.ProjectFolder) bool {
+			return platformReadMatchesSubstring(folder.Name, input.Name)
+		})
+	}
+	if platformReadMatchesEqual("file", input.Kind) {
+		filtered.Files = filterPlatformReadSlice(contents.Files, func(file platformapi.ProjectFile) bool {
+			return platformReadMatchesSubstring(file.Name, input.Name) && platformReadMatchesSubstring(file.MIMEType, input.MIMEType)
+		})
+	}
+	return &filtered
+}
+
+func platformReadMatchesSubstring(value, filter string) bool {
+	needle := strings.TrimSpace(filter)
+	if needle == "" {
+		return true
+	}
+	return strings.Contains(strings.ToLower(value), strings.ToLower(needle))
+}
+
+func platformReadMatchesEqual(value, filter string) bool {
+	expected := strings.TrimSpace(filter)
+	if expected == "" {
+		return true
+	}
+	return strings.EqualFold(strings.TrimSpace(value), expected)
+}
+
+func platformReadMatchesBool(value bool, filter string) bool {
+	expected := strings.TrimSpace(filter)
+	if expected == "" {
+		return true
+	}
+	switch strings.ToLower(expected) {
+	case "true", "yes", "1":
+		return value
+	case "false", "no", "0":
+		return !value
+	default:
+		return false
+	}
+}
+
+const descPlatformWorkspaceMap = `Return a compact selected-project map across hosted sources, secrets, AI providers, datasets, ontologies, transforms, functions, root files, storage, and lineage.
+
+Use this when the agent needs a full resource inventory after first checking whodb_platform_workspace_summary. It is read-only and never returns secret values.`
+
+const descPlatformResourceGraph = `Return a normalized graph of hosted platform resources and relationships in the selected project.
+
+Use this when an agent needs to understand how sources, datasets, files, ontologies, functions, secrets, AI providers, and lineage relate before proposing changes.`
+
+const descPlatformNextActions = `Return deterministic suggested next actions for the selected hosted project.
+
+Use this as a deeper action-ranking view after whodb_platform_workspace_summary or whodb_platform_gap_analysis. Suggestions are advisory only; backend permissions and write confirmations still apply.`
+
+const descPlatformWorkspaceSummary = `Return a compact, goal-aware summary of the selected hosted project.
+
+Use this when the user asks what the platform project contains or what can be built. It combines scope, counts, highlights, gaps, next actions, recommended tools, warnings, and lineage summary without drilling into every item.`
+
+const descPlatformBuildPlan = `Return an end-to-end hosted platform build plan for a user goal.
+
+Use this before coordinating a cross-resource workflow. It plans scope, ingest, persist, model, automate, runtime support, and governance phases using existing WhoDB platform terminology. It is read-only and never creates confirmation tokens.`
+
+const descPlatformGapAnalysis = `Return a goal-aware gap analysis for the selected hosted project.
+
+Use this when the agent needs to explain what is missing before building an app, data product, ontology workflow, transform pipeline, or AI-backed function. It returns ready areas, gaps, suggested tools, and next actions.`
+
+const descPlatformProjectHealth = `Return a compact health summary for the selected hosted project.
+
+Use this for readiness diagnostics after whodb_platform_workspace_summary or whodb_platform_gap_analysis. It combines project counts, readiness checks, warnings, selected scope, and top suggested next actions.`
+
+const descPlatformDataModelSummary = `Summarize selected-project data-model resources.
+
+Use this before ontology, dataset, or lineage work. It returns sources, datasets, ontologies, graph relationships, modeling gaps, and the read tools an agent should call next.`
+
+const descPlatformRuntimeReadiness = `Summarize selected-project runtime readiness.
+
+Use this before function, transform, AI provider, or secret work. It returns runtime resources, deployment/readiness checks, and warnings without exposing secret values.`
+
+const descPlatformChangeImpact = `Analyze direct graph impact for a planned change.
+
+Pass resource, id, and optional action before update, delete, deploy, run, move, or promotion work. It returns directly connected resources and recommended reads; it does not execute any change.`
+
+const descPlatformWritePlan = `Validate and preview a hosted platform write without executing it.
+
+Use this before calling mutating tools when the agent needs a safe dry-run summary. It reuses the same generic write specs as real writes, returns payload keys, suggested reads, and direct impact, but does not create a confirmation token.`
+
 const descPlatformSourceConstraints = `Describe editable field constraints for one hosted source object.
 
 Use a source name or id and an object ref such as table:public.users. This tool is read-only.`
@@ -649,17 +882,17 @@ const descPlatformSourceContent = `Read content for one hosted source object whe
 
 Use a source name or id and an object ref such as file:notes/report.txt. Prefer fields to request only the content metadata or body fields needed now, then call again with more fields only if needed. Text content is capped in MCP output.`
 
-const descPlatformSecrets = `List hosted project secret metadata and usage.
+const descPlatformSecrets = `List hosted project secret metadata and usage. Use name to filter by secret name when known.
 
 This tool never returns secret values, redacted placeholders, or credential material. Authorization is enforced by the hosted platform.`
 
-const descPlatformAIProviders = `List hosted AI provider metadata in the selected project.
+const descPlatformAIProviders = `List hosted AI provider metadata in the selected project. Use name and type filters when known.
 
 This tool never returns provider API keys.`
 
 const descPlatformAIProviderModels = `List model names available from one hosted AI provider.`
 
-const descPlatformOntologies = `List ontology object types in the selected hosted project.`
+const descPlatformOntologies = `List ontology object types in the selected hosted project. Use name and status filters when known.`
 
 const descPlatformOntology = `Inspect one ontology object type by id.`
 
@@ -675,7 +908,7 @@ const descPlatformOntologyFollowLink = `Follow one ontology link from a row prim
 
 Results are capped by the requested limit and the MCP --max-rows setting when provided.`
 
-const descPlatformDatasets = `List datasets in the selected hosted project.`
+const descPlatformDatasets = `List datasets in the selected hosted project. Use name and schema_mode filters when known.`
 
 const descPlatformDataset = `Inspect one hosted dataset by id.`
 
@@ -689,13 +922,15 @@ const descPlatformLineageNeighbors = `Return immediate lineage neighbors for one
 
 const descPlatformProjectLineage = `Return project-level lineage for the selected hosted project.`
 
-const descPlatformTransforms = `List transforms in the selected hosted project.`
+const descPlatformTransforms = `List transforms in the selected hosted project. Use name and type filters when known; type maps to trigger mode for this tool.`
+
+const descPlatformTransform = `Inspect one transform in the selected hosted project. Use fields to request only the top-level fields needed for the current task.`
 
 const descPlatformTransformRuns = `List recent runs for one hosted transform.`
 
 const descPlatformFunctions = `List ontology functions in the selected hosted project.
 
-Prefer fields such as ["id", "name", "description", "isDeployed"] for discovery. Request heavier fields such as "files" only when source code is needed. Function source file content is capped in MCP output. Secret bindings include secret ids only, never secret values.`
+Use name, type, and deployed filters when known; type maps to language for this tool. Prefer fields such as ["id", "name", "description", "isDeployed"] for discovery. Request heavier fields such as "files" only when source code is needed. Function source file content is capped in MCP output. Secret bindings include secret ids only, never secret values.`
 
 const descPlatformFunction = `Inspect one ontology function by id.
 
@@ -703,11 +938,15 @@ Prefer fields to request only the details needed now, for example ["id", "name",
 
 const descPlatformFiles = `List folders and files in a hosted project folder.
 
-Omit folder_id to list the project root. Prefer fields such as ["files", "folders"] or ["storageUsed"] to request only the folder data needed now.`
+Omit folder_id to list the project root. Use name, kind, and mime_type filters when known. Prefer fields such as ["files", "folders"] or ["storageUsed"] to request only the folder data needed now.`
 
 const descPlatformFilePreview = `Preview one hosted project file.
 
 Prefer fields such as ["mimeType", "sizeBytes", "isTabular"] before requesting body fields. Request "textContent" or "tabular" only when the file body or rows are needed. Text content is capped in MCP output. Tabular previews are returned as provided by the hosted platform.`
+
+const descPlatformFileInspect = `Inspect one hosted tabular file and infer promote-to-dataset column mappings.
+
+Use this before whodb_platform_action with resource "file" and action "promote_to_dataset". Prefer fields such as ["columns", "columnMapExample", "columnMapFlags"] first. Set include_rows only when sample row values are needed. The suggested mappings are convenience output; the hosted platform still validates promotion writes.`
 
 const descPlatformFileSearch = `Search files in the selected hosted project.`
 

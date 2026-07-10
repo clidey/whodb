@@ -19,6 +19,7 @@ package auth
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/common"
@@ -39,7 +40,21 @@ func Logout(ctx context.Context) (*model.StatusResponse, error) {
 			}
 		}
 	}
-	http.SetCookie(ctx.Value(common.RouterKey_ResponseWriter).(http.ResponseWriter), nil)
+	// Clear the auth cookie. Passing a nil cookie emits no valid deletion header,
+	// so an explicit expired cookie with a matching name and path is required for
+	// the browser to actually remove it.
+	if w, ok := ctx.Value(common.RouterKey_ResponseWriter).(http.ResponseWriter); ok {
+		http.SetCookie(w, &http.Cookie{
+			Name:     string(AuthKey_Token),
+			Value:    "",
+			Path:     "/",
+			MaxAge:   -1,
+			Expires:  time.Unix(0, 0),
+			Secure:   true,
+			HttpOnly: true,
+			SameSite: http.SameSiteLaxMode,
+		})
+	}
 	return &model.StatusResponse{
 		Status: true,
 	}, nil

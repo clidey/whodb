@@ -26,7 +26,7 @@ import (
 	"net/url"
 	"strconv"
 
-	elastictransport "github.com/elastic/elastic-transport-go/v8/elastictransport"
+	"github.com/elastic/elastic-transport-go/v8/elastictransport"
 	"github.com/elastic/go-elasticsearch/v8"
 
 	"github.com/clidey/whodb/core/src/common"
@@ -77,7 +77,7 @@ func DB(config *engine.PluginConfig) (*elasticsearch.Client, error) {
 		Username:  config.Credentials.Username,
 		Password:  config.Credentials.Password,
 	}
-	if config.Credentials.Type == string(engine.DatabaseType_OpenSearch) {
+	if config.Credentials.Type == engine.DatabaseType_OpenSearch {
 		cfg.Interceptors = []elastictransport.InterceptorFunc{opensearchProductHeaderInterceptor}
 	}
 
@@ -147,7 +147,7 @@ func DB(config *engine.PluginConfig) (*elasticsearch.Client, error) {
 			_ = body.Close()
 		}(res.Body)
 	}
-	if err != nil || res.IsError() {
+	if err != nil || res == nil || res.IsError() {
 		errMsg := "no error"
 		if err != nil {
 			errMsg = err.Error()

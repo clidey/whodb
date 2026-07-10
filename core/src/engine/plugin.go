@@ -90,15 +90,15 @@ type PluginFunctions interface {
 	// by querying database-specific system catalogs
 	MarkGeneratedColumns(config *PluginConfig, schema string, storageUnit string, columns []Column) error
 
-	// Mock data generation methods
+	// GetColumnConstraints returns database-specific constraints for mock data generation.
 	GetColumnConstraints(config *PluginConfig, schema string, storageUnit string) (map[string]map[string]any, error)
 	ClearTableData(config *PluginConfig, schema string, storageUnit string) (bool, error)
 	NullifyFKColumn(config *PluginConfig, schema string, storageUnit string, column string) error
 
-	// Foreign key detection
+	// GetForeignKeyRelationships returns foreign-key relationships for a storage unit.
 	GetForeignKeyRelationships(config *PluginConfig, schema string, storageUnit string) (map[string]*ForeignKeyRelationship, error)
 
-	// Transaction support
+	// WithTransaction runs an operation in a database-specific transaction.
 	WithTransaction(config *PluginConfig, operation func(tx any) error) error
 
 	// GetSSLStatus returns the verified SSL/TLS status of the current connection.

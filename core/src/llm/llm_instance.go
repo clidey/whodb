@@ -15,6 +15,7 @@
 package llm
 
 import (
+	"github.com/clidey/whodb/core/src/llm/providers"
 	"github.com/clidey/whodb/core/src/source"
 )
 
@@ -25,7 +26,7 @@ func ClientForModel(model *source.ExternalModel) *LLMClient {
 	}
 
 	return &LLMClient{
-		Type:   LLMType(model.Type),
+		Type:   providers.LLMType(model.Type),
 		APIKey: model.Token,
 	}
 }

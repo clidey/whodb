@@ -183,7 +183,7 @@ func TestHandleAWSError_UnknownCode(t *testing.T) {
 	err := &mockAPIError{code: "SomeUnknownError", message: "unknown error occurred"}
 	result := HandleAWSError(err)
 	if result == nil {
-		t.Error("expected non-nil error for unknown code")
+		t.Fatal("expected non-nil error for unknown code")
 	}
 	expected := "AWS error [SomeUnknownError]: unknown error occurred"
 	if result.Error() != expected {

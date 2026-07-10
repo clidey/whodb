@@ -50,10 +50,6 @@ func GetIsLocalMode() bool {
 	return GetIsDesktopMode() || GetIsCLIMode()
 }
 
-var Tokens = common.FilterList(strings.Split(os.Getenv("WHODB_TOKENS"), ","), func(item string) bool {
-	return item != ""
-})
-var IsAPIGatewayEnabled = len(Tokens) > 0
 var OllamaHost = os.Getenv("WHODB_OLLAMA_HOST")
 var OllamaPort = os.Getenv("WHODB_OLLAMA_PORT")
 

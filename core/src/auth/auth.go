@@ -163,11 +163,6 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		if env.IsAPIGatewayEnabled && (credentials.AccessToken == nil || (credentials.AccessToken != nil && !isTokenValid(*credentials.AccessToken))) {
-			http.Error(w, "Bad Request", http.StatusBadRequest)
-			return
-		}
-
 		inline := true
 		isSavedProfileReference := credentials.ID != nil && credentials.SourceType == ""
 
@@ -302,8 +297,4 @@ func mergeCredentialValues(base map[string]string, overrides map[string]string) 
 	maps.Copy(merged, base)
 	maps.Copy(merged, overrides)
 	return merged
-}
-
-func isTokenValid(token string) bool {
-	return slices.Contains(env.Tokens, token)
 }

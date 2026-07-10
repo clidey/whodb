@@ -146,7 +146,7 @@ var bookmarksLoadCmd = &cobra.Command{
 		for _, saved := range cfg.GetSavedQueries() {
 			if saved.Name == args[0] {
 				copy := saved
-				bookmark = &copy
+				bookmark = new(copy)
 				break
 			}
 		}

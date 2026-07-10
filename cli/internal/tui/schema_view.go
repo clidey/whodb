@@ -96,13 +96,13 @@ func (v *SchemaView) Update(msg tea.Msg) (*SchemaView, tea.Cmd) {
 		return v, nil
 
 	case tea.MouseMsg:
-		switch msg.Type {
-		case tea.MouseWheelUp:
+		switch msg.Button {
+		case tea.MouseButtonWheelUp:
 			if v.scrollOffset > 0 {
 				v.scrollOffset--
 			}
 			return v, nil
-		case tea.MouseWheelDown:
+		case tea.MouseButtonWheelDown:
 			// Calculate total items (tables + expanded columns)
 			totalItems := 0
 			for _, table := range v.filteredTables {

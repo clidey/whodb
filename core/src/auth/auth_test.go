@@ -57,12 +57,9 @@ func TestIsPublicRouteBlocksWhenNotDev(t *testing.T) {
 
 func TestAuthMiddlewareExtractsCredentialsFromBearer(t *testing.T) {
 	originalDev := env.IsDevelopment
-	originalGateway := env.IsAPIGatewayEnabled
 	env.IsDevelopment = false
-	env.IsAPIGatewayEnabled = false
 	t.Cleanup(func() {
 		env.IsDevelopment = originalDev
-		env.IsAPIGatewayEnabled = originalGateway
 	})
 
 	creds := source.Credentials{
@@ -124,12 +121,9 @@ func TestAuthMiddlewareRejectsMissingToken(t *testing.T) {
 
 func TestAuthMiddlewarePreservesAdvancedOptions(t *testing.T) {
 	originalDev := env.IsDevelopment
-	originalGateway := env.IsAPIGatewayEnabled
 	env.IsDevelopment = false
-	env.IsAPIGatewayEnabled = false
 	t.Cleanup(func() {
 		env.IsDevelopment = originalDev
-		env.IsAPIGatewayEnabled = originalGateway
 	})
 
 	creds := source.Credentials{
@@ -181,12 +175,9 @@ func TestAuthMiddlewareDecodesSourceCredentialsFormat(t *testing.T) {
 	// This test verifies that credentials marshaled from the source-first format
 	// are correctly unmarshaled into source.Credentials.
 	originalDev := env.IsDevelopment
-	originalGateway := env.IsAPIGatewayEnabled
 	env.IsDevelopment = false
-	env.IsAPIGatewayEnabled = false
 	t.Cleanup(func() {
 		env.IsDevelopment = originalDev
-		env.IsAPIGatewayEnabled = originalGateway
 	})
 
 	// This JSON matches the format produced by the source-first auth payload.

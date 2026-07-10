@@ -18,6 +18,7 @@ package providers
 
 import (
 	"net/http"
+	"strings"
 	"testing"
 )
 
@@ -301,5 +302,30 @@ func TestGenericProvider_CreateBAMLClient_IncludesDefaults(t *testing.T) {
 	}
 	if opts["api_key"] != "custom-key" {
 		t.Fatalf("expected api_key, got %v", opts["api_key"])
+	}
+}
+
+func TestRedactURL(t *testing.T) {
+	cases := []struct {
+		name        string
+		in          string
+		mustContain string
+		mustNotHave string
+	}{
+		{"gemini key param", "https://generativelanguage.googleapis.com/v1beta/models?key=SECRET123&pageSize=1000", "pageSize=1000", "SECRET123"},
+		{"api_key param", "https://api.example.com/models?api_key=abc123", "redacted", "abc123"},
+		{"userinfo", "https://user:pass@api.example.com/models", "redacted", "pass"},
+		{"no secret", "https://api.openai.com/v1/models", "https://api.openai.com/v1/models", "redacted"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := redactURL(tc.in)
+			if tc.mustNotHave != "" && strings.Contains(got, tc.mustNotHave) {
+				t.Errorf("redactURL(%q) = %q, must not contain %q", tc.in, got, tc.mustNotHave)
+			}
+			if tc.mustContain != "" && !strings.Contains(got, tc.mustContain) {
+				t.Errorf("redactURL(%q) = %q, must contain %q", tc.in, got, tc.mustContain)
+			}
+		})
 	}
 }

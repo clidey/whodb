@@ -115,6 +115,9 @@ func TestSetThemeRebuildsDerivedStyles(t *testing.T) {
 func TestAllThemesHaveAllColors(t *testing.T) {
 	for _, name := range ListThemes() {
 		theme := GetThemeByName(name)
+		if theme == nil {
+			t.Fatalf("Theme %q was not found", name)
+		}
 
 		// Check that no color slot is entirely empty
 		if theme.Primary.Light == "" && theme.Primary.Dark == "" {

@@ -22,6 +22,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 	"os"
@@ -162,6 +163,580 @@ func TestPlatformCLI_SourceLifecycle(t *testing.T) {
 	sourceForCleanup = ""
 }
 
+func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
+	cleanup := testharness.SetupCleanEnv(t)
+	defer cleanup()
+	t.Setenv("WHODB_CLI_E2E_PLATFORM_TOKEN_DIR", filepath.Join(os.Getenv("HOME"), ".whodb-cli-platform-e2e-tokens"))
+	config.ResetPathsForTesting()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+
+	host := envOrDefault("WHODB_PLATFORM_E2E_HOST", defaultPlatformE2EHost)
+	keycloakURL := envOrDefault("WHODB_PLATFORM_E2E_KEYCLOAK_URL", defaultPlatformE2EKeycloakURL)
+	email := envOrDefault("WHODB_PLATFORM_E2E_USER", defaultPlatformE2EUser)
+	password := envOrDefault("WHODB_PLATFORM_E2E_PASSWORD", defaultPlatformE2EPassword)
+
+	keycloakHostHeader := envOrDefault("WHODB_PLATFORM_E2E_KEYCLOAK_HOST_HEADER", "127.0.0.1:4001")
+	refreshToken := mintDevRefreshToken(t, ctx, keycloakURL, keycloakHostHeader, email, password)
+	restoreLogin := seedPlatformLogin(t, ctx, host, refreshToken)
+	defer restoreLogin()
+
+	orgSlug := envOrDefault("WHODB_PLATFORM_E2E_ORG", "acme")
+	projectSlug := envOrDefault("WHODB_PLATFORM_E2E_PROJECT", "default")
+	_ = runEnvelope(t, "use", "--host", host, "--org", orgSlug, "--project", projectSlug, "--format", "json", "--quiet")
+	workspace := runJSONCommand[map[string]any](t, "workspace", "show", "--host", host, "--format", "json", "--quiet")
+	if selected, _ := workspace["workspaceSelected"].(bool); !selected {
+		t.Fatalf("workspace show = %#v, want selected workspace", workspace)
+	}
+	cleared := runEnvelope(t, "workspace", "clear", "--host", host, "--format", "json", "--quiet")
+	var clearedWorkspace map[string]any
+	decodeEnvelopeData(t, cleared, &clearedWorkspace)
+	if selected, _ := clearedWorkspace["workspaceSelected"].(bool); selected {
+		t.Fatalf("workspace clear = %#v, want unselected workspace", clearedWorkspace)
+	}
+	_ = runEnvelope(t, "workspace", "switch", "--host", host, "--org", orgSlug, "--project", projectSlug, "--format", "json", "--quiet")
+	doctorReport := runJSONCommand[map[string]any](t, "doctor", "platform", "--host", host, "--format", "json", "--quiet")
+	if ok, _ := doctorReport["ok"].(bool); !ok {
+		t.Fatalf("doctor platform report = %#v, want ok", doctorReport)
+	}
+
+	suffix := strings.ReplaceAll(time.Now().UTC().Format("20060102150405.000000000"), ".", "")
+	baseArgs := []string{"--host", host, "--yes", "--format", "json", "--quiet"}
+	queryArgs := []string{"--host", host, "--format", "json", "--quiet"}
+
+	importProjectName := "cli-e2e-import-project-" + suffix
+	importProjectRenamedName := importProjectName + "-renamed"
+	importProjectID := runMutationID(t, append([]string{
+		"projects", "create",
+		"--org", orgSlug,
+		"--name", importProjectName,
+		"--description", "CLI e2e import target project",
+	}, queryArgs...)...)
+	defer bestEffortCLIProjectDelete(t, host, orgSlug, importProjectRenamedName)
+	defer bestEffortCLIProjectDelete(t, host, orgSlug, importProjectName)
+	projects := runJSONCommand[[]platform.Project](t, "projects", "list", "--host", host, "--org", orgSlug, "--format", "json", "--quiet")
+	requireContainsProjectID(t, projects, importProjectID)
+	renamedImportProjectID := runMutationID(t, append([]string{
+		"projects", "rename", importProjectName,
+		"--org", orgSlug,
+		"--name", importProjectRenamedName,
+	}, queryArgs...)...)
+	if renamedImportProjectID != importProjectID {
+		t.Fatalf("projects rename returned id %q, want %q", renamedImportProjectID, importProjectID)
+	}
+
+	t.Setenv("WHODB_PLATFORM_E2E_TYPED_SECRET", "secret-value-"+suffix)
+	secretName := "cli-e2e-secret-" + suffix
+	updatedSecretName := "cli-e2e-secret-updated-" + suffix
+	secretID := runMutationID(t, append([]string{
+		"secrets", "create",
+		"--name", secretName,
+		"--description", "CLI e2e secret",
+		"--value-env", "WHODB_PLATFORM_E2E_TYPED_SECRET",
+	}, baseArgs...)...)
+	defer bestEffortCLIResourceDelete(t, host, "secret", secretID)
+	secrets := runJSONCommand[[]platform.ProjectSecret](t, "secrets", "list", "--host", host, "--format", "json", "--quiet")
+	requireContainsSecret(t, secrets, secretID)
+	_ = runMutationID(t, append([]string{
+		"secrets", "update", secretName,
+		"--name", updatedSecretName,
+		"--description", "updated",
+		"--value-env", "WHODB_PLATFORM_E2E_TYPED_SECRET",
+	}, baseArgs...)...)
+	secret := runJSONCommand[platform.ProjectSecret](t, "secrets", "get", updatedSecretName, "--host", host, "--format", "json", "--quiet")
+	if secret.ID != secretID {
+		t.Fatalf("secrets get by name returned id %q, want %q", secret.ID, secretID)
+	}
+
+	t.Setenv("WHODB_PLATFORM_E2E_TYPED_PROVIDER_KEY", "test-key-"+suffix)
+	providerName := "cli-e2e-provider-" + suffix
+	updatedProviderName := "cli-e2e-provider-updated-" + suffix
+	providerID := runMutationID(t, append([]string{
+		"ai-providers", "create",
+		"--name", providerName,
+		"--type", "openai",
+		"--endpoint", "http://127.0.0.1:1/v1",
+		"--api-key-env", "WHODB_PLATFORM_E2E_TYPED_PROVIDER_KEY",
+		"--model", "gpt-4.1",
+	}, baseArgs...)...)
+	defer bestEffortCLIResourceDelete(t, host, "ai_provider", providerID)
+	providers := runJSONCommand[[]platform.AIProvider](t, "ai-providers", "list", "--host", host, "--format", "json", "--quiet")
+	requireContainsAIProvider(t, providers, providerID)
+	_ = runMutationID(t, append([]string{
+		"ai-providers", "update", providerName,
+		"--name", updatedProviderName,
+		"--endpoint", "http://127.0.0.1:1/v1",
+		"--model", "gpt-4.1-mini",
+	}, baseArgs...)...)
+	provider := runJSONCommand[platform.AIProvider](t, "ai-providers", "get", updatedProviderName, "--host", host, "--format", "json", "--quiet")
+	if provider.ID != providerID {
+		t.Fatalf("ai-providers get by name returned id %q, want %q", provider.ID, providerID)
+	}
+
+	datasetName := "cli-e2e-dataset-" + suffix
+	datasetID := runMutationID(t, append([]string{
+		"datasets", "create",
+		"--name", datasetName,
+		"--description", "CLI e2e dataset",
+		"--schema-mode", "manual",
+		"--column", "id:text:primary",
+		"--column", "name:text:nullable",
+	}, baseArgs...)...)
+	defer bestEffortCLIResourceDelete(t, host, "dataset", datasetID)
+	datasets := runJSONCommand[[]platform.Dataset](t, "datasets", "list", "--host", host, "--format", "json", "--quiet")
+	requireContainsDataset(t, datasets, datasetID)
+	filteredDatasets := runJSONCommand[[]platform.Dataset](t, "datasets", "list", "--host", host, "--name", datasetName, "--schema-mode", "manual", "--format", "json", "--quiet")
+	if len(filteredDatasets) != 1 || filteredDatasets[0].ID != datasetID {
+		t.Fatalf("filtered datasets = %#v, want only %q", filteredDatasets, datasetID)
+	}
+	dataset := runJSONCommand[platform.Dataset](t, "datasets", "get", datasetName, "--host", host, "--format", "json", "--quiet")
+	if dataset.ID != datasetID {
+		t.Fatalf("datasets get by name returned id %q, want %q", dataset.ID, datasetID)
+	}
+	datasetDescribe := runJSONCommand[platform.Dataset](t, "datasets", "describe", datasetName, "--host", host, "--format", "json", "--quiet")
+	if datasetDescribe.ID != datasetID {
+		t.Fatalf("datasets describe returned id %q, want %q", datasetDescribe.ID, datasetID)
+	}
+	datasetExportPath := filepath.Join(t.TempDir(), "dataset-export.json")
+	_ = runRawCommand(t, "datasets", "export", datasetName, "--host", host, "--out", datasetExportPath, "--quiet")
+	testharness.AssertFileContains(t, datasetExportPath, datasetName)
+	datasetCloneName := datasetName + "-clone"
+	datasetCloneID := runMutationID(t, append([]string{"datasets", "clone", datasetName, datasetCloneName}, baseArgs...)...)
+	defer bestEffortCLIResourceDelete(t, host, "dataset", datasetCloneID)
+	_ = runJSONCommand[platform.DatasetQueryResult](t, "datasets", "rows", datasetName, "--host", host, "--limit", "5", "--format", "json", "--quiet")
+	_ = runJSONCommand[platform.DatasetQueryResult](t, "datasets", "query", datasetName, "--host", host, "--limit", "5", "--format", "json", "--quiet")
+	datasetSchema := runJSONCommand[[]platform.ColumnDef](t, "datasets", "schema", datasetName, "--host", host, "--format", "json", "--quiet")
+	if len(datasetSchema) == 0 || datasetSchema[0].Name != "id" {
+		t.Fatalf("datasets schema = %#v, want id column", datasetSchema)
+	}
+	_ = runMutationID(t, append([]string{
+		"datasets", "update", datasetName,
+		"--description", "updated",
+		"--schema-mode", "manual",
+		"--column", "id:text:primary",
+	}, baseArgs...)...)
+
+	transformName := "cli-e2e-transform-" + suffix
+	transformID := runMutationID(t, append([]string{
+		"transforms", "create",
+		"--name", transformName,
+		"--description", "CLI e2e transform",
+		"--graph-json", `{"nodes":[],"edges":[]}`,
+		"--trigger-mode", "manual",
+	}, baseArgs...)...)
+	defer bestEffortCLIResourceDelete(t, host, "transform", transformID)
+	transform := runJSONCommand[platform.Transform](t, "transforms", "get", transformName, "--host", host, "--format", "json", "--quiet")
+	if transform.ID != transformID {
+		t.Fatalf("transforms get by name returned id %q, want %q", transform.ID, transformID)
+	}
+	filteredTransforms := runJSONCommand[[]platform.Transform](t, "transforms", "list", "--host", host, "--name", transformName, "--trigger-mode", "manual", "--format", "json", "--quiet")
+	if len(filteredTransforms) != 1 || filteredTransforms[0].ID != transformID {
+		t.Fatalf("filtered transforms = %#v, want only %q", filteredTransforms, transformID)
+	}
+	transformDescribe := runJSONCommand[platform.Transform](t, "transforms", "describe", transformName, "--host", host, "--format", "json", "--quiet")
+	if transformDescribe.ID != transformID {
+		t.Fatalf("transforms describe returned id %q, want %q", transformDescribe.ID, transformID)
+	}
+	transformExportPath := filepath.Join(t.TempDir(), "transform-export.json")
+	_ = runRawCommand(t, "transforms", "export", transformName, "--host", host, "--out", transformExportPath, "--quiet")
+	testharness.AssertFileContains(t, transformExportPath, transformName)
+	transformCloneName := transformName + "-clone"
+	transformCloneID := runMutationID(t, append([]string{"transforms", "clone", transformName, transformCloneName}, baseArgs...)...)
+	defer bestEffortCLIResourceDelete(t, host, "transform", transformCloneID)
+	_ = runMutationID(t, append([]string{
+		"transforms", "update", transformName,
+		"--description", "updated",
+	}, baseArgs...)...)
+	_ = runMutationID(t, append([]string{"transforms", "run", transformName}, baseArgs...)...)
+	_ = runJSONCommand[[]platform.TransformRun](t, "transforms", "runs", transformName, "--host", host, "--format", "json", "--quiet")
+
+	ontologyAPIName := "cli_e2e_ontology_" + suffix
+	ontologyID := runMutationID(t, append([]string{
+		"ontologies", "create",
+		"--api-name", ontologyAPIName,
+		"--display-name", "CLI E2E Ontology " + suffix,
+		"--plural-display-name", "CLI E2E Ontologies " + suffix,
+		"--description", "CLI e2e ontology",
+		"--primary-key", "id",
+		"--table-name", ontologyAPIName,
+		"--schema-name", "public",
+		"--property-json", `{"apiName":"id","displayName":"ID","description":"ID","columnName":"id","dataType":"String","isRequired":true,"visibility":"normal","isSearchable":true,"isSortable":true,"isEditOnly":false}`,
+	}, baseArgs...)...)
+	defer bestEffortCLIResourceDelete(t, host, "ontology", ontologyID)
+	ontology := runJSONCommand[platform.Ontology](t, "ontologies", "get", ontologyAPIName, "--host", host, "--format", "json", "--quiet")
+	if ontology.ID != ontologyID {
+		t.Fatalf("ontologies get by api name returned id %q, want %q", ontology.ID, ontologyID)
+	}
+	ontologyDescribe := runJSONCommand[platform.Ontology](t, "ontologies", "describe", ontologyAPIName, "--host", host, "--format", "json", "--quiet")
+	if ontologyDescribe.ID != ontologyID {
+		t.Fatalf("ontologies describe returned id %q, want %q", ontologyDescribe.ID, ontologyID)
+	}
+	ontologyExportPath := filepath.Join(t.TempDir(), "ontology-export.json")
+	_ = runRawCommand(t, "ontologies", "export", ontologyAPIName, "--host", host, "--out", ontologyExportPath, "--quiet")
+	testharness.AssertFileContains(t, ontologyExportPath, ontologyAPIName)
+	ontologyCloneName := "cli_e2e_ontology_clone_" + suffix
+	ontologyCloneID := runMutationID(t, append([]string{"ontologies", "clone", ontologyAPIName, ontologyCloneName}, baseArgs...)...)
+	defer bestEffortCLIResourceDelete(t, host, "ontology", ontologyCloneID)
+
+	functionName := "cli-e2e-function-" + suffix
+	functionPath := filepath.Join(t.TempDir(), "main.py")
+	if err := os.WriteFile(functionPath, []byte("def main(input):\n    return input\n"), 0600); err != nil {
+		t.Fatalf("write function fixture: %v", err)
+	}
+	functionID := runMutationID(t, append([]string{
+		"functions", "create",
+		"--name", functionName,
+		"--description", "CLI e2e function",
+		"--language", "python",
+		"--entry-point", "main",
+		"--file", "main.py=" + functionPath,
+		"--provider-id", providerID,
+		"--provider-config", providerID + "=gpt-4.1-mini",
+		"--secret-binding", "CLI_E2E_SECRET=" + secretID,
+		"--default-max-tokens", "256",
+		"--default-temperature", "0.2",
+	}, baseArgs...)...)
+	defer bestEffortCLIResourceDelete(t, host, "function", functionID)
+	fn := runJSONCommand[platform.Function](t, "functions", "get", functionName, "--host", host, "--format", "json", "--quiet")
+	if fn.ID != functionID {
+		t.Fatalf("functions get by name returned id %q, want %q", fn.ID, functionID)
+	}
+	filteredFunctions := runJSONCommand[[]platform.Function](t, "functions", "list", "--host", host, "--name", functionName, "--language", "python", "--deployed", "false", "--format", "json", "--quiet")
+	if len(filteredFunctions) != 1 || filteredFunctions[0].ID != functionID {
+		t.Fatalf("filtered functions = %#v, want only %q", filteredFunctions, functionID)
+	}
+	functionDescribe := runJSONCommand[platform.Function](t, "functions", "describe", functionName, "--host", host, "--format", "json", "--quiet")
+	if functionDescribe.ID != functionID {
+		t.Fatalf("functions describe returned id %q, want %q", functionDescribe.ID, functionID)
+	}
+	functionExportPath := filepath.Join(t.TempDir(), "function-export.json")
+	_ = runRawCommand(t, "functions", "export", functionName, "--host", host, "--out", functionExportPath, "--quiet")
+	testharness.AssertFileContains(t, functionExportPath, functionName)
+	functionCloneName := functionName + "-clone"
+	functionCloneID := runMutationID(t, append([]string{"functions", "clone", functionName, functionCloneName}, baseArgs...)...)
+	defer bestEffortCLIResourceDelete(t, host, "function", functionCloneID)
+	testResult := runJSONCommand[platform.FunctionExecutionResult](t, "functions", "test", functionName, "--host", host, "--input-json", `{"hello":"draft"}`, "--format", "json", "--quiet")
+	requireFunctionExecutionResult(t, "functions test", testResult)
+	previewResult := runJSONCommand[platform.FunctionExecutionResult](t, "functions", "preview", "--host", host, "--language", "python", "--entry-point", "main", "--file", "main.py="+functionPath, "--input-json", `{"hello":"preview"}`, "--format", "json", "--quiet")
+	requireFunctionExecutionResult(t, "functions preview", previewResult)
+	versions := runJSONCommand[[]platform.ObjectVersion](t, "functions", "versions", functionName, "--host", host, "--format", "json", "--quiet")
+	if len(versions) != 0 {
+		t.Fatalf("new function versions = %#v, want empty", versions)
+	}
+	active := runJSONCommand[map[string]any](t, "functions", "active", functionName, "--host", host, "--format", "json", "--quiet")
+	if got, _ := active["active"].(bool); got {
+		t.Fatalf("new function active = %#v, want inactive", active)
+	}
+	_, deployErr, deployExitCode := runCommandFailure(t, append([]string{"functions", "deploy", functionName}, baseArgs...)...)
+	if deployExitCode == 0 || !strings.Contains(deployErr, "Promote it first") {
+		t.Fatalf("functions deploy without active version stderr = %q exit = %d, want friendly promote guidance", deployErr, deployExitCode)
+	}
+	promotedV1 := runEnvelope(t, append([]string{
+		"functions", "promote", functionName,
+		"--message", "initial version",
+	}, baseArgs...)...)
+	var version1 platform.ObjectVersion
+	decodeEnvelopeData(t, promotedV1, &version1)
+	if version1.Version != 1 || version1.ObjectID != functionID {
+		t.Fatalf("promote v1 = %#v, want version 1 for %q", version1, functionID)
+	}
+	activeV1 := runJSONCommand[platform.ActiveProdVersion](t, "functions", "active", functionName, "--host", host, "--format", "json", "--quiet")
+	if activeV1.Version != 1 || activeV1.ObjectID != functionID {
+		t.Fatalf("active v1 = %#v, want version 1 for %q", activeV1, functionID)
+	}
+	_ = runMutationID(t, append([]string{
+		"functions", "update", functionName,
+		"--description", "updated",
+		"--default-max-tokens", "128",
+		"--default-temperature", "0.1",
+	}, baseArgs...)...)
+	promotedV2 := runEnvelope(t, append([]string{
+		"functions", "promote", functionName,
+		"--message", "updated version",
+	}, baseArgs...)...)
+	var version2 platform.ObjectVersion
+	decodeEnvelopeData(t, promotedV2, &version2)
+	if version2.Version != 2 || version2.ObjectID != functionID {
+		t.Fatalf("promote v2 = %#v, want version 2 for %q", version2, functionID)
+	}
+	versions = runJSONCommand[[]platform.ObjectVersion](t, "functions", "versions", functionName, "--host", host, "--format", "json", "--quiet")
+	requireFunctionVersions(t, versions, 1, 2)
+	_ = runMutationID(t, append([]string{
+		"functions", "update", functionName,
+		"--description", "temporary draft",
+	}, baseArgs...)...)
+	setActiveV1 := runEnvelope(t, append([]string{
+		"functions", "set-active", functionName,
+		"--version", "1",
+	}, baseArgs...)...)
+	decodeEnvelopeData(t, setActiveV1, &activeV1)
+	if activeV1.Version != 1 || activeV1.ObjectID != functionID {
+		t.Fatalf("set-active v1 = %#v, want version 1 for %q", activeV1, functionID)
+	}
+	restoredDraft := runEnvelope(t, append([]string{
+		"functions", "restore-draft", functionName,
+		"--version", "2",
+	}, baseArgs...)...)
+	decodeEnvelopeData(t, restoredDraft, &fn)
+	if fn.Description != "updated" {
+		t.Fatalf("restored function description = %q, want updated", fn.Description)
+	}
+	fn = runJSONCommand[platform.Function](t, "functions", "get", functionName, "--host", host, "--format", "json", "--quiet")
+	if fn.Description != "updated" {
+		t.Fatalf("function draft after restore = %q, want updated", fn.Description)
+	}
+
+	folderAName := "cli-e2e-folder-a-" + suffix
+	folderBName := "cli-e2e-folder-b-" + suffix
+	folderAID := runMutationID(t, append([]string{
+		"folders", "create",
+		"--name", folderAName,
+	}, baseArgs...)...)
+	defer bestEffortCLIResourceDelete(t, host, "folder", folderAID)
+	folderBID := runMutationID(t, append([]string{
+		"folders", "create",
+		"--name", folderBName,
+	}, baseArgs...)...)
+	defer bestEffortCLIResourceDelete(t, host, "folder", folderBID)
+	folder := runJSONCommand[platform.ProjectFolder](t, "folders", "get", folderAName, "--host", host, "--format", "json", "--quiet")
+	if folder.ID != folderAID {
+		t.Fatalf("folders get by name returned id %q, want %q", folder.ID, folderAID)
+	}
+	tree := runJSONCommand[[]map[string]any](t, "folders", "tree", "--host", host, "--format", "json", "--quiet")
+	requireTreeContainsID(t, tree, folderAID)
+
+	csvPath := filepath.Join(t.TempDir(), "cli-e2e-"+suffix+".csv")
+	if err := os.WriteFile(csvPath, []byte("id,name\n1,Ada\n"), 0600); err != nil {
+		t.Fatalf("write csv fixture: %v", err)
+	}
+	uploaded := runEnvelope(t, append([]string{
+		"files", "upload",
+		"--path", csvPath,
+		"--folder-id", folderAID,
+	}, baseArgs...)...)
+	var uploadedFile platform.ProjectFile
+	decodeEnvelopeData(t, uploaded, &uploadedFile)
+	if uploadedFile.ID == "" {
+		t.Fatalf("uploaded file did not include id: %#v", uploadedFile)
+	}
+	fileID := uploadedFile.ID
+	defer bestEffortCLIResourceDelete(t, host, "file", fileID)
+	_ = runJSONCommand[platform.FolderContents](t, "files", "list", "--host", host, "--folder-id", folderAID, "--format", "json", "--quiet")
+	filteredContents := runJSONCommand[platform.FolderContents](t, "files", "list", "--host", host, "--folder-id", folderAID, "--name", uploadedFile.Name, "--kind", "file", "--mime-type", "csv", "--format", "json", "--quiet")
+	if len(filteredContents.Files) != 1 || filteredContents.Files[0].ID != fileID || len(filteredContents.Folders) != 0 {
+		t.Fatalf("filtered file contents = %#v, want only uploaded file %q", filteredContents, fileID)
+	}
+	file := runJSONCommand[platform.ProjectFile](t, "files", "get", uploadedFile.Name, "--host", host, "--format", "json", "--quiet")
+	if file.ID != fileID {
+		t.Fatalf("files get by name returned id %q, want %q", file.ID, fileID)
+	}
+	fileDescribe := runJSONCommand[platform.ProjectFile](t, "files", "describe", uploadedFile.Name, "--host", host, "--format", "json", "--quiet")
+	if fileDescribe.ID != fileID {
+		t.Fatalf("files describe returned id %q, want %q", fileDescribe.ID, fileID)
+	}
+	_ = runRawCommand(t, "files", "preview", uploadedFile.Name, "--host", host, "--format", "json", "--quiet")
+	inspection := runJSONCommand[platform.FileInspection](t, "files", "inspect", uploadedFile.Name, "--host", host, "--format", "json", "--quiet")
+	if len(inspection.Columns) != 2 || !strings.Contains(inspection.ColumnMapExample, "--column-map id:id") {
+		t.Fatalf("files inspect = %#v, want inferred column maps", inspection)
+	}
+	columns := runJSONCommand[[]platform.FileColumnInspection](t, "files", "columns", uploadedFile.Name, "--host", host, "--format", "json", "--quiet")
+	if len(columns) != 2 || columns[1].DatasetColumn != "name" {
+		t.Fatalf("files columns = %#v, want inferred name column", columns)
+	}
+	downloadPath := filepath.Join(t.TempDir(), "downloaded.csv")
+	_ = runRawCommand(t, "files", "download", uploadedFile.Name, "--host", host, "--out", downloadPath, "--quiet")
+	testharness.AssertFileContains(t, downloadPath, "Ada")
+	fileBundlePath := filepath.Join(t.TempDir(), "project-bundle-with-files.json")
+	_ = runRawCommand(t, "resources", "export", "--host", host, "--out", fileBundlePath, "--include-files", "--max-file-bytes", "4096", "--quiet")
+	testharness.AssertFileContains(t, fileBundlePath, "Ada")
+	fileBeforePromote := runJSONCommand[platform.ProjectFile](t, "files", "get", fileID, "--host", host, "--format", "json", "--quiet")
+	if fileBeforePromote.ID != fileID {
+		t.Fatalf("files get by id before promote returned id %q, want %q", fileBeforePromote.ID, fileID)
+	}
+
+	promotedDatasetName := "cli-e2e-file-dataset-" + suffix
+	promotedDatasetID := runMutationID(t, append([]string{
+		"files", "promote-to-dataset", fileID,
+		"--name", promotedDatasetName,
+		"--description", "Promoted from CLI e2e CSV",
+		"--column-map", "id:id:text:primary",
+		"--column-map", "name:name:text:nullable",
+	}, baseArgs...)...)
+	defer bestEffortCLIResourceDelete(t, host, "dataset", promotedDatasetID)
+	promotedDataset := runJSONCommand[platform.Dataset](t, "datasets", "get", promotedDatasetName, "--host", host, "--format", "json", "--quiet")
+	if promotedDataset.ID != promotedDatasetID {
+		t.Fatalf("promoted dataset id = %q, want %q", promotedDataset.ID, promotedDatasetID)
+	}
+	promotedSchema := runJSONCommand[[]platform.ColumnDef](t, "datasets", "schema", promotedDatasetName, "--host", host, "--format", "json", "--quiet")
+	if len(promotedSchema) != 2 {
+		t.Fatalf("promoted dataset schema = %#v, want two columns", promotedSchema)
+	}
+	_ = runJSONCommand[platform.LineageGraph](t, "lineage", "project", "--host", host, "--format", "json", "--quiet")
+
+	bundlePath := filepath.Join(t.TempDir(), "project-bundle.json")
+	_ = runRawCommand(t, "resources", "export", "--host", host, "--out", bundlePath, "--quiet")
+	testharness.AssertFileContains(t, bundlePath, datasetName)
+	diffPlan := runJSONCommand[map[string]any](t, "resources", "diff", "--host", host, "--file", bundlePath, "--format", "json", "--quiet")
+	if actions, _ := diffPlan["actions"].([]any); len(actions) == 0 {
+		t.Fatalf("resources diff plan = %#v, want actions", diffPlan)
+	}
+	importPlan := runJSONCommand[map[string]any](t, "resources", "import", "--host", host, "--file", bundlePath, "--dry-run", "--format", "json", "--quiet")
+	if dryRun, _ := importPlan["dryRun"].(bool); !dryRun {
+		t.Fatalf("resources import --dry-run plan = %#v, want dryRun true", importPlan)
+	}
+
+	runMutationOK(t, append([]string{"datasets", "delete", datasetCloneName}, baseArgs...)...)
+	datasetCloneID = ""
+	runMutationOK(t, append([]string{"transforms", "delete", transformCloneName}, baseArgs...)...)
+	transformCloneID = ""
+	if transformID != "" {
+		runMutationOK(t, append([]string{"transforms", "delete", transformName}, baseArgs...)...)
+		transformID = ""
+	}
+	runMutationOK(t, append([]string{"ontologies", "delete", ontologyCloneName}, baseArgs...)...)
+	ontologyCloneID = ""
+	runMutationOK(t, append([]string{"functions", "delete", functionCloneName}, baseArgs...)...)
+	functionCloneID = ""
+
+	importSecretName := "cli-e2e-import-secret-" + suffix
+	importDatasetName := "cli-e2e-import-dataset-" + suffix
+	importOntologyAPIName := "cli_e2e_import_ontology_" + suffix
+	importTransformName := "cli-e2e-import-transform-" + suffix
+	importFunctionName := "cli-e2e-import-function-" + suffix
+	t.Setenv(platform.ImportSecretEnvName(importSecretName), "import-secret-value-"+suffix)
+	executableBundle := platform.ProjectBundle{
+		BundleVersion: 1,
+		Secrets:       []platform.ProjectSecret{{Name: importSecretName, Description: "CLI e2e imported secret"}},
+		Datasets: []platform.Dataset{{
+			Name:        importDatasetName,
+			Description: "CLI e2e imported dataset",
+			SchemaMode:  "manual",
+			Schema: []platform.ColumnDef{
+				{Name: "id", Type: "text", IsPrimary: true},
+				{Name: "name", Type: "text", IsNullable: true},
+			},
+		}},
+		Ontologies: []platform.Ontology{{
+			APIName:           importOntologyAPIName,
+			DisplayName:       "CLI E2E Import Ontology " + suffix,
+			PluralDisplayName: "CLI E2E Import Ontologies " + suffix,
+			Description:       "CLI e2e imported ontology",
+			PrimaryKey:        "id",
+			TableName:         importOntologyAPIName,
+			SchemaName:        "public",
+			Status:            "active",
+			Icon:              "table",
+			Color:             "#3366ff",
+			Properties: []platform.OntologyProperty{{
+				APIName: "id", DisplayName: "ID", Description: "ID", ColumnName: "id", DataType: "String",
+				IsRequired: true, Visibility: "normal", IsSearchable: true, IsSortable: true,
+			}},
+		}},
+		Transforms: []platform.Transform{{
+			Name:        importTransformName,
+			Description: "CLI e2e imported transform",
+			GraphJSON:   `{"nodes":[],"edges":[]}`,
+			TriggerMode: "manual",
+		}},
+		Functions: []platform.Function{{
+			Name:           importFunctionName,
+			Description:    "CLI e2e imported function",
+			Language:       "python",
+			EntryPoint:     "main",
+			TimeoutSeconds: 30,
+			Memory:         "128Mi",
+			CPU:            "100m",
+			Files:          []platform.FunctionFile{{Path: "main.py", Content: "def main(input):\n    return input\n"}},
+		}},
+	}
+	executableBundlePath := filepath.Join(t.TempDir(), "project-bundle-executable.json")
+	rawExecutableBundle, err := json.Marshal(executableBundle)
+	if err != nil {
+		t.Fatalf("marshal executable bundle: %v", err)
+	}
+	if err := os.WriteFile(executableBundlePath, rawExecutableBundle, 0600); err != nil {
+		t.Fatalf("write executable bundle: %v", err)
+	}
+	targetArgs := []string{"--host", host, "--org", orgSlug, "--project", importProjectRenamedName, "--format", "json", "--quiet"}
+	executedImportPlan := runJSONCommand[map[string]any](t, "resources", "import", "--host", host, "--org", orgSlug, "--project", importProjectRenamedName, "--file", executableBundlePath, "--yes", "--format", "json", "--quiet")
+	requireImportCreated(t, executedImportPlan, "secret", importSecretName)
+	requireImportCreated(t, executedImportPlan, "dataset", importDatasetName)
+	requireImportCreated(t, executedImportPlan, "ontology", importOntologyAPIName)
+	requireImportCreated(t, executedImportPlan, "transform", importTransformName)
+	requireImportCreated(t, executedImportPlan, "function", importFunctionName)
+	prefixPlan := runJSONCommand[map[string]any](t, "resources", "diff", "--host", host, "--org", orgSlug, "--project", importProjectRenamedName, "--file", executableBundlePath, "--prefix", "copy-", "--format", "json", "--quiet")
+	requireImportAction(t, prefixPlan, "dataset", "copy-"+importDatasetName, "create")
+	renamePlan := runJSONCommand[map[string]any](t, "resources", "diff", "--host", host, "--org", orgSlug, "--project", importProjectRenamedName, "--file", executableBundlePath, "--rename-conflicts", "--format", "json", "--quiet")
+	requireImportActionWithDifferentName(t, renamePlan, "dataset", importDatasetName, "create")
+	overwritePlan := runJSONCommand[map[string]any](t, "resources", "diff", "--host", host, "--org", orgSlug, "--project", importProjectRenamedName, "--file", executableBundlePath, "--overwrite-conflicts", "--format", "json", "--quiet")
+	requireImportAction(t, overwritePlan, "dataset", importDatasetName, "update")
+	if got := runJSONCommand[platform.Dataset](t, append([]string{"datasets", "get", importDatasetName}, targetArgs...)...); got.Name != importDatasetName {
+		t.Fatalf("imported dataset = %#v, want %q", got, importDatasetName)
+	}
+	if got := runJSONCommand[platform.Ontology](t, append([]string{"ontologies", "get", importOntologyAPIName}, targetArgs...)...); got.APIName != importOntologyAPIName {
+		t.Fatalf("imported ontology = %#v, want %q", got, importOntologyAPIName)
+	}
+	if got := runJSONCommand[platform.Transform](t, append([]string{"transforms", "get", importTransformName}, targetArgs...)...); got.Name != importTransformName {
+		t.Fatalf("imported transform = %#v, want %q", got, importTransformName)
+	}
+	if got := runJSONCommand[platform.Function](t, append([]string{"functions", "get", importFunctionName}, targetArgs...)...); got.Name != importFunctionName {
+		t.Fatalf("imported function = %#v, want %q", got, importFunctionName)
+	}
+	runMutationOK(t, "projects", "delete", importProjectRenamedName, "--host", host, "--org", orgSlug, "--yes", "--format", "json", "--quiet")
+	importProjectID = ""
+
+	runMutationOK(t, append([]string{"datasets", "delete", promotedDatasetName}, baseArgs...)...)
+	promotedDatasetID = ""
+	runMutationOK(t, append([]string{"files", "delete", uploadedFile.Name}, baseArgs...)...)
+	fileID = ""
+
+	moveCSVPath := filepath.Join(t.TempDir(), "cli-e2e-move-"+suffix+".csv")
+	if err := os.WriteFile(moveCSVPath, []byte("id,name\n2,Grace\n"), 0600); err != nil {
+		t.Fatalf("write move csv fixture: %v", err)
+	}
+	moveUploaded := runEnvelope(t, append([]string{
+		"files", "upload",
+		"--path", moveCSVPath,
+		"--folder-id", folderAID,
+	}, baseArgs...)...)
+	var moveFile platform.ProjectFile
+	decodeEnvelopeData(t, moveUploaded, &moveFile)
+	moveFileID := moveFile.ID
+	defer bestEffortCLIResourceDelete(t, host, "file", moveFileID)
+	renamedFileName := "cli-e2e-renamed-" + suffix + ".csv"
+	moveFileID = runMutationID(t, append([]string{"files", "rename", moveFile.Name, "--name", renamedFileName}, baseArgs...)...)
+	moveFileID = runMutationID(t, append([]string{"files", "move", renamedFileName, "--folder-id", folderBID}, baseArgs...)...)
+	if moveFileID == "" {
+		t.Fatalf("moved file did not include id")
+	}
+	runMutationOK(t, append([]string{"files", "delete", renamedFileName}, baseArgs...)...)
+	moveFileID = ""
+
+	runMutationOK(t, append([]string{"folders", "delete", folderAName}, baseArgs...)...)
+	folderAID = ""
+	runMutationOK(t, append([]string{"folders", "delete", folderBName}, baseArgs...)...)
+	folderBID = ""
+	runMutationOK(t, append([]string{"functions", "delete", functionName}, baseArgs...)...)
+	functionID = ""
+	if ontologyCloneID != "" {
+		runMutationOK(t, append([]string{"ontologies", "delete", ontologyCloneName}, baseArgs...)...)
+		ontologyCloneID = ""
+	}
+	runMutationOK(t, append([]string{"ontologies", "delete", ontologyAPIName}, baseArgs...)...)
+	ontologyID = ""
+	if transformID != "" {
+		runMutationOK(t, append([]string{"transforms", "delete", transformName}, baseArgs...)...)
+		transformID = ""
+	}
+	runMutationOK(t, append([]string{"datasets", "delete", datasetName}, baseArgs...)...)
+	datasetID = ""
+	runMutationOK(t, append([]string{"ai-providers", "delete", updatedProviderName}, baseArgs...)...)
+	providerID = ""
+	runMutationOK(t, append([]string{"secrets", "delete", updatedSecretName}, baseArgs...)...)
+	secretID = ""
+}
+
 func mintDevRefreshToken(t *testing.T, ctx context.Context, keycloakURL, hostHeader, username, password string) string {
 	t.Helper()
 	endpoint := strings.TrimRight(keycloakURL, "/") + "/realms/mothergate/protocol/openid-connect/token"
@@ -289,6 +864,34 @@ func runRawCommand(t *testing.T, args ...string) string {
 	return stdout
 }
 
+func runCommandFailure(t *testing.T, args ...string) (string, string, int) {
+	t.Helper()
+	stdout, stderr, exitCode := testharness.RunCLI(t, args...)
+	if exitCode == 0 {
+		t.Fatalf("CLI command succeeded unexpectedly: whodb-cli %s\nstdout:\n%s\nstderr:\n%s", strings.Join(args, " "), stdout, stderr)
+	}
+	return stdout, stderr, exitCode
+}
+
+func functionExecutionError(result platform.FunctionExecutionResult) string {
+	if result.Error != nil {
+		return *result.Error
+	}
+	return fmt.Sprintf("%#v", result)
+}
+
+func requireFunctionExecutionResult(t *testing.T, label string, result platform.FunctionExecutionResult) {
+	t.Helper()
+	if result.Success {
+		return
+	}
+	errText := functionExecutionError(result)
+	if strings.Contains(errText, "neither docker nor podman found in PATH") {
+		return
+	}
+	t.Fatalf("%s returned unsuccessful result: %s", label, errText)
+}
+
 func runJSONCommand[T any](t *testing.T, args ...string) T {
 	t.Helper()
 	stdout := runRawCommand(t, args...)
@@ -312,6 +915,107 @@ func decodeEnvelopeData(t *testing.T, envelope platformAutomationEnvelope, targe
 	if err := json.Unmarshal(envelope.Data, target); err != nil {
 		t.Fatalf("decode envelope data for %s: %v\nraw:\n%s", envelope.Command, err, string(envelope.Data))
 	}
+}
+
+func runMutationID(t *testing.T, args ...string) string {
+	t.Helper()
+	data := runMutationOK(t, args...)
+	var decoded struct {
+		ID string `json:"id"`
+	}
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		t.Fatalf("decode mutation result for whodb-cli %s: %v\nraw:\n%s", strings.Join(args, " "), err, string(data))
+	}
+	if decoded.ID == "" {
+		t.Fatalf("mutation result for whodb-cli %s did not include id: %s", strings.Join(args, " "), string(data))
+	}
+	return decoded.ID
+}
+
+func runMutationOK(t *testing.T, args ...string) json.RawMessage {
+	t.Helper()
+	envelope := runEnvelope(t, args...)
+	var mutation struct {
+		Operation string          `json:"Operation"`
+		Data      json.RawMessage `json:"Data"`
+	}
+	if err := json.Unmarshal(envelope.Data, &mutation); err != nil {
+		t.Fatalf("decode mutation envelope data for whodb-cli %s: %v\nraw:\n%s", strings.Join(args, " "), err, string(envelope.Data))
+	}
+	if len(mutation.Data) == 0 {
+		t.Fatalf("mutation envelope for whodb-cli %s did not include data: %s", strings.Join(args, " "), string(envelope.Data))
+	}
+	return mutation.Data
+}
+
+func jsonPayload(t *testing.T, value any) string {
+	t.Helper()
+	raw, err := json.Marshal(value)
+	if err != nil {
+		t.Fatalf("marshal JSON payload: %v", err)
+	}
+	return string(raw)
+}
+
+func requireImportCreated(t *testing.T, plan map[string]any, resource, name string) {
+	t.Helper()
+	requireImportAction(t, plan, resource, name, "created")
+}
+
+func requireImportAction(t *testing.T, plan map[string]any, resource, name, wantAction string) {
+	t.Helper()
+	actions, ok := plan["actions"].([]any)
+	if !ok {
+		t.Fatalf("import plan actions = %#v, want array", plan["actions"])
+	}
+	for _, rawAction := range actions {
+		action, ok := rawAction.(map[string]any)
+		if !ok {
+			continue
+		}
+		if action["resource"] == resource && action["name"] == name {
+			if action["action"] != wantAction {
+				t.Fatalf("import action for %s %s = %#v, want %s", resource, name, action, wantAction)
+			}
+			return
+		}
+	}
+	t.Fatalf("import plan did not include %s %s with action %s: %#v", resource, name, wantAction, plan)
+}
+
+func requireImportActionWithDifferentName(t *testing.T, plan map[string]any, resource, originalName, wantAction string) {
+	t.Helper()
+	actions, ok := plan["actions"].([]any)
+	if !ok {
+		t.Fatalf("import plan actions = %#v, want array", plan["actions"])
+	}
+	for _, rawAction := range actions {
+		action, ok := rawAction.(map[string]any)
+		if !ok {
+			continue
+		}
+		name, _ := action["name"].(string)
+		if action["resource"] == resource && action["action"] == wantAction && name != "" && name != originalName {
+			return
+		}
+	}
+	t.Fatalf("import plan did not include renamed %s action %s different from %q: %#v", resource, wantAction, originalName, plan)
+}
+
+func bestEffortCLIResourceDelete(t *testing.T, host, resource, id string) {
+	t.Helper()
+	if strings.TrimSpace(id) == "" {
+		return
+	}
+	_, _, _ = testharness.RunCLI(t, "resources", "delete", resource, id, "--host", host, "--yes", "--format", "json", "--quiet")
+}
+
+func bestEffortCLIProjectDelete(t *testing.T, host, org, project string) {
+	t.Helper()
+	if strings.TrimSpace(project) == "" {
+		return
+	}
+	_, _, _ = testharness.RunCLI(t, "projects", "delete", project, "--host", host, "--org", org, "--yes", "--format", "json", "--quiet")
 }
 
 func envOrDefault(key, fallback string) string {
@@ -348,6 +1052,16 @@ func requireContainsProject(t *testing.T, projects []platform.Project, slug stri
 	t.Fatalf("project slug %q not found in %#v", slug, projects)
 }
 
+func requireContainsProjectID(t *testing.T, projects []platform.Project, id string) {
+	t.Helper()
+	for _, project := range projects {
+		if project.ID == id {
+			return
+		}
+	}
+	t.Fatalf("project id %q not found in %#v", id, projects)
+}
+
 func requireContainsSourceType(t *testing.T, types []platform.SourceType, id string) {
 	t.Helper()
 	for _, sourceType := range types {
@@ -376,4 +1090,57 @@ func requireContainsSource(t *testing.T, sources []platform.Source, name string)
 		}
 	}
 	t.Fatalf("source %q not found in %#v", name, sources)
+}
+
+func requireContainsSecret(t *testing.T, secrets []platform.ProjectSecret, id string) {
+	t.Helper()
+	for _, secret := range secrets {
+		if secret.ID == id {
+			return
+		}
+	}
+	t.Fatalf("secret %q not found in %#v", id, secrets)
+}
+
+func requireContainsAIProvider(t *testing.T, providers []platform.AIProvider, id string) {
+	t.Helper()
+	for _, provider := range providers {
+		if provider.ID == id {
+			return
+		}
+	}
+	t.Fatalf("AI provider %q not found in %#v", id, providers)
+}
+
+func requireContainsDataset(t *testing.T, datasets []platform.Dataset, id string) {
+	t.Helper()
+	for _, dataset := range datasets {
+		if dataset.ID == id {
+			return
+		}
+	}
+	t.Fatalf("dataset %q not found in %#v", id, datasets)
+}
+
+func requireFunctionVersions(t *testing.T, versions []platform.ObjectVersion, expected ...int) {
+	t.Helper()
+	seen := make(map[int]bool, len(versions))
+	for _, version := range versions {
+		seen[version.Version] = true
+	}
+	for _, version := range expected {
+		if !seen[version] {
+			t.Fatalf("function version %d not found in %#v", version, versions)
+		}
+	}
+}
+
+func requireTreeContainsID(t *testing.T, tree []map[string]any, id string) {
+	t.Helper()
+	for _, entry := range tree {
+		if got, _ := entry["id"].(string); got == id {
+			return
+		}
+	}
+	t.Fatalf("tree entry %q not found in %#v", id, tree)
 }

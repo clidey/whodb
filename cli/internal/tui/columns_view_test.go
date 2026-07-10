@@ -368,7 +368,7 @@ func TestColumnsView_MouseScroll(t *testing.T) {
 	v.scrollOffset = 0
 
 	// Mouse wheel down
-	msg := tea.MouseMsg{Type: tea.MouseWheelDown}
+	msg := tea.MouseMsg{Button: tea.MouseButtonWheelDown}
 	v, _ = v.Update(msg)
 
 	if v.scrollOffset <= 0 {
@@ -377,7 +377,7 @@ func TestColumnsView_MouseScroll(t *testing.T) {
 
 	// Mouse wheel up
 	initialOffset := v.scrollOffset
-	msg = tea.MouseMsg{Type: tea.MouseWheelUp}
+	msg = tea.MouseMsg{Button: tea.MouseButtonWheelUp}
 	v, _ = v.Update(msg)
 
 	if v.scrollOffset >= initialOffset {

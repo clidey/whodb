@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 
@@ -103,11 +104,22 @@ func (f *fakePlatformClient) LineageNeighbors(ctx context.Context, projectID, no
 }
 
 func (f *fakePlatformClient) ProjectLineage(ctx context.Context, projectID string) (*platformapi.LineageGraph, error) {
-	return &platformapi.LineageGraph{Nodes: []platformapi.LineageNode{{ID: "dataset-1", NodeType: "dataset", Name: "Customers"}}}, nil
+	return &platformapi.LineageGraph{
+		Nodes: []platformapi.LineageNode{
+			{ID: "file-1", NodeType: "file", Name: "customers.csv"},
+			{ID: "dataset-1", NodeType: "dataset", Name: "Customers"},
+		},
+		Edges: []platformapi.LineageEdge{{SourceID: "file-1", SourceType: "file", TargetID: "dataset-1", TargetType: "dataset"}},
+	}, nil
 }
 
 func (f *fakePlatformClient) Transforms(ctx context.Context, projectID string) ([]platformapi.Transform, error) {
-	return []platformapi.Transform{{ID: "transform-1", ProjectID: projectID, Name: "Daily Load"}}, nil
+	return []platformapi.Transform{{
+		ID:        "transform-1",
+		ProjectID: projectID,
+		Name:      "Daily Load",
+		GraphJSON: `{"nodes":[{"id":"file","type":"file","config":{"fileId":"file-1"}},{"id":"dataset","type":"dataset","config":{"datasetId":"dataset-1"}},{"id":"output","type":"output","config":{"targetDatasetId":"dataset-1"}}],"edges":[{"source":"file","target":"dataset"},{"source":"dataset","target":"output"}]}`,
+	}}, nil
 }
 
 func (f *fakePlatformClient) TransformRuns(ctx context.Context, projectID, transformID string, limit int) ([]platformapi.TransformRun, error) {
@@ -116,7 +128,18 @@ func (f *fakePlatformClient) TransformRuns(ctx context.Context, projectID, trans
 
 func (f *fakePlatformClient) Functions(ctx context.Context, projectID string, fields []string) ([]platformapi.Function, error) {
 	f.functionsFields = append([]string(nil), fields...)
-	return []platformapi.Function{{ID: "fn-1", ProjectID: projectID, Name: "Enrich", Files: []platformapi.FunctionFile{{ID: "file-1", Path: "main.py", Content: strings.Repeat("x", defaultPlatformContentLimit+1)}}}}, nil
+	return []platformapi.Function{{
+		ID:                  "fn-1",
+		ProjectID:           projectID,
+		Name:                "Enrich",
+		Language:            "python",
+		EntryPoint:          "main",
+		ProviderIDs:         []string{"provider-1"},
+		OntologyIDs:         []string{"ont-1"},
+		ReadOnlyOntologyIDs: []string{"ont-2"},
+		SecretBindings:      []platformapi.FunctionSecretBinding{{Name: "OPENAI_API_KEY", SecretID: "secret-1", Target: "env"}},
+		Files:               []platformapi.FunctionFile{{ID: "file-1", Path: "main.py", Content: strings.Repeat("x", defaultPlatformContentLimit+1)}},
+	}}, nil
 }
 
 func (f *fakePlatformClient) Function(ctx context.Context, projectID, id string, fields []string) (*platformapi.Function, error) {
@@ -126,13 +149,29 @@ func (f *fakePlatformClient) Function(ctx context.Context, projectID, id string,
 
 func (f *fakePlatformClient) FolderContents(ctx context.Context, projectID, folderID string, fields []string) (*platformapi.FolderContents, error) {
 	f.folderContentsFields = append([]string(nil), fields...)
-	return &platformapi.FolderContents{Files: []platformapi.ProjectFile{{ID: "file-1", ProjectID: projectID, Name: "customers.csv", IsTabular: true}}}, nil
+	folderIDValue := "folder-1"
+	datasetID := "dataset-1"
+	return &platformapi.FolderContents{
+		Folders:     []platformapi.ProjectFolder{{ID: folderIDValue, ProjectID: projectID, Name: "Uploads", Path: "/Uploads"}},
+		Files:       []platformapi.ProjectFile{{ID: "file-1", ProjectID: projectID, FolderID: &folderIDValue, Name: "customers.csv", MIMEType: "text/csv", IsTabular: true, DatasetID: &datasetID}},
+		StorageUsed: 512,
+	}, nil
 }
 
 func (f *fakePlatformClient) FilePreview(ctx context.Context, projectID, fileID string, sheetIndex *int, fields []string) (*platformapi.FilePreviewResult, error) {
 	f.filePreviewFields = append([]string(nil), fields...)
 	text := strings.Repeat("z", defaultPlatformContentLimit+1)
-	return &platformapi.FilePreviewResult{MIMEType: "text/plain", SizeBytes: len(text), TextContent: &text}, nil
+	return &platformapi.FilePreviewResult{
+		MIMEType:    "text/csv",
+		SizeBytes:   len(text),
+		IsTabular:   true,
+		TextContent: &text,
+		Tabular: &platformapi.TabularPreviewData{
+			Columns: []platformapi.FilePreviewColumn{{Name: "id", Type: "integer"}, {Name: "Customer Name", Type: "string"}},
+			Rows:    [][]string{{"1", "Ada"}},
+			Total:   1,
+		},
+	}, nil
 }
 
 func (f *fakePlatformClient) SearchProjectFiles(ctx context.Context, projectID, query string) ([]platformapi.ProjectFile, error) {
@@ -169,6 +208,319 @@ func TestHandlePlatformSecretsDoesNotExposeValues(t *testing.T) {
 	}
 }
 
+func TestHandlePlatformWorkspaceMapSummarizesSelectedProject(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := HandlePlatformWorkspaceMap(context.Background(), nil, PlatformWorkspaceMapInput{})
+	if err != nil {
+		t.Fatalf("HandlePlatformWorkspaceMap() error = %v", err)
+	}
+	if output.Error != "" {
+		t.Fatalf("HandlePlatformWorkspaceMap() output error = %q", output.Error)
+	}
+	workspaceMap, ok := output.Data.(PlatformWorkspaceMap)
+	if !ok {
+		t.Fatalf("output.Data = %T, want PlatformWorkspaceMap", output.Data)
+	}
+	if workspaceMap.ProjectID != "proj-1" || workspaceMap.Counts["sources"] != 1 || workspaceMap.Counts["datasets"] != 1 || workspaceMap.Counts["files"] != 1 {
+		t.Fatalf("workspace map = %#v, want selected project counts", workspaceMap)
+	}
+	if workspaceMap.Lineage == nil || workspaceMap.Lineage.EdgeCount != 1 {
+		t.Fatalf("lineage summary = %#v, want one edge", workspaceMap.Lineage)
+	}
+	if output.Count == 0 {
+		t.Fatalf("output.Count = 0, want aggregate resource count")
+	}
+}
+
+func TestHandlePlatformResourceGraphBuildsRelationships(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := HandlePlatformResourceGraph(context.Background(), nil, PlatformResourceGraphInput{})
+	if err != nil {
+		t.Fatalf("HandlePlatformResourceGraph() error = %v", err)
+	}
+	if output.Error != "" {
+		t.Fatalf("HandlePlatformResourceGraph() output error = %q", output.Error)
+	}
+	graph, ok := output.Data.(PlatformResourceGraph)
+	if !ok {
+		t.Fatalf("output.Data = %T, want PlatformResourceGraph", output.Data)
+	}
+	if len(graph.Nodes) == 0 || output.Count != len(graph.Nodes) {
+		t.Fatalf("graph node count = %d output.Count=%d, want nodes", len(graph.Nodes), output.Count)
+	}
+	if !hasPlatformGraphEdge(graph.Edges, "fn-1", "function", "provider-1", "ai_provider", "uses_provider") {
+		t.Fatalf("edges = %#v, want function provider edge", graph.Edges)
+	}
+	if !hasPlatformGraphEdge(graph.Edges, "secret-1", "secret", "fn-1", "function", "secret_binding") {
+		t.Fatalf("edges = %#v, want secret binding edge", graph.Edges)
+	}
+	if !hasPlatformGraphEdge(graph.Edges, "file-1", "file", "dataset-1", "dataset", "promoted_to_dataset") {
+		t.Fatalf("edges = %#v, want file dataset edge", graph.Edges)
+	}
+	if !hasPlatformGraphEdge(graph.Edges, "file-1", "file", "transform-1:file", "transform_node", "transform_reads_file") {
+		t.Fatalf("edges = %#v, want transform file read edge", graph.Edges)
+	}
+	if !hasPlatformGraphEdge(graph.Edges, "transform-1:file", "transform_node", "transform-1:dataset", "transform_node", "transform_pipeline_edge") {
+		t.Fatalf("edges = %#v, want transform internal edge", graph.Edges)
+	}
+}
+
+func TestHandlePlatformProjectHealthSummarizesChecks(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := HandlePlatformProjectHealth(context.Background(), nil, PlatformNextActionsInput{})
+	if err != nil {
+		t.Fatalf("HandlePlatformProjectHealth() error = %v", err)
+	}
+	if output.Error != "" {
+		t.Fatalf("HandlePlatformProjectHealth() output error = %q", output.Error)
+	}
+	health, ok := output.Data.(PlatformProjectHealth)
+	if !ok {
+		t.Fatalf("output.Data = %T, want PlatformProjectHealth", output.Data)
+	}
+	if health.Counts["datasets"] != 1 || len(health.Checks) == 0 || len(health.Next) == 0 {
+		t.Fatalf("health = %#v, want counts checks and next actions", health)
+	}
+}
+
+func TestHandlePlatformWorkspaceSummaryReturnsGoalAwareOverview(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := HandlePlatformWorkspaceSummary(context.Background(), nil, PlatformWorkspaceSummaryInput{Goal: "build a customer app"})
+	if err != nil {
+		t.Fatalf("HandlePlatformWorkspaceSummary() error = %v", err)
+	}
+	if output.Error != "" {
+		t.Fatalf("HandlePlatformWorkspaceSummary() output error = %q", output.Error)
+	}
+	summary, ok := output.Data.(PlatformWorkspaceSummary)
+	if !ok {
+		t.Fatalf("output.Data = %T, want PlatformWorkspaceSummary", output.Data)
+	}
+	if summary.Goal != "build a customer app" || summary.Counts["datasets"] != 1 || len(summary.Highlights) == 0 || len(summary.RecommendedTools) == 0 {
+		t.Fatalf("summary = %#v, want goal counts highlights and recommended tools", summary)
+	}
+	if !strings.Contains(strings.Join(summary.RecommendedTools, ","), "whodb_platform_runtime_readiness") {
+		t.Fatalf("recommended tools = %#v, want runtime readiness for app goal", summary.RecommendedTools)
+	}
+}
+
+func TestHandlePlatformBuildPlanReturnsWorkflowPhases(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := HandlePlatformBuildPlan(context.Background(), nil, PlatformBuildPlanInput{Goal: "build a customer app"})
+	if err != nil {
+		t.Fatalf("HandlePlatformBuildPlan() error = %v", err)
+	}
+	if output.Error != "" {
+		t.Fatalf("HandlePlatformBuildPlan() output error = %q", output.Error)
+	}
+	plan, ok := output.Data.(PlatformBuildPlan)
+	if !ok {
+		t.Fatalf("output.Data = %T, want PlatformBuildPlan", output.Data)
+	}
+	if plan.Goal != "build a customer app" || len(plan.Phases) < 6 || len(plan.Prerequisites) == 0 {
+		t.Fatalf("plan = %#v, want goal prerequisites and phases", plan)
+	}
+	if !hasPlatformPlanPhase(plan.Phases, "runtime_support") {
+		t.Fatalf("phases = %#v, want runtime_support for app goal", plan.Phases)
+	}
+}
+
+func TestHandlePlatformBuildPlanRequiresGoal(t *testing.T) {
+	_, output, err := HandlePlatformBuildPlan(context.Background(), nil, PlatformBuildPlanInput{})
+	if err != nil {
+		t.Fatalf("HandlePlatformBuildPlan() error = %v", err)
+	}
+	if output.Error != "goal is required" {
+		t.Fatalf("output error = %q, want goal required", output.Error)
+	}
+}
+
+func TestHandlePlatformGapAnalysisReportsReadyAndGaps(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := HandlePlatformGapAnalysis(context.Background(), nil, PlatformGapAnalysisInput{Goal: "build an AI app"})
+	if err != nil {
+		t.Fatalf("HandlePlatformGapAnalysis() error = %v", err)
+	}
+	if output.Error != "" {
+		t.Fatalf("HandlePlatformGapAnalysis() output error = %q", output.Error)
+	}
+	analysis, ok := output.Data.(PlatformGapAnalysis)
+	if !ok {
+		t.Fatalf("output.Data = %T, want PlatformGapAnalysis", output.Data)
+	}
+	if !slices.Contains(analysis.Ready, "datasets") || !slices.Contains(analysis.Ready, "ai_providers") {
+		t.Fatalf("ready = %#v, want datasets and ai_providers", analysis.Ready)
+	}
+	if len(analysis.NextActions) == 0 {
+		t.Fatalf("analysis = %#v, want next actions", analysis)
+	}
+}
+
+func TestHandlePlatformChangeImpactFindsAffectedNodes(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := HandlePlatformChangeImpact(context.Background(), nil, PlatformChangeImpactInput{Resource: "file", ID: "file-1", Action: "promote_to_dataset"})
+	if err != nil {
+		t.Fatalf("HandlePlatformChangeImpact() error = %v", err)
+	}
+	if output.Error != "" {
+		t.Fatalf("HandlePlatformChangeImpact() output error = %q", output.Error)
+	}
+	impact, ok := output.Data.(PlatformChangeImpact)
+	if !ok {
+		t.Fatalf("output.Data = %T, want PlatformChangeImpact", output.Data)
+	}
+	if impact.Target.ID != "file-1" || len(impact.Affected) == 0 {
+		t.Fatalf("impact = %#v, want file target and affected nodes", impact)
+	}
+	if !strings.Contains(strings.Join(impact.SuggestedReads, ","), "whodb_platform_change_impact") {
+		t.Fatalf("suggested reads = %#v, want change impact for high-impact action", impact.SuggestedReads)
+	}
+}
+
+func TestHandlePlatformWritePlanDoesNotCreatePendingAction(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+	platformPendingMutex.Lock()
+	pendingPlatformActions = map[string]*PendingPlatformAction{}
+	platformPendingMutex.Unlock()
+
+	_, output, err := HandlePlatformWritePlan(context.Background(), nil, PlatformWritePlanInput{
+		Operation:   "update",
+		Resource:    "dataset",
+		ID:          "dataset-1",
+		PayloadJSON: `{"description":"planned"}`,
+	})
+	if err != nil {
+		t.Fatalf("HandlePlatformWritePlan() error = %v", err)
+	}
+	if output.Error != "" {
+		t.Fatalf("HandlePlatformWritePlan() output error = %q", output.Error)
+	}
+	plan, ok := output.Data.(PlatformWritePlan)
+	if !ok {
+		t.Fatalf("output.Data = %T, want PlatformWritePlan", output.Data)
+	}
+	if plan.Mutation == "" || plan.Preview == nil || !plan.ConfirmationRequired {
+		t.Fatalf("plan = %#v, want preview and mutation", plan)
+	}
+	platformPendingMutex.RLock()
+	pendingCount := len(pendingPlatformActions)
+	platformPendingMutex.RUnlock()
+	if pendingCount != 0 {
+		t.Fatalf("pending action count = %d, want 0", pendingCount)
+	}
+}
+
+func TestHandlePlatformNextActionsSuggestsWorkspaceFlow(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := HandlePlatformNextActions(context.Background(), nil, PlatformNextActionsInput{Goal: "understand customer data"})
+	if err != nil {
+		t.Fatalf("HandlePlatformNextActions() error = %v", err)
+	}
+	if output.Error != "" {
+		t.Fatalf("HandlePlatformNextActions() output error = %q", output.Error)
+	}
+	next, ok := output.Data.(PlatformNextActions)
+	if !ok {
+		t.Fatalf("output.Data = %T, want PlatformNextActions", output.Data)
+	}
+	if next.Goal != "understand customer data" || len(next.Actions) == 0 {
+		t.Fatalf("next actions = %#v, want goal and actions", next)
+	}
+	if !hasPlatformNextActionTool(next.Actions, "whodb_platform_source_objects") {
+		t.Fatalf("actions = %#v, want source inspection suggestion", next.Actions)
+	}
+	if !hasPlatformNextActionTool(next.Actions, "whodb_platform_action") {
+		t.Fatalf("actions = %#v, want deploy/run-aware write suggestion", next.Actions)
+	}
+}
+
+func TestHandlePlatformListFilters(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, datasets, err := HandlePlatformDatasets(context.Background(), nil, PlatformEmptyInput{Name: "cust"})
+	if err != nil {
+		t.Fatalf("HandlePlatformDatasets() error = %v", err)
+	}
+	if datasets.Count != 1 {
+		t.Fatalf("filtered dataset count = %d, want 1", datasets.Count)
+	}
+	_, datasets, err = HandlePlatformDatasets(context.Background(), nil, PlatformEmptyInput{Name: "orders"})
+	if err != nil {
+		t.Fatalf("HandlePlatformDatasets() error = %v", err)
+	}
+	if datasets.Count != 0 {
+		t.Fatalf("filtered dataset count = %d, want 0", datasets.Count)
+	}
+
+	_, files, err := HandlePlatformFiles(context.Background(), nil, PlatformFilesInput{Name: "customers", Kind: "file", MIMEType: "csv"})
+	if err != nil {
+		t.Fatalf("HandlePlatformFiles() error = %v", err)
+	}
+	if files.Count != 1 {
+		t.Fatalf("filtered file count = %d, want 1", files.Count)
+	}
+	_, files, err = HandlePlatformFiles(context.Background(), nil, PlatformFilesInput{Name: "missing", Kind: "folder"})
+	if err != nil {
+		t.Fatalf("HandlePlatformFiles() error = %v", err)
+	}
+	if files.Count != 0 {
+		t.Fatalf("filtered folder count = %d, want 0", files.Count)
+	}
+
+	_, functions, err := HandlePlatformFunctions(context.Background(), nil, PlatformEmptyInput{Name: "enrich", Deployed: "false"})
+	if err != nil {
+		t.Fatalf("HandlePlatformFunctions() error = %v", err)
+	}
+	if functions.Count != 1 {
+		t.Fatalf("filtered function count = %d, want 1", functions.Count)
+	}
+	_, functions, err = HandlePlatformFunctions(context.Background(), nil, PlatformEmptyInput{Deployed: "true"})
+	if err != nil {
+		t.Fatalf("HandlePlatformFunctions() error = %v", err)
+	}
+	if functions.Count != 0 {
+		t.Fatalf("filtered function count = %d, want 0", functions.Count)
+	}
+}
+
 func TestHandlePlatformFunctionTruncatesFileContent(t *testing.T) {
 	client := &fakePlatformClient{}
 	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
@@ -191,6 +543,34 @@ func TestHandlePlatformFunctionTruncatesFileContent(t *testing.T) {
 	}
 	if len(function.Files) != 1 || len(function.Files[0].Content) != defaultPlatformContentLimit {
 		t.Fatalf("function file content length = %d, want %d", len(function.Files[0].Content), defaultPlatformContentLimit)
+	}
+}
+
+func TestHandlePlatformFileInspectOmitsRowsByDefault(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := HandlePlatformFileInspect(context.Background(), nil, PlatformFileInspectInput{FileID: "file-1"})
+	if err != nil {
+		t.Fatalf("HandlePlatformFileInspect() error = %v", err)
+	}
+	if output.Error != "" {
+		t.Fatalf("HandlePlatformFileInspect() output error = %q", output.Error)
+	}
+	inspection, ok := output.Data.(*platformapi.FileInspection)
+	if !ok {
+		t.Fatalf("output.Data = %T, want *platformapi.FileInspection", output.Data)
+	}
+	if len(inspection.Columns) != 2 {
+		t.Fatalf("columns = %#v, want inferred columns", inspection.Columns)
+	}
+	if inspection.Rows != nil {
+		t.Fatalf("rows = %#v, want omitted by default", inspection.Rows)
+	}
+	if inspection.ColumnMapExample == "" {
+		t.Fatal("column map example empty")
 	}
 }
 
@@ -318,4 +698,33 @@ func TestPlatformReadOutputWarnsOnEmptyList(t *testing.T) {
 	if !strings.Contains(output.Warnings[0], "Clidey / Customer") {
 		t.Fatalf("warning = %q, want workspace name", output.Warnings[0])
 	}
+}
+
+func hasPlatformGraphEdge(edges []PlatformResourceGraphEdge, fromID, fromType, toID, toType, kind string) bool {
+	for _, edge := range edges {
+		if edge.FromID == fromID && edge.FromType == fromType && edge.ToID == toID && edge.ToType == toType && edge.Kind == kind {
+			return true
+		}
+	}
+	return false
+}
+
+func hasPlatformNextActionTool(actions []PlatformNextAction, toolName string) bool {
+	for _, action := range actions {
+		for _, suggested := range action.SuggestedTools {
+			if suggested == toolName {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func hasPlatformPlanPhase(phases []PlatformPlanPhase, phase string) bool {
+	for _, item := range phases {
+		if item.Phase == phase {
+			return true
+		}
+	}
+	return false
 }

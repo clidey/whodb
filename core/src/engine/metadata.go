@@ -17,17 +17,13 @@
 package engine
 
 import (
+	"errors"
+	"fmt"
 	"strings"
+	"unicode"
 
 	"github.com/clidey/whodb/core/src/source"
 )
-
-// Helper function to create a pointer to an int
-//
-//go:fix inline
-func IntPtr(i int) *int {
-	return new(i)
-}
 
 // ValidateColumnType checks if a column type string is valid against
 // source-owned type definitions and aliases.
@@ -59,12 +55,50 @@ func ValidateColumnType(typeName string, sourceType string, metadata *source.Typ
 		return &UnsupportedTypeError{TypeName: typeName, DatabaseType: sourceType}
 	}
 
-	// Validate parameters
-	if (typeDef.HasLength || typeDef.HasPrecision) && !hasParams {
-		// Type supports parameters but none provided - this is OK, defaults will be used
-		return nil
+	// The full type string (including any parameter section) is concatenated
+	// verbatim into CREATE TABLE DDL, so a parameter section must be a single
+	// balanced parenthesized group of safe characters. This rejects statement
+	// terminators, comment markers, and parenthesis breakouts while still
+	// allowing legitimate params such as varchar(255), Decimal(10, 2),
+	// DateTime64(3, 'UTC'), and Enum8('active' = 1, 'inactive' = 2).
+	if hasParams {
+		if err := validateTypeParams(typeName); err != nil {
+			return &UnsupportedTypeError{TypeName: typeName, DatabaseType: sourceType}
+		}
 	}
 
+	return nil
+}
+
+// validateTypeParams verifies that a parameterized type name has exactly one
+// balanced trailing parameter group containing only characters that cannot break
+// out of the column-type position in DDL. Enum labels are single-quoted and may
+// contain any character except a single quote.
+func validateTypeParams(typeName string) error {
+	trimmed := strings.TrimSpace(typeName)
+	open := strings.Index(trimmed, "(")
+	closeIdx := strings.LastIndex(trimmed, ")")
+	if open == -1 || closeIdx != len(trimmed)-1 || closeIdx <= open {
+		return errors.New("malformed type parameters")
+	}
+
+	params := trimmed[open+1 : closeIdx]
+	inQuote := false
+	for _, r := range params {
+		switch {
+		case r == '\'':
+			inQuote = !inQuote
+		case inQuote:
+			// Inside a quoted enum label; the surrounding quotes keep it safe.
+		case unicode.IsLetter(r) || unicode.IsDigit(r):
+		case r == ',' || r == ' ' || r == '=' || r == '+' || r == '-' || r == '.':
+		default:
+			return fmt.Errorf("invalid character %q in type parameters", r)
+		}
+	}
+	if inQuote {
+		return errors.New("unterminated quote in type parameters")
+	}
 	return nil
 }
 

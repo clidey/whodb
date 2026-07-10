@@ -36,8 +36,63 @@ type PlatformGenericWriteInput struct {
 	PayloadJSON string `json:"payload_json,omitempty" jsonschema:"JSON object payload for the hosted mutation. projectId and id are filled from selected workspace/id when appropriate."`
 }
 
+// PlatformDatasetColumnInput describes a dataset column for typed MCP writes.
+type PlatformDatasetColumnInput struct {
+	Name       string `json:"name" jsonschema:"Column name"`
+	Type       string `json:"type" jsonschema:"Column data type"`
+	IsNullable bool   `json:"is_nullable,omitempty" jsonschema:"Whether the column may be null"`
+	IsPrimary  bool   `json:"is_primary,omitempty" jsonschema:"Whether the column is part of the primary key"`
+}
+
+// PlatformCreateDatasetInput is the input for whodb_platform_create_dataset.
+type PlatformCreateDatasetInput struct {
+	Name        string                       `json:"name" jsonschema:"Dataset name"`
+	Description string                       `json:"description,omitempty" jsonschema:"Optional dataset description"`
+	SchemaMode  string                       `json:"schema_mode,omitempty" jsonschema:"Dataset schema mode, for example manual"`
+	SourceID    string                       `json:"source_id,omitempty" jsonschema:"Optional hosted source id for source-backed datasets"`
+	Columns     []PlatformDatasetColumnInput `json:"columns,omitempty" jsonschema:"Manual schema columns"`
+}
+
+// PlatformFileColumnMapInput describes one file-to-dataset promotion column.
+type PlatformFileColumnMapInput struct {
+	SourceColumn  string `json:"source_column" jsonschema:"Column name in the file"`
+	DatasetColumn string `json:"dataset_column" jsonschema:"Column name in the dataset"`
+	DataType      string `json:"data_type" jsonschema:"Dataset data type"`
+	IsNullable    bool   `json:"is_nullable,omitempty" jsonschema:"Whether the dataset column may be null"`
+	IsPrimary     bool   `json:"is_primary,omitempty" jsonschema:"Whether the dataset column is part of the primary key"`
+}
+
+// PlatformPromoteFileToDatasetInput is the input for whodb_platform_promote_file_to_dataset.
+type PlatformPromoteFileToDatasetInput struct {
+	FileID      string                       `json:"file_id" jsonschema:"Hosted project file id"`
+	Name        string                       `json:"name" jsonschema:"Dataset name"`
+	Description string                       `json:"description,omitempty" jsonschema:"Optional dataset description"`
+	SheetIndex  *int                         `json:"sheet_index,omitempty" jsonschema:"Optional tabular sheet index"`
+	ColumnMap   []PlatformFileColumnMapInput `json:"column_map" jsonschema:"Column mappings, usually from whodb_platform_file_inspect"`
+}
+
+// PlatformOntologyRecordInput is the input for ontology record write tools.
+type PlatformOntologyRecordInput struct {
+	EntityID      string            `json:"entity_id" jsonschema:"Ontology id"`
+	Values        map[string]string `json:"values" jsonschema:"Record values keyed by ontology property"`
+	UpdateColumns []string          `json:"update_columns,omitempty" jsonschema:"Ontology properties to update; required for update"`
+}
+
+// PlatformOntologyFastLookupInput is the input for whodb_platform_create_ontology_fast_lookup.
+type PlatformOntologyFastLookupInput struct {
+	EntityID string   `json:"entity_id" jsonschema:"Ontology id"`
+	Fields   []string `json:"fields" jsonschema:"Ontology properties to include in the lookup"`
+	Reason   string   `json:"reason,omitempty" jsonschema:"Optional reason for the lookup"`
+}
+
+// PlatformEntityWriteInput is a typed write input with one resource id.
+type PlatformEntityWriteInput struct {
+	ID string `json:"id" jsonschema:"Resource id"`
+}
+
 // PlatformGenericWriteOutput reports a hosted platform write result or pending confirmation.
 type PlatformGenericWriteOutput struct {
+	PlatformSetupGuidance
 	ConfirmationRequired bool                   `json:"confirmation_required,omitempty"`
 	ConfirmationToken    string                 `json:"confirmation_token,omitempty"`
 	ConfirmationAction   string                 `json:"confirmation_action,omitempty"`
@@ -48,62 +103,6 @@ type PlatformGenericWriteOutput struct {
 	ResultJSON           string                 `json:"result_json,omitempty"`
 	Error                string                 `json:"error,omitempty"`
 	RequestID            string                 `json:"request_id,omitempty"`
-}
-
-type platformGenericWriteSpec struct {
-	Resource        string
-	Action          string
-	Mutation        string
-	Mode            string
-	NeedsID         bool
-	InjectProjectID bool
-}
-
-const (
-	platformWriteModeInput         = "input"
-	platformWriteModeProjectID     = "project_id"
-	platformWriteModeID            = "id"
-	platformWriteModeProjectIDName = "project_id_name"
-	platformWriteModeDirect        = "direct"
-	platformWriteModeFileUpload    = "file_upload"
-)
-
-var platformGenericWriteSpecs = map[string]platformGenericWriteSpec{
-	"create:secret":                  {Resource: "secret", Action: "create", Mutation: "CreateSecret", Mode: platformWriteModeInput, InjectProjectID: true},
-	"update:secret":                  {Resource: "secret", Action: "update", Mutation: "UpdateSecret", Mode: platformWriteModeInput, NeedsID: true, InjectProjectID: true},
-	"delete:secret":                  {Resource: "secret", Action: "delete", Mutation: "DeleteSecret", Mode: platformWriteModeProjectID, NeedsID: true},
-	"create:ai_provider":             {Resource: "ai_provider", Action: "create", Mutation: "CreateAIProvider", Mode: platformWriteModeInput, InjectProjectID: true},
-	"update:ai_provider":             {Resource: "ai_provider", Action: "update", Mutation: "UpdateAIProvider", Mode: platformWriteModeInput, NeedsID: true},
-	"delete:ai_provider":             {Resource: "ai_provider", Action: "delete", Mutation: "DeleteAIProvider", Mode: platformWriteModeID, NeedsID: true},
-	"create:ontology":                {Resource: "ontology", Action: "create", Mutation: "CreateOntology", Mode: platformWriteModeInput, InjectProjectID: true},
-	"update:ontology":                {Resource: "ontology", Action: "update", Mutation: "UpdateOntology", Mode: platformWriteModeInput, NeedsID: true, InjectProjectID: true},
-	"delete:ontology":                {Resource: "ontology", Action: "delete", Mutation: "DeleteOntology", Mode: platformWriteModeProjectID, NeedsID: true},
-	"create:ontology_fast_lookup":    {Resource: "ontology_fast_lookup", Action: "create", Mutation: "CreateOntologyFastLookup", Mode: platformWriteModeInput, InjectProjectID: true},
-	"delete:ontology_fast_lookup":    {Resource: "ontology_fast_lookup", Action: "delete", Mutation: "RemoveOntologyFastLookup", Mode: platformWriteModeProjectID, NeedsID: true},
-	"create:dataset":                 {Resource: "dataset", Action: "create", Mutation: "CreateDataset", Mode: platformWriteModeInput, InjectProjectID: true},
-	"update:dataset":                 {Resource: "dataset", Action: "update", Mutation: "UpdateDataset", Mode: platformWriteModeInput, NeedsID: true, InjectProjectID: true},
-	"delete:dataset":                 {Resource: "dataset", Action: "delete", Mutation: "DeleteDataset", Mode: platformWriteModeProjectID, NeedsID: true},
-	"create:transform":               {Resource: "transform", Action: "create", Mutation: "SaveTransform", Mode: platformWriteModeInput, InjectProjectID: true},
-	"update:transform":               {Resource: "transform", Action: "update", Mutation: "SaveTransform", Mode: platformWriteModeInput, NeedsID: true, InjectProjectID: true},
-	"delete:transform":               {Resource: "transform", Action: "delete", Mutation: "DeleteTransform", Mode: platformWriteModeProjectID, NeedsID: true},
-	"create:folder":                  {Resource: "folder", Action: "create", Mutation: "CreateProjectFolder", Mode: platformWriteModeInput, InjectProjectID: true},
-	"delete:folder":                  {Resource: "folder", Action: "delete", Mutation: "DeleteProjectFolder", Mode: platformWriteModeProjectID, NeedsID: true},
-	"delete:file":                    {Resource: "file", Action: "delete", Mutation: "DeleteProjectFile", Mode: platformWriteModeProjectID, NeedsID: true},
-	"create:function":                {Resource: "function", Action: "create", Mutation: "CreateFunction", Mode: platformWriteModeInput, InjectProjectID: true},
-	"update:function":                {Resource: "function", Action: "update", Mutation: "UpdateFunction", Mode: platformWriteModeInput, NeedsID: true, InjectProjectID: true},
-	"delete:function":                {Resource: "function", Action: "delete", Mutation: "DeleteFunction", Mode: platformWriteModeProjectID, NeedsID: true},
-	"create:source_object":           {Resource: "source_object", Action: "create", Mutation: "CreatePlatformSourceObject", Mode: platformWriteModeDirect, InjectProjectID: true},
-	"update:source_object":           {Resource: "source_object", Action: "update", Mutation: "UpdatePlatformSourceObject", Mode: platformWriteModeDirect, InjectProjectID: true},
-	"delete:source_object":           {Resource: "source_object", Action: "delete", Mutation: "DeletePlatformSourceObject", Mode: platformWriteModeDirect, InjectProjectID: true},
-	"action:run:transform":           {Resource: "transform", Action: "run", Mutation: "RunTransform", Mode: platformWriteModeProjectID, NeedsID: true},
-	"action:upload:file":             {Resource: "file", Action: "upload", Mutation: "UploadProjectFile", Mode: platformWriteModeFileUpload, InjectProjectID: true},
-	"action:rename:file":             {Resource: "file", Action: "rename", Mutation: "RenameProjectFile", Mode: platformWriteModeProjectIDName, NeedsID: true},
-	"action:rename:folder":           {Resource: "folder", Action: "rename", Mutation: "RenameProjectFolder", Mode: platformWriteModeProjectIDName, NeedsID: true},
-	"action:move:file":               {Resource: "file", Action: "move", Mutation: "MoveProjectFile", Mode: platformWriteModeInput, NeedsID: true, InjectProjectID: true},
-	"action:move:folder":             {Resource: "folder", Action: "move", Mutation: "MoveProjectFolder", Mode: platformWriteModeInput, NeedsID: true, InjectProjectID: true},
-	"action:promote_to_dataset:file": {Resource: "file", Action: "promote_to_dataset", Mutation: "PromoteFileToDataset", Mode: platformWriteModeInput, NeedsID: true, InjectProjectID: true},
-	"action:deploy:function":         {Resource: "function", Action: "deploy", Mutation: "DeployFunction", Mode: platformWriteModeProjectID, NeedsID: true},
-	"action:redeploy:function":       {Resource: "function", Action: "redeploy", Mutation: "RedeployFunction", Mode: platformWriteModeProjectID, NeedsID: true},
 }
 
 func registerPlatformGenericWriteTool(server *mcp.Server, tool *mcp.Tool, secOpts *SecurityOptions) bool {
@@ -124,6 +123,34 @@ func registerPlatformGenericWriteTool(server *mcp.Server, tool *mcp.Tool, secOpt
 		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformGenericWriteInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformGenericWrite(ctx, "platform_action", input, "action", secOpts.ConfirmWrites)
 		})
+	case "whodb_platform_create_dataset":
+		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformCreateDatasetInput) (*mcp.CallToolResult, any, error) {
+			return handlePlatformCreateDataset(ctx, input, secOpts.ConfirmWrites)
+		})
+	case "whodb_platform_promote_file_to_dataset":
+		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformPromoteFileToDatasetInput) (*mcp.CallToolResult, any, error) {
+			return handlePlatformPromoteFileToDataset(ctx, input, secOpts.ConfirmWrites)
+		})
+	case "whodb_platform_add_ontology_record":
+		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformOntologyRecordInput) (*mcp.CallToolResult, any, error) {
+			return handlePlatformOntologyRecordWrite(ctx, "whodb_platform_add_ontology_record", input, "add_record", secOpts.ConfirmWrites)
+		})
+	case "whodb_platform_update_ontology_record":
+		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformOntologyRecordInput) (*mcp.CallToolResult, any, error) {
+			return handlePlatformOntologyRecordWrite(ctx, "whodb_platform_update_ontology_record", input, "update_record", secOpts.ConfirmWrites)
+		})
+	case "whodb_platform_delete_ontology_record":
+		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformOntologyRecordInput) (*mcp.CallToolResult, any, error) {
+			return handlePlatformOntologyRecordWrite(ctx, "whodb_platform_delete_ontology_record", input, "delete_record", secOpts.ConfirmWrites)
+		})
+	case "whodb_platform_create_ontology_fast_lookup":
+		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformOntologyFastLookupInput) (*mcp.CallToolResult, any, error) {
+			return handlePlatformCreateOntologyFastLookup(ctx, input, secOpts.ConfirmWrites)
+		})
+	case "whodb_platform_delete_ontology_fast_lookup":
+		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformEntityWriteInput) (*mcp.CallToolResult, any, error) {
+			return handlePlatformTypedGenericWrite(ctx, "whodb_platform_delete_ontology_fast_lookup", PlatformGenericWriteInput{Resource: "ontology_fast_lookup", ID: input.ID}, "delete", secOpts.ConfirmWrites)
+		})
 	default:
 		return false
 	}
@@ -136,6 +163,13 @@ func platformGenericWriteToolDefinitions() []*mcp.Tool {
 		{Name: "whodb_platform_update", Description: descPlatformUpdate, Annotations: platformDestructiveAnnotations("Update Hosted Platform Resource")},
 		{Name: "whodb_platform_delete", Description: descPlatformDelete, Annotations: platformDestructiveAnnotations("Delete Hosted Platform Resource")},
 		{Name: "whodb_platform_action", Description: descPlatformAction, Annotations: platformDestructiveAnnotations("Run Hosted Platform Action")},
+		{Name: "whodb_platform_create_dataset", Description: descPlatformCreateDataset, Annotations: platformDestructiveAnnotations("Create Hosted Dataset")},
+		{Name: "whodb_platform_promote_file_to_dataset", Description: descPlatformPromoteFileToDataset, Annotations: platformDestructiveAnnotations("Promote Hosted File To Dataset")},
+		{Name: "whodb_platform_add_ontology_record", Description: descPlatformAddOntologyRecord, Annotations: platformDestructiveAnnotations("Add Hosted Ontology Record")},
+		{Name: "whodb_platform_update_ontology_record", Description: descPlatformUpdateOntologyRecord, Annotations: platformDestructiveAnnotations("Update Hosted Ontology Record")},
+		{Name: "whodb_platform_delete_ontology_record", Description: descPlatformDeleteOntologyRecord, Annotations: platformDestructiveAnnotations("Delete Hosted Ontology Record")},
+		{Name: "whodb_platform_create_ontology_fast_lookup", Description: descPlatformCreateOntologyFastLookup, Annotations: platformDestructiveAnnotations("Create Hosted Ontology Fast Lookup")},
+		{Name: "whodb_platform_delete_ontology_fast_lookup", Description: descPlatformDeleteOntologyFastLookup, Annotations: platformDestructiveAnnotations("Delete Hosted Ontology Fast Lookup")},
 	}
 }
 
@@ -145,7 +179,7 @@ func handlePlatformGenericWrite(ctx context.Context, toolName string, input Plat
 	session, err := loadPlatformWorkspace(ctx)
 	if err != nil {
 		TrackToolCall(ctx, toolName, requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_session"})
-		return nil, PlatformGenericWriteOutput{Error: err.Error(), RequestID: requestID}, nil
+		return nil, platformGenericWriteSetupError(err, requestID), nil
 	}
 	spec, payload, err := buildPlatformGenericWrite(session, input, operationKind)
 	if err != nil {
@@ -160,6 +194,7 @@ func handlePlatformGenericWrite(ctx context.Context, toolName string, input Plat
 		OrgID:       session.Host.DefaultOrgID,
 		ProjectID:   session.Host.DefaultProjectID,
 		ProjectName: session.Host.DefaultProjectName,
+		Summary:     platformGenericWriteSummary(spec, payload),
 		Changes:     genericWriteChanges(payload),
 		Mutation:    spec.Mutation,
 		Variables:   payload,
@@ -178,7 +213,174 @@ func handlePlatformGenericWrite(ctx context.Context, toolName string, input Plat
 	return nil, platformGenericConfirmationOutput(requestID, token, expiresAt, spec.Mutation, action.Preview()), nil
 }
 
-func buildPlatformGenericWrite(session *platformToolSession, input PlatformGenericWriteInput, operationKind string) (platformGenericWriteSpec, map[string]any, error) {
+func platformGenericWriteSetupError(err error, requestID string) PlatformGenericWriteOutput {
+	return PlatformGenericWriteOutput{
+		PlatformSetupGuidance: platformSetupGuidanceForCurrentConfig(requestID),
+		Error:                 err.Error(),
+		RequestID:             requestID,
+	}
+}
+
+func handlePlatformTypedGenericWrite(ctx context.Context, toolName string, input PlatformGenericWriteInput, operationKind string, confirmWrites bool) (*mcp.CallToolResult, PlatformGenericWriteOutput, error) {
+	return handlePlatformGenericWrite(ctx, strings.TrimPrefix(toolName, "whodb_"), input, operationKind, confirmWrites)
+}
+
+func handlePlatformCreateDataset(ctx context.Context, input PlatformCreateDatasetInput, confirmWrites bool) (*mcp.CallToolResult, PlatformGenericWriteOutput, error) {
+	if strings.TrimSpace(input.Name) == "" {
+		return typedWriteValidationError("platform_create_dataset", "name is required")
+	}
+	payload := map[string]any{
+		"name": strings.TrimSpace(input.Name),
+	}
+	if strings.TrimSpace(input.Description) != "" {
+		payload["description"] = strings.TrimSpace(input.Description)
+	}
+	if strings.TrimSpace(input.SchemaMode) != "" {
+		payload["schemaMode"] = strings.TrimSpace(input.SchemaMode)
+	}
+	if strings.TrimSpace(input.SourceID) != "" {
+		payload["sourceId"] = strings.TrimSpace(input.SourceID)
+	}
+	if len(input.Columns) > 0 {
+		payload["columns"] = datasetColumnPayload(input.Columns)
+	}
+	raw, err := json.Marshal(payload)
+	if err != nil {
+		return nil, PlatformGenericWriteOutput{Error: err.Error(), RequestID: generateRequestID("platform_create_dataset")}, nil
+	}
+	return handlePlatformTypedGenericWrite(ctx, "whodb_platform_create_dataset", PlatformGenericWriteInput{Resource: "dataset", PayloadJSON: string(raw)}, "create", confirmWrites)
+}
+
+func handlePlatformPromoteFileToDataset(ctx context.Context, input PlatformPromoteFileToDatasetInput, confirmWrites bool) (*mcp.CallToolResult, PlatformGenericWriteOutput, error) {
+	if strings.TrimSpace(input.FileID) == "" {
+		return typedWriteValidationError("platform_promote_file_to_dataset", "file_id is required")
+	}
+	if strings.TrimSpace(input.Name) == "" {
+		return typedWriteValidationError("platform_promote_file_to_dataset", "name is required")
+	}
+	if len(input.ColumnMap) == 0 {
+		return typedWriteValidationError("platform_promote_file_to_dataset", "column_map is required")
+	}
+	payload := map[string]any{
+		"datasetName": strings.TrimSpace(input.Name),
+		"columnMap":   fileColumnMapPayload(input.ColumnMap),
+	}
+	if strings.TrimSpace(input.Description) != "" {
+		payload["description"] = strings.TrimSpace(input.Description)
+	}
+	if input.SheetIndex != nil {
+		payload["sheetIndex"] = *input.SheetIndex
+	}
+	raw, err := json.Marshal(payload)
+	if err != nil {
+		return nil, PlatformGenericWriteOutput{Error: err.Error(), RequestID: generateRequestID("platform_promote_file_to_dataset")}, nil
+	}
+	return handlePlatformTypedGenericWrite(ctx, "whodb_platform_promote_file_to_dataset", PlatformGenericWriteInput{Resource: "file", Action: "promote_to_dataset", ID: input.FileID, PayloadJSON: string(raw)}, "action", confirmWrites)
+}
+
+func handlePlatformOntologyRecordWrite(ctx context.Context, toolName string, input PlatformOntologyRecordInput, action string, confirmWrites bool) (*mcp.CallToolResult, PlatformGenericWriteOutput, error) {
+	requestName := strings.TrimPrefix(toolName, "whodb_")
+	if strings.TrimSpace(input.EntityID) == "" {
+		return typedWriteValidationError(requestName, "entity_id is required")
+	}
+	if len(input.Values) == 0 {
+		return typedWriteValidationError(requestName, "values is required")
+	}
+	if action == "update_record" && len(normalizedPlatformWriteStrings(input.UpdateColumns)) == 0 {
+		return typedWriteValidationError(requestName, "update_columns is required")
+	}
+	payload := map[string]any{"values": recordInputPayload(input.Values)}
+	if action == "update_record" {
+		payload["updatedColumns"] = normalizedPlatformWriteStrings(input.UpdateColumns)
+	}
+	raw, err := json.Marshal(payload)
+	if err != nil {
+		return nil, PlatformGenericWriteOutput{Error: err.Error(), RequestID: generateRequestID(requestName)}, nil
+	}
+	return handlePlatformTypedGenericWrite(ctx, toolName, PlatformGenericWriteInput{Resource: "ontology", Action: action, ID: input.EntityID, PayloadJSON: string(raw)}, "action", confirmWrites)
+}
+
+func handlePlatformCreateOntologyFastLookup(ctx context.Context, input PlatformOntologyFastLookupInput, confirmWrites bool) (*mcp.CallToolResult, PlatformGenericWriteOutput, error) {
+	if strings.TrimSpace(input.EntityID) == "" {
+		return typedWriteValidationError("platform_create_ontology_fast_lookup", "entity_id is required")
+	}
+	if len(normalizedPlatformWriteStrings(input.Fields)) == 0 {
+		return typedWriteValidationError("platform_create_ontology_fast_lookup", "fields is required")
+	}
+	payload := map[string]any{
+		"entityId": strings.TrimSpace(input.EntityID),
+		"fields":   normalizedPlatformWriteStrings(input.Fields),
+	}
+	if strings.TrimSpace(input.Reason) != "" {
+		payload["reason"] = strings.TrimSpace(input.Reason)
+	}
+	raw, err := json.Marshal(payload)
+	if err != nil {
+		return nil, PlatformGenericWriteOutput{Error: err.Error(), RequestID: generateRequestID("platform_create_ontology_fast_lookup")}, nil
+	}
+	return handlePlatformTypedGenericWrite(ctx, "whodb_platform_create_ontology_fast_lookup", PlatformGenericWriteInput{Resource: "ontology_fast_lookup", PayloadJSON: string(raw)}, "create", confirmWrites)
+}
+
+func typedWriteValidationError(toolName, message string) (*mcp.CallToolResult, PlatformGenericWriteOutput, error) {
+	return nil, PlatformGenericWriteOutput{Error: message, RequestID: generateRequestID(toolName)}, nil
+}
+
+func datasetColumnPayload(columns []PlatformDatasetColumnInput) []map[string]any {
+	out := make([]map[string]any, 0, len(columns))
+	for _, column := range columns {
+		out = append(out, map[string]any{
+			"name":       strings.TrimSpace(column.Name),
+			"type":       strings.TrimSpace(column.Type),
+			"isNullable": column.IsNullable,
+			"isPrimary":  column.IsPrimary,
+		})
+	}
+	return out
+}
+
+func fileColumnMapPayload(columns []PlatformFileColumnMapInput) []map[string]any {
+	out := make([]map[string]any, 0, len(columns))
+	for _, column := range columns {
+		out = append(out, map[string]any{
+			"sourceColumn":  strings.TrimSpace(column.SourceColumn),
+			"datasetColumn": strings.TrimSpace(column.DatasetColumn),
+			"dataType":      strings.TrimSpace(column.DataType),
+			"isNullable":    column.IsNullable,
+			"isPrimary":     column.IsPrimary,
+		})
+	}
+	return out
+}
+
+func recordInputPayload(values map[string]string) []map[string]any {
+	keys := make([]string, 0, len(values))
+	for key := range values {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	out := make([]map[string]any, 0, len(keys))
+	for _, key := range keys {
+		key = strings.TrimSpace(key)
+		if key == "" {
+			continue
+		}
+		out = append(out, map[string]any{"key": key, "value": values[key]})
+	}
+	return out
+}
+
+func normalizedPlatformWriteStrings(values []string) []string {
+	out := make([]string, 0, len(values))
+	for _, value := range values {
+		value = strings.TrimSpace(value)
+		if value != "" {
+			out = append(out, value)
+		}
+	}
+	return out
+}
+
+func buildPlatformGenericWrite(session *platformToolSession, input PlatformGenericWriteInput, operationKind string) (platformapi.GenericWriteSpec, map[string]any, error) {
 	resource := normalizePlatformWriteToken(input.Resource)
 	action := normalizePlatformWriteToken(operationKind)
 	if operationKind == "action" {
@@ -188,21 +390,21 @@ func buildPlatformGenericWrite(session *platformToolSession, input PlatformGener
 	if operationKind == "action" {
 		key = "action:" + action + ":" + resource
 	}
-	spec, ok := platformGenericWriteSpecs[key]
+	spec, ok := platformapi.GenericWriteSpecs[key]
 	if !ok {
-		return platformGenericWriteSpec{}, nil, fmt.Errorf("unsupported platform %s for resource %q", action, resource)
+		return platformapi.GenericWriteSpec{}, nil, fmt.Errorf("unsupported platform %s for resource %q", action, resource)
 	}
 	payload, err := parsePayloadJSON(input.PayloadJSON)
 	if err != nil {
-		return platformGenericWriteSpec{}, nil, err
+		return platformapi.GenericWriteSpec{}, nil, err
 	}
 	id := strings.TrimSpace(input.ID)
 	if spec.NeedsID && id == "" {
-		return platformGenericWriteSpec{}, nil, fmt.Errorf("id is required for %s %s", spec.Action, spec.Resource)
+		return platformapi.GenericWriteSpec{}, nil, fmt.Errorf("id is required for %s %s", spec.Action, spec.Resource)
 	}
 	variables := map[string]any{}
 	switch spec.Mode {
-	case platformWriteModeInput:
+	case platformapi.GenericWriteModeInput:
 		if spec.InjectProjectID {
 			payload["projectId"] = session.Host.DefaultProjectID
 		}
@@ -220,37 +422,53 @@ func buildPlatformGenericWrite(session *platformToolSession, input PlatformGener
 			payload["newParentId"] = nullablePayloadString(payload, "newParentId")
 		}
 		variables["input"] = payload
-	case platformWriteModeProjectID:
+	case platformapi.GenericWriteModeProjectID:
 		variables["projectId"] = session.Host.DefaultProjectID
 		variables["id"] = id
-	case platformWriteModeID:
+		addPlatformConfirmDeletionVariable(spec.Mutation, variables)
+	case platformapi.GenericWriteModeID:
 		variables["id"] = id
-	case platformWriteModeProjectIDName:
+	case platformapi.GenericWriteModeProjectIDName:
 		name, _ := payload["name"].(string)
 		if strings.TrimSpace(name) == "" {
-			return platformGenericWriteSpec{}, nil, fmt.Errorf("payload_json.name is required")
+			return platformapi.GenericWriteSpec{}, nil, fmt.Errorf("payload_json.name is required")
 		}
 		variables["projectId"] = session.Host.DefaultProjectID
 		variables["id"] = id
 		variables["name"] = strings.TrimSpace(name)
-	case platformWriteModeDirect:
+	case platformapi.GenericWriteModeDirect:
 		for key, value := range payload {
 			variables[key] = value
 		}
 		if spec.InjectProjectID {
 			variables["projectId"] = session.Host.DefaultProjectID
 		}
-	case platformWriteModeFileUpload:
+		if spec.NeedsID {
+			switch spec.Mutation {
+			case "OntologyAddRow", "OntologyUpdateRow", "OntologyDeleteRow":
+				variables["entityId"] = id
+			default:
+				variables["id"] = id
+			}
+		}
+	case platformapi.GenericWriteModeFileUpload:
 		filePath, _ := payload["file_path"].(string)
 		if strings.TrimSpace(filePath) == "" {
-			return platformGenericWriteSpec{}, nil, fmt.Errorf("payload_json.file_path is required")
+			return platformapi.GenericWriteSpec{}, nil, fmt.Errorf("payload_json.file_path is required")
 		}
 		variables["filePath"] = strings.TrimSpace(filePath)
 		variables["folderId"] = nullablePayloadString(payload, "folderId")
 	default:
-		return platformGenericWriteSpec{}, nil, fmt.Errorf("unsupported write mode %q", spec.Mode)
+		return platformapi.GenericWriteSpec{}, nil, fmt.Errorf("unsupported write mode %q", spec.Mode)
 	}
 	return spec, variables, nil
+}
+
+func addPlatformConfirmDeletionVariable(mutation string, variables map[string]any) {
+	switch mutation {
+	case "DeleteOntology", "DeleteProjectFolder":
+		variables["confirmDeletion"] = true
+	}
 }
 
 func executePlatformMutation(ctx context.Context, client platformClient, mutation, projectID string, variables map[string]any) (*platformapi.PlatformMutationResult, error) {
@@ -332,6 +550,45 @@ func genericWriteChanges(variables map[string]any) []string {
 	return redacted
 }
 
+func platformGenericWriteSummary(spec platformapi.GenericWriteSpec, payload map[string]any) string {
+	action := titlePlatformWriteAction(spec.Action)
+	resource := strings.ReplaceAll(spec.Resource, "_", " ")
+	details := payload
+	if input, ok := payload["input"].(map[string]any); ok {
+		details = input
+	}
+	switch spec.Mutation {
+	case "PromoteFileToDataset":
+		if name := firstPayloadString(details, "datasetName", ""); name != "" {
+			return fmt.Sprintf("Promote file to dataset %q", name)
+		}
+	case "OntologyAddRow":
+		return "Add ontology record"
+	case "OntologyUpdateRow":
+		return "Update ontology record"
+	case "OntologyDeleteRow":
+		return "Delete ontology record"
+	}
+	if name := firstPayloadString(details, "name", ""); name != "" {
+		return fmt.Sprintf("%s %s %q", action, resource, name)
+	}
+	if name := firstPayloadString(details, "displayName", ""); name != "" {
+		return fmt.Sprintf("%s %s %q", action, resource, name)
+	}
+	if name := firstPayloadString(details, "apiName", ""); name != "" {
+		return fmt.Sprintf("%s %s %q", action, resource, name)
+	}
+	return fmt.Sprintf("%s %s", action, resource)
+}
+
+func titlePlatformWriteAction(value string) string {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return value
+	}
+	return strings.ToUpper(value[:1]) + value[1:]
+}
+
 func sensitivePlatformWriteKey(key string) bool {
 	key = strings.ToLower(key)
 	return strings.Contains(key, "password") || strings.Contains(key, "secret") || strings.Contains(key, "key") || strings.Contains(key, "token") || strings.Contains(key, "value") || strings.Contains(key, "content") || strings.Contains(key, "path")
@@ -385,3 +642,31 @@ const descPlatformAction = `Run a hosted platform resource action through the se
 Supported actions include transform/run, file/upload, file/rename, file/move, file/promote_to_dataset, folder/rename, folder/move, function/deploy, and function/redeploy.
 Some actions create, move, deploy, or otherwise mutate hosted resources. Pass id and payload_json as required by the action. For file/upload, payload_json requires file_path and may include folderId.
 Default mode returns a confirmation token; do not call whodb_platform_confirm until the user approves the preview. Permission checks are enforced by the hosted platform.`
+
+const descPlatformCreateDataset = `Create a hosted dataset through the selected project.
+
+Use this typed wrapper for normal dataset creation instead of raw whodb_platform_create when possible. Default mode returns a confirmation token; do not call whodb_platform_confirm until the user approves the preview.`
+
+const descPlatformPromoteFileToDataset = `Promote a hosted project file to a dataset.
+
+Use whodb_platform_file_inspect first to infer column_map values. Default mode returns a confirmation token; do not call whodb_platform_confirm until the user approves the preview.`
+
+const descPlatformAddOntologyRecord = `Add one row to a hosted ontology backing table.
+
+Values are keyed by ontology property. Default mode returns a confirmation token; do not call whodb_platform_confirm until the user approves the preview.`
+
+const descPlatformUpdateOntologyRecord = `Update one hosted ontology row.
+
+Pass values containing both matcher values and replacement values, plus update_columns naming the properties to update. Default mode returns a confirmation token; do not call whodb_platform_confirm until the user approves the preview.`
+
+const descPlatformDeleteOntologyRecord = `Delete one hosted ontology row.
+
+Pass values that identify the row, usually the primary key property. Default mode returns a confirmation token; do not call whodb_platform_confirm until the user approves the preview.`
+
+const descPlatformCreateOntologyFastLookup = `Create a fast lookup for one hosted ontology.
+
+Pass ontology property names in fields. Default mode returns a confirmation token; do not call whodb_platform_confirm until the user approves the preview.`
+
+const descPlatformDeleteOntologyFastLookup = `Delete one hosted ontology fast lookup by id.
+
+Default mode returns a confirmation token; do not call whodb_platform_confirm until the user approves the preview.`

@@ -171,7 +171,7 @@ func TestHandleAzureError_UnknownCode(t *testing.T) {
 	err := newResponseError("SomeUnknownError", 418)
 	result := HandleAzureError(err)
 	if result == nil {
-		t.Error("expected non-nil error for unknown code")
+		t.Fatal("expected non-nil error for unknown code")
 	}
 	if !strings.Contains(result.Error(), "SomeUnknownError") {
 		t.Errorf("expected error to contain code, got %q", result.Error())

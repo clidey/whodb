@@ -75,7 +75,7 @@ func (c *livePlatformMCPExhaustiveCoverage) Assert(t *testing.T) {
 	}
 
 	var missingSpecs []string
-	for key := range platformGenericWriteSpecs {
+	for key := range platformapi.GenericWriteSpecs {
 		if !c.writeSpecs[key] {
 			missingSpecs = append(missingSpecs, key)
 		}
@@ -137,11 +137,14 @@ func TestPlatformMCP_RealReadWriteLifecycle(t *testing.T) {
 	sourceDatabase := liveEnvOrDefault("WHODB_PLATFORM_E2E_SOURCE_DATABASE", "whodb_platform")
 	sourceLocalPort := liveEnvOrDefault("WHODB_PLATFORM_E2E_SOURCE_LOCAL_PORT", defaultLivePlatformE2EDBPort)
 
+	liveMustPlatformSetupStatus(t, ctx)
 	status := liveMustPlatformStatus(t, ctx)
 	if status.Email != email || !status.WorkspaceSelected {
 		t.Fatalf("platform status = %#v, want %s with selected workspace", status, email)
 	}
+	liveMustPlatformDoctor(t, ctx)
 	liveMustReadOrgsProjects(t, ctx)
+	liveMustProjectTools(t, ctx, suffix)
 	liveMustReadSourceTypes(t, ctx)
 
 	sourceID := liveMustCreateSource(t, ctx, sourceName, sourceHost, sourcePort, sourceUser, sourcePassword, sourceDatabase)
@@ -209,6 +212,14 @@ func TestPlatformMCP_RealReadWriteLifecycle(t *testing.T) {
 		}),
 	})
 	defer liveBestEffortGenericDelete(ctx, "dataset", datasetID)
+	liveMustTypedWriteConfirmation(t, ctx, "whodb_platform_create_dataset", func() (PlatformGenericWriteOutput, error) {
+		_, out, err := handlePlatformCreateDataset(ctx, PlatformCreateDatasetInput{
+			Name:       "mcp-e2e-typed-dataset-" + suffix,
+			SchemaMode: "manual",
+			Columns:    []PlatformDatasetColumnInput{{Name: "id", Type: "text", IsPrimary: true}},
+		}, true)
+		return out, err
+	})
 	liveMustReadProjectList(t, ctx, "datasets", func() (int, string) {
 		_, out, err := HandlePlatformDatasets(ctx, nil, PlatformEmptyInput{Fields: []string{"id", "name"}})
 		if err != nil {
@@ -232,6 +243,8 @@ func TestPlatformMCP_RealReadWriteLifecycle(t *testing.T) {
 		ID:          datasetID,
 		PayloadJSON: liveJSON(t, map[string]any{"name": "mcp-e2e-dataset-updated-" + suffix, "description": "updated"}),
 	})
+	datasetCloneID := liveMustClone(t, ctx, PlatformCloneInput{Resource: "dataset", Source: datasetID, NewName: "mcp-e2e-dataset-clone-" + suffix})
+	defer liveBestEffortGenericDelete(ctx, "dataset", datasetCloneID)
 
 	transformID := liveMustGenericWriteID(t, ctx, "platform_create", "create", PlatformGenericWriteInput{
 		Resource: "transform",
@@ -256,6 +269,10 @@ func TestPlatformMCP_RealReadWriteLifecycle(t *testing.T) {
 		ID:          transformID,
 		PayloadJSON: liveJSON(t, map[string]any{"name": "mcp-e2e-transform-updated-" + suffix, "description": "updated", "graphJson": `{"nodes":[],"edges":[]}`, "scheduleCron": "", "triggerMode": "manual"}),
 	})
+	liveMustReadEntity(t, ctx, "transform", transformID, func() (string, error) {
+		_, out, err := HandlePlatformTransform(ctx, nil, PlatformEntityInput{ID: transformID, Fields: []string{"data", "scope"}})
+		return out.Error, err
+	})
 	liveMustGenericWrite(t, ctx, "platform_action", "action", PlatformGenericWriteInput{
 		Resource: "transform",
 		Action:   "run",
@@ -266,6 +283,7 @@ func TestPlatformMCP_RealReadWriteLifecycle(t *testing.T) {
 		return out.Error, err
 	})
 	liveCoverTool("whodb_platform_transforms")
+	liveCoverTool("whodb_platform_transform")
 	liveCoverTool("whodb_platform_transform_runs")
 
 	targetOntologyID := liveMustGenericWriteID(t, ctx, "platform_create", "create", PlatformGenericWriteInput{
@@ -354,6 +372,14 @@ func TestPlatformMCP_RealReadWriteLifecycle(t *testing.T) {
 		PayloadJSON: liveJSON(t, map[string]any{"entityId": ontologyID, "fields": []string{"id"}, "reason": "MCP e2e lookup"}),
 	})
 	defer liveBestEffortGenericDelete(ctx, "ontology_fast_lookup", lookupID)
+	liveMustTypedWriteConfirmation(t, ctx, "whodb_platform_create_ontology_fast_lookup", func() (PlatformGenericWriteOutput, error) {
+		_, out, err := handlePlatformCreateOntologyFastLookup(ctx, PlatformOntologyFastLookupInput{EntityID: ontologyID, Fields: []string{"id"}, Reason: "typed MCP e2e"}, true)
+		return out, err
+	})
+	liveMustTypedWriteConfirmation(t, ctx, "whodb_platform_delete_ontology_fast_lookup", func() (PlatformGenericWriteOutput, error) {
+		_, out, err := handlePlatformTypedGenericWrite(ctx, "whodb_platform_delete_ontology_fast_lookup", PlatformGenericWriteInput{Resource: "ontology_fast_lookup", ID: lookupID}, "delete", true)
+		return out, err
+	})
 	liveMustReadEntity(t, ctx, "ontology fast lookups", ontologyID, func() (string, error) {
 		_, out, err := HandlePlatformOntologyFastLookups(ctx, nil, PlatformEntityInput{ID: ontologyID, Fields: []string{"items", "count"}})
 		return out.Error, err
@@ -364,6 +390,21 @@ func TestPlatformMCP_RealReadWriteLifecycle(t *testing.T) {
 		return out.Error, err
 	})
 	liveCoverTool("whodb_platform_ontology_fast_lookup_suggestions")
+	liveMustTypedWriteConfirmation(t, ctx, "whodb_platform_add_ontology_record", func() (PlatformGenericWriteOutput, error) {
+		_, out, err := handlePlatformOntologyRecordWrite(ctx, "whodb_platform_add_ontology_record", PlatformOntologyRecordInput{EntityID: ontologyID, Values: map[string]string{"id": "typed-1", "target_id": ""}}, "add_record", true)
+		return out, err
+	})
+	liveCoverGenericWrite("action", PlatformGenericWriteInput{Resource: "ontology", Action: "add_record", ID: ontologyID})
+	liveMustTypedWriteConfirmation(t, ctx, "whodb_platform_update_ontology_record", func() (PlatformGenericWriteOutput, error) {
+		_, out, err := handlePlatformOntologyRecordWrite(ctx, "whodb_platform_update_ontology_record", PlatformOntologyRecordInput{EntityID: ontologyID, Values: map[string]string{"id": "typed-1", "target_id": "typed-2"}, UpdateColumns: []string{"target_id"}}, "update_record", true)
+		return out, err
+	})
+	liveCoverGenericWrite("action", PlatformGenericWriteInput{Resource: "ontology", Action: "update_record", ID: ontologyID})
+	liveMustTypedWriteConfirmation(t, ctx, "whodb_platform_delete_ontology_record", func() (PlatformGenericWriteOutput, error) {
+		_, out, err := handlePlatformOntologyRecordWrite(ctx, "whodb_platform_delete_ontology_record", PlatformOntologyRecordInput{EntityID: ontologyID, Values: map[string]string{"id": "typed-1"}}, "delete_record", true)
+		return out, err
+	})
+	liveCoverGenericWrite("action", PlatformGenericWriteInput{Resource: "ontology", Action: "delete_record", ID: ontologyID})
 	liveMustGenericWrite(t, ctx, "platform_update", "update", PlatformGenericWriteInput{
 		Resource: "ontology",
 		ID:       ontologyID,
@@ -465,6 +506,19 @@ func TestPlatformMCP_RealReadWriteLifecycle(t *testing.T) {
 		return out.Error, err
 	})
 	liveCoverTool("whodb_platform_file_preview")
+	liveMustReadEntity(t, ctx, "file inspect", fileID, func() (string, error) {
+		_, out, err := HandlePlatformFileInspect(ctx, nil, PlatformFileInspectInput{FileID: fileID, Fields: []string{"columns", "columnMapExample"}})
+		if out.Error == "" {
+			inspection, ok := out.Data.(map[string]any)
+			columns, _ := inspection["columns"].([]any)
+			columnMapExample, _ := inspection["columnMapExample"].(string)
+			if !ok || len(columns) == 0 || columnMapExample == "" {
+				return fmt.Sprintf("unexpected inspection payload: %#v", out.Data), err
+			}
+		}
+		return out.Error, err
+	})
+	liveCoverTool("whodb_platform_file_inspect")
 	liveMustGenericWrite(t, ctx, "platform_action", "action", PlatformGenericWriteInput{
 		Resource:    "file",
 		Action:      "rename",
@@ -505,6 +559,20 @@ func TestPlatformMCP_RealReadWriteLifecycle(t *testing.T) {
 		}),
 	})
 	defer liveBestEffortGenericDelete(ctx, "dataset", promotedDatasetID)
+	liveMustTypedWriteConfirmation(t, ctx, "whodb_platform_promote_file_to_dataset", func() (PlatformGenericWriteOutput, error) {
+		sheetIndex := 0
+		_, out, err := handlePlatformPromoteFileToDataset(ctx, PlatformPromoteFileToDatasetInput{
+			FileID:      fileID,
+			Name:        "mcp-e2e-typed-promoted-" + suffix,
+			Description: "typed MCP e2e promoted dataset",
+			SheetIndex:  &sheetIndex,
+			ColumnMap: []PlatformFileColumnMapInput{
+				{SourceColumn: "id", DatasetColumn: "id", DataType: "text", IsPrimary: true},
+				{SourceColumn: "name", DatasetColumn: "name", DataType: "text", IsNullable: true},
+			},
+		}, true)
+		return out, err
+	})
 	liveMustReadEntity(t, ctx, "promoted dataset", promotedDatasetID, func() (string, error) {
 		_, out, err := HandlePlatformDataset(ctx, nil, PlatformEntityInput{ID: promotedDatasetID, Fields: []string{"data", "scope"}})
 		return out.Error, err
@@ -528,6 +596,8 @@ func TestPlatformMCP_RealReadWriteLifecycle(t *testing.T) {
 		return out.Count, out.Error
 	})
 	liveCoverTool("whodb_platform_project_lineage")
+	liveMustWorkspaceIntelligence(t, ctx, promotedDatasetID)
+	liveMustBundleTools(t, ctx, suffix)
 
 	liveMustGenericWrite(t, ctx, "platform_delete", "delete", PlatformGenericWriteInput{Resource: "file", ID: fileID})
 	fileID = ""
@@ -543,6 +613,8 @@ func TestPlatformMCP_RealReadWriteLifecycle(t *testing.T) {
 	transformID = ""
 	liveMustGenericWrite(t, ctx, "platform_delete", "delete", PlatformGenericWriteInput{Resource: "dataset", ID: promotedDatasetID})
 	promotedDatasetID = ""
+	liveMustGenericWrite(t, ctx, "platform_delete", "delete", PlatformGenericWriteInput{Resource: "dataset", ID: datasetCloneID})
+	datasetCloneID = ""
 	liveMustGenericWrite(t, ctx, "platform_delete", "delete", PlatformGenericWriteInput{Resource: "dataset", ID: datasetID})
 	datasetID = ""
 	liveMustGenericWrite(t, ctx, "platform_delete", "delete", PlatformGenericWriteInput{Resource: "ontology", ID: ontologyID})
@@ -571,6 +643,204 @@ func liveMustPlatformStatus(t *testing.T, ctx context.Context) PlatformStatusOut
 	return output
 }
 
+func liveMustPlatformSetupStatus(t *testing.T, ctx context.Context) {
+	t.Helper()
+	_, output, err := HandlePlatformSetupStatus(ctx, nil, PlatformSetupStatusInput{})
+	if err != nil {
+		t.Fatalf("HandlePlatformSetupStatus() error = %v", err)
+	}
+	if output.Error != "" || output.Status != "ready" || !output.Authenticated || !output.WorkspaceSelected {
+		t.Fatalf("platform setup status = %#v, want ready authenticated workspace", output)
+	}
+	liveCoverTool("whodb_platform_setup_status")
+}
+
+func liveMustPlatformDoctor(t *testing.T, ctx context.Context) {
+	t.Helper()
+	_, output, err := HandlePlatformDoctor(ctx, nil, PlatformDoctorInput{})
+	if err != nil {
+		t.Fatalf("HandlePlatformDoctor() error = %v", err)
+	}
+	if output.Error != "" || !output.WorkspaceSelected {
+		t.Fatalf("platform doctor = %#v, want selected workspace without error", output)
+	}
+	liveCoverTool("whodb_platform_doctor")
+}
+
+func liveMustBundleTools(t *testing.T, ctx context.Context, suffix string) {
+	t.Helper()
+	_, exported, err := HandlePlatformBundleExport(ctx, nil, PlatformBundleExportInput{})
+	if err != nil {
+		t.Fatalf("HandlePlatformBundleExport() error = %v", err)
+	}
+	if exported.Error != "" || exported.Bundle == nil {
+		t.Fatalf("bundle export = %#v, want bundle without error", exported)
+	}
+	liveCoverTool("whodb_platform_bundle_export")
+	rawBundle, err := json.Marshal(exported.Bundle)
+	if err != nil {
+		t.Fatalf("marshal exported bundle: %v", err)
+	}
+	_, diff, err := HandlePlatformBundlePlan(ctx, nil, PlatformBundlePlanInput{BundleJSON: string(rawBundle)}, true, "platform_bundle_diff")
+	if err != nil {
+		t.Fatalf("HandlePlatformBundlePlan(diff) error = %v", err)
+	}
+	if diff.Error != "" || diff.Plan == nil || len(diff.Plan.Actions) == 0 {
+		t.Fatalf("bundle diff = %#v, want plan actions without error", diff)
+	}
+	liveCoverTool("whodb_platform_bundle_diff")
+	_, plan, err := HandlePlatformBundlePlan(ctx, nil, PlatformBundlePlanInput{BundleJSON: string(rawBundle)}, true, "platform_bundle_import_plan")
+	if err != nil {
+		t.Fatalf("HandlePlatformBundlePlan(import plan) error = %v", err)
+	}
+	if plan.Error != "" || plan.Plan == nil || len(plan.Plan.Actions) == 0 {
+		t.Fatalf("bundle import plan = %#v, want plan actions without error", plan)
+	}
+	liveCoverTool("whodb_platform_bundle_import_plan")
+
+	importDatasetName := "mcp-e2e-bundle-import-dataset-" + suffix
+	importBundle := platformapi.ProjectBundle{
+		BundleVersion: 1,
+		Datasets: []platformapi.Dataset{{
+			Name:        importDatasetName,
+			Description: "MCP e2e bundle imported dataset",
+			SchemaMode:  "manual",
+			Schema: []platformapi.ColumnDef{
+				{Name: "id", Type: "text", IsPrimary: true},
+				{Name: "name", Type: "text", IsNullable: true},
+			},
+		}},
+	}
+	rawImportBundle, err := json.Marshal(importBundle)
+	if err != nil {
+		t.Fatalf("marshal import bundle: %v", err)
+	}
+	_, importOutput, err := HandlePlatformBundleImport(ctx, nil, PlatformBundlePlanInput{BundleJSON: string(rawImportBundle)}, true)
+	if err != nil {
+		t.Fatalf("HandlePlatformBundleImport() error = %v", err)
+	}
+	if importOutput.Error != "" || !importOutput.ConfirmationRequired {
+		t.Fatalf("bundle import output = %#v, want pending confirmation", importOutput)
+	}
+	liveCoverTool("whodb_platform_bundle_import")
+	liveMustReadPending(t, ctx)
+	confirm := liveMustConfirm(t, ctx, importOutput.ConfirmationToken)
+	importedDatasetID := liveConfirmRowColumn(t, confirm, "dataset", importDatasetName, "target_id")
+	defer liveBestEffortGenericDelete(ctx, "dataset", importedDatasetID)
+	liveMustReadEntity(t, ctx, "bundle imported dataset", importedDatasetID, func() (string, error) {
+		_, out, err := HandlePlatformDataset(ctx, nil, PlatformEntityInput{ID: importedDatasetID, Fields: []string{"data", "scope"}})
+		return out.Error, err
+	})
+}
+
+func liveMustWorkspaceIntelligence(t *testing.T, ctx context.Context, datasetID string) {
+	t.Helper()
+	_, workspaceMap, err := HandlePlatformWorkspaceMap(ctx, nil, PlatformWorkspaceMapInput{Fields: []string{"counts", "warnings", "lineage"}})
+	if err != nil {
+		t.Fatalf("HandlePlatformWorkspaceMap() error = %v", err)
+	}
+	if workspaceMap.Error != "" || workspaceMap.Count == 0 {
+		t.Fatalf("workspace map = %#v, want mapped resources without error", workspaceMap)
+	}
+	liveCoverTool("whodb_platform_workspace_map")
+
+	_, graph, err := HandlePlatformResourceGraph(ctx, nil, PlatformResourceGraphInput{Fields: []string{"nodes", "edges", "counts"}})
+	if err != nil {
+		t.Fatalf("HandlePlatformResourceGraph() error = %v", err)
+	}
+	if graph.Error != "" || graph.Count == 0 {
+		t.Fatalf("resource graph = %#v, want graph nodes without error", graph)
+	}
+	liveCoverTool("whodb_platform_resource_graph")
+
+	_, actions, err := HandlePlatformNextActions(ctx, nil, PlatformNextActionsInput{Goal: "validate e2e workspace", Fields: []string{"actions", "warnings", "goal"}})
+	if err != nil {
+		t.Fatalf("HandlePlatformNextActions() error = %v", err)
+	}
+	if actions.Error != "" || actions.Count == 0 {
+		t.Fatalf("next actions = %#v, want suggested actions without error", actions)
+	}
+	liveCoverTool("whodb_platform_next_actions")
+
+	_, summary, err := HandlePlatformWorkspaceSummary(ctx, nil, PlatformWorkspaceSummaryInput{Goal: "build a customer app", Fields: []string{"counts", "highlights", "gaps", "next_actions", "recommended_tools"}})
+	if err != nil {
+		t.Fatalf("HandlePlatformWorkspaceSummary() error = %v", err)
+	}
+	if summary.Error != "" || summary.Count == 0 {
+		t.Fatalf("workspace summary = %#v, want summary without error", summary)
+	}
+	liveCoverTool("whodb_platform_workspace_summary")
+
+	_, buildPlan, err := HandlePlatformBuildPlan(ctx, nil, PlatformBuildPlanInput{Goal: "build a customer app", Fields: []string{"phases", "prerequisites", "gaps", "warnings"}})
+	if err != nil {
+		t.Fatalf("HandlePlatformBuildPlan() error = %v", err)
+	}
+	if buildPlan.Error != "" || buildPlan.Count == 0 {
+		t.Fatalf("build plan = %#v, want phases without error", buildPlan)
+	}
+	liveCoverTool("whodb_platform_build_plan")
+
+	_, gaps, err := HandlePlatformGapAnalysis(ctx, nil, PlatformGapAnalysisInput{Goal: "build a customer app", Fields: []string{"ready", "gaps", "counts", "next_actions"}})
+	if err != nil {
+		t.Fatalf("HandlePlatformGapAnalysis() error = %v", err)
+	}
+	if gaps.Error != "" {
+		t.Fatalf("gap analysis = %#v, want no error", gaps)
+	}
+	liveCoverTool("whodb_platform_gap_analysis")
+
+	_, health, err := HandlePlatformProjectHealth(ctx, nil, PlatformNextActionsInput{Fields: []string{"counts", "checks", "warnings", "next"}})
+	if err != nil {
+		t.Fatalf("HandlePlatformProjectHealth() error = %v", err)
+	}
+	if health.Error != "" || health.Count == 0 {
+		t.Fatalf("project health = %#v, want checks without error", health)
+	}
+	liveCoverTool("whodb_platform_project_health")
+
+	_, model, err := HandlePlatformDataModelSummary(ctx, nil, PlatformResourceGraphInput{Fields: []string{"datasets", "ontologies", "relationships", "gaps"}})
+	if err != nil {
+		t.Fatalf("HandlePlatformDataModelSummary() error = %v", err)
+	}
+	if model.Error != "" {
+		t.Fatalf("data model summary = %#v, want no error", model)
+	}
+	liveCoverTool("whodb_platform_data_model_summary")
+
+	_, readiness, err := HandlePlatformRuntimeReadiness(ctx, nil, PlatformNextActionsInput{Fields: []string{"checks", "warnings", "functions", "transforms"}})
+	if err != nil {
+		t.Fatalf("HandlePlatformRuntimeReadiness() error = %v", err)
+	}
+	if readiness.Error != "" || readiness.Count == 0 {
+		t.Fatalf("runtime readiness = %#v, want checks without error", readiness)
+	}
+	liveCoverTool("whodb_platform_runtime_readiness")
+
+	_, impact, err := HandlePlatformChangeImpact(ctx, nil, PlatformChangeImpactInput{Resource: "dataset", ID: datasetID, Action: "update", Fields: []string{"target", "affected", "suggested_reads", "warnings"}})
+	if err != nil {
+		t.Fatalf("HandlePlatformChangeImpact() error = %v", err)
+	}
+	if impact.Error != "" {
+		t.Fatalf("change impact = %#v, want no error", impact)
+	}
+	liveCoverTool("whodb_platform_change_impact")
+
+	_, plan, err := HandlePlatformWritePlan(ctx, nil, PlatformWritePlanInput{
+		Operation:   "update",
+		Resource:    "dataset",
+		ID:          datasetID,
+		PayloadJSON: `{"description":"planned by MCP e2e"}`,
+		Fields:      []string{"preview", "payload_keys", "suggested_reads", "warnings"},
+	})
+	if err != nil {
+		t.Fatalf("HandlePlatformWritePlan() error = %v", err)
+	}
+	if plan.Error != "" {
+		t.Fatalf("write plan = %#v, want no error", plan)
+	}
+	liveCoverTool("whodb_platform_write_plan")
+}
+
 func liveMustReadOrgsProjects(t *testing.T, ctx context.Context) {
 	t.Helper()
 	_, orgs, err := HandlePlatformOrgs(ctx, nil, PlatformOrgsInput{Fields: []string{"id", "name", "slug"}})
@@ -589,6 +859,45 @@ func liveMustReadOrgsProjects(t *testing.T, ctx context.Context) {
 		t.Fatalf("projects output = %#v, want visible projects", projects)
 	}
 	liveCoverTool("whodb_platform_projects")
+}
+
+func liveMustProjectTools(t *testing.T, ctx context.Context, suffix string) {
+	t.Helper()
+	projectName := "mcp-e2e-project-" + suffix
+	renamedProjectName := projectName + "-renamed"
+	_, createOutput, err := HandlePlatformProjectCreate(ctx, nil, PlatformProjectCreateInput{Name: projectName, Description: "MCP e2e project"}, true)
+	if err != nil {
+		t.Fatalf("HandlePlatformProjectCreate() error = %v", err)
+	}
+	if createOutput.Error != "" || !createOutput.ConfirmationRequired {
+		t.Fatalf("project create output = %#v, want pending confirmation", createOutput)
+	}
+	liveCoverTool("whodb_platform_project_create")
+	liveMustReadPending(t, ctx)
+	createConfirm := liveMustConfirm(t, ctx, createOutput.ConfirmationToken)
+	projectID := liveConfirmResultID(t, createConfirm, "project create")
+
+	_, renameOutput, err := HandlePlatformProjectRename(ctx, nil, PlatformProjectRenameInput{Project: projectID, Name: renamedProjectName}, true)
+	if err != nil {
+		t.Fatalf("HandlePlatformProjectRename() error = %v", err)
+	}
+	if renameOutput.Error != "" || !renameOutput.ConfirmationRequired {
+		t.Fatalf("project rename output = %#v, want pending confirmation", renameOutput)
+	}
+	liveCoverTool("whodb_platform_project_rename")
+	liveMustReadPending(t, ctx)
+	_ = liveMustConfirm(t, ctx, renameOutput.ConfirmationToken)
+
+	_, deleteOutput, err := HandlePlatformProjectDelete(ctx, nil, PlatformProjectDeleteInput{Project: projectID}, true)
+	if err != nil {
+		t.Fatalf("HandlePlatformProjectDelete() error = %v", err)
+	}
+	if deleteOutput.Error != "" || !deleteOutput.ConfirmationRequired {
+		t.Fatalf("project delete output = %#v, want pending confirmation", deleteOutput)
+	}
+	liveCoverTool("whodb_platform_project_delete")
+	liveMustReadPending(t, ctx)
+	_ = liveMustConfirm(t, ctx, deleteOutput.ConfirmationToken)
 }
 
 func liveMustReadSourceTypes(t *testing.T, ctx context.Context) {
@@ -936,6 +1245,32 @@ func liveMustGenericWrite(t *testing.T, ctx context.Context, toolName, operation
 	return liveConfirmColumn(t, confirm, "result_json")
 }
 
+func liveMustClone(t *testing.T, ctx context.Context, input PlatformCloneInput) string {
+	t.Helper()
+	_, output, err := HandlePlatformClone(ctx, nil, input, true)
+	if err != nil {
+		t.Fatalf("HandlePlatformClone(%s) error = %v", input.Resource, err)
+	}
+	if output.Error != "" || !output.ConfirmationRequired {
+		t.Fatalf("clone output for %s = %#v, want pending confirmation", input.Resource, output)
+	}
+	liveCoverTool("whodb_platform_clone")
+	liveCoverGenericWrite("create", PlatformGenericWriteInput{Resource: input.Resource})
+	liveMustReadPending(t, ctx)
+	confirm := liveMustConfirm(t, ctx, output.ConfirmationToken)
+	result := liveConfirmColumn(t, confirm, "result_json")
+	var decoded struct {
+		ID string `json:"id"`
+	}
+	if err := json.Unmarshal([]byte(result), &decoded); err != nil {
+		t.Fatalf("decode clone result JSON: %v\n%s", err, result)
+	}
+	if decoded.ID == "" {
+		t.Fatalf("clone result JSON did not include id: %s", result)
+	}
+	return decoded.ID
+}
+
 func liveMustGenericWriteConfirmError(t *testing.T, ctx context.Context, toolName, operationKind string, input PlatformGenericWriteInput) {
 	t.Helper()
 	_, output, err := handlePlatformGenericWrite(ctx, toolName, input, operationKind, true)
@@ -956,6 +1291,22 @@ func liveMustGenericWriteConfirmError(t *testing.T, ctx context.Context, toolNam
 		t.Fatalf("confirm output for %s %s/%s = %#v, want platform error", toolName, input.Resource, input.Action, confirm)
 	}
 	liveCoverTool("whodb_platform_confirm")
+}
+
+func liveMustTypedWriteConfirmation(t *testing.T, ctx context.Context, toolName string, run func() (PlatformGenericWriteOutput, error)) {
+	t.Helper()
+	output, err := run()
+	if err != nil {
+		t.Fatalf("%s error = %v", toolName, err)
+	}
+	if output.Error != "" {
+		t.Fatalf("%s output error = %q", toolName, output.Error)
+	}
+	if !output.ConfirmationRequired || output.ConfirmationToken == "" {
+		t.Fatalf("%s output = %#v, want confirmation token", toolName, output)
+	}
+	liveCoverTool(toolName)
+	liveMustReadPending(t, ctx)
 }
 
 func liveMustConfirm(t *testing.T, ctx context.Context, token string) ConfirmOutput {
@@ -994,6 +1345,58 @@ func liveConfirmColumn(t *testing.T, output ConfirmOutput, column string) string
 		t.Fatalf("confirm %s = %#v, want non-empty string", column, output.Rows[0][index])
 	}
 	return value
+}
+
+func liveConfirmResultID(t *testing.T, output ConfirmOutput, label string) string {
+	t.Helper()
+	result := liveConfirmColumn(t, output, "result_json")
+	var decoded struct {
+		ID string `json:"id"`
+	}
+	if err := json.Unmarshal([]byte(result), &decoded); err != nil {
+		t.Fatalf("decode %s result JSON: %v\n%s", label, err, result)
+	}
+	if decoded.ID == "" {
+		t.Fatalf("%s result JSON did not include id: %s", label, result)
+	}
+	return decoded.ID
+}
+
+func liveConfirmRowColumn(t *testing.T, output ConfirmOutput, resource, name, column string) string {
+	t.Helper()
+	resourceIndex := -1
+	nameIndex := -1
+	columnIndex := -1
+	for i, columnName := range output.Columns {
+		switch columnName {
+		case "resource":
+			resourceIndex = i
+		case "name":
+			nameIndex = i
+		case column:
+			columnIndex = i
+		}
+	}
+	if resourceIndex < 0 || nameIndex < 0 || columnIndex < 0 {
+		t.Fatalf("confirm columns = %#v, missing resource/name/%s", output.Columns, column)
+	}
+	for _, row := range output.Rows {
+		if len(row) <= resourceIndex || len(row) <= nameIndex || len(row) <= columnIndex {
+			continue
+		}
+		rowResource, _ := row[resourceIndex].(string)
+		rowName, _ := row[nameIndex].(string)
+		if rowResource != resource || rowName != name {
+			continue
+		}
+		value, _ := row[columnIndex].(string)
+		if strings.TrimSpace(value) == "" {
+			t.Fatalf("confirm row for %s %s has empty %s: %#v", resource, name, column, row)
+		}
+		return value
+	}
+	t.Fatalf("confirm rows = %#v, missing %s %s", output.Rows, resource, name)
+	return ""
 }
 
 func liveBestEffortSourceDelete(ctx context.Context, source string) {

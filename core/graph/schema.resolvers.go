@@ -1420,8 +1420,7 @@ func (r *queryResolver) AIProviders(ctx context.Context) ([]*model.AIProvider, e
 			IsGeneric:            provider.IsGeneric,
 		}
 		if provider.Icon != "" {
-			icon := provider.Icon
-			ap.Icon = &icon
+			ap.Icon = new(provider.Icon)
 		}
 		aiProviders = append(aiProviders, ap)
 	}
@@ -1473,76 +1472,6 @@ func (r *queryResolver) AIModel(ctx context.Context, providerID *string, modelTy
 		return nil, err
 	}
 	return models, nil
-}
-
-// AIChat is the resolver for the AIChat field.
-func (r *queryResolver) AIChat(ctx context.Context, providerID *string, modelType string, token *string, ref *model.SourceObjectRefInput, input model.ChatInput) ([]*model.AIChatMessage, error) {
-	spec, session, err := getSourceSessionForContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-	providerId := ""
-	if providerID != nil {
-		providerId = *providerID
-	}
-	requestToken := ""
-	if token != nil {
-		requestToken = *token
-	}
-	creds := envconfig.ResolveProviderCredentials(providerId, requestToken, "", modelType)
-	assistant, ok := source.AsModelAwareSourceAssistant(sourceAuditScopeFromContext(ctx, spec), session)
-	if !ok {
-		return nil, errors.New("source chat is not supported")
-	}
-	modelConfig := &source.ExternalModel{
-		Type:     creds.ModelType,
-		Token:    creds.Token,
-		Model:    input.Model,
-		Endpoint: creds.Endpoint,
-	}
-	scope := sourceScopeForChat(spec, sourceRefFromInput(ref))
-	messages, err := assistant.ReplyWithModel(ctx, sourceRefFromInput(ref), input.PreviousConversation, input.Query, modelConfig)
-
-	if err != nil {
-		log.WithFields(log.Fields{
-			"operation":     "Chat",
-			"scope":         scope,
-			"database_type": spec.ID,
-			"model":         input.Model,
-			"model_type":    modelType,
-			"provider_id":   providerID,
-			"query":         input.Query,
-			"error":         err.Error(),
-		}).Error("AI chat operation failed")
-		return nil, err
-	}
-
-	var chatResponse []*model.AIChatMessage
-
-	for _, message := range messages {
-		var result *model.RowsResult
-		if strings.HasPrefix(message.Type, "sql") && message.Result != nil {
-			var columns []*model.Column
-			for _, column := range message.Result.Columns {
-				columns = append(columns, &model.Column{
-					Type: column.Type,
-					Name: column.Name,
-				})
-			}
-			result = &model.RowsResult{
-				Columns: columns,
-				Rows:    message.Result.Rows,
-			}
-		}
-		chatResponse = append(chatResponse, &model.AIChatMessage{
-			Type:                 message.Type,
-			Result:               result,
-			Text:                 message.Text,
-			RequiresConfirmation: message.RequiresConfirmation,
-		})
-	}
-
-	return chatResponse, nil
 }
 
 // SettingsConfig is the resolver for the SettingsConfig field.

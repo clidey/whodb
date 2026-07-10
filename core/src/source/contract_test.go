@@ -4,9 +4,6 @@ import (
 	"testing"
 )
 
-//go:fix inline
-func ptr[T any](v T) *T { return new(v) }
-
 func specWithGraph(graphScopeKind *ObjectKind, objectTypes []ObjectType, rootActions []Action) TypeSpec {
 	return TypeSpec{
 		ID:    "test-source",

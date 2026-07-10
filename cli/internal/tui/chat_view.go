@@ -323,13 +323,13 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 		return v, nil
 
 	case tea.MouseMsg:
-		switch msg.Type {
-		case tea.MouseWheelUp:
+		switch msg.Button {
+		case tea.MouseButtonWheelUp:
 			if v.scrollOffset > 0 {
 				v.scrollOffset--
 			}
 			return v, nil
-		case tea.MouseWheelDown:
+		case tea.MouseButtonWheelDown:
 			maxVisible := v.maxVisibleMessages()
 			maxScroll := len(v.messages) - maxVisible
 			if maxScroll < 0 {

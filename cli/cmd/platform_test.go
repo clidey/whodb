@@ -216,6 +216,427 @@ func TestPlatformStatusForReportsUnsupportedMissingCapability(t *testing.T) {
 	}
 }
 
+func TestPlatformResourceCommandsRegistered(t *testing.T) {
+	expected := map[string][]string{
+		"secrets":      {"list", "get", "create", "update", "delete"},
+		"ai-providers": {"list", "get", "models", "create", "update", "delete"},
+		"ontologies":   {"list", "get", "describe", "export", "clone", "fast-lookups", "fast-lookup-suggestions", "rows", "follow-link", "records", "create", "update", "delete"},
+		"datasets":     {"list", "get", "describe", "schema", "export", "clone", "rows", "query", "create", "update", "delete"},
+		"lineage":      {"project", "root", "neighbors"},
+		"transforms":   {"list", "get", "describe", "export", "clone", "runs", "create", "update", "run", "delete"},
+		"functions":    {"list", "get", "describe", "export", "clone", "versions", "active", "promote", "set-active", "restore-draft", "run", "test", "preview", "create", "update", "deploy", "redeploy", "delete"},
+		"files":        {"list", "get", "describe", "preview", "inspect", "columns", "download", "search", "tabular", "storage-usage", "upload", "promote-to-dataset", "delete", "rename", "move"},
+		"folders":      {"list", "get", "tree", "create", "rename", "move", "delete"},
+		"resources":    {"specs", "shape", "export", "diff", "import", "create", "update", "delete", "action"},
+	}
+
+	for parentName, childNames := range expected {
+		parent, _, err := rootCmd.Find([]string{parentName})
+		if err != nil || parent == nil || parent.Name() != parentName {
+			t.Fatalf("root command %q not registered: cmd=%v err=%v", parentName, parent, err)
+		}
+		for _, childName := range childNames {
+			child, _, err := parent.Find([]string{childName})
+			if err != nil || child == nil || child.Name() != childName {
+				t.Fatalf("%s subcommand %q not registered: cmd=%v err=%v", parentName, childName, child, err)
+			}
+		}
+	}
+}
+
+func TestPlatformDoctorCommandRegistered(t *testing.T) {
+	command, _, err := rootCmd.Find([]string{"doctor", "platform"})
+	if err != nil || command == nil || command.Name() != "platform" {
+		t.Fatalf("doctor platform command not registered: cmd=%v err=%v", command, err)
+	}
+}
+
+func TestTypedPlatformWriteCommandsHaveExamples(t *testing.T) {
+	commands := []*cobra.Command{
+		secretsCreateCmd, secretsUpdateCmd, secretsDeleteCmd,
+		aiProvidersCreateCmd, aiProvidersUpdateCmd, aiProvidersDeleteCmd,
+		datasetsCreateCmd, datasetsUpdateCmd, datasetsDeleteCmd,
+		ontologyFastLookupsCreateCmd, ontologyFastLookupsDeleteCmd,
+		ontologyRecordsAddCmd, ontologyRecordsUpdateCmd, ontologyRecordsDeleteCmd,
+		transformsRunCmd, transformsDeleteCmd,
+		functionsDeployCmd, functionsRedeployCmd, functionsDeleteCmd,
+		filesUploadCmd, filesPromoteDatasetCmd, filesDeleteCmd, filesRenameCmd, filesMoveCmd,
+	}
+	for _, command := range commands {
+		if strings.TrimSpace(command.Example) == "" {
+			t.Fatalf("%s example is empty", command.CommandPath())
+		}
+		if !strings.Contains(command.Example, "whodb-cli") {
+			t.Fatalf("%s example = %q, want whodb-cli command", command.CommandPath(), command.Example)
+		}
+	}
+}
+
+func TestPlatformOntologyFastLookupSubcommandsRegistered(t *testing.T) {
+	parent, _, err := rootCmd.Find([]string{"ontologies", "fast-lookups"})
+	if err != nil || parent == nil || parent.Name() != "fast-lookups" {
+		t.Fatalf("fast-lookups command not registered: cmd=%v err=%v", parent, err)
+	}
+	for _, childName := range []string{"create", "delete"} {
+		child, _, err := parent.Find([]string{childName})
+		if err != nil || child == nil || child.Name() != childName {
+			t.Fatalf("fast-lookups subcommand %q not registered: cmd=%v err=%v", childName, child, err)
+		}
+	}
+}
+
+func TestBuildGenericResourceVariablesInjectsProjectAndID(t *testing.T) {
+	spec, variables, err := buildGenericResourceVariables("proj-1", genericResourceWriteInput{
+		Resource: "dataset",
+		Action:   "update",
+		ID:       "dataset-1",
+	}, map[string]any{"name": "Customers"})
+	if err != nil {
+		t.Fatalf("buildGenericResourceVariables() error = %v", err)
+	}
+	if spec.Mutation != "UpdateDataset" {
+		t.Fatalf("mutation = %q, want UpdateDataset", spec.Mutation)
+	}
+	input, ok := variables["input"].(map[string]any)
+	if !ok {
+		t.Fatalf("variables = %#v, want input object", variables)
+	}
+	if input["projectId"] != "proj-1" || input["id"] != "dataset-1" || input["name"] != "Customers" {
+		t.Fatalf("input = %#v, want project/id/name injected", input)
+	}
+}
+
+func TestBuildGenericResourceVariablesSupportsHyphenatedTokens(t *testing.T) {
+	spec, variables, err := buildGenericResourceVariables("proj-1", genericResourceWriteInput{
+		Resource: "ai-provider",
+		Action:   "update",
+		ID:       "provider-1",
+	}, map[string]any{"name": "Provider"})
+	if err != nil {
+		t.Fatalf("buildGenericResourceVariables() error = %v", err)
+	}
+	if spec.Mutation != "UpdateAIProvider" {
+		t.Fatalf("mutation = %q, want UpdateAIProvider", spec.Mutation)
+	}
+	input, ok := variables["input"].(map[string]any)
+	if !ok {
+		t.Fatalf("variables = %#v, want input object", variables)
+	}
+	if input["id"] != "provider-1" || input["projectId"] != nil {
+		t.Fatalf("input = %#v, want id and no project injection for ai provider update", input)
+	}
+}
+
+func TestBuildGenericResourceVariablesFileUpload(t *testing.T) {
+	spec, variables, err := buildGenericResourceVariables("proj-1", genericResourceWriteInput{
+		Resource: "file",
+		Action:   "upload",
+	}, map[string]any{"file_path": "/tmp/report.csv", "folderId": "folder-1"})
+	if err != nil {
+		t.Fatalf("buildGenericResourceVariables() error = %v", err)
+	}
+	if spec.Mutation != "UploadProjectFile" {
+		t.Fatalf("mutation = %q, want UploadProjectFile", spec.Mutation)
+	}
+	if variables["filePath"] != "/tmp/report.csv" {
+		t.Fatalf("filePath = %#v, want path", variables["filePath"])
+	}
+	folderID, ok := variables["folderId"].(*string)
+	if !ok || folderID == nil || *folderID != "folder-1" {
+		t.Fatalf("folderId = %#v, want folder pointer", variables["folderId"])
+	}
+}
+
+func TestBuildGenericResourceVariablesPromoteFileToDataset(t *testing.T) {
+	spec, variables, err := buildGenericResourceVariables("proj-1", genericResourceWriteInput{
+		Resource: "file",
+		Action:   "promote_to_dataset",
+		ID:       "file-1",
+	}, map[string]any{
+		"datasetName": "Customers",
+		"columnMap": []map[string]any{
+			{"sourceColumn": "id", "datasetColumn": "id", "dataType": "text", "isNullable": false, "isPrimary": true},
+		},
+	})
+	if err != nil {
+		t.Fatalf("buildGenericResourceVariables() error = %v", err)
+	}
+	if spec.Mutation != "PromoteFileToDataset" {
+		t.Fatalf("mutation = %q, want PromoteFileToDataset", spec.Mutation)
+	}
+	input, ok := variables["input"].(map[string]any)
+	if !ok {
+		t.Fatalf("variables = %#v, want input object", variables)
+	}
+	if input["projectId"] != "proj-1" || input["fileId"] != "file-1" || input["datasetName"] != "Customers" {
+		t.Fatalf("input = %#v, want project/file/dataset injected", input)
+	}
+}
+
+func TestBuildGenericResourceVariablesFolderDeleteConfirmsNestedDeletion(t *testing.T) {
+	spec, variables, err := buildGenericResourceVariables("proj-1", genericResourceWriteInput{
+		Resource: "folder",
+		Action:   "delete",
+		ID:       "folder-1",
+	}, map[string]any{})
+	if err != nil {
+		t.Fatalf("buildGenericResourceVariables() error = %v", err)
+	}
+	if spec.Mutation != "DeleteProjectFolder" {
+		t.Fatalf("mutation = %q, want DeleteProjectFolder", spec.Mutation)
+	}
+	if variables["confirmDeletion"] != true {
+		t.Fatalf("confirmDeletion = %#v, want true", variables["confirmDeletion"])
+	}
+}
+
+func TestBuildGenericResourceVariablesOntologyRecordUsesEntityID(t *testing.T) {
+	spec, variables, err := buildGenericResourceVariables("proj-1", genericResourceWriteInput{
+		Resource: "ontology",
+		Action:   "add_record",
+		ID:       "ontology-1",
+	}, map[string]any{
+		"values": []map[string]any{{"key": "id", "value": "1"}},
+	})
+	if err != nil {
+		t.Fatalf("buildGenericResourceVariables() error = %v", err)
+	}
+	if spec.Mutation != "OntologyAddRow" {
+		t.Fatalf("mutation = %q, want OntologyAddRow", spec.Mutation)
+	}
+	if variables["projectId"] != "proj-1" || variables["entityId"] != "ontology-1" {
+		t.Fatalf("variables = %#v, want projectId/entityId", variables)
+	}
+}
+
+func TestParseDatasetColumns(t *testing.T) {
+	columns, err := parseDatasetColumns([]string{"id:text:primary", "name:text:nullable"})
+	if err != nil {
+		t.Fatalf("parseDatasetColumns() error = %v", err)
+	}
+	if len(columns) != 2 {
+		t.Fatalf("columns = %#v, want 2", columns)
+	}
+	if columns[0]["name"] != "id" || columns[0]["isPrimary"] != true || columns[0]["isNullable"] != false {
+		t.Fatalf("first column = %#v, want primary required id", columns[0])
+	}
+	if columns[1]["name"] != "name" || columns[1]["isNullable"] != true {
+		t.Fatalf("second column = %#v, want nullable name", columns[1])
+	}
+}
+
+func TestParseOntologyRecordValues(t *testing.T) {
+	values, err := parseOntologyRecordValues([]string{"id=1", "name=Ada"})
+	if err != nil {
+		t.Fatalf("parseOntologyRecordValues() error = %v", err)
+	}
+	if len(values) != 2 || values[0]["key"] != "id" || values[0]["value"] != "1" || values[1]["key"] != "name" || values[1]["value"] != "Ada" {
+		t.Fatalf("values = %#v, want record inputs", values)
+	}
+	if _, err := parseOntologyRecordValues([]string{"broken"}); err == nil {
+		t.Fatal("parseOntologyRecordValues() error = nil, want error")
+	}
+}
+
+func TestBuildOntologyFastLookupCreatePayload(t *testing.T) {
+	ontologyFastLookupFields = []string{"id", " email "}
+	ontologyFastLookupReason = "common lookup"
+	t.Cleanup(func() {
+		ontologyFastLookupFields = nil
+		ontologyFastLookupReason = ""
+	})
+	cmd := &cobra.Command{}
+	cmd.Flags().String("reason", "", "")
+	if err := cmd.Flags().Set("reason", "common lookup"); err != nil {
+		t.Fatalf("set reason flag: %v", err)
+	}
+	payload, err := buildOntologyFastLookupCreatePayload(cmd)
+	if err != nil {
+		t.Fatalf("buildOntologyFastLookupCreatePayload() error = %v", err)
+	}
+	fields, ok := payload["fields"].([]string)
+	if !ok || len(fields) != 2 || fields[1] != "email" {
+		t.Fatalf("fields = %#v, want normalized fields", payload["fields"])
+	}
+	if payload["reason"] != "common lookup" {
+		t.Fatalf("reason = %#v, want reason", payload["reason"])
+	}
+}
+
+func TestPlatformListFilters(t *testing.T) {
+	platformFilterName = "cust"
+	platformFilterSchemaMode = "manual"
+	platformFilterStatus = "active"
+	platformFilterType = "python"
+	platformFilterMIMEType = "csv"
+	platformFilterKind = "file"
+	platformFilterDeployed = "true"
+	t.Cleanup(func() {
+		platformFilterName = ""
+		platformFilterSchemaMode = ""
+		platformFilterStatus = ""
+		platformFilterType = ""
+		platformFilterMIMEType = ""
+		platformFilterKind = ""
+		platformFilterDeployed = ""
+	})
+
+	datasets := filterDatasets([]platform.Dataset{
+		{ID: "dataset-1", Name: "Customers", SchemaMode: "manual"},
+		{ID: "dataset-2", Name: "Orders", SchemaMode: "manual"},
+		{ID: "dataset-3", Name: "Customer Import", SchemaMode: "inferred"},
+	})
+	if len(datasets) != 1 || datasets[0].ID != "dataset-1" {
+		t.Fatalf("filterDatasets() = %#v, want dataset-1", datasets)
+	}
+	ontologies := filterOntologies([]platform.Ontology{
+		{ID: "ontology-1", APIName: "customer", DisplayName: "Customer", Status: "active"},
+		{ID: "ontology-2", APIName: "customer_draft", DisplayName: "Customer Draft", Status: "draft"},
+	})
+	if len(ontologies) != 1 || ontologies[0].ID != "ontology-1" {
+		t.Fatalf("filterOntologies() = %#v, want ontology-1", ontologies)
+	}
+	functions := filterFunctions([]platform.Function{
+		{ID: "fn-1", Name: "Customer Enrich", Language: "python", IsDeployed: true},
+		{ID: "fn-2", Name: "Customer TS", Language: "typescript", IsDeployed: true},
+		{ID: "fn-3", Name: "Customer Draft", Language: "python", IsDeployed: false},
+	})
+	if len(functions) != 1 || functions[0].ID != "fn-1" {
+		t.Fatalf("filterFunctions() = %#v, want fn-1", functions)
+	}
+	contents := filterFolderContents(&platform.FolderContents{
+		Folders: []platform.ProjectFolder{{ID: "folder-1", Name: "Customers"}},
+		Files: []platform.ProjectFile{
+			{ID: "file-1", Name: "customers.csv", MIMEType: "text/csv"},
+			{ID: "file-2", Name: "customers.json", MIMEType: "application/json"},
+		},
+	})
+	if len(contents.Folders) != 0 || len(contents.Files) != 1 || contents.Files[0].ID != "file-1" {
+		t.Fatalf("filterFolderContents() = %#v, want only csv file", contents)
+	}
+}
+
+func TestPlatformResourceWriteSummaryUsesSafeName(t *testing.T) {
+	got := platformResourceWriteSummary(platform.GenericWriteSpec{Resource: "dataset", Action: "create", Mutation: "CreateDataset"}, map[string]any{
+		"name": "Customers",
+	})
+	if got != `Create dataset "Customers"` {
+		t.Fatalf("platformResourceWriteSummary() = %q", got)
+	}
+	got = platformResourceWriteSummary(platform.GenericWriteSpec{Resource: "file", Action: "promote_to_dataset", Mutation: "PromoteFileToDataset"}, map[string]any{
+		"datasetName": "Customers",
+	})
+	if got != `Promote file to dataset "Customers"` {
+		t.Fatalf("platformResourceWriteSummary() = %q", got)
+	}
+}
+
+func TestParseFunctionProviderConfigs(t *testing.T) {
+	configs, err := parseFunctionProviderConfigs([]string{"provider-1=gpt-4.1"})
+	if err != nil {
+		t.Fatalf("parseFunctionProviderConfigs() error = %v", err)
+	}
+	if len(configs) != 1 || configs[0]["providerId"] != "provider-1" || configs[0]["model"] != "gpt-4.1" {
+		t.Fatalf("configs = %#v, want provider/model", configs)
+	}
+}
+
+func TestParseFunctionSecretBindings(t *testing.T) {
+	bindings, err := parseFunctionSecretBindings([]string{"API_KEY=secret-1"})
+	if err != nil {
+		t.Fatalf("parseFunctionSecretBindings() error = %v", err)
+	}
+	if len(bindings) != 1 || bindings[0]["name"] != "API_KEY" || bindings[0]["secretId"] != "secret-1" || bindings[0]["target"] != "ENV" {
+		t.Fatalf("bindings = %#v, want env secret binding", bindings)
+	}
+}
+
+func TestParseFileColumnMappings(t *testing.T) {
+	mappings, err := parseFileColumnMappings([]string{"id:id:text:primary", "name:name:text:nullable"})
+	if err != nil {
+		t.Fatalf("parseFileColumnMappings() error = %v", err)
+	}
+	if len(mappings) != 2 || mappings[0]["sourceColumn"] != "id" || mappings[0]["isPrimary"] != true || mappings[1]["isNullable"] != true {
+		t.Fatalf("mappings = %#v, want parsed column mappings", mappings)
+	}
+}
+
+func TestReadSensitiveFlagValueUsesEnv(t *testing.T) {
+	t.Setenv("WHODB_TEST_SECRET", "secret-value")
+	value, err := readSensitiveFlagValue(&cobra.Command{}, "", "WHODB_TEST_SECRET", false, "secret value")
+	if err != nil {
+		t.Fatalf("readSensitiveFlagValue() error = %v", err)
+	}
+	if value != "secret-value" {
+		t.Fatalf("value = %q, want secret-value", value)
+	}
+}
+
+func TestImportSecretEnvNameSanitizesName(t *testing.T) {
+	got := importSecretEnvName("OpenAI API-Key")
+	if got != "WHODB_IMPORT_SECRET_OPENAI_API_KEY" {
+		t.Fatalf("importSecretEnvName() = %q, want sanitized env name", got)
+	}
+}
+
+func TestDatasetCreatePayloadFromExportOmitsSourceID(t *testing.T) {
+	payload := datasetCreatePayloadFromExport(platform.Dataset{
+		Name:        "Customers",
+		Description: "Customer import",
+		SourceID:    "source-from-other-project",
+		SchemaMode:  "manual",
+		Schema:      []platform.ColumnDef{{Name: "id", Type: "text", IsPrimary: true}},
+	})
+	if payload["sourceId"] != nil {
+		t.Fatalf("payload sourceId = %#v, want omitted for portable import", payload["sourceId"])
+	}
+	columns, ok := payload["columns"].([]map[string]any)
+	if !ok || len(columns) != 1 || columns[0]["name"] != "id" {
+		t.Fatalf("columns = %#v, want exported schema", payload["columns"])
+	}
+}
+
+func TestFunctionCreatePayloadFromExportStripsReferencesForBundleImport(t *testing.T) {
+	payload := functionCreatePayloadFromExport(platform.Function{
+		Name:                "enrich",
+		Language:            "python",
+		EntryPoint:          "main",
+		ProviderIDs:         []string{"provider-1"},
+		OntologyIDs:         []string{"ontology-1"},
+		ReadOnlyOntologyIDs: []string{"ontology-2"},
+		SecretBindings:      []platform.FunctionSecretBinding{{Name: "API_KEY", SecretID: "secret-1", Target: "ENV"}},
+		Files:               []platform.FunctionFile{{Path: "main.py", Content: "def main(): pass"}},
+	}, false)
+	for _, key := range []string{"providerIds", "ontologyIds", "readOnlyOntologyIds", "secretBindings"} {
+		if _, ok := payload[key]; ok {
+			t.Fatalf("payload[%q] present for portable import: %#v", key, payload[key])
+		}
+	}
+	files, ok := payload["files"].([]map[string]any)
+	if !ok || len(files) != 1 || files[0]["path"] != "main.py" {
+		t.Fatalf("files = %#v, want function files preserved", payload["files"])
+	}
+}
+
+func TestFunctionCreatePayloadFromExportKeepsReferencesForClone(t *testing.T) {
+	payload := functionCreatePayloadFromExport(platform.Function{
+		Name:        "enrich",
+		Language:    "python",
+		EntryPoint:  "main",
+		ProviderIDs: []string{"provider-1"},
+	}, true)
+	providerIDs, ok := payload["providerIds"].([]string)
+	if !ok || len(providerIDs) != 1 || providerIDs[0] != "provider-1" {
+		t.Fatalf("providerIds = %#v, want same-project references preserved", payload["providerIds"])
+	}
+}
+
+func TestSafePlatformIdentifier(t *testing.T) {
+	if got := safePlatformIdentifier("123 Customer Type!"); got != "x_123_customer_type" {
+		t.Fatalf("safePlatformIdentifier() = %q, want normalized identifier", got)
+	}
+}
+
 func newPlatformWorkspaceTestClient(t *testing.T, orgResponse, projectResponse string) *platform.Client {
 	t.Helper()
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

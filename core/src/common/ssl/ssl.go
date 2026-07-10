@@ -49,7 +49,7 @@ const (
 	KeySSLClientKeyContent  = "SSL Client Key Content"
 	KeySSLServerName        = "SSL Server Name"
 
-	// Path keys - only for profile-based connections (server-side, admin-controlled)
+	// KeySSLCACertPath is used by profile-based, server-side connections.
 	KeySSLCACertPath     = "SSL CA Path"
 	KeySSLClientCertPath = "SSL Client Cert Path"
 	KeySSLClientKeyPath  = "SSL Client Key Path"
@@ -180,7 +180,10 @@ func (c *SSLConfig) IsEnabled() bool {
 func ParseSSLConfig(dbType engine.DatabaseType, advanced []engine.Record, hostname string, isProfile bool) *SSLConfig {
 	log.Debugf("[SSL] ParseSSLConfig: received %d advanced records", len(advanced))
 	for _, rec := range advanced {
-		log.Debugf("[SSL] ParseSSLConfig: key=%q value=%q", rec.Key, rec.Value)
+		// Log only the key and value length. Advanced records include certificate
+		// and private-key PEM content (e.g. "SSL Client Key Content"), which must
+		// never be written to logs.
+		log.Debugf("[SSL] ParseSSLConfig: key=%q valueLen=%d", rec.Key, len(rec.Value))
 	}
 	modeStr := common.GetRecordValueOrDefault(advanced, KeySSLMode, string(SSLModeDisabled))
 	log.Debugf("[SSL] ParseSSLConfig: modeStr=%q (looking for key=%q)", modeStr, KeySSLMode)

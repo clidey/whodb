@@ -214,6 +214,14 @@ func HandleExplain(ctx context.Context, req *mcp.CallToolRequest, input ExplainI
 		return nil, ExplainOutput{Error: "connection is required when multiple connections are available", RequestID: requestID}, nil
 	}
 
+	// EXPLAIN ANALYZE executes the statement on some source types (e.g. Postgres),
+	// so only allow statements that cannot modify data. Write statements must go
+	// through whodb_query and its confirmation flow instead.
+	if !isSafeReadOnly(input.Query) {
+		TrackToolCall(ctx, "explain", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "security"})
+		return nil, ExplainOutput{Error: "explain is limited to read-only statements because EXPLAIN ANALYZE executes the query; use whodb_query for write statements", RequestID: requestID}, nil
+	}
+
 	mgr, conn, err := newConnectedManagerFromResolver(resolver, input.Connection)
 	if err != nil {
 		TrackToolCall(ctx, "explain", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "connection"})

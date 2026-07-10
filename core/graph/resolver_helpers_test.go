@@ -258,6 +258,3 @@ func TestResolverHelperFallbacks(t *testing.T) {
 		t.Fatalf("expected bool pointer value false, got %t", got)
 	}
 }
-
-//go:fix inline
-func boolPtr(value bool) *bool { return new(value) }

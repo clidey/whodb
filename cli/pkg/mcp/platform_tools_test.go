@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -181,13 +182,69 @@ func testPlatformSession(client platformClient) *platformToolSession {
 
 func TestPlatformToolDefinitions(t *testing.T) {
 	tools := platformToolDefinitions()
-	if len(tools) != 46 {
-		t.Fatalf("len(platformToolDefinitions()) = %d, want 46", len(tools))
+	if len(tools) != 76 {
+		t.Fatalf("len(platformToolDefinitions()) = %d, want 76", len(tools))
 	}
 	for _, tool := range tools {
 		if tool.Annotations == nil {
 			t.Fatalf("tool %s has no annotations", tool.Name)
 		}
+	}
+}
+
+func TestHandlePlatformSetupStatusReportsLoginCommandWithoutConfig(t *testing.T) {
+	setupTestEnv(t)
+
+	_, output, err := HandlePlatformSetupStatus(context.Background(), nil, PlatformSetupStatusInput{})
+	if err != nil {
+		t.Fatalf("HandlePlatformSetupStatus() error = %v", err)
+	}
+	if output.Status != "needs_login" || output.Authenticated {
+		t.Fatalf("setup status = %#v, want needs_login without auth", output)
+	}
+	for _, expected := range []string{"whodb-cli login --host https://app.whodb.com", "whodb-cli use --host https://app.whodb.com --org <org> --project <project>"} {
+		if !slices.Contains(output.Commands, expected) {
+			t.Fatalf("commands = %#v, want %q", output.Commands, expected)
+		}
+	}
+}
+
+func TestPlatformSetupStatusGuidance(t *testing.T) {
+	workspace := platformSetupStatusFor("https://app.whodb.com", "needs_workspace")
+	if len(workspace.Commands) != 1 || !strings.Contains(workspace.Commands[0], "use --host https://app.whodb.com") {
+		t.Fatalf("workspace commands = %#v, want use command", workspace.Commands)
+	}
+	if !strings.Contains(strings.Join(workspace.NextSteps, " "), "whodb_platform_orgs") {
+		t.Fatalf("workspace next steps = %#v, want org/project discovery", workspace.NextSteps)
+	}
+
+	ready := platformSetupStatusFor("https://app.whodb.com", "ready")
+	if len(ready.Commands) != 0 {
+		t.Fatalf("ready commands = %#v, want none", ready.Commands)
+	}
+	if !strings.Contains(strings.Join(ready.NextSteps, " "), "whodb_platform_project_health") {
+		t.Fatalf("ready next steps = %#v, want project health guidance", ready.NextSteps)
+	}
+}
+
+func TestHandlePlatformDoctorIncludesSetupGuidanceOnSessionError(t *testing.T) {
+	setupTestEnv(t)
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return nil, errors.New("not logged in")
+	})
+
+	_, output, err := HandlePlatformDoctor(context.Background(), nil, PlatformDoctorInput{})
+	if err != nil {
+		t.Fatalf("HandlePlatformDoctor() error = %v", err)
+	}
+	if output.Error != "not logged in" {
+		t.Fatalf("doctor error = %q, want loader error", output.Error)
+	}
+	if len(output.Commands) == 0 || !strings.Contains(output.Commands[0], "whodb-cli login") {
+		t.Fatalf("doctor commands = %#v, want login command", output.Commands)
+	}
+	if !strings.Contains(strings.Join(output.NextSteps, " "), "whodb-cli login") {
+		t.Fatalf("doctor next steps = %#v, want login guidance", output.NextSteps)
 	}
 }
 
@@ -441,6 +498,9 @@ func TestHandlePlatformGenericCreateConfirmWritesRedactsPreview(t *testing.T) {
 	if output.ConfirmationPreview == nil || output.ConfirmationPreview.Resource != "secret" || output.ConfirmationPreview.Action != "create" {
 		t.Fatalf("preview = %#v, want secret create preview", output.ConfirmationPreview)
 	}
+	if output.ConfirmationPreview.Summary != `Create secret "OPENAI_API_KEY"` {
+		t.Fatalf("preview summary = %q, want safe secret name summary", output.ConfirmationPreview.Summary)
+	}
 	if client.mutationName != "" {
 		t.Fatalf("mutation executed in confirm-writes mode: %q", client.mutationName)
 	}
@@ -480,6 +540,30 @@ func TestHandlePlatformGenericCreateAllowWriteExecutesImmediately(t *testing.T) 
 	}
 }
 
+func TestHandlePlatformGenericFolderDeleteConfirmsNestedDeletion(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := handlePlatformGenericWrite(context.Background(), "platform_delete", PlatformGenericWriteInput{
+		Resource: "folder",
+		ID:       "folder-1",
+	}, "delete", false)
+	if err != nil {
+		t.Fatalf("handlePlatformGenericWrite() error = %v", err)
+	}
+	if output.Error != "" {
+		t.Fatalf("handlePlatformGenericWrite() output error = %q", output.Error)
+	}
+	if client.mutationName != "DeleteProjectFolder" {
+		t.Fatalf("mutation = %q, want DeleteProjectFolder", client.mutationName)
+	}
+	if client.mutationVariables["confirmDeletion"] != true {
+		t.Fatalf("confirmDeletion = %#v, want true", client.mutationVariables["confirmDeletion"])
+	}
+}
+
 func TestHandlePlatformGenericFileUploadConfirmWritesRedactsPreview(t *testing.T) {
 	client := &fakePlatformClient{}
 	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
@@ -510,8 +594,30 @@ func TestHandlePlatformGenericFileUploadConfirmWritesRedactsPreview(t *testing.T
 	if output.ConfirmationPreview == nil || output.ConfirmationPreview.Resource != "file" || output.ConfirmationPreview.Action != "upload" {
 		t.Fatalf("preview = %#v, want file upload preview", output.ConfirmationPreview)
 	}
+	if output.ConfirmationPreview.Summary != "Upload file" {
+		t.Fatalf("preview summary = %q, want generic upload summary", output.ConfirmationPreview.Summary)
+	}
 	if client.mutationName != "" {
 		t.Fatalf("mutation executed in confirm-writes mode: %q", client.mutationName)
+	}
+}
+
+func TestPlatformGenericWriteSummaryUnwrapsInputPayload(t *testing.T) {
+	got := platformGenericWriteSummary(platformapi.GenericWriteSpec{
+		Resource: "dataset",
+		Action:   "create",
+		Mutation: "CreateDataset",
+	}, map[string]any{"input": map[string]any{"name": "Customers", "projectId": "proj-1"}})
+	if got != `Create dataset "Customers"` {
+		t.Fatalf("platformGenericWriteSummary() = %q", got)
+	}
+	got = platformGenericWriteSummary(platformapi.GenericWriteSpec{
+		Resource: "file",
+		Action:   "promote_to_dataset",
+		Mutation: "PromoteFileToDataset",
+	}, map[string]any{"input": map[string]any{"datasetName": "Customers"}})
+	if got != `Promote file to dataset "Customers"` {
+		t.Fatalf("platformGenericWriteSummary() = %q", got)
 	}
 }
 
@@ -552,7 +658,64 @@ func TestHandlePlatformGenericFileUploadAllowWriteExecutesImmediately(t *testing
 	}
 }
 
+func TestHandlePlatformCreateDatasetTypedConfirmWrites(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := handlePlatformCreateDataset(context.Background(), PlatformCreateDatasetInput{
+		Name:       "Customers",
+		SchemaMode: "manual",
+		Columns:    []PlatformDatasetColumnInput{{Name: "id", Type: "text", IsPrimary: true}},
+	}, true)
+	if err != nil {
+		t.Fatalf("handlePlatformCreateDataset() error = %v", err)
+	}
+	if output.Error != "" {
+		t.Fatalf("handlePlatformCreateDataset() output error = %q", output.Error)
+	}
+	if !output.ConfirmationRequired || output.ConfirmationPreview == nil {
+		t.Fatalf("output = %#v, want confirmation preview", output)
+	}
+	if output.ConfirmationPreview.Resource != "dataset" || output.ConfirmationPreview.Action != "create" {
+		t.Fatalf("preview = %#v, want dataset create", output.ConfirmationPreview)
+	}
+	if client.mutationName != "" {
+		t.Fatalf("mutation executed in confirm-writes mode: %q", client.mutationName)
+	}
+}
+
+func TestHandlePlatformOntologyRecordTypedAllowWriteUsesEntityID(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := handlePlatformOntologyRecordWrite(context.Background(), "whodb_platform_add_ontology_record", PlatformOntologyRecordInput{
+		EntityID: "ontology-1",
+		Values:   map[string]string{"id": "1", "name": "Ada"},
+	}, "add_record", false)
+	if err != nil {
+		t.Fatalf("handlePlatformOntologyRecordWrite() error = %v", err)
+	}
+	if output.Error != "" {
+		t.Fatalf("handlePlatformOntologyRecordWrite() output error = %q", output.Error)
+	}
+	if client.mutationName != "OntologyAddRow" {
+		t.Fatalf("mutation = %q, want OntologyAddRow", client.mutationName)
+	}
+	if client.mutationVariables["projectId"] != "proj-1" || client.mutationVariables["entityId"] != "ontology-1" {
+		t.Fatalf("variables = %#v, want projectId/entityId", client.mutationVariables)
+	}
+	values, ok := client.mutationVariables["values"].([]any)
+	if !ok || len(values) != 2 {
+		t.Fatalf("values = %#v, want record input values", client.mutationVariables["values"])
+	}
+}
+
 func TestHandlePlatformSourcesReportsActionableLoginError(t *testing.T) {
+	setupTestEnv(t)
 	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
 		return nil, errors.New("hosted WhoDB is not logged in for https://app.whodb.com. Run: whodb-cli login --host https://app.whodb.com")
 	})
@@ -564,6 +727,42 @@ func TestHandlePlatformSourcesReportsActionableLoginError(t *testing.T) {
 	if output.Error == "" || !containsAll(output.Error, "whodb-cli login", "app.whodb.com") {
 		t.Fatalf("output error = %q, want login guidance", output.Error)
 	}
+	assertPlatformSetupGuidance(t, output.PlatformSetupGuidance, "needs_login", "whodb-cli login --host https://app.whodb.com")
+}
+
+func TestHandlePlatformProjectHealthReportsSetupGuidanceOnSessionError(t *testing.T) {
+	setupTestEnv(t)
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return nil, errors.New("hosted WhoDB is not logged in for https://app.whodb.com")
+	})
+
+	_, output, err := HandlePlatformProjectHealth(context.Background(), nil, PlatformNextActionsInput{})
+	if err != nil {
+		t.Fatalf("HandlePlatformProjectHealth() error = %v", err)
+	}
+	if output.Error == "" {
+		t.Fatal("HandlePlatformProjectHealth() output error is empty, want session error")
+	}
+	assertPlatformSetupGuidance(t, output.PlatformSetupGuidance, "needs_login", "whodb-cli login --host https://app.whodb.com")
+}
+
+func TestHandlePlatformGenericWriteReportsSetupGuidanceOnSessionError(t *testing.T) {
+	setupTestEnv(t)
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return nil, errors.New("hosted WhoDB is not logged in for https://app.whodb.com")
+	})
+
+	_, output, err := handlePlatformGenericWrite(context.Background(), "platform_create", PlatformGenericWriteInput{
+		Resource:    "secret",
+		PayloadJSON: `{"name":"OPENAI_API_KEY","value":"secret-value"}`,
+	}, "create", true)
+	if err != nil {
+		t.Fatalf("handlePlatformGenericWrite() error = %v", err)
+	}
+	if output.Error == "" {
+		t.Fatal("handlePlatformGenericWrite() output error is empty, want session error")
+	}
+	assertPlatformSetupGuidance(t, output.PlatformSetupGuidance, "needs_login", "whodb-cli login --host https://app.whodb.com")
 }
 
 func TestHandlePlatformSourceConfigRedactsSecrets(t *testing.T) {
@@ -753,6 +952,45 @@ func TestHandleConfirmExecutesPlatformDelete(t *testing.T) {
 	}
 	if output.Message == "" || len(output.Rows) != 1 {
 		t.Fatalf("output = %#v, want confirmation rows", output)
+	}
+}
+
+func TestHandlePlatformConfirmReportsSetupGuidanceOnSessionError(t *testing.T) {
+	setupTestEnv(t)
+	clearPendingPlatformActions(t)
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return nil, errors.New("hosted WhoDB is not logged in for https://app.whodb.com")
+	})
+	token, _ := storePendingPlatformAction(&PendingPlatformAction{
+		Operation:   "delete_source",
+		Host:        "https://app.whodb.com",
+		OrgID:       "org-1",
+		ProjectID:   "proj-1",
+		ProjectName: "Customer",
+		SourceID:    "src-1",
+		SourceName:  "Warehouse",
+	})
+
+	_, output, err := HandlePlatformConfirm(context.Background(), nil, ConfirmInput{Token: token})
+	if err != nil {
+		t.Fatalf("HandlePlatformConfirm() error = %v", err)
+	}
+	if output.Error == "" {
+		t.Fatal("HandlePlatformConfirm() output error is empty, want session error")
+	}
+	assertPlatformSetupGuidance(t, output.PlatformSetupGuidance, "needs_login", "whodb-cli login --host https://app.whodb.com")
+}
+
+func assertPlatformSetupGuidance(t *testing.T, guidance PlatformSetupGuidance, wantStatus, wantCommand string) {
+	t.Helper()
+	if guidance.SetupStatus != wantStatus {
+		t.Fatalf("setup_status = %q, want %q", guidance.SetupStatus, wantStatus)
+	}
+	if !slices.Contains(guidance.Commands, wantCommand) {
+		t.Fatalf("commands = %#v, want %q", guidance.Commands, wantCommand)
+	}
+	if len(guidance.NextSteps) == 0 {
+		t.Fatal("next_steps is empty, want setup recovery guidance")
 	}
 }
 

@@ -316,6 +316,57 @@ func TestSaveAndLoadConfig(t *testing.T) {
 	}
 }
 
+func TestSaveAndLoad_SSHPasswordRoundTrip(t *testing.T) {
+	tempDir := t.TempDir()
+	origHome := os.Getenv("HOME")
+	os.Setenv("HOME", tempDir)
+	defer os.Setenv("HOME", origHome)
+	resetConfigDir()
+	defer resetConfigDir()
+
+	// Force the no-keyring path so the test is deterministic regardless of the
+	// host keyring: secrets fall back to the (0600) config file and must survive
+	// a round trip. This also exercises that SSHPassword is handled symmetrically
+	// with Password in both save and load.
+	off := false
+	origAvail := keyringAvailable
+	keyringAvailable = &off
+	defer func() { keyringAvailable = origAvail }()
+
+	cfg := DefaultConfig()
+	cfg.useKeyring = false
+	cfg.AddConnection(Connection{
+		Name:        "ssh-db",
+		Type:        "postgres",
+		Host:        "localhost",
+		Port:        5432,
+		Username:    "u",
+		Database:    "d",
+		Password:    "db-secret",
+		SSHHost:     "bastion",
+		SSHUser:     "ops",
+		SSHPassword: "ssh-secret",
+	})
+
+	if err := cfg.Save(); err != nil {
+		t.Fatalf("Save failed: %v", err)
+	}
+
+	loaded, err := LoadConfig()
+	if err != nil {
+		t.Fatalf("LoadConfig failed: %v", err)
+	}
+	if len(loaded.Connections) != 1 {
+		t.Fatalf("expected 1 connection, got %d", len(loaded.Connections))
+	}
+	if got := loaded.Connections[0].SSHPassword; got != "ssh-secret" {
+		t.Errorf("SSHPassword did not round-trip: got %q", got)
+	}
+	if got := loaded.Connections[0].Password; got != "db-secret" {
+		t.Errorf("Password did not round-trip: got %q", got)
+	}
+}
+
 func TestLoadConfig_ReturnsDefaults(t *testing.T) {
 	tempDir := t.TempDir()
 	origHome := os.Getenv("HOME")

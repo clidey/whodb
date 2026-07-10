@@ -53,17 +53,21 @@ func (p *ElasticSearchPlugin) GetGraph(config *engine.PluginConfig, database str
 		return nil, err
 	}
 
-	indicesStats := stats["indices"].(map[string]any)
+	indicesStatsMap, err := indicesStats(stats)
+	if err != nil {
+		log.WithError(err).Error("ElasticSearch indices stats response has invalid structure for graph generation")
+		return nil, err
+	}
 
 	indices := []string{}
-	for indexName := range indicesStats {
+	for indexName := range indicesStatsMap {
 		indices = append(indices, indexName)
 	}
 
 	var relations []graphutil.Relation
 	uniqueRelations := make(map[string]bool)
 
-	for indexName := range indicesStats {
+	for indexName := range indicesStatsMap {
 		var buf bytes.Buffer
 		query := map[string]any{
 			"size": 100,
@@ -101,12 +105,16 @@ func (p *ElasticSearchPlugin) GetGraph(config *engine.PluginConfig, database str
 		}
 		_ = res.Body.Close()
 
-		hits := searchResult["hits"].(map[string]any)["hits"].([]any)
+		hits, err := responseHits(searchResult)
+		if err != nil {
+			log.WithError(err).WithField("indexName", indexName).Error("ElasticSearch search response has invalid structure for graph generation")
+			return nil, err
+		}
 		if len(hits) > 0 {
 			// Collect unique field names across all sampled documents
 			fieldSet := make(map[string]struct{})
 			for _, h := range hits {
-				doc, ok := h.(map[string]any)["_source"].(map[string]any)
+				doc, ok := hitSource(h)
 				if !ok {
 					continue
 				}

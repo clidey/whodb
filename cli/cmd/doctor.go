@@ -101,12 +101,17 @@ func writeDoctorTable(cmd *cobra.Command, report doctor.Report) {
 
 func init() {
 	rootCmd.AddCommand(doctorCmd)
+	doctorCmd.AddCommand(platformDoctorCmd)
 
 	doctorCmd.Flags().StringVarP(&doctorConnection, "connection", "c", "", "connection name to inspect")
 	doctorCmd.Flags().StringVarP(&doctorSchema, "schema", "s", "", "schema override for metadata checks")
 	doctorCmd.Flags().StringVarP(&doctorFormat, "format", "f", "table", "output format: table or json")
 	doctorCmd.Flags().BoolVarP(&doctorQuiet, "quiet", "q", false, "suppress informational messages")
+	platformDoctorCmd.Flags().StringVar(&platformHost, "host", "", "hosted WhoDB URL (default app.whodb.com)")
+	platformDoctorCmd.Flags().StringVarP(&platformFormat, "format", "f", "auto", "output format: auto, table, plain, json, ndjson, csv")
+	platformDoctorCmd.Flags().BoolVarP(&platformQuiet, "quiet", "q", false, "suppress informational messages")
 
 	doctorCmd.RegisterFlagCompletionFunc("connection", completeConnectionNames)
 	doctorCmd.RegisterFlagCompletionFunc("format", completeOutputFormats)
+	platformDoctorCmd.RegisterFlagCompletionFunc("format", completeOutputFormats)
 }

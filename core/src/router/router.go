@@ -170,12 +170,9 @@ func graphQLAuditArguments(rootFieldCtx *graphql.RootFieldContext, opCtx *graphq
 }
 
 func setupServer(router *chi.Mux, schema graphql.ExecutableSchema, httpHandlers map[string]http.Handler, staticFiles embed.FS) {
-	if !env.IsAPIGatewayEnabled {
-		fileServer(router, staticFiles)
-	}
+	fileServer(router, staticFiles)
 
 	server := NewGraphQLServer(schema)
-	server.AddTransport(&transport.Websocket{})
 	graph.SetupHTTPServer(router)
 	setupPlaygroundHandler(router, server)
 
@@ -327,7 +324,7 @@ func sseAwareTimeout(dt time.Duration) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		timedHandler := timeoutMiddleware(next)
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if strings.HasSuffix(r.URL.Path, "/stream") {
+			if graph.IsLongLivedHTTPRoute(r.URL.Path) {
 				next.ServeHTTP(w, r)
 				return
 			}
@@ -344,7 +341,7 @@ func sseAwareThrottle(limit, backlog int, timeout time.Duration) func(http.Handl
 	return func(next http.Handler) http.Handler {
 		throttledHandler := throttleMiddleware(next)
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if strings.HasSuffix(r.URL.Path, "/stream") {
+			if graph.IsLongLivedHTTPRoute(r.URL.Path) {
 				next.ServeHTTP(w, r)
 				return
 			}
@@ -362,7 +359,7 @@ func sseAwareCompress(level int) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		compressedHandler := compressMiddleware(next)
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if strings.HasSuffix(r.URL.Path, "/stream") {
+			if graph.IsLongLivedHTTPRoute(r.URL.Path) {
 				next.ServeHTTP(w, r)
 				return
 			}
@@ -575,7 +572,7 @@ func InitializeRouter(schema graphql.ExecutableSchema, httpHandlers map[string]h
 		return router
 	}
 
-	if env.IsAPIGatewayEnabled || !hasEmbeddedFrontend(staticFiles) {
+	if !hasEmbeddedFrontend(staticFiles) {
 		log.Warnf("Ignoring WHODB_BASE_PATH=%s because bundled frontend assets are not being served", env.BasePath)
 		return router
 	}

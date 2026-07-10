@@ -390,10 +390,15 @@ func TestPendingConfirmation(t *testing.T) {
 		t.Errorf("Connection mismatch: got %q, want %q", pending.Connection, connection)
 	}
 
-	// Second retrieval should succeed (token not consumed on read)
+	// A second claim while in-flight is rejected; after release it succeeds again
+	// (token stays valid until consumed).
+	if _, err := getPendingConfirmation(token); err == nil {
+		t.Error("expected second concurrent claim to be rejected while in-flight")
+	}
+	releasePendingConfirmation(token)
 	pending2, err := getPendingConfirmation(token)
 	if err != nil {
-		t.Errorf("expected second retrieval to succeed (token stays valid until consumed), got: %v", err)
+		t.Errorf("expected claim after release to succeed, got: %v", err)
 	}
 	if pending2.Query != query {
 		t.Errorf("second retrieval query mismatch: got %q, want %q", pending2.Query, query)
@@ -1417,32 +1422,37 @@ func TestConfirmation_ExpiryInResponse(t *testing.T) {
 	}
 }
 
-// TestConfirmation_TokenRetryable tests that a token can be retrieved multiple times
-func TestConfirmation_TokenRetryable(t *testing.T) {
+// TestConfirmation_TokenClaimAndRetry verifies the in-flight claim: a second
+// concurrent claim is rejected, but after release the token can be retried, and
+// after consumption it is gone.
+func TestConfirmation_TokenClaimAndRetry(t *testing.T) {
 	token, _ := storePendingConfirmation("INSERT INTO test VALUES (1)", "conn")
 
-	// First retrieval
+	// First claim succeeds.
 	p1, err := getPendingConfirmation(token)
 	if err != nil {
-		t.Fatalf("first retrieval failed: %v", err)
+		t.Fatalf("first claim failed: %v", err)
 	}
 
-	// Second retrieval should also succeed
+	// A second claim while the first is in-flight must be rejected (prevents
+	// concurrent double execution of a non-idempotent write).
+	if _, err := getPendingConfirmation(token); err == nil {
+		t.Error("expected second concurrent claim to be rejected")
+	}
+
+	// Releasing the claim (the failure path) allows a retry.
+	releasePendingConfirmation(token)
 	p2, err := getPendingConfirmation(token)
 	if err != nil {
-		t.Fatalf("second retrieval failed: %v", err)
+		t.Fatalf("claim after release failed: %v", err)
 	}
-
 	if p1.Query != p2.Query {
-		t.Error("expected same query from both retrievals")
+		t.Error("expected same query from both claims")
 	}
 
-	// Consume
+	// Consuming removes the token permanently.
 	consumePendingConfirmation(token)
-
-	// Now should fail
-	_, err = getPendingConfirmation(token)
-	if err == nil {
+	if _, err := getPendingConfirmation(token); err == nil {
 		t.Error("expected error after consumption")
 	}
 }

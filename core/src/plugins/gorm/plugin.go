@@ -299,8 +299,6 @@ func (p *GormPlugin) GetColumnsForTable(config *engine.PluginConfig, schema stri
 			primaryKeys = []string{}
 		}
 
-		log.Debugf("[FK DEBUG] GetColumns for %s.%s: fkCount=%d, pkCount=%d, pks=%v", schema, storageUnit, len(fkRelationships), len(primaryKeys), primaryKeys)
-
 		// Enrich columns with primary key and foreign key information
 		// Note: IsAutoIncrement is already set by GORM's native detection in GetOrderedColumns
 		for i := range columns {
@@ -656,11 +654,9 @@ func (p *GormPlugin) GetForeignKeyRelationships(config *engine.PluginConfig, sch
 // This is a helper for SQL plugins that query system catalogs for FK information.
 // The query must return exactly 3 columns: column_name, referenced_table, referenced_column.
 func (p *GormPlugin) QueryForeignKeyRelationships(config *engine.PluginConfig, query string, params ...any) (map[string]*engine.ForeignKeyRelationship, error) {
-	log.Debugf("[FK DEBUG] QueryForeignKeyRelationships called with params: %v", params)
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (map[string]*engine.ForeignKeyRelationship, error) {
 		rows, err := db.Raw(query, params...).Rows()
 		if err != nil {
-			log.Debugf("[FK DEBUG] ERROR: Raw query error: %v", err)
 			return nil, err
 		}
 		defer func() { _ = rows.Close() }()
@@ -681,7 +677,6 @@ func (p *GormPlugin) QueryForeignKeyRelationships(config *engine.PluginConfig, q
 		if err := rows.Err(); err != nil {
 			return nil, err
 		}
-		log.Debugf("[FK DEBUG] Found %d FK relationships for params %v", len(relationships), params)
 		return relationships, nil
 	})
 }

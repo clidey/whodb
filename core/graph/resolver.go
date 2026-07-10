@@ -63,7 +63,7 @@ func stateToAWSProvider(state *settings.AWSProviderState) *model.AWSProvider {
 	var lastDiscoveryAt *string
 	if state.LastDiscoveryAt != nil {
 		t := state.LastDiscoveryAt.Format("2006-01-02T15:04:05Z")
-		lastDiscoveryAt = &t
+		lastDiscoveryAt = new(t)
 	}
 
 	var errorStr *string
@@ -98,7 +98,7 @@ func stateToGCPProvider(state *settings.GCPProviderState) *model.GCPProvider {
 	var lastDiscoveryAt *string
 	if state.LastDiscoveryAt != nil {
 		t := state.LastDiscoveryAt.Format("2006-01-02T15:04:05Z")
-		lastDiscoveryAt = &t
+		lastDiscoveryAt = new(t)
 	}
 
 	var errorStr *string
@@ -255,7 +255,7 @@ func stateToAzureProvider(state *settings.AzureProviderState) *model.AzureProvid
 	var lastDiscoveryAt *string
 	if state.LastDiscoveryAt != nil {
 		t := state.LastDiscoveryAt.Format("2006-01-02T15:04:05Z")
-		lastDiscoveryAt = &t
+		lastDiscoveryAt = new(t)
 	}
 
 	var errorStr *string

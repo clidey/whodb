@@ -176,9 +176,8 @@ WINDOWS_CERTIFICATE_PASSWORD
 
 ## Platform Build Tags (ARM / RISC-V64)
 
-Some features (AI streaming, agent, app generation) depend on CGO libraries or
-platform-specific bindings that are unavailable on ARM and RISC-V64. These are
-excluded using Go build tags.
+Some CE-owned features depend on CGO libraries or platform-specific bindings
+that are unavailable on ARM and RISC-V64. These are excluded using Go build tags.
 
 **Pattern:** every file with `//go:build !arm && !riscv64` MUST have a matching
 `_unsupported.go` stub file with `//go:build arm || riscv64` that provides the
@@ -187,9 +186,10 @@ same exported function signatures (returning HTTP 501 or no-op behavior).
 ```
 core/graph/
   http_ai_stream_handler.go          → http_ai_stream_unsupported.go
-  http_whodb_agent_handler.go        → http_agent_unsupported.go
-  http_app_handler.go                → http_app_handler_unsupported.go
 ```
+
+Edition or add-on HTTP routes should not add CE route names and CE unsupported
+stubs. Register those routes from the add-on package with `graph.RegisterHTTPRoutes`.
 
 **When adding a new HTTP handler with a build-tag constraint:**
 1. Create the main handler file with `//go:build !arm && !riscv64`

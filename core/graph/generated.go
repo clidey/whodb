@@ -321,7 +321,6 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		AIChat                       func(childComplexity int, providerID *string, modelType string, token *string, ref *model.SourceObjectRefInput, input model.ChatInput) int
 		AIModel                      func(childComplexity int, providerID *string, modelType string, token *string) int
 		AIProviders                  func(childComplexity int) int
 		AWSRegions                   func(childComplexity int) int
@@ -664,7 +663,6 @@ type QueryResolver interface {
 	SourceGraph(ctx context.Context, ref *model.SourceObjectRefInput) ([]*model.GraphUnit, error)
 	AIProviders(ctx context.Context) ([]*model.AIProvider, error)
 	AIModel(ctx context.Context, providerID *string, modelType string, token *string) ([]string, error)
-	AIChat(ctx context.Context, providerID *string, modelType string, token *string, ref *model.SourceObjectRefInput, input model.ChatInput) ([]*model.AIChatMessage, error)
 	SettingsConfig(ctx context.Context) (*model.SettingsConfig, error)
 	MockDataMaxRowCount(ctx context.Context) (int, error)
 	AnalyzeMockDataDependencies(ctx context.Context, ref model.SourceObjectRefInput, rowCount int, fkDensityRatio *int) (*model.MockDataDependencyAnalysis, error)
@@ -2052,17 +2050,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.ObjectCreationMetadata.TypeDefinitions(childComplexity), true
 
-	case "Query.AIChat":
-		if e.ComplexityRoot.Query.AIChat == nil {
-			break
-		}
-
-		args, err := ec.field_Query_AIChat_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.ComplexityRoot.Query.AIChat(childComplexity, args["providerId"].(*string), args["modelType"].(string), args["token"].(*string), args["ref"].(*model.SourceObjectRefInput), args["input"].(model.ChatInput)), true
 	case "Query.AIModel":
 		if e.ComplexityRoot.Query.AIModel == nil {
 			break
@@ -5121,52 +5108,6 @@ func (ec *executionContext) field_Mutation_UpdateSourceObject_args(ctx context.C
 		return nil, err
 	}
 	args["updatedColumns"] = arg2
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_AIChat_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "providerId",
-		func(ctx context.Context, v any) (*string, error) {
-			return ec.unmarshalOString2ᚖstring(ctx, v)
-		})
-	if err != nil {
-		return nil, err
-	}
-	args["providerId"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "modelType",
-		func(ctx context.Context, v any) (string, error) {
-			return ec.unmarshalNString2string(ctx, v)
-		})
-	if err != nil {
-		return nil, err
-	}
-	args["modelType"] = arg1
-	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "token",
-		func(ctx context.Context, v any) (*string, error) {
-			return ec.unmarshalOString2ᚖstring(ctx, v)
-		})
-	if err != nil {
-		return nil, err
-	}
-	args["token"] = arg2
-	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "ref",
-		func(ctx context.Context, v any) (*model.SourceObjectRefInput, error) {
-			return ec.unmarshalOSourceObjectRefInput2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSourceObjectRefInput(ctx, v)
-		})
-	if err != nil {
-		return nil, err
-	}
-	args["ref"] = arg3
-	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "input",
-		func(ctx context.Context, v any) (model.ChatInput, error) {
-			return ec.unmarshalNChatInput2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐChatInput(ctx, v)
-		})
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg4
 	return args, nil
 }
 
@@ -11549,50 +11490,6 @@ func (ec *executionContext) fieldContext_Query_AIModel(ctx context.Context, fiel
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_AIModel_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Query_AIChat(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.fieldContext_Query_AIChat(ctx, field)
-		},
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Query().AIChat(ctx, fc.Args["providerId"].(*string), fc.Args["modelType"].(string), fc.Args["token"].(*string), fc.Args["ref"].(*model.SourceObjectRefInput), fc.Args["input"].(model.ChatInput))
-		},
-		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v []*model.AIChatMessage) graphql.Marshaler {
-			return ec.marshalNAIChatMessage2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIChatMessageᚄ(ctx, selections, v)
-		},
-		true,
-		true,
-	)
-}
-func (ec *executionContext) fieldContext_Query_AIChat(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.childFields_AIChatMessage(ctx, field)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_AIChat_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -20755,28 +20652,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "AIChat":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_AIChat(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "SettingsConfig":
 			field := field
 
@@ -23433,22 +23308,6 @@ func (ec *executionContext) marshalNAIChatMessage2githubᚗcomᚋclideyᚋwhodb�
 	return ec._AIChatMessage(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNAIChatMessage2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIChatMessageᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.AIChatMessage) graphql.Marshaler {
-	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
-		fc := graphql.GetFieldContext(ctx)
-		fc.Result = &v[i]
-		return ec.marshalNAIChatMessage2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIChatMessage(ctx, sel, v[i])
-	})
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
 func (ec *executionContext) marshalNAIChatMessage2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIChatMessage(ctx context.Context, sel ast.SelectionSet, v *model.AIChatMessage) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -23631,11 +23490,6 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 		}
 	}
 	return res
-}
-
-func (ec *executionContext) unmarshalNChatInput2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐChatInput(ctx context.Context, v any) (model.ChatInput, error) {
-	res, err := ec.unmarshalInputChatInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNCloudProvider2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐCloudProvider(ctx context.Context, sel ast.SelectionSet, v model.CloudProvider) graphql.Marshaler {

@@ -114,11 +114,12 @@ func (e *ConditionalEntry) Errorf(format string, args ...any) {
 	e.Entry.Errorf(format, args...)
 }
 
-// Chaining methods return *ConditionalEntry to preserve the Error override.
+// WithField returns a ConditionalEntry that preserves the Error override.
 func (e *ConditionalEntry) WithField(key string, value any) *ConditionalEntry {
 	return &ConditionalEntry{Entry: e.Entry.WithField(key, value)}
 }
 
+// WithFields returns a ConditionalEntry that preserves the Error override.
 func (e *ConditionalEntry) WithFields(fields map[string]any) *ConditionalEntry {
 	return &ConditionalEntry{Entry: e.Entry.WithFields(fields)}
 }

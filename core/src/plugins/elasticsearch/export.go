@@ -129,13 +129,20 @@ func (p *ElasticSearchPlugin) ExportData(config *engine.PluginConfig, schema str
 	rowCount := 0
 
 	for {
-		hits := searchResult["hits"].(map[string]any)["hits"].([]any)
+		hits, err := responseHits(searchResult)
+		if err != nil {
+			log.WithError(err).WithField("storageUnit", storageUnit).Error("ElasticSearch search response has invalid structure during export")
+			return err
+		}
 		if len(hits) == 0 {
 			break
 		}
 
 		for _, hit := range hits {
-			doc := hit.(map[string]any)["_source"].(map[string]any)
+			doc, ok := hitSource(hit)
+			if !ok {
+				continue
+			}
 
 			row := make([]string, len(fieldNames))
 			for i, field := range fieldNames {
@@ -223,13 +230,19 @@ func (p *ElasticSearchPlugin) ExportDataNDJSON(config *engine.PluginConfig, sche
 	scrollID, _ := searchResult["_scroll_id"].(string)
 
 	for {
-		hits := searchResult["hits"].(map[string]any)["hits"].([]any)
+		hits, err := responseHits(searchResult)
+		if err != nil {
+			return err
+		}
 		if len(hits) == 0 {
 			break
 		}
 
 		for _, hit := range hits {
-			doc := hit.(map[string]any)["_source"].(map[string]any)
+			doc, ok := hitSource(hit)
+			if !ok {
+				continue
+			}
 			line, err := json.Marshal(doc)
 			if err != nil {
 				return err

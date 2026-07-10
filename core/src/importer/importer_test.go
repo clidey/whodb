@@ -159,8 +159,3 @@ func TestExecuteUpsertRequiresPrimaryKey(t *testing.T) {
 		t.Fatalf("expected upsert_no_pk error, got %v", err)
 	}
 }
-
-//go:fix inline
-func stringPtr(value string) *string {
-	return new(value)
-}

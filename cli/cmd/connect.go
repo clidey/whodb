@@ -227,8 +227,8 @@ Usage modes:
 		// If type and database are provided, connect directly.
 		// Username is optional for file-based databases (SQLite, DuckDB) and
 		// some NoSQL databases (Redis, MongoDB).
-		if typeKnown && (database != "" || !isConnectionFieldRequired(string(resolvedType.ID), "Database")) {
-			advanced, err := connectionopts.ApplySSLSettings(string(resolvedType.ID), nil, connectionopts.SSLSettings{
+		if typeKnown && (database != "" || !isConnectionFieldRequired(resolvedType.ID, "Database")) {
+			advanced, err := connectionopts.ApplySSLSettings(resolvedType.ID, nil, connectionopts.SSLSettings{
 				Mode:           connectSSLMode,
 				CAFile:         connectSSLCA,
 				ClientCertFile: connectSSLCert,
@@ -241,7 +241,7 @@ Usage modes:
 
 			conn := config.Connection{
 				Name:     name,
-				Type:     string(resolvedType.ID),
+				Type:     resolvedType.ID,
 				Host:     host,
 				Port:     port,
 				Username: username,

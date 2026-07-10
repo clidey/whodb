@@ -492,7 +492,7 @@ func analyzeMockDataDependenciesForRef(ctx context.Context, ref model.SourceObje
 	maxRowLimit := mockdata.GetMockDataGenerationMaxRowCount()
 	if rowCount > maxRowLimit {
 		errMsg := fmt.Sprintf("row count exceeds maximum limit of %d", maxRowLimit)
-		return &model.MockDataDependencyAnalysis{Error: &errMsg}, nil
+		return &model.MockDataDependencyAnalysis{Error: new(errMsg)}, nil
 	}
 
 	spec, session, err := getSourceSessionForContext(ctx)
@@ -503,18 +503,18 @@ func analyzeMockDataDependenciesForRef(ctx context.Context, ref model.SourceObje
 	resolvedRef := sourceRefFromInput(&ref)
 	if err := validateSourceObjectAction(spec, resolvedRef, source.ActionGenerateMockData); err != nil {
 		errMsg := err.Error()
-		return &model.MockDataDependencyAnalysis{Error: &errMsg}, nil //nolint:nilerr
+		return &model.MockDataDependencyAnalysis{Error: new(errMsg)}, nil //nolint:nilerr
 	}
 	_, objectName := namespaceAndObjectNameForRef(spec, *resolvedRef)
 	if !mockdata.IsMockDataGenerationAllowed(objectName) {
 		errMsg := "mock data generation is not allowed for this table"
-		return &model.MockDataDependencyAnalysis{Error: &errMsg}, nil
+		return &model.MockDataDependencyAnalysis{Error: new(errMsg)}, nil
 	}
 
 	manager, ok := source.AsMockDataManager(scope, session)
 	if !ok {
 		errMsg := "mock data dependency analysis is not supported"
-		return &model.MockDataDependencyAnalysis{Error: &errMsg}, nil
+		return &model.MockDataDependencyAnalysis{Error: new(errMsg)}, nil
 	}
 
 	fkRatio := 0
@@ -524,7 +524,7 @@ func analyzeMockDataDependenciesForRef(ctx context.Context, ref model.SourceObje
 	analysis, err := manager.AnalyzeMockDataDependencies(ctx, *resolvedRef, rowCount, fkRatio)
 	if err != nil {
 		errMsg := err.Error()
-		return &model.MockDataDependencyAnalysis{Error: &errMsg}, nil //nolint:nilerr
+		return &model.MockDataDependencyAnalysis{Error: new(errMsg)}, nil //nolint:nilerr
 	}
 
 	tables := make([]*model.MockDataTableInfo, 0, len(analysis.Tables))
