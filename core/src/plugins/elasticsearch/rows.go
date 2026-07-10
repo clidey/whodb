@@ -117,9 +117,8 @@ func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, req *engine.G
 		return nil, err
 	}
 
-	hits, ok := searchResult["hits"].(map[string]any)["hits"].([]any)
-	if !ok {
-		err := errors.New("invalid response structure")
+	hits, err := responseHits(searchResult)
+	if err != nil {
 		log.WithError(err).WithField("collection", collection).Error("ElasticSearch search response has invalid structure")
 		return nil, err
 	}
@@ -141,8 +140,14 @@ func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, req *engine.G
 	}
 
 	for _, hit := range hits {
-		hitMap := hit.(map[string]any)
-		source := hitMap["_source"].(map[string]any)
+		hitMap, ok := hit.(map[string]any)
+		if !ok {
+			continue
+		}
+		source, ok := hitMap["_source"].(map[string]any)
+		if !ok {
+			continue
+		}
 		id := hitMap[esFieldID]
 		source[esFieldID] = id
 		jsonBytes, err := json.Marshal(source)
@@ -248,18 +253,18 @@ func (p *ElasticSearchPlugin) GetColumnsForTable(config *engine.PluginConfig, sc
 		return nil, err
 	}
 
-	hits := searchResult["hits"].(map[string]any)["hits"].([]any)
+	hits, err := responseHits(searchResult)
+	if err != nil {
+		log.WithError(err).WithField("index", storageUnit).Error("ElasticSearch search response has invalid structure")
+		return nil, err
+	}
 	if len(hits) == 0 {
 		return []engine.Column{}, nil
 	}
 
 	fieldTypes := make(map[string]string)
 	for _, h := range hits {
-		hitMap, ok := h.(map[string]any)
-		if !ok {
-			continue
-		}
-		source, ok := hitMap["_source"].(map[string]any)
+		source, ok := hitSource(h)
 		if !ok {
 			continue
 		}
@@ -287,9 +292,13 @@ func (p *ElasticSearchPlugin) GetColumnsForTable(config *engine.PluginConfig, sc
 		return nil, err
 	}
 
-	indicesStats := stats["indices"].(map[string]any)
+	indicesStatsMap, err := indicesStats(stats)
+	if err != nil {
+		log.WithError(err).Error("ElasticSearch indices stats response has invalid structure")
+		return nil, err
+	}
 	var indices []string
-	for indexName := range indicesStats {
+	for indexName := range indicesStatsMap {
 		indices = append(indices, indexName)
 	}
 
