@@ -204,11 +204,9 @@ func parseImportMappingStrategy(value string) (*bool, error) {
 	case "", "auto":
 		return nil, nil
 	case "header":
-		result := true
-		return &result, nil
+		return new(true), nil
 	case "position", "positional":
-		result := false
-		return &result, nil
+		return new(false), nil
 	default:
 		return nil, fmt.Errorf("invalid --mapping %q (expected auto, header, or position)", value)
 	}

@@ -1043,7 +1043,7 @@ func ResolveTransform(ctx context.Context, client CloneClient, projectID, value 
 	for _, transform := range transforms {
 		if transform.ID == value || strings.EqualFold(transform.Name, value) {
 			found := transform
-			return &found, nil
+			return new(found), nil
 		}
 	}
 	return nil, fmt.Errorf("transform %q not found", value)

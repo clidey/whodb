@@ -99,12 +99,12 @@ func applyERDForeignKeyTargets(storageUnit string, columns []engine.Column, fkTa
 
 		if enriched[i].ReferencedTable == nil {
 			tableName := target.table
-			enriched[i].ReferencedTable = &tableName
+			enriched[i].ReferencedTable = new(tableName)
 		}
 
 		if enriched[i].ReferencedColumn == nil {
 			columnName := target.column
-			enriched[i].ReferencedColumn = &columnName
+			enriched[i].ReferencedColumn = new(columnName)
 		}
 	}
 

@@ -113,7 +113,7 @@ var sourcesUpdateCmd = &cobra.Command{
 				return err
 			}
 			config := platform.MergeSourceConfig(existing, values, advanced)
-			input.Config = &config
+			input.Config = new(config)
 		}
 
 		updated, err := session.Client.UpdateSource(ctx, input)

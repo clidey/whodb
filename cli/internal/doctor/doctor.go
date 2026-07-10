@@ -188,7 +188,7 @@ func resolveConnection(mgr *dbmgr.Manager, name string) (*dbmgr.Connection, stri
 		return nil, "", fmt.Errorf("no connections available")
 	}
 	conn := connections[0].Connection
-	return &conn, connections[0].Source, nil
+	return new(conn), connections[0].Source, nil
 }
 
 func summarizeConnection(conn *dbmgr.Connection, sourceName string) ConnectionSummary {

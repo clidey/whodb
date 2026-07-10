@@ -2995,7 +2995,7 @@ func nullableResourceString(payload map[string]any, key string) *string {
 		return nil
 	}
 	trimmed := strings.TrimSpace(text)
-	return &trimmed
+	return new(trimmed)
 }
 
 func resolvePlatformResourceID(ctx context.Context, session *platformSession, projectID, resource, value string) (string, error) {
@@ -3149,7 +3149,7 @@ func resolveProjectFile(ctx context.Context, session *platformSession, projectID
 		}
 		if entry.ID == value {
 			file := entry.File
-			return &file, nil
+			return new(file), nil
 		}
 		if entry.Name == value || entry.Path == value {
 			matches = append(matches, entry.File)
@@ -3159,7 +3159,7 @@ func resolveProjectFile(ctx context.Context, session *platformSession, projectID
 	case 0:
 		return nil, fmt.Errorf("file %q not found", value)
 	case 1:
-		return &matches[0], nil
+		return new(matches[0]), nil
 	default:
 		return nil, fmt.Errorf("file %q is ambiguous; use an id or path", value)
 	}
@@ -3169,7 +3169,7 @@ func matchProjectFile(value string, files []platform.ProjectFile) (*platform.Pro
 	var matches []platform.ProjectFile
 	for _, file := range files {
 		if file.ID == value {
-			return &file, nil
+			return new(file), nil
 		}
 		if file.Name == value {
 			matches = append(matches, file)
@@ -3179,7 +3179,7 @@ func matchProjectFile(value string, files []platform.ProjectFile) (*platform.Pro
 	case 0:
 		return nil, fmt.Errorf("file %q not found", value)
 	case 1:
-		return &matches[0], nil
+		return new(matches[0]), nil
 	default:
 		return nil, fmt.Errorf("file name %q is ambiguous; use an id", value)
 	}
@@ -3197,7 +3197,7 @@ func resolveProjectFolder(ctx context.Context, session *platformSession, project
 		}
 		if entry.ID == value {
 			folder := entry.Folder
-			return &folder, nil
+			return new(folder), nil
 		}
 		if entry.Name == value || entry.Path == value {
 			matches = append(matches, entry)
@@ -3208,7 +3208,7 @@ func resolveProjectFolder(ctx context.Context, session *platformSession, project
 		return nil, fmt.Errorf("folder %q not found", value)
 	case 1:
 		folder := matches[0].Folder
-		return &folder, nil
+		return new(folder), nil
 	default:
 		return nil, fmt.Errorf("folder %q is ambiguous; use an id", value)
 	}

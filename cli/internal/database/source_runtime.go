@@ -224,7 +224,7 @@ func (m *Manager) storageUnitParentRef(spec source.TypeSpec, namespace string) (
 		return nil, err
 	}
 	ref := source.NewObjectRef(kind, path)
-	return &ref, nil
+	return new(ref), nil
 }
 
 func (m *Manager) storageUnitRef(spec source.TypeSpec, namespace string, storageUnit string) (source.ObjectRef, error) {
@@ -252,7 +252,7 @@ func (m *Manager) sourceScopeRef(spec source.TypeSpec, namespace string) (*sourc
 	}
 
 	ref := source.NewObjectRef(kind, path)
-	return &ref, nil
+	return new(ref), nil
 }
 
 func (m *Manager) listNamespaceObjects(ctx context.Context, spec source.TypeSpec, session source.SourceSession) ([]source.Object, error) {
@@ -278,7 +278,7 @@ func (m *Manager) listNamespaceObjects(ctx context.Context, spec source.TypeSpec
 	}
 
 	parentRef := source.NewObjectRef(parentKind, parentPath)
-	return browser.ListObjects(ctx, &parentRef, []source.ObjectKind{kind})
+	return browser.ListObjects(ctx, new(parentRef), []source.ObjectKind{kind})
 }
 
 func (m *Manager) listStorageUnitObjects(ctx context.Context, spec source.TypeSpec, session source.SourceSession, namespace string) ([]source.Object, error) {

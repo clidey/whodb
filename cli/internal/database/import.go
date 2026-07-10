@@ -299,13 +299,13 @@ func (opts ImportOptions) fileOptions(filePath string) *coreimporter.FileOptions
 	var delimiter *string
 	if opts.Delimiter != 0 {
 		value := string(opts.Delimiter)
-		delimiter = &value
+		delimiter = new(value)
 	}
 
 	var sheet *string
 	if opts.Sheet != "" {
 		value := opts.Sheet
-		sheet = &value
+		sheet = new(value)
 	}
 
 	return &coreimporter.FileOptions{
