@@ -225,11 +225,6 @@ func (te *ToolEnablement) isToolEnabled(toolName string) bool {
 	return false
 }
 
-// boolPtr returns a pointer to a bool value (helper for ToolAnnotations).
-func boolPtr(b bool) *bool {
-	return &b
-}
-
 // isConnectionAllowed checks if a connection name is in the allowed list.
 // Returns true if AllowedConnections is empty (no restrictions) or if the connection is in the list.
 func (so *SecurityOptions) isConnectionAllowed(connection string) bool {
@@ -262,10 +257,10 @@ func registerTools(server *mcp.Server, secOpts *SecurityOptions, toolEnablement 
 			Description: queryDesc,
 			Annotations: &mcp.ToolAnnotations{
 				Title:           "Execute SQL Query",
-				ReadOnlyHint:    secOpts.ReadOnly,                                     // If server is read-only, this tool is read-only
-				DestructiveHint: boolPtr(!secOpts.ReadOnly && !secOpts.ConfirmWrites), // Destructive only if writes allowed without confirmation
-				IdempotentHint:  false,                                                // Queries can have side effects
-				OpenWorldHint:   boolPtr(false),                                       // Closed world (database only)
+				ReadOnlyHint:    secOpts.ReadOnly,                                 // If server is read-only, this tool is read-only
+				DestructiveHint: new(!secOpts.ReadOnly && !secOpts.ConfirmWrites), // Destructive only if writes allowed without confirmation
+				IdempotentHint:  false,                                            // Queries can have side effects
+				OpenWorldHint:   new(false),                                       // Closed world (database only)
 			},
 		}, createQueryHandler(secOpts))
 	}
@@ -280,7 +275,7 @@ func registerTools(server *mcp.Server, secOpts *SecurityOptions, toolEnablement 
 				Title:          "List Database Schemas",
 				ReadOnlyHint:   true,
 				IdempotentHint: true,
-				OpenWorldHint:  boolPtr(false),
+				OpenWorldHint:  new(false),
 			},
 		}, createSchemasHandler(secOpts))
 	}
@@ -295,7 +290,7 @@ func registerTools(server *mcp.Server, secOpts *SecurityOptions, toolEnablement 
 				Title:          "List Database Tables",
 				ReadOnlyHint:   true,
 				IdempotentHint: true,
-				OpenWorldHint:  boolPtr(false),
+				OpenWorldHint:  new(false),
 			},
 		}, createTablesHandler(secOpts))
 	}
@@ -310,7 +305,7 @@ func registerTools(server *mcp.Server, secOpts *SecurityOptions, toolEnablement 
 				Title:          "Describe Table Columns",
 				ReadOnlyHint:   true,
 				IdempotentHint: true,
-				OpenWorldHint:  boolPtr(false),
+				OpenWorldHint:  new(false),
 			},
 		}, createColumnsHandler(secOpts))
 	}
@@ -325,7 +320,7 @@ func registerTools(server *mcp.Server, secOpts *SecurityOptions, toolEnablement 
 				Title:          "List Database Connections",
 				ReadOnlyHint:   true,
 				IdempotentHint: true,
-				OpenWorldHint:  boolPtr(false),
+				OpenWorldHint:  new(false),
 			},
 		}, createConnectionsHandler(secOpts))
 	}
@@ -339,9 +334,9 @@ func registerTools(server *mcp.Server, secOpts *SecurityOptions, toolEnablement 
 			Annotations: &mcp.ToolAnnotations{
 				Title:           "Confirm Write Operation",
 				ReadOnlyHint:    false,
-				DestructiveHint: boolPtr(true), // Can execute destructive operations
-				IdempotentHint:  false,         // Tokens are single-use
-				OpenWorldHint:   boolPtr(false),
+				DestructiveHint: new(true), // Can execute destructive operations
+				IdempotentHint:  false,     // Tokens are single-use
+				OpenWorldHint:   new(false),
 			},
 		}, createConfirmHandler(secOpts))
 	}
@@ -356,7 +351,7 @@ func registerTools(server *mcp.Server, secOpts *SecurityOptions, toolEnablement 
 				Title:          "List Pending Confirmations",
 				ReadOnlyHint:   true,
 				IdempotentHint: true,
-				OpenWorldHint:  boolPtr(false),
+				OpenWorldHint:  new(false),
 			},
 		}, createPendingHandler(secOpts))
 	}
@@ -370,7 +365,7 @@ func registerTools(server *mcp.Server, secOpts *SecurityOptions, toolEnablement 
 				Title:          "Explain SQL Query",
 				ReadOnlyHint:   true,
 				IdempotentHint: true,
-				OpenWorldHint:  boolPtr(false),
+				OpenWorldHint:  new(false),
 			},
 		}, createExplainHandler(secOpts))
 	}
@@ -384,7 +379,7 @@ func registerTools(server *mcp.Server, secOpts *SecurityOptions, toolEnablement 
 				Title:          "Compare Schemas",
 				ReadOnlyHint:   true,
 				IdempotentHint: true,
-				OpenWorldHint:  boolPtr(false),
+				OpenWorldHint:  new(false),
 			},
 		}, createSchemaDiffHandler(secOpts))
 	}
@@ -398,7 +393,7 @@ func registerTools(server *mcp.Server, secOpts *SecurityOptions, toolEnablement 
 				Title:          "Load ER Diagram Metadata",
 				ReadOnlyHint:   true,
 				IdempotentHint: true,
-				OpenWorldHint:  boolPtr(false),
+				OpenWorldHint:  new(false),
 			},
 		}, createERDHandler(secOpts))
 	}
@@ -412,7 +407,7 @@ func registerTools(server *mcp.Server, secOpts *SecurityOptions, toolEnablement 
 				Title:          "Run Data Quality Audit",
 				ReadOnlyHint:   true,
 				IdempotentHint: true,
-				OpenWorldHint:  boolPtr(false),
+				OpenWorldHint:  new(false),
 			},
 		}, createAuditHandler(secOpts))
 	}
@@ -426,7 +421,7 @@ func registerTools(server *mcp.Server, secOpts *SecurityOptions, toolEnablement 
 				Title:          "Load Query Suggestions",
 				ReadOnlyHint:   true,
 				IdempotentHint: true,
-				OpenWorldHint:  boolPtr(false),
+				OpenWorldHint:  new(false),
 			},
 		}, createSuggestionsHandler(secOpts))
 	}

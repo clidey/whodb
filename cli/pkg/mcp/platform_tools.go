@@ -711,7 +711,7 @@ func platformReadOnlyAnnotations(title string) *mcp.ToolAnnotations {
 		Title:          title,
 		ReadOnlyHint:   true,
 		IdempotentHint: true,
-		OpenWorldHint:  boolPtr(true),
+		OpenWorldHint:  new(true),
 	}
 }
 
@@ -719,9 +719,9 @@ func platformDestructiveAnnotations(title string) *mcp.ToolAnnotations {
 	return &mcp.ToolAnnotations{
 		Title:           title,
 		ReadOnlyHint:    false,
-		DestructiveHint: boolPtr(true),
+		DestructiveHint: new(true),
 		IdempotentHint:  false,
-		OpenWorldHint:   boolPtr(true),
+		OpenWorldHint:   new(true),
 	}
 }
 

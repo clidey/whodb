@@ -1100,20 +1100,6 @@ func TestNewServer_WithDisabledTools(t *testing.T) {
 	}
 }
 
-// Helper function tests
-
-func TestBoolPtr(t *testing.T) {
-	truePtr := boolPtr(true)
-	falsePtr := boolPtr(false)
-
-	if truePtr == nil || *truePtr != true {
-		t.Error("boolPtr(true) should return pointer to true")
-	}
-	if falsePtr == nil || *falsePtr != false {
-		t.Error("boolPtr(false) should return pointer to false")
-	}
-}
-
 // Prompt content tests
 
 func TestBuildQueryHelpContent(t *testing.T) {

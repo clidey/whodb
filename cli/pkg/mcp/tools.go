@@ -564,8 +564,11 @@ func HandleQuery(ctx context.Context, req *mcp.CallToolRequest, input QueryInput
 	// Detect statement type first
 	stmtType := DetectStatementType(input.Query)
 
-	// In confirm-writes mode, write operations need confirmation before execution
-	if secOpts.ConfirmWrites && IsWriteStatement(stmtType) {
+	// In confirm-writes mode, any statement that is not provably read-only needs
+	// confirmation before execution. Using !isSafeReadOnly (rather than a positive
+	// write-verb allowlist) ensures unrecognized write statements — COPY, DO, MERGE,
+	// CALL, GRANT, writable CTEs — cannot execute without confirmation.
+	if secOpts.ConfirmWrites && !isSafeReadOnly(input.Query) {
 		// Validate the query first (check for other issues like multi-statement, dangerous functions)
 		// Pass allowWrite=true and allowDestructive=true since user will confirm
 		err := ValidateSQLStatement(input.Query, true, secOpts.SecurityLevel, secOpts.AllowMultiStatement, true)
