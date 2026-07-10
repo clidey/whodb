@@ -23,7 +23,7 @@ import (
 	"strconv"
 	"time"
 
-	memcachepb "cloud.google.com/go/memcache/apiv1/memcachepb"
+	"cloud.google.com/go/memcache/apiv1/memcachepb"
 	"google.golang.org/api/iterator"
 
 	"github.com/clidey/whodb/core/src/engine"

@@ -115,7 +115,7 @@ func parseMongoShellArgs(rawArgs string) ([]any, error) {
 	if err := bson.UnmarshalExtJSON([]byte("["+processed+"]"), false, &args); err != nil {
 		return nil, fmt.Errorf("failed to parse arguments: %w", err)
 	}
-	return []any(args), nil
+	return args, nil
 }
 
 func replaceMongoShellSingleQuotedStrings(input string) string {

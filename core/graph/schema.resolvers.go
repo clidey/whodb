@@ -1420,8 +1420,7 @@ func (r *queryResolver) AIProviders(ctx context.Context) ([]*model.AIProvider, e
 			IsGeneric:            provider.IsGeneric,
 		}
 		if provider.Icon != "" {
-			icon := provider.Icon
-			ap.Icon = &icon
+			ap.Icon = new(provider.Icon)
 		}
 		aiProviders = append(aiProviders, ap)
 	}

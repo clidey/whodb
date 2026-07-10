@@ -97,16 +97,13 @@ func GetAWSProvidersFromEnv() ([]env.AWSProviderEnvConfig, error) {
 	// Apply defaults
 	for i := range configs {
 		if configs[i].DiscoverRDS == nil {
-			t := true
-			configs[i].DiscoverRDS = &t
+			configs[i].DiscoverRDS = new(true)
 		}
 		if configs[i].DiscoverElastiCache == nil {
-			t := true
-			configs[i].DiscoverElastiCache = &t
+			configs[i].DiscoverElastiCache = new(true)
 		}
 		if configs[i].DiscoverDocumentDB == nil {
-			t := true
-			configs[i].DiscoverDocumentDB = &t
+			configs[i].DiscoverDocumentDB = new(true)
 		}
 	}
 
@@ -130,20 +127,16 @@ func GetAzureProvidersFromEnv() ([]env.AzureProviderEnvConfig, error) {
 	// Apply defaults — all discovery flags default to true
 	for i := range configs {
 		if configs[i].DiscoverPostgreSQL == nil {
-			t := true
-			configs[i].DiscoverPostgreSQL = &t
+			configs[i].DiscoverPostgreSQL = new(true)
 		}
 		if configs[i].DiscoverMySQL == nil {
-			t := true
-			configs[i].DiscoverMySQL = &t
+			configs[i].DiscoverMySQL = new(true)
 		}
 		if configs[i].DiscoverRedis == nil {
-			t := true
-			configs[i].DiscoverRedis = &t
+			configs[i].DiscoverRedis = new(true)
 		}
 		if configs[i].DiscoverCosmosDB == nil {
-			t := true
-			configs[i].DiscoverCosmosDB = &t
+			configs[i].DiscoverCosmosDB = new(true)
 		}
 	}
 
@@ -167,16 +160,13 @@ func GetGCPProvidersFromEnv() ([]env.GCPProviderEnvConfig, error) {
 	// Apply defaults
 	for i := range configs {
 		if configs[i].DiscoverCloudSQL == nil {
-			t := true
-			configs[i].DiscoverCloudSQL = &t
+			configs[i].DiscoverCloudSQL = new(true)
 		}
 		if configs[i].DiscoverAlloyDB == nil {
-			t := true
-			configs[i].DiscoverAlloyDB = &t
+			configs[i].DiscoverAlloyDB = new(true)
 		}
 		if configs[i].DiscoverMemorystore == nil {
-			t := true
-			configs[i].DiscoverMemorystore = &t
+			configs[i].DiscoverMemorystore = new(true)
 		}
 	}
 

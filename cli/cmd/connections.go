@@ -248,14 +248,14 @@ var connectionsAddCmd = &cobra.Command{
 			if !ok {
 				return fmt.Errorf("unsupported database type %q", connAddType)
 			}
-			if isConnectionFieldRequired(string(resolvedType.ID), "Hostname") && connAddHost == "" {
+			if isConnectionFieldRequired(resolvedType.ID, "Hostname") && connAddHost == "" {
 				return fmt.Errorf("--host is required")
 			}
-			if isConnectionFieldRequired(string(resolvedType.ID), "Database") && connAddDatabase == "" {
+			if isConnectionFieldRequired(resolvedType.ID, "Database") && connAddDatabase == "" {
 				return fmt.Errorf("--database is required")
 			}
 
-			advanced, err := connectionopts.ApplySSLSettings(string(resolvedType.ID), nil, connectionopts.SSLSettings{
+			advanced, err := connectionopts.ApplySSLSettings(resolvedType.ID, nil, connectionopts.SSLSettings{
 				Mode:           connAddSSLMode,
 				CAFile:         connAddSSLCA,
 				ClientCertFile: connAddSSLCert,
@@ -268,7 +268,7 @@ var connectionsAddCmd = &cobra.Command{
 
 			conn = config.Connection{
 				Name:     connAddName,
-				Type:     string(resolvedType.ID),
+				Type:     resolvedType.ID,
 				Host:     connAddHost,
 				Port:     connAddPort,
 				Username: connAddUser,

@@ -23,7 +23,7 @@ import (
 	"strings"
 	"time"
 
-	alloydbpb "cloud.google.com/go/alloydb/apiv1/alloydbpb"
+	"cloud.google.com/go/alloydb/apiv1/alloydbpb"
 	"google.golang.org/api/iterator"
 
 	"github.com/clidey/whodb/core/src/engine"

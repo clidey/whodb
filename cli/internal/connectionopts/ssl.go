@@ -140,7 +140,7 @@ func resolveSSLMode(modes []source.SSLModeInfo, raw string) (string, bool, error
 func sslModeValues(modes []source.SSLModeInfo) []string {
 	values := make([]string, 0, len(modes))
 	for _, mode := range modes {
-		values = append(values, string(mode.Value))
+		values = append(values, mode.Value)
 	}
 	slices.Sort(values)
 	return values

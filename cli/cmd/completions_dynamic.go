@@ -101,7 +101,7 @@ func completeSSLModes(cmd *cobra.Command, args []string, toComplete string) ([]s
 	if spec, ok := lookupDatabaseType(dbType); ok {
 		modes := make([]string, 0, len(spec.SSLModes))
 		for _, mode := range spec.SSLModes {
-			modes = append(modes, string(mode.Value))
+			modes = append(modes, mode.Value)
 		}
 		return modes, cobra.ShellCompDirectiveNoFileComp
 	}
@@ -109,7 +109,7 @@ func completeSSLModes(cmd *cobra.Command, args []string, toComplete string) ([]s
 	modeSet := map[string]struct{}{}
 	for _, id := range sourcetypes.IDs() {
 		for _, mode := range sourcetypes.SSLModes(id) {
-			modeSet[string(mode.Value)] = struct{}{}
+			modeSet[mode.Value] = struct{}{}
 		}
 	}
 

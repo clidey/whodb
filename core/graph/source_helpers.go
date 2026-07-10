@@ -136,7 +136,7 @@ func sourceRefFromInput(ref *model.SourceObjectRefInput) *source.ObjectRef {
 		resolved.Locator = *ref.Locator
 	}
 	normalized := source.NormalizeObjectRef(resolved)
-	return &normalized
+	return new(normalized)
 }
 
 func validateSourceObjectAction(spec source.TypeSpec, ref *source.ObjectRef, action source.Action) error {
@@ -326,7 +326,7 @@ func sourceContractToModel(contract source.Contract) *model.SourceContract {
 	var graphScopeKind *model.SourceObjectKind
 	if contract.GraphScopeKind != nil {
 		kind := model.SourceObjectKind(*contract.GraphScopeKind)
-		graphScopeKind = &kind
+		graphScopeKind = new(kind)
 	}
 
 	return &model.SourceContract{

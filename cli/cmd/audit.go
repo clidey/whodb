@@ -99,16 +99,16 @@ Checks performed:
 		if auditType != "" && !typeKnown {
 			return fmt.Errorf("unsupported database type %q", auditType)
 		}
-		if auditType != "" && typeKnown && isConnectionFieldRequired(string(resolvedType.ID), "Database") && auditDatabase == "" && auditConnection == "" {
+		if auditType != "" && typeKnown && isConnectionFieldRequired(resolvedType.ID, "Database") && auditDatabase == "" && auditConnection == "" {
 			return fmt.Errorf("--database is required for %s", resolvedType.Label)
 		}
 
 		var conn *dbmgr.Connection
-		if typeKnown && (auditDatabase != "" || !isConnectionFieldRequired(string(resolvedType.ID), "Database")) {
+		if typeKnown && (auditDatabase != "" || !isConnectionFieldRequired(resolvedType.ID, "Database")) {
 			// Inline connection from flags
 			h := auditHost
 			if h == "" {
-				if isFileBasedDatabaseType(string(resolvedType.ID)) {
+				if isFileBasedDatabaseType(resolvedType.ID) {
 					h = auditDatabase
 				} else {
 					h = "localhost"
@@ -116,10 +116,10 @@ Checks performed:
 			}
 			p := auditPort
 			if p == 0 {
-				p = getDefaultPort(string(resolvedType.ID))
+				p = getDefaultPort(resolvedType.ID)
 			}
 			conn = &dbmgr.Connection{
-				Type:     string(resolvedType.ID),
+				Type:     resolvedType.ID,
 				Host:     h,
 				Port:     p,
 				Username: auditUser,

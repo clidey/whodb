@@ -23,7 +23,7 @@ import (
 	"strconv"
 	"time"
 
-	redispb "cloud.google.com/go/redis/apiv1/redispb"
+	"cloud.google.com/go/redis/apiv1/redispb"
 	"google.golang.org/api/iterator"
 
 	"github.com/clidey/whodb/core/src/engine"
