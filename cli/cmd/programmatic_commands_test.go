@@ -265,7 +265,7 @@ func TestColumnsCmd_RequiresTable(t *testing.T) {
 
 	err := columnsCmd.RunE(columnsCmd, []string{})
 	if err == nil {
-		t.Error("Expected error when --table is not provided")
+		t.Fatal("Expected error when --table is not provided")
 	}
 	if !strings.Contains(err.Error(), "--table") {
 		t.Errorf("Expected error message to mention --table, got: %v", err)
@@ -412,7 +412,7 @@ func TestConnectionsAddCmd_RequiresName(t *testing.T) {
 
 	err := connectionsAddCmd.RunE(connectionsAddCmd, []string{})
 	if err == nil {
-		t.Error("Expected error when --name is not provided")
+		t.Fatal("Expected error when --name is not provided")
 	}
 	if !strings.Contains(err.Error(), "--name") {
 		t.Errorf("Expected error message to mention --name, got: %v", err)
@@ -431,7 +431,7 @@ func TestConnectionsAddCmd_RequiresType(t *testing.T) {
 
 	err := connectionsAddCmd.RunE(connectionsAddCmd, []string{})
 	if err == nil {
-		t.Error("Expected error when --type is not provided")
+		t.Fatal("Expected error when --type is not provided")
 	}
 	if !strings.Contains(err.Error(), "--type") {
 		t.Errorf("Expected error message to mention --type, got: %v", err)
@@ -451,7 +451,7 @@ func TestConnectionsAddCmd_RequiresDatabase(t *testing.T) {
 
 	err := connectionsAddCmd.RunE(connectionsAddCmd, []string{})
 	if err == nil {
-		t.Error("Expected error when --database is not provided")
+		t.Fatal("Expected error when --database is not provided")
 	}
 	if !strings.Contains(err.Error(), "--database") {
 		t.Errorf("Expected error message to mention --database, got: %v", err)
@@ -817,7 +817,7 @@ func TestConnectionsRemoveCmd_RequiresArg(t *testing.T) {
 
 	err := connectionsRemoveCmd.Args(connectionsRemoveCmd, []string{})
 	if err == nil {
-		t.Error("Expected error when connection name is not provided")
+		t.Fatal("Expected error when connection name is not provided")
 	}
 }
 
@@ -828,7 +828,7 @@ func TestConnectionsRemoveCmd_NotFound(t *testing.T) {
 
 	err := connectionsRemoveCmd.RunE(connectionsRemoveCmd, []string{"nonexistent"})
 	if err == nil {
-		t.Error("Expected error for non-existent connection")
+		t.Fatal("Expected error for non-existent connection")
 	}
 	if !strings.Contains(err.Error(), "not found") {
 		t.Errorf("Expected 'not found' in error, got: %v", err)
@@ -877,7 +877,7 @@ func TestExportCmd_RequiresTableOrQuery(t *testing.T) {
 
 	err := exportCmd.RunE(exportCmd, []string{})
 	if err == nil {
-		t.Error("Expected error when neither --table nor --query is provided")
+		t.Fatal("Expected error when neither --table nor --query is provided")
 	}
 	if !strings.Contains(err.Error(), "--table") && !strings.Contains(err.Error(), "--query") {
 		t.Errorf("Expected error message to mention --table or --query, got: %v", err)
@@ -896,7 +896,7 @@ func TestExportCmd_CannotUseBothTableAndQuery(t *testing.T) {
 
 	err := exportCmd.RunE(exportCmd, []string{})
 	if err == nil {
-		t.Error("Expected error when both --table and --query are provided")
+		t.Fatal("Expected error when both --table and --query are provided")
 	}
 	if !strings.Contains(err.Error(), "cannot use both") {
 		t.Errorf("Expected 'cannot use both' in error, got: %v", err)
@@ -915,7 +915,7 @@ func TestExportCmd_RequiresOutput(t *testing.T) {
 
 	err := exportCmd.RunE(exportCmd, []string{})
 	if err == nil {
-		t.Error("Expected error when --output is not provided")
+		t.Fatal("Expected error when --output is not provided")
 	}
 	if !strings.Contains(err.Error(), "--output") {
 		t.Errorf("Expected error message to mention --output, got: %v", err)
@@ -1389,7 +1389,7 @@ func TestMockDataCmd_RequiresConnection(t *testing.T) {
 
 	err := mockDataCmd.RunE(mockDataCmd, []string{})
 	if err == nil {
-		t.Error("Expected error when --connection is not provided")
+		t.Fatal("Expected error when --connection is not provided")
 	}
 	if !strings.Contains(err.Error(), "--connection") {
 		t.Errorf("Expected error message to mention --connection, got: %v", err)
@@ -1412,7 +1412,7 @@ func TestMockDataCmd_RequiresRows(t *testing.T) {
 
 	err := mockDataCmd.RunE(mockDataCmd, []string{})
 	if err == nil {
-		t.Error("Expected error when --rows is not positive")
+		t.Fatal("Expected error when --rows is not positive")
 	}
 	if !strings.Contains(err.Error(), "--rows") {
 		t.Errorf("Expected error message to mention --rows, got: %v", err)
@@ -1500,7 +1500,7 @@ func TestHistorySearchCmd_RequiresPattern(t *testing.T) {
 
 	err := historySearchCmd.Args(historySearchCmd, []string{})
 	if err == nil {
-		t.Error("Expected error when pattern is not provided")
+		t.Fatal("Expected error when pattern is not provided")
 	}
 }
 

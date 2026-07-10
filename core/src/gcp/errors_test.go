@@ -108,7 +108,7 @@ func TestHandleGCPError_RESTUnknownCode(t *testing.T) {
 	err := &googleapi.Error{Code: 418, Message: "I'm a teapot"}
 	result := HandleGCPError(err)
 	if result == nil {
-		t.Error("expected non-nil error for unknown code")
+		t.Fatal("expected non-nil error for unknown code")
 	}
 	if !strings.Contains(result.Error(), "418") {
 		t.Errorf("expected error to contain status code, got %q", result.Error())
@@ -185,7 +185,7 @@ func TestHandleGCPError_GRPCInvalidArgument(t *testing.T) {
 	err := status.Error(codes.InvalidArgument, "bad request")
 	result := HandleGCPError(err)
 	if result == nil {
-		t.Error("expected non-nil error for InvalidArgument")
+		t.Fatal("expected non-nil error for InvalidArgument")
 	}
 	if !strings.Contains(result.Error(), "bad request") {
 		t.Errorf("expected error to contain message, got %q", result.Error())
@@ -204,7 +204,7 @@ func TestHandleGCPError_GRPCUnknownCode(t *testing.T) {
 	err := status.Error(codes.DataLoss, "data corruption detected")
 	result := HandleGCPError(err)
 	if result == nil {
-		t.Error("expected non-nil error for unknown gRPC code")
+		t.Fatal("expected non-nil error for unknown gRPC code")
 	}
 	if !strings.Contains(result.Error(), "data corruption detected") {
 		t.Errorf("expected error to contain message, got %q", result.Error())
