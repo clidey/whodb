@@ -271,6 +271,3 @@ func setSourceSessionMetadata(t *testing.T, id string, metadata source.TypeSessi
 		}
 	})
 }
-
-//go:fix inline
-func intPtr(i int) *int { return new(i) }

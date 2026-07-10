@@ -22,13 +22,6 @@ import (
 	"github.com/clidey/whodb/core/src/source"
 )
 
-// Helper function to create a pointer to an int
-//
-//go:fix inline
-func IntPtr(i int) *int {
-	return new(i)
-}
-
 // ValidateColumnType checks if a column type string is valid against
 // source-owned type definitions and aliases.
 func ValidateColumnType(typeName string, sourceType string, metadata *source.TypeSessionMetadata) error {
