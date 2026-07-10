@@ -531,7 +531,7 @@ test.describe('Login & Authentication', () => {
             await expect(page.locator('[data-testid="port"]')).toHaveValue('5433');
         });
 
-        test('auto-login with ?login param navigates to storage unit', async ({ whodb, page }) => {
+        test('legacy login URL param does not submit credentials', async ({ whodb, page }) => {
             const db = getDatabaseConfig('postgres');
             const params = new URLSearchParams({
                 type: db.type,
@@ -545,67 +545,8 @@ test.describe('Login & Authentication', () => {
 
             await page.goto(whodb.url(`/login?${params.toString()}`));
 
-            await expect(page).toHaveURL(/\/storage-unit/, { timeout: 15000 });
-        });
-
-        test('URL is cleaned up after auto-login', async ({ whodb, page }) => {
-            const db = getDatabaseConfig('postgres');
-            const params = new URLSearchParams({
-                type: db.type,
-                host: db.connection.host,
-                username: db.connection.user,
-                password: db.connection.password,
-                database: db.connection.database,
-                login: '',
-            });
-
-            await page.goto(whodb.url(`/login?${params.toString()}`));
-            await expect(page).toHaveURL(/\/storage-unit/, { timeout: 15000 });
-
-            // None of the login params should remain in the URL
-            const url = new URL(page.url());
-            for (const key of ['type', 'host', 'username', 'password', 'database', 'login']) {
-                expect(url.searchParams.has(key)).toBe(false);
-            }
-        });
-
-        test('auto-login with search_path selects the correct schema', async ({ whodb, page }) => {
-            const db = getDatabaseConfig('postgres');
-            const params = new URLSearchParams({
-                type: db.type,
-                host: db.connection.host,
-                username: db.connection.user,
-                password: db.connection.password,
-                database: db.connection.database,
-                port: String(db.connection.port),
-                search_path: 'test_schema',
-                login: '',
-            });
-
-            await page.goto(whodb.url(`/login?${params.toString()}`));
-            await expect(page).toHaveURL(/\/storage-unit/, { timeout: 15000 });
-
-            // Schema dropdown should show test_schema, not public
-            await expect(page.locator('[data-testid="sidebar-schema"]')).toHaveText('test_schema', { timeout: 10000 });
-        });
-
-        test('UI params survive URL cleanup after login', async ({ whodb, page }) => {
-            const db = getDatabaseConfig('postgres');
-            const params = new URLSearchParams({
-                type: db.type,
-                host: db.connection.host,
-                username: db.connection.user,
-                password: db.connection.password,
-                database: db.connection.database,
-                login: '',
-                locale: 'en',
-            });
-
-            await page.goto(whodb.url(`/login?${params.toString()}`));
-            await expect(page).toHaveURL(/\/storage-unit/, { timeout: 15000 });
-
-            const url = new URL(page.url());
-            expect(url.searchParams.get('locale')).toBe('en');
+            await expect(page).toHaveURL(/\/login\?/, { timeout: 15000 });
+            await expect(page.locator('[data-testid="login-button"]')).toBeEnabled();
         });
     });
 });
