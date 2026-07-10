@@ -92,9 +92,9 @@ func (v *HistoryView) Update(msg tea.Msg) (*HistoryView, tea.Cmd) {
 			} else if errors.Is(msg.Err, context.Canceled) {
 				// User cancelled, don't show error
 				return v, nil
-			} else {
-				v.parent.err = msg.Err
 			}
+
+			v.parent.err = msg.Err
 			return v, nil
 		}
 		v.parent.resultsView.SetResults(msg.Result, msg.Query)
