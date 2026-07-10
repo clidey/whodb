@@ -49,6 +49,3 @@ func TestSaveCredentialsNoopWhenNotDesktop(t *testing.T) {
 		t.Fatalf("expected noop save to succeed without error")
 	}
 }
-
-//go:fix inline
-func strPtr(s string) *string { return new(s) }
