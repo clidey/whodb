@@ -170,9 +170,7 @@ func graphQLAuditArguments(rootFieldCtx *graphql.RootFieldContext, opCtx *graphq
 }
 
 func setupServer(router *chi.Mux, schema graphql.ExecutableSchema, httpHandlers map[string]http.Handler, staticFiles embed.FS) {
-	if !env.IsAPIGatewayEnabled {
-		fileServer(router, staticFiles)
-	}
+	fileServer(router, staticFiles)
 
 	server := NewGraphQLServer(schema)
 	graph.SetupHTTPServer(router)
@@ -574,7 +572,7 @@ func InitializeRouter(schema graphql.ExecutableSchema, httpHandlers map[string]h
 		return router
 	}
 
-	if env.IsAPIGatewayEnabled || !hasEmbeddedFrontend(staticFiles) {
+	if !hasEmbeddedFrontend(staticFiles) {
 		log.Warnf("Ignoring WHODB_BASE_PATH=%s because bundled frontend assets are not being served", env.BasePath)
 		return router
 	}

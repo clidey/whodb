@@ -31,7 +31,7 @@ func setupPlaygroundHandler(router chi.Router, server *handler.Server) {
 		apiQueryPath = env.BasePath + apiQueryPath
 	}
 	if env.IsDevelopment {
-		pathHandler = playground.Handler("API Gateway", apiQueryPath)
+		pathHandler = playground.Handler("WhoDB GraphQL", apiQueryPath)
 	}
 	router.HandleFunc("/api/query", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost || r.Header.Get("Connection") == "upgrade" {
