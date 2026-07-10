@@ -55,14 +55,3 @@ type Pane interface {
 	// HelpBindings returns the key bindings to display in the global help bar.
 	HelpBindings() []key.Binding
 }
-
-// PaneID identifies a pane slot within a layout.
-type PaneID int
-
-const (
-	PaneLeft PaneID = iota
-	PaneTopRight
-	PaneBottomRight
-	PaneCenter
-	PaneFull
-)

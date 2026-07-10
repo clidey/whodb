@@ -144,7 +144,7 @@ func runPlatformDoctor(ctx context.Context) platformDoctorReport {
 			add("project_read", "ok", "project-scoped requests work")
 		}
 	}
-	if len(selection.Messages) > 0 {
+	if err == nil && len(selection.Messages) > 0 {
 		add("workspace_autoselect", "ok", selection.Messages[len(selection.Messages)-1])
 	}
 	return report
