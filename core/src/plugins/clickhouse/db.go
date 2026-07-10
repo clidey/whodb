@@ -112,6 +112,7 @@ func (p *ClickHousePlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 
 	err = conn.PingContext(config.OperationContext())
 	if err != nil {
+		_ = conn.Close()
 		l.WithError(err).Error("Failed to ping ClickHouse server")
 		return nil, err
 	}
@@ -120,6 +121,7 @@ func (p *ClickHousePlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 		Conn: conn,
 	}), &gorm.Config{Logger: logger.Default.LogMode(plugins.GetGormLogConfig())})
 	if err != nil {
+		_ = conn.Close()
 		l.WithError(err).Error("Failed to open ClickHouse GORM connection")
 		return nil, err
 	}

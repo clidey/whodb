@@ -19,6 +19,7 @@ package testharness
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -141,7 +142,8 @@ func RunCLI(t *testing.T, args ...string) (stdout, stderr string, exitCode int) 
 	stderr = stderrBuf.String()
 
 	if err != nil {
-		if exitErr, ok := err.(*exec.ExitError); ok {
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) {
 			exitCode = exitErr.ExitCode()
 		} else {
 			t.Fatalf("Failed to run CLI: %v", err)

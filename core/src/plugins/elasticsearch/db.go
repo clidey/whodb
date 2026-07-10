@@ -147,7 +147,7 @@ func DB(config *engine.PluginConfig) (*elasticsearch.Client, error) {
 			_ = body.Close()
 		}(res.Body)
 	}
-	if err != nil || res.IsError() {
+	if err != nil || res == nil || res.IsError() {
 		errMsg := "no error"
 		if err != nil {
 			errMsg = err.Error()
