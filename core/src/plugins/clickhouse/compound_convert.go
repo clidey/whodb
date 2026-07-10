@@ -26,11 +26,21 @@ import (
 	"gorm.io/gorm"
 )
 
+// escapeCHString escapes a string for use inside a single-quoted ClickHouse
+// literal. ClickHouse treats backslash as an escape character within string
+// literals, so both backslash and single-quote must be escaped; escaping only
+// quotes would let a trailing backslash escape the closing quote.
+func escapeCHString(s string) string {
+	s = strings.ReplaceAll(s, `\`, `\\`)
+	s = strings.ReplaceAll(s, `'`, `\'`)
+	return s
+}
+
 // formatLiteral formats a single value in ClickHouse literal syntax.
 func formatLiteral(v any) string {
 	switch v := v.(type) {
 	case string:
-		return "'" + v + "'"
+		return "'" + escapeCHString(v) + "'"
 	default:
 		return fmt.Sprintf("%v", v)
 	}
@@ -45,7 +55,7 @@ func formatMap(m map[string]any) string {
 	sort.Strings(keys)
 	parts := make([]string, 0, len(m))
 	for _, k := range keys {
-		parts = append(parts, "'"+k+"': "+formatLiteral(m[k]))
+		parts = append(parts, "'"+escapeCHString(k)+"': "+formatLiteral(m[k]))
 	}
 	return "{" + strings.Join(parts, ", ") + "}"
 }
