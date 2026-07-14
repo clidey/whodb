@@ -67,6 +67,29 @@ If the backend already records it, the frontend must not.
   directly, and never duplicate the host-gating logic.
 - Consent-unknown users are not captured (`opt_out_capturing_by_default`).
 
+## Install heartbeat (separate from all of the above)
+
+`telemetry.heartbeat` (`core/src/analytics/heartbeat.go`) is an anonymous
+install counter, sent once at startup and every 24h from Go backends and
+desktop. It deliberately bypasses `Enabled()` and `buildProperties()`:
+
+- Distinct ID is a **stable random install UUID** persisted in the unified
+  config file — this makes unique installs, retention, and version adoption
+  measurable. It has no relation to the user or machine, and deleting the
+  config file resets it.
+- `$process_person_profile: false` (no person created) and `$ip: ""` (IP
+  discarded at ingestion).
+- Payload is fixed: `build_edition`, `app_version`, `dev_build`, `os`, `arch`,
+  `source`. Never add request context, usage data, or new properties to it —
+  the install ID must never become linkable to behavioral analytics or a
+  person.
+- Source builds (no ldflags-stamped version) are tagged `dev_build: true` and
+  `app_version: "dev"` so real installs are filterable, not skipped. CI runs
+  (`CI=true`) are skipped entirely.
+- Governed solely by `WHODB_HEARTBEAT_DISABLED=true`, independent of the
+  consent system. It is publicly documented in the README; keep code, README,
+  and this doc in sync if the payload ever changes.
+
 ## Verifying changes
 
 - A PostHog "data quality" insight counts events with null `build_edition` or

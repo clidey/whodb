@@ -31,6 +31,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
 
 	"github.com/clidey/whodb/core/src/analytics"
+	"github.com/clidey/whodb/core/src/common/datadir"
 	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/router"
@@ -67,6 +68,11 @@ func RunApp(config RunConfig) error {
 		defer analytics.Shutdown()
 	}
 	analytics.SetEnabled(settingsCfg.MetricsEnabled)
+	analytics.StartHeartbeat(datadir.Options{
+		AppName:           "whodb",
+		EnterpriseEdition: config.Edition == "ee",
+		Development:       env.IsDevelopment,
+	})
 
 	config.InitializeEngine()
 	log.Debugf("Running WhoDB Desktop %s Edition", strings.ToUpper(config.Edition))

@@ -482,7 +482,7 @@ In WhoDB Platform, credentials are encrypted with AES-256-GCM and stored central
 <summary><strong>Can I self-host WhoDB in an air-gapped environment?</strong></summary>
 <br>
 
-WhoDB Community runs in any environment including air-gapped networks — there's no license server and no telemetry by default. WhoDB Platform supports fully isolated deployments with offline activation.
+WhoDB Community runs in any environment including air-gapped networks — there's no license server, and it works fully offline. By default it sends one anonymous daily heartbeat (a random install identifier plus edition, version, and OS — no IP, no usage data, nothing tied to you or your machine) so we know how many installs exist and stay active; set `WHODB_HEARTBEAT_DISABLED=true` to turn it off, or delete the config file to reset the identifier. All behavioral analytics is separate and opt-in. WhoDB Platform supports fully isolated deployments with offline activation.
 
 </details>
 

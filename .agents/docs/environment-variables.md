@@ -186,6 +186,7 @@ Connect any OpenAI-compatible provider. Configured via multiple variables per pr
 | `WHODB_DISABLE_CREDENTIAL_FORM` | `false` | Set `true` to hide the source credential form on the login page |
 | `WHODB_MAX_PAGE_SIZE` | `10000` | Maximum number of rows returned per page |
 | `WHODB_DISABLE_MOCK_DATA_GENERATION` | unset | Disable mock data generation. `*` disables for all tables, or a comma-separated list of table names to disable selectively (e.g., `logs, metrics`) |
+| `WHODB_HEARTBEAT_DISABLED` | unset | Set `true` to disable the anonymous daily install heartbeat (random install ID plus edition, version, OS — no IP, no usage data). Does not affect the consent-gated product analytics |
 
 ### Serving WhoDB under a subpath
 
