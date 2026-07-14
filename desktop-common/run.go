@@ -59,6 +59,8 @@ func RunApp(config RunConfig) error {
 		Host:        env.PosthogHost,
 		Environment: env.ApplicationEnvironment,
 		AppVersion:  env.ApplicationVersion,
+		Edition:     config.Edition,
+		Source:      "desktop",
 	}); err != nil {
 		log.WithError(err).Warn("Analytics: PostHog initialization failed, metrics disabled")
 	} else {

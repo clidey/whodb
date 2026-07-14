@@ -64,9 +64,6 @@ func TestBaseProps(t *testing.T) {
 	cliVersion = "test-1.0.0"
 	props := baseProps()
 
-	if props["source"] != "cli" {
-		t.Errorf("Expected source='cli', got %v", props["source"])
-	}
 	if props["cli_version"] != "test-1.0.0" {
 		t.Errorf("Expected cli_version='test-1.0.0', got %v", props["cli_version"])
 	}
@@ -82,8 +79,8 @@ func TestMergeProps(t *testing.T) {
 	merged := mergeProps(additional)
 
 	// Should have base props
-	if merged["source"] != "cli" {
-		t.Errorf("Expected source='cli', got %v", merged["source"])
+	if merged["cli_version"] != "test-1.0.0" {
+		t.Errorf("Expected cli_version='test-1.0.0', got %v", merged["cli_version"])
 	}
 
 	// Should have additional props
@@ -100,8 +97,8 @@ func TestMergeProps_NilInput(t *testing.T) {
 	merged := mergeProps(nil)
 
 	// Should still have base props
-	if merged["source"] != "cli" {
-		t.Errorf("Expected source='cli', got %v", merged["source"])
+	if merged["cli_version"] != "test-1.0.0" {
+		t.Errorf("Expected cli_version='test-1.0.0', got %v", merged["cli_version"])
 	}
 }
 

@@ -69,20 +69,18 @@ func (a *App) Startup(ctx context.Context) {
 	a.SetupApplicationMenu()
 	a.SetupSystemTray()
 
-	// Track desktop app launch
+	// Track desktop app launch. Edition is stamped centrally as build_edition;
+	// "os" avoids colliding with the frontend's platform (browser|wails) property.
 	analytics.Capture(ctx, "desktop_app_launched", map[string]any{
-		"edition":  a.edition,
-		"platform": goruntime.GOOS,
-		"arch":     goruntime.GOARCH,
+		"os":   goruntime.GOOS,
+		"arch": goruntime.GOARCH,
 	})
 }
 
 // Shutdown is called when the app is closing
 func (a *App) Shutdown(ctx context.Context) {
 	// Track desktop app shutdown
-	analytics.Capture(ctx, "desktop_app_closed", map[string]any{
-		"edition": a.edition,
-	})
+	analytics.Capture(ctx, "desktop_app_closed", nil)
 }
 
 func (a *App) beforeClose(ctx context.Context) bool {

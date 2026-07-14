@@ -173,6 +173,7 @@ func Run(config AppConfig, staticFiles embed.FS) {
 		AppVersion:  env.ApplicationVersion,
 		Deployment:  config.AnalyticsDeployment,
 		Edition:     config.AnalyticsEdition,
+		Source:      "backend",
 	}); err == nil {
 		defer analytics.Shutdown()
 	}

@@ -35,6 +35,7 @@ import (
 
 func main() {
 	app.Run(app.AppConfig{
-		Schema: graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}}),
+		Schema:           graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}}),
+		AnalyticsEdition: "ce",
 	}, staticFiles)
 }
