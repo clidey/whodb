@@ -244,6 +244,8 @@ docker run -it -p 8080:8080 \
   clidey/whodb
 ```
 
+Running behind an HTTPS reverse proxy (nginx, Traefik, Caddy, a cloud load balancer, etc.)? Also set `WHODB_SECURE=true` so the session cookie is marked `Secure`. WhoDB does not infer HTTPS from proxy headers, so this must be set explicitly. Leave it unset for plain HTTP (including `localhost`), otherwise the browser will drop the cookie and logins won't persist.
+
 ### Docker Compose
 
 ```yaml
@@ -261,6 +263,10 @@ services:
       #   openssl rand -hex 32
       # Setting it keeps sessions valid across upgrades regardless of the volume.
       - WHODB_ENCRYPTION_KEY=replace_with_openssl_rand_hex_32
+
+      # Uncomment when serving over HTTPS (e.g. behind a TLS-terminating proxy)
+      # so the session cookie is marked Secure. Leave unset for plain HTTP.
+      # - WHODB_SECURE=true
 
       # Ollama (local AI)
       - WHODB_OLLAMA_HOST=localhost

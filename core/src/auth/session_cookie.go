@@ -67,14 +67,16 @@ func sessionTTL() time.Duration {
 
 // isSecureRequest reports whether the request should be treated as HTTPS, so
 // cookies can be marked Secure and use the __Host- prefix.
+//
+// It intentionally does NOT trust X-Forwarded-Proto: a proxy (e.g. the dev vite
+// server) can forward "https" while the actual browser↔server transport is plain
+// HTTP, which would make the browser silently drop the Secure cookie and break
+// auth. Deployments that terminate TLS at a proxy set WHODB_SECURE=true.
 func isSecureRequest(r *http.Request) bool {
 	if r != nil && r.TLS != nil {
 		return true
 	}
-	if env.Secure {
-		return true
-	}
-	return r != nil && strings.EqualFold(r.Header.Get("X-Forwarded-Proto"), "https")
+	return env.Secure
 }
 
 // sessionTokenFromRequest extracts the opaque session token from the request

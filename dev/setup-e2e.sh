@@ -315,17 +315,45 @@ if [ "$SKIP_CE_DATABASES" = "false" ]; then
     echo "🐳 Preparing Docker services..."
     cd "$SCRIPT_DIR"
 
-    # Simple function to wait for a service by checking its port
+    # Probe whether a MySQL-protocol server actually accepts queries. MySQL
+    # opens its TCP port early during initialization (data-dir setup / init SQL)
+    # but rejects the protocol handshake with "unexpected EOF" until it is fully
+    # up, so a port-open check alone is not sufficient. Uses a throwaway client
+    # container over the host network with the seeded credentials.
+    mysql_query_ready() {
+        local port=$1
+        docker run --rm --network host mysql:8 \
+            mysql -h127.0.0.1 -P"$port" --protocol=TCP -uuser -ppassword \
+            -e "SELECT 1;" test_db >/dev/null 2>&1
+    }
+
+    # Wait for a service by checking its port. For MySQL-family databases
+    # (db_type is passed as the 4th argument), additionally wait until the server
+    # answers a query, not just until the port opens.
     wait_for_port() {
         local service=$1
         local port=$2
         local max_wait=${3:-60}  # Allow custom timeout, default 60s
+        local db_type=${4:-}
         local counter=0
+
+        local mysql_family=false
+        case "$db_type" in
+            mysql|mysql8|mariadb|tidb) mysql_family=true ;;
+        esac
 
         while [ $counter -lt $max_wait ]; do
             if nc -z localhost $port 2>/dev/null; then
-                echo "✅ $service is ready (port $port)"
-                return 0
+                if [ "$mysql_family" = "true" ]; then
+                    if mysql_query_ready "$port"; then
+                        echo "✅ $service is ready (port $port, accepting queries)"
+                        return 0
+                    fi
+                    # Port open but server still initializing — keep waiting.
+                else
+                    echo "✅ $service is ready (port $port)"
+                    return 0
+                fi
             fi
             sleep 1
             counter=$((counter + 1))
@@ -373,7 +401,7 @@ if [ "$SKIP_CE_DATABASES" = "false" ]; then
         DB_WAIT=$(get_db_wait_time "$TARGET_DB")
         if [ -n "$DB_PORT" ]; then
             echo "⏳ Waiting for $TARGET_DB to be ready..."
-            wait_for_port "$TARGET_DB" "$DB_PORT" "$DB_WAIT"
+            wait_for_port "$TARGET_DB" "$DB_PORT" "$DB_WAIT" "$TARGET_DB"
         fi
 
         # Wait for SSL container if applicable
@@ -381,7 +409,7 @@ if [ "$SKIP_CE_DATABASES" = "false" ]; then
             SSL_PORT=$(get_ssl_port "$TARGET_DB")
             if [ -n "$SSL_PORT" ]; then
                 echo "⏳ Waiting for $TARGET_DB SSL to be ready..."
-                wait_for_port "$TARGET_DB-SSL" "$SSL_PORT" "$DB_WAIT"
+                wait_for_port "$TARGET_DB-SSL" "$SSL_PORT" "$DB_WAIT" "$TARGET_DB"
             fi
         fi
 

@@ -31,7 +31,9 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
+	"github.com/clidey/whodb/core/src/common/datadir"
 	"github.com/clidey/whodb/core/src/crypto"
+	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/source"
 )
@@ -67,7 +69,56 @@ var (
 	sessionDB     *gorm.DB
 	sessionKeyHex string
 	sessionMu     sync.RWMutex
+
+	ensureOnce  sync.Once
+	stopCleanup func()
 )
+
+// EnsureSessionStore initializes the session store exactly once for the current
+// process and returns a stop function for its cleanup ticker. It is called from
+// router initialization so every server entry point (app.Run, the test server,
+// etc.) gets the store — desktop and CLI modes are skipped (they use the OS
+// keyring / Authorization-header flow). Failures are non-fatal except a
+// malformed, explicitly-set WHODB_ENCRYPTION_KEY.
+func EnsureSessionStore() func() {
+	ensureOnce.Do(func() {
+		if env.GetIsDesktopMode() || env.GetIsCLIMode() {
+			return
+		}
+
+		dataDir := env.DataDir
+		if dataDir == "" {
+			resolved, err := datadir.Get(datadir.Options{
+				AppName:           "whodb",
+				EnterpriseEdition: env.IsEnterpriseEdition,
+				Development:       env.IsDevelopment,
+			})
+			if err != nil {
+				log.Warnf("Session store disabled: could not resolve data directory: %v", err)
+				return
+			}
+			dataDir = resolved
+		}
+
+		key, err := ResolveSessionEncryptionKey(dataDir)
+		if err != nil {
+			if env.EncryptionKey != "" {
+				// Operator explicitly set a bad key — fail loudly rather than ignore it.
+				log.Fatalf("Invalid WHODB_ENCRYPTION_KEY: %v", err)
+			}
+			log.Warnf("Session store disabled: could not resolve encryption key: %v", err)
+			return
+		}
+
+		if err := InitSessionStore(dataDir, key); err != nil {
+			log.Warnf("Session store disabled: %v", err)
+			return
+		}
+
+		stopCleanup = StartSessionCleanup(context.Background(), time.Hour)
+	})
+	return stopCleanup
+}
 
 // InitSessionStore opens (and migrates) the SQLite-backed session store in
 // dataDir and records the encryption key used to protect stored credentials.
