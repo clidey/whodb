@@ -63,6 +63,22 @@ export const registerAsyncAuthExtraHeadersProvider = (fn: () => Promise<Record<s
 };
 
 const analyticsHeaderName = 'X-WhoDB-Analytics-Id';
+const csrfCookieName = 'whodb_csrf';
+const csrfHeaderName = 'X-CSRF-Token';
+
+/**
+ * Reads the readable CSRF cookie set at login for the double-submit CSRF check.
+ * Returns null when absent (e.g. desktop, or before login).
+ */
+function readCSRFCookie(): string | null {
+    if (typeof document === 'undefined') {
+        return null;
+    }
+    const match = document.cookie
+        .split('; ')
+        .find(row => row.startsWith(`${csrfCookieName}=`));
+    return match ? decodeURIComponent(match.slice(csrfCookieName.length + 1)) : null;
+}
 
 /**
  * Checks if the app is running in a desktop/webview environment
@@ -94,6 +110,12 @@ export function isDesktopScheme(): boolean {
 export function getAuthorizationHeader(): string | null {
   if (authHeaderProvider) {
     return authHeaderProvider();
+  }
+  // Browser clients authenticate via the HttpOnly session cookie (credentials are
+  // stored server-side), so no Authorization header is sent. Desktop/webview
+  // clients, where cookies are unreliable, keep sending base64 credentials.
+  if (!isDesktopScheme()) {
+    return null;
   }
   try {
     // @ts-ignore - auth state type not fully defined
@@ -150,6 +172,10 @@ export function addAuthHeader(headers: HeadersInit = {}): HeadersInit {
         ...headers,
         [analyticsHeaderName]: id ?? ""
     }
+    const csrf = readCSRFCookie();
+    if (csrf) {
+        headers = { ...headers, [csrfHeaderName]: csrf };
+    }
     if (extraHeadersProvider) {
         headers = {
             ...headers,
@@ -177,6 +203,10 @@ export async function addAuthHeaderAsync(headers: HeadersInit = {}): Promise<Hea
     headers = {
         ...headers,
         [analyticsHeaderName]: id ?? ""
+    }
+    const csrf = readCSRFCookie();
+    if (csrf) {
+        headers = { ...headers, [csrfHeaderName]: csrf };
     }
     if (asyncExtraHeadersProvider) {
         headers = {

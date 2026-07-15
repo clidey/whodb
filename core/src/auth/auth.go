@@ -81,6 +81,7 @@ func isPublicRoute(r *http.Request) bool {
 func AuthMiddleware(next http.Handler) http.Handler {
 	var onceHeader sync.Once
 	var onceCookie sync.Once
+	var onceSession sync.Once
 	var onceKeyring sync.Once
 	var onceInline sync.Once
 	var onceProfile sync.Once
@@ -132,7 +133,23 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			}
 			onceHeader.Do(func() { log.Info("Auth: using Authorization header") })
 		}
-		// Fallback to cookie when header is not provided
+
+		// When no Authorization header is present, prefer the opaque session
+		// cookie (browser clients). It maps to server-side encrypted credentials
+		// and returns early — it never flows through the base64 credential path.
+		if token == "" {
+			if sessionToken, ok := sessionTokenFromRequest(r); ok {
+				onceSession.Do(func() { log.Info("Auth: using session cookie") })
+				if serveWithSessionCookie(w, r, next, sessionToken) {
+					return
+				}
+				// Invalid/expired session: cookies already cleared, reject.
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+		}
+
+		// Fallback to the legacy base64-credentials cookie when no header/session.
 		if token == "" {
 			if dbCookie, err := r.Cookie(string(AuthKey_Token)); err == nil {
 				token = dbCookie.Value
@@ -211,6 +228,39 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		ctx = context.WithValue(ctx, AuthKey_Source, credentials)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+// serveWithSessionCookie resolves an opaque session token to stored credentials
+// and serves the request with them injected into context. It enforces CSRF on
+// unsafe (mutating) methods, slides the session expiry forward when needed, and
+// returns false (after clearing the session cookies) when the session is
+// missing, expired, or undecryptable so the caller can respond 401.
+func serveWithSessionCookie(w http.ResponseWriter, r *http.Request, next http.Handler, sessionToken string) bool {
+	ttl := sessionTTL()
+	credentials, csrfHash, needsRefresh, err := LookupSession(sessionToken, ttl)
+	if err != nil {
+		clearSessionCookies(w)
+		return false
+	}
+
+	// CSRF double-submit check for unsafe methods (GraphQL mutations are POST).
+	if r.Method != http.MethodGet && r.Method != http.MethodHead && r.Method != http.MethodOptions {
+		if !validateCSRF(r, csrfHash) {
+			log.Debug("[Auth] CSRF token missing or invalid for session request")
+			http.Error(w, "Forbidden", http.StatusForbidden)
+			return true
+		}
+	}
+
+	if needsRefresh {
+		if expiresAt, rerr := RefreshSession(sessionToken, ttl); rerr == nil {
+			setSessionCookie(w, r, sessionToken, expiresAt)
+		}
+	}
+
+	ctx := context.WithValue(r.Context(), AuthKey_Source, credentials)
+	next.ServeHTTP(w, r.WithContext(ctx))
+	return true
 }
 
 func readRequestBody(r *http.Request) ([]byte, error) {

@@ -37,6 +37,7 @@ import {healthCheckService} from "./services/health-check";
 import {ServerDownOverlay, DatabaseDownOverlay} from "./components/health/health-overlays";
 import {HealthActions} from "./store/health";
 import {PageTitleUpdater} from "./hooks/use-page-title";
+import {getEdition} from "./config/edition";
 
 export const App = () => {
     const [updateSettings] = useMutation(UpdateSettingsDocument);
@@ -46,6 +47,7 @@ export const App = () => {
   const authStatus = useAppSelector(state => state.auth.status);
   const settingsConfig = settingsConfigData?.SettingsConfig;
   const newUIEnabled = settingsDefaults.newUIEnabled === true || settingsConfig?.EnableNewUI === true;
+  const telemetryRequired = getEdition() === 'ee';
 
   // Apply UI customization settings
   useThemeCustomization();
@@ -80,6 +82,14 @@ export const App = () => {
   }, [dispatch, settingsConfig]);
 
   useEffect(() => {
+      if (telemetryRequired) {
+          if (!metricsEnabled) {
+              dispatch(SettingsActions.setMetricsEnabled(true));
+          }
+          void optInUser();
+          return;
+      }
+
       const consent = getStoredConsentState();
 
       if (consent === 'denied' && metricsEnabled) {
@@ -102,9 +112,13 @@ export const App = () => {
       }
 
       void optInUser();
-  }, [metricsEnabled, dispatch]);
+  }, [metricsEnabled, dispatch, telemetryRequired]);
 
-    useEffect(() => {
+  useEffect(() => {
+        if (telemetryRequired) {
+            return;
+        }
+
         const consent = getStoredConsentState();
         if (consent !== 'granted') {
             if (!metricsEnabled || consent === 'denied') {
@@ -116,10 +130,10 @@ export const App = () => {
         if (!metricsEnabled) {
             resetAnalyticsIdentity().catch(() => undefined);
         }
-    }, [metricsEnabled]);
+  }, [metricsEnabled, telemetryRequired]);
 
   useEffect(() => {
-    if (authStatus !== 'logged-in') {
+    if (telemetryRequired || authStatus !== 'logged-in') {
       return;
     }
 
@@ -130,7 +144,7 @@ export const App = () => {
         }
       }
     });
-  }, [authStatus, updateSettings, metricsEnabled]);
+  }, [authStatus, updateSettings, metricsEnabled, telemetryRequired]);
 
   // Start health check service when user logs in, stop when they log out
 

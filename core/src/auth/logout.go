@@ -23,6 +23,7 @@ import (
 
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/common"
+	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/source"
 	"github.com/clidey/whodb/core/src/sourcecatalog"
 )
@@ -40,7 +41,15 @@ func Logout(ctx context.Context) (*model.StatusResponse, error) {
 			}
 		}
 	}
-	// Clear the auth cookie. Passing a nil cookie emits no valid deletion header,
+	// Delete the server-side session (if this request carried a session cookie).
+	if r, ok := ctx.Value(common.RouterKey_Request).(*http.Request); ok {
+		if sessionToken, found := sessionTokenFromRequest(r); found {
+			if err := DeleteSession(sessionToken); err != nil {
+				log.Debugf("[Logout] failed to delete session: %v", err)
+			}
+		}
+	}
+	// Clear the auth cookies. Passing a nil cookie emits no valid deletion header,
 	// so an explicit expired cookie with a matching name and path is required for
 	// the browser to actually remove it.
 	if w, ok := ctx.Value(common.RouterKey_ResponseWriter).(http.ResponseWriter); ok {
@@ -54,6 +63,7 @@ func Logout(ctx context.Context) (*model.StatusResponse, error) {
 			HttpOnly: true,
 			SameSite: http.SameSiteLaxMode,
 		})
+		clearSessionCookies(w)
 	}
 	return &model.StatusResponse{
 		Status: true,

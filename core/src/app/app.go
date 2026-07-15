@@ -35,6 +35,7 @@ import (
 
 	"github.com/clidey/whodb/core/src"
 	"github.com/clidey/whodb/core/src/analytics"
+	"github.com/clidey/whodb/core/src/auth"
 	"github.com/clidey/whodb/core/src/common/datadir"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/env"
@@ -104,6 +105,45 @@ func welcomeBannerLines(port string) []string {
 		"http://0.0.0.0:" + port,
 		"Explore and enjoy working with your databases!",
 	}
+}
+
+// initSessionStore resolves the encryption key, opens the session store, and
+// starts the expiry-cleanup ticker. It returns a stop function for the ticker
+// (nil when the store could not be initialized). Failures are non-fatal except a
+// malformed WHODB_ENCRYPTION_KEY, which is a configuration error worth stopping
+// for; otherwise the server boots and sessions self-heal on the next login.
+func initSessionStore() func() {
+	dataDir := env.DataDir
+	if dataDir == "" {
+		var err error
+		dataDir, err = datadir.Get(datadir.Options{
+			AppName:           "whodb",
+			EnterpriseEdition: env.IsEnterpriseEdition,
+			Development:       env.IsDevelopment,
+		})
+		if err != nil {
+			log.Warnf("Session store disabled: could not resolve data directory: %v", err)
+			return nil
+		}
+	}
+
+	key, err := auth.ResolveSessionEncryptionKey(dataDir)
+	if err != nil {
+		if env.EncryptionKey != "" {
+			// The operator explicitly set WHODB_ENCRYPTION_KEY but it is invalid;
+			// fail loudly rather than silently ignoring their configuration.
+			log.Fatalf("Invalid WHODB_ENCRYPTION_KEY: %v", err)
+		}
+		log.Warnf("Session store disabled: could not resolve encryption key: %v", err)
+		return nil
+	}
+
+	if err := auth.InitSessionStore(dataDir, key); err != nil {
+		log.Warnf("Session store disabled: %v", err)
+		return nil
+	}
+
+	return auth.StartSessionCleanup(context.Background(), time.Hour)
 }
 
 // PopulateActiveDatabases sets env.ActiveDatabases from registered plugins.
@@ -217,6 +257,13 @@ func Run(config AppConfig, staticFiles embed.FS) {
 		log.Warnf("Failed to initialize GCP providers from environment: %v", err)
 	}
 
+	// Initialize the encrypted session store (server mode only). Desktop uses the
+	// OS keyring + Authorization-header flow; CLI does not run this HTTP server.
+	var stopSessionCleanup func()
+	if mode == "server" {
+		stopSessionCleanup = initSessionStore()
+	}
+
 	r := router.InitializeRouter(config.Schema, config.HTTPHandlers, config.Middlewares, config.PublicPaths, staticFiles)
 
 	port := resolvePort()
@@ -247,6 +294,10 @@ func Run(config AppConfig, staticFiles embed.FS) {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 	log.Info("Shutting down server...")
+
+	if stopSessionCleanup != nil {
+		stopSessionCleanup()
+	}
 
 	// Create a deadline for graceful shutdown
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)

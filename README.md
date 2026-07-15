@@ -235,6 +235,15 @@ docker run -it -p 8080:8080 clidey/whodb
 
 Open [http://localhost:8080](http://localhost:8080) and connect a database.
 
+WhoDB keeps your login sessions server-side (credentials are encrypted at rest, not stored in the browser). The plain command above works out of the box; sessions reset on container recreation (you simply log in again). To keep sessions across upgrades, mount a volume and set an encryption key:
+
+```bash
+docker run -it -p 8080:8080 \
+  -v whodb-data:/data \
+  -e WHODB_ENCRYPTION_KEY=$(openssl rand -hex 32) \
+  clidey/whodb
+```
+
 ### Docker Compose
 
 ```yaml
@@ -244,7 +253,15 @@ services:
     image: clidey/whodb
     ports:
       - "8080:8080"
+    volumes:
+      # Persist encrypted login sessions across container recreation
+      - whodb-data:/data
     environment:
+      # Encryption key for stored sessions (64-char hex). Generate once with:
+      #   openssl rand -hex 32
+      # Setting it keeps sessions valid across upgrades regardless of the volume.
+      - WHODB_ENCRYPTION_KEY=replace_with_openssl_rand_hex_32
+
       # Ollama (local AI)
       - WHODB_OLLAMA_HOST=localhost
       - WHODB_OLLAMA_PORT=11434
@@ -268,6 +285,9 @@ services:
       # - WHODB_AI_GENERIC_OPENROUTER_MODELS=google/gemini-2.0-flash-001,anthropic/claude-3.5-sonnet
     # volumes:
     #   - ./sample.db:/db/sample.db
+
+volumes:
+  whodb-data:
 ```
 
 📖 For full installation and configuration options, see the [Documentation](https://docs.whodb.com/)

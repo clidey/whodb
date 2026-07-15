@@ -44,6 +44,7 @@ interface DoryDocsAPI {
 }
 
 declare const __APP_VERSION__: string;
+declare const __WHODB_EDITION__: "ce" | "ee";
 
 interface Window {
   DoryDocs?: DoryDocsAPI;

@@ -31,6 +31,7 @@ import { providersReducers } from './providers';
 import { healthReducers } from './health';
 import { exploreConditionsReducers } from './explore-conditions';
 import { runMigrations } from './migrations';
+import { stripProfileSecrets } from '../utils/credential-secrets';
 
 // Run migrations before initializing the store
 runMigrations();
@@ -153,6 +154,30 @@ const chatTransform = createTransform(
   { whitelist: ['houdini'] }
 );
 
+// authPersistTransform strips secrets before the auth slice is written to
+// localStorage. Credentials now live server-side (session cookie), so only
+// non-secret fields are persisted — enough to keep the logged-in status and
+// profile switcher across reloads without ever storing passwords or SSL private
+// keys in the browser. The valid session cookie re-establishes access on the
+// backend.
+//
+// redux-persist applies transforms per top-level field of the slice (the `key`
+// argument), so strip secrets from the `current` profile and each `profiles`
+// entry individually.
+const authPersistTransform = createTransform(
+  (inboundState: any, key) => {
+    if (key === 'current') {
+      return inboundState ? stripProfileSecrets(inboundState) : inboundState;
+    }
+    if (key === 'profiles') {
+      return Array.isArray(inboundState) ? inboundState.map(stripProfileSecrets) : inboundState;
+    }
+    return inboundState;
+  },
+  (outboundState: any) => outboundState,
+  { whitelist: ['current', 'profiles'] }
+);
+
 const settingsPersistTransform = createTransform(
   (inboundState: any) => {
     if (!inboundState) return inboundState;
@@ -166,7 +191,7 @@ const settingsPersistTransform = createTransform(
 const PERSIST_THROTTLE = 2000;
 
 const ceReducerMap = {
-  auth: persistReducer({ key: "auth", storage }, authReducers),
+  auth: persistReducer({ key: "auth", storage, transforms: [authPersistTransform] }, authReducers),
   database: persistReducer({ key: "database", storage }, databaseReducers),
   settings: persistReducer({ key: "settings", storage, transforms: [settingsPersistTransform] }, settingsReducers),
   houdini: persistReducer({ key: "houdini", storage, transforms: [chatTransform], throttle: PERSIST_THROTTLE }, houdiniReducers),
