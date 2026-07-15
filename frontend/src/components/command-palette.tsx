@@ -34,6 +34,7 @@ import {matchesShortcut, resolveShortcut, SHORTCUTS} from "@/utils/shortcuts";
 import {useEffectiveIsMac} from "@/hooks/useEffectiveIsMac";
 import {useSourceContract} from "@/hooks/useSourceContract";
 import {InternalRoutes} from "@/config/routes";
+import {performLogout} from "@/config/logout-handler";
 import {
     ArrowLeftStartOnRectangleIcon,
     ArrowPathIcon,
@@ -195,7 +196,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
                 label: t('disconnect'),
                 icon: <ArrowLeftStartOnRectangleIcon className="w-4 h-4" />,
                 onSelect: () => {
-                    void navigate(InternalRoutes.Logout.path);
+                    performLogout(navigate);
                     onOpenChange(false);
                 },
             });

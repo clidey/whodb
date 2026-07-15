@@ -22,7 +22,7 @@ import { LogoutPage } from "../pages/auth/logout";
 import { getComponent } from "./component-registry";
 import { featureFlags } from "./features";
 import { LoadingPage } from "../components/loading";
-import { getRegisteredUnscopedRoutes, getSurfaceFallbackPath } from "./route-registry";
+import { getRegisteredUnscopedRoutes, getSurfaceFallbackPath, isUnscopedRouteEnabled } from "./route-registry";
 import { useSourceContract } from "../hooks/useSourceContract";
 export { registerRoute } from "./route-registry";
 
@@ -181,7 +181,9 @@ export const getRoutes = (): IInternalRoute[] => {
             continue;
         }
         if ("path" in currentRoute) {
-            allRoutes.push(currentRoute);
+            if (isUnscopedRouteEnabled(currentRoute.path)) {
+                allRoutes.push(currentRoute);
+            }
             continue;
         }
         currentRoutes.push(...Object.values((currentRoute)));

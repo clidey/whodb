@@ -19,7 +19,8 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from '@/hooks/use-translation';
 import { useAppSelector } from '@/store/hooks';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { InternalRoutes, PublicRoutes } from '@/config/routes';
+import { PublicRoutes } from '@/config/routes';
+import { performLogout } from '@/config/logout-handler';
 import { XCircleIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 import type { LocalLoginProfile } from '@/store/auth';
@@ -160,7 +161,7 @@ export const DatabaseDownOverlay = () => {
     };
 
     const handleLogout = () => {
-        void navigate(InternalRoutes.Logout.path);
+        performLogout(navigate);
     };
 
     return (

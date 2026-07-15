@@ -20,6 +20,7 @@ import {InternalRoutes} from "../config/routes";
 import {useSourceContract} from "./useSourceContract";
 import {useAppSelector} from "../store/hooks";
 import {matchesShortcut, resolveShortcut, SHORTCUTS} from "../utils/shortcuts";
+import {isUnscopedRouteEnabled} from "../config/route-registry";
 
 export const useSidebarShortcuts = () => {
     const navigate = useNavigate();
@@ -44,20 +45,22 @@ export const useSidebarShortcuts = () => {
         const routes: string[] = [];
 
         // Chat is first for SQL databases
-        if (supportsChat) {
+        if (supportsChat && isUnscopedRouteEnabled(InternalRoutes.Chat.path)) {
             routes.push(InternalRoutes.Chat.path);
         }
 
         // Storage Units
-        routes.push(InternalRoutes.Dashboard.StorageUnit.path);
+        if (isUnscopedRouteEnabled(InternalRoutes.Dashboard.StorageUnit.path)) {
+            routes.push(InternalRoutes.Dashboard.StorageUnit.path);
+        }
 
         // Graph
-        if (supportsGraph) {
+        if (supportsGraph && isUnscopedRouteEnabled(InternalRoutes.Graph.path)) {
             routes.push(InternalRoutes.Graph.path);
         }
 
         // Scratchpad (if supported)
-        if (supportsScratchpad) {
+        if (supportsScratchpad && isUnscopedRouteEnabled(InternalRoutes.RawExecute.path)) {
             routes.push(InternalRoutes.RawExecute.path);
         }
 
