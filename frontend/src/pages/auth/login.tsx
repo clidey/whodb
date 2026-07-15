@@ -959,6 +959,8 @@ export const LoginForm: FC<LoginFormProps> = ({
                 setUsername={setUsername}
                 password={password}
                 setPassword={setPassword}
+                database={database}
+                setDatabase={setDatabase}
                 advancedForm={advancedForm}
                 setAdvancedForm={setAdvancedForm}
             />;

@@ -236,8 +236,12 @@ export interface CustomLoginFormProps {
 	setUsername: (value: string) => void;
 	password: string;
 	setPassword: (value: string) => void;
+	database: string;
+	setDatabase: (value: string) => void;
 	advancedForm: Record<string, string>;
 	setAdvancedForm: (value: Record<string, string>) => void;
+	/** Whether an existing encrypted primary password is stored but not returned to the browser. */
+	hasStoredPassword?: boolean;
 }
 
 /**
