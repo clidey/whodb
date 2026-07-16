@@ -88,7 +88,7 @@ func resolveKeyringSessionKey() (string, error) {
 func resolveFileSessionKey(dataDir string) (string, error) {
 	// Path is composed from the server-controlled data directory, not user input.
 	path := filepath.Join(dataDir, sessionKeyFileName)
-	if data, err := os.ReadFile(path); err == nil { //nolint:gosec // path is server-controlled (data dir)
+	if data, err := os.ReadFile(path); err == nil { // #nosec G304 -- path is composed from the server-controlled data directory.
 		existing := strings.TrimSpace(string(data))
 		if verr := validateKeyHex(existing); verr == nil {
 			return existing, nil

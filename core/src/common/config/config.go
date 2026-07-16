@@ -80,7 +80,7 @@ func ReadSection(section string, value any, opts datadir.Options) error {
 		return err
 	}
 
-	data, err := os.ReadFile(path) //nolint:gosec
+	data, err := os.ReadFile(path) // #nosec G304 -- path is resolved from the application data directory.
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil // No config file yet, use defaults
@@ -114,7 +114,7 @@ func WriteSection(section string, value any, opts datadir.Options) error {
 
 	// Read existing config (or start fresh)
 	var raw RawConfig
-	data, err := os.ReadFile(path) //nolint:gosec
+	data, err := os.ReadFile(path) // #nosec G304 -- path is resolved from the application data directory.
 	if err != nil {
 		if !os.IsNotExist(err) {
 			return err

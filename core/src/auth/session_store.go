@@ -163,7 +163,7 @@ func CreateSession(credentials *source.Credentials, ttl time.Duration) (token, c
 
 	// Marshaling the credentials (including any AccessToken) is intentional — the
 	// result is immediately AES-256-GCM encrypted before it is ever stored.
-	plaintext, err := json.Marshal(credentials) //nolint:gosec // encrypted before storage
+	plaintext, err := json.Marshal(credentials) // #nosec G117 -- plaintext is immediately AES-256-GCM encrypted before storage.
 	if err != nil {
 		return "", "", time.Time{}, err
 	}

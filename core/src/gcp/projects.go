@@ -81,7 +81,7 @@ func DiscoverLocalProjects() ([]LocalProject, error) {
 
 // parseServiceAccountProject reads a service account JSON key file and extracts the project ID.
 func parseServiceAccountProject(path string) *LocalProject {
-	data, err := os.ReadFile(path) //nolint:gosec
+	data, err := os.ReadFile(path) // #nosec G304 G703 -- path comes from the server-controlled GOOGLE_APPLICATION_CREDENTIALS environment variable.
 	if err != nil {
 		log.Debugf("GCP projects: failed to read service account file %s: %v", path, err)
 		return nil
@@ -155,7 +155,7 @@ func discoverGcloudProjects() []LocalProject {
 
 // parseGcloudProperties reads a gcloud properties/config file and extracts the project ID.
 func parseGcloudProperties(path string) string {
-	file, err := os.Open(path) //nolint:gosec
+	file, err := os.Open(path) // #nosec G304 -- path is built from the server's gcloud configuration directory.
 	if err != nil {
 		return ""
 	}

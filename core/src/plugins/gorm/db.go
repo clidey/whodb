@@ -19,6 +19,7 @@ package gorm_plugin
 import (
 	"context"
 	"fmt"
+	"math"
 	"net/url"
 	"strconv"
 	"strings"
@@ -81,6 +82,9 @@ func (p *GormPlugin) ParseConnectionConfig(config *engine.PluginConfig) (*Connec
 		if err != nil {
 			log.WithError(err).Error(fmt.Sprintf("Failed to parse port for database type %s", p.Type))
 			return nil, err
+		}
+		if parsedPort < 1 || parsedPort > math.MaxUint16 {
+			return nil, fmt.Errorf("port must be between 1 and %d", math.MaxUint16)
 		}
 		port = parsedPort
 	}

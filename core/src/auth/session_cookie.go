@@ -110,7 +110,7 @@ func setSessionCookie(w http.ResponseWriter, r *http.Request, token string, expi
 	}
 	// Secure is set only over TLS so local HTTP dev still works; Strict SameSite
 	// + HttpOnly protect the session cookie regardless.
-	http.SetCookie(w, &http.Cookie{ //nolint:gosec // Secure is intentionally TLS-conditional
+	http.SetCookie(w, &http.Cookie{ // #nosec G124 -- Secure is TLS-conditional so local HTTP remains supported; HttpOnly and SameSite are set.
 		Name:     name,
 		Value:    token,
 		Path:     "/",
@@ -131,7 +131,7 @@ func setCSRFCookie(w http.ResponseWriter, r *http.Request, csrfToken string, exp
 	}
 	// This cookie is deliberately readable by JS (not HttpOnly) so the frontend
 	// can echo it back in the X-Csrf-Token header (double-submit CSRF pattern).
-	http.SetCookie(w, &http.Cookie{ //nolint:gosec // CSRF cookie must be JS-readable by design
+	http.SetCookie(w, &http.Cookie{ // #nosec G124 -- double-submit CSRF cookie must be JS-readable; Secure and SameSite are set.
 		Name:     csrfCookieName,
 		Value:    csrfToken,
 		Path:     "/",
@@ -154,7 +154,7 @@ func clearSessionCookies(w http.ResponseWriter) {
 // cookie must be Secure for the browser to accept (and thus delete) it; the CSRF
 // cookie is the only non-HttpOnly one.
 func expireCookie(w http.ResponseWriter, name string) {
-	http.SetCookie(w, &http.Cookie{ //nolint:gosec // deletion cookie; attributes mirror the set cookie
+	http.SetCookie(w, &http.Cookie{ // #nosec G124 -- deletion cookie mirrors the security attributes of the cookie being removed.
 		Name:     name,
 		Value:    "",
 		Path:     "/",

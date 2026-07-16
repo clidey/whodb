@@ -88,7 +88,7 @@ func DB(config *engine.PluginConfig) (*elasticsearch.Client, error) {
 			log.Debug("[ES DB] Insecure mode: skipping certificate verification")
 			cfg.Transport = &http.Transport{
 				TLSClientConfig: &tls.Config{
-					InsecureSkipVerify: true, //nolint:gosec
+					InsecureSkipVerify: true, // #nosec G402 -- enabled only when the user explicitly selects insecure SSL mode.
 				},
 			}
 		} else {

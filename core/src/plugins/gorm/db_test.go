@@ -52,6 +52,23 @@ func TestParseConnectionConfigAllowsMissingPort(t *testing.T) {
 	}
 }
 
+func TestParseConnectionConfigRejectsOutOfRangePort(t *testing.T) {
+	plugin := newTestPlugin()
+
+	for _, port := range []string{"0", "-1", "65536"} {
+		t.Run(port, func(t *testing.T) {
+			_, err := plugin.ParseConnectionConfig(&engine.PluginConfig{
+				Credentials: &engine.Credentials{
+					Advanced: []engine.Record{{Key: "Port", Value: port}},
+				},
+			})
+			if err == nil {
+				t.Fatalf("expected ParseConnectionConfig to reject port %s", port)
+			}
+		})
+	}
+}
+
 func TestParseConnectionConfigNormalizesClickHouseToggleFields(t *testing.T) {
 	plugin := newTestPlugin()
 	plugin.Type = engine.DatabaseType_ClickHouse
