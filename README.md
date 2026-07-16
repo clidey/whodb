@@ -1,6 +1,6 @@
 <div align="center">
 
-# <img src="./docs/logo/logo.svg" width="30px" height="auto" alt="" /> WhoDB
+# <img src="https://raw.githubusercontent.com/clidey/whodb/main/docs/logo/logo.svg" width="30px" height="auto" alt="" /> WhoDB
 
 ### A lightweight, self-hosted workspace for your databases
 
@@ -16,7 +16,7 @@
 ![Closed issues](https://img.shields.io/github/issues-closed/clidey/whodb)
 ![Closed PRs](https://img.shields.io/github/issues-pr-closed/clidey/whodb)
 
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/clidey/whodb/blob/main/LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/clidey/whodb?style=social)](https://github.com/clidey/whodb/stargazers)
 ![Go](https://img.shields.io/badge/language-Go-00ADD8?logo=go&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/language-TypeScript-3178c6?logo=typescript&logoColor=white)
@@ -27,14 +27,14 @@
 [![Windows](https://img.shields.io/badge/Windows-available-brightgreen)](https://apps.microsoft.com/detail/9pftx5bv4ds6)
 [![macOS](https://img.shields.io/badge/macOS-available-brightgreen)](https://apps.apple.com/app/whodb/id6754566536)
 [![Snap](https://img.shields.io/badge/Snap-available-brightgreen)](https://snapcraft.io/whodb)
-[![CLI](https://img.shields.io/badge/CLI-available-brightgreen)](./cli/README.md)
+[![CLI](https://img.shields.io/badge/CLI-available-brightgreen)](https://github.com/clidey/whodb/blob/main/cli/README.md)
 
-[Quick start](#quick-start) · [Documentation](https://docs.whodb.com/) · [Live demo](https://demo.whodb.com/) · [Community](https://github.com/clidey/whodb/discussions)
+[Quick start](https://github.com/clidey/whodb/blob/main/README.md#quick-start) · [Documentation](https://docs.whodb.com/) · [Live demo](https://demo.whodb.com/) · [Community](https://github.com/clidey/whodb/discussions)
 
 </div>
 
 <p align="center">
-  <img src="./docs/images/06-storage-unit-list-with-sidebar.png" alt="WhoDB showing a database table" width="100%" />
+  <img src="https://raw.githubusercontent.com/clidey/whodb/main/docs/images/06-storage-unit-list-with-sidebar.png" alt="WhoDB showing a database table" width="100%" />
 </p>
 
 WhoDB gives you one place to explore your databases, edit data, run queries, and understand how a schema fits together. It runs in the browser, is easy to self-host, and is available as a desktop app or terminal CLI too.
@@ -65,10 +65,10 @@ Want to look around first? Try the [live demo](https://demo.whodb.com/) or watch
 <table>
 <tr>
 <td width="50%">
-  <img src="./docs/images/09-data-view-users-table.png" alt="Browsing rows in the WhoDB data grid" width="100%" />
+  <img src="https://raw.githubusercontent.com/clidey/whodb/main/docs/images/09-data-view-users-table.png" alt="Browsing rows in the WhoDB data grid" width="100%" />
 </td>
 <td width="50%">
-  <img src="./docs/images/24-graph-view-schema-topology.png" alt="Exploring database relationships in the WhoDB schema graph" width="100%" />
+  <img src="https://raw.githubusercontent.com/clidey/whodb/main/docs/images/24-graph-view-schema-topology.png" alt="Exploring database relationships in the WhoDB schema graph" width="100%" />
 </td>
 </tr>
 <tr>
@@ -137,7 +137,7 @@ whodb-cli             # open the terminal UI
 whodb-cli mcp serve   # start the MCP server
 ```
 
-See the [CLI guide](./cli/README.md) for connection examples and the full command reference.
+See the [CLI guide](https://github.com/clidey/whodb/blob/main/cli/README.md) for connection examples and the full command reference.
 
 ## AI providers
 
@@ -155,7 +155,7 @@ Environment variables let deployment administrators declare providers when the s
 - `WHODB_LMSTUDIO_*` for LM Studio connection settings
 - `WHODB_AI_GENERIC_<ID>_*` for OpenAI-compatible providers
 
-See the [installation guide](./docs/installation.mdx#ai-providers) for the complete environment variable list and the [AI provider guide](./docs/ai/setup-providers.mdx) for setup examples.
+See the [installation guide](https://github.com/clidey/whodb/blob/main/docs/installation.mdx#ai-providers) for the complete environment variable list and the [AI provider guide](https://github.com/clidey/whodb/blob/main/docs/ai/setup-providers.mdx) for setup examples.
 
 ## WhoDB Community and WhoDB Platform
 
@@ -187,7 +187,7 @@ pnpm install
 pnpm start
 ```
 
-The frontend opens at [http://localhost:3000](http://localhost:3000) and talks to the backend on port `8080`. See [BUILD_AND_RUN.md](./BUILD_AND_RUN.md) for generation and build commands.
+The frontend opens at [http://localhost:3000](http://localhost:3000) and talks to the backend on port `8080`. See [BUILD_AND_RUN.md](https://github.com/clidey/whodb/blob/main/BUILD_AND_RUN.md) for generation and build commands.
 
 ## Contributing
 
@@ -195,7 +195,7 @@ Bug reports, feature ideas, documentation improvements, and code contributions a
 
 - [Open an issue](https://github.com/clidey/whodb/issues) for a bug or concrete request.
 - [Start a discussion](https://github.com/clidey/whodb/discussions) for questions and ideas.
-- Read [CONTRIBUTING.md](./CONTRIBUTING.md) before sending a pull request.
+- Read [CONTRIBUTING.md](https://github.com/clidey/whodb/blob/main/CONTRIBUTING.md) before sending a pull request.
 
 ## More screenshots
 
@@ -204,19 +204,19 @@ Bug reports, feature ideas, documentation improvements, and code contributions a
 
 ### Query scratchpad
 
-<img src="./docs/images/27-scratchpad-main-view.png" alt="Writing queries in the WhoDB scratchpad" width="100%" />
+<img src="https://raw.githubusercontent.com/clidey/whodb/main/docs/images/27-scratchpad-main-view.png" alt="Writing queries in the WhoDB scratchpad" width="100%" />
 
 ### Add and edit records
 
-<img src="./docs/images/11-data-view-add-row-dialog.png" alt="Adding a row in WhoDB" width="100%" />
+<img src="https://raw.githubusercontent.com/clidey/whodb/main/docs/images/11-data-view-add-row-dialog.png" alt="Adding a row in WhoDB" width="100%" />
 
 ### Build filters visually
 
-<img src="./docs/images/16-data-view-where-conditions-popover.png" alt="Building WHERE conditions in WhoDB" width="100%" />
+<img src="https://raw.githubusercontent.com/clidey/whodb/main/docs/images/16-data-view-where-conditions-popover.png" alt="Building WHERE conditions in WhoDB" width="100%" />
 
 ### Export data
 
-<img src="./docs/images/20-data-view-export-dialog.png" alt="Exporting data from WhoDB" width="100%" />
+<img src="https://raw.githubusercontent.com/clidey/whodb/main/docs/images/20-data-view-export-dialog.png" alt="Exporting data from WhoDB" width="100%" />
 
 </details>
 
@@ -226,7 +226,7 @@ Bug reports, feature ideas, documentation improvements, and code contributions a
 - [GitHub Issues](https://github.com/clidey/whodb/issues)
 - [support@clidey.com](mailto:support@clidey.com)
 
-WhoDB is licensed under the [Apache License 2.0](./LICENSE).
+WhoDB is licensed under the [Apache License 2.0](https://github.com/clidey/whodb/blob/main/LICENSE).
 
 <div align="center">
 
