@@ -104,8 +104,8 @@ github.com/aws/aws-sdk-go-v2/service/sts v1.43.4 h1:Np0vmL7op0Zs5xGacYMMX3v5O5pv
 github.com/aws/aws-sdk-go-v2/service/sts v1.43.4/go.mod h1:r8wkDOuLaaMFqFiYAb8dGY2A3gJCOujMc6CFOVC4Zhc=
 github.com/aws/smithy-go v1.27.3 h1:F3Zb497UhhskkfpJmfkXswyo+t0sh9OTBnIHjogWbVY=
 github.com/aws/smithy-go v1.27.3/go.mod h1:YE2RhdIuDbA5E5bTdciG9KrW3+TiEONeUWCqxX9i1Fc=
-github.com/boundaryml/baml v0.222.0 h1:m0GrGCN/gYPdj3UPArXwzO3gkwjH8qBahD83kyJYC40=
-github.com/boundaryml/baml v0.222.0/go.mod h1:dzmyDMNDXIVxJX75q9KTjuTUADsYSGUEbGyi76Cwkew=
+github.com/boundaryml/baml v0.223.0 h1:0aPaZXr7iYvkn4duVSG2jV4RBae5XEJLaFfCbxsPyjc=
+github.com/boundaryml/baml v0.223.0/go.mod h1:dzmyDMNDXIVxJX75q9KTjuTUADsYSGUEbGyi76Cwkew=
 github.com/brianvoe/gofakeit/v7 v7.15.0 h1:kGLYAWN8tnmxq2PelKVK6zwpM7kMxdz9SGPH31mFkNs=
 github.com/brianvoe/gofakeit/v7 v7.15.0/go.mod h1:QXuPeBw164PJCzCUZVmgpgHJ3Llj49jSLVkKPMtxtxA=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
