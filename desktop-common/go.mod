@@ -5,7 +5,7 @@ go 1.26.1
 require (
 	github.com/99designs/gqlgen v0.17.91
 	github.com/clidey/whodb/core v0.0.0
-	github.com/wailsapp/wails/v2 v2.12.0
+	github.com/wailsapp/wails/v2 v2.13.0
 )
 
 require (
