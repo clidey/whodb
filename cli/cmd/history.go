@@ -40,6 +40,7 @@ var historyCmd = &cobra.Command{
 Subcommands:
   list   - List recent queries
   search - Search queries by pattern
+  load   - Print a saved query by ID
   clear  - Clear all history`,
 	Example: `  # List recent queries
   whodb-cli history list
@@ -49,6 +50,9 @@ Subcommands:
 
   # Search for queries containing "users"
   whodb-cli history search users
+
+  # Print the full query for a history entry
+  whodb-cli history load 1234567890
 
   # Clear all history
   whodb-cli history clear`,
@@ -230,6 +234,59 @@ var historySearchCmd = &cobra.Command{
 	},
 }
 
+var historyLoadCmd = &cobra.Command{
+	Use:           "load [id]",
+	Short:         "Print a saved query by ID",
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	Args:          cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		format, err := output.ParseFormat(historyFormat)
+		if err != nil {
+			return err
+		}
+
+		mgr, err := history.NewManager()
+		if err != nil {
+			return fmt.Errorf("cannot load history: %w", err)
+		}
+
+		entry, err := mgr.Get(args[0])
+		if err != nil {
+			return fmt.Errorf("history entry %q not found: %w", args[0], err)
+		}
+
+		if effectiveCommandOutputFormat(cmd, format) == output.FormatJSON {
+			return writeCommandJSON(cmd, entry)
+		}
+
+		if effectiveCommandOutputFormat(cmd, format) == output.FormatTable ||
+			effectiveCommandOutputFormat(cmd, format) == output.FormatCSV ||
+			effectiveCommandOutputFormat(cmd, format) == output.FormatNDJSON {
+			out := newCommandOutput(cmd, format, true)
+			return out.WriteQueryResult(&output.QueryResult{
+				Columns: []output.Column{
+					{Name: "id", Type: "string"},
+					{Name: "timestamp", Type: "string"},
+					{Name: "database", Type: "string"},
+					{Name: "success", Type: "bool"},
+					{Name: "query", Type: "string"},
+				},
+				Rows: [][]any{{
+					entry.ID,
+					entry.Timestamp.Format("2006-01-02 15:04:05"),
+					entry.Database,
+					entry.Success,
+					entry.Query,
+				}},
+			})
+		}
+
+		_, err = fmt.Fprintln(cmd.OutOrStdout(), entry.Query)
+		return err
+	},
+}
+
 var historyClearCmd = &cobra.Command{
 	Use:           "clear",
 	Short:         "Clear all query history",
@@ -276,6 +333,7 @@ func init() {
 	// Subcommands
 	historyCmd.AddCommand(historyListCmd)
 	historyCmd.AddCommand(historySearchCmd)
+	historyCmd.AddCommand(historyLoadCmd)
 	historyCmd.AddCommand(historyClearCmd)
 
 	historyCmd.RegisterFlagCompletionFunc("format", completeOutputFormats)
