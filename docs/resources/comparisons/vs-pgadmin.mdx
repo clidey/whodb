@@ -55,18 +55,16 @@ WhoDB is usually better for quick inspection and common development work. pgAdmi
 <AccordionGroup>
 <Accordion title="WhoDB Architecture">
 **Deployment Model:**
-- Single Go binary
-- Lightweight (~15MB)
+- Single self-contained Go binary
 - Runs on Linux, Mac, Windows
-- Docker optimized (50MB image)
+- Small Docker image
 - Minimal dependencies
 - Browser-based access
 
 **Infrastructure Impact:**
 - Single process per instance
-- \<50MB memory per instance
-- Scales horizontally naturally
-- Perfect for Kubernetes
+- Lightweight footprint
+- Simple to deploy
 - Containerization friendly
 - Cloud-native ready
 </Accordion>
@@ -143,7 +141,7 @@ WhoDB is usually better for quick inspection and common development work. pgAdmi
 |---------|:----:|:-------:|
 | **Explain Plans** | Yes | Yes, Advanced |
 | **VACUUM Analysis** | Run SQL manually | Yes |
-| **Query Profiling** | Execution timing and EXPLAIN | Yes, Detailed |
+| **Query Profiling** | No built-in profiling; run `EXPLAIN`/`EXPLAIN ANALYZE` in Scratchpad | Yes, Detailed |
 | **Extension Management** | Use native SQL/tools | Yes |
 | **Trigger Management** | Use native SQL/tools | Yes |
 | **Rule Management** | Use native SQL/tools | Yes |
@@ -202,9 +200,9 @@ WhoDB is usually better for quick inspection and common development work. pgAdmi
 | **Query Bookmarks** | CLI bookmarks | Yes |
 | **Multi-Query Execution** | Multi-cell | Batch execution |
 | **Explain Plans** | Yes | Advanced |
-| **Query Profiling** | Yes | Detailed |
+| **Query Profiling** | No (manual `EXPLAIN` in Scratchpad) | Detailed |
 | **Result Formatting** | JSON, CSV, export | Multiple formats |
-| **Execution Statistics** | Yes | Yes |
+| **Execution Statistics** | No | Yes |
 </Accordion>
 
 <Accordion title="Visualization">
@@ -224,13 +222,15 @@ WhoDB is usually better for quick inspection and common development work. pgAdmi
 
 ### WhoDB - Multi-Database Advantage
 
-WhoDB supports **multiple database types** with a single, consistent interface:
-- PostgreSQL 10+
-- MySQL 5.7+ / MariaDB
-- SQLite 3
-- MongoDB 4.0+
-- Redis 5.0+
-- ElasticSearch
+WhoDB supports **multiple database types** with a single, consistent interface — the [full catalog](/resources/supported-databases) covers 20+ types, including:
+- PostgreSQL (plus CockroachDB, YugabyteDB, QuestDB)
+- MySQL / MariaDB (plus TiDB)
+- SQLite and DuckDB
+- MongoDB (plus FerretDB, DocumentDB)
+- Redis (plus Valkey, Dragonfly, ElastiCache)
+- ClickHouse
+- ElasticSearch / OpenSearch
+- Memcached
 
 **Why This Matters:**
 Modern applications often use specialized databases for different needs (PostgreSQL for relational data, Redis for caching, MongoDB for documents). WhoDB manages them all with one tool and one UI paradigm.
@@ -500,8 +500,7 @@ For compliance needs, plan audit logging at the database and infrastructure laye
 **WhoDB:**
 - Syntax highlighting
 - Web Scratchpad history and CLI TUI autocomplete
-- Execution time display
-- Basic explain plans
+- Explain plans via manual `EXPLAIN` in Scratchpad
 - Query history
 - Multi-cell notebooks
 
@@ -597,12 +596,11 @@ For compliance needs, plan audit logging at the database and infrastructure laye
 - Scales inefficiently
 
 **WhoDB Solution:**
-- Lightweight (50MB)
+- Lightweight footprint
 - Single binary, simple deployment
-- Perfect Kubernetes fit
-- Scales linearly
+- Container-friendly
 
-**Result:** Simpler infrastructure, lower cloud costs, easier scaling
+**Result:** Simpler infrastructure, lower cloud costs
 
 ### Scenario 3: Mixed Database Stack
 

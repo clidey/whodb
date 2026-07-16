@@ -35,6 +35,8 @@ import (
 
 	"github.com/clidey/whodb/core/src"
 	"github.com/clidey/whodb/core/src/analytics"
+	"github.com/clidey/whodb/core/src/auth"
+	"github.com/clidey/whodb/core/src/common/datadir"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/log"
@@ -173,10 +175,16 @@ func Run(config AppConfig, staticFiles embed.FS) {
 		AppVersion:  env.ApplicationVersion,
 		Deployment:  config.AnalyticsDeployment,
 		Edition:     config.AnalyticsEdition,
+		Source:      "backend",
 	}); err == nil {
 		defer analytics.Shutdown()
 	}
 	analytics.SetEnabled(settingsCfg.MetricsEnabled)
+	analytics.StartHeartbeat(datadir.Options{
+		AppName:           "whodb",
+		EnterpriseEdition: env.IsEnterpriseEdition,
+		Development:       env.IsDevelopment,
+	})
 
 	src.InitializeEngine()
 
@@ -210,6 +218,11 @@ func Run(config AppConfig, staticFiles embed.FS) {
 		log.Warnf("Failed to initialize GCP providers from environment: %v", err)
 	}
 
+	// Initialize the encrypted session store and capture its cleanup-ticker stop
+	// function for graceful shutdown. This is idempotent — InitializeRouter also
+	// calls it — and is a no-op in desktop/CLI mode.
+	stopSessionCleanup := auth.EnsureSessionStore()
+
 	r := router.InitializeRouter(config.Schema, config.HTTPHandlers, config.Middlewares, config.PublicPaths, staticFiles)
 
 	port := resolvePort()
@@ -240,6 +253,10 @@ func Run(config AppConfig, staticFiles embed.FS) {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 	log.Info("Shutting down server...")
+
+	if stopSessionCleanup != nil {
+		stopSessionCleanup()
+	}
 
 	// Create a deadline for graceful shutdown
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)

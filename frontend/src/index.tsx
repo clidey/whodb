@@ -32,6 +32,7 @@ import {isDesktopApp} from './utils/external-links';
 import {PosthogConsentBanner} from './components/analytics/posthog-consent-banner';
 import {ErrorBoundary} from './components/error-boundary';
 import {getBasePath} from './utils/base-path';
+import {migrateAuthSessionCookieV9} from './store/migrations';
 
 // Detect desktop Linux and add a class for CSS-based overrides (e.g., fonts)
 try {
@@ -80,7 +81,7 @@ const AppWithProviders = () => {
 const desktopApp = isDesktopApp();
 const browserBasePath = desktopApp ? undefined : (getBasePath() || undefined);
 
-root.render(
+const rootApp = (
   <React.StrictMode>
     {desktopApp ? (
       <HashRouter>
@@ -109,3 +110,8 @@ root.render(
     )}
   </React.StrictMode>
 );
+
+// Establish the session cookie from any legacy localStorage credentials before
+// rendering, so the first GraphQL query cannot race the migration. Failures are
+// swallowed inside the migration; never block startup.
+void migrateAuthSessionCookieV9().finally(() => { root.render(rootApp); });

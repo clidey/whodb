@@ -565,6 +565,11 @@ func wrapWithBasePath(h http.Handler, basePath string) *chi.Mux {
 func InitializeRouter(schema graphql.ExecutableSchema, httpHandlers map[string]http.Handler, additionalMiddlewares []func(http.Handler) http.Handler, publicPaths []string, staticFiles embed.FS) *chi.Mux {
 	router := chi.NewRouter()
 
+	// Initialize the encrypted session store (server mode). This lives here, not
+	// in app.Run, so every server entry point that builds the router — including
+	// the e2e/test server — issues and validates session cookies.
+	auth.EnsureSessionStore()
+
 	setupMiddlewares(router, additionalMiddlewares, publicPaths)
 	setupServer(router, schema, httpHandlers, staticFiles)
 

@@ -48,8 +48,6 @@ Visit `http://localhost:8080`.
 ### Docker Compose
 
 ```yaml
-version: "3.8"
-
 services:
   whodb:
     image: clidey/whodb:latest
@@ -58,6 +56,9 @@ services:
     environment:
       - PORT=8080
       - WHODB_LOG_LEVEL=info
+      # Keeps encrypted login sessions valid across container recreation.
+      # Generate once with: openssl rand -hex 32
+      - WHODB_ENCRYPTION_KEY=replace_with_openssl_rand_hex_32
     restart: unless-stopped
     volumes:
       - whodb-data:/data
@@ -65,6 +66,21 @@ services:
 volumes:
   whodb-data:
 ```
+
+### Session Storage
+
+WhoDB keeps login sessions server-side. When you log in from a browser, WhoDB stores your database credentials encrypted (AES-256-GCM) in a local SQLite file under its data directory, and the browser only holds an opaque, `HttpOnly` session cookie — never the credentials themselves.
+
+Without any configuration, this works out of the box: a plain `docker run` generates an encryption key on first start and keeps you logged in until the container is recreated (at which point you simply log in again). To keep sessions valid across upgrades and restarts:
+
+- Mount `/data` as a volume so the encrypted session database and generated key persist.
+- Set `WHODB_ENCRYPTION_KEY` to a stable 64-character hex string (`openssl rand -hex 32`) so the key does not depend on the container's filesystem.
+
+<Warning>
+Keep `WHODB_ENCRYPTION_KEY` safe and stable. Changing or losing it invalidates every existing session — sessions encrypted with the old key can no longer be decrypted, so users are simply logged out and need to sign in again.
+</Warning>
+
+If WhoDB sits behind an HTTPS-terminating reverse proxy (nginx, Traefik, Caddy, a cloud load balancer), also set `WHODB_SECURE=true` so the session cookie is marked `Secure`. Leave it unset for plain HTTP, including local development — WhoDB does not infer HTTPS from proxy headers, and setting it on an HTTP deployment causes the browser to drop the cookie.
 
 ## Binary Installation
 
@@ -144,7 +160,7 @@ The desktop app lives in `desktop-ce/` and uses the same frontend and backend co
 |----------|-------------|---------|
 | `PORT` | HTTP port WhoDB listens on | `8080` |
 | `WHODB_LOG_LEVEL` | Logging level: `debug`, `info`, `warn`, `error`, `none` | `info` |
-| `WHODB_LOG_FORMAT` | Log format: `text` or `json` | `text` |
+| `WHODB_LOG_FORMAT` | Set to `json` for JSON logs; unset for the default text format | `text` |
 | `WHODB_LOG_FILE` | Redirect non-HTTP logs to a file. `default` means `/var/log/whodb/whodb.log` | unset |
 | `WHODB_ACCESS_LOG_FILE` | Redirect HTTP access logs to a file. `default` means `/var/log/whodb/whodb.access.log` | unset |
 | `WHODB_ALLOWED_ORIGINS` | Comma-separated CORS allowlist | unset |
@@ -153,6 +169,10 @@ The desktop app lives in `desktop-ce/` and uses the same frontend and backend co
 | `WHODB_MAX_PAGE_SIZE` | Maximum rows allowed per page request | `10000` |
 | `WHODB_DISABLE_MOCK_DATA_GENERATION` | Disable mock data globally or for named tables | unset |
 | `WHODB_DISABLE_UPDATE_CHECK` | Disable release availability checks | `false` |
+| `WHODB_ENCRYPTION_KEY` | 64-char hex key used to encrypt stored login sessions. Auto-generated and persisted to `WHODB_DATA_DIR` if unset | unset |
+| `WHODB_DATA_DIR` | Directory for the encrypted session database and generated key | platform default data directory |
+| `WHODB_SESSION_TTL` | Sliding idle timeout for login sessions, as a Go duration (for example `168h`) | `168h` (7 days) |
+| `WHODB_SECURE` | Mark the session cookie `Secure`. Set to `true` only when served over HTTPS (including behind a TLS-terminating proxy) | `false` |
 
 <Note>
 The `default` log paths write to `/var/log/whodb/`. That works naturally in Docker but usually requires a custom path for local development.
@@ -198,7 +218,7 @@ See [Cloud Providers](/features/cloud-providers) for examples and discovery deta
 
 WhoDB can preload connection profiles from environment variables so they appear on the login page.
 
-Supported core profile prefixes in the current CE build are:
+Profiles work for every database type in the catalog: the prefix is `WHODB_` followed by the uppercased type name. Examples for the core types include:
 
 - `WHODB_POSTGRES`
 - `WHODB_COCKROACHDB`
@@ -212,6 +232,8 @@ Supported core profile prefixes in the current CE build are:
 - `WHODB_CLICKHOUSE`
 - `WHODB_DUCKDB`
 - `WHODB_MEMCACHED`
+
+The same pattern applies to the rest of the catalog, such as `WHODB_VALKEY`, `WHODB_DRAGONFLY`, `WHODB_OPENSEARCH`, `WHODB_YUGABYTEDB`, `WHODB_QUESTDB`, and `WHODB_FERRETDB`.
 
 Two formats are supported:
 
@@ -263,7 +285,7 @@ export WHODB_POSTGRES_1='{
 ```
 
 <Note>
-Cloud-managed variants such as `DocumentDB` and `ElastiCache` are typically introduced through provider discovery rather than `WHODB_<TYPE>` profile prefixes.
+Cloud-managed variants such as `DocumentDB` and `ElastiCache` accept `WHODB_<TYPE>` profile prefixes like any other catalog type (`WHODB_DOCUMENTDB`, `WHODB_ELASTICACHE`), though provider discovery is the more common way to introduce them.
 </Note>
 
 <Note>

@@ -886,6 +886,18 @@
     "advancedFields.debug": "1a03bd2fd107",
     "advancedFields.urlParams": "aad7e7b506f8",
     "advancedFields.dnsEnabled": "01a08bb4ee0a",
+    "advancedFields.authMethod": "44ff9dbcb9c4",
+    "advancedFields.accessKeyId": "8761c0ccaff6",
+    "advancedFields.accessKeyIdPlaceholder": "9940538eb8d8",
+    "advancedFields.secretAccessKey": "d2aeacd6dbcf",
+    "advancedFields.secretAccessKeyPlaceholder": "452e60694cbc",
+    "advancedFields.sessionToken": "b93058b80efd",
+    "advancedFields.azureTenantId": "de1f5fff3413",
+    "advancedFields.clientId": "8726db013948",
+    "advancedFields.clientSecret": "ae21cf6d24b8",
+    "advancedFields.projectId": "e511470b21a9",
+    "advancedFields.serviceAccountJson": "b9f92e30b929",
+    "advancedFields.serviceAccountJsonPlaceholder": "dd02990f0965",
     "posthog.apiKey": "23189d55f697",
     "posthog.enterApiKey": "9d1e05c0c58b",
     "posthog.projectId": "e511470b21a9",
@@ -1050,7 +1062,11 @@
     "navigate": "d0cda6559bb3",
     "select": "b1a36d25d963",
     "back": "3c482346f375",
-    "open": "2348f9987442"
+    "open": "2348f9987442",
+    "folder": "74ccd4330384",
+    "useThisFolder": "30cbaeca91c8",
+    "link": "a6a32dbc5618",
+    "useThisEntity": "51e54a99b323"
   },
   "ee/frontend/src/locales/components/bigquery-login-form.yaml": {
     "projectId": "e511470b21a9",
@@ -1065,9 +1081,9 @@
     "authServiceAccount": "c3103be0fac9",
     "authServiceAccountDesc": "1da0ba0d5841",
     "authAccessToken": "f9db72ced1ee",
-    "authAccessTokenDesc": "65ef9ec5fd68",
+    "authAccessTokenDesc": "444fd55249de",
     "authRefreshToken": "4553124846a3",
-    "authRefreshTokenDesc": "17f649cbc8d7",
+    "authRefreshTokenDesc": "e80f4ebd458a",
     "authExternalAccount": "0767c25d6d80",
     "authExternalAccountDesc": "0dde5dffbaf6",
     "applicationDefaultHint": "7c4d1623211f",
@@ -1088,29 +1104,7 @@
     "clientSecretPlaceholder": "e75784ba010c",
     "additionalProperties": "81fc92583d94",
     "additionalPropertiesPlaceholder": "15138d801e17",
-    "additionalPropertiesDescription": "1e0c43b93c14"
-  },
-  "ee/frontend/src/locales/components/bridge-drivers.yaml": {
-    "title": "0822fa06e18f",
-    "description": "3fc00385dc0e",
-    "installed": "f8b32f4e92bd",
-    "install": "569ca49f4aaf",
-    "installing": "07ae7fd68456",
-    "maven": "ee6f44b9a67f",
-    "licenseDialogTitle": "3475d22d7cef",
-    "licenseDialogDescription": "de62da8b5f07",
-    "licenseLabel": "af825cf90693",
-    "detailsLabel": "a4a61b7a2453",
-    "licenseAcknowledge": "d6e2e2b3d181",
-    "acceptAndInstall": "19539bcd6fab",
-    "installDialogTitle": "fb29f7da19ae",
-    "checkingDialogTitle": "75b9928efa6c",
-    "installDialogDescription": "dfac851ea8fa",
-    "checkingDialogDescription": "4a0977e85fa4",
-    "installNotNeededTitle": "3475d22d7cef",
-    "installNotNeededDescription": "e0bd84e31e6a",
-    "installSuccess": "fc67d0b169d8",
-    "installFailed": "40e93bfa20c4"
+    "additionalPropertiesDescription": "31ced04d9b31"
   },
   "ee/frontend/src/locales/components/confirm-delete-dialog.yaml": {
     "cancel": "19766ed6ccb2",
@@ -1188,8 +1182,13 @@
     "regionPlaceholder": "f39d0e7d9349",
     "accessKeyId": "8761c0ccaff6",
     "accessKeyIdPlaceholder": "7cd01fad1dfa",
+    "accessKeyIdRequiredPlaceholder": "4edb904cbc17",
     "secretAccessKey": "d2aeacd6dbcf",
-    "secretAccessKeyPlaceholder": "7cd01fad1dfa"
+    "secretAccessKeyPlaceholder": "7cd01fad1dfa",
+    "secretAccessKeyRequiredPlaceholder": "2ddcfd0eb4f1",
+    "sessionTokenOptional": "b93058b80efd",
+    "sessionTokenPlaceholder": "1bbcaae07ce7",
+    "customerCredentialsDescription": "f665e743bedc"
   },
   "ee/frontend/src/locales/components/ee-command-palette.yaml": {
     "searchPlaceholder": "ec5e628c25f9",
@@ -1251,6 +1250,10 @@
     "uploading": "72cb29c90ccd",
     "attachFiles": "e697cc1e45af"
   },
+  "ee/frontend/src/locales/components/filtered-list-empty-state.yaml": {
+    "title": "2df01a03ff43",
+    "description": "92de22784e73"
+  },
   "ee/frontend/src/locales/components/function-secret-bindings.yaml": {
     "secretsLabel": "d8707d411d99",
     "secretsHelp": "0edbe17f2bb5",
@@ -1264,6 +1267,21 @@
     "duplicateSecretEnvName": "e6e43f9c877f",
     "invalidSecretEnvName": "47cacf37a809",
     "secretFallback": "7e32a729b122"
+  },
+  "ee/frontend/src/locales/components/gcs-login-form.yaml": {
+    "projectId": "e511470b21a9",
+    "projectIdPlaceholder": "9f4c92945fa8",
+    "bucketOptional": "08cc5f6ee22a",
+    "bucketPlaceholder": "008699fc557b",
+    "customEndpointOptional": "7f8c3aed5f87",
+    "customEndpointPlaceholder": "ca47d8530605",
+    "customEndpointDescription": "4fd345235e04",
+    "serviceAccountJson": "b9f92e30b929",
+    "credentialRequired": "2e41131d5075",
+    "credentialStored": "2d1c8111e4c1",
+    "selectedFile": "51d7a1ec8c35",
+    "invalidServiceAccount": "dd0c55c8d6ef",
+    "fileTooLarge": "119806c8e694"
   },
   "ee/frontend/src/locales/components/promote-button.yaml": {
     "trigger": "5834dab08544",
@@ -1505,10 +1523,15 @@
     "blockerMessage": "e43f291bf38a",
     "stripeDashboardNotice": "e087573b4f4b",
     "metricProjects": "04e2a9728af7",
+    "metricOrganizationMembers": "bb23cb720b0c",
     "metricSourcesPerProject": "2a0c4db9f014",
     "metricDatasetsPerProject": "8bf16f446371",
     "metricTransformsPerProject": "25d26009be0a",
     "metricOntologyEntitiesPerProject": "a672506720e7",
+    "metricAppsPerProject": "9d447195c04c",
+    "metricFunctionsPerProject": "07d63b06dd3d",
+    "metricConcurrentFunctionRuns": "e47673847452",
+    "metricConcurrentStreams": "25a9944c9843",
     "metricFilesPerProject": "39a8d078cf4b",
     "metricFoldersPerProject": "7e63f226c8c0",
     "metricStoragePerProject": "8cf99abc1b18",
@@ -1717,6 +1740,11 @@
     "kind_event": "4e1f49a9c8ae",
     "kind_loop": "f2f6a0188995"
   },
+  "ee/frontend/src/locales/pages/chat.yaml": {
+    "deleteSelectedChats": "cb78ec7204b9",
+    "deleteChatsTitle": "d95a26340dd6",
+    "deleteChatsDescription": "1d8834eda8d8"
+  },
   "ee/frontend/src/locales/pages/dashboard.yaml": {
     "welcome": "f0b56330b3e4",
     "of": "28391d3bc64e",
@@ -1867,6 +1895,13 @@
     "save": "1509f561f241",
     "saving": "dc85af8f2b1d",
     "cancel": "19766ed6ccb2"
+  },
+  "ee/frontend/src/locales/pages/files.yaml": {
+    "createTransform": "f6c142b169f5",
+    "extractTextWithOcr": "98af54ca9d69",
+    "extractFieldsWithAi": "b27a84deb385",
+    "analyzeRowsWithAi": "6b3b65049e8d",
+    "customPipeline": "adad48c956a5"
   },
   "ee/frontend/src/locales/pages/functions.yaml": {
     "title": "75e942e5b366",
@@ -2453,6 +2488,9 @@
     "subheading": "12621c315966",
     "getStarted": "47de23586e49",
     "signingIn": "12dfdbba4634",
+    "checkingAvailability": "b77042968e2f",
+    "registrationUnavailable": "68cdf72ee167",
+    "registrationUnavailableDescription": "a15022bf6435",
     "unknownPartner": "97e05ce4434c"
   },
   "ee/frontend/src/locales/pages/project.yaml": {
@@ -2801,9 +2839,21 @@
     "previewErrorTechnicalDetails": "890ab358a55d",
     "previewErrorCopyDetails": "ec7ee2826c84",
     "previewErrorCopied": "8d525e5f158b",
+    "previewCellCopyTitle": "2baab687f871",
+    "previewCellCopied": "32386b44f1df",
+    "previewCellCopyFailed": "8b8ddc77894e",
     "previewErrorNoData": "01066fab3332",
     "previewErrorFailed": "8f5998bb6b15",
     "builderNoNodes": "6394642e91f6",
+    "quickStartOcr": "98af54ca9d69",
+    "quickStartAi": "4c15873c9de2",
+    "quickStartExtractLoad": "801a75377b0d",
+    "quickStartSeedLoad": "06defd9c70f9",
+    "quickStartFilterExport": "a5ed4b9c39e8",
+    "quickStartSelectExport": "7b3fc8a7c157",
+    "quickStartFullTransform": "fe653e5762dd",
+    "quickStartJoinTables": "464ed758fd3d",
+    "quickStartReplace": "54449aa7bae9",
     "cfgSelectSource": "7092893d5e32",
     "cfgSelectSchema": "c0b7715247d1",
     "cfgSelectTable": "4a13813ff68c",
@@ -2956,6 +3006,7 @@
     "permissionProperty": "fc9184134ae5",
     "permissionEvent": "b8e1f80bd70a",
     "permissionScript": "21a0270b7f66",
+    "permissionIntentAdd": "9fd728c66c9a",
     "permissionIntentAddSubtree": "c86ebe660883",
     "permissionIntentAddSubtreeNamed": "6d49533bdaa4",
     "permissionIntentAddNode": "1d727988fb0b",

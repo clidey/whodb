@@ -30,6 +30,7 @@ The desktop menu currently wires native actions for:
 
 - new connection
 - export data
+- import data (Cmd/Ctrl + I)
 - refresh
 - toggle sidebar
 - execute query
@@ -37,6 +38,8 @@ The desktop menu currently wires native actions for:
 - disconnect
 - documentation and issue links
 - About dialog
+
+A standard Edit menu (cut, copy, paste, and related actions) is also included for native clipboard handling.
 
 ## File-Based Databases
 
@@ -47,9 +50,13 @@ The desktop app adds native file pickers for:
 
 This makes file-based logins smoother than the plain browser flow.
 
+## Credential Storage
+
+The desktop app stores saved connection credentials in the operating system keyring (under the service name "WhoDB"). It falls back to local config storage only if no keyring is available on the machine.
+
 ## Updates
 
-The current app checks for release availability and can surface a link to the latest release, but it does **not** apply updates automatically.
+Update the desktop app by downloading the latest version from the [GitHub releases page](https://github.com/clidey/whodb/releases) and installing it over your existing copy.
 
 ## Related Pages
 

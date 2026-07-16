@@ -198,7 +198,7 @@ whodb-cli connections add --from-discovered aws-prod-us-west-2/prod-db --user al
 
 ## SSH Tunneling
 
-Built-in SSH tunneling belongs to the CLI/TUI surface in this codebase. If your database sits behind a bastion host and you want WhoDB tooling to manage the tunnel, use the CLI rather than the web login page.
+Built-in SSH tunneling belongs to the CLI/TUI surface in this codebase. If your database sits behind a bastion host and you want WhoDB tooling to manage the tunnel, use the CLI rather than the web login page. SSH passwords for saved connections are stored in the OS keyring, with a `0600` plaintext config fallback only when no keyring is available.
 
 ## Agent Metadata, Diagnostics, And Runbooks
 
@@ -319,6 +319,8 @@ Useful MCP options:
 - `--transport stdio|http`
 - `--host`
 - `--port`
+- `--auth-token` (or `WHODB_MCP_AUTH_TOKEN`) — require a Bearer token on `/mcp` requests; strongly recommended when binding to a network interface
+- `--confirm-writes` (default on)
 - `--timeout`
 - `--max-rows`
 - `--allow-multi-statement`
@@ -332,7 +334,7 @@ Useful MCP options:
 HTTP mode is part of the CLI MCP server, not the WhoDB web app:
 
 ```bash
-whodb-cli mcp serve --transport=http --host=0.0.0.0 --port=3000
+whodb-cli mcp serve --transport=http --host=0.0.0.0 --port=3000 --auth-token your-secret-token
 ```
 
 It exposes:

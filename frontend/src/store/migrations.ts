@@ -17,6 +17,8 @@
 import type { IAIModelType } from './ai-models';
 import { ensureModelTypesArray, ensureModelsArray } from '../utils/ai-models-helper';
 import { featureFlags } from '../config/features';
+import { withBasePath } from '../utils/base-path';
+import { stripProfileSecrets } from '../utils/credential-secrets';
 
 
 /**
@@ -337,6 +339,72 @@ function clearAuthStateV8(): void {
   }
 }
 
+const PASSWORD_KEY = 'password';
+
+/**
+ * Migrate an already-logged-in browser user to the server-side session cookie.
+ * If persisted credentials carry a password and no session cookie exists yet,
+ * this posts LoginSource once (awaited, so it completes before the app renders
+ * and any query races it), then rewrites persist:auth with all secrets stripped
+ * — keeping the connection list and logged-in state. Best-effort: on failure it
+ * simply leaves the user to log in again. Skipped on desktop/webview.
+ */
+export async function migrateAuthSessionCookieV9(): Promise<void> {
+  try {
+    if (typeof window === 'undefined' || getMigrationVersion() >= 9) {
+      return;
+    }
+    // Desktop/webview keeps the Authorization-header flow; do not migrate.
+    const wailsGo = (window as any).go;
+    const hasWailsBindings = Boolean(wailsGo?.main?.App) || Boolean(wailsGo?.common?.App);
+    const isDesktop = hasWailsBindings
+      || !['http:', 'https:'].includes(window.location.protocol);
+
+    const raw = localStorage.getItem('persist:auth');
+    const parsed = raw ? JSON.parse(raw) : null;
+    const current = parsed?.current ? JSON.parse(parsed.current) : null;
+    const values: Array<{ Key: string; Value: string }> = current?.Values ?? [];
+    const hasPassword = Array.isArray(values)
+      && values.some(v => String(v?.Key ?? '').toLowerCase() === PASSWORD_KEY && v?.Value);
+
+    if (!isDesktop && current && hasPassword) {
+      const res = await fetch(withBasePath('/api/query'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          operationName: 'LoginSource',
+          query: 'mutation LoginSource($credentials: SourceLoginInput!) { LoginSource(credentials: $credentials) { Status } }',
+          variables: {
+            credentials: {
+              Id: current.Id,
+              SourceType: current.SourceType ?? current.Type,
+              Values: values,
+              AccessToken: current.AccessToken,
+            },
+          },
+        }),
+      });
+      // Only strip secrets once the cookie is established, so a failed mint
+      // leaves the credentials intact for a manual retry/login.
+      if (res.ok && parsed) {
+        if (parsed.current) parsed.current = JSON.stringify(stripProfileSecrets(current));
+        if (parsed.profiles) {
+          const profiles = JSON.parse(parsed.profiles);
+          parsed.profiles = JSON.stringify(
+            Array.isArray(profiles) ? profiles.map(stripProfileSecrets) : profiles
+          );
+        }
+        localStorage.setItem('persist:auth', JSON.stringify(parsed));
+      }
+    }
+  } catch (error) {
+    console.error('Error migrating auth to session cookie:', error);
+  } finally {
+    setMigrationVersion(9);
+  }
+}
+
 /**
  * Run all necessary migrations
  */
@@ -373,6 +441,9 @@ export function runMigrations(): void {
     clearAuthStateV8();
     setMigrationVersion(8);
   }
+
+  // V9 (auth → session cookie) runs separately via migrateAuthSessionCookieV9,
+  // which is awaited before the app renders so the cookie beats any query.
 
   // Always ensure AI models state is valid
   ensureValidAIModelsState();

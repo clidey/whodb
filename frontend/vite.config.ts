@@ -148,6 +148,7 @@ export default defineConfig(async ({command}) => {
     define: {
       'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
       '__APP_VERSION__': JSON.stringify(process.env.VITE_APP_VERSION || 'development'),
+      '__WHODB_EDITION__': JSON.stringify('ce'),
     },
   };
 });

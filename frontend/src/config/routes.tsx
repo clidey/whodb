@@ -22,7 +22,7 @@ import { LogoutPage } from "../pages/auth/logout";
 import { getComponent } from "./component-registry";
 import { featureFlags } from "./features";
 import { LoadingPage } from "../components/loading";
-import { getRegisteredUnscopedRoutes, getSurfaceFallbackPath } from "./route-registry";
+import { getRegisteredUnscopedRoutes, getSurfaceFallbackPath, isUnscopedRouteEnabled } from "./route-registry";
 import { useSourceContract } from "../hooks/useSourceContract";
 export { registerRoute } from "./route-registry";
 
@@ -41,7 +41,9 @@ const ExploreStorageUnit = lazy(() => import("../pages/storage-unit/explore-stor
 const StorageUnitPage = lazy(() => import("../pages/storage-unit/storage-unit").then(m => ({ default: m.StorageUnitPage })));
 const RawExecutePage = lazy(() => import("../pages/raw-execute/raw-execute").then(m => ({ default: m.RawExecutePage })));
 const ChatPage = lazy(() => import("../pages/chat/chat").then(m => ({ default: m.ChatPage })));
-const SettingsPage = lazy(() => import("../pages/settings/settings").then(m => ({ default: m.SettingsPage })));
+const SettingsPage = __WHODB_EDITION__ === "ce"
+    ? lazy(() => import("../pages/settings/settings").then(m => ({ default: m.SettingsPage })))
+    : null;
 const ContactUsPage = lazy(() => import("../pages/contact-us/contact-us").then(m => ({ default: m.ContactUsPage })));
 const ChatRouteComponent: FC = () => {
     const Agent = getComponent('sql-agent');
@@ -130,7 +132,7 @@ export const InternalRoutes = {
         path: "/logout",
         component: <LogoutPage />,
     },
-    ...(featureFlags.settingsPage ? {
+    ...(featureFlags.settingsPage && SettingsPage ? {
         Settings: {
             name: "Settings",
             path: "/settings",
@@ -179,7 +181,9 @@ export const getRoutes = (): IInternalRoute[] => {
             continue;
         }
         if ("path" in currentRoute) {
-            allRoutes.push(currentRoute);
+            if (isUnscopedRouteEnabled(currentRoute.path)) {
+                allRoutes.push(currentRoute);
+            }
             continue;
         }
         currentRoutes.push(...Object.values((currentRoute)));

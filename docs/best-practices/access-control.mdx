@@ -460,18 +460,13 @@ Production
 ```
 </Accordion>
 
-<Accordion title="Color Coding for Safety">
-Use color coding to prevent accidental production operations:
+<Accordion title="Clear Profile Naming for Safety">
+Use unambiguous profile names to prevent accidental production operations:
 
-- **Red**: Production databases (extreme caution)
-- **Yellow**: Staging databases (caution, test first)
-- **Green**: Development/test databases (safe for experimentation)
-- **Blue**: Read-only replicas (safe for queries)
-
-In WhoDB:
-- Assign colors to connection profiles
-- Always verify color before executing modifications
-- Train team on color meanings
+- Prefix names with the environment: `prod-`, `staging-`, `dev-`
+- Include the access level where relevant: `prod-postgres-readonly`
+- Always verify the profile name before executing modifications
+- Train the team on the naming convention
 </Accordion>
 
 <Accordion title="Connection Parameters">

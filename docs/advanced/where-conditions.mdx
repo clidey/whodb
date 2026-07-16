@@ -36,14 +36,16 @@ Click the page-level **Query** button to reload the grid with the condition appl
 
 ## Operators
 
-The current operator list includes equality and comparison operators such as:
+The operator dropdown lists the database's own operator tokens, provided by the backend for the connected source. For a typical SQL database such as PostgreSQL, the set includes:
 
-- Equals
-- Not equals
-- Greater than
-- Less than
-- Greater than or equal
-- Less than or equal
+- `=`, `!=`, `<>`
+- `>`, `>=`, `<`, `<=`
+- `BETWEEN`, `NOT BETWEEN`
+- `LIKE`, `NOT LIKE`, `ILIKE`, `NOT ILIKE`
+- `IN`, `NOT IN`
+- `IS NULL`, `IS NOT NULL`
+
+The exact list varies by database.
 
 ![Equals Operator](/images/59-where-operator-equals.png)
 

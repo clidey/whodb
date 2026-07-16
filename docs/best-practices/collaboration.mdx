@@ -1,677 +1,88 @@
 ---
 title: Team Collaboration
-description: Best practices for effective database team collaboration, query sharing, and knowledge management with WhoDB
+description: Practical patterns for using WhoDB as a team - shared deployments, per-user database accounts, version-controlled queries, and data exports
 ---
 
 # Team Collaboration
 
-Effective database team collaboration improves productivity, reduces errors, and ensures institutional knowledge is preserved across your organization. This guide covers proven practices for sharing queries, establishing workflows, maintaining documentation, and building a collaborative database culture.
+In WhoDB, collaboration happens through a shared deployment, database-side access control, version control for SQL, and exports. This guide covers the patterns that work.
 
-## Establishing Collaboration Workflows
+## Run One Shared Deployment
 
-### Define Team Roles and Responsibilities
+Deploy a single WhoDB instance for the team instead of everyone running their own copy. Everyone gets the same version, the same connection profiles, and one place to secure and monitor.
 
-Clear role definition prevents confusion and ensures accountability within your database team.
+Define the team's connections as environment-defined profiles on the deployment so they appear on the login page for everyone:
 
-**Common Database Team Roles:**
-
-- **Database Administrators**: Configuration, backups, performance tuning, security
-- **Data Analysts**: Query writing, data exploration, reporting, insights
-- **Data Engineers**: Pipeline development, data transformations, ETL workflows
-- **Developers**: Application queries, integration patterns, data access layers
-- **Data Scientists**: Complex analysis, machine learning data preparation, experimentation
-
-**Role Definition Process:**
-
-1. Document responsibilities for each role
-2. Clarify decision-making authority
-3. Define escalation paths
-4. Establish on-call procedures
-5. Create role-specific documentation
-
-### Establish Query Review Processes
-
-Code review practices adapted for SQL queries improve quality and prevent errors.
-
-**Query Review Workflow:**
-
-```
-1. Developer writes query in WhoDB Scratchpad
-2. Developer documents purpose and expected results
-3. Peer review in team channel
-4. Performance review by DBA
-5. Approval and documentation
-6. Integration into production systems
+```bash
+export WHODB_POSTGRES_1='{"alias":"staging","host":"staging-db.internal","user":"whodb_readonly","database":"myapp","port":"5432","password":"..."}'
 ```
 
-**Critical Query Reviews:**
+This keeps connection details in deployment config (one source of truth) rather than in chat messages and wikis. See the [Team Setup Guide](/guides/team-setup) for full deployment instructions and [Database Connectivity](/features/database-connectivity) for the profile format.
 
-These queries require extra scrutiny before execution:
+## Use Per-User Database Accounts
 
-- DELETE or UPDATE operations on production data
-- Schema modifications
-- New queries running on large datasets
-- Queries accessing sensitive data
-- Administrative operations
+Access control in WhoDB is the database's access control. Give each person their own database account scoped to what they actually need, rather than sharing one credential:
 
-**Review Checklist:**
+```sql
+-- PostgreSQL: read-only account for an analyst
+CREATE USER analyst_jane WITH PASSWORD 'unique_strong_password';
+GRANT CONNECT ON DATABASE myapp TO analyst_jane;
+GRANT USAGE ON SCHEMA public TO analyst_jane;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO analyst_jane;
+```
 
-- [ ] Query logic is correct and clear
-- [ ] WHERE clause prevents unintended data changes
-- [ ] Indexes are properly utilized (checked via EXPLAIN)
-- [ ] No unnecessary full table scans
-- [ ] Result set is reasonably sized
-- [ ] Query handles edge cases
-- [ ] Variable names are meaningful
-- [ ] Comments explain complex logic
+Why per-user accounts matter for collaboration:
 
-### Regular Knowledge Sharing Meetings
+- **Least privilege**: analysts get `SELECT`, developers get read-write on dev, only operators get production write access
+- **Attribution**: database-native audit and statement logs show who ran what
+- **Clean offboarding**: disable one account instead of rotating a shared password
 
-Schedule recurring meetings to share discoveries and discuss database topics.
+See [Access Control](/best-practices/access-control) for detailed role setups.
 
-**Weekly Team Syncs (30-60 minutes):**
+## Share Queries Through Version Control
 
-- Recent issues encountered
-- Performance improvements made
-- New query patterns discovered
-- Upcoming maintenance windows
-- Training topics
+WhoDB's [Scratchpad](/query/scratchpad-intro) state is stored per-browser — pages and cells are not visible to teammates. Use Scratchpad to build and test queries, then share the SQL itself through your normal channels:
 
-**Monthly Deep Dives (1-2 hours):**
-
-- Complex query optimization case studies
-- New features or tools evaluation
-- Database version upgrades planning
-- Capacity planning discussions
-- Security reviews
-
-**Quarterly Planning Sessions:**
-
-- Technical roadmap
-- Performance improvement initiatives
-- Training and skill development
-- Infrastructure upgrades
-- Compliance and security updates
-
-## Sharing and Documenting Queries
-
-### Query Repository Best Practices
-
-Centralize query storage for easy discovery and reuse.
-
-**Repository Structure:**
+1. **Develop** the query in Scratchpad against a development or staging database
+2. **Document** it with a short header comment (purpose, dependencies, expected runtime)
+3. **Review** it in a pull request like any other code — especially `UPDATE`/`DELETE` statements and anything touching production
+4. **Store** it in a shared repository:
 
 ```
 queries/
 ├── analytics/
-│   ├── daily_sales_summary.sql
-│   ├── user_retention.sql
-│   └── README.md
+│   └── daily_sales_summary.sql
 ├── reporting/
-│   ├── customer_invoices.sql
-│   ├── inventory_status.sql
-│   └── README.md
-├── operational/
-│   ├── data_cleanup.sql
-│   ├── health_checks.sql
-│   └── README.md
-└── migrations/
-    ├── 2024-01-migration.sql
-    └── README.md
+│   └── customer_invoices.sql
+└── operational/
+    └── health_checks.sql
 ```
 
-**Query Documentation Template:**
+Anyone who needs the query pastes it back into their own Scratchpad. Cell history in Scratchpad helps you recover your own recent SQL, but the repository is the team's memory.
 
-```sql
--- Query: Calculate Monthly Revenue by Region
--- Author: Analytics Team
--- Created: 2024-01-15
--- Last Updated: 2024-01-20
--- Purpose: Generate monthly revenue breakdown by sales region
--- Dependencies: sales, customers tables
--- Expected Runtime: < 5 seconds
--- Output Rows: ~50-100
+<Tip>
+Treat destructive queries like code changes: peer review before they run against production, and keep the reviewed version in the repository so the next person doesn't rewrite it from scratch.
+</Tip>
 
--- Usage:
--- SELECT * FROM monthly_revenue_by_region WHERE month = '2024-01'
+## Share Data Through Exports
 
-SELECT
-  c.region,
-  DATE_TRUNC('month', s.sale_date) as month,
-  COUNT(*) as transaction_count,
-  SUM(s.amount) as total_revenue
-FROM sales s
-JOIN customers c ON s.customer_id = c.id
-WHERE s.sale_date >= '2024-01-01'
-GROUP BY c.region, DATE_TRUNC('month', s.sale_date)
-ORDER BY month DESC, total_revenue DESC;
-```
+For sharing results rather than queries, use WhoDB's [export options](/advanced/export-options):
 
-### Query Tagging and Categorization
+- **CSV or Excel** from the data grid or query results — attach to tickets, drop into Slack, or feed into spreadsheets
+- **JSON Lines** for records from sources like MongoDB, where supported
+- Apply filters before exporting so the snapshot contains only what the discussion needs
 
-Use consistent tagging systems to make queries discoverable.
-
-**Recommended Tags:**
-
-- **Purpose**: `reporting`, `analysis`, `operational`, `diagnostic`, `testing`
-- **Frequency**: `daily`, `weekly`, `monthly`, `adhoc`, `one-time`
-- **Data Classification**: `public`, `internal`, `sensitive`, `pii`
-- **Performance**: `light`, `medium`, `heavy`
-- **Status**: `stable`, `experimental`, `deprecated`
-
-**Example Tags:**
-
-```
-Query: user_signup_trends.sql
-Tags: [reporting, weekly, public, light, stable]
-
-Query: customer_lifetime_value.sql
-Tags: [analysis, monthly, sensitive, medium, stable]
-
-Query: data_migration_validation.sql
-Tags: [operational, one-time, internal, heavy, experimental]
-```
-
-### Query Documentation Standards
-
-Consistent documentation helps team members understand intent and usage.
-
-<AccordionGroup>
-<Accordion title="Header Comments">
-Every query should begin with clear header information:
-- Query name and purpose
-- Author and creation date
-- Last modified date and by whom
-- Expected output and performance characteristics
-- Any dependencies or prerequisites
-</Accordion>
-
-<Accordion title="Inline Comments">
-Add comments for complex logic:
-```sql
--- Filter to active users created in last 30 days
--- to calculate recent adoption metrics
-SELECT u.id, u.email
-FROM users u
-WHERE u.active = true
-  AND u.created_at >= NOW() - INTERVAL '30 days'
-```
-</Accordion>
-
-<Accordion title="Parameter Documentation">
-Document any parameters used:
-```sql
--- Parameters:
--- @start_date: Beginning of reporting period (default: 30 days ago)
--- @end_date: End of reporting period (default: today)
--- @region: Sales region filter (default: NULL = all regions)
-
-SELECT * FROM sales
-WHERE sale_date BETWEEN @start_date AND @end_date
-  AND (region = @region OR @region IS NULL)
-```
-</Accordion>
-
-<Accordion title="Usage Examples">
-Include concrete examples:
-```
-Usage Example:
-  SELECT * FROM daily_sales
-  WHERE region = 'NORTH' AND sale_date = '2024-01-20'
-
-Expected Results:
-  ~50-100 rows, columns: date, region, product, amount
-```
-</Accordion>
-</AccordionGroup>
-
-## Collaborative Query Development
-
-### Using Scratchpad for Team Queries
-
-WhoDB's Scratchpad is useful for building and testing queries before sharing them through your normal team channels, such as pull requests, tickets, runbooks, or shared documents.
-
-**Collaborative Query Workflow:**
-
-1. **Initiate**: Create a Scratchpad page for the investigation
-2. **Iterate**: Write and refine queries against a development or staging database
-3. **Test**: Run queries against development database
-4. **Document**: Add comments, expected results, and parameter explanations
-5. **Review**: Move final SQL into a pull request, ticket, or runbook for peer review
-6. **Finalize**: Store the reviewed SQL in your repository or documentation
-
-**Team Query Best Practices:**
-
-- Use clear cell names: `user_analysis`, `sales_by_region`, `validation_checks`
-- Add context comments between cells explaining flow
-- Test incrementally before building large queries
-- Save versions as you reach milestones
-- Export final version to repository
-
-**Scratchpad Cell Organization:**
-
-```
-Cell 1: Load and explore source tables
-Cell 2: Data validation queries
-Cell 3: Transformation logic
-Cell 4: Join operations
-Cell 5: Final result with aggregations
-Cell 6: Quality checks and verification
-```
-
-### Pair Programming for Complex Queries
-
-Two developers working together produce better queries than either alone.
-
-**Pair Programming Session:**
-
-- **Driver**: Writes the query
-- **Navigator**: Reviews logic, suggests improvements, checks for errors
-- **Roles rotate**: Switch every 15-20 minutes
-
-**When to Use Pair Programming:**
-
-- Complex multi-step queries
-- First-time database interactions
-- Performance-critical operations
-- Queries on production data
-- Knowledge transfer opportunities
-
-**Session Template:**
-
-```
-Duration: 45-60 minutes
-Setup:
-  - Share screen or use collaborative editor
-  - Both have read access to relevant tables
-  - Development database selected
-
-Progress:
-  - Break problem into small steps
-  - Alternate driver/navigator roles
-  - Test frequently
-  - Document decisions
-
-Outcome:
-  - Finalized, well-documented query
-  - Both team members understand implementation
-  - Production-ready documentation
-```
-
-## Version Control and Query History
-
-### Using Query History Effectively
-
-Track who ran what queries and when for accountability and learning.
-
-**Query History Best Practices:**
-
-- Review your recent queries for patterns and improvements
-- Learn from colleagues' query approaches
-- Identify frequently used patterns for documentation
-- Spot potential performance issues
-- Maintain audit trail for compliance
-
-**Regular History Reviews:**
-
-- Weekly: Check your own query history for refactoring opportunities
-- Monthly: Team review of significant queries
-- Quarterly: Identify patterns and establish standards
-
-### Maintaining Query Versions
-
-Track query evolution as requirements change.
-
-**Versioning Approach:**
-
-```
-queries/sales_analysis/
-├── customer_revenue_v1.sql     (initial version, 2024-01)
-├── customer_revenue_v2.sql     (added region filter, 2024-02)
-├── customer_revenue_v3.sql     (optimized indexes, 2024-03)
-└── customer_revenue_current.sql (active version)
-```
-
-**Version Notes Template:**
-
-```
-Version 2.1 (2024-01-20)
-Changes:
-  - Added region parameter for filtering
-  - Excluded test orders from calculations
-  - Optimized join order
-
-Performance:
-  - Before: 12 seconds, 1M rows
-  - After: 3 seconds, filtered to 50K rows
-
-Breaking Changes: Region parameter now required
-Migration Guide: Scripts defaulting region to 'ALL' if not specified
-```
-
-## Knowledge Documentation
-
-### Creating Institutional Knowledge Base
-
-Document database knowledge to prevent silos and enable team independence.
-
-**Knowledge Base Structure:**
-
-```
-documentation/
-├── schemas/
-│   ├── sales_schema.md
-│   ├── users_schema.md
-│   └── products_schema.md
-├── operational_runbooks/
-│   ├── daily_maintenance.md
-│   ├── data_refresh_procedure.md
-│   └── incident_response.md
-├── query_patterns/
-│   ├── common_joins.md
-│   ├── aggregation_patterns.md
-│   └── performance_tips.md
-└── team_guidelines/
-    ├── naming_conventions.md
-    ├── code_review_standards.md
-    └── on_call_procedures.md
-```
-
-**Documentation Frequency:**
-
-- Update immediately when processes change
-- Quarterly review for accuracy
-- Annual comprehensive audit
-- Remove deprecated procedures
-
-### Schema and Table Documentation
-
-<AccordionGroup>
-<Accordion title="Schema Documentation">
-Each table should be documented with:
-- Business purpose and usage
-- Data ownership and stewardship
-- Update frequency and mechanisms
-- Retention policies
-- Query examples
-
-Example:
-```
-# Table: orders
-
-**Purpose**: Tracks all customer orders and transactions
-
-**Ownership**: Sales Operations Team
-
-**Update Frequency**: Real-time as orders are placed
-
-**Data Retention**: 7 years for compliance
-
-**Typical Queries**:
-- Revenue analysis by date range
-- Customer order history
-- Product sales patterns
-```
-</Accordion>
-
-<Accordion title="Column Documentation">
-Document each significant column:
-- Business meaning and usage
-- Data type and valid ranges
-- Nullable status and defaults
-- Relationships to other tables
-- Update patterns
-
-Example:
-```
-**Column: order_status**
-- Type: VARCHAR(50)
-- Valid Values: pending, processing, shipped, delivered, cancelled
-- Nullable: No, defaults to 'pending'
-- Last Updated: Updated via order_status_updated_at
-- Usage: Filter queries for reporting, joins to status_history table
-```
-</Accordion>
-
-<Accordion title="Business Rules">
-Document important business logic:
-- Calculation definitions
-- Data quality requirements
-- Integrity constraints
-- Edge cases and exceptions
-
-Example:
-```
-**Revenue Calculation Rule**:
-- Includes: Base price + taxes + shipping
-- Excludes: Discounts, refunds, cancelled orders
-- Edge Case: Partial refunds counted as 50% of order amount
-- Updated: Quarterly review for accuracy
-```
-</Accordion>
-</AccordionGroup>
-
-### Runbook Development
-
-Create step-by-step procedures for common tasks.
-
-**Daily Maintenance Runbook:**
-
-```markdown
-# Daily Database Maintenance
-
-## 1. Morning Health Check (8:00 AM)
-- [ ] Check database connectivity
-- [ ] Review error logs from overnight
-- [ ] Verify backup completion
-- [ ] Check disk space utilization
-
-SQL: SELECT * FROM health_checks_daily;
-
-## 2. Performance Monitoring (Hourly)
-- [ ] Check query performance metrics
-- [ ] Review active connection count
-- [ ] Identify long-running queries
-
-Query: SELECT * FROM slow_queries WHERE duration_seconds > 60;
-
-## 3. Data Refresh (2:00 PM)
-- [ ] Run materialized view refresh
-- [ ] Update cache tables
-- [ ] Verify data freshness
-
-Procedure: CALL refresh_analytics_views();
-
-## 4. Evening Cleanup (5:00 PM)
-- [ ] Archive old logs
-- [ ] Cleanup temporary tables
-- [ ] Verify backup for next day
-
-Query: DELETE FROM temp_tables WHERE created_at < NOW() - INTERVAL '1 day';
-```
-
-### Troubleshooting Guides
-
-Document solutions to common problems for faster resolution.
-
-**Troubleshooting Guide Template:**
-
-```markdown
-# Connection Timeout Issues
-
-## Problem
-Queries timeout when accessing production database
-
-## Symptoms
-- Query hangs after 30 seconds
-- Connection closed by server
-- Appears to work on dev database
-
-## Root Causes
-1. Network latency between locations
-2. Query performance degradation
-3. Connection pool exhaustion
-4. Network firewall rules
-
-## Diagnostic Steps
-1. Check query plan: EXPLAIN ANALYZE query;
-2. Verify network: ping -c 4 db-host
-3. Check connections: SELECT COUNT(*) FROM pg_stat_activity;
-4. Review error logs for specific messages
-
-## Solutions
-1. **Network Issue**: Contact network team, use VPN
-2. **Slow Query**: Optimize using EXPLAIN, add indexes
-3. **Connection Pool**: Increase max_connections in config
-4. **Firewall**: Verify IP whitelist with security team
-
-## Prevention
-- Monitor query performance regularly
-- Maintain connection pool metrics
-- Test queries on production dataset sizes
-- Document known problematic queries
-```
-
-## Building Collaborative Culture
-
-### Code of Conduct for Database Teams
-
-Establish expectations for respectful, productive collaboration.
-
-<Accordion title="Database Team Culture Principles">
-<Accordion title="Mutual Respect">
-- Questions are encouraged, never criticized
-- Mistakes are learning opportunities
-- Different experience levels valued
-- Diverse perspectives improve decisions
-</Accordion>
-
-<Accordion title="Continuous Learning">
-- Share what you learn with the team
-- Attend industry conferences and training
-- Experiment with new techniques (safely)
-- Document new discoveries
-</Accordion>
-
-<Accordion title="Ownership">
-- Take responsibility for your work
-- Help colleagues when they need support
-- Improve documentation when you find gaps
-- Contribute to team knowledge base
-</Accordion>
-
-<Accordion title="Clear Communication">
-- Document your decisions and reasoning
-- Ask for help early before problems escalate
-- Provide context in code reviews
-- Share status updates proactively
-</Accordion>
-</Accordion>
-
-### Mentorship and Training
-
-Structured knowledge transfer ensures team growth and capability building.
-
-**Mentorship Program:**
-
-- **New Team Members**: Assign senior mentor for first 3 months
-- **Skill Development**: Monthly training on emerging technologies
-- **Cross-Training**: Rotate team members to learn different areas
-- **Certifications**: Support relevant database certifications
-
-**Training Session Topics:**
-
-- Advanced query optimization techniques
-- New database version features
-- Security and compliance requirements
-- Performance tuning methodologies
-- Disaster recovery procedures
-
-### Celebrating Successes
-
-Recognition builds team morale and reinforces positive behaviors.
-
-**Recognition Ideas:**
-
-- Monthly "Query of the Month" for elegant solutions
-- Performance improvement awards
-- Documentation excellence recognition
-- Problem-solving recognition
-- Team member spotlights
-
-**Example Recognition:**
-
-```
-Query of the Month: January 2024
-Selected: customer_segmentation_analysis.sql
-
-Submitted by: Sarah Chen
-Reason: Optimized complex join from 45 seconds to 2 seconds
-        using strategic column ordering and indexes
-
-Impact: Revenue analysis reports now run 20x faster,
-        enabling real-time dashboard updates
-
-Team Recognition: Shared in monthly newsletter and team meeting
-Benefit: Query archived as reference pattern for team learning
-```
-
-## Collaboration Tools Integration
-
-### Connecting WhoDB to Communication Platforms
-
-Share query results and insights seamlessly with the team.
-
-**Query Sharing Workflow:**
-
-1. Generate results in WhoDB
-2. Export data (CSV, Excel, JSON)
-3. Share directly in Slack/Teams channel
-4. Include query notes and context
-5. Link back to permanent query repository
-
-**Communication Best Practices:**
-
-- Share query, not just results
-- Include interpretation of findings
-- Highlight any unexpected data patterns
-- Provide timeline for data freshness
-- Document any limitations or assumptions
+When you share an export, include the SQL that produced it and when it was run — a CSV without provenance goes stale silently.
 
 ## Collaboration Checklist
 
-**Team Setup:**
-
-- [ ] Database team roles clearly defined
-- [ ] Query review process documented
-- [ ] Regular meeting schedule established
-- [ ] Query repository structure created
-- [ ] Documentation templates prepared
-
-**Daily Collaboration:**
-
-- [ ] Complex queries are peer reviewed
-- [ ] Query history reviewed for opportunities
-- [ ] Blockers discussed with team promptly
-- [ ] Documentation updated when processes change
-- [ ] Questions asked rather than assumed
-
-**Knowledge Management:**
-
-- [ ] Schema documentation is current
-- [ ] Runbooks are available and tested
-- [ ] Troubleshooting guides cover common issues
-- [ ] Query patterns documented and shared
-- [ ] Team training schedule maintained
-
-**Culture:**
-
-- [ ] New team members have assigned mentor
-- [ ] Success is celebrated and recognized
-- [ ] Mistakes treated as learning opportunities
-- [ ] Continuous improvement is encouraged
-- [ ] Knowledge sharing is valued and rewarded
+- [ ] One shared WhoDB deployment, secured per the [Team Setup Guide](/guides/team-setup)
+- [ ] Connections defined as environment profiles, secrets in a password manager
+- [ ] Per-user database accounts with least-privilege grants
+- [ ] Team query repository in version control, with review for destructive SQL
+- [ ] Exports shared with the query and timestamp that produced them
+- [ ] Accounts disabled and shared credentials rotated when someone leaves
 
 ## Summary
 
-Effective team collaboration transforms database management from a siloed function into a shared capability. Use WhoDB for inspection, querying, and repeatable exports, then rely on your normal source control, review, and runbook practices for long-lived team knowledge.
+Use WhoDB for inspection, querying, and repeatable exports; use database accounts for access control; and use your normal source control and review practices for long-lived team knowledge. The Scratchpad is each person's workbench — version control is the team's shared surface.

@@ -34,6 +34,19 @@ export type RegisteredRoute = {
 
 const registrations: RegisteredRoute[] = [];
 const publicRegistrations: RegisteredRoute[] = [];
+const disabledUnscopedRoutePaths = new Set<string>();
+
+/** Disables unscoped routes by exact path before the app router is built. */
+export function disableUnscopedRoutes(paths: readonly string[]): void {
+    for (const path of paths) {
+        disabledUnscopedRoutePaths.add(path);
+    }
+}
+
+/** Reports whether an unscoped route path is enabled. */
+export function isUnscopedRouteEnabled(path: string): boolean {
+    return !disabledUnscopedRoutePaths.has(path);
+}
 
 /**
  * Registers an additional route to be included in the app router.
@@ -61,7 +74,7 @@ export function getRegisteredScopedRoutes(): RegisteredRoute[] {
 }
 
 export function getRegisteredUnscopedRoutes(): RegisteredRoute[] {
-    return registrations.filter(r => !r.scoped);
+    return registrations.filter(r => !r.scoped && isUnscopedRouteEnabled(r.path));
 }
 
 export function getRegisteredPublicRoutes(): RegisteredRoute[] {

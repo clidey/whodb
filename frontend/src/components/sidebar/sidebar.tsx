@@ -63,6 +63,7 @@ import {Link, useLocation, useNavigate} from "react-router-dom";
 import logoImage from "../../../public/images/logo.svg";
 import {extensions, featureFlags, getAppName} from "../../config/features";
 import {InternalRoutes} from "../../config/routes";
+import {performLogout} from "../../config/logout-handler";
 import {LoginForm} from "../../pages/auth/login";
 import type { LocalLoginProfile} from "../../store/auth";
 import {AuthActions} from "../../store/auth";
@@ -408,7 +409,7 @@ export const Sidebar: FC = () => {
         if (!current) return;
         const remainingProfiles = profiles.filter(p => p.Id !== current.Id);
         if (remainingProfiles.length === 0) {
-            void navigate(InternalRoutes.Logout.path);
+            performLogout(navigate);
             return;
         }
         setLogoutProfileId(current.Id);
@@ -417,7 +418,7 @@ export const Sidebar: FC = () => {
 
     // Logout all profiles
     const handleLogoutAll = useCallback(() => {
-        void navigate(InternalRoutes.Logout.path);
+        performLogout(navigate);
     }, [navigate]);
 
     // Profile switch dialog handlers

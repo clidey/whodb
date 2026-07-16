@@ -25,13 +25,13 @@ Some entries are native plugins and others are compatibility entries that reuse 
 | `SQLite3` | SQLite | File path | Yes | Yes | File-backed connection |
 | `DuckDB` | DuckDB | File path | Yes | Yes | Available only on supported builds |
 | `ClickHouse` | ClickHouse | Network | Yes | Yes | Analytical SQL workflow |
-| `MongoDB` | MongoDB | Network | No | Yes | Uses document-oriented browsing instead of SQL scratchpad |
-| `FerretDB` | MongoDB-compatible | Network | No | Yes | Uses MongoDB-family behavior |
-| `DocumentDB` | MongoDB-compatible | Network | No | Yes | AWS-managed, shown through provider discovery |
-| `Redis` | Redis | Network | No | No | Key/value browsing workflow |
-| `Valkey` | Redis-compatible | Network | No | No | Uses Redis-family behavior |
-| `Dragonfly` | Redis-compatible | Network | No | No | Uses Redis-family behavior |
-| `ElastiCache` | Redis-compatible | Network | No | No | AWS-managed, shown through provider discovery |
+| `MongoDB` | MongoDB | Network | Yes | Yes | Scratchpad uses shell-style commands (e.g. `db.collection.find({})`) instead of SQL |
+| `FerretDB` | MongoDB-compatible | Network | Yes | Yes | Uses MongoDB-family behavior |
+| `DocumentDB` | MongoDB-compatible | Network | Yes | Yes | AWS-managed, shown through provider discovery |
+| `Redis` | Redis | Network | Yes | No | Scratchpad uses Redis commands (e.g. `TYPE key`) instead of SQL |
+| `Valkey` | Redis-compatible | Network | Yes | No | Uses Redis-family behavior |
+| `Dragonfly` | Redis-compatible | Network | Yes | No | Uses Redis-family behavior |
+| `ElastiCache` | Redis-compatible | Network | Yes | No | AWS-managed, shown through provider discovery |
 | `Memcached` | Memcached | Network | No | No | Cache/key browsing workflow |
 | `ElasticSearch` | ElasticSearch | Network | No | No | Search/index workflow |
 | `OpenSearch` | ElasticSearch-compatible | Network | No | No | Uses ElasticSearch-family behavior |
@@ -51,7 +51,8 @@ Some entries are native plugins and others are compatibility entries that reuse 
 Not every database type exposes the same feature set:
 
 - SQL-capable databases generally support Scratchpad, graph/schema views, and mock data generation
-- Document, cache, and search systems use narrower capability sets
+- MongoDB-family and Redis-family systems support Scratchpad using their native command syntax rather than SQL
+- Memcached and search systems use narrower capability sets
 - Database switching and schema support vary by family
 
 ### Build-Specific Availability

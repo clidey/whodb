@@ -1,6 +1,6 @@
 ---
 title: "Docker Integration"
-description: "Run WhoDB with Docker and Docker Compose"
+description: "Run WhoDB with Docker and Docker Compose: images, environment variables, volumes, health checks, and networking"
 ---
 
 # Docker Integration
@@ -73,6 +73,30 @@ services:
       - "3000:3000"
 ```
 
+## Persistent Login Sessions
+
+WhoDB encrypts login sessions and stores them in `/data` inside the container. Without a mounted volume, a plain `docker run` still works, but sessions reset whenever the container is recreated. To keep sessions across restarts and upgrades, mount `/data` and set a stable encryption key:
+
+```yaml
+services:
+  whodb:
+    image: clidey/whodb:latest
+    ports:
+      - "8080:8080"
+    volumes:
+      - whodb-data:/data
+    environment:
+      # Generate once with: openssl rand -hex 32
+      WHODB_ENCRYPTION_KEY: replace_with_openssl_rand_hex_32
+
+volumes:
+  whodb-data:
+```
+
+If WhoDB is reachable only over HTTPS (typically via a reverse proxy or load balancer in front of the container), also set `WHODB_SECURE: "true"` so the session cookie is marked `Secure`. Leave it unset for plain HTTP.
+
+See [Session Storage](/installation#session-storage) for the full explanation of how sessions are encrypted and stored.
+
 ## Connect To Host Databases
 
 From inside a container, `localhost` means the WhoDB container itself. Use the right hostname for your database:
@@ -115,7 +139,7 @@ services:
     ports:
       - "8080:8080"
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/health | grep -qx ok"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health | grep -qx ok"]
       interval: 30s
       timeout: 5s
       retries: 3

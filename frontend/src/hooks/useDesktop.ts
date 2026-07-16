@@ -20,6 +20,7 @@ import * as desktopService from '../services/desktop';
 import {isDesktopApp} from '../utils/external-links';
 import {useAppSelector} from '../store/hooks';
 import {InternalRoutes} from '../config/routes';
+import {performLogout} from '../config/logout-handler';
 
 // Hook for file operations
 export const useDesktopFile = () => {
@@ -179,7 +180,7 @@ export const useDesktopMenu = () => {
       'menu:disconnect': safeHandler(async () => {
         const confirm = await showConfirm('Disconnect', 'Are you sure you want to disconnect from the current database?');
         if (confirm) {
-          void navigate(InternalRoutes.Logout.path);
+          performLogout(navigate);
         }
       }),
       'menu:new-scratchpad-page': safeHandler(() => {

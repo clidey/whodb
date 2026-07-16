@@ -126,6 +126,26 @@ var DisableCredentialForm = os.Getenv("WHODB_DISABLE_CREDENTIAL_FORM") == "true"
 
 var BridgeURL = os.Getenv("WHODB_BRIDGE_URL")
 
+// EncryptionKey is the 64-char hex (32-byte) key used to encrypt stored session
+// credentials at rest. When empty, a key is derived from the OS keyring (desktop)
+// or generated into a file in the data directory (server). Set via
+// WHODB_ENCRYPTION_KEY.
+var EncryptionKey = os.Getenv("WHODB_ENCRYPTION_KEY")
+
+// DataDir overrides the directory used for on-disk state such as the session
+// store and generated encryption key. When empty, the platform default data
+// directory is used. Set via WHODB_DATA_DIR.
+var DataDir = os.Getenv("WHODB_DATA_DIR")
+
+// Secure forces session cookies to be marked Secure even when the request is not
+// observed over TLS (for deployments behind a TLS-terminating proxy that does not
+// forward X-Forwarded-Proto). Set via WHODB_SECURE=true.
+var Secure = os.Getenv("WHODB_SECURE") == "true"
+
+// SessionTTL is the raw WHODB_SESSION_TTL value (a Go duration string, e.g.
+// "168h"). Parsing and the default live in the auth package to keep env pure.
+var SessionTTL = os.Getenv("WHODB_SESSION_TTL")
+
 // MaxPageSize is the maximum number of rows that can be requested in a single
 // page via the Row resolver. Configurable via WHODB_MAX_PAGE_SIZE (default 10000).
 var MaxPageSize = getMaxPageSize()

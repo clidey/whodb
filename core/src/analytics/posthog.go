@@ -21,7 +21,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"maps"
 	"net"
 	"net/http"
@@ -53,7 +52,12 @@ type Config struct {
 	Environment string
 	AppVersion  string
 	Deployment  string
-	Edition     string
+	// Edition is the build edition ("ce" or "ee"). Callers must set it so
+	// every event carries a non-null build_edition property.
+	Edition string
+	// Source identifies the emitting process ("backend", "cli", or "desktop")
+	// and is stamped on every event as the source property.
+	Source string
 	// SuppressClientLogs disables PostHog background logger output. Useful for
 	// short-lived CLIs where network failures should stay silent.
 	SuppressClientLogs bool
@@ -82,17 +86,27 @@ var (
 	client   posthog.Client
 	cfg      Config
 
-	initOnce   sync.Once
-	enabled    atomic.Bool
-	fallbackID atomic.Value
+	initOnce sync.Once
+	enabled  atomic.Bool
+
+	// distinctIDResolver, when set, is consulted first to derive the analytics
+	// distinct id from a request context. Set once during process startup,
+	// before the server begins handling requests.
+	distinctIDResolver func(ctx context.Context) string
 )
+
+// SetDistinctIDResolver registers a resolver consulted before request metadata
+// when deriving the analytics distinct id. Call during startup, before the
+// server begins handling requests.
+func SetDistinctIDResolver(resolver func(ctx context.Context) string) {
+	distinctIDResolver = resolver
+}
 
 // Initialize prepares the global PostHog client. It is safe to invoke multiple times.
 func Initialize(config Config) error {
 	var initErr error
 	initOnce.Do(func() {
 		cfg = config
-		fallbackID.Store(hashIdentifier(fmt.Sprintf("fallback:%d", time.Now().UnixNano())))
 		enabled.Store(false)
 
 		posthogConfig := posthog.Config{
@@ -202,7 +216,9 @@ func CaptureWithDistinctID(ctx context.Context, distinctID string, event string,
 	enqueue(message)
 }
 
-// CaptureError emits a structured error event.
+// CaptureError emits a structured error event. The raw error message is never
+// sent; it is mapped to a low-cardinality code via ErrorCode to avoid leaking
+// hostnames, table names, or SQL fragments.
 func CaptureError(ctx context.Context, operation string, err error, properties map[string]any) {
 	if err == nil {
 		return
@@ -211,7 +227,7 @@ func CaptureError(ctx context.Context, operation string, err error, properties m
 	props := make(map[string]any, len(properties)+2)
 	maps.Copy(props, properties)
 	props["operation"] = operation
-	props["error_message"] = err.Error()
+	props["error_code"] = ErrorCode(err)
 
 	Capture(ctx, "$exception", props)
 }
@@ -315,6 +331,11 @@ func buildProperties(ctx context.Context, properties map[string]any) posthog.Pro
 		if _, exists := props["domain"]; !exists {
 			props.Set("domain", metadata.Domain)
 		}
+		// Mirror posthog-js, which auto-captures $host from window.location:
+		// stamping it here keeps server-side events filterable by host too.
+		if _, exists := props["$host"]; !exists {
+			props.Set("$host", metadata.Domain)
+		}
 	}
 	if metadata.Path != "" {
 		if _, exists := props["path"]; !exists {
@@ -343,8 +364,8 @@ func buildProperties(ctx context.Context, properties map[string]any) posthog.Pro
 	}
 
 	if cfg.Environment != "" {
-		if _, exists := props["environment"]; !exists {
-			props.Set("environment", cfg.Environment)
+		if _, exists := props["build_environment"]; !exists {
+			props.Set("build_environment", cfg.Environment)
 		}
 	}
 	if cfg.AppVersion != "" {
@@ -360,6 +381,11 @@ func buildProperties(ctx context.Context, properties map[string]any) posthog.Pro
 	if cfg.Edition != "" {
 		if _, exists := props["build_edition"]; !exists {
 			props.Set("build_edition", cfg.Edition)
+		}
+	}
+	if cfg.Source != "" {
+		if _, exists := props["source"]; !exists {
+			props.Set("source", cfg.Source)
 		}
 	}
 
@@ -413,8 +439,8 @@ func buildIdentifyTraits(ctx context.Context, traits map[string]any) posthog.Pro
 		}
 	}
 	if cfg.Environment != "" {
-		if _, exists := properties["environment"]; !exists {
-			properties.Set("environment", cfg.Environment)
+		if _, exists := properties["build_environment"]; !exists {
+			properties.Set("build_environment", cfg.Environment)
 		}
 	}
 	if cfg.AppVersion != "" {
@@ -456,13 +482,15 @@ func storeClient(c posthog.Client) posthog.Client {
 }
 
 func distinctIDFromContext(ctx context.Context) string {
+	if distinctIDResolver != nil {
+		if id := strings.TrimSpace(distinctIDResolver(ctx)); id != "" {
+			return id
+		}
+	}
+
 	metadata := MetadataFromContext(ctx)
 	if metadata.DistinctID != "" {
 		return metadata.DistinctID
-	}
-
-	if value, ok := fallbackID.Load().(string); ok && value != "" {
-		return value
 	}
 
 	return anonymousID

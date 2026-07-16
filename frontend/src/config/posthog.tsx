@@ -28,7 +28,8 @@ import {
 
 type ConsentState = 'granted' | 'denied' | 'unknown';
 
-const CONSENT_STORAGE_KEY = 'whodb.analytics.consent';
+/** localStorage key holding the user's analytics consent decision. */
+export const CONSENT_STORAGE_KEY = 'whodb.analytics.consent';
 const DISTINCT_ID_STORAGE_KEY = 'whodb.analytics.distinct_id';
 const SESSION_REPLAY_SAMPLE_KEY = 'whodb.analytics.session_replay_sampled';
 
@@ -99,7 +100,8 @@ const isLocalAnalyticsHost = () => {
     return localHostPattern.test(hostname) || privateHostPattern.test(hostname);
 };
 
-const remoteAnalyticsAllowed = () => {
+/** Reports whether events may be sent to the remote PostHog instance in this runtime. */
+export const remoteAnalyticsAllowed = () => {
     if (isE2ETest() || !remoteAnalyticsEnabled()) {
         return false;
     }
@@ -219,6 +221,7 @@ const registerContext = (client: PostHog) => {
     const isDesktop = isDesktopApp();
 
     const properties: Record<string, string> = {
+        source: 'web',
         site_domain: domain,
         build_environment: getEnvEnvironment(),
         build_edition: getBuildEdition(),
@@ -333,10 +336,13 @@ const ensureInitializedClient = async (): Promise<PostHog | null> => {
                 maskTextSelector: '*',
                 blockSelector: '[data-ph-no-capture], [data-sensitive], .ph-no-capture',
             },
-            disable_web_experiments: enabled,
-            disable_surveys: enabled,
+            // Surveys and web experiments are not used by this product.
+            disable_web_experiments: true,
+            disable_surveys: true,
+            // Start opted out unless consent was already granted; the loaded
+            // callback opts in explicitly once consent is confirmed.
             //@ts-ignore
-            opt_out_capturing_by_default: enabled,
+            opt_out_capturing_by_default: !enabled,
             loaded: (client) => {
                 activeClient = client as PostHog;
                 registerContext(client as PostHog);
@@ -390,6 +396,13 @@ export const initPosthog = async (): Promise<PostHog | null> => {
 };
 
 export const getStoredConsentState = (): ConsentState => getStoredConsent();
+
+/** Grants stored analytics consent if the user has not already made a choice. */
+export const grantStoredConsentIfUnset = (): void => {
+    if (getStoredConsent() === 'unknown') {
+        persistConsent('granted');
+    }
+};
 
 export const trackFrontendEvent = async (event: string, properties?: Record<string, unknown>) => {
     if (!event) {

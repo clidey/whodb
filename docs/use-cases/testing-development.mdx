@@ -374,7 +374,7 @@ SELECT * FROM products
 WHERE name ILIKE '%laptop%' OR description ILIKE '%laptop%';
 ```
 
-Execute these and note execution time.
+Execute these and check the plan with `EXPLAIN ANALYZE` to measure timing.
 </Step>
 
 <Step title="Compare Before/After Optimization">
@@ -418,9 +418,9 @@ console.log(`100 queries completed in ${elapsed}ms`);
 console.log(`Average: ${elapsed/100}ms per query`);
 ```
 
-Monitor database performance in WhoDB while load tests run:
-- Watch query execution times in Scratchpad
-- Check if connection pool is being strained
+Monitor database performance while load tests run:
+- Spot-check query timing with `EXPLAIN ANALYZE` in Scratchpad
+- Check connection counts and locks with your database's system views
 - Verify no deadlocks occur
 </Step>
 </Steps>

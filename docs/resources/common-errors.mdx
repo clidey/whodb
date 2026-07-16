@@ -5,7 +5,7 @@ description: "Reference guide for common WhoDB error messages with explanations 
 
 # Common Errors and Solutions
 
-This guide provides detailed explanations and solutions for error messages you may encounter when using WhoDB.
+This guide covers error messages you may encounter when connecting to and working with databases through WhoDB.
 
 ## Connection Errors
 
@@ -19,46 +19,24 @@ Unable to connect to the database
 ```
 
 ### What It Means
-WhoDB tried to connect to the database server, but the connection was rejected. This usually means the database server isn't running or isn't listening on the specified port.
-
-### Causes
-- Database service not running
-- Incorrect host or port
-- Firewall blocking connection
-- Database server configuration issue
+WhoDB tried to connect to the database server, but the connection was rejected. This usually means the database server isn't running, isn't listening on the specified port, or isn't reachable from where WhoDB runs.
 
 ### Solutions
 
-**1. Verify database is running:**
+**1. Check connection parameters in the login form:**
+- Host: Use the correct hostname or IP
+- Port: Verify the correct port (PostgreSQL: 5432, MySQL: 3306, MongoDB: 27017)
+- Database name and credentials
+
+**2. Docker users — check your host value:**
+If WhoDB runs in Docker and the database runs on your host machine, `localhost` refers to the WhoDB container itself. Use `host.docker.internal` (macOS/Windows) or a shared Docker network instead. See the [Docker integration guide](/resources/integrations/docker).
+
+**3. Verify the database is reachable from the WhoDB host:**
 ```bash
-# PostgreSQL
-systemctl status postgresql
-
-# MySQL
-systemctl status mysql
-
-# Check if port is listening
-lsof -i :5432
+nc -zv hostname 5432
 ```
 
-**2. Check connection parameters:**
-- Host: Use correct hostname or IP (for Docker: `host.docker.internal`)
-- Port: Verify correct port (PostgreSQL: 5432, MySQL: 3306, MongoDB: 27017)
-- Test from command line first
-
-**3. Check firewall:**
-```bash
-# Allow port through firewall
-sudo ufw allow 5432/tcp
-
-# Test connectivity
-telnet hostname 5432
-```
-
-**4. Restart database service:**
-```bash
-systemctl restart postgresql
-```
+If this fails, the problem is network reachability or database availability, not WhoDB. Start the database service or fix the network path first.
 
 See [Connection Issues Troubleshooting](/resources/troubleshooting#connection-issues) for detailed steps.
 
@@ -73,94 +51,20 @@ Connection attempt timed out
 ```
 
 ### What It Means
-WhoDB connected to the server but didn't receive a response within the timeout period. The network is slow or the database is unresponsive.
-
-### Causes
-- Network latency too high
-- Database server overloaded
-- Slow query taking too long to execute
-- Firewall dropping packets
+WhoDB reached out to the server but didn't receive a response within the timeout period. The network is slow, a firewall is dropping packets, or the database is unresponsive.
 
 ### Solutions
 
 **1. Test with the native client first:**
 Use `psql`, `mysql`, `mongosh`, or the equivalent client against the same host, port, and credentials. If the native client also times out, the problem is network reachability, database health, or an upstream timeout rather than a configurable WhoDB web setting.
 
-**2. Test network connectivity:**
-```bash
-ping hostname
-traceroute hostname
-```
-
-**3. Check if database is responsive:**
-```bash
-# PostgreSQL
-psql -h hostname -U user -d database
-
-# MySQL
-mysql -h hostname -u user -p
-```
-
-**4. Reduce query load:**
+**2. Reduce query load if the timeout happens mid-session:**
 - Add WHERE conditions to filter data
 - Use LIMIT to reduce results
-- Check for running queries: `SHOW PROCESSLIST;`
+- Lower the page size in [Settings](/features/settings)
 
-If local connections work fine, the issue is network-related.
-
-</Accordion>
-
-<Accordion title="Connection reset by peer">
-
-### Error Message
-```
-Connection reset by peer
-Connection closed unexpectedly
-```
-
-### What It Means
-The connection was established but then closed abruptly by the database server. Something about the connection violated the server's policy.
-
-### Causes
-- Wrong authentication credentials
-- User doesn't have permission
-- Server configuration rejected connection
-- SSL/TLS certificate issue
-
-### Solutions
-
-**1. Verify credentials are correct:**
-```bash
-# Test with database client
-psql -h hostname -U username -d database
-# Enter password when prompted
-```
-
-**2. Check user permissions:**
-```sql
--- PostgreSQL: Check if user can connect
-SELECT * FROM pg_user WHERE usename = 'username';
-
--- MySQL: Check user exists
-SELECT User FROM mysql.user WHERE User='username';
-```
-
-**3. Check SSL requirements:**
-Try disabling SSL temporarily:
-- Set SSL Mode to "disable"
-- If connection works, SSL is the issue
-- Configure proper SSL certificates
-
-**4. Check server logs:**
-```bash
-# PostgreSQL logs
-tail -f /var/log/postgresql/postgresql.log
-
-# MySQL logs
-tail -f /var/log/mysql/error.log
-```
-
-Look for rejection reasons in logs.
+**3. Check database or proxy timeouts:**
+If the same query dies outside WhoDB, review the timeout that actually applies in your stack, such as PostgreSQL `statement_timeout` or a reverse proxy read timeout.
 
 </Accordion>
 
@@ -174,13 +78,7 @@ Invalid username or password
 ```
 
 ### What It Means
-The database server recognized your connection but rejected your credentials. Either the username doesn't exist, the password is wrong, or the user isn't allowed to connect from this host.
-
-### Causes
-- Incorrect password
-- Username doesn't exist
-- User not allowed to connect from this host
-- User account is locked or disabled
+The database server rejected the credentials entered in the WhoDB login form. Either the username doesn't exist, the password is wrong, or the user isn't allowed to connect from the host WhoDB runs on.
 
 ### Solutions
 
@@ -191,51 +89,18 @@ psql -h hostname -U username -d database
 
 # MySQL
 mysql -h hostname -u username -p
-
-# MongoDB
-mongosh --host hostname:27017 -u username -p
 ```
 
-If you can connect with the client, credentials are correct but WhoDB might have a formatting issue.
+If the native client connects with the same values, re-enter them carefully in the login form — passwords are case-sensitive and leading/trailing spaces count.
 
-**2. Check for special characters in password:**
-Some special characters need escaping. Try:
-- Removing special characters temporarily
-- Testing with simpler password
-- Using quotes around password in connection string
+**2. Check for special characters in the password:**
+Enter the password exactly as-is in the login form; WhoDB does not require URL-encoding form fields. If a native client works but WhoDB doesn't, test temporarily with a simpler password to rule out an entry mistake.
 
-**3. Verify user exists:**
-```sql
--- PostgreSQL
-\du
+**3. Check host-based access rules:**
+Some databases restrict which hosts a user may connect from (`pg_hba.conf`, MySQL `'user'@'host'` grants). Remember that when WhoDB runs in Docker, the connection originates from the container's address, not your workstation's.
 
--- MySQL
-SELECT User, Host FROM mysql.user;
-
--- MongoDB
-db.getUsers()
-```
-
-**4. Create user if doesn't exist:**
-```sql
--- PostgreSQL
-CREATE USER username WITH PASSWORD 'password';
-GRANT CONNECT ON DATABASE mydb TO username;
-
--- MySQL
-CREATE USER 'username'@'hostname' IDENTIFIED BY 'password';
-GRANT ALL PRIVILEGES ON mydb.* TO 'username'@'hostname';
-FLUSH PRIVILEGES;
-```
-
-**5. Unlock user account:**
-```sql
--- PostgreSQL
-ALTER USER username WITH ENCRYPTED PASSWORD 'newpassword';
-
--- MySQL
-SET PASSWORD FOR 'username'@'hostname' = PASSWORD('newpassword');
-```
+**4. Environment-defined profiles:**
+If you connect through a profile defined with environment variables such as `WHODB_POSTGRES_1`, verify the JSON contains the right credentials and restart WhoDB after changing it.
 
 </Accordion>
 
@@ -244,54 +109,29 @@ SET PASSWORD FOR 'username'@'hostname' = PASSWORD('newpassword');
 ### Error Message
 ```
 SSL certificate problem: self signed certificate
-SSL: certificate_verify_failed
 Certificate verification failed
 ```
 
 ### What It Means
-The database is using a self-signed SSL certificate that isn't in the trusted certificate store. This is common in development and testing environments.
-
-### Causes
-- Database using self-signed certificate
-- SSL verification mode set to "verify-full"
-- Certificate not imported to trust store
-- Certificate expired
+The database presents a self-signed SSL certificate that can't be verified against a trusted CA. This is common in development and testing environments.
 
 ### Solutions
 
-**1. Try with lower SSL verification mode:**
-Change from "verify-full" to "require":
-- Click SSL settings
-- Set SSL Mode to "require"
-- Reconnect
+**1. Lower the SSL verification mode:**
+In the login form's advanced panel, change `SSL Mode` from `verify-full` to `require`. This encrypts the connection without verifying the certificate chain.
 
-This accepts self-signed certificates.
-
-**2. Accept the certificate on first connection:**
-Some tools ask to accept certificate. Look for warning dialog.
-
-**3. Add certificate to trusted store:**
-Export certificate and trust it:
+**2. Provide the CA certificate:**
+For `verify-ca` or `verify-full`, paste the PEM CA certificate into the `SSL CA Content` field in the advanced panel. Get the PEM from your database provider or export it:
 ```bash
-# Export certificate
-openssl s_client -connect hostname:5432 -starttls postgres \
-  -showcerts > cert.pem
-
-# Add to trusted certificates
-sudo cp cert.pem /usr/local/share/ca-certificates/
-sudo update-ca-certificates
+openssl s_client -connect hostname:5432 -starttls postgres -showcerts
 ```
 
-**4. Disable SSL verification (development only):**
-```yaml
-SSL Mode: disable
-```
-
-Never do this in production.
+**3. Disable SSL (local development only):**
+Set `SSL Mode` to `disable`. Never do this in production.
 
 </Accordion>
 
-<Accordion title="SSL: CERTIFICATE_VERIFY_FAILED hostname mismatch">
+<Accordion title="SSL: certificate hostname mismatch">
 
 ### Error Message
 ```
@@ -300,803 +140,222 @@ The hostname doesn't match the certificate
 ```
 
 ### What It Means
-The SSL certificate is valid but issued for a different hostname than the one you're connecting to. For example, certificate is for `db.internal` but you're connecting to `192.168.1.100`.
-
-### Causes
-- Using IP address instead of hostname
-- Hostname doesn't match certificate CN
-- Certificate is for different domain
-- Certificate uses wildcard incorrectly
+The SSL certificate is valid but issued for a different hostname than the one in the login form — for example, the certificate is for `db.example.com` but you're connecting to an IP address.
 
 ### Solutions
 
-**1. Connect using correct hostname:**
-If certificate is for `db.example.com`, use that hostname instead of IP address.
+**1. Connect using the hostname on the certificate** instead of an IP address.
 
-**2. Use SSL Mode "verify-ca" instead of "verify-full":**
-```
-SSL Mode: verify-ca
-```
+**2. Set the `SSL Server Name` field** in the advanced panel to the hostname the certificate was issued for, while keeping the host/IP you actually connect to.
 
-This verifies the certificate is valid but doesn't check hostname matching.
-
-**3. Add hostname to hosts file (local development only):**
-```bash
-# /etc/hosts
-192.168.1.100  db.example.com
-```
-
-Then connect using `db.example.com`.
-
-**4. Import certificate with correct hostname:**
-Ensure certificate includes the hostname you're using:
-```bash
-openssl x509 -in certificate.pem -text -noout | grep "Subject:"
-```
+**3. Use `SSL Mode: verify-ca`** instead of `verify-full` — this verifies the certificate chain without checking the hostname.
 
 </Accordion>
 </AccordionGroup>
 
-## Query Errors
+## Session Errors
 
 <AccordionGroup>
-<Accordion title="Syntax error">
-
-### Error Message
-```
-Syntax error at or near "[keyword]"
-Syntax error near [token]
-```
+<Accordion title="Logged out unexpectedly / session no longer valid">
 
 ### What It Means
-Your SQL query has invalid syntax. The database parser encountered a token it didn't expect.
+In the web app, your database credentials are stored encrypted server-side and tied to an `HttpOnly` session cookie. If the cookie is missing, blocked, or the server-side session is gone, WhoDB returns you to the login page.
 
 ### Causes
-- Misspelled keywords
-- Missing or extra commas
-- Unmatched quotes or parentheses
-- Using syntax from wrong database type
-- Missing FROM clause or other required elements
+- WhoDB server or container was restarted without persistent session storage
+- Browser or extension is blocking cookies for the WhoDB origin
+- A reverse proxy is stripping or rewriting the session cookie
+- You logged out in another tab (logout deletes the server-side session)
 
 ### Solutions
 
-**1. Check for common syntax mistakes:**
-```sql
--- WRONG: Missing comma
-SELECT col1 col2 FROM table;
+**1. Log in again** — saved connection profiles in your browser keep the non-secret details (host, database, connection name), so you only need to re-enter the password.
 
--- CORRECT
-SELECT col1, col2 FROM table;
-
--- WRONG: Mismatched quotes
-SELECT * FROM table WHERE name = 'value;
-
--- CORRECT
-SELECT * FROM table WHERE name = 'value';
+**2. Persist session data in Docker:**
+The image writes session data to the `/data` volume. Mount it so sessions survive container restarts:
+```bash
+docker run -it -p 8080:8080 -v whodb-data:/data clidey/whodb
 ```
 
-**2. Verify keywords spelling:**
-```sql
--- WRONG
-SELELCT * FROM table;
-
--- CORRECT
-SELECT * FROM table;
-```
-
-**3. Check database-specific syntax:**
-PostgreSQL, MySQL, SQLite each have different functions:
-```sql
--- PostgreSQL
-SELECT NOW();
-
--- MySQL
-SELECT NOW();
-
--- SQLite
-SELECT datetime('now');
-```
-
-**4. Use syntax highlighting and linter:**
-- IDEs like VS Code show syntax errors
-- Use database-specific extensions
-- Test in database client first
-
-**5. Break down complex queries:**
-Test parts of the query separately:
-```sql
--- Test SELECT
-SELECT col1, col2 FROM table;
-
--- Add WHERE
-SELECT col1, col2 FROM table WHERE condition;
-
--- Add JOIN
-SELECT t1.col1, t2.col2 FROM table1 t1 JOIN table2 t2 ON t1.id = t2.id;
-```
+**3. Check cookie handling:**
+- Allow cookies for the WhoDB origin in your browser
+- If behind a reverse proxy, ensure it forwards cookies unmodified
 
 </Accordion>
 
-<Accordion title="Table or view does not exist">
-
-### Error Message
-```
-Table "public.tablename" does not exist
-Table or view does not exist
-Unknown table 'tablename'
-```
+<Accordion title="Sessions fail when running as a non-root user">
 
 ### What It Means
-The table you're trying to query doesn't exist in the database, or you're looking in the wrong schema/database.
+The container writes session data to the `/data` volume. When you run the container with `--user`, that UID must be able to write to the volume, or logins fail.
 
-### Causes
-- Table name is misspelled
-- Table is in different schema
-- Using wrong database
-- Table was dropped
-- Case sensitivity issue
-
-### Solutions
-
-**1. Verify table name:**
-```sql
--- PostgreSQL: List all tables
-\dt
-
--- MySQL: List all tables
-SHOW TABLES;
-
--- SQLite: List all tables
-.tables
+### Solution
+Make sure the mounted volume is owned by (or writable for) the UID you run as:
+```bash
+docker run --user 1000:1000 -v whodb-data:/data clidey/whodb
+# Ensure the volume is writable by UID 1000
 ```
-
-**2. Use correct table name in query:**
-```sql
--- WRONG
-SELECT * FROM orders;  -- If table is actually named 'order'
-
--- CORRECT
-SELECT * FROM order;
-```
-
-**3. Specify schema/database if needed:**
-```sql
--- PostgreSQL: Fully qualified name
-SELECT * FROM public.users;
-
--- MySQL: Database-qualified name
-SELECT * FROM mydb.users;
-```
-
-**4. Check if table exists in current database:**
-Some databases use different naming:
-```sql
--- PostgreSQL: Check current database
-SELECT current_database();
-
--- MySQL: Check current database
-SELECT DATABASE();
-```
-
-**5. Case sensitivity:**
-Some databases are case-sensitive:
-```sql
--- PostgreSQL requires quotes for case sensitivity
-SELECT * FROM "TableName";
-
--- MySQL is usually case-insensitive
-SELECT * FROM TableName;
-```
-
-</Accordion>
-
-<Accordion title="Column does not exist">
-
-### Error Message
-```
-Column "columnname" does not exist
-Unknown column 'columnname' in field list
-```
-
-### What It Means
-The column you're trying to access doesn't exist in the table, or there's a typo in the column name.
-
-### Causes
-- Column name is misspelled
-- Column doesn't exist in this table
-- Case sensitivity issue
-- Column is in different table
-
-### Solutions
-
-**1. List columns in table:**
-```sql
--- PostgreSQL
-\d tablename
-
--- MySQL
-DESCRIBE tablename;
-
--- SQLite
-PRAGMA table_info(tablename);
-```
-
-**2. Verify spelling:**
-```sql
--- WRONG: Typo in column name
-SELECT user_name FROM users;  -- If column is actually 'username'
-
--- CORRECT
-SELECT username FROM users;
-```
-
-**3. Handle case sensitivity:**
-```sql
--- PostgreSQL: Use quotes if needed
-SELECT "UserName" FROM users;
-
--- Safer approach: lowercase everything
-SELECT LOWER(column_name) FROM users;
-```
-
-**4. Specify table for ambiguous columns:**
-```sql
--- WRONG: Ambiguous in JOIN
-SELECT id FROM users JOIN orders ON users.id = orders.user_id;
-
--- CORRECT: Specify which table
-SELECT users.id FROM users JOIN orders ON users.id = orders.user_id;
-```
-
-</Accordion>
-
-<Accordion title="Permission denied">
-
-### Error Message
-```
-Permission denied
-Access denied for user
-User does not have permission
-```
-
-### What It Means
-Your database user doesn't have permission to perform the requested operation (SELECT, INSERT, UPDATE, DELETE, etc.).
-
-### Causes
-- User only has SELECT permission but trying to INSERT/UPDATE/DELETE
-- User doesn't have permission on specific table
-- User role doesn't include required permissions
-- Administrative operations require admin user
-
-### Solutions
-
-**1. Check current permissions:**
-```sql
--- PostgreSQL: Check table permissions
-\dp tablename
-
--- MySQL: Check user permissions
-SHOW GRANTS FOR 'username'@'hostname';
-```
-
-**2. Grant missing permissions:**
-```sql
--- PostgreSQL: Grant all permissions on table
-GRANT ALL PRIVILEGES ON tablename TO username;
-
--- PostgreSQL: Grant specific permissions
-GRANT SELECT, INSERT, UPDATE ON tablename TO username;
-
--- MySQL: Grant permissions
-GRANT SELECT, INSERT, UPDATE ON database.* TO 'username'@'hostname';
-FLUSH PRIVILEGES;
-```
-
-**3. Try with admin account:**
-Connect with admin/superuser account to verify operation works:
-- If admin can do it but user can't, it's a permissions issue
-- Grant appropriate permissions to user
-
-**4. Check user role:**
-```sql
--- PostgreSQL: Check user roles
-\du username
-
--- PostgreSQL: Make user superuser
-ALTER USER username SUPERUSER;
-```
-
-**5. Reconnect after permission change:**
-After granting permissions, reconnect to database for changes to take effect.
-
-</Accordion>
-
-<Accordion title="Foreign key constraint failed">
-
-### Error Message
-```
-Foreign key constraint failed
-Constraint violation
-Cannot add or update a child row
-Duplicate entry in foreign key
-```
-
-### What It Means
-You tried to insert or update a row that violates a foreign key constraint. Either the referenced record doesn't exist, or the value doesn't match any existing record in the referenced table.
-
-### Causes
-- Referenced record doesn't exist in parent table
-- Trying to delete record that has child records
-- Foreign key value is NULL but constraint requires it
-- Type mismatch between foreign key and reference
-
-### Solutions
-
-**1. Verify referenced record exists:**
-```sql
--- Verify user exists before inserting order
-SELECT * FROM users WHERE id = 123;
-
--- Then insert order
-INSERT INTO orders (user_id, amount) VALUES (123, 99.99);
-```
-
-**2. Check all existing data meets constraints:**
-```sql
--- Find orders with non-existent user IDs
-SELECT o.* FROM orders o
-LEFT JOIN users u ON o.user_id = u.id
-WHERE u.id IS NULL;
-```
-
-**3. Use correct data type:**
-```sql
--- WRONG: String foreign key
-INSERT INTO orders (user_id) VALUES ('123');
-
--- CORRECT: Integer foreign key
-INSERT INTO orders (user_id) VALUES (123);
-```
-
-**4. Temporarily disable constraint for bulk operations:**
-```sql
--- PostgreSQL
-ALTER TABLE orders DISABLE TRIGGER ALL;
--- ... do operations ...
-ALTER TABLE orders ENABLE TRIGGER ALL;
-
--- MySQL
-SET FOREIGN_KEY_CHECKS=0;
--- ... do operations ...
-SET FOREIGN_KEY_CHECKS=1;
-```
-
-**5. Delete child records first:**
-```sql
--- If deleting user, first delete their orders
-DELETE FROM orders WHERE user_id = 123;
-DELETE FROM users WHERE id = 123;
-```
-
-</Accordion>
-
-<Accordion title="Timeout waiting for query execution">
-
-### Error Message
-```
-Timeout waiting for query execution
-Query execution timeout
-Operation took too long
-```
-
-### What It Means
-Your query ran longer than the allowed timeout period. The database took too long to return results and the connection was terminated.
-
-### Causes
-- Query is inefficient and takes too long
-- Large result set requires long to transfer
-- Database is busy with other queries
-- No indexes on query columns
-
-### Solutions
-
-**1. Add LIMIT to reduce results:**
-```sql
--- WRONG: May return millions of rows
-SELECT * FROM large_table;
-
--- CORRECT: Limit results
-SELECT * FROM large_table LIMIT 1000;
-```
-
-**2. Add WHERE condition to filter:**
-```sql
--- WRONG: Scans entire table
-SELECT * FROM orders;
-
--- CORRECT: Filter by date range
-SELECT * FROM orders WHERE created_at > '2024-01-01';
-```
-
-**3. Create indexes on frequently queried columns:**
-```sql
--- Find slow queries and add indexes
-CREATE INDEX idx_orders_user_id ON orders(user_id);
-CREATE INDEX idx_users_email ON users(email);
-```
-
-**4. Check database or proxy timeout settings:**
-If the same query dies outside WhoDB, review the timeout that actually applies in your stack such as PostgreSQL `statement_timeout`, a reverse proxy read timeout, or a CLI profile timeout.
-
-**5. Check if database is overloaded:**
-```sql
--- See currently running queries
--- PostgreSQL
-SELECT * FROM pg_stat_activity;
-
--- MySQL
-SHOW PROCESSLIST;
-```
-
-Kill long-running operations if needed.
 
 </Accordion>
 </AccordionGroup>
 
-## Data Errors
+## Import and Export Errors
 
 <AccordionGroup>
-<Accordion title="NOT NULL constraint violated">
-
-### Error Message
-```
-NOT NULL constraint failed
-Cannot insert NULL into NOT NULL column
-Column does not allow NULL values
-```
+<Accordion title="Import file rejected (too large or too many rows)">
 
 ### What It Means
-You tried to insert or update a row with a NULL value in a column that requires a value.
+Data import enforces limits per file:
 
-### Causes
-- Trying to insert NULL in required field
-- Field left empty when submitting form
-- NULL value from missing join result
-- Default value not applied
+- Maximum file size: `50 MB`
+- Maximum row count: `100,000`
+
+Files beyond either limit are rejected before import starts.
 
 ### Solutions
 
-**1. Provide value for all required columns:**
-```sql
--- WRONG: Missing required email
-INSERT INTO users (name) VALUES ('John');
+**1. Split the file** into chunks under 50 MB and 100,000 rows each, and import them sequentially.
 
--- CORRECT: Provide all required fields
-INSERT INTO users (name, email) VALUES ('John', 'john@example.com');
-```
+**2. Use database-native bulk tooling for very large loads** (`COPY`, `LOAD DATA INFILE`, `mongoimport`, and so on) — WhoDB import is designed for small-to-medium datasets.
 
-**2. In UI form: Fill all required fields:**
-- Fields marked with asterisk (*) are required
-- Don't leave them blank
-- Check error message for which field
-
-**3. Use default values:**
-```sql
-INSERT INTO users (name, email, created_at)
-VALUES ('John', 'john@example.com', NOW());
-```
-
-**4. Handle NULL in JOINs:**
-```sql
--- WRONG: NULL if no match in join
-SELECT u.name, o.id FROM users u
-LEFT JOIN orders o ON u.id = o.user_id;
-
--- CORRECT: Use COALESCE to provide default
-SELECT u.name, COALESCE(o.id, 0) FROM users u
-LEFT JOIN orders o ON u.id = o.user_id;
-```
-
-**5. Check column definition:**
-```sql
--- See if column allows NULL
-\d users  -- PostgreSQL
-DESCRIBE users; -- MySQL
-PRAGMA table_info(users); -- SQLite
-```
+See [Importing Data](/data/importing) for supported formats and column-mapping details.
 
 </Accordion>
 
-<Accordion title="Duplicate key value violates unique constraint">
-
-### Error Message
-```
-Duplicate key value violates unique constraint
-Duplicate entry for key 'fieldname'
-Unique constraint failed
-```
+<Accordion title="Import fails partway with a database error">
 
 ### What It Means
-You tried to insert or update a row with a value that already exists in a column that has a unique constraint (typically primary key or unique index).
-
-### Causes
-- Inserting duplicate value in primary key
-- Email already exists in database
-- Unique index violation
-- Trying to insert same value twice
+The file passed WhoDB's checks, but the database rejected one or more rows — for example a constraint violation or a value that doesn't match the column type. The error message shown comes from your database.
 
 ### Solutions
 
-**1. Verify value doesn't already exist:**
-```sql
--- Check if email already exists
-SELECT * FROM users WHERE email = 'test@example.com';
+**1. Read the reported row/column** in the error and fix the source file (missing required values, duplicate keys, wrong date formats are the usual suspects).
 
--- If it exists, update instead of insert
-UPDATE users SET name = 'Updated' WHERE email = 'test@example.com';
-```
-
-**2. Use INSERT ... ON DUPLICATE KEY UPDATE (MySQL):**
-```sql
-INSERT INTO users (email, name) VALUES ('test@example.com', 'John')
-ON DUPLICATE KEY UPDATE name = 'John';
-```
-
-**3. Use upsert syntax (PostgreSQL):**
-```sql
-INSERT INTO users (email, name) VALUES ('test@example.com', 'John')
-ON CONFLICT (email) DO UPDATE SET name = 'John';
-```
-
-**4. Check unique constraints:**
-```sql
--- PostgreSQL: List constraints
-\d users
-
--- MySQL: Check indexes
-SHOW INDEX FROM users;
-```
-
-**5. For primary key conflicts:**
-```sql
--- If primary key is auto-increment, don't specify it
-INSERT INTO users (email, name) VALUES ('test@example.com', 'John');
--- ID will auto-generate
-
--- WRONG: Specifying duplicate ID
-INSERT INTO users (id, email, name) VALUES (1, 'test@example.com', 'John');
-```
+**2. Verify the column mapping** matches the table's schema before re-running the import.
 
 </Accordion>
 
-<Accordion title="Data type mismatch">
-
-### Error Message
-```
-Invalid input syntax for type integer
-Cannot convert string to number
-Type conversion error
-```
+<Accordion title="Export runs out of memory or is very slow">
 
 ### What It Means
-You tried to insert or compare a value with the wrong data type. For example, inserting text into a numeric column.
-
-### Causes
-- Inserting string in numeric column
-- Comparing incompatible types
-- Invalid date format
-- Type conversion error
+Exporting a very large result set in one pass can exhaust memory or take a long time.
 
 ### Solutions
 
-**1. Verify correct data type:**
-```sql
--- Check column types
-\d tablename  -- PostgreSQL
-DESCRIBE tablename; -- MySQL
+**1. Filter before exporting** — apply WHERE conditions or a query so you export only the rows you need.
 
--- Example error
-INSERT INTO orders (id, amount) VALUES ('abc', '99.99');  -- WRONG
-INSERT INTO orders (id, amount) VALUES (1, 99.99);  -- CORRECT
-```
+**2. Export in batches** — split by date range or key range across multiple exports instead of one huge file.
 
-**2. Cast values to correct type:**
-```sql
--- Cast to integer
-SELECT CAST('123' AS INTEGER);
-SELECT '123'::INTEGER;  -- PostgreSQL
-
--- Cast to decimal
-SELECT CAST('99.99' AS DECIMAL(10,2));
-```
-
-**3. Fix date format:**
-```sql
--- PostgreSQL: Use proper date format
-INSERT INTO orders (created_at) VALUES ('2024-01-15');
-
--- MySQL: Multiple formats work
-INSERT INTO orders (created_at) VALUES ('2024-01-15');
-INSERT INTO orders (created_at) VALUES (STR_TO_DATE('2024-01-15', '%Y-%m-%d'));
-```
-
-**4. Handle type conversion in application:**
-Ensure UI validates types before submitting:
-- Numbers: Only numeric input
-- Dates: Use date picker
-- Emails: Validate format
-
-</Accordion>
-
-<Accordion title="Division by zero">
-
-### Error Message
-```
-Division by zero
-Attempted to divide by zero
-```
-
-### What It Means
-A query tried to divide by zero, which is mathematically undefined and not allowed.
-
-### Causes
-- Direct division by 0
-- Denominator column contains 0
-- Empty result set in division
-- Logic error in calculation
-
-### Solutions
-
-**1. Add zero check:**
-```sql
--- WRONG: May divide by zero
-SELECT total / count FROM orders;
-
--- CORRECT: Check for zero
-SELECT CASE WHEN count > 0 THEN total / count ELSE 0 END FROM orders;
-```
-
-**2. Filter out zero values:**
-```sql
--- WRONG
-SELECT total / count FROM orders WHERE count = 0;
-
--- CORRECT
-SELECT total / count FROM orders WHERE count > 0;
-```
-
-**3. Use NULLIF to handle zeros:**
-```sql
--- NULLIF returns NULL if expression equals value
-SELECT total / NULLIF(count, 0) FROM orders;
-
--- Then handle NULLs
-SELECT COALESCE(total / NULLIF(count, 0), 0) FROM orders;
-```
-
-**4. Check denominator values:**
-```sql
--- Find which rows have zero denominator
-SELECT * FROM orders WHERE count = 0;
-
--- Fix the data
-UPDATE orders SET count = 1 WHERE count = 0;
-```
+**3. Use database-native tools** (`pg_dump`, `mysqldump`, etc.) for full backups or migration-scale dumps. See [Export Options](/advanced/export-options).
 
 </Accordion>
 </AccordionGroup>
 
-## Performance and Resource Errors
+## Docker and Deployment Errors
+
+<AccordionGroup>
+<Accordion title="Can't reach a localhost database from the WhoDB container">
+
+### What It Means
+Inside a container, `localhost` is the container itself — not your host machine.
+
+### Solutions
+
+**macOS/Windows:** use `host.docker.internal` as the host in the login form.
+
+**Linux:** run with host networking, or put both containers on a shared network:
+```bash
+docker run -it -p 8080:8080 --network host clidey/whodb
+```
+
+**Docker Compose:** put WhoDB and the database on the same network and use the service name as the host. See the [Docker integration guide](/resources/integrations/docker).
+
+</Accordion>
+
+<Accordion title="Port 8080 already in use">
+
+### Error Message
+```
+bind: address already in use
+```
+
+### Solutions
+
+**1. Map a different host port:**
+```bash
+docker run -it -p 3000:8080 clidey/whodb
+```
+
+**2. Or find and stop the conflicting process:**
+```bash
+lsof -i :8080
+```
+
+</Accordion>
+
+<Accordion title="Container healthcheck failing">
+
+### What It Means
+WhoDB CE exposes `GET /health`, which returns plain text `ok`. If your orchestrator reports the container unhealthy, the server isn't responding on the expected port.
+
+### Solutions
+
+**1. Use a healthcheck that matches the image** (the image includes `wget`):
+```yaml
+healthcheck:
+  test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health | grep -qx ok"]
+```
+
+**2. Check container logs** for startup errors:
+```bash
+docker logs whodb
+```
+
+See [Monitoring Integration](/resources/integrations/monitoring) for full examples.
+
+</Accordion>
+</AccordionGroup>
+
+## Resource Errors
 
 <AccordionGroup>
 <Accordion title="Out of memory">
 
-### Error Message
-```
-Out of memory
-Memory allocation failed
-Insufficient memory
-```
-
 ### What It Means
-The operation required more RAM than available, and the system couldn't allocate enough memory to complete the operation.
-
-### Causes
-- Query returning very large result set
-- Exporting huge amount of data
-- Multiple large operations simultaneously
-- Memory limit too low
+An operation — usually a huge result set, export, or mock-data generation — required more RAM than available.
 
 ### Solutions
 
-**1. Reduce result set size:**
-```sql
--- WRONG: All 10 million rows
-SELECT * FROM huge_table;
+**1. Reduce result set size:** add WHERE conditions and LIMIT, and lower the page size in [Settings](/features/settings).
 
--- CORRECT: Use pagination
-SELECT * FROM huge_table LIMIT 1000;
+**2. Export in smaller batches** by date range or specific columns.
 
--- CORRECT: Filter with WHERE
-SELECT * FROM huge_table WHERE created_at > '2024-01-01' LIMIT 1000;
-```
-
-**2. Use smaller page size:**
-- Change page size setting from 1000 to 100
-- Load data in smaller batches
-- Navigate between pages instead of loading all
-
-**3. Break the job into smaller batches:**
-- Lower the page size in [Settings](/features/settings)
-- Add filters or date ranges
-- Export specific columns instead of entire rows
-
-**4. Export in smaller batches:**
-Instead of exporting 10M rows at once:
-- Export by date ranges
-- Export specific columns only
-- Use multiple export operations
-
-**5. Close other applications:**
-Free up system memory by closing unnecessary programs.
+**3. Generate mock data in smaller runs** (for example 1,000 rows at a time).
 
 </Accordion>
 
-<Accordion title="Connection pool exhausted">
-
-### Error Message
-```
-Connection pool exhausted
-No more connections available
-Maximum pool size reached
-```
+<Accordion title="Connection pool exhausted / too many connections">
 
 ### What It Means
-All available database connections are in use and new queries can't get a connection.
+Either WhoDB's internal pool or the database server's connection limit is saturated.
 
-### Causes
-- Too many concurrent operations
-- Connections not being released
-- Connection pool size too small
-- Queries hanging without completing
+The current CE server keeps an internal SQL connection pool with conservative defaults (max open: `10`, max idle: `5`, max lifetime: `30 minutes`, max idle lifetime: `5 minutes`). These are fixed defaults in the server.
 
 ### Solutions
 
-**1. Reduce concurrency and check database-side limits:**
-The current CE web app uses an internal connection pool and does not expose `DB_MAX_*` web env vars. If you see connection-limit errors:
-- Check the database server's own `max_connections` or equivalent
-- Reduce the number of concurrent heavy operations
-- Add a database-side pool or proxy if many services share the same database
+**1. Reduce concurrency:** avoid running many heavy queries simultaneously; wait for operations to finish.
 
-**2. Close unused connections:**
-Wait for current operations to complete or restart WhoDB.
+**2. Check the database server's own limit** (`max_connections` or equivalent) — other applications sharing the database count against it.
 
-**3. Check for hanging queries:**
-```sql
--- PostgreSQL: See active connections
-SELECT * FROM pg_stat_activity;
+**3. Add a database-side pooling layer** such as PgBouncer or ProxySQL when many services share one database.
 
--- MySQL: See running queries
-SHOW PROCESSLIST;
-```
-
-**4. Kill long-running queries:**
-```sql
--- PostgreSQL
-SELECT pg_terminate_backend(pid) FROM pg_stat_activity
-WHERE state = 'active' AND query_start < NOW() - INTERVAL '10 minutes';
-
--- MySQL
-KILL <process_id>;
-```
-
-**5. Reduce concurrent operations:**
-- Don't run too many queries simultaneously
-- Use queue instead of parallel operations
-- Restart WhoDB to reset pool
+**4. Restart WhoDB** to reset the pool if connections appear stuck.
 
 </Accordion>
 </AccordionGroup>
+
+## SQL Errors from Your Database
+
+Errors such as syntax errors, unknown tables or columns, constraint violations, type mismatches, and division by zero are produced by your database, not by WhoDB — WhoDB surfaces them verbatim. Consult your database's own documentation (PostgreSQL, MySQL, SQLite, etc.) for the exact meaning, and see [Query Optimization](/best-practices/query-optimization) for guidance on writing efficient queries.
 
 ## Getting More Help
 

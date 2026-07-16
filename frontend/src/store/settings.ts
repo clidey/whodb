@@ -17,9 +17,8 @@
 import type { PayloadAction} from '@reduxjs/toolkit';
 import {createSlice} from '@reduxjs/toolkit';
 import {settingsDefaults} from '../config/features';
+import {CONSENT_STORAGE_KEY} from '../config/posthog';
 import {type SupportedLanguage, DEFAULT_LANGUAGE} from '../utils/languages';
-
-const ANALYTICS_CONSENT_KEY = 'whodb.analytics.consent';
 
 type ISettingsState = {
     metricsEnabled: boolean;
@@ -52,7 +51,7 @@ const getInitialMetricsEnabled = (): boolean => {
         return true;
     }
 
-    const consent = window.localStorage.getItem(ANALYTICS_CONSENT_KEY);
+    const consent = window.localStorage.getItem(CONSENT_STORAGE_KEY);
     if (consent === 'denied') {
         return false;
     }

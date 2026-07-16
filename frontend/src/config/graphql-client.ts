@@ -31,7 +31,7 @@ import {
 } from '@graphql';
 import type {LocalLoginProfile} from '../store/auth';
 import {reduxStore} from '../store';
-import {addAuthHeader, addAuthHeaderAsync} from '../utils/auth-headers';
+import {addAuthHeader, addAuthHeaderAsync, isDesktopScheme} from '../utils/auth-headers';
 import {isOnRoute, navigateWithBasePath, withBasePath} from '../utils/base-path';
 import {isAwsHostname, isAzureHostname, isGcpHostname} from '../utils/cloud-connection-prefill';
 import {getTranslation, loadTranslationsSync} from '../utils/i18n';
@@ -136,7 +136,11 @@ function fallbackAutoLogin() {
     const authState = reduxStore.getState().auth;
     const currentProfile = authState.current;
 
-    if (currentProfile) {
+    // Browser clients no longer persist credentials (they live in the server-side
+    // session behind the cookie), so silent re-login isn't possible — send the
+    // user to the login page. Desktop/webview clients keep credentials in memory
+    // and can transparently re-establish the session.
+    if (currentProfile && isDesktopScheme()) {
         void handleAutoLogin(currentProfile);
     } else {
         redirectToLoginWithMessage('sessionExpired');

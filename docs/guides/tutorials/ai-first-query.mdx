@@ -28,7 +28,7 @@ This tutorial assumes you've already connected to a database. If you haven't, co
 
 Before starting, make sure you have:
 - WhoDB connected to a database with data
-- An AI provider configured (OpenAI, Anthropic, or Ollama)
+- An AI provider configured (OpenAI, Anthropic, Gemini, Ollama, or LM Studio)
 - Basic familiarity with your database structure (what tables exist)
 
 <Note>
@@ -47,9 +47,9 @@ After connecting to your database, navigate to the Chat page:
 
 The Chat page is your gateway to natural language database interaction. You'll notice several elements:
 
-**AI Provider Dropdown**: At the top left, shows your current AI provider (OpenAI, Anthropic, or Ollama).
+**AI Provider Dropdown**: At the top left, shows your current AI provider (OpenAI, Anthropic, Gemini, Ollama, or LM Studio).
 
-**AI Model Dropdown**: Next to the provider, displays the specific model being used (GPT-4, Claude 3.5 Sonnet, Llama 3.1, etc.).
+**AI Model Dropdown**: Next to the provider, displays the specific model being used, fetched from your provider.
 
 **Chat Interface**: The main area where your conversation with the AI will appear.
 
@@ -70,7 +70,9 @@ Before asking questions, let's verify your AI configuration. Click the AI Provid
 You should see at least one configured provider:
 - **OpenAI**: Cloud-based, fast and accurate
 - **Anthropic**: Cloud-based, excellent for complex queries
-- **Ollama**: Local, privacy-focused
+- **Gemini**: Cloud-based, added with a Gemini API / AI Studio key
+- **Ollama**: Local, privacy-focused, detected automatically when running
+- **LM Studio**: Local, privacy-focused, detected automatically when running
 
 Select your preferred provider if it's not already active.
 
@@ -79,9 +81,11 @@ Next, click the AI Model dropdown to see available models:
 ![AI Model Dropdown](/images/103-chat-ai-model-dropdown.png)
 
 Different models offer different trade-offs:
-- **More capable models** (GPT-4, Claude 3.5 Sonnet): Better accuracy, slightly slower
-- **Faster models** (GPT-3.5 Turbo, Claude Haiku): Quick responses, good for simple queries
-- **Local models** (Llama 3.1, Mistral): Complete privacy, speed varies by hardware
+- **More capable models**: Better accuracy, slightly slower
+- **Faster models**: Quick responses, good for simple queries
+- **Local models** (via Ollama or LM Studio): Complete privacy, speed varies by hardware
+
+The model list is fetched from your provider, so it always reflects your provider's current lineup.
 
 <Note>
 For your first query, any model will work well. Don't overthink this choice—you can always change it later.
@@ -274,15 +278,7 @@ The AI shows:
 - **Which data will be affected**: Preview of rows to be changed
 - **Confirmation required**: Explicit prompt to proceed or cancel
 
-This safety feature prevents accidental data loss. You must respond with explicit confirmation:
-- "Yes, proceed"
-- "Confirm"
-- "Do it"
-
-Or cancel the operation:
-- "No"
-- "Cancel"
-- "Never mind"
+This safety feature prevents accidental data loss. The chat displays inline **Confirm** and **Cancel** buttons with the pending action — click **Confirm** to execute it, or **Cancel** to abort.
 
 <Warning>
 Always review confirmation prompts carefully before confirming deletions or updates. These operations cannot be undone.
@@ -333,10 +329,9 @@ When you find a useful query, you might want to save it or modify it further. Cl
 
 ![Move to Scratchpad Dialog](/images/113-chat-move-to-scratchpad-dialog.png)
 
-A dialog appears showing:
-- The SQL query that will be moved
-- Option to add notes or description
-- Confirmation button
+A dialog appears where you choose the destination:
+- Select an existing Scratchpad page, or
+- Enter a name to create a new page
 
 After moving to Scratchpad, you can:
 - Edit and refine the SQL manually
@@ -461,7 +456,7 @@ When starting with the AI assistant, these questions are particularly useful:
 - Local model (Ollama) processing on limited hardware
 
 **Solutions**:
-- Try a faster model (GPT-3.5 Turbo instead of GPT-4)
+- Try a faster model from your provider's lineup
 - Be more specific to reduce query complexity
 - Switch to a cloud provider for faster response
 - Simplify the question

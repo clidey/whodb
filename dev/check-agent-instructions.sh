@@ -102,6 +102,7 @@ check_stale_paths() {
     --glob '!**/coverage/**' \
     --glob '!frontend/src/generated/**' \
     --glob '!ee/frontend/src/generated/**' \
+    --glob '!**/.agents/skills/**' \
     --glob '!dev/check-agent-instructions.sh' \
     --glob '!.gitignore' 2>/dev/null)"; then
     printf '%s\n' "$output" >&2
@@ -130,7 +131,8 @@ check_trailing_whitespace() {
     )
   fi
 
-  if output="$(rg --hidden --line-number --color never '[[:blank:]]+$' "${targets[@]}" 2>/dev/null)"; then
+  if output="$(rg --hidden --line-number --color never '[[:blank:]]+$' "${targets[@]}" \
+    --glob '!**/.agents/skills/**' 2>/dev/null)"; then
     printf '%s\n' "$output" >&2
     fail "trailing whitespace found in agent instruction files"
   else

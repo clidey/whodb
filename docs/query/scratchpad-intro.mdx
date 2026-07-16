@@ -1,11 +1,11 @@
 ---
 title: "Scratchpad Introduction"
-description: "Use WhoDB's current Scratchpad query editor"
+description: "WhoDB's Scratchpad is a notebook-style query workspace with pages, cells, and history for SQL, MongoDB, and Redis queries"
 ---
 
 # Scratchpad Introduction
 
-Scratchpad is WhoDB's SQL workspace. It gives you page-based query organization, one or more query cells per page, query execution, result grids, action-query confirmations, and per-cell query history.
+Scratchpad is WhoDB's query workspace for connections that support raw queries — SQL databases, plus shell-style commands for MongoDB and commands for Redis. It gives you page-based query organization, one or more query cells per page, query execution, result grids, action-query confirmations, and per-cell query history.
 
 <Tip>
 Use Scratchpad for custom SQL. Use the Storage Unit data page when you want the guided grid, search, WHERE condition builder, row editing, export, and mock data actions.
@@ -26,9 +26,10 @@ The current layout is vertical:
 
 ## Run Queries
 
-Type SQL into the editor and run it with either:
+Type SQL into the editor and run it with any of:
 
-- The blue run button on the right side of the editor.
+- The run button at the bottom-right of the cell. It appears on hover (or when the page has a single cell) and is hidden while the editor is empty.
+- The per-statement play buttons in the editor's left gutter, which run one statement at a time.
 - `Cmd/Ctrl + Enter`.
 
 ![Scratchpad Query Results](/images/29-scratchpad-query-results.png)

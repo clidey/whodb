@@ -18,10 +18,10 @@ package analytics
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"sync"
-	"sync/atomic"
 	"testing"
 
 	"github.com/posthog/posthog-go"
@@ -83,7 +83,7 @@ func resetAnalyticsState() {
 	storeClient(nil)
 	enabled.Store(false)
 	initOnce = sync.Once{}
-	fallbackID = atomic.Value{}
+	distinctIDResolver = nil
 	cfg = Config{}
 }
 
@@ -143,6 +143,8 @@ func TestBuildPropertiesMergesMetadataAndConfig(t *testing.T) {
 	cfg = Config{
 		Environment: "prod",
 		AppVersion:  "1.2.3",
+		Edition:     "ce",
+		Source:      "backend",
 	}
 	ctx := WithMetadata(context.Background(), Metadata{
 		Domain:    "frontend.local",
@@ -161,17 +163,92 @@ func TestBuildPropertiesMergesMetadataAndConfig(t *testing.T) {
 	if props["domain"] != "frontend.local" {
 		t.Fatalf("expected domain to be added from metadata, got %v", props["domain"])
 	}
+	if props["$host"] != "frontend.local" {
+		t.Fatalf("expected $host to be added from metadata domain, got %v", props["$host"])
+	}
 	if props["path"] != "override" {
 		t.Fatalf("expected explicit path property to be preserved, got %v", props["path"])
 	}
-	if props["environment"] != "prod" || props["app_version"] != "1.2.3" {
+	if props["build_environment"] != "prod" || props["app_version"] != "1.2.3" {
 		t.Fatalf("expected config metadata to be included")
+	}
+	if props["build_edition"] != "ce" || props["source"] != "backend" {
+		t.Fatalf("expected edition and source to be stamped, got %v / %v", props["build_edition"], props["source"])
 	}
 	if props["$lib"] != libraryName {
 		t.Fatalf("expected $lib to be set to %s", libraryName)
 	}
 	if props["custom"] != "value" {
 		t.Fatalf("expected custom properties to be retained")
+	}
+}
+
+func TestCaptureErrorEmitsErrorCodeNotMessage(t *testing.T) {
+	t.Cleanup(resetAnalyticsState)
+
+	client := &fakePosthogClient{}
+	storeClient(client)
+	enabled.Store(true)
+
+	CaptureError(context.Background(), "login.execute", errors.New("connection refused: host db.internal:5432"), nil)
+
+	if len(client.messages) != 1 {
+		t.Fatalf("expected one event to be enqueued, got %d", len(client.messages))
+	}
+	capture, ok := client.messages[0].(posthog.Capture)
+	if !ok {
+		t.Fatalf("expected capture message, got %T", client.messages[0])
+	}
+	if capture.Properties["error_code"] != "connection_failed" {
+		t.Fatalf("expected error_code connection_failed, got %v", capture.Properties["error_code"])
+	}
+	if _, exists := capture.Properties["error_message"]; exists {
+		t.Fatalf("expected raw error message to be omitted")
+	}
+	if capture.Properties["operation"] != "login.execute" {
+		t.Fatalf("expected operation to be preserved, got %v", capture.Properties["operation"])
+	}
+}
+
+func TestDistinctIDResolverTakesPrecedence(t *testing.T) {
+	t.Cleanup(resetAnalyticsState)
+
+	ctx := WithMetadata(context.Background(), Metadata{DistinctID: "header-id"})
+
+	if got := distinctIDFromContext(ctx); got != "header-id" {
+		t.Fatalf("expected header id without resolver, got %s", got)
+	}
+
+	SetDistinctIDResolver(func(context.Context) string { return "user-42" })
+	if got := distinctIDFromContext(ctx); got != "user-42" {
+		t.Fatalf("expected resolver id to take precedence, got %s", got)
+	}
+
+	SetDistinctIDResolver(func(context.Context) string { return "  " })
+	if got := distinctIDFromContext(ctx); got != "header-id" {
+		t.Fatalf("expected blank resolver result to fall through to header, got %s", got)
+	}
+
+	if got := distinctIDFromContext(context.Background()); got != anonymousID {
+		t.Fatalf("expected anonymous fallback, got %s", got)
+	}
+}
+
+func TestErrorCodeTaxonomy(t *testing.T) {
+	cases := map[string]string{
+		"connection refused":       "connection_failed",
+		"quota exceeded for org":   "quota_exceeded",
+		"request timeout":          "timeout",
+		"invalid input for column": "invalid_input",
+		"something exploded":       "internal_error",
+	}
+	for message, want := range cases {
+		if got := ErrorCode(errors.New(message)); got != want {
+			t.Fatalf("ErrorCode(%q) = %s, want %s", message, got, want)
+		}
+	}
+	if got := ErrorCode(nil); got != "" {
+		t.Fatalf("expected empty code for nil error, got %s", got)
 	}
 }
 

@@ -11,10 +11,6 @@ seo:
 
 Managing databases across a team requires the right tools and proper workflows. WhoDB makes it simple to give your entire team secure, intuitive database access. This guide walks you through setting up WhoDB for your team, from initial deployment to establishing best practices.
 
-<Info>
-Whether you're managing a 3-person startup or a 300-person organization, WhoDB scales to support your team's database needs.
-</Info>
-
 ## Why WhoDB for Teams?
 
 <CardGroup cols={2}>
@@ -63,6 +59,8 @@ services:
     environment:
       PORT: 8080
       WHODB_LOG_LEVEL: info
+      # Optional: environment-defined connection profile shown on the login page
+      # WHODB_POSTGRES_1: '{"alias":"staging","host":"staging-db.internal","user":"whodb_readonly","database":"myapp","port":"5432","password":"..."}'
     restart: unless-stopped
     networks:
       - whodb_network
@@ -89,6 +87,10 @@ networks:
   whodb_network:
     driver: bridge
 ```
+
+<Tip>
+Environment-defined profiles (such as `WHODB_POSTGRES_1`) put connection details in your deployment config so team members pick a profile on the login page instead of typing credentials. See [Database Connectivity](/features/database-connectivity) for the format.
+</Tip>
 
 **Step 2: Deploy**
 
@@ -123,7 +125,7 @@ metadata:
   name: whodb
   namespace: default
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: whodb
@@ -170,11 +172,14 @@ Deploy with:
 kubectl apply -f whodb-deployment.yaml
 ```
 
+<Warning>
+WhoDB stores login sessions in a per-instance encrypted store, so a single replica is the simplest reliable setup. If you run multiple replicas, you must configure session affinity (sticky sessions) on your load balancer and set a shared `WHODB_ENCRYPTION_KEY` across replicas — otherwise logins will intermittently fail.
+</Warning>
+
 ### Option 3: Traditional Server Deployment
 
 For teams without Docker or Kubernetes:
 
-**Download and Install:**
 ```bash
 # Build the server from source
 git clone https://github.com/clidey/whodb.git
@@ -196,18 +201,7 @@ sudo systemctl start whodb
 Never expose WhoDB over HTTP in production. Always use HTTPS/SSL encryption.
 </Warning>
 
-**With Docker and Nginx Reverse Proxy:**
-
-```bash
-# Use Let's Encrypt for free SSL certificates
-sudo apt-get install certbot nginx
-
-# Get certificate (replace yourdomain.com with your domain)
-sudo certbot certonly --standalone -d yourdomain.com
-
-# Configure Nginx as reverse proxy
-sudo nano /etc/nginx/sites-available/whodb
-```
+Put WhoDB behind a TLS-terminating reverse proxy. With nginx and a Let's Encrypt certificate (`sudo certbot certonly --standalone -d yourdomain.com`):
 
 ```nginx
 server {
@@ -235,33 +229,19 @@ server {
 }
 ```
 
-Enable and restart:
-```bash
-sudo ln -s /etc/nginx/sites-available/whodb /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl restart nginx
-```
+Enable the site and reload nginx (`sudo nginx -t && sudo systemctl restart nginx`). When WhoDB is served over HTTPS this way, also set `WHODB_SECURE=true` so the session cookie is marked `Secure` (see [Installation](/installation)).
 
 ### Network Security
 
 <Steps>
 <Step title="Use Firewall Rules">
-Only allow trusted IPs to access WhoDB:
-```bash
-# UFW example (Ubuntu)
-sudo ufw allow 443/tcp
-sudo ufw allow 80/tcp (redirects to 443)
-sudo ufw enable
-
-# Restrict to specific IPs if possible
-sudo ufw allow from 203.0.113.0/24 to any port 443
-```
+Only allow trusted networks to reach WhoDB — for example, with UFW: `sudo ufw allow from 203.0.113.0/24 to any port 443`.
 </Step>
 <Step title="Require VPN for Access">
 If possible, require team members to connect via VPN before accessing WhoDB. This adds an extra security layer.
 </Step>
-<Step title="Enable Audit Logging">
-Configure WhoDB to log all connections and queries for security auditing.
+<Step title="Enable Logging">
+Set `WHODB_ACCESS_LOG_FILE` to capture an HTTP access log from WhoDB, and enable database-native audit or statement logging for query-level auditing.
 </Step>
 <Step title="Rotate Credentials Regularly">
 Change database credentials monthly or after team member departures.
@@ -380,21 +360,14 @@ CREATE USER dba_user WITH SUPERUSER PASSWORD 'dba_pass';
 **Scenario**: Your team reviews key metrics daily
 
 <Steps>
-<Step title="Monday Morning Setup">
-Developer opens WhoDB, connects to analytics database
-</Step>
 <Step title="Create Shared Queries">
-Write queries for key metrics:
-- User signups yesterday
-- Feature usage stats
-- Error rate trends
-Save in Scratchpad for team reference
+Write queries for key metrics (signups, feature usage, error rates). Save them in Scratchpad for your own reuse — Scratchpad pages are stored per-browser, so share the SQL itself (in docs or version control) for team reference.
 </Step>
 <Step title="Export for Sharing">
-Export results as CSV for team meeting or Slack
+Export results as CSV for the team meeting or Slack.
 </Step>
 <Step title="Document Process">
-Share queries in documentation for consistency
+Store the queries in your team repository for consistency. See [Team Collaboration](/best-practices/collaboration).
 </Step>
 </Steps>
 
@@ -404,16 +377,13 @@ Share queries in documentation for consistency
 
 <Steps>
 <Step title="Clone Production Data">
-Use WhoDB to export production data (anonymized) to CSV
+Use WhoDB to export production data (anonymized) to CSV.
 </Step>
 <Step title="Generate Mock Data">
-Use WhoDB's mock data feature to fill gaps with realistic data
+Use WhoDB's [mock data feature](/advanced/mock-data) to fill gaps with realistic data.
 </Step>
 <Step title="Import to Test Environment">
 Use Scratchpad to load data: `INSERT INTO table VALUES ...`
-</Step>
-<Step title="Share Dataset">
-Create database snapshot for all QA team members to use
 </Step>
 </Steps>
 
@@ -423,53 +393,19 @@ Create database snapshot for all QA team members to use
 
 <Steps>
 <Step title="Restricted Access">
-QA/Support team connects with read-only credentials to production
+QA/Support team connects with read-only credentials to production.
 </Step>
 <Step title="Query the Issue">
-Write query in Scratchpad to reproduce the problem
+Write a query in Scratchpad to reproduce the problem.
 </Step>
-<Step title="Document Finding">
-Export results and attach to bug ticket
-</Step>
-<Step title="Share with Engineers">
-Engineers get full query for confirmation and fix
+<Step title="Document and Share">
+Export results, attach them to the bug ticket, and include the query itself so engineers can confirm and fix.
 </Step>
 </Steps>
 
-## Best Practices for Team Collaboration
+## Team Practices
 
-### Documentation
-
-<Tip>
-Create a WhoDB team guide document covering:
-- How to connect to each database
-- Common queries your team uses
-- What data is production vs. test
-- Who to ask for help
-</Tip>
-
-Example structure:
-```markdown
-# WhoDB Team Guide
-
-## Connections
-- Production (Read-Only): connection details
-- Staging (Read-Write): connection details
-- Development (Full Access): connection details
-
-## Common Queries
-- Daily active users: [query]
-- Recent errors: [query]
-- Revenue trends: [query]
-
-## Security
-- Never share credentials
-- Always use connection profiles
-- Log out when done
-- Report suspicious activity
-```
-
-### Access Control Rules
+Keep a short team guide covering how to connect to each database, which environments are production vs. test, common queries, and who to ask for help. For query sharing and documentation practices, see [Team Collaboration](/best-practices/collaboration) and [Database Documentation](/best-practices/documentation).
 
 <Warning>
 Establish clear policies to prevent data breaches:
@@ -480,78 +416,19 @@ Establish clear policies to prevent data breaches:
 5. Audit query history regularly
 </Warning>
 
-### Team Onboarding Checklist
+**Onboarding**: create a restricted database user at the right access level, hand over the team guide, help with a first connection to the development database, and grant production access only once they're ready.
 
-When a new team member joins:
-
-<Steps>
-<Step title="Create Database User">
-Create restricted database user with appropriate access level
-</Step>
-<Step title="Provide Connection Guide">
-Give them the team documentation
-</Step>
-<Step title="First Connection">
-Help them connect to development database first
-</Step>
-<Step title="Walk Through Common Tasks">
-Show them how to view data, filter, and run basic queries
-</Step>
-<Step title="Introduce Advanced Features">
-Show scratchpad, graph visualization, export options
-</Step>
-<Step title="Grant Additional Access">
-Add production access only when they're ready
-</Step>
-</Steps>
-
-### Team Member Offboarding
-
-When a team member leaves:
-
-<Steps>
-<Step title="Disable Database Users">
-Immediately disable their database accounts
-</Step>
-<Step title="Review Database Logs">
-Review database-native audit logs and infrastructure logs for recent access
-</Step>
-<Step title="Transfer Shared Materials">
-Move any shared SQL files, runbooks, or exported reports to the owning team
-</Step>
-<Step title="Update Access Lists">
-Remove from any permission groups
-</Step>
-<Step title="Rotate Shared Credentials">
-Change passwords they had access to
-</Step>
-</Steps>
+**Offboarding**: immediately disable the person's database accounts, review database-native audit logs for recent access, rotate any shared credentials they knew, and transfer their SQL files or exported reports to the owning team.
 
 ## Monitoring and Maintenance
 
 ### Regular Backups
 
-Ensure your team's work isn't lost:
+Back up the databases your team works with using the database's native tools on a schedule, for example a nightly `pg_dump` per database from cron, keeping the last 30 days:
 
 ```bash
-# Daily backup script (cron job)
-#!/bin/bash
-BACKUP_DIR="/backups/whodb"
-DATE=$(date +%Y%m%d_%H%M%S)
-
-# Backup all databases
-for db in $DATABASES; do
-  pg_dump -U $DB_USER -h $DB_HOST $db > $BACKUP_DIR/$db\_$DATE.sql
-done
-
-# Keep only last 30 days
-find $BACKUP_DIR -name "*.sql" -mtime +30 -delete
-```
-
-Set up in crontab:
-```bash
-# Run backup daily at 2 AM
-0 2 * * * /usr/local/bin/backup-databases.sh
+# crontab: daily at 2 AM
+0 2 * * * pg_dump -U "$DB_USER" -h "$DB_HOST" myapp_prod > /backups/myapp_prod_$(date +\%Y\%m\%d).sql
 ```
 
 ### Performance Monitoring
@@ -578,10 +455,8 @@ Keep your instance updated:
 # Pull latest image
 docker pull clidey/whodb:latest
 
-# Stop current instance
+# Restart with the new image
 docker-compose down
-
-# Update compose file (latest tag)
 docker-compose up -d
 
 # Verify it's running
@@ -592,63 +467,24 @@ docker ps | grep whodb
 
 <AccordionGroup>
 <Accordion title="Team Member Can't Connect to Database">
-**Diagnosis:**
-1. Verify user exists in database
-2. Check password is correct
-3. Confirm host/port are correct
-4. Verify firewall allows connection
-
-**Solution:**
-1. Double-check credentials
-2. Test connection from command line first
-3. Check database server logs
-4. Verify user has CONNECT privilege
+Verify the database user exists and has the CONNECT privilege, double-check credentials and host/port, confirm the firewall allows the connection, and test from the command line first. Database server logs usually name the exact failure.
 </Accordion>
 
 <Accordion title="Query Performance is Slow for Team">
-**Symptoms:** Team members report slow data loading
-
-**Solutions:**
-1. Check database server load: `top`, `htop`
-2. Analyze slow queries: `EXPLAIN ANALYZE`
-3. Verify indexes exist on frequently queried columns
-4. Reduce result sizes or lower the default page size in [Settings](/features/settings)
-5. Consider database optimization, database-side pooling, or scaling
+Check database server load, analyze slow queries with `EXPLAIN ANALYZE`, and verify indexes exist on frequently queried columns. In WhoDB, reduce result sizes or lower the default page size in [Settings](/features/settings). For sustained load, consider database-side pooling or scaling.
 </Accordion>
 
 <Accordion title="Team Member Can't See All Tables">
-**Diagnosis:**
-1. User account doesn't have VIEW permission on schema
-2. Tables are in different schema they can't access
+The user account usually lacks schema access. Grant it:
 
-**Solution:**
 ```sql
--- PostgreSQL: Grant schema access
+-- PostgreSQL
 GRANT USAGE ON SCHEMA public TO username;
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO username;
-```
 
-```sql
--- MySQL: Grant database access
+-- MySQL
 GRANT SELECT ON myapp.* TO 'username'@'%';
 ```
-</Accordion>
-
-<Accordion title="Need to Restore from Backup">
-**Process:**
-1. Locate backup file
-2. Restore using database tools:
-
-```bash
-# PostgreSQL
-psql -U postgres -d myapp_prod < backup_20240115.sql
-
-# MySQL
-mysql -u root -p myapp_prod < backup_20240115.sql
-```
-
-3. Verify data integrity
-4. Notify team of restoration
 </Accordion>
 
 <Accordion title="Security Concern: Unauthorized Query Detected">
@@ -672,7 +508,6 @@ Recommended controls:
 - Store shared credentials in your password manager.
 - Restrict WhoDB access to trusted networks.
 - Review saved browser profiles on shared machines.
-- API key authentication
 
 ## Security Checklist for Production Teams
 
@@ -705,40 +540,11 @@ Quarterly review of who has access to what
 
 ## Scaling as Your Team Grows
 
-### Team of 3-10
+- **3-10 people**: a single WhoDB instance, a shared development database, read-only production access, and basic documentation.
+- **10-50 people**: a dedicated Docker deployment, separate dev/staging/prod connections, database-side role-based access control, regular backups, and database-native audit logging.
+- **50+ people**: a Kubernetes deployment (see the sticky-session note above if you run multiple replicas), database-side pooling or proxies where needed, monitoring and alerting, and compliance-grade audit logging.
 
-- Single WhoDB instance
-- Shared development database
-- Read-only production access
-- Basic documentation
-
-### Team of 10-50
-
-- Dedicated WhoDB instance (Docker)
-- Multiple databases (dev, staging, prod)
-- Database-side role-based access control
-- Regular backups
-- Database-native audit logging
-
-### Team of 50+
-
-- High-availability setup (multiple instances)
-- Kubernetes deployment
-- Database-side pooling or proxies where needed
-- Advanced monitoring and alerting
-- Compliance and audit logging
-- Dedicated database admin support
-
-## Cost Considerations
-
-| Component | Cost | Notes |
-|-----------|------|-------|
-| WhoDB | Free (Open Source) | No licensing costs |
-| Server/VPS | $10-100/month | Depends on team size |
-| SSL Certificate | Free (Let's Encrypt) | Annual renewal |
-| Backup Storage | $5-50/month | Varies by data size |
-| Database Licenses | $0-$500+/month | Many databases free (PostgreSQL, MySQL) |
-| **Total** | **$15-650/month** | **Way cheaper than traditional tools** |
+WhoDB itself is free and open source, so the only costs are the infrastructure you run it on — typically a small VPS, backup storage, and free Let's Encrypt certificates.
 
 ## Getting Help for Team Setup
 
@@ -749,18 +555,6 @@ Setting up WhoDB for your team is straightforward, but if you need guidance:
 - Read [Security Best Practices](/best-practices/security)
 </Info>
 
-## Summary: Your Team is Ready
-
-After completing this guide, your team has:
-
-✓ WhoDB deployed securely
-✓ Read-only and read-write access configured
-✓ Documentation and best practices established
-✓ Onboarding process ready
-✓ Backup and monitoring in place
-
-**Your team can now safely and efficiently manage your databases together.**
-
 <Check>
-Your team is ready to start using WhoDB. Onboard team members using the checklist above, and they'll be productive immediately.
+After completing this guide, your team has WhoDB deployed securely, read-only and read-write access configured, and backup and monitoring in place.
 </Check>

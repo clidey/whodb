@@ -84,6 +84,13 @@ async function querySourceFieldConstraints(page, ref, requestHeaders = {}) {
         if (authorization) {
             headers.authorization = authorization;
         }
+        // Session-cookie auth requires the CSRF token (double-submit) on POST
+        // requests. Mirror the app's Apollo client by echoing the readable
+        // whodb_csrf cookie back in the X-CSRF-Token header.
+        const csrfMatch = document.cookie.split('; ').find(row => row.startsWith('whodb_csrf='));
+        if (csrfMatch) {
+            headers['X-CSRF-Token'] = decodeURIComponent(csrfMatch.slice('whodb_csrf='.length));
+        }
         const response = await fetch(`${window.location.origin}/api/query`, {
             method: 'POST',
             headers,

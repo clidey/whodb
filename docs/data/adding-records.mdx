@@ -28,7 +28,7 @@ Click **Submit**. WhoDB sends the row to the backend and refreshes the grid on s
 
 - Numeric column types use numeric HTML inputs where possible.
 - Long or special database-specific conversions are handled by the backend plugin.
-- Empty fields are sent as empty strings unless the source/plugin maps them differently.
+- Fields left empty are skipped and not sent to the backend. Submitting with every field empty is rejected with a message asking you to fill at least one value.
 - For document sources, invalid JSON is rejected before submission.
 
 ## If Add Row Is Missing

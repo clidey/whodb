@@ -31,12 +31,7 @@ import (
 
 	"github.com/clidey/whodb/cli/pkg/identity"
 	"github.com/clidey/whodb/core/src/analytics"
-)
-
-// PostHog configuration - same project as core for unified analytics
-const (
-	posthogAPIKey = "phc_hbXcCoPTdxm5ADL8PmLSYTIUvS6oRWFM2JAK8SMbfnH"
-	posthogHost   = "https://us.i.posthog.com"
+	"github.com/clidey/whodb/core/src/env"
 )
 
 var (
@@ -63,10 +58,12 @@ func Initialize(version string) error {
 	}
 
 	if err := analytics.Initialize(analytics.Config{
-		APIKey:             posthogAPIKey,
-		Host:               posthogHost,
+		APIKey:             env.PosthogAPIKey,
+		Host:               env.PosthogHost,
 		Environment:        "cli",
 		AppVersion:         version,
+		Edition:            identity.Current().Edition,
+		Source:             "cli",
 		SuppressClientLogs: true,
 	}); err != nil {
 		return err
@@ -92,12 +89,11 @@ func IsEnabled() bool {
 	return analytics.Enabled()
 }
 
-// baseProps returns common properties included in all events.
+// baseProps returns common properties included in all events. Source and
+// edition are stamped centrally by the core analytics package.
 func baseProps() map[string]any {
 	return map[string]any{
-		"source":      "cli",
 		"cli_version": cliVersion,
-		"edition":     identity.Current().Edition,
 	}
 }
 

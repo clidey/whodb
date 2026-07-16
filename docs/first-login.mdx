@@ -10,7 +10,9 @@ The login page is the entry point for the web app and desktop app. It adapts to 
 ![WhoDB Login Page](/images/01-login-page.png)
 
 <Info>
-Depending on your setup, WhoDB may remember local profiles and recent connection state in local browser or app storage. For shared or sensitive machines, prefer managed database accounts and environment-defined profiles.
+In the web app, a successful login is kept server-side: WhoDB stores your database credentials encrypted in a local session database and gives your browser only an opaque, `HttpOnly` session cookie — the credentials themselves never reach browser storage. Non-secret display details (connection name, host, database) are kept in the browser so the profile switcher and login state survive a page reload.
+
+The desktop app, which cannot rely on cookies, stores saved credentials in the OS keyring instead (for example, macOS Keychain); if no keyring is available, it warns and continues without persisting credentials. For shared or sensitive machines, prefer managed database accounts and environment-defined profiles either way.
 </Info>
 
 ## Ways To Start A Connection

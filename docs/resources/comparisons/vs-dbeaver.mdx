@@ -360,20 +360,20 @@ If you need support for 20+ different database types, DBeaver is necessary. WhoD
 ### WhoDB Architecture
 
 **Lightweight, Cloud-Native:**
-- Single Go binary (~15MB)
+- Single self-contained Go binary
 - Runs on Linux, Mac, Windows
-- Docker image: 50MB
+- Small Docker image
 - Browser-based access
-- Stateless server design
-- Scales horizontally
-- Perfect for Kubernetes
+- Simple to deploy
+- Container-friendly
 
 **Resource Profile:**
 - Lightweight server process
 - Low background overhead compared with full desktop IDEs
-- Scales to multiple instances easily
 - Container-friendly
 - Cloud-native ready
+
+Note: WhoDB keeps an encrypted per-instance session store, so running multiple replicas requires sticky sessions at the load balancer.
 
 ### DBeaver Architecture
 

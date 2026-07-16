@@ -64,6 +64,7 @@ export const sanitizeAnalyticsProperties = (
     context: AnalyticsRuntimeContext
 ): Record<string, SafeAnalyticsPropertyValue> => {
     const base: Record<string, SafeAnalyticsPropertyValue> = {
+        source: 'web',
         build_edition: context.buildEdition,
         build_environment: context.buildEnvironment,
         app_type: context.appType,

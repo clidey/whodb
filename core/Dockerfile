@@ -121,4 +121,10 @@ COPY --from=backend-stage /runtime-libs/ /usr/local/lib/
 # (BAML Go client's isMusl() is not implemented, so we must use BAML_LIBRARY_PATH)
 ENV BAML_LIBRARY_PATH=/usr/local/lib/libbaml_cffi.so
 
+# Persist the session store (encrypted credentials + generated key) across
+# container restarts. Mount a named volume to keep sessions across upgrades, and
+# set WHODB_ENCRYPTION_KEY to a 64-char hex string for key portability.
+ENV WHODB_DATA_DIR=/data
+VOLUME /data
+
 CMD ["/core"]
