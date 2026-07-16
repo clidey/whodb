@@ -7,7 +7,7 @@
 [![Release workflow](https://img.shields.io/github/actions/workflow/status/clidey/whodb/release-ce.yml?branch=main)](https://github.com/clidey/whodb/actions/workflows/release-ce.yml)
 [![Release version](https://img.shields.io/github/v/release/clidey/whodb)](https://github.com/clidey/whodb/releases)
 ![Release date](https://img.shields.io/github/release-date/clidey/whodb)
-![Docker Pulls](https://img.shields.io/docker/pulls/clidey/whodb?label=downloads)
+![Total downloads](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/clidey/whodb/main/badges/downloads.json)
 ![Docker size](https://img.shields.io/docker/image-size/clidey/whodb/latest)
 
 ![Commits per month](https://img.shields.io/github/commit-activity/m/clidey/whodb)
