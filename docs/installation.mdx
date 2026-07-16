@@ -58,6 +58,9 @@ services:
     environment:
       - PORT=8080
       - WHODB_LOG_LEVEL=info
+      # Keeps encrypted login sessions valid across container recreation.
+      # Generate once with: openssl rand -hex 32
+      - WHODB_ENCRYPTION_KEY=replace_with_openssl_rand_hex_32
     restart: unless-stopped
     volumes:
       - whodb-data:/data
@@ -65,6 +68,21 @@ services:
 volumes:
   whodb-data:
 ```
+
+### Session Storage
+
+WhoDB keeps login sessions server-side. When you log in from a browser, WhoDB stores your database credentials encrypted (AES-256-GCM) in a local SQLite file under its data directory, and the browser only holds an opaque, `HttpOnly` session cookie — never the credentials themselves.
+
+Without any configuration, this works out of the box: a plain `docker run` generates an encryption key on first start and keeps you logged in until the container is recreated (at which point you simply log in again). To keep sessions valid across upgrades and restarts:
+
+- Mount `/data` as a volume so the encrypted session database and generated key persist.
+- Set `WHODB_ENCRYPTION_KEY` to a stable 64-character hex string (`openssl rand -hex 32`) so the key does not depend on the container's filesystem.
+
+<Warning>
+Keep `WHODB_ENCRYPTION_KEY` safe and stable. Changing or losing it invalidates every existing session — WhoDB detects this automatically and prompts an unaffected re-login, but nothing is decryptable with the old key afterward.
+</Warning>
+
+If WhoDB sits behind an HTTPS-terminating reverse proxy (nginx, Traefik, Caddy, a cloud load balancer), also set `WHODB_SECURE=true` so the session cookie is marked `Secure`. Leave it unset for plain HTTP, including local development — WhoDB does not infer HTTPS from proxy headers, and setting it on an HTTP deployment causes the browser to drop the cookie.
 
 ## Binary Installation
 
@@ -153,6 +171,10 @@ The desktop app lives in `desktop-ce/` and uses the same frontend and backend co
 | `WHODB_MAX_PAGE_SIZE` | Maximum rows allowed per page request | `10000` |
 | `WHODB_DISABLE_MOCK_DATA_GENERATION` | Disable mock data globally or for named tables | unset |
 | `WHODB_DISABLE_UPDATE_CHECK` | Disable release availability checks | `false` |
+| `WHODB_ENCRYPTION_KEY` | 64-char hex key used to encrypt stored login sessions. Auto-generated and persisted to `WHODB_DATA_DIR` if unset | unset |
+| `WHODB_DATA_DIR` | Directory for the encrypted session database and generated key | platform default data directory |
+| `WHODB_SESSION_TTL` | Sliding idle timeout for login sessions, as a Go duration (for example `168h`) | `168h` (7 days) |
+| `WHODB_SECURE` | Mark the session cookie `Secure`. Set to `true` only when served over HTTPS (including behind a TLS-terminating proxy) | `false` |
 
 <Note>
 The `default` log paths write to `/var/log/whodb/`. That works naturally in Docker but usually requires a custom path for local development.

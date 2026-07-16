@@ -58,10 +58,13 @@ Then connect WhoDB to `localhost:5432`.
 
 ### Connection String Security
 
-Never hardcode credentials in application code or configuration files. WhoDB can persist recent web connection profiles in browser storage and can also load environment-defined profiles, so treat both as sensitive configuration:
+Never hardcode credentials in application code or configuration files. In the web app, login credentials are encrypted and stored server-side, keyed by an `HttpOnly` session cookie — the browser itself never holds them. The desktop app is different: it cannot rely on cookies, so it keeps credentials in local app storage. WhoDB can also load environment-defined profiles, so treat those as sensitive configuration too:
 
 **Environment Variables:**
 Store sensitive connection details in environment variables rather than committing them to version control.
+
+**Session Encryption Key:**
+Set a stable `WHODB_ENCRYPTION_KEY` (see [Installation](/installation#session-storage)) rather than relying on the auto-generated key, especially in shared or production deployments. Keeping the key outside the same volume as the session database means filesystem access to that volume alone is not enough to decrypt stored sessions.
 
 **Secrets Management:**
 For production environments, use dedicated secrets management solutions:

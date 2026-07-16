@@ -266,16 +266,17 @@ Docker networking can be complex. See our [Docker integration guide](/resources/
 </Accordion>
 
 <Accordion title="Can I save multiple database connections?">
-Yes, WhoDB automatically saves your connection history in your browser's local storage. When you return to the login page, you can select from your recent connections.
+Yes, WhoDB automatically saves your connection history so you can select from your recent connections when you return to the login page.
+
+In the web app, only non-secret display details (connection name, host, database) are kept in your browser's local storage — passwords are never included, since credentials for an active login live encrypted server-side, tied to your session cookie. The desktop app keeps full connection details, including credentials, in its own local app storage.
 
 Features:
-- Saves recent connection profiles locally in the browser you are using
-- Quick reconnect from connection history
+- Saves recent connection profiles for quick reconnect from connection history
 - Edit saved connections
 - Delete old connections
 
 <Note>
-Browser storage is local to that browser profile. Use a dedicated browser profile or clear saved connections on shared machines.
+Browser and app storage are local to that browser profile or machine. Use a dedicated browser profile, and log out to end the server-side session, on shared machines.
 </Note>
 </Accordion>
 
@@ -676,7 +677,7 @@ WhoDB implements multiple security measures:
 
 **Application Security:**
 - Open-source code for review
-- Manual web connection profiles can be persisted in browser storage
+- Web app login credentials are encrypted and stored server-side, never in browser storage; only non-secret connection metadata is kept in the browser
 - Environment-defined profiles keep connection details in server-side environment configuration
 
 **Deployment Security:**
@@ -694,12 +695,13 @@ WhoDB is open source, allowing security audits by the community
 WhoDB follows these security principles:
 
 **Connection Passwords:**
-- Manually entered web connection profiles can be persisted in browser local storage
+- Web app: passwords never reach browser storage. A successful login is encrypted (AES-256-GCM) and stored server-side in a local session database; the browser only holds an opaque, `HttpOnly` session cookie
+- Desktop app: cannot rely on cookies, so it keeps credentials in local app storage on that machine instead
 - Environment-defined profiles keep credentials in server-side environment configuration
-- Browser storage security depends on the browser profile and operating system account protecting that machine
+- Desktop app storage security depends on the operating system account protecting that machine
 
 **Re-authentication:**
-- Clear saved connections or use a separate browser profile on shared machines
+- Log out to delete the server-side session immediately (web app), or clear saved connections on the desktop app
 - Prefer read-only accounts and dedicated credentials for operational access
 
 <Warning>
