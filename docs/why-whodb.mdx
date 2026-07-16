@@ -18,7 +18,7 @@ Traditional database management tools like phpMyAdmin, pgAdmin, and others were 
 - **Inconsistent Experience**: Different tools for different databases, each with unique quirks
 
 <Warning>
-The average developer wastes **2-3 hours per week** wrestling with database tools instead of building features.
+Context switching between tools and wrestling with clunky interfaces costs real development time every week.
 </Warning>
 
 ## The WhoDB Difference
@@ -104,10 +104,10 @@ Export schema diagrams for team documentation and onboarding
 
 <CardGroup cols={3}>
 <Card title="PostgreSQL" icon="database">
-Full support for PostgreSQL 10+
+Full support for PostgreSQL
 </Card>
 <Card title="MySQL / MariaDB" icon="database">
-Complete MySQL 5.7+ compatibility
+Complete MySQL and MariaDB compatibility
 </Card>
 <Card title="SQLite" icon="database">
 Local and embedded databases
@@ -237,7 +237,7 @@ See how WhoDB compares to TablePlus
 <Step title="Save Time">
 **Spend less time fighting tools, more time building features.**
 
-WhoDB's speed and intuitive interface save developers an average of 2-3 hours per week compared to traditional database tools.
+WhoDB's speed and intuitive interface cut down the time spent wrestling with database tools compared to traditional alternatives.
 </Step>
 <Step title="Reduce Errors">
 **Visual schema exploration prevents relationship mistakes.**
@@ -323,7 +323,7 @@ The short answer: WhoDB is faster, simpler, and more modern while supporting mul
 Yes. For production access, use read-only database accounts where possible, enable SSL/TLS, and put the app behind your normal network and authentication controls.
 </Accordion>
 <Accordion title="Does WhoDB store my database credentials?">
-Recent connection profiles can be persisted locally in your browser for faster reconnection. On shared machines, use a dedicated browser profile or clear saved connections when you are done. Environment-defined profiles are another option when you want connection details supplied by the server environment instead of typed manually.
+Credentials are kept server-side: after login, WhoDB stores them encrypted (AES-256-GCM) in a local SQLite session database, and your browser only holds an opaque, `HttpOnly` session cookie. Secrets are stripped from anything the frontend persists — only non-secret display details (connection name, host, database) remain in the browser so the profile switcher survives a reload. Environment-defined profiles are another option when you want connection details supplied by the server environment instead of typed manually.
 </Accordion>
 <Accordion title="Can I self-host WhoDB?">
 Yes! WhoDB is designed for self-hosting. You can run it on your own servers, in Docker containers, on Kubernetes, or even on your local machine. You have complete control over where your data goes.
@@ -332,11 +332,11 @@ Check our [Installation Guide](/installation) for deployment options.
 </Accordion>
 <Accordion title="What databases does WhoDB support?">
 WhoDB Community Edition supports:
-- PostgreSQL 10+
-- MySQL 5.7+ / MariaDB
+- PostgreSQL
+- MySQL / MariaDB
 - SQLite 3
-- MongoDB 4.0+
-- Redis 5.0+
+- MongoDB
+- Redis
 
 The current CE catalog also covers engines and compatible variants such as CockroachDB, TiDB, DuckDB, OpenSearch, Memcached, Valkey, Dragonfly, YugabyteDB, QuestDB, and FerretDB. See the [full list](/resources/supported-databases).
 </Accordion>

@@ -30,13 +30,13 @@ The assistant writes optimized SQL based on your database schema
 Works with PostgreSQL, MySQL, MongoDB, SQLite, Redis, and more
 </Card>
 <Card title="Multiple AI Providers" icon="brain">
-Choose from OpenAI, Anthropic, Ollama, or custom providers
+Choose from OpenAI, Anthropic, Gemini, Ollama, LM Studio, or custom providers
 </Card>
 <Card title="Contextual Conversations" icon="comments">
 Maintains conversation history for follow-up questions
 </Card>
 <Card title="Safe Data Modification" icon="shield-check">
-Requires explicit confirmation for updates, deletes, and inserts
+Requires explicit confirmation for data modifications and schema changes (INSERT, UPDATE, DELETE, CREATE, ALTER, DROP)
 </Card>
 </CardGroup>
 
@@ -59,7 +59,7 @@ The assistant has full awareness of your tables, columns, relationships, and dat
 </Info>
 </Step>
 <Step title="Query Executes">
-WhoDB runs the generated SQL against your database with proper security and timeout controls.
+WhoDB runs the generated SQL against your database. The assistant's text responses stream token-by-token as they are generated.
 </Step>
 <Step title="Results Display">
 Results appear in an interactive table with sorting, filtering, and export capabilities.
@@ -138,25 +138,25 @@ Result: Monthly revenue analysis table
 
 **You**: "Delete user with id 5"
 
-**Assistant**: "Are you sure you want to delete this user? This action cannot be undone. Please confirm to proceed."
+**Assistant**: [Generates the DELETE statement and shows an inline confirmation alert in the chat. You can view the SQL behind a toggle, then click Confirm or Cancel.]
 
-**You**: "Yes, delete it"
+**You**: [Click Confirm]
 
-**Assistant**: [Executes DELETE and confirms]
+Result: "Action Executed - DELETE"
 
-Result: "Action Executed - 1 row affected"
+The same inline confirmation applies to all data modifications and schema changes (INSERT, UPDATE, DELETE, CREATE, ALTER, DROP).
 
 ## Supported AI Providers
 
 WhoDB supports multiple AI providers, giving you flexibility based on your needs:
 
+Model lists are fetched live from each provider when you add it, so the available models always reflect your provider's current lineup.
+
 <AccordionGroup>
 <Accordion title="OpenAI (GPT Models)">
 **Best for**: Most users, general-purpose queries
 
-**Models Available**:
-- GPT-4: Most capable, best for complex queries
-- GPT-3.5 Turbo: Fast, cost-effective for simple queries
+**Models Available**: Fetched from your OpenAI account when you add the provider
 
 **Requirements**: OpenAI API key
 
@@ -172,9 +172,7 @@ WhoDB supports multiple AI providers, giving you flexibility based on your needs
 <Accordion title="Anthropic (Claude Models)">
 **Best for**: Complex reasoning, large context windows
 
-**Models Available**:
-- Claude 3.5 Sonnet: Balanced performance and speed
-- Claude 3 Opus: Maximum capability
+**Models Available**: Fetched from your Anthropic account when you add the provider
 
 **Requirements**: Anthropic API key
 
@@ -187,14 +185,25 @@ WhoDB supports multiple AI providers, giving you flexibility based on your needs
 - Requires paid API key
 - Data sent to external servers
 </Accordion>
+<Accordion title="Google Gemini">
+**Best for**: Google Cloud users, general-purpose queries
+
+**Models Available**: Fetched from the Gemini API when you add the provider
+
+**Requirements**: Gemini API key
+
+**Pros**:
+- Strong SQL generation and reasoning
+- Competitive pricing
+
+**Cons**:
+- Requires API key
+- Data sent to external servers
+</Accordion>
 <Accordion title="Ollama (Local Models)">
 **Best for**: Privacy-focused deployments, no API costs
 
-**Models Available**:
-- Llama 3.1: Open-source, highly capable
-- Mistral: Fast, efficient
-- CodeLlama: Optimized for code generation
-- Many others available
+**Models Available**: Whatever models you have downloaded locally with Ollama
 
 **Requirements**: Ollama installed locally
 
@@ -207,6 +216,22 @@ WhoDB supports multiple AI providers, giving you flexibility based on your needs
 **Cons**:
 - Requires local installation
 - Slower than cloud providers
+- Requires sufficient local hardware
+</Accordion>
+<Accordion title="LM Studio (Local Models)">
+**Best for**: Running local models with a desktop GUI
+
+**Models Available**: Whatever models you have loaded in LM Studio
+
+**Requirements**: LM Studio installed locally with its local server running
+
+**Pros**:
+- Complete data privacy (runs locally)
+- No API costs
+- Easy model management via the LM Studio app
+
+**Cons**:
+- Requires local installation
 - Requires sufficient local hardware
 </Accordion>
 <Accordion title="Custom Providers">
@@ -231,7 +256,7 @@ Contact your administrator for configuration details.
 **Not Sent**: Actual database data or query results
 **Consideration**: Review your organization's policies on external AI services
 </Card>
-<Card title="Local Models (Ollama)" icon="server">
+<Card title="Local Models (Ollama, LM Studio)" icon="server">
 **What's Sent**: Nothing—all processing is local
 **Privacy**: Complete data isolation
 **Consideration**: Ideal for sensitive or regulated environments
@@ -244,10 +269,8 @@ For highly sensitive data, use local models (Ollama) or consult your security te
 
 ### Security Features
 
-- **Confirmation Required**: All data modifications require explicit confirmation
+- **Confirmation Required**: All data modifications and schema changes (INSERT, UPDATE, DELETE, CREATE, ALTER, DROP) require explicit confirmation
 - **Read-Only Mode**: Can be configured with read-only database users
-- **Query Timeouts**: Automatic timeout prevents runaway queries
-- **Audit Trail**: All queries are logged for compliance
 - **Permission Aware**: Respects your database user permissions
 
 ## Getting Started
@@ -256,11 +279,11 @@ Ready to use the AI Chat Assistant? Follow these steps:
 
 <Steps>
 <Step title="Choose Your AI Provider">
-Decide between external providers (OpenAI, Anthropic) or local models (Ollama).
+Decide between external providers (OpenAI, Anthropic, Gemini) or local models (Ollama, LM Studio).
 
 <Card title="Quick Decision Guide" icon="lightbulb">
 - **Use External Providers** if: You want the best accuracy and speed
-- **Use Ollama** if: Privacy is critical or you want zero API costs
+- **Use Local Models** if: Privacy is critical or you want zero API costs
 </Card>
 </Step>
 <Step title="Set Up Your Provider">
@@ -292,6 +315,7 @@ Navigate to the Chat page and begin exploring your database.
 - **SQL Code View**: Toggle between results and generated SQL
 - **Scratchpad Integration**: Move queries to Scratchpad for refinement
 - **Query History**: Navigate through previous questions with keyboard shortcuts
+- **Chat Sessions**: Keep multiple conversations in a chat history sidebar and switch between them
 
 ### Data Operations
 
@@ -300,7 +324,7 @@ Navigate to the Chat page and begin exploring your database.
 - **Filtering**: WHERE conditions from natural language
 - **Sorting**: ORDER BY inferred from context
 - **Joins**: Multi-table queries generated correctly
-- **INSERT/UPDATE/DELETE**: Safe data modifications with confirmation
+- **Data and Schema Modifications**: INSERT, UPDATE, DELETE, CREATE, ALTER, and DROP with confirmation
 
 ## Use Case Examples
 
@@ -387,7 +411,7 @@ Key practices for effective AI assistant use:
 
 <CardGroup cols={2}>
 <Card title="Set Up Providers" icon="gear" href="/ai/setup-providers">
-Configure OpenAI, Anthropic, or Ollama for your needs
+Configure OpenAI, Anthropic, Gemini, Ollama, or LM Studio for your needs
 </Card>
 <Card title="Querying Data" icon="magnifying-glass" href="/ai/querying-data">
 Learn how to ask questions and retrieve data

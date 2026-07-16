@@ -119,7 +119,7 @@ A search capability that indexes and searches all text columns in a table. Avail
 WhoDB's visual representation of database schema showing tables as nodes and foreign key relationships as connecting lines. Interactive visualization allows panning, zooming, and node exploration.
 
 **GraphQL**
-A query language and runtime for APIs (Application Programming Interface) used throughout WhoDB for all backend communication, providing strongly-typed and flexible data querying.
+A query language and runtime for APIs (Application Programming Interface) used in WhoDB for most backend communication, providing strongly-typed and flexible data querying. AI chat streaming and file export/import use dedicated HTTP endpoints.
 
 **GORM**
 Go Object-Relational Mapping library used in WhoDB's backend for database interactions, providing type safety and database abstraction.
@@ -130,7 +130,7 @@ A SQL clause that groups rows with identical values in specified columns, typica
 ## H
 
 **Hash Function**
-A cryptographic function used for password hashing and data integrity verification, ensuring passwords are never stored in plain text in WhoDB.
+A cryptographic function that maps data to a fixed-size digest, commonly used for password hashing and data integrity verification. WhoDB protects connection passwords with AES-256-GCM encryption server-side, and with the OS keyring in the desktop app.
 
 **HAVING**
 A SQL clause that filters grouped data (rows returned by GROUP BY), similar to WHERE but applied after grouping and aggregation.
@@ -287,7 +287,7 @@ A secure protocol for remote command execution. In this codebase, SSH tunneling 
 Cryptographic protocols for secure communication over networks. WhoDB supports SSL/TLS encryption for database connections over the internet.
 
 **Storage Unit**
-WhoDB's terminology for a connected database instance, representing a specific database server or service you can explore and interact with.
+WhoDB's terminology for a data object within a connected source — a table, view, collection, key, or similar object exposed by a connector — that you can explore and interact with.
 
 ## T
 

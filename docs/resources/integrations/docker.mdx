@@ -139,7 +139,7 @@ services:
     ports:
       - "8080:8080"
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/health | grep -qx ok"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health | grep -qx ok"]
       interval: 30s
       timeout: 5s
       retries: 3

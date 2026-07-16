@@ -51,7 +51,7 @@ WhoDB exports CSV, Excel `.xlsx`, and JSON Lines for records from sources like M
 For full MySQL or MariaDB backups, use native tools:
 
 ```bash
-mysqldump --host "$MYSQL_HOST" --user "$MYSQL_USER" --password "$MYSQL_DATABASE" > backup.sql
+mysqldump --host "$MYSQL_HOST" --user "$MYSQL_USER" --password="$MYSQL_PASSWORD" "$MYSQL_DATABASE" > backup.sql
 ```
 
 ## Useful Shortcuts

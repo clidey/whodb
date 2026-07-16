@@ -123,7 +123,7 @@ metadata:
   name: whodb
   namespace: default
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: whodb
@@ -169,6 +169,10 @@ Deploy with:
 ```bash
 kubectl apply -f whodb-deployment.yaml
 ```
+
+<Warning>
+WhoDB stores login sessions in a per-instance encrypted store, so a single replica is the simplest reliable setup. If you run multiple replicas, you must configure session affinity (sticky sessions) on your load balancer and set a shared `WHODB_ENCRYPTION_KEY` across replicas — otherwise logins will intermittently fail.
+</Warning>
 
 ### Option 3: Traditional Server Deployment
 
@@ -260,8 +264,8 @@ sudo ufw allow from 203.0.113.0/24 to any port 443
 <Step title="Require VPN for Access">
 If possible, require team members to connect via VPN before accessing WhoDB. This adds an extra security layer.
 </Step>
-<Step title="Enable Audit Logging">
-Configure WhoDB to log all connections and queries for security auditing.
+<Step title="Enable Logging">
+Set `WHODB_ACCESS_LOG_FILE` to capture an HTTP access log from WhoDB, and enable database-native audit or statement logging for query-level auditing.
 </Step>
 <Step title="Rotate Credentials Regularly">
 Change database credentials monthly or after team member departures.
@@ -388,7 +392,7 @@ Write queries for key metrics:
 - User signups yesterday
 - Feature usage stats
 - Error rate trends
-Save in Scratchpad for team reference
+Save in Scratchpad for your own reuse — Scratchpad pages are stored per-browser, so share the SQL itself (in docs or version control) for team reference
 </Step>
 <Step title="Export for Sharing">
 Export results as CSV for team meeting or Slack
@@ -672,7 +676,6 @@ Recommended controls:
 - Store shared credentials in your password manager.
 - Restrict WhoDB access to trusted networks.
 - Review saved browser profiles on shared machines.
-- API key authentication
 
 ## Security Checklist for Production Teams
 
@@ -738,7 +741,7 @@ Quarterly review of who has access to what
 | SSL Certificate | Free (Let's Encrypt) | Annual renewal |
 | Backup Storage | $5-50/month | Varies by data size |
 | Database Licenses | $0-$500+/month | Many databases free (PostgreSQL, MySQL) |
-| **Total** | **$15-650/month** | **Way cheaper than traditional tools** |
+| **Total** | **$15-650/month** | |
 
 ## Getting Help for Team Setup
 

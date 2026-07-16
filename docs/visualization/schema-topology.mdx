@@ -39,8 +39,8 @@ Each table node in the graph displays:
 <Card title="Table Name">
 The name of the database table displayed prominently at the node's center
 </Card>
-<Card title="Visual Icon">
-An icon indicating the table type (regular table, view, materialized view)
+<Card title="Object Type">
+The object type (table, view, and so on) shown as a metadata row on the card
 </Card>
 <Card title="Key Columns">
 Primary key columns highlighted with a special marker
@@ -50,31 +50,18 @@ Columns that reference other tables shown with connection indicators
 </Card>
 </CardGroup>
 
-### Node States
+### Node Interaction
 
-**Idle State**
-- Table name visible
-- Key columns marked
-- Ready to interact
-
-**Hover State**
-- Highlights connected tables
-- Shows quick action buttons
-- Reveals data access option
-
-**Selected State**
-- Full details displayed
-- All columns and constraints shown
-- Relationship details expanded
+- Each node card shows the table name, metadata attributes, and a **Data** button that is always visible.
+- Clicking a node lazy-loads its column list into the card if it has not been loaded yet.
 
 ## Understanding Node Positioning
 
-The graph uses a force-directed layout algorithm that:
+The graph uses dagre, a hierarchical (layered) layout algorithm that:
 
-1. **Minimizes overlaps**: Positions nodes to avoid covering each other
-2. **Reduces line crossings**: Arranges tables to minimize complex crossing patterns
-3. **Groups related tables**: Tables with many mutual relationships cluster together
-4. **Maintains hierarchy**: Parent tables often appear above or beside their children
+1. **Arranges nodes in layers**: Tables are placed in ranks based on the direction of their relationships
+2. **Reduces line crossings**: Node ordering within layers minimizes crossing edges
+3. **Keeps components separate**: Disconnected groups of tables are laid out independently and packed into a grid
 
 ### Layout Evolution
 
@@ -301,6 +288,7 @@ Include notes about business logic and dependencies
 
 ### Sharing Topology Information
 
+- **PNG Download**: Use the built-in download button in the graph's lower-right controls to save the diagram as `clidey-whodb-diagram.png`
 - **PDF Export**: Use browser print-to-PDF for sharing
 - **Screenshots**: Document different zoom levels
 - **Description**: Write narrative descriptions of your schema organization

@@ -299,9 +299,9 @@ Be cautious when modifying authentication configuration files. Always backup bef
    - Enable SSL in Advanced Options
    - Set SSL Mode to at least "require"
 
-2. **Certificate files are incorrect**
-   - Verify certificate paths are correct and files exist
-   - Ensure WhoDB has read permissions for certificate files
+2. **Certificate content is incorrect**
+   - Re-paste the certificate content or re-upload the certificate file in the SSL options
+   - Make sure you pasted the full PEM block, including the BEGIN/END lines
    - Check certificates aren't expired: `openssl x509 -in cert.pem -noout -dates`
 
 3. **SSL mode is too strict**
@@ -342,9 +342,8 @@ Cloud database providers often provide downloadable certificate bundles. Check y
 
 Once connected successfully, you should see the main WhoDB interface with:
 
-- **Sidebar**: Showing your database structure with schemas and tables
+- **Left sidebar**: Navigation for Chat, Storage Units, Graph, Scratchpad, and Settings, plus your current database/schema selection
 - **Main area**: Displaying a list of available tables or storage units
-- **Top navigation**: With tabs for Data, Explore, Graph, and Scratchpad views
 
 Take a moment to explore:
 - Expand schemas in the sidebar

@@ -303,7 +303,7 @@ aws sns subscribe --topic-arn $SNS_ARN --protocol email --notification-endpoint 
 
 ## Security considerations
 
-WhoDB uses base64-encoded database credentials as Bearer tokens for authentication. Production security comes from network controls:
+Browser clients authenticate via an `HttpOnly` session cookie, with database credentials encrypted server-side; Authorization headers are only used by the desktop app and CLI. Production security still comes from network controls:
 
 - **HTTPS** — encrypts all traffic between users and the ALB
 - **AllowedCIDR** — restricts who can reach the ALB by IP range

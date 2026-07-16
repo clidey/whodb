@@ -102,7 +102,7 @@ docker-compose up -d
 Download the latest binary from GitHub Releases and replace your existing binary.
 
 **Desktop Application:**
-The desktop app can surface that a newer release exists, but updates are installed manually from GitHub Releases rather than through in-app auto-update.
+Update the desktop app by downloading the latest version from [GitHub Releases](https://github.com/clidey/whodb/releases) and installing it manually.
 
 <Warning>
 Always backup your configuration and connection profiles before updating
@@ -268,7 +268,7 @@ Docker networking can be complex. See our [Docker integration guide](/resources/
 <Accordion title="Can I save multiple database connections?">
 Yes, WhoDB automatically saves your connection history so you can select from your recent connections when you return to the login page.
 
-In the web app, only non-secret display details (connection name, host, database) are kept in your browser's local storage — passwords are never included, since credentials for an active login live encrypted server-side, tied to your session cookie. The desktop app keeps full connection details, including credentials, in its own local app storage.
+In the web app, only non-secret display details (connection name, host, database) are kept in your browser's local storage — passwords are never included, since credentials for an active login live encrypted server-side, tied to your session cookie. The desktop app stores saved connection credentials in the operating system keyring; browser-persisted state has secrets stripped on all platforms.
 
 Features:
 - Saves recent connection profiles for quick reconnect from connection history
@@ -545,11 +545,6 @@ WhoDB provides multiple search capabilities:
 - Multiple conditions with AND/OR
 - Operators: `=`, `!=`, `>`, `<`, `>=`, `<=`, `LIKE`, `IN`
 
-**Full-Text Search:**
-- Available for supported databases
-- Search across all text columns
-- Relevance ranking
-
 **Advanced Query:**
 - Use Scratchpad for complex searches
 - JOIN multiple tables
@@ -648,18 +643,14 @@ If you're working with sensitive data, use Ollama for complete privacy
 </Accordion>
 
 <Accordion title="Can the AI modify my data?">
-By default, the AI assistant can:
-- Generate SELECT queries (read-only)
-- Suggest INSERT/UPDATE/DELETE queries
-- Explain query logic
+Yes, with a confirmation step for anything that changes data:
 
-The AI will **not** automatically execute modification queries. You must:
-1. Review the generated query
-2. Copy it to Scratchpad
-3. Manually execute it
+- AI-generated SELECT queries run automatically and show their results in the chat
+- Modification and DDL statements (INSERT, UPDATE, DELETE, CREATE, ALTER, DROP) are **not** executed immediately — the chat pauses with an inline confirmation showing the generated SQL, with Confirm and Cancel buttons
+- Clicking Confirm executes the statement; clicking Cancel discards it
 
 <Note>
-This safety mechanism prevents accidental data loss or corruption
+This confirmation step prevents accidental data loss or corruption. Review the SQL before confirming
 </Note>
 </Accordion>
 </AccordionGroup>
@@ -696,9 +687,9 @@ WhoDB follows these security principles:
 
 **Connection Passwords:**
 - Web app: passwords never reach browser storage. A successful login is encrypted (AES-256-GCM) and stored server-side in a local session database; the browser only holds an opaque, `HttpOnly` session cookie
-- Desktop app: cannot rely on cookies, so it keeps credentials in local app storage on that machine instead
+- Desktop app: stores saved connection credentials in the operating system keyring, falling back to local config only if no keyring is available; browser-persisted state has secrets stripped on all platforms
 - Environment-defined profiles keep credentials in server-side environment configuration
-- Desktop app storage security depends on the operating system account protecting that machine
+- Desktop credential security ultimately depends on the operating system account protecting that machine
 
 **Re-authentication:**
 - Log out to delete the server-side session immediately (web app), or clear saved connections on the desktop app
@@ -767,6 +758,10 @@ iptables -A INPUT -p tcp --dport 8080 -j DROP
 # Run as non-root user
 docker run --user 1000:1000 clidey/whodb
 ```
+
+<Note>
+The image writes session data to the `/data` volume. When running as a non-root user, make sure the volume is owned by (or writable for) that UID, or sessions will fail.
+</Note>
 
 <Tip>
 Combine multiple security layers for defense in depth
@@ -867,8 +862,6 @@ WhoDB implements several performance optimizations:
 
 **Query Optimization:**
 - Automatic LIMIT clause addition
-- Index usage hints
-- Query result caching
 
 **Frontend Performance:**
 - Table virtualization
@@ -935,27 +928,12 @@ Be careful not to exceed your database server's connection limits
 </Accordion>
 
 <Accordion title="Does WhoDB cache query results?">
-WhoDB implements selective caching:
+The frontend caches GraphQL responses (such as table lists and column metadata) in memory for the duration of your session, so repeat navigation doesn't re-query the database. Refreshing the page or using the refresh action re-fetches from the database.
 
-**Cached:**
-- Schema metadata
-- Table lists
-- Column definitions
-- Foreign key relationships
-
-**Not Cached:**
-- Query results
-- Table data
-- Row counts
-- User modifications
-
-**Cache Duration:**
-- Schema cache: 5 minutes
-- Manual refresh available
-- Automatically refreshed on schema changes
+Cloud-provider connection discovery results are cached server-side and refresh after 5 minutes.
 
 <Info>
-Caching reduces database load while ensuring data freshness
+If the schema changed and the UI looks stale, refresh to re-fetch
 </Info>
 </Accordion>
 </AccordionGroup>

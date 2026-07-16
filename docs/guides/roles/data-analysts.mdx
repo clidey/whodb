@@ -347,11 +347,11 @@ For complex analysis, break your work into multiple cells:
 
 <Steps>
 <Step title="Create Intermediate Queries">
-Build analysis step-by-step:
+Build analysis step-by-step. Each cell runs as an independent, self-contained statement, so include everything a cell needs — including its CTEs — within that cell:
 
 ![Multiple Cells](/images/48-scratchpad-multiple-cells-results.png)
 
-**Cell 1**: Clean and filter raw data
+**Cell 1**: Inspect the cleaned, filtered data
 ```sql
 -- Get valid orders from the past year
 SELECT *
@@ -361,24 +361,43 @@ WHERE status = 'completed'
   AND amount > 0;
 ```
 
-**Cell 2**: Aggregate into meaningful metrics
+**Cell 2**: Aggregate into meaningful metrics (repeat the filter in a CTE)
 ```sql
 -- Calculate metrics by category
+WITH valid_orders AS (
+  SELECT *
+  FROM orders
+  WHERE status = 'completed'
+    AND created_at >= '2023-01-01'
+    AND amount > 0
+)
 SELECT category, COUNT(*) as count, SUM(amount) as revenue
-FROM valid_orders_cte
+FROM valid_orders
 GROUP BY category;
 ```
 
-**Cell 3**: Format for presentation
+**Cell 3**: Format for presentation (chain the CTEs in one statement)
 ```sql
 -- Add rankings and percentages
+WITH valid_orders AS (
+  SELECT *
+  FROM orders
+  WHERE status = 'completed'
+    AND created_at >= '2023-01-01'
+    AND amount > 0
+),
+category_metrics AS (
+  SELECT category, COUNT(*) as count, SUM(amount) as revenue
+  FROM valid_orders
+  GROUP BY category
+)
 SELECT *,
   ROW_NUMBER() OVER (ORDER BY revenue DESC) as rank,
   ROUND(revenue / SUM(revenue) OVER () * 100, 1) as revenue_percent
 FROM category_metrics;
 ```
 
-This step-by-step approach is easier to debug and modify.
+This step-by-step approach is easier to debug and modify: earlier cells validate each stage, and the final cell contains the complete, self-contained query.
 </Step>
 
 <Step title="Use Query History">
@@ -512,14 +531,10 @@ JSON Lines is available for records from sources like MongoDB when supported.
 <Step title="Configure Export Options">
 Customize the export:
 
-**For CSV:**
-- **Delimiter**: Comma (standard), semicolon (European), pipe (data with commas)
-- **Encoding**: UTF-8 (universal), ISO-8859-1 (legacy)
+- **Format**: CSV or Excel (JSON Lines is offered for NoSQL-style sources)
+- **CSV delimiter**: Comma (standard), semicolon (European), or pipe (data with commas)
 
-**Column Selection:**
-- Include/exclude specific columns
-- Reorder columns to match report structure
-- Exclude sensitive data like passwords or API keys
+To export a subset of columns, select only those columns in your query before exporting.
 </Step>
 
 <Step title="Download and Verify">

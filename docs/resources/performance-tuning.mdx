@@ -410,8 +410,6 @@ max_connections = 200
 
 ### Memory And Result Handling In CE
 
-The current CE build does not expose `DB_MAX_MEMORY`, `SCHEMA_CACHE_TTL`, or `QUERY_CACHE_ENABLED` as user-facing web env vars.
-
 To keep memory usage predictable:
 
 - Lower the default page size in [Settings](/features/settings)
@@ -664,53 +662,7 @@ SELECT * FROM orders WHERE created_at BETWEEN '2024-02-01' AND '2024-02-28';
 
 ### What WhoDB Caches
 
-WhoDB caches schema information to improve performance:
-
-```yaml
-environment:
-  # Schema cache duration (seconds)
-  SCHEMA_CACHE_TTL: 300  # 5 minutes default
-```
-
-Cached items:
-- Table list
-- Column definitions
-- Index information
-- Foreign key relationships
-
-### Manual Cache Management
-
-```sql
--- Force schema refresh in database
--- This invalidates WhoDB cache
-
--- PostgreSQL: Table structure changed
-ALTER TABLE users ADD COLUMN new_column VARCHAR;
--- Cache invalidated, WhoDB will see new column
-
--- MySQL: Same
-ALTER TABLE users ADD COLUMN new_column VARCHAR(255);
--- Cache invalidated
-```
-
-### Client-Side Caching
-
-Browser caches:
-- Already-viewed data
-- Query history
-- Connection profiles
-
-Clear browser cache:
-- Press Ctrl+Shift+Delete (Chrome/Firefox/Edge)
-- Cmd+Shift+Delete (macOS)
-- Or refresh page with F5
-
-### Best Practices
-
-- Don't cache live transaction data
-- Cache is mostly for schema/metadata
-- Results are not cached (always fresh)
-- Refreshing table structure clears cache
+The frontend caches GraphQL responses (schema metadata, table lists, column definitions) in memory for the duration of your browser session, so repeat navigation does not re-query the database. Refreshing the page or using the refresh action re-fetches everything from the database — use that if the UI looks stale after a schema change.
 
 </Accordion>
 </AccordionGroup>

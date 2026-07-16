@@ -90,7 +90,7 @@ For large tables, WhoDB keeps the grid paginated and focused on the current resu
 | Feature | WhoDB | phpMyAdmin |
 |---------|:----:|:---------:|
 | **Web-Based Access** | Yes | Yes |
-| **Multiple Database Support** | Yes (6+) | MySQL/MariaDB only |
+| **Multiple Database Support** | Yes ([20+ types](/resources/supported-databases)) | MySQL/MariaDB only |
 | **Table Management** | Yes | Yes |
 | **Column Management** | Yes | Yes |
 | **Indexes** | Metadata where exposed by the source | Yes |
@@ -128,7 +128,7 @@ For large tables, WhoDB keeps the grid paginated and focused on the current resu
 | **Query Bookmarks** | CLI bookmarks | Yes |
 | **Multi-query Execution** | Multi-cell support | One at a time |
 | **Result Export** | Direct export | Download required |
-| **Execution Time** | Shown | Shown |
+| **Execution Time** | Not shown (run `EXPLAIN`/`EXPLAIN ANALYZE` in Scratchpad) | Shown |
 | **Query Formatting** | CLI TUI formatting | Manual |
 </Accordion>
 
@@ -627,7 +627,7 @@ Migration effort depends on how many saved queries, export routines, and MySQL a
 
 **WhoDB Solution:**
 - Single binary deployment
-- 50MB resource footprint
+- Lightweight resource footprint
 - Simple Kubernetes manifests
 - Cloud-native architecture
 

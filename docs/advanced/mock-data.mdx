@@ -52,10 +52,16 @@ The row-count field accepts a positive number up to the current backend limit of
 
 ## Disable Mock Data
 
-Administrators can disable mock data globally or for named objects with:
+Administrators can disable mock data with the `WHODB_DISABLE_MOCK_DATA_GENERATION` environment variable. It has three modes:
+
+- Unset or empty: mock data is allowed for all objects.
+- `*`: mock data is disabled everywhere.
+- A comma-separated list of object names: mock data is disabled only for those objects.
+
+To disable globally:
 
 ```bash
-WHODB_DISABLE_MOCK_DATA_GENERATION=true
+WHODB_DISABLE_MOCK_DATA_GENERATION="*"
 ```
 
 or a comma-separated object list:

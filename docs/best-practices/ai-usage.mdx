@@ -353,7 +353,10 @@ FLUSH PRIVILEGES;
 - Prevents accidental data modification
 - Safe for exploration and learning
 - Appropriate for analyst and reporting use cases
-- Eliminates need for confirmation dialogs
+
+<Note>
+Confirmation prompts are triggered by the SQL operation type, not by database permissions. With a read-only user you still see the confirmation for a modification request; the database rejects the statement if you confirm it.
+</Note>
 
 <Tip>
 Use read-only credentials for 80% of your database work. Only use write credentials when actually modifying data.
@@ -418,6 +421,8 @@ Choosing the right AI provider for each situation optimizes cost, performance, p
 
 ### When to Use Each Provider
 
+Model lists are fetched live from each provider when you add it, so pick from your provider's current lineup. For current model options and rates, check your provider's pricing page.
+
 <AccordionGroup>
 <Accordion title="OpenAI (GPT Models)">
 **Best For:**
@@ -433,14 +438,10 @@ Choosing the right AI provider for each situation optimizes cost, performance, p
 - Standard CRUD operations
 
 **Cost Optimization:**
-- Use GPT-3.5 Turbo for simple queries (lower cost)
-- Reserve GPT-4 for complex multi-table operations
+- Use a smaller, cheaper model for simple queries
+- Reserve the most capable model for complex multi-table operations
 - Start new conversations when switching topics (reduces context cost)
-
-**Example Cost Analysis:**
-- Simple query (10 queries/day): ~$3-5/month
-- Moderate usage (50 queries/day): ~$15-25/month
-- Heavy usage (200 queries/day): ~$60-100/month
+- See [OpenAI's pricing page](https://openai.com/api/pricing/) for current rates
 </Accordion>
 
 <Accordion title="Anthropic (Claude Models)">
@@ -457,9 +458,7 @@ Choosing the right AI provider for each situation optimizes cost, performance, p
 - Databases with intricate relationships
 
 **Model Selection:**
-- **Claude 3.5 Sonnet**: Best balance for most use cases
-- **Claude 3 Opus**: Maximum capability for most complex scenarios
-- **Claude 3 Haiku**: Cost-effective for simpler queries
+Choose from the models fetched from the Anthropic API — smaller models for speed and cost, larger models for the most complex scenarios. See [Anthropic's pricing page](https://www.anthropic.com/pricing) for current models and rates.
 
 **When Claude Excels:**
 - Queries involving 5+ table joins
@@ -468,7 +467,16 @@ Choosing the right AI provider for each situation optimizes cost, performance, p
 - Schemas with hundreds of tables
 </Accordion>
 
-<Accordion title="Ollama (Local Models)">
+<Accordion title="Gemini">
+**Best For:**
+- Google Cloud users
+- General-purpose queries with competitive pricing
+
+**Model Selection:**
+Choose from the models fetched from the Gemini API. See [Google's Gemini pricing page](https://ai.google.dev/pricing) for current models and rates.
+</Accordion>
+
+<Accordion title="Ollama and LM Studio (Local Models)">
 **Best For:**
 - Privacy-sensitive environments
 - Regulated industries (healthcare, finance)
@@ -482,15 +490,12 @@ Choosing the right AI provider for each situation optimizes cost, performance, p
 - Cost-sensitive operations
 - Complete data sovereignty requirements
 
-**Model Recommendations:**
-- **Llama 3.1 (8B)**: Best general-purpose local model
-- **CodeLlama**: Optimized for SQL generation
-- **Mistral (7B)**: Fast responses, good for simple queries
-- **Llama 3.1 (70B)**: Maximum local accuracy (requires 64GB RAM)
+**Model Selection:**
+Use whatever models you have downloaded locally. Larger models are more accurate but need more RAM; smaller models respond faster on modest hardware.
 
 **Trade-offs:**
-- Slower than cloud providers (2-10 seconds vs. 1-2 seconds)
-- Lower accuracy than GPT-4 or Claude Opus
+- Typically slower than cloud providers
+- Smaller local models may be less accurate than the top cloud models
 - Requires local hardware investment
 - Complete privacy and zero ongoing costs
 </Accordion>
@@ -500,7 +505,7 @@ Choosing the right AI provider for each situation optimizes cost, performance, p
 
 <CardGroup cols={2}>
 <Card title="Use Cheaper Models for Simple Tasks" icon="dollar-sign">
-GPT-3.5 Turbo costs 10x less than GPT-4 while handling simple queries equally well
+Your provider's smaller models handle simple queries well at a fraction of the cost
 </Card>
 <Card title="Start New Conversations" icon="rotate">
 Long conversations consume more tokens. Start fresh when switching topics
@@ -509,20 +514,11 @@ Long conversations consume more tokens. Start fresh when switching topics
 Shorter questions and responses reduce token usage and costs
 </Card>
 <Card title="Local for High Volume" icon="server">
-Ollama eliminates per-query costs for high-volume usage
+Local models (Ollama, LM Studio) eliminate per-query costs for high-volume usage
 </Card>
 </CardGroup>
 
-**Cost Comparison Example:**
-
-Query load: 50 queries per day
-
-| Provider | Model | Monthly Cost | Response Time | Privacy |
-|----------|-------|-------------|---------------|---------|
-| OpenAI | GPT-3.5 Turbo | $10-15 | 1-2 sec | External |
-| OpenAI | GPT-4 | $60-100 | 3-5 sec | External |
-| Anthropic | Claude 3.5 Sonnet | $30-45 | 2-4 sec | External |
-| Ollama | Llama 3.1 (8B) | $0 | 5-10 sec | Complete |
+Per-token pricing changes frequently — compare current rates on your providers' pricing pages rather than relying on fixed estimates.
 
 ### Privacy Considerations
 
@@ -705,11 +701,7 @@ When the AI references incorrect previous context or misunderstands follow-up qu
 **Action:** Start new conversation with clear, explicit questions
 </Step>
 <Step title="Reaching Provider Limits">
-Some models have context limits. Approaching limits degrades quality.
-
-**GPT-3.5 Turbo:** 30+ messages may approach limits
-**GPT-4:** 100+ messages
-**Claude Models:** 200+ messages
+Every model has a context limit, and quality degrades as you approach it. Limits vary widely by model — check your provider's documentation.
 
 **Action:** Monitor conversation length and start fresh proactively
 </Step>
@@ -750,7 +742,7 @@ Queries worth saving:
 - Templates for common operations
 </Step>
 <Step title="Move to Scratchpad">
-Hover over query results and click the Scratchpad icon (command line symbol).
+Hover over query results, click the ellipsis (...) button, and select **Move to Scratchpad**.
 
 Choose or create an appropriately named page.
 </Step>
@@ -1000,7 +992,7 @@ When queries don't work as expected, follow a systematic troubleshooting process
 - Does the generated SQL match your intent?
 </Step>
 <Step title="Review Generated SQL">
-Click the code view toggle to see the generated SQL.
+Open the result's ellipsis (...) menu and select **Show Code** to see the generated SQL.
 
 **Check for:**
 - Correct table and column names
@@ -1177,8 +1169,8 @@ Maintain audit trails for compliance and troubleshooting.
 - Success or failure status
 - Error messages (if any)
 
-**WhoDB Automatic Logging:**
-WhoDB logs all executed queries with timestamps and user attribution.
+**Audit Logging in WhoDB Community Edition:**
+Use database-level audit logging to record executed queries. Per-query audit trails with user attribution are an Enterprise capability. You can set `WHODB_LOG_FILE` to capture WhoDB's application logs, but this is not a query audit trail.
 
 **Additional Audit Measures:**
 - Enable database-level query logging

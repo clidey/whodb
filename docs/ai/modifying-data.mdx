@@ -17,13 +17,13 @@ This workflow requires an active AI provider and selected model. If the Chat inp
 
 ## Understanding AI-Powered Data Modification
 
-The AI Chat Assistant translates your natural language instructions into SQL data modification statements (INSERT, UPDATE, DELETE). Unlike read-only queries, modification operations follow a confirmation workflow to ensure safety.
+The AI Chat Assistant translates your natural language instructions into SQL statements for data modifications and schema changes (INSERT, UPDATE, DELETE, CREATE, ALTER, DROP). Unlike read-only queries, these operations follow a confirmation workflow to ensure safety.
 
 ### Key Safety Features
 
 <CardGroup cols={2}>
 <Card title="Explicit Confirmation Required" icon="shield-check">
-All INSERT, UPDATE, and DELETE operations require manual confirmation before execution
+All data modifications and schema changes (INSERT, UPDATE, DELETE, CREATE, ALTER, DROP) require manual confirmation before execution
 </Card>
 <Card title="Operation Preview" icon="eye">
 See exactly what SQL will execute before confirming
@@ -40,18 +40,18 @@ Detailed error messages if modifications fail
 
 <Steps>
 <Step title="You Request a Modification">
-Ask the AI assistant to insert, update, or delete data using natural language.
+Ask the AI assistant to insert, update, or delete data (or change the schema) using natural language.
 </Step>
 <Step title="AI Generates SQL">
 The assistant analyzes your request and generates the appropriate SQL statement.
 </Step>
 <Step title="Confirmation Prompt Appears">
-A dialog displays the SQL that will execute and asks for explicit confirmation.
+An inline alert appears in the chat warning that the operation will modify your database, with a **Show Query** toggle to view the SQL and Confirm/Cancel buttons.
 
 ![Action Confirmation Dialog](/images/110-chat-action-confirmation.png)
 </Step>
 <Step title="You Review and Confirm">
-Review the SQL statement carefully. Confirm to proceed or cancel to abort.
+Click **Show Query** to review the SQL statement carefully. Confirm to proceed or cancel to abort.
 </Step>
 <Step title="Operation Executes">
 After confirmation, the SQL executes against your database.
@@ -118,11 +118,10 @@ Type your insert request in the chat interface.
 The assistant creates an INSERT statement with values extracted from your request.
 </Step>
 <Step title="Review the Confirmation">
-A confirmation dialog shows:
+An inline confirmation alert appears in the chat. Click **Show Query** to see:
 - The INSERT statement
 - Which table will be affected
 - What values will be inserted
-- A clear action button to proceed
 </Step>
 <Step title="Confirm the Insert">
 Click the confirmation button to execute the INSERT.
@@ -154,7 +153,7 @@ Provide values in the expected format for the column type.
 **Avoid**: "Add order with date next Monday" (ambiguous)
 </Accordion>
 <Accordion title="Review Generated SQL">
-Always check the generated INSERT statement in the confirmation dialog to ensure:
+Always check the generated INSERT statement in the confirmation prompt (via **Show Query**) to ensure:
 - Correct table is targeted
 - All required columns are included
 - Values are in the right order
@@ -247,7 +246,7 @@ Describe what you want to change and which records should be affected.
 The assistant creates an UPDATE statement with SET clauses and WHERE conditions.
 </Step>
 <Step title="Review the Confirmation">
-The confirmation dialog shows:
+An inline confirmation alert appears in the chat. Click **Show Query** to see:
 - The complete UPDATE statement
 - Which table will be modified
 - What columns will change
@@ -264,7 +263,7 @@ Missing WHERE clauses will update ALL records in the table. Always verify the WH
 Click the confirmation button to execute the UPDATE.
 </Step>
 <Step title="Check Success Message">
-Verify the "Action Executed" message and review affected row count.
+Verify the "Action Executed" message, then run a follow-up SELECT to confirm the intended records changed.
 </Step>
 </Steps>
 
@@ -286,7 +285,7 @@ Reference records by primary keys or unique columns when possible.
 <Accordion title="Review Row Count Expectations">
 Before confirming, mentally estimate how many rows should be affected.
 
-If updating one user, expect 1 row affected. If the confirmation suggests more, cancel and refine your query.
+If updating one user, expect 1 row affected. If the WHERE clause in the confirmation could match more, cancel and refine your query.
 </Accordion>
 <Accordion title="Test with SELECT First">
 For complex updates, first run a SELECT with the same WHERE clause to see which records will be affected.
@@ -331,7 +330,7 @@ Mark all pending orders older than 7 days as cancelled
 
 ## DELETE Operations - Removing Records
 
-Delete operations require the most caution as they permanently remove data. The AI assistant provides explicit confirmation prompts for all DELETE requests.
+Delete operations require the most caution as they permanently remove data. Like all modifications, DELETE requests go through the inline confirmation before anything executes.
 
 ### Basic Delete Examples
 
@@ -341,12 +340,7 @@ Delete operations require the most caution as they permanently remove data. The 
 Delete user with id 5
 ```
 
-The AI responds with a confirmation request:
-```text AI Response
-Are you sure you want to delete this user? This action cannot be undone. Please confirm to proceed.
-```
-
-After you confirm with "Yes" or "Yes, delete it":
+The AI generates the statement and shows the inline confirmation:
 ```sql Generated SQL
 DELETE FROM users WHERE id = 5
 ```
@@ -357,12 +351,6 @@ DELETE FROM users WHERE id = 5
 Delete all inactive users
 ```
 
-The AI requests confirmation:
-```text AI Response
-Are you sure you want to delete these users? This action cannot be undone. Please confirm to proceed.
-```
-
-After confirmation:
 ```sql Generated SQL
 DELETE FROM users WHERE status = 'inactive'
 ```
@@ -373,7 +361,6 @@ DELETE FROM users WHERE status = 'inactive'
 Remove all log entries older than 90 days
 ```
 
-After confirmation:
 ```sql Generated SQL
 DELETE FROM logs WHERE created_at < NOW() - INTERVAL '90 days'
 ```
@@ -384,36 +371,20 @@ DELETE FROM logs WHERE created_at < NOW() - INTERVAL '90 days'
 <Step title="Request the Deletion">
 Ask the AI to delete specific records.
 </Step>
-<Step title="AI Issues Confirmation Warning">
-The assistant responds with a warning message:
-- Explains what will be deleted
-- States the action cannot be undone
-- Asks for explicit confirmation
-</Step>
-<Step title="Provide Explicit Confirmation">
-Respond with a clear confirmation like:
-- "Yes, delete it"
-- "Confirm"
-- "Yes, proceed"
-
-<Info>
-The AI requires explicit confirmation language, not just "yes". This prevents accidental deletions.
-</Info>
-</Step>
 <Step title="AI Generates DELETE Statement">
-After confirmation, the assistant creates the DELETE statement.
+The assistant creates the DELETE statement and holds it for confirmation — nothing executes yet.
 </Step>
-<Step title="Review the Confirmation Dialog">
-The confirmation dialog shows:
+<Step title="Review the Inline Confirmation">
+An alert appears in the chat warning that the operation will modify your database. Click **Show Query** to see:
 - The DELETE statement
 - Which table will be affected
 - The WHERE clause indicating which records will be removed
 </Step>
-<Step title="Final Confirmation">
-Click the confirmation button to execute the DELETE.
+<Step title="Confirm or Cancel">
+Click the Confirm button to execute the DELETE, or Cancel to abort.
 </Step>
 <Step title="Verify Deletion">
-Check the "Action Executed" message and affected row count.
+Check the "Action Executed" message, then run a follow-up SELECT to confirm the records are gone.
 </Step>
 </Steps>
 
@@ -492,29 +463,23 @@ Delete all comments for post_id 123
 
 ## Understanding Confirmation Prompts
 
-The confirmation dialog is your final checkpoint before data modification. Understanding what to look for helps ensure safe operations.
+The inline confirmation is your final checkpoint before data modification. Understanding what to look for helps ensure safe operations.
 
-### What the Confirmation Dialog Shows
+### What the Confirmation Shows
 
 <Steps>
-<Step title="Operation Type">
-Clear indication of whether this is an INSERT, UPDATE, or DELETE.
+<Step title="Operation Warning">
+An inline alert warning that the operation will modify your database.
 </Step>
 <Step title="SQL Statement">
-The exact SQL that will execute, including:
+Click **Show Query** to see the exact SQL that will execute, including:
 - Target table name
 - Columns being affected (for INSERT/UPDATE)
 - WHERE conditions (for UPDATE/DELETE)
 - Values being set (for INSERT/UPDATE)
 </Step>
-<Step title="Impact Summary">
-Information about what will be affected:
-- Which table
-- How many records (when determinable)
-- Which columns are changing
-</Step>
 <Step title="Action Buttons">
-- **Confirm/Execute**: Proceeds with the operation
+- **Confirm**: Proceeds with the operation
 - **Cancel**: Aborts the operation
 </Step>
 </Steps>
@@ -542,7 +507,7 @@ For UPDATE and DELETE, ensure a WHERE clause exists unless you truly intend to a
 </Steps>
 
 <Tip>
-If anything in the confirmation dialog looks unexpected, click Cancel and rephrase your request to the AI assistant.
+If anything in the confirmation looks unexpected, click Cancel and rephrase your request to the AI assistant.
 </Tip>
 
 ## Verifying Modifications
@@ -557,15 +522,11 @@ Look for the "Action Executed" confirmation in the chat.
 
 ![Action Executed Feedback](/images/111-chat-action-executed.png)
 </Step>
-<Step title="Review Row Count">
-The success message typically shows how many rows were affected.
-
-- INSERT: Should show 1 row (or number inserted)
-- UPDATE: Shows number of rows modified
-- DELETE: Shows number of rows removed
+<Step title="Check the Operation Name">
+The success message shows which operation ran (for example, "DELETE" or "UPDATE").
 </Step>
 <Step title="Query the Modified Data">
-Run a SELECT query to verify the changes:
+Run a SELECT query to verify the changes and see how many rows were actually affected:
 
 **After INSERT**: "Show me the latest user record"
 **After UPDATE**: "Show user with id 5"
@@ -699,7 +660,7 @@ Know how you'll recover if something goes wrong.
 
 <AccordionGroup>
 <Accordion title="Read Confirmations Carefully">
-Always read the entire confirmation dialog before clicking confirm.
+Always review the confirmation and the SQL behind **Show Query** before clicking confirm.
 
 Take your time. Rushing leads to mistakes.
 </Accordion>
@@ -897,8 +858,8 @@ Confirm prices were updated correctly.
 Common issues and solutions when modifying data with the AI assistant.
 
 <AccordionGroup>
-<Accordion title="Confirmation Dialog Doesn't Appear">
-**Symptom**: You request a modification, but no confirmation dialog shows.
+<Accordion title="Confirmation Doesn't Appear">
+**Symptom**: You request a modification, but no confirmation prompt shows.
 
 **Possible Causes**:
 - The AI might have generated a read-only query instead
@@ -967,17 +928,14 @@ Common issues and solutions when modifying data with the AI assistant.
 - Use proper boolean values (true/false or 1/0)
 - Rephrase your request with correct data type format
 </Accordion>
-<Accordion title="Timeout on Large Modifications">
-**Symptom**: Operation times out when modifying many records.
-
-**Cause**: The modification affects too many rows for the timeout limit.
+<Accordion title="Large Modifications Are Slow">
+**Symptom**: Modifying many records takes a long time or strains the database.
 
 **Solutions**:
-- Break the operation into smaller batches
-- Use the Scratchpad for complex operations with custom timeouts
-- Filter to smaller subsets: Update 1000 records at a time
+- Break the operation into smaller batches: update or delete a limited subset at a time
+- Use the Scratchpad to run batched statements with transaction control
 - Consider database-level bulk operations for very large datasets
-- Contact your administrator about timeout settings
+- Schedule large modifications during low-traffic periods
 </Accordion>
 </AccordionGroup>
 
@@ -1026,17 +984,14 @@ Your modification requests and table/column names may be sent to external AI pro
 ### Audit and Compliance
 
 <Steps>
-<Step title="Query Logging">
-All executed SQL is logged by WhoDB for audit purposes.
-</Step>
 <Step title="User Attribution">
-Modifications are associated with the database user credentials used.
-</Step>
-<Step title="Timestamp Recording">
-Operation timestamps are recorded for compliance tracking.
+Modifications are associated with the database user credentials used, so database-level logs can attribute changes.
 </Step>
 <Step title="Database-Level Auditing">
-Consider enabling database audit logs for comprehensive tracking.
+Enable your database's audit or query logging for comprehensive tracking of executed statements.
+</Step>
+<Step title="Application Logs">
+Set `WHODB_LOG_FILE` to capture WhoDB's application logs. Note this is a general application log, not a per-query audit trail.
 </Step>
 </Steps>
 
@@ -1080,7 +1035,7 @@ Learn comprehensive data safety strategies
 WhoDB's AI Chat Assistant makes data modification accessible through natural language while maintaining strict safety controls:
 
 <Check>
-**Safe Modifications**: Every INSERT, UPDATE, and DELETE requires explicit confirmation before execution
+**Safe Modifications**: Every data modification and schema change (INSERT, UPDATE, DELETE, CREATE, ALTER, DROP) requires explicit confirmation before execution
 </Check>
 
 <Check>

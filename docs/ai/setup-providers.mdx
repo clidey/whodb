@@ -1,6 +1,6 @@
 ---
 title: "Setting Up AI Providers"
-description: "Configure OpenAI, Anthropic, Ollama, or custom AI providers for WhoDB's chat assistant"
+description: "Configure OpenAI, Anthropic, Gemini, Ollama, LM Studio, or custom AI providers for WhoDB's chat assistant"
 ---
 
 # Setting Up AI Providers
@@ -14,7 +14,7 @@ Navigate to the Chat page in WhoDB to access AI provider settings:
 ![Chat Initial Page](/images/101-chat-initial-page.png)
 
 The provider configuration is located at the top of the Chat interface with two dropdowns:
-1. **AI Provider**: Select your provider (OpenAI, Anthropic, Ollama, etc.)
+1. **AI Provider**: Select your provider (OpenAI, Anthropic, Gemini, Ollama, LM Studio, etc.)
 2. **AI Model**: Choose the specific model to use
 
 <Warning>
@@ -38,7 +38,13 @@ Different providers offer different trade-offs between accuracy, speed, cost, an
 - Very large context windows
 - Strong safety features
 </Card>
-<Card title="Ollama" icon="server">
+<Card title="Gemini" icon="google">
+**Best for**: Google Cloud users, general-purpose queries
+- Strong reasoning and SQL generation
+- Competitive pricing
+- Pay-per-use pricing
+</Card>
+<Card title="Ollama / LM Studio" icon="server">
 **Best for**: Privacy, zero API costs
 - Complete data privacy
 - No internet required
@@ -105,43 +111,15 @@ WhoDB will:
 - Save the configuration for future use
 </Step>
 <Step title="Select Model">
-Once configured, the AI Model dropdown will populate with available models:
-- **GPT-4**: Best accuracy, slower, higher cost
-- **GPT-3.5 Turbo**: Fast, cost-effective, good accuracy
+Once configured, the AI Model dropdown populates with the models fetched live from your OpenAI account. Pick a model based on your accuracy, speed, and cost needs.
 
 ![AI Model Dropdown](/images/103-chat-ai-model-dropdown.png)
 </Step>
 </Steps>
 
-### Available OpenAI Models
-
-| Model | Best Use Case | Speed | Cost per 1M Tokens (Input) | Context Window |
-|-------|--------------|-------|---------------------------|----------------|
-| GPT-4 | Complex queries, highest accuracy | Slower | ~$10 | 8K tokens |
-| GPT-4 Turbo | Balanced performance | Medium | ~$1 | 128K tokens |
-| GPT-3.5 Turbo | Simple queries, fast results | Fast | ~$0.50 | 16K tokens |
-
-<Tip>
-Start with GPT-3.5 Turbo for most queries. Upgrade to GPT-4 if you need better accuracy for complex scenarios
-</Tip>
-
 ### Cost Considerations
 
-OpenAI charges based on tokens used (roughly 4 characters per token):
-
-**Typical Costs Per Query**:
-- Simple query (e.g., "show me all users"): $0.001 - $0.002
-- Complex query with large schema: $0.005 - $0.01
-- Conversation with follow-ups: $0.02 - $0.05
-
-**Estimate Monthly Costs**:
-- Light use (10 queries/day): $3 - $5/month
-- Moderate use (50 queries/day): $15 - $25/month
-- Heavy use (200 queries/day): $60 - $100/month
-
-<Note>
-Costs vary based on schema size, conversation length, and model choice. Monitor usage in your OpenAI dashboard
-</Note>
+OpenAI charges based on tokens used. Costs vary by model, schema size, and conversation length. See [OpenAI's pricing page](https://openai.com/api/pricing/) for current rates and monitor usage in your OpenAI dashboard.
 
 ## Setting Up Anthropic (Claude)
 
@@ -172,24 +150,9 @@ sk-ant-api03-xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 <Step title="Submit and Select Model">
 Click Submit to verify and save the configuration.
 
-Available Claude models will appear in the Model dropdown:
-- **Claude 3.5 Sonnet**: Balanced speed and capability
-- **Claude 3 Opus**: Maximum reasoning capability
-- **Claude 3 Haiku**: Fastest, most cost-effective
+Available Claude models are fetched live from the Anthropic API and appear in the Model dropdown. See [Anthropic's pricing page](https://www.anthropic.com/pricing) for current models and rates.
 </Step>
 </Steps>
-
-### Available Claude Models
-
-| Model | Best Use Case | Speed | Cost per 1M Tokens (Input) | Context Window |
-|-------|--------------|-------|---------------------------|----------------|
-| Claude 3 Opus | Most complex queries | Slower | ~$15 | 200K tokens |
-| Claude 3.5 Sonnet | Best balance | Medium | ~$3 | 200K tokens |
-| Claude 3 Haiku | Speed and cost efficiency | Fast | ~$0.25 | 200K tokens |
-
-<Tip>
-Claude 3.5 Sonnet provides the best balance of speed, accuracy, and cost for most database queries
-</Tip>
 
 ### When to Use Claude
 
@@ -198,6 +161,38 @@ Claude excels in these scenarios:
 - **Complex Joins**: Better at understanding multi-table relationships
 - **Contextual Queries**: Superior at maintaining long conversation contexts
 - **Ambiguous Requests**: Better at asking clarifying questions
+
+## Setting Up Google Gemini
+
+Gemini models offer strong SQL generation with competitive pricing.
+
+### Prerequisites
+
+1. Create a Google AI Studio account at https://aistudio.google.com/
+2. Generate an API key from the AI Studio console
+
+### Configuration Steps
+
+<Steps>
+<Step title="Open Provider Configuration">
+Click the AI Provider dropdown and select **"Add a provider"**.
+</Step>
+<Step title="Select Gemini">
+Choose **Gemini** from the Model Type dropdown.
+</Step>
+<Step title="Enter API Key">
+Paste your Gemini API key in the Token field.
+</Step>
+<Step title="Submit and Select Model">
+Click Submit to verify and save the configuration.
+
+Available Gemini models are fetched live from the Gemini API and appear in the Model dropdown. See [Google's Gemini pricing page](https://ai.google.dev/pricing) for current models and rates.
+</Step>
+</Steps>
+
+<Note>
+To route Gemini requests through a custom endpoint (e.g., a proxy), set the `WHODB_GEMINI_ENDPOINT` environment variable.
+</Note>
 
 ## Setting Up Ollama (Local Models)
 
@@ -250,7 +245,7 @@ You should see a JSON response with available models.
 
 <Steps>
 <Step title="Access Chat Page">
-Navigate to the Chat page. If Ollama is running locally, it should appear automatically in the AI Provider dropdown.
+Navigate to the Chat page. Ollama is always listed in the AI Provider dropdown, whether or not it is currently running. Models only load when the Ollama service is reachable.
 </Step>
 <Step title="Select Ollama">
 Choose **Ollama** from the provider dropdown.
@@ -258,7 +253,7 @@ Choose **Ollama** from the provider dropdown.
 ![AI Provider Dropdown](/images/102-chat-ai-provider-dropdown.png)
 
 <Note>
-No API key required—Ollama connects automatically to localhost:11434
+No API key required—WhoDB connects to Ollama at localhost:11434 by default. If Ollama runs on a different host or port, set the `WHODB_OLLAMA_HOST` and `WHODB_OLLAMA_PORT` environment variables.
 </Note>
 </Step>
 <Step title="Choose Model">
@@ -351,6 +346,26 @@ Choose models, control updates, customize behavior
 Ollama is ideal for regulated industries, sensitive data, or organizations requiring complete data sovereignty
 </Check>
 
+## Setting Up LM Studio (Local Models)
+
+LM Studio is another local option with a desktop app for downloading and managing models.
+
+<Steps>
+<Step title="Install LM Studio">
+Download LM Studio from https://lmstudio.ai and load a model.
+</Step>
+<Step title="Start the Local Server">
+Enable LM Studio's local server (default: `http://localhost:1234`).
+</Step>
+<Step title="Select LM Studio in WhoDB">
+Like Ollama, LM Studio is always listed in the AI Provider dropdown. Select it and choose one of your loaded models.
+</Step>
+</Steps>
+
+<Note>
+If LM Studio runs on a non-default endpoint, set `WHODB_LMSTUDIO_BASE_URL`. Use `WHODB_LMSTUDIO_API_KEY` if your server requires a key, and `WHODB_LMSTUDIO_NAME` to change the display name.
+</Note>
+
 ## Advanced Configuration
 
 ### Multiple Providers
@@ -366,9 +381,9 @@ Use the AI Provider dropdown to switch between configured providers at any time.
 </Step>
 <Step title="Use Case-Specific Providers">
 **Strategy**:
-- Use Ollama for exploration and learning
-- Use GPT-3.5 for quick production queries
-- Use GPT-4 or Claude for complex analytics
+- Use a local model (Ollama, LM Studio) for exploration and learning
+- Use a fast, low-cost cloud model for quick production queries
+- Use your provider's most capable model for complex analytics
 
 This optimizes both cost and performance.
 </Step>
@@ -392,14 +407,34 @@ This removes the API key and disconnects the provider. You'll need to reconfigur
 </Steps>
 
 <Note>
-Providers configured by environment variables are managed through deployment configuration. Remove or change those providers by updating the deployment environment.
+Providers configured by environment variables are managed through deployment configuration. Remove or change those providers by updating the deployment environment. As a security measure, a server-configured provider API key is never combined with a client-supplied endpoint — if a request overrides the endpoint, WhoDB uses the server-configured endpoint with the server key instead.
 </Note>
+
+### Built-In Providers via Environment Variables
+
+You can preconfigure the built-in providers on the server so users don't need to enter API keys in the UI:
+
+| Variable | Description |
+|----------|-------------|
+| `WHODB_OPENAI_API_KEY` | OpenAI API key |
+| `WHODB_OPENAI_ENDPOINT` | Custom OpenAI-compatible endpoint (optional) |
+| `WHODB_OPENAI_NAME` | Display name override (optional) |
+| `WHODB_ANTHROPIC_API_KEY` | Anthropic API key |
+| `WHODB_ANTHROPIC_ENDPOINT` | Custom Anthropic endpoint (optional) |
+| `WHODB_ANTHROPIC_NAME` | Display name override (optional) |
+| `WHODB_GEMINI_ENDPOINT` | Custom Gemini endpoint (optional) |
+| `WHODB_OLLAMA_HOST` / `WHODB_OLLAMA_PORT` | Ollama host and port (default: localhost:11434) |
+| `WHODB_OLLAMA_NAME` | Display name override (optional) |
+| `WHODB_LMSTUDIO_BASE_URL` | LM Studio server URL (default: http://localhost:1234) |
+| `WHODB_LMSTUDIO_API_KEY` | LM Studio API key, if required (optional) |
+| `WHODB_LMSTUDIO_NAME` | Display name override (optional) |
+| `WHODB_BLOCK_INTERNAL_AI_ENDPOINTS` | Set to `true` to block AI requests to internal/private network endpoints (SSRF protection for hosted deployments) |
 
 ### Custom Providers via Environment Variables
 
 You can connect any OpenAI-compatible AI provider (LM Studio, OpenRouter, vLLM, etc.) using `WHODB_AI_GENERIC_<ID>_*` environment variables. This is useful for Docker deployments, self-hosted models, or providers not built into the UI.
 
-Each provider needs a unique `<ID>` (e.g., `LMSTUDIO`, `OPENROUTER`) and up to five variables:
+Each provider needs a unique `<ID>` (e.g., `LMSTUDIO`, `OPENROUTER`) and up to six variables:
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
@@ -408,6 +443,7 @@ Each provider needs a unique `<ID>` (e.g., `LMSTUDIO`, `OPENROUTER`) and up to f
 | `WHODB_AI_GENERIC_<ID>_BASE_URL` | Yes | | API base URL (e.g., `http://localhost:1234/v1`) |
 | `WHODB_AI_GENERIC_<ID>_API_KEY` | No | | API key if required by the provider |
 | `WHODB_AI_GENERIC_<ID>_MODELS` | Yes | | Comma-separated list of model names |
+| `WHODB_AI_GENERIC_<ID>_ICON` | No | | URL of an icon to show in the provider dropdown |
 
 <CodeGroup>
 ```bash LM Studio (local)
@@ -481,13 +517,13 @@ Choose the right provider for your needs:
 4. Try a new API key
 5. Check Anthropic service status
 </Accordion>
-<Accordion title="Ollama Not Detected">
-**Symptom**: Ollama doesn't appear in provider dropdown
+<Accordion title="Ollama Not Responding">
+**Symptom**: Ollama is selected but no models load or queries fail
 
 **Solutions**:
 1. Verify Ollama is running: `curl http://localhost:11434/api/tags`
 2. Restart Ollama service
-3. Check Ollama is accessible on port 11434
+3. Check Ollama is accessible on port 11434 (or set `WHODB_OLLAMA_HOST`/`WHODB_OLLAMA_PORT` for a custom endpoint)
 4. Ensure no firewall blocking localhost connections
 5. Verify at least one model is downloaded
 

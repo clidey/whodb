@@ -58,7 +58,7 @@ Display recent orders
 ```
 </Step>
 <Step title="Press Enter">
-Send your message and wait for the AI to respond.
+Send your message. The AI's response streams in token-by-token as it is generated.
 </Step>
 <Step title="View Results">
 The assistant will display the results in an interactive table.
@@ -177,11 +177,11 @@ One of the most powerful features is the ability to toggle between table results
 When the assistant returns query results:
 
 <Steps>
-<Step title="Locate the SQL Toggle">
-Above the results table, find the "View SQL" or code icon button.
+<Step title="Open the Actions Menu">
+Hover over the results table and click the ellipsis (...) button that appears next to it.
 </Step>
-<Step title="Click to View SQL">
-Click the toggle to switch from table view to SQL code view.
+<Step title="Click Show Code">
+Select **Show Code** from the dropdown menu to switch from table view to SQL code view.
 
 ![SQL Code View](/images/107-chat-sql-code-view.png)
 </Step>
@@ -189,7 +189,7 @@ Click the toggle to switch from table view to SQL code view.
 Examine the generated SQL to understand how your question was translated.
 </Step>
 <Step title="Toggle Back">
-Click the toggle again to return to the table view.
+Open the menu again and select **Show Table** to return to the table view.
 </Step>
 </Steps>
 
@@ -417,9 +417,8 @@ NULL values in your data are clearly indicated:
 
 ### Large Result Sets
 
-For queries returning many rows:
-- Results may be paginated
-- Scroll to view all data
+Chat results are shown in a fixed-height scrollable table containing all returned rows. For queries returning many rows:
+- Scroll within the table to view all data
 - Consider adding LIMIT in your question
 
 <Warning>
@@ -487,20 +486,6 @@ ERROR: column "price" is of type numeric but expression is of type text
 - Clarify data types in your question
 - Ask about the schema first
 - Rephrase with correct type expectations
-</Accordion>
-<Accordion title="Timeout">
-**Error Example**:
-```
-ERROR: query execution timeout
-```
-
-**What It Means**: The query took too long to execute.
-
-**Solutions**:
-- Add more specific filters to reduce data volume
-- Ask for a limited result set
-- Break down into smaller queries
-- Contact administrator about database performance
 </Accordion>
 </AccordionGroup>
 
@@ -630,7 +615,7 @@ Modify the loaded message and press Enter to resend.
 **Keyboard Shortcuts**:
 - `Up Arrow`: Previous message
 - `Down Arrow`: Next message
-- `Ctrl/Cmd + Enter`: Send message
+- `Enter`: Send message
 
 ## Example Workflows
 
@@ -775,7 +760,7 @@ When you generate a useful query, save it for future use:
 Locate a query result with SQL you want to save.
 </Step>
 <Step title="Click Move to Scratchpad">
-Click the "Move to Scratchpad" button (usually near the SQL view toggle).
+Hover over the result, click the ellipsis (...) button, and select **Move to Scratchpad** from the dropdown menu.
 </Step>
 <Step title="Choose Destination">
 **New Page**: Creates a new Scratchpad page with this query
@@ -862,9 +847,8 @@ Efficient keyboard navigation speeds up your workflow:
 | `Up Arrow` | Previous message in history |
 | `Down Arrow` | Next message in history |
 | `Enter` | Send message |
-| `Ctrl/Cmd + Enter` | Send message (alternative) |
-| `Escape` | Clear input field |
-| `Ctrl/Cmd + K` | Focus on input field |
+
+Arrow keys navigate through your previously sent messages, letting you quickly reload, edit, and resend earlier questions.
 
 ## Troubleshooting
 
