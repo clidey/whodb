@@ -188,5 +188,13 @@ export const scratchpadMethods = {
         } else {
             await this.page.locator('[data-testid="delete-page-button-confirm"]').click();
         }
+
+        // The overlay also fades out on close (Radix removes it from the DOM once
+        // the animation finishes), still intercepting pointer events until then.
+        // Without this wait, a subsequent call that clicks a delete-page-tab button
+        // can race the closing overlay and time out. Locate by data-slot only (not
+        // [data-state="open"]) so this resolves once the element is truly gone,
+        // not just once its state attribute flips to "closed".
+        await this.page.locator('[data-slot="alert-dialog-overlay"]').waitFor({ state: "detached" });
     },
 };
