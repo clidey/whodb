@@ -1,5 +1,13 @@
 {
   "name": "WhoDB",
+  "url": "https://docs.whodb.com",
+  "description": "WhoDB documentation — a lightweight database management tool for exploring, querying, and visualizing your data",
+  "seo": {
+    "titleTemplate": "%s — WhoDB Docs",
+    "keywords": ["whodb", "database management", "database gui", "sql client", "postgresql", "mysql", "mongodb", "redis", "database tool"],
+    "author": "Clidey",
+    "locale": "en_US"
+  },
   "colors": {
     "primary": "#ca6f1e",
     "light": "#ca6f1e",
@@ -221,6 +229,7 @@
     "light": "./logo/logo.svg",
     "dark": "./logo/logo.svg"
   },
+  "favicon": "./favicon.svg",
   "analytics": {
     "posthog": {
       "token": "phc_hxwfcMiIgSXYKkbWl9zpQE0HaPPmlRaVXCWODricYu1",

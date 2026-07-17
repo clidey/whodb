@@ -4,8 +4,10 @@ WORKDIR /app
 
 COPY . .
 
-# Install dory globally and build docs
-RUN npm install -g @clidey/dory && dory build
+# Install dory globally and build docs.
+# Pin the version so rebuilds are deterministic and upgrades are explicit
+# (an unpinned install gets cached by Docker layers and silently goes stale).
+RUN npm install -g @clidey/dory@0.49.0 && dory build
 
 FROM nginx:alpine
 
@@ -59,12 +61,16 @@ server {
         }
     }
 
-    # All other static files and docs site
+    # All other static files and docs site.
+    # Unknown URLs get the prerendered 404 page with a real 404 status
+    # instead of soft-404ing to the SPA shell.
     location / {
         root   /usr/share/nginx/html/docs;
         index  index.html index.htm;
-        try_files $uri $uri/ /index.html;
+        try_files $uri $uri/index.html =404;
     }
+
+    error_page 404 /404.html;
 
     error_page   500 502 503 504  /50x.html;
     location = /50x.html {
