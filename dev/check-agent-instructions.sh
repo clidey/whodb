@@ -162,9 +162,11 @@ require_file_contains .agents/README.md '\.agents/workflows/research-proof\.md' 
 if [ -d ee ]; then
   require_file ee/AGENTS.md
   require_file ee/CLAUDE.md
+  require_file ee/.agents/README.md
   require_dir ee/.agents/docs
   require_dir ee/.agents/rules
   require_dir ee/.agents/workflows
+  require_file_contains ee/AGENTS.md 'ee/\.agents/README\.md' 'ee/AGENTS.md links the EE agent index'
 fi
 
 check_legacy_dir_has_no_files .claude/docs
