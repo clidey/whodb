@@ -40,6 +40,22 @@ var (
 
 type PostgresPlugin struct {
 	gorm_plugin.GormPlugin
+
+	// classifySystemObjects overrides the catalog fingerprint query in tests;
+	// nil means querySystemObjectNames.
+	classifySystemObjects func(config *engine.PluginConfig, schema string) (map[string]bool, error)
+}
+
+// GetStorageUnits lists the schema's storage units and marks System Objects
+// with SystemObjectAttributeKey. Classification runs as a separate fail-open
+// query so it can never break the listing itself.
+func (p *PostgresPlugin) GetStorageUnits(config *engine.PluginConfig, schema string) ([]engine.StorageUnit, error) {
+	units, err := p.GormPlugin.GetStorageUnits(config, schema)
+	if err != nil {
+		return nil, err
+	}
+	p.markSystemObjects(config, schema, units)
+	return units, nil
 }
 
 func (p *PostgresPlugin) GetSupportedOperators() map[string]string {
