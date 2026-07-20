@@ -400,11 +400,11 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
         );
       }
       if (language === "json") {
-        let parsed: any = null;
+        let parsed: object = {};
         let isValidJson = true;
-        try{
+        try {
           parsed = JSON.parse(value);
-        } catch (e) {
+        } catch {
           isValidJson = false;
         }
 
@@ -418,8 +418,8 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
               />
             ) : (
               <div className="flex flex-col items-center justify-center h-full gap-2">
-                  <p className="text-sm text-red-500 font-medium">Invalid JSON</p>
-                  <p className="text-xs text-muted-foreground">Please check your syntax and try again.</p>
+                  <p className="text-sm text-red-500 font-medium">{t('invalidJson')}</p>
+                  <p className="text-xs text-muted-foreground">{t('invalidJsonDescription')}</p>
               </div>
             )}
           </div>

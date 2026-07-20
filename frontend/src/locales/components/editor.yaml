@@ -3,6 +3,8 @@ en_US:
   showPreview: Show Preview
   hidePreview: Hide Preview
   runQuery: Run query
+  invalidJson: Invalid JSON
+  invalidJsonDescription: Please check your syntax and try again.
 
 ar_AE:
   confirmOperationDescription: "سيقوم هذا الاستعلام بتعديل البيانات أو المخطط. هل أنت متأكد أنك تريد تنفيذ ذلك؟ لا يمكن التراجع عن هذا الإجراء."
