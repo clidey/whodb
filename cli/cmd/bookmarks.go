@@ -158,9 +158,12 @@ var bookmarksLoadCmd = &cobra.Command{
 			return writeCommandJSON(cmd, bookmark)
 		}
 
+		if effectiveCommandOutputFormat(cmd, format) == output.FormatNDJSON {
+			return writeCommandNDJSON(cmd, []*config.SavedQuery{bookmark})
+		}
+
 		if effectiveCommandOutputFormat(cmd, format) == output.FormatTable ||
-			effectiveCommandOutputFormat(cmd, format) == output.FormatCSV ||
-			effectiveCommandOutputFormat(cmd, format) == output.FormatNDJSON {
+			effectiveCommandOutputFormat(cmd, format) == output.FormatCSV {
 			out := newCommandOutput(cmd, format, true)
 			return out.WriteQueryResult(&output.QueryResult{
 				Columns: []output.Column{
