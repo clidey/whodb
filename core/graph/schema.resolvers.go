@@ -1429,39 +1429,21 @@ func (r *queryResolver) AIProviders(ctx context.Context) ([]*model.AIProvider, e
 
 // AIModel is the resolver for the AIModel field.
 func (r *queryResolver) AIModel(ctx context.Context, providerID *string, modelType string, token *string) ([]string, error) {
-	externalModel := &engine.ExternalModel{
-		Type: modelType,
-	}
-
+	provider := ""
 	if providerID != nil {
-		// Try to find provider in environment-defined providers first
-		chatProviders := envconfig.GetConfiguredChatProviders()
-		found := false
-		for _, provider := range chatProviders {
-			if provider.ProviderId == *providerID {
-				externalModel.Token = provider.APIKey
-				found = true
-
-				// For generic providers, return models from config instead of querying registry
-				if provider.IsGeneric {
-					for _, genericProvider := range env.GenericProviders {
-						if genericProvider.ProviderId == *providerID {
-							return genericProvider.Models, nil
-						}
-					}
-				}
-				break
-			}
-		}
-		// If provider not found in environment but token is provided, use the token
-		// This handles user-added providers that aren't in environment
-		if !found && token != nil {
-			externalModel.Token = *token
-		}
-	} else if token != nil {
-		externalModel.Token = *token
+		provider = *providerID
 	}
-	models, err := llm.ClientForModel(externalModel).GetSupportedModels()
+	requestToken := ""
+	if token != nil {
+		requestToken = *token
+	}
+	models, err := llm.ListSupportedModels(llm.ModelLookupOptions{
+		ProviderID:          provider,
+		ModelType:           modelType,
+		Token:               requestToken,
+		ConfiguredProviders: envconfig.GetConfiguredChatProviders(),
+		AllowTokenFallback:  true,
+	})
 	if err != nil {
 		log.WithFields(log.Fields{
 			"operation":   "GetSupportedModels",

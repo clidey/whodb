@@ -1569,23 +1569,12 @@ func (m *Manager) GetAIModels(providerID, modelType, token string) ([]string, er
 		return nil, fmt.Errorf("not connected to any database")
 	}
 
-	externalModel := &engine.ExternalModel{
-		Type: modelType,
-	}
-
-	if providerID != "" {
-		providers := envconfig.GetConfiguredChatProviders()
-		for _, provider := range providers {
-			if provider.ProviderId == providerID {
-				externalModel.Token = provider.APIKey
-				break
-			}
-		}
-	} else if token != "" {
-		externalModel.Token = token
-	}
-
-	return llm.ClientForModel(externalModel).GetSupportedModels()
+	return llm.ListSupportedModels(llm.ModelLookupOptions{
+		ProviderID:          providerID,
+		ModelType:           modelType,
+		Token:               token,
+		ConfiguredProviders: envconfig.GetConfiguredChatProviders(),
+	})
 }
 
 // GetAIModelsWithContext fetches AI models with context support for timeout/cancellation
