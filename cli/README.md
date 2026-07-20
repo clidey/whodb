@@ -119,7 +119,7 @@ whodb-cli --help
 ## Quick Start
 
 For hosted WhoDB platform login and source management, see
-[HOSTED_PLATFORM.md](HOSTED_PLATFORM.md).
+[the hosted platform CLI guide](../.agents/docs/hosted-platform-cli.md).
 
 ### 1. Connect to a Database
 

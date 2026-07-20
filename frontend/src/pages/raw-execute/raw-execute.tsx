@@ -1090,7 +1090,7 @@ export const RawExecutePage: FC = () => {
                                                 <RawExecuteSubPage 
                                                     key={page.id} 
                                                     pageId={page.id}
-                                                    cellIds={page.cellIds || []}
+                                                    cellIds={page.cellIds ?? []}
                                                     cells={cells}
                                                 />
                                             </motion.div>
