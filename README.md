@@ -187,7 +187,7 @@ pnpm install
 pnpm start
 ```
 
-The frontend opens at [http://localhost:3000](http://localhost:3000) and talks to the backend on port `8080`. See [BUILD_AND_RUN.md](https://github.com/clidey/whodb/blob/main/BUILD_AND_RUN.md) for generation and build commands.
+The frontend opens at [http://localhost:3000](http://localhost:3000) and talks to the backend on port `8080`. See the [CE build and run guide](https://github.com/clidey/whodb/blob/main/.agents/docs/build-and-run.md) for generation and build commands.
 
 ## Contributing
 

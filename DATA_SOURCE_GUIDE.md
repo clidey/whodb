@@ -995,7 +995,7 @@ source.RegisterType(source.TypeSpec{
 
 ## EE-Only Sources
 
-For EE-only data sources, see `ee/DATA_SOURCE_GUIDE_EE.md`. It covers EE engine types, catalog registration, source family specs, session metadata, and frontend icons.
+For EE-only data sources, see `ee/.agents/docs/data-sources.md`. It covers EE engine types, catalog registration, source family specs, session metadata, and frontend icons.
 
 ---
 
@@ -1111,4 +1111,4 @@ Understanding the full registration flow helps debug issues:
 
 ### For EE sources (additional):
 
-See `ee/DATA_SOURCE_GUIDE_EE.md` for the full EE checklist.
+See `ee/.agents/docs/data-sources.md` for the full EE checklist.

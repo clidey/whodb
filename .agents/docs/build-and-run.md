@@ -1,4 +1,7 @@
-# WhoDB Build and Run Guide
+# CE Build and Run Guide
+
+Use this guide for the Community Edition development workflow. For the broader
+command reference, see [commands.md](commands.md).
 
 ## Quick Start
 
