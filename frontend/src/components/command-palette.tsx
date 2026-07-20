@@ -52,6 +52,25 @@ export interface CommandPaletteProps {
     onOpenChange: (open: boolean) => void;
 }
 
+/** Shared command palette styling for command-group headings. */
+export const COMMAND_PALETTE_GROUP_CLASS = "[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-neutral-500 dark:[&_[cmdk-group-heading]]:text-neutral-400";
+
+/** Renders platform-aware keyboard shortcut keycaps in a command palette item. */
+export const CommandPaletteShortcut: FC<{ keys: string[]; isMac: boolean }> = ({keys, isMac}) => (
+    <div className="ml-auto flex items-center gap-0.5">
+        {keys.map((key, idx) => (
+            <span key={key} className="flex items-center gap-0.5">
+                <kbd className="inline-flex items-center justify-center min-w-[1.5rem] h-6 px-1.5 text-xs font-medium bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded shadow-sm">
+                    {getKeyDisplay(key)}
+                </kbd>
+                {idx < keys.length - 1 && !isMac && (
+                    <span className="text-neutral-400 text-xs">+</span>
+                )}
+            </span>
+        ))}
+    </div>
+);
+
 interface CommandAction {
     id: string;
     label: string;
@@ -218,25 +237,10 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
         });
     }
 
-    const renderShortcut = (keys: string[]) => (
-        <div className="ml-auto flex items-center gap-0.5">
-            {keys.map((key, idx) => (
-                <span key={key} className="flex items-center gap-0.5">
-                    <kbd className="inline-flex items-center justify-center min-w-[1.5rem] h-6 px-1.5 text-xs font-medium bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded shadow-sm">
-                        {getKeyDisplay(key)}
-                    </kbd>
-                    {idx < keys.length - 1 && !isMac && (
-                        <span className="text-neutral-400 text-xs">+</span>
-                    )}
-                </span>
-            ))}
-        </div>
-    );
-
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="p-0 overflow-hidden max-w-md" data-testid="command-palette">
-                <Command className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-neutral-500 dark:[&_[cmdk-group-heading]]:text-neutral-400">
+                <Command className={COMMAND_PALETTE_GROUP_CLASS}>
                     <CommandInput
                         placeholder={t('searchPlaceholder')}
                         data-testid="command-palette-input"
@@ -256,7 +260,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
                                     >
                                         {action.icon}
                                         <span className="ml-2">{action.label}</span>
-                                        {action.shortcut && renderShortcut(action.shortcut)}
+                                        {action.shortcut && <CommandPaletteShortcut keys={action.shortcut} isMac={isMac} />}
                                     </CommandItem>
                                 ))}
                             </CommandGroup>
@@ -274,7 +278,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
                                     >
                                         {action.icon}
                                         <span className="ml-2">{action.label}</span>
-                                        {action.shortcut && renderShortcut(action.shortcut)}
+                                        {action.shortcut && <CommandPaletteShortcut keys={action.shortcut} isMac={isMac} />}
                                     </CommandItem>
                                 ))}
                             </CommandGroup>
