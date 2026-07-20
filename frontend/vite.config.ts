@@ -120,7 +120,7 @@ export default defineConfig(async ({command}) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
-        '@graphql': path.resolve(__dirname, './src/generated/graphql.ts'),
+        '@graphql': path.resolve(__dirname, './src/generated/graphql-index.ts'),
       },
       dedupe: [
         '@codemirror/state',
