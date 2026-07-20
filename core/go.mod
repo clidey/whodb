@@ -18,7 +18,7 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.42.1
 	github.com/aws/aws-sdk-go-v2/config v1.32.25
 	github.com/aws/aws-sdk-go-v2/feature/rds/auth v1.6.29
-	github.com/aws/aws-sdk-go-v2/service/docdb v1.49.7
+	github.com/aws/aws-sdk-go-v2/service/docdb v1.50.0
 	github.com/aws/aws-sdk-go-v2/service/elasticache v1.55.0
 	github.com/aws/aws-sdk-go-v2/service/opensearch v1.72.1
 	github.com/aws/aws-sdk-go-v2/service/rds v1.120.0
