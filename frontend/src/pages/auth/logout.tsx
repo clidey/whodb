@@ -19,7 +19,6 @@ import type { FC} from "react";
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { Container } from "../../components/page";
-import type { LogoutMutation, LogoutMutationVariables } from '@graphql';
 import { LogoutDocument } from '@graphql';
 import { AuthActions } from "../../store/auth";
 import { Loading } from "../../components/loading";
@@ -29,7 +28,7 @@ import { clearGraphqlStore } from "@/config/graphql-client";
 
 export const LogoutPage: FC = () => {
   const { t } = useTranslation('pages/logout');
-  const [logout, ] = useMutation<LogoutMutation, LogoutMutationVariables>(LogoutDocument);
+  const [logout, ] = useMutation(LogoutDocument);
   const dispatch = useDispatch();
 
   useEffect(() => {

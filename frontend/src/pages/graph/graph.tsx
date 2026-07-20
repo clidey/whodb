@@ -27,8 +27,7 @@ import {LoadingPage} from "../../components/loading";
 import {InternalPage} from "../../components/page";
 import {InternalRoutes} from "../../config/routes";
 import type {
-    GetGraphQuery,
-    GetGraphQueryVariables} from '@graphql';
+    GetGraphQuery} from '@graphql';
 import {
     GetGraphDocument,
     GetColumnsBatchDocument,
@@ -190,7 +189,7 @@ export const GraphPage: FC = () => {
         data: graphQueryData,
         loading: graphLoading,
         refetch: refetchGraph
-    } = useQuery<GetGraphQuery, GetGraphQueryVariables>(GetGraphDocument, graphQueryOptions);
+    } = useQuery(GetGraphDocument, graphQueryOptions);
     const graphData = useMemo(() => {
         return (graphQueryData?.Graph ?? []) as GetGraphQuery["Graph"];
     }, [graphQueryData?.Graph]);
