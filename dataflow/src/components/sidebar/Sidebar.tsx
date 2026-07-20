@@ -81,7 +81,7 @@ function SidebarInner() {
 
   const {
     expandedItems, treeData, isLoading,
-    toggleItem, fetchNodeChildren, refreshNode, revealNode,
+    toggleItem, fetchNodeChildren, refreshNode, refreshSubtree, revealNode,
   } = useSidebarTree();
 
   // Modal state (inlined from former useSidebarModals)
@@ -414,10 +414,9 @@ function SidebarInner() {
           break;
         case "toggle_system_objects":
           toggleSystemObjects(node.id);
-          // Re-fetch this node's children with the new filter
-          if (expandedItems.has(node.id)) {
-            fetchNodeChildren(node);
-          }
+          // Re-fetch the subtree with the new filter — for Postgres the toggle
+          // also governs table listings two levels below the database node
+          refreshSubtree(node);
           break;
       }
 
@@ -426,7 +425,7 @@ function SidebarInner() {
     [
       contextMenu, connections, openTab, openModal,
       expandedItems, fetchNodeChildren, toggleItem,
-      toggleSystemObjects, t,
+      toggleSystemObjects, refreshSubtree, t,
     ],
   );
 

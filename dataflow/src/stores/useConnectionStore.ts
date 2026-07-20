@@ -80,7 +80,7 @@ interface ConnectionState {
   selectItem: (item: SelectedItem | null) => void;
   fetchDatabases: (connectionId: string) => Promise<string[]>;
   fetchSchemas: (connectionId: string, database: string) => Promise<string[]>;
-  fetchTables: (connectionId: string, database: string, schema?: string) => Promise<{ name: string; type: string }[]>;
+  fetchTables: (connectionId: string, database: string, schema?: string) => Promise<StorageUnitSummary[]>;
   systemSchemas: string[];
   /** Node IDs where system objects are visible */
   showSystemObjectsFor: Set<string>;
@@ -91,6 +91,29 @@ interface ConnectionState {
 export interface DDLResult {
   success: boolean;
   message?: string;
+}
+
+/** Sidebar-facing shape of a storage unit (table, view, collection, or key). */
+export interface StorageUnitSummary {
+  name: string;
+  type: string;
+  /** Provisioned by the engine, an extension, or platform tooling — not user-authored. */
+  system: boolean;
+}
+
+/** Transport-only marker the backend appends to System Object storage units. */
+const SYSTEM_OBJECT_ATTRIBUTE_KEY = 'whodb:system-object';
+
+/**
+ * Map a GraphQL StorageUnit to the sidebar's table shape, promoting the
+ * transport-only system-object attribute to a typed flag.
+ */
+export function storageUnitToSummary(unit: { Name: string; Attributes: { Key: string; Value: string }[] }): StorageUnitSummary {
+  return {
+    name: unit.Name,
+    type: unit.Attributes.find(a => a.Key === 'Type')?.Value ?? 'table',
+    system: unit.Attributes.some(a => a.Key === SYSTEM_OBJECT_ATTRIBUTE_KEY && a.Value === 'true'),
+  };
 }
 
 /** Map auth store Type (e.g. "Postgres") to SqlDialect. */
@@ -221,10 +244,7 @@ export const useConnectionStore = create<ConnectionState>((set) => ({
       console.error('[useConnectionStore] fetchTables failed:', error);
       throw error;
     }
-    return data?.StorageUnit?.map((u) => ({
-      name: u.Name,
-      type: u.Attributes.find(a => a.Key === "Type")?.Value ?? "table",
-    })) ?? [];
+    return data?.StorageUnit?.map(storageUnitToSummary) ?? [];
   },
 
   createDatabase: async (databaseName) => {

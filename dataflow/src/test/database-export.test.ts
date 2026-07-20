@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   buildDatabaseExportPlan,
+  filterDatabaseExportUnits,
   formatDatabaseExportEntryName,
 } from '@/utils/database-export'
 
@@ -24,6 +25,24 @@ describe('buildDatabaseExportPlan', () => {
       systemSchemas: [],
       includeSystemSchemas: false,
     })).toEqual(['app_db'])
+  })
+})
+
+describe('filterDatabaseExportUnits', () => {
+  const units = [
+    { name: 'orders', system: false },
+    { name: 'postgres_log', system: true },
+    { name: 'pg_stat_statements', system: true },
+  ]
+
+  it('excludes system objects when they are not revealed', () => {
+    expect(filterDatabaseExportUnits(units, false)).toEqual([
+      { name: 'orders', system: false },
+    ])
+  })
+
+  it('keeps system objects when the user has revealed them', () => {
+    expect(filterDatabaseExportUnits(units, true)).toEqual(units)
   })
 })
 

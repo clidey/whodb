@@ -93,6 +93,7 @@ export function TreeNode({ node, depth }: TreeNodeProps) {
           isSelected ? "selected" : "idle",
           isExpandable ? (isExpanded ? "expanded" : "collapsed") : "leaf",
           nodeIsLoading ? "loading" : null,
+          node.system ? "system" : null,
         ].filter(Boolean).join(" ")}
         data-qa-resource-type={node.type}
         data-qa-resource-id={node.id}
@@ -103,7 +104,8 @@ export function TreeNode({ node, depth }: TreeNodeProps) {
           "group flex items-center gap-2 rounded-md text-sm transition-colors cursor-pointer select-none px-2 py-2",
           isSelected
             ? "bg-input text-accent-foreground font-medium"
-            : "text-muted-foreground hover:bg-input hover:text-foreground"
+            : "text-muted-foreground hover:bg-input hover:text-foreground",
+          node.system && "opacity-60"
         )}
         onClick={() => onItemClick(node)}
         onContextMenu={(e) => onContextMenu(e, node)}

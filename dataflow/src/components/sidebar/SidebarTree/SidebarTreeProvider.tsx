@@ -14,6 +14,7 @@ interface SidebarTreeContextValue {
   toggleItem: (node: TreeNodeData) => Promise<void>;
   fetchNodeChildren: (node: TreeNodeData) => Promise<TreeNodeData[]>;
   refreshNode: (node: TreeNodeData) => Promise<void>;
+  refreshSubtree: (node: TreeNodeData) => Promise<void>;
   collapseNode: (nodeId: string) => void;
   revealNode: (node: TreeNodeData) => Promise<void>;
 }
@@ -168,7 +169,11 @@ export function SidebarTreeProvider({ children }: { children: React.ReactNode })
           node.metadata.database!,
           node.metadata.schema!
         );
+        // System objects follow the database node's "Show system objects" toggle
+        const databaseNodeId = `${node.connectionId}-${node.metadata.database}`;
+        const showSystem = showSystemObjectsFor.has(databaseNodeId);
         return tables
+          .filter((t) => showSystem || !t.system)
           .filter((t) =>
             isViewFolder
               ? t.type.toLowerCase().includes("view")
@@ -180,6 +185,7 @@ export function SidebarTreeProvider({ children }: { children: React.ReactNode })
             type: (isViewFolder ? "view" : "table") as NodeType,
             parentId: node.id,
             connectionId: node.connectionId,
+            system: t.system,
             metadata: {
               database: node.metadata.database,
               schema: node.metadata.schema,
@@ -256,6 +262,39 @@ export function SidebarTreeProvider({ children }: { children: React.ReactNode })
           }
         }
       }
+    },
+    [expandedItems, fetchNodeChildren]
+  );
+
+  /**
+   * Re-fetch children for a node and every expanded descendant, dropping
+   * cached data for collapsed descendants so they re-fetch on expand. Used
+   * after visibility changes that affect deep listings, e.g. the system
+   * objects toggle on a database node filtering tables two levels down.
+   */
+  const refreshSubtree = useCallback(
+    async (node: TreeNodeData) => {
+      setTreeData((prev) => {
+        const next = { ...prev };
+        const drop = (id: string) => {
+          const children = prev[id];
+          if (!children) return;
+          delete next[id];
+          for (const child of children) drop(child.id);
+        };
+        drop(node.id);
+        return next;
+      });
+      if (!expandedItems.has(node.id)) return;
+      const refetch = async (n: TreeNodeData) => {
+        const children = await fetchNodeChildren(n);
+        for (const child of children) {
+          if (expandedItems.has(child.id)) {
+            await refetch(child);
+          }
+        }
+      };
+      await refetch(node);
     },
     [expandedItems, fetchNodeChildren]
   );
@@ -383,6 +422,7 @@ export function SidebarTreeProvider({ children }: { children: React.ReactNode })
     toggleItem,
     fetchNodeChildren,
     refreshNode,
+    refreshSubtree,
     collapseNode,
     revealNode,
   };

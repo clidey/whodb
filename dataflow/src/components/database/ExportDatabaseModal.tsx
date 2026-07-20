@@ -14,6 +14,7 @@ import { buildStorageUnitReference } from '@/utils/ddl-sql'
 import { resolveSchemaParam } from '@/utils/database-features'
 import {
   buildDatabaseExportPlan,
+  filterDatabaseExportUnits,
   formatDatabaseExportEntryName,
   formatDatabaseExportTargetName,
 } from '@/utils/database-export'
@@ -122,6 +123,7 @@ function ExportDatabaseBridge({
     try {
       const connectionType = connections.find((connection) => connection.id === connectionId)?.type
       const databaseNodeId = `${connectionId}-${databaseName}`
+      const includeSystemObjects = showSystemObjectsFor.has(databaseNodeId)
       const allSchemas = connectionType === 'POSTGRES'
         ? await fetchSchemas(connectionId, databaseName)
         : []
@@ -130,12 +132,15 @@ function ExportDatabaseBridge({
         fallbackSchema: schema,
         allSchemas,
         systemSchemas,
-        includeSystemSchemas: showSystemObjectsFor.has(databaseNodeId),
+        includeSystemSchemas: includeSystemObjects,
       })
       const exportTargets: Array<{ schema: string; tableName: string }> = []
 
       for (const schemaName of schemasToExport) {
-        const tables = await fetchTables(connectionId, databaseName, schemaName)
+        const tables = filterDatabaseExportUnits(
+          await fetchTables(connectionId, databaseName, schemaName),
+          includeSystemObjects,
+        )
         for (const table of tables) {
           if (format === 'sql' && isViewStorageUnit(table.type)) continue
           exportTargets.push({ schema: schemaName, tableName: table.name })

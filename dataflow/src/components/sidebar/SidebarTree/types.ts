@@ -18,6 +18,8 @@ export interface TreeNodeData {
   type: NodeType;
   parentId?: string;
   connectionId: string;
+  /** Storage unit provisioned by the engine, an extension, or platform tooling — rendered muted. */
+  system?: boolean;
   metadata: {
     database?: string;
     schema?: string;

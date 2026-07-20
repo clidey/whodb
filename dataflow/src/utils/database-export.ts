@@ -27,6 +27,18 @@ export function buildDatabaseExportPlan({
   return fallbackSchema ? [fallbackSchema] : []
 }
 
+/**
+ * Filter one schema's storage units for a database export. System objects
+ * (engine-, extension-, or platform-provisioned) follow the same visibility
+ * rule as the sidebar: excluded unless the user has revealed them.
+ */
+export function filterDatabaseExportUnits<T extends { system: boolean }>(
+  units: T[],
+  includeSystemObjects: boolean,
+): T[] {
+  return includeSystemObjects ? units : units.filter((unit) => !unit.system)
+}
+
 /** Build the ZIP entry path for a storage unit export. */
 export function formatDatabaseExportEntryName(
   connectionType: ConnectionType | undefined,
