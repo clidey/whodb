@@ -52,6 +52,10 @@ _Avoid_: card-only view
 A Redis **Database Resource** addressed by key name.
 _Avoid_: table, collection
 
+**System Object**:
+A **Database Resource** provisioned by the database engine, an installed extension, or platform tooling rather than authored by the user.
+_Avoid_: internal table, hidden table
+
 **Database Export**:
 A database operation where a user extracts database content from the active **Database Connection** into a downloadable format.
 _Avoid_: backup when the export is not restorable, dump when only row data is exported
@@ -104,6 +108,7 @@ _Avoid_: widget when the data visualization is meant
 - A **Workspace Tab** belongs to the **Database Workspace**.
 - A **Workspace Tab** can be tied to one **Database Resource**.
 - A **SQL Table**, **SQL View**, **MongoDB Collection**, and **Redis Key** are each a kind of **Database Resource**.
+- A **System Object** is a **Database Resource** that stays hidden until a user reveals system objects for its database.
 - A **MongoDB Collection** contains zero or more **MongoDB Documents**.
 - A **Collection Table View** and a **JSON View** are alternate views of a **MongoDB Collection**.
 - A **Database Export** extracts content from exactly one active **Database Connection**.
