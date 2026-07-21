@@ -21,11 +21,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/textarea"
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/textarea"
+	"charm.land/bubbles/v2/textinput"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/clidey/whodb/cli/pkg/styles"
 	"github.com/clidey/whodb/core/src/engine"
 )
@@ -187,7 +187,7 @@ func (v *RowWriteView) Update(msg tea.Msg) (*RowWriteView, tea.Cmd) {
 		}
 		return v, tea.Batch(cmds...)
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		if v.working {
 			if msg.String() == "ctrl+c" {
 				return v, tea.Quit
@@ -258,7 +258,7 @@ func (v *RowWriteView) applyDimensions() {
 	}
 	v.textarea.SetHeight(height)
 	for idx := range v.inputs {
-		v.inputs[idx].Width = clamp(v.width-12, 24, 96)
+		v.inputs[idx].SetWidth(clamp(v.width-12, 24, 96))
 	}
 }
 
@@ -646,10 +646,12 @@ func buildRowInputs(columns []engine.Column) []textinput.Model {
 		input := textinput.New()
 		input.Placeholder = rowInputPlaceholder(column)
 		input.CharLimit = 0
-		input.Width = 72
-		input.PromptStyle = lipgloss.NewStyle().Foreground(styles.Primary)
-		input.TextStyle = lipgloss.NewStyle().Foreground(styles.Foreground)
-		input.Cursor.Style = lipgloss.NewStyle().Foreground(styles.Primary)
+		input.SetWidth(72)
+		inputStyles := input.Styles()
+		inputStyles.Focused.Prompt = lipgloss.NewStyle().Foreground(styles.Primary)
+		inputStyles.Focused.Text = lipgloss.NewStyle().Foreground(styles.Foreground)
+		inputStyles.Cursor.Color = styles.Primary
+		input.SetStyles(inputStyles)
 		inputs = append(inputs, input)
 	}
 	return inputs

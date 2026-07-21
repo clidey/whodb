@@ -24,12 +24,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/list"
-	"github.com/charmbracelet/bubbles/textinput"
-	"github.com/charmbracelet/bubbles/viewport"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/list"
+	"charm.land/bubbles/v2/textinput"
+	"charm.land/bubbles/v2/viewport"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	cloudruntime "github.com/clidey/whodb/cli/internal/cloud"
 	"github.com/clidey/whodb/cli/internal/config"
 	"github.com/clidey/whodb/cli/internal/connectionopts"
@@ -220,10 +220,12 @@ func NewConnectionView(parent *MainModel) *ConnectionView {
 		ti := textinput.New()
 		ti.Placeholder = placeholder
 		ti.CharLimit = charLimit
-		ti.Width = 40
-		ti.PromptStyle = lipgloss.NewStyle().Foreground(styles.Primary)
-		ti.TextStyle = lipgloss.NewStyle().Foreground(styles.Foreground)
-		ti.Cursor.Style = lipgloss.NewStyle().Foreground(styles.Primary)
+		ti.SetWidth(40)
+		tiStyles := ti.Styles()
+		tiStyles.Focused.Prompt = lipgloss.NewStyle().Foreground(styles.Primary)
+		tiStyles.Focused.Text = lipgloss.NewStyle().Foreground(styles.Foreground)
+		tiStyles.Cursor.Color = styles.Primary
+		ti.SetStyles(tiStyles)
 		return ti
 	}
 
@@ -356,12 +358,12 @@ func (v *ConnectionView) updateList(msg tea.Msg) (*ConnectionView, tea.Cmd) {
 		v.height = msg.Height
 		return v, nil
 
-	case tea.MouseMsg:
+	case tea.MouseWheelMsg:
 		switch msg.Button {
-		case tea.MouseButtonWheelUp:
+		case tea.MouseWheelUp:
 			v.list.CursorUp()
 			return v, nil
-		case tea.MouseButtonWheelDown:
+		case tea.MouseWheelDown:
 			v.list.CursorDown()
 			return v, nil
 		}
@@ -377,7 +379,7 @@ func (v *ConnectionView) updateList(msg tea.Msg) (*ConnectionView, tea.Cmd) {
 		}
 		return v, nil
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch {
 		case key.Matches(msg, Keys.ConnectionList.Down):
 			v.list.CursorDown()
@@ -443,7 +445,7 @@ func (v *ConnectionView) updateList(msg tea.Msg) (*ConnectionView, tea.Cmd) {
 	}
 
 	// Clear ESC confirmation on any non-ESC key press
-	if km, ok := msg.(tea.KeyMsg); ok && km.String() != "esc" {
+	if km, ok := msg.(tea.KeyPressMsg); ok && km.String() != "esc" {
 		v.escPressed = false
 	}
 
@@ -486,7 +488,7 @@ func (v *ConnectionView) updateForm(msg tea.Msg) (*ConnectionView, tea.Cmd) {
 	// Handle deferred password prompt overlay
 	if v.awaitingPassword {
 		switch m := msg.(type) {
-		case tea.KeyMsg:
+		case tea.KeyPressMsg:
 			switch m.String() {
 			case "enter":
 				// Set the password and proceed to connect
@@ -512,7 +514,7 @@ func (v *ConnectionView) updateForm(msg tea.Msg) (*ConnectionView, tea.Cmd) {
 		v.width = msg.Width
 		v.height = msg.Height
 		if !v.formReady {
-			v.formViewport = viewport.New(msg.Width-4, msg.Height-8)
+			v.formViewport = viewport.New(viewport.WithWidth(msg.Width-4), viewport.WithHeight(msg.Height-8))
 			v.formViewport.MouseWheelEnabled = true
 			v.formReady = true
 		}
@@ -543,7 +545,7 @@ func (v *ConnectionView) updateForm(msg tea.Msg) (*ConnectionView, tea.Cmd) {
 		}
 		return v, nil
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "ctrl+c":
 			return v, tea.Quit
@@ -603,14 +605,14 @@ func (v *ConnectionView) updateForm(msg tea.Msg) (*ConnectionView, tea.Cmd) {
 			}
 			return v, nil
 
-		case "enter", " ":
+		case "enter", "space":
 			if v.focusIndex == focusSSHToggle {
 				v.sshEnabled = !v.sshEnabled
 				v.visibleFields = getVisibleFields(v.dbTypes[v.dbTypeIndex])
 				return v, nil
 			}
 			if v.focusIndex == focusSSLMode {
-				if msg.String() == " " {
+				if msg.String() == "space" {
 					sslModes := v.sslModes()
 					if len(sslModes) > 0 {
 						v.sslModeIndex++
@@ -623,7 +625,7 @@ func (v *ConnectionView) updateForm(msg tea.Msg) (*ConnectionView, tea.Cmd) {
 				v.nextInput()
 				return v, nil
 			}
-			if msg.String() == " " {
+			if msg.String() == "space" {
 				// Space only toggles SSH; don't propagate to other fields
 				break
 			}
@@ -732,9 +734,9 @@ func (v *ConnectionView) renderForm() string {
 	// Set responsive input widths before rendering
 	iw := v.inputWidth()
 	for i := range v.inputs {
-		v.inputs[i].Width = iw
+		v.inputs[i].SetWidth(iw)
 	}
-	v.passwordPrompt.Width = iw
+	v.passwordPrompt.SetWidth(iw)
 
 	// Build form body for the viewport
 	var body strings.Builder
@@ -903,8 +905,8 @@ func (v *ConnectionView) renderForm() string {
 		if vpHeight < 3 {
 			vpHeight = 3
 		}
-		v.formViewport.Height = vpHeight
-		v.formViewport.Width = v.width - 4
+		v.formViewport.SetHeight(vpHeight)
+		v.formViewport.SetWidth(v.width - 4)
 		v.formViewport.SetContent(body.String())
 	}
 
@@ -1324,8 +1326,8 @@ func (v *ConnectionView) scrollToFocused() {
 		return
 	}
 
-	vpHeight := v.formViewport.Height
-	offset := v.formViewport.YOffset
+	vpHeight := v.formViewport.Height()
+	offset := v.formViewport.YOffset()
 
 	if line < offset+1 {
 		newOffset := line - 1

@@ -20,7 +20,7 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/clidey/whodb/cli/internal/history"
 )
 
@@ -61,7 +61,7 @@ func TestHistoryView_ClearConfirmation_Enter(t *testing.T) {
 	defer cleanup()
 
 	// Press shift+D to enter confirmation mode
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'D'}}
+	msg := tea.KeyPressMsg{Text: "D", Code: 'D'}
 	v, _ = v.Update(msg)
 
 	if !v.confirmingClear {
@@ -82,7 +82,7 @@ func TestHistoryView_ClearConfirmation_Confirm(t *testing.T) {
 	v.confirmingClear = true
 
 	// Confirm with 'y'
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'y'}}
+	msg := tea.KeyPressMsg{Text: "y", Code: 'y'}
 	v, _ = v.Update(msg)
 
 	if v.confirmingClear {
@@ -105,7 +105,7 @@ func TestHistoryView_ClearConfirmation_ConfirmUppercase(t *testing.T) {
 	v.confirmingClear = true
 
 	// Confirm with 'Y' (uppercase)
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'Y'}}
+	msg := tea.KeyPressMsg{Text: "Y", Code: 'Y'}
 	v, _ = v.Update(msg)
 
 	if v.confirmingClear {
@@ -128,7 +128,7 @@ func TestHistoryView_ClearConfirmation_Cancel_N(t *testing.T) {
 	v.confirmingClear = true
 
 	// Cancel with 'n'
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'n'}}
+	msg := tea.KeyPressMsg{Text: "n", Code: 'n'}
 	v, _ = v.Update(msg)
 
 	if v.confirmingClear {
@@ -151,7 +151,7 @@ func TestHistoryView_ClearConfirmation_Cancel_Esc(t *testing.T) {
 	v.confirmingClear = true
 
 	// Cancel with Esc
-	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	msg := tea.KeyPressMsg{Code: tea.KeyEsc}
 	v, _ = v.Update(msg)
 
 	if v.confirmingClear {
@@ -170,7 +170,7 @@ func TestHistoryView_Escape_GoesBack(t *testing.T) {
 
 	v.confirmingClear = false
 
-	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	msg := tea.KeyPressMsg{Code: tea.KeyEsc}
 	v, _ = v.Update(msg)
 
 	if v.parent.mode != ViewBrowser {
@@ -239,11 +239,11 @@ func TestHistoryView_MouseScroll(t *testing.T) {
 	v.refreshList()
 
 	// Mouse wheel down
-	msg := tea.MouseMsg{Button: tea.MouseButtonWheelDown}
+	msg := tea.MouseWheelMsg{Button: tea.MouseWheelDown}
 	v, _ = v.Update(msg)
 
 	// Mouse wheel up
-	msg = tea.MouseMsg{Button: tea.MouseButtonWheelUp}
+	msg = tea.MouseWheelMsg{Button: tea.MouseWheelUp}
 	_, _ = v.Update(msg)
 	// Just ensure no panic
 }
@@ -381,7 +381,7 @@ func TestHistoryView_RetryPrompt_EscCancels(t *testing.T) {
 	v.parent.err = nil
 
 	// Send ESC key
-	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	msg := tea.KeyPressMsg{Code: tea.KeyEsc}
 	v, _ = v.Update(msg)
 
 	// Verify retry prompt was dismissed
@@ -416,7 +416,7 @@ func TestHistoryView_RetryPrompt_KeyHandling(t *testing.T) {
 			v.parent.err = nil
 
 			// Send number key
-			msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(tt.key)}
+			msg := tea.KeyPressMsg{Text: tt.key, Code: rune(tt.key[0])}
 			v, cmd := v.Update(msg)
 
 			// Verify retry prompt was dismissed
@@ -445,7 +445,7 @@ func TestHistoryView_RetryPrompt_IgnoresOtherKeys(t *testing.T) {
 	v.retryPrompt.Show("SELECT * FROM test")
 
 	// Send an unrelated key (like 'a')
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("a")}
+	msg := tea.KeyPressMsg{Text: "a", Code: 'a'}
 	v, _ = v.Update(msg)
 
 	// Verify retry prompt is still active

@@ -23,10 +23,10 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/viewport"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/viewport"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/clidey/whodb/cli/pkg/styles"
 )
 
@@ -65,7 +65,7 @@ func (v *JSONViewer) Update(msg tea.Msg) (*JSONViewer, tea.Cmd) {
 		v.initViewport()
 		return v, nil
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		if key.Matches(msg, Keys.Global.Back) {
 			if !v.parent.PopView() {
 				v.parent.mode = ViewResults
@@ -127,7 +127,7 @@ func (v *JSONViewer) initViewport() {
 		contentHeight = 3
 	}
 
-	v.viewport = viewport.New(contentWidth, contentHeight)
+	v.viewport = viewport.New(viewport.WithWidth(contentWidth), viewport.WithHeight(contentHeight))
 	v.viewport.SetContent(highlightJSON(v.rawContent))
 	v.ready = true
 }

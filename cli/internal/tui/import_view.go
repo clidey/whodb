@@ -21,9 +21,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/textinput"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/clidey/whodb/cli/internal/database"
 	"github.com/clidey/whodb/cli/pkg/styles"
 )
@@ -79,19 +79,23 @@ func NewImportView(parent *MainModel) *ImportView {
 	fi := textinput.New()
 	fi.Placeholder = "path/to/data.csv"
 	fi.CharLimit = 256
-	fi.Width = 50
-	fi.PromptStyle = lipgloss.NewStyle().Foreground(styles.Primary)
-	fi.TextStyle = lipgloss.NewStyle().Foreground(styles.Foreground)
-	fi.Cursor.Style = lipgloss.NewStyle().Foreground(styles.Primary)
+	fi.SetWidth(50)
+	fiStyles := fi.Styles()
+	fiStyles.Focused.Prompt = lipgloss.NewStyle().Foreground(styles.Primary)
+	fiStyles.Focused.Text = lipgloss.NewStyle().Foreground(styles.Foreground)
+	fiStyles.Cursor.Color = styles.Primary
+	fi.SetStyles(fiStyles)
 	fi.Focus()
 
 	ti := textinput.New()
 	ti.Placeholder = "table_name"
 	ti.CharLimit = 100
-	ti.Width = 30
-	ti.PromptStyle = lipgloss.NewStyle().Foreground(styles.Primary)
-	ti.TextStyle = lipgloss.NewStyle().Foreground(styles.Foreground)
-	ti.Cursor.Style = lipgloss.NewStyle().Foreground(styles.Primary)
+	ti.SetWidth(30)
+	tiStyles := ti.Styles()
+	tiStyles.Focused.Prompt = lipgloss.NewStyle().Foreground(styles.Primary)
+	tiStyles.Focused.Text = lipgloss.NewStyle().Foreground(styles.Foreground)
+	tiStyles.Cursor.Color = styles.Primary
+	ti.SetStyles(tiStyles)
 
 	return &ImportView{
 		parent:      parent,
@@ -135,7 +139,7 @@ func (v *ImportView) Update(msg tea.Msg) (*ImportView, tea.Cmd) {
 		v.height = msg.Height
 		return v, nil
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "esc":
 			if v.step == importStepDone {
@@ -166,7 +170,7 @@ func (v *ImportView) Update(msg tea.Msg) (*ImportView, tea.Cmd) {
 	return v, cmd
 }
 
-func (v *ImportView) updateFileStep(msg tea.KeyMsg) (*ImportView, tea.Cmd) {
+func (v *ImportView) updateFileStep(msg tea.KeyPressMsg) (*ImportView, tea.Cmd) {
 	switch msg.String() {
 	case "enter":
 		if v.fileInput.Value() != "" {
@@ -192,7 +196,7 @@ func (v *ImportView) updateFileStep(msg tea.KeyMsg) (*ImportView, tea.Cmd) {
 	return v, nil
 }
 
-func (v *ImportView) updateTableStep(msg tea.KeyMsg) (*ImportView, tea.Cmd) {
+func (v *ImportView) updateTableStep(msg tea.KeyPressMsg) (*ImportView, tea.Cmd) {
 	switch msg.String() {
 	case "enter":
 		if v.tableInput.Value() != "" {
@@ -206,7 +210,7 @@ func (v *ImportView) updateTableStep(msg tea.KeyMsg) (*ImportView, tea.Cmd) {
 	return v, nil
 }
 
-func (v *ImportView) updateOptionsStep(msg tea.KeyMsg) (*ImportView, tea.Cmd) {
+func (v *ImportView) updateOptionsStep(msg tea.KeyPressMsg) (*ImportView, tea.Cmd) {
 	switch msg.String() {
 	case "up", "k":
 		if v.focusIndex > 0 {
@@ -216,7 +220,7 @@ func (v *ImportView) updateOptionsStep(msg tea.KeyMsg) (*ImportView, tea.Cmd) {
 		if v.focusIndex < 2 { // 3 options: header, create-table, [Import]
 			v.focusIndex++
 		}
-	case " ", "enter":
+	case "space", "enter":
 		switch v.focusIndex {
 		case 0:
 			v.hasHeader = !v.hasHeader
@@ -230,7 +234,7 @@ func (v *ImportView) updateOptionsStep(msg tea.KeyMsg) (*ImportView, tea.Cmd) {
 	return v, nil
 }
 
-func (v *ImportView) updatePreviewStep(msg tea.KeyMsg) (*ImportView, tea.Cmd) {
+func (v *ImportView) updatePreviewStep(msg tea.KeyPressMsg) (*ImportView, tea.Cmd) {
 	switch msg.String() {
 	case "enter", "i":
 		// Start import

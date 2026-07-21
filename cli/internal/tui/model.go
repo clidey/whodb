@@ -21,10 +21,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/spinner"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/spinner"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/clidey/whodb/cli/internal/config"
 	"github.com/clidey/whodb/cli/internal/database"
@@ -269,7 +269,7 @@ func (m *MainModel) Init() tea.Cmd {
 		styles.SetTheme(t)
 	}
 
-	cmds := []tea.Cmd{m.spinner.Tick}
+	cmds := []tea.Cmd{m.spinner.Tick, tea.RequestBackgroundColor}
 	if m.mode == ViewConnection {
 		cmds = append(cmds, m.connectionView.Init())
 	}
@@ -284,7 +284,7 @@ func (m *MainModel) Init() tea.Cmd {
 func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if m.err != nil {
 		switch msg := msg.(type) {
-		case tea.KeyMsg:
+		case tea.KeyPressMsg:
 			if msg.String() == "ctrl+c" || msg.String() == "q" {
 				return m, tea.Quit
 			}
@@ -310,7 +310,7 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	// If showing help, any key dismisses it
 	if m.showingHelp {
-		if _, ok := msg.(tea.KeyMsg); ok {
+		if _, ok := msg.(tea.KeyPressMsg); ok {
 			m.showingHelp = false
 			return m, nil
 		}
@@ -332,6 +332,10 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.pendingConfigSave = false
 		_ = m.config.Save()
+		return m, nil
+
+	case tea.BackgroundColorMsg:
+		styles.SetDarkBackground(msg.IsDark())
 		return m, nil
 
 	case tea.WindowSizeMsg:
@@ -368,7 +372,7 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "ctrl+c":
 			return m, tea.Batch(m.flushConfigSave(), tea.Quit)
@@ -692,14 +696,14 @@ func (m *MainModel) updateRowWriteView(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m *MainModel) View() string {
+func (m *MainModel) View() tea.View {
 	if m.err != nil {
-		return renderError(m.err.Error())
+		return m.newView(renderError(m.err.Error()))
 	}
 
 	// Show help overlay if active
 	if m.showingHelp {
-		return m.renderHelpOverlay()
+		return m.newView(m.renderHelpOverlay())
 	}
 
 	viewIndicator := m.renderViewIndicator()
@@ -786,7 +790,16 @@ func (m *MainModel) View() string {
 		}
 	}
 
-	return output
+	return m.newView(output)
+}
+
+// newView wraps content in a tea.View with alt-screen and mouse support enabled,
+// replacing the removed tea.WithAltScreen/tea.WithMouseCellMotion ProgramOptions.
+func (m *MainModel) newView(content string) tea.View {
+	v := tea.NewView(content)
+	v.AltScreen = true
+	v.MouseMode = tea.MouseModeCellMotion
+	return v
 }
 
 // SetStatus sets a transient status message that auto-dismisses after 3 seconds.

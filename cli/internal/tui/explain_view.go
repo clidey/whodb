@@ -17,14 +17,15 @@
 package tui
 
 import (
+	"image/color"
 	"regexp"
 	"strconv"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/viewport"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/viewport"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/clidey/whodb/cli/pkg/styles"
 )
 
@@ -67,7 +68,7 @@ func (v *ExplainView) Update(msg tea.Msg) (*ExplainView, tea.Cmd) {
 		v.initViewport()
 		return v, nil
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		if key.Matches(msg, Keys.Global.Back) {
 			if !v.parent.PopView() {
 				v.parent.mode = ViewEditor
@@ -150,7 +151,7 @@ func (v *ExplainView) initViewport() {
 		contentHeight = 3
 	}
 
-	v.viewport = viewport.New(contentWidth, contentHeight)
+	v.viewport = viewport.New(viewport.WithWidth(contentWidth), viewport.WithHeight(contentHeight))
 	v.viewport.SetContent(colorizePlan(v.plan))
 	v.ready = true
 }
@@ -189,15 +190,15 @@ func colorizePlanLine(line string) string {
 		return line
 	}
 
-	var color lipgloss.AdaptiveColor
+	var lineColor color.Color
 	switch {
 	case cost < 100:
-		color = styles.Success
+		lineColor = styles.Success
 	case cost <= 1000:
-		color = styles.Warning
+		lineColor = styles.Warning
 	default:
-		color = styles.Error
+		lineColor = styles.Error
 	}
 
-	return lipgloss.NewStyle().Foreground(color).Render(line)
+	return lipgloss.NewStyle().Foreground(lineColor).Render(line)
 }

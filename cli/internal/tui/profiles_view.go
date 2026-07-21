@@ -20,10 +20,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/textinput"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/clidey/whodb/cli/internal/config"
 	"github.com/clidey/whodb/cli/pkg/styles"
 )
@@ -44,10 +44,12 @@ func NewProfilesView(parent *MainModel) *ProfilesView {
 	ni := textinput.New()
 	ni.Placeholder = "profile name"
 	ni.CharLimit = 50
-	ni.Width = 30
-	ni.PromptStyle = lipgloss.NewStyle().Foreground(styles.Primary)
-	ni.TextStyle = lipgloss.NewStyle().Foreground(styles.Foreground)
-	ni.Cursor.Style = lipgloss.NewStyle().Foreground(styles.Primary)
+	ni.SetWidth(30)
+	niStyles := ni.Styles()
+	niStyles.Focused.Prompt = lipgloss.NewStyle().Foreground(styles.Primary)
+	niStyles.Focused.Text = lipgloss.NewStyle().Foreground(styles.Foreground)
+	niStyles.Cursor.Color = styles.Primary
+	ni.SetStyles(niStyles)
 
 	return &ProfilesView{
 		parent:    parent,
@@ -64,14 +66,14 @@ func (v *ProfilesView) Update(msg tea.Msg) (*ProfilesView, tea.Cmd) {
 		v.height = msg.Height
 		return v, nil
 
-	case tea.MouseMsg:
+	case tea.MouseWheelMsg:
 		switch msg.Button {
-		case tea.MouseButtonWheelUp:
+		case tea.MouseWheelUp:
 			if v.cursor > 0 {
 				v.cursor--
 			}
 			return v, nil
-		case tea.MouseButtonWheelDown:
+		case tea.MouseWheelDown:
 			profiles := v.parent.config.GetProfiles()
 			if v.cursor < len(profiles)-1 {
 				v.cursor++
@@ -79,7 +81,7 @@ func (v *ProfilesView) Update(msg tea.Msg) (*ProfilesView, tea.Cmd) {
 			return v, nil
 		}
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		// Handle name input mode
 		if v.naming {
 			switch msg.String() {

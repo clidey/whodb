@@ -17,8 +17,8 @@
 package tui
 
 import (
-	"github.com/charmbracelet/bubbles/key"
-	tea "github.com/charmbracelet/bubbletea"
+	"charm.land/bubbles/v2/key"
+	tea "charm.land/bubbletea/v2"
 	"github.com/clidey/whodb/cli/pkg/styles"
 )
 
@@ -57,7 +57,7 @@ func (v *BrowserView) SetDimensions(width, height int) {
 	columnWidth := 25
 	available := width - 8
 	v.columnsPerRow = clamp(available/columnWidth, 1, 6)
-	v.filterInput.Width = clamp(width-20, 15, 50)
+	v.filterInput.SetWidth(clamp(width-20, 15, 50))
 }
 func (v *BrowserView) Focusable() bool   { return true }
 func (v *BrowserView) OnFocus()          {}

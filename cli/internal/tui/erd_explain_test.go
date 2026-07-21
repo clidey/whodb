@@ -22,7 +22,7 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/clidey/whodb/cli/internal/config"
 	"github.com/clidey/whodb/core/src/engine"
 
@@ -82,7 +82,7 @@ func TestERDView_TabCyclesTables(t *testing.T) {
 	}
 
 	// Tab should cycle to next table, NOT switch views
-	m.Update(tea.KeyMsg{Type: tea.KeyTab})
+	m.Update(tea.KeyPressMsg{Code: tea.KeyTab})
 	if m.erdView.focusedIndex != 1 {
 		t.Errorf("After Tab: focusedIndex should be 1, got %d", m.erdView.focusedIndex)
 	}
@@ -91,7 +91,7 @@ func TestERDView_TabCyclesTables(t *testing.T) {
 	}
 
 	// Tab again wraps
-	m.Update(tea.KeyMsg{Type: tea.KeyTab})
+	m.Update(tea.KeyPressMsg{Code: tea.KeyTab})
 	if m.erdView.focusedIndex != 0 {
 		t.Errorf("After Tab2: focusedIndex should wrap to 0, got %d", m.erdView.focusedIndex)
 	}
@@ -110,12 +110,12 @@ func TestERDView_ZoomToggle(t *testing.T) {
 		t.Fatal("should start expanded")
 	}
 
-	m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'z'}})
+	m.Update(tea.KeyPressMsg{Text: "z", Code: 'z'})
 	if !m.erdView.compact {
 		t.Error("should be compact after z")
 	}
 
-	m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'z'}})
+	m.Update(tea.KeyPressMsg{Text: "z", Code: 'z'})
 	if m.erdView.compact {
 		t.Error("should be expanded after second z")
 	}
@@ -129,7 +129,7 @@ func TestERDView_EscCloses(t *testing.T) {
 		t.Fatal("should be in ViewERD")
 	}
 
-	m.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	m.Update(tea.KeyPressMsg{Code: tea.KeyEsc})
 	if m.mode == ViewERD {
 		t.Error("Esc should close ERD view")
 	}
@@ -306,7 +306,7 @@ func TestExplainView_EscCloses(t *testing.T) {
 		t.Fatal("should be in ViewExplain")
 	}
 
-	m.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	m.Update(tea.KeyPressMsg{Code: tea.KeyEsc})
 	if m.mode == ViewExplain {
 		t.Error("Esc should close Explain view")
 	}

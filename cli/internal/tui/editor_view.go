@@ -25,10 +25,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/textarea"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/textarea"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/clidey/whodb/cli/pkg/styles"
 	"github.com/clidey/whodb/core/src/querysuggestions"
 )
@@ -163,22 +163,22 @@ func (v *EditorView) Update(msg tea.Msg) (*EditorView, tea.Cmd) {
 		v.applyWindowSize(msg.Width, msg.Height)
 		return v, nil
 
-	case tea.MouseMsg:
+	case tea.MouseWheelMsg:
 		if v.showSuggestions && len(v.filteredSuggestions) > 0 {
 			switch msg.Button {
-			case tea.MouseButtonWheelUp:
+			case tea.MouseWheelUp:
 				v.selectedSuggestion--
 				if v.selectedSuggestion < 0 {
 					v.selectedSuggestion = len(v.filteredSuggestions) - 1
 				}
 				return v, nil
-			case tea.MouseButtonWheelDown:
+			case tea.MouseWheelDown:
 				v.selectedSuggestion = (v.selectedSuggestion + 1) % len(v.filteredSuggestions)
 				return v, nil
 			}
 		}
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		// Handle retry prompt for timed out queries
 		if v.retryPrompt.IsActive() {
 			result, handled := v.retryPrompt.HandleKeyMsg(msg.String())
@@ -197,7 +197,7 @@ func (v *EditorView) Update(msg tea.Msg) (*EditorView, tea.Cmd) {
 
 		// IMPORTANT: Check for execute query shortcut FIRST before passing to textarea
 		// Alt+Enter (Option+Enter on macOS) - works reliably across all platforms
-		if msg.Type == tea.KeyEnter && msg.Alt {
+		if msg.Code == tea.KeyEnter && msg.Mod.Contains(tea.ModAlt) {
 			return v, v.executeQuery()
 		}
 
@@ -213,13 +213,7 @@ func (v *EditorView) Update(msg tea.Msg) (*EditorView, tea.Cmd) {
 		}
 
 		// Ctrl+Space to manually trigger autocomplete
-		// Ctrl+@ is how Ctrl+Space is typically represented in terminals (ASCII 0)
-		if msg.Type == tea.KeyCtrlAt {
-			v.triggerAutocomplete()
-			return v, nil
-		}
-		// Also check for null rune
-		if msg.Type == tea.KeyRunes && len(msg.Runes) > 0 && msg.Runes[0] == 0 {
+		if msg.Code == tea.KeySpace && msg.Mod.Contains(tea.ModCtrl) {
 			v.triggerAutocomplete()
 			return v, nil
 		}
@@ -241,39 +235,39 @@ func (v *EditorView) Update(msg tea.Msg) (*EditorView, tea.Cmd) {
 
 		// Handle autocomplete navigation when suggestions are shown
 		if v.showSuggestions && len(v.filteredSuggestions) > 0 {
-			switch msg.Type {
-			case tea.KeyTab:
+			switch {
+			case msg.Code == tea.KeyTab && !msg.Mod.Contains(tea.ModShift):
 				v.selectedSuggestion = (v.selectedSuggestion + 1) % len(v.filteredSuggestions)
 				return v, nil
 
-			case tea.KeyShiftTab:
+			case msg.Code == tea.KeyTab && msg.Mod.Contains(tea.ModShift):
 				v.selectedSuggestion--
 				if v.selectedSuggestion < 0 {
 					v.selectedSuggestion = len(v.filteredSuggestions) - 1
 				}
 				return v, nil
 
-			case tea.KeyDown, tea.KeyCtrlN:
+			case msg.Code == tea.KeyDown || (msg.Code == 'n' && msg.Mod.Contains(tea.ModCtrl)):
 				v.selectedSuggestion = (v.selectedSuggestion + 1) % len(v.filteredSuggestions)
 				return v, nil
 
-			case tea.KeyUp, tea.KeyCtrlP:
+			case msg.Code == tea.KeyUp || (msg.Code == 'p' && msg.Mod.Contains(tea.ModCtrl)):
 				v.selectedSuggestion--
 				if v.selectedSuggestion < 0 {
 					v.selectedSuggestion = len(v.filteredSuggestions) - 1
 				}
 				return v, nil
 
-			case tea.KeyEnter:
-				if !msg.Alt {
+			case msg.Code == tea.KeyEnter:
+				if !msg.Mod.Contains(tea.ModAlt) {
 					v.acceptSuggestion()
 					return v, nil
 				}
 			}
 		}
 
-		switch msg.Type {
-		case tea.KeyEsc:
+		switch {
+		case msg.Code == tea.KeyEsc:
 			// If a query is running, cancel it
 			if v.queryState == OperationRunning && v.queryCancel != nil {
 				v.queryCancel()
@@ -290,7 +284,7 @@ func (v *EditorView) Update(msg tea.Msg) (*EditorView, tea.Cmd) {
 			}
 			return v, nil
 
-		case tea.KeyRight:
+		case msg.Code == tea.KeyRight && !msg.Mod.Contains(tea.ModShift):
 			// Accept ghost text when cursor is at end of text
 			text := v.textarea.Value()
 			li := v.textarea.LineInfo()
@@ -302,7 +296,7 @@ func (v *EditorView) Update(msg tea.Msg) (*EditorView, tea.Cmd) {
 			}
 			// Fall through to let textarea handle normal right-arrow
 
-		case tea.KeyCtrlF:
+		case msg.Code == 'f' && msg.Mod.Contains(tea.ModCtrl):
 			// Format/prettify the SQL in the textarea
 			text := v.textarea.Value()
 			if text != "" {
@@ -314,23 +308,23 @@ func (v *EditorView) Update(msg tea.Msg) (*EditorView, tea.Cmd) {
 			}
 			return v, nil
 
-		case tea.KeyCtrlO:
+		case msg.Code == 'o' && msg.Mod.Contains(tea.ModCtrl):
 			// Open current query in external editor
 			return v, v.openExternalEditor()
 
-		case tea.KeyCtrlN:
+		case msg.Code == 'n' && msg.Mod.Contains(tea.ModCtrl):
 			// New query tab
 			v.addTab()
 			v.refreshLayout()
 			return v, nil
 
-		case tea.KeyCtrlW:
+		case msg.Code == 'w' && msg.Mod.Contains(tea.ModCtrl):
 			// Close current query tab
 			v.closeTab()
 			v.refreshLayout()
 			return v, nil
 
-		case tea.KeyShiftLeft, tea.KeyCtrlPgUp:
+		case (msg.Code == tea.KeyLeft && msg.Mod.Contains(tea.ModShift)) || (msg.Code == tea.KeyPgUp && msg.Mod.Contains(tea.ModCtrl)):
 			// Switch to previous editor tab
 			if len(v.buffers) > 1 && v.activeTab > 0 {
 				v.switchToTab(v.activeTab - 1)
@@ -338,7 +332,7 @@ func (v *EditorView) Update(msg tea.Msg) (*EditorView, tea.Cmd) {
 				return v, nil
 			}
 
-		case tea.KeyShiftRight, tea.KeyCtrlPgDown:
+		case (msg.Code == tea.KeyRight && msg.Mod.Contains(tea.ModShift)) || (msg.Code == tea.KeyPgDown && msg.Mod.Contains(tea.ModCtrl)):
 			// Switch to next editor tab
 			if len(v.buffers) > 1 && v.activeTab < len(v.buffers)-1 {
 				v.switchToTab(v.activeTab + 1)
@@ -349,7 +343,7 @@ func (v *EditorView) Update(msg tea.Msg) (*EditorView, tea.Cmd) {
 	}
 
 	// Only schedule debounce for actual key events, not spinner ticks etc.
-	keyMsg, isKeyMsg := msg.(tea.KeyMsg)
+	keyMsg, isKeyMsg := msg.(tea.KeyPressMsg)
 	prevText := v.textarea.Value()
 	prevCursorPos := v.cursorPos
 

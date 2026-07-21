@@ -20,7 +20,7 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/engine"
 )
@@ -208,7 +208,7 @@ func TestWhereView_AddCondition_A(t *testing.T) {
 	v.SetTableContext("public", "users", []engine.Column{{Name: "id", Type: "integer"}}, nil)
 
 	// Press 'a' to add new condition
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'a'}}
+	msg := tea.KeyPressMsg{Text: "a", Code: 'a'}
 	v, _ = v.Update(msg)
 
 	if !v.addingNew {
@@ -232,7 +232,7 @@ func TestWhereView_AddCondition_Navigation(t *testing.T) {
 	v.focusIndex = 0
 
 	// Navigate down through fields
-	msg := tea.KeyMsg{Type: tea.KeyDown}
+	msg := tea.KeyPressMsg{Code: tea.KeyDown}
 	v, _ = v.Update(msg)
 	if v.focusIndex != 1 {
 		t.Errorf("Expected focusIndex 1 after down, got %d", v.focusIndex)
@@ -255,7 +255,7 @@ func TestWhereView_AddCondition_Navigation(t *testing.T) {
 	}
 
 	// Navigate up
-	msg = tea.KeyMsg{Type: tea.KeyUp}
+	msg = tea.KeyPressMsg{Code: tea.KeyUp}
 	v, _ = v.Update(msg)
 	if v.focusIndex != 3 {
 		t.Errorf("Expected focusIndex 3 after up from 0, got %d", v.focusIndex)
@@ -276,7 +276,7 @@ func TestWhereView_FieldSelection_LeftRight(t *testing.T) {
 	v.currentField = ""
 
 	// Right arrow selects first field
-	msg := tea.KeyMsg{Type: tea.KeyRight}
+	msg := tea.KeyPressMsg{Code: tea.KeyRight}
 	v, _ = v.Update(msg)
 	if v.currentField != "id" {
 		t.Errorf("Expected currentField 'id', got '%s'", v.currentField)
@@ -289,7 +289,7 @@ func TestWhereView_FieldSelection_LeftRight(t *testing.T) {
 	}
 
 	// Left goes back
-	msg = tea.KeyMsg{Type: tea.KeyLeft}
+	msg = tea.KeyPressMsg{Code: tea.KeyLeft}
 	v, _ = v.Update(msg)
 	if v.currentField != "id" {
 		t.Errorf("Expected currentField 'id' after left, got '%s'", v.currentField)
@@ -311,7 +311,7 @@ func TestWhereView_OperatorSelection_LeftRight(t *testing.T) {
 	v.currentOp = ""
 
 	// Right arrow selects first operator
-	msg := tea.KeyMsg{Type: tea.KeyRight}
+	msg := tea.KeyPressMsg{Code: tea.KeyRight}
 	v, _ = v.Update(msg)
 	if v.currentOp != "=" {
 		t.Errorf("Expected currentOp '=', got '%s'", v.currentOp)
@@ -333,7 +333,7 @@ func TestWhereView_Escape_CancelsAdding(t *testing.T) {
 	v.currentOp = "="
 	v.valueInput.SetValue("123")
 
-	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	msg := tea.KeyPressMsg{Code: tea.KeyEsc}
 	v, _ = v.Update(msg)
 
 	if v.addingNew {
@@ -359,7 +359,7 @@ func TestWhereView_Escape_GoesBack(t *testing.T) {
 
 	v.addingNew = false
 
-	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	msg := tea.KeyPressMsg{Code: tea.KeyEsc}
 	v, _ = v.Update(msg)
 
 	if v.parent.mode != ViewResults {
@@ -384,7 +384,7 @@ func TestWhereView_DeleteCondition_D(t *testing.T) {
 	// Select the first condition (index 1, after the group header at index 0).
 	v.selectedIndex = 1
 
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}}
+	msg := tea.KeyPressMsg{Text: "d", Code: 'd'}
 	v, _ = v.Update(msg)
 
 	if len(v.groups[0].Conditions) != 1 {
@@ -408,7 +408,7 @@ func TestWhereView_DeleteGroup(t *testing.T) {
 	// Select second group header. Items: [group0, cond0, group1, cond1]
 	v.selectedIndex = 2
 
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}}
+	msg := tea.KeyPressMsg{Text: "d", Code: 'd'}
 	v, _ = v.Update(msg)
 
 	if len(v.groups) != 1 {
@@ -435,7 +435,7 @@ func TestWhereView_EditCondition_CtrlE(t *testing.T) {
 	// Select the condition (index 1, after group header at index 0).
 	v.selectedIndex = 1
 
-	msg := tea.KeyMsg{Type: tea.KeyCtrlE}
+	msg := tea.KeyPressMsg{Code: 'e', Mod: tea.ModCtrl}
 	v, _ = v.Update(msg)
 
 	if !v.addingNew {
@@ -479,7 +479,7 @@ func TestWhereView_ConditionSelection_UpDown(t *testing.T) {
 	v.addingNew = false
 
 	// Down selects first (group header)
-	msg := tea.KeyMsg{Type: tea.KeyDown}
+	msg := tea.KeyPressMsg{Code: tea.KeyDown}
 	v, _ = v.Update(msg)
 	if v.selectedIndex != 0 {
 		t.Errorf("Expected selectedIndex 0, got %d", v.selectedIndex)
@@ -492,7 +492,7 @@ func TestWhereView_ConditionSelection_UpDown(t *testing.T) {
 	}
 
 	// Up moves back to group header
-	msg = tea.KeyMsg{Type: tea.KeyUp}
+	msg = tea.KeyPressMsg{Code: tea.KeyUp}
 	v, _ = v.Update(msg)
 	if v.selectedIndex != 0 {
 		t.Errorf("Expected selectedIndex 0 after up, got %d", v.selectedIndex)
@@ -509,7 +509,7 @@ func TestWhereView_NewGroup_G(t *testing.T) {
 	v.rebuildFlatItems()
 	v.addingNew = false
 
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'g'}}
+	msg := tea.KeyPressMsg{Text: "g", Code: 'g'}
 	v, _ = v.Update(msg)
 
 	if len(v.groups) != 2 {
@@ -532,7 +532,7 @@ func TestWhereView_ToggleLogic_T(t *testing.T) {
 	v.selectedIndex = 0 // group header
 	v.addingNew = false
 
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'t'}}
+	msg := tea.KeyPressMsg{Text: "t", Code: 't'}
 	v, _ = v.Update(msg)
 
 	if v.groups[0].Logic != "OR" {
@@ -558,7 +558,7 @@ func TestWhereView_ToggleLogic_FromConditionItem(t *testing.T) {
 	v.selectedIndex = 1
 	v.addingNew = false
 
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'t'}}
+	msg := tea.KeyPressMsg{Text: "t", Code: 't'}
 	v, _ = v.Update(msg)
 
 	// Should still toggle the parent group's logic.
@@ -850,7 +850,7 @@ func TestWhereView_Navigation_AcrossGroups(t *testing.T) {
 	v.selectedIndex = -1
 	v.addingNew = false
 
-	down := tea.KeyMsg{Type: tea.KeyDown}
+	down := tea.KeyPressMsg{Code: tea.KeyDown}
 
 	// Move down through all items
 	v, _ = v.Update(down) // -> group 0 header (index 0)
@@ -1001,14 +1001,14 @@ func TestWhereView_MouseScroll(t *testing.T) {
 	v.addingNew = false
 
 	// Mouse wheel down
-	msg := tea.MouseMsg{Button: tea.MouseButtonWheelDown}
+	msg := tea.MouseWheelMsg{Button: tea.MouseWheelDown}
 	v, _ = v.Update(msg)
 	if v.selectedIndex != 1 {
 		t.Errorf("Expected selectedIndex 1 after wheel down, got %d", v.selectedIndex)
 	}
 
 	// Mouse wheel up
-	msg = tea.MouseMsg{Button: tea.MouseButtonWheelUp}
+	msg = tea.MouseWheelMsg{Button: tea.MouseWheelUp}
 	v, _ = v.Update(msg)
 	if v.selectedIndex != 0 {
 		t.Errorf("Expected selectedIndex 0 after wheel up, got %d", v.selectedIndex)

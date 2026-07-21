@@ -24,10 +24,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/textarea"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/textarea"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/clidey/whodb/cli/internal/database"
 	"github.com/clidey/whodb/cli/pkg/styles"
 	"github.com/clidey/whodb/core/src/engine"
@@ -83,15 +83,17 @@ func NewChatView(parent *MainModel) *ChatView {
 	ti.SetHeight(3)
 	ti.SetWidth(70)
 	ti.Prompt = ""
-	ti.FocusedStyle.CursorLine = lipgloss.NewStyle()
-	ti.FocusedStyle.Base = lipgloss.NewStyle().
+	tiStyles := textarea.DefaultStyles(styles.DarkBackground())
+	tiStyles.Focused.CursorLine = lipgloss.NewStyle()
+	tiStyles.Focused.Base = lipgloss.NewStyle().
 		BorderStyle(lipgloss.RoundedBorder()).
 		BorderForeground(styles.Primary).
 		Padding(0, 1)
-	ti.BlurredStyle.Base = lipgloss.NewStyle().
+	tiStyles.Blurred.Base = lipgloss.NewStyle().
 		BorderStyle(lipgloss.RoundedBorder()).
 		BorderForeground(styles.Border).
 		Padding(0, 1)
+	ti.SetStyles(tiStyles)
 
 	providers := parent.dbManager.GetAIProviders()
 	selectedProvider := 0
@@ -148,7 +150,7 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 	// Data governance consent handling
 	if !v.consented {
 		switch m := msg.(type) {
-		case tea.KeyMsg:
+		case tea.KeyPressMsg:
 			switch m.String() {
 			case "a":
 				v.consented = true
@@ -322,14 +324,14 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 		v.input.SetWidth(msg.Width - 12)
 		return v, nil
 
-	case tea.MouseMsg:
+	case tea.MouseWheelMsg:
 		switch msg.Button {
-		case tea.MouseButtonWheelUp:
+		case tea.MouseWheelUp:
 			if v.scrollOffset > 0 {
 				v.scrollOffset--
 			}
 			return v, nil
-		case tea.MouseButtonWheelDown:
+		case tea.MouseWheelDown:
 			maxVisible := v.maxVisibleMessages()
 			maxScroll := len(v.messages) - maxVisible
 			if maxScroll < 0 {
@@ -342,7 +344,7 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 		}
 		return v, nil
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		// Handle retry prompt for timed out requests
 		if v.retryPrompt.IsActive() {
 			result, handled := v.retryPrompt.HandleKeyMsg(msg.String())

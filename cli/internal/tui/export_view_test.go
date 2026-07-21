@@ -22,7 +22,7 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/clidey/whodb/core/src/engine"
 )
 
@@ -125,7 +125,7 @@ func TestExportView_Navigation_Tab(t *testing.T) {
 	initialIndex := v.focusIndex
 
 	// Tab moves down
-	msg := tea.KeyMsg{Type: tea.KeyTab}
+	msg := tea.KeyPressMsg{Code: tea.KeyTab}
 	v, _ = v.Update(msg)
 
 	if v.focusIndex != initialIndex+1 {
@@ -141,7 +141,7 @@ func TestExportView_Navigation_UpDown(t *testing.T) {
 	v.focusIndex = 1
 
 	// Down
-	msg := tea.KeyMsg{Type: tea.KeyDown}
+	msg := tea.KeyPressMsg{Code: tea.KeyDown}
 	v, _ = v.Update(msg)
 
 	if v.focusIndex != 2 {
@@ -149,7 +149,7 @@ func TestExportView_Navigation_UpDown(t *testing.T) {
 	}
 
 	// Up
-	msg = tea.KeyMsg{Type: tea.KeyUp}
+	msg = tea.KeyPressMsg{Code: tea.KeyUp}
 	v, _ = v.Update(msg)
 
 	if v.focusIndex != 1 {
@@ -166,7 +166,7 @@ func TestExportView_FormatSelection(t *testing.T) {
 	v.selectedFormat = 0
 
 	// Right changes format
-	msg := tea.KeyMsg{Type: tea.KeyRight}
+	msg := tea.KeyPressMsg{Code: tea.KeyRight}
 	v, _ = v.Update(msg)
 
 	if v.selectedFormat != 1 {
@@ -180,7 +180,7 @@ func TestExportView_FormatSelection(t *testing.T) {
 	}
 
 	// Left wraps to end
-	msg = tea.KeyMsg{Type: tea.KeyLeft}
+	msg = tea.KeyPressMsg{Code: tea.KeyLeft}
 	v, _ = v.Update(msg)
 	if v.selectedFormat != len(exportFormats)-1 {
 		t.Errorf("Expected selectedFormat %d after left wrap, got %d", len(exportFormats)-1, v.selectedFormat)
@@ -197,7 +197,7 @@ func TestExportView_DelimiterSelection(t *testing.T) {
 	v.selectedDelim = 0
 
 	// Right changes delimiter
-	msg := tea.KeyMsg{Type: tea.KeyRight}
+	msg := tea.KeyPressMsg{Code: tea.KeyRight}
 	v, _ = v.Update(msg)
 
 	if v.selectedDelim != 1 {
@@ -231,14 +231,14 @@ func TestExportView_OverwriteToggle(t *testing.T) {
 	v.overwrite = false
 
 	// Left/right toggles
-	msg := tea.KeyMsg{Type: tea.KeyLeft}
+	msg := tea.KeyPressMsg{Code: tea.KeyLeft}
 	v, _ = v.Update(msg)
 
 	if !v.overwrite {
 		t.Error("Expected overwrite to be true after toggle")
 	}
 
-	msg = tea.KeyMsg{Type: tea.KeyRight}
+	msg = tea.KeyPressMsg{Code: tea.KeyRight}
 	v, _ = v.Update(msg)
 
 	if v.overwrite {
@@ -252,7 +252,7 @@ func TestExportView_Escape(t *testing.T) {
 
 	v.exporting = false
 
-	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	msg := tea.KeyPressMsg{Code: tea.KeyEsc}
 	v, _ = v.Update(msg)
 
 	if v.parent.mode != ViewResults {
@@ -268,7 +268,7 @@ func TestExportView_ConfirmOverwrite_Cancel(t *testing.T) {
 	v.confirmIndex = 0
 
 	// Esc cancels
-	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	msg := tea.KeyPressMsg{Code: tea.KeyEsc}
 	v, _ = v.Update(msg)
 
 	if v.confirmOverwrite {
@@ -284,14 +284,14 @@ func TestExportView_ConfirmOverwrite_Navigation(t *testing.T) {
 	v.confirmIndex = 0
 
 	// Left/right switches between Yes/No
-	msg := tea.KeyMsg{Type: tea.KeyLeft}
+	msg := tea.KeyPressMsg{Code: tea.KeyLeft}
 	v, _ = v.Update(msg)
 
 	if v.confirmIndex != 1 {
 		t.Errorf("Expected confirmIndex 1 after left, got %d", v.confirmIndex)
 	}
 
-	msg = tea.KeyMsg{Type: tea.KeyRight}
+	msg = tea.KeyPressMsg{Code: tea.KeyRight}
 	v, _ = v.Update(msg)
 
 	if v.confirmIndex != 0 {
@@ -423,7 +423,7 @@ func TestExportView_MouseScroll(t *testing.T) {
 	v.focusIndex = 1
 
 	// Mouse wheel down
-	msg := tea.MouseMsg{Button: tea.MouseButtonWheelDown}
+	msg := tea.MouseWheelMsg{Button: tea.MouseWheelDown}
 	v, _ = v.Update(msg)
 
 	if v.focusIndex != 2 {
@@ -431,7 +431,7 @@ func TestExportView_MouseScroll(t *testing.T) {
 	}
 
 	// Mouse wheel up
-	msg = tea.MouseMsg{Button: tea.MouseButtonWheelUp}
+	msg = tea.MouseWheelMsg{Button: tea.MouseWheelUp}
 	v, _ = v.Update(msg)
 
 	if v.focusIndex != 1 {

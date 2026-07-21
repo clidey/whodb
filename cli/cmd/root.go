@@ -22,7 +22,7 @@ import (
 	"os"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/clidey/whodb/cli/internal/config"
 	"github.com/clidey/whodb/cli/internal/tui"
 	"github.com/clidey/whodb/cli/pkg/analytics"
@@ -79,7 +79,7 @@ Press ? in any view for keyboard shortcuts.`,
 		}
 		// Start TUI directly
 		m := tui.NewMainModel()
-		p := tea.NewProgram(m, tea.WithAltScreen(), tea.WithMouseCellMotion())
+		p := tea.NewProgram(m)
 		finalModel, err := p.Run()
 		if err != nil {
 			return fmt.Errorf("error running interactive mode: %w", err)
@@ -149,7 +149,7 @@ func runWithProfile(name string) error {
 	}
 
 	m := tui.NewMainModelWithProfile(conn, cfg, name)
-	p := tea.NewProgram(m, tea.WithAltScreen(), tea.WithMouseCellMotion())
+	p := tea.NewProgram(m)
 	finalModel, err := p.Run()
 	if err != nil {
 		return fmt.Errorf("error running interactive mode: %w", err)

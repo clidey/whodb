@@ -16,38 +16,87 @@
 
 package styles
 
-import "github.com/charmbracelet/lipgloss"
+import (
+	"image/color"
+	"sync/atomic"
+
+	"charm.land/lipgloss/v2"
+)
 
 // Theme defines a complete set of colors for the CLI UI.
 type Theme struct {
 	Name string
 
 	// Core semantic colors
-	Primary   lipgloss.AdaptiveColor
-	Secondary lipgloss.AdaptiveColor
-	Success   lipgloss.AdaptiveColor
-	Error     lipgloss.AdaptiveColor
-	Warning   lipgloss.AdaptiveColor
-	Info      lipgloss.AdaptiveColor
-	Muted     lipgloss.AdaptiveColor
+	Primary   color.Color
+	Secondary color.Color
+	Success   color.Color
+	Error     color.Color
+	Warning   color.Color
+	Info      color.Color
+	Muted     color.Color
 
 	// UI chrome colors
-	Background lipgloss.AdaptiveColor
-	Foreground lipgloss.AdaptiveColor
-	Border     lipgloss.AdaptiveColor
-	Accent     lipgloss.AdaptiveColor
+	Background color.Color
+	Foreground color.Color
+	Border     color.Color
+	Accent     color.Color
 
 	// Syntax highlighting
-	Keyword lipgloss.AdaptiveColor
-	String  lipgloss.AdaptiveColor
-	Comment lipgloss.AdaptiveColor
-	Number  lipgloss.AdaptiveColor
+	Keyword color.Color
+	String  color.Color
+	Comment color.Color
+	Number  color.Color
 }
 
-// solid returns an AdaptiveColor where both Light and Dark are the same hex.
+// isDarkBackground holds the terminal's detected background darkness. It
+// defaults to dark and is updated asynchronously via SetDarkBackground when
+// the running Program reports a tea.BackgroundColorMsg. It must never be set
+// by querying the terminal directly at init time: that query blocks on a
+// response from bubbletea's own terminal handshake and deadlocks startup.
+var isDarkBackground atomic.Bool
+
+func init() {
+	isDarkBackground.Store(true)
+}
+
+// SetDarkBackground updates the background darkness used to resolve
+// adaptiveColor values. Call this from the Program's Update loop upon
+// receiving a tea.BackgroundColorMsg.
+func SetDarkBackground(isDark bool) {
+	isDarkBackground.Store(isDark)
+}
+
+// DarkBackground reports the currently detected terminal background darkness.
+func DarkBackground() bool {
+	return isDarkBackground.Load()
+}
+
+// adaptiveColor resolves to Light or Dark depending on isDarkBackground,
+// evaluated lazily at render time.
+type adaptiveColor struct {
+	Light color.Color
+	Dark  color.Color
+}
+
+// RGBA satisfies image/color.Color.
+func (c adaptiveColor) RGBA() (r, g, b, a uint32) {
+	if isDarkBackground.Load() {
+		return c.Dark.RGBA()
+	}
+	return c.Light.RGBA()
+}
+
+// adaptive returns a color.Color that resolves to light or dark based on the
+// detected terminal background.
+func adaptive(light, dark string) color.Color {
+	return adaptiveColor{Light: lipgloss.Color(light), Dark: lipgloss.Color(dark)}
+}
+
+// solid returns a color that's the same regardless of terminal background.
 // Used for named themes that define their own colors regardless of terminal background.
-func solid(hex string) lipgloss.AdaptiveColor {
-	return lipgloss.AdaptiveColor{Light: hex, Dark: hex}
+func solid(hex string) color.Color {
+	return lipgloss.Color(hex)
 }
 
 // currentTheme is the active theme. Default is set in init().
@@ -214,21 +263,21 @@ var builtinThemes = []*Theme{
 // ThemeDefault is the original WhoDB dark/light adaptive theme.
 var ThemeDefault = Theme{
 	Name:       "default",
-	Primary:    lipgloss.AdaptiveColor{Light: "#1a1a1a", Dark: "#fafafa"},
-	Secondary:  lipgloss.AdaptiveColor{Light: "#6b6b73", Dark: "#a1a1aa"},
-	Success:    lipgloss.AdaptiveColor{Light: "#16a34a", Dark: "#22c55e"},
-	Error:      lipgloss.AdaptiveColor{Light: "#dc2626", Dark: "#ef4444"},
-	Warning:    lipgloss.AdaptiveColor{Light: "#d97706", Dark: "#f59e0b"},
-	Info:       lipgloss.AdaptiveColor{Light: "#2563eb", Dark: "#3b82f6"},
-	Muted:      lipgloss.AdaptiveColor{Light: "#a1a1aa", Dark: "#71717a"},
-	Background: lipgloss.AdaptiveColor{Light: "#ffffff", Dark: "#09090b"},
-	Foreground: lipgloss.AdaptiveColor{Light: "#09090b", Dark: "#fafafa"},
-	Border:     lipgloss.AdaptiveColor{Light: "#d4d4d8", Dark: "#27272a"},
-	Accent:     lipgloss.AdaptiveColor{Light: "#f4f4f5", Dark: "#18181b"},
-	Keyword:    lipgloss.AdaptiveColor{Light: "#3f3f46", Dark: "#d4d4d8"},
-	String:     lipgloss.AdaptiveColor{Light: "#6b6b73", Dark: "#a1a1aa"},
-	Comment:    lipgloss.AdaptiveColor{Light: "#a1a1aa", Dark: "#71717a"},
-	Number:     lipgloss.AdaptiveColor{Light: "#3f3f46", Dark: "#d4d4d8"},
+	Primary:    adaptive("#1a1a1a", "#fafafa"),
+	Secondary:  adaptive("#6b6b73", "#a1a1aa"),
+	Success:    adaptive("#16a34a", "#22c55e"),
+	Error:      adaptive("#dc2626", "#ef4444"),
+	Warning:    adaptive("#d97706", "#f59e0b"),
+	Info:       adaptive("#2563eb", "#3b82f6"),
+	Muted:      adaptive("#a1a1aa", "#71717a"),
+	Background: adaptive("#ffffff", "#09090b"),
+	Foreground: adaptive("#09090b", "#fafafa"),
+	Border:     adaptive("#d4d4d8", "#27272a"),
+	Accent:     adaptive("#f4f4f5", "#18181b"),
+	Keyword:    adaptive("#3f3f46", "#d4d4d8"),
+	String:     adaptive("#6b6b73", "#a1a1aa"),
+	Comment:    adaptive("#a1a1aa", "#71717a"),
+	Number:     adaptive("#3f3f46", "#d4d4d8"),
 }
 
 // ThemeLight uses the light palette for both modes.

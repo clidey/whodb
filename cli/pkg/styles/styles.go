@@ -24,8 +24,8 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/charmbracelet/lipgloss"
-	"github.com/muesli/termenv"
+	"charm.land/lipgloss/v2"
+	"github.com/charmbracelet/colorprofile"
 )
 
 // Platform-aware keyboard shortcut labels
@@ -61,13 +61,13 @@ func init() {
 		colorDisabled.Store(true)
 	}
 	if colorDisabled.Load() {
-		lipgloss.SetColorProfile(termenv.Ascii)
+		lipgloss.Writer.Profile = colorprofile.Ascii
 	}
 }
 
 func DisableColor() {
 	colorDisabled.Store(true)
-	lipgloss.SetColorProfile(termenv.Ascii)
+	lipgloss.Writer.Profile = colorprofile.Ascii
 }
 
 func ColorEnabled() bool {
@@ -75,18 +75,18 @@ func ColorEnabled() bool {
 }
 
 var (
-	Primary   = lipgloss.AdaptiveColor{Light: "#1a1a1a", Dark: "#fafafa"}
-	Secondary = lipgloss.AdaptiveColor{Light: "#6b6b73", Dark: "#a1a1aa"}
-	Success   = lipgloss.AdaptiveColor{Light: "#16a34a", Dark: "#22c55e"}
-	Error     = lipgloss.AdaptiveColor{Light: "#dc2626", Dark: "#ef4444"}
-	Warning   = lipgloss.AdaptiveColor{Light: "#d97706", Dark: "#f59e0b"}
-	Info      = lipgloss.AdaptiveColor{Light: "#2563eb", Dark: "#3b82f6"}
-	Muted     = lipgloss.AdaptiveColor{Light: "#a1a1aa", Dark: "#71717a"}
+	Primary   = adaptive("#1a1a1a", "#fafafa")
+	Secondary = adaptive("#6b6b73", "#a1a1aa")
+	Success   = adaptive("#16a34a", "#22c55e")
+	Error     = adaptive("#dc2626", "#ef4444")
+	Warning   = adaptive("#d97706", "#f59e0b")
+	Info      = adaptive("#2563eb", "#3b82f6")
+	Muted     = adaptive("#a1a1aa", "#71717a")
 
-	Background = lipgloss.AdaptiveColor{Light: "#ffffff", Dark: "#09090b"}
-	Foreground = lipgloss.AdaptiveColor{Light: "#09090b", Dark: "#fafafa"}
-	Border     = lipgloss.AdaptiveColor{Light: "#d4d4d8", Dark: "#27272a"}
-	Accent     = lipgloss.AdaptiveColor{Light: "#f4f4f5", Dark: "#18181b"}
+	Background = adaptive("#ffffff", "#09090b")
+	Foreground = adaptive("#09090b", "#fafafa")
+	Border     = adaptive("#d4d4d8", "#27272a")
+	Accent     = adaptive("#f4f4f5", "#18181b")
 )
 
 var (
@@ -174,17 +174,17 @@ var (
 			MarginBottom(1)
 
 	KeywordStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.AdaptiveColor{Light: "#3f3f46", Dark: "#d4d4d8"})
+			Foreground(adaptive("#3f3f46", "#d4d4d8"))
 
 	StringStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.AdaptiveColor{Light: "#6b6b73", Dark: "#a1a1aa"})
+			Foreground(adaptive("#6b6b73", "#a1a1aa"))
 
 	CommentStyle = lipgloss.NewStyle().
 			Foreground(Muted).
 			Italic(true)
 
 	NumberStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.AdaptiveColor{Light: "#3f3f46", Dark: "#d4d4d8"})
+			Foreground(adaptive("#3f3f46", "#d4d4d8"))
 )
 
 func RenderTitle(title string) string {

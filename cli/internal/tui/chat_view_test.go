@@ -22,7 +22,7 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/clidey/whodb/cli/internal/config"
 	"github.com/clidey/whodb/cli/internal/database"
 	"github.com/clidey/whodb/core/src/engine"
@@ -79,7 +79,7 @@ func TestChatView_ConsentAccept(t *testing.T) {
 	v.consented = false
 
 	// Press 'a' to accept
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'a'}}
+	msg := tea.KeyPressMsg{Text: "a", Code: 'a'}
 	v, _ = v.Update(msg)
 
 	if !v.consented {
@@ -93,7 +93,7 @@ func TestChatView_ConsentCancel_Esc(t *testing.T) {
 
 	v.consented = false
 
-	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	msg := tea.KeyPressMsg{Code: tea.KeyEsc}
 	v, _ = v.Update(msg)
 
 	if v.consented {
@@ -111,7 +111,7 @@ func TestChatView_ConsentCancel_Q(t *testing.T) {
 
 	v.consented = false
 
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}}
+	msg := tea.KeyPressMsg{Text: "q", Code: 'q'}
 	v, _ = v.Update(msg)
 
 	if v.parent.mode != ViewBrowser {
@@ -125,7 +125,7 @@ func TestChatView_ConsentCancel_D(t *testing.T) {
 
 	v.consented = false
 
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}}
+	msg := tea.KeyPressMsg{Text: "d", Code: 'd'}
 	v, _ = v.Update(msg)
 
 	if v.parent.mode != ViewBrowser {
@@ -139,7 +139,7 @@ func TestChatView_RevokeConsent(t *testing.T) {
 
 	v.consented = true
 
-	msg := tea.KeyMsg{Type: tea.KeyCtrlR}
+	msg := tea.KeyPressMsg{Code: 'r', Mod: tea.ModCtrl}
 	v, _ = v.Update(msg)
 
 	if v.consented {
@@ -153,7 +153,7 @@ func TestChatView_Escape_GoesBack(t *testing.T) {
 
 	v.consented = true
 
-	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	msg := tea.KeyPressMsg{Code: tea.KeyEsc}
 	v, _ = v.Update(msg)
 
 	if v.parent.mode != ViewBrowser {
@@ -169,7 +169,7 @@ func TestChatView_FieldNavigation_Up(t *testing.T) {
 	v.focusField = focusFieldMessage
 
 	// Up from message goes to model
-	msg := tea.KeyMsg{Type: tea.KeyUp}
+	msg := tea.KeyPressMsg{Code: tea.KeyUp}
 	v, _ = v.Update(msg)
 
 	if v.focusField != focusFieldModel {
@@ -199,7 +199,7 @@ func TestChatView_FieldNavigation_Down(t *testing.T) {
 	v.focusField = focusFieldProvider
 
 	// Down from provider goes to model
-	msg := tea.KeyMsg{Type: tea.KeyDown}
+	msg := tea.KeyPressMsg{Code: tea.KeyDown}
 	v, _ = v.Update(msg)
 
 	if v.focusField != focusFieldModel {
@@ -233,11 +233,11 @@ func TestChatView_ProviderSelection_LeftRight(t *testing.T) {
 	}
 
 	// Right changes provider
-	msg := tea.KeyMsg{Type: tea.KeyRight}
+	msg := tea.KeyPressMsg{Code: tea.KeyRight}
 	v, _ = v.Update(msg)
 
 	// Left changes provider back
-	msg = tea.KeyMsg{Type: tea.KeyLeft}
+	msg = tea.KeyPressMsg{Code: tea.KeyLeft}
 	_, _ = v.Update(msg)
 
 	// Just ensure no panic
@@ -253,7 +253,7 @@ func TestChatView_ModelSelection_LeftRight(t *testing.T) {
 	v.selectedModel = 0
 
 	// Right moves forward
-	msg := tea.KeyMsg{Type: tea.KeyRight}
+	msg := tea.KeyPressMsg{Code: tea.KeyRight}
 	v, _ = v.Update(msg)
 
 	if v.selectedModel != 1 {
@@ -261,7 +261,7 @@ func TestChatView_ModelSelection_LeftRight(t *testing.T) {
 	}
 
 	// Left moves backward
-	msg = tea.KeyMsg{Type: tea.KeyLeft}
+	msg = tea.KeyPressMsg{Code: tea.KeyLeft}
 	v, _ = v.Update(msg)
 
 	if v.selectedModel != 0 {
@@ -279,7 +279,7 @@ func TestChatView_ModelSelection_WrapAround(t *testing.T) {
 	v.selectedModel = 0
 
 	// Left from 0 wraps to end
-	msg := tea.KeyMsg{Type: tea.KeyLeft}
+	msg := tea.KeyPressMsg{Code: tea.KeyLeft}
 	v, _ = v.Update(msg)
 
 	if v.selectedModel != 1 {
@@ -287,7 +287,7 @@ func TestChatView_ModelSelection_WrapAround(t *testing.T) {
 	}
 
 	// Right from end wraps to 0
-	msg = tea.KeyMsg{Type: tea.KeyRight}
+	msg = tea.KeyPressMsg{Code: tea.KeyRight}
 	v, _ = v.Update(msg)
 
 	if v.selectedModel != 0 {
@@ -307,7 +307,7 @@ func TestChatView_MessageNavigation_CtrlP(t *testing.T) {
 	v.selectedMessage = -1
 
 	// Ctrl+P selects last message when none selected
-	msg := tea.KeyMsg{Type: tea.KeyCtrlP}
+	msg := tea.KeyPressMsg{Code: 'p', Mod: tea.ModCtrl}
 	v, _ = v.Update(msg)
 
 	if v.selectedMessage != 1 {
@@ -334,7 +334,7 @@ func TestChatView_MessageNavigation_CtrlN(t *testing.T) {
 	v.selectedMessage = -1
 
 	// Ctrl+N selects first message when none selected
-	msg := tea.KeyMsg{Type: tea.KeyCtrlN}
+	msg := tea.KeyPressMsg{Code: 'n', Mod: tea.ModCtrl}
 	v, _ = v.Update(msg)
 
 	if v.selectedMessage != 0 {
@@ -357,7 +357,7 @@ func TestChatView_FocusInput(t *testing.T) {
 	v.focusField = focusFieldModel // Start from model field
 
 	// "/" focuses message input from any field
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'/'}}
+	msg := tea.KeyPressMsg{Text: "/", Code: '/'}
 	v, _ = v.Update(msg)
 
 	if v.focusField != focusFieldMessage {
@@ -373,7 +373,7 @@ func TestChatView_FocusInput_Slash(t *testing.T) {
 	v.focusField = focusFieldProvider
 
 	// '/' also focuses input
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'/'}}
+	msg := tea.KeyPressMsg{Text: "/", Code: '/'}
 	v, _ = v.Update(msg)
 
 	if v.focusField != focusFieldMessage {
@@ -392,7 +392,7 @@ func TestChatView_MouseScroll(t *testing.T) {
 	v.height = 30
 
 	// Mouse wheel up
-	msg := tea.MouseMsg{Button: tea.MouseButtonWheelUp}
+	msg := tea.MouseWheelMsg{Button: tea.MouseWheelUp}
 	v, _ = v.Update(msg)
 
 	if v.scrollOffset != 4 {
@@ -400,7 +400,7 @@ func TestChatView_MouseScroll(t *testing.T) {
 	}
 
 	// Mouse wheel down
-	msg = tea.MouseMsg{Button: tea.MouseButtonWheelDown}
+	msg = tea.MouseWheelMsg{Button: tea.MouseWheelDown}
 	v, _ = v.Update(msg)
 
 	if v.scrollOffset != 5 {
@@ -420,7 +420,7 @@ func TestChatView_MouseScroll_WorksFromAnyField(t *testing.T) {
 	// Scroll should work even when focused on provider field
 	v.focusField = focusFieldProvider
 
-	msg := tea.MouseMsg{Button: tea.MouseButtonWheelUp}
+	msg := tea.MouseWheelMsg{Button: tea.MouseWheelUp}
 	v, _ = v.Update(msg)
 
 	if v.scrollOffset != 4 {
@@ -444,7 +444,7 @@ func TestChatView_MouseScrollUp_AtTop(t *testing.T) {
 	v.consented = true
 	v.scrollOffset = 0
 
-	msg := tea.MouseMsg{Button: tea.MouseButtonWheelUp}
+	msg := tea.MouseWheelMsg{Button: tea.MouseWheelUp}
 	v, _ = v.Update(msg)
 
 	if v.scrollOffset != 0 {
@@ -498,7 +498,7 @@ func TestChatView_CtrlP_AdjustsScroll(t *testing.T) {
 	v.selectedMessage = 5
 
 	// Keep pressing Ctrl+P to go above the visible window
-	msg := tea.KeyMsg{Type: tea.KeyCtrlP}
+	msg := tea.KeyPressMsg{Code: 'p', Mod: tea.ModCtrl}
 	for i := 0; i < maxVisible+2; i++ {
 		v, _ = v.Update(msg)
 	}
@@ -886,7 +886,7 @@ func TestChatView_RetryPrompt_EscCancels(t *testing.T) {
 	v.err = errors.New("request timed out")
 
 	// Send ESC key
-	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	msg := tea.KeyPressMsg{Code: tea.KeyEsc}
 	v, _ = v.Update(msg)
 
 	// Verify retry prompt was dismissed
@@ -924,7 +924,7 @@ func TestChatView_RetryPrompt_KeyHandling(t *testing.T) {
 			v.models = []string{"test-model"}
 
 			// Send number key
-			msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(tt.key)}
+			msg := tea.KeyPressMsg{Text: tt.key, Code: rune(tt.key[0])}
 			v, cmd := v.Update(msg)
 
 			// Verify retry prompt was dismissed
@@ -954,7 +954,7 @@ func TestChatView_RetryPrompt_IgnoresOtherKeys(t *testing.T) {
 	v.retryPrompt.Show("tell me about the users table")
 
 	// Send an unrelated key (like 'a')
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("a")}
+	msg := tea.KeyPressMsg{Text: "a", Code: 'a'}
 	v, _ = v.Update(msg)
 
 	// Verify retry prompt is still active
@@ -1194,7 +1194,7 @@ func TestChatView_RetryMenuSavesPreference(t *testing.T) {
 			// Clear any previous preference
 			v.parent.config.SetPreferredTimeout(0)
 
-			msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(tt.key)}
+			msg := tea.KeyPressMsg{Text: tt.key, Code: rune(tt.key[0])}
 			v, _ = v.Update(msg)
 
 			saved := v.parent.config.GetPreferredTimeout()
@@ -1216,7 +1216,7 @@ func TestChatView_AutoRetriedResetOnNewMessage(t *testing.T) {
 	v.input.SetValue("new question")
 
 	// Send message via Enter
-	msg := tea.KeyMsg{Type: tea.KeyEnter}
+	msg := tea.KeyPressMsg{Code: tea.KeyEnter}
 	v, _ = v.Update(msg)
 
 	if v.retryPrompt.AutoRetried() {

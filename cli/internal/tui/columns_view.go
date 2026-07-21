@@ -20,9 +20,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/key"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/clidey/whodb/cli/pkg/styles"
 	"github.com/clidey/whodb/core/src/engine"
 )
@@ -69,9 +69,9 @@ func (v *ColumnsView) Update(msg tea.Msg) (*ColumnsView, tea.Cmd) {
 		v.height = msg.Height
 		return v, nil
 
-	case tea.MouseMsg:
+	case tea.MouseWheelMsg:
 		switch msg.Button {
-		case tea.MouseButtonWheelUp:
+		case tea.MouseWheelUp:
 			if v.scrollOffset > 0 {
 				v.scrollOffset--
 				// If selected item is now below viewport, move selection up
@@ -87,7 +87,7 @@ func (v *ColumnsView) Update(msg tea.Msg) (*ColumnsView, tea.Cmd) {
 				}
 			}
 			return v, nil
-		case tea.MouseButtonWheelDown:
+		case tea.MouseWheelDown:
 			maxVisible := v.height - 12
 			if maxVisible < 1 {
 				maxVisible = 10
@@ -107,7 +107,7 @@ func (v *ColumnsView) Update(msg tea.Msg) (*ColumnsView, tea.Cmd) {
 		}
 		return v, nil
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch {
 		case key.Matches(msg, Keys.Global.Back):
 			if !v.parent.PopView() {

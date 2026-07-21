@@ -21,8 +21,8 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/clidey/whodb/cli/internal/config"
 	"github.com/clidey/whodb/cli/internal/tui/layout"
 )
@@ -148,7 +148,7 @@ func TestTabCyclesFocusInMultiPane(t *testing.T) {
 		t.Fatalf("Initial focus should be 0, got %d", m.focusedPaneIdx)
 	}
 
-	m.Update(tea.KeyMsg{Type: tea.KeyTab})
+	m.Update(tea.KeyPressMsg{Code: tea.KeyTab})
 	if m.focusedPaneIdx != 1 {
 		t.Errorf("After Tab: focus should be 1, got %d", m.focusedPaneIdx)
 	}
@@ -156,7 +156,7 @@ func TestTabCyclesFocusInMultiPane(t *testing.T) {
 		t.Errorf("After Tab: mode should be ViewResults(%d), got %d", ViewResults, m.mode)
 	}
 
-	m.Update(tea.KeyMsg{Type: tea.KeyTab})
+	m.Update(tea.KeyPressMsg{Code: tea.KeyTab})
 	if m.focusedPaneIdx != 0 {
 		t.Errorf("After Tab2: focus should wrap to 0, got %d", m.focusedPaneIdx)
 	}
@@ -228,7 +228,7 @@ func TestMultiPaneRender_PreservesWrappedGlobalHelpBar(t *testing.T) {
 		t.Fatalf("expected wrapped global help bar height > 2 at narrow width, got %d", lipgloss.Height(helpBar))
 	}
 
-	output := m.View()
+	output := m.View().Content
 	if !strings.Contains(output, Keys.Global.Quit.Help().Desc) {
 		t.Fatalf("expected wrapped multi-pane output to include %q, got: %s", Keys.Global.Quit.Help().Desc, output)
 	}
@@ -240,7 +240,7 @@ func TestMultiPaneRender_PreservesWrappedGlobalHelpBar(t *testing.T) {
 func TestMultiPaneRender_ProducesOutput(t *testing.T) {
 	m := setupConnectedModel(t, 140, 40)
 
-	output := m.View()
+	output := m.View().Content
 	if output == "" {
 		t.Fatal("Multi-pane View() should produce output")
 	}
@@ -337,7 +337,7 @@ func TestResultsView_ExportKeyWorksForTableData(t *testing.T) {
 	m.mode = ViewResults
 
 	// Press 'e' for export
-	m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'e'}})
+	m.Update(tea.KeyPressMsg{Text: "e", Code: 'e'})
 	if m.mode != ViewExport {
 		t.Errorf("After 'e': mode should be ViewExport(%d), got %d", ViewExport, m.mode)
 	}
@@ -352,7 +352,7 @@ func TestResultsView_WhereKeyWorksForTableData(t *testing.T) {
 	m.mode = ViewResults
 
 	// Press 'w' for where
-	m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'w'}})
+	m.Update(tea.KeyPressMsg{Text: "w", Code: 'w'})
 	if m.mode != ViewWhere {
 		t.Errorf("After 'w': mode should be ViewWhere(%d), got %d", ViewWhere, m.mode)
 	}
@@ -367,7 +367,7 @@ func TestResultsView_ColumnsKeyWorksForTableData(t *testing.T) {
 	m.mode = ViewResults
 
 	// Press 'c' for columns
-	m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'c'}})
+	m.Update(tea.KeyPressMsg{Text: "c", Code: 'c'})
 	if m.mode != ViewColumns {
 		t.Errorf("After 'c': mode should be ViewColumns(%d), got %d", ViewColumns, m.mode)
 	}
@@ -385,7 +385,7 @@ func TestResultsView_ExportKeyWorksForQueryResults(t *testing.T) {
 	m.mode = ViewResults
 
 	// Press 'e' — should work via the query results branch
-	m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'e'}})
+	m.Update(tea.KeyPressMsg{Text: "e", Code: 'e'})
 	if m.mode != ViewExport {
 		t.Errorf("After 'e' on query results: mode should be ViewExport(%d), got %d", ViewExport, m.mode)
 	}
@@ -402,7 +402,7 @@ func TestResultsView_WhereDisabledForQueryResults(t *testing.T) {
 	m.mode = ViewResults
 
 	// Press 'w' — should NOT work (Where is table-specific)
-	m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'w'}})
+	m.Update(tea.KeyPressMsg{Text: "w", Code: 'w'})
 	if m.mode != ViewResults {
 		t.Errorf("After 'w' on query results: mode should stay ViewResults(%d), got %d", ViewResults, m.mode)
 	}

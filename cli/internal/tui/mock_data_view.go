@@ -21,9 +21,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/textinput"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/clidey/whodb/cli/pkg/styles"
 	coremockdata "github.com/clidey/whodb/core/src/mockdata"
 )
@@ -88,10 +88,12 @@ func newMockDataInput(placeholder string, width int) textinput.Model {
 	input := textinput.New()
 	input.Placeholder = placeholder
 	input.CharLimit = 128
-	input.Width = width
-	input.PromptStyle = lipgloss.NewStyle().Foreground(styles.Primary)
-	input.TextStyle = lipgloss.NewStyle().Foreground(styles.Foreground)
-	input.Cursor.Style = lipgloss.NewStyle().Foreground(styles.Primary)
+	input.SetWidth(width)
+	inputStyles := input.Styles()
+	inputStyles.Focused.Prompt = lipgloss.NewStyle().Foreground(styles.Primary)
+	inputStyles.Focused.Text = lipgloss.NewStyle().Foreground(styles.Foreground)
+	inputStyles.Cursor.Color = styles.Primary
+	input.SetStyles(inputStyles)
 	return input
 }
 
@@ -123,9 +125,9 @@ func (v *MockDataView) Update(msg tea.Msg) (*MockDataView, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		v.width = msg.Width
 		v.height = msg.Height
-		v.tableInput.Width = clamp(msg.Width-18, 18, 48)
-		v.rowsInput.Width = 10
-		v.densityInput.Width = 12
+		v.tableInput.SetWidth(clamp(msg.Width-18, 18, 48))
+		v.rowsInput.SetWidth(10)
+		v.densityInput.SetWidth(12)
 		return v, nil
 
 	case mockDataAnalysisMsg:
@@ -161,7 +163,7 @@ func (v *MockDataView) Update(msg tea.Msg) (*MockDataView, tea.Cmd) {
 		}
 		return v, tea.Batch(cmds...)
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		if v.analyzing || v.generating {
 			switch msg.String() {
 			case "ctrl+c":
@@ -198,7 +200,7 @@ func (v *MockDataView) Update(msg tea.Msg) (*MockDataView, tea.Cmd) {
 	return v, nil
 }
 
-func (v *MockDataView) updateConfig(msg tea.KeyMsg) (*MockDataView, tea.Cmd) {
+func (v *MockDataView) updateConfig(msg tea.KeyPressMsg) (*MockDataView, tea.Cmd) {
 	switch msg.String() {
 	case "tab", "down", "j":
 		v.moveFocus(1)
@@ -206,7 +208,7 @@ func (v *MockDataView) updateConfig(msg tea.KeyMsg) (*MockDataView, tea.Cmd) {
 	case "shift+tab", "up", "k":
 		v.moveFocus(-1)
 		return v, nil
-	case " ":
+	case "space":
 		if v.focusIndex == 2 {
 			v.overwrite = !v.overwrite
 			return v, nil
@@ -242,7 +244,7 @@ func (v *MockDataView) updateConfig(msg tea.KeyMsg) (*MockDataView, tea.Cmd) {
 	return v, nil
 }
 
-func (v *MockDataView) updatePlan(msg tea.KeyMsg) (*MockDataView, tea.Cmd) {
+func (v *MockDataView) updatePlan(msg tea.KeyPressMsg) (*MockDataView, tea.Cmd) {
 	switch msg.String() {
 	case "enter":
 		return v, v.startGeneration()
@@ -252,7 +254,7 @@ func (v *MockDataView) updatePlan(msg tea.KeyMsg) (*MockDataView, tea.Cmd) {
 	return v, nil
 }
 
-func (v *MockDataView) updateDone(msg tea.KeyMsg) (*MockDataView, tea.Cmd) {
+func (v *MockDataView) updateDone(msg tea.KeyPressMsg) (*MockDataView, tea.Cmd) {
 	if msg.String() == "enter" {
 		if !v.parent.PopView() {
 			v.parent.mode = ViewBrowser

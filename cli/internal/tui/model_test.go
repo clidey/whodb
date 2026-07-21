@@ -21,7 +21,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/clidey/whodb/cli/internal/config"
 	"github.com/clidey/whodb/cli/internal/tui/layout"
 	graphmodel "github.com/clidey/whodb/core/graph/model"
@@ -148,8 +148,8 @@ func TestMainModel_Update_CtrlC(t *testing.T) {
 
 	m := NewMainModel()
 
-	msg := tea.KeyMsg{
-		Type: tea.KeyCtrlC,
+	msg := tea.KeyPressMsg{
+		Code: 'c', Mod: tea.ModCtrl,
 	}
 
 	_, cmd := m.Update(msg)
@@ -165,7 +165,7 @@ func TestMainModel_View(t *testing.T) {
 	m := NewMainModel()
 	view := m.View()
 
-	if view == "" {
+	if view.Content == "" {
 		t.Error("Expected non-empty view")
 	}
 }
@@ -313,8 +313,8 @@ func TestMainModel_HandleTabSwitch(t *testing.T) {
 
 	initialMode := m.mode
 
-	msg := tea.KeyMsg{
-		Type: tea.KeyTab,
+	msg := tea.KeyPressMsg{
+		Code: tea.KeyTab,
 	}
 
 	_, _ = m.Update(msg)
@@ -330,8 +330,8 @@ func TestMainModel_HandleTabSwitch_NotConnected(t *testing.T) {
 	m := NewMainModel()
 	initialMode := m.mode
 
-	msg := tea.KeyMsg{
-		Type: tea.KeyTab,
+	msg := tea.KeyPressMsg{
+		Code: tea.KeyTab,
 	}
 
 	_, _ = m.Update(msg)
@@ -349,13 +349,12 @@ func TestMainModel_ErrorHandling(t *testing.T) {
 	}
 
 	view := m.View()
-	if view == "" {
+	if view.Content == "" {
 		t.Error("Expected error view to be non-empty")
 	}
 
-	msg := tea.KeyMsg{
-		Type:  tea.KeyRunes,
-		Runes: []rune{'q'},
+	msg := tea.KeyPressMsg{
+		Text: "q", Code: 'q',
 	}
 
 	_, cmd := m.Update(msg)
@@ -395,9 +394,8 @@ func TestMainModel_HelpOverlay(t *testing.T) {
 	// In ViewResults (no text input), '?' should show help
 	m.mode = ViewResults
 
-	msg := tea.KeyMsg{
-		Type:  tea.KeyRunes,
-		Runes: []rune{'?'},
+	msg := tea.KeyPressMsg{
+		Text: "?", Code: '?',
 	}
 
 	_, _ = m.Update(msg)
@@ -407,9 +405,8 @@ func TestMainModel_HelpOverlay(t *testing.T) {
 	}
 
 	// Any key should dismiss help
-	msg = tea.KeyMsg{
-		Type:  tea.KeyRunes,
-		Runes: []rune{'x'},
+	msg = tea.KeyPressMsg{
+		Text: "x", Code: 'x',
 	}
 
 	_, _ = m.Update(msg)
@@ -427,9 +424,8 @@ func TestMainModel_HelpOverlay_BlockedInEditor(t *testing.T) {
 	// In ViewEditor (always has text input), '?' should NOT show help
 	m.mode = ViewEditor
 
-	msg := tea.KeyMsg{
-		Type:  tea.KeyRunes,
-		Runes: []rune{'?'},
+	msg := tea.KeyPressMsg{
+		Text: "?", Code: '?',
 	}
 
 	_, _ = m.Update(msg)
@@ -573,7 +569,7 @@ func TestMainModel_ErrorDismiss(t *testing.T) {
 	m.mode = ViewBrowser
 
 	// Press Esc to dismiss error
-	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	msg := tea.KeyPressMsg{Code: tea.KeyEsc}
 	_, _ = m.Update(msg)
 
 	if m.err != nil {
@@ -610,7 +606,7 @@ func TestMainModel_Update_AllModes(t *testing.T) {
 			m.err = nil
 
 			// Send a simple key message
-			msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'x'}}
+			msg := tea.KeyPressMsg{Text: "x", Code: 'x'}
 			_, _ = m.Update(msg)
 			// Just ensure no panic
 		})
