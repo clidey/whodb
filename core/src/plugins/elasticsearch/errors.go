@@ -21,7 +21,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/elastic/go-elasticsearch/v8/esapi"
+	"github.com/elastic/go-elasticsearch/v9/esapi"
 )
 
 // formatElasticError extracts a readable error message from an Elasticsearch response.

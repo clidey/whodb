@@ -27,7 +27,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/plugins/clickhouse"
 	"github.com/clidey/whodb/core/src/plugins/elasticsearch"
@@ -35,6 +34,7 @@ import (
 	"github.com/clidey/whodb/core/src/plugins/mysql"
 	"github.com/clidey/whodb/core/src/plugins/postgres"
 	"github.com/clidey/whodb/core/src/plugins/redis"
+	"github.com/clidey/whodb/core/src/query"
 	"github.com/clidey/whodb/core/src/source"
 	"github.com/clidey/whodb/core/src/sourcecatalog"
 )
@@ -286,7 +286,7 @@ func waitForSeededTarget(target target, timeout time.Duration) error {
 			rows, rowsErr := target.plugin.GetRows(target.config, &engine.GetRowsRequest{
 				Schema:      readySchema,
 				StorageUnit: target.readyStorageUnit,
-				Sort:        []*model.SortCondition{},
+				Sort:        []*query.SortCondition{},
 				PageSize:    1,
 			})
 			if rowsErr == nil && len(rows.Rows) > 0 {

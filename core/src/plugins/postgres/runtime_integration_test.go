@@ -25,9 +25,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/clidey/whodb/core/src/query"
-	"github.com/clidey/whodb/core/src/engine"
 	"gorm.io/gorm"
+
+	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/query"
 )
 
 func postgresIntegrationPlugin(t *testing.T) *PostgresPlugin {
@@ -134,8 +135,8 @@ func TestPostgresSeededRuntimePaths(t *testing.T) {
 	}
 
 	table := fmt.Sprintf("intg_pg_ms_%d", time.Now().UnixNano())
-	_, _ = plugin.RawExecute(config, fmt.Sprintf("DROP TABLE IF EXISTS test_schema.%s", table))
-	defer plugin.RawExecute(config, fmt.Sprintf("DROP TABLE IF EXISTS test_schema.%s", table))
+	_, _ = plugin.RawExecute(config, "DROP TABLE IF EXISTS test_schema."+table)
+	defer plugin.RawExecute(config, "DROP TABLE IF EXISTS test_schema."+table)
 
 	multiStatementConfig := *config
 	multiStatementConfig.MultiStatement = true
@@ -172,8 +173,8 @@ func TestPostgresGeneratedColumnsAndLastInsertID(t *testing.T) {
 	waitForPostgresOrders(t, plugin, config)
 
 	table := fmt.Sprintf("intg_pg_gen_%d", time.Now().UnixNano())
-	_, _ = plugin.RawExecute(config, fmt.Sprintf("DROP TABLE IF EXISTS test_schema.%s", table))
-	defer plugin.RawExecute(config, fmt.Sprintf("DROP TABLE IF EXISTS test_schema.%s", table))
+	_, _ = plugin.RawExecute(config, "DROP TABLE IF EXISTS test_schema."+table)
+	defer plugin.RawExecute(config, "DROP TABLE IF EXISTS test_schema."+table)
 
 	_, err := plugin.RawExecute(config, fmt.Sprintf(`
 CREATE TABLE test_schema.%[1]s (

@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/elastic/go-elasticsearch/v8/esapi"
+	"github.com/elastic/go-elasticsearch/v9/esapi"
 )
 
 func TestFormatElasticErrorReadsAndRestoresBody(t *testing.T) {

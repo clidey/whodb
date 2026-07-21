@@ -22,7 +22,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
@@ -115,7 +115,7 @@ func (p *RedisPlugin) createStorageUnitFromRecords(config *engine.PluginConfig, 
 			if parseErr != nil {
 				score = 0
 			}
-			if err := client.ZAdd(ctx, storageUnit, &redis.Z{Score: score, Member: f.Key}).Err(); err != nil {
+			if err := client.ZAdd(ctx, storageUnit, redis.Z{Score: score, Member: f.Key}).Err(); err != nil {
 				log.WithError(err).WithField("key", storageUnit).Error("Failed to create Redis sorted set key")
 				return false, err
 			}
@@ -186,7 +186,7 @@ func (p *RedisPlugin) AddRow(config *engine.PluginConfig, schema string, storage
 		if parseErr != nil {
 			score = 0
 		}
-		if err := client.ZAdd(ctx, storageUnit, &redis.Z{Score: score, Member: member}).Err(); err != nil {
+		if err := client.ZAdd(ctx, storageUnit, redis.Z{Score: score, Member: member}).Err(); err != nil {
 			return false, err
 		}
 	default:

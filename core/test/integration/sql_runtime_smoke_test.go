@@ -25,8 +25,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/query"
 )
 
 type sqlSmokeCase struct {
@@ -116,7 +116,7 @@ func TestSeededSQLRuntimeSmoke(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			target := findTarget(t, tc.name)
 
@@ -154,7 +154,7 @@ func TestSeededSQLRuntimeSmoke(t *testing.T) {
 				t.Fatalf("expected storage unit %q to exist, exists=%t err=%v", tc.sampleTable, exists, err)
 			}
 
-			missingTable := fmt.Sprintf("missing_%s", tc.sampleTable)
+			missingTable := "missing_" + tc.sampleTable
 			exists, err = target.plugin.StorageUnitExists(target.config, tc.schema, missingTable)
 			if err != nil {
 				t.Fatalf("StorageUnitExists failed for missing table: %v", err)
@@ -177,7 +177,7 @@ func TestSeededSQLRuntimeSmoke(t *testing.T) {
 			rows, err := target.plugin.GetRows(target.config, &engine.GetRowsRequest{
 				Schema:      tc.schema,
 				StorageUnit: tc.sampleTable,
-				Sort:        []*model.SortCondition{},
+				Sort:        []*query.SortCondition{},
 				PageSize:    5,
 			})
 			if err != nil {
@@ -303,12 +303,12 @@ func TestClickHouseMutationRuntime(t *testing.T) {
 	}
 
 	var currentRows *engine.GetRowsResult
-	for attempt := 0; attempt < 5; attempt++ {
+	for range 5 {
 		time.Sleep(200 * time.Millisecond)
 		currentRows, err = target.plugin.GetRows(target.config, &engine.GetRowsRequest{
 			Schema:      target.schema,
 			StorageUnit: table,
-			Sort:        []*model.SortCondition{{Column: "id", Direction: model.SortDirectionAsc}},
+			Sort:        []*query.SortCondition{{Column: "id", Direction: query.SortDirectionAsc}},
 			PageSize:    10,
 		})
 		if err != nil {
@@ -338,7 +338,7 @@ func TestClickHouseMutationRuntime(t *testing.T) {
 		t.Fatalf("ClearTableData failed: cleared=%t err=%v", cleared, err)
 	}
 
-	for attempt := 0; attempt < 5; attempt++ {
+	for range 5 {
 		time.Sleep(200 * time.Millisecond)
 		count, err := target.plugin.GetRowCount(target.config, target.schema, table, nil)
 		if err != nil {

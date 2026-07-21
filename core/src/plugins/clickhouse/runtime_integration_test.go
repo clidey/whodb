@@ -147,7 +147,7 @@ func TestClickHouseMutationRuntimePaths(t *testing.T) {
 	if err != nil || !created {
 		t.Fatalf("AddStorageUnit failed: created=%t err=%v", created, err)
 	}
-	for attempt := 0; attempt < 10; attempt++ {
+	for range 10 {
 		exists, existsErr := plugin.StorageUnitExists(config, "test_db", table)
 		if existsErr == nil && exists {
 			break
@@ -169,7 +169,7 @@ func TestClickHouseMutationRuntimePaths(t *testing.T) {
 	}
 
 	var updatedRows *engine.GetRowsResult
-	for attempt := 0; attempt < 10; attempt++ {
+	for range 10 {
 		time.Sleep(200 * time.Millisecond)
 		updatedRows, err = plugin.RawExecute(config, fmt.Sprintf("SELECT status, toString(tags) FROM test_db.%s WHERE id = 1", table))
 		if err != nil {
@@ -202,7 +202,7 @@ func TestClickHouseMutationRuntimePaths(t *testing.T) {
 		t.Fatalf("ClearTableData failed: cleared=%t err=%v", cleared, err)
 	}
 
-	for attempt := 0; attempt < 10; attempt++ {
+	for range 10 {
 		time.Sleep(200 * time.Millisecond)
 		count, countErr := plugin.GetRowCount(config, "test_db", table, nil)
 		if countErr != nil {

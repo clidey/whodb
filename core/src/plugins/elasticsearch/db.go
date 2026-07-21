@@ -27,7 +27,7 @@ import (
 	"strconv"
 
 	"github.com/elastic/elastic-transport-go/v8/elastictransport"
-	"github.com/elastic/go-elasticsearch/v8"
+	"github.com/elastic/go-elasticsearch/v9"
 
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/common/ssl"
@@ -72,13 +72,14 @@ func DB(config *engine.PluginConfig) (*elasticsearch.Client, error) {
 	}
 	log.Debugf("[ES DB] Connecting to: %s", addresses[0])
 
-	cfg := elasticsearch.Config{
-		Addresses: addresses,
-		Username:  config.Credentials.Username,
-		Password:  config.Credentials.Password,
+	opts := []elasticsearch.Option{
+		elasticsearch.WithAddresses(addresses...),
+		elasticsearch.WithBasicAuth(config.Credentials.Username, config.Credentials.Password),
 	}
 	if config.Credentials.Type == engine.DatabaseType_OpenSearch {
-		cfg.Interceptors = []elastictransport.InterceptorFunc{opensearchProductHeaderInterceptor}
+		opts = append(opts, elasticsearch.WithTransportOptions(
+			elastictransport.WithInterceptors(opensearchProductHeaderInterceptor),
+		))
 	}
 
 	// Configure TLS if enabled
@@ -86,11 +87,11 @@ func DB(config *engine.PluginConfig) (*elasticsearch.Client, error) {
 		// For insecure mode, skip certificate verification
 		if sslConfig.Mode == ssl.SSLModeInsecure {
 			log.Debug("[ES DB] Insecure mode: skipping certificate verification")
-			cfg.Transport = &http.Transport{
+			opts = append(opts, elasticsearch.WithTransportOptions(elastictransport.WithTransport(&http.Transport{
 				TLSClientConfig: &tls.Config{
 					InsecureSkipVerify: true, // #nosec G402 -- enabled only when the user explicitly selects insecure SSL mode.
 				},
-			}
+			})))
 		} else {
 			// For enabled mode, use the native CACert option if CA is provided
 			caCertPEM, err := sslConfig.CACert.Load()
@@ -99,10 +100,7 @@ func DB(config *engine.PluginConfig) (*elasticsearch.Client, error) {
 				return nil, err
 			}
 
-			if caCertPEM != nil {
-				log.Debugf("[ES DB] Using CA certificate (%d bytes)", len(caCertPEM))
-				cfg.CACert = caCertPEM
-			}
+			useCACertOption := caCertPEM != nil
 
 			// Handle client certificates for mutual TLS
 			if !sslConfig.ClientCert.IsEmpty() && !sslConfig.ClientKey.IsEmpty() {
@@ -120,17 +118,22 @@ func DB(config *engine.PluginConfig) (*elasticsearch.Client, error) {
 						rootCAs.AppendCertsFromPEM(caCertPEM)
 						tlsConfig.RootCAs = rootCAs
 					}
-					cfg.Transport = &http.Transport{
+					opts = append(opts, elasticsearch.WithTransportOptions(elastictransport.WithTransport(&http.Transport{
 						TLSClientConfig: tlsConfig,
-					}
-					cfg.CACert = nil // Clear this since we're using transport
+					})))
+					useCACertOption = false // Clear this since we're using transport
 				}
+			}
+
+			if useCACertOption {
+				log.Debugf("[ES DB] Using CA certificate (%d bytes)", len(caCertPEM))
+				opts = append(opts, elasticsearch.WithCACert(caCertPEM))
 			}
 		}
 	}
 
 	log.Debug("[ES DB] Creating Elasticsearch client instance")
-	client, err := elasticsearch.NewClient(cfg)
+	client, err := elasticsearch.New(opts...)
 	if err != nil {
 		log.WithError(err).WithFields(map[string]any{
 			"hostname": config.Credentials.Hostname,

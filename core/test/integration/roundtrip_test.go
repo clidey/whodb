@@ -31,12 +31,13 @@ import (
 	"testing"
 
 	"github.com/99designs/gqlgen/graphql/handler"
+
 	graph "github.com/clidey/whodb/core/graph"
-	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src"
 	"github.com/clidey/whodb/core/src/auth"
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/query"
 	"github.com/clidey/whodb/core/src/types"
 )
 
@@ -106,7 +107,7 @@ func TestSQLTypeRoundTrips(t *testing.T) {
 					t.Fatalf("failed to insert sample for %s on %s: %v", td.ID, target.name, err)
 				}
 
-				rows, err := target.plugin.GetRows(target.config, &engine.GetRowsRequest{Schema: target.schema, StorageUnit: table, Sort: []*model.SortCondition{}, PageSize: 10})
+				rows, err := target.plugin.GetRows(target.config, &engine.GetRowsRequest{Schema: target.schema, StorageUnit: table, Sort: []*query.SortCondition{}, PageSize: 10})
 				if err != nil {
 					t.Fatalf("GetRows failed for %s on %s: %v", td.ID, target.name, err)
 				}
@@ -250,7 +251,7 @@ func TestMongoRoundTrip(t *testing.T) {
 	if err != nil || !ok {
 		t.Fatalf("failed to insert mongo doc: %v", err)
 	}
-	rows, err := mongoTarget.plugin.GetRows(mongoTarget.config, &engine.GetRowsRequest{Schema: mongoTarget.schema, StorageUnit: "items", Sort: []*model.SortCondition{}, PageSize: 10})
+	rows, err := mongoTarget.plugin.GetRows(mongoTarget.config, &engine.GetRowsRequest{Schema: mongoTarget.schema, StorageUnit: "items", Sort: []*query.SortCondition{}, PageSize: 10})
 	if err != nil {
 		t.Fatalf("mongo get rows failed: %v", err)
 	}
@@ -342,7 +343,7 @@ func TestServerSmokeAgainstPostgres(t *testing.T) {
 
 	// Start a minimal handler: use GraphQL server directly rather than full binary to avoid changing scripts
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}}))
-	ctx := context.WithValue(context.Background(), auth.AuthKey_Credentials, pgTarget.config.Credentials)
+	ctx := context.WithValue(context.Background(), auth.AuthKey_Source, pgTarget.config.Credentials)
 
 	// simple AddRow/Row via GraphQL against live DB
 	table := "intg_smoke"
