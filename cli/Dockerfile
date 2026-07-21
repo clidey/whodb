@@ -14,7 +14,7 @@
 
 # WhoDB CLI Dockerfile
 
-FROM golang:1.26-alpine3.24 AS builder
+FROM golang:1.26.5-alpine3.24 AS builder
 
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 

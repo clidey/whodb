@@ -35,7 +35,7 @@ RUN if [ "${USE_PREBUILT_FRONTEND}" = "true" ]; then \
 ARG TARGETARCH
 ARG PLATFORM=docker
 
-FROM golang:1.26-alpine3.24 AS backend-stage
+FROM golang:1.26.5-alpine3.24 AS backend-stage
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 RUN apk add --no-cache \
 	gcc \

@@ -1,6 +1,6 @@
 module github.com/clidey/whodb/core
 
-go 1.26.1
+go 1.26.5
 
 require (
 	cloud.google.com/go/alloydb v1.28.0
