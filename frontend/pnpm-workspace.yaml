@@ -41,6 +41,9 @@ trustPolicyExclude:
 
 strictDepBuilds: true
 
+allowBuilds:
+  core-js: false
+
 ignoreScripts: true
 preferFrozenLockfile: true
 strictSsl: true
@@ -52,4 +55,3 @@ minimumReleaseAgeExclude:
   - '@clidey/ux'
   - '@clidey/deptrust'
   - '@clidey/connparse'
-
