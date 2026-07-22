@@ -36,7 +36,10 @@ const goldenSourceTypesFile = "testdata/source_types.json"
 //
 //	go test -run TestGenerateSourceTypesGoldenFile ./graph/
 func TestSourceTypesGoldenFile(t *testing.T) {
-	t.Parallel()
+	// Not parallel: SourceTypes reads the shared global source registry, and
+	// other tests in this package (e.g. TestQuerySourceContentReadsRegisteredContentSource)
+	// register test-only types into it with no cleanup. Running in parallel
+	// made this test's outcome depend on unrelated test ordering.
 
 	types, err := (&Resolver{}).Query().SourceTypes(context.Background())
 	if err != nil {
