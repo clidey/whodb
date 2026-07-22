@@ -127,7 +127,12 @@ function formatYamlKey(key) {
 }
 
 function formatYamlValue(val) {
-    const escaped = String(val).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const escaped = String(val)
+        .replace(/\\/g, '\\\\')
+        .replace(/"/g, '\\"')
+        .replace(/\n/g, '\\n')
+        .replace(/\r/g, '\\r')
+        .replace(/\t/g, '\\t');
     return `"${escaped}"`;
 }
 
