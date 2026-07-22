@@ -103,7 +103,6 @@
     "@lhci/cli": "0.15.1",
     "@oxlint/migrate": "1.73.0",
     "@playwright/test": "1.61.1",
-    "@types/js-yaml": "4.0.9",
     "@types/lodash": "4.17.24",
     "@vitejs/plugin-react": "6.0.3",
     "baseline-browser-mapping": "2.10.43",
