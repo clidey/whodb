@@ -1155,6 +1155,7 @@ export type SourceQuerySuggestion = {
 export type SourceQueryTraits = {
   __typename?: 'SourceQueryTraits';
   ExplainMode: SourceQueryExplainMode;
+  SequentialPaginationOnly: Scalars['Boolean']['output'];
   SupportsAnalyze: Scalars['Boolean']['output'];
   SupportsMultiStatement: Scalars['Boolean']['output'];
   SupportsScripts: Scalars['Boolean']['output'];

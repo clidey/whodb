@@ -413,7 +413,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     const [mockDataOverwriteExisting, setMockDataOverwriteExisting] = useState("append");
     const [mockDataFkDensityRatio, setMockDataFkDensityRatio] = useState("20");
     const [showMockDataConfirmation, setShowMockDataConfirmation] = useState(false);
-    const { item, supportsMockDataRelations } = useSourceContract(databaseType);
+    const { item, supportsMockDataRelations, sequentialPaginationOnly } = useSourceContract(databaseType);
     const isMockDataSupported =
         sourceObjectSupportsAction(item, objectRef?.Kind, SourceAction.GenerateMockData) && isMockDataGenerationAllowed;
     const isImportSupported = sourceObjectSupportsAction(item, objectRef?.Kind, SourceAction.ImportData);
@@ -615,8 +615,15 @@ export const StorageUnitTable: FC<TableProps> = ({
     }, [rows]);
 
     const handlePageChange = useCallback((newPage: number) => {
+        // Sources paginating via keyset cursors (e.g. PostHog, which rejects
+        // OFFSET for personal-API-key queries) can only resolve the page
+        // immediately before or after the current one, so arbitrary jumps
+        // are silently ignored rather than sent as a doomed request.
+        if (sequentialPaginationOnly && Math.abs(newPage - currentPage) !== 1) {
+            return;
+        }
         onPageChange?.(newPage);
-    }, [onPageChange]);
+    }, [onPageChange, sequentialPaginationOnly, currentPage]);
 
     const handleSelectRow = useCallback((rowIndex: number) => {
         const isCurrentlySelected = checked.includes(rowIndex);

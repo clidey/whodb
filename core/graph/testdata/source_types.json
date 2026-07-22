@@ -21,7 +21,8 @@
         "SupportsStreaming": true,
         "SupportsMultiStatement": false,
         "SupportsSqlImport": true,
-        "ExplainMode": "ExplainPipeline"
+        "ExplainMode": "ExplainPipeline",
+        "SequentialPaginationOnly": false
       },
       "MockData": {
         "SupportsRelationalDependencies": false
@@ -203,7 +204,8 @@
         "SupportsStreaming": true,
         "SupportsMultiStatement": true,
         "SupportsSqlImport": true,
-        "ExplainMode": "Explain"
+        "ExplainMode": "Explain",
+        "SequentialPaginationOnly": false
       },
       "MockData": {
         "SupportsRelationalDependencies": true
@@ -406,7 +408,8 @@
         "SupportsStreaming": false,
         "SupportsMultiStatement": false,
         "SupportsSqlImport": false,
-        "ExplainMode": "None"
+        "ExplainMode": "None",
+        "SequentialPaginationOnly": false
       },
       "MockData": {
         "SupportsRelationalDependencies": true
@@ -604,7 +607,8 @@
         "SupportsStreaming": false,
         "SupportsMultiStatement": false,
         "SupportsSqlImport": false,
-        "ExplainMode": "None"
+        "ExplainMode": "None",
+        "SequentialPaginationOnly": false
       },
       "MockData": {
         "SupportsRelationalDependencies": false
@@ -754,7 +758,8 @@
         "SupportsStreaming": true,
         "SupportsMultiStatement": false,
         "SupportsSqlImport": true,
-        "ExplainMode": "Explain"
+        "ExplainMode": "Explain",
+        "SequentialPaginationOnly": false
       },
       "MockData": {
         "SupportsRelationalDependencies": true
@@ -876,7 +881,8 @@
         "SupportsStreaming": false,
         "SupportsMultiStatement": false,
         "SupportsSqlImport": false,
-        "ExplainMode": "None"
+        "ExplainMode": "None",
+        "SequentialPaginationOnly": false
       },
       "MockData": {
         "SupportsRelationalDependencies": false
@@ -1038,7 +1044,8 @@
         "SupportsStreaming": false,
         "SupportsMultiStatement": false,
         "SupportsSqlImport": false,
-        "ExplainMode": "None"
+        "ExplainMode": "None",
+        "SequentialPaginationOnly": false
       },
       "MockData": {
         "SupportsRelationalDependencies": false
@@ -1166,7 +1173,8 @@
         "SupportsStreaming": false,
         "SupportsMultiStatement": false,
         "SupportsSqlImport": false,
-        "ExplainMode": "None"
+        "ExplainMode": "None",
+        "SequentialPaginationOnly": false
       },
       "MockData": {
         "SupportsRelationalDependencies": true
@@ -1376,7 +1384,8 @@
         "SupportsStreaming": true,
         "SupportsMultiStatement": true,
         "SupportsSqlImport": true,
-        "ExplainMode": "Explain"
+        "ExplainMode": "Explain",
+        "SequentialPaginationOnly": false
       },
       "MockData": {
         "SupportsRelationalDependencies": true
@@ -1600,7 +1609,8 @@
         "SupportsStreaming": false,
         "SupportsMultiStatement": false,
         "SupportsSqlImport": false,
-        "ExplainMode": "None"
+        "ExplainMode": "None",
+        "SequentialPaginationOnly": false
       },
       "MockData": {
         "SupportsRelationalDependencies": false
@@ -1722,7 +1732,8 @@
         "SupportsStreaming": false,
         "SupportsMultiStatement": false,
         "SupportsSqlImport": false,
-        "ExplainMode": "None"
+        "ExplainMode": "None",
+        "SequentialPaginationOnly": false
       },
       "MockData": {
         "SupportsRelationalDependencies": true
@@ -1932,7 +1943,8 @@
         "SupportsStreaming": true,
         "SupportsMultiStatement": true,
         "SupportsSqlImport": true,
-        "ExplainMode": "Explain"
+        "ExplainMode": "Explain",
+        "SequentialPaginationOnly": false
       },
       "MockData": {
         "SupportsRelationalDependencies": true
@@ -2156,7 +2168,8 @@
         "SupportsStreaming": false,
         "SupportsMultiStatement": false,
         "SupportsSqlImport": false,
-        "ExplainMode": "None"
+        "ExplainMode": "None",
+        "SequentialPaginationOnly": false
       },
       "MockData": {
         "SupportsRelationalDependencies": false
@@ -2284,7 +2297,8 @@
         "SupportsStreaming": true,
         "SupportsMultiStatement": true,
         "SupportsSqlImport": true,
-        "ExplainMode": "ExplainAnalyze"
+        "ExplainMode": "ExplainAnalyze",
+        "SequentialPaginationOnly": false
       },
       "MockData": {
         "SupportsRelationalDependencies": true
@@ -2496,7 +2510,8 @@
         "SupportsStreaming": true,
         "SupportsMultiStatement": true,
         "SupportsSqlImport": true,
-        "ExplainMode": "Explain"
+        "ExplainMode": "Explain",
+        "SequentialPaginationOnly": false
       },
       "MockData": {
         "SupportsRelationalDependencies": false
@@ -2640,7 +2655,8 @@
         "SupportsStreaming": false,
         "SupportsMultiStatement": false,
         "SupportsSqlImport": false,
-        "ExplainMode": "None"
+        "ExplainMode": "None",
+        "SequentialPaginationOnly": false
       },
       "MockData": {
         "SupportsRelationalDependencies": false
@@ -2790,7 +2806,8 @@
         "SupportsStreaming": true,
         "SupportsMultiStatement": true,
         "SupportsSqlImport": true,
-        "ExplainMode": "Explain"
+        "ExplainMode": "Explain",
+        "SequentialPaginationOnly": false
       },
       "MockData": {
         "SupportsRelationalDependencies": true
@@ -2881,7 +2898,8 @@
         "SupportsStreaming": false,
         "SupportsMultiStatement": false,
         "SupportsSqlImport": false,
-        "ExplainMode": ""
+        "ExplainMode": "",
+        "SequentialPaginationOnly": false
       },
       "MockData": {
         "SupportsRelationalDependencies": false
@@ -2949,7 +2967,8 @@
         "SupportsStreaming": true,
         "SupportsMultiStatement": true,
         "SupportsSqlImport": true,
-        "ExplainMode": "Explain"
+        "ExplainMode": "Explain",
+        "SequentialPaginationOnly": false
       },
       "MockData": {
         "SupportsRelationalDependencies": true
@@ -3164,7 +3183,8 @@
         "SupportsStreaming": false,
         "SupportsMultiStatement": false,
         "SupportsSqlImport": false,
-        "ExplainMode": "None"
+        "ExplainMode": "None",
+        "SequentialPaginationOnly": false
       },
       "MockData": {
         "SupportsRelationalDependencies": false
@@ -3317,7 +3337,8 @@
         "SupportsStreaming": true,
         "SupportsMultiStatement": true,
         "SupportsSqlImport": true,
-        "ExplainMode": "Explain"
+        "ExplainMode": "Explain",
+        "SequentialPaginationOnly": false
       },
       "MockData": {
         "SupportsRelationalDependencies": true

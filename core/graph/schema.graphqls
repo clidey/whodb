@@ -561,6 +561,7 @@ type SourceQueryTraits {
   SupportsMultiStatement: Boolean!
   SupportsSqlImport: Boolean!
   ExplainMode: SourceQueryExplainMode!
+  SequentialPaginationOnly: Boolean!
 }
 
 type SourceMockDataTraits {

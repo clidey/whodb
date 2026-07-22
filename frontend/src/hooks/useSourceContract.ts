@@ -57,6 +57,8 @@ export interface SourceContractState extends SourceContractFlags {
     supportsMultiStatement: boolean;
     /** Whether the source supports SQL import (single or multi-statement). */
     supportsSqlImport: boolean;
+    /** Whether row pagination is restricted to sequential Next/Prev navigation. */
+    sequentialPaginationOnly: boolean;
     /** Source-owned explain mode for CLI/UI query planning. */
     explainMode: SourceQueryExplainMode;
     /** Whether mock-data generation can reason about relational dependencies. */

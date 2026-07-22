@@ -525,12 +525,13 @@ type ComplexityRoot struct {
 	}
 
 	SourceQueryTraits struct {
-		ExplainMode            func(childComplexity int) int
-		SupportsAnalyze        func(childComplexity int) int
-		SupportsMultiStatement func(childComplexity int) int
-		SupportsSQLImport      func(childComplexity int) int
-		SupportsScripts        func(childComplexity int) int
-		SupportsStreaming      func(childComplexity int) int
+		ExplainMode              func(childComplexity int) int
+		SequentialPaginationOnly func(childComplexity int) int
+		SupportsAnalyze          func(childComplexity int) int
+		SupportsMultiStatement   func(childComplexity int) int
+		SupportsSQLImport        func(childComplexity int) int
+		SupportsScripts          func(childComplexity int) int
+		SupportsStreaming        func(childComplexity int) int
 	}
 
 	SourceSSLMode struct {
@@ -2997,6 +2998,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.SourceQueryTraits.ExplainMode(childComplexity), true
+	case "SourceQueryTraits.SequentialPaginationOnly":
+		if e.ComplexityRoot.SourceQueryTraits.SequentialPaginationOnly == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SourceQueryTraits.SequentialPaginationOnly(childComplexity), true
 	case "SourceQueryTraits.SupportsAnalyze":
 		if e.ComplexityRoot.SourceQueryTraits.SupportsAnalyze == nil {
 			break
@@ -4253,6 +4260,8 @@ func (ec *executionContext) childFields_SourceQueryTraits(ctx context.Context, f
 		return ec.fieldContext_SourceQueryTraits_SupportsSqlImport(ctx, field)
 	case "ExplainMode":
 		return ec.fieldContext_SourceQueryTraits_ExplainMode(ctx, field)
+	case "SequentialPaginationOnly":
+		return ec.fieldContext_SourceQueryTraits_SequentialPaginationOnly(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type SourceQueryTraits", field.Name)
 }
@@ -14771,6 +14780,29 @@ func (ec *executionContext) fieldContext_SourceQueryTraits_ExplainMode(_ context
 	return graphql.NewScalarFieldContext("SourceQueryTraits", field, false, false, errors.New("field of type SourceQueryExplainMode does not have child fields"))
 }
 
+func (ec *executionContext) _SourceQueryTraits_SequentialPaginationOnly(ctx context.Context, field graphql.CollectedField, obj *model.SourceQueryTraits) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SourceQueryTraits_SequentialPaginationOnly(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SequentialPaginationOnly, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SourceQueryTraits_SequentialPaginationOnly(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SourceQueryTraits", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
 func (ec *executionContext) _SourceSSLMode_value(ctx context.Context, field graphql.CollectedField, obj *model.SourceSSLMode) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -22308,6 +22340,11 @@ func (ec *executionContext) _SourceQueryTraits(ctx context.Context, sel ast.Sele
 			}
 		case "ExplainMode":
 			out.Values[i] = ec._SourceQueryTraits_ExplainMode(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "SequentialPaginationOnly":
+			out.Values[i] = ec._SourceQueryTraits_SequentialPaginationOnly(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

@@ -352,6 +352,12 @@ type QueryTraits struct {
 	SupportsMultiStatement bool
 	SupportsSqlImport      bool
 	ExplainMode            QueryExplainMode
+	// SequentialPaginationOnly reports whether row pagination is restricted to
+	// sequential Next/Prev navigation. Sources using keyset/cursor-based
+	// pagination internally (e.g. because their backend rejects OFFSET) set
+	// this to true so the UI hides arbitrary page jumps. Zero value (false)
+	// preserves today's random-page-access behavior for every other source.
+	SequentialPaginationOnly bool
 }
 
 // MockDataTraits describes mock-data behavior for a source type.

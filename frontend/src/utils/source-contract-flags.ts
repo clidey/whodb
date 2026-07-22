@@ -40,6 +40,7 @@ export interface SourceContractFlags {
     supportsMockData: boolean;
     supportsImportData: boolean;
     supportsModifiers: boolean;
+    sequentialPaginationOnly: boolean;
 }
 
 /**
@@ -66,5 +67,6 @@ export function resolveSourceContractFlags(
         supportsMockData: sourceSupportsAction(item, SourceAction.GenerateMockData),
         supportsImportData: sourceSupportsAction(item, SourceAction.ImportData),
         supportsModifiers: item?.contract?.Model === SourceModel.Relational,
+        sequentialPaginationOnly: item?.traits?.query.sequentialPaginationOnly ?? false,
     };
 }
