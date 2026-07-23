@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	cloudruntime "github.com/clidey/whodb/cli/internal/cloud"
 	"github.com/clidey/whodb/cli/internal/config"
 	"github.com/clidey/whodb/cli/internal/connectionopts"
@@ -106,7 +106,7 @@ func hasDirectConnectInputs(conn config.Connection) bool {
 
 func runPrefilledConnectionForm(conn config.Connection) error {
 	m := tui.NewMainModelWithConnectionPrefill(&conn)
-	p := tea.NewProgram(m, tea.WithAltScreen(), tea.WithMouseCellMotion())
+	p := tea.NewProgram(m)
 	if _, err := p.Run(); err != nil {
 		return fmt.Errorf("error running interactive mode: %w", err)
 	}

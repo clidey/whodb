@@ -22,10 +22,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/textinput"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/clidey/whodb/cli/pkg/styles"
 	"github.com/clidey/whodb/core/src/engine"
 )
@@ -61,10 +61,12 @@ func NewExportView(parent *MainModel) *ExportView {
 	ti.Placeholder = "export"
 	ti.Focus()
 	ti.CharLimit = 100
-	ti.Width = 50
-	ti.PromptStyle = lipgloss.NewStyle().Foreground(styles.Primary)
-	ti.TextStyle = lipgloss.NewStyle().Foreground(styles.Foreground)
-	ti.Cursor.Style = lipgloss.NewStyle().Foreground(styles.Primary)
+	ti.SetWidth(50)
+	tiStyles := ti.Styles()
+	tiStyles.Focused.Prompt = lipgloss.NewStyle().Foreground(styles.Primary)
+	tiStyles.Focused.Text = lipgloss.NewStyle().Foreground(styles.Foreground)
+	tiStyles.Cursor.Color = styles.Primary
+	ti.SetStyles(tiStyles)
 
 	return &ExportView{
 		parent:           parent,
@@ -116,7 +118,7 @@ func (v *ExportView) Update(msg tea.Msg) (*ExportView, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		v.filenameInput.Width = clamp(msg.Width-12, 20, 60)
+		v.filenameInput.SetWidth(clamp(msg.Width-12, 20, 60))
 		return v, nil
 
 	case exportResultMsg:
@@ -134,9 +136,9 @@ func (v *ExportView) Update(msg tea.Msg) (*ExportView, tea.Cmd) {
 		v.exportError = msg.err
 		return v, nil
 
-	case tea.MouseMsg:
+	case tea.MouseWheelMsg:
 		switch msg.Button {
-		case tea.MouseButtonWheelUp:
+		case tea.MouseWheelUp:
 			v.focusIndex--
 			if v.focusIndex < 0 {
 				v.focusIndex = v.maxIndex()
@@ -147,7 +149,7 @@ func (v *ExportView) Update(msg tea.Msg) (*ExportView, tea.Cmd) {
 				v.filenameInput.Blur()
 			}
 			return v, nil
-		case tea.MouseButtonWheelDown:
+		case tea.MouseWheelDown:
 			v.focusIndex++
 			if v.focusIndex > v.maxIndex() {
 				v.focusIndex = 0
@@ -160,7 +162,7 @@ func (v *ExportView) Update(msg tea.Msg) (*ExportView, tea.Cmd) {
 			return v, nil
 		}
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		// Handle overwrite confirmation overlay
 		if v.confirmOverwrite {
 			switch msg.String() {

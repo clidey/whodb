@@ -98,3 +98,47 @@ func TestAuthMiddlewareSessionCookieInvalidClearsAndRejects(t *testing.T) {
 		t.Fatal("expected session cookie to be cleared on invalid session")
 	}
 }
+
+// TestAuthMiddlewareSessionCookieTransientErrorDoesNotClearCookie guards
+// against regressing to the old behavior where any LookupSession error
+// (including transient store errors, not just "session gone") cleared the
+// session cookie. A transient error should 401 the request but leave the
+// cookie in place so a subsequent request with the same still-valid session
+// can succeed.
+func TestAuthMiddlewareSessionCookieTransientErrorDoesNotClearCookie(t *testing.T) {
+	newTestStore(t)
+	token, _, _, err := CreateSession(testCredentials(), time.Hour)
+	if err != nil {
+		t.Fatalf("CreateSession: %v", err)
+	}
+
+	// Force the next query against the session store to fail with a generic,
+	// non-sentinel error by closing the underlying connection.
+	sessionMu.RLock()
+	sqlDB, dbErr := sessionDB.DB()
+	sessionMu.RUnlock()
+	if dbErr != nil {
+		t.Fatalf("sessionDB.DB(): %v", dbErr)
+	}
+	if err := sqlDB.Close(); err != nil {
+		t.Fatalf("closing session db: %v", err)
+	}
+
+	req := httptest.NewRequest(http.MethodPost, "/api/query", bytes.NewBufferString(`{"operationName":"Other"}`))
+	req.AddCookie(&http.Cookie{Name: sessionCookieName, Value: token})
+	req.Header.Set(csrfHeaderName, "whatever")
+	rr := httptest.NewRecorder()
+
+	AuthMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})).ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401 on transient store error, got %d", rr.Code)
+	}
+	for _, c := range rr.Result().Cookies() {
+		if c.Name == sessionCookieName && c.MaxAge < 0 {
+			t.Fatal("transient store error must not clear the session cookie")
+		}
+	}
+}

@@ -116,7 +116,7 @@ func getAWSConfigDir() string {
 }
 
 func parseINIFile(path, source string, isConfigFile bool) (map[string]*LocalProfile, error) {
-	file, err := os.Open(path) //nolint:gosec
+	file, err := os.Open(path) // #nosec G304 -- path is resolved from server-controlled AWS configuration locations.
 	if err != nil {
 		return nil, err
 	}

@@ -20,11 +20,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/textinput"
-	"github.com/charmbracelet/bubbles/viewport"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/textinput"
+	"charm.land/bubbles/v2/viewport"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/clidey/whodb/cli/internal/config"
 	"github.com/clidey/whodb/cli/internal/database"
 	"github.com/clidey/whodb/cli/internal/schemadiff"
@@ -71,18 +71,22 @@ func NewSchemaDiffView(parent *MainModel) *SchemaDiffView {
 	fromSchemaInput := textinput.New()
 	fromSchemaInput.Placeholder = "connection default"
 	fromSchemaInput.CharLimit = 128
-	fromSchemaInput.Width = 28
-	fromSchemaInput.PromptStyle = lipgloss.NewStyle().Foreground(styles.Primary)
-	fromSchemaInput.TextStyle = lipgloss.NewStyle().Foreground(styles.Foreground)
-	fromSchemaInput.Cursor.Style = lipgloss.NewStyle().Foreground(styles.Primary)
+	fromSchemaInput.SetWidth(28)
+	fromSchemaInputStyles := fromSchemaInput.Styles()
+	fromSchemaInputStyles.Focused.Prompt = lipgloss.NewStyle().Foreground(styles.Primary)
+	fromSchemaInputStyles.Focused.Text = lipgloss.NewStyle().Foreground(styles.Foreground)
+	fromSchemaInputStyles.Cursor.Color = styles.Primary
+	fromSchemaInput.SetStyles(fromSchemaInputStyles)
 
 	toSchemaInput := textinput.New()
 	toSchemaInput.Placeholder = "connection default"
 	toSchemaInput.CharLimit = 128
-	toSchemaInput.Width = 28
-	toSchemaInput.PromptStyle = lipgloss.NewStyle().Foreground(styles.Primary)
-	toSchemaInput.TextStyle = lipgloss.NewStyle().Foreground(styles.Foreground)
-	toSchemaInput.Cursor.Style = lipgloss.NewStyle().Foreground(styles.Primary)
+	toSchemaInput.SetWidth(28)
+	toSchemaInputStyles := toSchemaInput.Styles()
+	toSchemaInputStyles.Focused.Prompt = lipgloss.NewStyle().Foreground(styles.Primary)
+	toSchemaInputStyles.Focused.Text = lipgloss.NewStyle().Foreground(styles.Foreground)
+	toSchemaInputStyles.Cursor.Color = styles.Primary
+	toSchemaInput.SetStyles(toSchemaInputStyles)
 
 	return &SchemaDiffView{
 		parent:          parent,
@@ -154,14 +158,14 @@ func (v *SchemaDiffView) Update(msg tea.Msg) (*SchemaDiffView, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		v.width = msg.Width
 		v.height = msg.Height
-		v.fromSchemaInput.Width = clamp(msg.Width-28, 20, 40)
-		v.toSchemaInput.Width = clamp(msg.Width-28, 20, 40)
+		v.fromSchemaInput.SetWidth(clamp(msg.Width-28, 20, 40))
+		v.toSchemaInput.SetWidth(clamp(msg.Width-28, 20, 40))
 		if v.result != nil && !v.editing {
 			v.rebuildViewport()
 		}
 		return v, nil
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch {
 		case key.Matches(msg, Keys.Global.Back):
 			if !v.parent.PopView() {
@@ -190,7 +194,7 @@ func (v *SchemaDiffView) Update(msg tea.Msg) (*SchemaDiffView, tea.Cmd) {
 	return v, nil
 }
 
-func (v *SchemaDiffView) updateEditing(msg tea.KeyMsg) (*SchemaDiffView, tea.Cmd) {
+func (v *SchemaDiffView) updateEditing(msg tea.KeyPressMsg) (*SchemaDiffView, tea.Cmd) {
 	switch {
 	case key.Matches(msg, Keys.SchemaDiff.PrevField):
 		v.field--
@@ -246,7 +250,7 @@ func (v *SchemaDiffView) updateEditing(msg tea.KeyMsg) (*SchemaDiffView, tea.Cmd
 	}
 }
 
-func (v *SchemaDiffView) updateResults(msg tea.KeyMsg) (*SchemaDiffView, tea.Cmd) {
+func (v *SchemaDiffView) updateResults(msg tea.KeyPressMsg) (*SchemaDiffView, tea.Cmd) {
 	switch {
 	case key.Matches(msg, Keys.SchemaDiff.Edit):
 		v.editing = true
@@ -531,7 +535,7 @@ func (v *SchemaDiffView) rebuildViewport() {
 		contentHeight = 5
 	}
 
-	v.viewport = viewport.New(contentWidth, contentHeight)
+	v.viewport = viewport.New(viewport.WithWidth(contentWidth), viewport.WithHeight(contentHeight))
 	v.viewport.SetContent(schemadiff.RenderText(v.result))
 	v.ready = true
 }

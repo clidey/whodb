@@ -3,7 +3,7 @@
   "compilerOptions": {
     "paths": {
       "@/*": ["./src/*"],
-      "@graphql": ["./src/generated/graphql.ts"]
+      "@graphql": ["./src/generated/graphql-index.ts"]
     }
   },
   "include": [

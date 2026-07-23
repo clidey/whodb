@@ -32,13 +32,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/clidey/whodb/core/graph/model"
+	redislib "github.com/redis/go-redis/v9"
+
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	elasticplugin "github.com/clidey/whodb/core/src/plugins/elasticsearch"
 	mongoplugin "github.com/clidey/whodb/core/src/plugins/mongodb"
 	redisplugin "github.com/clidey/whodb/core/src/plugins/redis"
-	redislib "github.com/go-redis/redis/v8"
+	"github.com/clidey/whodb/core/src/query"
 )
 
 type typeCase struct {
@@ -130,7 +131,7 @@ func TestMongoCrudAndExport(t *testing.T) {
 		t.Fatalf("failed to insert mongo doc: %v", err)
 	}
 
-	rows, err := mongoTarget.plugin.GetRows(mongoTarget.config, &engine.GetRowsRequest{Schema: mongoTarget.schema, StorageUnit: collection, Sort: []*model.SortCondition{}, PageSize: 10})
+	rows, err := mongoTarget.plugin.GetRows(mongoTarget.config, &engine.GetRowsRequest{Schema: mongoTarget.schema, StorageUnit: collection, Sort: []*query.SortCondition{}, PageSize: 10})
 	if err != nil {
 		t.Fatalf("mongo get rows failed: %v", err)
 	}
@@ -147,7 +148,7 @@ func TestMongoCrudAndExport(t *testing.T) {
 		t.Fatalf("mongo update failed: %v", err)
 	}
 
-	rows, err = mongoTarget.plugin.GetRows(mongoTarget.config, &engine.GetRowsRequest{Schema: mongoTarget.schema, StorageUnit: collection, Sort: []*model.SortCondition{}, PageSize: 10})
+	rows, err = mongoTarget.plugin.GetRows(mongoTarget.config, &engine.GetRowsRequest{Schema: mongoTarget.schema, StorageUnit: collection, Sort: []*query.SortCondition{}, PageSize: 10})
 	if err != nil {
 		t.Fatalf("mongo get rows after update failed: %v", err)
 	}
@@ -174,7 +175,7 @@ func TestMongoCrudAndExport(t *testing.T) {
 		t.Fatalf("mongo delete failed: %v", err)
 	}
 
-	rows, err = mongoTarget.plugin.GetRows(mongoTarget.config, &engine.GetRowsRequest{Schema: mongoTarget.schema, StorageUnit: collection, Sort: []*model.SortCondition{}, PageSize: 10})
+	rows, err = mongoTarget.plugin.GetRows(mongoTarget.config, &engine.GetRowsRequest{Schema: mongoTarget.schema, StorageUnit: collection, Sort: []*query.SortCondition{}, PageSize: 10})
 	if err != nil {
 		t.Fatalf("mongo get rows after delete failed: %v", err)
 	}
@@ -278,7 +279,7 @@ func TestElasticsearchCRUDAndSearch(t *testing.T) {
 		t.Fatalf("failed to insert elastic doc: %v", err)
 	}
 
-	rows, err := esTarget.plugin.GetRows(esTarget.config, &engine.GetRowsRequest{Schema: esTarget.schema, StorageUnit: index, Sort: []*model.SortCondition{}, PageSize: 10})
+	rows, err := esTarget.plugin.GetRows(esTarget.config, &engine.GetRowsRequest{Schema: esTarget.schema, StorageUnit: index, Sort: []*query.SortCondition{}, PageSize: 10})
 	if err != nil {
 		t.Fatalf("elasticsearch get rows failed: %v", err)
 	}
@@ -297,16 +298,16 @@ func TestElasticsearchCRUDAndSearch(t *testing.T) {
 		t.Fatalf("failed to insert second elastic doc: %v", err)
 	}
 
-	where := &model.WhereCondition{
-		Type: model.WhereConditionTypeAtomic,
-		Atomic: &model.AtomicWhereCondition{
+	where := &query.WhereCondition{
+		Type: query.WhereConditionTypeAtomic,
+		Atomic: &query.AtomicWhereCondition{
 			Key:        "count",
 			Operator:   ">",
 			Value:      "0",
 			ColumnType: "integer",
 		},
 	}
-	filtered, err := esTarget.plugin.GetRows(esTarget.config, &engine.GetRowsRequest{Schema: esTarget.schema, StorageUnit: index, Where: where, Sort: []*model.SortCondition{}, PageSize: 10})
+	filtered, err := esTarget.plugin.GetRows(esTarget.config, &engine.GetRowsRequest{Schema: esTarget.schema, StorageUnit: index, Where: where, Sort: []*query.SortCondition{}, PageSize: 10})
 	if err != nil {
 		t.Fatalf("elastic filtered query failed: %v", err)
 	}
@@ -314,7 +315,7 @@ func TestElasticsearchCRUDAndSearch(t *testing.T) {
 		t.Fatalf("elastic filtered query returned no rows")
 	}
 
-	sortDesc := []*model.SortCondition{{Column: "count", Direction: model.SortDirectionDesc}}
+	sortDesc := []*query.SortCondition{{Column: "count", Direction: query.SortDirectionDesc}}
 	sorted, err := esTarget.plugin.GetRows(esTarget.config, &engine.GetRowsRequest{Schema: esTarget.schema, StorageUnit: index, Sort: sortDesc, PageSize: 2})
 	if err != nil {
 		t.Fatalf("elastic sorted query failed: %v", err)
@@ -348,16 +349,16 @@ func TestElasticsearchCRUDAndSearch(t *testing.T) {
 		t.Fatalf("elastic sort not applied correctly: %+v", sorted.Rows)
 	}
 
-	rangeFilter := &model.WhereCondition{
-		Type: model.WhereConditionTypeAtomic,
-		Atomic: &model.AtomicWhereCondition{
+	rangeFilter := &query.WhereCondition{
+		Type: query.WhereConditionTypeAtomic,
+		Atomic: &query.AtomicWhereCondition{
 			Key:        "count",
 			Operator:   ">",
 			Value:      "1",
 			ColumnType: "integer",
 		},
 	}
-	ranged, err := esTarget.plugin.GetRows(esTarget.config, &engine.GetRowsRequest{Schema: esTarget.schema, StorageUnit: index, Where: rangeFilter, Sort: []*model.SortCondition{}, PageSize: 10})
+	ranged, err := esTarget.plugin.GetRows(esTarget.config, &engine.GetRowsRequest{Schema: esTarget.schema, StorageUnit: index, Where: rangeFilter, Sort: []*query.SortCondition{}, PageSize: 10})
 	if err != nil {
 		t.Fatalf("elastic range filter failed: %v", err)
 	}
@@ -378,7 +379,7 @@ func TestElasticsearchCRUDAndSearch(t *testing.T) {
 		t.Fatalf("elastic update failed: %v", err)
 	}
 
-	rows, err = esTarget.plugin.GetRows(esTarget.config, &engine.GetRowsRequest{Schema: esTarget.schema, StorageUnit: index, Sort: []*model.SortCondition{}, PageSize: 10})
+	rows, err = esTarget.plugin.GetRows(esTarget.config, &engine.GetRowsRequest{Schema: esTarget.schema, StorageUnit: index, Sort: []*query.SortCondition{}, PageSize: 10})
 	if err != nil {
 		t.Fatalf("elastic get rows after update failed: %v", err)
 	}
@@ -414,7 +415,7 @@ func TestElasticsearchCRUDAndSearch(t *testing.T) {
 		t.Fatalf("expected elastic delete without _id to fail")
 	}
 
-	rows, err = esTarget.plugin.GetRows(esTarget.config, &engine.GetRowsRequest{Schema: esTarget.schema, StorageUnit: index, Sort: []*model.SortCondition{}, PageSize: 10})
+	rows, err = esTarget.plugin.GetRows(esTarget.config, &engine.GetRowsRequest{Schema: esTarget.schema, StorageUnit: index, Sort: []*query.SortCondition{}, PageSize: 10})
 	if err != nil {
 		t.Fatalf("elastic get rows after delete failed: %v", err)
 	}
@@ -490,7 +491,7 @@ func TestRedisLiveData(t *testing.T) {
 	if err := client.Set(ctx, stringKey, "value-one", 0).Err(); err != nil {
 		t.Fatalf("failed to seed string key: %v", err)
 	}
-	stringRows, err := redisTarget.plugin.GetRows(redisTarget.config, &engine.GetRowsRequest{Schema: redisTarget.schema, StorageUnit: stringKey, Sort: []*model.SortCondition{}, PageSize: 10})
+	stringRows, err := redisTarget.plugin.GetRows(redisTarget.config, &engine.GetRowsRequest{Schema: redisTarget.schema, StorageUnit: stringKey, Sort: []*query.SortCondition{}, PageSize: 10})
 	if err != nil || len(stringRows.Rows) != 1 || !strings.Contains(stringRows.Rows[0][0], "value-one") {
 		t.Fatalf("unexpected redis string rows: %+v err=%v", stringRows.Rows, err)
 	}
@@ -498,7 +499,7 @@ func TestRedisLiveData(t *testing.T) {
 	if err := client.HSet(ctx, hashKey, "field", "v1").Err(); err != nil {
 		t.Fatalf("failed to seed hash: %v", err)
 	}
-	hashRows, err := redisTarget.plugin.GetRows(redisTarget.config, &engine.GetRowsRequest{Schema: redisTarget.schema, StorageUnit: hashKey, Sort: []*model.SortCondition{}, PageSize: 10})
+	hashRows, err := redisTarget.plugin.GetRows(redisTarget.config, &engine.GetRowsRequest{Schema: redisTarget.schema, StorageUnit: hashKey, Sort: []*query.SortCondition{}, PageSize: 10})
 	if err != nil || len(hashRows.Rows) == 0 {
 		t.Fatalf("hash rows missing: %+v err=%v", hashRows.Rows, err)
 	}
@@ -508,7 +509,7 @@ func TestRedisLiveData(t *testing.T) {
 	}, []string{"value"}); err != nil {
 		t.Fatalf("hash update failed: %v", err)
 	}
-	hashRows, _ = redisTarget.plugin.GetRows(redisTarget.config, &engine.GetRowsRequest{Schema: redisTarget.schema, StorageUnit: hashKey, Sort: []*model.SortCondition{}, PageSize: 10})
+	hashRows, _ = redisTarget.plugin.GetRows(redisTarget.config, &engine.GetRowsRequest{Schema: redisTarget.schema, StorageUnit: hashKey, Sort: []*query.SortCondition{}, PageSize: 10})
 	if !strings.Contains(hashRows.Rows[0][1], "v2") {
 		t.Fatalf("hash update not reflected: %+v", hashRows.Rows)
 	}
@@ -519,7 +520,7 @@ func TestRedisLiveData(t *testing.T) {
 	if err := client.RPush(ctx, listKey, "a", "b", "c").Err(); err != nil {
 		t.Fatalf("failed to seed list: %v", err)
 	}
-	listRows, err := redisTarget.plugin.GetRows(redisTarget.config, &engine.GetRowsRequest{Schema: redisTarget.schema, StorageUnit: listKey, Sort: []*model.SortCondition{}, PageSize: 10})
+	listRows, err := redisTarget.plugin.GetRows(redisTarget.config, &engine.GetRowsRequest{Schema: redisTarget.schema, StorageUnit: listKey, Sort: []*query.SortCondition{}, PageSize: 10})
 	if err != nil || len(listRows.Rows) != 3 {
 		t.Fatalf("list rows unexpected: %+v err=%v", listRows.Rows, err)
 	}
@@ -529,7 +530,7 @@ func TestRedisLiveData(t *testing.T) {
 	}, []string{"value"}); err != nil {
 		t.Fatalf("list update failed: %v", err)
 	}
-	listRows, _ = redisTarget.plugin.GetRows(redisTarget.config, &engine.GetRowsRequest{Schema: redisTarget.schema, StorageUnit: listKey, Sort: []*model.SortCondition{}, PageSize: 10})
+	listRows, _ = redisTarget.plugin.GetRows(redisTarget.config, &engine.GetRowsRequest{Schema: redisTarget.schema, StorageUnit: listKey, Sort: []*query.SortCondition{}, PageSize: 10})
 	if listRows.Rows[1][1] != "bee" {
 		t.Fatalf("list update not reflected: %+v", listRows.Rows)
 	}
@@ -540,7 +541,7 @@ func TestRedisLiveData(t *testing.T) {
 	if err := client.SAdd(ctx, setKey, "red", "blue").Err(); err != nil {
 		t.Fatalf("failed to seed set: %v", err)
 	}
-	setRows, err := redisTarget.plugin.GetRows(redisTarget.config, &engine.GetRowsRequest{Schema: redisTarget.schema, StorageUnit: setKey, Sort: []*model.SortCondition{}, PageSize: 10})
+	setRows, err := redisTarget.plugin.GetRows(redisTarget.config, &engine.GetRowsRequest{Schema: redisTarget.schema, StorageUnit: setKey, Sort: []*query.SortCondition{}, PageSize: 10})
 	if err != nil || len(setRows.Rows) != 2 {
 		t.Fatalf("set rows unexpected: %+v err=%v", setRows.Rows, err)
 	}
@@ -548,10 +549,10 @@ func TestRedisLiveData(t *testing.T) {
 		t.Fatalf("set delete failed: %v", err)
 	}
 
-	if err := client.ZAdd(ctx, zsetKey, &redislib.Z{Score: 1, Member: "low"}, &redislib.Z{Score: 2, Member: "high"}).Err(); err != nil {
+	if err := client.ZAdd(ctx, zsetKey, redislib.Z{Score: 1, Member: "low"}, redislib.Z{Score: 2, Member: "high"}).Err(); err != nil {
 		t.Fatalf("failed to seed zset: %v", err)
 	}
-	zsetRows, err := redisTarget.plugin.GetRows(redisTarget.config, &engine.GetRowsRequest{Schema: redisTarget.schema, StorageUnit: zsetKey, Sort: []*model.SortCondition{}, PageSize: 10})
+	zsetRows, err := redisTarget.plugin.GetRows(redisTarget.config, &engine.GetRowsRequest{Schema: redisTarget.schema, StorageUnit: zsetKey, Sort: []*query.SortCondition{}, PageSize: 10})
 	if err != nil || len(zsetRows.Rows) != 2 {
 		t.Fatalf("zset rows unexpected: %+v err=%v", zsetRows.Rows, err)
 	}
@@ -560,7 +561,7 @@ func TestRedisLiveData(t *testing.T) {
 	}); err != nil {
 		t.Fatalf("zset delete failed: %v", err)
 	}
-	zsetRows, _ = redisTarget.plugin.GetRows(redisTarget.config, &engine.GetRowsRequest{Schema: redisTarget.schema, StorageUnit: zsetKey, Sort: []*model.SortCondition{}, PageSize: 10})
+	zsetRows, _ = redisTarget.plugin.GetRows(redisTarget.config, &engine.GetRowsRequest{Schema: redisTarget.schema, StorageUnit: zsetKey, Sort: []*query.SortCondition{}, PageSize: 10})
 	if len(zsetRows.Rows) != 1 || !strings.Contains(zsetRows.Rows[0][1], "high") {
 		t.Fatalf("zset delete not reflected: %+v", zsetRows.Rows)
 	}
@@ -617,7 +618,7 @@ func runSQLTypeCase(t *testing.T, target target, tc typeCase, idx int) {
 		t.Fatalf("failed to insert sample for %s on %s: %v", tc.columnType, target.name, err)
 	}
 
-	res, err := target.plugin.GetRows(target.config, &engine.GetRowsRequest{Schema: target.schema, StorageUnit: table, Sort: []*model.SortCondition{}, PageSize: 5})
+	res, err := target.plugin.GetRows(target.config, &engine.GetRowsRequest{Schema: target.schema, StorageUnit: table, Sort: []*query.SortCondition{}, PageSize: 5})
 	if err != nil {
 		t.Fatalf("GetRows failed for %s on %s: %v", tc.columnType, target.name, err)
 	}
@@ -654,11 +655,11 @@ func runSQLTypeCase(t *testing.T, target target, tc typeCase, idx int) {
 			attempts = 5
 		}
 		var lastGot string
-		for i := 0; i < attempts; i++ {
+		for i := range attempts {
 			if i > 0 {
 				time.Sleep(200 * time.Millisecond)
 			}
-			res, err = target.plugin.GetRows(target.config, &engine.GetRowsRequest{Schema: target.schema, StorageUnit: table, Sort: []*model.SortCondition{}, PageSize: 5})
+			res, err = target.plugin.GetRows(target.config, &engine.GetRowsRequest{Schema: target.schema, StorageUnit: table, Sort: []*query.SortCondition{}, PageSize: 5})
 			if err != nil {
 				t.Fatalf("GetRows after update failed for %s on %s: %v", tc.columnType, target.name, err)
 			}
@@ -747,7 +748,7 @@ func addAliasCases(aliasMap map[string]string, baseCases []typeCase) []typeCase 
 		spec := common.ParseTypeSpec(tc.columnType)
 		spec.BaseType = strings.ToUpper(alias)
 		cases = append(cases, typeCase{
-			name:       fmt.Sprintf("%s_alias", alias),
+			name:       alias + "_alias",
 			columnType: common.FormatTypeSpec(spec),
 			value:      tc.value,
 			updated:    tc.updated,
@@ -974,7 +975,7 @@ func expectContains(substr string) func(string) bool {
 
 func expectHexContains(hexStr string) func(string) bool {
 	lower := strings.ToLower(strings.TrimPrefix(hexStr, "0x"))
-	asciiHex := strings.ToLower(fmt.Sprintf("%x", []byte(lower)))
+	asciiHex := strings.ToLower(hex.EncodeToString([]byte(lower)))
 	return func(got string) bool {
 		g := strings.ToLower(strings.TrimPrefix(got, "0x"))
 		return strings.Contains(g, lower) || strings.Contains(g, asciiHex)
@@ -1163,7 +1164,7 @@ func dropStatement(target target, table string) string {
 	if target.schema != "" {
 		return fmt.Sprintf("DROP TABLE IF EXISTS %s.%s", target.schema, table)
 	}
-	return fmt.Sprintf("DROP TABLE IF EXISTS %s", table)
+	return "DROP TABLE IF EXISTS " + table
 }
 
 func columnIndex(cols []engine.Column, name string) int {

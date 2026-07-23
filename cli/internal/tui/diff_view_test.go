@@ -22,7 +22,7 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/clidey/whodb/cli/internal/config"
 	"github.com/clidey/whodb/cli/internal/schemadiff"
 )
@@ -86,7 +86,7 @@ func TestMainModel_Update_CtrlVOpensSchemaDiff(t *testing.T) {
 	m.mode = ViewBrowser
 	m.Update(tea.WindowSizeMsg{Width: 120, Height: 40})
 
-	_, _ = m.Update(tea.KeyMsg{Type: tea.KeyCtrlV})
+	_, _ = m.Update(tea.KeyPressMsg{Code: 'v', Mod: tea.ModCtrl})
 
 	if m.mode != ViewDiff {
 		t.Fatalf("expected mode ViewDiff after ctrl+v, got %v", m.mode)

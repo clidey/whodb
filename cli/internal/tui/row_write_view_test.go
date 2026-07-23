@@ -19,7 +19,7 @@ package tui
 import (
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/clidey/whodb/core/src/engine"
 )
 
@@ -63,7 +63,7 @@ func TestResultsView_AddRowShortcutOpensRowWrite(t *testing.T) {
 	m.resultsView.Update(msg)
 	m.mode = ViewResults
 
-	m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'a'}})
+	m.Update(tea.KeyPressMsg{Text: "a", Code: 'a'})
 
 	if m.mode != ViewRowWrite {
 		t.Fatalf("expected mode ViewRowWrite after add-row shortcut, got %v", m.mode)
@@ -84,7 +84,7 @@ func TestResultsView_DeleteRowShortcutOpensRowWrite(t *testing.T) {
 	m.resultsView.Update(msg)
 	m.mode = ViewResults
 
-	m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
+	m.Update(tea.KeyPressMsg{Text: "d", Code: 'd'})
 
 	if m.mode != ViewRowWrite {
 		t.Fatalf("expected mode ViewRowWrite after delete-row shortcut, got %v", m.mode)
@@ -105,7 +105,7 @@ func TestResultsView_EditRowShortcutOpensRowWrite(t *testing.T) {
 	m.resultsView.Update(msg)
 	m.mode = ViewResults
 
-	m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'u'}})
+	m.Update(tea.KeyPressMsg{Text: "u", Code: 'u'})
 
 	if m.mode != ViewRowWrite {
 		t.Fatalf("expected mode ViewRowWrite after edit-row shortcut, got %v", m.mode)
@@ -127,7 +127,7 @@ func TestResultsView_EditRowShortcutBlockedWhenUpdatesDisabled(t *testing.T) {
 	m.mode = ViewResults
 	m.resultsView.results.DisableUpdate = true
 
-	m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'u'}})
+	m.Update(tea.KeyPressMsg{Text: "u", Code: 'u'})
 
 	if m.mode != ViewResults {
 		t.Fatalf("expected mode ViewResults when updates are disabled, got %v", m.mode)
@@ -172,7 +172,7 @@ func TestRowWriteView_AddEditAndDeleteFlow(t *testing.T) {
 	m.resultsView.Update(msg)
 	m.mode = ViewResults
 
-	m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'a'}})
+	m.Update(tea.KeyPressMsg{Text: "a", Code: 'a'})
 	if m.mode != ViewRowWrite {
 		t.Fatalf("expected mode ViewRowWrite after add-row shortcut, got %v", m.mode)
 	}
@@ -192,7 +192,7 @@ func TestRowWriteView_AddEditAndDeleteFlow(t *testing.T) {
 	m.rowWriteView.inputs[nameIdx].SetValue("carol")
 	m.rowWriteView.inputs[emailIdx].SetValue("c@b.com")
 
-	_, cmd = m.Update(tea.KeyMsg{Type: tea.KeyEnter, Alt: true})
+	_, cmd = m.Update(tea.KeyPressMsg{Code: tea.KeyEnter, Mod: tea.ModAlt})
 	if cmd == nil {
 		t.Fatal("expected add-row command")
 	}
@@ -212,7 +212,7 @@ func TestRowWriteView_AddEditAndDeleteFlow(t *testing.T) {
 	m.mode = ViewResults
 	m.resultsView.table.SetCursor(len(m.resultsView.currentPageRows()) - 1)
 
-	m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'u'}})
+	m.Update(tea.KeyPressMsg{Text: "u", Code: 'u'})
 	if m.mode != ViewRowWrite {
 		t.Fatalf("expected mode ViewRowWrite after edit-row shortcut, got %v", m.mode)
 	}
@@ -230,7 +230,7 @@ func TestRowWriteView_AddEditAndDeleteFlow(t *testing.T) {
 	}
 	m.rowWriteView.inputs[nameIdx].SetValue("carol-updated")
 
-	_, cmd = m.Update(tea.KeyMsg{Type: tea.KeyEnter, Alt: true})
+	_, cmd = m.Update(tea.KeyPressMsg{Code: tea.KeyEnter, Mod: tea.ModAlt})
 	if cmd == nil {
 		t.Fatal("expected edit-row command")
 	}
@@ -254,12 +254,12 @@ func TestRowWriteView_AddEditAndDeleteFlow(t *testing.T) {
 	m.mode = ViewResults
 	m.resultsView.table.SetCursor(len(m.resultsView.currentPageRows()) - 1)
 
-	m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
+	m.Update(tea.KeyPressMsg{Text: "d", Code: 'd'})
 	if m.mode != ViewRowWrite {
 		t.Fatalf("expected mode ViewRowWrite after delete-row shortcut, got %v", m.mode)
 	}
 
-	_, cmd = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	_, cmd = m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 	if cmd == nil {
 		t.Fatal("expected delete-row command")
 	}

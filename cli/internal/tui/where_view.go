@@ -20,10 +20,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/textinput"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/clidey/whodb/cli/pkg/styles"
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/engine"
@@ -80,10 +80,12 @@ func NewWhereView(parent *MainModel) *WhereView {
 	ti := textinput.New()
 	ti.Placeholder = "value"
 	ti.CharLimit = 100
-	ti.Width = 30
-	ti.PromptStyle = lipgloss.NewStyle().Foreground(styles.Primary)
-	ti.TextStyle = lipgloss.NewStyle().Foreground(styles.Foreground)
-	ti.Cursor.Style = lipgloss.NewStyle().Foreground(styles.Primary)
+	ti.SetWidth(30)
+	tiStyles := ti.Styles()
+	tiStyles.Focused.Prompt = lipgloss.NewStyle().Foreground(styles.Primary)
+	tiStyles.Focused.Text = lipgloss.NewStyle().Foreground(styles.Foreground)
+	tiStyles.Cursor.Color = styles.Primary
+	ti.SetStyles(tiStyles)
 
 	return &WhereView{
 		parent:         parent,
@@ -129,12 +131,12 @@ func (v *WhereView) Update(msg tea.Msg) (*WhereView, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		v.valueInput.Width = clamp(msg.Width-16, 15, 50)
+		v.valueInput.SetWidth(clamp(msg.Width-16, 15, 50))
 		return v, nil
 
-	case tea.MouseMsg:
+	case tea.MouseWheelMsg:
 		switch msg.Button {
-		case tea.MouseButtonWheelUp:
+		case tea.MouseWheelUp:
 			if v.addingNew {
 				v.focusIndex--
 				if v.focusIndex < 0 {
@@ -149,7 +151,7 @@ func (v *WhereView) Update(msg tea.Msg) (*WhereView, tea.Cmd) {
 				v.moveSelectionUp()
 			}
 			return v, nil
-		case tea.MouseButtonWheelDown:
+		case tea.MouseWheelDown:
 			if v.addingNew {
 				v.focusIndex++
 				if v.focusIndex > 3 {
@@ -166,7 +168,7 @@ func (v *WhereView) Update(msg tea.Msg) (*WhereView, tea.Cmd) {
 			return v, nil
 		}
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch {
 		case key.Matches(msg, Keys.Global.Back):
 			if v.addingNew {

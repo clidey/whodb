@@ -216,7 +216,7 @@ func ReadFile(path string, maxBytes int64) ([]byte, error) {
 		maxBytes = MaxFileSizeBytes
 	}
 
-	file, err := os.Open(path) //nolint:gosec
+	file, err := os.Open(path) // #nosec G304 -- reading the caller-selected local import file is this API's purpose; reads are size-capped below.
 	if err != nil {
 		return nil, err
 	}

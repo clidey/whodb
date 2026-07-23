@@ -23,7 +23,7 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/clidey/whodb/cli/internal/config"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/env"
@@ -183,7 +183,7 @@ func TestConnectionView_LoadsCloudConnectionsAndPrefillsForm(t *testing.T) {
 	}
 
 	v.list.Select(len(v.list.Items()) - 1)
-	v, _ = v.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	v, _ = v.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 
 	if v.mode != "form" {
 		t.Fatalf("expected selecting a cloud item to open the form, got %q", v.mode)
@@ -208,7 +208,7 @@ func TestConnectionView_ListMode_Navigation_Tab(t *testing.T) {
 	v.refreshList()
 
 	// Tab moves down
-	msg := tea.KeyMsg{Type: tea.KeyTab}
+	msg := tea.KeyPressMsg{Code: tea.KeyTab}
 	_, _ = v.Update(msg)
 
 	// Just ensure no panic - list handles internal state
@@ -225,7 +225,7 @@ func TestConnectionView_ListMode_Navigation_ShiftTab(t *testing.T) {
 	v.refreshList()
 
 	// Shift+Tab moves up
-	msg := tea.KeyMsg{Type: tea.KeyShiftTab}
+	msg := tea.KeyPressMsg{Code: tea.KeyTab, Mod: tea.ModShift}
 	_, _ = v.Update(msg)
 
 	// Just ensure no panic
@@ -238,7 +238,7 @@ func TestConnectionView_ListMode_NewConnection(t *testing.T) {
 	v.mode = "list"
 
 	// Press 'n' to create new connection
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'n'}}
+	msg := tea.KeyPressMsg{Text: "n", Code: 'n'}
 	v, _ = v.Update(msg)
 
 	if v.mode != "form" {
@@ -258,7 +258,7 @@ func TestConnectionView_ListMode_Delete(t *testing.T) {
 	initialCount := len(v.parent.config.Connections)
 
 	// Press 'd' to delete
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}}
+	msg := tea.KeyPressMsg{Text: "d", Code: 'd'}
 	v, _ = v.Update(msg)
 
 	if len(v.parent.config.Connections) != initialCount-1 {
@@ -294,7 +294,7 @@ func TestConnectionView_ListMode_EscConfirmation(t *testing.T) {
 	v.escPressed = false
 
 	// First ESC - should show confirmation
-	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	msg := tea.KeyPressMsg{Code: tea.KeyEsc}
 	v, cmd := v.Update(msg)
 
 	if !v.escPressed {
@@ -319,7 +319,7 @@ func TestConnectionView_ListMode_EscConfirmation_SecondEsc(t *testing.T) {
 	v.escTimeoutSecs = 2
 
 	// Second ESC - should quit
-	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	msg := tea.KeyPressMsg{Code: tea.KeyEsc}
 	_, cmd := v.Update(msg)
 
 	// cmd should be tea.Quit
@@ -388,7 +388,7 @@ func TestConnectionView_FormMode_NextInput(t *testing.T) {
 	v.focusIndex = 0 // Name field
 
 	// Tab/Down moves to next input (Postgres: 7→0→1→2→3→4→5→6→8)
-	msg := tea.KeyMsg{Type: tea.KeyTab}
+	msg := tea.KeyPressMsg{Code: tea.KeyTab}
 	v, _ = v.Update(msg)
 
 	if v.focusIndex != 1 {
@@ -404,7 +404,7 @@ func TestConnectionView_FormMode_PrevInput(t *testing.T) {
 	v.focusIndex = 2
 
 	// Shift+Tab/Up moves to previous input
-	msg := tea.KeyMsg{Type: tea.KeyShiftTab}
+	msg := tea.KeyPressMsg{Code: tea.KeyTab, Mod: tea.ModShift}
 	v, _ = v.Update(msg)
 
 	if v.focusIndex != 1 {
@@ -443,7 +443,7 @@ func TestConnectionView_FormMode_DbTypeSelection(t *testing.T) {
 	v.dbTypeIndex = 0
 
 	// Right arrow cycles through types
-	msg := tea.KeyMsg{Type: tea.KeyRight}
+	msg := tea.KeyPressMsg{Code: tea.KeyRight}
 	v, _ = v.Update(msg)
 
 	if v.dbTypeIndex != 1 {
@@ -451,7 +451,7 @@ func TestConnectionView_FormMode_DbTypeSelection(t *testing.T) {
 	}
 
 	// Left arrow goes back
-	msg = tea.KeyMsg{Type: tea.KeyLeft}
+	msg = tea.KeyPressMsg{Code: tea.KeyLeft}
 	v, _ = v.Update(msg)
 
 	if v.dbTypeIndex != 0 {
@@ -468,7 +468,7 @@ func TestConnectionView_FormMode_DbTypeWrapAround(t *testing.T) {
 	v.dbTypeIndex = 0
 
 	// Left from first wraps to last
-	msg := tea.KeyMsg{Type: tea.KeyLeft}
+	msg := tea.KeyPressMsg{Code: tea.KeyLeft}
 	v, _ = v.Update(msg)
 
 	if v.dbTypeIndex != len(v.dbTypes)-1 {
@@ -476,7 +476,7 @@ func TestConnectionView_FormMode_DbTypeWrapAround(t *testing.T) {
 	}
 
 	// Right from last wraps to first
-	msg = tea.KeyMsg{Type: tea.KeyRight}
+	msg = tea.KeyPressMsg{Code: tea.KeyRight}
 	v, _ = v.Update(msg)
 
 	if v.dbTypeIndex != 0 {
@@ -492,7 +492,7 @@ func TestConnectionView_FormMode_EscapeToList(t *testing.T) {
 	v.parent.config.AddConnection(config.Connection{Name: "test"})
 	v.mode = "form"
 
-	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	msg := tea.KeyPressMsg{Code: tea.KeyEsc}
 	v, _ = v.Update(msg)
 
 	if v.mode != "list" {
@@ -509,7 +509,7 @@ func TestConnectionView_FormMode_PasswordPrompt(t *testing.T) {
 	v.inputs[4].SetValue("")    // Empty password
 
 	// Press Enter - should show password prompt
-	msg := tea.KeyMsg{Type: tea.KeyEnter}
+	msg := tea.KeyPressMsg{Code: tea.KeyEnter}
 	v, _ = v.Update(msg)
 
 	if !v.awaitingPassword {
@@ -526,7 +526,7 @@ func TestConnectionView_FormMode_PasswordPrompt_Cancel(t *testing.T) {
 	v.passwordPrompt.SetValue("secret")
 
 	// Press Esc to cancel
-	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	msg := tea.KeyPressMsg{Code: tea.KeyEsc}
 	v, _ = v.Update(msg)
 
 	if v.awaitingPassword {
@@ -632,11 +632,11 @@ func TestConnectionView_MouseScroll_List(t *testing.T) {
 	v.refreshList()
 
 	// Mouse wheel down
-	msg := tea.MouseMsg{Button: tea.MouseButtonWheelDown}
+	msg := tea.MouseWheelMsg{Button: tea.MouseWheelDown}
 	v, _ = v.Update(msg)
 
 	// Mouse wheel up
-	msg = tea.MouseMsg{Button: tea.MouseButtonWheelUp}
+	msg = tea.MouseWheelMsg{Button: tea.MouseWheelUp}
 	_, _ = v.Update(msg)
 
 	// Just ensure no panic
@@ -658,7 +658,7 @@ func TestConnectionView_MouseScroll_Form(t *testing.T) {
 
 	// Mouse wheel now scrolls the viewport, not the input focus.
 	// Verify scroll doesn't change focusIndex (focus uses keyboard nav).
-	msg := tea.MouseMsg{Button: tea.MouseButtonWheelDown}
+	msg := tea.MouseWheelMsg{Button: tea.MouseWheelDown}
 	v, _ = v.Update(msg)
 
 	if v.focusIndex != 0 {
@@ -666,7 +666,7 @@ func TestConnectionView_MouseScroll_Form(t *testing.T) {
 	}
 
 	// Tab navigates input focus instead of mouse wheel
-	v, _ = v.Update(tea.KeyMsg{Type: tea.KeyTab})
+	v, _ = v.Update(tea.KeyPressMsg{Code: tea.KeyTab})
 
 	if v.focusIndex == 0 {
 		t.Error("Expected focusIndex to change after tab")
@@ -1117,7 +1117,7 @@ func TestConnectionView_PasswordPromptSkipped_SQLite(t *testing.T) {
 	v.inputs[4].SetValue("")    // Password empty (but hidden)
 
 	// Press Enter - should NOT show password prompt since password field is hidden
-	msg := tea.KeyMsg{Type: tea.KeyEnter}
+	msg := tea.KeyPressMsg{Code: tea.KeyEnter}
 	v, _ = v.Update(msg)
 
 	if v.awaitingPassword {
@@ -1135,7 +1135,7 @@ func TestConnectionView_PasswordPromptSkipped_RedisOptionalPassword(t *testing.T
 	v.focusIndex = focusConnect
 	v.inputs[fieldPassword].SetValue("")
 
-	msg := tea.KeyMsg{Type: tea.KeyEnter}
+	msg := tea.KeyPressMsg{Code: tea.KeyEnter}
 	v, _ = v.Update(msg)
 
 	if v.awaitingPassword {
@@ -1220,7 +1220,7 @@ func TestConnectionView_ListConnect_IsAsync(t *testing.T) {
 	}
 
 	// Press Enter to connect
-	msg := tea.KeyMsg{Type: tea.KeyEnter}
+	msg := tea.KeyPressMsg{Code: tea.KeyEnter}
 	v, cmd := v.Update(msg)
 
 	// Should be in connecting state with a command (async)

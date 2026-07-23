@@ -21,10 +21,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/viewport"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/viewport"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/clidey/whodb/cli/pkg/styles"
 	"github.com/clidey/whodb/core/src/engine"
 )
@@ -106,7 +106,7 @@ func (v *ERDView) Update(msg tea.Msg) (*ERDView, tea.Cmd) {
 		}
 		return v, nil
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch {
 		case key.Matches(msg, Keys.Global.Back):
 			if !v.parent.PopView() {
@@ -279,7 +279,7 @@ func (v *ERDView) rebuildViewport() {
 	boxes, _, _ := layoutERDGrid(v.tables, contentWidth, v.compact, v.focusedIndex)
 	canvas := renderERDCanvas(boxes)
 
-	v.viewport = viewport.New(contentWidth, contentHeight)
+	v.viewport = viewport.New(viewport.WithWidth(contentWidth), viewport.WithHeight(contentHeight))
 	v.viewport.SetContent(canvas)
 	v.ready = true
 }

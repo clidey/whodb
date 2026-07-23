@@ -13,7 +13,7 @@
 # limitations under the License.
 
 FROM node:26-alpine3.24 AS build-stage
-RUN npm i -g pnpm@10.29.3
+RUN npm i -g pnpm@11.15.1
 WORKDIR /app
 COPY ./frontend/package.json ./frontend/pnpm-lock.yaml ./
 ARG USE_PREBUILT_FRONTEND=false
@@ -35,7 +35,7 @@ RUN if [ "${USE_PREBUILT_FRONTEND}" = "true" ]; then \
 ARG TARGETARCH
 ARG PLATFORM=docker
 
-FROM golang:1.26-alpine3.24 AS backend-stage
+FROM golang:1.26.5-alpine3.24 AS backend-stage
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 RUN apk add --no-cache \
 	gcc \

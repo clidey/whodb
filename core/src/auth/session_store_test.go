@@ -18,8 +18,11 @@ package auth
 
 import (
 	"errors"
+	"sync"
 	"testing"
 	"time"
+
+	sqlite3 "github.com/mattn/go-sqlite3"
 
 	"github.com/clidey/whodb/core/src/source"
 )
@@ -177,5 +180,54 @@ func TestCleanupExpiredSessions(t *testing.T) {
 	}
 	if _, _, _, err := LookupSession(live, time.Hour); err != nil {
 		t.Fatalf("live session should survive cleanup: %v", err)
+	}
+}
+
+// TestDisableSessionStoreSkipsInitialization guards the EE opt-out: editions
+// with their own browser-session mechanism (which never call CreateSession)
+// call DisableSessionStore so EnsureSessionStore does not create an unused
+// session database file and cleanup ticker.
+func TestDisableSessionStoreSkipsInitialization(t *testing.T) {
+	t.Cleanup(func() {
+		sessionStoreDisabled = false
+		ensureOnce = sync.Once{}
+		sessionMu.Lock()
+		sessionDB = nil
+		sessionKeyHex = ""
+		sessionMu.Unlock()
+	})
+
+	DisableSessionStore()
+	if stop := EnsureSessionStore(); stop != nil {
+		t.Fatal("expected no cleanup stop function when session store is disabled")
+	}
+
+	sessionMu.RLock()
+	db := sessionDB
+	sessionMu.RUnlock()
+	if db != nil {
+		t.Fatal("expected session store to remain uninitialized when disabled")
+	}
+}
+
+func TestIsSessionDBCorrupted(t *testing.T) {
+	tests := []struct {
+		name string
+		err  error
+		want bool
+	}{
+		{name: "corrupt disk image", err: sqlite3.Error{Code: sqlite3.ErrCorrupt}, want: true},
+		{name: "not a database file", err: sqlite3.Error{Code: sqlite3.ErrNotADB}, want: true},
+		{name: "busy is transient, not corruption", err: sqlite3.Error{Code: sqlite3.ErrBusy}, want: false},
+		{name: "locked is transient, not corruption", err: sqlite3.Error{Code: sqlite3.ErrLocked}, want: false},
+		{name: "non-sqlite error", err: errors.New("boom"), want: false},
+		{name: "nil error", err: nil, want: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := isSessionDBCorrupted(tt.err); got != tt.want {
+				t.Fatalf("isSessionDBCorrupted(%v) = %v, want %v", tt.err, got, tt.want)
+			}
+		})
 	}
 }

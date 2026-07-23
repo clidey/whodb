@@ -15,6 +15,7 @@
  */
 
 import { test, expect, forEachDatabase } from '../../support/test-fixture.mjs';
+import { clearBrowserState } from '../../support/helpers/animation.mjs';
 
 const SIDEBAR_REPRESENTATIVE_DATABASES = ['postgres', 'sqlite', 'mongodb', 'redis', 'memcached', 'elasticsearch'];
 
@@ -286,8 +287,24 @@ test.describe('Sidebar Navigation', () => {
     });
 
     test.describe('Logout', () => {
+        // These tests call whodb.logout(), which deletes the server-side session.
+        // login: false avoids the shared storageState from auth.setup.mjs, so
+        // logging out here doesn't invalidate every other test's session.
         forEachDatabase('sql', (db) => {
             test.describe(`${db.type}`, () => {
+                test.beforeEach(async ({ whodb, page }) => {
+                    await clearBrowserState(page);
+                    const conn = db.connection;
+                    await whodb.login(
+                        db.uiType || db.type,
+                        conn.host ?? undefined,
+                        conn.user ?? undefined,
+                        conn.password ?? undefined,
+                        conn.database ?? undefined,
+                        conn.advanced || {}
+                    );
+                });
+
                 test('logout redirects to login page', async ({ whodb, page }) => {
                     // Use the logout command
                     await whodb.logout();
@@ -309,7 +326,7 @@ test.describe('Sidebar Navigation', () => {
                     await expect(page).toHaveURL(/\/login/, { timeout: 10000 });
                 });
             });
-        }, { databases: ['postgres'] });
+        }, { databases: ['postgres'], login: false, logout: false });
     });
 
     test.describe('Profile Display', () => {

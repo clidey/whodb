@@ -52,7 +52,7 @@ func SaveCredentials(id string, creds *source.Credentials) error {
 	if id == "" || creds == nil {
 		return nil
 	}
-	data, err := json.Marshal(creds) //nolint:gosec
+	data, err := json.Marshal(creds) // #nosec G117 -- credential JSON is written directly to the operating-system keyring.
 	if err != nil {
 		return err
 	}

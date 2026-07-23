@@ -21,7 +21,7 @@ import (
 	"testing"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/clidey/whodb/cli/internal/database"
 )
 
@@ -83,7 +83,7 @@ func TestCmdLogViewEscCloses(t *testing.T) {
 	m.mode = ViewCmdLog
 	m.viewHistory = []ViewMode{ViewBrowser}
 
-	escMsg := tea.KeyMsg{Type: tea.KeyEsc}
+	escMsg := tea.KeyPressMsg{Code: tea.KeyEsc}
 	m.cmdLogView, _ = m.cmdLogView.Update(escMsg)
 
 	if m.mode != ViewBrowser {

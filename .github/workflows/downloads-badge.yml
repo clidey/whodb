@@ -1,0 +1,68 @@
+name: Downloads Badge
+
+# Publishes a combined "downloads" badge (GitHub release assets + Docker pulls)
+# as a shields.io endpoint JSON file at badges/downloads.json.
+
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-badge:
+    name: Update Downloads Badge
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+            hub.docker.com:443
+
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          submodules: false
+
+      - name: Compute combined downloads
+        id: downloads
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RELEASE_DOWNLOADS=$(gh api --paginate repos/clidey/whodb/releases --jq '[.[].assets[].download_count] | add // 0')
+          DOCKER_PULLS=$(curl -s "https://hub.docker.com/v2/repositories/clidey/whodb/" | jq '.pull_count // 0')
+          TOTAL=$((RELEASE_DOWNLOADS + DOCKER_PULLS))
+
+          if [ "$TOTAL" -ge 1000000 ]; then
+            LABEL_VALUE=$(awk -v n="$TOTAL" 'BEGIN { printf "%.1fM", n / 1000000 }')
+          elif [ "$TOTAL" -ge 1000 ]; then
+            LABEL_VALUE=$(awk -v n="$TOTAL" 'BEGIN { printf "%.1fk", n / 1000 }')
+          else
+            LABEL_VALUE="$TOTAL"
+          fi
+
+          mkdir -p badges
+          jq -n --arg value "$LABEL_VALUE" '{
+            schemaVersion: 1,
+            label: "downloads",
+            message: $value,
+            color: "blue"
+          }' > badges/downloads.json
+
+      - name: Commit badge data
+        run: |
+          if git diff --quiet badges/downloads.json; then
+            echo "No change in downloads count"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add badges/downloads.json
+            git commit -m "chore: update downloads badge"
+            git push origin main
+          fi

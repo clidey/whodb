@@ -23,7 +23,7 @@ import (
 	"os"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/clidey/whodb/cli/internal/config"
 	"github.com/clidey/whodb/cli/internal/connectionopts"
 	"github.com/clidey/whodb/cli/internal/docker"
@@ -126,7 +126,7 @@ Usage modes:
 				Database: database,
 			}
 			m := tui.NewMainModelWithConnection(&conn)
-			p := tea.NewProgram(m, tea.WithAltScreen(), tea.WithMouseCellMotion())
+			p := tea.NewProgram(m)
 			if _, err := p.Run(); err != nil {
 				return fmt.Errorf("error running interactive mode: %w", err)
 			}
@@ -212,7 +212,7 @@ Usage modes:
 			}
 
 			m := tui.NewMainModelWithConnection(&conn)
-			p := tea.NewProgram(m, tea.WithAltScreen(), tea.WithMouseCellMotion())
+			p := tea.NewProgram(m)
 			if _, err := p.Run(); err != nil {
 				return fmt.Errorf("error running interactive mode: %w", err)
 			}
@@ -295,7 +295,7 @@ Usage modes:
 			}
 
 			m := tui.NewMainModelWithConnection(&conn)
-			p := tea.NewProgram(m, tea.WithAltScreen(), tea.WithMouseCellMotion())
+			p := tea.NewProgram(m)
 
 			if _, err := p.Run(); err != nil {
 				return fmt.Errorf("error running interactive mode: %w", err)
@@ -306,7 +306,7 @@ Usage modes:
 
 		// Otherwise, launch TUI with connection form
 		m := tui.NewMainModel()
-		p := tea.NewProgram(m, tea.WithAltScreen(), tea.WithMouseCellMotion())
+		p := tea.NewProgram(m)
 
 		if _, err := p.Run(); err != nil {
 			return fmt.Errorf("error running interactive mode: %w", err)

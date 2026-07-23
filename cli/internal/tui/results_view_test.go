@@ -21,7 +21,7 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/clidey/whodb/core/src/engine"
 )
 
@@ -144,7 +144,7 @@ func TestResultsView_Escape_ToEditor(t *testing.T) {
 	v.schema = ""
 	v.tableName = ""
 
-	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	msg := tea.KeyPressMsg{Code: tea.KeyEsc}
 	v, _ = v.Update(msg)
 
 	if v.parent.mode != ViewEditor {
@@ -161,7 +161,7 @@ func TestResultsView_Escape_ToBrowser(t *testing.T) {
 	v.schema = "public"
 	v.tableName = "users"
 
-	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	msg := tea.KeyPressMsg{Code: tea.KeyEsc}
 	v, _ = v.Update(msg)
 
 	if v.parent.mode != ViewBrowser {
@@ -178,7 +178,7 @@ func TestResultsView_Escape_PopViewStack(t *testing.T) {
 	v.parent.PushView(ViewResults)
 	v.query = "SELECT 1"
 
-	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	msg := tea.KeyPressMsg{Code: tea.KeyEsc}
 	v, _ = v.Update(msg)
 
 	if v.parent.mode != ViewChat {
@@ -209,7 +209,7 @@ func TestResultsView_Navigation_LeftRight(t *testing.T) {
 	v.columnOffset = 0
 
 	// Move right
-	msg := tea.KeyMsg{Type: tea.KeyRight}
+	msg := tea.KeyPressMsg{Code: tea.KeyRight}
 	v, _ = v.Update(msg)
 
 	if v.columnOffset != 1 {
@@ -217,7 +217,7 @@ func TestResultsView_Navigation_LeftRight(t *testing.T) {
 	}
 
 	// Move left
-	msg = tea.KeyMsg{Type: tea.KeyLeft}
+	msg = tea.KeyPressMsg{Code: tea.KeyLeft}
 	v, _ = v.Update(msg)
 
 	if v.columnOffset != 0 {
@@ -248,7 +248,7 @@ func TestResultsView_Navigation_VimKeys(t *testing.T) {
 	v.columnOffset = 0
 
 	// 'l' moves right
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'l'}}
+	msg := tea.KeyPressMsg{Text: "l", Code: 'l'}
 	v, _ = v.Update(msg)
 
 	if v.columnOffset != 1 {
@@ -256,7 +256,7 @@ func TestResultsView_Navigation_VimKeys(t *testing.T) {
 	}
 
 	// 'h' moves left
-	msg = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'h'}}
+	msg = tea.KeyPressMsg{Text: "h", Code: 'h'}
 	v, _ = v.Update(msg)
 
 	if v.columnOffset != 0 {
@@ -307,7 +307,7 @@ func TestResultsView_PageSizeCycle(t *testing.T) {
 	}
 
 	// Press 's' to cycle: 50 -> 100
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'s'}}
+	msg := tea.KeyPressMsg{Text: "s", Code: 's'}
 	v, _ = v.Update(msg)
 
 	if v.pageSize != 100 {
@@ -334,7 +334,7 @@ func TestResultsView_CustomPageSize_Enter(t *testing.T) {
 	defer cleanup()
 
 	// Press 'S' to enter custom page size mode
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'S'}}
+	msg := tea.KeyPressMsg{Text: "S", Code: 'S'}
 	v, _ = v.Update(msg)
 
 	if !v.editingPageSize {
@@ -343,12 +343,12 @@ func TestResultsView_CustomPageSize_Enter(t *testing.T) {
 
 	// Type "75"
 	for _, r := range "75" {
-		msg = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}}
+		msg = tea.KeyPressMsg{Text: string(r), Code: r}
 		v, _ = v.Update(msg)
 	}
 
 	// Press Enter to confirm
-	msg = tea.KeyMsg{Type: tea.KeyEnter}
+	msg = tea.KeyPressMsg{Code: tea.KeyEnter}
 	v, _ = v.Update(msg)
 
 	if v.editingPageSize {
@@ -367,15 +367,15 @@ func TestResultsView_CustomPageSize_Escape(t *testing.T) {
 	originalPageSize := v.pageSize
 
 	// Enter custom page size mode
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'S'}}
+	msg := tea.KeyPressMsg{Text: "S", Code: 'S'}
 	v, _ = v.Update(msg)
 
 	// Type something
-	msg = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'9'}}
+	msg = tea.KeyPressMsg{Text: "9", Code: '9'}
 	v, _ = v.Update(msg)
 
 	// Press Escape to cancel
-	msg = tea.KeyMsg{Type: tea.KeyEsc}
+	msg = tea.KeyPressMsg{Code: tea.KeyEsc}
 	v, _ = v.Update(msg)
 
 	if v.editingPageSize {
@@ -394,17 +394,17 @@ func TestResultsView_CustomPageSize_InvalidInput(t *testing.T) {
 	originalPageSize := v.pageSize
 
 	// Enter custom page size mode
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'S'}}
+	msg := tea.KeyPressMsg{Text: "S", Code: 'S'}
 	v, _ = v.Update(msg)
 
 	// Type invalid input
 	for _, r := range "abc" {
-		msg = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}}
+		msg = tea.KeyPressMsg{Text: string(r), Code: r}
 		v, _ = v.Update(msg)
 	}
 
 	// Press Enter - should not change page size
-	msg = tea.KeyMsg{Type: tea.KeyEnter}
+	msg = tea.KeyPressMsg{Code: tea.KeyEnter}
 	v, _ = v.Update(msg)
 
 	if v.editingPageSize {
@@ -429,7 +429,7 @@ func TestResultsView_NextPage(t *testing.T) {
 	v.currentPage = 0
 
 	// Press 'n' for next page
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'n'}}
+	msg := tea.KeyPressMsg{Text: "n", Code: 'n'}
 	v, _ = v.Update(msg)
 
 	if v.currentPage != 1 {
@@ -450,7 +450,7 @@ func TestResultsView_PreviousPage(t *testing.T) {
 	v.currentPage = 2
 
 	// Press 'p' for previous page
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'p'}}
+	msg := tea.KeyPressMsg{Text: "p", Code: 'p'}
 	v, _ = v.Update(msg)
 
 	if v.currentPage != 1 {
@@ -469,7 +469,7 @@ func TestResultsView_PreviousPage_AtStart(t *testing.T) {
 	v.currentPage = 0
 
 	// Press 'p' at first page - should stay
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'p'}}
+	msg := tea.KeyPressMsg{Text: "p", Code: 'p'}
 	v, _ = v.Update(msg)
 
 	if v.currentPage != 0 {
@@ -771,11 +771,11 @@ func TestResultsView_MouseScroll(t *testing.T) {
 	v.updateTable()
 
 	// Mouse wheel down
-	msg := tea.MouseMsg{Button: tea.MouseButtonWheelDown}
+	msg := tea.MouseWheelMsg{Button: tea.MouseWheelDown}
 	v, _ = v.Update(msg)
 
 	// Mouse wheel up
-	msg = tea.MouseMsg{Button: tea.MouseButtonWheelUp}
+	msg = tea.MouseWheelMsg{Button: tea.MouseWheelUp}
 	_, _ = v.Update(msg)
 
 	// Just ensure no panic - table handles internal cursor state
@@ -860,7 +860,7 @@ func TestResultsView_ColumnOffsetBoundary(t *testing.T) {
 	v.columnOffset = 0
 
 	// Navigate to the right edge
-	msg := tea.KeyMsg{Type: tea.KeyRight}
+	msg := tea.KeyPressMsg{Code: tea.KeyRight}
 	for i := 0; i < 10; i++ {
 		v, _ = v.Update(msg)
 	}
@@ -914,7 +914,7 @@ func TestResultsView_PageSizeCycling_CustomSize(t *testing.T) {
 	}
 
 	// Cycle page size - should go to first option (10), not skip to 25
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'s'}}
+	msg := tea.KeyPressMsg{Text: "s", Code: 's'}
 	v, _ = v.Update(msg)
 
 	if v.pageSize != pageSizes[0] {

@@ -1564,6 +1564,40 @@ func TestHistoryLoadCmd_PlainJSONAndMissingID(t *testing.T) {
 	}
 }
 
+func TestHistoryLoadCmd_NDJSONMatchesJSONShape(t *testing.T) {
+	cleanup := setupTestEnv(t)
+	defer cleanup()
+
+	mgr, err := history.NewManager()
+	if err != nil {
+		t.Fatalf("Failed to create history manager: %v", err)
+	}
+	if err := mgr.Add("SELECT * FROM users", true, "postgres"); err != nil {
+		t.Fatalf("Failed to add history entry: %v", err)
+	}
+	entry := mgr.GetAll()[0]
+
+	historyFormat = "ndjson"
+	outBuf, errBuf := setCommandBuffers(t, historyLoadCmd)
+	if err := historyLoadCmd.RunE(historyLoadCmd, []string{entry.ID}); err != nil {
+		t.Fatalf("history load ndjson failed: %v", err)
+	}
+	if errBuf.Len() != 0 {
+		t.Fatalf("expected no stderr from ndjson load, got %q", errBuf.String())
+	}
+
+	var loaded history.Entry
+	if err := json.Unmarshal(outBuf.Bytes(), &loaded); err != nil {
+		t.Fatalf("failed to decode ndjson history entry: %v", err)
+	}
+	if loaded.ID != entry.ID || loaded.Query != entry.Query || loaded.Database != entry.Database || loaded.Success != entry.Success {
+		t.Fatalf("unexpected ndjson-loaded history entry: %+v", loaded)
+	}
+	if !loaded.Timestamp.Equal(entry.Timestamp) {
+		t.Fatalf("expected ndjson timestamp %v to match entry timestamp %v", loaded.Timestamp, entry.Timestamp)
+	}
+}
+
 func TestHistoryClearCmd_JSONEnvelope(t *testing.T) {
 	cleanup := setupTestEnv(t)
 	defer cleanup()
@@ -1804,6 +1838,35 @@ func TestBookmarksCmd_SaveLoadDelete(t *testing.T) {
 	}
 	if deleteErr.Len() != 0 {
 		t.Fatalf("expected no stderr from delete, got %q", deleteErr.String())
+	}
+}
+
+func TestBookmarksLoadCmd_NDJSONMatchesJSONShape(t *testing.T) {
+	cleanup := setupTestEnv(t)
+	defer cleanup()
+
+	bookmarkFormat = "json"
+	bookmarkQuiet = false
+
+	if err := bookmarksSaveCmd.RunE(bookmarksSaveCmd, []string{"users", "SELECT * FROM users"}); err != nil {
+		t.Fatalf("bookmarks save failed: %v", err)
+	}
+
+	bookmarkFormat = "ndjson"
+	outBuf, errBuf := setCommandBuffers(t, bookmarksLoadCmd)
+	if err := bookmarksLoadCmd.RunE(bookmarksLoadCmd, []string{"users"}); err != nil {
+		t.Fatalf("bookmarks load ndjson failed: %v", err)
+	}
+	if errBuf.Len() != 0 {
+		t.Fatalf("expected no stderr from ndjson load, got %q", errBuf.String())
+	}
+
+	var loaded config.SavedQuery
+	if err := json.Unmarshal(outBuf.Bytes(), &loaded); err != nil {
+		t.Fatalf("failed to decode ndjson bookmark: %v", err)
+	}
+	if loaded.Name != "users" || loaded.Query != "SELECT * FROM users" {
+		t.Fatalf("unexpected ndjson-loaded bookmark: %+v", loaded)
 	}
 }
 

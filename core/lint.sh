@@ -24,6 +24,9 @@ fi
 # Default to ./... if no paths provided
 if [ $# -eq 0 ]; then
 	exec "${BINARY}" run --config "${SCRIPT_DIR}/.golangci.yml" ./...
+elif [ "$1" = "run" ]; then
+	shift
+	exec "${BINARY}" run --config "${SCRIPT_DIR}/.golangci.yml" "$@"
 else
 	exec "${BINARY}" "$@"
 fi

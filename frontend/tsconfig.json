@@ -21,7 +21,7 @@
     "jsx": "react-jsx",
     "paths": {
       "@/*": ["./src/*"],
-      "@graphql": ["./src/generated/graphql.ts"]
+      "@graphql": ["./src/generated/graphql-index.ts"]
     },
     "allowImportingTsExtensions": true
   },

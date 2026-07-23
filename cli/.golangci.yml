@@ -1,7 +1,11 @@
 version: "2"
 
 run:
-  go: "1.26.1"
+  go: "1.26.5"
+  build-tags:
+    - e2e_platform
+    - e2e_postgres
+    - e2e_cli
 
 linters:
   enable:

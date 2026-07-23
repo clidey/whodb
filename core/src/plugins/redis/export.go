@@ -17,6 +17,7 @@
 package redis
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -35,7 +36,9 @@ func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, sto
 	}
 	defer func() { _ = client.Close() }()
 
-	keyType, err := client.Type(client.Context(), storageUnit).Result()
+	ctx := context.Background()
+
+	keyType, err := client.Type(ctx, storageUnit).Result()
 	if err != nil {
 		return err
 	}
@@ -46,7 +49,7 @@ func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, sto
 		if err := writer(headers); err != nil {
 			return err
 		}
-		val, err := client.Get(client.Context(), storageUnit).Result()
+		val, err := client.Get(ctx, storageUnit).Result()
 		if err != nil {
 			return err
 		}
@@ -68,7 +71,7 @@ func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, sto
 			return nil
 		}
 
-		values, err := client.HGetAll(client.Context(), storageUnit).Result()
+		values, err := client.HGetAll(ctx, storageUnit).Result()
 		if err != nil {
 			return err
 		}
@@ -99,7 +102,7 @@ func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, sto
 			return nil
 		}
 
-		values, err := client.LRange(client.Context(), storageUnit, 0, -1).Result()
+		values, err := client.LRange(ctx, storageUnit, 0, -1).Result()
 		if err != nil {
 			return err
 		}
@@ -125,7 +128,7 @@ func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, sto
 			return nil
 		}
 
-		values, err := client.SMembers(client.Context(), storageUnit).Result()
+		values, err := client.SMembers(ctx, storageUnit).Result()
 		if err != nil {
 			return err
 		}
@@ -160,7 +163,7 @@ func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, sto
 			return nil
 		}
 
-		values, err := client.ZRangeWithScores(client.Context(), storageUnit, 0, -1).Result()
+		values, err := client.ZRangeWithScores(ctx, storageUnit, 0, -1).Result()
 		if err != nil {
 			return err
 		}
@@ -187,7 +190,9 @@ func (p *RedisPlugin) ExportDataNDJSON(config *engine.PluginConfig, schema strin
 	}
 	defer func() { _ = client.Close() }()
 
-	keyType, err := client.Type(client.Context(), storageUnit).Result()
+	ctx := context.Background()
+
+	keyType, err := client.Type(ctx, storageUnit).Result()
 	if err != nil {
 		return err
 	}
@@ -208,8 +213,6 @@ func (p *RedisPlugin) ExportDataNDJSON(config *engine.PluginConfig, schema strin
 	if len(selectedRows) > 0 {
 		return emit(selectedRows)
 	}
-
-	ctx := client.Context()
 
 	switch keyType {
 	case redisTypeString:

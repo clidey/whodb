@@ -490,7 +490,7 @@ func genBinary(c map[string]any, f *gofakeit.Faker) any {
 
 	bytes := make([]byte, length)
 	for i := range bytes {
-		bytes[i] = byte(f.Number(0, 255)) //nolint:gosec
+		bytes[i] = byte(f.Number(0, 255)) // #nosec G115 -- Faker output is explicitly bounded to the byte range.
 	}
 	// Return as hex string with 0x prefix for proper round-trip through string serialization
 	return fmt.Sprintf("0x%x", bytes)

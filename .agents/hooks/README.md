@@ -26,3 +26,21 @@ needed.
 These hooks use the Codex/Claude Code hook format (JSON on stdin). Pi uses an
 extension-based hook system instead — wrap these scripts in a Pi extension for
 equivalent functionality.
+
+## Adding a New Hook
+
+1. Write the script in this directory (root `.agents/hooks/`).
+2. Add a forwarding shim at `ee/.agents/hooks/<script-name>` so the hook still
+   resolves when the agent's cwd is inside the `ee/` submodule (its own git
+   repo, so `git rev-parse --show-toplevel` resolves to `ee/` rather than the
+   monorepo root). Match the existing shim pattern exactly:
+   ```bash
+   #!/usr/bin/env bash
+   exec "$(cd "$(dirname "$0")/../../.." && pwd)/.agents/hooks/<script-name>" "$@"
+   ```
+   Then `chmod +x` it.
+3. Register the command in both `.claude/settings.json` and `.codex/hooks.json`
+   using `bash "$(git rev-parse --show-toplevel)/.agents/hooks/<script-name>"`
+   under the appropriate event (`SessionStart`, `PostToolUse`, `Stop`, etc.).
+   Both files must be updated — neither tool reads the other's config.
+4. Update the table above with the script's trigger and behavior.

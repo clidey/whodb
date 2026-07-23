@@ -21,11 +21,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/table"
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/table"
+	"charm.land/bubbles/v2/textinput"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/clidey/whodb/cli/pkg/styles"
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/engine"
@@ -87,7 +87,7 @@ func NewResultsView(parent *MainModel) *ResultsView {
 	ti := textinput.New()
 	ti.Placeholder = "e.g. 25"
 	ti.CharLimit = 5
-	ti.Width = 10
+	ti.SetWidth(10)
 
 	return &ResultsView{
 		parent:        parent,
@@ -121,12 +121,12 @@ func (v *ResultsView) Update(msg tea.Msg) (*ResultsView, tea.Cmd) {
 		}
 		return v, nil
 
-	case tea.MouseMsg:
+	case tea.MouseWheelMsg:
 		switch msg.Button {
-		case tea.MouseButtonWheelUp:
+		case tea.MouseWheelUp:
 			v.moveSelectionUp()
 			return v, nil
-		case tea.MouseButtonWheelDown:
+		case tea.MouseWheelDown:
 			v.moveSelectionDown()
 			return v, nil
 		}
@@ -166,7 +166,7 @@ func (v *ResultsView) Update(msg tea.Msg) (*ResultsView, tea.Cmd) {
 		}
 		return v, nil
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		// Handle page size editing mode
 		if v.editingPageSize {
 			switch msg.String() {

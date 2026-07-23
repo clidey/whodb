@@ -20,7 +20,7 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/clidey/whodb/cli/internal/config"
 	"github.com/clidey/whodb/core/src/engine"
 )
@@ -87,7 +87,7 @@ func TestBrowserView_SchemaSelection_EnterMode(t *testing.T) {
 	v.loading = false
 
 	// Press ctrl+s to enter schema selection
-	msg := tea.KeyMsg{Type: tea.KeyCtrlS}
+	msg := tea.KeyPressMsg{Code: 's', Mod: tea.ModCtrl}
 	v, _ = v.Update(msg)
 
 	if !v.schemaSelecting {
@@ -104,7 +104,7 @@ func TestBrowserView_SchemaSelection_SingleSchema(t *testing.T) {
 	v.currentSchema = "public"
 	v.loading = false
 
-	msg := tea.KeyMsg{Type: tea.KeyCtrlS}
+	msg := tea.KeyPressMsg{Code: 's', Mod: tea.ModCtrl}
 	v, _ = v.Update(msg)
 
 	if v.schemaSelecting {
@@ -123,28 +123,28 @@ func TestBrowserView_SchemaSelection_Navigation(t *testing.T) {
 	v.loading = false
 
 	// Test right arrow navigation
-	msg := tea.KeyMsg{Type: tea.KeyRight}
+	msg := tea.KeyPressMsg{Code: tea.KeyRight}
 	v, _ = v.Update(msg)
 	if v.selectedSchemaIndex != 1 {
 		t.Errorf("Expected selectedSchemaIndex 1 after right, got %d", v.selectedSchemaIndex)
 	}
 
 	// Test left arrow navigation
-	msg = tea.KeyMsg{Type: tea.KeyLeft}
+	msg = tea.KeyPressMsg{Code: tea.KeyLeft}
 	v, _ = v.Update(msg)
 	if v.selectedSchemaIndex != 0 {
 		t.Errorf("Expected selectedSchemaIndex 0 after left, got %d", v.selectedSchemaIndex)
 	}
 
 	// Test down arrow navigation (should also work)
-	msg = tea.KeyMsg{Type: tea.KeyDown}
+	msg = tea.KeyPressMsg{Code: tea.KeyDown}
 	v, _ = v.Update(msg)
 	if v.selectedSchemaIndex != 1 {
 		t.Errorf("Expected selectedSchemaIndex 1 after down, got %d", v.selectedSchemaIndex)
 	}
 
 	// Test up arrow navigation
-	msg = tea.KeyMsg{Type: tea.KeyUp}
+	msg = tea.KeyPressMsg{Code: tea.KeyUp}
 	v, _ = v.Update(msg)
 	if v.selectedSchemaIndex != 0 {
 		t.Errorf("Expected selectedSchemaIndex 0 after up, got %d", v.selectedSchemaIndex)
@@ -161,7 +161,7 @@ func TestBrowserView_SchemaSelection_Boundaries(t *testing.T) {
 	v.loading = false
 
 	// Try to go left at index 0 - should stay at 0
-	msg := tea.KeyMsg{Type: tea.KeyLeft}
+	msg := tea.KeyPressMsg{Code: tea.KeyLeft}
 	v, _ = v.Update(msg)
 	if v.selectedSchemaIndex != 0 {
 		t.Errorf("Expected selectedSchemaIndex to stay 0, got %d", v.selectedSchemaIndex)
@@ -171,7 +171,7 @@ func TestBrowserView_SchemaSelection_Boundaries(t *testing.T) {
 	v.selectedSchemaIndex = 2
 
 	// Try to go right at last index - should stay at 2
-	msg = tea.KeyMsg{Type: tea.KeyRight}
+	msg = tea.KeyPressMsg{Code: tea.KeyRight}
 	v, _ = v.Update(msg)
 	if v.selectedSchemaIndex != 2 {
 		t.Errorf("Expected selectedSchemaIndex to stay 2, got %d", v.selectedSchemaIndex)
@@ -186,7 +186,7 @@ func TestBrowserView_SchemaSelection_EscapeCancels(t *testing.T) {
 	v.schemaSelecting = true
 	v.loading = false
 
-	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	msg := tea.KeyPressMsg{Code: tea.KeyEsc}
 	v, _ = v.Update(msg)
 
 	if v.schemaSelecting {
@@ -208,7 +208,7 @@ func TestBrowserView_SchemaSelection_BlocksTableNavigation(t *testing.T) {
 
 	// Press 'j' (vim down) while in schema selection - should NOT affect table selection
 	initialTableIndex := v.selectedIndex
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}}
+	msg := tea.KeyPressMsg{Text: "j", Code: 'j'}
 	v, _ = v.Update(msg)
 
 	if v.selectedIndex != initialTableIndex {
@@ -224,7 +224,7 @@ func TestBrowserView_Filtering_Enter(t *testing.T) {
 	v.loading = false
 
 	// Press '/' to enter filter mode
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'/'}}
+	msg := tea.KeyPressMsg{Text: "/", Code: '/'}
 	v, _ = v.Update(msg)
 
 	if !v.filtering {
@@ -240,7 +240,7 @@ func TestBrowserView_Filtering_Escape(t *testing.T) {
 	v.filterInput.SetValue("test")
 	v.loading = false
 
-	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	msg := tea.KeyPressMsg{Code: tea.KeyEsc}
 	v, _ = v.Update(msg)
 
 	if v.filtering {
@@ -289,28 +289,28 @@ func TestBrowserView_TableNavigation_Grid(t *testing.T) {
 	v.loading = false
 
 	// Right arrow moves to next table
-	msg := tea.KeyMsg{Type: tea.KeyRight}
+	msg := tea.KeyPressMsg{Code: tea.KeyRight}
 	v, _ = v.Update(msg)
 	if v.selectedIndex != 1 {
 		t.Errorf("Expected selectedIndex 1 after right, got %d", v.selectedIndex)
 	}
 
 	// Down arrow moves to next row
-	msg = tea.KeyMsg{Type: tea.KeyDown}
+	msg = tea.KeyPressMsg{Code: tea.KeyDown}
 	v, _ = v.Update(msg)
 	if v.selectedIndex != 5 {
 		t.Errorf("Expected selectedIndex 5 after down, got %d", v.selectedIndex)
 	}
 
 	// Up arrow moves to previous row
-	msg = tea.KeyMsg{Type: tea.KeyUp}
+	msg = tea.KeyPressMsg{Code: tea.KeyUp}
 	v, _ = v.Update(msg)
 	if v.selectedIndex != 1 {
 		t.Errorf("Expected selectedIndex 1 after up, got %d", v.selectedIndex)
 	}
 
 	// Left arrow moves to previous table
-	msg = tea.KeyMsg{Type: tea.KeyLeft}
+	msg = tea.KeyPressMsg{Code: tea.KeyLeft}
 	v, _ = v.Update(msg)
 	if v.selectedIndex != 0 {
 		t.Errorf("Expected selectedIndex 0 after left, got %d", v.selectedIndex)
@@ -331,28 +331,28 @@ func TestBrowserView_TableNavigation_VimKeys(t *testing.T) {
 	v.loading = false
 
 	// 'l' moves right
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'l'}}
+	msg := tea.KeyPressMsg{Text: "l", Code: 'l'}
 	v, _ = v.Update(msg)
 	if v.selectedIndex != 1 {
 		t.Errorf("Expected selectedIndex 1 after 'l', got %d", v.selectedIndex)
 	}
 
 	// 'j' moves down
-	msg = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}}
+	msg = tea.KeyPressMsg{Text: "j", Code: 'j'}
 	v, _ = v.Update(msg)
 	if v.selectedIndex != 5 {
 		t.Errorf("Expected selectedIndex 5 after 'j', got %d", v.selectedIndex)
 	}
 
 	// 'k' moves up
-	msg = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'k'}}
+	msg = tea.KeyPressMsg{Text: "k", Code: 'k'}
 	v, _ = v.Update(msg)
 	if v.selectedIndex != 1 {
 		t.Errorf("Expected selectedIndex 1 after 'k', got %d", v.selectedIndex)
 	}
 
 	// 'h' moves left
-	msg = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'h'}}
+	msg = tea.KeyPressMsg{Text: "h", Code: 'h'}
 	v, _ = v.Update(msg)
 	if v.selectedIndex != 0 {
 		t.Errorf("Expected selectedIndex 0 after 'h', got %d", v.selectedIndex)
@@ -458,14 +458,14 @@ func TestBrowserView_MouseScroll(t *testing.T) {
 	v.loading = false
 
 	// Mouse wheel down
-	msg := tea.MouseMsg{Button: tea.MouseButtonWheelDown}
+	msg := tea.MouseWheelMsg{Button: tea.MouseWheelDown}
 	v, _ = v.Update(msg)
 	if v.selectedIndex != 4 {
 		t.Errorf("Expected selectedIndex 4 after wheel down, got %d", v.selectedIndex)
 	}
 
 	// Mouse wheel up
-	msg = tea.MouseMsg{Button: tea.MouseButtonWheelUp}
+	msg = tea.MouseWheelMsg{Button: tea.MouseWheelUp}
 	v, _ = v.Update(msg)
 	if v.selectedIndex != 0 {
 		t.Errorf("Expected selectedIndex 0 after wheel up, got %d", v.selectedIndex)
@@ -568,7 +568,7 @@ func TestBrowserView_RetryPrompt_EscCancels(t *testing.T) {
 	v.err = nil
 
 	// Send ESC key
-	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	msg := tea.KeyPressMsg{Code: tea.KeyEsc}
 	v, _ = v.Update(msg)
 
 	// Verify retry prompt was dismissed
@@ -598,7 +598,7 @@ func TestBrowserView_RetryPrompt_KeyHandling(t *testing.T) {
 			v.err = nil
 
 			// Send number key
-			msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(tt.key)}
+			msg := tea.KeyPressMsg{Text: tt.key, Code: rune(tt.key[0])}
 			v, cmd := v.Update(msg)
 
 			// Verify retry prompt was dismissed
@@ -632,7 +632,7 @@ func TestBrowserView_RetryPrompt_IgnoresOtherKeys(t *testing.T) {
 	v.retryPrompt.Show("")
 
 	// Send an unrelated key (like 'a')
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("a")}
+	msg := tea.KeyPressMsg{Text: "a", Code: 'a'}
 	v, _ = v.Update(msg)
 
 	// Verify retry prompt is still active
@@ -816,7 +816,7 @@ func TestBrowserView_RetryMenuSavesPreference(t *testing.T) {
 			v.retryPrompt.Show("")
 			v.parent.config.SetPreferredTimeout(0)
 
-			msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(tt.key)}
+			msg := tea.KeyPressMsg{Text: tt.key, Code: rune(tt.key[0])}
 			v, _ = v.Update(msg)
 
 			saved := v.parent.config.GetPreferredTimeout()

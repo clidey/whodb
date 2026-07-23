@@ -20,7 +20,7 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/clidey/whodb/core/src/engine"
 )
 
@@ -120,7 +120,7 @@ func TestColumnsView_ToggleSelection_Space(t *testing.T) {
 	v.selectedIndex = 0
 
 	// Toggle with space
-	msg := tea.KeyMsg{Type: tea.KeySpace}
+	msg := tea.KeyPressMsg{Code: tea.KeySpace}
 	v, _ = v.Update(msg)
 
 	if v.selected["id"] {
@@ -144,7 +144,7 @@ func TestColumnsView_ToggleSelection_X(t *testing.T) {
 	v.selectedIndex = 0
 
 	// Toggle with 'x'
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'x'}}
+	msg := tea.KeyPressMsg{Text: "x", Code: 'x'}
 	v, _ = v.Update(msg)
 
 	if v.selected["id"] {
@@ -164,7 +164,7 @@ func TestColumnsView_SelectAll(t *testing.T) {
 	v.selected["name"] = false
 
 	// Press 'a' to select all
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'a'}}
+	msg := tea.KeyPressMsg{Text: "a", Code: 'a'}
 	v, _ = v.Update(msg)
 
 	if !v.selected["id"] || !v.selected["name"] {
@@ -184,7 +184,7 @@ func TestColumnsView_SelectNone(t *testing.T) {
 	v.selected["name"] = true
 
 	// Press 'n' to select none
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'n'}}
+	msg := tea.KeyPressMsg{Text: "n", Code: 'n'}
 	v, _ = v.Update(msg)
 
 	if v.selected["id"] || v.selected["name"] {
@@ -205,7 +205,7 @@ func TestColumnsView_Navigation_UpDown(t *testing.T) {
 	v.height = 50 // Large enough to not scroll
 
 	// Down
-	msg := tea.KeyMsg{Type: tea.KeyDown}
+	msg := tea.KeyPressMsg{Code: tea.KeyDown}
 	v, _ = v.Update(msg)
 	if v.selectedIndex != 1 {
 		t.Errorf("Expected selectedIndex 1 after down, got %d", v.selectedIndex)
@@ -224,7 +224,7 @@ func TestColumnsView_Navigation_UpDown(t *testing.T) {
 	}
 
 	// Up
-	msg = tea.KeyMsg{Type: tea.KeyUp}
+	msg = tea.KeyPressMsg{Code: tea.KeyUp}
 	v, _ = v.Update(msg)
 	if v.selectedIndex != 1 {
 		t.Errorf("Expected selectedIndex 1 after up, got %d", v.selectedIndex)
@@ -243,14 +243,14 @@ func TestColumnsView_Navigation_VimKeys(t *testing.T) {
 	v.height = 50
 
 	// 'j' goes down
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}}
+	msg := tea.KeyPressMsg{Text: "j", Code: 'j'}
 	v, _ = v.Update(msg)
 	if v.selectedIndex != 1 {
 		t.Errorf("Expected selectedIndex 1 after 'j', got %d", v.selectedIndex)
 	}
 
 	// 'k' goes up
-	msg = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'k'}}
+	msg = tea.KeyPressMsg{Text: "k", Code: 'k'}
 	v, _ = v.Update(msg)
 	if v.selectedIndex != 0 {
 		t.Errorf("Expected selectedIndex 0 after 'k', got %d", v.selectedIndex)
@@ -261,7 +261,7 @@ func TestColumnsView_Escape(t *testing.T) {
 	v, cleanup := setupColumnsViewTest(t)
 	defer cleanup()
 
-	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	msg := tea.KeyPressMsg{Code: tea.KeyEsc}
 	v, _ = v.Update(msg)
 
 	if v.parent.mode != ViewResults {
@@ -368,7 +368,7 @@ func TestColumnsView_MouseScroll(t *testing.T) {
 	v.scrollOffset = 0
 
 	// Mouse wheel down
-	msg := tea.MouseMsg{Button: tea.MouseButtonWheelDown}
+	msg := tea.MouseWheelMsg{Button: tea.MouseWheelDown}
 	v, _ = v.Update(msg)
 
 	if v.scrollOffset <= 0 {
@@ -377,7 +377,7 @@ func TestColumnsView_MouseScroll(t *testing.T) {
 
 	// Mouse wheel up
 	initialOffset := v.scrollOffset
-	msg = tea.MouseMsg{Button: tea.MouseButtonWheelUp}
+	msg = tea.MouseWheelMsg{Button: tea.MouseWheelUp}
 	v, _ = v.Update(msg)
 
 	if v.scrollOffset >= initialOffset {
@@ -399,7 +399,7 @@ func TestColumnsView_ScrollWithNavigation(t *testing.T) {
 	v.scrollOffset = 0
 
 	// Navigate down many times
-	msg := tea.KeyMsg{Type: tea.KeyDown}
+	msg := tea.KeyPressMsg{Code: tea.KeyDown}
 	for i := 0; i < 10; i++ {
 		v, _ = v.Update(msg)
 	}
@@ -410,7 +410,7 @@ func TestColumnsView_ScrollWithNavigation(t *testing.T) {
 	}
 
 	// Navigate back up
-	msg = tea.KeyMsg{Type: tea.KeyUp}
+	msg = tea.KeyPressMsg{Code: tea.KeyUp}
 	for i := 0; i < 15; i++ {
 		v, _ = v.Update(msg)
 	}

@@ -160,7 +160,7 @@ func TestPlatformMCP_RealReadWriteLifecycle(t *testing.T) {
 		Resource:    "secret",
 		PayloadJSON: liveJSON(t, map[string]any{"name": "mcp-e2e-secret-" + suffix, "description": "MCP e2e secret", "value": "secret-value"}),
 	})
-	defer liveBestEffortGenericDelete(ctx, "secret", secretID)
+	defer func() { liveBestEffortGenericDelete(ctx, "secret", secretID) }()
 	liveMustReadProjectList(t, ctx, "secrets", func() (int, string) {
 		_, out, err := HandlePlatformSecrets(ctx, nil, PlatformEmptyInput{Fields: []string{"id", "name"}})
 		if err != nil {
@@ -179,7 +179,7 @@ func TestPlatformMCP_RealReadWriteLifecycle(t *testing.T) {
 		Resource:    "ai_provider",
 		PayloadJSON: liveJSON(t, map[string]any{"name": "mcp-e2e-provider-" + suffix, "providerType": "openai", "endpoint": "http://127.0.0.1:1/v1", "apiKey": "test-key"}),
 	})
-	defer liveBestEffortGenericDelete(ctx, "ai_provider", providerID)
+	defer func() { liveBestEffortGenericDelete(ctx, "ai_provider", providerID) }()
 	liveMustReadProjectList(t, ctx, "ai providers", func() (int, string) {
 		_, out, err := HandlePlatformAIProviders(ctx, nil, PlatformEmptyInput{Fields: []string{"id", "name", "providerType"}})
 		if err != nil {
@@ -211,7 +211,7 @@ func TestPlatformMCP_RealReadWriteLifecycle(t *testing.T) {
 			"schemaMode": "manual",
 		}),
 	})
-	defer liveBestEffortGenericDelete(ctx, "dataset", datasetID)
+	defer func() { liveBestEffortGenericDelete(ctx, "dataset", datasetID) }()
 	liveMustTypedWriteConfirmation(t, ctx, "whodb_platform_create_dataset", func() (PlatformGenericWriteOutput, error) {
 		_, out, err := handlePlatformCreateDataset(ctx, PlatformCreateDatasetInput{
 			Name:       "mcp-e2e-typed-dataset-" + suffix,
@@ -244,7 +244,7 @@ func TestPlatformMCP_RealReadWriteLifecycle(t *testing.T) {
 		PayloadJSON: liveJSON(t, map[string]any{"name": "mcp-e2e-dataset-updated-" + suffix, "description": "updated"}),
 	})
 	datasetCloneID := liveMustClone(t, ctx, PlatformCloneInput{Resource: "dataset", Source: datasetID, NewName: "mcp-e2e-dataset-clone-" + suffix})
-	defer liveBestEffortGenericDelete(ctx, "dataset", datasetCloneID)
+	defer func() { liveBestEffortGenericDelete(ctx, "dataset", datasetCloneID) }()
 
 	transformID := liveMustGenericWriteID(t, ctx, "platform_create", "create", PlatformGenericWriteInput{
 		Resource: "transform",
@@ -256,7 +256,7 @@ func TestPlatformMCP_RealReadWriteLifecycle(t *testing.T) {
 			"triggerMode":  "manual",
 		}),
 	})
-	defer liveBestEffortGenericDelete(ctx, "transform", transformID)
+	defer func() { liveBestEffortGenericDelete(ctx, "transform", transformID) }()
 	liveMustReadProjectList(t, ctx, "transforms", func() (int, string) {
 		_, out, err := HandlePlatformTransforms(ctx, nil, PlatformEmptyInput{Fields: []string{"id", "name"}})
 		if err != nil {
@@ -305,7 +305,7 @@ func TestPlatformMCP_RealReadWriteLifecycle(t *testing.T) {
 			"links": []map[string]any{},
 		}),
 	})
-	defer liveBestEffortGenericDelete(ctx, "ontology", targetOntologyID)
+	defer func() { liveBestEffortGenericDelete(ctx, "ontology", targetOntologyID) }()
 	ontologyID := liveMustGenericWriteID(t, ctx, "platform_create", "create", PlatformGenericWriteInput{
 		Resource: "ontology",
 		PayloadJSON: liveJSON(t, map[string]any{
@@ -343,7 +343,7 @@ func TestPlatformMCP_RealReadWriteLifecycle(t *testing.T) {
 			}},
 		}),
 	})
-	defer liveBestEffortGenericDelete(ctx, "ontology", ontologyID)
+	defer func() { liveBestEffortGenericDelete(ctx, "ontology", ontologyID) }()
 	liveMustReadProjectList(t, ctx, "ontologies", func() (int, string) {
 		_, out, err := HandlePlatformOntologies(ctx, nil, PlatformEmptyInput{Fields: []string{"id", "apiName", "displayName"}})
 		if err != nil {
@@ -371,7 +371,7 @@ func TestPlatformMCP_RealReadWriteLifecycle(t *testing.T) {
 		Resource:    "ontology_fast_lookup",
 		PayloadJSON: liveJSON(t, map[string]any{"entityId": ontologyID, "fields": []string{"id"}, "reason": "MCP e2e lookup"}),
 	})
-	defer liveBestEffortGenericDelete(ctx, "ontology_fast_lookup", lookupID)
+	defer func() { liveBestEffortGenericDelete(ctx, "ontology_fast_lookup", lookupID) }()
 	liveMustTypedWriteConfirmation(t, ctx, "whodb_platform_create_ontology_fast_lookup", func() (PlatformGenericWriteOutput, error) {
 		_, out, err := handlePlatformCreateOntologyFastLookup(ctx, PlatformOntologyFastLookupInput{EntityID: ontologyID, Fields: []string{"id"}, Reason: "typed MCP e2e"}, true)
 		return out, err
@@ -458,7 +458,7 @@ func TestPlatformMCP_RealReadWriteLifecycle(t *testing.T) {
 			"dependencies":   []map[string]any{},
 		}),
 	})
-	defer liveBestEffortGenericDelete(ctx, "function", functionID)
+	defer func() { liveBestEffortGenericDelete(ctx, "function", functionID) }()
 	liveMustReadEntity(t, ctx, "function", functionID, func() (string, error) {
 		_, out, err := HandlePlatformFunction(ctx, nil, PlatformEntityInput{ID: functionID, Fields: []string{"data", "scope"}})
 		return out.Error, err
@@ -484,12 +484,12 @@ func TestPlatformMCP_RealReadWriteLifecycle(t *testing.T) {
 		Resource:    "folder",
 		PayloadJSON: liveJSON(t, map[string]any{"name": "mcp-e2e-folder-a-" + suffix}),
 	})
-	defer liveBestEffortGenericDelete(ctx, "folder", folderAID)
+	defer func() { liveBestEffortGenericDelete(ctx, "folder", folderAID) }()
 	folderBID := liveMustGenericWriteID(t, ctx, "platform_create", "create", PlatformGenericWriteInput{
 		Resource:    "folder",
 		PayloadJSON: liveJSON(t, map[string]any{"name": "mcp-e2e-folder-b-" + suffix}),
 	})
-	defer liveBestEffortGenericDelete(ctx, "folder", folderBID)
+	defer func() { liveBestEffortGenericDelete(ctx, "folder", folderBID) }()
 	csvPath := filepath.Join(t.TempDir(), "mcp-e2e-"+suffix+".csv")
 	if err := os.WriteFile(csvPath, []byte("id,name\n1,Ada\n"), 0600); err != nil {
 		t.Fatalf("write test csv: %v", err)
@@ -499,7 +499,7 @@ func TestPlatformMCP_RealReadWriteLifecycle(t *testing.T) {
 		Action:      "upload",
 		PayloadJSON: liveJSON(t, map[string]any{"file_path": csvPath, "folderId": folderAID}),
 	})
-	defer liveBestEffortGenericDelete(ctx, "file", fileID)
+	defer func() { liveBestEffortGenericDelete(ctx, "file", fileID) }()
 	liveMustReadFiles(t, ctx, folderAID)
 	liveMustReadEntity(t, ctx, "file preview", fileID, func() (string, error) {
 		_, out, err := HandlePlatformFilePreview(ctx, nil, PlatformFilePreviewInput{FileID: fileID, Fields: []string{"data", "scope"}})
@@ -558,7 +558,7 @@ func TestPlatformMCP_RealReadWriteLifecycle(t *testing.T) {
 			},
 		}),
 	})
-	defer liveBestEffortGenericDelete(ctx, "dataset", promotedDatasetID)
+	defer func() { liveBestEffortGenericDelete(ctx, "dataset", promotedDatasetID) }()
 	liveMustTypedWriteConfirmation(t, ctx, "whodb_platform_promote_file_to_dataset", func() (PlatformGenericWriteOutput, error) {
 		sheetIndex := 0
 		_, out, err := handlePlatformPromoteFileToDataset(ctx, PlatformPromoteFileToDatasetInput{
@@ -726,7 +726,7 @@ func liveMustBundleTools(t *testing.T, ctx context.Context, suffix string) {
 	liveMustReadPending(t, ctx)
 	confirm := liveMustConfirm(t, ctx, importOutput.ConfirmationToken)
 	importedDatasetID := liveConfirmRowColumn(t, confirm, "dataset", importDatasetName, "target_id")
-	defer liveBestEffortGenericDelete(ctx, "dataset", importedDatasetID)
+	defer func() { liveBestEffortGenericDelete(ctx, "dataset", importedDatasetID) }()
 	liveMustReadEntity(t, ctx, "bundle imported dataset", importedDatasetID, func() (string, error) {
 		_, out, err := HandlePlatformDataset(ctx, nil, PlatformEntityInput{ID: importedDatasetID, Fields: []string{"data", "scope"}})
 		return out.Error, err

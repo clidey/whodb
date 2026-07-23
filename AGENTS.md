@@ -149,7 +149,7 @@ desktop-common/         # Shared desktop code
 .github/workflows/      # CI/CD pipelines (release, build, deploy)
 ```
 
-Additional agent docs: `.agents/docs/cli.md` (CLI), `.agents/docs/desktop.md` (desktop), `.agents/docs/ci-cd.md` (GitHub Actions), `.agents/docs/testing.md` (testing), `.agents/docs/analytics.md` (PostHog analytics contract). For adding new data sources, follow `DATA_SOURCE_GUIDE.md` (EE-specific additions in `ee/DATA_SOURCE_GUIDE_EE.md`).
+Additional agent docs: `.agents/docs/build-and-run.md` (CE setup and generation), `.agents/docs/data-sources.md` (adding data sources), `.agents/docs/cli.md` (CLI), `.agents/docs/desktop.md` (desktop), `.agents/docs/ci-cd.md` (GitHub Actions), `.agents/docs/testing.md` (testing), `.agents/docs/analytics.md` (PostHog analytics contract). EE-specific source additions are in `ee/.agents/docs/data-sources.md`.
 
 ## Testing
 

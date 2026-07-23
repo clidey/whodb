@@ -19,7 +19,7 @@ package tui
 import (
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/clidey/whodb/cli/internal/config"
 	"github.com/clidey/whodb/core/src/engine"
 )
@@ -96,7 +96,7 @@ func TestMainModel_Update_AltMOpensMockData(t *testing.T) {
 	m.browserView.filteredTables = []engine.StorageUnit{{Name: "users"}}
 	m.browserView.selectedIndex = 0
 
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'m'}, Alt: true}
+	msg := tea.KeyPressMsg{Code: 'm', Mod: tea.ModAlt}
 	_, _ = m.Update(msg)
 
 	if m.mode != ViewMockData {

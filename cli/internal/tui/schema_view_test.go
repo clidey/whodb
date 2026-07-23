@@ -21,7 +21,7 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/clidey/whodb/core/src/engine"
 )
 
@@ -139,7 +139,7 @@ func TestSchemaView_Navigation_UpDown(t *testing.T) {
 	v.height = 50 // Large enough to not scroll
 
 	// Move down
-	msg := tea.KeyMsg{Type: tea.KeyDown}
+	msg := tea.KeyPressMsg{Code: tea.KeyDown}
 	v, _ = v.Update(msg)
 
 	if v.selectedIndex != 1 {
@@ -161,7 +161,7 @@ func TestSchemaView_Navigation_UpDown(t *testing.T) {
 	}
 
 	// Move up
-	msg = tea.KeyMsg{Type: tea.KeyUp}
+	msg = tea.KeyPressMsg{Code: tea.KeyUp}
 	v, _ = v.Update(msg)
 
 	if v.selectedIndex != 1 {
@@ -183,7 +183,7 @@ func TestSchemaView_Navigation_VimKeys(t *testing.T) {
 	v.height = 50
 
 	// 'j' moves down
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}}
+	msg := tea.KeyPressMsg{Text: "j", Code: 'j'}
 	v, _ = v.Update(msg)
 
 	if v.selectedIndex != 1 {
@@ -191,7 +191,7 @@ func TestSchemaView_Navigation_VimKeys(t *testing.T) {
 	}
 
 	// 'k' moves up
-	msg = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'k'}}
+	msg = tea.KeyPressMsg{Text: "k", Code: 'k'}
 	v, _ = v.Update(msg)
 
 	if v.selectedIndex != 0 {
@@ -211,7 +211,7 @@ func TestSchemaView_Navigation_AtTop(t *testing.T) {
 	v.selectedIndex = 0
 
 	// Try to move up at top - should stay
-	msg := tea.KeyMsg{Type: tea.KeyUp}
+	msg := tea.KeyPressMsg{Code: tea.KeyUp}
 	v, _ = v.Update(msg)
 
 	if v.selectedIndex != 0 {
@@ -234,7 +234,7 @@ func TestSchemaView_ExpandCollapse_Enter(t *testing.T) {
 	v.selectedIndex = 0
 
 	// Press Enter to expand
-	msg := tea.KeyMsg{Type: tea.KeyEnter}
+	msg := tea.KeyPressMsg{Code: tea.KeyEnter}
 	v, _ = v.Update(msg)
 
 	if !v.expandedTables["users"] {
@@ -264,7 +264,7 @@ func TestSchemaView_ExpandCollapse_Space(t *testing.T) {
 	v.selectedIndex = 0
 
 	// Press Space to expand
-	msg := tea.KeyMsg{Type: tea.KeySpace}
+	msg := tea.KeyPressMsg{Code: tea.KeySpace}
 	v, _ = v.Update(msg)
 
 	if !v.expandedTables["orders"] {
@@ -280,7 +280,7 @@ func TestSchemaView_Filter_Enter(t *testing.T) {
 	v.filtering = false
 
 	// Press '/' to enter filter mode
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'/'}}
+	msg := tea.KeyPressMsg{Text: "/", Code: '/'}
 	v, _ = v.Update(msg)
 
 	if !v.filtering {
@@ -296,7 +296,7 @@ func TestSchemaView_Filter_EnterWithF(t *testing.T) {
 	v.filtering = false
 
 	// Press 'f' to enter filter mode
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'f'}}
+	msg := tea.KeyPressMsg{Text: "f", Code: 'f'}
 	v, _ = v.Update(msg)
 
 	if !v.filtering {
@@ -318,7 +318,7 @@ func TestSchemaView_Filter_Cancel(t *testing.T) {
 	v.filterInput.SetValue("usr")
 
 	// Press Esc to cancel
-	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	msg := tea.KeyPressMsg{Code: tea.KeyEsc}
 	v, _ = v.Update(msg)
 
 	if v.filtering {
@@ -349,7 +349,7 @@ func TestSchemaView_Filter_Apply(t *testing.T) {
 
 	// Type filter text and press Enter
 	v.filterInput.SetValue("user")
-	msg := tea.KeyMsg{Type: tea.KeyEnter}
+	msg := tea.KeyPressMsg{Code: tea.KeyEnter}
 	v, _ = v.Update(msg)
 
 	if v.filtering {
@@ -434,7 +434,7 @@ func TestSchemaView_Escape(t *testing.T) {
 	v.loading = false
 	v.filtering = false
 
-	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	msg := tea.KeyPressMsg{Code: tea.KeyEsc}
 	v, _ = v.Update(msg)
 
 	if v.parent.mode != ViewBrowser {
@@ -475,7 +475,7 @@ func TestSchemaView_MouseScroll(t *testing.T) {
 	v.scrollOffset = 0
 
 	// Mouse wheel down
-	msg := tea.MouseMsg{Button: tea.MouseButtonWheelDown}
+	msg := tea.MouseWheelMsg{Button: tea.MouseWheelDown}
 	v, _ = v.Update(msg)
 
 	if v.scrollOffset <= 0 {
@@ -484,7 +484,7 @@ func TestSchemaView_MouseScroll(t *testing.T) {
 
 	// Mouse wheel up
 	initialOffset := v.scrollOffset
-	msg = tea.MouseMsg{Button: tea.MouseButtonWheelUp}
+	msg = tea.MouseWheelMsg{Button: tea.MouseWheelUp}
 	v, _ = v.Update(msg)
 
 	if v.scrollOffset >= initialOffset {
@@ -498,7 +498,7 @@ func TestSchemaView_MouseScrollUp_AtTop(t *testing.T) {
 
 	v.scrollOffset = 0
 
-	msg := tea.MouseMsg{Button: tea.MouseButtonWheelUp}
+	msg := tea.MouseWheelMsg{Button: tea.MouseWheelUp}
 	v, _ = v.Update(msg)
 
 	if v.scrollOffset != 0 {
@@ -668,7 +668,7 @@ func TestSchemaView_Refresh(t *testing.T) {
 	v.expandedTables["users"] = true
 
 	// Press 'r' to refresh
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'r'}}
+	msg := tea.KeyPressMsg{Text: "r", Code: 'r'}
 	v, cmd := v.Update(msg)
 
 	if !v.loading {

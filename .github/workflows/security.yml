@@ -56,7 +56,7 @@ jobs:
 
       - name: Run gosec
         working-directory: core
-        run: gosec -no-fail -fmt json -out ../gosec.json -exclude-generated ./... 2>&1 || true
+        run: gosec -fmt json -out ../gosec.json -exclude-generated ./...
 
       - name: Run govulncheck
         working-directory: core

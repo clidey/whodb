@@ -36,8 +36,6 @@ const goldenSourceTypesFile = "testdata/source_types.json"
 //
 //	go test -run TestGenerateSourceTypesGoldenFile ./graph/
 func TestSourceTypesGoldenFile(t *testing.T) {
-	t.Parallel()
-
 	types, err := (&Resolver{}).Query().SourceTypes(context.Background())
 	if err != nil {
 		t.Fatalf("expected source types query to succeed, got %v", err)
@@ -86,8 +84,18 @@ func TestGenerateSourceTypesGoldenFile(t *testing.T) {
 func serializeSourceTypes(t *testing.T, types []*model.SourceType) string {
 	t.Helper()
 
-	sliced := make([]*model.SourceType, len(types))
-	copy(sliced, types)
+	sliced := make([]*model.SourceType, 0, len(types))
+	for _, st := range types {
+		// Other tests in this package (e.g.
+		// TestQuerySourceContentReadsRegisteredContentSource) register
+		// test-only types into the shared global source registry with no
+		// cleanup. Exclude them so this golden file reflects only the
+		// product's real source catalog regardless of test run order.
+		if st.ID == testContentSourceID {
+			continue
+		}
+		sliced = append(sliced, st)
+	}
 	slices.SortFunc(sliced, func(a, b *model.SourceType) int {
 		return strings.Compare(a.ID, b.ID)
 	})

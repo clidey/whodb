@@ -400,13 +400,28 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
         );
       }
       if (language === "json") {
+        let parsed: object = {};
+        let isValidJson = true;
+        try {
+          parsed = JSON.parse(value);
+        } catch {
+          isValidJson = false;
+        }
+
         return (
           <div className="h-full bg-white p-4 pl-8 dark:bg-[#252526] dark:backdrop-blur-md overflow-y-auto">
-            <ReactJson
-              src={JSON.parse(value)}
-              theme={darkModeEnabled ? "bright" : undefined}
-              style={{ height: "100%", backgroundColor: "unset" }}
-            />
+            {isValidJson ? (
+              <ReactJson
+                src={parsed}
+                theme={darkModeEnabled ? "bright" : undefined}
+                style={{ height: "100%", backgroundColor: "unset" }}
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full gap-2">
+                  <p className="text-sm text-red-500 font-medium">{t('invalidJson')}</p>
+                  <p className="text-xs text-muted-foreground">{t('invalidJsonDescription')}</p>
+              </div>
+            )}
           </div>
         );
       }

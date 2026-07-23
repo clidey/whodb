@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 	"github.com/clidey/whodb/cli/pkg/styles"
 	"github.com/clidey/whodb/core/src/engine"
 )

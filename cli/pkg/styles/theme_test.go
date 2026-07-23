@@ -120,19 +120,19 @@ func TestAllThemesHaveAllColors(t *testing.T) {
 		}
 
 		// Check that no color slot is entirely empty
-		if theme.Primary.Light == "" && theme.Primary.Dark == "" {
+		if theme.Primary == nil {
 			t.Errorf("Theme %q: Primary has no colors", name)
 		}
-		if theme.Background.Light == "" && theme.Background.Dark == "" {
+		if theme.Background == nil {
 			t.Errorf("Theme %q: Background has no colors", name)
 		}
-		if theme.Foreground.Light == "" && theme.Foreground.Dark == "" {
+		if theme.Foreground == nil {
 			t.Errorf("Theme %q: Foreground has no colors", name)
 		}
-		if theme.Error.Light == "" && theme.Error.Dark == "" {
+		if theme.Error == nil {
 			t.Errorf("Theme %q: Error has no colors", name)
 		}
-		if theme.Keyword.Light == "" && theme.Keyword.Dark == "" {
+		if theme.Keyword == nil {
 			t.Errorf("Theme %q: Keyword has no colors", name)
 		}
 	}

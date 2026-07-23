@@ -17,10 +17,18 @@
 schema: ../core/graph/schema.graphqls
 documents: src/**/*.graphql
 generates:
-  src/generated/graphql.ts:
+  src/generated/schema-types.ts:
     plugins:
       - typescript
+    config:
+      useTypeImports: true
+      enumType: native
+  src/generated/graphql.ts:
+    plugins:
       - typescript-operations
       - typed-document-node
     config:
       useTypeImports: true
+      enumType: native
+      importSchemaTypesFrom: ./src/generated/schema-types
+      namespacedImportName: SchemaTypes

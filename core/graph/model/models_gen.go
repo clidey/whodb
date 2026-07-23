@@ -625,12 +625,13 @@ type SourceQuerySuggestion struct {
 }
 
 type SourceQueryTraits struct {
-	SupportsAnalyze        bool                   `json:"SupportsAnalyze"`
-	SupportsScripts        bool                   `json:"SupportsScripts"`
-	SupportsStreaming      bool                   `json:"SupportsStreaming"`
-	SupportsMultiStatement bool                   `json:"SupportsMultiStatement"`
-	SupportsSQLImport      bool                   `json:"SupportsSqlImport"`
-	ExplainMode            SourceQueryExplainMode `json:"ExplainMode"`
+	SupportsAnalyze          bool                   `json:"SupportsAnalyze"`
+	SupportsScripts          bool                   `json:"SupportsScripts"`
+	SupportsStreaming        bool                   `json:"SupportsStreaming"`
+	SupportsMultiStatement   bool                   `json:"SupportsMultiStatement"`
+	SupportsSQLImport        bool                   `json:"SupportsSqlImport"`
+	ExplainMode              SourceQueryExplainMode `json:"ExplainMode"`
+	SequentialPaginationOnly bool                   `json:"SequentialPaginationOnly"`
 }
 
 type SourceSSLMode struct {

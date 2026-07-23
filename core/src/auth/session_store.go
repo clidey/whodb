@@ -27,6 +27,7 @@ import (
 	"sync"
 	"time"
 
+	sqlite3 "github.com/mattn/go-sqlite3"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -68,21 +69,70 @@ func (sessionRow) TableName() string { return "sessions" }
 var (
 	sessionDB     *gorm.DB
 	sessionKeyHex string
+	sessionDBPath string
 	sessionMu     sync.RWMutex
 
 	ensureOnce  sync.Once
 	stopCleanup func()
+
+	corruptionAlertOnce sync.Once
+
+	// sessionStoreDisabled is set via DisableSessionStore before the server
+	// starts (e.g. by an edition with its own session mechanism). It is only
+	// ever written once, at startup, before EnsureSessionStore's sync.Once can
+	// run, so no locking is needed.
+	sessionStoreDisabled bool
 )
+
+// DisableSessionStore opts out of initializing the CE encrypted session store
+// entirely. Editions that implement their own browser-session mechanism (and
+// never call CreateSession) should call this before the server starts so no
+// unused session database file or cleanup ticker is created. It must be
+// called before EnsureSessionStore runs (i.e. before app.Run/InitializeRouter).
+func DisableSessionStore() {
+	sessionStoreDisabled = true
+}
+
+// isSessionDBCorrupted reports whether err indicates the SQLite session
+// database file itself is unreadable (disk image malformed, or not a
+// database file at all) rather than a transient condition like a lock
+// timeout. These codes mean the file needs manual operator intervention —
+// no in-process retry or query will recover it.
+func isSessionDBCorrupted(err error) bool {
+	var sqliteErr sqlite3.Error
+	if !errors.As(err, &sqliteErr) {
+		return false
+	}
+	return errors.Is(sqliteErr.Code, sqlite3.ErrCorrupt) || errors.Is(sqliteErr.Code, sqlite3.ErrNotADB)
+}
+
+// alertSessionDBCorrupted logs a one-time, high-visibility warning that the
+// session store file appears corrupted. It does not attempt any automatic
+// repair: the file is operator data (session.key lives alongside it) and
+// deleting or rewriting it without consent could destroy an encryption key
+// or mask an underlying disk problem. The operator must intervene manually,
+// typically by stopping the server and removing the session database file
+// (sessions are ephemeral; this only forces re-login).
+func alertSessionDBCorrupted() {
+	corruptionAlertOnce.Do(func() {
+		log.Errorf(
+			"Session store database appears corrupted (%s). All sessions are unusable until this is resolved. "+
+				"Stop the server and delete the file to force a fresh store (all users will need to log in again).",
+			sessionDBPath,
+		)
+	})
+}
 
 // EnsureSessionStore initializes the session store exactly once for the current
 // process and returns a stop function for its cleanup ticker. It is called from
 // router initialization so every server entry point (app.Run, the test server,
 // etc.) gets the store — desktop and CLI modes are skipped (they use the OS
-// keyring / Authorization-header flow). Failures are non-fatal except a
-// malformed, explicitly-set WHODB_ENCRYPTION_KEY.
+// keyring / Authorization-header flow), as is any edition that called
+// DisableSessionStore. Failures are non-fatal except a malformed,
+// explicitly-set WHODB_ENCRYPTION_KEY.
 func EnsureSessionStore() func() {
 	ensureOnce.Do(func() {
-		if env.GetIsDesktopMode() || env.GetIsCLIMode() {
+		if env.GetIsDesktopMode() || env.GetIsCLIMode() || sessionStoreDisabled {
 			return
 		}
 
@@ -127,7 +177,8 @@ func InitSessionStore(dataDir, encryptionKey string) error {
 	if err := validateKeyHex(encryptionKey); err != nil {
 		return fmt.Errorf("session store: %w", err)
 	}
-	dsn := "file:" + filepath.Join(dataDir, sessionDBFileName) + "?_busy_timeout=5000&_journal_mode=WAL"
+	dbPath := filepath.Join(dataDir, sessionDBFileName)
+	dsn := "file:" + dbPath + "?_busy_timeout=5000&_journal_mode=WAL"
 	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
 	if err != nil {
 		return fmt.Errorf("session store: open: %w", err)
@@ -139,6 +190,7 @@ func InitSessionStore(dataDir, encryptionKey string) error {
 	sessionMu.Lock()
 	sessionDB = db
 	sessionKeyHex = encryptionKey
+	sessionDBPath = dbPath
 	sessionMu.Unlock()
 	return nil
 }
@@ -163,7 +215,7 @@ func CreateSession(credentials *source.Credentials, ttl time.Duration) (token, c
 
 	// Marshaling the credentials (including any AccessToken) is intentional — the
 	// result is immediately AES-256-GCM encrypted before it is ever stored.
-	plaintext, err := json.Marshal(credentials) //nolint:gosec // encrypted before storage
+	plaintext, err := json.Marshal(credentials) // #nosec G117 -- plaintext is immediately AES-256-GCM encrypted before storage.
 	if err != nil {
 		return "", "", time.Time{}, err
 	}
@@ -211,6 +263,9 @@ func LookupSession(token string, ttl time.Duration) (creds *source.Credentials, 
 	err = db.Where("session_hash = ? AND expires_at > ?", hashToken(token), time.Now()).First(&row).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, "", false, errSessionNotFound
+	}
+	if isSessionDBCorrupted(err) {
+		alertSessionDBCorrupted()
 	}
 	if err != nil {
 		return nil, "", false, err

@@ -21,10 +21,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/textinput"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/clidey/whodb/cli/pkg/styles"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/sahilm/fuzzy"
@@ -50,10 +50,12 @@ func NewSchemaView(parent *MainModel) *SchemaView {
 	ti := textinput.New()
 	ti.Placeholder = "Search Tables"
 	ti.CharLimit = 50
-	ti.Width = 30
-	ti.PromptStyle = lipgloss.NewStyle().Foreground(styles.Primary)
-	ti.TextStyle = lipgloss.NewStyle().Foreground(styles.Foreground)
-	ti.Cursor.Style = lipgloss.NewStyle().Foreground(styles.Primary)
+	ti.SetWidth(30)
+	tiStyles := ti.Styles()
+	tiStyles.Focused.Prompt = lipgloss.NewStyle().Foreground(styles.Primary)
+	tiStyles.Focused.Text = lipgloss.NewStyle().Foreground(styles.Foreground)
+	tiStyles.Cursor.Color = styles.Primary
+	ti.SetStyles(tiStyles)
 
 	return &SchemaView{
 		parent:         parent,
@@ -92,17 +94,17 @@ func (v *SchemaView) Update(msg tea.Msg) (*SchemaView, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		v.width = msg.Width
 		v.height = msg.Height
-		v.filterInput.Width = clamp(msg.Width-20, 15, 50)
+		v.filterInput.SetWidth(clamp(msg.Width-20, 15, 50))
 		return v, nil
 
-	case tea.MouseMsg:
+	case tea.MouseWheelMsg:
 		switch msg.Button {
-		case tea.MouseButtonWheelUp:
+		case tea.MouseWheelUp:
 			if v.scrollOffset > 0 {
 				v.scrollOffset--
 			}
 			return v, nil
-		case tea.MouseButtonWheelDown:
+		case tea.MouseWheelDown:
 			// Calculate total items (tables + expanded columns)
 			totalItems := 0
 			for _, table := range v.filteredTables {
@@ -133,7 +135,7 @@ func (v *SchemaView) Update(msg tea.Msg) (*SchemaView, tea.Cmd) {
 		}
 		return v, nil
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		if v.filtering {
 			switch msg.String() {
 			case "esc":

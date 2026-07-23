@@ -7,13 +7,21 @@ WhoDB uses GitHub Actions for automated builds, testing, and multi-platform depl
 ```
 .github/workflows/
   lint-check.yml          # PR lint + typecheck gate (Go + Frontend)
+  e2e-ce.yml              # CE end-to-end tests
+  security.yml            # CE security checks
   release-ce.yml          # Main CE release orchestrator
   _build-*.yml            # Reusable build workflows (called by release)
   _deploy-*.yml           # Reusable deploy workflows
   _sign-validate.yml      # Code signing validation
-  _verify-deployment.yml  # Post-deployment verification
-  claude.yml              # Claude Code integration
-  claude-code-review.yml  # Automated PR review
+
+ee/.github/workflows/
+  lint-check.yml          # EE lint and typecheck gate
+  e2e-ee.yml              # EE end-to-end tests
+  go-deps.yml             # EE dependency checks
+  security.yml            # EE security checks
+  release-ee.yml          # EE release orchestrator
+  _build-docker-bridge.yml
+  _deploy-docker-bridge.yml
 
 .github/actions/
   calculate-version/      # Semantic version calculation
@@ -130,36 +138,9 @@ Generates deployment summary with:
 
 ## Environment Secrets Required
 
-```
-# Docker
-DOCKER_USERNAME
-DOCKER_PASSWORD
-
-# Apple
-APPLE_DEVELOPER_CERTIFICATE_P12_BASE64
-APPLE_DEVELOPER_CERTIFICATE_PASSWORD
-APPLE_ID
-APPLE_TEAM_ID
-APPLE_APP_PASSWORD
-ASC_ISSUER_ID
-ASC_KEY_ID
-ASC_KEY_BASE64
-
-# Microsoft
-AZURE_TENANT_ID
-AZURE_CLIENT_ID
-AZURE_CLIENT_SECRET
-MS_STORE_SELLER_ID
-MS_STORE_CLIENT_ID
-MS_STORE_CLIENT_SECRET
-
-# Snapcraft
-SNAPCRAFT_STORE_CREDENTIALS
-
-# Code Signing
-WINDOWS_CERTIFICATE_P12_BASE64
-WINDOWS_CERTIFICATE_PASSWORD
-```
+See `ee/.agents/docs/github-actions-secrets.md` for the inventory derived from
+the checked-in CE and EE workflows. The workflow files remain the executable
+source of truth whenever a secret reference changes.
 
 ## Running Releases
 

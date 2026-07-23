@@ -1,5 +1,3 @@
-onlyBuiltDependencies: []
-
 minimumReleaseAge: 10080
 
 blockExoticSubdeps: true
@@ -16,7 +14,44 @@ trustPolicyExclude:
   # Long-standing widely-used release; allowlist this exact version to satisfy no-downgrade.
   - 'react-redux@9.2.0'
   - 'reselect@5.1.1'
+  # semver 6.3.1 lost provenance attestation when maintenance moved from isaacs to
+  # lukekarrys (npm-cli team) in 2023; no known vulnerabilities, pulled in transitively
+  # via @babel/core (istanbul-lib-instrument -> vite-plugin-istanbul).
+  - 'semver@6.3.1'
+  # @graphql-tools/executor-http 1.3.3 lost provenance attestation; published by
+  # dotansimha (The Guild founder, maintainer of graphql-tools/graphql-code-generator).
+  # No known vulnerabilities; pulled in transitively via @graphql-codegen/cli.
+  - '@graphql-tools/executor-http@1.3.3'
+  # semver 5.7.2 same 2023 npm-cli-team republish as semver@6.3.1 above (also by
+  # lukekarrys); no known vulnerabilities. Pulled in transitively via @lhci/cli -> lighthouse.
+  - 'semver@5.7.2'
+  # @graphql-tools/executor-graphql-ws 2.0.7 published by theguild-bot (The Guild's own
+  # release automation); no known vulnerabilities. Pulled in transitively via
+  # @graphql-codegen/cli -> @graphql-tools/url-loader.
+  - '@graphql-tools/executor-graphql-ws@2.0.7'
+  # @graphql-tools/wrap 10.1.4 same 2025-08-01 theguild-bot batch republish as above;
+  # no known vulnerabilities. Pulled in transitively via @graphql-codegen/cli -> url-loader.
+  - '@graphql-tools/wrap@10.1.4'
+  # @graphql-tools/delegate 10.2.23 same 2025-08-01 theguild-bot batch republish;
+  # no known vulnerabilities. Pulled in transitively via @graphql-codegen/cli -> wrap.
+  - '@graphql-tools/delegate@10.2.23'
+  # @graphql-tools/batch-execute 9.0.19 same 2025-08-01 theguild-bot batch republish;
+  # no known vulnerabilities. Pulled in transitively via @graphql-codegen/cli -> wrap.
+  - '@graphql-tools/batch-execute@9.0.19'
 
 strictDepBuilds: true
 
+allowBuilds:
+  core-js: false
+
 ignoreScripts: true
+preferFrozenLockfile: true
+strictSsl: true
+strictPeerDependencies: true
+saveExact: true
+auditLevel: high
+verifyStoreIntegrity: true
+minimumReleaseAgeExclude:
+  - '@clidey/ux'
+  - '@clidey/deptrust'
+  - '@clidey/connparse'

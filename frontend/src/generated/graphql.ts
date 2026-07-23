@@ -1,1788 +1,513 @@
-import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
-export type Maybe<T> = T | null;
-export type InputMaybe<T> = Maybe<T>;
-export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
-export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
-export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
-export type MakeEmpty<T extends { [key: string]: unknown }, K extends keyof T> = { [_ in K]?: never };
+/** Internal type. DO NOT USE DIRECTLY. */
+type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
+/** Internal type. DO NOT USE DIRECTLY. */
 export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
-/** All built-in and custom scalars, mapped to their actual values */
-export type Scalars = {
-  ID: { input: string; output: string; }
-  String: { input: string; output: string; }
-  Boolean: { input: boolean; output: boolean; }
-  Int: { input: number; output: number; }
-  Float: { input: number; output: number; }
-  Upload: { input: any; output: any; }
-};
+import type * as SchemaTypes from './schema-types';
 
-export type AiChatMessage = {
-  __typename?: 'AIChatMessage';
-  RequiresConfirmation: Scalars['Boolean']['output'];
-  Result?: Maybe<RowsResult>;
-  Text: Scalars['String']['output'];
-  Type: Scalars['String']['output'];
-};
-
-export type AiProvider = {
-  __typename?: 'AIProvider';
-  Icon?: Maybe<Scalars['String']['output']>;
-  IsEnvironmentDefined: Scalars['Boolean']['output'];
-  IsGeneric: Scalars['Boolean']['output'];
-  Name: Scalars['String']['output'];
-  ProviderId: Scalars['String']['output'];
-  Type: Scalars['String']['output'];
-};
-
-export type AwsProvider = CloudProvider & {
-  __typename?: 'AWSProvider';
-  DiscoverDocumentDB: Scalars['Boolean']['output'];
-  DiscoverElastiCache: Scalars['Boolean']['output'];
-  DiscoverRDS: Scalars['Boolean']['output'];
-  DiscoverS3: Scalars['Boolean']['output'];
-  DiscoveredCount: Scalars['Int']['output'];
-  Error?: Maybe<Scalars['String']['output']>;
-  Id: Scalars['ID']['output'];
-  LastDiscoveryAt?: Maybe<Scalars['String']['output']>;
-  Name: Scalars['String']['output'];
-  ProfileName?: Maybe<Scalars['String']['output']>;
-  ProviderType: CloudProviderType;
-  Region: Scalars['String']['output'];
-  Status: CloudProviderStatus;
-};
-
-export type AwsProviderInput = {
-  DiscoverDocumentDB?: InputMaybe<Scalars['Boolean']['input']>;
-  DiscoverElastiCache?: InputMaybe<Scalars['Boolean']['input']>;
-  DiscoverRDS?: InputMaybe<Scalars['Boolean']['input']>;
-  DiscoverS3?: InputMaybe<Scalars['Boolean']['input']>;
-  Name: Scalars['String']['input'];
-  ProfileName?: InputMaybe<Scalars['String']['input']>;
-  Region: Scalars['String']['input'];
-};
-
-export type AwsRegion = {
-  __typename?: 'AWSRegion';
-  Description: Scalars['String']['output'];
-  Id: Scalars['String']['output'];
-  Partition: Scalars['String']['output'];
-};
-
-export type AtomicWhereCondition = {
-  ColumnType: Scalars['String']['input'];
-  Key: Scalars['String']['input'];
-  Operator: Scalars['String']['input'];
-  Value: Scalars['String']['input'];
-};
-
-export type AzureProvider = CloudProvider & {
-  __typename?: 'AzureProvider';
-  DiscoverCosmosDB: Scalars['Boolean']['output'];
-  DiscoverMySQL: Scalars['Boolean']['output'];
-  DiscoverPostgreSQL: Scalars['Boolean']['output'];
-  DiscoverRedis: Scalars['Boolean']['output'];
-  DiscoveredCount: Scalars['Int']['output'];
-  Error?: Maybe<Scalars['String']['output']>;
-  Id: Scalars['ID']['output'];
-  LastDiscoveryAt?: Maybe<Scalars['String']['output']>;
-  Name: Scalars['String']['output'];
-  ProviderType: CloudProviderType;
-  Region: Scalars['String']['output'];
-  ResourceGroup?: Maybe<Scalars['String']['output']>;
-  Status: CloudProviderStatus;
-  SubscriptionID: Scalars['String']['output'];
-  TenantID?: Maybe<Scalars['String']['output']>;
-};
-
-export type AzureProviderInput = {
-  AuthMethod?: InputMaybe<Scalars['String']['input']>;
-  ClientID?: InputMaybe<Scalars['String']['input']>;
-  ClientSecret?: InputMaybe<Scalars['String']['input']>;
-  DiscoverCosmosDB?: InputMaybe<Scalars['Boolean']['input']>;
-  DiscoverMySQL?: InputMaybe<Scalars['Boolean']['input']>;
-  DiscoverPostgreSQL?: InputMaybe<Scalars['Boolean']['input']>;
-  DiscoverRedis?: InputMaybe<Scalars['Boolean']['input']>;
-  Name: Scalars['String']['input'];
-  ResourceGroup?: InputMaybe<Scalars['String']['input']>;
-  SubscriptionID: Scalars['String']['input'];
-  TenantID?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type AzureRegion = {
-  __typename?: 'AzureRegion';
-  DisplayName: Scalars['String']['output'];
-  Geography: Scalars['String']['output'];
-  Id: Scalars['String']['output'];
-};
-
-export type AzureSubscription = {
-  __typename?: 'AzureSubscription';
-  DisplayName: Scalars['String']['output'];
-  Id: Scalars['String']['output'];
-  State: Scalars['String']['output'];
-  TenantID: Scalars['String']['output'];
-};
-
-export type ChatInput = {
-  Model: Scalars['String']['input'];
-  PreviousConversation: Scalars['String']['input'];
-  Query: Scalars['String']['input'];
-  Token?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type CloudProvider = {
-  DiscoveredCount: Scalars['Int']['output'];
-  Error?: Maybe<Scalars['String']['output']>;
-  Id: Scalars['ID']['output'];
-  LastDiscoveryAt?: Maybe<Scalars['String']['output']>;
-  Name: Scalars['String']['output'];
-  ProviderType: CloudProviderType;
-  Region: Scalars['String']['output'];
-  Status: CloudProviderStatus;
-};
-
-export enum CloudProviderStatus {
-  Connected = 'Connected',
-  Disconnected = 'Disconnected',
-  Discovering = 'Discovering',
-  Error = 'Error'
-}
-
-export enum CloudProviderType {
-  Aws = 'AWS',
-  Azure = 'Azure',
-  Gcp = 'GCP'
-}
-
-export type Column = {
-  __typename?: 'Column';
-  IsForeignKey: Scalars['Boolean']['output'];
-  IsPrimary: Scalars['Boolean']['output'];
-  Length?: Maybe<Scalars['Int']['output']>;
-  MetadataFidelity: SourceMetadataFidelity;
-  Name: Scalars['String']['output'];
-  Precision?: Maybe<Scalars['Int']['output']>;
-  ReferencedColumn?: Maybe<Scalars['String']['output']>;
-  ReferencedTable?: Maybe<Scalars['String']['output']>;
-  Scale?: Maybe<Scalars['Int']['output']>;
-  Type: Scalars['String']['output'];
-};
-
-export type ColumnCreationCapabilities = {
-  __typename?: 'ColumnCreationCapabilities';
-  CheckMinMax: Scalars['Boolean']['output'];
-  CheckValues: Scalars['Boolean']['output'];
-  CompositePrimaryKey: Scalars['Boolean']['output'];
-  DefaultValue: Scalars['Boolean']['output'];
-  ForeignKey: Scalars['Boolean']['output'];
-  Identity: Scalars['Boolean']['output'];
-  Nullable: Scalars['Boolean']['output'];
-  PrimaryKey: Scalars['Boolean']['output'];
-  Types: Scalars['Boolean']['output'];
-  Unique: Scalars['Boolean']['output'];
-};
-
-export type ColumnCreationLabels = {
-  __typename?: 'ColumnCreationLabels';
-  CheckMax: Scalars['String']['output'];
-  CheckMin: Scalars['String']['output'];
-  CheckValues: Scalars['String']['output'];
-  DefaultValue: Scalars['String']['output'];
-  ForeignKey: Scalars['String']['output'];
-  Identity: Scalars['String']['output'];
-  Nullable: Scalars['String']['output'];
-  PrimaryKey: Scalars['String']['output'];
-  Unique: Scalars['String']['output'];
-};
-
-export type ColumnDefinitionInput = {
-  CheckMax?: InputMaybe<Scalars['Float']['input']>;
-  CheckMin?: InputMaybe<Scalars['Float']['input']>;
-  CheckValues?: InputMaybe<Array<Scalars['String']['input']>>;
-  DefaultValue?: InputMaybe<Scalars['String']['input']>;
-  ForeignKey?: InputMaybe<ForeignKeyDefinitionInput>;
-  Identity: Scalars['Boolean']['input'];
-  Name: Scalars['String']['input'];
-  Nullable?: InputMaybe<Scalars['Boolean']['input']>;
-  Primary: Scalars['Boolean']['input'];
-  Type: Scalars['String']['input'];
-  Unique: Scalars['Boolean']['input'];
-};
-
-export enum ConnectionStatus {
-  Available = 'Available',
-  Deleting = 'Deleting',
-  Failed = 'Failed',
-  Starting = 'Starting',
-  Stopped = 'Stopped',
-  Unknown = 'Unknown'
-}
-
-export type CreationOptionDefinition = {
-  __typename?: 'CreationOptionDefinition';
-  Key: Scalars['String']['output'];
-  Label: Scalars['String']['output'];
-  Required: Scalars['Boolean']['output'];
-  Values: Array<Scalars['String']['output']>;
-};
-
-export enum DataShape {
-  Content = 'Content',
-  Document = 'Document',
-  Graph = 'Graph',
-  Metadata = 'Metadata',
-  Tabular = 'Tabular'
-}
-
-export type DiscoveredConnection = {
-  __typename?: 'DiscoveredConnection';
-  Id: Scalars['ID']['output'];
-  Metadata: Array<Record>;
-  Name: Scalars['String']['output'];
-  ProviderID: Scalars['String']['output'];
-  ProviderType: CloudProviderType;
-  Region?: Maybe<Scalars['String']['output']>;
-  SourceType: Scalars['String']['output'];
-  Status: ConnectionStatus;
-};
-
-export type ForeignKeyDefinition = {
-  __typename?: 'ForeignKeyDefinition';
-  Column: Scalars['String']['output'];
-  Table: Scalars['String']['output'];
-};
-
-export type ForeignKeyDefinitionInput = {
-  Column: Scalars['String']['input'];
-  Table: Scalars['String']['input'];
-};
-
-export type GcpProvider = CloudProvider & {
-  __typename?: 'GCPProvider';
-  DiscoverAlloyDB: Scalars['Boolean']['output'];
-  DiscoverCloudSQL: Scalars['Boolean']['output'];
-  DiscoverMemorystore: Scalars['Boolean']['output'];
-  DiscoveredCount: Scalars['Int']['output'];
-  Error?: Maybe<Scalars['String']['output']>;
-  Id: Scalars['ID']['output'];
-  LastDiscoveryAt?: Maybe<Scalars['String']['output']>;
-  Name: Scalars['String']['output'];
-  ProjectID: Scalars['String']['output'];
-  ProviderType: CloudProviderType;
-  Region: Scalars['String']['output'];
-  ServiceAccountKeyPath?: Maybe<Scalars['String']['output']>;
-  Status: CloudProviderStatus;
-};
-
-export type GcpProviderInput = {
-  DiscoverAlloyDB?: InputMaybe<Scalars['Boolean']['input']>;
-  DiscoverCloudSQL?: InputMaybe<Scalars['Boolean']['input']>;
-  DiscoverMemorystore?: InputMaybe<Scalars['Boolean']['input']>;
-  Name: Scalars['String']['input'];
-  ProjectID: Scalars['String']['input'];
-  Region: Scalars['String']['input'];
-  ServiceAccountKeyPath?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type GcpRegion = {
-  __typename?: 'GCPRegion';
-  Description: Scalars['String']['output'];
-  Id: Scalars['String']['output'];
-};
-
-export type GenerateChatTitleInput = {
-  Endpoint?: InputMaybe<Scalars['String']['input']>;
-  Model: Scalars['String']['input'];
-  ModelType: Scalars['String']['input'];
-  ProviderId?: InputMaybe<Scalars['String']['input']>;
-  Query: Scalars['String']['input'];
-  SessionId?: InputMaybe<Scalars['String']['input']>;
-  Token?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type GenerateChatTitleResponse = {
-  __typename?: 'GenerateChatTitleResponse';
-  Title: Scalars['String']['output'];
-};
-
-export type GraphUnit = {
-  __typename?: 'GraphUnit';
-  Relations: Array<GraphUnitRelationship>;
-  Unit: SourceObject;
-};
-
-export type GraphUnitRelationship = {
-  __typename?: 'GraphUnitRelationship';
-  MetadataFidelity: SourceMetadataFidelity;
-  Name: Scalars['String']['output'];
-  Relationship: GraphUnitRelationshipType;
-  SourceColumn?: Maybe<Scalars['String']['output']>;
-  TargetColumn?: Maybe<Scalars['String']['output']>;
-};
-
-export enum GraphUnitRelationshipType {
-  ManyToMany = 'ManyToMany',
-  ManyToOne = 'ManyToOne',
-  OneToMany = 'OneToMany',
-  OneToOne = 'OneToOne',
-  Unknown = 'Unknown'
-}
-
-export type HealthStatus = {
-  __typename?: 'HealthStatus';
-  Database: Scalars['String']['output'];
-  Server: Scalars['String']['output'];
-};
-
-export type ImportColumnMapping = {
-  Skip: Scalars['Boolean']['input'];
-  SourceColumn: Scalars['String']['input'];
-  TargetColumn?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type ImportColumnMappingPreview = {
-  __typename?: 'ImportColumnMappingPreview';
-  SourceColumn: Scalars['String']['output'];
-  TargetColumn: Scalars['String']['output'];
-};
-
-export enum ImportFileFormat {
-  Csv = 'CSV',
-  Excel = 'EXCEL'
-}
-
-export type ImportFileInput = {
-  AllowAutoGenerated?: InputMaybe<Scalars['Boolean']['input']>;
-  File: Scalars['Upload']['input'];
-  Mapping: Array<ImportColumnMapping>;
-  Mode: ImportMode;
-  Options: ImportFileOptions;
-  Ref: SourceObjectRefInput;
-};
-
-export type ImportFileOptions = {
-  Delimiter?: InputMaybe<Scalars['String']['input']>;
-  Format: ImportFileFormat;
-  Sheet?: InputMaybe<Scalars['String']['input']>;
-};
-
-export enum ImportMode {
-  Append = 'APPEND',
-  Overwrite = 'OVERWRITE',
-  Upsert = 'UPSERT'
-}
-
-export type ImportPreview = {
-  __typename?: 'ImportPreview';
-  AutoGeneratedColumns: Array<Scalars['String']['output']>;
-  Columns: Array<Scalars['String']['output']>;
-  Mapping?: Maybe<Array<ImportColumnMappingPreview>>;
-  RequiresAllowAutoGenerated: Scalars['Boolean']['output'];
-  Rows: Array<Array<Scalars['String']['output']>>;
-  Sheet?: Maybe<Scalars['String']['output']>;
-  Truncated: Scalars['Boolean']['output'];
-  ValidationError?: Maybe<Scalars['String']['output']>;
-};
-
-export type ImportResult = {
-  __typename?: 'ImportResult';
-  Detail?: Maybe<Scalars['String']['output']>;
-  Message: Scalars['String']['output'];
-  Status: Scalars['Boolean']['output'];
-};
-
-export type ImportSqlInput = {
-  File?: InputMaybe<Scalars['Upload']['input']>;
-  Filename?: InputMaybe<Scalars['String']['input']>;
-  Script?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type LocalAwsProfile = {
-  __typename?: 'LocalAWSProfile';
-  AuthType: Scalars['String']['output'];
-  IsDefault: Scalars['Boolean']['output'];
-  Name: Scalars['String']['output'];
-  Region?: Maybe<Scalars['String']['output']>;
-  Source: Scalars['String']['output'];
-};
-
-export type LocalGcpProject = {
-  __typename?: 'LocalGCPProject';
-  IsDefault: Scalars['Boolean']['output'];
-  Name: Scalars['String']['output'];
-  ProjectID: Scalars['String']['output'];
-  Source: Scalars['String']['output'];
-};
-
-export type MockDataDependencyAnalysis = {
-  __typename?: 'MockDataDependencyAnalysis';
-  Error?: Maybe<Scalars['String']['output']>;
-  GenerationOrder: Array<Scalars['String']['output']>;
-  Tables: Array<MockDataTableInfo>;
-  TotalRows: Scalars['Int']['output'];
-  Warnings: Array<Scalars['String']['output']>;
-};
-
-export type MockDataGenerationInput = {
-  FkDensityRatio?: InputMaybe<Scalars['Int']['input']>;
-  Method: Scalars['String']['input'];
-  OverwriteExisting: Scalars['Boolean']['input'];
-  Ref: SourceObjectRefInput;
-  RowCount: Scalars['Int']['input'];
-};
-
-export type MockDataGenerationStatus = {
-  __typename?: 'MockDataGenerationStatus';
-  AmountGenerated: Scalars['Int']['output'];
-  Details?: Maybe<Array<MockDataTableDetail>>;
-};
-
-export type MockDataTableDetail = {
-  __typename?: 'MockDataTableDetail';
-  RowsGenerated: Scalars['Int']['output'];
-  Table: Scalars['String']['output'];
-  UsedExistingData: Scalars['Boolean']['output'];
-};
-
-export type MockDataTableInfo = {
-  __typename?: 'MockDataTableInfo';
-  IsBlocked: Scalars['Boolean']['output'];
-  RowsToGenerate: Scalars['Int']['output'];
-  Table: Scalars['String']['output'];
-  UsesExistingData: Scalars['Boolean']['output'];
-};
-
-export type Mutation = {
-  __typename?: 'Mutation';
-  AddAWSProvider: AwsProvider;
-  AddAzureProvider: AzureProvider;
-  AddGCPProvider: GcpProvider;
-  AddSourceRow: StatusResponse;
-  CreateSourceObject: StatusResponse;
-  CreateSourceObjectFromDefinition: StatusResponse;
-  DeleteSourceRow: StatusResponse;
-  ExecuteConfirmedSQL: AiChatMessage;
-  GenerateAzureADToken: Scalars['String']['output'];
-  GenerateChatTitle: GenerateChatTitleResponse;
-  GenerateCloudSQLIAMAuthToken: Scalars['String']['output'];
-  GenerateMockData: MockDataGenerationStatus;
-  GenerateRDSAuthToken: Scalars['String']['output'];
-  ImportPreview: ImportPreview;
-  ImportSQL: ImportResult;
-  ImportSourceObjectFile: ImportResult;
-  LoginSource: StatusResponse;
-  LoginWithSourceProfile: StatusResponse;
-  Logout: StatusResponse;
-  RefreshAzureProvider: AzureProvider;
-  RefreshCloudProvider: CloudProvider;
-  RefreshGCPProvider: GcpProvider;
-  RemoveCloudProvider: StatusResponse;
-  TestAWSCredentials: CloudProviderStatus;
-  TestAzureCredentials: CloudProviderStatus;
-  TestCloudProvider: CloudProviderStatus;
-  TestGCPCredentials: CloudProviderStatus;
-  TestSourceConnection: StatusResponse;
-  UpdateAWSProvider: AwsProvider;
-  UpdateAzureProvider: AzureProvider;
-  UpdateGCPProvider: GcpProvider;
-  UpdateSettings: StatusResponse;
-  UpdateSourceObject: StatusResponse;
-};
-
-
-export type MutationAddAwsProviderArgs = {
-  input: AwsProviderInput;
-};
-
-
-export type MutationAddAzureProviderArgs = {
-  input: AzureProviderInput;
-};
-
-
-export type MutationAddGcpProviderArgs = {
-  input: GcpProviderInput;
-};
-
-
-export type MutationAddSourceRowArgs = {
-  ref: SourceObjectRefInput;
-  values: Array<RecordInput>;
-};
-
-
-export type MutationCreateSourceObjectArgs = {
-  fields: Array<RecordInput>;
-  name: Scalars['String']['input'];
-  parent?: InputMaybe<SourceObjectRefInput>;
-};
-
-
-export type MutationCreateSourceObjectFromDefinitionArgs = {
-  definition: SourceObjectDefinitionInput;
-  parent?: InputMaybe<SourceObjectRefInput>;
-};
-
-
-export type MutationDeleteSourceRowArgs = {
-  ref: SourceObjectRefInput;
-  values: Array<RecordInput>;
-};
-
-
-export type MutationExecuteConfirmedSqlArgs = {
-  operationType: Scalars['String']['input'];
-  query: Scalars['String']['input'];
-};
-
-
-export type MutationGenerateAzureAdTokenArgs = {
-  providerID: Scalars['ID']['input'];
-  sourceType: Scalars['String']['input'];
-};
-
-
-export type MutationGenerateChatTitleArgs = {
-  input: GenerateChatTitleInput;
-};
-
-
-export type MutationGenerateCloudSqliamAuthTokenArgs = {
-  providerID: Scalars['ID']['input'];
-  username: Scalars['String']['input'];
-};
-
-
-export type MutationGenerateMockDataArgs = {
-  input: MockDataGenerationInput;
-};
-
-
-export type MutationGenerateRdsAuthTokenArgs = {
-  endpoint: Scalars['String']['input'];
-  port: Scalars['Int']['input'];
-  providerID: Scalars['ID']['input'];
-  region: Scalars['String']['input'];
-  username: Scalars['String']['input'];
-};
-
-
-export type MutationImportPreviewArgs = {
-  file: Scalars['Upload']['input'];
-  options: ImportFileOptions;
-  ref?: InputMaybe<SourceObjectRefInput>;
-  useHeaderMapping?: InputMaybe<Scalars['Boolean']['input']>;
-};
-
-
-export type MutationImportSqlArgs = {
-  input: ImportSqlInput;
-};
-
-
-export type MutationImportSourceObjectFileArgs = {
-  input: ImportFileInput;
-};
-
-
-export type MutationLoginSourceArgs = {
-  credentials: SourceLoginInput;
-};
-
-
-export type MutationLoginWithSourceProfileArgs = {
-  profile: SourceProfileLoginInput;
-};
-
-
-export type MutationRefreshAzureProviderArgs = {
-  id: Scalars['ID']['input'];
-};
-
-
-export type MutationRefreshCloudProviderArgs = {
-  id: Scalars['ID']['input'];
-};
-
-
-export type MutationRefreshGcpProviderArgs = {
-  id: Scalars['ID']['input'];
-};
-
-
-export type MutationRemoveCloudProviderArgs = {
-  id: Scalars['ID']['input'];
-};
-
-
-export type MutationTestAwsCredentialsArgs = {
-  input: AwsProviderInput;
-};
-
-
-export type MutationTestAzureCredentialsArgs = {
-  input: AzureProviderInput;
-};
-
-
-export type MutationTestCloudProviderArgs = {
-  id: Scalars['ID']['input'];
-};
-
-
-export type MutationTestGcpCredentialsArgs = {
-  input: GcpProviderInput;
-};
-
-
-export type MutationTestSourceConnectionArgs = {
-  credentials: SourceLoginInput;
-};
-
-
-export type MutationUpdateAwsProviderArgs = {
-  id: Scalars['ID']['input'];
-  input: AwsProviderInput;
-};
-
-
-export type MutationUpdateAzureProviderArgs = {
-  id: Scalars['ID']['input'];
-  input: AzureProviderInput;
-};
-
-
-export type MutationUpdateGcpProviderArgs = {
-  id: Scalars['ID']['input'];
-  input: GcpProviderInput;
-};
-
-
-export type MutationUpdateSettingsArgs = {
-  newSettings: SettingsConfigInput;
-};
-
-
-export type MutationUpdateSourceObjectArgs = {
-  ref: SourceObjectRefInput;
-  updatedColumns: Array<Scalars['String']['input']>;
-  values: Array<RecordInput>;
-};
-
-export type ObjectCreationMetadata = {
-  __typename?: 'ObjectCreationMetadata';
-  ColumnCapabilities: ColumnCreationCapabilities;
-  ColumnLabels: ColumnCreationLabels;
-  ObjectKind: SourceObjectKind;
-  RequiresColumns: Scalars['Boolean']['output'];
-  Supported: Scalars['Boolean']['output'];
-  TableCapabilities: TableCreationCapabilities;
-  TableOptions: Array<CreationOptionDefinition>;
-  TypeDefinitions: Array<TypeDefinition>;
-};
-
-export type OperationWhereCondition = {
-  Children: Array<WhereCondition>;
-};
-
-export type Query = {
-  __typename?: 'Query';
-  AIModel: Array<Scalars['String']['output']>;
-  AIProviders: Array<AiProvider>;
-  AWSRegions: Array<AwsRegion>;
-  AnalyzeMockDataDependencies: MockDataDependencyAnalysis;
-  AzureProvider?: Maybe<AzureProvider>;
-  AzureProviders: Array<AzureProvider>;
-  AzureRegions: Array<AzureRegion>;
-  AzureSubscriptions: Array<AzureSubscription>;
-  CloudProvider?: Maybe<CloudProvider>;
-  CloudProviders: Array<CloudProvider>;
-  DiscoveredConnections: Array<DiscoveredConnection>;
-  GCPProvider?: Maybe<GcpProvider>;
-  GCPProviders: Array<GcpProvider>;
-  GCPRegions: Array<GcpRegion>;
-  Health: HealthStatus;
-  LocalAWSProfiles: Array<LocalAwsProfile>;
-  LocalGCPProjects: Array<LocalGcpProject>;
-  MockDataMaxRowCount: Scalars['Int']['output'];
-  ProviderConnections: Array<DiscoveredConnection>;
-  RunSourceQuery: RowsResult;
-  SSLStatus?: Maybe<SslStatus>;
-  SettingsConfig: SettingsConfig;
-  SourceColumns: Array<Column>;
-  SourceColumnsBatch: Array<SourceObjectColumns>;
-  SourceContent?: Maybe<SourceContent>;
-  SourceFieldConstraints: Array<SourceFieldConstraints>;
-  SourceFieldOptions: Array<Scalars['String']['output']>;
-  SourceGraph: Array<GraphUnit>;
-  SourceObject?: Maybe<SourceObject>;
-  SourceObjectCreationMetadata: ObjectCreationMetadata;
-  SourceObjects: Array<SourceObject>;
-  SourceProfiles: Array<SourceProfile>;
-  SourceQuerySuggestions: Array<SourceQuerySuggestion>;
-  SourceRows: RowsResult;
-  SourceSessionMetadata?: Maybe<SourceSessionMetadata>;
-  SourceTypes: Array<SourceType>;
-  UpdateInfo: UpdateInfo;
-  Version: Scalars['String']['output'];
-};
-
-
-export type QueryAiModelArgs = {
-  modelType: Scalars['String']['input'];
-  providerId?: InputMaybe<Scalars['String']['input']>;
-  token?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-export type QueryAnalyzeMockDataDependenciesArgs = {
-  fkDensityRatio?: InputMaybe<Scalars['Int']['input']>;
-  ref: SourceObjectRefInput;
-  rowCount: Scalars['Int']['input'];
-};
-
-
-export type QueryAzureProviderArgs = {
-  id: Scalars['ID']['input'];
-};
-
-
-export type QueryCloudProviderArgs = {
-  id: Scalars['ID']['input'];
-};
-
-
-export type QueryGcpProviderArgs = {
-  id: Scalars['ID']['input'];
-};
-
-
-export type QueryProviderConnectionsArgs = {
-  providerID: Scalars['ID']['input'];
-};
-
-
-export type QueryRunSourceQueryArgs = {
-  query: Scalars['String']['input'];
-};
-
-
-export type QuerySourceColumnsArgs = {
-  ref: SourceObjectRefInput;
-};
-
-
-export type QuerySourceColumnsBatchArgs = {
-  refs: Array<SourceObjectRefInput>;
-};
-
-
-export type QuerySourceContentArgs = {
-  ref: SourceObjectRefInput;
-};
-
-
-export type QuerySourceFieldConstraintsArgs = {
-  ref: SourceObjectRefInput;
-};
-
-
-export type QuerySourceFieldOptionsArgs = {
-  fieldKey: Scalars['String']['input'];
-  sourceType: Scalars['String']['input'];
-  values?: InputMaybe<Array<RecordInput>>;
-};
-
-
-export type QuerySourceGraphArgs = {
-  ref?: InputMaybe<SourceObjectRefInput>;
-};
-
-
-export type QuerySourceObjectArgs = {
-  ref: SourceObjectRefInput;
-};
-
-
-export type QuerySourceObjectCreationMetadataArgs = {
-  parent?: InputMaybe<SourceObjectRefInput>;
-};
-
-
-export type QuerySourceObjectsArgs = {
-  kinds?: InputMaybe<Array<SourceObjectKind>>;
-  parent?: InputMaybe<SourceObjectRefInput>;
-};
-
-
-export type QuerySourceQuerySuggestionsArgs = {
-  ref?: InputMaybe<SourceObjectRefInput>;
-};
-
-
-export type QuerySourceRowsArgs = {
-  pageOffset: Scalars['Int']['input'];
-  pageSize: Scalars['Int']['input'];
-  ref: SourceObjectRefInput;
-  sort?: InputMaybe<Array<SortCondition>>;
-  where?: InputMaybe<WhereCondition>;
-};
-
-export type Record = {
-  __typename?: 'Record';
-  Key: Scalars['String']['output'];
-  Value: Scalars['String']['output'];
-};
-
-export type RecordInput = {
-  Extra?: InputMaybe<Array<RecordInput>>;
-  Key: Scalars['String']['input'];
-  Value: Scalars['String']['input'];
-};
-
-export type RowsResult = {
-  __typename?: 'RowsResult';
-  Columns: Array<Column>;
-  DisableUpdate: Scalars['Boolean']['output'];
-  Rows: Array<Array<Scalars['String']['output']>>;
-  TotalCount: Scalars['Int']['output'];
-};
-
-export type SslStatus = {
-  __typename?: 'SSLStatus';
-  IsEnabled: Scalars['Boolean']['output'];
-  Mode: Scalars['String']['output'];
-};
-
-export type SettingsConfig = {
-  __typename?: 'SettingsConfig';
-  AWSProviderEnabled: Scalars['Boolean']['output'];
-  AzureProviderEnabled: Scalars['Boolean']['output'];
-  CloudProvidersEnabled: Scalars['Boolean']['output'];
-  DisableCredentialForm: Scalars['Boolean']['output'];
-  EnableNewUI: Scalars['Boolean']['output'];
-  GCPProviderEnabled: Scalars['Boolean']['output'];
-  MaxPageSize: Scalars['Int']['output'];
-  MetricsEnabled?: Maybe<Scalars['Boolean']['output']>;
-};
-
-export type SettingsConfigInput = {
-  MetricsEnabled?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type SortCondition = {
-  Column: Scalars['String']['input'];
-  Direction: SortDirection;
-};
-
-export enum SortDirection {
-  Asc = 'ASC',
-  Desc = 'DESC'
-}
-
-export enum SourceAction {
-  Browse = 'Browse',
-  CreateChild = 'CreateChild',
-  Delete = 'Delete',
-  DeleteData = 'DeleteData',
-  Execute = 'Execute',
-  GenerateMockData = 'GenerateMockData',
-  ImportData = 'ImportData',
-  InsertData = 'InsertData',
-  Inspect = 'Inspect',
-  UpdateData = 'UpdateData',
-  ViewContent = 'ViewContent',
-  ViewDefinition = 'ViewDefinition',
-  ViewGraph = 'ViewGraph',
-  ViewRows = 'ViewRows'
-}
-
-export enum SourceCategory {
-  Cache = 'Cache',
-  Database = 'Database',
-  FileStore = 'FileStore',
-  ObjectStore = 'ObjectStore',
-  Search = 'Search'
-}
-
-export type SourceConnectionField = {
-  __typename?: 'SourceConnectionField';
-  DefaultValue?: Maybe<Scalars['String']['output']>;
-  Key: Scalars['String']['output'];
-  Kind: SourceConnectionFieldKind;
-  LabelKey: Scalars['String']['output'];
-  PlaceholderKey?: Maybe<Scalars['String']['output']>;
-  Required: Scalars['Boolean']['output'];
-  Section: SourceConnectionFieldSection;
-  SupportsOptions: Scalars['Boolean']['output'];
-};
-
-export enum SourceConnectionFieldKind {
-  Boolean = 'Boolean',
-  FilePath = 'FilePath',
-  Password = 'Password',
-  Text = 'Text'
-}
-
-export enum SourceConnectionFieldSection {
-  Advanced = 'Advanced',
-  Primary = 'Primary'
-}
-
-export type SourceConnectionTraits = {
-  __typename?: 'SourceConnectionTraits';
-  HostInputMode: SourceHostInputMode;
-  HostInputURLParser: SourceHostInputUrlParser;
-  SupportsCustomCAContent: Scalars['Boolean']['output'];
-  Transport: SourceConnectionTransport;
-};
-
-export enum SourceConnectionTransport {
-  Bridge = 'Bridge',
-  File = 'File',
-  Network = 'Network'
-}
-
-export type SourceContent = {
-  __typename?: 'SourceContent';
-  FileName: Scalars['String']['output'];
-  IsBinary: Scalars['Boolean']['output'];
-  MIMEType: Scalars['String']['output'];
-  ModifiedAt?: Maybe<Scalars['String']['output']>;
-  SizeBytes: Scalars['String']['output'];
-  Text?: Maybe<Scalars['String']['output']>;
-  Truncated: Scalars['Boolean']['output'];
-};
-
-export type SourceContract = {
-  __typename?: 'SourceContract';
-  BrowsePath: Array<SourceObjectKind>;
-  DefaultObjectKind: SourceObjectKind;
-  GraphScopeKind?: Maybe<SourceObjectKind>;
-  Model: SourceModel;
-  ObjectTypes: Array<SourceObjectType>;
-  RootActions: Array<SourceAction>;
-  Surfaces: Array<SourceSurface>;
-};
-
-export type SourceDiscoveryAdvancedDefault = {
-  __typename?: 'SourceDiscoveryAdvancedDefault';
-  Conditions: Array<SourceDiscoveryMetadataCondition>;
-  DefaultValue: Scalars['String']['output'];
-  Key: Scalars['String']['output'];
-  MetadataKey: Scalars['String']['output'];
-  ProviderTypes: Array<Scalars['String']['output']>;
-  Value: Scalars['String']['output'];
-};
-
-export type SourceDiscoveryMetadataCondition = {
-  __typename?: 'SourceDiscoveryMetadataCondition';
-  Key: Scalars['String']['output'];
-  Value: Scalars['String']['output'];
-};
-
-export type SourceDiscoveryPrefill = {
-  __typename?: 'SourceDiscoveryPrefill';
-  AdvancedDefaults: Array<SourceDiscoveryAdvancedDefault>;
-};
-
-export type SourceFieldConstraints = {
-  __typename?: 'SourceFieldConstraints';
-  AllowedValues: Array<Scalars['String']['output']>;
-  CheckMax?: Maybe<Scalars['Float']['output']>;
-  CheckMin?: Maybe<Scalars['Float']['output']>;
-  DefaultValue?: Maybe<Scalars['String']['output']>;
-  ForeignKey?: Maybe<ForeignKeyDefinition>;
-  Identity: Scalars['Boolean']['output'];
-  Length?: Maybe<Scalars['Int']['output']>;
-  MetadataFidelity: SourceMetadataFidelity;
-  Name: Scalars['String']['output'];
-  Nullable?: Maybe<Scalars['Boolean']['output']>;
-  Precision?: Maybe<Scalars['Int']['output']>;
-  Primary: Scalars['Boolean']['output'];
-  Scale?: Maybe<Scalars['Int']['output']>;
-  Type: Scalars['String']['output'];
-  Unique: Scalars['Boolean']['output'];
-};
-
-export enum SourceHostInputMode {
-  Hostname = 'Hostname',
-  HostnameOrUrl = 'HostnameOrURL',
-  None = 'None'
-}
-
-export enum SourceHostInputUrlParser {
-  MongoSrv = 'MongoSRV',
-  None = 'None',
-  Postgres = 'Postgres'
-}
-
-export type SourceLoginInput = {
-  AccessToken?: InputMaybe<Scalars['String']['input']>;
-  Id?: InputMaybe<Scalars['String']['input']>;
-  SourceType: Scalars['String']['input'];
-  Values: Array<RecordInput>;
-};
-
-export enum SourceMetadataFidelity {
-  Driver = 'Driver',
-  Exact = 'Exact',
-  Inferred = 'Inferred',
-  Sampled = 'Sampled',
-  Synthetic = 'Synthetic',
-  Unknown = 'Unknown',
-  Unsupported = 'Unsupported'
-}
-
-export type SourceMetadataTraits = {
-  __typename?: 'SourceMetadataTraits';
-  Columns: SourceMetadataFidelity;
-  Constraints: SourceMetadataFidelity;
-  Graph: SourceMetadataFidelity;
-  SystemObjectFiltering: SourceMetadataFidelity;
-};
-
-export type SourceMockDataTraits = {
-  __typename?: 'SourceMockDataTraits';
-  SupportsRelationalDependencies: Scalars['Boolean']['output'];
-};
-
-export enum SourceModel {
-  Document = 'Document',
-  Graph = 'Graph',
-  KeyValue = 'KeyValue',
-  Object = 'Object',
-  Relational = 'Relational',
-  Search = 'Search'
-}
-
-export type SourceObject = {
-  __typename?: 'SourceObject';
-  Actions: Array<SourceAction>;
-  HasChildren: Scalars['Boolean']['output'];
-  Kind: SourceObjectKind;
-  Metadata: Array<Record>;
-  Name: Scalars['String']['output'];
-  Path: Array<Scalars['String']['output']>;
-  Ref: SourceObjectRef;
-};
-
-export type SourceObjectColumns = {
-  __typename?: 'SourceObjectColumns';
-  Columns: Array<Column>;
-  Ref: SourceObjectRef;
-};
-
-export type SourceObjectDefinitionInput = {
-  Columns: Array<ColumnDefinitionInput>;
-  Name: Scalars['String']['input'];
-  TableOptions?: InputMaybe<Array<RecordInput>>;
-};
-
-export enum SourceObjectKind {
-  Collection = 'Collection',
-  Database = 'Database',
-  Function = 'Function',
-  Index = 'Index',
-  Item = 'Item',
-  Key = 'Key',
-  Procedure = 'Procedure',
-  Schema = 'Schema',
-  Sequence = 'Sequence',
-  Table = 'Table',
-  Trigger = 'Trigger',
-  View = 'View'
-}
-
-export type SourceObjectRef = {
-  __typename?: 'SourceObjectRef';
-  Kind: SourceObjectKind;
-  Locator: Scalars['String']['output'];
-  Path: Array<Scalars['String']['output']>;
-};
-
-export type SourceObjectRefInput = {
-  Kind: SourceObjectKind;
-  Locator?: InputMaybe<Scalars['String']['input']>;
-  Path: Array<Scalars['String']['input']>;
-};
-
-export type SourceObjectType = {
-  __typename?: 'SourceObjectType';
-  Actions: Array<SourceAction>;
-  DataShape: DataShape;
-  Kind: SourceObjectKind;
-  PluralLabel: Scalars['String']['output'];
-  SingularLabel: Scalars['String']['output'];
-  Views: Array<SourceView>;
-};
-
-export type SourcePresentationTraits = {
-  __typename?: 'SourcePresentationTraits';
-  ProfileLabelStrategy: SourceProfileLabelStrategy;
-  SchemaFidelity: SourceSchemaFidelity;
-};
-
-export type SourceProfile = {
-  __typename?: 'SourceProfile';
-  DisplayName: Scalars['String']['output'];
-  Id: Scalars['String']['output'];
-  IsEnvironmentDefined: Scalars['Boolean']['output'];
-  SSLConfigured: Scalars['Boolean']['output'];
-  Source: Scalars['String']['output'];
-  SourceType: Scalars['String']['output'];
-  Values: Array<Record>;
-};
-
-export enum SourceProfileLabelStrategy {
-  Database = 'Database',
-  Default = 'Default',
-  Hostname = 'Hostname'
-}
-
-export type SourceProfileLoginInput = {
-  Id: Scalars['String']['input'];
-  Values?: InputMaybe<Array<RecordInput>>;
-};
-
-export enum SourceQueryExplainMode {
-  Explain = 'Explain',
-  ExplainAnalyze = 'ExplainAnalyze',
-  ExplainPipeline = 'ExplainPipeline',
-  None = 'None'
-}
-
-export type SourceQuerySuggestion = {
-  __typename?: 'SourceQuerySuggestion';
-  category: Scalars['String']['output'];
-  description: Scalars['String']['output'];
-};
-
-export type SourceQueryTraits = {
-  __typename?: 'SourceQueryTraits';
-  ExplainMode: SourceQueryExplainMode;
-  SupportsAnalyze: Scalars['Boolean']['output'];
-  SupportsMultiStatement: Scalars['Boolean']['output'];
-  SupportsScripts: Scalars['Boolean']['output'];
-  SupportsSqlImport: Scalars['Boolean']['output'];
-  SupportsStreaming: Scalars['Boolean']['output'];
-};
-
-export type SourceSslMode = {
-  __typename?: 'SourceSSLMode';
-  aliases: Array<Scalars['String']['output']>;
-  value: Scalars['String']['output'];
-};
-
-export enum SourceSchemaFidelity {
-  Exact = 'Exact',
-  Sampled = 'Sampled'
-}
-
-export type SourceSessionMetadata = {
-  __typename?: 'SourceSessionMetadata';
-  AliasMap: Array<Record>;
-  Operators: Array<Scalars['String']['output']>;
-  QueryLanguages: Array<Scalars['String']['output']>;
-  SourceType: Scalars['String']['output'];
-  TypeDefinitions: Array<TypeDefinition>;
-};
-
-export enum SourceSurface {
-  Browser = 'Browser',
-  Chat = 'Chat',
-  Graph = 'Graph',
-  Query = 'Query'
-}
-
-export type SourceTraits = {
-  __typename?: 'SourceTraits';
-  Connection: SourceConnectionTraits;
-  Metadata: SourceMetadataTraits;
-  MockData: SourceMockDataTraits;
-  Presentation: SourcePresentationTraits;
-  Query: SourceQueryTraits;
-};
-
-export type SourceType = {
-  __typename?: 'SourceType';
-  Category: SourceCategory;
-  ConnectionFields: Array<SourceConnectionField>;
-  Connector: Scalars['String']['output'];
-  Contract: SourceContract;
-  DiscoveryPrefill: SourceDiscoveryPrefill;
-  Id: Scalars['String']['output'];
-  IsAWSManaged: Scalars['Boolean']['output'];
-  Label: Scalars['String']['output'];
-  SSLModes: Array<SourceSslMode>;
-  Traits: SourceTraits;
-};
-
-export enum SourceView {
-  Binary = 'Binary',
-  Graph = 'Graph',
-  Grid = 'Grid',
-  Json = 'JSON',
-  Metadata = 'Metadata',
-  Sql = 'SQL',
-  Text = 'Text'
-}
-
-export type StatusResponse = {
-  __typename?: 'StatusResponse';
-  Status: Scalars['Boolean']['output'];
-};
-
-export type StorageUnitColumns = {
-  __typename?: 'StorageUnitColumns';
-  Columns: Array<Column>;
-  StorageUnit: Scalars['String']['output'];
-};
-
-export type TableCreationCapabilities = {
-  __typename?: 'TableCreationCapabilities';
-  ClusteringKey: Scalars['Boolean']['output'];
-  KeyValueType: Scalars['Boolean']['output'];
-  OrderKey: Scalars['Boolean']['output'];
-  PartitionKey: Scalars['Boolean']['output'];
-  RequiresPrimaryKey: Scalars['Boolean']['output'];
-};
-
-export enum TypeCategory {
-  Binary = 'binary',
-  Boolean = 'boolean',
-  Datetime = 'datetime',
-  Json = 'json',
-  Numeric = 'numeric',
-  Other = 'other',
-  Text = 'text'
-}
-
-export type TypeDefinition = {
-  __typename?: 'TypeDefinition';
-  category: TypeCategory;
-  defaultLength?: Maybe<Scalars['Int']['output']>;
-  defaultPrecision?: Maybe<Scalars['Int']['output']>;
-  hasLength: Scalars['Boolean']['output'];
-  hasPrecision: Scalars['Boolean']['output'];
-  id: Scalars['String']['output'];
-  insertFunc?: Maybe<Scalars['String']['output']>;
-  label: Scalars['String']['output'];
-  tableModel?: Maybe<Scalars['String']['output']>;
-};
-
-export type UpdateInfo = {
-  __typename?: 'UpdateInfo';
-  currentVersion: Scalars['String']['output'];
-  latestVersion: Scalars['String']['output'];
-  releaseURL: Scalars['String']['output'];
-  updateAvailable: Scalars['Boolean']['output'];
-};
-
-export type WhereCondition = {
-  And?: InputMaybe<OperationWhereCondition>;
-  Atomic?: InputMaybe<AtomicWhereCondition>;
-  Or?: InputMaybe<OperationWhereCondition>;
-  Type: WhereConditionType;
-};
-
-export enum WhereConditionType {
-  And = 'And',
-  Atomic = 'Atomic',
-  Or = 'Or'
-}
-
+import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type SourceProfilesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type SourceProfilesQuery = { __typename?: 'Query', SourceProfiles: Array<{ __typename?: 'SourceProfile', Id: string, IsEnvironmentDefined: boolean, Source: string, SSLConfigured: boolean, Alias: string, Type: string, Values: Array<{ __typename?: 'Record', Key: string, Value: string }> }> };
+export type SourceProfilesQuery = { SourceProfiles: Array<{ Id: string, IsEnvironmentDefined: boolean, Source: string, SSLConfigured: boolean, Alias: string, Type: string, Values: Array<{ Key: string, Value: string }> }> };
 
 export type GetSchemaQueryVariables = Exact<{
-  parent?: InputMaybe<SourceObjectRefInput>;
-  kinds?: InputMaybe<Array<SourceObjectKind> | SourceObjectKind>;
+  parent?: SchemaTypes.SourceObjectRefInput | null | undefined;
+  kinds?: Array<SchemaTypes.SourceObjectKind> | SchemaTypes.SourceObjectKind | null | undefined;
 }>;
 
 
-export type GetSchemaQuery = { __typename?: 'Query', Schema: Array<{ __typename?: 'SourceObject', Name: string, Kind: SourceObjectKind, Ref: { __typename?: 'SourceObjectRef', Kind: SourceObjectKind, Locator: string, Path: Array<string> } }> };
+export type GetSchemaQuery = { Schema: Array<{ Name: string, Kind: SchemaTypes.SourceObjectKind, Ref: { Kind: SchemaTypes.SourceObjectKind, Locator: string, Path: Array<string> } }> };
 
 export type GetUpdateInfoQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetUpdateInfoQuery = { __typename?: 'Query', UpdateInfo: { __typename?: 'UpdateInfo', currentVersion: string, latestVersion: string, updateAvailable: boolean, releaseURL: string } };
+export type GetUpdateInfoQuery = { UpdateInfo: { currentVersion: string, latestVersion: string, updateAvailable: boolean, releaseURL: string } };
 
 export type GetVersionQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetVersionQuery = { __typename?: 'Query', Version: string };
+export type GetVersionQuery = { Version: string };
 
 export type ExecuteConfirmedSqlMutationVariables = Exact<{
-  query: Scalars['String']['input'];
-  operationType: Scalars['String']['input'];
+  query: string;
+  operationType: string;
 }>;
 
 
-export type ExecuteConfirmedSqlMutation = { __typename?: 'Mutation', ExecuteConfirmedSQL: { __typename?: 'AIChatMessage', Type: string, Text: string, RequiresConfirmation: boolean, Result?: { __typename?: 'RowsResult', Rows: Array<Array<string>>, DisableUpdate: boolean, TotalCount: number, Columns: Array<{ __typename?: 'Column', Type: string, Name: string, MetadataFidelity: SourceMetadataFidelity, IsPrimary: boolean, IsForeignKey: boolean, ReferencedTable?: string | null, ReferencedColumn?: string | null, Length?: number | null, Precision?: number | null, Scale?: number | null }> } | null } };
+export type ExecuteConfirmedSqlMutation = { ExecuteConfirmedSQL: { Type: string, Text: string, RequiresConfirmation: boolean, Result: { Rows: Array<Array<string>>, DisableUpdate: boolean, TotalCount: number, Columns: Array<{ Type: string, Name: string, MetadataFidelity: SchemaTypes.SourceMetadataFidelity, IsPrimary: boolean, IsForeignKey: boolean, ReferencedTable: string | null, ReferencedColumn: string | null, Length: number | null, Precision: number | null, Scale: number | null }> } | null } };
 
 export type GenerateChatTitleMutationVariables = Exact<{
-  input: GenerateChatTitleInput;
+  input: SchemaTypes.GenerateChatTitleInput;
 }>;
 
 
-export type GenerateChatTitleMutation = { __typename?: 'Mutation', GenerateChatTitle: { __typename?: 'GenerateChatTitleResponse', Title: string } };
+export type GenerateChatTitleMutation = { GenerateChatTitle: { Title: string } };
 
 export type GetHealthQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetHealthQuery = { __typename?: 'Query', Health: { __typename?: 'HealthStatus', Server: string, Database: string } };
+export type GetHealthQuery = { Health: { Server: string, Database: string } };
 
 export type ImportPreviewMutationVariables = Exact<{
-  file: Scalars['Upload']['input'];
-  options: ImportFileOptions;
-  ref?: InputMaybe<SourceObjectRefInput>;
-  useHeaderMapping?: InputMaybe<Scalars['Boolean']['input']>;
+  file: unknown;
+  options: SchemaTypes.ImportFileOptions;
+  ref?: SchemaTypes.SourceObjectRefInput | null | undefined;
+  useHeaderMapping?: boolean | null | undefined;
 }>;
 
 
-export type ImportPreviewMutation = { __typename?: 'Mutation', ImportPreview: { __typename?: 'ImportPreview', Sheet?: string | null, Columns: Array<string>, Rows: Array<Array<string>>, Truncated: boolean, ValidationError?: string | null, RequiresAllowAutoGenerated: boolean, AutoGeneratedColumns: Array<string>, Mapping?: Array<{ __typename?: 'ImportColumnMappingPreview', SourceColumn: string, TargetColumn: string }> | null } };
+export type ImportPreviewMutation = { ImportPreview: { Sheet: string | null, Columns: Array<string>, Rows: Array<Array<string>>, Truncated: boolean, ValidationError: string | null, RequiresAllowAutoGenerated: boolean, AutoGeneratedColumns: Array<string>, Mapping: Array<{ SourceColumn: string, TargetColumn: string }> | null } };
 
 export type ImportSqlMutationVariables = Exact<{
-  input: ImportSqlInput;
+  input: SchemaTypes.ImportSqlInput;
 }>;
 
 
-export type ImportSqlMutation = { __typename?: 'Mutation', ImportSQL: { __typename?: 'ImportResult', Status: boolean, Message: string, Detail?: string | null } };
+export type ImportSqlMutation = { ImportSQL: { Status: boolean, Message: string, Detail: string | null } };
 
 export type ImportTableFileMutationVariables = Exact<{
-  input: ImportFileInput;
+  input: SchemaTypes.ImportFileInput;
 }>;
 
 
-export type ImportTableFileMutation = { __typename?: 'Mutation', ImportTableFile: { __typename?: 'ImportResult', Status: boolean, Message: string, Detail?: string | null } };
+export type ImportTableFileMutation = { ImportTableFile: { Status: boolean, Message: string, Detail: string | null } };
 
 export type SourceSessionMetadataQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type SourceSessionMetadataQuery = { __typename?: 'Query', SourceSessionMetadata?: { __typename?: 'SourceSessionMetadata', sourceType: string, queryLanguages: Array<string>, operators: Array<string>, typeDefinitions: Array<{ __typename?: 'TypeDefinition', id: string, label: string, hasLength: boolean, hasPrecision: boolean, defaultLength?: number | null, defaultPrecision?: number | null, category: TypeCategory }>, aliasMap: Array<{ __typename?: 'Record', Key: string, Value: string }> } | null };
+export type SourceSessionMetadataQuery = { SourceSessionMetadata: { sourceType: string, queryLanguages: Array<string>, operators: Array<string>, typeDefinitions: Array<{ id: string, label: string, hasLength: boolean, hasPrecision: boolean, defaultLength: number | null, defaultPrecision: number | null, category: SchemaTypes.TypeCategory }>, aliasMap: Array<{ Key: string, Value: string }> } | null };
 
 export type SourceTypesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type SourceTypesQuery = { __typename?: 'Query', SourceTypes: Array<{ __typename?: 'SourceType', id: string, label: string, connector: string, category: SourceCategory, isAwsManaged: boolean, traits: { __typename?: 'SourceTraits', connection: { __typename?: 'SourceConnectionTraits', transport: SourceConnectionTransport, hostInputMode: SourceHostInputMode, hostInputUrlParser: SourceHostInputUrlParser, supportsCustomCAContent: boolean }, presentation: { __typename?: 'SourcePresentationTraits', profileLabelStrategy: SourceProfileLabelStrategy, schemaFidelity: SourceSchemaFidelity }, query: { __typename?: 'SourceQueryTraits', supportsAnalyze: boolean, supportsScripts: boolean, supportsStreaming: boolean, supportsMultiStatement: boolean, supportsSqlImport: boolean, explainMode: SourceQueryExplainMode }, mockData: { __typename?: 'SourceMockDataTraits', supportsRelationalDependencies: boolean }, metadata: { __typename?: 'SourceMetadataTraits', columns: SourceMetadataFidelity, constraints: SourceMetadataFidelity, graph: SourceMetadataFidelity, systemObjectFiltering: SourceMetadataFidelity } }, connectionFields: Array<{ __typename?: 'SourceConnectionField', Key: string, Kind: SourceConnectionFieldKind, Section: SourceConnectionFieldSection, Required: boolean, LabelKey: string, PlaceholderKey?: string | null, DefaultValue?: string | null, SupportsOptions: boolean }>, contract: { __typename?: 'SourceContract', Model: SourceModel, Surfaces: Array<SourceSurface>, RootActions: Array<SourceAction>, BrowsePath: Array<SourceObjectKind>, DefaultObjectKind: SourceObjectKind, GraphScopeKind?: SourceObjectKind | null, ObjectTypes: Array<{ __typename?: 'SourceObjectType', Kind: SourceObjectKind, DataShape: DataShape, Actions: Array<SourceAction>, Views: Array<SourceView>, SingularLabel: string, PluralLabel: string }> }, discoveryPrefill: { __typename?: 'SourceDiscoveryPrefill', AdvancedDefaults: Array<{ __typename?: 'SourceDiscoveryAdvancedDefault', Key: string, Value: string, MetadataKey: string, DefaultValue: string, ProviderTypes: Array<string>, Conditions: Array<{ __typename?: 'SourceDiscoveryMetadataCondition', Key: string, Value: string }> }> }, sslModes: Array<{ __typename?: 'SourceSSLMode', value: string, aliases: Array<string> }> }> };
+export type SourceTypesQuery = { SourceTypes: Array<{ id: string, label: string, connector: string, category: SchemaTypes.SourceCategory, isAwsManaged: boolean, traits: { connection: { transport: SchemaTypes.SourceConnectionTransport, hostInputMode: SchemaTypes.SourceHostInputMode, hostInputUrlParser: SchemaTypes.SourceHostInputUrlParser, supportsCustomCAContent: boolean }, presentation: { profileLabelStrategy: SchemaTypes.SourceProfileLabelStrategy, schemaFidelity: SchemaTypes.SourceSchemaFidelity }, query: { supportsAnalyze: boolean, supportsScripts: boolean, supportsStreaming: boolean, supportsMultiStatement: boolean, supportsSqlImport: boolean, explainMode: SchemaTypes.SourceQueryExplainMode, sequentialPaginationOnly: boolean }, mockData: { supportsRelationalDependencies: boolean }, metadata: { columns: SchemaTypes.SourceMetadataFidelity, constraints: SchemaTypes.SourceMetadataFidelity, graph: SchemaTypes.SourceMetadataFidelity, systemObjectFiltering: SchemaTypes.SourceMetadataFidelity } }, connectionFields: Array<{ Key: string, Kind: SchemaTypes.SourceConnectionFieldKind, Section: SchemaTypes.SourceConnectionFieldSection, Required: boolean, LabelKey: string, PlaceholderKey: string | null, DefaultValue: string | null, SupportsOptions: boolean }>, contract: { Model: SchemaTypes.SourceModel, Surfaces: Array<SchemaTypes.SourceSurface>, RootActions: Array<SchemaTypes.SourceAction>, BrowsePath: Array<SchemaTypes.SourceObjectKind>, DefaultObjectKind: SchemaTypes.SourceObjectKind, GraphScopeKind: SchemaTypes.SourceObjectKind | null, ObjectTypes: Array<{ Kind: SchemaTypes.SourceObjectKind, DataShape: SchemaTypes.DataShape, Actions: Array<SchemaTypes.SourceAction>, Views: Array<SchemaTypes.SourceView>, SingularLabel: string, PluralLabel: string }> }, discoveryPrefill: { AdvancedDefaults: Array<{ Key: string, Value: string, MetadataKey: string, DefaultValue: string, ProviderTypes: Array<string>, Conditions: Array<{ Key: string, Value: string }> }> }, sslModes: Array<{ value: string, aliases: Array<string> }> }> };
 
 export type GetSslStatusQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetSslStatusQuery = { __typename?: 'Query', SSLStatus?: { __typename?: 'SSLStatus', IsEnabled: boolean, Mode: string } | null };
+export type GetSslStatusQuery = { SSLStatus: { IsEnabled: boolean, Mode: string } | null };
 
 export type AnalyzeMockDataDependenciesQueryVariables = Exact<{
-  ref: SourceObjectRefInput;
-  rowCount: Scalars['Int']['input'];
-  fkDensityRatio?: InputMaybe<Scalars['Int']['input']>;
+  ref: SchemaTypes.SourceObjectRefInput;
+  rowCount: number;
+  fkDensityRatio?: number | null | undefined;
 }>;
 
 
-export type AnalyzeMockDataDependenciesQuery = { __typename?: 'Query', AnalyzeMockDataDependencies: { __typename?: 'MockDataDependencyAnalysis', GenerationOrder: Array<string>, TotalRows: number, Warnings: Array<string>, Error?: string | null, Tables: Array<{ __typename?: 'MockDataTableInfo', Table: string, RowsToGenerate: number, IsBlocked: boolean, UsesExistingData: boolean }> } };
+export type AnalyzeMockDataDependenciesQuery = { AnalyzeMockDataDependencies: { GenerationOrder: Array<string>, TotalRows: number, Warnings: Array<string>, Error: string | null, Tables: Array<{ Table: string, RowsToGenerate: number, IsBlocked: boolean, UsesExistingData: boolean }> } };
 
 export type MockDataMaxRowCountQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type MockDataMaxRowCountQuery = { __typename?: 'Query', MockDataMaxRowCount: number };
+export type MockDataMaxRowCountQuery = { MockDataMaxRowCount: number };
 
 export type GenerateMockDataMutationVariables = Exact<{
-  input: MockDataGenerationInput;
+  input: SchemaTypes.MockDataGenerationInput;
 }>;
 
 
-export type GenerateMockDataMutation = { __typename?: 'Mutation', GenerateMockData: { __typename?: 'MockDataGenerationStatus', AmountGenerated: number, Details?: Array<{ __typename?: 'MockDataTableDetail', Table: string, RowsGenerated: number, UsedExistingData: boolean }> | null } };
+export type GenerateMockDataMutation = { GenerateMockData: { AmountGenerated: number, Details: Array<{ Table: string, RowsGenerated: number, UsedExistingData: boolean }> | null } };
 
 export type SourceFieldOptionsQueryVariables = Exact<{
-  sourceType: Scalars['String']['input'];
-  values?: InputMaybe<Array<RecordInput> | RecordInput>;
+  sourceType: string;
+  values?: Array<SchemaTypes.RecordInput> | SchemaTypes.RecordInput | null | undefined;
 }>;
 
 
-export type SourceFieldOptionsQuery = { __typename?: 'Query', SourceFieldOptions: Array<string> };
+export type SourceFieldOptionsQuery = { SourceFieldOptions: Array<string> };
 
 export type LoginWithSourceProfileMutationVariables = Exact<{
-  profile: SourceProfileLoginInput;
+  profile: SchemaTypes.SourceProfileLoginInput;
 }>;
 
 
-export type LoginWithSourceProfileMutation = { __typename?: 'Mutation', LoginWithSourceProfile: { __typename?: 'StatusResponse', Status: boolean } };
+export type LoginWithSourceProfileMutation = { LoginWithSourceProfile: { Status: boolean } };
 
 export type LoginSourceMutationVariables = Exact<{
-  credentials: SourceLoginInput;
+  credentials: SchemaTypes.SourceLoginInput;
 }>;
 
 
-export type LoginSourceMutation = { __typename?: 'Mutation', LoginSource: { __typename?: 'StatusResponse', Status: boolean } };
+export type LoginSourceMutation = { LoginSource: { Status: boolean } };
 
 export type LogoutMutationVariables = Exact<{ [key: string]: never; }>;
 
 
-export type LogoutMutation = { __typename?: 'Mutation', Logout: { __typename?: 'StatusResponse', Status: boolean } };
+export type LogoutMutation = { Logout: { Status: boolean } };
 
 export type TestSourceConnectionMutationVariables = Exact<{
-  credentials: SourceLoginInput;
+  credentials: SchemaTypes.SourceLoginInput;
 }>;
 
 
-export type TestSourceConnectionMutation = { __typename?: 'Mutation', TestSourceConnection: { __typename?: 'StatusResponse', Status: boolean } };
+export type TestSourceConnectionMutation = { TestSourceConnection: { Status: boolean } };
 
 export type GetAiProvidersQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetAiProvidersQuery = { __typename?: 'Query', AIProviders: Array<{ __typename?: 'AIProvider', Type: string, Name: string, ProviderId: string, IsEnvironmentDefined: boolean, IsGeneric: boolean, Icon?: string | null }> };
+export type GetAiProvidersQuery = { AIProviders: Array<{ Type: string, Name: string, ProviderId: string, IsEnvironmentDefined: boolean, IsGeneric: boolean, Icon: string | null }> };
 
 export type GetDatabaseQuerySuggestionsQueryVariables = Exact<{
-  ref?: InputMaybe<SourceObjectRefInput>;
+  ref?: SchemaTypes.SourceObjectRefInput | null | undefined;
 }>;
 
 
-export type GetDatabaseQuerySuggestionsQuery = { __typename?: 'Query', DatabaseQuerySuggestions: Array<{ __typename?: 'SourceQuerySuggestion', description: string, category: string }> };
+export type GetDatabaseQuerySuggestionsQuery = { DatabaseQuerySuggestions: Array<{ description: string, category: string }> };
 
 export type GetAiModelsQueryVariables = Exact<{
-  providerId?: InputMaybe<Scalars['String']['input']>;
-  modelType: Scalars['String']['input'];
-  token?: InputMaybe<Scalars['String']['input']>;
+  providerId?: string | null | undefined;
+  modelType: string;
+  token?: string | null | undefined;
 }>;
 
 
-export type GetAiModelsQuery = { __typename?: 'Query', AIModel: Array<string> };
+export type GetAiModelsQuery = { AIModel: Array<string> };
 
 export type GetColumnsQueryVariables = Exact<{
-  ref: SourceObjectRefInput;
+  ref: SchemaTypes.SourceObjectRefInput;
 }>;
 
 
-export type GetColumnsQuery = { __typename?: 'Query', Columns: Array<{ __typename?: 'Column', Name: string, Type: string, MetadataFidelity: SourceMetadataFidelity, IsPrimary: boolean, IsForeignKey: boolean, ReferencedTable?: string | null, ReferencedColumn?: string | null, Length?: number | null, Precision?: number | null, Scale?: number | null }> };
+export type GetColumnsQuery = { Columns: Array<{ Name: string, Type: string, MetadataFidelity: SchemaTypes.SourceMetadataFidelity, IsPrimary: boolean, IsForeignKey: boolean, ReferencedTable: string | null, ReferencedColumn: string | null, Length: number | null, Precision: number | null, Scale: number | null }> };
 
 export type GetGraphQueryVariables = Exact<{
-  ref?: InputMaybe<SourceObjectRefInput>;
+  ref?: SchemaTypes.SourceObjectRefInput | null | undefined;
 }>;
 
 
-export type GetGraphQuery = { __typename?: 'Query', Graph: Array<{ __typename?: 'GraphUnit', Unit: { __typename?: 'SourceObject', Kind: SourceObjectKind, Name: string, Ref: { __typename?: 'SourceObjectRef', Kind: SourceObjectKind, Locator: string, Path: Array<string> }, Attributes: Array<{ __typename?: 'Record', Key: string, Value: string }> }, Relations: Array<{ __typename?: 'GraphUnitRelationship', Name: string, Relationship: GraphUnitRelationshipType, MetadataFidelity: SourceMetadataFidelity, SourceColumn?: string | null, TargetColumn?: string | null }> }> };
+export type GetGraphQuery = { Graph: Array<{ Unit: { Kind: SchemaTypes.SourceObjectKind, Name: string, Ref: { Kind: SchemaTypes.SourceObjectKind, Locator: string, Path: Array<string> }, Attributes: Array<{ Key: string, Value: string }> }, Relations: Array<{ Name: string, Relationship: SchemaTypes.GraphUnitRelationshipType, MetadataFidelity: SchemaTypes.SourceMetadataFidelity, SourceColumn: string | null, TargetColumn: string | null }> }> };
 
 export type ColumnsQueryVariables = Exact<{
-  ref: SourceObjectRefInput;
+  ref: SchemaTypes.SourceObjectRefInput;
 }>;
 
 
-export type ColumnsQuery = { __typename?: 'Query', Columns: Array<{ __typename?: 'Column', Name: string, Type: string, MetadataFidelity: SourceMetadataFidelity, IsPrimary: boolean, IsForeignKey: boolean, ReferencedTable?: string | null, ReferencedColumn?: string | null, Length?: number | null, Precision?: number | null, Scale?: number | null }> };
+export type ColumnsQuery = { Columns: Array<{ Name: string, Type: string, MetadataFidelity: SchemaTypes.SourceMetadataFidelity, IsPrimary: boolean, IsForeignKey: boolean, ReferencedTable: string | null, ReferencedColumn: string | null, Length: number | null, Precision: number | null, Scale: number | null }> };
 
 export type RawExecuteQueryVariables = Exact<{
-  query: Scalars['String']['input'];
+  query: string;
 }>;
 
 
-export type RawExecuteQuery = { __typename?: 'Query', RawExecute: { __typename?: 'RowsResult', Rows: Array<Array<string>>, TotalCount: number, Columns: Array<{ __typename?: 'Column', Type: string, Name: string, MetadataFidelity: SourceMetadataFidelity }> } };
+export type RawExecuteQuery = { RawExecute: { Rows: Array<Array<string>>, TotalCount: number, Columns: Array<{ Type: string, Name: string, MetadataFidelity: SchemaTypes.SourceMetadataFidelity }> } };
 
 export type GetCloudProvidersQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetCloudProvidersQuery = { __typename?: 'Query', CloudProviders: Array<{ __typename?: 'AWSProvider', Id: string, ProviderType: CloudProviderType, Name: string, Region: string, Status: CloudProviderStatus, LastDiscoveryAt?: string | null, DiscoveredCount: number, Error?: string | null, ProfileName?: string | null, DiscoverRDS: boolean, DiscoverElastiCache: boolean, DiscoverDocumentDB: boolean, DiscoverS3: boolean } | { __typename?: 'AzureProvider', Id: string, ProviderType: CloudProviderType, Name: string, Region: string, Status: CloudProviderStatus, LastDiscoveryAt?: string | null, DiscoveredCount: number, Error?: string | null, SubscriptionID: string, TenantID?: string | null, ResourceGroup?: string | null, DiscoverPostgreSQL: boolean, DiscoverMySQL: boolean, DiscoverRedis: boolean, DiscoverCosmosDB: boolean } | { __typename?: 'GCPProvider', Id: string, ProviderType: CloudProviderType, Name: string, Region: string, Status: CloudProviderStatus, LastDiscoveryAt?: string | null, DiscoveredCount: number, Error?: string | null, ProjectID: string, ServiceAccountKeyPath?: string | null, DiscoverCloudSQL: boolean, DiscoverAlloyDB: boolean, DiscoverMemorystore: boolean }> };
+export type GetCloudProvidersQuery = { CloudProviders: Array<
+    | { Id: string, ProviderType: SchemaTypes.CloudProviderType, Name: string, Region: string, Status: SchemaTypes.CloudProviderStatus, LastDiscoveryAt: string | null, DiscoveredCount: number, Error: string | null, ProfileName: string | null, DiscoverRDS: boolean, DiscoverElastiCache: boolean, DiscoverDocumentDB: boolean, DiscoverS3: boolean }
+    | { Id: string, ProviderType: SchemaTypes.CloudProviderType, Name: string, Region: string, Status: SchemaTypes.CloudProviderStatus, LastDiscoveryAt: string | null, DiscoveredCount: number, Error: string | null, SubscriptionID: string, TenantID: string | null, ResourceGroup: string | null, DiscoverPostgreSQL: boolean, DiscoverMySQL: boolean, DiscoverRedis: boolean, DiscoverCosmosDB: boolean }
+    | { Id: string, ProviderType: SchemaTypes.CloudProviderType, Name: string, Region: string, Status: SchemaTypes.CloudProviderStatus, LastDiscoveryAt: string | null, DiscoveredCount: number, Error: string | null, ProjectID: string, ServiceAccountKeyPath: string | null, DiscoverCloudSQL: boolean, DiscoverAlloyDB: boolean, DiscoverMemorystore: boolean }
+  > };
 
 export type GetCloudProviderQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: string | number;
 }>;
 
 
-export type GetCloudProviderQuery = { __typename?: 'Query', CloudProvider?: { __typename?: 'AWSProvider', Id: string, ProviderType: CloudProviderType, Name: string, Region: string, Status: CloudProviderStatus, LastDiscoveryAt?: string | null, DiscoveredCount: number, Error?: string | null, ProfileName?: string | null, DiscoverRDS: boolean, DiscoverElastiCache: boolean, DiscoverDocumentDB: boolean, DiscoverS3: boolean } | { __typename?: 'AzureProvider', Id: string, ProviderType: CloudProviderType, Name: string, Region: string, Status: CloudProviderStatus, LastDiscoveryAt?: string | null, DiscoveredCount: number, Error?: string | null, SubscriptionID: string, TenantID?: string | null, ResourceGroup?: string | null, DiscoverPostgreSQL: boolean, DiscoverMySQL: boolean, DiscoverRedis: boolean, DiscoverCosmosDB: boolean } | { __typename?: 'GCPProvider', Id: string, ProviderType: CloudProviderType, Name: string, Region: string, Status: CloudProviderStatus, LastDiscoveryAt?: string | null, DiscoveredCount: number, Error?: string | null, ProjectID: string, ServiceAccountKeyPath?: string | null, DiscoverCloudSQL: boolean, DiscoverAlloyDB: boolean, DiscoverMemorystore: boolean } | null };
+export type GetCloudProviderQuery = { CloudProvider:
+    | { Id: string, ProviderType: SchemaTypes.CloudProviderType, Name: string, Region: string, Status: SchemaTypes.CloudProviderStatus, LastDiscoveryAt: string | null, DiscoveredCount: number, Error: string | null, ProfileName: string | null, DiscoverRDS: boolean, DiscoverElastiCache: boolean, DiscoverDocumentDB: boolean, DiscoverS3: boolean }
+    | { Id: string, ProviderType: SchemaTypes.CloudProviderType, Name: string, Region: string, Status: SchemaTypes.CloudProviderStatus, LastDiscoveryAt: string | null, DiscoveredCount: number, Error: string | null, SubscriptionID: string, TenantID: string | null, ResourceGroup: string | null, DiscoverPostgreSQL: boolean, DiscoverMySQL: boolean, DiscoverRedis: boolean, DiscoverCosmosDB: boolean }
+    | { Id: string, ProviderType: SchemaTypes.CloudProviderType, Name: string, Region: string, Status: SchemaTypes.CloudProviderStatus, LastDiscoveryAt: string | null, DiscoveredCount: number, Error: string | null, ProjectID: string, ServiceAccountKeyPath: string | null, DiscoverCloudSQL: boolean, DiscoverAlloyDB: boolean, DiscoverMemorystore: boolean }
+   | null };
 
 export type GetDiscoveredConnectionsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetDiscoveredConnectionsQuery = { __typename?: 'Query', DiscoveredConnections: Array<{ __typename?: 'DiscoveredConnection', Id: string, ProviderType: CloudProviderType, ProviderID: string, Name: string, Region?: string | null, Status: ConnectionStatus, DatabaseType: string, Metadata: Array<{ __typename?: 'Record', Key: string, Value: string }> }> };
+export type GetDiscoveredConnectionsQuery = { DiscoveredConnections: Array<{ Id: string, ProviderType: SchemaTypes.CloudProviderType, ProviderID: string, Name: string, Region: string | null, Status: SchemaTypes.ConnectionStatus, DatabaseType: string, Metadata: Array<{ Key: string, Value: string }> }> };
 
 export type GetProviderConnectionsQueryVariables = Exact<{
-  providerId: Scalars['ID']['input'];
+  providerId: string | number;
 }>;
 
 
-export type GetProviderConnectionsQuery = { __typename?: 'Query', ProviderConnections: Array<{ __typename?: 'DiscoveredConnection', Id: string, ProviderType: CloudProviderType, ProviderID: string, Name: string, Region?: string | null, Status: ConnectionStatus, DatabaseType: string, Metadata: Array<{ __typename?: 'Record', Key: string, Value: string }> }> };
+export type GetProviderConnectionsQuery = { ProviderConnections: Array<{ Id: string, ProviderType: SchemaTypes.CloudProviderType, ProviderID: string, Name: string, Region: string | null, Status: SchemaTypes.ConnectionStatus, DatabaseType: string, Metadata: Array<{ Key: string, Value: string }> }> };
 
 export type GetLocalAwsProfilesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetLocalAwsProfilesQuery = { __typename?: 'Query', LocalAWSProfiles: Array<{ __typename?: 'LocalAWSProfile', Name: string, Region?: string | null, Source: string, AuthType: string, IsDefault: boolean }> };
+export type GetLocalAwsProfilesQuery = { LocalAWSProfiles: Array<{ Name: string, Region: string | null, Source: string, AuthType: string, IsDefault: boolean }> };
 
 export type GetAwsRegionsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetAwsRegionsQuery = { __typename?: 'Query', AWSRegions: Array<{ __typename?: 'AWSRegion', Id: string, Description: string, Partition: string }> };
+export type GetAwsRegionsQuery = { AWSRegions: Array<{ Id: string, Description: string, Partition: string }> };
 
 export type AddAwsProviderMutationVariables = Exact<{
-  input: AwsProviderInput;
+  input: SchemaTypes.AwsProviderInput;
 }>;
 
 
-export type AddAwsProviderMutation = { __typename?: 'Mutation', AddAWSProvider: { __typename?: 'AWSProvider', Id: string, ProviderType: CloudProviderType, Name: string, Region: string, ProfileName?: string | null, DiscoverRDS: boolean, DiscoverElastiCache: boolean, DiscoverDocumentDB: boolean, DiscoverS3: boolean, Status: CloudProviderStatus, LastDiscoveryAt?: string | null, DiscoveredCount: number, Error?: string | null } };
+export type AddAwsProviderMutation = { AddAWSProvider: { Id: string, ProviderType: SchemaTypes.CloudProviderType, Name: string, Region: string, ProfileName: string | null, DiscoverRDS: boolean, DiscoverElastiCache: boolean, DiscoverDocumentDB: boolean, DiscoverS3: boolean, Status: SchemaTypes.CloudProviderStatus, LastDiscoveryAt: string | null, DiscoveredCount: number, Error: string | null } };
 
 export type UpdateAwsProviderMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-  input: AwsProviderInput;
+  id: string | number;
+  input: SchemaTypes.AwsProviderInput;
 }>;
 
 
-export type UpdateAwsProviderMutation = { __typename?: 'Mutation', UpdateAWSProvider: { __typename?: 'AWSProvider', Id: string, ProviderType: CloudProviderType, Name: string, Region: string, ProfileName?: string | null, DiscoverRDS: boolean, DiscoverElastiCache: boolean, DiscoverDocumentDB: boolean, DiscoverS3: boolean, Status: CloudProviderStatus, LastDiscoveryAt?: string | null, DiscoveredCount: number, Error?: string | null } };
+export type UpdateAwsProviderMutation = { UpdateAWSProvider: { Id: string, ProviderType: SchemaTypes.CloudProviderType, Name: string, Region: string, ProfileName: string | null, DiscoverRDS: boolean, DiscoverElastiCache: boolean, DiscoverDocumentDB: boolean, DiscoverS3: boolean, Status: SchemaTypes.CloudProviderStatus, LastDiscoveryAt: string | null, DiscoveredCount: number, Error: string | null } };
 
 export type RemoveCloudProviderMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: string | number;
 }>;
 
 
-export type RemoveCloudProviderMutation = { __typename?: 'Mutation', RemoveCloudProvider: { __typename?: 'StatusResponse', Status: boolean } };
+export type RemoveCloudProviderMutation = { RemoveCloudProvider: { Status: boolean } };
 
 export type TestCloudProviderMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: string | number;
 }>;
 
 
-export type TestCloudProviderMutation = { __typename?: 'Mutation', TestCloudProvider: CloudProviderStatus };
+export type TestCloudProviderMutation = { TestCloudProvider: SchemaTypes.CloudProviderStatus };
 
 export type TestAwsCredentialsMutationVariables = Exact<{
-  input: AwsProviderInput;
+  input: SchemaTypes.AwsProviderInput;
 }>;
 
 
-export type TestAwsCredentialsMutation = { __typename?: 'Mutation', TestAWSCredentials: CloudProviderStatus };
+export type TestAwsCredentialsMutation = { TestAWSCredentials: SchemaTypes.CloudProviderStatus };
 
 export type GenerateRdsAuthTokenMutationVariables = Exact<{
-  providerID: Scalars['ID']['input'];
-  endpoint: Scalars['String']['input'];
-  port: Scalars['Int']['input'];
-  region: Scalars['String']['input'];
-  username: Scalars['String']['input'];
+  providerID: string | number;
+  endpoint: string;
+  port: number;
+  region: string;
+  username: string;
 }>;
 
 
-export type GenerateRdsAuthTokenMutation = { __typename?: 'Mutation', GenerateRDSAuthToken: string };
+export type GenerateRdsAuthTokenMutation = { GenerateRDSAuthToken: string };
 
 export type RefreshCloudProviderMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: string | number;
 }>;
 
 
-export type RefreshCloudProviderMutation = { __typename?: 'Mutation', RefreshCloudProvider: { __typename?: 'AWSProvider', Id: string, ProviderType: CloudProviderType, Name: string, Region: string, Status: CloudProviderStatus, LastDiscoveryAt?: string | null, DiscoveredCount: number, Error?: string | null, ProfileName?: string | null, DiscoverRDS: boolean, DiscoverElastiCache: boolean, DiscoverDocumentDB: boolean, DiscoverS3: boolean } | { __typename?: 'AzureProvider', Id: string, ProviderType: CloudProviderType, Name: string, Region: string, Status: CloudProviderStatus, LastDiscoveryAt?: string | null, DiscoveredCount: number, Error?: string | null, SubscriptionID: string, TenantID?: string | null, ResourceGroup?: string | null, DiscoverPostgreSQL: boolean, DiscoverMySQL: boolean, DiscoverRedis: boolean, DiscoverCosmosDB: boolean } | { __typename?: 'GCPProvider', Id: string, ProviderType: CloudProviderType, Name: string, Region: string, Status: CloudProviderStatus, LastDiscoveryAt?: string | null, DiscoveredCount: number, Error?: string | null, ProjectID: string, ServiceAccountKeyPath?: string | null, DiscoverCloudSQL: boolean, DiscoverAlloyDB: boolean, DiscoverMemorystore: boolean } };
+export type RefreshCloudProviderMutation = { RefreshCloudProvider:
+    | { Id: string, ProviderType: SchemaTypes.CloudProviderType, Name: string, Region: string, Status: SchemaTypes.CloudProviderStatus, LastDiscoveryAt: string | null, DiscoveredCount: number, Error: string | null, ProfileName: string | null, DiscoverRDS: boolean, DiscoverElastiCache: boolean, DiscoverDocumentDB: boolean, DiscoverS3: boolean }
+    | { Id: string, ProviderType: SchemaTypes.CloudProviderType, Name: string, Region: string, Status: SchemaTypes.CloudProviderStatus, LastDiscoveryAt: string | null, DiscoveredCount: number, Error: string | null, SubscriptionID: string, TenantID: string | null, ResourceGroup: string | null, DiscoverPostgreSQL: boolean, DiscoverMySQL: boolean, DiscoverRedis: boolean, DiscoverCosmosDB: boolean }
+    | { Id: string, ProviderType: SchemaTypes.CloudProviderType, Name: string, Region: string, Status: SchemaTypes.CloudProviderStatus, LastDiscoveryAt: string | null, DiscoveredCount: number, Error: string | null, ProjectID: string, ServiceAccountKeyPath: string | null, DiscoverCloudSQL: boolean, DiscoverAlloyDB: boolean, DiscoverMemorystore: boolean }
+   };
 
 export type GetAzureProvidersQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetAzureProvidersQuery = { __typename?: 'Query', AzureProviders: Array<{ __typename?: 'AzureProvider', Id: string, ProviderType: CloudProviderType, Name: string, Region: string, SubscriptionID: string, TenantID?: string | null, ResourceGroup?: string | null, DiscoverPostgreSQL: boolean, DiscoverMySQL: boolean, DiscoverRedis: boolean, DiscoverCosmosDB: boolean, Status: CloudProviderStatus, DiscoveredCount: number, LastDiscoveryAt?: string | null, Error?: string | null }> };
+export type GetAzureProvidersQuery = { AzureProviders: Array<{ Id: string, ProviderType: SchemaTypes.CloudProviderType, Name: string, Region: string, SubscriptionID: string, TenantID: string | null, ResourceGroup: string | null, DiscoverPostgreSQL: boolean, DiscoverMySQL: boolean, DiscoverRedis: boolean, DiscoverCosmosDB: boolean, Status: SchemaTypes.CloudProviderStatus, DiscoveredCount: number, LastDiscoveryAt: string | null, Error: string | null }> };
 
 export type GetAzureProviderQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: string | number;
 }>;
 
 
-export type GetAzureProviderQuery = { __typename?: 'Query', AzureProvider?: { __typename?: 'AzureProvider', Id: string, ProviderType: CloudProviderType, Name: string, Region: string, SubscriptionID: string, TenantID?: string | null, ResourceGroup?: string | null, DiscoverPostgreSQL: boolean, DiscoverMySQL: boolean, DiscoverRedis: boolean, DiscoverCosmosDB: boolean, Status: CloudProviderStatus, DiscoveredCount: number, LastDiscoveryAt?: string | null, Error?: string | null } | null };
+export type GetAzureProviderQuery = { AzureProvider: { Id: string, ProviderType: SchemaTypes.CloudProviderType, Name: string, Region: string, SubscriptionID: string, TenantID: string | null, ResourceGroup: string | null, DiscoverPostgreSQL: boolean, DiscoverMySQL: boolean, DiscoverRedis: boolean, DiscoverCosmosDB: boolean, Status: SchemaTypes.CloudProviderStatus, DiscoveredCount: number, LastDiscoveryAt: string | null, Error: string | null } | null };
 
 export type GetAzureSubscriptionsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetAzureSubscriptionsQuery = { __typename?: 'Query', AzureSubscriptions: Array<{ __typename?: 'AzureSubscription', Id: string, DisplayName: string, State: string, TenantID: string }> };
+export type GetAzureSubscriptionsQuery = { AzureSubscriptions: Array<{ Id: string, DisplayName: string, State: string, TenantID: string }> };
 
 export type GetAzureRegionsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetAzureRegionsQuery = { __typename?: 'Query', AzureRegions: Array<{ __typename?: 'AzureRegion', Id: string, DisplayName: string, Geography: string }> };
+export type GetAzureRegionsQuery = { AzureRegions: Array<{ Id: string, DisplayName: string, Geography: string }> };
 
 export type AddAzureProviderMutationVariables = Exact<{
-  input: AzureProviderInput;
+  input: SchemaTypes.AzureProviderInput;
 }>;
 
 
-export type AddAzureProviderMutation = { __typename?: 'Mutation', AddAzureProvider: { __typename?: 'AzureProvider', Id: string, ProviderType: CloudProviderType, Name: string, Region: string, SubscriptionID: string, TenantID?: string | null, ResourceGroup?: string | null, DiscoverPostgreSQL: boolean, DiscoverMySQL: boolean, DiscoverRedis: boolean, DiscoverCosmosDB: boolean, Status: CloudProviderStatus, DiscoveredCount: number, LastDiscoveryAt?: string | null, Error?: string | null } };
+export type AddAzureProviderMutation = { AddAzureProvider: { Id: string, ProviderType: SchemaTypes.CloudProviderType, Name: string, Region: string, SubscriptionID: string, TenantID: string | null, ResourceGroup: string | null, DiscoverPostgreSQL: boolean, DiscoverMySQL: boolean, DiscoverRedis: boolean, DiscoverCosmosDB: boolean, Status: SchemaTypes.CloudProviderStatus, DiscoveredCount: number, LastDiscoveryAt: string | null, Error: string | null } };
 
 export type UpdateAzureProviderMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-  input: AzureProviderInput;
+  id: string | number;
+  input: SchemaTypes.AzureProviderInput;
 }>;
 
 
-export type UpdateAzureProviderMutation = { __typename?: 'Mutation', UpdateAzureProvider: { __typename?: 'AzureProvider', Id: string, ProviderType: CloudProviderType, Name: string, Region: string, SubscriptionID: string, TenantID?: string | null, ResourceGroup?: string | null, DiscoverPostgreSQL: boolean, DiscoverMySQL: boolean, DiscoverRedis: boolean, DiscoverCosmosDB: boolean, Status: CloudProviderStatus, DiscoveredCount: number, LastDiscoveryAt?: string | null, Error?: string | null } };
+export type UpdateAzureProviderMutation = { UpdateAzureProvider: { Id: string, ProviderType: SchemaTypes.CloudProviderType, Name: string, Region: string, SubscriptionID: string, TenantID: string | null, ResourceGroup: string | null, DiscoverPostgreSQL: boolean, DiscoverMySQL: boolean, DiscoverRedis: boolean, DiscoverCosmosDB: boolean, Status: SchemaTypes.CloudProviderStatus, DiscoveredCount: number, LastDiscoveryAt: string | null, Error: string | null } };
 
 export type TestAzureCredentialsMutationVariables = Exact<{
-  input: AzureProviderInput;
+  input: SchemaTypes.AzureProviderInput;
 }>;
 
 
-export type TestAzureCredentialsMutation = { __typename?: 'Mutation', TestAzureCredentials: CloudProviderStatus };
+export type TestAzureCredentialsMutation = { TestAzureCredentials: SchemaTypes.CloudProviderStatus };
 
 export type GenerateAzureAdTokenMutationVariables = Exact<{
-  providerID: Scalars['ID']['input'];
-  sourceType: Scalars['String']['input'];
+  providerID: string | number;
+  sourceType: string;
 }>;
 
 
-export type GenerateAzureAdTokenMutation = { __typename?: 'Mutation', GenerateAzureADToken: string };
+export type GenerateAzureAdTokenMutation = { GenerateAzureADToken: string };
 
 export type RefreshAzureProviderMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: string | number;
 }>;
 
 
-export type RefreshAzureProviderMutation = { __typename?: 'Mutation', RefreshAzureProvider: { __typename?: 'AzureProvider', Id: string, ProviderType: CloudProviderType, Name: string, Region: string, SubscriptionID: string, TenantID?: string | null, ResourceGroup?: string | null, DiscoverPostgreSQL: boolean, DiscoverMySQL: boolean, DiscoverRedis: boolean, DiscoverCosmosDB: boolean, Status: CloudProviderStatus, DiscoveredCount: number, LastDiscoveryAt?: string | null, Error?: string | null } };
+export type RefreshAzureProviderMutation = { RefreshAzureProvider: { Id: string, ProviderType: SchemaTypes.CloudProviderType, Name: string, Region: string, SubscriptionID: string, TenantID: string | null, ResourceGroup: string | null, DiscoverPostgreSQL: boolean, DiscoverMySQL: boolean, DiscoverRedis: boolean, DiscoverCosmosDB: boolean, Status: SchemaTypes.CloudProviderStatus, DiscoveredCount: number, LastDiscoveryAt: string | null, Error: string | null } };
 
 export type GetGcpProvidersQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetGcpProvidersQuery = { __typename?: 'Query', GCPProviders: Array<{ __typename?: 'GCPProvider', Id: string, ProviderType: CloudProviderType, Name: string, Region: string, Status: CloudProviderStatus, LastDiscoveryAt?: string | null, DiscoveredCount: number, Error?: string | null, ProjectID: string, ServiceAccountKeyPath?: string | null, DiscoverCloudSQL: boolean, DiscoverAlloyDB: boolean, DiscoverMemorystore: boolean }> };
+export type GetGcpProvidersQuery = { GCPProviders: Array<{ Id: string, ProviderType: SchemaTypes.CloudProviderType, Name: string, Region: string, Status: SchemaTypes.CloudProviderStatus, LastDiscoveryAt: string | null, DiscoveredCount: number, Error: string | null, ProjectID: string, ServiceAccountKeyPath: string | null, DiscoverCloudSQL: boolean, DiscoverAlloyDB: boolean, DiscoverMemorystore: boolean }> };
 
 export type GetGcpProviderQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: string | number;
 }>;
 
 
-export type GetGcpProviderQuery = { __typename?: 'Query', GCPProvider?: { __typename?: 'GCPProvider', Id: string, ProviderType: CloudProviderType, Name: string, Region: string, Status: CloudProviderStatus, LastDiscoveryAt?: string | null, DiscoveredCount: number, Error?: string | null, ProjectID: string, ServiceAccountKeyPath?: string | null, DiscoverCloudSQL: boolean, DiscoverAlloyDB: boolean, DiscoverMemorystore: boolean } | null };
+export type GetGcpProviderQuery = { GCPProvider: { Id: string, ProviderType: SchemaTypes.CloudProviderType, Name: string, Region: string, Status: SchemaTypes.CloudProviderStatus, LastDiscoveryAt: string | null, DiscoveredCount: number, Error: string | null, ProjectID: string, ServiceAccountKeyPath: string | null, DiscoverCloudSQL: boolean, DiscoverAlloyDB: boolean, DiscoverMemorystore: boolean } | null };
 
 export type GetLocalGcpProjectsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetLocalGcpProjectsQuery = { __typename?: 'Query', LocalGCPProjects: Array<{ __typename?: 'LocalGCPProject', ProjectID: string, Name: string, Source: string, IsDefault: boolean }> };
+export type GetLocalGcpProjectsQuery = { LocalGCPProjects: Array<{ ProjectID: string, Name: string, Source: string, IsDefault: boolean }> };
 
 export type GetGcpRegionsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetGcpRegionsQuery = { __typename?: 'Query', GCPRegions: Array<{ __typename?: 'GCPRegion', Id: string, Description: string }> };
+export type GetGcpRegionsQuery = { GCPRegions: Array<{ Id: string, Description: string }> };
 
 export type AddGcpProviderMutationVariables = Exact<{
-  input: GcpProviderInput;
+  input: SchemaTypes.GcpProviderInput;
 }>;
 
 
-export type AddGcpProviderMutation = { __typename?: 'Mutation', AddGCPProvider: { __typename?: 'GCPProvider', Id: string, ProviderType: CloudProviderType, Name: string, Region: string, Status: CloudProviderStatus, LastDiscoveryAt?: string | null, DiscoveredCount: number, Error?: string | null, ProjectID: string, ServiceAccountKeyPath?: string | null, DiscoverCloudSQL: boolean, DiscoverAlloyDB: boolean, DiscoverMemorystore: boolean } };
+export type AddGcpProviderMutation = { AddGCPProvider: { Id: string, ProviderType: SchemaTypes.CloudProviderType, Name: string, Region: string, Status: SchemaTypes.CloudProviderStatus, LastDiscoveryAt: string | null, DiscoveredCount: number, Error: string | null, ProjectID: string, ServiceAccountKeyPath: string | null, DiscoverCloudSQL: boolean, DiscoverAlloyDB: boolean, DiscoverMemorystore: boolean } };
 
 export type UpdateGcpProviderMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-  input: GcpProviderInput;
+  id: string | number;
+  input: SchemaTypes.GcpProviderInput;
 }>;
 
 
-export type UpdateGcpProviderMutation = { __typename?: 'Mutation', UpdateGCPProvider: { __typename?: 'GCPProvider', Id: string, ProviderType: CloudProviderType, Name: string, Region: string, Status: CloudProviderStatus, LastDiscoveryAt?: string | null, DiscoveredCount: number, Error?: string | null, ProjectID: string, ServiceAccountKeyPath?: string | null, DiscoverCloudSQL: boolean, DiscoverAlloyDB: boolean, DiscoverMemorystore: boolean } };
+export type UpdateGcpProviderMutation = { UpdateGCPProvider: { Id: string, ProviderType: SchemaTypes.CloudProviderType, Name: string, Region: string, Status: SchemaTypes.CloudProviderStatus, LastDiscoveryAt: string | null, DiscoveredCount: number, Error: string | null, ProjectID: string, ServiceAccountKeyPath: string | null, DiscoverCloudSQL: boolean, DiscoverAlloyDB: boolean, DiscoverMemorystore: boolean } };
 
 export type TestGcpCredentialsMutationVariables = Exact<{
-  input: GcpProviderInput;
+  input: SchemaTypes.GcpProviderInput;
 }>;
 
 
-export type TestGcpCredentialsMutation = { __typename?: 'Mutation', TestGCPCredentials: CloudProviderStatus };
+export type TestGcpCredentialsMutation = { TestGCPCredentials: SchemaTypes.CloudProviderStatus };
 
 export type RefreshGcpProviderMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: string | number;
 }>;
 
 
-export type RefreshGcpProviderMutation = { __typename?: 'Mutation', RefreshGCPProvider: { __typename?: 'GCPProvider', Id: string, ProviderType: CloudProviderType, Name: string, Region: string, Status: CloudProviderStatus, LastDiscoveryAt?: string | null, DiscoveredCount: number, Error?: string | null, ProjectID: string, ServiceAccountKeyPath?: string | null, DiscoverCloudSQL: boolean, DiscoverAlloyDB: boolean, DiscoverMemorystore: boolean } };
+export type RefreshGcpProviderMutation = { RefreshGCPProvider: { Id: string, ProviderType: SchemaTypes.CloudProviderType, Name: string, Region: string, Status: SchemaTypes.CloudProviderStatus, LastDiscoveryAt: string | null, DiscoveredCount: number, Error: string | null, ProjectID: string, ServiceAccountKeyPath: string | null, DiscoverCloudSQL: boolean, DiscoverAlloyDB: boolean, DiscoverMemorystore: boolean } };
 
 export type GenerateCloudSqliamAuthTokenMutationVariables = Exact<{
-  providerID: Scalars['ID']['input'];
-  username: Scalars['String']['input'];
+  providerID: string | number;
+  username: string;
 }>;
 
 
-export type GenerateCloudSqliamAuthTokenMutation = { __typename?: 'Mutation', GenerateCloudSQLIAMAuthToken: string };
+export type GenerateCloudSqliamAuthTokenMutation = { GenerateCloudSQLIAMAuthToken: string };
 
 export type SettingsConfigQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type SettingsConfigQuery = { __typename?: 'Query', SettingsConfig: { __typename?: 'SettingsConfig', MetricsEnabled?: boolean | null, CloudProvidersEnabled: boolean, AWSProviderEnabled: boolean, AzureProviderEnabled: boolean, GCPProviderEnabled: boolean, DisableCredentialForm: boolean, EnableNewUI: boolean, MaxPageSize: number } };
+export type SettingsConfigQuery = { SettingsConfig: { MetricsEnabled: boolean | null, CloudProvidersEnabled: boolean, AWSProviderEnabled: boolean, AzureProviderEnabled: boolean, GCPProviderEnabled: boolean, DisableCredentialForm: boolean, EnableNewUI: boolean, MaxPageSize: number } };
 
 export type UpdateSettingsMutationVariables = Exact<{
-  newSettings: SettingsConfigInput;
+  newSettings: SchemaTypes.SettingsConfigInput;
 }>;
 
 
-export type UpdateSettingsMutation = { __typename?: 'Mutation', UpdateSettings: { __typename?: 'StatusResponse', Status: boolean } };
+export type UpdateSettingsMutation = { UpdateSettings: { Status: boolean } };
 
 export type AddRowMutationVariables = Exact<{
-  ref: SourceObjectRefInput;
-  values: Array<RecordInput> | RecordInput;
+  ref: SchemaTypes.SourceObjectRefInput;
+  values: Array<SchemaTypes.RecordInput> | SchemaTypes.RecordInput;
 }>;
 
 
-export type AddRowMutation = { __typename?: 'Mutation', AddRow: { __typename?: 'StatusResponse', Status: boolean } };
+export type AddRowMutation = { AddRow: { Status: boolean } };
 
 export type AddStorageUnitMutationVariables = Exact<{
-  parent?: InputMaybe<SourceObjectRefInput>;
-  storageUnit: Scalars['String']['input'];
-  fields: Array<RecordInput> | RecordInput;
+  parent?: SchemaTypes.SourceObjectRefInput | null | undefined;
+  storageUnit: string;
+  fields: Array<SchemaTypes.RecordInput> | SchemaTypes.RecordInput;
 }>;
 
 
-export type AddStorageUnitMutation = { __typename?: 'Mutation', AddStorageUnit: { __typename?: 'StatusResponse', Status: boolean } };
+export type AddStorageUnitMutation = { AddStorageUnit: { Status: boolean } };
 
 export type CreateSourceObjectFromDefinitionMutationVariables = Exact<{
-  parent?: InputMaybe<SourceObjectRefInput>;
-  definition: SourceObjectDefinitionInput;
+  parent?: SchemaTypes.SourceObjectRefInput | null | undefined;
+  definition: SchemaTypes.SourceObjectDefinitionInput;
 }>;
 
 
-export type CreateSourceObjectFromDefinitionMutation = { __typename?: 'Mutation', CreateSourceObjectFromDefinition: { __typename?: 'StatusResponse', Status: boolean } };
+export type CreateSourceObjectFromDefinitionMutation = { CreateSourceObjectFromDefinition: { Status: boolean } };
 
 export type DeleteRowMutationVariables = Exact<{
-  ref: SourceObjectRefInput;
-  values: Array<RecordInput> | RecordInput;
+  ref: SchemaTypes.SourceObjectRefInput;
+  values: Array<SchemaTypes.RecordInput> | SchemaTypes.RecordInput;
 }>;
 
 
-export type DeleteRowMutation = { __typename?: 'Mutation', DeleteRow: { __typename?: 'StatusResponse', Status: boolean } };
+export type DeleteRowMutation = { DeleteRow: { Status: boolean } };
 
 export type GetColumnsBatchQueryVariables = Exact<{
-  refs: Array<SourceObjectRefInput> | SourceObjectRefInput;
+  refs: Array<SchemaTypes.SourceObjectRefInput> | SchemaTypes.SourceObjectRefInput;
 }>;
 
 
-export type GetColumnsBatchQuery = { __typename?: 'Query', ColumnsBatch: Array<{ __typename?: 'SourceObjectColumns', StorageUnit: { __typename?: 'SourceObjectRef', Kind: SourceObjectKind, Locator: string, Path: Array<string> }, Columns: Array<{ __typename?: 'Column', Name: string, Type: string, MetadataFidelity: SourceMetadataFidelity, IsPrimary: boolean, IsForeignKey: boolean, ReferencedTable?: string | null, ReferencedColumn?: string | null, Length?: number | null, Precision?: number | null, Scale?: number | null }> }> };
+export type GetColumnsBatchQuery = { ColumnsBatch: Array<{ StorageUnit: { Kind: SchemaTypes.SourceObjectKind, Locator: string, Path: Array<string> }, Columns: Array<{ Name: string, Type: string, MetadataFidelity: SchemaTypes.SourceMetadataFidelity, IsPrimary: boolean, IsForeignKey: boolean, ReferencedTable: string | null, ReferencedColumn: string | null, Length: number | null, Precision: number | null, Scale: number | null }> }> };
 
 export type GetStorageUnitRowsQueryVariables = Exact<{
-  ref: SourceObjectRefInput;
-  where?: InputMaybe<WhereCondition>;
-  sort?: InputMaybe<Array<SortCondition> | SortCondition>;
-  pageSize: Scalars['Int']['input'];
-  pageOffset: Scalars['Int']['input'];
+  ref: SchemaTypes.SourceObjectRefInput;
+  where?: SchemaTypes.WhereCondition | null | undefined;
+  sort?: Array<SchemaTypes.SortCondition> | SchemaTypes.SortCondition | null | undefined;
+  pageSize: number;
+  pageOffset: number;
 }>;
 
 
-export type GetStorageUnitRowsQuery = { __typename?: 'Query', Row: { __typename?: 'RowsResult', Rows: Array<Array<string>>, DisableUpdate: boolean, TotalCount: number, Columns: Array<{ __typename?: 'Column', Type: string, Name: string, MetadataFidelity: SourceMetadataFidelity, IsPrimary: boolean, IsForeignKey: boolean, ReferencedTable?: string | null, ReferencedColumn?: string | null, Length?: number | null, Precision?: number | null, Scale?: number | null }> } };
+export type GetStorageUnitRowsQuery = { Row: { Rows: Array<Array<string>>, DisableUpdate: boolean, TotalCount: number, Columns: Array<{ Type: string, Name: string, MetadataFidelity: SchemaTypes.SourceMetadataFidelity, IsPrimary: boolean, IsForeignKey: boolean, ReferencedTable: string | null, ReferencedColumn: string | null, Length: number | null, Precision: number | null, Scale: number | null }> } };
 
 export type GetSourceContentQueryVariables = Exact<{
-  ref: SourceObjectRefInput;
+  ref: SchemaTypes.SourceObjectRefInput;
 }>;
 
 
-export type GetSourceContentQuery = { __typename?: 'Query', Content?: { __typename?: 'SourceContent', Text?: string | null, MIMEType: string, IsBinary: boolean, SizeBytes: string, Truncated: boolean, FileName: string, ModifiedAt?: string | null } | null };
+export type GetSourceContentQuery = { Content: { Text: string | null, MIMEType: string, IsBinary: boolean, SizeBytes: string, Truncated: boolean, FileName: string, ModifiedAt: string | null } | null };
 
 export type SourceFieldConstraintsQueryVariables = Exact<{
-  ref: SourceObjectRefInput;
+  ref: SchemaTypes.SourceObjectRefInput;
 }>;
 
 
-export type SourceFieldConstraintsQuery = { __typename?: 'Query', SourceFieldConstraints: Array<{ __typename?: 'SourceFieldConstraints', Name: string, Type: string, MetadataFidelity: SourceMetadataFidelity, Nullable?: boolean | null, Primary: boolean, Unique: boolean, Identity: boolean, DefaultValue?: string | null, AllowedValues: Array<string>, CheckMin?: number | null, CheckMax?: number | null, Length?: number | null, Precision?: number | null, Scale?: number | null, ForeignKey?: { __typename?: 'ForeignKeyDefinition', Table: string, Column: string } | null }> };
+export type SourceFieldConstraintsQuery = { SourceFieldConstraints: Array<{ Name: string, Type: string, MetadataFidelity: SchemaTypes.SourceMetadataFidelity, Nullable: boolean | null, Primary: boolean, Unique: boolean, Identity: boolean, DefaultValue: string | null, AllowedValues: Array<string>, CheckMin: number | null, CheckMax: number | null, Length: number | null, Precision: number | null, Scale: number | null, ForeignKey: { Table: string, Column: string } | null }> };
 
 export type SourceObjectCreationMetadataQueryVariables = Exact<{
-  parent?: InputMaybe<SourceObjectRefInput>;
+  parent?: SchemaTypes.SourceObjectRefInput | null | undefined;
 }>;
 
 
-export type SourceObjectCreationMetadataQuery = { __typename?: 'Query', SourceObjectCreationMetadata: { __typename?: 'ObjectCreationMetadata', Supported: boolean, ObjectKind: SourceObjectKind, RequiresColumns: boolean, TypeDefinitions: Array<{ __typename?: 'TypeDefinition', id: string, label: string, hasLength: boolean, hasPrecision: boolean, defaultLength?: number | null, defaultPrecision?: number | null, category: TypeCategory }>, ColumnCapabilities: { __typename?: 'ColumnCreationCapabilities', Types: boolean, Nullable: boolean, PrimaryKey: boolean, CompositePrimaryKey: boolean, Unique: boolean, Identity: boolean, DefaultValue: boolean, CheckValues: boolean, CheckMinMax: boolean, ForeignKey: boolean }, ColumnLabels: { __typename?: 'ColumnCreationLabels', Nullable: string, PrimaryKey: string, Unique: string, Identity: string, DefaultValue: string, CheckValues: string, CheckMin: string, CheckMax: string, ForeignKey: string }, TableCapabilities: { __typename?: 'TableCreationCapabilities', RequiresPrimaryKey: boolean, PartitionKey: boolean, ClusteringKey: boolean, OrderKey: boolean, KeyValueType: boolean }, TableOptions: Array<{ __typename?: 'CreationOptionDefinition', Key: string, Label: string, Required: boolean, Values: Array<string> }> } };
+export type SourceObjectCreationMetadataQuery = { SourceObjectCreationMetadata: { Supported: boolean, ObjectKind: SchemaTypes.SourceObjectKind, RequiresColumns: boolean, TypeDefinitions: Array<{ id: string, label: string, hasLength: boolean, hasPrecision: boolean, defaultLength: number | null, defaultPrecision: number | null, category: SchemaTypes.TypeCategory }>, ColumnCapabilities: { Types: boolean, Nullable: boolean, PrimaryKey: boolean, CompositePrimaryKey: boolean, Unique: boolean, Identity: boolean, DefaultValue: boolean, CheckValues: boolean, CheckMinMax: boolean, ForeignKey: boolean }, ColumnLabels: { Nullable: string, PrimaryKey: string, Unique: string, Identity: string, DefaultValue: string, CheckValues: string, CheckMin: string, CheckMax: string, ForeignKey: string }, TableCapabilities: { RequiresPrimaryKey: boolean, PartitionKey: boolean, ClusteringKey: boolean, OrderKey: boolean, KeyValueType: boolean }, TableOptions: Array<{ Key: string, Label: string, Required: boolean, Values: Array<string> }> } };
 
 export type GetStorageUnitsQueryVariables = Exact<{
-  parent?: InputMaybe<SourceObjectRefInput>;
+  parent?: SchemaTypes.SourceObjectRefInput | null | undefined;
 }>;
 
 
-export type GetStorageUnitsQuery = { __typename?: 'Query', StorageUnit: Array<{ __typename?: 'SourceObject', Kind: SourceObjectKind, Name: string, Actions: Array<SourceAction>, HasChildren: boolean, Ref: { __typename?: 'SourceObjectRef', Kind: SourceObjectKind, Locator: string, Path: Array<string> }, Attributes: Array<{ __typename?: 'Record', Key: string, Value: string }> }> };
+export type GetStorageUnitsQuery = { StorageUnit: Array<{ Kind: SchemaTypes.SourceObjectKind, Name: string, Actions: Array<SchemaTypes.SourceAction>, HasChildren: boolean, Ref: { Kind: SchemaTypes.SourceObjectKind, Locator: string, Path: Array<string> }, Attributes: Array<{ Key: string, Value: string }> }> };
 
 export type UpdateStorageUnitMutationVariables = Exact<{
-  ref: SourceObjectRefInput;
-  values: Array<RecordInput> | RecordInput;
-  updatedColumns: Array<Scalars['String']['input']> | Scalars['String']['input'];
+  ref: SchemaTypes.SourceObjectRefInput;
+  values: Array<SchemaTypes.RecordInput> | SchemaTypes.RecordInput;
+  updatedColumns: Array<string> | string;
 }>;
 
 
-export type UpdateStorageUnitMutation = { __typename?: 'Mutation', UpdateStorageUnit: { __typename?: 'StatusResponse', Status: boolean } };
+export type UpdateStorageUnitMutation = { UpdateStorageUnit: { Status: boolean } };
 
 
 export const SourceProfilesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"SourceProfiles"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"SourceProfiles"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"Alias"},"name":{"kind":"Name","value":"DisplayName"}},{"kind":"Field","name":{"kind":"Name","value":"Id"}},{"kind":"Field","alias":{"kind":"Name","value":"Type"},"name":{"kind":"Name","value":"SourceType"}},{"kind":"Field","name":{"kind":"Name","value":"Values"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"Key"}},{"kind":"Field","name":{"kind":"Name","value":"Value"}}]}},{"kind":"Field","name":{"kind":"Name","value":"IsEnvironmentDefined"}},{"kind":"Field","name":{"kind":"Name","value":"Source"}},{"kind":"Field","name":{"kind":"Name","value":"SSLConfigured"}}]}}]}}]} as unknown as DocumentNode<SourceProfilesQuery, SourceProfilesQueryVariables>;
@@ -1796,7 +521,7 @@ export const ImportPreviewDocument = {"kind":"Document","definitions":[{"kind":"
 export const ImportSqlDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"ImportSQL"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ImportSQLInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"ImportSQL"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"Status"}},{"kind":"Field","name":{"kind":"Name","value":"Message"}},{"kind":"Field","name":{"kind":"Name","value":"Detail"}}]}}]}}]} as unknown as DocumentNode<ImportSqlMutation, ImportSqlMutationVariables>;
 export const ImportTableFileDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"ImportTableFile"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ImportFileInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"ImportTableFile"},"name":{"kind":"Name","value":"ImportSourceObjectFile"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"Status"}},{"kind":"Field","name":{"kind":"Name","value":"Message"}},{"kind":"Field","name":{"kind":"Name","value":"Detail"}}]}}]}}]} as unknown as DocumentNode<ImportTableFileMutation, ImportTableFileMutationVariables>;
 export const SourceSessionMetadataDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"SourceSessionMetadata"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"SourceSessionMetadata"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"sourceType"},"name":{"kind":"Name","value":"SourceType"}},{"kind":"Field","alias":{"kind":"Name","value":"queryLanguages"},"name":{"kind":"Name","value":"QueryLanguages"}},{"kind":"Field","alias":{"kind":"Name","value":"typeDefinitions"},"name":{"kind":"Name","value":"TypeDefinitions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"label"}},{"kind":"Field","name":{"kind":"Name","value":"hasLength"}},{"kind":"Field","name":{"kind":"Name","value":"hasPrecision"}},{"kind":"Field","name":{"kind":"Name","value":"defaultLength"}},{"kind":"Field","name":{"kind":"Name","value":"defaultPrecision"}},{"kind":"Field","name":{"kind":"Name","value":"category"}}]}},{"kind":"Field","alias":{"kind":"Name","value":"operators"},"name":{"kind":"Name","value":"Operators"}},{"kind":"Field","alias":{"kind":"Name","value":"aliasMap"},"name":{"kind":"Name","value":"AliasMap"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"Key"}},{"kind":"Field","name":{"kind":"Name","value":"Value"}}]}}]}}]}}]} as unknown as DocumentNode<SourceSessionMetadataQuery, SourceSessionMetadataQueryVariables>;
-export const SourceTypesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"SourceTypes"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"SourceTypes"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"id"},"name":{"kind":"Name","value":"Id"}},{"kind":"Field","alias":{"kind":"Name","value":"label"},"name":{"kind":"Name","value":"Label"}},{"kind":"Field","alias":{"kind":"Name","value":"connector"},"name":{"kind":"Name","value":"Connector"}},{"kind":"Field","alias":{"kind":"Name","value":"category"},"name":{"kind":"Name","value":"Category"}},{"kind":"Field","alias":{"kind":"Name","value":"traits"},"name":{"kind":"Name","value":"Traits"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"connection"},"name":{"kind":"Name","value":"Connection"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"transport"},"name":{"kind":"Name","value":"Transport"}},{"kind":"Field","alias":{"kind":"Name","value":"hostInputMode"},"name":{"kind":"Name","value":"HostInputMode"}},{"kind":"Field","alias":{"kind":"Name","value":"hostInputUrlParser"},"name":{"kind":"Name","value":"HostInputURLParser"}},{"kind":"Field","alias":{"kind":"Name","value":"supportsCustomCAContent"},"name":{"kind":"Name","value":"SupportsCustomCAContent"}}]}},{"kind":"Field","alias":{"kind":"Name","value":"presentation"},"name":{"kind":"Name","value":"Presentation"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"profileLabelStrategy"},"name":{"kind":"Name","value":"ProfileLabelStrategy"}},{"kind":"Field","alias":{"kind":"Name","value":"schemaFidelity"},"name":{"kind":"Name","value":"SchemaFidelity"}}]}},{"kind":"Field","alias":{"kind":"Name","value":"query"},"name":{"kind":"Name","value":"Query"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"supportsAnalyze"},"name":{"kind":"Name","value":"SupportsAnalyze"}},{"kind":"Field","alias":{"kind":"Name","value":"supportsScripts"},"name":{"kind":"Name","value":"SupportsScripts"}},{"kind":"Field","alias":{"kind":"Name","value":"supportsStreaming"},"name":{"kind":"Name","value":"SupportsStreaming"}},{"kind":"Field","alias":{"kind":"Name","value":"supportsMultiStatement"},"name":{"kind":"Name","value":"SupportsMultiStatement"}},{"kind":"Field","alias":{"kind":"Name","value":"supportsSqlImport"},"name":{"kind":"Name","value":"SupportsSqlImport"}},{"kind":"Field","alias":{"kind":"Name","value":"explainMode"},"name":{"kind":"Name","value":"ExplainMode"}}]}},{"kind":"Field","alias":{"kind":"Name","value":"mockData"},"name":{"kind":"Name","value":"MockData"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"supportsRelationalDependencies"},"name":{"kind":"Name","value":"SupportsRelationalDependencies"}}]}},{"kind":"Field","alias":{"kind":"Name","value":"metadata"},"name":{"kind":"Name","value":"Metadata"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"columns"},"name":{"kind":"Name","value":"Columns"}},{"kind":"Field","alias":{"kind":"Name","value":"constraints"},"name":{"kind":"Name","value":"Constraints"}},{"kind":"Field","alias":{"kind":"Name","value":"graph"},"name":{"kind":"Name","value":"Graph"}},{"kind":"Field","alias":{"kind":"Name","value":"systemObjectFiltering"},"name":{"kind":"Name","value":"SystemObjectFiltering"}}]}}]}},{"kind":"Field","alias":{"kind":"Name","value":"connectionFields"},"name":{"kind":"Name","value":"ConnectionFields"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"Key"}},{"kind":"Field","name":{"kind":"Name","value":"Kind"}},{"kind":"Field","name":{"kind":"Name","value":"Section"}},{"kind":"Field","name":{"kind":"Name","value":"Required"}},{"kind":"Field","name":{"kind":"Name","value":"LabelKey"}},{"kind":"Field","name":{"kind":"Name","value":"PlaceholderKey"}},{"kind":"Field","name":{"kind":"Name","value":"DefaultValue"}},{"kind":"Field","name":{"kind":"Name","value":"SupportsOptions"}}]}},{"kind":"Field","alias":{"kind":"Name","value":"contract"},"name":{"kind":"Name","value":"Contract"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"Model"}},{"kind":"Field","name":{"kind":"Name","value":"Surfaces"}},{"kind":"Field","name":{"kind":"Name","value":"RootActions"}},{"kind":"Field","name":{"kind":"Name","value":"BrowsePath"}},{"kind":"Field","name":{"kind":"Name","value":"DefaultObjectKind"}},{"kind":"Field","name":{"kind":"Name","value":"GraphScopeKind"}},{"kind":"Field","name":{"kind":"Name","value":"ObjectTypes"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"Kind"}},{"kind":"Field","name":{"kind":"Name","value":"DataShape"}},{"kind":"Field","name":{"kind":"Name","value":"Actions"}},{"kind":"Field","name":{"kind":"Name","value":"Views"}},{"kind":"Field","name":{"kind":"Name","value":"SingularLabel"}},{"kind":"Field","name":{"kind":"Name","value":"PluralLabel"}}]}}]}},{"kind":"Field","alias":{"kind":"Name","value":"discoveryPrefill"},"name":{"kind":"Name","value":"DiscoveryPrefill"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"AdvancedDefaults"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"Key"}},{"kind":"Field","name":{"kind":"Name","value":"Value"}},{"kind":"Field","name":{"kind":"Name","value":"MetadataKey"}},{"kind":"Field","name":{"kind":"Name","value":"DefaultValue"}},{"kind":"Field","name":{"kind":"Name","value":"ProviderTypes"}},{"kind":"Field","name":{"kind":"Name","value":"Conditions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"Key"}},{"kind":"Field","name":{"kind":"Name","value":"Value"}}]}}]}}]}},{"kind":"Field","alias":{"kind":"Name","value":"isAwsManaged"},"name":{"kind":"Name","value":"IsAWSManaged"}},{"kind":"Field","alias":{"kind":"Name","value":"sslModes"},"name":{"kind":"Name","value":"SSLModes"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"value"}},{"kind":"Field","name":{"kind":"Name","value":"aliases"}}]}}]}}]}}]} as unknown as DocumentNode<SourceTypesQuery, SourceTypesQueryVariables>;
+export const SourceTypesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"SourceTypes"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"SourceTypes"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"id"},"name":{"kind":"Name","value":"Id"}},{"kind":"Field","alias":{"kind":"Name","value":"label"},"name":{"kind":"Name","value":"Label"}},{"kind":"Field","alias":{"kind":"Name","value":"connector"},"name":{"kind":"Name","value":"Connector"}},{"kind":"Field","alias":{"kind":"Name","value":"category"},"name":{"kind":"Name","value":"Category"}},{"kind":"Field","alias":{"kind":"Name","value":"traits"},"name":{"kind":"Name","value":"Traits"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"connection"},"name":{"kind":"Name","value":"Connection"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"transport"},"name":{"kind":"Name","value":"Transport"}},{"kind":"Field","alias":{"kind":"Name","value":"hostInputMode"},"name":{"kind":"Name","value":"HostInputMode"}},{"kind":"Field","alias":{"kind":"Name","value":"hostInputUrlParser"},"name":{"kind":"Name","value":"HostInputURLParser"}},{"kind":"Field","alias":{"kind":"Name","value":"supportsCustomCAContent"},"name":{"kind":"Name","value":"SupportsCustomCAContent"}}]}},{"kind":"Field","alias":{"kind":"Name","value":"presentation"},"name":{"kind":"Name","value":"Presentation"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"profileLabelStrategy"},"name":{"kind":"Name","value":"ProfileLabelStrategy"}},{"kind":"Field","alias":{"kind":"Name","value":"schemaFidelity"},"name":{"kind":"Name","value":"SchemaFidelity"}}]}},{"kind":"Field","alias":{"kind":"Name","value":"query"},"name":{"kind":"Name","value":"Query"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"supportsAnalyze"},"name":{"kind":"Name","value":"SupportsAnalyze"}},{"kind":"Field","alias":{"kind":"Name","value":"supportsScripts"},"name":{"kind":"Name","value":"SupportsScripts"}},{"kind":"Field","alias":{"kind":"Name","value":"supportsStreaming"},"name":{"kind":"Name","value":"SupportsStreaming"}},{"kind":"Field","alias":{"kind":"Name","value":"supportsMultiStatement"},"name":{"kind":"Name","value":"SupportsMultiStatement"}},{"kind":"Field","alias":{"kind":"Name","value":"supportsSqlImport"},"name":{"kind":"Name","value":"SupportsSqlImport"}},{"kind":"Field","alias":{"kind":"Name","value":"explainMode"},"name":{"kind":"Name","value":"ExplainMode"}},{"kind":"Field","alias":{"kind":"Name","value":"sequentialPaginationOnly"},"name":{"kind":"Name","value":"SequentialPaginationOnly"}}]}},{"kind":"Field","alias":{"kind":"Name","value":"mockData"},"name":{"kind":"Name","value":"MockData"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"supportsRelationalDependencies"},"name":{"kind":"Name","value":"SupportsRelationalDependencies"}}]}},{"kind":"Field","alias":{"kind":"Name","value":"metadata"},"name":{"kind":"Name","value":"Metadata"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"columns"},"name":{"kind":"Name","value":"Columns"}},{"kind":"Field","alias":{"kind":"Name","value":"constraints"},"name":{"kind":"Name","value":"Constraints"}},{"kind":"Field","alias":{"kind":"Name","value":"graph"},"name":{"kind":"Name","value":"Graph"}},{"kind":"Field","alias":{"kind":"Name","value":"systemObjectFiltering"},"name":{"kind":"Name","value":"SystemObjectFiltering"}}]}}]}},{"kind":"Field","alias":{"kind":"Name","value":"connectionFields"},"name":{"kind":"Name","value":"ConnectionFields"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"Key"}},{"kind":"Field","name":{"kind":"Name","value":"Kind"}},{"kind":"Field","name":{"kind":"Name","value":"Section"}},{"kind":"Field","name":{"kind":"Name","value":"Required"}},{"kind":"Field","name":{"kind":"Name","value":"LabelKey"}},{"kind":"Field","name":{"kind":"Name","value":"PlaceholderKey"}},{"kind":"Field","name":{"kind":"Name","value":"DefaultValue"}},{"kind":"Field","name":{"kind":"Name","value":"SupportsOptions"}}]}},{"kind":"Field","alias":{"kind":"Name","value":"contract"},"name":{"kind":"Name","value":"Contract"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"Model"}},{"kind":"Field","name":{"kind":"Name","value":"Surfaces"}},{"kind":"Field","name":{"kind":"Name","value":"RootActions"}},{"kind":"Field","name":{"kind":"Name","value":"BrowsePath"}},{"kind":"Field","name":{"kind":"Name","value":"DefaultObjectKind"}},{"kind":"Field","name":{"kind":"Name","value":"GraphScopeKind"}},{"kind":"Field","name":{"kind":"Name","value":"ObjectTypes"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"Kind"}},{"kind":"Field","name":{"kind":"Name","value":"DataShape"}},{"kind":"Field","name":{"kind":"Name","value":"Actions"}},{"kind":"Field","name":{"kind":"Name","value":"Views"}},{"kind":"Field","name":{"kind":"Name","value":"SingularLabel"}},{"kind":"Field","name":{"kind":"Name","value":"PluralLabel"}}]}}]}},{"kind":"Field","alias":{"kind":"Name","value":"discoveryPrefill"},"name":{"kind":"Name","value":"DiscoveryPrefill"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"AdvancedDefaults"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"Key"}},{"kind":"Field","name":{"kind":"Name","value":"Value"}},{"kind":"Field","name":{"kind":"Name","value":"MetadataKey"}},{"kind":"Field","name":{"kind":"Name","value":"DefaultValue"}},{"kind":"Field","name":{"kind":"Name","value":"ProviderTypes"}},{"kind":"Field","name":{"kind":"Name","value":"Conditions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"Key"}},{"kind":"Field","name":{"kind":"Name","value":"Value"}}]}}]}}]}},{"kind":"Field","alias":{"kind":"Name","value":"isAwsManaged"},"name":{"kind":"Name","value":"IsAWSManaged"}},{"kind":"Field","alias":{"kind":"Name","value":"sslModes"},"name":{"kind":"Name","value":"SSLModes"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"value"}},{"kind":"Field","name":{"kind":"Name","value":"aliases"}}]}}]}}]}}]} as unknown as DocumentNode<SourceTypesQuery, SourceTypesQueryVariables>;
 export const GetSslStatusDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetSSLStatus"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"SSLStatus"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"IsEnabled"}},{"kind":"Field","name":{"kind":"Name","value":"Mode"}}]}}]}}]} as unknown as DocumentNode<GetSslStatusQuery, GetSslStatusQueryVariables>;
 export const AnalyzeMockDataDependenciesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"AnalyzeMockDataDependencies"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"ref"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"SourceObjectRefInput"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"rowCount"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"fkDensityRatio"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"AnalyzeMockDataDependencies"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"ref"},"value":{"kind":"Variable","name":{"kind":"Name","value":"ref"}}},{"kind":"Argument","name":{"kind":"Name","value":"rowCount"},"value":{"kind":"Variable","name":{"kind":"Name","value":"rowCount"}}},{"kind":"Argument","name":{"kind":"Name","value":"fkDensityRatio"},"value":{"kind":"Variable","name":{"kind":"Name","value":"fkDensityRatio"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"GenerationOrder"}},{"kind":"Field","name":{"kind":"Name","value":"Tables"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"Table"}},{"kind":"Field","name":{"kind":"Name","value":"RowsToGenerate"}},{"kind":"Field","name":{"kind":"Name","value":"IsBlocked"}},{"kind":"Field","name":{"kind":"Name","value":"UsesExistingData"}}]}},{"kind":"Field","name":{"kind":"Name","value":"TotalRows"}},{"kind":"Field","name":{"kind":"Name","value":"Warnings"}},{"kind":"Field","name":{"kind":"Name","value":"Error"}}]}}]}}]} as unknown as DocumentNode<AnalyzeMockDataDependenciesQuery, AnalyzeMockDataDependenciesQueryVariables>;
 export const MockDataMaxRowCountDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"MockDataMaxRowCount"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"MockDataMaxRowCount"}}]}}]} as unknown as DocumentNode<MockDataMaxRowCountQuery, MockDataMaxRowCountQueryVariables>;

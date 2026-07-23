@@ -20,10 +20,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/viewport"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/viewport"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/clidey/whodb/cli/internal/database"
 	"github.com/clidey/whodb/cli/pkg/styles"
 )
@@ -83,7 +83,7 @@ func (v *AuditView) Update(msg tea.Msg) (*AuditView, tea.Cmd) {
 		}
 		return v, nil
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch {
 		case key.Matches(msg, Keys.Global.Back):
 			if !v.parent.PopView() {
@@ -241,7 +241,7 @@ func (v *AuditView) rebuildViewport() {
 	content, queries := v.renderAuditContent(contentWidth)
 	v.issueQueries = queries
 
-	v.viewport = viewport.New(contentWidth, contentHeight)
+	v.viewport = viewport.New(viewport.WithWidth(contentWidth), viewport.WithHeight(contentHeight))
 	v.viewport.SetContent(content)
 	v.ready = true
 }

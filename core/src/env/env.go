@@ -105,7 +105,7 @@ var BlockInternalAIEndpoints = os.Getenv("WHODB_BLOCK_INTERNAL_AI_ENDPOINTS") ==
 
 var ApplicationVersion string
 
-var PosthogAPIKey = "phc_hbXcCoPTdxm5ADL8PmLSYTIUvS6oRWFM2JAK8SMbfnH"
+var PosthogAPIKey = "phc_hbXcCoPTdxm5ADL8PmLSYTIUvS6oRWFM2JAK8SMbfnH" // #nosec G101 -- PostHog project keys are public ingestion identifiers.
 var PosthogHost = "https://us.i.posthog.com"
 
 // IsAWSProviderEnabled controls whether AWS provider functionality is available.

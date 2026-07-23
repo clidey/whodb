@@ -133,6 +133,9 @@ export interface SourceQueryTraitsDescriptor {
 	explainMode: NonNullable<
 		SourceTypesQuery["SourceTypes"][number]["traits"]
 	>["query"]["explainMode"];
+	sequentialPaginationOnly: NonNullable<
+		SourceTypesQuery["SourceTypes"][number]["traits"]
+	>["query"]["sequentialPaginationOnly"];
 }
 
 /**

@@ -15,7 +15,7 @@
 package tui
 
 import (
-	"github.com/charmbracelet/bubbles/key"
+	"charm.land/bubbles/v2/key"
 	"github.com/clidey/whodb/cli/pkg/styles"
 )
 
@@ -543,7 +543,7 @@ var Keys = Keymap{
 			key.WithHelp("↓/j", "down"),
 		),
 		Toggle: key.NewBinding(
-			key.WithKeys("enter", " "),
+			key.WithKeys("enter", "space"),
 			key.WithHelp("enter/space", "expand"),
 		),
 		ViewData: key.NewBinding(
@@ -569,7 +569,7 @@ var Keys = Keymap{
 			key.WithHelp("↓/j", "next"),
 		),
 		Toggle: key.NewBinding(
-			key.WithKeys(" ", "x"),
+			key.WithKeys("space", "x"),
 			key.WithHelp("space", "toggle"),
 		),
 		SelectAll: key.NewBinding(

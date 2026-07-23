@@ -550,7 +550,7 @@ func wrapWithBasePath(h http.Handler, basePath string) *chi.Mux {
 		if r.URL.RawQuery != "" {
 			target += "?" + r.URL.RawQuery
 		}
-		http.Redirect(w, r, target, http.StatusMovedPermanently) //nolint:gosec
+		http.Redirect(w, r, target, http.StatusMovedPermanently) // #nosec G710 -- basePath is validated at startup as a slash-prefixed local path.
 	}
 
 	router.Get(basePath, redirectToBasePath)

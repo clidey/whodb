@@ -210,7 +210,7 @@ func openLogFile(path string) *os.File {
 		fmt.Fprintf(os.Stderr, "whodb: refusing to open log file %s: path is a symlink\n", path)
 		os.Exit(1)
 	}
-	f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600) //nolint:gosec
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600) // #nosec G304 -- path is server-configured and symlinks are rejected above.
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "whodb: failed to open log file %s: %v\n", path, err)
 		os.Exit(1)

@@ -213,8 +213,8 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 		"--name", importProjectName,
 		"--description", "CLI e2e import target project",
 	}, queryArgs...)...)
-	defer bestEffortCLIProjectDelete(t, host, orgSlug, importProjectRenamedName)
-	defer bestEffortCLIProjectDelete(t, host, orgSlug, importProjectName)
+	defer func() { bestEffortCLIProjectDelete(t, host, orgSlug, importProjectRenamedName) }()
+	defer func() { bestEffortCLIProjectDelete(t, host, orgSlug, importProjectName) }()
 	projects := runJSONCommand[[]platform.Project](t, "projects", "list", "--host", host, "--org", orgSlug, "--format", "json", "--quiet")
 	requireContainsProjectID(t, projects, importProjectID)
 	renamedImportProjectID := runMutationID(t, append([]string{
@@ -235,7 +235,7 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 		"--description", "CLI e2e secret",
 		"--value-env", "WHODB_PLATFORM_E2E_TYPED_SECRET",
 	}, baseArgs...)...)
-	defer bestEffortCLIResourceDelete(t, host, "secret", secretID)
+	defer func() { bestEffortCLIResourceDelete(t, host, "secret", secretID) }()
 	secrets := runJSONCommand[[]platform.ProjectSecret](t, "secrets", "list", "--host", host, "--format", "json", "--quiet")
 	requireContainsSecret(t, secrets, secretID)
 	_ = runMutationID(t, append([]string{
@@ -260,7 +260,7 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 		"--api-key-env", "WHODB_PLATFORM_E2E_TYPED_PROVIDER_KEY",
 		"--model", "gpt-4.1",
 	}, baseArgs...)...)
-	defer bestEffortCLIResourceDelete(t, host, "ai_provider", providerID)
+	defer func() { bestEffortCLIResourceDelete(t, host, "ai_provider", providerID) }()
 	providers := runJSONCommand[[]platform.AIProvider](t, "ai-providers", "list", "--host", host, "--format", "json", "--quiet")
 	requireContainsAIProvider(t, providers, providerID)
 	_ = runMutationID(t, append([]string{
@@ -283,7 +283,7 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 		"--column", "id:text:primary",
 		"--column", "name:text:nullable",
 	}, baseArgs...)...)
-	defer bestEffortCLIResourceDelete(t, host, "dataset", datasetID)
+	defer func() { bestEffortCLIResourceDelete(t, host, "dataset", datasetID) }()
 	datasets := runJSONCommand[[]platform.Dataset](t, "datasets", "list", "--host", host, "--format", "json", "--quiet")
 	requireContainsDataset(t, datasets, datasetID)
 	filteredDatasets := runJSONCommand[[]platform.Dataset](t, "datasets", "list", "--host", host, "--name", datasetName, "--schema-mode", "manual", "--format", "json", "--quiet")
@@ -303,7 +303,7 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 	testharness.AssertFileContains(t, datasetExportPath, datasetName)
 	datasetCloneName := datasetName + "-clone"
 	datasetCloneID := runMutationID(t, append([]string{"datasets", "clone", datasetName, datasetCloneName}, baseArgs...)...)
-	defer bestEffortCLIResourceDelete(t, host, "dataset", datasetCloneID)
+	defer func() { bestEffortCLIResourceDelete(t, host, "dataset", datasetCloneID) }()
 	_ = runJSONCommand[platform.DatasetQueryResult](t, "datasets", "rows", datasetName, "--host", host, "--limit", "5", "--format", "json", "--quiet")
 	_ = runJSONCommand[platform.DatasetQueryResult](t, "datasets", "query", datasetName, "--host", host, "--limit", "5", "--format", "json", "--quiet")
 	datasetSchema := runJSONCommand[[]platform.ColumnDef](t, "datasets", "schema", datasetName, "--host", host, "--format", "json", "--quiet")
@@ -325,7 +325,7 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 		"--graph-json", `{"nodes":[],"edges":[]}`,
 		"--trigger-mode", "manual",
 	}, baseArgs...)...)
-	defer bestEffortCLIResourceDelete(t, host, "transform", transformID)
+	defer func() { bestEffortCLIResourceDelete(t, host, "transform", transformID) }()
 	transform := runJSONCommand[platform.Transform](t, "transforms", "get", transformName, "--host", host, "--format", "json", "--quiet")
 	if transform.ID != transformID {
 		t.Fatalf("transforms get by name returned id %q, want %q", transform.ID, transformID)
@@ -343,7 +343,7 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 	testharness.AssertFileContains(t, transformExportPath, transformName)
 	transformCloneName := transformName + "-clone"
 	transformCloneID := runMutationID(t, append([]string{"transforms", "clone", transformName, transformCloneName}, baseArgs...)...)
-	defer bestEffortCLIResourceDelete(t, host, "transform", transformCloneID)
+	defer func() { bestEffortCLIResourceDelete(t, host, "transform", transformCloneID) }()
 	_ = runMutationID(t, append([]string{
 		"transforms", "update", transformName,
 		"--description", "updated",
@@ -363,7 +363,7 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 		"--schema-name", "public",
 		"--property-json", `{"apiName":"id","displayName":"ID","description":"ID","columnName":"id","dataType":"String","isRequired":true,"visibility":"normal","isSearchable":true,"isSortable":true,"isEditOnly":false}`,
 	}, baseArgs...)...)
-	defer bestEffortCLIResourceDelete(t, host, "ontology", ontologyID)
+	defer func() { bestEffortCLIResourceDelete(t, host, "ontology", ontologyID) }()
 	ontology := runJSONCommand[platform.Ontology](t, "ontologies", "get", ontologyAPIName, "--host", host, "--format", "json", "--quiet")
 	if ontology.ID != ontologyID {
 		t.Fatalf("ontologies get by api name returned id %q, want %q", ontology.ID, ontologyID)
@@ -377,7 +377,7 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 	testharness.AssertFileContains(t, ontologyExportPath, ontologyAPIName)
 	ontologyCloneName := "cli_e2e_ontology_clone_" + suffix
 	ontologyCloneID := runMutationID(t, append([]string{"ontologies", "clone", ontologyAPIName, ontologyCloneName}, baseArgs...)...)
-	defer bestEffortCLIResourceDelete(t, host, "ontology", ontologyCloneID)
+	defer func() { bestEffortCLIResourceDelete(t, host, "ontology", ontologyCloneID) }()
 
 	functionName := "cli-e2e-function-" + suffix
 	functionPath := filepath.Join(t.TempDir(), "main.py")
@@ -397,7 +397,7 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 		"--default-max-tokens", "256",
 		"--default-temperature", "0.2",
 	}, baseArgs...)...)
-	defer bestEffortCLIResourceDelete(t, host, "function", functionID)
+	defer func() { bestEffortCLIResourceDelete(t, host, "function", functionID) }()
 	fn := runJSONCommand[platform.Function](t, "functions", "get", functionName, "--host", host, "--format", "json", "--quiet")
 	if fn.ID != functionID {
 		t.Fatalf("functions get by name returned id %q, want %q", fn.ID, functionID)
@@ -415,7 +415,7 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 	testharness.AssertFileContains(t, functionExportPath, functionName)
 	functionCloneName := functionName + "-clone"
 	functionCloneID := runMutationID(t, append([]string{"functions", "clone", functionName, functionCloneName}, baseArgs...)...)
-	defer bestEffortCLIResourceDelete(t, host, "function", functionCloneID)
+	defer func() { bestEffortCLIResourceDelete(t, host, "function", functionCloneID) }()
 	testResult := runJSONCommand[platform.FunctionExecutionResult](t, "functions", "test", functionName, "--host", host, "--input-json", `{"hello":"draft"}`, "--format", "json", "--quiet")
 	requireFunctionExecutionResult(t, "functions test", testResult)
 	previewResult := runJSONCommand[platform.FunctionExecutionResult](t, "functions", "preview", "--host", host, "--language", "python", "--entry-point", "main", "--file", "main.py="+functionPath, "--input-json", `{"hello":"preview"}`, "--format", "json", "--quiet")
@@ -493,12 +493,12 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 		"folders", "create",
 		"--name", folderAName,
 	}, baseArgs...)...)
-	defer bestEffortCLIResourceDelete(t, host, "folder", folderAID)
+	defer func() { bestEffortCLIResourceDelete(t, host, "folder", folderAID) }()
 	folderBID := runMutationID(t, append([]string{
 		"folders", "create",
 		"--name", folderBName,
 	}, baseArgs...)...)
-	defer bestEffortCLIResourceDelete(t, host, "folder", folderBID)
+	defer func() { bestEffortCLIResourceDelete(t, host, "folder", folderBID) }()
 	folder := runJSONCommand[platform.ProjectFolder](t, "folders", "get", folderAName, "--host", host, "--format", "json", "--quiet")
 	if folder.ID != folderAID {
 		t.Fatalf("folders get by name returned id %q, want %q", folder.ID, folderAID)
@@ -521,7 +521,7 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 		t.Fatalf("uploaded file did not include id: %#v", uploadedFile)
 	}
 	fileID := uploadedFile.ID
-	defer bestEffortCLIResourceDelete(t, host, "file", fileID)
+	defer func() { bestEffortCLIResourceDelete(t, host, "file", fileID) }()
 	_ = runJSONCommand[platform.FolderContents](t, "files", "list", "--host", host, "--folder-id", folderAID, "--format", "json", "--quiet")
 	filteredContents := runJSONCommand[platform.FolderContents](t, "files", "list", "--host", host, "--folder-id", folderAID, "--name", uploadedFile.Name, "--kind", "file", "--mime-type", "csv", "--format", "json", "--quiet")
 	if len(filteredContents.Files) != 1 || filteredContents.Files[0].ID != fileID || len(filteredContents.Folders) != 0 {
@@ -563,7 +563,7 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 		"--column-map", "id:id:text:primary",
 		"--column-map", "name:name:text:nullable",
 	}, baseArgs...)...)
-	defer bestEffortCLIResourceDelete(t, host, "dataset", promotedDatasetID)
+	defer func() { bestEffortCLIResourceDelete(t, host, "dataset", promotedDatasetID) }()
 	promotedDataset := runJSONCommand[platform.Dataset](t, "datasets", "get", promotedDatasetName, "--host", host, "--format", "json", "--quiet")
 	if promotedDataset.ID != promotedDatasetID {
 		t.Fatalf("promoted dataset id = %q, want %q", promotedDataset.ID, promotedDatasetID)
@@ -684,7 +684,6 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 		t.Fatalf("imported function = %#v, want %q", got, importFunctionName)
 	}
 	runMutationOK(t, "projects", "delete", importProjectRenamedName, "--host", host, "--org", orgSlug, "--yes", "--format", "json", "--quiet")
-	importProjectID = ""
 
 	runMutationOK(t, append([]string{"datasets", "delete", promotedDatasetName}, baseArgs...)...)
 	promotedDatasetID = ""
@@ -703,7 +702,7 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 	var moveFile platform.ProjectFile
 	decodeEnvelopeData(t, moveUploaded, &moveFile)
 	moveFileID := moveFile.ID
-	defer bestEffortCLIResourceDelete(t, host, "file", moveFileID)
+	defer func() { bestEffortCLIResourceDelete(t, host, "file", moveFileID) }()
 	renamedFileName := "cli-e2e-renamed-" + suffix + ".csv"
 	moveFileID = runMutationID(t, append([]string{"files", "rename", moveFile.Name, "--name", renamedFileName}, baseArgs...)...)
 	moveFileID = runMutationID(t, append([]string{"files", "move", renamedFileName, "--folder-id", folderBID}, baseArgs...)...)
@@ -946,15 +945,6 @@ func runMutationOK(t *testing.T, args ...string) json.RawMessage {
 		t.Fatalf("mutation envelope for whodb-cli %s did not include data: %s", strings.Join(args, " "), string(envelope.Data))
 	}
 	return mutation.Data
-}
-
-func jsonPayload(t *testing.T, value any) string {
-	t.Helper()
-	raw, err := json.Marshal(value)
-	if err != nil {
-		t.Fatalf("marshal JSON payload: %v", err)
-	}
-	return string(raw)
 }
 
 func requireImportCreated(t *testing.T, plan map[string]any, resource, name string) {

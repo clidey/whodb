@@ -97,6 +97,6 @@ cd frontend && pnpm run build:ce
 - Run: `cd frontend && pnpm e2e:db:headless <name>`
 
 ## Reference
-- See `DATA_SOURCE_GUIDE.md` for full details
+- See `.agents/docs/data-sources.md` for full details
 - See `core/src/plugins/postgres/` as reference implementation
 - See `.agents/docs/plugin-architecture.md` for architecture details

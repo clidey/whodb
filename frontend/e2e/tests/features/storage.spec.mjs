@@ -305,6 +305,23 @@ describeOrSkip('Browser Storage', () => {
     });
 
     test.describe('Logout Storage Cleanup', () => {
+        // These tests call whodb.logout(), which deletes the server-side session.
+        // Logging out with the file's shared storageState session would invalidate
+        // every other test relying on it, so each test here clears cookies and
+        // logs in fresh first.
+        test.beforeEach(async ({ whodb, page }) => {
+            await clearBrowserState(page);
+            const conn = db.connection;
+            await whodb.login(
+                db.uiType || db.type,
+                conn.host ?? undefined,
+                conn.user ?? undefined,
+                conn.password ?? undefined,
+                conn.database ?? undefined,
+                conn.advanced || {}
+            );
+        });
+
         test('clears Redux auth state on logout', async ({ whodb, page }) => {
             // Verify auth state exists before logout
             const statusBefore = await page.evaluate(() => {

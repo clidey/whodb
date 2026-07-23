@@ -21,10 +21,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/viewport"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/viewport"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/clidey/whodb/cli/internal/database"
 	"github.com/clidey/whodb/cli/pkg/styles"
 )
@@ -55,7 +55,7 @@ func (v *CmdLogView) Update(msg tea.Msg) (*CmdLogView, tea.Cmd) {
 		v.ready = false
 		return v, nil
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		if key.Matches(msg, Keys.Global.Back) {
 			if !v.parent.PopView() {
 				v.parent.mode = ViewBrowser
@@ -113,11 +113,11 @@ func (v *CmdLogView) initViewport() {
 	}
 
 	if !v.ready {
-		v.viewport = viewport.New(contentWidth, contentHeight)
+		v.viewport = viewport.New(viewport.WithWidth(contentWidth), viewport.WithHeight(contentHeight))
 		v.ready = true
 	} else {
-		v.viewport.Width = contentWidth
-		v.viewport.Height = contentHeight
+		v.viewport.SetWidth(contentWidth)
+		v.viewport.SetHeight(contentHeight)
 	}
 
 	v.viewport.SetContent(v.renderLogEntries())

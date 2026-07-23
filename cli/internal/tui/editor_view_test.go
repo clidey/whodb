@@ -23,7 +23,7 @@ import (
 	"testing"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/clidey/whodb/core/src/engine"
 )
 
@@ -74,7 +74,7 @@ func TestEditorView_Escape_HidesSuggestions(t *testing.T) {
 	v.showSuggestions = true
 	v.filteredSuggestions = []suggestion{{label: "test"}}
 
-	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	msg := tea.KeyPressMsg{Code: tea.KeyEsc}
 	v, _ = v.Update(msg)
 
 	if v.showSuggestions {
@@ -88,7 +88,7 @@ func TestEditorView_Escape_GoesBack(t *testing.T) {
 
 	v.showSuggestions = false
 
-	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	msg := tea.KeyPressMsg{Code: tea.KeyEsc}
 	v, _ = v.Update(msg)
 
 	if v.parent.mode != ViewBrowser {
@@ -107,7 +107,7 @@ func TestEditorView_CtrlL_Clear(t *testing.T) {
 	v.cursorPos = 10
 	v.lastText = "some text"
 
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'l'}, Alt: true}
+	msg := tea.KeyPressMsg{Code: 'l', Mod: tea.ModAlt}
 	v, _ = v.Update(msg)
 
 	if v.textarea.Value() != "" {
@@ -171,7 +171,7 @@ func TestEditorView_SuggestionNavigation_Tab(t *testing.T) {
 	v.selectedSuggestion = 0
 
 	// Tab cycles forward
-	msg := tea.KeyMsg{Type: tea.KeyTab}
+	msg := tea.KeyPressMsg{Code: tea.KeyTab}
 	v, _ = v.Update(msg)
 
 	if v.selectedSuggestion != 1 {
@@ -200,7 +200,7 @@ func TestEditorView_SuggestionNavigation_ShiftTab(t *testing.T) {
 	v.selectedSuggestion = 1
 
 	// Shift+Tab goes backward
-	msg := tea.KeyMsg{Type: tea.KeyShiftTab}
+	msg := tea.KeyPressMsg{Code: tea.KeyTab, Mod: tea.ModShift}
 	v, _ = v.Update(msg)
 
 	if v.selectedSuggestion != 0 {
@@ -226,7 +226,7 @@ func TestEditorView_SuggestionNavigation_Down(t *testing.T) {
 	}
 	v.selectedSuggestion = 0
 
-	msg := tea.KeyMsg{Type: tea.KeyDown}
+	msg := tea.KeyPressMsg{Code: tea.KeyDown}
 	v, _ = v.Update(msg)
 
 	if v.selectedSuggestion != 1 {
@@ -245,7 +245,7 @@ func TestEditorView_SuggestionNavigation_Up(t *testing.T) {
 	}
 	v.selectedSuggestion = 1
 
-	msg := tea.KeyMsg{Type: tea.KeyUp}
+	msg := tea.KeyPressMsg{Code: tea.KeyUp}
 	v, _ = v.Update(msg)
 
 	if v.selectedSuggestion != 0 {
@@ -264,7 +264,7 @@ func TestEditorView_SuggestionNavigation_CtrlN(t *testing.T) {
 	}
 	v.selectedSuggestion = 0
 
-	msg := tea.KeyMsg{Type: tea.KeyCtrlN}
+	msg := tea.KeyPressMsg{Code: 'n', Mod: tea.ModCtrl}
 	v, _ = v.Update(msg)
 
 	if v.selectedSuggestion != 1 {
@@ -283,7 +283,7 @@ func TestEditorView_SuggestionNavigation_CtrlP(t *testing.T) {
 	}
 	v.selectedSuggestion = 1
 
-	msg := tea.KeyMsg{Type: tea.KeyCtrlP}
+	msg := tea.KeyPressMsg{Code: 'p', Mod: tea.ModCtrl}
 	v, _ = v.Update(msg)
 
 	if v.selectedSuggestion != 0 {
@@ -304,7 +304,7 @@ func TestEditorView_MouseScroll_WithSuggestions(t *testing.T) {
 	v.selectedSuggestion = 1
 
 	// Mouse wheel down
-	msg := tea.MouseMsg{Button: tea.MouseButtonWheelDown}
+	msg := tea.MouseWheelMsg{Button: tea.MouseWheelDown}
 	v, _ = v.Update(msg)
 
 	if v.selectedSuggestion != 2 {
@@ -312,7 +312,7 @@ func TestEditorView_MouseScroll_WithSuggestions(t *testing.T) {
 	}
 
 	// Mouse wheel up
-	msg = tea.MouseMsg{Button: tea.MouseButtonWheelUp}
+	msg = tea.MouseWheelMsg{Button: tea.MouseWheelUp}
 	v, _ = v.Update(msg)
 
 	if v.selectedSuggestion != 1 {
@@ -332,7 +332,7 @@ func TestEditorView_MouseScrollUp_WrapAround(t *testing.T) {
 	v.selectedSuggestion = 0
 
 	// Mouse wheel up from 0 wraps to end
-	msg := tea.MouseMsg{Button: tea.MouseButtonWheelUp}
+	msg := tea.MouseWheelMsg{Button: tea.MouseWheelUp}
 	v, _ = v.Update(msg)
 
 	if v.selectedSuggestion != 1 {
@@ -923,7 +923,7 @@ func TestEditorView_RetryPrompt_EscCancels(t *testing.T) {
 	v.err = fmt.Errorf("query timed out")
 
 	// Send ESC key
-	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	msg := tea.KeyPressMsg{Code: tea.KeyEsc}
 	v, _ = v.Update(msg)
 
 	// Verify retry prompt was dismissed
@@ -939,14 +939,13 @@ func TestEditorView_RetryPrompt_EscCancels(t *testing.T) {
 
 func TestEditorView_RetryPrompt_KeyHandling(t *testing.T) {
 	tests := []struct {
-		name    string
-		key     string
-		keyType tea.KeyType
+		name string
+		key  string
 	}{
-		{"option_1", "1", tea.KeyRunes},
-		{"option_2", "2", tea.KeyRunes},
-		{"option_3", "3", tea.KeyRunes},
-		{"option_4", "4", tea.KeyRunes},
+		{"option_1", "1"},
+		{"option_2", "2"},
+		{"option_3", "3"},
+		{"option_4", "4"},
 	}
 
 	for _, tt := range tests {
@@ -959,10 +958,7 @@ func TestEditorView_RetryPrompt_KeyHandling(t *testing.T) {
 			v.err = fmt.Errorf("query timed out")
 
 			// Send number key
-			var msg tea.KeyMsg
-			if tt.keyType == tea.KeyRunes {
-				msg = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(tt.key)}
-			}
+			msg := tea.KeyPressMsg{Text: tt.key, Code: rune(tt.key[0])}
 			v, cmd := v.Update(msg)
 
 			// Verify retry prompt was dismissed
@@ -992,7 +988,7 @@ func TestEditorView_RetryPrompt_IgnoresOtherKeys(t *testing.T) {
 	v.err = fmt.Errorf("query timed out")
 
 	// Send an unrelated key (like 'a')
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("a")}
+	msg := tea.KeyPressMsg{Text: "a", Code: 'a'}
 	v, _ = v.Update(msg)
 
 	// Verify retry prompt is still active
@@ -1104,7 +1100,7 @@ func TestEditorView_DebounceSequenceID_Increments(t *testing.T) {
 	// Simulate typing by calling Update with key messages
 	// Each update should increment the sequence ID
 	v.textarea.SetValue("S")
-	v.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'S'}})
+	v.Update(tea.KeyPressMsg{Text: "S", Code: 'S'})
 
 	if v.autocompleteSeqID <= initialSeqID {
 		t.Error("Expected sequence ID to increment after keystroke")
@@ -1113,7 +1109,7 @@ func TestEditorView_DebounceSequenceID_Increments(t *testing.T) {
 	seqAfterFirst := v.autocompleteSeqID
 
 	v.textarea.SetValue("SE")
-	v.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'E'}})
+	v.Update(tea.KeyPressMsg{Text: "E", Code: 'E'})
 
 	if v.autocompleteSeqID <= seqAfterFirst {
 		t.Error("Expected sequence ID to increment after second keystroke")
@@ -1221,7 +1217,7 @@ func TestEditorView_RetryMenuSavesPreference(t *testing.T) {
 			v.retryPrompt.Show("SELECT 1")
 			v.parent.config.SetPreferredTimeout(0)
 
-			msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(tt.key)}
+			msg := tea.KeyPressMsg{Text: tt.key, Code: rune(tt.key[0])}
 			v, _ = v.Update(msg)
 
 			saved := v.parent.config.GetPreferredTimeout()

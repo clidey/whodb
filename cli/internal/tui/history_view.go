@@ -23,10 +23,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/list"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/list"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/clidey/whodb/cli/internal/history"
 	"github.com/clidey/whodb/cli/pkg/styles"
 )
@@ -110,17 +110,17 @@ func (v *HistoryView) Update(msg tea.Msg) (*HistoryView, tea.Cmd) {
 		v.list.SetSize(msg.Width-4, h)
 		return v, nil
 
-	case tea.MouseMsg:
+	case tea.MouseWheelMsg:
 		switch msg.Button {
-		case tea.MouseButtonWheelUp:
+		case tea.MouseWheelUp:
 			v.list.CursorUp()
 			return v, nil
-		case tea.MouseButtonWheelDown:
+		case tea.MouseWheelDown:
 			v.list.CursorDown()
 			return v, nil
 		}
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		// Handle retry prompt for timed out queries
 		if v.retryPrompt.IsActive() {
 			result, handled := v.retryPrompt.HandleKeyMsg(msg.String())
