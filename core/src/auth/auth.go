@@ -21,6 +21,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"io"
 	"maps"
 	"net/http"
@@ -239,7 +240,13 @@ func serveWithSessionCookie(w http.ResponseWriter, r *http.Request, next http.Ha
 	ttl := sessionTTL()
 	credentials, csrfHash, needsRefresh, err := LookupSession(sessionToken, ttl)
 	if err != nil {
-		clearSessionCookies(w)
+		// Only clear the cookies when the session is genuinely gone (expired,
+		// never existed, or undecryptable). Any other error (e.g. a transient
+		// SQLite busy/IO error from the session store) leaves the cookie intact
+		// so a subsequent request with the same still-valid session can succeed.
+		if errors.Is(err, errSessionNotFound) || errors.Is(err, errSessionInvalid) {
+			clearSessionCookies(w)
+		}
 		return false
 	}
 
