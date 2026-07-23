@@ -276,12 +276,28 @@ test.describe('Profile Management', () => {
     });
 
     test.describe('Logout from Profile', () => {
+        // These tests call whodb.logout(), which deletes the server-side session.
+        // login: false avoids the shared storageState from auth.setup.mjs, so
+        // logging out here doesn't invalidate every other test's session.
         forEachDatabase('sql', (db) => {
             if (db.type !== 'Postgres') {
                 return;
             }
 
             test.describe(`${db.type}`, () => {
+                test.beforeEach(async ({ whodb, page }) => {
+                    await clearBrowserState(page);
+                    const conn = db.connection;
+                    await whodb.login(
+                        db.uiType || db.type,
+                        conn.host ?? undefined,
+                        conn.user ?? undefined,
+                        conn.password ?? undefined,
+                        conn.database ?? undefined,
+                        conn.advanced || {}
+                    );
+                });
+
                 test('can logout from current profile', async ({ whodb, page }) => {
                     await expect(page.locator('[data-testid="sidebar-profile"]')).toBeAttached();
 
@@ -317,7 +333,7 @@ test.describe('Profile Management', () => {
                     await expect(page.locator('[data-testid="sidebar-profile"]')).toBeAttached();
                 });
             });
-        });
+        }, { login: false, logout: false });
     });
 
     test.describe('Profile Persistence', () => {
