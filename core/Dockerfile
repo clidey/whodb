@@ -13,7 +13,7 @@
 # limitations under the License.
 
 FROM node:26-alpine3.24 AS build-stage
-RUN npm i -g pnpm@10.29.3
+RUN npm i -g pnpm@11.15.1
 WORKDIR /app
 COPY ./frontend/package.json ./frontend/pnpm-lock.yaml ./
 ARG USE_PREBUILT_FRONTEND=false
