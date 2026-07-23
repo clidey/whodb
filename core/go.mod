@@ -37,6 +37,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/go-version v1.9.0
 	github.com/jackc/pgx/v5 v5.10.0
+	github.com/mattn/go-sqlite3 v1.14.42
 	github.com/posthog/posthog-go v1.21.0
 	github.com/redis/go-redis/v9 v9.21.0
 	github.com/shopspring/decimal v1.4.0
@@ -114,7 +115,6 @@ require (
 	github.com/klauspost/compress v1.18.6 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
-	github.com/mattn/go-sqlite3 v1.14.42 // indirect
 	github.com/paulmach/orb v0.13.0 // indirect
 	github.com/pierrec/lz4/v4 v4.1.27 // indirect
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
