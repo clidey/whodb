@@ -96,7 +96,6 @@ func sendHeartbeat(id string, now time.Time) {
 		Set("os", runtime.GOOS).
 		Set("arch", runtime.GOARCH).
 		Set("source", cfg.Source).
-		Set("$lib", libraryName).
 		// Anonymous event: no person profile is created or updated.
 		Set("$process_person_profile", false).
 		// Discard the sender IP at ingestion; no geolocation is stored.

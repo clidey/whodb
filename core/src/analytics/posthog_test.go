@@ -175,9 +175,6 @@ func TestBuildPropertiesMergesMetadataAndConfig(t *testing.T) {
 	if props["build_edition"] != "ce" || props["source"] != "backend" {
 		t.Fatalf("expected edition and source to be stamped, got %v / %v", props["build_edition"], props["source"])
 	}
-	if props["$lib"] != libraryName {
-		t.Fatalf("expected $lib to be set to %s", libraryName)
-	}
 	if props["custom"] != "value" {
 		t.Fatalf("expected custom properties to be retained")
 	}
