@@ -2,6 +2,8 @@
 
 # <img src="https://raw.githubusercontent.com/clidey/whodb/main/docs/logo/logo.svg" width="30px" height="auto" alt="" /> WhoDB
 
+[![MCP Toplist](https://mcptoplist.com/badge/glama%2Fclidey%2Fwhodb.svg)](https://mcptoplist.com/server/glama%2Fclidey%2Fwhodb)
+
 ### A lightweight, self-hosted workspace for your databases
 
 [![Release workflow](https://img.shields.io/github/actions/workflow/status/clidey/whodb/release-ce.yml?branch=main)](https://github.com/clidey/whodb/actions/workflows/release-ce.yml)
