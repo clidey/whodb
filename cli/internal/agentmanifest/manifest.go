@@ -318,9 +318,12 @@ func buildMCPTools() []MCPTool {
 		{Name: "whodb_platform_bundle_import_plan", Description: "Plan a bundle import into the selected hosted project without executing writes.", ReadOnly: true},
 		{Name: "whodb_platform_bundle_import", Description: "Import a project bundle into the selected hosted project; returns a confirmation token by default and is hidden in --read-only and --safe-mode.", ReadOnly: false},
 		{Name: "whodb_platform_workflow_plan", Description: "Validate and persist a multi-step hosted platform workflow without executing writes.", ReadOnly: true},
+		{Name: "whodb_platform_workflow_recipe", Description: "Return a goal-oriented read-first recipe for ETL, ontology, application, or general platform workflows.", ReadOnly: true},
 		{Name: "whodb_platform_workflow_get", Description: "Read one persisted hosted platform workflow plan and step status without payload values.", ReadOnly: true},
 		{Name: "whodb_platform_workflow_list", Description: "List persisted hosted platform workflow plans for the selected workspace.", ReadOnly: true},
 		{Name: "whodb_platform_workflow_apply", Description: "Apply or resume a hosted platform workflow plan; completed steps are skipped on retry.", ReadOnly: false},
+		{Name: "whodb_platform_transform_wait", Description: "Wait for a real hosted transform run to reach a terminal state.", ReadOnly: true},
+		{Name: "whodb_platform_restore", Description: "Restore a soft-deleted hosted resource through the platform restore path; requires confirmation.", ReadOnly: false},
 		{Name: "whodb_platform_clone", Description: "Clone a hosted dataset, ontology, transform, or function; returns a confirmation token by default and is hidden in --read-only and --safe-mode.", ReadOnly: false},
 	}
 	tools = append(tools,

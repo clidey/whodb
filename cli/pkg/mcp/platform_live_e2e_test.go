@@ -266,7 +266,7 @@ func TestPlatformMCP_RealReadWriteLifecycle(t *testing.T) {
 	})
 	defer func() { liveBestEffortGenericDelete(ctx, "transform", transformID) }()
 	liveMustReadProjectList(t, ctx, "transforms", func() (int, string) {
-		_, out, err := HandlePlatformTransforms(ctx, nil, PlatformEmptyInput{Fields: []string{"id", "name"}})
+		_, out, err := HandlePlatformTransforms(ctx, nil, PlatformEmptyInput{Search: "mcp-e2e", Limit: 1, Fields: []string{"id", "name"}})
 		if err != nil {
 			t.Fatalf("HandlePlatformTransforms() error = %v", err)
 		}
@@ -281,11 +281,21 @@ func TestPlatformMCP_RealReadWriteLifecycle(t *testing.T) {
 		_, out, err := HandlePlatformTransform(ctx, nil, PlatformEntityInput{ID: transformID, Fields: []string{"data", "scope"}})
 		return out.Error, err
 	})
-	liveMustGenericWrite(t, ctx, "platform_action", "action", PlatformGenericWriteInput{
+	runJSON := liveMustGenericWrite(t, ctx, "platform_action", "action", PlatformGenericWriteInput{
 		Resource: "transform",
 		Action:   "run",
 		ID:       transformID,
 	})
+	var run struct {
+		ID string `json:"id"`
+	}
+	if err := json.Unmarshal([]byte(runJSON), &run); err == nil && run.ID != "" {
+		_, waitOutput, err := HandlePlatformTransformWait(ctx, nil, PlatformTransformWaitInput{TransformID: transformID, RunID: run.ID, TimeoutSecs: 2, PollSecs: 1, Fields: []string{"id", "status", "errorMessage"}})
+		if err != nil || (waitOutput.Error != "" && !waitOutput.Retryable) {
+			t.Fatalf("transform wait = %v, %#v", err, waitOutput)
+		}
+		liveCoverTool("whodb_platform_transform_wait")
+	}
 	liveMustReadEntity(t, ctx, "transform runs", transformID, func() (string, error) {
 		_, out, err := HandlePlatformTransformRuns(ctx, nil, PlatformTransformRunsInput{TransformID: transformID, Limit: 5, Fields: []string{"items", "count"}})
 		return out.Error, err
@@ -647,6 +657,12 @@ func TestPlatformMCP_RealReadWriteLifecycle(t *testing.T) {
 	liveMustGenericWrite(t, ctx, "platform_delete", "delete", PlatformGenericWriteInput{Resource: "dataset", ID: promotedDatasetID})
 	promotedDatasetID = ""
 	liveMustGenericWrite(t, ctx, "platform_delete", "delete", PlatformGenericWriteInput{Resource: "dataset", ID: datasetCloneID})
+	_, restoreOutput, err := handlePlatformGenericWrite(ctx, "platform_restore", PlatformGenericWriteInput{Resource: "dataset", Action: "restore", ID: datasetCloneID}, "action", true)
+	if err != nil || restoreOutput.Error != "" || !restoreOutput.ConfirmationRequired {
+		t.Fatalf("dataset restore = %v, %#v", err, restoreOutput)
+	}
+	liveMustConfirm(t, ctx, restoreOutput.ConfirmationToken)
+	liveCoverTool("whodb_platform_restore")
 	datasetCloneID = ""
 	liveMustGenericWrite(t, ctx, "platform_delete", "delete", PlatformGenericWriteInput{Resource: "dataset", ID: datasetID})
 	datasetID = ""
@@ -954,6 +970,11 @@ func liveMustWorkspaceIntelligence(t *testing.T, ctx context.Context, datasetID 
 		t.Fatalf("workspace summary = %#v, want summary without error", summary)
 	}
 	liveCoverTool("whodb_platform_workspace_summary")
+	_, recipe, err := HandlePlatformWorkflowRecipe(ctx, nil, PlatformWorkflowRecipeInput{Goal: "set up an ETL pipeline"})
+	if err != nil || recipe.Recipe != "etl_pipeline" || len(recipe.Steps) == 0 {
+		t.Fatalf("workflow recipe = %v, %#v", err, recipe)
+	}
+	liveCoverTool("whodb_platform_workflow_recipe")
 
 	_, buildPlan, err := HandlePlatformBuildPlan(ctx, nil, PlatformBuildPlanInput{Goal: "build a customer app", Fields: []string{"phases", "prerequisites", "gaps", "warnings"}})
 	if err != nil {
