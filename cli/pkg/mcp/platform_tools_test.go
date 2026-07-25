@@ -185,8 +185,8 @@ func testPlatformSession(client platformClient) *platformToolSession {
 
 func TestPlatformToolDefinitions(t *testing.T) {
 	tools := platformToolDefinitions()
-	if len(tools) != 118 {
-		t.Fatalf("len(platformToolDefinitions()) = %d, want 118", len(tools))
+	if len(tools) != 119 {
+		t.Fatalf("len(platformToolDefinitions()) = %d, want 119", len(tools))
 	}
 	for _, tool := range tools {
 		if tool.Annotations == nil {

@@ -101,20 +101,21 @@ type PlatformRestoreInput struct {
 // PlatformGenericWriteOutput reports a hosted platform write result or pending confirmation.
 type PlatformGenericWriteOutput struct {
 	PlatformSetupGuidance
-	ConfirmationRequired bool                   `json:"confirmation_required,omitempty"`
-	ConfirmationToken    string                 `json:"confirmation_token,omitempty"`
-	ConfirmationAction   string                 `json:"confirmation_action,omitempty"`
-	ConfirmationPreview  *PlatformActionPreview `json:"confirmation_preview,omitempty"`
-	ConfirmationExpiry   string                 `json:"confirmation_expiry,omitempty"`
-	Warning              string                 `json:"warning,omitempty"`
-	Status               string                 `json:"status,omitempty"`
-	IdempotencyReplayed  bool                   `json:"idempotency_replayed,omitempty"`
-	ResultJSON           string                 `json:"result_json,omitempty"`
-	Error                string                 `json:"error,omitempty"`
-	ErrorCode            string                 `json:"error_code,omitempty"`
-	Retryable            bool                   `json:"retryable,omitempty"`
-	SuggestedTools       []string               `json:"suggested_tools,omitempty"`
-	RequestID            string                 `json:"request_id,omitempty"`
+	ConfirmationRequired bool                    `json:"confirmation_required,omitempty"`
+	ConfirmationToken    string                  `json:"confirmation_token,omitempty"`
+	ConfirmationAction   string                  `json:"confirmation_action,omitempty"`
+	ConfirmationPreview  *PlatformActionPreview  `json:"confirmation_preview,omitempty"`
+	ConfirmationExpiry   string                  `json:"confirmation_expiry,omitempty"`
+	Warning              string                  `json:"warning,omitempty"`
+	Status               string                  `json:"status,omitempty"`
+	IdempotencyReplayed  bool                    `json:"idempotency_replayed,omitempty"`
+	ResultJSON           string                  `json:"result_json,omitempty"`
+	Error                string                  `json:"error,omitempty"`
+	ErrorCode            string                  `json:"error_code,omitempty"`
+	Retryable            bool                    `json:"retryable,omitempty"`
+	SuggestedTools       []string                `json:"suggested_tools,omitempty"`
+	Recovery             *PlatformRecoveryAdvice `json:"recovery,omitempty"`
+	RequestID            string                  `json:"request_id,omitempty"`
 }
 
 func registerPlatformGenericWriteTool(server *mcp.Server, tool *mcp.Tool, secOpts *SecurityOptions) bool {
@@ -203,6 +204,14 @@ func handlePlatformGenericWrite(ctx context.Context, toolName string, input Plat
 		TrackToolCall(ctx, toolName, requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "validation"})
 		return nil, platformGenericWriteError(err, requestID), nil
 	}
+	if err := validatePlatformWriteCapability(ctx, session, spec); err != nil {
+		TrackToolCall(ctx, toolName, requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_capability"})
+		return nil, platformGenericWriteError(err, requestID), nil
+	}
+	if err := validatePlatformWriteInput(input, operationKind, spec); err != nil {
+		TrackToolCall(ctx, toolName, requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "validation"})
+		return nil, platformGenericWriteError(err, requestID), nil
+	}
 	action := &PendingPlatformAction{
 		Operation:      spec.Mutation,
 		Resource:       spec.Resource,
@@ -269,7 +278,8 @@ func platformGenericWriteSetupError(err error, requestID string) PlatformGeneric
 
 func platformGenericWriteError(err error, requestID string) PlatformGenericWriteOutput {
 	errorCode, retryable, suggestedTools := platformErrorFields(err)
-	return PlatformGenericWriteOutput{Error: err.Error(), ErrorCode: errorCode, Retryable: retryable, SuggestedTools: suggestedTools, RequestID: requestID}
+	advice := platformRecoveryAdvice(errorCode, err.Error())
+	return PlatformGenericWriteOutput{Error: err.Error(), ErrorCode: errorCode, Retryable: retryable, SuggestedTools: suggestedTools, Recovery: &advice, RequestID: requestID}
 }
 
 func handlePlatformTypedGenericWrite(ctx context.Context, toolName string, input PlatformGenericWriteInput, operationKind string, confirmWrites bool) (*mcp.CallToolResult, PlatformGenericWriteOutput, error) {
@@ -449,6 +459,13 @@ func buildPlatformGenericWrite(session *platformToolSession, input PlatformGener
 	if err != nil {
 		return platformapi.GenericWriteSpec{}, nil, err
 	}
+	// App file mutations historically receive the app id through the generic
+	// target id. Normalize it to the hosted payload field before validation.
+	if spec.Resource == "app" && (spec.Action == "upsert_file" || spec.Action == "delete_file") {
+		if _, ok := payload["appId"]; !ok && strings.TrimSpace(input.ID) != "" {
+			payload["appId"] = strings.TrimSpace(input.ID)
+		}
+	}
 	id := strings.TrimSpace(input.ID)
 	if spec.NeedsID && id == "" {
 		return platformapi.GenericWriteSpec{}, nil, fmt.Errorf("id is required for %s %s", spec.Action, spec.Resource)
@@ -513,6 +530,34 @@ func buildPlatformGenericWrite(session *platformToolSession, input PlatformGener
 		return platformapi.GenericWriteSpec{}, nil, fmt.Errorf("unsupported write mode %q", spec.Mode)
 	}
 	return spec, variables, nil
+}
+
+func validatePlatformWriteCapability(ctx context.Context, session *platformToolSession, spec platformapi.GenericWriteSpec) error {
+	if session == nil || session.Client == nil {
+		return nil
+	}
+	manifest, err := session.Client.PlatformManifest(ctx)
+	if err != nil {
+		return fmt.Errorf("load hosted platform capabilities: %w", err)
+	}
+	return validatePlatformManifestMutation(manifest, spec.Mutation)
+}
+
+func validatePlatformWriteInput(input PlatformGenericWriteInput, operationKind string, spec platformapi.GenericWriteSpec) error {
+	payload, err := parsePlatformWritePayload(input.Payload, input.PayloadJSON)
+	if err != nil {
+		return err
+	}
+	if spec.Resource == "app" && (spec.Action == "upsert_file" || spec.Action == "delete_file") {
+		if _, ok := payload["appId"]; !ok && strings.TrimSpace(input.ID) != "" {
+			payload["appId"] = strings.TrimSpace(input.ID)
+		}
+	}
+	key := normalizePlatformWriteToken(operationKind) + ":" + spec.Resource
+	if operationKind == "action" {
+		key = "action:" + spec.Action + ":" + spec.Resource
+	}
+	return validatePlatformPayload(key, payload)
 }
 
 func addPlatformConfirmDeletionVariable(mutation string, variables map[string]any) {

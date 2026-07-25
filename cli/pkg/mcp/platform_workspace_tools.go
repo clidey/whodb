@@ -289,6 +289,7 @@ type PlatformWritePlan struct {
 	SuggestedReads       []string                    `json:"suggested_reads"`
 	Affected             []PlatformResourceGraphNode `json:"affected,omitempty"`
 	Warnings             []string                    `json:"warnings"`
+	Preflight            []PlatformWritePreflight    `json:"preflight"`
 }
 
 type platformWorkspaceSnapshot struct {
@@ -468,11 +469,18 @@ func HandlePlatformWritePlan(ctx context.Context, req *mcp.CallToolRequest, inpu
 		if err != nil {
 			return nil, 0, false, err
 		}
+		if err := validatePlatformWriteCapability(ctx, session, spec); err != nil {
+			return nil, 0, false, err
+		}
+		if err := validatePlatformWriteInput(PlatformGenericWriteInput{Resource: input.Resource, ID: input.ID, Action: input.Action, Payload: input.Payload, PayloadJSON: input.PayloadJSON}, operation, spec); err != nil {
+			return nil, 0, false, err
+		}
 		snapshot, err := loadPlatformWorkspaceSnapshot(ctx, session, input.OmitFiles, input.OmitLineage)
 		if err != nil {
 			return nil, 0, false, err
 		}
 		plan := buildPlatformWritePlan(snapshot, session, spec, payload, input.ID)
+		plan.Preflight = platformWritePreflight(ctx, session, spec, payload, input.ID)
 		return plan, len(plan.Affected), false, nil
 	})
 }

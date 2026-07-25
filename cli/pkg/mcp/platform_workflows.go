@@ -66,17 +66,18 @@ type PlatformWorkflowGetInput struct {
 type PlatformWorkflowListInput struct{}
 
 type platformWorkflowStep struct {
-	ID        string         `json:"id"`
-	Operation string         `json:"operation"`
-	Resource  string         `json:"resource"`
-	Action    string         `json:"action,omitempty"`
-	TargetID  string         `json:"target_id,omitempty"`
-	Payload   map[string]any `json:"payload,omitempty"`
-	DependsOn []string       `json:"depends_on,omitempty"`
-	Status    string         `json:"status"`
-	ResultID  string         `json:"result_id,omitempty"`
-	Error     string         `json:"error,omitempty"`
-	Changes   []string       `json:"changes,omitempty"`
+	ID        string                   `json:"id"`
+	Operation string                   `json:"operation"`
+	Resource  string                   `json:"resource"`
+	Action    string                   `json:"action,omitempty"`
+	TargetID  string                   `json:"target_id,omitempty"`
+	Payload   map[string]any           `json:"payload,omitempty"`
+	DependsOn []string                 `json:"depends_on,omitempty"`
+	Status    string                   `json:"status"`
+	ResultID  string                   `json:"result_id,omitempty"`
+	Error     string                   `json:"error,omitempty"`
+	Changes   []string                 `json:"changes,omitempty"`
+	Preflight []PlatformWritePreflight `json:"preflight,omitempty"`
 }
 
 type platformWorkflowPlan struct {
@@ -97,23 +98,25 @@ type platformWorkflowPlan struct {
 // PlatformWorkflowOutput is the compact, non-secret workflow response.
 type PlatformWorkflowOutput struct {
 	PlatformSetupGuidance
-	ConfirmationRequired bool             `json:"confirmation_required,omitempty"`
-	ConfirmationToken    string           `json:"confirmation_token,omitempty"`
-	ConfirmationExpiry   string           `json:"confirmation_expiry,omitempty"`
-	Plan                 map[string]any   `json:"plan,omitempty"`
-	Plans                []map[string]any `json:"plans,omitempty"`
-	Status               string           `json:"status,omitempty"`
-	Message              string           `json:"message,omitempty"`
-	Error                string           `json:"error,omitempty"`
-	ErrorCode            string           `json:"error_code,omitempty"`
-	Retryable            bool             `json:"retryable,omitempty"`
-	SuggestedTools       []string         `json:"suggested_tools,omitempty"`
-	RequestID            string           `json:"request_id,omitempty"`
+	ConfirmationRequired bool                    `json:"confirmation_required,omitempty"`
+	ConfirmationToken    string                  `json:"confirmation_token,omitempty"`
+	ConfirmationExpiry   string                  `json:"confirmation_expiry,omitempty"`
+	Plan                 map[string]any          `json:"plan,omitempty"`
+	Plans                []map[string]any        `json:"plans,omitempty"`
+	Status               string                  `json:"status,omitempty"`
+	Message              string                  `json:"message,omitempty"`
+	Error                string                  `json:"error,omitempty"`
+	ErrorCode            string                  `json:"error_code,omitempty"`
+	Retryable            bool                    `json:"retryable,omitempty"`
+	SuggestedTools       []string                `json:"suggested_tools,omitempty"`
+	Recovery             *PlatformRecoveryAdvice `json:"recovery,omitempty"`
+	RequestID            string                  `json:"request_id,omitempty"`
 }
 
 func platformWorkflowError(err error, requestID string) PlatformWorkflowOutput {
 	errorCode, retryable, suggestedTools := platformErrorFields(err)
-	return PlatformWorkflowOutput{Error: err.Error(), ErrorCode: errorCode, Retryable: retryable, SuggestedTools: suggestedTools, RequestID: requestID}
+	advice := platformRecoveryAdvice(errorCode, err.Error())
+	return PlatformWorkflowOutput{Error: err.Error(), ErrorCode: errorCode, Retryable: retryable, SuggestedTools: suggestedTools, Recovery: &advice, RequestID: requestID}
 }
 
 func defaultPlatformWorkflowPath() (string, error) {
@@ -366,6 +369,9 @@ func workflowOutputPlan(plan platformWorkflowPlan) map[string]any {
 		if len(step.DependsOn) > 0 {
 			entry["depends_on"] = step.DependsOn
 		}
+		if len(step.Preflight) > 0 {
+			entry["preflight"] = step.Preflight
+		}
 		if step.ResultID != "" {
 			entry["result_id"] = step.ResultID
 		}
@@ -437,6 +443,17 @@ func HandlePlatformWorkflowPlan(ctx context.Context, req *mcp.CallToolRequest, i
 	plan, err := validatePlatformWorkflowInput(input, session)
 	if err != nil {
 		return nil, platformWorkflowError(err, requestID), nil
+	}
+	for index := range plan.Steps {
+		step := &plan.Steps[index]
+		spec, payload, buildErr := buildPlatformGenericWrite(session, PlatformGenericWriteInput{Resource: step.Resource, Action: step.Action, ID: step.TargetID, Payload: step.Payload}, step.Operation)
+		if buildErr != nil {
+			return nil, platformWorkflowError(fmt.Errorf("step %s: %w", step.ID, buildErr), requestID), nil
+		}
+		if capabilityErr := validatePlatformWriteCapability(ctx, session, spec); capabilityErr != nil {
+			return nil, platformWorkflowError(fmt.Errorf("step %s: %w", step.ID, capabilityErr), requestID), nil
+		}
+		step.Preflight = platformWritePreflight(ctx, session, spec, payload, step.TargetID)
 	}
 	platformWorkflowMutex.Lock()
 	defer platformWorkflowMutex.Unlock()

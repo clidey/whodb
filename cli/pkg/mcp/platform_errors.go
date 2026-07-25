@@ -48,3 +48,33 @@ func platformErrorFields(err error) (string, bool, []string) {
 		return string(PlatformErrorBackend), false, nil
 	}
 }
+
+// PlatformRecoveryAdvice is deterministic guidance an agent can follow after a failed call.
+type PlatformRecoveryAdvice struct {
+	LikelyCause string
+	NextSteps   []string
+}
+
+func platformRecoveryAdvice(code string, message string) PlatformRecoveryAdvice {
+	switch PlatformErrorCode(code) {
+	case PlatformErrorAuth:
+		return PlatformRecoveryAdvice{"the hosted session is missing or expired", []string{"run whodb_platform_setup_status", "ask the user to run whodb-cli login", "retry the original tool"}}
+	case PlatformErrorWorkspace:
+		return PlatformRecoveryAdvice{"no usable organization or project is selected", []string{"run whodb_platform_orgs", "run whodb_platform_projects", "run whodb_platform_use with the intended workspace"}}
+	case PlatformErrorPermission:
+		return PlatformRecoveryAdvice{"the signed-in user does not have the required platform permission", []string{"run whodb_platform_resource_permissions for the target", "ask the user to use the platform to grant access", "do not retry unchanged"}}
+	case PlatformErrorNotFound:
+		return PlatformRecoveryAdvice{"the resource id or name is not visible in the selected project", []string{"run whodb_platform_resolve_resource", "run whodb_platform_workspace_map", "verify the selected workspace"}}
+	case PlatformErrorConflict:
+		return PlatformRecoveryAdvice{"the requested state conflicts with an existing resource or pending change", []string{"resolve the target with whodb_platform_resolve_resource", "read the target and change impact", "retry with an explicit id or adjusted payload"}}
+	case PlatformErrorValidation:
+		return PlatformRecoveryAdvice{"the request does not match the hosted operation contract", []string{"run whodb_platform_status to refresh capabilities", "run whodb_platform_write_plan", "correct the named payload field and retry"}}
+	case PlatformErrorRateLimited:
+		return PlatformRecoveryAdvice{"the hosted platform asked the caller to slow down", []string{"wait briefly", "retry once", "use a bounded polling interval for long-running operations"}}
+	default:
+		if strings.Contains(strings.ToLower(message), "transform") || strings.Contains(strings.ToLower(message), "function") {
+			return PlatformRecoveryAdvice{"the hosted runtime rejected or could not complete the operation", []string{"run whodb_platform_runtime_readiness", "read the target resource and recent runs", "retry only after fixing the reported runtime issue"}}
+		}
+		return PlatformRecoveryAdvice{"the hosted platform returned an unexpected error", []string{"run whodb_platform_status", "read the target resource", "retry only if the error is transient"}}
+	}
+}

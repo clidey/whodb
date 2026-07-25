@@ -257,6 +257,7 @@ func buildMCPTools() []MCPTool {
 		{Name: "whodb_platform_runtime_readiness", Description: "Summarize selected hosted project runtime readiness across AI providers, secrets, functions, and transforms.", ReadOnly: true},
 		{Name: "whodb_platform_change_impact", Description: "Analyze direct graph impact for a planned hosted resource change without mutating state.", ReadOnly: true},
 		{Name: "whodb_platform_write_plan", Description: "Validate and preview a hosted platform write without executing it or creating a confirmation token.", ReadOnly: true},
+		{Name: "whodb_platform_resolve_resource", Description: "Resolve a hosted resource name or id to an exact resource in the selected project.", ReadOnly: true},
 		{Name: "whodb_platform_sources", Description: "List hosted WhoDB sources in the selected project when MCP starts with --platform; accepts fields for projection.", ReadOnly: true},
 		{Name: "whodb_platform_source_types", Description: "List hosted source types available for creation when MCP starts with --platform; accepts fields for projection.", ReadOnly: true},
 		{Name: "whodb_platform_source_fields", Description: "List connection fields for one hosted source type when MCP starts with --platform; accepts fields for projection.", ReadOnly: true},

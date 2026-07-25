@@ -230,6 +230,11 @@ func TestPlatformMCP_RealReadWriteLifecycle(t *testing.T) {
 		return out.Count, out.Error
 	})
 	liveCoverTool("whodb_platform_datasets")
+	_, resolveOutput, err := HandlePlatformResolveResource(ctx, nil, PlatformResolveResourceInput{Resource: "dataset", Query: datasetID})
+	if err != nil || resolveOutput.Error != "" || resolveOutput.Resolved == nil || resolveOutput.Resolved.ID != datasetID {
+		t.Fatalf("resolve dataset = %v, %#v", err, resolveOutput)
+	}
+	liveCoverTool("whodb_platform_resolve_resource")
 	liveMustReadEntity(t, ctx, "dataset", datasetID, func() (string, error) {
 		_, out, err := HandlePlatformDataset(ctx, nil, PlatformEntityInput{ID: datasetID, Fields: []string{"data", "scope"}})
 		return out.Error, err
