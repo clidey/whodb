@@ -190,6 +190,15 @@ func (f *fakePlatformClient) ProjectStorageUsage(ctx context.Context, projectID 
 	return 1024, nil
 }
 
+func (f *fakePlatformClient) PlatformQuery(_ context.Context, operation string, variables map[string]any) (any, error) {
+	f.platformQueryOperation = operation
+	f.platformQueryVariables = variables
+	if f.platformQueryResult != nil {
+		return f.platformQueryResult, nil
+	}
+	return []any{}, nil
+}
+
 func TestHandlePlatformSecretsDoesNotExposeValues(t *testing.T) {
 	client := &fakePlatformClient{}
 	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {

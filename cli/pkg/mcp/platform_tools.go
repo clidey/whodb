@@ -81,6 +81,7 @@ type platformClient interface {
 	SearchProjectFiles(context.Context, string, string) ([]platformapi.ProjectFile, error)
 	ProjectTabularFiles(context.Context, string) ([]platformapi.ProjectFile, error)
 	ProjectStorageUsage(context.Context, string) (int, error)
+	PlatformQuery(context.Context, string, map[string]any) (any, error)
 }
 
 type platformToolSession struct {
@@ -498,30 +499,34 @@ type PlatformActionPreview struct {
 	SourceType  string   `json:"source_type,omitempty"`
 	Changes     []string `json:"changes,omitempty"`
 	WillAffect  []string `json:"will_affect,omitempty"`
+	WorkflowID  string   `json:"workflow_id,omitempty"`
+	StepCount   int      `json:"step_count,omitempty"`
 }
 
 // PendingPlatformAction stores a hosted platform write awaiting confirmation.
 type PendingPlatformAction struct {
-	Token       string
-	Operation   string
-	Resource    string
-	Action      string
-	Summary     string
-	Host        string
-	OrgID       string
-	ProjectID   string
-	ProjectName string
-	SourceID    string
-	SourceName  string
-	SourceType  string
-	Changes     []string
-	CreateInput platformapi.CreateSourceInput
-	UpdateInput platformapi.UpdateSourceInput
-	Mutation    string
-	Variables   map[string]any
-	BundlePlan  *platformapi.BundlePlan
-	ExpiresAt   time.Time
-	inFlight    bool // true while a confirm is actively executing this action
+	Token          string
+	Operation      string
+	Resource       string
+	Action         string
+	Summary        string
+	Host           string
+	OrgID          string
+	ProjectID      string
+	ProjectName    string
+	SourceID       string
+	SourceName     string
+	SourceType     string
+	Changes        []string
+	CreateInput    platformapi.CreateSourceInput
+	UpdateInput    platformapi.UpdateSourceInput
+	Mutation       string
+	Variables      map[string]any
+	BundlePlan     *platformapi.BundlePlan
+	WorkflowPlanID string
+	WorkflowSteps  int
+	ExpiresAt      time.Time
+	inFlight       bool // true while a confirm is actively executing this action
 }
 
 // MarshalJSON ensures nil slices are serialized as [] instead of null.
@@ -542,6 +547,9 @@ func registerPlatformTools(server *mcp.Server, secOpts *SecurityOptions) {
 			continue
 		}
 		if !secOpts.ReadOnly && registerPlatformGenericWriteTool(server, tool, secOpts) {
+			continue
+		}
+		if registerPlatformWorkflowTool(server, tool, secOpts) {
 			continue
 		}
 		switch tool.Name {
@@ -705,7 +713,9 @@ func platformToolDefinitions() []*mcp.Tool {
 	}
 	tools = append(tools, platformGenericWriteToolDefinitions()...)
 	tools = append(tools, platformBundleToolDefinitions()...)
-	return append(tools, platformReadToolDefinitions()...)
+	tools = append(tools, platformReadToolDefinitions()...)
+	tools = append(tools, platformExtendedReadToolDefinitions()...)
+	return append(tools, platformWorkflowToolDefinitions()...)
 }
 
 func platformReadOnlyAnnotations(title string) *mcp.ToolAnnotations {
@@ -2092,7 +2102,16 @@ func (action *PendingPlatformAction) Preview() *PlatformActionPreview {
 		SourceType:  action.SourceType,
 		Changes:     changes,
 		WillAffect:  willAffect,
+		WorkflowID:  action.WorkflowPlanID,
+		StepCount:   action.WorkflowStepCount(),
 	}
+}
+
+func (action *PendingPlatformAction) WorkflowStepCount() int {
+	if action == nil || action.WorkflowPlanID == "" {
+		return 0
+	}
+	return action.WorkflowSteps
 }
 
 func platformActionWillAffect(action *PendingPlatformAction, changes []string) []string {
@@ -2290,6 +2309,9 @@ func executePendingPlatformAction(ctx context.Context, action *PendingPlatformAc
 			Message:   fmt.Sprintf("Hosted platform mutation %s completed successfully", action.Mutation),
 			RequestID: requestID,
 		}, nil
+	}
+	if action.WorkflowPlanID != "" {
+		return executePlatformWorkflow(ctx, session, action.WorkflowPlanID, requestID)
 	}
 	if action.BundlePlan != nil {
 		return executePlatformBundlePlan(ctx, session, action.BundlePlan, requestID)

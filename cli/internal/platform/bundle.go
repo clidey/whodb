@@ -684,7 +684,7 @@ func FunctionCreatePayloadFromExport(fn Function, keepProjectReferences bool) ma
 		"language":       fn.Language,
 		"entryPoint":     fn.EntryPoint,
 		"timeoutSeconds": fn.TimeoutSeconds,
-		"memory":         DefaultString(fn.Memory, "128Mi"),
+		"memory":         DefaultString(fn.Memory, "256Mi"),
 		"cpu":            DefaultString(fn.CPU, "100m"),
 		"files":          files,
 		"dependencies":   dependencies,

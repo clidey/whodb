@@ -137,18 +137,29 @@ type PlatformEmptyInput struct {
 // PlatformReadOutput is the common output for read-only hosted platform tools.
 type PlatformReadOutput struct {
 	PlatformSetupGuidance
-	Data      any                  `json:"data,omitempty"`
-	Items     []map[string]any     `json:"items,omitempty"`
-	Count     int                  `json:"count"`
-	Scope     *PlatformOutputScope `json:"scope,omitempty"`
-	Fields    []string             `json:"fields,omitempty"`
-	Warnings  []string             `json:"warnings,omitempty"`
-	Truncated bool                 `json:"truncated"`
-	Error     string               `json:"error,omitempty"`
-	RequestID string               `json:"request_id,omitempty"`
+	Data           any                  `json:"data,omitempty"`
+	Items          []map[string]any     `json:"items,omitempty"`
+	Count          int                  `json:"count"`
+	Scope          *PlatformOutputScope `json:"scope,omitempty"`
+	Fields         []string             `json:"fields,omitempty"`
+	Warnings       []string             `json:"warnings,omitempty"`
+	Truncated      bool                 `json:"truncated"`
+	Error          string               `json:"error,omitempty"`
+	ErrorCode      string               `json:"error_code,omitempty"`
+	Retryable      bool                 `json:"retryable,omitempty"`
+	SuggestedTools []string             `json:"suggested_tools,omitempty"`
+	RequestID      string               `json:"request_id,omitempty"`
+}
+
+func platformReadErrorOutput(err error, requestID string) PlatformReadOutput {
+	errorCode, retryable, suggestedTools := platformErrorFields(err)
+	return PlatformReadOutput{Error: err.Error(), ErrorCode: errorCode, Retryable: retryable, SuggestedTools: suggestedTools, RequestID: requestID}
 }
 
 func registerPlatformReadTool(server *mcp.Server, tool *mcp.Tool, secOpts *SecurityOptions) {
+	if registerPlatformExtendedReadTool(server, tool) {
+		return
+	}
 	switch tool.Name {
 	case "whodb_platform_workspace_map":
 		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformWorkspaceMapInput) (*mcp.CallToolResult, any, error) {
