@@ -1,6 +1,7 @@
 package platform
 
 import (
+	"context"
 	"strings"
 	"testing"
 )
@@ -18,7 +19,7 @@ func TestPlatformQuerySpecsAreBoundedAndScoped(t *testing.T) {
 
 func TestPlatformQueryRejectsUnknownOperation(t *testing.T) {
 	client := &Client{}
-	if _, err := client.PlatformQuery(nil, "UnknownOperation", nil); err == nil {
+	if _, err := client.PlatformQuery(context.Background(), "UnknownOperation", nil); err == nil {
 		t.Fatal("PlatformQuery() accepted an unknown operation")
 	}
 }
