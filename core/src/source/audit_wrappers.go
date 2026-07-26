@@ -172,6 +172,15 @@ func AsQueryRunner(scope AuditScope, session SourceSession) (QueryRunner, bool) 
 	return auditedQueryRunner{scope: scope, next: runner}, true
 }
 
+// AsReadOnlyQueryRunner returns an audited read-only query runner when supported.
+func AsReadOnlyQueryRunner(scope AuditScope, session SourceSession) (ReadOnlyQueryRunner, bool) {
+	runner, ok := session.(ReadOnlyQueryRunner)
+	if !ok {
+		return nil, false
+	}
+	return auditedReadOnlyQueryRunner{scope: scope, next: runner}, true
+}
+
 // AsScriptRunner returns an audited script runner when supported.
 func AsScriptRunner(scope AuditScope, session SourceSession) (ScriptRunner, bool) {
 	runner, ok := session.(ScriptRunner)
@@ -494,6 +503,29 @@ func (a auditedQueryRunner) RunQuery(ctx context.Context, queryText string, para
 		"query_operation": coreaudit.QueryOperation(queryText),
 		"query_length":    len(strings.TrimSpace(queryText)),
 		"param_count":     len(params),
+	}
+	if result != nil {
+		details["row_count"] = len(result.Rows)
+		details["column_count"] = len(result.Columns)
+		details["total_count"] = result.TotalCount
+	}
+	a.scope.record(ctx, "source.run_query", start, err, details)
+	return result, err
+}
+
+type auditedReadOnlyQueryRunner struct {
+	scope AuditScope
+	next  ReadOnlyQueryRunner
+}
+
+func (a auditedReadOnlyQueryRunner) RunReadOnlyQuery(ctx context.Context, queryText string, params ...any) (*RowsResult, error) {
+	start := time.Now()
+	result, err := a.next.RunReadOnlyQuery(ctx, queryText, params...)
+	details := map[string]any{
+		"query_operation": coreaudit.QueryOperation(queryText),
+		"query_length":    len(strings.TrimSpace(queryText)),
+		"param_count":     len(params),
+		"read_only":       true,
 	}
 	if result != nil {
 		details["row_count"] = len(result.Rows)

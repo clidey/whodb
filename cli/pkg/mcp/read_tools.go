@@ -27,6 +27,7 @@ import (
 	dbmgr "github.com/clidey/whodb/cli/internal/database"
 	"github.com/clidey/whodb/cli/internal/schemadiff"
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/sqlguard"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -217,7 +218,7 @@ func HandleExplain(ctx context.Context, req *mcp.CallToolRequest, input ExplainI
 	// EXPLAIN ANALYZE executes the statement on some source types (e.g. Postgres),
 	// so only allow statements that cannot modify data. Write statements must go
 	// through whodb_query and its confirmation flow instead.
-	if !isSafeReadOnly(input.Query) {
+	if !sqlguard.IsReadOnly(input.Query) {
 		TrackToolCall(ctx, "explain", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "security"})
 		return nil, ExplainOutput{Error: "explain is limited to read-only statements because EXPLAIN ANALYZE executes the query; use whodb_query for write statements", RequestID: requestID}, nil
 	}

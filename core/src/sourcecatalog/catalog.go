@@ -883,8 +883,13 @@ func sampledNetworkTraits(
 }
 
 func postgresTraits(hostInputMode source.HostInputMode, urlParser source.HostInputURLParser) source.TypeTraits {
+	// Postgres and its wire-compatible forks accept SET TRANSACTION READ ONLY,
+	// so a statement classified as a read can be executed with the server
+	// rejecting any write it turns out to contain.
+	traits := networkTraits(hostInputMode, urlParser)
+	traits.Query.SupportsReadOnlyExecution = true
 	return withHiddenObjectRules(
-		networkTraits(hostInputMode, urlParser),
+		traits,
 		map[source.ObjectKind][]string{
 			source.ObjectKindSchema: {"crdb_internal", "information_schema", "pg_catalog", "sys"},
 		},
@@ -915,6 +920,9 @@ func clickHouseTraits() source.TypeTraits {
 		},
 	)
 	traits.Metadata.Graph = source.MetadataFidelityInferred
+	// ClickHouse accepts a per-statement readonly setting, so a statement
+	// classified as a read can be executed with the server rejecting writes.
+	traits.Query.SupportsReadOnlyExecution = true
 	return traits
 }
 

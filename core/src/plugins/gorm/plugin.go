@@ -634,6 +634,10 @@ func (p *GormPlugin) ExecuteRawSQL(config *engine.PluginConfig, openMultiStateme
 			}, nil
 		}
 
+		if config.ReadOnly {
+			return p.executeReadOnly(db, query, params...)
+		}
+
 		// codeql[go/sql-injection]: RawExecute intentionally runs user-authored SQL from the query editor/import flow.
 		rows, err := db.Raw(query, params...).Rows()
 		if err != nil {
@@ -643,6 +647,31 @@ func (p *GormPlugin) ExecuteRawSQL(config *engine.PluginConfig, openMultiStateme
 
 		return p.ConvertRawToRows(rows)
 	})
+}
+
+// executeReadOnly runs a query inside a read-only transaction, so a statement
+// the caller classified as a read is rejected by the server if it in fact
+// writes. The transaction is always rolled back: a read has nothing to commit,
+// and rolling back keeps a write that somehow succeeded from persisting.
+func (p *GormPlugin) executeReadOnly(db *gorm.DB, query string, params ...any) (*engine.GetRowsResult, error) {
+	tx := db.Begin()
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+	defer func() { _ = tx.Rollback().Error }()
+
+	if err := tx.Exec("SET TRANSACTION READ ONLY").Error; err != nil {
+		return nil, err
+	}
+
+	// codeql[go/sql-injection]: RawExecute intentionally runs user-authored SQL from the query editor/import flow.
+	rows, err := tx.Raw(query, params...).Rows()
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+
+	return p.ConvertRawToRows(rows)
 }
 
 // GetForeignKeyRelationships returns foreign key relationships for a table (default empty implementation)

@@ -43,13 +43,17 @@ type Credentials struct {
 
 // PluginConfig contains all configuration needed to connect to and operate on a database.
 type PluginConfig struct {
-	Credentials           *Credentials
-	ExternalModel         *ExternalModel
-	Context               context.Context // Optional request context for database operations.
-	Transaction           any             // Optional transaction for transactional operations (e.g., *gorm.DB for SQL plugins)
-	MultiStatement        bool            // Hint for plugins that need special handling for multi-statement scripts (e.g., MySQL)
-	UpsertPKColumns       []string        // PK columns for ON CONFLICT DO UPDATE; non-nil = upsert mode
-	SkipConflictPKColumns []string        // PK columns for ON CONFLICT DO NOTHING (append mode — skip duplicate rows)
+	Credentials    *Credentials
+	ExternalModel  *ExternalModel
+	Context        context.Context // Optional request context for database operations.
+	Transaction    any             // Optional transaction for transactional operations (e.g., *gorm.DB for SQL plugins)
+	MultiStatement bool            // Hint for plugins that need special handling for multi-statement scripts (e.g., MySQL)
+	// ReadOnly asks the plugin to execute the statement with writes refused by
+	// the engine. Callers set it only for statements they have already classified
+	// as reads, so it is a second line of defense rather than the primary gate.
+	ReadOnly              bool
+	UpsertPKColumns       []string // PK columns for ON CONFLICT DO UPDATE; non-nil = upsert mode
+	SkipConflictPKColumns []string // PK columns for ON CONFLICT DO NOTHING (append mode — skip duplicate rows)
 }
 
 // GetRowsRequest bundles the parameters for a GetRows query.
