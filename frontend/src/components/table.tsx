@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {useLazyQuery, useMutation, useQuery} from "@apollo/client/react";
+import { useLazyQuery, useMutation, useQuery } from "@apollo/client/react";
 import {
     Alert,
     AlertDescription,
@@ -54,14 +54,14 @@ import {
     SheetTitle,
     Spinner,
     Table as TableComponent,
+    TableBody,
     TableCell,
     TableHead,
     TableHeader,
     TableHeadRow,
     TableRow,
     TextArea,
-    toast,
-    VirtualizedTableBody
+    toast
 } from "@clidey/ux";
 import {
     AnalyzeMockDataDependenciesDocument,
@@ -71,15 +71,15 @@ import {
     SourceAction,
     type SourceObjectRefInput,
 } from '@graphql';
-import type {FC} from "react";
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState} from "react";
-import {Export} from "./export";
-import {ImportData} from "./import-data";
-import {useTranslation} from '@/hooks/use-translation';
-import {copyToClipboard} from '@/services/clipboard';
-import {useSourceContract} from "@/hooks/useSourceContract";
-import {sourceObjectSupportsAction} from "@/config/source-types";
-import {ph} from '@/utils/privacy';
+import type { FC } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Export } from "./export";
+import { ImportData } from "./import-data";
+import { useTranslation } from '@/hooks/use-translation';
+import { copyToClipboard } from '@/services/clipboard';
+import { useSourceContract } from "@/hooks/useSourceContract";
+import { sourceObjectSupportsAction } from "@/config/source-types";
+import { ph } from '@/utils/privacy';
 import {
     ArrowDownCircleIcon,
     ArrowDownTrayIcon,
@@ -108,10 +108,10 @@ import {
     TrashIcon,
     XMarkIcon
 } from "./heroicons";
-import {Tip} from "./tip";
-import {formatShortcut} from "@/utils/platform";
-import {matchesShortcut, SHORTCUTS} from "@/utils/shortcuts";
-import {formatNumber} from "@/utils/functions";
+import { Tip } from "./tip";
+import { formatShortcut } from "@/utils/platform";
+import { matchesShortcut, SHORTCUTS } from "@/utils/shortcuts";
+import { formatNumber } from "@/utils/functions";
 
 
 // Dynamically load Export component
@@ -255,11 +255,11 @@ export function getInputPropsForColumnType(rawType: string): {
     // the html5 spec for numbers allows "e" to be used to mean exponent, so 2e2 => 2*10^2 => 200.
     // that requires extra backend handling and databases do not usually show nums like that.
     // so we avoid "e" as well as "+" because if a number doesn't have "-", it's already positive.
-    const numOnKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {if (e.key === "e" || e.key === "E" || e.key === "+") e.preventDefault();}
+    const numOnKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => { if (e.key === "e" || e.key === "E" || e.key === "+") e.preventDefault(); }
 
     // Integer types - use number input with step=1
     if (intTypes.has(type)) {
-        return { type: 'number', step: '1', inputMode: 'numeric',  onKeyDown: numOnKeyDown};
+        return { type: 'number', step: '1', inputMode: 'numeric', onKeyDown: numOnKeyDown };
     }
 
     // Unsigned integer types - use number input with min=0 and step=1
@@ -405,7 +405,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     const [focusedRowIndex, setFocusedRowIndex] = useState<number | null>(null);
     // Track focused column header for focus restoration after sort/refresh
     const focusedColumnRef = useRef<string | null>(null);
-    
+
     // Mock data state
     const [showMockDataSheet, setShowMockDataSheet] = useState(false);
     const [mockDataRowCount, setMockDataRowCount] = useState("100");
@@ -430,7 +430,7 @@ export const StorageUnitTable: FC<TableProps> = ({
 
     const [generateMockData, { loading: generatingMockData }] = useMutation(GenerateMockDataDocument);
     const [analyzeDependencies, { data: depAnalysis, loading: analyzingDeps }] = useLazyQuery(AnalyzeMockDataDependenciesDocument);
-    const [deleteRow, ] = useMutation(DeleteRowDocument);
+    const [deleteRow,] = useMutation(DeleteRowDocument);
     const [containerWidth, setContainerWidth] = useState<number>(0);
     const lastSearchState = useRef<{ search: string; matchIdx: number }>({ search: '', matchIdx: 0 });
     const canEditRows = !disableEdit && allowRowUpdate && isRowUpdateSupported && onRowUpdate != null;
@@ -636,13 +636,13 @@ export const StorageUnitTable: FC<TableProps> = ({
 
     const handleCellClick = useCallback((rowIndex: number, cellIndex: number) => {
         const cellKey = `${rowIndex}-${cellIndex}`;
-        
+
         // Clear any existing timeout for this cell
         const existingTimeout = clickTimeouts.current.get(cellKey);
         if (existingTimeout) {
             clearTimeout(existingTimeout);
         }
-        
+
         // Set a new timeout for the single-click action
         const timeout = window.setTimeout(() => {
             const cell = paginatedRows[rowIndex][cellIndex];
@@ -667,7 +667,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                 clickTimeouts.current.delete(cellKey);
             }
         }
-        
+
         const row = paginatedRows[rowIndex];
         if (row && Array.isArray(row)) {
             const rowString = row.map(cell => cell ?? "").join("\t");
@@ -685,7 +685,7 @@ export const StorageUnitTable: FC<TableProps> = ({
         // Only allow numeric input
         const numericValue = value.replace(/[^0-9]/g, '');
         const parsedValue = parseInt(numericValue) || 0;
-        
+
         // Enforce max limit
         if (parsedValue > maxRowCount) {
             setMockDataRowCount(maxRowCount.toString());
@@ -719,7 +719,7 @@ export const StorageUnitTable: FC<TableProps> = ({
             toast.error(t('rowCountExceedsMax', { max: maxRowCount }));
             return;
         }
-        
+
         try {
             const result = await generateMockData({
                 variables: {
@@ -867,16 +867,27 @@ export const StorageUnitTable: FC<TableProps> = ({
 
     // Helper to scroll focused row into view via the virtualizer's scroll container.
     // Uses smooth scrolling for small jumps, instant for large ones to avoid virtualizer flicker.
+    // Keep the focused row visible inside the native table scroll container.
     const scrollRowIntoView = useCallback((rowIndex: number) => {
-        const container = document.querySelector<HTMLElement>('[data-slot="table-body"]');
-        if (!container) return;
+        const container =
+            tableRef.current?.querySelector<HTMLElement>(
+                '[data-testid="table-scroll-container"]'
+            );
 
-        const rowTop = rowIndex * rowHeight;
-        const rowBottom = rowTop + rowHeight;
+        const row =
+            tableRef.current?.querySelector<HTMLElement>(
+                `[data-row-idx="${rowIndex}"]`
+            );
+
+        if (!container || !row) return;
+
+        const rowTop = row.offsetTop;
+        const rowBottom = rowTop + row.offsetHeight;
         const viewTop = container.scrollTop;
         const viewBottom = viewTop + container.clientHeight;
 
         let target: number | null = null;
+
         if (rowTop < viewTop) {
             target = rowTop;
         } else if (rowBottom > viewBottom) {
@@ -886,9 +897,14 @@ export const StorageUnitTable: FC<TableProps> = ({
         if (target === null) return;
 
         const distance = Math.abs(target - viewTop);
-        const behavior = distance > container.clientHeight ? 'instant' : 'smooth';
-        container.scrollTo({ top: target, behavior });
-    }, [rowHeight]);
+        const behavior =
+            distance > container.clientHeight ? 'instant' : 'smooth';
+
+        container.scrollTo({
+            top: target,
+            behavior,
+        });
+    }, []);
 
     // Helper to move focus and optionally extend selection
     const moveFocus = useCallback((newIndex: number, extendSelection: boolean = false) => {
@@ -1185,7 +1201,7 @@ export const StorageUnitTable: FC<TableProps> = ({
         return Math.min(contentHeight + 1, height);
     }, [paginatedRows.length, rowHeight, height, enforceMinHeight]);
 
-    const contextMenu = useCallback((index: number, style: React.CSSProperties) => {
+    const contextMenu = useCallback((index: number, style: React.CSSProperties = {}) => {
         const isFocused = focusedRowIndex === index;
         const isSelected = checked.includes(index);
 
@@ -1229,7 +1245,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                             clientY: e.clientY,
                         });
                         e.currentTarget.dispatchEvent(event);
-                        }} data-testid="icon-button" aria-label={t('moreActions')}>
+                    }} data-testid="icon-button" aria-label={t('moreActions')}>
                         <EllipsisVerticalIcon className="w-4 h-4" />
                     </Button>
                 </TableCell>
@@ -1398,28 +1414,28 @@ export const StorageUnitTable: FC<TableProps> = ({
             </ContextMenuContent>
         </ContextMenu>
     }, [
-	checked,
-	handleCellClick,
-	handleEdit,
-	handleSelectRow,
-	handleDeleteRow,
-	paginatedRows,
-	disableEdit,
-	limitContextMenu,
-	onRefresh,
-	t,
-	contextMenuCellIdx,
-	columns,
-	columnIsForeignKey,
-	columnIsPrimary,
-	onEntitySearch,
-	focusedRowIndex,
-	isMockDataSupported,
-	openExport,
-	canEditRows,
-	canDeleteRows,
-	isExportSupported
-]);
+        checked,
+        handleCellClick,
+        handleEdit,
+        handleSelectRow,
+        handleDeleteRow,
+        paginatedRows,
+        disableEdit,
+        limitContextMenu,
+        onRefresh,
+        t,
+        contextMenuCellIdx,
+        columns,
+        columnIsForeignKey,
+        columnIsPrimary,
+        onEntitySearch,
+        focusedRowIndex,
+        isMockDataSupported,
+        openExport,
+        canEditRows,
+        canDeleteRows,
+        isExportSupported
+    ]);
 
     return (
         <div ref={tableRef} className="flex min-w-0 w-full">
@@ -1429,18 +1445,23 @@ export const StorageUnitTable: FC<TableProps> = ({
                         ? `${paginatedRows.length} rows loaded${totalCount != null ? ` of ${totalCount} total` : ''}`
                         : ''}
                 </div>
-                <div className="overflow-x-auto" style={{
-                    width: `${containerWidth}px`,
-                }}>
+                <div
+                    className="overflow-auto"
+                    data-testid="table-scroll-container"
+                    style={{
+                        width: `${containerWidth}px`,
+                        maxHeight: `${actualTableHeight + 48}px`,
+                    }}
+                >
                     <TableComponent
                         role="grid"
                         aria-label={storageUnit ? `${storageUnit} data table` : 'Data table'}
                         aria-rowcount={paginatedRows.length}
                         aria-multiselectable={true}
                     >
-                    <TableHeader data-column-count={columns.length}>
-                        <ContextMenu>
-                            <ContextMenuTrigger asChild>
+                        <TableHeader data-column-count={columns.length}>
+                            <ContextMenu>
+                                <ContextMenuTrigger asChild>
                                     <TableHeadRow role="row" aria-rowindex={0} className="group relative cursor-context-menu hover:bg-muted/50 transition-colors" title={t('rightClickForOptions')}>
                                         <TableHead className={cn("min-w-[40px] w-[40px] relative", {
                                             "hidden": disableEdit,
@@ -1462,7 +1483,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                                     clientY: e.clientY,
                                                 });
                                                 e.currentTarget.dispatchEvent(event);
-                                                }} data-testid="icon-button" aria-label={t('moreActions')}>
+                                            }} data-testid="icon-button" aria-label={t('moreActions')}>
                                                 <EllipsisVerticalIcon className="w-4 h-4" aria-hidden="true" />
                                             </Button>
                                         </TableHead>
@@ -1505,9 +1526,9 @@ export const StorageUnitTable: FC<TableProps> = ({
                                     </TableHeadRow>
                                 </ContextMenuTrigger>
                                 <ContextMenuContent
-                    className="w-64 max-h-[calc(100vh-2rem)] overflow-y-auto"
-                    collisionPadding={{ top: 16, right: 16, bottom: 16, left: 16 }}
-                >
+                                    className="w-64 max-h-[calc(100vh-2rem)] overflow-y-auto"
+                                    collisionPadding={{ top: 16, right: 16, bottom: 16, left: 16 }}
+                                >
                                     {!limitContextMenu && isMockDataSupported && (
                                         <ContextMenuItem onSelect={() => { setShowMockDataSheet(true); }} data-testid="context-menu-mock-data">
                                             <CalculatorIcon className="w-4 h-4" />
@@ -1580,68 +1601,60 @@ export const StorageUnitTable: FC<TableProps> = ({
                                         </ContextMenuItem>
                                     )}
                                 </ContextMenuContent>
+                            </ContextMenu>
+                        </TableHeader>
+                        {paginatedRows.length > 0 && (
+                            <TableBody>
+                                {paginatedRows.map((_, rowIdx) => contextMenu(rowIdx))}
+                            </TableBody>
+                        )}
+                    </TableComponent>
+                    {paginatedRows.length === 0 && (
+                        <ContextMenu>
+                            <ContextMenuTrigger asChild>
+                                <div className="flex items-center justify-center cursor-pointer border rounded-lg h-[200px]">
+                                    <EmptyState className="table-empty-state" title={t('noDataAvailable')} description={t('noDataAvailable')} icon={<DocumentTextIcon className="w-4 h-4" />} />
+                                </div>
+                            </ContextMenuTrigger>
+                            <ContextMenuContent
+                                className="w-52 max-h-[calc(100vh-2rem)] overflow-y-auto"
+                                collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
+                            >
+                                <ContextMenuItem onSelect={() => { setShowMockDataSheet(true); }} className={cn({
+                                    "hidden": disableEdit || !isMockDataSupported,
+                                })}>
+                                    <CalculatorIcon className="w-4 h-4" />
+                                    {t('mockData')}
+                                    <ContextMenuShortcut>{formatShortcut(SHORTCUTS.mockData.displayKeys)}</ContextMenuShortcut>
+                                </ContextMenuItem>
+                                {isExportSupported && (
+                                    <ContextMenuSub>
+                                        <ContextMenuSubTrigger>
+                                            <ArrowDownCircleIcon className="w-4 h-4 mr-2" />
+                                            {t('export')}
+                                        </ContextMenuSubTrigger>
+                                        <ContextMenuSubContent
+                                            collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
+                                        >
+                                            <ContextMenuItem
+                                                onSelect={() => { openExport('csv', true); }}
+                                            >
+                                                <DocumentIcon className="w-4 h-4" />
+                                                {t('exportAllAsCsv')}
+                                                <ContextMenuShortcut>{formatShortcut(SHORTCUTS.exportData.displayKeys)}</ContextMenuShortcut>
+                                            </ContextMenuItem>
+                                            <ContextMenuItem
+                                                onSelect={() => { openExport('excel', true); }}
+                                            >
+                                                <DocumentIcon className="w-4 h-4" />
+                                                {t('exportAllAsExcel')}
+                                            </ContextMenuItem>
+                                        </ContextMenuSubContent>
+                                    </ContextMenuSub>
+                                )}
+                            </ContextMenuContent>
                         </ContextMenu>
-                    </TableHeader>
-                    {paginatedRows.length > 0 && (
-                        <VirtualizedTableBody
-                            rowCount={paginatedRows.length}
-                            rowHeight={rowHeight}
-                            height={actualTableHeight}
-                            overscan={10}
-                            style={{
-                                overflowY: 'scroll',
-                            }}
-                        >
-                            {(rowIdx: number, rowStyle: React.CSSProperties) => contextMenu(rowIdx, rowStyle)}
-                        </VirtualizedTableBody>
                     )}
-                </TableComponent>
-                {paginatedRows.length === 0 && (
-                    <ContextMenu>
-                        <ContextMenuTrigger asChild>
-                            <div className="flex items-center justify-center cursor-pointer border rounded-lg h-[200px]">
-                                <EmptyState className="table-empty-state" title={t('noDataAvailable')} description={t('noDataAvailable')} icon={<DocumentTextIcon className="w-4 h-4" />} />
-                            </div>
-                        </ContextMenuTrigger>
-                        <ContextMenuContent
-                className="w-52 max-h-[calc(100vh-2rem)] overflow-y-auto"
-                collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
-            >
-                            <ContextMenuItem onSelect={() => { setShowMockDataSheet(true); }} className={cn({
-                                "hidden": disableEdit || !isMockDataSupported,
-                            })}>
-                                <CalculatorIcon className="w-4 h-4" />
-                                {t('mockData')}
-                                <ContextMenuShortcut>{formatShortcut(SHORTCUTS.mockData.displayKeys)}</ContextMenuShortcut>
-                            </ContextMenuItem>
-                            {isExportSupported && (
-                                <ContextMenuSub>
-                                    <ContextMenuSubTrigger>
-                                        <ArrowDownCircleIcon className="w-4 h-4 mr-2" />
-                                        {t('export')}
-                                    </ContextMenuSubTrigger>
-                                    <ContextMenuSubContent
-                                        collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
-                                    >
-                                        <ContextMenuItem
-                                            onSelect={() => { openExport('csv', true); }}
-                                        >
-                                            <DocumentIcon className="w-4 h-4" />
-                                            {t('exportAllAsCsv')}
-                                            <ContextMenuShortcut>{formatShortcut(SHORTCUTS.exportData.displayKeys)}</ContextMenuShortcut>
-                                        </ContextMenuItem>
-                                        <ContextMenuItem
-                                            onSelect={() => { openExport('excel', true); }}
-                                        >
-                                            <DocumentIcon className="w-4 h-4" />
-                                            {t('exportAllAsExcel')}
-                                        </ContextMenuItem>
-                                    </ContextMenuSubContent>
-                                </ContextMenuSub>
-                            )}
-                        </ContextMenuContent>
-                    </ContextMenu>
-                )}
                 </div>
                 <div className={cn("flex justify-between items-center", {
                     "justify-end": children == null,
@@ -1714,47 +1727,47 @@ export const StorageUnitTable: FC<TableProps> = ({
                     }>
                         <SheetTitle>{t('editRow')}</SheetTitle>
                         <div className="flex flex-col gap-lg mt-4">
-                                {editRow &&
-                                    columns.map((col, idx) => (
-                                        <div key={col} className={cn("flex flex-col gap-2", ph.noCapture)}>
-                                            <div className="flex flex-col gap-0.5">
-                                                <Label>{col}</Label>
-                                                {columnTypes?.[idx] && (
-                                                    <span className="text-xs text-muted-foreground">
-                                                        {t('typeHint', { type: columnTypes[idx] })}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            {
-                                                editRowInitialLengths[idx] < 50 ?
-                                                    <Input
-                                                        key={`input-${col}`}
-                                                        value={editRow[idx] ?? ""}
-                                                        onChange={e => { handleInputChange(e.target.value, idx); }}
-                                                        data-testid={`editable-field-${idx}`}
-                                                        {...getInputPropsForColumnType(columnTypes?.[idx] ?? '')}
-                                                    />
-                                                    : <TextArea
-                                                        key={`textarea-${col}`}
-                                                        value={editRow[idx] ?? ""}
-                                                        onChange={e => { handleInputChange(e.target.value, idx); }}
-                                                        rows={5}
-                                                        className="min-h-[100px]"
-                                                        data-testid={`editable-field-${idx}`}
-                                                    />
-                                            }
+                            {editRow &&
+                                columns.map((col, idx) => (
+                                    <div key={col} className={cn("flex flex-col gap-2", ph.noCapture)}>
+                                        <div className="flex flex-col gap-0.5">
+                                            <Label>{col}</Label>
+                                            {columnTypes?.[idx] && (
+                                                <span className="text-xs text-muted-foreground">
+                                                    {t('typeHint', { type: columnTypes[idx] })}
+                                                </span>
+                                            )}
                                         </div>
-                                    ))}
+                                        {
+                                            editRowInitialLengths[idx] < 50 ?
+                                                <Input
+                                                    key={`input-${col}`}
+                                                    value={editRow[idx] ?? ""}
+                                                    onChange={e => { handleInputChange(e.target.value, idx); }}
+                                                    data-testid={`editable-field-${idx}`}
+                                                    {...getInputPropsForColumnType(columnTypes?.[idx] ?? '')}
+                                                />
+                                                : <TextArea
+                                                    key={`textarea-${col}`}
+                                                    value={editRow[idx] ?? ""}
+                                                    onChange={e => { handleInputChange(e.target.value, idx); }}
+                                                    rows={5}
+                                                    className="min-h-[100px]"
+                                                    data-testid={`editable-field-${idx}`}
+                                                />
+                                        }
+                                    </div>
+                                ))}
                         </div>
                     </SheetContent>
                 </Sheet>
             </div>
             <Sheet open={showMockDataSheet} onOpenChange={(open) => {
                 setShowMockDataSheet(open);
-                    if (!open) {
-                        setShowMockDataConfirmation(false);
-                    }
-                }}>
+                if (!open) {
+                    setShowMockDataConfirmation(false);
+                }
+            }}>
                 <SheetContent side="right" className="p-8" data-testid="mock-data-sheet" footer={
                     <SheetFooter className="flex gap-sm px-0">
                         <Alert variant={supportsMockDataRelations ? "info" : "default"} className="mb-4">
@@ -1789,7 +1802,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                 <Label>{t('numberOfRows', { max: maxRowCount })}</Label>
                                 <Input
                                     value={mockDataRowCount}
-                                    onChange={e => {handleMockDataRowCountChange(e.target.value); }}
+                                    onChange={e => { handleMockDataRowCountChange(e.target.value); }}
                                     type="text"
                                     inputMode="numeric"
                                     pattern="[0-9]*"
