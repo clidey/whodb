@@ -400,6 +400,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     const [forceExportAll, setForceExportAll] = useState(false);
     const tableRef = useRef<HTMLDivElement>(null);
     const [contextMenuCellIdx, setContextMenuCellIdx] = useState<number | null>(null);
+    const [contextMenuRowIdx, setContextMenuRowIdx] = useState<number | null>(null);
 
     // Keyboard navigation state
     const [focusedRowIndex, setFocusedRowIndex] = useState<number | null>(null);
@@ -868,7 +869,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     // Helper to scroll the focused row into view inside the table's own scroll container.
     // Uses smooth scrolling for small jumps, auto (instant) for large ones.
     const scrollRowIntoView = useCallback((rowIndex: number) => {
-        const container = tableRef.current?.querySelector<HTMLElement>('[data-testid="table-scroll-container"]');
+        const container = tableRef.current?.querySelector<HTMLElement>('[data-slot="table-container"]');
         const row = tableRef.current?.querySelector<HTMLElement>(`[data-row-idx="${rowIndex}"]`);
         if (!container || !row) return;
 
@@ -1192,6 +1193,7 @@ export const StorageUnitTable: FC<TableProps> = ({
 
         const tableRow = (
             <TableRow
+                key={index}
                 data-row-idx={index}
                 role="row"
                 aria-rowindex={index + 1}
@@ -1207,6 +1209,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                 )}
                 onClick={() => { setFocusedRowIndex(index); }}
                 onFocus={() => { setFocusedRowIndex(index); }}
+                onContextMenu={() => { setContextMenuRowIdx(index); }}
             >
                 <TableCell
                     role="gridcell"
@@ -1259,144 +1262,7 @@ export const StorageUnitTable: FC<TableProps> = ({
             </TableRow>
         );
 
-        return <ContextMenu key={index}>
-            <ContextMenuTrigger className="contents">
-                {tableRow}
-            </ContextMenuTrigger>
-            <ContextMenuContent
-                className="w-52 max-h-[calc(100vh-2rem)] overflow-y-auto"
-                collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
-            >
-                <ContextMenuItem
-                    onSelect={() => {
-                        if (contextMenuCellIdx == null) return;
-                        const cell = paginatedRows[index]?.[contextMenuCellIdx];
-                        if (cell !== undefined && cell !== null) {
-                            void copyToClipboard(String(cell)).then(success => {
-                                if (success) toast.success(t('copiedCellToClipboard'));
-                            });
-                        }
-                    }}
-                    disabled={contextMenuCellIdx == null}
-                >
-                    <DocumentDuplicateIcon className="w-4 h-4" />
-                    {t('copyCell')}
-                    <ContextMenuShortcut><CursorArrowRaysIcon className="w-4 h-4" /></ContextMenuShortcut>
-                </ContextMenuItem>
-                {onEntitySearch && contextMenuCellIdx !== null && columnIsForeignKey?.[contextMenuCellIdx] && !columnIsPrimary?.[contextMenuCellIdx] && (
-                    <ContextMenuItem
-                        onSelect={() => {
-                            if (contextMenuCellIdx == null) return;
-                            const cell = paginatedRows[index]?.[contextMenuCellIdx];
-                            const columnName = columns[contextMenuCellIdx];
-                            if (cell !== undefined && cell !== null && columnName) {
-                                onEntitySearch(columnName, String(cell));
-                            }
-                        }}
-                    >
-                        <MagnifyingGlassIcon className="w-4 h-4" />
-                        {t('searchForEntity')}
-                    </ContextMenuItem>
-                )}
-                <ContextMenuItem
-                    onSelect={() => {
-                        const row = paginatedRows[index];
-                        if (row && Array.isArray(row)) {
-                            const rowString = row.map(cell => cell ?? "").join("\t");
-                            void copyToClipboard(rowString).then(success => {
-                                if (success) toast.success(t('rowCopiedToClipboard'));
-                            });
-                        }
-                    }}
-                    className="[&>[data-slot='context-menu-shortcut']]:flex"
-                >
-                    <DocumentTextIcon className="w-4 h-4" />
-                    {t('copyRow')}
-                    <ContextMenuShortcut><CursorArrowRaysIcon className="w-4 h-4" /><CursorArrowRaysIcon className="w-4 h-4" /></ContextMenuShortcut>
-                </ContextMenuItem>
-                {!limitContextMenu && (
-                    <ContextMenuItem onSelect={() => { handleSelectRow(index); }}>
-                        <CheckCircleIcon className="w-4 h-4 text-primary" />
-                        {checked.includes(index) ? t('deselectRow') : t('selectRow')}
-                        <ContextMenuShortcut>Space</ContextMenuShortcut>
-                    </ContextMenuItem>
-                )}
-                {!limitContextMenu && canEditRows && (
-                    <ContextMenuItem onSelect={() => { handleEdit(index); }} disabled={checked.length > 1} data-testid="context-menu-edit-row">
-                        <PencilSquareIcon className="w-4 h-4" />
-                        {t('editRow')}
-                        <ContextMenuShortcut>Enter</ContextMenuShortcut>
-                    </ContextMenuItem>
-                )}
-                {isExportSupported && (
-                    <ContextMenuSub>
-                        <ContextMenuSubTrigger>
-                            <ArrowDownTrayIcon className="w-4 h-4 mr-2" />
-                            {t('export')}
-                        </ContextMenuSubTrigger>
-                        <ContextMenuSubContent
-                            collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
-                        >
-                            <ContextMenuItem
-                                onSelect={() => { openExport('csv', true); }}
-                            >
-                                <DocumentIcon className="w-4 h-4" />
-                                {t('exportAllAsCsv')}
-                                <ContextMenuShortcut>{formatShortcut(SHORTCUTS.exportData.displayKeys)}</ContextMenuShortcut>
-                            </ContextMenuItem>
-                            <ContextMenuItem
-                                onSelect={() => { openExport('excel', true); }}
-                            >
-                                <DocumentIcon className="w-4 h-4" />
-                                {t('exportAllAsExcel')}
-                            </ContextMenuItem>
-                            {!disableEdit && (
-                                <>
-                                    <ContextMenuSeparator />
-                                    <ContextMenuItem
-                                        onSelect={() => { openExport('csv'); }}
-                                        disabled={checked.length === 0}
-                                    >
-                                        <DocumentIcon className="w-4 h-4" />
-                                        {t('exportSelectedAsCsv')}
-                                    </ContextMenuItem>
-                                    <ContextMenuItem
-                                        onSelect={() => { openExport('excel'); }}
-                                        disabled={checked.length === 0}
-                                    >
-                                        <DocumentIcon className="w-4 h-4" />
-                                        {t('exportSelectedAsExcel')}
-                                    </ContextMenuItem>
-                                </>
-                            )}
-                        </ContextMenuSubContent>
-                    </ContextMenuSub>
-                )}
-                {!limitContextMenu && isMockDataSupported && (
-                    <ContextMenuItem
-                        onSelect={() => { setShowMockDataSheet(true); }}
-                    >
-                        <DocumentDuplicateIcon className="w-4 h-4" />
-                        {t('mockData')}
-                        <ContextMenuShortcut>{formatShortcut(SHORTCUTS.mockData.displayKeys)}</ContextMenuShortcut>
-                    </ContextMenuItem>
-                )}
-                {!limitContextMenu && canDeleteRows && (
-                    <ContextMenuItem
-                        variant="destructive"
-                        disabled={false}
-                        onSelect={() => {
-                            handleDeleteRow(index);
-                        }}
-                        data-testid="context-menu-delete-row"
-                    >
-                        <TrashIcon className="w-4 h-4 text-destructive" />
-                        {t('deleteRow')}
-                        <ContextMenuShortcut>{formatShortcut(SHORTCUTS.deleteRow.displayKeys)}</ContextMenuShortcut>
-                    </ContextMenuItem>
-                )}
-            </ContextMenuContent>
-        </ContextMenu>
+        return tableRow;
     }, [
 	checked,
 	handleCellClick,
@@ -1421,6 +1287,125 @@ export const StorageUnitTable: FC<TableProps> = ({
 	isExportSupported
 ]);
 
+    const rowContextMenuContent = (index: number) => (
+        <ContextMenuContent
+            className="w-52 max-h-[calc(100vh-2rem)] overflow-y-auto"
+            collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
+        >
+            <ContextMenuItem
+                onSelect={() => {
+                    if (contextMenuCellIdx == null) return;
+                    const cell = paginatedRows[index]?.[contextMenuCellIdx];
+                    if (cell !== undefined && cell !== null) {
+                        void copyToClipboard(String(cell)).then(success => {
+                            if (success) toast.success(t('copiedCellToClipboard'));
+                        });
+                    }
+                }}
+                disabled={contextMenuCellIdx == null}
+            >
+                <DocumentDuplicateIcon className="w-4 h-4" />
+                {t('copyCell')}
+                <ContextMenuShortcut><CursorArrowRaysIcon className="w-4 h-4" /></ContextMenuShortcut>
+            </ContextMenuItem>
+            {onEntitySearch && contextMenuCellIdx !== null && columnIsForeignKey?.[contextMenuCellIdx] && !columnIsPrimary?.[contextMenuCellIdx] && (
+                <ContextMenuItem
+                    onSelect={() => {
+                        if (contextMenuCellIdx == null) return;
+                        const cell = paginatedRows[index]?.[contextMenuCellIdx];
+                        const columnName = columns[contextMenuCellIdx];
+                        if (cell !== undefined && cell !== null && columnName) {
+                            onEntitySearch(columnName, String(cell));
+                        }
+                    }}
+                >
+                    <MagnifyingGlassIcon className="w-4 h-4" />
+                    {t('searchForEntity')}
+                </ContextMenuItem>
+            )}
+            <ContextMenuItem
+                onSelect={() => {
+                    const row = paginatedRows[index];
+                    if (row && Array.isArray(row)) {
+                        const rowString = row.map(cell => cell ?? "").join("\t");
+                        void copyToClipboard(rowString).then(success => {
+                            if (success) toast.success(t('rowCopiedToClipboard'));
+                        });
+                    }
+                }}
+                className="[&>[data-slot='context-menu-shortcut']]:flex"
+            >
+                <DocumentTextIcon className="w-4 h-4" />
+                {t('copyRow')}
+                <ContextMenuShortcut><CursorArrowRaysIcon className="w-4 h-4" /><CursorArrowRaysIcon className="w-4 h-4" /></ContextMenuShortcut>
+            </ContextMenuItem>
+            {!limitContextMenu && (
+                <ContextMenuItem onSelect={() => { handleSelectRow(index); }}>
+                    <CheckCircleIcon className="w-4 h-4 text-primary" />
+                    {checked.includes(index) ? t('deselectRow') : t('selectRow')}
+                    <ContextMenuShortcut>Space</ContextMenuShortcut>
+                </ContextMenuItem>
+            )}
+            {!limitContextMenu && canEditRows && (
+                <ContextMenuItem onSelect={() => { handleEdit(index); }} disabled={checked.length > 1} data-testid="context-menu-edit-row">
+                    <PencilSquareIcon className="w-4 h-4" />
+                    {t('editRow')}
+                    <ContextMenuShortcut>Enter</ContextMenuShortcut>
+                </ContextMenuItem>
+            )}
+            {isExportSupported && (
+                <ContextMenuSub>
+                    <ContextMenuSubTrigger>
+                        <ArrowDownTrayIcon className="w-4 h-4 mr-2" />
+                        {t('export')}
+                    </ContextMenuSubTrigger>
+                    <ContextMenuSubContent collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                        <ContextMenuItem onSelect={() => { openExport('csv', true); }}>
+                            <DocumentIcon className="w-4 h-4" />
+                            {t('exportAllAsCsv')}
+                            <ContextMenuShortcut>{formatShortcut(SHORTCUTS.exportData.displayKeys)}</ContextMenuShortcut>
+                        </ContextMenuItem>
+                        <ContextMenuItem onSelect={() => { openExport('excel', true); }}>
+                            <DocumentIcon className="w-4 h-4" />
+                            {t('exportAllAsExcel')}
+                        </ContextMenuItem>
+                        {!disableEdit && (
+                            <>
+                                <ContextMenuSeparator />
+                                <ContextMenuItem onSelect={() => { openExport('csv'); }} disabled={checked.length === 0}>
+                                    <DocumentIcon className="w-4 h-4" />
+                                    {t('exportSelectedAsCsv')}
+                                </ContextMenuItem>
+                                <ContextMenuItem onSelect={() => { openExport('excel'); }} disabled={checked.length === 0}>
+                                    <DocumentIcon className="w-4 h-4" />
+                                    {t('exportSelectedAsExcel')}
+                                </ContextMenuItem>
+                            </>
+                        )}
+                    </ContextMenuSubContent>
+                </ContextMenuSub>
+            )}
+            {!limitContextMenu && isMockDataSupported && (
+                <ContextMenuItem onSelect={() => { setShowMockDataSheet(true); }}>
+                    <DocumentDuplicateIcon className="w-4 h-4" />
+                    {t('mockData')}
+                    <ContextMenuShortcut>{formatShortcut(SHORTCUTS.mockData.displayKeys)}</ContextMenuShortcut>
+                </ContextMenuItem>
+            )}
+            {!limitContextMenu && canDeleteRows && (
+                <ContextMenuItem
+                    variant="destructive"
+                    onSelect={() => { handleDeleteRow(index); }}
+                    data-testid="context-menu-delete-row"
+                >
+                    <TrashIcon className="w-4 h-4 text-destructive" />
+                    {t('deleteRow')}
+                    <ContextMenuShortcut>{formatShortcut(SHORTCUTS.deleteRow.displayKeys)}</ContextMenuShortcut>
+                </ContextMenuItem>
+            )}
+        </ContextMenuContent>
+    );
+
     return (
         <div ref={tableRef} className="flex min-w-0 w-full">
             <div className="flex flex-col space-y-4 min-w-0 w-full" data-testid="table-container">
@@ -1429,15 +1414,13 @@ export const StorageUnitTable: FC<TableProps> = ({
                         ? `${paginatedRows.length} rows loaded${totalCount != null ? ` of ${totalCount} total` : ''}`
                         : ''}
                 </div>
-                <div className="overflow-auto" data-testid="table-scroll-container" style={{
-                    width: `${containerWidth}px`,
-                    maxHeight: `${actualTableHeight + 48}px`,
-                }}>
+                <div style={{ width: `${containerWidth}px` }}>
                     <TableComponent
                         role="grid"
                         aria-label={storageUnit ? `${storageUnit} data table` : 'Data table'}
                         aria-rowcount={paginatedRows.length}
                         aria-multiselectable={true}
+                        maxHeight={actualTableHeight + 48}
                     >
                     <TableHeader data-column-count={columns.length}>
                         <ContextMenu>
@@ -1584,9 +1567,14 @@ export const StorageUnitTable: FC<TableProps> = ({
                         </ContextMenu>
                     </TableHeader>
                     {paginatedRows.length > 0 && (
-                        <TableBody>
-                            {paginatedRows.map((_, rowIdx) => contextMenu(rowIdx))}
-                        </TableBody>
+                        <ContextMenu>
+                            <ContextMenuTrigger asChild>
+                                <TableBody rowHeight={rowHeight}>
+                                    {paginatedRows.map((_, rowIdx) => contextMenu(rowIdx))}
+                                </TableBody>
+                            </ContextMenuTrigger>
+                            {contextMenuRowIdx !== null && rowContextMenuContent(contextMenuRowIdx)}
+                        </ContextMenu>
                     )}
                 </TableComponent>
                 {paginatedRows.length === 0 && (

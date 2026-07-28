@@ -58,7 +58,7 @@ import {
     XMarkIcon
 } from '../../components/heroicons';
 import type {FC} from "react";
-import { useCallback, useEffect, useMemo, useState} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {useLocation, useNavigate, useSearchParams} from "react-router-dom";
 import {Handle, Position} from "reactflow";
 import {Card, ExpandableCard} from "../../components/card";
@@ -455,6 +455,21 @@ export const StorageUnitPage: FC = () => {
 
     const [filterValue, setFilterValue] = useState("");
 
+    const listViewRef = useRef<HTMLDivElement>(null);
+    const [listViewHeight, setListViewHeight] = useState(0);
+
+    useEffect(() => {
+        const container = listViewRef.current;
+        if (!container) return;
+
+        const updateHeight = () =>{  setListViewHeight(container.clientHeight); };
+        updateHeight();
+
+        const resizeObserver = new ResizeObserver(updateHeight);
+        resizeObserver.observe(container);
+        return () =>{  resizeObserver.disconnect(); };
+    }, []);
+
     const routes = useMemo(() => {
         return [
             {
@@ -605,10 +620,10 @@ export const StorageUnitPage: FC = () => {
                 ))
             }
         </div>
-        <div className={cn("flex flex-wrap gap-lg w-full h-[80vh]", {
+        <div ref={listViewRef} className={cn("flex flex-wrap gap-lg w-full h-[80vh]", {
             "hidden": view !== "list",
         })}>
-            <Table>
+            <Table maxHeight={listViewHeight}>
                 <TableHeader>
                     <TableHeadRow>
                         <TableHead>{t('nameLabel')}</TableHead>
@@ -619,7 +634,7 @@ export const StorageUnitPage: FC = () => {
                         <TableHead>{t('actions')}</TableHead>
                     </TableHeadRow>
                 </TableHeader>
-                <TableBody>
+                <TableBody rowHeight={40}>
                     {filterStorageUnits.map(unit => {
                         const attrMap = Object.fromEntries(unit.Attributes.map(attr => [attr.Key, attr.Value]));
                         return (
