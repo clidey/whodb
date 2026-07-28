@@ -30,7 +30,7 @@
     "graphql": "16.11.0",
     "html-to-image": "1.11.13",
     "lodash": "4.18.1",
-    "posthog-js": "1.405.3",
+    "posthog-js": "1.406.0",
     "react": "19.2.7",
     "react-dom": "19.2.7",
     "react-markdown": "10.1.0",
