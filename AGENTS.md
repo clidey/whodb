@@ -11,6 +11,10 @@ of duplicating these instructions.
 
 If the `ee/` directory is present, read `ee/AGENTS.md` for additional context. Do not add any code, comments, or references to `ee/` in the CE codebase.
 
+## Git Commits — Hard Rule
+
+**Never commit to `main` (or any branch) without the user explicitly saying "please commit this for me" (or unambiguously equivalent wording) in that turn.** This applies regardless of task framing — "merge it into main locally" or "just write the code changes in main" means apply the file changes on that branch, not create a commit. If committing seems necessary to accomplish what was asked (e.g. to merge a branch), stop and ask first instead of assuming consent.
+
 ## Terminology
 
 - **"EE agent" / "ee agent"** means the in-app WhoDB EE browser AI agent feature (under `ee/`), NOT the coding-agent (Claude/Codex) configuration or any MCP server. When in doubt, ask which is meant before acting.

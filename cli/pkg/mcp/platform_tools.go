@@ -1580,6 +1580,75 @@ func handlePlatformSourceDelete(ctx context.Context, req *mcp.CallToolRequest, i
 	return nil, platformSourceConfirmationOutput(requestID, token, expiresAt, actionLabel, action.Preview()), nil
 }
 
+// platformAccessTokenSkew is how long before expiry a cached access token is
+// treated as stale. It matches the skew the EE browser-session refresh path
+// uses so both clients renew at the same point in a token's life.
+const platformAccessTokenSkew = time.Minute
+
+type platformAccessTokenEntry struct {
+	accessToken string
+	expiresAt   time.Time
+}
+
+var (
+	platformAccessTokens     = map[string]platformAccessTokenEntry{}
+	platformAccessTokenMutex sync.Mutex
+)
+
+// platformAccessToken returns a usable access token for the given host and
+// account, refreshing only when no cached token remains valid.
+//
+// This exists because the MCP server is a single long-lived process whose tool
+// handlers each load a session: without a cache, every tool call spent a
+// network refresh to obtain a token that was still valid for ~15 minutes. The
+// mutex is equally load-bearing for correctness, not just for the cache — the
+// SDK dispatches tool calls concurrently (jsonrpc2.Async), so the surrounding
+// read-refresh-write against the single shared keyring entry was an unsynchronized
+// race. Refreshing under the lock serializes it.
+//
+// The lock is deliberately held across the network call so that concurrent
+// callers coalesce onto one refresh rather than each issuing their own. Waiters
+// re-check the cache on entry and return the token the winner just stored. That
+// serializes tool calls behind a slow refresh (bounded by the auth client's two
+// 30s timeouts), which is still no worse than the previous behaviour of every
+// caller waiting on its own refresh.
+func platformAccessToken(ctx context.Context, cfg *config.Config, hostURL, accountID, refreshToken string) (string, error) {
+	key := hostURL + "\x00" + accountID
+
+	platformAccessTokenMutex.Lock()
+	defer platformAccessTokenMutex.Unlock()
+
+	if entry, ok := platformAccessTokens[key]; ok && time.Until(entry.expiresAt) > platformAccessTokenSkew {
+		return entry.accessToken, nil
+	}
+
+	tokens, err := platformapi.RefreshToken(ctx, hostURL, refreshToken)
+	if err != nil {
+		// Drop any cached token for this account: the refresh token backing it
+		// may have been revoked, and serving a stale access token would hide
+		// the re-login the user needs to perform.
+		delete(platformAccessTokens, key)
+		return "", fmt.Errorf("cannot refresh hosted WhoDB login. Run: whodb-cli login --host %s", hostURL)
+	}
+	if tokens.RefreshToken != "" && tokens.RefreshToken != refreshToken {
+		if err := cfg.SavePlatformRefreshToken(hostURL, accountID, tokens.RefreshToken); err != nil {
+			return "", fmt.Errorf("cannot update hosted WhoDB refresh token: %w", err)
+		}
+	}
+	// Only cache when the server told us how long the token lives. A missing
+	// expires_in means we cannot know when it goes stale, so fall back to the
+	// previous behaviour of refreshing on every call rather than guessing.
+	if tokens.ExpiresIn > 0 {
+		platformAccessTokens[key] = platformAccessTokenEntry{
+			accessToken: tokens.AccessToken,
+			expiresAt:   time.Now().Add(time.Duration(tokens.ExpiresIn) * time.Second),
+		}
+	} else {
+		delete(platformAccessTokens, key)
+	}
+	return tokens.AccessToken, nil
+}
+
 func loadHostedPlatformToolSession(ctx context.Context) (*platformToolSession, error) {
 	cfg, err := config.LoadConfig()
 	if err != nil {
@@ -1601,16 +1670,11 @@ func loadHostedPlatformToolSession(ctx context.Context) (*platformToolSession, e
 	if err != nil {
 		return nil, fmt.Errorf("cannot load hosted WhoDB refresh token. Run: whodb-cli login --host %s", hostURL)
 	}
-	tokens, err := platformapi.RefreshToken(ctx, hostURL, refreshToken)
+	accessToken, err := platformAccessToken(ctx, cfg, hostURL, host.AccountID, refreshToken)
 	if err != nil {
-		return nil, fmt.Errorf("cannot refresh hosted WhoDB login. Run: whodb-cli login --host %s", hostURL)
+		return nil, err
 	}
-	if tokens.RefreshToken != "" && tokens.RefreshToken != refreshToken {
-		if err := cfg.SavePlatformRefreshToken(hostURL, host.AccountID, tokens.RefreshToken); err != nil {
-			return nil, fmt.Errorf("cannot update hosted WhoDB refresh token: %w", err)
-		}
-	}
-	client, err := platformapi.NewClient(hostURL, tokens.AccessToken)
+	client, err := platformapi.NewClient(hostURL, accessToken)
 	if err != nil {
 		return nil, err
 	}

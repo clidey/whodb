@@ -9,17 +9,19 @@ COPY . .
 # (an unpinned install gets cached by Docker layers and silently goes stale).
 RUN npm install -g @clidey/dory@0.49.0 && dory build
 
-FROM nginx:alpine
+FROM nginxinc/nginx-unprivileged:alpine
+
+USER root
 
 RUN rm /etc/nginx/conf.d/default.conf && \
     rm -rf /usr/share/nginx/html/*
 
-COPY --from=builder /app/dist /usr/share/nginx/html/docs
+COPY --from=builder --chown=nginx:nginx /app/dist /usr/share/nginx/html/docs
 
 RUN cat > /etc/nginx/conf.d/docs.conf <<'EOF'
 server {
-    listen       80;
-    listen  [::]:80;
+    listen       8080;
+    listen  [::]:8080;
     server_name  localhost;
 
     # Special CORS headers for embed.js and embed-widget.js only
@@ -79,6 +81,8 @@ server {
 }
 EOF
 
-EXPOSE 80
+USER nginx
+
+EXPOSE 8080
 
 CMD ["nginx", "-g", "daemon off;"]
