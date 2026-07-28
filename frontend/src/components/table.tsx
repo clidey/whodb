@@ -54,14 +54,14 @@ import {
     SheetTitle,
     Spinner,
     Table as TableComponent,
+    TableBody,
     TableCell,
     TableHead,
     TableHeader,
     TableHeadRow,
     TableRow,
     TextArea,
-    toast,
-    VirtualizedTableBody
+    toast
 } from "@clidey/ux";
 import {
     AnalyzeMockDataDependenciesDocument,
@@ -865,14 +865,15 @@ export const StorageUnitTable: FC<TableProps> = ({
         };
     }, [onRefresh]);
 
-    // Helper to scroll focused row into view via the virtualizer's scroll container.
-    // Uses smooth scrolling for small jumps, instant for large ones to avoid virtualizer flicker.
+    // Helper to scroll the focused row into view inside the table's own scroll container.
+    // Uses smooth scrolling for small jumps, auto (instant) for large ones.
     const scrollRowIntoView = useCallback((rowIndex: number) => {
-        const container = document.querySelector<HTMLElement>('[data-slot="table-body"]');
-        if (!container) return;
+        const container = tableRef.current?.querySelector<HTMLElement>('[data-testid="table-scroll-container"]');
+        const row = tableRef.current?.querySelector<HTMLElement>(`[data-row-idx="${rowIndex}"]`);
+        if (!container || !row) return;
 
-        const rowTop = rowIndex * rowHeight;
-        const rowBottom = rowTop + rowHeight;
+        const rowTop = row.offsetTop;
+        const rowBottom = rowTop + row.offsetHeight;
         const viewTop = container.scrollTop;
         const viewBottom = viewTop + container.clientHeight;
 
@@ -886,9 +887,9 @@ export const StorageUnitTable: FC<TableProps> = ({
         if (target === null) return;
 
         const distance = Math.abs(target - viewTop);
-        const behavior = distance > container.clientHeight ? 'instant' : 'smooth';
+        const behavior = distance > container.clientHeight ? 'auto' : 'smooth';
         container.scrollTo({ top: target, behavior });
-    }, [rowHeight]);
+    }, []);
 
     // Helper to move focus and optionally extend selection
     const moveFocus = useCallback((newIndex: number, extendSelection: boolean = false) => {
@@ -1185,7 +1186,7 @@ export const StorageUnitTable: FC<TableProps> = ({
         return Math.min(contentHeight + 1, height);
     }, [paginatedRows.length, rowHeight, height, enforceMinHeight]);
 
-    const contextMenu = useCallback((index: number, style: React.CSSProperties) => {
+    const contextMenu = useCallback((index: number) => {
         const isFocused = focusedRowIndex === index;
         const isSelected = checked.includes(index);
 
@@ -1204,7 +1205,6 @@ export const StorageUnitTable: FC<TableProps> = ({
                     // Selected styling
                     isSelected && "bg-muted"
                 )}
-                style={style}
                 onClick={() => { setFocusedRowIndex(index); }}
                 onFocus={() => { setFocusedRowIndex(index); }}
             >
@@ -1429,8 +1429,9 @@ export const StorageUnitTable: FC<TableProps> = ({
                         ? `${paginatedRows.length} rows loaded${totalCount != null ? ` of ${totalCount} total` : ''}`
                         : ''}
                 </div>
-                <div className="overflow-x-auto" style={{
+                <div className="overflow-auto" data-testid="table-scroll-container" style={{
                     width: `${containerWidth}px`,
+                    maxHeight: `${actualTableHeight + 48}px`,
                 }}>
                     <TableComponent
                         role="grid"
@@ -1583,17 +1584,9 @@ export const StorageUnitTable: FC<TableProps> = ({
                         </ContextMenu>
                     </TableHeader>
                     {paginatedRows.length > 0 && (
-                        <VirtualizedTableBody
-                            rowCount={paginatedRows.length}
-                            rowHeight={rowHeight}
-                            height={actualTableHeight}
-                            overscan={10}
-                            style={{
-                                overflowY: 'scroll',
-                            }}
-                        >
-                            {(rowIdx: number, rowStyle: React.CSSProperties) => contextMenu(rowIdx, rowStyle)}
-                        </VirtualizedTableBody>
+                        <TableBody>
+                            {paginatedRows.map((_, rowIdx) => contextMenu(rowIdx))}
+                        </TableBody>
                     )}
                 </TableComponent>
                 {paginatedRows.length === 0 && (

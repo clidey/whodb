@@ -24,6 +24,7 @@ import {
     StackList,
     StackListItem,
     Table,
+    TableBody,
     TableCell,
     TableHead,
     TableHeader,
@@ -31,8 +32,7 @@ import {
     TableRow,
     Tabs,
     TabsList,
-    TabsTrigger,
-    VirtualizedTableBody
+    TabsTrigger
 } from '@clidey/ux';
 import type {
     GetColumnsBatchQuery,
@@ -619,14 +619,8 @@ export const StorageUnitPage: FC = () => {
                         <TableHead>{t('actions')}</TableHead>
                     </TableHeadRow>
                 </TableHeader>
-                <VirtualizedTableBody
-                    rowCount={filterStorageUnits.length}
-                    rowHeight={40}>
-                    {(rowIndex: number) => {
-                        const unit = filterStorageUnits[rowIndex];
-                        if (!unit) {
-                            return null;
-                        }
+                <TableBody>
+                    {filterStorageUnits.map(unit => {
                         const attrMap = Object.fromEntries(unit.Attributes.map(attr => [attr.Key, attr.Value]));
                         return (
                             <TableRow key={unit.Name} className="group">
@@ -649,8 +643,8 @@ export const StorageUnitPage: FC = () => {
                                 </TableCell>
                             </TableRow>
                         );
-                    }}
-                </VirtualizedTableBody>
+                    })}
+                </TableBody>
             </Table>
             {expandedUnit && (
                 <div className="w-full mt-4">
