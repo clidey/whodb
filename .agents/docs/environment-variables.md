@@ -157,6 +157,9 @@ export WHODB_POSTGRES_1='{
 | `WHODB_ANTHROPIC_API_KEY` | unset | Anthropic API key |
 | `WHODB_ANTHROPIC_ENDPOINT` | `https://api.anthropic.com/v1` | Anthropic API endpoint |
 | `WHODB_ANTHROPIC_NAME` | unset | Display name for Anthropic in the provider dropdown |
+| `WHODB_MINIMAX_API_KEY` | unset | MiniMax API key |
+| `WHODB_MINIMAX_ENDPOINT` | `https://api.minimax.io/v1` | MiniMax API endpoint (set to `https://api.minimaxi.com/v1` for mainland China) |
+| `WHODB_MINIMAX_NAME` | unset | Display name for MiniMax in the provider dropdown |
 
 ### Generic AI providers
 
