@@ -105,7 +105,7 @@
     "@playwright/test": "1.61.1",
     "@types/lodash": "4.17.24",
     "@vitejs/plugin-react": "6.0.3",
-    "baseline-browser-mapping": "2.10.44",
+    "baseline-browser-mapping": "2.11.0",
     "js-yaml": "5.2.1",
     "nyc": "18.0.0",
     "oxlint": "1.74.0",
