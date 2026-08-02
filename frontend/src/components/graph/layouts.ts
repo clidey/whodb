@@ -21,6 +21,56 @@ type ILayoutOption = {
     direction: "TB" | "LR";
 }
 
+const PIPELINE_NODE_WIDTH = 208;
+const PIPELINE_NODE_HEIGHT = 76;
+const CONDITION_BRANCH_GAP = 72;
+
+function nodeWidth(node: Node): number {
+    return node.width ?? (node.data?.nodeType ? PIPELINE_NODE_WIDTH : 400);
+}
+
+function nodeHeight(node: Node): number {
+    return node.height ?? (node.data?.nodeType ? PIPELINE_NODE_HEIGHT : 200);
+}
+
+function positionConditionBranches(nodes: Node[], edges: Edge[]): Node[] {
+    const nodeByID = new Map(nodes.map(node => [node.id, node]));
+    const positioned = new Map(nodes.map(node => [node.id, node]));
+
+    for (const condition of nodes) {
+        if (condition.data?.nodeType !== 'condition') continue;
+
+        const conditionWidth = nodeWidth(condition);
+        const conditionHeight = nodeHeight(condition);
+        const conditionCenterY = condition.position.y + conditionHeight / 2;
+        const branches = [
+            { handle: 'match', direction: -1 },
+            { handle: 'otherwise', direction: 1 },
+        ];
+
+        for (const branch of branches) {
+            const edge = edges.find(candidate => candidate.source === condition.id && candidate.sourceHandle === branch.handle);
+            if (!edge) continue;
+            const target = nodeByID.get(edge.target);
+            if (!target) continue;
+
+            const targetWidth = nodeWidth(target);
+            const targetHeight = nodeHeight(target);
+            positioned.set(target.id, {
+                ...target,
+                position: {
+                    x: branch.direction < 0
+                        ? condition.position.x - CONDITION_BRANCH_GAP - targetWidth
+                        : condition.position.x + conditionWidth + CONDITION_BRANCH_GAP,
+                    y: conditionCenterY - targetHeight / 2,
+                },
+            });
+        }
+    }
+
+    return nodes.map(node => positioned.get(node.id) ?? node);
+}
+
 /**
  * Find connected components in the graph using union-find
  */
@@ -143,8 +193,8 @@ const packComponents = (
         // Convert from Dagre center positions to React Flow top-left positions
         const component = components[0];
         return component.nodes.map(node => {
-            const width = node.width ?? 400;
-            const height = node.height ?? 200;
+            const width = nodeWidth(node);
+            const height = nodeHeight(node);
 
             // Dagre positions are centers, React Flow expects top-left
             const centerX = node.position.x - component.minX;
@@ -220,8 +270,8 @@ const packComponents = (
             // Position all nodes in this component
             // Convert from Dagre center positions to React Flow top-left positions
             component.nodes.forEach(node => {
-                const width = node.width ?? 400;
-                const height = node.height ?? 200;
+                const width = nodeWidth(node);
+                const height = nodeHeight(node);
 
                 // Dagre positions are centers, React Flow expects top-left
                 const centerX = node.position.x + offsetX;
@@ -289,11 +339,10 @@ export const getDagreLayoutedElements = (nodes: Node[] = [], edges: Edge[] = [],
 
         Dagre.layout(g);
 
-        return {
-            nodes: nodes.map((node) => {
+        const layoutedNodes = nodes.map((node) => {
                 const dagreNode = g.node(node.id);
-                const width = node.width ?? 400;
-                const height = node.height ?? 200;
+                const width = nodeWidth(node);
+                const height = nodeHeight(node);
 
                 // Dagre positions are centers, React Flow expects top-left
                 const centerX = dagreNode?.x ?? 0;
@@ -308,7 +357,9 @@ export const getDagreLayoutedElements = (nodes: Node[] = [], edges: Edge[] = [],
                         y: topLeftY
                     }
                 };
-            }),
+            });
+        return {
+            nodes: positionConditionBranches(layoutedNodes, edges),
             edges,
         };
     }
