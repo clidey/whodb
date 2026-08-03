@@ -102,7 +102,7 @@
     "@graphql-typed-document-node/core": "3.2.0",
     "@lhci/cli": "0.15.1",
     "@oxlint/migrate": "1.75.0",
-    "@playwright/test": "1.61.1",
+    "@playwright/test": "1.62.0",
     "@types/lodash": "4.17.24",
     "@vitejs/plugin-react": "6.0.3",
     "baseline-browser-mapping": "2.11.0",
