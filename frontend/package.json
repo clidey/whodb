@@ -31,7 +31,7 @@
     "html-to-image": "1.11.13",
     "lodash": "4.18.1",
     "posthog-js": "1.406.0",
-    "react": "19.2.7",
+    "react": "19.2.8",
     "react-dom": "19.2.7",
     "react-markdown": "10.1.0",
     "react-redux": "9.3.0",
