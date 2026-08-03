@@ -21,6 +21,141 @@ type ILayoutOption = {
     direction: "TB" | "LR";
 }
 
+const PIPELINE_NODE_WIDTH = 208;
+const PIPELINE_NODE_HEIGHT = 76;
+const PIPELINE_BRANCH_GAP = 72;
+
+function nodeWidth(node: Node): number {
+    return node.width ?? (node.data?.nodeType ? PIPELINE_NODE_WIDTH : 400);
+}
+
+function nodeHeight(node: Node): number {
+    return node.height ?? (node.data?.nodeType ? PIPELINE_NODE_HEIGHT : 200);
+}
+
+function isPipelineGraph(nodes: Node[]): boolean {
+    return nodes.length > 0 && nodes.every(node => Boolean(node.data?.nodeType));
+}
+
+function sideBranchDirection(handle: string | null | undefined): -1 | 1 | null {
+    if (handle === 'left' || handle === 'match') return -1;
+    if (handle === 'right' || handle === 'otherwise') return 1;
+    return null;
+}
+
+function positionPipelineTopology(nodes: Node[], edges: Edge[], direction: ILayoutOption['direction']): Node[] {
+    if (!isPipelineGraph(nodes)) return nodes;
+
+    const nodeByID = new Map(nodes.map(node => [node.id, node]));
+    const positioned = new Map(nodes.map(node => [node.id, node]));
+
+    const incoming = new Map<string, Edge[]>();
+    const outgoing = new Map<string, Edge[]>();
+    for (const edge of edges) {
+        if (!nodeByID.has(edge.source) || !nodeByID.has(edge.target)) continue;
+        incoming.set(edge.target, [...(incoming.get(edge.target) ?? []), edge]);
+        outgoing.set(edge.source, [...(outgoing.get(edge.source) ?? []), edge]);
+    }
+
+    for (const target of nodes) {
+        const inputs = incoming.get(target.id) ?? [];
+        if (inputs.length < 2) continue;
+
+        const sources = inputs
+            .map(edge => nodeByID.get(edge.source))
+            .filter((node): node is Node => node !== undefined)
+            .filter(source => (outgoing.get(source.id) ?? []).length === 1);
+        if (sources.length < 2) continue;
+
+        const targetWidth = nodeWidth(target);
+        const targetHeight = nodeHeight(target);
+        const targetCenterX = target.position.x + targetWidth / 2;
+        const targetCenterY = target.position.y + targetHeight / 2;
+        const widestSource = Math.max(...sources.map(nodeWidth));
+
+        sources.forEach((source, index) => {
+            const sourceWidth = nodeWidth(source);
+            const sourceHeight = nodeHeight(source);
+            const offset = (index - (sources.length - 1) / 2) * (widestSource + PIPELINE_BRANCH_GAP);
+            positioned.set(source.id, {
+                ...source,
+                position: direction === 'TB'
+                    ? {
+                        x: targetCenterX + offset - sourceWidth / 2,
+                        y: target.position.y - PIPELINE_BRANCH_GAP - sourceHeight,
+                    }
+                    : {
+                        x: target.position.x - PIPELINE_BRANCH_GAP - sourceWidth,
+                        y: targetCenterY + offset - sourceHeight / 2,
+                    },
+            });
+        });
+    }
+
+    for (const source of nodes) {
+        const branches = outgoing.get(source.id) ?? [];
+        if (branches.length < 2) continue;
+
+        const targets = branches
+            .map(edge => ({ edge, node: nodeByID.get(edge.target) }))
+            .filter((branch): branch is { edge: Edge; node: Node } => branch.node !== undefined);
+        if (targets.length < 2) continue;
+
+        const sideBranches = targets
+            .map(branch => ({ ...branch, direction: sideBranchDirection(branch.edge.sourceHandle) }))
+            .filter((branch): branch is { edge: Edge; node: Node; direction: -1 | 1 } => branch.direction !== null);
+        const sourceWidth = nodeWidth(source);
+        const sourceHeight = nodeHeight(source);
+        const sourceCenterX = source.position.x + sourceWidth / 2;
+        const sourceCenterY = source.position.y + sourceHeight / 2;
+
+        if (sideBranches.length === targets.length) {
+            sideBranches.forEach(branch => {
+                const targetWidth = nodeWidth(branch.node);
+                const targetHeight = nodeHeight(branch.node);
+                positioned.set(branch.node.id, {
+                    ...branch.node,
+                    position: direction === 'TB'
+                        ? {
+                            x: branch.direction < 0
+                                ? source.position.x - PIPELINE_BRANCH_GAP - targetWidth
+                                : source.position.x + sourceWidth + PIPELINE_BRANCH_GAP,
+                            y: sourceCenterY - targetHeight / 2,
+                        }
+                        : {
+                            x: sourceCenterX - targetWidth / 2,
+                            y: branch.direction < 0
+                                ? source.position.y - PIPELINE_BRANCH_GAP - targetHeight
+                                : source.position.y + sourceHeight + PIPELINE_BRANCH_GAP,
+                        },
+                });
+            });
+            continue;
+        }
+
+        const widestTarget = Math.max(...targets.map(branch => nodeWidth(branch.node)));
+        targets.forEach((branch, index) => {
+            const targetWidth = nodeWidth(branch.node);
+            const targetHeight = nodeHeight(branch.node);
+            const offset = (index - (targets.length - 1) / 2) * (widestTarget + PIPELINE_BRANCH_GAP);
+            positioned.set(branch.node.id, {
+                ...branch.node,
+                position: direction === 'TB'
+                    ? {
+                        x: sourceCenterX + offset - targetWidth / 2,
+                        y: source.position.y + sourceHeight + PIPELINE_BRANCH_GAP,
+                    }
+                    : {
+                        x: source.position.x + sourceWidth + PIPELINE_BRANCH_GAP,
+                        y: sourceCenterY + offset - targetHeight / 2,
+                    },
+            });
+        });
+    }
+
+    return nodes.map(node => positioned.get(node.id) ?? node);
+}
+
 /**
  * Find connected components in the graph using union-find
  */
@@ -87,8 +222,8 @@ const layoutComponent = (
 
     nodes.forEach((node) => {
         // Use node dimensions or fallback to defaults
-        const width = node.width ?? 400;
-        const height = node.height ?? 200;
+        const width = nodeWidth(node);
+        const height = nodeHeight(node);
 
         const nodeWithDimensions = {
             ...node,
@@ -108,8 +243,8 @@ const layoutComponent = (
         const y = dagreNode?.y ?? 0;
 
         // Use node dimensions or fallback to defaults
-        const width = node.width ?? 400;
-        const height = node.height ?? 200;
+        const width = nodeWidth(node);
+        const height = nodeHeight(node);
 
         minX = Math.min(minX, x - width / 2);
         minY = Math.min(minY, y - height / 2);
@@ -143,8 +278,8 @@ const packComponents = (
         // Convert from Dagre center positions to React Flow top-left positions
         const component = components[0];
         return component.nodes.map(node => {
-            const width = node.width ?? 400;
-            const height = node.height ?? 200;
+            const width = nodeWidth(node);
+            const height = nodeHeight(node);
 
             // Dagre positions are centers, React Flow expects top-left
             const centerX = node.position.x - component.minX;
@@ -220,8 +355,8 @@ const packComponents = (
             // Position all nodes in this component
             // Convert from Dagre center positions to React Flow top-left positions
             component.nodes.forEach(node => {
-                const width = node.width ?? 400;
-                const height = node.height ?? 200;
+                const width = nodeWidth(node);
+                const height = nodeHeight(node);
 
                 // Dagre positions are centers, React Flow expects top-left
                 const centerX = node.position.x + offsetX;
@@ -276,8 +411,8 @@ export const getDagreLayoutedElements = (nodes: Node[] = [], edges: Edge[] = [],
 
         nodes.forEach((node) => {
             // Use node dimensions or fallback to defaults
-            const width = node.width ?? 400;
-            const height = node.height ?? 200;
+            const width = nodeWidth(node);
+            const height = nodeHeight(node);
 
             const nodeWithDimensions = {
                 ...node,
@@ -289,11 +424,10 @@ export const getDagreLayoutedElements = (nodes: Node[] = [], edges: Edge[] = [],
 
         Dagre.layout(g);
 
-        return {
-            nodes: nodes.map((node) => {
+        const layoutedNodes = nodes.map((node) => {
                 const dagreNode = g.node(node.id);
-                const width = node.width ?? 400;
-                const height = node.height ?? 200;
+                const width = nodeWidth(node);
+                const height = nodeHeight(node);
 
                 // Dagre positions are centers, React Flow expects top-left
                 const centerX = dagreNode?.x ?? 0;
@@ -308,7 +442,9 @@ export const getDagreLayoutedElements = (nodes: Node[] = [], edges: Edge[] = [],
                         y: topLeftY
                     }
                 };
-            }),
+            });
+        return {
+            nodes: positionPipelineTopology(layoutedNodes, edges, options.direction),
             edges,
         };
     }
@@ -325,7 +461,7 @@ export const getDagreLayoutedElements = (nodes: Node[] = [], edges: Edge[] = [],
     });
 
     // Pack components into optimal grid layout
-    const finalNodes = packComponents(layoutedComponents);
+    const finalNodes = positionPipelineTopology(packComponents(layoutedComponents), edges, options.direction);
 
     return {
         nodes: finalNodes,

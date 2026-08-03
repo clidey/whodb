@@ -331,6 +331,14 @@ query CLIPlatformOntologyFollowLink($projectId: ID!, $entityId: ID!, $pk: String
 }
 `
 
+const operationOntologyFollowIncomingLink = `
+query CLIPlatformOntologyFollowIncomingLink($projectId: ID!, $entityId: ID!, $pk: String!, $sourceEntityId: ID!, $linkApiName: String!, $pageSize: Int!, $pageOffset: Int!) {
+  OntologyFollowIncomingLink(projectId: $projectId, entityId: $entityId, pk: $pk, sourceEntityId: $sourceEntityId, linkApiName: $linkApiName, pageSize: $pageSize, pageOffset: $pageOffset) {
+` + datasetQueryResultFields + `
+  }
+}
+`
+
 const operationProjectDatasets = `
 query CLIPlatformProjectDatasets($projectId: ID!) {
   ProjectDatasets(projectId: $projectId) {
@@ -537,6 +545,7 @@ func init() {
 	platformOperations["ontology_fast_lookup_suggestions"] = operationOntologyFastLookupSuggestions
 	platformOperations["ontology_rows"] = operationOntologyRows
 	platformOperations["ontology_follow_link"] = operationOntologyFollowLink
+	platformOperations["ontology_follow_incoming_link"] = operationOntologyFollowIncomingLink
 	platformOperations["datasets"] = operationProjectDatasets
 	platformOperations["dataset"] = operationDatasetDetail
 	platformOperations["dataset_rows"] = operationQueryDataset

@@ -30,10 +30,12 @@ import (
 
 // PlatformGenericWriteInput describes a hosted platform create, update, delete, or action request.
 type PlatformGenericWriteInput struct {
-	Resource    string `json:"resource" jsonschema:"Resource type, for example secret, ai_provider, ontology, dataset, transform, folder, file, function, source_object"`
-	ID          string `json:"id,omitempty" jsonschema:"Resource id for update, delete, or action operations"`
-	Action      string `json:"action,omitempty" jsonschema:"Action name for whodb_platform_action, for example deploy, run, rename, move, promote_to_dataset"`
-	PayloadJSON string `json:"payload_json,omitempty" jsonschema:"JSON object payload for the hosted mutation. projectId and id are filled from selected workspace/id when appropriate."`
+	Resource       string         `json:"resource" jsonschema:"Resource type, for example secret, ai_provider, ontology, dataset, transform, folder, file, function, source_object"`
+	ID             string         `json:"id,omitempty" jsonschema:"Resource id for update, delete, or action operations"`
+	Action         string         `json:"action,omitempty" jsonschema:"Action name for whodb_platform_action, for example deploy, run, rename, move, promote_to_dataset"`
+	IdempotencyKey string         `json:"idempotency_key,omitempty" jsonschema:"Stable caller-provided key. Repeating a successful write with the same key will not execute it again."`
+	Payload        map[string]any `json:"payload,omitempty" jsonschema:"Structured mutation payload. Do not include projectId or the target id; the selected workspace and id are injected by the CLI."`
+	PayloadJSON    string         `json:"payload_json,omitempty" jsonschema:"Legacy JSON object payload. Prefer payload; projectId and id are filled from selected workspace/id when appropriate."`
 }
 
 // PlatformDatasetColumnInput describes a dataset column for typed MCP writes.
@@ -90,23 +92,38 @@ type PlatformEntityWriteInput struct {
 	ID string `json:"id" jsonschema:"Resource id"`
 }
 
+// PlatformRestoreInput restores a soft-deleted hosted platform resource.
+type PlatformRestoreInput struct {
+	Resource string `json:"resource" jsonschema:"Soft-deletable resource: source, ontology, dataset, transform, function, app, folder, or file"`
+	ID       string `json:"id" jsonschema:"Deleted resource id"`
+}
+
 // PlatformGenericWriteOutput reports a hosted platform write result or pending confirmation.
 type PlatformGenericWriteOutput struct {
 	PlatformSetupGuidance
-	ConfirmationRequired bool                   `json:"confirmation_required,omitempty"`
-	ConfirmationToken    string                 `json:"confirmation_token,omitempty"`
-	ConfirmationAction   string                 `json:"confirmation_action,omitempty"`
-	ConfirmationPreview  *PlatformActionPreview `json:"confirmation_preview,omitempty"`
-	ConfirmationExpiry   string                 `json:"confirmation_expiry,omitempty"`
-	Warning              string                 `json:"warning,omitempty"`
-	Status               string                 `json:"status,omitempty"`
-	ResultJSON           string                 `json:"result_json,omitempty"`
-	Error                string                 `json:"error,omitempty"`
-	RequestID            string                 `json:"request_id,omitempty"`
+	ConfirmationRequired bool                    `json:"confirmation_required,omitempty"`
+	ConfirmationToken    string                  `json:"confirmation_token,omitempty"`
+	ConfirmationAction   string                  `json:"confirmation_action,omitempty"`
+	ConfirmationPreview  *PlatformActionPreview  `json:"confirmation_preview,omitempty"`
+	ConfirmationExpiry   string                  `json:"confirmation_expiry,omitempty"`
+	Warning              string                  `json:"warning,omitempty"`
+	Status               string                  `json:"status,omitempty"`
+	IdempotencyReplayed  bool                    `json:"idempotency_replayed,omitempty"`
+	ResultJSON           string                  `json:"result_json,omitempty"`
+	Error                string                  `json:"error,omitempty"`
+	ErrorCode            string                  `json:"error_code,omitempty"`
+	Retryable            bool                    `json:"retryable,omitempty"`
+	SuggestedTools       []string                `json:"suggested_tools,omitempty"`
+	Recovery             *PlatformRecoveryAdvice `json:"recovery,omitempty"`
+	RequestID            string                  `json:"request_id,omitempty"`
 }
 
 func registerPlatformGenericWriteTool(server *mcp.Server, tool *mcp.Tool, secOpts *SecurityOptions) bool {
 	switch tool.Name {
+	case "whodb_platform_restore":
+		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformRestoreInput) (*mcp.CallToolResult, any, error) {
+			return handlePlatformGenericWrite(ctx, "platform_restore", PlatformGenericWriteInput{Resource: input.Resource, Action: "restore", ID: input.ID}, "action", secOpts.ConfirmWrites)
+		})
 	case "whodb_platform_create":
 		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformGenericWriteInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformGenericWrite(ctx, "platform_create", input, "create", secOpts.ConfirmWrites)
@@ -159,6 +176,7 @@ func registerPlatformGenericWriteTool(server *mcp.Server, tool *mcp.Tool, secOpt
 
 func platformGenericWriteToolDefinitions() []*mcp.Tool {
 	return []*mcp.Tool{
+		{Name: "whodb_platform_restore", Description: "Restore a soft-deleted hosted resource through the platform's existing restore path. This never purges data and still requires confirmation.", Annotations: platformDestructiveAnnotations("Restore Hosted Platform Resource")},
 		{Name: "whodb_platform_create", Description: descPlatformCreate, Annotations: platformDestructiveAnnotations("Create Hosted Platform Resource")},
 		{Name: "whodb_platform_update", Description: descPlatformUpdate, Annotations: platformDestructiveAnnotations("Update Hosted Platform Resource")},
 		{Name: "whodb_platform_delete", Description: descPlatformDelete, Annotations: platformDestructiveAnnotations("Delete Hosted Platform Resource")},
@@ -184,28 +202,50 @@ func handlePlatformGenericWrite(ctx context.Context, toolName string, input Plat
 	spec, payload, err := buildPlatformGenericWrite(session, input, operationKind)
 	if err != nil {
 		TrackToolCall(ctx, toolName, requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "validation"})
-		return nil, PlatformGenericWriteOutput{Error: err.Error(), RequestID: requestID}, nil
+		return nil, platformGenericWriteError(err, requestID), nil
+	}
+	if err := validatePlatformWriteCapability(ctx, session, spec); err != nil {
+		TrackToolCall(ctx, toolName, requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_capability"})
+		return nil, platformGenericWriteError(err, requestID), nil
+	}
+	if err := validatePlatformWriteInput(input, operationKind, spec); err != nil {
+		TrackToolCall(ctx, toolName, requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "validation"})
+		return nil, platformGenericWriteError(err, requestID), nil
 	}
 	action := &PendingPlatformAction{
-		Operation:   spec.Mutation,
-		Resource:    spec.Resource,
-		Action:      spec.Action,
-		Host:        session.Host.URL,
-		OrgID:       session.Host.DefaultOrgID,
-		ProjectID:   session.Host.DefaultProjectID,
-		ProjectName: session.Host.DefaultProjectName,
-		Summary:     platformGenericWriteSummary(spec, payload),
-		Changes:     genericWriteChanges(payload),
-		Mutation:    spec.Mutation,
-		Variables:   payload,
+		Operation:      spec.Mutation,
+		Resource:       spec.Resource,
+		Action:         spec.Action,
+		Host:           session.Host.URL,
+		OrgID:          session.Host.DefaultOrgID,
+		ProjectID:      session.Host.DefaultProjectID,
+		ProjectName:    session.Host.DefaultProjectName,
+		Summary:        platformGenericWriteSummary(spec, payload),
+		Changes:        genericWriteChanges(payload),
+		Mutation:       spec.Mutation,
+		Variables:      payload,
+		IdempotencyKey: scopedPlatformIdempotencyKey(session, input, operationKind),
+	}
+	if action.IdempotencyKey != "" {
+		if token, ok := pendingPlatformIdempotencyToken(action.IdempotencyKey); ok {
+			pending, err := getPendingPlatformAction(token)
+			if err == nil {
+				releasePendingPlatformAction(token)
+				return nil, platformGenericConfirmationOutput(requestID, token, pending.ExpiresAt, pending.Mutation, pending.Preview()), nil
+			}
+		}
+		if platformIdempotencyCompleted(action.IdempotencyKey) {
+			return nil, PlatformGenericWriteOutput{Status: "already_applied", IdempotencyReplayed: true, RequestID: requestID}, nil
+		}
 	}
 	if !confirmWrites {
 		result, err := executePlatformMutation(ctx, session.Client, spec.Mutation, session.Host.DefaultProjectID, payload)
 		if err != nil {
 			TrackToolCall(ctx, toolName, requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_action"})
-			return nil, PlatformGenericWriteOutput{Error: err.Error(), RequestID: requestID}, nil
+			return nil, platformGenericWriteError(err, requestID), nil
 		}
 		TrackToolCall(ctx, toolName, requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"confirmation_required": false, "mutation": spec.Mutation})
+		markPlatformIdempotencyCompleted(action.IdempotencyKey)
 		return nil, platformGenericWriteCompletedOutput(requestID, spec.Mutation, result, action.Preview()), nil
 	}
 	token, expiresAt := storePendingPlatformAction(action)
@@ -213,12 +253,33 @@ func handlePlatformGenericWrite(ctx context.Context, toolName string, input Plat
 	return nil, platformGenericConfirmationOutput(requestID, token, expiresAt, spec.Mutation, action.Preview()), nil
 }
 
+func scopedPlatformIdempotencyKey(session *platformToolSession, input PlatformGenericWriteInput, operationKind string) string {
+	key := strings.TrimSpace(input.IdempotencyKey)
+	if key == "" || session == nil {
+		return ""
+	}
+	if len(key) > 200 {
+		key = key[:200]
+	}
+	return strings.Join([]string{session.Host.URL, session.Host.DefaultOrgID, session.Host.DefaultProjectID, operationKind, normalizePlatformWriteToken(input.Resource), normalizePlatformWriteToken(input.Action), strings.TrimSpace(input.ID), key}, "|")
+}
+
 func platformGenericWriteSetupError(err error, requestID string) PlatformGenericWriteOutput {
+	errorCode, retryable, suggestedTools := platformErrorFields(err)
 	return PlatformGenericWriteOutput{
 		PlatformSetupGuidance: platformSetupGuidanceForCurrentConfig(requestID),
 		Error:                 err.Error(),
+		ErrorCode:             errorCode,
+		Retryable:             retryable,
+		SuggestedTools:        suggestedTools,
 		RequestID:             requestID,
 	}
+}
+
+func platformGenericWriteError(err error, requestID string) PlatformGenericWriteOutput {
+	errorCode, retryable, suggestedTools := platformErrorFields(err)
+	advice := platformRecoveryAdvice(errorCode, err.Error())
+	return PlatformGenericWriteOutput{Error: err.Error(), ErrorCode: errorCode, Retryable: retryable, SuggestedTools: suggestedTools, Recovery: &advice, RequestID: requestID}
 }
 
 func handlePlatformTypedGenericWrite(ctx context.Context, toolName string, input PlatformGenericWriteInput, operationKind string, confirmWrites bool) (*mcp.CallToolResult, PlatformGenericWriteOutput, error) {
@@ -394,9 +455,16 @@ func buildPlatformGenericWrite(session *platformToolSession, input PlatformGener
 	if !ok {
 		return platformapi.GenericWriteSpec{}, nil, fmt.Errorf("unsupported platform %s for resource %q", action, resource)
 	}
-	payload, err := parsePayloadJSON(input.PayloadJSON)
+	payload, err := parsePlatformWritePayload(input.Payload, input.PayloadJSON)
 	if err != nil {
 		return platformapi.GenericWriteSpec{}, nil, err
+	}
+	// App file mutations historically receive the app id through the generic
+	// target id. Normalize it to the hosted payload field before validation.
+	if spec.Resource == "app" && (spec.Action == "upsert_file" || spec.Action == "delete_file") {
+		if _, ok := payload["appId"]; !ok && strings.TrimSpace(input.ID) != "" {
+			payload["appId"] = strings.TrimSpace(input.ID)
+		}
 	}
 	id := strings.TrimSpace(input.ID)
 	if spec.NeedsID && id == "" {
@@ -464,6 +532,34 @@ func buildPlatformGenericWrite(session *platformToolSession, input PlatformGener
 	return spec, variables, nil
 }
 
+func validatePlatformWriteCapability(ctx context.Context, session *platformToolSession, spec platformapi.GenericWriteSpec) error {
+	if session == nil || session.Client == nil {
+		return nil
+	}
+	manifest, err := session.Client.PlatformManifest(ctx)
+	if err != nil {
+		return fmt.Errorf("load hosted platform capabilities: %w", err)
+	}
+	return validatePlatformManifestMutation(manifest, spec.Mutation)
+}
+
+func validatePlatformWriteInput(input PlatformGenericWriteInput, operationKind string, spec platformapi.GenericWriteSpec) error {
+	payload, err := parsePlatformWritePayload(input.Payload, input.PayloadJSON)
+	if err != nil {
+		return err
+	}
+	if spec.Resource == "app" && (spec.Action == "upsert_file" || spec.Action == "delete_file") {
+		if _, ok := payload["appId"]; !ok && strings.TrimSpace(input.ID) != "" {
+			payload["appId"] = strings.TrimSpace(input.ID)
+		}
+	}
+	key := normalizePlatformWriteToken(operationKind) + ":" + spec.Resource
+	if operationKind == "action" {
+		key = "action:" + spec.Action + ":" + spec.Resource
+	}
+	return validatePlatformPayload(key, payload)
+}
+
 func addPlatformConfirmDeletionVariable(mutation string, variables map[string]any) {
 	switch mutation {
 	case "DeleteOntology", "DeleteProjectFolder":
@@ -501,6 +597,20 @@ func parsePayloadJSON(value string) (map[string]any, error) {
 		return nil, fmt.Errorf("payload_json must be a JSON object: %w", err)
 	}
 	return payload, nil
+}
+
+func parsePlatformWritePayload(payload map[string]any, payloadJSON string) (map[string]any, error) {
+	if payload != nil && strings.TrimSpace(payloadJSON) != "" {
+		return nil, fmt.Errorf("provide payload or payload_json, not both")
+	}
+	if payload != nil {
+		copy := make(map[string]any, len(payload))
+		for key, value := range payload {
+			copy[key] = value
+		}
+		return copy, nil
+	}
+	return parsePayloadJSON(payloadJSON)
 }
 
 func nullablePayloadString(payload map[string]any, key string) any {
@@ -621,25 +731,25 @@ func platformGenericWriteCompletedOutput(requestID, mutation string, result *pla
 
 const descPlatformCreate = `Create a hosted platform resource through the selected project.
 
-Supported resources: secret, ai_provider, ontology, ontology_fast_lookup, dataset, transform, folder, function, source_object.
+Supported resources: secret, ai_provider, ontology, ontology_fast_lookup, dataset, transform, folder, function, app, package, source_object.
 Pass payload_json as a JSON object matching the hosted platform mutation input. The selected projectId is injected automatically when applicable.
 Default mode returns a confirmation token; do not call whodb_platform_confirm until the user approves the preview. Permission checks are enforced by the hosted platform.`
 
 const descPlatformUpdate = `Update a hosted platform resource through the selected project.
 
-Supported resources: secret, ai_provider, ontology, dataset, transform, function, source_object.
+Supported resources: secret, ai_provider, ontology, dataset, transform, function, app, source_object.
 Pass id when required and payload_json with changed fields only. Secret-like payload fields are never shown in confirmation previews.
 Default mode returns a confirmation token; do not call whodb_platform_confirm until the user approves the preview. Permission checks are enforced by the hosted platform.`
 
 const descPlatformDelete = `Delete a hosted platform resource through the selected project.
 
-Supported resources: secret, ai_provider, ontology, ontology_fast_lookup, dataset, transform, file, folder, function, source_object.
+Supported resources: secret, ai_provider, ontology, ontology_fast_lookup, dataset, transform, file, folder, function, app, source_object.
 This is destructive. Pass id for normal resources. For source_object, pass payload_json with sourceId, ref, and values.
 Default mode returns a confirmation token; explain exactly what will be deleted and do not call whodb_platform_confirm until the user approves the preview. Permission checks are enforced by the hosted platform.`
 
 const descPlatformAction = `Run a hosted platform resource action through the selected project.
 
-Supported actions include transform/run, file/upload, file/rename, file/move, file/promote_to_dataset, folder/rename, folder/move, function/deploy, and function/redeploy.
+Supported actions include transform/run, file/upload, file/rename, file/move, file/promote_to_dataset, folder/rename, folder/move, function/deploy, function/redeploy, app restore/purge/generate/file operations, object restore/purge/version restore, package installation, and organization/access administration.
 Some actions create, move, deploy, or otherwise mutate hosted resources. Pass id and payload_json as required by the action. For file/upload, payload_json requires file_path and may include folderId.
 Default mode returns a confirmation token; do not call whodb_platform_confirm until the user approves the preview. Permission checks are enforced by the hosted platform.`
 

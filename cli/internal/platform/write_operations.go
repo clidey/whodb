@@ -73,6 +73,44 @@ const transformRunFields = `
   completedAt
 `
 
+const appFields = `
+  id
+  projectId
+  name
+  description
+  thumbnailUrl
+  useCases
+  html
+  conversation
+  ontologyIds
+  readOnlyOntologyIds
+  functionIds
+  createdBy
+  createdAt
+  updatedAt
+`
+
+const appFileFields = `
+  path
+  content
+  updatedAt
+`
+
+const packageFields = `
+  id
+  name
+  version
+  channel
+  description
+  installable
+  importable
+  visibility
+  createdBy
+  createdAt
+  items { objectId objectType name version role visibility importable }
+  requirements { key kind label description required metadata }
+`
+
 // PlatformMutationResult contains the raw JSON payload returned by one hosted platform mutation.
 type PlatformMutationResult struct {
 	Operation string
@@ -131,9 +169,61 @@ var platformMutationSpecs = map[string]platformMutationSpec{
 		"projectId: $projectId, functionId: $functionId, version: $version",
 		functionWriteFields,
 	),
-	"CreatePlatformSourceObject": mutationSpecWithDirect("CreatePlatformSourceObject", "$projectId: ID!, $sourceId: ID!, $parent: SourceObjectRefInput, $name: String!, $fields: [RecordInput!]!", "projectId: $projectId, sourceId: $sourceId, parent: $parent, name: $name, fields: $fields", statusResponseFields),
-	"UpdatePlatformSourceObject": mutationSpecWithDirect("UpdatePlatformSourceObject", "$projectId: ID!, $sourceId: ID!, $ref: SourceObjectRefInput!, $values: [RecordInput!]!, $updatedColumns: [String!]!", "projectId: $projectId, sourceId: $sourceId, ref: $ref, values: $values, updatedColumns: $updatedColumns", statusResponseFields),
-	"DeletePlatformSourceObject": mutationSpecWithDirect("DeletePlatformSourceObject", "$projectId: ID!, $sourceId: ID!, $ref: SourceObjectRefInput!, $values: [RecordInput!]!", "projectId: $projectId, sourceId: $sourceId, ref: $ref, values: $values", statusResponseFields),
+	"CreatePlatformSourceObject":     mutationSpecWithDirect("CreatePlatformSourceObject", "$projectId: ID!, $sourceId: ID!, $parent: SourceObjectRefInput, $name: String!, $fields: [RecordInput!]!", "projectId: $projectId, sourceId: $sourceId, parent: $parent, name: $name, fields: $fields", statusResponseFields),
+	"UpdatePlatformSourceObject":     mutationSpecWithDirect("UpdatePlatformSourceObject", "$projectId: ID!, $sourceId: ID!, $ref: SourceObjectRefInput!, $values: [RecordInput!]!, $updatedColumns: [String!]!", "projectId: $projectId, sourceId: $sourceId, ref: $ref, values: $values, updatedColumns: $updatedColumns", statusResponseFields),
+	"DeletePlatformSourceObject":     mutationSpecWithDirect("DeletePlatformSourceObject", "$projectId: ID!, $sourceId: ID!, $ref: SourceObjectRefInput!, $values: [RecordInput!]!", "projectId: $projectId, sourceId: $sourceId, ref: $ref, values: $values", statusResponseFields),
+	"CreateApp":                      mutationSpecWithInput("CreateApp", "CreateAppInput", appFields),
+	"UpdateApp":                      mutationSpecWithInput("UpdateApp", "UpdateAppInput", appFields),
+	"DeleteApp":                      mutationSpecWithProjectID("DeleteApp", statusResponseFields),
+	"RestoreApp":                     mutationSpecWithProjectID("RestoreApp", statusResponseFields),
+	"PurgeApp":                       mutationSpecWithProjectID("PurgeApp", statusResponseFields),
+	"GenerateApp":                    mutationSpecWithInput("GenerateApp", "GenerateAppInput", "html\n  message"),
+	"UpsertAppFile":                  mutationSpecWithDirect("UpsertAppFile", "$projectId: ID!, $appId: ID!, $path: String!, $content: String!", "projectId: $projectId, appId: $appId, path: $path, content: $content", appFileFields),
+	"DeleteAppFile":                  mutationSpecWithDirect("DeleteAppFile", "$projectId: ID!, $appId: ID!, $path: String!", "projectId: $projectId, appId: $appId, path: $path", statusResponseFields),
+	"RestoreAppVersionToDraft":       mutationSpecWithDirect("RestoreAppVersionToDraft", "$projectId: ID!, $appId: ID!, $version: Int!", "projectId: $projectId, appId: $appId, version: $version", "app {\n"+appFields+"\n  }\n  files {\n"+appFileFields+"\n  }"),
+	"RestoreSource":                  mutationSpecWithProjectID("RestoreSource", statusResponseFields),
+	"PurgeSource":                    mutationSpecWithProjectID("PurgeSource", statusResponseFields),
+	"RestoreOntology":                mutationSpecWithProjectID("RestoreOntology", statusResponseFields),
+	"PurgeOntology":                  mutationSpecWithProjectID("PurgeOntology", statusResponseFields),
+	"RestoreDataset":                 mutationSpecWithProjectID("RestoreDataset", statusResponseFields),
+	"PurgeDataset":                   mutationSpecWithProjectID("PurgeDataset", statusResponseFields),
+	"RestoreTransform":               mutationSpecWithProjectID("RestoreTransform", statusResponseFields),
+	"PurgeTransform":                 mutationSpecWithProjectID("PurgeTransform", statusResponseFields),
+	"RestoreFunction":                mutationSpecWithProjectID("RestoreFunction", statusResponseFields),
+	"PurgeFunction":                  mutationSpecWithProjectID("PurgeFunction", statusResponseFields),
+	"RestoreOntologyVersionToDraft":  mutationSpecWithDirect("RestoreOntologyVersionToDraft", "$projectId: ID!, $ontologyId: ID!, $version: Int!", "projectId: $projectId, ontologyId: $ontologyId, version: $version", ontologyFields),
+	"RestoreDatasetVersionToDraft":   mutationSpecWithDirect("RestoreDatasetVersionToDraft", "$projectId: ID!, $datasetId: ID!, $version: Int!", "projectId: $projectId, datasetId: $datasetId, version: $version", datasetFields),
+	"RestoreTransformVersionToDraft": mutationSpecWithDirect("RestoreTransformVersionToDraft", "$projectId: ID!, $transformId: ID!, $version: Int!", "projectId: $projectId, transformId: $transformId, version: $version", transformFields),
+	"CreatePackage":                  mutationSpecWithInput("CreatePackage", "CreatePackageInput", packageFields),
+	"InstallPackage":                 mutationSpecWithInput("InstallPackage", "InstallPackageInput", "installation { id sourceProjectId targetProjectId packageId packageName packageVersion packageChannel status installedBy installedAt updatedAt }"),
+	"InstallSharedPackage":           mutationSpecWithInput("InstallSharedPackage", "SharedPackageOperationInput", "installation { id sourceProjectId targetProjectId packageId packageName packageVersion packageChannel status installedBy installedAt updatedAt }"),
+	"UpdatePackageInstallation":      mutationSpecWithInput("UpdatePackageInstallation", "UpdatePackageInstallationInput", "installation { id sourceProjectId targetProjectId packageId packageName packageVersion packageChannel status installedBy installedAt updatedAt }"),
+	"UninstallPackage":               mutationSpecWithInput("UninstallPackage", "UninstallPackageInput", statusResponseFields),
+	"ImportPackage":                  mutationSpecWithInput("ImportPackage", "ImportPackageInput", "installation { id sourceProjectId targetProjectId packageId packageName packageVersion packageChannel status installedBy installedAt updatedAt }"),
+	"ImportSharedPackage":            mutationSpecWithInput("ImportSharedPackage", "SharedPackageOperationInput", "installation { id sourceProjectId targetProjectId packageId packageName packageVersion packageChannel status installedBy installedAt updatedAt }"),
+	"CreatePackageShare":             mutationSpecWithInput("CreatePackageShare", "CreatePackageShareInput", "id packageId sourceOrgId sourceProjectId url createdBy createdAt revokedAt"),
+	"RenameOrganization":             mutationSpecWithDirect("RenameOrganization", "$orgId: ID!, $name: String!, $slug: String", "orgId: $orgId, name: $name, slug: $slug", "id name slug createdAt"),
+	"DeleteOrganization":             mutationSpecWithDirect("DeleteOrganization", "$orgId: ID!, $confirmDeletion: Boolean", "orgId: $orgId, confirmDeletion: $confirmDeletion", statusResponseFields),
+	"UpsertOrganizationDomain":       mutationSpecWithDirect("UpsertOrganizationDomain", "$orgId: ID!, $domain: String!, $isPrimary: Boolean", "orgId: $orgId, domain: $domain, isPrimary: $isPrimary", "id orgId domain isPrimary verifiedAt createdAt"),
+	"DeleteOrganizationDomain":       mutationSpecWithID("DeleteOrganizationDomain", statusResponseFields),
+	"CreateOrganizationSSOProvider":  mutationSpecWithDirect("CreateOrganizationSSOProvider", "$orgId: ID!, $providerType: String!, $displayName: String!, $providerAlias: String!, $enabled: Boolean, $isDefault: Boolean", "orgId: $orgId, providerType: $providerType, displayName: $displayName, providerAlias: $providerAlias, enabled: $enabled, isDefault: $isDefault", "id orgId providerType displayName providerAlias enabled isDefault createdAt updatedAt"),
+	"UpdateOrganizationSSOProvider":  mutationSpecWithDirect("UpdateOrganizationSSOProvider", "$id: ID!, $providerType: String, $displayName: String, $providerAlias: String, $enabled: Boolean, $isDefault: Boolean", "id: $id, providerType: $providerType, displayName: $displayName, providerAlias: $providerAlias, enabled: $enabled, isDefault: $isDefault", "id orgId providerType displayName providerAlias enabled isDefault createdAt updatedAt"),
+	"DeleteOrganizationSSOProvider":  mutationSpecWithID("DeleteOrganizationSSOProvider", statusResponseFields),
+	"InviteUser":                     mutationSpecWithInput("InviteUser", "InviteUserInput", statusResponseFields),
+	"ReinviteUser":                   mutationSpecWithDirect("ReinviteUser", "$userId: ID!, $orgId: ID!", "userId: $userId, orgId: $orgId", statusResponseFields),
+	"RemoveUser":                     mutationSpecWithDirect("RemoveUser", "$userId: ID!, $orgId: ID!, $force: Boolean", "userId: $userId, orgId: $orgId, force: $force", statusResponseFields),
+	"GrantAccess":                    mutationSpecWithInput("GrantAccess", "UpdateAccessInput", statusResponseFields),
+	"RevokeAccess":                   mutationSpecWithInput("RevokeAccess", "UpdateAccessInput", statusResponseFields),
+	"ShareByEmail":                   mutationSpecWithDirect("ShareByEmail", "$emails: [String!]!, $role: String!, $resourceType: String!, $resourceId: ID!, $expiresIn: String, $dependents: [ShareDependentInput!]", "emails: $emails, role: $role, resourceType: $resourceType, resourceId: $resourceId, expiresIn: $expiresIn, dependents: $dependents", "succeeded failed"),
+	"TransferOwnershipByEmail":       mutationSpecWithDirect("TransferOwnershipByEmail", "$email: String!, $resourceType: String!, $resourceId: ID!", "email: $email, resourceType: $resourceType, resourceId: $resourceId", statusResponseFields),
+	"TransferOwnership":              mutationSpecWithDirect("TransferOwnership", "$resourceType: String!, $resourceId: ID!, $newOwnerId: ID!", "resourceType: $resourceType, resourceId: $resourceId, newOwnerId: $newOwnerId", statusResponseFields),
+	"ClaimOrphan":                    mutationSpecWithDirect("ClaimOrphan", "$resourceType: String!, $resourceId: ID!", "resourceType: $resourceType, resourceId: $resourceId", statusResponseFields),
+	"CreateTeam":                     mutationSpecWithDirect("CreateTeam", "$orgId: ID!, $name: String!", "orgId: $orgId, name: $name", "id orgId name createdAt"),
+	"DeleteTeam":                     mutationSpecWithID("DeleteTeam", statusResponseFields),
+	"AddTeamMember":                  mutationSpecWithDirect("AddTeamMember", "$teamId: ID!, $userId: ID!", "teamId: $teamId, userId: $userId", statusResponseFields),
+	"RemoveTeamMember":               mutationSpecWithDirect("RemoveTeamMember", "$teamId: ID!, $userId: ID!", "teamId: $teamId, userId: $userId", statusResponseFields),
+	"SyncAllAppPermissions":          mutationSpecWithDirect("SyncAllAppPermissions", "", "", statusResponseFields),
+	"ExecuteFunction":                mutationSpecWithDirect("ExecuteFunction", "$projectId: ID!, $functionId: ID!, $input: String!, $inputFileIds: [ID!]", "projectId: $projectId, functionId: $functionId, input: $input, inputFileIds: $inputFileIds", functionTestResultFields),
 }
 
 const projectSecretFields = `
@@ -259,15 +349,23 @@ mutation CLIPlatform%s($projectId: ID!, $id: ID!, $name: String!) {
 }
 
 func mutationSpecWithDirect(operation, variables, args, fields string) platformMutationSpec {
+	variableDeclaration := ""
+	variableArguments := ""
+	if strings.TrimSpace(variables) != "" {
+		variableDeclaration = "(" + variables + ")"
+	}
+	if strings.TrimSpace(args) != "" {
+		variableArguments = "(" + args + ")"
+	}
 	return platformMutationSpec{
 		Operation: operation,
 		Query: fmt.Sprintf(`
-mutation CLIPlatform%s(%s) {
-  %s(%s) {
+mutation CLIPlatform%s%s {
+  %s%s {
 %s
   }
 }
-`, operation, variables, operation, args, fields),
+`, operation, variableDeclaration, operation, variableArguments, fields),
 	}
 }
 

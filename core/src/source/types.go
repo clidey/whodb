@@ -351,7 +351,14 @@ type QueryTraits struct {
 	SupportsStreaming      bool
 	SupportsMultiStatement bool
 	SupportsSqlImport      bool
-	ExplainMode            QueryExplainMode
+	// SupportsReadOnlyExecution reports whether the source can execute a
+	// statement with writes refused by the engine, so a query the caller believes
+	// is a read fails at the database if it turns out not to be. The mechanism is
+	// source-specific (a read-only transaction, a read-only JDBC connection, an
+	// engine setting); sources that have none leave this false and rely on
+	// statement classification alone.
+	SupportsReadOnlyExecution bool
+	ExplainMode               QueryExplainMode
 	// SequentialPaginationOnly reports whether row pagination is restricted to
 	// sequential Next/Prev navigation. Sources using keyset/cursor-based
 	// pagination internally (e.g. because their backend rejects OFFSET) set

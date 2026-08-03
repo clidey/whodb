@@ -33,8 +33,10 @@ import (
 const defaultPlatformRowLimit = 50
 
 var (
-	pendingPlatformActions = map[string]*PendingPlatformAction{}
-	platformPendingMutex   sync.RWMutex
+	pendingPlatformActions     = map[string]*PendingPlatformAction{}
+	platformIdempotencyPending = map[string]string{}
+	platformIdempotencyDone    = map[string]time.Time{}
+	platformPendingMutex       sync.RWMutex
 )
 
 type platformClient interface {
@@ -65,6 +67,7 @@ type platformClient interface {
 	OntologyFastLookupSuggestions(context.Context, string, string) ([]platformapi.OntologyFastLookupSuggestion, error)
 	OntologyRows(context.Context, string, string, int, int) (*platformapi.DatasetQueryResult, error)
 	OntologyFollowLink(context.Context, string, string, string, string, int, int) (*platformapi.DatasetQueryResult, error)
+	OntologyFollowIncomingLink(context.Context, string, string, string, string, string, int, int) (*platformapi.DatasetQueryResult, error)
 	Datasets(context.Context, string) ([]platformapi.Dataset, error)
 	Dataset(context.Context, string, string) (*platformapi.Dataset, error)
 	DatasetRows(context.Context, string, string, int, int) (*platformapi.DatasetQueryResult, error)
@@ -80,6 +83,7 @@ type platformClient interface {
 	SearchProjectFiles(context.Context, string, string) ([]platformapi.ProjectFile, error)
 	ProjectTabularFiles(context.Context, string) ([]platformapi.ProjectFile, error)
 	ProjectStorageUsage(context.Context, string) (int, error)
+	PlatformQuery(context.Context, string, map[string]any) (any, error)
 }
 
 type platformToolSession struct {
@@ -484,43 +488,56 @@ func (o PlatformPendingOutput) MarshalJSON() ([]byte, error) {
 
 // PlatformActionPreview describes a pending hosted source write without secrets.
 type PlatformActionPreview struct {
-	Operation   string   `json:"operation"`
-	Resource    string   `json:"resource,omitempty"`
-	Action      string   `json:"action,omitempty"`
-	Summary     string   `json:"summary,omitempty"`
-	Host        string   `json:"host"`
-	OrgID       string   `json:"org_id"`
-	ProjectID   string   `json:"project_id"`
-	ProjectName string   `json:"project_name,omitempty"`
-	SourceID    string   `json:"source_id,omitempty"`
-	SourceName  string   `json:"source_name,omitempty"`
-	SourceType  string   `json:"source_type,omitempty"`
-	Changes     []string `json:"changes,omitempty"`
-	WillAffect  []string `json:"will_affect,omitempty"`
+	Operation    string                `json:"operation"`
+	Resource     string                `json:"resource,omitempty"`
+	Action       string                `json:"action,omitempty"`
+	Summary      string                `json:"summary,omitempty"`
+	Host         string                `json:"host"`
+	OrgID        string                `json:"org_id"`
+	ProjectID    string                `json:"project_id"`
+	ProjectName  string                `json:"project_name,omitempty"`
+	SourceID     string                `json:"source_id,omitempty"`
+	SourceName   string                `json:"source_name,omitempty"`
+	SourceType   string                `json:"source_type,omitempty"`
+	Changes      []string              `json:"changes,omitempty"`
+	FieldChanges []PlatformFieldChange `json:"field_changes,omitempty"`
+	WillAffect   []string              `json:"will_affect,omitempty"`
+	WorkflowID   string                `json:"workflow_id,omitempty"`
+	StepCount    int                   `json:"step_count,omitempty"`
+}
+
+// PlatformFieldChange is a redacted before/after summary for a pending write.
+type PlatformFieldChange struct {
+	Field    string         `json:"field"`
+	After    map[string]any `json:"after,omitempty"`
+	Redacted bool           `json:"redacted,omitempty"`
 }
 
 // PendingPlatformAction stores a hosted platform write awaiting confirmation.
 type PendingPlatformAction struct {
-	Token       string
-	Operation   string
-	Resource    string
-	Action      string
-	Summary     string
-	Host        string
-	OrgID       string
-	ProjectID   string
-	ProjectName string
-	SourceID    string
-	SourceName  string
-	SourceType  string
-	Changes     []string
-	CreateInput platformapi.CreateSourceInput
-	UpdateInput platformapi.UpdateSourceInput
-	Mutation    string
-	Variables   map[string]any
-	BundlePlan  *platformapi.BundlePlan
-	ExpiresAt   time.Time
-	inFlight    bool // true while a confirm is actively executing this action
+	Token          string
+	Operation      string
+	Resource       string
+	Action         string
+	Summary        string
+	Host           string
+	OrgID          string
+	ProjectID      string
+	ProjectName    string
+	SourceID       string
+	SourceName     string
+	SourceType     string
+	Changes        []string
+	CreateInput    platformapi.CreateSourceInput
+	UpdateInput    platformapi.UpdateSourceInput
+	Mutation       string
+	Variables      map[string]any
+	BundlePlan     *platformapi.BundlePlan
+	WorkflowPlanID string
+	WorkflowSteps  int
+	IdempotencyKey string
+	ExpiresAt      time.Time
+	inFlight       bool // true while a confirm is actively executing this action
 }
 
 // MarshalJSON ensures nil slices are serialized as [] instead of null.
@@ -541,6 +558,9 @@ func registerPlatformTools(server *mcp.Server, secOpts *SecurityOptions) {
 			continue
 		}
 		if !secOpts.ReadOnly && registerPlatformGenericWriteTool(server, tool, secOpts) {
+			continue
+		}
+		if registerPlatformWorkflowTool(server, tool, secOpts) {
 			continue
 		}
 		switch tool.Name {
@@ -704,7 +724,9 @@ func platformToolDefinitions() []*mcp.Tool {
 	}
 	tools = append(tools, platformGenericWriteToolDefinitions()...)
 	tools = append(tools, platformBundleToolDefinitions()...)
-	return append(tools, platformReadToolDefinitions()...)
+	tools = append(tools, platformReadToolDefinitions()...)
+	tools = append(tools, platformExtendedReadToolDefinitions()...)
+	return append(tools, platformWorkflowToolDefinitions()...)
 }
 
 func platformReadOnlyAnnotations(title string) *mcp.ToolAnnotations {
@@ -1488,6 +1510,31 @@ func handlePlatformSourceUpdate(ctx context.Context, req *mcp.CallToolRequest, i
 	return nil, platformSourceConfirmationOutput(requestID, token, expiresAt, actionLabel, action.Preview()), nil
 }
 
+func platformActionFieldChanges(action *PendingPlatformAction) []PlatformFieldChange {
+	if action == nil || len(action.Variables) == 0 {
+		return nil
+	}
+	values := action.Variables
+	if input, ok := values["input"].(map[string]any); ok {
+		values = input
+	}
+	keys := make([]string, 0, len(values))
+	for key := range values {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	changes := make([]PlatformFieldChange, 0, len(keys))
+	for _, key := range keys {
+		value := values[key]
+		if sensitivePlatformWriteKey(key) {
+			changes = append(changes, PlatformFieldChange{Field: key, After: map[string]any{"value": "[redacted]"}, Redacted: true})
+			continue
+		}
+		changes = append(changes, PlatformFieldChange{Field: key, After: map[string]any{"value": value}})
+	}
+	return changes
+}
+
 // HandlePlatformSourceDelete prepares a hosted source deletion for confirmation.
 func HandlePlatformSourceDelete(ctx context.Context, req *mcp.CallToolRequest, input PlatformSourceDeleteInput) (*mcp.CallToolResult, PlatformSourceWriteOutput, error) {
 	return handlePlatformSourceDelete(ctx, req, input, true)
@@ -1533,6 +1580,75 @@ func handlePlatformSourceDelete(ctx context.Context, req *mcp.CallToolRequest, i
 	return nil, platformSourceConfirmationOutput(requestID, token, expiresAt, actionLabel, action.Preview()), nil
 }
 
+// platformAccessTokenSkew is how long before expiry a cached access token is
+// treated as stale. It matches the skew the EE browser-session refresh path
+// uses so both clients renew at the same point in a token's life.
+const platformAccessTokenSkew = time.Minute
+
+type platformAccessTokenEntry struct {
+	accessToken string
+	expiresAt   time.Time
+}
+
+var (
+	platformAccessTokens     = map[string]platformAccessTokenEntry{}
+	platformAccessTokenMutex sync.Mutex
+)
+
+// platformAccessToken returns a usable access token for the given host and
+// account, refreshing only when no cached token remains valid.
+//
+// This exists because the MCP server is a single long-lived process whose tool
+// handlers each load a session: without a cache, every tool call spent a
+// network refresh to obtain a token that was still valid for ~15 minutes. The
+// mutex is equally load-bearing for correctness, not just for the cache — the
+// SDK dispatches tool calls concurrently (jsonrpc2.Async), so the surrounding
+// read-refresh-write against the single shared keyring entry was an unsynchronized
+// race. Refreshing under the lock serializes it.
+//
+// The lock is deliberately held across the network call so that concurrent
+// callers coalesce onto one refresh rather than each issuing their own. Waiters
+// re-check the cache on entry and return the token the winner just stored. That
+// serializes tool calls behind a slow refresh (bounded by the auth client's two
+// 30s timeouts), which is still no worse than the previous behaviour of every
+// caller waiting on its own refresh.
+func platformAccessToken(ctx context.Context, cfg *config.Config, hostURL, accountID, refreshToken string) (string, error) {
+	key := hostURL + "\x00" + accountID
+
+	platformAccessTokenMutex.Lock()
+	defer platformAccessTokenMutex.Unlock()
+
+	if entry, ok := platformAccessTokens[key]; ok && time.Until(entry.expiresAt) > platformAccessTokenSkew {
+		return entry.accessToken, nil
+	}
+
+	tokens, err := platformapi.RefreshToken(ctx, hostURL, refreshToken)
+	if err != nil {
+		// Drop any cached token for this account: the refresh token backing it
+		// may have been revoked, and serving a stale access token would hide
+		// the re-login the user needs to perform.
+		delete(platformAccessTokens, key)
+		return "", fmt.Errorf("cannot refresh hosted WhoDB login. Run: whodb-cli login --host %s", hostURL)
+	}
+	if tokens.RefreshToken != "" && tokens.RefreshToken != refreshToken {
+		if err := cfg.SavePlatformRefreshToken(hostURL, accountID, tokens.RefreshToken); err != nil {
+			return "", fmt.Errorf("cannot update hosted WhoDB refresh token: %w", err)
+		}
+	}
+	// Only cache when the server told us how long the token lives. A missing
+	// expires_in means we cannot know when it goes stale, so fall back to the
+	// previous behaviour of refreshing on every call rather than guessing.
+	if tokens.ExpiresIn > 0 {
+		platformAccessTokens[key] = platformAccessTokenEntry{
+			accessToken: tokens.AccessToken,
+			expiresAt:   time.Now().Add(time.Duration(tokens.ExpiresIn) * time.Second),
+		}
+	} else {
+		delete(platformAccessTokens, key)
+	}
+	return tokens.AccessToken, nil
+}
+
 func loadHostedPlatformToolSession(ctx context.Context) (*platformToolSession, error) {
 	cfg, err := config.LoadConfig()
 	if err != nil {
@@ -1554,16 +1670,11 @@ func loadHostedPlatformToolSession(ctx context.Context) (*platformToolSession, e
 	if err != nil {
 		return nil, fmt.Errorf("cannot load hosted WhoDB refresh token. Run: whodb-cli login --host %s", hostURL)
 	}
-	tokens, err := platformapi.RefreshToken(ctx, hostURL, refreshToken)
+	accessToken, err := platformAccessToken(ctx, cfg, hostURL, host.AccountID, refreshToken)
 	if err != nil {
-		return nil, fmt.Errorf("cannot refresh hosted WhoDB login. Run: whodb-cli login --host %s", hostURL)
+		return nil, err
 	}
-	if tokens.RefreshToken != "" && tokens.RefreshToken != refreshToken {
-		if err := cfg.SavePlatformRefreshToken(hostURL, host.AccountID, tokens.RefreshToken); err != nil {
-			return nil, fmt.Errorf("cannot update hosted WhoDB refresh token: %w", err)
-		}
-	}
-	client, err := platformapi.NewClient(hostURL, tokens.AccessToken)
+	client, err := platformapi.NewClient(hostURL, accessToken)
 	if err != nil {
 		return nil, err
 	}
@@ -2008,7 +2119,48 @@ func storePendingPlatformAction(action *PendingPlatformAction) (string, time.Tim
 	action.Token = token
 	action.ExpiresAt = expiresAt
 	pendingPlatformActions[token] = action
+	if action.IdempotencyKey != "" {
+		platformIdempotencyPending[action.IdempotencyKey] = token
+	}
 	return token, expiresAt
+}
+
+func pendingPlatformIdempotencyToken(key string) (string, bool) {
+	platformPendingMutex.RLock()
+	defer platformPendingMutex.RUnlock()
+	token, ok := platformIdempotencyPending[key]
+	return token, ok
+}
+
+func platformIdempotencyCompleted(key string) bool {
+	if key == "" {
+		return false
+	}
+	platformPendingMutex.Lock()
+	defer platformPendingMutex.Unlock()
+	completedAt, ok := platformIdempotencyDone[key]
+	if !ok {
+		return false
+	}
+	if completedAt.Add(24 * time.Hour).Before(time.Now()) {
+		delete(platformIdempotencyDone, key)
+		return false
+	}
+	return true
+}
+
+func markPlatformIdempotencyCompleted(key string) {
+	if key == "" {
+		return
+	}
+	platformPendingMutex.Lock()
+	defer platformPendingMutex.Unlock()
+	markPlatformIdempotencyCompletedLocked(key)
+}
+
+func markPlatformIdempotencyCompletedLocked(key string) {
+	delete(platformIdempotencyPending, key)
+	platformIdempotencyDone[key] = time.Now()
 }
 
 // getPendingPlatformAction claims a pending action for execution, marking it
@@ -2046,7 +2198,10 @@ func releasePendingPlatformAction(token string) {
 func consumePendingPlatformAction(token string) {
 	platformPendingMutex.Lock()
 	defer platformPendingMutex.Unlock()
-	delete(pendingPlatformActions, token)
+	if action, ok := pendingPlatformActions[token]; ok {
+		delete(pendingPlatformActions, token)
+		markPlatformIdempotencyCompletedLocked(action.IdempotencyKey)
+	}
 }
 
 func listPendingPlatformActions() []*PendingPlatformAction {
@@ -2078,20 +2233,30 @@ func (action *PendingPlatformAction) Preview() *PlatformActionPreview {
 	changes := append([]string(nil), action.Changes...)
 	willAffect := platformActionWillAffect(action, changes)
 	return &PlatformActionPreview{
-		Operation:   action.Operation,
-		Resource:    action.Resource,
-		Action:      action.Action,
-		Summary:     action.Summary,
-		Host:        action.Host,
-		OrgID:       action.OrgID,
-		ProjectID:   action.ProjectID,
-		ProjectName: action.ProjectName,
-		SourceID:    action.SourceID,
-		SourceName:  action.SourceName,
-		SourceType:  action.SourceType,
-		Changes:     changes,
-		WillAffect:  willAffect,
+		Operation:    action.Operation,
+		Resource:     action.Resource,
+		Action:       action.Action,
+		Summary:      action.Summary,
+		Host:         action.Host,
+		OrgID:        action.OrgID,
+		ProjectID:    action.ProjectID,
+		ProjectName:  action.ProjectName,
+		SourceID:     action.SourceID,
+		SourceName:   action.SourceName,
+		SourceType:   action.SourceType,
+		Changes:      changes,
+		FieldChanges: platformActionFieldChanges(action),
+		WillAffect:   willAffect,
+		WorkflowID:   action.WorkflowPlanID,
+		StepCount:    action.WorkflowStepCount(),
 	}
+}
+
+func (action *PendingPlatformAction) WorkflowStepCount() int {
+	if action == nil || action.WorkflowPlanID == "" {
+		return 0
+	}
+	return action.WorkflowSteps
 }
 
 func platformActionWillAffect(action *PendingPlatformAction, changes []string) []string {
@@ -2289,6 +2454,9 @@ func executePendingPlatformAction(ctx context.Context, action *PendingPlatformAc
 			Message:   fmt.Sprintf("Hosted platform mutation %s completed successfully", action.Mutation),
 			RequestID: requestID,
 		}, nil
+	}
+	if action.WorkflowPlanID != "" {
+		return executePlatformWorkflow(ctx, session, action.WorkflowPlanID, requestID)
 	}
 	if action.BundlePlan != nil {
 		return executePlatformBundlePlan(ctx, session, action.BundlePlan, requestID)

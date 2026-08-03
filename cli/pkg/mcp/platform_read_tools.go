@@ -18,6 +18,8 @@ package mcp
 
 import (
 	"context"
+	"encoding/json"
+	"strconv"
 	"strings"
 	"time"
 
@@ -127,29 +129,56 @@ type PlatformFileSearchInput struct {
 // PlatformEmptyInput is the input for selected-project list tools.
 type PlatformEmptyInput struct {
 	Name       string   `json:"name,omitempty" jsonschema:"Optional case-insensitive name substring filter for list tools"`
+	Search     string   `json:"search,omitempty" jsonschema:"Optional case-insensitive search term; currently aliases name for list tools"`
 	Type       string   `json:"type,omitempty" jsonschema:"Optional type filter, for example provider type, transform trigger mode, or function language"`
 	Status     string   `json:"status,omitempty" jsonschema:"Optional status filter for resources that expose status"`
 	SchemaMode string   `json:"schema_mode,omitempty" jsonschema:"Optional dataset schema mode filter"`
 	Deployed   string   `json:"deployed,omitempty" jsonschema:"Optional function deployment filter: true or false"`
+	Limit      int      `json:"limit,omitempty" jsonschema:"Maximum list items to return; use offset to continue"`
+	Offset     int      `json:"offset,omitempty" jsonschema:"Number of matching list items to skip"`
 	Fields     []string `json:"fields,omitempty" jsonschema:"Top-level output fields to include. Prefer only fields needed now; call again with more fields if needed."`
 }
 
 // PlatformReadOutput is the common output for read-only hosted platform tools.
 type PlatformReadOutput struct {
 	PlatformSetupGuidance
-	Data      any                  `json:"data,omitempty"`
-	Items     []map[string]any     `json:"items,omitempty"`
-	Count     int                  `json:"count"`
-	Scope     *PlatformOutputScope `json:"scope,omitempty"`
-	Fields    []string             `json:"fields,omitempty"`
-	Warnings  []string             `json:"warnings,omitempty"`
-	Truncated bool                 `json:"truncated"`
-	Error     string               `json:"error,omitempty"`
-	RequestID string               `json:"request_id,omitempty"`
+	Data           any                     `json:"data,omitempty"`
+	Items          []map[string]any        `json:"items,omitempty"`
+	Count          int                     `json:"count"`
+	Scope          *PlatformOutputScope    `json:"scope,omitempty"`
+	Fields         []string                `json:"fields,omitempty"`
+	Warnings       []string                `json:"warnings,omitempty"`
+	Truncated      bool                    `json:"truncated"`
+	Error          string                  `json:"error,omitempty"`
+	ErrorCode      string                  `json:"error_code,omitempty"`
+	Retryable      bool                    `json:"retryable,omitempty"`
+	SuggestedTools []string                `json:"suggested_tools,omitempty"`
+	Recovery       *PlatformRecoveryAdvice `json:"recovery,omitempty"`
+	RequestID      string                  `json:"request_id,omitempty"`
+}
+
+func platformReadErrorOutput(err error, requestID string) PlatformReadOutput {
+	errorCode, retryable, suggestedTools := platformErrorFields(err)
+	advice := platformRecoveryAdvice(errorCode, err.Error())
+	return PlatformReadOutput{Error: err.Error(), ErrorCode: errorCode, Retryable: retryable, SuggestedTools: suggestedTools, Recovery: &advice, RequestID: requestID}
 }
 
 func registerPlatformReadTool(server *mcp.Server, tool *mcp.Tool, secOpts *SecurityOptions) {
+	if registerPlatformResourceResolverTool(server, tool) {
+		return
+	}
+	if registerPlatformExtendedReadTool(server, tool) {
+		return
+	}
 	switch tool.Name {
+	case "whodb_platform_workflow_recipe":
+		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformWorkflowRecipeInput) (*mcp.CallToolResult, any, error) {
+			return HandlePlatformWorkflowRecipe(ctx, req, input)
+		})
+	case "whodb_platform_transform_wait":
+		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformTransformWaitInput) (*mcp.CallToolResult, any, error) {
+			return HandlePlatformTransformWait(ctx, req, input)
+		})
 	case "whodb_platform_workspace_map":
 		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformWorkspaceMapInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformWorkspaceMap(ctx, req, input)
@@ -311,6 +340,9 @@ func registerPlatformReadTool(server *mcp.Server, tool *mcp.Tool, secOpts *Secur
 
 func platformReadToolDefinitions() []*mcp.Tool {
 	return []*mcp.Tool{
+		platformResolveResourceToolDefinition(),
+		platformWorkflowRecipeToolDefinition(),
+		platformTransformWaitToolDefinition(),
 		{Name: "whodb_platform_workspace_map", Description: descPlatformWorkspaceMap, Annotations: platformReadOnlyAnnotations("Map Hosted Workspace")},
 		{Name: "whodb_platform_resource_graph", Description: descPlatformResourceGraph, Annotations: platformReadOnlyAnnotations("Graph Hosted Resources")},
 		{Name: "whodb_platform_next_actions", Description: descPlatformNextActions, Annotations: platformReadOnlyAnnotations("Suggest Hosted Next Actions")},
@@ -375,7 +407,7 @@ func HandlePlatformSourceContent(ctx context.Context, req *mcp.CallToolRequest, 
 
 // HandlePlatformSecrets lists secret metadata and usage without values.
 func HandlePlatformSecrets(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
-	return platformProjectRead(ctx, "platform_secrets", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
+	return platformProjectListRead(ctx, "platform_secrets", input, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
 		secrets, err := session.Client.ProjectSecrets(ctx, session.Host.DefaultProjectID)
 		secrets = filterPlatformReadSlice(secrets, func(secret platformapi.ProjectSecret) bool {
 			return platformReadMatchesSubstring(secret.Name, input.Name)
@@ -386,7 +418,7 @@ func HandlePlatformSecrets(ctx context.Context, req *mcp.CallToolRequest, input 
 
 // HandlePlatformAIProviders lists hosted AI provider metadata.
 func HandlePlatformAIProviders(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
-	return platformProjectRead(ctx, "platform_ai_providers", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
+	return platformProjectListRead(ctx, "platform_ai_providers", input, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
 		providers, err := session.Client.AIProviders(ctx, session.Host.DefaultProjectID)
 		providers = filterPlatformReadSlice(providers, func(provider platformapi.AIProvider) bool {
 			return platformReadMatchesSubstring(provider.Name, input.Name) && platformReadMatchesEqual(provider.ProviderType, input.Type)
@@ -408,7 +440,7 @@ func HandlePlatformAIProviderModels(ctx context.Context, req *mcp.CallToolReques
 
 // HandlePlatformOntologies lists hosted ontology object types.
 func HandlePlatformOntologies(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
-	return platformProjectRead(ctx, "platform_ontologies", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
+	return platformProjectListRead(ctx, "platform_ontologies", input, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
 		ontologies, err := session.Client.Ontologies(ctx, session.Host.DefaultProjectID)
 		ontologies = filterPlatformReadSlice(ontologies, func(ontology platformapi.Ontology) bool {
 			nameMatch := platformReadMatchesSubstring(ontology.DisplayName, input.Name) || platformReadMatchesSubstring(ontology.APIName, input.Name)
@@ -462,7 +494,7 @@ func HandlePlatformOntologyFollowLink(ctx context.Context, req *mcp.CallToolRequ
 
 // HandlePlatformDatasets lists hosted datasets.
 func HandlePlatformDatasets(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
-	return platformProjectRead(ctx, "platform_datasets", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
+	return platformProjectListRead(ctx, "platform_datasets", input, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
 		datasets, err := session.Client.Datasets(ctx, session.Host.DefaultProjectID)
 		datasets = filterPlatformReadSlice(datasets, func(dataset platformapi.Dataset) bool {
 			return platformReadMatchesSubstring(dataset.Name, input.Name) && platformReadMatchesEqual(dataset.SchemaMode, input.SchemaMode)
@@ -518,7 +550,7 @@ func HandlePlatformProjectLineage(ctx context.Context, req *mcp.CallToolRequest,
 
 // HandlePlatformTransforms lists hosted transforms.
 func HandlePlatformTransforms(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
-	return platformProjectRead(ctx, "platform_transforms", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
+	return platformProjectListRead(ctx, "platform_transforms", input, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
 		transforms, err := session.Client.Transforms(ctx, session.Host.DefaultProjectID)
 		transforms = filterPlatformReadSlice(transforms, func(transform platformapi.Transform) bool {
 			return platformReadMatchesSubstring(transform.Name, input.Name) && platformReadMatchesEqual(transform.TriggerMode, input.Type)
@@ -548,7 +580,7 @@ func HandlePlatformTransformRuns(ctx context.Context, req *mcp.CallToolRequest, 
 
 // HandlePlatformFunctions lists hosted ontology functions.
 func HandlePlatformFunctions(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
-	return platformProjectRead(ctx, "platform_functions", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
+	return platformProjectListRead(ctx, "platform_functions", input, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
 		functions, err := session.Client.Functions(ctx, session.Host.DefaultProjectID, input.Fields)
 		functions = filterPlatformReadSlice(functions, func(fn platformapi.Function) bool {
 			return platformReadMatchesSubstring(fn.Name, input.Name) && platformReadMatchesEqual(fn.Language, input.Type) && platformReadMatchesBool(fn.IsDeployed, input.Deployed)
@@ -657,6 +689,21 @@ func platformProjectRead(ctx context.Context, toolName string, fields []string, 
 	}
 	TrackToolCall(ctx, toolName, requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"count": count, "truncated": truncated})
 	return nil, platformReadOutput(session, toolName, data, count, truncated, requestID, fields), nil
+}
+
+func platformProjectListRead(ctx context.Context, toolName string, input PlatformEmptyInput, read func(context.Context, *platformToolSession) (any, int, bool, error)) (*mcp.CallToolResult, PlatformReadOutput, error) {
+	search := input.Search
+	if strings.TrimSpace(search) == "" {
+		search = input.Name
+	}
+	return platformProjectRead(ctx, toolName, input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
+		data, _, truncated, err := read(ctx, session)
+		if err != nil {
+			return data, 0, truncated, err
+		}
+		paged, count, pageTruncated := paginatePlatformList(data, search, input.Type, input.Status, input.SchemaMode, input.Deployed, input.Offset, input.Limit)
+		return paged, count, truncated || pageTruncated, nil
+	})
 }
 
 func platformIDRead(ctx context.Context, toolName, id string, fields []string, read func(context.Context, *platformToolSession, string) (any, int, bool, error)) (*mcp.CallToolResult, PlatformReadOutput, error) {
@@ -805,6 +852,69 @@ func platformReadMatchesSubstring(value, filter string) bool {
 		return true
 	}
 	return strings.Contains(strings.ToLower(value), strings.ToLower(needle))
+}
+
+func paginatePlatformList(data any, search, typeFilter, status, schemaMode, deployed string, offset, limit int) (any, int, bool) {
+	if offset < 0 {
+		offset = 0
+	}
+	raw, err := json.Marshal(data)
+	if err != nil {
+		return data, 0, false
+	}
+	var items []map[string]any
+	if err := json.Unmarshal(raw, &items); err != nil {
+		return data, 0, false
+	}
+	filtered := make([]map[string]any, 0, len(items))
+	for _, item := range items {
+		if !platformMapListMatch(item, search, typeFilter, status, schemaMode, deployed) {
+			continue
+		}
+		filtered = append(filtered, item)
+	}
+	if offset >= len(filtered) {
+		return []map[string]any{}, 0, offset < len(filtered)
+	}
+	filtered = filtered[offset:]
+	truncated := false
+	if limit > 0 && len(filtered) > limit {
+		filtered = filtered[:limit]
+		truncated = true
+	}
+	return filtered, len(filtered), truncated
+}
+
+func platformMapListMatch(item map[string]any, search, typeFilter, status, schemaMode, deployed string) bool {
+	name := firstPlatformMapString(item, "name", "displayName", "apiName")
+	if !platformReadMatchesSubstring(name, search) {
+		return false
+	}
+	if typeFilter != "" && !platformReadMatchesSubstring(firstPlatformMapString(item, "type", "providerType", "triggerMode", "language", "resourceType"), typeFilter) {
+		return false
+	}
+	if status != "" && !platformReadMatchesEqual(firstPlatformMapString(item, "status"), status) {
+		return false
+	}
+	if schemaMode != "" && !platformReadMatchesEqual(firstPlatformMapString(item, "schemaMode"), schemaMode) {
+		return false
+	}
+	if deployed != "" && !platformReadMatchesEqual(firstPlatformMapString(item, "isDeployed"), deployed) {
+		return false
+	}
+	return true
+}
+
+func firstPlatformMapString(item map[string]any, keys ...string) string {
+	for _, key := range keys {
+		if value, ok := item[key].(string); ok {
+			return value
+		}
+		if value, ok := item[key].(bool); ok {
+			return strconv.FormatBool(value)
+		}
+	}
+	return ""
 }
 
 func platformReadMatchesEqual(value, filter string) bool {

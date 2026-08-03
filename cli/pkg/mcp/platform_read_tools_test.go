@@ -81,6 +81,10 @@ func (f *fakePlatformClient) OntologyFollowLink(ctx context.Context, projectID, 
 	return &platformapi.DatasetQueryResult{Columns: []string{"id"}, Rows: [][]string{{"2"}}, Total: 1}, nil
 }
 
+func (f *fakePlatformClient) OntologyFollowIncomingLink(ctx context.Context, projectID, entityID, pk, sourceEntityID, linkAPIName string, pageSize, pageOffset int) (*platformapi.DatasetQueryResult, error) {
+	return &platformapi.DatasetQueryResult{}, nil
+}
+
 func (f *fakePlatformClient) Datasets(ctx context.Context, projectID string) ([]platformapi.Dataset, error) {
 	return []platformapi.Dataset{{ID: "dataset-1", ProjectID: projectID, Name: "Customers"}}, nil
 }
@@ -184,6 +188,15 @@ func (f *fakePlatformClient) ProjectTabularFiles(ctx context.Context, projectID 
 
 func (f *fakePlatformClient) ProjectStorageUsage(ctx context.Context, projectID string) (int, error) {
 	return 1024, nil
+}
+
+func (f *fakePlatformClient) PlatformQuery(_ context.Context, operation string, variables map[string]any) (any, error) {
+	f.platformQueryOperation = operation
+	f.platformQueryVariables = variables
+	if f.platformQueryResult != nil {
+		return f.platformQueryResult, nil
+	}
+	return []any{}, nil
 }
 
 func TestHandlePlatformSecretsDoesNotExposeValues(t *testing.T) {

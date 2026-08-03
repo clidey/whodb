@@ -139,8 +139,6 @@ const emitDebugAnalytics = (
         debugWindow.__WHODB_ANALYTICS_DEBUG__ ??= [];
         debugWindow.__WHODB_ANALYTICS_DEBUG__.push({ kind, name, properties });
     }
-    // eslint-disable-next-line no-console
-    console.info('[analytics]', kind, name, properties);
 };
 
 const getStoredConsent = (): ConsentState => {

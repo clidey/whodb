@@ -16,7 +16,7 @@ require (
 	cloud.google.com/go/compute/metadata v0.9.0 // indirect
 	cloud.google.com/go/longrunning v1.2.0 // indirect
 	cloud.google.com/go/memcache v1.17.0 // indirect
-	cloud.google.com/go/redis v1.24.0 // indirect
+	cloud.google.com/go/redis v1.25.0 // indirect
 	git.sr.ht/~jackmordaunt/go-toast/v2 v2.0.3 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.22.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.14.0 // indirect
@@ -30,25 +30,25 @@ require (
 	github.com/agnivade/levenshtein v1.2.1 // indirect
 	github.com/andybalholm/brotli v1.2.1 // indirect
 	github.com/apache/arrow-go/v18 v18.5.2 // indirect
-	github.com/aws/aws-sdk-go-v2 v1.42.1 // indirect
-	github.com/aws/aws-sdk-go-v2/config v1.32.30 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.19.29 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.30 // indirect
+	github.com/aws/aws-sdk-go-v2 v1.43.0 // indirect
+	github.com/aws/aws-sdk-go-v2/config v1.32.31 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.19.30 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.31 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/rds/auth v1.6.30 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.30 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.30 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/v4a v1.4.31 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.31 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.31 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/v4a v1.4.32 // indirect
 	github.com/aws/aws-sdk-go-v2/service/docdb v1.50.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/elasticache v1.55.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.13 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.30 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.31 // indirect
 	github.com/aws/aws-sdk-go-v2/service/opensearch v1.74.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/rds v1.122.0 // indirect
-	github.com/aws/aws-sdk-go-v2/service/signin v1.4.1 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.32.1 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.37.1 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.44.1 // indirect
-	github.com/aws/smithy-go v1.27.4 // indirect
+	github.com/aws/aws-sdk-go-v2/service/signin v1.5.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.33.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.38.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.45.0 // indirect
+	github.com/aws/smithy-go v1.27.5 // indirect
 	github.com/bep/debounce v1.2.1 // indirect
 	github.com/boundaryml/baml v0.223.0 // indirect
 	github.com/brianvoe/gofakeit/v7 v7.15.0 // indirect
@@ -96,11 +96,11 @@ require (
 	github.com/leaanthony/u v1.1.1 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.21 // indirect
-	github.com/mattn/go-sqlite3 v1.14.42 // indirect
+	github.com/mattn/go-sqlite3 v1.14.48 // indirect
 	github.com/pierrec/lz4/v4 v4.1.27 // indirect
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/posthog/posthog-go v1.21.0 // indirect
+	github.com/posthog/posthog-go v1.22.0 // indirect
 	github.com/richardlehane/mscfb v1.0.7 // indirect
 	github.com/richardlehane/msoleps v1.0.6 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
@@ -139,7 +139,7 @@ require (
 	golang.org/x/time v0.15.0 // indirect
 	golang.org/x/tools v0.48.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
-	google.golang.org/api v0.289.0 // indirect
+	google.golang.org/api v0.290.0 // indirect
 	google.golang.org/genproto v0.0.0-20260319201613-d00831a3d3e7 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260630182238-925bb5da69e7 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260706201446-f0a921348800 // indirect

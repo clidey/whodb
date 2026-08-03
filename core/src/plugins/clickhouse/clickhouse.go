@@ -29,6 +29,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
@@ -297,6 +298,15 @@ func (p *ClickHousePlugin) executeRawSQL(config *engine.PluginConfig, query stri
 		// Multi-statement scripts silently execute only the first statement.
 		if config != nil && config.MultiStatement && isMultiStatement(query) {
 			return nil, engine.ErrMultiStatementUnsupported
+		}
+
+		if config != nil && config.ReadOnly {
+			// readonly=2 permits reads and settings changes but rejects writes and
+			// DDL. It is attached to this statement's context rather than to the
+			// connection, which is pooled and shared with other callers.
+			db = db.WithContext(clickhouse.Context(config.OperationContext(), clickhouse.WithSettings(clickhouse.Settings{
+				"readonly": 2,
+			})))
 		}
 
 		// codeql[go/sql-injection]: RawExecute intentionally runs user-authored SQL from the query editor/import flow.

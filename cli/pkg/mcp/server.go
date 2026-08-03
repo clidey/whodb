@@ -952,7 +952,7 @@ func buildPlatformPayloadShapeResources() []platformPayloadShapeResource {
 }
 
 func buildPlatformProductModel() string {
-	return "WhoDB EE is a hosted data workspace and semantic application platform. Sources and files bring data into a project; datasets make project data durable; ontologies model business objects and relationships; transforms move and shape data; functions add executable behavior; secrets and AI providers support runtime execution; lineage shows dependencies; bundles move project metadata between workspaces. Agents should operate on the whole project lifecycle, not treat WhoDB as only a source browser."
+	return "WhoDB EE is a hosted data workspace and semantic application platform. Sources and files bring data into a project; datasets make project data durable; ontologies model business objects and relationships; transforms move and shape data; functions add executable behavior; apps turn ontologies and functions into user-facing experiences; packages and versions promote or move project capabilities; secrets and AI providers support runtime execution; lineage and access controls show dependencies and governance. Agents should operate on the whole project lifecycle, not treat WhoDB as only a source browser."
 }
 
 func buildPlatformLifecycle() []platformLifecycleStep {
@@ -986,6 +986,18 @@ func buildPlatformLifecycle() []platformLifecycleStep {
 			Description: "Use transforms for repeatable pipelines and functions for executable behavior around the semantic model.",
 			Concepts:    []string{"transform", "function"},
 			Tools:       []string{"whodb_platform_transforms", "whodb_platform_transform", "whodb_platform_transform_runs", "whodb_platform_functions", "whodb_platform_function"},
+		},
+		{
+			Stage:       "compose",
+			Description: "Use ontologies and functions to build hosted applications, inspect generated files, and promote stable versions.",
+			Concepts:    []string{"app", "app_file", "version"},
+			Tools:       []string{"whodb_platform_apps", "whodb_platform_app", "whodb_platform_app_files", "whodb_platform_app_view", "whodb_platform_object_versions", "whodb_platform_active_version"},
+		},
+		{
+			Stage:       "govern",
+			Description: "Inspect effective access, grants, teams, and resource ownership before sharing, transferring, deleting, or packaging capabilities.",
+			Concepts:    []string{"permissions", "sharing", "teams", "packages"},
+			Tools:       []string{"whodb_platform_resource_permissions", "whodb_platform_resource_access", "whodb_platform_project_access", "whodb_platform_project_resources", "whodb_platform_packages", "whodb_platform_package_installations"},
 		},
 		{
 			Stage:       "runtime_support",
@@ -1258,11 +1270,27 @@ func buildPlatformToolGuide(secOpts *SecurityOptions) platformToolGuideResource 
 			{Tool: "whodb_platform_promote_file_to_dataset", Resources: []string{"file"}},
 		},
 			"whodb_platform_files", "whodb_platform_file_preview", "whodb_platform_file_inspect", "whodb_platform_file_search", "whodb_platform_tabular_files", "whodb_platform_storage_usage", "whodb_platform_promote_file_to_dataset"),
+		platformToolCategory(toolByName, "apps", "Ontology-powered application definitions, generated files, views, and promoted versions.", "Inspect the app and its ontology/function dependencies before changing or generating it. App HTML and file content can be large, so request them only when needed.", []string{"id", "name", "description"}, []platformToolGuideMutation{
+			{Tool: "whodb_platform_create", Resources: []string{"app"}},
+			{Tool: "whodb_platform_update", Resources: []string{"app"}},
+			{Tool: "whodb_platform_delete", Resources: []string{"app"}},
+			{Tool: "whodb_platform_action", Resources: []string{"app"}, Actions: []string{"restore", "purge", "generate", "upsert_file", "delete_file", "restore_version_to_draft"}},
+		},
+			"whodb_platform_apps", "whodb_platform_app", "whodb_platform_app_files", "whodb_platform_app_view", "whodb_platform_app_version_view"),
+		platformToolCategory(toolByName, "versions_and_packages", "Promoted versions, active production state, package creation, installation, sharing, and updates.", "Preview package operations and inspect requirements before installing or importing. Use object version reads before promote or rollback actions.", []string{"id", "name", "version", "status"}, []platformToolGuideMutation{
+			{Tool: "whodb_platform_create", Resources: []string{"package"}},
+			{Tool: "whodb_platform_action", Resources: []string{"package"}, Actions: []string{"install", "install_shared", "update_installation", "uninstall", "import", "import_shared", "create_share"}},
+		},
+			"whodb_platform_object_versions", "whodb_platform_active_version", "whodb_platform_project_active_versions", "whodb_platform_packages", "whodb_platform_package", "whodb_platform_package_installations", "whodb_platform_package_installation_update", "whodb_platform_package_library", "whodb_platform_shared_package", "whodb_platform_preview_create_package", "whodb_platform_preview_install_package", "whodb_platform_preview_import_package", "whodb_platform_preview_shared_install", "whodb_platform_preview_shared_import"),
+		platformToolCategory(toolByName, "governance", "Organization resources, teams, sharing, grants, and project access visibility.", "Use these reads to understand the signed-in user's effective permissions and current access before sharing or administrative writes.", []string{"id", "resourceType", "role"}, []platformToolGuideMutation{
+			{Tool: "whodb_platform_action", Resources: []string{"organization", "resource"}, Actions: []string{"rename", "delete", "invite_user", "grant_access", "revoke_access", "create_team", "delete_team", "add_team_member", "remove_team_member", "share_by_email", "transfer_ownership"}},
+		},
+			"whodb_platform_resource_access", "whodb_platform_resource_permissions", "whodb_platform_resource_types_access", "whodb_platform_deletion_impact", "whodb_platform_deleted_resources", "whodb_platform_project_access", "whodb_platform_project_resources", "whodb_platform_org_resources", "whodb_platform_org_members", "whodb_platform_org_domains", "whodb_platform_org_sso", "whodb_platform_shared_with_me", "whodb_platform_shared_by_me", "whodb_platform_my_grants", "whodb_platform_teams", "whodb_platform_team_members"),
 		platformToolCategory(toolByName, "generic_writes", "Generic hosted create, update, delete, and action tools for supported platform resources.", "Use only after reading current state and obtaining user approval for the exact confirmation preview.", nil, []platformToolGuideMutation{
-			{Tool: "whodb_platform_create", Resources: []string{"secret", "ai_provider", "ontology", "ontology_fast_lookup", "dataset", "transform", "folder", "function", "source_object"}},
-			{Tool: "whodb_platform_update", Resources: []string{"secret", "ai_provider", "ontology", "dataset", "transform", "function", "source_object"}},
-			{Tool: "whodb_platform_delete", Resources: []string{"secret", "ai_provider", "ontology", "ontology_fast_lookup", "dataset", "transform", "file", "folder", "function", "source_object"}},
-			{Tool: "whodb_platform_action", Resources: []string{"transform", "file", "folder", "function"}, Actions: []string{"run", "upload", "rename", "move", "promote_to_dataset", "deploy", "redeploy"}},
+			{Tool: "whodb_platform_create", Resources: []string{"secret", "ai_provider", "ontology", "ontology_fast_lookup", "dataset", "transform", "folder", "function", "app", "package", "source_object"}},
+			{Tool: "whodb_platform_update", Resources: []string{"secret", "ai_provider", "ontology", "dataset", "transform", "function", "app", "source_object"}},
+			{Tool: "whodb_platform_delete", Resources: []string{"secret", "ai_provider", "ontology", "ontology_fast_lookup", "dataset", "transform", "file", "folder", "function", "app", "source_object"}},
+			{Tool: "whodb_platform_action", Resources: []string{"transform", "file", "folder", "function", "app", "package", "object", "organization", "resource"}, Actions: []string{"run", "upload", "rename", "move", "promote_to_dataset", "deploy", "redeploy", "test", "preview", "execute", "promote", "rollback", "restore", "purge", "generate", "install", "import", "share_by_email"}},
 		},
 			"whodb_platform_write_plan", "whodb_platform_create", "whodb_platform_update", "whodb_platform_delete", "whodb_platform_action", "whodb_platform_pending", "whodb_platform_confirm"),
 	}

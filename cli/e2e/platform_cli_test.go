@@ -645,7 +645,7 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 			Language:       "python",
 			EntryPoint:     "main",
 			TimeoutSeconds: 30,
-			Memory:         "128Mi",
+			Memory:         "256Mi",
 			CPU:            "100m",
 			Files:          []platform.FunctionFile{{Path: "main.py", Content: "def main(input):\n    return input\n"}},
 		}},

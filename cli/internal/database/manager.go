@@ -40,6 +40,7 @@ import (
 	queryast "github.com/clidey/whodb/core/src/query"
 	"github.com/clidey/whodb/core/src/source"
 	"github.com/clidey/whodb/core/src/sourcecatalog"
+	"github.com/clidey/whodb/core/src/sqlguard"
 	"github.com/xuri/excelize/v2"
 	"golang.org/x/sync/errgroup"
 )
@@ -78,35 +79,15 @@ const DefaultCacheTTL = 5 * time.Minute
 // ErrReadOnly is returned when a mutation query is blocked by read-only mode.
 var ErrReadOnly = fmt.Errorf("query blocked: read-only mode is enabled")
 
-// mutationKeywords are SQL keywords that indicate a write operation.
-var mutationKeywords = map[string]bool{
-	"INSERT":   true,
-	"UPDATE":   true,
-	"DELETE":   true,
-	"DROP":     true,
-	"ALTER":    true,
-	"CREATE":   true,
-	"TRUNCATE": true,
-	"GRANT":    true,
-	"REVOKE":   true,
-}
-
-// IsMutationQuery returns true if the query starts with a mutation keyword
-// (INSERT, UPDATE, DELETE, DROP, ALTER, CREATE, TRUNCATE, GRANT, REVOKE).
+// IsMutationQuery reports whether a query can modify data, schema, or
+// permissions. It delegates to the shared classifier, which inspects the whole
+// statement rather than its first word, so a comment-prefixed write, a
+// data-modifying CTE, or a trailing statement in a batch is still a mutation.
 func IsMutationQuery(query string) bool {
-	trimmed := strings.TrimSpace(query)
-	if trimmed == "" {
+	if strings.TrimSpace(query) == "" {
 		return false
 	}
-	// Extract the first word
-	end := strings.IndexAny(trimmed, " \t\n\r;(")
-	var firstWord string
-	if end == -1 {
-		firstWord = trimmed
-	} else {
-		firstWord = trimmed[:end]
-	}
-	return mutationKeywords[strings.ToUpper(firstWord)]
+	return sqlguard.Classify(query).Mutating
 }
 
 // MetadataCache provides thread-safe caching for database metadata

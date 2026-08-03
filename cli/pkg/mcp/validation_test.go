@@ -18,6 +18,8 @@ package mcp
 
 import (
 	"testing"
+
+	"github.com/clidey/whodb/core/src/sqlguard"
 )
 
 func TestDetectStatementType(t *testing.T) {
@@ -41,7 +43,7 @@ func TestDetectStatementType(t *testing.T) {
 		{"desc shorthand", "DESC users", StatementDescribe},
 		{"explain", "EXPLAIN SELECT * FROM users", StatementExplain},
 		{"with cte", "WITH cte AS (SELECT 1) SELECT * FROM cte", StatementWith},
-		{"unknown", "GRANT ALL ON users TO admin", StatementUnknown},
+		{"grant", "GRANT ALL ON users TO admin", sqlguard.StatementGrant},
 	}
 
 	for _, tc := range cases {
@@ -249,12 +251,12 @@ func TestIsSafeReadOnly(t *testing.T) {
 		"MERGE INTO t USING s ON t.id=s.id WHEN MATCHED THEN DELETE",
 	}
 	for _, q := range safe {
-		if !isSafeReadOnly(q) {
+		if !sqlguard.IsReadOnly(q) {
 			t.Errorf("expected %q to be safe read-only", q)
 		}
 	}
 	for _, q := range unsafe {
-		if isSafeReadOnly(q) {
+		if sqlguard.IsReadOnly(q) {
 			t.Errorf("expected %q to NOT be safe read-only", q)
 		}
 	}

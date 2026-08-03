@@ -40,7 +40,6 @@ type contextKey string
 const (
 	contextKeyMetadata contextKey = "analytics.metadata"
 
-	libraryName = "whodb-backend"
 	anonymousID = "anonymous"
 	headerKeyID = "X-Whodb-Analytics-Id"
 )
@@ -387,11 +386,6 @@ func buildProperties(ctx context.Context, properties map[string]any) posthog.Pro
 		if _, exists := props["source"]; !exists {
 			props.Set("source", cfg.Source)
 		}
-	}
-
-	props.Set("$lib", libraryName)
-	if cfg.AppVersion != "" {
-		props.Set("$lib_version", cfg.AppVersion)
 	}
 
 	return props

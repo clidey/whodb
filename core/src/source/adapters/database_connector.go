@@ -424,6 +424,19 @@ func (s *DatabaseSession) RunQuery(ctx context.Context, sql string, params ...an
 	return s.plugin.RawExecute(config, sql, params...)
 }
 
+// RunReadOnlyQuery executes a query the caller has classified as a read, asking
+// the engine to refuse writes as well. Sources whose engine cannot enforce that
+// run the query normally — classification remains the gate for them.
+func (s *DatabaseSession) RunReadOnlyQuery(ctx context.Context, sql string, params ...any) (*source.RowsResult, error) {
+	if err := s.ensureSurface(source.SurfaceQuery); err != nil {
+		return nil, err
+	}
+
+	config := s.pluginConfig(ctx, nil)
+	config.ReadOnly = s.spec.Traits.Query.SupportsReadOnlyExecution
+	return s.plugin.RawExecute(config, sql, params...)
+}
+
 // RunQueryStream executes a query through the active source session's
 // streaming path when supported.
 func (s *DatabaseSession) RunQueryStream(ctx context.Context, sql string, writer source.QueryStreamWriter, params ...any) error {

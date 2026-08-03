@@ -1,0 +1,20 @@
+# Allowlist for core/Dockerfile. Ignore everything by default, then allow
+# back in only what this build actually COPYs, so new top-level folders
+# (ee/, docs/, etc.) never need to be added here to stay excluded.
+*
+!frontend/
+!core/
+
+# Exclude dev/test artifacts within the allowed directories.
+**/node_modules
+**/.gocache
+**/*.test
+**/*.out
+**/*.db
+**/.DS_Store
+**/.pi-lens
+frontend/coverage
+frontend/.nyc_output
+frontend/.pnpm-store
+frontend/e2e
+core/tmp

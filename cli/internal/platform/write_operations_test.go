@@ -26,6 +26,14 @@ import (
 	"testing"
 )
 
+func TestGenericWriteSpecsHaveMutationDefinitions(t *testing.T) {
+	for key, spec := range GenericWriteSpecs {
+		if _, ok := platformMutationSpecs[spec.Mutation]; !ok && spec.Mutation != "UploadProjectFile" {
+			t.Errorf("generic write %s references undefined mutation %s", key, spec.Mutation)
+		}
+	}
+}
+
 func TestUploadProjectFilePostsMultipartGraphQL(t *testing.T) {
 	tmp, err := os.CreateTemp(t.TempDir(), "upload-*.csv")
 	if err != nil {

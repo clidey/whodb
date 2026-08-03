@@ -2192,7 +2192,7 @@ func buildFunctionCreatePayload(cmd *cobra.Command) (map[string]any, error) {
 		"language":       language,
 		"entryPoint":     entryPoint,
 		"timeoutSeconds": timeoutSeconds,
-		"memory":         defaultString(strings.TrimSpace(functionMemory), "128Mi"),
+		"memory":         defaultString(strings.TrimSpace(functionMemory), "256Mi"),
 		"cpu":            defaultString(strings.TrimSpace(functionCPU), "100m"),
 		"files":          files,
 		"dependencies":   deps,

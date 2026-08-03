@@ -49,6 +49,9 @@ type fakePlatformClient struct {
 	uploadedProjectID       string
 	uploadedFolderID        *string
 	uploadedFilePath        string
+	platformQueryOperation  string
+	platformQueryVariables  map[string]any
+	platformQueryResult     any
 }
 
 func (f *fakePlatformClient) Me(context.Context) (*platformapi.User, error) {
@@ -182,8 +185,8 @@ func testPlatformSession(client platformClient) *platformToolSession {
 
 func TestPlatformToolDefinitions(t *testing.T) {
 	tools := platformToolDefinitions()
-	if len(tools) != 76 {
-		t.Fatalf("len(platformToolDefinitions()) = %d, want 76", len(tools))
+	if len(tools) != 119 {
+		t.Fatalf("len(platformToolDefinitions()) = %d, want 119", len(tools))
 	}
 	for _, tool := range tools {
 		if tool.Annotations == nil {

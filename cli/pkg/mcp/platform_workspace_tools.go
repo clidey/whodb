@@ -86,14 +86,15 @@ type PlatformChangeImpactInput struct {
 
 // PlatformWritePlanInput is the input for the whodb_platform_write_plan tool.
 type PlatformWritePlanInput struct {
-	Resource    string   `json:"resource" jsonschema:"Resource type, for example secret, ai_provider, ontology, dataset, transform, folder, file, function, source_object"`
-	ID          string   `json:"id,omitempty" jsonschema:"Resource id for update, delete, or action operations"`
-	Action      string   `json:"action,omitempty" jsonschema:"Action name when operation is action, for example deploy, run, rename, move, promote_to_dataset"`
-	Operation   string   `json:"operation" jsonschema:"Write operation: create, update, delete, or action"`
-	PayloadJSON string   `json:"payload_json,omitempty" jsonschema:"JSON object payload. This is validated and summarized but never executed by this read-only tool."`
-	OmitFiles   bool     `json:"omit_files,omitempty" jsonschema:"Omit root folder file and folder nodes for impact lookup. Defaults to false."`
-	OmitLineage bool     `json:"omit_lineage,omitempty" jsonschema:"Omit hosted lineage edges for impact lookup. Defaults to false."`
-	Fields      []string `json:"fields,omitempty" jsonschema:"Top-level output fields to include, for example preview, affected, warnings."`
+	Resource    string         `json:"resource" jsonschema:"Resource type, for example secret, ai_provider, ontology, dataset, transform, folder, file, function, source_object"`
+	ID          string         `json:"id,omitempty" jsonschema:"Resource id for update, delete, or action operations"`
+	Action      string         `json:"action,omitempty" jsonschema:"Action name when operation is action, for example deploy, run, rename, move, promote_to_dataset"`
+	Operation   string         `json:"operation" jsonschema:"Write operation: create, update, delete, or action"`
+	Payload     map[string]any `json:"payload,omitempty" jsonschema:"Structured payload to validate and summarize. This tool never executes it."`
+	PayloadJSON string         `json:"payload_json,omitempty" jsonschema:"Legacy JSON object payload. Prefer payload; this tool never executes it."`
+	OmitFiles   bool           `json:"omit_files,omitempty" jsonschema:"Omit root folder file and folder nodes for impact lookup. Defaults to false."`
+	OmitLineage bool           `json:"omit_lineage,omitempty" jsonschema:"Omit hosted lineage edges for impact lookup. Defaults to false."`
+	Fields      []string       `json:"fields,omitempty" jsonschema:"Top-level output fields to include, for example preview, affected, warnings."`
 }
 
 // PlatformWorkspaceItem is a compact platform resource summary for agents.
@@ -288,6 +289,7 @@ type PlatformWritePlan struct {
 	SuggestedReads       []string                    `json:"suggested_reads"`
 	Affected             []PlatformResourceGraphNode `json:"affected,omitempty"`
 	Warnings             []string                    `json:"warnings"`
+	Preflight            []PlatformWritePreflight    `json:"preflight"`
 }
 
 type platformWorkspaceSnapshot struct {
@@ -461,9 +463,16 @@ func HandlePlatformWritePlan(ctx context.Context, req *mcp.CallToolRequest, inpu
 			Resource:    input.Resource,
 			ID:          input.ID,
 			Action:      input.Action,
+			Payload:     input.Payload,
 			PayloadJSON: input.PayloadJSON,
 		}, operation)
 		if err != nil {
+			return nil, 0, false, err
+		}
+		if err := validatePlatformWriteCapability(ctx, session, spec); err != nil {
+			return nil, 0, false, err
+		}
+		if err := validatePlatformWriteInput(PlatformGenericWriteInput{Resource: input.Resource, ID: input.ID, Action: input.Action, Payload: input.Payload, PayloadJSON: input.PayloadJSON}, operation, spec); err != nil {
 			return nil, 0, false, err
 		}
 		snapshot, err := loadPlatformWorkspaceSnapshot(ctx, session, input.OmitFiles, input.OmitLineage)
@@ -471,6 +480,7 @@ func HandlePlatformWritePlan(ctx context.Context, req *mcp.CallToolRequest, inpu
 			return nil, 0, false, err
 		}
 		plan := buildPlatformWritePlan(snapshot, session, spec, payload, input.ID)
+		plan.Preflight = platformWritePreflight(ctx, session, spec, payload, input.ID)
 		return plan, len(plan.Affected), false, nil
 	})
 }

@@ -28,6 +28,7 @@ import (
 
 	dbmgr "github.com/clidey/whodb/cli/internal/database"
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/sqlguard"
 	"github.com/google/uuid"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -582,10 +583,10 @@ func HandleQuery(ctx context.Context, req *mcp.CallToolRequest, input QueryInput
 	stmtType := DetectStatementType(input.Query)
 
 	// In confirm-writes mode, any statement that is not provably read-only needs
-	// confirmation before execution. Using !isSafeReadOnly (rather than a positive
+	// confirmation before execution. Using !sqlguard.IsReadOnly (rather than a positive
 	// write-verb allowlist) ensures unrecognized write statements — COPY, DO, MERGE,
 	// CALL, GRANT, writable CTEs — cannot execute without confirmation.
-	if secOpts.ConfirmWrites && !isSafeReadOnly(input.Query) {
+	if secOpts.ConfirmWrites && !sqlguard.IsReadOnly(input.Query) {
 		// Validate the query first (check for other issues like multi-statement, dangerous functions)
 		// Pass allowWrite=true and allowDestructive=true since user will confirm
 		err := ValidateSQLStatement(input.Query, true, secOpts.SecurityLevel, secOpts.AllowMultiStatement, true)

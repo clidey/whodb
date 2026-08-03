@@ -183,6 +183,24 @@ func (c *Client) OntologyFollowLink(ctx context.Context, projectID, entityID, pk
 	return resp.OntologyFollowLink, nil
 }
 
+// OntologyFollowIncomingLink returns rows that reference one ontology record.
+func (c *Client) OntologyFollowIncomingLink(ctx context.Context, projectID, entityID, pk, sourceEntityID, linkAPIName string, pageSize, pageOffset int) (*DatasetQueryResult, error) {
+	if err := c.RequireOperation("Query", "OntologyFollowIncomingLink", "incoming ontology link traversal"); err != nil {
+		return nil, err
+	}
+	var resp struct {
+		OntologyFollowIncomingLink *DatasetQueryResult `json:"OntologyFollowIncomingLink"`
+	}
+	variables := map[string]any{"projectId": projectID, "entityId": entityID, "pk": pk, "sourceEntityId": sourceEntityID, "linkApiName": linkAPIName, "pageSize": pageSize, "pageOffset": pageOffset}
+	if err := c.graphQL(ctx, operationOntologyFollowIncomingLink, variables, &resp); err != nil {
+		return nil, err
+	}
+	if resp.OntologyFollowIncomingLink == nil {
+		return nil, fmt.Errorf("platform returned no incoming ontology linked rows")
+	}
+	return resp.OntologyFollowIncomingLink, nil
+}
+
 // Datasets returns hosted datasets in one project.
 func (c *Client) Datasets(ctx context.Context, projectID string) ([]Dataset, error) {
 	if err := c.RequireOperation("Query", "ProjectDatasets", "dataset listing"); err != nil {
