@@ -1,0 +1,3 @@
+query SourceConnectionFieldOptions($sourceType: String!, $fieldKey: String!, $values: [RecordInput!]) {
+  SourceFieldOptions(sourceType: $sourceType, fieldKey: $fieldKey, values: $values)
+}

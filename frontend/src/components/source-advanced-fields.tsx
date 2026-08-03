@@ -15,8 +15,10 @@
  */
 
 import { Input, Label, Switch } from '@clidey/ux';
-import { SourceConnectionFieldKind } from '@graphql';
-import type { FC } from 'react';
+import { useQuery } from '@apollo/client/react';
+import { SearchSelect } from '@/components/ux';
+import { SourceConnectionFieldKind, SourceConnectionFieldOptionsDocument } from '@graphql';
+import { useMemo, type FC } from 'react';
 import type { SourceTypeItem } from '@/config/source-types';
 import { SSLConfig } from '@/components/ssl-config';
 import type { SourceAdvancedSectionState } from '@/utils/source-connection-form';
@@ -44,6 +46,7 @@ export interface SourceAdvancedFieldsProps {
     databaseType: SourceTypeItem;
     advancedState: SourceAdvancedSectionState;
     advancedForm: Record<string, string>;
+    sourceValues?: Record<string, string>;
     onAdvancedFormChange: (key: string, value: string) => void;
     translate: (key: string) => string;
     showPasswordToggle?: boolean;
@@ -61,6 +64,7 @@ export const SourceAdvancedFields: FC<SourceAdvancedFieldsProps> = ({
     databaseType,
     advancedState,
     advancedForm,
+    sourceValues,
     onAdvancedFormChange,
     translate,
     showPasswordToggle = true,
@@ -83,7 +87,18 @@ export const SourceAdvancedFields: FC<SourceAdvancedFieldsProps> = ({
                     );
                 }
 
-                return (
+                return field.SupportsOptions ? (
+                    <SourceConnectionOptionsField
+                        key={field.Key}
+                        databaseType={databaseType}
+                        field={field}
+                        value={value}
+                        sourceValues={sourceValues ?? advancedForm}
+                        onChange={(nextValue) => { onAdvancedFormChange(field.Key, nextValue); }}
+                        translate={translate}
+                        fieldClassName={fieldClassName}
+                    />
+                ) : (
                     <div className={fieldClassName} key={field.Key}>
                         <Label>{translate(field.LabelKey)}</Label>
                         <Input
@@ -114,5 +129,40 @@ export const SourceAdvancedFields: FC<SourceAdvancedFieldsProps> = ({
                 onAdvancedFormChange={onAdvancedFormChange}
             />
         </>
+    );
+};
+
+const SourceConnectionOptionsField: FC<{
+    databaseType: SourceTypeItem;
+    field: SourceAdvancedSectionState['declaredAdvancedFields'][number];
+    value: string;
+    sourceValues: Record<string, string>;
+    onChange: (value: string) => void;
+    translate: (key: string) => string;
+    fieldClassName: string;
+}> = ({ databaseType, field, value, sourceValues, onChange, translate, fieldClassName }) => {
+    const values = useMemo(
+        () => Object.entries(sourceValues).map(([Key, Value]) => ({ Key, Value })),
+        [sourceValues],
+    );
+    const { data, loading } = useQuery(SourceConnectionFieldOptionsDocument, {
+        variables: { sourceType: databaseType.id, fieldKey: field.Key, values },
+    });
+    const options = data?.SourceFieldOptions ?? (value === '' ? [] : [value]);
+
+    return (
+        <div className={fieldClassName}>
+            <Label>{translate(field.LabelKey)}</Label>
+            <SearchSelect
+                value={value}
+                onChange={onChange}
+                disabled={loading}
+                options={options.map(option => ({
+                    value: option,
+                    label: option.replace(/(^|[-_\s])(\p{L})/gu, (_, prefix: string, letter: string) => `${prefix}${letter.toUpperCase()}`),
+                }))}
+                contentClassName="w-[var(--radix-popover-trigger-width)]"
+            />
+        </div>
     );
 };

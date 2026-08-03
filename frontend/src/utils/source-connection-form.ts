@@ -50,6 +50,22 @@ export interface SourceAdvancedSectionState {
 }
 
 /**
+ * Returns backend-declared defaults for advanced source connection fields.
+ *
+ * @param databaseType Source type whose defaults should be applied.
+ * @returns Initial advanced values suitable for a new source form.
+ */
+export function sourceAdvancedDefaults(databaseType: SourceTypeItem): Record<string, string> {
+    const defaults = { ...(databaseType.extra ?? {}) };
+    for (const field of databaseType.connectionFields ?? []) {
+        if (field.Section === SourceConnectionFieldSection.Advanced && field.DefaultValue != null && defaults[field.Key] == null) {
+            defaults[field.Key] = field.DefaultValue;
+        }
+    }
+    return defaults;
+}
+
+/**
  * Checks whether one source type uses a file transport instead of a network connection.
  *
  * @param databaseType Source type to inspect.

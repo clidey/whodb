@@ -84,6 +84,7 @@ import {
 } from '../../utils/source-credentials';
 import {
     buildSourceAdvancedSectionState,
+    sourceAdvancedDefaults,
     canSubmitCustomConnectionForm,
     canSubmitStandardConnectionForm,
     getPromotedConnectionFieldKeys,
@@ -262,7 +263,7 @@ export const LoginForm: FC<LoginFormProps> = ({
         const nextType = databaseTypeItems.find(item => item.id === databaseType.id) ?? databaseTypeItems[0];
         if (databaseType.id !== nextType.id) {
             setDatabaseType(nextType);
-            setAdvancedForm(nextType.extra ?? {});
+            setAdvancedForm(sourceAdvancedDefaults(nextType));
         }
     }, [databaseType.id, databaseTypeItems]);
 
@@ -620,7 +621,7 @@ export const LoginForm: FC<LoginFormProps> = ({
         setPassword("");
         setDatabase("");
         setDatabaseType(item);
-        setAdvancedForm(item.extra ?? {});
+        setAdvancedForm(sourceAdvancedDefaults(item));
         setFormResetKey(k => k + 1);
     }, []);
 
@@ -1114,6 +1115,13 @@ export const LoginForm: FC<LoginFormProps> = ({
                                 databaseType={databaseType}
                                 advancedState={advancedSection}
                                 advancedForm={advancedForm}
+                                sourceValues={{
+                                    Hostname: hostName,
+                                    Username: username,
+                                    Password: password,
+                                    Database: database,
+                                    ...advancedForm,
+                                }}
                                 onAdvancedFormChange={handleAdvancedForm}
                                 translate={t}
                                 showPasswordToggle={!isEmbedded}
