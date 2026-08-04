@@ -16,6 +16,7 @@
 
 import {reduxStore} from '../store';
 import {getAnalyticsDistinctId} from '../config/posthog';
+import {isSecretCredentialKey} from './credential-secrets';
 
 /**
  * Optional auth header provider registered by extensions.
@@ -131,13 +132,17 @@ export function getAuthorizationHeader(): string | null {
 
     const values = mapSourceCredentialValues(current.Values);
 
-    // For saved profiles, send only Id+Database (credentials stored server-side)
-    // For inline credentials, always send full credentials for validation
-    const tokenPayload = current.Saved ? {
+    const hasInlineSecrets = Boolean(current.Password || current.AccessToken)
+      || current.Values.some(value => isSecretCredentialKey(value.Key) && Boolean(value.Value));
+
+    // After a desktop restart Redux intentionally has no secret fields. Send an
+    // ID-only payload so the backend resolves the OS keyring entry instead of
+    // treating the sanitized profile as incomplete inline credentials. While a
+    // profile still has secrets in memory, retain the full-header fallback.
+    const tokenPayload = current.Saved || (current.Id && !hasInlineSecrets) ? {
       Id: current.Id,
       Values: current.Database ? { Database: current.Database } : {},
     } : {
-      Id: current.Id,
       SourceType: current.SourceType,
       Values: values,
       AccessToken: current.AccessToken,
