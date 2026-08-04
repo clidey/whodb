@@ -21,7 +21,8 @@ import { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { SourceSessionDocument } from '../generated/graphql';
 import { AuthActions } from '../store/auth';
-import { useAppDispatch } from '../store/hooks';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { isDesktopApp } from '../utils/external-links';
 
 interface AuthSessionGuardProps {
   children: ReactNode;
@@ -30,12 +31,19 @@ interface AuthSessionGuardProps {
 /** Restores CE UI auth state from the backend-owned browser session. */
 export const AuthSessionGuard: FC<AuthSessionGuardProps> = ({ children }) => {
   const dispatch = useAppDispatch();
+  const loggedIn = useAppSelector(state => state.auth.status === 'logged-in');
   const location = useLocation();
+  const desktopApp = isDesktopApp();
   const [checking, setChecking] = useState(true);
   const [hasSession, setHasSession] = useState(false);
   const [loadSourceSession] = useLazyQuery(SourceSessionDocument, { fetchPolicy: 'no-cache' });
 
   useEffect(() => {
+    if (desktopApp) {
+      setChecking(false);
+      setHasSession(loggedIn);
+      return;
+    }
     let mounted = true;
     setChecking(true);
     void loadSourceSession().then(({ data }) => {
@@ -69,7 +77,7 @@ export const AuthSessionGuard: FC<AuthSessionGuardProps> = ({ children }) => {
     return () => {
       mounted = false;
     };
-  }, [dispatch, loadSourceSession, location.pathname, location.search]);
+  }, [desktopApp, dispatch, loadSourceSession, location.pathname, location.search, loggedIn]);
 
   if (checking) {
     return (

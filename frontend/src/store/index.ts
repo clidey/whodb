@@ -19,6 +19,7 @@ import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import { persistReducer, persistStore, createTransform } from 'redux-persist';
 import storage from 'redux-persist/es/storage';
 import { authReducers } from './auth';
+import type { IAuthState } from './auth';
 import { databaseReducers } from './database';
 import { settingsReducers } from "./settings";
 import { houdiniReducers } from './chat';
@@ -31,6 +32,8 @@ import { providersReducers } from './providers';
 import { healthReducers } from './health';
 import { exploreConditionsReducers } from './explore-conditions';
 import { runMigrations } from './migrations';
+import { stripProfileSecrets } from '../utils/credential-secrets';
+import { isDesktopApp } from '../utils/external-links';
 
 // Run migrations before initializing the store
 runMigrations();
@@ -153,6 +156,20 @@ const chatTransform = createTransform(
   { whitelist: ['houdini'] }
 );
 
+const authPersistTransform = createTransform(
+  (inboundState: any, key) => {
+    if (key === 'current') {
+      return inboundState ? stripProfileSecrets(inboundState) : inboundState;
+    }
+    if (key === 'profiles') {
+      return Array.isArray(inboundState) ? inboundState.map(stripProfileSecrets) : inboundState;
+    }
+    return inboundState;
+  },
+  (outboundState: any) => outboundState,
+  { whitelist: ['current', 'profiles'] }
+);
+
 const settingsPersistTransform = createTransform(
   (inboundState: any) => {
     if (!inboundState) return inboundState;
@@ -165,8 +182,12 @@ const settingsPersistTransform = createTransform(
 
 const PERSIST_THROTTLE = 2000;
 
+const authReducer: Reducer<IAuthState> = isDesktopApp()
+  ? persistReducer({ key: "auth", storage, transforms: [authPersistTransform] }, authReducers) as unknown as Reducer<IAuthState>
+  : authReducers;
+
 const ceReducerMap = {
-  auth: authReducers,
+  auth: authReducer,
   database: persistReducer({ key: "database", storage }, databaseReducers),
   settings: persistReducer({ key: "settings", storage, transforms: [settingsPersistTransform] }, settingsReducers),
   houdini: persistReducer({ key: "houdini", storage, transforms: [chatTransform], throttle: PERSIST_THROTTLE }, houdiniReducers),

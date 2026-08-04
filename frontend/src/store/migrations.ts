@@ -19,6 +19,7 @@ import { ensureModelTypesArray, ensureModelsArray } from '../utils/ai-models-hel
 import { featureFlags } from '../config/features';
 import { withBasePath } from '../utils/base-path';
 import { stripProfileSecrets } from '../utils/credential-secrets';
+import { isDesktopApp } from '../utils/external-links';
 
 
 /**
@@ -413,6 +414,9 @@ export async function migrateAuthSessionCookieV9(): Promise<void> {
 export function clearPersistedAuthStateV10(): void {
   try {
     if (typeof window === 'undefined' || getMigrationVersion() >= 10) {
+      return;
+    }
+    if (isDesktopApp()) {
       return;
     }
     localStorage.removeItem('persist:auth');
