@@ -39,8 +39,9 @@ import (
 var cfgFile string
 
 var rootCmd = &cobra.Command{
-	Use:   "whodb-cli",
-	Short: "WhoDB CLI - Interactive database management tool",
+	Use:           "whodb-cli",
+	Short:         "WhoDB CLI - Interactive database management tool",
+	SilenceErrors: true,
 	Long: `WhoDB CLI is an interactive, production-ready command-line interface for navigating SQL and NoSQL databases.
 
 Features:

@@ -78,6 +78,18 @@ type LoginOptions struct {
 	Timeout     time.Duration
 }
 
+func mcpConnectedURL(host string) string {
+	parsed, err := url.Parse(host)
+	if err == nil && parsed.Port() == "8080" {
+		switch parsed.Hostname() {
+		case "localhost", "127.0.0.1", "::1":
+			parsed.Host = net.JoinHostPort(parsed.Hostname(), "3000")
+			return strings.TrimRight(parsed.String(), "/") + "/mcp-connected"
+		}
+	}
+	return strings.TrimRight(host, "/") + "/mcp-connected"
+}
+
 // Login runs the browser-based PKCE flow and returns platform tokens.
 func Login(ctx context.Context, opts LoginOptions) (*TokenResponse, error) {
 	host, err := NormalizeHost(opts.Host)
@@ -136,8 +148,7 @@ func Login(ctx context.Context, opts LoginOptions) (*TokenResponse, error) {
 				errCh <- fmt.Errorf("missing authorization code")
 				return
 			}
-			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-			_, _ = w.Write([]byte("WhoDB CLI login complete. You can close this window.\n"))
+			http.Redirect(w, r, mcpConnectedURL(host), http.StatusFound)
 			codeCh <- code
 		}),
 		ReadHeaderTimeout: 10 * time.Second,

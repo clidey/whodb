@@ -80,3 +80,18 @@ func TestIsInvalidGrant(t *testing.T) {
 		t.Fatalf("auth error leaked server description: %q", err.Error())
 	}
 }
+
+func TestMCPConnectedURL(t *testing.T) {
+	for _, tc := range []struct {
+		host string
+		want string
+	}{
+		{host: "https://app.example.com/", want: "https://app.example.com/mcp-connected"},
+		{host: "http://localhost:8080", want: "http://localhost:3000/mcp-connected"},
+		{host: "http://127.0.0.1:8080", want: "http://127.0.0.1:3000/mcp-connected"},
+	} {
+		if got := mcpConnectedURL(tc.host); got != tc.want {
+			t.Fatalf("mcpConnectedURL(%q) = %q, want %q", tc.host, got, tc.want)
+		}
+	}
+}
