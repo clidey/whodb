@@ -22,6 +22,7 @@ import { LogoutPage } from "../pages/auth/logout";
 import { getComponent } from "./component-registry";
 import { featureFlags } from "./features";
 import { LoadingPage } from "../components/loading";
+import { AuthSessionGuard as CEAuthSessionGuard } from "../components/auth-session-guard";
 import { getRegisteredUnscopedRoutes, getSurfaceFallbackPath, isUnscopedRouteEnabled } from "./route-registry";
 import { useSourceContract } from "../hooks/useSourceContract";
 export { registerRoute } from "./route-registry";
@@ -166,10 +167,7 @@ export const PrivateRoute: FC = () => {
         );
     }
 
-    if(loggedIn) {
-        return children;
-    }
-    return <Navigate to={PublicRoutes.Login.path} />
+    return <CEAuthSessionGuard>{children}</CEAuthSessionGuard>;
 }
 
 export const getRoutes = (): IInternalRoute[] => {

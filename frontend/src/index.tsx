@@ -32,7 +32,7 @@ import {isDesktopApp} from './utils/external-links';
 import {PosthogConsentBanner} from './components/analytics/posthog-consent-banner';
 import {ErrorBoundary} from './components/error-boundary';
 import {getBasePath} from './utils/base-path';
-import {migrateAuthSessionCookieV9} from './store/migrations';
+import {clearPersistedAuthStateV10, migrateAuthSessionCookieV9} from './store/migrations';
 
 // Detect desktop Linux and add a class for CSS-based overrides (e.g., fonts)
 try {
@@ -114,4 +114,7 @@ const rootApp = (
 // Establish the session cookie from any legacy localStorage credentials before
 // rendering, so the first GraphQL query cannot race the migration. Failures are
 // swallowed inside the migration; never block startup.
-void migrateAuthSessionCookieV9().finally(() => { root.render(rootApp); });
+void migrateAuthSessionCookieV9().finally(() => {
+  clearPersistedAuthStateV10();
+  root.render(rootApp);
+});

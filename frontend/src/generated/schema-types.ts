@@ -715,6 +715,7 @@ export type Query = {
   SourceProfiles: Array<SourceProfile>;
   SourceQuerySuggestions: Array<SourceQuerySuggestion>;
   SourceRows: RowsResult;
+  SourceSession?: Maybe<SourceSession>;
   SourceSessionMetadata?: Maybe<SourceSessionMetadata>;
   SourceTypes: Array<SourceType>;
   UpdateInfo: UpdateInfo;
@@ -1173,6 +1174,13 @@ export enum SourceSchemaFidelity {
   Exact = 'Exact',
   Sampled = 'Sampled'
 }
+
+export type SourceSession = {
+  __typename?: 'SourceSession';
+  Database: Scalars['String']['output'];
+  Id?: Maybe<Scalars['String']['output']>;
+  SourceType: Scalars['String']['output'];
+};
 
 export type SourceSessionMetadata = {
   __typename?: 'SourceSessionMetadata';

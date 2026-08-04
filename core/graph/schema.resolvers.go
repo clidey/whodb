@@ -1137,6 +1137,28 @@ func (r *queryResolver) SourceFieldOptions(ctx context.Context, sourceType strin
 	return reader.ConnectionFieldOptions(ctx, fieldKey, credentials.Values)
 }
 
+// SourceSession is the resolver for the SourceSession field.
+func (r *queryResolver) SourceSession(ctx context.Context) (*model.SourceSession, error) {
+	credentials := auth.GetSourceCredentials(ctx)
+	if credentials == nil {
+		return nil, nil
+	}
+
+	database := ""
+	for key, value := range credentials.Values {
+		if strings.EqualFold(key, "database") {
+			database = value
+			break
+		}
+	}
+
+	return &model.SourceSession{
+		ID:         credentials.ID,
+		SourceType: credentials.SourceType,
+		Database:   database,
+	}, nil
+}
+
 // SourceSessionMetadata is the resolver for the SourceSessionMetadata field.
 func (r *queryResolver) SourceSessionMetadata(ctx context.Context) (*model.SourceSessionMetadata, error) {
 	_, session, err := getSourceSessionForContext(ctx)
