@@ -1,6 +1,6 @@
 Generate a `DESIGN.md` file at the project root that captures the current visual design system, so AI agents generating new screens stay on-brand.
 
-DESIGN.md follows the [official Google Stitch DESIGN.md format](https://stitch.withgoogle.com/docs/design-md/format/): YAML frontmatter carrying machine-readable design tokens, followed by a markdown body with exactly six sections in a fixed order. **Tokens are normative; prose provides context for how to apply them.** Sections may be omitted when not relevant, but **do not reorder them and do not rename them**. Section headers must match the spec character-for-character so the file stays parseable by other DESIGN.md-aware tools (Stitch itself, awesome-design-md, skill-rest, etc.).
+DESIGN.md follows the [official DESIGN.md format spec](https://raw.githubusercontent.com/google-labs-code/design.md/main/docs/spec.md): optional YAML frontmatter carrying machine-readable design tokens, followed by up to eight markdown sections in a fixed order. **Tokens are normative; prose provides context for how to apply them.** Sections may be omitted when not relevant, but those present stay in the specified order. Use the canonical headings below so the file remains portable across DESIGN.md-aware tools.
 
 ## The frontmatter: token schema
 
@@ -43,26 +43,28 @@ components:
 Rules that matter:
 
 - **Token refs** use `{path.to.token}` (e.g. `{colors.primary}`, `{rounded.md}`). Components may reference primitives; primitives may not reference each other.
-- **Stitch validates colors as hex sRGB only** (`#RGB` / `#RGBA` / `#RRGGBB` / `#RRGGBBAA`); OKLCH/HSL/P3 trigger a linter warning, not a hard error. YAML accepts the string either way and our own parser is format-agnostic. Choose based on project posture: (a) if the project has an "OKLCH-only" doctrine or uses Display-P3 values that don't round-trip through sRGB, put OKLCH directly in the frontmatter and accept the Stitch linter warning; (b) if the project wants strict Stitch compliance or plans to use their Tailwind/DTCG export pipeline, put hex in the frontmatter and keep OKLCH in prose as the canonical reference. Never split the source of truth without explicit reason.
+- **Colors accept any valid CSS color string.** Hex is the recommended default for portability, but preserve an incumbent `rgb()`, `hsl()`, `oklch()`, wide-gamut, or mixed-color value when it is the project's normative source. Never split the source of truth without explicit reason.
 - **Component sub-tokens** are limited to 8 props: `backgroundColor`, `textColor`, `typography`, `rounded`, `padding`, `size`, `height`, `width`. Shadows, motion, focus rings, backdrop-filter: none of those fit. Carry them in the sidecar (Step 4b).
 - **Scale keys are open-ended.** Use whatever names the project already uses (`oxblood-deep`, `surface-container-low`). Don't rename to Material defaults.
 - **Variants are naming convention, not schema.** `button-primary` / `button-primary-hover` / `button-primary-active` as sibling keys.
 
-## The markdown body: six sections (exact order)
+## The markdown body: eight sections (canonical order)
 
 1. `## Overview`
 2. `## Colors`
 3. `## Typography`
-4. `## Elevation`
-5. `## Components`
-6. `## Do's and Don'ts`
+4. `## Layout`
+5. `## Elevation & Depth`
+6. `## Shapes`
+7. `## Components`
+8. `## Do's and Don'ts`
 
-Optional evocative subtitles are allowed in the form `## 2. Colors: The [Name] Palette` (Stitch's own outputs do this), but the literal word in each header (Overview, Colors, Typography, Elevation, Components, Do's and Don'ts) must be present. Do NOT add extra top-level sections (Layout Principles, Responsive Behavior, Motion, Agent Prompt Guide). Fold that content into the six spec sections where it naturally belongs.
+Omit irrelevant sections rather than filling them with invented rules. Put responsive layout in Layout, depth in Elevation & Depth, radius and form language in Shapes, and per-component behavior in Components. Unknown sections are preserved by the format, but new visual guidance should use the canonical structure whenever it fits.
 
 ## When to run
 
-- The user just ran `$impeccable init` and needs the visual side documented.
-- The skill noticed no `DESIGN.md` exists and nudged the user to create one.
+- New-work found a coherent incumbent visual system but no `DESIGN.md`.
+- The first implementation of a new world is complete and its provisional decisions need to be carbonized.
 - An existing `DESIGN.md` is stale (the design has drifted).
 - Before a large redesign, to capture the current state as a reference.
 
@@ -71,9 +73,9 @@ If a `DESIGN.md` already exists, **do not silently overwrite it**. Show the user
 ## Two paths
 
 - **Scan mode** (default): the project has design tokens, components, or rendered output. Extract, then confirm descriptive language. Use when there's code to analyze.
-- **Seed mode**: the project is pre-implementation (fresh init, nothing built yet). Interview for five high-level answers, write a minimal DESIGN.md marked `<!-- SEED -->`. Re-run in scan mode once there's code.
+- **Seed mode**: the project is pre-implementation. Ensure PRODUCT.md exists, then reuse new-work's visual-world workshop and write its directional DESIGN.md seed. Re-run in scan mode once there's code.
 
-Decide by scanning first (Scan mode Step 1). If the scan finds no tokens, no component files, and no rendered site, offer seed mode; don't silently switch. `$impeccable document --seed` forces seed mode regardless of code presence.
+Decide by scanning first (Scan mode Step 1). If the scan finds no tokens, no component files, and no rendered site, offer seed mode; don't silently switch. `$impeccable document --seed` requests new-work's world workshop, but it does not authorize replacing coherent code: when an incumbent system exists, offer scan mode or route an explicit identity-replacement request through new-work.
 
 ## Scan mode (approach C: auto-extract, then confirm descriptive language)
 
@@ -97,7 +99,8 @@ Build a structured draft from the discovered tokens. For each token class:
 - **Typography**: Map observed sizes and weights to the Material hierarchy (display / headline / title / body / label). Note font-family stacks and the scale ratio.
 - **Elevation**: Catalogue the shadow vocabulary. If the project is flat and uses tonal layering instead, that's a valid answer; state it explicitly.
 - **Components**: For each common component (button, card, input, chip, list item, tooltip, nav), extract shape (radius), color assignment, hover/focus treatment, internal padding.
-- **Spacing + layout**: Fold into Overview or relevant Components. The spec does NOT have a Layout section.
+- **Layout + spacing**: Extract grid, container, breakpoint, rhythm, and density behavior into Layout.
+- **Shapes**: Extract radius, corner, border, clipping, and recurring form behavior into Shapes.
 
 ### Step 2b: Stage the frontmatter
 
@@ -112,19 +115,19 @@ Skip anything the project doesn't have. Empty scale keys or fabricated tokens po
 
 ### Step 3: Ask the user for qualitative language
 
-The following require creative input that cannot be auto-extracted. Group them into one `AskUserQuestion` interaction:
+The following require creative input that cannot be auto-extracted. Ask them in two structured rounds of no more than three questions each (or the harness's lower limit), waiting between rounds:
 
 - **Creative North Star**: a single named metaphor for the whole system ("The Editorial Sanctuary", "The Golden State Curator", "The Lab Notebook"). Offer 2-3 options that honor PRODUCT.md's brand personality.
-- **Overview voice**: mood adjectives, aesthetic philosophy in 2-3 sentences, anti-references (what the system should not feel like).
+- **Overview voice**: mood adjectives, aesthetic philosophy in 2-3 sentences, and any confirmed visual anti-reference.
 - **Color character** (for auto-extracted colors): descriptive names ("Deep Muted Teal-Navy", not "blue-800"). Suggest 2-3 options per key color based on hue/saturation.
 - **Elevation philosophy**: flat/layered/lifted. If shadows exist, is their role ambient or structural?
 - **Component philosophy**: the feel of buttons, cards, inputs in one phrase ("tactile and confident" vs. "refined and restrained").
 
-Quote a line from PRODUCT.md when possible so the user sees their own strategic language carry forward.
+Carry a line from PRODUCT.md only when it is a durable brand commitment that actually constrains the visual system. Page strategy and surface concepts do not belong here.
 
 ### Step 4: Write DESIGN.md
 
-The file opens with the YAML frontmatter staged in Step 2b (schema documented at the top of this reference), then the markdown body using the structure below. Headers must match character-for-character. Optional evocative subtitles (e.g. `## 2. Colors: The Coastal Palette`) are allowed.
+The file opens with the YAML frontmatter staged in Step 2b (schema documented at the top of this reference), then the markdown body using the canonical structure below.
 
 ```markdown
 ---
@@ -136,13 +139,13 @@ colors:
 
 # Design System: [Project Title]
 
-## 1. Overview
+## Overview
 
 **Creative North Star: "[Named metaphor in quotes]"**
 
-[2-3 paragraph holistic description: personality, density, aesthetic philosophy. Start from the North Star and work outward. State what this system explicitly rejects (pulled from PRODUCT.md's anti-references). End with a short **Key Characteristics:** bullet list.]
+[2-3 paragraph holistic description: personality, density, and aesthetic philosophy. Start from the North Star and work outward. State only confirmed visual rejections. End with a short **Key Characteristics:** bullet list.]
 
-## 2. Colors
+## Colors
 
 [Describe the palette character in one sentence.]
 
@@ -162,7 +165,7 @@ colors:
 ### Named Rules (optional, powerful)
 **The [Rule Name] Rule.** [Short, forceful prohibition or doctrine, e.g. "The One Voice Rule. The primary accent is used on ≤10% of any given screen. Its rarity is the point."]
 
-## 3. Typography
+## Typography
 
 **Display Font:** [Family] (with [fallback])
 **Body Font:** [Family] (with [fallback])
@@ -180,7 +183,11 @@ colors:
 ### Named Rules (optional)
 **The [Rule Name] Rule.** [Short doctrine about type use.]
 
-## 4. Elevation
+## Layout
+
+[Describe the grid or spatial model, container behavior, density, responsive changes, and the spacing rhythm. Include exact values only when observed.]
+
+## Elevation & Depth
 
 [One paragraph: does this system use shadows, tonal layering, or a hybrid? If "no shadows", say so explicitly and describe how depth is conveyed instead.]
 
@@ -191,7 +198,11 @@ colors:
 ### Named Rules (optional)
 **The [Rule Name] Rule.** [e.g. "The Flat-By-Default Rule. Surfaces are flat at rest. Shadows appear only as a response to state (hover, elevation, focus)."]
 
-## 5. Components
+## Shapes
+
+[Describe the form language: corner/radius strategy, borders, clipping, and any recurring silhouette or geometry.]
+
+## Components
 
 For each component, lead with a short character line, then specify shape, color assignment, states, and any distinctive behavior.
 
@@ -223,16 +234,16 @@ For each component, lead with a short character line, then specify shape, color 
 ### [Signature Component] (optional; if the project has a distinctive custom component worth documenting)
 [Description.]
 
-## 6. Do's and Don'ts
+## Do's and Don'ts
 
-Concrete, forceful guardrails. Lead each with "Do" or "Don't". Be specific: include exact colors, pixel values, and named anti-patterns the user mentioned in PRODUCT.md. **Every anti-reference in PRODUCT.md should show up here as a "Don't" with the same language**, so the visual spec carries the strategic line through. Quote PRODUCT.md directly where possible: if PRODUCT.md says *"avoid dark mode with purple gradients, neon accents, glassmorphism"*, the Don'ts here should repeat that by name.
+Concrete visual guardrails grounded in the incumbent implementation or the user's chosen world. Lead each with "Do" or "Don't" and include exact values only when established. Do not turn a task-specific concept or surface strategy into a system-wide prohibition.
 
 ### Do:
 - **Do** [specific prescription with exact values / named rule].
 - **Do** [...]
 
 ### Don't:
-- **Don't** [specific prohibition, e.g. "use border-left greater than 1px as a colored stripe"].
+- **Don't** [specific prohibition confirmed by the incumbent system or the user].
 - **Don't** [...]
 - **Don't** [...]
 ```
@@ -274,7 +285,7 @@ Regenerate the sidecar whenever you regenerate root `DESIGN.md`. If the user onl
       "kind": "button | input | nav | chip | card | custom",
       "refersTo": "button-primary",
       "description": "One-line what and when.",
-      "html": "<button class=\"ds-btn-primary\">GET STARTED</button>",
+      "html": "<button class=\"ds-btn-primary\">SAVE CHANGES</button>",
       "css": ".ds-btn-primary { background: #191c1d; color: #fff; padding: 16px 48px; letter-spacing: 0.05em; text-transform: uppercase; font-weight: 500; border: none; border-radius: 0; transition: background 0.2s, transform 0.2s; } .ds-btn-primary:hover { background: oklch(60% 0.25 350); transform: translateY(-2px); }"
     }
   ],
@@ -307,7 +318,7 @@ The `html` and `css` fields must be **self-contained, drop-in snippets** that re
 Aim for a tight set of **5-10 components** that best represent the visual system:
 
 - **Canonical primitives (always include if the project has them):** button (each variant as a separate component entry), input/text field, navigation, chip/tag, card.
-- **Signature components (include if distinctive):** hero CTA, featured card, filter pill, any custom pattern the user mentioned as important in PRODUCT.md.
+- **Signature components (include if distinctive):** the recurring custom patterns that actually define the implemented system.
 - **Skip the rest.** Utility components, form building blocks, wrapper layouts: not worth documenting unless visually distinctive.
 
 If the project has **no component library yet** (bare landing page, new project), synthesize canonical primitives from the tokens using best-practice defaults consistent with the DESIGN.md's rules. Every `.impeccable/design.json` has *something* to render, even on day zero.
@@ -338,64 +349,40 @@ Your own write is the freshest source; subsequent commands in this session don't
 
 ## Seed mode
 
-For projects with no visual system to extract yet. Produces a minimal scaffold, not a full spec.
+For projects with no visual system to extract yet. Produces a user-chosen visual-world scaffold, not a fabricated token spec.
 
-### Step 1: Confirm seed mode
+### Step 1: Route through new-work's workshop
 
-Before interviewing: "There's no existing visual system to scan. I'll ask five quick questions to seed a starter DESIGN.md. You can re-run `$impeccable document` once there's code, to capture the real tokens and components. OK?"
+PRODUCT.md is the prerequisite. If it is missing, load [init.md](init.md) and complete its product interview first. Do not create a visual identity without durable product context.
 
-If the user prefers to skip, stop. No file.
+If PRODUCT.md exists, load [new-work.md](new-work.md) and resolve visual authority. Seed mode requires a concrete first surface: use the target the user named, or ask what they want to make first. Run new-work's **Create or replace the visual world** flow, then **Commit the world**, so the visual world and its first expression are chosen together. Stop after the directional DESIGN.md seed and surface brief; do not implement. A structured simulated user counts as the user and must get the same choice.
 
-### Step 2: Five questions
+If new-work already completed the workshop in this session, use its chosen direction directly. Do not ask again.
 
-Group into one `AskUserQuestion` interaction. Options must be concrete.
+### Step 2: Write seed DESIGN.md
 
-1. **Color strategy.** Pick one:
-   - Restrained: tinted neutrals + one accent ≤10%
-   - Committed: one saturated color carries 30–60% of the surface
-   - Full palette: 3–4 named color roles, each deliberate
-   - Drenched: the surface IS the color
-   
-   Then: one hue family or anchor reference ("deep teal", "mustard", "Klim #ff4500 orange").
-
-2. **Typography direction.** Pick one (specific fonts come later):
-   - Serif display + sans body
-   - Single sans (warm / technical / geometric / humanist; pick a feel)
-   - Display + mono
-   - Mono-forward
-   - Editorial script + sans
-
-3. **Motion energy.** Pick one:
-   - Restrained: state changes only
-   - Responsive: feedback + transitions, no choreography
-   - Choreographed: orchestrated entrances, scroll-driven sequences
-
-4. **Three named references.** Brands, products, printed objects. Not adjectives.
-
-5. **One anti-reference.** What it should NOT feel like. Also named.
-
-### Step 3: Write seed DESIGN.md
-
-Use the six-section spec from Scan mode. Populate what the interview answers; leave the rest as honest placeholders. The seed is a scaffold, not a fabricated spec.
+Use the canonical section order from Scan mode. Populate the selected workshop direction and leave unresolved implementation facts as honest placeholders. The seed commits a world and its invariants; it does not pretend implementation tokens already exist.
 
 Lead the file with:
 
 ```markdown
-<!-- SEED: re-run $impeccable document once there's code to capture the actual tokens and components. -->
+<!-- SEED: established with the user before implementation; re-run $impeccable document once there's code to capture the actual tokens and components. -->
 ```
 
 Per-section guidance in seed mode:
 
-- **Overview**: Creative North Star and philosophy phrased from the answers (color strategy + motion energy + references). Reference the user's anti-reference directly.
-- **Colors**: Color strategy as a Named Rule (e.g. *"The Drenched Rule. The surface IS the color."*). Hue family or anchor reference. No hex values; mark as `[to be resolved during implementation]`.
-- **Typography**: the direction the user picked (e.g. "Serif display + sans body"). No font names yet: `[font pairing to be chosen at implementation]`.
-- **Elevation**: inferred from motion energy. Restrained/Responsive → flat by default; Choreographed → layered. One sentence.
+- **Overview**: the chosen design thesis, layout behavior, material character, imagery stance, motion grammar, and reusable signature. Keep the selected first-surface expression in its surface brief; do not promote its composition into the global world.
+- **Colors**: the selected palette strategy and roles. Include values only when the user, an existing asset, or new-work's exploration established them; otherwise mark them `[to be resolved during implementation]`.
+- **Typography**: the selected type character and role relationship. Include font names only when established; otherwise mark the pairing `[to be resolved during implementation]`.
+- **Layout**: the selected spatial grammar and responsive behavior, without pretending exact measurements are settled.
+- **Elevation & Depth**: the selected material and depth behavior, stated as an invariant rather than inferred from a generic preset.
+- **Shapes**: the selected form and corner language.
 - **Components**: omit entirely; no components exist yet.
-- **Do's and Don'ts**: carry PRODUCT.md's anti-references directly plus the anti-reference named in Q5.
+- **Do's and Don'ts**: record the durable guardrails confirmed during the world choice, not task-local refusals.
 
 Seed mode writes a minimal frontmatter with `name` and `description` only; no colors, typography, rounded, spacing, or components yet. Real tokens land on the next Scan-mode run. Skip the `.impeccable/design.json` sidecar in seed mode for the same reason: nothing to render.
 
-### Step 4: Confirm
+### Step 3: Confirm
 
 1. Show the seed DESIGN.md. Call out that it is a seed (the marker is the literal commitment).
 2. Tell the user: "Re-run `$impeccable document` once you have some code. That pass will extract real tokens and generate the sidecar."
@@ -405,15 +392,15 @@ Your own write is the freshest source; no reload needed.
 ## Style guidelines
 
 - **Frontmatter first, prose second.** Tokens go in the YAML frontmatter; prose contextualizes them. Don't redefine a token value in two places; the frontmatter is normative.
-- **Cite PRODUCT.md anti-references by name** in the Do's and Don'ts section. If PRODUCT.md lists "SaaS landing-page clichés" or "generic AI tool marketing" as anti-references, the DESIGN.md Don'ts should repeat those phrases verbatim so the visual spec enforces the strategic line.
-- **Match the spec, don't invent new sections.** The six section names are fixed. If you have Layout/Motion/Responsive content to document, fold it into Overview (philosophy-level rules) or Components (per-component behavior).
+- **Carry only durable product constraints.** A binding logo, identity asset, accessibility need, or brand commitment from PRODUCT.md may constrain DESIGN.md. Surface strategy stays in its surface brief.
+- **Match the spec.** Use its eight canonical sections in order and omit any that are irrelevant. Put motion guidance with the world or component it affects rather than creating a token group the schema does not support.
 - **Descriptive > technical**: "Gently curved edges (8px radius)" > "rounded-lg". Include the technical value in parens, lead with the description.
 - **Functional > decorative**: for each token, explain WHERE and WHY it's used, not just WHAT it is.
 - **Exact values in parens**: hex codes, px/rem values, font weights; always the number in parens alongside the description.
 - **Use Named Rules**: `**The [Name] Rule.** [short doctrine]`. These are memorable, citable, and much stickier for AI consumers than bullet lists. Stitch's own outputs use them heavily ("The No-Line Rule", "The Ghost Border Fallback"). Aim for 1-3 per section.
-- **Be forceful**. The voice of a design director. "Prohibited", "forbidden", "never", "always", not "consider", "might", "prefer". Match PRODUCT.md's tone.
-- **Concrete anti-pattern tests**. Stitch writes things like *"If it looks like a 2014 app, the shadow is too dark and the blur is too small."* A one-sentence audit test beats a paragraph of principle.
-- **Reference PRODUCT.md**. The anti-references section of PRODUCT.md should directly inform the Do's and Don'ts section here. Quote or paraphrase.
+- **Be decisive where evidence is decisive.** Use hard language for actual invariants and softer language for provisional guidance.
+- **Use concrete audit tests only when they are grounded in the observed system or a confirmed user decision.** A one-sentence test beats a paragraph of principle.
+- **Reference PRODUCT.md selectively.** Product truth explains why the world fits; it does not supply page composition or a visual don't-list by default.
 - **Group colors by role**, not by hex-order or hue-order. Primary / Secondary / Tertiary / Neutral is the spec ordering.
 
 ## Pitfalls
@@ -423,7 +410,7 @@ Your own write is the freshest source; no reload needed.
 - Don't invent components that don't exist. If the project only has buttons and cards, only document those.
 - Don't overwrite an existing DESIGN.md without asking.
 - Don't duplicate content from PRODUCT.md. DESIGN.md is strictly visual.
-- Don't add a "Layout Principles" or "Motion" or "Responsive Behavior" top-level section. The spec has six, not nine. Fold that content where it belongs.
+- Don't replace canonical sections with near-synonyms. Put layout and responsive behavior in `Layout`; put motion with the affected world or component.
 - Don't rename sections even slightly. "Colors" not "Color Palette & Roles". "Typography" not "Typography Rules". Tooling parsing depends on exact headers.
 - Don't duplicate token values between frontmatter and prose. If a color is in `colors.primary` as hex, the prose can name it and describe its role but should not reassert a different hex. The frontmatter is normative.
 - Don't invent frontmatter token groups outside Stitch's schema (no `motion:`, `breakpoints:`, `shadows:` at the top level). Stitch's Zod schema only accepts `colors`, `typography`, `rounded`, `spacing`, `components`. Anything else belongs in the sidecar's `extensions`.

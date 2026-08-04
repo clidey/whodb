@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { profileStep, recordProfileEvent } from '../../profile/profiler.mjs';
-import { parseAnyColor, resolveLengthPx, resolveVarRefs } from '../../rules/checks.mjs';
+import { CSS_NAMED_COLORS, collectCssCustomProps, cssLengthToPx, parseAnyColor, resolveLengthPx, resolveVarRefs } from '../../rules/checks.mjs';
 
 // ---------------------------------------------------------------------------
 // jsdom CSS-variable border override map
@@ -223,7 +223,7 @@ function unwrapCssAtLayer(source) {
 // ---------------------------------------------------------------------------
 
 const STATIC_INHERITED_PROPS = new Set([
-  'color', 'fontFamily', 'fontSize', 'fontStyle', 'fontWeight',
+  'color', 'fontFamily', 'fontSize', 'fontStyle', 'fontWeight', 'fontVariant',
   'lineHeight', 'letterSpacing', 'textTransform', 'textAlign', 'hyphens',
   'webkitHyphens',
 ]);
@@ -245,9 +245,14 @@ const STATIC_DEFAULT_STYLE = {
   outlineColor: 'rgb(0, 0, 0)',
   outlineStyle: 'none',
   boxShadow: 'none',
+  // NOT in STATIC_INHERITED_PROPS even though text-shadow inherits in real
+  // CSS: the glow check only needs to fire once, on the element that
+  // declares the shadow, not on every descendant.
+  textShadow: 'none',
   fontFamily: '',
   fontSize: '16px',
   fontStyle: 'normal',
+  fontVariant: 'normal',
   fontWeight: '400',
   lineHeight: 'normal',
   letterSpacing: 'normal',
@@ -302,6 +307,7 @@ const STATIC_PROP_MAP = {
   'outline-color': 'outlineColor',
   'outline-style': 'outlineStyle',
   'box-shadow': 'boxShadow',
+  'text-shadow': 'textShadow',
   'font-family': 'fontFamily',
   'font-size': 'fontSize',
   'font-style': 'fontStyle',
@@ -339,17 +345,28 @@ const STATIC_PROP_MAP = {
   'overflow-y': 'overflowY',
 };
 
+// parseStaticColor tries parseAnyColor first, which already resolves every
+// name in the shared CSS_NAMED_COLORS table. This fallback only carries the
+// keywords parseAnyColor deliberately returns null for: the cascade needs
+// `transparent` to read as an actual zero-alpha color.
 const STATIC_NAMED_COLORS = {
-  black: { r: 0, g: 0, b: 0, a: 1 },
-  white: { r: 255, g: 255, b: 255, a: 1 },
   transparent: { r: 0, g: 0, b: 0, a: 0 },
-  gray: { r: 128, g: 128, b: 128, a: 1 },
-  grey: { r: 128, g: 128, b: 128, a: 1 },
-  silver: { r: 192, g: 192, b: 192, a: 1 },
-  red: { r: 255, g: 0, b: 0, a: 1 },
-  green: { r: 0, g: 128, b: 0, a: 1 },
-  blue: { r: 0, g: 0, b: 255, a: 1 },
 };
+
+// Named-color alternation for plucking a color token out of shorthand values
+// (issue #359: a hardcoded 9-name list here silently dropped `purple`,
+// `crimson`, `teal`, ... from border shorthands, so the side defaulted to
+// neutral black and side-tab never fired on .html files). Derived from the
+// same table parseAnyColor resolves against, so extraction and parsing can't
+// drift apart. Longest-first so names containing other names as substrings
+// (rebeccapurple) are matched whole.
+const NAMED_COLOR_TOKENS = [...Object.keys(CSS_NAMED_COLORS), ...Object.keys(STATIC_NAMED_COLORS)]
+  .sort((a, b) => b.length - a.length)
+  .join('|');
+const STATIC_COLOR_TOKEN_RE = new RegExp(
+  `(?:rgba?\\([^)]+\\)|oklch\\([^)]+\\)|oklab\\([^)]+\\)|lch\\([^)]+\\)|lab\\([^)]+\\)|hsla?\\([^)]+\\)|hwb\\([^)]+\\)|#[0-9a-f]{3,8}\\b|\\b(?:${NAMED_COLOR_TOKENS})\\b)`,
+  'i'
+);
 
 function splitCssList(value) {
   const parts = [];
@@ -420,7 +437,23 @@ function extractStaticColor(value) {
   if (!value) return '';
   const raw = String(value).trim();
   if (/^var\(/i.test(raw)) return raw;
-  const colorLike = raw.match(/(?:rgba?\([^)]+\)|oklch\([^)]+\)|oklab\([^)]+\)|lch\([^)]+\)|lab\([^)]+\)|hsla?\([^)]+\)|hwb\([^)]+\)|#[0-9a-f]{3,8}\b|\b(?:black|white|gray|grey|silver|red|green|blue|transparent)\b)/i);
+  // color-mix(...) needs balanced-paren capture (its arguments regularly
+  // contain nested var()/oklch() calls AND the keyword `transparent`, which
+  // the flat regex below would otherwise pluck out of the middle of the
+  // expression and report as the whole color).
+  const mixStart = raw.search(/color-mix\(/i);
+  if (mixStart !== -1) {
+    let depth = 0;
+    for (let i = raw.indexOf('(', mixStart); i < raw.length; i++) {
+      if (raw[i] === '(') depth++;
+      else if (raw[i] === ')') {
+        depth--;
+        if (depth === 0) return raw.slice(mixStart, i + 1);
+      }
+    }
+    return '';
+  }
+  const colorLike = raw.match(STATIC_COLOR_TOKEN_RE);
   if (!colorLike) return '';
   return colorLike[0];
 }
@@ -532,6 +565,15 @@ function expandStaticDeclaration(prop, value) {
     const beforeImage = hasImage ? v.split(/(?:repeating-)?(?:linear|radial|conic)-gradient\(|url\(/i)[0] : v;
     const color = extractStaticColor(hasImage ? beforeImage : v);
     if (color) out.push(['backgroundColor', color]);
+    // The `background` shorthand resets every longhand it does not set.
+    // Without this, `pre code { background: none }` leaves an earlier
+    // `background: var(--surface)` color standing and the contrast checks
+    // measure text against a surface the browser never paints. var() values
+    // stay untouched: they may resolve to a color later in the pipeline.
+    if (!color && !hasImage && !/var\(/i.test(v)) {
+      out.push(['backgroundColor', 'rgba(0, 0, 0, 0)']);
+      out.push(['backgroundImage', 'none']);
+    }
     return out;
   }
   if (p === 'border') {
@@ -702,7 +744,20 @@ function collectStaticCssRules(cssText, csstree) {
           });
         });
         for (const selector of splitCssList(selectorText)) {
-          if (selector) rules.push({ selector, declarations, specificity: staticSpecificity(selector), order: order++ });
+          if (!selector) continue;
+          // :hover rules can't be matched statically as-is (no interaction
+          // state), but they carry real cascade weight while hovered. Tag
+          // them and record a state-stripped selector so the hover pass can
+          // find their targets; specificity stays computed from the ORIGINAL
+          // selector (per CSS, :hover counts as a class).
+          const isHover = /:hover\b/i.test(selector);
+          let matchSelector = null;
+          if (isHover) {
+            matchSelector = selector.replace(/:hover\b/gi, '').trim();
+            if (!matchSelector || /[>+~]\s*$/.test(matchSelector)) matchSelector = null;
+            else matchSelector = matchSelector.replace(/(^|[\s>+~])(?=$|[\s>+~])/g, '$1*');
+          }
+          rules.push({ selector, declarations, specificity: staticSpecificity(selector), order: order++, isHover, matchSelector });
         }
         return;
       }
@@ -805,6 +860,13 @@ class StaticDocument {
     this.domutils = modules.domutils;
     this._wrappers = new WeakMap();
     this._styleMap = new WeakMap();
+    this._hoverStyleMap = new WeakMap();
+    this._accentDashPseudo = new WeakSet();
+    // Elements whose ::before/::after paints a full-cover opaque surface
+    // (position absolute/fixed + inset 0 + solid background). The pseudo is
+    // the element's visible background for contrast purposes even though it
+    // never joins the element cascade.
+    this._pseudoSurface = new WeakMap();
   }
   wrap(node) {
     let wrapped = this._wrappers.get(node);
@@ -841,6 +903,24 @@ class StaticDocument {
   getStyle(el) {
     return this._styleMap.get(el.node) || makeStaticStyle();
   }
+  setHoverStyle(node, style) {
+    this._hoverStyleMap.set(node, style);
+  }
+  getHoverStyle(el) {
+    return this._hoverStyleMap.get(el.node) || null;
+  }
+  setAccentDashPseudo(node) {
+    this._accentDashPseudo.add(node);
+  }
+  hasAccentDashPseudo(el) {
+    return this._accentDashPseudo.has(el.node);
+  }
+  setPseudoSurface(node, color) {
+    this._pseudoSurface.set(node, color);
+  }
+  getPseudoSurface(el) {
+    return this._pseudoSurface.get(el.node) || null;
+  }
 }
 
 function makeStaticStyle(values = {}) {
@@ -856,6 +936,9 @@ function buildStaticWindow(staticDoc) {
   return {
     document: staticDoc,
     getComputedStyle: (el) => staticDoc.getStyle(el),
+    getHoverStyle: (el) => staticDoc.getHoverStyle(el),
+    hasAccentDashPseudo: (el) => staticDoc.hasAccentDashPseudo(el),
+    getPseudoSurface: (el) => staticDoc.getPseudoSurface(el),
   };
 }
 
@@ -869,7 +952,10 @@ function collectStaticCssText(root, fileDir, profile, filePath, modules) {
     const rel = link.attribs?.rel || '';
     const href = link.attribs?.href || '';
     if (!/\bstylesheet\b/i.test(rel) || !href || /^(https?:)?\/\//i.test(href)) continue;
-    const cssPath = path.resolve(fileDir, href);
+    // Cache-busting hrefs (styles.css?v=3) resolve to the file, not to a
+    // literal path with the query in it; a versioned link otherwise made the
+    // whole stylesheet invisible to every element-level check.
+    const cssPath = path.resolve(fileDir, href.split(/[?#]/)[0]);
     try {
       const css = profileStep(profile, {
         engine: 'static-html',
@@ -886,6 +972,13 @@ function collectStaticCssText(root, fileDir, profile, filePath, modules) {
 
 function buildStaticStyleMap(root, staticDoc, cssText, modules, profile, filePath) {
   const specified = new Map();
+  // Declarations from :hover rules, matched via their state-stripped
+  // selectors. Merged per-property against the resting cascade in
+  // computeNode — a hover declaration only takes effect if it would win
+  // the cascade while the element is hovered (all resting rules still
+  // apply in that state).
+  const hoverSpecified = new Map();
+  const rootCustomProps = collectCssCustomProps(cssText);
   const allNodes = modules.selectAll('*', root.children || []);
   const rules = profileStep(profile, {
     engine: 'static-html',
@@ -901,9 +994,65 @@ function buildStaticStyleMap(root, staticDoc, cssText, modules, profile, filePat
     target: filePath,
   }, () => {
     for (const rule of rules) {
+      // ::before/::after rules can't join the element cascade (pseudo
+      // elements aren't DOM nodes), but one shape matters to the eyebrow
+      // check: the short chromatic "kicker dash" (content box 8-80px wide,
+      // 1-6px tall, accent-colored fill). Mark the base-selector matches
+      // so checkElementHeroEyebrow can see the dash.
+      if (!rule.isHover) {
+        const pm = rule.selector.match(/^(.+?)\s*::?(?:before|after)$/i);
+        if (pm) {
+          const decls = new Map();
+          for (const d of rule.declarations) decls.set(d.prop.toLowerCase(), d.value);
+          const w = cssLengthToPx(resolveVarRefs(decls.get('width') || decls.get('inline-size') || '', rootCustomProps));
+          const h = cssLengthToPx(resolveVarRefs(decls.get('height') || decls.get('block-size') || '', rootCustomProps));
+          if (w != null && h != null && w >= 8 && w <= 80 && h >= 1 && h <= 6) {
+            const bgRaw = String(resolveVarRefs(decls.get('background-color') || decls.get('background') || '', rootCustomProps));
+            const token = bgRaw.match(/(?:rgba?|hsla?|oklch|oklab|lab|lch|hwb|color-mix)\([^)]*(?:\([^)]*\))?[^)]*\)|#[0-9a-f]{3,8}\b/i);
+            const c = parseAnyColor(token ? token[0] : bgRaw);
+            if (c && (c.a ?? 1) >= 0.1 && Math.max(c.r, c.g, c.b) - Math.min(c.r, c.g, c.b) >= 30) {
+              try {
+                for (const node of modules.selectAll(pm[1], root.children || [])) {
+                  staticDoc.setAccentDashPseudo(node);
+                }
+              } catch { /* unsupported base selector */ }
+            }
+          }
+          // Full-cover surface pseudo: the CTA construction where the
+          // element itself stays transparent and a ::before/::after with
+          // position absolute/fixed + inset 0 (or all four sides 0, or
+          // 100% width and height) plus an opaque background paints the
+          // visible surface. Mark base-selector matches so the contrast
+          // checks measure text against the surface the browser renders.
+          const pseudoPos = String(decls.get('position') || '').toLowerCase();
+          if (pseudoPos === 'absolute' || pseudoPos === 'fixed') {
+            const zeroLen = v => v != null && /^0(?:px)?$/.test(String(v).trim());
+            const insetRaw = String(decls.get('inset') || '').trim();
+            const coversBox = (insetRaw !== '' && insetRaw.split(/\s+/).every(t => /^0(?:px)?$/.test(t)))
+              || ['top', 'right', 'bottom', 'left'].every(side => zeroLen(decls.get(side)))
+              || (String(decls.get('width') || '').trim() === '100%'
+                && String(decls.get('height') || '').trim() === '100%');
+            if (coversBox && decls.has('content')) {
+              const surfRaw = String(resolveVarRefs(decls.get('background-color') || decls.get('background') || '', rootCustomProps));
+              const surfToken = surfRaw.match(/(?:rgba?|hsla?|oklch|oklab|lab|lch|hwb|color-mix)\([^)]*(?:\([^)]*\))?[^)]*\)|#[0-9a-f]{3,8}\b/i);
+              const surf = parseAnyColor(surfToken ? surfToken[0] : surfRaw);
+              if (surf && (surf.a ?? 1) >= 0.9 && !/gradient/i.test(surfRaw)) {
+                try {
+                  for (const node of modules.selectAll(pm[1], root.children || [])) {
+                    staticDoc.setPseudoSurface(node, surf);
+                  }
+                } catch { /* unsupported base selector */ }
+              }
+            }
+          }
+          continue;
+        }
+      }
+      const matchSelector = rule.isHover ? rule.matchSelector : rule.selector;
+      if (!matchSelector) continue;
       let matched;
       try {
-        matched = modules.selectAll(rule.selector, root.children || []);
+        matched = modules.selectAll(matchSelector, root.children || []);
       } catch {
         recordProfileEvent(profile, {
           engine: 'static-html',
@@ -912,13 +1061,13 @@ function buildStaticStyleMap(root, staticDoc, cssText, modules, profile, filePat
           target: filePath,
           ms: 0,
           findings: 0,
-          detail: rule.selector,
+          detail: matchSelector,
         });
         continue;
       }
       for (const node of matched) {
         for (const decl of rule.declarations) {
-          applyStaticDeclaration(specified, node, decl.prop, decl.value, {
+          applyStaticDeclaration(rule.isHover ? hoverSpecified : specified, node, decl.prop, decl.value, {
             important: decl.important,
             specificity: rule.specificity,
             order: rule.order,
@@ -961,6 +1110,28 @@ function buildStaticStyleMap(root, staticDoc, cssText, modules, profile, filePat
     }
     const style = makeStaticStyle(values);
     staticDoc.setStyle(node, style);
+
+    // Hover pass: limited to the two properties the hover-contrast check
+    // consumes. A hover declaration wins only if it beats the resting
+    // winner for that property under normal cascade rules (specificity /
+    // order / importance) — exactly what a browser computes while the
+    // element is hovered.
+    const hoverMap = hoverSpecified.get(node);
+    if (hoverMap) {
+      let hoverValues = null;
+      for (const prop of ['color', 'backgroundColor']) {
+        const hoverDecl = hoverMap.get(prop);
+        if (!hoverDecl) continue;
+        const restingDecl = specifiedMap.get(prop);
+        if (!compareStaticPriority(restingDecl, hoverDecl)) continue;
+        const next = normalizeStaticCssValue(prop, hoverDecl.value, customProps, parentStyle, values);
+        if (next === values[prop]) continue;
+        if (!hoverValues) hoverValues = { ...values };
+        hoverValues[prop] = next;
+      }
+      if (hoverValues) staticDoc.setHoverStyle(node, makeStaticStyle(hoverValues));
+    }
+
     for (const child of node.children || []) {
       if (child.type === 'tag') computeNode(child, style, customProps);
     }

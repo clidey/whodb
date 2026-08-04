@@ -26,6 +26,7 @@ import {
   scaffoldSvelteComponentInsertSession,
   shouldUseSvelteComponentInjection,
 } from './live/svelte-component.mjs';
+import { enterLiveRoot } from './live/roots.mjs';
 
 const INSERT_POSITIONS = new Set(['before', 'after']);
 
@@ -131,6 +132,9 @@ Output (JSON):
   const query = argVal(args, '--query');
   const filePath = argVal(args, '--file');
   const text = argVal(args, '--text');
+  // See live-wrap.mjs: preflight computes the scaffold but leaves source
+  // untouched so the agent's single edit is the only framework reload.
+  const deferSourceWrite = args.includes('--defer-source-write');
 
   if (!id) { console.error('Missing --id'); process.exit(1); }
   if (!position) { console.error('Missing --position (before | after)'); process.exit(1); }
@@ -244,12 +248,23 @@ Output (JSON):
     isJsx,
   });
 
-  const newLines = [
-    ...lines.slice(0, spliceIndex),
-    ...wrapperLines,
-    ...lines.slice(spliceIndex),
-  ];
-  fs.writeFileSync(targetFile, newLines.join('\n'), 'utf-8');
+  let deferredWrapper = null;
+  if (deferSourceWrite) {
+    // Insert-as-empty-range: the agent inserts `wrapperBlock` (variants spliced
+    // at the marker) at spliceIndex without removing any source line.
+    deferredWrapper = {
+      block: wrapperLines.join('\n'),
+      replaceStartLine: spliceIndex + 1,
+      replaceEndLine: spliceIndex, // empty range (endLine < startLine) => insertion
+    };
+  } else {
+    const newLines = [
+      ...lines.slice(0, spliceIndex),
+      ...wrapperLines,
+      ...lines.slice(spliceIndex),
+    ];
+    fs.writeFileSync(targetFile, newLines.join('\n'), 'utf-8');
+  }
 
   const insertLine = spliceIndex + 3;
 
@@ -257,6 +272,10 @@ Output (JSON):
     mode: 'insert',
     position,
     file: relTargetFile,
+    sourceWritten: deferredWrapper ? false : undefined,
+    wrapperBlock: deferredWrapper ? deferredWrapper.block : undefined,
+    replaceStartLine: deferredWrapper ? deferredWrapper.replaceStartLine : undefined,
+    replaceEndLine: deferredWrapper ? deferredWrapper.replaceEndLine : undefined,
     insertLine: insertLine + 1,
     commentSyntax,
     styleMode: styleMode.mode,
@@ -268,5 +287,6 @@ Output (JSON):
 
 const _running = process.argv[1];
 if (_running?.endsWith('live-insert.mjs') || _running?.endsWith('live-insert.mjs/')) {
+  enterLiveRoot();
   insertCli();
 }

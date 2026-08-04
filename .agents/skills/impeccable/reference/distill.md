@@ -66,8 +66,8 @@ Systematically remove complexity across these dimensions:
 - **Reduce choices**: Fewer buttons, fewer options, clearer path forward (paradox of choice is real)
 - **Smart defaults**: Make common choices automatic, only ask when necessary
 - **Inline actions**: Replace modal flows with inline editing where possible
-- **Remove steps**: Can signup be one step instead of three? Can checkout be simplified?
-- **Clear CTAs**: ONE obvious next step, not five competing actions
+- **Remove steps**: Can the flow lose a step?
+- **Clear next action**: ONE obvious next action, not five competing ones
 
 ### Content Simplification
 - **Shorter copy**: Cut every sentence in half, then do it again
