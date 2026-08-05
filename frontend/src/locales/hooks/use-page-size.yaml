@@ -16,7 +16,7 @@ el_GR:
 
 en_GB:
   enterValidNumber: "Please enter a number greater than 0"
-  exceedsMaxPageSize: "Page size cannot exceed {max}"
+  exceedsMaxPageSize: "Page size can't exceed {max}"
 
 es_ES:
   enterValidNumber: "Por favor introduce un número mayor que 0"
@@ -28,7 +28,7 @@ fi_FI:
 
 fr_FR:
   enterValidNumber: "Veuillez saisir un nombre supérieur à 0"
-  exceedsMaxPageSize: "La taille de la page ne peut pas dépasser {max}"
+  exceedsMaxPageSize: "Page size can't exceed {max}"
 
 it_IT:
   enterValidNumber: "Inserisci un numero maggiore di 0"
@@ -36,7 +36,7 @@ it_IT:
 
 iw_IL:
   enterValidNumber: "נא להזין מספר גדול מ-0"
-  exceedsMaxPageSize: "גודל העמוד לא יכול לעלות על {max}"
+  exceedsMaxPageSize: "גודל העמוד לא יכול לחרוג מ-{max}"
 
 ja_JP:
   enterValidNumber: "0 より大きい数値を入力してください"
@@ -96,7 +96,7 @@ ca_ES:
 
 cs_CZ:
   enterValidNumber: "Zadejte číslo větší než 0"
-  exceedsMaxPageSize: "Velikost stránky nesmí překročit {max}"
+  exceedsMaxPageSize: "Velikost stránky nesmí přesáhnout {max}"
 
 da_DK:
   enterValidNumber: "Indtast venligst et tal større end 0"
@@ -136,7 +136,7 @@ sw_KE:
 
 ta_IN:
   enterValidNumber: "0 ஐ விட அதிகமான எண்ணை உள்ளிடவும்"
-  exceedsMaxPageSize: "பக்க அளவு {max} ஐ விட அதிகமாக இருக்கக்கூடாது"
+  exceedsMaxPageSize: "Page size can't exceed {max}"
 
 th_TH:
   enterValidNumber: "โปรดป้อนตัวเลขที่มากกว่า 0"
@@ -160,11 +160,11 @@ vi_VN:
 
 af_ZA:
   enterValidNumber: "Voer asseblief 'n getal groter as 0 in"
-  exceedsMaxPageSize: "Bladsygrootte kan nie meer as {max}"
+  exceedsMaxPageSize: "Bladsygrootte kan nie {max} oorskry"
 
 am_ET:
   enterValidNumber: "እባክህ ከ0 በላይ ቁጥር አስገባ"
-  exceedsMaxPageSize: "የገጽ መጠን መብለጥ አይችልም {max}"
+  exceedsMaxPageSize: "የገጽ መጠን {max} መብለጥ አይችልም"
 
 az_AZ:
   enterValidNumber: "Zəhmət olmasa 0-dan böyük rəqəm daxil edin"
@@ -184,7 +184,7 @@ ha_NG:
 
 ka_GE:
   enterValidNumber: "გთხოვთ შეიყვანოთ 0-ზე მეტი რიცხვი"
-  exceedsMaxPageSize: "გვერდის ზომა არ უნდა აღემატებოდეს {max}"
+  exceedsMaxPageSize: "გვერდის ზომა არ შეიძლება აღემატებოდეს {max}"
 
 km_KH:
   enterValidNumber: "សូមបញ្ចូលលេខធំជាង 0"
@@ -204,7 +204,7 @@ lv_LV:
 
 ml_IN:
   enterValidNumber: "ദയവായി 0-നേക്കാൾ വലിയ ഒരു സംഖ്യ നൽകുക"
-  exceedsMaxPageSize: "പേജിൻ്റെ വലുപ്പം {max} കവിയാൻ പാടില്ല"
+  exceedsMaxPageSize: "പേജിൻ്റെ വലുപ്പം {max} കവിയരുത്"
 
 mr_IN:
   enterValidNumber: "कृपया 0 पेक्षा मोठी संख्या प्रविष्ट करा"

@@ -17,8 +17,8 @@ ar_AE:
   selectProfilePlaceholder: "اختيار ملف تعريف..."
   switching: "التبديل..."
   switchSuccessful: "تم تبديل الملف الشخصي بنجاح"
-  switchFailed: "فشل في تبديل الملف الشخصي"
-  switchFailedWithError: "فشل في تبديل الملف الشخصي: {error}"
+  switchFailed: "تعذر تبديل الملف الشخصي"
+  switchFailedWithError: "تعذر تبديل الملف الشخصي: {error}"
 
 de_DE:
   serverDownTitle: "Server nicht verfügbar"
@@ -28,8 +28,8 @@ de_DE:
   selectProfilePlaceholder: "Wählen Sie ein Profil..."
   switching: "Wechsel..."
   switchSuccessful: "Profil erfolgreich gewechselt"
-  switchFailed: "Profilwechsel fehlgeschlagen"
-  switchFailedWithError: "Profilwechsel fehlgeschlagen: {error}"
+  switchFailed: "Profil konnte nicht gewechselt werden"
+  switchFailedWithError: "Profil konnte nicht gewechselt werden: {error}"
 
 el_GR:
   serverDownTitle: "Μη διαθέσιμος διακομιστής"
@@ -39,8 +39,8 @@ el_GR:
   selectProfilePlaceholder: "Επιλέξτε προφίλ..."
   switching: "Εναλλαγή..."
   switchSuccessful: "Επιτυχής αλλαγή προφίλ"
-  switchFailed: "Αποτυχία αλλαγής προφίλ"
-  switchFailedWithError: "Αποτυχία αλλαγής προφίλ: {error}"
+  switchFailed: "Δεν ήταν δυνατή η αλλαγή προφίλ"
+  switchFailedWithError: "Δεν ήταν δυνατή η αλλαγή προφίλ: {error}"
 
 en_GB:
   serverDownTitle: "Server Unavailable"
@@ -50,8 +50,8 @@ en_GB:
   selectProfilePlaceholder: "Choose a profile..."
   switching: "Switching..."
   switchSuccessful: "Successfully switched profile"
-  switchFailed: "Failed to switch profile"
-  switchFailedWithError: "Failed to switch profile: {error}"
+  switchFailed: "Couldn't switch profile"
+  switchFailedWithError: "Couldn't switch profile: {error}"
 
 es_ES:
   serverDownTitle: "Servidor no disponible"
@@ -62,7 +62,7 @@ es_ES:
   switching: "Traspuesta..."
   switchSuccessful: "Perfil cambiado exitosamente"
   switchFailed: "No se pudo cambiar de perfil"
-  switchFailedWithError: "No se pudo cambiar el perfil: {error}"
+  switchFailedWithError: "No se pudo cambiar de perfil: {error}"
 
 fi_FI:
   serverDownTitle: "Palvelin ei ole käytettävissä"
@@ -72,8 +72,8 @@ fi_FI:
   selectProfilePlaceholder: "Valitse profiili..."
   switching: "Vaihdetaan..."
   switchSuccessful: "Profiilin vaihto onnistui"
-  switchFailed: "Profiilin vaihto epäonnistui"
-  switchFailedWithError: "Profiilin vaihto epäonnistui: {error}"
+  switchFailed: "Profiilia ei voitu vaihtaa"
+  switchFailedWithError: "Profiilia ei voitu vaihtaa: {error}"
 
 fr_FR:
   serverDownTitle: "Serveur indisponible"
@@ -83,8 +83,8 @@ fr_FR:
   selectProfilePlaceholder: "Choisissez un profil..."
   switching: "Changement..."
   switchSuccessful: "Changement de profil réussi"
-  switchFailed: "Échec du changement de profil"
-  switchFailedWithError: "Échec du changement de profil : {error}"
+  switchFailed: "Impossible de changer de profil"
+  switchFailedWithError: "Couldn't switch profile: {error}"
 
 it_IT:
   serverDownTitle: "Server non disponibile"
@@ -105,8 +105,8 @@ iw_IL:
   selectProfilePlaceholder: "בחר פרופיל..."
   switching: "מחליף..."
   switchSuccessful: "הפרופיל עבר בהצלחה"
-  switchFailed: "החלפת פרופיל נכשלה"
-  switchFailedWithError: "החלפת פרופיל נכשלה: {error}"
+  switchFailed: "לא ניתן היה להחליף פרופיל"
+  switchFailedWithError: "לא ניתן היה להחליף פרופיל: {error}"
 
 ja_JP:
   serverDownTitle: "サーバーが利用できません"
@@ -116,8 +116,8 @@ ja_JP:
   selectProfilePlaceholder: "プロフィールを選択してください..."
   switching: "切り替え中..."
   switchSuccessful: "プロファイルが正常に切り替えられました"
-  switchFailed: "プロファイルの切り替えに失敗しました"
-  switchFailedWithError: "プロファイルの切り替えに失敗しました: {error}"
+  switchFailed: "プロファイルを切り替えられませんでした"
+  switchFailedWithError: "プロファイルを切り替えられませんでした: {error}"
 
 ko_KR:
   serverDownTitle: "서버를 사용할 수 없음"
@@ -127,8 +127,8 @@ ko_KR:
   selectProfilePlaceholder: "프로필을 선택하세요..."
   switching: "전환 중..."
   switchSuccessful: "프로필을 전환했습니다."
-  switchFailed: "프로필을 전환하지 못했습니다."
-  switchFailedWithError: "프로필을 전환하지 못했습니다: {error}"
+  switchFailed: "프로필을 전환할 수 없습니다."
+  switchFailedWithError: "프로필을 전환할 수 없습니다: {error}"
 
 nl_NL:
   serverDownTitle: "Server niet beschikbaar"
@@ -138,8 +138,8 @@ nl_NL:
   selectProfilePlaceholder: "Kies een profiel..."
   switching: "Overstappen..."
   switchSuccessful: "Profiel gewijzigd"
-  switchFailed: "Kan profiel niet wijzigen"
-  switchFailedWithError: "Kan niet van profiel wisselen: {error}"
+  switchFailed: "Kan niet van profiel wisselen"
+  switchFailedWithError: "Kan van profiel wisselen: {error}"
 
 pl_PL:
   serverDownTitle: "Serwer niedostępny"
@@ -149,8 +149,8 @@ pl_PL:
   selectProfilePlaceholder: "Wybierz profil..."
   switching: "Przełączanie..."
   switchSuccessful: "Pomyślnie zmieniono profil"
-  switchFailed: "Nie udało się przełączyć profilu"
-  switchFailedWithError: "Nie udało się przełączyć profilu: {error}"
+  switchFailed: "Nie udało się zmienić profilu"
+  switchFailedWithError: "Nie można zmienić profilu: {error}"
 
 pt_BR:
   serverDownTitle: "Servidor indisponível"
@@ -160,8 +160,8 @@ pt_BR:
   selectProfilePlaceholder: "Escolha um perfil..."
   switching: "Trocando..."
   switchSuccessful: "Perfil trocado com sucesso"
-  switchFailed: "Falha ao mudar de perfil"
-  switchFailedWithError: "Falha ao mudar de perfil: {error}"
+  switchFailed: "Não foi possível mudar de perfil"
+  switchFailedWithError: "Não foi possível mudar de perfil: {error}"
 
 ro_RO:
   serverDownTitle: "Server indisponibil"
@@ -171,8 +171,8 @@ ro_RO:
   selectProfilePlaceholder: "Alege un profil..."
   switching: "Se comută..."
   switchSuccessful: "Profilul a fost schimbat cu succes"
-  switchFailed: "Schimbarea profilului a eșuat"
-  switchFailedWithError: "Schimbarea profilului a eșuat: {error}"
+  switchFailed: "Nu s-a putut schimba profilul"
+  switchFailedWithError: "Nu s-a putut schimba profilul: {error}"
 
 ru_RU:
   serverDownTitle: "Сервер недоступен"
@@ -193,8 +193,8 @@ sk_SK:
   selectProfilePlaceholder: "Vyberte profil..."
   switching: "Prepínanie..."
   switchSuccessful: "Profil bol úspešne prepnutý"
-  switchFailed: "Prepnutie profilu zlyhalo"
-  switchFailedWithError: "Nepodarilo sa prepnúť profil: {error}"
+  switchFailed: "Profil sa nepodarilo prepnúť"
+  switchFailedWithError: "Profil sa nepodarilo prepnúť: {error}"
 
 sv_SE:
   serverDownTitle: "Servern är inte tillgänglig"
@@ -215,8 +215,8 @@ zh_CN:
   selectProfilePlaceholder: "选择个人资料..."
   switching: "交换..."
   switchSuccessful: "已成功切换个人资料"
-  switchFailed: "切换配置文件失败"
-  switchFailedWithError: "切换配置文件失败：{error}"
+  switchFailed: "无法切换个人资料"
+  switchFailedWithError: "无法切换配置文件：{error}"
 
 zh_TW:
   serverDownTitle: "伺服器不可用"
@@ -226,8 +226,8 @@ zh_TW:
   selectProfilePlaceholder: "選擇個人資料..."
   switching: "交換..."
   switchSuccessful: "已成功切換個人資料"
-  switchFailed: "切換設定檔失敗"
-  switchFailedWithError: "切換設定檔失敗：{error}"
+  switchFailed: "無法切換個人資料"
+  switchFailedWithError: "無法切換設定檔：{error}"
 
 bg_BG:
   serverDownTitle: "Сървърът е недостъпен"
@@ -237,8 +237,8 @@ bg_BG:
   selectProfilePlaceholder: "Изберете профил..."
   switching: "Превключване..."
   switchSuccessful: "Успешно превключен профил"
-  switchFailed: "Неуспешно превключване на профила"
-  switchFailedWithError: "Неуспешно превключване на профила: {error}"
+  switchFailed: "Профилът не можа да се превключи"
+  switchFailedWithError: "Не можах да превключа профила: {error}"
 
 bn_BD:
   serverDownTitle: "সার্ভার অনুপলব্ধ"
@@ -248,8 +248,8 @@ bn_BD:
   selectProfilePlaceholder: "একটি প্রোফাইল চয়ন করুন..."
   switching: "পাল্টানো হচ্ছে..."
   switchSuccessful: "সফলভাবে প্রোফাইল স্যুইচ করা হয়েছে"
-  switchFailed: "প্রোফাইল স্যুইচ করতে ব্যর্থ হয়েছে"
-  switchFailedWithError: "প্রোফাইল স্যুইচ করতে ব্যর্থ হয়েছে: {error}"
+  switchFailed: "প্রোফাইল স্যুইচ করা যায়নি"
+  switchFailedWithError: "প্রোফাইল স্যুইচ করা যায়নি: {error}"
 
 ca_ES:
   serverDownTitle: "Servidor no disponible"
@@ -270,8 +270,8 @@ cs_CZ:
   selectProfilePlaceholder: "Vyberte profil..."
   switching: "Přepínání..."
   switchSuccessful: "Profil byl úspěšně přepnut"
-  switchFailed: "Přepnutí profilu se nezdařilo"
-  switchFailedWithError: "Přepnutí profilu se nezdařilo: {error}"
+  switchFailed: "Profil se nepodařilo přepnout"
+  switchFailedWithError: "Profil nelze přepnout: {error}"
 
 da_DK:
   serverDownTitle: "Server ikke tilgængelig"
@@ -281,7 +281,7 @@ da_DK:
   selectProfilePlaceholder: "Vælg en profil..."
   switching: "Skifter..."
   switchSuccessful: "Skiftet profil"
-  switchFailed: "Det lykkedes ikke at skifte profil"
+  switchFailed: "Kunne ikke skifte profil"
   switchFailedWithError: "Kunne ikke skifte profil: {error}"
 
 fa_IR:
@@ -303,8 +303,8 @@ hi_IN:
   selectProfilePlaceholder: "एक प्रोफ़ाइल चुनें..."
   switching: "स्विचिंग..."
   switchSuccessful: "प्रोफ़ाइल सफलतापूर्वक स्विच की गई"
-  switchFailed: "प्रोफ़ाइल स्विच करने में विफल"
-  switchFailedWithError: "प्रोफ़ाइल स्विच करने में विफल: {error}"
+  switchFailed: "प्रोफ़ाइल स्विच नहीं किया जा सका"
+  switchFailedWithError: "प्रोफ़ाइल स्विच नहीं किया जा सका: {error}"
 
 hr_HR:
   serverDownTitle: "Poslužitelj nedostupan"
@@ -314,8 +314,8 @@ hr_HR:
   selectProfilePlaceholder: "Odaberite profil..."
   switching: "Prebacivanje..."
   switchSuccessful: "Uspješno promijenjen profil"
-  switchFailed: "Promjena profila nije uspjela"
-  switchFailedWithError: "Promjena profila nije uspjela: {error}"
+  switchFailed: "Nije moguće promijeniti profil"
+  switchFailedWithError: "Nije moguće promijeniti profil: {error}"
 
 hu_HU:
   serverDownTitle: "A szerver nem elérhető"
@@ -325,8 +325,8 @@ hu_HU:
   selectProfilePlaceholder: "Válassz egy profilt..."
   switching: "Átkapcsolás..."
   switchSuccessful: "Sikeres profilváltás"
-  switchFailed: "Nem sikerült váltani a profilt"
-  switchFailedWithError: "Nem sikerült a profilváltás: {error}"
+  switchFailed: "Nem sikerült profilt váltani"
+  switchFailedWithError: "Nem sikerült profilt váltani: {error}"
 
 id_ID:
   serverDownTitle: "Server Tidak Tersedia"
@@ -336,8 +336,8 @@ id_ID:
   selectProfilePlaceholder: "Pilih profil..."
   switching: "Beralih..."
   switchSuccessful: "Berhasil mengganti profil"
-  switchFailed: "Gagal mengganti profil"
-  switchFailedWithError: "Gagal mengganti profil: {error}"
+  switchFailed: "Tidak dapat mengganti profil"
+  switchFailedWithError: "Tidak dapat mengganti profil: {error}"
 
 ms_MY:
   serverDownTitle: "Pelayan Tidak Tersedia"
@@ -347,8 +347,8 @@ ms_MY:
   selectProfilePlaceholder: "Pilih profil..."
   switching: "Bertukar..."
   switchSuccessful: "Berjaya menukar profil"
-  switchFailed: "Gagal menukar profil"
-  switchFailedWithError: "Gagal menukar profil: {error}"
+  switchFailed: "Tidak dapat menukar profil"
+  switchFailedWithError: "Tidak dapat menukar profil: {error}"
 
 nb_NO:
   serverDownTitle: "Server utilgjengelig"
@@ -369,8 +369,8 @@ sw_KE:
   selectProfilePlaceholder: "Chagua wasifu..."
   switching: "Inabadilisha..."
   switchSuccessful: "Imefaulu kubadilisha wasifu"
-  switchFailed: "Imeshindwa kubadilisha wasifu"
-  switchFailedWithError: "Imeshindwa kubadilisha wasifu: {error}"
+  switchFailed: "Haikuweza kubadilisha wasifu"
+  switchFailedWithError: "Haikuweza kubadilisha wasifu: {error}"
 
 ta_IN:
   serverDownTitle: "சேவையகம் கிடைக்கவில்லை"
@@ -381,7 +381,7 @@ ta_IN:
   switching: "மாறுகிறது..."
   switchSuccessful: "சுயவிவரம் வெற்றிகரமாக மாற்றப்பட்டது"
   switchFailed: "சுயவிவரத்தை மாற்ற முடியவில்லை"
-  switchFailedWithError: "சுயவிவரத்தை மாற்றுவதில் தோல்வி: {error}"
+  switchFailedWithError: "சுயவிவரத்தை மாற்ற முடியவில்லை: {error}"
 
 th_TH:
   serverDownTitle: "เซิร์ฟเวอร์ไม่พร้อมใช้งาน"
@@ -424,8 +424,8 @@ ur_PK:
   selectProfilePlaceholder: "ایک پروفائل منتخب کریں..."
   switching: "سوئچ کر رہا ہے..."
   switchSuccessful: "پروفائل کو کامیابی سے تبدیل کر دیا گیا۔"
-  switchFailed: "پروفائل کو تبدیل کرنے میں ناکام"
-  switchFailedWithError: "پروفائل کو تبدیل کرنے میں ناکام: {error}"
+  switchFailed: "پروفائل کو تبدیل نہیں کیا جا سکا"
+  switchFailedWithError: "پروفائل کو تبدیل نہیں کیا جا سکا: {error}"
 
 vi_VN:
   serverDownTitle: "Máy chủ không khả dụng"
@@ -457,8 +457,8 @@ am_ET:
   selectProfilePlaceholder: "መገለጫ ይምረጡ..."
   switching: "በመቀየር ላይ..."
   switchSuccessful: "መገለጫ በተሳካ ሁኔታ ተቀይሯል።"
-  switchFailed: "መገለጫ መቀየር አልተሳካም።"
-  switchFailedWithError: "መገለጫ መቀየር አልተሳካም፦ {error}"
+  switchFailed: "መገለጫ መቀየር አልተቻለም"
+  switchFailedWithError: "መገለጫ መቀየር አልተቻለም፡{error}"
 
 az_AZ:
   serverDownTitle: "Server əlçatan deyil"
@@ -468,8 +468,8 @@ az_AZ:
   selectProfilePlaceholder: "Profil seçin..."
   switching: "Dəyişdirilir..."
   switchSuccessful: "Profil uğurla dəyişdirildi"
-  switchFailed: "Profili dəyişmək alınmadı"
-  switchFailedWithError: "Profili dəyişmək alınmadı: {error}"
+  switchFailed: "Profili dəyişmək mümkün olmadı"
+  switchFailedWithError: "Profili dəyişmək mümkün olmadı: {error}"
 
 et_EE:
   serverDownTitle: "Server pole saadaval"
@@ -479,8 +479,8 @@ et_EE:
   selectProfilePlaceholder: "Valige profiil..."
   switching: "Vahetamine..."
   switchSuccessful: "Profiili vahetamine õnnestus"
-  switchFailed: "Profiili vahetamine ebaõnnestus"
-  switchFailedWithError: "Profiili vahetamine ebaõnnestus: {error}"
+  switchFailed: "Profiili ei saanud vahetada"
+  switchFailedWithError: "Profiili ei saanud vahetada: {error}"
 
 gu_IN:
   serverDownTitle: "સર્વર અનુપલબ્ધ"
@@ -490,8 +490,8 @@ gu_IN:
   selectProfilePlaceholder: "પ્રોફાઇલ પસંદ કરો..."
   switching: "સ્વિચ કરી રહ્યું છે..."
   switchSuccessful: "પ્રોફાઇલ સફળતાપૂર્વક સ્વિચ કરી"
-  switchFailed: "પ્રોફાઇલ સ્વિચ કરવામાં નિષ્ફળ"
-  switchFailedWithError: "પ્રોફાઇલ સ્વિચ કરવામાં નિષ્ફળ: {error}"
+  switchFailed: "પ્રોફાઇલ સ્વિચ કરી શકાયું નથી"
+  switchFailedWithError: "પ્રોફાઇલ સ્વિચ કરી શકાયું નથી: {error}"
 
 ha_NG:
   serverDownTitle: "Babu Sabar"
@@ -523,8 +523,8 @@ km_KH:
   selectProfilePlaceholder: "ជ្រើសរើសប្រវត្តិរូប..."
   switching: "កំពុងប្តូរ..."
   switchSuccessful: "បានប្តូរទម្រង់ដោយជោគជ័យ"
-  switchFailed: "បានបរាជ័យក្នុងការប្តូរទម្រង់"
-  switchFailedWithError: "បរាជ័យក្នុងការផ្លាស់ប្តូរទម្រង់៖ {error}"
+  switchFailed: "មិនអាចប្តូរប្រវត្តិរូបបានទេ។"
+  switchFailedWithError: "មិនអាចប្តូរទម្រង់៖ {error}"
 
 kn_IN:
   serverDownTitle: "ಸರ್ವರ್ ಲಭ್ಯವಿಲ್ಲ"
@@ -534,8 +534,8 @@ kn_IN:
   selectProfilePlaceholder: "ಪ್ರೊಫೈಲ್ ಆಯ್ಕೆಮಾಡಿ..."
   switching: "ಬದಲಾಯಿಸಲಾಗುತ್ತಿದೆ..."
   switchSuccessful: "ಪ್ರೊಫೈಲ್ ಅನ್ನು ಯಶಸ್ವಿಯಾಗಿ ಬದಲಾಯಿಸಲಾಗಿದೆ"
-  switchFailed: "ಪ್ರೊಫೈಲ್ ಬದಲಾಯಿಸಲು ವಿಫಲವಾಗಿದೆ"
-  switchFailedWithError: "ಪ್ರೊಫೈಲ್ ಬದಲಾಯಿಸಲು ವಿಫಲವಾಗಿದೆ: {error}"
+  switchFailed: "ಪ್ರೊಫೈಲ್ ಬದಲಾಯಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ"
+  switchFailedWithError: "ಪ್ರೊಫೈಲ್ ಬದಲಾಯಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ: {error}"
 
 lt_LT:
   serverDownTitle: "Serveris nepasiekiamas"
@@ -556,8 +556,8 @@ lv_LV:
   selectProfilePlaceholder: "Izvēlieties profilu..."
   switching: "Notiek pārslēgšana..."
   switchSuccessful: "Profils ir veiksmīgi pārslēgts"
-  switchFailed: "Neizdevās pārslēgt profilu"
-  switchFailedWithError: "Neizdevās pārslēgt profilu: {error}"
+  switchFailed: "Nevarēja pārslēgt profilu"
+  switchFailedWithError: "Nevarēja pārslēgt profilu: {error}"
 
 ml_IN:
   serverDownTitle: "സെർവർ ലഭ്യമല്ല"
@@ -567,8 +567,8 @@ ml_IN:
   selectProfilePlaceholder: "ഒരു പ്രൊഫൈൽ തിരഞ്ഞെടുക്കുക..."
   switching: "മാറുന്നു..."
   switchSuccessful: "പ്രൊഫൈൽ മാറ്റി"
-  switchFailed: "പ്രൊഫൈൽ മാറുന്നതിൽ പരാജയപ്പെട്ടു"
-  switchFailedWithError: "പ്രൊഫൈൽ മാറുന്നതിൽ പരാജയപ്പെട്ടു: {error}"
+  switchFailed: "പ്രൊഫൈൽ മാറാനായില്ല"
+  switchFailedWithError: "പ്രൊഫൈൽ മാറാൻ കഴിഞ്ഞില്ല: {error}"
 
 mr_IN:
   serverDownTitle: "सर्व्हर अनुपलब्ध"
@@ -578,8 +578,8 @@ mr_IN:
   selectProfilePlaceholder: "प्रोफाइल निवडा..."
   switching: "स्विच करत आहे..."
   switchSuccessful: "प्रोफाइल यशस्वीरित्या स्विच केले"
-  switchFailed: "प्रोफाइल स्विच करण्यात अयशस्वी"
-  switchFailedWithError: "प्रोफाइल स्विच करण्यात अयशस्वी: {error}"
+  switchFailed: "प्रोफाइल स्विच करू शकलो नाही"
+  switchFailedWithError: "प्रोफाइल स्विच करू शकलो नाही: {error}"
 
 ne_NP:
   serverDownTitle: "सर्भर उपलब्ध छैन"
@@ -589,8 +589,8 @@ ne_NP:
   selectProfilePlaceholder: "प्रोफाइल छान्नुहोस्..."
   switching: "स्विच गर्दै..."
   switchSuccessful: "प्रोफाइल सफलतापूर्वक बदलियो"
-  switchFailed: "प्रोफाइल स्विच गर्न असफल भयो"
-  switchFailedWithError: "प्रोफाइल स्विच गर्न असफल: {error}"
+  switchFailed: "प्रोफाइल स्विच गर्न सकिएन"
+  switchFailedWithError: "प्रोफाइल स्विच गर्न सकिएन: {error}"
 
 pa_IN:
   serverDownTitle: "ਸਰਵਰ ਉਪਲਬਧ ਨਹੀਂ ਹੈ"
@@ -600,8 +600,8 @@ pa_IN:
   selectProfilePlaceholder: "ਇੱਕ ਪ੍ਰੋਫਾਈਲ ਚੁਣੋ..."
   switching: "ਬਦਲੀ ਜਾ ਰਹੀ ਹੈ..."
   switchSuccessful: "ਪ੍ਰੋਫਾਈਲ ਨੂੰ ਸਫਲਤਾਪੂਰਵਕ ਬਦਲਿਆ ਗਿਆ"
-  switchFailed: "ਪ੍ਰੋਫਾਈਲ ਬਦਲਣਾ ਅਸਫਲ ਰਿਹਾ"
-  switchFailedWithError: "ਪ੍ਰੋਫਾਈਲ ਨੂੰ ਬਦਲਣ ਵਿੱਚ ਅਸਫਲ: {error}"
+  switchFailed: "ਪ੍ਰੋਫਾਈਲ ਬਦਲਿਆ ਨਹੀਂ ਜਾ ਸਕਿਆ"
+  switchFailedWithError: "ਪ੍ਰੋਫਾਈਲ ਨੂੰ ਬਦਲਿਆ ਨਹੀਂ ਜਾ ਸਕਿਆ: {error}"
 
 si_LK:
   serverDownTitle: "සේවාදායකය නොමැත"
@@ -611,8 +611,8 @@ si_LK:
   selectProfilePlaceholder: "පැතිකඩක් තෝරන්න..."
   switching: "මාරු වෙමින්..."
   switchSuccessful: "පැතිකඩ සාර්ථකව මාරු විය"
-  switchFailed: "පැතිකඩ මාරු කිරීමට අසමත් විය"
-  switchFailedWithError: "පැතිකඩ මාරු කිරීමට අසමත් විය: {error}"
+  switchFailed: "පැතිකඩ මාරු කිරීමට නොහැකි විය"
+  switchFailedWithError: "පැතිකඩ මාරු කිරීමට නොහැකි විය: {error}"
 
 sl_SI:
   serverDownTitle: "Strežnik ni na voljo"
@@ -622,8 +622,8 @@ sl_SI:
   selectProfilePlaceholder: "Izberite profil ..."
   switching: "Preklop ..."
   switchSuccessful: "Profil je bil uspešno zamenjan"
-  switchFailed: "Preklop profila ni uspel"
-  switchFailedWithError: "Preklop profila ni uspel: {error}"
+  switchFailed: "Ni bilo mogoče zamenjati profila"
+  switchFailedWithError: "Ni bilo mogoče zamenjati profila: {error}"
 
 sr_RS:
   serverDownTitle: "Сервер недоступан"
@@ -644,8 +644,8 @@ te_IN:
   selectProfilePlaceholder: "ప్రొఫైల్‌ని ఎంచుకోండి..."
   switching: "మారుతోంది..."
   switchSuccessful: "ప్రొఫైల్ విజయవంతంగా మార్చబడింది"
-  switchFailed: "ప్రొఫైల్ మారడం విఫలమైంది"
-  switchFailedWithError: "ప్రొఫైల్‌ని మార్చడంలో విఫలమైంది: {error}"
+  switchFailed: "ప్రొఫైల్‌ని మార్చడం సాధ్యపడలేదు"
+  switchFailedWithError: "ప్రొఫైల్‌ను మార్చడం సాధ్యపడలేదు: {error}"
 
 tl_PH:
   serverDownTitle: "Hindi Available ang Server"
@@ -655,8 +655,8 @@ tl_PH:
   selectProfilePlaceholder: "Pumili ng profile..."
   switching: "Lumipat..."
   switchSuccessful: "Matagumpay na napalitan ang profile"
-  switchFailed: "Nabigong lumipat ng profile"
-  switchFailedWithError: "Nabigong lumipat ng profile: {error}"
+  switchFailed: "Hindi mailipat ang profile"
+  switchFailedWithError: "Hindi mailipat ang profile: {error}"
 
 uz_UZ:
   serverDownTitle: "Server mavjud emas"
@@ -677,5 +677,5 @@ yo_NG:
   selectProfilePlaceholder: "Yan profaili kan..."
   switching: "Yipada..."
   switchSuccessful: "Ni aṣeyọri yipada profaili"
-  switchFailed: "O kuna lati yi profaili pada"
-  switchFailedWithError: "Kuna lati yi profaili pada: {error}"
+  switchFailed: "Ko le yi profaili pada"
+  switchFailedWithError: "Ko le yi profaili pada: {error}"

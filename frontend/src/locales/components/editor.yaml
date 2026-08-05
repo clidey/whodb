@@ -7,7 +7,7 @@ en_US:
   invalidJsonDescription: Please check your syntax and try again.
 
 ar_AE:
-  confirmOperationDescription: "سيقوم هذا الاستعلام بتعديل البيانات أو المخطط. هل أنت متأكد أنك تريد تنفيذ ذلك؟ لا يمكن التراجع عن هذا الإجراء."
+  confirmOperationDescription: "سيؤدي هذا الاستعلام إلى تغيير بياناتك أو مخططك. هل أنت متأكد أنك تريد تشغيله؟"
   showPreview: "عرض المعاينة"
   hidePreview: "إخفاء المعاينة"
   runQuery: "تشغيل الاستعلام"
@@ -15,7 +15,7 @@ ar_AE:
   invalidJsonDescription: "يرجى التحقق من بناء الجملة الخاص بك وحاول مرة أخرى."
 
 de_DE:
-  confirmOperationDescription: "Diese Abfrage ändert Daten oder Schema. Sind Sie sicher, dass Sie es ausführen möchten? Diese Aktion kann nicht rückgängig gemacht werden."
+  confirmOperationDescription: "Diese Abfrage ändert Ihre Daten oder Ihr Schema. Sind Sie sicher, dass Sie es ausführen möchten?"
   showPreview: "Vorschau anzeigen"
   hidePreview: "Vorschau ausblenden"
   runQuery: "Abfrage ausführen"
@@ -23,7 +23,7 @@ de_DE:
   invalidJsonDescription: "Bitte überprüfen Sie Ihre Syntax und versuchen Sie es erneut."
 
 el_GR:
-  confirmOperationDescription: "Αυτό το ερώτημα θα τροποποιήσει δεδομένα ή σχήμα. Είστε βέβαιοι ότι θέλετε να το εκτελέσετε; Αυτή η ενέργεια δεν μπορεί να αναιρεθεί."
+  confirmOperationDescription: "Αυτό το ερώτημα θα αλλάξει τα δεδομένα ή το σχήμα σας. Είστε βέβαιοι ότι θέλετε να το εκτελέσετε;"
   showPreview: "Εμφάνιση προεπισκόπησης"
   hidePreview: "Απόκρυψη προεπισκόπησης"
   runQuery: "Εκτέλεση ερωτήματος"
@@ -31,7 +31,7 @@ el_GR:
   invalidJsonDescription: "Ελέγξτε τη σύνταξη και δοκιμάστε ξανά."
 
 en_GB:
-  confirmOperationDescription: "This query will modify data or schema. Are you sure you want to execute it? This action cannot be undone."
+  confirmOperationDescription: "This query will change your data or schema. Are you sure you want to run it?"
   showPreview: "Show Preview"
   hidePreview: "Hide Preview"
   runQuery: "Run query"
@@ -39,7 +39,7 @@ en_GB:
   invalidJsonDescription: "Please check your syntax and try again."
 
 es_ES:
-  confirmOperationDescription: "Esta consulta modificará los datos o el esquema. ¿Estás seguro de que quieres ejecutarlo? Esta acción no se puede deshacer."
+  confirmOperationDescription: "Esta consulta cambiará sus datos o esquema. ¿Estás seguro de que quieres ejecutarlo?"
   showPreview: "Mostrar vista previa"
   hidePreview: "Ocultar vista previa"
   runQuery: "Ejecutar consulta"
@@ -47,7 +47,7 @@ es_ES:
   invalidJsonDescription: "Verifique su sintaxis e inténtelo nuevamente."
 
 fi_FI:
-  confirmOperationDescription: "Tämä kysely muuttaa tietoja tai kaaviota. Oletko varma, että haluat suorittaa sen? Tätä toimintoa ei voi kumota."
+  confirmOperationDescription: "Tämä kysely muuttaa tietojasi tai malliasi. Oletko varma, että haluat suorittaa sen?"
   showPreview: "Näytä esikatselu"
   hidePreview: "Piilota esikatselu"
   runQuery: "Suorita kysely"
@@ -55,7 +55,7 @@ fi_FI:
   invalidJsonDescription: "Tarkista syntaksi ja yritä uudelleen."
 
 fr_FR:
-  confirmOperationDescription: "Cette requête modifiera les données ou le schéma. Êtes-vous sûr de vouloir l'exécuter ? Cette action ne peut pas être annulée."
+  confirmOperationDescription: "This query will change your data or schema. Are you sure you want to run it?"
   showPreview: "Afficher l'aperçu"
   hidePreview: "Masquer l'aperçu"
   runQuery: "Exécuter une requête"
@@ -63,7 +63,7 @@ fr_FR:
   invalidJsonDescription: "Veuillez vérifier votre syntaxe et réessayer."
 
 it_IT:
-  confirmOperationDescription: "Questa query modificherà i dati o lo schema. Sei sicuro di volerlo eseguire? Questa azione non può essere annullata."
+  confirmOperationDescription: "Questa query modificherà i tuoi dati o lo schema. Sei sicuro di volerlo eseguire?"
   showPreview: "Mostra anteprima"
   hidePreview: "Nascondi anteprima"
   runQuery: "Esegui interrogazione"
@@ -71,7 +71,7 @@ it_IT:
   invalidJsonDescription: "Controlla la sintassi e riprova."
 
 iw_IL:
-  confirmOperationDescription: "שאילתה זו תשנה נתונים או סכימה. האם אתה בטוח שאתה רוצה לבצע את זה? לא ניתן לבטל פעולה זו."
+  confirmOperationDescription: "שאילתה זו תשנה את הנתונים או הסכימה שלך. האם אתה בטוח שאתה רוצה להפעיל אותו?"
   showPreview: "הצג תצוגה מקדימה"
   hidePreview: "הסתר תצוגה מקדימה"
   runQuery: "הפעל שאילתה"
@@ -79,7 +79,7 @@ iw_IL:
   invalidJsonDescription: "אנא בדוק את התחביר שלך ונסה שוב."
 
 ja_JP:
-  confirmOperationDescription: "このクエリはデータまたはスキーマを変更します。 本当に実行してもよろしいですか? この操作は元に戻すことができません。"
+  confirmOperationDescription: "このクエリはデータまたはスキーマを変更します。 本当に実行してもよろしいですか?"
   showPreview: "プレビューを表示"
   hidePreview: "プレビューを非表示にする"
   runQuery: "クエリの実行"
@@ -87,7 +87,7 @@ ja_JP:
   invalidJsonDescription: "構文を確認して再試行してください。"
 
 ko_KR:
-  confirmOperationDescription: "이 쿼리는 데이터나 스키마를 수정합니다. 정말로 실행하시겠습니까? 이 작업은 취소할 수 없습니다."
+  confirmOperationDescription: "이 쿼리는 데이터나 스키마를 변경합니다. 정말로 실행하시겠습니까?"
   showPreview: "미리보기 표시"
   hidePreview: "미리보기 숨기기"
   runQuery: "쿼리 실행"
@@ -95,7 +95,7 @@ ko_KR:
   invalidJsonDescription: "구문을 확인하고 다시 시도하십시오."
 
 nl_NL:
-  confirmOperationDescription: "Met deze query worden gegevens of schema gewijzigd. Weet u zeker dat u het wilt uitvoeren? Deze actie kan niet ongedaan worden gemaakt."
+  confirmOperationDescription: "Deze zoekopdracht zal uw gegevens of schema wijzigen. Weet je zeker dat je het wilt uitvoeren?"
   showPreview: "Voorbeeld tonen"
   hidePreview: "Voorbeeld verbergen"
   runQuery: "Query uitvoeren"
@@ -103,7 +103,7 @@ nl_NL:
   invalidJsonDescription: "Controleer uw syntaxis en probeer het opnieuw."
 
 pl_PL:
-  confirmOperationDescription: "To zapytanie zmodyfikuje dane lub schemat. Czy na pewno chcesz to wykonać? Tej akcji nie można cofnąć."
+  confirmOperationDescription: "To zapytanie spowoduje zmianę Twoich danych lub schematu. Czy na pewno chcesz to uruchomić?"
   showPreview: "Pokaż podgląd"
   hidePreview: "Ukryj podgląd"
   runQuery: "Uruchom zapytanie"
@@ -111,7 +111,7 @@ pl_PL:
   invalidJsonDescription: "Sprawdź składnię i spróbuj ponownie."
 
 pt_BR:
-  confirmOperationDescription: "Esta consulta modificará dados ou esquema. Tem certeza de que deseja executá-lo? Esta ação não pode ser desfeita."
+  confirmOperationDescription: "Esta consulta alterará seus dados ou esquema. Tem certeza de que deseja executá-lo?"
   showPreview: "Mostrar visualização"
   hidePreview: "Ocultar visualização"
   runQuery: "Executar consulta"
@@ -119,7 +119,7 @@ pt_BR:
   invalidJsonDescription: "Verifique sua sintaxe e tente novamente."
 
 ro_RO:
-  confirmOperationDescription: "Această interogare va modifica datele sau schema. Sunteți sigur că doriți să o executați? Această acțiune nu poate fi anulată."
+  confirmOperationDescription: "Această interogare vă va schimba datele sau schema. Ești sigur că vrei să-l rulezi?"
   showPreview: "Afișează previzualizarea"
   hidePreview: "Ascunde previzualizarea"
   runQuery: "Rulați interogarea"
@@ -127,7 +127,7 @@ ro_RO:
   invalidJsonDescription: "Vă rugăm să vă verificați sintaxa și să încercați din nou."
 
 ru_RU:
-  confirmOperationDescription: "Этот запрос изменит данные или схему. Вы уверены, что хотите его выполнить? Это действие невозможно отменить."
+  confirmOperationDescription: "Этот запрос изменит ваши данные или схему. Вы уверены, что хотите запустить его?"
   showPreview: "Показать предварительный просмотр"
   hidePreview: "Скрыть предварительный просмотр"
   runQuery: "Запустить запрос"
@@ -135,7 +135,7 @@ ru_RU:
   invalidJsonDescription: "Пожалуйста, проверьте синтаксис и повторите попытку."
 
 sk_SK:
-  confirmOperationDescription: "Tento dotaz upraví údaje alebo schému. Ste si istý, že to chcete vykonať? Túto akciu nie je možné vrátiť späť."
+  confirmOperationDescription: "Tento dotaz zmení vaše údaje alebo schému. Ste si istý, že ho chcete spustiť?"
   showPreview: "Zobraziť ukážku"
   hidePreview: "Skryť ukážku"
   runQuery: "Spustiť dotaz"
@@ -143,7 +143,7 @@ sk_SK:
   invalidJsonDescription: "Skontrolujte svoju syntax a skúste to znova."
 
 sv_SE:
-  confirmOperationDescription: "Den här frågan kommer att ändra data eller schema. Är du säker på att du vill köra den? Denna åtgärd kan inte ångras."
+  confirmOperationDescription: "Den här frågan kommer att ändra din data eller ditt schema. Är du säker på att du vill köra den?"
   showPreview: "Visa förhandsgranskning"
   hidePreview: "Dölj förhandsgranskning"
   runQuery: "Kör fråga"
@@ -151,7 +151,7 @@ sv_SE:
   invalidJsonDescription: "Kontrollera din syntax och försök igen."
 
 zh_CN:
-  confirmOperationDescription: "此查询将修改数据或架构。 您确定要执行它吗？ 此操作无法撤消。"
+  confirmOperationDescription: "此查询将更改您的数据或架构。 您确定要运行它吗？"
   showPreview: "显示预览"
   hidePreview: "隐藏预览"
   runQuery: "运行查询"
@@ -159,7 +159,7 @@ zh_CN:
   invalidJsonDescription: "请检查您的语法并重试。"
 
 zh_TW:
-  confirmOperationDescription: "此查詢將修改資料或架構。 您確定要執行它嗎？ 此操作無法撤銷。"
+  confirmOperationDescription: "此查詢將更改您的資料或架構。 您確定要運行它嗎？"
   showPreview: "顯示預覽"
   hidePreview: "隱藏預覽"
   runQuery: "執行查詢"
@@ -167,7 +167,7 @@ zh_TW:
   invalidJsonDescription: "請檢查您的語法並重試。"
 
 bg_BG:
-  confirmOperationDescription: "Тази заявка ще промени данни или схема. Сигурни ли сте, че искате да го изпълните? Това действие не може да бъде отменено."
+  confirmOperationDescription: "Тази заявка ще промени вашите данни или схема. Сигурни ли сте, че искате да го стартирате?"
   showPreview: "Показване на визуализация"
   hidePreview: "Скриване на визуализация"
   runQuery: "Изпълнение на заявка"
@@ -175,7 +175,7 @@ bg_BG:
   invalidJsonDescription: "Моля, проверете синтаксиса си и опитайте отново."
 
 bn_BD:
-  confirmOperationDescription: "এই ক্যোয়ারী ডেটা বা স্কিমা পরিবর্তন করবে। আপনি কি এটি কার্যকর করতে চান? এই ক্রিয়াটি পূর্বাবস্থায় ফেরানো যাবে না৷"
+  confirmOperationDescription: "এই প্রশ্নটি আপনার ডেটা বা স্কিমা পরিবর্তন করবে। আপনি কি এটি চালানোর বিষয়ে নিশ্চিত?"
   showPreview: "পূর্বরূপ দেখান"
   hidePreview: "পূর্বরূপ লুকান"
   runQuery: "কোয়েরি চালান"
@@ -183,7 +183,7 @@ bn_BD:
   invalidJsonDescription: "অনুগ্রহ করে আপনার সিনট্যাক্স পরীক্ষা করুন এবং আবার চেষ্টা করুন।"
 
 ca_ES:
-  confirmOperationDescription: "Aquesta consulta modificarà les dades o l'esquema. Esteu segur que voleu executar-lo? Aquesta acció no es pot desfer."
+  confirmOperationDescription: "Aquesta consulta canviarà les vostres dades o l'esquema. Esteu segur que voleu executar-lo?"
   showPreview: "Mostra la vista prèvia"
   hidePreview: "Hide Preview"
   runQuery: "Executeu la consulta"
@@ -191,7 +191,7 @@ ca_ES:
   invalidJsonDescription: "Comproveu la vostra sintaxi i torneu-ho a provar."
 
 cs_CZ:
-  confirmOperationDescription: "Tento dotaz změní data nebo schéma. Opravdu to chcete provést? Tuto akci nelze vrátit zpět."
+  confirmOperationDescription: "Tento dotaz změní vaše data nebo schéma. Opravdu to chcete spustit?"
   showPreview: "Zobrazit náhled"
   hidePreview: "Skrýt náhled"
   runQuery: "Spustit dotaz"
@@ -199,7 +199,7 @@ cs_CZ:
   invalidJsonDescription: "Zkontrolujte prosím svou syntaxi a zkuste to znovu."
 
 da_DK:
-  confirmOperationDescription: "Denne forespørgsel vil ændre data eller skema. Er du sikker på, at du vil udføre det? Denne handling kan ikke fortrydes."
+  confirmOperationDescription: "Denne forespørgsel vil ændre dine data eller skema. Er du sikker på, at du vil køre det?"
   showPreview: "Vis forhåndsvisning"
   hidePreview: "Skjul forhåndsvisning"
   runQuery: "Kør forespørgsel"
@@ -207,7 +207,7 @@ da_DK:
   invalidJsonDescription: "Tjek venligst din syntaks og prøv igen."
 
 fa_IR:
-  confirmOperationDescription: "این پرس و جو داده ها یا طرحواره را تغییر می دهد. آیا مطمئن هستید که می خواهید آن را اجرا کنید؟ این عمل قابل لغو نیست."
+  confirmOperationDescription: "این پرس و جو داده ها یا طرح شما را تغییر می دهد. آیا مطمئن هستید که می خواهید آن را اجرا کنید؟"
   showPreview: "نمایش پیش نمایش"
   hidePreview: "پنهان کردن پیش نمایش"
   runQuery: "پرس و جو را اجرا کنید"
@@ -215,7 +215,7 @@ fa_IR:
   invalidJsonDescription: "لطفاً نحو خود را بررسی کنید و دوباره امتحان کنید."
 
 hi_IN:
-  confirmOperationDescription: "यह क्वेरी डेटा या स्कीमा को संशोधित करेगी. क्या आप वाकई इसे निष्पादित करना चाहते हैं? इस एक्शन को वापस नहीं किया जा सकता।"
+  confirmOperationDescription: "यह क्वेरी आपके डेटा या स्कीमा को बदल देगी. क्या आप वाकई इसे चलाना चाहते हैं?"
   showPreview: "पूर्वावलोकन दिखाएं"
   hidePreview: "पूर्वावलोकन छिपाएँ"
   runQuery: "क्वेरी चलाएँ"
@@ -223,7 +223,7 @@ hi_IN:
   invalidJsonDescription: "कृपया अपना सिंटैक्स जाँचें और पुनः प्रयास करें।"
 
 hr_HR:
-  confirmOperationDescription: "Ovaj će upit izmijeniti podatke ili shemu. Jeste li sigurni da ga želite izvršiti? Ova se radnja ne može poništiti."
+  confirmOperationDescription: "Ovaj upit će promijeniti vaše podatke ili shemu. Jeste li sigurni da ga želite pokrenuti?"
   showPreview: "Prikaži pregled"
   hidePreview: "Sakrij pretpregled"
   runQuery: "Pokreni upit"
@@ -231,7 +231,7 @@ hr_HR:
   invalidJsonDescription: "Provjerite svoju sintaksu i pokušajte ponovno."
 
 hu_HU:
-  confirmOperationDescription: "Ez a lekérdezés módosítja az adatokat vagy a sémát. Biztos, hogy végre akarod hajtani? Ez a művelet nem vonható vissza."
+  confirmOperationDescription: "Ez a lekérdezés módosítja az adatokat vagy a sémát. Biztosan futtatni akarod?"
   showPreview: "Előnézet megjelenítése"
   hidePreview: "Előnézet elrejtése"
   runQuery: "Lekérdezés futtatása"
@@ -239,7 +239,7 @@ hu_HU:
   invalidJsonDescription: "Kérjük, ellenőrizze a szintaxist, és próbálja újra."
 
 id_ID:
-  confirmOperationDescription: "Kueri ini akan mengubah data atau skema. Apakah Anda yakin ingin menjalankannya? Tindakan ini tidak dapat dibatalkan."
+  confirmOperationDescription: "Kueri ini akan mengubah data atau skema Anda. Apakah Anda yakin ingin menjalankannya?"
   showPreview: "Tampilkan Pratinjau"
   hidePreview: "Sembunyikan Pratinjau"
   runQuery: "Jalankan kueri"
@@ -247,7 +247,7 @@ id_ID:
   invalidJsonDescription: "Silakan periksa sintaksis Anda dan coba lagi."
 
 ms_MY:
-  confirmOperationDescription: "Pertanyaan ini akan mengubah suai data atau skema. Adakah anda pasti mahu melaksanakannya? Tindakan ini tidak boleh dibuat asal."
+  confirmOperationDescription: "Pertanyaan ini akan menukar data atau skema anda. Adakah anda pasti mahu menjalankannya?"
   showPreview: "Tunjukkan Pratonton"
   hidePreview: "Sembunyikan Pratonton"
   runQuery: "Jalankan pertanyaan"
@@ -255,7 +255,7 @@ ms_MY:
   invalidJsonDescription: "Sila semak sintaks anda dan cuba lagi."
 
 nb_NO:
-  confirmOperationDescription: "Denne spørringen vil endre data eller skjema. Er du sikker på at du vil utføre den? Denne handlingen kan ikke angres."
+  confirmOperationDescription: "Denne spørringen vil endre dataene eller skjemaet. Er du sikker på at du vil kjøre den?"
   showPreview: "Vis forhåndsvisning"
   hidePreview: "Skjul forhåndsvisning"
   runQuery: "Kjør spørringen"
@@ -263,7 +263,7 @@ nb_NO:
   invalidJsonDescription: "Kontroller syntaksen og prøv igjen."
 
 sw_KE:
-  confirmOperationDescription: "Hoja hii itarekebisha data au schema. Je, una uhakika unataka kuitekeleza? Kitendo hiki hakiwezi kutenduliwa."
+  confirmOperationDescription: "Hoja hii itabadilisha data au utaratibu wako. Je, una uhakika unataka kuiendesha?"
   showPreview: "Onyesha Hakiki"
   hidePreview: "Ficha Onyesho la Kuchungulia"
   runQuery: "Endesha swali"
@@ -271,7 +271,7 @@ sw_KE:
   invalidJsonDescription: "Tafadhali angalia sintaksia yako na ujaribu tena."
 
 ta_IN:
-  confirmOperationDescription: "இந்த வினவல் தரவு அல்லது திட்டத்தை மாற்றும். அதைச் செயல்படுத்த விரும்புகிறீர்களா? இந்தச் செயலைச் செயல்தவிர்க்க முடியாது."
+  confirmOperationDescription: "இந்த வினவல் உங்கள் தரவு அல்லது திட்டத்தை மாற்றும். நீங்கள் நிச்சயமாக இயக்க விரும்புகிறீர்களா?"
   showPreview: "முன்னோட்டத்தைக் காட்டு"
   hidePreview: "முன்னோட்டத்தை மறை"
   runQuery: "வினவலை இயக்கவும்"
@@ -279,7 +279,7 @@ ta_IN:
   invalidJsonDescription: "உங்கள் தொடரியல் சரிபார்த்து மீண்டும் முயற்சிக்கவும்."
 
 th_TH:
-  confirmOperationDescription: "แบบสอบถามนี้จะแก้ไขข้อมูลหรือสคีมา คุณแน่ใจหรือไม่ว่าต้องการดำเนินการดังกล่าว การดำเนินการนี้ไม่สามารถยกเลิกได้"
+  confirmOperationDescription: "แบบสอบถามนี้จะเปลี่ยนข้อมูลหรือสคีมาของคุณ คุณแน่ใจหรือไม่ว่าต้องการเรียกใช้งาน?"
   showPreview: "แสดงตัวอย่าง"
   hidePreview: "ซ่อนการแสดงตัวอย่าง"
   runQuery: "เรียกใช้แบบสอบถาม"
@@ -287,7 +287,7 @@ th_TH:
   invalidJsonDescription: "โปรดตรวจสอบไวยากรณ์ของคุณแล้วลองอีกครั้ง"
 
 tr_TR:
-  confirmOperationDescription: "Bu sorgu verileri veya şemayı değiştirecektir. Bunu yürütmek istediğinizden emin misiniz? Bu eylem geri alınamaz."
+  confirmOperationDescription: "Bu sorgu verilerinizi veya şemanızı değiştirecek. Çalıştırmak istediğinizden emin misiniz?"
   showPreview: "Önizlemeyi Göster"
   hidePreview: "Önizlemeyi Gizle"
   runQuery: "Sorguyu çalıştır"
@@ -295,7 +295,7 @@ tr_TR:
   invalidJsonDescription: "Lütfen sözdiziminizi kontrol edip tekrar deneyin."
 
 uk_UA:
-  confirmOperationDescription: "Цей запит змінить дані або схему. Ви впевнені, що хочете його виконати? Цю дію не можна скасувати."
+  confirmOperationDescription: "Цей запит змінить ваші дані або схему. Ви впевнені, що хочете його запустити?"
   showPreview: "Показати попередній перегляд"
   hidePreview: "Приховати попередній перегляд"
   runQuery: "Виконати запит"
@@ -303,7 +303,7 @@ uk_UA:
   invalidJsonDescription: "Перевірте синтаксис і повторіть спробу."
 
 ur_PK:
-  confirmOperationDescription: "یہ استفسار ڈیٹا یا اسکیما میں ترمیم کرے گا۔ کیا آپ واقعی اس پر عمل کرنا چاہتے ہیں؟ اس کارروائی کو کالعدم نہیں کیا جا سکتا۔"
+  confirmOperationDescription: "یہ استفسار آپ کے ڈیٹا یا اسکیما کو بدل دے گا۔ کیا آپ واقعی اسے چلانا چاہتے ہیں؟"
   showPreview: "پیش نظارہ دکھائیں۔"
   hidePreview: "پیش نظارہ چھپائیں۔"
   runQuery: "استفسار چلائیں۔"
@@ -311,7 +311,7 @@ ur_PK:
   invalidJsonDescription: "براہ کرم اپنا نحو چیک کریں اور دوبارہ کوشش کریں۔"
 
 vi_VN:
-  confirmOperationDescription: "Truy vấn này sẽ sửa đổi dữ liệu hoặc lược đồ. Bạn có chắc chắn muốn thực hiện nó không? Không thể hoàn tác hành động này."
+  confirmOperationDescription: "Truy vấn này sẽ thay đổi dữ liệu hoặc lược đồ của bạn. Bạn có chắc chắn muốn chạy nó không?"
   showPreview: "Hiển thị bản xem trước"
   hidePreview: "Ẩn bản xem trước"
   runQuery: "Chạy truy vấn"
@@ -319,7 +319,7 @@ vi_VN:
   invalidJsonDescription: "Vui lòng kiểm tra cú pháp của bạn và thử lại."
 
 af_ZA:
-  confirmOperationDescription: "Hierdie navraag sal data of skema wysig. Is jy seker jy wil dit uitvoer? Hierdie handeling kan nie ontdoen word nie."
+  confirmOperationDescription: "Hierdie navraag sal jou data of skema verander. Is jy seker jy wil dit laat loop?"
   showPreview: "Wys voorskou"
   hidePreview: "Versteek voorskou"
   runQuery: "Voer navraag uit"
@@ -327,7 +327,7 @@ af_ZA:
   invalidJsonDescription: "Kontroleer asseblief jou sintaksis en probeer weer."
 
 am_ET:
-  confirmOperationDescription: "ይህ መጠይቅ ውሂብን ወይም ንድፍን ይቀይራል። እርግጠኛ ነዎት እሱን ማስፈጸም ይፈልጋሉ? ይህ እርምጃ ሊቀለበስ አይችልም።"
+  confirmOperationDescription: "ይህ መጠይቅ የእርስዎን ውሂብ ወይም እቅድ ይለውጠዋል። እርግጠኛ ነህ ማሄድ ትፈልጋለህ?"
   showPreview: "ቅድመ እይታ አሳይ"
   hidePreview: "ቅድመ እይታን ደብቅ"
   runQuery: "መጠይቁን አሂድ"
@@ -335,7 +335,7 @@ am_ET:
   invalidJsonDescription: "እባክዎ የእርስዎን አገባብ ይፈትሹ እና እንደገና ይሞክሩ።"
 
 az_AZ:
-  confirmOperationDescription: "Bu sorğu data və ya sxemi dəyişdirəcək. Onu həyata keçirmək istədiyinizə əminsiniz? Bu əməliyyat geri qaytarıla bilməz."
+  confirmOperationDescription: "Bu sorğu məlumatlarınızı və ya sxeminizi dəyişəcək. Onu işə salmaq istədiyinizə əminsiniz?"
   showPreview: "Önizləməni göstərin"
   hidePreview: "Önizləməni gizlədin"
   runQuery: "Sorğunu icra edin"
@@ -343,7 +343,7 @@ az_AZ:
   invalidJsonDescription: "Lütfən, sintaksisinizi yoxlayın və yenidən cəhd edin."
 
 et_EE:
-  confirmOperationDescription: "See päring muudab andmeid või skeemi. Kas olete kindel, et soovite seda teostada? Seda toimingut ei saa tagasi võtta."
+  confirmOperationDescription: "See päring muudab teie andmeid või skeemi. Kas olete kindel, et soovite seda käivitada?"
   showPreview: "Näita eelvaadet"
   hidePreview: "Peida eelvaade"
   runQuery: "Käivita päring"
@@ -351,7 +351,7 @@ et_EE:
   invalidJsonDescription: "Kontrollige oma süntaksit ja proovige uuesti."
 
 gu_IN:
-  confirmOperationDescription: "આ ક્વેરી ડેટા અથવા સ્કીમાને સંશોધિત કરશે. શું તમે ખરેખર તેને ચલાવવા માંગો છો? આ ક્રિયા પૂર્વવત્ કરી શકાતી નથી."
+  confirmOperationDescription: "આ ક્વેરી તમારા ડેટા અથવા સ્કીમાને બદલશે. શું તમે ખરેખર તેને ચલાવવા માંગો છો?"
   showPreview: "પૂર્વાવલોકન બતાવો"
   hidePreview: "પૂર્વાવલોકન છુપાવો"
   runQuery: "ક્વેરી ચલાવો"
@@ -359,7 +359,7 @@ gu_IN:
   invalidJsonDescription: "કૃપા કરીને તમારી વાક્યરચના તપાસો અને ફરી પ્રયાસ કરો."
 
 ha_NG:
-  confirmOperationDescription: "Wannan tambayar za ta canza bayanai ko tsari. Ka tabbata kana son aiwatar da shi? Ba za a iya soke wannan aikin ba."
+  confirmOperationDescription: "Wannan tambayar za ta canza bayananku ko tsarin ku. Kun tabbata kuna son gudanar da shi?"
   showPreview: "Nuna Preview"
   hidePreview: "Boye Preview"
   runQuery: "Gudanar da tambaya"
@@ -367,7 +367,7 @@ ha_NG:
   invalidJsonDescription: "Da fatan za a duba rubutun ku kuma a sake gwadawa."
 
 ka_GE:
-  confirmOperationDescription: "ეს მოთხოვნა შეცვლის მონაცემებს ან სქემას. დარწმუნებული ხართ, რომ გსურთ მისი შესრულება? ამ მოქმედების გაუქმება შეუძლებელია."
+  confirmOperationDescription: "ეს მოთხოვნა შეცვლის თქვენს მონაცემებს ან სქემას. დარწმუნებული ხართ, რომ გსურთ მისი გაშვება?"
   showPreview: "გადახედვის ჩვენება"
   hidePreview: "გადახედვის დამალვა"
   runQuery: "შეკითხვის გაშვება"
@@ -375,7 +375,7 @@ ka_GE:
   invalidJsonDescription: "გთხოვთ, შეამოწმოთ თქვენი სინტაქსი და სცადოთ ხელახლა."
 
 km_KH:
-  confirmOperationDescription: "សំណួរនេះនឹងកែប្រែទិន្នន័យ ឬគ្រោងការណ៍។ តើអ្នកប្រាកដថាចង់ប្រតិបត្តិវាទេ? សកម្មភាពនេះមិនអាចត្រឡប់វិញបានទេ។"
+  confirmOperationDescription: "សំណួរនេះនឹងផ្លាស់ប្តូរទិន្នន័យ ឬគ្រោងការណ៍របស់អ្នក។ តើអ្នកប្រាកដថាចង់ដំណើរការវាទេ?"
   showPreview: "បង្ហាញការមើលជាមុន"
   hidePreview: "លាក់ការមើលជាមុន"
   runQuery: "ដំណើរការសំណួរ"
@@ -383,7 +383,7 @@ km_KH:
   invalidJsonDescription: "សូមពិនិត្យមើលវាក្យសម្ព័ន្ធរបស់អ្នក ហើយព្យាយាមម្តងទៀត។"
 
 kn_IN:
-  confirmOperationDescription: "ಈ ಪ್ರಶ್ನೆಯು ಡೇಟಾ ಅಥವಾ ಸ್ಕೀಮಾವನ್ನು ಮಾರ್ಪಡಿಸುತ್ತದೆ. ನೀವು ಅದನ್ನು ಕಾರ್ಯಗತಗೊಳಿಸಲು ಖಚಿತವಾಗಿ ಬಯಸುವಿರಾ? ಈ ಕ್ರಿಯೆಯನ್ನು ರದ್ದುಗೊಳಿಸಲಾಗುವುದಿಲ್ಲ."
+  confirmOperationDescription: "ಈ ಪ್ರಶ್ನೆಯು ನಿಮ್ಮ ಡೇಟಾ ಅಥವಾ ಸ್ಕೀಮಾವನ್ನು ಬದಲಾಯಿಸುತ್ತದೆ. ನೀವು ಅದನ್ನು ಚಲಾಯಿಸಲು ಖಚಿತವಾಗಿ ಬಯಸುವಿರಾ?"
   showPreview: "ಪೂರ್ವವೀಕ್ಷಣೆ ತೋರಿಸು"
   hidePreview: "ಮುನ್ನೋಟ ಮರೆಮಾಡಿ"
   runQuery: "ಪ್ರಶ್ನೆಯನ್ನು ರನ್ ಮಾಡಿ"
@@ -391,7 +391,7 @@ kn_IN:
   invalidJsonDescription: "ದಯವಿಟ್ಟು ನಿಮ್ಮ ಸಿಂಟ್ಯಾಕ್ಸ್ ಅನ್ನು ಪರಿಶೀಲಿಸಿ ಹಾಗೂ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ."
 
 lt_LT:
-  confirmOperationDescription: "Ši užklausa pakeis duomenis arba schemą. Ar tikrai norite tai įvykdyti? Šio veiksmo anuliuoti negalima."
+  confirmOperationDescription: "Ši užklausa pakeis jūsų duomenis arba schemą. Ar tikrai norite jį paleisti?"
   showPreview: "Rodyti peržiūrą"
   hidePreview: "Slėpti peržiūrą"
   runQuery: "Vykdyti užklausą"
@@ -399,7 +399,7 @@ lt_LT:
   invalidJsonDescription: "Patikrinkite sintaksę ir bandykite dar kartą."
 
 lv_LV:
-  confirmOperationDescription: "Šis vaicājums mainīs datus vai shēmu. Vai tiešām vēlaties to izpildīt? Šo darbību nevar atsaukt."
+  confirmOperationDescription: "Šis vaicājums mainīs jūsu datus vai shēmu. Vai tiešām vēlaties to palaist?"
   showPreview: "Rādīt priekšskatījumu"
   hidePreview: "Paslēpt priekšskatījumu"
   runQuery: "Palaist vaicājumu"
@@ -407,7 +407,7 @@ lv_LV:
   invalidJsonDescription: "Lūdzu, pārbaudiet sintaksi un mēģiniet vēlreiz."
 
 ml_IN:
-  confirmOperationDescription: "ഈ ചോദ്യം ഡാറ്റ അല്ലെങ്കിൽ സ്കീമ പരിഷ്കരിക്കും. അത് നടപ്പിലാക്കണമെന്ന് തീർച്ചയാണോ? ഈ പ്രവർത്തനം പഴയപടിയാക്കാനാകില്ല."
+  confirmOperationDescription: "ഈ ചോദ്യം നിങ്ങളുടെ ഡാറ്റയെയോ സ്കീമയെയോ മാറ്റും. ഇത് പ്രവർത്തിപ്പിക്കണമെന്ന് തീർച്ചയാണോ?"
   showPreview: "പ്രിവ്യൂ കാണിക്കുക"
   hidePreview: "പ്രിവ്യൂ മറയ്ക്കുക"
   runQuery: "ചോദ്യം റൺ ചെയ്യുക"
@@ -415,7 +415,7 @@ ml_IN:
   invalidJsonDescription: "ദയവായി നിങ്ങളുടെ വാക്യഘടന പരിശോധിച്ച് വീണ്ടും ശ്രമിക്കുക."
 
 mr_IN:
-  confirmOperationDescription: "ही क्वेरी डेटा किंवा स्कीमा सुधारेल. तुमची खात्री आहे की तुम्ही ते अंमलात आणू इच्छिता? ही क्रिया पूर्ववत केली जाऊ शकत नाही."
+  confirmOperationDescription: "ही क्वेरी तुमचा डेटा किंवा स्कीमा बदलेल. तुमची खात्री आहे की तुम्ही ते चालवू इच्छिता?"
   showPreview: "पूर्वावलोकन दर्शवा"
   hidePreview: "पूर्वावलोकन लपवा"
   runQuery: "क्वेरी चालवा"
@@ -423,7 +423,7 @@ mr_IN:
   invalidJsonDescription: "कृपया तुमचा वाक्यरचना तपासा आणि पुन्हा प्रयत्न करा."
 
 ne_NP:
-  confirmOperationDescription: "यो क्वेरीले डाटा वा स्कीमा परिमार्जन गर्नेछ। के तपाइँ यसलाई कार्यान्वयन गर्न निश्चित हुनुहुन्छ? यो कार्य अन्डू गर्न सकिँदैन।"
+  confirmOperationDescription: "यो क्वेरीले तपाईंको डाटा वा स्किमा परिवर्तन गर्नेछ। के तपाइँ यसलाई चलाउन चाहनु हुन्छ?"
   showPreview: "पूर्वावलोकन देखाउनुहोस्"
   hidePreview: "पूर्वावलोकन लुकाउनुहोस्"
   runQuery: "क्वेरी चलाउनुहोस्"
@@ -431,7 +431,7 @@ ne_NP:
   invalidJsonDescription: "कृपया आफ्नो सिन्ट्याक्स जाँच गर्नुहोस् र पुन: प्रयास गर्नुहोस्।"
 
 pa_IN:
-  confirmOperationDescription: "ਇਹ ਪੁੱਛਗਿੱਛ ਡੇਟਾ ਜਾਂ ਸਕੀਮਾ ਨੂੰ ਸੰਸ਼ੋਧਿਤ ਕਰੇਗੀ। ਕੀ ਤੁਸੀਂ ਯਕੀਨੀ ਤੌਰ 'ਤੇ ਇਸਨੂੰ ਚਲਾਉਣਾ ਚਾਹੁੰਦੇ ਹੋ? ਇਸ ਕਾਰਵਾਈ ਨੂੰ ਅਣਕੀਤਾ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਦਾ।"
+  confirmOperationDescription: "ਇਹ ਪੁੱਛਗਿੱਛ ਤੁਹਾਡੇ ਡੇਟਾ ਜਾਂ ਸਕੀਮਾ ਨੂੰ ਬਦਲ ਦੇਵੇਗੀ। ਕੀ ਤੁਸੀਂ ਯਕੀਨੀ ਤੌਰ 'ਤੇ ਇਸਨੂੰ ਚਲਾਉਣਾ ਚਾਹੁੰਦੇ ਹੋ?"
   showPreview: "ਝਲਕ ਦਿਖਾਓ"
   hidePreview: "ਝਲਕ ਲੁਕਾਓ"
   runQuery: "ਪੁੱਛਗਿੱਛ ਚਲਾਓ"
@@ -439,7 +439,7 @@ pa_IN:
   invalidJsonDescription: "ਕਿਰਪਾ ਕਰਕੇ ਆਪਣੇ ਸੰਟੈਕਸ ਦੀ ਜਾਂਚ ਕਰੋ ਅਤੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।"
 
 si_LK:
-  confirmOperationDescription: "මෙම විමසුම දත්ත හෝ යෝජනා ක්‍රමය වෙනස් කරයි. ඔබට එය ක්‍රියාත්මක කිරීමට අවශ්‍ය බව විශ්වාසද? මෙම ක්‍රියාව පසුගමනය කළ නොහැක."
+  confirmOperationDescription: "මෙම විමසුම ඔබගේ දත්ත හෝ යෝජනා ක්‍රමය වෙනස් කරයි. ඔබට එය ක්‍රියාත්මක කිරීමට අවශ්‍ය බව විශ්වාසද?"
   showPreview: "පෙරදසුන පෙන්වන්න"
   hidePreview: "පෙරදසුන සඟවන්න"
   runQuery: "විමසුම ධාවනය කරන්න"
@@ -447,7 +447,7 @@ si_LK:
   invalidJsonDescription: "කරුණාකර ඔබේ වාක්‍ය ඛණ්ඩය පරීක්ෂා කර නැවත උත්සාහ කරන්න."
 
 sl_SI:
-  confirmOperationDescription: "Ta poizvedba bo spremenila podatke ali shemo. Ali ste prepričani, da ga želite izvesti? Tega dejanja ni mogoče razveljaviti."
+  confirmOperationDescription: "Ta poizvedba bo spremenila vaše podatke ali shemo. Ste prepričani, da ga želite zagnati?"
   showPreview: "Prikaži predogled"
   hidePreview: "Skrij predogled"
   runQuery: "Zaženi poizvedbo"
@@ -455,7 +455,7 @@ sl_SI:
   invalidJsonDescription: "Preverite sintakso in poskusite znova."
 
 sr_RS:
-  confirmOperationDescription: "Овај упит ће изменити податке или шему. Да ли сте сигурни да желите да га извршите? Ова радња се не може опозвати."
+  confirmOperationDescription: "Овај упит ће променити ваше податке или шему. Да ли сте сигурни да желите да га покренете?"
   showPreview: "Прикажи преглед"
   hidePreview: "Сакриј преглед"
   runQuery: "Покрени упит"
@@ -463,7 +463,7 @@ sr_RS:
   invalidJsonDescription: "Проверите своју синтаксу и покушајте поново."
 
 te_IN:
-  confirmOperationDescription: "ఈ ప్రశ్న డేటా లేదా స్కీమాను సవరిస్తుంది. మీరు దీన్ని ఖచ్చితంగా అమలు చేయాలనుకుంటున్నారా? ఈ చర్య రద్దు చేయబడదు."
+  confirmOperationDescription: "ఈ ప్రశ్న మీ డేటా లేదా స్కీమాను మారుస్తుంది. మీరు దీన్ని ఖచ్చితంగా అమలు చేయాలనుకుంటున్నారా?"
   showPreview: "ప్రివ్యూ చూపించు"
   hidePreview: "ప్రివ్యూను దాచు"
   runQuery: "ప్రశ్నను అమలు చేయండి"
@@ -471,7 +471,7 @@ te_IN:
   invalidJsonDescription: "దయచేసి మీ సింటాక్స్‌ని తనిఖీ చేసి, మళ్లీ ప్రయత్నించండి."
 
 tl_PH:
-  confirmOperationDescription: "Babaguhin ng query na ito ang data o schema. Sigurado ka bang gusto mong isagawa ito? Ang pagkilos na ito ay hindi maaaring i-undo."
+  confirmOperationDescription: "Babaguhin ng query na ito ang iyong data o schema. Sigurado ka bang gusto mong patakbuhin ito?"
   showPreview: "Ipakita ang Preview"
   hidePreview: "Itago ang Preview"
   runQuery: "Patakbuhin ang query"
@@ -479,7 +479,7 @@ tl_PH:
   invalidJsonDescription: "Pakisuri ang iyong syntax at subukang muli."
 
 uz_UZ:
-  confirmOperationDescription: "Bu soʻrov maʼlumotlar yoki sxemani oʻzgartiradi. Haqiqatan ham buni amalga oshirmoqchimisiz? Bu amalni ortga qaytarib bo‘lmaydi."
+  confirmOperationDescription: "Bu soʻrov maʼlumotlaringiz yoki sxemangizni oʻzgartiradi. Haqiqatan ham uni ishga tushirmoqchimisiz?"
   showPreview: "Ko‘rish"
   hidePreview: "Ko‘rib chiqishni yashirish"
   runQuery: "So'rovni ishga tushirish"
@@ -487,7 +487,7 @@ uz_UZ:
   invalidJsonDescription: "Sintaksisingizni tekshiring va qayta urinib ko'ring."
 
 yo_NG:
-  confirmOperationDescription: "Ibeere yii yoo ṣe atunṣe data tabi eto. Ṣe o da ọ loju pe o fẹ ṣiṣẹ? Iṣe yii ko le ṣe atunṣe."
+  confirmOperationDescription: "Ibeere yii yoo yi data tabi eto rẹ pada. Ṣe o da ọ loju pe o fẹ ṣiṣe rẹ?"
   showPreview: "Ṣe afihan Awotẹlẹ"
   hidePreview: "Tọju Awotẹlẹ"
   runQuery: "Ṣiṣe ibeere"
