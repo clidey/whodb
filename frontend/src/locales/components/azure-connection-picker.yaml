@@ -2,16 +2,16 @@ en_US:
   connectAzureAccount: Connect an Azure account to discover databases
   azureConnections: Azure Connections
   noDiscoveredConnections: No databases discovered. Add an Azure account to auto-discover PostgreSQL, MySQL, Redis, and Cosmos DB instances.
-  refreshPartialError: Some Azure services could not be discovered. Check role assignments.
+  refreshPartialError: "Some Azure services couldn't be discovered. Check role assignments."
 
   helpLabel: How to set up Azure
   helpTitle: Azure Database Discovery
   helpIntro: "{appName} can automatically discover your Azure databases. Add an Azure account to get started."
   helpAuthDefaultDesc: uses managed identity, Azure CLI, or environment credentials
   helpAuthSPDesc: uses explicit tenant, client ID, and secret
-  unreachableTooltip: "WhoDB cannot reach this endpoint. Ensure WhoDB has network access (same VNet, peering, or tunnel)."
+  unreachableTooltip: "WhoDB can't reach this endpoint. Make sure WhoDB has network access (same VNet, peering, or tunnel)."
 
-  helpCredentialNote: "Note: {appName} discovers connection endpoints from Azure but cannot access database passwords. You'll need to enter credentials when connecting."
+  helpCredentialNote: "Note: {appName} discovers connection endpoints from Azure but can't access database passwords. You'll need to enter credentials when connecting."
 
 af_ZA:
   connectAzureAccount: "Koppel 'n Azure-rekening om databasisse te ontdek"

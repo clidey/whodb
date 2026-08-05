@@ -1,6 +1,6 @@
 en_US:
   enterValidNumber: Please enter a number greater than 0
-  exceedsMaxPageSize: "Page size cannot exceed {max}"
+  exceedsMaxPageSize: "Page size can't exceed {max}"
 
 ar_AE:
   enterValidNumber: "الرجاء إدخال رقم أكبر من 0"

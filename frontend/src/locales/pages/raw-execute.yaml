@@ -5,7 +5,7 @@ en_US:
   clearEditor: Clear the Editor
   deleteCell: Delete the Cell
   deleteCellTitle: Delete Cell?
-  deleteCellDescription: Are you sure you want to delete this cell? This action cannot be undone.
+  deleteCellDescription: "Delete this cell? This can\'t be undone."
   noHistoryTitle: No History Yet
   noHistoryDescription: Run a Query to See Your History
   success: Success
@@ -15,14 +15,14 @@ en_US:
   cloneToEditor: Clone to Editor
   clearHistory: Clear History
   clearHistoryTitle: Clear Query History
-  clearHistoryDescription: Are you sure you want to clear all query history? This action cannot be undone.
+  clearHistoryDescription: "Are you sure you want to clear all query history? This can't be undone."
   deletePage: Delete {pageName}?
-  deletePageDescription: This action cannot be undone. This will permanently delete "{pageName}" and remove its data.
+  deletePageDescription: "This can't be undone. This will permanently delete \"{pageName}\" and remove its data."
   doubleClickEdit: Double click to edit
   deletePageButton: Delete page
   options: Options
   addPage: Add Page
-  confirmExecutionDescription: This query will modify your database. This action cannot be undone.
+  confirmExecutionDescription: "This query will modify your database. This can't be undone."
 
 ar_AE:
   copyCode: "نسخ الرمز"

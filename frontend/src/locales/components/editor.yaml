@@ -1,5 +1,5 @@
 en_US:
-  confirmOperationDescription: This query will modify data or schema. Are you sure you want to execute it? This action cannot be undone.
+  confirmOperationDescription: This query will change your data or schema. Are you sure you want to run it?
   showPreview: Show Preview
   hidePreview: Hide Preview
   runQuery: Run query

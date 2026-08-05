@@ -12,7 +12,7 @@ en_US:
   contactUsInfo: If you know of a tool that might serve us better, we'd love to hear from you! Just reach out via the "Contact Us" option in the bottom left corner of the screen.
   enableTelemetry: Telemetry is enabled
   disableTelemetry: Telemetry is disabled
-  eeNoTelemetry: "{appName} Enterprise does not collect telemetry and performance metrics."
+  eeNoTelemetry: "{appName} Enterprise doesn't collect telemetry and performance metrics."
   personalizeTitle: Personalize Your Experience
   personalizeDescription: Make {appName} your own by customizing the appearance and feel of the {appName} interface
   storageUnitView: Storage Unit Default View

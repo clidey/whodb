@@ -1,7 +1,7 @@
 en_US:
   enterHostName: Enter Host Name
   advancedFields.region: Region
-  noConnectionsTitle: No connections available
+  noConnectionsTitle: No database connections set up yet
   noConnectionsDescription: Manual connection form is disabled for this deployment. Please configure database connections via environment variables or cloud providers, or contact your administrator.
   loggingIn: Logging In
   title: Login
@@ -28,9 +28,9 @@ en_US:
   loginFailedWithError: "Login Failed: {error}"
   sampleDatabaseNotFound: Sample Database Not Found
   welcomeToWhodb: Welcome to {appName}
-  failedToSelectDatabaseFile: Failed to Select Database File
-  failedToParseCredentials: Failed to Parse Credentials from URL
-  urlParseWarning: We could not extract all required details (host, username, password, or database) from this URL. Please enter the information manually.
+  failedToSelectDatabaseFile: "Couldn't Select Database File"
+  failedToParseCredentials: "Couldn't Parse Credentials from URL"
+  urlParseWarning: "We couldn't extract all required details (host, username, password, or database) from this URL. Please enter the information manually."
   tryWhodb: Try {appName}
   noSetupRequired: No Setup Required
   experienceDescription: Experience the power of {appName} with our interactive sample database. Explore all features with real data.

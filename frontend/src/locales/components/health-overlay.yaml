@@ -6,8 +6,8 @@ en_US:
   selectProfilePlaceholder: Choose a profile...
   switching: Switching...
   switchSuccessful: Successfully switched profile
-  switchFailed: Failed to switch profile
-  switchFailedWithError: "Failed to switch profile: {error}"
+  switchFailed: "Couldn't switch profile"
+  switchFailedWithError: "Couldn't switch profile: {error}"
 
 ar_AE:
   serverDownTitle: "الخادم غير متاح"

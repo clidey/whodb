@@ -11,11 +11,11 @@ en_US:
   chooseFile: Choose File
   switchToPaste: Switch to paste certificate content
   switchToFile: Switch to file picker
-  fileReadError: Failed to read file
+  fileReadError: "Couldn't read file"
   contentLoaded: Certificate loaded
   httpWarning: "Warning: You are using an insecure (HTTP) connection. Certificate data will be transmitted unencrypted."
   privateKeyHttpWarning: "Private keys should not be uploaded over insecure connections."
-  systemCaOnly: "This database uses system CA certificates for verification. Custom CA upload is not supported."
+  systemCaOnly: "This database uses system CA certificates for verification. Custom CA upload isn't supported."
 
   # SSL mode labels and descriptions (keyed by mode value)
   modes.disabled.label: Disabled

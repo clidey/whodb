@@ -1,6 +1,6 @@
 en_US:
   searchPlaceholder: Type a command or search...
-  noResults: No results found.
+  noResults: No matching results found.
   sortBy: Sort By
   goToChat: Go to Chat
   goToStorageUnits: Go to Storage Units

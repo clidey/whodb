@@ -10,8 +10,8 @@ en_US:
   scratchpadNotSupported: Scratchpad Is Not Supported for This Database Type
   queryMoved: Query Moved to Scratchpad
   moveToScratchpad: Move to Scratchpad
-  unableToQuery: Unable to Query. Try Again.
-  failedToExecuteSQL: Failed to Execute SQL. Try Again.
+  unableToQuery: "Couldn't Query. Try Again."
+  failedToExecuteSQL: "Couldn't Execute SQL. Try Again."
   actionExecuted: Action Executed
   noDataReturned: No Data Was Returned.
   dialogDescription: Choose which scratchpad page to add this query to.
@@ -25,7 +25,7 @@ en_US:
   clearChat: Clear Chat
   deleteChat: Delete Chat
   deleteChatTitle: Delete {chatName}?
-  deleteChatDescription: This will permanently delete this chat and all its messages. This action cannot be undone.
+  deleteChatDescription: "This will permanently delete this chat and all its messages. This can't be undone."
   doubleClickEdit: Double-click to edit
   messageCount: "{count} messages"
   messageCount_one: "{count} message"

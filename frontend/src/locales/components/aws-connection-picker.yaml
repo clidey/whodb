@@ -2,11 +2,11 @@ en_US:
   connectAwsAccount: Connect an AWS account to discover sources
   awsConnections: AWS Connections
   noDiscoveredConnections: No AWS sources discovered. Add an AWS account to auto-discover RDS, ElastiCache, DocumentDB, and S3 resources.
-  refreshPartialError: Some AWS services could not be discovered. Check IAM permissions.
+  refreshPartialError: "Some AWS services couldn't be discovered. Check IAM permissions."
 
   proxy: Proxy
   readOnly: Read-Only
-  unreachableTooltip: "WhoDB cannot reach this endpoint. Ensure WhoDB has network access (same VPC, peering, or tunnel)."
+  unreachableTooltip: "WhoDB can't reach this endpoint. Make sure WhoDB has network access (same VPC, peering, or tunnel)."
 
   helpLabel: How to set up AWS
   helpTitle: AWS Source Discovery
@@ -16,7 +16,7 @@ en_US:
   helpAuthProfileDesc: uses a named profile from ~/.aws/credentials
   helpRdsDesc: PostgreSQL, MySQL, MariaDB
   helpS3Desc: object storage buckets
-  helpCredentialNote: "Note: {appName} discovers source metadata from AWS but cannot access database passwords. You'll need to enter credentials when connecting to database sources."
+  helpCredentialNote: "Note: {appName} discovers source metadata from AWS but can't access database passwords. You'll need to enter credentials when connecting to database sources."
 
 ar_AE:
   connectAwsAccount: "قم بتوصيل حساب AWS لاكتشاف المصادر"

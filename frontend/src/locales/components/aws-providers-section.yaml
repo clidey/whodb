@@ -3,7 +3,7 @@ en_US:
   title: AWS Accounts
   description: Connect AWS accounts to auto-discover RDS, ElastiCache, DocumentDB, and S3 resources.
 
-  noProviders: No AWS accounts configured
+  noProviders: No AWS accounts linked yet
   addFirstProvider: Add your first AWS account to discover sources
 
 ar_AE:

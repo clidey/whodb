@@ -2,7 +2,7 @@ en_US:
   title: GCP Accounts
   description: Connect GCP accounts to auto-discover Cloud SQL, AlloyDB, and Memorystore instances.
 
-  noProviders: No GCP accounts configured
+  noProviders: No GCP accounts linked yet
   addFirstProvider: Add your first GCP account to discover databases
 
 af_ZA:
