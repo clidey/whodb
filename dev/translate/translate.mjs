@@ -122,7 +122,15 @@ const GLOSSARY_TERMS = [
     'ClickHouse', 'Memcached', 'MariaDB', 'PostgreSQL', 'MongoDB', 'SQLite',
     'DuckDB', 'FerretDB', 'Dragonfly', 'Valkey', 'CloudSQL', 'Cloud SQL',
     'Redis', 'MySQL', 'Ollama', 'Llama3.1', 'Llama',
+    // EE — additional source/product/integration/AI-provider names
     'WhoDB', 'BigQuery', 'DynamoDB', 'Snowflake', 'OAuth',
+    'GitHub', 'OpenAI', 'OpenLineage', 'PostHog', 'VNet', 'OCI', 'IBM',
+    'JDBC', 'Bedrock', 'watsonx.ai', 'watsonX', 'AWS_BEARER_TOKEN_BEDROCK',
+    // Generic technical acronyms/identifiers kept in Latin script across all locales
+    'SSO', 'SDK', 'SSL', 'TLS', 'ADC', 'PEM', 'UUID', 'PNG', 'JPEG', 'WebP',
+    'NDJSON', 'JSON', 'CSV', 'XLSX', 'YAML', 'API', 'URL', 'URLs', 'SSH',
+    'GCP', 'AWS', 'Azure', 'CLI', 'SQL', 'NoSQL', 'RDS', 'IAM', 'VPC', 'DNS',
+    'HTTP', 'HTTPS', 'UI', 'ID', 'IDs', 'FK', 'KB', 'MB', 'GB',
 ].sort((a, b) => b.length - a.length);
 
 // ─── Placeholder handling ───────────────────────────────────────
