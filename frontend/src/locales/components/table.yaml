@@ -87,8 +87,8 @@ en_US:
   foreignKey: Foreign key
   deleteRowConfirmTitle: Delete Row?
   deleteRowConfirmTitle_other: Delete Rows?
-  deleteRowConfirmDescription: "Delete {count} rows? This can\'t be undone."
-  deleteRowConfirmDescription_one: "Delete {count} row? This can\'t be undone."
+  deleteRowConfirmDescription: "Delete {count} rows? This can't be undone."
+  deleteRowConfirmDescription_one: "Delete {count} row? This can't be undone."
 
 ar_AE:
   rowCopiedToClipboard: "تم نسخ الصف إلى الحافظة"

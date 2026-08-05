@@ -93,15 +93,55 @@ const DELAY_BETWEEN_CHUNKS = 1000;
 const DELAY_BETWEEN_LANGUAGES = 3000;
 const MAX_RETRIES = 3;
 
+// Keys whose value is a literal command/identifier, not prose — copied verbatim
+// into every locale instead of being sent to Google Translate. Scoped by file
+// path (relative to the locales dir) since the same key name is reused with
+// ordinary translatable text elsewhere (e.g. `namePlaceholder` is usually a
+// generic hint, but in secrets.yaml it's a literal env var name).
+const NO_TRANSLATE_KEYS_BY_FILE = {
+    'components/ai.yaml': new Set(['ollamaRunCommand']),
+    'pages/secrets.yaml': new Set(['namePlaceholder']), // e.g. STRIPE_API_KEY
+};
+
+function noTranslateKeysFor(filePath) {
+    for (const [suffix, keys] of Object.entries(NO_TRANSLATE_KEYS_BY_FILE)) {
+        if (filePath.endsWith(suffix)) return keys;
+    }
+    return null;
+}
+
+// Brand/product/technical names Google Translate tends to mangle (e.g. "Redis"
+// → "Rédis", "AlloyDB" → "AlliageDB"). Protected the same way as {placeholders}:
+// swapped for an opaque marker before translation, restored verbatim after.
+// Longer names first so substring matches (e.g. "Cosmos DB" vs "Cosmos") don't
+// get shadowed by a shorter one.
+const GLOSSARY_TERMS = [
+    // CE — database/source brand names
+    'Azure Cosmos DB', 'Cosmos DB', 'CosmosDB',
+    'AlloyDB', 'Memorystore', 'ElastiCache', 'DocumentDB', 'Elasticsearch',
+    'ClickHouse', 'Memcached', 'MariaDB', 'PostgreSQL', 'MongoDB', 'SQLite',
+    'DuckDB', 'FerretDB', 'Dragonfly', 'Valkey', 'CloudSQL', 'Cloud SQL',
+    'Redis', 'MySQL', 'Ollama', 'Llama3.1', 'Llama',
+    'WhoDB', 'BigQuery', 'DynamoDB', 'Snowflake', 'OAuth',
+].sort((a, b) => b.length - a.length);
+
 // ─── Placeholder handling ───────────────────────────────────────
 
 function protectPlaceholders(text) {
     const placeholders = [];
-    const result = text.replace(/\{(\w+)\}/g, (match) => {
+    let result = text.replace(/\{(\w+)\}/g, (match) => {
         const idx = placeholders.length;
         placeholders.push(match);
         return `[[[${idx}]]]`;
     });
+    for (const term of GLOSSARY_TERMS) {
+        const re = new RegExp(`\\b${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g');
+        result = result.replace(re, (match) => {
+            const idx = placeholders.length;
+            placeholders.push(match);
+            return `[[[${idx}]]]`;
+        });
+    }
     return { text: result, placeholders };
 }
 
@@ -250,9 +290,16 @@ async function translateBatch(texts, targetLang, retries = MAX_RETRIES) {
     }
 }
 
-async function translateEntries(entries, googleLang) {
-    const keys = Object.keys(entries);
+async function translateEntries(entries, googleLang, noTranslateKeys) {
     const results = {};
+
+    const keys = Object.keys(entries).filter(k => {
+        if (noTranslateKeys?.has(k)) {
+            results[k] = String(entries[k]); // literal command/identifier — copy verbatim
+            return false;
+        }
+        return true;
+    });
 
     for (let i = 0; i < keys.length; i += CHUNK_SIZE) {
         const chunkKeys = keys.slice(i, i + CHUNK_SIZE);
@@ -442,7 +489,7 @@ async function main() {
                 console.log(`  ${filePath}: ${keyCount} keys (UK spelling)`);
             } else {
                 try {
-                    translated = await translateEntries(allKeys, googleLang);
+                    translated = await translateEntries(allKeys, googleLang, noTranslateKeysFor(filePath));
                     console.log(`  ${filePath}: ${keyCount} keys translated`);
                 } catch (err) {
                     console.error(`  ${filePath}: FAILED — ${err.message}`);

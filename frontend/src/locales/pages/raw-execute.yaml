@@ -5,7 +5,7 @@ en_US:
   clearEditor: Clear the Editor
   deleteCell: Delete the Cell
   deleteCellTitle: Delete Cell?
-  deleteCellDescription: "Delete this cell? This can\'t be undone."
+  deleteCellDescription: "Delete this cell? This can't be undone."
   noHistoryTitle: No History Yet
   noHistoryDescription: Run a Query to See Your History
   success: Success
