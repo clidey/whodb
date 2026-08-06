@@ -183,16 +183,24 @@ var loginCmd = &cobra.Command{
 				}
 			}
 		}
-		if !quiet {
+		if !quiet && !platformNoBrowser {
 			out.Info("Opening browser to sign in to %s", host)
 		}
 		tokens, err := platform.Login(ctx, platform.LoginOptions{
-			Host:        host,
-			OpenBrowser: !platformNoBrowser,
+			Host:                   host,
+			OpenBrowser:            !platformNoBrowser,
+			UseDeviceAuthorization: platformNoBrowser,
 			PrintURL: func(loginURL string) {
-				if platformNoBrowser || !quiet {
+				if !quiet {
 					fmt.Fprintf(cmd.ErrOrStderr(), "If your browser does not open, visit:\n%s\n", loginURL)
 				}
+			},
+			PrintDeviceAuthorization: func(prompt platform.DeviceAuthorizationPrompt) {
+				target := prompt.VerificationURIComplete
+				if target == "" {
+					target = prompt.VerificationURI
+				}
+				fmt.Fprintf(cmd.ErrOrStderr(), "Visit:\n%s\n\nEnter code: %s\n", target, prompt.UserCode)
 			},
 		})
 		if err != nil {
@@ -1370,7 +1378,7 @@ func init() {
 		command.RegisterFlagCompletionFunc("format", completeOutputFormats)
 	}
 
-	loginCmd.Flags().BoolVar(&platformNoBrowser, "no-browser", false, "print login URL without opening a browser")
+	loginCmd.Flags().BoolVar(&platformNoBrowser, "no-browser", false, "sign in with a device code without opening a browser")
 	loginCmd.Flags().BoolVarP(&platformLoginYes, "yes", "y", false, "replace an existing hosted WhoDB login without prompting")
 	logoutCmd.Flags().BoolVar(&platformLogoutLocal, "local", false, "remove local hosted WhoDB credentials without revoking the hosted session")
 	manifestCmd.Flags().BoolVar(&manifestRefresh, "refresh", false, "fetch and cache the current hosted platform manifest")
@@ -1476,6 +1484,12 @@ func loadPlatformSession(ctx context.Context, hostFlag string) (*platformSession
 	}
 	tokens, err := platform.RefreshToken(ctx, host, refreshToken)
 	if err != nil {
+		if platform.IsInvalidGrant(err) {
+			if clearErr := clearPlatformLogin(cfg, host, entry.AccountID); clearErr != nil {
+				return nil, fmt.Errorf("hosted WhoDB session expired and local credentials could not be removed: %w", clearErr)
+			}
+			return nil, fmt.Errorf("hosted WhoDB session expired; run whodb-cli login --host %s", host)
+		}
 		return nil, err
 	}
 	if tokens.RefreshToken != "" && tokens.RefreshToken != refreshToken {
@@ -1842,7 +1856,11 @@ func revokePlatformLogin(ctx context.Context, cfg *config.Config, host, accountI
 			return "", fmt.Errorf("cannot update hosted WhoDB refresh token before revocation retry support: %w", err)
 		}
 	}
-	if err := platform.Logout(ctx, host, tokens.AccessToken); err != nil {
+	tokenToRevoke := tokens.RefreshToken
+	if tokenToRevoke == "" {
+		tokenToRevoke = refreshToken
+	}
+	if err := platform.Logout(ctx, host, tokenToRevoke); err != nil {
 		return "", fmt.Errorf("logout failed before local credentials were removed; hosted session was not revoked: %w", err)
 	}
 	if err := clearPlatformLogin(cfg, host, accountID); err != nil {

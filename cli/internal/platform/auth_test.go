@@ -23,20 +23,65 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
+
+	"golang.org/x/oauth2"
 )
 
-func TestLogoutPostsBearerTokenToAuthHost(t *testing.T) {
-	var gotAuthorization string
-	authServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/auth/revoke-current-session" {
+func TestDeviceAuthorizationUsesPKCE(t *testing.T) {
+	var challenge string
+	var authServer *httptest.Server
+	authServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/realms/mothergate/.well-known/openid-configuration":
+			_, _ = w.Write([]byte(`{"issuer":"` + authServer.URL + `/realms/mothergate","authorization_endpoint":"` + authServer.URL + `/authorize","token_endpoint":"` + authServer.URL + `/token","device_authorization_endpoint":"` + authServer.URL + `/device"}`))
+		case "/device":
+			_ = r.ParseForm()
+			challenge = r.Form.Get("code_challenge")
+			if challenge == "" || r.Form.Get("code_challenge_method") != "S256" {
+				t.Fatal("device authorization request did not include S256 PKCE")
+			}
+			_, _ = w.Write([]byte(`{"device_code":"device-code","user_code":"ABCD-EFGH","verification_uri":"` + authServer.URL + `/verify","expires_in":30,"interval":1}`))
+		case "/token":
+			_ = r.ParseForm()
+			if got := oauth2.S256ChallengeFromVerifier(r.Form.Get("code_verifier")); got != challenge {
+				t.Fatalf("token code_verifier challenge = %q, want %q", got, challenge)
+			}
+			_, _ = w.Write([]byte(`{"access_token":"access-token","refresh_token":"refresh-token"}`))
+		default:
 			t.Fatalf("unexpected auth path %q", r.URL.Path)
 		}
-		if r.Method != http.MethodPost {
-			t.Fatalf("method = %s, want %s", r.Method, http.MethodPost)
+	}))
+	defer authServer.Close()
+
+	platformServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{"version":2,"issuer":"` + authServer.URL + `/realms/mothergate","clientId":"whodb-cli","flows":{"authorizationCodePkce":true,"deviceAuthorization":true}}`))
+	}))
+	defer platformServer.Close()
+
+	tokens, err := Login(context.Background(), LoginOptions{Host: platformServer.URL, UseDeviceAuthorization: true, Timeout: 3 * time.Second})
+	if err != nil {
+		t.Fatalf("Login() error = %v", err)
+	}
+	if tokens.AccessToken != "access-token" || tokens.RefreshToken != "refresh-token" {
+		t.Fatalf("Login() tokens = %#v", tokens)
+	}
+}
+
+func TestLogoutPostsBearerTokenToAuthHost(t *testing.T) {
+	var gotToken string
+	var authServer *httptest.Server
+	authServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/realms/mothergate/.well-known/openid-configuration":
+			_, _ = w.Write([]byte(`{"issuer":"` + authServer.URL + `/realms/mothergate","authorization_endpoint":"` + authServer.URL + `/authorize","token_endpoint":"` + authServer.URL + `/token","revocation_endpoint":"` + authServer.URL + `/revoke"}`))
+		case "/revoke":
+			_ = r.ParseForm()
+			gotToken = r.Form.Get("token")
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			t.Fatalf("unexpected auth path %q", r.URL.Path)
 		}
-		gotAuthorization = r.Header.Get("Authorization")
-		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"revoked":true}`))
 	}))
 	defer authServer.Close()
 
@@ -44,20 +89,20 @@ func TestLogoutPostsBearerTokenToAuthHost(t *testing.T) {
 		if r.URL.Path != "/api/auth-config" {
 			t.Fatalf("unexpected platform path %q", r.URL.Path)
 		}
-		authURL, err := json.Marshal(authServer.URL)
+		authURL, err := json.Marshal(authServer.URL + "/realms/mothergate")
 		if err != nil {
 			t.Fatalf("marshal auth URL: %v", err)
 		}
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"mothergateUrl":` + string(authURL) + `}`))
+		_, _ = w.Write([]byte(`{"version":2,"issuer":` + string(authURL) + `,"clientId":"whodb-cli","flows":{"authorizationCodePkce":true,"deviceAuthorization":true}}`))
 	}))
 	defer platformServer.Close()
 
 	if err := Logout(context.Background(), platformServer.URL, "access-token"); err != nil {
 		t.Fatalf("Logout() error = %v", err)
 	}
-	if gotAuthorization != "Bearer access-token" {
-		t.Fatalf("Authorization = %q, want bearer token", gotAuthorization)
+	if gotToken != "access-token" {
+		t.Fatalf("token = %q, want access-token", gotToken)
 	}
 }
 
@@ -69,7 +114,7 @@ func TestIsInvalidGrant(t *testing.T) {
 	}))
 	defer authServer.Close()
 
-	_, err := postAuth(context.Background(), authServer.URL, "/auth/refresh", map[string]string{})
+	_, err := requestTokens(context.Background(), authServer.URL, nil)
 	if err == nil {
 		t.Fatal("postAuth() error = nil, want auth error")
 	}
