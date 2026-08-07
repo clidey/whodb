@@ -17,8 +17,8 @@
 import { useLazyQuery } from '@apollo/client/react';
 import { Spinner } from '@clidey/ux';
 import type { FC, ReactNode } from 'react';
-import { useEffect, useState } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import { SourceSessionDocument } from '../generated/graphql';
 import { AuthActions } from '../store/auth';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
@@ -28,15 +28,25 @@ interface AuthSessionGuardProps {
   children: ReactNode;
 }
 
-/** Restores CE UI auth state from the backend-owned browser session. */
+/**
+ * Restores CE UI auth state from the backend-owned browser session.
+ *
+ * Runs once on mount, not on every navigation: this component wraps
+ * `PrivateRoute`'s `<Outlet/>` and stays mounted across in-app navigation, so
+ * re-running the session check on every route change would race with (and
+ * clobber) in-flight profile/database switches, which dispatch a richer
+ * profile object than the minimal one built from `SourceSession`. Session
+ * expiry mid-session is already handled by the GraphQL error link's 401
+ * auto-login.
+ */
 export const AuthSessionGuard: FC<AuthSessionGuardProps> = ({ children }) => {
   const dispatch = useAppDispatch();
   const loggedIn = useAppSelector(state => state.auth.status === 'logged-in');
-  const location = useLocation();
   const desktopApp = isDesktopApp();
   const [checking, setChecking] = useState(true);
   const [hasSession, setHasSession] = useState(false);
   const [loadSourceSession] = useLazyQuery(SourceSessionDocument, { fetchPolicy: 'no-cache' });
+  const hasChecked = useRef(false);
 
   useEffect(() => {
     if (desktopApp) {
@@ -44,6 +54,11 @@ export const AuthSessionGuard: FC<AuthSessionGuardProps> = ({ children }) => {
       setHasSession(loggedIn);
       return;
     }
+    if (hasChecked.current) {
+      return;
+    }
+    hasChecked.current = true;
+
     let mounted = true;
     setChecking(true);
     void loadSourceSession().then(({ data }) => {
@@ -77,7 +92,7 @@ export const AuthSessionGuard: FC<AuthSessionGuardProps> = ({ children }) => {
     return () => {
       mounted = false;
     };
-  }, [desktopApp, dispatch, loadSourceSession, location.pathname, location.search, loggedIn]);
+  }, [desktopApp, dispatch, loadSourceSession, loggedIn]);
 
   if (checking) {
     return (
