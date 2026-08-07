@@ -157,7 +157,7 @@ func normalizeOIDCURL(raw string) (string, error) {
 	if err != nil || parsed.Host == "" {
 		return "", fmt.Errorf("invalid absolute URL %q", raw)
 	}
-	if parsed.Scheme != "https" && !(parsed.Scheme == "http" && isLoopbackHostname(parsed.Hostname())) {
+	if parsed.Scheme != "https" && (parsed.Scheme != "http" || !isLoopbackHostname(parsed.Hostname())) {
 		return "", fmt.Errorf("URL must use https, except for loopback development")
 	}
 	if parsed.RawQuery != "" || parsed.Fragment != "" || strings.Trim(parsed.Path, "/") == "" {

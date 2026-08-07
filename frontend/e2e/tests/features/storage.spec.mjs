@@ -17,16 +17,11 @@
 import { test, expect } from '../../support/test-fixture.mjs';
 import { getDatabaseConfig, getDatabaseId } from '../../support/database-config.mjs';
 import { clearBrowserState } from '../../support/helpers/animation.mjs';
+import { fetchSourceSession } from '../../support/helpers/test-utils.mjs';
 import path from 'path';
 
 const targetDb = process.env.DATABASE;
 const shouldRun = !targetDb || targetDb.toLowerCase() === 'postgres';
-
-function parsePersistedAuth(authData) {
-    const parsed = JSON.parse(authData);
-    delete parsed.sslStatus;
-    return parsed;
-}
 
 /**
  * Browser Storage Tests
@@ -49,19 +44,15 @@ describeOrSkip('Browser Storage', () => {
     });
 
     test.describe('Redux State Persistence', () => {
-        test('persists auth state across page reload', async ({ whodb, page }) => {
+        test('persists auth session across page reload', async ({ whodb, page }) => {
             // Verify we're logged in
             await expect(page).toHaveURL(/\/storage-unit/);
 
-            // Check that auth state exists in localStorage
-            const authData = await page.evaluate(() => localStorage.getItem('persist:auth'));
-            expect(authData).not.toBeNull();
-
-            const parsed = JSON.parse(authData);
-            expect(parsed.status).toBeDefined();
-            expect(JSON.parse(parsed.status)).toEqual('logged-in');
-            expect(parsed.profiles).toBeDefined();
-            expect(parsed.current).toBeDefined();
+            // Auth state lives server-side (session cookie), not in localStorage —
+            // check the backend-owned session via the SourceSession query instead.
+            const session = await fetchSourceSession(page);
+            expect(session).not.toBeNull();
+            expect(session.sourceType).toBeDefined();
 
             // Reload the page
             await page.reload();
@@ -109,9 +100,10 @@ describeOrSkip('Browser Storage', () => {
         });
 
         test('persists all Redux slices with correct keys', async ({ whodb, page }) => {
-            // Slices that persist immediately on page load (no throttle or have initial state)
+            // Slices that persist immediately on page load (no throttle or have initial state).
+            // 'auth' is deliberately excluded: it's no longer redux-persisted in
+            // browser mode (session lives server-side in a cookie).
             const immediateKeys = [
-                'persist:auth',
                 'persist:database',
                 'persist:settings',
                 'persist:aiModels',
@@ -166,22 +158,18 @@ describeOrSkip('Browser Storage', () => {
 
         test('maintains Redux state structure after reload', async ({ whodb, page }) => {
             // Capture state before reload
-            const beforeReload = await page.evaluate(() => ({
-                auth: localStorage.getItem('persist:auth'),
-                database: localStorage.getItem('persist:database')
-            }));
+            const sessionBefore = await fetchSourceSession(page);
+            const databaseBefore = await page.evaluate(() => localStorage.getItem('persist:database'));
 
             // Reload the page
             await page.reload();
 
             // Verify state structure is maintained
-            const afterReload = await page.evaluate(() => ({
-                auth: localStorage.getItem('persist:auth'),
-                database: localStorage.getItem('persist:database')
-            }));
+            const sessionAfter = await fetchSourceSession(page);
+            const databaseAfter = await page.evaluate(() => localStorage.getItem('persist:database'));
 
-            expect(parsePersistedAuth(afterReload.auth)).toEqual(parsePersistedAuth(beforeReload.auth));
-            expect(JSON.parse(afterReload.database)).toEqual(JSON.parse(beforeReload.database));
+            expect(sessionAfter).toEqual(sessionBefore);
+            expect(JSON.parse(databaseAfter)).toEqual(JSON.parse(databaseBefore));
         });
     });
 
@@ -322,35 +310,18 @@ describeOrSkip('Browser Storage', () => {
             );
         });
 
-        test('clears Redux auth state on logout', async ({ whodb, page }) => {
-            // Verify auth state exists before logout
-            const statusBefore = await page.evaluate(() => {
-                const authData = localStorage.getItem('persist:auth');
-                const parsed = JSON.parse(authData);
-                return JSON.parse(parsed.status);
-            });
-            expect(statusBefore).toEqual('logged-in');
+        test('clears server-side session on logout', async ({ whodb, page }) => {
+            // Verify a session exists before logout
+            const sessionBefore = await fetchSourceSession(page);
+            expect(sessionBefore).not.toBeNull();
 
             // Logout
             await whodb.logout();
             await expect(page).toHaveURL(/\/login/, { timeout: 10000 });
 
-            // Auth state should be cleared (status = unauthorized, profiles empty)
-            const result = await page.evaluate(() => {
-                const authData = localStorage.getItem('persist:auth');
-                if (authData) {
-                    const parsed = JSON.parse(authData);
-                    return {
-                        status: JSON.parse(parsed.status),
-                        profileCount: JSON.parse(parsed.profiles).length
-                    };
-                }
-                return null;
-            });
-            if (result) {
-                expect(result.status).toEqual('unauthorized');
-                expect(result.profileCount).toEqual(0);
-            }
+            // Server-side session should be gone
+            const sessionAfter = await fetchSourceSession(page);
+            expect(sessionAfter).toBeNull();
         });
 
         test('preserves settings after logout', async ({ whodb, page }) => {
@@ -385,19 +356,17 @@ describeOrSkip('Browser Storage', () => {
             expect(hasLoggedInAfter).toEqual('true');
         });
 
-        test('clears current profile but preserves persist keys', async ({ whodb, page }) => {
+        test('preserves other persist keys after logout', async ({ whodb, page }) => {
             // Logout
             await whodb.logout();
             await expect(page).toHaveURL(/\/login/, { timeout: 10000 });
 
-            // Redux persist keys should still exist but with cleared data
+            // Redux persist keys unrelated to auth should still exist (auth itself
+            // is not redux-persisted in browser mode — session lives server-side).
             const result = await page.evaluate(() => {
-                const authData = localStorage.getItem('persist:auth');
-                if (authData) {
-                    const parsed = JSON.parse(authData);
-                    return { hasPersist: parsed._persist !== undefined };
-                }
-                return { hasPersist: false };
+                const data = localStorage.getItem('persist:settings');
+                if (!data) return { hasPersist: false };
+                return { hasPersist: JSON.parse(data)._persist !== undefined };
             });
             expect(result.hasPersist).toBeTruthy();
         });
@@ -609,67 +578,29 @@ describeOrSkip('Browser Storage', () => {
     });
 
     test.describe('Profile Management Storage', () => {
-        test('stores profile information in auth state', async ({ whodb, page }) => {
-            const result = await page.evaluate(() => {
-                const authData = JSON.parse(localStorage.getItem('persist:auth'));
-                const profiles = JSON.parse(authData.profiles);
-                if (profiles.length > 0) {
-                    const profile = profiles[0];
-                    return {
-                        count: profiles.length,
-                        hasId: profile.Id !== undefined,
-                        hasType: profile.Type !== undefined,
-                        hasHostname: profile.Hostname !== undefined
-                    };
-                }
-                return { count: 0 };
-            });
+        // Profile list/current profile now live only in the backend-owned
+        // session (SourceSession), not in persist:auth localStorage.
 
-            // Should have at least one profile
-            expect(result.count).toBeGreaterThan(0);
-
-            // Each profile should have required fields
-            expect(result.hasId).toBeTruthy();
-            expect(result.hasType).toBeTruthy();
-            expect(result.hasHostname).toBeTruthy();
-        });
-
-        test('stores current profile in auth state', async ({ whodb, page }) => {
-            const result = await page.evaluate(() => {
-                const authData = JSON.parse(localStorage.getItem('persist:auth'));
-                const current = JSON.parse(authData.current);
-                return {
-                    isNotNull: current !== null,
-                    hasId: current?.Id !== undefined,
-                    hasType: current?.Type !== undefined
-                };
-            });
+        test('stores current profile in session', async ({ whodb, page }) => {
+            const session = await fetchSourceSession(page);
 
             // Current profile should exist
-            expect(result.isNotNull).toBeTruthy();
-            expect(result.hasId).toBeTruthy();
-            expect(result.hasType).toBeTruthy();
+            expect(session).not.toBeNull();
+            expect(session.id).toBeDefined();
+            expect(session.sourceType).toBeDefined();
         });
 
         test('profile data persists after navigation', async ({ whodb, page }) => {
             // Get the current profile ID
-            const profileId = await page.evaluate(() => {
-                const authData = JSON.parse(localStorage.getItem('persist:auth'));
-                const current = JSON.parse(authData.current);
-                return current.Id;
-            });
+            const sessionBefore = await fetchSourceSession(page);
 
             // Navigate to another page
             await page.goto(whodb.url('/graph'));
             await page.waitForTimeout(500);
 
             // Profile should remain the same
-            const profileIdAfter = await page.evaluate(() => {
-                const authData = JSON.parse(localStorage.getItem('persist:auth'));
-                const current = JSON.parse(authData.current);
-                return current.Id;
-            });
-            expect(profileIdAfter).toEqual(profileId);
+            const sessionAfter = await fetchSourceSession(page);
+            expect(sessionAfter.id).toEqual(sessionBefore.id);
         });
     });
 

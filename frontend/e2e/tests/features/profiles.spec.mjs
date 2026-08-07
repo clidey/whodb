@@ -17,20 +17,14 @@
 import { test, expect, forEachDatabase } from '../../support/test-fixture.mjs';
 import { getDatabaseConfig } from '../../support/database-config.mjs';
 import { clearBrowserState } from '../../support/helpers/animation.mjs';
+import { fetchSourceSession } from '../../support/helpers/test-utils.mjs';
 
 const PROFILE_REPRESENTATIVE_DATABASES = ['postgres', 'mongodb', 'redis', 'memcached'];
 
 async function expectPersistedProfileType(page, expectedType) {
     await expect.poll(async () => {
-        return await page.evaluate(() => {
-            const rawAuth = localStorage.getItem('persist:auth');
-            if (!rawAuth) return null;
-
-            const auth = JSON.parse(rawAuth);
-            if (!auth.current) return null;
-
-            return JSON.parse(auth.current).Type;
-        });
+        const session = await fetchSourceSession(page);
+        return session?.sourceType ?? null;
     }, { timeout: 10000 }).toBe(expectedType);
 }
 

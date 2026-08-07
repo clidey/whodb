@@ -17,7 +17,7 @@
 import { useLazyQuery } from '@apollo/client/react';
 import { Spinner } from '@clidey/ux';
 import type { FC, ReactNode } from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { SourceSessionDocument } from '../generated/graphql';
 import { AuthActions } from '../store/auth';
@@ -31,33 +31,36 @@ interface AuthSessionGuardProps {
 /**
  * Restores CE UI auth state from the backend-owned browser session.
  *
- * Runs once on mount, not on every navigation: this component wraps
- * `PrivateRoute`'s `<Outlet/>` and stays mounted across in-app navigation, so
- * re-running the session check on every route change would race with (and
- * clobber) in-flight profile/database switches, which dispatch a richer
- * profile object than the minimal one built from `SourceSession`. Session
- * expiry mid-session is already handled by the GraphQL error link's 401
- * auto-login.
+ * Checks the session on mount only (no location dependency): this component
+ * wraps `PrivateRoute`'s `<Outlet/>` and stays mounted across in-app
+ * navigation, so re-running the session check on every route change would
+ * race with (and clobber) in-flight profile/database switches, which
+ * dispatch a richer profile object than the minimal one built from
+ * `SourceSession`. Session expiry mid-session is already handled by the
+ * GraphQL error link's 401 auto-login.
+ *
+ * Also skips the fetch entirely when Redux already reports a logged-in
+ * profile: this component first mounts right after the login page's own
+ * `AuthActions.login()` dispatch (with the full profile — Hostname,
+ * Password, etc.), and `SourceSession` only carries Id/SourceType/Database.
+ * Re-dispatching that minimal payload here would clobber the credentials the
+ * login flow just stored, breaking any later profile/database switch that
+ * needs them.
  */
 export const AuthSessionGuard: FC<AuthSessionGuardProps> = ({ children }) => {
   const dispatch = useAppDispatch();
   const loggedIn = useAppSelector(state => state.auth.status === 'logged-in');
   const desktopApp = isDesktopApp();
-  const [checking, setChecking] = useState(true);
-  const [hasSession, setHasSession] = useState(false);
+  const [checking, setChecking] = useState(!loggedIn);
+  const [hasSession, setHasSession] = useState(loggedIn);
   const [loadSourceSession] = useLazyQuery(SourceSessionDocument, { fetchPolicy: 'no-cache' });
-  const hasChecked = useRef(false);
 
   useEffect(() => {
-    if (desktopApp) {
+    if (desktopApp || loggedIn) {
       setChecking(false);
       setHasSession(loggedIn);
       return;
     }
-    if (hasChecked.current) {
-      return;
-    }
-    hasChecked.current = true;
 
     let mounted = true;
     setChecking(true);
