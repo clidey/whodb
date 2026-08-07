@@ -107,6 +107,9 @@ export async function fetchSourceSession(page) {
                 variables: {},
             }),
         });
+        if (!response.ok) {
+            return null;
+        }
         const result = await response.json();
         return result?.data?.SourceSession ?? null;
     });
