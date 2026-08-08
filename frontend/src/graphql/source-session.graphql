@@ -1,0 +1,7 @@
+query SourceSession {
+  SourceSession {
+    id: Id
+    sourceType: SourceType
+    database: Database
+  }
+}

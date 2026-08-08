@@ -19,6 +19,7 @@ import { ensureModelTypesArray, ensureModelsArray } from '../utils/ai-models-hel
 import { featureFlags } from '../config/features';
 import { withBasePath } from '../utils/base-path';
 import { stripProfileSecrets } from '../utils/credential-secrets';
+import { isDesktopApp } from '../utils/external-links';
 
 
 /**
@@ -406,6 +407,27 @@ export async function migrateAuthSessionCookieV9(): Promise<void> {
 }
 
 /**
+ * Removes the legacy Redux auth cache once browser sessions are restored from
+ * the backend. Auth state is now in-memory only and is hydrated at startup
+ * from the HttpOnly session cookie.
+ */
+export function clearPersistedAuthStateV10(): void {
+  try {
+    if (typeof window === 'undefined' || getMigrationVersion() >= 10) {
+      return;
+    }
+    if (isDesktopApp()) {
+      return;
+    }
+    localStorage.removeItem('persist:auth');
+  } catch (error) {
+    console.error('Error clearing persisted auth state:', error);
+  } finally {
+    setMigrationVersion(10);
+  }
+}
+
+/**
  * Run all necessary migrations
  */
 export function runMigrations(): void {
@@ -442,8 +464,8 @@ export function runMigrations(): void {
     setMigrationVersion(8);
   }
 
-  // V9 (auth → session cookie) runs separately via migrateAuthSessionCookieV9,
-  // which is awaited before the app renders so the cookie beats any query.
+  // V9 (auth → session cookie) and V10 (remove persisted auth) run separately
+  // before the app renders so the cookie beats any query.
 
   // Always ensure AI models state is valid
   ensureValidAIModelsState();

@@ -355,6 +355,7 @@ type ComplexityRoot struct {
 		SourceProfiles               func(childComplexity int) int
 		SourceQuerySuggestions       func(childComplexity int, ref *model.SourceObjectRefInput) int
 		SourceRows                   func(childComplexity int, ref model.SourceObjectRefInput, where *model.WhereCondition, sort []*model.SortCondition, pageSize int, pageOffset int) int
+		SourceSession                func(childComplexity int) int
 		SourceSessionMetadata        func(childComplexity int) int
 		SourceTypes                  func(childComplexity int) int
 		UpdateInfo                   func(childComplexity int) int
@@ -539,6 +540,12 @@ type ComplexityRoot struct {
 		Value   func(childComplexity int) int
 	}
 
+	SourceSession struct {
+		Database   func(childComplexity int) int
+		ID         func(childComplexity int) int
+		SourceType func(childComplexity int) int
+	}
+
 	SourceSessionMetadata struct {
 		AliasMap        func(childComplexity int) int
 		Operators       func(childComplexity int) int
@@ -651,6 +658,7 @@ type QueryResolver interface {
 	SourceProfiles(ctx context.Context) ([]*model.SourceProfile, error)
 	SourceTypes(ctx context.Context) ([]*model.SourceType, error)
 	SourceFieldOptions(ctx context.Context, sourceType string, fieldKey string, values []*model.RecordInput) ([]string, error)
+	SourceSession(ctx context.Context) (*model.SourceSession, error)
 	SourceSessionMetadata(ctx context.Context) (*model.SourceSessionMetadata, error)
 	SourceObjectCreationMetadata(ctx context.Context, parent *model.SourceObjectRefInput) (*model.ObjectCreationMetadata, error)
 	SourceObjects(ctx context.Context, parent *model.SourceObjectRefInput, kinds []model.SourceObjectKind) ([]*model.SourceObject, error)
@@ -2346,6 +2354,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.SourceRows(childComplexity, args["ref"].(model.SourceObjectRefInput), args["where"].(*model.WhereCondition), args["sort"].([]*model.SortCondition), args["pageSize"].(int), args["pageOffset"].(int)), true
+	case "Query.SourceSession":
+		if e.ComplexityRoot.Query.SourceSession == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.SourceSession(childComplexity), true
 	case "Query.SourceSessionMetadata":
 		if e.ComplexityRoot.Query.SourceSessionMetadata == nil {
 			break
@@ -3047,6 +3061,25 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.SourceSSLMode.Value(childComplexity), true
+
+	case "SourceSession.Database":
+		if e.ComplexityRoot.SourceSession.Database == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SourceSession.Database(childComplexity), true
+	case "SourceSession.Id":
+		if e.ComplexityRoot.SourceSession.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SourceSession.ID(childComplexity), true
+	case "SourceSession.SourceType":
+		if e.ComplexityRoot.SourceSession.SourceType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SourceSession.SourceType(childComplexity), true
 
 	case "SourceSessionMetadata.AliasMap":
 		if e.ComplexityRoot.SourceSessionMetadata.AliasMap == nil {
@@ -4274,6 +4307,18 @@ func (ec *executionContext) childFields_SourceSSLMode(ctx context.Context, field
 		return ec.fieldContext_SourceSSLMode_aliases(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type SourceSSLMode", field.Name)
+}
+
+func (ec *executionContext) childFields_SourceSession(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "Id":
+		return ec.fieldContext_SourceSession_Id(ctx, field)
+	case "SourceType":
+		return ec.fieldContext_SourceSession_SourceType(ctx, field)
+	case "Database":
+		return ec.fieldContext_SourceSession_Database(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type SourceSession", field.Name)
 }
 
 func (ec *executionContext) childFields_SourceSessionMetadata(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -10957,6 +11002,38 @@ func (ec *executionContext) fieldContext_Query_SourceFieldOptions(ctx context.Co
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_SourceSession(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_SourceSession(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Query().SourceSession(ctx)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.SourceSession) graphql.Marshaler {
+			return ec.marshalOSourceSession2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSourceSession(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Query_SourceSession(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_SourceSession(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_SourceSessionMetadata(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -14847,6 +14924,75 @@ func (ec *executionContext) _SourceSSLMode_aliases(ctx context.Context, field gr
 }
 func (ec *executionContext) fieldContext_SourceSSLMode_aliases(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("SourceSSLMode", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _SourceSession_Id(ctx context.Context, field graphql.CollectedField, obj *model.SourceSession) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SourceSession_Id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_SourceSession_Id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SourceSession", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _SourceSession_SourceType(ctx context.Context, field graphql.CollectedField, obj *model.SourceSession) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SourceSession_SourceType(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SourceType, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SourceSession_SourceType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SourceSession", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _SourceSession_Database(ctx context.Context, field graphql.CollectedField, obj *model.SourceSession) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SourceSession_Database(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Database, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SourceSession_Database(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SourceSession", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
 func (ec *executionContext) _SourceSessionMetadata_SourceType(ctx context.Context, field graphql.CollectedField, obj *model.SourceSessionMetadata) (ret graphql.Marshaler) {
@@ -20369,6 +20515,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "SourceSession":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_SourceSession(ctx, field)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "SourceSessionMetadata":
 			field := field
 
@@ -22388,6 +22556,54 @@ func (ec *executionContext) _SourceSSLMode(ctx context.Context, sel ast.Selectio
 			}
 		case "aliases":
 			out.Values[i] = ec._SourceSSLMode_aliases(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var sourceSessionImplementors = []string{"SourceSession"}
+
+func (ec *executionContext) _SourceSession(ctx context.Context, sel ast.SelectionSet, obj *model.SourceSession) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, sourceSessionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SourceSession")
+		case "Id":
+			out.Values[i] = ec._SourceSession_Id(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "SourceType":
+			out.Values[i] = ec._SourceSession_SourceType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Database":
+			out.Values[i] = ec._SourceSession_Database(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -25450,6 +25666,13 @@ func (ec *executionContext) unmarshalOSourceObjectRefInput2ᚖgithubᚗcomᚋcli
 	}
 	res, err := ec.unmarshalInputSourceObjectRefInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOSourceSession2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSourceSession(ctx context.Context, sel ast.SelectionSet, v *model.SourceSession) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._SourceSession(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOSourceSessionMetadata2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSourceSessionMetadata(ctx context.Context, sel ast.SelectionSet, v *model.SourceSessionMetadata) graphql.Marshaler {

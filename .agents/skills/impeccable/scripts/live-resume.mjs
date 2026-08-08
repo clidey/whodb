@@ -4,6 +4,7 @@
  */
 
 import { createLiveSessionStore } from './live/session-store.mjs';
+import { enterLiveRoot } from './live/roots.mjs';
 
 function manualApplyReplyCommand(eventOrId = 'EVENT_ID') {
   const id = typeof eventOrId === 'string' ? eventOrId : eventOrId?.id || 'EVENT_ID';
@@ -49,6 +50,28 @@ function collectManualApplyFiles(batch) {
   return [...new Set(files.filter((file) => typeof file === 'string' && file.length > 0))].sort();
 }
 
+/**
+ * The browser's render truth, folded into a small block the agent reads before
+ * it decides what to do. `arrivedVariants` only says the agent published;
+ * `renderState` says whether any of it reached a screen.
+ */
+export function renderSummary(snapshot = {}) {
+  return {
+    renderState: snapshot.renderState ?? null,
+    mountedVariants: Array.isArray(snapshot.mountedVariants) ? snapshot.mountedVariants : [],
+    mountFailures: Array.isArray(snapshot.mountFailures) ? snapshot.mountFailures : [],
+  };
+}
+
+export function mountFailureAction(snapshot = {}) {
+  const failures = Array.isArray(snapshot.mountFailures) ? snapshot.mountFailures : [];
+  const latest = failures[failures.length - 1];
+  if (!latest) return null;
+  const where = latest.url ? ` from ${latest.url}` : '';
+  const why = latest.error ? ` (${latest.error})` : '';
+  return `The browser failed to mount variant ${latest.variant}${where}${why}; nothing is on screen. Fix the variant files, then reply with live-poll.mjs --reply ${snapshot?.pendingEvent?.id || snapshot?.id || 'SESSION_ID'} done --file <manifest or source path> for the queued variant_mount_failed event (or republish) so the browser retries.`;
+}
+
 function parseArgs(argv) {
   const out = { id: null };
   for (let i = 0; i < argv.length; i++) {
@@ -75,20 +98,26 @@ export async function resumeCli() {
   }
 
   const pending = snapshot.pendingEvent || null;
-  const nextAction = pending
-    ? pending.type === 'manual_edit_apply'
-      ? manualApplyResumeHint(pending)
-      : `Run live-poll.mjs, handle ${pending.type} ${pending.id}, then acknowledge with live-poll.mjs --reply ${pending.id} done.`
-    : snapshot.phase === 'carbonize_required'
-      ? `Finish carbonize cleanup${snapshot.sourceFile ? ` in ${snapshot.sourceFile}` : ''}, then run live-complete.mjs --id ${snapshot.id}.`
-      : snapshot.phase === 'accept_requested'
-        ? `Run live-complete.mjs --id ${snapshot.id} after verifying the accepted variant is written.`
-        : `Inspect ${snapshot.id}; no pending agent event is currently queued.`;
+  const render = renderSummary(snapshot);
+  // A failed render outranks the generic pending-event hint: the agent needs to
+  // know the user is staring at an error card, not at variants. A leased manual
+  // Apply still outranks both, because abandoning that lease loses user edits.
+  const mountAction = render.renderState === 'failed' ? mountFailureAction(snapshot) : null;
+  const nextAction = pending?.type === 'manual_edit_apply'
+    ? manualApplyResumeHint(pending)
+    : mountAction || (pending
+      ? `Run live-poll.mjs, handle ${pending.type} ${pending.id}, then acknowledge with live-poll.mjs --reply ${pending.id} done.`
+      : snapshot.phase === 'carbonize_required'
+        ? `Finish carbonize cleanup${snapshot.sourceFile ? ` in ${snapshot.sourceFile}` : ''}, then run live-complete.mjs --id ${snapshot.id}.`
+        : snapshot.phase === 'accept_requested'
+          ? `Run live-complete.mjs --id ${snapshot.id} after verifying the accepted variant is written.`
+          : `Inspect ${snapshot.id}; no pending agent event is currently queued.`);
 
-  console.log(JSON.stringify({ active: true, snapshot, pendingEvent: pending, nextAction }, null, 2));
+  console.log(JSON.stringify({ active: true, snapshot, pendingEvent: pending, render, nextAction }, null, 2));
 }
 
 const _running = process.argv[1];
 if (_running?.endsWith('live-resume.mjs') || _running?.endsWith('live-resume.mjs/')) {
+  enterLiveRoot();
   resumeCli();
 }

@@ -89,6 +89,16 @@ jobs:
           delete-after-upload: true
         continue-on-error: true
 
+      # The upload step is continue-on-error, so a PostHog outage would leave its
+      # delete-after-upload unperformed and the maps would reach the artifact and
+      # the go:embed. They inline the original sources, so remove them here too:
+      # the guarantee should not depend on a third party succeeding.
+      - name: Ensure source maps are not shipped
+        run: |
+          find frontend/build -name '*.map' -type f -print -delete
+          remaining=$(find frontend/build -name '*.map' -type f | wc -l | tr -d ' ')
+          [ "$remaining" = "0" ] || { echo "::error::source maps remain in the build"; exit 1; }
+
       - name: Upload frontend build artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:

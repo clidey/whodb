@@ -15,7 +15,7 @@
  */
 
 import {expect} from "@playwright/test";
-import {TIMEOUT} from "../helpers/test-utils.mjs";
+import {TIMEOUT, fetchSourceSession} from "../helpers/test-utils.mjs";
 
 const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
 
@@ -280,15 +280,8 @@ export const coreMethods = {
         await this.page.locator(`[data-value="${selectedDatabase}"]`).click();
         await expect(this.page.locator('[data-testid="sidebar-database"]')).toContainText(selectedDatabase, { timeout: TIMEOUT.NAVIGATION });
         await expect.poll(async () => {
-            return await this.page.evaluate(() => {
-                const rawAuth = localStorage.getItem("persist:auth");
-                if (!rawAuth) return null;
-
-                const auth = JSON.parse(rawAuth);
-                if (!auth.current) return null;
-
-                return JSON.parse(auth.current).Database;
-            });
+            const session = await fetchSourceSession(this.page);
+            return session?.database ?? null;
         }, { timeout: TIMEOUT.NAVIGATION }).toBe(selectedDatabase);
     },
 

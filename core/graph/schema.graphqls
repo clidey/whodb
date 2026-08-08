@@ -654,6 +654,14 @@ type SourceSessionMetadata {
   AliasMap: [Record!]!
 }
 
+# Safe UI state for the active source session. Credentials and connection
+# details remain server-side and are never returned to the browser.
+type SourceSession {
+  Id: String
+  SourceType: String!
+  Database: String!
+}
+
 type SourceQuerySuggestion {
   description: String!
   category: String!
@@ -894,6 +902,7 @@ type Query {
   SourceProfiles: [SourceProfile!]!
   SourceTypes: [SourceType!]!
   SourceFieldOptions(sourceType: String!, fieldKey: String!, values: [RecordInput!]): [String!]!
+  SourceSession: SourceSession
   SourceSessionMetadata: SourceSessionMetadata
   SourceObjectCreationMetadata(parent: SourceObjectRefInput): ObjectCreationMetadata!
   SourceObjects(parent: SourceObjectRefInput, kinds: [SourceObjectKind!]): [SourceObject!]!

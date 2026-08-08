@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * `/impeccable hooks <on|off|status|reset>` — manage the design hook runtime
+ * The Impeccable hooks command manages the design hook runtime
  * via the `hook` key and shared detector ignores via the `detector` key in
  * .impeccable/config.json / .impeccable/config.local.json.
  *
@@ -10,9 +10,11 @@
  *   node hook-admin.mjs off                            # set enabled: false
  *   node hook-admin.mjs ignore-rule <rule-id>          # append to ignoreRules
  *   node hook-admin.mjs ignore-rule overused-font --all-values
- *   node hook-admin.mjs ignore-file <glob>             # append to ignoreFiles
+ *   node hook-admin.mjs ignore-file <glob> [--shared|--local]   # append to ignoreFiles
  *   node hook-admin.mjs ignore-value <rule> <value>    # append to shared ignoreValues
  *   node hook-admin.mjs ignore-value <rule> <value> --local
+ *   node hook-admin.mjs ignore-value <rule> "*" --file <glob>   # rule off in <glob> only
+ *   node hook-admin.mjs ignore-value <rule> "*"                 # refused: scope it or use ignore-rule
  *   node hook-admin.mjs reset                          # remove all config + cache
  *
  * Designed to be invoked by the LLM from the reference/hooks.md flow.
@@ -21,6 +23,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { IMPECCABLE_COMMAND } from './lib/provider.mjs';
 
 import {
   getConfigPath,
@@ -44,6 +47,26 @@ const IMPECCABLE_HOOK_COMMAND_MARKERS = [
 ];
 const TIMEOUT_SECONDS = 5;
 const STATUS_MESSAGE = 'Checking UI changes';
+// The Stop deep pass scans every UI file touched in the session with the full
+// rule set, so it gets a longer budget than the per-edit pass. Only Claude
+// Code and Codex dispatch a native Stop hook event, so only those manifests
+// carry the entry. Keep these shapes in sync with
+// scripts/lib/transformers/hooks.js in the repo.
+const STOP_TIMEOUT_SECONDS = 30;
+const STOP_STATUS_MESSAGE = 'Design deep pass';
+
+function stopManifestEntry(command) {
+  return {
+    hooks: [
+      {
+        type: 'command',
+        command,
+        timeout: STOP_TIMEOUT_SECONDS,
+        statusMessage: STOP_STATUS_MESSAGE,
+      },
+    ],
+  };
+}
 
 const HOOK_MANIFEST_TARGETS = [
   {
@@ -52,7 +75,7 @@ const HOOK_MANIFEST_TARGETS = [
     destRel: '.claude/settings.local.json',
     sharedDestRel: '.claude/settings.json',
     manifest: () => ({
-      description: 'Impeccable design detector: runs after Edit/Write/MultiEdit on UI files and surfaces findings as system reminders.',
+      description: 'Impeccable design detector: immediate-tier checks after Edit/Write/MultiEdit on UI files, full-rule deep pass on Stop.',
       hooks: {
         PostToolUse: [
           {
@@ -67,6 +90,7 @@ const HOOK_MANIFEST_TARGETS = [
             ],
           },
         ],
+        Stop: [stopManifestEntry('node "${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/hook.mjs"')],
       },
     }),
   },
@@ -75,7 +99,6 @@ const HOOK_MANIFEST_TARGETS = [
     skillRel: '.agents/skills/impeccable',
     destRel: '.codex/hooks.json',
     manifest: () => ({
-      description: 'Impeccable design detector: runs after Edit/Write/apply_patch on UI files and surfaces findings as system reminders.',
       hooks: {
         PostToolUse: [
           {
@@ -83,13 +106,14 @@ const HOOK_MANIFEST_TARGETS = [
             hooks: [
               {
                 type: 'command',
-                command: 'node "$(git rev-parse --show-toplevel)/.agents/skills/impeccable/scripts/hook.mjs"',
+                command: 'node ".agents/skills/impeccable/scripts/hook.mjs"',
                 timeout: TIMEOUT_SECONDS,
                 statusMessage: STATUS_MESSAGE,
               },
             ],
           },
         ],
+        Stop: [stopManifestEntry('node ".agents/skills/impeccable/scripts/hook.mjs"')],
       },
     }),
   },
@@ -142,7 +166,7 @@ function readRawConfigFile(filePath) {
   }
 }
 
-const DETECTOR_CONFIG_KEYS = new Set(['ignoreRules', 'ignoreFiles', 'ignoreValues', 'designSystem']);
+const DETECTOR_CONFIG_KEYS = new Set(['ignoreRules', 'ignoreFiles', 'ignoreValues', 'designSystem', 'advisoryRules']);
 
 function hookSection(unified) {
   return unified && typeof unified === 'object' && !Array.isArray(unified) && unified.hook && typeof unified.hook === 'object' && !Array.isArray(unified.hook)
@@ -176,6 +200,15 @@ function stripDetectorKeys(raw) {
   return out;
 }
 
+function pickDetectorKeys(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+  const out = {};
+  for (const [key, value] of Object.entries(raw)) {
+    if (DETECTOR_CONFIG_KEYS.has(key)) out[key] = value;
+  }
+  return out;
+}
+
 // Write hook runtime config under `hook`, leaving detector filters in
 // `detector` and preserving sibling keys such as updateCheck.
 function writeHookConfig(cwd, hookConfig, opts = {}) {
@@ -183,10 +216,19 @@ function writeHookConfig(cwd, hookConfig, opts = {}) {
   if (opts.local) ensureHookGitExcludes(cwd);
   const existingRaw = readRawConfigFile(filePath).raw;
   const existing = existingRaw && typeof existingRaw === 'object' && !Array.isArray(existingRaw) ? existingRaw : {};
-  const existingHook = stripDetectorKeys(hookSection(existing));
+  const existingHookSection = hookSection(existing);
+  const existingHook = stripDetectorKeys(existingHookSection);
+  const legacyDetector = pickDetectorKeys(existingHookSection);
   // Merge over the existing hook object so fields the merge helpers don't manage
-  // (consent, quiet, auditLog) survive a `/impeccable hooks` edit.
+  // (consent, quiet, auditLog) survive an Impeccable hooks edit.
   const next = { ...existing, hook: { ...existingHook, ...hookConfig } };
+  if (Object.keys(legacyDetector).length > 0) {
+    const existingDetector = detectorSection(existing) || {};
+    next.detector = {
+      ...existingDetector,
+      ...mergeDetectorConfig(existingDetector, mergeDetectorConfig(legacyDetector)),
+    };
+  }
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
   fs.writeFileSync(filePath, JSON.stringify(next, null, 2) + '\n');
   return filePath;
@@ -198,10 +240,14 @@ function writeDetectorConfig(cwd, detectorConfig, opts = {}) {
   const existingRaw = readRawConfigFile(filePath).raw;
   const existing = existingRaw && typeof existingRaw === 'object' && !Array.isArray(existingRaw) ? existingRaw : {};
   const nextHook = stripDetectorKeys(hookSection(existing));
-  const existingDetector = mergeDetectorConfig(detectorSection(existing));
+  const existingDetectorSection = detectorSection(existing) || {};
+  const existingDetector = mergeDetectorConfig(existingDetectorSection);
   const next = {
     ...existing,
-    detector: mergeDetectorConfig(detectorConfig, existingDetector),
+    detector: {
+      ...existingDetectorSection,
+      ...mergeDetectorConfig(detectorConfig, existingDetector),
+    },
   };
   if (Object.keys(nextHook).length > 0) next.hook = nextHook;
   else delete next.hook;
@@ -235,11 +281,17 @@ function mergeDetectorConfig(existing, seed = null) {
   if (seed?.designSystem && typeof seed.designSystem === 'object' && !Array.isArray(seed.designSystem)) {
     out.designSystem = { ...seed.designSystem };
   }
+  if (seed?.advisoryRules === 'include' || seed?.advisoryRules === 'exclude') {
+    out.advisoryRules = seed.advisoryRules;
+  }
   if (base.designSystem && typeof base.designSystem === 'object' && !Array.isArray(base.designSystem)) {
     out.designSystem = {
       ...(out.designSystem || {}),
       enabled: base.designSystem.enabled === false ? false : true,
     };
+  }
+  if (base.advisoryRules === 'include' || base.advisoryRules === 'exclude') {
+    out.advisoryRules = base.advisoryRules;
   }
   if (Array.isArray(base.ignoreRules)) {
     out.ignoreRules = Array.from(new Set([...out.ignoreRules, ...base.ignoreRules.map(String)]));
@@ -265,7 +317,10 @@ function mergeIgnoreValueEntries(existing, incoming) {
 }
 
 function ignoreValueEntryKey(entry) {
-  const files = Array.isArray(entry.files) && entry.files.length > 0 ? entry.files.join('\x1f') : '';
+  // Sorted: a file scope is a set. Comparing stored order made an on-disk scope
+  // miss the sorted argv form, so a re-add duplicated the entry and a remove
+  // silently failed. Every key that hashes `files` must sort — there are four.
+  const files = Array.isArray(entry.files) && entry.files.length > 0 ? [...entry.files].sort().join('\x1f') : '';
   return `${entry.rule}\0${entry.value}\0${files}`;
 }
 
@@ -283,7 +338,14 @@ function statusReport(cwd) {
     if (info.exists) return relPath;
     return `${relPath} (${absent})`;
   };
-  const ignoreValues = cfg.ignoreValues.map((entry) => `${entry.rule}=${entry.value}`);
+  // Show the file scope. Dropping it rendered a file-scoped entry as
+  // `design-system-font-size=*`, which reads as the project-wide wildcard this
+  // command refuses — the opposite of what is on disk. Matches the
+  // `rule=value [files]` shape `impeccable ignores list` already prints.
+  const ignoreValues = cfg.ignoreValues.map((entry) => {
+    const scope = Array.isArray(entry.files) && entry.files.length ? ` [${entry.files.join(', ')}]` : '';
+    return `${entry.rule}=${entry.value}${scope}`;
+  });
 
   const lines = [
     `Impeccable design hook`,
@@ -514,9 +576,9 @@ function parseIgnoreRuleArgs(args) {
 function addIgnoreRule(cwd, args) {
   const parsed = parseIgnoreRuleArgs(args);
   const rule = parsed.rule;
-  if (!rule) throw new Error('Pass a rule id, e.g. /impeccable hooks ignore-rule side-tab');
+  if (!rule) throw new Error(`Pass a rule id, e.g. ${IMPECCABLE_COMMAND} hooks ignore-rule side-tab`);
   if (rule === 'overused-font' && !parsed.allValues) {
-    throw new Error('overused-font is value-specific by default. Use /impeccable hooks ignore-value overused-font <font> for a confirmed font, or /impeccable hooks ignore-rule overused-font --all-values only when the user asked to ignore overused fonts generally.');
+    throw new Error(`overused-font is value-specific by default. Use ${IMPECCABLE_COMMAND} hooks ignore-value overused-font <font> for a confirmed font, or ${IMPECCABLE_COMMAND} hooks ignore-rule overused-font --all-values only when the user asked to ignore overused fonts generally.`);
   }
   const config = mergeDetectorConfig(readRawDetectorConfig(cwd));
   if (!config.ignoreRules.includes(rule)) config.ignoreRules.push(rule);
@@ -524,22 +586,69 @@ function addIgnoreRule(cwd, args) {
   return `Added "${rule}" to detector.ignoreRules. Current: ${config.ignoreRules.join(', ')}`;
 }
 
-function addIgnoreFile(cwd, glob) {
-  if (!glob) throw new Error('Pass a glob, e.g. /impeccable hooks ignore-file "src/legacy/**"');
-  const config = mergeDetectorConfig(readRawDetectorConfig(cwd));
+function parseIgnoreFileArgs(args) {
+  const positionals = [];
+  let shared = false;
+  let local = false;
+
+  for (const raw of args) {
+    const arg = String(raw || '');
+    if (arg === '--shared') {
+      shared = true;
+    } else if (arg === '--local') {
+      local = true;
+    } else if (arg === '--reason' || arg.startsWith('--reason=')) {
+      throw new Error('--reason is not supported for ignore-file because detector.ignoreFiles stores globs only; use ignore-value when a documented rule-specific exception fits');
+    } else if (arg.startsWith('--')) {
+      throw new Error(`Unknown ignore-file flag: ${arg}`);
+    } else {
+      positionals.push(arg);
+    }
+  }
+
+  if (shared && local) throw new Error('Pass only one scope flag: --shared or --local');
+  if (positionals.length > 1) throw new Error('Pass exactly one glob to ignore-file');
+
+  return {
+    glob: positionals[0],
+    local,
+  };
+}
+
+function addIgnoreFile(cwd, args) {
+  const parsed = parseIgnoreFileArgs(args);
+  const glob = parsed.glob;
+  if (!glob) throw new Error(`Pass a glob, e.g. ${IMPECCABLE_COMMAND} hooks ignore-file "src/legacy/**"`);
+  const config = mergeDetectorConfig(readRawDetectorConfig(cwd, { local: parsed.local }));
   if (!config.ignoreFiles.includes(glob)) config.ignoreFiles.push(glob);
-  writeDetectorConfig(cwd, config);
-  return `Added "${glob}" to detector.ignoreFiles. Current: ${config.ignoreFiles.join(', ')}`;
+  const target = writeDetectorConfig(cwd, config, { local: parsed.local });
+  const scope = parsed.local ? 'local detector.ignoreFiles' : 'shared detector.ignoreFiles';
+  return `Added "${glob}" to ${scope} (${path.relative(cwd, target) || target}). Current: ${config.ignoreFiles.join(', ')}`;
+}
+
+// An empty glob used to be dropped by filter(Boolean), so `--file=` reported
+// success and wrote an entry with no files: the user asked to scope a rule to one
+// file and silently got the project-wide suppression instead. Refuse it.
+function requireGlob(raw, flag) {
+  const glob = String(raw ?? '').trim();
+  if (!glob) throw new Error(`${flag} requires a non-empty glob`);
+  // A following flag is not a glob. `--file --reason "why"` consumed `--reason`
+  // as the scope and left the reason text to fold into the value, storing
+  // value="* why" files=["--reason"] and reporting success. Same silent-no-op
+  // class as an unknown flag folding into the value; refuse it the same way.
+  if (glob.startsWith('--')) throw new Error(`${flag} requires a glob, got the flag ${glob}`);
+  return glob;
 }
 
 function parseIgnoreValueArgs(args) {
   const positionals = [];
+  const files = [];
   let shared = false;
   let local = false;
   let reason = '';
 
   for (let i = 0; i < args.length; i++) {
-    const arg = args[i];
+    const arg = String(args[i] || '');
     if (arg === '--shared') {
       shared = true;
     } else if (arg === '--local') {
@@ -550,8 +659,20 @@ function parseIgnoreValueArgs(args) {
         chunks.push(args[++i]);
       }
       reason = chunks.join(' ').trim();
-    } else if (String(arg).startsWith('--reason=')) {
-      reason = String(arg).slice('--reason='.length).trim();
+    } else if (arg.startsWith('--reason=')) {
+      reason = arg.slice('--reason='.length).trim();
+    } else if (arg === '--file' || arg === '--files') {
+      if (i + 1 >= args.length) throw new Error(`${arg} requires a glob`);
+      files.push(requireGlob(args[++i], arg));
+    } else if (arg.startsWith('--file=')) {
+      files.push(requireGlob(arg.slice('--file='.length), '--file'));
+    } else if (arg.startsWith('--files=')) {
+      files.push(requireGlob(arg.slice('--files='.length), '--files'));
+    } else if (arg.startsWith('--')) {
+      // Otherwise a typo folds into the value: `ignore-value overused-font Inter
+      // --shard` stored the value "inter --shard", which matches no finding, and
+      // reported success. Matches `impeccable ignores add-value`.
+      throw new Error(`Unknown ignore-value flag: ${arg}`);
     } else {
       positionals.push(arg);
     }
@@ -561,6 +682,9 @@ function parseIgnoreValueArgs(args) {
   return {
     rule: String(rule || '').trim().toLowerCase(),
     value: normalizeIgnoreValue(valueParts.join(' ')),
+    // Sorted: the dedup key compares the files array, so an unsorted scope made
+    // `--file b.css --file a.css` a different entry from `--file a.css --file b.css`.
+    files: Array.from(new Set(files.filter(Boolean))).sort(),
     shared,
     local,
     reason,
@@ -570,17 +694,31 @@ function parseIgnoreValueArgs(args) {
 function addIgnoreValue(cwd, args) {
   const parsed = parseIgnoreValueArgs(args);
   if (!parsed.rule || !parsed.value) {
-    throw new Error('Pass a rule id and value, e.g. /impeccable hooks ignore-value overused-font Inter');
+    throw new Error(`Pass a rule id and value, e.g. ${IMPECCABLE_COMMAND} hooks ignore-value overused-font Inter`);
   }
 
   if (parsed.shared && parsed.local) {
     throw new Error('Pass only one scope flag: --shared or --local');
   }
 
+  // A bare `*` would suppress the rule everywhere, which is ignore-rule's job and
+  // not what a finding in one file justifies. detector.ignoreValues honours a
+  // `files` scope, so require one — matching `impeccable ignores add-value`.
+  if (parsed.value === '*' && parsed.files.length === 0) {
+    // `ignore-rule overused-font` refuses on its own without --all-values, so
+    // naming the bare form here would hand the user a second error.
+    const projectWide = parsed.rule === 'overused-font'
+      ? `${IMPECCABLE_COMMAND} hooks ignore-rule ${parsed.rule} --all-values`
+      : `${IMPECCABLE_COMMAND} hooks ignore-rule ${parsed.rule}`;
+    throw new Error(`Wildcard value ignores must be scoped with --file <glob>, e.g. ${IMPECCABLE_COMMAND} hooks ignore-value design-system-font-size "*" --file "src/widget.js". To suppress the rule project-wide use ${projectWide}.`);
+  }
+
   const local = parsed.local;
   const config = mergeDetectorConfig(readRawDetectorConfig(cwd, { local }));
-  const key = `${parsed.rule}\0${parsed.value}`;
-  const existing = config.ignoreValues.find((entry) => `${entry.rule}\0${entry.value}` === key);
+  // Key on the file scope too: the same rule/value legitimately appears more than
+  // once with different scopes, and a rule+value-only key overwrote them.
+  const key = ignoreValueEntryKey({ rule: parsed.rule, value: parsed.value, files: parsed.files });
+  const existing = config.ignoreValues.find((entry) => ignoreValueEntryKey(entry) === key);
 
   if (existing) {
     if (parsed.reason) existing.reason = parsed.reason;
@@ -588,15 +726,17 @@ function addIgnoreValue(cwd, args) {
     const entry = {
       rule: parsed.rule,
       value: parsed.value,
-      createdAt: new Date().toISOString(),
     };
+    if (parsed.files.length) entry.files = parsed.files;
+    entry.createdAt = new Date().toISOString();
     if (parsed.reason) entry.reason = parsed.reason;
     config.ignoreValues.push(entry);
   }
 
   const target = writeDetectorConfig(cwd, config, { local });
   const scope = local ? 'local detector.ignoreValues' : 'shared detector.ignoreValues';
-  return `Added ${parsed.rule}=${parsed.value} to ${scope} (${path.relative(cwd, target) || target}).`;
+  const scopeSuffix = parsed.files.length ? ` scoped to ${parsed.files.join(', ')}` : '';
+  return `Added ${parsed.rule}=${parsed.value}${scopeSuffix} to ${scope} (${path.relative(cwd, target) || target}).`;
 }
 
 function reset(cwd) {
@@ -647,7 +787,7 @@ function main() {
       case 'on':     out = setEnabled(cwd, true); break;
       case 'off':    out = setEnabled(cwd, false); break;
       case 'ignore-rule': out = addIgnoreRule(cwd, rest); break;
-      case 'ignore-file': out = addIgnoreFile(cwd, rest[0]); break;
+      case 'ignore-file': out = addIgnoreFile(cwd, rest); break;
       case 'ignore-value': out = addIgnoreValue(cwd, rest); break;
       case 'reset':  out = reset(cwd); break;
     }

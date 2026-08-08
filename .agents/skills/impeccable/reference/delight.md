@@ -1,302 +1,70 @@
-> **Additional context needed**: what's appropriate for the domain (playful vs professional vs quirky vs elegant).
+> **Additional context needed**: the brand's emotional range.
 
-Find the moments where personality and unexpected polish would turn a functional interface into one users remember and tell other people about. Add only where the moment earns it; delight everywhere reads as noise.
-
----
-
-## Register
-
-Brand: delight can be distributed across copy voice, section transitions, discovery rewards, seasonal touches, personality across the whole surface.
-
-Product: delight at specific moments, not pages. Completion, first-time actions, error recovery, milestone crossings. Reliability and consistency carry the rest of the experience; delight pushed everywhere reads as noise.
+Make the experience memorable at moments that earn it. Delight is not a layer of generic whimsy; it is product character revealed through a useful interaction, a humane response, or an unexpectedly considered detail.
 
 ---
 
-## Assess Delight Opportunities
+## Visitor mode
 
-Identify where delight would enhance (not distract from) the experience:
+- **Persuade + Experience:** personality may run through voice, composition, motion, and discovery, provided the artifact remains the focus.
+- **Operate + Read:** concentrate delight at meaningful moments such as first use, completion, recovery, or mastery. Reliability carries everything else.
 
-1. **Find natural delight moments**:
-   - **Success states**: Completed actions (save, send, publish)
-   - **Empty states**: First-time experiences, onboarding
-   - **Loading states**: Waiting periods that could be entertaining
-   - **Achievements**: Milestones, streaks, completions
-   - **Interactions**: Hover states, clicks, drags
-   - **Errors**: Softening frustrating moments
-   - **Easter eggs**: Hidden discoveries for curious users
+## Find the opportunity
 
-2. **Understand the context**:
-   - What's the brand personality? (Playful? Professional? Quirky? Elegant?)
-   - Who's the audience? (Tech-savvy? Creative? Corporate?)
-   - What's the emotional context? (Accomplishment? Exploration? Frustration?)
-   - What's appropriate? (Banking app ≠ gaming app)
+Inspect the target, DESIGN.md, product voice, repeated-use frequency, and emotional context. Look for:
 
-3. **Define delight strategy**:
-   - **Subtle sophistication**: Refined micro-interactions (luxury brands)
-   - **Playful personality**: Whimsical illustrations and copy (consumer apps)
-   - **Helpful surprises**: Anticipating needs before users ask (productivity tools)
-   - **Sensory richness**: Satisfying sounds, smooth animations (creative tools)
+- effort worth acknowledging;
+- waiting that can become informative;
+- an empty or first-use state that can orient;
+- an error or recovery moment that needs empathy;
+- an interaction whose physical or verbal response could express the brand;
+- a useful capability people might enjoy discovering.
 
-If any of these are unclear from the codebase, STOP and use Codex's structured user-input/question tool when available; if unavailable, ask directly in chat to clarify what you cannot infer.
+Do not manufacture a celebration for an ordinary click. Ask only when the brand's emotional range or the stakes cannot be inferred.
 
-**CRITICAL**: Delight should enhance usability, never obscure it. If users notice the delight more than accomplishing their goal, you've gone too far.
+## Define one delight thesis
 
-## Delight Principles
+State in one sentence what the user should feel and why that feeling belongs to this product. Then choose the smallest system that can deliver it:
 
-Follow these guidelines:
+- a distinctive response to a meaningful action;
+- product-specific language that clarifies while carrying voice;
+- an interaction or transition with a recognizable material behavior;
+- an illustration, sound, haptic, or environmental detail grounded in the product world;
+- a discovery reward that reveals real utility.
 
-### Delight Amplifies, Never Blocks
-- Delight moments should be quick (< 1 second)
-- Never delay core functionality for delight
-- Make delight skippable or subtle
-- Respect user's time and task focus
+Derive the treatment from product mechanism and visual world, not a stock catalog.
 
-### Surprise and Discovery
-- Hide delightful details for users to discover
-- Reward exploration and curiosity
-- Don't announce every delight moment
-- Let users share discoveries with others
+## Build for the emotional moment
 
-### Appropriate to Context
-- Match delight to emotional moment (celebrate success, empathize with errors)
-- Respect the user's state (don't be playful during critical errors)
-- Match brand personality and audience expectations
-- Cultural sensitivity (what's delightful varies by culture)
+- **Success:** match the response to the effort and consequence. Major milestones can expand; routine saves should simply feel certain.
+- **Waiting:** show truthful progress, useful context, or product-specific activity. Never fake work or delay completion to stage a flourish.
+- **Empty and first use:** make the next action clear before adding personality.
+- **Error and recovery:** lead with the problem and recovery. Warmth may reduce stress; jokes must not trivialize loss, money, privacy, or blocked work.
+- **Repeated interaction:** keep the response satisfying after the hundredth use. Variation is useful only when it remains coherent and predictable enough to trust.
+- **Discovery:** reward curiosity without hiding required functionality.
 
-### Compound Over Time
-- Delight should remain fresh with repeated use
-- Vary responses (not same animation every time)
-- Reveal deeper layers with continued use
-- Build anticipation through patterns
+Copy must use the product's language. Generic whimsy is worse than neutral clarity.
 
-## Delight Techniques
+## Protect the experience
 
-Add personality and joy through these methods:
+Delight must not:
 
-### Micro-interactions & Animation
+- delay, block, or obscure the primary task;
+- override platform conventions or accessibility;
+- add unrequested factual claims;
+- play sound without consent or ignore mute settings;
+- become mandatory, unskippable, or exhausting on repeat;
+- add a dependency or asset cost disproportionate to the moment.
 
-**Button delight**:
-```css
-/* Satisfying button press */
-.button {
-  transition: transform 0.1s, box-shadow 0.1s;
-}
-.button:active {
-  transform: translateY(2px);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
+For authored motion, load [animate.md](animate.md). Respect screen readers, keyboard use, touch, localization, and cultural context. Nonessential loops stop when hidden. Make celebration intensity proportional to frequency and consequence.
 
-/* Ripple effect on click */
-/* Smooth lift on hover */
-.button:hover {
-  transform: translateY(-2px);
-  transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1); /* ease-out-quart */
-}
-```
+## Verify
 
-**Loading delight**:
-- Playful loading animations (not just spinners)
-- Personality in loading messages (write product-specific ones, not generic AI filler)
-- Progress indication with encouraging messages
-- Skeleton screens with subtle animations
+- The moment is specific enough that a neighboring product could not use it unchanged.
+- It improves comprehension, confidence, motivation, or emotional recovery.
+- The interface remains fast and obvious without the flourish.
+- Repetition does not turn charm into friction.
+- Muted, keyboard, touch, and localized paths work.
+- The result feels like the selected world, not a generic “delight” treatment.
 
-**Success animations**:
-- Checkmark draw animation
-- Confetti burst for major achievements
-- Gentle scale + fade for confirmation
-- Satisfying sound effects (subtle)
-
-**Hover surprises**:
-- Icons that animate on hover
-- Color shifts or glow effects
-- Tooltip reveals with personality
-- Cursor changes (custom cursors for branded experiences)
-
-### Personality in Copy
-
-**Playful error messages**:
-```
-"Error 404"
-"This page is playing hide and seek. (And winning)"
-
-"Connection failed"
-"Looks like the internet took a coffee break. Want to retry?"
-```
-
-**Encouraging empty states**:
-```
-"No projects"
-"Your canvas awaits. Create something amazing."
-
-"No messages"
-"Inbox zero! You're crushing it today."
-```
-
-**Playful labels & tooltips**:
-```
-"Delete"
-"Send to void" (for playful brand)
-
-"Help"
-"Rescue me" (tooltip)
-```
-
-**IMPORTANT**: Match copy personality to brand. Banks shouldn't be wacky, but they can be warm.
-
-### Illustrations & Visual Personality
-
-**Custom illustrations**:
-- Empty state illustrations (not stock icons)
-- Error state illustrations (friendly monsters, quirky characters)
-- Loading state illustrations (animated characters)
-- Success state illustrations (celebrations)
-
-**Icon personality**:
-- Custom icon set matching brand personality
-- Animated icons (subtle motion on hover/click)
-- Illustrative icons (more detailed than generic)
-- Consistent style across all icons
-
-**Background effects**:
-- Subtle particle effects
-- Gradient mesh backgrounds
-- Geometric patterns
-- Parallax depth
-- Time-of-day themes (morning vs night)
-
-### Satisfying Interactions
-
-**Drag and drop delight**:
-- Lift effect on drag (shadow, scale)
-- Snap animation when dropped
-- Satisfying placement sound
-- Undo toast ("Dropped in wrong place? [Undo]")
-
-**Toggle switches**:
-- Smooth slide with spring physics
-- Color transition
-- Haptic feedback on mobile
-- Optional sound effect
-
-**Progress & achievements**:
-- Streak counters with celebratory milestones
-- Progress bars that "celebrate" at 100%
-- Badge unlocks with animation
-- Playful stats ("You're on fire! 5 days in a row")
-
-**Form interactions**:
-- Input fields that animate on focus
-- Checkboxes with a satisfying scale pulse when checked
-- Success state that celebrates valid input
-- Auto-grow textareas
-
-### Sound Design
-
-**Subtle audio cues** (when appropriate):
-- Notification sounds (distinctive but not annoying)
-- Success sounds (satisfying "ding")
-- Error sounds (empathetic, not harsh)
-- Typing sounds for chat/messaging
-- Ambient background audio (very subtle)
-
-**IMPORTANT**:
-- Respect system sound settings
-- Provide mute option
-- Keep volumes quiet (subtle cues, not alarms)
-- Don't play on every interaction (sound fatigue is real)
-
-### Easter Eggs & Hidden Delights
-
-**Discovery rewards**:
-- Konami code unlocks special theme
-- Hidden keyboard shortcuts (Cmd+K for special features)
-- Hover reveals on logos or illustrations
-- Alt text jokes on images (for screen reader users too!)
-- Console messages for developers ("Like what you see? We're hiring!")
-
-**Seasonal touches**:
-- Holiday themes (subtle, tasteful)
-- Seasonal color shifts
-- Weather-based variations
-- Time-based changes (dark at night, light during day)
-
-**Contextual personality**:
-- Different messages based on time of day
-- Responses to specific user actions
-- Randomized variations (not same every time)
-- Progressive reveals with continued use
-
-### Loading & Waiting States
-
-**Make waiting engaging**:
-- Interesting loading messages that rotate
-- Progress bars with personality
-- Mini-games during long loads
-- Fun facts or tips while waiting
-- Countdown with encouraging messages
-
-```
-Loading messages: write ones specific to your product, not generic AI filler:
-- "Crunching your latest numbers..."
-- "Syncing with your team's changes..."
-- "Preparing your dashboard..."
-- "Checking for updates since yesterday..."
-```
-
-**WARNING**: Avoid cliched loading messages like "Herding pixels", "Teaching robots to dance", "Consulting the magic 8-ball", "Counting backwards from infinity". These are AI-slop copy, instantly recognizable as machine-generated. Write messages that are specific to what your product actually does.
-
-### Celebration Moments
-
-**Success celebrations**:
-- Confetti for major milestones
-- Animated checkmarks for completions
-- Progress bar celebrations at 100%
-- "Achievement unlocked" style notifications
-- Personalized messages ("You published your 10th article!")
-
-**Milestone recognition**:
-- First-time actions get special treatment
-- Streak tracking and celebration
-- Progress toward goals
-- Anniversary celebrations
-
-## Implementation Patterns
-
-**Animation libraries**:
-- Framer Motion (React)
-- GSAP (universal)
-- Lottie (After Effects animations)
-- Canvas confetti (party effects)
-
-**Sound libraries**:
-- Howler.js (audio management)
-- Use-sound (React hook)
-
-**Physics libraries**:
-- React Spring (spring physics)
-- Popmotion (animation primitives)
-
-**IMPORTANT**: File size matters. Compress images, optimize animations, lazy load delight features.
-
-**NEVER**:
-- Delay core functionality for delight
-- Force users through delightful moments (make skippable)
-- Use delight to hide poor UX
-- Overdo it (less is more)
-- Ignore accessibility (animate responsibly, provide alternatives)
-- Make every interaction delightful (special moments should be special)
-- Sacrifice performance for delight
-- Be inappropriate for context (read the room)
-
-## Verify Delight Quality
-
-Test that delight actually delights:
-
-- **User reactions**: Do users smile? Share screenshots?
-- **Doesn't annoy**: Still pleasant after 100th time?
-- **Doesn't block**: Can users opt out or skip?
-- **Performant**: No jank, no slowdown
-- **Appropriate**: Matches brand and context
-- **Accessible**: Works with reduced motion, screen readers
-
-When the moments feel earned, hand off to `$impeccable polish` for the final pass.
+When the personality feels earned, hand off to `$impeccable polish` for the final pass.

@@ -21,6 +21,7 @@ const ANTIPATTERNS = [
   {
     id: 'overused-font',
     category: 'slop',
+    scopes: ['type'],
     name: 'Overused font',
     description:
       'Inter, Roboto, Fraunces, Geist, Plus Jakarta Sans, and Space Grotesk are used on so many sites they no longer feel distinctive. Each new wave of AI-generated UIs converges on the same handful of faces. Choose a face that gives your interface personality.',
@@ -28,17 +29,9 @@ const ANTIPATTERNS = [
     skillGuideline: 'overused fonts like Inter',
   },
   {
-    id: 'single-font',
-    category: 'slop',
-    name: 'Single font for everything',
-    description:
-      'Only one font family is used for the entire page. Pair a distinctive display font with a refined body font to create typographic hierarchy.',
-    skillSection: 'Typography',
-    skillGuideline: 'only one font family for the entire page',
-  },
-  {
     id: 'flat-type-hierarchy',
     category: 'slop',
+    scopes: ['type'],
     name: 'Flat type hierarchy',
     description:
       'Font sizes are too close together — no clear visual hierarchy. Use fewer sizes with more contrast (aim for at least a 1.25 ratio between steps).',
@@ -75,6 +68,7 @@ const ANTIPATTERNS = [
   {
     id: 'nested-cards',
     category: 'slop',
+    scopes: ['layout'],
     name: 'Nested cards',
     description:
       'Cards inside cards create visual noise and excessive depth. Flatten the hierarchy — use spacing, typography, and dividers instead of nesting containers.',
@@ -84,6 +78,7 @@ const ANTIPATTERNS = [
   {
     id: 'monotonous-spacing',
     category: 'slop',
+    scopes: ['layout'],
     name: 'Monotonous spacing',
     description:
       'The same spacing value used everywhere — no rhythm, no variation. Use tight groupings for related items and generous separations between sections.',
@@ -100,17 +95,72 @@ const ANTIPATTERNS = [
     skillGuideline: 'bounce or elastic easing',
   },
   {
+    id: 'pulsing-dot',
+    category: 'slop',
+    name: 'Pulsing status dot',
+    description:
+      'Small pulsing status dots simulate liveness decoratively. Reserve pulse animation for indicators tied to genuinely live, changing data; a static indicator with clear labeling is honest and calmer.',
+    skillSection: 'Motion',
+    skillGuideline: 'decorative pulsing status dot',
+  },
+  {
+    id: 'blinking-cursor',
+    category: 'slop',
+    severity: 'advisory',
+    name: 'Decorative blinking cursor',
+    description:
+      'A blinking text cursor animated into a hero or landing section simulates typing where no input exists. It borrows the dev-tool aesthetic as decoration. Real editable fields draw their own caret; anywhere else, let the composition hold attention without a fake prompt.',
+    skillSection: 'Motion',
+  },
+  {
+    id: 'shape-assembled-illustration',
+    category: 'slop',
+    severity: 'advisory',
+    name: 'Shape-assembled illustration',
+    description:
+      'A large inline SVG that builds a pictorial scene from a pile of primitive shapes reads as placeholder clip art, not illustration. Icons, logos, and data graphics are fine at their scale; a hero-sized visual deserves real artwork, a photograph, or a deliberately drawn graphic.',
+    skillSection: 'Imagery',
+  },
+  {
     id: 'dark-glow',
     category: 'slop',
-    name: 'Dark mode with glowing accents',
+    name: 'Glowing shadow accents',
     description:
-      'Dark backgrounds with colored box-shadow glows are the default "cool" look of AI-generated UIs. Use subtle, purposeful lighting instead — or skip the dark theme entirely.',
+      'Colored glow shadows — a zero-offset chromatic halo (box- or text-shadow) on any background, or any colored blurred shadow on a dark background — are the default "cool" look of AI-generated UIs. Use neutral elevation shadows and subtle, purposeful lighting instead.',
     skillSection: 'Color & Contrast',
     skillGuideline: 'dark mode with glowing accents',
   },
   {
+    id: 'radial-halo',
+    category: 'slop',
+    name: 'Radial-gradient background halo',
+    description:
+      'A chromatic radial-gradient wash — saturated at the center, fading to transparent — used as a decorative background glow on a dark page. Same tell as glowing shadows, drawn with a gradient instead of a shadow. Ground the surface with a solid or subtly shifted background instead.',
+    skillSection: 'Color & Contrast',
+    skillGuideline: 'dark mode with glowing accents',
+  },
+  {
+    id: 'radial-spotlight-glow',
+    category: 'slop',
+    name: 'Decorative radial spotlight glow',
+    description:
+      'A soft, low-opacity accent-colored radial gradient fading to transparent, dropped behind a hero or section as a "spotlight." It is a reflex AI decoration — the translucent cousin of the saturated radial halo. Let the surface stand on its own, or light the composition with a deliberate material accent rather than a floating colored haze.',
+    skillSection: 'Color & Contrast',
+    skillGuideline: 'dark mode with glowing accents',
+  },
+  {
+    id: 'marquee',
+    category: 'slop',
+    name: 'Auto-scrolling marquee',
+    description:
+      'Continuously auto-scrolling content demands attention it has not earned and hides half its content at any moment. Reserve motion for content that changes; let readers move at their own pace.',
+    skillSection: 'Motion',
+    skillGuideline: 'auto-scrolling marquee',
+  },
+  {
     id: 'icon-tile-stack',
     category: 'slop',
+    scopes: ['layout'],
     name: 'Icon tile stacked above heading',
     description:
       'A small rounded-square icon container above a heading is the universal AI feature-card template — every generator outputs this exact shape. Try a side-by-side icon and heading, or let the icon sit in flow without its own container.',
@@ -120,6 +170,7 @@ const ANTIPATTERNS = [
   {
     id: 'italic-serif-display',
     category: 'slop',
+    scopes: ['type'],
     name: 'Italic serif display headline',
     description:
       'Oversized italic serif (Fraunces, Recoleta, Playfair, Newsreader-italic) as the primary hero headline reads as taste in isolation but has become the universal AI-startup landing page hero. Set roman, or move to a non-serif display face. Editorial / magazine register may legitimately want this — judge by context.',
@@ -129,6 +180,7 @@ const ANTIPATTERNS = [
   {
     id: 'hero-eyebrow-chip',
     category: 'slop',
+    scopes: ['type'],
     name: 'Hero eyebrow / pill chip',
     description:
       'A tiny uppercase letter-spaced label sitting immediately above an oversized hero headline — or the same shape rendered as a pill chip — is now the default AI SaaS hero. Drop the eyebrow, integrate the kicker into the headline, or run it as a navigation breadcrumb instead.',
@@ -136,31 +188,37 @@ const ANTIPATTERNS = [
     skillGuideline: 'tiny uppercase tracked label above the hero headline',
   },
   {
-    id: 'repeated-section-kickers',
+    id: 'kicker-above-heading',
     category: 'slop',
-    severity: 'advisory',
-    name: 'Repeated section kicker labels',
+    scopes: ['type'],
+    name: 'Kicker / eyebrow label above heading',
     description:
-      'Repeating tiny uppercase tracked labels above section headings turns a brand page into AI editorial scaffolding. Replace them with stronger structure, artifacts, imagery, or a deliberate brand system.',
+      'A tiny tracked uppercase or small-caps label sitting as its own block directly above a heading is banned outright, repeated or not. Generated kickers never earn their place: the heading carries its own weight. Delete the label and let the heading speak; if the words matter, work them into the heading or the body.',
     skillSection: 'Typography',
-    skillGuideline: 'repeated eyebrow or kicker labels as section scaffolding',
+    skillGuideline: 'kicker or eyebrow labels above headings',
   },
   {
-    id: 'numbered-section-markers',
+    id: 'numbered-section-labels',
     category: 'slop',
+    scopes: ['type'],
     severity: 'advisory',
-    name: 'Numbered section markers (01 / 02 / 03)',
+    name: 'Tiny numbered section labels',
     description:
-      'Numbered display markers as section labels (01, 02, 03) are the AI editorial scaffold one tier deeper than tracked eyebrow chips. If you find yourself reaching for them, choose a different section cadence.',
+      'Small numeric index labels riding next to section headings, repeated section after section, are AI editorial scaffolding — a page numbering its own chapters instead of earning structure. Let hierarchy, content, and rhythm carry the sequence.',
     skillSection: 'Layout & Space',
     skillGuideline: 'numbered section markers',
   },
   {
     id: 'em-dash-overuse',
     category: 'slop',
+    // Advisory: humans use em-dashes legitimately, so this rule is opt-in noise
+    // rather than a failure. It fires only on the AI saturation pattern, not on
+    // ordinary prose. Advisory findings are surfaced separately, never counted
+    // as failures, and skipped by the design hook unless a project opts in.
+    advisory: true,
     name: 'Em-dash overuse',
     description:
-      'More than two em-dashes (— or --) in body copy is an AI cadence tell. Use commas, colons, periods, or parentheses instead.',
+      'Em-dash saturation in body copy is an AI cadence tell. Advisory only: humans use em-dashes legitimately, so this fires only on saturation — at least 8 em-dashes (— or --) at a density near one per 500 characters of body text — never on a long article that uses a few. Prefer commas, colons, periods, or parentheses.',
     skillSection: 'Copy',
     skillGuideline: 'no em dashes',
   },
@@ -185,6 +243,7 @@ const ANTIPATTERNS = [
   {
     id: 'oversized-h1',
     category: 'slop',
+    scopes: ['type'],
     name: 'Oversized hero headline',
     description:
       'A full-sentence headline set at display size ends up dominating the viewport, leaving no room for anything else above the fold. A punchy one- or two-word headline at that size is fine — the problem is a long headline blown up too large. Set long headlines smaller, or tighten the copy.',
@@ -194,6 +253,7 @@ const ANTIPATTERNS = [
   {
     id: 'extreme-negative-tracking',
     category: 'slop',
+    scopes: ['type'],
     name: 'Crushed letter spacing',
     description:
       'Letter-spacing pulled tighter than the point where characters keep their own shapes costs legibility. Tighten display type optically, not destructively.',
@@ -211,6 +271,49 @@ const ANTIPATTERNS = [
   },
 
   // ── Quality: general design and accessibility issues ──
+  {
+    id: 'script-error',
+    category: 'quality',
+    severity: 'error',
+    name: 'Uncaught script error on load',
+    description:
+      'A script threw an uncaught exception or failed to parse while the page loaded. Broken JavaScript silently kills reveals, interactions, and dynamic content, and can leave most of a page invisible. Fix the error before judging anything else.',
+  },
+  {
+    id: 'content-hidden-at-rest',
+    category: 'quality',
+    severity: 'error',
+    scopes: ['layout'],
+    name: 'Content invisible at rest',
+    description:
+      'A large share of the page text sits at opacity 0 or visibility hidden even after every reveal handler had a chance to run. This is the failed-reveal signature: the content shipped but never becomes visible. Make content visible by default and let JavaScript enhance its entrance instead of gating its existence.',
+  },
+  {
+    id: 'edge-flush-cards',
+    category: 'quality',
+    scopes: ['layout'],
+    name: 'Cards flush against the scroller edge',
+    description:
+      'Cards inside a horizontal scroller or tab panel sit flush against the container edge at rest while keeping a gutter on the other side, so their edges and rounded corners get cut off. Usually the panel is sized wider than its clip box. Keep a consistent inset on both sides.',
+  },
+  {
+    id: 'text-occlusion',
+    category: 'quality',
+    scopes: ['layout'],
+    name: 'Text occluded by an overlapping element',
+    description:
+      'Text is painted under an opaque element or a second text run, so part of it cannot be read. A decorative box, a stacked layer, or an inline element with leaked padding lands on the words instead of beside them. Give overlapping layers room, or move the text out from under the layer above it.',
+    skillSection: 'Layout & Space',
+  },
+  {
+    id: 'first-viewport-column-overflow',
+    category: 'quality',
+    scopes: ['layout'],
+    name: 'One column stretches the first viewport',
+    description:
+      'A multi-column opening section lets one column run far past the fold while its sibling fits in a single viewport, so the short column floats in dead space and the fold falls deep inside one section. Balance the columns, cap the tall one, or let the long content flow below the opening row.',
+    skillSection: 'Layout & Space',
+  },
   {
     id: 'gray-on-color',
     category: 'quality',
@@ -239,6 +342,7 @@ const ANTIPATTERNS = [
   {
     id: 'line-length',
     category: 'quality',
+    scopes: ['type', 'layout'],
     name: 'Line length too long',
     description:
       'Text lines wider than ~80 characters are hard to read. The eye loses its place tracking back to the start of the next line. Add a max-width (65ch to 75ch) to text containers.',
@@ -248,6 +352,7 @@ const ANTIPATTERNS = [
   {
     id: 'cramped-padding',
     category: 'quality',
+    scopes: ['layout'],
     name: 'Cramped padding',
     description:
       'Text is too close to the edge of its container. Two shapes: (1) an element with its own text where the padding is too low for the font size, and (2) a wrapper with text-bearing children and near-zero padding against a visible boundary (border, outline, or non-transparent background) — children land flush against the boundary line. Add at least 8px (ideally 12–16px) of padding inside bordered, outlined, or colored containers.',
@@ -257,6 +362,7 @@ const ANTIPATTERNS = [
   {
     id: 'body-text-viewport-edge',
     category: 'quality',
+    scopes: ['layout'],
     name: 'Body text touching viewport edge',
     description:
       'Body paragraphs render flush against the left or right viewport edge with no container providing horizontal padding. Wrap content in a container with at least 16px (ideally 24-32px) of horizontal padding, or apply max-width with mx-auto.',
@@ -264,6 +370,7 @@ const ANTIPATTERNS = [
   {
     id: 'tight-leading',
     category: 'quality',
+    scopes: ['type'],
     name: 'Tight line height',
     description:
       'Line height below 1.3x the font size makes multi-line text hard to read. Use 1.5 to 1.7 for body text so lines have room to breathe.',
@@ -271,13 +378,24 @@ const ANTIPATTERNS = [
   {
     id: 'skipped-heading',
     category: 'quality',
+    scopes: ['type'],
     name: 'Skipped heading level',
     description:
       'Heading levels should not skip (e.g. h1 then h3 with no h2). Screen readers use heading hierarchy for navigation. Skipping levels breaks the document outline.',
   },
   {
+    id: 'heading-rhythm',
+    category: 'quality',
+    scopes: ['layout', 'type'],
+    name: 'Heading crowded against the previous block',
+    description:
+      'A heading binds to the content it introduces, so the rendered space above it should exceed the space below it. When headings across a page sit as close or closer to the block above than to their own content, every section reads as if it captions the previous one. Open up the space above each heading.',
+    skillSection: 'Layout & Space',
+  },
+  {
     id: 'justified-text',
     category: 'quality',
+    scopes: ['type'],
     name: 'Justified text',
     description:
       'Justified text without hyphenation creates uneven word spacing ("rivers of white"). Use text-align: left for body text, or enable hyphens: auto if you must justify.',
@@ -285,13 +403,23 @@ const ANTIPATTERNS = [
   {
     id: 'tiny-text',
     category: 'quality',
+    scopes: ['type'],
     name: 'Tiny body text',
     description:
       'Body text below 12px is hard to read, especially on high-DPI screens. Use at least 14px for body content, 16px is ideal.',
   },
   {
+    id: 'undersized-ui-text',
+    category: 'quality',
+    scopes: ['type'],
+    name: 'Undersized functional text',
+    description:
+      'Interactive and content-bearing UI text (links, buttons, nav items, labels, table cells, meta rows, timecodes) below 11px is a legibility failure, not a style choice. WCAG sets no absolute pixel floor, but functional text under 11px is a defensible quality bar: it fails on high-DPI and small viewports and it degrades tap and read targets. The 11px floor holds even inside a footer; only non-interactive legal smallprint gets the softer 10px floor. Being ON the DESIGN.md size ramp does not exempt a value here: adding 8px to the ramp launders the token but not the legibility problem, and that is exactly the escape hatch this rule closes. Exempts sup/sub, visually-hidden (sr-only) text, and code/terminal contexts. Decorative letterspaced micro-labels are still functional and stay in scope.',
+  },
+  {
     id: 'all-caps-body',
     category: 'quality',
+    scopes: ['type'],
     name: 'All-caps body text',
     description:
       'Long passages in uppercase are hard to read. We recognize words by shape (ascenders and descenders), which all-caps removes. Reserve uppercase for short labels and headings.',
@@ -301,6 +429,7 @@ const ANTIPATTERNS = [
   {
     id: 'wide-tracking',
     category: 'quality',
+    scopes: ['type'],
     name: 'Wide letter spacing on body text',
     description:
       'Letter spacing above 0.05em on body text disrupts natural character groupings and slows reading. Reserve wide tracking for short uppercase labels only.',
@@ -308,6 +437,7 @@ const ANTIPATTERNS = [
   {
     id: 'text-overflow',
     category: 'quality',
+    scopes: ['layout'],
     name: 'Content overflowing its container',
     description:
       'Content renders wider than its container, spilling out or forcing a horizontal scrollbar. Let text wrap, constrain widths, or give the region a deliberate scroll affordance.',
@@ -315,8 +445,16 @@ const ANTIPATTERNS = [
     skillGuideline: 'content wider than its container',
   },
   {
+    id: 'repeated-container-text',
+    category: 'quality',
+    name: 'Same text repeated inside one container',
+    description:
+      'The same literal text rendered three or more times in structurally different spots inside a single card or panel is redundant messaging — usually a status or label wired into every slot of a template. Say it once, in the slot where it matters most.',
+  },
+  {
     id: 'clipped-overflow-container',
     category: 'quality',
+    scopes: ['layout'],
     name: 'Positioned child clipped by overflow container',
     description:
       'A clipping container (overflow hidden or clip) wrapping an absolutely-positioned child cuts off tooltips, menus, and popovers that need to escape. Let the overflow be visible, or move the positioned layer out of the clip.',
@@ -326,6 +464,7 @@ const ANTIPATTERNS = [
   {
     id: 'design-system-font',
     category: 'quality',
+    scopes: ['type'],
     name: 'Font outside DESIGN.md',
     description:
       'A font is used that is not declared in DESIGN.md typography. Use the documented type system or update DESIGN.md if this is an intentional brand addition.',
@@ -352,13 +491,23 @@ const ANTIPATTERNS = [
     skillSection: 'Visual Details',
     skillGuideline: 'border radius outside the project design system',
   },
+  {
+    id: 'design-system-font-size',
+    category: 'quality',
+    severity: 'advisory',
+    scopes: ['type'],
+    name: 'Font size outside DESIGN.md',
+    description:
+      'A literal font-size is off the type ramp documented in DESIGN.md typography. Use a documented size step or update the design system if the new step is intentional.',
+    skillSection: 'Typography',
+    skillGuideline: 'font size outside the project design system',
+  },
 
-  // ── Provider tells: opt-in via --gpt / --gemini (gated off by default) ──
+  // ── Common generated-UI tells ───────────────────────────────────────────
   {
     id: 'gpt-thin-border-wide-shadow',
     category: 'slop',
     severity: 'advisory',
-    gated: 'gpt',
     name: 'Hairline border with wide shadow',
     description:
       'A hairline border paired with a wide, diffuse shadow is a recurring generated-UI signature. Commit to one — a defined edge or a soft elevation — rather than both at once.',
@@ -369,7 +518,6 @@ const ANTIPATTERNS = [
     id: 'repeating-stripes-gradient',
     category: 'slop',
     severity: 'advisory',
-    gated: 'gpt',
     name: 'Repeating-gradient stripes',
     description:
       'Repeating-gradient stripes used as surface decoration are a recurring generated-UI signature. Reach for a deliberate texture or leave the surface plain.',
@@ -377,10 +525,19 @@ const ANTIPATTERNS = [
     skillGuideline: 'repeating-gradient decorative stripes',
   },
   {
+    id: 'codex-grid-background',
+    category: 'slop',
+    severity: 'advisory',
+    name: 'Decorative grid-line background',
+    description:
+      'A decorative grid or line-field background drawn with hairline linear-gradient layers tiled by a fixed pixel cell is a recurring generated-UI signature. Reserve grid overlays for actual canvas, map, blueprint, or measurement surfaces; elsewhere use product structure or a plain surface.',
+    skillSection: 'Visual Details',
+    skillGuideline: 'two-axis grid-line gradient background',
+  },
+  {
     id: 'theater-slop-phrase',
     category: 'slop',
     severity: 'advisory',
-    gated: 'gpt',
     name: 'Theater framing copy',
     description:
       'Dismissing something as "theater" is a recurring generated-copy tic. Say plainly what the thing does or does not do.',
@@ -391,7 +548,6 @@ const ANTIPATTERNS = [
     id: 'image-hover-transform',
     category: 'slop',
     severity: 'advisory',
-    gated: 'gemini',
     name: 'Image hover transform',
     description:
       'Scaling or rotating an image on hover is a recurring generated-UI signature. Let imagery sit still, or use a subtler, purposeful interaction.',
@@ -411,6 +567,18 @@ function getAntipattern(id) {
   return ANTIPATTERNS.find(rule => rule.id === id);
 }
 
+// Advisory rules are detected and reported, but never treated as failures:
+// the CLI lists them under a separate "Advisory" section, they do not affect
+// exit codes or the failure count, and the design hook skips them by default.
+// The set is derived from the registry so a rule only needs `advisory: true`.
+const ADVISORY_RULE_IDS = new Set(
+  ANTIPATTERNS.filter(rule => rule.advisory === true).map(rule => rule.id),
+);
+
+function isAdvisoryRule(id) {
+  return ADVISORY_RULE_IDS.has(id);
+}
+
 function getRulesForCategory(category) {
   return ANTIPATTERNS.filter(rule => rule.category === category);
 }
@@ -419,30 +587,31 @@ function getRuleEngineSupport(engine) {
   return RULE_ENGINE_SUPPORT[engine] || new Set();
 }
 
-// Set of provider tags that gate rules off by default (e.g. 'gpt', 'gemini').
-const GATED_PROVIDERS = new Set(
-  ANTIPATTERNS.map(rule => rule.gated).filter(Boolean),
+// Set of scope tags rules can declare (e.g. 'type', 'layout'). Used by the
+// CLI --scope flag to narrow output to one design domain.
+const RULE_SCOPES = new Set(
+  ANTIPATTERNS.flatMap(rule => rule.scopes || []),
 );
 
-// Drop findings for rules gated behind a provider tag unless that provider
-// was explicitly enabled (CLI --gpt / --gemini). Non-gated findings always
-// pass through. `findings` carry the rule id on `.antipattern`.
-function filterByProviders(findings, providers = []) {
-  const enabled = new Set(providers || []);
-  if (!GATED_PROVIDERS.size) return findings;
+// Keep only findings whose rule declares at least one of the requested
+// scopes. An empty scope list means no filtering (default CLI behavior).
+function filterByScopes(findings, scopes = []) {
+  if (!scopes || scopes.length === 0) return findings;
+  const enabled = new Set(scopes);
   return findings.filter(f => {
     const rule = getAntipattern(f.antipattern);
-    if (!rule || !rule.gated) return true;
-    return enabled.has(rule.gated);
+    return (rule?.scopes || []).some(scope => enabled.has(scope));
   });
 }
 
 export {
   ANTIPATTERNS,
+  RULE_SCOPES,
   RULE_ENGINE_SUPPORT,
-  GATED_PROVIDERS,
+  ADVISORY_RULE_IDS,
   getAntipattern,
   getRulesForCategory,
   getRuleEngineSupport,
-  filterByProviders,
+  isAdvisoryRule,
+  filterByScopes,
 };
