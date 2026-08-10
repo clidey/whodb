@@ -21,7 +21,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/docdb v1.51.1
 	github.com/aws/aws-sdk-go-v2/service/elasticache v1.56.2
 	github.com/aws/aws-sdk-go-v2/service/opensearch v1.75.0
-	github.com/aws/aws-sdk-go-v2/service/rds v1.123.0
+	github.com/aws/aws-sdk-go-v2/service/rds v1.123.2
 	github.com/aws/aws-sdk-go-v2/service/sts v1.45.2
 	github.com/aws/smithy-go v1.27.5
 	github.com/boundaryml/baml v0.223.0
