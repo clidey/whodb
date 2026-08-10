@@ -539,8 +539,9 @@ describeOrSkip('Browser Storage', () => {
                 };
             });
 
-            // Should have multiple persist keys
-            expect(result.persistKeyCount).toBeGreaterThan(5);
+            // Should have multiple persist keys (auth is not among them —
+            // it's not redux-persisted in browser mode)
+            expect(result.persistKeyCount).toBeGreaterThanOrEqual(5);
 
             // Should have first login flag
             expect(result.hasFirstLoginFlag).toBeTruthy();

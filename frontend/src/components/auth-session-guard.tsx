@@ -31,19 +31,25 @@ interface AuthSessionGuardProps {
 /**
  * Restores CE UI auth state from the backend-owned browser session.
  *
- * Checks the session on mount only (no location dependency): this component
- * wraps `PrivateRoute`'s `<Outlet/>` and stays mounted across in-app
- * navigation, so re-running the session check on every route change would
- * race with (and clobber) in-flight profile/database switches, which
- * dispatch a richer profile object than the minimal one built from
- * `SourceSession`. Session expiry mid-session is already handled by the
- * GraphQL error link's 401 auto-login.
+ * Checks the session at most once, on mount, deliberately excluding
+ * `loggedIn` from the effect's dependency array: this component wraps
+ * `PrivateRoute`'s `<Outlet/>` and stays mounted across in-app navigation
+ * *and* across login/logout, so a `loggedIn`-reactive effect would re-fire
+ * on every `AuthActions.login()`/`logout()` dispatch — racing with (and
+ * clobbering) in-flight profile/database switches, and re-showing the
+ * loading spinner mid-navigation on `/logout` right as it navigates to
+ * `/login` (observed as Playwright `net::ERR_ABORTED` on that navigation).
+ * Once the mount check completes, redirect/render decisions read `loggedIn`
+ * directly so they still reflect logins/logouts dispatched elsewhere — this
+ * component just never re-fetches the session to do so. Session expiry
+ * mid-session is already handled separately by the GraphQL error link's 401
+ * auto-login.
  *
- * Also skips the fetch entirely when Redux already reports a logged-in
- * profile: this component first mounts right after the login page's own
+ * The mount check itself is skipped when Redux already reports a logged-in
+ * profile — this component first mounts right after the login page's own
  * `AuthActions.login()` dispatch (with the full profile — Hostname,
  * Password, etc.), and `SourceSession` only carries Id/SourceType/Database.
- * Re-dispatching that minimal payload here would clobber the credentials the
+ * Dispatching that minimal payload here would clobber the credentials the
  * login flow just stored, breaking any later profile/database switch that
  * needs them.
  */
@@ -51,19 +57,16 @@ export const AuthSessionGuard: FC<AuthSessionGuardProps> = ({ children }) => {
   const dispatch = useAppDispatch();
   const loggedIn = useAppSelector(state => state.auth.status === 'logged-in');
   const desktopApp = isDesktopApp();
-  const [checking, setChecking] = useState(!loggedIn);
-  const [hasSession, setHasSession] = useState(loggedIn);
+  const [checking, setChecking] = useState(true);
   const [loadSourceSession] = useLazyQuery(SourceSessionDocument, { fetchPolicy: 'no-cache' });
 
   useEffect(() => {
     if (desktopApp || loggedIn) {
       setChecking(false);
-      setHasSession(loggedIn);
       return;
     }
 
     let mounted = true;
-    setChecking(true);
     void loadSourceSession().then(({ data }) => {
       if (!mounted) {
         return;
@@ -71,7 +74,6 @@ export const AuthSessionGuard: FC<AuthSessionGuardProps> = ({ children }) => {
       const session = data?.SourceSession;
       if (!session) {
         dispatch(AuthActions.logout());
-        setHasSession(false);
         setChecking(false);
         return;
       }
@@ -81,21 +83,20 @@ export const AuthSessionGuard: FC<AuthSessionGuardProps> = ({ children }) => {
         SourceType: session.sourceType,
         Values: session.database ? [{ Key: 'Database', Value: session.database }] : [],
       }));
-      setHasSession(true);
       setChecking(false);
     }).catch(() => {
       if (!mounted) {
         return;
       }
       dispatch(AuthActions.logout());
-      setHasSession(false);
       setChecking(false);
     });
 
     return () => {
       mounted = false;
     };
-  }, [desktopApp, dispatch, loadSourceSession, loggedIn]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally excludes `loggedIn`; see comment above
+  }, [desktopApp, dispatch, loadSourceSession]);
 
   if (checking) {
     return (
@@ -105,7 +106,7 @@ export const AuthSessionGuard: FC<AuthSessionGuardProps> = ({ children }) => {
     );
   }
 
-  if (!hasSession) {
+  if (!loggedIn) {
     return <Navigate to="/login" replace />;
   }
 
