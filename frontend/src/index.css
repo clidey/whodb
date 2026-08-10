@@ -23,6 +23,15 @@
 @custom-variant dark (&:where(.dark, .dark *));
 @custom-variant hover (&:hover);
 
+/* Map brand.css tokens into Tailwind so utilities like bg-highlight generate.
+   (The ux package ships compiled CSS; its @theme isn't visible to this build.) */
+@theme inline {
+  --color-highlight: var(--highlight);
+  --color-highlight-foreground: var(--highlight-foreground);
+  --color-brand-readable: var(--brand-readable);
+  --color-chart-highlight: var(--chart-highlight);
+}
+
 :root {
   /* UI Customization defaults - these will be overridden by theme-customization.ts */
   --font-size-xs: 0.75rem;
