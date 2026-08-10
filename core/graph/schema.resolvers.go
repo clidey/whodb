@@ -41,7 +41,11 @@ import (
 
 // LoginSource is the resolver for the LoginSource field.
 func (r *mutationResolver) LoginSource(ctx context.Context, credentials model.SourceLoginInput) (*model.StatusResponse, error) {
-	return performSourceLogin(ctx, sourceCredentialsFromInput(credentials), "")
+	creds := sourceCredentialsFromInput(credentials)
+	if current := auth.GetSourceCredentials(ctx); current != nil && current.SourceType == creds.SourceType {
+		creds.Values = mergeCredentialValues(current.CloneValues(), creds.Values)
+	}
+	return performSourceLogin(ctx, creds, "")
 }
 
 // LoginWithSourceProfile is the resolver for the LoginWithSourceProfile field.
