@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@apollo/client':
-        specifier: 4.2.7
-        version: 4.2.7(graphql-ws@6.1.0(graphql@16.11.0)(ws@8.21.1))(graphql@16.11.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)
+        specifier: 4.2.9
+        version: 4.2.9(graphql-ws@6.1.0(graphql@16.11.0)(ws@8.21.1))(graphql@16.11.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)
       '@clidey/connparse':
         specifier: 0.8.0
         version: 0.8.0
@@ -186,8 +186,8 @@ importers:
 
 packages:
 
-  '@apollo/client@4.2.7':
-    resolution: {integrity: sha512-Z129zR77VP0oWWIXPpHgwbtwhCVBzkw/FhiiymbqwlUniKb5z2KBeuQkpNIz3QfuO7ezHiaxsJ0PPjYBJTSHtg==}
+  '@apollo/client@4.2.9':
+    resolution: {integrity: sha512-miiAhuhnjZjdYvSYNckvBGHyM8N4McGyrDyf7yIMDHzpt85FlS7k7JgixHqkAy1+MXGl9vYlTDfKS7alEDGbvQ==}
     peerDependencies:
       graphql: ^16.0.0 || ^17.0.0
       graphql-ws: ^5.5.5 || ^6.0.3
@@ -5233,7 +5233,7 @@ packages:
 
 snapshots:
 
-  '@apollo/client@4.2.7(graphql-ws@6.1.0(graphql@16.11.0)(ws@8.21.1))(graphql@16.11.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)':
+  '@apollo/client@4.2.9(graphql-ws@6.1.0(graphql@16.11.0)(ws@8.21.1))(graphql@16.11.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)':
     dependencies:
       '@graphql-typed-document-node/core': 3.2.0(graphql@16.11.0)
       '@wry/caches': 1.0.1
