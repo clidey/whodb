@@ -5,10 +5,23 @@ import path from 'node:path';
 // File walker
 // ---------------------------------------------------------------------------
 
+// Hidden directories are skipped wholesale during recursion (below), which
+// covers .git / .next / .nuxt / .svelte-kit / .turbo / .vercel and — the
+// issue #303 class — every vendored AI-harness install (.claude, .cursor,
+// .codex, .agents, .impeccable, ...) whose bundled detector source would
+// otherwise be reported as findings on a root scan. Only the non-hidden
+// build/dependency dirs need naming. An explicitly passed hidden target
+// still scans: walkDir name-checks children, never the root it's given.
 const SKIP_DIRS = new Set([
-  'node_modules', '.git', 'dist', 'build', '.next', '.nuxt', '.output',
-  '.svelte-kit', '__pycache__', '.turbo', '.vercel',
+  'node_modules', 'dist', 'build', '__pycache__',
 ]);
+
+// The exceptions to the hidden-dir rule: hidden directories that
+// conventionally hold real UI source rather than tooling or vendored code.
+// VitePress and VuePress keep custom theme components in
+// .vitepress/theme/*.vue / .vuepress/theme/, and Storybook keeps preview
+// decorators/styles in .storybook/.
+const HIDDEN_SOURCE_DIRS = new Set(['.vitepress', '.vuepress', '.storybook']);
 
 const SCANNABLE_EXTENSIONS = new Set([
   '.html', '.htm', '.css', '.scss', '.sass', '.less',
@@ -18,12 +31,19 @@ const SCANNABLE_EXTENSIONS = new Set([
 
 const HTML_EXTENSIONS = new Set(['.html', '.htm']);
 
+const IMPORT_SPECIFIER_PATTERNS = [
+  /import\s+(?:[\s\S]*?from\s+)?['"]([^'"]+)['"]/g,
+  /@import\s+(?:url\(\s*)?['"]?([^'");\s]+)['"]?\s*\)?/g,
+  /@(?:use|forward)\s+['"]([^'"]+)['"]/g,
+];
+
 function walkDir(dir) {
   const files = [];
   let entries;
   try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return files; }
   for (const entry of entries) {
     if (SKIP_DIRS.has(entry.name)) continue;
+    if (entry.isDirectory() && entry.name.startsWith('.') && !HIDDEN_SOURCE_DIRS.has(entry.name)) continue;
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) files.push(...walkDir(full));
     else if (SCANNABLE_EXTENSIONS.has(path.extname(entry.name).toLowerCase())) files.push(full);
@@ -61,26 +81,11 @@ function buildImportGraph(files) {
     const dir = path.dirname(file);
     const imports = new Set();
 
-    // ES imports: import ... from '...' and import '...'
-    const esRe = /import\s+(?:[\s\S]*?from\s+)?['"]([^'"]+)['"]/g;
-    let m;
-    while ((m = esRe.exec(content)) !== null) {
-      const resolved = resolveImport(m[1], dir, fileSet);
-      if (resolved) imports.add(resolved);
-    }
-
-    // CSS @import
-    const cssRe = /@import\s+(?:url\(\s*)?['"]?([^'");\s]+)['"]?\s*\)?/g;
-    while ((m = cssRe.exec(content)) !== null) {
-      const resolved = resolveImport(m[1], dir, fileSet);
-      if (resolved) imports.add(resolved);
-    }
-
-    // SCSS @use / @forward
-    const scssRe = /@(?:use|forward)\s+['"]([^'"]+)['"]/g;
-    while ((m = scssRe.exec(content)) !== null) {
-      const resolved = resolveImport(m[1], dir, fileSet);
-      if (resolved) imports.add(resolved);
+    for (const pattern of IMPORT_SPECIFIER_PATTERNS) {
+      for (const match of content.matchAll(pattern)) {
+        const resolved = resolveImport(match[1], dir, fileSet);
+        if (resolved) imports.add(resolved);
+      }
     }
 
     graph.set(file, imports);

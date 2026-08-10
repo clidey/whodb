@@ -682,12 +682,28 @@ jobs:
           codesign --force --sign "$APPLE_DEVELOPER_ID_APPLICATION" \
             --options runtime --timestamp "$DMG_FILE"
 
-          # Notarize
-          echo "📤 Submitting DMG for notarization..."
-          xcrun notarytool submit "$DMG_FILE" \
+          # Notarize. The credentials are stored in a throwaway keychain first:
+          # passing --password to `notarytool submit` puts the app-specific
+          # password in this process's argument list, which any process on the
+          # runner can read from `ps` for the duration of the upload. notarytool
+          # has no delete-credentials subcommand, so the keychain file is the
+          # unit of cleanup (see the Cleanup Keychain step).
+          NOTARY_KEYCHAIN="$RUNNER_TEMP/notary.keychain-db"
+          NOTARY_KEYCHAIN_PASSWORD="$(uuidgen)"
+          NOTARY_PROFILE="whodb-notarize"
+          security create-keychain -p "$NOTARY_KEYCHAIN_PASSWORD" "$NOTARY_KEYCHAIN"
+          security unlock-keychain -p "$NOTARY_KEYCHAIN_PASSWORD" "$NOTARY_KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$NOTARY_KEYCHAIN"
+          xcrun notarytool store-credentials "$NOTARY_PROFILE" \
             --apple-id "$APPLE_ID" \
             --password "$APPLE_APP_PASSWORD" \
             --team-id "$APPLE_TEAM_ID" \
+            --keychain "$NOTARY_KEYCHAIN" >/dev/null
+
+          echo "📤 Submitting DMG for notarization..."
+          xcrun notarytool submit "$DMG_FILE" \
+            --keychain-profile "$NOTARY_PROFILE" \
+            --keychain "$NOTARY_KEYCHAIN" \
             --wait
 
           echo "📎 Stapling notarization ticket..."
@@ -766,4 +782,12 @@ jobs:
           if [ -f "$MAS_KEYCHAIN_PATH" ]; then
             security delete-keychain "$MAS_KEYCHAIN_PATH" || true
             echo "✅ MAS keychain cleanup complete"
+          fi
+          # Clean up the notarization keychain. It holds the app-specific
+          # password, and notarytool cannot remove a stored profile, so deleting
+          # the keychain is the only way to revoke it.
+          NOTARY_KEYCHAIN_PATH=$RUNNER_TEMP/notary.keychain-db
+          if [ -f "$NOTARY_KEYCHAIN_PATH" ]; then
+            security delete-keychain "$NOTARY_KEYCHAIN_PATH" || true
+            echo "✅ Notarization keychain cleanup complete"
           fi

@@ -78,7 +78,7 @@ Systematically improve resilience:
 
 **Responsive text sizing**:
 - Use `clamp()` for fluid typography
-- Set minimum readable sizes (14px on mobile)
+- Set minimum readable sizes (16px body on mobile, the same floor the typography guidance sets; 14px only for genuinely secondary text. iOS Safari force-zooms focused inputs under 16px, which breaks form layouts)
 - Test text scaling (zoom to 200%)
 - Ensure containers expand with text
 
@@ -260,17 +260,6 @@ t('items', { count }) // Handles complex plural rules
 - Announce dynamic changes (live regions)
 - Descriptive alt text
 - Semantic HTML
-
-**Motion sensitivity**:
-```css
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-```
 
 **High contrast mode**:
 - Test in Windows high contrast mode

@@ -25,6 +25,7 @@ import (
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/internal/testutil"
 	"github.com/clidey/whodb/core/src"
+	"github.com/clidey/whodb/core/src/auth"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/mockdata"
@@ -205,6 +206,43 @@ func TestQuerySourceSessionMetadataMapsFields(t *testing.T) {
 	}
 	if len(result.QueryLanguages) == 0 || result.QueryLanguages[0] != "sql" {
 		t.Fatalf("expected sql query language metadata to be mapped, got %#v", result.QueryLanguages)
+	}
+}
+
+func TestQuerySourceSessionReturnsOnlySafeSessionState(t *testing.T) {
+	resolver := &Resolver{}
+	query := resolver.Query()
+	profileID := "profile-1"
+	ctx := context.WithValue(context.Background(), auth.AuthKey_Source, &source.Credentials{
+		ID:         &profileID,
+		SourceType: "Postgres",
+		Values: map[string]string{
+			"Database": "app",
+			"Hostname": "db.internal",
+			"Password": "secret",
+		},
+	})
+
+	result, err := query.SourceSession(ctx)
+	if err != nil {
+		t.Fatalf("expected source session, got %v", err)
+	}
+	if result == nil || result.ID == nil || *result.ID != profileID {
+		t.Fatalf("expected profile ID, got %#v", result)
+	}
+	if result.SourceType != "Postgres" || result.Database != "app" {
+		t.Fatalf("expected safe session fields, got %#v", result)
+	}
+}
+
+func TestQuerySourceSessionReturnsNilWithoutSession(t *testing.T) {
+	resolver := &Resolver{}
+	result, err := resolver.Query().SourceSession(context.Background())
+	if err != nil {
+		t.Fatalf("expected no error without a session, got %v", err)
+	}
+	if result != nil {
+		t.Fatalf("expected no session, got %#v", result)
 	}
 }
 

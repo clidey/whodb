@@ -56,7 +56,16 @@ type ManifestRefresher func(context.Context, *Client) (*PlatformManifest, error)
 
 // AuthConfig is the public auth configuration advertised by a WhoDB platform host.
 type AuthConfig struct {
-	MothergateURL string `json:"mothergateUrl"`
+	Version  int             `json:"version"`
+	Issuer   string          `json:"issuer"`
+	ClientID string          `json:"clientId"`
+	Flows    AuthConfigFlows `json:"flows"`
+}
+
+// AuthConfigFlows lists the OIDC grants supported for the CLI client.
+type AuthConfigFlows struct {
+	AuthorizationCodePKCE bool `json:"authorizationCodePkce"`
+	DeviceAuthorization   bool `json:"deviceAuthorization"`
 }
 
 // NormalizeHost canonicalizes hosted WhoDB URLs for config and requests.
@@ -99,44 +108,62 @@ func isLoopbackHostname(hostname string) bool {
 	return ip != nil && ip.IsLoopback()
 }
 
-// ResolveAuthHost returns the Mothergate base URL advertised by the WhoDB host.
-func ResolveAuthHost(ctx context.Context, host string) (string, error) {
+// FetchAuthConfig returns and strictly validates the v2 OIDC configuration advertised by the WhoDB host.
+func FetchAuthConfig(ctx context.Context, host string) (*AuthConfig, error) {
 	normalized, err := NormalizeHost(host)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, normalized+"/api/auth-config", nil)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	req.Header.Set("Accept", "application/json")
 
 	resp, err := (&http.Client{Timeout: 30 * time.Second}).Do(req)
 	if err != nil {
-		return "", fmt.Errorf("fetch auth config: %w", err)
+		return nil, fmt.Errorf("fetch auth config: %w", err)
 	}
 	defer resp.Body.Close()
 
 	raw, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return "", fmt.Errorf("auth config request failed: %s: %s", resp.Status, strings.TrimSpace(string(raw)))
+		return nil, fmt.Errorf("auth config request failed: %s: %s", resp.Status, strings.TrimSpace(string(raw)))
 	}
 
 	var cfg AuthConfig
 	if err := json.Unmarshal(raw, &cfg); err != nil {
-		return "", fmt.Errorf("decode auth config: %w", err)
+		return nil, fmt.Errorf("decode auth config: %w", err)
 	}
-	if strings.TrimSpace(cfg.MothergateURL) == "" {
-		return "", fmt.Errorf("auth config did not include mothergateUrl")
+	if cfg.Version != 2 {
+		return nil, fmt.Errorf("unsupported auth config version %d", cfg.Version)
 	}
-	authHost, err := NormalizeHost(cfg.MothergateURL)
+	if strings.TrimSpace(cfg.ClientID) == "" {
+		return nil, fmt.Errorf("auth config did not include clientId")
+	}
+	issuer, err := normalizeOIDCURL(cfg.Issuer)
 	if err != nil {
-		return "", fmt.Errorf("invalid mothergateUrl in auth config: %w", err)
+		return nil, fmt.Errorf("invalid issuer in auth config: %w", err)
 	}
-	return authHost, nil
+	cfg.Issuer = issuer
+	return &cfg, nil
+}
+
+func normalizeOIDCURL(raw string) (string, error) {
+	parsed, err := url.Parse(strings.TrimSpace(raw))
+	if err != nil || parsed.Host == "" {
+		return "", fmt.Errorf("invalid absolute URL %q", raw)
+	}
+	if parsed.Scheme != "https" && (parsed.Scheme != "http" || !isLoopbackHostname(parsed.Hostname())) {
+		return "", fmt.Errorf("URL must use https, except for loopback development")
+	}
+	if parsed.RawQuery != "" || parsed.Fragment != "" || strings.Trim(parsed.Path, "/") == "" {
+		return "", fmt.Errorf("URL must include a path and omit query and fragment")
+	}
+	return strings.TrimRight(parsed.String(), "/"), nil
 }
 
 // NewClient creates a hosted WhoDB platform client.

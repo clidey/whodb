@@ -139,9 +139,9 @@ mkdir -p e2e/reports/test-results e2e/reports/blobs e2e/reports/html
 echo "🌐 Starting frontend dev server..."
 BACKEND_PORT="${WHODB_BACKEND_PORT:-8080}"
 if [ -n "$VITE_CONFIG" ]; then
-    VITE_BACKEND_PORT="$BACKEND_PORT" NODE_ENV=test pnpm exec vite --config "$VITE_CONFIG" --port 3000 --strictPort --clearScreen false --logLevel error > e2e/logs/frontend.log 2>&1 &
+    VITE_BACKEND_PORT="$BACKEND_PORT" VITE_E2E_TEST=true NODE_ENV=test pnpm exec vite --config "$VITE_CONFIG" --port 3000 --strictPort --clearScreen false --logLevel error > e2e/logs/frontend.log 2>&1 &
 else
-    VITE_BACKEND_PORT="$BACKEND_PORT" NODE_ENV=test pnpm exec vite --port 3000 --strictPort --clearScreen false --logLevel error > e2e/logs/frontend.log 2>&1 &
+    VITE_BACKEND_PORT="$BACKEND_PORT" VITE_E2E_TEST=true NODE_ENV=test pnpm exec vite --port 3000 --strictPort --clearScreen false --logLevel error > e2e/logs/frontend.log 2>&1 &
 fi
 FRONTEND_PID=$!
 

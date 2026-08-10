@@ -639,6 +639,12 @@ type SourceSSLMode struct {
 	Aliases []string `json:"aliases"`
 }
 
+type SourceSession struct {
+	ID         *string `json:"Id,omitempty"`
+	SourceType string  `json:"SourceType"`
+	Database   string  `json:"Database"`
+}
+
 type SourceSessionMetadata struct {
 	SourceType      string            `json:"SourceType"`
 	QueryLanguages  []string          `json:"QueryLanguages"`

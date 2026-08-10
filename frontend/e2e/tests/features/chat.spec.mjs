@@ -555,8 +555,8 @@ test.describe('Chat AI Integration', () => {
                 // Wait for confirmation dialog
                 await expect(page.getByText(/delete.*provider/i).first()).toBeVisible({ timeout: 5000 });
 
-                // Verify confirmation dialog has expected content (asking if sure about deletion)
-                await expect(page.getByText(/are you sure.*delete.*provider/i)).toBeVisible();
+                // Verify confirmation dialog has expected content (asking about re-adding credentials)
+                await expect(page.getByText(/re-enter credentials/i)).toBeVisible();
 
                 // Cancel deletion
                 await page.locator('button').filter({ hasText: /cancel/i }).click();

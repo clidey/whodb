@@ -58,34 +58,35 @@ func TestNormalizeHost(t *testing.T) {
 	}
 }
 
-func TestResolveAuthHost(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func TestFetchAuthConfigV2(t *testing.T) {
+	var server *httptest.Server
+	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/api/auth-config" {
 			t.Fatalf("unexpected path %q", r.URL.Path)
 		}
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"mothergateUrl":"http://localhost:4000/"}`))
+		_, _ = w.Write([]byte(`{"version":2,"issuer":"` + server.URL + `/realms/mothergate","clientId":"whodb-cli","flows":{"authorizationCodePkce":true,"deviceAuthorization":true}}`))
 	}))
 	defer server.Close()
 
-	got, err := ResolveAuthHost(context.Background(), server.URL)
+	got, err := FetchAuthConfig(context.Background(), server.URL)
 	if err != nil {
-		t.Fatalf("ResolveAuthHost() error = %v", err)
+		t.Fatalf("FetchAuthConfig() error = %v", err)
 	}
-	if got != "http://localhost:4000" {
-		t.Fatalf("ResolveAuthHost() = %q, want %q", got, "http://localhost:4000")
+	if got.Version != 2 || got.ClientID != "whodb-cli" || !got.Flows.DeviceAuthorization {
+		t.Fatalf("FetchAuthConfig() = %#v", got)
 	}
 }
 
-func TestResolveAuthHostRequiresMothergateURL(t *testing.T) {
+func TestFetchAuthConfigRejectsLegacyContract(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{}`))
+		_, _ = w.Write([]byte(`{"mothergateUrl":"http://localhost:4000"}`))
 	}))
 	defer server.Close()
 
-	if _, err := ResolveAuthHost(context.Background(), server.URL); err == nil {
-		t.Fatalf("ResolveAuthHost() error = nil, want error")
+	if _, err := FetchAuthConfig(context.Background(), server.URL); err == nil {
+		t.Fatalf("FetchAuthConfig() error = nil, want error")
 	}
 }
 

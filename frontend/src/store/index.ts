@@ -19,6 +19,7 @@ import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import { persistReducer, persistStore, createTransform } from 'redux-persist';
 import storage from 'redux-persist/es/storage';
 import { authReducers } from './auth';
+import type { IAuthState } from './auth';
 import { databaseReducers } from './database';
 import { settingsReducers } from "./settings";
 import { houdiniReducers } from './chat';
@@ -32,6 +33,7 @@ import { healthReducers } from './health';
 import { exploreConditionsReducers } from './explore-conditions';
 import { runMigrations } from './migrations';
 import { stripProfileSecrets } from '../utils/credential-secrets';
+import { isDesktopApp } from '../utils/external-links';
 
 // Run migrations before initializing the store
 runMigrations();
@@ -154,16 +156,6 @@ const chatTransform = createTransform(
   { whitelist: ['houdini'] }
 );
 
-// authPersistTransform strips secrets before the auth slice is written to
-// localStorage. Credentials now live server-side (session cookie), so only
-// non-secret fields are persisted — enough to keep the logged-in status and
-// profile switcher across reloads without ever storing passwords or SSL private
-// keys in the browser. The valid session cookie re-establishes access on the
-// backend.
-//
-// redux-persist applies transforms per top-level field of the slice (the `key`
-// argument), so strip secrets from the `current` profile and each `profiles`
-// entry individually.
 const authPersistTransform = createTransform(
   (inboundState: any, key) => {
     if (key === 'current') {
@@ -190,8 +182,12 @@ const settingsPersistTransform = createTransform(
 
 const PERSIST_THROTTLE = 2000;
 
+const authReducer: Reducer<IAuthState> = isDesktopApp()
+  ? persistReducer({ key: "auth", storage, transforms: [authPersistTransform] }, authReducers) as unknown as Reducer<IAuthState>
+  : authReducers;
+
 const ceReducerMap = {
-  auth: persistReducer({ key: "auth", storage, transforms: [authPersistTransform] }, authReducers),
+  auth: authReducer,
   database: persistReducer({ key: "database", storage }, databaseReducers),
   settings: persistReducer({ key: "settings", storage, transforms: [settingsPersistTransform] }, settingsReducers),
   houdini: persistReducer({ key: "houdini", storage, transforms: [chatTransform], throttle: PERSIST_THROTTLE }, houdiniReducers),

@@ -76,3 +76,41 @@ export function waitForMutation(page, operationName) {
         return result;
     };
 }
+
+/**
+ * Reads the backend-owned session for the currently logged-in profile via the
+ * SourceSession GraphQL query. Auth state now lives server-side (session
+ * cookie) rather than in `persist:auth` localStorage, so tests that need to
+ * check "what profile/database is currently active" must ask the backend
+ * instead of reading localStorage.
+ *
+ * @param {import('@playwright/test').Page} page
+ * @returns {Promise<{id: string | null, sourceType: string, database: string} | null>}
+ */
+export async function fetchSourceSession(page) {
+    return page.evaluate(async () => {
+        const csrfMatch = document.cookie
+            .split('; ')
+            .find(row => row.startsWith('whodb_csrf='));
+        const csrf = csrfMatch ? decodeURIComponent(csrfMatch.slice('whodb_csrf='.length)) : null;
+
+        const response = await fetch('/api/query', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(csrf ? { 'X-Csrf-Token': csrf } : {}),
+            },
+            body: JSON.stringify({
+                operationName: 'SourceSession',
+                query: 'query SourceSession { SourceSession { id: Id sourceType: SourceType database: Database } }',
+                variables: {},
+            }),
+        });
+        if (!response.ok) {
+            return null;
+        }
+        const result = await response.json();
+        return result?.data?.SourceSession ?? null;
+    });
+}

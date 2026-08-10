@@ -29,8 +29,8 @@ import (
 	"github.com/clidey/whodb/cli/internal/config"
 )
 
-// refreshStub serves the two endpoints platformapi.RefreshToken needs:
-// /api/auth-config (host discovery) and /auth/refresh (the token exchange).
+// refreshStub serves the OIDC configuration, discovery, and token endpoints
+// platformapi.RefreshToken needs.
 type refreshStub struct {
 	server    *httptest.Server
 	calls     atomic.Int64
@@ -43,9 +43,12 @@ func newRefreshStub(t *testing.T, expiresIn int) *refreshStub {
 	stub := &refreshStub{expiresIn: expiresIn, status: http.StatusOK}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/auth-config", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, `{"mothergateUrl":%q}`, stub.server.URL)
+		fmt.Fprintf(w, `{"version":2,"issuer":%q,"clientId":"whodb-cli","flows":{"authorizationCodePkce":true,"deviceAuthorization":true}}`, stub.server.URL+"/realms/mothergate")
 	})
-	mux.HandleFunc("/auth/refresh", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/realms/mothergate/.well-known/openid-configuration", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, `{"issuer":%q,"authorization_endpoint":%q,"token_endpoint":%q}`, stub.server.URL+"/realms/mothergate", stub.server.URL+"/authorize", stub.server.URL+"/token")
+	})
+	mux.HandleFunc("/token", func(w http.ResponseWriter, r *http.Request) {
 		n := stub.calls.Add(1)
 		if stub.status != http.StatusOK {
 			w.WriteHeader(stub.status)

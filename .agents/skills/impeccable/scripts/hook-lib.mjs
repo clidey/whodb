@@ -9,20 +9,26 @@
  *   ENVELOPE_PREFIX, ALLOWED_EXTS, ACK_EXTS, SENSITIVE_PATH, GENERATED_PATH, TRUTHY
  *   truthy(value)
  *   readConfig(cwd) / DEFAULT_CONFIG / getConfigPath(cwd) / getLocalConfigPath(cwd)
+ *   resolveProjectPlatform(cwd) / isNativePlatform(platform)
  *   normalizeIgnoreValue(value)
- *   readCache(cwd) / persistCache(cwd, cache)
+ *   readCache(cwd) / persistCache(cwd, cache) / resolveCacheCwd(primaryFile, sessionCwd)
  *   bumpEditCount(cache, sessionId, filePath) -> number
+ *   touchFile(cache, sessionId, filePath)
  *   suppressionNotice(filePath)
  *   filterFindings(findings, content, ext, config)
+ *   ADVISORY_RULES / isAdvisoryFinding(finding)
+ *   IMMEDIATE_TIER_RULES / splitFindingsByTier(findings) / perEditTieringActive(config, harness)
+ *   matchConfiguredExtension(filePath, extensions)
  *   dedupeAgainstCache(findings, cache, sessionId, filePath)
  *   renderTemplate(findings, filePath, config, opts)
  *   renderCleanAck(filePath, opts) / renderPendingAck(filePath, known, opts)
- *   shouldEmitAckForFile(filePath)
+ *   shouldEmitAckForFile(filePath, config?)
  *   writeAuditLog(env, entry)
  *   loadDetector() -> Promise<{ detectText, detectHtml }>
  *   matchesAnyGlob(filePath, globs)
  *   normalizeScanTargets(primaryTargets, projectCwd)
  *   runHook(deps) -> { exitCode, stdout, audit, reason? }
+ *   runStopHook(deps) -> { exitCode, stdout, audit, emission? }
  *
  * Design notes:
  * - All errors are swallowed at the runHook seam. The detector throwing must
@@ -35,8 +41,21 @@
  */
 
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
+import { extractPlatform, loadContext } from './context.mjs';
+import { IMPECCABLE_COMMAND } from './lib/provider.mjs';
+// `detector.extensions` (issue #316) is shared with Live's source search, which
+// needs the same answer for `.heex` / `.blade.php` when it hunts for session
+// markers. lib/template-extensions.mjs owns the shape; re-exported here because
+// hook-lib has been the import site for matchConfiguredExtension since #347.
+import {
+  matchConfiguredExtension,
+  mergeExtensions,
+} from './lib/template-extensions.mjs';
+
+export { matchConfiguredExtension };
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -65,9 +84,68 @@ export const SENSITIVE_PATH = new RegExp([
 ].join('|'), 'i');
 
 // Hard-skip regex for generated, lock, minified, and build-output paths.
-export const GENERATED_PATH = /(?:\.generated\.[a-z]+$|\.d\.ts$|\.min\.[a-z]+$|[/\\]node_modules[/\\]|[/\\](?:dist|build|out|\.next|\.cache|coverage)[/\\]|[/\\]?[^/\\]+\.lock(?:\.json)?$)/i;
+// `generated` is matched as a whole path segment so authored names such as
+// `generated-utils.ts` or `CodeGenerator.tsx` still get scanned.
+export const GENERATED_PATH = /(?:\.generated\.[a-z]+$|\.d\.ts$|\.min\.[a-z]+$|[/\\]node_modules[/\\]|[/\\]generated[/\\]|[/\\](?:dist|build|out|\.next|\.cache|coverage)[/\\]|[/\\]?[^/\\]+\.lock(?:\.json)?$)/i;
 
 export const TRUTHY = /^(1|true|yes|on)$/i;
+
+// ── Two-tier rule surfacing ──────────────────────────────────────────────
+// The per-edit PostToolUse pass surfaces only this "immediate" tier: rules
+// that are mechanical, unambiguous, and worth interrupting an edit for —
+// broken output the user would see (broken images, overflow, clipped
+// popovers, text on the viewport edge), objective contrast/legibility
+// failures, single-property slop that is trivial to fix in place (gradient
+// text, glow shadows), and design-system drift (which compounds with every
+// further edit if left uncorrected). Everything else — copy-cadence rules,
+// palette/typography taste, layout rhythm — is deferred to the Stop-event
+// deep pass (`runStopHook`), which runs the FULL rule set over every file
+// touched this session and surfaces the remainder once.
+//
+// Rationale (measured in the eval harness): the per-edit stream fires
+// overwhelmingly on copy-level rules, and that steady nag stream makes
+// models more conservative, while a single full pass at completion fixes
+// contrast/padding/glow just as reliably. Restore the old full per-edit
+// behavior with `.impeccable/config.json` → `hook: { "perEditRules": "all" }`.
+export const IMMEDIATE_TIER_RULES = new Set([
+  // Broken output.
+  'broken-image',
+  'text-overflow',
+  'clipped-overflow-container',
+  'body-text-viewport-edge',
+  // Objective contrast / legibility failures.
+  'low-contrast',
+  'gray-on-color',
+  'tiny-text',
+  // Single-property mechanical slop, trivial to fix at the edit site.
+  'gradient-text',
+  'dark-glow',
+  // Design-system drift compounds if not corrected at edit time.
+  'design-system-font',
+  'design-system-color',
+  'design-system-radius',
+  'design-system-font-size',
+]);
+
+// ── Advisory rules ────────────────────────────────────────────────────────
+// Advisory rules are opt-in noise: the CLI reports them in a separate section
+// and they never count as failures. The design hook skips them entirely by
+// default — in both the per-edit PostToolUse pass and the Stop deep pass — so
+// the agent is never nagged about a taste call a human might make on purpose.
+// A project opts back in with `.impeccable/config.json`:
+//   { "detector": { "advisoryRules": "include" } }
+// This set is the hook's own copy of the registry's `advisory: true` rules,
+// mirroring how IMMEDIATE_TIER_RULES lists rule ids inline so the hook stays
+// self-contained and testable without loading the detector. Keep it in sync
+// with the registry (cli/engine/registry/antipatterns.mjs).
+export const ADVISORY_RULES = new Set([
+  'em-dash-overuse',
+]);
+
+export function isAdvisoryFinding(finding) {
+  const id = finding && normalizeIgnoreRule(finding.antipattern);
+  return Boolean(id && (ADVISORY_RULES.has(id) || finding.advisory === true));
+}
 
 export const DEFAULT_CONFIG = Object.freeze({
   enabled: true,
@@ -77,7 +155,17 @@ export const DEFAULT_CONFIG = Object.freeze({
   ignoreRules: [],
   ignoreFiles: [],
   ignoreValues: [],
-  limits: { maxFindings: 5, maxChars: 8000 },
+  extensions: [],
+  perEditRules: 'immediate',
+  // Advisory rules are skipped unless a project sets detector.advisoryRules to
+  // "include". See ADVISORY_RULES above.
+  advisoryRules: 'exclude',
+  // maxFileBytes: not every generated artifact lives under a path we can
+  // recognize. Committed browser bundles and vendored detector copies sit
+  // next to source and run 200KB+, while genuinely authored stylesheets in
+  // this codebase top out under 90KB. A single file past the ceiling is a
+  // bundle, and findings against a bundle are never actionable.
+  limits: { maxFindings: 5, maxChars: 8000, maxFileBytes: 131072 },
 });
 
 export const HOOK_LOCAL_IGNORE_PATTERNS = Object.freeze([
@@ -134,6 +222,59 @@ export function resolveProjectCwd(event, fallback = process.cwd()) {
     || fallback;
 }
 
+function looksLikeProjectRoot(dir) {
+  return ['.git', 'package.json', '.impeccable'].some((marker) => {
+    try { return fs.existsSync(path.join(dir, marker)); } catch { return false; }
+  });
+}
+
+// Where `.impeccable/` (cache + config) lives for this event. Normally the
+// session cwd, untouched. But when the agent was launched from an umbrella
+// directory that is not itself a project (no .git, package.json, or
+// .impeccable), key to the edited file's nearest project root instead, so a
+// multi-project launch dir doesn't accumulate a shared cross-project cache
+// (issue #305). Climbing stops at the home dir, falling back to the session
+// cwd when no marker is found.
+export function resolveCacheCwd(primaryFile, sessionCwd) {
+  const base = path.resolve(sessionCwd || process.cwd());
+  if (!primaryFile || typeof primaryFile !== 'string' || hasPathTraversal(primaryFile)) return base;
+  if (looksLikeProjectRoot(base)) return base;
+  let dir;
+  try {
+    dir = path.dirname(path.resolve(primaryFile));
+  } catch {
+    return base;
+  }
+  const home = path.resolve(os.homedir());
+  while (true) {
+    if (dir === home) return base;
+    if (looksLikeProjectRoot(dir)) return dir;
+    const parent = path.dirname(dir);
+    if (parent === dir) return base;
+    dir = parent;
+  }
+}
+
+// The detector's rules are web rules (HTML/CSS shapes), but a React Native or
+// Flutter project is made of the exact extensions the hook watches (.tsx, .ts,
+// .js), so without this gate every native screen edit would draw web-shaped
+// findings that contradict the native platform references. PRODUCT.md's
+// `## Platform` field decides: `ios` / `android` / `adaptive` projects skip
+// the scan entirely. Resolution goes through loadContext so the hook reads the
+// same PRODUCT.md the skill does (alternate context dirs, monorepo fallback).
+export function resolveProjectPlatform(cwd) {
+  try {
+    const ctx = loadContext(cwd);
+    return extractPlatform(ctx && ctx.product);
+  } catch {
+    return null;
+  }
+}
+
+export function isNativePlatform(platform) {
+  return platform === 'ios' || platform === 'android' || platform === 'adaptive';
+}
+
 export function readConfig(cwd) {
   const config = cloneDefaultConfig();
   // Hook runtime settings live under `hook`; detector filters live under
@@ -168,6 +309,7 @@ function cloneDefaultConfig() {
     ignoreRules: [],
     ignoreFiles: [],
     ignoreValues: [],
+    extensions: [],
     designSystem: { ...DEFAULT_CONFIG.designSystem },
     limits: { ...DEFAULT_CONFIG.limits },
   };
@@ -175,6 +317,11 @@ function cloneDefaultConfig() {
 
 function applyDetectorConfigSource(config, raw) {
   if (!raw || typeof raw !== 'object') return config;
+  // `detector.advisoryRules: "include"` opts the hook into advisory rules
+  // (em-dash overuse, etc.). Any other value keeps the default "exclude".
+  if (raw.advisoryRules === 'include' || raw.advisoryRules === 'exclude') {
+    config.advisoryRules = raw.advisoryRules;
+  }
   if (raw.designSystem && typeof raw.designSystem === 'object' && !Array.isArray(raw.designSystem)) {
     config.designSystem = {
       ...config.designSystem,
@@ -190,6 +337,9 @@ function applyDetectorConfigSource(config, raw) {
   if (Array.isArray(raw.ignoreValues)) {
     config.ignoreValues = mergeIgnoreValues(config.ignoreValues, raw.ignoreValues);
   }
+  if (Array.isArray(raw.extensions)) {
+    config.extensions = mergeExtensions(config.extensions, raw.extensions);
+  }
   return config;
 }
 
@@ -201,6 +351,9 @@ function applyConfigSource(config, raw) {
   if (Object.prototype.hasOwnProperty.call(raw, 'quiet')) {
     config.quiet = raw.quiet === true;
   }
+  if (raw.perEditRules === 'all' || raw.perEditRules === 'immediate') {
+    config.perEditRules = raw.perEditRules;
+  }
   if (typeof raw.auditLog === 'string' && raw.auditLog.trim()) {
     config.auditLog = raw.auditLog.trim();
   }
@@ -209,6 +362,7 @@ function applyConfigSource(config, raw) {
     config.limits = {
       maxFindings: numberOr(raw.limits.maxFindings, config.limits.maxFindings),
       maxChars: numberOr(raw.limits.maxChars, config.limits.maxChars),
+      maxFileBytes: numberOr(raw.limits.maxFileBytes, config.limits.maxFileBytes),
     };
   }
   return config;
@@ -396,11 +550,14 @@ export function normalizeIgnoreValueEntries(entries) {
       ...(Array.isArray(entry.files) ? entry.files.filter(v => typeof v === 'string' && v.trim()).map(v => v.trim()) : []),
     ]);
     if (files.length > 0) normalized.files = files;
-    if (typeof entry.reason === 'string' && entry.reason.trim()) {
-      normalized.reason = entry.reason.trim();
-    }
+    // Key order is rule, value, files, createdAt, reason and must stay that way:
+    // normalizing runs on every write, so emitting a different order than the one
+    // already on disk rewrites every untouched entry and churns the diff.
     if (typeof entry.createdAt === 'string' && entry.createdAt.trim()) {
       normalized.createdAt = entry.createdAt.trim();
+    }
+    if (typeof entry.reason === 'string' && entry.reason.trim()) {
+      normalized.reason = entry.reason.trim();
     }
     out.push(normalized);
   }
@@ -419,7 +576,9 @@ function mergeIgnoreValues(existing, incoming) {
 }
 
 function ignoreValueFilesKey(files) {
-  return Array.isArray(files) && files.length > 0 ? files.join('\x1f') : '';
+  // Sort before joining: a scope is a set, so an entry already on disk in another
+  // order must compare equal rather than dedup as two distinct entries.
+  return Array.isArray(files) && files.length > 0 ? [...files].sort().join('\x1f') : '';
 }
 
 export function readCache(cwd) {
@@ -555,8 +714,16 @@ export function bumpEditCount(cache, sessionId, filePath) {
   return fileEntry.editCount;
 }
 
+// Record that a file was scanned this session without bumping its edit count.
+// The Stop deep pass reads the session's file list to know what to re-scan,
+// so a file whose per-edit findings were all deferred still needs an entry.
+export function touchFile(cache, sessionId, filePath) {
+  ensureFile(cache, sessionId, filePath);
+  ensureSession(cache, sessionId).updatedAt = Date.now();
+}
+
 export function suppressionNotice(filePath) {
-  return `${ENVELOPE_PREFIX} Suppressing further design hints on ${filePath}. More than ${EDIT_COUNT_THRESHOLD} edits in this session reached. Run /impeccable audit to revisit.`;
+  return `${ENVELOPE_PREFIX} Suppressing further design hints on ${filePath}. More than ${EDIT_COUNT_THRESHOLD} edits in this session reached. Run ${IMPECCABLE_COMMAND} audit to revisit.`;
 }
 
 // Glob → RegExp. Supports `**`, `*`, `?`, and `{a,b}` alternation.
@@ -617,22 +784,53 @@ export function filterFindings(findings, _content, _ext, config) {
   if (!Array.isArray(findings) || findings.length === 0) return [];
   const ignoreRules = new Set((config.ignoreRules || []).map((rule) => normalizeIgnoreRule(rule)));
   const ignoreValues = normalizeIgnoreValueEntries(config.ignoreValues || []);
+  // Advisory rules are skipped by default so the hook never nags about them;
+  // a project opts in with detector.advisoryRules: "include".
+  const includeAdvisory = (config?.advisoryRules || DEFAULT_CONFIG.advisoryRules) === 'include';
   return findings.filter((f) => {
     if (!f || typeof f !== 'object') return false;
+    if (!includeAdvisory && isAdvisoryFinding(f)) return false;
     if (ignoreRules.has(normalizeIgnoreRule(f.antipattern))) return false;
     if (isIgnoredFindingValue(f, ignoreValues)) return false;
     return true;
   });
 }
 
+// Split filtered findings into the per-edit "immediate" tier and the tier
+// deferred to the Stop deep pass. See IMMEDIATE_TIER_RULES for the tiering
+// rationale.
+export function splitFindingsByTier(findings) {
+  const immediate = [];
+  const deferred = [];
+  for (const f of Array.isArray(findings) ? findings : []) {
+    if (f && IMMEDIATE_TIER_RULES.has(normalizeIgnoreRule(f.antipattern))) {
+      immediate.push(f);
+    } else {
+      deferred.push(f);
+    }
+  }
+  return { immediate, deferred };
+}
+
+// Whether the per-edit pass for this harness should defer non-immediate
+// findings to a Stop deep pass. Only Claude Code and Codex dispatch our Stop
+// hook; Cursor and GitHub Copilot have no deep pass wired, so deferring for
+// them would silently drop the non-immediate rules entirely.
+export function perEditTieringActive(config, harness) {
+  if (harness === 'cursor' || harness === 'github') return false;
+  return (config?.perEditRules || DEFAULT_CONFIG.perEditRules) !== 'all';
+}
+
 function isIgnoredFindingValue(finding, ignoreValues) {
   if (!Array.isArray(ignoreValues) || ignoreValues.length === 0) return false;
   const rule = normalizeIgnoreRule(finding.antipattern);
+  if (!rule) return false;
+  // File-scoped wildcards suppress rules with no extractable value, such as side-tab.
   const value = extractFindingIgnoreValue(finding);
-  if (!rule || !value) return false;
   return ignoreValues.some((entry) => {
+    if (entry.rule !== rule) return false;
     const wildcardValue = entry.value === '*';
-    if (entry.rule !== rule || (!wildcardValue && !ignoreValueMatches(rule, entry.value, value))) return false;
+    if (!wildcardValue && (!value || !ignoreValueMatches(rule, entry.value, value))) return false;
     if (!Array.isArray(entry.files) || entry.files.length === 0) return !wildcardValue;
     return findingMatchesScopedIgnoreFile(finding, entry.files);
   });
@@ -661,6 +859,7 @@ export function extractFindingIgnoreValue(finding) {
     'design-system-font',
     'design-system-color',
     'design-system-radius',
+    'design-system-font-size',
   ]);
   if (!directValueRules.has(rule)) return '';
   return normalizeIgnoreValue(extractFindingIgnoreValueRaw(finding, rule));
@@ -680,6 +879,9 @@ function extractFindingIgnoreValueRaw(finding, rule = normalizeIgnoreRule(findin
 
     const primary = text.match(/Primary font:\s*([^()\n;]+)/i);
     if (primary) return cleanIgnoreValueDisplay(primary[1]);
+
+    const googleLabel = text.match(/Google Fonts:\s*([^()\n;]+)/i);
+    if (googleLabel) return cleanIgnoreValueDisplay(googleLabel[1]);
 
     const family = text.match(/font-family\s*:\s*["']?([^'",;\n]+)/i);
     if (family) return cleanIgnoreValueDisplay(family[1]);
@@ -737,11 +939,20 @@ export function dedupeAgainstCache(findings, cache, sessionId, filePath) {
   return fresh;
 }
 
+// Sync the remembered set to the findings present in the scan just performed.
+//
+// This replaces rather than accumulates, and that is the whole point. An
+// append-only set made the hook lie twice over: the pending ack counted
+// history instead of the live scan, so it kept naming findings the agent had
+// already fixed, and a finding that was fixed and later reintroduced was
+// deduped against a stale memory and never re-reported. Forgetting what is no
+// longer there is what lets the count shrink and a regression fire again.
+//
+// Callers must pass the complete current finding set, not just the fresh ones.
 export function rememberFindings(cache, sessionId, filePath, findings) {
   const fileEntry = ensureFile(cache, sessionId, filePath);
-  const known = new Set(fileEntry.findings || []);
-  for (const f of findings) known.add(findingCacheKey(f));
-  fileEntry.findings = Array.from(known);
+  const keys = new Set((findings || []).map(f => findingCacheKey(f)));
+  fileEntry.findings = Array.from(keys);
   ensureSession(cache, sessionId).updatedAt = Date.now();
 }
 
@@ -770,7 +981,7 @@ export function renderTemplate(findings, filePath, config, opts = {}) {
   const header = `${ENVELOPE_PREFIX} Design hook findings requiring review in ${display} (${total} issue(s)):`;
   const lines = shown.map((f) => formatFindingLine(f));
   const more = remaining > 0
-    ? `... and ${remaining} more (see /impeccable audit).`
+    ? `... and ${remaining} more (see ${IMPECCABLE_COMMAND} audit).`
     : null;
   const footer = directiveFooter(display);
 
@@ -814,7 +1025,7 @@ function renderGroupedTemplate(groups, config, opts = {}) {
     shownCount += shown.length;
     const hidden = group.findings.length - shown.length;
     if (hidden > 0) {
-      lines.push(`- ... ${hidden} more in ${display} (see /impeccable audit).`);
+      lines.push(`- ... ${hidden} more in ${display} (see ${IMPECCABLE_COMMAND} audit).`);
     }
   }
 
@@ -830,7 +1041,7 @@ function clampGroupedToBudget(header, lines, footer, maxChars) {
   const assemble = (linesArr, omitted) => [
     header,
     ...linesArr,
-    ...(omitted ? ['... and more (see /impeccable audit).'] : []),
+    ...(omitted ? [`... and more (see ${IMPECCABLE_COMMAND} audit).`] : []),
     '',
     footer,
   ].join('\n');
@@ -863,7 +1074,7 @@ function clampToBudget(header, lines, more, footer, maxChars) {
   let assembled = assemble(working, moreText);
   while (assembled.length > maxChars && working.length > 1) {
     working.pop();
-    moreText = '... and more (see /impeccable audit).';
+    moreText = `... and more (see ${IMPECCABLE_COMMAND} audit).`;
     assembled = assemble(working, moreText);
   }
   if (assembled.length > maxChars) {
@@ -895,7 +1106,7 @@ function formatFindingIgnoreCommand(finding) {
   const value = extractFindingIgnoreValueRaw(finding);
   const valueArg = quoteCommandArg(value);
   const reason = quoteCommandArg(`User confirmed ${value} is intentional`);
-  return `/impeccable hooks ignore-value ${rule} ${valueArg} --shared --reason ${reason}`;
+  return `${IMPECCABLE_COMMAND} hooks ignore-value ${rule} ${valueArg} --shared --reason ${reason}`;
 }
 
 function quoteCommandArg(value) {
@@ -1124,6 +1335,51 @@ function isInsideProject(filePath, projectCwd) {
   }
 }
 
+// Resolve a path to its canonical (symlink-free) form. When the path does
+// not exist yet — the before-edit hook gates proposed Writes — canonicalize
+// the nearest existing ancestor and re-append the remainder, so a new file
+// under a symlinked root still compares equal to its canonical project.
+// Memoized: the hook runs as a fresh process per tool event, so the cache
+// amounts to once-per-event work — the scan loops re-check the same project
+// root for every target file. The cap only matters to long-lived importers
+// like the test runner.
+const canonicalPathCache = new Map();
+const CANONICAL_PATH_CACHE_MAX = 1024;
+
+function canonicalPath(p) {
+  const resolved = path.resolve(p);
+  if (canonicalPathCache.has(resolved)) return canonicalPathCache.get(resolved);
+  let canonical = resolved;
+  let dir = resolved;
+  const tail = [];
+  while (true) {
+    try {
+      canonical = tail.length ? path.join(fs.realpathSync(dir), ...tail) : fs.realpathSync(dir);
+      break;
+    } catch { /* keep climbing */ }
+    const parent = path.dirname(dir);
+    if (parent === dir) break;
+    tail.unshift(path.basename(dir));
+    dir = parent;
+  }
+  if (canonicalPathCache.size >= CANONICAL_PATH_CACHE_MAX) canonicalPathCache.clear();
+  canonicalPathCache.set(resolved, canonical);
+  return canonical;
+}
+
+// Containment gate shared by the before-edit hook and both scan passes. A
+// session routinely touches files that belong to no project or to a
+// different one — harness scratchpad dirs under the system temp root,
+// sibling checkouts, one-off throwaway HTML — and findings against those are
+// judged with THIS project's config and DESIGN.md palette, which is never
+// right. Skip them (audit reason: outside-project). Paths are canonicalized
+// first so a symlinked root (macOS /tmp -> /private/tmp) doesn't split the
+// comparison.
+export function isScanTargetInsideProject(filePath, projectCwd) {
+  if (!filePath || !projectCwd) return false;
+  return isInsideProject(canonicalPath(filePath), canonicalPath(projectCwd));
+}
+
 export function parseStaticStyleImports(content, fromFile, projectCwd) {
   if (!content || typeof content !== 'string') return [];
   const dir = path.dirname(fromFile);
@@ -1319,8 +1575,12 @@ export function renderPendingAck(filePath, knownFindings, opts = {}) {
   return `${ENVELOPE_PREFIX} Design hook scanned ${display}. Still has ${count} finding(s) flagged earlier this session (${sample}${more}). Handle them before finalizing — the previous reminder still applies.`;
 }
 
-export function shouldEmitAckForFile(filePath) {
-  return ACK_EXTS.has(path.extname(String(filePath || '')).toLowerCase());
+export function shouldEmitAckForFile(filePath, config = null) {
+  if (ACK_EXTS.has(path.extname(String(filePath || '')).toLowerCase())) return true;
+  // Configured html-engine extensions are declared UI markup, so they get the
+  // clean/pending acks; text-engine ones stay quiet like plain .ts/.js.
+  const configured = matchConfiguredExtension(filePath, config?.extensions);
+  return Boolean(configured && configured.engine === 'html');
 }
 
 export function designSystemOptions(config, detector, projectCwd) {
@@ -1336,7 +1596,7 @@ export function designSystemOptions(config, detector, projectCwd) {
 
 export function appendDesignSystemNote(text, scanOptions) {
   if (!text || !scanOptions?.designSystem?.mdNewerThanJson) return text;
-  return `${text}\n\n${ENVELOPE_PREFIX} DESIGN.md is newer than .impeccable/design.json. Run /impeccable document to refresh the design-system sidecar.`;
+  return `${text}\n\n${ENVELOPE_PREFIX} DESIGN.md is newer than .impeccable/design.json. Run ${IMPECCABLE_COMMAND} document to refresh the design-system sidecar.`;
 }
 
 // The directive footer is the part of the hook output that steers model
@@ -1353,16 +1613,17 @@ export function appendDesignSystemNote(text, scanOptions) {
 //      raw envelope. Asking the model to surface the resolution in its
 //      reply is the cheapest way to make the feedback loop visible.
 function directiveFooter(display, opts = {}) {
-  const ignoreFileCommand = `/impeccable hooks ignore-file ${quoteCommandArg(display)}`;
-  const fileIgnoreGuidance = opts.grouped
-    ? 'run `/impeccable hooks ignore-file <path>` for the specific file'
-    : `run \`${ignoreFileCommand}\``;
+  // Offer the rule-scoped-to-file form first. `ignore-file` silences every rule
+  // for the path forever, which is far more than one noisy rule on a real UI
+  // surface justifies, and it was previously the only option named here.
+  const target = opts.grouped ? '<path>' : quoteCommandArg(display);
+  const fileIgnoreGuidance = `run \`${IMPECCABLE_COMMAND} hooks ignore-value <id> "*" --file ${target}\` to scope just that rule to the file, or \`${IMPECCABLE_COMMAND} hooks ignore-file ${target}\` only when the whole file is out of scope for design review (a fixture, a generated artifact, a deliberate demo)`;
   return [
     'Handle these before finalizing: fix findings that are real design problems, or explicitly classify contextually intentional findings as false positives. Acknowledge what you changed or why you are leaving a finding unchanged.',
     '',
     'Use context judgment before editing. A finding is not automatically a defect; literal or domain-appropriate motion, intentional demos or fixtures, documentation of bad design, and user-confirmed choices can be valid as-is.',
     '',
-    `Do not change intentional design just to satisfy the hook, and do not silence a real finding with an inline ignore comment to skip fixing it. Suppress a finding only after the user explicitly confirms it is intentional. Prefer a config ignore (one reviewable place, the commands below); reach for an inline \`impeccable-disable <rule>\` comment only when the waiver must travel with a file that leaves the repo, such as an exported or standalone document. Prefer the narrowest persisted exception: run the exact \`/impeccable hooks ignore-value ... --shared\` command shown next to a value-specific finding. For \`overused-font\`, use \`ignore-value\` for a specific font and use \`/impeccable hooks ignore-rule overused-font --all-values\` only when the user asks to ignore overused fonts generally. For file-specific findings without an ignore-value command, ${fileIgnoreGuidance}; use \`/impeccable hooks ignore-rule <id>\` only when the user asks to suppress the whole non-value-specific rule. Run /impeccable audit for the full pass.`,
+    `Do not change intentional design just to satisfy the hook, and do not silence a real finding with an inline ignore comment to skip fixing it. Suppress a finding only after the user explicitly confirms it is intentional. Prefer a config ignore (one reviewable place, the commands below); reach for an inline \`impeccable-disable <rule>\` comment only when the waiver must travel with a file that leaves the repo, such as an exported or standalone document. Prefer the narrowest persisted exception: run the exact \`${IMPECCABLE_COMMAND} hooks ignore-value ... --shared\` command shown next to a value-specific finding. For \`overused-font\`, use \`ignore-value\` for a specific font and use \`${IMPECCABLE_COMMAND} hooks ignore-rule overused-font --all-values\` only when the user asks to ignore overused fonts generally. For a finding whose line shows no exact ignore-value command, such as \`side-tab\`, ${fileIgnoreGuidance}; use \`${IMPECCABLE_COMMAND} hooks ignore-rule <id>\` only when the user asks to suppress the whole non-value-specific rule. Run ${IMPECCABLE_COMMAND} audit for the full pass.`,
   ].join('\n');
 }
 
@@ -1402,9 +1663,10 @@ export async function runHook({ stdinJson, env = {}, cwd = process.cwd(), now = 
     event = normalizeHookEvent(event, cwd, harness);
     audit.harness = harness;
 
-    const projectCwd = event.cwd || cwd;
+    const sessionCwd = event.cwd || cwd;
+    const primaryFiles = normalizeScanTargets(resolveTargetFiles(event, sessionCwd), sessionCwd);
+    const projectCwd = resolveCacheCwd(primaryFiles[0], sessionCwd);
     audit.cwd = projectCwd;
-    const primaryFiles = normalizeScanTargets(resolveTargetFiles(event, projectCwd), projectCwd);
     const primaryFileSet = new Set(primaryFiles);
     const targetFiles = expandScanTargets(primaryFiles, projectCwd);
     audit.session = event.session_id || null;
@@ -1419,22 +1681,33 @@ export async function runHook({ stdinJson, env = {}, cwd = process.cwd(), now = 
       return result({ skipped: 'config-disabled', durationMs: Date.now() - started });
     }
 
+    const platform = resolveProjectPlatform(projectCwd);
+    if (isNativePlatform(platform)) {
+      return result({ skipped: 'native-platform', platform, durationMs: Date.now() - started });
+    }
+
     const cache = readCache(projectCwd);
     const sessionId = event.session_id || 'unknown';
     const det = detector || await loadDetector();
     if (!det || typeof det.detectText !== 'function') {
-      persistCache(projectCwd, cache);
+      // Cache is not mutated yet at this point; nothing to persist.
       return result({ skipped: 'detector-missing', durationMs: Date.now() - started });
     }
     const scanOptions = designSystemOptions(config, det, projectCwd);
+    const tiered = perEditTieringActive(config, harness);
 
     let pendingWinner = null;
     let cleanWinner = null;
     const freshGroups = [];
     let suppressionWinner = null;
+    let cleanAckDeduped = false;
+    let skippedBytes = 0;
+    const quietMode = truthy(env.IMPECCABLE_HOOK_QUIET) || config.quiet === true;
     let detectorThrewAny = false;
     let lastSkip = 'no-scannable-file';
     let suppressedHit = false;
+    let cacheDirty = false;
+    let deferredTotal = 0;
 
     for (const filePath of targetFiles) {
       audit.file = filePath;
@@ -1449,8 +1722,9 @@ export async function runHook({ stdinJson, env = {}, cwd = process.cwd(), now = 
       }
 
       const ext = path.extname(filePath).toLowerCase();
-      audit.ext = ext;
-      if (!ALLOWED_EXTS.has(ext)) {
+      const configuredExt = matchConfiguredExtension(filePath, config.extensions);
+      audit.ext = configuredExt ? configuredExt.ext : ext;
+      if (!ALLOWED_EXTS.has(ext) && !configuredExt) {
         lastSkip = 'extension';
         continue;
       }
@@ -1464,9 +1738,25 @@ export async function runHook({ stdinJson, env = {}, cwd = process.cwd(), now = 
         lastSkip = 'file-missing';
         continue;
       }
+      if (!isScanTargetInsideProject(filePath, projectCwd)) {
+        lastSkip = 'outside-project';
+        continue;
+      }
+
+      const maxFileBytes = config.limits?.maxFileBytes ?? DEFAULT_CONFIG.limits.maxFileBytes;
+      if (maxFileBytes > 0) {
+        let size = 0;
+        try { size = fs.statSync(filePath).size; } catch { size = 0; }
+        if (size > maxFileBytes) {
+          skippedBytes = size;
+          lastSkip = 'too-large';
+          continue;
+        }
+      }
 
       if (primaryFileSet.has(filePath)) {
         const editCount = bumpEditCount(cache, sessionId, filePath);
+        cacheDirty = true;
         audit.editCount = editCount;
 
         if (editCount > EDIT_COUNT_THRESHOLD) {
@@ -1483,37 +1773,88 @@ export async function runHook({ stdinJson, env = {}, cwd = process.cwd(), now = 
       const content = fs.readFileSync(filePath, 'utf-8');
       let findings;
       let detectorThrew = false;
-      if ((ext === '.html' || ext === '.htm') && typeof det.detectHtml === 'function') {
+      const useHtmlEngine = configuredExt
+        ? configuredExt.engine === 'html'
+        : (ext === '.html' || ext === '.htm');
+      if (useHtmlEngine && typeof det.detectHtml === 'function') {
         try { findings = await det.detectHtml(filePath, scanOptions); } catch { findings = []; detectorThrew = true; }
       } else {
         try { findings = await det.detectText(content, filePath, scanOptions); } catch { findings = []; detectorThrew = true; }
       }
 
       const filtered = filterFindings(findings || [], content, ext, config);
-      const fresh = dedupeAgainstCache(filtered, cache, sessionId, filePath);
+      // Per-edit only surfaces the immediate tier; the rest waits for the
+      // Stop deep pass. The file is still marked touched so the deep pass
+      // knows to re-scan it.
+      const { immediate, deferred } = tiered
+        ? splitFindingsByTier(filtered)
+        : { immediate: filtered, deferred: [] };
+      if (deferred.length > 0) {
+        touchFile(cache, sessionId, filePath);
+        cacheDirty = true;
+        deferredTotal += deferred.length;
+      }
+      const fresh = dedupeAgainstCache(immediate, cache, sessionId, filePath);
       audit.findings = (findings || []).length;
       audit.freshFindings = fresh.length;
+      if (deferredTotal > 0) audit.deferred = deferredTotal;
 
-      if (fresh.length > 0) {
-        rememberFindings(cache, sessionId, filePath, fresh);
-        freshGroups.push({ filePath, findings: fresh });
-        continue;
-      }
-
+      // A detector failure tells us nothing about the file, so leave whatever
+      // was remembered alone rather than recording an empty scan as truth.
       if (detectorThrew) {
         detectorThrewAny = true;
         continue;
       }
 
-      if (filtered.length > 0 && !pendingWinner) {
-        const known = (ensureFile(cache, sessionId, filePath).findings || []).slice();
-        pendingWinner = { filePath, known };
-      } else if (filtered.length === 0 && !cleanWinner) {
-        cleanWinner = { filePath };
+      // Sync the cache to this scan before deciding what to emit, so fixed
+      // findings stop being remembered and a reintroduced one reads as fresh.
+      // Only the immediate tier is remembered: a deferred finding the per-edit
+      // pass never reported must still read as fresh to the Stop deep pass.
+      rememberFindings(cache, sessionId, filePath, immediate);
+      cacheDirty = true;
+
+      if (fresh.length > 0) {
+        freshGroups.push({ filePath, findings: fresh });
+        continue;
+      }
+
+      if (immediate.length > 0 && !pendingWinner) {
+        // Count the live scan, not the session's history.
+        pendingWinner = { filePath, known: immediate.map(f => findingCacheKey(f)) };
+      } else if (immediate.length === 0 && !cleanWinner) {
+        // The clean ack carries no finding, only the standing steer that a
+        // silent hook is not a verdict on the design. Repeating it on every
+        // clean edit spends context to say nothing, so it fires once per file
+        // per session. The pending ack, which names real unresolved work, is
+        // deliberately left to repeat.
+        //
+        // Quiet mode emits nothing, so it must not consume the ack and leave a
+        // later non-quiet run in this session silent.
+        if (quietMode || !shouldEmitAckForFile(filePath, config)) {
+          cleanWinner = { filePath };
+        } else if (ensureFile(cache, sessionId, filePath).cleanAcked) {
+          // Spent for this file. Remember it for the audit trail, but keep
+          // scanning: another target in this same event may still be owed an
+          // ack, and dropping out here would lose it.
+          cleanAckDeduped = true;
+        } else {
+          ensureFile(cache, sessionId, filePath).cleanAcked = true;
+          cleanWinner = { filePath };
+          cleanAckDeduped = false;
+        }
       }
     }
 
-    persistCache(projectCwd, cache);
+    // Persist only when the write is earned: fresh findings justify creating
+    // `.impeccable/` (dedup and suppression need it), deferred findings do
+    // too (the Stop deep pass needs the touched-file list to surface them),
+    // and an already-present `.impeccable/` dir marks a project that opted
+    // in. A non-UI edit, or a clean UI edit in a project with no Impeccable
+    // footprint, must be a no-op on disk (issues #344, #305).
+    if (freshGroups.length > 0 || deferredTotal > 0
+      || (cacheDirty && fs.existsSync(path.join(projectCwd, '.impeccable')))) {
+      persistCache(projectCwd, cache);
+    }
 
     if (freshGroups.length > 0) {
       const firstGroup = freshGroups[0];
@@ -1544,11 +1885,11 @@ export async function runHook({ stdinJson, env = {}, cwd = process.cwd(), now = 
       return result({ emitted: false, error: 'detector-threw', durationMs: Date.now() - started });
     }
 
-    if (truthy(env.IMPECCABLE_HOOK_QUIET) || config.quiet === true) {
+    if (quietMode) {
       return result({ emitted: false, quiet: true, durationMs: Date.now() - started });
     }
 
-    if (pendingWinner && shouldEmitAckForFile(pendingWinner.filePath)) {
+    if (pendingWinner && shouldEmitAckForFile(pendingWinner.filePath, config)) {
       const text = appendDesignSystemNote(renderPendingAck(pendingWinner.filePath, pendingWinner.known, { cwd: projectCwd }), scanOptions);
       return {
         exitCode: 0,
@@ -1582,7 +1923,7 @@ export async function runHook({ stdinJson, env = {}, cwd = process.cwd(), now = 
       };
     }
 
-    if (cleanWinner && shouldEmitAckForFile(cleanWinner.filePath)) {
+    if (cleanWinner && !cleanAckDeduped && shouldEmitAckForFile(cleanWinner.filePath, config)) {
       const text = appendDesignSystemNote(renderCleanAck(cleanWinner.filePath, { cwd: projectCwd }), scanOptions);
       return {
         exitCode: 0,
@@ -1599,15 +1940,195 @@ export async function runHook({ stdinJson, env = {}, cwd = process.cwd(), now = 
       };
     }
 
-    if (pendingWinner || cleanWinner) {
+    if (pendingWinner) {
       return result({ emitted: false, skipped: 'non-ui-ack', durationMs: Date.now() - started });
+    }
+
+    // Distinct from non-ui-ack so the audit log shows noise being suppressed on
+    // purpose rather than a file the hook could not classify.
+    if (cleanWinner) {
+      return result({ emitted: false, skipped: 'non-ui-ack', durationMs: Date.now() - started });
+    }
+
+    if (cleanAckDeduped) {
+      return result({ emitted: false, skipped: 'clean-ack-deduped', durationMs: Date.now() - started });
     }
 
     if (suppressedHit) {
       return result({ suppressed: true, emitted: false, durationMs: Date.now() - started });
     }
 
-    return result({ skipped: lastSkip, durationMs: Date.now() - started });
+    return result({
+      skipped: lastSkip,
+      ...(lastSkip === 'too-large' ? { bytes: skippedBytes } : {}),
+      durationMs: Date.now() - started,
+    });
+  } catch (err) {
+    return {
+      exitCode: 0,
+      stdout: '',
+      audit: { ...audit, error: String(err && err.message ? err.message : err) },
+    };
+  }
+}
+
+// Cap on files the Stop deep pass will scan. The touched-file list is
+// session-scoped and already capped per edit, but a very long session could
+// accumulate more than the 30s hook timeout comfortably covers.
+export const STOP_MAX_FILES = 20;
+
+/**
+ * Run the Stop-event deep pass: the FULL detector rule set over every UI
+ * file touched this session, surfaced once, deduped against everything the
+ * per-edit hook already reported. Same result contract as runHook():
+ *   { exitCode, stdout, audit, emission? }
+ *
+ * Never throws; exits silent (and fast) when the session touched no UI
+ * files. Output uses the Stop hookSpecificOutput channel: additionalContext
+ * is delivered to the model and the conversation continues so it can act.
+ */
+export async function runStopHook({ stdinJson, env = {}, cwd = process.cwd(), now = Date.now, detector } = {}) {
+  const audit = { ts: new Date(now()).toISOString(), event: 'Stop' };
+  const result = (extra) => ({ exitCode: 0, stdout: '', audit: { ...audit, ...extra } });
+
+  try {
+    // Re-entrancy guard, same as the per-edit pass.
+    if (depthIsSet(env.IMPECCABLE_HOOK_DEPTH) || depthIsSet(env.CLAUDE_HOOK_DEPTH)) {
+      return result({ reentrant: true, durationMs: 0 });
+    }
+    if (truthy(env.IMPECCABLE_HOOK_DISABLED)) {
+      return result({ skipped: 'env-disabled', durationMs: 0 });
+    }
+
+    const started = Date.now();
+
+    let event;
+    try {
+      event = typeof stdinJson === 'string' ? JSON.parse(stdinJson) : stdinJson;
+    } catch {
+      return result({ skipped: 'stdin-malformed', durationMs: Date.now() - started });
+    }
+    if (!event || typeof event !== 'object') {
+      return result({ skipped: 'stdin-empty', durationMs: Date.now() - started });
+    }
+
+    // Claude Code's Stop-hook contract: `stop_hook_active` is true when this
+    // hook is being re-invoked only because a prior invocation kept the turn
+    // alive (here, via hookSpecificOutput.additionalContext). Re-scanning and
+    // re-blocking now would loop until Claude Code's consecutive-block cap
+    // force-ends the turn (issue #400). The prior fire already surfaced the
+    // findings; whether to act on them is the agent's call. Exit fast with no
+    // output before any scan. Only Claude Code sends this field; other
+    // harnesses omit it, so the strict `=== true` is a no-op for them. This
+    // guard makes the loop impossible regardless of the finding cache key's
+    // line-number sensitivity (out of scope here; see findingCacheKey).
+    if (event.stop_hook_active === true) {
+      return result({ skipped: 'stop-hook-active', durationMs: Date.now() - started });
+    }
+
+    const harness = resolveHarness(env, event);
+    audit.harness = harness;
+
+    // A Stop event carries no file, so the session cwd is the project.
+    // Umbrella-dir launches keyed their per-edit cache to the edited file's
+    // project root (resolveCacheCwd); those sessions no-op here rather than
+    // guessing which child project the session was about.
+    const projectCwd = path.resolve(event.cwd || cwd);
+    audit.cwd = projectCwd;
+    const sessionId = event.session_id || 'unknown';
+    audit.session = sessionId;
+
+    const config = readConfig(projectCwd);
+    if (config.enabled === false) {
+      return result({ skipped: 'config-disabled', durationMs: Date.now() - started });
+    }
+
+    const cache = readCache(projectCwd);
+    const touched = Object.keys(cache.sessions?.[sessionId]?.files || {});
+    if (touched.length === 0) {
+      return result({ skipped: 'no-touched-files', durationMs: Date.now() - started });
+    }
+
+    const platform = resolveProjectPlatform(projectCwd);
+    if (isNativePlatform(platform)) {
+      return result({ skipped: 'native-platform', platform, durationMs: Date.now() - started });
+    }
+
+    const det = detector || await loadDetector();
+    if (!det || typeof det.detectText !== 'function') {
+      return result({ skipped: 'detector-missing', durationMs: Date.now() - started });
+    }
+    const scanOptions = designSystemOptions(config, det, projectCwd);
+
+    const freshGroups = [];
+    let scanned = 0;
+    for (const filePath of touched) {
+      if (scanned >= STOP_MAX_FILES) break;
+      if (hasPathTraversal(filePath) || SENSITIVE_PATH.test(filePath)) continue;
+      if (GENERATED_PATH.test(filePath)) continue;
+      const ext = path.extname(filePath).toLowerCase();
+      const configuredExt = matchConfiguredExtension(filePath, config.extensions);
+      if (!ALLOWED_EXTS.has(ext) && !configuredExt) continue;
+      const relForMatch = relativize(filePath, projectCwd);
+      if (matchesAnyGlob(relForMatch, config.ignoreFiles) || matchesAnyGlob(filePath, config.ignoreFiles)) continue;
+      if (!fs.existsSync(filePath)) continue;
+      // Caches written before this gate existed can still hold out-of-project
+      // paths, so the Stop pass re-checks containment rather than trusting
+      // the per-edit pass to have filtered them.
+      if (!isScanTargetInsideProject(filePath, projectCwd)) continue;
+
+      scanned += 1;
+      let content = '';
+      try { content = fs.readFileSync(filePath, 'utf-8'); } catch { continue; }
+
+      let findings;
+      const useHtmlEngine = configuredExt
+        ? configuredExt.engine === 'html'
+        : (ext === '.html' || ext === '.htm');
+
+      if (useHtmlEngine && typeof det.detectHtml === 'function') {
+        try { findings = await det.detectHtml(filePath, scanOptions); } catch { findings = []; }
+      } else {
+        try { findings = await det.detectText(content, filePath, scanOptions); } catch { findings = []; }
+      }
+
+      // Full rule set: no tier split here. Config/inline ignores still apply,
+      // and the session dedupe drops everything the per-edit pass (or an
+      // earlier Stop pass) already surfaced.
+      const filtered = filterFindings(findings || [], content, ext, config);
+      const fresh = dedupeAgainstCache(filtered, cache, sessionId, filePath);
+      if (fresh.length > 0) {
+        rememberFindings(cache, sessionId, filePath, fresh);
+        freshGroups.push({ filePath, findings: fresh });
+      }
+    }
+    audit.scannedFiles = scanned;
+
+    if (freshGroups.length === 0) {
+      return result({ emitted: false, skipped: 'stop-clean', durationMs: Date.now() - started });
+    }
+
+    // Fresh findings earn the cache write so the next Stop fire is silent
+    // unless new issues appear.
+    persistCache(projectCwd, cache);
+
+    const text = appendDesignSystemNote(renderGroupedTemplate(freshGroups, config, { cwd: projectCwd }), scanOptions);
+    return {
+      exitCode: 0,
+      stdout: payload(text, 'Stop', harness),
+      emission: {
+        kind: 'stop-deep-pass',
+        groups: freshGroups,
+      },
+      audit: {
+        ...audit,
+        emitted: true,
+        freshFiles: freshGroups.length,
+        freshFindings: freshGroups.reduce((sum, group) => sum + group.findings.length, 0),
+        chars: text.length,
+        durationMs: Date.now() - started,
+      },
+    };
   } catch (err) {
     return {
       exitCode: 0,

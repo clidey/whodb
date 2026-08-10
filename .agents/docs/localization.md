@@ -351,6 +351,8 @@ Translates missing/stale keys using Google Translate (via `google-translate-api-
 
 - Reads `drift.json` produced by `detect.py`
 - Protects `{placeholder}` tokens during translation
+- Protects brand/technical terms (`GLOSSARY_TERMS`, e.g. `Redis`, `AlloyDB`, `PostgreSQL`) from mistranslation
+- Copies literal command values (`NO_TRANSLATE_KEYS`, e.g. `ollamaRunCommand`) verbatim into every locale instead of translating them
 - Handles `en_GB` via US→UK spelling substitutions
 - Groups duplicate Google Translate codes to avoid redundant API calls
 - Removes orphaned keys automatically

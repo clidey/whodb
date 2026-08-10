@@ -530,7 +530,11 @@ if (IS_BROWSER) {
   function generateSelector(el) {
     if (el === document.body) return 'body';
     if (el === document.documentElement) return 'html';
-    if (el.id) return '#' + CSS.escape(el.id);
+    // Read via getAttribute when `el.id` is not a string — a <form> with a
+    // named control (e.g. <input name="id">) shadows the builtin getter and
+    // returns the element, producing a garbage `#[object …]` selector (#407).
+    const elId = typeof el.id === 'string' ? el.id : (el.getAttribute('id') || '');
+    if (elId) return '#' + CSS.escape(elId);
 
     const parts = [];
     let current = el;
@@ -1222,7 +1226,11 @@ if (IS_BROWSER) {
         return {
           type: f.type || f.id,
           category: ap ? ap.category : 'quality',
-          severity: ap?.severity || 'warning',
+          severity: f.severity || ap?.severity || 'warning',
+          // Advisory findings (em-dash overuse, etc.) are surfaced but never
+          // treated as failures; carry the flag so the overlay/extension can
+          // render them with the mildest affordance and consumers can filter.
+          advisory: (ap && ap.advisory === true) || f.advisory === true,
           detail: f.detail || f.snippet,
           ignoreValue: f.ignoreValue || f.value || '',
           name: ap ? ap.name : (f.type || f.id),
@@ -1458,16 +1466,16 @@ if (IS_BROWSER) {
     const _ruleOk = (id) => !_disabled.length || !_disabled.includes(id);
     const designSystem = browserDesignSystemConfig();
     const designSeen = { fonts: new Set(), colors: new Set(), radii: new Set() };
-    // Note: provider-gated rules (--gpt / --gemini) are NOT filtered here. In a
-    // real browser env (detector page, live overlay, extension) running every
-    // check is free, so we always surface them; the gating is purely a CLI
-    // output concern, applied in the Node engines' detect* return paths.
+    // All deterministic rules run in the browser and extension path.
 
     for (const el of document.querySelectorAll('*')) {
       // Skip impeccable's own elements and any descendants (overlays, labels, banner, nav buttons)
       if (el.closest('.impeccable-overlay, .impeccable-label, .impeccable-banner, .impeccable-tooltip')) continue;
-      // Skip browser extension elements (Claude, etc.)
-      const elId = el.id || '';
+      // Skip browser extension elements (Claude, etc.). Use getAttribute when
+      // `el.id` is not a string: a <form> with a named control like
+      // <input name="id"> shadows the builtin `id` getter and returns the
+      // element, whose `.startsWith` throws (issue #407).
+      const elId = typeof el.id === 'string' ? el.id : (el.getAttribute('id') || '');
       if (elId.startsWith('claude-') || elId.startsWith('cic-')) continue;
       // Skip the impeccable live-mode overlay (highlight, tooltip, bar, picker, toast).
       // These are inspector chrome, not part of the user's design.
@@ -1477,10 +1485,12 @@ if (IS_BROWSER) {
 
       const findings = [
         ...checkElementBordersDOM(el).map(f => ({ type: f.id, detail: f.snippet })),
+        ...checkElementPseudoStripeDOM(el).map(f => ({ type: f.id, detail: f.snippet })),
         ...checkElementColorsDOM(el).map(f => ({ type: f.id, detail: f.snippet })),
         ...checkElementMotionDOM(el).map(f => ({ type: f.id, detail: f.snippet })),
         ...checkElementGlowDOM(el).map(f => ({ type: f.id, detail: f.snippet })),
         ...checkElementAIPaletteDOM(el).map(f => ({ type: f.id, detail: f.snippet })),
+        ...checkElementRadialSpotlightDOM(el).map(f => ({ type: f.id, detail: f.snippet })),
         ...checkElementIconTileDOM(el).map(f => ({ type: f.id, detail: f.snippet })),
         ...checkElementItalicSerifDOM(el).map(f => ({ type: f.id, detail: f.snippet })),
         ...checkElementQualityDOM(el).map(f => ({ type: f.id, detail: f.snippet })),
@@ -1488,6 +1498,7 @@ if (IS_BROWSER) {
         ...checkElementClippedOverflowDOM(el).map(f => ({ type: f.id, detail: f.snippet })),
         ...checkElementGptBorderShadowDOM(el).map(f => ({ type: f.id, detail: f.snippet })),
         ...checkElementTextOverflowDOM(el).map(f => ({ type: f.id, detail: f.snippet })),
+        ...checkElementBlinkingCursorDOM(el).map(f => ({ type: f.id, detail: f.snippet, ...(f.severity ? { severity: f.severity } : {}) })),
         ...checkElementDesignSystemDOM(el, designSystem, designSeen),
       ].filter(f => _ruleOk(f.type));
 
@@ -1518,7 +1529,7 @@ if (IS_BROWSER) {
       addBrowserFindings(groupMap, document.body, typoFindings);
     }
 
-    const sectionKickerFindings = checkRepeatedSectionKickersDOM()
+    const sectionKickerFindings = checkKickerAboveHeadingDOM()
       .map(f => ({ type: f.id, detail: f.snippet }))
       .filter(f => _ruleOk(f.type));
     if (sectionKickerFindings.length > 0) {
@@ -1526,10 +1537,64 @@ if (IS_BROWSER) {
       addBrowserFindings(groupMap, document.body, sectionKickerFindings);
     }
 
+    const numberedLabelFindings = checkNumberedSectionLabelsDOM()
+      .map(f => ({ type: f.id, detail: f.snippet }))
+      .filter(f => _ruleOk(f.type));
+    if (numberedLabelFindings.length > 0) {
+      pageLevelFindings.push(...numberedLabelFindings);
+      addBrowserFindings(groupMap, document.body, numberedLabelFindings);
+    }
+
+    const repeatedTextFindings = checkRepeatedContainerTextDOM()
+      .map(f => ({ type: f.id, detail: f.snippet }))
+      .filter(f => _ruleOk(f.type));
+    if (repeatedTextFindings.length > 0) {
+      pageLevelFindings.push(...repeatedTextFindings);
+      addBrowserFindings(groupMap, document.body, repeatedTextFindings);
+    }
+
+    // Em-dash overuse (advisory): browser parity with the static/regex path.
+    // Reads rendered body text so it catches dashes written as HTML entities.
+    // serializeFindings stamps the advisory flag from the registry.
+    const emDashFindings = checkEmDashOveruseDOM()
+      .map(f => ({ type: f.id, detail: f.snippet }))
+      .filter(f => _ruleOk(f.type));
+    if (emDashFindings.length > 0) {
+      pageLevelFindings.push(...emDashFindings);
+      addBrowserFindings(groupMap, document.body, emDashFindings);
+    }
+
     const layoutFindings = checkLayout().filter(f => _ruleOk(f.type));
     for (const f of layoutFindings) {
       const el = f.el || document.body;
       addBrowserFindings(groupMap, el, [{ type: f.type, detail: f.detail || f.snippet }]);
+    }
+
+    // Heading rhythm (browser-only: needs real layout for the gap math)
+    const headingRhythmFindings = checkHeadingRhythmDOM().filter(f => _ruleOk(f.type));
+    for (const f of headingRhythmFindings) {
+      addBrowserFindings(groupMap, f.el || document.body, [{ type: f.type, detail: f.detail }]);
+    }
+
+    // Edge-flush cards in horizontal scrollers (browser-only: needs real
+    // layout for the scroller clip box vs card rect math)
+    const edgeFlushFindings = checkEdgeFlushCardsDOM().filter(f => _ruleOk(f.type));
+    for (const f of edgeFlushFindings) {
+      addBrowserFindings(groupMap, f.el || document.body, [{ type: f.type, detail: f.detail }]);
+    }
+
+    // Text occlusion / element overlap (browser-only: needs real layout +
+    // elementFromPoint to confirm what actually paints on top)
+    const occlusionFindings = checkTextOcclusionDOM().filter(f => _ruleOk(f.type));
+    for (const f of occlusionFindings) {
+      addBrowserFindings(groupMap, f.el || document.body, [{ type: f.type, detail: f.detail }]);
+    }
+
+    // First-viewport column overflow — the stretched-hero signature
+    // (browser-only: needs real layout for the content-extent math)
+    const colOverflowFindings = checkFirstViewportColumnOverflowDOM().filter(f => _ruleOk(f.type));
+    for (const f of colOverflowFindings) {
+      addBrowserFindings(groupMap, f.el || document.body, [{ type: f.type, detail: f.detail }]);
     }
 
     // Page-level quality checks (headings, etc.)
@@ -1557,7 +1622,25 @@ if (IS_BROWSER) {
     }
     const htmlPatternFindings = checkHtmlPatterns(docClone.outerHTML);
     if (htmlPatternFindings.length > 0) {
-      const mapped = htmlPatternFindings.map(f => ({ type: f.id, detail: f.snippet })).filter(f => _ruleOk(f.type));
+      const mapped = htmlPatternFindings.map(f => {
+        const item = { type: f.id, detail: f.snippet };
+        if (f.severity) {
+          item.severity = f.severity;
+        } else if (f.id === 'pulsing-dot' && f.selector) {
+          // The string scan promotes header/nav dots on its own; with a live
+          // layout also promote dots resting in the first ~900px of the page
+          // (the hero region), which the source scan cannot measure.
+          try {
+            const dotEl = document.querySelector(f.selector);
+            if (dotEl) {
+              const rect = dotEl.getBoundingClientRect();
+              const pageTop = rect.top + (window.scrollY || 0);
+              if (pageTop <= 900) item.severity = 'error';
+            }
+          } catch { /* unresolvable selector: keep registry severity */ }
+        }
+        return item;
+      }).filter(f => _ruleOk(f.type));
       pageLevelFindings.push(...mapped);
       addBrowserFindings(groupMap, document.body, mapped);
     }
@@ -1931,6 +2014,9 @@ if (IS_BROWSER) {
   window.impeccableDetectAsync = detectAsync;
   window.impeccableScan = scan;
   window.impeccableScanAsync = scanAsync;
+  // Raw measurement for the URL engine's content-hidden-at-rest pass: it
+  // drives a reveal sweep from Node and thresholds the result itself.
+  window.impeccableMeasureHiddenText = measureHiddenTextDOM;
   window.impeccableCollectVisualContrastCandidates = collectVisualContrastCandidates;
   window.impeccableAnalyzeVisualContrast = analyzeVisualContrast;
   window.impeccableGetLastVisualContrastAnalyses = () => lastVisualContrastAnalyses.slice();
