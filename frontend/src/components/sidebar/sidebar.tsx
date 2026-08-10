@@ -167,11 +167,11 @@ export const NavItem: FC<{
         <>
             <span className={cn(
                 "flex-shrink-0",
-                isActive ? "text-blue-400" : "text-neutral-600"
+                isActive ? "text-primary" : "text-muted-foreground"
             )}>{icon}</span>
             {open && <span className="text-sm">{label}</span>}
             {open && isActive && (
-                <span className="ml-auto w-1 h-1 rounded-full bg-blue-400" />
+                <span className="ml-auto w-1 h-1 rounded-full bg-primary" />
             )}
         </>
     );
@@ -179,7 +179,7 @@ export const NavItem: FC<{
     const className = cn(
         "flex items-center gap-2 transition-all duration-150",
         isActive
-            ? "text-blue-300 font-medium"
+            ? "text-primary font-medium"
             : "text-neutral-500 hover:text-neutral-200"
     );
 
@@ -544,7 +544,7 @@ export const Sidebar: FC = () => {
             <SidebarComponent
                 variant="sidebar"
                 collapsible="icon"
-                className="dark:group-data-[side=left]:border-r-neutral-800 z-[50]"
+                className="z-[50]"
             >
                 <SidebarHeader className={cn({ "ml-4": open })}>
                     <div className="flex items-center gap-sm justify-between">
@@ -706,7 +706,7 @@ export const Sidebar: FC = () => {
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild className={cn({ "hidden": !open })}>
                                                 <Button
-                                                    className="flex items-center justify-center p-1 rounded hover:bg-gray-100 dark:hover:bg-neutral-800 ml-2"
+                                                    className="flex items-center justify-center p-1 rounded hover:bg-accent ml-2"
                                                     aria-label={t('moreLogoutOptions')}
                                                     variant="ghost"
                                                 >
@@ -888,7 +888,7 @@ export const Sidebar: FC = () => {
                                                         "hidden": !open,
                                                     })}>
                                                         <Button
-                                                            className="flex items-center justify-center p-1 rounded hover:bg-gray-100 dark:hover:bg-neutral-800"
+                                                            className="flex items-center justify-center p-1 rounded hover:bg-accent"
                                                             aria-label={t('moreLogoutOptions')}
                                                             variant="ghost"
                                                         >
@@ -921,7 +921,7 @@ export const Sidebar: FC = () => {
                                                                     href={updateInfo.UpdateInfo.releaseURL}
                                                                     target="_blank"
                                                                     rel="noopener noreferrer"
-                                                                    className="mt-1 block text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                                                                    className="mt-1 block text-xs text-primary hover:text-primary/80 transition-colors"
                                                                 >
                                                                     {t('updateAvailable', { version: updateInfo.UpdateInfo.latestVersion })}
                                                                 </a>
@@ -959,7 +959,7 @@ export const Sidebar: FC = () => {
                             return (
                                 <button
                                     key={profile.Id}
-                                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors text-left w-full"
+                                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent transition-colors text-left w-full"
                                     onClick={() => { void handleDialogProfileSwitch(profile); }}
                                 >
                                     <DatabaseIconWithBadge
@@ -972,7 +972,7 @@ export const Sidebar: FC = () => {
                             );
                         })}
                         <button
-                            className="flex items-center gap-3 p-3 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors text-left w-full text-green-500"
+                            className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent transition-colors text-left w-full text-green-500"
                             onClick={handleDialogAddProfile}
                         >
                             <PlusCircleIcon className="w-4 h-4 stroke-green-500" />

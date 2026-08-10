@@ -1058,7 +1058,7 @@ export const ChatPage: FC = () => {
                                                         : <div className="pl-4" />}
                                                     {chat.isUserInput ? (
                                                         <div className="flex flex-col items-end">
-                                                            <p className={classNames("py-2 rounded-xl whitespace-pre-wrap bg-neutral-600/5 dark:bg-[#2C2F33] px-4", {
+                                                            <p className={classNames("py-2 rounded-xl whitespace-pre-wrap bg-muted dark:bg-card px-4", {
                                                                 "animate-fade-in": chat.isStreaming,
                                                             })} data-input-message="user">
                                                                 {chat.Text}

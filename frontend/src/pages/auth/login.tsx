@@ -1033,9 +1033,7 @@ export const LoginForm: FC<LoginFormProps> = ({
             "w-full h-full": advancedDirection === "vertical",
             "flex gap-8": showSidePanel && advancedDirection === "horizontal",
         })} data-testid="login-form-container">
-            <div className={cn("fixed top-4 right-4 z-20", {
-                "hidden": !showSidePanel,
-            })} data-testid="mode-toggle-login">
+            <div className="fixed top-4 right-4 z-20" data-testid="mode-toggle-login">
                 <ModeToggle />
             </div>
             <div className={classNames("flex flex-col grow gap-lg", {
@@ -1046,7 +1044,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                     <header className="flex justify-between" data-testid="login-header">
                         <h1 className="flex items-center gap-xs text-xl">
                             {extensions.Logo ?? <img src={logoImage} alt="WhoDB" className="w-auto h-8 mr-1"/>}
-                            <span className="text-brand-foreground" data-testid="app-name">{getAppName()}</span>
+                            <span className="text-primary" data-testid="app-name">{getAppName()}</span>
                         </h1>
                         <span className="text-xl">{t('title')}</span>
                         {
@@ -1228,7 +1226,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                         <div className="flex flex-col gap-4">
                             <div className="flex items-center gap-3">
                                 <div className="h-14 w-14 rounded-2xl flex justify-center items-center bg-gradient-to-br from-brand to-brand/80 shadow-lg" aria-hidden="true">
-                                    <SparklesIcon className="w-7 h-7 text-brand-foreground" />
+                                    <SparklesIcon className="w-7 h-7 text-primary" />
                                 </div>
                                 <div className="flex flex-col gap-1">
                                     <h2 id="sample-db-heading" className="text-2xl font-bold text-foreground">

@@ -330,14 +330,11 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
                 borderRight: "1px solid rgba(0,0,0,0.1)",
               },
               ".cm-play-button": {
-                color: "#10b981",
+                color: "var(--primary)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 height: "100%",
-              },
-              ".dark .cm-play-button": {
-                color: "#14b8a6",
               },
               ".dark .cm-play-gutter": {
                 borderRight: "1px solid rgba(255,255,255,0.1)",
@@ -351,7 +348,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
                 borderRight: "1px solid rgba(0,0,0,0.1)",
               },
               ".cm-play-button": {
-                color: "#10b981",
+                color: "var(--primary)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -393,7 +390,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
     if (showPreview) {
       if (language === "markdown") {
         return (
-          <div className="h-full bg-white p-4 pl-8 dark:bg-[#252526] dark:backdrop-blur-md markdown-preview dark:*:text-neutral-300 overflow-y-auto">
+          <div className="h-full bg-white p-4 pl-8 dark:bg-card dark:backdrop-blur-md markdown-preview dark:*:text-neutral-300 overflow-y-auto">
             {/* TODO: Links in markdown don't render correctly with this library version */}
             <MarkdownPreview remarkPlugins={[remarkGfm]}>{value}</MarkdownPreview>
           </div>
@@ -409,7 +406,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
         }
 
         return (
-          <div className="h-full bg-white p-4 pl-8 dark:bg-[#252526] dark:backdrop-blur-md overflow-y-auto">
+          <div className="h-full bg-white p-4 pl-8 dark:bg-card dark:backdrop-blur-md overflow-y-auto">
             {isValidJson ? (
               <ReactJson
                 src={parsed}
@@ -438,7 +435,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
           onClick={handlePreviewToggle}
           aria-label={label}
         >
-          {showPreview ? <EyeSlashIcon className="stroke-teal-500 w-8 h-8" /> : <EyeIcon className="stroke-teal-500 w-8 h-8" />}
+          {showPreview ? <EyeSlashIcon className="stroke-icon w-8 h-8" /> : <EyeIcon className="stroke-icon w-8 h-8" />}
         </button>
         <p>{label}</p>
       </Tip>

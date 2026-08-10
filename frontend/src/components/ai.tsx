@@ -611,13 +611,13 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                         <div className="font-bold">{t('localSetup')}</div>
                         <div>
                             {t('ollamaSetupText').split('<0>')[0]}
-                            <ExternalLink href="https://ollama.com/" className="font-semibold underline text-blue-600 hover:text-blue-800">Ollama</ExternalLink>
+                            <ExternalLink href="https://ollama.com/" className="font-semibold underline text-primary hover:text-primary/80">Ollama</ExternalLink>
                             {t('ollamaSetupText').split('</0>')[1]}
                         </div>
                         <div className="font-semibold">{t('downloadingModel')}</div>
                         <div>
                             {t('ollamaDownloadText').split('<0>')[0]}
-                            <ExternalLink href="https://ollama.com/library/llama3.1" className="font-semibold underline text-blue-600 hover:text-blue-800">Llama3.1 8b</ExternalLink>
+                            <ExternalLink href="https://ollama.com/library/llama3.1" className="font-semibold underline text-primary hover:text-primary/80">Llama3.1 8b</ExternalLink>
                             {t('ollamaDownloadText').split('</0>')[1]}
                         </div>
                         <div className="font-mono bg-neutral-100 dark:bg-neutral-900 rounded px-2 py-1 mb-1">
@@ -699,7 +699,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                         label: item.label,
                         icon: item.icon,
                         rightIcon: <span className="flex items-center gap-1">
-                            {unavailableProviders.has(item.id) && <span title={t('providerUnavailable')}><ExclamationCircleIcon className="w-3 h-3 text-amber-500" /></span>}
+                            {unavailableProviders.has(item.id) && <span title={t('providerUnavailable')}><ExclamationCircleIcon className="w-3 h-3 text-[var(--brand-readable)]" /></span>}
                             {item.extra?.isEnvironmentDefined && <span title={t('environmentDefined')}><LockClosedIcon className="w-3 h-3 text-muted-foreground" /></span>}
                         </span>,
                     }))}
@@ -749,7 +749,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                         title={t('providerUnavailable')}
                         className="px-2"
                     >
-                        <ArrowPathIcon className="w-4 h-4 text-amber-500" />
+                        <ArrowPathIcon className="w-4 h-4 text-[var(--brand-readable)]" />
                     </Button>
                 )}
                 {!(modelType && unavailableProviders.has(modelType.id)) && (

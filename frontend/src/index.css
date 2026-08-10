@@ -17,35 +17,13 @@
 @import 'tailwindcss';
 @import 'reactflow/dist/style.css';
 @import '@clidey/ux/styles.css';
+@import '@clidey/ux/brand.css';
+@import './brand-fonts.css';
 
 @custom-variant dark (&:where(.dark, .dark *));
 @custom-variant hover (&:hover);
 
-/* Inter variable fonts for app-wide usage */
-@supports (font-variation-settings: normal) {
-    @font-face {
-        font-family: "Inter";
-        src: url("/fonts/Inter/Inter-VariableFont_opsz,wght.woff2") format("woff2");
-        font-weight: 100 900;
-        font-style: normal;
-        font-display: swap;
-    }
-    @font-face {
-        font-family: "Inter";
-        src: url("/fonts/Inter/Inter-Italic-VariableFont_opsz,wght.woff2") format("woff2");
-        font-weight: 100 900;
-        font-style: italic;
-        font-display: swap;
-    }
-}
-
 :root {
-  --brand-foreground: #11518E;
-  --muted: oklch(0.97 0 0);
-  --primary: #11518E;
-  --icon-foreground: #11518E;
-  --backdrop: oklch(0 0 0 / 50%);
-
   /* UI Customization defaults - these will be overridden by theme-customization.ts */
   --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;
@@ -60,24 +38,15 @@
     /* no-op: selector placeholder to allow :root.linux overrides below */
 }
 
-/* Base font uses Inter across the app */
+/* Brand type stack: Hanken Grotesk for UI, JetBrains Mono via --font-mono */
 body {
-    font-family: "Inter", var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+    font-family: "Hanken Grotesk", "Inter", var(--font-sans), ui-sans-serif, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
 
-.dark {
-  --brand-foreground: #8EBFFB;
-  --icon: var(--text-muted);
-  --primary: #8EBFFB;
-  --muted: oklch(0.269 0 0);
-  --icon-foreground: #8EBFFB;
-  --backdrop: oklch(0 0 0 / 60%);
-}
-
 .bg-icon {
-  background-color: var(--text-muted);
+  background-color: var(--icon);
 }
 
 .dark .react-flow__controls-button {
@@ -214,12 +183,12 @@ body.disable-animations *::after {
 
 [data-testid="code-editor"] .cm-editor,
 [data-testid="code-editor"] .cm-gutters {
-  background-color: #f5f5f5;
+  background-color: var(--muted);
 }
 
 .dark [data-testid="code-editor"] .cm-editor,
 .dark [data-testid="code-editor"] .cm-gutters {
-  background-color: #252526;
+  background-color: var(--card);
 }
 
 *:focus {
@@ -251,6 +220,6 @@ body.whodb-new-ui-enabled [data-sonner-toast][data-styled='true'] {
 }
 
 body.whodb-new-ui-enabled .dark [data-sonner-toast][data-styled='true'] {
-  --normal-bg: oklch(20.5% 0 0) !important;
-  background-color: oklch(20.5% 0 0) !important;
+  --normal-bg: var(--popover) !important;
+  background-color: var(--popover) !important;
 }

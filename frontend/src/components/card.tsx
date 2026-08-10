@@ -75,9 +75,9 @@ export const Card: FC<ICardProps> = ({
         <>
           {(propsIcon ?? tag) && (
             <CardHeader className="flex flex-row justify-between items-start px-4">
-              {propsIcon && <div className="h-[40px] w-[40px] rounded-lg flex justify-center items-center bg-icon border border-icon-foreground">
+              {propsIcon && <div className="h-[40px] w-[40px] rounded-lg flex justify-center items-center bg-icon">
                 {cloneElement(propsIcon, {
-                  className: "w-6 h-6 text-primary dark:text-primary",
+                  className: "w-6 h-6 text-icon-foreground stroke-icon-foreground",
                 })}
               </div>}
               {tag && <Badge variant="secondary">{tag}</Badge>}
