@@ -367,7 +367,10 @@ func TestMiniMaxProvider_GetSupportedModels_DiscoversFromModelsEndpoint(t *testi
 		return httpResponse(http.StatusOK, `{
 			"data": [
 				{"id": "MiniMax-M3"},
-				{"id": "MiniMax-M2.7"}
+				{"id": "image-01"},
+				{"id": "MiniMax-M2.7"},
+				{"id": "speech-2.8-hd"},
+				{"id": "MiniMax-M3-20260801"}
 			]
 		}`), nil
 	})
@@ -376,7 +379,7 @@ func TestMiniMaxProvider_GetSupportedModels_DiscoversFromModelsEndpoint(t *testi
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if len(models) != 2 || models[0] != "MiniMax-M3" || models[1] != "MiniMax-M2.7" {
+	if len(models) != 3 || models[0] != "MiniMax-M3" || models[1] != "MiniMax-M2.7" || models[2] != "MiniMax-M3-20260801" {
 		t.Fatalf("expected MiniMax chat models, got %#v", models)
 	}
 }

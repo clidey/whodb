@@ -16,6 +16,8 @@
 
 package providers
 
+import "strings"
+
 const (
 	MiniMax_LLMType LLMType = "MiniMax"
 )
@@ -25,9 +27,30 @@ const (
 // https://api.minimaxi.com/v1 instead; both regions speak the same protocol.
 const MiniMaxDefaultEndpoint = "https://api.minimax.io/v1"
 
+type MiniMaxProvider struct {
+	*OpenAICompatibleProvider
+}
+
 // NewMiniMaxProvider creates a first-class MiniMax provider backed by the
-// OpenAI-compatible adapter. Models (e.g. MiniMax-M3, MiniMax-M2.7) are
-// discovered from the provider's /models endpoint.
-func NewMiniMaxProvider() *OpenAICompatibleProvider {
-	return NewOpenAICompatibleProvider(MiniMax_LLMType, MiniMaxDefaultEndpoint)
+// OpenAI-compatible adapter.
+func NewMiniMaxProvider() *MiniMaxProvider {
+	return &MiniMaxProvider{
+		OpenAICompatibleProvider: NewOpenAICompatibleProvider(MiniMax_LLMType, MiniMaxDefaultEndpoint),
+	}
+}
+
+// GetSupportedModels filters the shared model catalog to MiniMax chat models.
+func (p *MiniMaxProvider) GetSupportedModels(config *ProviderConfig) ([]string, error) {
+	models, err := p.OpenAICompatibleProvider.GetSupportedModels(config)
+	if err != nil {
+		return nil, err
+	}
+
+	chatModels := make([]string, 0, len(models))
+	for _, model := range models {
+		if strings.HasPrefix(model, "MiniMax-M3") || strings.HasPrefix(model, "MiniMax-M2.7") {
+			chatModels = append(chatModels, model)
+		}
+	}
+	return chatModels, nil
 }
