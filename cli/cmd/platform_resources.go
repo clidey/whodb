@@ -1043,7 +1043,7 @@ var datasetsCreateCmd = withExample(typedResourceWriteCommand("create", "Create 
 var datasetsUpdateCmd = withExample(typedResourceWriteCommand("update <dataset>", "Update a hosted WhoDB dataset", "update", "dataset", "", buildDatasetUpdatePayload), `  whodb-cli datasets update dataset_123 --description "Customer import"
   whodb-cli datasets update dataset_123 --column id:text:primary --column email:text:nullable`)
 var datasetsDeleteCmd = withExample(typedResourceWriteCommand("delete <dataset>", "Delete a hosted WhoDB dataset", "delete", "dataset", "", emptyTypedPayload), `  whodb-cli datasets delete dataset_123 --yes`)
-var ontologiesCreateCmd = withExample(typedResourceWriteCommand("create", "Create a hosted WhoDB ontology", "create", "ontology", "", buildOntologyCreatePayload), `  whodb-cli ontologies create --api-name customer --display-name Customer --plural-display-name Customers --primary-key id --table-name customers --schema-name public --property-json '{"apiName":"id","displayName":"ID","columnName":"id","dataType":"String","isRequired":true}'`)
+var ontologiesCreateCmd = withExample(typedResourceWriteCommand("create", "Create a hosted WhoDB ontology", "create", "ontology", "", buildOntologyCreatePayload), `  whodb-cli ontologies create --api-name customer --display-name Customer --plural-display-name Customers --primary-key id --table-name customers --schema-name public --property-json '{"apiName":"id","displayName":"ID","columnName":"id","dataType":"String","isRequired":true,"visibility":"normal","isSearchable":true,"isSortable":true,"isEditOnly":false}'`)
 var ontologiesUpdateCmd = withExample(typedResourceWriteCommand("update <ontology>", "Update a hosted WhoDB ontology", "update", "ontology", "", buildOntologyUpdatePayload), `  whodb-cli ontologies update ontology_123 --display-name "Customer Account" --status active`)
 var ontologiesDeleteCmd = withExample(typedResourceWriteCommand("delete <ontology>", "Delete a hosted WhoDB ontology", "delete", "ontology", "", emptyTypedPayload), `  whodb-cli ontologies delete ontology_123 --yes`)
 var transformsCreateCmd = withExample(typedResourceWriteCommand("create", "Create a hosted WhoDB transform", "create", "transform", "", buildTransformCreatePayload), `  whodb-cli transforms create --name daily-load --trigger-mode manual --graph-file ./transform.json`)
@@ -2077,6 +2077,9 @@ func buildOntologyCreatePayload(cmd *cobra.Command) (map[string]any, error) {
 	if len(properties) == 0 {
 		return nil, fmt.Errorf("--property-json is required at least once")
 	}
+	for _, property := range properties {
+		applyOntologyPropertyDefaults(property, ontologyPrimaryKey)
+	}
 	links, err := parseJSONObjectFlags(ontologyLinksJSON, "link-json")
 	if err != nil {
 		return nil, err
@@ -2084,6 +2087,26 @@ func buildOntologyCreatePayload(cmd *cobra.Command) (map[string]any, error) {
 	payload["properties"] = properties
 	payload["links"] = links
 	return payload, nil
+}
+
+func applyOntologyPropertyDefaults(property map[string]any, primaryKey string) {
+	if _, ok := property["visibility"]; !ok {
+		property["visibility"] = "normal"
+	}
+	searchableAndSortable := false
+	apiName := strings.TrimSpace(fmt.Sprint(property["apiName"]))
+	if strings.EqualFold(apiName, "id") || strings.EqualFold(apiName, strings.TrimSpace(primaryKey)) {
+		searchableAndSortable = true
+	}
+	if _, ok := property["isSearchable"]; !ok {
+		property["isSearchable"] = searchableAndSortable
+	}
+	if _, ok := property["isSortable"]; !ok {
+		property["isSortable"] = searchableAndSortable
+	}
+	if _, ok := property["isEditOnly"]; !ok {
+		property["isEditOnly"] = false
+	}
 }
 
 func buildOntologyUpdatePayload(cmd *cobra.Command) (map[string]any, error) {

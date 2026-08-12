@@ -224,6 +224,23 @@ var PayloadShapes = map[string]PayloadShape{
 		},
 		Examples: []string{`{"description":"Customer import","schemaMode":"manual"}`},
 	},
+	"create:ontology": {
+		Key: "create:ontology", Resource: "ontology", Action: "create", Description: "Create an ontology. projectId is injected from the selected workspace. Property defaults match the platform: normal visibility, false searchable/sortable/edit-only flags; primary-key and link foreign-key properties are searchable and sortable.",
+		Fields: []PayloadField{
+			{Name: "apiName", Type: "string", Required: true, Description: "Stable ontology API name"},
+			{Name: "displayName", Type: "string", Required: true, Description: "Ontology display name"},
+			{Name: "pluralDisplayName", Type: "string", Required: true, Description: "Plural display name"},
+			{Name: "description", Type: "string", Required: true, Description: "Ontology description"},
+			{Name: "primaryKey", Type: "string", Required: true, Description: "Primary property API name"},
+			{Name: "tableName", Type: "string", Required: true, Description: "Backing table name"},
+			{Name: "schemaName", Type: "string", Required: true, Description: "Backing schema name"},
+			{Name: "icon", Type: "string", Required: true, Description: "Ontology icon"},
+			{Name: "color", Type: "string", Required: true, Description: "Ontology color"},
+			{Name: "properties", Type: "[OntologyPropertyInput!]", Required: true, Description: "Properties; visibility is prominent, normal, or hidden"},
+			{Name: "links", Type: "[OntologyLinkInput!]", Required: true, Description: "Ontology links"},
+		},
+		Examples: []string{`{"apiName":"customer","displayName":"Customer","pluralDisplayName":"Customers","description":"","primaryKey":"id","tableName":"customers","schemaName":"public","icon":"table","color":"#3366ff","properties":[{"apiName":"id","displayName":"ID","description":"","columnName":"id","dataType":"String","isRequired":true,"visibility":"normal","isSearchable":true,"isSortable":true,"isEditOnly":false}],"links":[]}`},
+	},
 	"create:ontology_fast_lookup": {
 		Key: "create:ontology_fast_lookup", Resource: "ontology_fast_lookup", Action: "create", Description: "Create an ontology fast lookup. projectId is injected from the selected workspace.",
 		Fields: []PayloadField{
