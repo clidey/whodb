@@ -7,7 +7,7 @@ COPY . .
 # Install dory globally and build docs.
 # Pin the version so rebuilds are deterministic and upgrades are explicit
 # (an unpinned install gets cached by Docker layers and silently goes stale).
-RUN npm install -g @clidey/dory@1.0.2 && dory build
+RUN npm install -g @clidey/dory@1.0.3 && dory build
 
 FROM nginxinc/nginx-unprivileged:alpine
 
