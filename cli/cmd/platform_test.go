@@ -535,6 +535,29 @@ func TestBuildOntologyCreatePayloadDefaultsOrdinaryPropertyFlagsToFalse(t *testi
 	}
 }
 
+func TestBuildDatasetCreatePayloadIncludesRequiredDescription(t *testing.T) {
+	datasetName = "Customers"
+	datasetDescription = ""
+	datasetSourceID = ""
+	datasetSchemaMode = "manual"
+	datasetColumns = []string{"id:text:primary"}
+	t.Cleanup(func() {
+		datasetName = ""
+		datasetDescription = ""
+		datasetSourceID = ""
+		datasetSchemaMode = ""
+		datasetColumns = nil
+	})
+
+	payload, err := buildDatasetCreatePayload(&cobra.Command{})
+	if err != nil {
+		t.Fatalf("buildDatasetCreatePayload() error = %v", err)
+	}
+	if description, ok := payload["description"].(string); !ok || description != "" {
+		t.Fatalf("description = %#v, want empty string", payload["description"])
+	}
+}
+
 func TestPlatformListFilters(t *testing.T) {
 	platformFilterName = "cust"
 	platformFilterSchemaMode = "manual"

@@ -1211,8 +1211,8 @@ func registerTypedWriteFlags() {
 	datasetsUpdateCmd.Flags().StringVar(&datasetSchemaMode, "schema-mode", "", "dataset schema mode")
 	datasetsUpdateCmd.Flags().StringArrayVar(&datasetColumns, "column", nil, "dataset column as name:type[:nullable][:primary]; repeatable")
 
-	registerOntologyWriteFlags(ontologiesCreateCmd)
-	registerOntologyWriteFlags(ontologiesUpdateCmd)
+	registerOntologyWriteFlags(ontologiesCreateCmd, false)
+	registerOntologyWriteFlags(ontologiesUpdateCmd, true)
 	ontologyFastLookupsCreateCmd.Flags().StringArrayVar(&ontologyFastLookupFields, "field", nil, "ontology property to include in the fast lookup; repeatable")
 	ontologyFastLookupsCreateCmd.Flags().StringVar(&ontologyFastLookupReason, "reason", "", "reason for the fast lookup")
 	ontologyRecordsAddCmd.Flags().StringArrayVar(&ontologyRecordValues, "value", nil, "record value as key=value; repeatable")
@@ -1257,7 +1257,7 @@ func registerAIProviderAPIKeyFlags(command *cobra.Command) {
 	command.Flags().BoolVar(&aiProviderAPIKeyStdin, "api-key-stdin", false, "read the AI provider API key from stdin")
 }
 
-func registerOntologyWriteFlags(command *cobra.Command) {
+func registerOntologyWriteFlags(command *cobra.Command, includeStatus bool) {
 	command.Flags().StringVar(&ontologyAPIName, "api-name", "", "ontology API name")
 	command.Flags().StringVar(&ontologyDisplayName, "display-name", "", "ontology display name")
 	command.Flags().StringVar(&ontologyPluralName, "plural-display-name", "", "ontology plural display name")
@@ -1265,7 +1265,9 @@ func registerOntologyWriteFlags(command *cobra.Command) {
 	command.Flags().StringVar(&ontologyPrimaryKey, "primary-key", "", "ontology primary key property")
 	command.Flags().StringVar(&ontologyTableName, "table-name", "", "backing table name")
 	command.Flags().StringVar(&ontologySchemaName, "schema-name", "", "backing schema name")
-	command.Flags().StringVar(&ontologyStatus, "status", "", "ontology status")
+	if includeStatus {
+		command.Flags().StringVar(&ontologyStatus, "status", "", "ontology status")
+	}
 	command.Flags().StringVar(&ontologyIcon, "icon", "", "ontology icon")
 	command.Flags().StringVar(&ontologyColor, "color", "", "ontology color")
 	command.Flags().StringArrayVar(&ontologyPropertiesJSON, "property-json", nil, "ontology property JSON object; repeatable")
@@ -1997,9 +1999,7 @@ func buildDatasetCreatePayload(cmd *cobra.Command) (map[string]any, error) {
 		return nil, fmt.Errorf("--name is required")
 	}
 	payload := map[string]any{"name": name}
-	if cmd.Flags().Changed("description") {
-		payload["description"] = datasetDescription
-	}
+	payload["description"] = datasetDescription
 	if strings.TrimSpace(datasetSourceID) != "" {
 		payload["sourceId"] = strings.TrimSpace(datasetSourceID)
 	}
@@ -2067,9 +2067,6 @@ func buildOntologyCreatePayload(cmd *cobra.Command) (map[string]any, error) {
 	payload["description"] = ontologyDescription
 	payload["icon"] = defaultString(strings.TrimSpace(ontologyIcon), "table")
 	payload["color"] = defaultString(strings.TrimSpace(ontologyColor), "#3366ff")
-	if strings.TrimSpace(ontologyStatus) != "" {
-		payload["status"] = strings.TrimSpace(ontologyStatus)
-	}
 	properties, err := parseJSONObjectFlags(ontologyPropertiesJSON, "property-json")
 	if err != nil {
 		return nil, err

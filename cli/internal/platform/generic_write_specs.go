@@ -212,7 +212,7 @@ var PayloadShapes = map[string]PayloadShape{
 			{Name: "columns", Type: "[ColumnDefInput]", Description: "Manual schema columns"},
 			{Name: "schemaMode", Type: "string", Description: "Schema mode such as manual"},
 		},
-		Examples: []string{`{"name":"Customers","schemaMode":"manual","columns":[{"name":"id","type":"text","isNullable":false,"isPrimary":true}]}`},
+		Examples: []string{`{"name":"Customers","description":"","schemaMode":"manual","columns":[{"name":"id","type":"text","isNullable":false,"isPrimary":true}]}`},
 	},
 	"update:dataset": {
 		Key: "update:dataset", Resource: "dataset", Action: "update", Description: "Update a dataset. id and projectId are injected.",
