@@ -463,6 +463,101 @@ func TestBuildOntologyFastLookupCreatePayload(t *testing.T) {
 	}
 }
 
+func TestBuildOntologyCreatePayloadDefaultsRequiredPropertyFields(t *testing.T) {
+	ontologyAPIName = "customer"
+	ontologyDisplayName = "Customer"
+	ontologyPluralName = "Customers"
+	ontologyPrimaryKey = "id"
+	ontologyTableName = "customers"
+	ontologySchemaName = "public"
+	ontologyDescription = ""
+	ontologyIcon = ""
+	ontologyColor = ""
+	ontologyStatus = ""
+	ontologyPropertiesJSON = []string{`{"apiName":"id","displayName":"ID","columnName":"id","dataType":"String","isRequired":true}`}
+	ontologyLinksJSON = nil
+	t.Cleanup(func() {
+		ontologyAPIName = ""
+		ontologyDisplayName = ""
+		ontologyPluralName = ""
+		ontologyPrimaryKey = ""
+		ontologyTableName = ""
+		ontologySchemaName = ""
+		ontologyDescription = ""
+		ontologyIcon = ""
+		ontologyColor = ""
+		ontologyStatus = ""
+		ontologyPropertiesJSON = nil
+		ontologyLinksJSON = nil
+	})
+
+	payload, err := buildOntologyCreatePayload(&cobra.Command{})
+	if err != nil {
+		t.Fatalf("buildOntologyCreatePayload() error = %v", err)
+	}
+	properties, ok := payload["properties"].([]map[string]any)
+	if !ok || len(properties) != 1 {
+		t.Fatalf("properties = %#v, want one property", payload["properties"])
+	}
+	property := properties[0]
+	if property["visibility"] != "normal" || property["isSearchable"] != true || property["isSortable"] != true || property["isEditOnly"] != false {
+		t.Fatalf("property defaults = %#v, want normal/true/true/false", property)
+	}
+}
+
+func TestBuildOntologyCreatePayloadDefaultsOrdinaryPropertyFlagsToFalse(t *testing.T) {
+	ontologyAPIName = "customer"
+	ontologyDisplayName = "Customer"
+	ontologyPluralName = "Customers"
+	ontologyPrimaryKey = "id"
+	ontologyTableName = "customers"
+	ontologySchemaName = "public"
+	ontologyPropertiesJSON = []string{`{"apiName":"name","displayName":"Name","columnName":"name","dataType":"String","isRequired":false}`}
+	ontologyLinksJSON = nil
+	t.Cleanup(func() {
+		ontologyAPIName = ""
+		ontologyDisplayName = ""
+		ontologyPluralName = ""
+		ontologyPrimaryKey = ""
+		ontologyTableName = ""
+		ontologySchemaName = ""
+		ontologyPropertiesJSON = nil
+		ontologyLinksJSON = nil
+	})
+
+	payload, err := buildOntologyCreatePayload(&cobra.Command{})
+	if err != nil {
+		t.Fatalf("buildOntologyCreatePayload() error = %v", err)
+	}
+	property := payload["properties"].([]map[string]any)[0]
+	if property["isSearchable"] != false || property["isSortable"] != false {
+		t.Fatalf("property flags = %#v, want searchable=false and sortable=false", property)
+	}
+}
+
+func TestBuildDatasetCreatePayloadIncludesRequiredDescription(t *testing.T) {
+	datasetName = "Customers"
+	datasetDescription = ""
+	datasetSourceID = ""
+	datasetSchemaMode = "manual"
+	datasetColumns = []string{"id:text:primary"}
+	t.Cleanup(func() {
+		datasetName = ""
+		datasetDescription = ""
+		datasetSourceID = ""
+		datasetSchemaMode = ""
+		datasetColumns = nil
+	})
+
+	payload, err := buildDatasetCreatePayload(&cobra.Command{})
+	if err != nil {
+		t.Fatalf("buildDatasetCreatePayload() error = %v", err)
+	}
+	if description, ok := payload["description"].(string); !ok || description != "" {
+		t.Fatalf("description = %#v, want empty string", payload["description"])
+	}
+}
+
 func TestPlatformListFilters(t *testing.T) {
 	platformFilterName = "cust"
 	platformFilterSchemaMode = "manual"

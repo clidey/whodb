@@ -1102,12 +1102,12 @@ export const StorageUnitTable: FC<TableProps> = ({
         searchRef.current = (search: string) => {
             // Remove any previous highlight
             document.querySelectorAll('.table-search-highlight').forEach(el => {
-                el.classList.remove('bg-yellow-200', 'table-search-highlight', 'bg-muted');
+                el.classList.remove('bg-highlight/35', 'table-search-highlight', 'bg-muted');
             });
 
             // Remove highlight from the last highlighted cell if it exists
             if (lastHighlightedCell) {
-                lastHighlightedCell.classList.remove('bg-muted', 'table-search-highlight', 'bg-yellow-200');
+                lastHighlightedCell.classList.remove('bg-muted', 'table-search-highlight', 'bg-highlight/35');
                 lastHighlightedCell = null;
             }
 
@@ -1146,7 +1146,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                 if (cell) {
                     // Remove highlight from any previously highlighted cell
                     document.querySelectorAll('.table-search-highlight').forEach(el => {
-                        el.classList.remove('bg-muted', 'table-search-highlight', 'bg-yellow-200');
+                        el.classList.remove('bg-muted', 'table-search-highlight', 'bg-highlight/35');
                     });
                     cell.classList.add('bg-muted', 'table-search-highlight');
                     lastHighlightedCell = cell;
@@ -1167,7 +1167,7 @@ export const StorageUnitTable: FC<TableProps> = ({
         // Cleanup on unmount
         return () => {
             if (lastHighlightedCell) {
-                lastHighlightedCell.classList.remove('bg-muted', 'table-search-highlight', 'bg-yellow-200');
+                lastHighlightedCell.classList.remove('bg-muted', 'table-search-highlight', 'bg-highlight/35');
                 lastHighlightedCell = null;
             }
         };
@@ -1862,8 +1862,8 @@ export const StorageUnitTable: FC<TableProps> = ({
                         ) : (
                             <div className="space-y-4">
                                 <div className="flex items-center justify-center mb-4">
-                                    <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center">
-                                        <XMarkIcon className="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
+                                    <div className="w-16 h-16 bg-highlight/25 rounded-full flex items-center justify-center">
+                                        <XMarkIcon className="w-8 h-8 text-[var(--brand-readable)]" />
                                     </div>
                                 </div>
                                 <p className="text-center text-gray-700 dark:text-gray-300">

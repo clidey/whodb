@@ -65,7 +65,7 @@ const getTooltipPortalContainer = (): HTMLDivElement => {
 const TOOLTIP_CLASSES = {
   container: classNames(
     "fixed z-[9999] px-3 py-2 text-xs font-medium bg-white border border-gray-200 rounded-lg shadow-lg",
-    "dark:bg-[#2C2F33] dark:border-white/20 dark:text-gray-200",
+    "dark:bg-popover dark:border-border dark:text-popover-foreground",
     "min-w-[180px]",
     "animate-fade"
   ),

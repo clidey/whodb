@@ -180,7 +180,7 @@ const SQLHighlighter: FC<{ code: string }> = ({ code }) => {
                 tokens.push({
                     type: 'string',
                     value: stringValue,
-                    className: 'text-amber-600 dark:text-amber-400'
+                    className: 'text-[var(--syntax-string)]'
                 });
                 remaining = remaining.slice(stringValue.length);
                 matched = true;
@@ -200,7 +200,7 @@ const SQLHighlighter: FC<{ code: string }> = ({ code }) => {
                 tokens.push({
                     type: 'string',
                     value: stringValue,
-                    className: 'text-amber-600 dark:text-amber-400'
+                    className: 'text-[var(--syntax-string)]'
                 });
                 remaining = remaining.slice(stringValue.length);
                 matched = true;
@@ -212,7 +212,7 @@ const SQLHighlighter: FC<{ code: string }> = ({ code }) => {
                     tokens.push({
                         type: 'number',
                         value: numberMatch[0],
-                        className: 'text-blue-600 dark:text-blue-400'
+                        className: 'text-[var(--syntax-number)]'
                     });
                     remaining = remaining.slice(numberMatch[0].length);
                     matched = true;
@@ -228,7 +228,7 @@ const SQLHighlighter: FC<{ code: string }> = ({ code }) => {
                         tokens.push({
                             type: 'keyword',
                             value: word,
-                            className: 'text-purple-700 dark:text-purple-400 font-medium'
+                            className: 'text-[var(--syntax-keyword)] font-medium'
                         });
                     } else {
                         tokens.push({
@@ -708,7 +708,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                                             </Badge>
                                             <div className="flex flex-col min-h-[60px]">
                                                 <div className="pr-12">
-                                                    <div className="rounded-md overflow-hidden bg-neutral-50 dark:bg-[#1f1f1f]">
+                                                    <div className="rounded-md overflow-hidden bg-muted dark:bg-card">
                                                         <pre className="text-xs p-3 whitespace-pre-wrap">
                                                             <code>
                                                                 <SQLHighlighter code={item} />

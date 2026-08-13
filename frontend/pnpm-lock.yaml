@@ -9,14 +9,14 @@ importers:
   .:
     dependencies:
       '@apollo/client':
-        specifier: 4.2.7
-        version: 4.2.7(graphql-ws@6.1.0(graphql@16.11.0)(ws@8.21.1))(graphql@16.11.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)
+        specifier: 4.2.9
+        version: 4.2.9(graphql-ws@6.1.0(graphql@16.11.0)(ws@8.21.1))(graphql@16.11.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)
       '@clidey/connparse':
         specifier: 0.8.0
         version: 0.8.0
       '@clidey/ux':
-        specifier: 1.1.1
-        version: 1.1.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.8(react@19.2.8))(react-is@19.2.7)(react@19.2.8)(redux@5.0.1)
+        specifier: 1.2.4
+        version: 1.2.4(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.8(react@19.2.8))(react-is@19.2.7)(react@19.2.8)(redux@5.0.1)
       '@codemirror/autocomplete':
         specifier: 6.20.3
         version: 6.20.3
@@ -186,8 +186,8 @@ importers:
 
 packages:
 
-  '@apollo/client@4.2.7':
-    resolution: {integrity: sha512-Z129zR77VP0oWWIXPpHgwbtwhCVBzkw/FhiiymbqwlUniKb5z2KBeuQkpNIz3QfuO7ezHiaxsJ0PPjYBJTSHtg==}
+  '@apollo/client@4.2.9':
+    resolution: {integrity: sha512-miiAhuhnjZjdYvSYNckvBGHyM8N4McGyrDyf7yIMDHzpt85FlS7k7JgixHqkAy1+MXGl9vYlTDfKS7alEDGbvQ==}
     peerDependencies:
       graphql: ^16.0.0 || ^17.0.0
       graphql-ws: ^5.5.5 || ^6.0.3
@@ -303,8 +303,8 @@ packages:
     resolution: {integrity: sha512-wD2nhrRCPTMET04jFMDkV8AKKfN4EcRELmPoiebMHe3Uwd/gptb5hqRdTRfVtZz5pETq3vpSbTeGe/qLSaXKaA==}
     hasBin: true
 
-  '@clidey/ux@1.1.1':
-    resolution: {integrity: sha512-185AeHm3at0+md0PHaGa+Lx4X3NmGo2uCFvCeg1ehbwQaqf8e5S2eudl9dnv6tyT52G5h2dWy9NazKnqI/Rc2g==}
+  '@clidey/ux@1.2.4':
+    resolution: {integrity: sha512-5M3acppA5N4RkzEbEoSdBVGzYCWeZGMZ+A5xSQOqUrbhfAtROEUlFb0923O4PUh469Bs5sb7iWVgHxJJMgkBJA==}
     peerDependencies:
       react: '>=18.3.0'
       react-dom: '>=18.3.0'
@@ -5233,7 +5233,7 @@ packages:
 
 snapshots:
 
-  '@apollo/client@4.2.7(graphql-ws@6.1.0(graphql@16.11.0)(ws@8.21.1))(graphql@16.11.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)':
+  '@apollo/client@4.2.9(graphql-ws@6.1.0(graphql@16.11.0)(ws@8.21.1))(graphql@16.11.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)':
     dependencies:
       '@graphql-typed-document-node/core': 3.2.0(graphql@16.11.0)
       '@wry/caches': 1.0.1
@@ -5376,7 +5376,7 @@ snapshots:
     dependencies:
       yaml: 2.9.0
 
-  '@clidey/ux@1.1.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.8(react@19.2.8))(react-is@19.2.7)(react@19.2.8)(redux@5.0.1)':
+  '@clidey/ux@1.2.4(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.8(react@19.2.8))(react-is@19.2.7)(react@19.2.8)(redux@5.0.1)':
     dependencies:
       '@radix-ui/react-accordion': 1.2.17(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@radix-ui/react-alert-dialog': 1.1.20(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)

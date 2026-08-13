@@ -260,24 +260,25 @@ var builtinThemes = []*Theme{
 // Built-in themes
 // ---------------------------------------------------------------------------
 
-// ThemeDefault is the original WhoDB dark/light adaptive theme.
+// ThemeDefault is the Clidey-brand dark/light adaptive theme (Paper/Ink worlds;
+// values from the brand kit — Signal Blue primary, verified syntax palette).
 var ThemeDefault = Theme{
 	Name:       "default",
-	Primary:    adaptive("#1a1a1a", "#fafafa"),
-	Secondary:  adaptive("#6b6b73", "#a1a1aa"),
+	Primary:    adaptive("#2C6BD4", "#4787F3"),
+	Secondary:  adaptive("#5C6778", "#86909F"),
 	Success:    adaptive("#16a34a", "#22c55e"),
-	Error:      adaptive("#dc2626", "#ef4444"),
-	Warning:    adaptive("#d97706", "#f59e0b"),
-	Info:       adaptive("#2563eb", "#3b82f6"),
-	Muted:      adaptive("#a1a1aa", "#71717a"),
-	Background: adaptive("#ffffff", "#09090b"),
-	Foreground: adaptive("#09090b", "#fafafa"),
-	Border:     adaptive("#d4d4d8", "#27272a"),
-	Accent:     adaptive("#f4f4f5", "#18181b"),
-	Keyword:    adaptive("#3f3f46", "#d4d4d8"),
-	String:     adaptive("#6b6b73", "#a1a1aa"),
-	Comment:    adaptive("#a1a1aa", "#71717a"),
-	Number:     adaptive("#3f3f46", "#d4d4d8"),
+	Error:      adaptive("#E30117", "#FF6668"),
+	Warning:    adaptive("#B65401", "#FFC233"),
+	Info:       adaptive("#2C6BD4", "#4787F3"),
+	Muted:      adaptive("#5C6778", "#86909F"),
+	Background: adaptive("#FAF5EC", "#0E2240"),
+	Foreground: adaptive("#0E2240", "#FAF5EC"),
+	Border:     adaptive("#D9D4CB", "#314667"),
+	Accent:     adaptive("#EAF0FB", "#233E69"),
+	Keyword:    adaptive("#2C6BD4", "#85AFF4"),
+	String:     adaptive("#B65401", "#FFC233"),
+	Comment:    adaptive("#5C6778", "#8E98A7"),
+	Number:     adaptive("#26529C", "#B2CFFF"),
 }
 
 // ThemeLight uses the light palette for both modes.

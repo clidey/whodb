@@ -79,6 +79,24 @@ func isPublicRoute(r *http.Request) bool {
 	return false
 }
 
+// attachSessionContextIfPresent adds the existing session's credentials to the
+// request context when a valid session cookie is present, without requiring
+// one. Used for publicly-allowed operations (e.g. LoginSource) so a resolver
+// can merge previously-authenticated fields (host/username/password) with a
+// partial credentials payload (e.g. just a new Database value).
+func attachSessionContextIfPresent(r *http.Request) *http.Request {
+	sessionToken, ok := sessionTokenFromRequest(r)
+	if !ok {
+		return r
+	}
+	credentials, _, _, err := LookupSession(sessionToken, sessionTTL())
+	if err != nil {
+		return r
+	}
+	ctx := context.WithValue(r.Context(), AuthKey_Source, credentials)
+	return r.WithContext(ctx)
+}
+
 func AuthMiddleware(next http.Handler) http.Handler {
 	var onceHeader sync.Once
 	var onceCookie sync.Once
@@ -114,7 +132,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			// this is to ensure that it can be re-read by the GraphQL layer
 			r.Body = io.NopCloser(bytes.NewBuffer(body))
 			if isAllowed(r, body) {
-				next.ServeHTTP(w, r)
+				next.ServeHTTP(w, attachSessionContextIfPresent(r))
 				return
 			}
 		}

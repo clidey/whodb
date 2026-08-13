@@ -367,7 +367,7 @@ export const SettingsPage: FC = () => {
                                 {t('dataCollectionDetails', {
                                     privacyPolicyLink: <ExternalLink
                                         href={"https://whodb.com/privacy"}
-                                        className={"underline text-blue-500"}>{t('privacyPolicy')}</ExternalLink>
+                                        className={"underline text-primary"}>{t('privacyPolicy')}</ExternalLink>
                                 })}
                                 <br/>
                                 <br/>

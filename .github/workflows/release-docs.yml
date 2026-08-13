@@ -1,0 +1,118 @@
+name: Release Docs
+
+# Builds the docs/ site (via Dory) into a Docker image and publishes it to
+# Docker Hub as clidey/whodb-docs.
+#
+# The next version is calculated by reading existing tags from Docker Hub
+# itself (no version file in this repo) and bumping the minor version.
+# If clidey/whodb-docs has no tags yet, this starts at 0.1.0.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  calculate-version:
+    name: Calculate Version
+    runs-on: ubuntu-latest
+    environment: deploy-docker
+    outputs:
+      version: ${{ steps.calc.outputs.version }}
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            hub.docker.com:443
+
+      - name: Calculate next minor version from Docker Hub tags
+        id: calc
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          # clidey/whodb-docs is a private repo, so the tags API needs auth.
+          LOGIN_PAYLOAD=$(jq -n --arg u "$DOCKERHUB_USERNAME" --arg p "$DOCKERHUB_TOKEN" '{username: $u, password: $p}')
+          JWT=$(curl -s -H "Content-Type: application/json" -X POST \
+            -d "$LOGIN_PAYLOAD" \
+            "https://hub.docker.com/v2/users/login/" | jq -r '.token')
+
+          if [ -z "$JWT" ] || [ "$JWT" = "null" ]; then
+            echo "::error::Docker Hub login failed"
+            exit 1
+          fi
+          echo "::add-mask::${JWT}"
+
+          TAGS=""
+          URL="https://hub.docker.com/v2/repositories/clidey/whodb-docs/tags/?page_size=100"
+          while [ -n "$URL" ] && [ "$URL" != "null" ]; do
+            PAGE=$(curl -s -H "Authorization: Bearer ${JWT}" "$URL")
+            PAGE_TAGS=$(echo "$PAGE" | jq -r '.results[]?.name // empty')
+            TAGS=$(printf '%s\n%s' "$TAGS" "$PAGE_TAGS")
+            URL=$(echo "$PAGE" | jq -r '.next // empty')
+          done
+
+          LATEST=$(echo "$TAGS" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -t. -k1,1n -k2,2n -k3,3n | tail -1)
+
+          if [ -z "$LATEST" ]; then
+            VERSION="0.1.0"
+          else
+            MAJOR=$(echo "$LATEST" | cut -d. -f1)
+            MINOR=$(echo "$LATEST" | cut -d. -f2)
+            VERSION="${MAJOR}.$((MINOR + 1)).0"
+          fi
+
+          echo "Latest tag on Docker Hub: ${LATEST:-none}"
+          echo "Next version: ${VERSION}"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+  build-and-push:
+    name: Build and Push Docs Image
+    needs: [ calculate-version ]
+    runs-on: ubuntu-latest
+    environment: deploy-docker
+    permissions:
+      contents: read
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            auth.docker.io:443
+            github.com:443
+            index.docker.io:443
+            production.cloudflare.docker.com:443
+            production.cloudfront.docker.com:443
+            registry-1.docker.io:443
+            registry.npmjs.org:443
+
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          submodules: false
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push docs image
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
+        with:
+          context: ./docs
+          file: ./docs/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            clidey/whodb-docs:${{ needs.calculate-version.outputs.version }}
+            clidey/whodb-docs:latest
