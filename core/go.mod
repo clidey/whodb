@@ -20,7 +20,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/feature/rds/auth v1.6.34
 	github.com/aws/aws-sdk-go-v2/service/docdb v1.51.1
 	github.com/aws/aws-sdk-go-v2/service/elasticache v1.56.2
-	github.com/aws/aws-sdk-go-v2/service/opensearch v1.75.0
+	github.com/aws/aws-sdk-go-v2/service/opensearch v1.75.3
 	github.com/aws/aws-sdk-go-v2/service/rds v1.123.2
 	github.com/aws/aws-sdk-go-v2/service/sts v1.45.2
 	github.com/aws/smithy-go v1.27.6
@@ -75,8 +75,8 @@ require (
 	github.com/apache/arrow-go/v18 v18.5.2 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.32 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.33 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.33 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.33 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.34 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.34 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/v4a v1.4.34 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.14 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.33 // indirect
