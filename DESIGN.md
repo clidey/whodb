@@ -2,39 +2,51 @@
 name: WhoDB
 description: Lightweight, fast database management with quiet confidence
 colors:
-  brand-blue: "#11518E"
-  brand-blue-light: "#8EBFFB"
-  muted-light: "#f8f8f8"
-  muted-dark: "#1a1a1a"
-  surface-light: "#ffffff"
-  surface-dark: "#0f0f0f"
-  code-bg-light: "#f5f5f5"
-  code-bg-dark: "#252526"
-  foreground-light: "#0f0f0f"
-  foreground-dark: "#fafafa"
-  muted-foreground-light: "#6b7280"
-  muted-foreground-dark: "#9ca3af"
+  background-light: "#FAF5EC"
+  background-dark: "#0E2240"
+  foreground-light: "#0E2240"
+  foreground-dark: "#FAF5EC"
+  card-light: "#FFFFFF"
+  card-dark: "#162B4A"
+  popover-light: "#FFFFFF"
+  popover-dark: "#1D3151"
+  muted-foreground-light: "#5C6778"
+  muted-foreground-dark: "#9BA5B3"
+  primary-light: "#2C6BD4"
+  primary-dark: "#5091FD"
+  accent-light: "#EAF0FB"
+  accent-dark: "#233E69"
+  border-light: "#D9D4CB"
+  border-dark: "#314667"
+  brand-orange: "#F4781C"
+  highlight-yellow: "#FFC233"
+  destructive-light: "#E30117"
+  destructive-dark: "#FF6668"
 typography:
   body:
-    fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "Hanken Grotesk, Inter, ui-sans-serif, system-ui, sans-serif"
     fontSize: "1rem"
     fontWeight: 400
     lineHeight: 1.5
   label:
-    fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "Hanken Grotesk, Inter, ui-sans-serif, system-ui, sans-serif"
     fontSize: "0.875rem"
     fontWeight: 500
     lineHeight: 1.4
   title:
-    fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "Hanken Grotesk, Inter, ui-sans-serif, system-ui, sans-serif"
     fontSize: "1.25rem"
     fontWeight: 600
     lineHeight: 1.3
   headline:
-    fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "Hanken Grotesk, Inter, ui-sans-serif, system-ui, sans-serif"
     fontSize: "1.5rem"
     fontWeight: 600
     lineHeight: 1.25
+  mono:
+    fontFamily: "JetBrains Mono, ui-monospace, SF Mono, Menlo, monospace"
+    fontSize: "0.875rem"
+    fontWeight: 400
 rounded:
   sm: "0.375rem"
   md: "0.5rem"
@@ -48,153 +60,125 @@ spacing:
   xl: "2rem"
 components:
   button-primary:
-    backgroundColor: "{colors.brand-blue}"
-    textColor: "#ffffff"
+    backgroundColor: "{colors.primary-light}"
+    textColor: "#FFFFFF"
     rounded: "{rounded.md}"
     padding: "0.5rem 1rem"
-  button-primary-hover:
-    backgroundColor: "#0d4070"
-    textColor: "#ffffff"
   button-ghost:
     backgroundColor: "transparent"
     textColor: "{colors.foreground-light}"
     rounded: "{rounded.md}"
-    padding: "0.5rem 1rem"
   card:
-    backgroundColor: "{colors.surface-light}"
+    backgroundColor: "{colors.card-light}"
+    textColor: "{colors.foreground-light}"
     rounded: "{rounded.lg}"
     padding: "1rem"
-  input:
-    backgroundColor: "{colors.surface-light}"
-    textColor: "{colors.foreground-light}"
-    rounded: "{rounded.md}"
-    padding: "0.5rem 0.75rem"
 ---
 
 # Design System: WhoDB
 
-## 1. Overview
+## Overview
 
-**Creative North Star: "The Clean Terminal"**
+**Creative North Star: "Quiet Confidence"**
 
-Terminal efficiency meets modern interface. WhoDB's visual system channels the clarity of a well-configured terminal — functional density, monochrome confidence, and zero decorative noise — while maintaining the approachability of a modern product UI. Every pixel serves comprehension or interaction; nothing exists for ornament.
+WhoDB is a database management tool for people who already know what they're doing. The interface doesn't perform competence — it assumes it. Every surface exists to frame data, never to decorate it. All tokens flow from `@clidey/ux`'s Clidey brand kit (imported directly via `@import '@clidey/ux/brand.css'`): Paper/Ink dual-mode, Signal Blue as the product accent, Beacon Yellow as the single sanctioned highlight, Clidey Orange reserved for company-branded moments rather than general product UI.
 
-The system rejects the cluttered chaos of legacy database tools (phpMyAdmin, pgAdmin) and the bloated menu hierarchies of enterprise software (Oracle, IBM tooling). It equally rejects playful SaaS illustration-fests that undermine credibility with infrastructure professionals.
-
-Information is the interface. The design removes itself so data can speak. Controls are discoverable but unobtrusive. State changes are immediate. The system assumes expertise and rewards it.
+The system explicitly rejects:
+- The cluttered, dated aesthetic of legacy database tools (phpMyAdmin, pgAdmin)
+- Corporate-gray enterprise bloat and wizard-driven flows
+- Mixed-hue decoration — more than one accent color competing on the same surface
 
 **Key Characteristics:**
-- Monochrome-dominant with a single blue accent used sparingly
-- Flat surfaces differentiated by tonal layering, not shadows
-- Inter variable font at multiple weights for clear hierarchy without font pairing
-- Configurable density (compact / comfortable / spacious spacing)
-- Dark and light modes as equal citizens — neither is an afterthought
+- Flat surfaces by default; depth comes from a lightness step between surfaces, not shadow or blur
+- Dual theme: Paper (light) and Ink (dark), both first-class
+- Hanken Grotesk carries the UI; Bricolage Grotesque is self-hosted and available (`brand-fonts.css`) but not currently applied anywhere in the product UI — treat it as reserved for a future display-heading use, not an active token
+- A user-facing density system (Settings) swaps font-size, radius, and spacing scales between small/medium/large and none/small/medium/large tiers respectively — the values below are the medium/default tier, not the only valid values
+- Token-driven styling via CSS custom properties from `@clidey/ux` — extend, don't override component internals with `!important`
 
-## 2. Colors
+## Colors
 
-A restrained palette: tinted neutrals plus one accent at ≤10% surface coverage.
+The palette is Clidey's brand kit: Paper and Ink as the two surface worlds, Signal Blue as the product accent (lifts one lightness step in dark mode), Beacon Yellow as the single highlight, Clidey Orange reserved for company-branded emphasis.
 
 ### Primary
-- **Steady Blue** (#11518E / light mode): The brand voice. Used for primary actions, active states, and brand identity marks. Appears in the logo, selected navigation items, and CTAs. Never used as a background fill on large surfaces.
-- **Lifted Blue** (#8EBFFB / dark mode): The dark-mode complement. Same role, lighter value for contrast on dark surfaces.
+- **Signal Blue** (`#2C6BD4` light / `#5091FD` dark): Interactive affordances — buttons, links, focus rings, active states.
 
-### Neutral
-- **Ink** (#0f0f0f / light mode foreground): Primary text and high-emphasis elements.
-- **Ink Inverted** (#fafafa / dark mode foreground): Primary text on dark surfaces.
-- **Muted Foreground** (#6b7280 light / #9ca3af dark): Secondary text, labels, placeholders.
-- **Surface** (#ffffff light / #0f0f0f dark): Primary background.
-- **Muted Surface** (#f8f8f8 light / #1a1a1a dark): Elevated cards, sidebar, secondary surfaces.
-- **Code Surface** (#f5f5f5 light / #252526 dark): Editor backgrounds, code blocks.
-- **Backdrop** (oklch(0 0 0 / 50%) light / oklch(0 0 0 / 60%) dark): Modal overlays.
+### Secondary
+- **Clidey Orange** (`#F4781C`): Company-branded emphasis only, not general product UI. One accent per surface — don't mix with Signal Blue on the same card or banner.
 
-### Named Rules
-**The 10% Rule.** The primary blue is used on ≤10% of any given screen. Its rarity gives it authority. When everything is blue, nothing is.
+### Surfaces
+- **Background** (`#FAF5EC` Paper / `#0E2240` Ink): Page canvas, flat at rest.
+- **Card** (`#FFFFFF` light / `#162B4A` dark): One lightness step up from background.
+- **Popover** (`#FFFFFF` light / `#1D3151` dark): Menus, dropdowns, tooltips.
 
-## 3. Typography
+### Borders
+- **Light mode:** `#D9D4CB`
+- **Dark mode:** `#314667`
 
-**Body Font:** Inter (variable, 100–900 weight, with optical sizing)
-**Fallback Stack:** ui-sans-serif, system-ui, sans-serif
-
-**Character:** One family, many weights. Inter's optical sizing and weight range provide the entire hierarchy without font-pairing risk. The variable font loads a single file covering all weights, keeping resource overhead minimal.
-
-### Hierarchy
-- **Headline** (600, 1.5rem / 24px, line-height 1.25): Page titles, section headers.
-- **Title** (600, 1.25rem / 20px, line-height 1.3): Card titles, dialog headers, sidebar section labels.
-- **Body** (400, 1rem / 16px, line-height 1.5): Default text. Max line length 65–75ch where prose appears.
-- **Label** (500, 0.875rem / 14px, line-height 1.4): Form labels, table headers, metadata.
-- **Caption** (400, 0.75rem / 12px, line-height 1.4): Timestamps, badge text, secondary metadata.
+### Text
+- **Foreground** (`#0E2240` light / `#FAF5EC` dark): Primary body text.
+- **Muted Foreground** (`#5C6778` light / `#9BA5B3` dark): Secondary text, labels, descriptions. Always verify contrast against the actual surface the text sits on (`--card`, not just `--background`) — the dark-mode value was raised earlier after measuring under WCAG AA against `--card`.
 
 ### Named Rules
-**The Weight-Not-Size Rule.** Hierarchy within a section is conveyed through weight changes (400 → 500 → 600) before reaching for size changes. Size jumps are reserved for structural boundaries (page title vs card content), not inline emphasis.
+**The One-Accent Rule.** A single surface uses exactly one accent hue at a time. Blue leads product UI; orange leads company-branded moments. They do not mix on the same card or banner.
 
-## 4. Elevation
+## Typography
 
-Flat by default. Depth is conveyed through tonal layering (surface → muted surface → code surface) and 1px borders, not shadows. Shadows appear only as a response to state.
+**Primary Font:** Hanken Grotesk (with Inter, then system sans-serif fallback)
+**Mono Font:** JetBrains Mono, ui-monospace, SF Mono, Menlo, monospace
 
-### Shadow Vocabulary
-- **Highlight** (`shadow-2xl`): Transient attention signal on newly-created or freshly-navigated-to cards. Fades after 3 seconds.
-- **Dropdown / Popover** (system-provided by @clidey/ux): Only on floating elements that escape document flow.
-- **Modal backdrop** (`oklch(0 0 0 / 50-60%)`): Overlay dim, not a shadow.
+**Character:** Single active UI typeface. Bricolage Grotesque is self-hosted alongside Hanken Grotesk but not wired into any component today — don't assume it renders anywhere until it's actually applied to an element.
+
+### Hierarchy (medium density tier — the default)
+- **3xl** (600, 1.875rem/30px): Rare hero text.
+- **2xl** (600, 1.5rem/24px): Headline.
+- **xl** (600, 1.25rem/20px): Title/section headers.
+- **lg** (500, 1.125rem/18px): Card titles, dialog headers.
+- **base** (400, 1rem/16px): Primary body text.
+- **sm** (400, 0.875rem/14px): Secondary text, labels.
+- **xs** (400, 0.75rem/12px): Metadata, captions.
 
 ### Named Rules
-**The Flat-By-Default Rule.** Surfaces are flat at rest. The only shadows in the system are transient state indicators (highlight pulse) or floating-layer signals (popovers, modals). No ambient shadows on cards, no resting-state elevation.
+**The Density-Tier Rule.** Font sizes, radius, and spacing are all user-adjustable via Settings (small/medium/large tiers). Don't hardcode a pixel value where a `var(--font-size-*)`/`var(--radius-*)`/`var(--spacing-*)` token exists — hardcoding breaks the density switch for that element.
 
-## 5. Components
+## Layout
 
-All interactive components are sourced from `@clidey/ux` (a shadcn/ui-derived library). The system extends them through Tailwind classes and CSS variables — never by forking the library.
+Spacing follows a `--spacing-{xs,sm,md,lg,xl,2xl,3xl}` scale, adjustable via the same density system (compact/comfortable/spacious tiers; comfortable is the default: 8/12/16/24/32/40/48px).
+
+## Elevation & Depth
+
+Flat by default — no shadow at rest. Depth is a lightness step between `--background` → `--card` → `--popover`, not an elevation effect.
+
+## Shapes
+
+Radius follows a `--radius-{sm,md,lg,xl}` scale derived from a single `--radius` primitive (`calc()`-based: sm = radius−4px, md = radius−2px, lg = radius, xl = radius+4px), also swappable via the density system. Medium/default: `--radius: 0.625rem` (10px), giving sm 6px / md 8px / lg 10px / xl 14px.
+
+## Components
+
+Interactive components are sourced from `@clidey/ux`. The app extends them through CSS custom properties in `frontend/src/index.css` and the density-mapping variables in `theme-customization.ts` — never by overriding component internals with `!important`.
 
 ### Buttons
-- **Shape:** Medium radius (0.5rem / 8px)
-- **Primary:** Steady Blue background, white text, 0.5rem vertical / 1rem horizontal padding
-- **Hover:** Darkened blue (#0d4070), no transform, no shadow
-- **Ghost:** Transparent background, foreground text, same radius. Hover reveals muted-surface tint.
-- **Character:** Restrained and precise. No gradients, no elevation on hover. State changes are color shifts only.
+- **Shape:** `{rounded.md}`
+- **Primary:** Signal Blue background, contrast-checked text.
+- **Ghost:** Transparent background, foreground text.
 
 ### Cards
-- **Corner Style:** Gently curved (0.625rem / 10px radius)
-- **Background:** Surface color (white/dark)
-- **Border:** 1px border in muted tone (provided by @clidey/ux defaults)
-- **Shadow:** None at rest. `shadow-2xl` on transient highlight only (3s fade).
-- **Internal Padding:** 1rem (py-4 px-4)
-- **Expandable Cards:** Click-to-expand via Sheet (right drawer). Fixed 240px min-width, 200px min-height.
+- **Corner Style:** `{rounded.lg}`
+- **Background:** `var(--card)`, flat, no shadow at rest.
 
-### Inputs / Fields
-- **Style:** Surface background, 1px border, medium radius
-- **Focus:** Brand-blue ring (provided by @clidey/ux focus-visible system)
-- **Code Editor:** Dedicated code-surface background (#f5f5f5 light / #252526 dark) using CodeMirror
+### Icon tiles
+- **Pairing rule:** an icon tile's background token and its icon/text color token must be from different roles (e.g. `bg-icon` + `text-icon-foreground`, not `bg-icon` + `text-primary`) — a prior bug painted blue icon glyphs on a blue tile background because both referenced the same hue family. Always check the foreground/background pairing when introducing a new tinted tile.
 
-### Navigation (Sidebar)
-- **Style:** Collapsible sidebar via `@clidey/ux` SidebarProvider
-- **Active State:** Brand-blue text/icon, muted-surface background tint
-- **Hover:** Muted-surface background tint
-- **Sections:** Separated by `SidebarSeparator` (1px muted line)
-- **Trigger:** Hamburger toggle, collapses to icon-only rail
-
-### Data Table
-- **The signature component.** Spreadsheet-like data grid with virtualization for large datasets.
-- **Header:** Label weight (500), background tint for visual separation
-- **Rows:** Full-width, minimal vertical padding for density. Hover highlights row.
-- **Search Highlight:** Background transition (0.3s ease-in-out) with 4px radius
-
-## 6. Do's and Don'ts
+## Do's and Don'ts
 
 ### Do:
-- **Do** use Inter at multiple weights (400, 500, 600) to create hierarchy without introducing additional typefaces.
-- **Do** differentiate surfaces with tonal steps (surface → muted → code) rather than shadows.
-- **Do** keep the brand blue to ≤10% of any screen. Active nav items, primary CTAs, brand marks only.
-- **Do** provide full keyboard navigation for all interactive elements (via @clidey/ux defaults and custom shortcut system).
-- **Do** respect the configurable density system (compact/comfortable/spacious) — spacing variables, not hardcoded values.
-- **Do** test both light and dark mode as equal citizens. Neither is derived from the other.
+- **Do** use flat, token-driven backgrounds for all static surfaces.
+- **Do** use `var(--font-size-*)`, `var(--radius-*)`, and `var(--spacing-*)` tokens rather than hardcoded values, so the density-customization system keeps working.
+- **Do** respect both themes equally — verify contrast against the actual surface text sits on.
+- **Do** extend `@clidey/ux` via CSS custom properties, never by overriding component styles with `!important`.
 
 ### Don't:
-- **Don't** add ambient shadows to resting cards or surfaces. Flat-by-default is the system.
-- **Don't** use gradient fills on buttons, backgrounds, or text. Solid, single-tone fills only.
-- **Don't** add illustrations, mascots, or decorative graphics. The data IS the content.
-- **Don't** introduce additional typefaces. Inter handles the entire hierarchy.
-- **Don't** create cluttered toolbars with dozens of visible buttons (phpMyAdmin pattern). Progressive disclosure via command palette and keyboard shortcuts.
-- **Don't** gate features behind wizard flows or multi-step modals (enterprise bloat pattern). Surface power directly.
-- **Don't** use playful rounded corners (≥1rem on small elements), pastel accent colors, or illustration-heavy empty states. This is infrastructure tooling.
-- **Don't** add loading skeletons or spinners where instant rendering is achievable. Speed is the feature.
-- **Don't** apply `backdrop-filter` or translucent backgrounds to static surfaces (cards, buttons, inputs, badges). Reserve glassmorphism for floating layers only (command palette, sheets, popovers).
-- **Don't** override `@clidey/ux` component styles with `!important`. Extend via CSS custom properties and the token system.
-- **Don't** use hardcoded color values (`bg-white`, `dark:bg-gray-800`). Use semantic tokens (`bg-popover`, `bg-card`, `border-border`).
+- **Don't** mix Signal Blue and Clidey Orange on the same surface.
+- **Don't** add drop shadows to cards or containers at rest.
+- **Don't** assume Bricolage Grotesque renders anywhere — it's self-hosted but unused; Hanken Grotesk is the only active UI typeface.
+- **Don't** pair a tinted tile's background and foreground from the same color role (see the icon-tile bug above).
+- **Don't** use hardcoded color values (`bg-white`, `dark:bg-gray-800`). Use semantic tokens.
