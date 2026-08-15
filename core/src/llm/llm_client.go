@@ -30,6 +30,7 @@ func init() {
 	providers.RegisterProvider(providers.NewGeminiProvider())
 	providers.RegisterProvider(providers.NewOllamaProvider())
 	providers.RegisterProvider(providers.NewLMStudioProvider())
+	providers.RegisterProvider(providers.NewOrcaRouterProvider())
 
 	// Wire BAML config resolution to use the provider registry
 	bamlconfig.RegisterBAMLConfigResolver(providers.GetBAMLConfig)
@@ -72,6 +73,8 @@ func getEndpointForProvider(providerType providers.LLMType) string {
 		return env.GetOllamaEndpoint()
 	case providers.LMStudio_LLMType:
 		return env.GetLMStudioEndpoint()
+	case providers.OrcaRouter_LLMType:
+		return env.GetOrcaRouterEndpoint()
 	default:
 		// For generic providers, look up endpoint from environment configuration
 		for _, provider := range env.GenericProviders {

@@ -270,6 +270,87 @@ func TestGetBAMLConfig_ErrorsForUnregisteredProvider(t *testing.T) {
 	}
 }
 
+func TestOrcaRouterProvider_CreateBAMLClient_UsesDefaultEndpoint(t *testing.T) {
+	provider := NewOrcaRouterProvider()
+	config := &ProviderConfig{APIKey: "sk-orca-test"}
+
+	clientType, opts, err := provider.CreateBAMLClient(config, "openai/gpt-5.5")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if clientType != "openai-generic" {
+		t.Fatalf("expected client type 'openai-generic', got %q", clientType)
+	}
+	if opts["base_url"] != provider.GetDefaultEndpoint() {
+		t.Fatalf("expected default endpoint %q, got %v", provider.GetDefaultEndpoint(), opts["base_url"])
+	}
+	if opts["api_key"] != "sk-orca-test" {
+		t.Fatalf("expected api_key, got %v", opts["api_key"])
+	}
+	if opts["model"] != "openai/gpt-5.5" {
+		t.Fatalf("expected model, got %v", opts["model"])
+	}
+	if opts["default_role"] != "user" {
+		t.Fatalf("expected default_role 'user', got %v", opts["default_role"])
+	}
+	if _, ok := opts["request_timeout_ms"]; ok {
+		t.Fatalf("did not expect request_timeout_ms in OrcaRouter opts")
+	}
+}
+
+func TestOrcaRouterProvider_GetType_AndDefaultEndpoint(t *testing.T) {
+	provider := NewOrcaRouterProvider()
+	if provider.GetType() != OrcaRouter_LLMType {
+		t.Fatalf("expected provider type %q, got %q", OrcaRouter_LLMType, provider.GetType())
+	}
+	if provider.GetDefaultEndpoint() != "https://api.orcarouter.ai/v1" {
+		t.Fatalf("expected default endpoint https://api.orcarouter.ai/v1, got %q", provider.GetDefaultEndpoint())
+	}
+	if provider.GetProtocol() != "openai" {
+		t.Fatalf("expected protocol 'openai', got %q", provider.GetProtocol())
+	}
+}
+
+func TestOrcaRouterProvider_GetSupportedModels_RequiresAPIKey(t *testing.T) {
+	provider := NewOrcaRouterProvider()
+
+	if _, err := provider.GetSupportedModels(&ProviderConfig{}); err == nil {
+		t.Fatalf("expected error when API key is missing")
+	}
+}
+
+func TestOrcaRouterProvider_GetSupportedModels_FetchesFromGateway(t *testing.T) {
+	provider := NewOrcaRouterProvider()
+	withTestHTTPClient(t, func(r *http.Request) (*http.Response, error) {
+		if r.Method != http.MethodGet {
+			t.Fatalf("unexpected method %s", r.Method)
+		}
+		if r.URL.String() != "https://api.orcarouter.ai/v1/models" {
+			t.Fatalf("unexpected URL %s", r.URL.String())
+		}
+		if r.Header.Get("Authorization") != "Bearer sk-orca-test" {
+			t.Fatalf("expected bearer auth header, got %q", r.Header.Get("Authorization"))
+		}
+		return httpResponse(http.StatusOK, `{
+			"data": [
+				{"id": "orcarouter/auto"},
+				{"id": "openai/gpt-5.5"},
+				{"id": "anthropic/claude-sonnet-4.6"},
+				{"id": "deepseek/deepseek-v4-pro"}
+			]
+		}`), nil
+	})
+
+	models, err := provider.GetSupportedModels(&ProviderConfig{APIKey: "sk-orca-test"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(models) != 4 || models[0] != "orcarouter/auto" || models[3] != "deepseek/deepseek-v4-pro" {
+		t.Fatalf("expected gateway models, got %#v", models)
+	}
+}
+
 // --- GenericProvider tests (proving default_role/request_timeout_ms are set) ---
 
 func TestGenericProvider_CreateBAMLClient_IncludesDefaults(t *testing.T) {

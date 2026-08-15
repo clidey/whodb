@@ -31,6 +31,7 @@ const providerCatalog: AIProviderCatalogEntry[] = [
   { id: "Gemini", label: "Gemini API / AI Studio (API key)", iconKey: "Gemini", status: "available", defaultEndpoint: "https://generativelanguage.googleapis.com/v1beta/openai/" },
   { id: "Ollama", label: "Ollama", iconKey: "Ollama", status: "available", defaultEndpoint: "http://localhost:11434/api" },
   { id: "LMStudio", label: "LM Studio", iconKey: "LMStudio", status: "available", defaultEndpoint: "http://localhost:1234/v1" },
+  { id: "OrcaRouter", label: "OrcaRouter", iconKey: "OrcaRouter", status: "available", defaultEndpoint: "https://api.orcarouter.ai/v1" },
 ];
 
 /** Returns AI provider catalog entries visible in this edition. */

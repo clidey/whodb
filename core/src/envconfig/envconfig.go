@@ -300,6 +300,20 @@ func GetConfiguredChatProviders() []env.ChatProvider {
 		})
 	}
 
+	if len(env.OrcaRouterAPIKey) > 0 {
+		name := env.OrcaRouterName
+		if name == "" {
+			name = "OrcaRouter"
+		}
+		providers = append(providers, env.ChatProvider{
+			Type:       "OrcaRouter",
+			Name:       name,
+			APIKey:     env.OrcaRouterAPIKey,
+			Endpoint:   env.GetOrcaRouterEndpoint(),
+			ProviderId: "orcarouter-1",
+		})
+	}
+
 	// Flag if legacy OpenAI-Compatible env vars are still set
 	if os.Getenv("WHODB_OPENAI_COMPATIBLE_ENDPOINT") != "" || os.Getenv("WHODB_OPENAI_COMPATIBLE_API_KEY") != "" || os.Getenv("WHODB_CUSTOM_MODELS") != "" {
 		migrate.DeprecatedOpenAICompatibleEnv = true

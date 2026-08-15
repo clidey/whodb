@@ -69,6 +69,10 @@ var LMStudioBaseURL = os.Getenv("WHODB_LMSTUDIO_BASE_URL")
 var LMStudioAPIKey = os.Getenv("WHODB_LMSTUDIO_API_KEY")
 var LMStudioName = os.Getenv("WHODB_LMSTUDIO_NAME")
 
+var OrcaRouterAPIKey = os.Getenv("WHODB_ORCAROUTER_API_KEY")
+var OrcaRouterEndpoint = os.Getenv("WHODB_ORCAROUTER_ENDPOINT")
+var OrcaRouterName = os.Getenv("WHODB_ORCAROUTER_NAME")
+
 var AllowedOrigins = common.FilterList(strings.Split(os.Getenv("WHODB_ALLOWED_ORIGINS"), ","), func(item string) bool {
 	return item != ""
 })
@@ -230,6 +234,15 @@ func GetLMStudioEndpoint() string {
 		return common.ResolveLocalURL(LMStudioBaseURL)
 	}
 	return common.ResolveLocalURL("http://localhost:1234/v1")
+}
+
+// GetOrcaRouterEndpoint returns the configured OrcaRouter gateway endpoint, or
+// the default https://api.orcarouter.ai/v1 if no override is set.
+func GetOrcaRouterEndpoint() string {
+	if OrcaRouterEndpoint != "" {
+		return OrcaRouterEndpoint
+	}
+	return "https://api.orcarouter.ai/v1"
 }
 
 func getMaxPageSize() int {
