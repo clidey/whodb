@@ -30,6 +30,7 @@ en_US:
   messageCount: "{count} messages"
   messageCount_one: "{count} message"
   noMessages: No messages yet
+  liveInAnotherTab: Live in another tab
   confirmExecutionDescription: This operation will modify your database. Review and confirm to proceed.
   showQuery: Show Query
   hideQuery: Hide Query

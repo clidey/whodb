@@ -217,11 +217,12 @@ export const reduxStore = configureStore({
 /** Injects an additional reducer slice into the store. Called by EE at boot to add EE-specific state. */
 export function registerReducer(key: string, reducer: Reducer): void {
   if (key in eeReducerMap) return;
-  // Persist EE reducers (like platform)
+  // Persist dynamically registered reducers and start their rehydration cycle.
   const persistedReducer = persistReducer({ key, storage }, reducer);
   eeReducerMap[key] = persistedReducer;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   reduxStore.replaceReducer(buildRootReducer() as any);
+  reduxStorePersistor.persist();
 }
 
 export const reduxStorePersistor = persistStore(reduxStore);
