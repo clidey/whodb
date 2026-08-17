@@ -459,6 +459,16 @@ func buildPlatformGenericWrite(session *platformToolSession, input PlatformGener
 	if err != nil {
 		return platformapi.GenericWriteSpec{}, nil, err
 	}
+	if spec.Resource == "ontology" && spec.Action == "create" {
+		storageMode, ok := payload["storageMode"].(string)
+		if !ok || strings.TrimSpace(storageMode) == "" {
+			return platformapi.GenericWriteSpec{}, nil, fmt.Errorf("payload.storageMode is required for ontology create")
+		}
+		if err := platformapi.ValidateOntologyStorageMode(storageMode); err != nil {
+			return platformapi.GenericWriteSpec{}, nil, err
+		}
+		payload["storageMode"] = strings.TrimSpace(storageMode)
+	}
 	// App file mutations historically receive the app id through the generic
 	// target id. Normalize it to the hosted payload field before validation.
 	if spec.Resource == "app" && (spec.Action == "upsert_file" || spec.Action == "delete_file") {

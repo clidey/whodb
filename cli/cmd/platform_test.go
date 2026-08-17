@@ -500,6 +500,9 @@ func TestBuildOntologyCreatePayloadDefaultsRequiredPropertyFields(t *testing.T) 
 		t.Fatalf("properties = %#v, want one property", payload["properties"])
 	}
 	property := properties[0]
+	if payload["storageMode"] != platform.DefaultOntologyStorageMode {
+		t.Fatalf("storageMode = %#v, want %q", payload["storageMode"], platform.DefaultOntologyStorageMode)
+	}
 	if property["visibility"] != "normal" || property["isSearchable"] != true || property["isSortable"] != true || property["isEditOnly"] != false {
 		t.Fatalf("property defaults = %#v, want normal/true/true/false", property)
 	}

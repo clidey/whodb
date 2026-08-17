@@ -539,34 +539,56 @@ mutation CLIPlatformUploadProjectFile($projectId: ID!, $folderId: ID, $file: Upl
 		return nil, err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.host+defaultPath, &body)
-	if err != nil {
-		return nil, err
+	contentType := writer.FormDataContentType()
+	accessToken := c.accessToken
+	if c.tokenSource != nil {
+		accessToken, err = c.tokenSource.Token(ctx)
+		if err != nil {
+			return nil, err
+		}
 	}
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-	req.Header.Set("Accept", "application/json")
-	if c.accessToken != "" {
-		req.Header.Set("Authorization", "Bearer "+c.accessToken)
-	}
-	if c.workspaceOrgID != "" {
-		req.Header.Set(workspaceOrgHeader, c.workspaceOrgID)
-	}
-	if c.workspaceProjectID != "" {
-		req.Header.Set(workspaceProjectHeader, c.workspaceProjectID)
-	}
+	var raw []byte
+	var status string
+	var statusCode int
+	for attempt := 0; attempt < 2; attempt++ {
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.host+defaultPath, bytes.NewReader(body.Bytes()))
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Set("Content-Type", contentType)
+		req.Header.Set("Accept", "application/json")
+		if accessToken != "" {
+			req.Header.Set("Authorization", "Bearer "+accessToken)
+		}
+		if c.workspaceOrgID != "" {
+			req.Header.Set(workspaceOrgHeader, c.workspaceOrgID)
+		}
+		if c.workspaceProjectID != "" {
+			req.Header.Set(workspaceProjectHeader, c.workspaceProjectID)
+		}
 
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return nil, err
+		resp, err := c.httpClient.Do(req)
+		if err != nil {
+			return nil, err
+		}
+		status = resp.Status
+		statusCode = resp.StatusCode
+		raw, err = io.ReadAll(io.LimitReader(resp.Body, 4<<20))
+		resp.Body.Close()
+		if err != nil {
+			return nil, err
+		}
+		if statusCode != http.StatusUnauthorized || c.tokenSource == nil || attempt == 1 {
+			break
+		}
+		c.tokenSource.Invalidate()
+		accessToken, err = c.tokenSource.Token(ctx)
+		if err != nil {
+			return nil, err
+		}
 	}
-	defer resp.Body.Close()
-
-	raw, err := io.ReadAll(io.LimitReader(resp.Body, 4<<20))
-	if err != nil {
-		return nil, err
-	}
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("platform request failed: %s: %s", resp.Status, strings.TrimSpace(string(raw)))
+	if statusCode < 200 || statusCode >= 300 {
+		return nil, fmt.Errorf("platform request failed: %s: %s", status, strings.TrimSpace(string(raw)))
 	}
 	var envelope struct {
 		Data struct {
