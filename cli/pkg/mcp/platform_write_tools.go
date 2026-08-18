@@ -425,7 +425,7 @@ func recordInputPayload(values map[string]string) []map[string]any {
 		if key == "" {
 			continue
 		}
-		out = append(out, map[string]any{"key": key, "value": values[key]})
+		out = append(out, map[string]any{"Key": key, "Value": values[key]})
 	}
 	return out
 }

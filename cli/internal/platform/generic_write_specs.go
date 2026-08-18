@@ -256,7 +256,7 @@ var PayloadShapes = map[string]PayloadShape{
 		Fields: []PayloadField{
 			{Name: "values", Type: "[RecordInput]", Required: true, Description: "Record values as key/value entries"},
 		},
-		Examples: []string{`{"values":[{"key":"id","value":"1"},{"key":"name","value":"Ada"}]}`},
+		Examples: []string{`{"values":[{"Key":"id","Value":"1"},{"Key":"name","Value":"Ada"}]}`},
 	},
 	"action:update_record:ontology": {
 		Key: "action:update_record:ontology", Resource: "ontology", Action: "update_record", Description: "Update an ontology row. id becomes entityId and projectId is injected.",
@@ -264,14 +264,14 @@ var PayloadShapes = map[string]PayloadShape{
 			{Name: "values", Type: "[RecordInput]", Required: true, Description: "Matcher and replacement values as key/value entries"},
 			{Name: "updatedColumns", Type: "[string]", Required: true, Description: "Ontology properties to update"},
 		},
-		Examples: []string{`{"values":[{"key":"id","value":"1"},{"key":"name","value":"Grace"}],"updatedColumns":["name"]}`},
+		Examples: []string{`{"values":[{"Key":"id","Value":"1"},{"Key":"name","Value":"Grace"}],"updatedColumns":["name"]}`},
 	},
 	"action:delete_record:ontology": {
 		Key: "action:delete_record:ontology", Resource: "ontology", Action: "delete_record", Description: "Delete an ontology row. id becomes entityId and projectId is injected.",
 		Fields: []PayloadField{
 			{Name: "values", Type: "[RecordInput]", Required: true, Description: "Matcher values, usually primary key values"},
 		},
-		Examples: []string{`{"values":[{"key":"id","value":"1"}]}`},
+		Examples: []string{`{"values":[{"Key":"id","Value":"1"}]}`},
 	},
 	"action:run:transform": {
 		Key: "action:run:transform", Resource: "transform", Action: "run", Description: "Run an existing transform. id and projectId are injected.",

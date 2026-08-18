@@ -2801,7 +2801,7 @@ func parseOntologyRecordValues(values []string) ([]map[string]any, error) {
 		if !ok || key == "" {
 			return nil, fmt.Errorf("--value must be key=value")
 		}
-		records = append(records, map[string]any{"key": key, "value": strings.TrimSpace(recordValue)})
+		records = append(records, map[string]any{"Key": key, "Value": strings.TrimSpace(recordValue)})
 	}
 	return records, nil
 }

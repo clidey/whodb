@@ -396,7 +396,7 @@ func TestBuildGenericResourceVariablesOntologyRecordUsesEntityID(t *testing.T) {
 		Action:   "add_record",
 		ID:       "ontology-1",
 	}, map[string]any{
-		"values": []map[string]any{{"key": "id", "value": "1"}},
+		"values": []map[string]any{{"Key": "id", "Value": "1"}},
 	})
 	if err != nil {
 		t.Fatalf("buildGenericResourceVariables() error = %v", err)
@@ -430,7 +430,7 @@ func TestParseOntologyRecordValues(t *testing.T) {
 	if err != nil {
 		t.Fatalf("parseOntologyRecordValues() error = %v", err)
 	}
-	if len(values) != 2 || values[0]["key"] != "id" || values[0]["value"] != "1" || values[1]["key"] != "name" || values[1]["value"] != "Ada" {
+	if len(values) != 2 || values[0]["Key"] != "id" || values[0]["Value"] != "1" || values[1]["Key"] != "name" || values[1]["Value"] != "Ada" {
 		t.Fatalf("values = %#v, want record inputs", values)
 	}
 	if _, err := parseOntologyRecordValues([]string{"broken"}); err == nil {
