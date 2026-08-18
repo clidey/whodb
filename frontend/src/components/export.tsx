@@ -33,6 +33,7 @@ import type {FC} from "react";
 import { useCallback, useEffect, useMemo, useState} from "react";
 import {useExportToCSV} from "./hooks";
 import {ShareIcon} from "./heroicons";
+import {PlatformFunnelLink} from "./platform-funnel-link";
 import {VisuallyHidden} from "@radix-ui/react-visually-hidden";
 import {useTranslation} from "@/hooks/use-translation";
 import {useSourceContract} from "@/hooks/useSourceContract";
@@ -152,6 +153,7 @@ export const Export: FC<IExportProps> = ({
                                     </>
                                 )}
                             </ul>
+                            <PlatformFunnelLink trigger="export" label={t('platformDatasetLink')} className="mt-2" />
                         </div>
                         <div className="flex flex-row gap-sm">
                             <Button

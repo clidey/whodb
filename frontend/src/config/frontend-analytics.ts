@@ -65,6 +65,14 @@ export const trackOptionChanged = (field: string, selected: string | boolean | n
     });
 };
 
+/** Emits a WhoDB Platform funnel event tagged with the entry point that triggered it. */
+export const trackPlatformFunnel = (event: AnalyticsEventName, trigger: string, properties?: FrontendAnalyticsProperties): void => {
+    trackFrontendIntent(event, {
+        trigger,
+        ...properties,
+    });
+};
+
 /** Returns a coarse count bucket for analytics properties. */
 export const countBucket = (count: number): string => {
     if (!Number.isFinite(count) || count <= 0) return 'zero';

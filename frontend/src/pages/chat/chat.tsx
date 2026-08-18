@@ -71,6 +71,7 @@ import {InternalPage} from "../../components/page";
 import {StorageUnitTable} from "../../components/table";
 import {copyToClipboard} from "../../services/clipboard";
 import {MessageCopyAction} from "../../components/message-copy-action";
+import {PlatformFunnelLink} from "../../components/platform-funnel-link";
 import {extensions, featureFlags} from "../../config/features";
 import {InternalRoutes} from "../../config/routes";
 import {reduxStorePersistor} from "../../store";
@@ -1178,9 +1179,17 @@ export const ChatPage: FC = () => {
                                                     </div>
                                                 </div>
                                             }
+                                            const isChartFallback = featureFlags.platformFunnel && !featureFlags.dataVisualization && (chat.Type === "sql:pie-chart" || chat.Type === "sql:line-chart");
                                             return <div key={`chat-${chat.id}`} className="flex gap-lg w-full max-w-full min-w-0 pt-4 relative" data-testid="table-message">
                                                 {!chat.isUserInput && chats[i-1]?.isUserInput && (extensions.MetaIcon ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />)}
-                                                <TablePreview type={chat.Type} text={chat.Text} data={chat.Result} containerWidth={containerWidth} />
+                                                {isChartFallback ? (
+                                                    <div className="flex flex-col gap-1 w-full max-w-full min-w-0">
+                                                        <TablePreview type={chat.Type} text={chat.Text} data={chat.Result} containerWidth={containerWidth} />
+                                                        <PlatformFunnelLink trigger="chat_chart" label={t('platformChartLink')} />
+                                                    </div>
+                                                ) : (
+                                                    <TablePreview type={chat.Type} text={chat.Text} data={chat.Result} containerWidth={containerWidth} />
+                                                )}
                                             </div>
                                         })
                                     }
@@ -1194,7 +1203,10 @@ export const ChatPage: FC = () => {
                 </div>
                 {
                     (models.length === 0 || (!modelAvailable && !currentModel)) &&
-                    <EmptyState title={t('noModelTitle')} description={t('noModelDescription')} icon={<SparklesIcon className="w-16 h-16" data-testid="empty-state-sparkles-icon" />} />
+                    <>
+                        <EmptyState title={t('noModelTitle')} description={t('noModelDescription')} icon={<SparklesIcon className="w-16 h-16" data-testid="empty-state-sparkles-icon" />} />
+                        <PlatformFunnelLink trigger="chat_no_model" label={t('platformManagedAiLink')} className="self-center" />
+                    </>
                 }
                 <div className={classNames("flex justify-between items-center gap-2", {
                     "opacity-80": disableChat,

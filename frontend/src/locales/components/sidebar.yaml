@@ -30,6 +30,11 @@ en_US:
   platformOpenInPlatform: Import in Platform
   platformExplainerTitle: WhoDB Platform
   platformExplainerIntro: "WhoDB Platform is the hosted data layer that builds on the connections you already have — turn a database login into managed sources, shareable datasets, and a workspace your whole team can use."
+  platformExplainerSourceIntro: "{sourceType} is available on WhoDB Platform — connect it there as a managed source, alongside shareable datasets and a workspace your whole team can use."
+  platformConnectSource: "Connect {sourceType}"
+  platformBackupNudgeText: "Your saved connections only live in this browser. Keep a copy on WhoDB Platform so they're never lost."
+  platformBackupNudgeAction: Keep them safe
+  platformBackupNudgeDismiss: Dismiss
   platformSlideManagedTitle: Managed sources
   platformSlideManagedCaption: "Bring a connection across and the platform manages credentials and access for you."
   platformSlideDatasetsTitle: Shareable datasets

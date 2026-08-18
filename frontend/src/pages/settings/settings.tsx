@@ -21,7 +21,7 @@ import {InternalPage} from "../../components/page";
 import {InternalRoutes, type IInternalRoute} from "../../config/routes";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {SettingsActions} from "../../store/settings";
-import {getAppName} from "@/config/features";
+import {featureFlags, getAppName} from "@/config/features";
 import {useTranslation} from "@/hooks/use-translation";
 import {
     Input,
@@ -43,6 +43,7 @@ import {type SupportedLanguage, SUPPORTED_LANGUAGES} from "@/utils/languages";
 import {ExternalLink} from "../../utils/external-links";
 import {usePageSize} from "../../hooks/use-page-size";
 import {AwsProvidersSection} from "../../components/aws";
+import {PlatformFunnelLink} from "../../components/platform-funnel-link";
 import {AzureProvidersSection} from "../../components/azure";
 import {GcpProvidersSection} from "../../components/gcp";
 import {getComponent} from "../../config/component-registry";
@@ -164,7 +165,7 @@ export const SettingsPage: FC = () => {
         });
     }, []);
 
-    const hasIntegrations = cloudProvidersEnabled || !!getComponent('bridge-driver-panel');
+    const hasIntegrations = cloudProvidersEnabled || !!getComponent('bridge-driver-panel') || featureFlags.platformFunnel;
 
     return (
         <InternalPage routes={[InternalRoutes.Settings as IInternalRoute]}>
@@ -357,6 +358,16 @@ export const SettingsPage: FC = () => {
                                     </>
                                 );
                             })()}
+                            {featureFlags.platformFunnel && (
+                                <>
+                                    {(cloudProvidersEnabled || !!getComponent('bridge-driver-panel')) && <Separator className="my-6" />}
+                                    <div className="flex flex-col gap-2">
+                                        <h3 className="text-base font-medium">{t('platformSectionTitle')}</h3>
+                                        <p className="text-sm text-muted-foreground">{t('platformSectionDescription')}</p>
+                                        <PlatformFunnelLink trigger="settings" label={t('platformSectionLink')} />
+                                    </div>
+                                </>
+                            )}
                         </TabsContent>
                     )}
 

@@ -50,7 +50,7 @@ const defaultFeatures: FeatureFlags = {
     autoStartTourOnLogin: true, // Enabled in CE
     sqlAgent: false,
     keyboardShortcutsHelp: true, // Enabled in CE
-    platformFunnel: false,
+    platformFunnel: true,
 };
 
 export let featureFlags: FeatureFlags = {} as FeatureFlags;

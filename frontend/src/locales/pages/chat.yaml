@@ -3,6 +3,8 @@ en_US:
   emptyStateTitle: What Can I Help You With?
   noModelTitle: No Model Available
   noModelDescription: Please choose an available model to start chatting with your data.
+  platformManagedAiLink: Or skip the setup — WhoDB Platform includes managed AI providers.
+  platformChartLink: View results like these as charts on WhoDB Platform.
   loadingSuggestions: Loading suggestions...
   genericExamplesLabel: Example queries (not specific to your database)
   databaseSpecificSuggestionsLabel: Suggested queries based on your database schema

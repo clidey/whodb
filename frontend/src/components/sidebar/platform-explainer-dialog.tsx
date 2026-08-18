@@ -25,11 +25,13 @@ import {
     DialogTitle,
 } from "@clidey/ux";
 import type { FC, ReactNode } from "react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import logoImage from "../../../public/images/logo.svg";
+import { ANALYTICS_EVENTS } from "@/config/analytics-events";
+import { trackPlatformFunnel } from "@/config/frontend-analytics";
 import { useTranslation } from "@/hooks/use-translation";
 import { useAppSelector } from "@/store/hooks";
-import { PLATFORM_URL } from "@/utils/platform-funnel";
+import { buildPlatformUrl, type PlatformFunnelTrigger } from "@/utils/platform-funnel";
 import { ArrowTopRightOnSquareIcon, ChevronRightIcon, CircleStackIcon, RectangleGroupIcon, Squares2X2Icon } from "../heroicons";
 import { PlatformImportSheet } from "./platform-import-sheet";
 
@@ -37,6 +39,12 @@ import { PlatformImportSheet } from "./platform-import-sheet";
 export type PlatformExplainerDialogProps = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    /** The CE surface that opened this dialog; carried into analytics and outbound URLs. */
+    trigger: PlatformFunnelTrigger;
+    /** When set, the intro highlights that this source type is available on the platform. */
+    sourceType?: string;
+    /** Catalog id for the source type; when set, outbound links deep-link to creating it. */
+    sourceTypeId?: string;
 };
 
 /** A single step card in the three-step funnel flow. */
@@ -61,11 +69,28 @@ type Slide = { image: string; title: string; caption: string };
  * CE user already has. Opened from the sidebar footer; one click deep and
  * dismissible. Not a banner and not shown before any connection exists.
  */
-export const PlatformExplainerDialog: FC<PlatformExplainerDialogProps> = ({ open, onOpenChange }) => {
+export const PlatformExplainerDialog: FC<PlatformExplainerDialogProps> = ({ open, onOpenChange, trigger, sourceType, sourceTypeId }) => {
     const { t } = useTranslation("components/sidebar");
     const hasProfiles = useAppSelector(state => state.auth.profiles.length > 0);
     const [activeSlide, setActiveSlide] = useState(0);
     const [showImport, setShowImport] = useState(false);
+
+    useEffect(() => {
+        if (open) {
+            trackPlatformFunnel(ANALYTICS_EVENTS.PLATFORM_FUNNEL_OPENED, trigger, {
+                ...(sourceType ? { database_type: sourceType } : {}),
+            });
+        }
+    }, [open, sourceType, trigger]);
+
+    const handleDialogOpenChange = useCallback((nextOpen: boolean) => {
+        if (!nextOpen) {
+            trackPlatformFunnel(ANALYTICS_EVENTS.PLATFORM_FUNNEL_DISMISSED, trigger, {
+                ...(sourceType ? { database_type: sourceType } : {}),
+            });
+        }
+        onOpenChange(nextOpen);
+    }, [onOpenChange, sourceType, trigger]);
 
     const slides: Slide[] = [
         { image: logoImage, title: t("platformSlideManagedTitle"), caption: t("platformSlideManagedCaption") },
@@ -77,8 +102,16 @@ export const PlatformExplainerDialog: FC<PlatformExplainerDialogProps> = ({ open
         setActiveSlide((index + slides.length) % slides.length);
     }, [slides.length]);
 
+    // With a source type in context, land on the hosted "create this source"
+    // flow instead of the generic platform home.
     const handleOpenPlatform = () => {
-        window.open(PLATFORM_URL, "_blank", "noopener,noreferrer");
+        trackPlatformFunnel(ANALYTICS_EVENTS.PLATFORM_LINK_OPENED, trigger, {
+            ...(sourceTypeId ? { database_type: sourceTypeId } : {}),
+        });
+        const url = sourceTypeId
+            ? buildPlatformUrl(trigger, "/import", { type: sourceTypeId })
+            : buildPlatformUrl(trigger);
+        window.open(url, "_blank", "noopener,noreferrer");
         onOpenChange(false);
     };
 
@@ -91,11 +124,15 @@ export const PlatformExplainerDialog: FC<PlatformExplainerDialogProps> = ({ open
     const slide = slides[activeSlide];
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
+        <Dialog open={open} onOpenChange={handleDialogOpenChange}>
             <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="text-xl">{t("platformExplainerTitle")}</DialogTitle>
-                    <DialogDescription>{t("platformExplainerIntro")}</DialogDescription>
+                    <DialogDescription>
+                        {sourceType
+                            ? t("platformExplainerSourceIntro", { sourceType })
+                            : t("platformExplainerIntro")}
+                    </DialogDescription>
                 </DialogHeader>
 
                 <div className="flex flex-col gap-3">
@@ -171,7 +208,19 @@ export const PlatformExplainerDialog: FC<PlatformExplainerDialogProps> = ({ open
                 </ul>
 
                 <DialogFooter className="flex flex-row justify-end gap-2">
-                    {hasProfiles ? (
+                    {sourceType ? (
+                        // Source-specific entry: the user wants this source on the
+                        // platform, so the deep link is the primary action.
+                        <>
+                            <Button variant="ghost" onClick={() => { handleDialogOpenChange(false); }}>
+                                {t("platformMaybeLater")}
+                            </Button>
+                            <Button onClick={handleOpenPlatform} className="flex items-center gap-2">
+                                {t("platformConnectSource", { sourceType })}
+                                <ArrowTopRightOnSquareIcon className="w-4 h-4" />
+                            </Button>
+                        </>
+                    ) : hasProfiles ? (
                         <>
                             <Button variant="ghost" onClick={handleOpenPlatform} className="flex items-center gap-2">
                                 {t("platformLearnMore")}
@@ -183,7 +232,7 @@ export const PlatformExplainerDialog: FC<PlatformExplainerDialogProps> = ({ open
                         </>
                     ) : (
                         <>
-                            <Button variant="ghost" onClick={() => { onOpenChange(false); }}>
+                            <Button variant="ghost" onClick={() => { handleDialogOpenChange(false); }}>
                                 {t("platformMaybeLater")}
                             </Button>
                             <Button onClick={handleOpenPlatform} className="flex items-center gap-2">
@@ -198,6 +247,7 @@ export const PlatformExplainerDialog: FC<PlatformExplainerDialogProps> = ({ open
             <PlatformImportSheet
                 open={showImport}
                 onOpenChange={setShowImport}
+                trigger={trigger}
             />
         </Dialog>
     );

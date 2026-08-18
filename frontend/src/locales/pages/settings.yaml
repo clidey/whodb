@@ -1,4 +1,7 @@
 en_US:
+  platformSectionTitle: WhoDB Platform
+  platformSectionDescription: The hosted workspace that builds on your connections — managed sources, shareable datasets, and team access.
+  platformSectionLink: Learn more and import your connections
   tabAppearance: Appearance
   tabBehavior: Behavior
   tabIntegrations: Integrations

@@ -26,10 +26,12 @@ import {
     SheetTitle,
 } from "@clidey/ux";
 import type { FC } from "react";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ANALYTICS_EVENTS } from "@/config/analytics-events";
+import { countBucket, frontendAnalyticsErrorCode, trackPlatformFunnel } from "@/config/frontend-analytics";
 import { useTranslation } from "@/hooks/use-translation";
 import { useAppSelector } from "@/store/hooks";
-import { buildImportConnection, buildPlatformImportLandingUrl, PLATFORM_URL, postConnectionsToPlatform } from "@/utils/platform-funnel";
+import { buildImportConnection, buildPlatformImportLandingUrl, PLATFORM_URL, type PlatformFunnelTrigger, postConnectionsToPlatform } from "@/utils/platform-funnel";
 import { ph } from "@/utils/privacy";
 import { ArrowTopRightOnSquareIcon } from "../heroicons";
 
@@ -37,6 +39,8 @@ import { ArrowTopRightOnSquareIcon } from "../heroicons";
 export type PlatformImportSheetProps = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    /** The CE surface that led the user into this import flow. */
+    trigger: PlatformFunnelTrigger;
 };
 
 /**
@@ -45,13 +49,35 @@ export type PlatformImportSheetProps = {
  * sent with credentials, then staged on the platform via a POST that returns a
  * short-lived token. The hosted import page is opened with that token.
  */
-export const PlatformImportSheet: FC<PlatformImportSheetProps> = ({ open, onOpenChange }) => {
+export const PlatformImportSheet: FC<PlatformImportSheetProps> = ({ open, onOpenChange, trigger }) => {
     const { t } = useTranslation("components/sidebar");
     const profiles = useAppSelector(state => state.auth.profiles);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set(profiles.map(profile => profile.Id)));
     const [sendCredentials, setSendCredentials] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState(false);
+
+    const stagedRef = useRef(false);
+
+    useEffect(() => {
+        if (open) {
+            stagedRef.current = false;
+            trackPlatformFunnel(ANALYTICS_EVENTS.PLATFORM_IMPORT_OPENED, trigger, {
+                connection_count_bucket: countBucket(profiles.length),
+            });
+        }
+    }, [open, profiles.length, trigger]);
+
+    // Distinguishes walking away from completing: dismissed fires only when the
+    // sheet closes without a successful staging call.
+    const handleSheetOpenChange = useCallback((nextOpen: boolean) => {
+        if (!nextOpen && !stagedRef.current) {
+            trackPlatformFunnel(ANALYTICS_EVENTS.PLATFORM_IMPORT_DISMISSED, trigger, {
+                selected_count_bucket: countBucket(selectedIds.size),
+            });
+        }
+        onOpenChange(nextOpen);
+    }, [onOpenChange, selectedIds.size, trigger]);
 
     const platformHost = new URL(PLATFORM_URL).host;
     const allSelected = profiles.length > 0 && selectedIds.size === profiles.length;
@@ -83,9 +109,17 @@ export const PlatformImportSheet: FC<PlatformImportSheetProps> = ({ open, onOpen
         try {
             const connections = selectedProfiles.map(profile => buildImportConnection(profile, sendCredentials));
             const { token } = await postConnectionsToPlatform(connections);
-            window.open(buildPlatformImportLandingUrl(token), "_blank", "noopener,noreferrer");
+            stagedRef.current = true;
+            trackPlatformFunnel(ANALYTICS_EVENTS.PLATFORM_IMPORT_STAGED, trigger, {
+                connection_count_bucket: countBucket(connections.length),
+                has_password: sendCredentials,
+            });
+            window.open(buildPlatformImportLandingUrl(token, trigger), "_blank", "noopener,noreferrer");
             onOpenChange(false);
-        } catch {
+        } catch (importError) {
+            trackPlatformFunnel(ANALYTICS_EVENTS.PLATFORM_IMPORT_FAILED, trigger, {
+                error_code: frontendAnalyticsErrorCode(importError),
+            });
             setError(true);
         } finally {
             setSubmitting(false);
@@ -93,7 +127,7 @@ export const PlatformImportSheet: FC<PlatformImportSheetProps> = ({ open, onOpen
     };
 
     return (
-        <Sheet open={open} onOpenChange={onOpenChange}>
+        <Sheet open={open} onOpenChange={handleSheetOpenChange}>
             <SheetContent side="right" className="p-8 flex flex-col gap-6">
                 <SheetHeader>
                     <SheetTitle>{t("platformImportTitle")}</SheetTitle>
@@ -151,7 +185,7 @@ export const PlatformImportSheet: FC<PlatformImportSheetProps> = ({ open, onOpen
                 {error && <p className="text-xs text-red-500">{t("platformImportError")}</p>}
 
                 <SheetFooter className="mt-auto flex flex-row justify-end gap-2">
-                    <Button variant="ghost" onClick={() => { onOpenChange(false); }}>
+                    <Button variant="ghost" onClick={() => { handleSheetOpenChange(false); }}>
                         {t("platformCancel")}
                     </Button>
                     <Button

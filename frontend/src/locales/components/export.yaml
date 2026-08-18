@@ -1,4 +1,5 @@
 en_US:
+  platformDatasetLink: Need a live, shareable dataset instead of a file? Try WhoDB Platform.
   selectedRows: You are about to export {count} selected rows.
   selectedRows_one: You are about to export {count} selected row.
   allData: You are about to export all data from the table. This may take some time for large tables.

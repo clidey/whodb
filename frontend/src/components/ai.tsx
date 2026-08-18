@@ -67,6 +67,7 @@ import {
     XMarkIcon
 } from "./heroicons";
 import { Icons } from "./icons";
+import { PlatformFunnelLink } from "./platform-funnel-link";
 
 export const externalModelTypes = availableExternalModelTypes.map((model) => ({
     id: model,
@@ -630,6 +631,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                             {t('docs')}
                             <ArrowTopRightOnSquareIcon className="w-4 h-4" />
                         </Button>
+                        <PlatformFunnelLink trigger="ai_provider_sheet" label={t('platformManagedAiLink')} />
                     </div>
                 </SheetFooter>
             }>

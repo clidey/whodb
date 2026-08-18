@@ -61,7 +61,9 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState} from "reac
 import {useDispatch} from "react-redux";
 import {Link, useLocation, useNavigate} from "react-router-dom";
 import logoImage from "../../../public/images/logo.svg";
+import {ANALYTICS_EVENTS} from "../../config/analytics-events";
 import {extensions, featureFlags, getAppName} from "../../config/features";
+import {countBucket, trackPlatformFunnel} from "../../config/frontend-analytics";
 import {InternalRoutes} from "../../config/routes";
 import {performLogout} from "../../config/logout-handler";
 import {LoginForm} from "../../pages/auth/login";
@@ -72,6 +74,8 @@ import {useAppSelector} from "../../store/hooks";
 import {getComponent} from "../../config/component-registry";
 import { findSourceTypeItem, type SourceTypeItem } from "../../config/source-types";
 import {isAwsHostname, isAzureHostname, isGcpHostname} from "../../utils/cloud-connection-prefill";
+import type {PlatformFunnelTrigger} from "../../utils/platform-funnel";
+import {dismissBackupHint, hasDismissedBackupHint} from "../../utils/platform-hints";
 import {ph} from "../../utils/privacy";
 import {useSourceContract} from "../../hooks/useSourceContract";
 import {useSourceTypeItems} from "../../hooks/useSourceCatalog";
@@ -86,7 +90,8 @@ import {
     QuestionMarkCircleIcon,
     RectangleGroupIcon,
     SparklesIcon,
-    TableCellsIcon
+    TableCellsIcon,
+    XMarkIcon
 } from "../heroicons";
 import {PlatformExplainerDialog} from "./platform-explainer-dialog";
 import {Icons} from "../icons";
@@ -280,7 +285,8 @@ export const Sidebar: FC = () => {
     const [showLoginCard, setShowLoginCard] = useState(false);
     const [showProfileSwitchDialog, setShowProfileSwitchDialog] = useState(false);
     const [logoutProfileId, setLogoutProfileId] = useState<string | null>(null);
-    const [showPlatformExplainer, setShowPlatformExplainer] = useState(false);
+    const [platformExplainerTrigger, setPlatformExplainerTrigger] = useState<PlatformFunnelTrigger | null>(null);
+    const [backupHintDismissed, setBackupHintDismissed] = useState(() => hasDismissedBackupHint());
     const { toggleSidebar, open } = useSidebar();
     const isInitialMount = useRef(true);
     const { switchProfile } = useProfileSwitch({
@@ -471,9 +477,43 @@ export const Sidebar: FC = () => {
             pathname={pathname}
             open={open}
             tooltip={t('platformTitle')}
-            onClick={() => { setShowPlatformExplainer(true); }}
+            onClick={() => { setPlatformExplainerTrigger("sidebar"); }}
             data-testid="sidebar-platform-funnel"
         />
+    ) : null;
+
+    // One-time hint that saved connections only live in this browser. Shown
+    // once a user has accumulated a few profiles; dismissing it is permanent.
+    const backupNudge = featureFlags.platformFunnel && !isEmbedded && !backupHintDismissed && profiles.length >= 3 && open ? (
+        <div
+            className="relative mx-2 my-2 rounded-lg border border-neutral-200 dark:border-neutral-800 p-3 pr-8 flex flex-col gap-2"
+            data-testid="sidebar-backup-nudge"
+        >
+            <button
+                type="button"
+                aria-label={t('platformBackupNudgeDismiss')}
+                onClick={() => {
+                    dismissBackupHint();
+                    setBackupHintDismissed(true);
+                    trackPlatformFunnel(ANALYTICS_EVENTS.PLATFORM_NUDGE_DISMISSED, "backup_nudge", {
+                        connection_count_bucket: countBucket(profiles.length),
+                    });
+                }}
+                className="absolute right-2 top-2 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
+                data-testid="sidebar-backup-nudge-dismiss"
+            >
+                <XMarkIcon className="w-4 h-4" />
+            </button>
+            <p className="text-xs text-neutral-600 dark:text-neutral-400">{t('platformBackupNudgeText')}</p>
+            <Button
+                variant="outline"
+                size="sm"
+                className="self-start"
+                onClick={() => { setPlatformExplainerTrigger("backup_nudge"); }}
+            >
+                {t('platformBackupNudgeAction')}
+            </Button>
+        </div>
     ) : null;
 
     // Compute the label for the database dropdown based on the database type and user terminology preference
@@ -682,6 +722,7 @@ export const Sidebar: FC = () => {
 
                                     <SidebarSeparator className={cn("my-4", { "mx-0": !open })} />
 
+                                    {backupNudge}
                                     {platformFooterItem}
                                     {featureFlags.contactUsPage && InternalRoutes.ContactUs && (
                                         <NavItem icon={<QuestionMarkCircleIcon className="w-4 h-4" />} label={t('contactUs')} path={InternalRoutes.ContactUs.path} pathname={pathname} open={open} tooltip={t('contactUs')} />
@@ -832,7 +873,7 @@ export const Sidebar: FC = () => {
                                     <SidebarMenuItem>
                                         <SidebarMenuButton asChild tooltip={t('platformTitle')}>
                                             <div
-                                                onClick={() => { setShowPlatformExplainer(true); }}
+                                                onClick={() => { setPlatformExplainerTrigger("sidebar"); }}
                                                 className="flex items-center gap-2 cursor-pointer"
                                                 data-testid="sidebar-platform-funnel"
                                             >
@@ -946,7 +987,11 @@ export const Sidebar: FC = () => {
                     <LoginForm advancedDirection="vertical" onLoginSuccess={handleLoginSuccess}/>
                 </SheetContent>
             </Sheet>
-            <PlatformExplainerDialog open={showPlatformExplainer} onOpenChange={setShowPlatformExplainer} />
+            <PlatformExplainerDialog
+                open={platformExplainerTrigger != null}
+                onOpenChange={(dialogOpen) => { if (!dialogOpen) setPlatformExplainerTrigger(null); }}
+                trigger={platformExplainerTrigger ?? "sidebar"}
+            />
             <Dialog open={showProfileSwitchDialog} onOpenChange={handleProfileSwitchDialogChange}>
                 <DialogContent className="max-w-sm" onInteractOutside={(e) => { e.preventDefault(); }} onEscapeKeyDown={(e) => { e.preventDefault(); }}>
                     <DialogHeader>
