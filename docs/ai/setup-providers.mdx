@@ -1,6 +1,6 @@
 ---
 title: "Setting Up AI Providers"
-description: "Configure OpenAI, Anthropic, Gemini, Ollama, LM Studio, or custom AI providers for WhoDB's chat assistant"
+description: "Configure OpenAI, Anthropic, Gemini, OrcaRouter, Ollama, LM Studio, or custom AI providers for WhoDB's chat assistant"
 ---
 
 # Setting Up AI Providers
@@ -14,7 +14,7 @@ Navigate to the Chat page in WhoDB to access AI provider settings:
 ![Chat Initial Page](/images/101-chat-initial-page.png)
 
 The provider configuration is located at the top of the Chat interface with two dropdowns:
-1. **AI Provider**: Select your provider (OpenAI, Anthropic, Gemini, Ollama, LM Studio, etc.)
+1. **AI Provider**: Select your provider (OpenAI, Anthropic, Gemini, OrcaRouter, Ollama, LM Studio, etc.)
 2. **AI Model**: Choose the specific model to use
 
 <Warning>
@@ -192,6 +192,42 @@ Available Gemini models are fetched live from the Gemini API and appear in the M
 
 <Note>
 To route Gemini requests through a custom endpoint (e.g., a proxy), set the `WHODB_GEMINI_ENDPOINT` environment variable.
+</Note>
+
+## Setting Up OrcaRouter
+
+OrcaRouter is an OpenAI-compatible gateway that exposes models from OpenAI, Anthropic, Google, DeepSeek, Qwen, MiniMax, and xAI behind a single endpoint. One API key unlocks every supported model, and model names use a `provider/model` format such as `openai/gpt-5.5` or `anthropic/claude-sonnet-4.6`.
+
+### Prerequisites
+
+1. Create an OrcaRouter account at https://www.orcarouter.ai
+2. Generate an API key from the dashboard (keys start with `sk-orca-`)
+
+### Configuration Steps
+
+<Steps>
+<Step title="Open Provider Configuration">
+Click the AI Provider dropdown and select **"Add a provider"**.
+</Step>
+<Step title="Select OrcaRouter">
+Choose **OrcaRouter** from the Model Type dropdown.
+</Step>
+<Step title="Enter API Key">
+Paste your OrcaRouter API key in the Token field.
+
+```text Example API Key Format
+sk-orca-xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+</Step>
+<Step title="Submit and Select Model">
+Click Submit to verify and save the configuration.
+
+Available models are fetched live from the OrcaRouter gateway and appear in the Model dropdown.
+</Step>
+</Steps>
+
+<Note>
+To route OrcaRouter requests through a custom endpoint (e.g., a proxy), set the `WHODB_ORCAROUTER_ENDPOINT` environment variable.
 </Note>
 
 ## Setting Up Ollama (Local Models)
@@ -428,6 +464,9 @@ You can preconfigure the built-in providers on the server so users don't need to
 | `WHODB_LMSTUDIO_BASE_URL` | LM Studio server URL (default: http://localhost:1234) |
 | `WHODB_LMSTUDIO_API_KEY` | LM Studio API key, if required (optional) |
 | `WHODB_LMSTUDIO_NAME` | Display name override (optional) |
+| `WHODB_ORCAROUTER_API_KEY` | OrcaRouter gateway API key |
+| `WHODB_ORCAROUTER_ENDPOINT` | Custom OrcaRouter gateway endpoint (optional) |
+| `WHODB_ORCAROUTER_NAME` | Display name override (optional) |
 | `WHODB_BLOCK_INTERNAL_AI_ENDPOINTS` | Set to `true` to block AI requests to internal/private network endpoints (SSRF protection for hosted deployments) |
 
 ### Custom Providers via Environment Variables
