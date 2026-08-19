@@ -574,7 +574,7 @@ mutation CLIPlatformUploadProjectFile($projectId: ID!, $folderId: ID, $file: Upl
 		status = resp.Status
 		statusCode = resp.StatusCode
 		raw, err = io.ReadAll(io.LimitReader(resp.Body, 4<<20))
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		if err != nil {
 			return nil, err
 		}
