@@ -74,3 +74,15 @@ func TestRegisterHTTPRoutesAddsExtensionRoutes(t *testing.T) {
 		t.Fatalf("expected registered extension route to return 202, got %d", rec.Code)
 	}
 }
+
+func TestLongLivedHTTPRouteMatchesPathParameters(t *testing.T) {
+	pattern := "/api/test-runs/{runID}/events"
+	RegisterLongLivedHTTPRoute(pattern)
+
+	if !IsLongLivedHTTPRoute("/api/test-runs/run-123/events") {
+		t.Fatal("expected a concrete path to match the registered route pattern")
+	}
+	if IsLongLivedHTTPRoute("/api/test-runs/run-123/other") {
+		t.Fatal("expected a different path suffix not to match")
+	}
+}

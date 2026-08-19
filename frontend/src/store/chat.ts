@@ -245,6 +245,9 @@ export const houdiniSlice = createSlice({
         if (session) {
             session.status = action.payload.status;
             if (action.payload.activeRunId !== undefined) {
+                if (action.payload.activeRunId && action.payload.activeRunId !== session.activeRunId) {
+                    session.lastEventSequence = 0;
+                }
                 session.activeRunId = action.payload.activeRunId;
             }
         }
