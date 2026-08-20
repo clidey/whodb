@@ -689,6 +689,57 @@ func TestHandlePlatformCreateDatasetTypedConfirmWrites(t *testing.T) {
 	}
 }
 
+func TestHandlePlatformCreateDatasetSourceObjectRefAllowWrite(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := handlePlatformCreateDataset(context.Background(), PlatformCreateDatasetInput{
+		Name:            "Spam Emails",
+		SourceID:        "src-1",
+		SourceObjectRef: "Collection:Spam",
+	}, false)
+	if err != nil {
+		t.Fatalf("handlePlatformCreateDataset() error = %v", err)
+	}
+	if output.Error != "" {
+		t.Fatalf("handlePlatformCreateDataset() output error = %q", output.Error)
+	}
+	if output.ConfirmationRequired {
+		t.Fatalf("ConfirmationRequired = true, want false in allow-write mode")
+	}
+	ref, ok := client.mutationVariables["input"].(map[string]any)["sourceObjectRef"].(map[string]any)
+	if !ok {
+		t.Fatalf("mutationVariables = %#v, want sourceObjectRef map", client.mutationVariables)
+	}
+	if ref["Kind"] != "Collection" {
+		t.Fatalf("sourceObjectRef.Kind = %#v, want Collection", ref["Kind"])
+	}
+	path, ok := ref["Path"].([]any)
+	if !ok || len(path) != 1 || path[0] != "Spam" {
+		t.Fatalf("sourceObjectRef.Path = %#v, want [Spam]", ref["Path"])
+	}
+}
+
+func TestHandlePlatformCreateDatasetInvalidSourceObjectRef(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := handlePlatformCreateDataset(context.Background(), PlatformCreateDatasetInput{
+		Name:            "Spam Emails",
+		SourceObjectRef: "not-a-valid-ref",
+	}, false)
+	if err != nil {
+		t.Fatalf("handlePlatformCreateDataset() error = %v", err)
+	}
+	if output.Error == "" {
+		t.Fatal("output.Error = \"\", want validation error for malformed source_object_ref")
+	}
+}
+
 func TestHandlePlatformOntologyRecordTypedAllowWriteUsesEntityID(t *testing.T) {
 	client := &fakePlatformClient{}
 	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
