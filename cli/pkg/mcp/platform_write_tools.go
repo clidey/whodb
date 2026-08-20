@@ -425,7 +425,7 @@ func recordInputPayload(values map[string]string) []map[string]any {
 		if key == "" {
 			continue
 		}
-		out = append(out, map[string]any{"key": key, "value": values[key]})
+		out = append(out, map[string]any{"Key": key, "Value": values[key]})
 	}
 	return out
 }
@@ -458,6 +458,16 @@ func buildPlatformGenericWrite(session *platformToolSession, input PlatformGener
 	payload, err := parsePlatformWritePayload(input.Payload, input.PayloadJSON)
 	if err != nil {
 		return platformapi.GenericWriteSpec{}, nil, err
+	}
+	if spec.Resource == "ontology" && spec.Action == "create" {
+		storageMode, ok := payload["storageMode"].(string)
+		if !ok || strings.TrimSpace(storageMode) == "" {
+			return platformapi.GenericWriteSpec{}, nil, fmt.Errorf("payload.storageMode is required for ontology create")
+		}
+		if err := platformapi.ValidateOntologyStorageMode(storageMode); err != nil {
+			return platformapi.GenericWriteSpec{}, nil, err
+		}
+		payload["storageMode"] = strings.TrimSpace(storageMode)
 	}
 	// App file mutations historically receive the app id through the generic
 	// target id. Normalize it to the hosted payload field before validation.

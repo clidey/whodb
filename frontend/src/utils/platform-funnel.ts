@@ -22,6 +22,34 @@ export const PLATFORM_URL = "https://app.whodb.com";
 /** Endpoint that stages CE connections and returns a short-lived import token. */
 export const PLATFORM_IMPORT_ENDPOINT = `${PLATFORM_URL}/api/ce-import`;
 
+/** The CE surface a platform funnel interaction originated from. */
+export type PlatformFunnelTrigger =
+    | "sidebar"
+    | "source_picker"
+    | "backup_nudge"
+    | "chat_no_model"
+    | "chat_chart"
+    | "ai_provider_sheet"
+    | "export"
+    | "settings"
+    | "login_panel";
+
+/**
+ * Builds an attributed WhoDB Platform URL. Every outbound platform link carries
+ * UTM parameters so hosted-side conversion can be traced back to the CE entry
+ * point that produced it.
+ */
+export const buildPlatformUrl = (trigger: PlatformFunnelTrigger, path = "/", extraParams?: Record<string, string>): string => {
+    const url = new URL(path, PLATFORM_URL);
+    for (const [key, value] of Object.entries(extraParams ?? {})) {
+        url.searchParams.set(key, value);
+    }
+    url.searchParams.set("utm_source", "ce");
+    url.searchParams.set("utm_medium", "app");
+    url.searchParams.set("utm_campaign", trigger);
+    return url.toString();
+};
+
 /** A key/value advanced field carried alongside a connection. */
 export type PlatformImportAdvanced = {
     Key: string;
@@ -92,7 +120,6 @@ export const postConnectionsToPlatform = async (connections: PlatformImportConne
 };
 
 /** Builds the landing URL a CE user opens after staging connections. */
-export const buildPlatformImportLandingUrl = (token: string): string => {
-    const params = new URLSearchParams({ token });
-    return `${PLATFORM_URL}/import?${params.toString()}`;
+export const buildPlatformImportLandingUrl = (token: string, trigger: PlatformFunnelTrigger): string => {
+    return buildPlatformUrl(trigger, "/import", { token });
 };

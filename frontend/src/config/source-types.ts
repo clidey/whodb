@@ -26,6 +26,8 @@ import {
 } from "@graphql";
 import { Icons } from "../components/icons";
 import { getEdition } from "./edition";
+import { featureFlags } from "./features";
+import { PLATFORM_SOURCE_TYPES } from "./platform-source-types";
 import { getRegisteredSourceTypeOverrides } from "./source-registry";
 
 /**
@@ -320,6 +322,8 @@ export interface SourceTypeItem {
 	customFormRenderer?: ComponentType<CustomLoginFormProps>;
 	/** Optional custom form submit validation */
 	customFormCanSubmit?: (state: CustomLoginFormState) => boolean;
+	/** Whether this source type is only connectable on WhoDB Platform. */
+	platformOnly?: boolean;
 }
 
 /**
@@ -336,6 +340,11 @@ export interface SourceTypeFilterOptions {
 	cloudProvidersEnabled?: boolean;
 	/** When false, AWS managed source types are excluded. */
 	awsProviderEnabled?: boolean;
+	/**
+	 * When true and the platform funnel is enabled, platform-only source
+	 * types are appended after the connectable catalog entries.
+	 */
+	includePlatformOnly?: boolean;
 }
 
 /**
@@ -642,6 +651,25 @@ function withRegisteredSourceTypes(
 }
 
 /**
+ * Builds picker entries for platform-only source types. These are not backed
+ * by the local catalog — selecting one routes to the platform funnel instead
+ * of a connection form.
+ */
+function buildPlatformOnlyItems(existing: SourceTypeItem[]): SourceTypeItem[] {
+	const existingIds = new Set(existing.map((item) => item.id));
+	return PLATFORM_SOURCE_TYPES.filter(
+		(sourceType) => !existingIds.has(sourceType.id),
+	).map((sourceType) => ({
+		id: sourceType.id,
+		label: sourceType.label,
+		connector: sourceType.id,
+		icon: resolveIcon(sourceType.id, sourceType.id),
+		extra: {},
+		platformOnly: true,
+	}));
+}
+
+/**
  * Decorates raw backend catalog data with frontend-only presentation details.
  *
  * @param catalog Raw backend catalog entries.
@@ -653,7 +681,11 @@ export function resolveSourceTypeItems(
 	options: SourceTypeFilterOptions = {},
 ): SourceTypeItem[] {
 	const items = withRegisteredSourceTypes(catalog.map(decorateSourceType));
-	return filterSourceTypes(items, options);
+	const filtered = filterSourceTypes(items, options);
+	if (options.includePlatformOnly && featureFlags.platformFunnel) {
+		return [...filtered, ...buildPlatformOnlyItems(filtered)];
+	}
+	return filtered;
 }
 
 /**

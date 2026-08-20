@@ -58,6 +58,7 @@ const ontologyFields = `
   sourceId
   tableName
   schemaName
+  storageMode
   status
   icon
   color

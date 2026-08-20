@@ -319,6 +319,7 @@ func TestPlatformMCP_RealReadWriteLifecycle(t *testing.T) {
 			"primaryKey":        "id",
 			"tableName":         "mcp_e2e_target_" + suffix,
 			"schemaName":        "public",
+			"storageMode":       "operational",
 			"icon":              "table",
 			"color":             "#3366ff",
 			"properties": []map[string]any{{
@@ -339,6 +340,7 @@ func TestPlatformMCP_RealReadWriteLifecycle(t *testing.T) {
 			"primaryKey":        "id",
 			"tableName":         "mcp_e2e_entity_" + suffix,
 			"schemaName":        "public",
+			"storageMode":       "operational",
 			"icon":              "table",
 			"color":             "#3366ff",
 			"properties": []map[string]any{

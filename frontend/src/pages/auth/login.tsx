@@ -44,6 +44,8 @@ import {
 import {Icons} from "../../components/icons";
 import {Loading} from "../../components/loading";
 import {Container} from "../../components/page";
+import {PlatformFunnelLink} from "../../components/platform-funnel-link";
+import {PlatformExplainerDialog} from "../../components/sidebar/platform-explainer-dialog";
 import {updateProfileLastAccessed} from "../../components/profile-info-tooltip";
 import type {SourceTypeItem} from "../../config/source-types";
 import {extensions, featureFlags, getAppName, sources} from '../../config/features';
@@ -227,7 +229,7 @@ export const LoginForm: FC<LoginFormProps> = ({
         items: databaseTypeItems,
         loading: databaseTypesLoading,
         error: databaseTypesError,
-    } = useSourceTypeItems({ cloudProvidersEnabled, awsProviderEnabled });
+    } = useSourceTypeItems({ cloudProvidersEnabled, awsProviderEnabled, includePlatformOnly: true });
     const [searchParams, setSearchParams] = useSearchParams();
 
     const databaseTypesLoaded = !databaseTypesLoading;
@@ -241,6 +243,7 @@ export const LoginForm: FC<LoginFormProps> = ({
     const [advancedForm, setAdvancedForm] = useState<Record<string, string>>({});
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [formResetKey, setFormResetKey] = useState(0);
+    const [platformSourceType, setPlatformSourceType] = useState<{ id: string; label: string }>();
     const [selectedAvailableProfile, setSelectedAvailableProfile] = useState<string>();
     const [isEmbedded] = useState(() => {
         return searchParams.has("credentials");
@@ -260,7 +263,11 @@ export const LoginForm: FC<LoginFormProps> = ({
             return;
         }
 
-        const nextType = databaseTypeItems.find(item => item.id === databaseType.id) ?? databaseTypeItems[0];
+        // Platform-only entries are picker-only teasers: they can never become
+        // the active connection type, so fall back to the first connectable one.
+        const nextType = databaseTypeItems.find(item => item.id === databaseType.id && !item.platformOnly)
+            ?? databaseTypeItems.find(item => !item.platformOnly)
+            ?? databaseTypeItems[0];
         if (databaseType.id !== nextType.id) {
             setDatabaseType(nextType);
             setAdvancedForm(sourceAdvancedDefaults(nextType));
@@ -612,6 +619,13 @@ export const LoginForm: FC<LoginFormProps> = ({
     }, [appName, dispatch, handleLoginError, loginWithSourceProfile, markFirstLoginComplete, navigate, onLoginSuccess, profiles?.SourceProfiles, t]);
 
     const handleDatabaseTypeChange = useCallback((item: SourceTypeItem) => {
+        // Platform-only entries open the explainer instead of becoming the
+        // active type — regardless of whether they arrive via the picker,
+        // URL params, or cloud prefill.
+        if (item.platformOnly) {
+            setPlatformSourceType({ id: item.id, label: item.label });
+            return;
+        }
         loginFormTouchedRef.current = true;
         trackOptionChanged('database_type', item.id, {
             database_type: item.id,
@@ -1302,9 +1316,18 @@ export const LoginForm: FC<LoginFormProps> = ({
                         <p className="text-xs text-center text-muted-foreground">
                             {t('quickStartFooter')}
                         </p>
+
+                        <PlatformFunnelLink trigger="login_panel" label={t('platformZeroInstallLink')} className="text-center" />
                     </Card>
                 )
             }
+        <PlatformExplainerDialog
+            open={platformSourceType != null}
+            onOpenChange={(open) => { if (!open) setPlatformSourceType(undefined); }}
+            trigger="source_picker"
+            sourceType={platformSourceType?.label}
+            sourceTypeId={platformSourceType?.id}
+        />
         {(() => {
             const DriverInstallDialog = getComponent('driver-install-dialog') as React.LazyExoticComponent<FC<{driverName: string; onInstalled: () => void; onCancel: () => void}>> | undefined;
             if (!DriverInstallDialog || !missingDriver) return null;

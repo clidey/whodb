@@ -132,6 +132,7 @@ type Ontology struct {
 	SourceID          *string            `json:"sourceId,omitempty"`
 	TableName         string             `json:"tableName"`
 	SchemaName        string             `json:"schemaName"`
+	StorageMode       string             `json:"storageMode"`
 	Status            string             `json:"status"`
 	Icon              string             `json:"icon"`
 	Color             string             `json:"color"`

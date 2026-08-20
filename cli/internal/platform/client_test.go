@@ -22,6 +22,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -850,5 +851,56 @@ func TestSourceRowsMapsRefAndPagination(t *testing.T) {
 	}
 	if result.TotalCount != 1 || len(result.Rows) != 1 || result.Rows[0][0] != "1" {
 		t.Fatalf("result = %#v, want one row", result)
+	}
+}
+
+type testAccessTokenSource struct {
+	tokens      []string
+	index       int
+	invalidated int
+}
+
+func (s *testAccessTokenSource) Token(context.Context) (string, error) {
+	token := s.tokens[s.index]
+	if s.index < len(s.tokens)-1 {
+		s.index++
+	}
+	return token, nil
+}
+
+func (s *testAccessTokenSource) Invalidate() {
+	s.invalidated++
+}
+
+func TestAuthenticatedClientRefreshesOnceAfterUnauthorized(t *testing.T) {
+	var authorizations []string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		authorizations = append(authorizations, r.Header.Get("Authorization"))
+		if r.Header.Get("Authorization") == "Bearer stale-token" {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"data":{"Me":{"id":"user-1","email":"ada@example.com","displayName":"Ada"}}}`))
+	}))
+	defer server.Close()
+
+	source := &testAccessTokenSource{tokens: []string{"stale-token", "fresh-token"}}
+	client, err := NewAuthenticatedClient(server.URL, source)
+	if err != nil {
+		t.Fatalf("NewAuthenticatedClient() error = %v", err)
+	}
+	user, err := client.Me(context.Background())
+	if err != nil {
+		t.Fatalf("Me() error = %v", err)
+	}
+	if user.ID != "user-1" {
+		t.Fatalf("user id = %q, want user-1", user.ID)
+	}
+	if source.invalidated != 1 {
+		t.Fatalf("invalidations = %d, want 1", source.invalidated)
+	}
+	if !reflect.DeepEqual(authorizations, []string{"Bearer stale-token", "Bearer fresh-token"}) {
+		t.Fatalf("authorizations = %#v", authorizations)
 	}
 }

@@ -44,6 +44,7 @@ const (
 type Client struct {
 	host               string
 	accessToken        string
+	tokenSource        AccessTokenSource
 	httpClient         *http.Client
 	manifest           *PlatformManifest
 	manifestRefresher  ManifestRefresher
@@ -175,6 +176,24 @@ func NewClient(host, accessToken string) (*Client, error) {
 	return &Client{
 		host:        normalized,
 		accessToken: accessToken,
+		httpClient:  &http.Client{Timeout: 30 * time.Second},
+	}, nil
+}
+
+// NewAuthenticatedClient creates a hosted platform client backed by an OIDC
+// access-token source. The source is consulted for each request and refreshed
+// once after an authentication failure.
+func NewAuthenticatedClient(host string, source AccessTokenSource) (*Client, error) {
+	if source == nil {
+		return nil, errors.New("access token source is required")
+	}
+	normalized, err := NormalizeHost(host)
+	if err != nil {
+		return nil, err
+	}
+	return &Client{
+		host:        normalized,
+		tokenSource: source,
 		httpClient:  &http.Client{Timeout: 30 * time.Second},
 	}, nil
 }
@@ -505,6 +524,27 @@ func (c *Client) graphQLWithRetry(ctx context.Context, query func() string, vari
 }
 
 func (c *Client) graphQLOnce(ctx context.Context, query string, variables any, target any) error {
+	accessToken := c.accessToken
+	if c.tokenSource != nil {
+		var err error
+		accessToken, err = c.tokenSource.Token(ctx)
+		if err != nil {
+			return err
+		}
+	}
+	err := c.graphQLRequest(ctx, query, variables, target, accessToken)
+	if !isUnauthorizedError(err) || c.tokenSource == nil {
+		return err
+	}
+	c.tokenSource.Invalidate()
+	accessToken, refreshErr := c.tokenSource.Token(ctx)
+	if refreshErr != nil {
+		return refreshErr
+	}
+	return c.graphQLRequest(ctx, query, variables, target, accessToken)
+}
+
+func (c *Client) graphQLRequest(ctx context.Context, query string, variables any, target any, accessToken string) error {
 	body, err := json.Marshal(map[string]any{
 		"query":     query,
 		"variables": variables,
@@ -520,8 +560,8 @@ func (c *Client) graphQLOnce(ctx context.Context, query string, variables any, t
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
-	if c.accessToken != "" {
-		req.Header.Set("Authorization", "Bearer "+c.accessToken)
+	if accessToken != "" {
+		req.Header.Set("Authorization", "Bearer "+accessToken)
 	}
 	if c.workspaceOrgID != "" {
 		req.Header.Set(workspaceOrgHeader, c.workspaceOrgID)
@@ -541,7 +581,7 @@ func (c *Client) graphQLOnce(ctx context.Context, query string, variables any, t
 		return err
 	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return fmt.Errorf("platform request failed: %s: %s", resp.Status, strings.TrimSpace(string(raw)))
+		return PlatformHTTPError{StatusCode: resp.StatusCode, Status: resp.Status, Body: strings.TrimSpace(string(raw))}
 	}
 
 	var envelope struct {
@@ -564,6 +604,31 @@ func (c *Client) graphQLOnce(ctx context.Context, query string, variables any, t
 		return fmt.Errorf("platform returned no data")
 	}
 	return json.Unmarshal(envelope.Data, target)
+}
+
+// PlatformHTTPError describes a non-successful hosted platform response.
+type PlatformHTTPError struct {
+	StatusCode int
+	Status     string
+	Body       string
+}
+
+func (e PlatformHTTPError) Error() string {
+	return fmt.Sprintf("platform request failed: %s: %s", e.Status, e.Body)
+}
+
+func isUnauthorizedError(err error) bool {
+	var httpErr PlatformHTTPError
+	if errors.As(err, &httpErr) {
+		return httpErr.StatusCode == http.StatusUnauthorized
+	}
+	var graphErr GraphQLError
+	if errors.As(err, &graphErr) {
+		code := strings.ToUpper(graphErr.Code)
+		message := strings.ToLower(graphErr.Message)
+		return code == "UNAUTHENTICATED" || code == "UNAUTHORIZED" || strings.Contains(message, "unauthorized") || strings.Contains(message, "authentication")
+	}
+	return false
 }
 
 // GraphQLError is a GraphQL response error from the hosted platform.

@@ -214,14 +214,17 @@ export const reduxStore = configureStore({
   },
 });
 
-/** Injects an additional reducer slice into the store. Called by EE at boot to add EE-specific state. */
-export function registerReducer(key: string, reducer: Reducer): void {
+/** Injects or overrides a reducer slice, optionally without browser persistence. */
+export function registerReducer(key: string, reducer: Reducer, options: { persist?: boolean } = {}): void {
   if (key in eeReducerMap) return;
-  // Persist EE reducers (like platform)
-  const persistedReducer = persistReducer({ key, storage }, reducer);
-  eeReducerMap[key] = persistedReducer;
+  eeReducerMap[key] = options.persist === false
+    ? reducer
+    : persistReducer({ key, storage }, reducer);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   reduxStore.replaceReducer(buildRootReducer() as any);
+  if (options.persist !== false) {
+    reduxStorePersistor.persist();
+  }
 }
 
 export const reduxStorePersistor = persistStore(reduxStore);

@@ -110,6 +110,7 @@ var (
 	ontologyPrimaryKey          string
 	ontologyTableName           string
 	ontologySchemaName          string
+	ontologyStorageMode         string
 	ontologyStatus              string
 	ontologyIcon                string
 	ontologyColor               string
@@ -1265,6 +1266,9 @@ func registerOntologyWriteFlags(command *cobra.Command, includeStatus bool) {
 	command.Flags().StringVar(&ontologyPrimaryKey, "primary-key", "", "ontology primary key property")
 	command.Flags().StringVar(&ontologyTableName, "table-name", "", "backing table name")
 	command.Flags().StringVar(&ontologySchemaName, "schema-name", "", "backing schema name")
+	if !includeStatus {
+		command.Flags().StringVar(&ontologyStorageMode, "storage-mode", platform.DefaultOntologyStorageMode, "ontology storage mode: operational or analytical")
+	}
 	if includeStatus {
 		command.Flags().StringVar(&ontologyStatus, "status", "", "ontology status")
 	}
@@ -2064,6 +2068,11 @@ func buildOntologyCreatePayload(cmd *cobra.Command) (map[string]any, error) {
 	payload["primaryKey"] = strings.TrimSpace(ontologyPrimaryKey)
 	payload["tableName"] = strings.TrimSpace(ontologyTableName)
 	payload["schemaName"] = strings.TrimSpace(ontologySchemaName)
+	storageMode := defaultString(strings.TrimSpace(ontologyStorageMode), platform.DefaultOntologyStorageMode)
+	if err := platform.ValidateOntologyStorageMode(storageMode); err != nil {
+		return nil, err
+	}
+	payload["storageMode"] = storageMode
 	payload["description"] = ontologyDescription
 	payload["icon"] = defaultString(strings.TrimSpace(ontologyIcon), "table")
 	payload["color"] = defaultString(strings.TrimSpace(ontologyColor), "#3366ff")
@@ -2792,7 +2801,7 @@ func parseOntologyRecordValues(values []string) ([]map[string]any, error) {
 		if !ok || key == "" {
 			return nil, fmt.Errorf("--value must be key=value")
 		}
-		records = append(records, map[string]any{"key": key, "value": strings.TrimSpace(recordValue)})
+		records = append(records, map[string]any{"Key": key, "Value": strings.TrimSpace(recordValue)})
 	}
 	return records, nil
 }

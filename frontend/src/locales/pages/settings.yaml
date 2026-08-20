@@ -1,4 +1,7 @@
 en_US:
+  platformSectionTitle: WhoDB Platform
+  platformSectionDescription: The hosted workspace that builds on your connections — managed sources, shareable datasets, and team access.
+  platformSectionLink: Learn more and import your connections
   tabAppearance: Appearance
   tabBehavior: Behavior
   tabIntegrations: Integrations
@@ -103,6 +106,9 @@ ar_AE:
   formatBooleans: "تطبيع القيم المنطقية (t/1 → صحيح، f/0 → خطأ)"
   formatDatesEnabled: "تم تمكين تنسيق التاريخ"
   formatDatesDisabled: "تم تعطيل تنسيق التاريخ"
+  platformSectionTitle: "WhoDB منصة"
+  platformSectionDescription: "مساحة العمل المستضافة التي تعتمد على اتصالاتك - المصادر المُدارة، ومجموعات البيانات القابلة للمشاركة، وإمكانية وصول الفريق."
+  platformSectionLink: "تعرف على المزيد وقم باستيراد اتصالاتك"
 
 de_DE:
   telemetryTitle: "Telemetrie und Leistungsmetriken"
@@ -156,6 +162,9 @@ de_DE:
   formatBooleans: "Boolesche Werte normalisieren (t/1 → wahr, f/0 → falsch)"
   formatDatesEnabled: "Die Datumsformatierung ist aktiviert"
   formatDatesDisabled: "Die Datumsformatierung ist deaktiviert"
+  platformSectionTitle: "WhoDB Plattform"
+  platformSectionDescription: "Der gehostete Arbeitsbereich, der auf Ihren Verbindungen aufbaut – verwaltete Quellen, gemeinsam nutzbare Datensätze und Teamzugriff."
+  platformSectionLink: "Erfahren Sie mehr und importieren Sie Ihre Verbindungen"
 
 el_GR:
   telemetryTitle: "Τηλεμετρία και μετρήσεις απόδοσης"
@@ -209,6 +218,9 @@ el_GR:
   formatBooleans: "Κανονικοποίηση Booleans (t/1 → true, f/0 → false)"
   formatDatesEnabled: "Η μορφοποίηση ημερομηνίας είναι ενεργοποιημένη"
   formatDatesDisabled: "Η μορφοποίηση ημερομηνίας είναι απενεργοποιημένη"
+  platformSectionTitle: "WhoDB Πλατφόρμα"
+  platformSectionDescription: "Ο φιλοξενούμενος χώρος εργασίας που βασίζεται στις συνδέσεις σας — διαχειριζόμενες πηγές, κοινόχρηστα σύνολα δεδομένων και πρόσβαση ομάδας."
+  platformSectionLink: "Μάθετε περισσότερα και εισαγάγετε τις συνδέσεις σας"
 
 en_GB:
   telemetryTitle: "Telemetry and Performance Metrics"
@@ -262,6 +274,9 @@ en_GB:
   formatBooleans: "Normalize booleans (t/1 → true, f/0 → false)"
   formatDatesEnabled: "Date formatting is enabled"
   formatDatesDisabled: "Date formatting is disabled"
+  platformSectionTitle: "WhoDB Platform"
+  platformSectionDescription: "The hosted workspace that builds on your connections — managed sources, shareable datasets, and team access."
+  platformSectionLink: "Learn more and import your connections"
 
 es_ES:
   telemetryTitle: "Telemetría y métricas de rendimiento"
@@ -315,6 +330,9 @@ es_ES:
   formatBooleans: "Normalizar valores booleanos (t/1 → verdadero, f/0 → falso)"
   formatDatesEnabled: "El formato de fecha está habilitado"
   formatDatesDisabled: "El formato de fecha está deshabilitado"
+  platformSectionTitle: "WhoDB Plataforma"
+  platformSectionDescription: "El espacio de trabajo alojado que se basa en sus conexiones: fuentes administradas, conjuntos de datos que se pueden compartir y acceso del equipo."
+  platformSectionLink: "Obtenga más información e importe sus conexiones"
 
 fi_FI:
   telemetryTitle: "Telemetria ja suorituskykymittarit"
@@ -368,6 +386,9 @@ fi_FI:
   formatBooleans: "Normalisoi loogiset arvot (t/1 → tosi, f/0 → epätosi)"
   formatDatesEnabled: "Päivämäärän muotoilu on käytössä"
   formatDatesDisabled: "Päivämäärän muotoilu on poistettu käytöstä"
+  platformSectionTitle: "WhoDB Alusta"
+  platformSectionDescription: "Isännöity työtila, joka perustuu yhteyksiisi – hallinnoidut lähteet, jaettavat tietojoukot ja tiimin käyttöoikeudet."
+  platformSectionLink: "Lue lisää ja tuo yhteydet"
 
 fr_FR:
   telemetryTitle: "Télémétrie et mesures de performances"
@@ -421,6 +442,9 @@ fr_FR:
   formatBooleans: "Normaliser les booléens (t/1 → vrai, f/0 → faux)"
   formatDatesEnabled: "Le formatage de la date est activé"
   formatDatesDisabled: "Le formatage de la date est désactivé"
+  platformSectionTitle: "WhoDB Plateforme"
+  platformSectionDescription: "L'espace de travail hébergé qui s'appuie sur vos connexions : sources gérées, ensembles de données partageables et accès d'équipe."
+  platformSectionLink: "En savoir plus et importer vos connexions"
 
 it_IT:
   telemetryTitle: "Telemetria e metriche delle prestazioni"
@@ -474,6 +498,9 @@ it_IT:
   formatBooleans: "Normalizza i booleani (t/1 → vero, f/0 → falso)"
   formatDatesEnabled: "La formattazione della data è abilitata"
   formatDatesDisabled: "La formattazione della data è disabilitata"
+  platformSectionTitle: "WhoDB Piattaforma"
+  platformSectionDescription: "Lo spazio di lavoro ospitato che si basa sulle tue connessioni: origini gestite, set di dati condivisibili e accesso al team."
+  platformSectionLink: "Scopri di più e importa le tue connessioni"
 
 iw_IL:
   telemetryTitle: "טלמטריה ומדדי ביצועים"
@@ -527,6 +554,9 @@ iw_IL:
   formatBooleans: "נרמל בוליאנים (t/1 → נכון, f/0 → false)"
   formatDatesEnabled: "עיצוב תאריך מופעל"
   formatDatesDisabled: "עיצוב התאריך מושבת"
+  platformSectionTitle: "WhoDB פלטפורמה"
+  platformSectionDescription: "סביבת העבודה המתארחת שמתבססת על החיבורים שלך - מקורות מנוהלים, מערכי נתונים שניתנים לשיתוף וגישה לצוות."
+  platformSectionLink: "למידע נוסף וייבא את החיבורים שלך"
 
 ja_JP:
   telemetryTitle: "テレメトリとパフォーマンスのメトリクス"
@@ -580,6 +610,9 @@ ja_JP:
   formatBooleans: "ブール値の正規化 (t/1 → true、f/0 → false)"
   formatDatesEnabled: "日付の書式設定が有効になっています"
   formatDatesDisabled: "日付の書式設定が無効になっています"
+  platformSectionTitle: "WhoDB プラットフォーム"
+  platformSectionDescription: "接続に基づいて構築されるホストされたワークスペース - 管理されたソース、共有可能なデータセット、チーム アクセス。"
+  platformSectionLink: "詳細を確認して接続をインポートする"
 
 ko_KR:
   telemetryTitle: "원격 측정 및 성능 측정항목"
@@ -633,6 +666,9 @@ ko_KR:
   formatBooleans: "부울 정규화(t/1 → true, f/0 → false)"
   formatDatesEnabled: "날짜 형식이 활성화되었습니다"
   formatDatesDisabled: "날짜 형식이 비활성화되었습니다."
+  platformSectionTitle: "WhoDB 플랫폼"
+  platformSectionDescription: "관리형 소스, 공유 가능한 데이터 세트, 팀 액세스 등 연결을 기반으로 구축된 호스팅된 작업 공간입니다."
+  platformSectionLink: "자세히 알아보고 연결 가져오기"
 
 nl_NL:
   telemetryTitle: "Telemetrie en prestatiestatistieken"
@@ -686,6 +722,9 @@ nl_NL:
   formatBooleans: "Normaliseer booleaanse waarden (t/1 → waar, f/0 → onwaar)"
   formatDatesEnabled: "Datumnotatie is ingeschakeld"
   formatDatesDisabled: "Datumnotatie is uitgeschakeld"
+  platformSectionTitle: "WhoDB Platform"
+  platformSectionDescription: "De gehoste werkruimte die voortbouwt op uw verbindingen: beheerde bronnen, deelbare datasets en teamtoegang."
+  platformSectionLink: "Leer meer en importeer uw verbindingen"
 
 pl_PL:
   telemetryTitle: "Dane telemetryczne i wydajnościowe"
@@ -739,6 +778,9 @@ pl_PL:
   formatBooleans: "Normalizuj wartości logiczne (t/1 → prawda, f/0 → fałsz)"
   formatDatesEnabled: "Formatowanie daty jest włączone"
   formatDatesDisabled: "Formatowanie daty jest wyłączone"
+  platformSectionTitle: "WhoDB Platforma"
+  platformSectionDescription: "Hostowany obszar roboczy, który opiera się na Twoich połączeniach — zarządzanych źródłach, udostępnianych zbiorach danych i dostępie zespołu."
+  platformSectionLink: "Dowiedz się więcej i zaimportuj swoje połączenia"
 
 pt_BR:
   telemetryTitle: "Telemetria e métricas de desempenho"
@@ -792,6 +834,9 @@ pt_BR:
   formatBooleans: "Normalizar booleanos (t/1 → verdadeiro, f/0 → falso)"
   formatDatesEnabled: "A formatação de data está ativada"
   formatDatesDisabled: "A formatação de data está desativada"
+  platformSectionTitle: "WhoDB Plataforma"
+  platformSectionDescription: "O espaço de trabalho hospedado baseado em suas conexões: fontes gerenciadas, conjuntos de dados compartilháveis ​​e acesso de equipe."
+  platformSectionLink: "Saiba mais e importe suas conexões"
 
 ro_RO:
   telemetryTitle: "Telemetrie și valori de performanță"
@@ -845,6 +890,9 @@ ro_RO:
   formatBooleans: "Normalizați valorile booleene (t/1 → adevărat, f/0 → fals)"
   formatDatesEnabled: "Formatarea datei este activată"
   formatDatesDisabled: "Formatarea datei este dezactivată"
+  platformSectionTitle: "WhoDB Platformă"
+  platformSectionDescription: "Spațiul de lucru găzduit care se bazează pe conexiunile dvs. - surse gestionate, seturi de date care pot fi partajate și acces în echipă."
+  platformSectionLink: "Aflați mai multe și importați-vă conexiunile"
 
 ru_RU:
   telemetryTitle: "Телеметрия и показатели производительности"
@@ -898,6 +946,9 @@ ru_RU:
   formatBooleans: "Нормализовать логические значения (t/1 → true, f/0 → false)"
   formatDatesEnabled: "Форматирование даты включено"
   formatDatesDisabled: "Форматирование даты отключено"
+  platformSectionTitle: "WhoDB Платформа"
+  platformSectionDescription: "Размещенное рабочее пространство, основанное на ваших соединениях — управляемых источниках, общих наборах данных и групповом доступе."
+  platformSectionLink: "Узнайте больше и импортируйте свои подключения"
 
 sk_SK:
   telemetryTitle: "Telemetria a metriky výkonu"
@@ -951,6 +1002,9 @@ sk_SK:
   formatBooleans: "Normalizovať boolovské hodnoty (t/1 → pravda, f/0 → nepravda)"
   formatDatesEnabled: "Formátovanie dátumu je povolené"
   formatDatesDisabled: "Formátovanie dátumu je zakázané"
+  platformSectionTitle: "WhoDB Platforma"
+  platformSectionDescription: "Hostený pracovný priestor, ktorý stavia na vašich pripojeniach – spravované zdroje, zdieľateľné množiny údajov a tímový prístup."
+  platformSectionLink: "Získajte viac informácií a importujte svoje pripojenia"
 
 sv_SE:
   telemetryTitle: "Telemetri och prestandamått"
@@ -1004,6 +1058,9 @@ sv_SE:
   formatBooleans: "Normalisera booleaner (t/1 → sant, f/0 → falskt)"
   formatDatesEnabled: "Datumformatering är aktiverad"
   formatDatesDisabled: "Datumformatering är inaktiverad"
+  platformSectionTitle: "WhoDB Plattform"
+  platformSectionDescription: "Den värdbaserade arbetsytan som bygger på dina anslutningar – hanterade källor, delbara datauppsättningar och teamåtkomst."
+  platformSectionLink: "Läs mer och importera dina anslutningar"
 
 zh_CN:
   telemetryTitle: "遥测和性能指标"
@@ -1057,6 +1114,9 @@ zh_CN:
   formatBooleans: "标准化布尔值（t/1 → true，f/0 → false）"
   formatDatesEnabled: "日期格式已启用"
   formatDatesDisabled: "日期格式已禁用"
+  platformSectionTitle: "WhoDB 平台"
+  platformSectionDescription: "基于您的连接构建的托管工作区 - 托管源、可共享数据集和团队访问。"
+  platformSectionLink: "了解更多信息并导入您的联系"
 
 zh_TW:
   telemetryTitle: "遙測和性能指標"
@@ -1110,6 +1170,9 @@ zh_TW:
   formatBooleans: "標準化布林值（t/1 → true，f/0 → false）"
   formatDatesEnabled: "日期格式已啟用"
   formatDatesDisabled: "日期格式已停用"
+  platformSectionTitle: "WhoDB 平台"
+  platformSectionDescription: "基於您的連線建置的託管工作區 - 託管來源、可共用資料集和團隊存取。"
+  platformSectionLink: "了解更多並匯入您的聯繫"
 
 bg_BG:
   telemetryTitle: "Телеметрия и показатели за ефективност"
@@ -1163,6 +1226,9 @@ bg_BG:
   formatBooleans: "Нормализиране на булеви стойности (t/1 → true, f/0 → false)"
   formatDatesEnabled: "Форматирането на датата е активирано"
   formatDatesDisabled: "Форматирането на датата е деактивирано"
+  platformSectionTitle: "WhoDB Платформа"
+  platformSectionDescription: "Хостваното работно пространство, което се основава на вашите връзки – управлявани източници, споделяеми набори от данни и екипен достъп."
+  platformSectionLink: "Научете повече и импортирайте вашите връзки"
 
 bn_BD:
   telemetryTitle: "টেলিমেট্রি এবং পারফরম্যান্স মেট্রিক্স"
@@ -1216,6 +1282,9 @@ bn_BD:
   formatBooleans: "বুলিয়ানকে স্বাভাবিক করুন (t/1 → সত্য, f/0 → মিথ্যা)"
   formatDatesEnabled: "তারিখ বিন্যাস সক্ষম করা হয়েছে"
   formatDatesDisabled: "তারিখ বিন্যাস অক্ষম করা হয়েছে৷"
+  platformSectionTitle: "WhoDB প্ল্যাটফর্ম"
+  platformSectionDescription: "হোস্ট করা ওয়ার্কস্পেস যা আপনার সংযোগগুলি তৈরি করে — পরিচালিত উত্স, ভাগ করা যায় এমন ডেটাসেট এবং টিম অ্যাক্সেস।"
+  platformSectionLink: "আরো জানুন এবং আপনার সংযোগ আমদানি করুন"
 
 ca_ES:
   telemetryTitle: "Telemetria i mètriques de rendiment"
@@ -1269,6 +1338,9 @@ ca_ES:
   formatBooleans: "Normalitzar booleans (t/1 → cert, f/0 → fals)"
   formatDatesEnabled: "El format de data està habilitat"
   formatDatesDisabled: "El format de la data està desactivat"
+  platformSectionTitle: "WhoDB Plataforma"
+  platformSectionDescription: "L'espai de treball allotjat que es basa en les vostres connexions: fonts gestionades, conjunts de dades compartibles i accés d'equip."
+  platformSectionLink: "Obteniu més informació i importeu les vostres connexions"
 
 cs_CZ:
   telemetryTitle: "Telemetrie a metriky výkonu"
@@ -1322,6 +1394,9 @@ cs_CZ:
   formatBooleans: "Normalizovat booleovské hodnoty (t/1 → pravda, f/0 → nepravda)"
   formatDatesEnabled: "Formátování data je povoleno"
   formatDatesDisabled: "Formátování data je zakázáno"
+  platformSectionTitle: "WhoDB Platforma"
+  platformSectionDescription: "Hostovaný pracovní prostor, který staví na vašich připojeních – spravované zdroje, sdílené datové sady a týmový přístup."
+  platformSectionLink: "Zjistěte více a importujte svá připojení"
 
 da_DK:
   telemetryTitle: "Telemetri og præstationsmålinger"
@@ -1375,6 +1450,9 @@ da_DK:
   formatBooleans: "Normaliser booleaner (t/1 → sand, f/0 → falsk)"
   formatDatesEnabled: "Datoformatering er aktiveret"
   formatDatesDisabled: "Datoformatering er deaktiveret"
+  platformSectionTitle: "WhoDB Platform"
+  platformSectionDescription: "Det hostede arbejdsområde, der bygger på dine forbindelser - administrerede kilder, delbare datasæt og teamadgang."
+  platformSectionLink: "Få mere at vide, og importer dine forbindelser"
 
 fa_IR:
   telemetryTitle: "تله متری و معیارهای عملکرد"
@@ -1428,6 +1506,9 @@ fa_IR:
   formatBooleans: "عادی کردن بولی ها (t/1 → true، f/0 → false)"
   formatDatesEnabled: "قالب بندی تاریخ فعال است"
   formatDatesDisabled: "قالب بندی تاریخ غیرفعال است"
+  platformSectionTitle: "WhoDB پلتفرم"
+  platformSectionDescription: "فضای کاری میزبانی شده که بر روی اتصالات شما ایجاد می شود - منابع مدیریت شده، مجموعه داده های قابل اشتراک گذاری و دسترسی تیم."
+  platformSectionLink: "بیشتر بدانید و اتصالات خود را وارد کنید"
 
 hi_IN:
   telemetryTitle: "टेलीमेट्री और प्रदर्शन मेट्रिक्स"
@@ -1481,6 +1562,9 @@ hi_IN:
   formatBooleans: "बूलियन्स को सामान्यीकृत करें (t/1 → सत्य, f/0 → गलत)"
   formatDatesEnabled: "दिनांक स्वरूपण सक्षम है"
   formatDatesDisabled: "दिनांक स्वरूपण अक्षम है"
+  platformSectionTitle: "WhoDB प्लेटफार्म"
+  platformSectionDescription: "होस्ट किया गया कार्यक्षेत्र जो आपके कनेक्शन पर बनता है - प्रबंधित स्रोत, साझा करने योग्य डेटासेट और टीम पहुंच।"
+  platformSectionLink: "अधिक जानें और अपने कनेक्शन आयात करें"
 
 hr_HR:
   telemetryTitle: "Telemetrija i metrika performansi"
@@ -1534,6 +1618,9 @@ hr_HR:
   formatBooleans: "Normaliziraj booleove vrijednosti (t/1 → točno, f/0 → lažno)"
   formatDatesEnabled: "Formatiranje datuma je omogućeno"
   formatDatesDisabled: "Formatiranje datuma je onemogućeno"
+  platformSectionTitle: "WhoDB Platforma"
+  platformSectionDescription: "Hostirani radni prostor koji se temelji na vašim vezama — upravljani izvori, skupovi podataka koji se mogu dijeliti i timski pristup."
+  platformSectionLink: "Saznajte više i uvezite svoje veze"
 
 hu_HU:
   telemetryTitle: "Telemetria és teljesítménymérők"
@@ -1587,6 +1674,9 @@ hu_HU:
   formatBooleans: "Logikai értékek normalizálása (t/1 → igaz, f/0 → hamis)"
   formatDatesEnabled: "A dátum formázása engedélyezve van"
   formatDatesDisabled: "A dátum formázása le van tiltva"
+  platformSectionTitle: "WhoDB Platform"
+  platformSectionDescription: "A hosztolt munkaterület, amely a kapcsolatokra – felügyelt forrásokra, megosztható adatkészletekre és csapathozzáférésre – épül."
+  platformSectionLink: "Tudjon meg többet és importálja kapcsolatait"
 
 id_ID:
   telemetryTitle: "Telemetri dan Metrik Kinerja"
@@ -1640,6 +1730,9 @@ id_ID:
   formatBooleans: "Normalisasikan boolean (t/1 → true, f/0 → false)"
   formatDatesEnabled: "Pemformatan tanggal diaktifkan"
   formatDatesDisabled: "Pemformatan tanggal dinonaktifkan"
+  platformSectionTitle: "WhoDB Peron"
+  platformSectionDescription: "Ruang kerja yang dihosting berdasarkan koneksi Anda — sumber terkelola, kumpulan data yang dapat dibagikan, dan akses tim."
+  platformSectionLink: "Pelajari lebih lanjut dan impor koneksi Anda"
 
 ms_MY:
   telemetryTitle: "Telemetri dan Metrik Prestasi"
@@ -1693,6 +1786,9 @@ ms_MY:
   formatBooleans: "Normalkan boolean (t/1 → true, f/0 → false)"
   formatDatesEnabled: "Pemformatan tarikh didayakan"
   formatDatesDisabled: "Pemformatan tarikh dilumpuhkan"
+  platformSectionTitle: "WhoDB Platform"
+  platformSectionDescription: "Ruang kerja yang dihoskan yang membina sambungan anda — sumber terurus, set data boleh kongsi dan akses pasukan."
+  platformSectionLink: "Ketahui lebih lanjut dan import sambungan anda"
 
 nb_NO:
   telemetryTitle: "Telemetri og ytelsesmålinger"
@@ -1746,6 +1842,9 @@ nb_NO:
   formatBooleans: "Normaliser boolske verdier (t/1 → sant, f/0 → usant)"
   formatDatesEnabled: "Datoformatering er aktivert"
   formatDatesDisabled: "Datoformatering er deaktivert"
+  platformSectionTitle: "WhoDB Plattform"
+  platformSectionDescription: "Det vertsbaserte arbeidsområdet som bygger på tilkoblingene dine – administrerte kilder, delbare datasett og teamtilgang."
+  platformSectionLink: "Finn ut mer og importer tilkoblingene dine"
 
 sw_KE:
   telemetryTitle: "Vipimo vya Telemetry na Utendaji"
@@ -1799,6 +1898,9 @@ sw_KE:
   formatBooleans: "Kurekebisha booleans (t/1 → kweli, f/0 → uongo)"
   formatDatesEnabled: "Uumbizaji wa tarehe umewashwa"
   formatDatesDisabled: "Uumbizaji wa tarehe umezimwa"
+  platformSectionTitle: "WhoDB Jukwaa"
+  platformSectionDescription: "Nafasi ya kazi iliyopangishwa ambayo hujengwa juu ya miunganisho yako - vyanzo vinavyodhibitiwa, seti za data zinazoweza kushirikiwa na ufikiaji wa timu."
+  platformSectionLink: "Pata maelezo zaidi na uingize miunganisho yako"
 
 ta_IN:
   telemetryTitle: "டெலிமெட்ரி மற்றும் செயல்திறன் அளவீடுகள்"
@@ -1852,6 +1954,9 @@ ta_IN:
   formatBooleans: "பூலியன்களை இயல்பாக்கவும் (t/1 → true, f/0 → false)"
   formatDatesEnabled: "தேதி வடிவமைப்பு இயக்கப்பட்டது"
   formatDatesDisabled: "தேதி வடிவமைப்பு முடக்கப்பட்டுள்ளது"
+  platformSectionTitle: "WhoDB மேடை"
+  platformSectionDescription: "நிர்வகிக்கப்பட்ட ஆதாரங்கள், பகிரக்கூடிய தரவுத்தொகுப்புகள் மற்றும் குழு அணுகல் - உங்கள் இணைப்புகளை உருவாக்கும் ஹோஸ்ட் செய்யப்பட்ட பணியிடம்."
+  platformSectionLink: "மேலும் அறிக மற்றும் உங்கள் இணைப்புகளை இறக்குமதி செய்யவும்"
 
 th_TH:
   telemetryTitle: "การวัดและส่งข้อมูลทางไกลและการวัดประสิทธิภาพ"
@@ -1905,6 +2010,9 @@ th_TH:
   formatBooleans: "ทำให้บูลีนเป็นมาตรฐาน (t/1 → จริง, f/0 → เท็จ)"
   formatDatesEnabled: "เปิดใช้งานการจัดรูปแบบวันที่แล้ว"
   formatDatesDisabled: "การจัดรูปแบบวันที่ถูกปิดใช้งาน"
+  platformSectionTitle: "WhoDB แพลตฟอร์ม"
+  platformSectionDescription: "พื้นที่ทำงานที่โฮสต์ซึ่งสร้างขึ้นบนการเชื่อมต่อของคุณ — แหล่งที่มาที่ได้รับการจัดการ ชุดข้อมูลที่แชร์ได้ และการเข้าถึงของทีม"
+  platformSectionLink: "เรียนรู้เพิ่มเติมและนำเข้าการเชื่อมต่อของคุณ"
 
 tr_TR:
   telemetryTitle: "Telemetri ve Performans Metrikleri"
@@ -1958,6 +2066,9 @@ tr_TR:
   formatBooleans: "Boole değerlerini normalleştir (t/1 → doğru, f/0 → yanlış)"
   formatDatesEnabled: "Tarih biçimlendirmesi etkin"
   formatDatesDisabled: "Tarih biçimlendirmesi devre dışı"
+  platformSectionTitle: "WhoDB Platform"
+  platformSectionDescription: "Yönetilen kaynaklar, paylaşılabilir veri kümeleri ve ekip erişimi gibi bağlantılarınızı temel alan, barındırılan çalışma alanı."
+  platformSectionLink: "Daha fazla bilgi edinin ve bağlantılarınızı içe aktarın"
 
 uk_UA:
   telemetryTitle: "Телеметрія та показники продуктивності"
@@ -2011,6 +2122,9 @@ uk_UA:
   formatBooleans: "Нормалізація логічних значень (t/1 → true, f/0 → false)"
   formatDatesEnabled: "Форматування дати ввімкнено"
   formatDatesDisabled: "Форматування дати вимкнено"
+  platformSectionTitle: "WhoDB Платформа"
+  platformSectionDescription: "Розміщений робочий простір, який базується на ваших зв’язках — керовані джерела, набори даних для спільного використання та командний доступ."
+  platformSectionLink: "Дізнайтеся більше та імпортуйте свої підключення"
 
 ur_PK:
   telemetryTitle: "ٹیلی میٹری اور پرفارمنس میٹرکس"
@@ -2064,6 +2178,9 @@ ur_PK:
   formatBooleans: "بولین کو معمول بنائیں (t/1 → سچ، f/0 → غلط)"
   formatDatesEnabled: "تاریخ کی فارمیٹنگ فعال ہے۔"
   formatDatesDisabled: "تاریخ کی فارمیٹنگ غیر فعال ہے۔"
+  platformSectionTitle: "WhoDB پلیٹ فارم"
+  platformSectionDescription: "ہوسٹڈ ورک اسپیس جو آپ کے کنکشنز پر بناتا ہے — منظم ذرائع، قابل اشتراک ڈیٹا سیٹس، اور ٹیم تک رسائی۔"
+  platformSectionLink: "مزید جانیں اور اپنے کنکشنز درآمد کریں۔"
 
 vi_VN:
   telemetryTitle: "Đo lường từ xa và hiệu suất"
@@ -2117,6 +2234,9 @@ vi_VN:
   formatBooleans: "Chuẩn hóa booleans (t/1 → true, f/0 → false)"
   formatDatesEnabled: "Định dạng ngày được bật"
   formatDatesDisabled: "Định dạng ngày bị vô hiệu hóa"
+  platformSectionTitle: "WhoDB Nền tảng"
+  platformSectionDescription: "Không gian làm việc được lưu trữ được xây dựng trên các kết nối của bạn — nguồn được quản lý, bộ dữ liệu có thể chia sẻ và quyền truy cập của nhóm."
+  platformSectionLink: "Tìm hiểu thêm và nhập kết nối của bạn"
 
 af_ZA:
   telemetryTitle: "Telemetrie en prestasiemaatstawwe"
@@ -2170,6 +2290,9 @@ af_ZA:
   formatBooleans: "Normaliseer booleans (t/1 → waar, f/0 → onwaar)"
   formatDatesEnabled: "Datumformatering is geaktiveer"
   formatDatesDisabled: "Datumformatering is gedeaktiveer"
+  platformSectionTitle: "WhoDB Platform"
+  platformSectionDescription: "Die gehuisves werkspasie wat voortbou op jou verbindings – bestuurde bronne, deelbare datastelle en spantoegang."
+  platformSectionLink: "Kom meer te wete en voer jou verbindings in"
 
 am_ET:
   telemetryTitle: "ቴሌሜትሪ እና የአፈጻጸም መለኪያዎች"
@@ -2223,6 +2346,9 @@ am_ET:
   formatBooleans: "ቡሊያንስን መደበኛ አድርግ (t/1 → እውነት፣ f/0 → ሐሰት)"
   formatDatesEnabled: "የቀን ቅርጸት ነቅቷል።"
   formatDatesDisabled: "የቀን ቅርጸት ተሰናክሏል።"
+  platformSectionTitle: "WhoDB መድረክ"
+  platformSectionDescription: "በግንኙነቶችዎ ላይ የሚገነባው የተስተናገደው የስራ ቦታ - የሚተዳደሩ ምንጮች፣ ሊጋሩ የሚችሉ የውሂብ ስብስቦች እና የቡድን መዳረሻ።"
+  platformSectionLink: "የበለጠ ይወቁ እና ግንኙነቶችዎን ያስመጡ"
 
 az_AZ:
   telemetryTitle: "Telemetriya və Performans Metrikləri"
@@ -2276,6 +2402,9 @@ az_AZ:
   formatBooleans: "Booleanları normallaşdırın (t/1 → doğru, f/0 → yanlış)"
   formatDatesEnabled: "Tarixin formatlaşdırılması aktivdir"
   formatDatesDisabled: "Tarixin formatlaşdırılması deaktiv edilib"
+  platformSectionTitle: "WhoDB Platforma"
+  platformSectionDescription: "Əlaqələrinizə əsaslanan hosted iş sahəsi – idarə olunan mənbələr, paylaşılan verilənlər topluları və komanda girişi."
+  platformSectionLink: "Ətraflı məlumat əldə edin və bağlantılarınızı idxal edin"
 
 et_EE:
   telemetryTitle: "Telemeetria ja jõudlusmõõdikud"
@@ -2329,6 +2458,9 @@ et_EE:
   formatBooleans: "Normaliseeri tõeväärtused (t/1 → tõene, f/0 → väär)"
   formatDatesEnabled: "Kuupäeva vormindamine on lubatud"
   formatDatesDisabled: "Kuupäeva vormindamine on keelatud"
+  platformSectionTitle: "WhoDB Platvorm"
+  platformSectionDescription: "Hostitud tööruum, mis põhineb teie ühendustel – hallatud allikatel, jagatavatel andmekogumitel ja meeskonna juurdepääsul."
+  platformSectionLink: "Vaadake lisateavet ja importige oma ühendused"
 
 gu_IN:
   telemetryTitle: "ટેલિમેટ્રી અને પર્ફોર્મન્સ મેટ્રિક્સ"
@@ -2382,6 +2514,9 @@ gu_IN:
   formatBooleans: "બુલિયનને સામાન્ય બનાવો (t/1 → સાચું, f/0 → ખોટું)"
   formatDatesEnabled: "તારીખ ફોર્મેટિંગ સક્ષમ છે"
   formatDatesDisabled: "તારીખ ફોર્મેટિંગ અક્ષમ છે"
+  platformSectionTitle: "WhoDB પ્લેટફોર્મ"
+  platformSectionDescription: "હોસ્ટ કરેલ વર્કસ્પેસ જે તમારા કનેક્શન્સ પર બને છે — મેનેજ કરેલ સ્ત્રોતો, શેર કરી શકાય તેવા ડેટાસેટ્સ અને ટીમ એક્સેસ."
+  platformSectionLink: "વધુ જાણો અને તમારા કનેક્શન્સ આયાત કરો"
 
 ha_NG:
   telemetryTitle: "Telemetry da Ma'aunin Aiki"
@@ -2435,6 +2570,9 @@ ha_NG:
   formatBooleans: "Daidaita booleans (t/1 → gaskiya, f/0 → ƙarya)"
   formatDatesEnabled: "An kunna tsara kwanan wata"
   formatDatesDisabled: "An kashe tsara kwanan wata"
+  platformSectionTitle: "WhoDB Dandalin"
+  platformSectionDescription: "Wurin aiki da aka shirya wanda ke gina hanyoyin haɗin yanar gizonku - hanyoyin sarrafawa, bayanan da za'a iya rabawa, da samun damar ƙungiya."
+  platformSectionLink: "Ƙara koyo kuma shigo da haɗin yanar gizon ku"
 
 ka_GE:
   telemetryTitle: "ტელემეტრია და შესრულების მეტრიკა"
@@ -2488,6 +2626,9 @@ ka_GE:
   formatBooleans: "ლოგინების ნორმალიზება (t/1 → true, f/0 → false)"
   formatDatesEnabled: "თარიღის ფორმატირება ჩართულია"
   formatDatesDisabled: "თარიღის ფორმატირება გამორთულია"
+  platformSectionTitle: "WhoDB პლატფორმა"
+  platformSectionDescription: "მასპინძელი სამუშაო სივრცე, რომელიც ეფუძნება თქვენს კავშირებს - მართული წყაროები, მონაცემთა გაზიარება და გუნდური წვდომა."
+  platformSectionLink: "შეიტყვეთ მეტი და შემოიტანეთ თქვენი კავშირები"
 
 km_KH:
   telemetryTitle: "Telemetry និង​ម៉ែត្រ​ការ​អនុវត្ត"
@@ -2541,6 +2682,9 @@ km_KH:
   formatBooleans: "ធ្វើឱ្យប៊ូលីនធម្មតា (t/1 → true, f/0 → មិនពិត)"
   formatDatesEnabled: "ការធ្វើទ្រង់ទ្រាយកាលបរិច្ឆេទត្រូវបានបើក"
   formatDatesDisabled: "ការធ្វើទ្រង់ទ្រាយកាលបរិច្ឆេទត្រូវបានបិទ"
+  platformSectionTitle: "WhoDB វេទិកា"
+  platformSectionDescription: "កន្លែងធ្វើការដែលបានបង្ហោះដែលបង្កើតនៅលើការតភ្ជាប់របស់អ្នក — ប្រភពដែលបានគ្រប់គ្រង សំណុំទិន្នន័យដែលអាចចែករំលែកបាន និងការចូលប្រើក្រុម។"
+  platformSectionLink: "ស្វែងយល់បន្ថែម និងនាំចូលការតភ្ជាប់របស់អ្នក។"
 
 kn_IN:
   telemetryTitle: "ಟೆಲಿಮೆಟ್ರಿ ಮತ್ತು ಕಾರ್ಯಕ್ಷಮತೆಯ ಮೆಟ್ರಿಕ್ಸ್"
@@ -2594,6 +2738,9 @@ kn_IN:
   formatBooleans: "ಬೂಲಿಯನ್‌ಗಳನ್ನು ಸಾಧಾರಣಗೊಳಿಸಿ (t/1 → true, f/0 → ತಪ್ಪು)"
   formatDatesEnabled: "ದಿನಾಂಕ ಫಾರ್ಮ್ಯಾಟಿಂಗ್ ಅನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಲಾಗಿದೆ"
   formatDatesDisabled: "ದಿನಾಂಕ ಫಾರ್ಮ್ಯಾಟಿಂಗ್ ಅನ್ನು ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಲಾಗಿದೆ"
+  platformSectionTitle: "WhoDB Platform"
+  platformSectionDescription: "ನಿಮ್ಮ ಸಂಪರ್ಕಗಳ ಮೇಲೆ ನಿರ್ಮಿಸುವ ಹೋಸ್ಟ್ ಮಾಡಲಾದ ಕಾರ್ಯಸ್ಥಳ - ನಿರ್ವಹಿಸಿದ ಮೂಲಗಳು, ಹಂಚಿಕೊಳ್ಳಬಹುದಾದ ಡೇಟಾಸೆಟ್‌ಗಳು ಮತ್ತು ತಂಡದ ಪ್ರವೇಶ."
+  platformSectionLink: "ಇನ್ನಷ್ಟು ತಿಳಿಯಿರಿ ಮತ್ತು ನಿಮ್ಮ ಸಂಪರ್ಕಗಳನ್ನು ಆಮದು ಮಾಡಿಕೊಳ್ಳಿ"
 
 lt_LT:
   telemetryTitle: "Telemetrija ir našumo metrika"
@@ -2647,6 +2794,9 @@ lt_LT:
   formatBooleans: "Normalizuoti loginius parametrus (t/1 → tiesa, f/0 → klaidinga)"
   formatDatesEnabled: "Datos formatavimas įjungtas"
   formatDatesDisabled: "Datos formatavimas išjungtas"
+  platformSectionTitle: "WhoDB Platforma"
+  platformSectionDescription: "Priglobta darbo sritis, pagrįsta jūsų ryšiais – valdomais šaltiniais, bendrinamais duomenų rinkiniais ir komandos prieiga."
+  platformSectionLink: "Sužinokite daugiau ir importuokite savo ryšius"
 
 lv_LV:
   telemetryTitle: "Telemetrija un veiktspējas metrika"
@@ -2700,6 +2850,9 @@ lv_LV:
   formatBooleans: "Normalizēt Būla vērtības (t/1 → patiess, f/0 → nepatiess)"
   formatDatesEnabled: "Datuma formatēšana ir iespējota"
   formatDatesDisabled: "Datuma formatēšana ir atspējota"
+  platformSectionTitle: "WhoDB Platforma"
+  platformSectionDescription: "Mitināta darbvieta, kuras pamatā ir jūsu savienojumi — pārvaldīti avoti, koplietojamas datu kopas un komandas piekļuve."
+  platformSectionLink: "Uzziniet vairāk un importējiet savus savienojumus"
 
 ml_IN:
   telemetryTitle: "ടെലിമെട്രി, പെർഫോമൻസ് മെട്രിക്‌സ്"
@@ -2753,6 +2906,9 @@ ml_IN:
   formatBooleans: "ബൂലിയൻസ് സാധാരണമാക്കുക (t/1 → true, f/0 → false)"
   formatDatesEnabled: "തീയതി ഫോർമാറ്റിംഗ് പ്രവർത്തനക്ഷമമാക്കി"
   formatDatesDisabled: "തീയതി ഫോർമാറ്റിംഗ് പ്രവർത്തനരഹിതമാക്കി"
+  platformSectionTitle: "WhoDB പ്ലാറ്റ്ഫോം"
+  platformSectionDescription: "നിയന്ത്രിത ഉറവിടങ്ങൾ, പങ്കിടാവുന്ന ഡാറ്റാസെറ്റുകൾ, ടീം ആക്‌സസ് എന്നിവ - നിങ്ങളുടെ കണക്ഷനുകളിൽ നിർമ്മിക്കുന്ന ഹോസ്റ്റ് ചെയ്‌ത വർക്ക്‌സ്‌പെയ്‌സ്."
+  platformSectionLink: "കൂടുതലറിയുകയും നിങ്ങളുടെ കണക്ഷനുകൾ ഇറക്കുമതി ചെയ്യുകയും ചെയ്യുക"
 
 mr_IN:
   telemetryTitle: "टेलीमेट्री आणि परफॉर्मन्स मेट्रिक्स"
@@ -2806,6 +2962,9 @@ mr_IN:
   formatBooleans: "बूलियन्स सामान्य करा (t/1 → सत्य, f/0 → असत्य)"
   formatDatesEnabled: "तारीख स्वरूपन सक्षम केले आहे"
   formatDatesDisabled: "तारीख स्वरूपन अक्षम केले आहे"
+  platformSectionTitle: "WhoDB प्लॅटफॉर्म"
+  platformSectionDescription: "होस्ट केलेले वर्कस्पेस जे तुमच्या कनेक्शनवर तयार होते — व्यवस्थापित स्रोत, शेअर करण्यायोग्य डेटासेट आणि टीम ऍक्सेस."
+  platformSectionLink: "अधिक जाणून घ्या आणि तुमचे कनेक्शन आयात करा"
 
 ne_NP:
   telemetryTitle: "टेलिमेट्री र प्रदर्शन मेट्रिक्स"
@@ -2859,6 +3018,9 @@ ne_NP:
   formatBooleans: "बुलियनलाई सामान्य बनाउनुहोस् (t/1 → true, f/0 → false)"
   formatDatesEnabled: "मिति ढाँचा सक्षम गरिएको छ"
   formatDatesDisabled: "मिति ढाँचा असक्षम गरिएको छ"
+  platformSectionTitle: "WhoDB प्लेटफर्म"
+  platformSectionDescription: "होस्ट गरिएको कार्यस्थान जसले तपाइँको जडानहरूमा निर्माण गर्दछ — व्यवस्थित स्रोतहरू, साझेदारी गर्न मिल्ने डेटासेटहरू, र टोली पहुँच।"
+  platformSectionLink: "थप जान्नुहोस् र आफ्नो जडानहरू आयात गर्नुहोस्"
 
 pa_IN:
   telemetryTitle: "ਟੈਲੀਮੈਟਰੀ ਅਤੇ ਪ੍ਰਦਰਸ਼ਨ ਮੈਟ੍ਰਿਕਸ"
@@ -2912,6 +3074,9 @@ pa_IN:
   formatBooleans: "ਬੂਲੀਅਨ ਨੂੰ ਆਮ ਬਣਾਓ (t/1 → ਸਹੀ, f/0 → ਗਲਤ)"
   formatDatesEnabled: "ਮਿਤੀ ਫਾਰਮੈਟਿੰਗ ਚਾਲੂ ਹੈ"
   formatDatesDisabled: "ਮਿਤੀ ਫਾਰਮੈਟਿੰਗ ਅਸਮਰਥਿਤ ਹੈ"
+  platformSectionTitle: "WhoDB ਪਲੇਟਫਾਰਮ"
+  platformSectionDescription: "ਹੋਸਟ ਕੀਤਾ ਵਰਕਸਪੇਸ ਜੋ ਤੁਹਾਡੇ ਕਨੈਕਸ਼ਨਾਂ 'ਤੇ ਬਣਾਉਂਦਾ ਹੈ — ਪ੍ਰਬੰਧਿਤ ਸਰੋਤ, ਸਾਂਝਾ ਕਰਨ ਯੋਗ ਡਾਟਾਸੈੱਟ, ਅਤੇ ਟੀਮ ਪਹੁੰਚ।"
+  platformSectionLink: "ਹੋਰ ਜਾਣੋ ਅਤੇ ਆਪਣੇ ਕਨੈਕਸ਼ਨਾਂ ਨੂੰ ਆਯਾਤ ਕਰੋ"
 
 si_LK:
   telemetryTitle: "Telemetry සහ කාර්ය සාධන මිතික"
@@ -2965,6 +3130,9 @@ si_LK:
   formatBooleans: "බූලියන් සාමාන්‍යකරණය කරන්න (t/1 → true, f/0 → බොරු)"
   formatDatesEnabled: "දින හැඩතල ගැන්වීම සබල කර ඇත"
   formatDatesDisabled: "දින හැඩතල ගැන්වීම අබල කර ඇත"
+  platformSectionTitle: "WhoDB වේදිකාව"
+  platformSectionDescription: "ඔබගේ සම්බන්ධතා මත ගොඩනැගෙන සත්කාරක කාර්ය ඉඩ - කළමනාකරණය කළ මූලාශ්‍ර, බෙදාගත හැකි දත්ත කට්ටල, සහ කණ්ඩායම් ප්‍රවේශය."
+  platformSectionLink: "තව දැනගන්න සහ ඔබේ සම්බන්ධතා ආයාත කරන්න"
 
 sl_SI:
   telemetryTitle: "Telemetrija in meritve zmogljivosti"
@@ -3018,6 +3186,9 @@ sl_SI:
   formatBooleans: "Normaliziraj logične vrednosti (t/1 → resnično, f/0 → napačno)"
   formatDatesEnabled: "Oblikovanje datuma je omogočeno"
   formatDatesDisabled: "Oblikovanje datuma je onemogočeno"
+  platformSectionTitle: "WhoDB Platforma"
+  platformSectionDescription: "Gostujoči delovni prostor, ki gradi na vaših povezavah – upravljani viri, skupni nabori podatkov in skupinski dostop."
+  platformSectionLink: "Izvedite več in uvozite svoje povezave"
 
 sr_RS:
   telemetryTitle: "Телеметрија и метрика перформанси"
@@ -3071,6 +3242,9 @@ sr_RS:
   formatBooleans: "Нормализовати логичке вредности (т/1 → тачно, ф/0 → нетачно)"
   formatDatesEnabled: "Форматирање датума је омогућено"
   formatDatesDisabled: "Форматирање датума је онемогућено"
+  platformSectionTitle: "WhoDB Платформа"
+  platformSectionDescription: "Хостовани радни простор који се заснива на вашим везама — управљаним изворима, скуповима података који се могу делити и тимском приступу."
+  platformSectionLink: "Сазнајте више и увезите своје везе"
 
 te_IN:
   telemetryTitle: "టెలిమెట్రీ మరియు పనితీరు కొలమానాలు"
@@ -3124,6 +3298,9 @@ te_IN:
   formatBooleans: "బూలియన్‌లను సాధారణీకరించండి (t/1 → ఒప్పు, f/0 → తప్పు)"
   formatDatesEnabled: "తేదీ ఫార్మాటింగ్ ప్రారంభించబడింది"
   formatDatesDisabled: "తేదీ ఫార్మాటింగ్ నిలిపివేయబడింది"
+  platformSectionTitle: "WhoDB ప్లాట్‌ఫారమ్"
+  platformSectionDescription: "మీ కనెక్షన్‌లపై రూపొందించే హోస్ట్ చేయబడిన కార్యస్థలం — నిర్వహించబడే మూలాధారాలు, భాగస్వామ్యం చేయగల డేటాసెట్‌లు మరియు బృంద యాక్సెస్."
+  platformSectionLink: "మరింత తెలుసుకోండి మరియు మీ కనెక్షన్‌లను దిగుమతి చేసుకోండి"
 
 tl_PH:
   telemetryTitle: "Telemetry at Mga Sukatan ng Pagganap"
@@ -3177,6 +3354,9 @@ tl_PH:
   formatBooleans: "I-normalize ang mga boolean (t/1 → true, f/0 → false)"
   formatDatesEnabled: "Pinagana ang pag-format ng petsa"
   formatDatesDisabled: "Naka-disable ang pag-format ng petsa"
+  platformSectionTitle: "WhoDB Platform"
+  platformSectionDescription: "Ang naka-host na workspace na bumubuo sa iyong mga koneksyon — mga pinamamahalaang source, naibabahaging dataset, at access ng team."
+  platformSectionLink: "Matuto pa at i-import ang iyong mga koneksyon"
 
 uz_UZ:
   telemetryTitle: "Telemetriya va ishlash ko'rsatkichlari"
@@ -3230,6 +3410,9 @@ uz_UZ:
   formatBooleans: "Mantiqiy qiymatlarni normallashtirish (t/1 → rost, f/0 → noto‘g‘ri)"
   formatDatesEnabled: "Sana formatlash yoqilgan"
   formatDatesDisabled: "Sana formatlash o‘chirilgan"
+  platformSectionTitle: "WhoDB platformasi"
+  platformSectionDescription: "Ulanishlaringizga asoslanadigan mezbon ish maydoni — boshqariladigan manbalar, almashiladigan maʼlumotlar toʻplamlari va jamoaviy ruxsat."
+  platformSectionLink: "Batafsil ma'lumot oling va ulanishlaringizni import qiling"
 
 yo_NG:
   telemetryTitle: "Telemetry ati Awọn Metiriki Iṣẹ"
@@ -3283,3 +3466,6 @@ yo_NG:
   formatBooleans: "Ṣe deede awọn booleans (t/1 → otitọ, f/0 → eke)"
   formatDatesEnabled: "Ti ṣe ọna kika ọjọ ṣiṣẹ"
   formatDatesDisabled: "Tipa akoonu ọjọ jẹ alaabo"
+  platformSectionTitle: "WhoDB Syeed"
+  platformSectionDescription: "Aaye ibi-iṣẹ ti a gbalejo ti o kọ lori awọn asopọ rẹ - awọn orisun iṣakoso, awọn iwe data ti o le pin, ati iraye si ẹgbẹ."
+  platformSectionLink: "Kọ ẹkọ diẹ sii ki o gbe awọn asopọ rẹ wọle"

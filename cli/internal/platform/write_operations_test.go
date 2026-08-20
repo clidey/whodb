@@ -97,9 +97,9 @@ func TestUploadProjectFilePostsMultipartGraphQL(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client, err := NewClient(server.URL, "access-token")
+	client, err := NewAuthenticatedClient(server.URL, &testAccessTokenSource{tokens: []string{"access-token"}})
 	if err != nil {
-		t.Fatalf("NewClient() error = %v", err)
+		t.Fatalf("NewAuthenticatedClient() error = %v", err)
 	}
 	client.SetWorkspaceContext("org-1", "proj-1")
 	folderID := "folder-1"

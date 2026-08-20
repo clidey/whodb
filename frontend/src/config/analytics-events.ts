@@ -73,6 +73,15 @@ export const ANALYTICS_EVENTS = {
     CLOUD_PROVIDER_TEST_BLOCKED: 'cloud_provider.test_blocked',
     CLOUD_PROVIDER_TEST_SUCCEEDED: 'cloud_provider.test_succeeded',
     CLOUD_PROVIDER_TEST_FAILED: 'cloud_provider.test_failed',
+
+    PLATFORM_FUNNEL_OPENED: 'platform.funnel_opened',
+    PLATFORM_FUNNEL_DISMISSED: 'platform.funnel_dismissed',
+    PLATFORM_LINK_OPENED: 'platform.link_opened',
+    PLATFORM_IMPORT_OPENED: 'platform.import_opened',
+    PLATFORM_IMPORT_DISMISSED: 'platform.import_dismissed',
+    PLATFORM_IMPORT_STAGED: 'platform.import_staged',
+    PLATFORM_IMPORT_FAILED: 'platform.import_failed',
+    PLATFORM_NUDGE_DISMISSED: 'platform.nudge_dismissed',
 } as const;
 
 export type AnalyticsEventName = typeof ANALYTICS_EVENTS[keyof typeof ANALYTICS_EVENTS];

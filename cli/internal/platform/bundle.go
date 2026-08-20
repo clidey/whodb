@@ -641,6 +641,7 @@ func OntologyCreatePayloadFromExport(ontology Ontology) map[string]any {
 		"primaryKey":        ontology.PrimaryKey,
 		"tableName":         ontology.TableName,
 		"schemaName":        ontology.SchemaName,
+		"storageMode":       DefaultString(ontology.StorageMode, DefaultOntologyStorageMode),
 		"icon":              DefaultString(ontology.Icon, "table"),
 		"color":             DefaultString(ontology.Color, "#3366ff"),
 		"properties":        properties,

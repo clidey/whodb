@@ -3,6 +3,8 @@ en_US:
   emptyStateTitle: What Can I Help You With?
   noModelTitle: No Model Available
   noModelDescription: Please choose an available model to start chatting with your data.
+  platformManagedAiLink: Or skip the setup — WhoDB Platform includes managed AI providers.
+  platformChartLink: View results like these as charts on WhoDB Platform.
   loadingSuggestions: Loading suggestions...
   genericExamplesLabel: Example queries (not specific to your database)
   databaseSpecificSuggestionsLabel: Suggested queries based on your database schema
@@ -30,6 +32,7 @@ en_US:
   messageCount: "{count} messages"
   messageCount_one: "{count} message"
   noMessages: No messages yet
+  liveInAnotherTab: Live in another tab
   confirmExecutionDescription: This operation will modify your database. Review and confirm to proceed.
   showQuery: Show Query
   hideQuery: Hide Query
@@ -191,6 +194,9 @@ ar_AE:
   "no": "لا"
   autoScroll: "التمرير التلقائي"
   clearChat: "مسح الدردشة"
+  platformManagedAiLink: "أو تخطي الإعداد — WhoDB يتضمن النظام الأساسي موفري الذكاء الاصطناعي المُدارين."
+  platformChartLink: "عرض نتائج مثل هذه كمخططات بيانية على منصة WhoDB."
+  liveInAnotherTab: "العيش في علامة تبويب أخرى"
 
 de_DE:
   placeholder: "Geben Sie hier Ihre Nachricht ein..."
@@ -288,6 +294,9 @@ de_DE:
   "no": "NEIN"
   autoScroll: "Automatisches Scrollen"
   clearChat: "Chat löschen"
+  platformManagedAiLink: "Oder überspringen Sie die Einrichtung – WhoDB Die Plattform umfasst verwaltete KI-Anbieter."
+  platformChartLink: "Sehen Sie sich Ergebnisse wie diese als Diagramme auf der Plattform WhoDB an."
+  liveInAnotherTab: "Lebe in einem anderen Tab"
 
 el_GR:
   placeholder: "Πληκτρολογήστε το μήνυμά σας εδώ..."
@@ -385,6 +394,9 @@ el_GR:
   "no": "Οχι"
   autoScroll: "Auto-scroll"
   clearChat: "Εκκαθάριση συνομιλίας"
+  platformManagedAiLink: "Ή παραλείψτε τη ρύθμιση — WhoDB Η πλατφόρμα περιλαμβάνει διαχειριζόμενους παρόχους τεχνητής νοημοσύνης."
+  platformChartLink: "Δείτε αποτελέσματα σαν αυτά ως γραφήματα στην πλατφόρμα WhoDB."
+  liveInAnotherTab: "Ζήστε σε άλλη καρτέλα"
 
 en_GB:
   placeholder: "Type Your Message Here..."
@@ -482,6 +494,9 @@ en_GB:
   "no": "No"
   autoScroll: "Auto-scroll"
   clearChat: "Clear Chat"
+  platformManagedAiLink: "Or skip the setup — WhoDB Platform includes managed AI providers."
+  platformChartLink: "View results like these as charts on WhoDB Platform."
+  liveInAnotherTab: "Live in another tab"
 
 es_ES:
   placeholder: "Escriba su mensaje aquí..."
@@ -579,6 +594,9 @@ es_ES:
   "no": "No"
   autoScroll: "Desplazamiento automático"
   clearChat: "Borrar chat"
+  platformManagedAiLink: "O omita la configuración: WhoDB La plataforma incluye proveedores de IA administrados."
+  platformChartLink: "Vea resultados como estos como gráficos en la plataforma WhoDB."
+  liveInAnotherTab: "Vivir en otra pestaña"
 
 fi_FI:
   placeholder: "Kirjoita viestisi tähän..."
@@ -676,6 +694,9 @@ fi_FI:
   "no": "Ei"
   autoScroll: "Automaattinen vieritys"
   clearChat: "Tyhjennä Chat"
+  platformManagedAiLink: "Tai ohita asennus — WhoDB Alusta sisältää hallittuja tekoälypalveluntarjoajia."
+  platformChartLink: "Tarkastele tällaisia ​​tuloksia kaavioina WhoDB-alustalla."
+  liveInAnotherTab: "Live toisella välilehdellä"
 
 fr_FR:
   placeholder: "Tapez votre message ici..."
@@ -773,6 +794,9 @@ fr_FR:
   "no": "Non"
   autoScroll: "Défilement automatique"
   clearChat: "Effacer le chat"
+  platformManagedAiLink: "Ou ignorez la configuration : WhoDB La plate-forme inclut des fournisseurs d'IA gérés."
+  platformChartLink: "Affichez des résultats comme ceux-ci sous forme de graphiques sur la plateforme WhoDB."
+  liveInAnotherTab: "Vivez dans un autre onglet"
 
 it_IT:
   placeholder: "Scrivi qui il tuo messaggio..."
@@ -870,6 +894,9 @@ it_IT:
   "no": "NO"
   autoScroll: "Scorrimento automatico"
   clearChat: "Cancella chat"
+  platformManagedAiLink: "Oppure salta la configurazione: la piattaforma WhoDB include fornitori di IA gestiti."
+  platformChartLink: "Visualizza risultati come questi come grafici sulla piattaforma WhoDB."
+  liveInAnotherTab: "Vivi in ​​un'altra scheda"
 
 iw_IL:
   placeholder: "הקלד את הודעתך כאן..."
@@ -967,6 +994,9 @@ iw_IL:
   "no": "לֹא"
   autoScroll: "גלילה אוטומטית"
   clearChat: "נקה צ'אט"
+  platformManagedAiLink: "או דלג על ההגדרה - WhoDB הפלטפורמה כוללת ספקי AI מנוהלים."
+  platformChartLink: "הצג תוצאות כמו אלה בתור תרשימים בפלטפורמה WhoDB."
+  liveInAnotherTab: "חי בכרטיסייה אחרת"
 
 ja_JP:
   placeholder: "ここにメッセージを入力してください..."
@@ -1064,6 +1094,9 @@ ja_JP:
   "no": "いいえ"
   autoScroll: "自動スクロール"
   clearChat: "チャットをクリアする"
+  platformManagedAiLink: "または、セットアップをスキップします — WhoDB プラットフォームにはマネージド AI プロバイダーが含まれています。"
+  platformChartLink: "このような結果を WhoDB プラットフォームのグラフとして表示します。"
+  liveInAnotherTab: "別のタブに住む"
 
 ko_KR:
   placeholder: "여기에 메시지를 입력하세요..."
@@ -1161,6 +1194,9 @@ ko_KR:
   "no": "아니요"
   autoScroll: "자동 스크롤"
   clearChat: "채팅 지우기"
+  platformManagedAiLink: "또는 설정을 건너뜁니다. WhoDB 플랫폼에는 관리형 AI 공급자가 포함됩니다."
+  platformChartLink: "WhoDB 플랫폼에서 이와 같은 결과를 차트로 확인하세요."
+  liveInAnotherTab: "다른 탭에 라이브"
 
 nl_NL:
   placeholder: "Typ hier uw bericht..."
@@ -1258,6 +1294,9 @@ nl_NL:
   "no": "Nee"
   autoScroll: "Automatisch scrollen"
   clearChat: "Chat wissen"
+  platformManagedAiLink: "Of sla de installatie over: WhoDB Platform bevat beheerde AI-providers."
+  platformChartLink: "Bekijk resultaten zoals deze als grafieken op het WhoDB-platform."
+  liveInAnotherTab: "Leef in een ander tabblad"
 
 pl_PL:
   placeholder: "Wpisz tutaj swoją wiadomość..."
@@ -1355,6 +1394,9 @@ pl_PL:
   "no": "NIE"
   autoScroll: "Automatyczne przewijanie"
   clearChat: "Wyczyść czat"
+  platformManagedAiLink: "Lub pomiń konfigurację — WhoDB Platforma zawiera zarządzanych dostawców AI."
+  platformChartLink: "Przeglądaj takie wyniki w postaci wykresów na platformie WhoDB ."
+  liveInAnotherTab: "Na żywo w innej karcie"
 
 pt_BR:
   placeholder: "Digite sua mensagem aqui..."
@@ -1452,6 +1494,9 @@ pt_BR:
   "no": "Não"
   autoScroll: "Rolagem automática"
   clearChat: "Limpar bate-papo"
+  platformManagedAiLink: "Ou pule a configuração — WhoDB A plataforma inclui provedores de IA gerenciados."
+  platformChartLink: "Veja resultados como esses como gráficos na plataforma WhoDB."
+  liveInAnotherTab: "Ao vivo em outra guia"
 
 ro_RO:
   placeholder: "Introduceți mesajul dvs. aici..."
@@ -1549,6 +1594,9 @@ ro_RO:
   "no": "Nu"
   autoScroll: "Defilare automată"
   clearChat: "Ștergeți chatul"
+  platformManagedAiLink: "Sau omiteți configurarea — WhoDB Platforma include furnizori de AI gestionați."
+  platformChartLink: "Vizualizați astfel de rezultate ca diagrame pe platforma WhoDB."
+  liveInAnotherTab: "Trăiește într-o altă filă"
 
 ru_RU:
   placeholder: "Введите здесь свое сообщение..."
@@ -1646,6 +1694,9 @@ ru_RU:
   "no": "Нет"
   autoScroll: "Автопрокрутка"
   clearChat: "Очистить чат"
+  platformManagedAiLink: "Или пропустите настройку — WhoDB Платформа включает в себя управляемых поставщиков ИИ."
+  platformChartLink: "Просматривайте подобные результаты в виде диаграмм на платформе WhoDB ."
+  liveInAnotherTab: "Жить в другой вкладке"
 
 sk_SK:
   placeholder: "Sem napíšte svoju správu..."
@@ -1743,6 +1794,9 @@ sk_SK:
   "no": "Nie"
   autoScroll: "Automatické posúvanie"
   clearChat: "Vymazať rozhovor"
+  platformManagedAiLink: "Alebo preskočte nastavenie — WhoDB Platforma zahŕňa spravovaných poskytovateľov AI."
+  platformChartLink: "Zobrazte výsledky ako tieto ako grafy na platforme WhoDB."
+  liveInAnotherTab: "Naživo na inej karte"
 
 sv_SE:
   placeholder: "Skriv ditt meddelande här..."
@@ -1840,6 +1894,9 @@ sv_SE:
   "no": "Inga"
   autoScroll: "Automatisk rullning"
   clearChat: "Rensa chatt"
+  platformManagedAiLink: "Eller hoppa över installationen — WhoDB Plattformen inkluderar hanterade AI-leverantörer."
+  platformChartLink: "Se resultat som dessa som diagram på WhoDB-plattformen."
+  liveInAnotherTab: "Live i en annan flik"
 
 zh_CN:
   placeholder: "在此输入您的消息..."
@@ -1937,6 +1994,9 @@ zh_CN:
   "no": "不"
   autoScroll: "自动滚动"
   clearChat: "清除聊天"
+  platformManagedAiLink: "或者跳过设置 — WhoDB 平台包括托管人工智能提供商。"
+  platformChartLink: "在 WhoDB 平台上以图表形式查看此类结果。"
+  liveInAnotherTab: "住在另一个选项卡中"
 
 zh_TW:
   placeholder: "在此輸入您的訊息..."
@@ -2034,6 +2094,9 @@ zh_TW:
   "no": "不"
   autoScroll: "自動捲動"
   clearChat: "清除聊天"
+  platformManagedAiLink: "或跳過設定 — WhoDB 平台包括託管人工智慧提供者。"
+  platformChartLink: "在 WhoDB 平台上以圖表形式查看此類結果。"
+  liveInAnotherTab: "住在另一個選項卡中"
 
 bg_BG:
   placeholder: "Въведете вашето съобщение тук..."
@@ -2131,6 +2194,9 @@ bg_BG:
   "no": "не"
   autoScroll: "Автоматично превъртане"
   clearChat: "Изчистване на чата"
+  platformManagedAiLink: "Или пропуснете настройката — WhoDB Платформата включва управлявани доставчици на AI."
+  platformChartLink: "Вижте резултати като тези като диаграми на платформата WhoDB."
+  liveInAnotherTab: "На живо в друг раздел"
 
 bn_BD:
   placeholder: "এখানে আপনার বার্তা টাইপ করুন..."
@@ -2228,6 +2294,9 @@ bn_BD:
   "no": "না"
   autoScroll: "অটো-স্ক্রোল"
   clearChat: "সাফ চ্যাট"
+  platformManagedAiLink: "অথবা সেটআপ এড়িয়ে যান — WhoDB প্ল্যাটফর্মে পরিচালিত AI প্রদানকারী অন্তর্ভুক্ত রয়েছে।"
+  platformChartLink: "WhoDB প্ল্যাটফর্মে চার্ট হিসাবে এই জাতীয় ফলাফলগুলি দেখুন।"
+  liveInAnotherTab: "অন্য ট্যাবে লাইভ"
 
 ca_ES:
   placeholder: "Escriu el teu missatge aquí..."
@@ -2325,6 +2394,9 @@ ca_ES:
   "no": "No"
   autoScroll: "Desplaçament automàtic"
   clearChat: "Esborra el xat"
+  platformManagedAiLink: "O ometeu la configuració: WhoDB La plataforma inclou proveïdors d'IA gestionats."
+  platformChartLink: "Veure resultats com aquests com a gràfics a la plataforma WhoDB."
+  liveInAnotherTab: "Viu en una altra pestanya"
 
 cs_CZ:
   placeholder: "Sem napište svou zprávu..."
@@ -2422,6 +2494,9 @@ cs_CZ:
   "no": "Žádný"
   autoScroll: "Automatické posouvání"
   clearChat: "Vymazat chat"
+  platformManagedAiLink: "Nebo nastavení přeskočte — WhoDB Platforma zahrnuje spravované poskytovatele AI."
+  platformChartLink: "Prohlédněte si výsledky jako tyto jako grafy na platformě WhoDB."
+  liveInAnotherTab: "Živě na jiné kartě"
 
 da_DK:
   placeholder: "Skriv din besked her..."
@@ -2519,6 +2594,9 @@ da_DK:
   "no": "Ingen"
   autoScroll: "Auto-scroll"
   clearChat: "Ryd chat"
+  platformManagedAiLink: "Eller spring over opsætningen — WhoDB Platformen inkluderer administrerede AI-udbydere."
+  platformChartLink: "Se resultater som disse som diagrammer på WhoDB platformen."
+  liveInAnotherTab: "Lev i en anden fane"
 
 fa_IR:
   placeholder: "پیام خود را اینجا تایپ کنید..."
@@ -2616,6 +2694,9 @@ fa_IR:
   "no": "خیر"
   autoScroll: "اسکرول خودکار"
   clearChat: "پاک کردن چت"
+  platformManagedAiLink: "یا از تنظیم رد شوید - WhoDB پلتفرم شامل ارائه دهندگان هوش مصنوعی مدیریت شده است."
+  platformChartLink: "نتایجی مانند این را به صورت نمودار در WhoDB پلتفرم مشاهده کنید."
+  liveInAnotherTab: "در یک برگه دیگر زندگی کنید"
 
 hi_IN:
   placeholder: "यहाँ आपके संदेश लिखें..."
@@ -2713,6 +2794,9 @@ hi_IN:
   "no": "नहीं"
   autoScroll: "स्वतः स्क्रॉल"
   clearChat: "यह स्पष्ट है कि"
+  platformManagedAiLink: "या सेटअप छोड़ें - WhoDB प्लेटफ़ॉर्म में प्रबंधित AI प्रदाता शामिल हैं।"
+  platformChartLink: "WhoDB प्लेटफ़ॉर्म पर चार्ट के रूप में ऐसे परिणाम देखें।"
+  liveInAnotherTab: "दूसरे टैब में लाइव"
 
 hr_HR:
   placeholder: "Ovdje upišite svoju poruku..."
@@ -2810,6 +2894,9 @@ hr_HR:
   "no": "Ne"
   autoScroll: "Automatsko pomicanje"
   clearChat: "Obriši chat"
+  platformManagedAiLink: "Ili preskočite postavljanje — WhoDB Platforma uključuje upravljane AI pružatelje."
+  platformChartLink: "Pogledajte ovakve rezultate kao grafikone na WhoDB platformi."
+  liveInAnotherTab: "Uživo u drugoj kartici"
 
 hu_HU:
   placeholder: "Írja be üzenetét ide..."
@@ -2907,6 +2994,9 @@ hu_HU:
   "no": "Nem"
   autoScroll: "Automatikus görgetés"
   clearChat: "Csevegés törlése"
+  platformManagedAiLink: "Vagy hagyja ki a beállítást — WhoDB A platform felügyelt mesterségesintelligencia-szolgáltatókat tartalmaz."
+  platformChartLink: "Az ehhez hasonló eredményeket diagramokként tekintheti meg a WhoDB platformon."
+  liveInAnotherTab: "Élj egy másik lapon"
 
 id_ID:
   placeholder: "Ketik Pesan Anda Disini..."
@@ -3004,6 +3094,9 @@ id_ID:
   "no": "TIDAK"
   autoScroll: "Gulir otomatis"
   clearChat: "Hapus Obrolan"
+  platformManagedAiLink: "Atau lewati penyiapan — WhoDB Platform menyertakan penyedia AI terkelola."
+  platformChartLink: "Lihat hasil seperti ini sebagai grafik di WhoDB Platform."
+  liveInAnotherTab: "Tinggal di tab lain"
 
 ms_MY:
   placeholder: "Taip Mesej Anda Di Sini..."
@@ -3101,6 +3194,9 @@ ms_MY:
   "no": "Tidak"
   autoScroll: "Tatal automatik"
   clearChat: "Kosongkan Sembang"
+  platformManagedAiLink: "Atau langkau persediaan — WhoDB Platform termasuk penyedia AI terurus."
+  platformChartLink: "Lihat hasil seperti ini sebagai carta pada WhoDB Platform."
+  liveInAnotherTab: "Hidup dalam tab lain"
 
 nb_NO:
   placeholder: "Skriv inn meldingen din her..."
@@ -3198,6 +3294,9 @@ nb_NO:
   "no": "Ingen"
   autoScroll: "Automatisk rulling"
   clearChat: "Fjern Chat"
+  platformManagedAiLink: "Eller hopp over oppsettet – WhoDB Plattformen inkluderer administrerte AI-leverandører."
+  platformChartLink: "Se resultater som disse som diagrammer på WhoDB-plattformen."
+  liveInAnotherTab: "Bor i en annen fane"
 
 sw_KE:
   placeholder: "Andika Ujumbe wako Hapa..."
@@ -3295,6 +3394,9 @@ sw_KE:
   "no": "Hapana"
   autoScroll: "Sogeza kiotomatiki"
   clearChat: "Futa Gumzo"
+  platformManagedAiLink: "Au ruka usanidi — WhoDB Mfumo unajumuisha watoa huduma wa AI wanaosimamiwa."
+  platformChartLink: "Tazama matokeo kama haya kama chati kwenye WhoDB Platform."
+  liveInAnotherTab: "Ishi katika kichupo kingine"
 
 ta_IN:
   placeholder: "உங்கள் செய்தியை இங்கே தட்டச்சு செய்யவும்..."
@@ -3392,6 +3494,9 @@ ta_IN:
   "no": "இல்லை"
   autoScroll: "தானாக உருட்டும்"
   clearChat: "அரட்டையை அழிக்கவும்"
+  platformManagedAiLink: "அல்லது அமைப்பைத் தவிர்க்கவும் - WhoDB பிளாட்ஃபார்ம் நிர்வகிக்கப்படும் AI வழங்குநர்களை உள்ளடக்கியது."
+  platformChartLink: "இது போன்ற முடிவுகளை WhoDB பிளாட்ஃபார்மில் விளக்கப்படங்களாகப் பார்க்கவும்."
+  liveInAnotherTab: "மற்றொரு தாவலில் வாழ்க"
 
 th_TH:
   placeholder: "พิมพ์ข้อความของคุณที่นี่..."
@@ -3489,6 +3594,9 @@ th_TH:
   "no": "เลขที่"
   autoScroll: "เลื่อนอัตโนมัติ"
   clearChat: "ล้างแชท"
+  platformManagedAiLink: "หรือข้ามการตั้งค่า — WhoDB แพลตฟอร์มประกอบด้วยผู้ให้บริการ AI ที่มีการจัดการ"
+  platformChartLink: "ดูผลลัพธ์ในลักษณะแผนภูมิบนแพลตฟอร์ม WhoDB"
+  liveInAnotherTab: "อยู่ในแท็บอื่น"
 
 tr_TR:
   placeholder: "Mesajınızı Buraya Yazın..."
@@ -3586,6 +3694,9 @@ tr_TR:
   "no": "HAYIR"
   autoScroll: "Otomatik kaydırma"
   clearChat: "Sohbeti Temizle"
+  platformManagedAiLink: "Veya kurulumu atlayın — WhoDB Platform, yönetilen AI sağlayıcılarını içerir."
+  platformChartLink: "Bunun gibi sonuçları WhoDB Platformunda grafikler halinde görüntüleyin."
+  liveInAnotherTab: "Başka bir sekmede yaşa"
 
 uk_UA:
   placeholder: "Введіть своє повідомлення тут..."
@@ -3683,6 +3794,9 @@ uk_UA:
   "no": "немає"
   autoScroll: "Автопрокручування"
   clearChat: "Очистити чат"
+  platformManagedAiLink: "Або пропустіть налаштування — WhoDB Платформа включає керованих постачальників AI."
+  platformChartLink: "Переглядайте такі результати як діаграми на платформі WhoDB."
+  liveInAnotherTab: "Жити в іншій вкладці"
 
 ur_PK:
   placeholder: "اپنا پیغام یہاں ٹائپ کریں..."
@@ -3780,6 +3894,9 @@ ur_PK:
   "no": "نہیں"
   autoScroll: "آٹو سکرول"
   clearChat: "چیٹ صاف کریں۔"
+  platformManagedAiLink: "یا سیٹ اپ کو چھوڑ دیں — WhoDB پلیٹ فارم میں منظم AI فراہم کنندگان شامل ہیں۔"
+  platformChartLink: "اس طرح کے نتائج کو WhoDB پلیٹ فارم پر بطور چارٹ دیکھیں۔"
+  liveInAnotherTab: "دوسرے ٹیب میں رہتے ہیں۔"
 
 vi_VN:
   placeholder: "Nhập tin nhắn của bạn ở đây..."
@@ -3877,6 +3994,9 @@ vi_VN:
   "no": "KHÔNG"
   autoScroll: "Tự động cuộn"
   clearChat: "Xóa cuộc trò chuyện"
+  platformManagedAiLink: "Hoặc bỏ qua phần thiết lập — Nền tảng WhoDB bao gồm các nhà cung cấp AI được quản lý."
+  platformChartLink: "Xem các kết quả như thế này dưới dạng biểu đồ trên Nền tảng WhoDB."
+  liveInAnotherTab: "Sống trong một tab khác"
 
 af_ZA:
   placeholder: "Tik jou boodskap hier..."
@@ -3974,6 +4094,9 @@ af_ZA:
   "no": "Nee"
   autoScroll: "Outo-blaai"
   clearChat: "Vee klets uit"
+  platformManagedAiLink: "Of slaan die opstelling oor – WhoDB Platform sluit bestuurde KI-verskaffers in."
+  platformChartLink: "Bekyk resultate soos hierdie as kaarte op WhoDB platform."
+  liveInAnotherTab: "Leef in 'n ander oortjie"
 
 am_ET:
   placeholder: "መልእክትህን እዚህ ፃፍ..."
@@ -4071,6 +4194,9 @@ am_ET:
   "no": "አይ"
   autoScroll: "በራስ-ማሸብለል"
   clearChat: "ውይይትን አጽዳ"
+  platformManagedAiLink: "ወይም ማዋቀሩን ዝለል - WhoDB መድረክ የሚተዳደሩ AI አቅራቢዎችን ያካትታል።"
+  platformChartLink: "እንደነዚህ ያሉትን ውጤቶች በWhoDB መድረክ ላይ እንደ ገበታ ይመልከቱ።"
+  liveInAnotherTab: "በሌላ ትር ውስጥ ኑሩ"
 
 az_AZ:
   placeholder: "Mesajınızı Bura Yazın..."
@@ -4168,6 +4294,9 @@ az_AZ:
   "no": "yox"
   autoScroll: "Avtomatik sürüşdürün"
   clearChat: "Söhbəti silin"
+  platformManagedAiLink: "Və ya quraşdırmadan keçin — WhoDB Platforma idarə olunan AI provayderlərini əhatə edir."
+  platformChartLink: "Bu kimi nəticələrə WhoDB Platformasında qrafiklər kimi baxın."
+  liveInAnotherTab: "Başqa tabda yaşayın"
 
 et_EE:
   placeholder: "Sisestage oma sõnum siia..."
@@ -4265,6 +4394,9 @@ et_EE:
   "no": "Ei"
   autoScroll: "Automaatne kerimine"
   clearChat: "Tühjenda vestlus"
+  platformManagedAiLink: "Või jätke seadistamine vahele — WhoDB Platvorm sisaldab hallatud tehisintellekti pakkujaid."
+  platformChartLink: "Vaadake selliseid tulemusi graafikutena WhoDB platvormil."
+  liveInAnotherTab: "Ela teises vahekaardil"
 
 gu_IN:
   placeholder: "તમારો સંદેશ અહીં લખો..."
@@ -4362,6 +4494,9 @@ gu_IN:
   "no": "ના"
   autoScroll: "સ્વતઃ સ્ક્રોલ કરો"
   clearChat: "ચેટ સાફ કરો"
+  platformManagedAiLink: "અથવા સેટઅપ છોડો — WhoDB પ્લેટફોર્મમાં સંચાલિત AI પ્રદાતાઓનો સમાવેશ થાય છે."
+  platformChartLink: "WhoDB પ્લેટફોર્મ પર આના જેવા પરિણામોને ચાર્ટ તરીકે જુઓ."
+  liveInAnotherTab: "બીજા ટેબમાં રહે છે"
 
 ha_NG:
   placeholder: "Buga Saƙonku Anan..."
@@ -4459,6 +4594,9 @@ ha_NG:
   "no": "A'a"
   autoScroll: "Gungura ta atomatik"
   clearChat: "Share Taɗi"
+  platformManagedAiLink: "Ko tsallake saitin - WhoDB dandamali ya haɗa da masu samar da AI da aka sarrafa."
+  platformChartLink: "Duba sakamako kamar waɗannan azaman ginshiƙi akan WhoDB dandamali."
+  liveInAnotherTab: "Zauna a wani shafin"
 
 ka_GE:
   placeholder: "ჩაწერეთ თქვენი შეტყობინება აქ..."
@@ -4556,6 +4694,9 @@ ka_GE:
   "no": "არა"
   autoScroll: "ავტომატური გადახვევა"
   clearChat: "ჩატის გასუფთავება"
+  platformManagedAiLink: "ან გამოტოვეთ დაყენება — WhoDB პლატფორმა მოიცავს მართულ AI პროვაიდერებს."
+  platformChartLink: "იხილეთ მსგავსი შედეგები, როგორც დიაგრამები WhoDB პლატფორმაზე."
+  liveInAnotherTab: "იცხოვრე სხვა ჩანართში"
 
 km_KH:
   placeholder: "វាយបញ្ចូលសាររបស់អ្នកនៅទីនេះ..."
@@ -4653,6 +4794,9 @@ km_KH:
   "no": "ទេ"
   autoScroll: "រមូរដោយស្វ័យប្រវត្តិ"
   clearChat: "ជម្រះការជជែក"
+  platformManagedAiLink: "ឬរំលងការដំឡើង — WhoDB វេទិការួមបញ្ចូលអ្នកផ្តល់សេវា AI ដែលគ្រប់គ្រង។"
+  platformChartLink: "មើលលទ្ធផលទាំងនេះជាតារាងនៅលើ WhoDB Platform។"
+  liveInAnotherTab: "រស់នៅក្នុងផ្ទាំងផ្សេងទៀត។"
 
 kn_IN:
   placeholder: "ನಿಮ್ಮ ಸಂದೇಶವನ್ನು ಇಲ್ಲಿ ಟೈಪ್ ಮಾಡಿ..."
@@ -4750,6 +4894,9 @@ kn_IN:
   "no": "ಸಂ"
   autoScroll: "ಸ್ವಯಂ-ಸ್ಕ್ರಾಲ್"
   clearChat: "ಚಾಟ್ ತೆರವುಗೊಳಿಸಿ"
+  platformManagedAiLink: "ಅಥವಾ ಸೆಟಪ್ ಅನ್ನು ಬಿಟ್ಟುಬಿಡಿ - WhoDB ಪ್ಲಾಟ್‌ಫಾರ್ಮ್ ನಿರ್ವಹಿಸಿದ AI ಪೂರೈಕೆದಾರರನ್ನು ಒಳಗೊಂಡಿದೆ."
+  platformChartLink: "ಈ ರೀತಿಯ ಫಲಿತಾಂಶಗಳನ್ನು WhoDB ಪ್ಲಾಟ್‌ಫಾರ್ಮ್‌ನಲ್ಲಿ ಚಾರ್ಟ್‌ಗಳಂತೆ ವೀಕ್ಷಿಸಿ."
+  liveInAnotherTab: "ಇನ್ನೊಂದು ಟ್ಯಾಬ್‌ನಲ್ಲಿ ಲೈವ್"
 
 lt_LT:
   placeholder: "Įveskite savo žinutę čia..."
@@ -4847,6 +4994,9 @@ lt_LT:
   "no": "Nr"
   autoScroll: "Automatinis slinkimas"
   clearChat: "Išvalyti pokalbį"
+  platformManagedAiLink: "Arba praleiskite sąranką — WhoDB Platformoje yra valdomų AI teikėjų."
+  platformChartLink: "Peržiūrėkite tokius rezultatus kaip diagramas WhoDB platformoje."
+  liveInAnotherTab: "Gyvenkite kitame skirtuke"
 
 lv_LV:
   placeholder: "Ierakstiet savu ziņojumu šeit..."
@@ -4944,6 +5094,9 @@ lv_LV:
   "no": "Nē"
   autoScroll: "Automātiska ritināšana"
   clearChat: "Notīrīt tērzēšanu"
+  platformManagedAiLink: "Vai arī izlaidiet iestatīšanu — WhoDB Platformā ir iekļauti pārvaldīti AI nodrošinātāji."
+  platformChartLink: "Skatiet līdzīgus rezultātus kā diagrammas platformā WhoDB."
+  liveInAnotherTab: "Dzīvojiet citā cilnē"
 
 ml_IN:
   placeholder: "നിങ്ങളുടെ സന്ദേശം ഇവിടെ ടൈപ്പ് ചെയ്യുക..."
@@ -5041,6 +5194,9 @@ ml_IN:
   "no": "ഇല്ല"
   autoScroll: "സ്വയമേവ സ്ക്രോൾ ചെയ്യുക"
   clearChat: "ചാറ്റ് മായ്‌ക്കുക"
+  platformManagedAiLink: "അല്ലെങ്കിൽ സജ്ജീകരണം ഒഴിവാക്കുക - WhoDB പ്ലാറ്റ്‌ഫോമിൽ നിയന്ത്രിത AI ദാതാക്കൾ ഉൾപ്പെടുന്നു."
+  platformChartLink: "ഇതുപോലുള്ള ഫലങ്ങൾ WhoDB പ്ലാറ്റ്‌ഫോമിൽ ചാർട്ടുകളായി കാണുക."
+  liveInAnotherTab: "മറ്റൊരു ടാബിൽ ജീവിക്കുക"
 
 mr_IN:
   placeholder: "तुमचा संदेश येथे टाइप करा..."
@@ -5138,6 +5294,9 @@ mr_IN:
   "no": "नाही"
   autoScroll: "स्वयं-स्क्रोल करा"
   clearChat: "चॅट साफ करा"
+  platformManagedAiLink: "किंवा सेटअप वगळा — WhoDB प्लॅटफॉर्ममध्ये व्यवस्थापित AI प्रदाते समाविष्ट आहेत."
+  platformChartLink: "WhoDB प्लॅटफॉर्मवर यासारखे परिणाम चार्ट म्हणून पहा."
+  liveInAnotherTab: "दुसऱ्या टॅबमध्ये राहतात"
 
 ne_NP:
   placeholder: "यहाँ आफ्नो सन्देश टाइप गर्नुहोस्..."
@@ -5235,6 +5394,9 @@ ne_NP:
   "no": "छैन"
   autoScroll: "स्वतः स्क्रोल गर्नुहोस्"
   clearChat: "च्याट खाली गर्नुहोस्"
+  platformManagedAiLink: "वा सेटअप छोड्नुहोस् — WhoDB प्लेटफर्मले व्यवस्थित AI प्रदायकहरू समावेश गर्दछ।"
+  platformChartLink: "WhoDB प्लेटफर्ममा चार्टको रूपमा यी जस्तै परिणामहरू हेर्नुहोस्।"
+  liveInAnotherTab: "अर्को ट्याबमा बस्नुहोस्"
 
 pa_IN:
   placeholder: "ਆਪਣਾ ਸੁਨੇਹਾ ਇੱਥੇ ਟਾਈਪ ਕਰੋ..."
@@ -5332,6 +5494,9 @@ pa_IN:
   "no": "ਨੰ"
   autoScroll: "ਆਟੋ-ਸਕ੍ਰੌਲ ਕਰੋ"
   clearChat: "ਚੈਟ ਸਾਫ਼ ਕਰੋ"
+  platformManagedAiLink: "ਜਾਂ ਸੈੱਟਅੱਪ ਛੱਡੋ — WhoDB ਪਲੇਟਫਾਰਮ ਵਿੱਚ ਪ੍ਰਬੰਧਿਤ AI ਪ੍ਰਦਾਤਾ ਸ਼ਾਮਲ ਹਨ।"
+  platformChartLink: "ਇਹਨਾਂ ਵਰਗੇ ਨਤੀਜਿਆਂ ਨੂੰ WhoDB ਪਲੇਟਫਾਰਮ 'ਤੇ ਚਾਰਟ ਵਜੋਂ ਦੇਖੋ।"
+  liveInAnotherTab: "ਕਿਸੇ ਹੋਰ ਟੈਬ ਵਿੱਚ ਰਹਿੰਦੇ ਹਨ"
 
 si_LK:
   placeholder: "ඔබගේ පණිවිඩය මෙහි ටයිප් කරන්න..."
@@ -5429,6 +5594,9 @@ si_LK:
   "no": "නැත"
   autoScroll: "ස්වයංක්‍රීය අනුචලනය"
   clearChat: "කතාබස් හිස් කරන්න"
+  platformManagedAiLink: "නැතහොත් පිහිටුවීම මඟ හරින්න — WhoDB වේදිකාවට කළමනාකරණය කළ AI සපයන්නන් ඇතුළත් වේ."
+  platformChartLink: "මෙවැනි ප්‍රතිඵල WhoDB වේදිකාවේ ප්‍රස්ථාර ලෙස බලන්න."
+  liveInAnotherTab: "වෙනත් ටැබ් එකක ජීවත් වන්න"
 
 sl_SI:
   placeholder: "Tukaj vnesite svoje sporočilo ..."
@@ -5526,6 +5694,9 @@ sl_SI:
   "no": "št"
   autoScroll: "Samodejno pomikanje"
   clearChat: "Počisti klepet"
+  platformManagedAiLink: "Ali pa preskočite nastavitev — WhoDB Platforma vključuje upravljane ponudnike AI."
+  platformChartLink: "Oglejte si takšne rezultate kot grafikone na WhoDB platformi."
+  liveInAnotherTab: "Živi v drugem zavihku"
 
 sr_RS:
   placeholder: "Унесите своју поруку овде..."
@@ -5623,6 +5794,9 @@ sr_RS:
   "no": "бр"
   autoScroll: "Ауто-сцролл"
   clearChat: "Обриши ћаскање"
+  platformManagedAiLink: "Или прескочите подешавање — WhoDB Платформа укључује управљане АИ провајдере."
+  platformChartLink: "Погледајте овакве резултате као графиконе на WhoDB платформи."
+  liveInAnotherTab: "Уживо на другој картици"
 
 te_IN:
   placeholder: "మీ సందేశాన్ని ఇక్కడ టైప్ చేయండి..."
@@ -5720,6 +5894,9 @@ te_IN:
   "no": "సంఖ్య"
   autoScroll: "స్వయంచాలకంగా స్క్రోల్ చేయండి"
   clearChat: "చాట్‌ని క్లియర్ చేయండి"
+  platformManagedAiLink: "లేదా సెటప్‌ను దాటవేయి — WhoDB ప్లాట్‌ఫారమ్‌లో నిర్వహించబడే AI ప్రొవైడర్లు ఉంటాయి."
+  platformChartLink: "ఇలాంటి ఫలితాలను WhoDB ప్లాట్‌ఫారమ్‌లో చార్ట్‌లుగా వీక్షించండి."
+  liveInAnotherTab: "మరొక ట్యాబ్‌లో నివసిస్తున్నారు"
 
 tl_PH:
   placeholder: "I-type ang Iyong Mensahe Dito..."
@@ -5817,6 +5994,9 @@ tl_PH:
   "no": "Hindi"
   autoScroll: "Auto-scroll"
   clearChat: "I-clear ang Chat"
+  platformManagedAiLink: "O laktawan ang setup — WhoDB Kasama sa platform ang mga pinamamahalaang AI provider."
+  platformChartLink: "Tingnan ang mga resultang tulad nito bilang mga chart sa WhoDB Platform."
+  liveInAnotherTab: "Live sa ibang tab"
 
 uz_UZ:
   placeholder: "Xabaringizni shu yerga yozing..."
@@ -5914,6 +6094,9 @@ uz_UZ:
   "no": "Yo'q"
   autoScroll: "Avtomatik aylantirish"
   clearChat: "Chatni tozalash"
+  platformManagedAiLink: "Yoki sozlashni oʻtkazib yuboring — WhoDB Platforma boshqariladigan AI provayderlarini oʻz ichiga oladi."
+  platformChartLink: "Shu kabi natijalarni WhoDB platformasida diagramma sifatida koʻring."
+  liveInAnotherTab: "Boshqa varaqda yashang"
 
 yo_NG:
   placeholder: "Tẹ ifiranṣẹ rẹ Nibi ..."
@@ -6011,3 +6194,6 @@ yo_NG:
   "no": "Rara"
   autoScroll: "Yi lọ laifọwọyi"
   clearChat: "Ko iwiregbe kuro"
+  platformManagedAiLink: "Tabi foo iṣeto naa - WhoDB Platform pẹlu awọn olupese AI ti iṣakoso."
+  platformChartLink: "Wo awọn abajade bii iwọnyi bi awọn shatti lori WhoDB Platform."
+  liveInAnotherTab: "Gbe ni miiran taabu"

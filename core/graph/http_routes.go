@@ -17,6 +17,7 @@
 package graph
 
 import (
+	"strings"
 	"sync"
 
 	"github.com/go-chi/chi/v5"
@@ -55,8 +56,36 @@ func RegisterLongLivedHTTPRoute(path string) {
 func IsLongLivedHTTPRoute(path string) bool {
 	httpRouteRegistrarsMu.RLock()
 	defer httpRouteRegistrarsMu.RUnlock()
-	_, ok := longLivedHTTPRoutes[path]
-	return ok
+	if _, ok := longLivedHTTPRoutes[path]; ok {
+		return true
+	}
+	for pattern := range longLivedHTTPRoutes {
+		if routePatternMatches(pattern, path) {
+			return true
+		}
+	}
+	return false
+}
+
+func routePatternMatches(pattern, path string) bool {
+	patternParts := strings.Split(strings.Trim(pattern, "/"), "/")
+	pathParts := strings.Split(strings.Trim(path, "/"), "/")
+	if len(patternParts) != len(pathParts) {
+		return false
+	}
+	for index := range patternParts {
+		part := patternParts[index]
+		if strings.HasPrefix(part, "{") && strings.HasSuffix(part, "}") {
+			if pathParts[index] == "" {
+				return false
+			}
+			continue
+		}
+		if part != pathParts[index] {
+			return false
+		}
+	}
+	return true
 }
 
 func registerExtensionHTTPRoutes(router chi.Router) {

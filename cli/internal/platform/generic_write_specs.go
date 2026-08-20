@@ -234,12 +234,13 @@ var PayloadShapes = map[string]PayloadShape{
 			{Name: "primaryKey", Type: "string", Required: true, Description: "Primary property API name"},
 			{Name: "tableName", Type: "string", Required: true, Description: "Backing table name"},
 			{Name: "schemaName", Type: "string", Required: true, Description: "Backing schema name"},
+			{Name: "storageMode", Type: "OntologyStorageMode", Required: true, Description: "Immutable storage mode: operational or analytical"},
 			{Name: "icon", Type: "string", Required: true, Description: "Ontology icon"},
 			{Name: "color", Type: "string", Required: true, Description: "Ontology color"},
 			{Name: "properties", Type: "[OntologyPropertyInput!]", Required: true, Description: "Properties; visibility is prominent, normal, or hidden"},
 			{Name: "links", Type: "[OntologyLinkInput!]", Required: true, Description: "Ontology links"},
 		},
-		Examples: []string{`{"apiName":"customer","displayName":"Customer","pluralDisplayName":"Customers","description":"","primaryKey":"id","tableName":"customers","schemaName":"public","icon":"table","color":"#3366ff","properties":[{"apiName":"id","displayName":"ID","description":"","columnName":"id","dataType":"String","isRequired":true,"visibility":"normal","isSearchable":true,"isSortable":true,"isEditOnly":false}],"links":[]}`},
+		Examples: []string{`{"apiName":"customer","displayName":"Customer","pluralDisplayName":"Customers","description":"","primaryKey":"id","tableName":"customers","schemaName":"public","storageMode":"operational","icon":"table","color":"#3366ff","properties":[{"apiName":"id","displayName":"ID","description":"","columnName":"id","dataType":"String","isRequired":true,"visibility":"normal","isSearchable":true,"isSortable":true,"isEditOnly":false}],"links":[]}`},
 	},
 	"create:ontology_fast_lookup": {
 		Key: "create:ontology_fast_lookup", Resource: "ontology_fast_lookup", Action: "create", Description: "Create an ontology fast lookup. projectId is injected from the selected workspace.",
@@ -255,7 +256,7 @@ var PayloadShapes = map[string]PayloadShape{
 		Fields: []PayloadField{
 			{Name: "values", Type: "[RecordInput]", Required: true, Description: "Record values as key/value entries"},
 		},
-		Examples: []string{`{"values":[{"key":"id","value":"1"},{"key":"name","value":"Ada"}]}`},
+		Examples: []string{`{"values":[{"Key":"id","Value":"1"},{"Key":"name","Value":"Ada"}]}`},
 	},
 	"action:update_record:ontology": {
 		Key: "action:update_record:ontology", Resource: "ontology", Action: "update_record", Description: "Update an ontology row. id becomes entityId and projectId is injected.",
@@ -263,14 +264,14 @@ var PayloadShapes = map[string]PayloadShape{
 			{Name: "values", Type: "[RecordInput]", Required: true, Description: "Matcher and replacement values as key/value entries"},
 			{Name: "updatedColumns", Type: "[string]", Required: true, Description: "Ontology properties to update"},
 		},
-		Examples: []string{`{"values":[{"key":"id","value":"1"},{"key":"name","value":"Grace"}],"updatedColumns":["name"]}`},
+		Examples: []string{`{"values":[{"Key":"id","Value":"1"},{"Key":"name","Value":"Grace"}],"updatedColumns":["name"]}`},
 	},
 	"action:delete_record:ontology": {
 		Key: "action:delete_record:ontology", Resource: "ontology", Action: "delete_record", Description: "Delete an ontology row. id becomes entityId and projectId is injected.",
 		Fields: []PayloadField{
 			{Name: "values", Type: "[RecordInput]", Required: true, Description: "Matcher values, usually primary key values"},
 		},
-		Examples: []string{`{"values":[{"key":"id","value":"1"}]}`},
+		Examples: []string{`{"values":[{"Key":"id","Value":"1"}]}`},
 	},
 	"action:run:transform": {
 		Key: "action:run:transform", Resource: "transform", Action: "run", Description: "Run an existing transform. id and projectId are injected.",

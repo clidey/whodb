@@ -40,9 +40,9 @@ func platformErrorFields(err error) (string, bool, []string) {
 		return string(PlatformErrorNotFound), false, nil
 	case strings.Contains(message, "already exists") || strings.Contains(message, "conflict") || strings.Contains(message, "409"):
 		return string(PlatformErrorConflict), false, nil
-	case strings.Contains(message, "rate") || strings.Contains(message, "429") || strings.Contains(message, "too many"):
+	case strings.Contains(message, "rate limit") || strings.Contains(message, "429") || strings.Contains(message, "too many"):
 		return string(PlatformErrorRateLimited), true, nil
-	case strings.Contains(message, "required") || strings.Contains(message, "invalid") || strings.Contains(message, "unsupported"):
+	case strings.Contains(message, "required") || strings.Contains(message, "invalid") || strings.Contains(message, "unsupported") || strings.Contains(message, "does not support") || strings.Contains(message, "not supported"):
 		return string(PlatformErrorValidation), false, []string{"whodb_platform_status"}
 	default:
 		return string(PlatformErrorBackend), false, nil

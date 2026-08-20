@@ -30,6 +30,11 @@ en_US:
   platformOpenInPlatform: Import in Platform
   platformExplainerTitle: WhoDB Platform
   platformExplainerIntro: "WhoDB Platform is the hosted data layer that builds on the connections you already have — turn a database login into managed sources, shareable datasets, and a workspace your whole team can use."
+  platformExplainerSourceIntro: "{sourceType} is available on WhoDB Platform — connect it there as a managed source, alongside shareable datasets and a workspace your whole team can use."
+  platformConnectSource: "Connect {sourceType}"
+  platformBackupNudgeText: "Your saved connections only live in this browser. Keep a copy on WhoDB Platform so they're never lost."
+  platformBackupNudgeAction: Keep them safe
+  platformBackupNudgeDismiss: Dismiss
   platformSlideManagedTitle: Managed sources
   platformSlideManagedCaption: "Bring a connection across and the platform manages credentials and access for you."
   platformSlideDatasetsTitle: Shareable datasets
@@ -105,6 +110,11 @@ ar_AE:
   platformMaybeLater: "ربما في وقت لاحق"
   platformLearnMore: "يتعلم أكثر"
   platformImportConnection: "اتصال الاستيراد"
+  platformExplainerSourceIntro: "يتوفر {sourceType} على منصة WhoDB — قم بتوصيله هناك كمصدر مُدار، إلى جانب مجموعات البيانات القابلة للمشاركة ومساحة العمل التي يمكن لفريقك بأكمله استخدامها."
+  platformConnectSource: "توصيل {sourceType}"
+  platformBackupNudgeText: "اتصالاتك المحفوظة موجودة فقط في هذا المتصفح. احتفظ بنسخة على منصة WhoDB حتى لا تضيع أبدًا."
+  platformBackupNudgeAction: "ابقهم آمنين"
+  platformBackupNudgeDismiss: "رفض"
 
 de_DE:
   mainNavigation: "Hauptnavigation"
@@ -159,6 +169,11 @@ de_DE:
   platformMaybeLater: "Vielleicht später"
   platformLearnMore: "Erfahren Sie mehr"
   platformImportConnection: "Verbindung importieren"
+  platformExplainerSourceIntro: "{sourceType} ist auf der Plattform WhoDB verfügbar – verbinden Sie es dort als verwaltete Quelle, zusammen mit gemeinsam nutzbaren Datensätzen und einem Arbeitsbereich, den Ihr gesamtes Team nutzen kann."
+  platformConnectSource: "Verbinden Sie {sourceType}"
+  platformBackupNudgeText: "Ihre gespeicherten Verbindungen leben nur in diesem Browser. Behalten Sie eine Kopie auf der WhoDB-Plattform, damit sie nie verloren gehen."
+  platformBackupNudgeAction: "Bewahren Sie sie sicher auf"
+  platformBackupNudgeDismiss: "Zurückweisen"
 
 el_GR:
   mainNavigation: "Κύρια πλοήγηση"
@@ -213,6 +228,11 @@ el_GR:
   platformMaybeLater: "Ίσως αργότερα"
   platformLearnMore: "Μάθετε περισσότερα"
   platformImportConnection: "Εισαγωγή σύνδεσης"
+  platformExplainerSourceIntro: "Το {sourceType} είναι διαθέσιμο στην WhoDB Πλατφόρμα — συνδέστε το εκεί ως διαχειριζόμενη πηγή, μαζί με κοινόχρηστα σύνολα δεδομένων και έναν χώρο εργασίας που μπορεί να χρησιμοποιήσει ολόκληρη η ομάδα σας."
+  platformConnectSource: "Σύνδεση {sourceType}"
+  platformBackupNudgeText: "Οι αποθηκευμένες συνδέσεις σας ζουν μόνο σε αυτό το πρόγραμμα περιήγησης. Κρατήστε ένα αντίγραφο στην πλατφόρμα WhoDB για να μην χαθούν ποτέ."
+  platformBackupNudgeAction: "Κρατήστε τα ασφαλή"
+  platformBackupNudgeDismiss: "Απολύω"
 
 en_GB:
   mainNavigation: "Main navigation"
@@ -267,6 +287,11 @@ en_GB:
   platformMaybeLater: "Maybe later"
   platformLearnMore: "Learn more"
   platformImportConnection: "Import connection"
+  platformExplainerSourceIntro: "{sourceType} is available on WhoDB Platform — connect it there as a managed source, alongside shareable datasets and a workspace your whole team can use."
+  platformConnectSource: "Connect {sourceType}"
+  platformBackupNudgeText: "Your saved connections only live in this browser. Keep a copy on WhoDB Platform so they're never lost."
+  platformBackupNudgeAction: "Keep them safe"
+  platformBackupNudgeDismiss: "Dismiss"
 
 es_ES:
   mainNavigation: "Navegación principal"
@@ -321,6 +346,11 @@ es_ES:
   platformMaybeLater: "tal vez más tarde"
   platformLearnMore: "Más información"
   platformImportConnection: "Conexión de importación"
+  platformExplainerSourceIntro: "{sourceType} está disponible en la plataforma WhoDB: conéctalo allí como una fuente administrada, junto con conjuntos de datos que se pueden compartir y un espacio de trabajo que todo tu equipo puede usar."
+  platformConnectSource: "Conectar {sourceType}"
+  platformBackupNudgeText: "Tus conexiones guardadas solo se encuentran en este navegador. Guarda una copia en la plataforma WhoDB para que nunca se pierda."
+  platformBackupNudgeAction: "Mantenerlas seguras"
+  platformBackupNudgeDismiss: "Despedir"
 
 fi_FI:
   mainNavigation: "Päänavigointi"
@@ -375,6 +405,11 @@ fi_FI:
   platformMaybeLater: "Ehkä myöhemmin"
   platformLearnMore: "Lue lisää"
   platformImportConnection: "Tuo yhteys"
+  platformExplainerSourceIntro: "{sourceType} on saatavilla WhoDB-alustalla – liitä se sinne hallittuna lähteenä jaettavien tietojoukkojen ja työtilan ohella, jota koko tiimisi voi käyttää."
+  platformConnectSource: "Yhdistä {sourceType}"
+  platformBackupNudgeText: "Tallennetut yhteytesi toimivat vain tässä selaimessa. Pidä kopio WhoDB alustalla, jotta ne eivät koskaan katoa."
+  platformBackupNudgeAction: "Pidä ne turvassa"
+  platformBackupNudgeDismiss: "Hylkää"
 
 fr_FR:
   mainNavigation: "Navigation principale"
@@ -429,6 +464,11 @@ fr_FR:
   platformMaybeLater: "Peut-être plus tard"
   platformLearnMore: "Apprendre encore plus"
   platformImportConnection: "Importer la connexion"
+  platformExplainerSourceIntro: "{sourceType} est disponible sur la plate-forme WhoDB : connectez-la en tant que source gérée, aux côtés d'ensembles de données partageables et d'un espace de travail que toute votre équipe peut utiliser."
+  platformConnectSource: "Connecter {sourceType}"
+  platformBackupNudgeText: "Vos connexions enregistrées ne résident que dans ce navigateur. Conservez une copie sur la plateforme WhoDB afin qu'elles ne soient jamais perdues."
+  platformBackupNudgeAction: "Gardez-les en sécurité"
+  platformBackupNudgeDismiss: "Rejeter"
 
 it_IT:
   mainNavigation: "Navigazione principale"
@@ -483,6 +523,11 @@ it_IT:
   platformMaybeLater: "Forse più tardi"
   platformLearnMore: "Saperne di più"
   platformImportConnection: "Importa connessione"
+  platformExplainerSourceIntro: "{sourceType} è disponibile sulla piattaforma WhoDB: collegalo lì come origine gestita, insieme a set di dati condivisibili e uno spazio di lavoro che tutto il tuo team può utilizzare."
+  platformConnectSource: "Connetti {sourceType}"
+  platformBackupNudgeText: "Le tue connessioni salvate risiedono solo in questo browser. Conservane una copia sulla piattaforma WhoDB in modo che non vadano mai perse."
+  platformBackupNudgeAction: "Teneteli al sicuro"
+  platformBackupNudgeDismiss: "Congedare"
 
 iw_IL:
   mainNavigation: "ניווט ראשי"
@@ -537,6 +582,11 @@ iw_IL:
   platformMaybeLater: "אולי מאוחר יותר"
   platformLearnMore: "למידע נוסף"
   platformImportConnection: "חיבור ייבוא"
+  platformExplainerSourceIntro: "{sourceType} זמין בפלטפורמה WhoDB - חבר אותו לשם כמקור מנוהל, לצד מערכי נתונים הניתנים לשיתוף ומרחב עבודה שכל הצוות שלך יכול להשתמש בו."
+  platformConnectSource: "חבר {sourceType}"
+  platformBackupNudgeText: "החיבורים השמורים שלך חיים רק בדפדפן זה. שמור עותק בפלטפורמה WhoDB כדי שהם לעולם לא ילכו לאיבוד."
+  platformBackupNudgeAction: "שמור עליהם בטוחים"
+  platformBackupNudgeDismiss: "לְפַטֵר"
 
 ja_JP:
   mainNavigation: "メインナビゲーション"
@@ -591,6 +641,11 @@ ja_JP:
   platformMaybeLater: "たぶん後で"
   platformLearnMore: "もっと詳しく知る"
   platformImportConnection: "インポート接続"
+  platformExplainerSourceIntro: "{sourceType} は WhoDB プラットフォームで利用できます。共有可能なデータセットやチーム全体が使用できるワークスペースと並んで、管理されたソースとしてそこに接続します。"
+  platformConnectSource: "{sourceType} を接続します"
+  platformBackupNudgeText: "保存された接続はこのブラウザ内にのみ存在します。 コピーを WhoDB プラットフォームに保存して、紛失しないようにしてください。"
+  platformBackupNudgeAction: "安全に保管してください"
+  platformBackupNudgeDismiss: "却下する"
 
 ko_KR:
   mainNavigation: "메인 네비게이션"
@@ -645,6 +700,11 @@ ko_KR:
   platformMaybeLater: "어쩌면 나중에"
   platformLearnMore: "자세히 알아보기"
   platformImportConnection: "가져오기 연결"
+  platformExplainerSourceIntro: "{sourceType}은(는) WhoDB 플랫폼에서 사용할 수 있습니다. 공유 가능한 데이터 세트 및 팀 전체가 사용할 수 있는 작업 공간과 함께 관리형 소스로 연결하세요."
+  platformConnectSource: "{sourceType} 연결"
+  platformBackupNudgeText: "저장된 연결은 이 브라우저에만 적용됩니다. 분실되지 않도록 WhoDB 플랫폼에 사본을 보관하세요."
+  platformBackupNudgeAction: "안전하게 보관하세요"
+  platformBackupNudgeDismiss: "해고하다"
 
 nl_NL:
   mainNavigation: "Hoofdnavigatie"
@@ -699,6 +759,11 @@ nl_NL:
   platformMaybeLater: "Misschien later"
   platformLearnMore: "Meer informatie"
   platformImportConnection: "Verbinding importeren"
+  platformExplainerSourceIntro: "{sourceType} is beschikbaar op het WhoDB-platform. Sluit het daar aan als een beheerde bron, naast deelbare datasets en een werkruimte die uw hele team kan gebruiken."
+  platformConnectSource: "Verbind {sourceType}"
+  platformBackupNudgeText: "Uw opgeslagen verbindingen leven alleen in deze browser. Bewaar een kopie op het WhoDB-platform, zodat ze nooit verloren gaan."
+  platformBackupNudgeAction: "Bewaar ze veilig"
+  platformBackupNudgeDismiss: "Afwijzen"
 
 pl_PL:
   mainNavigation: "Główna nawigacja"
@@ -753,6 +818,11 @@ pl_PL:
   platformMaybeLater: "Może później"
   platformLearnMore: "Dowiedz się więcej"
   platformImportConnection: "Importuj połączenie"
+  platformExplainerSourceIntro: "{sourceType} jest dostępny na platformie WhoDB — podłącz go tam jako zarządzane źródło wraz z udostępnianymi zbiorami danych i przestrzenią roboczą, z której może korzystać cały zespół."
+  platformConnectSource: "Połącz {sourceType}"
+  platformBackupNudgeText: "Twoje zapisane połączenia są aktywne tylko w tej przeglądarce. Zachowaj kopię na platformie WhoDB, aby nigdy jej nie zgubić."
+  platformBackupNudgeAction: "Zapewnij im bezpieczeństwo"
+  platformBackupNudgeDismiss: "Odrzucać"
 
 pt_BR:
   mainNavigation: "Navegação principal"
@@ -807,6 +877,11 @@ pt_BR:
   platformMaybeLater: "Talvez mais tarde"
   platformLearnMore: "Saber mais"
   platformImportConnection: "Conexão de importação"
+  platformExplainerSourceIntro: "{sourceType} está disponível na plataforma WhoDB — conecte-o lá como uma fonte gerenciada, juntamente com conjuntos de dados compartilháveis ​​e um espaço de trabalho que toda a sua equipe pode usar."
+  platformConnectSource: "Conectar {sourceType}"
+  platformBackupNudgeText: "Suas conexões salvas residem apenas neste navegador. Mantenha uma cópia na plataforma WhoDB para que nunca se percam."
+  platformBackupNudgeAction: "Mantenha-os seguros"
+  platformBackupNudgeDismiss: "Liberar"
 
 ro_RO:
   mainNavigation: "Navigație principală"
@@ -861,6 +936,11 @@ ro_RO:
   platformMaybeLater: "Poate mai târziu"
   platformLearnMore: "Află mai multe"
   platformImportConnection: "Importați conexiunea"
+  platformExplainerSourceIntro: "{sourceType} este disponibil pe platforma WhoDB — conectați-l acolo ca sursă gestionată, alături de seturi de date care pot fi partajate și un spațiu de lucru pe care îl poate folosi întreaga echipă."
+  platformConnectSource: "Conectați {sourceType}"
+  platformBackupNudgeText: "Conexiunile dvs. salvate trăiesc numai în acest browser. Păstrați o copie pe platforma WhoDB, astfel încât să nu se piardă niciodată."
+  platformBackupNudgeAction: "Păstrați-le în siguranță"
+  platformBackupNudgeDismiss: "Respingeți"
 
 ru_RU:
   mainNavigation: "Основная навигация"
@@ -915,6 +995,11 @@ ru_RU:
   platformMaybeLater: "Может быть, позже"
   platformLearnMore: "Узнать больше"
   platformImportConnection: "Импортировать соединение"
+  platformExplainerSourceIntro: "{sourceType} доступен на платформе WhoDB — подключите его туда как управляемый источник вместе с общими наборами данных и рабочим пространством, которое может использовать вся ваша команда."
+  platformConnectSource: "Подключить {sourceType}"
+  platformBackupNudgeText: "Ваши сохраненные соединения живут только в этом браузере. Сохраните копию на платформе WhoDB, чтобы они никогда не потерялись."
+  platformBackupNudgeAction: "Держите их в безопасности"
+  platformBackupNudgeDismiss: "Увольнять"
 
 sk_SK:
   mainNavigation: "Hlavná navigácia"
@@ -969,6 +1054,11 @@ sk_SK:
   platformMaybeLater: "Možno neskôr"
   platformLearnMore: "Zistite viac"
   platformImportConnection: "Importovať pripojenie"
+  platformExplainerSourceIntro: "{sourceType} je k dispozícii na platforme WhoDB – pripojte ho tam ako spravovaný zdroj spolu so zdieľateľnými množinami údajov a pracovným priestorom, ktorý môže používať celý váš tím."
+  platformConnectSource: "Pripojiť {sourceType}"
+  platformBackupNudgeText: "Vaše uložené pripojenia fungujú iba v tomto prehliadači. Uschovajte si kópiu na WhoDB platforme, aby sa nikdy nestratili."
+  platformBackupNudgeAction: "Udržujte ich v bezpečí"
+  platformBackupNudgeDismiss: "Odmietnuť"
 
 sv_SE:
   mainNavigation: "Huvudnavigering"
@@ -1023,6 +1113,11 @@ sv_SE:
   platformMaybeLater: "Kanske senare"
   platformLearnMore: "Läs mer"
   platformImportConnection: "Importera anslutning"
+  platformExplainerSourceIntro: "{sourceType} är tillgänglig på WhoDB-plattformen – anslut den dit som en hanterad källa, tillsammans med delbara datauppsättningar och en arbetsyta som hela ditt team kan använda."
+  platformConnectSource: "Anslut {sourceType}"
+  platformBackupNudgeText: "Dina sparade anslutningar finns bara i den här webbläsaren. Behåll en kopia på WhoDB-plattformen så att de aldrig går vilse."
+  platformBackupNudgeAction: "Håll dem säkra"
+  platformBackupNudgeDismiss: "Avfärda"
 
 zh_CN:
   mainNavigation: "主导航"
@@ -1077,6 +1172,11 @@ zh_CN:
   platformMaybeLater: "也许稍后"
   platformLearnMore: "了解更多"
   platformImportConnection: "导入连接"
+  platformExplainerSourceIntro: "{sourceType} 在 WhoDB 平台上可用 - 将其作为托管源连接到那里，以及可共享的数据集和整个团队可以使用的工作区。"
+  platformConnectSource: "连接 {sourceType}"
+  platformBackupNudgeText: "您保存的连接仅存在于该浏览器中。 在 WhoDB 平台上保留一份副本，这样它们就不会丢失。"
+  platformBackupNudgeAction: "确保他们的安全"
+  platformBackupNudgeDismiss: "解雇"
 
 zh_TW:
   mainNavigation: "主導航"
@@ -1131,6 +1231,11 @@ zh_TW:
   platformMaybeLater: "也許稍後"
   platformLearnMore: "了解更多"
   platformImportConnection: "導入連線"
+  platformExplainerSourceIntro: "{sourceType} 在 WhoDB 平台上可用 - 將其作為託管來源連接到那裡，以及可共享的資料集和整個團隊可以使用的工作區。"
+  platformConnectSource: "連結 {sourceType}"
+  platformBackupNudgeText: "您儲存的連線僅存在於該瀏覽器中。 在 WhoDB 平台上保留一份副本，這樣它們就不會遺失。"
+  platformBackupNudgeAction: "確保他們的安全"
+  platformBackupNudgeDismiss: "解僱"
 
 bg_BG:
   mainNavigation: "Основна навигация"
@@ -1185,6 +1290,11 @@ bg_BG:
   platformMaybeLater: "Може би по-късно"
   platformLearnMore: "Научете повече"
   platformImportConnection: "Импортиране на връзка"
+  platformExplainerSourceIntro: "{sourceType} е наличен на платформата WhoDB — свържете го там като управляван източник, заедно с набори от данни за споделяне и работно пространство, което целият ви екип може да използва."
+  platformConnectSource: "Свържете {sourceType}"
+  platformBackupNudgeText: "Вашите запазени връзки съществуват само в този браузър. Съхранявайте копие на платформата WhoDB, за да не бъдат никога изгубени."
+  platformBackupNudgeAction: "Пазете ги"
+  platformBackupNudgeDismiss: "Отхвърляне"
 
 bn_BD:
   mainNavigation: "প্রধান নেভিগেশন"
@@ -1239,6 +1349,11 @@ bn_BD:
   platformMaybeLater: "হয়তো পরে"
   platformLearnMore: "আরও জানুন"
   platformImportConnection: "সংযোগ আমদানি করুন"
+  platformExplainerSourceIntro: "{sourceType} WhoDB প্ল্যাটফর্মে উপলব্ধ — এটিকে একটি পরিচালিত উত্স হিসাবে সেখানে সংযুক্ত করুন, শেয়ারযোগ্য ডেটাসেট এবং আপনার পুরো দল ব্যবহার করতে পারে এমন একটি কর্মক্ষেত্রের পাশাপাশি।"
+  platformConnectSource: "সংযোগ করুন {sourceType}"
+  platformBackupNudgeText: "আপনার সংরক্ষিত সংযোগ শুধুমাত্র এই ব্রাউজারে লাইভ. একটি অনুলিপি WhoDB প্ল্যাটফর্মে রাখুন যাতে সেগুলি কখনই হারিয়ে না যায়।"
+  platformBackupNudgeAction: "তাদের নিরাপদ রাখুন"
+  platformBackupNudgeDismiss: "খারিজ"
 
 ca_ES:
   mainNavigation: "Navegació principal"
@@ -1293,6 +1408,11 @@ ca_ES:
   platformMaybeLater: "Potser més tard"
   platformLearnMore: "Més informació"
   platformImportConnection: "Importa la connexió"
+  platformExplainerSourceIntro: "{sourceType} està disponible a la plataforma WhoDB: connecteu-lo allà com a font gestionada, juntament amb conjunts de dades compartibles i un espai de treball que pot utilitzar tot el vostre equip."
+  platformConnectSource: "Connecta {sourceType}"
+  platformBackupNudgeText: "Les vostres connexions desades només viuen en aquest navegador. Conserveu una còpia a la plataforma WhoDB perquè mai es perdin."
+  platformBackupNudgeAction: "Mantingueu-los segurs"
+  platformBackupNudgeDismiss: "Descartar"
 
 cs_CZ:
   mainNavigation: "Hlavní navigace"
@@ -1347,6 +1467,11 @@ cs_CZ:
   platformMaybeLater: "Možná později"
   platformLearnMore: "Zjistěte více"
   platformImportConnection: "Import připojení"
+  platformExplainerSourceIntro: "{sourceType} je k dispozici na platformě WhoDB – připojte jej tam jako spravovaný zdroj spolu se sdílenými datovými sadami a pracovním prostorem, který může používat celý váš tým."
+  platformConnectSource: "Připojit {sourceType}"
+  platformBackupNudgeText: "Vaše uložená připojení fungují pouze v tomto prohlížeči. Uschovejte si kopii na WhoDB platformě, aby se nikdy neztratili."
+  platformBackupNudgeAction: "Udržujte je v bezpečí"
+  platformBackupNudgeDismiss: "Propustit"
 
 da_DK:
   mainNavigation: "Hovednavigation"
@@ -1401,6 +1526,11 @@ da_DK:
   platformMaybeLater: "Måske senere"
   platformLearnMore: "Få flere oplysninger"
   platformImportConnection: "Import forbindelse"
+  platformExplainerSourceIntro: "{sourceType} er tilgængelig på WhoDB platformen – tilslut det der som en administreret kilde sammen med delbare datasæt og et arbejdsområde, som hele dit team kan bruge."
+  platformConnectSource: "Tilslut {sourceType}"
+  platformBackupNudgeText: "Dine gemte forbindelser lever kun i denne browser. Behold en kopi på WhoDB platformen, så de aldrig går tabt."
+  platformBackupNudgeAction: "Opbevar dem sikkert"
+  platformBackupNudgeDismiss: "Afskedige"
 
 fa_IR:
   mainNavigation: "ناوبری اصلی"
@@ -1455,6 +1585,11 @@ fa_IR:
   platformMaybeLater: "شاید بعدا"
   platformLearnMore: "بیشتر بدانید"
   platformImportConnection: "اتصال واردات"
+  platformExplainerSourceIntro: "{sourceType} در پلتفرم WhoDB موجود است — آن را به عنوان منبع مدیریت شده، در کنار مجموعه داده‌های قابل اشتراک‌گذاری و فضای کاری که کل تیم شما می‌تواند از آن استفاده کند، به آن متصل کنید."
+  platformConnectSource: "اتصال {sourceType}"
+  platformBackupNudgeText: "اتصالات ذخیره شده شما فقط در این مرورگر فعال هستند. یک کپی را در WhoDB پلتفرم نگه دارید تا هرگز گم نشوند."
+  platformBackupNudgeAction: "آنها را ایمن نگه دارید"
+  platformBackupNudgeDismiss: "رد کردن"
 
 hi_IN:
   mainNavigation: "मुख्य नेविगेशन"
@@ -1509,6 +1644,11 @@ hi_IN:
   platformMaybeLater: "शायद बाद में"
   platformLearnMore: "और अधिक जानें"
   platformImportConnection: "कनेक्शन आयात करें"
+  platformExplainerSourceIntro: "{sourceType} WhoDB प्लेटफ़ॉर्म पर उपलब्ध है - इसे साझा करने योग्य डेटासेट और एक कार्यक्षेत्र के साथ एक प्रबंधित स्रोत के रूप में कनेक्ट करें जिसे आपकी पूरी टीम उपयोग कर सकती है।"
+  platformConnectSource: "कनेक्ट करें {sourceType}"
+  platformBackupNudgeText: "आपके सहेजे गए कनेक्शन केवल इस ब्राउज़र में रहते हैं। WhoDB प्लेटफ़ॉर्म पर एक प्रति रखें ताकि वे कभी खो न जाएँ।"
+  platformBackupNudgeAction: "उन्हें सुरक्षित रखें"
+  platformBackupNudgeDismiss: "नकार देना"
 
 hr_HR:
   mainNavigation: "Glavna navigacija"
@@ -1563,6 +1703,11 @@ hr_HR:
   platformMaybeLater: "Možda kasnije"
   platformLearnMore: "Saznajte više"
   platformImportConnection: "Uvezi vezu"
+  platformExplainerSourceIntro: "{sourceType} je dostupan na WhoDB platformi — povežite ga tamo kao upravljani izvor, uz skupove podataka koji se mogu dijeliti i radni prostor koji vaš cijeli tim može koristiti."
+  platformConnectSource: "Poveži {sourceType}"
+  platformBackupNudgeText: "Vaše spremljene veze žive samo u ovom pregledniku. Čuvajte kopiju na WhoDB platformi kako se nikada ne bi izgubili."
+  platformBackupNudgeAction: "Čuvaj ih"
+  platformBackupNudgeDismiss: "Odbaciti"
 
 hu_HU:
   mainNavigation: "Fő navigáció"
@@ -1617,6 +1762,11 @@ hu_HU:
   platformMaybeLater: "Talán később"
   platformLearnMore: "További információ"
   platformImportConnection: "Csatlakozás importálása"
+  platformExplainerSourceIntro: "A {sourceType} elérhető a WhoDB platformon – csatlakoztassa oda felügyelt forrásként, megosztható adatkészletekkel és egy olyan munkaterülettel, amelyet az egész csapat használhat."
+  platformConnectSource: "Csatlakozás {sourceType}"
+  platformBackupNudgeText: "Az Ön mentett kapcsolatai csak ebben a böngészőben élnek. Tartson egy példányt a WhoDB platformon, hogy soha ne vesszen el."
+  platformBackupNudgeAction: "Tartsa őket biztonságban"
+  platformBackupNudgeDismiss: "Elvetés"
 
 id_ID:
   mainNavigation: "Navigasi utama"
@@ -1671,6 +1821,11 @@ id_ID:
   platformMaybeLater: "mungkin nanti"
   platformLearnMore: "Pelajari lebih lanjut"
   platformImportConnection: "Impor koneksi"
+  platformExplainerSourceIntro: "{sourceType} tersedia di Platform WhoDB — sambungkan ke sana sebagai sumber terkelola, bersama dengan kumpulan data yang dapat dibagikan dan ruang kerja yang dapat digunakan seluruh tim Anda."
+  platformConnectSource: "Hubungkan {sourceType}"
+  platformBackupNudgeText: "Koneksi Anda yang tersimpan hanya ada di browser ini. Simpan salinannya di Platform WhoDB agar tidak hilang."
+  platformBackupNudgeAction: "Jaga keamanan mereka"
+  platformBackupNudgeDismiss: "Membubarkan"
 
 ms_MY:
   mainNavigation: "Navigasi utama"
@@ -1725,6 +1880,11 @@ ms_MY:
   platformMaybeLater: "Mungkin nanti"
   platformLearnMore: "Ketahui lebih lanjut"
   platformImportConnection: "Sambungan import"
+  platformExplainerSourceIntro: "{sourceType} tersedia di WhoDB Platform — sambungkannya di sana sebagai sumber terurus, bersama set data boleh kongsi dan ruang kerja yang boleh digunakan oleh seluruh pasukan anda."
+  platformConnectSource: "Sambungkan {sourceType}"
+  platformBackupNudgeText: "Sambungan anda yang disimpan hanya hidup dalam penyemak imbas ini. Simpan salinan pada WhoDB Platform supaya ia tidak hilang."
+  platformBackupNudgeAction: "Pastikan mereka selamat"
+  platformBackupNudgeDismiss: "Tolak"
 
 nb_NO:
   mainNavigation: "Hovednavigasjon"
@@ -1779,6 +1939,11 @@ nb_NO:
   platformMaybeLater: "Kanskje senere"
   platformLearnMore: "Lær mer"
   platformImportConnection: "Importer tilkobling"
+  platformExplainerSourceIntro: "{sourceType} er tilgjengelig på WhoDB-plattformen – koble den til som en administrert kilde, sammen med delbare datasett og et arbeidsområde som hele teamet ditt kan bruke."
+  platformConnectSource: "Koble til {sourceType}"
+  platformBackupNudgeText: "Dine lagrede tilkoblinger lever bare i denne nettleseren. Behold en kopi på WhoDB-plattformen slik at de aldri går tapt."
+  platformBackupNudgeAction: "Hold dem trygge"
+  platformBackupNudgeDismiss: "Avskjedige"
 
 sw_KE:
   mainNavigation: "Urambazaji mkuu"
@@ -1833,6 +1998,11 @@ sw_KE:
   platformMaybeLater: "Labda baadaye"
   platformLearnMore: "Jifunze zaidi"
   platformImportConnection: "Ingiza muunganisho"
+  platformExplainerSourceIntro: "{sourceType} inapatikana kwenye WhoDB Mfumo — iunganishe hapo kama chanzo kinachodhibitiwa, pamoja na seti za data zinazoweza kushirikiwa na nafasi ya kazi ambayo timu yako nzima inaweza kutumia."
+  platformConnectSource: "Unganisha {sourceType}"
+  platformBackupNudgeText: "Miunganisho yako iliyohifadhiwa huishi katika kivinjari hiki pekee. Weka nakala kwenye WhoDB Jukwaa ili zisipotee kamwe."
+  platformBackupNudgeAction: "Waweke salama"
+  platformBackupNudgeDismiss: "Ondoa"
 
 ta_IN:
   mainNavigation: "முக்கிய வழிசெலுத்தல்"
@@ -1887,6 +2057,11 @@ ta_IN:
   platformMaybeLater: "பின்னர் இருக்கலாம்"
   platformLearnMore: "மேலும் அறிக"
   platformImportConnection: "இணைப்பு இறக்குமதி"
+  platformExplainerSourceIntro: "{sourceType} WhoDB பிளாட்ஃபார்மில் கிடைக்கிறது — அதை நிர்வகிக்கப்பட்ட ஆதாரமாக, பகிரக்கூடிய தரவுத்தொகுப்புகள் மற்றும் உங்கள் குழு முழுவதும் பயன்படுத்தக்கூடிய பணியிடத்துடன் இணைக்கவும்."
+  platformConnectSource: "இணைக்கவும் {sourceType}"
+  platformBackupNudgeText: "நீங்கள் சேமித்த இணைப்புகள் இந்த உலாவியில் மட்டுமே இருக்கும். WhoDB பிளாட்ஃபார்மில் ஒரு நகலை வைத்திருங்கள், அதனால் அவை ஒருபோதும் இழக்கப்படாது."
+  platformBackupNudgeAction: "அவற்றைப் பாதுகாப்பாக வைத்திருங்கள்"
+  platformBackupNudgeDismiss: "நிராகரி"
 
 th_TH:
   mainNavigation: "การนำทางหลัก"
@@ -1941,6 +2116,11 @@ th_TH:
   platformMaybeLater: "อาจจะในภายหลัง"
   platformLearnMore: "เรียนรู้เพิ่มเติม"
   platformImportConnection: "นำเข้าการเชื่อมต่อ"
+  platformExplainerSourceIntro: "{sourceType} พร้อมใช้งานบนแพลตฟอร์ม WhoDB — เชื่อมต่อแพลตฟอร์มดังกล่าวเป็นแหล่งที่มีการจัดการ ควบคู่ไปกับชุดข้อมูลที่แชร์ได้และพื้นที่ทำงานที่ทั้งทีมของคุณสามารถใช้ได้"
+  platformConnectSource: "เชื่อมต่อ {sourceType}"
+  platformBackupNudgeText: "การเชื่อมต่อที่บันทึกไว้ของคุณจะอยู่ในเบราว์เซอร์นี้เท่านั้น เก็บสำเนาไว้บนแพลตฟอร์ม WhoDB เพื่อไม่ให้สูญหาย"
+  platformBackupNudgeAction: "ให้พวกเขาปลอดภัย"
+  platformBackupNudgeDismiss: "อนุญาตให้ออกไป"
 
 tr_TR:
   mainNavigation: "Ana gezinme"
@@ -1995,6 +2175,11 @@ tr_TR:
   platformMaybeLater: "Belki daha sonra"
   platformLearnMore: "Daha fazla bilgi edin"
   platformImportConnection: "Bağlantıyı içe aktar"
+  platformExplainerSourceIntro: "{sourceType}, WhoDB Platformunda mevcuttur — paylaşılabilir veri kümeleri ve tüm ekibinizin kullanabileceği bir çalışma alanının yanı sıra, yönetilen bir kaynak olarak oraya bağlayın."
+  platformConnectSource: "{sourceType}'a bağlan"
+  platformBackupNudgeText: "Kayıtlı bağlantılarınız yalnızca bu tarayıcıda yayınlanır. Asla kaybolmamaları için bir kopyasını WhoDB Platformunda saklayın."
+  platformBackupNudgeAction: "Onları güvende tutun"
+  platformBackupNudgeDismiss: "Azletmek"
 
 uk_UA:
   mainNavigation: "Основна навігація"
@@ -2049,6 +2234,11 @@ uk_UA:
   platformMaybeLater: "Можливо пізніше"
   platformLearnMore: "Дізнайтесь більше"
   platformImportConnection: "Імпортувати підключення"
+  platformExplainerSourceIntro: "{sourceType} доступний на платформі WhoDB — підключіть його туди як кероване джерело разом із доступними наборами даних і робочим простором, який може використовувати вся ваша команда."
+  platformConnectSource: "Підключити {sourceType}"
+  platformBackupNudgeText: "Ваші збережені підключення доступні лише в цьому браузері. Зберігайте копію на платформі WhoDB, щоб вони ніколи не були втрачені."
+  platformBackupNudgeAction: "Бережіть їх"
+  platformBackupNudgeDismiss: "Відхилити"
 
 ur_PK:
   mainNavigation: "مین نیویگیشن"
@@ -2103,6 +2293,11 @@ ur_PK:
   platformMaybeLater: "شاید بعد میں"
   platformLearnMore: "مزید جانیں"
   platformImportConnection: "کنکشن درآمد کریں۔"
+  platformExplainerSourceIntro: "{sourceType} WhoDB پلیٹ فارم پر دستیاب ہے — اسے وہاں ایک منظم ذریعہ کے طور پر منسلک کریں، اس کے ساتھ ساتھ قابل اشتراک ڈیٹاسیٹس اور ایک ورک اسپیس جو آپ کی پوری ٹیم استعمال کر سکتی ہے۔"
+  platformConnectSource: "جڑیں {sourceType}"
+  platformBackupNudgeText: "آپ کے محفوظ کردہ کنکشن صرف اس براؤزر میں رہتے ہیں۔ ایک کاپی WhoDB پلیٹ فارم پر رکھیں تاکہ وہ کبھی ضائع نہ ہوں۔"
+  platformBackupNudgeAction: "انہیں محفوظ رکھیں"
+  platformBackupNudgeDismiss: "برطرف کرنا"
 
 vi_VN:
   mainNavigation: "Điều hướng chính"
@@ -2157,6 +2352,11 @@ vi_VN:
   platformMaybeLater: "Có lẽ sau này"
   platformLearnMore: "Tìm hiểu thêm"
   platformImportConnection: "Nhập kết nối"
+  platformExplainerSourceIntro: "{sourceType} có sẵn trên Nền tảng WhoDB — kết nối nó ở đó dưới dạng nguồn được quản lý, cùng với các tập dữ liệu có thể chia sẻ và không gian làm việc mà cả nhóm của bạn có thể sử dụng."
+  platformConnectSource: "Kết nối {sourceType}"
+  platformBackupNudgeText: "Các kết nối đã lưu của bạn chỉ tồn tại trong trình duyệt này. Giữ một bản sao trên Nền tảng WhoDB để chúng không bao giờ bị mất."
+  platformBackupNudgeAction: "Giữ chúng an toàn"
+  platformBackupNudgeDismiss: "Miễn nhiệm"
 
 af_ZA:
   mainNavigation: "Hoofnavigasie"
@@ -2211,6 +2411,11 @@ af_ZA:
   platformMaybeLater: "Miskien later"
   platformLearnMore: "Kom meer te wete"
   platformImportConnection: "Voer verbinding in"
+  platformExplainerSourceIntro: "{sourceType} is beskikbaar op WhoDB platform – verbind dit daar as 'n bestuurde bron, langs deelbare datastelle en 'n werkspasie wat jou hele span kan gebruik."
+  platformConnectSource: "Koppel {sourceType}"
+  platformBackupNudgeText: "Jou gestoorde verbindings leef net in hierdie blaaier. Hou 'n kopie op WhoDB platform sodat dit nooit verlore gaan nie."
+  platformBackupNudgeAction: "Hou hulle veilig"
+  platformBackupNudgeDismiss: "Verwerp"
 
 am_ET:
   mainNavigation: "ዋና አሰሳ"
@@ -2265,6 +2470,11 @@ am_ET:
   platformMaybeLater: "ምናልባት በኋላ"
   platformLearnMore: "የበለጠ ተማር"
   platformImportConnection: "ግንኙነት አስመጣ"
+  platformExplainerSourceIntro: "{sourceType} በ WhoDB ላይ ይገኛል መድረክ — እዚያ እንደ የሚተዳደር ምንጭ ያገናኙት፣ ሊጋሩ ከሚችሉ የውሂብ ስብስቦች እና መላው ቡድንዎ ሊጠቀምበት ከሚችለው የስራ ቦታ ጋር።"
+  platformConnectSource: "አገናኝ {sourceType}"
+  platformBackupNudgeText: "የተቀመጡ ግንኙነቶችዎ በዚህ አሳሽ ውስጥ ብቻ ይኖራሉ። ቅጂውን በWhoDB መድረክ ላይ ያቆዩት እንዳይጠፉ።"
+  platformBackupNudgeAction: "ደህንነታቸውን ይጠብቁ"
+  platformBackupNudgeDismiss: "አሰናብት"
 
 az_AZ:
   mainNavigation: "Əsas naviqasiya"
@@ -2319,6 +2529,11 @@ az_AZ:
   platformMaybeLater: "Bəlkə sonra"
   platformLearnMore: "Ətraflı məlumat əldə edin"
   platformImportConnection: "Bağlantı idxalı"
+  platformExplainerSourceIntro: "{sourceType} WhoDB Platformasında əlçatandır — onu idarə olunan mənbə kimi, paylaşıla bilən verilənlər bazası və bütün komandanızın istifadə edə biləcəyi iş sahəsi kimi oraya qoşun."
+  platformConnectSource: "Qoşun {sourceType}"
+  platformBackupNudgeText: "Saxlanmış bağlantılarınız yalnız bu brauzerdə yaşayır. Bir nüsxəni WhoDB Platformada saxlayın ki, onlar heç vaxt itirilməsin."
+  platformBackupNudgeAction: "Onları təhlükəsiz saxlayın"
+  platformBackupNudgeDismiss: "Rədd et"
 
 et_EE:
   mainNavigation: "Peamine navigeerimine"
@@ -2373,6 +2588,11 @@ et_EE:
   platformMaybeLater: "Võib-olla hiljem"
   platformLearnMore: "Lisateavet"
   platformImportConnection: "Impordi ühendus"
+  platformExplainerSourceIntro: "{sourceType} on saadaval WhoDB platvormil – ühendage see seal hallatava allikana koos jagatavate andmekogumite ja tööruumiga, mida kogu teie meeskond saab kasutada."
+  platformConnectSource: "Ühenda {sourceType}"
+  platformBackupNudgeText: "Teie salvestatud ühendused elavad ainult selles brauseris. Hoidke koopiat WhoDB platvormil, et need kunagi kaduma ei läheks."
+  platformBackupNudgeAction: "Hoidke neid turvaliselt"
+  platformBackupNudgeDismiss: "Loobu"
 
 gu_IN:
   mainNavigation: "મુખ્ય નેવિગેશન"
@@ -2427,6 +2647,11 @@ gu_IN:
   platformMaybeLater: "કદાચ પછીથી"
   platformLearnMore: "વધુ જાણો"
   platformImportConnection: "કનેક્શન આયાત કરો"
+  platformExplainerSourceIntro: "{sourceType} WhoDB પ્લેટફોર્મ પર ઉપલબ્ધ છે — શેર કરી શકાય તેવા ડેટાસેટ્સ અને તમારી આખી ટીમ ઉપયોગ કરી શકે તેવી વર્કસ્પેસની સાથે, મેનેજ કરેલ સ્ત્રોત તરીકે તેને ત્યાં કનેક્ટ કરો."
+  platformConnectSource: "કનેક્ટ કરો {sourceType}"
+  platformBackupNudgeText: "તમારા સાચવેલા જોડાણો ફક્ત આ બ્રાઉઝરમાં જ રહે છે. એક નકલ WhoDB પ્લેટફોર્મ પર રાખો જેથી તેઓ ક્યારેય ખોવાઈ ન જાય."
+  platformBackupNudgeAction: "તેમને સુરક્ષિત રાખો"
+  platformBackupNudgeDismiss: "કાઢી નાખો"
 
 ha_NG:
   mainNavigation: "Babban kewayawa"
@@ -2481,6 +2706,11 @@ ha_NG:
   platformMaybeLater: "Wataƙila daga baya"
   platformLearnMore: "Ƙara koyo"
   platformImportConnection: "Shigo da haɗin kai"
+  platformExplainerSourceIntro: "{sourceType} yana samuwa akan WhoDB Platform - haɗa shi a can azaman tushen sarrafawa, tare da bayanan da za'a iya rabawa da filin aiki da duk ƙungiyar ku za ta iya amfani da ita."
+  platformConnectSource: "Haɗa {sourceType}"
+  platformBackupNudgeText: "Abubuwan haɗin yanar gizon ku da aka adana suna rayuwa ne kawai a cikin wannan burauzar. Ajiye kwafi akan WhoDB Dandali don kada su taɓa yin asara."
+  platformBackupNudgeAction: "A kiyaye su lafiya"
+  platformBackupNudgeDismiss: "Korar"
 
 ka_GE:
   mainNavigation: "მთავარი ნავიგაცია"
@@ -2535,6 +2765,11 @@ ka_GE:
   platformMaybeLater: "შეიძლება მოგვიანებით"
   platformLearnMore: "შეიტყვეთ მეტი"
   platformImportConnection: "კავშირის იმპორტი"
+  platformExplainerSourceIntro: "{sourceType} ხელმისაწვდომია WhoDB პლატფორმაზე — დააკავშირეთ იგი იქ, როგორც მართული წყარო, გაზიარებად მონაცემთა ნაკრებებთან და სამუშაო სივრცესთან ერთად, რომელსაც მთელი თქვენი გუნდი გამოიყენებს."
+  platformConnectSource: "დაკავშირება {sourceType}"
+  platformBackupNudgeText: "თქვენი შენახული კავშირები მხოლოდ ამ ბრაუზერშია. შეინახეთ ასლი WhoDB პლატფორმაზე, რათა არასოდეს დაიკარგოს."
+  platformBackupNudgeAction: "შეინახეთ ისინი უსაფრთხოდ"
+  platformBackupNudgeDismiss: "გაუქმება"
 
 km_KH:
   mainNavigation: "ការរុករកចម្បង"
@@ -2589,6 +2824,11 @@ km_KH:
   platformMaybeLater: "ប្រហែលជាពេលក្រោយ"
   platformLearnMore: "ស្វែងយល់បន្ថែម"
   platformImportConnection: "ការតភ្ជាប់នាំចូល"
+  platformExplainerSourceIntro: "{sourceType} មាននៅលើ WhoDB Platform — ភ្ជាប់វានៅទីនោះជាប្រភពគ្រប់គ្រង រួមជាមួយនឹងសំណុំទិន្នន័យដែលអាចចែករំលែកបាន និងកន្លែងធ្វើការដែលក្រុមទាំងមូលរបស់អ្នកអាចប្រើប្រាស់បាន។"
+  platformConnectSource: "ភ្ជាប់ {sourceType}"
+  platformBackupNudgeText: "ការតភ្ជាប់ដែលបានរក្សាទុករបស់អ្នកមានតែនៅក្នុងកម្មវិធីរុករកនេះប៉ុណ្ណោះ។ រក្សាច្បាប់ចម្លងនៅលើ WhoDB វេទិកា ដូច្នេះពួកគេមិនដែលបាត់បង់ឡើយ។"
+  platformBackupNudgeAction: "រក្សាពួកគេឱ្យមានសុវត្ថិភាព"
+  platformBackupNudgeDismiss: "ច្រានចោល"
 
 kn_IN:
   mainNavigation: "ಮುಖ್ಯ ಸಂಚರಣೆ"
@@ -2643,6 +2883,11 @@ kn_IN:
   platformMaybeLater: "ಬಹುಶಃ ನಂತರ"
   platformLearnMore: "ಇನ್ನಷ್ಟು ತಿಳಿಯಿರಿ"
   platformImportConnection: "ಆಮದು ಸಂಪರ್ಕ"
+  platformExplainerSourceIntro: "{sourceType} WhoDB ಪ್ಲಾಟ್‌ಫಾರ್ಮ್‌ನಲ್ಲಿ ಲಭ್ಯವಿದೆ - ಹಂಚಿಕೊಳ್ಳಬಹುದಾದ ಡೇಟಾಸೆಟ್‌ಗಳು ಮತ್ತು ನಿಮ್ಮ ಇಡೀ ತಂಡವು ಬಳಸಬಹುದಾದ ಕಾರ್ಯಸ್ಥಳದೊಂದಿಗೆ ಅದನ್ನು ನಿರ್ವಹಿಸಿದ ಮೂಲವಾಗಿ ಸಂಪರ್ಕಿಸಿ."
+  platformConnectSource: "{sourceType} ಸಂಪರ್ಕಿಸಿ"
+  platformBackupNudgeText: "ನಿಮ್ಮ ಉಳಿಸಿದ ಸಂಪರ್ಕಗಳು ಈ ಬ್ರೌಸರ್‌ನಲ್ಲಿ ಮಾತ್ರ ಲೈವ್ ಆಗಿರುತ್ತವೆ. WhoDB ಪ್ಲಾಟ್‌ಫಾರ್ಮ್‌ನಲ್ಲಿ ನಕಲನ್ನು ಇರಿಸಿ ಇದರಿಂದ ಅವು ಎಂದಿಗೂ ಕಳೆದುಹೋಗುವುದಿಲ್ಲ."
+  platformBackupNudgeAction: "ಅವುಗಳನ್ನು ಸುರಕ್ಷಿತವಾಗಿರಿಸಿಕೊಳ್ಳಿ"
+  platformBackupNudgeDismiss: "ವಜಾಗೊಳಿಸಿ"
 
 lt_LT:
   mainNavigation: "Pagrindinė navigacija"
@@ -2697,6 +2942,11 @@ lt_LT:
   platformMaybeLater: "Gal vėliau"
   platformLearnMore: "Sužinokite daugiau"
   platformImportConnection: "Importuoti ryšį"
+  platformExplainerSourceIntro: "{sourceType} pasiekiamas WhoDB platformoje – prijunkite jį ten kaip valdomą šaltinį, kartu su bendrinamais duomenų rinkiniais ir darbo vieta, kuria gali naudotis visa komanda."
+  platformConnectSource: "Prisijunkite {sourceType}"
+  platformBackupNudgeText: "Jūsų išsaugoti ryšiai veikia tik šioje naršyklėje. Laikykite kopiją WhoDB platformoje, kad jos niekada neprarastumėte."
+  platformBackupNudgeAction: "Saugokite juos"
+  platformBackupNudgeDismiss: "Atsisakyti"
 
 lv_LV:
   mainNavigation: "Galvenā navigācija"
@@ -2751,6 +3001,11 @@ lv_LV:
   platformMaybeLater: "Varbūt vēlāk"
   platformLearnMore: "Uzziniet vairāk"
   platformImportConnection: "Importēt savienojumu"
+  platformExplainerSourceIntro: "{sourceType} ir pieejams WhoDB platformā — pievienojiet to tur kā pārvaldītu avotu kopā ar koplietojamām datu kopām un darbvietu, ko var izmantot visa jūsu komanda."
+  platformConnectSource: "Savienot {sourceType}"
+  platformBackupNudgeText: "Jūsu saglabātie savienojumi darbojas tikai šajā pārlūkprogrammā. Saglabājiet kopiju WhoDB platformā, lai tās nekad nepazustu."
+  platformBackupNudgeAction: "Saglabājiet tos drošībā"
+  platformBackupNudgeDismiss: "Atlaist"
 
 ml_IN:
   mainNavigation: "പ്രധാന നാവിഗേഷൻ"
@@ -2805,6 +3060,11 @@ ml_IN:
   platformMaybeLater: "ഒരുപക്ഷേ പിന്നീട്"
   platformLearnMore: "കൂടുതലറിയുക"
   platformImportConnection: "കണക്ഷൻ ഇറക്കുമതി ചെയ്യുക"
+  platformExplainerSourceIntro: "{sourceType}, WhoDB പ്ലാറ്റ്‌ഫോമിൽ ലഭ്യമാണ് - പങ്കിടാനാകുന്ന ഡാറ്റാസെറ്റുകൾക്കും നിങ്ങളുടെ മുഴുവൻ ടീമിനും ഉപയോഗിക്കാനാകുന്ന വർക്ക്‌സ്‌പെയ്‌സിനൊപ്പം നിയന്ത്രിത ഉറവിടമായി അതിനെ ബന്ധിപ്പിക്കുക."
+  platformConnectSource: "{sourceType} ബന്ധിപ്പിക്കുക"
+  platformBackupNudgeText: "നിങ്ങളുടെ സംരക്ഷിച്ച കണക്ഷനുകൾ ഈ ബ്രൗസറിൽ മാത്രമേ നിലനിൽക്കൂ. WhoDB പ്ലാറ്റ്‌ഫോമിൽ ഒരു പകർപ്പ് സൂക്ഷിക്കുക, അങ്ങനെ അവ ഒരിക്കലും നഷ്‌ടപ്പെടില്ല."
+  platformBackupNudgeAction: "അവരെ സുരക്ഷിതമായി സൂക്ഷിക്കുക"
+  platformBackupNudgeDismiss: "പിരിച്ചുവിടുക"
 
 mr_IN:
   mainNavigation: "मुख्य नेव्हिगेशन"
@@ -2859,6 +3119,11 @@ mr_IN:
   platformMaybeLater: "कदाचित नंतर"
   platformLearnMore: "अधिक जाणून घ्या"
   platformImportConnection: "कनेक्शन आयात करा"
+  platformExplainerSourceIntro: "{sourceType} WhoDB प्लॅटफॉर्मवर उपलब्ध आहे — सामायिक करण्यायोग्य डेटासेट आणि तुमची संपूर्ण टीम वापरू शकतील अशा वर्कस्पेससह व्यवस्थापित स्त्रोत म्हणून तेथे कनेक्ट करा."
+  platformConnectSource: "कनेक्ट करा {sourceType}"
+  platformBackupNudgeText: "तुमचे सेव्ह केलेले कनेक्शन फक्त या ब्राउझरमध्ये राहतात. एक प्रत WhoDB प्लॅटफॉर्मवर ठेवा जेणेकरून ते कधीही गमावले जाणार नाहीत."
+  platformBackupNudgeAction: "त्यांना सुरक्षित ठेवा"
+  platformBackupNudgeDismiss: "डिसमिस करा"
 
 ne_NP:
   mainNavigation: "मुख्य नेभिगेसन"
@@ -2913,6 +3178,11 @@ ne_NP:
   platformMaybeLater: "सायद पछि"
   platformLearnMore: "थप जान्नुहोस्"
   platformImportConnection: "जडान आयात गर्नुहोस्"
+  platformExplainerSourceIntro: "{sourceType} WhoDB प्लेटफर्ममा उपलब्ध छ — यसलाई त्यहाँ एक व्यवस्थित स्रोतको रूपमा जडान गर्नुहोस्, साझेदारी गर्न मिल्ने डेटासेटहरू र तपाईंको सम्पूर्ण टोलीले प्रयोग गर्न सक्ने कार्यस्थानसँगै।"
+  platformConnectSource: "जडान गर्नुहोस् {sourceType}"
+  platformBackupNudgeText: "तपाईंका सुरक्षित गरिएका जडानहरू यस ब्राउजरमा मात्र रहन्छन्। एउटा प्रतिलिपि WhoDB प्लेटफर्ममा राख्नुहोस् ताकि तिनीहरू कहिल्यै हराउन नपरोस्।"
+  platformBackupNudgeAction: "तिनीहरूलाई सुरक्षित राख्नुहोस्"
+  platformBackupNudgeDismiss: "खारेज गर्नुहोस्"
 
 pa_IN:
   mainNavigation: "ਮੁੱਖ ਨੈਵੀਗੇਸ਼ਨ"
@@ -2967,6 +3237,11 @@ pa_IN:
   platformMaybeLater: "ਸ਼ਾਇਦ ਬਾਅਦ ਵਿੱਚ"
   platformLearnMore: "ਜਿਆਦਾ ਜਾਣੋ"
   platformImportConnection: "ਕਨੈਕਸ਼ਨ ਆਯਾਤ ਕਰੋ"
+  platformExplainerSourceIntro: "{sourceType} WhoDB ਪਲੇਟਫਾਰਮ 'ਤੇ ਉਪਲਬਧ ਹੈ — ਸਾਂਝਾ ਕਰਨ ਯੋਗ ਡਾਟਾਸੈਟਾਂ ਅਤੇ ਤੁਹਾਡੀ ਪੂਰੀ ਟੀਮ ਦੀ ਵਰਤੋਂ ਕਰ ਸਕਣ ਵਾਲੇ ਵਰਕਸਪੇਸ ਦੇ ਨਾਲ, ਇਸ ਨੂੰ ਪ੍ਰਬੰਧਿਤ ਸਰੋਤ ਦੇ ਤੌਰ 'ਤੇ ਉੱਥੇ ਕਨੈਕਟ ਕਰੋ।"
+  platformConnectSource: "ਕਨੈਕਟ ਕਰੋ {sourceType}"
+  platformBackupNudgeText: "ਤੁਹਾਡੇ ਸੁਰੱਖਿਅਤ ਕੀਤੇ ਕਨੈਕਸ਼ਨ ਸਿਰਫ਼ ਇਸ ਬ੍ਰਾਊਜ਼ਰ ਵਿੱਚ ਰਹਿੰਦੇ ਹਨ। ਇੱਕ ਕਾਪੀ WhoDB ਪਲੇਟਫਾਰਮ 'ਤੇ ਰੱਖੋ ਤਾਂ ਜੋ ਉਹ ਕਦੇ ਨਾ ਗੁਆਚਣ।"
+  platformBackupNudgeAction: "ਉਹਨਾਂ ਨੂੰ ਸੁਰੱਖਿਅਤ ਰੱਖੋ"
+  platformBackupNudgeDismiss: "ਖਾਰਜ ਕਰੋ"
 
 si_LK:
   mainNavigation: "ප්රධාන සංචලනය"
@@ -3021,6 +3296,11 @@ si_LK:
   platformMaybeLater: "සමහර විට පසුව"
   platformLearnMore: "තවත් හදාරන්න"
   platformImportConnection: "ආයාත සම්බන්ධතාවය"
+  platformExplainerSourceIntro: "{sourceType} {sourceType} WhoDB වේදිකාවේ ඇත — එය කළමනාකරණය කළ හැකි මූලාශ්‍රයක් ලෙස, බෙදාගත හැකි දත්ත කට්ටල සහ ඔබේ මුළු කණ්ඩායමට භාවිත කළ හැකි කාර්ය ඉඩක් සමඟ සම්බන්ධ කරන්න."
+  platformConnectSource: "සම්බන්ධ කරන්න {sourceType}"
+  platformBackupNudgeText: "ඔබගේ සුරැකි සම්බන්ධතා මෙම බ්‍රවුසරයේ පමණක් සජීවී වේ. WhoDB වේදිකාවේ පිටපතක් තබා ගන්න එවිට ඒවා කිසිදා නැති නොවේ."
+  platformBackupNudgeAction: "ඔවුන් ආරක්ෂාකාරීව තබාගන්න"
+  platformBackupNudgeDismiss: "අස් කරන්න"
 
 sl_SI:
   mainNavigation: "Glavna navigacija"
@@ -3075,6 +3355,11 @@ sl_SI:
   platformMaybeLater: "Mogoče kasneje"
   platformLearnMore: "Več o tem"
   platformImportConnection: "Uvozi povezavo"
+  platformExplainerSourceIntro: "{sourceType} je na voljo na platformi WhoDB — tam ga povežite kot upravljan vir, skupaj z nabori podatkov, ki jih je mogoče deliti, in delovnim prostorom, ki ga lahko uporablja vaša celotna ekipa."
+  platformConnectSource: "Poveži {sourceType}"
+  platformBackupNudgeText: "Vaše shranjene povezave so v živo samo v tem brskalniku. Hranite kopijo na platformi WhoDB, da se nikoli ne izgubijo."
+  platformBackupNudgeAction: "Zavarujte jih"
+  platformBackupNudgeDismiss: "Odpusti"
 
 sr_RS:
   mainNavigation: "Главна навигација"
@@ -3129,6 +3414,11 @@ sr_RS:
   platformMaybeLater: "Можда касније"
   platformLearnMore: "Сазнајте више"
   platformImportConnection: "Веза за увоз"
+  platformExplainerSourceIntro: "{sourceType} је доступан на WhoDB платформи — повежите га тамо као управљани извор, заједно са скуповима података за дељење и радним простором који ваш цео тим може да користи."
+  platformConnectSource: "Повежи {sourceType}"
+  platformBackupNudgeText: "Ваше сачуване везе живе само у овом прегледачу. Чувајте копију на платформи WhoDB тако да се никада не изгубе."
+  platformBackupNudgeAction: "Чувајте их"
+  platformBackupNudgeDismiss: "Одбаци"
 
 te_IN:
   mainNavigation: "ప్రధాన నావిగేషన్"
@@ -3183,6 +3473,11 @@ te_IN:
   platformMaybeLater: "బహుశా తర్వాత"
   platformLearnMore: "మరింత తెలుసుకోండి"
   platformImportConnection: "దిగుమతి కనెక్షన్"
+  platformExplainerSourceIntro: "{sourceType} WhoDB ప్లాట్‌ఫారమ్‌లో అందుబాటులో ఉంది — భాగస్వామ్యం చేయదగిన డేటాసెట్‌లు మరియు మీ బృందం మొత్తం ఉపయోగించగల వర్క్‌స్పేస్‌తో పాటు నిర్వహించబడే మూలంగా దాన్ని కనెక్ట్ చేయండి."
+  platformConnectSource: "కనెక్ట్ చేయండి {sourceType}"
+  platformBackupNudgeText: "మీరు సేవ్ చేసిన కనెక్షన్‌లు ఈ బ్రౌజర్‌లో మాత్రమే ప్రత్యక్షంగా ఉంటాయి. WhoDB ప్లాట్‌ఫారమ్‌లో కాపీని ఉంచండి, తద్వారా అవి ఎప్పటికీ కోల్పోవు."
+  platformBackupNudgeAction: "వాటిని సురక్షితంగా ఉంచండి"
+  platformBackupNudgeDismiss: "తొలగించు"
 
 tl_PH:
   mainNavigation: "Pangunahing nabigasyon"
@@ -3237,6 +3532,11 @@ tl_PH:
   platformMaybeLater: "Baka mamaya"
   platformLearnMore: "Matuto pa"
   platformImportConnection: "Mag-import ng koneksyon"
+  platformExplainerSourceIntro: "{sourceType} ay available sa WhoDB Platform — ikonekta ito doon bilang isang pinamamahalaang source, kasama ng mga naibabahaging dataset at isang workspace na magagamit ng iyong buong team."
+  platformConnectSource: "Ikonekta {sourceType}"
+  platformBackupNudgeText: "Ang iyong mga naka-save na koneksyon ay nakatira lamang sa browser na ito. Magtabi ng kopya sa WhoDB Platform para hindi sila mawala."
+  platformBackupNudgeAction: "Panatilihin silang ligtas"
+  platformBackupNudgeDismiss: "I-dismiss"
 
 uz_UZ:
   mainNavigation: "Asosiy navigatsiya"
@@ -3291,6 +3591,11 @@ uz_UZ:
   platformMaybeLater: "Balki keyinroq"
   platformLearnMore: "Batafsil ma'lumot"
   platformImportConnection: "Import ulanish"
+  platformExplainerSourceIntro: "{sourceType} WhoDB platformasida mavjud — uni boshqariladigan manba sifatida, umumiy maʼlumotlar toʻplamlari va butun jamoangiz foydalanishi mumkin boʻlgan ish maydoni bilan birga ulang."
+  platformConnectSource: "Ulanish {sourceType}"
+  platformBackupNudgeText: "Saqlangan ulanishlaringiz faqat shu brauzerda ishlaydi. Nusxasini WhoDB platformasida saqlang, shunda ular hech qachon yo'qolmaydi."
+  platformBackupNudgeAction: "Ularni xavfsiz saqlang"
+  platformBackupNudgeDismiss: "Rad etish"
 
 yo_NG:
   mainNavigation: "Lilọ kiri akọkọ"
@@ -3345,3 +3650,8 @@ yo_NG:
   platformMaybeLater: "Boya nigbamii"
   platformLearnMore: "Kọ ẹkọ diẹ si"
   platformImportConnection: "Asopọ gbe wọle"
+  platformExplainerSourceIntro: "{sourceType} wa lori WhoDB Platform — so rẹ pọ sibẹ gẹgẹbi orisun iṣakoso, lẹgbẹẹ awọn iwe data ti o le pin ati aaye iṣẹ ti gbogbo ẹgbẹ rẹ le lo."
+  platformConnectSource: "Sopọ {sourceType}"
+  platformBackupNudgeText: "Awọn asopọ ti o fipamọ nikan wa laaye ni ẹrọ aṣawakiri yii. Tọju ẹda kan sori WhoDB Platform ki wọn ko padanu rara."
+  platformBackupNudgeAction: "Pa wọn mọ lailewu"
+  platformBackupNudgeDismiss: "Yọọ kuro"
