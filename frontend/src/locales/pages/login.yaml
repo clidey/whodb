@@ -154,6 +154,7 @@ ar_AE:
   advancedFields.projectId: "معرف المشروع"
   advancedFields.serviceAccountJson: "حساب الخدمة JSON"
   advancedFields.serviceAccountJsonPlaceholder: "قم بتحميل أو لصق مفتاح JSON لحساب الخدمة"
+  platformZeroInstallLink: "تفضل التثبيت صفر؟ جرب منصة WhoDB المستضافة."
 
 de_DE:
   enterHostName: "Geben Sie den Hostnamen ein"
@@ -232,6 +233,7 @@ de_DE:
   advancedFields.projectId: "Projekt-ID"
   advancedFields.serviceAccountJson: "Dienstkonto JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Laden Sie einen JSON-Schlüssel für ein Dienstkonto hoch oder fügen Sie ihn ein"
+  platformZeroInstallLink: "Bevorzugen Sie eine Nullinstallation? Probieren Sie die gehostete WhoDB-Plattform aus."
 
 el_GR:
   enterHostName: "Εισαγάγετε Όνομα κεντρικού υπολογιστή"
@@ -310,6 +312,7 @@ el_GR:
   advancedFields.projectId: "Αναγνωριστικό έργου"
   advancedFields.serviceAccountJson: "Λογαριασμός υπηρεσίας JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Μεταφορτώστε ή επικολλήστε ένα κλειδί JSON λογαριασμού υπηρεσίας"
+  platformZeroInstallLink: "Προτιμάτε μηδενική εγκατάσταση; Δοκιμάστε τη φιλοξενούμενη WhoDB πλατφόρμα."
 
 en_GB:
   enterHostName: "Enter Host Name"
@@ -388,6 +391,7 @@ en_GB:
   advancedFields.projectId: "Project ID"
   advancedFields.serviceAccountJson: "Service Account JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Upload or paste a service account JSON key"
+  platformZeroInstallLink: "Prefer zero install? Try hosted WhoDB Platform."
 
 es_ES:
   enterHostName: "Introduzca el nombre del host"
@@ -466,6 +470,7 @@ es_ES:
   advancedFields.projectId: "ID del proyecto"
   advancedFields.serviceAccountJson: "Cuenta de servicio JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Cargar o pegar una clave JSON de cuenta de servicio"
+  platformZeroInstallLink: "¿Prefieres instalación cero? Pruebe la plataforma alojada WhoDB."
 
 fi_FI:
   enterHostName: "Anna isäntänimi"
@@ -544,6 +549,7 @@ fi_FI:
   advancedFields.projectId: "Projektin tunnus"
   advancedFields.serviceAccountJson: "Palvelutili JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Lataa tai liitä palvelutilin JSON-avain"
+  platformZeroInstallLink: "Haluatko mieluummin nollaasennuksen? Kokeile isännöityä WhoDB alustaa."
 
 fr_FR:
   enterHostName: "Entrez le nom d'hôte"
@@ -622,6 +628,7 @@ fr_FR:
   advancedFields.projectId: "ID du projet"
   advancedFields.serviceAccountJson: "Compte de service JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Importer ou coller une clé JSON de compte de service"
+  platformZeroInstallLink: "Vous préférez zéro installation ? Essayez la plateforme WhoDB hébergée."
 
 it_IT:
   enterHostName: "Inserisci il nome host"
@@ -700,6 +707,7 @@ it_IT:
   advancedFields.projectId: "Identificativo del progetto"
   advancedFields.serviceAccountJson: "Account di servizio JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Carica o incolla la chiave JSON dell'account di servizio"
+  platformZeroInstallLink: "Preferisci l'installazione zero? Prova la piattaforma WhoDB ospitata."
 
 iw_IL:
   enterHostName: "הזן את שם המארח"
@@ -778,6 +786,7 @@ iw_IL:
   advancedFields.projectId: "מזהה פרויקט"
   advancedFields.serviceAccountJson: "חשבון שירות JSON"
   advancedFields.serviceAccountJsonPlaceholder: "העלה או הדבק מפתח JSON של חשבון שירות"
+  platformZeroInstallLink: "מעדיפים אפס התקנה? נסה את הפלטפורמה המתארחת WhoDB."
 
 ja_JP:
   enterHostName: "ホスト名を入力してください"
@@ -856,6 +865,7 @@ ja_JP:
   advancedFields.projectId: "プロジェクトID"
   advancedFields.serviceAccountJson: "サービスアカウントJSON"
   advancedFields.serviceAccountJsonPlaceholder: "サービスアカウントのJSONキーをアップロードまたは貼り付けます"
+  platformZeroInstallLink: "ゼロインストールを希望しますか? ホストされた WhoDB プラットフォームをお試しください。"
 
 ko_KR:
   enterHostName: "호스트 이름을 입력하세요"
@@ -934,6 +944,7 @@ ko_KR:
   advancedFields.projectId: "프로젝트 ID"
   advancedFields.serviceAccountJson: "서비스 계정 JSON"
   advancedFields.serviceAccountJsonPlaceholder: "서비스 계정 JSON 키 업로드 또는 붙여넣기"
+  platformZeroInstallLink: "제로 설치를 선호하시나요? 호스팅된 WhoDB 플랫폼을 사용해 보세요."
 
 nl_NL:
   enterHostName: "Voer de hostnaam in"
@@ -1012,6 +1023,7 @@ nl_NL:
   advancedFields.projectId: "Project-ID"
   advancedFields.serviceAccountJson: "Serviceaccount JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Upload of plak een JSON-sleutel van een serviceaccount"
+  platformZeroInstallLink: "Liever nul-installatie? Probeer het gehoste WhoDB-platform."
 
 pl_PL:
   enterHostName: "Wprowadź nazwę hosta"
@@ -1090,6 +1102,7 @@ pl_PL:
   advancedFields.projectId: "Identyfikator projektu"
   advancedFields.serviceAccountJson: "Konto usługi JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Prześlij lub wklej klucz JSON konta usługi"
+  platformZeroInstallLink: "Wolisz instalację zerową? Wypróbuj platformę hostowaną WhoDB."
 
 pt_BR:
   enterHostName: "Digite o nome do host"
@@ -1168,6 +1181,7 @@ pt_BR:
   advancedFields.projectId: "ID do projeto"
   advancedFields.serviceAccountJson: "JSON da conta de serviço"
   advancedFields.serviceAccountJsonPlaceholder: "Faça upload ou cole uma chave JSON da conta de serviço"
+  platformZeroInstallLink: "Prefere instalação zero? Experimente a plataforma WhoDB hospedada."
 
 ro_RO:
   enterHostName: "Introduceți numele gazdei"
@@ -1246,6 +1260,7 @@ ro_RO:
   advancedFields.projectId: "ID proiect"
   advancedFields.serviceAccountJson: "Cont de serviciu JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Încărcați sau inserați o cheie JSON de cont de serviciu"
+  platformZeroInstallLink: "Preferi zero instalare? Încercați platforma găzduită WhoDB."
 
 ru_RU:
   enterHostName: "Введите имя хоста"
@@ -1324,6 +1339,7 @@ ru_RU:
   advancedFields.projectId: "Идентификатор проекта"
   advancedFields.serviceAccountJson: "Сервисный аккаунт в формате JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Загрузите или вставьте JSON-ключ сервисного аккаунта."
+  platformZeroInstallLink: "Предпочитаете нулевую установку? Попробуйте размещенную платформу WhoDB ."
 
 sk_SK:
   enterHostName: "Zadajte názov hostiteľa"
@@ -1402,6 +1418,7 @@ sk_SK:
   advancedFields.projectId: "ID projektu"
   advancedFields.serviceAccountJson: "Servisný účet JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Nahrajte alebo prilepte kľúč JSON servisného účtu"
+  platformZeroInstallLink: "Preferujete nulovú inštaláciu? Vyskúšajte hosťovanú WhoDB platformu."
 
 sv_SE:
   enterHostName: "Ange värdnamn"
@@ -1480,6 +1497,7 @@ sv_SE:
   advancedFields.projectId: "Projekt-ID"
   advancedFields.serviceAccountJson: "Servicekonto JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Ladda upp eller klistra in en JSON-nyckel för ett tjänstkonto"
+  platformZeroInstallLink: "Föredrar du noll installation? Prova värd WhoDB plattform."
 
 zh_CN:
   enterHostName: "输入主机名"
@@ -1558,6 +1576,7 @@ zh_CN:
   advancedFields.projectId: "项目编号"
   advancedFields.serviceAccountJson: "服务帐户 JSON"
   advancedFields.serviceAccountJsonPlaceholder: "上传或粘贴服务帐户 JSON 密钥"
+  platformZeroInstallLink: "更喜欢零安装？ 尝试托管 WhoDB 平台。"
 
 zh_TW:
   enterHostName: "輸入主機名稱"
@@ -1636,6 +1655,7 @@ zh_TW:
   advancedFields.projectId: "項目編號"
   advancedFields.serviceAccountJson: "服務帳戶 JSON"
   advancedFields.serviceAccountJsonPlaceholder: "上傳或貼上服務帳戶 JSON 金鑰"
+  platformZeroInstallLink: "喜歡零安裝？ 嘗試託管 WhoDB 平台。"
 
 bg_BG:
   enterHostName: "Въведете име на хост"
@@ -1714,6 +1734,7 @@ bg_BG:
   advancedFields.projectId: "ID на проекта"
   advancedFields.serviceAccountJson: "Сервизен акаунт JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Качете или поставете JSON ключ на акаунт за услуга"
+  platformZeroInstallLink: "Предпочитате нулева инсталация? Опитайте хоствана WhoDB платформа."
 
 bn_BD:
   enterHostName: "হোস্টের নাম লিখুন"
@@ -1792,6 +1813,7 @@ bn_BD:
   advancedFields.projectId: "প্রকল্প আইডি"
   advancedFields.serviceAccountJson: "পরিষেবা অ্যাকাউন্ট JSON"
   advancedFields.serviceAccountJsonPlaceholder: "একটি পরিষেবা অ্যাকাউন্ট JSON কী আপলোড বা পেস্ট করুন"
+  platformZeroInstallLink: "শূন্য ইনস্টল পছন্দ? হোস্ট করা WhoDB প্ল্যাটফর্ম চেষ্টা করুন।"
 
 ca_ES:
   enterHostName: "Introduïu el nom de l'amfitrió"
@@ -1870,6 +1892,7 @@ ca_ES:
   advancedFields.projectId: "ID del projecte"
   advancedFields.serviceAccountJson: "Compte de servei JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Pengeu o enganxeu una clau JSON del compte de servei"
+  platformZeroInstallLink: "Prefereix zero instal·lació? Prova la plataforma allotjada WhoDB."
 
 cs_CZ:
   enterHostName: "Zadejte název hostitele"
@@ -1948,6 +1971,7 @@ cs_CZ:
   advancedFields.projectId: "ID projektu"
   advancedFields.serviceAccountJson: "Servisní účet JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Nahrajte nebo vložte klíč JSON servisního účtu"
+  platformZeroInstallLink: "Preferujete nulovou instalaci? Vyzkoušejte hostovanou WhoDB platformu."
 
 da_DK:
   enterHostName: "Indtast værtsnavn"
@@ -2026,6 +2050,7 @@ da_DK:
   advancedFields.projectId: "Projekt ID"
   advancedFields.serviceAccountJson: "Tjenestekonto JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Upload eller indsæt en JSON-nøgle til en tjenestekonto"
+  platformZeroInstallLink: "Foretrækker du nul installation? Prøv hostet WhoDB platform."
 
 fa_IR:
   enterHostName: "نام میزبان را وارد کنید"
@@ -2104,6 +2129,7 @@ fa_IR:
   advancedFields.projectId: "شناسه پروژه"
   advancedFields.serviceAccountJson: "حساب سرویس JSON"
   advancedFields.serviceAccountJsonPlaceholder: "کلید JSON حساب سرویس را آپلود یا جایگذاری کنید"
+  platformZeroInstallLink: "نصب صفر را ترجیح می دهید؟ پلتفرم میزبانی WhoDB را امتحان کنید."
 
 hi_IN:
   enterHostName: "होस्ट नाम दर्ज करें"
@@ -2182,6 +2208,7 @@ hi_IN:
   advancedFields.projectId: "प्रोजेक्ट आईडी"
   advancedFields.serviceAccountJson: "सेवा खाता JSON"
   advancedFields.serviceAccountJsonPlaceholder: "सेवा खाता JSON कुंजी अपलोड या पेस्ट करें"
+  platformZeroInstallLink: "शून्य इंस्टॉल को प्राथमिकता दें? होस्ट किए गए WhoDB प्लेटफ़ॉर्म को आज़माएं।"
 
 hr_HR:
   enterHostName: "Unesite naziv glavnog računala"
@@ -2260,6 +2287,7 @@ hr_HR:
   advancedFields.projectId: "ID projekta"
   advancedFields.serviceAccountJson: "Račun usluge JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Prenesite ili zalijepite JSON ključ računa usluge"
+  platformZeroInstallLink: "Više volite nultu instalaciju? Isprobajte hostiranu WhoDB platformu."
 
 hu_HU:
   enterHostName: "Írja be a gazdagép nevét"
@@ -2338,6 +2366,7 @@ hu_HU:
   advancedFields.projectId: "Projektazonosító"
   advancedFields.serviceAccountJson: "Szolgáltatásfiók JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Töltsön fel vagy illesszen be egy szolgáltatásfiók JSON-kulcsát"
+  platformZeroInstallLink: "Inkább nulla telepítés? Próbálja ki a tárolt WhoDB platformot."
 
 id_ID:
   enterHostName: "Masukkan Nama Host"
@@ -2416,6 +2445,7 @@ id_ID:
   advancedFields.projectId: "ID Proyek"
   advancedFields.serviceAccountJson: "Akun Layanan JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Unggah atau tempel kunci JSON akun layanan"
+  platformZeroInstallLink: "Lebih suka tanpa instalasi? Coba platform WhoDB yang dihosting."
 
 ms_MY:
   enterHostName: "Masukkan Nama Hos"
@@ -2494,6 +2524,7 @@ ms_MY:
   advancedFields.projectId: "ID Projek"
   advancedFields.serviceAccountJson: "Akaun Perkhidmatan JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Muat naik atau tampal kunci JSON akaun perkhidmatan"
+  platformZeroInstallLink: "Lebih suka sifar pemasangan? Cuba dihoskan WhoDB Platform."
 
 nb_NO:
   enterHostName: "Skriv inn vertsnavn"
@@ -2572,6 +2603,7 @@ nb_NO:
   advancedFields.projectId: "Prosjekt-ID"
   advancedFields.serviceAccountJson: "Tjenestekonto JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Last opp eller lim inn en tjenestekonto JSON-nøkkel"
+  platformZeroInstallLink: "Foretrekker null installasjon? Prøv vertsbasert WhoDB plattform."
 
 sw_KE:
   enterHostName: "Ingiza Jina la Mwenyeji"
@@ -2650,6 +2682,7 @@ sw_KE:
   advancedFields.projectId: "Kitambulisho cha mradi"
   advancedFields.serviceAccountJson: "Akaunti ya Huduma JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Pakia au ubandike ufunguo wa akaunti ya huduma ya JSON"
+  platformZeroInstallLink: "Je, unapendelea kusakinisha sifuri? Jaribu Mfumo wa kupangishwa WhoDB."
 
 ta_IN:
   enterHostName: "ஹோஸ்ட் பெயரை உள்ளிடவும்"
@@ -2728,6 +2761,7 @@ ta_IN:
   advancedFields.projectId: "திட்ட ஐடி"
   advancedFields.serviceAccountJson: "சேவை கணக்கு JSON"
   advancedFields.serviceAccountJsonPlaceholder: "சேவைக் கணக்கு JSON விசையைப் பதிவேற்றவும் அல்லது ஒட்டவும்"
+  platformZeroInstallLink: "பூஜ்ஜிய நிறுவலை விரும்புகிறீர்களா? ஹோஸ்ட் செய்யப்பட்ட WhoDB இயங்குதளத்தை முயற்சிக்கவும்."
 
 th_TH:
   enterHostName: "ป้อนชื่อโฮสต์"
@@ -2806,6 +2840,7 @@ th_TH:
   advancedFields.projectId: "รหัสโครงการ"
   advancedFields.serviceAccountJson: "บัญชีบริการ JSON"
   advancedFields.serviceAccountJsonPlaceholder: "อัปโหลดหรือวางคีย์ JSON ของบัญชีบริการ"
+  platformZeroInstallLink: "ต้องการการติดตั้งเป็นศูนย์หรือไม่ ลองใช้แพลตฟอร์มที่โฮสต์ WhoDB"
 
 tr_TR:
   enterHostName: "Ana Bilgisayar Adını Girin"
@@ -2884,6 +2919,7 @@ tr_TR:
   advancedFields.projectId: "Proje Kimliği"
   advancedFields.serviceAccountJson: "Hizmet Hesabı JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Hizmet hesabı JSON anahtarını yükleyin veya yapıştırın"
+  platformZeroInstallLink: "Sıfır yüklemeyi mi tercih ediyorsunuz? Barındırılan WhoDB Platformu deneyin."
 
 uk_UA:
   enterHostName: "Введіть ім'я хоста"
@@ -2962,6 +2998,7 @@ uk_UA:
   advancedFields.projectId: "ID проекту"
   advancedFields.serviceAccountJson: "Обліковий запис служби JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Завантажте або вставте ключ JSON сервісного облікового запису"
+  platformZeroInstallLink: "Віддаєте перевагу нульовій установці? Спробуйте розміщену платформу WhoDB."
 
 ur_PK:
   enterHostName: "میزبان کا نام درج کریں۔"
@@ -3040,6 +3077,7 @@ ur_PK:
   advancedFields.projectId: "پروجیکٹ ID"
   advancedFields.serviceAccountJson: "سروس اکاؤنٹ JSON"
   advancedFields.serviceAccountJsonPlaceholder: "سروس اکاؤنٹ JSON کلید اپ لوڈ یا پیسٹ کریں۔"
+  platformZeroInstallLink: "زیرو انسٹال کو ترجیح دیں؟ ہوسٹڈ WhoDB پلیٹ فارم کو آزمائیں۔"
 
 vi_VN:
   enterHostName: "Nhập tên máy chủ"
@@ -3118,6 +3156,7 @@ vi_VN:
   advancedFields.projectId: "Mã dự án"
   advancedFields.serviceAccountJson: "Tài khoản dịch vụ JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Tải lên hoặc dán khóa JSON của tài khoản dịch vụ"
+  platformZeroInstallLink: "Thích cài đặt bằng không? Hãy thử Nền tảng WhoDB được lưu trữ."
 
 af_ZA:
   enterHostName: "Voer gasheernaam in"
@@ -3196,6 +3235,7 @@ af_ZA:
   advancedFields.projectId: "Projek ID"
   advancedFields.serviceAccountJson: "Diensrekening JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Laai 'n diensrekening JSON-sleutel op of plak"
+  platformZeroInstallLink: "Verkies nul installasie? Probeer gehuisves WhoDB platform."
 
 am_ET:
   enterHostName: "የአስተናጋጅ ስም ያስገቡ"
@@ -3274,6 +3314,7 @@ am_ET:
   advancedFields.projectId: "የፕሮጀክት መታወቂያ"
   advancedFields.serviceAccountJson: "የአገልግሎት መለያ JSON"
   advancedFields.serviceAccountJsonPlaceholder: "የአገልግሎት መለያ JSON ቁልፍን ይስቀሉ ወይም ይለጥፉ"
+  platformZeroInstallLink: "ዜሮ መጫን እመርጣለሁ? የተስተናገደውን ይሞክሩ WhoDB መድረክ።"
 
 az_AZ:
   enterHostName: "Host adını daxil edin"
@@ -3352,6 +3393,7 @@ az_AZ:
   advancedFields.projectId: "Layihə ID"
   advancedFields.serviceAccountJson: "Xidmət Hesabı JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Xidmət hesabı JSON açarını yükləyin və ya yapışdırın"
+  platformZeroInstallLink: "Sıfır quraşdırmaya üstünlük verirsiniz? Yerləşdirilmiş WhoDB Platformasını sınayın."
 
 et_EE:
   enterHostName: "Sisestage hosti nimi"
@@ -3430,6 +3472,7 @@ et_EE:
   advancedFields.projectId: "Projekti ID"
   advancedFields.serviceAccountJson: "Teenusekonto JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Laadige üles või kleepige teenusekonto JSON-võti"
+  platformZeroInstallLink: "Kas eelistate nullinstalli? Proovige hostitud WhoDB platvormi."
 
 gu_IN:
   enterHostName: "હોસ્ટનું નામ દાખલ કરો"
@@ -3508,6 +3551,7 @@ gu_IN:
   advancedFields.projectId: "પ્રોજેક્ટ ID"
   advancedFields.serviceAccountJson: "સેવા ખાતું JSON"
   advancedFields.serviceAccountJsonPlaceholder: "સેવા એકાઉન્ટ JSON કી અપલોડ કરો અથવા પેસ્ટ કરો"
+  platformZeroInstallLink: "શૂન્ય ઇન્સ્ટોલ કરવાનું પસંદ કરો છો? હોસ્ટ કરેલ WhoDB પ્લેટફોર્મ અજમાવી જુઓ."
 
 ha_NG:
   enterHostName: "Shigar da Sunan Mai watsa shiri"
@@ -3586,6 +3630,7 @@ ha_NG:
   advancedFields.projectId: "ID na aikin"
   advancedFields.serviceAccountJson: "Asusun Sabis JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Loda ko liƙa asusun sabis na JSON"
+  platformZeroInstallLink: "An fi son shigar da sifili? Gwada masaukin WhoDB Dandalin."
 
 ka_GE:
   enterHostName: "შეიყვანეთ ჰოსტის სახელი"
@@ -3664,6 +3709,7 @@ ka_GE:
   advancedFields.projectId: "პროექტის ID"
   advancedFields.serviceAccountJson: "სერვისის ანგარიში JSON"
   advancedFields.serviceAccountJsonPlaceholder: "ატვირთეთ ან ჩასვით სერვისის ანგარიშის JSON გასაღები"
+  platformZeroInstallLink: "გირჩევნიათ ნულოვანი ინსტალაცია? სცადეთ ჰოსტირებული WhoDB პლატფორმა."
 
 km_KH:
   enterHostName: "បញ្ចូលឈ្មោះម៉ាស៊ីន"
@@ -3742,6 +3788,7 @@ km_KH:
   advancedFields.projectId: "លេខសម្គាល់គម្រោង"
   advancedFields.serviceAccountJson: "គណនីសេវាកម្ម JSON"
   advancedFields.serviceAccountJsonPlaceholder: "បង្ហោះ ឬបិទភ្ជាប់គណនីសេវាកម្ម JSON"
+  platformZeroInstallLink: "ចូលចិត្តការដំឡើងសូន្យ? សាកល្បងប្រើវេទិកា WhoDB ។"
 
 kn_IN:
   enterHostName: "ಹೋಸ್ಟ್ ಹೆಸರನ್ನು ನಮೂದಿಸಿ"
@@ -3820,6 +3867,7 @@ kn_IN:
   advancedFields.projectId: "ಪ್ರಾಜೆಕ್ಟ್ ಐಡಿ"
   advancedFields.serviceAccountJson: "ಸೇವಾ ಖಾತೆ JSON"
   advancedFields.serviceAccountJsonPlaceholder: "ಸೇವಾ ಖಾತೆ JSON ಕೀಯನ್ನು ಅಪ್‌ಲೋಡ್ ಮಾಡಿ ಅಥವಾ ಅಂಟಿಸಿ"
+  platformZeroInstallLink: "ಶೂನ್ಯ ಸ್ಥಾಪನೆಗೆ ಆದ್ಯತೆ ನೀಡುವುದೇ? ಹೋಸ್ಟ್ ಮಾಡಿದ WhoDB ಪ್ಲಾಟ್‌ಫಾರ್ಮ್ ಅನ್ನು ಪ್ರಯತ್ನಿಸಿ."
 
 lt_LT:
   enterHostName: "Įveskite pagrindinio kompiuterio pavadinimą"
@@ -3898,6 +3946,7 @@ lt_LT:
   advancedFields.projectId: "Projekto ID"
   advancedFields.serviceAccountJson: "Paslaugos paskyra JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Įkelkite arba įklijuokite paslaugos paskyros JSON raktą"
+  platformZeroInstallLink: "Norite įdiegti nulį? Išbandykite priglobtą WhoDB platformą."
 
 lv_LV:
   enterHostName: "Ievadiet resursdatora nosaukumu"
@@ -3976,6 +4025,7 @@ lv_LV:
   advancedFields.projectId: "Projekta ID"
   advancedFields.serviceAccountJson: "Pakalpojuma konts JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Augšupielādējiet vai ielīmējiet pakalpojuma konta JSON atslēgu"
+  platformZeroInstallLink: "Vai vēlaties instalēt nulli? Izmēģiniet mitināto WhoDB platformu."
 
 ml_IN:
   enterHostName: "ഹോസ്റ്റിൻ്റെ പേര് നൽകുക"
@@ -4054,6 +4104,7 @@ ml_IN:
   advancedFields.projectId: "പ്രോജക്റ്റ് ഐഡി"
   advancedFields.serviceAccountJson: "സേവന അക്കൗണ്ട് JSON"
   advancedFields.serviceAccountJsonPlaceholder: "ഒരു സേവന അക്കൗണ്ട് JSON കീ അപ്‌ലോഡ് ചെയ്യുക അല്ലെങ്കിൽ ഒട്ടിക്കുക"
+  platformZeroInstallLink: "പൂജ്യം ഇൻസ്റ്റാൾ ചെയ്യണോ? ഹോസ്റ്റ് ചെയ്‌ത WhoDB പ്ലാറ്റ്‌ഫോം പരീക്ഷിക്കുക."
 
 mr_IN:
   enterHostName: "होस्ट नाव प्रविष्ट करा"
@@ -4132,6 +4183,7 @@ mr_IN:
   advancedFields.projectId: "प्रकल्प आयडी"
   advancedFields.serviceAccountJson: "सेवा खाते JSON"
   advancedFields.serviceAccountJsonPlaceholder: "सेवा खाते JSON की अपलोड किंवा पेस्ट करा"
+  platformZeroInstallLink: "शून्य स्थापित करण्यास प्राधान्य द्यायचे? होस्ट केलेले WhoDB प्लॅटफॉर्म वापरून पहा."
 
 ne_NP:
   enterHostName: "होस्ट नाम प्रविष्ट गर्नुहोस्"
@@ -4210,6 +4262,7 @@ ne_NP:
   advancedFields.projectId: "परियोजना आईडी"
   advancedFields.serviceAccountJson: "सेवा खाता JSON"
   advancedFields.serviceAccountJsonPlaceholder: "सेवा खाता JSON कुञ्जी अपलोड वा टाँस्नुहोस्"
+  platformZeroInstallLink: "शून्य स्थापना मनपर्छ? होस्ट गरिएको WhoDB प्लेटफर्म प्रयास गर्नुहोस्।"
 
 pa_IN:
   enterHostName: "ਮੇਜ਼ਬਾਨ ਦਾ ਨਾਮ ਦਰਜ ਕਰੋ"
@@ -4288,6 +4341,7 @@ pa_IN:
   advancedFields.projectId: "ਪ੍ਰੋਜੈਕਟ ਆਈ.ਡੀ"
   advancedFields.serviceAccountJson: "ਸੇਵਾ ਖਾਤਾ JSON"
   advancedFields.serviceAccountJsonPlaceholder: "ਸੇਵਾ ਖਾਤਾ JSON ਕੁੰਜੀ ਨੂੰ ਅੱਪਲੋਡ ਜਾਂ ਪੇਸਟ ਕਰੋ"
+  platformZeroInstallLink: "ਜ਼ੀਰੋ ਇੰਸਟਾਲ ਨੂੰ ਤਰਜੀਹ ਦਿੰਦੇ ਹੋ? ਹੋਸਟ ਕੀਤੇ WhoDB ਪਲੇਟਫਾਰਮ ਦੀ ਕੋਸ਼ਿਸ਼ ਕਰੋ।"
 
 si_LK:
   enterHostName: "සත්කාරක නාමය ඇතුළත් කරන්න"
@@ -4366,6 +4420,7 @@ si_LK:
   advancedFields.projectId: "ව්යාපෘති හැඳුනුම්පත"
   advancedFields.serviceAccountJson: "JSON සේවා ගිණුම"
   advancedFields.serviceAccountJsonPlaceholder: "සේවා ගිණුම් JSON යතුරක් උඩුගත කරන්න හෝ අලවන්න"
+  platformZeroInstallLink: "ශුන්‍ය ස්ථාපනයට කැමතිද? සත්කාරක WhoDB වේදිකාව උත්සාහ කරන්න."
 
 sl_SI:
   enterHostName: "Vnesite ime gostitelja"
@@ -4444,6 +4499,7 @@ sl_SI:
   advancedFields.projectId: "ID projekta"
   advancedFields.serviceAccountJson: "Storitveni račun JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Naložite ali prilepite ključ JSON storitvenega računa"
+  platformZeroInstallLink: "Želite raje ničelno namestitev? Poskusite gostovano WhoDB platformo."
 
 sr_RS:
   enterHostName: "Унесите име хоста"
@@ -4522,6 +4578,7 @@ sr_RS:
   advancedFields.projectId: "ИД пројекта"
   advancedFields.serviceAccountJson: "ЈСОН налог услуге"
   advancedFields.serviceAccountJsonPlaceholder: "Отпремите или налепите ЈСОН кључ налога услуге"
+  platformZeroInstallLink: "Желите нулту инсталацију? Испробајте хостовану WhoDB платформу."
 
 te_IN:
   enterHostName: "హోస్ట్ పేరును నమోదు చేయండి"
@@ -4600,6 +4657,7 @@ te_IN:
   advancedFields.projectId: "ప్రాజెక్ట్ ID"
   advancedFields.serviceAccountJson: "సేవా ఖాతా JSON"
   advancedFields.serviceAccountJsonPlaceholder: "సేవా ఖాతా JSON కీని అప్‌లోడ్ చేయండి లేదా అతికించండి"
+  platformZeroInstallLink: "సున్నా ఇన్‌స్టాల్‌ను ఇష్టపడతారా? హోస్ట్ చేయబడిన WhoDB ప్లాట్‌ఫారమ్‌ను ప్రయత్నించండి."
 
 tl_PH:
   enterHostName: "Ilagay ang Host Name"
@@ -4678,6 +4736,7 @@ tl_PH:
   advancedFields.projectId: "Project ID"
   advancedFields.serviceAccountJson: "Account ng Serbisyo JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Mag-upload o mag-paste ng JSON key ng account ng serbisyo"
+  platformZeroInstallLink: "Mas gusto ang zero install? Subukan ang naka-host na WhoDB Platform."
 
 uz_UZ:
   enterHostName: "Xost nomini kiriting"
@@ -4756,6 +4815,7 @@ uz_UZ:
   advancedFields.projectId: "Loyiha identifikatori"
   advancedFields.serviceAccountJson: "JSON xizmat hisobi"
   advancedFields.serviceAccountJsonPlaceholder: "Xizmat hisobi JSON kalitini yuklang yoki joylashtiring"
+  platformZeroInstallLink: "Nol o'rnatishni afzal ko'rasizmi? Xostlangan WhoDB platformasini sinab koʻring."
 
 yo_NG:
   enterHostName: "Tẹ Orukọ ogun sii"
@@ -4834,3 +4894,4 @@ yo_NG:
   advancedFields.projectId: "ID ise agbese"
   advancedFields.serviceAccountJson: "Account Service JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Po si tabi lẹẹmọ iroyin iṣẹ bọtini JSON"
+  platformZeroInstallLink: "Ṣe o fẹ fi sori ẹrọ odo bi? Gbiyanju lati gbalejo WhoDB Platform."

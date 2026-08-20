@@ -44,6 +44,7 @@ ar_AE:
   delimiterPipe: "الأنبوب (|) - أقل شيوعًا في البيانات"
   jsonLineDelimited: "JSON مفصولة بأسطر (مستند واحد لكل صف)"
   jsonDetails: "يحافظ على الحقول المتداخلة دون التسوية"
+  platformDatasetLink: "هل تحتاج إلى مجموعة بيانات مباشرة وقابلة للمشاركة بدلاً من الملف؟ جرب منصة WhoDB."
 
 de_DE:
   selectedRows: "Sie sind dabei, {count} ausgewählte Zeilen zu exportieren."
@@ -67,6 +68,7 @@ de_DE:
   delimiterPipe: "Pipe (|) – In Daten seltener"
   jsonLineDelimited: "Zeilengetrenntes JSON (ein Dokument pro Zeile)"
   jsonDetails: "Behält verschachtelte Felder bei, ohne sie zu reduzieren"
+  platformDatasetLink: "Benötigen Sie einen Live-Datensatz, der anstelle einer Datei gemeinsam genutzt werden kann? Probieren Sie die Plattform WhoDB aus."
 
 el_GR:
   selectedRows: "Πρόκειται να εξαγάγετε {count} επιλεγμένες σειρές."
@@ -90,6 +92,7 @@ el_GR:
   delimiterPipe: "Pipe (|) - Λιγότερο συνηθισμένο στα δεδομένα"
   jsonLineDelimited: "JSON οριοθετημένης γραμμής (ένα έγγραφο ανά σειρά)"
   jsonDetails: "Διατηρεί ένθετα χωράφια χωρίς ισοπέδωση"
+  platformDatasetLink: "Χρειάζεστε ένα ζωντανό σύνολο δεδομένων με δυνατότητα κοινής χρήσης αντί για ένα αρχείο; Δοκιμάστε την πλατφόρμα WhoDB."
 
 en_GB:
   selectedRows: "You are about to export {count} selected rows."
@@ -113,6 +116,7 @@ en_GB:
   delimiterPipe: "Pipe (|) - Less common in data"
   jsonLineDelimited: "Line-delimited JSON (one document per row)"
   jsonDetails: "Preserves nested fields without flattening"
+  platformDatasetLink: "Need a live, shareable dataset instead of a file? Try WhoDB Platform."
 
 es_ES:
   selectedRows: "Está a punto de exportar {count} filas seleccionadas."
@@ -136,6 +140,7 @@ es_ES:
   delimiterPipe: "Tubería (|): menos común en datos"
   jsonLineDelimited: "JSON delimitado por líneas (un documento por fila)"
   jsonDetails: "Conserva los campos anidados sin aplanarse"
+  platformDatasetLink: "¿Necesita un conjunto de datos en vivo que se pueda compartir en lugar de un archivo? Pruebe la plataforma WhoDB."
 
 fi_FI:
   selectedRows: "Olet viemässä {count} valittua riviä."
@@ -159,6 +164,7 @@ fi_FI:
   delimiterPipe: "Putki (|) - Harvemmin tiedoissa"
   jsonLineDelimited: "Rivieroteltu JSON (yksi asiakirja riviä kohden)"
   jsonDetails: "Säilyttää sisäkkäiset kentät litistämättä"
+  platformDatasetLink: "Tarvitsetko elävän, jaettavan tietojoukon tiedoston sijaan? Kokeile WhoDB alustaa."
 
 fr_FR:
   selectedRows: "Vous êtes sur le point d'exporter {count} lignes sélectionnées."
@@ -182,6 +188,7 @@ fr_FR:
   delimiterPipe: "Pipe (|) - Moins courant dans les données"
   jsonLineDelimited: "JSON délimité par des lignes (un document par ligne)"
   jsonDetails: "Préserve les champs imbriqués sans les aplatir"
+  platformDatasetLink: "Besoin d'un ensemble de données en direct et partageable au lieu d'un fichier ? Essayez la plateforme WhoDB."
 
 it_IT:
   selectedRows: "Stai per esportare le {count} righe selezionate."
@@ -205,6 +212,7 @@ it_IT:
   delimiterPipe: "Pipe (|) - Meno comune nei dati"
   jsonLineDelimited: "JSON delimitato da righe (un documento per riga)"
   jsonDetails: "Conserva i campi nidificati senza appiattirli"
+  platformDatasetLink: "Hai bisogno di un set di dati attivo e condivisibile invece di un file? Prova la piattaforma WhoDB"
 
 iw_IL:
   selectedRows: "אתה עומד לייצא {count} שורות נבחרות."
@@ -228,6 +236,7 @@ iw_IL:
   delimiterPipe: "צינור (|) - פחות נפוץ בנתונים"
   jsonLineDelimited: "JSON מופרד בשורה (מסמך אחד בכל שורה)"
   jsonDetails: "שומר על שדות מקוננים ללא שיטוח"
+  platformDatasetLink: "צריך מערך נתונים חי וניתן לשיתוף במקום קובץ? נסה את WhoDB פלטפורמה."
 
 ja_JP:
   selectedRows: "選択した {count} 行をエクスポートしようとしています。"
@@ -251,6 +260,7 @@ ja_JP:
   delimiterPipe: "パイプ (|) - データではあまり一般的ではありません"
   jsonLineDelimited: "行区切りの JSON (1 行に 1 つのドキュメント)"
   jsonDetails: "ネストされたフィールドを平坦化せずに保持します"
+  platformDatasetLink: "ファイルではなく、共有可能なライブ データセットが必要ですか? WhoDB プラットフォームをお試しください。"
 
 ko_KR:
   selectedRows: "선택한 행 {count}개를 내보내려고 합니다."
@@ -274,6 +284,7 @@ ko_KR:
   delimiterPipe: "파이프(|) - 데이터에서는 덜 일반적입니다."
   jsonLineDelimited: "줄로 구분된 JSON(행당 하나의 문서)"
   jsonDetails: "병합하지 않고 중첩된 필드를 유지합니다."
+  platformDatasetLink: "파일 대신 공유 가능한 실시간 데이터 세트가 필요합니까? WhoDB 플랫폼을 사용해 보세요."
 
 nl_NL:
   selectedRows: "U staat op het punt {count} geselecteerde rijen te exporteren."
@@ -297,6 +308,7 @@ nl_NL:
   delimiterPipe: "Pipe (|) - Minder gebruikelijk in gegevens"
   jsonLineDelimited: "Door regels gescheiden JSON (één document per rij)"
   jsonDetails: "Behoudt geneste velden zonder afvlakking"
+  platformDatasetLink: "Heeft u een live, deelbare dataset nodig in plaats van een bestand? Probeer het WhoDB-platform."
 
 pl_PL:
   selectedRows: "Zamierzasz wyeksportować {count} wybranych wierszy."
@@ -320,6 +332,7 @@ pl_PL:
   delimiterPipe: "Rura (|) — Rzadziej spotykana w danych"
   jsonLineDelimited: "JSON rozdzielany liniami (jeden dokument w wierszu)"
   jsonDetails: "Zachowuje zagnieżdżone pola bez spłaszczania"
+  platformDatasetLink: "Potrzebujesz aktywnego, udostępnianego zbioru danych zamiast pliku? Wypróbuj platformę WhoDB"
 
 pt_BR:
   selectedRows: "Você está prestes a exportar {count} linhas selecionadas."
@@ -343,6 +356,7 @@ pt_BR:
   delimiterPipe: "Pipe (|) - Menos comum em dados"
   jsonLineDelimited: "JSON delimitado por linha (um documento por linha)"
   jsonDetails: "Preserva campos aninhados sem nivelar"
+  platformDatasetLink: "Precisa de um conjunto de dados ativo e compartilhável em vez de um arquivo? Experimente a plataforma WhoDB."
 
 ro_RO:
   selectedRows: "Sunteți pe cale să exportați {count} rânduri selectate."
@@ -366,6 +380,7 @@ ro_RO:
   delimiterPipe: "Pipe (|) - Mai puțin frecvente în date"
   jsonLineDelimited: "JSON delimitat de linii (un document pe rând)"
   jsonDetails: "Păstrează câmpurile imbricate fără aplatizare"
+  platformDatasetLink: "Aveți nevoie de un set de date live care poate fi partajat în loc de un fișier? Încercați Platforma WhoDB."
 
 ru_RU:
   selectedRows: "Вы собираетесь экспортировать {count} выбранных строк."
@@ -389,6 +404,7 @@ ru_RU:
   delimiterPipe: "Труба (|) — реже встречается в данных."
   jsonLineDelimited: "JSON с разделителями строк (один документ в строке)"
   jsonDetails: "Сохраняет вложенные поля без выравнивания."
+  platformDatasetLink: "Нужен живой, общий набор данных вместо файла? Попробуйте WhoDB платформу."
 
 sk_SK:
   selectedRows: "Chystáte sa exportovať {count} vybratých riadkov."
@@ -412,6 +428,7 @@ sk_SK:
   delimiterPipe: "Pipe (|) – Menej časté v údajoch"
   jsonLineDelimited: "JSON oddelený riadkami (jeden dokument na riadok)"
   jsonDetails: "Zachováva vnorené polia bez sploštenia"
+  platformDatasetLink: "Potrebujete namiesto súboru živú, zdieľateľnú množinu údajov? Vyskúšajte platformu WhoDB."
 
 sv_SE:
   selectedRows: "Du håller på att exportera {count} markerade rader."
@@ -435,6 +452,7 @@ sv_SE:
   delimiterPipe: "Pipe (|) - Mindre vanligt i data"
   jsonLineDelimited: "Radavgränsad JSON (ett dokument per rad)"
   jsonDetails: "Bevarar kapslade fält utan att förenklas"
+  platformDatasetLink: "Behöver du en levande, delbar datauppsättning istället för en fil? Prova WhoDB Plattform."
 
 zh_CN:
   selectedRows: "您即将导出 {count} 选定的行。"
@@ -458,6 +476,7 @@ zh_CN:
   delimiterPipe: "管道 (|) - 在数据中不太常见"
   jsonLineDelimited: "以行分隔的 JSON（每行一个文档）"
   jsonDetails: "保留嵌套字段而不展平"
+  platformDatasetLink: "需要实时、可共享的数据集而不是文件？ 尝试 WhoDB 平台。"
 
 zh_TW:
   selectedRows: "您即將匯出 {count} 選定的行。"
@@ -481,6 +500,7 @@ zh_TW:
   delimiterPipe: "管道 (|) - 在數據中較不常見"
   jsonLineDelimited: "以行分隔的 JSON（每行一個文件）"
   jsonDetails: "保留嵌套欄位而不展平"
+  platformDatasetLink: "需要即時、可共享的資料集而不是檔案？ 嘗試 WhoDB 平台。"
 
 bg_BG:
   selectedRows: "На път сте да експортирате {count} избрани редове."
@@ -504,6 +524,7 @@ bg_BG:
   delimiterPipe: "Тръбна линия (|) – По-рядко срещана в данните"
   jsonLineDelimited: "Разделен с редове JSON (един документ на ред)"
   jsonDetails: "Запазва вложените полета без сплескване"
+  platformDatasetLink: "Нуждаете се от активен, споделяем набор от данни вместо файл? Опитайте платформата WhoDB."
 
 bn_BD:
   selectedRows: "আপনি {count} নির্বাচিত সারিগুলি রপ্তানি করতে চলেছেন৷"
@@ -527,6 +548,7 @@ bn_BD:
   delimiterPipe: "পাইপ (|) - ডেটাতে কম সাধারণ"
   jsonLineDelimited: "লাইন-ডিলিমিটেড JSON (প্রতি সারিতে একটি নথি)"
   jsonDetails: "সমতল না করে নেস্টেড ক্ষেত্র সংরক্ষণ করে"
+  platformDatasetLink: "একটি ফাইলের পরিবর্তে একটি লাইভ, শেয়ারযোগ্য ডেটাসেট প্রয়োজন? চেষ্টা করুন WhoDB প্ল্যাটফর্ম।"
 
 ca_ES:
   selectedRows: "Esteu a punt d'exportar {count} files seleccionades."
@@ -550,6 +572,7 @@ ca_ES:
   delimiterPipe: "Pipe (|) - Menys comú en dades"
   jsonLineDelimited: "JSON delimitat per línies (un document per fila)"
   jsonDetails: "Conserva els camps imbricats sense aplanar-los"
+  platformDatasetLink: "Necessites un conjunt de dades en directe i compartible en lloc d'un fitxer? Prova la plataforma WhoDB."
 
 cs_CZ:
   selectedRows: "Chystáte se exportovat {count} vybraných řádků."
@@ -573,6 +596,7 @@ cs_CZ:
   delimiterPipe: "Pipe (|) – Méně časté v datech"
   jsonLineDelimited: "JSON oddělený řádky (jeden dokument na řádek)"
   jsonDetails: "Zachovává vnořená pole bez zploštění"
+  platformDatasetLink: "Potřebujete místo souboru živou datovou sadu, kterou lze sdílet? Vyzkoušejte platformu WhoDB."
 
 da_DK:
   selectedRows: "Du er ved at eksportere {count} valgte rækker."
@@ -596,6 +620,7 @@ da_DK:
   delimiterPipe: "Rør (|) - Mindre almindelig i data"
   jsonLineDelimited: "Linjesepareret JSON (et dokument pr. række)"
   jsonDetails: "Bevarer indlejrede felter uden at blive flad"
+  platformDatasetLink: "Har du brug for et live, delbart datasæt i stedet for en fil? Prøv WhoDB platform."
 
 fa_IR:
   selectedRows: "شما در شرف صدور {count} ردیف انتخاب شده هستید."
@@ -619,6 +644,7 @@ fa_IR:
   delimiterPipe: "لوله (|) - در داده ها کمتر رایج است"
   jsonLineDelimited: "JSON محدود به خط (یک سند در هر ردیف)"
   jsonDetails: "مزارع تو در تو را بدون مسطح شدن حفظ می کند"
+  platformDatasetLink: "به جای فایل به یک مجموعه داده زنده و قابل اشتراک گذاری نیاز دارید؟ پلتفرم WhoDB را امتحان کنید."
 
 hi_IN:
   selectedRows: "आप {count} चयनित पंक्तियाँ निर्यात करने वाले हैं।"
@@ -642,6 +668,7 @@ hi_IN:
   delimiterPipe: "पाइप (|) - डेटा में कम आम"
   jsonLineDelimited: "रेखा-सीमांकित JSON (प्रति पंक्ति एक दस्तावेज़)"
   jsonDetails: "घोंसले वाले खेतों को बिना समतल किए सुरक्षित रखता है"
+  platformDatasetLink: "फ़ाइल के बजाय लाइव, साझा करने योग्य डेटासेट की आवश्यकता है? WhoDB प्लेटफ़ॉर्म आज़माएँ।"
 
 hr_HR:
   selectedRows: "Spremate se izvesti {count} odabranih redaka."
@@ -665,6 +692,7 @@ hr_HR:
   delimiterPipe: "Cjevčica (|) - Rjeđe u podacima"
   jsonLineDelimited: "JSON razgraničen linijama (jedan dokument po retku)"
   jsonDetails: "Čuva ugniježđena polja bez izravnavanja"
+  platformDatasetLink: "Trebate živi skup podataka koji se može dijeliti umjesto datoteke? Isprobajte WhoDB platformu."
 
 hu_HU:
   selectedRows: "{count} kiválasztott sor exportálására készül."
@@ -688,6 +716,7 @@ hu_HU:
   delimiterPipe: "Cső (|) – Ritkább az adatokban"
   jsonLineDelimited: "Sorokkal elválasztott JSON (soronként egy dokumentum)"
   jsonDetails: "Megőrzi a beágyazott mezőket simítás nélkül"
+  platformDatasetLink: "Élő, megosztható adatkészletre van szüksége fájl helyett? Próbáld ki a WhoDB platformot."
 
 id_ID:
   selectedRows: "Anda akan mengekspor {count} baris yang dipilih."
@@ -711,6 +740,7 @@ id_ID:
   delimiterPipe: "Pipa (|) - Kurang umum dalam data"
   jsonLineDelimited: "JSON yang dibatasi baris (satu dokumen per baris)"
   jsonDetails: "Mempertahankan bidang bersarang tanpa menjadi rata"
+  platformDatasetLink: "Butuh kumpulan data langsung yang dapat dibagikan, bukan file? Coba WhoDB Platform."
 
 ms_MY:
   selectedRows: "Anda akan mengeksport {count} baris yang dipilih."
@@ -734,6 +764,7 @@ ms_MY:
   delimiterPipe: "Paip (|) - Kurang biasa dalam data"
   jsonLineDelimited: "JSON dibatasi baris (satu dokumen setiap baris)"
   jsonDetails: "Memelihara padang bersarang tanpa diratakan"
+  platformDatasetLink: "Perlukan set data langsung yang boleh dikongsi dan bukannya fail? Cuba WhoDB Platform."
 
 nb_NO:
   selectedRows: "Du er i ferd med å eksportere {count} valgte rader."
@@ -757,6 +788,7 @@ nb_NO:
   delimiterPipe: "Rør (|) - Mindre vanlig i data"
   jsonLineDelimited: "Linjedelt JSON (ett dokument per rad)"
   jsonDetails: "Bevarer nestede felt uten å flate ut"
+  platformDatasetLink: "Trenger du et levende, delbart datasett i stedet for en fil? Prøv WhoDB-plattformen."
 
 sw_KE:
   selectedRows: "Unakaribia kuhamisha {count} safu mlalo zilizochaguliwa."
@@ -780,6 +812,7 @@ sw_KE:
   delimiterPipe: "Bomba (|) - Chini ya kawaida katika data"
   jsonLineDelimited: "JSON iliyotenganishwa na mstari (hati moja kwa kila safu)"
   jsonDetails: "Huhifadhi mashamba yaliyowekwa viota bila kujaa"
+  platformDatasetLink: "Je, unahitaji seti ya data inayoweza kushirikiwa badala ya faili? Jaribu WhoDB Jukwaa."
 
 ta_IN:
   selectedRows: "நீங்கள் தேர்ந்தெடுத்த {count} வரிசைகளை ஏற்றுமதி செய்ய உள்ளீர்கள்."
@@ -803,6 +836,7 @@ ta_IN:
   delimiterPipe: "குழாய் (|) - தரவுகளில் குறைவாகவே உள்ளது"
   jsonLineDelimited: "வரியால் பிரிக்கப்பட்ட JSON (ஒரு வரிசைக்கு ஒரு ஆவணம்)"
   jsonDetails: "கூடு கட்டப்பட்ட வயல்களை சமதளமாக்காமல் பாதுகாக்கிறது"
+  platformDatasetLink: "கோப்புக்குப் பதிலாக நேரடி, பகிரக்கூடிய தரவுத்தொகுப்பு வேண்டுமா? WhoDB தளத்தை முயற்சிக்கவும்."
 
 th_TH:
   selectedRows: "คุณกำลังจะส่งออกแถวที่เลือก {count}"
@@ -826,6 +860,7 @@ th_TH:
   delimiterPipe: "ไปป์ (|) - พบได้น้อยในข้อมูล"
   jsonLineDelimited: "JSON แบบคั่นด้วยบรรทัด (หนึ่งเอกสารต่อแถว)"
   jsonDetails: "รักษาเขตข้อมูลที่ซ้อนกันโดยไม่ทำให้แบน"
+  platformDatasetLink: "ต้องการชุดข้อมูลสดที่แชร์ได้แทนไฟล์ใช่ไหม ลองใช้แพลตฟอร์ม WhoDB"
 
 tr_TR:
   selectedRows: "Seçilen {count} satırı dışa aktarmak üzeresiniz."
@@ -849,6 +884,7 @@ tr_TR:
   delimiterPipe: "Boru (|) - Verilerde daha az yaygın"
   jsonLineDelimited: "Satırla ayrılmış JSON (satır başına bir belge)"
   jsonDetails: "Yuvalanmış alanları düzleştirmeden korur"
+  platformDatasetLink: "Dosya yerine canlı, paylaşılabilir bir veri kümesine mi ihtiyacınız var? WhoDB Platformu deneyin."
 
 uk_UA:
   selectedRows: "Ви збираєтеся експортувати {count} вибраних рядків."
@@ -872,6 +908,7 @@ uk_UA:
   delimiterPipe: "Трубна лінія (|) – рідше в даних"
   jsonLineDelimited: "JSON із роздільниками (один документ на рядок)"
   jsonDetails: "Зберігає вкладені поля без зведення"
+  platformDatasetLink: "Потрібен живий набір даних, яким можна ділитися, а не файл? Спробуйте платформу WhoDB."
 
 ur_PK:
   selectedRows: "آپ {count} منتخب قطاریں برآمد کرنے والے ہیں۔"
@@ -895,6 +932,7 @@ ur_PK:
   delimiterPipe: "پائپ (|) - ڈیٹا میں کم عام"
   jsonLineDelimited: "لائن سے حد بندی JSON (ایک دستاویز فی قطار)"
   jsonDetails: "گھوںسلا کے کھیتوں کو چپٹا کیے بغیر محفوظ کرتا ہے۔"
+  platformDatasetLink: "فائل کے بجائے لائیو، قابل اشتراک ڈیٹاسیٹ کی ضرورت ہے؟ WhoDB پلیٹ فارم کو آزمائیں۔"
 
 vi_VN:
   selectedRows: "Bạn sắp xuất {count} hàng đã chọn."
@@ -918,6 +956,7 @@ vi_VN:
   delimiterPipe: "Ống (|) - Ít phổ biến hơn trong dữ liệu"
   jsonLineDelimited: "JSON được phân cách bằng dòng (một tài liệu trên mỗi hàng)"
   jsonDetails: "Bảo tồn các trường lồng nhau mà không làm phẳng"
+  platformDatasetLink: "Cần một tập dữ liệu trực tiếp, có thể chia sẻ thay vì một tập tin? Hãy thử Nền tảng WhoDB ."
 
 af_ZA:
   selectedRows: "Jy is op die punt om {count} geselekteerde rye uit te voer."
@@ -941,6 +980,7 @@ af_ZA:
   delimiterPipe: "Pyp (|) - Minder algemeen in data"
   jsonLineDelimited: "Lyn-geskeide JSON (een dokument per ry)"
   jsonDetails: "Behou geneste velde sonder om plat te maak"
+  platformDatasetLink: "Benodig jy 'n lewendige, deelbare datastel in plaas van 'n lêer? Probeer WhoDB platform."
 
 am_ET:
   selectedRows: "{count} የተመረጡ ረድፎችን ወደ ውጭ ሊልኩ ነው።"
@@ -964,6 +1004,7 @@ am_ET:
   delimiterPipe: "ቧንቧ (|) - በመረጃ ውስጥ ብዙም ያልተለመደ"
   jsonLineDelimited: "በመስመር የተገደበ JSON (በአንድ ረድፍ አንድ ሰነድ)"
   jsonDetails: "ያለ ጠፍጣፋ የጎጆ እርሻዎችን ይጠብቃል።"
+  platformDatasetLink: "ከፋይል ይልቅ የቀጥታ፣ ሊጋራ የሚችል የውሂብ ስብስብ ይፈልጋሉ? ይሞክሩ WhoDB መድረክ።"
 
 az_AZ:
   selectedRows: "Siz {count} seçilmiş sətirləri ixrac etmək üzrəsiniz."
@@ -987,6 +1028,7 @@ az_AZ:
   delimiterPipe: "Boru (|) - Məlumatlarda daha az yayılmışdır"
   jsonLineDelimited: "Sətirlə ayrılmış JSON (hər sətirə bir sənəd)"
   jsonDetails: "Yuvalanmış sahələri düzləşdirmədən qoruyur"
+  platformDatasetLink: "Fayl əvəzinə canlı, paylaşıla bilən verilənlər bazasına ehtiyacınız varmı? WhoDB Platformasını sınayın."
 
 et_EE:
   selectedRows: "Eksportite {count} valitud rida."
@@ -1010,6 +1052,7 @@ et_EE:
   delimiterPipe: "Toru (|) – andmetes vähem levinud"
   jsonLineDelimited: "Readega eraldatud JSON (üks dokument rea kohta)"
   jsonDetails: "Säilitab pesastatud väljad ilma tasandamata"
+  platformDatasetLink: "Kas vajate faili asemel elavat jagatavat andmekogumit? Proovige WhoDB platvormi."
 
 gu_IN:
   selectedRows: "તમે પસંદ કરેલી {count} પંક્તિઓની નિકાસ કરવા જઈ રહ્યાં છો."
@@ -1033,6 +1076,7 @@ gu_IN:
   delimiterPipe: "પાઇપ (|) - ડેટામાં ઓછું સામાન્ય"
   jsonLineDelimited: "રેખા-સીમાંકિત JSON (પંક્તિ દીઠ એક દસ્તાવેજ)"
   jsonDetails: "નેસ્ટેડ ફીલ્ડ્સને સપાટ કર્યા વિના સાચવે છે"
+  platformDatasetLink: "ફાઇલને બદલે લાઇવ, શેર કરી શકાય તેવા ડેટાસેટની જરૂર છે? WhoDB પ્લેટફોર્મ અજમાવી જુઓ."
 
 ha_NG:
   selectedRows: "Kuna shirin fitarwa {count} zaɓaɓɓun layuka."
@@ -1056,6 +1100,7 @@ ha_NG:
   delimiterPipe: "Bututu (|) - ƙarancin gama gari a cikin bayanai"
   jsonLineDelimited: "JSON-layi mai iyaka (takardu ɗaya a jere)"
   jsonDetails: "Yana adana filayen gida ba tare da lallashi ba"
+  platformDatasetLink: "Kuna buƙatar saitin bayanai mai rai, mai iya rabawa maimakon fayil? Gwada WhoDB Dandalin."
 
 ka_GE:
   selectedRows: "თქვენ აპირებთ {count} არჩეული მწკრივის ექსპორტს."
@@ -1079,6 +1124,7 @@ ka_GE:
   delimiterPipe: "მილები (|) - ნაკლებად გავრცელებულია მონაცემებში"
   jsonLineDelimited: "ხაზებით გამოყოფილი JSON (ერთი დოკუმენტი მწკრივზე)"
   jsonDetails: "ინარჩუნებს ბუდებულ ველებს გაბრტყელების გარეშე"
+  platformDatasetLink: "გჭირდებათ ცოცხალი, გასაზიარებელი მონაცემთა ნაკრები ფაილის ნაცვლად? სცადეთ WhoDB პლატფორმა."
 
 km_KH:
   selectedRows: "អ្នកហៀបនឹងនាំចេញ {count} ជួរដែលបានជ្រើសរើស។"
@@ -1102,6 +1148,7 @@ km_KH:
   delimiterPipe: "បំពង់ (|) - មិនសូវមាននៅក្នុងទិន្នន័យ"
   jsonLineDelimited: "JSON កំណត់បន្ទាត់ (ឯកសារមួយក្នុងមួយជួរ)"
   jsonDetails: "រក្សា​វាល​ស្រែ​ដែល​មាន​សំបុក​ដោយ​មិន​មាន​សភាព​រាបស្មើ"
+  platformDatasetLink: "ត្រូវ​ការ​សំណុំ​ទិន្នន័យ​ដែល​អាច​ចែក​រំលែក​បន្ត​ផ្ទាល់​ជំនួស​ឱ្យ​ឯកសារ​ឬ? សាកល្បង WhoDB វេទិកា។"
 
 kn_IN:
   selectedRows: "ನೀವು {count} ಆಯ್ಕೆಮಾಡಿದ ಸಾಲುಗಳನ್ನು ರಫ್ತು ಮಾಡಲಿರುವಿರಿ."
@@ -1125,6 +1172,7 @@ kn_IN:
   delimiterPipe: "ಪೈಪ್ (|) - ಡೇಟಾದಲ್ಲಿ ಕಡಿಮೆ ಸಾಮಾನ್ಯವಾಗಿದೆ"
   jsonLineDelimited: "ಲೈನ್-ಡಿಲಿಮಿಟೆಡ್ JSON (ಪ್ರತಿ ಸಾಲಿಗೆ ಒಂದು ಡಾಕ್ಯುಮೆಂಟ್)"
   jsonDetails: "ಗೂಡಿನ ಜಾಗ ಸಮತಟ್ಟಾಗದೆ ಸಂರಕ್ಷಿಸುತ್ತದೆ"
+  platformDatasetLink: "ಫೈಲ್ ಬದಲಿಗೆ ಲೈವ್, ಹಂಚಿಕೊಳ್ಳಬಹುದಾದ ಡೇಟಾಸೆಟ್ ಬೇಕೇ? WhoDB ಪ್ಲಾಟ್‌ಫಾರ್ಮ್ ಅನ್ನು ಪ್ರಯತ್ನಿಸಿ."
 
 lt_LT:
   selectedRows: "Ketinate eksportuoti {count} pasirinktas eilutes."
@@ -1148,6 +1196,7 @@ lt_LT:
   delimiterPipe: "Vamzdis (|) – duomenų rečiau pasitaiko"
   jsonLineDelimited: "Eilutėmis atskirtas JSON (po vieną dokumentą eilutėje)"
   jsonDetails: "Išsaugo įdėtus laukus be išlyginimo"
+  platformDatasetLink: "Reikia tiesioginio, bendrinamo duomenų rinkinio, o ne failo? Išbandykite WhoDB platformą."
 
 lv_LV:
   selectedRows: "Jūs gatavojaties eksportēt {count} atlasītās rindas."
@@ -1171,6 +1220,7 @@ lv_LV:
   delimiterPipe: "Caurule (|) — datos retāk sastopama"
   jsonLineDelimited: "Ar rindiņām atdalīts JSON (viens dokuments katrā rindā)"
   jsonDetails: "Saglabā ligzdotos laukus bez saplacināšanas"
+  platformDatasetLink: "Vai faila vietā nepieciešama tieša, koplietojama datu kopa? Izmēģiniet WhoDB platformu."
 
 ml_IN:
   selectedRows: "നിങ്ങൾ തിരഞ്ഞെടുത്ത {count} വരികൾ കയറ്റുമതി ചെയ്യാൻ പോകുകയാണ്."
@@ -1194,6 +1244,7 @@ ml_IN:
   delimiterPipe: "പൈപ്പ് (|) - ഡാറ്റയിൽ കുറവാണ്"
   jsonLineDelimited: "ലൈൻ-ഡിലിമിറ്റഡ് JSON (ഒരു വരിയിൽ ഒരു പ്രമാണം)"
   jsonDetails: "കൂടുണ്ടാക്കിയ വയലുകൾ പരന്നുപോകാതെ സംരക്ഷിക്കുന്നു"
+  platformDatasetLink: "ഫയലിന് പകരം തത്സമയവും പങ്കിടാവുന്നതുമായ ഒരു ഡാറ്റാസെറ്റ് ആവശ്യമുണ്ടോ? WhoDB പ്ലാറ്റ്‌ഫോം പരീക്ഷിക്കുക."
 
 mr_IN:
   selectedRows: "तुम्ही निवडलेल्या {count} पंक्ती निर्यात करणार आहात."
@@ -1217,6 +1268,7 @@ mr_IN:
   delimiterPipe: "पाईप (|) - डेटामध्ये कमी सामान्य"
   jsonLineDelimited: "लाइन-डिलिमिटेड JSON (प्रति पंक्ती एक दस्तऐवज)"
   jsonDetails: "नेस्टेड फील्ड सपाट न करता जतन करते"
+  platformDatasetLink: "फाईलऐवजी थेट, शेअर करण्यायोग्य डेटासेट हवा आहे? WhoDB प्लॅटफॉर्म वापरून पहा."
 
 ne_NP:
   selectedRows: "तपाईं {count} चयन गरिएका पङ्क्तिहरू निर्यात गर्न लाग्दै हुनुहुन्छ।"
@@ -1240,6 +1292,7 @@ ne_NP:
   delimiterPipe: "पाइप (|) - डाटामा कम सामान्य"
   jsonLineDelimited: "रेखा-सीमित JSON (प्रति पङ्क्ति एक कागजात)"
   jsonDetails: "नेस्टेड फिल्डहरू सपाट नगरी जोगाउँछ"
+  platformDatasetLink: "फाइलको सट्टा लाइभ, सेयर गर्न मिल्ने डेटासेट चाहिन्छ? प्रयास गर्नुहोस् WhoDB प्लेटफर्म।"
 
 pa_IN:
   selectedRows: "ਤੁਸੀਂ {count} ਚੁਣੀਆਂ ਕਤਾਰਾਂ ਨੂੰ ਨਿਰਯਾਤ ਕਰਨ ਜਾ ਰਹੇ ਹੋ।"
@@ -1263,6 +1316,7 @@ pa_IN:
   delimiterPipe: "ਪਾਈਪ (|) - ਡੇਟਾ ਵਿੱਚ ਘੱਟ ਆਮ"
   jsonLineDelimited: "ਲਾਈਨ-ਸੀਮਤ JSON (ਪ੍ਰਤੀ ਕਤਾਰ ਇੱਕ ਦਸਤਾਵੇਜ਼)"
   jsonDetails: "ਨੇਸਟਡ ਫੀਲਡਾਂ ਨੂੰ ਫਲੈਟ ਕੀਤੇ ਬਿਨਾਂ ਸੁਰੱਖਿਅਤ ਰੱਖਿਆ"
+  platformDatasetLink: "ਇੱਕ ਫਾਈਲ ਦੀ ਬਜਾਏ ਇੱਕ ਲਾਈਵ, ਸ਼ੇਅਰ ਕਰਨ ਯੋਗ ਡੇਟਾਸੈਟ ਦੀ ਲੋੜ ਹੈ? WhoDB ਪਲੇਟਫਾਰਮ ਅਜ਼ਮਾਓ।"
 
 si_LK:
   selectedRows: "ඔබ තෝරාගත් පේළි {count} නිර්යාත කිරීමට සූදානම් වේ."
@@ -1286,6 +1340,7 @@ si_LK:
   delimiterPipe: "පයිප්ප (|) - දත්තවල අඩු පොදු"
   jsonLineDelimited: "රේඛා-සීමිත JSON (පේළියකට එක් ලේඛනයක්)"
   jsonDetails: "කැදලි කෙත්වතු සමතලා නොකර සංරක්ෂණය කරයි"
+  platformDatasetLink: "ගොනුවක් වෙනුවට සජීවී, බෙදාගත හැකි දත්ත කට්ටලයක් අවශ්‍යද? WhoDB වේදිකාව උත්සාහ කරන්න."
 
 sl_SI:
   selectedRows: "Izvozili boste {count} izbranih vrstic."
@@ -1309,6 +1364,7 @@ sl_SI:
   delimiterPipe: "Cev (|) – Manj pogosto v podatkih"
   jsonLineDelimited: "Z vrsticami ločen JSON (en dokument na vrstico)"
   jsonDetails: "Ohranja ugnezdena polja brez sploščitve"
+  platformDatasetLink: "Potrebujete nabor podatkov v živo, ki ga je mogoče deliti namesto datoteke? Preizkusite WhoDB platformo."
 
 sr_RS:
   selectedRows: "Спремате се да извезете {count} изабране редове."
@@ -1332,6 +1388,7 @@ sr_RS:
   delimiterPipe: "Пипе (|) - Мање уобичајено у подацима"
   jsonLineDelimited: "ЈСОН раздвојен редовима (један документ по реду)"
   jsonDetails: "Чува угнежђена поља без спљоштења"
+  platformDatasetLink: "Потребан вам је скуп података који се може делити уживо уместо датотеке? Испробајте WhoDB платформу."
 
 te_IN:
   selectedRows: "మీరు ఎంచుకున్న {count} అడ్డు వరుసలను ఎగుమతి చేయబోతున్నారు."
@@ -1355,6 +1412,7 @@ te_IN:
   delimiterPipe: "పైప్ (|) - డేటాలో తక్కువ సాధారణం"
   jsonLineDelimited: "లైన్-డిలిమిటెడ్ JSON (ఒక అడ్డు వరుసకు ఒక పత్రం)"
   jsonDetails: "గూడు పొలాలను చదును చేయకుండా కాపాడుతుంది"
+  platformDatasetLink: "ఫైల్‌కి బదులుగా లైవ్, షేర్ చేయగల డేటాసెట్ కావాలా? WhoDB ప్లాట్‌ఫారమ్‌ని ప్రయత్నించండి."
 
 tl_PH:
   selectedRows: "Ie-export mo na ang {count} mga napiling row."
@@ -1378,6 +1436,7 @@ tl_PH:
   delimiterPipe: "Pipe (|) - Hindi gaanong karaniwan sa data"
   jsonLineDelimited: "Line-delimited JSON (isang dokumento bawat row)"
   jsonDetails: "Pinapanatili ang mga nested field nang walang pag-flatte"
+  platformDatasetLink: "Kailangan ng live, naibabahaging dataset sa halip na isang file? Subukan ang WhoDB Platform."
 
 uz_UZ:
   selectedRows: "Siz {count} tanlangan qatorlarni eksport qilmoqchisiz."
@@ -1401,6 +1460,7 @@ uz_UZ:
   delimiterPipe: "Quvur (|) - Ma'lumotlarda kamroq tarqalgan"
   jsonLineDelimited: "Satr bilan ajratilgan JSON (har bir satrda bitta hujjat)"
   jsonDetails: "Uyalangan maydonlarni tekislashsiz saqlaydi"
+  platformDatasetLink: "Fayl o'rniga jonli, almashinadigan ma'lumotlar to'plami kerakmi? WhoDB platformasini sinab koʻring."
 
 yo_NG:
   selectedRows: "O ti fẹrẹ ṣe okeere {count} awọn ori ila ti o yan."
@@ -1424,3 +1484,4 @@ yo_NG:
   delimiterPipe: "Paipu (|) - Kere wọpọ ni data"
   jsonLineDelimited: "JSON laini-ipin (ipamọ kan fun ila kan)"
   jsonDetails: "Ṣe itọju awọn aaye itẹle laisi fifẹ"
+  platformDatasetLink: "Ṣe o nilo aye laaye, data ti o le pin dipo faili kan? Gbiyanju WhoDB Platform."

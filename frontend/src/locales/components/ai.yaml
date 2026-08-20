@@ -52,6 +52,7 @@ ar_AE:
   environmentDefined: "تم تكوينه عبر البيئة"
   invalidProviderToken: "مفتاح API غير صالح. تحقق من الرمز وحاول مرة أخرى."
   modelDiscoveryFailed: "تعذر جلب النماذج لهذا الموفر."
+  platformManagedAiLink: "هل تفضل الإعداد صفر؟ WhoDB يتضمن النظام الأساسي موفري الذكاء الاصطناعي المُدار."
 
 de_DE:
   title: "KI-Assistent"
@@ -79,6 +80,7 @@ de_DE:
   environmentDefined: "Configured via environment"
   invalidProviderToken: "Der API-Schlüssel ist ungültig. Überprüfen Sie das Token und versuchen Sie es erneut."
   modelDiscoveryFailed: "Für diesen Anbieter konnten keine Modelle abgerufen werden."
+  platformManagedAiLink: "Bevorzugen Sie ein Null-Setup? WhoDB Die Plattform umfasst verwaltete KI-Anbieter."
 
 el_GR:
   title: "Βοηθός AI"
@@ -106,6 +108,7 @@ el_GR:
   environmentDefined: "Διαμόρφωση μέσω περιβάλλοντος"
   invalidProviderToken: "The API key is invalid. Ελέγξτε το διακριτικό και δοκιμάστε ξανά."
   modelDiscoveryFailed: "Δεν ήταν δυνατή η ανάκτηση μοντέλων για αυτόν τον πάροχο."
+  platformManagedAiLink: "Προτιμάτε μηδενική ρύθμιση; WhoDB Η πλατφόρμα περιλαμβάνει διαχειριζόμενους παρόχους τεχνητής νοημοσύνης."
 
 en_GB:
   title: "AI Assistant"
@@ -133,6 +136,7 @@ en_GB:
   environmentDefined: "Configured via environment"
   invalidProviderToken: "The API key is invalid. Check the token and try again."
   modelDiscoveryFailed: "Could not fetch models for this provider."
+  platformManagedAiLink: "Prefer zero setup? WhoDB Platform includes managed AI providers."
 
 es_ES:
   title: "Asistente de IA"
@@ -160,6 +164,7 @@ es_ES:
   environmentDefined: "Configurado a través del entorno"
   invalidProviderToken: "La clave API no es válida. Verifique el token e inténtelo nuevamente."
   modelDiscoveryFailed: "No se pudieron recuperar modelos para este proveedor."
+  platformManagedAiLink: "¿Prefieres la configuración cero? WhoDB La plataforma incluye proveedores de IA administrados."
 
 fi_FI:
   title: "AI Assistant"
@@ -187,6 +192,7 @@ fi_FI:
   environmentDefined: "Konfiguroitu ympäristön kautta"
   invalidProviderToken: "API-avain on virheellinen. Tarkista tunnus ja yritä uudelleen."
   modelDiscoveryFailed: "Tämän palveluntarjoajan malleja ei voitu hakea."
+  platformManagedAiLink: "Pidätkö mieluummin nolla-asetuksesta? WhoDB Alusta sisältää hallittuja tekoälyntarjoajia."
 
 fr_FR:
   title: "Assistant IA"
@@ -214,6 +220,7 @@ fr_FR:
   environmentDefined: "Configuré via l'environnement"
   invalidProviderToken: "La clé API n'est pas valide. Vérifiez le jeton et réessayez."
   modelDiscoveryFailed: "Impossible de récupérer des modèles pour ce fournisseur."
+  platformManagedAiLink: "Vous préférez une configuration zéro ? WhoDB La plate-forme comprend des fournisseurs d'IA gérés."
 
 it_IT:
   title: "Assistente AI"
@@ -241,6 +248,7 @@ it_IT:
   environmentDefined: "Configurato tramite ambiente"
   invalidProviderToken: "La chiave API non è valida. Controlla il token e riprova."
   modelDiscoveryFailed: "Impossibile recuperare i modelli per questo fornitore."
+  platformManagedAiLink: "Preferisci la configurazione zero? WhoDB La piattaforma include fornitori di IA gestiti."
 
 iw_IL:
   title: "עוזר AI"
@@ -268,6 +276,7 @@ iw_IL:
   environmentDefined: "מוגדר באמצעות סביבה"
   invalidProviderToken: "מפתח ה-API לא חוקי. בדוק את האסימון ונסה שוב."
   modelDiscoveryFailed: "לא ניתן היה להביא דגמים עבור ספק זה."
+  platformManagedAiLink: "מעדיף אפס הגדרה? WhoDB הפלטפורמה כוללת ספקי AI מנוהלים."
 
 ja_JP:
   title: "AIアシスタント"
@@ -295,6 +304,7 @@ ja_JP:
   environmentDefined: "環境経由で設定"
   invalidProviderToken: "APIキーが無効です。 トークンを確認して再試行してください。"
   modelDiscoveryFailed: "このプロバイダーのモデルを取得できませんでした。"
+  platformManagedAiLink: "ゼロセットアップをご希望ですか? WhoDB プラットフォームにはマネージド AI プロバイダーが含まれています。"
 
 ko_KR:
   title: "AI 어시스턴트"
@@ -322,6 +332,7 @@ ko_KR:
   environmentDefined: "환경을 통해 구성됨"
   invalidProviderToken: "API 키가 잘못되었습니다. 토큰을 확인하고 다시 시도하세요."
   modelDiscoveryFailed: "이 제공업체의 모델을 가져올 수 없습니다."
+  platformManagedAiLink: "제로 설정을 선호하시나요? WhoDB 플랫폼에는 관리형 AI 제공업체가 포함되어 있습니다."
 
 nl_NL:
   title: "AI-assistent"
@@ -349,6 +360,7 @@ nl_NL:
   environmentDefined: "Geconfigureerd via omgeving"
   invalidProviderToken: "De API-sleutel is ongeldig. Controleer het token en probeer het opnieuw."
   modelDiscoveryFailed: "Kan modellen voor deze provider niet ophalen."
+  platformManagedAiLink: "Liever een nulopstelling? WhoDB Platform omvat beheerde AI-providers."
 
 pl_PL:
   title: "Asystent AI"
@@ -376,6 +388,7 @@ pl_PL:
   environmentDefined: "Konfiguracja poprzez środowisko"
   invalidProviderToken: "Klucz API jest nieprawidłowy. Sprawdź token i spróbuj ponownie."
   modelDiscoveryFailed: "Nie można pobrać modeli dla tego dostawcy."
+  platformManagedAiLink: "Wolisz konfigurację zerową? WhoDB Platforma obejmuje zarządzanych dostawców AI."
 
 pt_BR:
   title: "Assistente de IA"
@@ -403,6 +416,7 @@ pt_BR:
   environmentDefined: "Configurado via ambiente"
   invalidProviderToken: "A chave de API é inválida. Verifique o token e tente novamente."
   modelDiscoveryFailed: "Não foi possível buscar modelos para este provedor."
+  platformManagedAiLink: "Prefere configuração zero? WhoDB A plataforma inclui provedores de IA gerenciados."
 
 ro_RO:
   title: "Asistent AI"
@@ -430,6 +444,7 @@ ro_RO:
   environmentDefined: "Configurat prin mediu"
   invalidProviderToken: "Cheia API este nevalidă. Verificați jetonul și încercați din nou."
   modelDiscoveryFailed: "Nu s-au putut prelua modele pentru acest furnizor."
+  platformManagedAiLink: "Preferiți configurarea zero? WhoDB Platforma include furnizori de AI gestionați."
 
 ru_RU:
   title: "ИИ-помощник"
@@ -457,6 +472,7 @@ ru_RU:
   environmentDefined: "Настраивается через среду"
   invalidProviderToken: "Ключ API недействителен. Проверьте токен и повторите попытку."
   modelDiscoveryFailed: "Не удалось получить модели для этого поставщика."
+  platformManagedAiLink: "Предпочитаете нулевую настройку? WhoDB Платформа включает в себя управляемых поставщиков ИИ."
 
 sk_SK:
   title: "Asistent AI"
@@ -484,6 +500,7 @@ sk_SK:
   environmentDefined: "Konfigurované cez prostredie"
   invalidProviderToken: "Kľúč API je neplatný. Skontrolujte token a skúste to znova."
   modelDiscoveryFailed: "Nepodarilo sa načítať modely pre tohto poskytovateľa."
+  platformManagedAiLink: "Preferujete nulové nastavenie? WhoDB Platforma zahŕňa spravovaných poskytovateľov AI."
 
 sv_SE:
   title: "AI-assistent"
@@ -511,6 +528,7 @@ sv_SE:
   environmentDefined: "Konfigurerad via miljö"
   invalidProviderToken: "API-nyckeln är ogiltig. Kontrollera token och försök igen."
   modelDiscoveryFailed: "Det gick inte att hämta modeller för den här leverantören."
+  platformManagedAiLink: "Föredrar du nollinställningar? WhoDB Plattformen inkluderar hanterade AI-leverantörer."
 
 zh_CN:
   title: "人工智能助手"
@@ -538,6 +556,7 @@ zh_CN:
   environmentDefined: "通过环境配置"
   invalidProviderToken: "API 密钥无效。 检查令牌并重试。"
   modelDiscoveryFailed: "无法获取该提供商的模型。"
+  platformManagedAiLink: "更喜欢零设置？ WhoDB 平台包括托管人工智能提供商。"
 
 zh_TW:
   title: "人工智慧助手"
@@ -565,6 +584,7 @@ zh_TW:
   environmentDefined: "透過環境配置"
   invalidProviderToken: "API 金鑰無效。 檢查令牌並重試。"
   modelDiscoveryFailed: "無法取得該提供者的模型。"
+  platformManagedAiLink: "喜歡零設定？ WhoDB 平台包括託管人工智慧提供者。"
 
 bg_BG:
   title: "AI асистент"
@@ -592,6 +612,7 @@ bg_BG:
   environmentDefined: "Конфигуриран чрез среда"
   invalidProviderToken: "API ключът е невалиден. Проверете токена и опитайте отново."
   modelDiscoveryFailed: "Неуспешно извличане на модели за този доставчик."
+  platformManagedAiLink: "Предпочитате нулева настройка? WhoDB Платформата включва управлявани доставчици на AI."
 
 bn_BD:
   title: "এআই সহকারী"
@@ -619,6 +640,7 @@ bn_BD:
   environmentDefined: "পরিবেশের মাধ্যমে কনফিগার করা হয়েছে"
   invalidProviderToken: "API কীটি অবৈধ৷ টোকেন চেক করুন এবং আবার চেষ্টা করুন।"
   modelDiscoveryFailed: "এই প্রদানকারীর জন্য মডেল আনা যায়নি."
+  platformManagedAiLink: "শূন্য সেটআপ পছন্দ করেন? WhoDB প্ল্যাটফর্মে পরিচালিত AI প্রদানকারী অন্তর্ভুক্ত।"
 
 ca_ES:
   title: "Assistent d'IA"
@@ -646,6 +668,7 @@ ca_ES:
   environmentDefined: "Configurat mitjançant l'entorn"
   invalidProviderToken: "La clau de l'API no és vàlida. Comproveu el testimoni i torneu-ho a provar."
   modelDiscoveryFailed: "No s'han pogut obtenir models per a aquest proveïdor."
+  platformManagedAiLink: "Prefereix la configuració zero? WhoDB La plataforma inclou proveïdors d'IA gestionats."
 
 cs_CZ:
   title: "Asistent AI"
@@ -673,6 +696,7 @@ cs_CZ:
   environmentDefined: "Konfigurováno prostřednictvím prostředí"
   invalidProviderToken: "Klíč API je neplatný. Zkontrolujte token a zkuste to znovu."
   modelDiscoveryFailed: "Modely pro tohoto poskytovatele nelze načíst."
+  platformManagedAiLink: "Preferujete nulové nastavení? WhoDB Platforma zahrnuje spravované poskytovatele AI."
 
 da_DK:
   title: "AI assistent"
@@ -700,6 +724,7 @@ da_DK:
   environmentDefined: "Konfigureret via miljø"
   invalidProviderToken: "API-nøglen er ugyldig. Tjek tokenet, og prøv igen."
   modelDiscoveryFailed: "Kunne ikke hente modeller for denne udbyder."
+  platformManagedAiLink: "Foretrækker du nul opsætning? WhoDB Platformen inkluderer administrerede AI-udbydere."
 
 fa_IR:
   title: "دستیار هوش مصنوعی"
@@ -727,6 +752,7 @@ fa_IR:
   environmentDefined: "از طریق محیط پیکربندی شده است"
   invalidProviderToken: "The API key is invalid. رمز را بررسی کنید و دوباره امتحان کنید."
   modelDiscoveryFailed: "مدل‌های این ارائه‌دهنده واکشی نشد."
+  platformManagedAiLink: "تنظیم صفر را ترجیح می دهید؟ WhoDB پلتفرم شامل ارائه دهندگان هوش مصنوعی مدیریت شده است."
 
 hi_IN:
   title: "एआई सहायक"
@@ -754,6 +780,7 @@ hi_IN:
   environmentDefined: "पर्यावरण के माध्यम से कॉन्फ़िगर किया गया"
   invalidProviderToken: "एपीआई कुंजी अमान्य है. टोकन की जाँच करें और पुनः प्रयास करें।"
   modelDiscoveryFailed: "इस प्रदाता के लिए मॉडल नहीं लाया जा सका."
+  platformManagedAiLink: "शून्य सेटअप को प्राथमिकता दें? WhoDB प्लेटफ़ॉर्म में प्रबंधित AI प्रदाता शामिल हैं।"
 
 hr_HR:
   title: "AI pomoćnik"
@@ -781,6 +808,7 @@ hr_HR:
   environmentDefined: "Konfigurirano putem okruženja"
   invalidProviderToken: "API ključ je nevažeći. Provjerite token i pokušajte ponovno."
   modelDiscoveryFailed: "Nije moguće dohvatiti modele za ovog pružatelja usluga."
+  platformManagedAiLink: "Više volite nultu postavku? WhoDB Platforma uključuje upravljane AI pružatelje."
 
 hu_HU:
   title: "AI-asszisztens"
@@ -808,6 +836,7 @@ hu_HU:
   environmentDefined: "Környezeten keresztül konfigurálva"
   invalidProviderToken: "Az API-kulcs érvénytelen. Ellenőrizze a tokent, és próbálja újra."
   modelDiscoveryFailed: "Nem sikerült lekérni a modelleket ehhez a szolgáltatóhoz."
+  platformManagedAiLink: "A nulla beállítást részesíti előnyben? WhoDB A platform felügyelt mesterségesintelligencia-szolgáltatókat tartalmaz."
 
 id_ID:
   title: "Asisten AI"
@@ -835,6 +864,7 @@ id_ID:
   environmentDefined: "Dikonfigurasi melalui lingkungan"
   invalidProviderToken: "Kunci API tidak valid. Periksa token dan coba lagi."
   modelDiscoveryFailed: "Tidak dapat mengambil model untuk penyedia ini."
+  platformManagedAiLink: "Lebih suka pengaturan nol? WhoDB Platform mencakup penyedia AI terkelola."
 
 ms_MY:
   title: "Penolong AI"
@@ -862,6 +892,7 @@ ms_MY:
   environmentDefined: "Dikonfigurasikan melalui persekitaran"
   invalidProviderToken: "Kunci API tidak sah. Semak token dan cuba lagi."
   modelDiscoveryFailed: "Tidak dapat mengambil model untuk pembekal ini."
+  platformManagedAiLink: "Lebih suka persediaan sifar? WhoDB Platform termasuk penyedia AI terurus."
 
 nb_NO:
   title: "AI-assistent"
@@ -889,6 +920,7 @@ nb_NO:
   environmentDefined: "Konfigurert via miljø"
   invalidProviderToken: "API-nøkkelen er ugyldig. Sjekk tokenet og prøv igjen."
   modelDiscoveryFailed: "Kunne ikke hente modeller for denne leverandøren."
+  platformManagedAiLink: "Foretrekker null oppsett? WhoDB Plattformen inkluderer administrerte AI-leverandører."
 
 sw_KE:
   title: "Msaidizi wa AI"
@@ -916,6 +948,7 @@ sw_KE:
   environmentDefined: "Imesanidiwa kupitia mazingira"
   invalidProviderToken: "Ufunguo wa API ni batili. Angalia tokeni na ujaribu tena."
   modelDiscoveryFailed: "Haikuweza kuleta miundo ya mtoa huduma huyu."
+  platformManagedAiLink: "Je, unapendelea kusanidi sifuri? WhoDB Mfumo unajumuisha watoa huduma wa AI wanaosimamiwa."
 
 ta_IN:
   title: "AI உதவியாளர்"
@@ -943,6 +976,7 @@ ta_IN:
   environmentDefined: "சூழல் மூலம் கட்டமைக்கப்பட்டது"
   invalidProviderToken: "API விசை தவறானது. டோக்கனைச் சரிபார்த்து மீண்டும் முயற்சிக்கவும்."
   modelDiscoveryFailed: "இந்த வழங்குநருக்கான மாதிரிகளைப் பெற முடியவில்லை."
+  platformManagedAiLink: "பூஜ்ஜிய அமைப்பை விரும்புகிறீர்களா? WhoDB பிளாட்ஃபார்ம் நிர்வகிக்கப்படும் AI வழங்குநர்களை உள்ளடக்கியது."
 
 th_TH:
   title: "ผู้ช่วยเอไอ"
@@ -970,6 +1004,7 @@ th_TH:
   environmentDefined: "กำหนดค่าผ่านสภาพแวดล้อม"
   invalidProviderToken: "คีย์ API ไม่ถูกต้อง Check the token and try again."
   modelDiscoveryFailed: "ไม่สามารถดึงโมเดลสำหรับผู้ให้บริการรายนี้"
+  platformManagedAiLink: "ต้องการการตั้งค่าเป็นศูนย์หรือไม่? WhoDB แพลตฟอร์มประกอบด้วยผู้ให้บริการ AI ที่มีการจัดการ"
 
 tr_TR:
   title: "Yapay Zeka Asistanı"
@@ -997,6 +1032,7 @@ tr_TR:
   environmentDefined: "Ortam aracılığıyla yapılandırıldı"
   invalidProviderToken: "API anahtarı geçersiz. Jetonu kontrol edip tekrar deneyin."
   modelDiscoveryFailed: "Bu sağlayıcı için modeller getirilemedi."
+  platformManagedAiLink: "Sıfır kurulumu mu tercih ediyorsunuz? WhoDB Platform, yönetilen yapay zeka sağlayıcılarını içerir."
 
 uk_UA:
   title: "ШІ помічник"
@@ -1024,6 +1060,7 @@ uk_UA:
   environmentDefined: "Налаштовано через середовище"
   invalidProviderToken: "Ключ API недійсний. Перевірте маркер і повторіть спробу."
   modelDiscoveryFailed: "Не вдалося отримати моделі для цього постачальника."
+  platformManagedAiLink: "Бажаєте нульове налаштування? WhoDB Платформа включає керованих постачальників AI."
 
 ur_PK:
   title: "اے آئی اسسٹنٹ"
@@ -1051,6 +1088,7 @@ ur_PK:
   environmentDefined: "ماحول کے ذریعے ترتیب دیا گیا ہے۔"
   invalidProviderToken: "API کلید غلط ہے۔ ٹوکن چیک کریں اور دوبارہ کوشش کریں۔"
   modelDiscoveryFailed: "اس فراہم کنندہ کے لیے ماڈلز حاصل نہیں کیے جا سکے۔"
+  platformManagedAiLink: "صفر سیٹ اپ کو ترجیح دیں؟ WhoDB پلیٹ فارم میں منظم AI فراہم کنندگان شامل ہیں۔"
 
 vi_VN:
   title: "Trợ lý AI"
@@ -1078,6 +1116,7 @@ vi_VN:
   environmentDefined: "Cấu hình thông qua môi trường"
   invalidProviderToken: "Khóa API không hợp lệ. Hãy kiểm tra mã thông báo và thử lại."
   modelDiscoveryFailed: "Không thể tìm nạp mô hình cho nhà cung cấp này."
+  platformManagedAiLink: "Thích thiết lập bằng không? WhoDB Nền tảng bao gồm các nhà cung cấp AI được quản lý."
 
 af_ZA:
   title: "KI assistent"
@@ -1105,6 +1144,7 @@ af_ZA:
   environmentDefined: "Gekonfigureer via omgewing"
   invalidProviderToken: "Die API-sleutel is ongeldig. Gaan die teken na en probeer weer."
   modelDiscoveryFailed: "Kon nie modelle vir hierdie verskaffer gaan haal nie."
+  platformManagedAiLink: "Verkies jy nul opstelling? WhoDB Platform sluit bestuurde KI-verskaffers in."
 
 am_ET:
   title: "AI ረዳት"
@@ -1132,6 +1172,7 @@ am_ET:
   environmentDefined: "በአከባቢ በኩል የተዋቀረ"
   invalidProviderToken: "የኤፒአይ ቁልፉ ልክ ያልሆነ ነው። ማስመሰያውን ይፈትሹ እና እንደገና ይሞክሩ።"
   modelDiscoveryFailed: "ለዚህ አቅራቢ ሞዴሎችን ማምጣት አልተቻለም።"
+  platformManagedAiLink: "ዜሮ ማዋቀር ይመርጣሉ? WhoDB መድረክ የሚተዳደሩ AI አቅራቢዎችን ያካትታል።"
 
 az_AZ:
   title: "AI köməkçisi"
@@ -1159,6 +1200,7 @@ az_AZ:
   environmentDefined: "Ətraf mühit vasitəsilə konfiqurasiya edilmişdir"
   invalidProviderToken: "API açarı yanlışdır. Tokeni yoxlayın və yenidən cəhd edin."
   modelDiscoveryFailed: "Bu provayder üçün modelləri əldə etmək mümkün olmadı."
+  platformManagedAiLink: "Sıfır quraşdırmaya üstünlük verirsiniz? WhoDB Platformaya idarə olunan AI təminatçıları daxildir."
 
 et_EE:
   title: "AI assistent"
@@ -1186,6 +1228,7 @@ et_EE:
   environmentDefined: "Seadistatud keskkonna kaudu"
   invalidProviderToken: "API võti on kehtetu. Kontrollige tunnust ja proovige uuesti."
   modelDiscoveryFailed: "Selle teenusepakkuja mudeleid ei saanud tuua."
+  platformManagedAiLink: "Kas eelistate nullseadistust? WhoDB Platvorm hõlmab hallatud tehisintellekti pakkujaid."
 
 gu_IN:
   title: "એઆઈ સહાયક"
@@ -1213,6 +1256,7 @@ gu_IN:
   environmentDefined: "પર્યાવરણ દ્વારા રૂપરેખાંકિત"
   invalidProviderToken: "API કી અમાન્ય છે. ટોકન તપાસો અને ફરી પ્રયાસ કરો."
   modelDiscoveryFailed: "આ પ્રદાતા માટે મોડેલો આનયન કરી શકાયું નથી."
+  platformManagedAiLink: "શૂન્ય સેટઅપ પસંદ કરો છો? WhoDB પ્લેટફોર્મમાં સંચાલિત AI પ્રદાતાઓનો સમાવેશ થાય છે."
 
 ha_NG:
   title: "AI Mataimakin"
@@ -1240,6 +1284,7 @@ ha_NG:
   environmentDefined: "An saita ta hanyar muhalli"
   invalidProviderToken: "Maɓallin API ba daidai ba ne. Duba alamar kuma a sake gwadawa."
   modelDiscoveryFailed: "An kasa debo samfuri don wannan mai bada."
+  platformManagedAiLink: "Fi son saitin sifili? WhoDB Platform ya haɗa da masu samar da AI da aka sarrafa."
 
 ka_GE:
   title: "AI ასისტენტი"
@@ -1267,6 +1312,7 @@ ka_GE:
   environmentDefined: "კონფიგურირებულია გარემოს საშუალებით"
   invalidProviderToken: "API გასაღები არასწორია. შეამოწმეთ ჟეტონი და სცადეთ ხელახლა."
   modelDiscoveryFailed: "ამ პროვაიდერისთვის მოდელების მოძიება ვერ მოხერხდა."
+  platformManagedAiLink: "გირჩევნიათ ნულოვანი დაყენება? WhoDB პლატფორმა მოიცავს მართულ AI პროვაიდერებს."
 
 km_KH:
   title: "ជំនួយការ AI"
@@ -1294,6 +1340,7 @@ km_KH:
   environmentDefined: "កំណត់រចនាសម្ព័ន្ធតាមរយៈបរិស្ថាន"
   invalidProviderToken: "សោ API មិនត្រឹមត្រូវទេ។ ពិនិត្យសញ្ញាសម្ងាត់ ហើយព្យាយាមម្តងទៀត។"
   modelDiscoveryFailed: "មិនអាចទៅយកគំរូសម្រាប់អ្នកផ្តល់សេវានេះទេ។"
+  platformManagedAiLink: "ចូលចិត្តការដំឡើងសូន្យ? WhoDB វេទិការួមមានអ្នកផ្តល់សេវា AI ដែលគ្រប់គ្រង។"
 
 kn_IN:
   title: "AI ಸಹಾಯಕ"
@@ -1321,6 +1368,7 @@ kn_IN:
   environmentDefined: "ಪರಿಸರದ ಮೂಲಕ ಕಾನ್ಫಿಗರ್ ಮಾಡಲಾಗಿದೆ"
   invalidProviderToken: "API ಕೀ ಅಮಾನ್ಯವಾಗಿದೆ. ಟೋಕನ್ ಪರಿಶೀಲಿಸಿ ಮತ್ತು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ."
   modelDiscoveryFailed: "ಈ ಪೂರೈಕೆದಾರರಿಗೆ ಮಾದರಿಗಳನ್ನು ತರಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ."
+  platformManagedAiLink: "ಶೂನ್ಯ ಸೆಟಪ್‌ಗೆ ಆದ್ಯತೆ ನೀಡುವುದೇ? WhoDB ಪ್ಲಾಟ್‌ಫಾರ್ಮ್ ನಿರ್ವಹಿಸಿದ AI ಪೂರೈಕೆದಾರರನ್ನು ಒಳಗೊಂಡಿದೆ."
 
 lt_LT:
   title: "AI asistentas"
@@ -1348,6 +1396,7 @@ lt_LT:
   environmentDefined: "Konfigūruojama per aplinką"
   invalidProviderToken: "API raktas neteisingas. Patikrinkite prieigos raktą ir bandykite dar kartą."
   modelDiscoveryFailed: "Nepavyko gauti šio teikėjo modelių."
+  platformManagedAiLink: "Norite nulinės sąrankos? WhoDB Platforma apima valdomus AI teikėjus."
 
 lv_LV:
   title: "AI palīgs"
@@ -1375,6 +1424,7 @@ lv_LV:
   environmentDefined: "Konfigurēts, izmantojot vidi"
   invalidProviderToken: "API atslēga nav derīga. Pārbaudiet marķieri un mēģiniet vēlreiz."
   modelDiscoveryFailed: "Nevarēja ienest šī pakalpojumu sniedzēja modeļus."
+  platformManagedAiLink: "Vai dodat priekšroku nulles iestatījumam? WhoDB Platformā ir iekļauti pārvaldīti AI nodrošinātāji."
 
 ml_IN:
   title: "AI അസിസ്റ്റൻ്റ്"
@@ -1402,6 +1452,7 @@ ml_IN:
   environmentDefined: "പരിസ്ഥിതി വഴി ക്രമീകരിച്ചത്"
   invalidProviderToken: "API കീ അസാധുവാണ്. ടോക്കൺ പരിശോധിച്ച് വീണ്ടും ശ്രമിക്കുക."
   modelDiscoveryFailed: "ഈ ദാതാവിനായി മോഡലുകൾ ലഭ്യമാക്കാൻ കഴിഞ്ഞില്ല."
+  platformManagedAiLink: "പൂജ്യം സജ്ജീകരണം തിരഞ്ഞെടുക്കണോ? WhoDB പ്ലാറ്റ്‌ഫോമിൽ നിയന്ത്രിത AI ദാതാക്കൾ ഉൾപ്പെടുന്നു."
 
 mr_IN:
   title: "एआय सहाय्यक"
@@ -1429,6 +1480,7 @@ mr_IN:
   environmentDefined: "पर्यावरणाद्वारे कॉन्फिगर केले"
   invalidProviderToken: "API की अवैध आहे. टोकन तपासा आणि पुन्हा प्रयत्न करा."
   modelDiscoveryFailed: "या प्रदात्यासाठी मॉडेल आणू शकलो नाही."
+  platformManagedAiLink: "शून्य सेटअपला प्राधान्य द्यायचे? WhoDB प्लॅटफॉर्ममध्ये व्यवस्थापित AI प्रदाते समाविष्ट आहेत."
 
 ne_NP:
   title: "एआई सहायक"
@@ -1456,6 +1508,7 @@ ne_NP:
   environmentDefined: "वातावरण मार्फत कन्फिगर गरियो"
   invalidProviderToken: "API कुञ्जी अमान्य छ। टोकन जाँच गर्नुहोस् र फेरि प्रयास गर्नुहोस्।"
   modelDiscoveryFailed: "यस प्रदायकको लागि मोडेलहरू ल्याउन सकिएन।"
+  platformManagedAiLink: "शून्य सेटअप मनपर्छ? WhoDB प्लेटफर्मले व्यवस्थित एआई प्रदायकहरू समावेश गर्दछ।"
 
 pa_IN:
   title: "AI ਸਹਾਇਕ"
@@ -1483,6 +1536,7 @@ pa_IN:
   environmentDefined: "ਵਾਤਾਵਰਣ ਦੁਆਰਾ ਸੰਰਚਿਤ ਕੀਤਾ ਗਿਆ"
   invalidProviderToken: "API ਕੁੰਜੀ ਅਵੈਧ ਹੈ। ਟੋਕਨ ਦੀ ਜਾਂਚ ਕਰੋ ਅਤੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।"
   modelDiscoveryFailed: "ਇਸ ਪ੍ਰਦਾਤਾ ਲਈ ਮਾਡਲਾਂ ਨੂੰ ਪ੍ਰਾਪਤ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ।"
+  platformManagedAiLink: "ਜ਼ੀਰੋ ਸੈੱਟਅੱਪ ਨੂੰ ਤਰਜੀਹ ਦਿੰਦੇ ਹੋ? WhoDB ਪਲੇਟਫਾਰਮ ਵਿੱਚ ਪ੍ਰਬੰਧਿਤ AI ਪ੍ਰਦਾਤਾ ਸ਼ਾਮਲ ਹੁੰਦੇ ਹਨ।"
 
 si_LK:
   title: "AI සහකාර"
@@ -1510,6 +1564,7 @@ si_LK:
   environmentDefined: "පරිසරය හරහා වින්‍යාස කර ඇත"
   invalidProviderToken: "API යතුර වලංගු නොවේ. ටෝකනය පරීක්ෂා කර නැවත උත්සාහ කරන්න."
   modelDiscoveryFailed: "මෙම සැපයුම්කරු සඳහා ආකෘති ලබා ගැනීමට නොහැකි විය."
+  platformManagedAiLink: "ශුන්‍ය පිහිටුවීමට කැමතිද? WhoDB වේදිකාවට කළමනාකරණය කළ AI සපයන්නන් ඇතුළත් වේ."
 
 sl_SI:
   title: "Pomočnik AI"
@@ -1537,6 +1592,7 @@ sl_SI:
   environmentDefined: "Konfigurirano prek okolja"
   invalidProviderToken: "Ključ API je neveljaven. Preverite žeton in poskusite znova."
   modelDiscoveryFailed: "Ni bilo mogoče pridobiti modelov za tega ponudnika."
+  platformManagedAiLink: "Ali imate raje ničelno nastavitev? WhoDB Platforma vključuje upravljane ponudnike AI."
 
 sr_RS:
   title: "АИ Ассистант"
@@ -1564,6 +1620,7 @@ sr_RS:
   environmentDefined: "Конфигурисано преко окружења"
   invalidProviderToken: "АПИ кључ је неважећи. Проверите токен и покушајте поново."
   modelDiscoveryFailed: "Није могуће преузети моделе за овог провајдера."
+  platformManagedAiLink: "Желите нулто подешавање? WhoDB Платформа укључује управљане АИ провајдере."
 
 te_IN:
   title: "AI అసిస్టెంట్"
@@ -1591,6 +1648,7 @@ te_IN:
   environmentDefined: "పర్యావరణం ద్వారా కాన్ఫిగర్ చేయబడింది"
   invalidProviderToken: "API కీ చెల్లదు. టోకెన్‌ని తనిఖీ చేసి, మళ్లీ ప్రయత్నించండి."
   modelDiscoveryFailed: "ఈ ప్రొవైడర్ కోసం మోడల్‌లను పొందడం సాధ్యపడలేదు."
+  platformManagedAiLink: "సున్నా సెటప్‌ని ఇష్టపడతారా? WhoDB ప్లాట్‌ఫారమ్‌లో నిర్వహించబడే AI ప్రొవైడర్లు ఉన్నారు."
 
 tl_PH:
   title: "AI Assistant"
@@ -1618,6 +1676,7 @@ tl_PH:
   environmentDefined: "Na-configure sa pamamagitan ng kapaligiran"
   invalidProviderToken: "Ang API key ay hindi wasto. Suriin ang token at subukang muli."
   modelDiscoveryFailed: "Hindi makakuha ng mga modelo para sa provider na ito."
+  platformManagedAiLink: "Mas gusto ang zero setup? WhoDB Kasama sa platform ang mga pinamamahalaang AI provider."
 
 uz_UZ:
   title: "AI yordamchisi"
@@ -1645,6 +1704,7 @@ uz_UZ:
   environmentDefined: "Atrof-muhit orqali sozlangan"
   invalidProviderToken: "API kaliti yaroqsiz. Tokenni tekshiring va qayta urinib ko'ring."
   modelDiscoveryFailed: "Bu provayder uchun modellarni olib bo‘lmadi."
+  platformManagedAiLink: "Nol sozlamalarni afzal ko'rasizmi? WhoDB Platformaga boshqariladigan AI provayderlari kiradi."
 
 yo_NG:
   title: "AI Iranlọwọ"
@@ -1672,3 +1732,4 @@ yo_NG:
   environmentDefined: "Tunto nipasẹ ayika"
   invalidProviderToken: "Bọtini API ko wulo. Ṣayẹwo ami naa ki o tun gbiyanju lẹẹkansi."
   modelDiscoveryFailed: "Ko le mu awọn awoṣe fun olupese yii."
+  platformManagedAiLink: "Ṣeto eto odo? WhoDB Platform pẹlu awọn olupese AI ti iṣakoso."
