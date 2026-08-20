@@ -55,7 +55,7 @@ func TestDeviceAuthorizationUsesPKCE(t *testing.T) {
 	defer authServer.Close()
 
 	platformServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_, _ = w.Write([]byte(`{"version":2,"issuer":"` + authServer.URL + `/realms/mothergate","clientId":"whodb-cli","flows":{"authorizationCodePkce":true,"deviceAuthorization":true}}`))
+		_, _ = w.Write([]byte(`{"version":2,"issuer":"` + authServer.URL + `/realms/mothergate","clientId":"whodb","flows":{"authorizationCodePkce":true,"deviceAuthorization":true}}`))
 	}))
 	defer platformServer.Close()
 
@@ -94,7 +94,7 @@ func TestLogoutPostsBearerTokenToAuthHost(t *testing.T) {
 			t.Fatalf("marshal auth URL: %v", err)
 		}
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"version":2,"issuer":` + string(authURL) + `,"clientId":"whodb-cli","flows":{"authorizationCodePkce":true,"deviceAuthorization":true}}`))
+		_, _ = w.Write([]byte(`{"version":2,"issuer":` + string(authURL) + `,"clientId":"whodb","flows":{"authorizationCodePkce":true,"deviceAuthorization":true}}`))
 	}))
 	defer platformServer.Close()
 

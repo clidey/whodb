@@ -83,29 +83,29 @@ Usage modes:
 `,
 	Example: `
   # Open connection form (interactive — shows saved + Docker connections)
-  whodb-cli connect
+  whodb connect
 
   # Connect to PostgreSQL
-  whodb-cli connect --type postgres --host localhost --user alice --database app
+  whodb connect --type postgres --host localhost --user alice --database app
 
   # Connect to SQLite (no password needed)
-  whodb-cli connect --type sqlite3 --database ./app.db
+  whodb connect --type sqlite3 --database ./app.db
 
   # Auto-detect Docker database containers
-  whodb-cli connect --docker
+  whodb connect --docker
 
   # Prefill from a discovered cloud resource
-  whodb-cli connect --discovered aws-prod-us-west-2/prod-db
+  whodb connect --discovered aws-prod-us-west-2/prod-db
 
   # One-shot connect from a discovered resource
-  whodb-cli connect --discovered aws-prod-us-west-2/prod-db --user alice --database app
+  whodb connect --discovered aws-prod-us-west-2/prod-db --user alice --database app
 
   # Non-interactive: read password from stdin
-  printf "%s\n" "$DB_PASS" | whodb-cli connect --type postgres --host localhost --user alice --database app --password
-  whodb-cli connect --type sqlite --host ./app.db --database ./app.db --name app-sqlite
+  printf "%s\n" "$DB_PASS" | whodb connect --type postgres --host localhost --user alice --database app --password
+  whodb connect --type sqlite --host ./app.db --database ./app.db --name app-sqlite
 
   # Connect with SSL
-  whodb-cli connect --type postgres --host localhost --user alice --database app --ssl-mode verify-ca --ssl-ca ./ca.pem`,
+  whodb connect --type postgres --host localhost --user alice --database app --ssl-mode verify-ca --ssl-ca ./ca.pem`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if useDocker && strings.TrimSpace(connectDiscovered) != "" {
 			return fmt.Errorf("--docker cannot be combined with --discovered")

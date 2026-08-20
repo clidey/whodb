@@ -106,14 +106,14 @@ func CLIBinaryPath(t *testing.T) string {
 
 	// testharness/harness.go -> e2e -> cli
 	cliDir := filepath.Dir(filepath.Dir(filepath.Dir(filename)))
-	binaryName := "whodb-cli"
+	binaryName := "whodb"
 	if runtime.GOOS == "windows" {
-		binaryName = "whodb-cli.exe"
+		binaryName = "whodb.exe"
 	}
 
 	binaryPath := filepath.Join(cliDir, binaryName)
 	if _, err := os.Stat(binaryPath); os.IsNotExist(err) {
-		t.Fatalf("CLI binary not found at %s. Run 'go build -o whodb-cli .' in the cli directory first.", binaryPath)
+		t.Fatalf("CLI binary not found at %s. Run 'go build -o whodb .' in the cli directory first.", binaryPath)
 	}
 
 	return binaryPath

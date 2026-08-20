@@ -73,13 +73,13 @@ var erdCmd = &cobra.Command{
 The text output is optimized for terminal inspection, while JSON exposes the
 storage units, columns, and normalized relationship edges for automation.`,
 	Example: `  # Show a textual ERD summary
-  whodb-cli erd --connection mydb
+  whodb erd --connection mydb
 
   # Compare a specific schema
-  whodb-cli erd --connection mydb --schema public
+  whodb erd --connection mydb --schema public
 
   # Emit machine-readable JSON
-  whodb-cli erd --connection mydb --format json`,
+  whodb erd --connection mydb --format json`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		format, err := resolveERDFormat(erdFormat)
 		if err != nil {
@@ -103,7 +103,7 @@ storage units, columns, and normalized relationship edges for automation.`,
 		} else {
 			conns := mgr.ListAvailableConnections()
 			if len(conns) == 0 {
-				return fmt.Errorf("no connections available. Create one first:\n  whodb-cli connect --type postgres --host localhost --user myuser --database mydb --name myconn")
+				return fmt.Errorf("no connections available. Create one first:\n  whodb connect --type postgres --host localhost --user myuser --database mydb --name myconn")
 			}
 			conn = &conns[0]
 			out.Info("Using connection: %s", conn.Name)

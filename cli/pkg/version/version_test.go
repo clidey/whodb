@@ -96,8 +96,8 @@ func TestShort(t *testing.T) {
 	if !strings.Contains(short, "def456") {
 		t.Errorf("Short() = %s, should contain commit def456", short)
 	}
-	if !strings.Contains(short, "whodb-cli") {
-		t.Errorf("Short() = %s, should contain 'whodb-cli'", short)
+	if !strings.Contains(short, "whodb") {
+		t.Errorf("Short() = %s, should contain 'whodb'", short)
 	}
 }
 

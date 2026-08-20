@@ -135,8 +135,8 @@ npm install -g @clidey/whodb-cli
 ```
 
 ```bash
-whodb-cli             # open the terminal UI
-whodb-cli mcp serve   # start the MCP server
+whodb             # open the terminal UI
+whodb mcp serve   # start the MCP server
 ```
 
 See the [CLI guide](https://github.com/clidey/whodb/blob/main/cli/README.md) for connection examples and the full command reference.

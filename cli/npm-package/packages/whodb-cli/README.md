@@ -74,13 +74,13 @@ npx @clidey/whodb-cli mcp serve --allowed-connections prod,staging
 
 ## MCP Client Configuration (Example)
 
-Example configuration (from `whodb-cli mcp serve --help`):
+Example configuration (from `whodb mcp serve --help`):
 
 ```json
 {
   "mcpServers": {
     "whodb": {
-      "command": "whodb-cli",
+      "command": "whodb",
       "args": ["mcp", "serve"],
       "env": {
         "WHODB_POSTGRES_1": "{\"alias\":\"prod\",\"host\":\"localhost\",\"user\":\"user\",\"password\":\"pass\",\"database\":\"db\"}"

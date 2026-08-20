@@ -662,7 +662,7 @@ func TestHandlePlatformDatasetsReportsMissingWorkspaceAction(t *testing.T) {
 	if err != nil {
 		t.Fatalf("HandlePlatformDatasets() error = %v", err)
 	}
-	want := "whodb-cli use --host http://localhost:8080 --org <org> --project <project>"
+	want := "whodb use --host http://localhost:8080 --org <org> --project <project>"
 	if !strings.Contains(output.Error, want) {
 		t.Fatalf("output.Error = %q, want %q", output.Error, want)
 	}

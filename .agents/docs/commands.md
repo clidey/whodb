@@ -39,7 +39,7 @@ cd frontend && pnpm e2e:db postgres      # Single database
 
 ```bash
 # Build CLI
-cd cli && go build -o whodb-cli .
+cd cli && go build -o whodb .
 
 # Lint CLI only
 cd cli && make lint

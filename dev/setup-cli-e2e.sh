@@ -54,7 +54,7 @@ fi
 # Build CLI binary
 echo "Building CLI..."
 cd "$PROJECT_ROOT/cli"
-go build -o whodb-cli .
-echo "CLI built at cli/whodb-cli"
+go build -o whodb .
+echo "CLI built at cli/whodb"
 
 echo "CLI E2E setup complete!"

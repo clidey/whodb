@@ -242,13 +242,13 @@ Best for documentation and readable reports.
 ### CSV
 ```bash
 # Export query results
-whodb-cli query "SELECT * FROM report_data" --format csv > report.csv
+whodb query "SELECT * FROM report_data" --format csv > report.csv
 ```
 
 ### JSON
 ```bash
 # Structured data for further processing
-whodb-cli query "SELECT * FROM report_data" --format json > report.json
+whodb query "SELECT * FROM report_data" --format json > report.json
 ```
 
 ## Best Practices

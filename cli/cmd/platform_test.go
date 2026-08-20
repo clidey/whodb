@@ -67,7 +67,7 @@ func TestConfirmPlatformLoginReplacementSkipsPromptWhenApprovedByFlag(t *testing
 
 func TestLocalLogoutHintIncludesHost(t *testing.T) {
 	hint := localLogoutHint("http://localhost:8080")
-	if !bytes.Contains([]byte(hint), []byte("whodb-cli logout --host http://localhost:8080 --local")) {
+	if !bytes.Contains([]byte(hint), []byte("whodb logout --host http://localhost:8080 --local")) {
 		t.Fatalf("localLogoutHint() = %q, want local logout command", hint)
 	}
 }
@@ -266,8 +266,8 @@ func TestTypedPlatformWriteCommandsHaveExamples(t *testing.T) {
 		if strings.TrimSpace(command.Example) == "" {
 			t.Fatalf("%s example is empty", command.CommandPath())
 		}
-		if !strings.Contains(command.Example, "whodb-cli") {
-			t.Fatalf("%s example = %q, want whodb-cli command", command.CommandPath(), command.Example)
+		if !strings.Contains(command.Example, "whodb") {
+			t.Fatalf("%s example = %q, want whodb command", command.CommandPath(), command.Example)
 		}
 	}
 }
@@ -948,7 +948,7 @@ func TestExplicitSourceConfigValuesRejectsUnknownFieldWithHint(t *testing.T) {
 	if err == nil {
 		t.Fatal("explicitSourceConfigValues() error = nil, want unknown field error")
 	}
-	if !strings.Contains(err.Error(), "whodb-cli sources fields Postgres") {
+	if !strings.Contains(err.Error(), "whodb sources fields Postgres") {
 		t.Fatalf("explicitSourceConfigValues() error = %q, want fields hint", err)
 	}
 }

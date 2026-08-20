@@ -43,13 +43,13 @@ var explainCmd = &cobra.Command{
 Like the TUI explain view, this command reuses the backend explain path so the
 database-specific explain prefix stays aligned with the current plugin.`,
 	Example: `  # Explain a query with a saved connection
-  whodb-cli explain --connection mydb "SELECT * FROM users LIMIT 10"
+  whodb explain --connection mydb "SELECT * FROM users LIMIT 10"
 
   # Emit JSON
-  whodb-cli explain --connection mydb --format json "SELECT * FROM users"
+  whodb explain --connection mydb --format json "SELECT * FROM users"
 
   # Read SQL from stdin
-  cat query.sql | whodb-cli explain --connection mydb -`,
+  cat query.sql | whodb explain --connection mydb -`,
 	Args: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			return fmt.Errorf("missing SQL query")
@@ -87,7 +87,7 @@ database-specific explain prefix stays aligned with the current plugin.`,
 		} else {
 			conns := mgr.ListAvailableConnections()
 			if len(conns) == 0 {
-				return fmt.Errorf("no connections available. Create one first:\n  whodb-cli connect --type postgres --host localhost --user myuser --database mydb --name myconn")
+				return fmt.Errorf("no connections available. Create one first:\n  whodb connect --type postgres --host localhost --user myuser --database mydb --name myconn")
 			}
 			conn = &conns[0]
 			out.Info("Using connection: %s", conn.Name)

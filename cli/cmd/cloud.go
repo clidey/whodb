@@ -44,16 +44,16 @@ This command works with the shared WhoDB cloud provider runtime. When provider
 support is enabled, it can inspect configured providers and discover
 cloud-managed databases and caches from the CLI.`,
 	Example: `  # List configured providers
-  whodb-cli cloud providers list
+  whodb cloud providers list
 
   # Discover resources from all providers
-  whodb-cli cloud connections list
+  whodb cloud connections list
 
   # Discover resources from one provider
-  whodb-cli cloud connections list --provider aws-prod-us-west-2
+  whodb cloud connections list --provider aws-prod-us-west-2
 
   # Refresh provider discovery state
-  whodb-cli cloud providers refresh --all`,
+  whodb cloud providers refresh --all`,
 }
 
 func init() {
@@ -125,8 +125,8 @@ func newCloudProvidersTestCommand() *cobra.Command {
 		Args:          cobra.ExactArgs(1),
 		SilenceUsage:  true,
 		SilenceErrors: true,
-		Example: `  whodb-cli cloud providers test aws-prod-us-west-2
-  whodb-cli cloud providers test gcp-prod-us-central1 --format json`,
+		Example: `  whodb cloud providers test aws-prod-us-west-2
+  whodb cloud providers test gcp-prod-us-central1 --format json`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			format, err := output.ParseFormat(formatFlag)
 			if err != nil {
@@ -158,9 +158,9 @@ func newCloudProvidersRefreshCommand() *cobra.Command {
 		Short:         "Refresh provider discovery state",
 		SilenceUsage:  true,
 		SilenceErrors: true,
-		Example: `  whodb-cli cloud providers refresh aws-prod-us-west-2
-  whodb-cli cloud providers refresh --all
-  whodb-cli cloud providers refresh --all --format json`,
+		Example: `  whodb cloud providers refresh aws-prod-us-west-2
+  whodb cloud providers refresh --all
+  whodb cloud providers refresh --all --format json`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			format, err := output.ParseFormat(formatFlag)
 			if err != nil {
@@ -222,9 +222,9 @@ func newCloudConnectionsListCommand() *cobra.Command {
 		Short:         "List discovered cloud resources",
 		SilenceUsage:  true,
 		SilenceErrors: true,
-		Example: `  whodb-cli cloud connections list
-  whodb-cli cloud connections list --provider aws-prod-us-west-2
-  whodb-cli cloud connections list --format json`,
+		Example: `  whodb cloud connections list
+  whodb cloud connections list --provider aws-prod-us-west-2
+  whodb cloud connections list --format json`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			format, err := output.ParseFormat(formatFlag)
 			if err != nil {

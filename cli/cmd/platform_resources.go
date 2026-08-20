@@ -353,9 +353,9 @@ var ontologyFastLookupsCreateCmd = withExample(&cobra.Command{
 		payload["entityId"] = entityID
 		return runPlatformResourceWrite(cmd, genericResourceWriteInput{Resource: "ontology_fast_lookup", Action: "create"}, "create", payload)
 	},
-}, `  whodb-cli ontologies fast-lookups create customers --field id --field email`)
+}, `  whodb ontologies fast-lookups create customers --field id --field email`)
 
-var ontologyFastLookupsDeleteCmd = withExample(typedResourceWriteCommand("delete <lookup>", "Delete a hosted WhoDB ontology fast lookup", "delete", "ontology_fast_lookup", "", emptyTypedPayload), `  whodb-cli ontologies fast-lookups delete lookup_123 --yes`)
+var ontologyFastLookupsDeleteCmd = withExample(typedResourceWriteCommand("delete <lookup>", "Delete a hosted WhoDB ontology fast lookup", "delete", "ontology_fast_lookup", "", emptyTypedPayload), `  whodb ontologies fast-lookups delete lookup_123 --yes`)
 
 var ontologyRowsCmd = pagedIDRowsCommand("rows <ontology>", "Preview hosted WhoDB ontology rows", func(ctx context.Context, session *platformSession, id string) (*platform.DatasetQueryResult, error) {
 	resolvedID, err := resolvePlatformResourceID(ctx, session, session.Host.DefaultProjectID, "ontology", id)
@@ -366,9 +366,9 @@ var ontologyRowsCmd = pagedIDRowsCommand("rows <ontology>", "Preview hosted WhoD
 })
 
 var ontologyRecordsCmd = &cobra.Command{Use: "records", Short: "Manage hosted WhoDB ontology records"}
-var ontologyRecordsAddCmd = withExample(typedResourceWriteCommand("add <ontology>", "Add a hosted WhoDB ontology record", "action", "ontology", "add_record", buildOntologyRecordAddPayload), `  whodb-cli ontologies records add customers --value id=1 --value name=Ada`)
-var ontologyRecordsUpdateCmd = withExample(typedResourceWriteCommand("update <ontology>", "Update a hosted WhoDB ontology record", "action", "ontology", "update_record", buildOntologyRecordUpdatePayload), `  whodb-cli ontologies records update customers --value id=1 --value name=Grace --update-column name`)
-var ontologyRecordsDeleteCmd = withExample(typedResourceWriteCommand("delete <ontology>", "Delete a hosted WhoDB ontology record", "action", "ontology", "delete_record", buildOntologyRecordDeletePayload), `  whodb-cli ontologies records delete customers --value id=1`)
+var ontologyRecordsAddCmd = withExample(typedResourceWriteCommand("add <ontology>", "Add a hosted WhoDB ontology record", "action", "ontology", "add_record", buildOntologyRecordAddPayload), `  whodb ontologies records add customers --value id=1 --value name=Ada`)
+var ontologyRecordsUpdateCmd = withExample(typedResourceWriteCommand("update <ontology>", "Update a hosted WhoDB ontology record", "action", "ontology", "update_record", buildOntologyRecordUpdatePayload), `  whodb ontologies records update customers --value id=1 --value name=Grace --update-column name`)
+var ontologyRecordsDeleteCmd = withExample(typedResourceWriteCommand("delete <ontology>", "Delete a hosted WhoDB ontology record", "action", "ontology", "delete_record", buildOntologyRecordDeletePayload), `  whodb ontologies records delete customers --value id=1`)
 
 var ontologyFollowLinkCmd = &cobra.Command{
 	Use:           "follow-link",
@@ -1030,45 +1030,45 @@ var resourcesShapeCmd = &cobra.Command{
 		return newCommandOutput(cmd, format, platformQuiet).WriteQueryResult(tableResult([]string{"field", "type", "required", "secret", "description"}, rows))
 	},
 }
-var secretsCreateCmd = withExample(typedResourceWriteCommand("create", "Create a hosted WhoDB secret", "create", "secret", "", buildSecretCreatePayload), `  whodb-cli secrets create --name OPENAI_API_KEY --value-env OPENAI_API_KEY
-  printf %s "$TOKEN" | whodb-cli secrets create --name SERVICE_TOKEN --value-stdin`)
-var secretsUpdateCmd = withExample(typedResourceWriteCommand("update <secret>", "Update a hosted WhoDB secret", "update", "secret", "", buildSecretUpdatePayload), `  whodb-cli secrets update sec_123 --description "rotated key" --value-env OPENAI_API_KEY
-  printf %s "$TOKEN" | whodb-cli secrets update sec_123 --value-stdin`)
-var secretsDeleteCmd = withExample(typedResourceWriteCommand("delete <secret>", "Delete a hosted WhoDB secret", "delete", "secret", "", emptyTypedPayload), `  whodb-cli secrets delete sec_123
-  whodb-cli secrets delete sec_123 --yes`)
-var aiProvidersCreateCmd = withExample(typedResourceWriteCommand("create", "Create a hosted WhoDB AI provider", "create", "ai_provider", "", buildAIProviderCreatePayload), `  whodb-cli ai-providers create --name OpenAI --type openai --endpoint https://api.openai.com/v1 --api-key-env OPENAI_API_KEY --model gpt-4.1`)
-var aiProvidersUpdateCmd = withExample(typedResourceWriteCommand("update <provider>", "Update a hosted WhoDB AI provider", "update", "ai_provider", "", buildAIProviderUpdatePayload), `  whodb-cli ai-providers update provider_123 --endpoint https://api.openai.com/v1 --model gpt-4.1 --model gpt-4.1-mini
-  whodb-cli ai-providers update provider_123 --api-key-env OPENAI_API_KEY`)
-var aiProvidersDeleteCmd = withExample(typedResourceWriteCommand("delete <provider>", "Delete a hosted WhoDB AI provider", "delete", "ai_provider", "", emptyTypedPayload), `  whodb-cli ai-providers delete provider_123 --yes`)
-var datasetsCreateCmd = withExample(typedResourceWriteCommand("create", "Create a hosted WhoDB dataset", "create", "dataset", "", buildDatasetCreatePayload), `  whodb-cli datasets create --name Customers --schema-mode manual --column id:text:primary --column email:text:nullable`)
-var datasetsUpdateCmd = withExample(typedResourceWriteCommand("update <dataset>", "Update a hosted WhoDB dataset", "update", "dataset", "", buildDatasetUpdatePayload), `  whodb-cli datasets update dataset_123 --description "Customer import"
-  whodb-cli datasets update dataset_123 --column id:text:primary --column email:text:nullable`)
-var datasetsDeleteCmd = withExample(typedResourceWriteCommand("delete <dataset>", "Delete a hosted WhoDB dataset", "delete", "dataset", "", emptyTypedPayload), `  whodb-cli datasets delete dataset_123 --yes`)
-var ontologiesCreateCmd = withExample(typedResourceWriteCommand("create", "Create a hosted WhoDB ontology", "create", "ontology", "", buildOntologyCreatePayload), `  whodb-cli ontologies create --api-name customer --display-name Customer --plural-display-name Customers --primary-key id --table-name customers --schema-name public --property-json '{"apiName":"id","displayName":"ID","columnName":"id","dataType":"String","isRequired":true,"visibility":"normal","isSearchable":true,"isSortable":true,"isEditOnly":false}'`)
-var ontologiesUpdateCmd = withExample(typedResourceWriteCommand("update <ontology>", "Update a hosted WhoDB ontology", "update", "ontology", "", buildOntologyUpdatePayload), `  whodb-cli ontologies update ontology_123 --display-name "Customer Account" --status active`)
-var ontologiesDeleteCmd = withExample(typedResourceWriteCommand("delete <ontology>", "Delete a hosted WhoDB ontology", "delete", "ontology", "", emptyTypedPayload), `  whodb-cli ontologies delete ontology_123 --yes`)
-var transformsCreateCmd = withExample(typedResourceWriteCommand("create", "Create a hosted WhoDB transform", "create", "transform", "", buildTransformCreatePayload), `  whodb-cli transforms create --name daily-load --trigger-mode manual --graph-file ./transform.json`)
-var transformsUpdateCmd = withExample(typedResourceWriteCommand("update <transform>", "Update a hosted WhoDB transform", "update", "transform", "", buildTransformUpdatePayload), `  whodb-cli transforms update transform_123 --description "Daily customer load" --graph-file ./transform.json`)
-var transformsRunCmd = withExample(typedResourceWriteCommand("run <transform>", "Run a hosted WhoDB transform", "action", "transform", "run", emptyTypedPayload), `  whodb-cli transforms run transform_123`)
-var transformsDeleteCmd = withExample(typedResourceWriteCommand("delete <transform>", "Delete a hosted WhoDB transform", "delete", "transform", "", emptyTypedPayload), `  whodb-cli transforms delete transform_123 --yes`)
-var functionsCreateCmd = withExample(typedResourceWriteCommand("create", "Create a hosted WhoDB function", "create", "function", "", buildFunctionCreatePayload), `  whodb-cli functions create --name enrich-customer --language python --entry-point main --file main.py=./main.py`)
-var functionsUpdateCmd = withExample(typedResourceWriteCommand("update <function>", "Update a hosted WhoDB function", "update", "function", "", buildFunctionUpdatePayload), `  whodb-cli functions update function_123 --description "Updated enrichment" --file main.py=./main.py`)
-var functionsDeployCmd = withExample(platformFunctionDeployCommand("deploy <function>", "Deploy a hosted WhoDB function", "DeployFunction", "deploy"), `  whodb-cli functions deploy function_123`)
-var functionsRedeployCmd = withExample(platformFunctionDeployCommand("redeploy <function>", "Redeploy a hosted WhoDB function", "RedeployFunction", "redeploy"), `  whodb-cli functions redeploy function_123`)
-var functionsDeleteCmd = withExample(typedResourceWriteCommand("delete <function>", "Delete a hosted WhoDB function", "delete", "function", "", emptyTypedPayload), `  whodb-cli functions delete function_123 --yes`)
-var foldersCreateCmd = withExample(typedResourceWriteCommand("create", "Create a hosted WhoDB project folder", "create", "folder", "", buildFolderCreatePayload), `  whodb-cli folders create --name imports
-  whodb-cli folders create --name january --parent-id folder_123`)
-var foldersRenameCmd = withExample(typedResourceWriteCommand("rename <folder>", "Rename a hosted WhoDB project folder", "action", "folder", "rename", buildFolderRenamePayload), `  whodb-cli folders rename folder_123 --name imports-2026`)
-var foldersMoveCmd = withExample(typedResourceWriteCommand("move <folder>", "Move a hosted WhoDB project folder", "action", "folder", "move", buildFolderMovePayload), `  whodb-cli folders move folder_123 --parent-id folder_456
-  whodb-cli folders move folder_123`)
-var foldersDeleteCmd = withExample(typedResourceWriteCommand("delete <folder>", "Delete a hosted WhoDB project folder", "delete", "folder", "", emptyTypedPayload), `  whodb-cli folders delete folder_123 --yes`)
-var filesUploadCmd = withExample(typedResourceWriteCommand("upload", "Upload a hosted WhoDB project file", "action", "file", "upload", buildFileUploadPayload), `  whodb-cli files upload --path ./customers.csv
-  whodb-cli files upload --path ./customers.csv --folder-id folder_123`)
-var filesDeleteCmd = withExample(typedResourceWriteCommand("delete <file>", "Delete a hosted WhoDB project file", "delete", "file", "", emptyTypedPayload), `  whodb-cli files delete file_123 --yes`)
-var filesRenameCmd = withExample(typedResourceWriteCommand("rename <file>", "Rename a hosted WhoDB project file", "action", "file", "rename", buildFileRenamePayload), `  whodb-cli files rename file_123 --name customers-2026.csv`)
-var filesMoveCmd = withExample(typedResourceWriteCommand("move <file>", "Move a hosted WhoDB project file", "action", "file", "move", buildFileMovePayload), `  whodb-cli files move file_123 --folder-id folder_123
-  whodb-cli files move file_123`)
-var filesPromoteDatasetCmd = withExample(typedResourceWriteCommand("promote-to-dataset <file>", "Promote a hosted WhoDB project file to a dataset", "action", "file", "promote_to_dataset", buildFilePromoteDatasetPayload), `  whodb-cli files promote-to-dataset customers.csv --name Customers --column-map id:id:text:primary --column-map name:name:text:nullable`)
+var secretsCreateCmd = withExample(typedResourceWriteCommand("create", "Create a hosted WhoDB secret", "create", "secret", "", buildSecretCreatePayload), `  whodb secrets create --name OPENAI_API_KEY --value-env OPENAI_API_KEY
+  printf %s "$TOKEN" | whodb secrets create --name SERVICE_TOKEN --value-stdin`)
+var secretsUpdateCmd = withExample(typedResourceWriteCommand("update <secret>", "Update a hosted WhoDB secret", "update", "secret", "", buildSecretUpdatePayload), `  whodb secrets update sec_123 --description "rotated key" --value-env OPENAI_API_KEY
+  printf %s "$TOKEN" | whodb secrets update sec_123 --value-stdin`)
+var secretsDeleteCmd = withExample(typedResourceWriteCommand("delete <secret>", "Delete a hosted WhoDB secret", "delete", "secret", "", emptyTypedPayload), `  whodb secrets delete sec_123
+  whodb secrets delete sec_123 --yes`)
+var aiProvidersCreateCmd = withExample(typedResourceWriteCommand("create", "Create a hosted WhoDB AI provider", "create", "ai_provider", "", buildAIProviderCreatePayload), `  whodb ai-providers create --name OpenAI --type openai --endpoint https://api.openai.com/v1 --api-key-env OPENAI_API_KEY --model gpt-4.1`)
+var aiProvidersUpdateCmd = withExample(typedResourceWriteCommand("update <provider>", "Update a hosted WhoDB AI provider", "update", "ai_provider", "", buildAIProviderUpdatePayload), `  whodb ai-providers update provider_123 --endpoint https://api.openai.com/v1 --model gpt-4.1 --model gpt-4.1-mini
+  whodb ai-providers update provider_123 --api-key-env OPENAI_API_KEY`)
+var aiProvidersDeleteCmd = withExample(typedResourceWriteCommand("delete <provider>", "Delete a hosted WhoDB AI provider", "delete", "ai_provider", "", emptyTypedPayload), `  whodb ai-providers delete provider_123 --yes`)
+var datasetsCreateCmd = withExample(typedResourceWriteCommand("create", "Create a hosted WhoDB dataset", "create", "dataset", "", buildDatasetCreatePayload), `  whodb datasets create --name Customers --schema-mode manual --column id:text:primary --column email:text:nullable`)
+var datasetsUpdateCmd = withExample(typedResourceWriteCommand("update <dataset>", "Update a hosted WhoDB dataset", "update", "dataset", "", buildDatasetUpdatePayload), `  whodb datasets update dataset_123 --description "Customer import"
+  whodb datasets update dataset_123 --column id:text:primary --column email:text:nullable`)
+var datasetsDeleteCmd = withExample(typedResourceWriteCommand("delete <dataset>", "Delete a hosted WhoDB dataset", "delete", "dataset", "", emptyTypedPayload), `  whodb datasets delete dataset_123 --yes`)
+var ontologiesCreateCmd = withExample(typedResourceWriteCommand("create", "Create a hosted WhoDB ontology", "create", "ontology", "", buildOntologyCreatePayload), `  whodb ontologies create --api-name customer --display-name Customer --plural-display-name Customers --primary-key id --table-name customers --schema-name public --property-json '{"apiName":"id","displayName":"ID","columnName":"id","dataType":"String","isRequired":true,"visibility":"normal","isSearchable":true,"isSortable":true,"isEditOnly":false}'`)
+var ontologiesUpdateCmd = withExample(typedResourceWriteCommand("update <ontology>", "Update a hosted WhoDB ontology", "update", "ontology", "", buildOntologyUpdatePayload), `  whodb ontologies update ontology_123 --display-name "Customer Account" --status active`)
+var ontologiesDeleteCmd = withExample(typedResourceWriteCommand("delete <ontology>", "Delete a hosted WhoDB ontology", "delete", "ontology", "", emptyTypedPayload), `  whodb ontologies delete ontology_123 --yes`)
+var transformsCreateCmd = withExample(typedResourceWriteCommand("create", "Create a hosted WhoDB transform", "create", "transform", "", buildTransformCreatePayload), `  whodb transforms create --name daily-load --trigger-mode manual --graph-file ./transform.json`)
+var transformsUpdateCmd = withExample(typedResourceWriteCommand("update <transform>", "Update a hosted WhoDB transform", "update", "transform", "", buildTransformUpdatePayload), `  whodb transforms update transform_123 --description "Daily customer load" --graph-file ./transform.json`)
+var transformsRunCmd = withExample(typedResourceWriteCommand("run <transform>", "Run a hosted WhoDB transform", "action", "transform", "run", emptyTypedPayload), `  whodb transforms run transform_123`)
+var transformsDeleteCmd = withExample(typedResourceWriteCommand("delete <transform>", "Delete a hosted WhoDB transform", "delete", "transform", "", emptyTypedPayload), `  whodb transforms delete transform_123 --yes`)
+var functionsCreateCmd = withExample(typedResourceWriteCommand("create", "Create a hosted WhoDB function", "create", "function", "", buildFunctionCreatePayload), `  whodb functions create --name enrich-customer --language python --entry-point main --file main.py=./main.py`)
+var functionsUpdateCmd = withExample(typedResourceWriteCommand("update <function>", "Update a hosted WhoDB function", "update", "function", "", buildFunctionUpdatePayload), `  whodb functions update function_123 --description "Updated enrichment" --file main.py=./main.py`)
+var functionsDeployCmd = withExample(platformFunctionDeployCommand("deploy <function>", "Deploy a hosted WhoDB function", "DeployFunction", "deploy"), `  whodb functions deploy function_123`)
+var functionsRedeployCmd = withExample(platformFunctionDeployCommand("redeploy <function>", "Redeploy a hosted WhoDB function", "RedeployFunction", "redeploy"), `  whodb functions redeploy function_123`)
+var functionsDeleteCmd = withExample(typedResourceWriteCommand("delete <function>", "Delete a hosted WhoDB function", "delete", "function", "", emptyTypedPayload), `  whodb functions delete function_123 --yes`)
+var foldersCreateCmd = withExample(typedResourceWriteCommand("create", "Create a hosted WhoDB project folder", "create", "folder", "", buildFolderCreatePayload), `  whodb folders create --name imports
+  whodb folders create --name january --parent-id folder_123`)
+var foldersRenameCmd = withExample(typedResourceWriteCommand("rename <folder>", "Rename a hosted WhoDB project folder", "action", "folder", "rename", buildFolderRenamePayload), `  whodb folders rename folder_123 --name imports-2026`)
+var foldersMoveCmd = withExample(typedResourceWriteCommand("move <folder>", "Move a hosted WhoDB project folder", "action", "folder", "move", buildFolderMovePayload), `  whodb folders move folder_123 --parent-id folder_456
+  whodb folders move folder_123`)
+var foldersDeleteCmd = withExample(typedResourceWriteCommand("delete <folder>", "Delete a hosted WhoDB project folder", "delete", "folder", "", emptyTypedPayload), `  whodb folders delete folder_123 --yes`)
+var filesUploadCmd = withExample(typedResourceWriteCommand("upload", "Upload a hosted WhoDB project file", "action", "file", "upload", buildFileUploadPayload), `  whodb files upload --path ./customers.csv
+  whodb files upload --path ./customers.csv --folder-id folder_123`)
+var filesDeleteCmd = withExample(typedResourceWriteCommand("delete <file>", "Delete a hosted WhoDB project file", "delete", "file", "", emptyTypedPayload), `  whodb files delete file_123 --yes`)
+var filesRenameCmd = withExample(typedResourceWriteCommand("rename <file>", "Rename a hosted WhoDB project file", "action", "file", "rename", buildFileRenamePayload), `  whodb files rename file_123 --name customers-2026.csv`)
+var filesMoveCmd = withExample(typedResourceWriteCommand("move <file>", "Move a hosted WhoDB project file", "action", "file", "move", buildFileMovePayload), `  whodb files move file_123 --folder-id folder_123
+  whodb files move file_123`)
+var filesPromoteDatasetCmd = withExample(typedResourceWriteCommand("promote-to-dataset <file>", "Promote a hosted WhoDB project file to a dataset", "action", "file", "promote_to_dataset", buildFilePromoteDatasetPayload), `  whodb files promote-to-dataset customers.csv --name Customers --column-map id:id:text:primary --column-map name:name:text:nullable`)
 
 func registerPlatformResourceCommands() {
 	for _, command := range []*cobra.Command{secretsCmd, aiProvidersCmd, ontologiesCmd, datasetsCmd, lineageCmd, transformsCmd, functionsCmd, filesCmd, foldersCmd, resourcesCmd} {
@@ -1822,7 +1822,7 @@ func runPlatformFunctionDeployWrite(cmd *cobra.Command, functionRef, mutation, a
 func friendlyFunctionDeployError(functionRef string, err error) error {
 	message := strings.ToLower(err.Error())
 	if strings.Contains(message, "no active version") || strings.Contains(message, "promote") && strings.Contains(message, "active") {
-		return fmt.Errorf("function %s has no active version. Promote it first:\n  whodb-cli functions promote %s --message \"initial version\"\n  whodb-cli functions deploy %s", functionRef, functionRef, functionRef)
+		return fmt.Errorf("function %s has no active version. Promote it first:\n  whodb functions promote %s --message \"initial version\"\n  whodb functions deploy %s", functionRef, functionRef, functionRef)
 	}
 	return err
 }

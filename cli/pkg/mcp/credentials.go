@@ -59,7 +59,7 @@ func (r *connectionResolver) ResolveOrDefault(name string) (*dbmgr.Connection, e
 	infos := r.resolver.ListWithSource()
 	switch len(infos) {
 	case 0:
-		return nil, fmt.Errorf("no database connections available. Add one with: whodb-cli connections add or set WHODB_<DBTYPE> profiles")
+		return nil, fmt.Errorf("no database connections available. Add one with: whodb connections add or set WHODB_<DBTYPE> profiles")
 	case 1:
 		conn := infos[0].Connection
 		return new(conn), nil

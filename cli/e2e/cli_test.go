@@ -35,7 +35,7 @@ func TestCLI_Version(t *testing.T) {
 	stdout, stderr, exitCode := testharness.RunCLI(t, "version")
 
 	testharness.RequireSuccess(t, stderr, exitCode)
-	testharness.AssertContains(t, stdout, "whodb-cli")
+	testharness.AssertContains(t, stdout, "whodb")
 }
 
 func TestCLI_Version_Short(t *testing.T) {

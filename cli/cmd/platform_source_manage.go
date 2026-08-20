@@ -259,7 +259,7 @@ func explicitSourceConfigValues(cmd *cobra.Command, sourceType *platform.SourceT
 			var ok bool
 			canonicalKey, ok = fieldKeyByLower[strings.ToLower(strings.TrimSpace(key))]
 			if !ok {
-				return nil, nil, fmt.Errorf("source type does not define connection field %q; run whodb-cli sources fields %s to list valid fields", key, sourceType.ID)
+				return nil, nil, fmt.Errorf("source type does not define connection field %q; run whodb sources fields %s to list valid fields", key, sourceType.ID)
 			}
 		}
 		values[canonicalKey] = value

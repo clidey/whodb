@@ -13,7 +13,9 @@ $ErrorActionPreference = "Stop"
 
 # Configuration
 $Repo = "clidey/whodb"
-$BinaryName = "whodb-cli"
+# Release assets keep the whodb-cli- prefix; the installed command is "whodb".
+$AssetName = "whodb-cli"
+$InstallName = "whodb"
 $InstallDir = if ($env:WHODB_INSTALL_DIR) { $env:WHODB_INSTALL_DIR } else { "$env:LOCALAPPDATA\WhoDB\bin" }
 
 function Write-Step {
@@ -93,7 +95,7 @@ function Main {
     Write-Step "Installing version: $version"
 
     # Construct download URL
-    $binaryFile = "$BinaryName-windows-$arch.exe"
+    $binaryFile = "$AssetName-windows-$arch.exe"
     $downloadUrl = "https://github.com/$Repo/releases/download/$version/$binaryFile"
 
     # Create install directory
@@ -102,7 +104,7 @@ function Main {
         New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
     }
 
-    $installPath = Join-Path $InstallDir "$BinaryName.exe"
+    $installPath = Join-Path $InstallDir "$InstallName.exe"
 
     # Download binary
     Write-Step "Downloading $binaryFile..."
@@ -125,6 +127,12 @@ function Main {
     Write-Success "WhoDB CLI $version installed successfully!"
     Write-Host ""
 
+    # Keep a deprecated "whodb-cli.exe" copy pointing at the new binary so
+    # existing scripts keep working. It prints a warning and will be removed
+    # in a future release.
+    $legacyPath = Join-Path $InstallDir "whodb-cli.exe"
+    Copy-Item -Path $installPath -Destination $legacyPath -Force
+
     # Add to PATH
     $pathAdded = Add-ToPath -PathToAdd $InstallDir
     if ($pathAdded) {
@@ -139,9 +147,9 @@ function Main {
 
     # Show usage
     Write-Host "Get started:"
-    Write-Host "  $BinaryName          # Launch interactive TUI"
-    Write-Host "  $BinaryName mcp      # Run as MCP server"
-    Write-Host "  $BinaryName --help   # Show help"
+    Write-Host "  $InstallName          # Launch interactive TUI"
+    Write-Host "  $InstallName mcp      # Run as MCP server"
+    Write-Host "  $InstallName --help   # Show help"
     Write-Host ""
     Write-Host "Documentation: https://docs.whodb.com/cli"
 }

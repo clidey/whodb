@@ -1,0 +1,133 @@
+#!/usr/bin/env node
+
+const { spawn } = require('child_process');
+const path = require('path');
+const fs = require('fs');
+
+// Map Node.js platform/arch to package names
+const PLATFORM_PACKAGES = {
+  'darwin-arm64': '@clidey/whodb-cli-darwin-arm64',
+  'darwin-x64': '@clidey/whodb-cli-darwin-x64',
+  'linux-arm64': '@clidey/whodb-cli-linux-arm64',
+  'linux-x64': '@clidey/whodb-cli-linux-x64',
+  'linux-arm': '@clidey/whodb-cli-linux-arm',
+  'win32-x64': '@clidey/whodb-cli-win32-x64',
+  'win32-arm64': '@clidey/whodb-cli-win32-arm64',
+};
+
+// Map Node.js platform/arch to BAML library names
+const BAML_LIBRARIES = {
+  'darwin-arm64': 'libbaml_cffi-aarch64-apple-darwin.dylib',
+  'darwin-x64': 'libbaml_cffi-x86_64-apple-darwin.dylib',
+  'linux-arm64': 'libbaml_cffi-aarch64-unknown-linux-gnu.so',
+  'linux-x64': 'libbaml_cffi-x86_64-unknown-linux-gnu.so',
+  'win32-x64': 'baml_cffi-x86_64-pc-windows-msvc.dll',
+  // linux-arm (armv7) not supported by BAML - will fall back to runtime download
+};
+
+function getBinaryPath() {
+  const platformKey = `${process.platform}-${process.arch}`;
+  const packageName = PLATFORM_PACKAGES[platformKey];
+
+  if (!packageName) {
+    console.error(`Unsupported platform: ${platformKey}`);
+    console.error(`Supported platforms: ${Object.keys(PLATFORM_PACKAGES).join(', ')}`);
+    process.exit(1);
+  }
+
+  // Try to find the platform package
+  const possiblePaths = [
+    // When installed as a dependency
+    path.join(__dirname, '..', 'node_modules', packageName, 'bin', 'whodb'),
+    path.join(__dirname, '..', '..', packageName, 'bin', 'whodb'),
+    path.join(__dirname, '..', '..', '..', packageName, 'bin', 'whodb'),
+    // When packages are hoisted to root node_modules
+    path.join(__dirname, '..', '..', '..', '..', packageName, 'bin', 'whodb'),
+  ];
+
+  // Add .exe extension for Windows
+  if (process.platform === 'win32') {
+    possiblePaths.push(...possiblePaths.map(p => p + '.exe'));
+  }
+
+  for (const binaryPath of possiblePaths) {
+    if (fs.existsSync(binaryPath)) {
+      return binaryPath;
+    }
+  }
+
+  // Try require.resolve as fallback
+  try {
+    const packagePath = require.resolve(`${packageName}/package.json`);
+    const packageDir = path.dirname(packagePath);
+    const ext = process.platform === 'win32' ? '.exe' : '';
+    const binaryPath = path.join(packageDir, 'bin', `whodb${ext}`);
+    if (fs.existsSync(binaryPath)) {
+      return binaryPath;
+    }
+  } catch (e) {
+    // Package not found via require.resolve
+  }
+
+  console.error(`Could not find WhoDB binary for ${platformKey}`);
+  console.error(`Expected package: ${packageName}`);
+  console.error('');
+  console.error('This usually means the platform-specific package was not installed.');
+  console.error('Try reinstalling: npm install @clidey/whodb-cli');
+  process.exit(1);
+}
+
+// Finds the bundled BAML library, if any, next to the given binary.
+function getBamlLibraryPath(binaryPath) {
+  const platformKey = `${process.platform}-${process.arch}`;
+  const bamlLibName = BAML_LIBRARIES[platformKey];
+
+  if (!bamlLibName) {
+    // Platform not supported for bundled BAML, will use runtime download
+    return null;
+  }
+
+  // BAML library should be in the same directory as the binary
+  const binDir = path.dirname(binaryPath);
+  const bamlPath = path.join(binDir, bamlLibName);
+
+  if (fs.existsSync(bamlPath)) {
+    return bamlPath;
+  }
+
+  return null;
+}
+
+// launch spawns the whodb binary with the current process's args, exiting
+// with its exit code. Set deprecated to true to print a one-line notice
+// before launching (used by the legacy whodb-cli bin entry).
+function launch(deprecated) {
+  if (deprecated) {
+    console.error('Warning: "whodb-cli" is deprecated; use "whodb" instead. "whodb-cli" will be removed in a future release.');
+  }
+
+  const binaryPath = getBinaryPath();
+  const bamlLibraryPath = getBamlLibraryPath(binaryPath);
+
+  const env = { ...process.env };
+  if (bamlLibraryPath) {
+    env.BAML_LIBRARY_PATH = bamlLibraryPath;
+  }
+
+  const args = process.argv.slice(2);
+  const child = spawn(binaryPath, args, {
+    stdio: 'inherit',
+    env,
+  });
+
+  child.on('error', (err) => {
+    console.error('Failed to start WhoDB CLI:', err.message);
+    process.exit(1);
+  });
+
+  child.on('exit', (code) => {
+    process.exit(code || 0);
+  });
+}
+
+module.exports = { launch };

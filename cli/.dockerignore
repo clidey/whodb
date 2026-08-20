@@ -10,7 +10,7 @@ testutil/
 .idea/
 
 # Build artifacts
-whodb-cli
+whodb
 *.exe
 
 # Git

@@ -6,7 +6,7 @@ The CLI is an interactive terminal interface for WhoDB with split-pane TUI suppo
 
 ```bash
 # Build
-cd cli && go build -o whodb-cli .
+cd cli && go build -o whodb .
 
 # Run interactive mode
 ./whodb-cli
@@ -153,7 +153,7 @@ Do not move command/TUI logic back into the binary entrypoint.
 ### 2. Do not hardcode command identity
 
 Avoid new hardcoded uses of:
-- `whodb-cli`
+- `whodb`
 - `WhoDB CLI`
 - `.whodb-cli`
 - `WhoDB-CLI`

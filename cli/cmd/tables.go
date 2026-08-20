@@ -44,7 +44,7 @@ var tablesCmd = &cobra.Command{
 
 Prerequisites:
   Create and save a connection first via:
-    whodb-cli connect --type <db> --host <host> --user <user> --database <db> --name <name>
+    whodb connect --type <db> --host <host> --user <user> --database <db> --name <name>
 
 Output formats:
   auto   - Table for terminals, plain for pipes (default)
@@ -54,13 +54,13 @@ Output formats:
   ndjson - One JSON object per line
   csv    - CSV format`,
 	Example: `  # List tables in the default/first schema
-  whodb-cli tables --connection mydb
+  whodb tables --connection mydb
 
   # List tables in a specific schema
-  whodb-cli tables --connection mydb --schema public
+  whodb tables --connection mydb --schema public
 
   # Output as JSON
-  whodb-cli tables --connection mydb --format json`,
+  whodb tables --connection mydb --format json`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := context.Background()
 		startTime := time.Now()
@@ -87,7 +87,7 @@ Output formats:
 		} else {
 			conns := mgr.ListAvailableConnections()
 			if len(conns) == 0 {
-				return fmt.Errorf("no connections available. Create one first:\n  whodb-cli connect --type postgres --host localhost --user myuser --database mydb --name myconn")
+				return fmt.Errorf("no connections available. Create one first:\n  whodb connect --type postgres --host localhost --user myuser --database mydb --name myconn")
 			}
 			conn = &conns[0]
 			out.Info("Using connection: %s", conn.Name)

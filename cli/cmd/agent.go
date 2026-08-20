@@ -37,7 +37,7 @@ var agentSchemaCmd = &cobra.Command{
 	Short:         "Emit the agent capability manifest",
 	SilenceUsage:  true,
 	SilenceErrors: true,
-	Example:       `  whodb-cli agent schema --format json`,
+	Example:       `  whodb agent schema --format json`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		format, err := output.ParseFormat(agentSchemaFormat)
 		if err != nil {

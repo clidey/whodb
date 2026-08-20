@@ -108,8 +108,8 @@ fi
 
 # 3. CLI E2E Tests (needs binary)
 print_header "Building CLI Binary"
-go build -o whodb-cli .
-echo "CLI built at cli/whodb-cli"
+go build -o whodb .
+echo "CLI built at cli/whodb"
 
 print_header "Running CLI E2E Tests"
 if go test -tags=e2e_cli $VERBOSE ./e2e/... -run "^TestCLI_" 2>&1; then
@@ -119,7 +119,7 @@ else
 fi
 
 # Clean up binary
-rm -f whodb-cli
+rm -f whodb
 
 # 4. PostgreSQL E2E Tests (optional, requires Docker)
 if [ "$RUN_POSTGRES" = true ]; then
@@ -154,7 +154,7 @@ if [ "$RUN_POSTGRES" = true ]; then
         else
             # Build CLI and run tests
             cd "$CLI_DIR"
-            go build -o whodb-cli .
+            go build -o whodb .
 
             if go test -tags=e2e_postgres $VERBOSE ./e2e/... -run "^TestPostgres_" 2>&1; then
                 POSTGRES_RESULT=0
@@ -162,7 +162,7 @@ if [ "$RUN_POSTGRES" = true ]; then
                 POSTGRES_RESULT=1
             fi
 
-            rm -f whodb-cli
+            rm -f whodb
         fi
 
         # Cleanup PostgreSQL
@@ -181,12 +181,12 @@ if [ "$RUN_EE" = true ]; then
     else
         cd "$EE_CLI_DIR"
         if env GOWORK=off GOSUMDB=off GOPROXY=off go test $VERBOSE ./... 2>&1 && \
-           env GOWORK=off GOSUMDB=off GOPROXY=off go build -o whodb-cli . 2>&1; then
+           env GOWORK=off GOSUMDB=off GOPROXY=off go build -o whodb . 2>&1; then
             EE_RESULT=0
-            rm -f whodb-cli
+            rm -f whodb
         else
             EE_RESULT=1
-            rm -f whodb-cli
+            rm -f whodb
         fi
         cd "$CLI_DIR"
     fi

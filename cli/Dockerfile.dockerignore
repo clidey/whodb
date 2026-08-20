@@ -15,4 +15,4 @@
 **/.pi-lens
 core/tmp
 cli/build
-cli/whodb-cli
+cli/whodb

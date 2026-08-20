@@ -17,6 +17,8 @@
 package cmd
 
 import (
+	"bytes"
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -30,8 +32,8 @@ func TestRootCmd(t *testing.T) {
 		t.Fatal("rootCmd is nil")
 	}
 
-	if rootCmd.Use != "whodb-cli" {
-		t.Errorf("Expected Use to be 'whodb-cli', got '%s'", rootCmd.Use)
+	if rootCmd.Use != "whodb" {
+		t.Errorf("Expected Use to be 'whodb', got '%s'", rootCmd.Use)
 	}
 
 	if rootCmd.Short == "" {
@@ -95,5 +97,51 @@ func TestInitConfig(t *testing.T) {
 	configDir := filepath.Join(home, ".whodb-cli")
 	if _, err := os.Stat(configDir); os.IsNotExist(err) {
 		t.Errorf("Config directory was not created: %s", configDir)
+	}
+}
+
+func TestWarnIfInvokedAsLegacyName(t *testing.T) {
+	origArgs := os.Args
+	defer func() { os.Args = origArgs }()
+
+	cases := []struct {
+		name     string
+		argv0    string
+		wantWarn bool
+	}{
+		{"legacy name", filepath.Join(string(filepath.Separator), "usr", "local", "bin", "whodb-cli"), true},
+		{"legacy name with exe suffix", filepath.Join(string(filepath.Separator), "usr", "local", "bin", "whodb-cli.exe"), true},
+		{"current name", filepath.Join(string(filepath.Separator), "usr", "local", "bin", "whodb"), false},
+		{"unrelated name", filepath.Join(string(filepath.Separator), "usr", "local", "bin", "other"), false},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			os.Args = []string{tc.argv0}
+
+			r, w, err := os.Pipe()
+			if err != nil {
+				t.Fatalf("failed to create pipe: %v", err)
+			}
+			origStderr := os.Stderr
+			os.Stderr = w
+
+			warnIfInvokedAsLegacyName()
+
+			w.Close()
+			os.Stderr = origStderr
+
+			var buf bytes.Buffer
+			io.Copy(&buf, r)
+			output := buf.String()
+
+			gotWarn := output != ""
+			if gotWarn != tc.wantWarn {
+				t.Errorf("warnIfInvokedAsLegacyName() with argv0=%q: got warning=%v, want %v (output: %q)", tc.argv0, gotWarn, tc.wantWarn, output)
+			}
+			if gotWarn && (!bytes.Contains(buf.Bytes(), []byte("whodb-cli")) || !bytes.Contains(buf.Bytes(), []byte("deprecated"))) {
+				t.Errorf("expected deprecation warning to mention whodb-cli and 'deprecated', got %q", output)
+			}
+		})
 	}
 }

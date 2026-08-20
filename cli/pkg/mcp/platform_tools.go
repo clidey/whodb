@@ -1595,7 +1595,7 @@ func loadHostedPlatformToolSession(ctx context.Context) (*platformToolSession, e
 	}
 	host, ok := cfg.GetPlatformHost(hostURL)
 	if !ok || strings.TrimSpace(host.AccountID) == "" {
-		return nil, fmt.Errorf("hosted WhoDB is not logged in for %s. Run: whodb-cli login --host %s", hostURL, hostURL)
+		return nil, fmt.Errorf("hosted WhoDB is not logged in for %s. Run: whodb login --host %s", hostURL, hostURL)
 	}
 	tokenSource := platformapi.NewOIDCTokenSource(hostURL, host.AccountID, cfg)
 	client, err := platformapi.NewAuthenticatedClient(hostURL, tokenSource)
@@ -1636,9 +1636,9 @@ func loadPlatformWorkspace(ctx context.Context) (*platformToolSession, error) {
 func platformUseCommand(host string) string {
 	host = strings.TrimSpace(host)
 	if host == "" {
-		return "whodb-cli use --org <org> --project <project>"
+		return "whodb use --org <org> --project <project>"
 	}
-	return fmt.Sprintf("whodb-cli use --host %s --org <org> --project <project>", host)
+	return fmt.Sprintf("whodb use --host %s --org <org> --project <project>", host)
 }
 
 func loadPlatformSource(ctx context.Context, value string) (*platformToolSession, *platformapi.Source, error) {
@@ -1757,7 +1757,7 @@ func resolvePlatformToolOrg(ctx context.Context, session *platformToolSession, v
 		needle = orgs[0].ID
 	}
 	if needle == "" {
-		return nil, fmt.Errorf("org is required because no hosted WhoDB organization is selected. Call whodb_platform_orgs, then run whodb-cli use --org <org> --project <project> or pass org")
+		return nil, fmt.Errorf("org is required because no hosted WhoDB organization is selected. Call whodb_platform_orgs, then run whodb use --org <org> --project <project> or pass org")
 	}
 	for i := range orgs {
 		org := &orgs[i]
@@ -2492,16 +2492,16 @@ func platformRowsLimit(requested int, secOpts *SecurityOptions) int {
 
 const descPlatformStatus = `Report the current hosted WhoDB login and selected hosted workspace.
 
-Requires a prior hosted login with whodb-cli login. Use this before other whodb_platform_* tools to confirm which host, organization, and project are active.`
+Requires a prior hosted login with whodb login. Use this before other whodb_platform_* tools to confirm which host, organization, and project are active.`
 
 const descPlatformSources = `List hosted WhoDB sources in the selected organization and project.
 
-Requires whodb-cli login and whodb-cli use --org <org> --project <project>. This tool is read-only and never exposes source credentials.
+Requires whodb login and whodb use --org <org> --project <project>. This tool is read-only and never exposes source credentials.
 Prefer fields such as ["id", "name", "type"] for discovery; request more fields only when needed.`
 
 const descPlatformOrgs = `List hosted WhoDB organizations visible to the authenticated user.
 
-Use this after whodb-cli login to discover valid organization ids, slugs, and names before selecting a workspace. This tool is read-only.
+Use this after whodb login to discover valid organization ids, slugs, and names before selecting a workspace. This tool is read-only.
 Prefer fields such as ["id", "name", "slug", "selected"] for discovery.`
 
 const descPlatformProjects = `List hosted WhoDB projects in one organization.

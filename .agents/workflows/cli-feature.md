@@ -30,7 +30,7 @@ func init() {
 
 ### 2. Key Rules
 - Use `database.Manager` for all DB operations (direct plugin access, not GraphQL)
-- Identity-driven text: use `pkg/identity` helpers, never hardcode `whodb-cli`
+- Identity-driven text: write `whodb` in command examples; use `pkg/identity` helpers for display names and home-dir paths, never hardcode edition-specific names
 - Structured output: use `pkg/output` writers (table/json/csv/ndjson) for machine-readable commands
 - Keep `main.go` thin — it calls the shared runtime, nothing else
 

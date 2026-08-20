@@ -58,7 +58,7 @@ type PlatformRecoveryAdvice struct {
 func platformRecoveryAdvice(code string, message string) PlatformRecoveryAdvice {
 	switch PlatformErrorCode(code) {
 	case PlatformErrorAuth:
-		return PlatformRecoveryAdvice{"the hosted session is missing or expired", []string{"run whodb_platform_setup_status", "ask the user to run whodb-cli login", "retry the original tool"}}
+		return PlatformRecoveryAdvice{"the hosted session is missing or expired", []string{"run whodb_platform_setup_status", "ask the user to run whodb login", "retry the original tool"}}
 	case PlatformErrorWorkspace:
 		return PlatformRecoveryAdvice{"no usable organization or project is selected", []string{"run whodb_platform_orgs", "run whodb_platform_projects", "run whodb_platform_use with the intended workspace"}}
 	case PlatformErrorPermission:

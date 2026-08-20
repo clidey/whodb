@@ -378,9 +378,9 @@ func buildPlatformMCP() PlatformMCP {
 		SupportsFields:          true,
 		LocalToolSelectionFlags: []string{"--tools", "--disable-tools"},
 		SetupCommands: []string{
-			"whodb-cli login",
-			"whodb-cli use --org <org> --project <project>",
-			"whodb-cli mcp serve --platform",
+			"whodb login",
+			"whodb use --org <org> --project <project>",
+			"whodb mcp serve --platform",
 		},
 		WriteModes: PlatformMCPModes{
 			Default:    "confirmation_required",

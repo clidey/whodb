@@ -77,7 +77,7 @@ func (s *OIDCTokenSource) cacheKey() string {
 func (s *OIDCTokenSource) refreshLocked(ctx context.Context, key string) (string, error) {
 	refreshToken, err := s.store.GetPlatformRefreshToken(s.hostURL, s.accountID)
 	if err != nil {
-		return "", fmt.Errorf("cannot load hosted WhoDB refresh token. Run: whodb-cli login --host %s", s.hostURL)
+		return "", fmt.Errorf("cannot load hosted WhoDB refresh token. Run: whodb login --host %s", s.hostURL)
 	}
 
 	tokens, err := RefreshToken(ctx, s.hostURL, refreshToken)
@@ -92,7 +92,7 @@ func (s *OIDCTokenSource) refreshLocked(ctx context.Context, key string) (string
 	}
 	if err != nil {
 		delete(accessTokenCache, key)
-		return "", fmt.Errorf("cannot refresh hosted WhoDB login. Run: whodb-cli login --host %s", s.hostURL)
+		return "", fmt.Errorf("cannot refresh hosted WhoDB login. Run: whodb login --host %s", s.hostURL)
 	}
 	if tokens.RefreshToken != "" && tokens.RefreshToken != refreshToken {
 		if err := s.store.SavePlatformRefreshToken(s.hostURL, s.accountID, tokens.RefreshToken); err != nil {

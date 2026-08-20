@@ -168,65 +168,65 @@ Connection Resolution:
   1. Environment profiles, for example:
      - WHODB_POSTGRES='[{"alias":"prod","host":"localhost","user":"user","password":"pass","database":"db","port":"5432"}]'
      - WHODB_MYSQL_1='{"alias":"staging","host":"localhost","user":"user","password":"pass","database":"db","port":"3306"}'
-  2. Saved connection from 'whodb-cli connections add'
+  2. Saved connection from 'whodb connections add'
 
   Saved connections take precedence when names collide.`,
 	Example: `  # Start MCP server (confirm-writes by default - you approve each write)
-  whodb-cli mcp serve
+  whodb mcp serve
 
   # Safe mode for demos/playgrounds (read-only + strict security)
-  whodb-cli mcp serve --safe-mode
+  whodb mcp serve --safe-mode
 
   # Read-only mode (no writes at all)
-  whodb-cli mcp serve --read-only
+  whodb mcp serve --read-only
 
   # Allow full write access without confirmation (use with caution)
-  whodb-cli mcp serve --allow-write
+  whodb mcp serve --allow-write
 
   # Strict security mode (blocks dangerous functions like pg_read_file)
-  whodb-cli mcp serve --security=strict
+  whodb mcp serve --security=strict
 
   # Custom timeout and row limit
-  whodb-cli mcp serve --timeout=60s --max-rows=500
+  whodb mcp serve --timeout=60s --max-rows=500
 
   # Run as HTTP service
-  whodb-cli mcp serve --transport=http --port=3000
+  whodb mcp serve --transport=http --port=3000
   # Endpoint: http://localhost:3000/mcp
   # Health:   http://localhost:3000/health
 
   # HTTP mode bound to all interfaces (can be used in Docker/Kubernetes)
-  whodb-cli mcp serve --transport=http --host=0.0.0.0 --port=8080
+  whodb mcp serve --transport=http --host=0.0.0.0 --port=8080
 
   # Enable only specific tools (minimal surface for read-only exploration)
-  whodb-cli mcp serve --tools=schemas,tables,columns,connections,suggestions
+  whodb mcp serve --tools=schemas,tables,columns,connections,suggestions
 
   # Disable query tool (only schema exploration)
-  whodb-cli mcp serve --disable-tools=query,confirm
+  whodb mcp serve --disable-tools=query,confirm
 
   # Restrict to specific connections (first becomes default)
-  whodb-cli mcp serve --allowed-connections=prod,staging
+  whodb mcp serve --allowed-connections=prod,staging
 
   # Run hosted WhoDB platform MCP mode only
-  whodb-cli mcp serve --platform
+  whodb mcp serve --platform
 
   # Hosted platform MCP config (stdio):
   {
     "mcpServers": {
       "whodb-platform": {
-        "command": "whodb-cli",
+        "command": "whodb",
         "args": ["mcp", "serve", "--platform"]
       }
     }
   }
 
   # Set default connection without restricting access
-  whodb-cli mcp serve --default-connection=prod
+  whodb mcp serve --default-connection=prod
 
   # Claude Desktop / Claude Code configuration (stdio):
   {
     "mcpServers": {
       "whodb": {
-        "command": "whodb-cli",
+        "command": "whodb",
         "args": ["mcp", "serve"],
         "env": {
           "WHODB_POSTGRES_1": "{\"alias\":\"prod\",\"host\":\"localhost\",\"user\":\"user\",\"password\":\"pass\",\"database\":\"db\"}"
@@ -370,7 +370,7 @@ func init() {
 
 	// Platform flags
 	mcpServeCmd.Flags().BoolVar(&mcpPlatform, "platform", false,
-		"Run hosted platform MCP mode only (requires whodb-cli login and use)")
+		"Run hosted platform MCP mode only (requires whodb login and use)")
 
 	// Tool enablement flags
 	mcpServeCmd.Flags().StringSliceVar(&mcpEnabledTools, "tools", nil,

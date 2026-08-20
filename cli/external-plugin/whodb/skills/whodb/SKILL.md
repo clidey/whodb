@@ -64,40 +64,40 @@ If MCP tools are unavailable, use the CLI directly via Bash:
 
 ### Query Execution
 ```bash
-whodb-cli query "SELECT * FROM users LIMIT 10" --connection mydb --format json
+whodb query "SELECT * FROM users LIMIT 10" --connection mydb --format json
 ```
 
 ### Schema Discovery
 ```bash
 # List schemas
-whodb-cli schemas --connection mydb --format json
+whodb schemas --connection mydb --format json
 
 # List tables
-whodb-cli tables --connection mydb --schema public --format json
+whodb tables --connection mydb --schema public --format json
 
 # Describe columns
-whodb-cli columns --connection mydb --table users --format json
+whodb columns --connection mydb --table users --format json
 ```
 
 ### Connection Management
 ```bash
 # List connections
-whodb-cli connections list --format json
+whodb connections list --format json
 
 # Test connection
-whodb-cli connections test mydb
+whodb connections test mydb
 
 # Add new connection (interactive)
-whodb-cli connections add --name mydb --type Postgres --host localhost --database mydb
+whodb connections add --name mydb --type Postgres --host localhost --database mydb
 ```
 
 ### Data Export
 ```bash
 # Export to CSV
-whodb-cli export --connection mydb --table users --output users.csv
+whodb export --connection mydb --table users --output users.csv
 
 # Export query results
-whodb-cli export --connection mydb --query "SELECT * FROM orders" --output orders.xlsx
+whodb export --connection mydb --query "SELECT * FROM orders" --output orders.xlsx
 ```
 
 ## Workflow Examples

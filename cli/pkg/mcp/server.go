@@ -1303,7 +1303,7 @@ func buildPlatformToolGuide(secOpts *SecurityOptions) platformToolGuideResource 
 		FieldProjection:   "Use fields on supported read tools to request only the top-level fields needed, then call again with more fields if needed.",
 		WriteBehavior:     platformResourceWriteBehavior(secOpts) + " Read whodb://platform/schema payload_shapes before using generic write tools.",
 		PermissionModel:   "The hosted platform is authoritative for permissions. Workspace selection only scopes requests after token-backed authorization.",
-		WorkspaceBehavior: "Use whodb_platform_status first. If no workspace is selected, use whodb_platform_orgs and whodb_platform_projects, then run whodb-cli use --org <org> --project <project>.",
+		WorkspaceBehavior: "Use whodb_platform_status first. If no workspace is selected, use whodb_platform_orgs and whodb_platform_projects, then run whodb use --org <org> --project <project>.",
 		Categories:        filterPlatformToolGuideCategories(categories),
 	}
 }
@@ -1539,7 +1539,7 @@ WhoDB EE is a hosted data workspace and semantic application platform. Do not tr
 
 Only whodb_platform_* tools are available. Local database tools such as whodb_query and whodb_connections are not exposed in this mode.
 
-Use the active whodb-cli hosted login and selected workspace. Start with whodb_platform_setup_status when setup may be unknown, then use whodb_platform_status to confirm host, signed-in user, organization, and project. If no workspace is selected, call whodb_platform_orgs and whodb_platform_projects, then ask the user to run whodb-cli use --org <org> --project <project>.
+Use the active whodb hosted login and selected workspace. Start with whodb_platform_setup_status when setup may be unknown, then use whodb_platform_status to confirm host, signed-in user, organization, and project. If no workspace is selected, call whodb_platform_orgs and whodb_platform_projects, then ask the user to run whodb use --org <org> --project <project>.
 
 Backend permissions are authoritative. The CLI may select a workspace, but the hosted platform decides what the signed-in user can read or change.
 
@@ -2430,7 +2430,7 @@ pass or when the task specifically asks for those views.
 
 Start with whodb_platform_setup_status when a session may be fresh or when any
 platform tool reports login/workspace errors. It does not require a valid hosted
-session and returns exact whodb-cli login/use commands for the user.
+session and returns exact whodb login/use commands for the user.
 
 Read tools return stable metadata such as count, request_id, scope, warnings, and
 truncated where applicable. Most read tools accept an optional fields array to
@@ -2497,9 +2497,9 @@ Available tools:
 - whodb_platform_confirm: Confirm pending hosted platform writes
 
 Setup:
-1. Run whodb-cli login
-2. Run whodb-cli use --org <org> --project <project>
-3. Start this server with whodb-cli mcp serve --platform
+1. Run whodb login
+2. Run whodb use --org <org> --project <project>
+3. Start this server with whodb mcp serve --platform
 
 Hosted create, update, delete, and action tools follow the same permission mode
 as local MCP writes. In default confirm-writes mode, they return confirmation

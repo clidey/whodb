@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
@@ -39,7 +40,7 @@ import (
 var cfgFile string
 
 var rootCmd = &cobra.Command{
-	Use:           "whodb-cli",
+	Use:           "whodb",
 	Short:         "WhoDB CLI - Interactive database management tool",
 	SilenceErrors: true,
 	Long: `WhoDB CLI is an interactive, production-ready command-line interface for navigating SQL and NoSQL databases.
@@ -112,10 +113,30 @@ Press ? in any view for keyboard shortcuts.`,
 func Execute() {
 	defer analytics.Shutdown()
 	configureRuntime()
+	warnIfInvokedAsLegacyName()
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
+}
+
+// legacyCommandName is the CLI's previous command/binary name, kept around as
+// a deprecated alias so existing installs and scripts keep working.
+const legacyCommandName = "whodb-cli"
+
+// warnIfInvokedAsLegacyName prints a one-time deprecation notice to stderr
+// when the binary is run under its old name (e.g. via a symlink, a stale
+// install, or an npm/Docker/Homebrew alias), pointing users at the new name.
+func warnIfInvokedAsLegacyName() {
+	if len(os.Args) == 0 {
+		return
+	}
+	invokedName := strings.TrimSuffix(filepath.Base(os.Args[0]), ".exe")
+	if invokedName != legacyCommandName {
+		return
+	}
+	fmt.Fprintf(os.Stderr, "Warning: %q is deprecated; use %q instead. %q will be removed in a future release.\n",
+		legacyCommandName, identity.Current().CommandName, legacyCommandName)
 }
 
 // runWithProfile loads a named profile, applies its settings, and connects.

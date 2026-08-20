@@ -636,7 +636,7 @@ WhoDB can run alongside existing tools during your transition period
 </Accordion>
 
 <Accordion title="Can I integrate WhoDB with my CI/CD pipeline?">
-Yes. Use the web container when you want a temporary inspection UI, and use `whodb-cli` or native database clients for scriptable pipeline steps.
+Yes. Use the web container when you want a temporary inspection UI, and use `whodb` or native database clients for scriptable pipeline steps.
 
 **WhoDB web service:**
 ```yaml
@@ -649,8 +649,8 @@ Yes. Use the web container when you want a temporary inspection UI, and use `who
 
 **Scriptable checks:**
 ```bash
-whodb-cli query "SELECT COUNT(*) FROM users" --connection mydb --format json
-whodb-cli export --connection mydb --table users --output users.csv
+whodb query "SELECT COUNT(*) FROM users" --connection mydb --format json
+whodb export --connection mydb --table users --output users.csv
 ```
 
 Use native database clients for migrations, full backups, restores, and SQL seed files. See our [CI/CD Integration Guide](/resources/integrations/ci-cd) for detailed examples.
@@ -660,7 +660,7 @@ Use native database clients for migrations, full backups, restores, and SQL seed
 Export table data as CSV or Excel from the table view, or script it:
 
 ```bash
-whodb-cli export --connection mydb --table users --output users.csv
+whodb export --connection mydb --table users --output users.csv
 ```
 
 For schema DDL and large-scale backups, use native database tools (`pg_dump --schema-only`, `mysqldump --no-data`, and so on).

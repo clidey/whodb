@@ -106,7 +106,7 @@ func runPlatformDoctor(ctx context.Context) platformDoctorReport {
 	if err != nil {
 		add("workspace", "fail", err.Error())
 	} else if session.Host.DefaultOrgID == "" || session.Host.DefaultProjectID == "" {
-		add("workspace", "fail", "no selected organization/project; run whodb-cli use --org <org> --project <project>")
+		add("workspace", "fail", "no selected organization/project; run whodb use --org <org> --project <project>")
 	} else {
 		add("workspace", "ok", session.Host.DefaultOrgName+" / "+session.Host.DefaultProjectName)
 	}

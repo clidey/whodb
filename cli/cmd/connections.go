@@ -63,16 +63,16 @@ Subcommands:
   remove  - Remove a saved connection
   test    - Test a connection`,
 	Example: `  # List all connections
-  whodb-cli connections list
+  whodb connections list
 
   # Add a new connection
-  whodb-cli connections add --name mydb --type postgres --host localhost --user admin --database myapp
+  whodb connections add --name mydb --type postgres --host localhost --user admin --database myapp
 
   # Test a connection
-  whodb-cli connections test mydb
+  whodb connections test mydb
 
   # Remove a connection
-  whodb-cli connections remove mydb`,
+  whodb connections remove mydb`,
 }
 
 // connections list
@@ -101,7 +101,7 @@ var connectionsListCmd = &cobra.Command{
 				return writeEmptyJSONArray(cmd)
 			}
 			out.Info("No connections available. Create one with:")
-			out.Info("  whodb-cli connect --type postgres --host localhost --user myuser --database mydb --name myconn")
+			out.Info("  whodb connect --type postgres --host localhost --user myuser --database mydb --name myconn")
 			return nil
 		}
 
@@ -176,16 +176,16 @@ var connectionsAddCmd = &cobra.Command{
 	SilenceErrors: true,
 	Long:          `Add a new database connection.`,
 	Example: `  # Add a PostgreSQL connection
-  whodb-cli connections add --name mydb --type Postgres --host localhost --port 5432 --user admin --password secret --database myapp
+  whodb connections add --name mydb --type Postgres --host localhost --port 5432 --user admin --password secret --database myapp
 
   # Add with schema
-  whodb-cli connections add --name mydb --type Postgres --host localhost --user admin --database myapp --schema public
+  whodb connections add --name mydb --type Postgres --host localhost --user admin --database myapp --schema public
 
  # Add with SSL
-  whodb-cli connections add --name mydb --type Postgres --host localhost --user admin --database myapp --ssl-mode verify-identity --ssl-ca ./ca.pem --ssl-server-name db.internal
+  whodb connections add --name mydb --type Postgres --host localhost --user admin --database myapp --ssl-mode verify-identity --ssl-ca ./ca.pem --ssl-server-name db.internal
 
   # Save a discovered cloud resource as a normal connection
-  whodb-cli connections add --from-discovered aws-prod-us-west-2/prod-db --user admin --database myapp`,
+  whodb connections add --from-discovered aws-prod-us-west-2/prod-db --user admin --database myapp`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := context.Background()
 		format, err := output.ParseFormat(connectionsFormat)
@@ -317,7 +317,7 @@ var connectionsRemoveCmd = &cobra.Command{
 	SilenceUsage:  true,
 	SilenceErrors: true,
 	Args:          cobra.ExactArgs(1),
-	Example:       `  whodb-cli connections remove mydb`,
+	Example:       `  whodb connections remove mydb`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := context.Background()
 		name := args[0]
@@ -373,7 +373,7 @@ var connectionsTestCmd = &cobra.Command{
 	SilenceUsage:  true,
 	SilenceErrors: true,
 	Args:          cobra.ExactArgs(1),
-	Example:       `  whodb-cli connections test mydb`,
+	Example:       `  whodb connections test mydb`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := context.Background()
 		startTime := time.Now()
