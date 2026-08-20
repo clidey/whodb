@@ -16,12 +16,30 @@
 
 package analytics
 
-import "strings"
+import (
+	"errors"
+	"strings"
+)
+
+// CodedError lets an error attach a stable, low-cardinality analytics code at
+// its construction site, bypassing ErrorCode's substring heuristics. Keeps
+// this package free of edition-specific imports — EE (or CE) code that owns a
+// typed/sentinel error can implement this to classify precisely.
+type CodedError interface {
+	error
+	Code() string
+}
 
 // ErrorCode maps raw errors into a stable low-cardinality taxonomy.
 func ErrorCode(err error) string {
 	if err == nil {
 		return ""
+	}
+	var coded CodedError
+	if errors.As(err, &coded) {
+		if code := strings.TrimSpace(coded.Code()); code != "" {
+			return code
+		}
 	}
 	message := strings.ToLower(strings.TrimSpace(err.Error()))
 	switch {
