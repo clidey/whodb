@@ -12,8 +12,8 @@ importers:
         specifier: 4.2.12
         version: 4.2.12(graphql-ws@6.1.0(graphql@16.11.0)(ws@8.21.1))(graphql@16.11.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)
       '@clidey/connparse':
-        specifier: 0.8.0
-        version: 0.8.0
+        specifier: 0.9.0
+        version: 0.9.0
       '@clidey/ux':
         specifier: 1.2.4
         version: 1.2.4(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-is@19.2.7)(react@19.2.8)(redux@5.0.1)
@@ -299,8 +299,8 @@ packages:
     resolution: {integrity: sha512-4zBIxpPzowiZpusoFkyGVwakdRJUyuH5PxQ/PrqghfdFWWasvnCdPfQXHrenDai+gyLARulZjZowCOj6fjT4pA==}
     engines: {node: '>=6.9.0'}
 
-  '@clidey/connparse@0.8.0':
-    resolution: {integrity: sha512-wD2nhrRCPTMET04jFMDkV8AKKfN4EcRELmPoiebMHe3Uwd/gptb5hqRdTRfVtZz5pETq3vpSbTeGe/qLSaXKaA==}
+  '@clidey/connparse@0.9.0':
+    resolution: {integrity: sha512-RlJ0hDi+ntZBRkO7zm9BfZc8QbS2erow9h7kga3R9OoKx8e4yOYEAaOfxgKVVqkogp9R9IYIbhVv+dLDz6GFYg==}
     hasBin: true
 
   '@clidey/ux@1.2.4':
@@ -5433,7 +5433,7 @@ snapshots:
       '@babel/helper-string-parser': 7.29.7
       '@babel/helper-validator-identifier': 7.29.7
 
-  '@clidey/connparse@0.8.0':
+  '@clidey/connparse@0.9.0':
     dependencies:
       yaml: 2.9.0
 
