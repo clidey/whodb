@@ -7,6 +7,6 @@
   },
   "dependencies": {
     "google-translate-api-x": "10.7.3",
-    "js-yaml": "5.2.2"
+    "js-yaml": "5.3.0"
   }
 }
