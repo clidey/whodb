@@ -103,7 +103,7 @@ parts:
       - GOPATH: "$HOME/go"
       - GOWORK: "$PWD/go.work.desktop-ce"
     build-snaps:
-      - go/latest/stable
+      - go/1.27/stable
     build-packages:
       - gcc
       - g++
