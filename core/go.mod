@@ -41,7 +41,7 @@ require (
 	github.com/posthog/posthog-go v1.23.1
 	github.com/redis/go-redis/v9 v9.22.0
 	github.com/shopspring/decimal v1.4.0
-	github.com/sirupsen/logrus v1.9.4
+	github.com/sirupsen/logrus v1.10.0
 	github.com/twpayne/go-geom v1.6.1
 	github.com/vektah/gqlparser/v2 v2.5.36
 	github.com/xuri/excelize/v2 v2.11.0
