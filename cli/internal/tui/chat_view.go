@@ -604,7 +604,28 @@ func (v *ChatView) View() string {
 	} else if len(v.models) == 0 {
 		b.WriteString(styles.RenderMuted("Press Ctrl+L to load models"))
 	} else {
-		for i, model := range v.models {
+		const visibleCount = 4
+		start := 0
+		if len(v.models) > visibleCount {
+			// Keep the selected model in view as the user navigates left/right.
+			start = v.selectedModel - visibleCount + 1
+			if start < 0 {
+				start = 0
+			}
+			if start > len(v.models)-visibleCount {
+				start = len(v.models) - visibleCount
+			}
+		}
+		end := start + visibleCount
+		if end > len(v.models) {
+			end = len(v.models)
+		}
+
+		if start > 0 {
+			b.WriteString(styles.RenderMuted(fmt.Sprintf("+%d more ", start)))
+		}
+		for i := start; i < end; i++ {
+			model := v.models[i]
 			displayName := model
 			if len(displayName) > 20 {
 				displayName = displayName[:17] + "..."
@@ -614,15 +635,12 @@ func (v *ChatView) View() string {
 			} else {
 				b.WriteString(styles.RenderMuted(fmt.Sprintf(" %s ", displayName)))
 			}
-			if i < len(v.models)-1 && i < 3 {
+			if i < end-1 {
 				b.WriteString(" ")
 			}
-			if i == 3 {
-				break
-			}
 		}
-		if len(v.models) > 4 {
-			b.WriteString(styles.RenderMuted(fmt.Sprintf(" +%d more", len(v.models)-4)))
+		if end < len(v.models) {
+			b.WriteString(styles.RenderMuted(fmt.Sprintf(" +%d more", len(v.models)-end)))
 		}
 	}
 	b.WriteString("\n\n")
