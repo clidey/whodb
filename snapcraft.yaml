@@ -99,12 +99,10 @@ parts:
     source-type: local
     build-environment:
       - CGO_ENABLED: "1"
-      - PATH: "/snap/go/current/bin:$PATH"
       - GOPATH: "$HOME/go"
       - GOWORK: "$PWD/go.work.desktop-ce"
-    build-snaps:
-      - go/1.27/stable
     build-packages:
+      - curl
       - gcc
       - g++
       - libgtk-3-dev
@@ -417,6 +415,36 @@ parts:
       - -**/*.pyo
       - -**/*.pyc
     override-build: |
+      # The Snap Store has no go/1.27 channel yet. Use the official Go
+      # distribution and verify it against the checksum published at go.dev/dl.
+      GO_VERSION=1.27.0
+      case "$(uname -m)" in
+        x86_64)
+          GO_ARCH=amd64
+          GO_SHA256=675c26c449cbb18fc24b74650de1eabbae6e16f64326fd85a283fb3b58280685
+          ;;
+        aarch64)
+          GO_ARCH=arm64
+          GO_SHA256=51798d2c42d0e1c6ed7fd9f48728b4193abac9e8aad6dbac2fe96a81f5909bda
+          ;;
+        *)
+          echo "Unsupported Go build architecture: $(uname -m)" >&2
+          exit 1
+          ;;
+      esac
+
+      GO_ARCHIVE="go${GO_VERSION}.linux-${GO_ARCH}.tar.gz"
+      curl --fail --location --retry 3 \
+        --output "/tmp/${GO_ARCHIVE}" \
+        "https://go.dev/dl/${GO_ARCHIVE}"
+      echo "${GO_SHA256}  /tmp/${GO_ARCHIVE}" | sha256sum --check -
+
+      rm -rf "${CRAFT_PART_BUILD}/go"
+      tar -C "${CRAFT_PART_BUILD}" -xzf "/tmp/${GO_ARCHIVE}"
+      export GOROOT="${CRAFT_PART_BUILD}/go"
+      export PATH="${GOROOT}/bin:${PATH}"
+      go version
+
       # Install Wails (required by Makefile) — version derived from go.mod
       WAILS_VERSION=$(grep 'github.com/wailsapp/wails/v2' ${SNAPCRAFT_PART_SRC}/desktop-common/go.mod | awk '{print $2}')
       go install github.com/wailsapp/wails/v2/cmd/wails@${WAILS_VERSION}

@@ -56,6 +56,7 @@ jobs:
             deb.nodesource.com:443
             dl.google.com:443
             esm.ubuntu.com:443
+            go.dev:443
             github.com:443
             motd.ubuntu.com:443
             packages.microsoft.com:443
