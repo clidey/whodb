@@ -66,22 +66,22 @@ Checks performed:
   - Missing primary key detection
   - Type mismatch warnings (e.g. _id column with TEXT type)`,
 	Example: `  # Audit a SQLite database directly
-  whodb-cli audit --type sqlite3 --database ./app.db
+  whodb audit --type sqlite3 --database ./app.db
 
   # Audit a Postgres database
-  whodb-cli audit --type postgres --host localhost --user alice --database mydb
+  whodb audit --type postgres --host localhost --user alice --database mydb
 
   # Audit using a saved connection
-  whodb-cli audit --connection mydb
+  whodb audit --connection mydb
 
   # Audit a specific table
-  whodb-cli audit --type sqlite3 --database ./app.db --table users
+  whodb audit --type sqlite3 --database ./app.db --table users
 
   # Output as JSON
-  whodb-cli audit --connection mydb --format json
+  whodb audit --connection mydb --format json
 
   # Custom null thresholds
-  whodb-cli audit --connection mydb --null-warning 15 --null-error 60`,
+  whodb audit --connection mydb --null-warning 15 --null-error 60`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		format, err := resolveAuditFormat(auditFormat)
 		if err != nil {
@@ -133,7 +133,7 @@ Checks performed:
 		} else {
 			conns := mgr.ListAvailableConnections()
 			if len(conns) == 0 {
-				return fmt.Errorf("provide --type and --database, or --connection:\n  whodb-cli audit --type sqlite3 --database ./app.db\n  whodb-cli audit --connection mydb")
+				return fmt.Errorf("provide --type and --database, or --connection:\n  whodb audit --type sqlite3 --database ./app.db\n  whodb audit --connection mydb")
 			}
 			conn = &conns[0]
 			out.Info("Using connection: %s", conn.Name)

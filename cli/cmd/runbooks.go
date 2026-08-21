@@ -95,10 +95,10 @@ var runbooksRunCmd = &cobra.Command{
 	SilenceUsage:  true,
 	SilenceErrors: true,
 	Args:          cobra.ExactArgs(1),
-	Example: `  whodb-cli runbooks run connection-doctor --connection prod
-  whodb-cli runbooks run schema-audit --connection prod --format json
-  whodb-cli runbooks run schema-diff --from staging --to prod --format json
-  whodb-cli runbooks run schema-audit --connection prod --dry-run`,
+	Example: `  whodb runbooks run connection-doctor --connection prod
+  whodb runbooks run schema-audit --connection prod --format json
+  whodb runbooks run schema-diff --from staging --to prod --format json
+  whodb runbooks run schema-audit --connection prod --dry-run`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		format, err := resolveRunbooksFormat(runbooksFormat)
 		if err != nil {

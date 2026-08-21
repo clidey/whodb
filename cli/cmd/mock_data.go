@@ -57,16 +57,16 @@ For safety, writes require an explicit connection and either:
   - an interactive confirmation prompt, or
   - --yes for non-interactive/automated runs.`,
 	Example: `  # Analyze the dependency plan without writing data
-  whodb-cli mock-data --connection mydb --table orders --rows 50 --analyze
+  whodb mock-data --connection mydb --table orders --rows 50 --analyze
 
   # Generate data with interactive confirmation
-  whodb-cli mock-data --connection mydb --schema public --table orders --rows 50
+  whodb mock-data --connection mydb --schema public --table orders --rows 50
 
   # Overwrite existing rows and skip the confirmation prompt
-  whodb-cli mock-data --connection mydb --table orders --rows 50 --overwrite --yes
+  whodb mock-data --connection mydb --table orders --rows 50 --overwrite --yes
 
   # Emit machine-readable JSON
-  whodb-cli mock-data --connection mydb --table orders --rows 50 --yes --format json`,
+  whodb mock-data --connection mydb --table orders --rows 50 --yes --format json`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if strings.TrimSpace(mockDataConnection) == "" {
 			return fmt.Errorf("--connection is required")

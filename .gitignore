@@ -42,7 +42,7 @@ msix-package-*/
 test-cert.*
 whodb-test.cer
 cli/build/
-cli/whodb-cli
+cli/whodb
 cli/.gocache
 .gocache
 #.claude/skills

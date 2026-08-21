@@ -114,15 +114,7 @@ func (v *SchemaView) Update(msg tea.Msg) (*SchemaView, tea.Cmd) {
 				}
 			}
 
-			headerLines := 6
-			if v.filtering || v.filterInput.Value() != "" {
-				headerLines = 8
-			}
-			footerLines := 4
-			maxVisibleLines := v.height - headerLines - footerLines
-			if maxVisibleLines < 5 {
-				maxVisibleLines = 5
-			}
+			maxVisibleLines := v.visibleLineBudget()
 
 			maxScroll := totalItems - maxVisibleLines
 			if maxScroll < 0 {
@@ -227,6 +219,32 @@ func (v *SchemaView) Update(msg tea.Msg) (*SchemaView, tea.Cmd) {
 func (v *SchemaView) View() string {
 	var b strings.Builder
 
+	b.WriteString(v.renderHeader())
+
+	if v.err != nil {
+		b.WriteString(styles.RenderErrorBox(v.err.Error()))
+		b.WriteString("\n\n")
+		b.WriteString(styles.RenderMuted("Press 'r' to retry"))
+	} else if v.loading {
+		b.WriteString(v.parent.SpinnerView() + styles.RenderMuted(" Loading schema..."))
+	} else if len(v.filteredTables) == 0 {
+		b.WriteString(styles.RenderMuted("No tables found."))
+	} else {
+		b.WriteString(v.renderTables())
+	}
+
+	b.WriteString("\n\n")
+	b.WriteString(v.renderFooter())
+
+	return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
+}
+
+// renderHeader renders the title and, when filtering is active or applied,
+// the filter input line. Extracted so visibleLineBudget can measure its
+// exact rendered height.
+func (v *SchemaView) renderHeader() string {
+	var b strings.Builder
+
 	b.WriteString(styles.RenderTitle("Database Schema"))
 	b.WriteString("\n\n")
 
@@ -246,56 +264,45 @@ func (v *SchemaView) View() string {
 		b.WriteString("\n\n")
 	}
 
-	if v.err != nil {
-		b.WriteString(styles.RenderErrorBox(v.err.Error()))
-		b.WriteString("\n\n")
-		b.WriteString(styles.RenderMuted("Press 'r' to retry"))
-	} else if v.loading {
-		b.WriteString(v.parent.SpinnerView() + styles.RenderMuted(" Loading schema..."))
-	} else if len(v.filteredTables) == 0 {
-		b.WriteString(styles.RenderMuted("No tables found."))
-	} else {
-		b.WriteString(v.renderTables())
-	}
+	return b.String()
+}
 
-	b.WriteString("\n\n")
-
+// renderFooter renders the shortcut help text for the current mode.
+// Extracted so visibleLineBudget can measure its exact rendered height.
+func (v *SchemaView) renderFooter() string {
 	if v.filtering {
-		b.WriteString(renderBindingHelpWidthNoHelp(v.width,
+		return renderBindingHelpWidthNoHelp(v.width,
 			Keys.Filter.CancelFilter,
 			Keys.Filter.ApplyFilter,
-		))
-	} else {
-		b.WriteString(RenderBindingHelpWidth(v.width,
-			Keys.Schema.Up,
-			Keys.Schema.Down,
-			Keys.Schema.Toggle,
-			Keys.Schema.ViewData,
-			Keys.Schema.Filter,
-			Keys.Schema.Refresh,
-			Keys.Global.Back,
-		))
+		)
 	}
+	return RenderBindingHelpWidth(v.width,
+		Keys.Schema.Up,
+		Keys.Schema.Down,
+		Keys.Schema.Toggle,
+		Keys.Schema.ViewData,
+		Keys.Schema.Filter,
+		Keys.Schema.Refresh,
+		Keys.Global.Back,
+	)
+}
 
-	return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
+// visibleLineBudget returns how many table/column rows can be shown given
+// the terminal height minus the header and footer's actual rendered
+// height, measured via lipgloss.Height rather than a fixed guess.
+func (v *SchemaView) visibleLineBudget() int {
+	overhead := lipgloss.Height(v.renderHeader()) + 2 + lipgloss.Height(v.renderFooter())
+	maxVisibleLines := v.height - overhead
+	if maxVisibleLines < 5 {
+		maxVisibleLines = 5
+	}
+	return maxVisibleLines
 }
 
 func (v *SchemaView) renderTables() string {
 	var b strings.Builder
 
-	// Calculate available lines for content
-	// Header takes: title(2) + filter(2 if shown) + blank line = ~5 lines
-	// Footer takes: blank line + help(2 lines) = ~3 lines
-	// Total overhead: ~8-10 lines
-	headerLines := 6
-	if v.filtering || v.filterInput.Value() != "" {
-		headerLines = 8
-	}
-	footerLines := 4
-	maxVisibleLines := v.height - headerLines - footerLines
-	if maxVisibleLines < 5 {
-		maxVisibleLines = 5
-	}
+	maxVisibleLines := v.visibleLineBudget()
 
 	// Build a list of all visible items (tables + their columns if expanded)
 	type viewItem struct {
@@ -506,15 +513,7 @@ func (v *SchemaView) ensureSelectedVisible() {
 	}
 
 	// Calculate viewport
-	headerLines := 6
-	if v.filtering || v.filterInput.Value() != "" {
-		headerLines = 8
-	}
-	footerLines := 4
-	maxVisibleLines := v.height - headerLines - footerLines
-	if maxVisibleLines < 5 {
-		maxVisibleLines = 5
-	}
+	maxVisibleLines := v.visibleLineBudget()
 
 	// Adjust scroll offset to keep selected item visible
 	if selectedItemIndex < v.scrollOffset {

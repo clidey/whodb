@@ -14,7 +14,7 @@ The default configuration uses npx to auto-download and run the MCP server:
 {
   "whodb": {
     "command": "npx",
-    "args": ["-y", "@clidey/whodb-cli", "mcp", "serve"]
+    "args": ["-y", "whodb", "mcp", "serve"]
   }
 }
 ```
@@ -46,7 +46,7 @@ Install the CLI once, then it runs instantly:
 {
   "mcpServers": {
     "whodb": {
-      "command": "whodb-cli",
+      "command": "whodb",
       "args": ["mcp", "serve"]
     }
   }
@@ -56,8 +56,10 @@ Install the CLI once, then it runs instantly:
 ### Method 4: Homebrew (macOS/Linux)
 
 ```bash
-brew install clidey/tap/whodb-cli
+brew install whodb-cli
 ```
+
+The formula is named `whodb-cli` (the `whodb` name is used by the desktop app cask), but it installs the `whodb` command.
 
 ### Method 5: Go Install (Requires Go)
 
@@ -89,8 +91,8 @@ Download the latest release from [GitHub Releases](https://github.com/clidey/who
 ```bash
 git clone https://github.com/clidey/whodb.git
 cd whodb/cli
-go build -o whodb-cli .
-sudo mv whodb-cli /usr/local/bin/
+go build -o whodb .
+sudo mv whodb /usr/local/bin/
 ```
 
 ### Option 3: Docker
@@ -121,7 +123,7 @@ export WHODB_MYSQL_1='{"alias":"dev","host":"localhost","user":"user","password"
 Or use the CLI to save connections:
 
 ```bash
-whodb-cli connect --type postgres --host localhost --port 5432 --user myuser --database mydb --name prod
+whodb connect --type postgres --host localhost --port 5432 --user myuser --database mydb --name prod
 ```
 
 ## MCP Tools

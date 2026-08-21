@@ -12,4 +12,4 @@ dependencies:
       description: "WhoDB MCP server for database operations"
       transport: "stdio"
       command: "npx"
-      args: ["-y", "@clidey/whodb-cli", "mcp", "serve"]
+      args: ["-y", "whodb", "mcp", "serve"]

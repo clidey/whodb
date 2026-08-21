@@ -1,0 +1,28 @@
+#!/usr/bin/env node
+
+// Thin wrapper: the real launcher lives in @clidey/whodb-cli.
+const path = require('path');
+const { spawn } = require('child_process');
+
+let launcherPath;
+try {
+  const packagePath = require.resolve('@clidey/whodb-cli/package.json');
+  launcherPath = path.join(path.dirname(packagePath), 'bin', 'whodb');
+} catch (e) {
+  console.error('Could not find @clidey/whodb-cli.');
+  console.error('Try reinstalling: npm install @clidey/whodb');
+  process.exit(1);
+}
+
+const child = spawn(process.execPath, [launcherPath, ...process.argv.slice(2)], {
+  stdio: 'inherit',
+});
+
+child.on('error', (err) => {
+  console.error('Failed to start WhoDB CLI:', err.message);
+  process.exit(1);
+});
+
+child.on('exit', (code) => {
+  process.exit(code || 0);
+});

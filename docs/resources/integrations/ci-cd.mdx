@@ -1,6 +1,6 @@
 ---
 title: "CI/CD Integration"
-description: "Use WhoDB and the whodb-cli in CI/CD pipelines for database validation, exports, imports, and data-quality checks"
+description: "Use WhoDB and the whodb in CI/CD pipelines for database validation, exports, imports, and data-quality checks"
 ---
 
 # CI/CD Integration
@@ -8,11 +8,11 @@ description: "Use WhoDB and the whodb-cli in CI/CD pipelines for database valida
 Use CI/CD for repeatable database work. With WhoDB today, the practical paths are:
 
 - Run `clidey/whodb:latest` as a temporary web UI for inspecting a test or staging database.
-- Run `whodb-cli` for scriptable checks such as listing schemas, listing tables, running validation queries, exporting rows, importing CSV or Excel fixtures, and running data-quality audits.
+- Run `whodb` for scriptable checks such as listing schemas, listing tables, running validation queries, exporting rows, importing CSV or Excel fixtures, and running data-quality audits.
 - Keep migrations, full backups, restores, and large bulk loads in your database-native tooling such as `psql`, `mysql`, `pg_dump`, `mysqldump`, `COPY`, or `LOAD DATA`.
 
 <Note>
-`GET /health` returns plain text `ok` when the WhoDB server is running. Validate database state separately with a database client or `whodb-cli query`.
+`GET /health` returns plain text `ok` when the WhoDB server is running. Validate database state separately with a database client or `whodb query`.
 </Note>
 
 ## Common Pipeline Patterns
@@ -22,7 +22,7 @@ Use CI/CD for repeatable database work. With WhoDB today, the practical paths ar
 Apply migrations to a disposable database, then verify the expected tables, columns, and constraints.
 </Card>
 <Card title="Fixture Loading" icon="table">
-Use native SQL seed files or `whodb-cli import` for CSV and Excel fixtures.
+Use native SQL seed files or `whodb import` for CSV and Excel fixtures.
 </Card>
 <Card title="Data Validation" icon="check">
 Run row counts, orphan checks, and business-rule queries after migrations or imports.
@@ -104,7 +104,7 @@ jobs:
           npm run test
 ```
 
-## Scriptable Checks With whodb-cli
+## Scriptable Checks With whodb
 
 The CLI can read the same environment-defined connection profile format used by the web app.
 
@@ -116,20 +116,20 @@ Use the CLI when you want a WhoDB-flavored command surface in a pipeline:
 
 ```bash
 # List schemas and tables
-npx @clidey/whodb-cli schemas --connection ci-postgres --format json
-npx @clidey/whodb-cli tables --connection ci-postgres --schema public --format json
+npx @clidey/whodb schemas --connection ci-postgres --format json
+npx @clidey/whodb tables --connection ci-postgres --schema public --format json
 
 # Run validation SQL
-npx @clidey/whodb-cli query "SELECT COUNT(*) FROM users" --connection ci-postgres --format json
+npx @clidey/whodb query "SELECT COUNT(*) FROM users" --connection ci-postgres --format json
 
 # Export a table for artifacts or downstream checks
-npx @clidey/whodb-cli export --connection ci-postgres --table users --format csv --output users.csv
+npx @clidey/whodb export --connection ci-postgres --table users --format csv --output users.csv
 
 # Import CSV or Excel fixtures
-npx @clidey/whodb-cli import --connection ci-postgres --file test/fixtures/users.csv --table users
+npx @clidey/whodb import --connection ci-postgres --file test/fixtures/users.csv --table users
 
 # Run data-quality checks
-npx @clidey/whodb-cli audit --connection ci-postgres --schema public --format json
+npx @clidey/whodb audit --connection ci-postgres --schema public --format json
 ```
 
 <Tip>
@@ -143,7 +143,7 @@ Use the path that matches your fixture format:
 ### CSV Or Excel
 
 ```bash
-npx @clidey/whodb-cli import \
+npx @clidey/whodb import \
   --connection ci-postgres \
   --file test/fixtures/users.csv \
   --table users \

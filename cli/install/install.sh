@@ -15,7 +15,9 @@ set -e
 
 # Configuration
 REPO="clidey/whodb"
-BINARY_NAME="whodb-cli"
+# Release assets keep the whodb-cli- prefix; the installed command is "whodb".
+ASSET_NAME="whodb-cli"
+INSTALL_NAME="whodb"
 INSTALL_DIR="${WHODB_INSTALL_DIR:-$HOME/.local/bin}"
 
 # Colors for output
@@ -113,7 +115,7 @@ main() {
     print_step "Installing version: ${version}"
 
     # Construct binary name
-    binary_suffix="${BINARY_NAME}-${os}-${arch}"
+    binary_suffix="${ASSET_NAME}-${os}-${arch}"
     download_url="https://github.com/${REPO}/releases/download/${version}/${binary_suffix}"
 
     # Create temp directory
@@ -123,31 +125,36 @@ main() {
     # Download binary
     print_step "Downloading ${binary_suffix}..."
     if command_exists curl; then
-        curl -fsSL -o "${tmp_dir}/${BINARY_NAME}" "$download_url"
+        curl -fsSL -o "${tmp_dir}/${INSTALL_NAME}" "$download_url"
     elif command_exists wget; then
-        wget -q -O "${tmp_dir}/${BINARY_NAME}" "$download_url"
+        wget -q -O "${tmp_dir}/${INSTALL_NAME}" "$download_url"
     else
         print_error "Neither curl nor wget found. Please install one of them."
         exit 1
     fi
 
     # Verify download
-    if [ ! -f "${tmp_dir}/${BINARY_NAME}" ] || [ ! -s "${tmp_dir}/${BINARY_NAME}" ]; then
+    if [ ! -f "${tmp_dir}/${INSTALL_NAME}" ] || [ ! -s "${tmp_dir}/${INSTALL_NAME}" ]; then
         print_error "Download failed or file is empty"
         print_error "URL: ${download_url}"
         exit 1
     fi
 
     # Make executable
-    chmod +x "${tmp_dir}/${BINARY_NAME}"
+    chmod +x "${tmp_dir}/${INSTALL_NAME}"
 
     # Create install directory
     mkdir -p "$INSTALL_DIR"
 
     # Install binary
-    install_path="${INSTALL_DIR}/${BINARY_NAME}"
+    install_path="${INSTALL_DIR}/${INSTALL_NAME}"
     print_step "Installing to ${install_path}..."
-    mv "${tmp_dir}/${BINARY_NAME}" "$install_path"
+    mv "${tmp_dir}/${INSTALL_NAME}" "$install_path"
+
+    # Keep a deprecated "whodb-cli" alias pointing at the new binary so
+    # existing scripts keep working. It prints a warning and will be removed
+    # in a future release.
+    ln -sf "$INSTALL_NAME" "${INSTALL_DIR}/whodb-cli"
 
     # Verify installation
     if [ ! -x "$install_path" ]; then
@@ -190,9 +197,9 @@ main() {
 
     # Show usage
     echo "Get started:"
-    echo "  ${BINARY_NAME}          # Launch interactive TUI"
-    echo "  ${BINARY_NAME} mcp      # Run as MCP server"
-    echo "  ${BINARY_NAME} --help   # Show help"
+    echo "  ${INSTALL_NAME}          # Launch interactive TUI"
+    echo "  ${INSTALL_NAME} mcp      # Run as MCP server"
+    echo "  ${INSTALL_NAME} --help   # Show help"
     echo ""
     echo "Documentation: https://github.com/clidey/whodb/tree/main/cli#readme"
 }

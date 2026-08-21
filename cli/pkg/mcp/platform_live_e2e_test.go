@@ -1644,7 +1644,7 @@ func liveMintDevRefreshToken(t *testing.T, ctx context.Context, keycloakURL, hos
 	t.Helper()
 	endpoint := strings.TrimRight(keycloakURL, "/") + "/realms/mothergate/protocol/openid-connect/token"
 	form := url.Values{
-		"client_id":  {"whodb-cli"},
+		"client_id":  {"whodb"},
 		"grant_type": {"password"},
 		"username":   {username},
 		"password":   {password},

@@ -1476,7 +1476,7 @@ func loadPlatformSession(ctx context.Context, hostFlag string) (*platformSession
 	}
 	entry, ok := cfg.GetPlatformHost(host)
 	if !ok || entry.AccountID == "" {
-		return nil, fmt.Errorf("not logged in to %s; run whodb-cli login --host %s", host, host)
+		return nil, fmt.Errorf("not logged in to %s; run whodb login --host %s", host, host)
 	}
 	refreshToken, err := cfg.GetPlatformRefreshToken(host, entry.AccountID)
 	if err != nil {
@@ -1488,7 +1488,7 @@ func loadPlatformSession(ctx context.Context, hostFlag string) (*platformSession
 			if clearErr := clearPlatformLogin(cfg, host, entry.AccountID); clearErr != nil {
 				return nil, fmt.Errorf("hosted WhoDB session expired and local credentials could not be removed: %w", clearErr)
 			}
-			return nil, fmt.Errorf("hosted WhoDB session expired; run whodb-cli login --host %s", host)
+			return nil, fmt.Errorf("hosted WhoDB session expired; run whodb login --host %s", host)
 		}
 		return nil, err
 	}
@@ -1892,7 +1892,7 @@ func clearPlatformLogin(cfg *config.Config, host, accountID string) error {
 }
 
 func localLogoutHint(host string) string {
-	return fmt.Sprintf("If this host is no longer reachable, remove only the local CLI credentials with:\n  whodb-cli logout --host %s --local", host)
+	return fmt.Sprintf("If this host is no longer reachable, remove only the local CLI credentials with:\n  whodb logout --host %s --local", host)
 }
 
 func resolvePlatformProject(ctx context.Context, session *platformSession, orgValue, projectValue string) (*platform.Organization, *platform.Project, error) {
@@ -2171,7 +2171,7 @@ func resolveOrganization(ctx context.Context, client *platform.Client, host conf
 		return &orgs[0], nil
 	}
 	if needle == "" {
-		return nil, fmt.Errorf("no organization selected; run whodb-cli use --org <org> --project <project> or pass --org")
+		return nil, fmt.Errorf("no organization selected; run whodb use --org <org> --project <project> or pass --org")
 	}
 	for _, org := range orgs {
 		if matchesPlatformIdentifier(needle, org.ID, org.Slug, org.Name) {

@@ -740,7 +740,7 @@ func mintDevRefreshToken(t *testing.T, ctx context.Context, keycloakURL, hostHea
 	t.Helper()
 	endpoint := strings.TrimRight(keycloakURL, "/") + "/realms/mothergate/protocol/openid-connect/token"
 	form := url.Values{
-		"client_id":  {"whodb-cli"},
+		"client_id":  {"whodb"},
 		"grant_type": {"password"},
 		"username":   {username},
 		"password":   {password},
@@ -858,7 +858,7 @@ func runRawCommand(t *testing.T, args ...string) string {
 	t.Helper()
 	stdout, stderr, exitCode := testharness.RunCLI(t, args...)
 	if exitCode != 0 {
-		t.Fatalf("CLI command failed: whodb-cli %s\nstdout:\n%s\nstderr:\n%s", strings.Join(args, " "), stdout, stderr)
+		t.Fatalf("CLI command failed: whodb %s\nstdout:\n%s\nstderr:\n%s", strings.Join(args, " "), stdout, stderr)
 	}
 	return stdout
 }
@@ -867,7 +867,7 @@ func runCommandFailure(t *testing.T, args ...string) (string, string, int) {
 	t.Helper()
 	stdout, stderr, exitCode := testharness.RunCLI(t, args...)
 	if exitCode == 0 {
-		t.Fatalf("CLI command succeeded unexpectedly: whodb-cli %s\nstdout:\n%s\nstderr:\n%s", strings.Join(args, " "), stdout, stderr)
+		t.Fatalf("CLI command succeeded unexpectedly: whodb %s\nstdout:\n%s\nstderr:\n%s", strings.Join(args, " "), stdout, stderr)
 	}
 	return stdout, stderr, exitCode
 }
@@ -896,7 +896,7 @@ func runJSONCommand[T any](t *testing.T, args ...string) T {
 	stdout := runRawCommand(t, args...)
 	var value T
 	if err := json.Unmarshal([]byte(stdout), &value); err != nil {
-		t.Fatalf("decode JSON from whodb-cli %s: %v\noutput:\n%s", strings.Join(args, " "), err, stdout)
+		t.Fatalf("decode JSON from whodb %s: %v\noutput:\n%s", strings.Join(args, " "), err, stdout)
 	}
 	return value
 }
@@ -923,10 +923,10 @@ func runMutationID(t *testing.T, args ...string) string {
 		ID string `json:"id"`
 	}
 	if err := json.Unmarshal(data, &decoded); err != nil {
-		t.Fatalf("decode mutation result for whodb-cli %s: %v\nraw:\n%s", strings.Join(args, " "), err, string(data))
+		t.Fatalf("decode mutation result for whodb %s: %v\nraw:\n%s", strings.Join(args, " "), err, string(data))
 	}
 	if decoded.ID == "" {
-		t.Fatalf("mutation result for whodb-cli %s did not include id: %s", strings.Join(args, " "), string(data))
+		t.Fatalf("mutation result for whodb %s did not include id: %s", strings.Join(args, " "), string(data))
 	}
 	return decoded.ID
 }
@@ -939,10 +939,10 @@ func runMutationOK(t *testing.T, args ...string) json.RawMessage {
 		Data      json.RawMessage `json:"Data"`
 	}
 	if err := json.Unmarshal(envelope.Data, &mutation); err != nil {
-		t.Fatalf("decode mutation envelope data for whodb-cli %s: %v\nraw:\n%s", strings.Join(args, " "), err, string(envelope.Data))
+		t.Fatalf("decode mutation envelope data for whodb %s: %v\nraw:\n%s", strings.Join(args, " "), err, string(envelope.Data))
 	}
 	if len(mutation.Data) == 0 {
-		t.Fatalf("mutation envelope for whodb-cli %s did not include data: %s", strings.Join(args, " "), string(envelope.Data))
+		t.Fatalf("mutation envelope for whodb %s did not include data: %s", strings.Join(args, " "), string(envelope.Data))
 	}
 	return mutation.Data
 }

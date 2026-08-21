@@ -30,11 +30,11 @@ func TestDefaultThemeIsSet(t *testing.T) {
 
 func TestListThemes(t *testing.T) {
 	names := ListThemes()
-	if len(names) != 8 {
-		t.Errorf("Expected 8 themes, got %d", len(names))
+	if len(names) != 7 {
+		t.Errorf("Expected 7 themes, got %d", len(names))
 	}
 
-	expected := []string{"default", "light", "monokai", "dracula", "nord", "gruvbox", "tokyo-night", "catppuccin"}
+	expected := []string{"default", "monokai", "dracula", "nord", "gruvbox", "tokyo-night", "catppuccin"}
 	for i, name := range expected {
 		if i >= len(names) {
 			break

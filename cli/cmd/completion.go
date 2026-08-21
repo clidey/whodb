@@ -37,13 +37,13 @@ var completionCmd = &cobra.Command{
 
 Examples:
   # Install completion for your current shell (recommended)
-  whodb-cli completion install
+  whodb completion install
 
   # Print completion script for bash to stdout
-  whodb-cli completion bash|zsh|fish|powershell
+  whodb completion bash|zsh|fish|powershell
 
   # Install completion for a specific shell
-  whodb-cli completion install bash`,
+  whodb completion install bash`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Default behavior with no args: show help instead of printing a script

@@ -269,6 +269,43 @@ func TestChatView_ModelSelection_LeftRight(t *testing.T) {
 	}
 }
 
+func TestChatView_ModelSelection_ScrollsIntoView(t *testing.T) {
+	v, cleanup := setupChatViewTest(t)
+	defer cleanup()
+
+	v.consented = true
+	v.focusField = focusFieldModel
+	v.models = []string{"m0", "m1", "m2", "m3", "m4", "m5"}
+	v.selectedModel = 0
+
+	view := v.View()
+	if !strings.Contains(view, "m0") || !strings.Contains(view, "m3") {
+		t.Errorf("Expected first window to show m0..m3, got: %s", view)
+	}
+	if strings.Contains(view, "m4") || strings.Contains(view, "m5") {
+		t.Errorf("Expected m4/m5 to be hidden behind '+2 more', got: %s", view)
+	}
+	if !strings.Contains(view, "+2 more") {
+		t.Errorf("Expected '+2 more' indicator, got: %s", view)
+	}
+
+	// Navigate right past the initial window — selection should scroll into view.
+	for i := 0; i < 5; i++ {
+		v, _ = v.Update(tea.KeyPressMsg{Code: tea.KeyRight})
+	}
+	if v.selectedModel != 5 {
+		t.Fatalf("Expected selectedModel 5, got %d", v.selectedModel)
+	}
+
+	view = v.View()
+	if !strings.Contains(view, "m5") {
+		t.Errorf("Expected selected model m5 to be visible after scrolling right, got: %s", view)
+	}
+	if !strings.Contains(view, "+2 more") {
+		t.Errorf("Expected '+2 more' indicator for the hidden leading models, got: %s", view)
+	}
+}
+
 func TestChatView_ModelSelection_WrapAround(t *testing.T) {
 	v, cleanup := setupChatViewTest(t)
 	defer cleanup()

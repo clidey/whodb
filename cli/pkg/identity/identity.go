@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	defaultCommandName        = "whodb-cli"
+	defaultCommandName        = "whodb"
 	defaultDisplayName        = "WhoDB CLI"
 	defaultHomeDirName        = ".whodb-cli"
 	defaultViperEnvPrefix     = "WHODB_CLI"
@@ -97,7 +97,6 @@ func ReplaceText(text string) string {
 	cfg := Current()
 	replacer := strings.NewReplacer(
 		"WhoDB CLI", cfg.DisplayName,
-		"whodb-cli", cfg.CommandName,
 		".whodb-cli", cfg.HomeDirName,
 	)
 	return replacer.Replace(text)

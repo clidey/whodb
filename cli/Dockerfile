@@ -14,7 +14,7 @@
 
 # WhoDB CLI Dockerfile
 
-FROM golang:1.26.5-alpine3.24 AS builder
+FROM golang:1.27.0-alpine3.24 AS builder
 
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 
@@ -59,10 +59,10 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     CGO_LDFLAGS="-Wl,--gc-sections -Wl,--as-needed -flto -lduckdb_musl_compat" \
     CGO_ENABLED=1 GOOS=linux GOARCH=${TARGETARCH} go build -trimpath \
     -ldflags "-s -w -X github.com/clidey/whodb/cli/pkg/version.Version=${VERSION}" \
-    -o /whodb-cli .
+    -o /whodb .
 
-RUN chmod +x /whodb-cli && \
-    upx --best /whodb-cli
+RUN chmod +x /whodb && \
+    upx --best /whodb
 
 # Pre-download BAML native library for the target architecture (musl for Alpine)
 # Extract BAML version from go.mod to stay in sync
@@ -88,7 +88,12 @@ RUN apk add --no-cache ca-certificates libgcc libstdc++
 
 WORKDIR /app
 
-COPY --from=builder /whodb-cli /usr/local/bin/whodb-cli
+COPY --from=builder /whodb /usr/local/bin/whodb
+
+# Deprecated alias for "whodb", kept for existing scripts. It prints a
+# warning (via argv0 detection in the binary) and will be removed in a
+# future release.
+RUN ln -s /usr/local/bin/whodb /usr/local/bin/whodb-cli
 
 # Copy BAML musl library and set path via env var
 COPY --from=builder /baml-lib/libbaml_cffi.so /usr/local/lib/libbaml_cffi.so
@@ -97,5 +102,5 @@ ENV BAML_LIBRARY_PATH=/usr/local/lib/libbaml_cffi.so
 # Create config directory
 RUN mkdir -p /root/.whodb-cli
 
-ENTRYPOINT ["whodb-cli"]
+ENTRYPOINT ["whodb"]
 CMD ["--help"]

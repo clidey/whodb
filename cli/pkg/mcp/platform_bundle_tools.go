@@ -277,7 +277,7 @@ func applyPlatformSetupGuidance(output *PlatformSetupStatusOutput) {
 		host = platformapi.DefaultHost
 		output.Host = host
 	}
-	loginCommand := fmt.Sprintf("whodb-cli login --host %s", host)
+	loginCommand := fmt.Sprintf("whodb login --host %s", host)
 	useCommand := platformUseCommand(host)
 	switch output.Status {
 	case "ready":

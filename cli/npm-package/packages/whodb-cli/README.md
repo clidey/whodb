@@ -2,6 +2,10 @@
 
 WhoDB CLI - a powerful database management tool with interactive TUI, programmatic commands, and MCP server for AI assistants.
 
+Installing this package provides the `whodb` command. If you'd rather use a
+namespaced package name, install [`@clidey/whodb`](https://www.npmjs.com/package/@clidey/whodb)
+instead — both provide the same command.
+
 ## Installation
 
 ```bash
@@ -11,6 +15,8 @@ npx @clidey/whodb-cli --help
 # Or install globally
 npm install -g @clidey/whodb-cli
 ```
+
+Both install methods provide the `whodb` command.
 
 ## Features
 
@@ -34,26 +40,26 @@ npm install -g @clidey/whodb-cli
 ### Interactive Mode (TUI)
 
 ```bash
-npx @clidey/whodb-cli
+npx @clidey/whodb
 ```
 
 ### Programmatic Commands
 
 ```bash
 # Query a database
-npx @clidey/whodb-cli query "SELECT * FROM users LIMIT 10" --connection mydb
+npx @clidey/whodb query "SELECT * FROM users LIMIT 10" --connection mydb
 
 # List schemas
-npx @clidey/whodb-cli schemas --connection mydb --format json
+npx @clidey/whodb schemas --connection mydb --format json
 
 # List tables
-npx @clidey/whodb-cli tables --connection mydb --schema public
+npx @clidey/whodb tables --connection mydb --schema public
 
 # Describe columns
-npx @clidey/whodb-cli columns --connection mydb --table users
+npx @clidey/whodb columns --connection mydb --table users
 
 # Export data
-npx @clidey/whodb-cli export --connection mydb --table users --format csv --output users.csv
+npx @clidey/whodb export --connection mydb --table users --format csv --output users.csv
 ```
 
 ### MCP Server Mode
@@ -61,7 +67,7 @@ npx @clidey/whodb-cli export --connection mydb --table users --format csv --outp
 Start as an MCP server for AI assistant integration:
 
 ```bash
-npx @clidey/whodb-cli mcp serve
+npx @clidey/whodb mcp serve
 ```
 
 Write operations require confirmation by default. Use `--allow-write` to disable confirmations or `--read-only` to block writes.
@@ -69,18 +75,18 @@ Write operations require confirmation by default. Use `--allow-write` to disable
 Restrict AI access to specific connections with `--allowed-connections`:
 
 ```bash
-npx @clidey/whodb-cli mcp serve --allowed-connections prod,staging
+npx @clidey/whodb mcp serve --allowed-connections prod,staging
 ```
 
 ## MCP Client Configuration (Example)
 
-Example configuration (from `whodb-cli mcp serve --help`):
+Example configuration (from `whodb mcp serve --help`):
 
 ```json
 {
   "mcpServers": {
     "whodb": {
-      "command": "whodb-cli",
+      "command": "whodb",
       "args": ["mcp", "serve"],
       "env": {
         "WHODB_POSTGRES_1": "{\"alias\":\"prod\",\"host\":\"localhost\",\"user\":\"user\",\"password\":\"pass\",\"database\":\"db\"}"
@@ -95,11 +101,11 @@ Example configuration (from `whodb-cli mcp serve --help`):
 Install native assistant configuration with the bundled CLI:
 
 ```bash
-npx @clidey/whodb-cli skills install --target cursor
-npx @clidey/whodb-cli skills install --target vscode
-npx @clidey/whodb-cli skills install --target gemini-cli
-npx @clidey/whodb-cli skills install --target claude-code --include-agents
-npx @clidey/whodb-cli skills install --target cursor --dry-run
+npx @clidey/whodb skills install --target cursor
+npx @clidey/whodb skills install --target vscode
+npx @clidey/whodb skills install --target gemini-cli
+npx @clidey/whodb skills install --target claude-code --include-agents
+npx @clidey/whodb skills install --target cursor --dry-run
 ```
 
 Supported targets: `codex`, `claude-code`, `cursor`, `vscode`, `github-copilot`, `gemini-cli`, `windsurf`, `opencode`, `cline`, `zed`, `continue`, and `aider`.

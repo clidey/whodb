@@ -131,6 +131,8 @@ func (v *WhereView) Update(msg tea.Msg) (*WhereView, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
+		v.width = msg.Width
+		v.height = msg.Height
 		v.valueInput.SetWidth(clamp(msg.Width-16, 15, 50))
 		return v, nil
 
@@ -389,123 +391,174 @@ func (v *WhereView) Update(msg tea.Msg) (*WhereView, tea.Cmd) {
 
 // View renders the WHERE condition builder.
 func (v *WhereView) View() string {
-	var b strings.Builder
-
-	b.WriteString(styles.RenderTitle("WHERE Conditions"))
-	b.WriteString("\n")
-	b.WriteString(styles.RenderMuted(fmt.Sprintf("Table: %s.%s", v.schema, v.tableName)))
-	b.WriteString("\n\n")
+	header := styles.RenderTitle("WHERE Conditions") + "\n" +
+		styles.RenderMuted(fmt.Sprintf("Table: %s.%s", v.schema, v.tableName)) + "\n\n"
 
 	if len(v.groups) == 0 || (v.totalConditionCount() == 0 && !v.hasMultipleGroups()) {
+		var b strings.Builder
+		b.WriteString(header)
 		b.WriteString(styles.RenderMuted("No conditions added yet"))
-	} else {
-		b.WriteString(styles.RenderKey("Current Conditions:"))
 		b.WriteString("\n\n")
-		b.WriteString(v.renderTree())
+		b.WriteString(v.renderTrailer())
+		return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
 	}
 
+	treeHeader := styles.RenderKey("Current Conditions:") + "\n\n"
+	trailer := v.renderTrailer()
+
+	// Reserve room for everything else already rendered (header, tree
+	// header, blank line after the tree, trailer) so a long condition tree
+	// never pushes the shortcut help off screen.
+	nonTreeHeight := lipgloss.Height(header) + lipgloss.Height(treeHeader) + 1 + lipgloss.Height(trailer)
+	rowBudget := v.height - nonTreeHeight - 2 // headroom for scroll indicators
+
+	var b strings.Builder
+	b.WriteString(header)
+	b.WriteString(treeHeader)
+	b.WriteString(v.renderTree(rowBudget))
 	b.WriteString("\n")
+	b.WriteString(trailer)
 
-	if v.addingNew {
-		targetLabel := ""
-		if v.addTargetGroup >= 0 && v.addTargetGroup < len(v.groups) {
-			targetLabel = fmt.Sprintf(" (to %s group %d)", v.groups[v.addTargetGroup].Logic, v.addTargetGroup+1)
-		}
-		b.WriteString(styles.RenderKey("Add New Condition" + targetLabel + ":"))
-		b.WriteString("\n\n")
+	return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
+}
 
-		var fieldLabel string
-		if v.focusIndex == 0 {
-			fieldLabel = styles.RenderKey("▶ Field:")
-		} else {
-			fieldLabel = "  Field:"
-		}
-		b.WriteString(fieldLabel)
-		b.WriteString("\n  ")
-		if v.currentField != "" {
-			if col := v.findColumn(v.currentField); col != nil {
-				displayText := fmt.Sprintf("%s (%s)", v.currentField, col.Type)
-				style := styles.KeyStyle
-				if v.focusIndex == 0 {
-					style = styles.ActiveListItemStyle
-				}
-				b.WriteString(style.Render(displayText))
+// renderTrailer renders everything below the condition tree: the
+// add-condition form (when open) followed by the shortcut footer for the
+// current mode. Extracted so View can measure its exact rendered height
+// when budgeting the tree's row count.
+func (v *WhereView) renderTrailer() string {
+	if !v.addingNew {
+		return v.renderFooter()
+	}
+
+	var b strings.Builder
+
+	targetLabel := ""
+	if v.addTargetGroup >= 0 && v.addTargetGroup < len(v.groups) {
+		targetLabel = fmt.Sprintf(" (to %s group %d)", v.groups[v.addTargetGroup].Logic, v.addTargetGroup+1)
+	}
+	b.WriteString(styles.RenderKey("Add New Condition" + targetLabel + ":"))
+	b.WriteString("\n\n")
+
+	var fieldLabel string
+	if v.focusIndex == 0 {
+		fieldLabel = styles.RenderKey("▶ Field:")
+	} else {
+		fieldLabel = "  Field:"
+	}
+	b.WriteString(fieldLabel)
+	b.WriteString("\n  ")
+	if v.currentField != "" {
+		if col := v.findColumn(v.currentField); col != nil {
+			displayText := fmt.Sprintf("%s (%s)", v.currentField, col.Type)
+			style := styles.KeyStyle
+			if v.focusIndex == 0 {
+				style = styles.ActiveListItemStyle
 			}
-		} else {
-			b.WriteString(styles.RenderMuted("(use ← → to select)"))
+			b.WriteString(style.Render(displayText))
 		}
-		b.WriteString("\n\n")
+	} else {
+		b.WriteString(styles.RenderMuted("(use ← → to select)"))
+	}
+	b.WriteString("\n\n")
 
-		var opLabel string
+	var opLabel string
+	if v.focusIndex == 1 {
+		opLabel = styles.RenderKey("▶ Operator:")
+	} else {
+		opLabel = "  Operator:"
+	}
+	b.WriteString(opLabel)
+	b.WriteString("\n  ")
+	if v.currentOp != "" {
 		if v.focusIndex == 1 {
-			opLabel = styles.RenderKey("▶ Operator:")
+			b.WriteString(styles.ActiveListItemStyle.Render(v.currentOp))
 		} else {
-			opLabel = "  Operator:"
+			b.WriteString(styles.RenderKey(v.currentOp))
 		}
-		b.WriteString(opLabel)
-		b.WriteString("\n  ")
-		if v.currentOp != "" {
-			if v.focusIndex == 1 {
-				b.WriteString(styles.ActiveListItemStyle.Render(v.currentOp))
-			} else {
-				b.WriteString(styles.RenderKey(v.currentOp))
-			}
-		} else {
-			b.WriteString(styles.RenderMuted("(use ← → to select)"))
-		}
-		b.WriteString("\n\n")
+	} else {
+		b.WriteString(styles.RenderMuted("(use ← → to select)"))
+	}
+	b.WriteString("\n\n")
 
-		var valueLabel string
-		if v.focusIndex == 2 {
-			valueLabel = styles.RenderKey("▶ Value:")
-		} else {
-			valueLabel = "  Value:"
-		}
-		b.WriteString(valueLabel)
-		b.WriteString("\n  ")
-		b.WriteString(v.valueInput.View())
-		b.WriteString("\n\n")
+	var valueLabel string
+	if v.focusIndex == 2 {
+		valueLabel = styles.RenderKey("▶ Value:")
+	} else {
+		valueLabel = "  Value:"
+	}
+	b.WriteString(valueLabel)
+	b.WriteString("\n  ")
+	b.WriteString(v.valueInput.View())
+	b.WriteString("\n\n")
 
-		addLabel := "Add Condition"
-		if v.focusIndex == 3 {
-			addLabel = styles.ActiveListItemStyle.Render("[" + addLabel + "]")
-		} else {
-			addLabel = styles.RenderKey("[" + addLabel + "]")
-		}
-		b.WriteString("  " + addLabel)
-		b.WriteString("\n\n")
+	addLabel := "Add Condition"
+	if v.focusIndex == 3 {
+		addLabel = styles.ActiveListItemStyle.Render("[" + addLabel + "]")
+	} else {
+		addLabel = styles.RenderKey("[" + addLabel + "]")
+	}
+	b.WriteString("  " + addLabel)
+	b.WriteString("\n\n")
 
-		b.WriteString(renderBindingHelpWidthNoHelp(v.width,
+	b.WriteString(v.renderFooter())
+
+	return b.String()
+}
+
+// renderFooter renders the shortcut help text for the current mode
+// (add-condition form vs. the condition tree list).
+func (v *WhereView) renderFooter() string {
+	if v.addingNew {
+		return renderBindingHelpWidthNoHelp(v.width,
 			Keys.WhereAdd.Prev,
 			Keys.WhereAdd.Next,
 			Keys.WhereAdd.Change,
 			Keys.WhereAdd.Confirm,
 			Keys.Global.Back,
-		))
-	} else {
-		b.WriteString("\n")
-		b.WriteString(renderBindingHelpWidthNoHelp(v.width,
-			Keys.WhereList.Up,
-			Keys.WhereList.Down,
-			Keys.WhereList.Add,
-			Keys.WhereList.NewGroup,
-			Keys.WhereList.ToggleLogic,
-			Keys.WhereList.EditCond,
-			Keys.WhereList.Delete,
-			Keys.WhereList.Apply,
-			Keys.Global.Back,
-			Keys.Global.Quit,
-		))
+		)
 	}
-
-	return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
+	return renderBindingHelpWidthNoHelp(v.width,
+		Keys.WhereList.Up,
+		Keys.WhereList.Down,
+		Keys.WhereList.Add,
+		Keys.WhereList.NewGroup,
+		Keys.WhereList.ToggleLogic,
+		Keys.WhereList.EditCond,
+		Keys.WhereList.Delete,
+		Keys.WhereList.Apply,
+		Keys.Global.Back,
+		Keys.Global.Quit,
+	)
 }
 
 // renderTree produces the indented tree representation of all groups and
-// conditions.
-func (v *WhereView) renderTree() string {
+// conditions, showing only as many rows as rowBudget allows and scrolling
+// to keep the selection visible. A non-positive rowBudget is treated as
+// unlimited (used when height is not yet known).
+func (v *WhereView) renderTree(rowBudget int) string {
 	var b strings.Builder
-	for i, item := range v.flatItems {
+
+	startRow := 0
+	endRow := len(v.flatItems)
+	if rowBudget > 0 && len(v.flatItems) > rowBudget {
+		startRow = v.selectedIndex - rowBudget/2
+		if startRow < 0 {
+			startRow = 0
+		}
+		if startRow+rowBudget > len(v.flatItems) {
+			startRow = len(v.flatItems) - rowBudget
+		}
+		endRow = startRow + rowBudget
+	}
+
+	if startRow > 0 {
+		b.WriteString(styles.RenderMuted(fmt.Sprintf("↑ %d more", startRow)))
+		b.WriteString("\n")
+	}
+
+	for i := startRow; i < endRow; i++ {
+		item := v.flatItems[i]
 		selected := i == v.selectedIndex
 		prefix := "  "
 		if selected {
@@ -554,6 +607,12 @@ func (v *WhereView) renderTree() string {
 		}
 		b.WriteString("\n")
 	}
+
+	if endRow < len(v.flatItems) {
+		b.WriteString(styles.RenderMuted(fmt.Sprintf("↓ %d more", len(v.flatItems)-endRow)))
+		b.WriteString("\n")
+	}
+
 	return b.String()
 }
 

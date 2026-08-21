@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   author: clidey
   version: "0.106.0"
-compatibility: "Requires Node.js (npx) or the whodb-cli binary installed."
+compatibility: "Requires Node.js (npx) or the whodb binary installed."
 ---
 
 # WhoDB
@@ -18,12 +18,12 @@ If the WhoDB MCP server is not connected, set it up:
 
 1. Add the MCP server (npx, no install needed):
    ```bash
-   codex mcp add whodb -- npx -y @clidey/whodb-cli mcp serve
+   codex mcp add whodb -- npx -y whodb mcp serve
    ```
 
-2. Or if `whodb-cli` is installed locally:
+2. Or if `whodb` is installed locally:
    ```bash
-   codex mcp add whodb -- whodb-cli mcp serve
+   codex mcp add whodb -- whodb mcp serve
    ```
 
 3. Configure database connections via environment variables:

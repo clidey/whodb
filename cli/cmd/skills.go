@@ -72,20 +72,20 @@ var skillsInstallCmd = &cobra.Command{
 	SilenceErrors: true,
 	Args:          cobra.MaximumNArgs(1),
 	Example: `  # Install all skills to a specific directory
-  whodb-cli skills install --target-dir ~/.codex/skills
+  whodb skills install --target-dir ~/.codex/skills
 
   # Install one skill
-  whodb-cli skills install query-builder --target-dir ~/.codex/skills
+  whodb skills install query-builder --target-dir ~/.codex/skills
 
   # Install common skill and agent directories for a target
-  whodb-cli skills install --target claude-code --include-agents
+  whodb skills install --target claude-code --include-agents
 
   # Install MCP configuration for an assistant
-  whodb-cli skills install --target cursor
-  whodb-cli skills install --target gemini-cli
+  whodb skills install --target cursor
+  whodb skills install --target gemini-cli
 
   # Preview files without writing
-  whodb-cli skills install --target cursor --dry-run`,
+  whodb skills install --target cursor --dry-run`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		format, err := resolveSkillsFormat(skillsFormat)
 		if err != nil {

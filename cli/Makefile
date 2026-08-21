@@ -16,7 +16,7 @@
 
 .PHONY: build clean install test run dev help lint lint-fix docker-build docker-run docker-compose-up docker-compose-down
 
-BINARY_NAME=clidey/whodb-cli
+BINARY_NAME=whodb
 BUILD_DIR=build
 INSTALL_PATH=/usr/local/bin
 DOCKER_IMAGE=clidey/whodb-cli:latest
@@ -104,7 +104,7 @@ docker-run:
 docker-compose-up:
 	@echo "Starting CLI and test databases..."
 	@docker-compose up -d
-	@echo "Services started. Use 'docker-compose exec whodb-cli whodb-cli' to connect"
+	@echo "Services started. Use 'docker-compose exec whodb-cli whodb' to connect"
 
 docker-compose-down:
 	@echo "Stopping Docker services..."

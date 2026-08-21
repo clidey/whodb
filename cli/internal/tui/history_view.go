@@ -102,12 +102,9 @@ func (v *HistoryView) Update(msg tea.Msg) (*HistoryView, tea.Cmd) {
 		return v, nil
 
 	case tea.WindowSizeMsg:
-		overhead := 10
-		h := msg.Height - overhead
-		if h < 5 {
-			h = 5
-		}
-		v.list.SetSize(msg.Width-4, h)
+		v.width = msg.Width
+		v.height = msg.Height
+		v.resizeList()
 		return v, nil
 
 	case tea.MouseWheelMsg:
@@ -240,6 +237,8 @@ func (v *HistoryView) View() string {
 		return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
 	}
 
+	v.resizeList()
+
 	entries := v.parent.histMgr.GetAll()
 	if len(entries) == 0 {
 		b.WriteString(styles.RenderMuted("No history entries"))
@@ -248,7 +247,15 @@ func (v *HistoryView) View() string {
 	}
 
 	b.WriteString("\n\n")
-	b.WriteString(RenderBindingHelpWidth(v.width,
+	b.WriteString(v.renderFooter())
+
+	return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
+}
+
+// renderFooter renders the shortcut help text shown at the bottom of the
+// view. Extracted so resizeList can measure its exact rendered height.
+func (v *HistoryView) renderFooter() string {
+	return RenderBindingHelpWidth(v.width,
 		Keys.Browser.Up,
 		Keys.Browser.Down,
 		Keys.History.Edit,
@@ -257,9 +264,30 @@ func (v *HistoryView) View() string {
 		Keys.Global.NextView,
 		Keys.Global.Back,
 		Keys.Global.Quit,
-	))
+	)
+}
 
-	return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
+// resizeList recalculates the history list's viewport height from the
+// current terminal height minus the surrounding chrome (title, optional
+// executing spinner line, footer) — measured via lipgloss.Height rather
+// than a fixed guess, so the footer is never pushed off screen.
+func (v *HistoryView) resizeList() {
+	if v.height <= 0 {
+		return
+	}
+
+	overhead := 2 // title + blank line
+	if v.executing {
+		overhead += 2 // spinner line + blank line
+	}
+	overhead += 2 // blank line before the footer
+	overhead += lipgloss.Height(v.renderFooter())
+
+	h := v.height - overhead
+	if h < 5 {
+		h = 5
+	}
+	v.list.SetSize(v.width-4, h)
 }
 
 func (v *HistoryView) refreshList() {

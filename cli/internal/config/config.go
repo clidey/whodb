@@ -563,10 +563,11 @@ func (c *Config) SetPageSize(size int) {
 }
 
 // GetThemeName returns the configured theme name.
-// Returns "default" if unset or set to the legacy "dark" value.
+// Returns "default" if unset or set to a legacy/removed theme name
+// ("dark", "light").
 func (c *Config) GetThemeName() string {
 	name := c.Display.Theme
-	if name == "" || name == "dark" {
+	if name == "" || name == "dark" || name == "light" {
 		return "default"
 	}
 	return name

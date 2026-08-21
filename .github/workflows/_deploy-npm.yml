@@ -149,11 +149,11 @@ jobs:
               # Create bin directory
               mkdir -p "$pkg_dir/bin"
 
-              # Determine target binary name
+              # Determine target binary name (installed command is "whodb")
               if [[ "$binary_name" == *.exe ]]; then
-                target_name="whodb-cli.exe"
+                target_name="whodb.exe"
               else
-                target_name="whodb-cli"
+                target_name="whodb"
               fi
 
               # Copy binary
@@ -202,7 +202,7 @@ jobs:
           # Publish each platform package with provenance (OIDC auth)
           for pkg_dir in whodb-cli-darwin-* whodb-cli-linux-* whodb-cli-win32-*; do
             if [ -d "$pkg_dir" ]; then
-              if [ -f "$pkg_dir/bin/whodb-cli" ] || [ -f "$pkg_dir/bin/whodb-cli.exe" ]; then
+              if [ -f "$pkg_dir/bin/whodb" ] || [ -f "$pkg_dir/bin/whodb.exe" ]; then
                 echo "Publishing $pkg_dir..."
                 cd "$pkg_dir"
                 npm publish --access public --provenance || echo "Failed to publish $pkg_dir (may already exist)"
@@ -219,6 +219,40 @@ jobs:
           echo "Publishing main package..."
           npm publish --access public --provenance
 
+      - name: Publish @clidey/whodb wrapper package
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          cd "cli/npm-package/packages/@clidey/whodb"
+
+          # Stamp version and pin the scoped dependency to the same release
+          jq --arg v "$VERSION" '
+            .version = $v |
+            .dependencies."@clidey/whodb-cli" = $v
+          ' package.json > package.json.tmp
+          mv package.json.tmp package.json
+
+          echo "Publishing @clidey/whodb wrapper package..."
+          npm publish --access public --provenance
+
+      - name: Publish unscoped whodb wrapper package
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          cd cli/npm-package/packages/whodb
+
+          # Stamp version and pin the scoped dependency to the same release.
+          # This package is kept published for name-squat protection only;
+          # docs and examples point at @clidey/whodb-cli or @clidey/whodb.
+          jq --arg v "$VERSION" '
+            .version = $v |
+            .dependencies."@clidey/whodb-cli" = $v
+          ' package.json > package.json.tmp
+          mv package.json.tmp package.json
+
+          echo "Publishing whodb wrapper package..."
+          npm publish --access public --provenance
+
       - name: Verify publication
         env:
           VERSION: ${{ inputs.version }}
@@ -228,3 +262,9 @@ jobs:
 
           echo "Verifying @clidey/whodb-cli@${VERSION}..."
           npm view "@clidey/whodb-cli@${VERSION}" version || echo "Main package not found yet"
+
+          echo "Verifying @clidey/whodb@${VERSION}..."
+          npm view "@clidey/whodb@${VERSION}" version || echo "Wrapper package not found yet"
+
+          echo "Verifying whodb@${VERSION}..."
+          npm view "whodb@${VERSION}" version || echo "Wrapper package not found yet"

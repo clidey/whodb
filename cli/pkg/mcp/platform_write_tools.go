@@ -48,11 +48,12 @@ type PlatformDatasetColumnInput struct {
 
 // PlatformCreateDatasetInput is the input for whodb_platform_create_dataset.
 type PlatformCreateDatasetInput struct {
-	Name        string                       `json:"name" jsonschema:"Dataset name"`
-	Description string                       `json:"description,omitempty" jsonschema:"Optional dataset description"`
-	SchemaMode  string                       `json:"schema_mode,omitempty" jsonschema:"Dataset schema mode, for example manual"`
-	SourceID    string                       `json:"source_id,omitempty" jsonschema:"Optional hosted source id for source-backed datasets"`
-	Columns     []PlatformDatasetColumnInput `json:"columns,omitempty" jsonschema:"Manual schema columns"`
+	Name            string                       `json:"name" jsonschema:"Dataset name"`
+	Description     string                       `json:"description,omitempty" jsonschema:"Optional dataset description"`
+	SchemaMode      string                       `json:"schema_mode,omitempty" jsonschema:"Dataset schema mode, for example manual"`
+	SourceID        string                       `json:"source_id,omitempty" jsonschema:"Optional hosted source id for source-backed datasets"`
+	SourceObjectRef string                       `json:"source_object_ref,omitempty" jsonschema:"Optional source object ref as kind:path, for example Collection:Spam, binding the dataset to one table/object on the source"`
+	Columns         []PlatformDatasetColumnInput `json:"columns,omitempty" jsonschema:"Manual schema columns"`
 }
 
 // PlatformFileColumnMapInput describes one file-to-dataset promotion column.
@@ -301,6 +302,17 @@ func handlePlatformCreateDataset(ctx context.Context, input PlatformCreateDatase
 	}
 	if strings.TrimSpace(input.SourceID) != "" {
 		payload["sourceId"] = strings.TrimSpace(input.SourceID)
+	}
+	if strings.TrimSpace(input.SourceObjectRef) != "" {
+		ref, err := parsePlatformRequiredRef(input.SourceObjectRef)
+		if err != nil {
+			return typedWriteValidationError("platform_create_dataset", err.Error())
+		}
+		payload["sourceObjectRef"] = map[string]any{
+			"Kind":    ref.Kind,
+			"Locator": ref.Locator,
+			"Path":    ref.Path,
+		}
 	}
 	if len(input.Columns) > 0 {
 		payload["columns"] = datasetColumnPayload(input.Columns)

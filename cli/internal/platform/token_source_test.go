@@ -54,7 +54,7 @@ func newOIDCTestServer(t *testing.T, expiresIn int) (*httptest.Server, *atomic.I
 	var refreshes atomic.Int64
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/auth-config", func(w http.ResponseWriter, r *http.Request) {
-		_, _ = fmt.Fprintf(w, `{"version":2,"issuer":%q,"clientId":"whodb-cli","flows":{"authorizationCodePkce":true,"deviceAuthorization":true}}`, server.URL+"/realms/mothergate")
+		_, _ = fmt.Fprintf(w, `{"version":2,"issuer":%q,"clientId":"whodb","flows":{"authorizationCodePkce":true,"deviceAuthorization":true}}`, server.URL+"/realms/mothergate")
 	})
 	mux.HandleFunc("/realms/mothergate/.well-known/openid-configuration", func(w http.ResponseWriter, r *http.Request) {
 		_, _ = fmt.Fprintf(w, `{"issuer":%q,"authorization_endpoint":%q,"token_endpoint":%q,"device_authorization_endpoint":%q,"revocation_endpoint":%q}`, server.URL+"/realms/mothergate", server.URL+"/authorize", server.URL+"/token", server.URL+"/device", server.URL+"/revoke")

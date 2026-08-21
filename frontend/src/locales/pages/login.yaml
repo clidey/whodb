@@ -73,6 +73,8 @@ en_US:
   posthog.enterApiKey: Enter PostHog API Key
   posthog.projectId: Project ID
   posthog.enterProjectId: Enter PostHog Project ID
+  zohomail.appPassword: App Password
+  zohomail.enterAppPassword: Enter Zoho Mail App-Specific Password
   testConnection: Test
   testConnectionSuccess: Connection successful
   testConnectionFailed: "Connection failed: {error}"

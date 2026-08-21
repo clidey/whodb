@@ -41,7 +41,7 @@ var profilesCmd = &cobra.Command{
 Profiles bundle a saved connection with theme, page size, and timeout
 preferences. To apply one, use the root --profile flag:
 
-  whodb-cli --profile prod`,
+  whodb --profile prod`,
 }
 
 var profilesListCmd = &cobra.Command{

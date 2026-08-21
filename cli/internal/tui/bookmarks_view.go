@@ -233,56 +233,6 @@ func (v *BookmarksView) View() string {
 	}
 
 	queries := v.parent.config.GetSavedQueries()
-	row := 0
-
-	// "Save current query" option when editor has content
-	if v.editorQuery != "" {
-		prefix := "  "
-		if v.cursor == row {
-			prefix = styles.RenderKey("> ")
-		}
-		label := "+ Save current query"
-		if v.cursor == row {
-			b.WriteString(prefix + styles.ActiveListItemStyle.Render(label))
-		} else {
-			b.WriteString(prefix + styles.RenderKey(label))
-		}
-		b.WriteString("\n\n")
-		row++
-	}
-
-	if len(queries) == 0 {
-		b.WriteString(styles.RenderMuted("No saved bookmarks"))
-	} else {
-		for i, sq := range queries {
-			prefix := "  "
-			if v.cursor == row+i {
-				prefix = styles.RenderKey("> ")
-			}
-
-			// Truncate preview
-			preview := strings.ReplaceAll(sq.Query, "\n", " ")
-			maxPreview := 50
-			if v.width > 30 {
-				maxPreview = v.width - 30
-			}
-			if len(preview) > maxPreview {
-				preview = preview[:maxPreview] + "..."
-			}
-
-			nameStr := sq.Name
-			line := nameStr + "  " + styles.MutedStyle.Render(preview)
-
-			if v.cursor == row+i {
-				b.WriteString(prefix + styles.ActiveListItemStyle.Render(nameStr) + "  " + styles.MutedStyle.Render(preview))
-			} else {
-				b.WriteString(prefix + line)
-			}
-			b.WriteString("\n")
-		}
-	}
-
-	b.WriteString("\n\n")
 
 	bindings := []key.Binding{
 		Keys.Bookmarks.Up,
@@ -294,7 +244,95 @@ func (v *BookmarksView) View() string {
 		bindings = append(bindings, Keys.Bookmarks.Save)
 	}
 	bindings = append(bindings, Keys.Global.Back, Keys.Global.Quit)
-	b.WriteString(RenderBindingHelpWidth(v.width, bindings...))
+	footer := RenderBindingHelpWidth(v.width, bindings...)
+
+	if len(queries) == 0 && v.editorQuery == "" {
+		b.WriteString(styles.RenderMuted("No saved bookmarks"))
+		b.WriteString("\n\n")
+		b.WriteString(footer)
+		return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
+	}
+
+	// Reserve room for the header already written and the footer, so a
+	// long bookmark list never pushes the shortcut help off screen.
+	headerHeight := lipgloss.Height(b.String())
+	footerHeight := 2 + lipgloss.Height(footer)             // blank line + footer
+	rowBudget := v.height - headerHeight - footerHeight - 2 // headroom for scroll indicators
+
+	saveRowOffset := 0
+	if v.editorQuery != "" {
+		saveRowOffset = 1
+	}
+	total := saveRowOffset + len(queries)
+
+	startRow := 0
+	endRow := total
+	if rowBudget > 0 && total > rowBudget {
+		startRow = v.cursor - rowBudget/2
+		if startRow < 0 {
+			startRow = 0
+		}
+		if startRow+rowBudget > total {
+			startRow = total - rowBudget
+		}
+		endRow = startRow + rowBudget
+	}
+
+	if startRow > 0 {
+		b.WriteString(styles.RenderMuted(fmt.Sprintf("↑ %d more", startRow)))
+		b.WriteString("\n")
+	}
+
+	// "Save current query" option when editor has content
+	if v.editorQuery != "" && startRow == 0 {
+		prefix := "  "
+		if v.cursor == 0 {
+			prefix = styles.RenderKey("> ")
+		}
+		label := "+ Save current query"
+		if v.cursor == 0 {
+			b.WriteString(prefix + styles.ActiveListItemStyle.Render(label))
+		} else {
+			b.WriteString(prefix + styles.RenderKey(label))
+		}
+		b.WriteString("\n")
+	}
+
+	for i := max(startRow, saveRowOffset) - saveRowOffset; i < len(queries) && saveRowOffset+i < endRow; i++ {
+		sq := queries[i]
+		row := saveRowOffset + i
+		prefix := "  "
+		if v.cursor == row {
+			prefix = styles.RenderKey("> ")
+		}
+
+		// Truncate preview
+		preview := strings.ReplaceAll(sq.Query, "\n", " ")
+		maxPreview := 50
+		if v.width > 30 {
+			maxPreview = v.width - 30
+		}
+		if len(preview) > maxPreview {
+			preview = preview[:maxPreview] + "..."
+		}
+
+		nameStr := sq.Name
+
+		if v.cursor == row {
+			b.WriteString(prefix + styles.ActiveListItemStyle.Render(nameStr) + "  " + styles.MutedStyle.Render(preview))
+		} else {
+			b.WriteString(prefix + nameStr + "  " + styles.MutedStyle.Render(preview))
+		}
+		b.WriteString("\n")
+	}
+
+	if endRow < total {
+		b.WriteString(styles.RenderMuted(fmt.Sprintf("↓ %d more", total-endRow)))
+		b.WriteString("\n")
+	}
+
+	b.WriteString("\n")
+	b.WriteString(footer)
 
 	return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
 }

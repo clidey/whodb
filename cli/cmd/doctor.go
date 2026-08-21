@@ -42,10 +42,10 @@ var doctorCmd = &cobra.Command{
 The JSON output is redacted and does not include passwords or connection
 strings.`,
 	Example: `  # Run diagnostics for one connection
-  whodb-cli doctor --connection prod
+  whodb doctor --connection prod
 
   # Emit machine-readable diagnostics
-  whodb-cli doctor --connection prod --format json`,
+  whodb doctor --connection prod --format json`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		format, err := resolveDoctorFormat(doctorFormat)
 		if err != nil {

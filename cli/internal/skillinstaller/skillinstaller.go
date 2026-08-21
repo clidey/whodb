@@ -369,7 +369,7 @@ func installIntegrationTarget(opts InstallOptions) (InstallResult, error) {
 func stdioMCPServer(includeType bool) map[string]any {
 	server := map[string]any{
 		"command": "npx",
-		"args":    []string{"-y", "@clidey/whodb-cli", "mcp", "serve"},
+		"args":    []string{"-y", "whodb", "mcp", "serve"},
 	}
 	if includeType {
 		server["type"] = "stdio"
@@ -504,7 +504,7 @@ func mergeOpenCodeConfig(path string, force, dryRun bool) error {
 	}
 	mcpMap["whodb"] = map[string]any{
 		"type":    "local",
-		"command": []string{"npx", "-y", "@clidey/whodb-cli", "mcp", "serve"},
+		"command": []string{"npx", "-y", "whodb", "mcp", "serve"},
 		"enabled": true,
 	}
 
@@ -683,7 +683,7 @@ func mergeContinueConfig(path string, force, dryRun bool) error {
 	if err := mergeYAMLNamedList(config, "mcpServers", map[string]any{
 		"name":    "whodb",
 		"command": "npx",
-		"args":    []string{"-y", "@clidey/whodb-cli", "mcp", "serve"},
+		"args":    []string{"-y", "whodb", "mcp", "serve"},
 	}, force); err != nil {
 		return err
 	}

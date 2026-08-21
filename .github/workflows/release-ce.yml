@@ -390,6 +390,7 @@ jobs:
       validate-windows: ${{ needs.build-windows.result == 'success' }}
       validate-apple: ${{ needs.build-apple.result == 'success' }}
       validate-linux-terminal: ${{ needs.build-linux-terminal.result == 'success' }}
+      validate-cli: ${{ needs.build-cli.result == 'success' }}
 
   # Final GitHub release gate after selected builds and deploys succeed
   create-github-release:

@@ -7,10 +7,10 @@ The default host is `https://app.whodb.com`. Use `--host` for local, staging,
 or self-hosted environments.
 
 ```bash
-whodb-cli login
-whodb-cli login --host http://localhost:8080
-whodb-cli status
-whodb-cli manifest
+whodb login
+whodb login --host http://localhost:8080
+whodb status
+whodb manifest
 ```
 
 ## Authentication
@@ -24,9 +24,9 @@ host/account is active, the CLI asks before revoking the old session and
 replacing the local entry.
 
 ```bash
-whodb-cli login --host https://app.whodb.com
-whodb-cli whoami
-whodb-cli logout
+whodb login --host https://app.whodb.com
+whodb whoami
+whodb logout
 ```
 
 If the account has exactly one organization, the CLI selects it automatically.
@@ -36,7 +36,7 @@ project automatically and prints what it selected.
 If a host is no longer reachable and you only need to remove local credentials:
 
 ```bash
-whodb-cli logout --host http://localhost:8080 --local
+whodb logout --host http://localhost:8080 --local
 ```
 
 ## Workspace Selection
@@ -46,9 +46,9 @@ possible organization or project, the CLI can select it automatically. Otherwise
 select defaults once:
 
 ```bash
-whodb-cli orgs list
-whodb-cli projects list --org <org-id-or-slug>
-whodb-cli use --org <org-id-or-slug> --project <project-id-or-slug>
+whodb orgs list
+whodb projects list --org <org-id-or-slug>
+whodb use --org <org-id-or-slug> --project <project-id-or-slug>
 ```
 
 Power users can pass `--org` and `--project` directly on `sources` commands.
@@ -57,8 +57,8 @@ Power users can pass `--org` and `--project` directly on `sources` commands.
 management capability state.
 
 ```bash
-whodb-cli status
-whodb-cli status --format json
+whodb status
+whodb status --format json
 ```
 
 ## Platform Manifest
@@ -73,8 +73,8 @@ the platform version changes, or a GraphQL validation error indicates schema
 drift, the CLI refreshes the manifest and retries the failed request once.
 
 ```bash
-whodb-cli manifest
-whodb-cli manifest --refresh --format json
+whodb manifest
+whodb manifest --refresh --format json
 ```
 
 ## Source Management
@@ -82,14 +82,14 @@ whodb-cli manifest --refresh --format json
 Discover available source types and required fields:
 
 ```bash
-whodb-cli sources types
-whodb-cli sources fields Postgres
+whodb sources types
+whodb sources fields Postgres
 ```
 
 Create a source:
 
 ```bash
-printf "%s\n" "$PGPASSWORD" | whodb-cli sources create Postgres \
+printf "%s\n" "$PGPASSWORD" | whodb sources create Postgres \
   --name local-postgres \
   --hostname localhost \
   --port 5432 \
@@ -101,18 +101,18 @@ printf "%s\n" "$PGPASSWORD" | whodb-cli sources create Postgres \
 List, inspect, and update sources:
 
 ```bash
-whodb-cli sources list
-whodb-cli sources get local-postgres
-whodb-cli sources config local-postgres
-whodb-cli sources update local-postgres --database analytics
+whodb sources list
+whodb sources get local-postgres
+whodb sources config local-postgres
+whodb sources update local-postgres --database analytics
 ```
 
 Test connections:
 
 ```bash
-whodb-cli sources test local-postgres
+whodb sources test local-postgres
 
-printf "%s\n" "$PGPASSWORD" | whodb-cli sources test \
+printf "%s\n" "$PGPASSWORD" | whodb sources test \
   --type Postgres \
   --hostname localhost \
   --port 5432 \
@@ -124,16 +124,16 @@ printf "%s\n" "$PGPASSWORD" | whodb-cli sources test \
 Browse source metadata and preview rows:
 
 ```bash
-whodb-cli sources objects local-postgres
-whodb-cli sources columns local-postgres --ref table:public.users
-whodb-cli sources rows local-postgres --ref table:public.users --limit 25
+whodb sources objects local-postgres
+whodb sources columns local-postgres --ref table:public.users
+whodb sources rows local-postgres --ref table:public.users --limit 25
 ```
 
 Delete is destructive and prompts by default:
 
 ```bash
-whodb-cli sources delete local-postgres
-whodb-cli sources delete local-postgres --yes
+whodb sources delete local-postgres
+whodb sources delete local-postgres --yes
 ```
 
 ## MCP Platform Tools
@@ -141,14 +141,14 @@ whodb-cli sources delete local-postgres --yes
 Hosted platform MCP mode is opt-in:
 
 ```bash
-whodb-cli mcp serve --platform
+whodb mcp serve --platform
 ```
 
 The platform tools use the existing hosted login and selected workspace:
 
 ```bash
-whodb-cli login
-whodb-cli use --org <org-id-or-slug> --project <project-id-or-slug>
+whodb login
+whodb use --org <org-id-or-slug> --project <project-id-or-slug>
 ```
 
 For single-workspace accounts, `login` or `status` can select the workspace
@@ -233,7 +233,7 @@ If no workspace is selected yet, agents should call `whodb_platform_orgs` and
 `whodb_platform_projects`, then ask the user to run:
 
 ```bash
-whodb-cli use --org <org-id-or-slug> --project <project-id-or-slug>
+whodb use --org <org-id-or-slug> --project <project-id-or-slug>
 ```
 
 When `--platform` is set, the MCP server exposes only hosted platform tools.
@@ -246,7 +246,7 @@ Example hosted platform MCP config:
 {
   "mcpServers": {
     "whodb-platform": {
-      "command": "whodb-cli",
+      "command": "whodb",
       "args": ["mcp", "serve", "--platform"]
     }
   }
@@ -256,9 +256,9 @@ Example hosted platform MCP config:
 Local smoke test with the MCP inspector:
 
 ```bash
-whodb-cli login --host http://localhost:8080
-whodb-cli use --host http://localhost:8080 --org <org-id-or-slug> --project <project-id-or-slug>
-npx @modelcontextprotocol/inspector whodb-cli mcp serve --platform
+whodb login --host http://localhost:8080
+whodb use --host http://localhost:8080 --org <org-id-or-slug> --project <project-id-or-slug>
+npx @modelcontextprotocol/inspector whodb mcp serve --platform
 ```
 
 In the inspector, call:
@@ -294,10 +294,10 @@ an automation envelope:
 Read commands emit the requested resource directly:
 
 ```bash
-whodb-cli status --format json
-whodb-cli manifest --format json
-whodb-cli sources types --format json
-whodb-cli sources list --format json
+whodb status --format json
+whodb manifest --format json
+whodb sources types --format json
+whodb sources list --format json
 ```
 
 Use `--quiet` to suppress informational text in human-readable output.

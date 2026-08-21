@@ -54,19 +54,19 @@ CSV delimiter is auto-detected unless specified with --delimiter.
 
 Examples:
   # Import CSV with headers into an existing table
-  whodb-cli import --connection mydb --file data.csv --table users
+  whodb import --connection mydb --file data.csv --table users
 
   # Import CSV and create the table automatically
-  whodb-cli import --connection mydb --file data.csv --table users --create-table
+  whodb import --connection mydb --file data.csv --table users --create-table
 
   # Import Excel data from a named sheet and overwrite existing rows
-  whodb-cli import --connection mydb --file data.xlsx --table orders --sheet Q1 --mode overwrite
+  whodb import --connection mydb --file data.xlsx --table orders --sheet Q1 --mode overwrite
 
   # Import CSV without headers using positional mapping
-  whodb-cli import --connection mydb --file data.csv --table raw_data --header=false --mapping position
+  whodb import --connection mydb --file data.csv --table raw_data --header=false --mapping position
 
   # Specify tab delimiter for TSV files
-  whodb-cli import --connection mydb --file data.txt --table logs --delimiter "\t"`,
+  whodb import --connection mydb --file data.txt --table logs --delimiter "\t"`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		w := output.New(output.WithQuiet(importQuiet))
 

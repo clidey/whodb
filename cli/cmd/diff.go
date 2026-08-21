@@ -53,19 +53,19 @@ By default, the CLI compares each connection's configured schema or database
 scope. Use --schema to compare the same schema name on both sides, or use
 --from-schema and --to-schema when the namespace names differ.`,
 	Example: `  # Compare two saved connections using their default schemas
-  whodb-cli diff --from staging --to prod
+  whodb diff --from staging --to prod
 
   # Compare the same schema name on both connections
-  whodb-cli diff --from staging --to prod --schema public
+  whodb diff --from staging --to prod --schema public
 
   # Compare Postgres to MySQL by using each connection's configured namespace
-  whodb-cli diff --from dev-e2e_postgres-1 --to dev-e2e_mysql-1
+  whodb diff --from dev-e2e_postgres-1 --to dev-e2e_mysql-1
 
   # Compare two different schema names
-  whodb-cli diff --from dev --to prod --from-schema app_dev --to-schema app_prod
+  whodb diff --from dev --to prod --from-schema app_dev --to-schema app_prod
 
   # Emit machine-readable JSON
-  whodb-cli diff --from staging --to prod --format json`,
+  whodb diff --from staging --to prod --format json`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if strings.TrimSpace(diffFromConnection) == "" {
 			return fmt.Errorf("--from is required")

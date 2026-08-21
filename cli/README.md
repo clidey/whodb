@@ -53,6 +53,10 @@ The native installer:
 - Installs to `~/.local/bin` (macOS/Linux) or `%LOCALAPPDATA%\WhoDB\bin` (Windows)
 - Adds to PATH if needed
 
+> **Linux note:** if the WhoDB desktop snap is installed, it also provides a `whodb` command at `/snap/bin/whodb`. Which one runs depends on your PATH order.
+
+> **Renamed from `whodb-cli`:** the command used to be `whodb-cli`. The installer, Homebrew formula, npm package, and Docker image all still provide a deprecated `whodb-cli` alias that prints a warning and forwards to `whodb`. The alias will be removed in a future release — update any scripts or configs to use `whodb`.
+
 To install a specific version:
 
 ```bash
@@ -69,16 +73,18 @@ $env:WHODB_VERSION = "v0.62.0"; irm https://raw.githubusercontent.com/clidey/who
 brew install whodb-cli
 ```
 
+The formula is named `whodb-cli` (the `whodb` name is used by the desktop app cask), but it installs the `whodb` command.
+
 ### npm
 
 ```bash
-npm install -g @clidey/whodb-cli
+npm install -g @clidey/whodb
 ```
 
 Or with npx (no install):
 
 ```bash
-npx @clidey/whodb-cli
+npx @clidey/whodb
 ```
 
 ### From Source
@@ -88,7 +94,7 @@ Requires Go 1.21+:
 ```bash
 git clone https://github.com/clidey/whodb.git
 cd whodb/cli
-go build -o whodb-cli .
+go build -o whodb .
 ```
 
 Or using the Makefile:
@@ -112,8 +118,8 @@ docker pull clidey/whodb-cli:latest
 ### Verify Installation
 
 ```bash
-whodb-cli --version
-whodb-cli --help
+whodb --version
+whodb --help
 ```
 
 ## Quick Start
@@ -126,13 +132,13 @@ For hosted WhoDB platform login and source management, see
 If you omit required flags, the interactive connection form opens:
 
 ```bash
-whodb-cli connect
+whodb connect
 ```
 
 #### PostgreSQL
 
 ```bash
-whodb-cli connect \
+whodb connect \
   --type postgres \
   --host localhost \
   --port 5432 \
@@ -144,7 +150,7 @@ whodb-cli connect \
 #### PostgreSQL (non-interactive password)
 
 ```bash
-printf "%s\n" "$PGPASSWORD" | whodb-cli connect \
+printf "%s\n" "$PGPASSWORD" | whodb connect \
   --type postgres \
   --host localhost \
   --port 5432 \
@@ -157,7 +163,7 @@ printf "%s\n" "$PGPASSWORD" | whodb-cli connect \
 #### PostgreSQL with SSL
 
 ```bash
-whodb-cli connect \
+whodb connect \
   --type postgres \
   --host localhost \
   --port 5432 \
@@ -171,10 +177,10 @@ whodb-cli connect \
 
 ```bash
 # Open the TUI form prefilled from discovery
-whodb-cli connect --discovered aws-prod-us-west-2/prod-db
+whodb connect --discovered aws-prod-us-west-2/prod-db
 
 # One-shot connect when you already know the missing credentials
-whodb-cli connect \
+whodb connect \
   --discovered aws-prod-us-west-2/prod-db \
   --user postgres \
   --database app
@@ -183,7 +189,7 @@ whodb-cli connect \
 #### MySQL
 
 ```bash
-whodb-cli connect \
+whodb connect \
   --type mysql \
   --host localhost \
   --port 3306 \
@@ -195,7 +201,7 @@ whodb-cli connect \
 #### SQLite
 
 ```bash
-whodb-cli connect \
+whodb connect \
   --type sqlite \
   --user sqlite \
   --database /path/to/database.db \
@@ -205,7 +211,7 @@ whodb-cli connect \
 #### MongoDB
 
 ```bash
-whodb-cli connect \
+whodb connect \
   --type mongodb \
   --host localhost \
   --port 27017 \
@@ -230,23 +236,23 @@ export WHODB_MYSQL_1='{"alias":"dev","host":"localhost","user":"user","password"
 
 ```bash
 # Start the TUI (default behavior)
-whodb-cli
+whodb
 ```
 
 ### 3. Execute a Quick Query
 
 ```bash
-whodb-cli query "SELECT * FROM users LIMIT 10" --connection my-postgres
+whodb query "SELECT * FROM users LIMIT 10" --connection my-postgres
 ```
 
 ## Commands
 
 ### Root Command (Interactive Mode)
 
-Running `whodb-cli` without arguments starts the interactive TUI.
+Running `whodb` without arguments starts the interactive TUI.
 
 ```bash
-whodb-cli [flags]
+whodb [flags]
 ```
 
 Flags:
@@ -259,7 +265,7 @@ Flags:
 Connect to a database and optionally save the connection. If required flags are missing, the interactive connection form opens.
 
 ```bash
-whodb-cli connect [flags]
+whodb connect [flags]
 ```
 
 Flags:
@@ -285,7 +291,7 @@ On a TTY, you will be prompted for the password with input hidden.
 Execute a SQL query directly. Use `-` to read SQL from stdin.
 
 ```bash
-whodb-cli query "SQL" [flags]
+whodb query "SQL" [flags]
 ```
 
 Flags:
@@ -303,8 +309,8 @@ Flags:
 Show backend-generated query suggestions for a connection.
 
 ```bash
-whodb-cli suggestions --connection my-postgres
-whodb-cli suggestions --connection my-postgres --format json
+whodb suggestions --connection my-postgres
+whodb suggestions --connection my-postgres --format json
 ```
 
 Flags:
@@ -320,30 +326,30 @@ Generate or install shell completion scripts.
 
 ```bash
 # Show help
-whodb-cli completion
+whodb completion
 
 # Print completion script to stdout
-whodb-cli completion bash
-whodb-cli completion zsh
-whodb-cli completion fish
-whodb-cli completion powershell
+whodb completion bash
+whodb completion zsh
+whodb completion fish
+whodb completion powershell
 
 # Install completion (auto-detects shell)
-whodb-cli completion install
+whodb completion install
 
 # Install for specific shell
-whodb-cli completion install bash
+whodb completion install bash
 
 # Uninstall completion
-whodb-cli completion uninstall
+whodb completion uninstall
 ```
 
 Install paths (bash/zsh rc files updated automatically):
 
-- Bash: `~/.local/share/bash-completion/completions/whodb-cli`
-- Zsh: `~/.zsh/completions/_whodb-cli`
-- Fish: `~/.config/fish/completions/whodb-cli.fish`
-- PowerShell: Manual install (see `whodb-cli completion powershell`)
+- Bash: `~/.local/share/bash-completion/completions/whodb`
+- Zsh: `~/.zsh/completions/_whodb`
+- Fish: `~/.config/fish/completions/whodb.fish`
+- PowerShell: Manual install (see `whodb completion powershell`)
 
 ## Programmatic Commands
 
@@ -358,7 +364,7 @@ These commands output structured data for scripting, automation, and AI integrat
 Emit a machine-readable manifest of WhoDB's agent-facing surface. The manifest includes source types, connection fields, programmatic commands, MCP tools, platform MCP prompts/resources, safety modes, and built-in workflows.
 
 ```bash
-whodb-cli agent schema --format json
+whodb agent schema --format json
 ```
 
 Flags:
@@ -369,8 +375,8 @@ Flags:
 Run redacted connection, schema, and metadata diagnostics for one connection.
 
 ```bash
-whodb-cli doctor --connection my-postgres
-whodb-cli doctor --connection my-postgres --schema public --format json
+whodb doctor --connection my-postgres
+whodb doctor --connection my-postgres --schema public --format json
 ```
 
 Flags:
@@ -385,19 +391,19 @@ List, describe, and run built-in database workflows. Built-in runbooks are inten
 
 ```bash
 # List available workflows
-whodb-cli runbooks list
+whodb runbooks list
 
 # Inspect a workflow
-whodb-cli runbooks describe schema-audit
+whodb runbooks describe schema-audit
 
 # Show planned steps without executing
-whodb-cli runbooks run schema-audit --connection my-postgres --dry-run
+whodb runbooks run schema-audit --connection my-postgres --dry-run
 
 # Run a schema audit
-whodb-cli runbooks run schema-audit --connection my-postgres --schema public --format json
+whodb runbooks run schema-audit --connection my-postgres --schema public --format json
 
 # Compare two environments
-whodb-cli runbooks run schema-diff --from staging --to prod --format json
+whodb runbooks run schema-diff --from staging --to prod --format json
 ```
 
 Built-in runbooks:
@@ -422,25 +428,25 @@ List bundled WhoDB assistant skills and install native assistant integrations.
 
 ```bash
 # List bundled skills and agents
-whodb-cli skills list
-whodb-cli skills list --format json
+whodb skills list
+whodb skills list --format json
 
 # Install all skills into an explicit skills directory
-whodb-cli skills install --target-dir ~/.codex/skills
+whodb skills install --target-dir ~/.codex/skills
 
 # Install one skill
-whodb-cli skills install query-builder --target-dir ~/.codex/skills
+whodb skills install query-builder --target-dir ~/.codex/skills
 
 # Install skills and bundled agents for Claude Code
-whodb-cli skills install --target claude-code --include-agents
+whodb skills install --target claude-code --include-agents
 
 # Install native MCP configuration for an assistant
-whodb-cli skills install --target cursor
-whodb-cli skills install --target vscode
-whodb-cli skills install --target gemini-cli
+whodb skills install --target cursor
+whodb skills install --target vscode
+whodb skills install --target gemini-cli
 
 # Preview files without modifying disk
-whodb-cli skills install --target cursor --dry-run
+whodb skills install --target cursor --dry-run
 ```
 
 Supported targets:
@@ -479,8 +485,8 @@ Flags:
 Run `EXPLAIN` using the current database plugin's native explain prefix.
 
 ```bash
-whodb-cli explain --connection my-postgres "SELECT * FROM users"
-whodb-cli explain --connection my-postgres --format json "SELECT * FROM users"
+whodb explain --connection my-postgres "SELECT * FROM users"
+whodb explain --connection my-postgres --format json "SELECT * FROM users"
 ```
 
 Flags:
@@ -493,7 +499,7 @@ Flags:
 List database schemas.
 
 ```bash
-whodb-cli schemas --connection my-postgres --format json
+whodb schemas --connection my-postgres --format json
 ```
 
 Flags:
@@ -506,7 +512,7 @@ Flags:
 List tables in a schema.
 
 ```bash
-whodb-cli tables --connection my-postgres --schema public --format json
+whodb tables --connection my-postgres --schema public --format json
 ```
 
 Flags:
@@ -520,7 +526,7 @@ Flags:
 Describe table columns.
 
 ```bash
-whodb-cli columns --connection my-postgres --table users --format json
+whodb columns --connection my-postgres --table users --format json
 ```
 
 Flags:
@@ -536,16 +542,16 @@ Manage saved connections.
 
 ```bash
 # List connections
-whodb-cli connections list --format json
+whodb connections list --format json
 
 # Test a connection
-whodb-cli connections test my-postgres --format json
+whodb connections test my-postgres --format json
 
 # Add a connection
-whodb-cli connections add --name prod --type postgres --host db.example.com --port 5432 --user app --database mydb --format json
+whodb connections add --name prod --type postgres --host db.example.com --port 5432 --user app --database mydb --format json
 
 # Remove a connection
-whodb-cli connections remove prod --format json
+whodb connections remove prod --format json
 ```
 
 Flags (applies to all subcommands):
@@ -563,19 +569,19 @@ Cloud provider support follows the shared provider flags:
 
 ```bash
 # List configured providers
-whodb-cli cloud providers list
+whodb cloud providers list
 
 # Test or refresh providers
-whodb-cli cloud providers test aws-prod-us-west-2
-whodb-cli cloud providers refresh --all
+whodb cloud providers test aws-prod-us-west-2
+whodb cloud providers refresh --all
 
 # List discovered resources
-whodb-cli cloud connections list
-whodb-cli cloud connections list --provider aws-prod-us-west-2
+whodb cloud connections list
+whodb cloud connections list --provider aws-prod-us-west-2
 
 # Use a discovered resource in the normal connect/save flows
-whodb-cli connect --discovered aws-prod-us-west-2/prod-db
-whodb-cli connections add --from-discovered aws-prod-us-west-2/prod-db --user alice --database app
+whodb connect --discovered aws-prod-us-west-2/prod-db
+whodb connections add --from-discovered aws-prod-us-west-2/prod-db --user alice --database app
 ```
 
 ### diff
@@ -588,16 +594,16 @@ connection's configured database when no schema flag is provided.
 
 ```bash
 # Compare two connections using their default schemas
-whodb-cli diff --from staging --to prod
+whodb diff --from staging --to prod
 
 # Compare the same schema on both sides
-whodb-cli diff --from staging --to prod --schema public
+whodb diff --from staging --to prod --schema public
 
 # Compare Postgres to MySQL using each connection's configured namespace
-whodb-cli diff --from dev-e2e_postgres-1 --to dev-e2e_mysql-1
+whodb diff --from dev-e2e_postgres-1 --to dev-e2e_mysql-1
 
 # Emit machine-readable JSON
-whodb-cli diff --from staging --to prod --format json
+whodb diff --from staging --to prod --format json
 ```
 
 Flags:
@@ -614,8 +620,8 @@ Flags:
 Render the same backend graph metadata used by the TUI ER diagram view.
 
 ```bash
-whodb-cli erd --connection my-postgres
-whodb-cli erd --connection my-postgres --schema public --format json
+whodb erd --connection my-postgres
+whodb erd --connection my-postgres --schema public --format json
 ```
 
 Flags:
@@ -630,13 +636,13 @@ Export table data or query results to file.
 
 ```bash
 # Export to CSV
-whodb-cli export --connection my-postgres --table users --format csv --output users.csv
+whodb export --connection my-postgres --table users --format csv --output users.csv
 
 # Export to Excel
-whodb-cli export --connection my-postgres --table orders --format excel --output orders.xlsx
+whodb export --connection my-postgres --table orders --format excel --output orders.xlsx
 
 # Export query results
-whodb-cli export --connection my-postgres --query "SELECT * FROM users" --output users.csv
+whodb export --connection my-postgres --query "SELECT * FROM users" --output users.csv
 ```
 
 Flags:
@@ -656,13 +662,13 @@ Access query history.
 
 ```bash
 # List recent queries
-whodb-cli history list --limit 20 --format json
+whodb history list --limit 20 --format json
 
 # Search history
-whodb-cli history search "SELECT.*users"
+whodb history search "SELECT.*users"
 
 # Clear history
-whodb-cli history clear --format json
+whodb history clear --format json
 ```
 
 Flags:
@@ -675,10 +681,10 @@ Flags:
 Manage the same saved query bookmarks used by the TUI editor.
 
 ```bash
-whodb-cli bookmarks list
-whodb-cli bookmarks save recent-users "SELECT * FROM users ORDER BY id DESC"
-whodb-cli bookmarks load recent-users
-whodb-cli bookmarks delete recent-users --format json
+whodb bookmarks list
+whodb bookmarks save recent-users "SELECT * FROM users ORDER BY id DESC"
+whodb bookmarks load recent-users
+whodb bookmarks delete recent-users --format json
 ```
 
 ### profiles
@@ -686,11 +692,11 @@ whodb-cli bookmarks delete recent-users --format json
 Manage the same saved connection profiles used by the TUI.
 
 ```bash
-whodb-cli profiles list
-whodb-cli profiles save production --connection prod --theme Dracula --page-size 100 --timeout 30
-whodb-cli profiles show production --format json
-whodb-cli profiles delete production --format json
-whodb-cli --profile production
+whodb profiles list
+whodb profiles save production --connection prod --theme Dracula --page-size 100 --timeout 30
+whodb profiles show production --format json
+whodb profiles delete production --format json
+whodb --profile production
 ```
 
 ## MCP Server
@@ -701,10 +707,10 @@ WhoDB can run as an MCP (Model Context Protocol) server, enabling AI assistants 
 
 ```bash
 # Default: stdio transport (for Claude Desktop, Claude Code, etc.)
-whodb-cli mcp serve
+whodb mcp serve
 
 # HTTP transport (for cloud deployments, Docker, Kubernetes)
-whodb-cli mcp serve --transport=http --port=3000
+whodb mcp serve --transport=http --port=3000
 ```
 
 This starts an MCP server that exposes these tools:
@@ -733,27 +739,27 @@ Hosted setup:
 
 ```bash
 # Sign in to app.whodb.com
-whodb-cli login
+whodb login
 
 # Select the hosted workspace used by platform tools
-whodb-cli use --org <org> --project <project>
+whodb use --org <org> --project <project>
 
 # Start stdio MCP for your MCP client
-whodb-cli mcp serve --platform
+whodb mcp serve --platform
 
 # Read-only hosted platform MCP
-whodb-cli mcp serve --platform --read-only
+whodb mcp serve --platform --read-only
 
 # Hosted writes without confirmation; use only for trusted automation
-whodb-cli mcp serve --platform --allow-write
+whodb mcp serve --platform --allow-write
 ```
 
 Local or staging setup:
 
 ```bash
-whodb-cli login --host http://localhost:8080
-whodb-cli use --host http://localhost:8080 --org <org> --project <project>
-whodb-cli mcp serve --platform
+whodb login --host http://localhost:8080
+whodb use --host http://localhost:8080 --org <org> --project <project>
+whodb mcp serve --platform
 ```
 
 Recommended MCP client behavior:
@@ -854,7 +860,7 @@ ids and field names.
 
 If no workspace is selected yet, agents should call `whodb_platform_orgs` and
 `whodb_platform_projects`, then ask the user to run
-`whodb-cli use --org <org> --project <project>`.
+`whodb use --org <org> --project <project>`.
 For single-workspace accounts, hosted `login` or `status` can select the only
 organization/project automatically and report what was selected.
 
@@ -864,7 +870,7 @@ Example hosted platform MCP config:
 {
   "mcpServers": {
     "whodb-platform": {
-      "command": "whodb-cli",
+      "command": "whodb",
       "args": ["mcp", "serve", "--platform"]
     }
   }
@@ -877,7 +883,7 @@ Example read-only hosted platform MCP config:
 {
   "mcpServers": {
     "whodb-platform-readonly": {
-      "command": "whodb-cli",
+      "command": "whodb",
       "args": ["mcp", "serve", "--platform", "--read-only"]
     }
   }
@@ -890,15 +896,15 @@ Example local or staging platform MCP config:
 {
   "mcpServers": {
     "whodb-platform-local": {
-      "command": "whodb-cli",
+      "command": "whodb",
       "args": ["mcp", "serve", "--platform"]
     }
   }
 }
 ```
 
-The server uses the single active hosted login selected by `whodb-cli login` and
-`whodb-cli use`. If you switch hosts, run `login --host ...` and `use --host ...`
+The server uses the single active hosted login selected by `whodb login` and
+`whodb use`. If you switch hosts, run `login --host ...` and `use --host ...`
 before starting the MCP server. The MCP server does not need a host flag because
 it reads the active hosted login from the CLI config.
 
@@ -917,7 +923,7 @@ Platform MCP exposes these resources instead:
 | `whodb://platform/workspace` | Current hosted login and selected workspace metadata |
 | `whodb://platform/tool-guide` | Platform tool categories, recommended usage, field projection guidance, and write behavior |
 
-The same metadata is available from `whodb-cli agent schema --format json`.
+The same metadata is available from `whodb agent schema --format json`.
 Its `platform_mcp` section describes the `--platform` flag, default host,
 login/workspace requirements, field projection support, platform-only tool
 prefix, platform prompts/resources, and write behavior for confirm, read-only,
@@ -930,13 +936,13 @@ Write operations require confirmation by default. Use `--allow-write` to disable
 **stdio (default)** - For local CLI integration with Claude Desktop, Claude Code, etc.
 
 ```bash
-whodb-cli mcp serve
+whodb mcp serve
 ```
 
 **HTTP** - For cloud deployments, Docker, Kubernetes, or shared access.
 
 ```bash
-whodb-cli mcp serve --transport=http --host=0.0.0.0 --port=8080
+whodb mcp serve --transport=http --host=0.0.0.0 --port=8080
 ```
 
 HTTP mode exposes:
@@ -976,17 +982,17 @@ HTTP mode exposes:
 - `--default-connection`: Default connection when not specified (does not restrict access)
 
 **Hosted Platform:**
-- `--platform`: Run hosted platform MCP mode only. Requires `whodb-cli login` and `whodb-cli use --org <org> --project <project>`.
+- `--platform`: Run hosted platform MCP mode only. Requires `whodb login` and `whodb use --org <org> --project <project>`.
 
 ```bash
 # Restrict AI to specific connections only
-whodb-cli mcp serve --allowed-connections prod,staging
+whodb mcp serve --allowed-connections prod,staging
 
 # Set default without restricting access
-whodb-cli mcp serve --default-connection prod
+whodb mcp serve --default-connection prod
 
 # Combine: restrict to prod/staging, default to staging
-whodb-cli mcp serve --allowed-connections prod,staging --default-connection staging
+whodb mcp serve --allowed-connections prod,staging --default-connection staging
 ```
 
 When `--allowed-connections` is set:
@@ -1017,19 +1023,19 @@ Saved connections take precedence if names collide.
 
 **Option 2: Saved Connections**
 
-Use `whodb-cli connect --name mydb ...` to save connections that the MCP server can access.
+Use `whodb connect --name mydb ...` to save connections that the MCP server can access.
 
 If a tool call omits `connection`, the MCP server uses the only available connection or returns an error if multiple are available.
 
 ### MCP Client Configuration (Example)
 
-Example configuration (from `whodb-cli mcp serve --help`):
+Example configuration (from `whodb mcp serve --help`):
 
 ```json
 {
   "mcpServers": {
       "whodb": {
-        "command": "whodb-cli",
+        "command": "whodb",
         "args": ["mcp", "serve"],
         "env": {
           "WHODB_POSTGRES_1": "{\"alias\":\"prod\",\"host\":\"localhost\",\"user\":\"user\",\"password\":\"pass\",\"database\":\"db\"}"
@@ -1182,7 +1188,7 @@ WhoDB CLI stores data in the unified WhoDB config:
 
 Development builds append `-dev` to the data directory name, and EE builds append `-ee`.
 
-Query history is stored alongside the config as `history.json`. If a legacy `~/.whodb-cli/config.yaml` exists, it is migrated automatically.
+Query history is stored alongside the config as `history.json`.
 
 ### Config Structure
 
@@ -1330,7 +1336,7 @@ Recommended terminals: iTerm2, Alacritty, Windows Terminal, Kitty
 
 ```bash
 mkdir -p ~/.local/share/whodb
-whodb-cli connect --type postgres --host localhost --name test
+whodb connect --type postgres --host localhost --name test
 ```
 Adjust the path for your OS (see Configuration).
 
@@ -1344,7 +1350,7 @@ chmod 600 ~/.local/share/whodb/config.json ~/.local/share/whodb/history.json
 ### Debug Mode
 
 ```bash
-whodb-cli --debug
+whodb --debug
 ```
 
 ## Architecture
@@ -1418,7 +1424,7 @@ go run .
 go test ./...
 
 # Build with race detector
-go build -race -o whodb-cli .
+go build -race -o whodb .
 
 # Lint
 golangci-lint run ./...

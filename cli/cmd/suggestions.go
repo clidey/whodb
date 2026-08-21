@@ -41,13 +41,13 @@ var suggestionsCmd = &cobra.Command{
 Suggestions are built from the actual storage units in the resolved schema or
 database, so they stay aligned with the same backend logic used by the app.`,
 	Example: `  # Show suggestions for the configured/default schema
-  whodb-cli suggestions --connection mydb
+  whodb suggestions --connection mydb
 
   # Show suggestions for a specific schema
-  whodb-cli suggestions --connection mydb --schema public
+  whodb suggestions --connection mydb --schema public
 
   # Emit machine-readable output
-  whodb-cli suggestions --connection mydb --format json`,
+  whodb suggestions --connection mydb --format json`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		format, err := output.ParseFormat(suggestionsFormat)
 		if err != nil {
@@ -71,7 +71,7 @@ database, so they stay aligned with the same backend logic used by the app.`,
 		} else {
 			conns := mgr.ListAvailableConnections()
 			if len(conns) == 0 {
-				return fmt.Errorf("no connections available. Create one first:\n  whodb-cli connect --type postgres --host localhost --user myuser --database mydb --name myconn")
+				return fmt.Errorf("no connections available. Create one first:\n  whodb connect --type postgres --host localhost --user myuser --database mydb --name myconn")
 			}
 			conn = &conns[0]
 			out.Info("Using connection: %s", conn.Name)

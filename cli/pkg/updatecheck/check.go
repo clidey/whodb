@@ -49,7 +49,7 @@ type githubRelease struct {
 	TagName string `json:"tag_name"`
 }
 
-// Check looks for a newer version of whodb-cli using a file-based 24h cache.
+// Check looks for a newer version of whodb using a file-based 24h cache.
 // Returns nil if no update is available, the check is suppressed, or any error occurs.
 func Check(currentVersion string) *Result {
 	if currentVersion == "" || currentVersion == "dev" {

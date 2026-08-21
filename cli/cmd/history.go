@@ -43,19 +43,19 @@ Subcommands:
   load   - Print a saved query by ID
   clear  - Clear all history`,
 	Example: `  # List recent queries
-  whodb-cli history list
+  whodb history list
 
   # List last 5 queries
-  whodb-cli history list --limit 5
+  whodb history list --limit 5
 
   # Search for queries containing "users"
-  whodb-cli history search users
+  whodb history search users
 
   # Print the full query for a history entry
-  whodb-cli history load 1234567890
+  whodb history load 1234567890
 
   # Clear all history
-  whodb-cli history clear`,
+  whodb history clear`,
 }
 
 var historyListCmd = &cobra.Command{
@@ -140,7 +140,7 @@ var historySearchCmd = &cobra.Command{
 	SilenceUsage:  true,
 	SilenceErrors: true,
 	Args:          cobra.ExactArgs(1),
-	Example:       `  whodb-cli history search "SELECT.*users"`,
+	Example:       `  whodb history search "SELECT.*users"`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		pattern := args[0]
 

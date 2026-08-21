@@ -63,22 +63,22 @@ The output format is determined by:
 Streaming:
   Use --stream with CSV output to write large exports incrementally.`,
 	Example: `  # Export a table to CSV
-  whodb-cli export --connection mydb --table users --output users.csv
+  whodb export --connection mydb --table users --output users.csv
 
   # Export to Excel
-  whodb-cli export --connection mydb --table users --output users.xlsx
+  whodb export --connection mydb --table users --output users.xlsx
 
   # Export query results
-  whodb-cli export --connection mydb --query "SELECT * FROM users WHERE active = true" --output active_users.csv
+  whodb export --connection mydb --query "SELECT * FROM users WHERE active = true" --output active_users.csv
 
   # Custom CSV delimiter
-  whodb-cli export --connection mydb --table users --output users.csv --delimiter ";"
+  whodb export --connection mydb --table users --output users.csv --delimiter ";"
 
   # Stream a large query export directly to CSV
-  whodb-cli export --connection mydb --query "SELECT * FROM events" --output events.csv --stream
+  whodb export --connection mydb --query "SELECT * FROM events" --output events.csv --stream
 
   # Specify schema
-  whodb-cli export --connection mydb --schema public --table users --output users.csv`,
+  whodb export --connection mydb --schema public --table users --output users.csv`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := context.Background()
 		startTime := time.Now()
@@ -109,7 +109,7 @@ Streaming:
 		} else {
 			conns := mgr.ListAvailableConnections()
 			if len(conns) == 0 {
-				return fmt.Errorf("no connections available. Create one first:\n  whodb-cli connect --type postgres --host localhost --user myuser --database mydb --name myconn")
+				return fmt.Errorf("no connections available. Create one first:\n  whodb connect --type postgres --host localhost --user myuser --database mydb --name myconn")
 			}
 			conn = &conns[0]
 			out.Info("Using connection: %s", conn.Name)

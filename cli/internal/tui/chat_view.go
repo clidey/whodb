@@ -83,16 +83,14 @@ func NewChatView(parent *MainModel) *ChatView {
 	ti.SetHeight(3)
 	ti.SetWidth(70)
 	ti.Prompt = ""
+	// The border is applied around ti.View() at render time rather than on
+	// the textarea's own Base style: bubbles/v2's placeholder rendering path
+	// wraps the placeholder content in Base a second time, which doubles up
+	// the border when the input is empty.
 	tiStyles := textarea.DefaultStyles(styles.DarkBackground())
 	tiStyles.Focused.CursorLine = lipgloss.NewStyle()
-	tiStyles.Focused.Base = lipgloss.NewStyle().
-		BorderStyle(lipgloss.RoundedBorder()).
-		BorderForeground(styles.Primary).
-		Padding(0, 1)
-	tiStyles.Blurred.Base = lipgloss.NewStyle().
-		BorderStyle(lipgloss.RoundedBorder()).
-		BorderForeground(styles.Border).
-		Padding(0, 1)
+	tiStyles.Focused.Base = lipgloss.NewStyle().Padding(0, 1)
+	tiStyles.Blurred.Base = lipgloss.NewStyle().Padding(0, 1)
 	ti.SetStyles(tiStyles)
 
 	providers := parent.dbManager.GetAIProviders()
@@ -606,7 +604,28 @@ func (v *ChatView) View() string {
 	} else if len(v.models) == 0 {
 		b.WriteString(styles.RenderMuted("Press Ctrl+L to load models"))
 	} else {
-		for i, model := range v.models {
+		const visibleCount = 4
+		start := 0
+		if len(v.models) > visibleCount {
+			// Keep the selected model in view as the user navigates left/right.
+			start = v.selectedModel - visibleCount + 1
+			if start < 0 {
+				start = 0
+			}
+			if start > len(v.models)-visibleCount {
+				start = len(v.models) - visibleCount
+			}
+		}
+		end := start + visibleCount
+		if end > len(v.models) {
+			end = len(v.models)
+		}
+
+		if start > 0 {
+			b.WriteString(styles.RenderMuted(fmt.Sprintf("+%d more ", start)))
+		}
+		for i := start; i < end; i++ {
+			model := v.models[i]
 			displayName := model
 			if len(displayName) > 20 {
 				displayName = displayName[:17] + "..."
@@ -616,15 +635,12 @@ func (v *ChatView) View() string {
 			} else {
 				b.WriteString(styles.RenderMuted(fmt.Sprintf(" %s ", displayName)))
 			}
-			if i < len(v.models)-1 && i < 3 {
+			if i < end-1 {
 				b.WriteString(" ")
 			}
-			if i == 3 {
-				break
-			}
 		}
-		if len(v.models) > 4 {
-			b.WriteString(styles.RenderMuted(fmt.Sprintf(" +%d more", len(v.models)-4)))
+		if end < len(v.models) {
+			b.WriteString(styles.RenderMuted(fmt.Sprintf(" +%d more", len(v.models)-end)))
 		}
 	}
 	b.WriteString("\n\n")
@@ -722,7 +738,14 @@ func (v *ChatView) View() string {
 
 	b.WriteString(styles.RenderKey("Message:"))
 	b.WriteString("\n")
-	b.WriteString(v.input.View())
+	inputBorderColor := styles.Border
+	if v.input.Focused() {
+		inputBorderColor = styles.Primary
+	}
+	b.WriteString(lipgloss.NewStyle().
+		BorderStyle(lipgloss.RoundedBorder()).
+		BorderForeground(inputBorderColor).
+		Render(v.input.View()))
 	b.WriteString("\n\n")
 
 	b.WriteString(renderBindingHelpWidthNoHelp(v.width,

@@ -131,12 +131,13 @@ The CLI includes an interactive terminal UI and an MCP server for AI tools:
 curl -fsSL https://raw.githubusercontent.com/clidey/whodb/main/cli/install/install.sh | bash
 
 # or install with npm
-npm install -g @clidey/whodb-cli
+npm install -g @clidey/whodb
 ```
 
+
 ```bash
-whodb-cli             # open the terminal UI
-whodb-cli mcp serve   # start the MCP server
+whodb             # open the terminal UI
+whodb mcp serve   # start the MCP server
 ```
 
 See the [CLI guide](https://github.com/clidey/whodb/blob/main/cli/README.md) for connection examples and the full command reference.

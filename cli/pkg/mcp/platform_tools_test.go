@@ -205,7 +205,7 @@ func TestHandlePlatformSetupStatusReportsLoginCommandWithoutConfig(t *testing.T)
 	if output.Status != "needs_login" || output.Authenticated {
 		t.Fatalf("setup status = %#v, want needs_login without auth", output)
 	}
-	for _, expected := range []string{"whodb-cli login --host https://app.whodb.com", "whodb-cli use --host https://app.whodb.com --org <org> --project <project>"} {
+	for _, expected := range []string{"whodb login --host https://app.whodb.com", "whodb use --host https://app.whodb.com --org <org> --project <project>"} {
 		if !slices.Contains(output.Commands, expected) {
 			t.Fatalf("commands = %#v, want %q", output.Commands, expected)
 		}
@@ -243,10 +243,10 @@ func TestHandlePlatformDoctorIncludesSetupGuidanceOnSessionError(t *testing.T) {
 	if output.Error != "not logged in" {
 		t.Fatalf("doctor error = %q, want loader error", output.Error)
 	}
-	if len(output.Commands) == 0 || !strings.Contains(output.Commands[0], "whodb-cli login") {
+	if len(output.Commands) == 0 || !strings.Contains(output.Commands[0], "whodb login") {
 		t.Fatalf("doctor commands = %#v, want login command", output.Commands)
 	}
-	if !strings.Contains(strings.Join(output.NextSteps, " "), "whodb-cli login") {
+	if !strings.Contains(strings.Join(output.NextSteps, " "), "whodb login") {
 		t.Fatalf("doctor next steps = %#v, want login guidance", output.NextSteps)
 	}
 }
@@ -284,7 +284,7 @@ func TestHandlePlatformSourcesReportsMissingWorkspaceAction(t *testing.T) {
 	if err != nil {
 		t.Fatalf("HandlePlatformSources() error = %v", err)
 	}
-	want := "whodb-cli use --host https://app.whodb.com --org <org> --project <project>"
+	want := "whodb use --host https://app.whodb.com --org <org> --project <project>"
 	if !strings.Contains(output.Error, want) {
 		t.Fatalf("output.Error = %q, want %q", output.Error, want)
 	}
@@ -689,6 +689,57 @@ func TestHandlePlatformCreateDatasetTypedConfirmWrites(t *testing.T) {
 	}
 }
 
+func TestHandlePlatformCreateDatasetSourceObjectRefAllowWrite(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := handlePlatformCreateDataset(context.Background(), PlatformCreateDatasetInput{
+		Name:            "Spam Emails",
+		SourceID:        "src-1",
+		SourceObjectRef: "Collection:Spam",
+	}, false)
+	if err != nil {
+		t.Fatalf("handlePlatformCreateDataset() error = %v", err)
+	}
+	if output.Error != "" {
+		t.Fatalf("handlePlatformCreateDataset() output error = %q", output.Error)
+	}
+	if output.ConfirmationRequired {
+		t.Fatalf("ConfirmationRequired = true, want false in allow-write mode")
+	}
+	ref, ok := client.mutationVariables["input"].(map[string]any)["sourceObjectRef"].(map[string]any)
+	if !ok {
+		t.Fatalf("mutationVariables = %#v, want sourceObjectRef map", client.mutationVariables)
+	}
+	if ref["Kind"] != "Collection" {
+		t.Fatalf("sourceObjectRef.Kind = %#v, want Collection", ref["Kind"])
+	}
+	path, ok := ref["Path"].([]any)
+	if !ok || len(path) != 1 || path[0] != "Spam" {
+		t.Fatalf("sourceObjectRef.Path = %#v, want [Spam]", ref["Path"])
+	}
+}
+
+func TestHandlePlatformCreateDatasetInvalidSourceObjectRef(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := handlePlatformCreateDataset(context.Background(), PlatformCreateDatasetInput{
+		Name:            "Spam Emails",
+		SourceObjectRef: "not-a-valid-ref",
+	}, false)
+	if err != nil {
+		t.Fatalf("handlePlatformCreateDataset() error = %v", err)
+	}
+	if output.Error == "" {
+		t.Fatal("output.Error = \"\", want validation error for malformed source_object_ref")
+	}
+}
+
 func TestHandlePlatformOntologyRecordTypedAllowWriteUsesEntityID(t *testing.T) {
 	client := &fakePlatformClient{}
 	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
@@ -720,17 +771,17 @@ func TestHandlePlatformOntologyRecordTypedAllowWriteUsesEntityID(t *testing.T) {
 func TestHandlePlatformSourcesReportsActionableLoginError(t *testing.T) {
 	setupTestEnv(t)
 	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
-		return nil, errors.New("hosted WhoDB is not logged in for https://app.whodb.com. Run: whodb-cli login --host https://app.whodb.com")
+		return nil, errors.New("hosted WhoDB is not logged in for https://app.whodb.com. Run: whodb login --host https://app.whodb.com")
 	})
 
 	_, output, err := HandlePlatformSources(context.Background(), nil, PlatformSourcesInput{})
 	if err != nil {
 		t.Fatalf("HandlePlatformSources() error = %v", err)
 	}
-	if output.Error == "" || !containsAll(output.Error, "whodb-cli login", "app.whodb.com") {
+	if output.Error == "" || !containsAll(output.Error, "whodb login", "app.whodb.com") {
 		t.Fatalf("output error = %q, want login guidance", output.Error)
 	}
-	assertPlatformSetupGuidance(t, output.PlatformSetupGuidance, "needs_login", "whodb-cli login --host https://app.whodb.com")
+	assertPlatformSetupGuidance(t, output.PlatformSetupGuidance, "needs_login", "whodb login --host https://app.whodb.com")
 }
 
 func TestHandlePlatformProjectHealthReportsSetupGuidanceOnSessionError(t *testing.T) {
@@ -746,7 +797,7 @@ func TestHandlePlatformProjectHealthReportsSetupGuidanceOnSessionError(t *testin
 	if output.Error == "" {
 		t.Fatal("HandlePlatformProjectHealth() output error is empty, want session error")
 	}
-	assertPlatformSetupGuidance(t, output.PlatformSetupGuidance, "needs_login", "whodb-cli login --host https://app.whodb.com")
+	assertPlatformSetupGuidance(t, output.PlatformSetupGuidance, "needs_login", "whodb login --host https://app.whodb.com")
 }
 
 func TestHandlePlatformGenericWriteReportsSetupGuidanceOnSessionError(t *testing.T) {
@@ -765,7 +816,7 @@ func TestHandlePlatformGenericWriteReportsSetupGuidanceOnSessionError(t *testing
 	if output.Error == "" {
 		t.Fatal("handlePlatformGenericWrite() output error is empty, want session error")
 	}
-	assertPlatformSetupGuidance(t, output.PlatformSetupGuidance, "needs_login", "whodb-cli login --host https://app.whodb.com")
+	assertPlatformSetupGuidance(t, output.PlatformSetupGuidance, "needs_login", "whodb login --host https://app.whodb.com")
 }
 
 func TestHandlePlatformSourceConfigRedactsSecrets(t *testing.T) {
@@ -981,7 +1032,7 @@ func TestHandlePlatformConfirmReportsSetupGuidanceOnSessionError(t *testing.T) {
 	if output.Error == "" {
 		t.Fatal("HandlePlatformConfirm() output error is empty, want session error")
 	}
-	assertPlatformSetupGuidance(t, output.PlatformSetupGuidance, "needs_login", "whodb-cli login --host https://app.whodb.com")
+	assertPlatformSetupGuidance(t, output.PlatformSetupGuidance, "needs_login", "whodb login --host https://app.whodb.com")
 }
 
 func assertPlatformSetupGuidance(t *testing.T, guidance PlatformSetupGuidance, wantStatus, wantCommand string) {

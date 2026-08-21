@@ -66,7 +66,7 @@ func TestFetchAuthConfigV2(t *testing.T) {
 			t.Fatalf("unexpected path %q", r.URL.Path)
 		}
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"version":2,"issuer":"` + server.URL + `/realms/mothergate","clientId":"whodb-cli","flows":{"authorizationCodePkce":true,"deviceAuthorization":true}}`))
+		_, _ = w.Write([]byte(`{"version":2,"issuer":"` + server.URL + `/realms/mothergate","clientId":"whodb","flows":{"authorizationCodePkce":true,"deviceAuthorization":true}}`))
 	}))
 	defer server.Close()
 
@@ -74,7 +74,7 @@ func TestFetchAuthConfigV2(t *testing.T) {
 	if err != nil {
 		t.Fatalf("FetchAuthConfig() error = %v", err)
 	}
-	if got.Version != 2 || got.ClientID != "whodb-cli" || !got.Flows.DeviceAuthorization {
+	if got.Version != 2 || got.ClientID != "whodb" || !got.Flows.DeviceAuthorization {
 		t.Fatalf("FetchAuthConfig() = %#v", got)
 	}
 }

@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "WhoDB CLI - database management tool with TUI, programmatic commands, and MCP server",
   "bin": {
+    "whodb": "bin/whodb",
     "whodb-cli": "bin/whodb-cli"
   },
   "repository": {
