@@ -284,40 +284,6 @@ func (v *ProfilesView) View() string {
 
 	profiles := v.parent.config.GetProfiles()
 
-	if len(profiles) == 0 {
-		b.WriteString(styles.RenderMuted("  No saved profiles"))
-		b.WriteString("\n\n")
-		b.WriteString(styles.RenderMuted("  Press [s] to save current settings as a profile"))
-	} else {
-		for i, p := range profiles {
-			prefix := "  "
-			if v.cursor == i {
-				prefix = styles.RenderKey("> ")
-			}
-
-			nameStr := p.Name
-			details := fmt.Sprintf("conn:%s", p.Connection)
-			if p.Theme != "" {
-				details += fmt.Sprintf(" theme:%s", p.Theme)
-			}
-			if p.PageSize > 0 {
-				details += fmt.Sprintf(" page:%d", p.PageSize)
-			}
-			if p.TimeoutSeconds > 0 {
-				details += fmt.Sprintf(" timeout:%ds", p.TimeoutSeconds)
-			}
-
-			if v.cursor == i {
-				b.WriteString(prefix + styles.ActiveListItemStyle.Render(nameStr) + "  " + styles.MutedStyle.Render(details))
-			} else {
-				b.WriteString(prefix + nameStr + "  " + styles.MutedStyle.Render(details))
-			}
-			b.WriteString("\n")
-		}
-	}
-
-	b.WriteString("\n\n")
-
 	bindings := []key.Binding{
 		Keys.Profiles.Up,
 		Keys.Profiles.Down,
@@ -327,7 +293,75 @@ func (v *ProfilesView) View() string {
 		Keys.Global.Back,
 		Keys.Global.Quit,
 	}
-	b.WriteString(RenderBindingHelpWidth(v.width, bindings...))
+	footer := RenderBindingHelpWidth(v.width, bindings...)
+
+	if len(profiles) == 0 {
+		b.WriteString(styles.RenderMuted("  No saved profiles"))
+		b.WriteString("\n\n")
+		b.WriteString(styles.RenderMuted("  Press [s] to save current settings as a profile"))
+		b.WriteString("\n\n")
+		b.WriteString(footer)
+		return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
+	}
+
+	// Reserve room for the header already written and the footer, so a
+	// long profile list never pushes the shortcut help off screen.
+	headerHeight := lipgloss.Height(b.String())
+	footerHeight := 2 + lipgloss.Height(footer)             // blank line + footer
+	rowBudget := v.height - headerHeight - footerHeight - 2 // headroom for scroll indicators
+
+	startRow := 0
+	endRow := len(profiles)
+	if rowBudget > 0 && len(profiles) > rowBudget {
+		startRow = v.cursor - rowBudget/2
+		if startRow < 0 {
+			startRow = 0
+		}
+		if startRow+rowBudget > len(profiles) {
+			startRow = len(profiles) - rowBudget
+		}
+		endRow = startRow + rowBudget
+	}
+
+	if startRow > 0 {
+		b.WriteString(styles.RenderMuted(fmt.Sprintf("↑ %d more", startRow)))
+		b.WriteString("\n")
+	}
+
+	for i := startRow; i < endRow; i++ {
+		p := profiles[i]
+		prefix := "  "
+		if v.cursor == i {
+			prefix = styles.RenderKey("> ")
+		}
+
+		nameStr := p.Name
+		details := fmt.Sprintf("conn:%s", p.Connection)
+		if p.Theme != "" {
+			details += fmt.Sprintf(" theme:%s", p.Theme)
+		}
+		if p.PageSize > 0 {
+			details += fmt.Sprintf(" page:%d", p.PageSize)
+		}
+		if p.TimeoutSeconds > 0 {
+			details += fmt.Sprintf(" timeout:%ds", p.TimeoutSeconds)
+		}
+
+		if v.cursor == i {
+			b.WriteString(prefix + styles.ActiveListItemStyle.Render(nameStr) + "  " + styles.MutedStyle.Render(details))
+		} else {
+			b.WriteString(prefix + nameStr + "  " + styles.MutedStyle.Render(details))
+		}
+		b.WriteString("\n")
+	}
+
+	if endRow < len(profiles) {
+		b.WriteString(styles.RenderMuted(fmt.Sprintf("↓ %d more", len(profiles)-endRow)))
+		b.WriteString("\n")
+	}
+
+	b.WriteString("\n")
+	b.WriteString(footer)
 
 	return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
 }
