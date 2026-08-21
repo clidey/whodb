@@ -26,7 +26,7 @@
     "@types/react-dom": "19.2.4",
     "classnames": "2.5.1",
     "codemirror": "6.0.2",
-    "framer-motion": "12.42.2",
+    "framer-motion": "13.1.0",
     "graphql": "16.11.0",
     "html-to-image": "1.11.13",
     "lodash": "4.18.1",
