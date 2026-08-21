@@ -18,7 +18,7 @@ If the WhoDB MCP server is not connected, set it up:
 
 1. Add the MCP server (npx, no install needed):
    ```bash
-   codex mcp add whodb -- npx -y @clidey/whodb-cli mcp serve
+   codex mcp add whodb -- npx -y whodb mcp serve
    ```
 
 2. Or if `whodb` is installed locally:

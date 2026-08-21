@@ -1,0 +1,35 @@
+{
+  "name": "@clidey/whodb",
+  "version": "0.1.0",
+  "description": "WhoDB CLI - database management tool with TUI, programmatic commands, and MCP server. Thin wrapper around @clidey/whodb-cli.",
+  "bin": {
+    "whodb": "bin/whodb"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/clidey/whodb.git",
+    "directory": "cli/npm-package/packages/@clidey/whodb"
+  },
+  "keywords": [
+    "whodb",
+    "cli",
+    "database",
+    "mcp",
+    "claude",
+    "postgres",
+    "mysql",
+    "sqlite",
+    "mongodb",
+    "redis",
+    "elasticsearch"
+  ],
+  "author": "Clidey",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/clidey/whodb",
+  "engines": {
+    "node": ">=14"
+  },
+  "dependencies": {
+    "@clidey/whodb-cli": "0.1.0"
+  }
+}

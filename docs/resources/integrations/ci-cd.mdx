@@ -116,20 +116,20 @@ Use the CLI when you want a WhoDB-flavored command surface in a pipeline:
 
 ```bash
 # List schemas and tables
-npx @clidey/whodb-cli schemas --connection ci-postgres --format json
-npx @clidey/whodb-cli tables --connection ci-postgres --schema public --format json
+npx @clidey/whodb schemas --connection ci-postgres --format json
+npx @clidey/whodb tables --connection ci-postgres --schema public --format json
 
 # Run validation SQL
-npx @clidey/whodb-cli query "SELECT COUNT(*) FROM users" --connection ci-postgres --format json
+npx @clidey/whodb query "SELECT COUNT(*) FROM users" --connection ci-postgres --format json
 
 # Export a table for artifacts or downstream checks
-npx @clidey/whodb-cli export --connection ci-postgres --table users --format csv --output users.csv
+npx @clidey/whodb export --connection ci-postgres --table users --format csv --output users.csv
 
 # Import CSV or Excel fixtures
-npx @clidey/whodb-cli import --connection ci-postgres --file test/fixtures/users.csv --table users
+npx @clidey/whodb import --connection ci-postgres --file test/fixtures/users.csv --table users
 
 # Run data-quality checks
-npx @clidey/whodb-cli audit --connection ci-postgres --schema public --format json
+npx @clidey/whodb audit --connection ci-postgres --schema public --format json
 ```
 
 <Tip>
@@ -143,7 +143,7 @@ Use the path that matches your fixture format:
 ### CSV Or Excel
 
 ```bash
-npx @clidey/whodb-cli import \
+npx @clidey/whodb import \
   --connection ci-postgres \
   --file test/fixtures/users.csv \
   --table users \

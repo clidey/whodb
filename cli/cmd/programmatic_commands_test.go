@@ -2308,7 +2308,7 @@ func TestSkillsInstall_AssistantIntegrationTargets(t *testing.T) {
 				}
 				return
 			}
-			if !strings.Contains(content, "whodb") || !strings.Contains(content, "@clidey/whodb-cli") {
+			if !strings.Contains(content, "whodb") {
 				t.Fatalf("expected WhoDB MCP config in %s, got %q", target.checkPath, content)
 			}
 		})

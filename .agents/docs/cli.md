@@ -9,30 +9,30 @@ The CLI is an interactive terminal interface for WhoDB with split-pane TUI suppo
 cd cli && go build -o whodb .
 
 # Run interactive mode
-./whodb-cli
+./whodb
 
 # Connect to database
-./whodb-cli connect --type postgres --host localhost --user postgres --database mydb
-./whodb-cli connect --type sqlite3 --database ./app.db
-./whodb-cli connect --docker
+./whodb connect --type postgres --host localhost --user postgres --database mydb
+./whodb connect --type sqlite3 --database ./app.db
+./whodb connect --docker
 
 # Execute query
-./whodb-cli query "SELECT * FROM users" --connection my-postgres
-./whodb-cli query --stream --format ndjson "SELECT * FROM audit_log"
+./whodb query "SELECT * FROM users" --connection my-postgres
+./whodb query --stream --format ndjson "SELECT * FROM audit_log"
 
 # Cloud discovery (when provider support is enabled)
-./whodb-cli cloud providers list
-./whodb-cli cloud connections list
-./whodb-cli connect --discovered aws-prod-us-west-2/prod-db
+./whodb cloud providers list
+./whodb cloud connections list
+./whodb connect --discovered aws-prod-us-west-2/prod-db
 
 # Schema diff
-./whodb-cli diff --from staging --to prod
+./whodb diff --from staging --to prod
 
 # Mock data
-./whodb-cli mock-data --connection mydb --table orders --rows 50 --analyze
+./whodb mock-data --connection mydb --table orders --rows 50 --analyze
 
 # MCP server
-./whodb-cli mcp serve
+./whodb mcp serve
 ```
 
 ## Current Architecture

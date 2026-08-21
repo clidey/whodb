@@ -78,13 +78,13 @@ The formula is named `whodb-cli` (the `whodb` name is used by the desktop app ca
 ### npm
 
 ```bash
-npm install -g @clidey/whodb-cli
+npm install -g @clidey/whodb
 ```
 
 Or with npx (no install):
 
 ```bash
-npx @clidey/whodb-cli
+npx @clidey/whodb
 ```
 
 ### From Source
@@ -1188,7 +1188,7 @@ WhoDB CLI stores data in the unified WhoDB config:
 
 Development builds append `-dev` to the data directory name, and EE builds append `-ee`.
 
-Query history is stored alongside the config as `history.json`. If a legacy `~/.whodb-cli/config.yaml` exists, it is migrated automatically.
+Query history is stored alongside the config as `history.json`.
 
 ### Config Structure
 
