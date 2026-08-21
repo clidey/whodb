@@ -53,7 +53,12 @@ type BrowserView struct {
 	retryPrompt         RetryPrompt
 	lastRefreshed       time.Time
 	compact             bool
-	escConfirm          bool // true when waiting for second Esc to disconnect
+	// gridScrollRow is the first grid row shown by the most recent View()
+	// render, used to map mouse clicks to the correct table when the grid
+	// is scrolled (see renderTablesGrid).
+	gridScrollRow   int
+	gridHasScrollUp bool
+	escConfirm      bool // true when waiting for second Esc to disconnect
 }
 
 func NewBrowserView(parent *MainModel) *BrowserView {
@@ -161,10 +166,13 @@ func (v *BrowserView) Update(msg tea.Msg) (*BrowserView, tea.Cmd) {
 				if v.filtering || v.filterInput.Value() != "" {
 					headerLines++
 				}
+				if v.gridHasScrollUp {
+					headerLines++
+				}
 				gridRow := msg.Y - headerLines
 				gridCol := msg.X / 25 // columnWidth = 25
 				if gridRow >= 0 && gridCol >= 0 && gridCol < v.columnsPerRow {
-					idx := gridRow*v.columnsPerRow + gridCol
+					idx := (v.gridScrollRow+gridRow)*v.columnsPerRow + gridCol
 					if idx >= 0 && idx < len(v.filteredTables) {
 						v.selectedIndex = idx
 					}
@@ -441,6 +449,8 @@ func (v *BrowserView) View() string {
 		return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
 	}
 
+	footer := v.renderFooter()
+
 	if v.err != nil {
 		b.WriteString(styles.RenderErrorBox(v.err.Error()))
 		b.WriteString("\n\n")
@@ -452,64 +462,113 @@ func (v *BrowserView) View() string {
 		b.WriteString("\n")
 		b.WriteString(styles.RenderMuted("Press " + Keys.Browser.Refresh.Help().Key + " to refresh or " + Keys.Browser.Editor.Help().Key + " to run SQL queries."))
 	} else {
-		b.WriteString(v.renderTablesGrid())
+		// Reserve room for the header already written, the grid's own
+		// trailing blank line + total/refreshed line, and the footer, so
+		// the grid never pushes the shortcut help off screen on short
+		// terminals.
+		headerHeight := lipgloss.Height(b.String())
+		footerHeight := 0
+		if !v.compact {
+			footerHeight = 2 + lipgloss.Height(footer) // blank line + footer
+		}
+		// blank + total/refreshed line, plus headroom for the "N more"
+		// scroll indicators renderTablesGrid may add above/below the grid.
+		gridBudget := v.height - headerHeight - footerHeight - 5
+		b.WriteString(v.renderTablesGrid(gridBudget))
 	}
 
 	if !v.compact {
 		b.WriteString("\n\n")
-
-		if v.schemaSelecting {
-			b.WriteString(RenderBindingHelpWidth(v.width,
-				Keys.SchemaSelect.NavLeft,
-				Keys.SchemaSelect.SelectSchema,
-				Keys.Global.Back,
-			))
-		} else if v.filtering {
-			b.WriteString(renderBindingHelpWidthNoHelp(v.width,
-				Keys.Filter.CancelFilter,
-				Keys.Filter.ApplyFilter,
-			))
-		} else {
-			bindings := []key.Binding{
-				Keys.Browser.Up,
-				Keys.Browser.Down,
-				Keys.Browser.Left,
-				Keys.Browser.Right,
-				Keys.Browser.Select,
-				Keys.Browser.Filter,
-			}
-			if len(v.schemas) > 1 {
-				bindings = append(bindings, Keys.Browser.Schema)
-			}
-			bindings = append(bindings,
-				Keys.Browser.Editor,
-				Keys.Browser.AIChat,
-				Keys.Browser.History,
-				Keys.Global.SchemaDiff,
-				Keys.Global.ERDiagram,
-				Keys.Global.MockData,
-				Keys.Browser.Refresh,
-				Keys.Global.NextView,
-				Keys.Browser.Disconnect,
-				Keys.Global.Quit,
-			)
-			b.WriteString(RenderBindingHelpWidth(v.width, bindings...))
-		}
+		b.WriteString(footer)
 	}
 
 	return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
 }
 
-func (v *BrowserView) renderTablesGrid() string {
+// renderFooter renders the shortcut help text shown at the bottom of the
+// view. Extracted so View can measure its exact rendered height and budget
+// the tables grid's visible row count accordingly — otherwise a wide table
+// list on a short terminal pushes the footer past the bottom and it gets
+// clipped by MainModel.View's height truncation.
+func (v *BrowserView) renderFooter() string {
+	if v.schemaSelecting {
+		return RenderBindingHelpWidth(v.width,
+			Keys.SchemaSelect.NavLeft,
+			Keys.SchemaSelect.SelectSchema,
+			Keys.Global.Back,
+		)
+	}
+	if v.filtering {
+		return renderBindingHelpWidthNoHelp(v.width,
+			Keys.Filter.CancelFilter,
+			Keys.Filter.ApplyFilter,
+		)
+	}
+
+	bindings := []key.Binding{
+		Keys.Browser.Up,
+		Keys.Browser.Down,
+		Keys.Browser.Left,
+		Keys.Browser.Right,
+		Keys.Browser.Select,
+		Keys.Browser.Filter,
+	}
+	if len(v.schemas) > 1 {
+		bindings = append(bindings, Keys.Browser.Schema)
+	}
+	bindings = append(bindings,
+		Keys.Browser.Editor,
+		Keys.Browser.AIChat,
+		Keys.Browser.History,
+		Keys.Global.SchemaDiff,
+		Keys.Global.ERDiagram,
+		Keys.Global.MockData,
+		Keys.Browser.Refresh,
+		Keys.Global.NextView,
+		Keys.Browser.Disconnect,
+		Keys.Global.Quit,
+	)
+	return RenderBindingHelpWidth(v.width, bindings...)
+}
+
+// renderTablesGrid renders the table name grid, showing only as many rows
+// as rowBudget allows and scrolling to keep the selected item visible. A
+// non-positive rowBudget is treated as unlimited (used when height is not
+// yet known, e.g. before the first WindowSizeMsg).
+func (v *BrowserView) renderTablesGrid(rowBudget int) string {
 	var b strings.Builder
 
 	columnWidth := 25
 	tables := v.filteredTables
 
-	for i := 0; i < len(tables); i++ {
+	totalRows := (len(tables) + v.columnsPerRow - 1) / v.columnsPerRow
+	selectedRow := v.selectedIndex / v.columnsPerRow
+
+	startRow := 0
+	endRow := totalRows
+	if rowBudget > 0 && totalRows > rowBudget {
+		startRow = selectedRow - rowBudget/2
+		if startRow < 0 {
+			startRow = 0
+		}
+		if startRow+rowBudget > totalRows {
+			startRow = totalRows - rowBudget
+		}
+		endRow = startRow + rowBudget
+	}
+
+	v.gridScrollRow = startRow
+	v.gridHasScrollUp = startRow > 0
+
+	if startRow > 0 {
+		b.WriteString(styles.RenderMuted(fmt.Sprintf("↑ %d more", startRow*v.columnsPerRow)))
+		b.WriteString("\n")
+	}
+
+	for i := startRow * v.columnsPerRow; i < len(tables) && i < endRow*v.columnsPerRow; i++ {
 		colIndex := i % v.columnsPerRow
 
-		if colIndex == 0 && i > 0 {
+		if colIndex == 0 && i > startRow*v.columnsPerRow {
 			b.WriteString("\n")
 		}
 
@@ -537,6 +596,12 @@ func (v *BrowserView) renderTablesGrid() string {
 			// Normal item
 			b.WriteString(styles.ListItemStyle.Render(content))
 		}
+	}
+
+	remaining := len(tables) - min(endRow*v.columnsPerRow, len(tables))
+	if remaining > 0 {
+		b.WriteString("\n")
+		b.WriteString(styles.RenderMuted(fmt.Sprintf("↓ %d more", remaining)))
 	}
 
 	// Show total count and last-refreshed timestamp

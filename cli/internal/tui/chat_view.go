@@ -83,16 +83,14 @@ func NewChatView(parent *MainModel) *ChatView {
 	ti.SetHeight(3)
 	ti.SetWidth(70)
 	ti.Prompt = ""
+	// The border is applied around ti.View() at render time rather than on
+	// the textarea's own Base style: bubbles/v2's placeholder rendering path
+	// wraps the placeholder content in Base a second time, which doubles up
+	// the border when the input is empty.
 	tiStyles := textarea.DefaultStyles(styles.DarkBackground())
 	tiStyles.Focused.CursorLine = lipgloss.NewStyle()
-	tiStyles.Focused.Base = lipgloss.NewStyle().
-		BorderStyle(lipgloss.RoundedBorder()).
-		BorderForeground(styles.Primary).
-		Padding(0, 1)
-	tiStyles.Blurred.Base = lipgloss.NewStyle().
-		BorderStyle(lipgloss.RoundedBorder()).
-		BorderForeground(styles.Border).
-		Padding(0, 1)
+	tiStyles.Focused.Base = lipgloss.NewStyle().Padding(0, 1)
+	tiStyles.Blurred.Base = lipgloss.NewStyle().Padding(0, 1)
 	ti.SetStyles(tiStyles)
 
 	providers := parent.dbManager.GetAIProviders()
@@ -722,7 +720,14 @@ func (v *ChatView) View() string {
 
 	b.WriteString(styles.RenderKey("Message:"))
 	b.WriteString("\n")
-	b.WriteString(v.input.View())
+	inputBorderColor := styles.Border
+	if v.input.Focused() {
+		inputBorderColor = styles.Primary
+	}
+	b.WriteString(lipgloss.NewStyle().
+		BorderStyle(lipgloss.RoundedBorder()).
+		BorderForeground(inputBorderColor).
+		Render(v.input.View()))
 	b.WriteString("\n\n")
 
 	b.WriteString(renderBindingHelpWidthNoHelp(v.width,

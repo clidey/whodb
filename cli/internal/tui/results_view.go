@@ -106,15 +106,8 @@ func (v *ResultsView) Update(msg tea.Msg) (*ResultsView, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		v.width = msg.Width
-		overhead := 14
-		if v.query != "" {
-			overhead += 3
-		}
-		h := msg.Height - overhead
-		if h < 5 {
-			h = 5
-		}
-		v.table.SetHeight(h)
+		v.height = msg.Height
+		v.resizeTable()
 		v.table.SetWidth(msg.Width - 8)
 		if v.results != nil {
 			v.updateTable()
@@ -395,6 +388,8 @@ func (v *ResultsView) Update(msg tea.Msg) (*ResultsView, tea.Cmd) {
 }
 
 func (v *ResultsView) View() string {
+	v.resizeTable()
+
 	var b strings.Builder
 	pageRows := v.currentPageRows()
 
@@ -439,83 +434,123 @@ func (v *ResultsView) View() string {
 
 	if !v.compact {
 		b.WriteString("\n\n")
-
-		// Show different help based on whether export/where/columns is available
-		// Also show appropriate back target (editor for query results, browser for table data)
-		backTarget := "browser"
-		if v.query != "" {
-			backTarget = "editor"
-		}
-
-		if v.tableName != "" {
-			whereLabel := "where"
-			conditionCount := v.countWhereConditions()
-			if conditionCount > 0 {
-				whereLabel = fmt.Sprintf("where (%d)", conditionCount)
-			}
-
-			columnsLabel := "columns"
-			if v.results != nil && len(v.results.Columns) > 0 {
-				selectedCount := len(v.visibleColumns)
-				if selectedCount == 0 {
-					selectedCount = len(v.results.Columns)
-				}
-				columnsLabel = fmt.Sprintf("columns (%d/%d)", selectedCount, len(v.results.Columns))
-			}
-
-			// Use static bindings for most items, but dynamic labels for where/columns/back
-			b.WriteString(renderFooterHelpPairsWidth(v.width,
-				Keys.Results.Up.Help().Key, Keys.Results.Up.Help().Desc,
-				Keys.Results.Down.Help().Key, Keys.Results.Down.Help().Desc,
-				Keys.Results.ColLeft.Help().Key, Keys.Results.ColLeft.Help().Desc,
-				Keys.Results.ColRight.Help().Key, Keys.Results.ColRight.Help().Desc,
-				"scroll", "trackpad/mouse",
-				Keys.Results.ViewCell.Help().Key, Keys.Results.ViewCell.Help().Desc,
-				Keys.Results.Where.Help().Key, whereLabel,
-				Keys.Results.Columns.Help().Key, columnsLabel,
-				Keys.Results.AddRow.Help().Key, Keys.Results.AddRow.Help().Desc,
-				Keys.Results.Export.Help().Key, Keys.Results.Export.Help().Desc,
-				Keys.Global.SchemaDiff.Help().Key, Keys.Global.SchemaDiff.Help().Desc,
-				Keys.Global.ERDiagram.Help().Key, Keys.Global.ERDiagram.Help().Desc,
-				Keys.Global.MockData.Help().Key, Keys.Global.MockData.Help().Desc,
-				Keys.Results.NextPage.Help().Key, Keys.Results.NextPage.Help().Desc,
-				Keys.Results.PageSize.Help().Key, Keys.Results.PageSize.Help().Desc,
-				Keys.Results.CustomSize.Help().Key, Keys.Results.CustomSize.Help().Desc,
-				Keys.Global.Back.Help().Key, backTarget,
-			))
-			if v.results != nil && !v.results.DisableUpdate {
-				b.WriteString("\n")
-				b.WriteString(renderFooterHelpPairsWidthNoHelp(v.width,
-					Keys.Results.EditRow.Help().Key, Keys.Results.EditRow.Help().Desc,
-					Keys.Results.DeleteRow.Help().Key, Keys.Results.DeleteRow.Help().Desc,
-				))
-			} else {
-				b.WriteString("\n")
-				b.WriteString(renderFooterHelpPairsWidthNoHelp(v.width,
-					Keys.Results.DeleteRow.Help().Key, Keys.Results.DeleteRow.Help().Desc,
-				))
-			}
-		} else {
-			b.WriteString(renderFooterHelpPairsWidth(v.width,
-				Keys.Results.Up.Help().Key, Keys.Results.Up.Help().Desc,
-				Keys.Results.Down.Help().Key, Keys.Results.Down.Help().Desc,
-				Keys.Results.ColLeft.Help().Key, Keys.Results.ColLeft.Help().Desc,
-				Keys.Results.ColRight.Help().Key, Keys.Results.ColRight.Help().Desc,
-				"scroll", "trackpad/mouse",
-				Keys.Results.ViewCell.Help().Key, Keys.Results.ViewCell.Help().Desc,
-				Keys.Results.Export.Help().Key, Keys.Results.Export.Help().Desc,
-				Keys.Global.SchemaDiff.Help().Key, Keys.Global.SchemaDiff.Help().Desc,
-				Keys.Global.ERDiagram.Help().Key, Keys.Global.ERDiagram.Help().Desc,
-				Keys.Global.MockData.Help().Key, Keys.Global.MockData.Help().Desc,
-				Keys.Results.NextPage.Help().Key, Keys.Results.NextPage.Help().Desc,
-				Keys.Results.PageSize.Help().Key, Keys.Results.PageSize.Help().Desc,
-				Keys.Results.CustomSize.Help().Key, Keys.Results.CustomSize.Help().Desc,
-				Keys.Global.Back.Help().Key, backTarget,
-			))
-		}
+		b.WriteString(v.renderFooter())
 	}
 
 	return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
+}
+
+// renderFooter renders the shortcut help text shown at the bottom of the
+// view. Extracted so resizeTable can measure its exact rendered height —
+// it varies with terminal width and with dynamic labels (where/columns
+// counts), so a fixed row estimate drifts and the table either wastes
+// space or overflows into the height truncation in MainModel.View.
+func (v *ResultsView) renderFooter() string {
+	var b strings.Builder
+
+	// Show different help based on whether export/where/columns is available
+	// Also show appropriate back target (editor for query results, browser for table data)
+	backTarget := "browser"
+	if v.query != "" {
+		backTarget = "editor"
+	}
+
+	if v.tableName != "" {
+		whereLabel := "where"
+		conditionCount := v.countWhereConditions()
+		if conditionCount > 0 {
+			whereLabel = fmt.Sprintf("where (%d)", conditionCount)
+		}
+
+		columnsLabel := "columns"
+		if v.results != nil && len(v.results.Columns) > 0 {
+			selectedCount := len(v.visibleColumns)
+			if selectedCount == 0 {
+				selectedCount = len(v.results.Columns)
+			}
+			columnsLabel = fmt.Sprintf("columns (%d/%d)", selectedCount, len(v.results.Columns))
+		}
+
+		// Use static bindings for most items, but dynamic labels for where/columns/back
+		b.WriteString(renderFooterHelpPairsWidth(v.width,
+			Keys.Results.Up.Help().Key, Keys.Results.Up.Help().Desc,
+			Keys.Results.Down.Help().Key, Keys.Results.Down.Help().Desc,
+			Keys.Results.ColLeft.Help().Key, Keys.Results.ColLeft.Help().Desc,
+			Keys.Results.ColRight.Help().Key, Keys.Results.ColRight.Help().Desc,
+			"scroll", "trackpad/mouse",
+			Keys.Results.ViewCell.Help().Key, Keys.Results.ViewCell.Help().Desc,
+			Keys.Results.Where.Help().Key, whereLabel,
+			Keys.Results.Columns.Help().Key, columnsLabel,
+			Keys.Results.AddRow.Help().Key, Keys.Results.AddRow.Help().Desc,
+			Keys.Results.Export.Help().Key, Keys.Results.Export.Help().Desc,
+			Keys.Global.SchemaDiff.Help().Key, Keys.Global.SchemaDiff.Help().Desc,
+			Keys.Global.ERDiagram.Help().Key, Keys.Global.ERDiagram.Help().Desc,
+			Keys.Global.MockData.Help().Key, Keys.Global.MockData.Help().Desc,
+			Keys.Results.NextPage.Help().Key, Keys.Results.NextPage.Help().Desc,
+			Keys.Results.PageSize.Help().Key, Keys.Results.PageSize.Help().Desc,
+			Keys.Results.CustomSize.Help().Key, Keys.Results.CustomSize.Help().Desc,
+			Keys.Global.Back.Help().Key, backTarget,
+		))
+		if v.results != nil && !v.results.DisableUpdate {
+			b.WriteString("\n")
+			b.WriteString(renderFooterHelpPairsWidthNoHelp(v.width,
+				Keys.Results.EditRow.Help().Key, Keys.Results.EditRow.Help().Desc,
+				Keys.Results.DeleteRow.Help().Key, Keys.Results.DeleteRow.Help().Desc,
+			))
+		} else {
+			b.WriteString("\n")
+			b.WriteString(renderFooterHelpPairsWidthNoHelp(v.width,
+				Keys.Results.DeleteRow.Help().Key, Keys.Results.DeleteRow.Help().Desc,
+			))
+		}
+	} else {
+		b.WriteString(renderFooterHelpPairsWidth(v.width,
+			Keys.Results.Up.Help().Key, Keys.Results.Up.Help().Desc,
+			Keys.Results.Down.Help().Key, Keys.Results.Down.Help().Desc,
+			Keys.Results.ColLeft.Help().Key, Keys.Results.ColLeft.Help().Desc,
+			Keys.Results.ColRight.Help().Key, Keys.Results.ColRight.Help().Desc,
+			"scroll", "trackpad/mouse",
+			Keys.Results.ViewCell.Help().Key, Keys.Results.ViewCell.Help().Desc,
+			Keys.Results.Export.Help().Key, Keys.Results.Export.Help().Desc,
+			Keys.Global.SchemaDiff.Help().Key, Keys.Global.SchemaDiff.Help().Desc,
+			Keys.Global.ERDiagram.Help().Key, Keys.Global.ERDiagram.Help().Desc,
+			Keys.Global.MockData.Help().Key, Keys.Global.MockData.Help().Desc,
+			Keys.Results.NextPage.Help().Key, Keys.Results.NextPage.Help().Desc,
+			Keys.Results.PageSize.Help().Key, Keys.Results.PageSize.Help().Desc,
+			Keys.Results.CustomSize.Help().Key, Keys.Results.CustomSize.Help().Desc,
+			Keys.Global.Back.Help().Key, backTarget,
+		))
+	}
+
+	return b.String()
+}
+
+// resizeTable recalculates the table's viewport height from the current
+// terminal height minus the chrome that surrounds it (title, pagination
+// line, footer). Called on resize and whenever footer content that affects
+// its wrapped height changes (e.g. table selection, column visibility).
+func (v *ResultsView) resizeTable() {
+	if v.height <= 0 {
+		return
+	}
+
+	// Title (2 lines: heading + blank, +1 more for the query line when present)
+	overhead := 2
+	if v.query != "" {
+		overhead += 2
+	}
+	// Table's own trailing blank line + pagination line
+	overhead += 3
+	if !v.compact {
+		overhead += 2 // blank line before the footer
+		overhead += lipgloss.Height(v.renderFooter())
+	}
+
+	h := v.height - overhead
+	if h < 5 {
+		h = 5
+	}
+	v.table.SetHeight(h)
 }
 
 func (v *ResultsView) SetResults(results *engine.GetRowsResult, query string) {

@@ -225,7 +225,6 @@ func rebuildStyles() {
 func ListThemes() []string {
 	return []string{
 		ThemeDefault.Name,
-		ThemeLight.Name,
 		ThemeMonokai.Name,
 		ThemeDracula.Name,
 		ThemeNord.Name,
@@ -247,7 +246,6 @@ func GetThemeByName(name string) *Theme {
 
 var builtinThemes = []*Theme{
 	&ThemeDefault,
-	&ThemeLight,
 	&ThemeMonokai,
 	&ThemeDracula,
 	&ThemeNord,
@@ -279,26 +277,6 @@ var ThemeDefault = Theme{
 	String:     adaptive("#B65401", "#FFC233"),
 	Comment:    adaptive("#5C6778", "#8E98A7"),
 	Number:     adaptive("#26529C", "#B2CFFF"),
-}
-
-// ThemeLight uses the light palette for both modes.
-var ThemeLight = Theme{
-	Name:       "light",
-	Primary:    solid("#1a1a1a"),
-	Secondary:  solid("#6b6b73"),
-	Success:    solid("#16a34a"),
-	Error:      solid("#dc2626"),
-	Warning:    solid("#d97706"),
-	Info:       solid("#2563eb"),
-	Muted:      solid("#a1a1aa"),
-	Background: solid("#ffffff"),
-	Foreground: solid("#09090b"),
-	Border:     solid("#d4d4d8"),
-	Accent:     solid("#f4f4f5"),
-	Keyword:    solid("#7c3aed"),
-	String:     solid("#059669"),
-	Comment:    solid("#9ca3af"),
-	Number:     solid("#d97706"),
 }
 
 // ThemeMonokai — classic dark theme from Sublime Text.
