@@ -171,13 +171,9 @@ func (v *EditorView) computeSuggestionHeight(totalHeight int) int {
 		return 0
 	}
 
-	// Reserve space for title (2), textarea (min 5), help (2 if not compact)
 	minTextarea := 5
-	overhead := 4 // title + spacing
-	if !v.compact {
-		overhead += 4 // help footer
-	}
-	available := totalHeight - overhead - minTextarea
+	// +2 for the top/bottom rows added by View's outer Padding(1, 2).
+	available := totalHeight - v.nonTextareaHeight() - minTextarea - 2
 	if available < minSuggestionHeight {
 		return 0
 	}

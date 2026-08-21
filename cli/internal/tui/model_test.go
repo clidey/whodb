@@ -19,12 +19,14 @@ package tui
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/clidey/whodb/cli/internal/config"
 	"github.com/clidey/whodb/cli/internal/tui/layout"
 	graphmodel "github.com/clidey/whodb/core/graph/model"
+	"github.com/clidey/whodb/core/src/engine"
 )
 
 func TestNewMainModel(t *testing.T) {
@@ -141,6 +143,40 @@ func TestMainModel_Update_WindowSize(t *testing.T) {
 	if m.height != 50 {
 		t.Errorf("Expected height 50, got %d", m.height)
 	}
+}
+
+func TestMainModel_TablesLoadedMsg_RefreshesEditorLayout(t *testing.T) {
+	setupTestEnv(t)
+
+	m := NewMainModel()
+	_, _ = m.Update(tea.WindowSizeMsg{Width: 90, Height: 30})
+
+	beforeHeight := m.editorView.nonTextareaHeight()
+
+	msg := tablesLoadedMsg{
+		tables: []engine.StorageUnit{
+			{Name: "schema_migrations"},
+			{Name: "browser_auth_transactions"},
+			{Name: "browser_sessions"},
+		},
+		schemas: []string{"public"},
+		schema:  "public",
+	}
+	_, _ = m.Update(msg)
+
+	afterHeight := m.editorView.nonTextareaHeight()
+	if afterHeight <= beforeHeight {
+		t.Errorf("Expected nonTextareaHeight to grow once onboarding suggestions appear (before=%d, after=%d)", beforeHeight, afterHeight)
+	}
+
+	view := m.editorView.View()
+	if !containsBindingHelp(view) {
+		t.Errorf("Expected editor footer shortcuts to remain visible after tables load, got: %s", view)
+	}
+}
+
+func containsBindingHelp(view string) bool {
+	return strings.Contains(view, Keys.Editor.Execute.Help().Key)
 }
 
 func TestMainModel_Update_CtrlC(t *testing.T) {

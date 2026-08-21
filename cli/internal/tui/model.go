@@ -1146,6 +1146,12 @@ func (m *MainModel) updateConnectionView(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *MainModel) updateBrowserView(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	m.browserView, cmd = m.browserView.Update(msg)
+	if _, ok := msg.(tablesLoadedMsg); ok {
+		// The editor's onboarding suggestions depend on browserView.tables;
+		// refresh its layout so the textarea/footer resize to account for
+		// them appearing or disappearing.
+		m.editorView.refreshLayout()
+	}
 	return m, cmd
 }
 

@@ -17,6 +17,7 @@
 package tui
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -747,7 +748,7 @@ func TestWhereView_RenderTree_SingleGroup(t *testing.T) {
 	}
 	v.rebuildFlatItems()
 
-	tree := v.renderTree()
+	tree := v.renderTree(0)
 
 	if !strings.Contains(tree, "AND") {
 		t.Error("Expected 'AND' in tree rendering")
@@ -781,7 +782,7 @@ func TestWhereView_RenderTree_MultipleGroups(t *testing.T) {
 	}
 	v.rebuildFlatItems()
 
-	tree := v.renderTree()
+	tree := v.renderTree(0)
 
 	if !strings.Contains(tree, "AND") {
 		t.Error("Expected 'AND' in tree rendering")
@@ -923,6 +924,53 @@ func TestWhereView_View_WithConditions(t *testing.T) {
 
 	if !strings.Contains(view, "Current Conditions") {
 		t.Error("Expected 'Current Conditions' header")
+	}
+}
+
+func TestWhereView_View_ScrollsIntoView(t *testing.T) {
+	v, cleanup := setupWhereViewTest(t)
+	defer cleanup()
+
+	v.schema = "public"
+	v.tableName = "users"
+	v.width = 100
+	v.height = 24
+
+	var conditions []WhereCondition
+	for i := 0; i < 20; i++ {
+		conditions = append(conditions, WhereCondition{
+			Field:    fmt.Sprintf("field_%d", i),
+			Operator: "=",
+			Value:    fmt.Sprintf("%d", i),
+		})
+	}
+	v.groups = []conditionGroup{{Logic: "AND", Conditions: conditions}}
+	v.rebuildFlatItems()
+	v.selectedIndex = 0
+
+	view := v.View()
+	if !strings.Contains(view, "field_0 = 0") {
+		t.Errorf("Expected first condition visible initially, got: %s", view)
+	}
+	if strings.Contains(view, "field_19 = 19") {
+		t.Errorf("Expected last condition hidden initially, got: %s", view)
+	}
+	if !strings.Contains(view, "more") {
+		t.Errorf("Expected a scroll indicator, got: %s", view)
+	}
+	if !strings.Contains(view, Keys.Global.Back.Help().Key) {
+		t.Errorf("Expected footer shortcuts to remain visible, got: %s", view)
+	}
+
+	// Select the last condition — it's the last flat item (index 20: group + 20 conditions).
+	v.selectedIndex = len(v.flatItems) - 1
+
+	view = v.View()
+	if !strings.Contains(view, "field_19 = 19") {
+		t.Errorf("Expected last condition visible after scrolling to it, got: %s", view)
+	}
+	if !strings.Contains(view, Keys.Global.Back.Help().Key) {
+		t.Errorf("Expected footer shortcuts to remain visible after scrolling, got: %s", view)
 	}
 }
 

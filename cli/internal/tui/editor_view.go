@@ -593,25 +593,93 @@ func (v *EditorView) applyWindowSize(width, height int) {
 
 	v.suggestionHeight = v.computeSuggestionHeight(height)
 
-	// Title (2) + padding (4) + error/retry/running status
-	overhead := 6
-	if !v.compact {
-		overhead += 4 // help footer
-	}
-	if v.err != nil {
-		overhead += 4
-	}
-	if v.retryPrompt.IsActive() {
-		overhead += 4
-	}
-	if v.queryState == OperationRunning {
-		overhead += 2
-	}
-	targetHeight := height - overhead - v.suggestionHeight
+	// +2 for the top/bottom rows added by View's outer Padding(1, 2).
+	targetHeight := height - v.nonTextareaHeight() - v.suggestionHeight - 2
 	if targetHeight < 5 {
 		targetHeight = 5
 	}
 	v.textarea.SetHeight(targetHeight)
+}
+
+// nonTextareaHeight measures the rendered height of every part of View()
+// other than the textarea and the ghost-text/suggestion area below it,
+// using lipgloss.Height on the actual content rather than guessed
+// constants — so a wrapping error message or multi-line tab bar doesn't
+// silently push the footer off screen.
+func (v *EditorView) nonTextareaHeight() int {
+	var b strings.Builder
+
+	if len(v.buffers) > 1 {
+		for _, buf := range v.buffers {
+			b.WriteString(buf.name)
+		}
+		b.WriteString("\n")
+	} else {
+		b.WriteString(styles.RenderTitle("SQL Editor"))
+	}
+	b.WriteString("\n\n")
+
+	if v.queryState == OperationRunning {
+		b.WriteString(v.parent.SpinnerView() + styles.RenderMuted(" Executing query... Press ESC to cancel"))
+		b.WriteString("\n\n")
+	}
+
+	if onboarding := v.renderOnboarding(); onboarding != "" {
+		b.WriteString(onboarding)
+		b.WriteString("\n\n")
+	}
+
+	// One line for the textarea's own trailing newline + ghost text.
+	b.WriteString("\n")
+
+	if v.err != nil {
+		b.WriteString("\n")
+		if v.compact {
+			b.WriteString(styles.RenderError(v.err.Error()))
+		} else {
+			b.WriteString("\n")
+			b.WriteString(styles.RenderErrorBox(v.err.Error()))
+		}
+	}
+
+	if v.retryPrompt.IsActive() {
+		b.WriteString("\n\n")
+		b.WriteString(styles.RenderKey("Retry with longer timeout?"))
+		b.WriteString("\n")
+		b.WriteString(styles.RenderHelp(
+			"[1]", "60s",
+			"[2]", "2min",
+			"[3]", "5min",
+			"[4]", "no limit",
+			"esc", "cancel",
+		))
+		return lipgloss.Height(b.String())
+	}
+
+	if !v.compact {
+		b.WriteString("\n\n")
+		bindings := []key.Binding{
+			Keys.Editor.Execute,
+			Keys.Editor.Explain,
+			Keys.Editor.Autocomplete,
+			Keys.Editor.Format,
+			Keys.Editor.OpenEditor,
+			Keys.Editor.Bookmarks,
+			Keys.Editor.NewTab,
+		}
+		if len(v.buffers) > 1 {
+			bindings = append(bindings, Keys.Editor.PrevTab, Keys.Editor.NextTab, Keys.Editor.CloseTab)
+		}
+		bindings = append(bindings,
+			Keys.Editor.Clear,
+			Keys.Global.NextView,
+			Keys.Global.Back,
+			Keys.Global.Quit,
+		)
+		b.WriteString(renderBindingHelpWidthNoHelp(v.width, bindings...))
+	}
+
+	return lipgloss.Height(b.String())
 }
 
 // getGhostText returns the remaining text from a matching history entry,
