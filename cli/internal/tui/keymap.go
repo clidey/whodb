@@ -884,14 +884,9 @@ func renderBindingHelpWidth(width int, includeHelp bool, bindings ...key.Binding
 	return renderHelpPairsWidth(width, false, pairs...)
 }
 
-// maxHelpWrapWidth caps how wide the shortcut help text is allowed to wrap.
-// Wide terminals still cram bindings into fewer, denser lines otherwise;
-// clamping keeps the grouping readable regardless of actual terminal width.
-const maxHelpWrapWidth = 80
-
 func renderHelpPairsWidth(width int, includeHelp bool, keys ...string) string {
-	if width <= 0 || width > maxHelpWrapWidth {
-		width = maxHelpWrapWidth
+	if width <= 0 {
+		width = 80
 	}
 	if includeHelp {
 		keys = appendHelpPair(keys)
