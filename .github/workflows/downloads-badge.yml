@@ -35,7 +35,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          RELEASE_DOWNLOADS=$(gh api --paginate repos/clidey/whodb/releases --jq '[.[].assets[].download_count] | add // 0')
+          RELEASE_DOWNLOADS=$(gh api --paginate repos/clidey/whodb/releases --jq '.[].assets[].download_count' | awk '{sum+=$1} END{print sum+0}')
           DOCKER_PULLS=$(curl -s "https://hub.docker.com/v2/repositories/clidey/whodb/" | jq '.pull_count // 0')
           TOTAL=$((RELEASE_DOWNLOADS + DOCKER_PULLS))
 
