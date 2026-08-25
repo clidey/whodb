@@ -157,6 +157,8 @@ ar_AE:
   advancedFields.serviceAccountJson: "حساب الخدمة JSON"
   advancedFields.serviceAccountJsonPlaceholder: "قم بتحميل أو لصق مفتاح JSON لحساب الخدمة"
   platformZeroInstallLink: "تفضل التثبيت صفر؟ جرب منصة WhoDB المستضافة."
+  zohomail.appPassword: "كلمة مرور التطبيق"
+  zohomail.enterAppPassword: "أدخل كلمة المرور الخاصة بتطبيق Zoho Mail"
 
 de_DE:
   enterHostName: "Geben Sie den Hostnamen ein"
@@ -236,6 +238,8 @@ de_DE:
   advancedFields.serviceAccountJson: "Dienstkonto JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Laden Sie einen JSON-Schlüssel für ein Dienstkonto hoch oder fügen Sie ihn ein"
   platformZeroInstallLink: "Bevorzugen Sie eine Nullinstallation? Probieren Sie die gehostete WhoDB-Plattform aus."
+  zohomail.appPassword: "App-Passwort"
+  zohomail.enterAppPassword: "Geben Sie das für die Zoho Mail-App spezifische Passwort ein"
 
 el_GR:
   enterHostName: "Εισαγάγετε Όνομα κεντρικού υπολογιστή"
@@ -315,6 +319,8 @@ el_GR:
   advancedFields.serviceAccountJson: "Λογαριασμός υπηρεσίας JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Μεταφορτώστε ή επικολλήστε ένα κλειδί JSON λογαριασμού υπηρεσίας"
   platformZeroInstallLink: "Προτιμάτε μηδενική εγκατάσταση; Δοκιμάστε τη φιλοξενούμενη WhoDB πλατφόρμα."
+  zohomail.appPassword: "Κωδικός εφαρμογής"
+  zohomail.enterAppPassword: "Εισαγάγετε τον κωδικό πρόσβασης για την εφαρμογή Zoho Mail"
 
 en_GB:
   enterHostName: "Enter Host Name"
@@ -394,6 +400,8 @@ en_GB:
   advancedFields.serviceAccountJson: "Service Account JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Upload or paste a service account JSON key"
   platformZeroInstallLink: "Prefer zero install? Try hosted WhoDB Platform."
+  zohomail.appPassword: "App Password"
+  zohomail.enterAppPassword: "Enter Zoho Mail App-Specific Password"
 
 es_ES:
   enterHostName: "Introduzca el nombre del host"
@@ -473,6 +481,8 @@ es_ES:
   advancedFields.serviceAccountJson: "Cuenta de servicio JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Cargar o pegar una clave JSON de cuenta de servicio"
   platformZeroInstallLink: "¿Prefieres instalación cero? Pruebe la plataforma alojada WhoDB."
+  zohomail.appPassword: "Contraseña de la aplicación"
+  zohomail.enterAppPassword: "Ingrese la contraseña específica de la aplicación Zoho Mail"
 
 fi_FI:
   enterHostName: "Anna isäntänimi"
@@ -552,6 +562,8 @@ fi_FI:
   advancedFields.serviceAccountJson: "Palvelutili JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Lataa tai liitä palvelutilin JSON-avain"
   platformZeroInstallLink: "Haluatko mieluummin nollaasennuksen? Kokeile isännöityä WhoDB alustaa."
+  zohomail.appPassword: "Sovelluksen salasana"
+  zohomail.enterAppPassword: "Anna Zoho Mail -sovelluskohtainen salasana"
 
 fr_FR:
   enterHostName: "Entrez le nom d'hôte"
@@ -631,6 +643,8 @@ fr_FR:
   advancedFields.serviceAccountJson: "Compte de service JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Importer ou coller une clé JSON de compte de service"
   platformZeroInstallLink: "Vous préférez zéro installation ? Essayez la plateforme WhoDB hébergée."
+  zohomail.appPassword: "Mot de passe de l'application"
+  zohomail.enterAppPassword: "Saisissez le mot de passe spécifique à l'application Zoho Mail"
 
 it_IT:
   enterHostName: "Inserisci il nome host"
@@ -710,6 +724,8 @@ it_IT:
   advancedFields.serviceAccountJson: "Account di servizio JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Carica o incolla la chiave JSON dell'account di servizio"
   platformZeroInstallLink: "Preferisci l'installazione zero? Prova la piattaforma WhoDB ospitata."
+  zohomail.appPassword: "Password dell'app"
+  zohomail.enterAppPassword: "Inserisci la password specifica dell'app Zoho Mail"
 
 iw_IL:
   enterHostName: "הזן את שם המארח"
@@ -789,6 +805,8 @@ iw_IL:
   advancedFields.serviceAccountJson: "חשבון שירות JSON"
   advancedFields.serviceAccountJsonPlaceholder: "העלה או הדבק מפתח JSON של חשבון שירות"
   platformZeroInstallLink: "מעדיפים אפס התקנה? נסה את הפלטפורמה המתארחת WhoDB."
+  zohomail.appPassword: "סיסמת אפליקציה"
+  zohomail.enterAppPassword: "הזן סיסמה ספציפית לאפליקציית Zoho Mail"
 
 ja_JP:
   enterHostName: "ホスト名を入力してください"
@@ -868,6 +886,8 @@ ja_JP:
   advancedFields.serviceAccountJson: "サービスアカウントJSON"
   advancedFields.serviceAccountJsonPlaceholder: "サービスアカウントのJSONキーをアップロードまたは貼り付けます"
   platformZeroInstallLink: "ゼロインストールを希望しますか? ホストされた WhoDB プラットフォームをお試しください。"
+  zohomail.appPassword: "アプリのパスワード"
+  zohomail.enterAppPassword: "Zoho Mailアプリ固有のパスワードを入力してください"
 
 ko_KR:
   enterHostName: "호스트 이름을 입력하세요"
@@ -947,6 +967,8 @@ ko_KR:
   advancedFields.serviceAccountJson: "서비스 계정 JSON"
   advancedFields.serviceAccountJsonPlaceholder: "서비스 계정 JSON 키 업로드 또는 붙여넣기"
   platformZeroInstallLink: "제로 설치를 선호하시나요? 호스팅된 WhoDB 플랫폼을 사용해 보세요."
+  zohomail.appPassword: "앱 비밀번호"
+  zohomail.enterAppPassword: "Zoho Mail 앱별 비밀번호를 입력하세요."
 
 nl_NL:
   enterHostName: "Voer de hostnaam in"
@@ -1026,6 +1048,8 @@ nl_NL:
   advancedFields.serviceAccountJson: "Serviceaccount JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Upload of plak een JSON-sleutel van een serviceaccount"
   platformZeroInstallLink: "Liever nul-installatie? Probeer het gehoste WhoDB-platform."
+  zohomail.appPassword: "App-wachtwoord"
+  zohomail.enterAppPassword: "Voer het app-specifieke wachtwoord van Zoho Mail in"
 
 pl_PL:
   enterHostName: "Wprowadź nazwę hosta"
@@ -1105,6 +1129,8 @@ pl_PL:
   advancedFields.serviceAccountJson: "Konto usługi JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Prześlij lub wklej klucz JSON konta usługi"
   platformZeroInstallLink: "Wolisz instalację zerową? Wypróbuj platformę hostowaną WhoDB."
+  zohomail.appPassword: "Hasło aplikacji"
+  zohomail.enterAppPassword: "Wprowadź hasło specyficzne dla aplikacji Zoho Mail"
 
 pt_BR:
   enterHostName: "Digite o nome do host"
@@ -1184,6 +1210,8 @@ pt_BR:
   advancedFields.serviceAccountJson: "JSON da conta de serviço"
   advancedFields.serviceAccountJsonPlaceholder: "Faça upload ou cole uma chave JSON da conta de serviço"
   platformZeroInstallLink: "Prefere instalação zero? Experimente a plataforma WhoDB hospedada."
+  zohomail.appPassword: "Senha do aplicativo"
+  zohomail.enterAppPassword: "Insira a senha específica do aplicativo Zoho Mail"
 
 ro_RO:
   enterHostName: "Introduceți numele gazdei"
@@ -1263,6 +1291,8 @@ ro_RO:
   advancedFields.serviceAccountJson: "Cont de serviciu JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Încărcați sau inserați o cheie JSON de cont de serviciu"
   platformZeroInstallLink: "Preferi zero instalare? Încercați platforma găzduită WhoDB."
+  zohomail.appPassword: "Parola aplicației"
+  zohomail.enterAppPassword: "Introduceți parola specifică aplicației Zoho Mail"
 
 ru_RU:
   enterHostName: "Введите имя хоста"
@@ -1342,6 +1372,8 @@ ru_RU:
   advancedFields.serviceAccountJson: "Сервисный аккаунт в формате JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Загрузите или вставьте JSON-ключ сервисного аккаунта."
   platformZeroInstallLink: "Предпочитаете нулевую установку? Попробуйте размещенную платформу WhoDB ."
+  zohomail.appPassword: "Пароль приложения"
+  zohomail.enterAppPassword: "Введите пароль приложения Zoho Mail"
 
 sk_SK:
   enterHostName: "Zadajte názov hostiteľa"
@@ -1421,6 +1453,8 @@ sk_SK:
   advancedFields.serviceAccountJson: "Servisný účet JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Nahrajte alebo prilepte kľúč JSON servisného účtu"
   platformZeroInstallLink: "Preferujete nulovú inštaláciu? Vyskúšajte hosťovanú WhoDB platformu."
+  zohomail.appPassword: "Heslo aplikácie"
+  zohomail.enterAppPassword: "Zadajte heslo špecifické pre aplikáciu Zoho Mail"
 
 sv_SE:
   enterHostName: "Ange värdnamn"
@@ -1500,6 +1534,8 @@ sv_SE:
   advancedFields.serviceAccountJson: "Servicekonto JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Ladda upp eller klistra in en JSON-nyckel för ett tjänstkonto"
   platformZeroInstallLink: "Föredrar du noll installation? Prova värd WhoDB plattform."
+  zohomail.appPassword: "Applösenord"
+  zohomail.enterAppPassword: "Ange Zoho Mail App-specifikt lösenord"
 
 zh_CN:
   enterHostName: "输入主机名"
@@ -1579,6 +1615,8 @@ zh_CN:
   advancedFields.serviceAccountJson: "服务帐户 JSON"
   advancedFields.serviceAccountJsonPlaceholder: "上传或粘贴服务帐户 JSON 密钥"
   platformZeroInstallLink: "更喜欢零安装？ 尝试托管 WhoDB 平台。"
+  zohomail.appPassword: "应用程序密码"
+  zohomail.enterAppPassword: "输入 Zoho Mail 应用程序专用密码"
 
 zh_TW:
   enterHostName: "輸入主機名稱"
@@ -1658,6 +1696,8 @@ zh_TW:
   advancedFields.serviceAccountJson: "服務帳戶 JSON"
   advancedFields.serviceAccountJsonPlaceholder: "上傳或貼上服務帳戶 JSON 金鑰"
   platformZeroInstallLink: "喜歡零安裝？ 嘗試託管 WhoDB 平台。"
+  zohomail.appPassword: "應用程式密碼"
+  zohomail.enterAppPassword: "輸入 Zoho Mail 應用程式專用密碼"
 
 bg_BG:
   enterHostName: "Въведете име на хост"
@@ -1737,6 +1777,8 @@ bg_BG:
   advancedFields.serviceAccountJson: "Сервизен акаунт JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Качете или поставете JSON ключ на акаунт за услуга"
   platformZeroInstallLink: "Предпочитате нулева инсталация? Опитайте хоствана WhoDB платформа."
+  zohomail.appPassword: "Парола за приложение"
+  zohomail.enterAppPassword: "Въведете специфична парола за приложението Zoho Mail"
 
 bn_BD:
   enterHostName: "হোস্টের নাম লিখুন"
@@ -1816,6 +1858,8 @@ bn_BD:
   advancedFields.serviceAccountJson: "পরিষেবা অ্যাকাউন্ট JSON"
   advancedFields.serviceAccountJsonPlaceholder: "একটি পরিষেবা অ্যাকাউন্ট JSON কী আপলোড বা পেস্ট করুন"
   platformZeroInstallLink: "শূন্য ইনস্টল পছন্দ? হোস্ট করা WhoDB প্ল্যাটফর্ম চেষ্টা করুন।"
+  zohomail.appPassword: "অ্যাপ পাসওয়ার্ড"
+  zohomail.enterAppPassword: "জোহো মেল অ্যাপ-নির্দিষ্ট পাসওয়ার্ড লিখুন"
 
 ca_ES:
   enterHostName: "Introduïu el nom de l'amfitrió"
@@ -1895,6 +1939,8 @@ ca_ES:
   advancedFields.serviceAccountJson: "Compte de servei JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Pengeu o enganxeu una clau JSON del compte de servei"
   platformZeroInstallLink: "Prefereix zero instal·lació? Prova la plataforma allotjada WhoDB."
+  zohomail.appPassword: "Contrasenya de l'aplicació"
+  zohomail.enterAppPassword: "Introduïu la contrasenya específica de l'aplicació Zoho Mail"
 
 cs_CZ:
   enterHostName: "Zadejte název hostitele"
@@ -1974,6 +2020,8 @@ cs_CZ:
   advancedFields.serviceAccountJson: "Servisní účet JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Nahrajte nebo vložte klíč JSON servisního účtu"
   platformZeroInstallLink: "Preferujete nulovou instalaci? Vyzkoušejte hostovanou WhoDB platformu."
+  zohomail.appPassword: "Heslo aplikace"
+  zohomail.enterAppPassword: "Zadejte heslo pro aplikaci Zoho Mail"
 
 da_DK:
   enterHostName: "Indtast værtsnavn"
@@ -2053,6 +2101,8 @@ da_DK:
   advancedFields.serviceAccountJson: "Tjenestekonto JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Upload eller indsæt en JSON-nøgle til en tjenestekonto"
   platformZeroInstallLink: "Foretrækker du nul installation? Prøv hostet WhoDB platform."
+  zohomail.appPassword: "App-adgangskode"
+  zohomail.enterAppPassword: "Indtast Zoho Mail App-specifik adgangskode"
 
 fa_IR:
   enterHostName: "نام میزبان را وارد کنید"
@@ -2132,6 +2182,8 @@ fa_IR:
   advancedFields.serviceAccountJson: "حساب سرویس JSON"
   advancedFields.serviceAccountJsonPlaceholder: "کلید JSON حساب سرویس را آپلود یا جایگذاری کنید"
   platformZeroInstallLink: "نصب صفر را ترجیح می دهید؟ پلتفرم میزبانی WhoDB را امتحان کنید."
+  zohomail.appPassword: "رمز برنامه"
+  zohomail.enterAppPassword: "رمز عبور اختصاصی برنامه ایمیل Zoho را وارد کنید"
 
 hi_IN:
   enterHostName: "होस्ट नाम दर्ज करें"
@@ -2211,6 +2263,8 @@ hi_IN:
   advancedFields.serviceAccountJson: "सेवा खाता JSON"
   advancedFields.serviceAccountJsonPlaceholder: "सेवा खाता JSON कुंजी अपलोड या पेस्ट करें"
   platformZeroInstallLink: "शून्य इंस्टॉल को प्राथमिकता दें? होस्ट किए गए WhoDB प्लेटफ़ॉर्म को आज़माएं।"
+  zohomail.appPassword: "ऐप पासवर्ड"
+  zohomail.enterAppPassword: "ज़ोहो मेल ऐप-विशिष्ट पासवर्ड दर्ज करें"
 
 hr_HR:
   enterHostName: "Unesite naziv glavnog računala"
@@ -2290,6 +2344,8 @@ hr_HR:
   advancedFields.serviceAccountJson: "Račun usluge JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Prenesite ili zalijepite JSON ključ računa usluge"
   platformZeroInstallLink: "Više volite nultu instalaciju? Isprobajte hostiranu WhoDB platformu."
+  zohomail.appPassword: "Lozinka aplikacije"
+  zohomail.enterAppPassword: "Unesite lozinku za aplikaciju Zoho Mail"
 
 hu_HU:
   enterHostName: "Írja be a gazdagép nevét"
@@ -2369,6 +2425,8 @@ hu_HU:
   advancedFields.serviceAccountJson: "Szolgáltatásfiók JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Töltsön fel vagy illesszen be egy szolgáltatásfiók JSON-kulcsát"
   platformZeroInstallLink: "Inkább nulla telepítés? Próbálja ki a tárolt WhoDB platformot."
+  zohomail.appPassword: "Alkalmazás jelszava"
+  zohomail.enterAppPassword: "Adja meg a Zoho Mail App-specifikus jelszót"
 
 id_ID:
   enterHostName: "Masukkan Nama Host"
@@ -2448,6 +2506,8 @@ id_ID:
   advancedFields.serviceAccountJson: "Akun Layanan JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Unggah atau tempel kunci JSON akun layanan"
   platformZeroInstallLink: "Lebih suka tanpa instalasi? Coba platform WhoDB yang dihosting."
+  zohomail.appPassword: "Kata Sandi Aplikasi"
+  zohomail.enterAppPassword: "Masukkan Kata Sandi Khusus Aplikasi Zoho Mail"
 
 ms_MY:
   enterHostName: "Masukkan Nama Hos"
@@ -2527,6 +2587,8 @@ ms_MY:
   advancedFields.serviceAccountJson: "Akaun Perkhidmatan JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Muat naik atau tampal kunci JSON akaun perkhidmatan"
   platformZeroInstallLink: "Lebih suka sifar pemasangan? Cuba dihoskan WhoDB Platform."
+  zohomail.appPassword: "Kata Laluan Apl"
+  zohomail.enterAppPassword: "Masukkan Kata Laluan Khusus Apl Zoho Mail"
 
 nb_NO:
   enterHostName: "Skriv inn vertsnavn"
@@ -2606,6 +2668,8 @@ nb_NO:
   advancedFields.serviceAccountJson: "Tjenestekonto JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Last opp eller lim inn en tjenestekonto JSON-nøkkel"
   platformZeroInstallLink: "Foretrekker null installasjon? Prøv vertsbasert WhoDB plattform."
+  zohomail.appPassword: "App-passord"
+  zohomail.enterAppPassword: "Skriv inn Zoho Mail App-spesifikt passord"
 
 sw_KE:
   enterHostName: "Ingiza Jina la Mwenyeji"
@@ -2685,6 +2749,8 @@ sw_KE:
   advancedFields.serviceAccountJson: "Akaunti ya Huduma JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Pakia au ubandike ufunguo wa akaunti ya huduma ya JSON"
   platformZeroInstallLink: "Je, unapendelea kusakinisha sifuri? Jaribu Mfumo wa kupangishwa WhoDB."
+  zohomail.appPassword: "Nenosiri la programu"
+  zohomail.enterAppPassword: "Weka Nenosiri Maalum la Programu ya Zoho"
 
 ta_IN:
   enterHostName: "ஹோஸ்ட் பெயரை உள்ளிடவும்"
@@ -2764,6 +2830,8 @@ ta_IN:
   advancedFields.serviceAccountJson: "சேவை கணக்கு JSON"
   advancedFields.serviceAccountJsonPlaceholder: "சேவைக் கணக்கு JSON விசையைப் பதிவேற்றவும் அல்லது ஒட்டவும்"
   platformZeroInstallLink: "பூஜ்ஜிய நிறுவலை விரும்புகிறீர்களா? ஹோஸ்ட் செய்யப்பட்ட WhoDB இயங்குதளத்தை முயற்சிக்கவும்."
+  zohomail.appPassword: "பயன்பாட்டு கடவுச்சொல்"
+  zohomail.enterAppPassword: "ஜோஹோ மெயில் ஆப்-குறிப்பிட்ட கடவுச்சொல்லை உள்ளிடவும்"
 
 th_TH:
   enterHostName: "ป้อนชื่อโฮสต์"
@@ -2843,6 +2911,8 @@ th_TH:
   advancedFields.serviceAccountJson: "บัญชีบริการ JSON"
   advancedFields.serviceAccountJsonPlaceholder: "อัปโหลดหรือวางคีย์ JSON ของบัญชีบริการ"
   platformZeroInstallLink: "ต้องการการติดตั้งเป็นศูนย์หรือไม่ ลองใช้แพลตฟอร์มที่โฮสต์ WhoDB"
+  zohomail.appPassword: "รหัสผ่านสำหรับแอป"
+  zohomail.enterAppPassword: "ป้อนรหัสผ่านเฉพาะแอป Zoho Mail"
 
 tr_TR:
   enterHostName: "Ana Bilgisayar Adını Girin"
@@ -2922,6 +2992,8 @@ tr_TR:
   advancedFields.serviceAccountJson: "Hizmet Hesabı JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Hizmet hesabı JSON anahtarını yükleyin veya yapıştırın"
   platformZeroInstallLink: "Sıfır yüklemeyi mi tercih ediyorsunuz? Barındırılan WhoDB Platformu deneyin."
+  zohomail.appPassword: "Uygulama Şifresi"
+  zohomail.enterAppPassword: "Zoho Mail Uygulamasına Özel Şifreyi Girin"
 
 uk_UA:
   enterHostName: "Введіть ім'я хоста"
@@ -3001,6 +3073,8 @@ uk_UA:
   advancedFields.serviceAccountJson: "Обліковий запис служби JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Завантажте або вставте ключ JSON сервісного облікового запису"
   platformZeroInstallLink: "Віддаєте перевагу нульовій установці? Спробуйте розміщену платформу WhoDB."
+  zohomail.appPassword: "Пароль програми"
+  zohomail.enterAppPassword: "Введіть пароль програми Zoho Mail"
 
 ur_PK:
   enterHostName: "میزبان کا نام درج کریں۔"
@@ -3080,6 +3154,8 @@ ur_PK:
   advancedFields.serviceAccountJson: "سروس اکاؤنٹ JSON"
   advancedFields.serviceAccountJsonPlaceholder: "سروس اکاؤنٹ JSON کلید اپ لوڈ یا پیسٹ کریں۔"
   platformZeroInstallLink: "زیرو انسٹال کو ترجیح دیں؟ ہوسٹڈ WhoDB پلیٹ فارم کو آزمائیں۔"
+  zohomail.appPassword: "ایپ پاس ورڈ"
+  zohomail.enterAppPassword: "زوہو میل ایپ کے لیے مخصوص پاس ورڈ درج کریں۔"
 
 vi_VN:
   enterHostName: "Nhập tên máy chủ"
@@ -3159,6 +3235,8 @@ vi_VN:
   advancedFields.serviceAccountJson: "Tài khoản dịch vụ JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Tải lên hoặc dán khóa JSON của tài khoản dịch vụ"
   platformZeroInstallLink: "Thích cài đặt bằng không? Hãy thử Nền tảng WhoDB được lưu trữ."
+  zohomail.appPassword: "Mật khẩu ứng dụng"
+  zohomail.enterAppPassword: "Nhập mật khẩu dành riêng cho ứng dụng Zoho Mail"
 
 af_ZA:
   enterHostName: "Voer gasheernaam in"
@@ -3238,6 +3316,8 @@ af_ZA:
   advancedFields.serviceAccountJson: "Diensrekening JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Laai 'n diensrekening JSON-sleutel op of plak"
   platformZeroInstallLink: "Verkies nul installasie? Probeer gehuisves WhoDB platform."
+  zohomail.appPassword: "App Wagwoord"
+  zohomail.enterAppPassword: "Voer Zoho Mail App-spesifieke wagwoord in"
 
 am_ET:
   enterHostName: "የአስተናጋጅ ስም ያስገቡ"
@@ -3317,6 +3397,8 @@ am_ET:
   advancedFields.serviceAccountJson: "የአገልግሎት መለያ JSON"
   advancedFields.serviceAccountJsonPlaceholder: "የአገልግሎት መለያ JSON ቁልፍን ይስቀሉ ወይም ይለጥፉ"
   platformZeroInstallLink: "ዜሮ መጫን እመርጣለሁ? የተስተናገደውን ይሞክሩ WhoDB መድረክ።"
+  zohomail.appPassword: "የመተግበሪያ ይለፍ ቃል"
+  zohomail.enterAppPassword: "Zoho Mail መተግበሪያ-ተኮር የይለፍ ቃል ያስገቡ"
 
 az_AZ:
   enterHostName: "Host adını daxil edin"
@@ -3396,6 +3478,8 @@ az_AZ:
   advancedFields.serviceAccountJson: "Xidmət Hesabı JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Xidmət hesabı JSON açarını yükləyin və ya yapışdırın"
   platformZeroInstallLink: "Sıfır quraşdırmaya üstünlük verirsiniz? Yerləşdirilmiş WhoDB Platformasını sınayın."
+  zohomail.appPassword: "Proqram parolu"
+  zohomail.enterAppPassword: "Zoho Mail Tətbiqinə Xüsusi Parol daxil edin"
 
 et_EE:
   enterHostName: "Sisestage hosti nimi"
@@ -3475,6 +3559,8 @@ et_EE:
   advancedFields.serviceAccountJson: "Teenusekonto JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Laadige üles või kleepige teenusekonto JSON-võti"
   platformZeroInstallLink: "Kas eelistate nullinstalli? Proovige hostitud WhoDB platvormi."
+  zohomail.appPassword: "Rakenduse parool"
+  zohomail.enterAppPassword: "Sisestage Zoho Maili rakenduse spetsiifiline parool"
 
 gu_IN:
   enterHostName: "હોસ્ટનું નામ દાખલ કરો"
@@ -3554,6 +3640,8 @@ gu_IN:
   advancedFields.serviceAccountJson: "સેવા ખાતું JSON"
   advancedFields.serviceAccountJsonPlaceholder: "સેવા એકાઉન્ટ JSON કી અપલોડ કરો અથવા પેસ્ટ કરો"
   platformZeroInstallLink: "શૂન્ય ઇન્સ્ટોલ કરવાનું પસંદ કરો છો? હોસ્ટ કરેલ WhoDB પ્લેટફોર્મ અજમાવી જુઓ."
+  zohomail.appPassword: "એપ્લિકેશન પાસવર્ડ"
+  zohomail.enterAppPassword: "Zoho Mail એપ્લિકેશન-વિશિષ્ટ પાસવર્ડ દાખલ કરો"
 
 ha_NG:
   enterHostName: "Shigar da Sunan Mai watsa shiri"
@@ -3633,6 +3721,8 @@ ha_NG:
   advancedFields.serviceAccountJson: "Asusun Sabis JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Loda ko liƙa asusun sabis na JSON"
   platformZeroInstallLink: "An fi son shigar da sifili? Gwada masaukin WhoDB Dandalin."
+  zohomail.appPassword: "Kalmar wucewa ta App"
+  zohomail.enterAppPassword: "Shigar da Takamaiman Kalmar wucewa ta Saƙon Zoho"
 
 ka_GE:
   enterHostName: "შეიყვანეთ ჰოსტის სახელი"
@@ -3712,6 +3802,8 @@ ka_GE:
   advancedFields.serviceAccountJson: "სერვისის ანგარიში JSON"
   advancedFields.serviceAccountJsonPlaceholder: "ატვირთეთ ან ჩასვით სერვისის ანგარიშის JSON გასაღები"
   platformZeroInstallLink: "გირჩევნიათ ნულოვანი ინსტალაცია? სცადეთ ჰოსტირებული WhoDB პლატფორმა."
+  zohomail.appPassword: "აპლიკაციის პაროლი"
+  zohomail.enterAppPassword: "შეიყვანეთ Zoho Mail App-ის სპეციფიკური პაროლი"
 
 km_KH:
   enterHostName: "បញ្ចូលឈ្មោះម៉ាស៊ីន"
@@ -3791,6 +3883,8 @@ km_KH:
   advancedFields.serviceAccountJson: "គណនីសេវាកម្ម JSON"
   advancedFields.serviceAccountJsonPlaceholder: "បង្ហោះ ឬបិទភ្ជាប់គណនីសេវាកម្ម JSON"
   platformZeroInstallLink: "ចូលចិត្តការដំឡើងសូន្យ? សាកល្បងប្រើវេទិកា WhoDB ។"
+  zohomail.appPassword: "ពាក្យសម្ងាត់កម្មវិធី"
+  zohomail.enterAppPassword: "បញ្ចូលពាក្យសម្ងាត់ជាក់លាក់នៃកម្មវិធី Zoho Mail"
 
 kn_IN:
   enterHostName: "ಹೋಸ್ಟ್ ಹೆಸರನ್ನು ನಮೂದಿಸಿ"
@@ -3870,6 +3964,8 @@ kn_IN:
   advancedFields.serviceAccountJson: "ಸೇವಾ ಖಾತೆ JSON"
   advancedFields.serviceAccountJsonPlaceholder: "ಸೇವಾ ಖಾತೆ JSON ಕೀಯನ್ನು ಅಪ್‌ಲೋಡ್ ಮಾಡಿ ಅಥವಾ ಅಂಟಿಸಿ"
   platformZeroInstallLink: "ಶೂನ್ಯ ಸ್ಥಾಪನೆಗೆ ಆದ್ಯತೆ ನೀಡುವುದೇ? ಹೋಸ್ಟ್ ಮಾಡಿದ WhoDB ಪ್ಲಾಟ್‌ಫಾರ್ಮ್ ಅನ್ನು ಪ್ರಯತ್ನಿಸಿ."
+  zohomail.appPassword: "ಅಪ್ಲಿಕೇಶನ್ ಪಾಸ್ವರ್ಡ್"
+  zohomail.enterAppPassword: "ಜೊಹೊ ಮೇಲ್ ಅಪ್ಲಿಕೇಶನ್-ನಿರ್ದಿಷ್ಟ ಪಾಸ್‌ವರ್ಡ್ ನಮೂದಿಸಿ"
 
 lt_LT:
   enterHostName: "Įveskite pagrindinio kompiuterio pavadinimą"
@@ -3949,6 +4045,8 @@ lt_LT:
   advancedFields.serviceAccountJson: "Paslaugos paskyra JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Įkelkite arba įklijuokite paslaugos paskyros JSON raktą"
   platformZeroInstallLink: "Norite įdiegti nulį? Išbandykite priglobtą WhoDB platformą."
+  zohomail.appPassword: "Programos slaptažodis"
+  zohomail.enterAppPassword: "Įveskite „Zoho Mail App“ specifinį slaptažodį"
 
 lv_LV:
   enterHostName: "Ievadiet resursdatora nosaukumu"
@@ -4028,6 +4126,8 @@ lv_LV:
   advancedFields.serviceAccountJson: "Pakalpojuma konts JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Augšupielādējiet vai ielīmējiet pakalpojuma konta JSON atslēgu"
   platformZeroInstallLink: "Vai vēlaties instalēt nulli? Izmēģiniet mitināto WhoDB platformu."
+  zohomail.appPassword: "Lietotnes parole"
+  zohomail.enterAppPassword: "Ievadiet Zoho Mail lietotnes specifisko paroli"
 
 ml_IN:
   enterHostName: "ഹോസ്റ്റിൻ്റെ പേര് നൽകുക"
@@ -4107,6 +4207,8 @@ ml_IN:
   advancedFields.serviceAccountJson: "സേവന അക്കൗണ്ട് JSON"
   advancedFields.serviceAccountJsonPlaceholder: "ഒരു സേവന അക്കൗണ്ട് JSON കീ അപ്‌ലോഡ് ചെയ്യുക അല്ലെങ്കിൽ ഒട്ടിക്കുക"
   platformZeroInstallLink: "പൂജ്യം ഇൻസ്റ്റാൾ ചെയ്യണോ? ഹോസ്റ്റ് ചെയ്‌ത WhoDB പ്ലാറ്റ്‌ഫോം പരീക്ഷിക്കുക."
+  zohomail.appPassword: "ആപ്പ് പാസ്‌വേഡ്"
+  zohomail.enterAppPassword: "സോഹോ മെയിൽ ആപ്പ്-നിർദ്ദിഷ്ട പാസ്‌വേഡ് നൽകുക"
 
 mr_IN:
   enterHostName: "होस्ट नाव प्रविष्ट करा"
@@ -4186,6 +4288,8 @@ mr_IN:
   advancedFields.serviceAccountJson: "सेवा खाते JSON"
   advancedFields.serviceAccountJsonPlaceholder: "सेवा खाते JSON की अपलोड किंवा पेस्ट करा"
   platformZeroInstallLink: "शून्य स्थापित करण्यास प्राधान्य द्यायचे? होस्ट केलेले WhoDB प्लॅटफॉर्म वापरून पहा."
+  zohomail.appPassword: "ॲप पासवर्ड"
+  zohomail.enterAppPassword: "झोहो मेल ॲप-विशिष्ट पासवर्ड प्रविष्ट करा"
 
 ne_NP:
   enterHostName: "होस्ट नाम प्रविष्ट गर्नुहोस्"
@@ -4265,6 +4369,8 @@ ne_NP:
   advancedFields.serviceAccountJson: "सेवा खाता JSON"
   advancedFields.serviceAccountJsonPlaceholder: "सेवा खाता JSON कुञ्जी अपलोड वा टाँस्नुहोस्"
   platformZeroInstallLink: "शून्य स्थापना मनपर्छ? होस्ट गरिएको WhoDB प्लेटफर्म प्रयास गर्नुहोस्।"
+  zohomail.appPassword: "एप पासवर्ड"
+  zohomail.enterAppPassword: "Zoho मेल एप-विशिष्ट पासवर्ड प्रविष्ट गर्नुहोस्"
 
 pa_IN:
   enterHostName: "ਮੇਜ਼ਬਾਨ ਦਾ ਨਾਮ ਦਰਜ ਕਰੋ"
@@ -4344,6 +4450,8 @@ pa_IN:
   advancedFields.serviceAccountJson: "ਸੇਵਾ ਖਾਤਾ JSON"
   advancedFields.serviceAccountJsonPlaceholder: "ਸੇਵਾ ਖਾਤਾ JSON ਕੁੰਜੀ ਨੂੰ ਅੱਪਲੋਡ ਜਾਂ ਪੇਸਟ ਕਰੋ"
   platformZeroInstallLink: "ਜ਼ੀਰੋ ਇੰਸਟਾਲ ਨੂੰ ਤਰਜੀਹ ਦਿੰਦੇ ਹੋ? ਹੋਸਟ ਕੀਤੇ WhoDB ਪਲੇਟਫਾਰਮ ਦੀ ਕੋਸ਼ਿਸ਼ ਕਰੋ।"
+  zohomail.appPassword: "ਐਪ ਪਾਸਵਰਡ"
+  zohomail.enterAppPassword: "ਜ਼ੋਹੋ ਮੇਲ ਐਪ-ਵਿਸ਼ੇਸ਼ ਪਾਸਵਰਡ ਦਰਜ ਕਰੋ"
 
 si_LK:
   enterHostName: "සත්කාරක නාමය ඇතුළත් කරන්න"
@@ -4423,6 +4531,8 @@ si_LK:
   advancedFields.serviceAccountJson: "JSON සේවා ගිණුම"
   advancedFields.serviceAccountJsonPlaceholder: "සේවා ගිණුම් JSON යතුරක් උඩුගත කරන්න හෝ අලවන්න"
   platformZeroInstallLink: "ශුන්‍ය ස්ථාපනයට කැමතිද? සත්කාරක WhoDB වේදිකාව උත්සාහ කරන්න."
+  zohomail.appPassword: "යෙදුම් මුරපදය"
+  zohomail.enterAppPassword: "Zoho Mail යෙදුම-විශේෂිත මුරපදය ඇතුළත් කරන්න"
 
 sl_SI:
   enterHostName: "Vnesite ime gostitelja"
@@ -4502,6 +4612,8 @@ sl_SI:
   advancedFields.serviceAccountJson: "Storitveni račun JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Naložite ali prilepite ključ JSON storitvenega računa"
   platformZeroInstallLink: "Želite raje ničelno namestitev? Poskusite gostovano WhoDB platformo."
+  zohomail.appPassword: "Geslo za aplikacijo"
+  zohomail.enterAppPassword: "Vnesite posebno geslo za aplikacijo Zoho Mail"
 
 sr_RS:
   enterHostName: "Унесите име хоста"
@@ -4581,6 +4693,8 @@ sr_RS:
   advancedFields.serviceAccountJson: "ЈСОН налог услуге"
   advancedFields.serviceAccountJsonPlaceholder: "Отпремите или налепите ЈСОН кључ налога услуге"
   platformZeroInstallLink: "Желите нулту инсталацију? Испробајте хостовану WhoDB платформу."
+  zohomail.appPassword: "Лозинка апликације"
+  zohomail.enterAppPassword: "Унесите лозинку за Зохо Маил апликацију"
 
 te_IN:
   enterHostName: "హోస్ట్ పేరును నమోదు చేయండి"
@@ -4660,6 +4774,8 @@ te_IN:
   advancedFields.serviceAccountJson: "సేవా ఖాతా JSON"
   advancedFields.serviceAccountJsonPlaceholder: "సేవా ఖాతా JSON కీని అప్‌లోడ్ చేయండి లేదా అతికించండి"
   platformZeroInstallLink: "సున్నా ఇన్‌స్టాల్‌ను ఇష్టపడతారా? హోస్ట్ చేయబడిన WhoDB ప్లాట్‌ఫారమ్‌ను ప్రయత్నించండి."
+  zohomail.appPassword: "యాప్ పాస్‌వర్డ్"
+  zohomail.enterAppPassword: "జోహో మెయిల్ యాప్-నిర్దిష్ట పాస్‌వర్డ్‌ని నమోదు చేయండి"
 
 tl_PH:
   enterHostName: "Ilagay ang Host Name"
@@ -4739,6 +4855,8 @@ tl_PH:
   advancedFields.serviceAccountJson: "Account ng Serbisyo JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Mag-upload o mag-paste ng JSON key ng account ng serbisyo"
   platformZeroInstallLink: "Mas gusto ang zero install? Subukan ang naka-host na WhoDB Platform."
+  zohomail.appPassword: "Password ng App"
+  zohomail.enterAppPassword: "Ilagay ang Zoho Mail App-Specific na Password"
 
 uz_UZ:
   enterHostName: "Xost nomini kiriting"
@@ -4818,6 +4936,8 @@ uz_UZ:
   advancedFields.serviceAccountJson: "JSON xizmat hisobi"
   advancedFields.serviceAccountJsonPlaceholder: "Xizmat hisobi JSON kalitini yuklang yoki joylashtiring"
   platformZeroInstallLink: "Nol o'rnatishni afzal ko'rasizmi? Xostlangan WhoDB platformasini sinab koʻring."
+  zohomail.appPassword: "Ilova paroli"
+  zohomail.enterAppPassword: "Zoho Mail ilovasi uchun maxsus parolni kiriting"
 
 yo_NG:
   enterHostName: "Tẹ Orukọ ogun sii"
@@ -4897,3 +5017,5 @@ yo_NG:
   advancedFields.serviceAccountJson: "Account Service JSON"
   advancedFields.serviceAccountJsonPlaceholder: "Po si tabi lẹẹmọ iroyin iṣẹ bọtini JSON"
   platformZeroInstallLink: "Ṣe o fẹ fi sori ẹrọ odo bi? Gbiyanju lati gbalejo WhoDB Platform."
+  zohomail.appPassword: "Ọrọigbaniwọle App"
+  zohomail.enterAppPassword: "Tẹ ọrọ igbaniwọle kan pato App Zoho Mail sii"
