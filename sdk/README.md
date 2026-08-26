@@ -53,6 +53,8 @@ node tools/conformance-runner.mjs --lang python
 ```
 
 Releases ride `release-ce.yml` (the `deploy-sdk` toggle) and share the repo
-release version — see `_deploy-sdk-npm.yml` / `_deploy-sdk-pypi.yml`.
+release version — see `_deploy-sdk-npm.yml` and the inlined
+`deploy-sdk-pypi` job in `release-ce.yml` (inlined because PyPI attestations
+don't work from reusable workflows).
 
 Adding a language: `docs/porting.md`.

@@ -106,7 +106,9 @@ port is real.
   constant that feeds User-Agent.
 - Wire tests into `pnpm -r test` (a private harness package.json is fine for
   non-JS languages — see packages/python/package.json).
-- Add a publish job modeled on `_deploy-sdk-pypi.yml` (trusted publishing
+- Add a publish job modeled on the `deploy-sdk-pypi` job in `release-ce.yml`
+  (inline it there, not a reusable workflow, if the registry validates
+  attestations against the top-level workflow — PyPI does; trusted publishing
   where the registry supports it) and gate it on `deploy-sdk` in
   `release-ce.yml`.
 - Vet every new runtime dependency with deptrust before pinning; prefer zero
