@@ -193,6 +193,7 @@ jobs:
           DEPLOY_LINUX_TERMINAL: ${{ steps.calc.outputs.deploy-linux-terminal }}
           DEPLOY_CLI: ${{ steps.calc.outputs.deploy-cli }}
           DEPLOY_NPM: ${{ steps.calc.outputs.deploy-npm }}
+          DEPLOY_SDK: ${{ steps.calc.outputs.deploy-sdk }}
         run: |
           set -euo pipefail
 
@@ -201,8 +202,9 @@ jobs:
             HAS_FILE_ASSETS=true
           fi
 
-          if [ "$DEPLOY_DOCKER" != "true" ] && [ "$HAS_FILE_ASSETS" != "true" ]; then
-            echo "::error::Select at least one release target: Docker, Snap, Microsoft, Apple, Linux Terminal, CLI, or npm."
+          # SDKs publish to npm/PyPI only — a valid target, but no release-page assets.
+          if [ "$DEPLOY_DOCKER" != "true" ] && [ "$HAS_FILE_ASSETS" != "true" ] && [ "$DEPLOY_SDK" != "true" ]; then
+            echo "::error::Select at least one release target: Docker, Snap, Microsoft, Apple, Linux Terminal, CLI, npm, or SDK."
             exit 1
           fi
 
@@ -262,6 +264,7 @@ jobs:
             echo "| Snap Store | ${{ steps.calc.outputs.deploy-snap }} | stable |"
             echo "| Microsoft Store | ${{ steps.calc.outputs.deploy-microsoft }} | production |"
             echo "| Apple App Store | ${{ steps.calc.outputs.deploy-apple }} | App Store |"
+            echo "| SDKs (npm + PyPI) | ${{ steps.calc.outputs.deploy-sdk }} | latest |"
           else
             echo "| Store | Deploy | Channel |"
             echo "|-------|--------|---------|"
@@ -269,6 +272,7 @@ jobs:
             echo "| Snap Store | ${{ steps.calc.outputs.deploy-snap }} | edge |"
             echo "| Microsoft Store | ${{ steps.calc.outputs.deploy-microsoft }} | draft |"
             echo "| Apple App Store | ${{ steps.calc.outputs.deploy-apple }} | TestFlight |"
+            echo "| SDKs (npm + PyPI) | ${{ steps.calc.outputs.deploy-sdk }} | version |"
           fi
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -1051,6 +1055,8 @@ jobs:
       deploy-microsoft,
       deploy-apple,
       deploy-npm,
+      deploy-sdk-npm,
+      deploy-sdk-pypi,
       create-github-release,
       stamp-plugin-version
     ]
@@ -1144,6 +1150,8 @@ jobs:
           deploy_row "Microsoft Store" "${{ needs.deploy-microsoft.result }}" "${{ needs.calculate-version.outputs.deploy-microsoft }}" "${{ needs.calculate-version.outputs.stage-only == 'true' && 'Draft submission' || 'Submitted for certification' }}"
           deploy_row "Apple App Store" "${{ needs.deploy-apple.result }}" "${{ needs.calculate-version.outputs.deploy-apple }}" "${{ needs.calculate-version.outputs.stage-only == 'true' && 'TestFlight only' || 'Submitted for review' }}"
           deploy_row "npm (@clidey/whodb-cli)" "${{ needs.deploy-npm.result }}" "${{ needs.calculate-version.outputs.deploy-npm }}" "All platform packages"
+          deploy_row "SDK npm (@clidey/whodb-sdk)" "${{ needs.deploy-sdk-npm.result }}" "${{ needs.calculate-version.outputs.deploy-sdk }}" "TypeScript platform SDK"
+          deploy_row "SDK PyPI (whodb-sdk)" "${{ needs.deploy-sdk-pypi.result }}" "${{ needs.calculate-version.outputs.deploy-sdk }}" "Python platform SDK"
 
           echo ""
 
