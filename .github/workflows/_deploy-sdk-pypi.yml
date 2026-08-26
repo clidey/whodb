@@ -30,9 +30,11 @@ jobs:
             api.github.com:443
             files.pythonhosted.org:443
             fulcio.sigstore.dev:443
+            ghcr.io:443
             github.com:443
             nodejs.org:443
             objects.githubusercontent.com:443
+            pkg-containers.githubusercontent.com:443
             pypi.org:443
             registry.npmjs.org:443
             rekor.sigstore.dev:443
@@ -56,9 +58,9 @@ jobs:
           node-version: '25.6.0'
 
       - name: Setup Python
-        uses: actions/setup-python@2e3e4b15a884dc73a63f962bff250a855150a234 # v6.1.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: '3.12'
+          python-version: '3.13'
 
       - name: Install workspace deps
         run: cd sdk && pnpm install --frozen-lockfile
@@ -78,6 +80,6 @@ jobs:
           python -m build
 
       - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc # v1.12.4
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
         with:
           packages-dir: sdk/packages/python/dist/
