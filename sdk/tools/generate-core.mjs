@@ -9,10 +9,14 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parse, buildASTSchema, extendSchema, Kind, isObjectType, isEnumType, isScalarType, isNonNullType, isListType, getNamedType } from 'graphql';
+import { execFileSync } from 'node:child_process';
+import { parse, buildASTSchema, extendSchema, Kind, isObjectType, isEnumType, isScalarType, getNamedType } from 'graphql';
 import YAML from 'yaml';
 import { renderTypeScript } from './render/ts.mjs';
 import { renderPython } from './render/python.mjs';
+import { renderGo } from './render/go.mjs';
+import { renderRust } from './render/rust.mjs';
+import { renderJava } from './render/java.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const sdkRoot = resolve(here, '..');
@@ -162,12 +166,30 @@ function main() {
   const renderers = [
     { name: 'typescript', outDir: join(sdkRoot, 'packages/typescript/src/generated'), render: renderTypeScript },
     { name: 'python', outDir: join(sdkRoot, 'packages/python/src/whodb/_generated'), render: renderPython },
+    { name: 'go', outDir: join(sdkRoot, 'packages/go/gen'), render: renderGo },
+    { name: 'rust', outDir: join(sdkRoot, 'packages/rust/src/gen'), render: renderRust },
+    { name: 'java', outDir: join(sdkRoot, 'packages/java/src/main/java/com/clidey/whodb/gen'), render: renderJava },
   ];
 
   let failed = false;
   for (const renderer of renderers) {
     const renderFn = renderer.render;
-    const files = renderFn(ir); // [ [relPath, content], ... ]
+    let files = renderFn(ir); // [ [relPath, content], ... ]
+    if (renderer.name === 'go') {
+      // Generated Go is normalized through gofmt so --check byte-comparison
+      // is stable regardless of renderer whitespace choices.
+      files = files.map(([relPath, content]) => [
+        relPath,
+        execFileSync('gofmt', [], { input: content, encoding: 'utf8' }),
+      ]);
+    }
+    if (renderer.name === 'rust') {
+      // Same normalization for Rust via rustfmt (matches `cargo fmt --check` in CI).
+      files = files.map(([relPath, content]) => [
+        relPath,
+        execFileSync('rustfmt', ['--edition', '2021', '--emit', 'stdout'], { input: content, encoding: 'utf8' }),
+      ]);
+    }
     for (const [relPath, content] of files) {
       const outPath = join(renderer.outDir, relPath);
       if (check) {

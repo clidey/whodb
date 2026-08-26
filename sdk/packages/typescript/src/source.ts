@@ -4,7 +4,7 @@ import type {
   Column, PlatformSource, SourceObject, SourceObjectRefInput,
   WhereCondition, SortCondition,
 } from './generated/types.js';
-import { hydrateRows, type Row } from './hydrate.js';
+import { hydrateRows } from './hydrate.js';
 import { ListCall, type Page } from './pagination.js';
 import { warnIfFlagged } from './manifest-check.js';
 

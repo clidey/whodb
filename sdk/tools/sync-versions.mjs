@@ -38,6 +38,33 @@ const manifests = [
     read: (text) => text.match(/SDK_VERSION = "([^"]+)"/)?.[1],
     write: (text, version) => text.replace(/SDK_VERSION = "[^"]+"/, `SDK_VERSION = "${version}"`),
   },
+  // Go has no manifest version — releases are git tags (sdk/packages/go/vX.Y.Z).
+  // The constant still feeds the User-Agent header.
+  {
+    path: join(sdkRoot, 'packages/go/version.go'),
+    read: (text) => text.match(/SDKVersion = "([^"]+)"/)?.[1],
+    write: (text, version) => text.replace(/SDKVersion = "[^"]+"/, `SDKVersion = "${version}"`),
+  },
+  {
+    path: join(sdkRoot, 'packages/rust/Cargo.toml'),
+    read: (text) => text.match(/^version = "([^"]+)"/m)?.[1],
+    write: (text, version) => text.replace(/^version = "[^"]+"/m, `version = "${version}"`),
+  },
+  {
+    path: join(sdkRoot, 'packages/rust/src/lib.rs'),
+    read: (text) => text.match(/SDK_VERSION: &str = "([^"]+)"/)?.[1],
+    write: (text, version) => text.replace(/SDK_VERSION: &str = "[^"]+"/, `SDK_VERSION: &str = "${version}"`),
+  },
+  {
+    path: join(sdkRoot, 'packages/java/pom.xml'),
+    read: (text) => text.match(/<version>([^<]+)<\/version>\s*\n\s*<packaging>/)?.[1],
+    write: (text, version) => text.replace(/<version>[^<]+<\/version>(\s*\n\s*<packaging>)/, `<version>${version}</version>$1`),
+  },
+  {
+    path: join(sdkRoot, 'packages/java/src/main/java/com/clidey/whodb/WhoDB.java'),
+    read: (text) => text.match(/SDK_VERSION = "([^"]+)"/)?.[1],
+    write: (text, version) => text.replace(/SDK_VERSION = "[^"]+"/, `SDK_VERSION = "${version}"`),
+  },
 ];
 
 const args = process.argv.slice(2);

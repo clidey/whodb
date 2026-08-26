@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from typing import Any
 
 from ._errors import NotFoundError
 from ._generated import operations as ops
@@ -17,7 +18,7 @@ class DatasetHandle:
         self._execute = execute
         self._project_id = project_id
         self._name = name
-        self._dataset_cache: Optional[dict] = None
+        self._dataset_cache: dict | None = None
 
     def meta(self) -> dict:
         """Resolve and cache the dataset metadata backing this handle."""

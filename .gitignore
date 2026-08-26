@@ -78,4 +78,5 @@ ee/research-sources/__pycache__/
 sdk/packages/typescript/dist/
 sdk/packages/python/dist/
 sdk/packages/python/src/*.egg-info/
-__pycache__/
+sdk/packages/rust/target/
+sdk/packages/java/target/

@@ -1,0 +1,34 @@
+version: "2"
+
+run:
+  go: "1.22"
+
+linters:
+  enable:
+    - govet
+    - staticcheck
+    - errcheck
+    - gosec
+  exclusions:
+    rules:
+      - linters: [errcheck]
+        source: "defer "
+      - linters: [errcheck]
+        path: "_test\\.go$"
+      # G101: test files use obviously-fake "whodb_sk_x" style keys.
+      - linters: [gosec]
+        text: "G101"
+        path: "_test\\.go$"
+      # The conformance runner writes JSON lines to stdout; encode errors are
+      # unrecoverable there.
+      - linters: [errcheck]
+        path: "cmd/conformance/"
+      # G204: the CLI credential helper execs a fixed argv ("whodb auth
+      # print-token") — the documented gcloud-ADC pattern, no user input.
+      - linters: [gosec]
+        text: "G204"
+        path: "auth\\.go"
+
+formatters:
+  enable:
+    - gofmt

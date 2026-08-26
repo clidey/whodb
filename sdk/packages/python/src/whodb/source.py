@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from typing import Any
 
 from ._generated import operations as ops
 from ._hydrate import hydrate_rows
@@ -20,7 +21,7 @@ class SourceHandle:
         self._project_id = project_id
         self._source_id = source_id
 
-    def objects(self, parent: Optional[dict] = None, page_size: Optional[int] = None, page_offset: Optional[int] = None) -> list[dict]:
+    def objects(self, parent: dict | None = None, page_size: int | None = None, page_offset: int | None = None) -> list[dict]:
         """List browsable objects (schemas, tables, collections...)."""
         warn_if_flagged("PlatformSourceObjects")
         return self._execute(
@@ -45,7 +46,7 @@ class SourceHandle:
             )
         )
 
-    def rows(self, ref: dict, where: Optional[dict] = None, sort: Optional[list[dict]] = None, page_size: int = _DEFAULT_PAGE_SIZE) -> ListCall:
+    def rows(self, ref: dict, where: dict | None = None, sort: list[dict] | None = None, page_size: int = _DEFAULT_PAGE_SIZE) -> ListCall:
         """Read rows from one object; iterate or call .pages()."""
 
         def fetch_page(page_offset: int) -> Page:

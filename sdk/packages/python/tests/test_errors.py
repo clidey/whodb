@@ -14,7 +14,11 @@ from whodb._errors import (  # noqa: E402
     WhoDBVersionError,
     map_graphql_errors,
 )
-from whodb._manifest_check import interpret_server_error, reset_warnings, warn_if_flagged  # noqa: E402
+from whodb._manifest_check import (  # noqa: E402
+    interpret_server_error,
+    reset_warnings,
+    warn_if_flagged,
+)
 
 
 class TestErrorMapping(unittest.TestCase):

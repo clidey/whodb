@@ -5,7 +5,8 @@ languages differ in ergonomics, never in behavior (conformance-pinned)."""
 from __future__ import annotations
 
 import json
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from typing import Any
 
 from ._errors import NotFoundError, ValidationError
 from ._generated import operations as ops
@@ -38,7 +39,7 @@ class OntologyHandle:
         self._execute = execute
         self._project_id = project_id
         self._api_name = api_name
-        self._entity_cache: Optional[dict] = None
+        self._entity_cache: dict | None = None
 
     def entity_meta(self) -> dict:
         """Resolve and cache the entity metadata backing this handle."""
@@ -70,7 +71,7 @@ class OntologyHandle:
             )
         )
 
-    def get(self, pk: Any) -> Optional[dict]:
+    def get(self, pk: Any) -> dict | None:
         """Fetch a single record by primary key, or None when absent."""
         entity = self.entity_meta()
         primary_key = entity.get("primaryKey")
@@ -97,8 +98,8 @@ class OntologyHandle:
 
     def list(
         self,
-        where: Optional[dict] = None,
-        sort: Optional[list[dict]] = None,
+        where: dict | None = None,
+        sort: list[dict] | None = None,
         page_size: int = _DEFAULT_PAGE_SIZE,
     ) -> ListCall:
         """List records with optional filter/sort; iterate or call .pages()."""
@@ -151,9 +152,9 @@ class OntologyHandle:
     def aggregate(
         self,
         group_by: list[str],
-        metrics: Optional[list[dict]] = None,
-        where: Optional[dict] = None,
-        sort: Optional[list[dict]] = None,
+        metrics: list[dict] | None = None,
+        where: dict | None = None,
+        sort: list[dict] | None = None,
         page_size: int = _DEFAULT_PAGE_SIZE,
     ) -> list[dict]:
         """Aggregate records grouped by properties with metric functions."""
@@ -176,7 +177,7 @@ class OntologyHandle:
         rows, _ = hydrate_rows(result)
         return rows
 
-    def stats(self, property_name: str, where: Optional[dict] = None) -> dict:
+    def stats(self, property_name: str, where: dict | None = None) -> dict:
         """Statistical summary of one property."""
         entity = self.entity_meta()
         warn_if_flagged("OntologyStats")
@@ -191,7 +192,7 @@ class OntologyHandle:
             )
         )
 
-    def similar(self, row_id: str, top_k: int = 10, properties: Optional[list[str]] = None, where: Optional[dict] = None) -> dict:
+    def similar(self, row_id: str, top_k: int = 10, properties: list[str] | None = None, where: dict | None = None) -> dict:
         """Embedding-based similarity search over this entity's records."""
         entity = self.entity_meta()
         warn_if_flagged("OntologySimilar")
@@ -294,7 +295,7 @@ class OntologyHandle:
             )
         )
 
-    def create_many(self, rows: list[dict[str, Any]], idempotency_key: Optional[str] = None) -> dict:
+    def create_many(self, rows: list[dict[str, Any]], idempotency_key: str | None = None) -> dict:
         """Insert many records; idempotency_key makes safe retries possible."""
         entity = self.entity_meta()
         warn_if_flagged("OntologyAddRows")

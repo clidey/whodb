@@ -7,6 +7,9 @@ and sources as in-code function APIs.
 |---|---|---|
 | `@clidey/whodb-sdk` | npm | `packages/typescript/` |
 | `whodb-sdk` | PyPI | `packages/python/` |
+| `github.com/clidey/whodb/sdk/packages/go` | Go modules (git tag) | `packages/go/` |
+| `whodb-sdk` | crates.io | `packages/rust/` |
+| `com.clidey:whodb-sdk` | Maven Central | `packages/java/` |
 
 Design: `SDK_DESIGN.md` in the EE repository. Architecture in one line:
 a **generated wire core** (rendered from the committed spec snapshot in
@@ -48,8 +51,7 @@ pnpm install
 pnpm run check                        # generate --check + version lockstep
 pnpm -r --if-present run build
 pnpm -r test
-node tools/conformance-runner.mjs --lang ts
-node tools/conformance-runner.mjs --lang python
+node tools/conformance-runner.mjs --lang ts       # also: python, go, rust, java
 ```
 
 Releases ride `release-ce.yml` (the `deploy-sdk` toggle) and share the repo

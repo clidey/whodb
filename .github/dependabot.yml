@@ -77,6 +77,30 @@ updates:
     cooldown:
       default-days: 7
 
+  # Go SDK (zero deps today; covers any future additions).
+  - package-ecosystem: "gomod"
+    directory: "/sdk/packages/go"
+    schedule:
+      interval: "daily"
+    cooldown:
+      default-days: 7
+
+  # Rust SDK (runtime deps: serde, serde_json, ureq).
+  - package-ecosystem: "cargo"
+    directory: "/sdk/packages/rust"
+    schedule:
+      interval: "daily"
+    cooldown:
+      default-days: 7
+
+  # Java SDK (runtime dep: jackson-databind; build plugins).
+  - package-ecosystem: "maven"
+    directory: "/sdk/packages/java"
+    schedule:
+      interval: "daily"
+    cooldown:
+      default-days: 7
+
   - package-ecosystem: "docker"
     directory: "/core"
 #    multi-ecosystem-group: "all-docker"

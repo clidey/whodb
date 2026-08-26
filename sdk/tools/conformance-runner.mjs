@@ -16,6 +16,9 @@ const fixturesDir = join(sdkRoot, 'spec/fixtures');
 const RUNNERS = {
   ts: { command: 'node', args: [join(sdkRoot, 'packages/typescript/scripts/conformance.mjs')] },
   python: { command: 'python3', args: [join(sdkRoot, 'packages/python/scripts/conformance.py')] },
+  go: { command: 'go', args: ['run', './cmd/conformance'], cwd: join(sdkRoot, 'packages/go'), env: { GOWORK: 'off' } },
+  rust: { command: 'cargo', args: ['run', '--quiet', '--bin', 'conformance'], cwd: join(sdkRoot, 'packages/rust') },
+  java: { command: 'mvn', args: ['-q', 'compile', 'exec:java'], cwd: join(sdkRoot, 'packages/java') },
 };
 
 const args = process.argv.slice(2);
@@ -34,7 +37,7 @@ const fixtures = readdirSync(fixturesDir)
   .flatMap(f => JSON.parse(readFileSync(join(fixturesDir, f), 'utf8')).fixtures)
   .filter(f => !filter || f.name.includes(filter));
 
-const child = spawn(runner.command, runner.args, { stdio: ['pipe', 'pipe', 'inherit'] });
+const child = spawn(runner.command, runner.args, { stdio: ['pipe', 'pipe', 'inherit'], cwd: runner.cwd, env: runner.env ? { ...process.env, ...runner.env } : process.env });
 const lines = createInterface({ input: child.stdout });
 const results = [];
 

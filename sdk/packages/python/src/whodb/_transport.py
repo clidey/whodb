@@ -7,7 +7,7 @@ over GraphQL/HTTP externally and over IPC inside the functions runtime.
 
 from __future__ import annotations
 
-from typing import Any, Optional, Protocol
+from typing import Any, Protocol
 
 import httpx
 
@@ -30,7 +30,7 @@ class AsyncTransport(Protocol):
     async def execute(self, operation: str, document: str, variables: dict[str, Any]) -> dict[str, Any]: ...
 
 
-def _interpret_response(operation: str, status_code: int, payload: Optional[dict]) -> dict[str, Any]:
+def _interpret_response(operation: str, status_code: int, payload: dict | None) -> dict[str, Any]:
     """Shared response handling for the sync and async HTTP transports."""
     if status_code == 401:
         raise AuthError("authentication failed — check your API key or run: whodb login")
@@ -53,10 +53,10 @@ class _HttpBase:
     def __init__(self, host: str, credentials: CredentialProvider):
         self._endpoint = host.rstrip("/") + "/api/query"
         self._credentials = credentials
-        self._org_id: Optional[str] = None
-        self._project_id: Optional[str] = None
+        self._org_id: str | None = None
+        self._project_id: str | None = None
 
-    def set_workspace(self, org_id: Optional[str], project_id: Optional[str]) -> None:
+    def set_workspace(self, org_id: str | None, project_id: str | None) -> None:
         """Set the workspace scope headers used on subsequent requests."""
         self._org_id = org_id
         self._project_id = project_id
@@ -77,7 +77,7 @@ class _HttpBase:
 class HttpTransport(_HttpBase):
     """Synchronous GraphQL-over-HTTP transport (POST /api/query)."""
 
-    def __init__(self, host: str, credentials: CredentialProvider, client: Optional[httpx.Client] = None):
+    def __init__(self, host: str, credentials: CredentialProvider, client: httpx.Client | None = None):
         super().__init__(host, credentials)
         self._client = client or httpx.Client(timeout=30.0)
 
@@ -97,7 +97,7 @@ class HttpTransport(_HttpBase):
 class AsyncHttpTransport(_HttpBase):
     """Asynchronous GraphQL-over-HTTP transport (POST /api/query)."""
 
-    def __init__(self, host: str, credentials: CredentialProvider, client: Optional[httpx.AsyncClient] = None):
+    def __init__(self, host: str, credentials: CredentialProvider, client: httpx.AsyncClient | None = None):
         super().__init__(host, credentials)
         self._client = client or httpx.AsyncClient(timeout=30.0)
 

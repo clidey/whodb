@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import json
 import subprocess
+from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
-from typing import Callable, Optional, Protocol
+from typing import Protocol
 
 from ._errors import AuthError, CliCredentialsError
 
@@ -69,11 +70,11 @@ class CliCredentials:
 
     def __init__(self, command: str = "whodb"):
         self._command = command
-        self._cached: Optional[dict] = None
+        self._cached: dict | None = None
 
     def _exec(self) -> dict:
         try:
-            completed = subprocess.run(
+            completed = subprocess.run(  # noqa: S603 — fixed argv list, no shell; the documented CLI credential helper
                 [self._command, "auth", "print-token", "--format", "json"],
                 capture_output=True,
                 timeout=15,

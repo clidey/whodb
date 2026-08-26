@@ -1,8 +1,17 @@
 # Porting the WhoDB SDK to a New Language
 
 The contract, learned from the TypeScript → Python port. Read this before
-starting Go/Rust/Java. Languages differ in ergonomics, never in behavior —
-the shared conformance fixtures are the acceptance test.
+porting to a new language. Languages differ in ergonomics, never in behavior —
+the shared conformance fixtures are the acceptance test. Ports so far:
+TypeScript (reference), Python, Go, Rust, Java — each took the renderer +
+facade + conformance-runner shape below. Rust notes: rows are
+serde_json::Value maps; hydrated timestamps use the '@date:' marker directly
+(no std datetime type); generated code is normalized through rustfmt in the
+generator, mirroring gofmt. Java notes: Maven `com.clidey:whodb-sdk`, Java 17,
+one dep (jackson-databind), JDK HttpClient for HTTP; rows are
+Map<String, Object>, timestamps hydrate to OffsetDateTime; the Docker-runtime
+unix-socket IPC speaks raw HTTP/1.1 over SocketChannel (java.net.http can't
+dial unix sockets); conformance runs via `mvn -q compile exec:java`.
 
 ## 1. Inputs (all committed under `sdk/spec/`)
 
@@ -95,7 +104,9 @@ against the real client with a mock transport, emit
 - Canonical results: datetimes serialize as `@date:<ISO-8601 with Z>`;
   compare as JSON.
 
-Register the run command in `RUNNERS` in `tools/conformance-runner.mjs`.
+Register the run command in `RUNNERS` in `tools/conformance-runner.mjs`
+(supports `cwd` and `env` per runner — Go uses `go run ./cmd/conformance`
+with `GOWORK: off` since the module sits outside the repo's go.work).
 `--lang <language>` must report 7/7 (or the current fixture count) before the
 port is real.
 

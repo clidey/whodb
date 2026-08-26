@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import json
 import os
-from typing import Any, Optional
+from typing import Any
 
 import httpx
 
@@ -37,14 +37,14 @@ class IpcTransport:
 
     def __init__(
         self,
-        address: Optional[str] = None,
-        job_id: Optional[str] = None,
-        token: Optional[str] = None,
+        address: str | None = None,
+        job_id: str | None = None,
+        token: str | None = None,
     ):
         self._address = address or os.environ.get("WHODB_IPC_ADDRESS", "")
         self._job_id = job_id or os.environ.get("WHODB_JOB_ID", "")
         self._token = token or os.environ.get("WHODB_IPC_TOKEN", "")
-        self._entities_cache: Optional[list[dict]] = None
+        self._entities_cache: list[dict] | None = None
         if self._address.startswith("/"):
             # Unix domain socket (Docker runtime).
             self._client = httpx.Client(

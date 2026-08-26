@@ -9,11 +9,13 @@
   "scripts": {
     "generate": "node tools/generate-core.mjs",
     "check": "node tools/generate-core.mjs --check && node tools/sync-versions.mjs --check",
+    "lint": "oxlint --deny-warnings packages/typescript/src packages/typescript/scripts packages/typescript/test tools",
     "test": "pnpm -r test",
     "conformance": "node tools/conformance-runner.mjs"
   },
   "devDependencies": {
     "graphql": "16.11.0",
-    "yaml": "2.8.0"
+    "oxlint": "1.78.0",
+    "yaml": "2.9.0"
   }
 }

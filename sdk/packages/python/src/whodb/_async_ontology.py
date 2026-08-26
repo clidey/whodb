@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import json
-from typing import Any, AsyncIterator, Awaitable, Callable, Optional
+from collections.abc import AsyncIterator, Awaitable, Callable
+from typing import Any
 
 from ._errors import NotFoundError, ValidationError
 from ._generated import operations as ops
@@ -24,7 +25,7 @@ class AsyncOntologyHandle:
         self._execute = execute
         self._project_id = project_id
         self._api_name = api_name
-        self._entity_cache: Optional[dict] = None
+        self._entity_cache: dict | None = None
 
     async def entity_meta(self) -> dict:
         """Resolve and cache the entity metadata backing this handle."""
@@ -40,7 +41,7 @@ class AsyncOntologyHandle:
         self._entity_cache = entity
         return entity
 
-    async def get(self, pk: Any) -> Optional[dict]:
+    async def get(self, pk: Any) -> dict | None:
         """Fetch a single record by primary key, or None when absent."""
         entity = await self.entity_meta()
         primary_key = entity.get("primaryKey")
@@ -67,8 +68,8 @@ class AsyncOntologyHandle:
 
     async def list(
         self,
-        where: Optional[dict] = None,
-        sort: Optional[list[dict]] = None,
+        where: dict | None = None,
+        sort: list[dict] | None = None,
         page_size: int = _DEFAULT_PAGE_SIZE,
         page_offset: int = 0,
     ) -> list[dict]:
@@ -93,7 +94,7 @@ class AsyncOntologyHandle:
         return rows
 
     async def pages(
-        self, where: Optional[dict] = None, page_size: int = _DEFAULT_PAGE_SIZE
+        self, where: dict | None = None, page_size: int = _DEFAULT_PAGE_SIZE
     ) -> AsyncIterator[list[dict]]:
         """Iterate every page until a short page signals the end."""
         offset = 0
@@ -118,7 +119,7 @@ class AsyncOntologyHandle:
             )
         )
 
-    async def create_many(self, rows: list[dict[str, Any]], idempotency_key: Optional[str] = None) -> dict:
+    async def create_many(self, rows: list[dict[str, Any]], idempotency_key: str | None = None) -> dict:
         """Insert many records with optional idempotency key."""
         entity = await self.entity_meta()
         warn_if_flagged("OntologyAddRows")

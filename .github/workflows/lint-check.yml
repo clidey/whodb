@@ -149,14 +149,88 @@ jobs:
       - name: Version lockstep check
         run: cd sdk && node tools/sync-versions.mjs --check
 
+      - name: Lint (TypeScript + tools)
+        run: cd sdk && pnpm lint
+
       - name: Build
         run: cd sdk && pnpm -r --if-present run build
+
+      - name: Lint (Python)
+        run: |
+          python3 -m pip install --user ruff==0.16.4
+          cd sdk/packages/python && python3 -m ruff check .
 
       - name: Tests
         run: cd sdk && pnpm -r test
 
       - name: Conformance (TypeScript)
         run: cd sdk && node tools/conformance-runner.mjs --lang ts
+
+      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        with:
+          go-version-file: core/go.mod
+          cache-dependency-path: sdk/packages/go/go.mod
+
+      - name: Install Go lint/security tools
+        uses: ./.github/actions/install-go-tools
+        with:
+          cache-key: sdk-go-tools-golangci-v2.12.2-govulncheck-v1.7.0
+          tools: |
+            golangci-lint|github.com/golangci/golangci-lint/v2/cmd/golangci-lint|v2.12.2
+            govulncheck|golang.org/x/vuln/cmd/govulncheck|v1.7.0
+
+      - name: Go SDK build, vet, test
+        env:
+          GOWORK: off
+        run: cd sdk/packages/go && go build ./... && go vet ./... && go test ./...
+
+      - name: Go SDK lint + vulnerability scan
+        env:
+          GOWORK: off
+        run: |
+          cd sdk/packages/go
+          golangci-lint run ./...
+          govulncheck ./...
+
+      - name: Conformance (Go)
+        env:
+          GOWORK: off
+        run: cd sdk && node tools/conformance-runner.mjs --lang go
+
+      - name: Cache cargo-audit
+        id: cargo-audit-cache
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: ~/.cargo/bin/cargo-audit
+          key: ${{ runner.os }}-cargo-audit-0.22.2
+
+      - name: Install cargo-audit
+        if: steps.cargo-audit-cache.outputs.cache-hit != 'true'
+        run: cargo install cargo-audit --locked --version 0.22.2
+
+      - name: Rust SDK build, clippy, test, audit
+        run: |
+          cd sdk/packages/rust
+          cargo fmt --check
+          cargo clippy --all-targets -- -D warnings
+          cargo test
+          cargo audit
+
+      - name: Conformance (Rust)
+        run: cd sdk && node tools/conformance-runner.mjs --lang rust
+
+      - uses: actions/setup-java@ad2b38190b15e4d6bdf0c97fb4fca8412226d287 # v5.3.0
+        with:
+          distribution: oracle
+          java-version: '25'
+          cache: maven
+          cache-dependency-path: sdk/packages/java/pom.xml
+
+      - name: Java SDK build and test
+        run: cd sdk/packages/java && mvn -q --batch-mode verify
+
+      - name: Conformance (Java)
+        run: cd sdk && node tools/conformance-runner.mjs --lang java
 
   frontend-lint:
     name: Frontend Lint & Typecheck

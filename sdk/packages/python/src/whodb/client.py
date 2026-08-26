@@ -9,10 +9,16 @@ from __future__ import annotations
 
 import os
 import re
-from typing import Any, Callable, Optional, Union
+from collections.abc import Callable
+from typing import Any
 
-from ._auth import CallbackCredentials, CliCredentials, CredentialProvider, StaticCredentials
-from ._errors import TransportCapabilityError, ValidationError
+from ._auth import (
+    CallbackCredentials,
+    CliCredentials,
+    CredentialProvider,
+    StaticCredentials,
+)
+from ._errors import ValidationError
 from ._generated import operations as ops
 from ._generated.manifest import MANIFEST_HASH
 from ._manifest_check import interpret_server_error, warn_if_flagged
@@ -30,10 +36,10 @@ _UUID_PATTERN = re.compile(
 
 
 def _resolve_credentials(
-    api_key: Optional[str],
-    token: Optional[Union[str, Callable[[], str]]],
-    credentials: Optional[CredentialProvider],
-    env: Optional[dict] = None,
+    api_key: str | None,
+    token: str | Callable[[], str] | None,
+    credentials: CredentialProvider | None,
+    env: dict | None = None,
 ) -> tuple[CredentialProvider, bool, bool]:
     """Apply the credential precedence: explicit args → WHODB_API_KEY → CLI.
 
@@ -72,18 +78,18 @@ class WhoDB:
 
     def __init__(
         self,
-        api_key: Optional[str] = None,
-        token: Optional[Union[str, Callable[[], str]]] = None,
-        credentials: Optional[CredentialProvider] = None,
-        org: Optional[str] = None,
-        project: Optional[str] = None,
-        host: Optional[str] = None,
-        transport: Optional[Transport] = None,
+        api_key: str | None = None,
+        token: str | Callable[[], str] | None = None,
+        credentials: CredentialProvider | None = None,
+        org: str | None = None,
+        project: str | None = None,
+        host: str | None = None,
+        transport: Transport | None = None,
     ):
         environ = os.environ
         self._org_input = org or environ.get("WHODB_ORG")
         self._project_input = project or environ.get("WHODB_PROJECT")
-        self._workspace: Optional[tuple[str, str]] = None
+        self._workspace: tuple[str, str] | None = None
 
         if transport is None and environ.get("WHODB_IPC_TOKEN"):
             # Functions runtime: no explicit transport + IPC env present.
@@ -95,9 +101,9 @@ class WhoDB:
             # Custom transports (IPC, mocks) skip slug resolution: inputs are
             # taken as IDs verbatim (or left empty — IPC scopes server-side).
             self._transport = transport
-            self._http: Optional[HttpTransport] = None
+            self._http: HttpTransport | None = None
             self._skip_resolution = True
-            self._cli_provider: Optional[CliCredentials] = None
+            self._cli_provider: CliCredentials | None = None
             self._using_api_key = False
             return
 
@@ -210,12 +216,12 @@ class AsyncWhoDB:
 
     def __init__(
         self,
-        api_key: Optional[str] = None,
-        token: Optional[Union[str, Callable[[], str]]] = None,
-        credentials: Optional[CredentialProvider] = None,
-        org: Optional[str] = None,
-        project: Optional[str] = None,
-        host: Optional[str] = None,
+        api_key: str | None = None,
+        token: str | Callable[[], str] | None = None,
+        credentials: CredentialProvider | None = None,
+        org: str | None = None,
+        project: str | None = None,
+        host: str | None = None,
     ):
         from ._transport import AsyncHttpTransport
 
@@ -225,7 +231,7 @@ class AsyncWhoDB:
         self._project_input = project or os.environ.get("WHODB_PROJECT")
         resolved_host = host or os.environ.get("WHODB_HOST") or DEFAULT_HOST
         self._transport = AsyncHttpTransport(resolved_host, provider)
-        self._workspace: Optional[tuple[str, str]] = None
+        self._workspace: tuple[str, str] | None = None
 
     async def _execute(self, request: ops.Request) -> Any:
         try:

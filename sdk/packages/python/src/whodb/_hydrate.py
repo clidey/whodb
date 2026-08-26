@@ -7,8 +7,8 @@ in lockstep with the TypeScript hydrate.ts.
 from __future__ import annotations
 
 import json
-from datetime import date, datetime
-from typing import Any, Optional
+from datetime import datetime
+from typing import Any
 
 from ._generated.hydration import HYDRATION_DEFAULT, HYDRATION_RULES
 
@@ -49,7 +49,7 @@ def coerce_value(raw: Any, column_type: str) -> Any:
     return raw
 
 
-def _normalize(result: dict) -> tuple[list[dict], list[list], Optional[int]]:
+def _normalize(result: dict) -> tuple[list[dict], list[list], int | None]:
     """Normalize the two wire result shapes to (columns, rows, total).
 
     DatasetQueryResult: {columns: [str] (names only), rows, total}
@@ -77,8 +77,8 @@ def property_types_of(entity: dict) -> dict[str, str]:
 
 
 def hydrate_rows(
-    result: dict, property_types: Optional[dict[str, str]] = None
-) -> tuple[list[dict], Optional[int]]:
+    result: dict, property_types: dict[str, str] | None = None
+) -> tuple[list[dict], int | None]:
     """Hydrate a wire result into native-typed row dicts.
 
     Ontology property metadata, when supplied, overrides the wire column type
