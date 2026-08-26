@@ -26,6 +26,18 @@ const manifests = [
     read: (text) => text.match(/^version\s*=\s*"([^"]+)"/m)?.[1],
     write: (text, version) => text.replace(/^version\s*=\s*"[^"]+"/m, `version = "${version}"`),
   },
+  // The in-code version constants feed the User-Agent header; stamping them
+  // here keeps them lockstep without per-workflow sed steps.
+  {
+    path: join(sdkRoot, 'packages/typescript/src/version.ts'),
+    read: (text) => text.match(/SDK_VERSION = '([^']+)'/)?.[1],
+    write: (text, version) => text.replace(/SDK_VERSION = '[^']+'/, `SDK_VERSION = '${version}'`),
+  },
+  {
+    path: join(sdkRoot, 'packages/python/src/whodb/_version.py'),
+    read: (text) => text.match(/SDK_VERSION = "([^"]+)"/)?.[1],
+    write: (text, version) => text.replace(/SDK_VERSION = "[^"]+"/, `SDK_VERSION = "${version}"`),
+  },
 ];
 
 const args = process.argv.slice(2);

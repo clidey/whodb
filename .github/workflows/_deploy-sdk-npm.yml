@@ -66,9 +66,8 @@ jobs:
           VERSION: ${{ inputs.version }}
         run: |
           cd sdk
+          # Stamps package manifests AND the in-code SDK_VERSION constants.
           node tools/sync-versions.mjs --set "$VERSION"
-          # SDK_VERSION feeds the User-Agent header; keep it in lockstep.
-          sed -i "s/export const SDK_VERSION = '.*'/export const SDK_VERSION = '$VERSION'/" packages/typescript/src/version.ts
 
       - name: Build
         run: cd sdk/packages/typescript && pnpm run build
