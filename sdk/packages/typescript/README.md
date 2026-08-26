@@ -1,4 +1,4 @@
-# @clidey/whodb
+# @clidey/whodb-sdk
 
 Official TypeScript/JavaScript SDK for the [WhoDB](https://whodb.com) hosted
 platform — your ontology, datasets, and sources as in-code function APIs.
@@ -6,7 +6,7 @@ platform — your ontology, datasets, and sources as in-code function APIs.
 ## Install
 
 ```bash
-npm install @clidey/whodb
+npm install @clidey/whodb-sdk
 ```
 
 Requires Node.js ≥ 20.
@@ -14,7 +14,7 @@ Requires Node.js ≥ 20.
 ## Quickstart
 
 ```ts
-import { WhoDB } from '@clidey/whodb';
+import { WhoDB } from '@clidey/whodb-sdk';
 
 // Production: API key (create one in org settings → API keys).
 // The key carries its org; the project auto-resolves when the key

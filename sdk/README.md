@@ -5,8 +5,8 @@ and sources as in-code function APIs.
 
 | Package | Registry | Path |
 |---|---|---|
-| `@clidey/whodb` | npm | `packages/typescript/` |
-| `whodb` | PyPI | `packages/python/` |
+| `@clidey/whodb-sdk` | npm | `packages/typescript/` |
+| `whodb-sdk` | PyPI | `packages/python/` |
 
 Design: `SDK_DESIGN.md` in the EE repository. Architecture in one line:
 a **generated wire core** (rendered from the committed spec snapshot in

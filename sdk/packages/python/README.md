@@ -1,4 +1,4 @@
-# whodb
+# whodb-sdk
 
 Official Python SDK for the [WhoDB](https://whodb.com) hosted platform — your
 ontology, datasets, and sources as in-code function APIs.
@@ -6,7 +6,7 @@ ontology, datasets, and sources as in-code function APIs.
 ## Install
 
 ```bash
-pip install whodb
+pip install whodb-sdk
 ```
 
 Requires Python ≥ 3.10.

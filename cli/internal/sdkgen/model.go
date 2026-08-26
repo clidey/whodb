@@ -1,6 +1,6 @@
 // Package sdkgen generates typed per-project SDK clients (entity classes and
 // a typed root) from a project's ontology, layered over the dynamic
-// @clidey/whodb / whodb SDK facades. See ee SDK_DESIGN.md §3.2.
+// @clidey/whodb-sdk / whodb SDK facades. See ee SDK_DESIGN.md §3.2.
 package sdkgen
 
 import (

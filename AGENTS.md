@@ -147,7 +147,7 @@ frontend/               # React/TypeScript (uses @clidey/ux component library)
   src/generated/       # GraphQL codegen output (@graphql alias)
 
 cli/                    # Interactive TUI CLI (Bubble Tea)
-sdk/                    # Platform SDKs (npm @clidey/whodb, PyPI whodb) — own pnpm
+sdk/                    # Platform SDKs (npm @clidey/whodb-sdk, PyPI whodb) — own pnpm
                         # project; wire cores generated from sdk/spec/ (see sdk/README.md)
 desktop-ce/             # Desktop app (Wails)
 desktop-common/         # Shared desktop code

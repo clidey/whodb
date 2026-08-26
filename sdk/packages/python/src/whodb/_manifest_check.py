@@ -28,7 +28,7 @@ def warn_if_flagged(operation_name: str) -> None:
         warnings.warn(
             f"[whodb] {operation_name} is deprecated"
             + (f" and will be removed after {sunset}" if sunset else "")
-            + f" — upgrade the whodb package before then. {note}".rstrip(),
+            + f" — upgrade the whodb-sdk package before then. {note}".rstrip(),
             DeprecationWarning,
             stacklevel=3,
         )
@@ -49,7 +49,7 @@ def interpret_server_error(error: Exception, sdk_version: str) -> Exception:
     if any(pattern.search(message) for pattern in _UNKNOWN_OPERATION_PATTERNS):
         return WhoDBVersionError(
             f"this SDK ({sdk_version}) was built for an older WhoDB platform API; "
-            "upgrade the whodb package"
+            "upgrade the whodb-sdk package"
         )
     return error
 

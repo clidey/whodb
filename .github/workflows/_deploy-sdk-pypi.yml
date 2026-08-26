@@ -1,7 +1,7 @@
 name: Deploy SDK PyPI Package
 
-# Publishes whodb (the Python platform SDK, sdk/packages/python) via PyPI
-# Trusted Publishing. Register the publisher on PyPI for repo clidey/whodb,
+# Publishes whodb-sdk (the Python platform SDK, sdk/packages/python) via PyPI
+# Trusted Publishing. Register the publisher on PyPI (project whodb-sdk) for repo clidey/whodb,
 # workflow _deploy-sdk-pypi.yml, before the first run.
 
 on:
@@ -19,7 +19,7 @@ permissions:
 
 jobs:
   publish-sdk-pypi:
-    name: Publish whodb (PyPI)
+    name: Publish whodb-sdk (PyPI)
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner

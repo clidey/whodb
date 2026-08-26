@@ -1,6 +1,6 @@
 name: Deploy SDK npm Package
 
-# Publishes @clidey/whodb (the TypeScript platform SDK, sdk/packages/typescript)
+# Publishes @clidey/whodb-sdk (the TypeScript platform SDK, sdk/packages/typescript)
 # via npm Trusted Publishing. Version comes from calculate-version so SDKs
 # share the repo release version (ee SDK_DESIGN.md §2.3).
 
@@ -19,7 +19,7 @@ permissions:
 
 jobs:
   publish-sdk-npm:
-    name: Publish @clidey/whodb
+    name: Publish @clidey/whodb-sdk
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
@@ -84,4 +84,4 @@ jobs:
           VERSION: ${{ inputs.version }}
         run: |
           sleep 10
-          npm view "@clidey/whodb@$VERSION" version
+          npm view "@clidey/whodb-sdk@$VERSION" version

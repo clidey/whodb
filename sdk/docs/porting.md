@@ -110,4 +110,4 @@ port is real.
   where the registry supports it) and gate it on `deploy-sdk` in
   `release-ce.yml`.
 - Vet every new runtime dependency with deptrust before pinning; prefer zero
-  or one dependency (Python's single dep is httpx, chosen for sync+async+UDS).
+  or one dependency (Python's single dep is httpx, chosen for sync+async+UDS). Package names: npm @clidey/whodb-sdk, PyPI whodb-sdk (import name stays whodb).

@@ -1,5 +1,5 @@
 {
-  "name": "@clidey/whodb",
+  "name": "@clidey/whodb-sdk",
   "version": "0.0.0",
   "description": "Official WhoDB platform SDK — ontology, datasets, and sources as in-code function APIs",
   "license": "Apache-2.0",

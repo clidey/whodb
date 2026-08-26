@@ -13,7 +13,7 @@ export function warnIfFlagged(operationName) {
         return;
     if (entry.deprecated) {
         warned.add(operationName);
-        console.warn(`[whodb] ${operationName} is deprecated${entry.sunsetAt ? ` and will be removed after ${entry.sunsetAt}` : ''} — upgrade @clidey/whodb before then.${entry.note ? ` ${entry.note}` : ''}`);
+        console.warn(`[whodb] ${operationName} is deprecated${entry.sunsetAt ? ` and will be removed after ${entry.sunsetAt}` : ''} — upgrade @clidey/whodb-sdk before then.${entry.note ? ` ${entry.note}` : ''}`);
     }
     else if (entry.behaviorChanged) {
         warned.add(operationName);
@@ -33,7 +33,7 @@ const UNKNOWN_OPERATION_PATTERNS = [
  */
 export function interpretServerError(error, sdkVersion) {
     if (error instanceof Error && UNKNOWN_OPERATION_PATTERNS.some(p => p.test(error.message))) {
-        return new WhoDBVersionError(`this SDK (${sdkVersion}) was built for an older WhoDB platform API; upgrade the @clidey/whodb package`);
+        return new WhoDBVersionError(`this SDK (${sdkVersion}) was built for an older WhoDB platform API; upgrade the @clidey/whodb-sdk package`);
     }
     return error;
 }
