@@ -58,10 +58,12 @@ frontend/e2e/logs
 frontend/e2e/.auth
 tools/docs-agent/.venv
 tools/docs-agent/runs/
-tools/
+# Anchored: only the repo-root tools/ — an unanchored "tools/" also swallowed sdk/tools/.
+/tools/
 .playwright-mcp
 .claude/worktrees
 .pnpm-store
+*__pycache__
 .codex/*
 !.codex/hooks.json
 frontend/build-ee
@@ -72,4 +74,8 @@ core/.pi-lens
 .impeccable
 inspection_results
 branding
-ee/research-sources/
+ee/research-sources/__pycache__/
+sdk/packages/typescript/dist/
+sdk/packages/python/dist/
+sdk/packages/python/src/*.egg-info/
+__pycache__/
