@@ -1,0 +1,64 @@
+{
+  "fixtures": [
+    {
+      "name": "get by pk hydrates native types via property metadata",
+      "call": { "domain": "ontology", "handle": "User", "method": "get", "args": ["u_1"] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "OntologyEntities", "variables": { "projectId": "proj-1" } },
+          "response": { "data": { "OntologyEntities": [ { "id": "ent-1", "apiName": "User", "primaryKey": "id", "properties": [ { "apiName": "id", "dataType": "String" }, { "apiName": "age", "dataType": "Integer" }, { "apiName": "active", "dataType": "Boolean" }, { "apiName": "joined", "dataType": "Timestamp" } ], "links": [] } ] } }
+        },
+        {
+          "expectRequest": { "operation": "OntologyQuery", "variablesContain": { "projectId": "proj-1" }, "inputContains": { "entity": "User", "pageSize": 1 } },
+          "response": { "data": { "OntologyQuery": { "columns": ["id", "age", "active", "joined"], "rows": [["u_1", "42", "true", "2026-01-05T00:00:00Z"]], "total": 1 } } }
+        }
+      ],
+      "expectResult": { "id": "u_1", "age": 42, "active": true, "joined": "@date:2026-01-05T00:00:00Z" }
+    },
+    {
+      "name": "get returns null for missing record",
+      "call": { "domain": "ontology", "handle": "User", "method": "get", "args": ["nope"] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "OntologyEntities" },
+          "response": { "data": { "OntologyEntities": [ { "id": "ent-1", "apiName": "User", "primaryKey": "id", "properties": [], "links": [] } ] } }
+        },
+        {
+          "expectRequest": { "operation": "OntologyQuery" },
+          "response": { "data": { "OntologyQuery": { "columns": ["id"], "rows": [], "total": 0 } } }
+        }
+      ],
+      "expectResult": null
+    },
+    {
+      "name": "list paginates until short page",
+      "call": { "domain": "ontology", "handle": "User", "method": "list", "args": [{ "pageSize": 2 }], "collect": "pages" },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "OntologyEntities" },
+          "response": { "data": { "OntologyEntities": [ { "id": "ent-1", "apiName": "User", "primaryKey": "id", "properties": [ { "apiName": "id", "dataType": "String" } ], "links": [] } ] } }
+        },
+        {
+          "expectRequest": { "operation": "OntologyQuery", "inputContains": { "entity": "User", "pageSize": 2, "offset": 0 } },
+          "response": { "data": { "OntologyQuery": { "columns": ["id"], "rows": [["u_1"], ["u_2"]], "total": 3 } } }
+        },
+        {
+          "expectRequest": { "operation": "OntologyQuery", "inputContains": { "entity": "User", "pageSize": 2, "offset": 2 } },
+          "response": { "data": { "OntologyQuery": { "columns": ["id"], "rows": [["u_3"]], "total": 3 } } }
+        }
+      ],
+      "expectResult": [ [ { "id": "u_1" }, { "id": "u_2" } ], [ { "id": "u_3" } ] ]
+    },
+    {
+      "name": "unknown entity raises NotFoundError",
+      "call": { "domain": "ontology", "handle": "Ghost", "method": "describe", "args": [] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "OntologyEntities" },
+          "response": { "data": { "OntologyEntities": [] } }
+        }
+      ],
+      "expectError": { "type": "NotFoundError", "messageContains": "Ghost" }
+    }
+  ]
+}

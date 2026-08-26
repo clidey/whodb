@@ -1,0 +1,87 @@
+name: Deploy SDK npm Package
+
+# Publishes @clidey/whodb (the TypeScript platform SDK, sdk/packages/typescript)
+# via npm Trusted Publishing. Version comes from calculate-version so SDKs
+# share the repo release version (ee SDK_DESIGN.md §2.3).
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'Version to publish'
+        required: true
+        type: string
+
+# OIDC permissions for npm Trusted Publishers
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish-sdk-npm:
+    name: Publish @clidey/whodb
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            fulcio.sigstore.dev:443
+            github.com:443
+            nodejs.org:443
+            objects.githubusercontent.com:443
+            registry.npmjs.org:443
+            rekor.sigstore.dev:443
+            token.actions.githubusercontent.com:443
+            tuf-repo-cdn.sigstore.dev:443
+
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          submodules: false
+
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          package_json_file: sdk/package.json
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: '25.6.0'
+          registry-url: 'https://registry.npmjs.org'
+          cache: pnpm
+          cache-dependency-path: sdk/pnpm-lock.yaml
+
+      - name: Install
+        run: cd sdk && pnpm install --frozen-lockfile
+
+      - name: Verify generated core is current
+        run: cd sdk && node tools/generate-core.mjs --check
+
+      - name: Stamp version
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          cd sdk
+          node tools/sync-versions.mjs --set "$VERSION"
+          # SDK_VERSION feeds the User-Agent header; keep it in lockstep.
+          sed -i "s/export const SDK_VERSION = '.*'/export const SDK_VERSION = '$VERSION'/" packages/typescript/src/version.ts
+
+      - name: Build
+        run: cd sdk/packages/typescript && pnpm run build
+
+      - name: Test
+        run: cd sdk/packages/typescript && pnpm test
+
+      - name: Publish
+        run: cd sdk/packages/typescript && npm publish --access public --provenance
+
+      - name: Verify publish
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          sleep 10
+          npm view "@clidey/whodb@$VERSION" version

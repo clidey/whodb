@@ -61,6 +61,22 @@ updates:
 #      all-npm:
 #        patterns: ["*"]
 
+  # Platform SDK workspace (tools deps: graphql, yaml; TS package devDeps).
+  - package-ecosystem: "npm"
+    directory: "/sdk"
+    schedule:
+      interval: "daily"
+    cooldown:
+      default-days: 7
+
+  # Python SDK (runtime dep: httpx).
+  - package-ecosystem: "pip"
+    directory: "/sdk/packages/python"
+    schedule:
+      interval: "daily"
+    cooldown:
+      default-days: 7
+
   - package-ecosystem: "docker"
     directory: "/core"
 #    multi-ecosystem-group: "all-docker"

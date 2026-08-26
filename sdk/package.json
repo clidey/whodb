@@ -1,0 +1,19 @@
+{
+  "name": "@clidey/whodb-sdk-workspace",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.17.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "generate": "node tools/generate-core.mjs",
+    "check": "node tools/generate-core.mjs --check && node tools/sync-versions.mjs --check",
+    "test": "pnpm -r test",
+    "conformance": "node tools/conformance-runner.mjs"
+  },
+  "devDependencies": {
+    "graphql": "16.11.0",
+    "yaml": "2.8.0"
+  }
+}

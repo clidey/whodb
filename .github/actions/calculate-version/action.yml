@@ -40,6 +40,10 @@ inputs:
     description: 'Publish to npm registry'
     required: false
     default: 'false'
+  deploy-sdk:
+    description: 'Publish the platform SDKs (npm @clidey/whodb + PyPI whodb)'
+    required: false
+    default: 'false'
   publish-github-release:
     description: 'Publish GitHub release to production (production mode only)'
     required: false
@@ -78,6 +82,9 @@ outputs:
   deploy-npm:
     description: 'Deploy npm flag'
     value: ${{ steps.stores.outputs.deploy-npm }}
+  deploy-sdk:
+    description: 'Deploy platform SDKs flag'
+    value: ${{ steps.stores.outputs.deploy-sdk }}
   publish-github-release:
     description: 'Publish GitHub release flag'
     value: ${{ steps.flags.outputs.publish-github-release }}
@@ -203,6 +210,7 @@ runs:
         echo "deploy-linux-terminal=${{ inputs.deploy-linux-terminal }}" >> $GITHUB_OUTPUT
         echo "deploy-cli=${{ inputs.deploy-cli }}" >> $GITHUB_OUTPUT
         echo "deploy-npm=${{ inputs.deploy-npm }}" >> $GITHUB_OUTPUT
+        echo "deploy-sdk=${{ inputs.deploy-sdk }}" >> $GITHUB_OUTPUT
 
         if [ "$MODE" = "production" ]; then
           echo "Production mode: deploying selected stores to production channels"

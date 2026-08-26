@@ -1,0 +1,5815 @@
+{
+  "platformVersion": "dev",
+  "manifestProtocolVersion": "1",
+  "generatedAt": "1970-01-01T00:00:00Z",
+  "operations": [
+    {
+      "name": "Me",
+      "kind": "Query",
+      "args": null,
+      "returns": "PlatformUser"
+    },
+    {
+      "name": "PlatformManifest",
+      "kind": "Query",
+      "args": null,
+      "returns": "PlatformManifest!"
+    },
+    {
+      "name": "MyOrganizations",
+      "kind": "Query",
+      "args": null,
+      "returns": "[Organization!]!"
+    },
+    {
+      "name": "Projects",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "orgId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[Project!]!"
+    },
+    {
+      "name": "ProjectSources",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[PlatformSource!]!"
+    },
+    {
+      "name": "ProjectSecrets",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[PlatformSecret!]!"
+    },
+    {
+      "name": "ServiceAccounts",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "orgId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[ServiceAccount!]!"
+    },
+    {
+      "name": "MyWorkspace",
+      "kind": "Query",
+      "args": null,
+      "returns": "Workspace!"
+    },
+    {
+      "name": "SourceTypes",
+      "kind": "Query",
+      "args": null,
+      "returns": "[SourceType!]!"
+    },
+    {
+      "name": "SourceConfig",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "sourceId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "SourceConfig!"
+    },
+    {
+      "name": "PlatformSourceObjects",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "sourceId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "parent",
+          "type": "SourceObjectRefInput",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "kinds",
+          "type": "SourceObjectKind",
+          "required": false,
+          "list": true
+        },
+        {
+          "name": "pageSize",
+          "type": "Int",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "pageOffset",
+          "type": "Int",
+          "required": false,
+          "list": false
+        }
+      ],
+      "returns": "[SourceObject!]!"
+    },
+    {
+      "name": "PlatformSourceColumns",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "sourceId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "ref",
+          "type": "SourceObjectRefInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[Column!]!"
+    },
+    {
+      "name": "PlatformSourceRows",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "sourceId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "ref",
+          "type": "SourceObjectRefInput",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "where",
+          "type": "WhereCondition",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "sort",
+          "type": "SortCondition",
+          "required": false,
+          "list": true
+        },
+        {
+          "name": "pageSize",
+          "type": "Int",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "pageOffset",
+          "type": "Int",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "RowsResult!"
+    },
+    {
+      "name": "PlatformSourceFieldConstraints",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "sourceId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "ref",
+          "type": "SourceObjectRefInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[SourceFieldConstraints!]!"
+    },
+    {
+      "name": "PlatformSourceContent",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "sourceId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "ref",
+          "type": "SourceObjectRefInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "SourceContent"
+    },
+    {
+      "name": "PlatformAIProviders",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[PlatformAIProvider!]!"
+    },
+    {
+      "name": "AIProviderModels",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "providerId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[String!]!"
+    },
+    {
+      "name": "CodeCompletion",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "providerId",
+          "type": "String",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "modelType",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "token",
+          "type": "String",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "ref",
+          "type": "SourceObjectRefInput",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "input",
+          "type": "ChatInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "CodeCompletionResult!"
+    },
+    {
+      "name": "ExplainQuery",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "providerId",
+          "type": "String",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "modelType",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "token",
+          "type": "String",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "ref",
+          "type": "SourceObjectRefInput",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "input",
+          "type": "ChatInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "String!"
+    },
+    {
+      "name": "GenerateQuery",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "providerId",
+          "type": "String",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "modelType",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "token",
+          "type": "String",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "ref",
+          "type": "SourceObjectRefInput",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "input",
+          "type": "ChatInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "String!"
+    },
+    {
+      "name": "OntologyEntities",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[OntologyObjectType!]!"
+    },
+    {
+      "name": "OntologyEntity",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "OntologyObjectType!"
+    },
+    {
+      "name": "OntologyFastLookups",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "entityId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[OntologyFastLookup!]!"
+    },
+    {
+      "name": "OntologyFastLookupSuggestions",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "entityId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[OntologyFastLookupSuggestion!]!"
+    },
+    {
+      "name": "OntologyRows",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "pageSize",
+          "type": "Int",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "pageOffset",
+          "type": "Int",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "DatasetQueryResult!"
+    },
+    {
+      "name": "OntologyFollowLink",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "entityId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "pk",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "linkApiName",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "pageSize",
+          "type": "Int",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "pageOffset",
+          "type": "Int",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "DatasetQueryResult!"
+    },
+    {
+      "name": "OntologyFollowIncomingLink",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "entityId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "pk",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "sourceEntityId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "linkApiName",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "pageSize",
+          "type": "Int",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "pageOffset",
+          "type": "Int",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "DatasetQueryResult!"
+    },
+    {
+      "name": "OntologyEmbeddingJobs",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "entityId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[OntologyEmbeddingJob!]!"
+    },
+    {
+      "name": "OntologySimilar",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "input",
+          "type": "OntologySimilarInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "OntologySimilarityResult!"
+    },
+    {
+      "name": "OntologyStats",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "property",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "where",
+          "type": "WhereCondition",
+          "required": false,
+          "list": false
+        }
+      ],
+      "returns": "OntologyStatsResult!"
+    },
+    {
+      "name": "OntologyAggregate",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "groupBy",
+          "type": "String",
+          "required": true,
+          "list": true
+        },
+        {
+          "name": "metrics",
+          "type": "OntologyAggregateMetricInput",
+          "required": true,
+          "list": true
+        },
+        {
+          "name": "where",
+          "type": "WhereCondition",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "sort",
+          "type": "SortCondition",
+          "required": false,
+          "list": true
+        },
+        {
+          "name": "pageSize",
+          "type": "Int",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "pageOffset",
+          "type": "Int",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "DatasetQueryResult!"
+    },
+    {
+      "name": "OntologyQuery",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "input",
+          "type": "OntologyQueryInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "DatasetQueryResult!"
+    },
+    {
+      "name": "OntologyDescribe",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "input",
+          "type": "OntologyDescribeInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "OntologyDescription!"
+    },
+    {
+      "name": "ProjectDatasets",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[Dataset!]!"
+    },
+    {
+      "name": "DatasetDetail",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "Dataset!"
+    },
+    {
+      "name": "QueryDataset",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "input",
+          "type": "QueryDatasetInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "DatasetQueryResult!"
+    },
+    {
+      "name": "LineageGraph",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "rootId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "rootType",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "direction",
+          "type": "String",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "maxDepth",
+          "type": "Int",
+          "required": false,
+          "list": false
+        }
+      ],
+      "returns": "LineageGraphGQL!"
+    },
+    {
+      "name": "LineageNeighbors",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "nodeId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "nodeType",
+          "type": "String",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "LineageGraphGQL!"
+    },
+    {
+      "name": "ProjectLineage",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "LineageGraphGQL!"
+    },
+    {
+      "name": "ProjectLineageProviders",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[LineageProvider!]!"
+    },
+    {
+      "name": "ProjectTransforms",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[Transform!]!"
+    },
+    {
+      "name": "TransformRuns",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "transformId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "limit",
+          "type": "Int",
+          "required": false,
+          "list": false
+        }
+      ],
+      "returns": "[TransformRun!]!"
+    },
+    {
+      "name": "PreviewTransform",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "graphJson",
+          "type": "String",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "DatasetQueryResult!"
+    },
+    {
+      "name": "ProjectFunctions",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[OntologyFunction!]!"
+    },
+    {
+      "name": "ProjectApps",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[App!]!"
+    },
+    {
+      "name": "AppDetail",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "App"
+    },
+    {
+      "name": "AppFiles",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "appId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[AppFile!]!"
+    },
+    {
+      "name": "AppView",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "env",
+          "type": "String",
+          "required": false,
+          "list": false
+        }
+      ],
+      "returns": "AppViewResult"
+    },
+    {
+      "name": "AppVersionView",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "appId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "version",
+          "type": "Int",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "AppViewResult"
+    },
+    {
+      "name": "FunctionDetail",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "OntologyFunction!"
+    },
+    {
+      "name": "FunctionRuns",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "functionId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "limit",
+          "type": "Int",
+          "required": false,
+          "list": false
+        }
+      ],
+      "returns": "[FunctionRun!]!"
+    },
+    {
+      "name": "FunctionRun",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "FunctionRun!"
+    },
+    {
+      "name": "FolderContents",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "folderId",
+          "type": "ID",
+          "required": false,
+          "list": false
+        }
+      ],
+      "returns": "FolderContents!"
+    },
+    {
+      "name": "FilePreview",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "fileId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "sheetIndex",
+          "type": "Int",
+          "required": false,
+          "list": false
+        }
+      ],
+      "returns": "FilePreviewResult!"
+    },
+    {
+      "name": "SearchProjectFiles",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "query",
+          "type": "String",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[ProjectFile!]!"
+    },
+    {
+      "name": "ProjectTabularFiles",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[ProjectFile!]!"
+    },
+    {
+      "name": "ProjectStorageUsage",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "Int!"
+    },
+    {
+      "name": "ObjectVersions",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "objectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "objectType",
+          "type": "VersionableObjectType",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[ObjectVersion!]!"
+    },
+    {
+      "name": "ActiveProdVersion",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "objectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "objectType",
+          "type": "VersionableObjectType",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "ActiveProdVersion"
+    },
+    {
+      "name": "ProjectActiveProdVersions",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[ActiveProdVersion!]!"
+    },
+    {
+      "name": "WhoHasAccess",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "resourceType",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "resourceId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[AccessEntry!]!"
+    },
+    {
+      "name": "MyPermissions",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "resourceType",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "resourceId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[String!]!"
+    },
+    {
+      "name": "WhatCanIAccess",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "resourceType",
+          "type": "String",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[ID!]!"
+    },
+    {
+      "name": "OrgResources",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "orgId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[OrgResourceEntry!]!"
+    },
+    {
+      "name": "OrgMembers",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "orgId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[PlatformUser!]!"
+    },
+    {
+      "name": "OrganizationDomains",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "orgId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[OrganizationDomain!]!"
+    },
+    {
+      "name": "OrganizationSSOProviders",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "orgId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[OrganizationSSOProvider!]!"
+    },
+    {
+      "name": "Teams",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "orgId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[Team!]!"
+    },
+    {
+      "name": "TeamMembers",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "teamId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[TeamMember!]!"
+    },
+    {
+      "name": "ProjectResourceSummary",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "ProjectResourceSummary"
+    },
+    {
+      "name": "ProjectAccessMatrix",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "ProjectAccessMatrix"
+    },
+    {
+      "name": "SharedWithMe",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "orgId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[SharedResource!]!"
+    },
+    {
+      "name": "SharedByMe",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "orgId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[SharedResource!]!"
+    },
+    {
+      "name": "MyGrants",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "orgId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[UserAccessEntry!]!"
+    },
+    {
+      "name": "Packages",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[Package!]!"
+    },
+    {
+      "name": "PackageDetail",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "packageId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "Package"
+    },
+    {
+      "name": "PackageInstallations",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[PackageInstallation!]!"
+    },
+    {
+      "name": "PackageInstallationUpdate",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "installationId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "PackageUpdateInfo"
+    },
+    {
+      "name": "SharedPackage",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "shareToken",
+          "type": "String",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "SharedPackage!"
+    },
+    {
+      "name": "PackageLibrary",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "search",
+          "type": "String",
+          "required": false,
+          "list": false
+        }
+      ],
+      "returns": "[PackageLibraryEntry!]!"
+    },
+    {
+      "name": "PreviewCreatePackage",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "input",
+          "type": "CreatePackageInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "PackagePreview!"
+    },
+    {
+      "name": "PreviewInstallPackage",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "input",
+          "type": "InstallPackageInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "PackagePreview!"
+    },
+    {
+      "name": "PreviewImportPackage",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "input",
+          "type": "ImportPackageInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "PackagePreview!"
+    },
+    {
+      "name": "PreviewSharedPackageInstall",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "input",
+          "type": "SharedPackageOperationInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "PackagePreview!"
+    },
+    {
+      "name": "PreviewSharedPackageImport",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "input",
+          "type": "SharedPackageOperationInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "PackagePreview!"
+    },
+    {
+      "name": "ActiveProdVersion",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "objectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "objectType",
+          "type": "VersionableObjectType",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "ActiveProdVersion"
+    },
+    {
+      "name": "DeletionImpact",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "resourceType",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "resourceId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "orgId",
+          "type": "ID",
+          "required": false,
+          "list": false
+        }
+      ],
+      "returns": "DeletionImpact!"
+    },
+    {
+      "name": "DeletedResources",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "orgId",
+          "type": "ID",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": false,
+          "list": false
+        }
+      ],
+      "returns": "[DeletedResource!]!"
+    },
+    {
+      "name": "RestoreSource",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "orgId",
+          "type": "ID",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "PurgeSource",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "orgId",
+          "type": "ID",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "RestoreDataset",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "PurgeDataset",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "RestoreTransform",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "PurgeTransform",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "RestoreOntology",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "PurgeOntology",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "RestoreApp",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "PurgeApp",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "RestoreFunction",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "PurgeFunction",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "RestoreProjectFile",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "PurgeProjectFile",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "RestoreProjectFolder",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "PurgeProjectFolder",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "CreateProject",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "input",
+          "type": "CreateProjectInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "Project!"
+    },
+    {
+      "name": "RenameProject",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "slug",
+          "type": "String",
+          "required": false,
+          "list": false
+        }
+      ],
+      "returns": "Project!"
+    },
+    {
+      "name": "DeleteProject",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "orgId",
+          "type": "ID",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "confirmDeletion",
+          "type": "Boolean",
+          "required": false,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "CreateSource",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "input",
+          "type": "CreateSourceInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "PlatformSource!"
+    },
+    {
+      "name": "UpdateSource",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "input",
+          "type": "UpdateSourceInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "PlatformSource!"
+    },
+    {
+      "name": "CreateSecret",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "input",
+          "type": "CreateSecretInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "PlatformSecret!"
+    },
+    {
+      "name": "UpdateSecret",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "input",
+          "type": "UpdateSecretInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "PlatformSecret!"
+    },
+    {
+      "name": "DeleteSecret",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "CreateServiceAccount",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "orgId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "required": false,
+          "list": false
+        }
+      ],
+      "returns": "ServiceAccount!"
+    },
+    {
+      "name": "DeleteServiceAccount",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "orgId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "CreateServiceAccountKey",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "orgId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "serviceAccountId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "expiresAt",
+          "type": "String",
+          "required": false,
+          "list": false
+        }
+      ],
+      "returns": "CreatedServiceAccountKey!"
+    },
+    {
+      "name": "RevokeServiceAccountKey",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "orgId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "keyId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "TestSourceConnection",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "credentials",
+          "type": "SourceLoginInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "DeleteSource",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "CreateAIProvider",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "input",
+          "type": "CreateAIProviderInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "PlatformAIProvider!"
+    },
+    {
+      "name": "UpdateAIProvider",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "input",
+          "type": "UpdateAIProviderInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "PlatformAIProvider!"
+    },
+    {
+      "name": "DeleteAIProvider",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "CreateOntology",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "input",
+          "type": "CreateOntologyInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "OntologyObjectType!"
+    },
+    {
+      "name": "UpdateOntology",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "input",
+          "type": "UpdateOntologyEntityInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "OntologyObjectType!"
+    },
+    {
+      "name": "DeleteOntology",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "confirmDeletion",
+          "type": "Boolean",
+          "required": false,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "OntologyAddRow",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "entityId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "values",
+          "type": "RecordInput",
+          "required": true,
+          "list": true
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "OntologyAddRows",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "entityId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "rows",
+          "type": "OntologyCreateRowInput",
+          "required": true,
+          "list": true
+        },
+        {
+          "name": "idempotencyKey",
+          "type": "String",
+          "required": false,
+          "list": false
+        }
+      ],
+      "returns": "OntologyAddRowsResult!"
+    },
+    {
+      "name": "OntologyUpdateRow",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "entityId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "values",
+          "type": "RecordInput",
+          "required": true,
+          "list": true
+        },
+        {
+          "name": "updatedColumns",
+          "type": "String",
+          "required": true,
+          "list": true
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "OntologyDeleteRow",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "entityId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "values",
+          "type": "RecordInput",
+          "required": true,
+          "list": true
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "CreateOntologyFastLookup",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "input",
+          "type": "CreateOntologyFastLookupInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "OntologyFastLookup!"
+    },
+    {
+      "name": "RemoveOntologyFastLookup",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "ReembedOntology",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "entityId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "batchSize",
+          "type": "Int",
+          "required": false,
+          "list": false
+        }
+      ],
+      "returns": "OntologyEmbeddingJob!"
+    },
+    {
+      "name": "RestoreOntologyVersionToDraft",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "ontologyId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "version",
+          "type": "Int",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "OntologyObjectType!"
+    },
+    {
+      "name": "OntologyPurgeData",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "entityId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "CreateDataset",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "input",
+          "type": "CreateDatasetInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "Dataset!"
+    },
+    {
+      "name": "UpdateDataset",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "input",
+          "type": "UpdateDatasetInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "Dataset!"
+    },
+    {
+      "name": "DeleteDataset",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "RestoreDatasetVersionToDraft",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "datasetId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "version",
+          "type": "Int",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "Dataset!"
+    },
+    {
+      "name": "SaveTransform",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "input",
+          "type": "SaveTransformInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "Transform!"
+    },
+    {
+      "name": "DeleteTransform",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "RunTransform",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "TransformRun!"
+    },
+    {
+      "name": "CancelTransformRun",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "transformId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "runId",
+          "type": "ID",
+          "required": false,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "RestoreTransformVersionToDraft",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "transformId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "version",
+          "type": "Int",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "Transform!"
+    },
+    {
+      "name": "SaveLineageProvider",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "input",
+          "type": "SaveLineageProviderInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "LineageProvider!"
+    },
+    {
+      "name": "DeleteLineageProvider",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "providerId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "UploadProjectFile",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "folderId",
+          "type": "ID",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "file",
+          "type": "Upload",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "ProjectFile!"
+    },
+    {
+      "name": "CreateProjectFolder",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "input",
+          "type": "CreateFolderInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "ProjectFolder!"
+    },
+    {
+      "name": "RenameProjectFile",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "ProjectFile!"
+    },
+    {
+      "name": "RenameProjectFolder",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "ProjectFolder!"
+    },
+    {
+      "name": "MoveProjectFile",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "input",
+          "type": "MoveFileInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "ProjectFile!"
+    },
+    {
+      "name": "MoveProjectFolder",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "input",
+          "type": "MoveFolderInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "ProjectFolder!"
+    },
+    {
+      "name": "DeleteProjectFile",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "DeleteProjectFolder",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "confirmDeletion",
+          "type": "Boolean",
+          "required": false,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "PromoteFileToDataset",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "input",
+          "type": "PromoteFileInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "Dataset!"
+    },
+    {
+      "name": "CreateFunction",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "input",
+          "type": "CreateFunctionInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "OntologyFunction!"
+    },
+    {
+      "name": "UpdateFunction",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "input",
+          "type": "UpdateFunctionInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "OntologyFunction!"
+    },
+    {
+      "name": "DeleteFunction",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "DeployFunction",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "RedeployFunction",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "ExecuteFunction",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "functionId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "input",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "inputFileIds",
+          "type": "ID",
+          "required": false,
+          "list": true
+        }
+      ],
+      "returns": "FunctionTestResult!"
+    },
+    {
+      "name": "StartFunctionRun",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "functionId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "input",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "useActiveVersion",
+          "type": "Boolean",
+          "required": false,
+          "list": false
+        }
+      ],
+      "returns": "FunctionRun!"
+    },
+    {
+      "name": "CancelFunctionRun",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "FunctionRun!"
+    },
+    {
+      "name": "TestFunction",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "input",
+          "type": "TestFunctionInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "FunctionTestResult!"
+    },
+    {
+      "name": "GenerateFunctionTestInput",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "input",
+          "type": "GenerateFunctionTestInputInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "GenerateFunctionTestInputResponse!"
+    },
+    {
+      "name": "PreviewFunction",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "input",
+          "type": "PreviewFunctionInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "FunctionTestResult!"
+    },
+    {
+      "name": "RestoreFunctionVersionToDraft",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "functionId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "version",
+          "type": "Int",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "OntologyFunction!"
+    },
+    {
+      "name": "CreateApp",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "input",
+          "type": "CreateAppInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "App!"
+    },
+    {
+      "name": "UpdateApp",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "input",
+          "type": "UpdateAppInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "App!"
+    },
+    {
+      "name": "DeleteApp",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "GenerateApp",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "input",
+          "type": "GenerateAppInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "GenerateAppResult!"
+    },
+    {
+      "name": "CancelAppGeneration",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "appId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "UpsertAppFile",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "appId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "path",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "content",
+          "type": "String",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "AppFile!"
+    },
+    {
+      "name": "DeleteAppFile",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "appId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "path",
+          "type": "String",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "RestoreAppVersionToDraft",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "appId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "version",
+          "type": "Int",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "AppViewResult!"
+    },
+    {
+      "name": "CreatePackage",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "input",
+          "type": "CreatePackageInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "Package!"
+    },
+    {
+      "name": "InstallPackage",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "input",
+          "type": "InstallPackageInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "PackageOperationResult!"
+    },
+    {
+      "name": "InstallSharedPackage",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "input",
+          "type": "SharedPackageOperationInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "PackageOperationResult!"
+    },
+    {
+      "name": "UpdatePackageInstallation",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "input",
+          "type": "UpdatePackageInstallationInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "PackageOperationResult!"
+    },
+    {
+      "name": "UninstallPackage",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "input",
+          "type": "UninstallPackageInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "ImportPackage",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "input",
+          "type": "ImportPackageInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "PackageOperationResult!"
+    },
+    {
+      "name": "ImportSharedPackage",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "input",
+          "type": "SharedPackageOperationInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "PackageOperationResult!"
+    },
+    {
+      "name": "CreatePackageShare",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "input",
+          "type": "CreatePackageShareInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "PackageShare!"
+    },
+    {
+      "name": "PromoteObject",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "input",
+          "type": "PromoteObjectInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "ObjectVersion!"
+    },
+    {
+      "name": "RollbackObject",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "input",
+          "type": "RollbackObjectInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "ActiveProdVersion!"
+    },
+    {
+      "name": "CreatePlatformSourceObject",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "sourceId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "parent",
+          "type": "SourceObjectRefInput",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "fields",
+          "type": "RecordInput",
+          "required": true,
+          "list": true
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "UpdatePlatformSourceObject",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "sourceId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "ref",
+          "type": "SourceObjectRefInput",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "values",
+          "type": "RecordInput",
+          "required": true,
+          "list": true
+        },
+        {
+          "name": "updatedColumns",
+          "type": "String",
+          "required": true,
+          "list": true
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "DeletePlatformSourceObject",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "sourceId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "ref",
+          "type": "SourceObjectRefInput",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "values",
+          "type": "RecordInput",
+          "required": true,
+          "list": true
+        }
+      ],
+      "returns": "StatusResponse!"
+    }
+  ],
+  "types": [
+    {
+      "name": "PlatformUser",
+      "fields": [
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "email",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "displayName",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "lastSeenAt",
+          "type": "String",
+          "required": false,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "Organization",
+      "fields": [
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "slug",
+          "type": "String",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "Project",
+      "fields": [
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "orgId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "slug",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "PlatformSource",
+      "fields": [
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "databaseType",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "createdBy",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "String",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "PlatformSecret",
+      "fields": [
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "createdBy",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "updatedBy",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "updatedAt",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "lastUsedAt",
+          "type": "String",
+          "required": false,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "ServiceAccount",
+      "fields": [
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "orgId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "createdBy",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "disabledAt",
+          "type": "String",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "keys",
+          "type": "ServiceAccountKey",
+          "required": true,
+          "list": true
+        }
+      ]
+    },
+    {
+      "name": "ServiceAccountKey",
+      "fields": [
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "keyPrefix",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "expiresAt",
+          "type": "String",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "revokedAt",
+          "type": "String",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "lastUsedAt",
+          "type": "String",
+          "required": false,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "CreatedServiceAccountKey",
+      "fields": [
+        {
+          "name": "key",
+          "type": "ServiceAccountKey",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "rawKey",
+          "type": "String",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "Workspace",
+      "fields": [
+        {
+          "name": "orgId",
+          "type": "ID",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": false,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "PlatformAIProvider",
+      "fields": [
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "providerType",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "endpoint",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "models",
+          "type": "String",
+          "required": true,
+          "list": true
+        },
+        {
+          "name": "createdBy",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "updatedAt",
+          "type": "String",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "OntologyProperty",
+      "fields": [
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "apiName",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "displayName",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "columnName",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "dataType",
+          "type": "OntologyDataType",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "arrayElementType",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "isRequired",
+          "type": "Boolean",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "visibility",
+          "type": "OntologyVisibility",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "isSearchable",
+          "type": "Boolean",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "isSortable",
+          "type": "Boolean",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "isEditOnly",
+          "type": "Boolean",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "sortOrder",
+          "type": "Int",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "OntologyLink",
+      "fields": [
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "apiName",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "targetOntologyApiName",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "cardinality",
+          "type": "OntologyLinkCardinality",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "foreignKeyProperty",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "targetForeignKeyProperty",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "joinTable",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "sourceColumnInJoinTable",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "targetColumnInJoinTable",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "displayName",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "pluralDisplayName",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "reverseDisplayName",
+          "type": "String",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "OntologyObjectType",
+      "fields": [
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "apiName",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "displayName",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "pluralDisplayName",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "primaryKey",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "sourceId",
+          "type": "ID",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "tableName",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "schemaName",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "storageMode",
+          "type": "OntologyStorageMode",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "provisioningStatus",
+          "type": "OntologyProvisioningStatus",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "status",
+          "type": "OntologyStatus",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "icon",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "color",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "updatedAt",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "properties",
+          "type": "OntologyProperty",
+          "required": true,
+          "list": true
+        },
+        {
+          "name": "links",
+          "type": "OntologyLink",
+          "required": true,
+          "list": true
+        }
+      ]
+    },
+    {
+      "name": "OntologyAddRowsResult",
+      "fields": [
+        {
+          "name": "inserted",
+          "type": "Int",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "ids",
+          "type": "ID",
+          "required": true,
+          "list": true
+        }
+      ]
+    },
+    {
+      "name": "OntologyFastLookup",
+      "fields": [
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "entityId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "displayName",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "fields",
+          "type": "String",
+          "required": true,
+          "list": true
+        },
+        {
+          "name": "status",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "reason",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "updatedAt",
+          "type": "String",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "OntologyFastLookupSuggestion",
+      "fields": [
+        {
+          "name": "entityId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "displayName",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "fields",
+          "type": "String",
+          "required": true,
+          "list": true
+        },
+        {
+          "name": "reason",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "canCreate",
+          "type": "Boolean",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "ColumnDef",
+      "fields": [
+        {
+          "name": "name",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "type",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "isNullable",
+          "type": "Boolean",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "isPrimary",
+          "type": "Boolean",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "Dataset",
+      "fields": [
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "sourceId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "schema",
+          "type": "ColumnDef",
+          "required": true,
+          "list": true
+        },
+        {
+          "name": "schemaMode",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "ownerId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "rowCount",
+          "type": "Int",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "sizeBytes",
+          "type": "Int",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "updatedAt",
+          "type": "String",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "DatasetQueryResult",
+      "fields": [
+        {
+          "name": "columns",
+          "type": "String",
+          "required": true,
+          "list": true
+        },
+        {
+          "name": "rows",
+          "type": "String",
+          "required": true,
+          "list": true
+        },
+        {
+          "name": "total",
+          "type": "Int",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "LineageNodeGQL",
+      "fields": [
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "nodeType",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "LineageEdgeGQL",
+      "fields": [
+        {
+          "name": "sourceId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "sourceType",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "targetId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "targetType",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "String",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "LineageGraphGQL",
+      "fields": [
+        {
+          "name": "nodes",
+          "type": "LineageNodeGQL",
+          "required": true,
+          "list": true
+        },
+        {
+          "name": "edges",
+          "type": "LineageEdgeGQL",
+          "required": true,
+          "list": true
+        }
+      ]
+    },
+    {
+      "name": "LineageProvider",
+      "fields": [
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "endpoint",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "readEndpoint",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "namespace",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "authType",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "enabled",
+          "type": "Boolean",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "updatedAt",
+          "type": "String",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "Transform",
+      "fields": [
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "graphJson",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "scheduleCron",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "triggerMode",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "lastRunStatus",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "lastRunAt",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "updatedAt",
+          "type": "String",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "TransformRun",
+      "fields": [
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "transformId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "status",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "errorMessage",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "triggeredBy",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "startedAt",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "completedAt",
+          "type": "String",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "FunctionSecretBinding",
+      "fields": [
+        {
+          "name": "name",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "secretId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "target",
+          "type": "SecretBindingTarget",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "FunctionProviderConfig",
+      "fields": [
+        {
+          "name": "providerId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "model",
+          "type": "String",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "OntologyFunctionFile",
+      "fields": [
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "path",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "content",
+          "type": "String",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "OntologyFunctionDependency",
+      "fields": [
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "version",
+          "type": "String",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "OntologyFunction",
+      "fields": [
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "language",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "entryPoint",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "timeoutSeconds",
+          "type": "Int",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "memory",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "cpu",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "executionMode",
+          "type": "FunctionExecutionMode",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "createdBy",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "updatedAt",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "files",
+          "type": "OntologyFunctionFile",
+          "required": true,
+          "list": true
+        },
+        {
+          "name": "dependencies",
+          "type": "OntologyFunctionDependency",
+          "required": true,
+          "list": true
+        },
+        {
+          "name": "providerIds",
+          "type": "ID",
+          "required": true,
+          "list": true
+        },
+        {
+          "name": "ontologyIds",
+          "type": "ID",
+          "required": true,
+          "list": true
+        },
+        {
+          "name": "readOnlyOntologyIds",
+          "type": "ID",
+          "required": true,
+          "list": true
+        },
+        {
+          "name": "providerConfigs",
+          "type": "FunctionProviderConfig",
+          "required": true,
+          "list": true
+        },
+        {
+          "name": "secretBindings",
+          "type": "FunctionSecretBinding",
+          "required": true,
+          "list": true
+        },
+        {
+          "name": "defaultMaxTokens",
+          "type": "Int",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "defaultTemperature",
+          "type": "Float",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "isDeployed",
+          "type": "Boolean",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "FunctionRun",
+      "fields": [
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "functionId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "executionMode",
+          "type": "FunctionExecutionMode",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "status",
+          "type": "FunctionRunStatus",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "desiredState",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "input",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "output",
+          "type": "String",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "logs",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "error",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "attempt",
+          "type": "Int",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "createdBy",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "startedAt",
+          "type": "String",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "heartbeatAt",
+          "type": "String",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "completedAt",
+          "type": "String",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "updatedAt",
+          "type": "String",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "FunctionTestResult",
+      "fields": [
+        {
+          "name": "output",
+          "type": "String",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "logs",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "durationMs",
+          "type": "Int",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "success",
+          "type": "Boolean",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "error",
+          "type": "String",
+          "required": false,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "ObjectVersion",
+      "fields": [
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "objectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "objectType",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "version",
+          "type": "Int",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "snapshot",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "message",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "promotedBy",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "String",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "ActiveProdVersion",
+      "fields": [
+        {
+          "name": "objectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "objectType",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "version",
+          "type": "Int",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "activatedAt",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "activatedBy",
+          "type": "String",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "ProjectFolder",
+      "fields": [
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "parentId",
+          "type": "ID",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "createdBy",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "String",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "ProjectFile",
+      "fields": [
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "folderId",
+          "type": "ID",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "mimeType",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "sizeBytes",
+          "type": "Int",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "isTabular",
+          "type": "Boolean",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "rowCount",
+          "type": "Int",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "columnCount",
+          "type": "Int",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "datasetId",
+          "type": "ID",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "uploadedBy",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "updatedAt",
+          "type": "String",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "FolderContents",
+      "fields": [
+        {
+          "name": "folders",
+          "type": "ProjectFolder",
+          "required": true,
+          "list": true
+        },
+        {
+          "name": "files",
+          "type": "ProjectFile",
+          "required": true,
+          "list": true
+        },
+        {
+          "name": "breadcrumbs",
+          "type": "ProjectFolder",
+          "required": true,
+          "list": true
+        },
+        {
+          "name": "storageUsed",
+          "type": "Int",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "DeletionItem",
+      "fields": [
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "resourceType",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "DeletedResource",
+      "fields": [
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "resourceType",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "deletedAt",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "deletedBy",
+          "type": "String",
+          "required": false,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "DeletionImpact",
+      "fields": [
+        {
+          "name": "resource",
+          "type": "DeletionItem",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "children",
+          "type": "DeletionItem",
+          "required": true,
+          "list": true
+        },
+        {
+          "name": "references",
+          "type": "DeletionItem",
+          "required": true,
+          "list": true
+        },
+        {
+          "name": "dependents",
+          "type": "DeletionItem",
+          "required": true,
+          "list": true
+        },
+        {
+          "name": "sharedWith",
+          "type": "String",
+          "required": true,
+          "list": true
+        },
+        {
+          "name": "requiresConfirmation",
+          "type": "Boolean",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "FilePreviewColumn",
+      "fields": [
+        {
+          "name": "name",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "type",
+          "type": "String",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "TabularPreviewData",
+      "fields": [
+        {
+          "name": "columns",
+          "type": "FilePreviewColumn",
+          "required": true,
+          "list": true
+        },
+        {
+          "name": "rows",
+          "type": "String",
+          "required": true,
+          "list": true
+        },
+        {
+          "name": "total",
+          "type": "Int",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "sheetName",
+          "type": "String",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "sheetIndex",
+          "type": "Int",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "sheetCount",
+          "type": "Int",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "sheetNames",
+          "type": "String",
+          "required": false,
+          "list": true
+        }
+      ]
+    },
+    {
+      "name": "FilePreviewResult",
+      "fields": [
+        {
+          "name": "mimeType",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "sizeBytes",
+          "type": "Int",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "isTabular",
+          "type": "Boolean",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "tabular",
+          "type": "TabularPreviewData",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "textContent",
+          "type": "String",
+          "required": false,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "SourceConfig",
+      "fields": [
+        {
+          "name": "hostname",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "port",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "username",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "password",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "database",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "advanced",
+          "type": "Record",
+          "required": true,
+          "list": true
+        }
+      ]
+    },
+    {
+      "name": "SourceType",
+      "fields": [
+        {
+          "name": "Id",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "Label",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "Connector",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "Category",
+          "type": "SourceCategory",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "ConnectionFields",
+          "type": "SourceConnectionField",
+          "required": true,
+          "list": true
+        }
+      ]
+    },
+    {
+      "name": "SourceConnectionField",
+      "fields": [
+        {
+          "name": "Key",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "Kind",
+          "type": "SourceConnectionFieldKind",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "Section",
+          "type": "SourceConnectionFieldSection",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "Required",
+          "type": "Boolean",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "LabelKey",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "PlaceholderKey",
+          "type": "String",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "DefaultValue",
+          "type": "String",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "SupportsOptions",
+          "type": "Boolean",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "SourceObject",
+      "fields": [
+        {
+          "name": "Ref",
+          "type": "SourceObjectRef",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "Kind",
+          "type": "SourceObjectKind",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "Name",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "Path",
+          "type": "String",
+          "required": true,
+          "list": true
+        },
+        {
+          "name": "HasChildren",
+          "type": "Boolean",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "Actions",
+          "type": "SourceAction",
+          "required": true,
+          "list": true
+        },
+        {
+          "name": "Metadata",
+          "type": "Record",
+          "required": true,
+          "list": true
+        }
+      ]
+    },
+    {
+      "name": "SourceObjectRef",
+      "fields": [
+        {
+          "name": "Kind",
+          "type": "SourceObjectKind",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "Locator",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "Path",
+          "type": "String",
+          "required": true,
+          "list": true
+        }
+      ]
+    },
+    {
+      "name": "Column",
+      "fields": [
+        {
+          "name": "Name",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "Type",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "IsPrimary",
+          "type": "Boolean",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "IsForeignKey",
+          "type": "Boolean",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "RowsResult",
+      "fields": [
+        {
+          "name": "Columns",
+          "type": "Column",
+          "required": true,
+          "list": true
+        },
+        {
+          "name": "Rows",
+          "type": "String",
+          "required": true,
+          "list": true
+        },
+        {
+          "name": "DisableUpdate",
+          "type": "Boolean",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "TotalCount",
+          "type": "Int",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "Record",
+      "fields": [
+        {
+          "name": "Key",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "Value",
+          "type": "String",
+          "required": true,
+          "list": false
+        }
+      ]
+    }
+  ]
+}

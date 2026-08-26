@@ -1,0 +1,9 @@
+{
+  "name": "@clidey/whodb-python-harness",
+  "private": true,
+  "version": "0.0.0",
+  "description": "pnpm harness for the whodb Python package — real metadata lives in pyproject.toml",
+  "scripts": {
+    "test": "python3 -m unittest discover tests"
+  }
+}

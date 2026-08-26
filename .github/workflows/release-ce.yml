@@ -91,6 +91,11 @@ on:
         required: false
         type: boolean
         default: false
+      deploy-sdk:
+        description: 'Publish the platform SDKs (npm @clidey/whodb + PyPI whodb)'
+        required: false
+        type: boolean
+        default: false
       publish-github-release:
         description: 'Publish GitHub release to production (leave unchecked to keep as draft)'
         required: false
@@ -122,6 +127,7 @@ jobs:
       deploy-linux-terminal: ${{ steps.calc.outputs.deploy-linux-terminal }}
       deploy-cli: ${{ steps.calc.outputs.deploy-cli }}
       deploy-npm: ${{ steps.calc.outputs.deploy-npm }}
+      deploy-sdk: ${{ steps.calc.outputs.deploy-sdk }}
       publish-github-release: ${{ steps.calc.outputs.publish-github-release }}
       has-file-assets: ${{ steps.release_flags.outputs.has-file-assets }}
       release-notes: ${{ steps.release_notes.outputs.notes }}
@@ -174,6 +180,7 @@ jobs:
           deploy-linux-terminal: ${{ github.event_name == 'push' && 'true' || (inputs.deploy-linux-terminal && 'true' || 'false') }}
           deploy-cli: ${{ github.event_name == 'push' && 'true' || (inputs.deploy-cli && 'true' || 'false') }}
           deploy-npm: ${{ github.event_name == 'push' && 'true' || (inputs.deploy-npm && 'true' || 'false') }}
+          deploy-sdk: ${{ github.event_name == 'push' && 'true' || (inputs.deploy-sdk && 'true' || 'false') }}
           publish-github-release: ${{ github.event_name == 'push' && 'true' || (inputs.publish-github-release && 'true' || 'false') }}
 
       - name: Validate release target selection
@@ -955,6 +962,28 @@ jobs:
       actions: read
       id-token: write
     uses: ./.github/workflows/_deploy-npm.yml
+    with:
+      version: ${{ needs.calculate-version.outputs.version }}
+
+  deploy-sdk-npm:
+    name: Deploy SDK npm
+    needs: [ calculate-version ]
+    if: needs.calculate-version.outputs.deploy-sdk == 'true'
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/_deploy-sdk-npm.yml
+    with:
+      version: ${{ needs.calculate-version.outputs.version }}
+
+  deploy-sdk-pypi:
+    name: Deploy SDK PyPI
+    needs: [ calculate-version ]
+    if: needs.calculate-version.outputs.deploy-sdk == 'true'
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/_deploy-sdk-pypi.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
 

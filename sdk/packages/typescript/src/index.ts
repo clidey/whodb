@@ -1,0 +1,17 @@
+export { WhoDB } from './client.js';
+export type { WhoDBConfig } from './config.js';
+export type { Transport } from './transport.js';
+export { IpcTransport } from './transport-ipc.js';
+export type { CredentialProvider } from './auth.js';
+export { apiKeyProvider, tokenProvider, cliProvider } from './auth.js';
+export {
+  WhoDBError, AuthError, NotFoundError, ValidationError,
+  WhoDBVersionError, CliCredentialsError, TransportCapabilityError, PlatformError,
+} from './errors.js';
+export type { Row } from './hydrate.js';
+export type { Page } from './pagination.js';
+export { ListCall } from './pagination.js';
+export { OntologyHandle } from './ontology.js';
+export { DatasetHandle } from './dataset.js';
+export { SourceHandle } from './source.js';
+export { FilesHandle } from './files.js';

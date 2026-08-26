@@ -1,0 +1,120 @@
+# surface.yaml — the hand-curated mapping from platform manifest operations to
+# SDK facade methods. This file is the only manual step when exposing a new
+# domain; the wire layer is generated from it by tools/generate-core.mjs.
+#
+# Method entry fields:
+#   operation: manifest operation name (must exist in platform-manifest.json)
+#   autofill:  args injected from client config, never user-supplied
+#              ($project = resolved project ID)
+#   rename:    facadeArg -> graphqlArg mapping (facade arg names are idiomatic)
+#   paginated: marks list-shaped ops for .pages() support
+version: 1
+
+domains:
+  ontology:
+    handleArg: name          # whodb.ontology(name) — resolved to entityId via OntologyEntities
+    methods:
+      entities:
+        operation: OntologyEntities
+        autofill: { projectId: $project }
+      entity:
+        operation: OntologyEntity
+        autofill: { projectId: $project }
+      describe:
+        operation: OntologyDescribe
+        autofill: { projectId: $project }
+      list:
+        operation: OntologyRows
+        autofill: { projectId: $project }
+        paginated: { pageSizeArg: pageSize, pageOffsetArg: pageOffset }
+      query:
+        operation: OntologyQuery
+        autofill: { projectId: $project }
+      aggregate:
+        operation: OntologyAggregate
+        autofill: { projectId: $project }
+        paginated: { pageSizeArg: pageSize, pageOffsetArg: pageOffset }
+      stats:
+        operation: OntologyStats
+        autofill: { projectId: $project }
+      similar:
+        operation: OntologySimilar
+        autofill: { projectId: $project }
+      followLink:
+        operation: OntologyFollowLink
+        autofill: { projectId: $project }
+        paginated: { pageSizeArg: pageSize, pageOffsetArg: pageOffset }
+      followIncomingLink:
+        operation: OntologyFollowIncomingLink
+        autofill: { projectId: $project }
+        paginated: { pageSizeArg: pageSize, pageOffsetArg: pageOffset }
+      fastLookups:
+        operation: OntologyFastLookups
+        autofill: { projectId: $project }
+      create:
+        operation: OntologyAddRow
+        autofill: { projectId: $project }
+      createMany:
+        operation: OntologyAddRows
+        autofill: { projectId: $project }
+      update:
+        operation: OntologyUpdateRow
+        autofill: { projectId: $project }
+      delete:
+        operation: OntologyDeleteRow
+        autofill: { projectId: $project }
+
+  dataset:
+    handleArg: name
+    methods:
+      list:
+        operation: ProjectDatasets
+        autofill: { projectId: $project }
+      rows:
+        operation: QueryDataset
+
+  source:
+    handleArg: id
+    methods:
+      list:
+        operation: ProjectSources
+        autofill: { projectId: $project }
+      rows:
+        operation: PlatformSourceRows
+        autofill: { projectId: $project }
+        paginated: { pageSizeArg: pageSize, pageOffsetArg: pageOffset }
+      objects:
+        operation: PlatformSourceObjects
+        autofill: { projectId: $project }
+      columns:
+        operation: PlatformSourceColumns
+        autofill: { projectId: $project }
+
+  # Init-time workspace resolution only — not exposed as a public facade domain.
+  workspace:
+    internal: true
+    methods:
+      organizations:
+        operation: MyOrganizations
+      projects:
+        operation: Projects
+      mine:
+        operation: MyWorkspace
+
+# NOTE: whodb.query(rawSql) is decided-in-scope (SDK_DESIGN.md §4) but the
+# hosted platform manifest does not yet publish a raw-query operation
+# (RunSourceQuery is a CE session op). Blocked on adding a platform
+# RunSourceQuery to the manifest; wire it here when it exists.
+
+# Destructive bulk operations are excluded from the SDK surface by design
+# (SDK_DESIGN.md §4): they stay in the app/CLI/MCP where confirmation flows
+# exist. The generator hard-errors if a domain references one of these.
+excluded:
+  - OntologyPurgeData
+  - PurgeOntology
+  - PurgeProject
+  - PurgeSource
+
+# Optional per-operation selection-set overrides. When absent, the generator
+# derives the selection by expanding the return type (depth 4, cycle-guarded).
+selections: {}

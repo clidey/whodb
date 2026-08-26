@@ -1,0 +1,14 @@
+packages:
+  - packages/*
+
+minimumReleaseAge: 10080
+blockExoticSubdeps: true
+trustPolicy: "no-downgrade"
+strictDepBuilds: true
+ignoreScripts: true
+preferFrozenLockfile: true
+strictSsl: true
+strictPeerDependencies: true
+saveExact: true
+auditLevel: high
+verifyStoreIntegrity: true

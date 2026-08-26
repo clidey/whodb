@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "whodb"
+version = "0.0.0"
+description = "Official Python SDK for the WhoDB hosted platform — ontology, datasets, and sources as in-code function APIs"
+readme = "README.md"
+license = { text = "Apache-2.0" }
+requires-python = ">=3.10"
+dependencies = ["httpx>=0.27"]
+authors = [{ name = "Clidey, Inc." }]
+keywords = ["whodb", "ontology", "data", "sdk"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+[project.urls]
+Homepage = "https://whodb.com"
+Repository = "https://github.com/clidey/whodb"
+
+[tool.setuptools.packages.find]
+where = ["src"]
