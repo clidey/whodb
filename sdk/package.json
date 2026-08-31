@@ -15,7 +15,7 @@
   },
   "devDependencies": {
     "graphql": "16.11.0",
-    "oxlint": "1.78.0",
+    "oxlint": "1.80.0",
     "yaml": "2.9.0"
   }
 }
