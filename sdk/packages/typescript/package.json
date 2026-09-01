@@ -29,7 +29,7 @@
     "directory": "sdk/packages/typescript"
   },
   "devDependencies": {
-    "@types/node": "25.5.2",
+    "@types/node": "26.3.0",
     "typescript": "6.0.3"
   }
 }
