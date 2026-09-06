@@ -137,3 +137,51 @@ func TestGetConfiguredChatProviders(t *testing.T) {
 		t.Fatalf("expected Ollama provider to use overridden host/port, got %+v", providers[3])
 	}
 }
+
+func TestGetConfiguredChatProviders_IncludesMiniMax(t *testing.T) {
+	originalKey := env.MiniMaxAPIKey
+	originalEndpoint := env.MiniMaxEndpoint
+	originalName := env.MiniMaxName
+	t.Cleanup(func() {
+		env.MiniMaxAPIKey = originalKey
+		env.MiniMaxEndpoint = originalEndpoint
+		env.MiniMaxName = originalName
+	})
+
+	env.MiniMaxAPIKey = "minimax-key"
+	env.MiniMaxEndpoint = ""
+	env.MiniMaxName = ""
+
+	var minimax *env.ChatProvider
+	for _, p := range GetConfiguredChatProviders() {
+		if p.Type == "MiniMax" {
+			found := p
+			minimax = &found
+			break
+		}
+	}
+	if minimax == nil {
+		t.Fatalf("expected MiniMax provider to be configured when API key is set")
+	}
+	if minimax.ProviderId != "minimax-1" {
+		t.Fatalf("expected provider id 'minimax-1', got %q", minimax.ProviderId)
+	}
+	if minimax.Name != "MiniMax" {
+		t.Fatalf("expected default name 'MiniMax', got %q", minimax.Name)
+	}
+	if minimax.Endpoint != "https://api.minimax.io/v1" {
+		t.Fatalf("expected default global endpoint, got %q", minimax.Endpoint)
+	}
+}
+
+func TestGetConfiguredChatProviders_OmitsMiniMaxWithoutAPIKey(t *testing.T) {
+	originalKey := env.MiniMaxAPIKey
+	t.Cleanup(func() { env.MiniMaxAPIKey = originalKey })
+
+	env.MiniMaxAPIKey = ""
+	for _, p := range GetConfiguredChatProviders() {
+		if p.Type == "MiniMax" {
+			t.Fatalf("did not expect MiniMax provider when API key is unset")
+		}
+	}
+}
