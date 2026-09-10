@@ -147,7 +147,7 @@ var bookmarksLoadCmd = &cobra.Command{
 		for _, saved := range cfg.GetSavedQueries() {
 			if saved.Name == args[0] {
 				copy := saved
-				bookmark = new(copy)
+				bookmark = &copy
 				break
 			}
 		}
@@ -159,12 +159,9 @@ var bookmarksLoadCmd = &cobra.Command{
 			return writeCommandJSON(cmd, bookmark)
 		}
 
-		if effectiveCommandOutputFormat(cmd, format) == output.FormatNDJSON {
-			return writeCommandNDJSON(cmd, []*config.SavedQuery{bookmark})
-		}
-
 		if effectiveCommandOutputFormat(cmd, format) == output.FormatTable ||
-			effectiveCommandOutputFormat(cmd, format) == output.FormatCSV {
+			effectiveCommandOutputFormat(cmd, format) == output.FormatCSV ||
+			effectiveCommandOutputFormat(cmd, format) == output.FormatNDJSON {
 			out := newCommandOutput(cmd, format, true)
 			return out.WriteQueryResult(&output.QueryResult{
 				Columns: []output.Column{
@@ -219,7 +216,7 @@ var bookmarksDeleteCmd = &cobra.Command{
 
 var bookmarksSearchCmd = &cobra.Command{
 	Use:           "search [name]",
-	Short:         "Search saved bookmarks`",
+	Short:         "Search saved bookmarks",
 	SilenceUsage:  true,
 	SilenceErrors: true,
 	Args:          cobra.ExactArgs(1),
@@ -240,10 +237,15 @@ var bookmarksSearchCmd = &cobra.Command{
 
 		rows := make([][]any, 0)
 		pattern := strings.ToLower(args[0])
+		effFormat := effectiveCommandOutputFormat(cmd, format)
 		for _, value := range bookmarks {
 			if strings.Contains(strings.ToLower(value.Name), pattern) ||
 				strings.Contains(strings.ToLower(value.Query), pattern) {
-				rows = append(rows, []any{value.Name, strings.ReplaceAll(value.Query, "\n", " ")})
+				query := value.Query
+				if effFormat != output.FormatJSON && effFormat != output.FormatNDJSON && effFormat != output.FormatCSV {
+					query = strings.ReplaceAll(query, "\n", " ")
+				}
+				rows = append(rows, []any{value.Name, query})
 			}
 		}
 
