@@ -39,6 +39,7 @@ import (
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
+	queryast "github.com/clidey/whodb/core/src/query"
 	sourcecatalogspecs "github.com/clidey/whodb/core/src/sourcecatalog/specs"
 )
 
@@ -589,28 +590,67 @@ func (p *ClickHousePlugin) GetRows(config *engine.PluginConfig, req *engine.GetR
 			return p.GormPlugin.GetRows(config, req)
 		}
 
-		parts := make([]string, 0, len(cols))
+		selectExprs := make([]string, 0, len(cols))
 		for _, col := range cols {
 			if isUnsupportedDriverType(col.Type) {
 				upper := strings.ToUpper(col.Type)
-				var expr string
 				if strings.HasPrefix(upper, "AGGREGATEFUNCTION(") {
-					expr = fmt.Sprintf("finalizeAggregation(`%s`) AS `%s`", col.Name, col.Name)
+					selectExprs = append(selectExprs, fmt.Sprintf("finalizeAggregation(`%s`) AS `%s`", col.Name, col.Name))
 				} else {
-					expr = fmt.Sprintf("toString(`%s`) AS `%s`", col.Name, col.Name)
+					selectExprs = append(selectExprs, fmt.Sprintf("toString(`%s`) AS `%s`", col.Name, col.Name))
 				}
-				parts = append(parts, expr)
 			} else {
-				parts = append(parts, fmt.Sprintf("`%s`", col.Name))
+				selectExprs = append(selectExprs, fmt.Sprintf("`%s`", col.Name))
 			}
 		}
 
 		tableName := p.FormTableName(req.Schema, req.StorageUnit)
-		query := fmt.Sprintf("SELECT %s FROM %s LIMIT %d OFFSET %d",
-			strings.Join(parts, ", "), tableName, req.PageSize, req.PageOffset)
 
-		return p.executeRawSQL(config, query)
+		query := db.Table(tableName).Select(strings.Join(selectExprs, ", "))
+
+		query, err = p.ApplyWhereConditions(query, req.Where, nil)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(req.Sort) > 0 {
+			builder := p.CreateSQLBuilder(db)
+			sortList := make([]plugins.Sort, len(req.Sort))
+			for i, s := range req.Sort {
+				sortList[i] = plugins.Sort{Column: s.Column, Direction: plugins.Down}
+				if s.Direction == queryast.SortDirectionAsc {
+					sortList[i].Direction = plugins.Up
+				}
+			}
+			query = builder.BuildOrderBy(query, sortList)
+		} else if orderBy := p.GetRowsOrderBy(db, req.Schema, req.StorageUnit); orderBy != "" {
+			query = query.Order(orderBy)
+		}
+
+		if req.PageSize > 0 {
+			query = query.Limit(req.PageSize).Offset(req.PageOffset)
+		}
+
+		rows, err := query.Rows() //nolint:rowserrcheck
+		if err != nil {
+			return nil, err
+		}
+		defer func() { _ = rows.Close() }()
+
+		return p.ConvertRawToRows(rows)
 	})
+}
+
+func (p *ClickHousePlugin) GetRowsOrderBy(db *gorm.DB, schema, storageUnit string) string {
+	pks, err := p.GetPrimaryKeyColumns(db, schema, storageUnit)
+	if err != nil || len(pks) == 0 {
+		return ""
+	}
+	quoted := make([]string, len(pks))
+	for i, c := range pks {
+		quoted[i] = fmt.Sprintf("`%s`", c)
+	}
+	return strings.Join(quoted, ", ")
 }
 
 func isUnsupportedDriverType(typeName string) bool {
