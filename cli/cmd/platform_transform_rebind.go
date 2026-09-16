@@ -87,7 +87,7 @@ func runTransformRebindSource(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("transform %q not found", args[0])
 	}
 
-	binding := transformSourceBinding{}
+	var binding transformSourceBinding
 	if strings.TrimSpace(transformRebindFileID) != "" || strings.TrimSpace(transformRebindFilePath) != "" {
 		fileID := strings.TrimSpace(transformRebindFileID)
 		if transformRebindFilePath != "" {

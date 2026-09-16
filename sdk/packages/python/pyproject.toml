@@ -22,6 +22,9 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 
+[project.optional-dependencies]
+dev = ["ruff==0.16.4"]
+
 [project.urls]
 Homepage = "https://whodb.com"
 Repository = "https://github.com/clidey/whodb"

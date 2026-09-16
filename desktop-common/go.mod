@@ -1,6 +1,6 @@
 module github.com/clidey/whodb/desktop-common
 
-go 1.27.0
+go 1.27.1
 
 require (
 	github.com/99designs/gqlgen v0.17.94

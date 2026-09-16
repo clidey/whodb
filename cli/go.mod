@@ -1,6 +1,6 @@
 module github.com/clidey/whodb/cli
 
-go 1.27.0
+go 1.27.1
 
 require (
 	charm.land/bubbles/v2 v2.1.1
