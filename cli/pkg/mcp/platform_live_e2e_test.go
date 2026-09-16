@@ -369,6 +369,16 @@ func TestPlatformMCP_RealReadWriteLifecycle(t *testing.T) {
 		}),
 	})
 	defer func() { liveBestEffortGenericDelete(ctx, "ontology", ontologyID) }()
+	liveMustGenericWrite(t, ctx, "platform_action", "action", PlatformGenericWriteInput{
+		Resource: "ontology", Action: "save_behavior", ID: ontologyID,
+		PayloadJSON: liveJSON(t, map[string]any{
+			"expectedRevision": 0,
+			"document": map[string]any{
+				"api_name": "mcp_e2e_entity_" + suffix, "ontology_id": ontologyID,
+				"actions": map[string]any{"approve": map[string]any{}},
+			},
+		}),
+	})
 	liveMustReadProjectList(t, ctx, "ontologies", func() (int, string) {
 		_, out, err := HandlePlatformOntologies(ctx, nil, PlatformEmptyInput{Fields: []string{"id", "apiName", "displayName"}})
 		if err != nil {
@@ -434,15 +444,17 @@ func TestPlatformMCP_RealReadWriteLifecycle(t *testing.T) {
 		Resource: "ontology",
 		ID:       ontologyID,
 		PayloadJSON: liveJSON(t, map[string]any{
-			"displayName":       "MCP E2E Entity Updated " + suffix,
-			"pluralDisplayName": "MCP E2E Entities Updated " + suffix,
-			"description":       "updated",
-			"primaryKey":        "id",
-			"tableName":         "mcp_e2e_entity_" + suffix,
-			"schemaName":        "public",
-			"status":            "active",
-			"icon":              "table",
-			"color":             "#3366ff",
+			"displayName":         "MCP E2E Entity Updated " + suffix,
+			"pluralDisplayName":   "MCP E2E Entities Updated " + suffix,
+			"description":         "updated",
+			"primaryKey":          "id",
+			"tableName":           "mcp_e2e_entity_" + suffix,
+			"schemaName":          "public",
+			"status":              "active",
+			"embeddingEnabled":    false,
+			"embeddingProperties": []string{},
+			"icon":                "table",
+			"color":               "#3366ff",
 			"properties": []map[string]any{
 				{
 					"apiName": "id", "displayName": "ID", "description": "ID", "columnName": "id", "dataType": "String",
@@ -521,14 +533,29 @@ func TestPlatformMCP_RealReadWriteLifecycle(t *testing.T) {
 		}),
 	})
 	defer func() { liveBestEffortGenericDelete(ctx, "app", appID) }()
+	liveMustGenericWrite(t, ctx, "platform_action", "action", PlatformGenericWriteInput{
+		Resource: "app", Action: "upsert_file",
+		PayloadJSON: liveJSON(t, map[string]any{"appId": appID, "path": "brand.json", "content": `{"brandName":"RetailOS","primary":"navy"}`}),
+	})
+	packageSession, err := loadPlatformWorkspace(ctx)
+	if err != nil {
+		t.Fatalf("load workspace for package creation: %v", err)
+	}
+	packageName := "mcp-e2e-package-" + suffix
 	packageID := liveMustGenericWriteID(t, ctx, "platform_create", "create", PlatformGenericWriteInput{
 		Resource: "package",
 		PayloadJSON: liveJSON(t, map[string]any{
-			"name": "mcp-e2e-package-" + suffix, "version": "1.0.0", "channel": "stable", "description": "MCP e2e package",
-			"items": []map[string]any{{"objectId": datasetID, "objectType": "dataset", "role": "required"}},
+			"name": packageName, "version": "1.0.0", "channel": "stable", "description": "MCP e2e package",
+			"items": []map[string]any{
+				{"sourceProjectId": packageSession.Host.DefaultProjectID, "objectId": datasetID, "objectType": "dataset", "role": "required"},
+				{"sourceProjectId": packageSession.Host.DefaultProjectID, "objectId": appID, "objectType": "app", "role": "required"},
+			},
 		}),
 	})
 	liveMustExtendedPlatformReads(t, ctx, appID, packageID, datasetID)
+	packageTargetProjectID := liveMustCreatePackageTargetProject(t, ctx, packageName+"-target")
+	liveMustPackageCustomizationLifecycle(t, ctx, packageSession, packageTargetProjectID, packageID, packageName, appID, ontologyID)
+	liveMustDeletePackageTargetProject(t, ctx, packageTargetProjectID)
 
 	folderAID := liveMustGenericWriteID(t, ctx, "platform_create", "create", PlatformGenericWriteInput{
 		Resource:    "folder",
@@ -805,15 +832,15 @@ func liveMustExtendedPlatformReads(t *testing.T, ctx context.Context, appID, pac
 	// legitimately returns null data until one exists.
 	read("whodb_platform_app_view", "AppView", map[string]any{"id": appID}, []string{"data", "scope"}, false)
 	read("whodb_platform_app_version_view", "AppVersionView", map[string]any{"appId": appID, "version": 1}, []string{"data", "scope"}, false)
-	read("whodb_platform_packages", "Packages", nil, []string{"data", "count"}, true)
-	read("whodb_platform_package", "PackageDetail", map[string]any{"packageId": packageID}, []string{"data", "scope"}, true)
+	read("whodb_platform_packages", "OrganizationPackages", nil, []string{"data", "count"}, true)
+	read("whodb_platform_package", "OrganizationPackage", map[string]any{"packageId": packageID}, []string{"data", "scope"}, true)
 	read("whodb_platform_package_installations", "PackageInstallations", nil, []string{"data", "count"}, true)
 	read("whodb_platform_package_installation_update", "PackageInstallationUpdate", map[string]any{"installationId": "missing-installation"}, []string{"data", "scope"}, false)
 	read("whodb_platform_package_library", "PackageLibrary", nil, []string{"data", "count"}, true)
 	read("whodb_platform_shared_package", "SharedPackage", map[string]any{"shareToken": "missing-share-token"}, []string{"data", "scope"}, false)
-	read("whodb_platform_preview_create_package", "PreviewCreatePackage", map[string]any{"input": map[string]any{"name": "preview", "items": []map[string]any{{"objectId": objectID, "objectType": "dataset"}}}}, []string{"data", "scope"}, true)
-	read("whodb_platform_preview_install_package", "PreviewInstallPackage", map[string]any{"input": map[string]any{"sourceProjectId": session.Host.DefaultProjectID, "targetProjectId": session.Host.DefaultProjectID, "packageId": packageID}}, []string{"data", "scope"}, true)
-	read("whodb_platform_preview_import_package", "PreviewImportPackage", map[string]any{"input": map[string]any{"sourceProjectId": session.Host.DefaultProjectID, "targetProjectId": session.Host.DefaultProjectID, "packageId": packageID}}, []string{"data", "scope"}, true)
+	read("whodb_platform_preview_create_package", "PreviewCreatePackage", map[string]any{"input": map[string]any{"name": "preview", "items": []map[string]any{{"sourceProjectId": session.Host.DefaultProjectID, "objectId": objectID, "objectType": "dataset"}}}}, []string{"data", "scope"}, true)
+	read("whodb_platform_preview_install_package", "PreviewInstallPackage", map[string]any{"input": map[string]any{"targetProjectId": session.Host.DefaultProjectID, "packageId": packageID}}, []string{"data", "scope"}, true)
+	read("whodb_platform_preview_import_package", "PreviewImportPackage", map[string]any{"input": map[string]any{"targetProjectId": session.Host.DefaultProjectID, "packageId": packageID}}, []string{"data", "scope"}, true)
 	read("whodb_platform_preview_shared_install", "PreviewSharedPackageInstall", map[string]any{"input": map[string]any{"shareToken": "missing-share-token", "targetProjectId": "selected"}}, []string{"data", "scope"}, false)
 	read("whodb_platform_preview_shared_import", "PreviewSharedPackageImport", map[string]any{"input": map[string]any{"shareToken": "missing-share-token", "targetProjectId": "selected"}}, []string{"data", "scope"}, false)
 	read("whodb_platform_object_versions", "ObjectVersions", map[string]any{"objectId": objectID, "objectType": "dataset"}, []string{"data", "count"}, true)
@@ -835,6 +862,158 @@ func liveMustExtendedPlatformReads(t *testing.T, ctx context.Context, appID, pac
 	read("whodb_platform_my_grants", "MyGrants", nil, []string{"data", "count"}, true)
 	read("whodb_platform_teams", "Teams", nil, []string{"data", "count"}, true)
 	liveCoverTool("whodb_platform_team_members")
+}
+
+func liveMustCreatePackageTargetProject(t *testing.T, ctx context.Context, name string) string {
+	t.Helper()
+	_, output, err := HandlePlatformProjectCreate(ctx, nil, PlatformProjectCreateInput{Name: name, Description: "Package lifecycle target"}, true)
+	if err != nil {
+		t.Fatalf("create package target project: %v", err)
+	}
+	if output.Error != "" || !output.ConfirmationRequired {
+		t.Fatalf("package target project create output = %#v, want pending confirmation", output)
+	}
+	return liveConfirmResultID(t, liveMustConfirm(t, ctx, output.ConfirmationToken), "package target project create")
+}
+
+func liveMustDeletePackageTargetProject(t *testing.T, ctx context.Context, projectID string) {
+	t.Helper()
+	_, output, err := HandlePlatformProjectDelete(ctx, nil, PlatformProjectDeleteInput{Project: projectID}, true)
+	if err != nil {
+		t.Fatalf("delete package target project: %v", err)
+	}
+	if output.Error != "" || !output.ConfirmationRequired {
+		t.Fatalf("package target project delete output = %#v, want pending confirmation", output)
+	}
+	_ = liveMustConfirm(t, ctx, output.ConfirmationToken)
+}
+
+func liveMustPackageCustomizationLifecycle(t *testing.T, ctx context.Context, session *platformToolSession, targetProjectID, packageID, packageName, sourceAppID, sourceOntologyID string) {
+	t.Helper()
+	result := liveMustGenericWrite(t, ctx, "platform_action", "action", PlatformGenericWriteInput{
+		Resource: "package", Action: "install",
+		PayloadJSON: liveJSON(t, map[string]any{"targetProjectId": targetProjectID, "packageId": packageID}),
+	})
+	var installed struct {
+		Installation struct {
+			ID string `json:"id"`
+		} `json:"installation"`
+		Items []struct {
+			SourceObjectID   string `json:"sourceObjectId"`
+			SourceObjectType string `json:"sourceObjectType"`
+			TargetObjectID   string `json:"targetObjectId"`
+		} `json:"items"`
+	}
+	if err := json.Unmarshal([]byte(result), &installed); err != nil {
+		t.Fatalf("decode package install result: %v\n%s", err, result)
+	}
+	if installed.Installation.ID == "" {
+		t.Fatalf("package install result omitted installation id: %s", result)
+	}
+	targetAppID := ""
+	targetOntologyID := ""
+	for _, item := range installed.Items {
+		if item.SourceObjectID == sourceAppID && item.SourceObjectType == "app" {
+			targetAppID = item.TargetObjectID
+		}
+		if item.SourceObjectID == sourceOntologyID && item.SourceObjectType == "ontology" {
+			targetOntologyID = item.TargetObjectID
+		}
+	}
+	if targetAppID == "" {
+		t.Fatalf("package install result omitted app mapping: %s", result)
+	}
+	if targetOntologyID == "" {
+		t.Fatalf("package install result omitted ontology mapping: %s", result)
+	}
+	behaviorData, err := session.Client.PlatformQuery(ctx, "OntologyBehavior", map[string]any{"projectId": targetProjectID, "ontologyId": targetOntologyID})
+	if err != nil {
+		t.Fatalf("read installed ontology behavior: %v", err)
+	}
+	behaviorJSON, _ := json.Marshal(behaviorData)
+	if !strings.Contains(string(behaviorJSON), `"approve"`) {
+		t.Fatalf("installed ontology behavior omitted approve action: %s", behaviorJSON)
+	}
+
+	if _, err := session.Client.PlatformMutation(ctx, "UpsertPackageInstallationCustomization", map[string]any{"input": map[string]any{
+		"targetProjectId": targetProjectID,
+		"installationId":  installed.Installation.ID,
+		"objectId":        sourceAppID,
+		"path":            "brand.json",
+		"mode":            "merge_json",
+		"content":         `{"brandName":"Christy"}`,
+	}}); err != nil {
+		t.Fatalf("upsert package customization: %v", err)
+	}
+	liveMustAppFileContent(t, ctx, session, targetProjectID, targetAppID, "brand.json", `"Christy"`, `"navy"`)
+
+	liveMustGenericWrite(t, ctx, "platform_action", "action", PlatformGenericWriteInput{
+		Resource: "app", Action: "upsert_file",
+		PayloadJSON: liveJSON(t, map[string]any{"appId": sourceAppID, "path": "brand.json", "content": `{"brandName":"RetailOS","primary":"navy","accent":"gold"}`}),
+	})
+	updatePackageID := liveMustGenericWriteID(t, ctx, "platform_create", "create", PlatformGenericWriteInput{
+		Resource: "package",
+		PayloadJSON: liveJSON(t, map[string]any{
+			"name": packageName, "version": "1.1.0", "channel": "stable", "description": "MCP e2e package update",
+			"items": []map[string]any{{"sourceProjectId": session.Host.DefaultProjectID, "objectId": sourceAppID, "objectType": "app", "role": "required"}},
+		}),
+	})
+	liveMustGenericWrite(t, ctx, "platform_action", "action", PlatformGenericWriteInput{
+		Resource: "package", Action: "update_installation",
+		PayloadJSON: liveJSON(t, map[string]any{
+			"targetProjectId": targetProjectID,
+			"installationId":  installed.Installation.ID,
+			"packageId":       updatePackageID,
+			"pruneRemoved":    false,
+		}),
+	})
+	liveMustAppFileContent(t, ctx, session, targetProjectID, targetAppID, "brand.json", `"Christy"`, `"navy"`, `"gold"`)
+
+	if _, err := session.Client.PlatformMutation(ctx, "DeletePackageInstallationCustomization", map[string]any{"input": map[string]any{
+		"targetProjectId": targetProjectID,
+		"installationId":  installed.Installation.ID,
+		"objectId":        sourceAppID,
+		"path":            "brand.json",
+	}}); err != nil {
+		t.Fatalf("delete package customization: %v", err)
+	}
+	liveMustAppFileContent(t, ctx, session, targetProjectID, targetAppID, "brand.json", `"RetailOS"`, `"navy"`, `"gold"`)
+
+	liveMustGenericWrite(t, ctx, "platform_action", "action", PlatformGenericWriteInput{
+		Resource: "package", Action: "uninstall",
+		PayloadJSON: liveJSON(t, map[string]any{"targetProjectId": targetProjectID, "installationId": installed.Installation.ID, "deleteObjects": true}),
+	})
+}
+
+func liveMustAppFileContent(t *testing.T, ctx context.Context, session *platformToolSession, projectID, appID, path string, fragments ...string) {
+	t.Helper()
+	data, err := session.Client.PlatformQuery(ctx, "AppFiles", map[string]any{"projectId": projectID, "appId": appID})
+	if err != nil {
+		t.Fatalf("read installed app files: %v", err)
+	}
+	raw, err := json.Marshal(data)
+	if err != nil {
+		t.Fatalf("encode installed app files: %v", err)
+	}
+	var files []struct {
+		Path    string `json:"path"`
+		Content string `json:"content"`
+	}
+	if err := json.Unmarshal(raw, &files); err != nil {
+		t.Fatalf("decode installed app files: %v", err)
+	}
+	for _, file := range files {
+		if file.Path != path {
+			continue
+		}
+		for _, fragment := range fragments {
+			if !strings.Contains(file.Content, fragment) {
+				t.Fatalf("installed %s content %q does not contain %q", path, file.Content, fragment)
+			}
+		}
+		return
+	}
+	t.Fatalf("installed app %s did not contain %s", appID, path)
 }
 
 func liveMustPlatformStatus(t *testing.T, ctx context.Context) PlatformStatusOutput {
@@ -1644,7 +1823,7 @@ func liveMintDevRefreshToken(t *testing.T, ctx context.Context, keycloakURL, hos
 	t.Helper()
 	endpoint := strings.TrimRight(keycloakURL, "/") + "/realms/mothergate/protocol/openid-connect/token"
 	form := url.Values{
-		"client_id":  {"whodb"},
+		"client_id":  {"whodb-cli"},
 		"grant_type": {"password"},
 		"username":   {username},
 		"password":   {password},

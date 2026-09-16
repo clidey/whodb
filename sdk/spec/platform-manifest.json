@@ -1654,6 +1654,25 @@
       "returns": "PackageUpdateInfo"
     },
     {
+      "name": "PackageInstallationCustomizations",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "installationId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[PackageInstallationCustomization!]!"
+    },
+    {
       "name": "SharedPackage",
       "kind": "Query",
       "args": [
@@ -2197,6 +2216,88 @@
         }
       ],
       "returns": "StatusResponse!"
+    },
+    {
+      "name": "InviteUser",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "input",
+          "type": "InviteUserInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "GrantAccess",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "input",
+          "type": "UpdateAccessInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "RevokeAccess",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "input",
+          "type": "UpdateAccessInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "ShareByEmail",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "emails",
+          "type": "String",
+          "required": true,
+          "list": true
+        },
+        {
+          "name": "role",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "resourceType",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "resourceId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "expiresIn",
+          "type": "String",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "dependents",
+          "type": "ShareDependentInput",
+          "required": false,
+          "list": true
+        }
+      ],
+      "returns": "ShareResult!"
     },
     {
       "name": "CreateSource",
@@ -3568,6 +3669,32 @@
         }
       ],
       "returns": "PackageOperationResult!"
+    },
+    {
+      "name": "UpsertPackageInstallationCustomization",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "input",
+          "type": "UpsertPackageInstallationCustomizationInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "PackageInstallationCustomization!"
+    },
+    {
+      "name": "DeletePackageInstallationCustomization",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "input",
+          "type": "DeletePackageInstallationCustomizationInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
     },
     {
       "name": "UninstallPackage",

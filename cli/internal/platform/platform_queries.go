@@ -31,17 +31,20 @@ var platformQuerySpecs = map[string]string{
 	"AppVersionView": `query CLIPlatformAppVersionView($projectId: ID!, $appId: ID!, $version: Int!) {
   AppVersionView(projectId: $projectId, appId: $appId, version: $version) { app { id projectId name description thumbnailUrl useCases html conversation ontologyIds readOnlyOntologyIds functionIds createdBy createdAt updatedAt } files { path content updatedAt } }
 }`,
-	"Packages": `query CLIPlatformPackages($projectId: ID!) {
-  Packages(projectId: $projectId) { id name version channel description installable importable visibility createdBy createdAt items { objectId objectType name version role visibility importable } requirements { key kind label description required metadata } stats { installCount importCount reviewCount averageRating } }
+	"OrganizationPackages": `query CLIPlatformOrganizationPackages($organizationId: ID!) {
+  OrganizationPackages(organizationId: $organizationId) { id name version channel description installable importable visibility createdBy createdAt items { objectId objectType name version role visibility importable } requirements { key kind label description required metadata } stats { installCount importCount reviewCount averageRating } }
 }`,
-	"PackageDetail": `query CLIPlatformPackageDetail($projectId: ID!, $packageId: ID!) {
-  PackageDetail(projectId: $projectId, packageId: $packageId) { id name version channel description installable importable visibility createdBy createdAt items { objectId objectType name version role visibility importable } requirements { key kind label description required metadata } stats { installCount importCount reviewCount averageRating } changelog { id version title body createdAt } }
+	"OrganizationPackage": `query CLIPlatformOrganizationPackage($organizationId: ID!, $packageId: ID!) {
+  OrganizationPackage(organizationId: $organizationId, packageId: $packageId) { id name version channel description installable importable visibility createdBy createdAt items { objectId objectType name version role visibility importable } requirements { key kind label description required metadata } stats { installCount importCount reviewCount averageRating } changelog { id version title body createdAt } }
 }`,
 	"PackageInstallations": `query CLIPlatformPackageInstallations($projectId: ID!) {
   PackageInstallations(projectId: $projectId) { id sourceProjectId targetProjectId packageId packageName packageVersion packageChannel status installedBy installedAt updatedAt updateInfo { available currentPackageId currentVersion latestPackageId latestVersion latestCreatedAt channel } items { sourceObjectId sourceObjectType sourceVersion sourceVisibility sourceImportable targetObjectId targetObjectType } }
 }`,
 	"PackageInstallationUpdate": `query CLIPlatformPackageInstallationUpdate($projectId: ID!, $installationId: ID!) {
-  PackageInstallationUpdate(projectId: $projectId, installationId: $installationId) { available currentPackageId currentVersion latestPackageId latestVersion latestCreatedAt channel }
+	  PackageInstallationUpdate(projectId: $projectId, installationId: $installationId) { available sourceAvailable sourceRemovedAt currentPackageId currentVersion latestPackageId latestVersion latestCreatedAt channel changes { action pruneAction sourceObjectId sourceObjectType sourceVersion targetObjectId targetObjectType } }
+}`,
+	"PackageInstallationCustomizations": `query CLIPlatformPackageInstallationCustomizations($projectId: ID!, $installationId: ID!) {
+  PackageInstallationCustomizations(projectId: $projectId, installationId: $installationId) { id installationId sourceObjectId sourceObjectType targetObjectId path mode content updatedBy createdAt updatedAt }
 }`,
 	"PackageLibrary": `query CLIPlatformPackageLibrary($search: String) {
   PackageLibrary(search: $search) { sourceOrgName share { id packageId sourceOrgId sourceProjectId url createdBy createdAt revokedAt } package { id name version channel description installable importable visibility createdBy createdAt } }
@@ -69,6 +72,9 @@ var platformQuerySpecs = map[string]string{
 }`,
 	"ActiveProdVersion": `query CLIPlatformActiveProdVersion($projectId: ID!, $objectId: ID!, $objectType: VersionableObjectType!) {
   ActiveProdVersion(projectId: $projectId, objectId: $objectId, objectType: $objectType) { objectId objectType version activatedAt activatedBy }
+}`,
+	"OntologyBehavior": `query CLIPlatformOntologyBehavior($projectId: ID!, $ontologyId: ID!) {
+  OntologyBehavior(projectId: $projectId, ontologyId: $ontologyId) { id ontologyId document revision createdAt updatedAt }
 }`,
 	"ProjectActiveProdVersions": `query CLIPlatformProjectActiveProdVersions($projectId: ID!) {
   ProjectActiveProdVersions(projectId: $projectId) { objectId objectType version activatedAt activatedBy }
@@ -116,7 +122,7 @@ var platformQuerySpecs = map[string]string{
   MyGrants(orgId: $orgId) { resourceType resourceId resourceName role projectId projectName provenance }
 }`,
 	"ProjectResourceSummary": `query CLIPlatformProjectResourceSummary($projectId: ID!) {
-  ProjectResourceSummary(projectId: $projectId) { sources { id name } datasets { id name } transforms { id name } functions { id name } apps { id name } ontologyTypes { id name } files { id name } packages { id name } }
+  ProjectResourceSummary(projectId: $projectId) { sources { id name } datasets { id name } transforms { id name } functions { id name } apps { id name } ontologyTypes { id name } files { id name } }
 }`,
 	"ProjectAccessMatrix": `query CLIPlatformProjectAccessMatrix($projectId: ID!) {
   ProjectAccessMatrix(projectId: $projectId) { projectId projectName resources { resourceType resourceId resourceName accessList { subject displayName role } } }

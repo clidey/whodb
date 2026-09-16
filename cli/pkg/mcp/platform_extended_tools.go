@@ -75,11 +75,11 @@ func registerPlatformExtendedReadTool(server *mcp.Server, tool *mcp.Tool) bool {
 		})
 	case "whodb_platform_packages":
 		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformPackageInput) (*mcp.CallToolResult, any, error) {
-			return handlePlatformExtendedQuery(ctx, "platform_packages", "Packages", map[string]any{}, input.Fields)
+			return handlePlatformExtendedQuery(ctx, "platform_packages", "OrganizationPackages", map[string]any{}, input.Fields)
 		})
 	case "whodb_platform_package":
 		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformPackageInput) (*mcp.CallToolResult, any, error) {
-			return handlePlatformExtendedQuery(ctx, "platform_package", "PackageDetail", map[string]any{"packageId": strings.TrimSpace(input.ID)}, input.Fields)
+			return handlePlatformExtendedQuery(ctx, "platform_package", "OrganizationPackage", map[string]any{"packageId": strings.TrimSpace(input.ID)}, input.Fields)
 		})
 	case "whodb_platform_package_installations":
 		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformPackageInput) (*mcp.CallToolResult, any, error) {
@@ -110,9 +110,7 @@ func registerPlatformExtendedReadTool(server *mcp.Server, tool *mcp.Tool) bool {
 			if err != nil {
 				return nil, PlatformReadOutput{Error: err.Error(), RequestID: generateRequestID(tool.Name)}, nil
 			}
-			if operation == "PreviewCreatePackage" {
-				payload["projectId"] = "selected"
-			} else {
+			if operation != "PreviewCreatePackage" {
 				payload["targetProjectId"] = "selected"
 			}
 			return handlePlatformExtendedQuery(ctx, tool.Name, operation, map[string]any{"input": payload}, input.Fields)
@@ -252,10 +250,9 @@ func handlePlatformExtendedQuery(ctx context.Context, toolName, operation string
 	return platformProjectRead(ctx, toolName, fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
 		variables["projectId"] = session.Host.DefaultProjectID
 		variables["orgId"] = session.Host.DefaultOrgID
+		variables["organizationId"] = session.Host.DefaultOrgID
 		if input, ok := variables["input"].(map[string]any); ok {
-			if operation == "PreviewCreatePackage" {
-				input["projectId"] = session.Host.DefaultProjectID
-			} else {
+			if operation != "PreviewCreatePackage" {
 				input["targetProjectId"] = session.Host.DefaultProjectID
 			}
 		}

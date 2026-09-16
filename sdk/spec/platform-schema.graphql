@@ -2688,6 +2688,7 @@ type ShareDependent {
   resourceName: String!
   defaultRole: String!
   reason: String!
+  grantable: Boolean!
 }
 
 input ShareDependentInput {
@@ -2728,6 +2729,8 @@ extend type Mutation {
   InstallPackageDeployment(input: InstallPackageDeploymentInput!): PackageDeploymentResult!
   InstallSharedPackage(input: SharedPackageOperationInput!): PackageOperationResult!
   UpdatePackageInstallation(input: UpdatePackageInstallationInput!): PackageOperationResult!
+  UpsertPackageInstallationCustomization(input: UpsertPackageInstallationCustomizationInput!): PackageInstallationCustomization!
+  DeletePackageInstallationCustomization(input: DeletePackageInstallationCustomizationInput!): StatusResponse!
   UninstallPackage(input: UninstallPackageInput!): StatusResponse!
   ImportPackage(input: ImportPackageInput!): PackageOperationResult!
   ImportSharedPackage(input: SharedPackageOperationInput!): PackageOperationResult!
@@ -2928,6 +2931,31 @@ type PackageUpdateInfo {
   latestVersion: String
   latestCreatedAt: String
   channel: String!
+  changes: [PackageUpdateChange!]!
+}
+
+type PackageUpdateChange {
+  action: String!
+  pruneAction: String!
+  sourceObjectId: ID!
+  sourceObjectType: String!
+  sourceVersion: Int!
+  targetObjectId: ID
+  targetObjectType: String
+}
+
+type PackageInstallationCustomization {
+  id: ID!
+  installationId: ID!
+  sourceObjectId: ID!
+  sourceObjectType: String!
+  targetObjectId: ID
+  path: String!
+  mode: String!
+  content: String!
+  updatedBy: ID!
+  createdAt: String!
+  updatedAt: String!
 }
 
 type PackageStats {
@@ -3053,6 +3081,23 @@ input UpdatePackageInstallationInput {
   installationId: ID!
   packageId: ID
   bindings: [PackageRequirementBindingInput!]
+  pruneRemoved: Boolean = false
+}
+
+input UpsertPackageInstallationCustomizationInput {
+  targetProjectId: ID!
+  installationId: ID!
+  objectId: ID!
+  path: String!
+  mode: String = "replace"
+  content: String = ""
+}
+
+input DeletePackageInstallationCustomizationInput {
+  targetProjectId: ID!
+  installationId: ID!
+  objectId: ID!
+  path: String!
 }
 
 input ImportPackageInput {
@@ -3108,6 +3153,7 @@ extend type Query {
   PackageInstallations(projectId: ID!): [PackageInstallation!]!
   OrganizationPackageInstallations(organizationId: ID!, packageId: ID): [PackageInstallation!]!
   PackageInstallationUpdate(projectId: ID!, installationId: ID!): PackageUpdateInfo!
+  PackageInstallationCustomizations(projectId: ID!, installationId: ID!): [PackageInstallationCustomization!]!
   SharedPackage(shareToken: String!): SharedPackage!
   PackageLibrary(search: String): [PackageLibraryEntry!]!
   PreviewCreatePackage(input: CreatePackageInput!): PackagePreview!

@@ -113,6 +113,26 @@ func TestBuildPlatformGenericWriteAcceptsStructuredPayload(t *testing.T) {
 	}
 }
 
+func TestBuildPlatformGenericWriteUsesCustomIdentityField(t *testing.T) {
+	session := testPlatformSession(&fakePlatformClient{})
+	_, variables, err := buildPlatformGenericWrite(session, PlatformGenericWriteInput{
+		Resource: "ontology",
+		Action:   "save_behavior",
+		ID:       "ontology-1",
+		Payload:  map[string]any{"expectedRevision": 0, "document": map[string]any{"actions": map[string]any{}}},
+	}, "action")
+	if err != nil {
+		t.Fatalf("buildPlatformGenericWrite() error = %v", err)
+	}
+	input := variables["input"].(map[string]any)
+	if input["ontologyId"] != "ontology-1" {
+		t.Fatalf("ontologyId = %#v, want ontology-1", input["ontologyId"])
+	}
+	if _, exists := input["id"]; exists {
+		t.Fatalf("custom identity payload contains invalid generic id: %#v", input)
+	}
+}
+
 func TestBuildPlatformGenericWriteRejectsAmbiguousPayloads(t *testing.T) {
 	_, _, err := buildPlatformGenericWrite(testPlatformSession(&fakePlatformClient{}), PlatformGenericWriteInput{
 		Resource:    "dataset",

@@ -9,6 +9,7 @@ require (
 	github.com/charmbracelet/colorprofile v0.4.3
 	github.com/charmbracelet/x/ansi v0.11.8
 	github.com/clidey/whodb/core v0.0.0
+	github.com/duckdb/duckdb-go/v2 v2.10505.0
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/go-version v1.9.0
 	github.com/jackc/pgx/v5 v5.10.0
@@ -89,7 +90,6 @@ require (
 	github.com/duckdb/duckdb-go-bindings/lib/linux-amd64 v0.10505.0 // indirect
 	github.com/duckdb/duckdb-go-bindings/lib/linux-arm64 v0.10505.0 // indirect
 	github.com/duckdb/duckdb-go-bindings/lib/windows-amd64 v0.10505.0 // indirect
-	github.com/duckdb/duckdb-go/v2 v2.10505.0 // indirect
 	github.com/elastic/elastic-transport-go/v8 v8.11.0 // indirect
 	github.com/elastic/go-elasticsearch/v9 v9.5.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect

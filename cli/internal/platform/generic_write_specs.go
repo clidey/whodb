@@ -128,7 +128,7 @@ var GenericWriteSpecs = map[string]GenericWriteSpec{
 	"action:restore_version_to_draft:ontology":    {Resource: "ontology", Action: "restore_version_to_draft", Mutation: "RestoreOntologyVersionToDraft", Mode: GenericWriteModeDirect, InjectProjectID: true},
 	"action:restore_version_to_draft:dataset":     {Resource: "dataset", Action: "restore_version_to_draft", Mutation: "RestoreDatasetVersionToDraft", Mode: GenericWriteModeDirect, InjectProjectID: true},
 	"action:restore_version_to_draft:transform":   {Resource: "transform", Action: "restore_version_to_draft", Mutation: "RestoreTransformVersionToDraft", Mode: GenericWriteModeDirect, InjectProjectID: true},
-	"create:package":                              {Resource: "package", Action: "create", Mutation: "CreatePackage", Mode: GenericWriteModeInput, InjectProjectID: true},
+	"create:package":                              {Resource: "package", Action: "create", Mutation: "CreatePackage", Mode: GenericWriteModeInput},
 	"action:install:package":                      {Resource: "package", Action: "install", Mutation: "InstallPackage", Mode: GenericWriteModeInput},
 	"action:install_shared:package":               {Resource: "package", Action: "install_shared", Mutation: "InstallSharedPackage", Mode: GenericWriteModeInput},
 	"action:update_installation:package":          {Resource: "package", Action: "update_installation", Mutation: "UpdatePackageInstallation", Mode: GenericWriteModeInput},
