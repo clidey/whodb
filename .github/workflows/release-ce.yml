@@ -1174,7 +1174,10 @@ jobs:
           mask_secret "$CENTRAL_USERNAME"
           mask_secret "$CENTRAL_PASSWORD"
           mask_secret "$MAVEN_GPG_PASSPHRASE"
-          mvn -B -f sdk/packages/java/pom.xml -P release -Dcentral.autoPublish=true -Dcentral.waitUntil=published deploy
+          # waitUntil=validated: auto-publish still proceeds server-side, but
+          # the job returns once Central validates the bundle instead of
+          # polling (sometimes for many minutes) until full publication.
+          mvn -B -f sdk/packages/java/pom.xml -P release -Dcentral.autoPublish=true -Dcentral.waitUntil=validated deploy
 
   # The Go SDK "publishes" via a git tag: the Go module proxy serves
   # github.com/clidey/whodb/sdk/packages/go straight from GitHub, and a

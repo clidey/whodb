@@ -78,9 +78,19 @@ jobs:
       - name: Publish
         run: cd sdk/packages/typescript && npm publish --access public --provenance
 
+      # npm read replicas can lag the publish by more than a few seconds, so
+      # poll instead of a single fixed sleep (a 0.127.2 publish succeeded but
+      # this step 404'd at 10s and failed the whole job).
       - name: Verify publish
         env:
           VERSION: ${{ inputs.version }}
         run: |
-          sleep 10
-          npm view "@clidey/whodb-sdk@$VERSION" version
+          for attempt in $(seq 1 30); do
+            if npm view "@clidey/whodb-sdk@$VERSION" version; then
+              exit 0
+            fi
+            echo "not visible yet (attempt $attempt/30); retrying in 10s"
+            sleep 10
+          done
+          echo "package @clidey/whodb-sdk@$VERSION not visible after 5 minutes" >&2
+          exit 1
