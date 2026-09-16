@@ -1111,6 +1111,71 @@ jobs:
           CARGO_REGISTRY_TOKEN: ${{ steps.crates-io-auth.outputs.token }}
         run: cargo publish --locked --allow-dirty --manifest-path sdk/packages/rust/Cargo.toml
 
+  # Maven Central publish, mirroring the com.clidey:connparse release flow:
+  # setup-java writes the ephemeral settings.xml (server id "central") and
+  # imports the GPG signing key; Central Portal has no OIDC trusted
+  # publishing, so this job carries token secrets (shared with connparse).
+  deploy-sdk-maven:
+    name: Deploy SDK Maven Central
+    runs-on: ubuntu-latest
+    needs: [ calculate-version ]
+    if: needs.calculate-version.outputs.deploy-sdk == 'true'
+    permissions:
+      contents: read
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            api.adoptium.net:443
+            central.sonatype.com:443
+            github.com:443
+            objects.githubusercontent.com:443
+            repo.maven.apache.org:443
+            repo1.maven.org:443
+
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          submodules: false
+
+      - name: Set up JDK
+        uses: actions/setup-java@ad2b38190b15e4d6bdf0c97fb4fca8412226d287 # v5.3.0
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+          cache-dependency-path: sdk/packages/java/pom.xml
+          server-id: central
+          server-username: CENTRAL_USERNAME
+          server-password: CENTRAL_PASSWORD
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
+
+      - name: Stamp version
+        env:
+          VERSION: ${{ needs.calculate-version.outputs.version }}
+        run: cd sdk && node tools/sync-versions.mjs --set "$VERSION"
+
+      - name: Publish to Maven Central
+        env:
+          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+          CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          mask_secret() {
+            local value="$1"
+            value="${value//'%'/'%25'}"
+            value="${value//$'\r'/'%0D'}"
+            value="${value//$'\n'/'%0A'}"
+            echo "::add-mask::$value"
+          }
+          mask_secret "$CENTRAL_USERNAME"
+          mask_secret "$CENTRAL_PASSWORD"
+          mask_secret "$MAVEN_GPG_PASSPHRASE"
+          mvn -B -f sdk/packages/java/pom.xml -P release -Dcentral.autoPublish=true -Dcentral.waitUntil=published deploy
+
   # The Go SDK "publishes" via a git tag: the Go module proxy serves
   # github.com/clidey/whodb/sdk/packages/go straight from GitHub, and a
   # subdirectory module needs its path as the tag prefix. Runs only after the
@@ -1118,13 +1183,14 @@ jobs:
   deploy-sdk-go-tag:
     name: Tag Go SDK
     runs-on: ubuntu-latest
-    needs: [ calculate-version, deploy-sdk-npm, deploy-sdk-pypi, deploy-sdk-cargo ]
+    needs: [ calculate-version, deploy-sdk-npm, deploy-sdk-pypi, deploy-sdk-cargo, deploy-sdk-maven ]
     if: |
       needs.calculate-version.outputs.deploy-sdk == 'true' &&
       needs.calculate-version.outputs.stage-only != 'true' &&
       needs.deploy-sdk-npm.result == 'success' &&
       needs.deploy-sdk-pypi.result == 'success' &&
-      needs.deploy-sdk-cargo.result == 'success'
+      needs.deploy-sdk-cargo.result == 'success' &&
+      needs.deploy-sdk-maven.result == 'success'
     permissions:
       contents: write
     steps:
@@ -1222,6 +1288,7 @@ jobs:
       deploy-sdk-npm,
       deploy-sdk-pypi,
       deploy-sdk-cargo,
+      deploy-sdk-maven,
       deploy-sdk-go-tag,
       create-github-release,
       stamp-plugin-version
@@ -1319,6 +1386,7 @@ jobs:
           deploy_row "SDK npm (@clidey/whodb-sdk)" "${{ needs.deploy-sdk-npm.result }}" "${{ needs.calculate-version.outputs.deploy-sdk }}" "TypeScript platform SDK"
           deploy_row "SDK PyPI (whodb-sdk)" "${{ needs.deploy-sdk-pypi.result }}" "${{ needs.calculate-version.outputs.deploy-sdk }}" "Python platform SDK"
           deploy_row "SDK crates.io (whodb-sdk)" "${{ needs.deploy-sdk-cargo.result }}" "${{ needs.calculate-version.outputs.deploy-sdk }}" "Rust platform SDK"
+          deploy_row "SDK Maven Central (com.clidey:whodb-sdk)" "${{ needs.deploy-sdk-maven.result }}" "${{ needs.calculate-version.outputs.deploy-sdk }}" "Java platform SDK"
           deploy_row "SDK Go tag (sdk/packages/go)" "${{ needs.deploy-sdk-go-tag.result }}" "${{ needs.calculate-version.outputs.deploy-sdk }}" "Go platform SDK (module proxy serves the tag)"
 
           echo ""
