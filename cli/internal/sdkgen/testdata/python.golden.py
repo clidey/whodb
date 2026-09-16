@@ -54,6 +54,28 @@ class OrderHandle:
         """Delete one record by primary key."""
         return self._handle.delete(pk)
 
+    def capabilities(self, record_key=None):
+        """Compute the current actor's readable fields and allowed actions."""
+        return self._handle.capabilities(record_key)
+
+    def preview_action(self, action, record_key, values=None):
+        """Dry-run a named action without persisting records, effects, or events."""
+        return self._handle.preview_action(action, record_key, values)
+
+    def action(self, action, record_key, values=None, *, expected_version=None, idempotency_key=None):
+        """Execute a named action with full behavior enforcement."""
+        return self._handle.action(
+            action,
+            record_key,
+            values,
+            expected_version=expected_version,
+            idempotency_key=idempotency_key,
+        )
+
+    def action_executions(self, record_key, limit=50):
+        """List recent named-action executions for one record."""
+        return self._handle.action_executions(record_key, limit)
+
     @property
     def dynamic(self):
         """The underlying dynamic handle, for operations not typed here."""
@@ -107,6 +129,28 @@ class UserHandle:
     def orders(self, pk, **kwargs):
         """Follow the orders link to order records (ONE_TO_MANY)."""
         return self._handle.follow_link(pk, "orders", **kwargs)
+
+    def capabilities(self, record_key=None):
+        """Compute the current actor's readable fields and allowed actions."""
+        return self._handle.capabilities(record_key)
+
+    def preview_action(self, action, record_key, values=None):
+        """Dry-run a named action without persisting records, effects, or events."""
+        return self._handle.preview_action(action, record_key, values)
+
+    def action(self, action, record_key, values=None, *, expected_version=None, idempotency_key=None):
+        """Execute a named action with full behavior enforcement."""
+        return self._handle.action(
+            action,
+            record_key,
+            values,
+            expected_version=expected_version,
+            idempotency_key=idempotency_key,
+        )
+
+    def action_executions(self, record_key, limit=50):
+        """List recent named-action executions for one record."""
+        return self._handle.action_executions(record_key, limit)
 
     @property
     def dynamic(self):

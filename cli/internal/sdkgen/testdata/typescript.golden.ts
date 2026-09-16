@@ -55,6 +55,31 @@ export class OrderHandle {
     return this.handle.delete(pk);
   }
 
+  /** Computes the current actor's readable fields and allowed actions. */
+  capabilities(recordKey?: string | number) {
+    return this.handle.capabilities(recordKey);
+  }
+
+  /** Dry-runs a named action without persisting records, effects, or events. */
+  previewAction(action: string, recordKey: string | number | null, values: Record<string, unknown> = {}) {
+    return this.handle.previewAction(action, recordKey, values);
+  }
+
+  /** Executes a named action with full behavior enforcement. */
+  action(
+    action: string,
+    recordKey: string | number | null,
+    values: Record<string, unknown> = {},
+    options: Parameters<OntologyHandle['action']>[3] = {},
+  ) {
+    return this.handle.action(action, recordKey, values, options);
+  }
+
+  /** Lists recent named-action executions for one record. */
+  actionExecutions(recordKey: string | number, limit = 50) {
+    return this.handle.actionExecutions(recordKey, limit);
+  }
+
   /** The underlying dynamic handle, for operations not typed here. */
   get dynamic(): OntologyHandle {
     return this.handle;
@@ -115,6 +140,31 @@ export class UserHandle {
   /** Follows the orders link to order records (ONE_TO_MANY). */
   orders(pk: string | number, options: { pageSize?: number } = {}): ListCall {
     return this.handle.followLink(pk, 'orders', options);
+  }
+
+  /** Computes the current actor's readable fields and allowed actions. */
+  capabilities(recordKey?: string | number) {
+    return this.handle.capabilities(recordKey);
+  }
+
+  /** Dry-runs a named action without persisting records, effects, or events. */
+  previewAction(action: string, recordKey: string | number | null, values: Record<string, unknown> = {}) {
+    return this.handle.previewAction(action, recordKey, values);
+  }
+
+  /** Executes a named action with full behavior enforcement. */
+  action(
+    action: string,
+    recordKey: string | number | null,
+    values: Record<string, unknown> = {},
+    options: Parameters<OntologyHandle['action']>[3] = {},
+  ) {
+    return this.handle.action(action, recordKey, values, options);
+  }
+
+  /** Lists recent named-action executions for one record. */
+  actionExecutions(recordKey: string | number, limit = 50) {
+    return this.handle.actionExecutions(recordKey, limit);
   }
 
   /** The underlying dynamic handle, for operations not typed here. */
