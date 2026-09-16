@@ -64,7 +64,7 @@ func (t *httpTransport) post(ctx context.Context, body []byte) (*http.Response, 
 	}
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Authorization", "Bearer "+token)
-	request.Header.Set("User-Agent", "clidey-whodb-go/"+SDKVersion)
+	request.Header.Set("User-Agent", "clidey-whodb-go/"+resolvedVersion())
 	t.mu.RLock()
 	if t.orgID != "" {
 		request.Header.Set("X-Whodb-Org-Id", t.orgID)

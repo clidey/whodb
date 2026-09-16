@@ -170,3 +170,11 @@ func TestIpcAutodetect(t *testing.T) {
 		t.Errorf("WHODB_IPC_TOKEN must autodetect IpcTransport, got %T", client.transport)
 	}
 }
+
+func TestResolvedVersionFallsBackInModule(t *testing.T) {
+	// In-module builds have no dependency entry for the SDK itself, so the
+	// stamped constant is the User-Agent version.
+	if got := resolvedVersion(); got != SDKVersion {
+		t.Errorf("in-module resolvedVersion: got %q, want %q", got, SDKVersion)
+	}
+}

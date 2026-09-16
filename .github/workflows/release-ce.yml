@@ -1057,6 +1057,104 @@ jobs:
         with:
           packages-dir: sdk/packages/python/dist/
 
+  # Inlined like deploy-sdk-pypi: the crates.io trusted publisher is
+  # registered against release-ce.yml, and the OIDC exchange mints a
+  # 30-minute token — no long-lived registry secret in the repo.
+  deploy-sdk-cargo:
+    name: Deploy SDK crates.io
+    runs-on: ubuntu-latest
+    needs: [ calculate-version ]
+    if: needs.calculate-version.outputs.deploy-sdk == 'true'
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            crates.io:443
+            index.crates.io:443
+            static.crates.io:443
+            static.rust-lang.org:443
+            github.com:443
+            api.github.com:443
+            objects.githubusercontent.com:443
+            token.actions.githubusercontent.com:443
+
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          submodules: false
+
+      - name: Stamp version
+        env:
+          VERSION: ${{ needs.calculate-version.outputs.version }}
+        run: |
+          cd sdk
+          node tools/sync-versions.mjs --set "$VERSION"
+          # Sync the crate's own Cargo.lock entry to the stamped version so
+          # publish --locked doesn't reject the lockfile; dependencies stay
+          # exactly as locked.
+          cd packages/rust && cargo update --workspace
+
+      - name: Authenticate crates.io
+        id: crates-io-auth
+        uses: rust-lang/crates-io-auth-action@bbd81622f20ce9e2dd9622e3218b975523e45bbe # v1.0.4
+
+      # --allow-dirty: the version stamp above deliberately dirties the
+      # checkout (in-repo manifests stay at 0.0.0; versions are stamped only
+      # at release time), which cargo would otherwise refuse to package.
+      - name: Publish to crates.io
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.crates-io-auth.outputs.token }}
+        run: cargo publish --locked --allow-dirty --manifest-path sdk/packages/rust/Cargo.toml
+
+  # The Go SDK "publishes" via a git tag: the Go module proxy serves
+  # github.com/clidey/whodb/sdk/packages/go straight from GitHub, and a
+  # subdirectory module needs its path as the tag prefix. Runs only after the
+  # npm and PyPI publishes succeed so all registries agree on the version.
+  deploy-sdk-go-tag:
+    name: Tag Go SDK
+    runs-on: ubuntu-latest
+    needs: [ calculate-version, deploy-sdk-npm, deploy-sdk-pypi, deploy-sdk-cargo ]
+    if: |
+      needs.calculate-version.outputs.deploy-sdk == 'true' &&
+      needs.calculate-version.outputs.stage-only != 'true' &&
+      needs.deploy-sdk-npm.result == 'success' &&
+      needs.deploy-sdk-pypi.result == 'success' &&
+      needs.deploy-sdk-cargo.result == 'success'
+    permissions:
+      contents: write
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            github.com:443
+
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          submodules: false
+
+      - name: Create and push Go module tag
+        env:
+          VERSION: ${{ needs.calculate-version.outputs.version }}
+        run: |
+          TAG="sdk/packages/go/v$VERSION"
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "tag $TAG already exists"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "$TAG" "$GITHUB_SHA"
+          git push origin "refs/tags/$TAG"
+          echo "tagged $TAG at $GITHUB_SHA"
+
   # Post-release housekeeping
   stamp-plugin-version:
     name: Stamp Plugin Version on Main
@@ -1123,6 +1221,8 @@ jobs:
       deploy-npm,
       deploy-sdk-npm,
       deploy-sdk-pypi,
+      deploy-sdk-cargo,
+      deploy-sdk-go-tag,
       create-github-release,
       stamp-plugin-version
     ]
@@ -1218,6 +1318,8 @@ jobs:
           deploy_row "npm (@clidey/whodb-cli)" "${{ needs.deploy-npm.result }}" "${{ needs.calculate-version.outputs.deploy-npm }}" "All platform packages"
           deploy_row "SDK npm (@clidey/whodb-sdk)" "${{ needs.deploy-sdk-npm.result }}" "${{ needs.calculate-version.outputs.deploy-sdk }}" "TypeScript platform SDK"
           deploy_row "SDK PyPI (whodb-sdk)" "${{ needs.deploy-sdk-pypi.result }}" "${{ needs.calculate-version.outputs.deploy-sdk }}" "Python platform SDK"
+          deploy_row "SDK crates.io (whodb-sdk)" "${{ needs.deploy-sdk-cargo.result }}" "${{ needs.calculate-version.outputs.deploy-sdk }}" "Rust platform SDK"
+          deploy_row "SDK Go tag (sdk/packages/go)" "${{ needs.deploy-sdk-go-tag.result }}" "${{ needs.calculate-version.outputs.deploy-sdk }}" "Go platform SDK (module proxy serves the tag)"
 
           echo ""
 
