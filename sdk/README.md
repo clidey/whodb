@@ -55,8 +55,10 @@ node tools/conformance-runner.mjs --lang ts       # also: python, go, rust, java
 ```
 
 Releases ride `release-ce.yml` (the `deploy-sdk` toggle) and share the repo
-release version — see `_deploy-sdk-npm.yml` and the inlined
-`deploy-sdk-pypi` job in `release-ce.yml` (inlined because PyPI attestations
-don't work from reusable workflows).
+release version across all five targets: npm (`_deploy-sdk-npm.yml`) plus the
+inlined `deploy-sdk-pypi`, `deploy-sdk-cargo`, and `deploy-sdk-maven` jobs
+(inlined because PyPI attestations and crates.io trusted publishing validate
+the top-level workflow), and `deploy-sdk-go-tag`, which tags
+`sdk/packages/go/v<version>` only after all four registry publishes succeed.
 
 Adding a language: `docs/porting.md`.
