@@ -65,7 +65,7 @@ func TestPlatformMutationAllowsPermissionOperationOmittedByLegacyManifest(t *tes
 	if err != nil {
 		t.Fatalf("NewAuthenticatedClient() error = %v", err)
 	}
-	client.manifest = &PlatformManifest{}
+	client.manifest = &PlatformManifest{Operations: []PlatformManifestOperation{{Kind: "Mutation", Name: "CreateDataset"}}}
 
 	result, err := client.PlatformMutation(context.Background(), "InviteUser", map[string]any{
 		"input": map[string]any{
@@ -79,6 +79,13 @@ func TestPlatformMutationAllowsPermissionOperationOmittedByLegacyManifest(t *tes
 	}
 	if result.Operation != "InviteUser" || !strings.Contains(string(result.Data), `"Status":true`) {
 		t.Fatalf("PlatformMutation() result = %#v", result)
+	}
+}
+
+func TestValidatePlatformMutationCapabilityRejectsUnadvertisedNonPermissionMutation(t *testing.T) {
+	manifest := &PlatformManifest{Operations: []PlatformManifestOperation{{Kind: "Mutation", Name: "CreateDataset"}}}
+	if err := ValidatePlatformMutationCapability(manifest, "DeleteDataset"); err == nil {
+		t.Fatal("ValidatePlatformMutationCapability() accepted an unadvertised non-permission mutation")
 	}
 }
 

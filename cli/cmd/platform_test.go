@@ -53,6 +53,18 @@ func TestPlatformHostsWithLogin(t *testing.T) {
 	}
 }
 
+func TestPlatformLoginsForHostDoesNotReplaceOtherHosts(t *testing.T) {
+	cfg := &config.Config{CLISection: config.CLISection{Platform: config.PlatformConfig{Hosts: []config.PlatformHost{
+		{URL: "https://app.whodb.com", AccountID: "hosted-user"},
+		{URL: "http://localhost:8080", AccountID: "local-user"},
+	}}}}
+
+	hosts := platformLoginsForHost(cfg, "http://localhost:8080")
+	if len(hosts) != 1 || hosts[0].AccountID != "local-user" {
+		t.Fatalf("platformLoginsForHost() = %#v", hosts)
+	}
+}
+
 func TestConfirmPlatformLoginReplacementSkipsPromptWhenApprovedByFlag(t *testing.T) {
 	approved, err := confirmPlatformLoginReplacement(io.Discard, []config.PlatformHost{
 		{URL: "https://app.whodb.com", AccountID: "user-1"},

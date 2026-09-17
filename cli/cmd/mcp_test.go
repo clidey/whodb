@@ -19,6 +19,8 @@ package cmd
 import (
 	"strings"
 	"testing"
+
+	platformapi "github.com/clidey/whodb/cli/internal/platform"
 )
 
 // TestMcpCmd_Exists verifies the mcp command is registered
@@ -88,6 +90,45 @@ func TestMcpServeCmd_HasPlatformFlag(t *testing.T) {
 	}
 }
 
+func TestMcpServeCmd_HasPlatformSessionFlags(t *testing.T) {
+	for _, name := range []string{"platform-host", "platform-org", "platform-project"} {
+		if mcpServeCmd.Flags().Lookup(name) == nil {
+			t.Fatalf("expected mcp serve to expose --%s", name)
+		}
+	}
+}
+
+func TestConfigureMCPPlatformScope(t *testing.T) {
+	resetMCPServeFlagsForTest(t)
+	t.Setenv(platformapi.SessionHostEnv, "")
+	t.Setenv(platformapi.SessionOrgEnv, "")
+	t.Setenv(platformapi.SessionProjectEnv, "")
+	mcpPlatform = true
+	mcpPlatformHost = "http://localhost:4000"
+	mcpPlatformOrg = "acme"
+	mcpPlatformProject = "analysis"
+
+	if err := configureMCPPlatformScope(); err != nil {
+		t.Fatalf("configureMCPPlatformScope() error = %v", err)
+	}
+	scope := platformapi.SessionScopeFromEnvironment()
+	if scope.Host != mcpPlatformHost || scope.Org != mcpPlatformOrg || scope.Project != mcpPlatformProject {
+		t.Fatalf("scope = %#v", scope)
+	}
+}
+
+func TestConfigureMCPPlatformScopeRejectsPartialWorkspace(t *testing.T) {
+	resetMCPServeFlagsForTest(t)
+	t.Setenv(platformapi.SessionOrgEnv, "")
+	t.Setenv(platformapi.SessionProjectEnv, "")
+	mcpPlatform = true
+	mcpPlatformOrg = "acme"
+
+	if err := configureMCPPlatformScope(); err == nil {
+		t.Fatal("configureMCPPlatformScope() succeeded with a partial workspace")
+	}
+}
+
 func TestPlatformMCP_ServeRejectsLocalToolSelection(t *testing.T) {
 	for _, tt := range []struct {
 		name  string
@@ -123,7 +164,7 @@ func TestPlatformMCP_ServeRejectsLocalToolSelection(t *testing.T) {
 func resetMCPServeFlagsForTest(t *testing.T) {
 	t.Helper()
 	flags := mcpServeCmd.Flags()
-	for _, name := range []string{"platform", "tools", "disable-tools"} {
+	for _, name := range []string{"platform", "platform-host", "platform-org", "platform-project", "tools", "disable-tools"} {
 		flag := flags.Lookup(name)
 		if flag == nil {
 			t.Fatalf("missing %s flag", name)
@@ -134,15 +175,21 @@ func resetMCPServeFlagsForTest(t *testing.T) {
 		flag.Changed = false
 	}
 	mcpPlatform = false
+	mcpPlatformHost = ""
+	mcpPlatformOrg = ""
+	mcpPlatformProject = ""
 	mcpEnabledTools = nil
 	mcpDisabledTools = nil
 	t.Cleanup(func() {
-		for _, name := range []string{"platform", "tools", "disable-tools"} {
+		for _, name := range []string{"platform", "platform-host", "platform-org", "platform-project", "tools", "disable-tools"} {
 			flag := flags.Lookup(name)
 			_ = flag.Value.Set(flag.DefValue)
 			flag.Changed = false
 		}
 		mcpPlatform = false
+		mcpPlatformHost = ""
+		mcpPlatformOrg = ""
+		mcpPlatformProject = ""
 		mcpEnabledTools = nil
 		mcpDisabledTools = nil
 	})
