@@ -62,11 +62,14 @@ export const PlatformImportSheet: FC<PlatformImportSheetProps> = ({ open, onOpen
     useEffect(() => {
         if (open) {
             stagedRef.current = false;
+            setSelectedIds(new Set(profiles.map(profile => profile.Id)));
+            setSendCredentials(false);
+            setError(false);
             trackPlatformFunnel(ANALYTICS_EVENTS.PLATFORM_IMPORT_OPENED, trigger, {
                 connection_count_bucket: countBucket(profiles.length),
             });
         }
-    }, [open, profiles.length, trigger]);
+    }, [open, profiles, trigger]);
 
     // Distinguishes walking away from completing: dismissed fires only when the
     // sheet closes without a successful staging call.
@@ -167,11 +170,12 @@ export const PlatformImportSheet: FC<PlatformImportSheetProps> = ({ open, onOpen
                 <div className="flex flex-col gap-1">
                     <div className="flex items-start gap-sm">
                         <Checkbox
+                            id="platform-import-credentials"
                             checked={sendCredentials}
                             onCheckedChange={(value) => { setSendCredentials(Boolean(value)); }}
                             data-testid="platform-import-send-credentials"
                         />
-                        <Label className="cursor-pointer" onClick={() => { setSendCredentials(value => !value); }}>
+                        <Label htmlFor="platform-import-credentials" className="cursor-pointer">
                             {t("platformImportSendCredentials")}
                         </Label>
                     </div>
