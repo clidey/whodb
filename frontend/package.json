@@ -110,7 +110,7 @@
     "nyc": "18.0.0",
     "oxlint": "1.78.0",
     "oxlint-tsgolint": "7.0.2001",
-    "typescript": "6.0.3",
+    "typescript": "7.0.2",
     "vite": "8.2.1",
     "vite-plugin-istanbul": "9.0.1"
   },
