@@ -20,7 +20,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/feature/rds/auth v1.7.3
 	github.com/aws/aws-sdk-go-v2/service/docdb v1.51.1
 	github.com/aws/aws-sdk-go-v2/service/elasticache v1.61.0
-	github.com/aws/aws-sdk-go-v2/service/opensearch v1.75.3
+	github.com/aws/aws-sdk-go-v2/service/opensearch v1.80.0
 	github.com/aws/aws-sdk-go-v2/service/rds v1.124.2
 	github.com/aws/aws-sdk-go-v2/service/sts v1.45.6
 	github.com/aws/smithy-go v1.28.1
