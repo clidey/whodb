@@ -38,7 +38,7 @@ require (
 	github.com/hashicorp/go-version v1.9.0
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/mattn/go-sqlite3 v1.14.50
-	github.com/posthog/posthog-go v1.23.1
+	github.com/posthog/posthog-go v1.25.1
 	github.com/redis/go-redis/v9 v9.22.0
 	github.com/shopspring/decimal v1.4.0
 	github.com/sirupsen/logrus v1.10.0
