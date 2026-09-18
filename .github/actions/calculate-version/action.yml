@@ -132,8 +132,10 @@ runs:
       env:
         EXPLICIT_VERSION: ${{ inputs.explicit-version }}
       run: |
-        # Get all tags, strip 'v' prefix if present, sort by semantic version
-        LATEST_TAG=$(git tag | sed 's/^v//' | sort -V | tail -1)
+        # Get all release tags, strip 'v' prefix if present, sort by semantic
+        # version. Only plain X.Y.Z tags count: Go module tags like
+        # sdk/packages/go/v0.128.0 must not be picked up as the latest release.
+        LATEST_TAG=$(git tag | sed 's/^v//' | { grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' || true; } | sort -V | tail -1)
 
         # Default to 0.0.0 if no tags exist
         if [ -z "$LATEST_TAG" ]; then
