@@ -75,7 +75,7 @@ RUN BAML_VERSION=$(grep 'github.com/boundaryml/baml ' /app/core/go.mod | awk '{p
         echo "Unsupported architecture: $TARGETARCH" && exit 1; \
     fi && \
     mkdir -p /baml-lib && \
-    curl -L -o /baml-lib/libbaml_cffi.so \
+    curl --fail --location --retry 3 -o /baml-lib/libbaml_cffi.so \
         https://github.com/boundaryml/baml/releases/download/${BAML_VERSION}/libbaml_cffi-${BAML_ARCH}-unknown-linux-musl.so && \
     chmod +x /baml-lib/libbaml_cffi.so && \
     strip --strip-debug /baml-lib/libbaml_cffi.so && \
