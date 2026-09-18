@@ -303,7 +303,7 @@ func TestExportSourceConnection(t *testing.T) {
 				req.AddCookie(&http.Cookie{Name: "whodb_ce_session", Value: token})
 			}
 			if tt.csrf {
-				req.Header.Set("X-CSRF-Token", csrf)
+				req.Header.Set("X-Csrf-Token", csrf)
 			}
 			w := httptest.NewRecorder()
 			srv.ServeHTTP(w, req)
