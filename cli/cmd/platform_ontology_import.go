@@ -19,7 +19,6 @@ package cmd
 import (
 	"context"
 	"crypto/sha256"
-	"database/sql"
 	"encoding/csv"
 	"encoding/hex"
 	"encoding/json"
@@ -36,7 +35,6 @@ import (
 
 	"github.com/clidey/whodb/cli/internal/platform"
 	"github.com/clidey/whodb/cli/pkg/output"
-	_ "github.com/duckdb/duckdb-go/v2"
 	"github.com/spf13/cobra"
 )
 
@@ -428,40 +426,6 @@ func readOntologyImportRows(ctx context.Context, path string) ([]map[string]any,
 	default:
 		return nil, fmt.Errorf("unsupported import file type %q; use CSV, JSON, NDJSON, or Parquet", ext)
 	}
-}
-
-func readOntologyImportParquet(ctx context.Context, path string) ([]map[string]any, error) {
-	db, err := sql.Open("duckdb", "")
-	if err != nil {
-		return nil, err
-	}
-	defer db.Close()
-	rows, err := db.QueryContext(ctx, "SELECT * FROM read_parquet(?)", path)
-	if err != nil {
-		return nil, fmt.Errorf("read parquet: %w", err)
-	}
-	defer rows.Close()
-	columns, err := rows.Columns()
-	if err != nil {
-		return nil, err
-	}
-	result := []map[string]any{}
-	for rows.Next() {
-		values := make([]any, len(columns))
-		pointers := make([]any, len(columns))
-		for index := range values {
-			pointers[index] = &values[index]
-		}
-		if err := rows.Scan(pointers...); err != nil {
-			return nil, err
-		}
-		record := make(map[string]any, len(columns))
-		for index, column := range columns {
-			record[column] = normalizeOntologyImportValue(values[index])
-		}
-		result = append(result, record)
-	}
-	return result, rows.Err()
 }
 
 func readOntologyImportCSV(path string) ([]map[string]any, error) {
