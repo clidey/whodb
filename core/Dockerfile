@@ -60,7 +60,7 @@ RUN ENCODED=$(grep 'github.com/duckdb/duckdb-go/v2 ' /tmp/go.mod | awk '{print $
     elif [ "$TARGETARCH" = "arm64" ]; then DUCKDB_ARCH="linux-arm64"; \
     else echo "Unsupported architecture: $TARGETARCH" && exit 1; fi && \
     mkdir -p /usr/local/include && \
-    curl -L -o /tmp/libduckdb-musl.zip \
+    curl --fail --location --retry 3 -o /tmp/libduckdb-musl.zip \
         "https://github.com/duckdb/duckdb/releases/download/${DUCKDB_VERSION}/libduckdb-${DUCKDB_ARCH}-musl.zip" && \
     unzip -j /tmp/libduckdb-musl.zip libduckdb.so -d /usr/local/lib/ && \
     unzip -j /tmp/libduckdb-musl.zip duckdb.h -d /usr/local/include/ && \
@@ -105,7 +105,7 @@ RUN BAML_VERSION=$(grep 'github.com/boundaryml/baml ' go.mod | awk '{print $2}' 
         echo "Unsupported architecture: $TARGETARCH" && exit 1; \
     fi && \
     mkdir -p /baml-lib && \
-    curl -L -o /baml-lib/libbaml_cffi.so \
+    curl --fail --location --retry 3 -o /baml-lib/libbaml_cffi.so \
         https://github.com/boundaryml/baml/releases/download/${BAML_VERSION}/libbaml_cffi-${BAML_ARCH}-unknown-linux-musl.so && \
     chmod +x /baml-lib/libbaml_cffi.so && \
     strip --strip-debug /baml-lib/libbaml_cffi.so && \
