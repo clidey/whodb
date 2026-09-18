@@ -90,8 +90,8 @@ github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.17 h1:OvYZOB
 github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.17/go.mod h1:JgR/2Ew50ACfIWau1oeMRX59tMtC0kM+PYQGEaT04cY=
 github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.37 h1:a3D4AjrOrTrP8+d9ILBthqrElf0z1JNol09Xvnwcys8=
 github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.37/go.mod h1:ky0gTu+ukvUTuUKFIpp6Wid4oninrkCyvbFkVs0kpHM=
-github.com/aws/aws-sdk-go-v2/service/opensearch v1.75.3 h1:lo4yFVcNq9owIIGNYIZ2Br9DSfJj7x1T8saiXeQiji8=
-github.com/aws/aws-sdk-go-v2/service/opensearch v1.75.3/go.mod h1:OjZCuHKSZx6/gNLyeMXamq4yIhuz3Yl2Wcrl9P7BJvc=
+github.com/aws/aws-sdk-go-v2/service/opensearch v1.80.0 h1:E4cFgebyiuXs8k9Mm/fRUVhK9D1wtJD58GUa4gbfVFI=
+github.com/aws/aws-sdk-go-v2/service/opensearch v1.80.0/go.mod h1:soHkl4mnDqMIOg4ZQiSnDU+DOJLy5KvA+CDJFskXTz8=
 github.com/aws/aws-sdk-go-v2/service/rds v1.124.2 h1:qYCAcSBUzQQWUUu7d9AkaJpFB9khH+YV2k+xtPgACtM=
 github.com/aws/aws-sdk-go-v2/service/rds v1.124.2/go.mod h1:wUePd59AnbMaomGj+e6NrvJtWG+zY9EefvmCvU9sZ3E=
 github.com/aws/aws-sdk-go-v2/service/signin v1.5.6 h1:i68sFvXidKlkiSvI7d7Ilc1/UvW4CtBOaivH7jhG4fs=
