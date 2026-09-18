@@ -295,6 +295,21 @@ fn run_fixture(fixture: &Value) -> Value {
             handle.delete(pk)?;
             Ok(Value::Null)
         }
+        "followLink" => {
+            let pk = args.first().and_then(Value::as_str).unwrap_or("");
+            let link = args.get(1).and_then(Value::as_str).unwrap_or("");
+            let options = args.get(2).and_then(Value::as_object);
+            let page_size = options
+                .and_then(|o| o.get("pageSize"))
+                .and_then(Value::as_u64)
+                .unwrap_or(0) as usize;
+            let offset = options
+                .and_then(|o| o.get("offset"))
+                .and_then(Value::as_u64)
+                .unwrap_or(0) as usize;
+            let rows = handle.follow_link(pk, link, page_size, offset)?;
+            Ok(Value::Array(rows.into_iter().map(Value::Object).collect()))
+        }
         other => Err(Error::Transport(format!(
             "unsupported fixture method: {other}"
         ))),

@@ -10,7 +10,29 @@ import * as ops from './generated/operations.js';
 import type { OntologyObjectType, PlatformSource } from './generated/types.js';
 import { manifestHash } from './generated/manifest.js';
 import { ValidationError } from './errors.js';
+import { interpretServerError } from './manifest-check.js';
 import { SDK_VERSION } from './version.js';
+
+
+/**
+ * Wraps a transport so server "unknown operation" rejections surface as the
+ * actionable WhoDBVersionError instead of a raw validation error.
+ */
+class InterpretingTransport implements Transport {
+  constructor(private readonly inner: Transport) {}
+
+  async execute(
+    operationName: string,
+    document: string,
+    variables: Record<string, unknown>,
+  ): Promise<Record<string, unknown>> {
+    try {
+      return await this.inner.execute(operationName, document, variables);
+    } catch (error) {
+      throw interpretServerError(error, SDK_VERSION);
+    }
+  }
+}
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -54,7 +76,7 @@ export class WhoDB {
     if (transportOverride) {
       // Custom transports (IPC in the functions runtime, mocks in tests) skip
       // slug resolution: org/project inputs are taken as IDs verbatim.
-      this.transport = transportOverride;
+      this.transport = new InterpretingTransport(transportOverride);
       this.httpTransport = null;
       this.filesHandle = null;
       this.skipWorkspaceResolution = true;
@@ -62,7 +84,7 @@ export class WhoDB {
     }
     const host = resolved.host ?? DEFAULT_HOST;
     const httpTransport = new HttpTransport({ host, credentials: resolved.credentials });
-    this.transport = httpTransport;
+    this.transport = new InterpretingTransport(httpTransport);
     this.httpTransport = httpTransport;
     this.filesHandle = new FilesHandle({
       host,

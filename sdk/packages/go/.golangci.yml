@@ -15,9 +15,9 @@ linters:
         source: "defer "
       - linters: [errcheck]
         path: "_test\\.go$"
-      # G101: test files use obviously-fake "whodb_sk_x" style keys.
+      # Test files use obviously-fake keys (G101), write executable fake-CLI
+      # scripts (G306), and read their own temp files (G304).
       - linters: [gosec]
-        text: "G101"
         path: "_test\\.go$"
       # The conformance runner writes JSON lines to stdout; encode errors are
       # unrecoverable there.

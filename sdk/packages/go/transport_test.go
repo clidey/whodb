@@ -226,3 +226,37 @@ func TestClientMultiGrantKeyRequiresProject(t *testing.T) {
 		t.Errorf("null projectId must map to ErrValidation, got %v", err)
 	}
 }
+
+func TestConcurrentClientAccessIsRaceFree(t *testing.T) {
+	clearClientEnv(t)
+	// Enough responses for resolution plus every goroutine's calls; the stub
+	// replays OntologyEntities for all requests after the first.
+	responses := make([]func(w http.ResponseWriter), 0, 20)
+	responses = append(responses,
+		jsonResponse(200, `{"data":{"MyWorkspace":{"orgId":"33333333-3333-3333-3333-333333333333","projectId":"44444444-4444-4444-4444-444444444444"}}}`))
+	for range 19 {
+		responses = append(responses, jsonResponse(200, `{"data":{"OntologyEntities":[{"id":"ent-1","apiName":"User","primaryKey":"id","properties":[],"links":[]}]}}`))
+	}
+	stub := newScriptedServer(t, responses...)
+	client, err := New(Config{APIKey: "whodb_sk_test", Host: stub.server.URL})
+	if err != nil {
+		t.Fatal(err)
+	}
+	handle := client.Ontology("User")
+	var wg sync.WaitGroup
+	for range 8 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			// Exercises workspace resolution (once-guarded) and the handle's
+			// entity metadata cache under contention.
+			if _, err := handle.EntityMeta(context.Background()); err != nil {
+				t.Error(err)
+			}
+			if _, err := client.OntologyEntities(context.Background()); err != nil {
+				t.Error(err)
+			}
+		}()
+	}
+	wg.Wait()
+}

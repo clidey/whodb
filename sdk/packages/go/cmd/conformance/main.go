@@ -317,6 +317,10 @@ func runFixture(f fixture) result {
 	case "delete":
 		callErr = handle.Delete(ctx, f.Call.Args[0])
 		value = nil
+	case "followLink":
+		link, _ := f.Call.Args[1].(string)
+		options := optionsFrom(f.Call.Args, 2)
+		value, callErr = handle.FollowLink(ctx, f.Call.Args[0], link, intOption(options, "pageSize", 0), intOption(options, "offset", 0))
 	default:
 		return result{Name: f.Name, Pass: false, Reason: "unsupported fixture method: " + f.Call.Method}
 	}

@@ -20,12 +20,22 @@ final class CliCredentials implements CredentialProvider {
     /** The parsed output of one CLI invocation. */
     record TokenEntry(String accessToken, String expiresAt, String host, String orgId, String projectId) {}
 
+    private final String command;
     private TokenEntry cached;
+
+    CliCredentials() {
+        this("whodb");
+    }
+
+    /** Test hook: overrides the CLI binary path. */
+    CliCredentials(String command) {
+        this.command = command;
+    }
 
     private synchronized TokenEntry exec() {
         Process process;
         try {
-            process = new ProcessBuilder("whodb", "auth", "print-token", "--format", "json").start();
+            process = new ProcessBuilder(command, "auth", "print-token", "--format", "json").start();
         } catch (IOException error) {
             throw new WhoDBException(WhoDBException.Kind.CLI_CREDENTIALS,
                 "whodb CLI not found — install it or set WHODB_API_KEY");

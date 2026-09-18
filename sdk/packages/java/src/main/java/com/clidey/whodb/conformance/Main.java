@@ -235,6 +235,14 @@ public final class Main {
                 case "update" -> handle.update(
                     JSON.convertValue(args.get(0), Object.class), JSON.convertValue(args.get(1), Map.class));
                 case "delete" -> handle.delete(JSON.convertValue(args.get(0), Object.class));
+                case "followLink" -> {
+                    JsonNode options = args.size() > 2 ? args.get(2) : JSON.createObjectNode();
+                    value = handle.followLink(
+                        JSON.convertValue(args.get(0), Object.class),
+                        args.get(1).asText(),
+                        options.path("pageSize").asInt(0),
+                        options.path("offset").asInt(0));
+                }
                 default -> {
                     result.put("pass", false);
                     result.put("reason", "unsupported fixture method: " + call.path("method").asText());

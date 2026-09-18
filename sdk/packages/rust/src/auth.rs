@@ -177,3 +177,135 @@ fn parse_rfc3339(text: &str) -> Option<SystemTime> {
     }
     Some(SystemTime::UNIX_EPOCH + Duration::from_secs(seconds as u64))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+    use std::io::Write;
+    use std::os::unix::fs::PermissionsExt;
+    use std::path::PathBuf;
+
+    /// Writes a fake whodb CLI script; appends to a counter file per run.
+    fn fake_cli(body: &str) -> (CliCredentials, PathBuf) {
+        let dir = std::env::temp_dir().join(format!(
+            "whodb-cli-test-{}-{:?}",
+            std::process::id(),
+            std::thread::current().id(),
+        ));
+        fs::create_dir_all(&dir).expect("create test dir");
+        let count_file = dir.join("count");
+        let _ = fs::remove_file(&count_file);
+        let command = dir.join("whodb");
+        let mut file = fs::File::create(&command).expect("write fake cli");
+        write!(
+            file,
+            "#!/bin/sh\necho x >> \"{}\"\n{}\n",
+            count_file.display(),
+            body
+        )
+        .expect("script body");
+        fs::set_permissions(&command, fs::Permissions::from_mode(0o755)).expect("chmod");
+        let credentials = CliCredentials {
+            command: command.display().to_string(),
+            cache: Mutex::new(None),
+        };
+        (credentials, count_file)
+    }
+
+    fn exec_count(count_file: &PathBuf) -> usize {
+        fs::read(count_file).map(|data| data.len() / 2).unwrap_or(0)
+    }
+
+    fn future_expiry(seconds: u64) -> String {
+        // Format a UTC RFC3339 timestamp `seconds` ahead using only std.
+        let now = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .expect("clock")
+            .as_secs()
+            + seconds;
+        let days = now / 86400;
+        let time_of_day = now % 86400;
+        // civil-from-days (Howard Hinnant) — inverse of parse_rfc3339 below.
+        let days_shifted = days as i64 + 719_468;
+        let era = days_shifted.div_euclid(146_097);
+        let day_of_era = days_shifted - era * 146_097;
+        let year_of_era =
+            (day_of_era - day_of_era / 1460 + day_of_era / 36_524 - day_of_era / 146_096) / 365;
+        let year = year_of_era + era * 400;
+        let day_of_year = day_of_era - (365 * year_of_era + year_of_era / 4 - year_of_era / 100);
+        let month_prime = (5 * day_of_year + 2) / 153;
+        let day = day_of_year - (153 * month_prime + 2) / 5 + 1;
+        let month = if month_prime < 10 {
+            month_prime + 3
+        } else {
+            month_prime - 9
+        };
+        let year = if month <= 2 { year + 1 } else { year };
+        format!(
+            "{:04}-{:02}-{:02}T{:02}:{:02}:{:02}Z",
+            year,
+            month,
+            day,
+            time_of_day / 3600,
+            (time_of_day % 3600) / 60,
+            time_of_day % 60,
+        )
+    }
+
+    #[test]
+    fn missing_binary_is_cli_credentials_error() {
+        let credentials = CliCredentials {
+            command: "/no/such/whodb-binary".to_string(),
+            cache: Mutex::new(None),
+        };
+        assert!(matches!(credentials.token(), Err(Error::CliCredentials(_))));
+    }
+
+    #[test]
+    fn invalid_json_is_cli_credentials_error() {
+        let (credentials, _count) = fake_cli("echo not-json");
+        assert!(matches!(credentials.token(), Err(Error::CliCredentials(_))));
+    }
+
+    #[test]
+    fn nonzero_exit_is_cli_credentials_error() {
+        let (credentials, _count) = fake_cli("echo 'run: whodb login' >&2; exit 1");
+        assert!(matches!(credentials.token(), Err(Error::CliCredentials(_))));
+    }
+
+    #[test]
+    fn fresh_tokens_are_cached() {
+        let (credentials, count_file) = fake_cli(&format!(
+            "echo '{{\"access_token\":\"tok-1\",\"expires_at\":\"{}\"}}'",
+            future_expiry(3600),
+        ));
+        for _ in 0..3 {
+            assert_eq!(credentials.token().expect("token"), "tok-1");
+        }
+        assert_eq!(exec_count(&count_file), 1);
+    }
+
+    #[test]
+    fn near_expiry_tokens_reexec() {
+        let (credentials, count_file) = fake_cli(&format!(
+            "echo '{{\"access_token\":\"tok-1\",\"expires_at\":\"{}\"}}'",
+            future_expiry(30), // inside the 60s refresh skew
+        ));
+        credentials.token().expect("token");
+        credentials.token().expect("token");
+        assert_eq!(exec_count(&count_file), 2);
+    }
+
+    #[test]
+    fn refresh_drops_the_cache() {
+        let (credentials, count_file) = fake_cli(&format!(
+            "echo '{{\"access_token\":\"tok-1\",\"expires_at\":\"{}\"}}'",
+            future_expiry(3600),
+        ));
+        credentials.token().expect("token");
+        credentials.refresh();
+        credentials.token().expect("token");
+        assert_eq!(exec_count(&count_file), 2);
+    }
+}

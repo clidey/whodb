@@ -1,0 +1,275 @@
+{
+  "fixtures": [
+    {
+      "name": "create lowercases boolean values into record inputs",
+      "call": {
+        "domain": "ontology",
+        "handle": "User",
+        "method": "create",
+        "args": [{ "active": true }]
+      },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "OntologyEntities" },
+          "response": {
+            "data": {
+              "OntologyEntities": [
+                { "id": "ent-1", "apiName": "User", "primaryKey": "id", "properties": [], "links": [] }
+              ]
+            }
+          }
+        },
+        {
+          "expectRequest": {
+            "operation": "OntologyAddRow",
+            "variablesContain": {
+              "entityId": "ent-1",
+              "values": [{ "Key": "active", "Value": "true" }]
+            }
+          },
+          "response": { "data": { "OntologyAddRow": { "Status": true } } }
+        }
+      ],
+      "expectResult": null
+    },
+    {
+      "name": "create JSON-encodes object values into record inputs",
+      "call": {
+        "domain": "ontology",
+        "handle": "User",
+        "method": "create",
+        "args": [{ "meta": { "tier": "gold" } }]
+      },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "OntologyEntities" },
+          "response": {
+            "data": {
+              "OntologyEntities": [
+                { "id": "ent-1", "apiName": "User", "primaryKey": "id", "properties": [], "links": [] }
+              ]
+            }
+          }
+        },
+        {
+          "expectRequest": {
+            "operation": "OntologyAddRow",
+            "variablesContain": {
+              "values": [{ "Key": "meta", "Value": "{\"tier\":\"gold\"}" }]
+            }
+          },
+          "response": { "data": { "OntologyAddRow": { "Status": true } } }
+        }
+      ],
+      "expectResult": null
+    },
+    {
+      "name": "delete sends the primary key as a record input",
+      "call": {
+        "domain": "ontology",
+        "handle": "User",
+        "method": "delete",
+        "args": ["u_9"]
+      },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "OntologyEntities" },
+          "response": {
+            "data": {
+              "OntologyEntities": [
+                { "id": "ent-1", "apiName": "User", "primaryKey": "id", "properties": [], "links": [] }
+              ]
+            }
+          }
+        },
+        {
+          "expectRequest": {
+            "operation": "OntologyDeleteRow",
+            "variablesContain": {
+              "entityId": "ent-1",
+              "values": [{ "Key": "id", "Value": "u_9" }]
+            }
+          },
+          "response": { "data": { "OntologyDeleteRow": { "Status": true } } }
+        }
+      ],
+      "expectResult": null
+    },
+    {
+      "name": "describe forwards the entity filter and returns the schema",
+      "call": {
+        "domain": "ontology",
+        "handle": "User",
+        "method": "describe",
+        "args": []
+      },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "OntologyEntities" },
+          "response": {
+            "data": {
+              "OntologyEntities": [
+                { "id": "ent-1", "apiName": "User", "primaryKey": "id", "properties": [], "links": [] }
+              ]
+            }
+          }
+        },
+        {
+          "expectRequest": {
+            "operation": "OntologyDescribe",
+            "inputContains": { "entities": ["User"], "includeInferred": true }
+          },
+          "response": {
+            "data": {
+              "OntologyDescribe": {
+                "text": "User has 2 fields",
+                "entities": [{ "name": "User", "primaryKey": "id" }]
+              }
+            }
+          }
+        }
+      ],
+      "expectResult": {
+        "text": "User has 2 fields",
+        "entities": [{ "name": "User", "primaryKey": "id" }]
+      }
+    },
+    {
+      "name": "list returns an empty page as an empty array",
+      "call": {
+        "domain": "ontology",
+        "handle": "User",
+        "method": "list",
+        "args": [{ "pageSize": 5 }]
+      },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "OntologyEntities" },
+          "response": {
+            "data": {
+              "OntologyEntities": [
+                { "id": "ent-1", "apiName": "User", "primaryKey": "id", "properties": [], "links": [] }
+              ]
+            }
+          }
+        },
+        {
+          "expectRequest": { "operation": "OntologyQuery" },
+          "response": { "data": { "OntologyQuery": { "columns": [], "rows": [], "total": 0 } } }
+        }
+      ],
+      "expectResult": []
+    },
+    {
+      "name": "float and json property values hydrate natively",
+      "call": {
+        "domain": "ontology",
+        "handle": "User",
+        "method": "list",
+        "args": [{ "pageSize": 1 }]
+      },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "OntologyEntities" },
+          "response": {
+            "data": {
+              "OntologyEntities": [
+                {
+                  "id": "ent-1",
+                  "apiName": "User",
+                  "primaryKey": "id",
+                  "properties": [
+                    { "apiName": "score", "dataType": "Float" },
+                    { "apiName": "meta", "dataType": "Json" }
+                  ],
+                  "links": []
+                }
+              ]
+            }
+          }
+        },
+        {
+          "expectRequest": { "operation": "OntologyQuery" },
+          "response": {
+            "data": {
+              "OntologyQuery": {
+                "columns": ["score", "meta"],
+                "rows": [["3.5", "{\"tier\": \"gold\"}"]],
+                "total": 1
+              }
+            }
+          }
+        }
+      ],
+      "expectResult": [{ "score": 3.5, "meta": { "tier": "gold" } }]
+    },
+    {
+      "name": "followLink hydrates related rows",
+      "call": {
+        "domain": "ontology",
+        "handle": "User",
+        "method": "followLink",
+        "args": ["u_1", "orders", { "pageSize": 2 }]
+      },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "OntologyEntities" },
+          "response": {
+            "data": {
+              "OntologyEntities": [
+                { "id": "ent-1", "apiName": "User", "primaryKey": "id", "properties": [], "links": [] }
+              ]
+            }
+          }
+        },
+        {
+          "expectRequest": {
+            "operation": "OntologyFollowLink",
+            "variablesContain": {
+              "entityId": "ent-1",
+              "pk": "u_1",
+              "linkApiName": "orders",
+              "pageSize": 2
+            }
+          },
+          "response": {
+            "data": {
+              "OntologyFollowLink": {
+                "Columns": [
+                  { "Name": "order_id", "Type": "text" },
+                  { "Name": "total", "Type": "numeric" }
+                ],
+                "Rows": [["o_1", "19.99"]],
+                "TotalCount": 1
+              }
+            }
+          }
+        }
+      ],
+      "expectResult": [{ "order_id": "o_1", "total": 19.99 }]
+    },
+    {
+      "name": "unknown operation rejection maps to WhoDBVersionError",
+      "call": {
+        "domain": "ontology",
+        "handle": "User",
+        "method": "list",
+        "args": [{}]
+      },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "OntologyEntities" },
+          "response": {
+            "errors": [
+              {
+                "message": "Cannot query field \"OntologyEntities\" on type \"Query\"",
+                "extensions": { "code": "SERVER_REJECTED" }
+              }
+            ]
+          }
+        }
+      ],
+      "expectError": { "type": "WhoDBVersionError", "messageContains": "" }
+    }
+  ]
+}
