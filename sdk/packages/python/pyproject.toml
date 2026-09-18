@@ -45,6 +45,6 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-# Tests and the conformance runner use assert and test-only patterns.
-"tests/*" = ["S101"]
+# Tests and the conformance runner use assert and obviously-fake tokens.
+"tests/*" = ["S101", "S106"]
 "scripts/*" = ["S101"]

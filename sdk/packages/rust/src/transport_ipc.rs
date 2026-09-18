@@ -37,15 +37,24 @@ pub struct IpcTransport {
 }
 
 impl IpcTransport {
-    /// Builds the transport from the runtime's WHODB_IPC_* env vars.
-    pub fn from_env() -> Self {
+    /// Builds the transport from explicit connection details.
+    pub fn new(address: &str, job_id: &str, token: &str) -> Self {
         IpcTransport {
-            address: std::env::var("WHODB_IPC_ADDRESS").unwrap_or_default(),
-            job_id: std::env::var("WHODB_JOB_ID").unwrap_or_default(),
-            token: std::env::var("WHODB_IPC_TOKEN").unwrap_or_default(),
+            address: address.to_string(),
+            job_id: job_id.to_string(),
+            token: token.to_string(),
             agent: ureq::Agent::new_with_defaults(),
             entities: Mutex::new(None),
         }
+    }
+
+    /// Builds the transport from the runtime's WHODB_IPC_* env vars.
+    pub fn from_env() -> Self {
+        Self::new(
+            &std::env::var("WHODB_IPC_ADDRESS").unwrap_or_default(),
+            &std::env::var("WHODB_JOB_ID").unwrap_or_default(),
+            &std::env::var("WHODB_IPC_TOKEN").unwrap_or_default(),
+        )
     }
 
     fn post(&self, path: &str, body: &Value) -> Result<Value> {
