@@ -12,7 +12,7 @@ require (
 	github.com/duckdb/duckdb-go/v2 v2.10505.0
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/go-version v1.9.0
-	github.com/jackc/pgx/v5 v5.10.0
+	github.com/jackc/pgx/v5 v5.11.0
 	github.com/modelcontextprotocol/go-sdk v1.7.0
 	github.com/sahilm/fuzzy v0.1.3
 	github.com/spf13/cobra v1.10.2
@@ -65,14 +65,14 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/elasticache v1.61.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.17 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.37 // indirect
-	github.com/aws/aws-sdk-go-v2/service/opensearch v1.75.3 // indirect
+	github.com/aws/aws-sdk-go-v2/service/opensearch v1.80.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/rds v1.124.2 // indirect
 	github.com/aws/aws-sdk-go-v2/service/signin v1.5.6 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.33.6 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.38.6 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.45.6 // indirect
 	github.com/aws/smithy-go v1.28.1 // indirect
-	github.com/boundaryml/baml v0.223.0 // indirect
+	github.com/boundaryml/baml v0.226.2 // indirect
 	github.com/brianvoe/gofakeit/v7 v7.15.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/charmbracelet/ultraviolet v0.0.0-20260811164956-006e29f97886 // indirect
