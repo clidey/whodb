@@ -969,9 +969,61 @@ jobs:
     with:
       version: ${{ needs.calculate-version.outputs.version }}
 
+  # SDK registry publishes (npm, PyPI, crates.io, Maven, Go tag) are
+  # irreversible — a version can never be republished. Gate them behind the
+  # same "all selected builds and app deploys succeeded" condition as
+  # create-github-release so a broken app build can't leave registries
+  # holding a version the app never shipped. If the gate fails, nothing SDK
+  # has published yet; re-run via workflow_dispatch. If an SDK publish fails
+  # after the gate, re-run with explicit-version and only deploy-sdk checked.
+  sdk-release-gate:
+    name: SDK Release Gate
+    runs-on: ubuntu-latest
+    needs: [
+      calculate-version,
+      build-docker,
+      build-docker-cli,
+      build-windows,
+      build-apple,
+      build-snap,
+      build-linux-terminal,
+      build-cli,
+      sign-and-validate,
+      deploy-docker,
+      deploy-docker-cli,
+      deploy-snap,
+      deploy-microsoft,
+      deploy-apple,
+      deploy-npm
+    ]
+    if: |
+      always() &&
+      needs.calculate-version.result == 'success' &&
+      needs.calculate-version.outputs.deploy-sdk == 'true' &&
+      (
+        (needs.calculate-version.outputs.has-file-assets == 'true' && needs.sign-and-validate.result == 'success') ||
+        (needs.calculate-version.outputs.has-file-assets != 'true' && needs.sign-and-validate.result == 'skipped')
+      ) &&
+      (needs.calculate-version.outputs.deploy-docker != 'true' || needs.build-docker.result == 'success') &&
+      (needs.calculate-version.outputs.deploy-docker != 'true' || needs.build-docker-cli.result == 'success') &&
+      (needs.calculate-version.outputs.deploy-snap != 'true' || needs.build-snap.result == 'success') &&
+      (needs.calculate-version.outputs.deploy-microsoft != 'true' || needs.build-windows.result == 'success') &&
+      (needs.calculate-version.outputs.deploy-apple != 'true' || needs.build-apple.result == 'success') &&
+      (needs.calculate-version.outputs.deploy-linux-terminal != 'true' || needs.build-linux-terminal.result == 'success') &&
+      (needs.calculate-version.outputs.deploy-cli != 'true' || needs.build-cli.result == 'success') &&
+      (needs.calculate-version.outputs.deploy-docker != 'true' || needs.deploy-docker.result == 'success') &&
+      (needs.calculate-version.outputs.deploy-docker != 'true' || needs.deploy-docker-cli.result == 'success') &&
+      (needs.calculate-version.outputs.deploy-snap != 'true' || needs.deploy-snap.result == 'success') &&
+      (needs.calculate-version.outputs.deploy-microsoft != 'true' || needs.deploy-microsoft.result == 'success') &&
+      (needs.calculate-version.outputs.deploy-apple != 'true' || needs.deploy-apple.result == 'success') &&
+      (needs.calculate-version.outputs.deploy-npm != 'true' || needs.deploy-npm.result == 'success')
+    steps:
+      - name: Gate open
+        run: echo "All selected app builds and deploys succeeded; SDK publishes may proceed."
+
   deploy-sdk-npm:
     name: Deploy SDK npm
-    needs: [ calculate-version ]
+    needs: [ calculate-version, sdk-release-gate ]
     if: needs.calculate-version.outputs.deploy-sdk == 'true'
     permissions:
       contents: read
@@ -988,7 +1040,7 @@ jobs:
   deploy-sdk-pypi:
     name: Deploy SDK PyPI
     runs-on: ubuntu-latest
-    needs: [ calculate-version ]
+    needs: [ calculate-version, sdk-release-gate ]
     if: needs.calculate-version.outputs.deploy-sdk == 'true'
     permissions:
       contents: read
@@ -1063,7 +1115,7 @@ jobs:
   deploy-sdk-cargo:
     name: Deploy SDK crates.io
     runs-on: ubuntu-latest
-    needs: [ calculate-version ]
+    needs: [ calculate-version, sdk-release-gate ]
     if: needs.calculate-version.outputs.deploy-sdk == 'true'
     permissions:
       contents: read
@@ -1118,7 +1170,7 @@ jobs:
   deploy-sdk-maven:
     name: Deploy SDK Maven Central
     runs-on: ubuntu-latest
-    needs: [ calculate-version ]
+    needs: [ calculate-version, sdk-release-gate ]
     if: needs.calculate-version.outputs.deploy-sdk == 'true'
     permissions:
       contents: read
