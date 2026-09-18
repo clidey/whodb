@@ -168,7 +168,7 @@ var loginCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		existingHosts := platformHostsWithLogin(cfg)
+		existingHosts := platformLoginsForHost(cfg, host)
 		if len(existingHosts) > 0 {
 			approved, err := confirmPlatformLoginReplacement(cmd.ErrOrStderr(), existingHosts, platformLoginYes)
 			if err != nil {
@@ -235,7 +235,8 @@ var loginCmd = &cobra.Command{
 			return err
 		}
 		client.SetWorkspaceContext(hostEntry.DefaultOrgID, hostEntry.DefaultProjectID)
-		cfg.SetOnlyPlatformHost(hostEntry)
+		cfg.UpsertPlatformHost(hostEntry)
+		cfg.SetDefaultPlatformHost(hostEntry.URL)
 		if err := cfg.SavePlatformRefreshToken(client.Host(), user.ID, tokens.RefreshToken); err != nil {
 			return err
 		}
@@ -1518,11 +1519,27 @@ func loadPlatformSession(ctx context.Context, hostFlag string) (*platformSession
 		}
 	}
 	client.SetWorkspaceContext(entry.DefaultOrgID, entry.DefaultProjectID)
-	return &platformSession{
+	session := &platformSession{
 		Config: cfg,
 		Host:   *entry,
 		Client: client,
-	}, nil
+	}
+	scope := platform.SessionScopeFromEnvironment()
+	if err := scope.Validate(); err != nil {
+		return nil, err
+	}
+	if scope.HasWorkspace() {
+		org, project, err := resolvePlatformProject(ctx, session, scope.Org, scope.Project)
+		if err != nil {
+			return nil, fmt.Errorf("resolve process-scoped hosted workspace: %w", err)
+		}
+		session.Host.DefaultOrgID = org.ID
+		session.Host.DefaultOrgName = org.Name
+		session.Host.DefaultProjectID = project.ID
+		session.Host.DefaultProjectName = project.Name
+		session.Client.SetWorkspaceContext(org.ID, project.ID)
+	}
+	return session, nil
 }
 
 func attachPlatformManifestRefresher(cfg *config.Config, host *config.PlatformHost, client *platform.Client) {
@@ -1549,6 +1566,9 @@ func refreshPlatformManifest(ctx context.Context, cfg *config.Config, host *conf
 func resolvePlatformHost(cfg *config.Config, hostFlag string) (string, error) {
 	if strings.TrimSpace(hostFlag) != "" {
 		return platform.NormalizeHost(hostFlag)
+	}
+	if host := platform.SessionScopeFromEnvironment().Host; host != "" {
+		return platform.NormalizeHost(host)
 	}
 	if cfg != nil && strings.TrimSpace(cfg.Platform.DefaultHost) != "" {
 		return platform.NormalizeHost(cfg.Platform.DefaultHost)
@@ -1801,6 +1821,17 @@ func platformHostsWithLogin(cfg *config.Config) []config.PlatformHost {
 		}
 	}
 	return hosts
+}
+
+func platformLoginsForHost(cfg *config.Config, hostURL string) []config.PlatformHost {
+	hosts := platformHostsWithLogin(cfg)
+	matching := make([]config.PlatformHost, 0, 1)
+	for _, host := range hosts {
+		if host.URL == hostURL {
+			matching = append(matching, host)
+		}
+	}
+	return matching
 }
 
 func confirmPlatformLoginReplacement(out io.Writer, existingHosts []config.PlatformHost, skipPrompt bool) (bool, error) {

@@ -244,6 +244,21 @@ var permissionMutationsOmittedByLegacyManifests = map[string]struct{}{
 	"ShareByEmail": {},
 }
 
+// ValidatePlatformMutationCapability verifies that a hosted manifest supports a
+// mutation, including the narrow permission-mutation compatibility contract for
+// older hosts that implemented those mutations without advertising them.
+func ValidatePlatformMutationCapability(manifest *PlatformManifest, operation string) error {
+	if manifest == nil || len(manifest.Operations) == 0 {
+		return nil
+	}
+	if err := manifest.RequireOperation("Mutation", operation, "platform write "+operation); err != nil {
+		if _, compatible := permissionMutationsOmittedByLegacyManifests[operation]; !compatible {
+			return err
+		}
+	}
+	return nil
+}
+
 const projectSecretFields = `
   id
   projectId
@@ -412,10 +427,8 @@ func (c *Client) PlatformMutation(ctx context.Context, operation string, variabl
 	if !ok {
 		return nil, fmt.Errorf("unsupported platform mutation %q", operation)
 	}
-	if err := c.RequireOperation("Mutation", operation, "platform write"); err != nil {
-		if _, compatible := permissionMutationsOmittedByLegacyManifests[operation]; !compatible {
-			return nil, err
-		}
+	if err := ValidatePlatformMutationCapability(c.manifest, operation); err != nil {
+		return nil, err
 	}
 	var resp map[string]json.RawMessage
 	if err := c.graphQL(ctx, spec.Query, variables, &resp); err != nil {

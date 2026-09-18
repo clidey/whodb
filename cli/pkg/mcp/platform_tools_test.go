@@ -30,6 +30,8 @@ import (
 )
 
 type fakePlatformClient struct {
+	workspaceOrgID          string
+	workspaceProjectID      string
 	projectSourcesOrgID     string
 	projectSourcesProjectID string
 	sourceRowsOrgID         string
@@ -54,6 +56,11 @@ type fakePlatformClient struct {
 	platformQueryResult     any
 }
 
+func (f *fakePlatformClient) SetWorkspaceContext(orgID, projectID string) {
+	f.workspaceOrgID = orgID
+	f.workspaceProjectID = projectID
+}
+
 func (f *fakePlatformClient) Me(context.Context) (*platformapi.User, error) {
 	return &platformapi.User{ID: "user-1", Email: "ada@example.com"}, nil
 }
@@ -74,6 +81,32 @@ func (f *fakePlatformClient) Projects(ctx context.Context, orgID string) ([]plat
 		{ID: "proj-1", OrgID: orgID, Name: "Customer", Slug: "customer", Description: "Customer data"},
 		{ID: "proj-2", OrgID: orgID, Name: "Internal", Slug: "internal"},
 	}, nil
+}
+
+func TestApplyPlatformToolSessionScopeResolvesNamesWithoutChangingSavedHost(t *testing.T) {
+	saved := config.PlatformHost{
+		URL:                "https://app.whodb.com",
+		DefaultOrgID:       "org-1",
+		DefaultOrgName:     "Clidey",
+		DefaultProjectID:   "proj-1",
+		DefaultProjectName: "Customer",
+	}
+	client := &fakePlatformClient{}
+	session := &platformToolSession{Host: saved, Client: client}
+
+	scoped, err := applyPlatformToolSessionScope(context.Background(), session, platformapi.SessionScope{Org: "acme", Project: "internal"})
+	if err != nil {
+		t.Fatalf("applyPlatformToolSessionScope() error = %v", err)
+	}
+	if scoped.Host.DefaultOrgID != "org-2" || scoped.Host.DefaultProjectID != "proj-2" {
+		t.Fatalf("scoped host = %#v", scoped.Host)
+	}
+	if client.workspaceOrgID != "org-2" || client.workspaceProjectID != "proj-2" {
+		t.Fatalf("client workspace = %s/%s", client.workspaceOrgID, client.workspaceProjectID)
+	}
+	if saved.DefaultOrgID != "org-1" || saved.DefaultProjectID != "proj-1" {
+		t.Fatalf("saved host changed = %#v", saved)
+	}
 }
 
 func (f *fakePlatformClient) ProjectSources(ctx context.Context, orgID, projectID string) ([]platformapi.Source, error) {
@@ -209,6 +242,55 @@ func TestHandlePlatformSetupStatusReportsLoginCommandWithoutConfig(t *testing.T)
 		if !slices.Contains(output.Commands, expected) {
 			t.Fatalf("commands = %#v, want %q", output.Commands, expected)
 		}
+	}
+}
+
+func TestHandlePlatformSetupStatusUsesProcessScopeWithoutChangingGlobalDefaults(t *testing.T) {
+	setupTestEnv(t)
+	t.Setenv(platformapi.SessionHostEnv, "http://localhost:8080")
+	t.Setenv(platformapi.SessionOrgEnv, "acme")
+	t.Setenv(platformapi.SessionProjectEnv, "analysis")
+
+	_, output, err := HandlePlatformSetupStatus(context.Background(), nil, PlatformSetupStatusInput{})
+	if err != nil {
+		t.Fatalf("HandlePlatformSetupStatus() error = %v", err)
+	}
+	if output.Host != "http://localhost:8080" || output.OrgSelector != "acme" || output.ProjectSelector != "analysis" {
+		t.Fatalf("setup status scope = %#v", output)
+	}
+	if !output.WorkspaceSelected || output.Status != "needs_login" {
+		t.Fatalf("setup status = %#v, want scoped workspace awaiting login", output)
+	}
+	if len(output.Commands) != 1 || output.Commands[0] != "whodb login --host http://localhost:8080" {
+		t.Fatalf("commands = %#v, want only the scoped host login command", output.Commands)
+	}
+}
+
+func TestHandlePlatformSetupStatusRejectsPartialProcessScope(t *testing.T) {
+	setupTestEnv(t)
+	t.Setenv(platformapi.SessionOrgEnv, "acme")
+
+	_, output, err := HandlePlatformSetupStatus(context.Background(), nil, PlatformSetupStatusInput{})
+	if err != nil {
+		t.Fatalf("HandlePlatformSetupStatus() error = %v", err)
+	}
+	if output.Status != "config_error" || !strings.Contains(output.Error, platformapi.SessionProjectEnv) {
+		t.Fatalf("setup status = %#v, want partial-scope configuration error", output)
+	}
+}
+
+func TestApplyPlatformSessionScopeToSetupStatusClearsSavedWorkspace(t *testing.T) {
+	output := PlatformSetupStatusOutput{
+		OrgID: "saved-org", OrgName: "Saved org",
+		ProjectID: "saved-project", ProjectName: "Saved project",
+	}
+	applyPlatformSessionScopeToSetupStatus(&output, platformapi.SessionScope{Org: "acme", Project: "analysis"})
+
+	if output.OrgID != "" || output.OrgName != "" || output.ProjectID != "" || output.ProjectName != "" {
+		t.Fatalf("saved workspace leaked into scoped status: %#v", output)
+	}
+	if output.OrgSelector != "acme" || output.ProjectSelector != "analysis" || !output.WorkspaceSelected {
+		t.Fatalf("scoped status = %#v", output)
 	}
 }
 

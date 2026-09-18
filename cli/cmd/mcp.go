@@ -21,9 +21,11 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
+	platformapi "github.com/clidey/whodb/cli/internal/platform"
 	whodbmcp "github.com/clidey/whodb/cli/pkg/mcp"
 	"github.com/clidey/whodb/cli/pkg/version"
 	"github.com/spf13/cobra"
@@ -51,7 +53,12 @@ var (
 )
 
 // platform flags
-var mcpPlatform bool
+var (
+	mcpPlatform        bool
+	mcpPlatformHost    string
+	mcpPlatformOrg     string
+	mcpPlatformProject string
+)
 
 // tool enablement flags
 var (
@@ -137,6 +144,17 @@ confirm-writes returns confirmation tokens, --read-only and --safe-mode hide
 hosted platform write tools, and --allow-write executes hosted platform writes
 without confirmation.
 
+PLATFORM SESSION SCOPING:
+  --platform-host URL       Select the platform host for this MCP process
+  --platform-org ORG        Select an organization id, slug, or name
+  --platform-project NAME   Select a project id, slug, or name
+
+  Organization and project must be provided together. These process-local
+  values do not change the workspace saved by whodb use, so separate terminal
+  sessions can safely target different projects. The equivalent environment
+  variables are WHODB_PLATFORM_SESSION_HOST, WHODB_PLATFORM_SESSION_ORG, and
+  WHODB_PLATFORM_SESSION_PROJECT.
+
 TOOL SELECTION:
   --tools           - Comma-separated list of local MCP tools to enable (default: all)
                       Valid: query, schemas, tables, columns, connections, confirm, pending, explain, diff, erd, audit, suggestions
@@ -209,6 +227,10 @@ Connection Resolution:
   # Run hosted WhoDB platform MCP mode only
   whodb mcp serve --platform
 
+  # Run an independently scoped platform MCP session
+  whodb mcp serve --platform --platform-host=http://localhost:8080 \
+    --platform-org=acme --platform-project=analysis
+
   # Hosted platform MCP config (stdio):
   {
     "mcpServers": {
@@ -241,6 +263,9 @@ Connection Resolution:
 
 		if mcpPlatform && (cmd.Flags().Changed("tools") || cmd.Flags().Changed("disable-tools")) {
 			return fmt.Errorf("--tools and --disable-tools apply only to local MCP mode; omit them when using --platform")
+		}
+		if err := configureMCPPlatformScope(); err != nil {
+			return err
 		}
 
 		// Handle shutdown signals
@@ -371,6 +396,12 @@ func init() {
 	// Platform flags
 	mcpServeCmd.Flags().BoolVar(&mcpPlatform, "platform", false,
 		"Run hosted platform MCP mode only (requires whodb login and use)")
+	mcpServeCmd.Flags().StringVar(&mcpPlatformHost, "platform-host", "",
+		"Hosted platform URL for this MCP process (or WHODB_PLATFORM_SESSION_HOST)")
+	mcpServeCmd.Flags().StringVar(&mcpPlatformOrg, "platform-org", "",
+		"Hosted organization id, slug, or name for this MCP process (or WHODB_PLATFORM_SESSION_ORG)")
+	mcpServeCmd.Flags().StringVar(&mcpPlatformProject, "platform-project", "",
+		"Hosted project id, slug, or name for this MCP process (or WHODB_PLATFORM_SESSION_PROJECT)")
 
 	// Tool enablement flags
 	mcpServeCmd.Flags().StringSliceVar(&mcpEnabledTools, "tools", nil,
@@ -395,4 +426,25 @@ func init() {
 	mcpServeCmd.RegisterFlagCompletionFunc("allowed-connections", completeConnectionNames)
 	mcpServeCmd.RegisterFlagCompletionFunc("transport", completeMCPTransports)
 	mcpServeCmd.RegisterFlagCompletionFunc("security", completeMCPSecurityLevels)
+}
+
+func configureMCPPlatformScope() error {
+	if !mcpPlatform {
+		if mcpPlatformHost != "" || mcpPlatformOrg != "" || mcpPlatformProject != "" {
+			return fmt.Errorf("--platform-host, --platform-org, and --platform-project require --platform")
+		}
+		return nil
+	}
+	for key, value := range map[string]string{
+		platformapi.SessionHostEnv:    mcpPlatformHost,
+		platformapi.SessionOrgEnv:     mcpPlatformOrg,
+		platformapi.SessionProjectEnv: mcpPlatformProject,
+	} {
+		if strings.TrimSpace(value) != "" {
+			if err := os.Setenv(key, strings.TrimSpace(value)); err != nil {
+				return fmt.Errorf("set hosted platform session scope: %w", err)
+			}
+		}
+	}
+	return platformapi.SessionScopeFromEnvironment().Validate()
 }
