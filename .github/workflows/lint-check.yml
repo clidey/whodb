@@ -167,6 +167,14 @@ jobs:
       - name: Tests
         run: cd sdk && pnpm -r test
 
+      # Consumption tests of the BUILT artifacts (npm tarball, Python wheel):
+      # catches broken exports maps / packaging that source-tree tests miss.
+      - name: Pack test (TypeScript)
+        run: cd sdk/packages/typescript && node scripts/pack-test.mjs
+
+      - name: Pack test (Python wheel)
+        run: bash sdk/packages/python/scripts/pack_test.sh
+
       - name: Conformance (TypeScript)
         run: cd sdk && node tools/conformance-runner.mjs --lang ts
 
@@ -189,7 +197,7 @@ jobs:
       - name: Go SDK build, vet, test
         env:
           GOWORK: off
-        run: cd sdk/packages/go && go build ./... && go vet ./... && go test ./...
+        run: cd sdk/packages/go && go build ./... && go vet ./... && go test -race ./...
 
       - name: Go SDK lint + vulnerability scan
         env:
