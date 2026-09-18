@@ -90,8 +90,8 @@ github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.17 h1:OvYZOB
 github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.17/go.mod h1:JgR/2Ew50ACfIWau1oeMRX59tMtC0kM+PYQGEaT04cY=
 github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.37 h1:a3D4AjrOrTrP8+d9ILBthqrElf0z1JNol09Xvnwcys8=
 github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.37/go.mod h1:ky0gTu+ukvUTuUKFIpp6Wid4oninrkCyvbFkVs0kpHM=
-github.com/aws/aws-sdk-go-v2/service/opensearch v1.75.3 h1:lo4yFVcNq9owIIGNYIZ2Br9DSfJj7x1T8saiXeQiji8=
-github.com/aws/aws-sdk-go-v2/service/opensearch v1.75.3/go.mod h1:OjZCuHKSZx6/gNLyeMXamq4yIhuz3Yl2Wcrl9P7BJvc=
+github.com/aws/aws-sdk-go-v2/service/opensearch v1.80.0 h1:E4cFgebyiuXs8k9Mm/fRUVhK9D1wtJD58GUa4gbfVFI=
+github.com/aws/aws-sdk-go-v2/service/opensearch v1.80.0/go.mod h1:soHkl4mnDqMIOg4ZQiSnDU+DOJLy5KvA+CDJFskXTz8=
 github.com/aws/aws-sdk-go-v2/service/rds v1.124.2 h1:qYCAcSBUzQQWUUu7d9AkaJpFB9khH+YV2k+xtPgACtM=
 github.com/aws/aws-sdk-go-v2/service/rds v1.124.2/go.mod h1:wUePd59AnbMaomGj+e6NrvJtWG+zY9EefvmCvU9sZ3E=
 github.com/aws/aws-sdk-go-v2/service/signin v1.5.6 h1:i68sFvXidKlkiSvI7d7Ilc1/UvW4CtBOaivH7jhG4fs=
@@ -104,8 +104,8 @@ github.com/aws/aws-sdk-go-v2/service/sts v1.45.6 h1:JvExZWabChDM0qJAirQYGfOYo0nd
 github.com/aws/aws-sdk-go-v2/service/sts v1.45.6/go.mod h1:XZcaQkV2cItp6yEkrwljyaPOf22RuX7T43jxap/FOmM=
 github.com/aws/smithy-go v1.28.1 h1:R/nXH00c8qcfCzQVELtRw+eLQWtzv+VAIEFJ1/xxXlQ=
 github.com/aws/smithy-go v1.28.1/go.mod h1:YE2RhdIuDbA5E5bTdciG9KrW3+TiEONeUWCqxX9i1Fc=
-github.com/boundaryml/baml v0.223.0 h1:0aPaZXr7iYvkn4duVSG2jV4RBae5XEJLaFfCbxsPyjc=
-github.com/boundaryml/baml v0.223.0/go.mod h1:dzmyDMNDXIVxJX75q9KTjuTUADsYSGUEbGyi76Cwkew=
+github.com/boundaryml/baml v0.226.2 h1:JbN8wEqC5DmIYGDdYy59e7C0GV6oNIYpG2P7MZuBXHQ=
+github.com/boundaryml/baml v0.226.2/go.mod h1:dzmyDMNDXIVxJX75q9KTjuTUADsYSGUEbGyi76Cwkew=
 github.com/brianvoe/gofakeit/v7 v7.15.0 h1:kGLYAWN8tnmxq2PelKVK6zwpM7kMxdz9SGPH31mFkNs=
 github.com/brianvoe/gofakeit/v7 v7.15.0/go.mod h1:QXuPeBw164PJCzCUZVmgpgHJ3Llj49jSLVkKPMtxtxA=
 github.com/bsm/ginkgo/v2 v2.12.0 h1:Ny8MWAHyOepLGlLKYmXG4IEkioBysk6GpaRTLC8zwWs=

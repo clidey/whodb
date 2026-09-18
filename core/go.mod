@@ -20,11 +20,11 @@ require (
 	github.com/aws/aws-sdk-go-v2/feature/rds/auth v1.7.3
 	github.com/aws/aws-sdk-go-v2/service/docdb v1.51.1
 	github.com/aws/aws-sdk-go-v2/service/elasticache v1.61.0
-	github.com/aws/aws-sdk-go-v2/service/opensearch v1.75.3
+	github.com/aws/aws-sdk-go-v2/service/opensearch v1.80.0
 	github.com/aws/aws-sdk-go-v2/service/rds v1.124.2
 	github.com/aws/aws-sdk-go-v2/service/sts v1.45.6
 	github.com/aws/smithy-go v1.28.1
-	github.com/boundaryml/baml v0.223.0
+	github.com/boundaryml/baml v0.226.2
 	github.com/brianvoe/gofakeit/v7 v7.15.0
 	github.com/deckarep/golang-set/v2 v2.9.0
 	github.com/dromara/carbon/v2 v2.6.17
