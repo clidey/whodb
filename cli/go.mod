@@ -65,14 +65,14 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/elasticache v1.61.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.17 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.37 // indirect
-	github.com/aws/aws-sdk-go-v2/service/opensearch v1.75.3 // indirect
+	github.com/aws/aws-sdk-go-v2/service/opensearch v1.80.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/rds v1.124.2 // indirect
 	github.com/aws/aws-sdk-go-v2/service/signin v1.5.6 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.33.6 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.38.6 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.45.6 // indirect
 	github.com/aws/smithy-go v1.28.1 // indirect
-	github.com/boundaryml/baml v0.223.0 // indirect
+	github.com/boundaryml/baml v0.226.2 // indirect
 	github.com/brianvoe/gofakeit/v7 v7.15.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/charmbracelet/ultraviolet v0.0.0-20260811164956-006e29f97886 // indirect
