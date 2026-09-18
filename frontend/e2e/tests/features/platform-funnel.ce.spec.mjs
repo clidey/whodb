@@ -1,5 +1,9 @@
 import { test, expect } from '@playwright/test';
 import { buildImportConnection } from '../../../src/utils/platform-funnel';
+import { defaultFeatures } from '../../../src/config/feature-defaults';
+
+// The funnel UI only renders when the platformFunnel feature flag is on.
+test.skip(!defaultFeatures.platformFunnel, 'platformFunnel feature flag is disabled');
 
 const profile = {
     Id: 'test-connection', SourceType: 'Postgres', Type: 'Postgres', Values: [],
