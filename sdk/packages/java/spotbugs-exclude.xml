@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+  <!-- Generated wire core: string constants are GraphQL documents. -->
+  <Match>
+    <Package name="com.clidey.whodb.gen"/>
+  </Match>
+  <!-- CliCredentials execs a fixed argv ("whodb auth print-token") — the
+       documented gcloud-ADC credential-helper pattern, no user input. -->
+  <Match>
+    <Class name="com.clidey.whodb.CliCredentials"/>
+    <Bug pattern="COMMAND_INJECTION"/>
+  </Match>
+  <!-- The conformance runner is a test harness, not shipped API surface. -->
+  <Match>
+    <Package name="com.clidey.whodb.conformance"/>
+  </Match>
+  <!-- Broad Exception catches are the cross-language hydration/JSON contract:
+       unparseable values fall back to the raw string rather than failing. -->
+  <Match>
+    <Bug pattern="REC_CATCH_EXCEPTION,DE_MIGHT_IGNORE"/>
+  </Match>
+  <!-- The SDK's rows and options are deliberately plain Maps/Lists (dynamic
+       facade design shared across all SDK languages) — not defensive copies. -->
+  <Match>
+    <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+  </Match>
+  <!-- Case mapping uses Locale.ROOT on protocol strings (column types, HTTP
+       headers), not user-visible text. -->
+  <Match>
+    <Bug pattern="IMPROPER_UNICODE"/>
+  </Match>
+</FindBugsFilter>

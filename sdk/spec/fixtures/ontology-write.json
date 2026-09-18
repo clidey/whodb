@@ -1,0 +1,49 @@
+{
+  "fixtures": [
+    {
+      "name": "createMany passes rows and idempotency key",
+      "call": { "domain": "ontology", "handle": "User", "method": "createMany", "args": [[{ "email": "a@b.co" }, { "email": "c@d.co" }], { "idempotencyKey": "batch-7" }] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "OntologyEntities" },
+          "response": { "data": { "OntologyEntities": [ { "id": "ent-1", "apiName": "User", "primaryKey": "id", "properties": [], "links": [] } ] } }
+        },
+        {
+          "expectRequest": { "operation": "OntologyAddRows", "variablesContain": { "entityId": "ent-1", "idempotencyKey": "batch-7" } },
+          "response": { "data": { "OntologyAddRows": { "inserted": 2, "ids": ["u_9", "u_10"] } } }
+        }
+      ],
+      "expectResult": { "inserted": 2, "ids": ["u_9", "u_10"] }
+    },
+    {
+      "name": "update includes pk and updated columns",
+      "call": { "domain": "ontology", "handle": "User", "method": "update", "args": ["u_1", { "plan": "pro" }] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "OntologyEntities" },
+          "response": { "data": { "OntologyEntities": [ { "id": "ent-1", "apiName": "User", "primaryKey": "id", "properties": [], "links": [] } ] } }
+        },
+        {
+          "expectRequest": { "operation": "OntologyUpdateRow", "variablesContain": { "entityId": "ent-1", "updatedColumns": ["plan"] } },
+          "response": { "data": { "OntologyUpdateRow": { "Status": true } } }
+        }
+      ],
+      "expectResult": null
+    },
+    {
+      "name": "platform error maps to AuthError on FORBIDDEN",
+      "call": { "domain": "ontology", "handle": "User", "method": "create", "args": [{ "email": "x@y.z" }] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "OntologyEntities" },
+          "response": { "data": { "OntologyEntities": [ { "id": "ent-1", "apiName": "User", "primaryKey": "id", "properties": [], "links": [] } ] } }
+        },
+        {
+          "expectRequest": { "operation": "OntologyAddRow" },
+          "response": { "errors": [ { "message": "permission denied", "extensions": { "code": "FORBIDDEN" } } ] }
+        }
+      ],
+      "expectError": { "type": "AuthError", "messageContains": "permission denied" }
+    }
+  ]
+}

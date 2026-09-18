@@ -34,6 +34,61 @@ func TestGenericWriteSpecsHaveMutationDefinitions(t *testing.T) {
 	}
 }
 
+func TestInstallPackagePayloadShapeMatchesCurrentInput(t *testing.T) {
+	shape := PayloadShapes["action:install:package"]
+	fields := make(map[string]PayloadField, len(shape.Fields))
+	for _, field := range shape.Fields {
+		fields[field.Name] = field
+	}
+
+	if _, ok := fields["sourceProjectId"]; ok {
+		t.Fatal("install package payload must not advertise retired sourceProjectId")
+	}
+	for _, name := range []string{"targetProjectId", "packageId"} {
+		if field, ok := fields[name]; !ok || !field.Required {
+			t.Fatalf("install package field %q = %#v, want required field", name, field)
+		}
+	}
+	if field, ok := fields["sourceScopeProjectId"]; !ok || field.Required {
+		t.Fatalf("sourceScopeProjectId = %#v, want optional field", field)
+	}
+}
+
+func TestPlatformMutationAllowsPermissionOperationOmittedByLegacyManifest(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"data":{"InviteUser":{"Status":true}}}`))
+	}))
+	defer server.Close()
+
+	client, err := NewAuthenticatedClient(server.URL, &testAccessTokenSource{tokens: []string{"access-token"}})
+	if err != nil {
+		t.Fatalf("NewAuthenticatedClient() error = %v", err)
+	}
+	client.manifest = &PlatformManifest{Operations: []PlatformManifestOperation{{Kind: "Mutation", Name: "CreateDataset"}}}
+
+	result, err := client.PlatformMutation(context.Background(), "InviteUser", map[string]any{
+		"input": map[string]any{
+			"orgId":    "org-1",
+			"email":    "editor@example.com",
+			"relation": "member",
+		},
+	})
+	if err != nil {
+		t.Fatalf("PlatformMutation() error = %v", err)
+	}
+	if result.Operation != "InviteUser" || !strings.Contains(string(result.Data), `"Status":true`) {
+		t.Fatalf("PlatformMutation() result = %#v", result)
+	}
+}
+
+func TestValidatePlatformMutationCapabilityRejectsUnadvertisedNonPermissionMutation(t *testing.T) {
+	manifest := &PlatformManifest{Operations: []PlatformManifestOperation{{Kind: "Mutation", Name: "CreateDataset"}}}
+	if err := ValidatePlatformMutationCapability(manifest, "DeleteDataset"); err == nil {
+		t.Fatal("ValidatePlatformMutationCapability() accepted an unadvertised non-permission mutation")
+	}
+}
+
 func TestUploadProjectFilePostsMultipartGraphQL(t *testing.T) {
 	tmp, err := os.CreateTemp(t.TempDir(), "upload-*.csv")
 	if err != nil {

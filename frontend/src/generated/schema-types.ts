@@ -456,6 +456,7 @@ export type Mutation = {
   CreateSourceObjectFromDefinition: StatusResponse;
   DeleteSourceRow: StatusResponse;
   ExecuteConfirmedSQL: AiChatMessage;
+  ExportSourceConnection: Array<Record>;
   GenerateAzureADToken: Scalars['String']['output'];
   GenerateChatTitle: GenerateChatTitleResponse;
   GenerateCloudSQLIAMAuthToken: Scalars['String']['output'];
@@ -527,6 +528,12 @@ export type MutationDeleteSourceRowArgs = {
 export type MutationExecuteConfirmedSqlArgs = {
   operationType: Scalars['String']['input'];
   query: Scalars['String']['input'];
+};
+
+
+export type MutationExportSourceConnectionArgs = {
+  id: Scalars['String']['input'];
+  includeSecrets: Scalars['Boolean']['input'];
 };
 
 

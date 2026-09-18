@@ -27,6 +27,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/clidey/whodb/cli/internal/platform"
 	"github.com/clidey/whodb/cli/pkg/output"
@@ -981,6 +982,30 @@ var resourcesCreateCmd = genericResourceWriteCommand("create <resource>", "Creat
 var resourcesUpdateCmd = genericResourceWriteCommand("update <resource> <id>", "Update a hosted WhoDB platform resource", "update")
 var resourcesDeleteCmd = genericResourceWriteCommand("delete <resource> <id>", "Delete a hosted WhoDB platform resource", "delete")
 var resourcesActionCmd = genericResourceWriteCommand("action <resource> <action> [id]", "Run a hosted WhoDB platform resource action", "action")
+var resourcesQueryCmd = &cobra.Command{
+	Use:           "query <operation>",
+	Short:         "Run an allow-listed hosted WhoDB platform resource read",
+	Args:          cobra.ExactArgs(1),
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return runPlatformProjectRead(cmd, func(ctx context.Context, session *platformSession, project *platform.Project) (any, *output.QueryResult, error) {
+			payload, err := readPlatformPayload(cmd)
+			if err != nil {
+				return nil, nil, err
+			}
+			if _, ok := payload["projectId"]; !ok {
+				payload["projectId"] = project.ID
+			}
+			data, err := session.Client.PlatformQuery(ctx, args[0], payload)
+			if err != nil {
+				return nil, nil, err
+			}
+			encoded, _ := json.Marshal(data)
+			return data, tableResult([]string{"data"}, [][]any{{string(encoded)}}), nil
+		})
+	},
+}
 var resourcesSpecsCmd = &cobra.Command{
 	Use:           "specs",
 	Short:         "List supported hosted WhoDB generic resource writes",
@@ -1079,15 +1104,15 @@ func registerPlatformResourceCommands() {
 	secretsCmd.AddCommand(secretsListCmd, secretsGetCmd, secretDescribeCmd, secretsCreateCmd, secretsUpdateCmd, secretsDeleteCmd)
 	aiProvidersCmd.AddCommand(aiProvidersListCmd, aiProviderGetCmd, aiProviderDescribeCmd, aiProviderModelsCmd, aiProvidersCreateCmd, aiProvidersUpdateCmd, aiProvidersDeleteCmd)
 	ontologyFastLookupsCmd.AddCommand(ontologyFastLookupsCreateCmd, ontologyFastLookupsDeleteCmd)
-	ontologyRecordsCmd.AddCommand(ontologyRecordsAddCmd, ontologyRecordsUpdateCmd, ontologyRecordsDeleteCmd)
-	ontologiesCmd.AddCommand(ontologiesListCmd, ontologyGetCmd, ontologyDescribeCmd, ontologyExportCmd, ontologyCloneCmd, ontologyFastLookupsCmd, ontologyFastLookupSuggestionsCmd, ontologyRowsCmd, ontologyFollowLinkCmd, ontologyRecordsCmd, ontologiesCreateCmd, ontologiesUpdateCmd, ontologiesDeleteCmd)
+	ontologyRecordsCmd.AddCommand(ontologyRecordsAddCmd, ontologyRecordsUpdateCmd, ontologyRecordsDeleteCmd, ontologyRecordsImportCmd)
+	ontologiesCmd.AddCommand(ontologiesListCmd, ontologyGetCmd, ontologyDescribeCmd, ontologyExportCmd, ontologyCloneCmd, ontologyBehaviorGetCmd, ontologyDataStatusCmd, ontologyFastLookupsCmd, ontologyFastLookupSuggestionsCmd, ontologyRowsCmd, ontologyFollowLinkCmd, ontologyRecordsCmd, ontologiesCreateCmd, ontologiesUpdateCmd, ontologiesDeleteCmd)
 	datasetsCmd.AddCommand(datasetsListCmd, datasetGetCmd, datasetDescribeCmd, datasetSchemaCmd, datasetExportCmd, datasetCloneCmd, datasetRowsCmd, datasetQueryCmd, datasetsCreateCmd, datasetsUpdateCmd, datasetsDeleteCmd)
 	lineageCmd.AddCommand(lineageProjectCmd, lineageRootCmd, lineageNeighborsCmd)
-	transformsCmd.AddCommand(transformsListCmd, transformGetCmd, transformDescribeCmd, transformExportCmd, transformCloneCmd, transformRunsCmd, transformsCreateCmd, transformsUpdateCmd, transformsRunCmd, transformsDeleteCmd)
+	transformsCmd.AddCommand(transformsListCmd, transformGetCmd, transformDescribeCmd, transformExportCmd, transformCloneCmd, transformRunsCmd, transformsCreateCmd, transformsUpdateCmd, transformsRunCmd, transformsDeleteCmd, transformsApplyCmd, transformsRebindSourceCmd)
 	functionsCmd.AddCommand(functionsListCmd, functionGetCmd, functionDescribeCmd, functionExportCmd, functionCloneCmd, functionsVersionsCmd, functionsActiveCmd, functionsPromoteCmd, functionsSetActiveCmd, functionsRestoreDraftCmd, functionsRunCmd, functionsTestCmd, functionsPreviewCmd, functionsCreateCmd, functionsUpdateCmd, functionsDeployCmd, functionsRedeployCmd, functionsDeleteCmd)
 	filesCmd.AddCommand(filesListCmd, fileGetCmd, fileDescribeCmd, filePreviewCmd, fileInspectCmd, fileColumnsCmd, fileDownloadCmd, fileSearchCmd, tabularFilesCmd, storageUsageCmd, filesUploadCmd, filesPromoteDatasetCmd, filesDeleteCmd, filesRenameCmd, filesMoveCmd)
 	foldersCmd.AddCommand(foldersListCmd, folderGetCmd, folderDescribeCmd, foldersTreeCmd, foldersCreateCmd, foldersRenameCmd, foldersMoveCmd, foldersDeleteCmd)
-	resourcesCmd.AddCommand(resourcesSpecsCmd, resourcesShapeCmd, resourcesExportCmd, resourcesDiffCmd, resourcesImportCmd, resourcesCreateCmd, resourcesUpdateCmd, resourcesDeleteCmd, resourcesActionCmd)
+	resourcesCmd.AddCommand(resourcesSpecsCmd, resourcesShapeCmd, resourcesQueryCmd, resourcesExportCmd, resourcesDiffCmd, resourcesImportCmd, resourcesCreateCmd, resourcesUpdateCmd, resourcesDeleteCmd, resourcesActionCmd)
 
 	for _, command := range []*cobra.Command{functionsListCmd, functionGetCmd, functionDescribeCmd, functionExportCmd, filesListCmd, filePreviewCmd} {
 		command.Flags().StringArrayVar(&platformFields, "field", nil, "top-level field to request; repeatable")
@@ -1124,6 +1149,38 @@ func registerPlatformResourceCommands() {
 		command.Flags().IntVar(&platformOffset, "offset", 0, "row offset")
 	}
 	transformRunsCmd.Flags().IntVar(&platformLimit, "limit", 20, "maximum runs to return")
+	transformsApplyCmd.Flags().StringVar(&transformApplyManifest, "manifest", "", "YAML or JSON transform plan")
+	transformsApplyCmd.Flags().StringArrayVar(&transformApplyCatalogs, "catalog", nil, "fixture catalog to match by ontology API name; repeatable")
+	transformsApplyCmd.Flags().StringVar(&transformApplyBaseDir, "base-dir", "", "base directory for relative file paths (defaults to the manifest directory)")
+	transformsApplyCmd.Flags().BoolVar(&transformApplyDryRun, "dry-run", false, "validate and preview without writing")
+	transformsApplyCmd.Flags().BoolVar(&transformApplyOverwrite, "overwrite", false, "update existing transforms from the manifest")
+	transformsApplyCmd.Flags().BoolVar(&transformApplyRun, "run", false, "run entries that do not set an explicit run value")
+	transformsApplyCmd.Flags().BoolVar(&transformApplyWait, "wait", true, "wait for each requested transform run to finish")
+	transformsApplyCmd.Flags().DurationVar(&transformApplyTimeout, "timeout", 10*time.Minute, "maximum time to wait for each transform run")
+	transformsApplyCmd.Flags().DurationVar(&transformApplyPoll, "poll-interval", 2*time.Second, "interval between transform run status checks")
+	transformsApplyCmd.Flags().BoolVar(&transformApplyOnlyEmpty, "only-empty", false, "skip ontologies that already contain rows")
+	transformsApplyCmd.Flags().StringVar(&transformApplyNamePrefix, "name-prefix", "WhoDB Fixture", "transform name prefix for catalog-generated entries")
+	transformsApplyCmd.Flags().BoolVarP(&transformApplyYes, "yes", "y", false, "apply the plan without prompting")
+	transformsRebindSourceCmd.Flags().StringVar(&transformRebindNodeID, "node", "", "source node id (defaults to the first source-like node)")
+	transformsRebindSourceCmd.Flags().StringVar(&transformRebindSourceID, "source-id", "", "customer source id")
+	transformsRebindSourceCmd.Flags().StringVar(&transformRebindSourceKind, "source-kind", "database", "customer source kind")
+	transformsRebindSourceCmd.Flags().StringArrayVar(&transformRebindSourcePath, "source-path", nil, "source object path segment; repeatable")
+	transformsRebindSourceCmd.Flags().StringVar(&transformRebindObjectKind, "object-kind", "Table", "source object kind")
+	transformsRebindSourceCmd.Flags().StringVar(&transformRebindFileID, "file-id", "", "existing hosted file id")
+	transformsRebindSourceCmd.Flags().StringVar(&transformRebindFilePath, "file", "", "local file to upload and bind")
+	transformsRebindSourceCmd.Flags().StringVar(&transformRebindCloneName, "clone-name", "", "save as a customer-owned transform with this name")
+	transformsRebindSourceCmd.Flags().StringVar(&transformRebindDescription, "description", "", "description for the saved transform")
+	transformsRebindSourceCmd.Flags().BoolVar(&transformRebindDryRun, "dry-run", false, "print the rebound graph without writing")
+	transformsRebindSourceCmd.Flags().BoolVarP(&transformRebindYes, "yes", "y", false, "upload and save without prompting")
+	ontologyRecordsImportCmd.Flags().StringVar(&ontologyImportFile, "file", "", "CSV, JSON, NDJSON, or Parquet file")
+	ontologyRecordsImportCmd.Flags().StringVar(&ontologyImportAction, "action", "create", "behavior action used to create each record")
+	ontologyRecordsImportCmd.Flags().StringArrayVar(&ontologyImportExclude, "exclude-field", nil, "input field to omit; repeatable")
+	ontologyRecordsImportCmd.Flags().IntVar(&ontologyImportConcurrency, "concurrency", 0, "parallel action requests (defaults to available CPUs, max 8)")
+	ontologyRecordsImportCmd.Flags().BoolVar(&ontologyImportReplayState, "replay-state", true, "replay behavior transitions to each row's requested state")
+	ontologyRecordsImportCmd.Flags().BoolVar(&ontologyImportDryRun, "dry-run", false, "read and validate the file without executing actions")
+	ontologyRecordsImportCmd.Flags().BoolVarP(&ontologyImportYes, "yes", "y", false, "execute all behavior actions without prompting")
+	ontologyDataStatusCmd.Flags().BoolVar(&ontologyDataStatusEmptyOnly, "empty-only", false, "show only empty ontologies and query errors")
+	ontologyDataStatusCmd.Flags().IntVar(&ontologyDataStatusConcurrency, "concurrency", 6, "parallel row-count queries")
 	filesListCmd.Flags().StringVar(&platformFolderID, "folder-id", "", "folder id to list; omitted means project root")
 	foldersListCmd.Flags().StringVar(&platformFolderID, "folder-id", "", "parent folder id to list; omitted means project root")
 	filePreviewCmd.Flags().IntVar(&platformSheetIndex, "sheet-index", 0, "tabular sheet index to preview")
@@ -1165,7 +1222,11 @@ func registerPlatformResourceCommands() {
 		command.Flags().BoolVar(&platformPayloadStdin, "payload-stdin", false, "read JSON object payload from stdin")
 		command.Flags().BoolVarP(&platformWriteYes, "yes", "y", false, "run the write without prompting")
 	}
+	resourcesQueryCmd.Flags().StringVar(&platformPayloadJSON, "payload-json", "", "JSON object payload for the hosted read")
+	resourcesQueryCmd.Flags().BoolVar(&platformPayloadStdin, "payload-stdin", false, "read JSON object payload from stdin")
 	registerTypedWriteFlags()
+	registerPlatformAppCommands()
+	registerOntologyBehaviorApplyCommand()
 }
 
 func registerTypedWriteFlags() {
@@ -1610,10 +1671,11 @@ func runPlatformResourceWrite(cmd *cobra.Command, input genericResourceWriteInpu
 	if err != nil {
 		return err
 	}
-	_, project, err := resolvePlatformProject(ctx, session, platformResourceOrg, platformResourceProject)
+	org, project, err := resolvePlatformProject(ctx, session, platformResourceOrg, platformResourceProject)
 	if err != nil {
 		return err
 	}
+	session.Client.SetWorkspaceContext(org.ID, project.ID)
 	if strings.TrimSpace(input.ID) != "" {
 		if normalizePlatformResourceToken(input.Resource) == "file" && normalizePlatformResourceToken(input.Action) == "promote_to_dataset" {
 			if resolvedID, err := resolvePlatformResourceID(ctx, session, project.ID, input.Resource, input.ID); err == nil {
@@ -1681,10 +1743,11 @@ func runPlatformFunctionLifecycleWrite(cmd *cobra.Command, functionRef, action s
 	if err != nil {
 		return err
 	}
-	_, project, err := resolvePlatformProject(ctx, session, platformResourceOrg, platformResourceProject)
+	org, project, err := resolvePlatformProject(ctx, session, platformResourceOrg, platformResourceProject)
 	if err != nil {
 		return err
 	}
+	session.Client.SetWorkspaceContext(org.ID, project.ID)
 	functionID, err := resolvePlatformResourceID(ctx, session, project.ID, "function", functionRef)
 	if err != nil {
 		return err
@@ -1770,10 +1833,11 @@ func runPlatformFunctionDeployWrite(cmd *cobra.Command, functionRef, mutation, a
 	if err != nil {
 		return err
 	}
-	_, project, err := resolvePlatformProject(ctx, session, platformResourceOrg, platformResourceProject)
+	org, project, err := resolvePlatformProject(ctx, session, platformResourceOrg, platformResourceProject)
 	if err != nil {
 		return err
 	}
+	session.Client.SetWorkspaceContext(org.ID, project.ID)
 	functionID, err := resolvePlatformResourceID(ctx, session, project.ID, "function", functionRef)
 	if err != nil {
 		return err
@@ -2864,7 +2928,11 @@ func buildGenericResourceVariables(projectID string, input genericResourceWriteI
 					payload["fileId"] = id
 				}
 			} else {
-				payload["id"] = id
+				identityField := spec.IdentityField
+				if identityField == "" {
+					identityField = "id"
+				}
+				payload[identityField] = id
 			}
 		}
 		if spec.Action == "move" && spec.Resource == "file" {

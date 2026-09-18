@@ -44,11 +44,11 @@ func init() {
 		Fields: []PayloadField{{Name: "appId", Type: "ID", Required: true, Description: "App id"}, {Name: "path", Type: "string", Required: true, Description: "File path"}},
 	}
 	PayloadShapes["create:package"] = PayloadShape{
-		Key: "create:package", Resource: "package", Action: "create", Description: "Create an immutable package from selected versionable objects. projectId is injected.",
-		Fields: []PayloadField{{Name: "name", Type: "string", Required: true, Description: "Package name"}, {Name: "version", Type: "string", Description: "Package version"}, {Name: "channel", Type: "string", Description: "Release channel"}, {Name: "description", Type: "string", Description: "Package description"}, {Name: "items", Type: "[PackageItemInput!]", Required: true, Description: "Objects included in the package"}},
+		Key: "create:package", Resource: "package", Action: "create", Description: "Create an immutable package from selected versionable objects. Each item must identify its source project.",
+		Fields: []PayloadField{{Name: "name", Type: "string", Required: true, Description: "Package name"}, {Name: "version", Type: "string", Description: "Package version"}, {Name: "channel", Type: "string", Description: "Release channel"}, {Name: "description", Type: "string", Description: "Package description"}, {Name: "items", Type: "[PackageItemInput!]", Required: true, Description: "Objects included in the package; each item requires sourceProjectId, objectId, and objectType"}},
 	}
 	PayloadShapes["action:install:package"] = PayloadShape{
 		Key: "action:install:package", Resource: "package", Action: "install", Description: "Install a package into the selected project.",
-		Fields: []PayloadField{{Name: "sourceProjectId", Type: "ID", Required: true, Description: "Package source project"}, {Name: "targetProjectId", Type: "ID", Required: true, Description: "Installation target project"}, {Name: "packageId", Type: "ID", Required: true, Description: "Package id"}, {Name: "bindings", Type: "[PackageRequirementBindingInput!]", Description: "Requirement bindings"}},
+		Fields: []PayloadField{{Name: "targetProjectId", Type: "ID", Required: true, Description: "Installation target project"}, {Name: "packageId", Type: "ID", Required: true, Description: "Package id"}, {Name: "bindings", Type: "[PackageRequirementBindingInput!]", Description: "Requirement bindings"}, {Name: "sourceScopeProjectId", Type: "ID", Description: "Optional source project scope for multi-project packages"}},
 	}
 }

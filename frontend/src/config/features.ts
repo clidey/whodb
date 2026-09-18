@@ -15,43 +15,9 @@
  */
 
 import { updateDocumentMeta } from './meta';
+import { defaultFeatures, type FeatureFlags } from './feature-defaults';
 
-// Feature flags control which UI features are active.
-export interface FeatureFlags {
-    analyzeView: boolean;
-    explainView: boolean;
-    generateView: boolean;
-    customTheme: boolean;
-    dataVisualization: boolean;
-    aiChat: boolean;
-    multiProfile: boolean;
-    advancedDatabases: boolean;
-    contactUsPage: boolean;
-    settingsPage: boolean;
-    sampleDatabaseTour: boolean;
-    autoStartTourOnLogin: boolean;
-    sqlAgent: boolean;
-    keyboardShortcutsHelp: boolean;
-    platformFunnel: boolean;
-}
-
-const defaultFeatures: FeatureFlags = {
-    analyzeView: false,
-    explainView: false,
-    generateView: false,
-    customTheme: false,
-    dataVisualization: false,
-    aiChat: false,
-    multiProfile: false,
-    advancedDatabases: false,
-    contactUsPage: true, // Enabled in CE
-    settingsPage: true, // Enabled in CE
-    sampleDatabaseTour: true, // Enabled in CE
-    autoStartTourOnLogin: true, // Enabled in CE
-    sqlAgent: false,
-    keyboardShortcutsHelp: true, // Enabled in CE
-    platformFunnel: false,
-};
+export type { FeatureFlags } from './feature-defaults';
 
 export let featureFlags: FeatureFlags = {} as FeatureFlags;
 export const extensions: Record<string, any> = {};

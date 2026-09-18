@@ -76,7 +76,7 @@ function getEEOverrideIgnores() {
   }
 }
 
-const eeOverrides = getEEOverrideIgnores();
+const eeOverrides = [...getEEOverrideIgnores(), ...(EE_E2E_DIR ? [/\.ce\.spec\.mjs$/] : [])];
 
 /** Shared browser config for standalone projects (launches own Chromium). */
 const standaloneBrowser = {

@@ -41,6 +41,7 @@ type GenericWriteSpec struct {
 	Mutation        string
 	Mode            GenericWriteMode
 	NeedsID         bool
+	IdentityField   string
 	InjectProjectID bool
 }
 
@@ -79,6 +80,8 @@ var GenericWriteSpecs = map[string]GenericWriteSpec{
 	"action:add_record:ontology":                  {Resource: "ontology", Action: "add_record", Mutation: "OntologyAddRow", Mode: GenericWriteModeDirect, NeedsID: true, InjectProjectID: true},
 	"action:update_record:ontology":               {Resource: "ontology", Action: "update_record", Mutation: "OntologyUpdateRow", Mode: GenericWriteModeDirect, NeedsID: true, InjectProjectID: true},
 	"action:delete_record:ontology":               {Resource: "ontology", Action: "delete_record", Mutation: "OntologyDeleteRow", Mode: GenericWriteModeDirect, NeedsID: true, InjectProjectID: true},
+	"action:save_behavior:ontology":               {Resource: "ontology", Action: "save_behavior", Mutation: "SaveBehavior", Mode: GenericWriteModeInput, NeedsID: true, IdentityField: "ontologyId", InjectProjectID: true},
+	"action:execute_behavior:ontology":            {Resource: "ontology", Action: "execute_behavior", Mutation: "ExecuteOntologyAction", Mode: GenericWriteModeInput, NeedsID: true, IdentityField: "ontologyId", InjectProjectID: true},
 	"create:dataset":                              {Resource: "dataset", Action: "create", Mutation: "CreateDataset", Mode: GenericWriteModeInput, InjectProjectID: true},
 	"update:dataset":                              {Resource: "dataset", Action: "update", Mutation: "UpdateDataset", Mode: GenericWriteModeInput, NeedsID: true, InjectProjectID: true},
 	"delete:dataset":                              {Resource: "dataset", Action: "delete", Mutation: "DeleteDataset", Mode: GenericWriteModeProjectID, NeedsID: true},
@@ -125,7 +128,7 @@ var GenericWriteSpecs = map[string]GenericWriteSpec{
 	"action:restore_version_to_draft:ontology":    {Resource: "ontology", Action: "restore_version_to_draft", Mutation: "RestoreOntologyVersionToDraft", Mode: GenericWriteModeDirect, InjectProjectID: true},
 	"action:restore_version_to_draft:dataset":     {Resource: "dataset", Action: "restore_version_to_draft", Mutation: "RestoreDatasetVersionToDraft", Mode: GenericWriteModeDirect, InjectProjectID: true},
 	"action:restore_version_to_draft:transform":   {Resource: "transform", Action: "restore_version_to_draft", Mutation: "RestoreTransformVersionToDraft", Mode: GenericWriteModeDirect, InjectProjectID: true},
-	"create:package":                              {Resource: "package", Action: "create", Mutation: "CreatePackage", Mode: GenericWriteModeInput, InjectProjectID: true},
+	"create:package":                              {Resource: "package", Action: "create", Mutation: "CreatePackage", Mode: GenericWriteModeInput},
 	"action:install:package":                      {Resource: "package", Action: "install", Mutation: "InstallPackage", Mode: GenericWriteModeInput},
 	"action:install_shared:package":               {Resource: "package", Action: "install_shared", Mutation: "InstallSharedPackage", Mode: GenericWriteModeInput},
 	"action:update_installation:package":          {Resource: "package", Action: "update_installation", Mutation: "UpdatePackageInstallation", Mode: GenericWriteModeInput},
@@ -273,6 +276,25 @@ var PayloadShapes = map[string]PayloadShape{
 		},
 		Examples: []string{`{"values":[{"Key":"id","Value":"1"}]}`},
 	},
+	"action:save_behavior:ontology": {
+		Key: "action:save_behavior:ontology", Resource: "ontology", Action: "save_behavior", Description: "Save and activate an ontology behavior. Validation, tests, versioning, and activation happen internally; ontologyId and projectId are injected.",
+		Fields: []PayloadField{
+			{Name: "document", Type: "JSON", Required: true, Description: "Canonical behavior document"},
+			{Name: "expectedRevision", Type: "integer", Required: true, Description: "Current revision used for optimistic concurrency"},
+		},
+		Examples: []string{`{"document":{"api_name":"order","ontology_id":"ontology_123","actions":{}},"expectedRevision":0}`},
+	},
+	"action:execute_behavior:ontology": {
+		Key: "action:execute_behavior:ontology", Resource: "ontology", Action: "execute_behavior", Description: "Execute an active ontology behavior action. ontologyId and projectId are injected.",
+		Fields: []PayloadField{
+			{Name: "recordKey", Type: "string", Description: "Primary record key; omit for create actions"},
+			{Name: "action", Type: "string", Required: true, Description: "Behavior action API name"},
+			{Name: "values", Type: "JSON", Required: true, Description: "Action input values"},
+			{Name: "expectedVersion", Type: "integer", Description: "Expected record version for optimistic concurrency"},
+			{Name: "idempotencyKey", Type: "string", Description: "Idempotency key for idempotent actions"},
+		},
+		Examples: []string{`{"recordKey":"order-1","action":"approve","values":{},"expectedVersion":1}`},
+	},
 	"action:run:transform": {
 		Key: "action:run:transform", Resource: "transform", Action: "run", Description: "Run an existing transform. id and projectId are injected.",
 	},
@@ -309,5 +331,47 @@ var PayloadShapes = map[string]PayloadShape{
 	},
 	"action:redeploy:function": {
 		Key: "action:redeploy:function", Resource: "function", Action: "redeploy", Description: "Redeploy an existing function. id and projectId are injected.",
+	},
+	"action:invite_user:organization": {
+		Key: "action:invite_user:organization", Resource: "organization", Action: "invite_user", Description: "Invite a user to one organization. Resource grants must be provided explicitly and are not inferred from organization membership.",
+		Fields: []PayloadField{
+			{Name: "orgId", Type: "string", Required: true, Description: "Organization id receiving the member"},
+			{Name: "email", Type: "string", Required: true, Description: "Email address to invite"},
+			{Name: "firstName", Type: "string", Description: "Optional first name"},
+			{Name: "lastName", Type: "string", Description: "Optional last name"},
+			{Name: "relation", Type: "string", Required: true, Description: "Organization relation, normally member"},
+			{Name: "grants", Type: "array", Description: "Optional explicit resource grants"},
+		},
+		Examples: []string{`{"orgId":"org_123","email":"user@example.com","relation":"member"}`},
+	},
+	"action:grant_access:organization": {
+		Key: "action:grant_access:organization", Resource: "organization", Action: "grant_access", Description: "Grant a subject an explicit role on one resource.",
+		Fields: []PayloadField{
+			{Name: "resourceType", Type: "string", Required: true, Description: "Resource type"},
+			{Name: "resourceId", Type: "string", Required: true, Description: "Resource id"},
+			{Name: "subject", Type: "string", Required: true, Description: "Authorization subject"},
+			{Name: "relation", Type: "string", Required: true, Description: "Role to grant"},
+		},
+	},
+	"action:revoke_access:organization": {
+		Key: "action:revoke_access:organization", Resource: "organization", Action: "revoke_access", Description: "Revoke a subject's explicit role on one resource.",
+		Fields: []PayloadField{
+			{Name: "resourceType", Type: "string", Required: true, Description: "Resource type"},
+			{Name: "resourceId", Type: "string", Required: true, Description: "Resource id"},
+			{Name: "subject", Type: "string", Required: true, Description: "Authorization subject"},
+			{Name: "relation", Type: "string", Required: true, Description: "Role to revoke"},
+		},
+	},
+	"action:share_by_email:resource": {
+		Key: "action:share_by_email:resource", Resource: "resource", Action: "share_by_email", Description: "Share one resource and any explicitly listed dependent resources by email.",
+		Fields: []PayloadField{
+			{Name: "emails", Type: "array", Required: true, Description: "Recipient email addresses"},
+			{Name: "role", Type: "string", Required: true, Description: "Role on the primary resource"},
+			{Name: "resourceType", Type: "string", Required: true, Description: "Primary resource type"},
+			{Name: "resourceId", Type: "string", Required: true, Description: "Primary resource id"},
+			{Name: "expiresIn", Type: "string", Description: "Optional Go duration"},
+			{Name: "dependents", Type: "array", Description: "Explicit dependent resource grants"},
+		},
+		Examples: []string{`{"emails":["user@example.com"],"role":"viewer","resourceType":"project","resourceId":"project_123","dependents":[{"resourceType":"transform","resourceId":"transform_123","role":"viewer"}]}`},
 	},
 }

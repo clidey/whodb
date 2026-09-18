@@ -501,6 +501,8 @@ func buildPlatformGenericWrite(session *platformToolSession, input PlatformGener
 		if spec.NeedsID {
 			if spec.Mutation == "PromoteFileToDataset" {
 				payload["fileId"] = firstPayloadString(payload, "fileId", id)
+			} else if spec.IdentityField != "" {
+				payload[spec.IdentityField] = id
 			} else {
 				payload["id"] = id
 			}
@@ -534,11 +536,15 @@ func buildPlatformGenericWrite(session *platformToolSession, input PlatformGener
 			variables["projectId"] = session.Host.DefaultProjectID
 		}
 		if spec.NeedsID {
-			switch spec.Mutation {
-			case "OntologyAddRow", "OntologyUpdateRow", "OntologyDeleteRow":
-				variables["entityId"] = id
-			default:
-				variables["id"] = id
+			if spec.IdentityField != "" {
+				variables[spec.IdentityField] = id
+			} else {
+				switch spec.Mutation {
+				case "OntologyAddRow", "OntologyUpdateRow", "OntologyDeleteRow":
+					variables["entityId"] = id
+				default:
+					variables["id"] = id
+				}
 			}
 		}
 	case platformapi.GenericWriteModeFileUpload:

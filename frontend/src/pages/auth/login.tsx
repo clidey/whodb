@@ -44,7 +44,6 @@ import {
 import {Icons} from "../../components/icons";
 import {Loading} from "../../components/loading";
 import {Container} from "../../components/page";
-import {PlatformFunnelLink} from "../../components/platform-funnel-link";
 import {PlatformExplainerDialog} from "../../components/sidebar/platform-explainer-dialog";
 import {updateProfileLastAccessed} from "../../components/profile-info-tooltip";
 import type {SourceTypeItem} from "../../config/source-types";
@@ -1316,8 +1315,6 @@ export const LoginForm: FC<LoginFormProps> = ({
                         <p className="text-xs text-center text-muted-foreground">
                             {t('quickStartFooter')}
                         </p>
-
-                        <PlatformFunnelLink trigger="login_panel" label={t('platformZeroInstallLink')} className="text-center" />
                     </Card>
                 )
             }

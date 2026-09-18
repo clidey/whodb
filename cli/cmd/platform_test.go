@@ -53,6 +53,18 @@ func TestPlatformHostsWithLogin(t *testing.T) {
 	}
 }
 
+func TestPlatformLoginsForHostDoesNotReplaceOtherHosts(t *testing.T) {
+	cfg := &config.Config{CLISection: config.CLISection{Platform: config.PlatformConfig{Hosts: []config.PlatformHost{
+		{URL: "https://app.whodb.com", AccountID: "hosted-user"},
+		{URL: "http://localhost:8080", AccountID: "local-user"},
+	}}}}
+
+	hosts := platformLoginsForHost(cfg, "http://localhost:8080")
+	if len(hosts) != 1 || hosts[0].AccountID != "local-user" {
+		t.Fatalf("platformLoginsForHost() = %#v", hosts)
+	}
+}
+
 func TestConfirmPlatformLoginReplacementSkipsPromptWhenApprovedByFlag(t *testing.T) {
 	approved, err := confirmPlatformLoginReplacement(io.Discard, []config.PlatformHost{
 		{URL: "https://app.whodb.com", AccountID: "user-1"},
@@ -303,6 +315,28 @@ func TestBuildGenericResourceVariablesInjectsProjectAndID(t *testing.T) {
 	}
 	if input["projectId"] != "proj-1" || input["id"] != "dataset-1" || input["name"] != "Customers" {
 		t.Fatalf("input = %#v, want project/id/name injected", input)
+	}
+}
+
+func TestBuildGenericResourceVariablesUsesConfiguredIdentityField(t *testing.T) {
+	payload := map[string]any{"document": map[string]any{"actions": map[string]any{}}, "expectedRevision": 1}
+	spec, variables, err := buildGenericResourceVariables("proj-1", genericResourceWriteInput{
+		Resource: "ontology",
+		Action:   "save_behavior",
+		ID:       "ontology-1",
+	}, payload)
+	if err != nil {
+		t.Fatalf("buildGenericResourceVariables() error = %v", err)
+	}
+	if spec.Mutation != "SaveBehavior" {
+		t.Fatalf("mutation = %q, want SaveBehavior", spec.Mutation)
+	}
+	input, ok := variables["input"].(map[string]any)
+	if !ok {
+		t.Fatalf("variables = %#v, want input object", variables)
+	}
+	if input["projectId"] != "proj-1" || input["ontologyId"] != "ontology-1" || input["id"] != nil {
+		t.Fatalf("input = %#v, want projectId/ontologyId and no id", input)
 	}
 }
 

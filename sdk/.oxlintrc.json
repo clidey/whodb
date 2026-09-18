@@ -1,0 +1,16 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": [],
+  "env": {
+    "node": true
+  },
+  "ignorePatterns": [
+    "**/dist/**",
+    "**/node_modules/**",
+    "**/src/generated/**"
+  ],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error"
+  }
+}

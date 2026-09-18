@@ -91,6 +91,11 @@ on:
         required: false
         type: boolean
         default: false
+      deploy-sdk:
+        description: 'Publish the platform SDKs (npm @clidey/whodb-sdk, PyPI whodb-sdk, crates.io whodb-sdk, Maven com.clidey:whodb-sdk, Go module tag)'
+        required: false
+        type: boolean
+        default: false
       publish-github-release:
         description: 'Publish GitHub release to production (leave unchecked to keep as draft)'
         required: false
@@ -122,6 +127,7 @@ jobs:
       deploy-linux-terminal: ${{ steps.calc.outputs.deploy-linux-terminal }}
       deploy-cli: ${{ steps.calc.outputs.deploy-cli }}
       deploy-npm: ${{ steps.calc.outputs.deploy-npm }}
+      deploy-sdk: ${{ steps.calc.outputs.deploy-sdk }}
       publish-github-release: ${{ steps.calc.outputs.publish-github-release }}
       has-file-assets: ${{ steps.release_flags.outputs.has-file-assets }}
       release-notes: ${{ steps.release_notes.outputs.notes }}
@@ -174,6 +180,7 @@ jobs:
           deploy-linux-terminal: ${{ github.event_name == 'push' && 'true' || (inputs.deploy-linux-terminal && 'true' || 'false') }}
           deploy-cli: ${{ github.event_name == 'push' && 'true' || (inputs.deploy-cli && 'true' || 'false') }}
           deploy-npm: ${{ github.event_name == 'push' && 'true' || (inputs.deploy-npm && 'true' || 'false') }}
+          deploy-sdk: ${{ github.event_name == 'push' && 'true' || (inputs.deploy-sdk && 'true' || 'false') }}
           publish-github-release: ${{ github.event_name == 'push' && 'true' || (inputs.publish-github-release && 'true' || 'false') }}
 
       - name: Validate release target selection
@@ -186,6 +193,7 @@ jobs:
           DEPLOY_LINUX_TERMINAL: ${{ steps.calc.outputs.deploy-linux-terminal }}
           DEPLOY_CLI: ${{ steps.calc.outputs.deploy-cli }}
           DEPLOY_NPM: ${{ steps.calc.outputs.deploy-npm }}
+          DEPLOY_SDK: ${{ steps.calc.outputs.deploy-sdk }}
         run: |
           set -euo pipefail
 
@@ -194,8 +202,9 @@ jobs:
             HAS_FILE_ASSETS=true
           fi
 
-          if [ "$DEPLOY_DOCKER" != "true" ] && [ "$HAS_FILE_ASSETS" != "true" ]; then
-            echo "::error::Select at least one release target: Docker, Snap, Microsoft, Apple, Linux Terminal, CLI, or npm."
+          # SDKs publish to npm/PyPI only — a valid target, but no release-page assets.
+          if [ "$DEPLOY_DOCKER" != "true" ] && [ "$HAS_FILE_ASSETS" != "true" ] && [ "$DEPLOY_SDK" != "true" ]; then
+            echo "::error::Select at least one release target: Docker, Snap, Microsoft, Apple, Linux Terminal, CLI, npm, or SDK."
             exit 1
           fi
 
@@ -255,6 +264,7 @@ jobs:
             echo "| Snap Store | ${{ steps.calc.outputs.deploy-snap }} | stable |"
             echo "| Microsoft Store | ${{ steps.calc.outputs.deploy-microsoft }} | production |"
             echo "| Apple App Store | ${{ steps.calc.outputs.deploy-apple }} | App Store |"
+            echo "| SDKs (npm, PyPI, crates.io, Maven, Go tag) | ${{ steps.calc.outputs.deploy-sdk }} | latest |"
           else
             echo "| Store | Deploy | Channel |"
             echo "|-------|--------|---------|"
@@ -262,6 +272,7 @@ jobs:
             echo "| Snap Store | ${{ steps.calc.outputs.deploy-snap }} | edge |"
             echo "| Microsoft Store | ${{ steps.calc.outputs.deploy-microsoft }} | draft |"
             echo "| Apple App Store | ${{ steps.calc.outputs.deploy-apple }} | TestFlight |"
+            echo "| SDKs (npm, PyPI, crates.io, Maven, Go tag) | ${{ steps.calc.outputs.deploy-sdk }} | version |"
           fi
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -958,6 +969,261 @@ jobs:
     with:
       version: ${{ needs.calculate-version.outputs.version }}
 
+  deploy-sdk-npm:
+    name: Deploy SDK npm
+    needs: [ calculate-version ]
+    if: needs.calculate-version.outputs.deploy-sdk == 'true'
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/_deploy-sdk-npm.yml
+    with:
+      version: ${{ needs.calculate-version.outputs.version }}
+
+  # Inlined (not a reusable workflow) deliberately: PyPI trusted publishing
+  # validates the token against the reusable file but attestation certificates
+  # name the top-level workflow — with workflow_call the two can never both
+  # match, so attestations only work when the job lives directly in this file.
+  # The PyPI trusted publisher must be registered as release-ce.yml.
+  deploy-sdk-pypi:
+    name: Deploy SDK PyPI
+    runs-on: ubuntu-latest
+    needs: [ calculate-version ]
+    if: needs.calculate-version.outputs.deploy-sdk == 'true'
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            files.pythonhosted.org:443
+            fulcio.sigstore.dev:443
+            ghcr.io:443
+            github.com:443
+            nodejs.org:443
+            objects.githubusercontent.com:443
+            pkg-containers.githubusercontent.com:443
+            pypi.org:443
+            registry.npmjs.org:443
+            rekor.sigstore.dev:443
+            timestamp.sigstore.dev:443
+            token.actions.githubusercontent.com:443
+            tuf-repo-cdn.sigstore.dev:443
+            upload.pypi.org:443
+
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          submodules: false
+
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          package_json_file: sdk/package.json
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: '25.6.0'
+
+      - name: Setup Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.13'
+
+      - name: Install workspace deps
+        run: cd sdk && pnpm install --frozen-lockfile
+
+      - name: Verify generated core is current
+        run: cd sdk && node tools/generate-core.mjs --check
+
+      - name: Stamp version
+        env:
+          VERSION: ${{ needs.calculate-version.outputs.version }}
+        run: cd sdk && node tools/sync-versions.mjs --set "$VERSION"
+
+      - name: Build sdist and wheel
+        run: |
+          cd sdk/packages/python
+          python -m pip install --upgrade build
+          python -m build
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        with:
+          packages-dir: sdk/packages/python/dist/
+
+  # Inlined like deploy-sdk-pypi: the crates.io trusted publisher is
+  # registered against release-ce.yml, and the OIDC exchange mints a
+  # 30-minute token — no long-lived registry secret in the repo.
+  deploy-sdk-cargo:
+    name: Deploy SDK crates.io
+    runs-on: ubuntu-latest
+    needs: [ calculate-version ]
+    if: needs.calculate-version.outputs.deploy-sdk == 'true'
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            crates.io:443
+            index.crates.io:443
+            static.crates.io:443
+            static.rust-lang.org:443
+            github.com:443
+            api.github.com:443
+            objects.githubusercontent.com:443
+            token.actions.githubusercontent.com:443
+
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          submodules: false
+
+      - name: Stamp version
+        env:
+          VERSION: ${{ needs.calculate-version.outputs.version }}
+        run: |
+          cd sdk
+          node tools/sync-versions.mjs --set "$VERSION"
+          # Sync the crate's own Cargo.lock entry to the stamped version so
+          # publish --locked doesn't reject the lockfile; dependencies stay
+          # exactly as locked.
+          cd packages/rust && cargo update --workspace
+
+      - name: Authenticate crates.io
+        id: crates-io-auth
+        uses: rust-lang/crates-io-auth-action@bbd81622f20ce9e2dd9622e3218b975523e45bbe # v1.0.4
+
+      # --allow-dirty: the version stamp above deliberately dirties the
+      # checkout (in-repo manifests stay at 0.0.0; versions are stamped only
+      # at release time), which cargo would otherwise refuse to package.
+      - name: Publish to crates.io
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.crates-io-auth.outputs.token }}
+        run: cargo publish --locked --allow-dirty --manifest-path sdk/packages/rust/Cargo.toml
+
+  # Maven Central publish, mirroring the com.clidey:connparse release flow:
+  # setup-java writes the ephemeral settings.xml (server id "central") and
+  # imports the GPG signing key; Central Portal has no OIDC trusted
+  # publishing, so this job carries token secrets (shared with connparse).
+  deploy-sdk-maven:
+    name: Deploy SDK Maven Central
+    runs-on: ubuntu-latest
+    needs: [ calculate-version ]
+    if: needs.calculate-version.outputs.deploy-sdk == 'true'
+    permissions:
+      contents: read
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            api.adoptium.net:443
+            central.sonatype.com:443
+            github.com:443
+            objects.githubusercontent.com:443
+            repo.maven.apache.org:443
+            repo1.maven.org:443
+
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          submodules: false
+
+      - name: Set up JDK
+        uses: actions/setup-java@ad2b38190b15e4d6bdf0c97fb4fca8412226d287 # v5.3.0
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+          cache-dependency-path: sdk/packages/java/pom.xml
+          server-id: central
+          server-username: CENTRAL_USERNAME
+          server-password: CENTRAL_PASSWORD
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
+
+      - name: Stamp version
+        env:
+          VERSION: ${{ needs.calculate-version.outputs.version }}
+        run: cd sdk && node tools/sync-versions.mjs --set "$VERSION"
+
+      - name: Publish to Maven Central
+        env:
+          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+          CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          mask_secret() {
+            local value="$1"
+            value="${value//'%'/'%25'}"
+            value="${value//$'\r'/'%0D'}"
+            value="${value//$'\n'/'%0A'}"
+            echo "::add-mask::$value"
+          }
+          mask_secret "$CENTRAL_USERNAME"
+          mask_secret "$CENTRAL_PASSWORD"
+          mask_secret "$MAVEN_GPG_PASSPHRASE"
+          # waitUntil=validated: auto-publish still proceeds server-side, but
+          # the job returns once Central validates the bundle instead of
+          # polling (sometimes for many minutes) until full publication.
+          mvn -B -f sdk/packages/java/pom.xml -P release -Dcentral.autoPublish=true -Dcentral.waitUntil=validated deploy
+
+  # The Go SDK "publishes" via a git tag: the Go module proxy serves
+  # github.com/clidey/whodb/sdk/packages/go straight from GitHub, and a
+  # subdirectory module needs its path as the tag prefix. Runs only after the
+  # npm and PyPI publishes succeed so all registries agree on the version.
+  deploy-sdk-go-tag:
+    name: Tag Go SDK
+    runs-on: ubuntu-latest
+    needs: [ calculate-version, deploy-sdk-npm, deploy-sdk-pypi, deploy-sdk-cargo, deploy-sdk-maven ]
+    if: |
+      needs.calculate-version.outputs.deploy-sdk == 'true' &&
+      needs.calculate-version.outputs.stage-only != 'true' &&
+      needs.deploy-sdk-npm.result == 'success' &&
+      needs.deploy-sdk-pypi.result == 'success' &&
+      needs.deploy-sdk-cargo.result == 'success' &&
+      needs.deploy-sdk-maven.result == 'success'
+    permissions:
+      contents: write
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            github.com:443
+
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          submodules: false
+
+      - name: Create and push Go module tag
+        env:
+          VERSION: ${{ needs.calculate-version.outputs.version }}
+        run: |
+          TAG="sdk/packages/go/v$VERSION"
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "tag $TAG already exists"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "$TAG" "$GITHUB_SHA"
+          git push origin "refs/tags/$TAG"
+          echo "tagged $TAG at $GITHUB_SHA"
+
   # Post-release housekeeping
   stamp-plugin-version:
     name: Stamp Plugin Version on Main
@@ -1022,6 +1288,11 @@ jobs:
       deploy-microsoft,
       deploy-apple,
       deploy-npm,
+      deploy-sdk-npm,
+      deploy-sdk-pypi,
+      deploy-sdk-cargo,
+      deploy-sdk-maven,
+      deploy-sdk-go-tag,
       create-github-release,
       stamp-plugin-version
     ]
@@ -1115,6 +1386,11 @@ jobs:
           deploy_row "Microsoft Store" "${{ needs.deploy-microsoft.result }}" "${{ needs.calculate-version.outputs.deploy-microsoft }}" "${{ needs.calculate-version.outputs.stage-only == 'true' && 'Draft submission' || 'Submitted for certification' }}"
           deploy_row "Apple App Store" "${{ needs.deploy-apple.result }}" "${{ needs.calculate-version.outputs.deploy-apple }}" "${{ needs.calculate-version.outputs.stage-only == 'true' && 'TestFlight only' || 'Submitted for review' }}"
           deploy_row "npm (@clidey/whodb-cli)" "${{ needs.deploy-npm.result }}" "${{ needs.calculate-version.outputs.deploy-npm }}" "All platform packages"
+          deploy_row "SDK npm (@clidey/whodb-sdk)" "${{ needs.deploy-sdk-npm.result }}" "${{ needs.calculate-version.outputs.deploy-sdk }}" "TypeScript platform SDK"
+          deploy_row "SDK PyPI (whodb-sdk)" "${{ needs.deploy-sdk-pypi.result }}" "${{ needs.calculate-version.outputs.deploy-sdk }}" "Python platform SDK"
+          deploy_row "SDK crates.io (whodb-sdk)" "${{ needs.deploy-sdk-cargo.result }}" "${{ needs.calculate-version.outputs.deploy-sdk }}" "Rust platform SDK"
+          deploy_row "SDK Maven Central (com.clidey:whodb-sdk)" "${{ needs.deploy-sdk-maven.result }}" "${{ needs.calculate-version.outputs.deploy-sdk }}" "Java platform SDK"
+          deploy_row "SDK Go tag (sdk/packages/go)" "${{ needs.deploy-sdk-go-tag.result }}" "${{ needs.calculate-version.outputs.deploy-sdk }}" "Go platform SDK (module proxy serves the tag)"
 
           echo ""
 

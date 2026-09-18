@@ -132,6 +132,11 @@ func (r *mutationResolver) Logout(ctx context.Context) (*model.StatusResponse, e
 	return resp, nil
 }
 
+// ExportSourceConnection is the resolver for the ExportSourceConnection field.
+func (r *mutationResolver) ExportSourceConnection(ctx context.Context, id string, includeSecrets bool) ([]*model.Record, error) {
+	return exportSourceConnection(ctx, id, includeSecrets)
+}
+
 // TestSourceConnection is the resolver for the TestSourceConnection field.
 func (r *mutationResolver) TestSourceConnection(ctx context.Context, credentials model.SourceLoginInput) (*model.StatusResponse, error) {
 	return testSourceConnection(ctx, sourceCredentialsFromInput(credentials))

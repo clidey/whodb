@@ -417,7 +417,7 @@ parts:
     override-build: |
       # The Snap Store has no go/1.27 channel yet. Use the official Go
       # distribution and verify it against the checksum published at go.dev/dl.
-      GO_VERSION=1.27.0
+      GO_VERSION=1.27.1
       case "$(uname -m)" in
         x86_64)
           GO_ARCH=amd64

@@ -68,10 +68,39 @@ func TestValidatePlatformPayloadUsesKnownShapeAndTypes(t *testing.T) {
 	}
 }
 
+func TestValidatePlatformPayloadRequiresPermissionTargets(t *testing.T) {
+	if err := validatePlatformPayload("action:invite_user:organization", map[string]any{
+		"email": "user@example.com", "relation": "member",
+	}); err == nil {
+		t.Fatal("organization invite without orgId was accepted")
+	}
+	if err := validatePlatformPayload("action:invite_user:organization", map[string]any{
+		"orgId": "org-1", "email": "user@example.com", "relation": "member",
+	}); err != nil {
+		t.Fatalf("valid organization invite rejected: %v", err)
+	}
+	if err := validatePlatformPayload("action:share_by_email:resource", map[string]any{
+		"emails": []any{"user@example.com"}, "role": "viewer", "resourceType": "project",
+	}); err == nil {
+		t.Fatal("resource share without resourceId was accepted")
+	}
+	if err := validatePlatformPayload("action:share_by_email:resource", map[string]any{
+		"emails": []any{"user@example.com"}, "role": "viewer", "resourceType": "project", "resourceId": "project-1",
+		"dependents": []any{map[string]any{"resourceType": "transform", "resourceId": "transform-1", "role": "viewer"}},
+	}); err != nil {
+		t.Fatalf("valid resource share rejected: %v", err)
+	}
+}
+
 func TestValidatePlatformManifestMutationIsCapabilityAware(t *testing.T) {
 	manifest := &platformapi.PlatformManifest{Operations: []platformapi.PlatformManifestOperation{{Kind: "Mutation", Name: "CreateDataset"}}}
 	if err := validatePlatformManifestMutation(manifest, "CreateDataset"); err != nil {
 		t.Fatalf("published mutation rejected: %v", err)
+	}
+	for _, mutation := range []string{"GrantAccess", "InviteUser", "RevokeAccess", "ShareByEmail"} {
+		if err := validatePlatformManifestMutation(manifest, mutation); err != nil {
+			t.Fatalf("legacy-compatible mutation %s rejected: %v", mutation, err)
+		}
 	}
 	if err := validatePlatformManifestMutation(manifest, "DeleteDataset"); err == nil {
 		t.Fatal("unpublished mutation accepted")

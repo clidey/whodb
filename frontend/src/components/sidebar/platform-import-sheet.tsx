@@ -25,6 +25,8 @@ import {
     SheetHeader,
     SheetTitle,
 } from "@clidey/ux";
+import { useApolloClient } from "@apollo/client/react";
+import { ExportSourceConnectionDocument } from "@graphql";
 import type { FC } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ANALYTICS_EVENTS } from "@/config/analytics-events";
@@ -51,6 +53,8 @@ export type PlatformImportSheetProps = {
  */
 export const PlatformImportSheet: FC<PlatformImportSheetProps> = ({ open, onOpenChange, trigger }) => {
     const { t } = useTranslation("components/sidebar");
+    const client = useApolloClient();
+    const currentProfileId = useAppSelector(state => state.auth.current?.Id);
     const profiles = useAppSelector(state => state.auth.profiles);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set(profiles.map(profile => profile.Id)));
     const [sendCredentials, setSendCredentials] = useState(false);
@@ -62,11 +66,14 @@ export const PlatformImportSheet: FC<PlatformImportSheetProps> = ({ open, onOpen
     useEffect(() => {
         if (open) {
             stagedRef.current = false;
+            setSelectedIds(new Set(profiles.map(profile => profile.Id)));
+            setSendCredentials(false);
+            setError(false);
             trackPlatformFunnel(ANALYTICS_EVENTS.PLATFORM_IMPORT_OPENED, trigger, {
                 connection_count_bucket: countBucket(profiles.length),
             });
         }
-    }, [open, profiles.length, trigger]);
+    }, [open, profiles, trigger]);
 
     // Distinguishes walking away from completing: dismissed fires only when the
     // sheet closes without a successful staging call.
@@ -107,7 +114,20 @@ export const PlatformImportSheet: FC<PlatformImportSheetProps> = ({ open, onOpen
         setSubmitting(true);
         setError(false);
         try {
-            const connections = selectedProfiles.map(profile => buildImportConnection(profile, sendCredentials));
+            const connections = await Promise.all(selectedProfiles.map(async profile => {
+                if (profile.Id !== currentProfileId) {
+                    return buildImportConnection(profile, sendCredentials);
+                }
+                const { data } = await client.mutate({
+                    mutation: ExportSourceConnectionDocument,
+                    variables: { id: profile.Id, includeSecrets: sendCredentials },
+                    fetchPolicy: "no-cache",
+                });
+                if (!data?.ExportSourceConnection) {
+                    throw new Error("Connection export failed");
+                }
+                return buildImportConnection(profile, sendCredentials, data.ExportSourceConnection);
+            }));
             const { token } = await postConnectionsToPlatform(connections);
             stagedRef.current = true;
             trackPlatformFunnel(ANALYTICS_EVENTS.PLATFORM_IMPORT_STAGED, trigger, {
@@ -167,11 +187,12 @@ export const PlatformImportSheet: FC<PlatformImportSheetProps> = ({ open, onOpen
                 <div className="flex flex-col gap-1">
                     <div className="flex items-start gap-sm">
                         <Checkbox
+                            id="platform-import-credentials"
                             checked={sendCredentials}
                             onCheckedChange={(value) => { setSendCredentials(Boolean(value)); }}
                             data-testid="platform-import-send-credentials"
                         />
-                        <Label className="cursor-pointer" onClick={() => { setSendCredentials(value => !value); }}>
+                        <Label htmlFor="platform-import-credentials" className="cursor-pointer">
                             {t("platformImportSendCredentials")}
                         </Label>
                     </div>

@@ -196,10 +196,7 @@ func matchPlatformResources(items []PlatformResolvedResource, query string) []Pl
 }
 
 func validatePlatformManifestMutation(manifest *platformapi.PlatformManifest, mutation string) error {
-	if manifest == nil || len(manifest.Operations) == 0 {
-		return nil
-	}
-	return manifest.RequireOperation("Mutation", mutation, "platform write "+mutation)
+	return platformapi.ValidatePlatformMutationCapability(manifest, mutation)
 }
 
 func validatePlatformPayload(key string, payload map[string]any) error {
@@ -259,7 +256,7 @@ type PlatformWritePreflight struct {
 }
 
 func platformWritePreflight(ctx context.Context, session *platformToolSession, spec platformapi.GenericWriteSpec, payload map[string]any, targetID string) []PlatformWritePreflight {
-	checks := []PlatformWritePreflight{{Name: "operation_published", Status: "ready", Reason: "The hosted manifest publishes this mutation."}}
+	checks := []PlatformWritePreflight{{Name: "operation_supported", Status: "ready", Reason: "The hosted manifest or compatibility contract supports this mutation."}}
 	if strings.TrimSpace(targetID) != "" {
 		checks = append(checks, PlatformWritePreflight{Name: "target_reference", Status: "ready", Reason: "The write has an explicit target id."})
 	}

@@ -482,7 +482,7 @@ export const Sidebar: FC = () => {
         />
     ) : null;
 
-    // One-time hint that saved connections only live in this browser. Shown
+    // One-time hint about team access to saved connections. Shown
     // once a user has accumulated a few profiles; dismissing it is permanent.
     const backupNudge = featureFlags.platformFunnel && !isEmbedded && !backupHintDismissed && profiles.length >= 3 && open ? (
         <div

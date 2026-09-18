@@ -19,9 +19,9 @@ whodb manifest
 the refresh token in the OS keyring and stores only non-secret account metadata
 in the CLI config.
 
-Only one hosted login is active at a time. If you run `login` while another
-host/account is active, the CLI asks before revoking the old session and
-replacing the local entry.
+The CLI retains one hosted login per host. Signing in to a different host does
+not revoke existing sessions. Signing in again to the same host asks before
+revoking and replacing that host's prior session.
 
 ```bash
 whodb login --host https://app.whodb.com
@@ -52,6 +52,26 @@ whodb use --org <org-id-or-slug> --project <project-id-or-slug>
 ```
 
 Power users can pass `--org` and `--project` directly on `sources` commands.
+
+For independent terminal sessions, set a process-local workspace scope. These
+values are resolved as ids, slugs, or names and do not overwrite the workspace
+saved by `whodb use`:
+
+```bash
+# Terminal 1
+export WHODB_PLATFORM_SESSION_ORG=acme
+export WHODB_PLATFORM_SESSION_PROJECT=analysis
+whodb ontologies list
+
+# Terminal 2
+export WHODB_PLATFORM_SESSION_ORG=acme
+export WHODB_PLATFORM_SESSION_PROJECT=operations
+whodb ontologies list
+```
+
+Set `WHODB_PLATFORM_SESSION_HOST` as well when the session should use a
+non-default host. `WHODB_PLATFORM_SESSION_ORG` and
+`WHODB_PLATFORM_SESSION_PROJECT` must be set together.
 
 `status` shows the current login, workspace selection, manifest, and source
 management capability state.
@@ -143,6 +163,20 @@ Hosted platform MCP mode is opt-in:
 ```bash
 whodb mcp serve --platform
 ```
+
+Each MCP process can select its own host and workspace without changing the
+global default:
+
+```bash
+whodb mcp serve --platform \
+  --platform-host http://localhost:8080 \
+  --platform-org acme \
+  --platform-project analysis
+```
+
+The same `WHODB_PLATFORM_SESSION_HOST`, `WHODB_PLATFORM_SESSION_ORG`, and
+`WHODB_PLATFORM_SESSION_PROJECT` environment variables work for MCP processes,
+which is useful for defining several independent MCP server entries.
 
 The platform tools use the existing hosted login and selected workspace:
 

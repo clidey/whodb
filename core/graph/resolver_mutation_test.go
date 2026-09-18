@@ -17,10 +17,18 @@
 package graph
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
+	"net/http"
+	"net/http/httptest"
+	"reflect"
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/99designs/gqlgen/graphql/handler"
 
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/internal/testutil"
@@ -243,6 +251,107 @@ func TestQuerySourceSessionReturnsNilWithoutSession(t *testing.T) {
 	}
 	if result != nil {
 		t.Fatalf("expected no session, got %#v", result)
+	}
+}
+
+func TestExportSourceConnection(t *testing.T) {
+	if err := auth.InitSessionStore(t.TempDir(), strings.Repeat("01", 32)); err != nil {
+		t.Fatal(err)
+	}
+	id := "connection-1"
+	credentials := &source.Credentials{ID: &id, SourceType: "Postgres", Values: map[string]string{
+		"Hostname": "db.example.test", "Username": "reader", "Database": "reports", "Port": "5433",
+		"Password": "fixture-password", "Search Path": "reporting", "SSL Mode": "verify-full",
+		"SSL Private Key": "fixture-private-key\nsecond-line", "Access Token": "fixture-token",
+		"Passphrase": "fixture-passphrase", "SSL CA Content": "fixture-certificate",
+	}}
+	token, csrf, _, err := auth.CreateSession(credentials, time.Hour)
+	if err != nil {
+		t.Fatal(err)
+	}
+	srv := auth.AuthMiddleware(handler.NewDefaultServer(NewExecutableSchema(Config{Resolvers: &Resolver{}})))
+
+	tests := []struct {
+		name           string
+		id             string
+		includeSecrets bool
+		cookie         bool
+		csrf           bool
+		operationName  string
+		denied         bool
+	}{
+		{name: "details without secrets", id: id, cookie: true, csrf: true, operationName: "ExportSourceConnection"},
+		{name: "explicit secrets", id: id, includeSecrets: true, cookie: true, csrf: true, operationName: "ExportSourceConnection"},
+		{name: "different connection", id: "other-connection", includeSecrets: true, cookie: true, csrf: true, operationName: "ExportSourceConnection", denied: true},
+		{name: "unauthenticated", id: id, includeSecrets: true, operationName: "ExportSourceConnection", denied: true},
+		{name: "missing csrf", id: id, includeSecrets: true, cookie: true, operationName: "ExportSourceConnection", denied: true},
+		{name: "public operation name bypass", id: id, includeSecrets: true, cookie: true, operationName: "SourceProfiles", denied: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			body, err := json.Marshal(map[string]any{
+				"operationName": tt.operationName,
+				"query":         "mutation " + tt.operationName + "($id: String!, $includeSecrets: Boolean!) { ExportSourceConnection(id: $id, includeSecrets: $includeSecrets) { Key Value } }",
+				"variables":     map[string]any{"id": tt.id, "includeSecrets": tt.includeSecrets},
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			req := httptest.NewRequest(http.MethodPost, "/api/query", bytes.NewReader(body))
+			req.Header.Set("Content-Type", "application/json")
+			if tt.cookie {
+				req.AddCookie(&http.Cookie{Name: "whodb_ce_session", Value: token})
+			}
+			if tt.csrf {
+				req.Header.Set("X-Csrf-Token", csrf)
+			}
+			w := httptest.NewRecorder()
+			srv.ServeHTTP(w, req)
+			if tt.denied {
+				if w.Code == http.StatusOK && !strings.Contains(w.Body.String(), `"errors"`) {
+					t.Fatal("expected export to be rejected")
+				}
+				if strings.Contains(w.Body.String(), "fixture-") || strings.Contains(w.Body.String(), "db.example.test") {
+					t.Fatal("rejected export exposed credentials")
+				}
+				return
+			}
+			var result struct {
+				Data struct {
+					Values []struct {
+						Key   string
+						Value string
+					} `json:"ExportSourceConnection"`
+				} `json:"data"`
+				Errors []any `json:"errors"`
+			}
+			if err := json.Unmarshal(w.Body.Bytes(), &result); err != nil {
+				t.Fatal(err)
+			}
+			if w.Code != http.StatusOK || len(result.Errors) > 0 {
+				t.Fatalf("export failed: status %d, errors %v", w.Code, result.Errors)
+			}
+			got := map[string]string{}
+			for _, value := range result.Data.Values {
+				got[value.Key] = value.Value
+			}
+			want := credentials.CloneValues()
+			if !tt.includeSecrets {
+				for _, key := range []string{"Password", "SSL Private Key", "Access Token", "Passphrase"} {
+					want[key] = ""
+				}
+			}
+			if !reflect.DeepEqual(got, want) {
+				t.Fatal("export did not preserve connection details and consent")
+			}
+		})
+	}
+	restored, _, _, err := auth.LookupSession(token, time.Hour)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(restored.Values, credentials.Values) {
+		t.Fatal("export modified stored credentials")
 	}
 }
 

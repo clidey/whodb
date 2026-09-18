@@ -286,7 +286,7 @@ func BuildMetadata(r *http.Request) Metadata {
 		Method:     r.Method,
 		UserAgent:  r.UserAgent(),
 		Referer:    r.Referer(),
-		RequestID:  strings.TrimSpace(r.Header.Get("X-Request-Id")),
+		RequestID:  strings.TrimSpace(r.Header.Get("X-Request-ID")),
 	}
 
 	if r.URL != nil {

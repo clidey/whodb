@@ -1,0 +1,33 @@
+{
+  "comment": "Single cross-language source for coercing stringly-typed DatasetQueryResult/RowsResult cell values into native types, keyed by lowercase column type name. Kinds: int, float, bool, timestamp, date, json, string. Pinned by conformance fixtures.",
+  "rules": {
+    "int": "int",
+    "integer": "int",
+    "bigint": "int",
+    "smallint": "int",
+    "int2": "int",
+    "int4": "int",
+    "int8": "int",
+    "serial": "int",
+    "bigserial": "int",
+    "float": "float",
+    "float4": "float",
+    "float8": "float",
+    "double": "float",
+    "double precision": "float",
+    "real": "float",
+    "numeric": "float",
+    "decimal": "float",
+    "bool": "bool",
+    "boolean": "bool",
+    "timestamp": "timestamp",
+    "timestamptz": "timestamp",
+    "timestamp with time zone": "timestamp",
+    "timestamp without time zone": "timestamp",
+    "datetime": "timestamp",
+    "date": "date",
+    "json": "json",
+    "jsonb": "json"
+  },
+  "default": "string"
+}

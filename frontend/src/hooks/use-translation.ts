@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { type ReactNode, useEffect, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useState } from 'react';
 import { useAppSelector } from '@/store/hooks';
 import { loadTranslationsSync, getTranslation, getPluralCategory } from '@/utils/i18n';
 
@@ -64,7 +64,7 @@ export const useTranslation = (componentPath: string) => {
         (key: string): string;
         (key: string, params: Record<string, string | number>): string;
         (key: string, params: Record<string, ReactNode>): ReactNode;
-    } = (key: string, params?: Record<string, any>): any => {
+    } = useCallback((key: string, params?: Record<string, any>): any => {
         if (typeof params !== 'object' || params === null) {
             return getTranslation(translations, key, language);
         }
@@ -110,7 +110,7 @@ export const useTranslation = (componentPath: string) => {
         }
 
         return parts;
-    };
+    }, [language, translations]);
 
     return { t, language };
 };

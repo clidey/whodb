@@ -20,6 +20,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
+	"regexp"
 	"slices"
 	"strings"
 	"time"
@@ -30,6 +32,7 @@ import (
 	"github.com/clidey/whodb/core/src/analytics"
 	"github.com/clidey/whodb/core/src/audit"
 	"github.com/clidey/whodb/core/src/auth"
+	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/importer"
 	"github.com/clidey/whodb/core/src/log"
@@ -178,6 +181,36 @@ func loginAuditOutcome(err error) audit.Outcome {
 	default:
 		return audit.OutcomeFailure
 	}
+}
+
+var connectionSecretKey = regexp.MustCompile(`(?i)(password|passphrase|secret|token|private key|key content)`)
+
+func exportSourceConnection(ctx context.Context, id string, includeSecrets bool) ([]*model.Record, error) {
+	credentials := auth.GetAuthenticatedSourceCredentials(ctx)
+	if credentials == nil {
+		return nil, errors.New("authenticated source session required")
+	}
+	sessionID := "session:" + credentials.SourceType
+	if credentials.ID != nil {
+		sessionID = *credentials.ID
+	}
+	if id != sessionID {
+		return nil, errors.New("source session changed; reconnect before exporting")
+	}
+	if w, ok := ctx.Value(common.RouterKey_ResponseWriter).(http.ResponseWriter); ok {
+		w.Header().Set("Cache-Control", "no-store")
+	}
+	values := credentials.CloneValues()
+	if !includeSecrets {
+		spec, _ := sourcecatalog.Find(credentials.SourceType)
+		for key := range values {
+			field, _ := spec.ConnectionFieldByKey(key)
+			if connectionSecretKey.MatchString(key) || field.Kind == source.ConnectionFieldKindPassword {
+				values[key] = ""
+			}
+		}
+	}
+	return recordsToModel(values), nil
 }
 
 func testSourceConnection(ctx context.Context, credentials *source.Credentials) (*model.StatusResponse, error) {

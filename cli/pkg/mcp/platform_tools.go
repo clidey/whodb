@@ -40,6 +40,7 @@ var (
 )
 
 type platformClient interface {
+	SetWorkspaceContext(string, string)
 	Me(context.Context) (*platformapi.User, error)
 	PlatformManifest(context.Context) (*platformapi.PlatformManifest, error)
 	Organizations(context.Context) ([]platformapi.Organization, error)
@@ -1585,7 +1586,14 @@ func loadHostedPlatformToolSession(ctx context.Context) (*platformToolSession, e
 	if err != nil {
 		return nil, fmt.Errorf("cannot load hosted WhoDB config: %w", err)
 	}
-	hostURL := strings.TrimSpace(cfg.Platform.DefaultHost)
+	scope := platformapi.SessionScopeFromEnvironment()
+	if err := scope.Validate(); err != nil {
+		return nil, err
+	}
+	hostURL := scope.Host
+	if hostURL == "" {
+		hostURL = strings.TrimSpace(cfg.Platform.DefaultHost)
+	}
 	if hostURL == "" {
 		hostURL = platformapi.DefaultHost
 	}
@@ -1607,6 +1615,10 @@ func loadHostedPlatformToolSession(ctx context.Context) (*platformToolSession, e
 		return nil, fmt.Errorf("cannot load hosted WhoDB platform manifest: %w", err)
 	}
 	client.SetPlatformManifest(manifest)
+	if scope.HasWorkspace() {
+		session := &platformToolSession{Host: *host, Client: client}
+		return applyPlatformToolSessionScope(ctx, session, scope)
+	}
 	autoSelected, changed, err := autoSelectPlatformToolWorkspace(ctx, client, host)
 	if err != nil {
 		return nil, err
@@ -1620,6 +1632,19 @@ func loadHostedPlatformToolSession(ctx context.Context) (*platformToolSession, e
 	}
 	client.SetWorkspaceContext(host.DefaultOrgID, host.DefaultProjectID)
 	return &platformToolSession{Host: *host, Client: client, AutoSelected: autoSelected}, nil
+}
+
+func applyPlatformToolSessionScope(ctx context.Context, session *platformToolSession, scope platformapi.SessionScope) (*platformToolSession, error) {
+	org, project, err := resolvePlatformToolProject(ctx, session, scope.Org, scope.Project)
+	if err != nil {
+		return nil, fmt.Errorf("resolve process-scoped hosted workspace: %w", err)
+	}
+	session.Host.DefaultOrgID = org.ID
+	session.Host.DefaultOrgName = org.Name
+	session.Host.DefaultProjectID = project.ID
+	session.Host.DefaultProjectName = project.Name
+	session.Client.SetWorkspaceContext(org.ID, project.ID)
+	return session, nil
 }
 
 func loadPlatformWorkspace(ctx context.Context) (*platformToolSession, error) {

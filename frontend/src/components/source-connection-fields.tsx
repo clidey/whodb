@@ -231,7 +231,7 @@ export function SourceConnectionFields({
                     )}
                 </div>
             )}
-            <div className={layout === 'login' ? 'contents' : 'grid grid-cols-2 gap-4'}>
+            <div className={layout === 'login' ? 'contents' : 'grid gap-4'}>
                 {usernameField != null && shouldPromoteField(usernameField, promotedKeys) && (
                     <div className={fieldClassName}>
                         <Label htmlFor="source-username">{translate(usernameField.LabelKey)}</Label>

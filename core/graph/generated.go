@@ -282,6 +282,7 @@ type ComplexityRoot struct {
 		CreateSourceObjectFromDefinition func(childComplexity int, parent *model.SourceObjectRefInput, definition model.SourceObjectDefinitionInput) int
 		DeleteSourceRow                  func(childComplexity int, ref model.SourceObjectRefInput, values []*model.RecordInput) int
 		ExecuteConfirmedSQL              func(childComplexity int, query string, operationType string) int
+		ExportSourceConnection           func(childComplexity int, id string, includeSecrets bool) int
 		GenerateAzureADToken             func(childComplexity int, providerID string, sourceType string) int
 		GenerateChatTitle                func(childComplexity int, input model.GenerateChatTitleInput) int
 		GenerateCloudSQLIAMAuthToken     func(childComplexity int, providerID string, username string) int
@@ -620,6 +621,7 @@ type MutationResolver interface {
 	LoginSource(ctx context.Context, credentials model.SourceLoginInput) (*model.StatusResponse, error)
 	LoginWithSourceProfile(ctx context.Context, profile model.SourceProfileLoginInput) (*model.StatusResponse, error)
 	Logout(ctx context.Context) (*model.StatusResponse, error)
+	ExportSourceConnection(ctx context.Context, id string, includeSecrets bool) ([]*model.Record, error)
 	TestSourceConnection(ctx context.Context, credentials model.SourceLoginInput) (*model.StatusResponse, error)
 	UpdateSettings(ctx context.Context, newSettings model.SettingsConfigInput) (*model.StatusResponse, error)
 	CreateSourceObject(ctx context.Context, parent *model.SourceObjectRefInput, name string, fields []*model.RecordInput) (*model.StatusResponse, error)
@@ -1739,6 +1741,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.ExecuteConfirmedSQL(childComplexity, args["query"].(string), args["operationType"].(string)), true
+	case "Mutation.ExportSourceConnection":
+		if e.ComplexityRoot.Mutation.ExportSourceConnection == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_ExportSourceConnection_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.ExportSourceConnection(childComplexity, args["id"].(string), args["includeSecrets"].(bool)), true
 	case "Mutation.GenerateAzureADToken":
 		if e.ComplexityRoot.Mutation.GenerateAzureADToken == nil {
 			break
@@ -4714,6 +4727,28 @@ func (ec *executionContext) field_Mutation_ExecuteConfirmedSQL_args(ctx context.
 		return nil, err
 	}
 	args["operationType"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_ExportSourceConnection_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNString2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "includeSecrets",
+		func(ctx context.Context, v any) (bool, error) {
+			return ec.unmarshalNBoolean2bool(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["includeSecrets"] = arg1
 	return args, nil
 }
 
@@ -9254,6 +9289,50 @@ func (ec *executionContext) fieldContext_Mutation_Logout(_ context.Context, fiel
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return ec.childFields_StatusResponse(ctx, field)
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_ExportSourceConnection(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_ExportSourceConnection(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().ExportSourceConnection(ctx, fc.Args["id"].(string), fc.Args["includeSecrets"].(bool))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.Record) graphql.Marshaler {
+			return ec.marshalNRecord2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐRecordᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_ExportSourceConnection(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Record(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_ExportSourceConnection_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -20055,6 +20134,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "Logout":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_Logout(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "ExportSourceConnection":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_ExportSourceConnection(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++

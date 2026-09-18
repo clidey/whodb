@@ -39,6 +39,8 @@ type PlatformSetupStatusOutput struct {
 	Status            string   `json:"status"`
 	Authenticated     bool     `json:"authenticated"`
 	WorkspaceSelected bool     `json:"workspace_selected"`
+	OrgSelector       string   `json:"org_selector,omitempty"`
+	ProjectSelector   string   `json:"project_selector,omitempty"`
 	Email             string   `json:"email,omitempty"`
 	AccountID         string   `json:"account_id,omitempty"`
 	OrgID             string   `json:"org_id,omitempty"`
@@ -66,6 +68,8 @@ type PlatformDoctorOutput struct {
 	Host                    string   `json:"host,omitempty"`
 	Email                   string   `json:"email,omitempty"`
 	WorkspaceSelected       bool     `json:"workspace_selected"`
+	OrgSelector             string   `json:"org_selector,omitempty"`
+	ProjectSelector         string   `json:"project_selector,omitempty"`
 	OrgID                   string   `json:"org_id,omitempty"`
 	OrgName                 string   `json:"org_name,omitempty"`
 	ProjectID               string   `json:"project_id,omitempty"`
@@ -184,20 +188,36 @@ func HandlePlatformSetupStatus(ctx context.Context, req *mcp.CallToolRequest, in
 }
 
 func buildPlatformSetupStatus(requestID string) PlatformSetupStatusOutput {
+	scope := platformapi.SessionScopeFromEnvironment()
 	host := platformapi.DefaultHost
+	if scope.Host != "" {
+		host = scope.Host
+	}
+	if err := scope.Validate(); err != nil {
+		output := platformSetupStatusFor(host, "config_error")
+		applyPlatformSessionScopeToSetupStatus(&output, scope)
+		applyPlatformSetupGuidance(&output)
+		output.Error = err.Error()
+		output.RequestID = requestID
+		return output
+	}
 	cfg, err := config.LoadConfigWithoutSecrets()
 	if err != nil {
 		output := platformSetupStatusFor(host, "config_error")
+		applyPlatformSessionScopeToSetupStatus(&output, scope)
+		applyPlatformSetupGuidance(&output)
 		output.Error = fmt.Sprintf("cannot load hosted WhoDB config: %v", err)
 		output.RequestID = requestID
 		return output
 	}
-	if strings.TrimSpace(cfg.Platform.DefaultHost) != "" {
+	if scope.Host == "" && strings.TrimSpace(cfg.Platform.DefaultHost) != "" {
 		host = cfg.Platform.DefaultHost
 	}
 	normalizedHost, err := platformapi.NormalizeHost(host)
 	if err != nil {
 		output := platformSetupStatusFor(platformapi.DefaultHost, "config_error")
+		applyPlatformSessionScopeToSetupStatus(&output, scope)
+		applyPlatformSetupGuidance(&output)
 		output.Error = err.Error()
 		output.RequestID = requestID
 		return output
@@ -206,6 +226,8 @@ func buildPlatformSetupStatus(requestID string) PlatformSetupStatusOutput {
 	entry, ok := cfg.GetPlatformHost(host)
 	if !ok || strings.TrimSpace(entry.AccountID) == "" {
 		output := platformSetupStatusFor(host, "needs_login")
+		applyPlatformSessionScopeToSetupStatus(&output, scope)
+		applyPlatformSetupGuidance(&output)
 		output.RequestID = requestID
 		return output
 	}
@@ -219,6 +241,7 @@ func buildPlatformSetupStatus(requestID string) PlatformSetupStatusOutput {
 	output.ProjectID = entry.DefaultProjectID
 	output.ProjectName = entry.DefaultProjectName
 	output.WorkspaceSelected = strings.TrimSpace(entry.DefaultOrgID) != "" && strings.TrimSpace(entry.DefaultProjectID) != ""
+	applyPlatformSessionScopeToSetupStatus(&output, scope)
 
 	if _, err := cfg.GetPlatformRefreshToken(host, entry.AccountID); err != nil {
 		output.Authenticated = false
@@ -232,6 +255,19 @@ func buildPlatformSetupStatus(requestID string) PlatformSetupStatusOutput {
 	applyPlatformSetupGuidance(&output)
 	output.RequestID = requestID
 	return output
+}
+
+func applyPlatformSessionScopeToSetupStatus(output *PlatformSetupStatusOutput, scope platformapi.SessionScope) {
+	if !scope.HasWorkspace() {
+		return
+	}
+	output.OrgSelector = scope.Org
+	output.ProjectSelector = scope.Project
+	output.OrgID = ""
+	output.OrgName = ""
+	output.ProjectID = ""
+	output.ProjectName = ""
+	output.WorkspaceSelected = true
 }
 
 func platformSetupStatusFor(host, status string) PlatformSetupStatusOutput {
@@ -294,10 +330,11 @@ func applyPlatformSetupGuidance(output *PlatformSetupStatusOutput) {
 			"Ask the user to run: " + useCommand,
 		}
 	default:
-		output.Commands = []string{loginCommand, useCommand}
-		output.NextSteps = []string{
-			"Ask the user to run: " + loginCommand,
-			"Then ask the user to select a workspace with: " + useCommand,
+		output.Commands = []string{loginCommand}
+		output.NextSteps = []string{"Ask the user to run: " + loginCommand}
+		if !output.WorkspaceSelected {
+			output.Commands = append(output.Commands, useCommand)
+			output.NextSteps = append(output.NextSteps, "Then ask the user to select a workspace with: "+useCommand)
 		}
 		if output.Status == "" {
 			output.Status = "needs_login"
@@ -317,6 +354,8 @@ func HandlePlatformDoctor(ctx context.Context, req *mcp.CallToolRequest, input P
 			Host:              setup.Host,
 			Email:             setup.Email,
 			WorkspaceSelected: setup.WorkspaceSelected,
+			OrgSelector:       setup.OrgSelector,
+			ProjectSelector:   setup.ProjectSelector,
 			OrgID:             setup.OrgID,
 			OrgName:           setup.OrgName,
 			ProjectID:         setup.ProjectID,

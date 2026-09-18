@@ -94,7 +94,7 @@ func TestBuildMetadataPrefersOriginAndStripsPort(t *testing.T) {
 	req.Header.Set("Origin", "https://frontend.local:3000")
 	req.Header.Set("User-Agent", "test-agent")
 	req.Header.Set("Referer", "https://frontend.local/dashboard")
-	req.Header.Set("X-Request-Id", "req-123")
+	req.Header.Set("X-Request-ID", "req-123")
 
 	metadata := BuildMetadata(req)
 

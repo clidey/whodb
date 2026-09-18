@@ -1,0 +1,64 @@
+{
+  "fixtures": [
+    {
+      "name": "capabilities address behavior by ontology ID",
+      "call": { "domain": "ontology", "handle": "Order", "method": "capabilities", "args": ["order-1"] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "OntologyEntities" },
+          "response": { "data": { "OntologyEntities": [ { "id": "order-entity", "apiName": "Order", "primaryKey": "id", "properties": [], "links": [] } ] } }
+        },
+        {
+          "expectRequest": { "operation": "OntologyRecordCapabilities", "variablesContain": { "ontologyId": "order-entity", "recordKey": "order-1" } },
+          "response": { "data": { "OntologyRecordCapabilities": { "behaviorVersion": 3, "recordVersion": 7, "currentState": "pending", "readableProperties": ["id", "status"], "writableProperties": ["notes"], "actions": [ { "apiName": "approve", "allowed": true, "denialCode": null } ] } } }
+        }
+      ],
+      "expectResult": { "behaviorVersion": 3, "recordVersion": 7, "currentState": "pending", "readableProperties": ["id", "status"], "writableProperties": ["notes"], "actions": [ { "apiName": "approve", "allowed": true, "denialCode": null } ] }
+    },
+    {
+      "name": "previewAction sends values without mutating",
+      "call": { "domain": "ontology", "handle": "Order", "method": "previewAction", "args": ["approve", "order-1", { "note": "ok" }] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "OntologyEntities" },
+          "response": { "data": { "OntologyEntities": [ { "id": "order-entity", "apiName": "Order", "primaryKey": "id", "properties": [], "links": [] } ] } }
+        },
+        {
+          "expectRequest": { "operation": "PreviewOntologyAction", "inputContains": { "ontologyId": "order-entity", "recordKey": "order-1", "action": "approve", "values": { "note": "ok" } } },
+          "response": { "data": { "PreviewOntologyAction": { "allowed": true, "denialCode": null, "proposedChanges": { "status": "approved" }, "emittedEvents": ["order.approved"] } } }
+        }
+      ],
+      "expectResult": { "allowed": true, "denialCode": null, "proposedChanges": { "status": "approved" }, "emittedEvents": ["order.approved"] }
+    },
+    {
+      "name": "action forwards concurrency and idempotency controls",
+      "call": { "domain": "ontology", "handle": "Order", "method": "action", "args": ["approve", "order-1", { "note": "ok" }, { "expectedVersion": 7, "idempotencyKey": "approve-1" }] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "OntologyEntities" },
+          "response": { "data": { "OntologyEntities": [ { "id": "order-entity", "apiName": "Order", "primaryKey": "id", "properties": [], "links": [] } ] } }
+        },
+        {
+          "expectRequest": { "operation": "ExecuteOntologyAction", "inputContains": { "ontologyId": "order-entity", "recordKey": "order-1", "action": "approve", "values": { "note": "ok" }, "expectedVersion": 7, "idempotencyKey": "approve-1" } },
+          "response": { "data": { "ExecuteOntologyAction": { "executionId": "exec-1", "allowed": true, "denialCode": null, "recordChanges": { "status": "approved" }, "recordVersion": 8, "emittedEventIds": ["event-1"], "validationErrors": [] } } }
+        }
+      ],
+      "expectResult": { "executionId": "exec-1", "allowed": true, "denialCode": null, "recordChanges": { "status": "approved" }, "recordVersion": 8, "emittedEventIds": ["event-1"], "validationErrors": [] }
+    },
+    {
+      "name": "actionExecutions returns record history",
+      "call": { "domain": "ontology", "handle": "Order", "method": "actionExecutions", "args": ["order-1", 20] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "OntologyEntities" },
+          "response": { "data": { "OntologyEntities": [ { "id": "order-entity", "apiName": "Order", "primaryKey": "id", "properties": [], "links": [] } ] } }
+        },
+        {
+          "expectRequest": { "operation": "OntologyActionExecutions", "variablesContain": { "ontologyId": "order-entity", "recordKey": "order-1", "limit": 20 } },
+          "response": { "data": { "OntologyActionExecutions": [ { "id": "exec-1", "ontologyId": "order-entity", "recordKey": "order-1", "actionName": "approve", "behaviorVersionId": "version-3", "actorId": "user-1", "status": "COMMITTED", "resultSummary": { "allowed": true }, "createdAt": "2026-09-06T10:00:00Z" } ] } }
+        }
+      ],
+      "expectResult": [ { "id": "exec-1", "ontologyId": "order-entity", "recordKey": "order-1", "actionName": "approve", "behaviorVersionId": "version-3", "actorId": "user-1", "status": "COMMITTED", "resultSummary": { "allowed": true }, "createdAt": "2026-09-06T10:00:00Z" } ]
+    }
+  ]
+}

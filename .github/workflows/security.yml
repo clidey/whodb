@@ -43,10 +43,10 @@ jobs:
       - name: Install Go security tools
         uses: ./.github/actions/install-go-tools
         with:
-          cache-key: go-security-tools-gosec-v2.27.1-govulncheck-v1.3.0
+          cache-key: go-security-tools-gosec-v2.29.0-govulncheck-v1.8.0
           tools: |
-            gosec|github.com/securego/gosec/v2/cmd/gosec|v2.27.1
-            govulncheck|golang.org/x/vuln/cmd/govulncheck|v1.3.0
+            gosec|github.com/securego/gosec/v2/cmd/gosec|v2.29.0
+            govulncheck|golang.org/x/vuln/cmd/govulncheck|v1.8.0
 
       - name: Gitleaks
         uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0

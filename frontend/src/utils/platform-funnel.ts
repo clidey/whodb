@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-import type { LocalLoginProfile } from "@/store/auth";
+import type { LocalLoginProfile, SourceCredentialValue } from "@/store/auth";
+import { isSecretCredentialKey } from "./credential-secrets";
+import { valuesToMap } from "./source-credentials";
 
 /** The WhoDB Platform (hosted) base URL. */
 export const PLATFORM_URL = "https://app.whodb.com";
@@ -26,13 +28,7 @@ export const PLATFORM_IMPORT_ENDPOINT = `${PLATFORM_URL}/api/ce-import`;
 export type PlatformFunnelTrigger =
     | "sidebar"
     | "source_picker"
-    | "backup_nudge"
-    | "chat_no_model"
-    | "chat_chart"
-    | "ai_provider_sheet"
-    | "export"
-    | "settings"
-    | "login_panel";
+    | "backup_nudge";
 
 /**
  * Builds an attributed WhoDB Platform URL. Every outbound platform link carries
@@ -81,23 +77,31 @@ export type PlatformImportStageResult = {
 /**
  * Maps a saved CE connection profile to the platform import shape. Port is
  * pulled out of the profile's advanced values (where connectors store it) and
- * the remaining advanced entries are carried through. The password travels only
- * when `includePassword` is true.
+ * the remaining advanced entries are carried through. Secret values travel only
+ * with consent; otherwise their keys remain with empty values for re-entry.
+ * For the active connection, sessionValues supplies the server-owned credentials.
  */
-export const buildImportConnection = (profile: LocalLoginProfile, includePassword: boolean): PlatformImportConnection => {
-    const advanced = profile.Advanced ?? [];
+export const buildImportConnection = (profile: LocalLoginProfile, includeCredentials: boolean, sessionValues?: SourceCredentialValue[]): PlatformImportConnection => {
+    const values = sessionValues ? valuesToMap(sessionValues) : null;
+    const advanced = sessionValues
+        ? sessionValues.filter(({ Key }) => !["Hostname", "Database", "Username", "Password"].includes(Key))
+        : profile.Advanced;
+    const password = values ? values.Password : profile.Password;
     const port = advanced.find(value => value.Key === "Port")?.Value ?? "";
     const rest = advanced
         .filter(value => value.Key !== "Port")
-        .map(value => ({ Key: value.Key, Value: value.Value }));
+        .map(value => ({
+            Key: value.Key,
+            Value: !includeCredentials && isSecretCredentialKey(value.Key) ? "" : value.Value,
+        }));
     return {
         name: profile.DisplayName ?? profile.Id,
         databaseType: profile.Type,
-        hostname: profile.Hostname,
+        hostname: values ? values.Hostname ?? "" : profile.Hostname,
         port,
-        username: profile.Username,
-        ...(includePassword && profile.Password ? { password: profile.Password } : {}),
-        database: profile.Database,
+        username: values ? values.Username ?? "" : profile.Username,
+        ...(includeCredentials && password ? { password } : {}),
+        database: values ? values.Database ?? "" : profile.Database,
         advanced: rest,
     };
 };

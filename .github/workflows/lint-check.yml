@@ -23,9 +23,9 @@ jobs:
       - name: Install golangci-lint
         uses: ./.github/actions/install-go-tools
         with:
-          cache-key: golangci-lint-v2.12.2
+          cache-key: golangci-lint-v2.13.2
           tools: |
-            golangci-lint|github.com/golangci/golangci-lint/v2/cmd/golangci-lint|v2.12.2
+            golangci-lint|github.com/golangci/golangci-lint/v2/cmd/golangci-lint|v2.13.2
 
       - name: Lint
         run: |
@@ -46,9 +46,9 @@ jobs:
       - name: Install golangci-lint
         uses: ./.github/actions/install-go-tools
         with:
-          cache-key: golangci-lint-v2.12.2
+          cache-key: golangci-lint-v2.13.2
           tools: |
-            golangci-lint|github.com/golangci/golangci-lint/v2/cmd/golangci-lint|v2.12.2
+            golangci-lint|github.com/golangci/golangci-lint/v2/cmd/golangci-lint|v2.13.2
 
       - name: Lint
         run: |
@@ -120,6 +120,132 @@ jobs:
 
       - name: Build
         run: cd frontend && pnpm build:ce
+
+  sdk-check:
+    name: SDK Generate Check & Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          package_json_file: sdk/package.json
+          run_install: false
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: '25.6.0'
+          cache: pnpm
+          cache-dependency-path: sdk/pnpm-lock.yaml
+
+      - name: Install
+        run: cd sdk && pnpm install --frozen-lockfile
+
+      # Generated cores must match the committed spec snapshot exactly
+      # (SDK_DESIGN.md §2.2 drift gate) and package versions must be lockstep.
+      - name: Generate check
+        run: cd sdk && node tools/generate-core.mjs --check
+
+      - name: Version lockstep check
+        run: cd sdk && node tools/sync-versions.mjs --check
+
+      - name: Lint (TypeScript + tools)
+        run: cd sdk && pnpm lint
+
+      - name: Build
+        run: cd sdk && pnpm -r --if-present run build
+
+      # Installs the SDK's own dependencies from pyproject.toml (httpx, plus
+      # ruff via the dev extra) so versions have one source of truth that
+      # dependabot already watches.
+      - name: Install Python deps
+        run: python3 -m pip install --user -e 'sdk/packages/python[dev]'
+
+      - name: Lint (Python)
+        run: cd sdk/packages/python && python3 -m ruff check .
+
+      - name: Tests
+        run: cd sdk && pnpm -r test
+
+      # Consumption tests of the BUILT artifacts (npm tarball, Python wheel):
+      # catches broken exports maps / packaging that source-tree tests miss.
+      - name: Pack test (TypeScript)
+        run: cd sdk/packages/typescript && node scripts/pack-test.mjs
+
+      - name: Pack test (Python wheel)
+        run: bash sdk/packages/python/scripts/pack_test.sh
+
+      - name: Conformance (TypeScript)
+        run: cd sdk && node tools/conformance-runner.mjs --lang ts
+
+      - name: Conformance (Python)
+        run: cd sdk && node tools/conformance-runner.mjs --lang python
+
+      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        with:
+          go-version-file: core/go.mod
+          cache-dependency-path: sdk/packages/go/go.mod
+
+      - name: Install Go lint/security tools
+        uses: ./.github/actions/install-go-tools
+        with:
+          cache-key: sdk-go-tools-golangci-v2.13.2-govulncheck-v1.8.0
+          tools: |
+            golangci-lint|github.com/golangci/golangci-lint/v2/cmd/golangci-lint|v2.13.2
+            govulncheck|golang.org/x/vuln/cmd/govulncheck|v1.8.0
+
+      - name: Go SDK build, vet, test
+        env:
+          GOWORK: off
+        run: cd sdk/packages/go && go build ./... && go vet ./... && go test -race ./...
+
+      - name: Go SDK lint + vulnerability scan
+        env:
+          GOWORK: off
+        run: |
+          cd sdk/packages/go
+          golangci-lint run ./...
+          govulncheck ./...
+
+      - name: Conformance (Go)
+        env:
+          GOWORK: off
+        run: cd sdk && node tools/conformance-runner.mjs --lang go
+
+      - name: Cache cargo-audit
+        id: cargo-audit-cache
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: ~/.cargo/bin/cargo-audit
+          key: ${{ runner.os }}-cargo-audit-0.22.2
+
+      - name: Install cargo-audit
+        if: steps.cargo-audit-cache.outputs.cache-hit != 'true'
+        run: cargo install cargo-audit --locked --version 0.22.2
+
+      - name: Rust SDK build, clippy, test, audit
+        run: |
+          cd sdk/packages/rust
+          cargo fmt --check
+          cargo clippy --all-targets -- -D warnings
+          cargo test
+          cargo audit
+
+      - name: Conformance (Rust)
+        run: cd sdk && node tools/conformance-runner.mjs --lang rust
+
+      - uses: actions/setup-java@ad2b38190b15e4d6bdf0c97fb4fca8412226d287 # v5.3.0
+        with:
+          distribution: oracle
+          java-version: '25'
+          cache: maven
+          cache-dependency-path: sdk/packages/java/pom.xml
+
+      - name: Java SDK build and test
+        run: cd sdk/packages/java && mvn -q --batch-mode verify
+
+      - name: Conformance (Java)
+        run: cd sdk && node tools/conformance-runner.mjs --lang java
 
   frontend-lint:
     name: Frontend Lint & Typecheck

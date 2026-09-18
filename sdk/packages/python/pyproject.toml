@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "whodb-sdk"
+version = "0.0.0"
+description = "Official Python SDK for the WhoDB hosted platform — ontology, datasets, and sources as in-code function APIs"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.10"
+dependencies = ["httpx>=0.27"]
+authors = [{ name = "Clidey, Inc." }]
+keywords = ["whodb", "ontology", "data", "sdk"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+[project.optional-dependencies]
+dev = ["ruff==0.16.7"]
+
+[project.urls]
+Homepage = "https://whodb.com"
+Repository = "https://github.com/clidey/whodb"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+target-version = "py310"
+extend-exclude = ["src/whodb/_generated", "build"]
+
+[tool.ruff.lint]
+# E/F/W = core correctness+style, B = bugbear, S = bandit security rules,
+# UP = modern-python upgrades, I = import sorting.
+select = ["E", "F", "W", "B", "S", "UP", "I"]
+ignore = [
+    "E501", # line length — not enforced for this codebase
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests and the conformance runner use assert and obviously-fake tokens.
+"tests/*" = ["S101", "S106"]
+"scripts/*" = ["S101"]
