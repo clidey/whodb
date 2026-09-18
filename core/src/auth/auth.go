@@ -38,6 +38,8 @@ import (
 
 type AuthKey string
 
+type authenticatedSourceKey struct{}
+
 const (
 	AuthKey_Token  AuthKey = "Token"
 	AuthKey_Source AuthKey = "SourceCredentials"
@@ -53,6 +55,15 @@ func GetSourceCredentials(ctx context.Context) *source.Credentials {
 		return nil
 	}
 	return credentials.(*source.Credentials)
+}
+
+// GetAuthenticatedSourceCredentials returns credentials only after the request
+// passed authentication and CSRF checks, excluding public-operation session hints.
+func GetAuthenticatedSourceCredentials(ctx context.Context) *source.Credentials {
+	if authenticated, _ := ctx.Value(authenticatedSourceKey{}).(bool); !authenticated {
+		return nil
+	}
+	return GetSourceCredentials(ctx)
 }
 
 func isPublicRoute(r *http.Request) bool {
@@ -245,6 +256,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 
 		ctx := r.Context()
 		ctx = context.WithValue(ctx, AuthKey_Source, credentials)
+		ctx = context.WithValue(ctx, authenticatedSourceKey{}, true)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -284,6 +296,7 @@ func serveWithSessionCookie(w http.ResponseWriter, r *http.Request, next http.Ha
 	}
 
 	ctx := context.WithValue(r.Context(), AuthKey_Source, credentials)
+	ctx = context.WithValue(ctx, authenticatedSourceKey{}, true)
 	next.ServeHTTP(w, r.WithContext(ctx))
 	return true
 }

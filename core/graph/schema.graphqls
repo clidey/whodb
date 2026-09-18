@@ -655,7 +655,7 @@ type SourceSessionMetadata {
 }
 
 # Safe UI state for the active source session. Credentials and connection
-# details remain server-side and are never returned to the browser.
+# details are excluded from normal session restoration.
 type SourceSession {
   Id: String
   SourceType: String!
@@ -963,6 +963,8 @@ type Mutation {
   LoginSource(credentials: SourceLoginInput!): StatusResponse!
   LoginWithSourceProfile(profile: SourceProfileLoginInput!): StatusResponse!
   Logout: StatusResponse!
+  # Explicitly exports the authenticated connection; secrets require consent.
+  ExportSourceConnection(id: String!, includeSecrets: Boolean!): [Record!]!
   TestSourceConnection(credentials: SourceLoginInput!): StatusResponse!
   UpdateSettings(newSettings: SettingsConfigInput!): StatusResponse!
 

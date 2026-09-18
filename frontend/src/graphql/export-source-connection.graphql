@@ -1,0 +1,6 @@
+mutation ExportSourceConnection($id: String!, $includeSecrets: Boolean!) {
+  ExportSourceConnection(id: $id, includeSecrets: $includeSecrets) {
+    Key
+    Value
+  }
+}

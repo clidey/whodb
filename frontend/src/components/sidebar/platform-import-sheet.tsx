@@ -25,6 +25,8 @@ import {
     SheetHeader,
     SheetTitle,
 } from "@clidey/ux";
+import { useApolloClient } from "@apollo/client/react";
+import { ExportSourceConnectionDocument } from "@graphql";
 import type { FC } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ANALYTICS_EVENTS } from "@/config/analytics-events";
@@ -51,6 +53,8 @@ export type PlatformImportSheetProps = {
  */
 export const PlatformImportSheet: FC<PlatformImportSheetProps> = ({ open, onOpenChange, trigger }) => {
     const { t } = useTranslation("components/sidebar");
+    const client = useApolloClient();
+    const currentProfileId = useAppSelector(state => state.auth.current?.Id);
     const profiles = useAppSelector(state => state.auth.profiles);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set(profiles.map(profile => profile.Id)));
     const [sendCredentials, setSendCredentials] = useState(false);
@@ -110,7 +114,20 @@ export const PlatformImportSheet: FC<PlatformImportSheetProps> = ({ open, onOpen
         setSubmitting(true);
         setError(false);
         try {
-            const connections = selectedProfiles.map(profile => buildImportConnection(profile, sendCredentials));
+            const connections = await Promise.all(selectedProfiles.map(async profile => {
+                if (profile.Id !== currentProfileId) {
+                    return buildImportConnection(profile, sendCredentials);
+                }
+                const { data } = await client.mutate({
+                    mutation: ExportSourceConnectionDocument,
+                    variables: { id: profile.Id, includeSecrets: sendCredentials },
+                    fetchPolicy: "no-cache",
+                });
+                if (!data?.ExportSourceConnection) {
+                    throw new Error("Connection export failed");
+                }
+                return buildImportConnection(profile, sendCredentials, data.ExportSourceConnection);
+            }));
             const { token } = await postConnectionsToPlatform(connections);
             stagedRef.current = true;
             trackPlatformFunnel(ANALYTICS_EVENTS.PLATFORM_IMPORT_STAGED, trigger, {

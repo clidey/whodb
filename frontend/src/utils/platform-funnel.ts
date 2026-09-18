@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import type { LocalLoginProfile } from "@/store/auth";
+import type { LocalLoginProfile, SourceCredentialValue } from "@/store/auth";
 import { isSecretCredentialKey } from "./credential-secrets";
+import { valuesToMap } from "./source-credentials";
 
 /** The WhoDB Platform (hosted) base URL. */
 export const PLATFORM_URL = "https://app.whodb.com";
@@ -78,9 +79,14 @@ export type PlatformImportStageResult = {
  * pulled out of the profile's advanced values (where connectors store it) and
  * the remaining advanced entries are carried through. Secret values travel only
  * with consent; otherwise their keys remain with empty values for re-entry.
+ * For the active connection, sessionValues supplies the server-owned credentials.
  */
-export const buildImportConnection = (profile: LocalLoginProfile, includeCredentials: boolean): PlatformImportConnection => {
-    const advanced = profile.Advanced ?? [];
+export const buildImportConnection = (profile: LocalLoginProfile, includeCredentials: boolean, sessionValues?: SourceCredentialValue[]): PlatformImportConnection => {
+    const values = sessionValues ? valuesToMap(sessionValues) : null;
+    const advanced = sessionValues
+        ? sessionValues.filter(({ Key }) => !["Hostname", "Database", "Username", "Password"].includes(Key))
+        : profile.Advanced;
+    const password = values ? values.Password : profile.Password;
     const port = advanced.find(value => value.Key === "Port")?.Value ?? "";
     const rest = advanced
         .filter(value => value.Key !== "Port")
@@ -91,11 +97,11 @@ export const buildImportConnection = (profile: LocalLoginProfile, includeCredent
     return {
         name: profile.DisplayName ?? profile.Id,
         databaseType: profile.Type,
-        hostname: profile.Hostname,
+        hostname: values ? values.Hostname ?? "" : profile.Hostname,
         port,
-        username: profile.Username,
-        ...(includeCredentials && profile.Password ? { password: profile.Password } : {}),
-        database: profile.Database,
+        username: values ? values.Username ?? "" : profile.Username,
+        ...(includeCredentials && password ? { password } : {}),
+        database: values ? values.Database ?? "" : profile.Database,
         advanced: rest,
     };
 };

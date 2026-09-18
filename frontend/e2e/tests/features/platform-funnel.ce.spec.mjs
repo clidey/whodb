@@ -37,6 +37,7 @@ test('explicit credential consent includes passwords and advanced secrets', () =
 test('sidebar import defaults to no secrets and resets consent when reopened', async ({ page }) => {
     await page.addInitScript(() => localStorage.setItem('whodb.analytics.consent', 'denied'));
     await page.route('**/api/query', route => route.fulfill({ json: { data: {
+        ExportSourceConnection: [{ Key: 'Database', Value: 'reports' }],
         SourceTypes: [], SourceProfiles: [], SourceSession: { id: profile.Id, sourceType: 'Postgres', database: 'reports' },
         SourceSessionMetadata: { sourceType: 'Postgres', queryLanguages: [], typeDefinitions: [], operators: [], aliasMap: [] },
         SettingsConfig: { CloudProvidersEnabled: false, AWSProviderEnabled: false, AzureProviderEnabled: false, GCPProviderEnabled: false, DisableCredentialForm: false, MaxPageSize: 10000 },
@@ -61,6 +62,51 @@ test('sidebar import defaults to no secrets and resets consent when reopened', a
     await expect.poll(() => submitted).toBeDefined();
     expect(submitted.connections[0]).not.toHaveProperty('password');
 });
+
+for (const includeSecrets of [false, true]) {
+    test(`reloaded browser session exports connection details (secrets: ${includeSecrets})`, async ({ page }) => {
+        await page.addInitScript(() => localStorage.setItem('whodb.analytics.consent', 'denied'));
+        const values = [
+            { Key: 'Hostname', Value: profile.Hostname },
+            { Key: 'Username', Value: profile.Username },
+            { Key: 'Password', Value: profile.Password },
+            { Key: 'Database', Value: profile.Database },
+            ...profile.Advanced,
+        ];
+        let exportVariables;
+        await page.route('**/api/query', route => {
+            const request = route.request().postDataJSON();
+            if (request.operationName === 'ExportSourceConnection') {
+                exportVariables = request.variables;
+                return route.fulfill({ json: { data: { ExportSourceConnection: values } } });
+            }
+            return route.fulfill({ json: { data: {
+                SourceTypes: [], SourceProfiles: [],
+                SourceSession: { id: profile.Id, sourceType: profile.Type, database: profile.Database },
+                SourceSessionMetadata: { sourceType: profile.Type, queryLanguages: [], typeDefinitions: [], operators: [], aliasMap: [] },
+                SettingsConfig: { CloudProvidersEnabled: false, AWSProviderEnabled: false, AzureProviderEnabled: false, GCPProviderEnabled: false, DisableCredentialForm: false, MaxPageSize: 10000 },
+                Health: { Server: 'healthy', Database: 'healthy' },
+            } } });
+        });
+        let submitted;
+        await page.route('https://app.whodb.com/api/ce-import', route => {
+            submitted = route.request().postDataJSON();
+            return route.fulfill({ status: 503, body: 'Test staging failure' });
+        });
+        await page.goto('/settings');
+        await page.reload();
+        await page.getByTestId('sidebar-platform-funnel').click();
+        await page.getByRole('button', { name: 'Import connection', exact: true }).click();
+        if (includeSecrets) await page.getByTestId('platform-import-send-credentials').click();
+        await page.getByRole('button', { name: 'Import in Platform', exact: true }).click();
+        await expect.poll(() => submitted).toBeDefined();
+        expect(submitted.connections).toEqual([buildImportConnection(profile, includeSecrets)]);
+        expect(exportVariables).toEqual({ id: profile.Id, includeSecrets });
+        const storage = await page.evaluate(() => JSON.stringify({ ...localStorage, ...sessionStorage }));
+        expect(storage).not.toContain(profile.Password);
+        expect(storage).not.toContain('fixture-private-key');
+    });
+}
 
 test('Platform connectors use plain names and open the attributed source flow', async ({ page, context }) => {
     await page.addInitScript(() => localStorage.setItem('whodb.analytics.consent', 'denied'));
