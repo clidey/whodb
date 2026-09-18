@@ -329,3 +329,65 @@ func TestRedactURL(t *testing.T) {
 		})
 	}
 }
+
+func TestAnthropicProvider_CreateBAMLClient_NormalizesEndpoint(t *testing.T) {
+	provider := NewAnthropicProvider()
+
+	tests := []struct {
+		name            string
+		endpoint        string
+		expectedBaseURL string
+		expectKey       bool
+	}{
+		{
+			name:            "custom endpoint with /v1 suffix",
+			endpoint:        "http://anthropic-gateway:8317/v1",
+			expectedBaseURL: "http://anthropic-gateway:8317",
+			expectKey:       true,
+		},
+		{
+			name:            "custom endpoint with /v1/ trailing slash",
+			endpoint:        "http://anthropic-gateway:8317/v1/",
+			expectedBaseURL: "http://anthropic-gateway:8317",
+			expectKey:       true,
+		},
+		{
+			name:            "custom endpoint without /v1 suffix",
+			endpoint:        "http://anthropic-gateway:8317",
+			expectedBaseURL: "http://anthropic-gateway:8317",
+			expectKey:       true,
+		},
+		{
+			name:            "default official endpoint",
+			endpoint:        "https://api.anthropic.com/v1",
+			expectedBaseURL: "",
+			expectKey:       false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			config := &ProviderConfig{
+				Endpoint: tc.endpoint,
+				APIKey:   "test-key",
+			}
+			clientType, opts, err := provider.CreateBAMLClient(config, "claude-3-5-sonnet")
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if clientType != "anthropic" {
+				t.Fatalf("expected clientType 'anthropic', got %q", clientType)
+			}
+			if tc.expectKey {
+				if opts["base_url"] != tc.expectedBaseURL {
+					t.Errorf("expected base_url %q, got %v", tc.expectedBaseURL, opts["base_url"])
+				}
+			} else {
+				if _, ok := opts["base_url"]; ok {
+					t.Errorf("expected base_url to be omitted for default endpoint, got %v", opts["base_url"])
+				}
+			}
+		})
+	}
+}
+
