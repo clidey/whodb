@@ -69,6 +69,10 @@ var LMStudioBaseURL = os.Getenv("WHODB_LMSTUDIO_BASE_URL")
 var LMStudioAPIKey = os.Getenv("WHODB_LMSTUDIO_API_KEY")
 var LMStudioName = os.Getenv("WHODB_LMSTUDIO_NAME")
 
+var MiniMaxAPIKey = os.Getenv("WHODB_MINIMAX_API_KEY")
+var MiniMaxEndpoint = os.Getenv("WHODB_MINIMAX_ENDPOINT")
+var MiniMaxName = os.Getenv("WHODB_MINIMAX_NAME")
+
 var AllowedOrigins = common.FilterList(strings.Split(os.Getenv("WHODB_ALLOWED_ORIGINS"), ","), func(item string) bool {
 	return item != ""
 })
@@ -230,6 +234,16 @@ func GetLMStudioEndpoint() string {
 		return common.ResolveLocalURL(LMStudioBaseURL)
 	}
 	return common.ResolveLocalURL("http://localhost:1234/v1")
+}
+
+// GetMiniMaxEndpoint returns the configured MiniMax base URL, or the default
+// global OpenAI-compatible endpoint if no override is set. Deployments in
+// mainland China can set WHODB_MINIMAX_ENDPOINT to https://api.minimaxi.com/v1.
+func GetMiniMaxEndpoint() string {
+	if MiniMaxEndpoint != "" {
+		return MiniMaxEndpoint
+	}
+	return "https://api.minimax.io/v1"
 }
 
 func getMaxPageSize() int {

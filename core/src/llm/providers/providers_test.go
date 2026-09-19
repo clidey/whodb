@@ -329,3 +329,57 @@ func TestRedactURL(t *testing.T) {
 		})
 	}
 }
+
+func TestMiniMaxProvider_UsesOpenAICompatibleDefaults(t *testing.T) {
+	provider := NewMiniMaxProvider()
+
+	if provider.GetType() != MiniMax_LLMType {
+		t.Fatalf("expected provider type %q, got %q", MiniMax_LLMType, provider.GetType())
+	}
+	if provider.GetDefaultEndpoint() != MiniMaxDefaultEndpoint {
+		t.Fatalf("expected default endpoint %q, got %q", MiniMaxDefaultEndpoint, provider.GetDefaultEndpoint())
+	}
+
+	clientType, opts, err := provider.CreateBAMLClient(&ProviderConfig{APIKey: "minimax-key"}, "MiniMax-M3")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if clientType != "openai-generic" {
+		t.Fatalf("expected client type 'openai-generic', got %q", clientType)
+	}
+	if opts["base_url"] != MiniMaxDefaultEndpoint {
+		t.Fatalf("expected default base_url, got %v", opts["base_url"])
+	}
+	if opts["model"] != "MiniMax-M3" {
+		t.Fatalf("expected model 'MiniMax-M3', got %v", opts["model"])
+	}
+}
+
+func TestMiniMaxProvider_GetSupportedModels_DiscoversFromModelsEndpoint(t *testing.T) {
+	provider := NewMiniMaxProvider()
+	withTestHTTPClient(t, func(r *http.Request) (*http.Response, error) {
+		if r.URL.String() != MiniMaxDefaultEndpoint+"/models" {
+			t.Fatalf("unexpected URL %s", r.URL.String())
+		}
+		if r.Header.Get("Authorization") != "Bearer minimax-key" {
+			t.Fatalf("expected bearer auth header, got %q", r.Header.Get("Authorization"))
+		}
+		return httpResponse(http.StatusOK, `{
+			"data": [
+				{"id": "MiniMax-M3"},
+				{"id": "image-01"},
+				{"id": "MiniMax-M2.7"},
+				{"id": "speech-2.8-hd"},
+				{"id": "MiniMax-M3-20260801"}
+			]
+		}`), nil
+	})
+
+	models, err := provider.GetSupportedModels(&ProviderConfig{APIKey: "minimax-key"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(models) != 3 || models[0] != "MiniMax-M3" || models[1] != "MiniMax-M2.7" || models[2] != "MiniMax-M3-20260801" {
+		t.Fatalf("expected MiniMax chat models, got %#v", models)
+	}
+}
