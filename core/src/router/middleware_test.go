@@ -5,8 +5,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/go-chi/chi/v5"
+
 	"github.com/clidey/whodb/core/src/analytics"
 	coreaudit "github.com/clidey/whodb/core/src/audit"
+	"github.com/clidey/whodb/core/src/env"
 )
 
 func TestContextMiddlewareAddsMetadata(t *testing.T) {
@@ -67,5 +70,54 @@ func TestContextMiddlewareUsesForwardedClientIP(t *testing.T) {
 
 	if request.RemoteIP != "203.0.113.10" {
 		t.Fatalf("expected forwarded client ip, got %q", request.RemoteIP)
+	}
+}
+
+func TestCORSOriginPolicy(t *testing.T) {
+	previous := env.AllowedOrigins
+	t.Cleanup(func() { env.AllowedOrigins = previous })
+	for _, tc := range []struct {
+		name            string
+		origins         []string
+		origin          string
+		wantOrigin      string
+		wantCredentials string
+	}{
+		{"unset", nil, "https://evil.example", "", ""},
+		{"wildcard", []string{"https://*"}, "https://evil.example", "https://evil.example", ""},
+		{"literal wildcard", []string{"*"}, "https://evil.example", "*", ""},
+		{"explicit rejected", []string{"https://app.example"}, "https://evil.example", "", ""},
+		{"explicit accepted", []string{"https://app.example"}, "https://app.example", "https://app.example", "true"},
+		{"same origin without CORS", nil, "", "", ""},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			env.AllowedOrigins = tc.origins
+			mux := chi.NewRouter()
+			setupMiddlewares(mux, nil, []string{"/cors-test"})
+			mux.Get("/cors-test", func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusNoContent) })
+			for _, method := range []string{http.MethodOptions, http.MethodGet} {
+				t.Run(method, func(t *testing.T) {
+					req := httptest.NewRequest(method, "http://localhost/cors-test", nil)
+					if tc.origin != "" {
+						req.Header.Set("Origin", tc.origin)
+					}
+					if method == http.MethodOptions {
+						req.Header.Set("Access-Control-Request-Method", http.MethodGet)
+						req.Header.Set("Access-Control-Request-Headers", "content-type,authorization")
+					}
+					rr := httptest.NewRecorder()
+					mux.ServeHTTP(rr, req)
+					if got := rr.Header().Get("Access-Control-Allow-Origin"); got != tc.wantOrigin {
+						t.Errorf("allow origin = %q, want %q", got, tc.wantOrigin)
+					}
+					if got := rr.Header().Get("Access-Control-Allow-Credentials"); got != tc.wantCredentials {
+						t.Errorf("allow credentials = %q, want %q", got, tc.wantCredentials)
+					}
+					if method == http.MethodGet && rr.Code != http.StatusNoContent {
+						t.Errorf("GET status = %d, want %d", rr.Code, http.StatusNoContent)
+					}
+				})
+			}
+		})
 	}
 }
