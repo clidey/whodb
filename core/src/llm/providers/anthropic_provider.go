@@ -73,7 +73,13 @@ func (p *AnthropicProvider) GetSupportedModels(config *ProviderConfig) ([]string
 		return nil, err
 	}
 
-	url := config.Endpoint + "/models"
+	endpoint := strings.TrimRight(config.Endpoint, "/")
+	var url string
+	if strings.HasSuffix(endpoint, "/v1") {
+		url = endpoint + "/models"
+	} else {
+		url = endpoint + "/v1/models"
+	}
 	headers := map[string]string{
 		"x-api-key":         config.APIKey,
 		"anthropic-version": "2023-06-01",
@@ -119,8 +125,14 @@ func (p *AnthropicProvider) CreateBAMLClient(config *ProviderConfig, model strin
 	if config.APIKey != "" {
 		opts["api_key"] = config.APIKey
 	}
-	if config.Endpoint != "" && config.Endpoint != p.GetDefaultEndpoint() {
-		opts["base_url"] = config.Endpoint
+	if config.Endpoint != "" {
+		endpoint := strings.TrimRight(config.Endpoint, "/")
+		// Normalize by stripping /v1: BAML's Anthropic client automatically appends /v1/messages
+		normalized := strings.TrimSuffix(endpoint, "/v1")
+		defaultBase := strings.TrimSuffix(strings.TrimRight(p.GetDefaultEndpoint(), "/"), "/v1")
+		if normalized != "" && normalized != defaultBase {
+			opts["base_url"] = normalized
+		}
 	}
 	return anthrpProviderType, opts, nil
 }
