@@ -53,6 +53,16 @@ type Sqlite3Plugin struct {
 	cacheMutex       sync.RWMutex
 }
 
+// SetTransactionReadOnly enforces SQLite read-only execution on the transaction's
+// pinned connection. The sqlite3 driver ignores sql.TxOptions.ReadOnly.
+func (p *Sqlite3Plugin) SetTransactionReadOnly(tx *gorm.DB, readOnly bool) error {
+	value := "OFF"
+	if readOnly {
+		value = "ON"
+	}
+	return tx.Exec("PRAGMA query_only = " + value).Error
+}
+
 func (p *Sqlite3Plugin) GetSupportedOperators() map[string]string {
 	return supportedOperators
 }
@@ -531,9 +541,28 @@ func (p *Sqlite3Plugin) GetRows(config *engine.PluginConfig, req *engine.GetRows
 
 func (p *Sqlite3Plugin) executeRawSQL(config *engine.PluginConfig, query string, params ...any) (*engine.GetRowsResult, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (*engine.GetRowsResult, error) {
+		if config != nil && config.ReadOnly {
+			tx := db.Begin(&sql.TxOptions{ReadOnly: true})
+			if tx.Error != nil {
+				return nil, tx.Error
+			}
+			defer func() { _ = tx.Rollback().Error }()
+			if err := p.SetTransactionReadOnly(tx, true); err != nil {
+				return nil, err
+			}
+			defer func() { _ = p.SetTransactionReadOnly(tx, false) }()
+			db = tx
+		}
+
 		// For multi-statement scripts, use the underlying *sql.DB directly
 		// SQLite's driver supports multi-statement with Exec()
 		if config != nil && config.MultiStatement {
+			if config.ReadOnly {
+				if err := db.Exec(query).Error; err != nil {
+					return nil, err
+				}
+				return &engine.GetRowsResult{Columns: []engine.Column{}, Rows: [][]string{}}, nil
+			}
 			sqlDB, err := db.DB()
 			if err != nil {
 				return nil, err

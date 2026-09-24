@@ -138,14 +138,17 @@ func TestClassifyMutating(t *testing.T) {
 	}
 }
 
-// TestClassifyPlainExplainIsRead pins that plain EXPLAIN over a write does not
-// execute it, so it stays read-only while EXPLAIN ANALYZE does not.
-func TestClassifyPlainExplainIsRead(t *testing.T) {
-	if Classify("EXPLAIN UPDATE users SET admin=true").Mutating {
-		t.Error("plain EXPLAIN does not execute the statement; expected read-only")
+func TestClassifyExplainOverWriteFailsClosed(t *testing.T) {
+	queries := []string{
+		"EXPLAIN UPDATE users SET admin=true",
+		"EXPLAIN ANALYZE UPDATE users SET admin=true",
+		"EXPLAIN (ANALYZE,BUFFERS) DELETE FROM users",
+		`EXPLAIN ("analyze" true) INSERT INTO users VALUES (1)`,
 	}
-	if !Classify("EXPLAIN ANALYZE UPDATE users SET admin=true").Mutating {
-		t.Error("EXPLAIN ANALYZE executes the statement; expected mutating")
+	for _, query := range queries {
+		if !Classify(query).Mutating {
+			t.Errorf("expected EXPLAIN over a write to fail closed: %q", query)
+		}
 	}
 }
 

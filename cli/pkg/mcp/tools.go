@@ -631,6 +631,9 @@ func HandleQuery(ctx context.Context, req *mcp.CallToolRequest, input QueryInput
 		TrackToolCall(ctx, "query", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "manager_init"})
 		return nil, QueryOutput{Error: fmt.Sprintf("cannot initialize database manager: %v", err), RequestID: requestID}, nil
 	}
+	if secOpts.ReadOnly {
+		mgr.EnableReadOnly()
+	}
 
 	if err := mgr.Connect(conn); err != nil {
 		TrackToolCall(ctx, "query", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "connection", "db_type": conn.Type})

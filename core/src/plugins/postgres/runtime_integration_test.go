@@ -186,6 +186,86 @@ INSERT INTO test_schema.%[1]s (name) VALUES ('alpha'), ('beta');
 	}
 }
 
+func TestPostgresReadOnlyRawExecuteRejectsAdvisoryBypasses(t *testing.T) {
+	plugin := postgresIntegrationPlugin(t)
+	config := postgresIntegrationConfig()
+	waitForPostgresOrders(t, plugin, config)
+
+	table := fmt.Sprintf("read_only_guard_%d", time.Now().UnixNano())
+	if _, err := plugin.RawExecute(config, "CREATE TABLE "+table+" (id integer primary key)"); err != nil {
+		t.Fatalf("failed to create PostgreSQL guard table: %v", err)
+	}
+	t.Cleanup(func() { _, _ = plugin.RawExecute(config, "DROP TABLE IF EXISTS "+table) })
+	if _, err := plugin.RawExecute(config, "INSERT INTO "+table+" VALUES (1), (2), (3)"); err != nil {
+		t.Fatalf("failed to seed PostgreSQL guard table: %v", err)
+	}
+
+	config.ReadOnly = true
+	queries := []string{
+		"WITH x AS(DELETE FROM " + table + " WHERE id=2 RETURNING *) SELECT * FROM x",
+		"EXPLAIN (ANALYZE,BUFFERS) DELETE FROM " + table + " WHERE id=3",
+		`EXPLAIN ("analyze" true) DELETE FROM ` + table + " WHERE id=1",
+	}
+	for _, query := range queries {
+		if _, err := plugin.RawExecute(config, query); err == nil {
+			t.Errorf("expected PostgreSQL read-only execution to reject %q", query)
+		}
+	}
+	config.MultiStatement = true
+	if _, err := plugin.RawExecute(config, "SELECT 1; DELETE FROM "+table+" WHERE id=1"); err == nil {
+		t.Error("expected PostgreSQL read-only execution to reject a multi-statement write")
+	}
+	config.MultiStatement = false
+
+	config.ReadOnly = false
+	rows, err := plugin.RawExecute(config, "SELECT COUNT(*) FROM "+table)
+	if err != nil {
+		t.Fatalf("failed to verify PostgreSQL guard table: %v", err)
+	}
+	if len(rows.Rows) != 1 || rows.Rows[0][0] != "3" {
+		t.Fatalf("PostgreSQL guard table was modified: %#v", rows.Rows)
+	}
+}
+
+func TestPostgresFamilyReadOnlyRawExecuteRejectsWrites(t *testing.T) {
+	tests := []struct {
+		name   string
+		plugin engine.PluginFunctions
+		config *engine.PluginConfig
+	}{
+		{name: "Postgres", plugin: NewPostgresPlugin().PluginFunctions, config: postgresIntegrationConfig()},
+		{name: "CockroachDB", plugin: NewCockroachDBPlugin().PluginFunctions, config: postgresFamilyIntegrationConfig(engine.DatabaseType_CockroachDB, "26257")},
+		{name: "YugabyteDB", plugin: NewYugabyteDBPlugin().PluginFunctions, config: postgresFamilyIntegrationConfig(engine.DatabaseType_YugabyteDB, "5434")},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			waitForPostgresFamilyConnection(t, test.plugin, test.config)
+			table := fmt.Sprintf("test_schema.read_only_family_guard_%d", time.Now().UnixNano())
+			if _, err := test.plugin.RawExecute(test.config, "CREATE TABLE "+table+" (id integer primary key)"); err != nil {
+				t.Fatalf("failed to create %s guard table: %v", test.name, err)
+			}
+			t.Cleanup(func() { _, _ = test.plugin.RawExecute(test.config, "DROP TABLE IF EXISTS "+table) })
+			if _, err := test.plugin.RawExecute(test.config, "INSERT INTO "+table+" VALUES (1)"); err != nil {
+				t.Fatalf("failed to seed %s guard table: %v", test.name, err)
+			}
+
+			test.config.ReadOnly = true
+			if _, err := test.plugin.RawExecute(test.config, "INSERT INTO "+table+" VALUES (2)"); err == nil {
+				t.Errorf("expected %s read-only execution to reject INSERT", test.name)
+			}
+			test.config.ReadOnly = false
+			rows, err := test.plugin.RawExecute(test.config, "SELECT COUNT(*) FROM "+table)
+			if err != nil {
+				t.Fatalf("failed to verify %s guard table: %v", test.name, err)
+			}
+			if len(rows.Rows) != 1 || rows.Rows[0][0] != "1" {
+				t.Fatalf("%s guard table was modified: %#v", test.name, rows.Rows)
+			}
+		})
+	}
+}
+
 func TestPostgresGeneratedColumnsAndLastInsertID(t *testing.T) {
 	plugin := postgresIntegrationPlugin(t)
 	config := postgresIntegrationConfig()

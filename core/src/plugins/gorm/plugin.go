@@ -90,6 +90,13 @@ type GormPluginFunctions interface {
 	// CreateSQLBuilder creates a SQL builder instance - can be overridden by specific plugins
 	CreateSQLBuilder(db *gorm.DB) SQLBuilderInterface
 	IdentifierQuoteStyle() sqlident.QuoteStyle
+	// SetTransactionReadOnly applies or clears any database-specific read-only
+	// setting that database/sql transaction options do not enforce.
+	SetTransactionReadOnly(tx *gorm.DB, readOnly bool) error
+	// SupportsReadOnlyTransactionOptions reports whether the driver accepts
+	// sql.TxOptions.ReadOnly. Drivers that reject it still run inside a
+	// transaction that is always rolled back.
+	SupportsReadOnlyTransactionOptions() bool
 
 	// these below are meant to be implemented by the specific database plugins
 	DB(config *engine.PluginConfig) (*gorm.DB, error)
@@ -632,6 +639,10 @@ func (p *GormPlugin) ExecuteRawSQL(config *engine.PluginConfig, openMultiStateme
 	}
 
 	return plugins.WithConnection(config, dbFunc, func(db *gorm.DB) (*engine.GetRowsResult, error) {
+		if config != nil && config.ReadOnly {
+			return p.executeReadOnly(db, query, params...)
+		}
+
 		if multiStatement {
 			sqlDB, err := db.DB()
 			if err != nil {
@@ -646,10 +657,6 @@ func (p *GormPlugin) ExecuteRawSQL(config *engine.PluginConfig, openMultiStateme
 				Columns: []engine.Column{},
 				Rows:    [][]string{},
 			}, nil
-		}
-
-		if config.ReadOnly {
-			return p.executeReadOnly(db, query, params...)
 		}
 
 		// codeql[go/sql-injection]: RawExecute intentionally runs user-authored SQL from the query editor/import flow.
@@ -668,15 +675,21 @@ func (p *GormPlugin) ExecuteRawSQL(config *engine.PluginConfig, openMultiStateme
 // writes. The transaction is always rolled back: a read has nothing to commit,
 // and rolling back keeps a write that somehow succeeded from persisting.
 func (p *GormPlugin) executeReadOnly(db *gorm.DB, query string, params ...any) (*engine.GetRowsResult, error) {
-	tx := db.Begin()
+	var tx *gorm.DB
+	if p.GormPluginFunctions.SupportsReadOnlyTransactionOptions() {
+		tx = db.Begin(&sql.TxOptions{ReadOnly: true})
+	} else {
+		tx = db.Begin()
+	}
 	if tx.Error != nil {
 		return nil, tx.Error
 	}
 	defer func() { _ = tx.Rollback().Error }()
 
-	if err := tx.Exec("SET TRANSACTION READ ONLY").Error; err != nil {
+	if err := p.GormPluginFunctions.SetTransactionReadOnly(tx, true); err != nil {
 		return nil, err
 	}
+	defer func() { _ = p.GormPluginFunctions.SetTransactionReadOnly(tx, false) }()
 
 	// codeql[go/sql-injection]: RawExecute intentionally runs user-authored SQL from the query editor/import flow.
 	rows, err := tx.Raw(query, params...).Rows()
@@ -686,6 +699,17 @@ func (p *GormPlugin) executeReadOnly(db *gorm.DB, query string, params ...any) (
 	defer func() { _ = rows.Close() }()
 
 	return p.ConvertRawToRows(rows)
+}
+
+// SetTransactionReadOnly is a no-op for drivers that honor sql.TxOptions.ReadOnly.
+func (p *GormPlugin) SetTransactionReadOnly(_ *gorm.DB, _ bool) error {
+	return nil
+}
+
+// SupportsReadOnlyTransactionOptions reports that the default driver accepts
+// database/sql's read-only transaction option.
+func (p *GormPlugin) SupportsReadOnlyTransactionOptions() bool {
+	return true
 }
 
 // GetForeignKeyRelationships returns foreign key relationships for a table (default empty implementation)

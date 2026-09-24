@@ -170,6 +170,54 @@ INSERT INTO %s (name) VALUES ('alpha'), ('beta');
 	}
 }
 
+func TestMySQLFamilyReadOnlyRawExecuteRejectsWrites(t *testing.T) {
+	tests := []struct {
+		name   string
+		plugin engine.PluginFunctions
+		config *engine.PluginConfig
+	}{
+		{name: "MySQL", plugin: NewMySQLPlugin().PluginFunctions, config: mysqlIntegrationConfig()},
+		{name: "MariaDB", plugin: NewMyMariaDBPlugin().PluginFunctions, config: mysqlFamilyIntegrationConfig(engine.DatabaseType_MariaDB, "3307")},
+		{name: "TiDB", plugin: NewTiDBPlugin().PluginFunctions, config: mysqlFamilyIntegrationConfig(engine.DatabaseType_TiDB, "4002")},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			waitForMySQLOrders(t, test.plugin, test.config)
+			table := fmt.Sprintf("read_only_guard_%d", time.Now().UnixNano())
+			if _, err := test.plugin.RawExecute(test.config, "CREATE TABLE "+table+" (id integer primary key)"); err != nil {
+				t.Fatalf("failed to create %s guard table: %v", test.name, err)
+			}
+			t.Cleanup(func() { _, _ = test.plugin.RawExecute(test.config, "DROP TABLE IF EXISTS "+table) })
+			if _, err := test.plugin.RawExecute(test.config, "INSERT INTO "+table+" VALUES (1)"); err != nil {
+				t.Fatalf("failed to seed %s guard table: %v", test.name, err)
+			}
+
+			test.config.ReadOnly = true
+			queries := []string{
+				"INSERT INTO " + table + " VALUES (2)",
+				"WITH x AS (SELECT 1) DELETE FROM " + table + " WHERE id=1",
+			}
+			for _, query := range queries {
+				if _, err := test.plugin.RawExecute(test.config, query); err == nil {
+					t.Errorf("expected %s read-only execution to reject %q", test.name, query)
+				}
+			}
+			test.config.MultiStatement = true
+			_, _ = test.plugin.RawExecute(test.config, "SELECT 1; DELETE FROM "+table+" WHERE id=1")
+			test.config.MultiStatement = false
+			test.config.ReadOnly = false
+			rows, err := test.plugin.RawExecute(test.config, "SELECT COUNT(*) FROM "+table)
+			if err != nil {
+				t.Fatalf("failed to verify %s guard table: %v", test.name, err)
+			}
+			if len(rows.Rows) != 1 || rows.Rows[0][0] != "1" {
+				t.Fatalf("%s guard table was modified: %#v", test.name, rows.Rows)
+			}
+		})
+	}
+}
+
 func TestMySQLGeneratedColumnsAndLastInsertID(t *testing.T) {
 	plugin := mysqlIntegrationPlugin(t)
 	config := mysqlIntegrationConfig()

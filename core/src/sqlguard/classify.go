@@ -25,7 +25,6 @@
 package sqlguard
 
 import (
-	"slices"
 	"strings"
 )
 
@@ -143,14 +142,6 @@ func Classify(query string) Classification {
 	cls := Classification{Type: stmtType, MultiStatement: multi}
 	if multi {
 		cls.Reason = "multiple statements submitted"
-	}
-
-	// Plain EXPLAIN plans a statement without running it, so the write verb it
-	// names does not execute. EXPLAIN ANALYZE does run it, and a batch can carry a
-	// second statement past the EXPLAIN, so neither keeps the exemption.
-	if stmtType == StatementExplain && !multi && !slices.Contains(tokens, "ANALYZE") {
-		cls.Reason = "EXPLAIN plans without executing"
-		return cls
 	}
 
 	if keyword, found := firstMutatingKeyword(tokens); found {
@@ -279,18 +270,13 @@ func isMultiStatement(stripped string) bool {
 	return strings.Contains(trimmed, ";")
 }
 
-// tokenize splits a statement into uppercased, punctuation-trimmed tokens. It
-// splits on any whitespace, so a tab or newline separator cannot hide a keyword
-// the way a literal-space prefix check would.
+// tokenize returns uppercased SQL words, treating punctuation as separators.
+// Splitting on punctuation as well as whitespace prevents constructs such as
+// AS(DELETE or EXPLAIN (ANALYZE,BUFFERS) from hiding security-significant words.
 func tokenize(query string) []string {
-	fields := strings.Fields(strings.ToUpper(query))
-	tokens := make([]string, 0, len(fields))
-	for _, f := range fields {
-		if f = strings.Trim(f, "(),;"); f != "" {
-			tokens = append(tokens, f)
-		}
-	}
-	return tokens
+	return strings.FieldsFunc(strings.ToUpper(query), func(r rune) bool {
+		return (r < 'A' || r > 'Z') && (r < '0' || r > '9') && r != '_'
+	})
 }
 
 // stripNoise replaces comments, string literals, quoted identifiers, and

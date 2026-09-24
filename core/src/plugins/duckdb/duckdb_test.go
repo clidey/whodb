@@ -8,6 +8,7 @@ import (
 	"time"
 
 	duckdbDriver "github.com/duckdb/duckdb-go/v2"
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
 	"github.com/clidey/whodb/core/src/engine"
@@ -160,6 +161,43 @@ func TestDuckDBHelpers(t *testing.T) {
 	}
 	if pluginDef.Type != engine.DatabaseType_DuckDB {
 		t.Fatalf("expected DuckDB plugin type, got %q", pluginDef.Type)
+	}
+}
+
+func TestDuckDBReadOnlyRawExecuteRollsBackWrites(t *testing.T) {
+	t.Setenv("WHODB_CLI", "true")
+	dbPath := filepath.Join(t.TempDir(), "read-only.duckdb")
+	db, err := gorm.Open(Open(dbPath), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("failed to create DuckDB database: %v", err)
+	}
+	sqlDB, err := db.DB()
+	if err != nil {
+		t.Fatalf("failed to get DuckDB handle: %v", err)
+	}
+	if err := sqlDB.Close(); err != nil {
+		t.Fatalf("failed to close DuckDB setup connection: %v", err)
+	}
+
+	plugin := NewDuckDBPlugin().PluginFunctions.(*DuckDBPlugin)
+	config := engine.NewPluginConfig(&engine.Credentials{Type: string(engine.DatabaseType_DuckDB), Database: dbPath})
+	if _, err := plugin.RawExecute(config, "CREATE TABLE read_only_guard (id INTEGER PRIMARY KEY)"); err != nil {
+		t.Fatalf("failed to create DuckDB guard table: %v", err)
+	}
+	if _, err := plugin.RawExecute(config, "INSERT INTO read_only_guard VALUES (1)"); err != nil {
+		t.Fatalf("failed to seed DuckDB guard table: %v", err)
+	}
+
+	config.ReadOnly = true
+	_, _ = plugin.RawExecute(config, "INSERT INTO read_only_guard VALUES (2)")
+	_, _ = plugin.RawExecute(config, "WITH x AS (SELECT 1) DELETE FROM read_only_guard WHERE id=1")
+	config.ReadOnly = false
+	rows, err := plugin.RawExecute(config, "SELECT COUNT(*) FROM read_only_guard")
+	if err != nil {
+		t.Fatalf("failed to verify DuckDB guard table: %v", err)
+	}
+	if len(rows.Rows) != 1 || rows.Rows[0][0] != "1" {
+		t.Fatalf("DuckDB guard table was modified: %#v", rows.Rows)
 	}
 }
 

@@ -67,6 +67,41 @@ func findSQLiteColumn(columns []engine.Column, name string) *engine.Column {
 	return nil
 }
 
+func TestSQLiteReadOnlyRawExecuteRejectsWrites(t *testing.T) {
+	plugin, config, _ := newSQLiteRuntimeTestFixture(t,
+		"CREATE TABLE read_only_guard (id INTEGER PRIMARY KEY)",
+		"INSERT INTO read_only_guard VALUES (1)",
+	)
+	config.ReadOnly = true
+
+	queries := []string{
+		"INSERT INTO read_only_guard VALUES (2)",
+		"WITH x AS (SELECT 1) DELETE FROM read_only_guard WHERE id=1",
+	}
+	for _, query := range queries {
+		if _, err := plugin.RawExecute(config, query); err == nil {
+			t.Errorf("expected SQLite read-only execution to reject %q", query)
+		}
+	}
+	config.MultiStatement = true
+	if _, err := plugin.RawExecute(config, "SELECT 1; DELETE FROM read_only_guard WHERE id=1"); err == nil {
+		t.Error("expected SQLite read-only execution to reject a multi-statement write")
+	}
+	config.MultiStatement = false
+	rows, err := plugin.RawExecute(config, "SELECT COUNT(*) FROM read_only_guard")
+	if err != nil {
+		t.Fatalf("expected SQLite read-only execution to allow SELECT: %v", err)
+	}
+	if len(rows.Rows) != 1 || rows.Rows[0][0] != "1" {
+		t.Fatalf("SQLite guard table was modified: %#v", rows.Rows)
+	}
+
+	config.ReadOnly = false
+	if _, err := plugin.RawExecute(config, "INSERT INTO read_only_guard VALUES (2)"); err != nil {
+		t.Fatalf("expected SQLite connection to return to read-write mode: %v", err)
+	}
+}
+
 func TestSQLiteColumnMetadataAndGeneratedColumns(t *testing.T) {
 	plugin, config, db := newSQLiteRuntimeTestFixture(t,
 		`CREATE TABLE parents (id INTEGER PRIMARY KEY, name TEXT);`,

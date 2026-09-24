@@ -207,6 +207,7 @@ func TestValidateSQLStatement_BypassRegression(t *testing.T) {
 		expectErr bool
 	}{
 		{"writable CTE blocked in read-only", "WITH d AS (DELETE FROM users RETURNING *) SELECT count(*) FROM d", true},
+		{"punctuation-adjacent writable CTE blocked", "WITH d AS(DELETE FROM users RETURNING *) SELECT count(*) FROM d", true},
 		{"read-only CTE allowed", "WITH d AS (SELECT id FROM users) SELECT count(*) FROM d", false},
 		{"tab-separated DROP blocked", "DROP\tTABLE users", true},
 		{"newline-separated DROP blocked", "DROP\nTABLE users", true},
@@ -216,7 +217,9 @@ func TestValidateSQLStatement_BypassRegression(t *testing.T) {
 		{"CALL blocked in read-only", "CALL do_something()", true},
 		{"GRANT blocked in read-only", "GRANT ALL ON users TO bob", true},
 		{"EXPLAIN ANALYZE write blocked", "EXPLAIN ANALYZE UPDATE users SET admin=true", true},
-		{"plain EXPLAIN write allowed", "EXPLAIN UPDATE users SET admin=true", false},
+		{"parenthesized EXPLAIN ANALYZE write blocked", "EXPLAIN (ANALYZE,BUFFERS) DELETE FROM users", true},
+		{"quoted EXPLAIN ANALYZE write blocked", `EXPLAIN ("analyze" true) INSERT INTO users VALUES (1)`, true},
+		{"plain EXPLAIN write fails closed", "EXPLAIN UPDATE users SET admin=true", true},
 		{"identifier containing keyword allowed", "SELECT backdrop FROM stages", false},
 	}
 
