@@ -33,7 +33,7 @@
 #   WHODB_SETUP_MODE     - mode to pass to setup-e2e.sh (default: ce)
 #   WHODB_EDITION_LABEL  - label for output (default: CE)
 #   WHODB_EXTRA_WAIT     - set to 'true' for extra service wait time
-#   WHODB_E2E_DB_CONCURRENCY - maximum concurrent database Playwright processes (default: 4)
+#   WHODB_E2E_DB_CONCURRENCY - maximum concurrent database Playwright processes (default: 1)
 #   CDP_ENDPOINT         - if set, connects to Gateway CEF browser instead of launching Chromium
 #
 # Examples:
@@ -70,7 +70,7 @@ VITE_CONFIG="${WHODB_VITE_CONFIG:-}"
 SETUP_MODE="${WHODB_SETUP_MODE:-ce}"
 EDITION_LABEL="${WHODB_EDITION_LABEL:-CE}"
 EXTRA_WAIT="${WHODB_EXTRA_WAIT:-false}"
-DB_CONCURRENCY="${WHODB_E2E_DB_CONCURRENCY:-4}"
+DB_CONCURRENCY="${WHODB_E2E_DB_CONCURRENCY:-1}"
 
 if ! [[ "$DB_CONCURRENCY" =~ ^[1-9][0-9]*$ ]]; then
     echo "❌ WHODB_E2E_DB_CONCURRENCY must be a positive integer (got: $DB_CONCURRENCY)"
@@ -236,15 +236,19 @@ if [ "$HEADLESS" = "false" ]; then
 fi
 
 if [ "$HEADLESS" = "true" ]; then
-    # Headless mode: Run one Playwright process per database with bounded concurrency.
-    # Each active process gets its own browser and per-database output directory.
-    # The backend handles the parallel database connections within the test connection limit.
+    # Headless mode: Run one Playwright process per database sequentially by default.
+    # Database suites share one backend and can opt into bounded concurrency when the
+    # machine has enough resources for the database containers and browser processes.
 
     # Warm Playwright's transform cache so parallel workers don't race on .mjs compilation.
     DATABASE="${DATABASES[0]}" CATEGORY="$(get_category "${DATABASES[0]}")" \
         pnpm exec playwright test --config="$PW_CONFIG" --list > /dev/null 2>&1 || true
 
-    echo "📋 Running ${#DATABASES[@]} database tests with up to $DB_CONCURRENCY in parallel..."
+    if [ "$DB_CONCURRENCY" -eq 1 ]; then
+        echo "📋 Running ${#DATABASES[@]} database tests sequentially..."
+    else
+        echo "📋 Running ${#DATABASES[@]} database tests with up to $DB_CONCURRENCY in parallel..."
+    fi
 
     declare -A DB_PIDS
     declare -A DB_DONE
