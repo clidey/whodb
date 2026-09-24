@@ -2,7 +2,7 @@
 name = "whodb-sdk"
 version = "0.0.0"
 edition = "2021"
-rust-version = "1.75"
+rust-version = "1.85"
 description = "Official Rust SDK for the WhoDB hosted platform — ontology, datasets, and sources as in-code function APIs"
 license = "Apache-2.0"
 repository = "https://github.com/clidey/whodb"

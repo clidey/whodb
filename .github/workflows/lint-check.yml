@@ -231,6 +231,15 @@ jobs:
           cargo test
           cargo audit
 
+      # Builds against the rust-version declared in Cargo.toml, so a dependency
+      # bump that raises the real floor fails here instead of drifting silently.
+      - name: Rust SDK MSRV check
+        run: |
+          cd sdk/packages/rust
+          msrv=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].rust_version')
+          rustup toolchain install "$msrv" --profile minimal
+          cargo "+$msrv" check --all-targets
+
       - name: Conformance (Rust)
         run: cd sdk && node tools/conformance-runner.mjs --lang rust
 
