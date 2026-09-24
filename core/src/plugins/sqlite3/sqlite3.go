@@ -35,6 +35,7 @@ import (
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
 	queryast "github.com/clidey/whodb/core/src/query"
 	sourcecatalogspecs "github.com/clidey/whodb/core/src/sourcecatalog/specs"
+	"github.com/clidey/whodb/core/src/sqlident"
 )
 
 // CreateSQLBuilder creates a SQLite-specific SQL builder.
@@ -380,7 +381,6 @@ func (p *Sqlite3Plugin) GetRows(config *engine.PluginConfig, req *engine.GetRows
 	where, sort, pageSize, pageOffset := req.Where, req.Sort, req.PageSize, req.PageOffset
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (*engine.GetRowsResult, error) {
 		builder := gorm_plugin.NewSQLBuilder(db, p)
-		fullTable := builder.BuildFullTableName("", storageUnit)
 
 		// Start count query in a separate goroutine for parallel execution
 		var totalCount int64
@@ -388,7 +388,7 @@ func (p *Sqlite3Plugin) GetRows(config *engine.PluginConfig, req *engine.GetRows
 		go func() {
 			columnTypes, _ := p.GetColumnTypes(db, schema, storageUnit)
 			// codeql[go/sql-injection]: table name validated by StorageUnitExists before reaching this code
-			countQuery := db.Table(fullTable)
+			countQuery := builder.GetTableQuery("", storageUnit)
 			var err error
 			countQuery, err = p.ApplyWhereConditions(countQuery, where, columnTypes)
 			if err != nil {
@@ -406,7 +406,7 @@ func (p *Sqlite3Plugin) GetRows(config *engine.PluginConfig, req *engine.GetRows
 		// For STRICT tables, delegate to parent GORM implementation without CAST
 		if isStrict {
 			// codeql[go/sql-injection]: table name validated by StorageUnitExists before reaching this code
-			query := db.Table(fullTable)
+			query := builder.GetTableQuery("", storageUnit)
 
 			// Get column types for WHERE conditions
 			columnTypes, _ := p.GetColumnTypes(db, schema, storageUnit)
@@ -467,7 +467,7 @@ func (p *Sqlite3Plugin) GetRows(config *engine.PluginConfig, req *engine.GetRows
 			}
 
 			// codeql[go/sql-injection]: table name validated by StorageUnitExists before reaching this code
-			query := db.Table(fullTable).Select(selects)
+			query := builder.GetTableQuery("", storageUnit).Select(selects)
 
 			query, err = p.ApplyWhereConditions(query, where, columnTypes)
 			if err != nil {
@@ -1025,6 +1025,7 @@ func init() {
 
 func NewSqlite3Plugin() *engine.Plugin {
 	plugin := &Sqlite3Plugin{}
+	plugin.ConfigureIdentifierQuoting(sqlident.DoubleQuote)
 	plugin.Type = engine.DatabaseType_Sqlite3
 	plugin.PluginFunctions = plugin
 	plugin.GormPluginFunctions = plugin

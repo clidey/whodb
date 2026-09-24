@@ -35,6 +35,7 @@ import (
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
 	sourcecatalogspecs "github.com/clidey/whodb/core/src/sourcecatalog/specs"
+	"github.com/clidey/whodb/core/src/sqlident"
 )
 
 const (
@@ -313,7 +314,10 @@ func (p *DuckDBPlugin) AddRowReturningID(config *engine.PluginConfig, schema str
 
 			// Build INSERT ... RETURNING pk_column
 			builder := p.CreateSQLBuilder(tx)
-			tableName := builder.BuildFullTableName(schema, storageUnit)
+			tableName, err := builder.QualifiedTableName(schema, storageUnit)
+			if err != nil {
+				return err
+			}
 			pkColQuoted := builder.QuoteIdentifier(pkCols[0])
 
 			var cols []string
@@ -419,6 +423,7 @@ func plural(v int64) string {
 // NewDuckDBPlugin creates a new DuckDB plugin instance.
 func NewDuckDBPlugin() *engine.Plugin {
 	plugin := &DuckDBPlugin{}
+	plugin.ConfigureIdentifierQuoting(sqlident.DoubleQuote)
 	plugin.Type = engine.DatabaseType_DuckDB
 	plugin.PluginFunctions = plugin
 	plugin.GormPluginFunctions = plugin

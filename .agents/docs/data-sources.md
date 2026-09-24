@@ -50,7 +50,7 @@ Read the **Core Architecture** section first, then follow the path that matches 
 3. **Plugin Self-Registration** — Plugins register themselves via `init()` functions. The frontend and API automatically adapt based on the plugin's declared catalog entries.
 4. **CE vs. EE Strict Boundary** — CE (Community Edition) knows *nothing* about EE (Enterprise Edition). CE code must never contain `ee/` imports, references, or `if isEE` logic. EE extends CE purely through registries at boot time. Edition is controlled by which entry point is compiled (`core/cmd/whodb/main.go` for CE, `ee/cmd/whodb/main.go` for EE), not build tags.
 5. **No Defensive Code** — Do not write fallback logic unless explicitly requested.
-6. **No SQL Injection** — Use parameterized queries or `GetPlaceholder(index)`. Never use `fmt.Sprintf` for user-supplied SQL variables.
+6. **No SQL Injection** — Parameterize values and render every raw schema/table/column component through `core/src/sqlident`. Metadata validation does not replace quoting at the SQL sink. See `.agents/docs/sql-security.md`.
 7. **Localization** — All user-facing strings must use `t()` with YAML keys. No hardcoded UI text.
 
 ---
@@ -496,6 +496,15 @@ func (p *MyPlugin) GetTableNameAndAttributes(rows *sql.Rows) (string, []engine.R
 | `NullifyFKColumn(config, schema, storageUnit, column) error` | Nullify FK column |
 
 **Connection lifecycle**: Always use `plugins.WithConnection(config, p.DB, func(db *gorm.DB) ...)` for all database operations. This handles connection pooling and lifecycle.
+
+**Identifier security**: Every SQL plugin must configure its identifier quote
+style with `ConfigureIdentifierQuoting`. Do not add database-specific
+`BuildFullTableName`/`BuildQuotedTableName` variants; shared SQL paths and raw
+database-specific paths must use `core/src/sqlident`. If the source contract
+exposes `ImportData`, add a runtime overwrite test with a delimiter-bearing
+table reference and an unrelated guard table, then classify the connector in
+`core/src/sourcecatalog/identifier_coverage_test.go` or the EE equivalent. The
+coverage test must fail when an import-capable connector has no declared proof.
 
 **Error handling**: Use `ErrorHandler` from `core/src/plugins/gorm/errors.go` for user-friendly error messages. Call `p.InitPlugin()` in your constructor or first method to initialize it.
 

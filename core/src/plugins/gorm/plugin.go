@@ -33,12 +33,14 @@ import (
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	queryast "github.com/clidey/whodb/core/src/query"
+	"github.com/clidey/whodb/core/src/sqlident"
 )
 
 type GormPlugin struct {
 	engine.Plugin
 	GormPluginFunctions
-	errorHandler *ErrorHandler
+	errorHandler         *ErrorHandler
+	identifierQuoteStyle sqlident.QuoteStyle
 }
 
 // InitPlugin initializes the plugin with an error handler
@@ -52,6 +54,19 @@ func (p *GormPlugin) InitPlugin() {
 // Can be overridden by specific database plugins (e.g., MySQL)
 func (p *GormPlugin) CreateSQLBuilder(db *gorm.DB) SQLBuilderInterface {
 	return NewSQLBuilder(db, p)
+}
+
+// ConfigureIdentifierQuoting sets the identifier delimiters used by this database plugin.
+func (p *GormPlugin) ConfigureIdentifierQuoting(style sqlident.QuoteStyle) {
+	p.identifierQuoteStyle = style
+}
+
+// IdentifierQuoteStyle returns the configured identifier quoting rules.
+func (p *GormPlugin) IdentifierQuoteStyle() sqlident.QuoteStyle {
+	if p.identifierQuoteStyle == sqlident.Unknown {
+		return sqlident.DoubleQuote
+	}
+	return p.identifierQuoteStyle
 }
 
 // FormTableName returns the qualified table name for a given schema and storage unit.
@@ -74,6 +89,7 @@ type GormPluginFunctions interface {
 
 	// CreateSQLBuilder creates a SQL builder instance - can be overridden by specific plugins
 	CreateSQLBuilder(db *gorm.DB) SQLBuilderInterface
+	IdentifierQuoteStyle() sqlident.QuoteStyle
 
 	// these below are meant to be implemented by the specific database plugins
 	DB(config *engine.PluginConfig) (*gorm.DB, error)
@@ -260,10 +276,7 @@ func (p *GormPlugin) GetRowCount(config *engine.PluginConfig, schema string, sto
 		}
 
 		builder := p.GormPluginFunctions.CreateSQLBuilder(db)
-		fullTable := builder.BuildFullTableName(schema, storageUnit)
-
-		// codeql[go/sql-injection]: table name validated by StorageUnitExists before reaching this code
-		query := db.Table(fullTable)
+		query := builder.GetTableQuery(schema, storageUnit)
 		query, err := p.ApplyWhereConditions(query, where, columnTypes)
 		if err != nil {
 			return 0, err
@@ -279,9 +292,9 @@ func (p *GormPlugin) GetRowCount(config *engine.PluginConfig, schema string, sto
 
 func (p *GormPlugin) GetColumnsForTable(config *engine.PluginConfig, schema string, storageUnit string) ([]engine.Column, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) ([]engine.Column, error) {
-		migrator := NewMigratorHelper(db, p.GormPluginFunctions)
-		fullTableName := p.FormTableName(schema, storageUnit)
-		columns, err := migrator.GetOrderedColumns(fullTableName)
+		migrator := NewMigratorHelper(p.GormPluginFunctions)
+		builder := p.GormPluginFunctions.CreateSQLBuilder(db)
+		columns, err := migrator.GetOrderedColumns(builder.GetTableQuery(schema, storageUnit), schema, storageUnit)
 		if err != nil {
 			log.WithError(err).Error(fmt.Sprintf("Failed to get columns for table %s.%s", schema, storageUnit))
 			return nil, err
@@ -329,7 +342,10 @@ func (p *GormPlugin) getGenericRows(db *gorm.DB, schema, storageUnit string, whe
 	}
 
 	builder := p.GormPluginFunctions.CreateSQLBuilder(db)
-	fullTable := builder.BuildFullTableName(schema, storageUnit)
+	fullTable, err := builder.QualifiedTableName(schema, storageUnit)
+	if err != nil {
+		return nil, err
+	}
 	log.WithFields(map[string]any{
 		"dialect":     db.Dialector.Name(),
 		"schema":      schema,
@@ -345,8 +361,7 @@ func (p *GormPlugin) getGenericRows(db *gorm.DB, schema, storageUnit string, whe
 	var totalCount int64
 	countDone := make(chan error, 1)
 	go func() {
-		// codeql[go/sql-injection]: table name validated by StorageUnitExists before reaching this code
-		countQuery := db.Table(fullTable)
+		countQuery := builder.GetTableQuery(schema, storageUnit)
 		var err error
 		countQuery, err = p.ApplyWhereConditions(countQuery, where, columnTypes)
 		if err != nil {
@@ -356,9 +371,8 @@ func (p *GormPlugin) getGenericRows(db *gorm.DB, schema, storageUnit string, whe
 		countDone <- countQuery.Count(&totalCount).Error
 	}()
 
-	// codeql[go/sql-injection]: table name validated by StorageUnitExists before reaching this code
-	query := db.Table(fullTable)
-	query, err := p.ApplyWhereConditions(query, where, columnTypes)
+	query := builder.GetTableQuery(schema, storageUnit)
+	query, err = p.ApplyWhereConditions(query, where, columnTypes)
 	if err != nil {
 		log.WithError(err).Error(fmt.Sprintf("Failed to apply where conditions for table %s.%s", schema, storageUnit))
 		return nil, err

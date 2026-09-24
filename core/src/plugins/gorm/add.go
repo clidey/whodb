@@ -39,10 +39,10 @@ func (p *GormPlugin) CreateStorageUnit(config *engine.PluginConfig, schema strin
 			return false, errors.New("no fields provided for table creation")
 		}
 
-		migrator := NewMigratorHelper(db, p.GormPluginFunctions)
-		fullTableName := p.FormTableName(schema, definition.Name)
-		if migrator.TableExists(fullTableName) {
-			return false, fmt.Errorf("table %s already exists", fullTableName)
+		migrator := NewMigratorHelper(p.GormPluginFunctions)
+		builder := p.GormPluginFunctions.CreateSQLBuilder(db)
+		if migrator.TableExists(builder.GetTableQuery(schema, definition.Name)) {
+			return false, fmt.Errorf("table %s already exists", p.FormTableName(schema, definition.Name))
 		}
 
 		var columns []engine.Record
