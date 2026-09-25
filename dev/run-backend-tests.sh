@@ -151,8 +151,15 @@ run_ce_integration() {
 				echo "🐳 Starting CE integration docker-compose stack"
 				docker compose -f "$COMPOSE_FILE" up -d
 				COMPOSE_STARTED=1
-				docker compose -f "$COMPOSE_FILE" wait \
-					cockroachdb-init tidb-init yugabytedb-init questdb-init
+				# docker compose wait only sees running containers and errors out if
+				# the init jobs already exited, so wait on the container IDs directly.
+				for code in $(docker wait $(docker compose -f "$COMPOSE_FILE" ps -aq \
+					cockroachdb-init tidb-init yugabytedb-init questdb-init)); do
+					if [ "$code" -ne 0 ]; then
+						echo "seed init container exited with code $code"
+						exit 1
+					fi
+				done
 			fi
 		else
 			echo "ℹ️  WHODB_MANAGE_COMPOSE=0, assuming CE services are already running"
