@@ -13,7 +13,9 @@ cd core && ./lint.sh && go build ./cmd/whodb
 
 ## SQL Security
 - Never `fmt.Sprintf` with user input — use `db.Raw("... WHERE x = ?", val)` or GORM builder
-- For identifiers (table/column names), use `p.EscapeIdentifier(name)`
+- For identifiers, configure `GormPlugin.ConfigureIdentifierQuoting(...)` and
+  render raw schema/table/column components through `core/src/sqlident`; never
+  concatenate an identifier or rely on `StorageUnitExists` as the SQL safety boundary
 - Always close `*sql.Rows` with `defer rows.Close()`
 
 ## Plugin Patterns

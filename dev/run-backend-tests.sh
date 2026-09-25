@@ -27,6 +27,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd -- "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 GOCACHE_DIR="$ROOT_DIR/core/.gocache"
+GOMODCACHE_DIR="$(go env GOMODCACHE)"
 EE_COMPOSE_PROJECT="whodb-ee-tests"
 
 export GOCACHE="$GOCACHE_DIR"
@@ -66,7 +67,8 @@ run_hermetic_go_test() {
 		original_home="${HOME:-}"
 
 		cleanup() {
-			rm -rf "$test_home"
+			chmod -R u+w "$test_home" 2>/dev/null || true
+			rm -rf "$test_home" || true
 		}
 		trap cleanup EXIT
 
@@ -77,6 +79,7 @@ run_hermetic_go_test() {
 		done < <(env)
 
 		export HOME="$test_home"
+		export GOMODCACHE="$GOMODCACHE_DIR"
 		export XDG_DATA_HOME="$test_home/.local/share"
 		export XDG_CONFIG_HOME="$test_home/.config"
 		export XDG_CACHE_HOME="$test_home/.cache"
@@ -148,6 +151,15 @@ run_ce_integration() {
 				echo "🐳 Starting CE integration docker-compose stack"
 				docker compose -f "$COMPOSE_FILE" up -d
 				COMPOSE_STARTED=1
+				# docker compose wait only sees running containers and errors out if
+				# the init jobs already exited, so wait on the container IDs directly.
+				for code in $(docker wait $(docker compose -f "$COMPOSE_FILE" ps -aq \
+					cockroachdb-init tidb-init yugabytedb-init questdb-init)); do
+					if [ "$code" -ne 0 ]; then
+						echo "seed init container exited with code $code"
+						exit 1
+					fi
+				done
 			fi
 		else
 			echo "ℹ️  WHODB_MANAGE_COMPOSE=0, assuming CE services are already running"
@@ -159,11 +171,11 @@ run_ce_integration() {
 		if [ "$COMPOSE_STARTED" -eq 1 ]; then
 			START_FLAG="0"
 		fi
-		WHODB_START_COMPOSE="${START_FLAG:-0}" go test -tags integration \
+		WHODB_START_COMPOSE="${START_FLAG:-0}" go test -count=1 -tags integration \
 			./src/plugins/postgres \
 			./src/plugins/mysql \
 			./src/plugins/clickhouse
-		WHODB_START_COMPOSE="${START_FLAG:-0}" go test -tags integration ./test/integration/...
+		WHODB_START_COMPOSE="${START_FLAG:-0}" go test -count=1 -tags integration ./test/integration/...
 	)
 }
 
@@ -179,12 +191,19 @@ run_ee_integration() {
 		COMPOSE_FILE="$ROOT_DIR/ee/dev/docker-compose.yml"
 		MANAGE_COMPOSE="${WHODB_MANAGE_COMPOSE:-1}"
 		COMPOSE_STARTED=0
+		BRIDGE_STARTED=0
 		RUNNING_SERVICE_COUNT=0
 
 		cleanup() {
-			if [ "$MANAGE_COMPOSE" = "1" ] && [ "$COMPOSE_STARTED" -eq 1 ]; then
+			if [ "$MANAGE_COMPOSE" != "1" ]; then
+				return
+			fi
+			if [ "$COMPOSE_STARTED" -eq 1 ]; then
 				echo "→ Tearing down EE integration docker-compose stack"
-				docker compose -p "$EE_COMPOSE_PROJECT" -f "$COMPOSE_FILE" --profile ee down --volumes --remove-orphans
+				docker compose -p "$EE_COMPOSE_PROJECT" -f "$COMPOSE_FILE" --profile ee --profile bridge down --volumes --remove-orphans
+			elif [ "$BRIDGE_STARTED" -eq 1 ]; then
+				echo "→ Tearing down EE JDBC bridge integration stack"
+				docker compose -p "$EE_COMPOSE_PROJECT" -f "$COMPOSE_FILE" --profile bridge down --volumes --remove-orphans
 			fi
 		}
 		trap cleanup EXIT
@@ -202,6 +221,20 @@ run_ee_integration() {
 				docker compose -p "$EE_COMPOSE_PROJECT" -f "$COMPOSE_FILE" --profile ee up -d
 				COMPOSE_STARTED=1
 			fi
+			BRIDGE_SERVICE_COUNT="$({
+				docker compose -p "$EE_COMPOSE_PROJECT" -f "$COMPOSE_FILE" --profile bridge ps -q \
+					e2e_jdbc_bridge e2e_db2 e2e_starrocks e2e_trino
+			} | grep -c . || true)"
+			if [ "$BRIDGE_SERVICE_COUNT" -ne 4 ]; then
+				echo "🐳 Starting EE JDBC bridge integration stack"
+				docker compose -p "$EE_COMPOSE_PROJECT" -f "$COMPOSE_FILE" --profile bridge up -d \
+					e2e_jdbc_bridge e2e_db2 e2e_db2_seed e2e_starrocks e2e_starrocks_seed e2e_trino e2e_trino_seed
+				docker compose -p "$EE_COMPOSE_PROJECT" -f "$COMPOSE_FILE" --profile bridge wait \
+					e2e_db2_seed e2e_starrocks_seed e2e_trino_seed
+				if [ "$COMPOSE_STARTED" -eq 0 ]; then
+					BRIDGE_STARTED=1
+				fi
+			fi
 		else
 			echo "ℹ️  WHODB_MANAGE_COMPOSE=0, assuming EE services are already running"
 		fi
@@ -211,12 +244,14 @@ run_ee_integration() {
 		if [ "$COMPOSE_STARTED" -eq 1 ]; then
 			START_FLAG="0"
 		fi
-		WHODB_START_COMPOSE="${START_FLAG:-0}" go test -tags integration \
+		WHODB_START_COMPOSE="${START_FLAG:-0}" go test -count=1 -tags integration \
+			./core/src/plugins/bridge \
 			./core/src/plugins/cassandra \
 			./core/src/plugins/dynamodb \
+			./core/src/plugins/gaussdb \
 			./core/src/plugins/mssql \
 			./core/src/plugins/oracle
-		WHODB_START_COMPOSE="${START_FLAG:-0}" go test -tags integration ./test/integration/...
+		WHODB_START_COMPOSE="${START_FLAG:-0}" go test -count=1 -tags integration ./test/integration/...
 	)
 }
 

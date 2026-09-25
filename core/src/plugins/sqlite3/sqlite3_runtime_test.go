@@ -24,6 +24,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/importer"
 )
 
 func newSQLiteRuntimeTestFixture(t *testing.T, statements ...string) (*Sqlite3Plugin, *engine.PluginConfig, *gorm.DB) {
@@ -64,6 +65,47 @@ func findSQLiteColumn(columns []engine.Column, name string) *engine.Column {
 		}
 	}
 	return nil
+}
+
+func TestSQLiteReadOnlyRawExecuteRejectsWrites(t *testing.T) {
+	plugin, config, _ := newSQLiteRuntimeTestFixture(t,
+		"CREATE TABLE read_only_guard (id INTEGER PRIMARY KEY)",
+		"INSERT INTO read_only_guard VALUES (1)",
+	)
+	config.ReadOnly = true
+
+	queries := []string{
+		"INSERT INTO read_only_guard VALUES (2)",
+		"WITH x AS (SELECT 1) DELETE FROM read_only_guard WHERE id=1",
+	}
+	for _, query := range queries {
+		if _, err := plugin.RawExecute(config, query); err == nil {
+			t.Errorf("expected SQLite read-only execution to reject %q", query)
+		}
+	}
+	config.MultiStatement = true
+	if _, err := plugin.RawExecute(config, "SELECT 1; DELETE FROM read_only_guard WHERE id=1"); err == nil {
+		t.Error("expected SQLite read-only execution to reject a multi-statement write")
+	}
+	if _, err := plugin.RawExecute(config, "PRAGMA query_only=OFF; DELETE FROM read_only_guard WHERE id=1; COMMIT"); err == nil {
+		t.Error("expected SQLite read-only execution to reject a script that disables query_only")
+	}
+	if _, err := plugin.RawExecute(config, "SELECT 1; SELECT 2"); err != nil {
+		t.Fatalf("expected SQLite read-only execution to allow a read-only script: %v", err)
+	}
+	config.MultiStatement = false
+	rows, err := plugin.RawExecute(config, "SELECT COUNT(*) FROM read_only_guard")
+	if err != nil {
+		t.Fatalf("expected SQLite read-only execution to allow SELECT: %v", err)
+	}
+	if len(rows.Rows) != 1 || rows.Rows[0][0] != "1" {
+		t.Fatalf("SQLite guard table was modified: %#v", rows.Rows)
+	}
+
+	config.ReadOnly = false
+	if _, err := plugin.RawExecute(config, "INSERT INTO read_only_guard VALUES (2)"); err != nil {
+		t.Fatalf("expected SQLite connection to return to read-write mode: %v", err)
+	}
 }
 
 func TestSQLiteColumnMetadataAndGeneratedColumns(t *testing.T) {
@@ -178,5 +220,85 @@ func TestSQLiteRawExecutePreservesDateTimeAndBlobValues(t *testing.T) {
 	}
 	if len(result.Columns) != 3 || result.Columns[0].Type != "DATETIME" || result.Columns[1].Type != "BLOB" {
 		t.Fatalf("expected original sqlite column types to be restored, got %#v", result.Columns)
+	}
+}
+
+func TestClearTableDataTreatsCraftedExistingNameAsOneIdentifier(t *testing.T) {
+	craftedTable := `products"; DELETE FROM secrets;--`
+	plugin, config, db := newSQLiteRuntimeTestFixture(t,
+		`CREATE TABLE "products""; DELETE FROM secrets;--" (id INTEGER PRIMARY KEY, name TEXT)`,
+		`CREATE TABLE secrets (id INTEGER PRIMARY KEY, token TEXT)`,
+		`INSERT INTO "products""; DELETE FROM secrets;--" (id, name) VALUES (1, 'widget')`,
+		`INSERT INTO secrets (id, token) VALUES (1, 'super-secret')`,
+	)
+
+	ok, err := plugin.ClearTableData(config, "", craftedTable)
+	if err != nil || !ok {
+		t.Fatalf("expected crafted table to be cleared safely, got ok=%v err=%v", ok, err)
+	}
+
+	var targetRows int64
+	if err := db.Raw(`SELECT COUNT(*) FROM "products""; DELETE FROM secrets;--"`).Scan(&targetRows).Error; err != nil {
+		t.Fatal(err)
+	}
+	if targetRows != 0 {
+		t.Fatalf("expected crafted table to be empty, got %d rows", targetRows)
+	}
+
+	var secretRows int64
+	if err := db.Raw(`SELECT COUNT(*) FROM secrets`).Scan(&secretRows).Error; err != nil {
+		t.Fatal(err)
+	}
+	if secretRows != 1 {
+		t.Fatalf("expected secrets table to remain untouched, got %d rows", secretRows)
+	}
+}
+
+func TestOverwriteImportTreatsCraftedExistingNameAsOneIdentifier(t *testing.T) {
+	craftedTable := `products"; DELETE FROM secrets;--`
+	plugin, config, db := newSQLiteRuntimeTestFixture(t,
+		`CREATE TABLE "products""; DELETE FROM secrets;--" (id INTEGER PRIMARY KEY, name TEXT)`,
+		`CREATE TABLE secrets (id INTEGER PRIMARY KEY, token TEXT)`,
+		`INSERT INTO "products""; DELETE FROM secrets;--" (id, name) VALUES (1, 'old')`,
+		`INSERT INTO secrets (id, token) VALUES (1, 'super-secret')`,
+	)
+
+	result, err := importer.Execute(plugin, config, &importer.ExecuteRequest{
+		StorageUnit: craftedTable,
+		Mode:        importer.ModeOverwrite,
+		Parsed: &importer.ParsedFile{
+			Columns: []string{"id", "name"},
+			Rows:    [][]string{{"2", "new"}},
+		},
+		Mapping: []importer.ColumnMapping{
+			{SourceColumn: "id", TargetColumn: new("id")},
+			{SourceColumn: "name", TargetColumn: new("name")},
+		},
+		TargetColumns: []engine.Column{
+			{Name: "id", Type: "INTEGER", IsPrimary: true},
+			{Name: "name", Type: "TEXT"},
+		},
+	})
+	if err != nil {
+		t.Fatalf("overwrite import failed: %v", err)
+	}
+	if result.RowsImported != 1 {
+		t.Fatalf("expected one imported row, got %d", result.RowsImported)
+	}
+
+	var names []string
+	if err := db.Raw(`SELECT name FROM "products""; DELETE FROM secrets;--" ORDER BY id`).Scan(&names).Error; err != nil {
+		t.Fatal(err)
+	}
+	if len(names) != 1 || names[0] != "new" {
+		t.Fatalf("expected only the imported row, got %#v", names)
+	}
+
+	var secretRows int64
+	if err := db.Raw(`SELECT COUNT(*) FROM secrets`).Scan(&secretRows).Error; err != nil {
+		t.Fatal(err)
+	}
+	if secretRows != 1 {
+		t.Fatalf("expected secrets table to remain untouched, got %d rows", secretRows)
 	}
 }

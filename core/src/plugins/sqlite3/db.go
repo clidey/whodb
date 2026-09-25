@@ -18,6 +18,7 @@ package sqlite3
 
 import (
 	"errors"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -101,7 +102,16 @@ func (p *Sqlite3Plugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 		"path":     fileNameDatabase,
 	})
 
-	db, err := gorm.Open(sqlite.Open(fileNameDatabase), &gorm.Config{Logger: logger.Default.LogMode(plugins.GetGormLogConfig())})
+	dsn := fileNameDatabase
+	if config != nil && config.ReadOnly && config.MultiStatement {
+		uri := url.URL{Scheme: "file", Path: fileNameDatabase}
+		query := uri.Query()
+		query.Set("mode", "ro")
+		uri.RawQuery = query.Encode()
+		dsn = uri.String()
+	}
+
+	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{Logger: logger.Default.LogMode(plugins.GetGormLogConfig())})
 	if err != nil {
 		l.WithError(err).Error("Failed to connect to SQLite database")
 		return nil, err

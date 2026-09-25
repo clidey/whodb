@@ -29,6 +29,7 @@ import (
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
+	"github.com/clidey/whodb/core/src/sqlident"
 )
 
 // QuestDBPlugin extends PostgresPlugin with QuestDB-specific catalog behavior.
@@ -288,6 +289,7 @@ func (p *QuestDBPlugin) GetCreateTableQuery(db *gorm.DB, schema string, storageU
 // while overriding the incompatible catalog and metadata paths.
 func NewQuestDBPlugin() *engine.Plugin {
 	questDBPlugin := &QuestDBPlugin{}
+	questDBPlugin.ConfigureIdentifierQuoting(sqlident.DoubleQuote)
 	questDBPlugin.Type = engine.DatabaseType_QuestDB
 	questDBPlugin.PluginFunctions = questDBPlugin
 	questDBPlugin.GormPluginFunctions = questDBPlugin

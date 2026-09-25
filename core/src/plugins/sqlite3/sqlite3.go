@@ -35,6 +35,7 @@ import (
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
 	queryast "github.com/clidey/whodb/core/src/query"
 	sourcecatalogspecs "github.com/clidey/whodb/core/src/sourcecatalog/specs"
+	"github.com/clidey/whodb/core/src/sqlident"
 )
 
 // CreateSQLBuilder creates a SQLite-specific SQL builder.
@@ -50,6 +51,16 @@ type Sqlite3Plugin struct {
 	gorm_plugin.GormPlugin
 	strictTableCache map[string]bool
 	cacheMutex       sync.RWMutex
+}
+
+// SetTransactionReadOnly enforces SQLite read-only execution on the transaction's
+// pinned connection. The sqlite3 driver ignores sql.TxOptions.ReadOnly.
+func (p *Sqlite3Plugin) SetTransactionReadOnly(tx *gorm.DB, readOnly bool) error {
+	value := "OFF"
+	if readOnly {
+		value = "ON"
+	}
+	return tx.Exec("PRAGMA query_only = " + value).Error
 }
 
 func (p *Sqlite3Plugin) GetSupportedOperators() map[string]string {
@@ -380,7 +391,6 @@ func (p *Sqlite3Plugin) GetRows(config *engine.PluginConfig, req *engine.GetRows
 	where, sort, pageSize, pageOffset := req.Where, req.Sort, req.PageSize, req.PageOffset
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (*engine.GetRowsResult, error) {
 		builder := gorm_plugin.NewSQLBuilder(db, p)
-		fullTable := builder.BuildFullTableName("", storageUnit)
 
 		// Start count query in a separate goroutine for parallel execution
 		var totalCount int64
@@ -388,7 +398,7 @@ func (p *Sqlite3Plugin) GetRows(config *engine.PluginConfig, req *engine.GetRows
 		go func() {
 			columnTypes, _ := p.GetColumnTypes(db, schema, storageUnit)
 			// codeql[go/sql-injection]: table name validated by StorageUnitExists before reaching this code
-			countQuery := db.Table(fullTable)
+			countQuery := builder.GetTableQuery("", storageUnit)
 			var err error
 			countQuery, err = p.ApplyWhereConditions(countQuery, where, columnTypes)
 			if err != nil {
@@ -406,7 +416,7 @@ func (p *Sqlite3Plugin) GetRows(config *engine.PluginConfig, req *engine.GetRows
 		// For STRICT tables, delegate to parent GORM implementation without CAST
 		if isStrict {
 			// codeql[go/sql-injection]: table name validated by StorageUnitExists before reaching this code
-			query := db.Table(fullTable)
+			query := builder.GetTableQuery("", storageUnit)
 
 			// Get column types for WHERE conditions
 			columnTypes, _ := p.GetColumnTypes(db, schema, storageUnit)
@@ -467,7 +477,7 @@ func (p *Sqlite3Plugin) GetRows(config *engine.PluginConfig, req *engine.GetRows
 			}
 
 			// codeql[go/sql-injection]: table name validated by StorageUnitExists before reaching this code
-			query := db.Table(fullTable).Select(selects)
+			query := builder.GetTableQuery("", storageUnit).Select(selects)
 
 			query, err = p.ApplyWhereConditions(query, where, columnTypes)
 			if err != nil {
@@ -531,9 +541,29 @@ func (p *Sqlite3Plugin) GetRows(config *engine.PluginConfig, req *engine.GetRows
 
 func (p *Sqlite3Plugin) executeRawSQL(config *engine.PluginConfig, query string, params ...any) (*engine.GetRowsResult, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (*engine.GetRowsResult, error) {
+		if config != nil && config.ReadOnly {
+			tx := db.Begin(&sql.TxOptions{ReadOnly: true})
+			if tx.Error != nil {
+				return nil, tx.Error
+			}
+			defer func() { _ = tx.Rollback().Error }()
+			if err := p.SetTransactionReadOnly(tx, true); err != nil {
+				return nil, err
+			}
+			defer func() { _ = p.SetTransactionReadOnly(tx, false) }()
+			db = tx
+		}
+
 		// For multi-statement scripts, use the underlying *sql.DB directly
 		// SQLite's driver supports multi-statement with Exec()
 		if config != nil && config.MultiStatement {
+			if config.ReadOnly {
+				// codeql[go/sql-injection]: RawExecute intentionally runs user-authored SQL against a mode=ro SQLite connection.
+				if err := db.Exec(query).Error; err != nil {
+					return nil, err
+				}
+				return &engine.GetRowsResult{Columns: []engine.Column{}, Rows: [][]string{}}, nil
+			}
 			sqlDB, err := db.DB()
 			if err != nil {
 				return nil, err
@@ -1025,6 +1055,7 @@ func init() {
 
 func NewSqlite3Plugin() *engine.Plugin {
 	plugin := &Sqlite3Plugin{}
+	plugin.ConfigureIdentifierQuoting(sqlident.DoubleQuote)
 	plugin.Type = engine.DatabaseType_Sqlite3
 	plugin.PluginFunctions = plugin
 	plugin.GormPluginFunctions = plugin

@@ -114,7 +114,7 @@ func initSSLTargets() []sslTarget {
 				Type:     string(engine.DatabaseType_Postgres),
 				Hostname: "localhost",
 				Username: "user",
-				Password: "password",
+				Password: "jio53$*(@nfe)",
 				Database: "test_db",
 				Advanced: []engine.Record{
 					{Key: "Port", Value: "5433"},
@@ -131,7 +131,7 @@ func initSSLTargets() []sslTarget {
 				Type:     string(engine.DatabaseType_Postgres),
 				Hostname: "localhost",
 				Username: "user",
-				Password: "password",
+				Password: "jio53$*(@nfe)",
 				Database: "test_db",
 				Advanced: []engine.Record{
 					{Key: "Port", Value: "5433"},
@@ -151,7 +151,7 @@ func initSSLTargets() []sslTarget {
 				Type:     string(engine.DatabaseType_Postgres),
 				Hostname: "localhost",
 				Username: "user",
-				Password: "password",
+				Password: "jio53$*(@nfe)",
 				Database: "test_db",
 				Advanced: []engine.Record{
 					{Key: "Port", Value: "5433"},

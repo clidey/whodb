@@ -33,12 +33,14 @@ import (
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	queryast "github.com/clidey/whodb/core/src/query"
+	"github.com/clidey/whodb/core/src/sqlident"
 )
 
 type GormPlugin struct {
 	engine.Plugin
 	GormPluginFunctions
-	errorHandler *ErrorHandler
+	errorHandler         *ErrorHandler
+	identifierQuoteStyle sqlident.QuoteStyle
 }
 
 // InitPlugin initializes the plugin with an error handler
@@ -52,6 +54,19 @@ func (p *GormPlugin) InitPlugin() {
 // Can be overridden by specific database plugins (e.g., MySQL)
 func (p *GormPlugin) CreateSQLBuilder(db *gorm.DB) SQLBuilderInterface {
 	return NewSQLBuilder(db, p)
+}
+
+// ConfigureIdentifierQuoting sets the identifier delimiters used by this database plugin.
+func (p *GormPlugin) ConfigureIdentifierQuoting(style sqlident.QuoteStyle) {
+	p.identifierQuoteStyle = style
+}
+
+// IdentifierQuoteStyle returns the configured identifier quoting rules.
+func (p *GormPlugin) IdentifierQuoteStyle() sqlident.QuoteStyle {
+	if p.identifierQuoteStyle == sqlident.Unknown {
+		return sqlident.DoubleQuote
+	}
+	return p.identifierQuoteStyle
 }
 
 // FormTableName returns the qualified table name for a given schema and storage unit.
@@ -74,6 +89,14 @@ type GormPluginFunctions interface {
 
 	// CreateSQLBuilder creates a SQL builder instance - can be overridden by specific plugins
 	CreateSQLBuilder(db *gorm.DB) SQLBuilderInterface
+	IdentifierQuoteStyle() sqlident.QuoteStyle
+	// SetTransactionReadOnly applies or clears any database-specific read-only
+	// setting that database/sql transaction options do not enforce.
+	SetTransactionReadOnly(tx *gorm.DB, readOnly bool) error
+	// SupportsReadOnlyTransactionOptions reports whether the driver accepts
+	// sql.TxOptions.ReadOnly. Drivers that reject it still run inside a
+	// transaction that is always rolled back.
+	SupportsReadOnlyTransactionOptions() bool
 
 	// these below are meant to be implemented by the specific database plugins
 	DB(config *engine.PluginConfig) (*gorm.DB, error)
@@ -260,10 +283,7 @@ func (p *GormPlugin) GetRowCount(config *engine.PluginConfig, schema string, sto
 		}
 
 		builder := p.GormPluginFunctions.CreateSQLBuilder(db)
-		fullTable := builder.BuildFullTableName(schema, storageUnit)
-
-		// codeql[go/sql-injection]: table name validated by StorageUnitExists before reaching this code
-		query := db.Table(fullTable)
+		query := builder.GetTableQuery(schema, storageUnit)
 		query, err := p.ApplyWhereConditions(query, where, columnTypes)
 		if err != nil {
 			return 0, err
@@ -279,9 +299,9 @@ func (p *GormPlugin) GetRowCount(config *engine.PluginConfig, schema string, sto
 
 func (p *GormPlugin) GetColumnsForTable(config *engine.PluginConfig, schema string, storageUnit string) ([]engine.Column, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) ([]engine.Column, error) {
-		migrator := NewMigratorHelper(db, p.GormPluginFunctions)
-		fullTableName := p.FormTableName(schema, storageUnit)
-		columns, err := migrator.GetOrderedColumns(fullTableName)
+		migrator := NewMigratorHelper(p.GormPluginFunctions)
+		builder := p.GormPluginFunctions.CreateSQLBuilder(db)
+		columns, err := migrator.GetOrderedColumns(builder.GetTableQuery(schema, storageUnit), schema, storageUnit)
 		if err != nil {
 			log.WithError(err).Error(fmt.Sprintf("Failed to get columns for table %s.%s", schema, storageUnit))
 			return nil, err
@@ -329,7 +349,10 @@ func (p *GormPlugin) getGenericRows(db *gorm.DB, schema, storageUnit string, whe
 	}
 
 	builder := p.GormPluginFunctions.CreateSQLBuilder(db)
-	fullTable := builder.BuildFullTableName(schema, storageUnit)
+	fullTable, err := builder.QualifiedTableName(schema, storageUnit)
+	if err != nil {
+		return nil, err
+	}
 	log.WithFields(map[string]any{
 		"dialect":     db.Dialector.Name(),
 		"schema":      schema,
@@ -345,8 +368,7 @@ func (p *GormPlugin) getGenericRows(db *gorm.DB, schema, storageUnit string, whe
 	var totalCount int64
 	countDone := make(chan error, 1)
 	go func() {
-		// codeql[go/sql-injection]: table name validated by StorageUnitExists before reaching this code
-		countQuery := db.Table(fullTable)
+		countQuery := builder.GetTableQuery(schema, storageUnit)
 		var err error
 		countQuery, err = p.ApplyWhereConditions(countQuery, where, columnTypes)
 		if err != nil {
@@ -356,9 +378,8 @@ func (p *GormPlugin) getGenericRows(db *gorm.DB, schema, storageUnit string, whe
 		countDone <- countQuery.Count(&totalCount).Error
 	}()
 
-	// codeql[go/sql-injection]: table name validated by StorageUnitExists before reaching this code
-	query := db.Table(fullTable)
-	query, err := p.ApplyWhereConditions(query, where, columnTypes)
+	query := builder.GetTableQuery(schema, storageUnit)
+	query, err = p.ApplyWhereConditions(query, where, columnTypes)
 	if err != nil {
 		log.WithError(err).Error(fmt.Sprintf("Failed to apply where conditions for table %s.%s", schema, storageUnit))
 		return nil, err
@@ -618,6 +639,10 @@ func (p *GormPlugin) ExecuteRawSQL(config *engine.PluginConfig, openMultiStateme
 	}
 
 	return plugins.WithConnection(config, dbFunc, func(db *gorm.DB) (*engine.GetRowsResult, error) {
+		if config != nil && config.ReadOnly {
+			return p.executeReadOnly(db, query, params...)
+		}
+
 		if multiStatement {
 			sqlDB, err := db.DB()
 			if err != nil {
@@ -632,10 +657,6 @@ func (p *GormPlugin) ExecuteRawSQL(config *engine.PluginConfig, openMultiStateme
 				Columns: []engine.Column{},
 				Rows:    [][]string{},
 			}, nil
-		}
-
-		if config.ReadOnly {
-			return p.executeReadOnly(db, query, params...)
 		}
 
 		// codeql[go/sql-injection]: RawExecute intentionally runs user-authored SQL from the query editor/import flow.
@@ -654,15 +675,21 @@ func (p *GormPlugin) ExecuteRawSQL(config *engine.PluginConfig, openMultiStateme
 // writes. The transaction is always rolled back: a read has nothing to commit,
 // and rolling back keeps a write that somehow succeeded from persisting.
 func (p *GormPlugin) executeReadOnly(db *gorm.DB, query string, params ...any) (*engine.GetRowsResult, error) {
-	tx := db.Begin()
+	var tx *gorm.DB
+	if p.GormPluginFunctions.SupportsReadOnlyTransactionOptions() {
+		tx = db.Begin(&sql.TxOptions{ReadOnly: true})
+	} else {
+		tx = db.Begin()
+	}
 	if tx.Error != nil {
 		return nil, tx.Error
 	}
 	defer func() { _ = tx.Rollback().Error }()
 
-	if err := tx.Exec("SET TRANSACTION READ ONLY").Error; err != nil {
+	if err := p.GormPluginFunctions.SetTransactionReadOnly(tx, true); err != nil {
 		return nil, err
 	}
+	defer func() { _ = p.GormPluginFunctions.SetTransactionReadOnly(tx, false) }()
 
 	// codeql[go/sql-injection]: RawExecute intentionally runs user-authored SQL from the query editor/import flow.
 	rows, err := tx.Raw(query, params...).Rows()
@@ -672,6 +699,17 @@ func (p *GormPlugin) executeReadOnly(db *gorm.DB, query string, params ...any) (
 	defer func() { _ = rows.Close() }()
 
 	return p.ConvertRawToRows(rows)
+}
+
+// SetTransactionReadOnly is a no-op for drivers that honor sql.TxOptions.ReadOnly.
+func (p *GormPlugin) SetTransactionReadOnly(_ *gorm.DB, _ bool) error {
+	return nil
+}
+
+// SupportsReadOnlyTransactionOptions reports that the default driver accepts
+// database/sql's read-only transaction option.
+func (p *GormPlugin) SupportsReadOnlyTransactionOptions() bool {
+	return true
 }
 
 // GetForeignKeyRelationships returns foreign key relationships for a table (default empty implementation)

@@ -229,6 +229,7 @@ func HandleExplain(ctx context.Context, req *mcp.CallToolRequest, input ExplainI
 		return nil, ExplainOutput{Error: err.Error(), RequestID: requestID}, nil
 	}
 	defer mgr.Disconnect()
+	mgr.EnableReadOnly()
 
 	result, err := mgr.ExecuteExplain(input.Query)
 	if err != nil {

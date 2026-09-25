@@ -464,7 +464,10 @@ func setupMiddlewares(router *chi.Mux, additionalMiddlewares []func(http.Handler
 	//     (no "*" / wildcard pattern), since credentials + wildcard is unsafe.
 	allowedOrigins := env.AllowedOrigins
 	allowCredentials := len(allowedOrigins) > 0 && !originsContainWildcard(allowedOrigins)
+	var allowOriginFunc func(*http.Request, string) bool
 	if len(allowedOrigins) == 0 {
+		// go-chi/cors defaults an empty allowlist to all origins unless a callback is supplied.
+		allowOriginFunc = func(*http.Request, string) bool { return false }
 		log.Warnf("WHODB_ALLOWED_ORIGINS is unset; cross-origin requests are disabled. Set it to your app origin (e.g. https://app.example.com) to enable CORS.")
 	} else if !allowCredentials {
 		log.Warnf("WHODB_ALLOWED_ORIGINS contains a wildcard (%v); Access-Control-Allow-Credentials is disabled because credentialed wildcard CORS is unsafe. Use explicit origins to allow credentials.", allowedOrigins)
@@ -483,6 +486,7 @@ func setupMiddlewares(router *chi.Mux, additionalMiddlewares []func(http.Handler
 		sseAwareTimeout(90 * time.Second),
 		cors.Handler(cors.Options{
 			AllowedOrigins:   allowedOrigins,
+			AllowOriginFunc:  allowOriginFunc,
 			AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 			AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 			ExposedHeaders:   []string{},

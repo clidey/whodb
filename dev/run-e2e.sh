@@ -33,6 +33,7 @@
 #   WHODB_SETUP_MODE     - mode to pass to setup-e2e.sh (default: ce)
 #   WHODB_EDITION_LABEL  - label for output (default: CE)
 #   WHODB_EXTRA_WAIT     - set to 'true' for extra service wait time
+#   WHODB_E2E_DB_CONCURRENCY - maximum concurrent database Playwright processes (default: 1)
 #   CDP_ENDPOINT         - if set, connects to Gateway CEF browser instead of launching Chromium
 #
 # Examples:
@@ -69,6 +70,12 @@ VITE_CONFIG="${WHODB_VITE_CONFIG:-}"
 SETUP_MODE="${WHODB_SETUP_MODE:-ce}"
 EDITION_LABEL="${WHODB_EDITION_LABEL:-CE}"
 EXTRA_WAIT="${WHODB_EXTRA_WAIT:-false}"
+DB_CONCURRENCY="${WHODB_E2E_DB_CONCURRENCY:-1}"
+
+if ! [[ "$DB_CONCURRENCY" =~ ^[1-9][0-9]*$ ]]; then
+    echo "❌ WHODB_E2E_DB_CONCURRENCY must be a positive integer (got: $DB_CONCURRENCY)"
+    exit 1
+fi
 
 # Convert space-separated string to array
 read -ra DATABASES <<< "$DATABASES_STR"
@@ -229,19 +236,65 @@ if [ "$HEADLESS" = "false" ]; then
 fi
 
 if [ "$HEADLESS" = "true" ]; then
-    # Headless mode: Run all databases in parallel (1 Playwright process per database).
-    # Each process gets its own browser, outputDir, and blob report — no file collisions.
-    # The backend handles the parallel database connections within the test connection limit.
+    # Headless mode: Run one Playwright process per database sequentially by default.
+    # Database suites share one backend and can opt into bounded concurrency when the
+    # machine has enough resources for the database containers and browser processes.
 
     # Warm Playwright's transform cache so parallel workers don't race on .mjs compilation.
     DATABASE="${DATABASES[0]}" CATEGORY="$(get_category "${DATABASES[0]}")" \
         pnpm exec playwright test --config="$PW_CONFIG" --list > /dev/null 2>&1 || true
 
-    echo "📋 Running ${#DATABASES[@]} database tests in parallel..."
+    if [ "$DB_CONCURRENCY" -eq 1 ]; then
+        echo "📋 Running ${#DATABASES[@]} database tests sequentially..."
+    else
+        echo "📋 Running ${#DATABASES[@]} database tests with up to $DB_CONCURRENCY in parallel..."
+    fi
 
     declare -A DB_PIDS
+    declare -A DB_DONE
+    DONE_COUNT=0
+    TOTAL=${#DATABASES[@]}
+
+    reap_finished_databases() {
+        local candidate
+        for candidate in "${DATABASES[@]}"; do
+            [ -z "${DB_PIDS[$candidate]}" ] && continue
+            [ -n "${DB_DONE[$candidate]}" ] && continue
+            if ! kill -0 "${DB_PIDS[$candidate]}" 2>/dev/null; then
+                wait "${DB_PIDS[$candidate]}" && DB_DONE[$candidate]="pass" || DB_DONE[$candidate]="fail"
+                DONE_COUNT=$((DONE_COUNT + 1))
+                [ "${DB_DONE[$candidate]}" = "fail" ] && FAILED_DBS+=("$candidate")
+
+                if [ "${DB_DONE[$candidate]}" = "pass" ]; then
+                    echo "✅ [$DONE_COUNT/$TOTAL] $candidate passed"
+                else
+                    echo "❌ [$DONE_COUNT/$TOTAL] $candidate failed (see e2e/logs/$candidate.log)"
+                fi
+            fi
+        done
+    }
+
+    count_active_databases() {
+        local candidate
+        ACTIVE_DATABASES=0
+        for candidate in "${DATABASES[@]}"; do
+            [ -z "${DB_PIDS[$candidate]}" ] && continue
+            [ -n "${DB_DONE[$candidate]}" ] && continue
+            if kill -0 "${DB_PIDS[$candidate]}" 2>/dev/null; then
+                ACTIVE_DATABASES=$((ACTIVE_DATABASES + 1))
+            fi
+        done
+    }
 
     for db in "${DATABASES[@]}"; do
+        count_active_databases
+        while [ "$ACTIVE_DATABASES" -ge "$DB_CONCURRENCY" ]; do
+            reap_finished_databases
+            count_active_databases
+            [ "$ACTIVE_DATABASES" -lt "$DB_CONCURRENCY" ] && break
+            sleep 1
+        done
+
         echo "🧪 Starting: $db ($(get_category "$db"))"
 
         (
@@ -278,28 +331,8 @@ if [ "$HEADLESS" = "true" ]; then
     echo ""
     echo "⏳ Waiting for all databases to complete..."
 
-    # Track which databases have finished
-    declare -A DB_DONE
-    DONE_COUNT=0
-    TOTAL=${#DATABASES[@]}
-
     while [ $DONE_COUNT -lt $TOTAL ]; do
-        for db in "${DATABASES[@]}"; do
-            [ -n "${DB_DONE[$db]}" ] && continue
-            if ! kill -0 "${DB_PIDS[$db]}" 2>/dev/null; then
-                wait "${DB_PIDS[$db]}" && DB_DONE[$db]="pass" || DB_DONE[$db]="fail"
-                DONE_COUNT=$((DONE_COUNT + 1))
-                [ "${DB_DONE[$db]}" = "fail" ] && FAILED_DBS+=("$db")
-
-                # Print result permanently
-                printf "\r\033[2K"
-                if [ "${DB_DONE[$db]}" = "pass" ]; then
-                    echo "✅ [$DONE_COUNT/$TOTAL] $db passed"
-                else
-                    echo "❌ [$DONE_COUNT/$TOTAL] $db failed (see e2e/logs/$db.log)"
-                fi
-            fi
-        done
+        reap_finished_databases
 
         if [ $DONE_COUNT -lt $TOTAL ]; then
             # Single-line status showing what each running db is on

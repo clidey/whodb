@@ -22,12 +22,14 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
 	"gorm.io/gorm"
 
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/importer"
 	"github.com/clidey/whodb/core/src/query"
 )
 
@@ -48,10 +50,11 @@ func postgresIntegrationConfig() *engine.PluginConfig {
 		Username: "user",
 		Password: "jio53$*(@nfe)",
 		Database: "test_db",
+		Advanced: []engine.Record{{Key: "Port", Value: "5432"}},
 	})
 }
 
-func waitForPostgresOrders(t *testing.T, plugin *PostgresPlugin, config *engine.PluginConfig) {
+func waitForPostgresOrders(t *testing.T, plugin engine.PluginFunctions, config *engine.PluginConfig) {
 	t.Helper()
 
 	deadline := time.Now().Add(2 * time.Minute)
@@ -78,6 +81,22 @@ func waitForPostgresOrders(t *testing.T, plugin *PostgresPlugin, config *engine.
 	}
 
 	t.Fatal("timed out waiting for seeded postgres data")
+}
+
+func waitForPostgresFamilyConnection(t *testing.T, plugin engine.PluginFunctions, config *engine.PluginConfig) {
+	t.Helper()
+
+	deadline := time.Now().Add(2 * time.Minute)
+	for time.Now().Before(deadline) {
+		if plugin.IsAvailable(context.Background(), config) {
+			if _, err := plugin.RawExecute(config, "SELECT 1"); err == nil {
+				return
+			}
+		}
+		time.Sleep(2 * time.Second)
+	}
+
+	t.Fatalf("timed out waiting for %s connection", config.Credentials.Type)
 }
 
 func findPostgresColumn(t *testing.T, columns []engine.Column, name string) engine.Column {
@@ -167,6 +186,86 @@ INSERT INTO test_schema.%[1]s (name) VALUES ('alpha'), ('beta');
 	}
 }
 
+func TestPostgresReadOnlyRawExecuteRejectsAdvisoryBypasses(t *testing.T) {
+	plugin := postgresIntegrationPlugin(t)
+	config := postgresIntegrationConfig()
+	waitForPostgresOrders(t, plugin, config)
+
+	table := fmt.Sprintf("read_only_guard_%d", time.Now().UnixNano())
+	if _, err := plugin.RawExecute(config, "CREATE TABLE "+table+" (id integer primary key)"); err != nil {
+		t.Fatalf("failed to create PostgreSQL guard table: %v", err)
+	}
+	t.Cleanup(func() { _, _ = plugin.RawExecute(config, "DROP TABLE IF EXISTS "+table) })
+	if _, err := plugin.RawExecute(config, "INSERT INTO "+table+" VALUES (1), (2), (3)"); err != nil {
+		t.Fatalf("failed to seed PostgreSQL guard table: %v", err)
+	}
+
+	config.ReadOnly = true
+	queries := []string{
+		"WITH x AS(DELETE FROM " + table + " WHERE id=2 RETURNING *) SELECT * FROM x",
+		"EXPLAIN (ANALYZE,BUFFERS) DELETE FROM " + table + " WHERE id=3",
+		`EXPLAIN ("analyze" true) DELETE FROM ` + table + " WHERE id=1",
+	}
+	for _, query := range queries {
+		if _, err := plugin.RawExecute(config, query); err == nil {
+			t.Errorf("expected PostgreSQL read-only execution to reject %q", query)
+		}
+	}
+	config.MultiStatement = true
+	if _, err := plugin.RawExecute(config, "SELECT 1; DELETE FROM "+table+" WHERE id=1"); err == nil {
+		t.Error("expected PostgreSQL read-only execution to reject a multi-statement write")
+	}
+	config.MultiStatement = false
+
+	config.ReadOnly = false
+	rows, err := plugin.RawExecute(config, "SELECT COUNT(*) FROM "+table)
+	if err != nil {
+		t.Fatalf("failed to verify PostgreSQL guard table: %v", err)
+	}
+	if len(rows.Rows) != 1 || rows.Rows[0][0] != "3" {
+		t.Fatalf("PostgreSQL guard table was modified: %#v", rows.Rows)
+	}
+}
+
+func TestPostgresFamilyReadOnlyRawExecuteRejectsWrites(t *testing.T) {
+	tests := []struct {
+		name   string
+		plugin engine.PluginFunctions
+		config *engine.PluginConfig
+	}{
+		{name: "Postgres", plugin: NewPostgresPlugin().PluginFunctions, config: postgresIntegrationConfig()},
+		{name: "CockroachDB", plugin: NewCockroachDBPlugin().PluginFunctions, config: postgresFamilyIntegrationConfig(engine.DatabaseType_CockroachDB, "26257")},
+		{name: "YugabyteDB", plugin: NewYugabyteDBPlugin().PluginFunctions, config: postgresFamilyIntegrationConfig(engine.DatabaseType_YugabyteDB, "5434")},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			waitForPostgresFamilyConnection(t, test.plugin, test.config)
+			table := fmt.Sprintf("test_schema.read_only_family_guard_%d", time.Now().UnixNano())
+			if _, err := test.plugin.RawExecute(test.config, "CREATE TABLE "+table+" (id integer primary key)"); err != nil {
+				t.Fatalf("failed to create %s guard table: %v", test.name, err)
+			}
+			t.Cleanup(func() { _, _ = test.plugin.RawExecute(test.config, "DROP TABLE IF EXISTS "+table) })
+			if _, err := test.plugin.RawExecute(test.config, "INSERT INTO "+table+" VALUES (1)"); err != nil {
+				t.Fatalf("failed to seed %s guard table: %v", test.name, err)
+			}
+
+			test.config.ReadOnly = true
+			if _, err := test.plugin.RawExecute(test.config, "INSERT INTO "+table+" VALUES (2)"); err == nil {
+				t.Errorf("expected %s read-only execution to reject INSERT", test.name)
+			}
+			test.config.ReadOnly = false
+			rows, err := test.plugin.RawExecute(test.config, "SELECT COUNT(*) FROM "+table)
+			if err != nil {
+				t.Fatalf("failed to verify %s guard table: %v", test.name, err)
+			}
+			if len(rows.Rows) != 1 || rows.Rows[0][0] != "1" {
+				t.Fatalf("%s guard table was modified: %#v", test.name, rows.Rows)
+			}
+		})
+	}
+}
+
 func TestPostgresGeneratedColumnsAndLastInsertID(t *testing.T) {
 	plugin := postgresIntegrationPlugin(t)
 	config := postgresIntegrationConfig()
@@ -232,5 +331,172 @@ CREATE TABLE test_schema.%[1]s (
 	}
 	if len(totals.Rows) != 1 || totals.Rows[0][0] != "13" {
 		t.Fatalf("expected generated postgres total 13, got %#v", totals.Rows)
+	}
+}
+
+func TestPostgresOverwriteImportAcceptsQuotedTableName(t *testing.T) {
+	tests := []struct {
+		name   string
+		plugin engine.PluginFunctions
+		config *engine.PluginConfig
+	}{
+		{name: "Postgres", plugin: NewPostgresPlugin().PluginFunctions, config: postgresIntegrationConfig()},
+		{name: "CockroachDB", plugin: NewCockroachDBPlugin().PluginFunctions, config: postgresFamilyIntegrationConfig(engine.DatabaseType_CockroachDB, "26257")},
+		{name: "YugabyteDB", plugin: NewYugabyteDBPlugin().PluginFunctions, config: postgresFamilyIntegrationConfig(engine.DatabaseType_YugabyteDB, "5434")},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			testPostgresOverwriteImportAcceptsQuotedTableName(t, test.plugin, test.config)
+		})
+	}
+}
+
+func postgresFamilyIntegrationConfig(databaseType engine.DatabaseType, port string) *engine.PluginConfig {
+	return engine.NewPluginConfig(&engine.Credentials{
+		Type:     string(databaseType),
+		Hostname: "localhost",
+		Username: "user",
+		Password: "password",
+		Database: "test_db",
+		Advanced: []engine.Record{{Key: "Port", Value: port}},
+	})
+}
+
+func testPostgresOverwriteImportAcceptsQuotedTableName(t *testing.T, plugin engine.PluginFunctions, config *engine.PluginConfig) {
+	t.Helper()
+	waitForPostgresFamilyConnection(t, plugin, config)
+
+	guardTable := fmt.Sprintf("guard_%d", time.Now().UnixNano()%1_000_000)
+	table := `identifier"; DELETE FROM test_schema.` + guardTable + `;--`
+	quotedTable := `"` + strings.ReplaceAll(table, `"`, `""`) + `"`
+	_, _ = plugin.RawExecute(config, `DROP TABLE IF EXISTS test_schema.`+quotedTable)
+	_, _ = plugin.RawExecute(config, `DROP TABLE IF EXISTS test_schema.`+guardTable)
+	t.Cleanup(func() {
+		_, _ = plugin.RawExecute(config, `DROP TABLE IF EXISTS test_schema.`+quotedTable)
+		_, _ = plugin.RawExecute(config, `DROP TABLE IF EXISTS test_schema.`+guardTable)
+	})
+
+	setup := []string{
+		`CREATE TABLE test_schema.` + guardTable + ` (id INTEGER PRIMARY KEY)`,
+		`INSERT INTO test_schema.` + guardTable + ` VALUES (1)`,
+		`CREATE TABLE test_schema.` + quotedTable + ` (id INTEGER PRIMARY KEY, name VARCHAR(50))`,
+		`INSERT INTO test_schema.` + quotedTable + ` VALUES (1, 'old')`,
+	}
+	for _, statement := range setup {
+		if _, err := plugin.RawExecute(config, statement); err != nil {
+			t.Fatalf("failed to prepare quoted postgres table with %q: %v", statement, err)
+		}
+	}
+
+	columns, err := plugin.GetColumnsForTable(config, "test_schema", table)
+	if err != nil {
+		t.Fatalf("failed to inspect quoted %s table: %v", config.Credentials.Type, err)
+	}
+	nameColumn := findPostgresColumn(t, columns, "name")
+	if nameColumn.Type != "CHARACTER VARYING(50)" || nameColumn.Length == nil || *nameColumn.Length != 50 {
+		t.Fatalf("quoted %s metadata lost declared type information: %#v", config.Credentials.Type, columns)
+	}
+
+	result, err := importer.Execute(plugin, config, &importer.ExecuteRequest{
+		Schema:      "test_schema",
+		StorageUnit: table,
+		Mode:        importer.ModeOverwrite,
+		Parsed:      &importer.ParsedFile{Columns: []string{"id", "name"}, Rows: [][]string{{"2", "new"}}},
+		Mapping: []importer.ColumnMapping{
+			{SourceColumn: "id", TargetColumn: new("id")},
+			{SourceColumn: "name", TargetColumn: new("name")},
+		},
+		TargetColumns: []engine.Column{{Name: "id", Type: "INTEGER", IsPrimary: true}, {Name: "name", Type: "TEXT"}},
+	})
+	if err != nil {
+		t.Fatalf("overwrite import through quoted %s table failed: %v", config.Credentials.Type, err)
+	}
+	if result.RowsImported != 1 {
+		t.Fatalf("expected one imported postgres row, got %d", result.RowsImported)
+	}
+
+	rows, err := plugin.RawExecute(config, `SELECT name FROM test_schema.`+quotedTable)
+	if err != nil || len(rows.Rows) != 1 || rows.Rows[0][0] != "new" {
+		t.Fatalf("unexpected postgres target rows: rows=%#v err=%v", rows, err)
+	}
+	guard, err := plugin.RawExecute(config, `SELECT COUNT(*) FROM test_schema.`+guardTable)
+	if err != nil || len(guard.Rows) != 1 || guard.Rows[0][0] != "1" {
+		t.Fatalf("postgres guard table was modified: rows=%#v err=%v", guard, err)
+	}
+}
+
+func TestQuestDBReadPathsAcceptQuotedTableName(t *testing.T) {
+	plugin := NewQuestDBPlugin().PluginFunctions
+	config := engine.NewPluginConfig(&engine.Credentials{
+		Type:     string(engine.DatabaseType_QuestDB),
+		Hostname: "localhost",
+		Username: "user",
+		Password: "password",
+		Database: "qdb",
+		Advanced: []engine.Record{{Key: "Port", Value: "8812"}},
+	})
+
+	deadline := time.Now().Add(2 * time.Minute)
+	ready := false
+	for time.Now().Before(deadline) {
+		if plugin.IsAvailable(context.Background(), config) {
+			exists, err := plugin.StorageUnitExists(config, "", "users")
+			if err == nil && exists {
+				ready = true
+				break
+			}
+		}
+		time.Sleep(2 * time.Second)
+	}
+	if !ready {
+		t.Fatal("timed out waiting for seeded QuestDB data")
+	}
+
+	guardTable := fmt.Sprintf("guard_%d", time.Now().UnixNano()%1_000_000)
+	hostileTable := `identifier"; DROP TABLE ` + guardTable + `;--`
+	exists, err := plugin.StorageUnitExists(config, "", hostileTable)
+	if err != nil {
+		t.Fatalf("QuestDB hostile identifier existence check failed: %v", err)
+	}
+	if exists {
+		t.Fatalf("unexpected pre-existing QuestDB table %q", hostileTable)
+	}
+
+	table := fmt.Sprintf("identifier safe %d", time.Now().UnixNano()%1_000_000)
+	quotedTable := `"` + strings.ReplaceAll(table, `"`, `""`) + `"`
+	_, _ = plugin.RawExecute(config, `DROP TABLE IF EXISTS `+guardTable)
+	t.Cleanup(func() {
+		_, _ = plugin.RawExecute(config, `DROP TABLE IF EXISTS `+quotedTable)
+		_, _ = plugin.RawExecute(config, `DROP TABLE IF EXISTS `+guardTable)
+	})
+
+	setup := []string{
+		`CREATE TABLE ` + guardTable + ` (id INT)`,
+		`INSERT INTO ` + guardTable + ` VALUES (1)`,
+		`CREATE TABLE ` + quotedTable + ` (id INT, name STRING)`,
+		`INSERT INTO ` + quotedTable + ` VALUES (1, 'safe')`,
+	}
+	for _, statement := range setup {
+		if _, err := plugin.RawExecute(config, statement); err != nil {
+			t.Fatalf("failed to prepare quoted QuestDB table with %q: %v", statement, err)
+		}
+	}
+
+	columns, err := plugin.GetColumnsForTable(config, "", table)
+	if err != nil {
+		t.Fatalf("failed to inspect quoted QuestDB table: %v", err)
+	}
+	if len(columns) != 2 || columns[0].Name != "id" || columns[1].Name != "name" {
+		t.Fatalf("unexpected quoted QuestDB table metadata: %#v", columns)
+	}
+
+	rows, err := plugin.GetRows(config, &engine.GetRowsRequest{StorageUnit: table, PageSize: 10})
+	if err != nil || len(rows.Rows) != 1 {
+		t.Fatalf("failed to read quoted QuestDB table: rows=%#v err=%v", rows, err)
+	}
+	guard, err := plugin.RawExecute(config, `SELECT COUNT(*) FROM `+guardTable)
+	if err != nil || len(guard.Rows) != 1 || guard.Rows[0][0] != "1" {
+		t.Fatalf("QuestDB guard table was modified: rows=%#v err=%v", guard, err)
 	}
 }

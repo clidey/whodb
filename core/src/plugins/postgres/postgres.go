@@ -30,6 +30,7 @@ import (
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
 	sourcecatalogspecs "github.com/clidey/whodb/core/src/sourcecatalog/specs"
+	"github.com/clidey/whodb/core/src/sqlident"
 )
 
 var (
@@ -190,6 +191,7 @@ func init() {
 
 func NewPostgresPlugin() *engine.Plugin {
 	plugin := &PostgresPlugin{}
+	plugin.ConfigureIdentifierQuoting(sqlident.DoubleQuote)
 	plugin.Type = engine.DatabaseType_Postgres
 	plugin.PluginFunctions = plugin
 	plugin.GormPluginFunctions = plugin

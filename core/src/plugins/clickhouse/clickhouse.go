@@ -40,6 +40,7 @@ import (
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
 	sourcecatalogspecs "github.com/clidey/whodb/core/src/sourcecatalog/specs"
+	"github.com/clidey/whodb/core/src/sqlident"
 )
 
 var (
@@ -185,12 +186,15 @@ func (p *ClickHousePlugin) RawExecute(config *engine.PluginConfig, query string,
 func (p *ClickHousePlugin) ClearTableData(config *engine.PluginConfig, schema string, storageUnit string) (bool, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
 		builder := p.CreateSQLBuilder(db)
-		tableName := builder.BuildFullTableName(schema, storageUnit)
+		tableName, err := builder.QualifiedTableName(schema, storageUnit)
+		if err != nil {
+			return false, err
+		}
 
 		query := fmt.Sprintf("ALTER TABLE %s DELETE WHERE 1=1", tableName)
 
 		// Execute the DELETE mutation
-		err := db.Exec(query).Error
+		err = db.Exec(query).Error
 		if err != nil {
 			// ClickHouse mutations may return "driver: bad connection" when trying to read
 			// the non-existent result set. Verify the connection is still healthy.
@@ -480,18 +484,18 @@ func (p *ClickHousePlugin) NormalizeType(typeName string) string {
 // migrator.ColumnTypes() doesn't support "database.table" format - it uses
 // m.CurrentDatabase() internally and expects just the table name.
 func (p *ClickHousePlugin) GetColumnTypes(db *gorm.DB, schema, tableName string) (map[string]gorm_plugin.ColumnTypeInfo, error) {
-	migrator := gorm_plugin.NewMigratorHelper(db, p)
-	// Pass just table name - ClickHouse GORM driver handles database context
-	return migrator.GetColumnTypes(tableName)
+	migrator := gorm_plugin.NewMigratorHelper(p)
+	builder := p.CreateSQLBuilder(db)
+	return migrator.GetColumnTypes(builder.GetTableQuery("", tableName), "", tableName)
 }
 
 // GetColumnsForTable overrides the base implementation for the same reason as GetColumnTypes.
 func (p *ClickHousePlugin) GetColumnsForTable(config *engine.PluginConfig, schema string, storageUnit string) ([]engine.Column, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) ([]engine.Column, error) {
-		migrator := gorm_plugin.NewMigratorHelper(db, p)
+		migrator := gorm_plugin.NewMigratorHelper(p)
+		builder := p.CreateSQLBuilder(db)
 
-		// Pass just table name - ClickHouse GORM driver handles database context
-		columns, err := migrator.GetOrderedColumns(storageUnit)
+		columns, err := migrator.GetOrderedColumns(builder.GetTableQuery("", storageUnit), "", storageUnit)
 		if err != nil {
 			log.WithError(err).Error(fmt.Sprintf("Failed to get columns for table %s.%s", schema, storageUnit))
 			return nil, err
@@ -557,6 +561,7 @@ func init() {
 
 func NewClickHousePlugin() *engine.Plugin {
 	clickhousePlugin := &ClickHousePlugin{}
+	clickhousePlugin.ConfigureIdentifierQuoting(sqlident.BacktickStrict)
 	clickhousePlugin.Type = engine.DatabaseType_ClickHouse
 	clickhousePlugin.PluginFunctions = clickhousePlugin
 	clickhousePlugin.GormPluginFunctions = clickhousePlugin

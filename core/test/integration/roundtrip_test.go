@@ -38,6 +38,7 @@ import (
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/query"
+	_ "github.com/clidey/whodb/core/src/source/adapters"
 	"github.com/clidey/whodb/core/src/types"
 )
 
@@ -332,20 +333,21 @@ func TestServerSmokeAgainstPostgres(t *testing.T) {
 	src.MainEngine.RegistryPlugin(pgTarget.plugin)
 	t.Cleanup(func() { src.MainEngine = origEngine })
 
-	src.MainEngine.AddLoginProfile(types.DatabaseCredentials{
+	profile := types.DatabaseCredentials{
 		Type:     string(pgTarget.config.Credentials.Type),
 		Hostname: pgTarget.config.Credentials.Hostname,
 		Database: pgTarget.config.Credentials.Database,
 		Username: pgTarget.config.Credentials.Username,
 		Password: pgTarget.config.Credentials.Password,
 		Port:     common.GetRecordValueOrDefault(pgTarget.config.Credentials.Advanced, "Port", ""),
-	})
+	}
+	src.MainEngine.AddLoginProfile(profile)
 
 	// Start a minimal handler: use GraphQL server directly rather than full binary to avoid changing scripts
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}}))
-	ctx := context.WithValue(context.Background(), auth.AuthKey_Source, pgTarget.config.Credentials)
+	ctx := context.WithValue(context.Background(), auth.AuthKey_Source, src.GetSourceCredentials(profile))
 
-	// simple AddRow/Row via GraphQL against live DB
+	// simple AddSourceRow/SourceRows via GraphQL against live DB
 	table := "intg_smoke"
 	pkType := primaryKeyType(*pgTarget)
 	pkValue := primaryKeyValue(*pgTarget)
@@ -357,24 +359,25 @@ func TestServerSmokeAgainstPostgres(t *testing.T) {
 		t.Fatalf("failed to create table for smoke: %v", err)
 	}
 
-	graphAdd := fmt.Sprintf(`mutation($schema:String!,$table:String!){ AddRow(schema:$schema, storageUnit:$table, values:[{Key:"id", Value:%q}]){Status}}`, pkValue)
+	graphAdd := fmt.Sprintf(`mutation($ref:SourceObjectRefInput!){ AddSourceRow(ref:$ref, values:[{Key:"id", Value:%q}]){Status}}`, pkValue)
+	ref := map[string]any{"Kind": "Table", "Path": []string{pgTarget.config.Credentials.Database, pgTarget.schema, table}}
 	body, _ := json.Marshal(map[string]any{
 		"query":     graphAdd,
-		"variables": map[string]any{"schema": pgTarget.schema, "table": table},
+		"variables": map[string]any{"ref": ref},
 	})
 	req := httptest.NewRequest(http.MethodPost, "/api/query", bytes.NewBuffer(body))
 	req = req.WithContext(ctx)
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
-	if w.Code != http.StatusOK {
+	if w.Code != http.StatusOK || !strings.Contains(w.Body.String(), `"Status":true`) {
 		t.Fatalf("graphql add row failed: %d %s", w.Code, w.Body.String())
 	}
 
-	graphRow := fmt.Sprintf(`query($schema:String!,$table:String!){ Row(schema:$schema, storageUnit:$table, where:{Type:Atomic,Atomic:{Key:"id",Operator:"=",Value:%q,ColumnType:%q}}, sort:[{Column:"id", Direction:ASC}], pageSize:10, pageOffset:0){ Rows }}`, pkValue, strings.ToLower(pkType))
+	graphRow := fmt.Sprintf(`query($ref:SourceObjectRefInput!){ SourceRows(ref:$ref, where:{Type:Atomic,Atomic:{Key:"id",Operator:"=",Value:%q,ColumnType:%q}}, sort:[{Column:"id", Direction:ASC}], pageSize:10, pageOffset:0){ Rows }}`, pkValue, strings.ToLower(pkType))
 	body, _ = json.Marshal(map[string]any{
 		"query":     graphRow,
-		"variables": map[string]any{"schema": pgTarget.schema, "table": table},
+		"variables": map[string]any{"ref": ref},
 	})
 	req = httptest.NewRequest(http.MethodPost, "/api/query", bytes.NewBuffer(body))
 	req = req.WithContext(ctx)
