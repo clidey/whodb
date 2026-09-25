@@ -87,6 +87,12 @@ func TestSQLiteReadOnlyRawExecuteRejectsWrites(t *testing.T) {
 	if _, err := plugin.RawExecute(config, "SELECT 1; DELETE FROM read_only_guard WHERE id=1"); err == nil {
 		t.Error("expected SQLite read-only execution to reject a multi-statement write")
 	}
+	if _, err := plugin.RawExecute(config, "PRAGMA query_only=OFF; DELETE FROM read_only_guard WHERE id=1; COMMIT"); err == nil {
+		t.Error("expected SQLite read-only execution to reject a script that disables query_only")
+	}
+	if _, err := plugin.RawExecute(config, "SELECT 1; SELECT 2"); err != nil {
+		t.Fatalf("expected SQLite read-only execution to allow a read-only script: %v", err)
+	}
 	config.MultiStatement = false
 	rows, err := plugin.RawExecute(config, "SELECT COUNT(*) FROM read_only_guard")
 	if err != nil {

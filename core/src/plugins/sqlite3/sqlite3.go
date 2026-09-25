@@ -558,6 +558,7 @@ func (p *Sqlite3Plugin) executeRawSQL(config *engine.PluginConfig, query string,
 		// SQLite's driver supports multi-statement with Exec()
 		if config != nil && config.MultiStatement {
 			if config.ReadOnly {
+				// codeql[go/sql-injection]: RawExecute intentionally runs user-authored SQL against a mode=ro SQLite connection.
 				if err := db.Exec(query).Error; err != nil {
 					return nil, err
 				}
