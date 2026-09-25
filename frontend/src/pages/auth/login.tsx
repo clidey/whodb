@@ -1044,7 +1044,7 @@ export const LoginForm: FC<LoginFormProps> = ({
     return (
         <div className={classNames("w-fit h-fit", className, {
             "w-full h-full": advancedDirection === "vertical",
-            "flex gap-8": showSidePanel && advancedDirection === "horizontal",
+            "flex flex-col gap-8 md:flex-row": showSidePanel && advancedDirection === "horizontal",
         })} data-testid="login-form-container">
             <div className="fixed top-4 right-4 z-20" data-testid="mode-toggle-login">
                 <ModeToggle />
@@ -1069,10 +1069,10 @@ export const LoginForm: FC<LoginFormProps> = ({
                     </header>
                 )}
                 <div className={classNames("flex", {
-                    "flex-row grow": advancedDirection === "horizontal",
+                    "flex-col md:flex-row grow": advancedDirection === "horizontal",
                     "flex-col w-full gap-lg": advancedDirection === "vertical",
                 })} data-testid="login-form">
-                    <div className={classNames("flex flex-col gap-lg grow", advancedDirection === "vertical" ? "w-full" : "w-[350px]")}>
+                    <div className={classNames("flex flex-col gap-lg grow", advancedDirection === "vertical" ? "w-full" : "w-full md:w-[350px]")}>
                         <div className={cn("flex flex-col grow gap-lg", {
                             "justify-center": advancedDirection === "horizontal" && !showSidePanel,
                         })}>
@@ -1119,7 +1119,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                     {
                         (showAdvanced && advancedSection.hasAdvancedSection && !databaseType.customFormRenderer) &&
                         <div className={classNames("transition-all h-full overflow-hidden flex flex-col gap-lg", {
-                            "w-[350px] ml-4": advancedDirection === "horizontal",
+                            "w-full mt-6 md:mt-0 md:w-[350px] md:ml-4": advancedDirection === "horizontal",
                             "w-full": advancedDirection === "vertical",
                         })}>
                             <SourceAdvancedFields
@@ -1235,7 +1235,7 @@ export const LoginForm: FC<LoginFormProps> = ({
             </div>
             {
                 showSidePanel && advancedDirection === "horizontal" && (
-                    <Card className="flex flex-col gap-6 p-8 w-[380px] shadow-xl" data-testid="sample-database-panel" aria-labelledby="sample-db-heading">
+                    <Card className="flex flex-col gap-6 p-8 w-full md:w-[380px] shadow-xl" data-testid="sample-database-panel" aria-labelledby="sample-db-heading">
                         <div className="flex flex-col gap-4">
                             <div className="flex items-center gap-3">
                                 <div className="h-14 w-14 rounded-2xl flex justify-center items-center bg-gradient-to-br from-brand to-brand/80 shadow-lg" aria-hidden="true">
@@ -1349,9 +1349,9 @@ export const LoginPage: FC = () => {
     const { t } = useTranslation('pages/login');
 
     return (
-        <Container className="justify-center items-center">
+        <Container className="flex-col justify-center items-center gap-6 overflow-y-auto md:flex-row md:gap-0">
             <LoginForm />
-            <div className="fixed bottom-4 left-1/2 -translate-x-1/2 text-xs text-foreground/60" data-testid="login-page-version">
+            <div className="shrink-0 pb-4 text-xs text-foreground/60 md:fixed md:bottom-4 md:left-1/2 md:-translate-x-1/2 md:pb-0" data-testid="login-page-version">
                 {t('version')}: {__APP_VERSION__}
             </div>
         </Container>

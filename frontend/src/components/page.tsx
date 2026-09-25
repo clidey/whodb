@@ -26,7 +26,7 @@ import {ConnectionContext} from "./connection-context";
 import {Loading} from "./loading";
 import {Sidebar} from "./sidebar/sidebar";
 import {useTranslation} from "@/hooks/use-translation";
-import {MagnifyingGlassIcon, QuestionMarkCircleIcon} from "./heroicons";
+import {Bars3Icon, MagnifyingGlassIcon, QuestionMarkCircleIcon} from "./heroicons";
 import {getKeyDisplay} from "@/utils/platform";
 import {useEffectiveIsMac} from "@/hooks/useEffectiveIsMac";
 import {useSourceSessionMetadata} from "@/hooks/useSourceSessionMetadata";
@@ -118,6 +118,7 @@ const KeyboardShortcutsHint: FC = () => {
 };
 
 export const InternalPage: FC<IInternalPageProps> = (props) => {
+    const { t } = useTranslation('components/page');
     const isLoggedIn = useAppSelector(state => state.auth.current != null);
     const sidebarOpen = useAppSelector(state => state.settings.sidebarOpen);
     const dispatch = useAppDispatch();
@@ -139,7 +140,17 @@ export const InternalPage: FC<IInternalPageProps> = (props) => {
             <Page wrapperClassName="p-0" {...props}>
                 <div className="flex flex-col grow py-6">
                     <div className="flex flex-col gap-1 px-8">
-                        <div className="flex w-full justify-between items-center">
+                        <div className="flex w-full justify-between items-center gap-2">
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                className="md:hidden shrink-0"
+                                aria-label={t('openNavigation')}
+                                data-testid="mobile-nav-toggle"
+                                onClick={() => window.dispatchEvent(new CustomEvent('menu:toggle-sidebar'))}
+                            >
+                                <Bars3Icon className="h-4 w-4" />
+                            </Button>
                             <Breadcrumb routes={props.routes ?? []} active={props.routes?.at(-1)} />
                             <div className="flex items-center gap-2 shrink-0">
                                 <CommandPaletteTrigger />

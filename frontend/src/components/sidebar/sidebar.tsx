@@ -287,7 +287,9 @@ export const Sidebar: FC = () => {
     const [logoutProfileId, setLogoutProfileId] = useState<string | null>(null);
     const [platformExplainerTrigger, setPlatformExplainerTrigger] = useState<PlatformFunnelTrigger | null>(null);
     const [backupHintDismissed, setBackupHintDismissed] = useState(() => hasDismissedBackupHint());
-    const { toggleSidebar, open } = useSidebar();
+    const { toggleSidebar, open: desktopOpen, isMobile } = useSidebar();
+    // The mobile sheet always shows the expanded layout, whatever the persisted desktop collapse state is.
+    const open = isMobile || desktopOpen;
     const isInitialMount = useRef(true);
     const { switchProfile } = useProfileSwitch({
         errorMessage: t('errorSigningIn'),

@@ -20,6 +20,10 @@
 @import '@clidey/ux/brand.css';
 @import './brand-fonts.css';
 
+/* Emit every utility the ux components use from this build, so ux's own
+   responsive classes (e.g. `hidden md:block`) get correct variant ordering. */
+@source "../node_modules/@clidey/ux/dist";
+
 @custom-variant dark (&:where(.dark, .dark *));
 @custom-variant hover (&:hover);
 
