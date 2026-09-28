@@ -1,185 +1,247 @@
 en_US:
   skipToContent: Skip to main content
+  openNavigation: Open navigation
 
 ar_AE:
-  skipToContent: انتقل إلى المحتوى الرئيسي
+  skipToContent: "انتقل إلى المحتوى الرئيسي"
+  openNavigation: "افتح التنقل"
 
 de_DE:
-  skipToContent: Zum Hauptinhalt springen
+  skipToContent: "Zum Hauptinhalt springen"
+  openNavigation: "Navigation öffnen"
 
 el_GR:
-  skipToContent: Μετάβαση στο κύριο περιεχόμενο
+  skipToContent: "Μετάβαση στο κύριο περιεχόμενο"
+  openNavigation: "Ανοίξτε την πλοήγηση"
 
 en_GB:
-  skipToContent: Skip to main content
+  skipToContent: "Skip to main content"
+  openNavigation: "Open navigation"
 
 es_ES:
-  skipToContent: Saltar al contenido principal
+  skipToContent: "Saltar al contenido principal"
+  openNavigation: "Abrir navegación"
 
 fi_FI:
-  skipToContent: Siirry pääsisältöön
+  skipToContent: "Siirry pääsisältöön"
+  openNavigation: "Avaa navigointi"
 
 fr_FR:
-  skipToContent: Passer au contenu principal
+  skipToContent: "Passer au contenu principal"
+  openNavigation: "Ouvrir la navigation"
 
 it_IT:
-  skipToContent: Passa al contenuto principale
+  skipToContent: "Passa al contenuto principale"
+  openNavigation: "Apri la navigazione"
 
 iw_IL:
-  skipToContent: דלג לתוכן הראשי
+  skipToContent: "דלג לתוכן הראשי"
+  openNavigation: "פתח את הניווט"
 
 ja_JP:
-  skipToContent: メインコンテンツにスキップ
+  skipToContent: "メインコンテンツにスキップ"
+  openNavigation: "ナビゲーションを開く"
 
 ko_KR:
-  skipToContent: 주요 콘텐츠로 건너뛰기
+  skipToContent: "주요 콘텐츠로 건너뛰기"
+  openNavigation: "탐색 열기"
 
 nl_NL:
-  skipToContent: Ga naar de hoofdinhoud
+  skipToContent: "Ga naar de hoofdinhoud"
+  openNavigation: "Navigatie openen"
 
 pl_PL:
-  skipToContent: Przejdź do głównej treści
+  skipToContent: "Przejdź do głównej treści"
+  openNavigation: "Otwórz nawigację"
 
 pt_BR:
-  skipToContent: Pular para o conteúdo principal
+  skipToContent: "Pular para o conteúdo principal"
+  openNavigation: "Abrir navegação"
 
 ro_RO:
-  skipToContent: Treci la conținutul principal
+  skipToContent: "Treci la conținutul principal"
+  openNavigation: "Deschideți navigarea"
 
 ru_RU:
-  skipToContent: Перейти к основному содержанию
+  skipToContent: "Перейти к основному содержанию"
+  openNavigation: "Открыть навигацию"
 
 sk_SK:
-  skipToContent: Preskočiť na hlavný obsah
+  skipToContent: "Preskočiť na hlavný obsah"
+  openNavigation: "Otvorte navigáciu"
 
 sv_SE:
-  skipToContent: Hoppa till huvudinnehållet
+  skipToContent: "Hoppa till huvudinnehållet"
+  openNavigation: "Öppna navigering"
 
 zh_CN:
-  skipToContent: 跳至主要内容
+  skipToContent: "跳至主要内容"
+  openNavigation: "打开导航"
 
 zh_TW:
-  skipToContent: 跳至主要內容
+  skipToContent: "跳至主要內容"
+  openNavigation: "打開導航"
 
 bg_BG:
-  skipToContent: Преминете към основното съдържание
+  skipToContent: "Преминете към основното съдържание"
+  openNavigation: "Отворете навигацията"
 
 bn_BD:
-  skipToContent: প্রধান বিষয়বস্তু এড়িয়ে যান
+  skipToContent: "প্রধান বিষয়বস্তু এড়িয়ে যান"
+  openNavigation: "নেভিগেশন খুলুন"
 
 ca_ES:
-  skipToContent: Skip to main content
+  skipToContent: "Skip to main content"
+  openNavigation: "Navegació oberta"
 
 cs_CZ:
-  skipToContent: Přejít na hlavní obsah
+  skipToContent: "Přejít na hlavní obsah"
+  openNavigation: "Otevřete navigaci"
 
 da_DK:
-  skipToContent: Spring til hovedindhold
+  skipToContent: "Spring til hovedindhold"
+  openNavigation: "Åbn navigation"
 
 fa_IR:
-  skipToContent: به محتوای اصلی بروید
+  skipToContent: "به محتوای اصلی بروید"
+  openNavigation: "ناوبری را باز کنید"
 
 hi_IN:
-  skipToContent: मुख्य सामग्री पर जाएँ
+  skipToContent: "मुख्य सामग्री पर जाएँ"
+  openNavigation: "नेविगेशन खोलें"
 
 hr_HR:
-  skipToContent: Prijeđi na glavni sadržaj
+  skipToContent: "Prijeđi na glavni sadržaj"
+  openNavigation: "Otvorite navigaciju"
 
 hu_HU:
-  skipToContent: Ugrás a fő tartalomhoz
+  skipToContent: "Ugrás a fő tartalomhoz"
+  openNavigation: "Nyissa meg a navigációt"
 
 id_ID:
-  skipToContent: Lompat ke konten utama
+  skipToContent: "Lompat ke konten utama"
+  openNavigation: "Buka navigasi"
 
 ms_MY:
-  skipToContent: Langkau ke kandungan utama
+  skipToContent: "Langkau ke kandungan utama"
+  openNavigation: "Buka navigasi"
 
 nb_NO:
-  skipToContent: Gå til hovedinnhold
+  skipToContent: "Gå til hovedinnhold"
+  openNavigation: "Åpne navigasjon"
 
 sw_KE:
-  skipToContent: Ruka hadi kwa yaliyomo kuu
+  skipToContent: "Ruka hadi kwa yaliyomo kuu"
+  openNavigation: "Fungua urambazaji"
 
 ta_IN:
-  skipToContent: முக்கிய உள்ளடக்கத்திற்கு செல்க
+  skipToContent: "முக்கிய உள்ளடக்கத்திற்கு செல்க"
+  openNavigation: "வழிசெலுத்தலைத் திறக்கவும்"
 
 th_TH:
-  skipToContent: ข้ามไปที่เนื้อหาหลัก
+  skipToContent: "ข้ามไปที่เนื้อหาหลัก"
+  openNavigation: "เปิดการนำทาง"
 
 tr_TR:
-  skipToContent: Ana içeriğe atla
+  skipToContent: "Ana içeriğe atla"
+  openNavigation: "Gezinmeyi aç"
 
 uk_UA:
-  skipToContent: Перейти до основного вмісту
+  skipToContent: "Перейти до основного вмісту"
+  openNavigation: "Відкрити навігацію"
 
 ur_PK:
-  skipToContent: مرکزی مواد پر جائیں۔
+  skipToContent: "مرکزی مواد پر جائیں۔"
+  openNavigation: "نیویگیشن کھولیں۔"
 
 vi_VN:
-  skipToContent: Chuyển đến nội dung chính
+  skipToContent: "Chuyển đến nội dung chính"
+  openNavigation: "Mở điều hướng"
 
 af_ZA:
   skipToContent: "Slaan oor na hoofinhoud"
+  openNavigation: "Maak navigasie oop"
 
 am_ET:
   skipToContent: "ወደ ዋናው ይዘት ዝለል"
+  openNavigation: "አሰሳ ክፈት"
 
 az_AZ:
   skipToContent: "Əsas məzmuna keçin"
+  openNavigation: "Naviqasiyanı açın"
 
 et_EE:
   skipToContent: "Mine põhisisu juurde"
+  openNavigation: "Ava navigeerimine"
 
 gu_IN:
   skipToContent: "મુખ્ય સામગ્રી પર જાઓ"
+  openNavigation: "નેવિગેશન ખોલો"
 
 ha_NG:
   skipToContent: "Tsallake zuwa babban abun ciki"
+  openNavigation: "Buɗe kewayawa"
 
 ka_GE:
   skipToContent: "გადადით მთავარ შინაარსზე"
+  openNavigation: "გახსენით ნავიგაცია"
 
 km_KH:
   skipToContent: "រំលងទៅមាតិកាសំខាន់"
+  openNavigation: "បើកការរុករក"
 
 kn_IN:
   skipToContent: "ಮುಖ್ಯ ವಿಷಯಕ್ಕೆ ತೆರಳಿ"
+  openNavigation: "ನ್ಯಾವಿಗೇಶನ್ ತೆರೆಯಿರಿ"
 
 lt_LT:
   skipToContent: "Pereiti prie pagrindinio turinio"
+  openNavigation: "Atidaryti navigaciją"
 
 lv_LV:
   skipToContent: "Pāriet uz galveno saturu"
+  openNavigation: "Atveriet navigāciju"
 
 ml_IN:
   skipToContent: "പ്രധാന ഉള്ളടക്കത്തിലേക്ക് പോകുക"
+  openNavigation: "നാവിഗേഷൻ തുറക്കുക"
 
 mr_IN:
   skipToContent: "मुख्य सामग्रीवर जा"
+  openNavigation: "नेव्हिगेशन उघडा"
 
 ne_NP:
   skipToContent: "मुख्य सामग्रीमा जानुहोस्"
+  openNavigation: "नेभिगेसन खोल्नुहोस्"
 
 pa_IN:
   skipToContent: "ਮੁੱਖ ਸਮੱਗਰੀ 'ਤੇ ਜਾਓ"
+  openNavigation: "ਨੈਵੀਗੇਸ਼ਨ ਖੋਲ੍ਹੋ"
 
 si_LK:
   skipToContent: "ප්‍රධාන අන්තර්ගතය වෙත යන්න"
+  openNavigation: "සංචාලනය විවෘත කරන්න"
 
 sl_SI:
   skipToContent: "Preskoči na glavno vsebino"
+  openNavigation: "Odpri navigacijo"
 
 sr_RS:
   skipToContent: "Пређи на главни садржај"
+  openNavigation: "Отворите навигацију"
 
 te_IN:
   skipToContent: "ప్రధాన కంటెంట్‌కి దాటవేయండి"
+  openNavigation: "నావిగేషన్ తెరవండి"
 
 tl_PH:
   skipToContent: "Lumaktaw sa pangunahing nilalaman"
+  openNavigation: "Buksan ang nabigasyon"
 
 uz_UZ:
   skipToContent: "Asosiy tarkibga o'tish"
+  openNavigation: "Navigatsiyani oching"
 
 yo_NG:
   skipToContent: "Rekọja si akoonu akọkọ"
+  openNavigation: "Ṣii lilọ kiri"

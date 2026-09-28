@@ -552,7 +552,7 @@ export const StorageUnitPage: FC = () => {
     }
 
     return <InternalPage routes={routes}>
-        <div className="flex w-full h-fit my-2 gap-lg justify-between">
+        <div className="flex w-full h-fit my-2 flex-wrap gap-lg justify-between">
             <div className="flex justify-between items-center">
                 {previousBrowserState != null && (
                     <Button

@@ -37,6 +37,7 @@ import (
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/mockdata"
+	"github.com/clidey/whodb/core/src/settings"
 	"github.com/clidey/whodb/core/src/source"
 	"github.com/clidey/whodb/core/src/sourcecatalog"
 )
@@ -269,7 +270,9 @@ func TestExportSourceConnection(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	srv := auth.AuthMiddleware(handler.NewDefaultServer(NewExecutableSchema(Config{Resolvers: &Resolver{}})))
+	graphQLServer := handler.NewDefaultServer(NewExecutableSchema(Config{Resolvers: &Resolver{}}))
+	graphQLServer.AroundOperations(auth.GraphQLAuthorizationMiddleware)
+	srv := auth.AuthMiddleware(graphQLServer)
 
 	tests := []struct {
 		name           string
@@ -352,6 +355,31 @@ func TestExportSourceConnection(t *testing.T) {
 	}
 	if !reflect.DeepEqual(restored.Values, credentials.Values) {
 		t.Fatal("export modified stored credentials")
+	}
+}
+
+func TestGraphQLAuthorizationRejectsOperationNameSpoofBeforeMutation(t *testing.T) {
+	original := settings.Get().MetricsEnabled
+	t.Cleanup(func() {
+		settings.UpdateSettings(settings.MetricsEnabledField(original))
+	})
+	settings.UpdateSettings(settings.MetricsEnabledField(false))
+
+	graphQLServer := handler.NewDefaultServer(NewExecutableSchema(Config{Resolvers: &Resolver{}}))
+	graphQLServer.AroundOperations(auth.GraphQLAuthorizationMiddleware)
+	srv := auth.AuthMiddleware(graphQLServer)
+	body := `{"operationName":"Version","query":"mutation Version { UpdateSettings(newSettings: { MetricsEnabled: \"true\" }) { Status } }"}`
+	req := httptest.NewRequest(http.MethodPost, "/api/query", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	srv.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK || !strings.Contains(w.Body.String(), `"code":"UNAUTHENTICATED"`) {
+		t.Fatalf("expected GraphQL authentication error, got status %d body %s", w.Code, w.Body.String())
+	}
+	if settings.Get().MetricsEnabled {
+		t.Fatal("spoofed operation executed UpdateSettings")
 	}
 }
 

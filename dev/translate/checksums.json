@@ -471,7 +471,8 @@
     "pleaseWait": "b910f0b0fcf7"
   },
   "frontend/src/locales/components/page.yaml": {
-    "skipToContent": "c887f134c26e"
+    "skipToContent": "c887f134c26e",
+    "openNavigation": "0ed77fd2619b"
   },
   "frontend/src/locales/components/posthog-consent-banner.yaml": {
     "title": "bb0019f44a00",
@@ -1270,6 +1271,9 @@
     "toggleSidebar": "1d4c17db52f7",
     "signOut": "0b184bc5d534",
     "runTransformPrefix": "50542d086235"
+  },
+  "ee/frontend/src/locales/components/ee-page.yaml": {
+    "openNavigation": "0ed77fd2619b"
   },
   "ee/frontend/src/locales/components/file-upload.yaml": {
     "uploadSuccess": "fcad7fdcde03",
@@ -2166,8 +2170,14 @@
     "executionModeAsync": "88f22a6c2154",
     "executionModeAsyncDescription": "cee9b9a9e462",
     "executionModeLive": "b64ac05f17e6",
-    "executionModeLiveDescription": "9a7373968f5a",
-    "executionModeHelp": "28e52a033341",
+    "executionModeLiveDescription": "e406d1f792dd",
+    "liveBehavior": "0661176e0cb6",
+    "liveBehaviorHelp": "66a26be2417c",
+    "liveBehaviorRequest": "bf40185d2386",
+    "liveBehaviorRequestDescription": "1ed569e04231",
+    "liveBehaviorService": "593806038739",
+    "liveBehaviorServiceDescription": "c476f9eeaea8",
+    "executionModeHelp": "b000264a4dc1",
     "executionModeImmutable": "fe0f92f0451b",
     "runStarted": "bad233f8159b",
     "stopRun": "b7ec68a21ea3",
@@ -2177,6 +2187,8 @@
     "runQueued": "661ff40a07e0",
     "startFunctionRun": "cdffd2693a0c",
     "startingRun": "2da6afcc42bc",
+    "startService": "c5686e2f5820",
+    "startingService": "0243c4434b6b",
     "saveBeforeDetachedRun": "7cef31917aaf",
     "runHistory": "addf321bfa5b",
     "runsTitle": "9b9a2d3a21a5",
@@ -3833,6 +3845,44 @@
     "purged": "a37b8e4ca600",
     "purgeFailed": "82e50ef70e68",
     "purgeConfirm": "27b1668cc514"
+  },
+  "ee/frontend/src/locales/pages/typesafe.yaml": {
+    "addProvider": "d49b823ec471",
+    "openInChat": "1d528a208af8",
+    "state": "a3b50c476732",
+    "stateFormat": "1e14da5d765c",
+    "text": "71988c4d8e08",
+    "json": "db1a21a0bc2e",
+    "questions": "9a72221a2747",
+    "example": "4dbb46fc867a",
+    "apiDocs": "d656f914e948",
+    "invalidState": "1ba8fb96920a",
+    "invalidQuestions": "702b5fcf43dc",
+    "run": "00d60e31a4e6",
+    "running": "46c541363b02",
+    "cancel": "19766ed6ccb2",
+    "cancelled": "f2ac2d4c0c67",
+    "failed": "7add7df66776",
+    "credentials": "44ec00cfec35",
+    "rateLimit": "71ec8b3fc772",
+    "denied": "8abe3e4ecf67",
+    "rejected": "7a3b3cb0c56b",
+    "loadFailed": "e2b6161a7eee",
+    "retry": "942087cc2d41",
+    "results": "219c4a6c86a7",
+    "usage": "8d59829c1e15",
+    "raw": "587372398f62",
+    "submitted": "5695440fd2d3",
+    "copy": "f0f755afea88",
+    "copied": "367a90e62c48",
+    "copyFailed": "b4c0748f567e",
+    "exampleState": "52ae4fd504d8",
+    "exampleInstructions": "492556149753",
+    "emptyTitle": "d7833981dd8f",
+    "emptyDescription": "c49f58d4b680",
+    "statePlaceholder": "6397aec91186",
+    "runFailed": "4a2894ce5703",
+    "runInterrupted": "584d0c3691a0"
   },
   "ee/frontend/src/locales/pages/whodb-agent.yaml": {
     "title": "63b482da3bc2",

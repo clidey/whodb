@@ -145,6 +145,24 @@ cd frontend && DATABASE=postgres pnpm exec playwright test \
   tests/postgres-screenshots.spec.mjs
 ```
 
+### GraphQL Authorization Regression
+
+The CE live-server regression is
+`frontend/e2e/tests/features/graphql-authorization.ce.spec.mjs`. It sends an
+anonymous `UpdateSettings` mutation under the public-looking operation name
+`SettingsConfig` and verifies the setting is unchanged.
+
+```bash
+cd frontend
+VITE_E2E_TEST=true bash ../dev/run-e2e.sh true sqlite graphql-authorization.ce
+```
+
+EE platform coverage lives in
+`ee/frontend/e2e/tests/platform/graphql-authorization.spec.mjs` and verifies
+that an operation mixing public `Health` with a protected platform field is
+rejected as a whole. Run it through the platform E2E stack described in
+`ee/.agents/docs/ee-testing.md`.
+
 ### Playwright Configuration
 
 Key settings in `frontend/e2e/playwright.config.mjs`:

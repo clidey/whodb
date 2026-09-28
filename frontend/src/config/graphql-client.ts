@@ -100,18 +100,28 @@ const authLink = setContext(async (_, prevContext) => {
  *
  * This ensures seamless user experience when sessions expire.
  */
+const handleUnauthorized = () => {
+    if (onUnauthorizedHandler) {
+        void onUnauthorizedHandler().then(handled => {
+            if (!handled) {
+                fallbackAutoLogin();
+            }
+        });
+        return;
+    }
+    fallbackAutoLogin();
+};
+
 const errorLink = onError(({error}) => {
+    if (CombinedGraphQLErrors.is(error)) {
+        if (error.errors.some(graphQLError => graphQLError.extensions?.code === 'UNAUTHENTICATED')) {
+            handleUnauthorized();
+        }
+        return;
+    }
     if (ServerError.is(error)) {
         if (error.statusCode === 401) {
-            if (onUnauthorizedHandler) {
-                void onUnauthorizedHandler().then(handled => {
-                    if (!handled) {
-                        fallbackAutoLogin();
-                    }
-                });
-                return;
-            }
-            fallbackAutoLogin();
+            handleUnauthorized();
             return;
         }
 
@@ -119,7 +129,7 @@ const errorLink = onError(({error}) => {
             toast.error('Server error. Please try again.');
         }
         console.error('Network error:', error);
-    } else if (!CombinedGraphQLErrors.is(error) && !CombinedProtocolErrors.is(error)) {
+    } else if (!CombinedProtocolErrors.is(error)) {
         if (error && 'message' in error && (error as any).message?.includes('Failed to fetch')) {
             toast.error('Connection lost. Check your network.');
         }

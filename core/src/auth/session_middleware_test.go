@@ -52,7 +52,7 @@ func TestAuthMiddlewareSessionCookieInjectsCredentials(t *testing.T) {
 	}
 }
 
-func TestAuthMiddlewareSessionCookieRejectsMissingCSRF(t *testing.T) {
+func TestAuthMiddlewareSessionCookieDefersGraphQLCSRF(t *testing.T) {
 	newTestStore(t)
 	token, _, _, err := CreateSession(testCredentials(), time.Hour)
 	if err != nil {
@@ -63,19 +63,24 @@ func TestAuthMiddlewareSessionCookieRejectsMissingCSRF(t *testing.T) {
 	req.AddCookie(&http.Cookie{Name: sessionCookieName, Value: token})
 	rr := httptest.NewRecorder()
 
+	var csrfFailed bool
 	AuthMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		csrfFailed, _ = r.Context().Value(csrfFailedKey{}).(bool)
 		w.WriteHeader(http.StatusOK)
 	})).ServeHTTP(rr, req)
 
-	if rr.Code != http.StatusForbidden {
-		t.Fatalf("expected 403 for missing CSRF, got %d", rr.Code)
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected GraphQL CSRF authorization to be deferred, got %d", rr.Code)
+	}
+	if !csrfFailed {
+		t.Fatal("expected the GraphQL operation authorizer to receive the failed CSRF state")
 	}
 }
 
 func TestAuthMiddlewareSessionCookieInvalidClearsAndRejects(t *testing.T) {
 	newTestStore(t)
 
-	req := httptest.NewRequest(http.MethodPost, "/api/query", bytes.NewBufferString(`{"operationName":"Other"}`))
+	req := httptest.NewRequest(http.MethodPost, "/api/private", nil)
 	req.AddCookie(&http.Cookie{Name: sessionCookieName, Value: "does-not-exist"})
 	req.Header.Set(csrfHeaderName, "whatever")
 	rr := httptest.NewRecorder()
@@ -124,7 +129,7 @@ func TestAuthMiddlewareSessionCookieTransientErrorDoesNotClearCookie(t *testing.
 		t.Fatalf("closing session db: %v", err)
 	}
 
-	req := httptest.NewRequest(http.MethodPost, "/api/query", bytes.NewBufferString(`{"operationName":"Other"}`))
+	req := httptest.NewRequest(http.MethodPost, "/api/private", nil)
 	req.AddCookie(&http.Cookie{Name: sessionCookieName, Value: token})
 	req.Header.Set(csrfHeaderName, "whatever")
 	rr := httptest.NewRecorder()
