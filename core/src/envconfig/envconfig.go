@@ -300,6 +300,20 @@ func GetConfiguredChatProviders() []env.ChatProvider {
 		})
 	}
 
+	if len(env.MiniMaxAPIKey) > 0 {
+		name := env.MiniMaxName
+		if name == "" {
+			name = "MiniMax"
+		}
+		providers = append(providers, env.ChatProvider{
+			Type:       "MiniMax",
+			Name:       name,
+			APIKey:     env.MiniMaxAPIKey,
+			Endpoint:   env.GetMiniMaxEndpoint(),
+			ProviderId: "minimax-1",
+		})
+	}
+
 	// Flag if legacy OpenAI-Compatible env vars are still set
 	if os.Getenv("WHODB_OPENAI_COMPATIBLE_ENDPOINT") != "" || os.Getenv("WHODB_OPENAI_COMPATIBLE_API_KEY") != "" || os.Getenv("WHODB_CUSTOM_MODELS") != "" {
 		migrate.DeprecatedOpenAICompatibleEnv = true
