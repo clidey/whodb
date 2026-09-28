@@ -247,6 +247,15 @@ the default mode. They return a confirmation token, and the write runs only
 after approval through `whodb_platform_confirm`. Use `whodb_platform_pending`
 to recover active confirmation tokens.
 
+Upload previews must show the stored absolute source path and destination across
+write plans, confirmations, and pending-action retrieval. Keep this display
+exception specific to uploads; do not relax secret detection for persisted
+workflows or send paths to telemetry. Confirmation tokens are available to the
+model and do not independently prove human approval. File contents and symlink
+targets are not snapshotted at preview time. See the CLI guide's
+[upload review and confirmation limitations](../../cli/README.md#upload-review-and-confirmation-limitations)
+for the user-facing security contract.
+
 Generic write tools are capability-backed. Before using
 `whodb_platform_create`, `whodb_platform_update`, `whodb_platform_delete`, or
 `whodb_platform_action`, agents should read `whodb://platform/schema` and use
