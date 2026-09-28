@@ -59,6 +59,7 @@ let cachedDistinctId: string | null = null;
 const configuredDeploymentName = import.meta.env.VITE_POSTHOG_DEPLOYMENT?.trim();
 
 let deploymentName: string | null = configuredDeploymentName?.length ? configuredDeploymentName : null;
+let remoteAnalyticsHostAllowlist: readonly string[] | null = null;
 
 const posthogKey = "phc_hbXcCoPTdxm5ADL8PmLSYTIUvS6oRWFM2JAK8SMbfnH";
 const apiHost = "https://z.clidey.com";
@@ -100,12 +101,28 @@ const isLocalAnalyticsHost = () => {
     return localHostPattern.test(hostname) || privateHostPattern.test(hostname);
 };
 
+/**
+ * Restricts remote analytics to the given public hostnames. Call at boot when
+ * one build serves several hosts and only some of them should report events.
+ * Passing null restores the default (any non-local host).
+ */
+export const setRemoteAnalyticsHostAllowlist = (hosts: readonly string[] | null): void => {
+    remoteAnalyticsHostAllowlist = hosts;
+};
+
 /** Reports whether events may be sent to the remote PostHog instance in this runtime. */
 export const remoteAnalyticsAllowed = () => {
     if (isE2ETest() || !remoteAnalyticsEnabled()) {
         return false;
     }
-    return getEnvEnvironment() === 'production' && !isLocalAnalyticsHost();
+    if (getEnvEnvironment() !== 'production' || isLocalAnalyticsHost()) {
+        return false;
+    }
+    if (remoteAnalyticsHostAllowlist === null) {
+        return true;
+    }
+    const hostname = typeof window === 'undefined' ? '' : window.location.hostname.toLowerCase();
+    return remoteAnalyticsHostAllowlist.some((allowed) => allowed.toLowerCase() === hostname);
 };
 
 const analyticsRuntimeContext = (): AnalyticsRuntimeContext => ({
