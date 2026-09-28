@@ -42,8 +42,8 @@ interface AuthSessionGuardProps {
  * Once the mount check completes, redirect/render decisions read `loggedIn`
  * directly so they still reflect logins/logouts dispatched elsewhere — this
  * component just never re-fetches the session to do so. Session expiry
- * mid-session is already handled separately by the GraphQL error link's 401
- * auto-login.
+ * mid-session is already handled separately by the GraphQL error link's
+ * unauthenticated-response auto-login.
  *
  * The mount check itself is skipped when Redux already reports a logged-in
  * profile — this component first mounts right after the login page's own

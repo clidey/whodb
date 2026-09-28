@@ -29,29 +29,15 @@ import (
 	"github.com/clidey/whodb/core/src/source"
 )
 
-func TestIsPublicRouteAllowsIntrospectionInDev(t *testing.T) {
-	originalDev := env.IsDevelopment
-	env.IsDevelopment = true
-	t.Cleanup(func() {
-		env.IsDevelopment = originalDev
-	})
-
-	req := httptest.NewRequest(http.MethodPost, "/api/query", bytes.NewBufferString(`{"query":"IntrospectionQuery"}`))
-	if !isPublicRoute(req) {
-		t.Fatalf("expected introspection query to be treated as public route in development")
+func TestIsPublicRouteUsesOnlyTheRequestPath(t *testing.T) {
+	publicRequest := httptest.NewRequest(http.MethodGet, "/dashboard", nil)
+	if !isPublicRoute(publicRequest) {
+		t.Fatal("expected a non-API path to be public")
 	}
-}
 
-func TestIsPublicRouteBlocksWhenNotDev(t *testing.T) {
-	originalDev := env.IsDevelopment
-	env.IsDevelopment = false
-	t.Cleanup(func() {
-		env.IsDevelopment = originalDev
-	})
-
-	req := httptest.NewRequest(http.MethodPost, "/api/query", bytes.NewBufferString(`{"query":"IntrospectionQuery"}`))
-	if isPublicRoute(req) {
-		t.Fatalf("expected introspection query to require auth outside development")
+	graphQLRequest := httptest.NewRequest(http.MethodPost, "/api/query", bytes.NewBufferString(`{"query":"query { Version }"}`))
+	if isPublicRoute(graphQLRequest) {
+		t.Fatal("expected GraphQL authorization to be deferred until gqlgen selects the operation")
 	}
 }
 
@@ -98,14 +84,14 @@ func TestAuthMiddlewareExtractsCredentialsFromBearer(t *testing.T) {
 	}
 }
 
-func TestAuthMiddlewareRejectsMissingToken(t *testing.T) {
+func TestAuthMiddlewareRejectsMissingTokenForNonGraphQLAPI(t *testing.T) {
 	originalDev := env.IsDevelopment
 	env.IsDevelopment = false
 	t.Cleanup(func() {
 		env.IsDevelopment = originalDev
 	})
 
-	req := httptest.NewRequest(http.MethodPost, "/api/query", strings.NewReader(`{"operationName":"Other"}`))
+	req := httptest.NewRequest(http.MethodPost, "/api/private", nil)
 	rr := httptest.NewRecorder()
 
 	handler := AuthMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -219,55 +205,5 @@ func TestAuthMiddlewareDecodesSourceCredentialsFormat(t *testing.T) {
 	}
 	if captured.Values["SSL CA Certificate Path"] != "/path/to/ca.crt" {
 		t.Fatalf("expected SSL CA Certificate Path to be preserved, got %+v", captured.Values)
-	}
-}
-
-func TestIsAllowedPermitsWhitelistedOperations(t *testing.T) {
-	body := `{"operationName":"LoginSource","variables":{}}`
-	req := httptest.NewRequest(http.MethodPost, "/api/query", strings.NewReader(body))
-	if !isAllowed(req, []byte(body)) {
-		t.Fatalf("expected LoginSource operation to be allowed without auth")
-	}
-
-	profiles := `{"operationName":"SourceProfiles","variables":{}}`
-	req = httptest.NewRequest(http.MethodPost, "/api/query", strings.NewReader(profiles))
-	if !isAllowed(req, []byte(profiles)) {
-		t.Fatalf("expected SourceProfiles operation to be allowed without auth")
-	}
-
-	loginWithProfile := `{"operationName":"LoginWithSourceProfile","variables":{}}`
-	req = httptest.NewRequest(http.MethodPost, "/api/query", strings.NewReader(loginWithProfile))
-	if !isAllowed(req, []byte(loginWithProfile)) {
-		t.Fatalf("expected LoginWithSourceProfile operation to be allowed without auth")
-	}
-
-	settingsConfig := `{"operationName":"SettingsConfig","variables":{}}`
-	req = httptest.NewRequest(http.MethodPost, "/api/query", strings.NewReader(settingsConfig))
-	if !isAllowed(req, []byte(settingsConfig)) {
-		t.Fatalf("expected SettingsConfig operation to be allowed without auth")
-	}
-
-	updateSettings := `{"operationName":"UpdateSettings","variables":{"newSettings":{"MetricsEnabled":"true"}}}`
-	req = httptest.NewRequest(http.MethodPost, "/api/query", strings.NewReader(updateSettings))
-	if isAllowed(req, []byte(updateSettings)) {
-		t.Fatalf("expected UpdateSettings operation to require auth")
-	}
-
-	getDb := `{"operationName":"SourceFieldOptions","variables":{"sourceType":"Sqlite3"}}`
-	req = httptest.NewRequest(http.MethodPost, "/api/query", strings.NewReader(getDb))
-	if !isAllowed(req, []byte(getDb)) {
-		t.Fatalf("expected SourceFieldOptions for Sqlite3 to be allowed")
-	}
-
-	getDuckDB := `{"operationName":"SourceFieldOptions","variables":{"sourceType":"DuckDB"}}`
-	req = httptest.NewRequest(http.MethodPost, "/api/query", strings.NewReader(getDuckDB))
-	if !isAllowed(req, []byte(getDuckDB)) {
-		t.Fatalf("expected SourceFieldOptions for DuckDB to be allowed")
-	}
-
-	denied := `{"operationName":"SourceFieldOptions","variables":{"sourceType":"Postgres"}}`
-	req = httptest.NewRequest(http.MethodPost, "/api/query", strings.NewReader(denied))
-	if isAllowed(req, []byte(denied)) {
-		t.Fatalf("expected SourceFieldOptions for sources without public field options to be rejected")
 	}
 }

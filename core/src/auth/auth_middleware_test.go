@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -238,8 +240,12 @@ func TestAuthMiddlewareRejectsOversizeBody(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/api/query", bytes.NewReader(body))
 	rr := httptest.NewRecorder()
 
-	AuthMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})).ServeHTTP(rr, req)
-	if rr.Code != http.StatusRequestEntityTooLarge {
-		t.Fatalf("expected 413, got %d", rr.Code)
+	var readErr error
+	AuthMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, readErr = io.ReadAll(r.Body)
+	})).ServeHTTP(rr, req)
+	var maxBytesErr *http.MaxBytesError
+	if !errors.As(readErr, &maxBytesErr) {
+		t.Fatalf("expected MaxBytesError, got %v", readErr)
 	}
 }

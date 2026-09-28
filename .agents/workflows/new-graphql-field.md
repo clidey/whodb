@@ -28,6 +28,15 @@ Run the manifest contract test after changing it:
 cd ee && PLATFORM_ENCRYPTION_KEY=0123456789abcdef0123456789abcdef go test ./core/graph -run TestPlatformManifestMatchesGraphQLSchema -count=1
 ```
 
+Classify every new root field before implementing its resolver:
+
+- Protected is the default and requires no policy entry.
+- If unauthenticated access is an explicit requirement, add the actual root
+  field name to the matching edition policy in
+  `core/src/auth/graphql_authorization.go` or
+  `ee/core/src/auth/graphql_authorization.go`.
+- Never authorize by GraphQL operation name. See `.agents/rules/graphql.md`.
+
 ### 2. Run Backend Codegen
 ```bash
 cd core && go generate .
@@ -78,3 +87,7 @@ const { data, loading } = useSourceNewFeatureQuery({ variables: { input } });
 cd core && go build ./cmd/whodb && go vet ./...
 cd frontend && pnpm run build:ce
 ```
+
+For public fields or authorization-sensitive changes, add a regression that
+uses a misleading public-looking operation name with a protected selected
+field and proves the operation is rejected before resolver execution.

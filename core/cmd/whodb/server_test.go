@@ -46,7 +46,7 @@ func TestMain(m *testing.M) {
 
 	src.InitializeEngine()
 	schema := graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}})
-	r := router.InitializeRouter(schema, nil, nil, nil, staticFilesTest)
+	r := router.InitializeRouter(schema, nil, nil, nil, nil, staticFilesTest)
 
 	port := os.Getenv("PORT")
 	if port == "" {

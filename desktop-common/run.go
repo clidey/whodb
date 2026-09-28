@@ -77,7 +77,7 @@ func RunApp(config RunConfig) error {
 	config.InitializeEngine()
 	log.Debugf("Running WhoDB Desktop %s Edition", strings.ToUpper(config.Edition))
 
-	r := router.InitializeRouter(config.Schema, nil, nil, nil, config.Assets)
+	r := router.InitializeRouter(config.Schema, nil, nil, nil, nil, config.Assets)
 	app := NewApp(config.Edition)
 
 	err := wails.Run(&options.App{

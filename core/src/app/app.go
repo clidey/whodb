@@ -120,6 +120,10 @@ type AppConfig struct {
 	// Schema is the GraphQL executable schema.
 	Schema graphql.ExecutableSchema
 
+	// GraphQLAuthorization authorizes a parsed GraphQL operation before any
+	// resolver executes. CE authorization is used when this is nil.
+	GraphQLAuthorization graphql.OperationMiddleware
+
 	// HTTPHandlers maps additional HTTP paths to handlers.
 	HTTPHandlers map[string]http.Handler
 
@@ -223,7 +227,7 @@ func Run(config AppConfig, staticFiles embed.FS) {
 	// calls it — and is a no-op in desktop/CLI mode.
 	stopSessionCleanup := auth.EnsureSessionStore()
 
-	r := router.InitializeRouter(config.Schema, config.HTTPHandlers, config.Middlewares, config.PublicPaths, staticFiles)
+	r := router.InitializeRouter(config.Schema, config.GraphQLAuthorization, config.HTTPHandlers, config.Middlewares, config.PublicPaths, staticFiles)
 
 	port := resolvePort()
 
