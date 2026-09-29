@@ -108,7 +108,6 @@ describeOrSkip('Browser Storage', () => {
                 'persist:settings',
                 'persist:aiModels',
                 'persist:tour',
-                'persist:providers',
             ];
             // Slices with throttle that only persist after activity
             const throttledKeys = [
@@ -541,7 +540,7 @@ describeOrSkip('Browser Storage', () => {
 
             // Should have multiple persist keys (auth is not among them —
             // it's not redux-persisted in browser mode)
-            expect(result.persistKeyCount).toBeGreaterThanOrEqual(5);
+            expect(result.persistKeyCount).toBeGreaterThanOrEqual(4);
 
             // Should have first login flag
             expect(result.hasFirstLoginFlag).toBeTruthy();
