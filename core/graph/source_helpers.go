@@ -20,7 +20,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"maps"
 	"slices"
 	"strconv"
 
@@ -618,10 +617,11 @@ func scopeValueForKind(spec source.TypeSpec, ref source.ObjectRef, kind source.O
 	return ref.Path[index]
 }
 
-func mergeCredentialValues(base map[string]string, overrides map[string]string) map[string]string {
-	merged := map[string]string{}
-	maps.Copy(merged, base)
-	maps.Copy(merged, overrides)
+func mergeCurrentSourceValues(current *source.Credentials, requested map[string]string) map[string]string {
+	merged, err := auth.MergeSourceProfileValues(current.SourceType, current.Values, requested)
+	if err != nil {
+		return requested
+	}
 	return merged
 }
 

@@ -40,6 +40,7 @@ import (
 	"github.com/clidey/whodb/core/src/settings"
 	"github.com/clidey/whodb/core/src/source"
 	"github.com/clidey/whodb/core/src/sourcecatalog"
+	"github.com/clidey/whodb/core/src/types"
 )
 
 func TestAddRowSuccess(t *testing.T) {
@@ -380,6 +381,88 @@ func TestGraphQLAuthorizationRejectsOperationNameSpoofBeforeMutation(t *testing.
 	}
 	if settings.Get().MetricsEnabled {
 		t.Fatal("spoofed operation executed UpdateSettings")
+	}
+}
+
+func TestLoginWithSourceProfileRejectsAnonymousConnectionRedirection(t *testing.T) {
+	mock := testutil.NewPluginMock(engine.DatabaseType("Postgres"))
+	connectionAttempts := 0
+	mock.IsAvailableFunc = func(context.Context, *engine.PluginConfig) bool {
+		connectionAttempts++
+		return false
+	}
+	setEngineMock(t, mock)
+	src.MainEngine.AddLoginProfile(types.DatabaseCredentials{
+		CustomId:  "production",
+		Type:      "Postgres",
+		Hostname:  "db.internal",
+		Port:      "5432",
+		Username:  "reader",
+		Password:  "server-owned-secret",
+		Database:  "app",
+		Source:    "environment",
+		IsProfile: true,
+		Advanced:  map[string]string{"SSL Mode": "verify-full"},
+	})
+
+	graphQLServer := handler.NewDefaultServer(NewExecutableSchema(Config{Resolvers: &Resolver{}}))
+	graphQLServer.AroundOperations(auth.GraphQLAuthorizationMiddleware)
+	srv := auth.AuthMiddleware(graphQLServer)
+	body := `{"operationName":"LoginWithSourceProfile","query":"mutation LoginWithSourceProfile($profile: SourceProfileLoginInput!) { LoginWithSourceProfile(profile: $profile) { Status } }","variables":{"profile":{"Id":"production","Values":[{"Key":"Hostname","Value":"attacker.example"},{"Key":"Port","Value":"443"},{"Key":"SSL Mode","Value":"disabled"}]}}}`
+	if strings.Contains(body, "server-owned-secret") {
+		t.Fatal("test request must not contain the stored password")
+	}
+	req := httptest.NewRequest(http.MethodPost, "/api/query", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	srv.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK || !strings.Contains(w.Body.String(), "source profile connection fields cannot be overridden") {
+		t.Fatalf("expected profile override to be rejected, got status %d body %s", w.Code, w.Body.String())
+	}
+	if connectionAttempts != 0 {
+		t.Fatalf("expected rejection before any connection attempt, got %d attempts", connectionAttempts)
+	}
+}
+
+func TestLoginSourceDoesNotReuseSessionSecretsForConnectionRedirection(t *testing.T) {
+	mock := testutil.NewPluginMock(engine.DatabaseType("Postgres"))
+	var attempted *engine.Credentials
+	mock.IsAvailableFunc = func(_ context.Context, config *engine.PluginConfig) bool {
+		attempted = config.Credentials
+		return false
+	}
+	setEngineMock(t, mock)
+	ctx := testSourceContext("Postgres", map[string]string{
+		"Hostname": "db.internal",
+		"Username": "reader",
+		"Password": "server-owned-secret",
+		"Database": "app",
+		"Port":     "5432",
+		"SSL Mode": "verify-full",
+	})
+
+	_, err := (&Resolver{}).Mutation().LoginSource(ctx, model.SourceLoginInput{
+		SourceType: "Postgres",
+		Values: []*model.RecordInput{
+			{Key: "Hostname", Value: "attacker.example"},
+			{Key: "Port", Value: "443"},
+			{Key: "SSL Mode", Value: "disabled"},
+		},
+	})
+
+	if err == nil {
+		t.Fatal("expected redirected connection without credentials to fail")
+	}
+	if attempted == nil {
+		t.Fatal("expected independent connection attempt")
+	}
+	if attempted.Password != "" || attempted.Username != "" {
+		t.Fatalf("session credentials were reused for redirected connection: %#v", attempted)
+	}
+	if attempted.Hostname != "attacker.example" {
+		t.Fatalf("expected independent request values to be retained, got %#v", attempted)
 	}
 }
 

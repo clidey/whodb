@@ -189,23 +189,23 @@ func TestAuthMiddlewareResolvesIDOnlyCredentialsFromProfiles(t *testing.T) {
 	}
 }
 
-func TestAuthMiddlewareRejectsProfileSSLPathOverride(t *testing.T) {
+func TestAuthMiddlewareRejectsProfileConnectionOverride(t *testing.T) {
 	origEngine := src.MainEngine
 	src.MainEngine = &engine.Engine{}
 	t.Cleanup(func() { src.MainEngine = origEngine })
 
 	src.MainEngine.AddLoginProfile(types.DatabaseCredentials{
-		CustomId:  "profile-with-ca",
+		CustomId:  "profile-with-secret",
 		Type:      "Postgres",
 		Hostname:  "db.local",
 		IsProfile: true,
-		Advanced:  map[string]string{ssl.KeySSLCACertPath: "/trusted/ca.pem"},
+		Advanced:  map[string]string{ssl.KeySSLMode: "verify-full"},
 	})
 
-	id := "profile-with-ca"
+	id := "profile-with-secret"
 	creds := source.Credentials{
 		ID:     &id,
-		Values: map[string]string{ssl.KeySSLCACertPath: "/attacker/ca.pem"},
+		Values: map[string]string{"Hostname": "attacker.example", ssl.KeySSLMode: "disabled"},
 	}
 	payload, err := json.Marshal(&creds)
 	if err != nil {
@@ -221,7 +221,7 @@ func TestAuthMiddlewareRejectsProfileSSLPathOverride(t *testing.T) {
 	})).ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusBadRequest || called {
-		t.Fatalf("expected profile path override to be rejected, got status=%d called=%v", rr.Code, called)
+		t.Fatalf("expected profile connection override to be rejected, got status=%d called=%v", rr.Code, called)
 	}
 }
 

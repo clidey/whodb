@@ -25,7 +25,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/clidey/whodb/core/src/common/ssl"
 	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/source"
 )
@@ -42,22 +41,33 @@ func TestIsPublicRouteUsesOnlyTheRequestPath(t *testing.T) {
 	}
 }
 
-func TestMergeSourceProfileValuesRejectsSSLPathOverrides(t *testing.T) {
-	for _, key := range []string{ssl.KeySSLCACertPath, ssl.KeySSLClientCertPath, ssl.KeySSLClientKeyPath} {
+func TestMergeSourceProfileValuesRestrictsOverridesToDatabaseSwitching(t *testing.T) {
+	base := map[string]string{
+		"Hostname": "db.internal",
+		"Port":     "5432",
+		"Username": "reader",
+		"Password": "secret",
+		"Database": "default",
+		"SSL Mode": "verify-full",
+	}
+	for _, key := range []string{"Hostname", "Port", "Username", "Password", "SSL Mode", "URL Params"} {
 		t.Run(key, func(t *testing.T) {
-			base := map[string]string{key: "/trusted/path", "Database": "default"}
-			if _, err := MergeSourceProfileValues(base, map[string]string{key: "/attacker/path"}); err == nil {
+			if _, err := MergeSourceProfileValues("Postgres", base, map[string]string{key: base[key]}); err == nil {
 				t.Fatalf("expected %s override to be rejected", key)
 			}
-
-			merged, err := MergeSourceProfileValues(base, map[string]string{key: "/trusted/path", "Database": "override"})
-			if err != nil {
-				t.Fatalf("expected unchanged path to be accepted: %v", err)
-			}
-			if merged["Database"] != "override" {
-				t.Fatalf("expected ordinary profile override to be retained, got %#v", merged)
-			}
 		})
+	}
+
+	merged, err := MergeSourceProfileValues("Postgres", base, map[string]string{"Database": "reporting"})
+	if err != nil {
+		t.Fatalf("expected database switch to be accepted: %v", err)
+	}
+	if merged["Database"] != "reporting" || merged["Hostname"] != "db.internal" || merged["Password"] != "secret" {
+		t.Fatalf("expected only the database to change, got %#v", merged)
+	}
+
+	if _, err := MergeSourceProfileValues("Sqlite3", base, map[string]string{"Database": "/tmp/attacker.db"}); err == nil {
+		t.Fatal("expected file-backed database override to be rejected")
 	}
 }
 

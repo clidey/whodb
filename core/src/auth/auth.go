@@ -23,11 +23,11 @@ import (
 	"errors"
 	"maps"
 	"net/http"
+	"slices"
 	"strings"
 	"sync"
 
 	"github.com/clidey/whodb/core/src"
-	"github.com/clidey/whodb/core/src/common/ssl"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/source"
 	"github.com/clidey/whodb/core/src/sourcecatalog"
@@ -176,7 +176,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			_, storedProfile, ok := src.FindSourceProfile(*credentials.ID)
 			if ok {
 				storedProfile.ID = credentials.ID
-				storedProfile.Values, err = MergeSourceProfileValues(storedProfile.Values, credentials.Values)
+				storedProfile.Values, err = MergeSourceProfileValues(storedProfile.SourceType, storedProfile.Values, credentials.Values)
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusBadRequest)
 					return
@@ -189,7 +189,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			if !matched {
 				if stored, err := LoadCredentials(*credentials.ID); err == nil && stored != nil {
 					stored.ID = credentials.ID
-					stored.Values, err = MergeSourceProfileValues(stored.Values, credentials.Values)
+					stored.Values, err = MergeSourceProfileValues(stored.SourceType, stored.Values, credentials.Values)
 					if err != nil {
 						http.Error(w, err.Error(), http.StatusBadRequest)
 						return
@@ -285,16 +285,21 @@ func RegisterAuthBypass(fn func(*http.Request) bool) {
 	authBypassFn = fn
 }
 
-// MergeSourceProfileValues merges client overrides while keeping server-side
-// TLS file paths under the control of the stored profile.
-func MergeSourceProfileValues(base map[string]string, overrides map[string]string) (map[string]string, error) {
-	for _, key := range []string{ssl.KeySSLCACertPath, ssl.KeySSLClientCertPath, ssl.KeySSLClientKeyPath} {
-		if value, ok := overrides[key]; ok && value != base[key] {
-			return nil, errors.New("SSL file paths cannot be overridden by clients")
+// MergeSourceProfileValues applies the database selection supported by a
+// stored profile while keeping every connection target and secret server-owned.
+func MergeSourceProfileValues(sourceType string, base map[string]string, overrides map[string]string) (map[string]string, error) {
+	for key := range overrides {
+		if key != "Database" || !sourceSupportsDatabaseSwitching(sourceType) {
+			return nil, errors.New("source profile connection fields cannot be overridden")
 		}
 	}
 	merged := map[string]string{}
 	maps.Copy(merged, base)
 	maps.Copy(merged, overrides)
 	return merged, nil
+}
+
+func sourceSupportsDatabaseSwitching(sourceType string) bool {
+	spec, ok := sourcecatalog.Find(sourceType)
+	return ok && slices.Contains(spec.Contract.BrowsePath, source.ObjectKindDatabase)
 }

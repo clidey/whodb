@@ -43,7 +43,7 @@ import (
 func (r *mutationResolver) LoginSource(ctx context.Context, credentials model.SourceLoginInput) (*model.StatusResponse, error) {
 	creds := sourceCredentialsFromInput(credentials)
 	if current := auth.GetSourceCredentials(ctx); current != nil && current.SourceType == creds.SourceType {
-		creds.Values = mergeCredentialValues(current.CloneValues(), creds.Values)
+		creds.Values = mergeCurrentSourceValues(current, creds.Values)
 	}
 	return performSourceLogin(ctx, creds, "")
 }
@@ -55,7 +55,7 @@ func (r *mutationResolver) LoginWithSourceProfile(ctx context.Context, profile m
 		return nil, errors.New("login profile does not exist or is not authorized")
 	}
 
-	values, err := auth.MergeSourceProfileValues(credentials.Values, recordInputsToMap(profile.Values))
+	values, err := auth.MergeSourceProfileValues(credentials.SourceType, credentials.Values, recordInputsToMap(profile.Values))
 	if err != nil {
 		return nil, err
 	}
@@ -1134,7 +1134,7 @@ func (r *queryResolver) SourceFieldOptions(ctx context.Context, sourceType strin
 		Values:     recordInputsToMap(values),
 	}
 	if current := auth.GetSourceCredentials(ctx); current != nil && current.SourceType == sourceType {
-		credentials.Values = mergeCredentialValues(current.CloneValues(), credentials.Values)
+		credentials.Values = mergeCurrentSourceValues(current, credentials.Values)
 	}
 
 	session, err := source.Open(ctx, spec, credentials)
