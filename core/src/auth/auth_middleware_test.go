@@ -13,6 +13,7 @@ import (
 	"github.com/zalando/go-keyring"
 
 	"github.com/clidey/whodb/core/src"
+	"github.com/clidey/whodb/core/src/common/ssl"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/source"
@@ -185,6 +186,42 @@ func TestAuthMiddlewareResolvesIDOnlyCredentialsFromProfiles(t *testing.T) {
 	}
 	if got == nil || got.SourceType != "Postgres" || got.Values["Username"] != "alice" || got.Values["Database"] != "override" {
 		t.Fatalf("expected resolved credentials with overridden database, got %+v", got)
+	}
+}
+
+func TestAuthMiddlewareRejectsProfileSSLPathOverride(t *testing.T) {
+	origEngine := src.MainEngine
+	src.MainEngine = &engine.Engine{}
+	t.Cleanup(func() { src.MainEngine = origEngine })
+
+	src.MainEngine.AddLoginProfile(types.DatabaseCredentials{
+		CustomId:  "profile-with-ca",
+		Type:      "Postgres",
+		Hostname:  "db.local",
+		IsProfile: true,
+		Advanced:  map[string]string{ssl.KeySSLCACertPath: "/trusted/ca.pem"},
+	})
+
+	id := "profile-with-ca"
+	creds := source.Credentials{
+		ID:     &id,
+		Values: map[string]string{ssl.KeySSLCACertPath: "/attacker/ca.pem"},
+	}
+	payload, err := json.Marshal(&creds)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req := httptest.NewRequest(http.MethodPost, "/api/query", bytes.NewBufferString(`{"operationName":"Other"}`))
+	req.Header.Set("Authorization", "Bearer "+base64.StdEncoding.EncodeToString(payload))
+	rr := httptest.NewRecorder()
+	called := false
+
+	AuthMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called = true
+	})).ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusBadRequest || called {
+		t.Fatalf("expected profile path override to be rejected, got status=%d called=%v", rr.Code, called)
 	}
 }
 

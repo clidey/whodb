@@ -55,7 +55,11 @@ func (r *mutationResolver) LoginWithSourceProfile(ctx context.Context, profile m
 		return nil, errors.New("login profile does not exist or is not authorized")
 	}
 
-	credentials.Values = mergeCredentialValues(credentials.Values, recordInputsToMap(profile.Values))
+	values, err := auth.MergeSourceProfileValues(credentials.Values, recordInputsToMap(profile.Values))
+	if err != nil {
+		return nil, err
+	}
+	credentials.Values = values
 	return performSourceLogin(ctx, credentials, sourceProfile.Source)
 }
 

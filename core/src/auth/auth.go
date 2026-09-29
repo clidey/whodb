@@ -27,6 +27,7 @@ import (
 	"sync"
 
 	"github.com/clidey/whodb/core/src"
+	"github.com/clidey/whodb/core/src/common/ssl"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/source"
 	"github.com/clidey/whodb/core/src/sourcecatalog"
@@ -163,6 +164,8 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
+		// Profile trust comes only from server-side resolution, never the token.
+		credentials.IsProfile = false
 		inline := true
 		isSavedProfileReference := credentials.ID != nil && credentials.SourceType == ""
 
@@ -173,7 +176,11 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			_, storedProfile, ok := src.FindSourceProfile(*credentials.ID)
 			if ok {
 				storedProfile.ID = credentials.ID
-				storedProfile.Values = mergeCredentialValues(storedProfile.Values, credentials.Values)
+				storedProfile.Values, err = MergeSourceProfileValues(storedProfile.Values, credentials.Values)
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusBadRequest)
+					return
+				}
 				credentials = storedProfile
 				matched = true
 				inline = false
@@ -182,7 +189,11 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			if !matched {
 				if stored, err := LoadCredentials(*credentials.ID); err == nil && stored != nil {
 					stored.ID = credentials.ID
-					stored.Values = mergeCredentialValues(stored.Values, credentials.Values)
+					stored.Values, err = MergeSourceProfileValues(stored.Values, credentials.Values)
+					if err != nil {
+						http.Error(w, err.Error(), http.StatusBadRequest)
+						return
+					}
 					credentials = stored
 					inline = false
 					onceKeyring.Do(func() { log.Info("Auth: credentials resolved via OS keyring") })
@@ -274,9 +285,16 @@ func RegisterAuthBypass(fn func(*http.Request) bool) {
 	authBypassFn = fn
 }
 
-func mergeCredentialValues(base map[string]string, overrides map[string]string) map[string]string {
+// MergeSourceProfileValues merges client overrides while keeping server-side
+// TLS file paths under the control of the stored profile.
+func MergeSourceProfileValues(base map[string]string, overrides map[string]string) (map[string]string, error) {
+	for _, key := range []string{ssl.KeySSLCACertPath, ssl.KeySSLClientCertPath, ssl.KeySSLClientKeyPath} {
+		if value, ok := overrides[key]; ok && value != base[key] {
+			return nil, errors.New("SSL file paths cannot be overridden by clients")
+		}
+	}
 	merged := map[string]string{}
 	maps.Copy(merged, base)
 	maps.Copy(merged, overrides)
-	return merged
+	return merged, nil
 }

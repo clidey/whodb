@@ -25,6 +25,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/clidey/whodb/core/src/common/ssl"
 	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/source"
 )
@@ -41,6 +42,25 @@ func TestIsPublicRouteUsesOnlyTheRequestPath(t *testing.T) {
 	}
 }
 
+func TestMergeSourceProfileValuesRejectsSSLPathOverrides(t *testing.T) {
+	for _, key := range []string{ssl.KeySSLCACertPath, ssl.KeySSLClientCertPath, ssl.KeySSLClientKeyPath} {
+		t.Run(key, func(t *testing.T) {
+			base := map[string]string{key: "/trusted/path", "Database": "default"}
+			if _, err := MergeSourceProfileValues(base, map[string]string{key: "/attacker/path"}); err == nil {
+				t.Fatalf("expected %s override to be rejected", key)
+			}
+
+			merged, err := MergeSourceProfileValues(base, map[string]string{key: "/trusted/path", "Database": "override"})
+			if err != nil {
+				t.Fatalf("expected unchanged path to be accepted: %v", err)
+			}
+			if merged["Database"] != "override" {
+				t.Fatalf("expected ordinary profile override to be retained, got %#v", merged)
+			}
+		})
+	}
+}
+
 func TestAuthMiddlewareExtractsCredentialsFromBearer(t *testing.T) {
 	originalDev := env.IsDevelopment
 	env.IsDevelopment = false
@@ -50,6 +70,7 @@ func TestAuthMiddlewareExtractsCredentialsFromBearer(t *testing.T) {
 
 	creds := source.Credentials{
 		SourceType: "Postgres",
+		IsProfile:  true, // A client cannot grant itself server-side file access.
 		Values: map[string]string{
 			"Hostname": "db.local",
 			"Username": "alice",
@@ -81,6 +102,9 @@ func TestAuthMiddlewareExtractsCredentialsFromBearer(t *testing.T) {
 
 	if captured == nil || captured.Values["Username"] != "alice" || captured.Values["Database"] != "app" {
 		t.Fatalf("expected credentials to be populated from bearer token, got %+v", captured)
+	}
+	if captured.IsProfile {
+		t.Fatal("client-supplied IsProfile must not be trusted")
 	}
 }
 
