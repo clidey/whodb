@@ -219,7 +219,13 @@ func TestSetupAIClientAndCreateDynamicBAMLClient(t *testing.T) {
 }
 
 func TestPlannerCannotLabelWritesAsReads(t *testing.T) {
-	for _, query := range []string{"SELECT * INTO stolen FROM users", "SELECT 1; DELETE FROM users", "SELECT side_effect()"} {
+	for _, query := range []string{
+		"DELETE FROM users",
+		"DROP TABLE users",
+		"SELECT * INTO stolen FROM users",
+		"SELECT 1; DELETE FROM users",
+		"SELECT side_effect()",
+	} {
 		op := types.OperationTypeGET
 		runner := &queryExecutorStub{}
 		message := ProcessChatResponse(t.Context(), &types.ChatResponse{Type: types.ChatMessageTypeSQL, Operation: &op, Text: query}, runner)

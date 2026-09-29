@@ -5,7 +5,9 @@ import "testing"
 func TestProtectedReadsFailClosed(t *testing.T) {
 	for _, query := range []string{
 		"SELECT * INTO copy FROM users", "SELECT * FROM users INTO OUTFILE '/tmp/dump'",
-		"SELECT data FROM blobs INTO DUMPFILE '/tmp/dump'", "SELECT 1; USE other_database",
+		"SELECT data FROM blobs INTO DUMPFILE '/tmp/dump'", "SELECT 1 INTO\nOUTFILE '/tmp/dump'",
+		"SELECT pg_read_file('/etc/passwd', 0, 100000)", "SELECT lo_export(1, '/tmp/export')",
+		"SELECT LOAD_FILE('/etc/passwd')", "SELECT 1; USE other_database",
 		"SELECT 1; FLURB anything", "SELECT 1 /*! INTO OUTFILE '/tmp/dump' */",
 		"SELECT 1 /*M! INTO OUTFILE '/tmp/dump' */", "SELECT set_config('search_path', 'evil', false)",
 		"SELECT nextval('seq')", "SELECT seq.nextval FROM dual", `SELECT seq."NEXTVAL" FROM dual`, "SELECT pg_advisory_lock(1)", "SELECT readfile('/tmp/secret')",

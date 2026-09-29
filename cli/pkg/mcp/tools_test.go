@@ -54,6 +54,11 @@ func TestHandleQuery_ReadOnlyBlocksWrites(t *testing.T) {
 		{"CREATE blocked", "CREATE TABLE foo (id int)"},
 		{"ALTER blocked", "ALTER TABLE users ADD col int"},
 		{"TRUNCATE blocked", "TRUNCATE TABLE users"},
+		{"Postgres file read blocked", "SELECT pg_read_file('/etc/passwd', 0, 100000)"},
+		{"Postgres file export blocked", "SELECT lo_export(1, '/tmp/export')"},
+		{"MySQL file read blocked", "SELECT LOAD_FILE('/etc/passwd')"},
+		{"MySQL OUTFILE blocked", "SELECT 1 INTO\nOUTFILE '/tmp/export'"},
+		{"MySQL DUMPFILE blocked", "SELECT 1 INTO DUMPFILE '/tmp/export'"},
 	}
 
 	for _, tc := range blockedQueries {
@@ -141,6 +146,11 @@ func TestHandleQuery_ConfirmWritesMode(t *testing.T) {
 		"INSERT INTO users VALUES (1, 'test')",
 		"UPDATE users SET name='x' WHERE id=1",
 		"DELETE FROM users WHERE id=1",
+		"SELECT pg_read_file('/etc/passwd', 0, 100000)",
+		"SELECT lo_export(1, '/tmp/export')",
+		"SELECT LOAD_FILE('/etc/passwd')",
+		"SELECT 1 INTO\nOUTFILE '/tmp/export'",
+		"SELECT 1 INTO DUMPFILE '/tmp/export'",
 	}
 
 	for _, query := range writeQueries {

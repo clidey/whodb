@@ -17,14 +17,18 @@
 package sqlite3
 
 import (
+	"context"
 	"path/filepath"
 	"testing"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
+	"github.com/clidey/whodb/core/baml_client/types"
+	"github.com/clidey/whodb/core/src/bamlconfig"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/importer"
+	"github.com/clidey/whodb/core/src/source"
 	_ "github.com/clidey/whodb/core/src/sources/database"
 )
 
@@ -106,6 +110,39 @@ func TestSQLiteReadOnlyRawExecuteRejectsWrites(t *testing.T) {
 	config.ReadOnly = false
 	if _, err := plugin.RawExecute(config, "INSERT INTO read_only_guard VALUES (2)"); err != nil {
 		t.Fatalf("expected SQLite connection to return to read-write mode: %v", err)
+	}
+}
+
+func TestChatPlannerMislabelledWriteDoesNotChangeSQLiteState(t *testing.T) {
+	plugin, config, db := newSQLiteRuntimeTestFixture(t,
+		"CREATE TABLE chat_guard (id INTEGER PRIMARY KEY)",
+		"INSERT INTO chat_guard VALUES (1)",
+	)
+	operation := types.OperationTypeGET
+	executions := 0
+	executor := bamlconfig.ChatQueryExecutorFunc(func(_ context.Context, query string, params ...any) (*source.RowsResult, error) {
+		executions++
+		return plugin.RawExecute(config, query, params...)
+	})
+
+	message := bamlconfig.ProcessChatResponse(t.Context(), &types.ChatResponse{
+		Type:      types.ChatMessageTypeSQL,
+		Operation: &operation,
+		Text:      "DELETE FROM chat_guard",
+	}, executor)
+
+	if !message.RequiresConfirmation {
+		t.Fatalf("mislabelled write did not require confirmation: %#v", message)
+	}
+	if executions != 0 {
+		t.Fatalf("mislabelled write reached the executor %d times", executions)
+	}
+	var count int64
+	if err := db.Table("chat_guard").Count(&count).Error; err != nil {
+		t.Fatal(err)
+	}
+	if count != 1 {
+		t.Fatalf("mislabelled write changed database state: row count = %d", count)
 	}
 }
 
