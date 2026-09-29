@@ -191,6 +191,17 @@ func Run(config AppConfig, staticFiles embed.FS) {
 	})
 
 	src.InitializeEngine()
+	if !env.IsEnterpriseEdition && mode == "server" {
+		profileCount := 0
+		for _, profile := range src.GetLoginProfiles() {
+			if profile.Source != "builtin" {
+				profileCount++
+			}
+		}
+		if profileCount > 0 {
+			log.Warnf("Configured connection profiles grant database access to anyone who can reach this WhoDB CE instance; restrict instance access to trusted users (profiles=%d)", profileCount)
+		}
+	}
 
 	// Initialize the encrypted session store and capture its cleanup-ticker stop
 	// function for graceful shutdown. This is idempotent — InitializeRouter also

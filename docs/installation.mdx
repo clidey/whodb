@@ -218,6 +218,10 @@ These variables do not enable provider operations in the CE web server. See [Clo
 
 WhoDB can preload connection profiles from environment variables so they appear on the login page.
 
+<Warning>
+In Community Edition, connection profiles are shared with everyone who can reach the WhoDB instance. A user can select a profile and connect with its server-configured credentials without entering the database password. Profile names and IDs are not authentication factors. When profiles grant access to private or sensitive data, expose WhoDB only to trusted users and use a least-privileged database account.
+</Warning>
+
 Profiles work for every database type in the catalog: the prefix is `WHODB_` followed by the uppercased type name. Examples for the core types include:
 
 - `WHODB_POSTGRES`
@@ -262,6 +266,8 @@ Each profile object supports these common fields:
 | `database` | Database name or file path |
 | `port` | Port number as a string |
 | `advanced` | Key/value map of advanced options |
+
+Setting `WHODB_DISABLE_CREDENTIAL_FORM=true` hides manual credential entry, but it does not add authentication in front of configured profiles. Users who can reach the instance can still select and use them.
 
 ### SSL Example
 

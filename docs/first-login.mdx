@@ -81,6 +81,10 @@ Profiles can appear from two places:
 - Local profiles saved by the app
 - Environment-defined profiles such as `WHODB_POSTGRES_1`, `WHODB_MYSQL_1`, or `WHODB_REDIS_1`
 
+<Warning>
+WhoDB Community Edition treats access to the instance as the trust boundary for profiles. Anyone who can reach the instance can list and use its available profiles with the database permissions configured for those profiles. The database password is used by the server, so users do not need to know or enter it. Only make a profile available on instances restricted to trusted users.
+</Warning>
+
 When the manual credential form is disabled with `WHODB_DISABLE_CREDENTIAL_FORM=true`, the login page can still work through managed profiles.
 
 ## File-Based Databases

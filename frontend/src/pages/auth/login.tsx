@@ -15,7 +15,7 @@
  */
 
 import { useLazyQuery, useMutation, useQuery } from "@apollo/client/react";
-import {Badge, Button, Card, cn, Label, ModeToggle, Separator, toast, useTheme} from '@clidey/ux';
+import {Alert, AlertDescription, AlertTitle, Badge, Button, Card, cn, Label, ModeToggle, Separator, toast, useTheme} from '@clidey/ux';
 import {SearchSelect} from '../../components/ux';
 import {
     SettingsConfigDocument,
@@ -37,6 +37,7 @@ import {
     CheckCircleIcon,
     ChevronDownIcon,
     CodeBracketIcon,
+    InformationCircleIcon,
     ShareIcon,
     SparklesIcon,
     TableCellsIcon
@@ -1107,6 +1108,11 @@ export const LoginForm: FC<LoginFormProps> = ({
                         {!disableCredentialForm && <Separator className="my-8" />}
                         <div className="flex flex-col gap-lg">
                             <Label>{t('availableProfiles')}</Label>
+                            <Alert data-testid="profile-access-notice">
+                                <InformationCircleIcon className="h-4 w-4" aria-hidden="true" />
+                                <AlertTitle>{t('profileAccessNoticeTitle')}</AlertTitle>
+                                <AlertDescription>{t('profileAccessNoticeDescription')}</AlertDescription>
+                            </Alert>
                             <SearchSelect
                                 value={selectedAvailableProfile}
                                 onChange={handleAvailableProfileChange}
