@@ -3,7 +3,7 @@ en_US:
   enterHostName: Enter Host Name
   advancedFields.region: Region
   noConnectionsTitle: No database connections set up yet
-  noConnectionsDescription: Manual connection form is disabled for this deployment. Please configure database connections via environment variables or cloud providers, or contact your administrator.
+  noConnectionsDescription: Manual connection form is disabled for this deployment. Please configure database connections via environment variables or contact your administrator.
   loggingIn: Logging In
   title: Login
   databaseType: Database Type

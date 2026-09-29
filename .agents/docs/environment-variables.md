@@ -205,9 +205,11 @@ When `WHODB_BASE_PATH=/whodb`:
 - Reverse proxy `/whodb/` to the WhoDB server
 - Keep container health checks on `/health`
 
-## Cloud Provider Variables
+## CLI Cloud Provider Variables
+
+These variables configure local CLI cloud discovery. They do not enable cloud-provider operations in the CE web server.
 
 | Variable | Default | Description |
 |---|---|---|
-| `WHODB_ENABLE_AWS_PROVIDER` | `false` | Set `true` to enable AWS provider |
+| `WHODB_ENABLE_AWS_PROVIDER` | `false` | Set `true` to enable the AWS provider in the CLI |
 | `WHODB_AWS_PROVIDER` | unset | JSON array of AWS provider configs (see `aws-integration.md`) |

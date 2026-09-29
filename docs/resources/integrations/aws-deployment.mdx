@@ -9,10 +9,10 @@ WhoDB provides CloudFormation templates for deploying on AWS. They're ordered fr
 
 <CardGroup cols={3}>
 <Card title="Production" icon="rocket">
-Bare minimum — HTTPS, Fargate, AWS discovery. One command to deploy.
+Bare minimum — HTTPS and Fargate. One command to deploy.
 </Card>
 <Card title="Self-Hosted" icon="server">
-Flexible — bring your own VPC, choose HTTP or HTTPS, toggle AWS discovery
+Flexible — bring your own VPC and choose HTTP or HTTPS
 </Card>
 <Card title="Demo" icon="flask">
 Full stack with RDS, ElastiCache, DocumentDB, auto-scaling, alarms, and access logs
@@ -33,7 +33,7 @@ All templates create IAM roles, so you must pass `--capabilities CAPABILITY_IAM`
 
 ## Production Stack
 
-The fastest way to get WhoDB running on AWS. No options to think about — HTTPS, private Fargate tasks, and AWS database discovery are baked in.
+The fastest way to get WhoDB running on AWS. No options to think about — HTTPS and private Fargate tasks are baked in.
 
 ### What's included
 
@@ -42,7 +42,6 @@ The fastest way to get WhoDB running on AWS. No options to think about — HTTPS
 | **VPC** | 2 public + 2 private subnets, NAT gateway |
 | **ALB** | HTTPS on 443, HTTP-to-HTTPS redirect, invalid header dropping |
 | **Fargate** | Private subnets, 512 CPU / 1024 MB, ECS Exec disabled |
-| **AWS discovery** | Auto-discovers RDS, ElastiCache, and DocumentDB in the same region |
 
 ### Deploy
 
@@ -96,17 +95,16 @@ aws cloudformation delete-stack --stack-name whodb-prod
 
 ## Self-Hosted Stack
 
-More flexibility than the production stack. Supports using an existing VPC, HTTP-only mode, internal ALBs, and toggling AWS discovery. Use this when the production stack's baked-in defaults don't fit your environment.
+More flexibility than the production stack. Supports using an existing VPC, HTTP-only mode, and internal ALBs. Use this when the production stack's baked-in defaults don't fit your environment.
 
 ### Deployment modes
 
 | Mode | Parameters | What you get |
 |------|-----------|--------------|
-| **Minimal** | None (all defaults) | New VPC + HTTP on 8080 + AWS discovery |
+| **Minimal** | None (all defaults) | New VPC + HTTP on 8080 |
 | **HTTPS** | `CertificateArn` | New VPC + HTTPS on 443 + redirect |
 | **Existing VPC** | `VpcId`, `PublicSubnetIds`, `PrivateSubnetIds` | Uses your VPC |
 | **Internal** | `ALBScheme=internal` | Private ALB (no internet access) |
-| **No AWS discovery** | `EnableAWSProvider=false` | Just WhoDB, no IAM role |
 
 ### Deploy
 
@@ -143,16 +141,6 @@ aws cloudformation create-stack \
     ParameterKey=ALBScheme,ParameterValue=internal
 ```
 </Accordion>
-<Accordion title="Without AWS discovery">
-```bash
-aws cloudformation create-stack \
-  --stack-name whodb \
-  --template-body file://dev/aws-selfhosted-stack.yml \
-  --capabilities CAPABILITY_IAM \
-  --parameters \
-    ParameterKey=EnableAWSProvider,ParameterValue=false
-```
-</Accordion>
 </AccordionGroup>
 
 ### Parameters
@@ -166,8 +154,6 @@ aws cloudformation create-stack \
 | `PrivateSubnetIds` | No | *(empty)* | Existing private subnets (2+, required if VpcId set) |
 | `AllowedCIDR` | No | `0.0.0.0/0` | CIDR range allowed to access the ALB |
 | `ALBScheme` | No | `internet-facing` | `internet-facing` or `internal` |
-| `EnableAWSProvider` | No | `true` | Enable auto-discovery of AWS databases |
-| `AWSProviderRegion` | No | *(stack region)* | Region for AWS discovery |
 | `TaskCpu` | No | `512` | Fargate CPU units (256-4096) |
 | `TaskMemory` | No | `1024` | Fargate memory in MB (512-16384) |
 | `AlarmSNSTopicArn` | No | *(empty)* | SNS topic for CloudWatch alarm notifications |
@@ -274,20 +260,6 @@ The ALB access log S3 bucket has `DeletionPolicy: Retain` and will not be delete
 
 ---
 
-## AWS auto-discovery
-
-When AWS discovery is enabled (production and self-hosted stacks), WhoDB automatically discovers:
-
-- **RDS** instances (PostgreSQL, MySQL, MariaDB)
-- **ElastiCache** clusters (Redis)
-- **DocumentDB** clusters (MongoDB-compatible)
-
-Discovered databases appear on WhoDB's login page. You still need to provide credentials to connect — discovery only finds the endpoints.
-
-<Info>
-The task role includes read-only permissions for `rds:Describe*`, `elasticache:Describe*`, and `docdb:Describe*`. It cannot modify your databases.
-</Info>
-
 ## Alarm notifications
 
 The demo and self-hosted stacks include CloudWatch alarms. By default, alarms change state but don't notify anyone. To receive alerts, create an SNS topic and pass it:
@@ -334,13 +306,6 @@ Check that:
 - The target group has healthy targets: `aws elbv2 describe-target-health --target-group-arn TARGET_GROUP_ARN`
 - Your IP is within the `AllowedCIDR` range
 - For HTTPS: the ACM certificate is issued (not pending validation)
-</Accordion>
-
-<Accordion title="Databases not appearing in AWS discovery">
-Verify:
-- AWS discovery is enabled (always on for production stack, configurable for self-hosted)
-- The databases are in the same region as the stack (or `AWSProviderRegion` matches)
-- The task role has the correct permissions (check CloudTrail for AccessDenied errors)
 </Accordion>
 
 <Accordion title="Cannot delete stack (deletion protection)">

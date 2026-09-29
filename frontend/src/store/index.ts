@@ -28,7 +28,6 @@ import type { IScratchpadState } from './scratchpad';
 import { scratchpadReducers } from './scratchpad';
 import type { IChatState } from './chat';
 import { tourReducers } from './tour';
-import { providersReducers } from './providers';
 import { healthReducers } from './health';
 import { exploreConditionsReducers } from './explore-conditions';
 import { runMigrations } from './migrations';
@@ -194,7 +193,6 @@ const ceReducerMap = {
   aiModels: persistReducer({ key: "aiModels", storage }, aiModelsReducers),
   scratchpad: persistReducer({ key: "scratchpad", storage, transforms: [scratchpadTransform], throttle: PERSIST_THROTTLE }, scratchpadReducers),
   tour: persistReducer({ key: "tour", storage }, tourReducers),
-  providers: persistReducer({ key: "providers", storage }, providersReducers),
   health: healthReducers,
   exploreConditions: persistReducer({ key: 'exploreConditions', storage, throttle: PERSIST_THROTTLE }, exploreConditionsReducers),
 };

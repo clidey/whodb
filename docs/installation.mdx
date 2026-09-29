@@ -201,18 +201,18 @@ The `default` log paths write to `/var/log/whodb/`. That works naturally in Dock
 
 Generic OpenAI-compatible providers can be added with the `WHODB_AI_GENERIC_<ID>_*` pattern. See [Setting Up AI Providers](/ai/setup-providers).
 
-### Cloud Providers
+### CLI Cloud Providers
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `WHODB_ENABLE_AWS_PROVIDER` | Enable AWS provider support | `false` |
+| `WHODB_ENABLE_AWS_PROVIDER` | Enable AWS provider support in the CLI | `false` |
 | `WHODB_AWS_PROVIDER` | JSON array of AWS provider definitions | unset |
-| `WHODB_ENABLE_AZURE_PROVIDER` | Enable Azure provider support | `false` |
+| `WHODB_ENABLE_AZURE_PROVIDER` | Enable Azure provider support in the CLI | `false` |
 | `WHODB_AZURE_PROVIDER` | JSON array of Azure provider definitions | unset |
-| `WHODB_ENABLE_GCP_PROVIDER` | Enable GCP provider support | `false` |
+| `WHODB_ENABLE_GCP_PROVIDER` | Enable GCP provider support in the CLI | `false` |
 | `WHODB_GCP_PROVIDER` | JSON array of GCP provider definitions | unset |
 
-See [Cloud Providers](/features/cloud-providers) for examples and discovery details.
+These variables do not enable provider operations in the CE web server. See [Cloud Providers](/features/cloud-providers) for the local CLI workflow.
 
 ## Database Connection Profiles
 
@@ -357,6 +357,6 @@ Verify:
 Walk through the connection flow after WhoDB is running.
 </Card>
 <Card title="Cloud Providers" icon="cloud" href="/features/cloud-providers">
-Enable managed discovery for AWS, Azure, and GCP.
+Use local CLI discovery for AWS, Azure, and GCP.
 </Card>
 </CardGroup>

@@ -5,7 +5,7 @@ description: "Connect to your first database with the current WhoDB login flow"
 
 # First Login
 
-The login page is the entry point for the web app and desktop app. It adapts to the selected database type, can show saved profiles, and can also surface cloud-discovered connections when provider support is enabled.
+The login page is the entry point for the web app and desktop app. It adapts to the selected database type and can show saved or environment-defined profiles.
 
 ![WhoDB Login Page](/images/01-login-page.png)
 
@@ -81,17 +81,7 @@ Profiles can appear from two places:
 - Local profiles saved by the app
 - Environment-defined profiles such as `WHODB_POSTGRES_1`, `WHODB_MYSQL_1`, or `WHODB_REDIS_1`
 
-When the manual credential form is disabled with `WHODB_DISABLE_CREDENTIAL_FORM=true`, the login page can still work through managed profiles and cloud pickers.
-
-## Cloud-Discovered Connections
-
-When any of these flags are enabled:
-
-- `WHODB_ENABLE_AWS_PROVIDER=true`
-- `WHODB_ENABLE_AZURE_PROVIDER=true`
-- `WHODB_ENABLE_GCP_PROVIDER=true`
-
-the login page can show provider-specific pickers below the standard form. Picking a discovered resource does not skip the normal connection flow; it prefills the same login form with the discovered endpoint and connection metadata.
+When the manual credential form is disabled with `WHODB_DISABLE_CREDENTIAL_FORM=true`, the login page can still work through managed profiles.
 
 ## File-Based Databases
 
@@ -111,7 +101,7 @@ See the current CE connection model and advanced option reference.
 Review the current database catalog grouped by compatibility family.
 </Card>
 <Card title="Cloud Providers" icon="cloud" href="/features/cloud-providers">
-Enable and manage AWS, Azure, and GCP discovery.
+Use local CLI discovery for AWS, Azure, and GCP.
 </Card>
 <Card title="Quick Start" icon="rocket" href="/quick-start">
 Move from login to exploring data and writing queries.
