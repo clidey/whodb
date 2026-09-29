@@ -205,7 +205,7 @@ fi
 SPEC_BASENAME="${SPEC_FILE%.spec.mjs}"
 MUTATING_SPEC=false
 case "$SPEC_BASENAME" in
-    crud|mock-data|import|data-types|key-types|schema-management|chat|keyboard-shortcuts|type-casting)
+    crud|mock-data|import|data-types|key-types|schema-management|chat|protected-chat.ce|keyboard-shortcuts|type-casting)
         MUTATING_SPEC=true
         ;;
 esac

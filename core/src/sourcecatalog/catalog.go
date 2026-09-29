@@ -948,8 +948,7 @@ func duckDBTraits() source.TypeTraits {
 		},
 		nil,
 	)
-	// The driver rejects read-only transactions; do not advertise enforcement.
-	traits.Query.SupportsReadOnlyExecution = false
+	traits.Query.SupportsReadOnlyExecution = true
 	return traits
 }
 
