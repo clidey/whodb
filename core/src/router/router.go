@@ -46,7 +46,8 @@ type OAuthLoginUrl struct {
 	Url string `json:"url"`
 }
 
-func NewGraphQLServer(es graphql.ExecutableSchema) *handler.Server {
+// NewGraphQLServer creates the gqlgen server and installs operation authorization when provided.
+func NewGraphQLServer(es graphql.ExecutableSchema, authorization graphql.OperationMiddleware) *handler.Server {
 	srv := handler.New(es)
 
 	srv.AddTransport(&transport.Websocket{
@@ -75,6 +76,9 @@ func NewGraphQLServer(es graphql.ExecutableSchema) *handler.Server {
 		}
 		return next(ctx)
 	})
+	if authorization != nil {
+		srv.AroundOperations(authorization)
+	}
 
 	srv.AroundRootFields(func(ctx context.Context, next graphql.RootResolver) graphql.Marshaler {
 		start := time.Now()
@@ -169,10 +173,10 @@ func graphQLAuditArguments(rootFieldCtx *graphql.RootFieldContext, opCtx *graphq
 	return rootFieldCtx.Field.ArgumentMap(variables)
 }
 
-func setupServer(router *chi.Mux, schema graphql.ExecutableSchema, httpHandlers map[string]http.Handler, staticFiles embed.FS) {
+func setupServer(router *chi.Mux, schema graphql.ExecutableSchema, authorization graphql.OperationMiddleware, httpHandlers map[string]http.Handler, staticFiles embed.FS) {
 	fileServer(router, staticFiles)
 
-	server := NewGraphQLServer(schema)
+	server := NewGraphQLServer(schema, authorization)
 	graph.SetupHTTPServer(router)
 	setupPlaygroundHandler(router, server)
 
@@ -566,7 +570,7 @@ func wrapWithBasePath(h http.Handler, basePath string) *chi.Mux {
 }
 
 // InitializeRouter creates the chi router with all middleware, GraphQL server, and additional HTTP handlers.
-func InitializeRouter(schema graphql.ExecutableSchema, httpHandlers map[string]http.Handler, additionalMiddlewares []func(http.Handler) http.Handler, publicPaths []string, staticFiles embed.FS) *chi.Mux {
+func InitializeRouter(schema graphql.ExecutableSchema, authorization graphql.OperationMiddleware, httpHandlers map[string]http.Handler, additionalMiddlewares []func(http.Handler) http.Handler, publicPaths []string, staticFiles embed.FS) *chi.Mux {
 	router := chi.NewRouter()
 
 	// Initialize the encrypted session store (server mode). This lives here, not
@@ -575,7 +579,10 @@ func InitializeRouter(schema graphql.ExecutableSchema, httpHandlers map[string]h
 	auth.EnsureSessionStore()
 
 	setupMiddlewares(router, additionalMiddlewares, publicPaths)
-	setupServer(router, schema, httpHandlers, staticFiles)
+	if authorization == nil {
+		authorization = auth.GraphQLAuthorizationMiddleware
+	}
+	setupServer(router, schema, authorization, httpHandlers, staticFiles)
 
 	if env.BasePath == "" {
 		return router

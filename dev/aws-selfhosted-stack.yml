@@ -37,15 +37,6 @@ Parameters:
       - internet-facing
       - internal
     Description: ALB scheme (internet-facing or internal for private access)
-  EnableAWSProvider:
-    Type: String
-    Default: "true"
-    AllowedValues: ["true", "false"]
-    Description: Enable AWS provider for auto-discovering RDS, ElastiCache, DocumentDB
-  AWSProviderRegion:
-    Type: String
-    Default: ""
-    Description: AWS region for provider discovery (defaults to stack region if empty)
   TaskCpu:
     Type: String
     Default: "512"
@@ -64,8 +55,6 @@ Parameters:
 Conditions:
   CreateVPC: !Equals [!Ref VpcId, ""]
   UseHTTPS: !Not [!Equals [!Ref CertificateArn, ""]]
-  EnableAWS: !Equals [!Ref EnableAWSProvider, "true"]
-  UseCustomRegion: !Not [!Equals [!Ref AWSProviderRegion, ""]]
   HasAlarmTopic: !Not [!Equals [!Ref AlarmSNSTopicArn, ""]]
 
 Resources:
@@ -318,37 +307,6 @@ Resources:
       ManagedPolicyArns:
         - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
 
-  TaskRole:
-    Type: AWS::IAM::Role
-    Condition: EnableAWS
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: ecs-tasks.amazonaws.com
-            Action: sts:AssumeRole
-      Policies:
-        - PolicyName: whodb-aws-discovery
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - rds:DescribeDBInstances
-                  - rds:DescribeDBClusters
-                  - rds:ListTagsForResource
-                  - elasticache:DescribeCacheClusters
-                  - elasticache:DescribeReplicationGroups
-                  - elasticache:DescribeServerlessCaches
-                  - elasticache:ListTagsForResource
-                  - docdb:DescribeDBClusters
-                  - docdb:DescribeDBInstances
-                  - docdb:ListTagsForResource
-                  - sts:GetCallerIdentity
-                Resource: "*"
-
   LogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
@@ -365,26 +323,11 @@ Resources:
       RequiresCompatibilities:
         - FARGATE
       ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
-      TaskRoleArn: !If [EnableAWS, !GetAtt TaskRole.Arn, !Ref AWS::NoValue]
       ContainerDefinitions:
         - Name: whodb
           Image: !Ref WhoDBImage
           PortMappings:
             - ContainerPort: 8080
-          Environment:
-            - !If
-              - EnableAWS
-              - Name: WHODB_ENABLE_AWS_PROVIDER
-                Value: "true"
-              - !Ref AWS::NoValue
-            - !If
-              - EnableAWS
-              - Name: WHODB_AWS_PROVIDER
-                Value: !Sub
-                  - >-
-                    [{"name":"AWS Discovery","region":"${Region}","discoverRDS":true,"discoverElastiCache":true,"discoverDocumentDB":true}]
-                  - Region: !If [UseCustomRegion, !Ref AWSProviderRegion, !Ref "AWS::Region"]
-              - !Ref AWS::NoValue
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -501,7 +444,3 @@ Outputs:
   VpcId:
     Description: VPC ID (created or provided)
     Value: !If [CreateVPC, !Ref VPC, !Ref VpcId]
-
-  AWSDiscoveryEnabled:
-    Description: Whether AWS provider discovery is enabled
-    Value: !If [EnableAWS, "true", "false"]

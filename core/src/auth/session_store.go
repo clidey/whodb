@@ -19,6 +19,7 @@ package auth
 import (
 	"context"
 	"crypto/rand"
+	"crypto/subtle"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -43,6 +44,8 @@ import (
 // the data directory. It is distinct from any user-configured sqlite3 data source.
 const sessionDBFileName = "whodb.db"
 
+const sessionPayloadVersion = 1
+
 // errSessionNotFound indicates no live session matched the token.
 var errSessionNotFound = errors.New("session not found")
 
@@ -61,6 +64,13 @@ type sessionRow struct {
 	ExpiresAt            time.Time `gorm:"index"`
 	CreatedAt            time.Time
 	UpdatedAt            time.Time
+}
+
+type sessionPayload struct {
+	Version       int                 `json:"version"`
+	SessionHash   string              `json:"sessionHash"`
+	CSRFTokenHash string              `json:"csrfTokenHash"`
+	Credentials   *source.Credentials `json:"credentials"`
 }
 
 // TableName sets the table name for sessionRow.
@@ -213,17 +223,6 @@ func CreateSession(credentials *source.Credentials, ttl time.Duration) (token, c
 		return "", "", time.Time{}, errors.New("session store not initialized")
 	}
 
-	// Marshaling the credentials (including any AccessToken) is intentional — the
-	// result is immediately AES-256-GCM encrypted before it is ever stored.
-	plaintext, err := json.Marshal(credentials) // #nosec G117 -- plaintext is immediately AES-256-GCM encrypted before storage.
-	if err != nil {
-		return "", "", time.Time{}, err
-	}
-	encrypted, err := crypto.Encrypt(key, string(plaintext))
-	if err != nil {
-		return "", "", time.Time{}, err
-	}
-
 	token, err = randomToken(48)
 	if err != nil {
 		return "", "", time.Time{}, err
@@ -233,11 +232,27 @@ func CreateSession(credentials *source.Credentials, ttl time.Duration) (token, c
 		return "", "", time.Time{}, err
 	}
 
+	sessionHash := hashToken(token)
+	csrfTokenHash := hashToken(csrfToken)
+	plaintext, err := json.Marshal(sessionPayload{
+		Version:       sessionPayloadVersion,
+		SessionHash:   sessionHash,
+		CSRFTokenHash: csrfTokenHash,
+		Credentials:   credentials,
+	}) // #nosec G117 -- plaintext is immediately AES-256-GCM encrypted before storage.
+	if err != nil {
+		return "", "", time.Time{}, err
+	}
+	encrypted, err := crypto.Encrypt(key, string(plaintext))
+	if err != nil {
+		return "", "", time.Time{}, err
+	}
+
 	expiresAt = time.Now().Add(ttl)
 	row := sessionRow{
-		SessionHash:          hashToken(token),
+		SessionHash:          sessionHash,
 		EncryptedCredentials: encrypted,
-		CSRFTokenHash:        hashToken(csrfToken),
+		CSRFTokenHash:        csrfTokenHash,
 		ExpiresAt:            expiresAt,
 	}
 	if err := db.Create(&row).Error; err != nil {
@@ -277,14 +292,18 @@ func LookupSession(token string, ttl time.Duration) (creds *source.Credentials, 
 		_ = db.Where("session_hash = ?", row.SessionHash).Delete(&sessionRow{}).Error
 		return nil, "", false, errSessionInvalid
 	}
-	credentials := &source.Credentials{}
-	if err := json.Unmarshal([]byte(plaintext), credentials); err != nil {
+	payload := sessionPayload{}
+	if err := json.Unmarshal([]byte(plaintext), &payload); err != nil ||
+		payload.Version != sessionPayloadVersion ||
+		payload.Credentials == nil ||
+		subtle.ConstantTimeCompare([]byte(payload.SessionHash), []byte(row.SessionHash)) != 1 ||
+		subtle.ConstantTimeCompare([]byte(payload.CSRFTokenHash), []byte(row.CSRFTokenHash)) != 1 {
 		_ = db.Where("session_hash = ?", row.SessionHash).Delete(&sessionRow{}).Error
 		return nil, "", false, errSessionInvalid
 	}
 
 	needsRefresh = time.Until(row.ExpiresAt) < ttl/2
-	return credentials, row.CSRFTokenHash, needsRefresh, nil
+	return payload.Credentials, row.CSRFTokenHash, needsRefresh, nil
 }
 
 // RefreshSession slides the session expiry forward by ttl from now.

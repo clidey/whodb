@@ -71,9 +71,7 @@ func (p *ClickHousePlugin) ExportData(config *engine.PluginConfig, schema string
 
 	// Use GORM query builder for export
 	builder := gorm_plugin.NewSQLBuilder(db, p)
-	fullTable := builder.BuildFullTableName(schema, storageUnit)
-
-	exportQuery := db.Table(fullTable)
+	exportQuery := builder.GetTableQuery(schema, storageUnit)
 	if len(columns) > 0 {
 		exportQuery = exportQuery.Select(columns)
 	}

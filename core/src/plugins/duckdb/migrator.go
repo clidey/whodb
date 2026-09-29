@@ -18,6 +18,7 @@ package duckdb
 
 import (
 	"database/sql"
+	"fmt"
 	"strings"
 
 	"gorm.io/gorm"
@@ -51,7 +52,10 @@ func (m DuckDBMigrator) ColumnTypes(value any) ([]gorm.ColumnType, error) {
 		schemaName = parts[0]
 		tableName = parts[1]
 	}
+	return m.columnTypes(schemaName, tableName)
+}
 
+func (m DuckDBMigrator) columnTypes(schemaName, tableName string) ([]gorm.ColumnType, error) {
 	query := `
 		SELECT
 			c.column_name,
@@ -125,4 +129,16 @@ func (m DuckDBMigrator) ColumnTypes(value any) ([]gorm.ColumnType, error) {
 	}
 
 	return columnTypes, rows.Err()
+}
+
+// QuotedColumnTypes returns complete DuckDB metadata for identifiers that require quoting.
+func (p *DuckDBPlugin) QuotedColumnTypes(db *gorm.DB, schema, table string) ([]gorm.ColumnType, error) {
+	if schema == "" {
+		schema = "main"
+	}
+	duckMigrator, ok := db.Migrator().(DuckDBMigrator)
+	if !ok {
+		return nil, fmt.Errorf("unexpected DuckDB migrator %T", db.Migrator())
+	}
+	return duckMigrator.columnTypes(schema, table)
 }

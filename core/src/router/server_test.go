@@ -134,7 +134,7 @@ func TestNewGraphQLServerTogglesIntrospectionByEnvironment(t *testing.T) {
 		env.IsDevelopment = isDevelopment
 		defer func() { env.IsDevelopment = originalDev }()
 
-		server := NewGraphQLServer(graphapi.NewExecutableSchema(graphapi.Config{Resolvers: &graphapi.Resolver{}}))
+		server := NewGraphQLServer(graphapi.NewExecutableSchema(graphapi.Config{Resolvers: &graphapi.Resolver{}}), nil)
 		req := httptest.NewRequest(http.MethodPost, "/api/query", bytes.NewReader(queryBody))
 		req.Header.Set("Content-Type", "application/json")
 		rr := httptest.NewRecorder()
@@ -166,7 +166,7 @@ func TestNewGraphQLServerAuditsGraphQLRootFieldName(t *testing.T) {
 		coreaudit.SetActorProvider(nil)
 	})
 
-	server := NewGraphQLServer(graphapi.NewExecutableSchema(graphapi.Config{Resolvers: &graphapi.Resolver{}}))
+	server := NewGraphQLServer(graphapi.NewExecutableSchema(graphapi.Config{Resolvers: &graphapi.Resolver{}}), nil)
 
 	queryBody, err := json.Marshal(map[string]any{
 		"query": `query GetHealth { Health { Server Database } }`,

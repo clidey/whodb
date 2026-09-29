@@ -27,12 +27,13 @@ import (
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/plugins"
+	"github.com/clidey/whodb/core/src/sqlident"
 )
 
 // SQLBuilderInterface defines the methods that can be overridden by database-specific implementations
 type SQLBuilderInterface interface {
 	QuoteIdentifier(identifier string) string
-	BuildFullTableName(schema, table string) string
+	QualifiedTableName(schema, table string) (string, error)
 	GetTableQuery(schema, table string) *gorm.DB
 	SelectQuery(schema, table string, columns []string, conditions map[string]any) *gorm.DB
 	BuildOrderBy(query *gorm.DB, sortList []plugins.Sort) *gorm.DB
@@ -86,24 +87,31 @@ func (sb *SQLBuilder) QuoteIdentifier(identifier string) string {
 	return identifier
 }
 
-// BuildFullTableName builds a fully qualified table name for GORM operations
-// GORM's dialector handles identifier quoting internally via QuoteTo method.
-func (sb *SQLBuilder) BuildFullTableName(schema, table string) string {
-	if table == "" {
-		return ""
+// QualifiedTableName renders a table name using the plugin's identifier rules.
+func (sb *SQLBuilder) QualifiedTableName(schema, table string) (string, error) {
+	name, err := sqlident.New(schema, table)
+	if err != nil {
+		return "", err
 	}
-	if schema == "" {
-		return table
+	style := sqlident.DoubleQuote
+	if sb.plugin != nil {
+		style = sb.plugin.IdentifierQuoteStyle()
 	}
-	return schema + "." + table
+	return name.SQL(style)
 }
 
 // GetTableQuery creates a GORM query with the appropriate table reference
 // This method can be overridden by database-specific implementations
 func (sb *SQLBuilder) GetTableQuery(schema, table string) *gorm.DB {
-	fullTableName := sb.BuildFullTableName(schema, table)
-	// codeql[go/sql-injection]: table name comes from a validated storage unit or plugin-controlled metadata before reaching this helper.
-	return sb.db.Table(fullTableName)
+	fullTableName, err := sb.self.QualifiedTableName(schema, table)
+	if err != nil {
+		tx := sb.db.Session(&gorm.Session{})
+		_ = tx.AddError(err)
+		return tx
+	}
+	query := sb.db.Table("?", clause.Expr{SQL: fullTableName})
+	query.Statement.Table = table
+	return query
 }
 
 // SelectQuery builds a SELECT query using GORM's query builder
@@ -253,17 +261,7 @@ func (sb *SQLBuilder) InsertRow(schema, table string, data map[string]any) error
 		return errors.New("table name cannot be empty when inserting row")
 	}
 
-	// Let GORM handle the table name formatting
-	// GORM's dialect will properly escape and format the table name
-	tableName := table
-	if schema != "" {
-		// For databases that support schemas, use schema.table format
-		// GORM will handle this appropriately for each dialect
-		tableName = schema + "." + table
-	}
-
-	// codeql[go/sql-injection]: table name comes from a validated storage unit before reaching this helper.
-	result := sb.db.Table(tableName).Create(data)
+	result := sb.self.GetTableQuery(schema, table).Create(data)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -274,14 +272,7 @@ func (sb *SQLBuilder) InsertRow(schema, table string, data map[string]any) error
 // UpdateQuery builds an UPDATE query using GORM's Update methods
 // GORM handles all escaping automatically
 func (sb *SQLBuilder) UpdateQuery(schema, table string, updates map[string]any, conditions map[string]any) *gorm.DB {
-	// Let GORM handle the table name formatting
-	tableName := table
-	if schema != "" {
-		tableName = schema + "." + table
-	}
-
-	// codeql[go/sql-injection]: table name comes from a validated storage unit before reaching this helper.
-	query := sb.db.Table(tableName)
+	query := sb.self.GetTableQuery(schema, table)
 
 	// Add WHERE conditions using GORM's native support
 	if len(conditions) > 0 {
@@ -295,14 +286,7 @@ func (sb *SQLBuilder) UpdateQuery(schema, table string, updates map[string]any, 
 // DeleteQuery builds a DELETE query using GORM's Delete method
 // GORM handles all escaping automatically
 func (sb *SQLBuilder) DeleteQuery(schema, table string, conditions map[string]any) *gorm.DB {
-	// Let GORM handle the table name formatting
-	tableName := table
-	if schema != "" {
-		tableName = schema + "." + table
-	}
-
-	// codeql[go/sql-injection]: table name comes from a validated storage unit before reaching this helper.
-	query := sb.db.Table(tableName)
+	query := sb.self.GetTableQuery(schema, table)
 
 	// Add WHERE conditions using GORM's native support
 	if len(conditions) > 0 {
@@ -316,14 +300,7 @@ func (sb *SQLBuilder) DeleteQuery(schema, table string, conditions map[string]an
 // GORM handles all escaping automatically
 func (sb *SQLBuilder) CountQuery(schema, table string) (int64, error) {
 	var count int64
-	// Let GORM handle the table name formatting
-	tableName := table
-	if schema != "" {
-		tableName = schema + "." + table
-	}
-
-	// codeql[go/sql-injection]: table name comes from a validated storage unit before reaching this helper.
-	err := sb.db.Table(tableName).Count(&count).Error
+	err := sb.self.GetTableQuery(schema, table).Count(&count).Error
 	return count, err
 }
 

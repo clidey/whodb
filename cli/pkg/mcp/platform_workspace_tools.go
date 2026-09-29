@@ -1216,7 +1216,7 @@ func buildPlatformWritePlan(snapshot *platformWorkspaceSnapshot, session *platfo
 		Mutation:             spec.Mutation,
 		ConfirmationRequired: true,
 		Preview:              preview,
-		PayloadKeys:          genericWriteChanges(payload),
+		PayloadKeys:          preview.Changes,
 		SuggestedReads:       suggestedReadsForResource(spec.Resource, spec.Action),
 		Affected:             affected,
 		Warnings:             warnings,

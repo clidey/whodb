@@ -17,41 +17,70 @@
 package gorm_plugin
 
 import (
+	"database/sql"
 	"fmt"
 	"strings"
 
 	"gorm.io/gorm"
 
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/sqlident"
 )
 
-// MigratorHelper provides schema operations using GORM's Migrator interface
-// NOTE: Most methods are not yet used but are prepared for future schema modification features
+// MigratorHelper provides schema metadata operations for safely scoped GORM table queries.
 type MigratorHelper struct {
-	db       *gorm.DB
-	plugin   GormPluginFunctions
-	migrator gorm.Migrator
+	plugin GormPluginFunctions
+}
+
+type quotedColumnTypeProvider interface {
+	QuotedColumnTypes(db *gorm.DB, schema, table string) ([]gorm.ColumnType, error)
 }
 
 // NewMigratorHelper creates a new migrator helper
-func NewMigratorHelper(db *gorm.DB, plugin GormPluginFunctions) *MigratorHelper {
+func NewMigratorHelper(plugin GormPluginFunctions) *MigratorHelper {
 	return &MigratorHelper{
-		db:       db,
-		plugin:   plugin,
-		migrator: db.Migrator(),
+		plugin: plugin,
 	}
 }
 
-// TableExists checks if a table exists using Migrator
-func (m *MigratorHelper) TableExists(tableName string) bool {
-	return m.migrator.HasTable(tableName)
+// ReadSQLColumnTypes returns driver metadata from an already safely scoped table query.
+func ReadSQLColumnTypes(query *gorm.DB) (map[string]*sql.ColumnType, error) {
+	rows, err := query.Limit(1).Rows()
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+
+	columnTypes, err := rows.ColumnTypes()
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[string]*sql.ColumnType, len(columnTypes))
+	for _, columnType := range columnTypes {
+		result[columnType.Name()] = columnType
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
-// GetConstraints gets table constraints using Migrator
-func (m *MigratorHelper) GetConstraints(tableName string) (map[string][]gorm.ColumnType, error) {
+// TableExists checks whether a safely scoped table query can be opened.
+func (m *MigratorHelper) TableExists(query *gorm.DB) bool {
+	rows, err := query.Limit(1).Rows()
+	if err != nil {
+		return false
+	}
+	defer func() { _ = rows.Close() }()
+	_ = rows.Next()
+	return rows.Err() == nil
+}
+
+// GetConstraints gets table constraints using column metadata.
+func (m *MigratorHelper) GetConstraints(query *gorm.DB, schema, table string) (map[string][]gorm.ColumnType, error) {
 	// GORM's Migrator doesn't directly expose constraints
 	// We can get column types which include some constraint info
-	columnTypes, err := m.migrator.ColumnTypes(tableName)
+	columnTypes, err := m.columnTypes(query, schema, table)
 	if err != nil {
 		return nil, err
 	}
@@ -73,12 +102,12 @@ func (m *MigratorHelper) GetConstraints(tableName string) (map[string][]gorm.Col
 	return constraints, nil
 }
 
-// GetColumnTypes gets column types and nullability using Migrator's ColumnTypes.
+// GetColumnTypes gets column types and nullability using driver metadata.
 // Returns types with length info when available (e.g., "VARCHAR(255)").
-func (m *MigratorHelper) GetColumnTypes(tableName string) (map[string]ColumnTypeInfo, error) {
+func (m *MigratorHelper) GetColumnTypes(query *gorm.DB, schema, table string) (map[string]ColumnTypeInfo, error) {
 	columnTypes := make(map[string]ColumnTypeInfo)
 
-	types, err := m.migrator.ColumnTypes(tableName)
+	types, err := m.columnTypes(query, schema, table)
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +142,7 @@ type ColumnTypeInfo struct {
 var typesWithLength = map[string]bool{
 	// Character types
 	"VARCHAR": true, "CHAR": true, "CHARACTER": true, "CHARACTER VARYING": true,
-	"NVARCHAR": true, "NCHAR": true, "BPCHAR": true,
+	"VARCHAR2": true, "NVARCHAR": true, "NVARCHAR2": true, "NCHAR": true, "BPCHAR": true,
 	// Binary types
 	"BINARY": true, "VARBINARY": true, "BIT": true, "BIT VARYING": true, "VARBIT": true,
 	// ClickHouse string types
@@ -152,8 +181,8 @@ func (m *MigratorHelper) buildFullTypeName(col gorm.ColumnType) string {
 
 // GetOrderedColumns returns columns in their definition order.
 // Returns types with length info when available and normalized to canonical form.
-func (m *MigratorHelper) GetOrderedColumns(tableName string) ([]engine.Column, error) {
-	types, err := m.migrator.ColumnTypes(tableName)
+func (m *MigratorHelper) GetOrderedColumns(query *gorm.DB, schema, table string) ([]engine.Column, error) {
+	types, err := m.columnTypes(query, schema, table)
 	if err != nil {
 		return nil, err
 	}
@@ -201,4 +230,15 @@ func (m *MigratorHelper) GetOrderedColumns(tableName string) ([]engine.Column, e
 	}
 
 	return columns, nil
+}
+
+func (m *MigratorHelper) columnTypes(query *gorm.DB, schema, table string) ([]gorm.ColumnType, error) {
+	if sqlident.IsSimple(schema) && sqlident.IsSimple(table) {
+		return query.Session(&gorm.Session{NewDB: true}).Migrator().ColumnTypes(m.plugin.FormTableName(schema, table))
+	}
+	provider, ok := m.plugin.(quotedColumnTypeProvider)
+	if !ok {
+		return nil, fmt.Errorf("column metadata requires connector-native lookup for quoted identifier %q", m.plugin.FormTableName(schema, table))
+	}
+	return provider.QuotedColumnTypes(query.Session(&gorm.Session{NewDB: true}), schema, table)
 }

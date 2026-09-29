@@ -27,6 +27,7 @@ package <name>
 import (
     "github.com/clidey/whodb/core/src/engine"
     "github.com/clidey/whodb/core/src/plugins/gorm"
+    "github.com/clidey/whodb/core/src/sqlident"
 )
 
 type <Name>Plugin struct {
@@ -35,6 +36,7 @@ type <Name>Plugin struct {
 
 func New<Name>Plugin() *engine.Plugin {
     p := &<Name>Plugin{}
+    p.ConfigureIdentifierQuoting(sqlident.DoubleQuote) // choose the database's rules
     return &engine.Plugin{
         Type:            engine.DatabaseType_<Name>,
         PluginFunctions: p,
@@ -79,6 +81,10 @@ At minimum for SQL plugins:
 - `GetSchemaTableQuery() string`
 - `GetPlaceholder(index int) string` — `$1` for Postgres-like, `?` for MySQL-like
 
+For every raw SQL path, pass values as parameters and render raw object-name
+components through `core/src/sqlident`. Do not create connector-specific
+qualified-name helpers. See `.agents/docs/sql-security.md`.
+
 ### 8. Add Frontend Icon
 In `frontend/src/icons.tsx` (or `ee/frontend/src/icons.tsx`):
 ```typescript
@@ -94,6 +100,13 @@ cd frontend && pnpm run build:ce
 ### 10. Tests
 - Add database fixture in `frontend/e2e/fixtures/databases/<name>.json`
 - Add Docker service in `dev/docker-compose.yml` with seed data
+- If the source contract exposes `ImportData`, add a runtime overwrite test that:
+  - creates a uniquely named target and unrelated guard table;
+  - uses a table name containing the database's closing identifier delimiter and an SQL suffix, or proves the database rejects that name before overwrite;
+  - calls the production `importer.Execute(..., ModeOverwrite)` path;
+  - verifies the replacement rows, verifies the guard is unchanged, and cleans up;
+  - executes against the supported database image or live service so the generated SQL is accepted by the real driver.
+- Add the plugin type and proof to `core/src/sourcecatalog/identifier_coverage_test.go` (CE) or `ee/core/src/sourcecatalog/identifier_coverage_test.go` (EE). This is required for every import-capable connector.
 - Run: `cd frontend && pnpm e2e:db:headless <name>`
 
 ## Reference

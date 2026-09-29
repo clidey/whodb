@@ -5,7 +5,7 @@ description: "Current settings and personalization options in WhoDB"
 
 # Settings
 
-The current CE build includes a dedicated settings page. It is enabled in the default CE feature flags and covers telemetry, UI personalization, table defaults, language, and cloud-provider management.
+The current CE build includes a dedicated settings page. It is enabled in the default CE feature flags and covers telemetry, UI personalization, table defaults, and language.
 
 The page is organized into **Appearance**, **Behavior**, **Integrations**, and **Privacy** tabs.
 
@@ -45,30 +45,13 @@ The current page also exposes:
 The backend still enforces the global maximum page size through `WHODB_MAX_PAGE_SIZE`. The settings page controls the default page size within that limit.
 </Note>
 
-### Cloud Provider Management
-
-When cloud providers are enabled, the settings page adds dedicated sections for:
-
-- AWS providers
-- Azure providers
-- GCP providers
-
-These sections let you add, edit, refresh, and remove providers, and they are the management entry point for the cloud pickers shown on the login page.
-
-<Note>
-Cloud provider integrations are still not production-ready in the current CE build, so they are disabled by default. You can still enable them and try them out in a non-production environment if you want to evaluate the workflow.
-</Note>
-
 ## Related Configuration
 
-Use environment variables for deployment-level configuration such as connection profiles, provider setup, log output, and maximum page size.
+Use environment variables for deployment-level configuration such as connection profiles, log output, and maximum page size.
 
 ## Related Pages
 
 <CardGroup cols={2}>
-<Card title="Cloud Providers" icon="cloud" href="/features/cloud-providers">
-See how AWS, Azure, and GCP provider management works.
-</Card>
 <Card title="Keyboard Shortcuts" icon="code" href="/resources/keyboard-shortcuts">
 Review the current shortcut map used by the frontend.
 </Card>

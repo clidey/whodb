@@ -35,6 +35,7 @@ import (
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
 	sourcecatalogspecs "github.com/clidey/whodb/core/src/sourcecatalog/specs"
+	"github.com/clidey/whodb/core/src/sqlident"
 )
 
 const (
@@ -313,7 +314,10 @@ func (p *DuckDBPlugin) AddRowReturningID(config *engine.PluginConfig, schema str
 
 			// Build INSERT ... RETURNING pk_column
 			builder := p.CreateSQLBuilder(tx)
-			tableName := builder.BuildFullTableName(schema, storageUnit)
+			tableName, err := builder.QualifiedTableName(schema, storageUnit)
+			if err != nil {
+				return err
+			}
 			pkColQuoted := builder.QuoteIdentifier(pkCols[0])
 
 			var cols []string
@@ -368,8 +372,46 @@ func (p *DuckDBPlugin) MarkGeneratedColumns(config *engine.PluginConfig, schema 
 	return nil
 }
 
+// RawExecute runs SQL, using DuckDB's native read-only transaction for protected reads.
 func (p *DuckDBPlugin) RawExecute(config *engine.PluginConfig, query string, params ...any) (*engine.GetRowsResult, error) {
+	if config != nil && config.ReadOnly {
+		protected, err := plugins.ReadOnlyConfig(config, query)
+		if err != nil {
+			return nil, err
+		}
+		return plugins.WithConnection(protected, p.DB, func(db *gorm.DB) (*engine.GetRowsResult, error) {
+			return p.executeReadOnly(db, query, params...)
+		})
+	}
 	return p.ExecuteRawSQL(config, nil, query, params...)
+}
+
+// executeReadOnly uses SQL because duckdb-go rejects sql.TxOptions.ReadOnly.
+// A sql.Conn pins BEGIN, query and ROLLBACK to the same physical connection.
+// The caller must apply ReadOnlyConfig: transaction mode alone permits COPY TO.
+func (p *DuckDBPlugin) executeReadOnly(db *gorm.DB, query string, params ...any) (*engine.GetRowsResult, error) {
+	sqlDB, err := db.DB()
+	if err != nil {
+		return nil, err
+	}
+	ctx := db.Statement.Context
+	conn, err := sqlDB.Conn(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = conn.Close() }()
+	if _, err := conn.ExecContext(ctx, "BEGIN TRANSACTION READ ONLY"); err != nil {
+		return nil, err
+	}
+	defer func() { _, _ = conn.ExecContext(ctx, "ROLLBACK") }()
+
+	// codeql[go/sql-injection]: RawExecute intentionally runs user-authored SQL after protected-read validation.
+	rows, err := conn.QueryContext(ctx, query, params...)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+	return p.ConvertRawToRows(rows)
 }
 
 func formatInterval(v duckdbDriver.Interval) string {
@@ -419,6 +461,7 @@ func plural(v int64) string {
 // NewDuckDBPlugin creates a new DuckDB plugin instance.
 func NewDuckDBPlugin() *engine.Plugin {
 	plugin := &DuckDBPlugin{}
+	plugin.ConfigureIdentifierQuoting(sqlident.DoubleQuote)
 	plugin.Type = engine.DatabaseType_DuckDB
 	plugin.PluginFunctions = plugin
 	plugin.GormPluginFunctions = plugin

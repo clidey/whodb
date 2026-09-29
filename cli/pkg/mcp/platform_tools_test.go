@@ -649,7 +649,7 @@ func TestHandlePlatformGenericFolderDeleteConfirmsNestedDeletion(t *testing.T) {
 	}
 }
 
-func TestHandlePlatformGenericFileUploadConfirmWritesRedactsPreview(t *testing.T) {
+func TestHandlePlatformGenericFileUploadConfirmWritesShowsSourcePath(t *testing.T) {
 	client := &fakePlatformClient{}
 	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
 		return testPlatformSession(client), nil
@@ -669,18 +669,19 @@ func TestHandlePlatformGenericFileUploadConfirmWritesRedactsPreview(t *testing.T
 	if !output.ConfirmationRequired || output.ConfirmationToken == "" {
 		t.Fatalf("output = %#v, want confirmation token", output)
 	}
+	t.Cleanup(func() { consumePendingPlatformAction(output.ConfirmationToken) })
 	raw, err := json.Marshal(output)
 	if err != nil {
 		t.Fatalf("json.Marshal(output) error = %v", err)
 	}
-	if strings.Contains(string(raw), "/tmp/private.csv") {
-		t.Fatalf("confirmation preview leaked local file path: %s", raw)
+	if !strings.Contains(string(raw), "/tmp/private.csv") {
+		t.Fatalf("confirmation preview omitted local file path: %s", raw)
 	}
 	if output.ConfirmationPreview == nil || output.ConfirmationPreview.Resource != "file" || output.ConfirmationPreview.Action != "upload" {
 		t.Fatalf("preview = %#v, want file upload preview", output.ConfirmationPreview)
 	}
-	if output.ConfirmationPreview.Summary != "Upload file" {
-		t.Fatalf("preview summary = %q, want generic upload summary", output.ConfirmationPreview.Summary)
+	if output.ConfirmationPreview.Summary != `Upload file "/tmp/private.csv"` {
+		t.Fatalf("preview summary = %q, want upload source path", output.ConfirmationPreview.Summary)
 	}
 	if client.mutationName != "" {
 		t.Fatalf("mutation executed in confirm-writes mode: %q", client.mutationName)

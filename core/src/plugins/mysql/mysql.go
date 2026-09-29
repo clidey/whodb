@@ -30,6 +30,7 @@ import (
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
 	sourcecatalogspecs "github.com/clidey/whodb/core/src/sourcecatalog/specs"
+	"github.com/clidey/whodb/core/src/sqlident"
 )
 
 var (
@@ -216,6 +217,7 @@ func init() {
 
 func NewMySQLPlugin() *engine.Plugin {
 	mysqlPlugin := &MySQLPlugin{}
+	mysqlPlugin.ConfigureIdentifierQuoting(sqlident.Backtick)
 	mysqlPlugin.Type = engine.DatabaseType_MySQL
 	mysqlPlugin.PluginFunctions = mysqlPlugin
 	mysqlPlugin.GormPluginFunctions = mysqlPlugin
@@ -224,6 +226,7 @@ func NewMySQLPlugin() *engine.Plugin {
 
 func NewMyMariaDBPlugin() *engine.Plugin {
 	mysqlPlugin := &MySQLPlugin{}
+	mysqlPlugin.ConfigureIdentifierQuoting(sqlident.Backtick)
 	mysqlPlugin.Type = engine.DatabaseType_MariaDB
 	mysqlPlugin.PluginFunctions = mysqlPlugin
 	mysqlPlugin.GormPluginFunctions = mysqlPlugin
@@ -232,6 +235,7 @@ func NewMyMariaDBPlugin() *engine.Plugin {
 
 func NewTiDBPlugin() *engine.Plugin {
 	tidbPlugin := &MySQLPlugin{}
+	tidbPlugin.ConfigureIdentifierQuoting(sqlident.Backtick)
 	tidbPlugin.Type = engine.DatabaseType_TiDB
 	tidbPlugin.PluginFunctions = tidbPlugin
 	tidbPlugin.GormPluginFunctions = tidbPlugin

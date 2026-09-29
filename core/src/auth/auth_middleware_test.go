@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -11,6 +13,7 @@ import (
 	"github.com/zalando/go-keyring"
 
 	"github.com/clidey/whodb/core/src"
+	"github.com/clidey/whodb/core/src/common/ssl"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/source"
@@ -186,6 +189,42 @@ func TestAuthMiddlewareResolvesIDOnlyCredentialsFromProfiles(t *testing.T) {
 	}
 }
 
+func TestAuthMiddlewareRejectsProfileConnectionOverride(t *testing.T) {
+	origEngine := src.MainEngine
+	src.MainEngine = &engine.Engine{}
+	t.Cleanup(func() { src.MainEngine = origEngine })
+
+	src.MainEngine.AddLoginProfile(types.DatabaseCredentials{
+		CustomId:  "profile-with-secret",
+		Type:      "Postgres",
+		Hostname:  "db.local",
+		IsProfile: true,
+		Advanced:  map[string]string{ssl.KeySSLMode: "verify-full"},
+	})
+
+	id := "profile-with-secret"
+	creds := source.Credentials{
+		ID:     &id,
+		Values: map[string]string{"Hostname": "attacker.example", ssl.KeySSLMode: "disabled"},
+	}
+	payload, err := json.Marshal(&creds)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req := httptest.NewRequest(http.MethodPost, "/api/query", bytes.NewBufferString(`{"operationName":"Other"}`))
+	req.Header.Set("Authorization", "Bearer "+base64.StdEncoding.EncodeToString(payload))
+	rr := httptest.NewRecorder()
+	called := false
+
+	AuthMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called = true
+	})).ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusBadRequest || called {
+		t.Fatalf("expected profile connection override to be rejected, got status=%d called=%v", rr.Code, called)
+	}
+}
+
 func TestAuthMiddlewareResolvesIDOnlyCredentialsFromKeyring(t *testing.T) {
 	keyring.MockInit()
 	t.Setenv("WHODB_DESKTOP", "true")
@@ -238,8 +277,12 @@ func TestAuthMiddlewareRejectsOversizeBody(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/api/query", bytes.NewReader(body))
 	rr := httptest.NewRecorder()
 
-	AuthMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})).ServeHTTP(rr, req)
-	if rr.Code != http.StatusRequestEntityTooLarge {
-		t.Fatalf("expected 413, got %d", rr.Code)
+	var readErr error
+	AuthMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, readErr = io.ReadAll(r.Body)
+	})).ServeHTTP(rr, req)
+	var maxBytesErr *http.MaxBytesError
+	if !errors.As(readErr, &maxBytesErr) {
+		t.Fatalf("expected MaxBytesError, got %v", readErr)
 	}
 }

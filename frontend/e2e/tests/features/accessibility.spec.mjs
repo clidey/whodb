@@ -283,54 +283,6 @@ test.describe("Accessibility (axe-core)", () => {
       await runAxeScan(page, testInfo, "settings");
     });
 
-    test("settings cloud providers section has no critical violations", async ({ whodb, page }, testInfo) => {
-      const enableCloudProviders = async (route) => {
-        let postData;
-        try {
-          postData = route.request().postDataJSON();
-        } catch {
-          return route.fallback();
-        }
-
-        const op = postData?.operationName;
-        if (op === "SettingsConfig") {
-          return route.fulfill({
-            contentType: "application/json",
-            body: JSON.stringify({
-              data: {
-                SettingsConfig: {
-                  MetricsEnabled: "false",
-                  CloudProvidersEnabled: true,
-                  AWSProviderEnabled: true,
-                  AzureProviderEnabled: true,
-                  GCPProviderEnabled: true,
-                  DisableCredentialForm: false,
-                  EnableNewUI: true,
-                  MaxPageSize: 10000,
-                  __typename: "SettingsConfig",
-                },
-              },
-            }),
-          });
-        }
-        if (op === "GetCloudProviders") {
-          return route.fulfill({
-            contentType: "application/json",
-            body: JSON.stringify({ data: { CloudProviders: [] } }),
-          });
-        }
-
-        return route.fallback();
-      };
-
-      await page.route("**/api/query", enableCloudProviders);
-      await whodb.goto("settings");
-      await page.waitForURL(/\/settings/, { timeout: 15_000 });
-      await page.locator('[data-testid="add-first-aws-provider"]').waitFor({ timeout: 15_000 });
-      await runAxeScan(page, testInfo, "settings-cloud-providers");
-      await page.unroute("**/api/query", enableCloudProviders);
-    });
-
     test("contact-us page has no critical violations", async ({ whodb, page }, testInfo) => {
       await whodb.goto("contact-us");
       await page.waitForURL(/\/contact-us/, { timeout: 15_000 });

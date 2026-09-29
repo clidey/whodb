@@ -120,6 +120,10 @@ type AppConfig struct {
 	// Schema is the GraphQL executable schema.
 	Schema graphql.ExecutableSchema
 
+	// GraphQLAuthorization authorizes a parsed GraphQL operation before any
+	// resolver executes. CE authorization is used when this is nil.
+	GraphQLAuthorization graphql.OperationMiddleware
+
 	// HTTPHandlers maps additional HTTP paths to handlers.
 	HTTPHandlers map[string]http.Handler
 
@@ -187,35 +191,17 @@ func Run(config AppConfig, staticFiles embed.FS) {
 	})
 
 	src.InitializeEngine()
-
-	// Load persisted AWS providers from disk (if any)
-	if err := settings.LoadProvidersFromFile(); err != nil {
-		log.Warnf("Failed to load persisted AWS providers: %v", err)
-	}
-
-	// Initialize AWS providers from environment variables (may add or override persisted)
-	if err := settings.InitAWSProvidersFromEnv(); err != nil {
-		log.Warnf("Failed to initialize AWS providers from environment: %v", err)
-	}
-
-	// Load persisted Azure providers from disk (if any)
-	if err := settings.LoadAzureProvidersFromFile(); err != nil {
-		log.Warnf("Failed to load persisted Azure providers: %v", err)
-	}
-
-	// Initialize Azure providers from environment variables (may add or override persisted)
-	if err := settings.InitAzureProvidersFromEnv(); err != nil {
-		log.Warnf("Failed to initialize Azure providers from environment: %v", err)
-	}
-
-	// Load persisted GCP providers from disk (if any)
-	if err := settings.LoadGCPProvidersFromFile(); err != nil {
-		log.Warnf("Failed to load persisted GCP providers: %v", err)
-	}
-
-	// Initialize GCP providers from environment variables (may add or override persisted)
-	if err := settings.InitGCPProvidersFromEnv(); err != nil {
-		log.Warnf("Failed to initialize GCP providers from environment: %v", err)
+	if !env.IsEnterpriseEdition && mode == "server" {
+		profileCount := 0
+		profiles := src.GetLoginProfiles()
+		for i := range profiles {
+			if profiles[i].Source != "builtin" {
+				profileCount++
+			}
+		}
+		if profileCount > 0 {
+			log.Warnf("Configured connection profiles grant database access to anyone who can reach this WhoDB CE instance; restrict instance access to trusted users (profiles=%d)", profileCount)
+		}
 	}
 
 	// Initialize the encrypted session store and capture its cleanup-ticker stop
@@ -223,7 +209,7 @@ func Run(config AppConfig, staticFiles embed.FS) {
 	// calls it — and is a no-op in desktop/CLI mode.
 	stopSessionCleanup := auth.EnsureSessionStore()
 
-	r := router.InitializeRouter(config.Schema, config.HTTPHandlers, config.Middlewares, config.PublicPaths, staticFiles)
+	r := router.InitializeRouter(config.Schema, config.GraphQLAuthorization, config.HTTPHandlers, config.Middlewares, config.PublicPaths, staticFiles)
 
 	port := resolvePort()
 

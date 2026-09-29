@@ -17,12 +17,10 @@
 package auth
 
 import (
-	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"io"
 	"maps"
 	"net/http"
 	"slices"
@@ -30,7 +28,6 @@ import (
 	"sync"
 
 	"github.com/clidey/whodb/core/src"
-	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/source"
 	"github.com/clidey/whodb/core/src/sourcecatalog"
@@ -39,6 +36,8 @@ import (
 type AuthKey string
 
 type authenticatedSourceKey struct{}
+type csrfFailedKey struct{}
+type authenticationUnavailableKey struct{}
 
 const (
 	AuthKey_Token  AuthKey = "Token"
@@ -68,44 +67,11 @@ func GetAuthenticatedSourceCredentials(ctx context.Context) *source.Credentials 
 
 func isPublicRoute(r *http.Request) bool {
 	// Paths not under /api/ are always public — SPA routes, auth proxy endpoints, static assets.
-	if !strings.HasPrefix(r.URL.Path, "/api/") && r.URL.Path != "/api" {
-		return true
-	}
-
-	// In dev mode, also allow GraphQL introspection requests without credentials.
-	if env.IsDevelopment && r.Method == http.MethodPost {
-		body, err := io.ReadAll(r.Body)
-		if err != nil {
-			return false
-		}
-		r.Body = io.NopCloser(bytes.NewReader(body))
-		var query map[string]any
-		if err := json.Unmarshal(body, &query); err == nil {
-			if q, ok := query["query"].(string); ok && strings.Contains(q, "IntrospectionQuery") {
-				return true
-			}
-		}
-	}
-
-	return false
+	return !strings.HasPrefix(r.URL.Path, "/api/") && r.URL.Path != "/api"
 }
 
-// attachSessionContextIfPresent adds the existing session's credentials to the
-// request context when a valid session cookie is present, without requiring
-// one. Used for publicly-allowed operations (e.g. LoginSource) so a resolver
-// can merge previously-authenticated fields (host/username/password) with a
-// partial credentials payload (e.g. just a new Database value).
-func attachSessionContextIfPresent(r *http.Request) *http.Request {
-	sessionToken, ok := sessionTokenFromRequest(r)
-	if !ok {
-		return r
-	}
-	credentials, _, _, err := LookupSession(sessionToken, sessionTTL())
-	if err != nil {
-		return r
-	}
-	ctx := context.WithValue(r.Context(), AuthKey_Source, credentials)
-	return r.WithContext(ctx)
+func isGraphQLRequest(r *http.Request) bool {
+	return r.URL.Path == "/api/query"
 }
 
 func AuthMiddleware(next http.Handler) http.Handler {
@@ -122,30 +88,11 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		isMultipart := strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/")
-
-		if isMultipart {
+		if strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/") {
 			// Multipart uploads (file uploads) use a higher body limit.
-			// Skip body buffering — auth relies on the Authorization header.
 			r.Body = http.MaxBytesReader(w, r.Body, maxUploadBodySize)
 		} else {
 			r.Body = http.MaxBytesReader(w, r.Body, maxRequestBodySize)
-			body, err := readRequestBody(r)
-			if err != nil {
-				if err.Error() == "http: request body too large" {
-					http.Error(w, "Request body too large", http.StatusRequestEntityTooLarge)
-				} else {
-					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-				}
-				return
-			}
-
-			// this is to ensure that it can be re-read by the GraphQL layer
-			r.Body = io.NopCloser(bytes.NewBuffer(body))
-			if isAllowed(r, body) {
-				next.ServeHTTP(w, attachSessionContextIfPresent(r))
-				return
-			}
 		}
 
 		if authBypassFn != nil && authBypassFn(r) {
@@ -170,10 +117,13 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		if token == "" {
 			if sessionToken, ok := sessionTokenFromRequest(r); ok {
 				onceSession.Do(func() { log.Info("Auth: using session cookie") })
-				if serveWithSessionCookie(w, r, next, sessionToken) {
+				if serveWithSessionCookie(w, r, next, sessionToken, isGraphQLRequest(r)) {
 					return
 				}
-				// Invalid/expired session: cookies already cleared, reject.
+				if isGraphQLRequest(r) {
+					next.ServeHTTP(w, r)
+					return
+				}
 				http.Error(w, "Unauthorized", http.StatusUnauthorized)
 				return
 			}
@@ -189,6 +139,10 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			}
 		}
 
+		if token == "" && isGraphQLRequest(r) {
+			next.ServeHTTP(w, r)
+			return
+		}
 		if token == "" {
 			log.Debug("[Auth] No token found (no cookie or header), returning 401")
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -210,6 +164,8 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
+		// Profile trust comes only from server-side resolution, never the token.
+		credentials.IsProfile = false
 		inline := true
 		isSavedProfileReference := credentials.ID != nil && credentials.SourceType == ""
 
@@ -220,7 +176,11 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			_, storedProfile, ok := src.FindSourceProfile(*credentials.ID)
 			if ok {
 				storedProfile.ID = credentials.ID
-				storedProfile.Values = mergeCredentialValues(storedProfile.Values, credentials.Values)
+				storedProfile.Values, err = MergeSourceProfileValues(storedProfile.SourceType, storedProfile.Values, credentials.Values)
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusBadRequest)
+					return
+				}
 				credentials = storedProfile
 				matched = true
 				inline = false
@@ -229,7 +189,11 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			if !matched {
 				if stored, err := LoadCredentials(*credentials.ID); err == nil && stored != nil {
 					stored.ID = credentials.ID
-					stored.Values = mergeCredentialValues(stored.Values, credentials.Values)
+					stored.Values, err = MergeSourceProfileValues(stored.SourceType, stored.Values, credentials.Values)
+					if err != nil {
+						http.Error(w, err.Error(), http.StatusBadRequest)
+						return
+					}
 					credentials = stored
 					inline = false
 					onceKeyring.Do(func() { log.Info("Auth: credentials resolved via OS keyring") })
@@ -261,12 +225,11 @@ func AuthMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// serveWithSessionCookie resolves an opaque session token to stored credentials
-// and serves the request with them injected into context. It enforces CSRF on
-// unsafe (mutating) methods, slides the session expiry forward when needed, and
-// returns false (after clearing the session cookies) when the session is
-// missing, expired, or undecryptable so the caller can respond 401.
-func serveWithSessionCookie(w http.ResponseWriter, r *http.Request, next http.Handler, sessionToken string) bool {
+// serveWithSessionCookie resolves an opaque session token and injects its
+// credentials into the request context. GraphQL CSRF enforcement is deferred
+// until gqlgen has selected the operation; other HTTP requests are rejected
+// immediately when their CSRF token is invalid.
+func serveWithSessionCookie(w http.ResponseWriter, r *http.Request, next http.Handler, sessionToken string, deferGraphQLCSRF bool) bool {
 	ttl := sessionTTL()
 	credentials, csrfHash, needsRefresh, err := LookupSession(sessionToken, ttl)
 	if err != nil {
@@ -277,15 +240,23 @@ func serveWithSessionCookie(w http.ResponseWriter, r *http.Request, next http.Ha
 		if errors.Is(err, errSessionNotFound) || errors.Is(err, errSessionInvalid) {
 			clearSessionCookies(w)
 		}
+		if deferGraphQLCSRF && !errors.Is(err, errSessionNotFound) && !errors.Is(err, errSessionInvalid) {
+			ctx := context.WithValue(r.Context(), authenticationUnavailableKey{}, true)
+			next.ServeHTTP(w, r.WithContext(ctx))
+			return true
+		}
 		return false
 	}
 
-	// CSRF double-submit check for unsafe methods (GraphQL mutations are POST).
+	csrfFailed := false
 	if r.Method != http.MethodGet && r.Method != http.MethodHead && r.Method != http.MethodOptions {
 		if !validateCSRF(r, csrfHash) {
-			log.Debug("[Auth] CSRF token missing or invalid for session request")
-			http.Error(w, "Forbidden", http.StatusForbidden)
-			return true
+			if !deferGraphQLCSRF {
+				log.Debug("[Auth] CSRF token missing or invalid for session request")
+				http.Error(w, "Forbidden", http.StatusForbidden)
+				return true
+			}
+			csrfFailed = true
 		}
 	}
 
@@ -297,35 +268,12 @@ func serveWithSessionCookie(w http.ResponseWriter, r *http.Request, next http.Ha
 
 	ctx := context.WithValue(r.Context(), AuthKey_Source, credentials)
 	ctx = context.WithValue(ctx, authenticatedSourceKey{}, true)
+	ctx = context.WithValue(ctx, csrfFailedKey{}, csrfFailed)
 	next.ServeHTTP(w, r.WithContext(ctx))
 	return true
 }
 
-func readRequestBody(r *http.Request) ([]byte, error) {
-	buf := &strings.Builder{}
-	_, err := io.Copy(buf, r.Body)
-	if err != nil {
-		return nil, err
-	}
-	return []byte(buf.String()), nil
-}
-
-type GraphQLRequest struct {
-	OperationName string         `json:"operationName"`
-	Variables     map[string]any `json:"variables"`
-}
-
-// additionalAllowedOps holds operation names registered by extensions (e.g. EE)
-// that should be allowed without authentication.
-var additionalAllowedOps []string
-
-// RegisterAllowedOperation adds a GraphQL operation name to the unauthenticated allowlist.
-// It must be called during init(), before the HTTP server starts.
-func RegisterAllowedOperation(opName string) {
-	additionalAllowedOps = append(additionalAllowedOps, opName)
-}
-
-// authBypassFn, if set, is called for requests that are not in the public allowlist.
+// authBypassFn, if set, is called before CE credential authentication.
 // When it returns true the CE credential check is skipped entirely.
 // Extensions use this to provide alternative authentication mechanisms.
 var authBypassFn func(*http.Request) bool
@@ -337,52 +285,21 @@ func RegisterAuthBypass(fn func(*http.Request) bool) {
 	authBypassFn = fn
 }
 
-func isAllowed(r *http.Request, body []byte) bool {
-	if r.Method != http.MethodPost {
-		return false
-	}
-
-	query := GraphQLRequest{}
-	if err := json.Unmarshal(body, &query); err != nil {
-		return false
-	}
-
-	if query.OperationName == "SourceFieldOptions" {
-		sourceType, _ := query.Variables["sourceType"].(string)
-		spec, ok := sourcecatalog.Find(sourceType)
-		if !ok {
-			return false
+// MergeSourceProfileValues applies the database selection supported by a
+// stored profile while keeping every connection target and secret server-owned.
+func MergeSourceProfileValues(sourceType string, base map[string]string, overrides map[string]string) (map[string]string, error) {
+	for key := range overrides {
+		if key != "Database" || !sourceSupportsDatabaseSwitching(sourceType) {
+			return nil, errors.New("source profile connection fields cannot be overridden")
 		}
-		field, ok := spec.ConnectionFieldByKey("Database")
-		return ok && field.SupportsOptions
 	}
-
-	switch query.OperationName {
-	case "LoginSource", "TestSourceConnection",
-		"LoginWithSourceProfile", "SourceProfiles",
-		"GetHealth", "SettingsConfig", "GetVersion",
-		"GetAWSProviders", "GetCloudProviders", "GetCloudProvider",
-		"GetDiscoveredConnections", "GetProviderConnections", "SourceTypes",
-		"GetLocalAWSProfiles", "GetAWSRegions",
-		"AddAWSProvider", "TestAWSCredentials", "TestCloudProvider",
-		"RefreshCloudProvider", "RemoveCloudProvider", "UpdateAWSProvider",
-		"GenerateRDSAuthToken",
-		"GetAzureProviders", "GetAzureProvider",
-		"GetAzureSubscriptions", "GetAzureRegions",
-		"AddAzureProvider", "UpdateAzureProvider", "TestAzureCredentials",
-		"RefreshAzureProvider", "GenerateAzureADToken",
-		"GetLocalGCPProjects", "GetGCPRegions",
-		"GetGCPProviders", "GetGCPProvider",
-		"AddGCPProvider", "UpdateGCPProvider", "TestGCPCredentials",
-		"RefreshGCPProvider", "GenerateCloudSQLIAMAuthToken":
-		return true
-	}
-	return slices.Contains(additionalAllowedOps, query.OperationName)
-}
-
-func mergeCredentialValues(base map[string]string, overrides map[string]string) map[string]string {
 	merged := map[string]string{}
 	maps.Copy(merged, base)
 	maps.Copy(merged, overrides)
-	return merged
+	return merged, nil
+}
+
+func sourceSupportsDatabaseSwitching(sourceType string) bool {
+	spec, ok := sourcecatalog.Find(sourceType)
+	return ok && slices.Contains(spec.Contract.BrowsePath, source.ObjectKindDatabase)
 }

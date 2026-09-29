@@ -11,18 +11,6 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 )
 
-type CloudProvider interface {
-	IsCloudProvider()
-	GetID() string
-	GetProviderType() CloudProviderType
-	GetName() string
-	GetRegion() string
-	GetStatus() CloudProviderStatus
-	GetLastDiscoveryAt() *string
-	GetDiscoveredCount() int
-	GetError() *string
-}
-
 type AIChatMessage struct {
 	Type                 string      `json:"Type"`
 	Result               *RowsResult `json:"Result,omitempty"`
@@ -39,108 +27,11 @@ type AIProvider struct {
 	Icon                 *string `json:"Icon,omitempty"`
 }
 
-type AWSProvider struct {
-	ID                  string              `json:"Id"`
-	ProviderType        CloudProviderType   `json:"ProviderType"`
-	Name                string              `json:"Name"`
-	Region              string              `json:"Region"`
-	Status              CloudProviderStatus `json:"Status"`
-	LastDiscoveryAt     *string             `json:"LastDiscoveryAt,omitempty"`
-	DiscoveredCount     int                 `json:"DiscoveredCount"`
-	Error               *string             `json:"Error,omitempty"`
-	ProfileName         *string             `json:"ProfileName,omitempty"`
-	DiscoverRds         bool                `json:"DiscoverRDS"`
-	DiscoverElastiCache bool                `json:"DiscoverElastiCache"`
-	DiscoverDocumentDb  bool                `json:"DiscoverDocumentDB"`
-	DiscoverS3          bool                `json:"DiscoverS3"`
-}
-
-func (AWSProvider) IsCloudProvider()                        {}
-func (this AWSProvider) GetID() string                      { return this.ID }
-func (this AWSProvider) GetProviderType() CloudProviderType { return this.ProviderType }
-func (this AWSProvider) GetName() string                    { return this.Name }
-func (this AWSProvider) GetRegion() string                  { return this.Region }
-func (this AWSProvider) GetStatus() CloudProviderStatus     { return this.Status }
-func (this AWSProvider) GetLastDiscoveryAt() *string        { return this.LastDiscoveryAt }
-func (this AWSProvider) GetDiscoveredCount() int            { return this.DiscoveredCount }
-func (this AWSProvider) GetError() *string                  { return this.Error }
-
-type AWSProviderInput struct {
-	Name                string  `json:"Name"`
-	Region              string  `json:"Region"`
-	ProfileName         *string `json:"ProfileName,omitempty"`
-	DiscoverRds         *bool   `json:"DiscoverRDS,omitempty"`
-	DiscoverElastiCache *bool   `json:"DiscoverElastiCache,omitempty"`
-	DiscoverDocumentDb  *bool   `json:"DiscoverDocumentDB,omitempty"`
-	DiscoverS3          *bool   `json:"DiscoverS3,omitempty"`
-}
-
-type AWSRegion struct {
-	ID          string `json:"Id"`
-	Description string `json:"Description"`
-	Partition   string `json:"Partition"`
-}
-
 type AtomicWhereCondition struct {
 	ColumnType string `json:"ColumnType"`
 	Key        string `json:"Key"`
 	Operator   string `json:"Operator"`
 	Value      string `json:"Value"`
-}
-
-type AzureProvider struct {
-	ID                 string              `json:"Id"`
-	ProviderType       CloudProviderType   `json:"ProviderType"`
-	Name               string              `json:"Name"`
-	Region             string              `json:"Region"`
-	Status             CloudProviderStatus `json:"Status"`
-	LastDiscoveryAt    *string             `json:"LastDiscoveryAt,omitempty"`
-	DiscoveredCount    int                 `json:"DiscoveredCount"`
-	Error              *string             `json:"Error,omitempty"`
-	SubscriptionID     string              `json:"SubscriptionID"`
-	TenantID           *string             `json:"TenantID,omitempty"`
-	ResourceGroup      *string             `json:"ResourceGroup,omitempty"`
-	DiscoverPostgreSQL bool                `json:"DiscoverPostgreSQL"`
-	DiscoverMySQL      bool                `json:"DiscoverMySQL"`
-	DiscoverRedis      bool                `json:"DiscoverRedis"`
-	DiscoverCosmosDb   bool                `json:"DiscoverCosmosDB"`
-}
-
-func (AzureProvider) IsCloudProvider()                        {}
-func (this AzureProvider) GetID() string                      { return this.ID }
-func (this AzureProvider) GetProviderType() CloudProviderType { return this.ProviderType }
-func (this AzureProvider) GetName() string                    { return this.Name }
-func (this AzureProvider) GetRegion() string                  { return this.Region }
-func (this AzureProvider) GetStatus() CloudProviderStatus     { return this.Status }
-func (this AzureProvider) GetLastDiscoveryAt() *string        { return this.LastDiscoveryAt }
-func (this AzureProvider) GetDiscoveredCount() int            { return this.DiscoveredCount }
-func (this AzureProvider) GetError() *string                  { return this.Error }
-
-type AzureProviderInput struct {
-	Name               string  `json:"Name"`
-	SubscriptionID     string  `json:"SubscriptionID"`
-	TenantID           *string `json:"TenantID,omitempty"`
-	ClientID           *string `json:"ClientID,omitempty"`
-	ClientSecret       *string `json:"ClientSecret,omitempty"`
-	AuthMethod         *string `json:"AuthMethod,omitempty"`
-	ResourceGroup      *string `json:"ResourceGroup,omitempty"`
-	DiscoverPostgreSQL *bool   `json:"DiscoverPostgreSQL,omitempty"`
-	DiscoverMySQL      *bool   `json:"DiscoverMySQL,omitempty"`
-	DiscoverRedis      *bool   `json:"DiscoverRedis,omitempty"`
-	DiscoverCosmosDb   *bool   `json:"DiscoverCosmosDB,omitempty"`
-}
-
-type AzureRegion struct {
-	ID          string `json:"Id"`
-	DisplayName string `json:"DisplayName"`
-	Geography   string `json:"Geography"`
-}
-
-type AzureSubscription struct {
-	ID          string `json:"Id"`
-	DisplayName string `json:"DisplayName"`
-	State       string `json:"State"`
-	TenantID    string `json:"TenantID"`
 }
 
 type ChatInput struct {
@@ -209,17 +100,6 @@ type CreationOptionDefinition struct {
 	Values   []string `json:"Values"`
 }
 
-type DiscoveredConnection struct {
-	ID           string            `json:"Id"`
-	ProviderType CloudProviderType `json:"ProviderType"`
-	ProviderID   string            `json:"ProviderID"`
-	Name         string            `json:"Name"`
-	SourceType   string            `json:"SourceType"`
-	Region       *string           `json:"Region,omitempty"`
-	Status       ConnectionStatus  `json:"Status"`
-	Metadata     []*Record         `json:"Metadata"`
-}
-
 type ForeignKeyDefinition struct {
 	Table  string `json:"Table"`
 	Column string `json:"Column"`
@@ -228,47 +108,6 @@ type ForeignKeyDefinition struct {
 type ForeignKeyDefinitionInput struct {
 	Table  string `json:"Table"`
 	Column string `json:"Column"`
-}
-
-type GCPProvider struct {
-	ID                    string              `json:"Id"`
-	ProviderType          CloudProviderType   `json:"ProviderType"`
-	Name                  string              `json:"Name"`
-	Region                string              `json:"Region"`
-	Status                CloudProviderStatus `json:"Status"`
-	LastDiscoveryAt       *string             `json:"LastDiscoveryAt,omitempty"`
-	DiscoveredCount       int                 `json:"DiscoveredCount"`
-	Error                 *string             `json:"Error,omitempty"`
-	ProjectID             string              `json:"ProjectID"`
-	ServiceAccountKeyPath *string             `json:"ServiceAccountKeyPath,omitempty"`
-	DiscoverCloudSQL      bool                `json:"DiscoverCloudSQL"`
-	DiscoverAlloyDb       bool                `json:"DiscoverAlloyDB"`
-	DiscoverMemorystore   bool                `json:"DiscoverMemorystore"`
-}
-
-func (GCPProvider) IsCloudProvider()                        {}
-func (this GCPProvider) GetID() string                      { return this.ID }
-func (this GCPProvider) GetProviderType() CloudProviderType { return this.ProviderType }
-func (this GCPProvider) GetName() string                    { return this.Name }
-func (this GCPProvider) GetRegion() string                  { return this.Region }
-func (this GCPProvider) GetStatus() CloudProviderStatus     { return this.Status }
-func (this GCPProvider) GetLastDiscoveryAt() *string        { return this.LastDiscoveryAt }
-func (this GCPProvider) GetDiscoveredCount() int            { return this.DiscoveredCount }
-func (this GCPProvider) GetError() *string                  { return this.Error }
-
-type GCPProviderInput struct {
-	Name                  string  `json:"Name"`
-	ProjectID             string  `json:"ProjectID"`
-	Region                string  `json:"Region"`
-	ServiceAccountKeyPath *string `json:"ServiceAccountKeyPath,omitempty"`
-	DiscoverCloudSQL      *bool   `json:"DiscoverCloudSQL,omitempty"`
-	DiscoverAlloyDb       *bool   `json:"DiscoverAlloyDB,omitempty"`
-	DiscoverMemorystore   *bool   `json:"DiscoverMemorystore,omitempty"`
-}
-
-type GCPRegion struct {
-	ID          string `json:"Id"`
-	Description string `json:"Description"`
 }
 
 type GenerateChatTitleInput struct {
@@ -352,21 +191,6 @@ type ImportSQLInput struct {
 	Filename *string         `json:"Filename,omitempty"`
 }
 
-type LocalAWSProfile struct {
-	Name      string  `json:"Name"`
-	Region    *string `json:"Region,omitempty"`
-	Source    string  `json:"Source"`
-	AuthType  string  `json:"AuthType"`
-	IsDefault bool    `json:"IsDefault"`
-}
-
-type LocalGCPProject struct {
-	ProjectID string `json:"ProjectID"`
-	Name      string `json:"Name"`
-	Source    string `json:"Source"`
-	IsDefault bool   `json:"IsDefault"`
-}
-
 type MockDataDependencyAnalysis struct {
 	GenerationOrder []string             `json:"GenerationOrder"`
 	Tables          []*MockDataTableInfo `json:"Tables"`
@@ -447,10 +271,6 @@ type SSLStatus struct {
 
 type SettingsConfig struct {
 	MetricsEnabled        *bool `json:"MetricsEnabled,omitempty"`
-	CloudProvidersEnabled bool  `json:"CloudProvidersEnabled"`
-	AWSProviderEnabled    bool  `json:"AWSProviderEnabled"`
-	AzureProviderEnabled  bool  `json:"AzureProviderEnabled"`
-	GCPProviderEnabled    bool  `json:"GCPProviderEnabled"`
 	DisableCredentialForm bool  `json:"DisableCredentialForm"`
 	EnableNewUI           bool  `json:"EnableNewUI"`
 	MaxPageSize           int   `json:"MaxPageSize"`
@@ -715,185 +535,6 @@ type WhereCondition struct {
 	Atomic *AtomicWhereCondition    `json:"Atomic,omitempty"`
 	And    *OperationWhereCondition `json:"And,omitempty"`
 	Or     *OperationWhereCondition `json:"Or,omitempty"`
-}
-
-type CloudProviderStatus string
-
-const (
-	CloudProviderStatusConnected    CloudProviderStatus = "Connected"
-	CloudProviderStatusDiscovering  CloudProviderStatus = "Discovering"
-	CloudProviderStatusError        CloudProviderStatus = "Error"
-	CloudProviderStatusDisconnected CloudProviderStatus = "Disconnected"
-)
-
-var AllCloudProviderStatus = []CloudProviderStatus{
-	CloudProviderStatusConnected,
-	CloudProviderStatusDiscovering,
-	CloudProviderStatusError,
-	CloudProviderStatusDisconnected,
-}
-
-func (e CloudProviderStatus) IsValid() bool {
-	switch e {
-	case CloudProviderStatusConnected, CloudProviderStatusDiscovering, CloudProviderStatusError, CloudProviderStatusDisconnected:
-		return true
-	}
-	return false
-}
-
-func (e CloudProviderStatus) String() string {
-	return string(e)
-}
-
-func (e *CloudProviderStatus) UnmarshalGQL(v any) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = CloudProviderStatus(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid CloudProviderStatus", str)
-	}
-	return nil
-}
-
-func (e CloudProviderStatus) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-func (e *CloudProviderStatus) UnmarshalJSON(b []byte) error {
-	s, err := strconv.Unquote(string(b))
-	if err != nil {
-		return err
-	}
-	return e.UnmarshalGQL(s)
-}
-
-func (e CloudProviderStatus) MarshalJSON() ([]byte, error) {
-	var buf bytes.Buffer
-	e.MarshalGQL(&buf)
-	return buf.Bytes(), nil
-}
-
-type CloudProviderType string
-
-const (
-	CloudProviderTypeAWS   CloudProviderType = "AWS"
-	CloudProviderTypeAzure CloudProviderType = "Azure"
-	CloudProviderTypeGCP   CloudProviderType = "GCP"
-)
-
-var AllCloudProviderType = []CloudProviderType{
-	CloudProviderTypeAWS,
-	CloudProviderTypeAzure,
-	CloudProviderTypeGCP,
-}
-
-func (e CloudProviderType) IsValid() bool {
-	switch e {
-	case CloudProviderTypeAWS, CloudProviderTypeAzure, CloudProviderTypeGCP:
-		return true
-	}
-	return false
-}
-
-func (e CloudProviderType) String() string {
-	return string(e)
-}
-
-func (e *CloudProviderType) UnmarshalGQL(v any) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = CloudProviderType(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid CloudProviderType", str)
-	}
-	return nil
-}
-
-func (e CloudProviderType) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-func (e *CloudProviderType) UnmarshalJSON(b []byte) error {
-	s, err := strconv.Unquote(string(b))
-	if err != nil {
-		return err
-	}
-	return e.UnmarshalGQL(s)
-}
-
-func (e CloudProviderType) MarshalJSON() ([]byte, error) {
-	var buf bytes.Buffer
-	e.MarshalGQL(&buf)
-	return buf.Bytes(), nil
-}
-
-type ConnectionStatus string
-
-const (
-	ConnectionStatusAvailable ConnectionStatus = "Available"
-	ConnectionStatusStarting  ConnectionStatus = "Starting"
-	ConnectionStatusStopped   ConnectionStatus = "Stopped"
-	ConnectionStatusDeleting  ConnectionStatus = "Deleting"
-	ConnectionStatusFailed    ConnectionStatus = "Failed"
-	ConnectionStatusUnknown   ConnectionStatus = "Unknown"
-)
-
-var AllConnectionStatus = []ConnectionStatus{
-	ConnectionStatusAvailable,
-	ConnectionStatusStarting,
-	ConnectionStatusStopped,
-	ConnectionStatusDeleting,
-	ConnectionStatusFailed,
-	ConnectionStatusUnknown,
-}
-
-func (e ConnectionStatus) IsValid() bool {
-	switch e {
-	case ConnectionStatusAvailable, ConnectionStatusStarting, ConnectionStatusStopped, ConnectionStatusDeleting, ConnectionStatusFailed, ConnectionStatusUnknown:
-		return true
-	}
-	return false
-}
-
-func (e ConnectionStatus) String() string {
-	return string(e)
-}
-
-func (e *ConnectionStatus) UnmarshalGQL(v any) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = ConnectionStatus(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid ConnectionStatus", str)
-	}
-	return nil
-}
-
-func (e ConnectionStatus) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-func (e *ConnectionStatus) UnmarshalJSON(b []byte) error {
-	s, err := strconv.Unquote(string(b))
-	if err != nil {
-		return err
-	}
-	return e.UnmarshalGQL(s)
-}
-
-func (e ConnectionStatus) MarshalJSON() ([]byte, error) {
-	var buf bytes.Buffer
-	e.MarshalGQL(&buf)
-	return buf.Bytes(), nil
 }
 
 type DataShape string

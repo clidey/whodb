@@ -111,10 +111,10 @@ func (p *GormPlugin) GetPrimaryKeyColumns(db *gorm.DB, schema string, tableName 
 
 // GetColumnTypes uses GORM's Migrator when possible, falls back to raw SQL
 func (p *GormPlugin) GetColumnTypes(db *gorm.DB, schema, tableName string) (map[string]ColumnTypeInfo, error) {
-	migrator := NewMigratorHelper(db, p.GormPluginFunctions)
+	migrator := NewMigratorHelper(p.GormPluginFunctions)
 
-	fullTableName := p.FormTableName(schema, tableName)
-	return migrator.GetColumnTypes(fullTableName)
+	builder := p.GormPluginFunctions.CreateSQLBuilder(db)
+	return migrator.GetColumnTypes(builder.GetTableQuery(schema, tableName), schema, tableName)
 }
 
 // typeConverter defines how to handle null values and value conversion for a type category.

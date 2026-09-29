@@ -10,7 +10,7 @@ WhoDB builds its connection catalog from the database plugins registered in the 
 ![WhoDB Login Page](/images/01-login-page.png)
 
 <Tip>
-Use this page with [First Login](/first-login), [Supported Databases](/resources/supported-databases), and [Cloud Providers](/features/cloud-providers) when you need the current connection flow.
+Use this page with [First Login](/first-login) and [Supported Databases](/resources/supported-databases) when you need the current web connection flow.
 </Tip>
 
 ## Connection Paths
@@ -22,8 +22,8 @@ Pick a database type, fill in the fields shown for that type, and connect direct
 <Card title="Saved Profiles" icon="link">
 Reuse local or environment-defined profiles from the login page instead of retyping every field.
 </Card>
-<Card title="Cloud Discovery" icon="cloud">
-Experimental and disabled by default; when explicitly enabled, WhoDB can discover AWS, Azure, and GCP resources and prefill the standard login form.
+<Card title="CLI Cloud Discovery" icon="cloud">
+Use the local WhoDB CLI to inspect configured AWS, Azure, and GCP resources.
 </Card>
 <Card title="File Databases" icon="desktop">
 SQLite and DuckDB connect through file paths instead of host and port fields.
@@ -53,11 +53,6 @@ The current connectable catalog exposed by the app includes:
 - QuestDB
 - FerretDB
 
-When AWS provider support is enabled, cloud-discovered connections can also surface:
-
-- ElastiCache
-- DocumentDB
-
 <Note>
 DuckDB availability depends on the build target. In this repository it is registered conditionally, so some architectures will not expose it.
 </Note>
@@ -66,7 +61,7 @@ DuckDB availability depends on the build target. In this repository it is regist
 
 <Steps>
 <Step title="Choose a Database Type or Profile">
-The login page can start from a manual database type selection, a saved/local profile, an environment-defined profile, or a discovered cloud resource.
+The login page can start from a manual database type selection, a saved/local profile, or an environment-defined profile.
 
 ![Database Type Dropdown](/images/02-login-database-type-dropdown.png)
 </Step>
@@ -135,7 +130,7 @@ Walk through the actual login page and connection flow.
 See the current CE database catalog grouped by compatibility family.
 </Card>
 <Card title="Cloud Providers" icon="cloud" href="/features/cloud-providers">
-Enable AWS, Azure, and GCP discovery and manage provider accounts.
+Use local CLI discovery for AWS, Azure, and GCP.
 </Card>
 <Card title="CLI & MCP" icon="code" href="/features/cli-and-mcp">
 Use the TUI, scripted subcommands, built-in SSH tunnels, and the MCP server.

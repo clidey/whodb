@@ -12,11 +12,12 @@ try {
     execFileSync('node_modules/.bin/tsc', [
         '--module', 'CommonJS',
         '--target', 'ES2022',
-        '--moduleResolution', 'node',
+        '--moduleResolution', 'bundler',
         '--lib', 'ES2022,DOM',
         '--strict',
         '--skipLibCheck',
         '--esModuleInterop',
+        '--ignoreConfig',
         '--rootDir', 'src',
         '--outDir', outDir,
         'src/config/analytics-events.ts',

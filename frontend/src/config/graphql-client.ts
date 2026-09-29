@@ -33,7 +33,6 @@ import type {LocalLoginProfile} from '../store/auth';
 import {reduxStore} from '../store';
 import {addAuthHeader, addAuthHeaderAsync, isDesktopScheme} from '../utils/auth-headers';
 import {isOnRoute, navigateWithBasePath, withBasePath} from '../utils/base-path';
-import {isAwsHostname, isAzureHostname, isGcpHostname} from '../utils/cloud-connection-prefill';
 import {getTranslation, loadTranslationsSync} from '../utils/i18n';
 import {type SupportedLanguage, DEFAULT_LANGUAGE} from '../utils/languages';
 import {clearSourceSessionMetadata} from '../utils/source-session-metadata-cache';
@@ -100,18 +99,28 @@ const authLink = setContext(async (_, prevContext) => {
  *
  * This ensures seamless user experience when sessions expire.
  */
+const handleUnauthorized = () => {
+    if (onUnauthorizedHandler) {
+        void onUnauthorizedHandler().then(handled => {
+            if (!handled) {
+                fallbackAutoLogin();
+            }
+        });
+        return;
+    }
+    fallbackAutoLogin();
+};
+
 const errorLink = onError(({error}) => {
+    if (CombinedGraphQLErrors.is(error)) {
+        if (error.errors.some(graphQLError => graphQLError.extensions?.code === 'UNAUTHENTICATED')) {
+            handleUnauthorized();
+        }
+        return;
+    }
     if (ServerError.is(error)) {
         if (error.statusCode === 401) {
-            if (onUnauthorizedHandler) {
-                void onUnauthorizedHandler().then(handled => {
-                    if (!handled) {
-                        fallbackAutoLogin();
-                    }
-                });
-                return;
-            }
-            fallbackAutoLogin();
+            handleUnauthorized();
             return;
         }
 
@@ -119,7 +128,7 @@ const errorLink = onError(({error}) => {
             toast.error('Server error. Please try again.');
         }
         console.error('Network error:', error);
-    } else if (!CombinedGraphQLErrors.is(error) && !CombinedProtocolErrors.is(error)) {
+    } else if (!CombinedProtocolErrors.is(error)) {
         if (error && 'message' in error && (error as any).message?.includes('Failed to fetch')) {
             toast.error('Connection lost. Check your network.');
         }
@@ -153,17 +162,6 @@ function fallbackAutoLogin() {
 async function handleAutoLogin(currentProfile: LocalLoginProfile) {
     const t = getTranslator();
     try {
-        const settings = reduxStore.getState().settings;
-        if (isAwsHostname(currentProfile.Hostname) && !settings.awsProviderEnabled) {
-            return;
-        }
-        if (isAzureHostname(currentProfile.Hostname) && !settings.azureProviderEnabled) {
-            return;
-        }
-        if (isGcpHostname(currentProfile.Hostname) && !settings.gcpProviderEnabled) {
-            return;
-        }
-
         let response, result;
         if (currentProfile.Saved) {
             // Login with source profile

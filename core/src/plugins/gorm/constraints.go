@@ -21,14 +21,15 @@ import (
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/plugins"
+	"github.com/clidey/whodb/core/src/sqlident"
 )
 
 // GetColumnConstraints gets column constraints using GORM's Migrator
 func (p *GormPlugin) GetColumnConstraints(config *engine.PluginConfig, schema string, storageUnit string) (map[string]map[string]any, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (map[string]map[string]any, error) {
-		fullTableName := p.FormTableName(schema, storageUnit)
-		migrator := NewMigratorHelper(db, p.GormPluginFunctions)
-		migratorConstraints, err := migrator.GetConstraints(fullTableName)
+		builder := p.GormPluginFunctions.CreateSQLBuilder(db)
+		migrator := NewMigratorHelper(p.GormPluginFunctions)
+		migratorConstraints, err := migrator.GetConstraints(builder.GetTableQuery(schema, storageUnit), schema, storageUnit)
 		if err != nil {
 			// Fall back to empty constraints if Migrator fails
 			// This maintains backward compatibility
@@ -100,12 +101,7 @@ func (p *GormPlugin) getColumnConstraintsRaw(db *gorm.DB, schema string, storage
 // clearTableDataWithDB performs the actual table data clearing using the provided database connection
 func (p *GormPlugin) clearTableDataWithDB(db *gorm.DB, schema string, storageUnit string) error {
 	builder := p.GormPluginFunctions.CreateSQLBuilder(db)
-	tableName := builder.BuildFullTableName(schema, storageUnit)
-
-	// Use raw SQL with "WHERE 1=1" to delete all rows
-	// This works across all SQL databases and bypasses GORM's safety check
-	// codeql[go/sql-injection]: table name comes from a validated storage unit or dependency-graph metadata before reaching this helper.
-	result := db.Table(tableName).Where("1=1").Delete(nil)
+	result := builder.GetTableQuery(schema, storageUnit).Where("1=1").Delete(nil)
 	return result.Error
 }
 
@@ -114,9 +110,15 @@ func (p *GormPlugin) clearTableDataWithDB(db *gorm.DB, schema string, storageUni
 func (p *GormPlugin) NullifyFKColumn(config *engine.PluginConfig, schema string, storageUnit string, column string) error {
 	_, err := plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
 		builder := p.GormPluginFunctions.CreateSQLBuilder(db)
-		tableName := builder.BuildFullTableName(schema, storageUnit)
-		// codeql[go/sql-injection]: table and column names come from validated storage units and FK metadata before reaching this helper.
-		result := db.Table(tableName).Where(column+" IS NOT NULL").Update(column, gorm.Expr("NULL"))
+		columnName, err := sqlident.New("", column)
+		if err != nil {
+			return false, err
+		}
+		quotedColumn, err := columnName.SQL(p.IdentifierQuoteStyle())
+		if err != nil {
+			return false, err
+		}
+		result := builder.GetTableQuery(schema, storageUnit).Where(quotedColumn+" IS NOT NULL").Update(column, gorm.Expr("NULL"))
 		return result.Error == nil, result.Error
 	})
 	return err

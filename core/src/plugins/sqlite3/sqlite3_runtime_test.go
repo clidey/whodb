@@ -17,14 +17,91 @@
 package sqlite3
 
 import (
+	"context"
+	"errors"
+	"os"
 	"path/filepath"
 	"testing"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
+	"github.com/clidey/whodb/core/baml_client/types"
+	"github.com/clidey/whodb/core/src/bamlconfig"
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/importer"
+	"github.com/clidey/whodb/core/src/source"
+	_ "github.com/clidey/whodb/core/src/sources/database"
 )
+
+func TestServerSQLiteConnectionsRejectFilesystemAttachment(t *testing.T) {
+	t.Setenv("WHODB_CLI", "false")
+	t.Setenv("WHODB_DESKTOP", "false")
+
+	db, err := gorm.Open(sourceSQLiteDialector(":memory:", false), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("open confined SQLite connection: %v", err)
+	}
+	sqlDB, err := db.DB()
+	if err != nil {
+		t.Fatalf("get confined SQLite handle: %v", err)
+	}
+	t.Cleanup(func() { _ = sqlDB.Close() })
+
+	targetPath := filepath.Join(t.TempDir(), "attached.sqlite")
+	queries := []struct {
+		name  string
+		query string
+		args  []any
+	}{
+		{name: "literal", query: "ATTACH DATABASE '" + targetPath + "' AS attached"},
+		{name: "bound filename", query: "ATTACH DATABASE ? AS attached", args: []any{targetPath}},
+	}
+	for _, tt := range queries {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := db.Exec(tt.query, tt.args...).Error; err == nil {
+				t.Fatal("expected filesystem attachment to be denied")
+			}
+		})
+	}
+
+	vacuumPath := filepath.Join(t.TempDir(), "vacuum.sqlite")
+	if err := db.Exec("VACUUM INTO ?", vacuumPath).Error; err == nil {
+		t.Fatal("expected VACUUM INTO to be denied")
+	}
+	if _, err := os.Stat(vacuumPath); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("VACUUM INTO created an output file: %v", err)
+	}
+}
+
+func TestServerSampleDatabaseIsReadOnly(t *testing.T) {
+	t.Setenv("WHODB_CLI", "false")
+	t.Setenv("WHODB_DESKTOP", "false")
+
+	db, err := GetSampleDatabase()
+	if err != nil {
+		t.Fatalf("open sample database: %v", err)
+	}
+	sqlDB, err := db.DB()
+	if err != nil {
+		t.Fatalf("get sample database handle: %v", err)
+	}
+	t.Cleanup(func() { _ = sqlDB.Close() })
+
+	var count int64
+	if err := db.Table("users").Count(&count).Error; err != nil {
+		t.Fatalf("read sample data: %v", err)
+	}
+	if count == 0 {
+		t.Fatal("expected seeded sample rows")
+	}
+	if err := db.Exec("CREATE TABLE attacker_controlled (id INTEGER)").Error; err == nil {
+		t.Fatal("expected sample database write to be denied")
+	}
+	if err := db.Exec("PRAGMA query_only=OFF").Error; err == nil {
+		t.Fatal("expected disabling sample query_only to be denied")
+	}
+}
 
 func newSQLiteRuntimeTestFixture(t *testing.T, statements ...string) (*Sqlite3Plugin, *engine.PluginConfig, *gorm.DB) {
 	t.Helper()
@@ -64,6 +141,80 @@ func findSQLiteColumn(columns []engine.Column, name string) *engine.Column {
 		}
 	}
 	return nil
+}
+
+func TestSQLiteReadOnlyRawExecuteRejectsWrites(t *testing.T) {
+	plugin, config, _ := newSQLiteRuntimeTestFixture(t,
+		"CREATE TABLE read_only_guard (id INTEGER PRIMARY KEY)",
+		"INSERT INTO read_only_guard VALUES (1)",
+	)
+	config.ReadOnly = true
+
+	queries := []string{
+		"INSERT INTO read_only_guard VALUES (2)",
+		"WITH x AS (SELECT 1) DELETE FROM read_only_guard WHERE id=1",
+	}
+	for _, query := range queries {
+		if _, err := plugin.RawExecute(config, query); err == nil {
+			t.Errorf("expected SQLite read-only execution to reject %q", query)
+		}
+	}
+	config.MultiStatement = true
+	if _, err := plugin.RawExecute(config, "SELECT 1; DELETE FROM read_only_guard WHERE id=1"); err == nil {
+		t.Error("expected SQLite read-only execution to reject a multi-statement write")
+	}
+	if _, err := plugin.RawExecute(config, "PRAGMA query_only=OFF; DELETE FROM read_only_guard WHERE id=1; COMMIT"); err == nil {
+		t.Error("expected SQLite read-only execution to reject a script that disables query_only")
+	}
+	if _, err := plugin.RawExecute(config, "SELECT 1; SELECT 2"); err != nil {
+		t.Fatalf("expected SQLite read-only execution to allow a read-only script: %v", err)
+	}
+	config.MultiStatement = false
+	rows, err := plugin.RawExecute(config, "SELECT COUNT(*) FROM read_only_guard")
+	if err != nil {
+		t.Fatalf("expected SQLite read-only execution to allow SELECT: %v", err)
+	}
+	if len(rows.Rows) != 1 || rows.Rows[0][0] != "1" {
+		t.Fatalf("SQLite guard table was modified: %#v", rows.Rows)
+	}
+
+	config.ReadOnly = false
+	if _, err := plugin.RawExecute(config, "INSERT INTO read_only_guard VALUES (2)"); err != nil {
+		t.Fatalf("expected SQLite connection to return to read-write mode: %v", err)
+	}
+}
+
+func TestChatPlannerMislabelledWriteDoesNotChangeSQLiteState(t *testing.T) {
+	plugin, config, db := newSQLiteRuntimeTestFixture(t,
+		"CREATE TABLE chat_guard (id INTEGER PRIMARY KEY)",
+		"INSERT INTO chat_guard VALUES (1)",
+	)
+	operation := types.OperationTypeGET
+	executions := 0
+	executor := bamlconfig.ChatQueryExecutorFunc(func(_ context.Context, query string, params ...any) (*source.RowsResult, error) {
+		executions++
+		return plugin.RawExecute(config, query, params...)
+	})
+
+	message := bamlconfig.ProcessChatResponse(t.Context(), &types.ChatResponse{
+		Type:      types.ChatMessageTypeSQL,
+		Operation: &operation,
+		Text:      "DELETE FROM chat_guard",
+	}, executor)
+
+	if !message.RequiresConfirmation {
+		t.Fatalf("mislabelled write did not require confirmation: %#v", message)
+	}
+	if executions != 0 {
+		t.Fatalf("mislabelled write reached the executor %d times", executions)
+	}
+	var count int64
+	if err := db.Table("chat_guard").Count(&count).Error; err != nil {
+		t.Fatal(err)
+	}
+	if count != 1 {
+		t.Fatalf("mislabelled write changed database state: row count = %d", count)
+	}
 }
 
 func TestSQLiteColumnMetadataAndGeneratedColumns(t *testing.T) {
@@ -178,5 +329,110 @@ func TestSQLiteRawExecutePreservesDateTimeAndBlobValues(t *testing.T) {
 	}
 	if len(result.Columns) != 3 || result.Columns[0].Type != "DATETIME" || result.Columns[1].Type != "BLOB" {
 		t.Fatalf("expected original sqlite column types to be restored, got %#v", result.Columns)
+	}
+}
+
+func TestClearTableDataTreatsCraftedExistingNameAsOneIdentifier(t *testing.T) {
+	craftedTable := `products"; DELETE FROM secrets;--`
+	plugin, config, db := newSQLiteRuntimeTestFixture(t,
+		`CREATE TABLE "products""; DELETE FROM secrets;--" (id INTEGER PRIMARY KEY, name TEXT)`,
+		`CREATE TABLE secrets (id INTEGER PRIMARY KEY, token TEXT)`,
+		`INSERT INTO "products""; DELETE FROM secrets;--" (id, name) VALUES (1, 'widget')`,
+		`INSERT INTO secrets (id, token) VALUES (1, 'super-secret')`,
+	)
+
+	ok, err := plugin.ClearTableData(config, "", craftedTable)
+	if err != nil || !ok {
+		t.Fatalf("expected crafted table to be cleared safely, got ok=%v err=%v", ok, err)
+	}
+
+	var targetRows int64
+	if err := db.Raw(`SELECT COUNT(*) FROM "products""; DELETE FROM secrets;--"`).Scan(&targetRows).Error; err != nil {
+		t.Fatal(err)
+	}
+	if targetRows != 0 {
+		t.Fatalf("expected crafted table to be empty, got %d rows", targetRows)
+	}
+
+	var secretRows int64
+	if err := db.Raw(`SELECT COUNT(*) FROM secrets`).Scan(&secretRows).Error; err != nil {
+		t.Fatal(err)
+	}
+	if secretRows != 1 {
+		t.Fatalf("expected secrets table to remain untouched, got %d rows", secretRows)
+	}
+}
+
+func TestOverwriteImportTreatsCraftedExistingNameAsOneIdentifier(t *testing.T) {
+	craftedTable := `products"; DELETE FROM secrets;--`
+	plugin, config, db := newSQLiteRuntimeTestFixture(t,
+		`CREATE TABLE "products""; DELETE FROM secrets;--" (id INTEGER PRIMARY KEY, name TEXT)`,
+		`CREATE TABLE secrets (id INTEGER PRIMARY KEY, token TEXT)`,
+		`INSERT INTO "products""; DELETE FROM secrets;--" (id, name) VALUES (1, 'old')`,
+		`INSERT INTO secrets (id, token) VALUES (1, 'super-secret')`,
+	)
+
+	result, err := importer.Execute(plugin, config, &importer.ExecuteRequest{
+		StorageUnit: craftedTable,
+		Mode:        importer.ModeOverwrite,
+		Parsed: &importer.ParsedFile{
+			Columns: []string{"id", "name"},
+			Rows:    [][]string{{"2", "new"}},
+		},
+		Mapping: []importer.ColumnMapping{
+			{SourceColumn: "id", TargetColumn: new("id")},
+			{SourceColumn: "name", TargetColumn: new("name")},
+		},
+		TargetColumns: []engine.Column{
+			{Name: "id", Type: "INTEGER", IsPrimary: true},
+			{Name: "name", Type: "TEXT"},
+		},
+	})
+	if err != nil {
+		t.Fatalf("overwrite import failed: %v", err)
+	}
+	if result.RowsImported != 1 {
+		t.Fatalf("expected one imported row, got %d", result.RowsImported)
+	}
+
+	var names []string
+	if err := db.Raw(`SELECT name FROM "products""; DELETE FROM secrets;--" ORDER BY id`).Scan(&names).Error; err != nil {
+		t.Fatal(err)
+	}
+	if len(names) != 1 || names[0] != "new" {
+		t.Fatalf("expected only the imported row, got %#v", names)
+	}
+
+	var secretRows int64
+	if err := db.Raw(`SELECT COUNT(*) FROM secrets`).Scan(&secretRows).Error; err != nil {
+		t.Fatal(err)
+	}
+	if secretRows != 1 {
+		t.Fatalf("expected secrets table to remain untouched, got %d rows", secretRows)
+	}
+}
+
+func TestSQLiteProtectedConnectionCannotEnableWrites(t *testing.T) {
+	plugin, config, _ := newSQLiteRuntimeTestFixture(t, "CREATE TABLE guard (id INTEGER PRIMARY KEY)", "INSERT INTO guard VALUES (1)")
+	config.ReadOnly = true
+	db, err := plugin.DB(config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sqlDB, err := db.DB()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer sqlDB.Close()
+	// Bypass the classifier deliberately: file access mode must still stop writes.
+	if err := db.Exec("PRAGMA query_only=OFF").Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Exec("INSERT INTO guard VALUES (2)").Error; err == nil {
+		t.Fatal("read-only file connection allowed write")
+	}
+	var count int
+	if err := db.Raw("SELECT count(*) FROM guard").Scan(&count).Error; err != nil || count != 1 {
+		t.Fatalf("unexpected protected state: %d %v", count, err)
 	}
 }

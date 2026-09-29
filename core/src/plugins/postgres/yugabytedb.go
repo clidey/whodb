@@ -21,6 +21,7 @@ import (
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
+	"github.com/clidey/whodb/core/src/sqlident"
 )
 
 // YugabyteDBPlugin reuses the PostgreSQL runtime while using YugabyteDB-safe
@@ -82,6 +83,7 @@ func (p *YugabyteDBPlugin) GetPrimaryKeyColQuery() string {
 // connection and query runtime with YugabyteDB-specific metadata hooks.
 func NewYugabyteDBPlugin() *engine.Plugin {
 	yugabyteDBPlugin := &YugabyteDBPlugin{}
+	yugabyteDBPlugin.ConfigureIdentifierQuoting(sqlident.DoubleQuote)
 	yugabyteDBPlugin.Type = engine.DatabaseType_YugabyteDB
 	yugabyteDBPlugin.PluginFunctions = yugabyteDBPlugin
 	yugabyteDBPlugin.GormPluginFunctions = yugabyteDBPlugin

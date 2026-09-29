@@ -900,13 +900,15 @@ func postgresTraits(hostInputMode source.HostInputMode, urlParser source.HostInp
 }
 
 func mysqlTraits() source.TypeTraits {
-	return withHiddenObjectRules(
+	traits := withHiddenObjectRules(
 		networkTraits(source.HostInputModeHostname, source.HostInputURLParserNone),
 		map[source.ObjectKind][]string{
 			source.ObjectKindDatabase: {"information_schema", "mysql", "performance_schema", "sys"},
 		},
 		nil,
 	)
+	traits.Query.SupportsReadOnlyExecution = true
+	return traits
 }
 
 func clickHouseTraits() source.TypeTraits {
@@ -927,23 +929,27 @@ func clickHouseTraits() source.TypeTraits {
 }
 
 func sqliteTraits() source.TypeTraits {
-	return withHiddenObjectRules(
+	traits := withHiddenObjectRules(
 		fileTraits(source.ProfileLabelStrategyDatabase),
 		nil,
 		map[source.ObjectKind][]string{
 			source.ObjectKindTable: {"sqlite_"},
 		},
 	)
+	traits.Query.SupportsReadOnlyExecution = true
+	return traits
 }
 
 func duckDBTraits() source.TypeTraits {
-	return withHiddenObjectRules(
+	traits := withHiddenObjectRules(
 		fileTraits(source.ProfileLabelStrategyDatabase),
 		map[source.ObjectKind][]string{
 			source.ObjectKindSchema: {"information_schema", "pg_catalog"},
 		},
 		nil,
 	)
+	traits.Query.SupportsReadOnlyExecution = true
+	return traits
 }
 
 func mongoTraits() source.TypeTraits {

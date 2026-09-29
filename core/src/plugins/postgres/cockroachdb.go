@@ -30,6 +30,7 @@ import (
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
+	"github.com/clidey/whodb/core/src/sqlident"
 )
 
 // CockroachDBPlugin extends PostgresPlugin with CockroachDB-specific overrides.
@@ -350,6 +351,7 @@ func (p *CockroachDBPlugin) GetSSLStatus(config *engine.PluginConfig) (*engine.S
 // and CockroachDB-specific overrides for unsupported catalog functions.
 func NewCockroachDBPlugin() *engine.Plugin {
 	crdbPlugin := &CockroachDBPlugin{}
+	crdbPlugin.ConfigureIdentifierQuoting(sqlident.DoubleQuote)
 	crdbPlugin.Type = engine.DatabaseType_CockroachDB
 	crdbPlugin.PluginFunctions = crdbPlugin
 	crdbPlugin.GormPluginFunctions = crdbPlugin

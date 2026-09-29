@@ -8,6 +8,8 @@ import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
+	"github.com/clidey/whodb/core/src/sqlident"
+
 	"github.com/clidey/whodb/core/src/plugins"
 )
 
@@ -159,5 +161,32 @@ func TestSQLBuilderCreateTableQualifiesUnqualifiedForeignKeyReferences(t *testin
 	expected := "FOREIGN KEY (" + sb.QuoteIdentifier("user_id") + ") REFERENCES " + sb.QuoteIdentifier("test_schema") + "." + sb.QuoteIdentifier("users") + " (" + sb.QuoteIdentifier("id") + ")"
 	if !strings.Contains(ddl, expected) {
 		t.Fatalf("expected DDL to include %q, got %q", expected, ddl)
+	}
+}
+
+func TestQualifiedTableNameKeepsUntrustedTextInsideIdentifiers(t *testing.T) {
+	db := newDryRunDB(t)
+	plugin := &GormPlugin{}
+	plugin.ConfigureIdentifierQuoting(sqlident.DoubleQuote)
+	builder := NewSQLBuilder(db, plugin)
+
+	got, err := builder.QualifiedTableName(`tenant.with.dot`, `orders"; DELETE FROM secrets;--`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := `"tenant.with.dot"."orders""; DELETE FROM secrets;--"`
+	if got != want {
+		t.Fatalf("expected %q, got %q", want, got)
+	}
+}
+
+func TestQualifiedTableNameRejectsClickHouseDelimiter(t *testing.T) {
+	db := newDryRunDB(t)
+	plugin := &GormPlugin{}
+	plugin.ConfigureIdentifierQuoting(sqlident.BacktickStrict)
+	builder := NewSQLBuilder(db, plugin)
+
+	if _, err := builder.QualifiedTableName("", "orders`; DROP TABLE secrets;--"); err == nil {
+		t.Fatal("expected an embedded ClickHouse delimiter to be rejected")
 	}
 }

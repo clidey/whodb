@@ -139,13 +139,12 @@ func TestClickHouseMutationRuntimePaths(t *testing.T) {
 	_, _ = plugin.RawExecute(config, fmt.Sprintf("DROP TABLE IF EXISTS test_db.%s SYNC", table))
 	defer plugin.RawExecute(config, fmt.Sprintf("DROP TABLE IF EXISTS test_db.%s SYNC", table))
 
-	created, err := plugin.AddStorageUnit(config, "test_db", table, []engine.Record{
-		{Key: "id", Value: "UInt32", Extra: map[string]string{"Primary": "true", "Nullable": "false"}},
-		{Key: "tags", Value: "Array(String)", Extra: map[string]string{"Primary": "false", "Nullable": "false"}},
-		{Key: "status", Value: "String", Extra: map[string]string{"Primary": "false", "Nullable": "false"}},
-	})
-	if err != nil || !created {
-		t.Fatalf("AddStorageUnit failed: created=%t err=%v", created, err)
+	_, err := plugin.RawExecute(config, fmt.Sprintf(
+		"CREATE TABLE IF NOT EXISTS test_db.%s (id UInt32, tags Array(String), status String) ENGINE = MergeTree ORDER BY id",
+		table,
+	))
+	if err != nil {
+		t.Fatalf("failed to create clickhouse mutation table: %v", err)
 	}
 	for range 10 {
 		exists, existsErr := plugin.StorageUnitExists(config, "test_db", table)
@@ -214,4 +213,78 @@ func TestClickHouseMutationRuntimePaths(t *testing.T) {
 	}
 
 	t.Fatalf("expected clickhouse table %q to be empty after ClearTableData", table)
+}
+
+func TestClickHouseClearAndBulkInsertAcceptQuotedTableName(t *testing.T) {
+	plugin := clickHouseIntegrationPlugin(t)
+	config := clickHouseIntegrationConfig()
+	waitForClickHouseOrders(t, plugin, config)
+
+	guardTable := fmt.Sprintf("identifier_guard_%d", time.Now().UnixNano())
+	table := `identifier"; DELETE FROM test_db.` + guardTable + `;--`
+	quotedTable := "`" + table + "`"
+	_, _ = plugin.RawExecute(config, "DROP TABLE IF EXISTS test_db."+quotedTable+" SYNC")
+	_, _ = plugin.RawExecute(config, "DROP TABLE IF EXISTS test_db."+guardTable+" SYNC")
+	t.Cleanup(func() {
+		_, _ = plugin.RawExecute(config, "DROP TABLE IF EXISTS test_db."+quotedTable+" SYNC")
+		_, _ = plugin.RawExecute(config, "DROP TABLE IF EXISTS test_db."+guardTable+" SYNC")
+	})
+
+	if _, err := plugin.RawExecute(config, "CREATE TABLE IF NOT EXISTS test_db."+guardTable+" (id UInt32) ENGINE = MergeTree ORDER BY id"); err != nil {
+		t.Fatalf("failed to create clickhouse guard table: %v", err)
+	}
+	if _, err := plugin.RawExecute(config, "INSERT INTO test_db."+guardTable+" VALUES (1)"); err != nil {
+		t.Fatalf("failed to seed clickhouse guard table: %v", err)
+	}
+	if _, err := plugin.RawExecute(config, "CREATE TABLE IF NOT EXISTS test_db."+quotedTable+" (id String, name String, code FixedString(50) DEFAULT '') ENGINE = MergeTree ORDER BY id"); err != nil {
+		t.Fatalf("failed to create quoted clickhouse table: %v", err)
+	}
+	if _, err := plugin.RawExecute(config, "INSERT INTO test_db."+quotedTable+" (id, name) VALUES ('old-id', 'old')"); err != nil {
+		t.Fatalf("failed to seed quoted clickhouse table: %v", err)
+	}
+	columns, err := plugin.GetColumnsForTable(config, "test_db", table)
+	if err != nil {
+		t.Fatalf("failed to inspect quoted clickhouse table: %v", err)
+	}
+	var codeType string
+	for _, column := range columns {
+		if column.Name == "code" {
+			codeType = column.Type
+		}
+	}
+	if codeType != "FIXEDSTRING(50)" {
+		t.Fatalf("quoted clickhouse metadata lost declared type information: %#v", columns)
+	}
+	guardBefore, err := plugin.RawExecute(config, "SELECT count() FROM test_db."+guardTable)
+	if err != nil || len(guardBefore.Rows) != 1 {
+		t.Fatalf("failed to read clickhouse guard baseline: rows=%#v err=%v", guardBefore, err)
+	}
+
+	cleared, err := plugin.ClearTableData(config, "test_db", table)
+	if err != nil || !cleared {
+		t.Fatalf("clear through quoted clickhouse table failed: cleared=%t err=%v", cleared, err)
+	}
+	for range 50 {
+		count, countErr := plugin.GetRowCount(config, "test_db", table, nil)
+		if countErr != nil {
+			t.Fatalf("failed to count quoted clickhouse table: %v", countErr)
+		}
+		if count == 0 {
+			break
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	added, err := plugin.BulkAddRows(config, "test_db", table, [][]engine.Record{{{Key: "id", Value: "new-id"}, {Key: "name", Value: "new"}}})
+	if err != nil || !added {
+		t.Fatalf("bulk insert through quoted clickhouse table failed: added=%t err=%v", added, err)
+	}
+	rows, err := plugin.RawExecute(config, "SELECT name FROM test_db."+quotedTable)
+	if err != nil || len(rows.Rows) != 1 || rows.Rows[0][0] != "new" {
+		t.Fatalf("unexpected clickhouse target rows: rows=%#v err=%v", rows, err)
+	}
+	guard, err := plugin.RawExecute(config, "SELECT count() FROM test_db."+guardTable)
+	if err != nil || len(guard.Rows) != 1 || guard.Rows[0][0] != guardBefore.Rows[0][0] {
+		t.Fatalf("clickhouse guard table was modified: rows=%#v err=%v", guard, err)
+	}
 }

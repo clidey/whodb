@@ -487,7 +487,7 @@ func (o PlatformPendingOutput) MarshalJSON() ([]byte, error) {
 	return json.Marshal(Alias(o))
 }
 
-// PlatformActionPreview describes a pending hosted source write without secrets.
+// PlatformActionPreview describes a hosted write with secrets redacted and upload source paths visible.
 type PlatformActionPreview struct {
 	Operation    string                `json:"operation"`
 	Resource     string                `json:"resource,omitempty"`
@@ -1527,7 +1527,7 @@ func platformActionFieldChanges(action *PendingPlatformAction) []PlatformFieldCh
 	changes := make([]PlatformFieldChange, 0, len(keys))
 	for _, key := range keys {
 		value := values[key]
-		if sensitivePlatformWriteKey(key) {
+		if sensitivePlatformWriteKey(key) && (action.Mutation != "UploadProjectFile" || key != "filePath") {
 			changes = append(changes, PlatformFieldChange{Field: key, After: map[string]any{"value": "[redacted]"}, Redacted: true})
 			continue
 		}
@@ -2175,17 +2175,29 @@ func listPendingPlatformActions() []*PendingPlatformAction {
 	return actions
 }
 
+// Preview returns the review details shared by write plans, confirmations, and pending actions.
 func (action *PendingPlatformAction) Preview() *PlatformActionPreview {
 	if action == nil {
 		return nil
 	}
 	changes := append([]string(nil), action.Changes...)
+	summary := action.Summary
+	if action.Mutation == "UploadProjectFile" {
+		// The source path is essential for approval, but stays sensitive in persisted workflows.
+		filePath, _ := action.Variables["filePath"].(string)
+		summary = fmt.Sprintf("Upload file %q", filePath)
+		for i, change := range changes {
+			if change == "filePath (redacted)" {
+				changes[i] = "filePath"
+			}
+		}
+	}
 	willAffect := platformActionWillAffect(action, changes)
 	return &PlatformActionPreview{
 		Operation:    action.Operation,
 		Resource:     action.Resource,
 		Action:       action.Action,
-		Summary:      action.Summary,
+		Summary:      summary,
 		Host:         action.Host,
 		OrgID:        action.OrgID,
 		ProjectID:    action.ProjectID,
@@ -2598,4 +2610,5 @@ Use this to recover confirmation tokens returned by hosted platform write tools.
 
 const descPlatformConfirm = `Confirm and execute a pending hosted WhoDB platform write.
 
-Use the confirmation_token returned by hosted platform write tools. Tokens expire after 5 minutes. Only call this after the user has approved the pending write preview.`
+Use the confirmation_token returned by hosted platform write tools. Tokens expire after 5 minutes. Only call this after the user has approved the pending write preview.
+The token does not independently prove human approval: the MCP host must enforce approval if that guarantee is required. For uploads, review the full local source path and destination; the file is read at execution time, not snapshotted when the preview is created.`

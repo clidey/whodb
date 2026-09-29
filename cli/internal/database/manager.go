@@ -275,6 +275,27 @@ func NewManager() (*Manager, error) {
 	return NewManagerWithConfig(nil)
 }
 
+// EnableReadOnly makes query execution use both statement classification and
+// the source's engine-enforced read-only path, rejecting unsupported sources.
+func (m *Manager) EnableReadOnly() {
+	m.config.SetReadOnly(true)
+}
+
+func (m *Manager) runQuery(ctx context.Context, session source.SourceSession, sourceLabel, query string, params ...any) (*engine.GetRowsResult, error) {
+	if m.config.GetReadOnly() {
+		if runner, ok := session.(source.ReadOnlyQueryRunner); ok {
+			return runner.RunReadOnlyQuery(ctx, query, params...)
+		}
+		return nil, fmt.Errorf("protected read-only execution is not supported for %s", sourceLabel)
+	}
+
+	runner, ok := session.(source.QueryRunner)
+	if !ok {
+		return nil, fmt.Errorf("querying is not supported for %s", sourceLabel)
+	}
+	return runner.RunQuery(ctx, query, params...)
+}
+
 // ListConnections returns saved connections from the CLI config.
 func (m *Manager) ListConnections() []Connection {
 	return m.config.Connections
@@ -682,13 +703,8 @@ func (m *Manager) ExecuteQuery(query string) (*engine.GetRowsResult, error) {
 		return nil, err
 	}
 
-	runner, ok := session.(source.QueryRunner)
-	if !ok {
-		return nil, fmt.Errorf("querying is not supported for %s", spec.Label)
-	}
-
 	start := time.Now()
-	result, err := runner.RunQuery(context.Background(), query)
+	result, err := m.runQuery(context.Background(), session, spec.Label, query)
 	m.logQuery(query, start, result, err)
 	return result, err
 }
@@ -842,14 +858,9 @@ func (m *Manager) ExecuteQueryWithContext(ctx context.Context, query string) (*e
 		return nil, err
 	}
 
-	runner, ok := session.(source.QueryRunner)
-	if !ok {
-		return nil, fmt.Errorf("querying is not supported for %s", spec.Label)
-	}
-
 	start := time.Now()
 	result, err := runWithContext(ctx, func() (*engine.GetRowsResult, error) {
-		return runner.RunQuery(ctx, query)
+		return m.runQuery(ctx, session, spec.Label, query)
 	})
 	m.logQuery(query, start, result, err)
 	return result, err
@@ -908,13 +919,8 @@ func (m *Manager) ExecuteQueryWithParams(query string, params []any) (*engine.Ge
 		return nil, err
 	}
 
-	runner, ok := session.(source.QueryRunner)
-	if !ok {
-		return nil, fmt.Errorf("querying is not supported for %s", spec.Label)
-	}
-
 	start := time.Now()
-	result, err := runner.RunQuery(context.Background(), query, params...)
+	result, err := m.runQuery(context.Background(), session, spec.Label, query, params...)
 	m.logQuery(query, start, result, err)
 	return result, err
 }
@@ -934,14 +940,9 @@ func (m *Manager) ExecuteQueryWithContextAndParams(ctx context.Context, query st
 		return nil, err
 	}
 
-	runner, ok := session.(source.QueryRunner)
-	if !ok {
-		return nil, fmt.Errorf("querying is not supported for %s", spec.Label)
-	}
-
 	start := time.Now()
 	result, err := runWithContext(ctx, func() (*engine.GetRowsResult, error) {
-		return runner.RunQuery(ctx, query, params...)
+		return m.runQuery(ctx, session, spec.Label, query, params...)
 	})
 	m.logQuery(query, start, result, err)
 	return result, err

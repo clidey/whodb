@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import {useQuery} from "@apollo/client/react";
 import type {FC} from "react";
 import { Suspense, useCallback, useEffect, useMemo} from "react";
 import {InternalPage} from "../../components/page";
@@ -42,11 +41,7 @@ import {optInUser, optOutUser, trackFrontendEvent} from "@/config/posthog";
 import {type SupportedLanguage, SUPPORTED_LANGUAGES} from "@/utils/languages";
 import {ExternalLink} from "../../utils/external-links";
 import {usePageSize} from "../../hooks/use-page-size";
-import {AwsProvidersSection} from "../../components/aws";
-import {AzureProvidersSection} from "../../components/azure";
-import {GcpProvidersSection} from "../../components/gcp";
 import {getComponent} from "../../config/component-registry";
-import {SettingsConfigDocument} from "@graphql";
 import {trackOptionChanged} from "@/config/frontend-analytics";
 
 export const SettingsPage: FC = () => {
@@ -66,13 +61,6 @@ export const SettingsPage: FC = () => {
     const language = useAppSelector(state => state.settings.language);
     const databaseSchemaTerminology = useAppSelector(state => state.settings.databaseSchemaTerminology);
     const disableAnimations = useAppSelector(state => state.settings.disableAnimations);
-
-    // Check if cloud providers are enabled
-    const { data: settingsData } = useQuery(SettingsConfigDocument);
-    const cloudProvidersEnabled = settingsData?.SettingsConfig?.CloudProvidersEnabled ?? false;
-    const awsProviderEnabled = settingsData?.SettingsConfig?.AWSProviderEnabled ?? false;
-    const azureProviderEnabled = settingsData?.SettingsConfig?.AzureProviderEnabled ?? false;
-    const gcpProviderEnabled = settingsData?.SettingsConfig?.GCPProviderEnabled ?? false;
 
     const pageSizeOptions = useMemo(() => ({
         onPageSizeChange: (size: number) => {
@@ -164,7 +152,7 @@ export const SettingsPage: FC = () => {
         });
     }, []);
 
-    const hasIntegrations = cloudProvidersEnabled || !!getComponent('bridge-driver-panel');
+    const hasIntegrations = !!getComponent('bridge-driver-panel');
 
     return (
         <InternalPage routes={[InternalRoutes.Settings as IInternalRoute]}>
@@ -328,33 +316,13 @@ export const SettingsPage: FC = () => {
 
                     {hasIntegrations && (
                         <TabsContent value="integrations" className="flex flex-col gap-xl pt-6">
-                            {cloudProvidersEnabled && (
-                                <>
-                                    {awsProviderEnabled && <AwsProvidersSection />}
-                                    {azureProviderEnabled && (
-                                        <>
-                                            {awsProviderEnabled && <Separator className="my-6" />}
-                                            <AzureProvidersSection />
-                                        </>
-                                    )}
-                                    {gcpProviderEnabled && (
-                                        <>
-                                            {(awsProviderEnabled || azureProviderEnabled) && <Separator className="my-6" />}
-                                            <GcpProvidersSection />
-                                        </>
-                                    )}
-                                </>
-                            )}
                             {(() => {
                                 const BridgeDriverPanel = getComponent('bridge-driver-panel');
                                 if (!BridgeDriverPanel) return null;
                                 return (
-                                    <>
-                                        {cloudProvidersEnabled && <Separator className="my-6" />}
-                                        <Suspense fallback={null}>
-                                            <BridgeDriverPanel />
-                                        </Suspense>
-                                    </>
+                                    <Suspense fallback={null}>
+                                        <BridgeDriverPanel />
+                                    </Suspense>
                                 );
                             })()}
                         </TabsContent>

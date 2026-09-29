@@ -18,7 +18,6 @@ package mysql
 
 import (
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
 )
@@ -37,11 +36,7 @@ func NewMySQLSQLBuilder(db *gorm.DB, plugin gorm_plugin.GormPluginFunctions) gor
 	return msb
 }
 
-// GetTableQuery creates a GORM query with the appropriate table reference for MySQL/MariaDB
-func (msb *MySQLSQLBuilder) GetTableQuery(schema, table string) *gorm.DB {
-	return msb.SQLBuilder.GetDB().Table(table).Clauses(clause.From{
-		Tables: []clause.Table{
-			{Name: table},
-		},
-	})
+// QualifiedTableName renders a table in the current MySQL database.
+func (msb *MySQLSQLBuilder) QualifiedTableName(_ string, table string) (string, error) {
+	return msb.SQLBuilder.QualifiedTableName("", table)
 }

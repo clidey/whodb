@@ -951,8 +951,8 @@ export const ExploreStorageUnit: FC = () => {
                 <div className="text-sm" data-testid="total-count-top"><span className="font-semibold">{t('totalCount')}</span> {totalCount}</div>
             </div>
             <div className="flex w-full relative" data-testid="explore-storage-unit-options">
-                <div className="flex justify-between items-end w-full">
-                    <div className="flex gap-2">
+                <div className="flex flex-wrap justify-between items-end gap-2 w-full">
+                    <div className="flex flex-wrap gap-2">
                         {EESearchBar != null ? (
                             <EESearchBar
                                 key={conditionKey}

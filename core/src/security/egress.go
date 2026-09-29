@@ -9,12 +9,20 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/netip"
 	"net/url"
 	"strings"
 	"time"
 
 	"github.com/clidey/whodb/core/src/env"
 )
+
+var blockedIPv6TransitionPrefixes = []netip.Prefix{
+	netip.MustParsePrefix("64:ff9b::/96"),   // NAT64 well-known prefix (RFC 6052)
+	netip.MustParsePrefix("64:ff9b:1::/48"), // NAT64 local-use prefix (RFC 8215)
+	netip.MustParsePrefix("2001::/32"),      // Teredo (RFC 4380)
+	netip.MustParsePrefix("2002::/16"),      // 6to4 (RFC 3056)
+}
 
 // egressEnforced reports whether outbound egress restrictions should apply.
 // Controlled by the explicit WHODB_BLOCK_INTERNAL_AI_ENDPOINTS flag (off by
@@ -105,6 +113,29 @@ func checkIP(ip net.IP) error {
 	// IsLinkLocalUnicast, but called out for clarity) and IPv4-mapped variants.
 	if ip.Equal(net.ParseIP("169.254.169.254")) {
 		return fmt.Errorf("destination address %s is not allowed", ip)
+	}
+	address, ok := netip.AddrFromSlice(ip)
+	if !ok {
+		return fmt.Errorf("destination address %s is not allowed", ip)
+	}
+	address = address.Unmap()
+	for _, prefix := range blockedIPv6TransitionPrefixes {
+		if prefix.Contains(address) {
+			return fmt.Errorf("destination address %s is not allowed", ip)
+		}
+	}
+	for _, value := range strings.Split(env.AIEndpointBlockedCIDRs, ",") {
+		value = strings.TrimSpace(value)
+		if value == "" {
+			continue
+		}
+		prefix, err := netip.ParsePrefix(value)
+		if err != nil {
+			return fmt.Errorf("invalid WHODB_AI_ENDPOINT_BLOCKED_CIDRS entry %q: %w", value, err)
+		}
+		if prefix.Contains(address) {
+			return fmt.Errorf("destination address %s is not allowed", ip)
+		}
 	}
 	return nil
 }

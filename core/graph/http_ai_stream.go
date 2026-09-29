@@ -30,6 +30,7 @@ import (
 	"github.com/clidey/whodb/core/src/envconfig"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/source"
+	"github.com/clidey/whodb/core/src/sqlguard"
 )
 
 func init() {
@@ -62,7 +63,7 @@ func ceAIChatStreamHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	auditScope := sourceAuditScopeFromContext(r.Context(), spec)
-	queryRunner, ok := source.AsQueryRunner(auditScope, session)
+	queryRunner, ok := source.AsReadOnlyQueryRunner(auditScope, session)
 	if !ok {
 		SendSSEError(w, flusher, "Source queries are not supported")
 		return
@@ -122,7 +123,7 @@ func processStream(
 	w http.ResponseWriter,
 	flusher http.Flusher,
 	stream <-chan baml_client.StreamValue[[]stream_types.ChatResponse, []types.ChatResponse],
-	queryRunner source.QueryRunner,
+	queryRunner source.ReadOnlyQueryRunner,
 ) {
 	for chunk := range stream {
 		if chunk.IsError {
@@ -144,7 +145,7 @@ func processStream(
 	}
 }
 
-func processFinalChunk(ctx stdctx.Context, w http.ResponseWriter, flusher http.Flusher, responses *[]types.ChatResponse, queryRunner source.QueryRunner) {
+func processFinalChunk(ctx stdctx.Context, w http.ResponseWriter, flusher http.Flusher, responses *[]types.ChatResponse, queryRunner source.ReadOnlyQueryRunner) {
 	if responses == nil {
 		return
 	}
@@ -154,7 +155,7 @@ func processFinalChunk(ctx stdctx.Context, w http.ResponseWriter, flusher http.F
 	}
 }
 
-func processFinalResponse(ctx stdctx.Context, bamlResp *types.ChatResponse, queryRunner source.QueryRunner) *model.AIChatMessage {
+func processFinalResponse(ctx stdctx.Context, bamlResp *types.ChatResponse, queryRunner source.ReadOnlyQueryRunner) *model.AIChatMessage {
 	message := &model.AIChatMessage{
 		Type: bamlconfig.ConvertBAMLTypeToWhoDB(bamlResp.Type),
 		Text: bamlResp.Text,
@@ -164,20 +165,15 @@ func processFinalResponse(ctx stdctx.Context, bamlResp *types.ChatResponse, quer
 		return message
 	}
 
-	isMutation := *bamlResp.Operation == types.OperationTypeINSERT ||
-		*bamlResp.Operation == types.OperationTypeUPDATE ||
-		*bamlResp.Operation == types.OperationTypeDELETE ||
-		*bamlResp.Operation == types.OperationTypeCREATE ||
-		*bamlResp.Operation == types.OperationTypeALTER ||
-		*bamlResp.Operation == types.OperationTypeDROP
+	classification := sqlguard.Classify(bamlResp.Text)
 
-	if isMutation {
-		message.Type = bamlconfig.ConvertOperationType(*bamlResp.Operation)
+	if classification.Mutating {
+		message.Type = "sql:" + sqlguard.OperationName(classification)
 		message.RequiresConfirmation = true
 		return message
 	}
 
-	result, err := queryRunner.RunQuery(ctx, bamlResp.Text)
+	result, err := queryRunner.RunReadOnlyQuery(ctx, bamlResp.Text)
 	if err != nil {
 		message.Type = "error"
 		message.Text = err.Error()

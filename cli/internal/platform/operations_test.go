@@ -38,6 +38,10 @@ func TestPlatformOperationsMatchEESchema(t *testing.T) {
 
 func loadPlatformSchema(t *testing.T) *ast.Schema {
 	t.Helper()
+	// The EE schema lives in a private submodule that CE CI does not check out.
+	if _, err := os.Stat(filepath.Join("..", "..", "..", "ee", "core", "graph", "schema.extension.graphqls")); os.IsNotExist(err) {
+		t.Skip("ee submodule not present; skipping platform schema check")
+	}
 	sources := []*ast.Source{
 		readSchemaSource(t, "core/graph/schema.graphqls"),
 		readSchemaSource(t, "ee/core/graph/schema.extension.graphqls"),

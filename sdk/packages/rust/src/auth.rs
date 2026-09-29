@@ -183,38 +183,125 @@ mod tests {
     use super::*;
     use std::fs;
     use std::io::Write;
-    use std::os::unix::fs::PermissionsExt;
+    use std::os::unix::fs::{DirBuilderExt, OpenOptionsExt};
     use std::path::PathBuf;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    use std::sync::MutexGuard;
 
-    /// Writes a fake whodb CLI script; appends to a counter file per run.
-    fn fake_cli(body: &str) -> (CliCredentials, PathBuf) {
-        let dir = std::env::temp_dir().join(format!(
-            "whodb-cli-test-{}-{:?}",
-            std::process::id(),
-            std::thread::current().id(),
-        ));
-        fs::create_dir_all(&dir).expect("create test dir");
-        let count_file = dir.join("count");
-        let _ = fs::remove_file(&count_file);
-        let command = dir.join("whodb");
-        let mut file = fs::File::create(&command).expect("write fake cli");
-        write!(
-            file,
-            "#!/bin/sh\necho x >> \"{}\"\n{}\n",
-            count_file.display(),
-            body
-        )
-        .expect("script body");
-        fs::set_permissions(&command, fs::Permissions::from_mode(0o755)).expect("chmod");
-        let credentials = CliCredentials {
-            command: command.display().to_string(),
-            cache: Mutex::new(None),
-        };
-        (credentials, count_file)
+    /// Serializes script writes against process spawns. A `fork` on one thread
+    /// inherits another thread's open write handle to its script, and on Linux
+    /// the exec of a file with a live write handle fails with ETXTBSY. Every
+    /// test that writes a script or spawns a process must hold this.
+    static EXEC_LOCK: Mutex<()> = Mutex::new(());
+
+    /// A fake whodb CLI bundled with the exec lock it has to be used under.
+    /// The guard lives as long as the fixture, so every test that gets one is
+    /// serialized for its whole body without having to remember to lock.
+    struct FakeCli {
+        credentials: CliCredentials,
+        count_file: PathBuf,
+        dir: Option<PathBuf>,
+        _guard: MutexGuard<'static, ()>,
     }
 
-    fn exec_count(count_file: &PathBuf) -> usize {
-        fs::read(count_file).map(|data| data.len() / 2).unwrap_or(0)
+    impl FakeCli {
+        /// Writes a CLI script running `body`, appending to a counter per run.
+        fn new(body: &str) -> Self {
+            let guard = Self::lock();
+            let dir = Self::private_dir();
+            let count_file = dir.join("count");
+            let command = dir.join("whodb");
+            // create_new refuses an existing path (a planted symlink included)
+            // instead of writing through it, and mode() sets the executable bit
+            // at creation, leaving no window where the script is writable by
+            // anyone else between the write and the exec.
+            let mut file = fs::OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .mode(0o700)
+                .open(&command)
+                .expect("write fake cli");
+            write!(
+                file,
+                "#!/bin/sh\necho x >> \"{}\"\n{}\n",
+                count_file.display(),
+                body
+            )
+            .expect("script body");
+            Self {
+                credentials: CliCredentials {
+                    command: command.display().to_string(),
+                    cache: Mutex::new(None),
+                },
+                count_file,
+                dir: Some(dir),
+                _guard: guard,
+            }
+        }
+
+        /// Points at a path holding no binary, for the CLI-not-installed case.
+        fn missing() -> Self {
+            Self {
+                credentials: CliCredentials {
+                    command: "/no/such/whodb-binary".to_string(),
+                    cache: Mutex::new(None),
+                },
+                count_file: PathBuf::new(),
+                dir: None,
+                _guard: Self::lock(),
+            }
+        }
+
+        /// Creates a fresh 0700 directory under the temp dir. The name is
+        /// unique per fixture so a stale directory from a killed run can never
+        /// collide, and `create` (not `create_dir_all`) fails rather than
+        /// reusing a directory some other local user got there first with.
+        fn private_dir() -> PathBuf {
+            static SEQ: AtomicUsize = AtomicUsize::new(0);
+            let nanos = SystemTime::now()
+                .duration_since(SystemTime::UNIX_EPOCH)
+                .expect("clock")
+                .as_nanos();
+            let dir = std::env::temp_dir().join(format!(
+                "whodb-cli-test-{}-{}-{}",
+                std::process::id(),
+                nanos,
+                SEQ.fetch_add(1, Ordering::Relaxed),
+            ));
+            fs::DirBuilder::new()
+                .mode(0o700)
+                .create(&dir)
+                .expect("create test dir");
+            dir
+        }
+
+        /// Takes the exec lock, ignoring poisoning from another test's panic:
+        /// unwinding drops both the guard and the write handle, so the
+        /// invariant this lock protects is already restored.
+        fn lock() -> MutexGuard<'static, ()> {
+            EXEC_LOCK
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner())
+        }
+
+        fn token(&self) -> Result<String> {
+            self.credentials.token()
+        }
+
+        fn exec_count(&self) -> usize {
+            fs::read(&self.count_file)
+                .map(|data| data.len() / 2)
+                .unwrap_or(0)
+        }
+    }
+
+    impl Drop for FakeCli {
+        /// Names are unique per fixture, so nothing reclaims these but us.
+        fn drop(&mut self) {
+            if let Some(dir) = &self.dir {
+                let _ = fs::remove_dir_all(dir);
+            }
+        }
     }
 
     fn future_expiry(seconds: u64) -> String {
@@ -255,57 +342,54 @@ mod tests {
 
     #[test]
     fn missing_binary_is_cli_credentials_error() {
-        let credentials = CliCredentials {
-            command: "/no/such/whodb-binary".to_string(),
-            cache: Mutex::new(None),
-        };
-        assert!(matches!(credentials.token(), Err(Error::CliCredentials(_))));
+        let cli = FakeCli::missing();
+        assert!(matches!(cli.token(), Err(Error::CliCredentials(_))));
     }
 
     #[test]
     fn invalid_json_is_cli_credentials_error() {
-        let (credentials, _count) = fake_cli("echo not-json");
-        assert!(matches!(credentials.token(), Err(Error::CliCredentials(_))));
+        let cli = FakeCli::new("echo not-json");
+        assert!(matches!(cli.token(), Err(Error::CliCredentials(_))));
     }
 
     #[test]
     fn nonzero_exit_is_cli_credentials_error() {
-        let (credentials, _count) = fake_cli("echo 'run: whodb login' >&2; exit 1");
-        assert!(matches!(credentials.token(), Err(Error::CliCredentials(_))));
+        let cli = FakeCli::new("echo 'run: whodb login' >&2; exit 1");
+        assert!(matches!(cli.token(), Err(Error::CliCredentials(_))));
     }
 
     #[test]
     fn fresh_tokens_are_cached() {
-        let (credentials, count_file) = fake_cli(&format!(
+        let cli = FakeCli::new(&format!(
             "echo '{{\"access_token\":\"tok-1\",\"expires_at\":\"{}\"}}'",
             future_expiry(3600),
         ));
         for _ in 0..3 {
-            assert_eq!(credentials.token().expect("token"), "tok-1");
+            assert_eq!(cli.token().expect("token"), "tok-1");
         }
-        assert_eq!(exec_count(&count_file), 1);
+        assert_eq!(cli.exec_count(), 1);
     }
 
     #[test]
     fn near_expiry_tokens_reexec() {
-        let (credentials, count_file) = fake_cli(&format!(
+        let cli = FakeCli::new(&format!(
             "echo '{{\"access_token\":\"tok-1\",\"expires_at\":\"{}\"}}'",
             future_expiry(30), // inside the 60s refresh skew
         ));
-        credentials.token().expect("token");
-        credentials.token().expect("token");
-        assert_eq!(exec_count(&count_file), 2);
+        cli.token().expect("token");
+        cli.token().expect("token");
+        assert_eq!(cli.exec_count(), 2);
     }
 
     #[test]
     fn refresh_drops_the_cache() {
-        let (credentials, count_file) = fake_cli(&format!(
+        let cli = FakeCli::new(&format!(
             "echo '{{\"access_token\":\"tok-1\",\"expires_at\":\"{}\"}}'",
             future_expiry(3600),
         ));
-        credentials.token().expect("token");
-        credentials.refresh();
-        credentials.token().expect("token");
-        assert_eq!(exec_count(&count_file), 2);
+        cli.token().expect("token");
+        cli.credentials.refresh();
+        cli.token().expect("token");
+        assert_eq!(cli.exec_count(), 2);
     }
 }

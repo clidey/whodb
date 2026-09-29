@@ -73,7 +73,6 @@ import {DatabaseActions} from "../../store/database";
 import {useAppSelector} from "../../store/hooks";
 import {getComponent} from "../../config/component-registry";
 import { findSourceTypeItem, type SourceTypeItem } from "../../config/source-types";
-import {isAwsHostname, isAzureHostname, isGcpHostname} from "../../utils/cloud-connection-prefill";
 import type {PlatformFunnelTrigger} from "../../utils/platform-funnel";
 import {dismissBackupHint, hasDismissedBackupHint} from "../../utils/platform-hints";
 import {ph} from "../../utils/privacy";
@@ -96,9 +95,7 @@ import {
 import {PlatformExplainerDialog} from "./platform-explainer-dialog";
 import {Icons} from "../icons";
 import {Loading} from "../loading";
-import {DatabaseIconWithBadge, isAwsConnection} from "../aws";
-import {isAzureConnection} from "../azure";
-import {isGcpConnection} from "../gcp";
+import {DatabaseIconWithBadge} from "../database-icon-with-badge";
 import {useProfileSwitch} from "@/hooks/use-profile-switch";
 import {buildSourceSchemaQuery} from "@/utils/source-refs";
 
@@ -216,9 +213,6 @@ export const Sidebar: FC = () => {
     const { t } = useTranslation('components/sidebar');
     const schema = useAppSelector(state => state.database.schema);
     const databaseSchemaTerminology = useAppSelector(state => state.settings.databaseSchemaTerminology);
-    const awsProviderEnabled = useAppSelector(state => state.settings.awsProviderEnabled);
-    const azureProviderEnabled = useAppSelector(state => state.settings.azureProviderEnabled);
-    const gcpProviderEnabled = useAppSelector(state => state.settings.gcpProviderEnabled);
     const newUIEnabled = useAppSelector(state => state.settings.newUIEnabled);
     const isEmbedded = useAppSelector(state => state.auth.isEmbedded);
     const dispatch = useDispatch();
@@ -287,27 +281,21 @@ export const Sidebar: FC = () => {
     const [logoutProfileId, setLogoutProfileId] = useState<string | null>(null);
     const [platformExplainerTrigger, setPlatformExplainerTrigger] = useState<PlatformFunnelTrigger | null>(null);
     const [backupHintDismissed, setBackupHintDismissed] = useState(() => hasDismissedBackupHint());
-    const { toggleSidebar, open } = useSidebar();
+    const { toggleSidebar, open: desktopOpen, isMobile } = useSidebar();
+    // The mobile sheet always shows the expanded layout, whatever the persisted desktop collapse state is.
+    const open = isMobile || desktopOpen;
     const isInitialMount = useRef(true);
     const { switchProfile } = useProfileSwitch({
         errorMessage: t('errorSigningIn'),
     });
     const { items: sourceTypeItems } = useSourceTypeItems();
 
-    const profileOptions = useMemo(() => profiles
-        .filter(profile => {
-            if (isAwsHostname(profile.Hostname)) return awsProviderEnabled;
-            if (isAzureHostname(profile.Hostname)) return azureProviderEnabled;
-            if (isGcpHostname(profile.Hostname)) return gcpProviderEnabled;
-            return true;
-        })
-        .map(profile => ({
+    const profileOptions = useMemo(() => profiles.map(profile => ({
             value: profile.Id,
             label: getProfileLabel(profile, findSourceTypeItem(sourceTypeItems, profile.Type)),
             icon: (
                 <DatabaseIconWithBadge
                     icon={getProfileIcon(profile)}
-                    showCloudBadge={isAwsConnection(profile.Id) || isAzureConnection(profile.Id) || isGcpConnection(profile.Id)}
                     sslStatus={profile.Id === current?.Id
                         ? sslStatus
                         : (profile.SSLConfigured ? { IsEnabled: true, Mode: 'configured' } : undefined)}
@@ -315,7 +303,7 @@ export const Sidebar: FC = () => {
                 />
             ),
             profile,
-        })), [profiles, current?.Id, sslStatus, awsProviderEnabled, azureProviderEnabled, gcpProviderEnabled, sourceTypeItems]);
+        })), [profiles, current?.Id, sslStatus, sourceTypeItems]);
 
     const currentProfileOption = useMemo(() => {
         if (!current) return undefined;
@@ -1009,7 +997,6 @@ export const Sidebar: FC = () => {
                                 >
                                     <DatabaseIconWithBadge
                                         icon={getProfileIcon(profile)}
-                                        showCloudBadge={isAwsConnection(profile.Id)}
                                         size="sm"
                                     />
                                     <span className={cn("text-sm font-medium truncate", ph.mask)}>{getProfileLabel(profile, sourceTypeItem)}</span>

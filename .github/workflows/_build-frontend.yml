@@ -47,6 +47,7 @@ jobs:
             objects.githubusercontent.com:443
             registry.npmjs.org:443
             release-assets.githubusercontent.com:443
+            releases.posthog.com:443
             us.i.posthog.com:443
             us.posthog.com:443
 
@@ -82,6 +83,7 @@ jobs:
       - name: Upload source maps to PostHog
         uses: PostHog/upload-source-maps@991172e085213c222c61d2ba6a0b9e57c81e5066 # v2.0.0
         with:
+          cli-version: "0.18.7"
           directory: frontend/build
           project-id: ${{ secrets.POSTHOG_PROJECT_ID }}
           api-key: ${{ secrets.POSTHOG_API_KEY }}

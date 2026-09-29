@@ -20,7 +20,43 @@ import (
 	"context"
 	"errors"
 	"testing"
+
+	"github.com/clidey/whodb/cli/internal/config"
+	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/source"
 )
+
+type recordingReadOnlyRunner struct {
+	ordinaryCalls int
+	readOnlyCalls int
+}
+
+func (r *recordingReadOnlyRunner) Metadata(context.Context) (*source.SessionMetadata, error) {
+	return &source.SessionMetadata{}, nil
+}
+
+func (r *recordingReadOnlyRunner) RunQuery(context.Context, string, ...any) (*source.RowsResult, error) {
+	r.ordinaryCalls++
+	return &engine.GetRowsResult{}, nil
+}
+
+func (r *recordingReadOnlyRunner) RunReadOnlyQuery(context.Context, string, ...any) (*source.RowsResult, error) {
+	r.readOnlyCalls++
+	return &engine.GetRowsResult{}, nil
+}
+
+func TestRunQueryUsesEngineReadOnlyRunner(t *testing.T) {
+	runner := &recordingReadOnlyRunner{}
+	mgr := &Manager{config: config.DefaultConfig()}
+	mgr.EnableReadOnly()
+
+	if _, err := mgr.runQuery(context.Background(), runner, "test", "SELECT 1"); err != nil {
+		t.Fatalf("runQuery failed: %v", err)
+	}
+	if runner.readOnlyCalls != 1 || runner.ordinaryCalls != 0 {
+		t.Fatalf("expected engine read-only path, got readOnly=%d ordinary=%d", runner.readOnlyCalls, runner.ordinaryCalls)
+	}
+}
 
 func TestIsMutationQuery(t *testing.T) {
 	tests := []struct {
@@ -59,7 +95,7 @@ func TestIsMutationQuery(t *testing.T) {
 		// Edge cases
 		{"empty string", "", false},
 		{"whitespace only", "   ", false},
-		{"single word select", "SELECT", false},
+		{"single word select", "SELECT", true},
 		{"semicolon only keyword", "INSERT;", true},
 		{"paren after keyword", "CREATE(", true},
 	}

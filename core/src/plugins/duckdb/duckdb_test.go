@@ -12,6 +12,7 @@ import (
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/env"
+	_ "github.com/clidey/whodb/core/src/sources/database"
 )
 
 func TestDuckDBColumnCodec(t *testing.T) {

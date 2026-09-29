@@ -28,93 +28,11 @@ export type AiProvider = {
   Type: Scalars['String']['output'];
 };
 
-export type AwsProvider = CloudProvider & {
-  __typename?: 'AWSProvider';
-  DiscoverDocumentDB: Scalars['Boolean']['output'];
-  DiscoverElastiCache: Scalars['Boolean']['output'];
-  DiscoverRDS: Scalars['Boolean']['output'];
-  DiscoverS3: Scalars['Boolean']['output'];
-  DiscoveredCount: Scalars['Int']['output'];
-  Error?: Maybe<Scalars['String']['output']>;
-  Id: Scalars['ID']['output'];
-  LastDiscoveryAt?: Maybe<Scalars['String']['output']>;
-  Name: Scalars['String']['output'];
-  ProfileName?: Maybe<Scalars['String']['output']>;
-  ProviderType: CloudProviderType;
-  Region: Scalars['String']['output'];
-  Status: CloudProviderStatus;
-};
-
-export type AwsProviderInput = {
-  DiscoverDocumentDB?: InputMaybe<Scalars['Boolean']['input']>;
-  DiscoverElastiCache?: InputMaybe<Scalars['Boolean']['input']>;
-  DiscoverRDS?: InputMaybe<Scalars['Boolean']['input']>;
-  DiscoverS3?: InputMaybe<Scalars['Boolean']['input']>;
-  Name: Scalars['String']['input'];
-  ProfileName?: InputMaybe<Scalars['String']['input']>;
-  Region: Scalars['String']['input'];
-};
-
-export type AwsRegion = {
-  __typename?: 'AWSRegion';
-  Description: Scalars['String']['output'];
-  Id: Scalars['String']['output'];
-  Partition: Scalars['String']['output'];
-};
-
 export type AtomicWhereCondition = {
   ColumnType: Scalars['String']['input'];
   Key: Scalars['String']['input'];
   Operator: Scalars['String']['input'];
   Value: Scalars['String']['input'];
-};
-
-export type AzureProvider = CloudProvider & {
-  __typename?: 'AzureProvider';
-  DiscoverCosmosDB: Scalars['Boolean']['output'];
-  DiscoverMySQL: Scalars['Boolean']['output'];
-  DiscoverPostgreSQL: Scalars['Boolean']['output'];
-  DiscoverRedis: Scalars['Boolean']['output'];
-  DiscoveredCount: Scalars['Int']['output'];
-  Error?: Maybe<Scalars['String']['output']>;
-  Id: Scalars['ID']['output'];
-  LastDiscoveryAt?: Maybe<Scalars['String']['output']>;
-  Name: Scalars['String']['output'];
-  ProviderType: CloudProviderType;
-  Region: Scalars['String']['output'];
-  ResourceGroup?: Maybe<Scalars['String']['output']>;
-  Status: CloudProviderStatus;
-  SubscriptionID: Scalars['String']['output'];
-  TenantID?: Maybe<Scalars['String']['output']>;
-};
-
-export type AzureProviderInput = {
-  AuthMethod?: InputMaybe<Scalars['String']['input']>;
-  ClientID?: InputMaybe<Scalars['String']['input']>;
-  ClientSecret?: InputMaybe<Scalars['String']['input']>;
-  DiscoverCosmosDB?: InputMaybe<Scalars['Boolean']['input']>;
-  DiscoverMySQL?: InputMaybe<Scalars['Boolean']['input']>;
-  DiscoverPostgreSQL?: InputMaybe<Scalars['Boolean']['input']>;
-  DiscoverRedis?: InputMaybe<Scalars['Boolean']['input']>;
-  Name: Scalars['String']['input'];
-  ResourceGroup?: InputMaybe<Scalars['String']['input']>;
-  SubscriptionID: Scalars['String']['input'];
-  TenantID?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type AzureRegion = {
-  __typename?: 'AzureRegion';
-  DisplayName: Scalars['String']['output'];
-  Geography: Scalars['String']['output'];
-  Id: Scalars['String']['output'];
-};
-
-export type AzureSubscription = {
-  __typename?: 'AzureSubscription';
-  DisplayName: Scalars['String']['output'];
-  Id: Scalars['String']['output'];
-  State: Scalars['String']['output'];
-  TenantID: Scalars['String']['output'];
 };
 
 export type ChatInput = {
@@ -123,30 +41,6 @@ export type ChatInput = {
   Query: Scalars['String']['input'];
   Token?: InputMaybe<Scalars['String']['input']>;
 };
-
-export type CloudProvider = {
-  DiscoveredCount: Scalars['Int']['output'];
-  Error?: Maybe<Scalars['String']['output']>;
-  Id: Scalars['ID']['output'];
-  LastDiscoveryAt?: Maybe<Scalars['String']['output']>;
-  Name: Scalars['String']['output'];
-  ProviderType: CloudProviderType;
-  Region: Scalars['String']['output'];
-  Status: CloudProviderStatus;
-};
-
-export enum CloudProviderStatus {
-  Connected = 'Connected',
-  Disconnected = 'Disconnected',
-  Discovering = 'Discovering',
-  Error = 'Error'
-}
-
-export enum CloudProviderType {
-  Aws = 'AWS',
-  Azure = 'Azure',
-  Gcp = 'GCP'
-}
 
 export type Column = {
   __typename?: 'Column';
@@ -203,15 +97,6 @@ export type ColumnDefinitionInput = {
   Unique: Scalars['Boolean']['input'];
 };
 
-export enum ConnectionStatus {
-  Available = 'Available',
-  Deleting = 'Deleting',
-  Failed = 'Failed',
-  Starting = 'Starting',
-  Stopped = 'Stopped',
-  Unknown = 'Unknown'
-}
-
 export type CreationOptionDefinition = {
   __typename?: 'CreationOptionDefinition';
   Key: Scalars['String']['output'];
@@ -228,18 +113,6 @@ export enum DataShape {
   Tabular = 'Tabular'
 }
 
-export type DiscoveredConnection = {
-  __typename?: 'DiscoveredConnection';
-  Id: Scalars['ID']['output'];
-  Metadata: Array<Record>;
-  Name: Scalars['String']['output'];
-  ProviderID: Scalars['String']['output'];
-  ProviderType: CloudProviderType;
-  Region?: Maybe<Scalars['String']['output']>;
-  SourceType: Scalars['String']['output'];
-  Status: ConnectionStatus;
-};
-
 export type ForeignKeyDefinition = {
   __typename?: 'ForeignKeyDefinition';
   Column: Scalars['String']['output'];
@@ -249,39 +122,6 @@ export type ForeignKeyDefinition = {
 export type ForeignKeyDefinitionInput = {
   Column: Scalars['String']['input'];
   Table: Scalars['String']['input'];
-};
-
-export type GcpProvider = CloudProvider & {
-  __typename?: 'GCPProvider';
-  DiscoverAlloyDB: Scalars['Boolean']['output'];
-  DiscoverCloudSQL: Scalars['Boolean']['output'];
-  DiscoverMemorystore: Scalars['Boolean']['output'];
-  DiscoveredCount: Scalars['Int']['output'];
-  Error?: Maybe<Scalars['String']['output']>;
-  Id: Scalars['ID']['output'];
-  LastDiscoveryAt?: Maybe<Scalars['String']['output']>;
-  Name: Scalars['String']['output'];
-  ProjectID: Scalars['String']['output'];
-  ProviderType: CloudProviderType;
-  Region: Scalars['String']['output'];
-  ServiceAccountKeyPath?: Maybe<Scalars['String']['output']>;
-  Status: CloudProviderStatus;
-};
-
-export type GcpProviderInput = {
-  DiscoverAlloyDB?: InputMaybe<Scalars['Boolean']['input']>;
-  DiscoverCloudSQL?: InputMaybe<Scalars['Boolean']['input']>;
-  DiscoverMemorystore?: InputMaybe<Scalars['Boolean']['input']>;
-  Name: Scalars['String']['input'];
-  ProjectID: Scalars['String']['input'];
-  Region: Scalars['String']['input'];
-  ServiceAccountKeyPath?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type GcpRegion = {
-  __typename?: 'GCPRegion';
-  Description: Scalars['String']['output'];
-  Id: Scalars['String']['output'];
 };
 
 export type GenerateChatTitleInput = {
@@ -391,23 +231,6 @@ export type ImportSqlInput = {
   Script?: InputMaybe<Scalars['String']['input']>;
 };
 
-export type LocalAwsProfile = {
-  __typename?: 'LocalAWSProfile';
-  AuthType: Scalars['String']['output'];
-  IsDefault: Scalars['Boolean']['output'];
-  Name: Scalars['String']['output'];
-  Region?: Maybe<Scalars['String']['output']>;
-  Source: Scalars['String']['output'];
-};
-
-export type LocalGcpProject = {
-  __typename?: 'LocalGCPProject';
-  IsDefault: Scalars['Boolean']['output'];
-  Name: Scalars['String']['output'];
-  ProjectID: Scalars['String']['output'];
-  Source: Scalars['String']['output'];
-};
-
 export type MockDataDependencyAnalysis = {
   __typename?: 'MockDataDependencyAnalysis';
   Error?: Maybe<Scalars['String']['output']>;
@@ -448,55 +271,23 @@ export type MockDataTableInfo = {
 
 export type Mutation = {
   __typename?: 'Mutation';
-  AddAWSProvider: AwsProvider;
-  AddAzureProvider: AzureProvider;
-  AddGCPProvider: GcpProvider;
   AddSourceRow: StatusResponse;
   CreateSourceObject: StatusResponse;
   CreateSourceObjectFromDefinition: StatusResponse;
   DeleteSourceRow: StatusResponse;
   ExecuteConfirmedSQL: AiChatMessage;
   ExportSourceConnection: Array<Record>;
-  GenerateAzureADToken: Scalars['String']['output'];
   GenerateChatTitle: GenerateChatTitleResponse;
-  GenerateCloudSQLIAMAuthToken: Scalars['String']['output'];
   GenerateMockData: MockDataGenerationStatus;
-  GenerateRDSAuthToken: Scalars['String']['output'];
   ImportPreview: ImportPreview;
   ImportSQL: ImportResult;
   ImportSourceObjectFile: ImportResult;
   LoginSource: StatusResponse;
   LoginWithSourceProfile: StatusResponse;
   Logout: StatusResponse;
-  RefreshAzureProvider: AzureProvider;
-  RefreshCloudProvider: CloudProvider;
-  RefreshGCPProvider: GcpProvider;
-  RemoveCloudProvider: StatusResponse;
-  TestAWSCredentials: CloudProviderStatus;
-  TestAzureCredentials: CloudProviderStatus;
-  TestCloudProvider: CloudProviderStatus;
-  TestGCPCredentials: CloudProviderStatus;
   TestSourceConnection: StatusResponse;
-  UpdateAWSProvider: AwsProvider;
-  UpdateAzureProvider: AzureProvider;
-  UpdateGCPProvider: GcpProvider;
   UpdateSettings: StatusResponse;
   UpdateSourceObject: StatusResponse;
-};
-
-
-export type MutationAddAwsProviderArgs = {
-  input: AwsProviderInput;
-};
-
-
-export type MutationAddAzureProviderArgs = {
-  input: AzureProviderInput;
-};
-
-
-export type MutationAddGcpProviderArgs = {
-  input: GcpProviderInput;
 };
 
 
@@ -537,34 +328,13 @@ export type MutationExportSourceConnectionArgs = {
 };
 
 
-export type MutationGenerateAzureAdTokenArgs = {
-  providerID: Scalars['ID']['input'];
-  sourceType: Scalars['String']['input'];
-};
-
-
 export type MutationGenerateChatTitleArgs = {
   input: GenerateChatTitleInput;
 };
 
 
-export type MutationGenerateCloudSqliamAuthTokenArgs = {
-  providerID: Scalars['ID']['input'];
-  username: Scalars['String']['input'];
-};
-
-
 export type MutationGenerateMockDataArgs = {
   input: MockDataGenerationInput;
-};
-
-
-export type MutationGenerateRdsAuthTokenArgs = {
-  endpoint: Scalars['String']['input'];
-  port: Scalars['Int']['input'];
-  providerID: Scalars['ID']['input'];
-  region: Scalars['String']['input'];
-  username: Scalars['String']['input'];
 };
 
 
@@ -596,66 +366,8 @@ export type MutationLoginWithSourceProfileArgs = {
 };
 
 
-export type MutationRefreshAzureProviderArgs = {
-  id: Scalars['ID']['input'];
-};
-
-
-export type MutationRefreshCloudProviderArgs = {
-  id: Scalars['ID']['input'];
-};
-
-
-export type MutationRefreshGcpProviderArgs = {
-  id: Scalars['ID']['input'];
-};
-
-
-export type MutationRemoveCloudProviderArgs = {
-  id: Scalars['ID']['input'];
-};
-
-
-export type MutationTestAwsCredentialsArgs = {
-  input: AwsProviderInput;
-};
-
-
-export type MutationTestAzureCredentialsArgs = {
-  input: AzureProviderInput;
-};
-
-
-export type MutationTestCloudProviderArgs = {
-  id: Scalars['ID']['input'];
-};
-
-
-export type MutationTestGcpCredentialsArgs = {
-  input: GcpProviderInput;
-};
-
-
 export type MutationTestSourceConnectionArgs = {
   credentials: SourceLoginInput;
-};
-
-
-export type MutationUpdateAwsProviderArgs = {
-  id: Scalars['ID']['input'];
-  input: AwsProviderInput;
-};
-
-
-export type MutationUpdateAzureProviderArgs = {
-  id: Scalars['ID']['input'];
-  input: AzureProviderInput;
-};
-
-
-export type MutationUpdateGcpProviderArgs = {
-  id: Scalars['ID']['input'];
-  input: GcpProviderInput;
 };
 
 
@@ -690,23 +402,9 @@ export type Query = {
   __typename?: 'Query';
   AIModel: Array<Scalars['String']['output']>;
   AIProviders: Array<AiProvider>;
-  AWSRegions: Array<AwsRegion>;
   AnalyzeMockDataDependencies: MockDataDependencyAnalysis;
-  AzureProvider?: Maybe<AzureProvider>;
-  AzureProviders: Array<AzureProvider>;
-  AzureRegions: Array<AzureRegion>;
-  AzureSubscriptions: Array<AzureSubscription>;
-  CloudProvider?: Maybe<CloudProvider>;
-  CloudProviders: Array<CloudProvider>;
-  DiscoveredConnections: Array<DiscoveredConnection>;
-  GCPProvider?: Maybe<GcpProvider>;
-  GCPProviders: Array<GcpProvider>;
-  GCPRegions: Array<GcpRegion>;
   Health: HealthStatus;
-  LocalAWSProfiles: Array<LocalAwsProfile>;
-  LocalGCPProjects: Array<LocalGcpProject>;
   MockDataMaxRowCount: Scalars['Int']['output'];
-  ProviderConnections: Array<DiscoveredConnection>;
   RunSourceQuery: RowsResult;
   SSLStatus?: Maybe<SslStatus>;
   SettingsConfig: SettingsConfig;
@@ -741,26 +439,6 @@ export type QueryAnalyzeMockDataDependenciesArgs = {
   fkDensityRatio?: InputMaybe<Scalars['Int']['input']>;
   ref: SourceObjectRefInput;
   rowCount: Scalars['Int']['input'];
-};
-
-
-export type QueryAzureProviderArgs = {
-  id: Scalars['ID']['input'];
-};
-
-
-export type QueryCloudProviderArgs = {
-  id: Scalars['ID']['input'];
-};
-
-
-export type QueryGcpProviderArgs = {
-  id: Scalars['ID']['input'];
-};
-
-
-export type QueryProviderConnectionsArgs = {
-  providerID: Scalars['ID']['input'];
 };
 
 
@@ -858,12 +536,8 @@ export type SslStatus = {
 
 export type SettingsConfig = {
   __typename?: 'SettingsConfig';
-  AWSProviderEnabled: Scalars['Boolean']['output'];
-  AzureProviderEnabled: Scalars['Boolean']['output'];
-  CloudProvidersEnabled: Scalars['Boolean']['output'];
   DisableCredentialForm: Scalars['Boolean']['output'];
   EnableNewUI: Scalars['Boolean']['output'];
-  GCPProviderEnabled: Scalars['Boolean']['output'];
   MaxPageSize: Scalars['Int']['output'];
   MetricsEnabled?: Maybe<Scalars['Boolean']['output']>;
 };

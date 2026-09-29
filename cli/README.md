@@ -978,6 +978,35 @@ safe, and allow-write modes.
 
 Write operations require confirmation by default. Use `--allow-write` to disable confirmations, or `--read-only` to block writes entirely.
 
+#### Upload review and confirmation limitations
+
+For file uploads, the write plan, confirmation preview, and pending-action list
+show the full absolute source path, destination host and project, and folder ID
+(`null` means the project root). The summary quotes the path and escapes control
+characters. Relative paths are resolved against the MCP server's working
+directory when the action is prepared; confirmation uses that stored absolute
+path. A literal `~` is not expanded to the user's home directory.
+
+The CLI reads file contents only when the upload executes. The preview approves
+a path, not an immutable file snapshot: replacing the file or changing a symlink
+before execution can change the uploaded contents. This flow does not sandbox
+local file access; the CLI can read files permitted by its operating-system
+identity.
+
+**A confirmation token does not independently prove human approval.** The model
+receives the token and can call `whodb_platform_confirm`. The assistant is
+instructed to ask the user first, but an independent approval guarantee requires
+the MCP host or another trusted interaction outside the model's control to
+enforce that approval. Clear previews support informed review; they do not
+prevent a malicious or prompt-injected model from calling available tools.
+Use `--read-only` or `--safe-mode` to hide hosted write tools when writes are not
+needed. `--allow-write` executes uploads without the CLI confirmation step.
+
+Upload source paths are intentionally visible to the MCP client for review.
+They are excluded from WhoDB upload telemetry; client-side logging and retention
+are controlled by the MCP host. Other sensitive fields remain redacted, and
+persisted workflow payloads still reject local file paths.
+
 ### Transport Modes
 
 **stdio (default)** - For local CLI integration with Claude Desktop, Claude Code, etc.

@@ -92,7 +92,7 @@ go clean -testcache
 
 # 1. Unit Tests
 print_header "Running Unit Tests"
-if go test $VERBOSE ./internal/... 2>&1; then
+if go test $VERBOSE ./cmd/... ./internal/... ./pkg/... 2>&1; then
     UNIT_RESULT=0
 else
     UNIT_RESULT=1

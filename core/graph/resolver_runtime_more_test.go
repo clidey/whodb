@@ -31,17 +31,11 @@ import (
 
 func TestMutationUpdateSettingsAndQuerySettingsConfig(t *testing.T) {
 	originalSettings := settings.Get()
-	originalAWS := env.IsAWSProviderEnabled
-	originalAzure := env.IsAzureProviderEnabled
-	originalGCP := env.IsGCPProviderEnabled
 	originalDisableCredentialForm := env.DisableCredentialForm
 	originalNewUI := env.IsNewUIEnabled
 	originalMaxPageSize := env.MaxPageSize
 	t.Cleanup(func() {
 		settings.UpdateSettings(settings.MetricsEnabledField(originalSettings.MetricsEnabled))
-		env.IsAWSProviderEnabled = originalAWS
-		env.IsAzureProviderEnabled = originalAzure
-		env.IsGCPProviderEnabled = originalGCP
 		env.DisableCredentialForm = originalDisableCredentialForm
 		env.IsNewUIEnabled = originalNewUI
 		env.MaxPageSize = originalMaxPageSize
@@ -57,9 +51,6 @@ func TestMutationUpdateSettingsAndQuerySettingsConfig(t *testing.T) {
 		t.Fatalf("expected settings update to report success, got %#v", status)
 	}
 
-	env.IsAWSProviderEnabled = false
-	env.IsAzureProviderEnabled = true
-	env.IsGCPProviderEnabled = false
 	env.DisableCredentialForm = true
 	env.IsNewUIEnabled = true
 	env.MaxPageSize = 321
@@ -71,11 +62,8 @@ func TestMutationUpdateSettingsAndQuerySettingsConfig(t *testing.T) {
 	if cfg.MetricsEnabled == nil || !*cfg.MetricsEnabled {
 		t.Fatalf("expected metrics setting to be enabled, got %#v", cfg)
 	}
-	if !cfg.CloudProvidersEnabled || !cfg.DisableCredentialForm || !cfg.EnableNewUI || cfg.MaxPageSize != 321 {
+	if !cfg.DisableCredentialForm || !cfg.EnableNewUI || cfg.MaxPageSize != 321 {
 		t.Fatalf("expected settings config to reflect env flags, got %#v", cfg)
-	}
-	if cfg.AWSProviderEnabled || !cfg.AzureProviderEnabled || cfg.GCPProviderEnabled {
-		t.Fatalf("expected provider-specific settings to reflect env flags, got %#v", cfg)
 	}
 }
 
@@ -374,87 +362,6 @@ func TestQueryAIProvidersIncludesConfiguredAndBuiltinProviders(t *testing.T) {
 	}
 	if byID["ollama-1"] == nil || byID["ollama-1"].Name != "Ollama Local" {
 		t.Fatalf("expected Ollama provider to be returned, got %#v", providers)
-	}
-}
-
-func TestCloudQueriesReturnEmptyWhenProvidersDisabled(t *testing.T) {
-	originalAWS := env.IsAWSProviderEnabled
-	originalAzure := env.IsAzureProviderEnabled
-	originalGCP := env.IsGCPProviderEnabled
-	t.Cleanup(func() {
-		env.IsAWSProviderEnabled = originalAWS
-		env.IsAzureProviderEnabled = originalAzure
-		env.IsGCPProviderEnabled = originalGCP
-	})
-
-	env.IsAWSProviderEnabled = false
-	env.IsAzureProviderEnabled = false
-	env.IsGCPProviderEnabled = false
-
-	query := (&Resolver{}).Query()
-
-	discovered, err := query.DiscoveredConnections(context.Background())
-	if err != nil {
-		t.Fatalf("expected discovered connections query to succeed, got %v", err)
-	}
-	if len(discovered) != 0 {
-		t.Fatalf("expected no discovered connections when providers are disabled, got %#v", discovered)
-	}
-
-	connections, err := query.ProviderConnections(context.Background(), "provider-1")
-	if err != nil {
-		t.Fatalf("expected provider connections query to succeed, got %v", err)
-	}
-	if len(connections) != 0 {
-		t.Fatalf("expected no provider connections when providers are disabled, got %#v", connections)
-	}
-
-	awsProfiles, err := query.LocalAWSProfiles(context.Background())
-	if err != nil {
-		t.Fatalf("expected local AWS profiles query to succeed, got %v", err)
-	}
-	if len(awsProfiles) != 0 {
-		t.Fatalf("expected no AWS profiles when providers are disabled, got %#v", awsProfiles)
-	}
-
-	azureProviders, err := query.AzureProviders(context.Background())
-	if err != nil {
-		t.Fatalf("expected Azure providers query to succeed, got %v", err)
-	}
-	if len(azureProviders) != 0 {
-		t.Fatalf("expected no Azure providers when disabled, got %#v", azureProviders)
-	}
-
-	azureProvider, err := query.AzureProvider(context.Background(), "azure-1")
-	if err != nil {
-		t.Fatalf("expected Azure provider query to succeed, got %v", err)
-	}
-	if azureProvider != nil {
-		t.Fatalf("expected nil Azure provider when disabled, got %#v", azureProvider)
-	}
-
-	gcpProviders, err := query.GCPProviders(context.Background())
-	if err != nil {
-		t.Fatalf("expected GCP providers query to succeed, got %v", err)
-	}
-	if len(gcpProviders) != 0 {
-		t.Fatalf("expected no GCP providers when disabled, got %#v", gcpProviders)
-	}
-
-	gcpProvider, err := query.GCPProvider(context.Background(), "gcp-1")
-	if err != nil {
-		t.Fatalf("expected GCP provider query to succeed, got %v", err)
-	}
-	if gcpProvider != nil {
-		t.Fatalf("expected nil GCP provider when disabled, got %#v", gcpProvider)
-	}
-
-	localProjects, err := query.LocalGCPProjects(context.Background())
-	if err != nil {
-		t.Fatalf("expected local GCP projects query to succeed, got %v", err)
-	}
-	if len(localProjects) != 0 {
-		t.Fatalf("expected no GCP projects when disabled, got %#v", localProjects)
 	}
 }
 

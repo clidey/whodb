@@ -87,7 +87,11 @@ func (p *GormPlugin) Chat(config *engine.PluginConfig, schema string, previousCo
 			query,
 			config.ExternalModel,
 			bamlconfig.ChatQueryExecutorFunc(func(_ ctx.Context, query string, params ...any) (*source.RowsResult, error) {
-				return p.RawExecute(config, query, params...)
+				protected, err := plugins.ReadOnlyConfig(config, query)
+				if err != nil {
+					return nil, err
+				}
+				return p.RawExecute(protected, query, params...)
 			}),
 		)
 	})

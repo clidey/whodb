@@ -57,6 +57,7 @@ const MUTATING_TESTS = [
   /key-types\.spec/,
   /schema-management\.spec/,
   /chat\.spec/,
+  /protected-chat\.ce\.spec/,
   /keyboard-shortcuts\.spec/,
   /type-casting\.spec/,
 ];

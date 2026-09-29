@@ -15,7 +15,7 @@
  */
 
 import { useLazyQuery, useMutation, useQuery } from "@apollo/client/react";
-import {Badge, Button, Card, cn, Label, ModeToggle, Separator, toast, useTheme} from '@clidey/ux';
+import {Alert, AlertDescription, AlertTitle, Badge, Button, Card, cn, Label, ModeToggle, Separator, toast, useTheme} from '@clidey/ux';
 import {SearchSelect} from '../../components/ux';
 import {
     SettingsConfigDocument,
@@ -37,6 +37,7 @@ import {
     CheckCircleIcon,
     ChevronDownIcon,
     CodeBracketIcon,
+    InformationCircleIcon,
     ShareIcon,
     SparklesIcon,
     TableCellsIcon
@@ -62,18 +63,7 @@ import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {isDesktopApp} from '../../utils/external-links';
 import {v4 as uuidv4} from 'uuid';
 import {hasCompletedOnboarding, markOnboardingComplete} from '../../utils/onboarding';
-import {
-    AwsConnectionPicker,
-    DatabaseIconWithBadge,
-    isAwsConnection
-} from '../../components/aws';
-import {AzureConnectionPicker, isAzureConnection} from '../../components/azure';
-import {
-    GcpConnectionPicker,
-    isGcpConnection,
-} from '../../components/gcp';
-import type {ConnectionPrefillData} from '../../utils/cloud-connection-prefill';
-import { isAwsHostname, isAzureHostname, isGcpHostname} from '../../utils/cloud-connection-prefill';
+import {DatabaseIconWithBadge} from '../../components/database-icon-with-badge';
 import { SourceAdvancedFields } from '@/components/source-advanced-fields';
 import { clearGraphqlStore } from '@/config/graphql-client';
 import {
@@ -81,7 +71,6 @@ import {
     buildSourceValues,
     createProfilePayload,
     createProfilePayloadFromSourceProfile,
-    getValue,
 } from '../../utils/source-credentials';
 import {
     buildSourceAdvancedSectionState,
@@ -218,17 +207,13 @@ export const LoginForm: FC<LoginFormProps> = ({
     const [getDatabases, { loading: databasesLoading, data: foundDatabases }] = useLazyQuery(SourceFieldOptionsDocument);
     const { loading: profilesLoading, data: profiles } = useQuery(SourceProfilesDocument);
     const { data: settingsData } = useQuery(SettingsConfigDocument);
-    const cloudProvidersEnabled = settingsData?.SettingsConfig?.CloudProvidersEnabled ?? false;
-    const awsProviderEnabled = settingsData?.SettingsConfig?.AWSProviderEnabled ?? false;
-    const azureProviderEnabled = settingsData?.SettingsConfig?.AzureProviderEnabled ?? false;
-    const gcpProviderEnabled = settingsData?.SettingsConfig?.GCPProviderEnabled ?? false;
     const disableCredentialForm = settingsData?.SettingsConfig?.DisableCredentialForm ?? false;
     const maxPageSize = settingsData?.SettingsConfig?.MaxPageSize ?? 10000;
     const {
         items: databaseTypeItems,
         loading: databaseTypesLoading,
         error: databaseTypesError,
-    } = useSourceTypeItems({ cloudProvidersEnabled, awsProviderEnabled, includePlatformOnly: true });
+    } = useSourceTypeItems({ includePlatformOnly: true });
     const [searchParams, setSearchParams] = useSearchParams();
 
     const databaseTypesLoaded = !databaseTypesLoading;
@@ -250,12 +235,8 @@ export const LoginForm: FC<LoginFormProps> = ({
     const { isDesktop, selectDatabaseFile } = useDesktopFile();
 
     useEffect(() => {
-        dispatch(SettingsActions.setCloudProvidersEnabled(cloudProvidersEnabled));
-        dispatch(SettingsActions.setAWSProviderEnabled(awsProviderEnabled));
-        dispatch(SettingsActions.setAzureProviderEnabled(azureProviderEnabled));
-        dispatch(SettingsActions.setGCPProviderEnabled(gcpProviderEnabled));
         dispatch(SettingsActions.setMaxPageSize(maxPageSize));
-    }, [cloudProvidersEnabled, awsProviderEnabled, azureProviderEnabled, gcpProviderEnabled, maxPageSize, dispatch]);
+    }, [maxPageSize, dispatch]);
 
     useEffect(() => {
         if (databaseTypeItems.length === 0) {
@@ -619,8 +600,7 @@ export const LoginForm: FC<LoginFormProps> = ({
 
     const handleDatabaseTypeChange = useCallback((item: SourceTypeItem) => {
         // Platform-only entries open the explainer instead of becoming the
-        // active type — regardless of whether they arrive via the picker,
-        // URL params, or cloud prefill.
+        // active type, regardless of whether it arrives via the picker or URL params.
         if (item.platformOnly) {
             setPlatformSourceType({ id: item.id, label: item.label });
             return;
@@ -670,54 +650,6 @@ export const LoginForm: FC<LoginFormProps> = ({
         });
         setSelectedAvailableProfile(itemId);
     }, []);
-
-    /**
-     * Handle prefill from a cloud connection picker (AWS, Azure, GCP).
-     * Updates the main login form with discovered connection details,
-     * then focuses the username field for easy credential entry.
-     */
-    const handleCloudConnectionPrefill = useCallback((data: ConnectionPrefillData) => {
-        loginFormTouchedRef.current = true;
-        trackFrontendIntent('auth.cloud_connection_prefilled', {
-            database_type: data.databaseType,
-            has_database: data.database != null && data.database.trim().length > 0,
-            has_advanced_fields: Object.keys(data.advanced).length > 0,
-            advanced_field_count: Object.keys(data.advanced).length,
-        });
-        // Find the database type in our dropdown items
-        const dbType = databaseTypeItems.find(item =>
-            item.id.toLowerCase() === data.databaseType.toLowerCase()
-        );
-
-        if (dbType) {
-            // Use the proper handler to set database type and reset fields
-            handleDatabaseTypeChange(dbType);
-
-            // Set hostname and advanced settings after type change completes
-            setTimeout(() => {
-                if (data.hostname) {
-                    setHostName(data.hostname);
-                }
-                if (data.database) {
-                    setDatabase(data.database);
-                }
-
-                // Merge advanced settings
-                if (data.advanced && Object.keys(data.advanced).length > 0) {
-                    setAdvancedForm(prev => ({
-                        ...prev,
-                        ...data.advanced,
-                    }));
-                    setShowAdvanced(true);
-                }
-
-                // Focus username field after form updates
-                setTimeout(() => {
-                    usernameInputRef.current?.focus();
-                }, 50);
-            }, 0);
-        }
-    }, [databaseTypeItems, handleDatabaseTypeChange]);
 
     const handleBrowseDatabaseFile = useCallback(async () => {
         loginFormTouchedRef.current = true;
@@ -800,27 +732,19 @@ export const LoginForm: FC<LoginFormProps> = ({
     const availableProfiles = useMemo(() => {
         return profiles?.SourceProfiles
             .filter(profile => profile.Source !== "builtin")
-            .filter(profile => {
-                const hostname = getValue(profile.Values, "Hostname");
-                if (isAwsHostname(hostname)) return awsProviderEnabled;
-                if (isAzureHostname(hostname)) return azureProviderEnabled;
-                if (isGcpHostname(hostname)) return gcpProviderEnabled;
-                return true;
-            })
             .map(profile => ({
                 value: profile.Id,
                 label: profile.Alias ?? profile.Id,
                 icon: (
                     <DatabaseIconWithBadge
                         icon={(Icons.Logos as Record<string, ReactElement>)[profile.Type]}
-                        showCloudBadge={isAwsConnection(profile.Id) || isAzureConnection(profile.Id) || isGcpConnection(profile.Id)}
                         sslStatus={profile.SSLConfigured ? { IsEnabled: true, Mode: 'configured' } : undefined}
                         size="sm"
                     />
                 ),
                 rightIcon: sources[profile.Source],
             })) ?? [];
-    }, [profiles?.SourceProfiles, awsProviderEnabled, azureProviderEnabled, gcpProviderEnabled]);
+    }, [profiles?.SourceProfiles]);
 
     const hasAvailableProfiles = availableProfiles.length > 0;
 
@@ -1044,7 +968,7 @@ export const LoginForm: FC<LoginFormProps> = ({
     return (
         <div className={classNames("w-fit h-fit", className, {
             "w-full h-full": advancedDirection === "vertical",
-            "flex gap-8": showSidePanel && advancedDirection === "horizontal",
+            "flex flex-col gap-8 md:flex-row": showSidePanel && advancedDirection === "horizontal",
         })} data-testid="login-form-container">
             <div className="fixed top-4 right-4 z-20" data-testid="mode-toggle-login">
                 <ModeToggle />
@@ -1069,10 +993,10 @@ export const LoginForm: FC<LoginFormProps> = ({
                     </header>
                 )}
                 <div className={classNames("flex", {
-                    "flex-row grow": advancedDirection === "horizontal",
+                    "flex-col md:flex-row grow": advancedDirection === "horizontal",
                     "flex-col w-full gap-lg": advancedDirection === "vertical",
                 })} data-testid="login-form">
-                    <div className={classNames("flex flex-col gap-lg grow", advancedDirection === "vertical" ? "w-full" : "w-[350px]")}>
+                    <div className={classNames("flex flex-col gap-lg grow", advancedDirection === "vertical" ? "w-full" : "w-full md:w-[350px]")}>
                         <div className={cn("flex flex-col grow gap-lg", {
                             "justify-center": advancedDirection === "horizontal" && !showSidePanel,
                         })}>
@@ -1119,7 +1043,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                     {
                         (showAdvanced && advancedSection.hasAdvancedSection && !databaseType.customFormRenderer) &&
                         <div className={classNames("transition-all h-full overflow-hidden flex flex-col gap-lg", {
-                            "w-[350px] ml-4": advancedDirection === "horizontal",
+                            "w-full mt-6 md:mt-0 md:w-[350px] md:ml-4": advancedDirection === "horizontal",
                             "w-full": advancedDirection === "vertical",
                         })}>
                             <SourceAdvancedFields
@@ -1184,6 +1108,11 @@ export const LoginForm: FC<LoginFormProps> = ({
                         {!disableCredentialForm && <Separator className="my-8" />}
                         <div className="flex flex-col gap-lg">
                             <Label>{t('availableProfiles')}</Label>
+                            <Alert data-testid="profile-access-notice">
+                                <InformationCircleIcon className="h-4 w-4" aria-hidden="true" />
+                                <AlertTitle>{t('profileAccessNoticeTitle')}</AlertTitle>
+                                <AlertDescription>{t('profileAccessNoticeDescription')}</AlertDescription>
+                            </Alert>
                             <SearchSelect
                                 value={selectedAvailableProfile}
                                 onChange={handleAvailableProfileChange}
@@ -1201,41 +1130,10 @@ export const LoginForm: FC<LoginFormProps> = ({
                         </div>
                     </>
                 }
-                {cloudProvidersEnabled && (
-                    <>
-                        {awsProviderEnabled && (
-                            <>
-                                <Separator className="my-8" />
-                                <AwsConnectionPicker
-                                    onSelectConnection={handleCloudConnectionPrefill}
-                                    sourceTypes={databaseTypeItems}
-                                />
-                            </>
-                        )}
-                        {azureProviderEnabled && (
-                            <>
-                                <Separator className="my-8" />
-                                <AzureConnectionPicker
-                                    onSelectConnection={handleCloudConnectionPrefill}
-                                    sourceTypes={databaseTypeItems}
-                                />
-                            </>
-                        )}
-                        {gcpProviderEnabled && (
-                            <>
-                                <Separator className="my-8" />
-                                <GcpConnectionPicker
-                                    onSelectConnection={handleCloudConnectionPrefill}
-                                    sourceTypes={databaseTypeItems}
-                                />
-                            </>
-                        )}
-                    </>
-                )}
             </div>
             {
                 showSidePanel && advancedDirection === "horizontal" && (
-                    <Card className="flex flex-col gap-6 p-8 w-[380px] shadow-xl" data-testid="sample-database-panel" aria-labelledby="sample-db-heading">
+                    <Card className="flex flex-col gap-6 p-8 w-full md:w-[380px] shadow-xl" data-testid="sample-database-panel" aria-labelledby="sample-db-heading">
                         <div className="flex flex-col gap-4">
                             <div className="flex items-center gap-3">
                                 <div className="h-14 w-14 rounded-2xl flex justify-center items-center bg-gradient-to-br from-brand to-brand/80 shadow-lg" aria-hidden="true">
@@ -1349,9 +1247,9 @@ export const LoginPage: FC = () => {
     const { t } = useTranslation('pages/login');
 
     return (
-        <Container className="justify-center items-center">
+        <Container className="flex-col justify-center items-center gap-6 overflow-y-auto md:flex-row md:gap-0">
             <LoginForm />
-            <div className="fixed bottom-4 left-1/2 -translate-x-1/2 text-xs text-foreground/60" data-testid="login-page-version">
+            <div className="shrink-0 pb-4 text-xs text-foreground/60 md:fixed md:bottom-4 md:left-1/2 md:-translate-x-1/2 md:pb-0" data-testid="login-page-version">
                 {t('version')}: {__APP_VERSION__}
             </div>
         </Container>

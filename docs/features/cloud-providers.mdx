@@ -1,157 +1,44 @@
 ---
 title: "Cloud Providers"
-description: "Discover and connect to managed databases on AWS, Azure, and Google Cloud from WhoDB, including RDS, ElastiCache, and Cloud SQL"
+description: "Inspect cloud providers and discovered database resources from the WhoDB CLI"
 ---
 
 # Cloud Providers
 
-WhoDB can discover managed database resources from AWS, Azure, and GCP, then prefill the standard login form from those discovered endpoints.
+Cloud-provider management and discovery are available only through the local WhoDB CLI. The CE web server does not load provider credentials or expose provider management, discovery, or database-token operations through GraphQL.
 
-<Warning>
-Cloud provider discovery is still not production-ready in the current CE build. That is why these integrations are disabled by default. If you want to experiment with them, you can enable the provider flags and try them in a non-production environment.
-</Warning>
+The CLI uses the provider configuration and credential sources available to the user running it. Provider support remains disabled by default and must be explicitly enabled for local CLI use.
 
-## Enable Provider Support
+## CLI Commands
 
-Cloud discovery is opt-in, disabled by default, and controlled with environment flags:
+```bash
+whodb cloud providers list
+whodb cloud providers test <provider-id>
+whodb cloud providers refresh --all
+whodb cloud connections list
+```
+
+See [CLI and MCP](/features/cli-and-mcp) for the complete command reference.
+
+## Provider Flags
 
 | Variable | Purpose |
 |----------|---------|
-| `WHODB_ENABLE_AWS_PROVIDER=true` | Enable AWS provider management and discovery |
-| `WHODB_ENABLE_AZURE_PROVIDER=true` | Enable Azure provider management and discovery |
-| `WHODB_ENABLE_GCP_PROVIDER=true` | Enable GCP provider management and discovery |
+| `WHODB_ENABLE_AWS_PROVIDER=true` | Enable AWS providers for CLI discovery |
+| `WHODB_ENABLE_AZURE_PROVIDER=true` | Enable Azure providers for CLI discovery |
+| `WHODB_ENABLE_GCP_PROVIDER=true` | Enable GCP providers for CLI discovery |
 
-Once enabled:
+These variables do not enable cloud-provider functionality in the CE web server.
 
-- the login page can show cloud connection pickers
-- the settings page adds provider management sections
-- provider-backed credential helpers become available for supported platforms
+## Web Connections
 
-<Note>
-Treat provider discovery as an experimental workflow for now. It is available for testing, but it should not be treated as a production-ready path in the current CE build.
-</Note>
-
-## AWS
-
-AWS provider configuration is supplied through `WHODB_AWS_PROVIDER` as a JSON array.
-
-```bash
-export WHODB_ENABLE_AWS_PROVIDER=true
-export WHODB_AWS_PROVIDER='[
-  {
-    "name": "Production AWS",
-    "region": "us-west-2",
-    "profileName": "production",
-    "discoverRDS": true,
-    "discoverElastiCache": true,
-    "discoverDocumentDB": true
-  }
-]'
-```
-
-The AWS provider code discovers:
-
-- RDS
-- ElastiCache
-- DocumentDB
-- OpenSearch
-
-It can also generate short-lived RDS IAM authentication tokens for supported flows.
-
-## Azure
-
-Azure provider configuration is supplied through `WHODB_AZURE_PROVIDER`.
-
-```bash
-export WHODB_ENABLE_AZURE_PROVIDER=true
-export WHODB_AZURE_PROVIDER='[
-  {
-    "name": "Production Azure",
-    "subscriptionId": "12345678-1234-1234-1234-123456789012",
-    "authMethod": "default",
-    "discoverPostgreSQL": true,
-    "discoverMySQL": true,
-    "discoverRedis": true,
-    "discoverCosmosDB": true
-  }
-]'
-```
-
-The Azure provider supports:
-
-- default credential chain auth
-- service principal auth
-
-It discovers Azure Database for PostgreSQL, Azure Database for MySQL, Azure Cache for Redis, and Azure Cosmos DB for MongoDB-compatible flows. It can also generate Azure AD database tokens for supported connections.
-
-## GCP
-
-GCP provider configuration is supplied through `WHODB_GCP_PROVIDER`.
-
-```bash
-export WHODB_ENABLE_GCP_PROVIDER=true
-export WHODB_GCP_PROVIDER='[
-  {
-    "name": "Production GCP",
-    "projectId": "my-project-123",
-    "region": "us-central1",
-    "serviceAccountKeyPath": "/path/to/key.json",
-    "discoverCloudSQL": true,
-    "discoverAlloyDB": true,
-    "discoverMemorystore": true
-  }
-]'
-```
-
-The GCP provider supports:
-
-- Application Default Credentials
-- service account key files
-
-It discovers Cloud SQL, AlloyDB, and Memorystore. It can also generate Cloud SQL IAM auth tokens for supported login flows.
-
-## How Discovery Appears In The UI
-
-### Login Page
-
-When providers are enabled, the login page can show:
-
-- AWS connection picker
-- Azure connection picker
-- GCP connection picker
-
-Selecting a discovered connection prefills the same standard login form used for manual connections.
-
-### Settings Page
-
-The settings page becomes the management surface for providers:
-
-- add a provider
-- edit a provider
-- refresh discovery
-- remove a provider
-
-Environment-defined providers are managed in deployment configuration.
-
-## Reachability Still Matters
-
-Discovery fills connection details for you. The WhoDB process still needs network access to the discovered endpoint.
-
-- web deployments need direct network reachability
-- the desktop app needs local reachability
-- the CLI can add built-in SSH tunneling if needed
-
-<Warning>
-Even if discovery works for your account, keep it in test or evaluation environments for now. The provider integrations are intentionally off by default because they are not yet positioned as production-ready.
-</Warning>
-
-## Related Pages
+To connect through the CE web interface, enter the database endpoint and database credentials directly or use a server-configured source profile. The web interface does not request or store cloud-account credentials.
 
 <CardGroup cols={2}>
-<Card title="Settings" icon="cog" href="/features/settings">
-Manage providers from the settings page.
+<Card title="CLI and MCP" icon="terminal" href="/features/cli-and-mcp">
+Use local cloud-provider discovery commands.
 </Card>
-<Card title="First Login" icon="right-to-bracket" href="/first-login">
-See where the cloud pickers appear in the login flow.
+<Card title="Database Connectivity" icon="database" href="/features/database-connectivity">
+Configure direct database connections and source profiles.
 </Card>
 </CardGroup>

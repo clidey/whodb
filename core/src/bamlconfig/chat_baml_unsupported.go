@@ -31,14 +31,14 @@ import (
 
 // ChatQueryExecutor executes read queries produced by the chat planner.
 type ChatQueryExecutor interface {
-	RunQuery(ctx context.Context, query string, params ...any) (*source.RowsResult, error)
+	RunReadOnlyQuery(ctx context.Context, query string, params ...any) (*source.RowsResult, error)
 }
 
 // ChatQueryExecutorFunc adapts a function to ChatQueryExecutor.
 type ChatQueryExecutorFunc func(ctx context.Context, query string, params ...any) (*source.RowsResult, error)
 
-// RunQuery executes the wrapped function.
-func (fn ChatQueryExecutorFunc) RunQuery(ctx context.Context, query string, params ...any) (*source.RowsResult, error) {
+// RunReadOnlyQuery executes the wrapped function.
+func (fn ChatQueryExecutorFunc) RunReadOnlyQuery(ctx context.Context, query string, params ...any) (*source.RowsResult, error) {
 	return fn(ctx, query, params...)
 }
 

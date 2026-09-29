@@ -22,12 +22,14 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
 	"gorm.io/gorm"
 
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/importer"
 	"github.com/clidey/whodb/core/src/query"
 )
 
@@ -48,10 +50,11 @@ func mysqlIntegrationConfig() *engine.PluginConfig {
 		Username: "user",
 		Password: "password",
 		Database: "test_db",
+		Advanced: []engine.Record{{Key: "Port", Value: "3306"}},
 	})
 }
 
-func waitForMySQLOrders(t *testing.T, plugin *MySQLPlugin, config *engine.PluginConfig) {
+func waitForMySQLOrders(t *testing.T, plugin engine.PluginFunctions, config *engine.PluginConfig) {
 	t.Helper()
 
 	deadline := time.Now().Add(2 * time.Minute)
@@ -167,6 +170,54 @@ INSERT INTO %s (name) VALUES ('alpha'), ('beta');
 	}
 }
 
+func TestMySQLFamilyReadOnlyRawExecuteRejectsWrites(t *testing.T) {
+	tests := []struct {
+		name   string
+		plugin engine.PluginFunctions
+		config *engine.PluginConfig
+	}{
+		{name: "MySQL", plugin: NewMySQLPlugin().PluginFunctions, config: mysqlIntegrationConfig()},
+		{name: "MariaDB", plugin: NewMyMariaDBPlugin().PluginFunctions, config: mysqlFamilyIntegrationConfig(engine.DatabaseType_MariaDB, "3307")},
+		{name: "TiDB", plugin: NewTiDBPlugin().PluginFunctions, config: mysqlFamilyIntegrationConfig(engine.DatabaseType_TiDB, "4002")},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			waitForMySQLOrders(t, test.plugin, test.config)
+			table := fmt.Sprintf("read_only_guard_%d", time.Now().UnixNano())
+			if _, err := test.plugin.RawExecute(test.config, "CREATE TABLE "+table+" (id integer primary key)"); err != nil {
+				t.Fatalf("failed to create %s guard table: %v", test.name, err)
+			}
+			t.Cleanup(func() { _, _ = test.plugin.RawExecute(test.config, "DROP TABLE IF EXISTS "+table) })
+			if _, err := test.plugin.RawExecute(test.config, "INSERT INTO "+table+" VALUES (1)"); err != nil {
+				t.Fatalf("failed to seed %s guard table: %v", test.name, err)
+			}
+
+			test.config.ReadOnly = true
+			queries := []string{
+				"INSERT INTO " + table + " VALUES (2)",
+				"WITH x AS (SELECT 1) DELETE FROM " + table + " WHERE id=1",
+			}
+			for _, query := range queries {
+				if _, err := test.plugin.RawExecute(test.config, query); err == nil {
+					t.Errorf("expected %s read-only execution to reject %q", test.name, query)
+				}
+			}
+			test.config.MultiStatement = true
+			_, _ = test.plugin.RawExecute(test.config, "SELECT 1; DELETE FROM "+table+" WHERE id=1")
+			test.config.MultiStatement = false
+			test.config.ReadOnly = false
+			rows, err := test.plugin.RawExecute(test.config, "SELECT COUNT(*) FROM "+table)
+			if err != nil {
+				t.Fatalf("failed to verify %s guard table: %v", test.name, err)
+			}
+			if len(rows.Rows) != 1 || rows.Rows[0][0] != "1" {
+				t.Fatalf("%s guard table was modified: %#v", test.name, rows.Rows)
+			}
+		})
+	}
+}
+
 func TestMySQLGeneratedColumnsAndLastInsertID(t *testing.T) {
 	plugin := mysqlIntegrationPlugin(t)
 	config := mysqlIntegrationConfig()
@@ -179,6 +230,7 @@ func TestMySQLGeneratedColumnsAndLastInsertID(t *testing.T) {
 	_, err := plugin.RawExecute(config, fmt.Sprintf(`
 CREATE TABLE %s (
 	id BIGINT AUTO_INCREMENT PRIMARY KEY,
+	name VARCHAR(64),
 	subtotal INT NOT NULL,
 	tax INT NOT NULL,
 	total INT GENERATED ALWAYS AS (subtotal + tax) STORED
@@ -194,6 +246,13 @@ CREATE TABLE %s (
 	}
 	if err := plugin.MarkGeneratedColumns(config, "test_db", table, columns); err != nil {
 		t.Fatalf("MarkGeneratedColumns failed: %v", err)
+	}
+	if !findMySQLColumn(t, columns, "id").IsAutoIncrement {
+		t.Fatalf("expected id column to retain auto-increment metadata, got %#v", columns)
+	}
+	nameColumn := findMySQLColumn(t, columns, "name")
+	if nameColumn.Type != "VARCHAR(64)" || nameColumn.Length == nil || *nameColumn.Length != 64 {
+		t.Fatalf("expected name column to retain VARCHAR(64) metadata, got %#v", nameColumn)
 	}
 	if !findMySQLColumn(t, columns, "total").IsComputed {
 		t.Fatalf("expected total column to be marked as computed, got %#v", columns)
@@ -232,5 +291,96 @@ CREATE TABLE %s (
 	}
 	if len(totals.Rows) != 1 || totals.Rows[0][0] != "13" {
 		t.Fatalf("expected generated mysql total 13, got %#v", totals.Rows)
+	}
+}
+
+func TestMySQLOverwriteImportAcceptsQuotedTableName(t *testing.T) {
+	tests := []struct {
+		name   string
+		plugin engine.PluginFunctions
+		config *engine.PluginConfig
+	}{
+		{name: "MySQL", plugin: NewMySQLPlugin().PluginFunctions, config: mysqlIntegrationConfig()},
+		{name: "MariaDB", plugin: NewMyMariaDBPlugin().PluginFunctions, config: mysqlFamilyIntegrationConfig(engine.DatabaseType_MariaDB, "3307")},
+		{name: "TiDB", plugin: NewTiDBPlugin().PluginFunctions, config: mysqlFamilyIntegrationConfig(engine.DatabaseType_TiDB, "4002")},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			testMySQLOverwriteImportAcceptsQuotedTableName(t, test.plugin, test.config)
+		})
+	}
+}
+
+func mysqlFamilyIntegrationConfig(databaseType engine.DatabaseType, port string) *engine.PluginConfig {
+	return engine.NewPluginConfig(&engine.Credentials{
+		Type:     string(databaseType),
+		Hostname: "localhost",
+		Username: "user",
+		Password: "password",
+		Database: "test_db",
+		Advanced: []engine.Record{{Key: "Port", Value: port}},
+	})
+}
+
+func testMySQLOverwriteImportAcceptsQuotedTableName(t *testing.T, plugin engine.PluginFunctions, config *engine.PluginConfig) {
+	t.Helper()
+	waitForMySQLOrders(t, plugin, config)
+
+	guardTable := fmt.Sprintf("identifier_guard_%d", time.Now().UnixNano())
+	table := "identifier`; DELETE FROM " + guardTable + ";--"
+	quotedTable := "`" + strings.ReplaceAll(table, "`", "``") + "`"
+	_, _ = plugin.RawExecute(config, "DROP TABLE IF EXISTS "+quotedTable)
+	_, _ = plugin.RawExecute(config, "DROP TABLE IF EXISTS "+guardTable)
+	t.Cleanup(func() {
+		_, _ = plugin.RawExecute(config, "DROP TABLE IF EXISTS "+quotedTable)
+		_, _ = plugin.RawExecute(config, "DROP TABLE IF EXISTS "+guardTable)
+	})
+
+	setup := []string{
+		"CREATE TABLE " + guardTable + " (id INTEGER PRIMARY KEY)",
+		"INSERT INTO " + guardTable + " VALUES (1)",
+		"CREATE TABLE " + quotedTable + " (id INTEGER PRIMARY KEY, name VARCHAR(50))",
+		"INSERT INTO " + quotedTable + " VALUES (1, 'old')",
+	}
+	for _, statement := range setup {
+		if _, err := plugin.RawExecute(config, statement); err != nil {
+			t.Fatalf("failed to prepare quoted mysql table with %q: %v", statement, err)
+		}
+	}
+
+	columns, err := plugin.GetColumnsForTable(config, "test_db", table)
+	if err != nil {
+		t.Fatalf("failed to inspect quoted %s table: %v", config.Credentials.Type, err)
+	}
+	if len(columns) != 2 || columns[1].Name != "name" || columns[1].Type != "VARCHAR(50)" || columns[1].Length == nil || *columns[1].Length != 50 {
+		t.Fatalf("unexpected quoted %s table metadata: %#v", config.Credentials.Type, columns)
+	}
+
+	result, err := importer.Execute(plugin, config, &importer.ExecuteRequest{
+		Schema:      "test_db",
+		StorageUnit: table,
+		Mode:        importer.ModeOverwrite,
+		Parsed:      &importer.ParsedFile{Columns: []string{"id", "name"}, Rows: [][]string{{"2", "new"}}},
+		Mapping: []importer.ColumnMapping{
+			{SourceColumn: "id", TargetColumn: new("id")},
+			{SourceColumn: "name", TargetColumn: new("name")},
+		},
+		TargetColumns: []engine.Column{{Name: "id", Type: "INTEGER", IsPrimary: true}, {Name: "name", Type: "TEXT"}},
+	})
+	if err != nil {
+		t.Fatalf("overwrite import through quoted %s table failed: %v", config.Credentials.Type, err)
+	}
+	if result.RowsImported != 1 {
+		t.Fatalf("expected one imported mysql row, got %d", result.RowsImported)
+	}
+
+	rows, err := plugin.RawExecute(config, "SELECT name FROM "+quotedTable)
+	if err != nil || len(rows.Rows) != 1 || rows.Rows[0][0] != "new" {
+		t.Fatalf("unexpected mysql target rows: rows=%#v err=%v", rows, err)
+	}
+	guard, err := plugin.RawExecute(config, "SELECT COUNT(*) FROM "+guardTable)
+	if err != nil || len(guard.Rows) != 1 || guard.Rows[0][0] != "1" {
+		t.Fatalf("mysql guard table was modified: rows=%#v err=%v", guard, err)
 	}
 }
