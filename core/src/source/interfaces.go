@@ -123,13 +123,10 @@ type QueryRunner interface {
 	RunQuery(ctx context.Context, sql string, params ...any) (*RowsResult, error)
 }
 
-// ReadOnlyQueryRunner executes a query with the engine itself refusing writes,
-// for callers that have already classified the statement as a read. It is a
-// second line of defense: a statement that slips past classification fails at
-// the database instead of modifying data.
+// ReadOnlyQueryRunner validates queries and applies connector read-only protection.
+// Implementations reject unsupported protection instead of executing normally.
 type ReadOnlyQueryRunner interface {
-	// RunReadOnlyQuery executes a query that must not modify anything. Sources
-	// that cannot enforce this fall back to ordinary execution.
+	// RunReadOnlyQuery executes a supported read or returns an error.
 	RunReadOnlyQuery(ctx context.Context, sql string, params ...any) (*RowsResult, error)
 }
 

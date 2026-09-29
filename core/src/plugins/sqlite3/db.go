@@ -103,7 +103,7 @@ func (p *Sqlite3Plugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 	})
 
 	dsn := fileNameDatabase
-	if config != nil && config.ReadOnly && config.MultiStatement {
+	if config != nil && config.ReadOnly {
 		uri := url.URL{Scheme: "file", Path: fileNameDatabase}
 		query := uri.Query()
 		query.Set("mode", "ro")

@@ -101,11 +101,16 @@ func GetGormLogConfig() logger.LogLevel {
 // Connections are cached and reused across operations to prevent connection exhaustion.
 // The underlying sql.DB handles connection pooling internally.
 // If config.Transaction is set (as a *gorm.DB), it will be used instead of creating a new connection.
-// Multi-statement connections bypass the cache and are closed immediately after use.
+// Multi-statement and protected connections bypass the cache and close after use.
 func WithConnection[T any](config *engine.PluginConfig, dbFn DBCreationFunc, operation DBOperation[T]) (T, error) {
 	if config == nil {
 		var zero T
 		return zero, errors.New("plugin configuration is required")
+	}
+
+	if config.ReadOnly && config.Transaction != nil {
+		var zero T
+		return zero, errors.New("protected queries cannot join an existing transaction")
 	}
 
 	// Check if we're operating within a transaction
@@ -115,9 +120,9 @@ func WithConnection[T any](config *engine.PluginConfig, dbFn DBCreationFunc, ope
 		}
 	}
 
-	// Multi-statement connections are one-off (e.g., SQL imports). Create a fresh
-	// connection, run the operation, and close it — no caching.
-	if config.MultiStatement {
+	// Scripts and protected reads own their connections. Closing protected
+	// connections also prevents failed session-state cleanup from poisoning a pool.
+	if config.MultiStatement || config.ReadOnly {
 		db, err := dbFn(config)
 		if err != nil {
 			var zero T

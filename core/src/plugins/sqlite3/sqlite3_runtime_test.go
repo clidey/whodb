@@ -25,6 +25,7 @@ import (
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/importer"
+	_ "github.com/clidey/whodb/core/src/sources/database"
 )
 
 func newSQLiteRuntimeTestFixture(t *testing.T, statements ...string) (*Sqlite3Plugin, *engine.PluginConfig, *gorm.DB) {
@@ -300,5 +301,30 @@ func TestOverwriteImportTreatsCraftedExistingNameAsOneIdentifier(t *testing.T) {
 	}
 	if secretRows != 1 {
 		t.Fatalf("expected secrets table to remain untouched, got %d rows", secretRows)
+	}
+}
+
+func TestSQLiteProtectedConnectionCannotEnableWrites(t *testing.T) {
+	plugin, config, _ := newSQLiteRuntimeTestFixture(t, "CREATE TABLE guard (id INTEGER PRIMARY KEY)", "INSERT INTO guard VALUES (1)")
+	config.ReadOnly = true
+	db, err := plugin.DB(config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sqlDB, err := db.DB()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer sqlDB.Close()
+	// Bypass the classifier deliberately: file access mode must still stop writes.
+	if err := db.Exec("PRAGMA query_only=OFF").Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Exec("INSERT INTO guard VALUES (2)").Error; err == nil {
+		t.Fatal("read-only file connection allowed write")
+	}
+	var count int
+	if err := db.Raw("SELECT count(*) FROM guard").Scan(&count).Error; err != nil || count != 1 {
+		t.Fatalf("unexpected protected state: %d %v", count, err)
 	}
 }

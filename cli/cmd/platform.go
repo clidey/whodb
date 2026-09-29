@@ -266,6 +266,7 @@ var loginCmd = &cobra.Command{
 		if len(selection.Orgs) == 0 {
 			out.Info(noOrganizationAccessMessage(client.Host()))
 		}
+		printLoginNextSteps(out)
 		return nil
 	},
 }
@@ -2263,4 +2264,13 @@ func noProjectsMessage(orgName string) string {
 func isAffirmativeConfirmation(answer string) bool {
 	normalized := strings.ToLower(strings.TrimSpace(answer))
 	return normalized == "y" || normalized == "yes"
+}
+
+// printLoginNextSteps mirrors the hosted /mcp-connected page so both the
+// browser and device-code sign-in flows end with the same suggested commands.
+func printLoginNextSteps(out *output.Writer) {
+	out.Info("")
+	out.Info("Try these next:")
+	out.Info("  Check your workspace:            whodb status")
+	out.Info("  Start your assistant connection: whodb mcp serve --platform")
 }

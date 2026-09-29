@@ -17,7 +17,7 @@ type queryExecutorStub struct {
 	err     error
 }
 
-func (s *queryExecutorStub) RunQuery(_ context.Context, query string, _ ...any) (*source.RowsResult, error) {
+func (s *queryExecutorStub) RunReadOnlyQuery(_ context.Context, query string, _ ...any) (*source.RowsResult, error) {
 	s.queries = append(s.queries, query)
 	return s.result, s.err
 }
@@ -215,5 +215,16 @@ func TestSetupAIClientAndCreateDynamicBAMLClient(t *testing.T) {
 
 	if got := SetupAIClient(model); len(got) != 1 {
 		t.Fatalf("expected one call option when model is configured, got %d", len(got))
+	}
+}
+
+func TestPlannerCannotLabelWritesAsReads(t *testing.T) {
+	for _, query := range []string{"SELECT * INTO stolen FROM users", "SELECT 1; DELETE FROM users", "SELECT side_effect()"} {
+		op := types.OperationTypeGET
+		runner := &queryExecutorStub{}
+		message := ProcessChatResponse(t.Context(), &types.ChatResponse{Type: types.ChatMessageTypeSQL, Operation: &op, Text: query}, runner)
+		if !message.RequiresConfirmation || len(runner.queries) != 0 {
+			t.Fatalf("model label bypassed approval: %#v", message)
+		}
 	}
 }

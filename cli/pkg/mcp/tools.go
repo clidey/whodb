@@ -19,10 +19,12 @@ package mcp
 import (
 	"context"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"sync"
 	"time"
 
@@ -58,16 +60,17 @@ type QueryInput struct {
 
 // QueryOutput is the output for the whodb_query tool.
 type QueryOutput struct {
-	Columns              []string `json:"columns"`
-	ColumnTypes          []string `json:"column_types,omitempty"`
-	Rows                 [][]any  `json:"rows"`
-	Error                string   `json:"error,omitempty"`
-	Warning              string   `json:"warning,omitempty"`
-	ConfirmationRequired bool     `json:"confirmation_required,omitempty"`
-	ConfirmationToken    string   `json:"confirmation_token,omitempty"`
-	ConfirmationQuery    string   `json:"confirmation_query,omitempty"`
-	ConfirmationExpiry   string   `json:"confirmation_expiry,omitempty"` // ISO 8601 timestamp when the token expires
-	RequestID            string   `json:"request_id,omitempty"`          // Unique ID for request tracing
+	Columns                []string `json:"columns"`
+	ColumnTypes            []string `json:"column_types,omitempty"`
+	Rows                   [][]any  `json:"rows"`
+	Error                  string   `json:"error,omitempty"`
+	Warning                string   `json:"warning,omitempty"`
+	ConfirmationRequired   bool     `json:"confirmation_required,omitempty"`
+	ConfirmationToken      string   `json:"confirmation_token,omitempty"`
+	ConfirmationQuery      string   `json:"confirmation_query,omitempty"`
+	ConfirmationParameters []any    `json:"confirmation_parameters,omitempty"`
+	ConfirmationExpiry     string   `json:"confirmation_expiry,omitempty"` // ISO 8601 timestamp when the token expires
+	RequestID              string   `json:"request_id,omitempty"`          // Unique ID for request tracing
 }
 
 // MarshalJSON ensures nil slices are serialized as [] instead of null,
@@ -255,6 +258,7 @@ type PendingInput struct{}
 type PendingInfo struct {
 	Token      string `json:"token"`
 	Query      string `json:"query,omitempty"`
+	Parameters []any  `json:"parameters,omitempty"`
 	Connection string `json:"connection,omitempty"`
 	ExpiresAt  string `json:"expires_at"` // ISO 8601
 }
@@ -277,11 +281,13 @@ func (o PendingOutput) MarshalJSON() ([]byte, error) {
 
 // PendingConfirmation stores a query awaiting user confirmation
 type PendingConfirmation struct {
-	Token      string
-	Query      string
-	Connection string
-	ExpiresAt  time.Time
-	inFlight   bool // true while a confirm is actively executing this token
+	Token             string
+	Query             string
+	Connection        string
+	Parameters        []any
+	targetFingerprint [32]byte
+	ExpiresAt         time.Time
+	inFlight          bool // true while a confirm is actively executing this token
 }
 
 // pendingConfirmations stores queries awaiting confirmation
@@ -296,7 +302,7 @@ func generateConfirmationToken() string {
 }
 
 // storePendingConfirmation stores a query for later confirmation
-func storePendingConfirmation(query, connection string) (string, time.Time) {
+func storePendingConfirmation(query string, connection *dbmgr.Connection, parameters []any) (string, time.Time) {
 	token := generateConfirmationToken()
 
 	pendingMutex.Lock()
@@ -312,21 +318,29 @@ func storePendingConfirmation(query, connection string) (string, time.Time) {
 
 	expiresAt := now.Add(5 * time.Minute)
 	pendingConfirmations[token] = &PendingConfirmation{
-		Token:      token,
-		Query:      query,
-		Connection: connection,
-		ExpiresAt:  expiresAt,
+		Token:             token,
+		Query:             query,
+		Connection:        connection.Name,
+		Parameters:        slices.Clone(parameters),
+		targetFingerprint: connectionFingerprint(connection),
+		ExpiresAt:         expiresAt,
 	}
 
 	return token, expiresAt
+}
+
+func connectionFingerprint(connection *dbmgr.Connection) [32]byte {
+	// Connection contains only JSON-compatible scalars and string maps.
+	data, _ := json.Marshal(connection)
+	return sha256.Sum256(data)
 }
 
 // getPendingConfirmation claims a pending confirmation for execution. It marks
 // the token in-flight so concurrent confirm calls with the same token are
 // rejected, preventing a get/consume race from executing the (non-idempotent)
 // write twice. The token is not deleted here — it stays valid until consumed by
-// consumePendingConfirmation on success, or released by releasePendingConfirmation
-// on failure so the caller can retry (e.g. after a connection error or timeout).
+// consumePendingConfirmation before dispatch, or released after a pre-dispatch
+// failure. A timeout after dispatch must never release the approval.
 func getPendingConfirmation(token string) (*PendingConfirmation, error) {
 	pendingMutex.Lock()
 	defer pendingMutex.Unlock()
@@ -359,7 +373,7 @@ func releasePendingConfirmation(token string) {
 	}
 }
 
-// consumePendingConfirmation removes a token after successful execution.
+// consumePendingConfirmation removes approval before dispatch or after invalidation.
 func consumePendingConfirmation(token string) {
 	pendingMutex.Lock()
 	defer pendingMutex.Unlock()
@@ -586,7 +600,7 @@ func HandleQuery(ctx context.Context, req *mcp.CallToolRequest, input QueryInput
 	// confirmation before execution. Using !sqlguard.IsReadOnly (rather than a positive
 	// write-verb allowlist) ensures unrecognized write statements — COPY, DO, MERGE,
 	// CALL, GRANT, writable CTEs — cannot execute without confirmation.
-	if secOpts.ConfirmWrites && !sqlguard.IsReadOnly(input.Query) {
+	if !secOpts.ReadOnly && secOpts.ConfirmWrites && !sqlguard.IsReadOnly(input.Query) {
 		// Validate the query first (check for other issues like multi-statement, dangerous functions)
 		// Pass allowWrite=true and allowDestructive=true since user will confirm
 		err := ValidateSQLStatement(input.Query, true, secOpts.SecurityLevel, secOpts.AllowMultiStatement, true)
@@ -597,16 +611,24 @@ func HandleQuery(ctx context.Context, req *mcp.CallToolRequest, input QueryInput
 		}
 
 		// Create a pending confirmation for the write operation
-		token, expiresAt := storePendingConfirmation(input.Query, input.Connection)
+		conn, err := ResolveConnectionOrDefault(input.Connection)
+		if err != nil {
+			return nil, QueryOutput{Error: err.Error(), RequestID: requestID}, nil
+		}
+		if !secOpts.isConnectionAllowed(conn.Name) {
+			return nil, QueryOutput{Error: "connection is not allowed", RequestID: requestID}, nil
+		}
+		token, expiresAt := storePendingConfirmation(input.Query, conn, input.Parameters)
 
 		TrackToolCall(ctx, "query", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"confirmation_required": true, "statement_type": stmtType})
 		return nil, QueryOutput{
-			ConfirmationRequired: true,
-			ConfirmationToken:    token,
-			ConfirmationQuery:    input.Query,
-			ConfirmationExpiry:   expiresAt.UTC().Format(time.RFC3339),
-			Warning:              fmt.Sprintf("This %s operation requires your approval before it runs. You have 5 minutes to confirm or cancel.", stmtType),
-			RequestID:            requestID,
+			ConfirmationRequired:   true,
+			ConfirmationToken:      token,
+			ConfirmationQuery:      input.Query,
+			ConfirmationParameters: slices.Clone(input.Parameters),
+			ConfirmationExpiry:     expiresAt.UTC().Format(time.RFC3339),
+			Warning:                fmt.Sprintf("This %s operation requires your approval before it runs. You have 5 minutes to confirm or cancel.", stmtType),
+			RequestID:              requestID,
 		}, nil
 	}
 
@@ -631,7 +653,7 @@ func HandleQuery(ctx context.Context, req *mcp.CallToolRequest, input QueryInput
 		TrackToolCall(ctx, "query", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "manager_init"})
 		return nil, QueryOutput{Error: fmt.Sprintf("cannot initialize database manager: %v", err), RequestID: requestID}, nil
 	}
-	if secOpts.ReadOnly {
+	if secOpts.ReadOnly || secOpts.ConfirmWrites {
 		mgr.EnableReadOnly()
 	}
 
@@ -688,8 +710,10 @@ func HandleConfirm(ctx context.Context, req *mcp.CallToolRequest, input ConfirmI
 		return nil, ConfirmOutput{Error: err.Error(), RequestID: requestID}, nil
 	}
 
-	// Claim the pending confirmation. The claim is released on any failure path
-	// (allowing retry) and only cleared permanently once the query succeeds.
+	if secOpts.ReadOnly || !secOpts.ConfirmWrites {
+		return nil, ConfirmOutput{Error: "write confirmation is disabled", RequestID: requestID}, nil
+	}
+	// A pre-dispatch failure may be retried; dispatch permanently consumes approval.
 	pending, err := getPendingConfirmation(input.Token)
 	if err != nil {
 		TrackToolCall(ctx, "confirm", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "token_invalid"})
@@ -715,6 +739,15 @@ func HandleConfirm(ctx context.Context, req *mcp.CallToolRequest, input ConfirmI
 		return nil, ConfirmOutput{Error: err.Error(), RequestID: requestID}, nil
 	}
 
+	if connectionFingerprint(conn) != pending.targetFingerprint {
+		consumePendingConfirmation(input.Token)
+		consumed = true
+		return nil, ConfirmOutput{Error: "connection changed; submit the query for approval again", RequestID: requestID}, nil
+	}
+	if err := ValidateSQLStatement(pending.Query, true, secOpts.SecurityLevel, secOpts.AllowMultiStatement, true); err != nil {
+		return nil, ConfirmOutput{Error: err.Error(), RequestID: requestID}, nil
+	}
+
 	mgr, err := dbmgr.NewManager()
 	if err != nil {
 		TrackToolCall(ctx, "confirm", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "manager_init"})
@@ -727,8 +760,10 @@ func HandleConfirm(ctx context.Context, req *mcp.CallToolRequest, input ConfirmI
 	}
 	defer mgr.Disconnect()
 
-	// Confirmed queries don't use parameters (the original query was stored as-is)
-	result, err := executeQuery(ctx, mgr, pending.Query, nil, secOpts.QueryTimeout)
+	// Once dispatched, an error may still have changed the database. Never replay.
+	consumePendingConfirmation(input.Token)
+	consumed = true
+	result, err := executeQuery(ctx, mgr, pending.Query, pending.Parameters, secOpts.QueryTimeout)
 	if err != nil {
 		if errors.Is(err, context.DeadlineExceeded) {
 			TrackToolCall(ctx, "confirm", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "timeout", "db_type": conn.Type})
@@ -737,10 +772,6 @@ func HandleConfirm(ctx context.Context, req *mcp.CallToolRequest, input ConfirmI
 		TrackToolCall(ctx, "confirm", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "execution", "db_type": conn.Type})
 		return nil, ConfirmOutput{Error: fmt.Sprintf("query failed: %v", err), RequestID: requestID}, nil
 	}
-
-	// Query executed successfully — consume the token so it can't be reused
-	consumePendingConfirmation(input.Token)
-	consumed = true
 
 	columns := convertColumns(result)
 	columnTypes := convertColumnTypes(result)
@@ -782,6 +813,7 @@ func HandlePending(ctx context.Context, req *mcp.CallToolRequest, input PendingI
 		infos[i] = PendingInfo{
 			Token:      p.Token,
 			Query:      p.Query,
+			Parameters: slices.Clone(p.Parameters),
 			Connection: p.Connection,
 			ExpiresAt:  p.ExpiresAt.UTC().Format(time.RFC3339),
 		}

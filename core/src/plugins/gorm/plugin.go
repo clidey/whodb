@@ -632,6 +632,14 @@ func (p *GormPlugin) WithTransaction(config *engine.PluginConfig, operation func
 // openMultiStatementDB is called when config.MultiStatement is true to get a DB connection
 // that supports multiple statements. Pass nil if multi-statement is not supported.
 func (p *GormPlugin) ExecuteRawSQL(config *engine.PluginConfig, openMultiStatementDB func(*engine.PluginConfig) (*gorm.DB, error), query string, params ...any) (*engine.GetRowsResult, error) {
+	if config != nil && config.ReadOnly {
+		protected, err := plugins.ReadOnlyConfig(config, query)
+		if err != nil {
+			return nil, err
+		}
+		config = protected
+	}
+
 	multiStatement := config != nil && config.MultiStatement
 	dbFunc := p.DB
 	if multiStatement && openMultiStatementDB != nil {

@@ -13,6 +13,7 @@ import (
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/env"
+	_ "github.com/clidey/whodb/core/src/sources/database"
 )
 
 func TestDuckDBColumnCodec(t *testing.T) {
@@ -164,7 +165,7 @@ func TestDuckDBHelpers(t *testing.T) {
 	}
 }
 
-func TestDuckDBReadOnlyRawExecuteRollsBackWrites(t *testing.T) {
+func TestDuckDBReadOnlyRawExecuteRejectsUnsupportedProtection(t *testing.T) {
 	t.Setenv("WHODB_CLI", "true")
 	dbPath := filepath.Join(t.TempDir(), "read-only.duckdb")
 	db, err := gorm.Open(Open(dbPath), &gorm.Config{})
@@ -189,8 +190,15 @@ func TestDuckDBReadOnlyRawExecuteRollsBackWrites(t *testing.T) {
 	}
 
 	config.ReadOnly = true
-	_, _ = plugin.RawExecute(config, "INSERT INTO read_only_guard VALUES (2)")
-	_, _ = plugin.RawExecute(config, "WITH x AS (SELECT 1) DELETE FROM read_only_guard WHERE id=1")
+	if _, err := plugin.RawExecute(config, "SELECT 1"); err == nil {
+		t.Fatal("unsupported protection accepted")
+	}
+	if _, err := plugin.RawExecute(config, "INSERT INTO read_only_guard VALUES (2)"); err == nil {
+		t.Fatal("write accepted")
+	}
+	if _, err := plugin.RawExecute(config, "WITH x AS (SELECT 1) DELETE FROM read_only_guard WHERE id=1"); err == nil {
+		t.Fatal("write accepted")
+	}
 	config.ReadOnly = false
 	rows, err := plugin.RawExecute(config, "SELECT COUNT(*) FROM read_only_guard")
 	if err != nil {

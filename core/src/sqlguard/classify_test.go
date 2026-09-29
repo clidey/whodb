@@ -75,7 +75,7 @@ func TestClassifyMutating(t *testing.T) {
 		{"explain analyze select", "EXPLAIN ANALYZE SELECT * FROM users", false},
 		{"read-only cte", "WITH c AS (SELECT 1) SELECT * FROM c", false},
 		{"pragma read", "PRAGMA table_info(users)", false},
-		{"use database", "USE analytics", false},
+		{"use database", "USE analytics", true},
 		{"identifier containing keyword", "SELECT backdrop FROM stages", false},
 		{"keyword inside string literal", "SELECT 'DROP TABLE users' AS note", false},
 		{"keyword inside quoted identifier", `SELECT "delete" FROM audit`, false},
@@ -122,7 +122,7 @@ func TestClassifyMutating(t *testing.T) {
 		{"lock table", "LOCK TABLE users", true},
 		{"pragma assignment", "PRAGMA journal_mode = WAL", true},
 		{"unknown statement fails closed", "FLURB the wibble", true},
-		{"empty is not mutating but unknown", "", false},
+		{"empty fails closed", "", true},
 	}
 
 	for _, tc := range cases {
