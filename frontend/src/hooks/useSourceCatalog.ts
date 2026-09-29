@@ -67,8 +67,6 @@ export function useSourceTypeItems(
         fetchPolicy: import.meta.env.DEV ? "network-only" : "cache-and-network",
         nextFetchPolicy: "cache-first",
     });
-    const cloudProvidersEnabled = options.cloudProvidersEnabled;
-    const awsProviderEnabled = options.awsProviderEnabled;
     const includePlatformOnly = options.includePlatformOnly;
 
     useEffect(() => {
@@ -79,8 +77,8 @@ export function useSourceTypeItems(
 
     const items = useMemo(() => {
         const catalog = data?.SourceTypes ?? cachedCatalog;
-        return resolveSourceTypeItems(catalog, { cloudProvidersEnabled, awsProviderEnabled, includePlatformOnly });
-    }, [awsProviderEnabled, cachedCatalog, cloudProvidersEnabled, data?.SourceTypes, includePlatformOnly]);
+        return resolveSourceTypeItems(catalog, { includePlatformOnly });
+    }, [cachedCatalog, data?.SourceTypes, includePlatformOnly]);
 
     return {
         items,

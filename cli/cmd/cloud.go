@@ -68,11 +68,11 @@ func newCloudProvidersCommand() *cobra.Command {
 	cloudProvidersCmd := &cobra.Command{
 		Use:   "providers",
 		Short: "Inspect configured cloud providers",
-		Long: `Inspect configured cloud providers from the shared WhoDB data directory.
+		Long: `Inspect cloud providers configured through local environment variables or
+from the shared WhoDB data directory.
 
-Provider configuration can come from the app or from environment variables such
-as WHODB_AWS_PROVIDER, WHODB_AZURE_PROVIDER, and WHODB_GCP_PROVIDER when cloud
-provider support is enabled.`,
+Supported variables include WHODB_AWS_PROVIDER, WHODB_AZURE_PROVIDER, and
+WHODB_GCP_PROVIDER when cloud provider support is enabled.`,
 	}
 
 	cloudProvidersCmd.AddCommand(

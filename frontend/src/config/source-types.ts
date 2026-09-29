@@ -336,10 +336,6 @@ export type SourceTypeOverride = Pick<SourceTypeItem, "id"> &
  * Filter options for source type retrieval.
  */
 export interface SourceTypeFilterOptions {
-	/** When false, all cloud-managed source types are excluded. */
-	cloudProvidersEnabled?: boolean;
-	/** When false, AWS managed source types are excluded. */
-	awsProviderEnabled?: boolean;
 	/**
 	 * When true and the platform funnel is enabled, platform-only source
 	 * types are appended after the connectable catalog entries.
@@ -583,21 +579,6 @@ function decorateSourceType(item: BackendSourceType): SourceTypeItem {
 	};
 }
 
-function filterSourceTypes(
-	items: SourceTypeItem[],
-	options: SourceTypeFilterOptions = {},
-): SourceTypeItem[] {
-	const cloudProvidersEnabled = options.cloudProvidersEnabled ?? true;
-	const awsProviderEnabled =
-		options.awsProviderEnabled ?? cloudProvidersEnabled;
-
-	if (cloudProvidersEnabled) {
-		return items.filter((item) => awsProviderEnabled || !item.isAwsManaged);
-	}
-
-	return items.filter((item) => !item.isAwsManaged);
-}
-
 function mergeSourceTypeOverride(
 	item: SourceTypeItem,
 	override: SourceTypeOverride,
@@ -681,11 +662,10 @@ export function resolveSourceTypeItems(
 	options: SourceTypeFilterOptions = {},
 ): SourceTypeItem[] {
 	const items = withRegisteredSourceTypes(catalog.map(decorateSourceType));
-	const filtered = filterSourceTypes(items, options);
 	if (options.includePlatformOnly && featureFlags.platformFunnel) {
-		return [...filtered, ...buildPlatformOnlyItems(filtered)];
+		return [...items, ...buildPlatformOnlyItems(items)];
 	}
-	return filtered;
+	return items;
 }
 
 /**

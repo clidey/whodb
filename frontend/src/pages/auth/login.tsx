@@ -212,7 +212,7 @@ export const LoginForm: FC<LoginFormProps> = ({
         items: databaseTypeItems,
         loading: databaseTypesLoading,
         error: databaseTypesError,
-    } = useSourceTypeItems({ cloudProvidersEnabled: false, includePlatformOnly: true });
+    } = useSourceTypeItems({ includePlatformOnly: true });
     const [searchParams, setSearchParams] = useSearchParams();
 
     const databaseTypesLoaded = !databaseTypesLoading;
@@ -599,8 +599,7 @@ export const LoginForm: FC<LoginFormProps> = ({
 
     const handleDatabaseTypeChange = useCallback((item: SourceTypeItem) => {
         // Platform-only entries open the explainer instead of becoming the
-        // active type — regardless of whether they arrive via the picker,
-        // URL params, or cloud prefill.
+        // active type, regardless of whether it arrives via the picker or URL params.
         if (item.platformOnly) {
             setPlatformSourceType({ id: item.id, label: item.label });
             return;
