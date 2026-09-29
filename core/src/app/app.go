@@ -193,8 +193,9 @@ func Run(config AppConfig, staticFiles embed.FS) {
 	src.InitializeEngine()
 	if !env.IsEnterpriseEdition && mode == "server" {
 		profileCount := 0
-		for _, profile := range src.GetLoginProfiles() {
-			if profile.Source != "builtin" {
+		profiles := src.GetLoginProfiles()
+		for i := range profiles {
+			if profiles[i].Source != "builtin" {
 				profileCount++
 			}
 		}
