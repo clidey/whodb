@@ -99,6 +99,11 @@ verify that file access mode still rejects writes. ClickHouse tests independentl
 exercise its native readonly setting. These tests fail when their required
 local database is missing.
 
+The ClickHouse test also runs in CI: `dev/run-backend-tests.sh ce-integration`
+starts the `readguard_clickhouse` service from `dev/docker-compose.yml` (compose
+profile `readguard`, same credentials and port as above) and sets
+`WHODB_READGUARD_LOCAL=1`. The CLI transport suite remains local-only.
+
 ```sh
 docker stop whodb-readguard-pg whodb-readguard-mysql whodb-readguard-maria whodb-readguard-clickhouse
 docker rm -v whodb-readguard-pg whodb-readguard-mysql whodb-readguard-maria whodb-readguard-clickhouse
