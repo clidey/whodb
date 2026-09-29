@@ -18,6 +18,8 @@ package sqlite3
 
 import (
 	"context"
+	"errors"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -31,6 +33,75 @@ import (
 	"github.com/clidey/whodb/core/src/source"
 	_ "github.com/clidey/whodb/core/src/sources/database"
 )
+
+func TestServerSQLiteConnectionsRejectFilesystemAttachment(t *testing.T) {
+	t.Setenv("WHODB_CLI", "false")
+	t.Setenv("WHODB_DESKTOP", "false")
+
+	db, err := gorm.Open(sourceSQLiteDialector(":memory:", false), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("open confined SQLite connection: %v", err)
+	}
+	sqlDB, err := db.DB()
+	if err != nil {
+		t.Fatalf("get confined SQLite handle: %v", err)
+	}
+	t.Cleanup(func() { _ = sqlDB.Close() })
+
+	targetPath := filepath.Join(t.TempDir(), "attached.sqlite")
+	queries := []struct {
+		name  string
+		query string
+		args  []any
+	}{
+		{name: "literal", query: "ATTACH DATABASE '" + targetPath + "' AS attached"},
+		{name: "bound filename", query: "ATTACH DATABASE ? AS attached", args: []any{targetPath}},
+	}
+	for _, tt := range queries {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := db.Exec(tt.query, tt.args...).Error; err == nil {
+				t.Fatal("expected filesystem attachment to be denied")
+			}
+		})
+	}
+
+	vacuumPath := filepath.Join(t.TempDir(), "vacuum.sqlite")
+	if err := db.Exec("VACUUM INTO ?", vacuumPath).Error; err == nil {
+		t.Fatal("expected VACUUM INTO to be denied")
+	}
+	if _, err := os.Stat(vacuumPath); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("VACUUM INTO created an output file: %v", err)
+	}
+}
+
+func TestServerSampleDatabaseIsReadOnly(t *testing.T) {
+	t.Setenv("WHODB_CLI", "false")
+	t.Setenv("WHODB_DESKTOP", "false")
+
+	db, err := GetSampleDatabase()
+	if err != nil {
+		t.Fatalf("open sample database: %v", err)
+	}
+	sqlDB, err := db.DB()
+	if err != nil {
+		t.Fatalf("get sample database handle: %v", err)
+	}
+	t.Cleanup(func() { _ = sqlDB.Close() })
+
+	var count int64
+	if err := db.Table("users").Count(&count).Error; err != nil {
+		t.Fatalf("read sample data: %v", err)
+	}
+	if count == 0 {
+		t.Fatal("expected seeded sample rows")
+	}
+	if err := db.Exec("CREATE TABLE attacker_controlled (id INTEGER)").Error; err == nil {
+		t.Fatal("expected sample database write to be denied")
+	}
+	if err := db.Exec("PRAGMA query_only=OFF").Error; err == nil {
+		t.Fatal("expected disabling sample query_only to be denied")
+	}
+}
 
 func newSQLiteRuntimeTestFixture(t *testing.T, statements ...string) (*Sqlite3Plugin, *engine.PluginConfig, *gorm.DB) {
 	t.Helper()

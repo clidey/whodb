@@ -20,7 +20,6 @@ import (
 	_ "embed"
 	"sync"
 
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
@@ -36,6 +35,7 @@ var sampleSQL string
 const SampleDatabaseName = "whodb-sample"
 
 const sampleDatabaseURI = "file:" + SampleDatabaseName + "?mode=memory&cache=shared"
+const readOnlySampleDatabaseURI = sampleDatabaseURI + "&_query_only=1"
 
 var (
 	sampleDBOnce sync.Once
@@ -58,7 +58,7 @@ func GetSampleProfile() types.DatabaseCredentials {
 
 func GetSampleDatabase() (*gorm.DB, error) {
 	sampleDBOnce.Do(func() {
-		db, err := gorm.Open(sqlite.Open(sampleDatabaseURI), &gorm.Config{
+		db, err := gorm.Open(sourceSQLiteDialector(sampleDatabaseURI, false), &gorm.Config{
 			Logger: logger.Default.LogMode(plugins.GetGormLogConfig()),
 		})
 		if err != nil {
@@ -78,7 +78,7 @@ func GetSampleDatabase() (*gorm.DB, error) {
 		return nil, sampleDBErr
 	}
 
-	return gorm.Open(sqlite.Open(sampleDatabaseURI), &gorm.Config{
+	return gorm.Open(sourceSQLiteDialector(readOnlySampleDatabaseURI, true), &gorm.Config{
 		Logger: logger.Default.LogMode(plugins.GetGormLogConfig()),
 	})
 }
