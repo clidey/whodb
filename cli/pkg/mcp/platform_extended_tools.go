@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/clidey/whodb/cli/internal/appcapture"
 	platformapi "github.com/clidey/whodb/cli/internal/platform"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -21,6 +22,46 @@ type PlatformAppInput struct {
 	Version int      `json:"version,omitempty" jsonschema:"App version for a version view"`
 	Env     string   `json:"env,omitempty" jsonschema:"Optional app environment for the current view"`
 	Fields  []string `json:"fields,omitempty" jsonschema:"Optional top-level output fields"`
+}
+
+// PlatformAppCaptureInput selects a rendered app view without browser scripting.
+type PlatformAppCaptureInput struct {
+	App     string              `json:"app" jsonschema:"App ID or exact name in the selected project"`
+	Env     string              `json:"env,omitempty" jsonschema:"published (default) or dev"`
+	Page    string              `json:"page,omitempty" jsonschema:"Optional page returned by whodb_platform_app_views"`
+	Tab     string              `json:"tab,omitempty" jsonschema:"Optional visible tab or button label to open before capture"`
+	Actions []appcapture.Action `json:"actions,omitempty" jsonschema:"Ordered actions inside the app frame: click, fill, press, wait_for, or wait"`
+	Script  string              `json:"script,omitempty" jsonschema:"Optional JavaScript expression or IIFE evaluated inside the app frame after actions"`
+	Width   int                 `json:"width,omitempty" jsonschema:"Viewport width, default 1440"`
+	Height  int                 `json:"height,omitempty" jsonschema:"Viewport height, default 900"`
+}
+
+// PlatformAppViewsOutput lists actual pages available in one hosted app.
+type PlatformAppViewsOutput struct {
+	App       string            `json:"app,omitempty"`
+	AppID     string            `json:"app_id,omitempty"`
+	Env       string            `json:"env,omitempty"`
+	Views     []appcapture.View `json:"views,omitempty"`
+	Error     string            `json:"error,omitempty"`
+	RequestID string            `json:"request_id,omitempty"`
+}
+
+// PlatformAppScreenshotOutput describes an image returned in MCP content.
+type PlatformAppScreenshotOutput struct {
+	App              string                 `json:"app,omitempty"`
+	AppID            string                 `json:"app_id,omitempty"`
+	Env              string                 `json:"env,omitempty"`
+	Page             string                 `json:"page,omitempty"`
+	Tab              string                 `json:"tab,omitempty"`
+	Width            int                    `json:"width,omitempty"`
+	Height           int                    `json:"height,omitempty"`
+	MIMEType         string                 `json:"mime_type,omitempty"`
+	VisibleText      string                 `json:"visible_text,omitempty"`
+	Diagnostics      appcapture.Diagnostics `json:"diagnostics"`
+	ScriptResultJSON string                 `json:"script_result_json,omitempty"`
+	ChecksPassed     bool                   `json:"checks_passed"`
+	Error            string                 `json:"error,omitempty"`
+	RequestID        string                 `json:"request_id,omitempty"`
 }
 
 // PlatformPackageInput selects one hosted package or installation.
@@ -53,6 +94,14 @@ type PlatformAccessInput struct {
 
 func registerPlatformExtendedReadTool(server *mcp.Server, tool *mcp.Tool) bool {
 	switch tool.Name {
+	case "whodb_platform_app_views":
+		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAppCaptureInput) (*mcp.CallToolResult, PlatformAppViewsOutput, error) {
+			return handlePlatformAppViews(ctx, input)
+		})
+	case "whodb_platform_app_screenshot":
+		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAppCaptureInput) (*mcp.CallToolResult, PlatformAppScreenshotOutput, error) {
+			return handlePlatformAppScreenshot(ctx, input)
+		})
 	case "whodb_platform_apps":
 		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAppInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformExtendedQuery(ctx, "platform_apps", "ProjectApps", map[string]any{}, input.Fields)
@@ -203,6 +252,8 @@ func platformExtendedReadToolDefinitions() []*mcp.Tool {
 	}
 	return []*mcp.Tool{
 		read("whodb_platform_apps", "List hosted ontology-powered apps in the selected project."),
+		read("whodb_platform_app_views", "List pages in a hosted app by ID or exact name. Use a returned page with whodb_platform_app_screenshot."),
+		read("whodb_platform_app_screenshot", "Capture a rendered app page after optional actions or JavaScript. Returns a WebP image, visible text, console and network errors. Hosted writes are blocked."),
 		read("whodb_platform_app", "Inspect one hosted app, including its generated definition."),
 		read("whodb_platform_app_files", "List the files belonging to one hosted app."),
 		read("whodb_platform_app_view", "Read the current hosted app view and generated files."),
