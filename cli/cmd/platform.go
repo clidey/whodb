@@ -266,7 +266,7 @@ var loginCmd = &cobra.Command{
 		if len(selection.Orgs) == 0 {
 			out.Info(noOrganizationAccessMessage(client.Host()))
 		}
-		printLoginNextSteps(out)
+		printLoginNextSteps(out, data.WorkspaceSelected)
 		return nil
 	},
 }
@@ -2266,11 +2266,15 @@ func isAffirmativeConfirmation(answer string) bool {
 	return normalized == "y" || normalized == "yes"
 }
 
-// printLoginNextSteps mirrors the hosted /mcp-connected page so both the
-// browser and device-code sign-in flows end with the same suggested commands.
-func printLoginNextSteps(out *output.Writer) {
+// printLoginNextSteps prints suggested follow-up commands after a successful
+// sign-in. The CLI owns this text so it cannot drift from the installed binary.
+func printLoginNextSteps(out *output.Writer, workspaceSelected bool) {
 	out.Info("")
 	out.Info("Try these next:")
-	out.Info("  Check your workspace:            whodb status")
+	if workspaceSelected {
+		out.Info("  Check your workspace:            whodb status")
+	} else {
+		out.Info("  Select a workspace:              whodb use --org <org> --project <project>")
+	}
 	out.Info("  Start your assistant connection: whodb mcp serve --platform")
 }
