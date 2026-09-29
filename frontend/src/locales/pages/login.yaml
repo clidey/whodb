@@ -3,7 +3,7 @@ en_US:
   enterHostName: Enter Host Name
   advancedFields.region: Region
   noConnectionsTitle: No database connections set up yet
-  noConnectionsDescription: Manual connection form is disabled for this deployment. Please configure database connections via environment variables or cloud providers, or contact your administrator.
+  noConnectionsDescription: Manual connection form is disabled for this deployment. Please configure database connections via environment variables or contact your administrator.
   loggingIn: Logging In
   title: Login
   databaseType: Database Type
@@ -22,6 +22,8 @@ en_US:
   advancedButton: Advanced
   lessAdvancedButton: Less Advanced
   availableProfiles: Available Profiles
+  profileAccessNoticeTitle: Profiles provide shared access
+  profileAccessNoticeDescription: Selecting a profile uses credentials configured by this WhoDB instance. Anyone who can access this Community Edition instance can use its available profiles.
   selectProfile: Select a Profile
   allFieldsRequired: All Fields Are Required
   loginSuccessful: Login Successful

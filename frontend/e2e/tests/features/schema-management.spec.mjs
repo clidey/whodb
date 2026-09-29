@@ -452,13 +452,18 @@ test.describe('Schema Management', () => {
                     await page.goto(whodb.url('/storage-unit'));
                     await page.locator('[data-testid="storage-unit-card"]').first().waitFor({ timeout: 15000 });
 
-                    await expect(
-                        page.locator('[data-testid="storage-unit-card"]').filter({ hasText: uniqueTableName })
-                    ).toBeAttached({ timeout: 10000 });
+                    const createdCard = page.locator('[data-testid="storage-unit-card"]').filter({
+                        has: page.locator('[data-testid="storage-unit-name"]', {
+                            hasText: new RegExp(`^${uniqueTableName}$`, 'i'),
+                        }),
+                    }).first();
+                    await expect(createdCard).toBeAttached({ timeout: 10000 });
+                    const createdObjectName = await createdCard.getAttribute('data-table-name');
+                    expect(createdObjectName, 'created table should expose its canonical name').toBeTruthy();
 
                     const constraints = await querySourceFieldConstraints(
                         page,
-                        createdObjectRef(createRequest.variables.parent, uniqueTableName),
+                        createdObjectRef(createRequest.variables.parent, createdObjectName),
                         createRequest.headers
                     );
                     const idConstraints = constraints.find(field => field.Name.toLowerCase() === 'id');

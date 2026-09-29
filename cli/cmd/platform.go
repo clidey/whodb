@@ -266,6 +266,7 @@ var loginCmd = &cobra.Command{
 		if len(selection.Orgs) == 0 {
 			out.Info(noOrganizationAccessMessage(client.Host()))
 		}
+		printLoginNextSteps(out, data.WorkspaceSelected)
 		return nil
 	},
 }
@@ -2263,4 +2264,17 @@ func noProjectsMessage(orgName string) string {
 func isAffirmativeConfirmation(answer string) bool {
 	normalized := strings.ToLower(strings.TrimSpace(answer))
 	return normalized == "y" || normalized == "yes"
+}
+
+// printLoginNextSteps prints suggested follow-up commands after a successful
+// sign-in. The CLI owns this text so it cannot drift from the installed binary.
+func printLoginNextSteps(out *output.Writer, workspaceSelected bool) {
+	out.Info("")
+	out.Info("Try these next:")
+	if workspaceSelected {
+		out.Info("  Check your workspace:            whodb status")
+	} else {
+		out.Info("  Select a workspace:              whodb use --org <org> --project <project>")
+	}
+	out.Info("  Start your assistant connection: whodb mcp serve --platform")
 }

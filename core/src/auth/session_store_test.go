@@ -17,6 +17,7 @@
 package auth
 
 import (
+	"encoding/json"
 	"errors"
 	"sync"
 	"testing"
@@ -24,6 +25,7 @@ import (
 
 	sqlite3 "github.com/mattn/go-sqlite3"
 
+	"github.com/clidey/whodb/core/src/crypto"
 	"github.com/clidey/whodb/core/src/source"
 )
 
@@ -75,6 +77,67 @@ func TestCreateAndLookupSession(t *testing.T) {
 	}
 	if needsRefresh {
 		t.Fatal("fresh session should not need refresh")
+	}
+}
+
+func TestLookupRejectsCredentialsCopiedBetweenSessions(t *testing.T) {
+	newTestStore(t)
+	victimToken, _, _, err := CreateSession(testCredentials(), time.Hour)
+	if err != nil {
+		t.Fatalf("create victim session: %v", err)
+	}
+	attackerCredentials := testCredentials()
+	attackerCredentials.Values["Hostname"] = "attacker.invalid"
+	attackerToken, _, _, err := CreateSession(attackerCredentials, time.Hour)
+	if err != nil {
+		t.Fatalf("create attacker session: %v", err)
+	}
+
+	var victim sessionRow
+	if err := sessionDB.Where("session_hash = ?", hashToken(victimToken)).First(&victim).Error; err != nil {
+		t.Fatalf("load victim session: %v", err)
+	}
+	if err := sessionDB.Model(&sessionRow{}).
+		Where("session_hash = ?", hashToken(attackerToken)).
+		Update("encrypted_credentials", victim.EncryptedCredentials).Error; err != nil {
+		t.Fatalf("copy victim credentials: %v", err)
+	}
+
+	if _, _, _, err := LookupSession(attackerToken, time.Hour); !errors.Is(err, errSessionInvalid) {
+		t.Fatalf("copied credentials returned %v, want errSessionInvalid", err)
+	}
+	credentials, _, _, err := LookupSession(victimToken, time.Hour)
+	if err != nil {
+		t.Fatalf("victim session should remain valid: %v", err)
+	}
+	if credentials.Values["Password"] != "s3cr3t" {
+		t.Fatalf("victim credentials changed: %#v", credentials.Values)
+	}
+}
+
+func TestLookupRejectsLegacyUnboundSession(t *testing.T) {
+	newTestStore(t)
+	token := "legacy-session-token"
+	csrfToken := "legacy-csrf-token"
+	plaintext, err := json.Marshal(testCredentials())
+	if err != nil {
+		t.Fatal(err)
+	}
+	encrypted, err := crypto.Encrypt(storeTestKey, string(plaintext))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := sessionDB.Create(&sessionRow{
+		SessionHash:          hashToken(token),
+		EncryptedCredentials: encrypted,
+		CSRFTokenHash:        hashToken(csrfToken),
+		ExpiresAt:            time.Now().Add(time.Hour),
+	}).Error; err != nil {
+		t.Fatalf("create legacy session: %v", err)
+	}
+
+	if _, _, _, err := LookupSession(token, time.Hour); !errors.Is(err, errSessionInvalid) {
+		t.Fatalf("legacy session returned %v, want errSessionInvalid", err)
 	}
 }
 

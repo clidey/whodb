@@ -157,6 +157,8 @@ export WHODB_POSTGRES_1='{
 | `WHODB_ANTHROPIC_API_KEY` | unset | Anthropic API key |
 | `WHODB_ANTHROPIC_ENDPOINT` | `https://api.anthropic.com/v1` | Anthropic API endpoint |
 | `WHODB_ANTHROPIC_NAME` | unset | Display name for Anthropic in the provider dropdown |
+| `WHODB_BLOCK_INTERNAL_AI_ENDPOINTS` | `false` | Set `true` to reject AI endpoints that resolve to loopback, link-local, private, metadata, or standardized IPv6 transition ranges |
+| `WHODB_AI_ENDPOINT_BLOCKED_CIDRS` | unset | Comma-separated deployment-specific CIDRs that AI endpoints must not reach, including network-specific NAT64 prefixes |
 
 ### Generic AI providers
 
@@ -203,9 +205,11 @@ When `WHODB_BASE_PATH=/whodb`:
 - Reverse proxy `/whodb/` to the WhoDB server
 - Keep container health checks on `/health`
 
-## Cloud Provider Variables
+## CLI Cloud Provider Variables
+
+These variables configure local CLI cloud discovery. They do not enable cloud-provider operations in the CE web server.
 
 | Variable | Default | Description |
 |---|---|---|
-| `WHODB_ENABLE_AWS_PROVIDER` | `false` | Set `true` to enable AWS provider |
+| `WHODB_ENABLE_AWS_PROVIDER` | `false` | Set `true` to enable the AWS provider in the CLI |
 | `WHODB_AWS_PROVIDER` | unset | JSON array of AWS provider configs (see `aws-integration.md`) |

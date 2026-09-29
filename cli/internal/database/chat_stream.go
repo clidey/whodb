@@ -50,7 +50,7 @@ func (m *Manager) SendAIChatStream(ctx context.Context, providerID, modelType, t
 		return nil, fmt.Errorf("chat is not supported for %s", spec.Label)
 	}
 
-	runner, ok := session.(source.QueryRunner)
+	runner, ok := session.(source.ReadOnlyQueryRunner)
 	if !ok {
 		return nil, fmt.Errorf("querying is not supported for %s", spec.Label)
 	}
@@ -156,17 +156,17 @@ func (m *Manager) buildSourceChatTableDetails(ctx context.Context, spec source.T
 
 type sourceChatQueryExecutor struct {
 	ctx    context.Context
-	runner source.QueryRunner
+	runner source.ReadOnlyQueryRunner
 }
 
-func (e *sourceChatQueryExecutor) RunQuery(_ context.Context, query string, params ...any) (*source.RowsResult, error) {
-	return e.runner.RunQuery(e.ctx, query, params...)
+func (e *sourceChatQueryExecutor) RunReadOnlyQuery(_ context.Context, query string, params ...any) (*source.RowsResult, error) {
+	return e.runner.RunReadOnlyQuery(e.ctx, query, params...)
 }
 
 // convertSourceFinalResponses converts BAML final responses to ChatMessages,
 // executing read queries through the active source session and leaving mutations
 // gated for user confirmation.
-func convertSourceFinalResponses(ctx context.Context, responses []types.ChatResponse, runner source.QueryRunner) []*ChatMessage {
+func convertSourceFinalResponses(ctx context.Context, responses []types.ChatResponse, runner source.ReadOnlyQueryRunner) []*ChatMessage {
 	var messages []*ChatMessage
 	executor := &sourceChatQueryExecutor{ctx: ctx, runner: runner}
 	for _, resp := range responses {

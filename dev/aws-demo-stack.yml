@@ -515,36 +515,6 @@ Resources:
       ManagedPolicyArns:
         - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
 
-  TaskRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: ecs-tasks.amazonaws.com
-            Action: sts:AssumeRole
-      Policies:
-        - PolicyName: whodb-aws-discovery
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - rds:DescribeDBInstances
-                  - rds:DescribeDBClusters
-                  - rds:ListTagsForResource
-                  - elasticache:DescribeCacheClusters
-                  - elasticache:DescribeReplicationGroups
-                  - elasticache:DescribeServerlessCaches
-                  - elasticache:ListTagsForResource
-                  - docdb:DescribeDBClusters
-                  - docdb:DescribeDBInstances
-                  - docdb:ListTagsForResource
-                  - sts:GetCallerIdentity
-                Resource: "*"
-
   LogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
@@ -561,18 +531,11 @@ Resources:
       RequiresCompatibilities:
         - FARGATE
       ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
-      TaskRoleArn: !GetAtt TaskRole.Arn
       ContainerDefinitions:
         - Name: whodb
           Image: !Ref WhoDBImage
           PortMappings:
             - ContainerPort: 8080
-          Environment:
-            - Name: WHODB_ENABLE_AWS_PROVIDER
-              Value: "true"
-            - Name: WHODB_AWS_PROVIDER
-              Value: !Sub >-
-                [{"name":"AWS Demo","region":"${AWS::Region}","discoverRDS":true,"discoverElastiCache":true,"discoverDocumentDB":true}]
           LogConfiguration:
             LogDriver: awslogs
             Options:

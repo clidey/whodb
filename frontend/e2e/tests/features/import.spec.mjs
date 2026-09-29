@@ -175,6 +175,10 @@ test.describe('Data Import', () => {
     // ========================================================================
 
     forEachDatabase('sql', (db) => {
+        if (db.import.supportsSqlImport === false) {
+            return;
+        }
+
         const supportsSqlFileImport = db.import.supportsSqlFileImport !== false;
 
         test.describe('SQL Import', () => {

@@ -18,7 +18,9 @@ package mongodb
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -47,6 +49,7 @@ func disconnectClient(client *mongo.Client) {
 	_ = client.Disconnect(ctx)
 }
 
+// DB opens and verifies a MongoDB connection using the supplied credentials.
 func DB(config *engine.PluginConfig) (*mongo.Client, error) {
 	ctx, cancel := opCtx(config)
 	defer cancel()
@@ -81,6 +84,13 @@ func DB(config *engine.PluginConfig) (*mongo.Client, error) {
 
 	connectionURI.WriteString(config.Credentials.Database)
 	connectionURI.WriteString(queryParams)
+
+	// ApplyURI can add behavior before connecting. Validate the complete URI first,
+	// including escaped keys and options injected through other fields. Profiles
+	// use the dedicated SSL path fields.
+	if err := validateURIOptions(connectionURI.String()); err != nil {
+		return nil, err
+	}
 
 	clientOptions.ApplyURI(connectionURI.String())
 	clientOptions.SetMaxPoolSize(10)
@@ -135,4 +145,47 @@ func DB(config *engine.PluginConfig) (*mongo.Client, error) {
 		return nil, err
 	}
 	return client, nil
+}
+
+var allowedMongoURIOptions = map[string]struct{}{
+	"appname":                  {},
+	"authsource":               {},
+	"connecttimeoutms":         {},
+	"directconnection":         {},
+	"loadbalanced":             {},
+	"readconcernlevel":         {},
+	"readpreference":           {},
+	"readpreferencetags":       {},
+	"replicaset":               {},
+	"retryreads":               {},
+	"retrywrites":              {},
+	"serverselectiontimeoutms": {},
+	"sockettimeoutms":          {},
+	"srvmaxhosts":              {},
+	"srvservicename":           {},
+	"ssl":                      {},
+	"sslinsecure":              {},
+	"timeoutms":                {},
+	"tls":                      {},
+	"tlsinsecure":              {},
+}
+
+func validateURIOptions(uri string) error {
+	queryStart := strings.IndexByte(uri, '?')
+	if queryStart < 0 {
+		return nil
+	}
+
+	for _, pair := range strings.FieldsFunc(uri[queryStart+1:], func(r rune) bool { return r == '&' || r == ';' }) {
+		key, _, _ := strings.Cut(pair, "=")
+		decodedKey, err := url.QueryUnescape(key)
+		if err != nil {
+			return errors.New("invalid MongoDB URL parameter name")
+		}
+		if _, ok := allowedMongoURIOptions[strings.ToLower(decodedKey)]; !ok {
+			return fmt.Errorf("MongoDB URL parameter %q is not supported", decodedKey)
+		}
+	}
+
+	return nil
 }

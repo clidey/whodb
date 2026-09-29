@@ -40,7 +40,7 @@ Some entries are native plugins and others are compatibility entries that reuse 
 
 ### Cloud-Managed Variants
 
-`DocumentDB` and `ElastiCache` are part of the CE catalog, but they are marked as AWS-managed entries and are intended to be surfaced through cloud provider discovery rather than treated like ordinary manual entries.
+`DocumentDB` and `ElastiCache` are part of the CE catalog, but they are marked as AWS-managed entries and are available through local CLI cloud discovery rather than the CE web connection form.
 
 ### File-Based Databases
 
@@ -65,7 +65,7 @@ The connection catalog is broader than the environment-profile system.
 
 - The catalog defines what the UI can connect to
 - Environment profiles are loaded from registered plugins and currently target the core registered types such as Postgres, CockroachDB, MySQL, MariaDB, TiDB, SQLite3, MongoDB, Redis, ElasticSearch, ClickHouse, DuckDB, and Memcached
-- Cloud-managed variants are configured through provider discovery rather than ordinary `WHODB_<TYPE>` profile prefixes
+- Cloud-managed variants are available through local CLI provider discovery rather than ordinary `WHODB_<TYPE>` profile prefixes
 
 ## Related Pages
 
@@ -74,6 +74,6 @@ The connection catalog is broader than the environment-profile system.
 See how the login flow and advanced options work in the current app.
 </Card>
 <Card title="Cloud Providers" icon="cloud" href="/features/cloud-providers">
-Enable AWS, Azure, and GCP discovery for managed resources.
+Use local CLI discovery for managed resources.
 </Card>
 </CardGroup>

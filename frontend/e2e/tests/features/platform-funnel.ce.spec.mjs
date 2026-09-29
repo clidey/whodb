@@ -44,7 +44,7 @@ test('sidebar import defaults to no secrets and resets consent when reopened', a
         ExportSourceConnection: [{ Key: 'Database', Value: 'reports' }],
         SourceTypes: [], SourceProfiles: [], SourceSession: { id: profile.Id, sourceType: 'Postgres', database: 'reports' },
         SourceSessionMetadata: { sourceType: 'Postgres', queryLanguages: [], typeDefinitions: [], operators: [], aliasMap: [] },
-        SettingsConfig: { CloudProvidersEnabled: false, AWSProviderEnabled: false, AzureProviderEnabled: false, GCPProviderEnabled: false, DisableCredentialForm: false, MaxPageSize: 10000 },
+        SettingsConfig: { DisableCredentialForm: false, MaxPageSize: 10000 },
         Health: { Server: 'healthy', Database: 'healthy' },
     } } }));
     let submitted;
@@ -88,7 +88,7 @@ for (const includeSecrets of [false, true]) {
                 SourceTypes: [], SourceProfiles: [],
                 SourceSession: { id: profile.Id, sourceType: profile.Type, database: profile.Database },
                 SourceSessionMetadata: { sourceType: profile.Type, queryLanguages: [], typeDefinitions: [], operators: [], aliasMap: [] },
-                SettingsConfig: { CloudProvidersEnabled: false, AWSProviderEnabled: false, AzureProviderEnabled: false, GCPProviderEnabled: false, DisableCredentialForm: false, MaxPageSize: 10000 },
+                SettingsConfig: { DisableCredentialForm: false, MaxPageSize: 10000 },
                 Health: { Server: 'healthy', Database: 'healthy' },
             } } });
         });
@@ -116,7 +116,7 @@ test('Platform connectors use plain names and open the attributed source flow', 
     await page.addInitScript(() => localStorage.setItem('whodb.analytics.consent', 'denied'));
     await page.route('**/api/query', route => route.fulfill({ json: { data: {
         SourceTypes: [], SourceProfiles: [], SourceSession: null,
-        SettingsConfig: { CloudProvidersEnabled: false, AWSProviderEnabled: false, AzureProviderEnabled: false, GCPProviderEnabled: false, DisableCredentialForm: false, MaxPageSize: 10000 },
+        SettingsConfig: { DisableCredentialForm: false, MaxPageSize: 10000 },
         Health: { Server: 'healthy', Database: 'healthy' },
     } } }));
     await context.route('https://app.whodb.com/**', route => route.fulfill({ body: 'Hosted destination intercepted for test' }));

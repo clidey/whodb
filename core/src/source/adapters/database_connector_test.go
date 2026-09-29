@@ -789,3 +789,42 @@ func testSchemaRef() *source.ObjectRef {
 	ref := source.NewObjectRef(source.ObjectKindSchema, []string{"app", "public"})
 	return &ref
 }
+
+func TestDatabaseSessionProtectedExecution(t *testing.T) {
+	mock := testutil.NewPluginMock(engine.DatabaseType("Postgres"))
+	spec := testTypeSpec("Postgres", []source.Surface{source.SurfaceQuery})
+	spec.Traits.Query.SupportsReadOnlyExecution = true
+	spec.Traits.Query.SupportsMultiStatement = true
+	session := newTestDatabaseSession(spec, mock)
+	calls := 0
+	mock.RawExecuteFunc = func(config *engine.PluginConfig, sql string, params ...any) (*engine.GetRowsResult, error) {
+		calls++
+		if !config.ReadOnly {
+			t.Fatal("unprotected dispatch")
+		}
+		if sql == "SELECT 1; SELECT 2" && !config.MultiStatement {
+			t.Fatal("batch intent lost")
+		}
+		return &engine.GetRowsResult{}, nil
+	}
+	for _, sql := range []string{"SELECT * INTO stolen FROM users", "SELECT 1; USE other", "SELECT unknown_function()"} {
+		if _, err := session.RunReadOnlyQuery(t.Context(), sql); err == nil {
+			t.Fatalf("accepted %s", sql)
+		}
+	}
+	if calls != 0 {
+		t.Fatal("rejected query dispatched")
+	}
+	for _, sql := range []string{"SELECT 1", "SELECT 1; SELECT 2"} {
+		if _, err := session.RunReadOnlyQuery(t.Context(), sql); err != nil {
+			t.Fatal(err)
+		}
+	}
+	session.spec.Traits.Query.SupportsReadOnlyExecution = false
+	if _, err := session.RunReadOnlyQuery(t.Context(), "SELECT 1"); err == nil {
+		t.Fatal("unsupported enforcement accepted")
+	}
+	if calls != 2 {
+		t.Fatalf("unexpected dispatch count: %d", calls)
+	}
+}

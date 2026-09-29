@@ -540,6 +540,14 @@ func (p *Sqlite3Plugin) GetRows(config *engine.PluginConfig, req *engine.GetRows
 }
 
 func (p *Sqlite3Plugin) executeRawSQL(config *engine.PluginConfig, query string, params ...any) (*engine.GetRowsResult, error) {
+	if config != nil && config.ReadOnly {
+		protected, err := plugins.ReadOnlyConfig(config, query)
+		if err != nil {
+			return nil, err
+		}
+		config = protected
+	}
+
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (*engine.GetRowsResult, error) {
 		if config != nil && config.ReadOnly {
 			tx := db.Begin(&sql.TxOptions{ReadOnly: true})

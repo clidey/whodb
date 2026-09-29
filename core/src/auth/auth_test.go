@@ -41,6 +41,36 @@ func TestIsPublicRouteUsesOnlyTheRequestPath(t *testing.T) {
 	}
 }
 
+func TestMergeSourceProfileValuesRestrictsOverridesToDatabaseSwitching(t *testing.T) {
+	base := map[string]string{
+		"Hostname": "db.internal",
+		"Port":     "5432",
+		"Username": "reader",
+		"Password": "secret",
+		"Database": "default",
+		"SSL Mode": "verify-full",
+	}
+	for _, key := range []string{"Hostname", "Port", "Username", "Password", "SSL Mode", "URL Params"} {
+		t.Run(key, func(t *testing.T) {
+			if _, err := MergeSourceProfileValues("Postgres", base, map[string]string{key: base[key]}); err == nil {
+				t.Fatalf("expected %s override to be rejected", key)
+			}
+		})
+	}
+
+	merged, err := MergeSourceProfileValues("Postgres", base, map[string]string{"Database": "reporting"})
+	if err != nil {
+		t.Fatalf("expected database switch to be accepted: %v", err)
+	}
+	if merged["Database"] != "reporting" || merged["Hostname"] != "db.internal" || merged["Password"] != "secret" {
+		t.Fatalf("expected only the database to change, got %#v", merged)
+	}
+
+	if _, err := MergeSourceProfileValues("Sqlite3", base, map[string]string{"Database": "/tmp/attacker.db"}); err == nil {
+		t.Fatal("expected file-backed database override to be rejected")
+	}
+}
+
 func TestAuthMiddlewareExtractsCredentialsFromBearer(t *testing.T) {
 	originalDev := env.IsDevelopment
 	env.IsDevelopment = false
@@ -50,6 +80,7 @@ func TestAuthMiddlewareExtractsCredentialsFromBearer(t *testing.T) {
 
 	creds := source.Credentials{
 		SourceType: "Postgres",
+		IsProfile:  true, // A client cannot grant itself server-side file access.
 		Values: map[string]string{
 			"Hostname": "db.local",
 			"Username": "alice",
@@ -81,6 +112,9 @@ func TestAuthMiddlewareExtractsCredentialsFromBearer(t *testing.T) {
 
 	if captured == nil || captured.Values["Username"] != "alice" || captured.Values["Database"] != "app" {
 		t.Fatalf("expected credentials to be populated from bearer token, got %+v", captured)
+	}
+	if captured.IsProfile {
+		t.Fatal("client-supplied IsProfile must not be trusted")
 	}
 }
 

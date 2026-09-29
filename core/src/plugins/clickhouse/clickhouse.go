@@ -297,6 +297,14 @@ func (p *ClickHousePlugin) UpdateStorageUnit(config *engine.PluginConfig, schema
 }
 
 func (p *ClickHousePlugin) executeRawSQL(config *engine.PluginConfig, query string, params ...any) (*engine.GetRowsResult, error) {
+	if config != nil && config.ReadOnly {
+		protected, err := plugins.ReadOnlyConfig(config, query)
+		if err != nil {
+			return nil, err
+		}
+		config = protected
+	}
+
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (*engine.GetRowsResult, error) {
 		// ClickHouse's native TCP protocol only supports one statement per request.
 		// Multi-statement scripts silently execute only the first statement.
@@ -305,11 +313,11 @@ func (p *ClickHousePlugin) executeRawSQL(config *engine.PluginConfig, query stri
 		}
 
 		if config != nil && config.ReadOnly {
-			// readonly=2 permits reads and settings changes but rejects writes and
+			// readonly=1 permits reads and rejects settings changes, writes and
 			// DDL. It is attached to this statement's context rather than to the
 			// connection, which is pooled and shared with other callers.
 			db = db.WithContext(clickhouse.Context(config.OperationContext(), clickhouse.WithSettings(clickhouse.Settings{
-				"readonly": 2,
+				"readonly": 1,
 			})))
 		}
 

@@ -22,10 +22,6 @@ import {type SupportedLanguage, DEFAULT_LANGUAGE} from '../utils/languages';
 
 type ISettingsState = {
     metricsEnabled: boolean;
-    cloudProvidersEnabled: boolean;
-    awsProviderEnabled: boolean;
-    azureProviderEnabled: boolean;
-    gcpProviderEnabled: boolean;
     newUIEnabled: boolean;
     storageUnitView: 'list' | 'card';
     fontSize: 'small' | 'medium' | 'large';
@@ -61,10 +57,6 @@ const getInitialMetricsEnabled = (): boolean => {
 const getInitialState = (): ISettingsState => {
     return {
         metricsEnabled: getInitialMetricsEnabled(),
-        cloudProvidersEnabled: false,
-        awsProviderEnabled: false,
-        azureProviderEnabled: false,
-        gcpProviderEnabled: false,
         newUIEnabled: settingsDefaults.newUIEnabled ?? false,
         storageUnitView: 'card',
         fontSize: 'medium',
@@ -94,18 +86,6 @@ export const settingsSlice = createSlice({
     reducers: {
         setMetricsEnabled: (state, action: PayloadAction<ISettingsState["metricsEnabled"]>) => {
             state.metricsEnabled = action.payload;
-        },
-        setCloudProvidersEnabled: (state, action: PayloadAction<ISettingsState["cloudProvidersEnabled"]>) => {
-            state.cloudProvidersEnabled = action.payload;
-        },
-        setAWSProviderEnabled: (state, action: PayloadAction<ISettingsState["awsProviderEnabled"]>) => {
-            state.awsProviderEnabled = action.payload;
-        },
-        setAzureProviderEnabled: (state, action: PayloadAction<ISettingsState["azureProviderEnabled"]>) => {
-            state.azureProviderEnabled = action.payload;
-        },
-        setGCPProviderEnabled: (state, action: PayloadAction<ISettingsState["gcpProviderEnabled"]>) => {
-            state.gcpProviderEnabled = action.payload;
         },
         setNewUIEnabled: (state, action: PayloadAction<ISettingsState["newUIEnabled"]>) => {
             state.newUIEnabled = action.payload;

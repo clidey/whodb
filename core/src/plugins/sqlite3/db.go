@@ -23,7 +23,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
@@ -103,7 +102,7 @@ func (p *Sqlite3Plugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 	})
 
 	dsn := fileNameDatabase
-	if config != nil && config.ReadOnly && config.MultiStatement {
+	if config != nil && config.ReadOnly {
 		uri := url.URL{Scheme: "file", Path: fileNameDatabase}
 		query := uri.Query()
 		query.Set("mode", "ro")
@@ -111,7 +110,7 @@ func (p *Sqlite3Plugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 		dsn = uri.String()
 	}
 
-	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{Logger: logger.Default.LogMode(plugins.GetGormLogConfig())})
+	db, err := gorm.Open(sourceSQLiteDialector(dsn, false), &gorm.Config{Logger: logger.Default.LogMode(plugins.GetGormLogConfig())})
 	if err != nil {
 		l.WithError(err).Error("Failed to connect to SQLite database")
 		return nil, err

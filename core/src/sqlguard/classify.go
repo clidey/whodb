@@ -14,14 +14,10 @@
  * limitations under the License.
  */
 
-// Package sqlguard classifies statements and source-native commands as reads or
-// writes. It is the single place that decides whether a statement can modify
-// data, so the read-only gate, the confirmation gate, and telemetry can never
-// disagree about the same query.
-//
-// The classifier fails closed: anything it does not recognize is reported as
-// mutating, because executing an unrecognized statement without confirmation is
-// the failure mode that matters.
+// Package sqlguard classifies queries for read-only and approval gates. SQL
+// outside the supported read grammar is reported as mutating, including syntax
+// whose effects cannot be established. Classification must be combined with
+// connector enforcement and trusted database schema objects.
 package sqlguard
 
 import (
@@ -66,9 +62,8 @@ const (
 type Classification struct {
 	// Type is the statement kind, or StatementUnknown when unrecognized.
 	Type StatementType
-	// Mutating reports whether the statement can change data, schema, or
-	// permissions, or otherwise execute server-side code. Unknown statements are
-	// reported as mutating.
+	// Mutating reports whether the statement requires approval because it may
+	// change state or its effects are unknown. It does not prove a write occurs.
 	Mutating bool
 	// MultiStatement reports whether more than one statement was submitted. It is
 	// tracked separately from Mutating because execution paths differ: a single
@@ -78,10 +73,8 @@ type Classification struct {
 	Reason string
 }
 
-// mutatingKeywords are verbs that write data, change schema or permissions, or
-// execute server-side code. They are matched as whole words anywhere in the
-// statement, so a data-modifying CTE or a trailing statement in a batch cannot
-// hide behind a leading SELECT.
+// mutatingKeywords reserves write and administrative words in the read grammar.
+// This is not the security boundary: the complete grammar must also match.
 var mutatingKeywords = map[string]bool{
 	"INSERT": true, "UPDATE": true, "DELETE": true, "MERGE": true,
 	"DROP": true, "TRUNCATE": true, "ALTER": true, "CREATE": true,
@@ -95,9 +88,8 @@ var mutatingKeywords = map[string]bool{
 	"KILL": true, "SHUTDOWN": true, "RESET": true,
 }
 
-// readStatementTypes are the leading keywords that cannot modify anything by
-// themselves. A statement of one of these types is still reported as mutating
-// when a mutating keyword appears later in it.
+// readStatementTypes identifies read-shaped prefixes for presentation only.
+// Classify must inspect the complete query before execution.
 var readStatementTypes = map[StatementType]bool{
 	StatementSelect:   true,
 	StatementShow:     true,
@@ -122,73 +114,23 @@ var leadingKeywords = map[string]StatementType{
 	"PRAGMA": StatementPragma, "USE": StatementUse,
 }
 
-// Classify decides whether a SQL statement can modify anything.
-//
-// Detection runs over a normalized copy of the query with comments, string
-// literals, quoted identifiers, and dollar-quoted bodies removed, so a keyword
-// cannot be hidden behind `-- x`, `/* x */`, a leading `(` or `;`, or a tab or
-// newline separator, and a keyword inside a string literal cannot cause a false
-// positive.
+// Classify reports whether SQL requires approval. Only the bounded read grammar
+// is automatic; unsupported syntax and ambiguous dialect semantics fail closed.
 func Classify(query string) Classification {
 	stripped := stripNoise(query)
 	tokens := tokenize(stripped)
-	if len(tokens) == 0 {
-		return Classification{Type: StatementUnknown, Reason: "empty statement"}
+	cls := Classification{Type: StatementUnknown, MultiStatement: isMultiStatement(stripped)}
+	if len(tokens) > 0 {
+		cls.Type = statementType(tokens)
 	}
-
-	multi := isMultiStatement(stripped)
-	stmtType := statementType(tokens)
-
-	cls := Classification{Type: stmtType, MultiStatement: multi}
-	if multi {
-		cls.Reason = "multiple statements submitted"
+	if !understoodRead(query) {
+		cls.Mutating = true
+		cls.Reason = "statement is not a supported read-only query"
 	}
-
-	if keyword, found := firstMutatingKeyword(tokens); found {
-		cls.Mutating = true
-		if readStatementTypes[stmtType] {
-			// A read verb wrapping a write: a data-modifying CTE, EXPLAIN over a
-			// write, or a batch whose first statement is a SELECT.
-			cls.Reason = "read statement contains " + keyword
-		} else {
-			cls.Reason = string(stmtType) + " modifies data or schema"
-		}
-		return cls
-	}
-
-	switch {
-	case readStatementTypes[stmtType]:
-		return cls
-	case stmtType == StatementPragma:
-		// `PRAGMA name` reads a setting; `PRAGMA name = value` writes one.
-		if strings.Contains(stripped, "=") {
-			cls.Mutating = true
-			cls.Reason = "PRAGMA assignment changes database configuration"
-		}
-		return cls
-	case stmtType == StatementUse:
-		return cls
-	case stmtType == StatementAnalyze:
-		// Bare ANALYZE rewrites statistics; ANALYZE over a statement executes it.
-		cls.Mutating = true
-		cls.Reason = "ANALYZE writes statistics"
-		return cls
-	case stmtType == StatementSet:
-		cls.Mutating = true
-		cls.Reason = "SET changes session or role state"
-		return cls
-	case stmtType == StatementUnknown:
-		cls.Mutating = true
-		cls.Reason = "unrecognized statement is treated as mutating"
-		return cls
-	default:
-		cls.Mutating = true
-		cls.Reason = string(stmtType) + " modifies data or schema"
-		return cls
-	}
+	return cls
 }
 
-// IsReadOnly reports whether a statement cannot modify anything.
+// IsReadOnly reports whether SQL fits the supported automatic-read grammar.
 func IsReadOnly(query string) bool {
 	return !Classify(query).Mutating
 }
@@ -230,18 +172,6 @@ func statementType(tokens []string) StatementType {
 		return stmtType
 	}
 	return StatementUnknown
-}
-
-// firstMutatingKeyword returns the first whole-word mutating keyword in the
-// statement. Whole-word matching avoids false positives on identifiers that
-// merely contain a keyword (e.g. "backdrop" containing "DROP").
-func firstMutatingKeyword(tokens []string) (string, bool) {
-	for _, tok := range tokens {
-		if mutatingKeywords[tok] {
-			return tok, true
-		}
-	}
-	return "", false
 }
 
 // ContainsKeyword reports whether a query contains any of the given keywords as

@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -552,7 +553,12 @@ func buildPlatformGenericWrite(session *platformToolSession, input PlatformGener
 		if strings.TrimSpace(filePath) == "" {
 			return platformapi.GenericWriteSpec{}, nil, fmt.Errorf("payload_json.file_path is required")
 		}
-		variables["filePath"] = strings.TrimSpace(filePath)
+		// Bind review and execution to the same path even if the working directory changes.
+		filePath, err = filepath.Abs(strings.TrimSpace(filePath))
+		if err != nil {
+			return platformapi.GenericWriteSpec{}, nil, fmt.Errorf("resolve upload file path: %w", err)
+		}
+		variables["filePath"] = filePath
 		variables["folderId"] = nullablePayloadString(payload, "folderId")
 	default:
 		return platformapi.GenericWriteSpec{}, nil, fmt.Errorf("unsupported write mode %q", spec.Mode)

@@ -18,6 +18,7 @@ package mcp
 
 import (
 	"encoding/json"
+	dbmgr "github.com/clidey/whodb/cli/internal/database"
 	"strings"
 	"testing"
 	"time"
@@ -53,6 +54,11 @@ func TestHandleQuery_ReadOnlyBlocksWrites(t *testing.T) {
 		{"CREATE blocked", "CREATE TABLE foo (id int)"},
 		{"ALTER blocked", "ALTER TABLE users ADD col int"},
 		{"TRUNCATE blocked", "TRUNCATE TABLE users"},
+		{"Postgres file read blocked", "SELECT pg_read_file('/etc/passwd', 0, 100000)"},
+		{"Postgres file export blocked", "SELECT lo_export(1, '/tmp/export')"},
+		{"MySQL file read blocked", "SELECT LOAD_FILE('/etc/passwd')"},
+		{"MySQL OUTFILE blocked", "SELECT 1 INTO\nOUTFILE '/tmp/export'"},
+		{"MySQL DUMPFILE blocked", "SELECT 1 INTO DUMPFILE '/tmp/export'"},
 	}
 
 	for _, tc := range blockedQueries {
@@ -122,6 +128,8 @@ func TestHandleQuery_ReadOnlyAllowsSelects(t *testing.T) {
 
 // TestHandleQuery_ConfirmWritesMode tests that write operations return confirmation requests
 func TestHandleQuery_ConfirmWritesMode(t *testing.T) {
+	setupTestEnv(t)
+	t.Setenv("WHODB_POSTGRES", `[{"alias":"test_conn","host":"localhost","user":"test","database":"test"}]`)
 	ctx := t.Context()
 
 	secOpts := &SecurityOptions{
@@ -138,6 +146,11 @@ func TestHandleQuery_ConfirmWritesMode(t *testing.T) {
 		"INSERT INTO users VALUES (1, 'test')",
 		"UPDATE users SET name='x' WHERE id=1",
 		"DELETE FROM users WHERE id=1",
+		"SELECT pg_read_file('/etc/passwd', 0, 100000)",
+		"SELECT lo_export(1, '/tmp/export')",
+		"SELECT LOAD_FILE('/etc/passwd')",
+		"SELECT 1 INTO\nOUTFILE '/tmp/export'",
+		"SELECT 1 INTO DUMPFILE '/tmp/export'",
 	}
 
 	for _, query := range writeQueries {
@@ -244,6 +257,8 @@ func TestHandleQuery_DropBlockedWithoutFlag(t *testing.T) {
 
 // TestHandleQuery_DropConfirmationWithConfirmWrites tests DROP goes through confirmation
 func TestHandleQuery_DropConfirmationWithConfirmWrites(t *testing.T) {
+	setupTestEnv(t)
+	t.Setenv("WHODB_POSTGRES", `[{"alias":"test_conn","host":"localhost","user":"test","database":"test"}]`)
 	ctx := t.Context()
 
 	// With --confirm-writes, DROP should require confirmation (not be blocked)
@@ -365,7 +380,7 @@ func TestPendingConfirmation(t *testing.T) {
 	connection := "test_conn"
 
 	// Store a pending confirmation
-	token, expiresAt := storePendingConfirmation(query, connection)
+	token, expiresAt := storePendingConfirmation(query, &dbmgr.Connection{Name: connection}, nil)
 	if token == "" {
 		t.Fatal("expected non-empty token")
 	}
@@ -524,6 +539,8 @@ func TestHandleQuery_SelectInConfirmWritesMode(t *testing.T) {
 
 // TestHandleQuery_TruncateConfirmationWithConfirmWrites tests TRUNCATE goes through confirmation
 func TestHandleQuery_TruncateConfirmationWithConfirmWrites(t *testing.T) {
+	setupTestEnv(t)
+	t.Setenv("WHODB_POSTGRES", `[{"alias":"test_conn","host":"localhost","user":"test","database":"test"}]`)
 	ctx := t.Context()
 
 	secOpts := &SecurityOptions{
@@ -1376,6 +1393,8 @@ func TestQueryOutput_ColumnTypesOmittedWhenNil(t *testing.T) {
 
 // TestConfirmation_ExpiryInResponse tests that confirmation response includes expiry timestamp
 func TestConfirmation_ExpiryInResponse(t *testing.T) {
+	setupTestEnv(t)
+	t.Setenv("WHODB_POSTGRES", `[{"alias":"test_conn","host":"localhost","user":"test","database":"test"}]`)
 	ctx := t.Context()
 
 	secOpts := &SecurityOptions{
@@ -1426,7 +1445,7 @@ func TestConfirmation_ExpiryInResponse(t *testing.T) {
 // concurrent claim is rejected, but after release the token can be retried, and
 // after consumption it is gone.
 func TestConfirmation_TokenClaimAndRetry(t *testing.T) {
-	token, _ := storePendingConfirmation("INSERT INTO test VALUES (1)", "conn")
+	token, _ := storePendingConfirmation("INSERT INTO test VALUES (1)", &dbmgr.Connection{Name: "conn"}, nil)
 
 	// First claim succeeds.
 	p1, err := getPendingConfirmation(token)
@@ -1471,8 +1490,8 @@ func TestListPendingConfirmations(t *testing.T) {
 	pendingMutex.Unlock()
 
 	// Store a few confirmations
-	token1, _ := storePendingConfirmation("INSERT INTO a VALUES (1)", "conn1")
-	token2, _ := storePendingConfirmation("UPDATE b SET x=1", "conn2")
+	token1, _ := storePendingConfirmation("INSERT INTO a VALUES (1)", &dbmgr.Connection{Name: "conn1"}, nil)
+	token2, _ := storePendingConfirmation("UPDATE b SET x=1", &dbmgr.Connection{Name: "conn2"}, nil)
 
 	pending := listPendingConfirmations()
 	if len(pending) != 2 {
@@ -1518,7 +1537,7 @@ func TestHandlePending(t *testing.T) {
 	}
 
 	// Add one
-	token, _ := storePendingConfirmation("INSERT INTO test VALUES (1)", "myconn")
+	token, _ := storePendingConfirmation("INSERT INTO test VALUES (1)", &dbmgr.Connection{Name: "myconn"}, nil)
 
 	_, output, err = HandlePending(ctx, nil, PendingInput{}, secOpts)
 	if err != nil {
@@ -1623,4 +1642,44 @@ func TestConvertEngineColumnsToColumnInfos(t *testing.T) {
 	if infos[2].ReferencedColumn != "user_id" {
 		t.Errorf("expected 'user_id', got %q", infos[2].ReferencedColumn)
 	}
+}
+
+func TestConfirmationPreservesParametersAndRejectsChangedTarget(t *testing.T) {
+	setupTestEnv(t)
+	t.Setenv("WHODB_POSTGRES", `[{"alias":"guard","host":"original","user":"test","database":"test"}]`)
+	opts := &SecurityOptions{ConfirmWrites: true, SecurityLevel: SecurityLevelStandard}
+	_, pending, err := HandleQuery(t.Context(), nil, QueryInput{Connection: "guard", Query: "INSERT INTO t VALUES ($1)", Parameters: []any{42}}, opts)
+	if err != nil || !pending.ConfirmationRequired {
+		t.Fatalf("approval not created: %#v %v", pending, err)
+	}
+	stored, err := getPendingConfirmation(pending.ConfirmationToken)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(stored.Parameters) != 1 || stored.Parameters[0] != 42 {
+		t.Fatalf("parameters lost: %#v", stored.Parameters)
+	}
+	releasePendingConfirmation(pending.ConfirmationToken)
+	t.Setenv("WHODB_POSTGRES", `[{"alias":"guard","host":"replacement","user":"test","database":"test"}]`)
+	_, out, err := HandleConfirm(t.Context(), nil, ConfirmInput{Token: pending.ConfirmationToken}, opts)
+	if err != nil || !strings.Contains(out.Error, "connection changed") {
+		t.Fatalf("target was not bound: %#v %v", out, err)
+	}
+	if _, err := getPendingConfirmation(pending.ConfirmationToken); err == nil {
+		t.Fatal("changed-target approval remains usable")
+	}
+}
+
+func TestReadOnlyOverridesConfirmation(t *testing.T) {
+	opts := &SecurityOptions{ReadOnly: true, ConfirmWrites: true, SecurityLevel: SecurityLevelStandard}
+	_, out, err := HandleQuery(t.Context(), nil, QueryInput{Query: "SELECT * INTO stolen FROM users"}, opts)
+	if err != nil || out.Error == "" || out.ConfirmationRequired {
+		t.Fatalf("read-only yielded approval: %#v %v", out, err)
+	}
+	token, _ := storePendingConfirmation("DELETE FROM users", &dbmgr.Connection{Name: "guard"}, nil)
+	_, confirmed, err := HandleConfirm(t.Context(), nil, ConfirmInput{Token: token}, opts)
+	if err != nil || confirmed.Error != "write confirmation is disabled" {
+		t.Fatalf("read-only confirmation accepted: %#v %v", confirmed, err)
+	}
+	consumePendingConfirmation(token)
 }

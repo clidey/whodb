@@ -103,6 +103,11 @@ var ApplicationEnvironment = os.Getenv("WHODB_APPLICATION_ENVIRONMENT")
 // multi-tenant/hosted deployments should set this to "true".
 var BlockInternalAIEndpoints = os.Getenv("WHODB_BLOCK_INTERNAL_AI_ENDPOINTS") == "true"
 
+// AIEndpointBlockedCIDRs lists deployment-specific address ranges that
+// user-configured AI provider endpoints must not reach. This includes any
+// network-specific IPv4/IPv6 translation prefixes used by the deployment.
+var AIEndpointBlockedCIDRs = strings.TrimSpace(os.Getenv("WHODB_AI_ENDPOINT_BLOCKED_CIDRS"))
+
 var ApplicationVersion string
 
 var PosthogAPIKey = "phc_hbXcCoPTdxm5ADL8PmLSYTIUvS6oRWFM2JAK8SMbfnH" // #nosec G101 -- PostHog project keys are public ingestion identifiers.

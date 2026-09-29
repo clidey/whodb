@@ -201,22 +201,26 @@ The `default` log paths write to `/var/log/whodb/`. That works naturally in Dock
 
 Generic OpenAI-compatible providers can be added with the `WHODB_AI_GENERIC_<ID>_*` pattern. See [Setting Up AI Providers](/ai/setup-providers).
 
-### Cloud Providers
+### CLI Cloud Providers
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `WHODB_ENABLE_AWS_PROVIDER` | Enable AWS provider support | `false` |
+| `WHODB_ENABLE_AWS_PROVIDER` | Enable AWS provider support in the CLI | `false` |
 | `WHODB_AWS_PROVIDER` | JSON array of AWS provider definitions | unset |
-| `WHODB_ENABLE_AZURE_PROVIDER` | Enable Azure provider support | `false` |
+| `WHODB_ENABLE_AZURE_PROVIDER` | Enable Azure provider support in the CLI | `false` |
 | `WHODB_AZURE_PROVIDER` | JSON array of Azure provider definitions | unset |
-| `WHODB_ENABLE_GCP_PROVIDER` | Enable GCP provider support | `false` |
+| `WHODB_ENABLE_GCP_PROVIDER` | Enable GCP provider support in the CLI | `false` |
 | `WHODB_GCP_PROVIDER` | JSON array of GCP provider definitions | unset |
 
-See [Cloud Providers](/features/cloud-providers) for examples and discovery details.
+These variables do not enable provider operations in the CE web server. See [Cloud Providers](/features/cloud-providers) for the local CLI workflow.
 
 ## Database Connection Profiles
 
 WhoDB can preload connection profiles from environment variables so they appear on the login page.
+
+<Warning>
+In Community Edition, connection profiles are shared with everyone who can reach the WhoDB instance. A user can select a profile and connect with its server-configured credentials without entering the database password. Profile names and IDs are not authentication factors. When profiles grant access to private or sensitive data, expose WhoDB only to trusted users and use a least-privileged database account.
+</Warning>
 
 Profiles work for every database type in the catalog: the prefix is `WHODB_` followed by the uppercased type name. Examples for the core types include:
 
@@ -262,6 +266,8 @@ Each profile object supports these common fields:
 | `database` | Database name or file path |
 | `port` | Port number as a string |
 | `advanced` | Key/value map of advanced options |
+
+Setting `WHODB_DISABLE_CREDENTIAL_FORM=true` hides manual credential entry, but it does not add authentication in front of configured profiles. Users who can reach the instance can still select and use them.
 
 ### SSL Example
 
@@ -357,6 +363,6 @@ Verify:
 Walk through the connection flow after WhoDB is running.
 </Card>
 <Card title="Cloud Providers" icon="cloud" href="/features/cloud-providers">
-Enable managed discovery for AWS, Azure, and GCP.
+Use local CLI discovery for AWS, Azure, and GCP.
 </Card>
 </CardGroup>

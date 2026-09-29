@@ -276,7 +276,7 @@ func NewManager() (*Manager, error) {
 }
 
 // EnableReadOnly makes query execution use both statement classification and
-// the source's engine-enforced read-only path when available.
+// the source's engine-enforced read-only path, rejecting unsupported sources.
 func (m *Manager) EnableReadOnly() {
 	m.config.SetReadOnly(true)
 }
@@ -286,6 +286,7 @@ func (m *Manager) runQuery(ctx context.Context, session source.SourceSession, so
 		if runner, ok := session.(source.ReadOnlyQueryRunner); ok {
 			return runner.RunReadOnlyQuery(ctx, query, params...)
 		}
+		return nil, fmt.Errorf("protected read-only execution is not supported for %s", sourceLabel)
 	}
 
 	runner, ok := session.(source.QueryRunner)

@@ -74,14 +74,6 @@ export const App = () => {
   }, [dispatch, newUIEnabled]);
 
   useEffect(() => {
-      if (!settingsConfig) return;
-      dispatch(SettingsActions.setCloudProvidersEnabled(settingsConfig.CloudProvidersEnabled));
-      dispatch(SettingsActions.setAWSProviderEnabled(settingsConfig.AWSProviderEnabled));
-      dispatch(SettingsActions.setAzureProviderEnabled(settingsConfig.AzureProviderEnabled));
-      dispatch(SettingsActions.setGCPProviderEnabled(settingsConfig.GCPProviderEnabled));
-  }, [dispatch, settingsConfig]);
-
-  useEffect(() => {
       if (telemetryRequired) {
           if (!metricsEnabled) {
               dispatch(SettingsActions.setMetricsEnabled(true));

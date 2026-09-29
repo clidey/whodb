@@ -95,7 +95,7 @@ func TestIsMutationQuery(t *testing.T) {
 		// Edge cases
 		{"empty string", "", false},
 		{"whitespace only", "   ", false},
-		{"single word select", "SELECT", false},
+		{"single word select", "SELECT", true},
 		{"semicolon only keyword", "INSERT;", true},
 		{"paren after keyword", "CREATE(", true},
 	}

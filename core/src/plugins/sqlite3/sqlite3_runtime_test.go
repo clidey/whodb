@@ -17,15 +17,91 @@
 package sqlite3
 
 import (
+	"context"
+	"errors"
+	"os"
 	"path/filepath"
 	"testing"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
+	"github.com/clidey/whodb/core/baml_client/types"
+	"github.com/clidey/whodb/core/src/bamlconfig"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/importer"
+	"github.com/clidey/whodb/core/src/source"
+	_ "github.com/clidey/whodb/core/src/sources/database"
 )
+
+func TestServerSQLiteConnectionsRejectFilesystemAttachment(t *testing.T) {
+	t.Setenv("WHODB_CLI", "false")
+	t.Setenv("WHODB_DESKTOP", "false")
+
+	db, err := gorm.Open(sourceSQLiteDialector(":memory:", false), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("open confined SQLite connection: %v", err)
+	}
+	sqlDB, err := db.DB()
+	if err != nil {
+		t.Fatalf("get confined SQLite handle: %v", err)
+	}
+	t.Cleanup(func() { _ = sqlDB.Close() })
+
+	targetPath := filepath.Join(t.TempDir(), "attached.sqlite")
+	queries := []struct {
+		name  string
+		query string
+		args  []any
+	}{
+		{name: "literal", query: "ATTACH DATABASE '" + targetPath + "' AS attached"},
+		{name: "bound filename", query: "ATTACH DATABASE ? AS attached", args: []any{targetPath}},
+	}
+	for _, tt := range queries {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := db.Exec(tt.query, tt.args...).Error; err == nil {
+				t.Fatal("expected filesystem attachment to be denied")
+			}
+		})
+	}
+
+	vacuumPath := filepath.Join(t.TempDir(), "vacuum.sqlite")
+	if err := db.Exec("VACUUM INTO ?", vacuumPath).Error; err == nil {
+		t.Fatal("expected VACUUM INTO to be denied")
+	}
+	if _, err := os.Stat(vacuumPath); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("VACUUM INTO created an output file: %v", err)
+	}
+}
+
+func TestServerSampleDatabaseIsReadOnly(t *testing.T) {
+	t.Setenv("WHODB_CLI", "false")
+	t.Setenv("WHODB_DESKTOP", "false")
+
+	db, err := GetSampleDatabase()
+	if err != nil {
+		t.Fatalf("open sample database: %v", err)
+	}
+	sqlDB, err := db.DB()
+	if err != nil {
+		t.Fatalf("get sample database handle: %v", err)
+	}
+	t.Cleanup(func() { _ = sqlDB.Close() })
+
+	var count int64
+	if err := db.Table("users").Count(&count).Error; err != nil {
+		t.Fatalf("read sample data: %v", err)
+	}
+	if count == 0 {
+		t.Fatal("expected seeded sample rows")
+	}
+	if err := db.Exec("CREATE TABLE attacker_controlled (id INTEGER)").Error; err == nil {
+		t.Fatal("expected sample database write to be denied")
+	}
+	if err := db.Exec("PRAGMA query_only=OFF").Error; err == nil {
+		t.Fatal("expected disabling sample query_only to be denied")
+	}
+}
 
 func newSQLiteRuntimeTestFixture(t *testing.T, statements ...string) (*Sqlite3Plugin, *engine.PluginConfig, *gorm.DB) {
 	t.Helper()
@@ -105,6 +181,39 @@ func TestSQLiteReadOnlyRawExecuteRejectsWrites(t *testing.T) {
 	config.ReadOnly = false
 	if _, err := plugin.RawExecute(config, "INSERT INTO read_only_guard VALUES (2)"); err != nil {
 		t.Fatalf("expected SQLite connection to return to read-write mode: %v", err)
+	}
+}
+
+func TestChatPlannerMislabelledWriteDoesNotChangeSQLiteState(t *testing.T) {
+	plugin, config, db := newSQLiteRuntimeTestFixture(t,
+		"CREATE TABLE chat_guard (id INTEGER PRIMARY KEY)",
+		"INSERT INTO chat_guard VALUES (1)",
+	)
+	operation := types.OperationTypeGET
+	executions := 0
+	executor := bamlconfig.ChatQueryExecutorFunc(func(_ context.Context, query string, params ...any) (*source.RowsResult, error) {
+		executions++
+		return plugin.RawExecute(config, query, params...)
+	})
+
+	message := bamlconfig.ProcessChatResponse(t.Context(), &types.ChatResponse{
+		Type:      types.ChatMessageTypeSQL,
+		Operation: &operation,
+		Text:      "DELETE FROM chat_guard",
+	}, executor)
+
+	if !message.RequiresConfirmation {
+		t.Fatalf("mislabelled write did not require confirmation: %#v", message)
+	}
+	if executions != 0 {
+		t.Fatalf("mislabelled write reached the executor %d times", executions)
+	}
+	var count int64
+	if err := db.Table("chat_guard").Count(&count).Error; err != nil {
+		t.Fatal(err)
+	}
+	if count != 1 {
+		t.Fatalf("mislabelled write changed database state: row count = %d", count)
 	}
 }
 
@@ -300,5 +409,30 @@ func TestOverwriteImportTreatsCraftedExistingNameAsOneIdentifier(t *testing.T) {
 	}
 	if secretRows != 1 {
 		t.Fatalf("expected secrets table to remain untouched, got %d rows", secretRows)
+	}
+}
+
+func TestSQLiteProtectedConnectionCannotEnableWrites(t *testing.T) {
+	plugin, config, _ := newSQLiteRuntimeTestFixture(t, "CREATE TABLE guard (id INTEGER PRIMARY KEY)", "INSERT INTO guard VALUES (1)")
+	config.ReadOnly = true
+	db, err := plugin.DB(config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sqlDB, err := db.DB()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer sqlDB.Close()
+	// Bypass the classifier deliberately: file access mode must still stop writes.
+	if err := db.Exec("PRAGMA query_only=OFF").Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Exec("INSERT INTO guard VALUES (2)").Error; err == nil {
+		t.Fatal("read-only file connection allowed write")
+	}
+	var count int
+	if err := db.Raw("SELECT count(*) FROM guard").Scan(&count).Error; err != nil || count != 1 {
+		t.Fatalf("unexpected protected state: %d %v", count, err)
 	}
 }

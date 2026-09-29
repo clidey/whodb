@@ -23,6 +23,7 @@ import (
 	"errors"
 	"maps"
 	"net/http"
+	"slices"
 	"strings"
 	"sync"
 
@@ -163,6 +164,8 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
+		// Profile trust comes only from server-side resolution, never the token.
+		credentials.IsProfile = false
 		inline := true
 		isSavedProfileReference := credentials.ID != nil && credentials.SourceType == ""
 
@@ -173,7 +176,11 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			_, storedProfile, ok := src.FindSourceProfile(*credentials.ID)
 			if ok {
 				storedProfile.ID = credentials.ID
-				storedProfile.Values = mergeCredentialValues(storedProfile.Values, credentials.Values)
+				storedProfile.Values, err = MergeSourceProfileValues(storedProfile.SourceType, storedProfile.Values, credentials.Values)
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusBadRequest)
+					return
+				}
 				credentials = storedProfile
 				matched = true
 				inline = false
@@ -182,7 +189,11 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			if !matched {
 				if stored, err := LoadCredentials(*credentials.ID); err == nil && stored != nil {
 					stored.ID = credentials.ID
-					stored.Values = mergeCredentialValues(stored.Values, credentials.Values)
+					stored.Values, err = MergeSourceProfileValues(stored.SourceType, stored.Values, credentials.Values)
+					if err != nil {
+						http.Error(w, err.Error(), http.StatusBadRequest)
+						return
+					}
 					credentials = stored
 					inline = false
 					onceKeyring.Do(func() { log.Info("Auth: credentials resolved via OS keyring") })
@@ -274,9 +285,21 @@ func RegisterAuthBypass(fn func(*http.Request) bool) {
 	authBypassFn = fn
 }
 
-func mergeCredentialValues(base map[string]string, overrides map[string]string) map[string]string {
+// MergeSourceProfileValues applies the database selection supported by a
+// stored profile while keeping every connection target and secret server-owned.
+func MergeSourceProfileValues(sourceType string, base map[string]string, overrides map[string]string) (map[string]string, error) {
+	for key := range overrides {
+		if key != "Database" || !sourceSupportsDatabaseSwitching(sourceType) {
+			return nil, errors.New("source profile connection fields cannot be overridden")
+		}
+	}
 	merged := map[string]string{}
 	maps.Copy(merged, base)
 	maps.Copy(merged, overrides)
-	return merged
+	return merged, nil
+}
+
+func sourceSupportsDatabaseSwitching(sourceType string) bool {
+	spec, ok := sourcecatalog.Find(sourceType)
+	return ok && slices.Contains(spec.Contract.BrowsePath, source.ObjectKindDatabase)
 }
