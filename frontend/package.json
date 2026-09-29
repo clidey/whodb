@@ -42,7 +42,7 @@
     "rxjs": "7.8.2",
     "tailwind-merge": "3.6.0",
     "tailwindcss": "4.3.3",
-    "uuid": "14.0.1"
+    "uuid": "14.0.2"
   },
   "scripts": {
     "start": "vite --port 3000 --open",
@@ -106,7 +106,7 @@
     "@types/lodash": "4.17.25",
     "@vitejs/plugin-react": "6.0.5",
     "baseline-browser-mapping": "2.11.15",
-    "js-yaml": "5.3.0",
+    "js-yaml": "5.4.1",
     "nyc": "18.0.0",
     "oxlint": "1.78.0",
     "oxlint-tsgolint": "7.0.2001",
