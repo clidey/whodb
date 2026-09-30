@@ -8,6 +8,17 @@ const require = createRequire(playwrightPackage);
 const { chromium } = require("@playwright/test");
 const origin = new URL(options.Host).origin;
 
+// A document is read-only when it starts with a query and defines no mutation or
+// subscription anywhere, so a decoy query followed by a mutation selected through
+// operationName is rejected. Block strings, strings, and comments are removed in
+// one left-to-right pass so a quote inside a comment cannot hide later tokens.
+const isReadOnlyDocument = (raw) => {
+  const query = String(raw ?? "")
+    .replace(/"""[\s\S]*?"""|"(?:[^"\\\n]|\\.)*"|#[^\n]*/g, (token) => (token[0] === "#" ? "" : '""'))
+    .trimStart();
+  return /^(query\b|\{)/.test(query) && !/\b(mutation|subscription)\b/.test(query);
+};
+
 const browser = await chromium.launch({ headless: true });
 try {
   const context = await browser.newContext({
@@ -44,14 +55,14 @@ try {
     if (request.method() !== "GET" && request.method() !== "HEAD") {
       let query = "";
       try {
-        query = request.postDataJSON()?.query?.trimStart() ?? "";
+        query = request.postDataJSON()?.query ?? "";
       } catch {
         // Non-GraphQL writes are blocked below.
       }
       if (
         parsed.origin !== origin ||
         !["/api/query", "/graphql"].includes(parsed.pathname) ||
-        !/^(query\b|\{)/.test(query)
+        !isReadOnlyDocument(query)
       ) {
         return route.abort();
       }
