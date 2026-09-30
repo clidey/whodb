@@ -180,7 +180,7 @@ func Capture(parent context.Context, options Options) (*Result, error) {
 	if err := cmd.Run(); err != nil {
 		message := strings.TrimSpace(stderr.String())
 		if strings.Contains(message, "Executable doesn't exist") || strings.Contains(message, "Please run the following command") {
-			return nil, errors.New("Chromium is missing; run whodb apps setup-capture, or retry whodb apps screenshot --install")
+			return nil, errors.New("missing Chromium; run whodb apps setup-capture, or retry whodb apps screenshot --install")
 		}
 		if len(message) > 700 {
 			message = message[:700]

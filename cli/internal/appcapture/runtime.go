@@ -34,7 +34,7 @@ func RuntimeDir() (string, error) {
 // It is only called by an explicit CLI setup command or --install flag.
 func SetupRuntime(ctx context.Context) (string, error) {
 	if _, err := exec.LookPath("node"); err != nil {
-		return "", errors.New("Node.js is required; install Node.js, then run whodb apps setup-capture")
+		return "", errors.New("missing Node.js; install Node.js, then run whodb apps setup-capture")
 	}
 	if _, err := exec.LookPath("npm"); err != nil {
 		return "", errors.New("npm is required; install Node.js with npm, then run whodb apps setup-capture")
