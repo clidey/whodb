@@ -133,23 +133,24 @@ run_ce_integration() {
 		cleanup() {
 			if [ "$MANAGE_COMPOSE" = "1" ] && [ "$COMPOSE_STARTED" -eq 1 ]; then
 				echo "→ Tearing down CE integration docker-compose stack"
-				docker compose -f "$COMPOSE_FILE" down --volumes --remove-orphans
+				docker compose -f "$COMPOSE_FILE" --profile readguard down --volumes --remove-orphans
 			fi
 		}
 		trap cleanup EXIT
 
 		if [ "$MANAGE_COMPOSE" = "1" ]; then
 			RUNNING_SERVICE_COUNT="$(
-				docker compose -f "$COMPOSE_FILE" ps -q \
+				docker compose -f "$COMPOSE_FILE" --profile readguard ps -q \
 					e2e_postgres e2e_mysql e2e_mariadb e2e_mysql_842 \
-					e2e_mongo e2e_clickhouse e2e_redis e2e_elasticsearch |
+					e2e_mongo e2e_clickhouse e2e_redis e2e_elasticsearch \
+					readguard_clickhouse |
 					grep -c . || true
 			)"
-			if [ "$RUNNING_SERVICE_COUNT" -eq 8 ]; then
+			if [ "$RUNNING_SERVICE_COUNT" -eq 9 ]; then
 				echo "ℹ️  Reusing existing CE docker-compose stack"
 			else
 				echo "🐳 Starting CE integration docker-compose stack"
-				docker compose -f "$COMPOSE_FILE" up -d
+				docker compose -f "$COMPOSE_FILE" --profile readguard up -d
 				COMPOSE_STARTED=1
 				# docker compose wait only sees running containers and errors out if
 				# the init jobs already exited, so wait on the container IDs directly.
@@ -160,6 +161,9 @@ run_ce_integration() {
 						exit 1
 					fi
 				done
+				# The readguard test connects immediately, so wait for the
+				# disposable ClickHouse healthcheck instead of relying on retries.
+				docker compose -f "$COMPOSE_FILE" --profile readguard up -d --wait readguard_clickhouse
 			fi
 		else
 			echo "ℹ️  WHODB_MANAGE_COMPOSE=0, assuming CE services are already running"
@@ -171,7 +175,7 @@ run_ce_integration() {
 		if [ "$COMPOSE_STARTED" -eq 1 ]; then
 			START_FLAG="0"
 		fi
-		WHODB_START_COMPOSE="${START_FLAG:-0}" go test -count=1 -tags integration \
+		WHODB_START_COMPOSE="${START_FLAG:-0}" WHODB_READGUARD_LOCAL=1 go test -count=1 -tags integration \
 			./src/plugins/postgres \
 			./src/plugins/mysql \
 			./src/plugins/clickhouse

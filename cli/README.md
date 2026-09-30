@@ -754,6 +754,53 @@ whodb mcp serve --platform --read-only
 whodb mcp serve --platform --allow-write
 ```
 
+To capture an actual rendered app with its current data, use the app commands
+or the `whodb_platform_app_views` and `whodb_platform_app_screenshot` MCP tools.
+The MCP screenshot tool returns WebP image content directly to the model. Both
+paths use the selected hosted workspace and are available in read-only mode.
+
+```bash
+whodb apps views "Clidey Sales" --org clidey-erp --project erp-demo --env dev
+whodb apps screenshot "Clidey Sales" --org clidey-erp --project erp-demo \
+  --env dev --tab Catalog --output sales-catalog.webp
+whodb apps setup-capture
+# Or install the optional browser on demand when taking a screenshot:
+whodb apps screenshot "Clidey Sales" --install --org clidey-erp --project erp-demo
+```
+
+For a specific page or interactive state, list pages first, then pass `--page`.
+Use `--click` for a visible app control, or `--actions` for an ordered sequence.
+Selectors are Playwright selectors inside the app frame. `--js` evaluates a
+JavaScript expression or IIFE in that frame after the actions; `--script-file`
+reads the expression from a file. JSON output includes the screenshot path,
+visible text, browser console errors, page errors, failed requests, HTTP error
+responses, and the JavaScript result.
+An assertion in `--js` can throw an error. The command still saves the screenshot
+and JSON diagnostics, sets `checks_passed` to `false`, and exits nonzero.
+`checks_passed` confirms that actions ran and explicit `wait_for` or JavaScript
+assertions passed; a click alone does not prove the app reached an intended view.
+
+```bash
+whodb apps views "Clidey Sales" --org clidey-erp --project erp-demo --env dev
+whodb apps screenshot "Clidey Sales" --org clidey-erp --project erp-demo \
+  --env dev --page main --click 'text=Orders' \
+  --js '(() => ({ rows: document.querySelectorAll("tr").length }))()' \
+  --output sales-orders.webp --format json
+```
+
+The MCP screenshot tool accepts the same `page`, `tab`, `actions`, and `script`
+inputs, so an agent can click, fill, press, wait for a selector, or inspect DOM
+state without creating a Playwright script. For example, use an action
+`{"kind":"click","selector":"text=Orders"}` followed by a script
+`"(() => document.querySelectorAll('tr').length)()"`.
+
+App capture needs Node.js and npm. `setup-capture` installs Playwright and
+Chromium in the user's cache; `--install` does the same before capturing.
+Without them, the command and MCP tool return setup instructions. Existing
+Playwright installations in the WhoDB source checkout work without setup.
+Captures only allow hosted GraphQL reads and never upload or publish the image.
+Inspect sample data and loading states before using a capture as product media.
+
 Local or staging setup:
 
 ```bash

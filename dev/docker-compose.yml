@@ -836,6 +836,26 @@ services:
     networks:
       - db
 
+  # Disposable ClickHouse for the protected-read (readguard) integration test.
+  # Matches the manual setup in docs/read-only-execution.md.
+  readguard_clickhouse:
+    profiles: ["readguard"]
+    image: clickhouse/clickhouse-server:25.5
+    ports:
+      - "127.0.0.1:59009:9000"
+    environment:
+      CLICKHOUSE_USER: guard
+      CLICKHOUSE_PASSWORD: guard-local
+      CLICKHOUSE_DB: guard
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
+    networks:
+      - db
+    healthcheck:
+      test: ["CMD-SHELL", "clickhouse-client --user guard --password guard-local --query 'SELECT 1' || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
 networks:
   db:
     driver: bridge

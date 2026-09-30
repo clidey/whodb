@@ -86,6 +86,7 @@ func registerPlatformAppCommands() {
 	appsCloneCmd.Flags().BoolVar(&appCloneOverwrite, "overwrite", false, "update an existing target app with the same name")
 	appsCloneCmd.Flags().BoolVarP(&platformWriteYes, "yes", "y", false, "clone without first printing the plan")
 	appsCmd.AddCommand(appsListCmd, appsCloneCmd)
+	registerPlatformAppCaptureCommands()
 }
 
 func readPlatformApps(ctx context.Context, session *platformSession, projectID string) ([]platformApp, error) {
