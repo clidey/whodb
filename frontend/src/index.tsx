@@ -45,6 +45,20 @@ try {
     // best-effort; do not block startup on UA detection issues
 }
 
+// A new build replaces the hashed chunks; a tab still running the old bundle fails
+// to lazy-load routes. Reload once so it picks up the new assets, but not more
+// than once a minute so a genuinely broken build cannot loop.
+const preloadErrorReloadKey = 'whodb:preload-error-reload';
+window.addEventListener('vite:preloadError', (event) => {
+    const lastReload = Number(sessionStorage.getItem(preloadErrorReloadKey) ?? 0);
+    if (Date.now() - lastReload < 60_000) {
+        return;
+    }
+    sessionStorage.setItem(preloadErrorReloadKey, String(Date.now()));
+    event.preventDefault();
+    window.location.reload();
+});
+
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
