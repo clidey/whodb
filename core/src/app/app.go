@@ -219,7 +219,11 @@ func Run(config AppConfig, staticFiles embed.FS) {
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      10 * time.Minute,
-		IdleTimeout:       30 * time.Second,
+		// Reverse proxies and load balancers commonly hold backend keepalive
+		// connections for up to 600s. Staying above that means we never close
+		// an idle connection the proxy is about to reuse, which would fail the
+		// request before it reaches a handler.
+		IdleTimeout: 620 * time.Second,
 	}
 
 	go func() {
