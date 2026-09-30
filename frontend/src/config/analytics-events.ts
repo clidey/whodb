@@ -30,6 +30,7 @@ export const ANALYTICS_EVENTS = {
     UI_STORAGE_UNIT_CREATED: 'ui.storage_unit_created',
     UI_STORAGE_UNIT_CREATE_BLOCKED: 'ui.storage_unit_create_blocked',
     UI_STORAGE_UNIT_CREATE_FAILED: 'ui.storage_unit_create_failed',
+    UI_REQUEST_RETRIED: 'ui.request_retried',
 
     AUTH_LOGIN_BLOCKED: 'auth.login_blocked',
     AUTH_LOGIN_FAILED: 'auth.login_failed',

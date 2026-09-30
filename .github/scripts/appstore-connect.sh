@@ -243,6 +243,44 @@ get_app_id() {
     echo "$app_id"
 }
 
+# App Store version states that can still be edited (and therefore renamed/resubmitted).
+# See https://developer.apple.com/documentation/appstoreconnectapi/appstoreversionstate
+EDITABLE_VERSION_STATES='["PREPARE_FOR_SUBMISSION","DEVELOPER_REJECTED","REJECTED","METADATA_REJECTED","INVALID_BINARY"]'
+
+# Rename an existing editable app store version to a new version string.
+# App Store Connect allows only one in-progress version per platform, so a
+# leftover rejected/unsubmitted version must be reused rather than replaced.
+rename_version() {
+    local version_id="$1"
+    local version="$2"
+
+    local update_data
+    update_data=$(cat <<EOF
+{
+    "data": {
+        "type": "appStoreVersions",
+        "id": "$version_id",
+        "attributes": {
+            "versionString": "$version"
+        }
+    }
+}
+EOF
+)
+
+    local response
+    response=$(api_request PATCH "/appStoreVersions/$version_id" "$update_data")
+
+    local new_version
+    new_version=$(echo "$response" | jq -r '.data.attributes.versionString // empty')
+
+    if [[ "$new_version" != "$version" ]]; then
+        error "Failed to rename version $version_id to $version"
+        error "Response: $response"
+        return 1
+    fi
+}
+
 # Get or create an app store version
 get_or_create_version() {
     local app_id="$1"
@@ -263,17 +301,33 @@ get_or_create_version() {
         log "Found existing version $version (ID: $version_id, state: $state)"
 
         # Check if version is in an editable state
-        case "$state" in
-            PREPARE_FOR_SUBMISSION|DEVELOPER_REJECTED|REJECTED|METADATA_REJECTED|INVALID_BINARY)
-                log "Version is editable"
-                echo "$version_id"
-                return 0
-                ;;
-            *)
-                error "Version $version exists but is in non-editable state: $state"
-                return 1
-                ;;
-        esac
+        if echo "$EDITABLE_VERSION_STATES" | jq -e --arg s "$state" 'index($s)' > /dev/null; then
+            log "Version is editable"
+            echo "$version_id"
+            return 0
+        fi
+
+        error "Version $version exists but is in non-editable state: $state"
+        return 1
+    fi
+
+    # No version with this string yet. Apple only allows one in-progress version
+    # per platform, so if a previous version is still editable (e.g. developer
+    # rejected), rename it to the new version instead of creating another one.
+    response=$(api_request GET "/apps/$app_id/appStoreVersions?filter[platform]=MAC_OS&limit=200")
+
+    local editable
+    editable=$(echo "$response" | jq -r --argjson states "$EDITABLE_VERSION_STATES" \
+        '.data | map(select(.attributes.appStoreState as $s | $states | index($s))) | first // empty | "\(.id) \(.attributes.versionString) \(.attributes.appStoreState)"')
+
+    if [[ -n "$editable" ]]; then
+        local old_version state
+        read -r version_id old_version state <<< "$editable"
+        log "Found editable version $old_version (ID: $version_id, state: $state); renaming to $version"
+        rename_version "$version_id" "$version"
+        log "Renamed version $old_version -> $version"
+        echo "$version_id"
+        return 0
     fi
 
     log "Creating new version: $version"
@@ -307,6 +361,7 @@ EOF
     if [[ -z "$version_id" ]]; then
         error "Failed to create version"
         error "Response: $response"
+        error "App Store Connect allows one in-progress version per platform. If another version is waiting for or in review, it must finish or be cancelled first."
         return 1
     fi
 

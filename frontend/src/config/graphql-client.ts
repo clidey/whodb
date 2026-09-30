@@ -19,6 +19,8 @@ import {CombinedGraphQLErrors, CombinedProtocolErrors, ServerError} from '@apoll
 import {setContext} from '@apollo/client/link/context';
 import {onError} from '@apollo/client/link/error';
 import {HttpLink} from '@apollo/client/link/http';
+import {RetryLink} from '@apollo/client/link/retry';
+import {getMainDefinition} from '@apollo/client/utilities';
 import {toast} from '@clidey/ux';
 import {print} from 'graphql';
 import type {
@@ -36,6 +38,8 @@ import {isOnRoute, navigateWithBasePath, withBasePath} from '../utils/base-path'
 import {getTranslation, loadTranslationsSync} from '../utils/i18n';
 import {type SupportedLanguage, DEFAULT_LANGUAGE} from '../utils/languages';
 import {clearSourceSessionMetadata} from '../utils/source-session-metadata-cache';
+import {ANALYTICS_EVENTS} from './analytics-events';
+import {trackFrontendIntent} from './frontend-analytics';
 
 // Always use an application-relative URI so that:
 // - Desktop/Wails uses the embedded router handler
@@ -136,6 +140,42 @@ const errorLink = onError(({error}) => {
     }
 });
 
+// Statuses that mean the request never reached the backend. 504 is
+// deliberately excluded: the server's own request timeout answers with 504,
+// and replaying a query that already took too long only adds load.
+const transientStatusCodes = new Set([502, 503]);
+const maxRequestAttempts = 3;
+
+// Retries read operations that failed before the server produced a GraphQL
+// response: network failures and 502/503. Mutations are never retried, and
+// GraphQL-level errors are not transient. Each retry is reported so transient
+// failures stay visible even when users never see them.
+const retryLink = new RetryLink({
+    delay: {initial: 500, max: 4000, jitter: true},
+    attempts: (attempt, operation, error) => {
+        if (attempt >= maxRequestAttempts) {
+            return false;
+        }
+        const definition = getMainDefinition(operation.query);
+        if (definition.kind !== 'OperationDefinition' || definition.operation !== 'query') {
+            return false;
+        }
+        if (CombinedGraphQLErrors.is(error) || CombinedProtocolErrors.is(error)) {
+            return false;
+        }
+        const isServerError = ServerError.is(error);
+        if (isServerError && !transientStatusCodes.has(error.statusCode)) {
+            return false;
+        }
+        trackFrontendIntent(ANALYTICS_EVENTS.UI_REQUEST_RETRIED, {
+            attempt_index: attempt,
+            error_code: isServerError ? 'server_error' : 'connection_failed',
+            ...(isServerError ? {status: error.statusCode} : {}),
+        });
+        return true;
+    },
+});
+
 function fallbackAutoLogin() {
     if (isOnRoute('/login')) {
         return;
@@ -231,7 +271,7 @@ async function handleAutoLogin(currentProfile: LocalLoginProfile) {
 }
 
 export const graphqlClient = new ApolloClient({
-    link: errorLink.concat(authLink.concat(httpLink)),
+    link: errorLink.concat(retryLink.concat(authLink.concat(httpLink))),
   cache: new InMemoryCache(),
   defaultOptions: {
       watchQuery: {
