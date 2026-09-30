@@ -1,8 +1,9 @@
 name: Build CLI Docker Images
 
 # Produces:
-# - docker-cli-image-amd64: transient scan handoff artifact.
-# - docker-cli-image-arm64: transient scan handoff artifact.
+# - docker-cli-image-amd64: OCI layout tarball with SBOM + provenance attestations.
+# - docker-cli-image-arm64: OCI layout tarball with SBOM + provenance attestations.
+# The deploy workflow pushes these tarballs as-is, so the scanned image digest is the deployed digest.
 
 on:
   workflow_call:
@@ -86,20 +87,25 @@ jobs:
           file: ./cli/Dockerfile
           platforms: ${{ matrix.platform }}
           push: false
+          sbom: true
+          provenance: mode=max
           tags: clidey/whodb-cli:${{ inputs.version }}-${{ matrix.arch }}
-          outputs: type=docker,dest=/tmp/whodb-cli-docker-${{ matrix.arch }}.tar
+          outputs: type=oci,dest=/tmp/whodb-cli-docker-${{ matrix.arch }}.tar
           cache-from: type=gha,scope=ce-cli-docker-${{ matrix.arch }}
           cache-to: type=gha,mode=max,scope=ce-cli-docker-${{ matrix.arch }}
           build-args: |
             VERSION=${{ inputs.version }}
 
-      - name: Load image for scan
-        run: docker load -i /tmp/whodb-cli-docker-${{ matrix.arch }}.tar
+      # Trivy reads OCI layouts from a directory, not from the tarball itself.
+      - name: Extract OCI layout for scan
+        run: |
+          mkdir -p /tmp/whodb-cli-oci
+          tar -xf /tmp/whodb-cli-docker-${{ matrix.arch }}.tar -C /tmp/whodb-cli-oci
 
       - name: Generate Trivy SARIF report
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          image-ref: clidey/whodb-cli:${{ inputs.version }}-${{ matrix.arch }}
+          input: /tmp/whodb-cli-oci
           format: sarif
           output: trivy-results.sarif
           exit-code: '0'
