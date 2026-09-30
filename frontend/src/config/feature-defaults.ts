@@ -34,6 +34,7 @@ export interface FeatureFlags {
     sqlAgent: boolean;
     keyboardShortcutsHelp: boolean;
     platformFunnel: boolean;
+    healthMonitoring: boolean;
 }
 
 /** Default feature flag values for the CE build. */
@@ -53,4 +54,5 @@ export const defaultFeatures: FeatureFlags = {
     sqlAgent: false,
     keyboardShortcutsHelp: true, // Enabled in CE
     platformFunnel: false,
+    healthMonitoring: true, // Enabled in CE
 };

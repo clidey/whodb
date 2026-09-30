@@ -26,7 +26,7 @@ import {getRegisteredPublicRoutes, getRegisteredScopedRoutes, getScopedLayout} f
 import {NavigateToDefault} from "./pages/chat/default-chat-route";
 import {useAppDispatch, useAppSelector} from "./store/hooks";
 import {SettingsActions} from "./store/settings";
-import {settingsDefaults} from "./config/features";
+import {featureFlags, settingsDefaults} from "./config/features";
 import {useThemeCustomization} from "./hooks/use-theme-customization";
 import {useDesktopMenu} from "./hooks/useDesktop";
 import {useSidebarShortcuts} from "./hooks/useSidebarShortcuts";
@@ -141,6 +141,9 @@ export const App = () => {
   // Start health check service when user logs in, stop when they log out
 
   useEffect(() => {
+    if (!featureFlags.healthMonitoring) {
+      return;
+    }
     if (authStatus === 'logged-in') {
       healthCheckService.start();
     } else {
@@ -160,8 +163,12 @@ export const App = () => {
       <div className="h-[100vh] w-[100vw]" id="whodb-app-container">
         {KeyboardShortcutsHelpModal}
         {CommandPaletteModal}
-        <ServerDownOverlay />
-        <DatabaseDownOverlay />
+        {featureFlags.healthMonitoring && (
+          <>
+            <ServerDownOverlay />
+            <DatabaseDownOverlay />
+          </>
+        )}
         <PageTitleUpdater />
         <Routes>
           <Route path="/" element={<PrivateRoute />}>
