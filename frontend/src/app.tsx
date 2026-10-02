@@ -45,6 +45,7 @@ export const App = () => {
     const dispatch = useAppDispatch();
   const metricsEnabled = useAppSelector(state => state.settings.metricsEnabled);
   const authStatus = useAppSelector(state => state.auth.status);
+  const serverStatus = useAppSelector(state => state.health.serverStatus);
   const settingsConfig = settingsConfigData?.SettingsConfig;
   const newUIEnabled = settingsDefaults.newUIEnabled === true || settingsConfig?.EnableNewUI === true;
   const telemetryRequired = getEdition() === 'ee';
@@ -144,7 +145,7 @@ export const App = () => {
     if (!featureFlags.healthMonitoring) {
       return;
     }
-    if (authStatus === 'logged-in') {
+    if (authStatus === 'logged-in' || serverStatus === 'error') {
       healthCheckService.start();
     } else {
       healthCheckService.stop();
@@ -152,14 +153,15 @@ export const App = () => {
       dispatch(HealthActions.resetHealth());
     }
 
-    return () => {
-      healthCheckService.stop();
-    };
-  }, [authStatus, dispatch]);
+  }, [authStatus, serverStatus, dispatch]);
+
+  useEffect(() => () => {
+    healthCheckService.stop();
+  }, []);
 
   return (
     <TourProvider>
-      {createPortal(<Toaster position="bottom-center" />, document.body)}
+      {createPortal(<Toaster position="bottom-right" />, document.body)}
       <div className="h-[100vh] w-[100vw]" id="whodb-app-container">
         {KeyboardShortcutsHelpModal}
         {CommandPaletteModal}

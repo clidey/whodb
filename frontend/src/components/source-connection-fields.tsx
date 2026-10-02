@@ -79,6 +79,7 @@ export interface SourceConnectionFieldsProps {
     databaseOptions?: SourceConnectionFieldOption[];
     databaseOptionsLoading?: boolean;
     hasError?: boolean;
+    hostError?: boolean;
     errorId?: string;
 }
 
@@ -115,6 +116,7 @@ export function SourceConnectionFields({
     databaseOptions = [],
     databaseOptionsLoading = false,
     hasError = false,
+    hostError = false,
     errorId,
 }: SourceConnectionFieldsProps): ReactElement {
     const hostnameField = findConnectionFieldByKey(databaseType, 'Hostname');
@@ -125,7 +127,7 @@ export function SourceConnectionFields({
     const searchPathField = promotedConnectionField(databaseType, 'Search Path', promotedKeys);
     const port = portValue ?? advancedForm.Port ?? portField?.DefaultValue ?? '';
     const setPort = onPortChange ?? ((value: string) => { onAdvancedFormChange('Port', value); });
-    const containerClassName = cn(layout === 'login' ? 'flex flex-col gap-lg w-full' : 'space-y-4', ph.noCapture);
+    const containerClassName = cn(layout === 'login' ? 'source-connection-fields flex flex-col gap-lg w-full' : 'space-y-4', ph.noCapture);
     const fieldClassName = layout === 'login' ? 'flex flex-col gap-sm w-full' : 'grid gap-2';
 
     if (usesFileTransport(databaseType) && databaseField != null) {
@@ -213,8 +215,8 @@ export function SourceConnectionFields({
                             data-testid="hostname"
                             placeholder={fieldPlaceholder(hostnameField, translate)}
                             aria-required={hostnameField.Required ? 'true' : undefined}
-                            aria-invalid={hasError ? 'true' : undefined}
-                            aria-describedby={hasError ? errorId : undefined}
+                            aria-invalid={hasError || hostError ? 'true' : undefined}
+                            aria-describedby={hasError || hostError ? errorId : undefined}
                         />
                     </div>
                     {portField != null && layout === 'login' && (

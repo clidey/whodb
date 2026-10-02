@@ -357,7 +357,7 @@ test.describe("Accessibility (axe-core)", () => {
       await page.route("**/api/query", handleHealth);
 
       await page.goto(whodb.url("/storage-unit"));
-      await page.getByRole("heading", { name: "Server Unavailable" }).waitFor({ timeout: 15_000 });
+      await page.getByRole("heading", { name: "We're having trouble connecting" }).waitFor({ timeout: 15_000 });
       await runAxeScan(page, testInfo, "server-down-overlay");
       await page.unroute("**/api/query", handleHealth);
     });

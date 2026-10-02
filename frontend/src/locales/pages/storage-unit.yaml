@@ -1,5 +1,9 @@
 en_US:
   title: Tables
+  loadingTables: Loading tables
+  objectCount: "{count} {objects}"
+  columnCount: "{count} columns"
+  newObject: "New {object}"
   searchPlaceholder: Enter Filter Value...
   cardView: Card View
   listView: List View

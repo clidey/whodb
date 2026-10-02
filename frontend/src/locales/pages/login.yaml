@@ -1,4 +1,33 @@
 en_US:
+  storyLabel: About WhoDB
+  communityEdition: Community Edition
+  openSourceExplorer: Open-source database explorer
+  storyHeadline: "Every database.\nOne explorer.\nNo setup."
+  engines: Engines
+  sample: Sample
+  connectWhatYouRun: Connect what you run
+  connectWhatYouRunDescription: SQL, document, key-value and graph databases from one place.
+  tryTheSample: Try the sample
+  sampleDescription: A small store database. Nothing is kept.
+  openSample: Open
+  sqliteLabel: SQLite
+  sampleChat: Chat
+  sampleChatDescription: Questions in plain English
+  sampleGraph: Graph
+  sampleGraphDescription: Tables and their links
+  sampleGrid: Grid
+  sampleGridDescription: Edit rows like a sheet
+  sampleScratchpad: Scratchpad
+  sampleScratchpadDescription: SQL with autocomplete
+  connectEyebrow: Connect
+  connectTitle: Connect a database
+  credentialsStayLocal: Credentials stay on this machine.
+  connectButton: Connect
+  connecting: Connecting
+  connectingTo: Connecting to {host}
+  testingConnection: Testing
+  roundTrip: "{duration} ms round trip"
+  advancedHint: Schema, SSL and more in
   platformZeroInstallLink: Prefer zero install? Try hosted WhoDB Platform.
   enterHostName: Enter Host Name
   advancedFields.region: Region
@@ -6,11 +35,11 @@ en_US:
   noConnectionsDescription: Manual connection form is disabled for this deployment. Please configure database connections via environment variables or contact your administrator.
   loggingIn: Logging In
   title: Login
-  databaseType: Database Type
-  databaseName: "Database Name"
+  databaseType: Engine
+  databaseName: "Database"
   databaseFilePath: "Database File Path"
   hostName: Host Name
-  hostNameOrUrl: Host Name (or Enter Connection String)
+  hostNameOrUrl: Host or connection string
   username: Username
   enterUsername: Enter Username
   password: Password

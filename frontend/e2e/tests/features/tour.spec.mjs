@@ -93,16 +93,16 @@ describeOrSkip('Tour & Onboarding', () => {
 
             // Verify first step content
             await expect(getTourTooltip(page)).toContainText('Welcome to WhoDB');
-            await expect(getTourTooltip(page)).toContainText('Let\'s take a quick tour');
+            await expect(getTourTooltip(page)).toContainText('Take a quick tour');
         });
 
         test('displays correct step counter on first step', async ({ whodb, page }) => {
             await loginToSampleDatabase(whodb, page);
             await waitForTourToStart(page);
 
-            // Should show step 1 of 7 (based on tour-config.tsx)
+            // Should show step 1 of 6 (based on tour-config.tsx)
             await expect(getTourTooltip(page)).toContainText('1');
-            await expect(getTourTooltip(page)).toContainText('7');
+            await expect(getTourTooltip(page)).toContainText('6');
         });
 
         test('shows spotlight on target element', async ({ whodb, page }) => {
@@ -132,23 +132,22 @@ describeOrSkip('Tour & Onboarding', () => {
             // Wait for transition
             await page.waitForTimeout(500);
 
-            // Verify second step - AI Chat Assistant
-            await expect(getTourTooltip(page)).toContainText('AI Chat Assistant');
-            await expect(getTourTooltip(page)).toContainText('Ask questions in plain English');
+            // Verify second step - Chat
+            await expect(getTourTooltip(page)).toContainText('Ask in plain English');
+            await expect(getTourTooltip(page)).toContainText('top products this month');
 
-            // Step counter should show 2 of 7
+            // Step counter should show 2 of 6
             await expect(getTourTooltip(page)).toContainText('2');
         });
 
         test('navigates through all tour steps sequentially', async ({ whodb, page }) => {
             const expectedSteps = [
                 'Welcome to WhoDB',
-                'AI Chat Assistant',
-                'Visual Schema Explorer',
-                'Browse Database Tables',
-                'SQL Editor & Scratchpad',
-                'View Table Data',
-                'You\'re All Set!'
+                'Ask in plain English',
+                'Explore your schema',
+                'Browse tables',
+                'Write SQL in Scratchpad',
+                'You are all set'
             ];
 
             for (let index = 0; index < expectedSteps.length; index++) {
@@ -158,7 +157,7 @@ describeOrSkip('Tour & Onboarding', () => {
 
                 // Verify step counter
                 await expect(getTourTooltip(page)).toContainText(`${index + 1}`);
-                await expect(getTourTooltip(page)).toContainText('7');
+                await expect(getTourTooltip(page)).toContainText('6');
 
                 // Click next unless it's the last step
                 if (index < expectedSteps.length - 1) {
@@ -175,19 +174,19 @@ describeOrSkip('Tour & Onboarding', () => {
             await page.waitForTimeout(500);
 
             // Step 2: AI Chat - should highlight chat link
-            await expect(getTourTooltip(page)).toContainText('AI Chat Assistant');
+            await expect(getTourTooltip(page)).toContainText('Ask in plain English');
             await expect(page.locator('[href="/chat"]')).toBeAttached();
             await page.locator('[data-testid="tour-next-button"]').click();
             await page.waitForTimeout(500);
 
             // Step 3: Graph - should highlight graph link
-            await expect(getTourTooltip(page)).toContainText('Visual Schema Explorer');
+            await expect(getTourTooltip(page)).toContainText('Explore your schema');
             await expect(page.locator('[href="/graph"]')).toBeAttached();
             await page.locator('[data-testid="tour-next-button"]').click();
             await page.waitForTimeout(500);
 
             // Step 4: Storage Unit cards
-            await expect(getTourTooltip(page)).toContainText('Browse Database Tables');
+            await expect(getTourTooltip(page)).toContainText('Browse tables');
             await expect(page.locator('[data-testid="storage-unit-card-list"]')).toBeAttached();
         });
     });
@@ -210,7 +209,7 @@ describeOrSkip('Tour & Onboarding', () => {
             // Navigate to second step
             await page.locator('[data-testid="tour-next-button"]').click();
             await page.waitForTimeout(500);
-            await expect(getTourTooltip(page)).toContainText('AI Chat Assistant');
+            await expect(getTourTooltip(page)).toContainText('Ask in plain English');
 
             // Click previous button
             await expect(page.locator('[data-testid="tour-prev-button"]')).toBeVisible();
@@ -231,19 +230,19 @@ describeOrSkip('Tour & Onboarding', () => {
             await page.locator('[data-testid="tour-next-button"]').click();
             await page.waitForTimeout(800);
 
-            await expect(getTourTooltip(page)).toContainText('Browse Database Tables');
+            await expect(getTourTooltip(page)).toContainText('Browse tables');
             await expect(getTourTooltip(page)).toContainText('4');
 
             // Go back to step 3
             await page.locator('[data-testid="tour-prev-button"]').click();
             await page.waitForTimeout(500);
-            await expect(getTourTooltip(page)).toContainText('Visual Schema Explorer');
+            await expect(getTourTooltip(page)).toContainText('Explore your schema');
             await expect(getTourTooltip(page)).toContainText('3');
 
             // Go back to step 2
             await page.locator('[data-testid="tour-prev-button"]').click();
             await page.waitForTimeout(500);
-            await expect(getTourTooltip(page)).toContainText('AI Chat Assistant');
+            await expect(getTourTooltip(page)).toContainText('Ask in plain English');
             await expect(getTourTooltip(page)).toContainText('2');
         });
     });
@@ -289,7 +288,7 @@ describeOrSkip('Tour & Onboarding', () => {
             await page.locator('[data-testid="tour-next-button"]').click();
             await page.waitForTimeout(500);
 
-            await expect(getTourTooltip(page)).toContainText('Visual Schema Explorer');
+            await expect(getTourTooltip(page)).toContainText('Explore your schema');
 
             // Skip from this step
             await page.locator('[data-testid="tour-skip-button"]').click();
@@ -312,14 +311,14 @@ describeOrSkip('Tour & Onboarding', () => {
 
         test('shows finish button on last step', async ({ whodb, page }) => {
             // Navigate to last step
-            for (let i = 0; i < 6; i++) {
+            for (let i = 0; i < 5; i++) {
                 await page.locator('[data-testid="tour-next-button"]').click();
                 await page.waitForTimeout(800);
             }
 
             // Last step should show finish/complete button
-            await expect(getTourTooltip(page)).toContainText('You\'re All Set!');
-            await expect(getTourTooltip(page)).toContainText('7');
+            await expect(getTourTooltip(page)).toContainText('You are all set');
+            await expect(getTourTooltip(page)).toContainText('6');
 
             // Next button might say "Finish" or "Complete" on last step
             await expect(page.locator('[data-testid="tour-next-button"]')).toBeVisible();
@@ -327,12 +326,12 @@ describeOrSkip('Tour & Onboarding', () => {
 
         test('closes tour and marks onboarding complete when finishing', async ({ whodb, page }) => {
             // Navigate to last step
-            for (let i = 0; i < 6; i++) {
+            for (let i = 0; i < 5; i++) {
                 await page.locator('[data-testid="tour-next-button"]').click();
                 await page.waitForTimeout(800);
             }
 
-            await expect(getTourTooltip(page)).toContainText('You\'re All Set!');
+            await expect(getTourTooltip(page)).toContainText('You are all set');
 
             // Click finish button
             await page.locator('[data-testid="tour-next-button"]').click();
@@ -453,28 +452,24 @@ describeOrSkip('Tour & Onboarding', () => {
                     descriptionSnippet: 'quick tour'
                 },
                 {
-                    title: 'AI Chat Assistant',
-                    descriptionSnippet: 'plain English'
+                    title: 'Ask in plain English',
+                    descriptionSnippet: 'top products this month'
                 },
                 {
-                    title: 'Visual Schema Explorer',
-                    descriptionSnippet: 'database structure'
+                    title: 'Explore your schema',
+                    descriptionSnippet: 'relationships'
                 },
                 {
-                    title: 'Browse Database Tables',
-                    descriptionSnippet: 'tables in your database'
-                },
-                {
-                    title: 'SQL Editor & Scratchpad',
-                    descriptionSnippet: 'custom SQL queries'
-                },
-                {
-                    title: 'View Table Data',
+                    title: 'Browse tables',
                     descriptionSnippet: 'table card'
                 },
                 {
-                    title: 'You\'re All Set!',
-                    descriptionSnippet: 'key features'
+                    title: 'Write SQL in Scratchpad',
+                    descriptionSnippet: 'autocomplete'
+                },
+                {
+                    title: 'You are all set',
+                    descriptionSnippet: 'sample database'
                 }
             ];
 
@@ -491,29 +486,27 @@ describeOrSkip('Tour & Onboarding', () => {
             }
         });
 
-        test('displays icons for each step', async ({ whodb, page }) => {
-            // First step should have an icon (Sparkles icon for welcome)
-            await expect(getTourTooltip(page).locator('svg').first()).toBeAttached();
-
-            // Navigate and check other steps have icons
-            await page.locator('[data-testid="tour-next-button"]').click();
-            await page.waitForTimeout(500);
-            await expect(getTourTooltip(page).locator('svg').first()).toBeAttached(); // Chat icon
+        test('displays progress dots for each step', async ({ whodb, page }) => {
+            await expect(getTourTooltip(page).locator('.tour-tooltip-dots span')).toHaveCount(6);
 
             await page.locator('[data-testid="tour-next-button"]').click();
             await page.waitForTimeout(500);
-            await expect(getTourTooltip(page).locator('svg').first()).toBeAttached(); // Graph icon
+            await expect(getTourTooltip(page).locator('.tour-tooltip-dots .is-current')).toHaveCount(1);
+
+            await page.locator('[data-testid="tour-next-button"]').click();
+            await page.waitForTimeout(500);
+            await expect(getTourTooltip(page).locator('.tour-tooltip-dots span')).toHaveCount(6);
         });
 
         test('shows progress indicator with current step', async ({ whodb, page }) => {
             await expect(getTourTooltip(page)).toContainText('1');
-            await expect(getTourTooltip(page)).toContainText('7');
+            await expect(getTourTooltip(page)).toContainText('6');
 
             await page.locator('[data-testid="tour-next-button"]').click();
             await page.waitForTimeout(500);
 
             await expect(getTourTooltip(page)).toContainText('2');
-            await expect(getTourTooltip(page)).toContainText('7');
+            await expect(getTourTooltip(page)).toContainText('6');
         });
     });
 
@@ -575,7 +568,7 @@ describeOrSkip('Tour & Onboarding', () => {
                 await page.waitForTimeout(800);
             }
 
-            await expect(getTourTooltip(page)).toContainText('Browse Database Tables');
+            await expect(getTourTooltip(page)).toContainText('Browse tables');
 
             // Target element should be visible
             await expect(page.locator('[data-testid="storage-unit-card-list"]')).toBeVisible();
@@ -589,7 +582,7 @@ describeOrSkip('Tour & Onboarding', () => {
             await page.waitForTimeout(800);
 
             // Tour should wait for element and then show tooltip
-            await expect(getTourTooltip(page)).toContainText('AI Chat Assistant');
+            await expect(getTourTooltip(page)).toContainText('Ask in plain English');
             await expect(page.locator('[href="/chat"]')).toBeAttached();
         });
     });

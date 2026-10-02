@@ -22,6 +22,7 @@ import { sampleDatabaseTour } from '../../config/tour-config';
 import { Tour } from './tour';
 import { markOnboardingComplete } from '../../utils/onboarding';
 import { featureFlags } from '../../config/features';
+import { useTranslation } from '../../hooks/use-translation';
 
 interface TourProviderProps {
     children: ReactNode;
@@ -30,6 +31,7 @@ interface TourProviderProps {
 export const TourProvider: FC<TourProviderProps> = ({ children }) => {
     const dispatch = useAppDispatch();
     const tourState = useAppSelector(state => state.tour);
+    const { t } = useTranslation('components/tour');
 
     useEffect(() => {
         if (tourState.shouldStartOnLoad && tourState.tourId && featureFlags.autoStartTourOnLogin) {
@@ -54,11 +56,11 @@ export const TourProvider: FC<TourProviderProps> = ({ children }) => {
     const getTourConfig = useCallback(() => {
         switch (tourState.tourId) {
             case 'sample-database-tour':
-                return sampleDatabaseTour;
+                return sampleDatabaseTour(t);
             default:
                 return null;
         }
-    }, [tourState.tourId]);
+    }, [tourState.tourId, t]);
 
     const config = getTourConfig();
 

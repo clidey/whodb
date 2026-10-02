@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-import { Badge, Button, Card } from '@clidey/ux';
+import { Button, Card } from '@clidey/ux';
 import { motion } from 'framer-motion';
-import type { FC, ReactElement} from 'react';
+import type { FC } from 'react';
 import { useEffect, useState } from 'react';
-import { CheckCircleIcon, ChevronRightIcon, XMarkIcon } from '../heroicons';
 import { useTranslation } from '../../hooks/use-translation';
 import { useAppSelector } from '../../store/hooks';
 
@@ -28,7 +27,6 @@ interface TourTooltipProps {
     targetElement: HTMLElement | null;
     title: string;
     description: string;
-    icon?: ReactElement;
     position?: TooltipPosition;
     currentStep: number;
     totalSteps: number;
@@ -43,7 +41,6 @@ export const TourTooltip: FC<TourTooltipProps> = ({
     targetElement,
     title,
     description,
-    icon,
     position = 'right',
     currentStep,
     totalSteps,
@@ -69,79 +66,46 @@ export const TourTooltip: FC<TourTooltipProps> = ({
         }
 
         const updatePosition = () => {
-            const rect = targetElement.getBoundingClientRect();
-            const tooltipWidth = 400;
-            const tooltipHeight = 300;
-            const gap = 20;
-
-            let style: React.CSSProperties = {
-                position: 'fixed',
-            };
+            const navItem = targetElement.closest('[data-slot="sidebar-menu-item"]');
+            const rect = (navItem ?? targetElement).getBoundingClientRect();
+            const tooltipWidth = Math.min(320, window.innerWidth - 32);
+            const tooltipHeight = 240;
+            const gap = 12;
+            let left = rect.right + gap;
+            let top = rect.top;
 
             switch (position) {
                 case 'right':
-                    style = {
-                        ...style,
-                        left: rect.right + gap,
-                        top: rect.top + rect.height / 2,
-                        transform: 'translateY(-50%)',
-                    };
+                    left = Math.max(left, (targetElement.closest('[data-slot="sidebar-container"]')?.getBoundingClientRect().right ?? left) + 8);
+                    top = rect.top + rect.height / 2 - 28;
                     break;
                 case 'left':
-                    style = {
-                        ...style,
-                        right: window.innerWidth - rect.left + gap,
-                        top: rect.top + rect.height / 2,
-                        transform: 'translateY(-50%)',
-                    };
+                    left = rect.left - tooltipWidth - gap;
                     break;
                 case 'bottom':
-                    style = {
-                        ...style,
-                        left: rect.left + rect.width / 2,
-                        top: rect.bottom + gap,
-                        transform: 'translateX(-50%)',
-                    };
+                    left = rect.left + (rect.width - tooltipWidth) / 2;
+                    top = rect.bottom + gap;
                     break;
                 case 'top':
-                    style = {
-                        ...style,
-                        left: rect.left + rect.width / 2,
-                        bottom: window.innerHeight - rect.top + gap,
-                        transform: 'translateX(-50%)',
-                    };
+                    left = rect.left + (rect.width - tooltipWidth) / 2;
+                    top = rect.top - tooltipHeight - gap;
                     break;
                 case 'center':
                 default:
-                    style = {
-                        ...style,
+                    setTooltipStyle({
+                        position: 'fixed',
                         left: '50%',
                         top: '50%',
                         transform: 'translate(-50%, -50%)',
-                    };
+                    });
+                    return;
             }
 
-            if (style.left && typeof style.left === 'number') {
-                if (style.left + tooltipWidth > window.innerWidth) {
-                    style.left = window.innerWidth - tooltipWidth - 20;
-                }
-                if (style.left < 20) {
-                    style.left = 20;
-                }
-            }
-
-            if (style.top && typeof style.top === 'number') {
-                // TODO: Compensate for unknown offset in tooltip positioning
-                style.top -= 25;
-                if (style.top + tooltipHeight > window.innerHeight) {
-                    style.top = window.innerHeight - tooltipHeight - 20;
-                }
-                if (style.top < 20) {
-                    style.top = 20;
-                }
-            }
-
-            setTooltipStyle(style);
+            setTooltipStyle({
+                position: 'fixed',
+                left: Math.max(16, Math.min(left, window.innerWidth - tooltipWidth - 16)),
+                top: Math.max(16, Math.min(top, window.innerHeight - tooltipHeight - 16)),
+            });
         };
 
         updatePosition();
@@ -163,73 +127,22 @@ export const TourTooltip: FC<TourTooltipProps> = ({
                 transition: { duration: 0.3, ease: "easeInOut" }
             })}
             style={tooltipStyle}
-            className="z-[10000] w-[400px]"
+            className="tour-tooltip z-[10000]"
+            data-position={position}
             data-testid="tour-tooltip"
         >
-            <Card className="flex flex-col gap-4 p-6 shadow-2xl border-2 border-brand/30">
-                <button
-                    onClick={onSkip}
-                    className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors"
-                    aria-label="Close tour"
-                    data-testid="tour-skip-button"
-                >
-                    <XMarkIcon className="w-5 h-5" />
-                </button>
-
-                {icon && (
-                    <div className="h-12 w-12 rounded-xl flex justify-center items-center bg-gradient-to-br from-brand to-brand/80 shadow-lg">
-                        {icon}
+            <Card className="tour-tooltip-card">
+                <p className="tour-tooltip-step">{t('tourStep', { current: currentStep, total: totalSteps })}</p>
+                <h3>{title}</h3>
+                <p className="tour-tooltip-description">{description}</p>
+                <div className="tour-tooltip-footer">
+                    <div className="tour-tooltip-dots" aria-hidden="true">
+                        {Array.from({ length: totalSteps }, (_, step) => <span key={step} className={step === currentStep - 1 ? 'is-current' : ''} />)}
                     </div>
-                )}
-
-                <div className="flex flex-col gap-2">
-                    <h3 className="text-xl font-semibold text-foreground pr-8">
-                        {title}
-                    </h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                        {description}
-                    </p>
-                </div>
-
-                <div className="flex items-center justify-between pt-4 border-t">
-                    <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="text-xs">
-                            {currentStep} / {totalSteps}
-                        </Badge>
-                        <div className="flex gap-1">
-                            {Array.from({ length: totalSteps }, (_, i) => i).map((step) => (
-                                <div
-                                    key={`dot-${step}`}
-                                    className={`h-1.5 rounded-full transition-all ${
-                                        step === currentStep - 1
-                                            ? 'w-6 bg-brand'
-                                            : 'w-1.5 bg-muted'
-                                    }`}
-                                />
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="flex gap-2">
-                        {!isFirstStep && (
-                            <Button onClick={onPrev} variant="outline" size="sm" data-testid="tour-prev-button">
-                                <ChevronRightIcon className="w-4 h-4 rotate-180" />
-                                {t('back')}
-                            </Button>
-                        )}
-                        <Button onClick={onNext} size="sm" data-testid="tour-next-button">
-                            {isLastStep ? (
-                                <>
-                                    <CheckCircleIcon className="w-4 h-4" />
-                                    {t('finish')}
-                                </>
-                            ) : (
-                                <>
-                                    {t('next')}
-                                    <ChevronRightIcon className="w-4 h-4" />
-                                </>
-                            )}
-                        </Button>
+                    <div className="tour-tooltip-actions">
+                        <Button onClick={onSkip} variant="ghost" size="sm" data-testid="tour-skip-button">{t('skip')}</Button>
+                        {!isFirstStep && <Button onClick={onPrev} variant="outline" size="sm" data-testid="tour-prev-button">{t('back')}</Button>}
+                        <Button onClick={onNext} size="sm" data-testid="tour-next-button">{isLastStep ? t('finish') : t('next')}<span className="tour-next-icon" aria-hidden="true" /></Button>
                     </div>
                 </div>
             </Card>

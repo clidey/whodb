@@ -1,11 +1,21 @@
 en_US:
-  description: We're here to help! Reach out to us for support, questions, or feedback.
-  emailTitle: Email
+  contactUs: Contact
+  settingsTitle: Settings
+  savedInBrowser: Saved in this browser.
+  appearance: Appearance
+  behavior: Behavior
+  privacy: Privacy
+  writeToUs: Write to us
+  docsTitle: Docs
+  docsDescription: Guides for every engine and AI setup.
+  readDocs: Read the docs
+  description: Questions, bugs and ideas all reach the same team.
+  emailTitle: Email support
   emailAddress: support@clidey.com
-  emailDescription: Our support team typically responds within 1 business day.
-  communityTitle: Community & Issues
-  submitIssue: Submit an Issue on GitHub
-  communityDescription: For bug reports, feature requests, or to join the discussion, visit our GitHub issues page.
+  emailDescription: We typically reply within one business day.
+  communityTitle: GitHub issues
+  submitIssue: Open an issue
+  communityDescription: Bug reports and feature requests, in the open.
   liveChatTitle: Live Chat (Coming Soon)
   chatButton: Chat with Support
   liveChatDescription: Live chat support will be available soon. Stay tuned!

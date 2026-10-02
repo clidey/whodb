@@ -60,7 +60,7 @@ const importLimits = {
 
 type ImportModeType = "data" | "sql";
 type DataFormatType = "csv" | "excel";
-const previewRowLimit = 3;
+const previewRowLimit = 20;
 const previewMinDelayMs = 1000;
 
 type ImportDataProps = {
@@ -90,6 +90,8 @@ export const ImportData: FC<ImportDataProps> = ({
 
   const [dataFormat, setDataFormat] = useState<DataFormatType>("csv");
   const [dataFile, setDataFile] = useState<File | null>(null);
+  const [draggingFile, setDraggingFile] = useState(false);
+  const dataFileInputRef = useRef<HTMLInputElement>(null);
   const [delimiter, setDelimiter] = useState("auto");
   const [preview, setPreview] = useState<ImportPreviewMutation["ImportPreview"] | null>(null);
   const [previewMapping, setPreviewMapping] = useState<PreviewMapping | null>(null);
@@ -194,6 +196,42 @@ export const ImportData: FC<ImportDataProps> = ({
 
     return null;
   }, []);
+
+  const handleDataFile = useCallback((file: File | null) => {
+    if (!file) {
+      lastPreviewKey.current = null;
+      setDataFile(null);
+      setPreview(null);
+      setDetectedSheet(null);
+      setPreviewError(null);
+      setPreviewValidationError(null);
+      return;
+    }
+    if (file.size > importLimits.maxFileSizeBytes) {
+      toast.error(t("fileTooLarge", { size: importSizeMB }));
+      setDataFile(null);
+      setPreview(null);
+      setPreviewMapping(null);
+      lastPreviewKey.current = null;
+      return;
+    }
+    const detected = detectDataFormat(file);
+    if (!detected) {
+      toast.error(t("fileTypeUnsupported"));
+      setDataFile(null);
+      setPreview(null);
+      setPreviewMapping(null);
+      lastPreviewKey.current = null;
+      return;
+    }
+    lastPreviewKey.current = null;
+    setDataFormat(detected);
+    setDataFile(file);
+    setPreview(null);
+    setDetectedSheet(null);
+    setPreviewError(null);
+    setPreviewValidationError(null);
+  }, [detectDataFormat, importSizeMB, t]);
 
   useEffect(() => {
     if (!open) {
@@ -475,21 +513,21 @@ export const ImportData: FC<ImportDataProps> = ({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="max-w-lg w-full p-8 flex flex-col h-full"
+        className="ce-import-sheet flex flex-col h-full"
         data-testid="import-dialog"
       >
-        <SheetTitle>{t("importData")}</SheetTitle>
-        <div className="flex-1 overflow-y-auto mt-4">
-          <div className="flex flex-col gap-lg pr-2">
+        <div className="ce-import-header"><span>{objectRef?.Path?.at(-1)}</span><SheetTitle>{mode === "data" ? t("importRows") : t("importData")}</SheetTitle></div>
+        <div className="ce-import-body flex-1 overflow-y-auto">
+          <div className="flex flex-col gap-lg">
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>{t("importType")}</Label>
+                <Label>{t("format")}</Label>
                 <Select value={mode} onValueChange={(value) => { setMode(value as ImportModeType); }}>
                   <SelectTrigger data-testid="import-mode-select">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="data" data-value="data">{t("modeData")}</SelectItem>
+                    <SelectItem value="data" data-value="data">{t("csvOrExcel")}</SelectItem>
                     {supportsSQLImport && <SelectItem value="sql" data-value="sql">{t("modeSql")}</SelectItem>}
                   </SelectContent>
                 </Select>
@@ -497,61 +535,6 @@ export const ImportData: FC<ImportDataProps> = ({
 
               {mode === "data" ? (
                 <>
-                  <div className="space-y-2">
-                    <Label>{t("dataFile")}</Label>
-                    <Input
-                      type="file"
-                      accept=".csv,.xlsx,.xlsm"
-                      data-testid="import-data-file-input"
-                      onClick={(event) => {
-                        (event.target as HTMLInputElement).value = "";
-                      }}
-                      onChange={(event) => {
-                        const file = event.target.files?.[0] ?? null;
-                        if (!file) {
-                          lastPreviewKey.current = null;
-                          setDataFile(null);
-                          setPreview(null);
-                          setDetectedSheet(null);
-                          setPreviewError(null);
-                          setPreviewValidationError(null);
-                          return;
-                        }
-
-                        if (file.size > importLimits.maxFileSizeBytes) {
-                          toast.error(t("fileTooLarge", { size: importSizeMB }));
-                          event.target.value = "";
-                          return;
-                        }
-
-                        const detected = detectDataFormat(file);
-                        if (!detected) {
-                          toast.error(t("fileTypeUnsupported"));
-                          event.target.value = "";
-                          lastPreviewKey.current = null;
-                          setDataFile(null);
-                          setPreview(null);
-                          setDetectedSheet(null);
-                          setPreviewError(null);
-                          setPreviewValidationError(null);
-                          return;
-                        }
-
-                        lastPreviewKey.current = null;
-                        setDataFormat(detected);
-                        setDataFile(file);
-                        setPreview(null);
-                        setDetectedSheet(null);
-                        setPreviewError(null);
-                        setPreviewValidationError(null);
-                      }}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      {t("fileLimits", { rows: importLimits.maxRows, size: importSizeMB })}
-                    </p>
-                    <p className="text-xs text-muted-foreground">{t("headerRowNote")}</p>
-                  </div>
-
                   {dataFormat === "csv" && (
                     <div className="space-y-2">
                       <Label>{t("delimiter")}</Label>
@@ -569,6 +552,40 @@ export const ImportData: FC<ImportDataProps> = ({
                       </Select>
                     </div>
                   )}
+                  <div className="space-y-2">
+                    <Label>{t("headerRow")}</Label>
+                    <div className="ce-import-header-row">{t("headerRowNote")}</div>
+                  </div>
+                  <div className="space-y-2">
+                    <Input
+                      ref={dataFileInputRef}
+                      type="file"
+                      accept=".csv,.xlsx,.xlsm"
+                      data-testid="import-data-file-input"
+                      className="ce-import-file-input"
+                      onClick={(event) => {
+                        (event.target as HTMLInputElement).value = "";
+                      }}
+                      onChange={(event) => {
+                        handleDataFile(event.target.files?.[0] ?? null);
+                      }}
+                    />
+                    <div
+                      className={`ce-import-drop-zone${draggingFile ? " is-dragging" : ""}`}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => { dataFileInputRef.current?.click(); }}
+                      onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); dataFileInputRef.current?.click(); } }}
+                      onDragOver={(event) => { event.preventDefault(); setDraggingFile(true); }}
+                      onDragLeave={() => { setDraggingFile(false); }}
+                      onDrop={(event) => { event.preventDefault(); setDraggingFile(false); handleDataFile(event.dataTransfer.files[0] ?? null); }}
+                    >
+                      <span className="ce-whodb-icon ce-whodb-icon-upload" aria-hidden="true" />
+                      <strong>{dataFile?.name ?? t("dropFilePrompt")}</strong>
+                      <span>{t("browseFileHelp", {rows: importLimits.maxRows, size: importSizeMB})}</span>
+                    </div>
+                    <p className="ce-import-note">{t("matchColumnsNote")}</p>
+                  </div>
 
                   {dataFormat === "excel" && (
                     <div className="space-y-2">
@@ -749,7 +766,8 @@ export const ImportData: FC<ImportDataProps> = ({
           </div>
         </div>
 
-        <SheetFooter className="flex gap-sm px-0 mt-4">
+        <SheetFooter className="ce-import-footer">
+          <span>{dataFile?.name ?? t("noFileYet")}</span>
           <Button variant="secondary" onClick={() => { onOpenChange(false); }} data-testid="import-cancel-button">
             {t("cancel")}
           </Button>

@@ -73,6 +73,10 @@ function GenerateSQLQuery(
     - ONLY mention tables that ACTUALLY EXIST in the "Available Tables and Fields" section above
     - If NO tables are listed in "Available Tables and Fields", DO NOT mention any table names
     - NEVER hallucinate or make up table names, database names, or data that isn't provided in the context
+    - This chat can run SQL against the listed tables. It cannot call named tools, access ontology catalogs, create artifacts, or render charts and graphs.
+    - NEVER put a tool call or tool result (such as a JSON object with "toolName" or "artifactId") in a response item's text.
+    - If a request needs one of those unavailable actions, explain that limitation in a message and offer a SQL query against listed tables when useful.
+    - NEVER claim a query has run or a chart or graph is visible. The application runs valid SQL and displays its result after your response.
 
     ### Your Personality and Approach:
     - Be warm, conversational, and approachable - like a helpful colleague, not a robot

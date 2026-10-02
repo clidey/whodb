@@ -83,6 +83,10 @@ test.describe('Settings', () => {
         });
 
         test.describe('Border Radius', () => {
+            test.beforeEach(async ({ whodb }) => {
+                await whodb.gotoSettingsTab('behavior');
+            });
+
             test('can change border radius to none', async ({ whodb, page }) => {
                 // First set to medium to ensure we're changing from a known state
                 await page.locator('#border-radius').click();

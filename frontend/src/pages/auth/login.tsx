@@ -43,7 +43,7 @@ import {
     TableCellsIcon
 } from '../../components/heroicons';
 import {Icons} from "../../components/icons";
-import {Loading} from "../../components/loading";
+import {Loading, Spinner} from "../../components/loading";
 import {Container} from "../../components/page";
 import {PlatformExplainerDialog} from "../../components/sidebar/platform-explainer-dialog";
 import {updateProfileLastAccessed} from "../../components/profile-info-tooltip";
@@ -176,6 +176,7 @@ export interface LoginFormProps {
     // Optionally override container className
     className?: string;
     advancedDirection?: "horizontal" | "vertical";
+    landing?: boolean;
 }
 
 export const LoginForm: FC<LoginFormProps> = ({
@@ -183,6 +184,7 @@ export const LoginForm: FC<LoginFormProps> = ({
     hideHeader = false,
     className = "",
     advancedDirection = "horizontal",
+    landing = false,
 }) => {
     const { t } = useTranslation('pages/login');
     const appName = getAppName();
@@ -223,6 +225,7 @@ export const LoginForm: FC<LoginFormProps> = ({
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState<string>();
+    const [testResult, setTestResult] = useState<{ status: 'success' | 'error'; message: string; duration?: number }>();
     const [missingDriver, setMissingDriver] = useState<string | null>(null);
     const [advancedForm, setAdvancedForm] = useState<Record<string, string>>({});
     const [showAdvanced, setShowAdvanced] = useState(false);
@@ -233,6 +236,8 @@ export const LoginForm: FC<LoginFormProps> = ({
         return searchParams.has("credentials");
     });
     const { isDesktop, selectDatabaseFile } = useDesktopFile();
+
+    useEffect(() => { setTestResult(undefined); }, [hostName, username, password, database, advancedForm]);
 
     useEffect(() => {
         dispatch(SettingsActions.setMaxPageSize(maxPageSize));
@@ -431,6 +436,9 @@ export const LoginForm: FC<LoginFormProps> = ({
     }, [advancedForm, database, databaseType, dispatch, handleLoginError, hostName, login, markFirstLoginComplete, navigate, onLoginSuccess, password, searchParams, setSearchParams, t, username]);
 
     const handleTestConnection = useCallback(() => {
+        setTestResult(undefined);
+        setError(undefined);
+        const startedAt = performance.now();
         loginFormTouchedRef.current = true;
         trackFrontendIntent('auth.connection_test_submitted', {
             ...loginAnalyticsPropsRef.current,
@@ -452,7 +460,9 @@ export const LoginForm: FC<LoginFormProps> = ({
                         ...loginAnalyticsPropsRef.current,
                         database_type: databaseType.id || 'unknown',
                     });
-                    toast.success(t('testConnectionSuccess'));
+                    setTestResult({ status: 'success', message: t('testConnectionSuccess'), duration: Math.round(performance.now() - startedAt) });
+                } else {
+                    setTestResult({ status: 'error', message: t('testConnectionFailed', { error: t('loginFailed') }) });
                 }
             } catch (e: any) {
                 trackFrontendIntent('auth.connection_test_failed', {
@@ -460,7 +470,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                     database_type: databaseType.id || 'unknown',
                     error_code: frontendAnalyticsErrorCode(e),
                 });
-                toast.error(t('testConnectionFailed', { error: e?.message ?? '' }));
+                setTestResult({ status: 'error', message: t('testConnectionFailed', { error: e?.message ?? '' }) });
             }
         })();
     }, [advancedForm, database, databaseType.id, hostName, password, testConnection, t, username]);
@@ -614,6 +624,7 @@ export const LoginForm: FC<LoginFormProps> = ({
         setPassword("");
         setDatabase("");
         setDatabaseType(item);
+        setTestResult(undefined);
         setAdvancedForm(sourceAdvancedDefaults(item));
         setFormResetKey(k => k + 1);
     }, []);
@@ -886,6 +897,10 @@ export const LoginForm: FC<LoginFormProps> = ({
         return true;
     }, [databaseType, t]);
 
+    const promotedConnectionFieldKeys = useMemo(() => {
+        return getPromotedConnectionFieldKeys(databaseType, landing ? { omitKeys: ['Search Path'] } : {});
+    }, [databaseType, landing]);
+
     const fields = useMemo(() => {
         if (databaseType.customFormRenderer) {
             const CustomForm = databaseType.customFormRenderer;
@@ -919,6 +934,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                 setDatabase={setDatabase}
                 advancedForm={advancedForm}
                 onAdvancedFormChange={handleAdvancedForm}
+                promotedKeys={promotedConnectionFieldKeys}
                 translate={t}
                 showPasswordToggle={!isEmbedded}
                 isDesktop={isDesktop}
@@ -926,10 +942,11 @@ export const LoginForm: FC<LoginFormProps> = ({
                 databaseOptions={buildDatabaseFieldOptions(foundDatabases?.SourceFieldOptions)}
                 databaseOptionsLoading={databasesLoading}
                 hasError={error != null}
+                hostError={testResult?.status === 'error'}
                 errorId="login-error"
             />
         );
-    }, [database, databaseType, databasesLoading, foundDatabases?.SourceFieldOptions, handleHostNameChange, handleHostNamePaste, hostName, password, username, isDesktop, handleBrowseDatabaseFile, advancedForm, formResetKey, t, error, isEmbedded]);
+    }, [database, databaseType, databasesLoading, foundDatabases?.SourceFieldOptions, handleHostNameChange, handleHostNamePaste, hostName, password, username, isDesktop, handleBrowseDatabaseFile, advancedForm, promotedConnectionFieldKeys, formResetKey, t, error, testResult, isEmbedded]);
 
     const loginWithCredentialsEnabled = useMemo(() => {
         if (databaseType.customFormRenderer) {
@@ -942,15 +959,11 @@ export const LoginForm: FC<LoginFormProps> = ({
         return selectedAvailableProfile != null;
     }, [selectedAvailableProfile]);
 
-    const promotedConnectionFieldKeys = useMemo(() => {
-        return getPromotedConnectionFieldKeys(databaseType);
-    }, [databaseType]);
-
     const advancedSection = useMemo(() => {
         return buildSourceAdvancedSectionState(databaseType, advancedForm, promotedConnectionFieldKeys);
     }, [advancedForm, databaseType, promotedConnectionFieldKeys]);
 
-    if (!databaseTypesLoaded || loading || profilesLoading)  {
+    if (!databaseTypesLoaded || profilesLoading)  {
         return (
             <div className={classNames("flex flex-col justify-center items-center gap-lg w-full", className)}>
                 <div>
@@ -963,27 +976,75 @@ export const LoginForm: FC<LoginFormProps> = ({
         );
     }
 
+    if (landing && loading) {
+        return <div className="ce-connect-loading" role="status" aria-live="polite" data-testid="connection-loading">
+            <Spinner className="size-20" aria-hidden="true" />
+            <h1>{t('connectingTo', { host: hostName || databaseType.label })}</h1>
+            <p>{databaseType.label}{database ? ` · ${database}` : ''}</p>
+        </div>;
+    }
+
     const showSidePanel = sampleProfile && !hideHeader && featureFlags.sampleDatabaseTour && isFirstLogin && !hasCompletedOnboarding();
 
     return (
         <div className={classNames("w-fit h-fit", className, {
             "w-full h-full": advancedDirection === "vertical",
             "flex flex-col gap-8 md:flex-row": showSidePanel && advancedDirection === "horizontal",
+            "ce-connect": landing,
         })} data-testid="login-form-container">
+            {landing && <section className="ce-connect-story" aria-label={t('storyLabel')}>
+                <div className="ce-connect-brand">
+                    {extensions.Logo ?? <img src={logoImage} alt="" className="size-7" />}
+                    <strong>{appName}</strong><span>{t('communityEdition')}</span>
+                </div>
+                <div className="ce-connect-story-content">
+                    <p className="ce-connect-eyebrow">{t('openSourceExplorer')}</p>
+                    <h1>{t('storyHeadline')}</h1>
+                    <div className="ce-connect-showcase">
+                        <div className="ce-connect-showcase-panel">
+                            <div className="ce-connect-showcase-label"><span>01 / 02</span><span>{t('engines')}</span></div>
+                            <div className="ce-connect-engine-list">{[
+                                ['postgres', 'mysql', 'mariadb'],
+                                ['sqlite3', 'mongodb', 'redis'],
+                                ['clickhouse', 'elasticsearch'],
+                                ['duckdb'],
+                            ].map(row => <div className="ce-connect-engine-row" key={row[0]}>{row.map(id => {
+                                const item = databaseTypeItems.find(type => type.id.toLowerCase() === id && !type.platformOnly);
+                                return item && <span className={cn(item.id === databaseType.id && 'is-selected')} key={id}>{id === 'sqlite3' ? t('sqliteLabel') : item.label}</span>;
+                            })}</div>)}</div>
+                            <div className="ce-connect-showcase-bottom"><strong>{t('connectWhatYouRun')}</strong><p>{t('connectWhatYouRunDescription')}</p></div>
+                        </div>
+                        <div className="ce-connect-showcase-panel">
+                            <div className="ce-connect-showcase-label"><span>02 / 02</span><span>{t('sample')}</span></div>
+                            <div className="ce-connect-feature-list">
+                                <div><span className="ce-connect-feature-icon"><span className="ce-connect-icon ce-connect-icon--chat" /></span><span><strong>{t('sampleChat')}</strong><small>{t('sampleChatDescription')}</small></span></div>
+                                <div><span className="ce-connect-feature-icon"><span className="ce-connect-icon ce-connect-icon--relation" /></span><span><strong>{t('sampleGraph')}</strong><small>{t('sampleGraphDescription')}</small></span></div>
+                                <div><span className="ce-connect-feature-icon"><span className="ce-connect-icon ce-connect-icon--table" /></span><span><strong>{t('sampleGrid')}</strong><small>{t('sampleGridDescription')}</small></span></div>
+                                <div><span className="ce-connect-feature-icon"><span className="ce-connect-icon ce-connect-icon--code" /></span><span><strong>{t('sampleScratchpad')}</strong><small>{t('sampleScratchpadDescription')}</small></span></div>
+                            </div>
+                            <div className="ce-connect-showcase-bottom ce-connect-showcase-bottom--sample"><div><strong>{t('tryTheSample')}</strong><p>{t('sampleDescription')}</p></div>{sampleProfile && <Button onClick={handleSampleDatabaseLogin} data-testid="get-started-sample-db" variant="outline" size="sm">{t('openSample')} <span className="ce-connect-icon ce-connect-icon--arrow-right" aria-hidden="true" /></Button>}</div>
+                        </div>
+                    </div>
+                </div>
+            </section>}
+            <section className={cn('ce-connect-form-side', !landing && 'contents')}>
             <div className="fixed top-4 right-4 z-20" data-testid="mode-toggle-login">
                 <ModeToggle />
             </div>
             <div className={classNames("flex flex-col grow gap-lg", {
                 "justify-between": advancedDirection === "horizontal",
                 "h-full": advancedDirection === "vertical" && availableProfiles.length === 0,
+                "ce-connect-form-inner": landing,
             })}>
                 {!hideHeader && (
-                    <header className="flex justify-between" data-testid="login-header">
+                    <header className={cn('flex justify-between', landing && 'ce-connect-form-header')} data-testid="login-header">
+                        {landing ? <div><p className="ce-connect-eyebrow">{t('connectEyebrow')}</p><h2>{t('connectTitle')}</h2><p className="ce-connect-subtitle">{t('credentialsStayLocal')}</p></div> : <>
                         <h1 className="flex items-center gap-xs text-xl">
                             {extensions.Logo ?? <img src={logoImage} alt="WhoDB" className="w-auto h-8 mr-1"/>}
                             <span className="text-primary" data-testid="app-name">{getAppName()}</span>
                         </h1>
                         <span className="text-xl">{t('title')}</span>
+                        </>}
                         {
                             error &&
                             <Badge id="login-error" variant="destructive" className="self-end" role="alert">
@@ -996,7 +1057,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                     "flex-col md:flex-row grow": advancedDirection === "horizontal",
                     "flex-col w-full gap-lg": advancedDirection === "vertical",
                 })} data-testid="login-form">
-                    <div className={classNames("flex flex-col gap-lg grow", advancedDirection === "vertical" ? "w-full" : "w-full md:w-[350px]")}>
+                    <div className={classNames("flex flex-col gap-lg grow", advancedDirection === "vertical" ? "w-full" : landing ? "w-full" : "w-full md:w-[350px]")}>
                         <div className={cn("flex flex-col grow gap-lg", {
                             "justify-center": advancedDirection === "horizontal" && !showSidePanel,
                         })}>
@@ -1043,7 +1104,8 @@ export const LoginForm: FC<LoginFormProps> = ({
                     {
                         (showAdvanced && advancedSection.hasAdvancedSection && !databaseType.customFormRenderer) &&
                         <div className={classNames("transition-all h-full overflow-hidden flex flex-col gap-lg", {
-                            "w-full mt-6 md:mt-0 md:w-[350px] md:ml-4": advancedDirection === "horizontal",
+                            "w-full mt-6 md:mt-0 md:w-[350px] md:ml-4": advancedDirection === "horizontal" && !landing,
+                            "w-full mt-4": landing,
                             "w-full": advancedDirection === "vertical",
                         })}>
                             <SourceAdvancedFields
@@ -1066,6 +1128,10 @@ export const LoginForm: FC<LoginFormProps> = ({
                         </div>
                     }
                 </div>
+                {testResult && <div id="login-error" className={cn('ce-connect-test-result', testResult.status === 'success' ? 'is-success' : 'is-error')} role="status" data-testid="connection-test-result">
+                    {testResult.status === 'success' ? <CheckCircleIcon className="size-4" /> : <InformationCircleIcon className="size-4" />}
+                    <span><strong>{testResult.message}</strong>{testResult.duration != null && <small>{t('roundTrip', { duration: testResult.duration })}</small>}</span>
+                </div>}
                 <div className={classNames("flex login-action-buttons", {
                     "justify-end": advancedForm == null,
                     "justify-between": advancedForm != null,
@@ -1073,15 +1139,16 @@ export const LoginForm: FC<LoginFormProps> = ({
                     {!disableCredentialForm && <>
                     <Button className={classNames({
                         "hidden": !advancedSection.hasAdvancedSection || usesFileTransport(databaseType) || databaseType.customFormRenderer != null,
+                        "ce-connect-advanced": landing,
                     })} onClick={handleAdvancedToggle} data-testid="advanced-button" variant="secondary">
-                        <AdjustmentsHorizontalIcon className="w-4 h-4" /> {showAdvanced ? t('lessAdvancedButton') : t('advancedButton')}
+                        {landing ? <span className="ce-connect-icon ce-connect-icon--sliders" aria-hidden="true" /> : <AdjustmentsHorizontalIcon className="w-4 h-4" />} {landing && !showAdvanced && <span>{t('advancedHint')} </span>}<span className="ce-connect-advanced-link">{showAdvanced ? t('lessAdvancedButton') : t('advancedButton')}</span>
                     </Button>
                     {advancedDirection === "horizontal" && (<>
-                        <Button onClick={handleTestConnection} variant="secondary" disabled={!loginWithCredentialsEnabled || testConnectionLoading}>
-                            {t('testConnection')}
+                        <Button onClick={handleTestConnection} variant="secondary" disabled={!loginWithCredentialsEnabled || testConnectionLoading} data-testid="connection-test-button">
+                            {testConnectionLoading ? <Spinner className="size-4" aria-hidden="true" /> : landing && <span className="ce-connect-icon ce-connect-icon--beaker" aria-hidden="true" />}{testConnectionLoading ? t('testingConnection') : t('testConnection')}
                         </Button>
-                        <Button onClick={handleSubmit} data-testid="login-button" variant={loginWithCredentialsEnabled ? "default" : "secondary"} disabled={!loginWithCredentialsEnabled}>
-                            <CheckCircleIcon className="w-4 h-4" /> {t('title')}
+                        <Button onClick={handleSubmit} data-testid="login-button" variant={landing || loginWithCredentialsEnabled ? "default" : "secondary"} disabled={landing ? loading : !loginWithCredentialsEnabled || loading}>
+                            {loading ? <Spinner className="size-4" aria-hidden="true" /> : !landing && <CheckCircleIcon className="w-4 h-4" />} {loading ? t('connecting') : landing ? <>{t('connectButton')} <span className="ce-connect-icon ce-connect-icon--arrow-right" aria-hidden="true" /></> : t('title')}
                         </Button>
                     </>)}
                     </>}
@@ -1132,7 +1199,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                 }
             </div>
             {
-                showSidePanel && advancedDirection === "horizontal" && (
+                showSidePanel && !landing && advancedDirection === "horizontal" && (
                     <Card className="flex flex-col gap-6 p-8 w-full md:w-[380px] shadow-xl" data-testid="sample-database-panel" aria-labelledby="sample-db-heading">
                         <div className="flex flex-col gap-4">
                             <div className="flex items-center gap-3">
@@ -1239,6 +1306,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                 </Suspense>
             );
         })()}
+            </section>
         </div>
     );
 };
@@ -1247,9 +1315,9 @@ export const LoginPage: FC = () => {
     const { t } = useTranslation('pages/login');
 
     return (
-        <Container className="flex-col justify-center items-center gap-6 overflow-y-auto md:flex-row md:gap-0">
-            <LoginForm />
-            <div className="shrink-0 pb-4 text-xs text-foreground/60 md:fixed md:bottom-4 md:left-1/2 md:-translate-x-1/2 md:pb-0" data-testid="login-page-version">
+        <Container className="ce-connect-page">
+            <LoginForm landing />
+            <div className="sr-only" data-testid="login-page-version">
                 {t('version')}: {__APP_VERSION__}
             </div>
         </Container>

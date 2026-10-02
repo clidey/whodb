@@ -35,8 +35,45 @@ import classNames from "classnames";
 import type { FC} from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { twMerge } from "tailwind-merge";
-import { AdjustmentsVerticalIcon, CheckCircleIcon, PlusCircleIcon, XCircleIcon, XMarkIcon } from "../../components/heroicons";
+import { PlusCircleIcon, XCircleIcon, XMarkIcon } from "../../components/heroicons";
+import {WhoDBChatIcon} from "../../components/whodb-chat-icon";
 import { useTranslation } from "@/hooks/use-translation";
+import {whereConditionToSql} from "../../utils/where-condition-to-sql";
+
+type FilterJoin = typeof WhereConditionType.And | typeof WhereConditionType.Or;
+type FilterRow = {condition: AtomicWhereCondition; join: FilterJoin};
+
+const flattenFilters = (where: WhereCondition | undefined): FilterRow[] => {
+    if (!where) return [];
+    if (where.Type === WhereConditionType.Atomic) {
+        return where.Atomic ? [{condition: where.Atomic, join: WhereConditionType.And}] : [];
+    }
+
+    const join = where.Type === WhereConditionType.Or ? WhereConditionType.Or : WhereConditionType.And;
+    const children = join === WhereConditionType.Or ? where.Or?.Children : where.And?.Children;
+    return (children ?? []).flatMap((child, index) => {
+        const rows = flattenFilters(child);
+        if (index > 0 && rows.length > 0) rows[0] = {...rows[0], join};
+        return rows;
+    });
+};
+
+const buildFilters = (rows: FilterRow[]): WhereCondition => {
+    let where: WhereCondition = {Type: WhereConditionType.And, And: {Children: []}};
+    for (const [index, {condition, join}] of rows.entries()) {
+        const atomic: WhereCondition = {Type: WhereConditionType.Atomic, Atomic: condition};
+        if (index > 0 && join === WhereConditionType.Or) {
+            where = where.Type === WhereConditionType.Or
+                ? {Type: WhereConditionType.Or, Or: {Children: [...(where.Or?.Children ?? []), atomic]}}
+                : {Type: WhereConditionType.Or, Or: {Children: [where, atomic]}};
+        } else {
+            where = where.Type === WhereConditionType.And
+                ? {Type: WhereConditionType.And, And: {Children: [...(where.And?.Children ?? []), atomic]}}
+                : {Type: WhereConditionType.And, And: {Children: [where, atomic]}};
+        }
+    }
+    return where;
+};
 
 type IPopoverCardProps = {
     open: boolean;
@@ -53,6 +90,7 @@ type IPopoverCardProps = {
     className?: string;
     isEditing?: boolean;
     editingIndex?: number;
+    trigger?: React.ReactNode;
     t: (key: string, params?: Record<string, any>) => string;
 }
 
@@ -71,6 +109,7 @@ const PopoverCard: FC<IPopoverCardProps> = ({
                                                 className,
                                                 isEditing = false,
                                                 editingIndex = -1,
+                                                trigger,
                                                 t
                                             }) => {
     const handleAction = useCallback(() => {
@@ -83,15 +122,17 @@ const PopoverCard: FC<IPopoverCardProps> = ({
 
     return  <Popover open={open} onOpenChange={onOpenChange}>
         <PopoverTrigger asChild>
-            <div />
+            {trigger ?? <div />}
         </PopoverTrigger>
         <PopoverContent
-            className={cn("flex flex-col gap-md z-[5] py-4 px-6 mt-1 rounded-lg shadow-md min-w-[260px]", className)}
+            className={cn("ce-filter-popover z-[50]", className)}
             side="bottom"
-            align="center"
+            align="start"
             tabIndex={0}
         >
-            <div className="flex flex-col gap-sm w-full">
+            <strong className="ce-filter-popover-title">{t(isEditing ? 'editCondition' : 'addFilter')}</strong>
+            <div className="ce-filter-fields">
+            <div className="ce-filter-field">
                 <Label className="text-xs">
                     {t('field')}
                 </Label>
@@ -105,7 +146,7 @@ const PopoverCard: FC<IPopoverCardProps> = ({
                     }}
                 />
             </div>
-            <div className="flex flex-col gap-sm w-full">
+            <div className="ce-filter-field">
                 <Label className="text-xs">
                     {t('operator')}
                 </Label>
@@ -113,13 +154,12 @@ const PopoverCard: FC<IPopoverCardProps> = ({
                     value={currentFilter.Operator}
                     options={validOperators}
                     onChange={handleOperatorSelector}
-                    contentClassName="w-[var(--radix-popover-trigger-width)]"
                     buttonProps={{
                         "data-testid": "field-operator",
                     }}
                 />
             </div>
-            <div className="flex flex-col gap-sm w-full">
+            <div className="ce-filter-field">
                 <Label className="text-xs">
                     {t('value')}
                 </Label>
@@ -131,14 +171,16 @@ const PopoverCard: FC<IPopoverCardProps> = ({
                     data-testid="field-value"
                 />
             </div>
-            <div className="flex gap-sm mt-2">
+            </div>
+            {currentFilter.Key && <p className="ce-filter-type-hint">{t('columnTypeHint', {column: currentFilter.Key, type: currentFilter.ColumnType?.toLowerCase() ?? ''})}</p>}
+            <div className="ce-filter-actions">
                 <Button
                     className="flex-1"
                     onClick={handleCancel}
                     data-testid="cancel-button"
                     variant="secondary"
                 >
-                    <XCircleIcon className="w-4 h-4" /> {t('cancel')}
+                    {t('cancel')}
                 </Button>
                 <Button
                     className="flex-1"
@@ -150,7 +192,7 @@ const PopoverCard: FC<IPopoverCardProps> = ({
                     }
                     data-testid={isEditing ? "update-condition-button" : "add-condition-button"}
                 >
-                    <CheckCircleIcon className="w-4 h-4"/> {isEditing ? t('update') : t('add')}
+                    {isEditing ? t('update') : t('applyFilter')}
                 </Button>
             </div>
         </PopoverContent>
@@ -159,13 +201,16 @@ const PopoverCard: FC<IPopoverCardProps> = ({
 
 type IExploreStorageUnitWhereConditionProps = {
     defaultWhere?: WhereCondition;
+    objectName?: string;
+    sheetOnly?: boolean;
     columns: string[];
     operators: string[];
     columnTypes: string[];
     onChange?: (filters: WhereCondition) => void;
 }
 
-export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereConditionProps> = ({ defaultWhere, columns, columnTypes, onChange, operators }) => {
+/** Renders the shared Explore filter chips, quick add popover, and all filters sheet. */
+export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereConditionProps> = ({ defaultWhere, objectName, sheetOnly = false, columns, columnTypes, onChange, operators }) => {
     const { t } = useTranslation('pages/where-condition');
     const [currentFilter, setCurrentFilter] = useState<AtomicWhereCondition>({ ColumnType: "string", Key: "", Operator: "", Value: "" });
     const [filters, setFilters] = useState<WhereCondition>(defaultWhere ?? {
@@ -176,11 +221,14 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
     const [editingFilter, setEditingFilter] = useState(-1);
     const [sheetOpen, setSheetOpen] = useState(false);
     const [sheetFilters, setSheetFilters] = useState<AtomicWhereCondition[]>([]);
+    const [sheetJoins, setSheetJoins] = useState<FilterJoin[]>([]);
+    const [sheetRowIds, setSheetRowIds] = useState<string[]>([]);
     const newFilterRef = useRef<HTMLDivElement>(null);
     const editFilterRef = useRef<HTMLDivElement>(null);
 
     // Maximum number of conditions to show in the main view
-    const MAX_VISIBLE_CONDITIONS = 2;
+    const MAX_VISIBLE_CONDITIONS = 3;
+    const filterRows = useMemo(() => flattenFilters(filters), [filters]);
 
     const handleClick = useCallback(() => {
         const shouldShow = !newFilter;
@@ -219,30 +267,20 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
     }, []);
 
     const handleAddFilter = useCallback(() => {
-        const newAtomicCondition: WhereCondition = {
-            Type: WhereConditionType.Atomic,
-            Atomic: currentFilter
-        };
-
-        const updatedFilters = {
-            Type: WhereConditionType.And,
-            And: { Children: [...filters.And?.Children ?? [], newAtomicCondition] }
-        };
+        const updatedFilters = buildFilters([...filterRows, {condition: currentFilter, join: WhereConditionType.And}]);
 
         setFilters(updatedFilters);
+        setNewFilter(false);
         setCurrentFilter({ ColumnType: "", Key: "", Operator: "", Value: "" });
         onChange?.(updatedFilters);
-    }, [filters, currentFilter, onChange]);
+    }, [filterRows, currentFilter, onChange]);
 
     const handleRemove = useCallback((index: number) => {
         setEditingFilter(-1);
-        const updatedFilters = {
-            Type: WhereConditionType.And,
-            And: { Children: filters.And?.Children?.filter((_, i) => i !== index) ??[] }
-        };
+        const updatedFilters = buildFilters(filterRows.filter((_, i) => i !== index));
         setFilters(updatedFilters);
         onChange?.(updatedFilters);
-    }, [filters, onChange]);
+    }, [filterRows, onChange]);
 
     const handleEdit = useCallback((index: number) => {
         if (editingFilter === index) {
@@ -251,25 +289,19 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
             return;
         }
         setNewFilter(false);
-        const filter = filters.And?.Children?.[index];
-        if (filter?.Type === WhereConditionType.Atomic) {
-            setCurrentFilter(filter.Atomic ?? { ColumnType: "string", Key: "", Operator: "", Value: "" });
-        }
+        setCurrentFilter(filterRows[index]?.condition ?? { ColumnType: "string", Key: "", Operator: "", Value: "" });
         setEditingFilter(index);
-    }, [editingFilter, filters]);
+    }, [editingFilter, filterRows]);
 
     const handleSaveFilter = useCallback((index: number) => {
-        const updatedChildren = [...(filters.And?.Children ?? [])];
-        updatedChildren[index] = { Type: WhereConditionType.Atomic, Atomic: { ...currentFilter } };
-        const updatedFilters = {
-            Type: WhereConditionType.And,
-            And: { Children: updatedChildren }
-        };
+        const updatedRows = [...filterRows];
+        updatedRows[index] = {...updatedRows[index], condition: {...currentFilter}};
+        const updatedFilters = buildFilters(updatedRows);
         setFilters(updatedFilters);
         setEditingFilter(-1);
         setCurrentFilter({ ColumnType: "string", Key: "", Operator: "", Value: "" });
         onChange?.(updatedFilters);
-    }, [filters, currentFilter, onChange]);
+    }, [filterRows, currentFilter, onChange]);
 
     const validOperators = useMemo(() => {
         return operators.map(operator => ({ value: operator, label: operator }));
@@ -277,16 +309,12 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
 
     // Sheet management functions
     const handleOpenSheet = useCallback(() => {
-        // Convert filters to sheet format
-        const defaultFilter = { ColumnType: "string", Key: "", Operator: "", Value: "" };
-        const atomicFilters = filters.And?.Children?.map(child =>
-            child.Type === WhereConditionType.Atomic
-                ? (child.Atomic ?? defaultFilter)
-                : defaultFilter
-        ) ?? [];
-        setSheetFilters(atomicFilters);
+        const rows: FilterRow[] = filterRows.length > 0 ? filterRows : [{condition: {ColumnType: "string", Key: "", Operator: "", Value: ""}, join: WhereConditionType.And}];
+        setSheetFilters(rows.map(row => row.condition));
+        setSheetJoins(rows.map(row => row.join));
+        setSheetRowIds(rows.map(() => crypto.randomUUID()));
         setSheetOpen(true);
-    }, [filters]);
+    }, [filterRows]);
 
     const handleSheetFieldChange = useCallback((index: number, field: keyof AtomicWhereCondition, value: string) => {
         setSheetFilters(prev => {
@@ -306,28 +334,25 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
 
     const handleSheetAddFilter = useCallback(() => {
         setSheetFilters(prev => [...prev, {ColumnType: "string", Key: "", Operator: "", Value: ""}]);
+        setSheetJoins(prev => [...prev, WhereConditionType.And]);
+        setSheetRowIds(prev => [...prev, crypto.randomUUID()]);
     }, []);
 
     const handleSheetRemoveFilter = useCallback((index: number) => {
         setSheetFilters(prev => prev.filter((_, i) => i !== index));
+        setSheetJoins(prev => prev.filter((_, i) => i !== index));
+        setSheetRowIds(prev => prev.filter((_, i) => i !== index));
     }, []);
 
     const handleSheetSave = useCallback(() => {
-        const updatedFilters = {
-            Type: WhereConditionType.And,
-            And: {
-                Children: sheetFilters
-                    .filter(filter => filter.Key && filter.Operator && filter.Value)
-                    .map(filter => ({
-                        Type: WhereConditionType.Atomic,
-                        Atomic: filter
-                    }))
-            }
-        };
+        const updatedFilters = buildFilters(sheetFilters.map((condition, index) => ({
+            condition,
+            join: sheetJoins[index] ?? WhereConditionType.And,
+        })));
         setFilters(updatedFilters);
         onChange?.(updatedFilters);
         setSheetOpen(false);
-    }, [sheetFilters, onChange]);
+    }, [sheetFilters, sheetJoins, onChange]);
 
     useEffect(() => {
         setFilters(defaultWhere ?? { Type: WhereConditionType.And, And: { Children: [] } });
@@ -385,24 +410,27 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
         }
     }, [newFilter, editingFilter, handleKeyDown, handleClickOutside]);
 
-    const visibleFilters = filters.And?.Children?.slice(0, MAX_VISIBLE_CONDITIONS) ?? [];
-    const hiddenCount = (filters.And?.Children?.length ?? 0) - MAX_VISIBLE_CONDITIONS;
-
-    const totalConditionCount = filters.And?.Children?.length ?? 0;
+    const visibleFilters = filterRows.slice(0, MAX_VISIBLE_CONDITIONS);
+    const hiddenCount = filterRows.length - MAX_VISIBLE_CONDITIONS;
+    const totalConditionCount = filterRows.length;
+    const sheetIsValid = sheetFilters.every(filter => filter.Key && filter.Operator && filter.Value);
+    const sheetWhereClause = whereConditionToSql(buildFilters(sheetFilters
+        .map((condition, index) => ({condition, join: sheetJoins[index] ?? WhereConditionType.And}))
+        .filter(row => row.condition.Key && row.condition.Operator && row.condition.Value)));
 
     return (
-        <div className="flex flex-col" data-condition-count={totalConditionCount} data-condition-mode="and">
+        <div className="flex flex-col" data-condition-count={totalConditionCount} data-condition-mode={filterRows.some(row => row.join === WhereConditionType.Or) ? "mixed" : "and"}>
             <Label className="mb-2">{t('whereCondition')}</Label>
             <div className="flex flex-row gap-xs max-w-[min(500px,calc(100vw-20px))] flex-wrap">
-                {visibleFilters.map((filter, i) => {
-                    const filterKey = `${filter.Atomic?.Key}-${filter.Atomic?.Operator}-${filter.Atomic?.Value}-${i}`;
+                {visibleFilters.map(({condition: filter}, i) => {
+                    const filterKey = `${filter.Key}-${filter.Operator}-${filter.Value}-${i}`;
                     return (<div
                         key={filterKey}
                         className="group/filter-item flex gap-xs items-center text-xs rounded-2xl cursor-pointer h-[36px]"
                         data-testid="where-condition"
-                        data-condition-key={filter.Atomic?.Key}
-                        data-condition-operator={filter.Atomic?.Operator}
-                        data-condition-value={filter.Atomic?.Value}
+                        data-condition-key={filter.Key}
+                        data-condition-operator={filter.Operator}
+                        data-condition-value={filter.Value}
                     >
                         <Badge
                             className={twMerge(
@@ -411,18 +439,18 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                                     { "ring-2 ring-primary-500 dark:ring-primary-400": editingFilter === i }
                                 )
                             )}
-                            onClick={() =>{  handleEdit(i); }}
+                            onClick={() => { if (sheetOnly) handleOpenSheet(); else handleEdit(i); }}
                             data-testid="where-condition-badge"
                             variant="secondary"
                         >
                             <div className="flex items-center gap-xs h-full">
-                                {filter.Atomic?.Key} {filter.Atomic?.Operator} {filter.Atomic?.Value}
-                                <Button className="size-8 h-full" onClick={() =>{  handleRemove(i); }} data-testid="remove-where-condition-button" variant="ghost" size="icon" aria-label={t('removeCondition')}>
+                                {filter.Key} {filter.Operator} {filter.Value}
+                                <Button className="size-8 h-full" onClick={event => { event.stopPropagation(); handleRemove(i); }} data-testid="remove-where-condition-button" variant="ghost" size="icon" aria-label={t('removeCondition')}>
                                     <XCircleIcon aria-hidden="true" />
                                 </Button>
                             </div>
                         </Badge>
-                        <PopoverCard
+                        {!sheetOnly && <PopoverCard
                             className="mt-8"
                             open={editingFilter === i}
                             onOpenChange={() => {
@@ -442,7 +470,7 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                             isEditing={true}
                             editingIndex={i}
                             t={t}
-                        />
+                        />}
                     </div>);
                 })}
                 {hiddenCount > 0 && (
@@ -450,98 +478,97 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                         {t('moreConditions', { count: hiddenCount })}
                     </Button>
                 )}
-                <Button onClick={handleClick} data-testid="where-button" variant="secondary">
-                    <PlusCircleIcon className="w-4 h-4" /> {t('add')}
-                </Button>
+                {sheetOnly ? <Button data-testid="where-button" data-sheet-only="true" variant="secondary" onClick={handleOpenSheet}><WhoDBChatIcon name="plus-circle" /> {t('filter')}</Button> : <PopoverCard
+                    open={newFilter}
+                    onOpenChange={(open) => { if (open) handleClick(); else setNewFilter(false); }}
+                    trigger={<Button data-testid="where-button" variant="secondary"><WhoDBChatIcon name="plus-circle" /> {t('filter')}</Button>}
+                    currentFilter={currentFilter}
+                    fieldsDropdownItems={fieldsDropdownItems}
+                    validOperators={validOperators}
+                    handleFieldSelect={handleFieldSelect}
+                    handleOperatorSelector={handleOperatorSelector}
+                    handleInputChange={handleInputChange}
+                    handleAddFilter={handleAddFilter}
+                    handleSaveFilter={handleSaveFilter}
+                    handleCancel={handleCancelNewFilter}
+                    t={t}
+                />}
             </div>
-            <PopoverCard
-                open={newFilter}
-                onOpenChange={setNewFilter}
-                currentFilter={currentFilter}
-                fieldsDropdownItems={fieldsDropdownItems}
-                validOperators={validOperators}
-                handleFieldSelect={handleFieldSelect}
-                handleOperatorSelector={handleOperatorSelector}
-                handleInputChange={handleInputChange}
-                handleAddFilter={handleAddFilter}
-                handleSaveFilter={handleSaveFilter}
-                handleCancel={handleCancelNewFilter}
-                isEditing={false}
-                editingIndex={-1}
-                t={t}
-            />
 
             {/* Sheet for managing all conditions */}
             <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-                <SheetContent side="right" className="w-[500px] max-w-full p-8" footer={
-                    <SheetFooter className="flex gap-sm px-0">
-                        <Button
-                            className="flex-1"
-                            variant="secondary"
-                            onClick={() =>{  setSheetOpen(false); }}
-                            data-testid="cancel-manage-conditions"
-                        >
-                            {t('cancel')}
+                <SheetContent side="right" className="ce-all-filters-sheet w-[min(380px,100vw)] max-w-full p-0" footer={
+                    <SheetFooter className="ce-all-filters-footer">
+                        <Button variant="ghost" size="sm" onClick={() => { setSheetFilters([]); setSheetJoins([]); setSheetRowIds([]); }}>
+                            {t('clearAll')}
                         </Button>
-                        <Button className="flex-1" onClick={handleSheetSave}>
-                            {t('saveChanges')}
-                        </Button>
+                        <div>
+                            <Button variant="outline" size="sm" onClick={() => { setSheetOpen(false); }} data-testid="cancel-manage-conditions">
+                                {t('cancel')}
+                            </Button>
+                            <Button size="sm" onClick={handleSheetSave} disabled={!sheetIsValid} data-testid="apply-filters-button">
+                                {t('applyFilters', {count: sheetFilters.length})}
+                            </Button>
+                        </div>
                     </SheetFooter>
                 }>
-                    <SheetTitle><AdjustmentsVerticalIcon className="w-5 h-5" /> {t('manageWhereConditions')}</SheetTitle>
-                    <div className="flex flex-col gap-lg mt-6 overflow-y-auto max-h-[calc(100vh-200px)]">
+                    <div className="ce-all-filters-header">
+                        {objectName && <span>{objectName}</span>}
+                        <SheetTitle>{t('filters')}</SheetTitle>
+                    </div>
+                    <div className="ce-all-filters-body">
                         {sheetFilters.map((filter, index) => {
-                            const sheetFilterKey = `${filter.Key}-${filter.Operator}-${filter.Value}-${index}`;
-                            return (<div key={sheetFilterKey} className="flex flex-col gap-lg p-4 border rounded-lg">
-                                <div className="flex items-center justify-between">
-                                    <Label className="text-sm font-medium">{t('conditionNumber', { index: index + 1 })}</Label>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() =>{  handleSheetRemoveFilter(index); }}
-                                        data-testid={`remove-sheet-filter-${index}`}
-                                        aria-label={t('removeCondition')}
-                                    >
-                                        <XMarkIcon className="w-4 h-4" aria-hidden="true" />
+                            return (<div key={sheetRowIds[index]} className="ce-all-filters-condition">
+                                {index > 0 && <div className="ce-all-filters-join" role="group" aria-label={t('joinConditions')}>
+                                    <Button variant="ghost" size="sm" aria-pressed={sheetJoins[index] !== WhereConditionType.Or}
+                                        onClick={() => { setSheetJoins(prev => prev.map((join, i) => i === index ? WhereConditionType.And : join)); }}>
+                                        {t('and')}
                                     </Button>
-                                </div>
-                                <div className="flex flex-col gap-2">
-                                    <Label className="text-xs">{t('field')}</Label>
+                                    <Button variant="ghost" size="sm" aria-pressed={sheetJoins[index] === WhereConditionType.Or}
+                                        onClick={() => { setSheetJoins(prev => prev.map((join, i) => i === index ? WhereConditionType.Or : join)); }}>
+                                        {t('or')}
+                                    </Button>
+                                </div>}
+                                <div className="ce-all-filters-row" data-testid={`sheet-filter-row-${index}`}>
                                     <SearchSelect
                                         value={filter.Key}
                                         options={fieldsDropdownItems}
                                         onChange={(value) =>{  handleSheetFieldChange(index, 'Key', value); }}
                                         buttonProps={{
                                             "data-testid": `sheet-field-key-${index}`,
+                                            "aria-label": t('field'),
                                         }}
                                     />
-                                </div>
-                                <div className="flex flex-col gap-2">
-                                    <Label className="text-xs">{t('operator')}</Label>
                                     <SearchSelect
                                         value={filter.Operator}
                                         options={validOperators}
                                         onChange={(value) =>{  handleSheetFieldChange(index, 'Operator', value); }}
                                         buttonProps={{
                                             "data-testid": `sheet-field-operator-${index}`,
+                                            "aria-label": t('operator'),
                                         }}
                                     />
-                                </div>
-                                <div className="flex flex-col gap-2">
-                                    <Label className="text-xs">{t('value')}</Label>
                                     <Input
                                         value={filter.Value}
                                         onChange={(e) =>{  handleSheetFieldChange(index, 'Value', e.target.value); }}
                                         placeholder={t('enterFilterValue')}
                                         data-testid={`sheet-field-value-${index}`}
+                                        aria-label={t('value')}
                                     />
+                                    <Button variant="ghost" size="icon" onClick={() => { handleSheetRemoveFilter(index); }}
+                                        data-testid={`remove-sheet-filter-${index}`} aria-label={t('removeCondition')}>
+                                        <XMarkIcon className="size-4" aria-hidden="true" />
+                                    </Button>
                                 </div>
                             </div>);
                         })}
-                        <Button onClick={handleSheetAddFilter} data-testid="add-sheet-filter-button" variant="secondary"
-                                className="self-start">
-                            <PlusCircleIcon className="w-4 h-4"/> {t('addCondition')}
+                        <Button onClick={handleSheetAddFilter} data-testid="add-sheet-filter-button" variant="outline" size="sm" className="ce-all-filters-add">
+                            <PlusCircleIcon className="size-4" aria-hidden="true" /> {t('addCondition')}
                         </Button>
+                        {sheetWhereClause && <div className="ce-all-filters-preview">
+                            <span>{t('whereClause')}</span>
+                            <code>{t('whereKeyword')} {sheetWhereClause}</code>
+                        </div>}
                     </div>
                 </SheetContent>
             </Sheet>

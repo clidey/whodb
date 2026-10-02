@@ -1,11 +1,14 @@
 en_US:
-  searchPlaceholder: Type a command or search...
+  tables: Tables
+  triggerLabel: Search or run a command
+  searchPlaceholder: Search or run a command
   noResults: No matching results found.
   sortBy: Sort By
-  goToChat: Go to Chat
-  goToStorageUnits: Go to Storage Units
-  goToGraph: Go to Graph
-  goToScratchpad: Go to Scratchpad
+  goTo: Go to
+  goToChat: Chat
+  goToStorageUnits: Tables
+  goToGraph: Graph
+  goToScratchpad: Scratchpad
   toggleSidebar: Toggle Sidebar
   disconnect: Disconnect
   sortByColumn: Sort by {column}

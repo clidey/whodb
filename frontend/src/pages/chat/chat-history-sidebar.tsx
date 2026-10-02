@@ -25,13 +25,15 @@ import {
     AlertDialogTitle,
     Button,
     cn,
+    Input,
     ScrollArea,
     Sidebar as SidebarComponent,
     SidebarContent,
     SidebarGroup,
     SidebarHeader
 } from "@clidey/ux";
-import { ChatBubbleLeftRightIcon, PlusCircleIcon, TrashIcon } from "../../components/heroicons";
+import { TrashIcon } from "../../components/heroicons";
+import { WhoDBChatIcon } from "../../components/whodb-chat-icon";
 import { Tip } from "../../components/tip";
 import type { ChangeEvent, FC} from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -139,14 +141,14 @@ const EditableSessionName: FC<EditableSessionNameProps> = ({ session, isActive, 
                         }
                     }}
                     autoFocus
-                    className="w-full border-b border-gray-400 bg-transparent transition-colors text-xs outline-none"
+                    className="w-full border-b border-gray-400 bg-transparent text-sm outline-none transition-colors"
                     data-testid={`chat-session-name-input-${session.id}`}
                     style={{ height: '20px' }}
                 />
             ) : (
                 <span
-                    className={cn("text-xs block w-full", {
-                        "text-primary font-medium": isActive,
+                    className={cn("block w-full text-sm font-semibold", {
+                        "text-foreground": isActive,
                         "truncate": displayContent === currentContent,
                     })}
                     data-testid={`chat-session-name-${session.id}`}
@@ -162,12 +164,14 @@ const EditableSessionName: FC<EditableSessionNameProps> = ({ session, isActive, 
     );
 };
 
+/** Renders searchable chat sessions beside the conversation panel. */
 export const ChatHistorySidebar: FC = () => {
     const { t } = useTranslation('pages/chat');
     const dispatch = useAppDispatch();
     const { sessions, activeSessionId } = useAppSelector(state => state.houdini);
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [sessionToDelete, setSessionToDelete] = useState<string | null>(null);
+    const [sessionSearch, setSessionSearch] = useState('');
 
     const handleAddSession = useCallback(() => {
         trackFrontendIntent('chat.session_created', {
@@ -210,30 +214,35 @@ export const ChatHistorySidebar: FC = () => {
 
     return (
         <>
-            <div className="flex h-full dark" data-testid="chat-history-sidebar">
-                <SidebarComponent variant="embed" className="w-64 h-full flex flex-col">
-                    <SidebarHeader>
+            <div className="flex h-full min-h-0" data-testid="chat-history-sidebar">
+                <SidebarComponent variant="embed" className="flex h-full w-72 flex-col border-r border-border">
+                    <SidebarHeader className="gap-2 p-3">
                         <div className="flex items-center justify-between">
-                            <h1 className="text-lg font-semibold pt-8 px-4">{t('chatHistory')}</h1>
+                            <h1 className="text-sm font-semibold">{t('chatHistory')}</h1>
                             <Tip className="w-fit">
                                 <Button
-                                    variant="ghost"
-                                    size="sm"
+                                    variant="outline"
+                                    size="icon"
+                                    className="size-7"
                                     onClick={handleAddSession}
                                     data-testid="add-chat-session-button"
                                     aria-label={t('newChat')}
                                 >
-                                    <PlusCircleIcon className="w-4 h-4" />
+                                    <WhoDBChatIcon name="plus" className="size-4" />
                                 </Button>
                                 <p>{t('newChat')}</p>
                             </Tip>
                         </div>
+                        <div className="relative">
+                            <WhoDBChatIcon name="search" className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                            <Input value={sessionSearch} onChange={event => { setSessionSearch(event.target.value); }} placeholder={t('searchChats')} aria-label={t('searchChats')} className="h-9 bg-card !pl-8 text-sm" />
+                        </div>
                     </SidebarHeader>
-                    <SidebarContent>
-                        <SidebarGroup>
-                            <ScrollArea className="h-full">
+                    <SidebarContent className="min-h-0">
+                        <SidebarGroup className="min-h-0 grow">
+                            <ScrollArea className="h-full min-h-0">
                                 <div className="flex flex-col gap-1 p-2">
-                                {sessions.map((session) => {
+                                {sessions.filter(session => session.name.toLocaleLowerCase().includes(sessionSearch.trim().toLocaleLowerCase())).map((session) => {
                                     const isActive = session.id === activeSessionId;
                                     const messageCount = session.messages.length;
 
@@ -241,17 +250,15 @@ export const ChatHistorySidebar: FC = () => {
                                         <div
                                             key={session.id}
                                             className={cn(
-                                                "flex items-center gap-2 p-2 rounded-md cursor-pointer hover:bg-muted/50 transition-colors group/session w-full max-w-full",
+                                                "group/session relative flex w-full max-w-full cursor-pointer items-center gap-3 rounded-md px-3 py-2 transition-colors hover:bg-muted/50",
                                                 {
-                                                    "bg-muted": isActive,
+                                                    "bg-primary/10 dark:bg-primary/25": isActive,
                                                 }
                                             )}
                                             onClick={() => { handleSelectSession(session.id); }}
                                             data-testid={`chat-session-item-${session.id}`}
                                         >
-                                            <ChatBubbleLeftRightIcon className={cn("w-4 h-4 shrink-0", {
-                                                "text-primary": isActive,
-                                            })} />
+                                            <span className="flex size-6 shrink-0 items-center justify-center rounded bg-primary/10 text-primary dark:bg-primary/20"><WhoDBChatIcon name="chat" className="size-4" /></span>
                                             <div className="flex-1 min-w-0 flex flex-col overflow-hidden max-w-[calc(100%-3rem)] hover:max-w-[calc(100%-3rem)]">
                                                 <EditableSessionName
                                                     session={session}

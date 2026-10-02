@@ -719,18 +719,20 @@ test.describe('Keyboard Shortcuts', () => {
                 expect(rowCount).toBeGreaterThanOrEqual(1);
             });
 
-            test('Command palette search filters results', async ({ whodb, page }) => {
+            test('Command palette search filters tables while keeping navigation visible', async ({ whodb, page }) => {
                 await whodb.data(tableName);
 
                 // Open command palette
                 await whodb.typeCmdShortcut('k');
 
                 // Type to search
-                await page.locator('[data-testid="command-palette-input"]').fill('graph');
+                await page.locator('[data-testid="command-palette-input"]').fill('prod');
 
-                // Should filter to show only graph
+                // Matching tables appear above the persistent navigation shortcuts.
+                await expect(page.locator('[data-testid="command-table-products"]')).toBeAttached();
+                await expect(page.locator('[data-testid="command-table-users"]')).not.toBeAttached();
                 await expect(page.locator('[data-testid="command-nav-graph"]')).toBeAttached();
-                await expect(page.locator('[data-testid="command-nav-chat"]')).not.toBeAttached();
+                await expect(page.locator('[data-testid="command-nav-chat"]')).toBeAttached();
 
                 // Close
                 await page.keyboard.press('Escape');

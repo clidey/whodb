@@ -15,6 +15,8 @@
  */
 
 import { useTranslation } from '@/hooks/use-translation';
+import {useQuery} from '@apollo/client/react';
+import type {SQLNamespace} from '@codemirror/lang-sql';
 import { isDestructiveQuery } from '@/utils/query-utils';
 import {
     AlertDialog,
@@ -41,14 +43,13 @@ import {
     Sheet,
     SheetContent,
     SheetFooter,
-    Spinner,
     Tabs,
     TabsContent,
     TabsList,
     TabsTrigger,
     toast
 } from "@clidey/ux";
-import type { RowsResult } from '@graphql';
+import {GetColumnsBatchDocument, GetStorageUnitsDocument, type RowsResult} from '@graphql';
 import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
 import type {
@@ -64,6 +65,7 @@ import {
     useState
 } from "react";
 import { useLocation } from "react-router-dom";
+import { createPortal } from "react-dom";
 import { v4 as uuidv4 } from 'uuid';
 import { useAI } from "../../components/ai";
 import { CodeEditor } from "../../components/editor";
@@ -82,7 +84,7 @@ import {
     XCircleIcon,
     XMarkIcon
 } from "../../components/heroicons";
-import { Loading } from "../../components/loading";
+import { Loading, Spinner } from "../../components/loading";
 import { InternalPage } from "../../components/page";
 import { Tip } from "../../components/tip";
 import { InternalRoutes } from "../../config/routes";
@@ -94,6 +96,9 @@ import { isDesktopApp } from "../../utils/external-links";
 import type { IPluginProps} from "./query-view";
 import { QueryView } from "./query-view";
 import { ph } from "../../utils/privacy";
+import { WhoDBChatIcon } from "../../components/whodb-chat-icon";
+import { useSourceContract } from '../../hooks/useSourceContract';
+import { buildSourceParentRef } from '../../utils/source-refs';
 
 /** Raw-execute extensions — set via registerRawExecuteExtensions(). */
 let eeRawExecuteExtensions: {
@@ -117,6 +122,8 @@ type IRawExecuteCellProps = {
     onDelete?: (cellId: string) => void;
     showTools?: boolean;
     cellData?: any;
+    toolbarTarget?: HTMLDivElement | null;
+    sqlSchema?: SQLNamespace;
 }
 
 enum ActionOptions {
@@ -279,7 +286,7 @@ const SQLHighlighter: FC<{ code: string }> = ({ code }) => {
 };
 
 
-const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, showTools, cellData }) => {
+const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, showTools, cellData, toolbarTarget, sqlSchema }) => {
     const { t } = useTranslation('pages/raw-execute');
     const dispatch = useAppDispatch();
     const [mode, setMode] = useState<string>(cellData?.mode ?? ActionOptions.Query);
@@ -296,10 +303,12 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
     const currentDatabase = useAppSelector(state => state.auth.current?.Database);
     const currentId = useAppSelector(state => state.auth.current?.Id);
     const currentType = useAppSelector(state => state.auth.current?.Type);
-    const handleExecute = useRef<(code: string) => Promise<any>>(() => Promise.resolve());
+    const handleExecute = useRef<(code: string, signal?: AbortSignal) => Promise<any>>(() => Promise.resolve());
     const [historyOpen, setHistoryOpen] = useState(false);
     const [error, setError] = useState<Error | null>(null);
     const [loading, setLoading] = useState(false);
+    const [elapsed, setElapsed] = useState(0);
+    const requestController = useRef<AbortController | null>(null);
     const [pendingExecuteCode, setPendingExecuteCode] = useState<string | null>(null);
     const [rows, setRows] = useState<RowsResult | null>(null);
     const { modelType } = useAI();    
@@ -310,6 +319,21 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
     const resultsContainerRef = useRef<HTMLDivElement | null>(null);
     const containerWidth = useContainerWidth(resultsContainerRef);
     const activeListenersRef = useRef<{move: (e: MouseEvent) => void; up: () => void}[]>([]);
+
+    useEffect(() => {
+        if (!loading) return;
+        const started = Date.now();
+        const timer = window.setInterval(() => {
+            setElapsed((Date.now() - started) / 1000);
+        }, 100);
+        return () => {
+            window.clearInterval(timer);
+        };
+    }, [loading]);
+
+    useEffect(() => () => {
+        requestController.current?.abort();
+    }, []);
 
     // Clean up any dangling document listeners on unmount
     useEffect(() => {
@@ -385,17 +409,25 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
     }, []);
 
     const doExecute = useCallback((currentCode: string) => {
+        requestController.current?.abort();
+        const controller = new AbortController();
+        requestController.current = controller;
         const historyItem = {id: uuidv4(), item: currentCode, status: false, date: new Date()};
         setSubmittedCode(currentCode);
         setError(null);
         setLoading(true);
+        setElapsed(0);
+        setRows(null);
 
-        handleExecute.current(currentCode).then((data) => {
+        handleExecute.current(currentCode, controller.signal).then((data) => {
+            if (controller.signal.aborted) return;
             historyItem.status = true;
             setRows(data);
         }).catch((err) => {
+            if (controller.signal.aborted) return;
             setError(err);
         }).finally(() => {
+            if (controller.signal.aborted) return;
             setLoading(false);
             setHistory(h => [historyItem, ...h]);
             dispatch(ScratchpadActions.addCellHistory({
@@ -405,6 +437,11 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
             }));
         });
     }, [handleExecute, cellId, dispatch]);
+
+    const cancelExecute = useCallback(() => {
+        requestController.current?.abort();
+        setLoading(false);
+    }, []);
 
     const handleRawExecute = useCallback((historyCode?: string) => {
         if (currentId == null) {
@@ -538,7 +575,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                     <Suspense fallback={<Loading />}>
                         <Component code={submittedCode} handleExecuteRef={handleExecute} modelType={modelType?.modelType ?? ''}
                                    schema={currentDatabase ?? ''} token={modelType?.token} providerId={currentId}
-                                   containerWidth={containerWidth} />
+                                   containerWidth={containerWidth} rowsResult={rows} />
                     </Suspense>
                 </div>
             </div>
@@ -565,13 +602,21 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
     }, [rows]);
 
     return (
-        <div className="flex flex-col grow group/cell relative">
+        <div className="ce-scratchpad-cell flex flex-col grow group/cell relative">
+            {toolbarTarget && createPortal(<div className="ce-scratchpad-actions">
+                <Button variant="outline" size="sm" onClick={() => { setHistoryOpen(true); }} data-testid="history-button">
+                    <WhoDBChatIcon name="clock" />{t('history')}
+                </Button>
+                <Button size="sm" onClick={() => { handleRawExecute(); }} disabled={!code.trim() || loading} data-testid="query-cell-button">
+                    {loading ? <Spinner /> : <WhoDBChatIcon name="play" />}{loading ? t('running') : t('run')}
+                </Button>
+            </div>, toolbarTarget)}
             <div className="relative">
                 <div
-                    className={`flex grow border border-gray-200 rounded-md overflow-hidden dark:bg-white/10 dark:border-white/5 ${ph.noCapture}`}
+                    className={`ce-scratchpad-editor flex grow border border-gray-200 rounded-md overflow-visible dark:bg-white/10 dark:border-white/5 ${ph.noCapture}`}
                     style={{ height: `${editorHeight}px` }}
                 >
-                    <CodeEditor language="sql" value={code} setValue={setCode} onRun={(c) =>{  handleRawExecute(c); }} />
+                    <CodeEditor language="sql" value={code} setValue={setCode} onRun={(c) =>{  handleRawExecute(c); }} sqlSchema={sqlSchema} />
                 </div>
                 <div 
                     className="h-2 cursor-row-resize transition-all duration-200 relative group"
@@ -614,7 +659,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
-                <div className={classNames("absolute -bottom-3 z-20 flex justify-between px-3 pr-8 w-full opacity-0 transition-all duration-500 group-hover/cell:opacity-100 pointer-events-none", {
+                <div className={classNames("ce-scratchpad-cell-tools absolute -bottom-3 z-20 flex justify-between px-3 pr-8 w-full opacity-0 transition-all duration-500 group-hover/cell:opacity-100 pointer-events-none", {
                     "opacity-100": showTools,
                 })}>
                     <div className="flex gap-sm pointer-events-auto">
@@ -643,7 +688,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                             </Tip>
                         }
                     </div>
-                    <div className="flex gap-sm items-center">
+                    {!toolbarTarget && <div className="flex gap-sm items-center">
                         <Tip className="w-fit">
                             <Button
                                 onClick={() =>{  setHistoryOpen(true); }}
@@ -668,7 +713,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                             </Button>
                             <p>{t('executeQuery')}</p>
                         </Tip>
-                    </div>
+                    </div>}
                 </div>
             </div>
             {
@@ -677,10 +722,13 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                     <ErrorState error={error} />
                 </div>
             }
-            {loading && <div className="flex justify-center items-center h-full py-2">
-                <Spinner />
+            {loading && <div className="ce-scratchpad-running" data-testid="scratchpad-running">
+                <div className="ce-scratchpad-running-copy"><Spinner /><div><strong>{t('runningQuery')}</strong><small>{elapsed.toFixed(1)} s · {currentDatabase}</small></div></div>
+                <Button variant="outline" size="sm" onClick={cancelExecute} data-testid="scratchpad-cancel">{t('cancel')}</Button>
             </div>}
-            {output}
+            {loading && <div className="ce-scratchpad-skeleton" aria-hidden="true"><span /><span /><span /></div>}
+            {!loading && rows && <div className="ce-scratchpad-result-heading"><span>{t('result')}</span><Badge variant="secondary">{t('rowCount', { count: rows.Rows?.length ?? 0 })}</Badge></div>}
+            {!loading && output}
             <Sheet open={historyOpen} onOpenChange={setHistoryOpen}>
                 <SheetContent className="min-w-[50vw] max-w-[50vw] p-0">
                     <div className="flex flex-col h-full">
@@ -845,7 +893,9 @@ const RawExecuteSubPage: FC<{
     pageId: string; 
     cellIds: string[]; 
     cells: Record<string, any>;
-}> = ({ pageId, cellIds = [], cells = {} }) => {
+    toolbarTarget?: HTMLDivElement | null;
+    sqlSchema?: SQLNamespace;
+}> = ({ pageId, cellIds = [], cells = {}, toolbarTarget, sqlSchema }) => {
     // Ensure cellIds is always an array
     const safeCellIds = cellIds || [];
     const dispatch = useAppDispatch();
@@ -876,6 +926,8 @@ const RawExecuteSubPage: FC<{
                                 onDelete={safeCellIds.length <= 1 ? undefined : handleDelete}
                                 showTools={safeCellIds.length === 1}
                                 cellData={cells[cellId]}
+                                toolbarTarget={index === 0 ? toolbarTarget : null}
+                                sqlSchema={sqlSchema}
                             />
                         </div>
                     ))
@@ -944,6 +996,27 @@ export const RawExecutePage: FC = () => {
     const disableAnimations = useAppSelector(state => state.settings.disableAnimations);
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [pageToDelete, setPageToDelete] = useState<string | null>(null);
+    const [toolbarTarget, setToolbarTarget] = useState<HTMLDivElement | null>(null);
+    const current = useAppSelector(state => state.auth.current);
+    const schema = useAppSelector(state => state.database.schema);
+    const {item} = useSourceContract(current?.Type);
+    const parentRef = useMemo(() => buildSourceParentRef(item, current, schema), [item, current, schema]);
+    const {data: sourceObjects} = useQuery(GetStorageUnitsDocument, {
+        variables: {parent: parentRef},
+        skip: !item || !current,
+    });
+    const tableRefs = useMemo(() => (sourceObjects?.StorageUnit ?? []).filter(unit => unit.Kind === item?.contract?.DefaultObjectKind).slice(0, 50), [sourceObjects, item]);
+    const {data: sourceColumns} = useQuery(GetColumnsBatchDocument, {
+        variables: {refs: tableRefs.map(unit => unit.Ref)},
+        skip: tableRefs.length === 0,
+    });
+    const tableDetail = t('completionTable');
+    const columnDetail = t('completionColumn');
+    const sqlSchema = useMemo<SQLNamespace>(() => Object.fromEntries(tableRefs.map(unit => [unit.Name, {
+        self: {label: unit.Name, type: 'type', detail: tableDetail},
+        children: (sourceColumns?.ColumnsBatch.find(batch => batch.StorageUnit.Path.join('.') === unit.Ref.Path.join('.'))?.Columns ?? [])
+            .map(column => ({label: column.Name, type: 'property', detail: columnDetail})),
+    }])), [tableRefs, sourceColumns, tableDetail, columnDetail]);
 
     // Initialize scratchpad and ensure all pages have cells
     const hasInitialized = useRef(false);
@@ -1027,12 +1100,12 @@ export const RawExecutePage: FC = () => {
 
     return (
         <InternalPage routes={[InternalRoutes.RawExecute]}>
-            <div className="flex flex-col w-full gap-2" data-testid="raw-execute-page">
-                <div className="flex justify-center items-center w-full mt-4">
+            <div className="ce-scratchpad-page flex flex-col w-full gap-2" data-testid="raw-execute-page">
+                <div className="flex justify-center items-center w-full">
                     <div className="w-full flex flex-col gap-4">
                         <div className="flex justify-between items-center">
                             <Tabs className="w-full h-full" value={activePageId ?? ""}>
-                                <div className="flex gap-sm w-full justify-between">
+                                <div className="ce-scratchpad-tabbar flex gap-sm w-full justify-between">
                                     <TabsList className="flex flex-wrap gap-sm" data-testid="page-tabs">
                                         {
                                             pages.map((page, index) => (
@@ -1072,8 +1145,9 @@ export const RawExecutePage: FC = () => {
                                             <p>{t('addPage')}</p>
                                         </Tip>
                                     </TabsList>
+                                    <div ref={setToolbarTarget} />
                                 </div>
-                                <TabsContent value={activePageId ?? ""} className="h-full w-full mt-4">
+                                <TabsContent value={activePageId ?? ""} className="h-full w-full mt-2">
                                     <AnimatePresence mode="wait">
                                         {pages.map((page) => (
                                             <motion.div
@@ -1092,6 +1166,8 @@ export const RawExecutePage: FC = () => {
                                                     pageId={page.id}
                                                     cellIds={page.cellIds ?? []}
                                                     cells={cells}
+                                                    toolbarTarget={page.id === activePageId ? toolbarTarget : null}
+                                                    sqlSchema={sqlSchema}
                                                 />
                                             </motion.div>
                                         ))}

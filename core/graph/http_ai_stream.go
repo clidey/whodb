@@ -20,10 +20,12 @@ package graph
 
 import (
 	stdctx "context"
+	"encoding/json"
 	"net/http"
+	"strings"
+	"time"
 
 	"github.com/clidey/whodb/core/baml_client"
-	"github.com/clidey/whodb/core/baml_client/stream_types"
 	"github.com/clidey/whodb/core/baml_client/types"
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/bamlconfig"
@@ -55,8 +57,10 @@ func ceAIChatStreamHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Streaming unsupported", http.StatusInternalServerError)
 		return
 	}
+	chatContext, cancel := stdctx.WithTimeout(r.Context(), 90*time.Second)
+	defer cancel()
 
-	spec, session, err := getSourceSessionForContext(r.Context())
+	spec, session, err := getSourceSessionForContext(chatContext)
 	if err != nil {
 		log.Debugf("AI Chat Stream: Failed to create source session: %v", err)
 		SendSSEError(w, flusher, "No source session available")
@@ -78,16 +82,18 @@ func ceAIChatStreamHandler(w http.ResponseWriter, r *http.Request) {
 		Endpoint: creds.Endpoint,
 	}
 
+	SendSSEProgress(w, flusher, "schema", "started")
 	// Build object details for the selected chat scope.
 	log.Debugf("AI Chat Stream: Building object details for ref=%+v", req.Ref)
 	resolvedRef := sourceRefFromInput(req.Ref)
-	tableDetails, err := BuildObjectDetails(r.Context(), auditScope, session, resolvedRef, spec.Contract.DefaultObjectKind)
+	tableDetails, err := BuildObjectDetails(chatContext, auditScope, session, resolvedRef, spec.Contract.DefaultObjectKind)
 	if err != nil {
 		log.Debugf("AI Chat Stream: BuildObjectDetails failed: %v", err)
 		SendSSEError(w, flusher, "Failed to get table info: "+err.Error())
 		return
 	}
 	log.Debugf("AI Chat Stream: Table details built, length=%d", len(tableDetails))
+	SendSSEProgress(w, flusher, "schema", "completed")
 
 	scope := sourceScopeForChat(spec, resolvedRef)
 
@@ -100,59 +106,130 @@ func ceAIChatStreamHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Debugf("AI Chat Stream: BAML context created")
 
-	// Create BAML stream
-	log.Debugf("AI Chat Stream: Setting up AI client...")
 	callOpts := bamlconfig.SetupAIClient(modelConfig)
-	log.Debugf("AI Chat Stream: Starting BAML GenerateSQLQuery stream...")
-	stream, err := baml_client.Stream.GenerateSQLQuery(stdctx.Background(), dbContext, req.Input.Query, callOpts...)
-	if err != nil {
-		log.Debugf("AI Chat Stream: GenerateSQLQuery failed: %v", err)
-		SendSSEError(w, flusher, "Failed to start stream: "+err.Error())
-		return
-	}
-	log.Debugf("AI Chat Stream: BAML stream created successfully")
-
-	// Process stream
-	log.Debugf("AI Chat Stream: Starting to process stream...")
-	processStream(r.Context(), w, flusher, stream, queryRunner)
-	log.Debugf("AI Chat Stream: Stream processing completed")
+	runChatLoop(chatContext, w, flusher, dbContext, req.Input.Query, callOpts, queryRunner)
 }
 
-func processStream(
+func runChatLoop(
 	ctx stdctx.Context,
 	w http.ResponseWriter,
 	flusher http.Flusher,
-	stream <-chan baml_client.StreamValue[[]stream_types.ChatResponse, []types.ChatResponse],
+	dbContext types.DatabaseContext,
+	userQuery string,
+	callOpts []baml_client.CallOptionFunc,
 	queryRunner source.ReadOnlyQueryRunner,
 ) {
-	for chunk := range stream {
-		if chunk.IsError {
-			SendSSEError(w, flusher, chunk.Error.Error())
+	request := userQuery
+	var lastFailedSQL, lastQueryError string
+	for attempt := 0; attempt < 2; attempt++ {
+		SendSSEProgress(w, flusher, "plan", "started")
+		stream, err := baml_client.Stream.GenerateSQLQuery(ctx, dbContext, request, callOpts...)
+		if err != nil {
+			sendModelError(w, flusher, err.Error())
 			return
 		}
-
-		if chunk.IsFinal {
-			processFinalChunk(ctx, w, flusher, chunk.Final(), queryRunner)
-			SendSSEDone(w, flusher)
-			return
-		}
-
-		if chunk.Stream() != nil {
-			for _, bamlResp := range *chunk.Stream() {
-				SendSSEChunk(w, flusher, convertStreamResponse(&bamlResp))
+		var responses *[]types.ChatResponse
+		for chunk := range stream {
+			if chunk.IsError {
+				sendModelError(w, flusher, chunk.Error.Error())
+				return
+			}
+			if chunk.IsFinal {
+				responses = chunk.Final()
+				break
 			}
 		}
+		if err := ctx.Err(); err != nil {
+			if err == stdctx.DeadlineExceeded {
+				SendSSEError(w, flusher, "The chat request timed out. Please try again.")
+			}
+			return
+		}
+		SendSSEProgress(w, flusher, "plan", "completed")
+		if responses == nil || len(*responses) == 0 {
+			SendSSEError(w, flusher, "The model returned no answer")
+			return
+		}
+
+		messages := make([]*model.AIChatMessage, 0, len(*responses))
+		var retryReason string
+		for _, response := range *responses {
+			if unsupportedChatTool(response.Text) {
+				retryReason = "This chat cannot invoke named tools. Answer using listed database tables or explain the limitation."
+				break
+			}
+			if response.Type == types.ChatMessageTypeSQL {
+				step := "query"
+				if sqlguard.Classify(response.Text).Mutating {
+					step = "draft"
+				}
+				SendSSEProgress(w, flusher, step, "started")
+				message := processFinalResponse(ctx, &response, queryRunner)
+				SendSSEProgress(w, flusher, step, "completed")
+				if message.Type == "error" {
+					retryReason = message.Text
+					lastFailedSQL = response.Text
+					lastQueryError = message.Text
+					break
+				}
+				messages = append(messages, message)
+				continue
+			}
+			message := processFinalResponse(ctx, &response, queryRunner)
+			messages = append(messages, message)
+		}
+		if retryReason != "" && attempt == 0 {
+			SendSSEProgress(w, flusher, "retry", "started")
+			request = userQuery + "\nThe previous plan failed: " + retryReason + "\nReturn a corrected answer. Use only SQL on the listed database tables; do not claim that any action has run."
+			SendSSEProgress(w, flusher, "retry", "completed")
+			continue
+		}
+		if retryReason != "" {
+			if lastFailedSQL != "" {
+				SendSSESQLFailure(w, flusher, lastFailedSQL, lastQueryError)
+			} else if strings.Contains(retryReason, "cannot invoke named tools") {
+				SendSSEMessage(w, flusher, &model.AIChatMessage{Type: "scope:error", Text: "unsupported_tool"})
+				SendSSEDone(w, flusher)
+			} else {
+				SendSSEError(w, flusher, retryReason)
+			}
+			return
+		}
+		hasSQL := false
+		for _, response := range *responses {
+			if response.Type == types.ChatMessageTypeSQL {
+				hasSQL = true
+				break
+			}
+		}
+		if lastFailedSQL != "" && !hasSQL {
+			SendSSESQLFailure(w, flusher, lastFailedSQL, lastQueryError)
+			return
+		}
+		for _, message := range messages {
+			if hasSQL && message.Type == "message" {
+				continue
+			}
+			SendSSEMessage(w, flusher, message)
+		}
+		SendSSEDone(w, flusher)
+		return
 	}
 }
 
-func processFinalChunk(ctx stdctx.Context, w http.ResponseWriter, flusher http.Flusher, responses *[]types.ChatResponse, queryRunner source.ReadOnlyQueryRunner) {
-	if responses == nil {
+func sendModelError(w http.ResponseWriter, flusher http.Flusher, message string) {
+	lower := strings.ToLower(message)
+	if strings.Contains(lower, "connection refused") || strings.Contains(lower, "could not connect") || strings.Contains(lower, "connect error") {
+		SendSSEMessage(w, flusher, &model.AIChatMessage{Type: "provider:error", Text: sanitizeErrorMessage(message)})
+		SendSSEDone(w, flusher)
 		return
 	}
+	SendSSEError(w, flusher, message)
+}
 
-	for _, bamlResp := range *responses {
-		SendSSEMessage(w, flusher, processFinalResponse(ctx, &bamlResp, queryRunner))
-	}
+func unsupportedChatTool(text string) bool {
+	var value map[string]json.RawMessage
+	return json.Unmarshal([]byte(strings.TrimSpace(text)), &value) == nil && value["toolName"] != nil
 }
 
 func processFinalResponse(ctx stdctx.Context, bamlResp *types.ChatResponse, queryRunner source.ReadOnlyQueryRunner) *model.AIChatMessage {
@@ -161,7 +238,12 @@ func processFinalResponse(ctx stdctx.Context, bamlResp *types.ChatResponse, quer
 		Text: bamlResp.Text,
 	}
 
-	if bamlResp.Type != types.ChatMessageTypeSQL || bamlResp.Operation == nil {
+	if bamlResp.Type != types.ChatMessageTypeSQL {
+		return message
+	}
+	if bamlResp.Operation == nil {
+		message.Type = "error"
+		message.Text = "The model did not specify a query operation"
 		return message
 	}
 
@@ -180,30 +262,7 @@ func processFinalResponse(ctx stdctx.Context, bamlResp *types.ChatResponse, quer
 		return message
 	}
 
-	message.Type = bamlconfig.ConvertOperationType(*bamlResp.Operation)
+	message.Type = "sql:get"
 	message.Result = ConvertResultToMessage(result)
 	return message
-}
-
-func convertStreamResponse(bamlResp *stream_types.ChatResponse) map[string]any {
-	typeStr := ""
-	if bamlResp.Type != nil {
-		typeStr = bamlconfig.ConvertBAMLTypeToWhoDB(*bamlResp.Type)
-	}
-
-	opStr := ""
-	if bamlResp.Operation != nil {
-		opStr = bamlconfig.OperationToString(*bamlResp.Operation)
-	}
-
-	textStr := ""
-	if bamlResp.Text != nil {
-		textStr = *bamlResp.Text
-	}
-
-	return map[string]any{
-		"type":      typeStr,
-		"text":      textStr,
-		"operation": opStr,
-	}
 }

@@ -1,6 +1,31 @@
 en_US:
+  primaryKeyShort: PK
+  foreignKeyShort: FK
+  rowsSummary_one: "{count} row"
+  rowsSummary_other: "{count} rows"
   rowCopiedToClipboard: Row Copied to Clipboard
   rowUpdated: Row Updated
+  unsavedChanges_one: "{count} unsaved change"
+  unsavedChanges_other: "{count} unsaved changes"
+  discard: Discard
+  save: Save
+  saving: Saving
+  rowNumber: "row {number}"
+  selectedIds: "id {ids}"
+  exportAction: Export
+  deleting: Deleting
+  rowsDeleted_one: "{count} row deleted"
+  rowsDeleted_other: "{count} rows deleted"
+  rowsDeletedFrom: "{table} · {source}"
+  unableToDeleteRowStatus: The source did not delete this row
+  undo: Undo
+  deleteUndone: Deleted rows restored
+  undoFailed: Couldn't restore deleted rows
+  deleteFromTableTitle_one: "Delete {count} row from {table}?"
+  deleteFromTableTitle_other: "Delete {count} rows from {table}?"
+  deleteRowsDetails: "Rows with id {ids} are removed from {source}."
+  saveOrDiscardBeforePaging: Save or discard your changes before changing pages.
+  cellEditingHint: Double-click to edit this cell.
   errorUpdatingRow: "Couldn't update row"
   deletingRows: Deleting Rows...
   deletingRows_one: Deleting Row...
@@ -71,6 +96,9 @@ en_US:
   noSearchMatches: No matches found
   cellInteractionHint: Click to copy cell, double-click to copy row, right-click for more options
   tablePagination: Table pagination
+  pageOf: Page {page} of {total}
+  previousPage: Previous page
+  nextPage: Next page
   goToPage: Go to page {page}
   currentPage: Page {page}, current page
   integerType: Integer type

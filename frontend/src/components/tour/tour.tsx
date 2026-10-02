@@ -151,7 +151,7 @@ export const Tour: FC<TourProps> = ({ config, isActive, onComplete, onSkip }) =>
 
     return (
         <>
-            {!isTransitioning && targetElement && (
+            {!isTransitioning && targetElement && currentStep.position !== 'center' && (
                 <AnimatePresence mode="wait">
                     <TourSpotlight key={`spotlight-${currentStepIndex}`} targetElement={targetElement} />
                 </AnimatePresence>
@@ -163,7 +163,6 @@ export const Tour: FC<TourProps> = ({ config, isActive, onComplete, onSkip }) =>
                         targetElement={targetElement}
                         title={currentStep.title}
                         description={currentStep.description}
-                        icon={currentStep.icon}
                         position={currentStep.position}
                         currentStep={currentStepIndex + 1}
                         totalSteps={config.steps.length}

@@ -1,4 +1,37 @@
 en_US:
+  askAboutSource: Ask about {source}
+  sampleSQLite: Sample SQLite
+  sampleDatabase: sample.db
+  emptyStateDescription: WhoDB writes the SQL, shows it, and asks before anything changes.
+  stop: Stop
+  workingOnIt: Working on it
+  thinking: Thinking
+  retryingQuery: Revising the query
+  stepOfThree: Step {step} of 3
+  readingSchema: Read the source schema
+  runOnSource: RUN · {source}
+  connectingToModel: Connecting to the model
+  preparingQuery: Reasoning about the query
+  writingAnswer: Writing the answer
+  pressStopToCancel: Press Stop to cancel.
+  result: Result
+  complete: Complete
+  activitySteps: "{count} steps completed"
+  activityDetails: Details
+  readSchema: Read schema
+  runQuery: Run query
+  draftChange: Draft change
+  sql: SQL
+  export: Export
+  rowCount: "{count} rows"
+  rowCount_one: "{count} row"
+  reviewChange: Review database change
+  changeNeedsConfirmation: CHANGE · NEEDS CONFIRMATION
+  dontRun: Don't run
+  runStatement: Run statement
+  running: Running
+  copied: Copied
+  copy: Copy
   placeholder: Type Your Message Here...
   emptyStateTitle: What Can I Help You With?
   noModelTitle: No Model Available
@@ -16,6 +49,30 @@ en_US:
   failedToExecuteSQL: "Couldn't Execute SQL. Try Again."
   actionExecuted: Action Executed
   noDataReturned: No Data Was Returned.
+  resultUnavailable: Query result unavailable
+  toolResponseNotExecuted: The model returned a tool action that this chat did not run. No result was created.
+  unsupportedToolRequest: This chat could not run the requested action. Ask about the connected database or try a SQL query.
+  actionUnavailable: Action unavailable
+  toolActionNotRun: TOOL ACTION NOT RUN
+  showTableConnections: Show how tables connect
+  tableConnectionsPrompt: How are the tables in this database connected?
+  openGraph: Open Graph
+  queryFailed: The query failed
+  queryErrorSource: QUERY ERROR · {source}
+  noSuchTable: no such table
+  queryError: query error
+  missingTableExplanation: "There is no {table} table in this connection. Choose a table listed in Tables or edit the query."
+  countOrdersByUserInstead: Count orders by user instead
+  countOrdersByUserPrompt: Count orders by user and show each user's name.
+  tryAvailableTables: Try available tables
+  listTablesPrompt: List the tables available in this database.
+  editInScratchpad: Edit in Scratchpad
+  failedQueryPageName: Failed chat query
+  cantReachProvider: "Can't reach {provider}"
+  modelProvider: model provider
+  changeModel: Change model
+  retry: Retry
+  streamInterrupted: The chat response stopped before it finished. Try again.
   dialogDescription: Choose which scratchpad page to add this query to.
   selectPageLabel: Select a Page
   selectPagePlaceholder: Choose a Page...
@@ -23,6 +80,7 @@ en_US:
   newPagePlaceholder: Enter Page Name
   createNewPage: Create New Page
   chatHistory: Chat History
+  searchChats: Search chats...
   newChat: New Chat
   clearChat: Clear Chat
   deleteChat: Delete Chat

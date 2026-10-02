@@ -73,16 +73,13 @@ import {ErrorState} from "../../components/error-state";
 import {
     CheckCircleIcon,
     CommandLineIcon,
-    MagnifyingGlassIcon,
-    PlayIcon,
-    PlusCircleIcon,
-    TableCellsIcon,
     XMarkIcon
 } from "../../components/heroicons";
-import {Loading, LoadingPage} from "../../components/loading";
+import {Loading, LoadingPage, Spinner} from "../../components/loading";
 import {InternalPage} from "../../components/page";
 import {SchemaViewer} from "../../components/schema-viewer";
-import {getColumnIcons, getInputPropsForColumnType, StorageUnitTable} from "../../components/table";
+import {getInputPropsForColumnType, StorageUnitTable} from "../../components/table";
+import {WhoDBChatIcon} from "../../components/whodb-chat-icon";
 import {Tip} from "../../components/tip";
 import {InternalRoutes} from "../../config/routes";
 import {useSourceContract} from "../../hooks/useSourceContract";
@@ -91,7 +88,6 @@ import {ExploreConditionsActions} from "../../store/explore-conditions";
 import {getSourceOperators} from "../../utils/source-operators";
 import {usePageSize} from "../../hooks/use-page-size";
 import {ExploreStorageUnitWhereCondition} from "./explore-storage-unit-where-condition";
-import {ExploreStorageUnitWhereConditionSheet} from "./explore-storage-unit-where-condition-sheet";
 import {useTranslation} from "../../hooks/use-translation";
 import {whereConditionToSql} from "../../utils/where-condition-to-sql";
 import {isDestructiveQuery} from "../../utils/query-utils";
@@ -103,6 +99,43 @@ import {formatAttributeValue} from "../../utils/functions";
 import {ph} from "../../utils/privacy";
 
 type SourceBrowserObject = GetStorageUnitsQuery['StorageUnit'][number];
+
+const ForeignKeyAddRowField: FC<{
+    reference: SourceObjectRefInput;
+    column: string;
+    fieldName: string;
+    value: string;
+    onChange: (value: string) => void;
+}> = ({reference, column, fieldName, value, onChange}) => {
+    const {t} = useTranslation('pages/explore-storage-unit');
+    const [manual, setManual] = useState(false);
+    const {data, loading} = useQuery(GetStorageUnitRowsDocument, {
+        variables: {ref: reference, pageSize: 100, pageOffset: 0},
+    });
+    const columnIndex = data?.Row.Columns.findIndex(item => item.Name === column) ?? -1;
+    const values = columnIndex < 0 ? [] : [...new Set(data?.Row.Rows.map(row => row[columnIndex]).filter(Boolean) ?? [])];
+
+    return <>
+        <Select value={manual ? '__manual__' : value || undefined} onValueChange={nextValue => {
+            if (nextValue === '__manual__') {
+                setManual(true);
+                onChange('');
+            } else {
+                setManual(false);
+                onChange(nextValue);
+            }
+        }}>
+            <SelectTrigger className="w-full" data-testid={`add-row-fk-${fieldName}`}>
+                <span>{loading ? t('loadingReferencedRows') : manual ? t('enterReferencedKey') : value || t('selectReferencedRow')}</span>
+            </SelectTrigger>
+            <SelectContent>
+                {values.map(option => <SelectItem key={option} value={option} data-value={option}>{option}</SelectItem>)}
+                <SelectItem value="__manual__" data-value="__manual__">{t('enterReferencedKey')}</SelectItem>
+            </SelectContent>
+        </Select>
+        {manual && <Input value={value} onChange={event => {onChange(event.target.value);}} placeholder={t('enterReferencedKey')} aria-label={t('enterReferencedKey')} />}
+    </>;
+};
 
 type ExploreSourceState = {
     unit?: SourceBrowserObject;
@@ -150,7 +183,6 @@ export const ExploreStorageUnit: FC = () => {
         handleCustomApply: handleCustomPageSizeApply,
     } = usePageSize(defaultPageSize, pageSizeOptions);
     const { t } = useTranslation('pages/explore-storage-unit');
-    const { t: tTable } = useTranslation('components/table');
 
     let schema = useAppSelector(state => state.database.schema);
     const current = useAppSelector(state => state.auth.current);
@@ -207,6 +239,7 @@ export const ExploreStorageUnit: FC = () => {
     const [whereCondition, setWhereCondition] = useState<WhereCondition | undefined>(savedConditions?.whereCondition);
     const [sortConditions, setSortConditions] = useState<SortCondition[]>(savedConditions?.sortConditions ?? []);
     const [isScratchpadOpen, setIsScratchpadOpen] = useState(false);
+    const [tableActionsTarget, setTableActionsTarget] = useState<HTMLDivElement | null>(null);
 
     // Check if this is a view/materialized view - mock data generation not allowed for these
     const isMockDataGenerationAllowed = useMemo(() => {
@@ -571,9 +604,12 @@ export const ExploreStorageUnit: FC = () => {
                 ...InternalRoutes.Dashboard.StorageUnit,
                 name: storageUnitLabel,
             },
-            InternalRoutes.Dashboard.ExploreStorageUnit,
+            {
+                ...InternalRoutes.Dashboard.ExploreStorageUnit,
+                name: unit?.Name ?? InternalRoutes.Dashboard.ExploreStorageUnit.name,
+            },
         ];
-    }, [storageUnitLabel]);
+    }, [storageUnitLabel, unit?.Name]);
 
     // Broadcast available columns for Command Palette sorting
     useEffect(() => {
@@ -692,6 +728,13 @@ export const ExploreStorageUnit: FC = () => {
 
     const handleAddRowSubmit = useCallback(() => {
         if (rows?.Columns == null) return;
+        const missingRequired = constraintsData?.SourceFieldConstraints?.some(constraint =>
+            constraint.Nullable !== true && !constraint.Identity && constraint.DefaultValue == null && !addRowData[constraint.Name]
+        );
+        if (missingRequired) {
+            setAddRowError(t('fillRequiredFields'));
+            return;
+        }
         const values: RecordInput[] = [];
         if (isNoSQL && rows.Columns.length === 1 && rows.Columns[0].Type === "Document") {
             try {
@@ -744,7 +787,7 @@ export const ExploreStorageUnit: FC = () => {
                 toast.error(errorMessage);
             },
         });
-    }, [addRow, addRowData, current, currentTableName, currentUnitRef, handleSubmitRequest, isNoSQL, item, rows?.Columns, schema, t, unit?.Name, unitName]);
+    }, [addRow, addRowData, constraintsData?.SourceFieldConstraints, current, currentTableName, currentUnitRef, handleSubmitRequest, isNoSQL, item, rows?.Columns, schema, t, unit?.Name, unitName]);
 
     const [pendingScratchpadQuery, setPendingScratchpadQuery] = useState<string | null>(null);
 
@@ -774,7 +817,6 @@ export const ExploreStorageUnit: FC = () => {
         setIsScratchpadOpen(false);
     }, []);
 
-    const columnIcons = useMemo(() => getColumnIcons(columns, columnTypes, tTable), [columns, columnTypes, tTable]);
 
     // Foreign key detection using actual column metadata
     const getColumnByName = useCallback((columnName: string) => {
@@ -943,12 +985,13 @@ export const ExploreStorageUnit: FC = () => {
     }
 
     return <InternalPage routes={routes} className="relative" sidebar={<SchemaViewer parentRef={currentParentRef} selectedName={unit.Name} trail={browserTrail} />}>
-        <div className="flex flex-col grow gap-lg h-[calc(100%-100px)]">
-            <div className="flex items-center justify-between">
+        <div className="ce-explore-content flex flex-col grow gap-lg h-[calc(100%-100px)]">
+            <div className="ce-explore-heading flex items-center justify-between">
                 <div className="flex gap-sm items-center">
-                    <h1 className="text-xl font-bold mr-4">{unitName}</h1>
+                    <h1 className="text-xl font-bold">{unitName}</h1>
+                    <span className="ce-explore-count" data-testid="total-count-top">{totalCount} {t('rows')}</span>
                 </div>
-                <div className="text-sm" data-testid="total-count-top"><span className="font-semibold">{t('totalCount')}</span> {totalCount}</div>
+                <div className="ce-explore-heading-actions" ref={setTableActionsTarget} />
             </div>
             <div className="flex w-full relative" data-testid="explore-storage-unit-options">
                 <div className="flex flex-wrap justify-between items-end gap-2 w-full">
@@ -966,7 +1009,7 @@ export const ExploreStorageUnit: FC = () => {
                             <div className="flex flex-col gap-2">
                                 <Label>{t('search')}</Label>
                                 <div className="relative">
-                                    <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                                    <WhoDBChatIcon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                                     <Input
                                         placeholder={t('searchPlaceholder')}
                                         className="w-64 pl-10"
@@ -985,72 +1028,43 @@ export const ExploreStorageUnit: FC = () => {
                                 </div>
                             </div>
                         )}
-                        <div className="flex flex-col gap-2">
-                            <Label>{t('pageSizeLabel')}</Label>
-                            <div className="flex gap-2">
-                                <Select
-                                    value={isCustomPageSize ? "custom" : pageSizeString}
-                                    onValueChange={handlePageSizeChange}
-                                >
-                                    <SelectTrigger className="w-32" data-testid="table-page-size">
-                                        <span>{isCustomPageSize ? t('custom') : `${t('showPrefix')} ${pageSizeString}`}</span>
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {import.meta.env.VITE_E2E_TEST === "true" &&
-                                            <SelectItem value="1" data-value="1">1</SelectItem>
-                                        }
-                                        {import.meta.env.VITE_E2E_TEST === "true" &&
-                                            <SelectItem value="2" data-value="2">2</SelectItem>
-                                        }
-                                        <SelectItem value="10" data-value="10">10</SelectItem>
-                                        <SelectItem value="25" data-value="25">25</SelectItem>
-                                        <SelectItem value="50" data-value="50">50</SelectItem>
-                                        <SelectItem value="100" data-value="100">100</SelectItem>
-                                        <SelectItem value="250" data-value="250">250</SelectItem>
-                                        <SelectItem value="500" data-value="500">500</SelectItem>
-                                        <SelectItem value="1000" data-value="1000">1000</SelectItem>
-                                        <SelectItem value="custom" data-value="custom">Custom</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                {isCustomPageSize && (
-                                    <Input
-                                        type="number"
-                                        min={1}
-                                        className="w-24"
-                                        value={customPageSizeInput}
-                                        onChange={(e) =>{  setCustomPageSizeInput(e.target.value); }}
-                                        onBlur={handleCustomPageSizeApply}
-                                        onKeyDown={(e) => {
-                                            if (e.key === "Enter") {
-                                                handleCustomPageSizeApply();
-                                            }
-                                        }}
-                                        data-testid="table-page-size-custom"
-                                    />
-                                )}
-                            </div>
-                        </div>
-                        {isTabularObject && (
-                            whereConditionMode === 'sheet' ? (
-                                <ExploreStorageUnitWhereConditionSheet 
-                                    defaultWhere={whereCondition} 
-                                    columns={whereColumns}
-                                    operators={validOperators} 
-                                    onChange={handleFilterChange}
-                                    columnTypes={whereColumnTypes ?? []}
-                                />
-                            ) : (
-                                <ExploreStorageUnitWhereCondition 
-                                    defaultWhere={whereCondition} 
-                                    columns={whereColumns}
-                                    operators={validOperators} 
-                                    onChange={handleFilterChange}
-                                    columnTypes={whereColumnTypes ?? []}
-                                />
-                            )
+                        {isTabularObject && <ExploreStorageUnitWhereCondition
+                            defaultWhere={whereCondition}
+                            objectName={unit.Name}
+                            sheetOnly={whereConditionMode === 'sheet'}
+                            columns={whereColumns}
+                            operators={validOperators}
+                            onChange={handleFilterChange}
+                            columnTypes={whereColumnTypes ?? []}
+                        />}
+                    </div>
+                    <div className="ce-explore-run-controls">
+                        <Select value={isCustomPageSize ? "custom" : pageSizeString} onValueChange={handlePageSizeChange}>
+                            <SelectTrigger className="w-32" data-testid="table-page-size">
+                                <span>{isCustomPageSize ? t('custom') : `${pageSizeString} ${t('rows')}`}</span>
+                            </SelectTrigger>
+                            <SelectContent align="end">
+                                {import.meta.env.VITE_E2E_TEST === "true" && <SelectItem value="1" data-value="1">1</SelectItem>}
+                                {import.meta.env.VITE_E2E_TEST === "true" && <SelectItem value="2" data-value="2">2</SelectItem>}
+                                <SelectItem value="10" data-value="10">10</SelectItem>
+                                <SelectItem value="25" data-value="25">25</SelectItem>
+                                <SelectItem value="50" data-value="50">50</SelectItem>
+                                <SelectItem value="100" data-value="100">100</SelectItem>
+                                <SelectItem value="250" data-value="250">250</SelectItem>
+                                <SelectItem value="500" data-value="500">500</SelectItem>
+                                <SelectItem value="1000" data-value="1000">1000</SelectItem>
+                                <SelectItem value="custom" data-value="custom">{t('custom')}</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        {isCustomPageSize && (
+                            <Input type="number" min={1} className="w-24" value={customPageSizeInput}
+                                onChange={(e) => { setCustomPageSizeInput(e.target.value); }}
+                                onBlur={handleCustomPageSizeApply}
+                                onKeyDown={(e) => { if (e.key === "Enter") handleCustomPageSizeApply(); }}
+                                data-testid="table-page-size-custom" />
                         )}
-                        <Button className="ml-6 mt-[22px]" onClick={handleQuery} data-testid="submit-button">
-                            <CheckCircleIcon className="w-4 h-4" /> {t('query')}
+                        <Button onClick={handleQuery} data-testid="submit-button">
+                            <WhoDBChatIcon name="play" /> {t('run')}
                         </Button>
                     </div>
                     <Button onClick={handleOpenScratchpad} data-testid="embedded-scratchpad-button" variant="secondary"
@@ -1063,7 +1077,7 @@ export const ExploreStorageUnit: FC = () => {
                 <Sheet open={showAdd} onOpenChange={setShowAdd}>
                     <SheetContent
                         side="right"
-                        className="flex flex-col p-8"
+                        className="ce-add-row-sheet flex flex-col"
                         onKeyDown={(e) => {
                             if (e.key === 'Escape') {
                                 e.preventDefault();
@@ -1072,23 +1086,23 @@ export const ExploreStorageUnit: FC = () => {
                             }
                         }}
                         footer={
-                            <SheetFooter className="flex flex-row gap-sm px-0">
+                            <SheetFooter className="ce-add-row-footer">
+                                <span className="ce-add-row-required-count">{t('requiredFields', {count: constraintsData?.SourceFieldConstraints?.filter(c => c.Nullable !== true && !c.Identity && c.DefaultValue == null).length ?? 0})}</span>
                                 <Button
-                                    className="flex-1"
                                     variant="secondary"
                                     onClick={() =>{  setShowAdd(false); }}
                                     data-testid="cancel-add-row"
                                 >
                                     {t('cancel')}
                                 </Button>
-                                <Button className="flex-1" onClick={handleAddRowSubmit} data-testid="submit-add-row-button" disabled={adding}>
-                                    <CheckCircleIcon className="w-4 h-4" /> {t('submit')}
+                                <Button onClick={handleAddRowSubmit} data-testid="submit-add-row-button" disabled={adding}>
+                                    {adding && <Spinner className="size-4" aria-hidden="true" />} {t('addRowButton')}
                                 </Button>
                             </SheetFooter>
                         }
                     >
-                        <SheetTitle className="flex items-center gap-2"><TableCellsIcon className="w-5 h-5" /> {t('addRowTitle')}</SheetTitle>
-                        <div className="flex-1 overflow-y-auto pr-2">
+                        <div className="ce-add-row-header"><span>{unitName}</span><SheetTitle>{t('addRowTitle')}</SheetTitle></div>
+                        <div className="ce-add-row-body flex-1 overflow-y-auto">
                             {/* NoSQL Document input - show JSON editor */}
                             {isNoSQL && rows?.Columns?.length === 1 && rows?.Columns?.[0]?.Type === "Document" ? (
                                 <div className="flex flex-col gap-4" data-testid="add-row-field-document">
@@ -1105,37 +1119,47 @@ export const ExploreStorageUnit: FC = () => {
                             ) : (
                                 /* Regular column-based input for SQL databases */
                                 <div className="flex flex-col gap-4">
-                                    {rows?.Columns?.map((col, index) => {
+                                    {rows?.Columns?.map((col) => {
                                         const constraint = constraintsData?.SourceFieldConstraints?.find(c => c.Name === col.Name);
                                         const isRequired = constraint ? (constraint.Nullable !== true && !constraint.Identity && constraint.DefaultValue == null) : false;
                                         const isIdentity = constraint?.Identity === true;
                                         const hasDefault = constraint?.DefaultValue != null;
                                         return (
-                                            <div key={col.Name} className="flex flex-col gap-2"
+                                            <div key={col.Name} className="ce-add-row-field flex flex-col gap-2"
                                                  data-testid={`add-row-field-${col.Name}`}>
-                                                <Tip>
-                                                    <div className="flex items-center gap-xs">
-                                                        {columnIcons[index]}
-                                                        <Label className="w-fit">
+                                                <div className="ce-add-row-field-heading">
+                                                    <div className="ce-add-row-field-name">
+                                                        <Label className="w-fit" htmlFor={`add-row-${col.Name}`}>
                                                             {col.Name}
                                                         </Label>
                                                         {isRequired && <Badge variant="secondary" className="text-[10px] px-1 py-0">{t('required')}</Badge>}
                                                         {isIdentity && <Badge variant="outline" className="text-[10px] px-1 py-0">{t('autoGenerated')}</Badge>}
                                                         {hasDefault && !isIdentity && <Badge variant="outline" className="text-[10px] px-1 py-0">{t('hasDefault')}</Badge>}
                                                     </div>
-                                                    <p className="text-xs">{col.Type?.toLowerCase()}</p>
-                                                </Tip>
-                                                <Input
+                                                    <span>{col.IsForeignKey && col.ReferencedTable && col.ReferencedColumn ? `→ ${col.ReferencedTable}.${col.ReferencedColumn}` : col.Type?.toLowerCase()}</span>
+                                                </div>
+                                                {col.IsForeignKey && col.ReferencedTable && col.ReferencedColumn && current ? (
+                                                    <ForeignKeyAddRowField
+                                                        reference={buildSourceObjectRef(item, current, schema, col.ReferencedTable)}
+                                                        column={col.ReferencedColumn}
+                                                        fieldName={col.Name}
+                                                        value={addRowData[col.Name] ?? ""}
+                                                        onChange={value => { handleAddRowFieldChange(col.Name, value); }}
+                                                    />
+                                                ) : <Input
+                                                    id={`add-row-${col.Name}`}
                                                     value={addRowData[col.Name] ?? ""}
                                                     onChange={e =>{  handleAddRowFieldChange(col.Name, e.target.value); }}
-                                                    placeholder={hasDefault ? `Default: ${constraint?.DefaultValue}` : isIdentity ? t('autoGeneratedPlaceholder') : `Enter value for ${col.Name}`}
+                                                    placeholder={hasDefault ? t('defaultValuePlaceholder', {value: constraint?.DefaultValue ?? ''}) : isIdentity ? t('autoGeneratedPlaceholder') : t('enterValueFor', {column: col.Name})}
+                                                    disabled={isIdentity}
                                                     {...getInputPropsForColumnType(col.Type || '')}
-                                                />
+                                                />}
                                             </div>
                                         );
                                     })}
                                 </div>
                             )}
+                            {rows?.Columns?.some(col => col.IsForeignKey && col.ReferencedTable) && <p className="ce-add-row-fk-note">{t('foreignKeyPickerHelp')}</p>}
                             {addRowError && (
                                 <ErrorState error={addRowError} />
                             )}
@@ -1146,19 +1170,32 @@ export const ExploreStorageUnit: FC = () => {
             </div>
             <div className="grow" ref={tableContainerRef}>
                 {loading ? (
-                    <div className="flex justify-center items-center h-full">
-                        <Loading />
+                    <div className="ce-explore-loading-grid" data-testid="explore-rows-loading">
+                        <div className="ce-explore-loading-row ce-explore-loading-header">
+                            <span className="ce-explore-loading-check" />
+                            {Array.from({length: 5}, (_, index) => <span key={index} className="ce-explore-loading-cell"><span /></span>)}
+                        </div>
+                        {Array.from({length: 6}, (_, rowIndex) => <div key={rowIndex} className="ce-explore-loading-row">
+                            <span className="ce-explore-loading-check" />
+                            {Array.from({length: 5}, (_, cellIndex) => <span key={cellIndex} className="ce-explore-loading-cell"><span /></span>)}
+                        </div>)}
+                        <div className="ce-explore-loading-badge">
+                            <Loading size="sm" className="size-4" />
+                            <span>{t('loadingRows')}</span>
+                        </div>
                     </div>
                 ) : rows != null ? (
                     <StorageUnitTable
                         columns={columns}
                         rows={rows.Rows}
                         onRowUpdate={handleRowUpdate}
+                        cellEditing
                         columnTypes={columnTypes}
                         columnIsPrimary={columnIsPrimary}
                         columnIsForeignKey={columnIsForeignKey}
                         schema={schema}
                         storageUnit={unitName}
+                        sourceLabel={current?.Database}
                         objectRef={currentUnitRef}
                         onRefresh={handleSubmitRequest}
                         onColumnSort={handleColumnSort}
@@ -1171,6 +1208,7 @@ export const ExploreStorageUnit: FC = () => {
                         currentPage={currentPage}
                         onPageChange={handlePageChange}
                         showPagination={true}
+                        actionsTarget={tableActionsTarget}
                         // Foreign key functionality
                         isValidForeignKey={isValidForeignKey}
                         onEntitySearch={handleEntitySearch}
@@ -1187,7 +1225,7 @@ export const ExploreStorageUnit: FC = () => {
                     >
                         {allowsInsertData && <div className="flex gap-2">
                             <Button onClick={handleOpenAddSheet} disabled={adding} data-testid="add-row-button">
-                                <PlusCircleIcon className="w-4 h-4" /> {t('addRowButton')}
+                                <WhoDBChatIcon name="plus" /> {t('addRowButton')}
                             </Button>
                         </div>}
                     </StorageUnitTable>
@@ -1207,7 +1245,7 @@ export const ExploreStorageUnit: FC = () => {
                         <h2 className="text-lg font-semibold">{t('scratchpad')}</h2>
                         <div className="flex gap-sm items-center">
                             <Button onClick={() =>{  handleScratchpad(); }} data-testid="run-submit-button">
-                                <PlayIcon className="w-4 h-4" />
+                                <WhoDBChatIcon name="play" />
                                 {t('run')}
                             </Button>
                         </div>
@@ -1278,7 +1316,7 @@ export const ExploreStorageUnit: FC = () => {
                 </SheetFooter>
             }>
                 <div className="text-lg font-semibold mb-4 flex items-center gap-2">
-                    <MagnifyingGlassIcon className="w-5 h-5" />
+                    <WhoDBChatIcon name="search" className="w-5 h-5" />
                     {t('searchAround')}
                 </div>
                 {entitySearchData && (

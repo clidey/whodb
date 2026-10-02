@@ -1,8 +1,22 @@
 en_US:
+  tourStep: "Tour · {current} of {total}"
   next: Next
   previous: Previous
+  back: Back
   skip: Skip
   finish: Finish
+  welcomeTitle: Welcome to WhoDB
+  welcomeDescription: Take a quick tour of your sample database and the main tools.
+  chatTitle: Ask in plain English
+  chatDescription: 'Type "top products this month". WhoDB writes the SQL and shows it before anything runs.'
+  graphTitle: Explore your schema
+  graphDescription: See your tables and their relationships in the Graph view.
+  tablesTitle: Browse tables
+  tablesDescription: Open a table card to inspect its structure or data.
+  scratchpadTitle: Write SQL in Scratchpad
+  scratchpadDescription: Write and run SQL with autocomplete.
+  completeTitle: You are all set
+  completeDescription: Explore the sample database or connect your own source.
 
 ar_AE:
   next: "التالي"

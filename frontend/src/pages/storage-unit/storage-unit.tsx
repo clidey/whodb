@@ -63,7 +63,7 @@ import {useLocation, useNavigate, useSearchParams} from "react-router-dom";
 import {Handle, Position} from "reactflow";
 import {Card, ExpandableCard} from "../../components/card";
 import type {IGraphCardProps} from "../../components/graph/graph";
-import {Loading, LoadingPage} from "../../components/loading";
+import {Loading} from "../../components/loading";
 import {InternalPage} from "../../components/page";
 import {InternalRoutes} from "../../config/routes";
 import {useSourceContract} from "../../hooks/useSourceContract";
@@ -117,8 +117,10 @@ function sourceObjectRefKey(ref: SourceObjectRefLike): string {
 const StorageUnitCard: FC<{
     unit: SourceBrowserObject;
     trail: SourceBrowserObject[];
+    objectLabel: string;
+    columnCount?: number;
     onColumnsLoaded: (unitName: string, columns: SourceColumn[]) => void;
-}> = ({ unit, trail, onColumnsLoaded }) => {
+}> = ({ unit, trail, objectLabel, columnCount, onColumnsLoaded }) => {
     const [expanded, setExpanded] = useState(false);
     const navigate = useNavigate();
     const { t } = useTranslation('pages/storage-unit');
@@ -190,10 +192,10 @@ const StorageUnitCard: FC<{
         return [ unit.Attributes.slice(0,4), unit.Attributes.slice(4) ];
     }, [unit.Attributes]);
 
-    return (<ExpandableCard key={unit.Name} isExpanded={expanded} setExpanded={handleSetExpanded} icon={<TableCellsIcon className="w-4 h-4" />} className={cn({
+    return (<ExpandableCard key={unit.Name} isExpanded={expanded} setExpanded={handleSetExpanded} icon={<TableCellsIcon className="w-4 h-4" />} collapsedTag={<span className="ce-table-card-type">{objectLabel}</span>} className={cn('ce-table-card', {
         "shadow-2xl exploring-storage-unit": expanded,
     })} data-testid="storage-unit-card" data-table-name={unit.Name}>
-        <div className="flex flex-col grow mt-2 cursor-pointer" data-testid="storage-unit-card" data-table-name={unit.Name}>
+        <div className="flex flex-col grow cursor-pointer" data-testid="storage-unit-card" data-table-name={unit.Name}>
             <div className="flex flex-col grow mb-2 w-full overflow-x-hidden">
                 <Tip className="w-fit">
                     <h1
@@ -205,11 +207,7 @@ const StorageUnitCard: FC<{
                     </h1>
                     <p className={cn("text-xs", ph.mask)}>{unit.Name}</p>
                 </Tip>
-                {
-                    introAttributes.slice(0,2).map(attribute => (
-                        <p key={attribute.Key} className="text-xs">{attribute.Key}: {formatAttributeValue(attribute.Key, attribute.Value)}</p>
-                    ))
-                }
+                <p className="ce-table-card-meta">{columnCount != null ? t('columnCount', { count: columnCount }) : introAttributes.slice(0, 2).map(attribute => formatAttributeValue(attribute.Key, attribute.Value)).join(' · ')}</p>
             </div>
             <div className="flex flex-row justify-end gap-xs" onClick={(e) => { e.stopPropagation(); }}>
                 <Button onClick={handleExpand} data-testid="explore-button" variant="secondary">
@@ -388,7 +386,7 @@ export const StorageUnitPage: FC = () => {
     }, [currentProfileId, currentDatabase, parentRefKey]);
 
     useEffect(() => {
-        if (!create || referenceStorageUnits.length === 0) {
+        if ((!create && view !== 'card') || referenceStorageUnits.length === 0) {
             return;
         }
         const missingUnits = referenceStorageUnits.filter(unit => storageUnitColumnsByName[unit.Name] == null);
@@ -421,7 +419,7 @@ export const StorageUnitPage: FC = () => {
                 return next;
             });
         });
-    }, [create, fetchColumnsBatchForList, referenceStorageUnits, storageUnitColumnsByName]);
+    }, [create, fetchColumnsBatchForList, referenceStorageUnits, storageUnitColumnsByName, view]);
 
     // Lazy-load columns for list view expanded detail
     useEffect(() => {
@@ -547,13 +545,18 @@ export const StorageUnitPage: FC = () => {
 
     if (loading) {
         return <InternalPage routes={routes}>
-            <LoadingPage />
+            <div className="ce-tables-heading"><div><h1>{t('title')}</h1><p>{t('loadingTables')}</p></div></div>
+            <div className="ce-table-grid" role="status" aria-label={t('loadingTables')} data-testid="storage-unit-skeletons">
+                {Array.from({ length: 5 }, (_, index) => <div className="ce-table-skeleton" key={index}><span/><span/><span/><span/></div>)}
+            </div>
         </InternalPage>
     }
 
     return <InternalPage routes={routes}>
-        <div className="flex w-full h-fit my-2 flex-wrap gap-lg justify-between">
-            <div className="flex justify-between items-center">
+        <div className="ce-tables-toolbar">
+        <div className="ce-tables-heading"><div><h1>{t('title')}</h1><p>{t('objectCount', { count: storageUnits.length, objects: storageUnitLabel.toLowerCase() })}</p></div></div>
+        <div className="ce-tables-controls">
+            <div className="ce-tables-filter">
                 {previousBrowserState != null && (
                     <Button
                         variant="secondary"
@@ -565,13 +568,7 @@ export const StorageUnitPage: FC = () => {
                 )}
                 <SearchInput value={filterValue} onChange={(e) => { setFilterValue(e.target.value); }} placeholder={t('searchPlaceholder')} />
             </div>
-            <div className="flex items-center gap-2">
-                {
-                    supportsScratchpad &&
-                    <Button onClick={() => { void navigate(InternalRoutes.RawExecute.path); }} data-testid="scratchpad-button" variant="secondary">
-                        <CommandLineIcon className="w-4 h-4" /> {t('scratchpad')}
-                    </Button>
-                }
+            <div className="ce-tables-actions">
                 <Tabs value={view} onValueChange={value => {
                     trackOptionChanged('storage_unit_view', value, {
                         view_mode: value,
@@ -590,13 +587,20 @@ export const StorageUnitPage: FC = () => {
                         </Tip>
                     </TabsList>
                 </Tabs>
+                {supportsScratchpad &&
+                    <Button onClick={() => { void navigate(InternalRoutes.RawExecute.path); }} data-testid="scratchpad-button" variant="secondary">
+                        <CommandLineIcon className="w-4 h-4" /> {t('scratchpad')}
+                    </Button>
+                }
+                {canCreateObjects && <div data-testid="create-storage-unit-card"><Button onClick={() => { setCreate(true); }}><PlusCircleIcon className="size-4" />{t('newObject', { object: singularStorageUnitLabel.toLowerCase() })}<span className="sr-only" aria-hidden="true">{t('create')}</span></Button></div>}
             </div>
         </div>
-        <div className={cn("flex flex-wrap gap-4", {
+        </div>
+        <div className={cn("ce-table-grid", {
             "hidden": view !== "card",
         })} data-testid="storage-unit-card-list">
-            {canCreateObjects && <ExpandableCard className="overflow-visible min-w-[200px] max-w-[700px] h-full" icon={<PlusCircleIcon className="w-4 h-4" />} isExpanded={create} setExpanded={setCreate} tag={<Badge variant="destructive">{error}</Badge>}>
-                <div className="flex flex-col grow h-full justify-between mt-2 gap-2" data-testid="create-storage-unit-card">
+            {canCreateObjects && <div className="hidden"><ExpandableCard className="overflow-visible min-w-[200px] max-w-[700px] h-full" icon={<PlusCircleIcon className="w-4 h-4" />} isExpanded={create} setExpanded={setCreate} tag={<Badge variant="destructive">{error}</Badge>}>
+                <div className="flex flex-col grow h-full justify-between mt-2 gap-2">
                     <h1 className="text-lg"><span className="prefix-create-storage-unit">{t('createTitle', { storageUnit: singularStorageUnitLabel })}</span></h1>
                     <Button className="self-end" onClick={e => { e.stopPropagation(); handleCreate(); }} variant="secondary">
                         <PlusCircleIcon  className='w-4 h-4' /> {t('create')}
@@ -613,10 +617,10 @@ export const StorageUnitPage: FC = () => {
                     onErrorChange={setError}
                     onClose={() => { setCreate(false); }}
                 />
-            </ExpandableCard>}
+            </ExpandableCard></div>}
             {
                 storageUnits.length > 0 && filterStorageUnits.map(unit => (
-                    <StorageUnitCard key={`${unit.Name}-${unit.Kind}`} unit={unit} trail={trail} onColumnsLoaded={handleColumnsLoaded} />
+                    <StorageUnitCard key={`${unit.Name}-${unit.Kind}`} unit={unit} trail={trail} objectLabel={singularStorageUnitLabel} columnCount={storageUnitColumnsByName[unit.Name]?.length} onColumnsLoaded={handleColumnsLoaded} />
                 ))
             }
         </div>

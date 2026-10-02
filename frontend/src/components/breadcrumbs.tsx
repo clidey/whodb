@@ -25,7 +25,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@clidey/ux";
-import {ChevronRightIcon, HomeIcon} from "./heroicons";
+import {WhoDBChatIcon} from "./whodb-chat-icon";
 
 export type IBreadcrumbRoute = Omit<IInternalRoute, "component">;
 
@@ -45,11 +45,11 @@ export const Breadcrumb: FC<IBreadcrumbProps> = ({ routes, active }) => {
           const isLast = i === routes.length - 1;
           return (
             <BreadcrumbItem key={route.name}>
-              {i > 0 && <BreadcrumbSeparator><ChevronRightIcon className="w-4 h-4 mr-1"/></BreadcrumbSeparator>}
+              {i > 0 && <BreadcrumbSeparator><WhoDBChatIcon name="chevron-right" className="w-4 h-4 mr-1" /></BreadcrumbSeparator>}
               {isLast || isActive ? (
                   <BreadcrumbPage className="flex items-center gap-xs">
                   {i === 0 && (
-                      <HomeIcon className="w-4 h-4" onClick={() => navigate(InternalRoutes.Dashboard.StorageUnit.path)} />
+                      <WhoDBChatIcon name="home" onClick={() => { void navigate(InternalRoutes.Dashboard.StorageUnit.path); }} />
                   )}
                   {route.name}
                 </BreadcrumbPage>
@@ -61,7 +61,7 @@ export const Breadcrumb: FC<IBreadcrumbProps> = ({ routes, active }) => {
                 >
                   <div className="flex items-center gap-xs" onClick={() => { void navigate(InternalRoutes.Dashboard.StorageUnit.path); }}>
                     {i === 0 && (
-                        <HomeIcon className="w-4 h-4"/>
+                        <WhoDBChatIcon name="home" />
                     )}
                     {route.name}
                   </div>

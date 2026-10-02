@@ -17,8 +17,8 @@
 import {useTheme} from "@clidey/ux";
 import {json} from "@codemirror/lang-json";
 import {markdown} from "@codemirror/lang-markdown";
-import {sql} from "@codemirror/lang-sql";
-import {EditorState, RangeSet} from "@codemirror/state";
+import {sql, type SQLNamespace} from "@codemirror/lang-sql";
+import {Compartment, EditorState, RangeSet} from "@codemirror/state";
 import {oneDark} from "@codemirror/theme-one-dark";
 import {EditorView, gutter, GutterMarker, lineNumbers} from "@codemirror/view";
 import {EyeIcon, EyeSlashIcon} from "./heroicons";
@@ -35,6 +35,17 @@ import { useTranslation } from "@/hooks/use-translation";
 // Extension autocomplete — set via registerEditorExtensions()
 let createSQLAutocomplete: ((options: { apolloClient: any; defaultSchema?: string }) => any[]) | undefined;
 const registeredLanguages: Record<string, () => any> = {};
+
+const sqlLanguage = (schema: SQLNamespace | undefined, keywordDetail: string) => sql({
+  schema,
+  upperCaseKeywords: true,
+  keywordCompletion: (label, type) => ({
+    label,
+    type,
+    detail: type === 'keyword' ? keywordDetail : undefined,
+    boost: -1,
+  }),
+});
 
 export const registerEditorExtensions = (fns: {
     createSQLAutocomplete?: (options: { apolloClient: any; defaultSchema?: string }) => any[];
@@ -116,6 +127,7 @@ type ICodeEditorProps = {
   onRun?: (lineText?: string) => void;
   defaultShowPreview?: boolean;
   disabled?: boolean;
+  sqlSchema?: SQLNamespace;
 };
 
 class PlayButtonMarker extends GutterMarker {
@@ -179,11 +191,13 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
   onRun,
   defaultShowPreview = false,
   disabled,
+  sqlSchema,
 }) => {
   const { t } = useTranslation('components/editor');
   const [showPreview, setShowPreview] = useState(defaultShowPreview);
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
+  const languageCompartment = useMemo(() => new Compartment(), []);
   const onRunReference = useRef<Function | undefined>(undefined);
   const { theme } = useTheme();
   const darkModeEnabled = theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
@@ -191,6 +205,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
   const currentSchema = useAppSelector(state => state.database.schema);
   const currentDatabase = useAppSelector(state => state.auth.current?.Database);
   const runQueryLabel = t('runQuery');
+  const keywordDetail = t('completionKeyword');
 
   // For databases like MySQL where database and schema are the same,
   // use the connection database as fallback if no schema is selected
@@ -236,7 +251,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
         case "markdown":
           return markdown();
         case "sql":
-          return sql();
+          return sqlLanguage(sqlSchema, keywordDetail);
         default:
           if (language && registeredLanguages[language]) {
             return registeredLanguages[language]();
@@ -318,7 +333,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
             basicSetup,
             EditorState.readOnly.of(!!disabled),
             EditorView.editable.of(!disabled),
-            languageExtension ?? [],
+            languageCompartment.of(languageExtension ?? []),
             // Add autocomplete for SQL in EE mode, but allow disabling it during E2E tests to prevent flakiness.
             (language === "sql" && createSQLAutocomplete && !(window as any).__E2E_DISABLE_AUTOCOMPLETE) ? createSQLAutocomplete({apolloClient, defaultSchema}) : [],
             darkModeEnabled ? [oneDark, EditorView.theme({
@@ -376,7 +391,15 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
       view.destroy();
       viewRef.current = null;
     };
-  }, [language, apolloClient, darkModeEnabled, defaultSchema, disabled, runQueryLabel]);
+  }, [language, apolloClient, darkModeEnabled, defaultSchema, disabled, runQueryLabel, keywordDetail, languageCompartment]);
+
+  useEffect(() => {
+    if (language === 'sql' && viewRef.current) {
+      viewRef.current.dispatch({
+        effects: languageCompartment.reconfigure(sqlLanguage(sqlSchema, keywordDetail)),
+      });
+    }
+  }, [language, languageCompartment, sqlSchema, keywordDetail]);
 
   const handlePreviewToggle = useCallback(() => {
     setShowPreview((prev) => !prev);

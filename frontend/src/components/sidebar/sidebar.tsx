@@ -84,11 +84,10 @@ import {
     CloudIcon,
     CogIcon,
     CommandLineIcon,
+    EnvelopeIcon,
     InformationCircleIcon,
     PlusCircleIcon,
-    QuestionMarkCircleIcon,
     RectangleGroupIcon,
-    SparklesIcon,
     TableCellsIcon,
     XMarkIcon
 } from "../heroicons";
@@ -96,6 +95,7 @@ import {PlatformExplainerDialog} from "./platform-explainer-dialog";
 import {Icons} from "../icons";
 import {Loading} from "../loading";
 import {DatabaseIconWithBadge} from "../database-icon-with-badge";
+import {WhoDBChatIcon} from "../whodb-chat-icon";
 import {useProfileSwitch} from "@/hooks/use-profile-switch";
 import {buildSourceSchemaQuery} from "@/utils/source-refs";
 
@@ -158,7 +158,7 @@ export const NavItem: FC<{
         return (
             <SidebarMenuItem>
                 <SidebarMenuButton tooltip={tooltip} className="opacity-35 cursor-not-allowed pointer-events-none">
-                    <span className="text-neutral-600">{icon}</span>
+                    <span className="flex shrink-0 items-center justify-center text-neutral-600">{icon}</span>
                     {open && <span className="text-neutral-600 text-sm">{label}</span>}
                 </SidebarMenuButton>
             </SidebarMenuItem>
@@ -168,32 +168,29 @@ export const NavItem: FC<{
     const inner = (
         <>
             <span className={cn(
-                "flex-shrink-0",
-                isActive ? "text-primary" : "text-muted-foreground"
+                "flex shrink-0 items-center justify-center",
+                isActive ? "text-primary" : "text-sidebar-foreground"
             )}>{icon}</span>
             {open && <span className="text-sm">{label}</span>}
-            {open && isActive && (
-                <span className="ml-auto w-1 h-1 rounded-full bg-primary" />
-            )}
         </>
     );
 
     const className = cn(
-        "flex items-center gap-2 transition-all duration-150",
+        "flex w-full items-center gap-2 font-medium transition-all duration-150",
         isActive
-            ? "text-primary font-medium"
-            : "text-neutral-500 hover:text-neutral-200"
+            ? "text-primary"
+            : "text-sidebar-foreground/90 hover:text-sidebar-accent-foreground"
     );
 
     return (
         <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip={tooltip}>
+            <SidebarMenuButton asChild isActive={isActive} tooltip={tooltip}>
                 {onClick != null ? (
-                    <button type="button" onClick={onClick} className={cn(className, "w-full cursor-pointer")} data-testid={dataTestId}>
+                    <button type="button" onClick={onClick} className={cn(className, "w-full cursor-pointer")} style={isActive ? { color: 'var(--primary)' } : undefined} data-testid={dataTestId}>
                         {inner}
                     </button>
                 ) : (
-                    <Link to={path ?? "#"} className={className} data-testid={dataTestId}>
+                    <Link to={path ?? "#"} className={className} style={isActive ? { color: 'var(--primary)' } : undefined} data-testid={dataTestId} aria-current={isActive ? "page" : undefined}>
                         {inner}
                     </Link>
                 )}
@@ -370,33 +367,33 @@ export const Sidebar: FC = () => {
         const routes: { title: string; icon: React.ReactNode; path: string }[] = [
             {
                 title: storageUnitLabel,
-                icon: <TableCellsIcon className="w-4 h-4" />,
+                icon: newUIEnabled ? <TableCellsIcon className="w-4 h-4" /> : <WhoDBChatIcon name="table" className="size-4" />,
                 path: InternalRoutes.Dashboard.StorageUnit.path,
             },
         ];
         if (supportsChat) {
             routes.unshift({
                 title: t('chat'),
-                icon: <SparklesIcon className="w-4 h-4" />,
+                icon: <WhoDBChatIcon name="chat" className="size-4" />,
                 path: InternalRoutes.Chat.path,
             });
         }
         if (supportsGraph) {
             routes.push({
                 title: t('graph'),
-                icon: <RectangleGroupIcon className="w-4 h-4" />,
+                icon: newUIEnabled ? <RectangleGroupIcon className="w-4 h-4" /> : <WhoDBChatIcon name="relation" className="size-4" />,
                 path: InternalRoutes.Graph.path,
             });
         }
         if (supportsScratchpad) {
             routes.push({
                 title: t('scratchpad'),
-                icon: <CommandLineIcon className="w-4 h-4" />,
+                icon: newUIEnabled ? <CommandLineIcon className="w-4 h-4" /> : <WhoDBChatIcon name="code" className="size-4" />,
                 path: InternalRoutes.RawExecute.path,
             });
         }
         return routes;
-    }, [current, storageUnitLabel, supportsChat, supportsGraph, supportsScratchpad, t]);
+    }, [current, newUIEnabled, storageUnitLabel, supportsChat, supportsGraph, supportsScratchpad, t]);
 
     // Logout single profile — show dialog first, remove after switch
     const handleLogoutProfile = useCallback(() => {
@@ -572,15 +569,27 @@ export const Sidebar: FC = () => {
             <SidebarComponent
                 variant="sidebar"
                 collapsible="icon"
-                className="z-[50]"
+                className={cn('z-[50]', !newUIEnabled && (pathname === InternalRoutes.Dashboard.StorageUnit.path || pathname === InternalRoutes.RawExecute.path || pathname === InternalRoutes.Chat.path || pathname === InternalRoutes.Settings?.path || pathname === InternalRoutes.ContactUs?.path) && 'ce-tables-sidebar', !newUIEnabled && pathname.includes(InternalRoutes.Dashboard.ExploreStorageUnit.path) && 'ce-explore-sidebar')}
             >
                 <SidebarHeader className={cn({ "ml-4": open })}>
                     <div className="flex items-center gap-sm justify-between">
                         <div className={cn("flex items-center gap-sm mt-2", { "hidden": !open })}>
                             {extensions.Logo ?? <img src={logoImage} alt="clidey logo" className={cn("w-auto", newUIEnabled ? "h-6" : "h-8")} />}
                             {open && <span className={cn("font-bold", newUIEnabled ? "text-lg" : "text-3xl")} data-testid="app-name">{getAppName()}</span>}
+                            {open && !newUIEnabled && <span className="ce-sidebar-edition">{t('communityEditionShort')}</span>}
                         </div>
-                        <SidebarTrigger className="px-0" />
+                        {!open && pathname.includes(InternalRoutes.Dashboard.ExploreStorageUnit.path) && (
+                            <button type="button" className="ce-explore-rail-brand" onClick={toggleSidebar} aria-label={t('expandNavigation')}>
+                                <img src={logoImage} alt="" />
+                            </button>
+                        )}
+                        {!newUIEnabled && !pathname.includes(InternalRoutes.Dashboard.ExploreStorageUnit.path) && open ? (
+                            <button type="button" className="ce-sidebar-toggle" onClick={toggleSidebar} aria-label={t('collapseNavigation')}>
+                                <WhoDBChatIcon name="sidebar" />
+                            </button>
+                        ) : (
+                            <SidebarTrigger className={cn('px-0', !open && pathname.includes(InternalRoutes.Dashboard.ExploreStorageUnit.path) && 'hidden')} />
+                        )}
                     </div>
                 </SidebarHeader>
                 <SidebarContent className={cn("mt-4 mb-4 overflow-y-auto", { "mx-4": open })}>
@@ -713,7 +722,7 @@ export const Sidebar: FC = () => {
                                     {backupNudge}
                                     {platformFooterItem}
                                     {featureFlags.contactUsPage && InternalRoutes.ContactUs && (
-                                        <NavItem icon={<QuestionMarkCircleIcon className="w-4 h-4" />} label={t('contactUs')} path={InternalRoutes.ContactUs.path} pathname={pathname} open={open} tooltip={t('contactUs')} />
+                                    <NavItem icon={<EnvelopeIcon className="w-4 h-4" />} label={t('contact')} path={InternalRoutes.ContactUs.path} pathname={pathname} open={open} tooltip={t('contact')} />
                                     )}
                                     {featureFlags.settingsPage && InternalRoutes.Settings && (
                                         <NavItem icon={<CogIcon className="w-4 h-4" />} label={t('settings')} path={InternalRoutes.Settings.path} pathname={pathname} open={open} tooltip={t('settings')} />
@@ -725,10 +734,10 @@ export const Sidebar: FC = () => {
 
                             {!EESidebarNav && !isEmbedded && (
                                 <SidebarMenuItem className="flex justify-between items-center w-full">
-                                    <SidebarMenuButton asChild tooltip={t('logOutProfile')}>
+                                    <SidebarMenuButton asChild tooltip={newUIEnabled ? t('logOutProfile') : t('disconnect')}>
                                         <div className="flex items-center gap-sm text-nowrap w-fit cursor-pointer" onClick={handleLogoutProfile}>
                                             <ArrowLeftStartOnRectangleIcon className="w-4 h-4" />
-                                            {open && <span>{t('logOutProfile')}</span>}
+                                            {open && <span>{newUIEnabled ? t('logOutProfile') : t('disconnect')}</span>}
                                         </div>
                                     </SidebarMenuButton>
                                     <SidebarMenuButton asChild>
@@ -761,8 +770,21 @@ export const Sidebar: FC = () => {
                     ) : (
                         <SidebarGroup className="grow">
                             <div className="flex flex-col gap-lg">
-                                <div className="flex flex-col gap-sm w-full">
+                                <div className="flex flex-col gap-sm w-full ce-sidebar-profile-wrap">
                                     <h2 className={cn("text-sm", { "hidden": !open })}>{t('profile')}</h2>
+                                    {open && !pathname.includes(InternalRoutes.Dashboard.ExploreStorageUnit.path) && current && (
+                                        <div className="ce-sidebar-profile-display" aria-hidden="true">
+                                            <span className="ce-sidebar-profile-icon"><WhoDBChatIcon name="source" /></span>
+                                            <span className="ce-sidebar-profile-copy">
+                                                <strong>{current.Database === 'whodb-sample' ? t('sampleSQLiteName') : (current.DisplayName ?? getProfileLabel(current, findSourceTypeItem(sourceTypeItems, current.Type)))}</strong>
+                                                <small>{current.Database === 'whodb-sample' ? t('sampleSQLiteFilename') : (current.Database ? current.Database : current.Hostname)}</small>
+                                            </span>
+                                            <span className="ce-sidebar-profile-chevron">
+                                                <WhoDBChatIcon name="chevron-up" />
+                                                <WhoDBChatIcon name="chevron-down" />
+                                            </span>
+                                        </div>
+                                    )}
                                     <SearchSelect
                                         label={t('profile')}
                                         options={profileOptions}
@@ -783,8 +805,8 @@ export const Sidebar: FC = () => {
                                                 </span>
                                             </CommandItem>
                                         ) : undefined}
-                                        side="left" align="start"
-                                        buttonClassName={ph.mask}
+                                        side={open ? "bottom" : "right"} align="start"
+                                        buttonClassName={cn(ph.mask, !pathname.includes(InternalRoutes.Dashboard.ExploreStorageUnit.path) && 'ce-sidebar-profile-button')}
                                         buttonProps={{
                                             "data-testid": "sidebar-profile",
                                             "data-collapsed": !open,
@@ -837,22 +859,25 @@ export const Sidebar: FC = () => {
                             </div>
 
                             <SidebarMenu className="grow mt-8 gap-4">
-                                {sidebarRoutes.map(route => (
+                                {sidebarRoutes.map((route, index) => (
                                     <SidebarMenuItem key={route.title}>
-                                        <SidebarMenuButton asChild tooltip={route.title}>
+                                        <SidebarMenuButton asChild tooltip={open ? undefined : route.title} isActive={pathname === route.path || (pathname.includes(InternalRoutes.Dashboard.ExploreStorageUnit.path) && route.path === InternalRoutes.Dashboard.StorageUnit.path)}>
                                             <Link
                                                 to={route.path}
-                                                className={cn("flex items-center gap-2", {
+                                                className={cn("flex w-full items-center gap-2", {
                                                     "font-bold": pathname === route.path,
                                                 })}
+                                                aria-current={pathname === route.path || (pathname.includes(InternalRoutes.Dashboard.ExploreStorageUnit.path) && route.path === InternalRoutes.Dashboard.StorageUnit.path) ? 'page' : undefined}
                                             >
                                                 {route.icon}
                                                 {open && <span>{route.title}</span>}
+                                                {open && pathname === InternalRoutes.Dashboard.StorageUnit.path && <span className="ce-sidebar-shortcut" aria-hidden="true">^{index + 1}</span>}
                                             </Link>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
                                 ))}
 
+                                <SidebarMenuItem className="grow" aria-hidden="true" />
                                 <SidebarSeparator className={cn("my-2", {
                                     "mx-0": !open,
                                 })} />
@@ -873,15 +898,15 @@ export const Sidebar: FC = () => {
                                 )}
                                 {featureFlags.contactUsPage && InternalRoutes.ContactUs && (
                                     <SidebarMenuItem>
-                                        <SidebarMenuButton asChild tooltip={t('contactUs')}>
+                                        <SidebarMenuButton asChild tooltip={t('contact')}>
                                             <Link
                                                 to={InternalRoutes.ContactUs.path}
                                                 className={cn("flex items-center gap-2", {
                                                     "font-bold": pathname === InternalRoutes.ContactUs.path,
                                                 })}
                                             >
-                                                <QuestionMarkCircleIcon className="w-4 h-4" />
-                                                {open && <span>{t('contactUs')}</span>}
+                                                <WhoDBChatIcon name="mail" />
+                                                {open && <span>{t('contact')}</span>}
                                             </Link>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
@@ -895,22 +920,21 @@ export const Sidebar: FC = () => {
                                                     "font-bold": pathname === InternalRoutes.Settings.path,
                                                 })}
                                             >
-                                                <CogIcon className="w-4 h-4" />
+                                                <WhoDBChatIcon name="settings" />
                                                 {open && <span>{t('settings')}</span>}
                                             </Link>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
                                 )}
-                                <div className="grow" />
                                 {!isEmbedded && (
                                     <SidebarMenuItem className="flex justify-between items-center w-full overflow-hidden">
-                                        <SidebarMenuButton asChild tooltip={t('logOutProfile')} className="flex-1 min-w-0">
+                                        <SidebarMenuButton asChild tooltip={t('disconnect')} className="flex-1 min-w-0">
                                             <div className="flex items-center gap-sm text-nowrap w-fit cursor-pointer" onClick={handleLogoutProfile}>
-                                                <ArrowLeftStartOnRectangleIcon className="w-4 h-4" />
-                                                {open && <span>{t('logOutProfile')}</span>}
+                                                <WhoDBChatIcon name="signout" />
+                                                {open && <span>{t('disconnect')}</span>}
                                             </div>
                                         </SidebarMenuButton>
-                                        <div className="flex items-center gap-1 shrink-0">
+                                        <div className={cn("flex items-center gap-1 shrink-0", pathname === InternalRoutes.Dashboard.StorageUnit.path && "ce-sidebar-logout-extras")}>
                                             <SidebarMenuButton asChild className="w-auto">
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild className={cn({

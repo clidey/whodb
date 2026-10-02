@@ -19,7 +19,6 @@ import {
     Alert,
     AlertDescription,
     AlertDialog,
-    AlertDialogAction,
     AlertDialogCancel,
     AlertDialogContent,
     AlertDialogDescription,
@@ -52,7 +51,6 @@ import {
     SheetContent,
     SheetFooter,
     SheetTitle,
-    Spinner,
     Table as TableComponent,
     TableBody,
     TableCell,
@@ -63,8 +61,10 @@ import {
     TextArea,
     toast
 } from "@clidey/ux";
+import { Spinner } from '@/components/loading';
 import {
     AnalyzeMockDataDependenciesDocument,
+    AddRowDocument,
     DeleteRowDocument,
     GenerateMockDataDocument,
     MockDataMaxRowCountDocument,
@@ -73,6 +73,7 @@ import {
 } from '@graphql';
 import type {FC} from "react";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState} from "react";
+import { createPortal } from "react-dom";
 import {Export} from "./export";
 import {ImportData} from "./import-data";
 import {useTranslation} from '@/hooks/use-translation';
@@ -85,30 +86,22 @@ import {
     ArrowDownTrayIcon,
     ArrowUpCircleIcon,
     CalculatorIcon,
-    CalendarIcon,
     CheckCircleIcon,
     ChevronDownIcon,
     ChevronUpIcon,
     CircleStackIcon,
-    ClockIcon,
-    CodeBracketIcon,
     CursorArrowRaysIcon,
     DocumentDuplicateIcon,
     DocumentIcon,
     DocumentTextIcon,
     EllipsisVerticalIcon,
-    GlobeAltIcon,
-    HashtagIcon,
-    KeyIcon,
-    ListBulletIcon,
     MagnifyingGlassIcon,
     PencilSquareIcon,
-    ShareIcon,
-    Squares2X2Icon,
     TrashIcon,
     XMarkIcon
 } from "./heroicons";
 import {Tip} from "./tip";
+import {WhoDBChatIcon} from "./whodb-chat-icon";
 import {formatShortcut} from "@/utils/platform";
 import {matchesShortcut, SHORTCUTS} from "@/utils/shortcuts";
 import {formatNumber} from "@/utils/functions";
@@ -213,26 +206,26 @@ function stripTypeSuffix(type: string): string {
 }
 
 
-export function getColumnIcons(columns: string[], columnTypes?: string[], t?: (key: string) => string) {
+/** Returns the WhoDB icon for each column's data type. */
+export function getColumnIcons(columns: string[], columnTypes?: string[]) {
     return columns.map((col, idx) => {
         const rawType = columnTypes?.[idx] ?? "";
         const type = stripTypeSuffix(rawType).toUpperCase();
         const key = `${col}-${idx}`;
 
-        if (intTypes.has(type) || uintTypes.has(type)) return <HashtagIcon key={key} className="w-4 h-4" aria-label={t?.('integerType') ?? 'Integer type'} />;
-        if (floatTypes.has(type)) return <CalculatorIcon key={key} className="w-4 h-4" aria-label={t?.('decimalType') ?? 'Decimal type'} />;
-        if (boolTypes.has(type)) return <CheckCircleIcon key={key} className="w-4 h-4" aria-label={t?.('booleanType') ?? 'Boolean type'} />;
-        if (dateTypes.has(type)) return <CalendarIcon key={key} className="w-4 h-4" aria-label={t?.('dateType') ?? 'Date type'} />;
-        if (dateTimeTypes.has(type)) return <ClockIcon key={key} className="w-4 h-4" aria-label={t?.('dateTimeType') ?? 'DateTime type'} />;
-        if (uuidTypes.has(type)) return <KeyIcon key={key} className="w-4 h-4" aria-label={t?.('uuidType') ?? 'UUID type'} />;
-        if (binaryTypes.has(type)) return <DocumentDuplicateIcon key={key} className="w-4 h-4" aria-label={t?.('binaryType') ?? 'Binary type'} />;
-        if (jsonTypes.has(type)) return <CodeBracketIcon key={key} className="w-4 h-4" aria-label={t?.('jsonType') ?? 'JSON type'} />;
-        if (networkTypes.has(type)) return <GlobeAltIcon key={key} className="w-4 h-4" aria-label={t?.('networkType') ?? 'Network type'} />;
-        if (geometryTypes.has(type)) return <Squares2X2Icon key={key} className="w-4 h-4" aria-label={t?.('geometryType') ?? 'Geometry type'} />;
-        if (xmlTypes.has(type)) return <CodeBracketIcon key={key} className="w-4 h-4" aria-label={t?.('xmlType') ?? 'XML type'} />;
-        if (type.startsWith("ARRAY")) return <ListBulletIcon key={key} className="w-4 h-4" aria-label={t?.('arrayType') ?? 'Array type'} />;
-        if (stringTypes.has(type)) return <DocumentTextIcon key={key} className="w-4 h-4" aria-label={t?.('textType') ?? 'Text type'} />;
-        return <CircleStackIcon key={key} className="w-4 h-4" aria-label={t?.('dataType') ?? 'Data type'} />;
+        if (intTypes.has(type) || uintTypes.has(type)) return <WhoDBChatIcon key={key} name="hash" />;
+        if (floatTypes.has(type)) return <WhoDBChatIcon key={key} name="banknotes" />;
+        if (boolTypes.has(type)) return <WhoDBChatIcon key={key} name="check-circle" />;
+        if (dateTypes.has(type)) return <WhoDBChatIcon key={key} name="calendar" />;
+        if (dateTimeTypes.has(type)) return <WhoDBChatIcon key={key} name="clock" />;
+        if (uuidTypes.has(type)) return <WhoDBChatIcon key={key} name="secret" />;
+        if (binaryTypes.has(type)) return <WhoDBChatIcon key={key} name="copy" />;
+        if (jsonTypes.has(type) || xmlTypes.has(type)) return <WhoDBChatIcon key={key} name="code" />;
+        if (networkTypes.has(type)) return <WhoDBChatIcon key={key} name="globe" />;
+        if (geometryTypes.has(type)) return <WhoDBChatIcon key={key} name="grid" />;
+        if (type.startsWith("ARRAY")) return <WhoDBChatIcon key={key} name="list" />;
+        if (stringTypes.has(type)) return <WhoDBChatIcon key={key} name="file-text" />;
+        return <WhoDBChatIcon key={key} name="source" />;
     });
 }
 
@@ -312,15 +305,18 @@ interface TableProps {
     rowHeight?: number;
     height?: number;
     onRowUpdate?: (row: Record<string, string | number>, originalRow?: Record<string, string | number>) => Promise<void>;
+    cellEditing?: boolean;
     disableEdit?: boolean;
     allowRowUpdate?: boolean;
     allowRowDelete?: boolean;
     limitContextMenu?: boolean;
     schema?: string;
     storageUnit?: string;
+    sourceLabel?: string;
     objectRef?: SourceObjectRefInput;
     onRefresh?: () => void;
     children?: React.ReactNode;
+    actionsTarget?: HTMLElement | null;
     onColumnSort?: (column: string) => void;
     sortedColumns?: Map<string, 'asc' | 'desc'>;
     searchRef?: React.MutableRefObject<(search: string) => void>;
@@ -356,15 +352,18 @@ export const StorageUnitTable: FC<TableProps> = ({
     rowHeight = 48,
     height = 500,
     onRowUpdate,
+    cellEditing = false,
     disableEdit = false,
     allowRowUpdate = true,
     allowRowDelete = true,
     limitContextMenu = false,
     schema: _schema,
     storageUnit,
+    sourceLabel,
     objectRef,
     onRefresh,
     children,
+    actionsTarget,
     onColumnSort,
     sortedColumns,
     searchRef,
@@ -392,7 +391,11 @@ export const StorageUnitTable: FC<TableProps> = ({
     const [editIndex, setEditIndex] = useState<number | null>(null);
     const [editRow, setEditRow] = useState<string[] | null>(null);
     const [editRowInitialLengths, setEditRowInitialLengths] = useState<number[]>([]);
+    const [editingCell, setEditingCell] = useState<{ row: number; column: number } | null>(null);
+    const [pendingCells, setPendingCells] = useState<Record<string, string>>({});
+    const [savingCells, setSavingCells] = useState(false);
     const [pendingDeleteIndexes, setPendingDeleteIndexes] = useState<number[] | null>(null);
+    const [deletingRows, setDeletingRows] = useState(false);
     const [checked, setChecked] = useState<number[]>([]);
     const [showExportConfirm, setShowExportConfirm] = useState(false);
     const [showImport, setShowImport] = useState(false);
@@ -421,6 +424,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     const isExportSupported = rawQuery != null || sourceObjectSupportsAction(item, objectRef?.Kind, SourceAction.ViewRows);
     const isRowUpdateSupported = sourceObjectSupportsAction(item, objectRef?.Kind, SourceAction.UpdateData);
     const isRowDeleteSupported = sourceObjectSupportsAction(item, objectRef?.Kind, SourceAction.DeleteData);
+    const isRowInsertSupported = sourceObjectSupportsAction(item, objectRef?.Kind, SourceAction.InsertData);
     const { data: maxRowData } = useQuery(MockDataMaxRowCountDocument);
     const maxRowCount = maxRowData?.MockDataMaxRowCount ?? 200;
 
@@ -432,10 +436,54 @@ export const StorageUnitTable: FC<TableProps> = ({
     const [generateMockData, { loading: generatingMockData }] = useMutation(GenerateMockDataDocument);
     const [analyzeDependencies, { data: depAnalysis, loading: analyzingDeps }] = useLazyQuery(AnalyzeMockDataDependenciesDocument);
     const [deleteRow, ] = useMutation(DeleteRowDocument);
+    const [restoreRow] = useMutation(AddRowDocument);
     const [containerWidth, setContainerWidth] = useState<number>(0);
     const lastSearchState = useRef<{ search: string; matchIdx: number }>({ search: '', matchIdx: 0 });
     const canEditRows = !disableEdit && allowRowUpdate && isRowUpdateSupported && onRowUpdate != null;
     const canDeleteRows = !disableEdit && allowRowDelete && isRowDeleteSupported && objectRef != null;
+    const pendingCellCount = Object.keys(pendingCells).length;
+    const pendingRowIndexes = [...new Set(Object.keys(pendingCells).map(key => Number(key.split(':')[0])))];
+
+    useEffect(() => {
+        setEditingCell(null);
+        setPendingCells({});
+    }, [currentPage, storageUnit]);
+
+    const updatePendingCell = useCallback((rowIndex: number, columnIndex: number, value: string) => {
+        const key = `${rowIndex}:${columnIndex}`;
+        setPendingCells(previous => {
+            const next = {...previous};
+            if (value === rows[rowIndex]?.[columnIndex]) delete next[key];
+            else next[key] = value;
+            return next;
+        });
+    }, [rows]);
+
+    const savePendingCells = useCallback(async () => {
+        if (!onRowUpdate || savingCells || pendingCellCount === 0) return;
+        setEditingCell(null);
+        setSavingCells(true);
+        try {
+            const rowIndexes = [...new Set(Object.keys(pendingCells).map(key => Number(key.split(':')[0])))];
+            for (const rowIndex of rowIndexes) {
+                const original: Record<string, string | number> = {};
+                const updated: Record<string, string | number> = {};
+                columns.forEach((column, columnIndex) => {
+                    const value = rows[rowIndex][columnIndex];
+                    original[column] = value;
+                    updated[column] = pendingCells[`${rowIndex}:${columnIndex}`] ?? value;
+                });
+                await onRowUpdate(updated, original);
+            }
+            setPendingCells({});
+            toast.success(t('rowUpdated'));
+            onRefresh?.();
+        } catch {
+            toast.error(t('errorUpdatingRow'));
+        } finally {
+            setSavingCells(false);
+        }
+    }, [columns, onRefresh, onRowUpdate, pendingCellCount, pendingCells, rows, savingCells, t]);
 
     const handleEdit = (index: number) => {
         if (!canEditRows) {
@@ -488,6 +536,8 @@ export const StorageUnitTable: FC<TableProps> = ({
 
     // --- Export logic ---
     const hasSelectedRows = checked.length > 0;
+    const primaryColumnIndex = columnIsPrimary?.findIndex(Boolean) ?? -1;
+    const selectedIds = checked.map(index => primaryColumnIndex >= 0 ? rows[index]?.[primaryColumnIndex] : String(index + 1)).filter(Boolean);
     const selectedRowsData = useMemo(() => {
         if (hasSelectedRows) {
             const validChecked = checked.filter(idx => idx < rows.length);
@@ -530,8 +580,7 @@ export const StorageUnitTable: FC<TableProps> = ({
             toast.error(t('storageUnitRequired'));
             return;
         }
-        let unableToDeleteAll = false;
-        toast.info(t('deletingRows', { count: indexesToDelete.length }));
+        const deletedRows: string[][] = [];
         for (const index of indexesToDelete) {
             const row = rows[index];
             if (!row) continue;
@@ -540,23 +589,50 @@ export const StorageUnitTable: FC<TableProps> = ({
                 Value: row[i],
             }));
             try {
-                await deleteRow({
+                const result = await deleteRow({
                     variables: {
                         ref: objectRef,
                         values,
                     },
                 });
+                if (!result.data?.DeleteRow.Status) throw new Error(t('unableToDeleteRowStatus'));
+                deletedRows.push([...row]);
             } catch (e: any) {
                 toast.error(t('unableToDeleteRow', { message: e?.message ?? e }));
-                unableToDeleteAll = true;
                 break;
             }
         }
-        if (!unableToDeleteAll) {
-            toast.success(t('rowDeleted'));
+        if (deletedRows.length === indexesToDelete.length) {
+            const toastOptions = isRowInsertSupported ? {
+                description: t('rowsDeletedFrom', {table: storageUnit ?? '', source: sourceLabel ?? ''}),
+                duration: 7000,
+                className: 'ce-delete-toast',
+                icon: <span className="ce-delete-success-icon"><span className="ce-whodb-icon ce-whodb-icon-check" /></span>,
+                action: {
+                    label: t('undo'),
+                    onClick: () => {
+                        void (async () => {
+                            try {
+                                for (const deleted of deletedRows) {
+                                    const result = await restoreRow({variables: {
+                                        ref: objectRef,
+                                        values: columns.map((column, i) => ({Key: column, Value: deleted[i]})),
+                                    }});
+                                    if (!result.data?.AddRow.Status) throw new Error(t('undoFailed'));
+                                }
+                                toast.success(t('deleteUndone'));
+                                onRefresh?.();
+                            } catch {
+                                toast.error(t('undoFailed'));
+                            }
+                        })();
+                    },
+                },
+            } : {description: t('rowsDeletedFrom', {table: storageUnit ?? '', source: sourceLabel ?? ''}), duration: 7000, className: 'ce-delete-toast', icon: <span className="ce-delete-success-icon"><span className="ce-whodb-icon ce-whodb-icon-check" /></span>};
+            toast.success(t('rowsDeleted', {count: deletedRows.length}), toastOptions);
         }
         onRefresh?.();
-    }, [canDeleteRows, columns, deleteRow, objectRef, onRefresh, rows, t]);
+    }, [canDeleteRows, columns, deleteRow, isRowInsertSupported, objectRef, onRefresh, restoreRow, rows, sourceLabel, storageUnit, t]);
 
     const handleDeleteRow = useCallback((rowIndex: number) => {
         if (!canDeleteRows) {
@@ -577,12 +653,17 @@ export const StorageUnitTable: FC<TableProps> = ({
     }, [canDeleteRows, rows, columns, checked]);
 
     const handleConfirmDelete = useCallback(async () => {
-        if (pendingDeleteIndexes) {
+        if (pendingDeleteIndexes && !deletingRows) {
             const indexes = pendingDeleteIndexes;
-            setPendingDeleteIndexes(null);
-            await doDeleteRows(indexes);
+            setDeletingRows(true);
+            try {
+                await doDeleteRows(indexes);
+            } finally {
+                setDeletingRows(false);
+                setPendingDeleteIndexes(null);
+            }
         }
-    }, [pendingDeleteIndexes, doDeleteRows]);
+    }, [pendingDeleteIndexes, deletingRows, doDeleteRows]);
 
     const handleCancelDelete = useCallback(() => {
         setPendingDeleteIndexes(null);
@@ -616,6 +697,10 @@ export const StorageUnitTable: FC<TableProps> = ({
     }, [rows]);
 
     const handlePageChange = useCallback((newPage: number) => {
+        if (cellEditing && pendingCellCount > 0) {
+            toast.info(t('saveOrDiscardBeforePaging'));
+            return;
+        }
         // Sources paginating via keyset cursors (e.g. PostHog, which rejects
         // OFFSET for personal-API-key queries) can only resolve the page
         // immediately before or after the current one, so arbitrary jumps
@@ -624,7 +709,7 @@ export const StorageUnitTable: FC<TableProps> = ({
             return;
         }
         onPageChange?.(newPage);
-    }, [onPageChange, sequentialPaginationOnly, currentPage]);
+    }, [cellEditing, currentPage, onPageChange, pendingCellCount, sequentialPaginationOnly, t]);
 
     const handleSelectRow = useCallback((rowIndex: number) => {
         const isCurrentlySelected = checked.includes(rowIndex);
@@ -755,7 +840,7 @@ export const StorageUnitTable: FC<TableProps> = ({
         }
     }, [generateMockData, maxRowCount, mockDataFkDensityRatio, mockDataMethod, mockDataOverwriteExisting, mockDataRowCount, objectRef, onRefresh, showMockDataConfirmation, storageUnit, t]);
 
-    const columnIcons = useMemo(() => getColumnIcons(columns, columnTypes, t), [columns, columnTypes, t]);
+    const columnIcons = useMemo(() => getColumnIcons(columns, columnTypes), [columns, columnTypes]);
 
     // Cleanup click timeouts on unmount
     useEffect(() => {
@@ -1213,15 +1298,15 @@ export const StorageUnitTable: FC<TableProps> = ({
             >
                 <TableCell
                     role="gridcell"
-                    className={cn("min-w-[40px] w-[40px]", {
+                    className={cn("ce-table-selection-cell min-w-[40px] w-[40px]", {
                         "hidden": disableEdit,
                     })}
                 >
-                    <Checkbox
+                    <div className="ce-table-selection-control"><Checkbox
                         checked={isSelected}
                         onCheckedChange={() => { setChecked(isSelected ? checked.filter(i => i !== index) : [...checked, index]); }}
                         aria-label={isSelected ? t('deselectRow') : t('selectRow')}
-                    />
+                    /></div>
                     <Button variant="secondary" className="opacity-0 group-hover:opacity-100 absolute right-2 w-0 top-1.5" onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -1245,17 +1330,45 @@ export const StorageUnitTable: FC<TableProps> = ({
                             key={columns[cellIdx]}
                             role="gridcell"
                             className={cn(ph.mask, "cursor-pointer")}
-                            title={displayValue !== cell ? cell : t('cellInteractionHint')}
+                            title={displayValue !== cell ? cell : t(cellEditing && canEditRows ? 'cellEditingHint' : 'cellInteractionHint')}
                             onClick={(e) => {
                                 e.stopPropagation();
                                 setFocusedRowIndex(index);
                                 handleCellClick(index, cellIdx);
                             }}
-                            onDoubleClick={() => { handleCellDoubleClick(index); }}
+                            onDoubleClick={() => {
+                                if (cellEditing && canEditRows) {
+                                    for (const timeout of clickTimeouts.current.values()) clearTimeout(timeout);
+                                    clickTimeouts.current.clear();
+                                    setEditingCell({row: index, column: cellIdx});
+                                } else handleCellDoubleClick(index);
+                            }}
                             onContextMenu={() => { if (!limitContextMenu) { setContextMenuCellIdx(cellIdx); } }}
                             data-col-idx={cellIdx}
                         >
-                            {displayValue}
+                            {cellEditing && canEditRows && editingCell?.row === index && editingCell.column === cellIdx ? (
+                                <Input
+                                    autoFocus
+                                    className="ce-cell-editor"
+                                    value={pendingCells[`${index}:${cellIdx}`] ?? cell}
+                                    onChange={event => { updatePendingCell(index, cellIdx, event.target.value); }}
+                                    onClick={event => { event.stopPropagation(); }}
+                                    onDoubleClick={event => { event.stopPropagation(); }}
+                                    onBlur={() => { setEditingCell(null); }}
+                                    onKeyDown={event => {
+                                        if (event.key === 'Enter') setEditingCell(null);
+                                        if (event.key === 'Escape') {
+                                            updatePendingCell(index, cellIdx, rows[index][cellIdx]);
+                                            setEditingCell(null);
+                                        }
+                                    }}
+                                    data-testid="cell-editor"
+                                />
+                            ) : (
+                                <span className={cn(pendingCells[`${index}:${cellIdx}`] !== undefined && 'ce-cell-pending')}>
+                                    {pendingCells[`${index}:${cellIdx}`] ?? displayValue}
+                                </span>
+                            )}
                         </TableCell>
                     );
                 })}
@@ -1284,7 +1397,16 @@ export const StorageUnitTable: FC<TableProps> = ({
 	openExport,
 	canEditRows,
 	canDeleteRows,
-	isExportSupported
+	isExportSupported,
+    cellEditing,
+    editingCell,
+    pendingCells,
+    updatePendingCell,
+    rows,
+    handleCellDoubleClick,
+    formatDatesLocale,
+    formatBooleansReadable,
+    columnTypes
 ]);
 
     const rowContextMenuContent = (index: number) => (
@@ -1406,6 +1528,20 @@ export const StorageUnitTable: FC<TableProps> = ({
         </ContextMenuContent>
     );
 
+    const actions = <>
+        {isImportSupported && allowImport && (
+            <Button variant="secondary" onClick={() => { setShowImport(true); }} className="flex gap-sm" data-testid="import-button">
+                {cellEditing ? <WhoDBChatIcon name="upload" /> : <ArrowUpCircleIcon className="w-4 h-4" />}{t('importAction')}
+            </Button>
+        )}
+        {isExportSupported && (
+            <Button variant="secondary" onClick={() => { openExport(); }} className="flex gap-sm" data-testid="export-all-button">
+                {cellEditing ? <WhoDBChatIcon name="download" /> : <ArrowDownCircleIcon className="w-4 h-4" />}{cellEditing ? t('exportAction') : hasSelectedRows ? t('exportSelected', { count: checked.length }) : t('exportAll')}
+            </Button>
+        )}
+        {actionsTarget && children}
+    </>;
+
     return (
         <div ref={tableRef} className="flex min-w-0 w-full">
             <div className="flex flex-col space-y-4 min-w-0 w-full" data-testid="table-container">
@@ -1414,7 +1550,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                         ? `${paginatedRows.length} rows loaded${totalCount != null ? ` of ${totalCount} total` : ''}`
                         : ''}
                 </div>
-                <div style={{ width: `${containerWidth}px` }}>
+                <div style={{ width: enableKeyboardShortcuts ? '100%' : `${containerWidth}px` }}>
                     <TableComponent
                         role="grid"
                         aria-label={storageUnit ? `${storageUnit} data table` : 'Data table'}
@@ -1426,16 +1562,16 @@ export const StorageUnitTable: FC<TableProps> = ({
                         <ContextMenu>
                             <ContextMenuTrigger asChild>
                                     <TableHeadRow role="row" aria-rowindex={0} className="group relative cursor-context-menu hover:bg-muted/50 transition-colors" title={t('rightClickForOptions')}>
-                                        <TableHead className={cn("min-w-[40px] w-[40px] relative", {
+                                        <TableHead className={cn("ce-table-selection-cell min-w-[40px] w-[40px] relative", {
                                             "hidden": disableEdit,
                                         })}>
-                                            <Checkbox
+                                            <div className="ce-table-selection-control"><Checkbox
                                                 checked={checked.length === paginatedRows.length && paginatedRows.length > 0}
                                                 onCheckedChange={() => {
                                                     setChecked(checked.length === paginatedRows.length ? [] : paginatedRows.map((_, index) => index));
                                                 }}
                                                 aria-label={checked.length === paginatedRows.length ? t('deselectAll') : t('selectAll')}
-                                            />
+                                            /></div>
                                             <Button variant="secondary" className="opacity-0 group-hover:opacity-100 absolute right-2 top-1.5 w-0" onClick={(e) => {
                                                 e.preventDefault();
                                                 e.stopPropagation();
@@ -1453,7 +1589,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                         {columns.map((col, idx) => (
                                             <TableHead
                                                 key={col}
-                                                icon={columnIsPrimary?.[idx] ? <KeyIcon className="w-4 h-4" aria-label="Primary key" /> : columnIsForeignKey?.[idx] ? <ShareIcon className="w-4 h-4" aria-label="Foreign key" /> : columnIcons?.[idx]}
+                                                icon={columnIsPrimary?.[idx] ? <WhoDBChatIcon name="secret" /> : columnIsForeignKey?.[idx] ? <WhoDBChatIcon name="relation" /> : columnIcons?.[idx]}
                                                 className={cn(ph.mask, {
                                                     "cursor-pointer select-none": onColumnSort,
                                                 })}
@@ -1476,6 +1612,8 @@ export const StorageUnitTable: FC<TableProps> = ({
                                                         "italic": columnIsForeignKey?.[idx] && !columnIsPrimary?.[idx],
                                                     })}>
                                                         {col}
+                                                        {enableKeyboardShortcuts && columnIsPrimary?.[idx] && <span className="ce-column-key">{t('primaryKeyShort')}</span>}
+                                                        {enableKeyboardShortcuts && columnIsForeignKey?.[idx] && <span className="ce-column-key">{t('foreignKeyShort')}</span>}
                                                         {onColumnSort && sortedColumns?.has(col) && (
                                                             sortedColumns.get(col) === 'asc'
                                                                 ? <ChevronUpIcon className="w-4 h-4" data-testid="sort-indicator" />
@@ -1484,6 +1622,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                                     </p>
                                                     <p className="text-xs">{columnTypes?.[idx]?.toLowerCase()}</p>
                                                 </Tip>
+                                                {enableKeyboardShortcuts && <span className="ce-column-type">{columnTypes?.[idx]?.toLowerCase()}</span>}
                                             </TableHead>
                                         ))}
                                     </TableHeadRow>
@@ -1626,47 +1765,62 @@ export const StorageUnitTable: FC<TableProps> = ({
                 </div>
                 <div className={cn("flex justify-between items-center", {
                     "justify-end": children == null,
-                    "mt-4": children != null,
+                    "mt-4": children != null && !actionsTarget,
+                    "hidden": actionsTarget != null && totalPages <= 1 && !cellEditing,
                 })}>
-                    {children}
-                    <DataPagination
+                    {!actionsTarget && children}
+                    {cellEditing && totalCount != null && totalCount > 0 && <span className="ce-explore-row-summary" data-testid="total-count-bottom">{t('rowsSummary', {count: totalCount})}</span>}
+                    {cellEditing && showPagination ? <nav className="ce-explore-pagination" aria-label={t('tablePagination')}>
+                        <Button variant="outline" size="icon" disabled={currentPage <= 1} onClick={() => { handlePageChange(currentPage - 1); }} aria-label={t('previousPage')}>
+                            <WhoDBChatIcon name="chevron-left" />
+                        </Button>
+                        <span>{t('pageOf', {page: currentPage, total: Math.max(1, totalPages)})}</span>
+                        <Button variant="outline" size="icon" disabled={currentPage >= totalPages} onClick={() => { handlePageChange(currentPage + 1); }} aria-label={t('nextPage')}>
+                            <WhoDBChatIcon name="chevron-right" />
+                        </Button>
+                    </nav> : <DataPagination
                         totalPages={totalPages}
                         currentPage={currentPage}
                         onPageChange={handlePageChange}
                         className={cn("flex justify-end", {
                             "hidden": !showPagination,
                         })}
-                    />
+                    />}
                 </div>
                 <div className="flex justify-end items-center mb-2 gap-4">
-                    {totalCount != null && totalCount > 0 && (
+                    {!cellEditing && totalCount != null && totalCount > 0 && (
                         <div className="text-sm" data-testid="total-count-bottom">
-                            <span className="font-semibold">{t('totalCount')}</span> {formatNumber(totalCount, language)}
+                            {enableKeyboardShortcuts
+                                ? t('rowsSummary', { count: totalCount })
+                                : <><span className="font-semibold">{t('totalCount')}</span> {formatNumber(totalCount, language)}</>}
                         </div>
                     )}
-                    {isImportSupported && allowImport && (
-                        <Button
-                            variant="secondary"
-                            onClick={() => { setShowImport(true); }}
-                            className="flex gap-sm"
-                            data-testid="import-button"
-                        >
-                            <ArrowUpCircleIcon className="w-4 h-4" />
-                            {t('importAction')}
-                        </Button>
-                    )}
-                    {isExportSupported && (
-                        <Button
-                            variant="secondary"
-                            onClick={() => { openExport(); }}
-                            className="flex gap-sm"
-                            data-testid="export-all-button"
-                        >
-                            <ArrowDownCircleIcon className="w-4 h-4" />
-                            {hasSelectedRows ? t('exportSelected', { count: checked.length }) : t('exportAll')}
-                        </Button>
-                    )}
+                    {!actionsTarget && actions}
                 </div>
+                {actionsTarget && createPortal(actions, actionsTarget)}
+                {cellEditing && hasSelectedRows && pendingDeleteIndexes == null && createPortal(
+                    <div className={cn('ce-selection-bar', pendingCellCount > 0 && 'ce-selection-bar-above')} role="status" data-testid="selected-rows-bar">
+                        <strong>{t('rowsSelected', {count: checked.length})}</strong>
+                        {primaryColumnIndex >= 0 && <span className="ce-selection-ids">{t('selectedIds', {ids: selectedIds.join(', ')})}</span>}
+                        <span className="ce-cell-save-divider" />
+                        {isExportSupported && <Button variant="ghost" size="sm" onClick={() => {openExport();}}>{t('exportAction')}</Button>}
+                        {canDeleteRows && <Button variant="destructive" size="sm" onClick={() => {handleDeleteRow(checked[0]);}} data-testid="delete-selected-rows">
+                            <span className="ce-whodb-icon ce-whodb-icon-trash" aria-hidden="true" />{t('deleteRow', {count: checked.length})}
+                        </Button>}
+                    </div>, document.body
+                )}
+                {cellEditing && pendingCellCount > 0 && pendingDeleteIndexes == null && createPortal(
+                    <div className="ce-cell-save-bar" role="status" data-testid="cell-save-bar">
+                        <strong>{t('unsavedChanges', {count: pendingCellCount})}</strong>
+                        <span className="ce-cell-save-context">{storageUnit} · {pendingRowIndexes.length === 1 ? t('rowNumber', {number: (currentPage - 1) * pageSize + pendingRowIndexes[0] + 1}) : t('rowsSummary', {count: pendingRowIndexes.length})}</span>
+                        <span className="ce-cell-save-divider" />
+                        <Button variant="ghost" size="sm" disabled={savingCells} onClick={() => {setPendingCells({}); setEditingCell(null);}}>{t('discard')}</Button>
+                        <Button size="sm" disabled={savingCells} onClick={() => {void savePendingCells();}} data-testid="save-cell-changes">
+                            {savingCells && <Spinner className="size-4" />}
+                            {savingCells ? t('saving') : t('save')}
+                        </Button>
+                    </div>, document.body
+                )}
                 <Sheet open={editIndex !== null} onOpenChange={open => {
                     if (!open) {
                         setEditIndex(null);
@@ -1900,21 +2054,24 @@ export const StorageUnitTable: FC<TableProps> = ({
                     onImportSuccess={onRefresh}
                 />
             )}
-            <AlertDialog open={pendingDeleteIndexes != null} onOpenChange={(open) => { if (!open) handleCancelDelete(); }}>
-                <AlertDialogContent>
+            <AlertDialog open={pendingDeleteIndexes != null} onOpenChange={(open) => { if (!open && !deletingRows) handleCancelDelete(); }}>
+                <AlertDialogContent className={cn(cellEditing && 'ce-delete-dialog')}>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>{t('deleteRowConfirmTitle', { count: pendingDeleteIndexes?.length ?? 1 })}</AlertDialogTitle>
+                        {cellEditing && <span className="ce-delete-icon"><span className="ce-whodb-icon ce-whodb-icon-trash" aria-hidden="true" /></span>}
+                        <AlertDialogTitle>{cellEditing ? t('deleteFromTableTitle', {count: pendingDeleteIndexes?.length ?? 1, table: storageUnit ?? ''}) : t('deleteRowConfirmTitle', { count: pendingDeleteIndexes?.length ?? 1 })}</AlertDialogTitle>
                         <AlertDialogDescription>
-                            {t('deleteRowConfirmDescription', { count: pendingDeleteIndexes?.length ?? 1 })}
+                            {cellEditing ? t('deleteRowsDetails', {ids: pendingDeleteIndexes?.map(index => rows[index]?.[primaryColumnIndex >= 0 ? primaryColumnIndex : 0]).join(', ') ?? '', source: sourceLabel ?? ''}) : t('deleteRowConfirmDescription', { count: pendingDeleteIndexes?.length ?? 1 })}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
+                    {cellEditing && primaryColumnIndex >= 0 && pendingDeleteIndexes && <code className="ce-delete-preview">
+                        DELETE FROM {storageUnit} WHERE {columns[primaryColumnIndex]} IN ({pendingDeleteIndexes.map(index => rows[index]?.[primaryColumnIndex]).join(', ')});
+                    </code>}
                     <AlertDialogFooter>
-                        <AlertDialogCancel onClick={handleCancelDelete}>{t('cancel')}</AlertDialogCancel>
-                        <AlertDialogAction asChild>
-                            <Button variant="destructive" onClick={() => { void handleConfirmDelete(); }} data-testid="confirm-delete-row-button">
-                                {t('deleteRow', { count: pendingDeleteIndexes?.length ?? 1 })}
-                            </Button>
-                        </AlertDialogAction>
+                        <AlertDialogCancel onClick={handleCancelDelete} disabled={deletingRows}>{t('cancel')}</AlertDialogCancel>
+                        <Button variant="destructive" onClick={() => { void handleConfirmDelete(); }} disabled={deletingRows} data-testid="confirm-delete-row-button">
+                            {deletingRows && <Spinner className="size-4" aria-hidden="true" />}
+                            {deletingRows && cellEditing ? t('deleting') : deletingRows ? t('deletingRows', {count: pendingDeleteIndexes?.length ?? 1}) : t('deleteRow', { count: pendingDeleteIndexes?.length ?? 1 })}
+                        </Button>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>

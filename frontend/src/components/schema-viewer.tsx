@@ -15,20 +15,16 @@
  */
 
 import { skipToken, useQuery } from "@apollo/client/react";
-import type {
-    TreeDataItem} from "@clidey/ux";
 import {
     SearchInput,
     Sidebar as SidebarComponent,
     SidebarContent,
     SidebarGroup,
     SidebarHeader,
-    toTitleCase,
-    Tree
 } from "@clidey/ux";
 import type { GetStorageUnitsQuery, SourceObjectRefInput} from "@graphql";
-import {GetStorageUnitsDocument, SourceAction} from "@graphql";
-import {FolderIcon, TableCellsIcon} from "./heroicons";
+import {GetStorageUnitRowsDocument, GetStorageUnitsDocument, SourceAction} from "@graphql";
+import {WhoDBChatIcon} from "./whodb-chat-icon";
 import type {FC} from "react";
 import { useCallback, useEffect, useMemo, useState} from "react";
 import {useLocation, useNavigate} from "react-router-dom";
@@ -48,16 +44,25 @@ type SchemaViewerProps = {
     trail?: SourceBrowserObject[];
 };
 
-function groupByType(units: SourceBrowserObject[]) {
-    const groups: Record<string, any[]> = {};
-    for (const unit of units) {
-        const type = toTitleCase(unit.Attributes.find(a => a.Key === "Type")?.Value ?? "");
-        if (type === "") continue; // Ignore grouping if empty
-        if (!groups[type]) groups[type] = [];
-        groups[type].push(unit);
-    }
-    return groups;
-}
+const SchemaViewerUnit: FC<{unit: SourceBrowserObject; selected: boolean; onSelect: (name: string) => void}> = ({unit, selected, onSelect}) => {
+    const metadataCount = unit.Attributes.find(attribute => attribute.Key === 'Count')?.Value;
+    const knownCount = metadataCount != null && metadataCount !== 'unknown' ? metadataCount : undefined;
+    const {data} = useQuery(GetStorageUnitRowsDocument, knownCount == null && unit.Actions.includes(SourceAction.ViewRows)
+        ? {variables: {ref: unit.Ref, pageSize: 1, pageOffset: 0}}
+        : skipToken);
+    const count = knownCount ?? data?.Row.TotalCount;
+
+    return <button
+        type="button"
+        className={selected ? 'is-selected' : ''}
+        onClick={() => { onSelect(unit.Name); }}
+        aria-current={selected ? 'page' : undefined}
+    >
+        <WhoDBChatIcon name="table" />
+        <span>{unit.Name}</span>
+        {count != null && <span className="ce-schema-row-count">{count}</span>}
+    </button>;
+};
 
 export const SchemaViewer: FC<SchemaViewerProps> = ({ parentRef: explicitParentRef, selectedName, trail = [] }) => {
     const { t } = useTranslation('components/schema-viewer');
@@ -96,47 +101,11 @@ export const SchemaViewer: FC<SchemaViewerProps> = ({ parentRef: explicitParentR
         return (data?.StorageUnit ?? []) as SourceBrowserObject[];
     }, [data?.StorageUnit]);
 
-    // Group storage units by type for tree display, with search filter
-    const treeData: TreeDataItem[] = useMemo(() => {
-        if (storageUnits.length === 0) return [];
-        const grouped = groupByType(storageUnits);
+    const filteredUnits = useMemo(() => storageUnits.filter(unit =>
+        (unit.Name ?? "").toLowerCase().includes(search.trim().toLowerCase())
+    ), [search, storageUnits]);
 
-        // If searching, flatten all units and filter by name, then group again
-        if (search.trim() !== "") {
-            const searchLower = search.trim().toLowerCase();
-            // Flatten all units
-            const filteredUnits = storageUnits.filter(unit =>
-                (unit.Name ?? "").toLowerCase().includes(searchLower)
-            );
-            const filteredGrouped = groupByType(filteredUnits);
-            return Object.entries(filteredGrouped).map(([type, units]) => ({
-                id: type,
-                name: type,
-                icon: FolderIcon as TreeDataItem["icon"],
-                children: units.map(unit => ({
-                    id: unit.Name,
-                    name: unit.Name,
-                    icon: TableCellsIcon as TreeDataItem["icon"],
-                })),
-            }));
-        }
-
-        // Default: show all grouped
-        return Object.entries(grouped).map(([type, units]) => ({
-            id: type,
-            name: type,
-            icon: FolderIcon as TreeDataItem["icon"],
-            children: units.map(unit => ({
-                id: unit.Name,
-                name: unit.Name,
-                icon: TableCellsIcon as TreeDataItem["icon"],
-            })),
-        }));
-    }, [search, storageUnits]);
-
-    const handleSelect = useCallback((item: TreeDataItem | undefined) => {
-        // Only leaf nodes (tables) are selectable
-        const tableId = item?.id;
+    const handleSelect = useCallback((tableId: string) => {
         if (tableId == null || tableId === (selectedName ?? state?.unit?.Name)) {
             return
         }
@@ -169,7 +138,7 @@ export const SchemaViewer: FC<SchemaViewerProps> = ({ parentRef: explicitParentR
     }
 
     return (
-        <div className="flex h-full dark" data-testid="schema-viewer">
+        <div className="flex h-full ce-schema-viewer" data-testid="schema-viewer">
             <SidebarComponent variant="embed" className="w-64 h-full flex flex-col">
                 <SidebarContent>
                     <SidebarHeader>
@@ -191,18 +160,20 @@ export const SchemaViewer: FC<SchemaViewerProps> = ({ parentRef: explicitParentR
                                 <div className="flex-1 flex items-center justify-center">
                                     <Loading />
                                 </div>
-                            ) : treeData.length === 0 ? (
+                            ) : filteredUnits.length === 0 ? (
                                 <div className="flex-1 flex items-center justify-center px-4 text-center text-sm text-muted-foreground mt-4">
                                     {t('noResults')}
                                 </div>
                             ) : (
-                                <Tree
-                                    className={`flex-1 overflow-y-auto ${ph.mask}`}
-                                    data={treeData}
-                                    initialSelectedItemId={selectedName ?? state?.unit?.Name}
-                                    onSelectChange={handleSelect}
-                                    expandAll
-                                />
+                                <div className={`ce-schema-list ${ph.mask}`}>
+                                    <p className="ce-schema-list-label">{currentDatabase} · {storageUnits.length}</p>
+                                    {filteredUnits.map(unit => <SchemaViewerUnit
+                                        key={unit.Name}
+                                        unit={unit}
+                                        selected={unit.Name === (selectedName ?? state?.unit?.Name)}
+                                        onSelect={handleSelect}
+                                    />)}
+                                </div>
                             )
                         }
                     </SidebarGroup>

@@ -16,7 +16,6 @@
 
 import {
     Command,
-    CommandEmpty,
     CommandGroup,
     CommandInput,
     CommandItem,
@@ -24,8 +23,10 @@ import {
     Dialog,
     DialogContent,
 } from "@clidey/ux";
+import {useQuery} from '@apollo/client/react';
+import {GetStorageUnitsDocument} from '@graphql';
 import type {FC} from "react";
-import { useCallback, useEffect, useState} from "react";
+import { useCallback, useEffect, useMemo, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {useTranslation} from "@/hooks/use-translation";
 import {useAppSelector} from "@/store/hooks";
@@ -35,16 +36,12 @@ import {useEffectiveIsMac} from "@/hooks/useEffectiveIsMac";
 import {useSourceContract} from "@/hooks/useSourceContract";
 import {InternalRoutes} from "@/config/routes";
 import {performLogout} from "@/config/logout-handler";
+import {WhoDBChatIcon} from './whodb-chat-icon';
+import {buildSourceParentObjectRef, buildSourceParentRef} from '../utils/source-refs';
 import {
-    ArrowLeftStartOnRectangleIcon,
     ArrowPathIcon,
-    ChatBubbleLeftRightIcon,
     ChevronUpDownIcon,
-    CircleStackIcon,
     CogIcon,
-    CommandLineIcon,
-    RectangleGroupIcon,
-    ShareIcon,
 } from "./heroicons";
 
 export interface CommandPaletteProps {
@@ -83,11 +80,25 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
     const {t} = useTranslation('components/command-palette');
     const navigate = useNavigate();
     const currentType = useAppSelector(state => state.auth.current?.Type);
+    const current = useAppSelector(state => state.auth.current);
+    const schema = useAppSelector(state => state.database.schema);
     const isLoggedIn = useAppSelector(state => state.auth.status === "logged-in");
     const isEmbedded = useAppSelector(state => state.auth.isEmbedded);
     const isMac = useEffectiveIsMac();
     const [availableColumns, setAvailableColumns] = useState<string[]>([]);
-    const { supportsChat, supportsGraph, supportsScratchpad } = useSourceContract(currentType);
+    const [search, setSearch] = useState("");
+    const { supportsChat, supportsGraph, supportsScratchpad, item } = useSourceContract(currentType);
+    const parentRef = useMemo(() => buildSourceParentRef(item, current, schema), [item, current, schema]);
+    const {data: sourceObjects} = useQuery(GetStorageUnitsDocument, {
+        variables: {parent: parentRef},
+        skip: !open || !item || !current,
+    });
+    const sourceTables = (sourceObjects?.StorageUnit ?? []).filter(unit => unit.Kind === item?.contract?.DefaultObjectKind);
+    const matchingTables = sourceTables.filter(unit => unit.Name.toLowerCase().includes(search.trim().toLowerCase()));
+    const handlePaletteOpenChange = (nextOpen: boolean) => {
+        if (!nextOpen) setSearch("");
+        onOpenChange(nextOpen);
+    };
 
     // Listen for columns broadcast from storage unit page
     useEffect(() => {
@@ -115,11 +126,11 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
             navigationActions.push({
                 id: "nav-chat",
                 label: t('goToChat'),
-                icon: <ChatBubbleLeftRightIcon className="w-4 h-4" />,
+                icon: <WhoDBChatIcon name="chat" />,
                 shortcut: resolveShortcut(navDefs[shortcutIndex]).displayKeys,
                 onSelect: () => {
                     void navigate(InternalRoutes.Chat.path);
-                    onOpenChange(false);
+                    handlePaletteOpenChange(false);
                 },
             });
             shortcutIndex += 1;
@@ -128,11 +139,11 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
         navigationActions.push({
             id: "nav-storage-units",
             label: t('goToStorageUnits'),
-            icon: <RectangleGroupIcon className="w-4 h-4" />,
+            icon: <WhoDBChatIcon name="table" />,
             shortcut: resolveShortcut(navDefs[shortcutIndex]).displayKeys,
             onSelect: () => {
                 void navigate(InternalRoutes.Dashboard.StorageUnit.path);
-                onOpenChange(false);
+                handlePaletteOpenChange(false);
             },
         });
         shortcutIndex += 1;
@@ -141,11 +152,11 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
             navigationActions.push({
                 id: "nav-graph",
                 label: t('goToGraph'),
-                icon: <ShareIcon className="w-4 h-4" />,
+                icon: <WhoDBChatIcon name="relation" />,
                 shortcut: resolveShortcut(navDefs[shortcutIndex]).displayKeys,
                 onSelect: () => {
                     void navigate(InternalRoutes.Graph.path);
-                    onOpenChange(false);
+                    handlePaletteOpenChange(false);
                 },
             });
             shortcutIndex += 1;
@@ -155,11 +166,11 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
             navigationActions.push({
                 id: "nav-scratchpad",
                 label: t('goToScratchpad'),
-                icon: <CommandLineIcon className="w-4 h-4" />,
+                icon: <WhoDBChatIcon name="code" />,
                 shortcut: resolveShortcut(navDefs[shortcutIndex]).displayKeys,
                 onSelect: () => {
                     void navigate(InternalRoutes.RawExecute.path);
-                    onOpenChange(false);
+                    handlePaletteOpenChange(false);
                 },
             });
         }
@@ -172,29 +183,41 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
             shortcut: SHORTCUTS.refresh.displayKeys,
             onSelect: () => {
                 window.dispatchEvent(new CustomEvent('app:refresh-data'));
-                onOpenChange(false);
+                handlePaletteOpenChange(false);
             },
         });
 
         tableActions.push({
             id: "action-export",
             label: t('exportData'),
-            icon: <CircleStackIcon className="w-4 h-4" />,
+            icon: <WhoDBChatIcon name="download" />,
             shortcut: SHORTCUTS.exportData.displayKeys,
             onSelect: () => {
                 window.dispatchEvent(new CustomEvent('menu:trigger-export'));
-                onOpenChange(false);
+                handlePaletteOpenChange(false);
             },
         });
+
+        if (!isEmbedded) {
+            tableActions.push({
+                id: "action-disconnect",
+                label: t('disconnect'),
+                icon: <WhoDBChatIcon name="signout" />,
+                onSelect: () => {
+                    performLogout(navigate);
+                    handlePaletteOpenChange(false);
+                },
+            });
+        }
 
         tableActions.push({
             id: "action-import",
             label: t('importData'),
-            icon: <CircleStackIcon className="w-4 h-4" />,
+            icon: <WhoDBChatIcon name="upload" />,
             shortcut: SHORTCUTS.importData.displayKeys,
             onSelect: () => {
                 window.dispatchEvent(new CustomEvent('menu:trigger-import'));
-                onOpenChange(false);
+                handlePaletteOpenChange(false);
             },
         });
 
@@ -205,21 +228,9 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
             shortcut: SHORTCUTS.toggleSidebar.displayKeys,
             onSelect: () => {
                 window.dispatchEvent(new CustomEvent('menu:toggle-sidebar'));
-                onOpenChange(false);
+                handlePaletteOpenChange(false);
             },
         });
-
-        if (!isEmbedded) {
-            tableActions.push({
-                id: "action-disconnect",
-                label: t('disconnect'),
-                icon: <ArrowLeftStartOnRectangleIcon className="w-4 h-4" />,
-                onSelect: () => {
-                    performLogout(navigate);
-                    onOpenChange(false);
-                },
-            });
-        }
 
         // Add sort actions for available columns
         availableColumns.forEach((column) => {
@@ -231,25 +242,37 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
                     window.dispatchEvent(new CustomEvent('table:sort-column', {
                         detail: { column }
                     }));
-                    onOpenChange(false);
+                    handlePaletteOpenChange(false);
                 },
             });
         });
     }
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="p-0 overflow-hidden max-w-md" data-testid="command-palette">
-                <Command className={COMMAND_PALETTE_GROUP_CLASS}>
+        <Dialog open={open} onOpenChange={handlePaletteOpenChange}>
+            <DialogContent className="ce-command-palette p-0 overflow-hidden top-[18vh] translate-y-0" showCloseButton={false} data-testid="command-palette">
+                <Command className={COMMAND_PALETTE_GROUP_CLASS} shouldFilter={false}>
                     <CommandInput
                         placeholder={t('searchPlaceholder')}
                         data-testid="command-palette-input"
+                        value={search}
+                        onValueChange={setSearch}
                     />
+                    <kbd className="ce-command-escape" aria-hidden="true">esc</kbd>
                     <CommandList className="max-h-[400px]">
-                        <CommandEmpty>{t('noResults')}</CommandEmpty>
+                        {matchingTables.length > 0 && <CommandGroup heading={t('tables')}>
+                            {matchingTables.map(unit => <CommandItem key={unit.Name} value={unit.Name} onSelect={() => {
+                                void navigate(InternalRoutes.Dashboard.ExploreStorageUnit.path, {
+                                    state: {unit, parentRef: buildSourceParentObjectRef(item, unit.Ref), trail: []},
+                                });
+                                handlePaletteOpenChange(false);
+                            }} data-testid={`command-table-${unit.Name}`}>
+                                <WhoDBChatIcon name="table" /><span>{unit.Name}</span><kbd className="ce-command-enter" aria-hidden="true">↵</kbd>
+                            </CommandItem>)}
+                        </CommandGroup>}
 
                         {navigationActions.length > 0 && (
-                            <CommandGroup heading={t('navigation')}>
+                            <CommandGroup heading={t('goTo')}>
                                 {navigationActions.map((action) => (
                                     <CommandItem
                                         key={action.id}

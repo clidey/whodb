@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import {Button, ModeToggle, SidebarProvider, Tooltip, TooltipContent, TooltipTrigger} from "@clidey/ux";
+import {Button, cn, SidebarProvider, Tooltip, TooltipContent, TooltipTrigger, useTheme} from "@clidey/ux";
 import classNames from "classnames";
-import type {FC, ReactNode} from "react";
+import type {CSSProperties, FC, ReactNode} from "react";
 import {twMerge} from "tailwind-merge";
-import type {IInternalRoute} from "../config/routes";
+import {InternalRoutes, type IInternalRoute} from "../config/routes";
 import {useAppDispatch, useAppSelector} from "../store/hooks";
 import {SettingsActions} from "../store/settings";
 import {Breadcrumb} from "./breadcrumbs";
@@ -26,7 +26,8 @@ import {ConnectionContext} from "./connection-context";
 import {Loading} from "./loading";
 import {Sidebar} from "./sidebar/sidebar";
 import {useTranslation} from "@/hooks/use-translation";
-import {Bars3Icon, MagnifyingGlassIcon, QuestionMarkCircleIcon} from "./heroicons";
+import {Bars3Icon} from "./heroicons";
+import {WhoDBChatIcon} from "./whodb-chat-icon";
 import {getKeyDisplay} from "@/utils/platform";
 import {useEffectiveIsMac} from "@/hooks/useEffectiveIsMac";
 import {useSourceSessionMetadata} from "@/hooks/useSourceSessionMetadata";
@@ -50,6 +51,8 @@ type IInternalPageProps = IPageProps & {
     sidebar?: ReactNode;
     children: ReactNode;
     routes?: IInternalRoute[];
+    fullHeight?: boolean;
+    subSidebarWidth?: string;
 }
 
 const CommandPaletteTrigger: FC = () => {
@@ -71,20 +74,14 @@ const CommandPaletteTrigger: FC = () => {
             size="sm"
             onClick={handleClick}
             className="gap-2 h-9"
-            aria-label={t('searchPlaceholder')}
+            aria-label={t('triggerLabel')}
             data-testid="command-palette-trigger"
         >
-            <MagnifyingGlassIcon className="h-4 w-4" />
-            <span className="hidden sm:inline text-xs text-neutral-500 dark:text-neutral-400">{t('searchPlaceholder')}</span>
-            <div className="hidden sm:flex items-center gap-0.5 ml-1">
-                <kbd className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 text-xs font-medium bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded shadow-sm">
-                    {getKeyDisplay("Mod")}
-                </kbd>
-                {!isMac && <span className="text-neutral-400 text-xs">+</span>}
-                <kbd className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 text-xs font-medium bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded shadow-sm">
-                    K
-                </kbd>
-            </div>
+            <WhoDBChatIcon name="search" />
+            <span className="ce-command-label hidden sm:inline text-xs text-neutral-500 dark:text-neutral-400">{t('triggerLabel')}</span>
+            <kbd className="ce-command-shortcut hidden sm:inline-flex items-center justify-center h-5 px-1 text-xs font-medium bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded">
+                {getKeyDisplay("Mod")}{isMac ? '' : '+'}K
+            </kbd>
         </Button>
     );
 };
@@ -104,10 +101,10 @@ const KeyboardShortcutsHint: FC = () => {
                     variant="outline"
                     size="sm"
                     onClick={handleClick}
-                    className="gap-1.5 h-9"
+                    className="ce-help-trigger gap-1.5 h-9"
                     aria-label={t('showShortcuts')}
                 >
-                    <QuestionMarkCircleIcon className="h-4 w-4" />
+                    <WhoDBChatIcon name="help" />
                 </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom">
@@ -117,10 +114,24 @@ const KeyboardShortcutsHint: FC = () => {
     );
 };
 
+const ThemeToggle: FC = () => {
+    const {t} = useTranslation('components/page');
+    const {theme, setTheme} = useTheme();
+    const dark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+    return <Button variant="outline" size="icon" className="ce-theme-trigger" aria-label={t('theme')} onClick={() => { setTheme(dark ? 'light' : 'dark'); }}>
+        <WhoDBChatIcon name={dark ? 'sun' : 'moon'} />
+    </Button>;
+};
+
+/** Renders the authenticated app shell and optional full-height content panels. */
 export const InternalPage: FC<IInternalPageProps> = (props) => {
     const { t } = useTranslation('components/page');
     const isLoggedIn = useAppSelector(state => state.auth.current != null);
     const sidebarOpen = useAppSelector(state => state.settings.sidebarOpen);
+    const isTablesPage = props.routes?.at(-1)?.path === InternalRoutes.Dashboard.StorageUnit.path;
+    const isExplorePage = props.routes?.at(-1)?.path === InternalRoutes.Dashboard.ExploreStorageUnit.path;
+    const isWorkspacePage = [InternalRoutes.RawExecute.path, InternalRoutes.Chat.path, InternalRoutes.Settings?.path, InternalRoutes.ContactUs?.path].includes(props.routes?.at(-1)?.path);
     const dispatch = useAppDispatch();
 
     // Fetch source session metadata when logged in so Apollo state is ready
@@ -130,16 +141,16 @@ export const InternalPage: FC<IInternalPageProps> = (props) => {
     return (
         <Container>
             <div className="flex flex-row grow">
-                <SidebarProvider open={sidebarOpen} onOpenChange={(open) => dispatch(SettingsActions.setSidebarOpen(open))}>
+                <SidebarProvider open={sidebarOpen} onOpenChange={(open) => dispatch(SettingsActions.setSidebarOpen(open))} style={isTablesPage ? { '--sidebar-width': '240px' } as CSSProperties : undefined}>
                     <Sidebar />
                 </SidebarProvider>
-                {props.sidebar && <SidebarProvider>
+                {props.sidebar && <SidebarProvider style={props.subSidebarWidth ? { '--sidebar-width': props.subSidebarWidth } as CSSProperties : undefined}>
                     {props.sidebar}
                 </SidebarProvider>}
             </div>
-            <Page wrapperClassName="p-0" {...props}>
-                <div className="flex flex-col grow py-6">
-                    <div className="flex flex-col gap-1 px-8">
+            <Page {...props} wrapperClassName={cn('p-0', isTablesPage && 'ce-tables-shell', isExplorePage && 'ce-explore-shell', isWorkspacePage && 'ce-workspace-shell')}>
+                <div className={cn("flex flex-col grow py-6", (isTablesPage || isExplorePage || isWorkspacePage) && 'ce-app-content', props.fullHeight && "min-h-0 !py-0")}>
+                    <div className={cn("flex flex-col gap-1 px-8", (isTablesPage || isExplorePage || isWorkspacePage) && 'ce-tables-topbar', props.fullHeight && !isWorkspacePage && "px-4 py-5")}>
                         <div className="flex w-full justify-between items-center gap-2">
                             <Button
                                 variant="outline"
@@ -155,12 +166,12 @@ export const InternalPage: FC<IInternalPageProps> = (props) => {
                             <div className="flex items-center gap-2 shrink-0">
                                 <CommandPaletteTrigger />
                                 <KeyboardShortcutsHint />
-                                <div data-testid="mode-toggle" role="group" aria-label="Theme toggle">
-                                    <ModeToggle />
+                                <div data-testid="mode-toggle" role="group" aria-label={t('theme')}>
+                                    <ThemeToggle />
                                 </div>
                             </div>
                         </div>
-                        <ConnectionContext />
+                        {!isTablesPage && !isExplorePage && !isWorkspacePage && <ConnectionContext />}
                     </div>
                     {
                         !isLoggedIn
@@ -169,7 +180,7 @@ export const InternalPage: FC<IInternalPageProps> = (props) => {
                         </div>
                             : <main
                                 id="main-content"
-                                className="flex grow flex-wrap gap-sm py-4 content-start relative px-8"
+                                className={cn("flex grow flex-wrap gap-sm py-4 content-start relative px-8", props.fullHeight && "min-h-0 !flex-nowrap !px-4 !pt-3 !pb-0", isWorkspacePage && 'ce-workspace-content')}
                                 data-testid="page-content"
                                 tabIndex={-1}
                             >

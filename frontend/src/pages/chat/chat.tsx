@@ -21,7 +21,6 @@ import {
     AlertTitle,
     Button,
     Card,
-    Checkbox,
     cn,
     Dialog,
     DialogContent,
@@ -46,14 +45,11 @@ import {ChatHistorySidebar} from "./chat-history-sidebar";
 import type {RowsResult} from '@graphql';
 import {ExecuteConfirmedSqlDocument, GenerateChatTitleDocument, GetDatabaseQuerySuggestionsDocument} from '@graphql';
 import {
-    ArrowUpCircleIcon,
     CheckCircleIcon,
-    CircleStackIcon,
     CodeBracketIcon,
     CommandLineIcon,
     DocumentDuplicateIcon,
     EllipsisHorizontalIcon,
-    PresentationChartLineIcon,
     SparklesIcon,
     TableCellsIcon
 } from "../../components/heroicons";
@@ -66,18 +62,17 @@ import {AIProvider, useAI} from "../../components/ai";
 import {Tip} from "../../components/tip";
 import {CodeEditor} from "../../components/editor";
 import {ErrorState} from "../../components/error-state";
-import {Loading} from "../../components/loading";
+import {Loading, Spinner} from "../../components/loading";
+import {WhoDBChatIcon} from "../../components/whodb-chat-icon";
 import {InternalPage} from "../../components/page";
 import {StorageUnitTable} from "../../components/table";
 import {copyToClipboard} from "../../services/clipboard";
 import {MessageCopyAction} from "../../components/message-copy-action";
 import {extensions, featureFlags} from "../../config/features";
 import {InternalRoutes} from "../../config/routes";
-import {reduxStorePersistor} from "../../store";
-import {HoudiniActions} from "../../store/chat";
+import {HoudiniActions, type IChatMessage} from "../../store/chat";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {ScratchpadActions} from "../../store/scratchpad";
-import {chooseRandomItems} from "../../utils/functions";
 import {getComponent} from "../../config/component-registry";
 import {useSourceContract} from "../../hooks/useSourceContract";
 import {useNavigate} from "react-router-dom";
@@ -94,7 +89,6 @@ import {
     frontendAnalyticsErrorCode,
     textLengthBucket,
     trackFrontendIntent,
-    trackOptionChanged,
     trackScreenViewed,
 } from "../../config/frontend-analytics";
 
@@ -102,7 +96,45 @@ import {
 const LineChart = getComponent('line-chart');
 const PieChart = getComponent('pie-chart');
 
-const THINKING_PHRASES_COUNT = 25;
+function unsupportedToolName(text: string): string | null {
+    if (!text.trimStart().startsWith('{')) return null;
+    try {
+        const payload: unknown = JSON.parse(text);
+        if (payload && typeof payload === 'object' && 'toolName' in payload && typeof payload.toolName === 'string') {
+            return payload.toolName;
+        }
+    } catch {
+        return null;
+    }
+    return null;
+}
+
+function parseSQLFailure(text: string): {sql: string; error: string} | null {
+    try {
+        const value: unknown = JSON.parse(text);
+        if (value && typeof value === 'object' && 'sql' in value && 'error' in value && typeof value.sql === 'string' && typeof value.error === 'string') {
+            return {sql: value.sql, error: value.error};
+        }
+    } catch {
+        return null;
+    }
+    return null;
+}
+
+function failedSQLLine(sql: string, error: string): number | null {
+    const lines = sql.split('\n');
+    const lineNumber = /\bline\s+(\d+)\b/i.exec(error);
+    if (lineNumber) {
+        const index = Number(lineNumber[1]) - 1;
+        if (index >= 0 && index < lines.length) return index;
+    }
+    const objectName = /(?:no such table:|relation|unknown column|no such column:)\s*["'`]?([\w.]+)/i.exec(error)?.[1];
+    if (objectName) {
+        const index = lines.findIndex(line => line.toLowerCase().includes(objectName.toLowerCase()));
+        if (index >= 0) return index;
+    }
+    return null;
+}
 
 const markdownComponents = {
     p: ({_node, ...props}: any) => <p className="mb-2 last:mb-0" {...props} />,
@@ -113,13 +145,14 @@ const markdownComponents = {
     h1: ({_node, ...props}: any) => <h1 className="text-xl font-bold mb-2 mt-4 first:mt-0" {...props} />,
     h2: ({_node, ...props}: any) => <h2 className="text-lg font-semibold mb-2 mt-3 first:mt-0" {...props} />,
     h3: ({_node, ...props}: any) => <h3 className="text-md font-semibold mb-1 mt-2 first:mt-0" {...props} />,
+    a: ({_node, ...props}: any) => <a className="text-primary underline underline-offset-2" {...props} />,
     code: ({_node, children, ...props}: any) => {
         const isInline = !String(props.className ?? '').includes('language-');
         return isInline
-            ? <code className="bg-neutral-100 dark:bg-neutral-800 px-1 py-0.5 rounded text-sm" {...props}>{children}</code>
+            ? <code className="rounded bg-muted px-1 py-0.5 text-[0.9em] text-foreground" {...props}>{children}</code>
             : <CodeBlock>{String(children)}</CodeBlock>;
     },
-    blockquote: ({_node, ...props}: any) => <blockquote className="border-l-4 border-neutral-300 dark:border-neutral-700 pl-4 my-2 italic" {...props} />,
+    blockquote: ({_node, ...props}: any) => <blockquote className="my-2 border-l-4 border-border pl-4 italic" {...props} />,
 };
 
 const CodeBlock: FC<{ children: string }> = ({ children }) => {
@@ -136,12 +169,12 @@ const CodeBlock: FC<{ children: string }> = ({ children }) => {
 
     return (
         <div className="relative group/code-block my-2">
-            <code className="block bg-neutral-100 dark:bg-neutral-800 p-2 pr-16 rounded text-sm overflow-x-auto">
+            <code className="block overflow-x-auto rounded bg-muted p-2 pr-16 text-[0.9em] text-foreground">
                 {children}
             </code>
             <button
                 onClick={handleCopy}
-                className="absolute top-1.5 right-1.5 flex items-center gap-1 px-1.5 py-0.5 rounded text-xs text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-100 bg-neutral-200 dark:bg-neutral-700 hover:bg-neutral-300 dark:hover:bg-neutral-600 transition-colors"
+                className="absolute top-1.5 right-1.5 flex items-center gap-1 rounded bg-secondary px-1.5 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             >
                 {copied
                     ? <><CheckCircleIcon className="w-3.5 h-3.5 text-green-500" /> <span className="text-green-500">Copied!</span></>
@@ -170,6 +203,23 @@ const TablePreview: FC<{ type: string, data: TableData, text: string, containerW
     const handleCodeToggle = useCallback(() => {
         setShowSQL(status => !status);
     }, []);
+
+    const handleExport = useCallback(() => {
+        if (!data) return;
+        const escapeCell = (value: string) => {
+            const safeValue = /^[=+@\-\t\r]/.test(value) ? `'${value}` : value;
+            return `"${safeValue.replaceAll('"', '""')}"`;
+        };
+        const csv = [data.Columns.map(column => column.Name), ...data.Rows].map(row => row.map(escapeCell).join(',')).join('\n');
+        const url = URL.createObjectURL(new Blob([csv], {type: 'text/csv;charset=utf-8'}));
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'chat-result.csv';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.setTimeout(() => { URL.revokeObjectURL(url); }, 0);
+    }, [data]);
 
     // Create page options excluding current page
     const pageOptions = useMemo(() => {
@@ -228,15 +278,27 @@ const TablePreview: FC<{ type: string, data: TableData, text: string, containerW
         return type.toUpperCase().split(":")?.[1];
     }, [data, type, t]);
 
+    const unhandledTool = data == null ? unsupportedToolName(text) : null;
+
     const canMoveToScratchpad = useMemo(() => {
         return supportsScratchpad && type.startsWith("sql:");
     }, [supportsScratchpad, type]);
 
-    return <div className="flex gap-2 w-[calc(100%-50px)] max-w-full min-w-0 group/table-preview">
+    const keyedRows = useMemo(() => {
+        const seen = new Map<string, number>();
+        return (data?.Rows ?? []).map(row => {
+            const signature = JSON.stringify(row);
+            const occurrence = seen.get(signature) ?? 0;
+            seen.set(signature, occurrence + 1);
+            return {row, key: `${signature}:${occurrence}`};
+        });
+    }, [data]);
+
+    return <div className="ce-chat-result-card flex gap-2 w-[calc(100%-50px)] max-w-full min-w-0 group/table-preview">
         <div className={cn("transition-all shrink-0 pt-1", {
             "opacity-0 group-hover/table-preview:opacity-100 focus-within:opacity-100": !dropdownOpen,
             "opacity-100": dropdownOpen,
-        })}>
+        }, __WHODB_EDITION__ === 'ce' && 'ce-chat-result-menu')}>
             <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
                 <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="sm" data-testid="icon-button" aria-label={t('actions')}>
@@ -266,9 +328,23 @@ const TablePreview: FC<{ type: string, data: TableData, text: string, containerW
                 </DropdownMenuContent>
             </DropdownMenu>
         </div>
-        <div className="flex flex-col gap-lg overflow-hidden break-all leading-6 shrink-0 w-full max-w-full min-w-0">
+        <div className="ce-chat-result-body flex flex-col gap-lg overflow-hidden break-all leading-6 shrink-0 w-full max-w-full min-w-0">
+            {data != null && <div className="ce-chat-result-heading"><strong>{t('result')}</strong><span>{t('rowCount', {count: data.Rows.length})}</span><span className="ce-chat-result-complete">{t('complete')}</span></div>}
             {
-                showSQL
+                __WHODB_EDITION__ === 'ce' && data != null
+                ? <>
+                    {showSQL
+                        ? <pre className="ce-chat-result-sql">{text}</pre>
+                        : data.Rows.length > 0
+                            ? <div className="ce-chat-result-grid"><table><thead><tr>{data.Columns.map(column => <th key={column.Name}>{column.Name}</th>)}</tr></thead><tbody>{keyedRows.map(({row, key}) => <tr key={key}>{data.Columns.map((column, index) => <td key={column.Name}>{row[index]}</td>)}</tr>)}</tbody></table></div>
+                            : <p className="ce-chat-result-empty">{t('noDataReturned')}</p>}
+                    <div className="ce-chat-result-actions"><button type="button" onClick={handleCodeToggle}><WhoDBChatIcon name="code" />{showSQL ? t('showTable') : t('sql')}</button><button type="button" onClick={handleExport}><WhoDBChatIcon name="download" />{t('export')}</button></div>
+                </>
+                : __WHODB_EDITION__ === 'ce' && unhandledTool
+                ? <div className="ce-chat-result-empty"><strong>{t('toolResponseNotExecuted')}</strong><span>{unhandledTool}</span></div>
+                : __WHODB_EDITION__ === 'ce' && data == null
+                ? <div className="ce-chat-result-empty"><strong>{t('resultUnavailable')}</strong>{text && <pre className="ce-chat-result-sql">{text}</pre>}</div>
+                : showSQL
                 ? <div className={cn("h-[300px] w-full", ph.mask)}>
                     <CodeEditor value={text} language="sql" />
                 </div>
@@ -283,8 +359,8 @@ const TablePreview: FC<{ type: string, data: TableData, text: string, containerW
                             limitContextMenu={true}
                             databaseType={currentType}
                             rawQuery={text}
-                            height={200}
-                            enforceMinHeight={true}
+                            height={__WHODB_EDITION__ === 'ce' ? Math.max(76, (data?.Rows?.length ?? 0) * 32 + 40) : 200}
+                            enforceMinHeight={__WHODB_EDITION__ !== 'ce'}
                             totalCount={data?.Rows?.length ?? 0}
                         />
                     </div>
@@ -352,6 +428,7 @@ const TablePreview: FC<{ type: string, data: TableData, text: string, containerW
     </div>
 });
 
+/** Renders CE chat in the shared full-height conversation layout. */
 export const ChatPage: FC = () => {
     const { t } = useTranslation('pages/chat');
     const [query, setQuery] = useState("");
@@ -364,6 +441,35 @@ export const ChatPage: FC = () => {
     const chats = useMemo(() => {
         return activeSession?.messages ?? [];
     }, [activeSession]);
+    const displayChats = useMemo(() => {
+        const visible: IChatMessage[] = [];
+        for (let start = 0; start < chats.length;) {
+            if (!chats[start].isUserInput) {
+                visible.push(chats[start]);
+                start++;
+                continue;
+            }
+            let end = start + 1;
+            while (end < chats.length && !chats[end].isUserInput) end++;
+            const turn = chats.slice(start, end);
+            const invalidTool = turn.find(chat => !chat.isUserInput && unsupportedToolName(chat.Text));
+            const hasDatabaseResult = turn.some(chat => chat.Result != null || chat.RequiresConfirmation);
+            if (invalidTool && !hasDatabaseResult) {
+                visible.push(chats[start], {
+                    id: invalidTool.id,
+                    Type: 'error',
+                    Text: t('unsupportedToolRequest'),
+                    RequiresConfirmation: false,
+                });
+            } else if (invalidTool) {
+                visible.push(...turn.filter(chat => !unsupportedToolName(chat.Text)));
+            } else {
+                visible.push(...turn);
+            }
+            start = end;
+        }
+        return visible;
+    }, [chats, t]);
     const autoScrollEnabled = activeSession?.autoScrollEnabled ?? true;
     const [executeConfirmedSql] = useMutation(ExecuteConfirmedSqlDocument);
     const [generateChatTitleMutation] = useMutation(GenerateChatTitleDocument);
@@ -373,17 +479,20 @@ export const ChatPage: FC = () => {
     const authProfile = useAppSelector(state => state.auth.current);
     const authProfileType = authProfile?.Type;
     const authProfileDatabase = authProfile?.Database;
-    const { item, supportsScripts } = useSourceContract(authProfileType);
+    const { item, supportsScripts, supportsScratchpad } = useSourceContract(authProfileType);
+    const scratchpadPageId = useAppSelector(state => state.scratchpad.activePageId);
     const [executingConfirmedId, setExecutingConfirmedId] = useState<number | null>(null);
-    const [showQueryForId, setShowQueryForId] = useState<number | null>(null);
     const [copiedSqlId, setCopiedSqlId] = useState<number | null>(null);
     const messageIdCounter = useRef(0);
     const sourceScopeRef = useMemo(() => buildSourceScopeRef(item, authProfile, schemaFromState), [authProfileDatabase, item, schemaFromState]);
     const [currentSearchIndex, setCurrentSearchIndex] = useState<number>();
     const draftAbandonedRef = useRef(false);
+    const chatRequest = useRef<AbortController | null>(null);
+    const streamingMessage = useRef<number | null>(null);
     const draftAnalyticsPropsRef = useRef<Record<string, unknown>>({});
 
     const dispatch = useAppDispatch();
+    const navigate = useNavigate();
 
     // Generate unique message IDs to prevent collisions
     const getUniqueMessageId = useCallback(() => {
@@ -396,12 +505,8 @@ export const ChatPage: FC = () => {
 
     const chatExamples = useChatExamples();
 
-    const thinkingPhrases = useMemo(() => {
-        return Array.from({ length: THINKING_PHRASES_COUNT }, (_, i) => t(`thinking${i}`));
-    }, [t]);
-
     const [loading, setLoading] = useState(false);
-    const loadingPhraseRef = useRef<string>("");
+    const [progressSteps, setProgressSteps] = useState<Array<{id: string; step: string; status: string}>>([]);
 
     // Database-specific suggestions
     const [getDatabaseSuggestions, { loading: suggestionsLoading }] = useLazyQuery(GetDatabaseQuerySuggestionsDocument, {
@@ -461,11 +566,11 @@ export const ChatPage: FC = () => {
     const getCategoryIcon = useCallback((category: string) => {
         switch (category) {
             case 'SELECT':
-                return <CircleStackIcon className="w-4 h-4" />;
+                return <WhoDBChatIcon name="table" />;
             case 'AGGREGATE':
-                return <PresentationChartLineIcon className="w-4 h-4" />;
+                return <WhoDBChatIcon name="banknotes" />;
             default:
-                return <SparklesIcon className="w-4 h-4" />;
+                return <WhoDBChatIcon name="code" />;
         }
     }, []);
 
@@ -485,8 +590,8 @@ export const ChatPage: FC = () => {
         return exampleIndicesRef.current.map(i => chatExamples[i]);
     }, [useDatabaseSuggestions, databaseSuggestions, chatExamples, getCategoryIcon]);
 
-    const handleSubmitQuery = useCallback(async () => {
-        const sanitizedQuery = query.trim();
+    const handleSubmitQuery = useCallback(async (queryOverride?: string, retryMessageId?: number) => {
+        const sanitizedQuery = (queryOverride ?? query).trim();
         if (modelType == null || sanitizedQuery.length === 0) {
             return;
         }
@@ -507,12 +612,14 @@ export const ChatPage: FC = () => {
         const shouldTryTitle = hasDefaultName;
 
         setLoading(true);
-        loadingPhraseRef.current = chooseRandomItems(thinkingPhrases)[0];
-        dispatch(HoudiniActions.addChatMessage({ Type: "message", Text: sanitizedQuery, isUserInput: true, RequiresConfirmation: false }));
+        setProgressSteps([]);
+        if (retryMessageId != null) dispatch(HoudiniActions.removeChatMessage(retryMessageId));
+        else dispatch(HoudiniActions.addChatMessage({ Type: "message", Text: sanitizedQuery, isUserInput: true, RequiresConfirmation: false }));
         setQuery("");
 
         // Add a placeholder for streaming text
         const streamingMessageId = getUniqueMessageId();
+        streamingMessage.current = streamingMessageId;
         dispatch(HoudiniActions.addChatMessage({
             Type: "message",
             Text: "",
@@ -532,10 +639,13 @@ export const ChatPage: FC = () => {
             }, 250);
         }
 
+        const controller = new AbortController();
+        chatRequest.current = controller;
         try {
             const response = await fetch(withBasePath('/api/ai-chat/stream'), {
                 method: 'POST',
                 credentials: 'include',
+                signal: controller.signal,
                 headers: addAuthHeader({
                     'Content-Type': 'application/json',
                 }),
@@ -547,7 +657,7 @@ export const ChatPage: FC = () => {
                     model: currentModel ?? '',
                     input: {
                         Query: sanitizedQuery,
-                        PreviousConversation: chats.map(chat =>
+                        PreviousConversation: displayChats.filter(chat => chat.Type !== 'activity' && chat.id !== retryMessageId).map(chat =>
                             `${chat.isUserInput ? "<User>" : "<System>"}${chat.Text}${chat.isUserInput ? "</User>" : "</System>"}`
                         ).join("\n"),
                     },
@@ -583,6 +693,9 @@ export const ChatPage: FC = () => {
             let currentEventType = '';
             const addedSqlMessages = new Set<string>(); // Track added SQL to avoid duplicates
             let streamDone = false;
+            let rejectedTool = false;
+            let firstSqlMessageId: number | null = null;
+            let progressTrace: Array<{id: string; step: string; status: string}> = [];
 
             while (true) {
                 const { done, value } = await reader.read();
@@ -606,7 +719,15 @@ export const ChatPage: FC = () => {
                         try {
                             const parsed = JSON.parse(data);
 
-                            if (currentEventType === 'chunk') {
+                            if (currentEventType === 'progress') {
+                                if (typeof parsed.step === 'string' && typeof parsed.status === 'string') {
+                                    const index = progressTrace.findIndex(item => item.step === parsed.step && item.status !== 'completed');
+                                    progressTrace = index >= 0
+                                        ? progressTrace.map((item, position) => position === index ? {...item, status: parsed.status} : item)
+                                        : [...progressTrace, {id: `${parsed.step}:${progressTrace.length + 1}`, step: parsed.step, status: parsed.status}];
+                                    setProgressSteps(progressTrace);
+                                }
+                            } else if (currentEventType === 'chunk') {
                                 const text = parsed.text ?? '';
                                 const chunkType = parsed.type ?? '';
 
@@ -628,7 +749,16 @@ export const ChatPage: FC = () => {
                                 }
                             } else if (currentEventType === 'message') {
                                 // Handle complete messages (SQL responses and errors after streaming)
-                                if (parsed.Type?.startsWith("sql") || parsed.Type === "error") {
+                                if ((parsed.Type === 'message' || parsed.Type === 'text') && typeof parsed.Text === 'string') {
+                                    streamingText = parsed.Text;
+                                    dispatch(HoudiniActions.updateChatMessage({id: streamingMessageId, Text: streamingText}));
+                                    continue;
+                                }
+                                if (parsed.Type?.startsWith("sql") || parsed.Type === "error" || parsed.Type === 'provider:error' || parsed.Type === 'scope:error') {
+                                    if (parsed.Type?.startsWith("sql") && unsupportedToolName(parsed.Text ?? '')) {
+                                        rejectedTool = true;
+                                        continue;
+                                    }
                                     // Create a unique key for this message to avoid duplicates
                                     const messageKey = `${parsed.Type}:${parsed.Text}`;
 
@@ -637,6 +767,7 @@ export const ChatPage: FC = () => {
                                         addedSqlMessages.add(messageKey);
 
                                         const messageId = getUniqueMessageId();
+                                        if (parsed.Type.startsWith('sql:') && firstSqlMessageId == null) firstSqlMessageId = messageId;
                                         dispatch(HoudiniActions.addChatMessage({
                                             Type: parsed.Type,
                                             Text: parsed.Text,
@@ -658,8 +789,16 @@ export const ChatPage: FC = () => {
                                     }
                                 }
                             } else if (currentEventType === 'done') {
+                                if (firstSqlMessageId != null) {
+                                    dispatch(HoudiniActions.setChatActivity({id: firstSqlMessageId, activity: progressTrace.filter(item => item.status === 'completed').map(item => item.id)}));
+                                }
                                 // Stream complete - finalize the streaming message
-                                if (streamingText === '' || streamingText.trim() === '') {
+                                if (rejectedTool) {
+                                    dispatch(HoudiniActions.completeStreamingMessage({
+                                        id: streamingMessageId,
+                                        message: { Type: 'error', Text: t('unsupportedToolRequest') },
+                                    }));
+                                } else if (streamingText === '' || streamingText.trim() === '') {
                                     // No message text was streamed, remove placeholder
                                     dispatch(HoudiniActions.removeChatMessage(streamingMessageId));
                                 } else {
@@ -710,7 +849,25 @@ export const ChatPage: FC = () => {
                     break;
                 }
             }
+            if (!streamDone && !controller.signal.aborted) {
+                if (rejectedTool) {
+                    dispatch(HoudiniActions.completeStreamingMessage({
+                        id: streamingMessageId,
+                        message: { Type: 'error', Text: t('unsupportedToolRequest') },
+                    }));
+                } else if (streamingText.trim()) {
+                    dispatch(HoudiniActions.completeStreamingMessage({
+                        id: streamingMessageId,
+                        message: { Type: "message", Text: streamingText },
+                    }));
+                } else {
+                    dispatch(HoudiniActions.removeChatMessage(streamingMessageId));
+                }
+                toast.error(t('streamInterrupted'));
+                setLoading(false);
+            }
         } catch (error) {
+            if (controller.signal.aborted) return;
             dispatch(HoudiniActions.removeChatMessage(streamingMessageId));
             const errorMessage = error instanceof Error
                 ? error.message
@@ -727,7 +884,7 @@ export const ChatPage: FC = () => {
             setLoading(false);
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [chats, currentModel, modelType, query, sourceScopeRef, dispatch, t, scrollContainerRef, getUniqueMessageId, activeSession, activeSessionId, autoScrollEnabled]);
+    }, [chats, currentModel, modelType, query, sourceScopeRef, dispatch, t, scrollContainerRef, getUniqueMessageId, activeSession, activeSessionId, autoScrollEnabled, displayChats]);
 
     // Helper function to generate and update chat title
     const generateChatTitle = useCallback(async (userQuery: string) => {
@@ -763,8 +920,8 @@ export const ChatPage: FC = () => {
     }, [modelType, currentModel, activeSessionId, dispatch, generateChatTitleMutation]);
 
     const disableChat = useMemo(() => {
-        return loading || models.length === 0 || (!modelAvailable && !currentModel) || query.trim().length === 0;
-    }, [loading, modelAvailable, models.length, currentModel, query]);
+        return loading || modelType == null || currentModel == null || models.length === 0 || !modelAvailable || query.trim().length === 0;
+    }, [loading, modelType, modelAvailable, models.length, currentModel, query]);
 
     const handleKeyDown: KeyboardEventHandler<HTMLInputElement> = useCallback((e) => {
         if (matchesShortcut(e, SHORTCUTS.clearEditor)) {
@@ -842,6 +999,13 @@ export const ChatPage: FC = () => {
         setQuery(example);
     }, [useDatabaseSuggestions]);
 
+    const handleStop = useCallback(() => {
+        chatRequest.current?.abort();
+        if (streamingMessage.current != null) dispatch(HoudiniActions.removeChatMessage(streamingMessage.current));
+        streamingMessage.current = null;
+        setLoading(false);
+    }, [dispatch]);
+
     const handleClear = useCallback(() => {
         trackFrontendIntent('chat.cleared', {
             message_count_bucket: countBucket(chats.length),
@@ -917,8 +1081,8 @@ export const ChatPage: FC = () => {
     }, [dispatch, t]);
 
     const disableAll = useMemo(() => {
-        return models.length === 0 || (!modelAvailable && !currentModel);
-    }, [modelAvailable, models.length, currentModel]);
+        return modelType == null || currentModel == null || models.length === 0 || !modelAvailable;
+    }, [modelType, modelAvailable, models.length, currentModel]);
 
     // Initialize chat sessions on mount
     const hasInitialized = useRef(false);
@@ -935,25 +1099,6 @@ export const ChatPage: FC = () => {
             scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
         }
     }, [activeSessionId, autoScrollEnabled, chats.length]);
-
-    const handleAutoScrollChange = useCallback((enabled: boolean) => {
-        if (activeSessionId) {
-            dispatch(HoudiniActions.updateSessionAutoScroll({ sessionId: activeSessionId, autoScrollEnabled: enabled }));
-            void reduxStorePersistor.flush();
-        }
-        trackOptionChanged('chat_auto_scroll', enabled);
-        if (!enabled) {
-            return;
-        }
-        setTimeout(() => {
-            if (scrollContainerRef.current != null) {
-                scrollContainerRef.current.scroll({
-                    top: scrollContainerRef.current.scrollHeight,
-                    behavior: "smooth",
-                });
-            }
-        }, 0);
-    }, [activeSessionId, dispatch]);
 
     // Fetch database-specific suggestions when AI is available and chat is empty
     useEffect(() => {
@@ -992,33 +1137,27 @@ export const ChatPage: FC = () => {
         }
     }, [chats.length, currentModel, getDatabaseSuggestions, modelAvailable, sourceScopeRef]);
 
+    const assistantAvatar = <span className="ce-chat-avatar">{extensions.MetaIcon ?? <img src={logoImage} alt="" />}</span>;
+
     return (
-        <InternalPage routes={[InternalRoutes.Chat]} className="h-full min-w-0" sidebar={<ChatHistorySidebar />}>
-            <div className="flex flex-col w-full h-full gap-2 min-w-[30%]">
-                <div className="flex w-full items-center">
+        <InternalPage routes={[InternalRoutes.Chat]} className="h-full min-w-0 !overflow-hidden" sidebar={__WHODB_EDITION__ === 'ce' ? undefined : <ChatHistorySidebar />} subSidebarWidth="18rem" fullHeight>
+            <div className="ce-chat-page flex h-full min-h-0 w-full min-w-0 flex-col">
+                <div className="ce-chat-toolbar flex min-h-11 w-full items-center border-b border-border px-3 pb-2">
                     <AIProvider
                         {...aiState}
                         onClear={handleClear}
-                        footerAction={(
-                            <label className="flex h-9 items-center gap-2 rounded-md border border-input bg-transparent px-3 text-sm text-foreground shadow-xs dark:bg-input/30">
-                                <Checkbox
-                                    checked={autoScrollEnabled}
-                                    onCheckedChange={checked =>{  handleAutoScrollChange(checked === true); }}
-                                    data-testid="chat-auto-scroll-toggle"
-                                />
-                                <span>{t('autoScroll')}</span>
-                            </label>
-                        )}
+                        disableNewChat
                     />
+                    <Button size="sm" variant="outline" onClick={handleClear} data-testid="chat-new-chat"><WhoDBChatIcon name="plus" />{t('newChat')}</Button>
                 </div>
-                <div className={classNames("flex grow w-full rounded-xl overflow-hidden", {
-                    "hidden": disableAll,
-                })}>
+                <div className="flex min-h-0 w-full flex-1 overflow-hidden">
                     {
                         chats.length === 0
-                        ? <div className="flex flex-col justify-center items-center w-full gap-8" data-testid="chat-empty-state-container">
-                            {/* {extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-16" />} */}
-                            <EmptyState title={t('emptyStateTitle')} description="" icon={<SparklesIcon className="w-16 h-16" data-testid="empty-state-sparkles-icon" />} />
+                        ? disableAll
+                            ? <div className="flex h-full w-full items-center justify-center"><EmptyState title={t('noModelTitle')} description={t('noModelDescription')} icon={<SparklesIcon className="w-16 h-16" data-testid="empty-state-sparkles-icon" />} /></div>
+                            : <div className="ce-chat-empty flex flex-col justify-center items-center w-full gap-8" data-testid="chat-empty-state-container">
+                            <img src={logoImage} alt="" className="ce-chat-empty-logo" />
+                            <div className="ce-chat-empty-heading"><h1>{t('askAboutSource', {source: authProfile?.Database === 'whodb-sample' ? t('sampleSQLite') : (authProfile?.DisplayName ?? authProfile?.Database ?? '')})}</h1><p>{t('emptyStateDescription')}</p></div>
                             {suggestionsLoading ? (
                                 <Loading loadingText={t('loadingSuggestions')} size="sm" />
                             ) : (
@@ -1029,9 +1168,9 @@ export const ChatPage: FC = () => {
                                     {useDatabaseSuggestions && databaseSuggestions.length > 0 && (
                                         <p className="text-xs text-muted-foreground">{t('databaseSpecificSuggestionsLabel')}</p>
                                     )}
-                                    <div className="flex flex-wrap justify-center items-center gap-4" data-testid="chat-examples-list">
+                                    <div className="ce-chat-examples flex flex-wrap justify-center items-center gap-4" data-testid="chat-examples-list">
                                         {
-                                            examples.map((example) => (
+                                            examples.slice(0, 3).map((example) => (
                                                 <Card key={example.description} className="flex flex-col gap-sm w-[250px] h-[120px] p-4 text-sm cursor-pointer hover:opacity-80 transition-all"
                                                     onClick={() =>{  handleSelectExample(example.description); }}>
                                                     {example.icon}
@@ -1043,22 +1182,42 @@ export const ChatPage: FC = () => {
                                 </div>
                             )}
                         </div>
-                        : <div className="h-full w-full py-8 max-h-[calc(75vh-25px)] overflow-y-auto" ref={scrollContainerRef}>
-                            <div className="flex justify-center w-full h-full max-w-full">
-                                <div className="flex w-full flex-col gap-2 max-w-full min-w-0">
+                        : <div className="ce-chat-conversation h-full w-full overflow-y-auto overflow-x-hidden px-3 pt-6 pb-12" ref={scrollContainerRef}>
+                            <div className="flex w-full min-h-full max-w-full justify-center">
+                                <div className="mx-auto flex w-full max-w-4xl min-w-0 flex-col gap-3">
                                     {
-                                        chats.map((chat, i) => {
+                                        displayChats.map((chat, i) => {
+                                            const firstReply = !chat.isUserInput && displayChats[i-1]?.isUserInput;
+                                            const nextUser = firstReply ? displayChats.findIndex((message, index) => index > i && message.isUserInput) : -1;
+                                            const turn = firstReply ? displayChats.slice(i, nextUser < 0 ? undefined : nextUser) : [];
+                                            const recordedSteps = turn.find(message => message.activity?.length)?.activity ?? [];
+                                            const activitySteps = recordedSteps.map(id => ({id, label: id.startsWith('schema:') ? t('readSchema') : id.startsWith('plan:') ? t('preparingQuery') : id.startsWith('query:') ? t('runQuery') : id.startsWith('draft:') ? t('draftChange') : t('retryingQuery')}));
+                                            const activity = activitySteps.length > 0 && <details className="ce-chat-activity"><summary><WhoDBChatIcon name="check-circle" /><strong>{t('activitySteps', {count: activitySteps.length})}</strong>{activitySteps.map(step => <span key={step.id}>{step.label}</span>)}<b>{t('activityDetails')}</b></summary><ol>{activitySteps.map(step => <li key={step.id}>{step.label}</li>)}</ol></details>;
+                                            if (chat.Type === 'activity') return null;
+                                            const priorUserText = displayChats.slice(0, i).reverse().find(message => message.isUserInput)?.Text ?? '';
+                                            const isOntologyQuestion = /ontolog/i.test(priorUserText);
+                                            const isSampleDatabase = authProfile?.Database === 'whodb-sample';
+                                            const sourceName = isSampleDatabase ? t('sampleDatabase') : (authProfile?.Database ?? '');
+                                            const setSuggestedQuery = (suggestion: string) => {
+                                                setQuery(suggestion);
+                                                document.querySelector<HTMLInputElement>('[data-testid="chat-input"]')?.focus();
+                                            };
+                                            const renderScopeCard = () => <div className="ce-chat-error-card ce-chat-scope-card">
+                                                <div className="ce-chat-error-heading"><WhoDBChatIcon name="help" /><div><strong>{t('actionUnavailable')}</strong><span>{t('toolActionNotRun')}</span></div></div>
+                                                <div className="ce-chat-error-body"><p>{chat.Type === 'scope:error' ? t('unsupportedToolRequest') : chat.Text}</p><div className="ce-chat-error-actions"><button type="button" className="ce-chat-primary-action" onClick={() => { setSuggestedQuery(isOntologyQuestion ? t('tableConnectionsPrompt') : t('listTablesPrompt')); }}>{isOntologyQuestion ? t('showTableConnections') : t('tryAvailableTables')}</button><button type="button" onClick={() => { void navigate(InternalRoutes.Graph.path); }}><WhoDBChatIcon name="relation" />{t('openGraph')}</button></div></div>
+                                            </div>;
                                             if (chat.Type === "message" || chat.Type === "text") {
+                                                if (chat.isStreaming && !chat.Text) return null;
                                                 return <div key={`chat-${chat.id}`} className={classNames("flex gap-lg overflow-hidden break-words leading-6 shrink-0 relative group/msg", {
                                                     "self-end ml-3": chat.isUserInput,
                                                     "self-start": !chat.isUserInput,
                                                 })} data-testid={chat.isUserInput ? "user-message" : "system-message"}>
-                                                    {!chat.isUserInput && chats[i-1]?.isUserInput
-                                                        ? extensions.MetaIcon ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />
-                                                        : <div className="pl-4" />}
+                                                    {!chat.isUserInput && displayChats[i-1]?.isUserInput
+                                                        ? assistantAvatar
+                                                        : <div className="ce-chat-avatar-spacer" />}
                                                     {chat.isUserInput ? (
                                                         <div className="flex flex-col items-end">
-                                                            <p className={classNames("py-2 rounded-xl whitespace-pre-wrap bg-muted dark:bg-card px-4", {
+                                                            <p className={classNames("rounded-xl bg-primary/10 px-4 py-2 whitespace-pre-wrap dark:bg-primary/25", {
                                                                 "animate-fade-in": chat.isStreaming,
                                                             })} data-input-message="user">
                                                                 {chat.Text}
@@ -1068,6 +1227,7 @@ export const ChatPage: FC = () => {
                                                         </div>
                                                     ) : (
                                                         <div className="flex flex-col">
+                                                            {activity}
                                                             <div className={classNames("py-2 rounded-xl markdown-content", {
                                                                 "animate-fade-in": chat.isStreaming,
                                                             })} data-input-message="system">
@@ -1080,18 +1240,38 @@ export const ChatPage: FC = () => {
                                                         </div>
                                                     )}
                                                 </div>
+                                            } else if (chat.Type === 'scope:error') {
+                                                return <div key={`chat-${chat.id}`} className="ce-chat-error-row" data-testid="scope-error-message">{firstReply ? assistantAvatar : <div className="ce-chat-avatar-spacer" />}{renderScopeCard()}</div>;
+                                            } else if (chat.Type === 'provider:error' || (chat.Type === 'error' && /connection refused|could not connect/i.test(chat.Text))) {
+                                                return <div key={`chat-${chat.id}`} className="ce-chat-error-row" data-testid="provider-error-message">{firstReply ? assistantAvatar : <div className="ce-chat-avatar-spacer" />}<div className="ce-chat-provider-error"><WhoDBChatIcon name="help" /><div><strong>{t('cantReachProvider', {provider: modelType?.name ?? modelType?.modelType ?? t('modelProvider')})}</strong><span>{chat.Text}</span></div><button type="button" onClick={() => { document.querySelector<HTMLButtonElement>('[data-testid="ai-model-select"]')?.click(); }}>{t('changeModel')}</button><button type="button" className="ce-chat-primary-action" disabled={loading || !priorUserText} onClick={() => { void handleSubmitQuery(priorUserText, chat.id); }}><WhoDBChatIcon name="play" />{t('retry')}</button></div></div>;
+                                            } else if (chat.Type === 'sql:error') {
+                                                const failure = parseSQLFailure(chat.Text);
+                                                if (!failure) return null;
+                                                const badLine = failedSQLLine(failure.sql, failure.error);
+                                                const missingTable = /no such table:\s*["'`]?([\w.]+)/i.exec(failure.error)?.[1];
+                                                const lines = failure.sql.split('\n').map((line, index) => ({id: `${index + 1}:${line}`, number: index + 1, text: line}));
+                                                const editInScratchpad = () => {
+                                                    if (scratchpadPageId) dispatch(ScratchpadActions.addCellToPageAndActivate({pageId: scratchpadPageId, initialQuery: failure.sql}));
+                                                    else dispatch(ScratchpadActions.addPage({name: t('failedQueryPageName'), initialQuery: failure.sql}));
+                                                    void navigate(InternalRoutes.RawExecute.path, {state: {targetPage: scratchpadPageId ?? 'new'}});
+                                                };
+                                                return <div key={`chat-${chat.id}`} className="ce-chat-error-row" data-testid="sql-error-message">{firstReply ? assistantAvatar : <div className="ce-chat-avatar-spacer" />}<div className="ce-chat-error-card ce-chat-sql-error-card"><div className="ce-chat-error-heading"><WhoDBChatIcon name="help" /><div><strong>{t('queryFailed')}</strong><span>{t('queryErrorSource', {source: sourceName})}</span></div><b>{missingTable ? t('noSuchTable') : t('queryError')}</b></div><div className="ce-chat-error-body">{activity}<p>{missingTable ? t('missingTableExplanation', {table: missingTable}) : failure.error}</p><pre className="ce-chat-failed-sql">{lines.map(line => <span key={line.id} className={badLine === line.number - 1 ? 'ce-chat-failed-line' : undefined}><small>{line.number}</small>{line.text}</span>)}</pre><div className="ce-chat-error-actions"><button type="button" className="ce-chat-primary-action" onClick={() => { setSuggestedQuery(isSampleDatabase ? t('countOrdersByUserPrompt') : t('listTablesPrompt')); }}>{isSampleDatabase ? t('countOrdersByUserInstead') : t('tryAvailableTables')}</button><button type="button" disabled={!supportsScratchpad} onClick={editInScratchpad}><WhoDBChatIcon name="code" />{t('editInScratchpad')}</button></div></div></div></div>;
                                             } else if (chat.Type === "error") {
+                                                const errorText = chat.Text.replace(/^ERROR:\s*/i, "");
+                                                const unsupportedAction = errorText === t('unsupportedToolRequest');
                                                 return (
                                                     <div key={`chat-${chat.id}`} className="flex gap-2 overflow-hidden break-words leading-6 shrink-0 pt-6 relative self-start" data-testid="error-message">
-                                                        {!chat.isUserInput && chats[i-1]?.isUserInput
-                                                            ? extensions.MetaIcon ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />
+                                                        {!chat.isUserInput && displayChats[i-1]?.isUserInput
+                                                            ? assistantAvatar
                                                             : null}
-                                                        <ErrorState error={chat.Text.replace(/^ERROR:\s*/i, "")} />
+                                                        {unsupportedAction
+                                                            ? renderScopeCard()
+                                                            : <ErrorState error={errorText} />}
                                                     </div>
                                                 );
                                             } else if (featureFlags.dataVisualization && (chat.Type === "sql:pie-chart" || chat.Type === "sql:line-chart")) {
                                                 return <div key={`chat-${chat.id}`} className={cn("flex gap-lg w-full max-w-full min-w-0 pt-4 relative", ph.mask)} data-testid="visual-message">
-                                                    {!chat.isUserInput && chats[i-1]?.isUserInput && (extensions.MetaIcon ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />)}
+                                                    {!chat.isUserInput && displayChats[i-1]?.isUserInput && assistantAvatar}
                                                     {/* @ts-ignore */}
                                                     {chat.Type === "sql:pie-chart" && PieChart && <PieChart columns={chat.Result?.Columns?.map(col => col.Name) ?? []} data={chat.Result?.Rows ?? []} text={chat.Text} />}
                                                     {/* @ts-ignore */}
@@ -1100,44 +1280,15 @@ export const ChatPage: FC = () => {
                                             } else if (chat.RequiresConfirmation) {
                                                 // Show confirmation UI inline
                                                 const isExecuting = executingConfirmedId === chat.id;
-                                                const showQuery = showQueryForId === chat.id;
-
                                                 return <div key={`chat-${chat.id}`} className="flex gap-lg w-full max-w-full min-w-0 pt-4 relative" data-testid="confirmation-message">
-                                                    {!chat.isUserInput && chats[i-1]?.isUserInput
-                                                        ? (extensions.MetaIcon ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />)
-                                                        : <div className="pl-4" />}
-                                                    <div className="flex flex-col gap-3 w-[calc(100%-50px)] max-w-full min-w-0">
-                                                        <Alert className="w-full">
-                                                            <SparklesIcon className="w-4 h-4" />
-                                                            <AlertTitle>{t('confirmExecutionTitle') || 'Confirm Execution'}</AlertTitle>
-                                                            <AlertDescription>
-                                                                {t('confirmExecutionDescription') || 'This operation will modify your database. Review and confirm to proceed.'}
-                                                            </AlertDescription>
-                                                        </Alert>
-
-                                                        {/* SQL Query Toggle */}
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={() => {
-                                                                trackFrontendIntent('chat.sql_confirmation_query_toggled', {
-                                                                    open: !showQuery,
-                                                                    operation_type: chat.Type,
-                                                                });
-                                                                setShowQueryForId(showQuery ? null : (chat.id ?? null));
-                                                            }}
-                                                            className="w-fit"
-                                                        >
-                                                            <CodeBracketIcon className="w-4 h-4 mr-2" />
-                                                            {showQuery ? t('hideQuery') || 'Hide Query' : t('showQuery') || 'Show Query'}
-                                                        </Button>
-
-                                                        {/* SQL Query Display */}
-                                                        {showQuery && (
-                                                            <div className="relative w-full rounded-lg overflow-hidden">
-                                                                <div className="h-[300px]">
-                                                                    <CodeEditor value={chat.Text} language="sql" />
-                                                                </div>
+                                                    {!chat.isUserInput && displayChats[i-1]?.isUserInput
+                                                        ? assistantAvatar
+                                                        : <div className="ce-chat-avatar-spacer" />}
+                                                    <div className="ce-chat-change-card flex flex-col gap-3 w-[calc(100%-50px)] max-w-full min-w-0">
+                                                        {activity}
+                                                        <div className="ce-chat-change-heading"><WhoDBChatIcon name="code" /><div><strong>{t('reviewChange')}</strong><span>{t('changeNeedsConfirmation')}</span></div></div>
+                                                        <div className="ce-chat-change-sql relative w-full rounded-lg overflow-hidden">
+                                                                <code>{chat.Text}</code>
                                                                 <button
                                                                     onClick={() => {
                                                                         void copyToClipboard(chat.Text).then(success => {
@@ -1149,76 +1300,79 @@ export const ChatPage: FC = () => {
                                                                     }}
                                                                     className="absolute top-2 right-2 flex items-center gap-1 px-1.5 py-0.5 rounded text-xs text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-100 bg-neutral-200 dark:bg-neutral-700 hover:bg-neutral-300 dark:hover:bg-neutral-600 transition-colors z-10"
                                                                 >
-                                                                    {copiedSqlId === chat.id
-                                                                        ? <><CheckCircleIcon className="w-3.5 h-3.5 text-green-500" /> <span className="text-green-500">Copied!</span></>
-                                                                        : <><DocumentDuplicateIcon className="w-3.5 h-3.5" /> <span>Copy</span></>
-                                                                    }
+                                                                    <WhoDBChatIcon name={copiedSqlId === chat.id ? 'check-circle' : 'copy'} />
+                                                                    <span>{copiedSqlId === chat.id ? t('copied') : t('copy')}</span>
                                                                 </button>
-                                                            </div>
-                                                        )}
+                                                        </div>
 
                                                         {/* Action Buttons */}
-                                                        <div className="flex gap-2">
+                                                        <div className="flex gap-2 justify-end">
                                                             <Button
                                                                 variant="outline"
                                                                 onClick={() => { if (chat.id) handleCancelSQL(chat.id); }}
                                                                 disabled={isExecuting}
                                                                 size="sm"
                                                             >
-                                                                {t('no') || 'No'}
+                                                                {t('dontRun')}
                                                             </Button>
                                                             <Button
                                                                 onClick={() => { if (chat.id) void handleConfirmSQL(chat.id, chat.Text, chat.Type); }}
                                                                 disabled={isExecuting || !supportsScripts}
                                                                 size="sm"
                                                             >
-                                                                {isExecuting ? (t('executing') || 'Executing...') : (t('yes') || 'Yes')}
+                                                                {isExecuting && <Spinner />}{isExecuting ? t('running') : t('runStatement')}
                                                             </Button>
                                                         </div>
                                                     </div>
                                                 </div>
                                             }
                                             return <div key={`chat-${chat.id}`} className="flex gap-lg w-full max-w-full min-w-0 pt-4 relative" data-testid="table-message">
-                                                {!chat.isUserInput && chats[i-1]?.isUserInput && (extensions.MetaIcon ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />)}
-                                                <TablePreview type={chat.Type} text={chat.Text} data={chat.Result} containerWidth={containerWidth} />
+                                                {firstReply ? assistantAvatar : <div className="ce-chat-avatar-spacer" />}
+                                                <div className="flex min-w-0 flex-1 flex-col gap-2">{activity}<TablePreview type={chat.Type} text={chat.Text} data={chat.Result} containerWidth={containerWidth} /></div>
                                             </div>
                                         })
                                     }
-                                    { loading &&  <div className="flex w-full mt-4">
-                                        <Loading loadingText={loadingPhraseRef.current} size="sm" />
-                                    </div> }
                                 </div>
                             </div>
                         </div>
                     }
                 </div>
-                {
-                    (models.length === 0 || (!modelAvailable && !currentModel)) &&
-                    <EmptyState title={t('noModelTitle')} description={t('noModelDescription')} icon={<SparklesIcon className="w-16 h-16" data-testid="empty-state-sparkles-icon" />} />
-                }
-                <div className={classNames("flex justify-between items-center gap-2", {
+                {loading && <div className="ce-chat-pinned-progress">
+                    <div className="ce-chat-thinking" role="status">
+                        <div className="ce-chat-thinking-heading"><div><img src={logoImage} alt="" className="ce-chat-working-avatar" /><strong>{t('workingOnIt')}</strong><span className="ce-chat-thinking-count">{progressSteps.filter(item => item.status === 'completed').length}/{progressSteps.length || 1}</span></div><span>{t('runOnSource', {source: authProfile?.Database === 'whodb-sample' ? t('sampleDatabase') : (authProfile?.Database ?? '')})}</span></div>
+                        <div className="ce-chat-thinking-list">
+                            {(progressSteps.length ? progressSteps : [{id: 'thinking', step: 'thinking', status: 'started'}]).map(item => {
+                                const label = item.step === 'schema' ? t('readingSchema') : item.step === 'plan' ? t('preparingQuery') : item.step === 'query' ? t('runQuery') : item.step === 'draft' ? t('draftChange') : item.step === 'retry' ? t('retryingQuery') : t('thinking');
+                                return <div key={item.id} className="ce-chat-thinking-step"><span className="ce-chat-step-icon">{item.status === 'completed' ? <WhoDBChatIcon name="check-circle" /> : <Spinner />}</span><span>{label}</span></div>;
+                            })}
+                        </div>
+                    </div>
+                    <p className="ce-chat-stop-hint">{t('pressStopToCancel')}</p>
+                </div>}
+                <div className={classNames("ce-chat-composer flex shrink-0 items-center gap-2 border-t border-border px-3 py-4", {
                     "opacity-80": disableChat,
                     "opacity-10": disableAll,
                 })}>
-                    <Input
-                        value={query}
-                        onChange={e =>{  setQuery(e.target.value); }}
-                        placeholder={t('placeholder')}
-                        onSubmit={() => { void handleSubmitQuery(); }}
-                        disabled={disableAll}
-                        onKeyDown={handleKeyDown}
-                        onKeyUp={handleKeyUp}
-                        autoComplete="off"
-                        data-testid="chat-input"
-                    />
-                    <Tip className="w-fit">
-                        <Button tabIndex={0} onClick={loading ? undefined : () => { void handleSubmitQuery(); }} className={cn("rounded-full", {
-                            "opacity-50": loading,
-                        })} disabled={disableChat} variant={disableChat ? "secondary" : undefined} data-testid="icon-button" aria-label={t('sendMessage')}>
-                            <ArrowUpCircleIcon className="w-8 h-8" aria-hidden="true" />
-                        </Button>
-                        <p>{t('sendMessage')}</p>
-                    </Tip>
+                    <div className="mx-auto flex w-full max-w-4xl items-center gap-2 rounded-lg border border-border bg-card p-1.5 shadow-sm">
+                        <Input
+                            value={query}
+                            onChange={e =>{  setQuery(e.target.value); }}
+                            placeholder={t('placeholder')}
+                            onSubmit={() => { void handleSubmitQuery(); }}
+                            disabled={disableAll}
+                            onKeyDown={handleKeyDown}
+                            onKeyUp={handleKeyUp}
+                            autoComplete="off"
+                            data-testid="chat-input"
+                            className="!border-0 !bg-transparent !shadow-none !ring-0"
+                        />
+                        <Tip className="w-fit">
+                            <Button tabIndex={0} onClick={loading ? handleStop : () => { void handleSubmitQuery(); }} className="size-9 rounded-md p-0" disabled={disableChat && !loading} variant={disableChat && !loading ? "secondary" : undefined} data-testid="icon-button" aria-label={loading ? t('stop') : t('sendMessage')}>
+                                {loading ? <span className="size-2 rounded-sm bg-current" /> : <WhoDBChatIcon name="send" className="size-4" />}
+                            </Button>
+                            <p>{loading ? t('stop') : t('sendMessage')}</p>
+                        </Tip>
+                    </div>
                 </div>
             </div>
         </InternalPage>

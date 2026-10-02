@@ -38,32 +38,24 @@ export const whereMethods = {
 
         console.log(`Where condition mode detected: ${isSheetMode ? "sheet" : isPopoverMode ? "popover" : "unknown"}`);
 
-        for (const [key, operator, value] of fieldArray) {
+        for (const [index, [key, operator, value]] of fieldArray.entries()) {
             console.log(`Adding condition: ${key} ${operator} ${value}`);
 
             if (isSheetMode) {
-                if ((await this.page.locator('[data-testid="sheet-field-key-0"]').count()) > 0) {
-                    await this.page.locator('[data-testid="sheet-field-key-0"]').click();
-                } else if ((await this.page.locator('[data-testid="sheet-field-key"]').count()) > 0) {
-                    await this.page.locator('[data-testid="sheet-field-key"]').click();
+                if (index > 0 || (await this.page.locator('[data-testid="sheet-field-value-0"]').inputValue())) {
+                    await this.page.locator('[data-testid="add-sheet-filter-button"]').click();
                 }
+                const row = (await this.page.locator('[data-testid^="sheet-filter-row-"]').count()) - 1;
+                await this.page.locator(`[data-testid="sheet-field-key-${row}"]`).click();
                 await this.page.locator(`[data-value="${key}"]`).click();
 
-                if ((await this.page.locator('[data-testid="sheet-field-operator-0"]').count()) > 0) {
-                    await this.page.locator('[data-testid="sheet-field-operator-0"]').click();
-                } else if ((await this.page.locator('[data-testid="sheet-field-operator"]').count()) > 0) {
-                    await this.page.locator('[data-testid="sheet-field-operator"]').click();
-                }
+                await this.page.locator(`[data-testid="sheet-field-operator-${row}"]`).click();
                 await this.page.locator(`[data-value="${operator}"]`).click();
 
-                const sheetValueLocator = (await this.page.locator('[data-testid="sheet-field-value-0"]').count()) > 0
-                    ? this.page.locator('[data-testid="sheet-field-value-0"]')
-                    : this.page.locator('[data-testid="sheet-field-value"]');
+                const sheetValueLocator = this.page.locator(`[data-testid="sheet-field-value-${row}"]`);
                 await sheetValueLocator.clear();
                 await sheetValueLocator.fill(value);
                 await expect(sheetValueLocator).toHaveValue(value);
-
-                await this.page.locator('[role="dialog"] [data-testid="add-conditions-button"]').click();
             } else {
                 await this.page.locator('[data-testid="field-key"]').first().click();
                 await this.page.locator(`[data-value="${key}"]`).click();
@@ -86,11 +78,7 @@ export const whereMethods = {
         }
 
         if (isSheetMode) {
-            if ((await this.page.locator('[role="dialog"] button[aria-label="Close"]').count()) > 0) {
-                await this.page.locator('[role="dialog"] button[aria-label="Close"]').click();
-            } else {
-                await this.page.keyboard.press("Escape");
-            }
+            await this.page.locator('[data-testid="apply-filters-button"]').click();
             // Required: dialog close animation
             await this.page.waitForTimeout(100);
             await this.page.locator('[role="dialog"]').waitFor({ state: "hidden", timeout: TIMEOUT.ELEMENT });
@@ -113,6 +101,9 @@ export const whereMethods = {
      * @returns {Promise<string>}
      */
     async getWhereConditionMode() {
+        if ((await this.page.locator('[data-testid="where-button"]').getAttribute('data-sheet-only')) === 'true') {
+            return "sheet";
+        }
         const hasSheetFields = (await this.page.locator('[data-testid*="sheet-field"]').count()) > 0;
         const hasPopoverBadges = (await this.page.locator('[data-testid="where-condition-badge"]').count()) > 0;
         const hasFieldKey = (await this.page.locator('[data-testid="field-key"]').count()) > 0;
@@ -203,13 +194,13 @@ export const whereMethods = {
         } else {
             await this.page.locator('[data-testid="where-button"]').click();
 
-            const deleteBtn = this.page.locator(`[data-testid="delete-existing-filter-${index}"]`);
+            const deleteBtn = this.page.locator(`[data-testid="remove-sheet-filter-${index}"]`);
             await deleteBtn.waitFor({ state: "visible", timeout: TIMEOUT.ELEMENT });
             await deleteBtn.click();
             // Required: filter removal animation
             await this.page.waitForTimeout(200);
 
-            await this.page.keyboard.press("Escape");
+            await this.page.locator('[data-testid="apply-filters-button"]').click();
             // Required: dialog close animation
             await this.page.waitForTimeout(100);
             const dialog = this.page.locator('[role="dialog"]');
@@ -284,7 +275,7 @@ export const whereMethods = {
      * Save changes in a sheet
      */
     async saveSheetChanges() {
-        await this.page.locator('[role="dialog"]').locator("button", { hasText: /^(Add|Update|Add to Page|Add Condition|Save Changes)$/ }).click();
+        await this.page.locator('[data-testid="apply-filters-button"]').click();
     },
 
     /**

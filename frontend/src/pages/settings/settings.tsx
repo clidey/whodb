@@ -20,7 +20,6 @@ import {InternalPage} from "../../components/page";
 import {InternalRoutes, type IInternalRoute} from "../../config/routes";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {SettingsActions} from "../../store/settings";
-import {getAppName} from "@/config/features";
 import {useTranslation} from "@/hooks/use-translation";
 import {
     Input,
@@ -30,7 +29,6 @@ import {
     SelectItem,
     SelectTrigger,
     SelectValue,
-    Separator,
     Switch,
     Tabs,
     TabsContent,
@@ -43,10 +41,14 @@ import {ExternalLink} from "../../utils/external-links";
 import {usePageSize} from "../../hooks/use-page-size";
 import {getComponent} from "../../config/component-registry";
 import {trackOptionChanged} from "@/config/frontend-analytics";
+import {useNavigate, useSearchParams} from 'react-router-dom';
+import {WhoDBChatIcon} from '../../components/whodb-chat-icon';
 
 export const SettingsPage: FC = () => {
     const {t} = useTranslation('pages/settings');
-    const appName = getAppName();
+    const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const activeTab = searchParams.get('tab') ?? 'appearance';
     const dispatch = useAppDispatch();
     const metricsEnabled = useAppSelector(state => state.settings.metricsEnabled);
     const storageUnitView = useAppSelector(state => state.settings.storageUnitView);
@@ -147,41 +149,46 @@ export const SettingsPage: FC = () => {
     }, [dispatch]);
 
     const handleTabChange = useCallback((tab: string) => {
+        setSearchParams({tab});
         trackOptionChanged('settings_tab', tab, {
             tab,
         });
-    }, []);
+    }, [setSearchParams]);
 
     const hasIntegrations = !!getComponent('bridge-driver-panel');
 
     return (
         <InternalPage routes={[InternalRoutes.Settings as IInternalRoute]}>
-            <div className="flex flex-col items-center w-full max-w-2xl mx-auto py-10 gap-8">
-                <Tabs defaultValue="appearance" className="w-full" onValueChange={handleTabChange}>
-                    <TabsList className="w-full">
-                        <TabsTrigger value="appearance">{t('tabAppearance')}</TabsTrigger>
-                        <TabsTrigger value="behavior">{t('tabBehavior')}</TabsTrigger>
+            <div className="ce-settings-page w-full">
+                <Tabs value={activeTab} className="ce-settings-tabs" onValueChange={handleTabChange}>
+                    <TabsList className="ce-settings-rail">
+                        <div className="ce-settings-rail-heading"><h1>{t('settingsTitle')}</h1><p>{t('savedInBrowser')}</p></div>
+                        <TabsTrigger value="appearance"><WhoDBChatIcon name="grid" />{t('tabAppearance')}</TabsTrigger>
+                        <TabsTrigger value="behavior"><WhoDBChatIcon name="sliders" />{t('tabBehavior')}</TabsTrigger>
                         {hasIntegrations && <TabsTrigger value="integrations">{t('tabIntegrations')}</TabsTrigger>}
-                        <TabsTrigger value="privacy">{t('tabPrivacy')}</TabsTrigger>
+                        <TabsTrigger value="privacy"><WhoDBChatIcon name="secret" />{t('tabPrivacy')}</TabsTrigger>
+                        <button type="button" onClick={() => void navigate(InternalRoutes.ContactUs?.path ?? '/contact-us')}><WhoDBChatIcon name="mail" />{t('contact')}</button>
                     </TabsList>
 
-                    <TabsContent value="appearance" className="flex flex-col gap-xl pt-6">
+                    <TabsContent value="appearance" className="ce-settings-panel">
+                        <div className="ce-settings-panel-heading"><h2>{t('tabAppearance')}</h2><p>{t('appearanceDescription')}</p></div>
+                        <p className="ce-settings-section-label">{t('appearanceSection')}</p>
                         <div className="flex justify-between">
-                            <Label>{t('storageUnitView')}</Label>
+                            <div className="ce-settings-row-copy"><Label htmlFor="storage-unit-view">{t('tableView')}</Label><p>{t('tableViewDescription')}</p></div>
                             <Select value={storageUnitView} onValueChange={handleStorageUnitViewToggle}>
-                                <SelectTrigger id="storage-unit-view" className="w-[135px]">
+                                <SelectTrigger id="storage-unit-view" className="w-[165px]">
                                     <SelectValue placeholder={t('selectView')} />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="list" data-value="list">{t('list')}</SelectItem>
-                                    <SelectItem value="card" data-value="card">{t('card')}</SelectItem>
+                                    <SelectItem value="card" data-value="card">{t('cards')}</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
                         <div className="flex justify-between">
-                            <Label>{t('fontSize')}</Label>
+                            <div className="ce-settings-row-copy"><Label htmlFor="font-size">{t('textSize')}</Label><p>{t('textSizeDescription')}</p></div>
                             <Select value={fontSize} onValueChange={handleFontSizeChange}>
-                                <SelectTrigger id="font-size" className="w-[135px]">
+                                <SelectTrigger id="font-size" className="w-[165px]">
                                     <SelectValue placeholder={t('selectFontSize')} />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -192,23 +199,9 @@ export const SettingsPage: FC = () => {
                             </Select>
                         </div>
                         <div className="flex justify-between">
-                            <Label>{t('borderRadius')}</Label>
-                            <Select value={borderRadius} onValueChange={handleBorderRadiusChange}>
-                                <SelectTrigger id="border-radius" className="w-[135px]">
-                                    <SelectValue placeholder={t('selectBorderRadius')} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="none" data-value="none">{t('none')}</SelectItem>
-                                    <SelectItem value="small" data-value="small">{t('small')}</SelectItem>
-                                    <SelectItem value="medium" data-value="medium">{t('medium')}</SelectItem>
-                                    <SelectItem value="large" data-value="large">{t('large')}</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="flex justify-between">
-                            <Label>{t('spacing')}</Label>
+                            <div className="ce-settings-row-copy"><Label htmlFor="spacing">{t('density')}</Label><p>{t('densityDescription')}</p></div>
                             <Select value={spacing} onValueChange={handleSpacingChange}>
-                                <SelectTrigger id="spacing" className="w-[135px]">
+                                <SelectTrigger id="spacing" className="w-[165px]">
                                     <SelectValue placeholder={t('selectSpacing')} />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -219,28 +212,27 @@ export const SettingsPage: FC = () => {
                             </Select>
                         </div>
                         <div className="flex justify-between">
-                            <Label>{disableAnimations ? t('disableAnimationsEnabled') : t('disableAnimationsDisabled')}</Label>
-                            <Switch checked={disableAnimations} onCheckedChange={handleDisableAnimationsToggle}/>
+                            <div className="ce-settings-row-copy"><Label htmlFor="settings-animations">{t('animations')}</Label><p>{t('animationsDescription')}</p></div>
+                            <Switch id="settings-animations" checked={!disableAnimations} onCheckedChange={enabled => { handleDisableAnimationsToggle(!enabled); }}/>
                         </div>
-                        <Separator className="my-2" />
-                        <div className="flex flex-col gap-sm">
-                            <p className="text-sm font-medium text-muted-foreground">{t('dataDisplayTitle')}</p>
+                        <p className="ce-settings-section-label">{t('dataDisplayTitle')}</p>
+                        <div className="flex justify-between">
+                            <div className="ce-settings-row-copy"><Label htmlFor="settings-local-dates">{t('localDates')}</Label><p>{t('localDatesDescription')}</p></div>
+                            <Switch id="settings-local-dates" checked={formatDatesLocale} onCheckedChange={handleFormatDatesLocaleToggle}/>
                         </div>
                         <div className="flex justify-between">
-                            <Label>{t('formatDates')}</Label>
-                            <Switch checked={formatDatesLocale} onCheckedChange={handleFormatDatesLocaleToggle}/>
-                        </div>
-                        <div className="flex justify-between">
-                            <Label>{t('formatBooleans')}</Label>
-                            <Switch checked={formatBooleansReadable} onCheckedChange={handleFormatBooleansReadableToggle}/>
+                            <div className="ce-settings-row-copy"><Label htmlFor="settings-readable-booleans">{t('readableBooleans')}</Label><p>{t('readableBooleansDescription')}</p></div>
+                            <Switch id="settings-readable-booleans" checked={formatBooleansReadable} onCheckedChange={handleFormatBooleansReadableToggle}/>
                         </div>
                     </TabsContent>
 
-                    <TabsContent value="behavior" className="flex flex-col gap-xl pt-6">
+                    <TabsContent value="behavior" className="ce-settings-panel">
+                        <div className="ce-settings-panel-heading"><h2>{t('tabBehavior')}</h2><p>{t('behaviorDescription')}</p></div>
+                        <p className="ce-settings-section-label">{t('gridSection')}</p>
                         <div className="flex justify-between">
-                            <Label>{t('whereConditionMode')}</Label>
+                            <div className="ce-settings-row-copy"><Label htmlFor="where-condition-mode">{t('whereConditionMode')}</Label><p>{t('whereConditionModeDescription')}</p></div>
                             <Select value={whereConditionMode} onValueChange={handleWhereConditionModeChange}>
-                                <SelectTrigger id="where-condition-mode" className="w-[135px]">
+                                <SelectTrigger id="where-condition-mode" className="w-[165px]">
                                     <SelectValue placeholder={t('selectMode')} />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -250,13 +242,13 @@ export const SettingsPage: FC = () => {
                             </Select>
                         </div>
                         <div className="flex justify-between">
-                            <Label>{t('defaultPageSize')}</Label>
+                            <div className="ce-settings-row-copy"><Label htmlFor="default-page-size">{t('defaultPageSize')}</Label><p>{t('defaultPageSizeDescription')}</p></div>
                             <div className="flex gap-2">
                                 <Select
                                     value={isCustomPageSize ? "custom" : pageSizeString}
                                     onValueChange={handleDefaultPageSizeChange}
                                 >
-                                    <SelectTrigger id="default-page-size" className="w-[135px]">
+                                    <SelectTrigger id="default-page-size" className="w-[165px]">
                                         <SelectValue placeholder={t('selectPageSize')}/>
                                     </SelectTrigger>
                                     <SelectContent>
@@ -287,10 +279,25 @@ export const SettingsPage: FC = () => {
                                 )}
                             </div>
                         </div>
+                        <p className="ce-settings-section-label">{t('generalSection')}</p>
                         <div className="flex justify-between">
-                            <Label>{t('databaseSchemaTerminology')}</Label>
+                            <div className="ce-settings-row-copy"><Label htmlFor="border-radius">{t('cornerRadius')}</Label><p>{t('cornerRadiusDescription')}</p></div>
+                            <Select value={borderRadius} onValueChange={handleBorderRadiusChange}>
+                                <SelectTrigger id="border-radius" className="w-[165px]">
+                                    <SelectValue placeholder={t('selectBorderRadius')} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none" data-value="none">{t('none')}</SelectItem>
+                                    <SelectItem value="small" data-value="small">{t('small')}</SelectItem>
+                                    <SelectItem value="medium" data-value="medium">{t('medium')}</SelectItem>
+                                    <SelectItem value="large" data-value="large">{t('large')}</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="flex justify-between">
+                            <div className="ce-settings-row-copy"><Label htmlFor="database-schema-terminology">{t('databaseSchemaTerminology')}</Label><p>{t('databaseSchemaTerminologyDescription')}</p></div>
                             <Select value={databaseSchemaTerminology} onValueChange={handleDatabaseSchemaTerminologyChange}>
-                                <SelectTrigger id="database-schema-terminology" className="w-[135px]">
+                                <SelectTrigger id="database-schema-terminology" className="w-[165px]">
                                     <SelectValue placeholder={t('selectDatabaseSchemaTerminology')} />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -300,7 +307,7 @@ export const SettingsPage: FC = () => {
                             </Select>
                         </div>
                         <div className="flex justify-between">
-                            <Label>{t('language')}</Label>
+                            <div className="ce-settings-row-copy"><Label htmlFor="language">{t('language')}</Label><p>{t('languageDescription')}</p></div>
                             <Select value={language} onValueChange={handleLanguageChange}>
                                 <SelectTrigger id="language" className="w-[200px]">
                                     <SelectValue placeholder={t('selectLanguage')} />
@@ -315,7 +322,7 @@ export const SettingsPage: FC = () => {
                     </TabsContent>
 
                     {hasIntegrations && (
-                        <TabsContent value="integrations" className="flex flex-col gap-xl pt-6">
+                        <TabsContent value="integrations" className="ce-settings-panel">
                             {(() => {
                                 const BridgeDriverPanel = getComponent('bridge-driver-panel');
                                 if (!BridgeDriverPanel) return null;
@@ -328,27 +335,20 @@ export const SettingsPage: FC = () => {
                         </TabsContent>
                     )}
 
-                    <TabsContent value="privacy" className="flex flex-col gap-xl pt-6">
-                        <div className="flex flex-col gap-4">
-                            <h3 className="text-base">
-                                {t('telemetryDescription', { appName })}&nbsp;
-                                {t('dataCollectionDetails', {
-                                    privacyPolicyLink: <ExternalLink
-                                        href={"https://whodb.com/privacy"}
-                                        className={"underline text-primary"}>{t('privacyPolicy')}</ExternalLink>
-                                })}
-                                <br/>
-                                <br/>
-                                {t('posthogInfo', { appName })}&nbsp;
-                                {t('sensitiveDataInfo')}
-                                <br/>
-                                <br/>
-                                {t('contactUsInfo')}
-                            </h3>
-                            <br/>
+                    <TabsContent value="privacy" className="ce-settings-panel">
+                        <div className="ce-settings-panel-heading"><h2>{t('tabPrivacy')}</h2><p>{t('privacyDescription')}</p></div>
+                        <p className="ce-settings-section-label">{t('usageDataSection')}</p>
+                        <div className="ce-settings-privacy-card">
                             <div className="flex justify-between">
-                                <Label>{metricsEnabled ? t('enableTelemetry') : t('disableTelemetry')}</Label>
-                                <Switch checked={metricsEnabled} onCheckedChange={handleMetricsToggle}/>
+                                <div className="ce-settings-row-copy"><Label htmlFor="settings-metrics">{t('anonymousUsageData')}</Label><p>{t('anonymousUsageDataDescription')}</p></div>
+                                <Switch id="settings-metrics" checked={metricsEnabled} onCheckedChange={handleMetricsToggle}/>
+                            </div>
+                        </div>
+                        <p className="ce-settings-section-label">{t('moreSection')}</p>
+                        <div className="ce-settings-privacy-card">
+                            <div className="flex justify-between">
+                                <div className="ce-settings-row-copy"><span className="ce-settings-row-title">{t('privacyPolicy')}</span><p>{t('privacyPolicyDescription')}</p></div>
+                                <ExternalLink href="https://whodb.com/privacy" className="ce-settings-link-button">{t('open')}<WhoDBChatIcon name="chevron-right" /></ExternalLink>
                             </div>
                         </div>
                     </TabsContent>

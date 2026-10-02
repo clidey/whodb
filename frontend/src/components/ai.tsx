@@ -49,22 +49,18 @@ import { AIModelsActions, availableExternalModelTypes, type IAIModelType } from 
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { findAIProviderCatalogEntry } from "../config/ai-provider-catalog";
 import { ensureModelsArray, ensureModelTypesArray } from "../utils/ai-models-helper";
-import { ExternalLink } from "../utils/external-links";
 import { v4 as uuidv4 } from 'uuid';
 import { useTranslation } from "../hooks/use-translation";
 import { getAIProviderOverrides } from "../config/ai-provider-registry";
 import { persistAISelection } from "../config/ai-persistence";
 import {
     ArrowPathIcon,
-    ArrowTopRightOnSquareIcon,
-    CheckCircleIcon,
     ChevronDownIcon,
     ExclamationCircleIcon,
     LockClosedIcon,
     PlusCircleIcon,
     SparklesIcon,
-    TrashIcon,
-    XMarkIcon
+    TrashIcon
 } from "./heroicons";
 import { Icons } from "./icons";
 
@@ -301,6 +297,13 @@ export const useAI = () => {
         dispatch(AIModelsActions.setModelTypes(finalModelTypes));
 
         if (waitingForPlatform) {
+            return;
+        }
+
+        if (finalModelTypes.length === 0) {
+            dispatch(AIModelsActions.setCurrentModelType({ id: "" }));
+            dispatch(AIModelsActions.setModels([]));
+            dispatch(AIModelsActions.setCurrentModel(undefined));
             return;
         }
 
@@ -580,10 +583,6 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
         });
     }, [dispatch, externalModelName, externalModelToken, externalModelType, getAIModels, handleAIModelsError, markProviderAvailable, markProviderUnavailable, t]);
 
-    const handleOpenDocs = useCallback(() => {
-        window.open("https://docs.whodb.com/ai/introduction", "_blank");
-    }, []);
-
     const handleClear = useCallback(() => {
         onClear?.();
     }, [onClear]);
@@ -603,40 +602,17 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
 
     return <div className="flex w-full min-w-0 flex-col gap-4" data-testid="ai-provider">
         <Sheet open={addExternalModel} onOpenChange={setAddExternalModel}>
-            <SheetContent className={cn("max-w-md mx-auto w-full flex flex-col gap-4", {
-                "px-8 py-10": !newUIEnabled,
-            })} footer={
-                <SheetFooter className="p-0">
-                    <div className="text-xs text-neutral-500 flex flex-col gap-2">
-                        <div className="font-bold">{t('localSetup')}</div>
-                        <div>
-                            {t('ollamaSetupText').split('<0>')[0]}
-                            <ExternalLink href="https://ollama.com/" className="font-semibold underline text-primary hover:text-primary/80">Ollama</ExternalLink>
-                            {t('ollamaSetupText').split('</0>')[1]}
-                        </div>
-                        <div className="font-semibold">{t('downloadingModel')}</div>
-                        <div>
-                            {t('ollamaDownloadText').split('<0>')[0]}
-                            <ExternalLink href="https://ollama.com/library/llama3.1" className="font-semibold underline text-primary hover:text-primary/80">Llama3.1 8b</ExternalLink>
-                            {t('ollamaDownloadText').split('</0>')[1]}
-                        </div>
-                        <div className="font-mono bg-neutral-100 dark:bg-neutral-900 rounded px-2 py-1 mb-1">
-                            {t('ollamaRunCommand')}
-                        </div>
-                        <div>
-                            {t('ollamaDocsText')}
-                        </div>
-                        <Button variant="secondary" className="w-full mt-2" onClick={handleOpenDocs}>
-                            {t('docs')}
-                            <ArrowTopRightOnSquareIcon className="w-4 h-4" />
-                        </Button>
-                    </div>
+            <SheetContent className="ce-provider-sheet max-w-md w-full flex flex-col gap-4" footer={
+                <SheetFooter className="ce-provider-sheet-footer">
+                    <span>{t('storedLocally')}</span>
+                    <Button onClick={handleCloseExternalModel} data-testid="external-model-cancel" variant="outline">{t('cancel')}</Button>
+                    <Button onClick={handleExternalModelSubmit} disabled={getAIModelsLoading} data-testid="external-model-submit">{t('addProvider')}</Button>
                 </SheetFooter>
             }>
                 <div className="flex flex-col gap-4">
-                    <div className="text-lg font-semibold mb-2">{t('addExternalModel')}</div>
+                    <div className="ce-provider-sheet-heading"><small>{t('providerEyebrow')}</small><h2>{t('addProvider')}</h2></div>
                     <div className="flex flex-col gap-2">
-                        <Label>{t('modelType')}</Label>
+                        <Label>{t('providerLabel')}</Label>
                         <Select
                             value={externalModelType}
                             onValueChange={handleExternalModelChange}
@@ -657,37 +633,23 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                         </Select>
                     </div>
                     <div className="flex flex-col gap-2">
-                        <Label>{t('name')}</Label>
+                        <Label>{t('providerName')}</Label>
                         <Input
                             value={externalModelName ?? ""}
                             onChange={e =>{  setExternalModelName(e.target.value); }}
                             placeholder={externalModelType}
                         />
+                        <p className="ce-provider-hint">{t('providerNameHint')}</p>
                     </div>
                     <div className="flex flex-col gap-2">
-                        <Label>{t('token')}</Label>
+                        <Label>{t('apiKey')}</Label>
                         <Input
                             value={externalModelToken ?? ""}
                             onChange={e =>{  setExternalModelToken(e.target.value); }}
                             type="password"
                         />
+                        <p className="ce-provider-hint">{t('localProviderHint')}</p>
                     </div>
-                </div>
-                <div className="flex items-center gap-sm self-end mt-4">
-                    <Button
-                        onClick={handleCloseExternalModel}
-                        data-testid="external-model-cancel"
-                        variant="secondary"
-                    >
-                        <XMarkIcon className="w-4 h-4" /> {t('cancel')}
-                    </Button>
-                    <Button
-                        onClick={handleExternalModelSubmit}
-                        disabled={getAIModelsLoading}
-                        data-testid="external-model-submit"
-                    >
-                        <CheckCircleIcon className="w-4 h-4" /> {t('submit')}
-                    </Button>
                 </div>
             </SheetContent>
         </Sheet>

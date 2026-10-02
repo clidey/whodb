@@ -1,11 +1,19 @@
 en_US:
+  importRows: Import rows
+  format: Format
+  csvOrExcel: CSV or Excel
+  headerRow: Header row
+  dropFilePrompt: Drop a CSV or Excel file
+  browseFileHelp: "or browse · up to {rows} rows, {size} MB"
+  matchColumnsNote: Columns are matched by name. Preview up to 20 rows before anything is written.
+  noFileYet: No file yet
   importType: Import Type
   modeData: CSV / Excel
   modeSql: SQL Script
 
   dataFile: Data File
   fileLimits: "Max {rows} rows, {size} MB"
-  headerRowNote: First row is treated as column headers.
+  headerRowNote: First row holds column names
   delimiterAuto: Auto-detect
   delimiterComma: Comma (,)
   delimiterSemicolon: Semicolon (;)

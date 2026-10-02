@@ -103,6 +103,25 @@ func TestServerSampleDatabaseIsReadOnly(t *testing.T) {
 	}
 }
 
+func TestServerSampleDatabaseProtectedRead(t *testing.T) {
+	t.Setenv("WHODB_CLI", "false")
+	t.Setenv("WHODB_DESKTOP", "false")
+
+	plugin := NewSqlite3Plugin().PluginFunctions.(*Sqlite3Plugin)
+	config := engine.NewPluginConfig(&engine.Credentials{
+		Type:     string(engine.DatabaseType_Sqlite3),
+		Database: SampleDatabaseName,
+	})
+	config.ReadOnly = true
+	rows, err := plugin.RawExecute(config, "SELECT id FROM orders LIMIT 1")
+	if err != nil {
+		t.Fatalf("protected read of sample orders failed: %v", err)
+	}
+	if len(rows.Rows) != 1 {
+		t.Fatalf("expected one sample order, got %d", len(rows.Rows))
+	}
+}
+
 func newSQLiteRuntimeTestFixture(t *testing.T, statements ...string) (*Sqlite3Plugin, *engine.PluginConfig, *gorm.DB) {
 	t.Helper()
 
