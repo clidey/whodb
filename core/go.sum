@@ -145,8 +145,8 @@ github.com/duckdb/duckdb-go/v2 v2.10505.0 h1:SWwvLn2Qx/RQSnQNupwgIF8VbnJ5A6OQU9l
 github.com/duckdb/duckdb-go/v2 v2.10505.0/go.mod h1:m0PW4J4FG9hlFlVdXi6Ds9owpyIDaBdE2jyce00fGcE=
 github.com/elastic/elastic-transport-go/v8 v8.11.0 h1:taYmqC2M6+fZt/+W+ENYh/W5L9+KrlJGOSbEJs8egWc=
 github.com/elastic/elastic-transport-go/v8 v8.11.0/go.mod h1:DZQ0szCNywc9F+C9l/Kkd4n69SvJVj0I3yK1Of7s3l8=
-github.com/elastic/go-elasticsearch/v9 v9.5.0 h1:ye9pnajcrSE2Fra0Q++nJsi09p2dJTaN6YXKz7LL7WU=
-github.com/elastic/go-elasticsearch/v9 v9.5.0/go.mod h1:EbZnYlTlbhNqRt98YW+QSM2SEKplN5o8J+G6d9STOVo=
+github.com/elastic/go-elasticsearch/v9 v9.5.2 h1:+SnIMDLdfSSS+hIp2CZDQNUQZKd5JuViG3yGvJkrgA0=
+github.com/elastic/go-elasticsearch/v9 v9.5.2/go.mod h1:EbZnYlTlbhNqRt98YW+QSM2SEKplN5o8J+G6d9STOVo=
 github.com/envoyproxy/go-control-plane v0.14.0 h1:hbG2kr4RuFj222B6+7T83thSPqLjwBIfQawTkC++2HA=
 github.com/envoyproxy/go-control-plane/envoy v1.37.0 h1:u3riX6BoYRfF4Dr7dwSOroNfdSbEPe9Yyl09/B6wBrQ=
 github.com/envoyproxy/go-control-plane/envoy v1.37.0/go.mod h1:DReE9MMrmecPy+YvQOAOHNYMALuowAnbjjEMkkWOi6A=
