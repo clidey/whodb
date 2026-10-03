@@ -408,12 +408,15 @@ func accessLogMiddleware(next http.Handler) http.Handler {
 //     (which proxies AI/SSE); external provider hosts are server-side only.
 //   - img-src 'self' data: https:: DB cell content and provider icons can be
 //     arbitrary https/data URLs.
+//   - worker-src 'self': the service worker and any web workers are served
+//     from the same origin as the shell.
 const cspReportOnlyPolicy = "default-src 'self'; " +
 	"script-src 'self'; " +
 	"style-src 'self' 'unsafe-inline'; " +
 	"img-src 'self' data: https:; " +
 	"font-src 'self' data:; " +
 	"connect-src 'self'; " +
+	"worker-src 'self'; " +
 	"frame-ancestors 'none'; " +
 	"base-uri 'self'; " +
 	"form-action 'self'"

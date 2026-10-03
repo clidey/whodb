@@ -182,9 +182,10 @@ export function addAuthHeader(headers: HeadersInit = {}): HeadersInit {
         headers = { ...headers, [csrfHeaderName]: csrf };
     }
     if (extraHeadersProvider) {
+        // Headers set explicitly on a request take precedence over extension defaults.
         headers = {
-            ...headers,
             ...extraHeadersProvider(),
+            ...headers,
         };
     }
     if (authHeader) {
@@ -213,15 +214,16 @@ export async function addAuthHeaderAsync(headers: HeadersInit = {}): Promise<Hea
     if (csrf) {
         headers = { ...headers, [csrfHeaderName]: csrf };
     }
+    // Headers set explicitly on a request take precedence over extension defaults.
     if (asyncExtraHeadersProvider) {
         headers = {
-            ...headers,
             ...await asyncExtraHeadersProvider(),
+            ...headers,
         };
     } else if (extraHeadersProvider) {
         headers = {
-            ...headers,
             ...extraHeadersProvider(),
+            ...headers,
         };
     }
     if (authHeader) {
