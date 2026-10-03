@@ -104,7 +104,7 @@
     "@oxlint/migrate": "1.78.0",
     "@playwright/test": "1.62.1",
     "@types/lodash": "4.17.25",
-    "@vitejs/plugin-react": "6.0.5",
+    "@vitejs/plugin-react": "6.1.1",
     "baseline-browser-mapping": "2.11.15",
     "js-yaml": "5.3.0",
     "nyc": "18.0.0",
