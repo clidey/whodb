@@ -38,6 +38,7 @@ import {ServerDownOverlay, DatabaseDownOverlay} from "./components/health/health
 import {HealthActions} from "./store/health";
 import {PageTitleUpdater} from "./hooks/use-page-title";
 import {getEdition} from "./config/edition";
+import {LoadingPage} from "./components/loading";
 
 export const App = () => {
     const [updateSettings] = useMutation(UpdateSettingsDocument);
@@ -179,9 +180,9 @@ export const App = () => {
               const scopedRoutes = getRegisteredScopedRoutes();
               if (layout && scopedRoutes.length > 0) {
                 return (
-                  <Route path={layout.pathPattern} element={<Suspense fallback={null}><layout.lazyComponent /></Suspense>}>
+                  <Route path={layout.pathPattern} element={<Suspense fallback={<LoadingPage />}><layout.lazyComponent /></Suspense>}>
                     {scopedRoutes.map(route => (
-                      <Route key={route.path} path={route.path} element={<Suspense fallback={null}><route.lazyComponent /></Suspense>} />
+                      <Route key={route.path} path={route.path} element={<Suspense fallback={<LoadingPage />}><route.lazyComponent /></Suspense>} />
                     ))}
                   </Route>
                 );
