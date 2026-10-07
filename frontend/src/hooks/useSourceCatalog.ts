@@ -60,10 +60,11 @@ export interface UseSourceTypeItemResult extends UseSourceTypeItemsResult {
  * @returns Decorated source type items plus loading/error state.
  */
 export function useSourceTypeItems(
-    options: SourceTypeFilterOptions = {}
+    options: SourceTypeFilterOptions & { skip?: boolean } = {}
 ): UseSourceTypeItemsResult {
     const [cachedCatalog] = useState<BackendSourceType[]>(() => readCachedSourceCatalog());
     const { data, loading, error } = useQuery(SourceTypesDocument, {
+        skip: options.skip,
         fetchPolicy: import.meta.env.DEV ? "network-only" : "cache-and-network",
         nextFetchPolicy: "cache-first",
     });
@@ -98,7 +99,7 @@ export function useSourceTypeItem(
     sourceType: string | undefined,
     options: SourceTypeFilterOptions = {}
 ): UseSourceTypeItemResult {
-    const result = useSourceTypeItems(options);
+    const result = useSourceTypeItems({ ...options, skip: !sourceType });
 
     const item = useMemo(() => {
         return findSourceTypeItem(result.items, sourceType);

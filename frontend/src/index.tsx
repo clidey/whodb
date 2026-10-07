@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React, {useEffect, useState} from 'react';
+import React, {useEffect} from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import {ApolloProvider} from "@apollo/client/react";
@@ -24,8 +24,6 @@ import {reduxStore, reduxStorePersistor} from './store';
 import {App} from './app';
 import {BrowserRouter, HashRouter} from "react-router-dom";
 import {PersistGate} from 'redux-persist/integration/react';
-import {PostHogProvider} from 'posthog-js/react';
-import type {PostHog} from 'posthog-js';
 import {initPosthog} from "./config/posthog";
 import {ThemeProvider} from '@clidey/ux'
 import {isDesktopApp} from './utils/external-links';
@@ -63,33 +61,18 @@ const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
 
-// Initialize PostHog once and keep provider stable to prevent remounting
+// Telemetry initialization must not replace the component tree or reset an open form.
 const AppWithProviders = () => {
-    const [posthogClient, setPosthogClient] = useState<PostHog | null>(null);
-    const [initialized, setInitialized] = useState(false);
-
     useEffect(() => {
-        if (initialized) {
-            return;
-        }
-        setInitialized(true);
-        initPosthog()
-            .then(client => { setPosthogClient(client); })
-            .catch(() => { setPosthogClient(null); });
-    }, [initialized]);
+        void initPosthog().catch(() => undefined);
+    }, []);
 
-    const app = (
+    return (
         <ThemeProvider>
             <App />
             <PosthogConsentBanner/>
         </ThemeProvider>
     );
-
-    if (posthogClient) {
-        return <PostHogProvider client={posthogClient}>{app}</PostHogProvider>;
-    }
-
-    return app;
 };
 
 const desktopApp = isDesktopApp();

@@ -16,7 +16,6 @@
 
 import type {PostHog} from 'posthog-js';
 import type * as PostHogModule from 'posthog-js';
-import {featureFlags} from './features';
 import {getEdition} from './edition';
 import { ANALYTICS_EVENTS } from './analytics-events';
 import {
@@ -252,7 +251,19 @@ const registerContext = (client: PostHog) => {
 
 const captureClientException = (client: PostHog, error: unknown, properties: Record<string, unknown>) => {
     try {
-        client.captureException(error, properties);
+        // Error messages and stacks can contain query text, URLs and credentials.
+        // Keep the detailed exception in the browser console; report a fixed category.
+        const name = error instanceof Error && ['TypeError', 'ReferenceError', 'RangeError', 'SyntaxError'].includes(error.name)
+            ? error.name : 'Error';
+        const safeError = new Error('Unexpected frontend error');
+        safeError.name = name;
+        safeError.stack = undefined;
+        const reference = typeof properties.reference === 'string' && /^ERR-[A-F0-9]{8}$/.test(properties.reference)
+            ? properties.reference : undefined;
+        client.captureException(safeError, {
+            ...sanitizeEventProperties({ error_code: 'internal_error' }),
+            ...(reference ? { reference } : {}),
+        });
     } catch (captureError) {
         console.warn('PostHog exception capture failed', captureError);
     }
@@ -293,9 +304,6 @@ const ensureInitializedClient = async (): Promise<PostHog | null> => {
     }
     if (initPromise) {
         return initPromise;
-    }
-    if (!featureFlags.sampleDatabaseTour) {
-        return null;
     }
     if (isE2ETest()) {
         return null;

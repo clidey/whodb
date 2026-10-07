@@ -79,7 +79,8 @@
     "oxlint": "oxlint src/",
     "oxlint:fix": "oxlint --fix src/",
     "typecheck": "tsc -p tsconfig.ce.json --noEmit",
-    "test:analytics": "node scripts/run-analytics-tests.mjs"
+    "test:analytics": "node scripts/run-analytics-tests.mjs",
+    "test:posthog": "node --experimental-vm-modules --test scripts/posthog.test.mjs"
   },
   "browserslist": {
     "production": [
