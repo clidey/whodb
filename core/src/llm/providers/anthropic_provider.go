@@ -73,7 +73,7 @@ func (p *AnthropicProvider) GetSupportedModels(config *ProviderConfig) ([]string
 		return nil, err
 	}
 
-	url := config.Endpoint + "/models"
+	url := anthropicBaseURL(config.Endpoint) + "/v1/models"
 	headers := map[string]string{
 		"x-api-key":         config.APIKey,
 		"anthropic-version": "2023-06-01",
@@ -120,7 +120,14 @@ func (p *AnthropicProvider) CreateBAMLClient(config *ProviderConfig, model strin
 		opts["api_key"] = config.APIKey
 	}
 	if config.Endpoint != "" && config.Endpoint != p.GetDefaultEndpoint() {
-		opts["base_url"] = config.Endpoint
+		opts["base_url"] = anthropicBaseURL(config.Endpoint)
 	}
 	return anthrpProviderType, opts, nil
+}
+
+// anthropicBaseURL strips a trailing slash and /v1 so an endpoint works with or
+// without the version segment. BAML's Anthropic client appends /v1/messages to
+// base_url, and model discovery appends /v1/models to the same base.
+func anthropicBaseURL(endpoint string) string {
+	return strings.TrimSuffix(strings.TrimRight(endpoint, "/"), "/v1")
 }
