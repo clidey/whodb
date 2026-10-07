@@ -1,65 +1,70 @@
 version: 2
 
-#multi-ecosystem-groups:
-#  all-go:
-#    schedule:
-#      interval: "daily"
-#
-#  all-docker:
-#    schedule:
-#      interval: "weekly"
-
 updates:
   - package-ecosystem: "gomod"
     directory: "/core"
-#    multi-ecosystem-group: "all-go"
-#    patterns: ["*"]
-#    open-pull-requests-limit: 20
     schedule:
       interval: "daily"
     cooldown:
       default-days: 7
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      minor-and-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
 
   - package-ecosystem: "gomod"
     directory: "/desktop-ce"
-#    multi-ecosystem-group: "all-go"
-#    patterns: ["*"]
-#    open-pull-requests-limit: 20
     schedule:
       interval: "daily"
     cooldown:
       default-days: 7
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      minor-and-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
 
   - package-ecosystem: "gomod"
     directory: "/desktop-common"
-#    multi-ecosystem-group: "all-go"
-#    patterns: ["*"]
-#    open-pull-requests-limit: 20
     schedule:
       interval: "daily"
     cooldown:
       default-days: 7
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      minor-and-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
 
   - package-ecosystem: "gomod"
     directory: "/cli"
-#    multi-ecosystem-group: "all-go"
-#    patterns: ["*"]
-#    open-pull-requests-limit: 20
     schedule:
       interval: "daily"
     cooldown:
       default-days: 7
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      minor-and-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
 
   - package-ecosystem: "npm"
     directory: "/frontend"
-#    open-pull-requests-limit: 20
     schedule:
       interval: "daily"
     cooldown:
       default-days: 7
-#    groups:
-#      all-npm:
-#        patterns: ["*"]
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      minor-and-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
 
   # Platform SDK workspace (tools deps: graphql, yaml; TS package devDeps).
   - package-ecosystem: "npm"
@@ -68,6 +73,12 @@ updates:
       interval: "daily"
     cooldown:
       default-days: 7
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      minor-and-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
 
   # Python SDK (runtime dep: httpx).
   - package-ecosystem: "pip"
@@ -76,6 +87,12 @@ updates:
       interval: "daily"
     cooldown:
       default-days: 7
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      minor-and-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
 
   # Go SDK (zero deps today; covers any future additions).
   - package-ecosystem: "gomod"
@@ -84,6 +101,12 @@ updates:
       interval: "daily"
     cooldown:
       default-days: 7
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      minor-and-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
 
   # Rust SDK (runtime deps: serde, serde_json, ureq).
   - package-ecosystem: "cargo"
@@ -92,6 +115,12 @@ updates:
       interval: "daily"
     cooldown:
       default-days: 7
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      minor-and-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
 
   # Java SDK (runtime dep: jackson-databind; build plugins).
   - package-ecosystem: "maven"
@@ -100,34 +129,51 @@ updates:
       interval: "daily"
     cooldown:
       default-days: 7
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      minor-and-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
 
   - package-ecosystem: "docker"
     directory: "/core"
-#    multi-ecosystem-group: "all-docker"
-#    patterns: ["*"]
-#    open-pull-requests-limit: 20
     schedule:
       interval: "weekly"
+      day: "monday"
     cooldown:
       default-days: 7
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      minor-and-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
 
   - package-ecosystem: "docker"
     directory: "/docs"
-#    multi-ecosystem-group: "all-docker"
-#    patterns: ["*"]
-#    open-pull-requests-limit: 20
     schedule:
       interval: "weekly"
+      day: "monday"
     cooldown:
       default-days: 7
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      minor-and-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
 
   - package-ecosystem: "github-actions"
     directory: "/.github"
-#    open-pull-requests-limit: 20
     schedule:
       interval: "weekly"
+      day: "monday"
     cooldown:
       default-days: 7
-#    groups:
-#      all-actions:
-#        patterns: ["*"]
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      minor-and-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
