@@ -156,19 +156,38 @@ whodb sources delete local-postgres
 whodb sources delete local-postgres --yes
 ```
 
+## Platform MCP (default)
+
+`whodb mcp serve` exposes hosted platform tools. Sign in to each required host with
+`whodb login --host <url>`. Start with `whodb_platform_hosts` to discover saved
+hosts and accounts, then `whodb_platform_orgs` with `workspace: {host}` and
+`whodb_platform_projects` with `workspace: {host, org}`.
+
+Resolve the intended target with `whodb_platform_workspace_resolve`. Pass an
+explicit `workspace: {host, org, project}` on subsequent tools when working across
+UAT, production, or projects. Targets apply to one call, including parallel calls,
+and never change saved defaults. Check the returned `scope`. Do not run `whodb use`
+to switch another session's defaults. Omitted targets use process overrides, then
+saved defaults. Read `whodb://platform/schema` for operations and payloads.
+
+Writes return a preview bound to its host, account, organization, and project.
+Confirm only after approval of that exact preview. Changing defaults does not
+redirect a pending confirmation. Ask for `whodb login --host <url>` when a host
+needs authentication; no separate login is needed per project.
+
 ## MCP Platform Tools
 
-Hosted platform MCP mode is opt-in:
+Hosted platform MCP mode is the default (`--database` selects standalone database tools):
 
 ```bash
-whodb mcp serve --platform
+whodb mcp serve
 ```
 
 Each MCP process can select its own host and workspace without changing the
 global default:
 
 ```bash
-whodb mcp serve --platform \
+whodb mcp serve \
   --platform-host http://localhost:8080 \
   --platform-org acme \
   --platform-project analysis
@@ -178,10 +197,12 @@ The same `WHODB_PLATFORM_SESSION_HOST`, `WHODB_PLATFORM_SESSION_ORG`, and
 `WHODB_PLATFORM_SESSION_PROJECT` environment variables work for MCP processes,
 which is useful for defining several independent MCP server entries.
 
-The platform tools use the existing hosted login and selected workspace:
+Platform tools use saved host logins. Saving a default workspace is optional
+when tools pass an explicit `workspace`:
 
 ```bash
 whodb login
+# Optional default for calls without an explicit workspace
 whodb use --org <org-id-or-slug> --project <project-id-or-slug>
 ```
 
@@ -272,15 +293,15 @@ only if needed. Avoid broad details such as source content, file previews,
 function files, row previews, and large lineage graphs unless the user asks for
 them or they are required for the task.
 
-If no workspace is selected yet, agents should call `whodb_platform_orgs` and
-`whodb_platform_projects`, then ask the user to run:
+Agents can discover and pass explicit workspaces without changing defaults.
+Users can optionally save a default with:
 
 ```bash
 whodb use --org <org-id-or-slug> --project <project-id-or-slug>
 ```
 
-When `--platform` is set, the MCP server exposes only hosted platform tools.
-Local database MCP tools such as `whodb_query` and `whodb_connections` are not
+In default platform mode, the MCP server exposes only hosted platform tools.
+Standalone database MCP tools such as `whodb_query` and `whodb_connections` are not
 registered.
 
 Example hosted platform MCP config:
@@ -290,7 +311,7 @@ Example hosted platform MCP config:
   "mcpServers": {
     "whodb-platform": {
       "command": "whodb",
-      "args": ["mcp", "serve", "--platform"]
+      "args": ["mcp", "serve"]
     }
   }
 }
@@ -301,7 +322,7 @@ Local smoke test with the MCP inspector:
 ```bash
 whodb login --host http://localhost:8080
 whodb use --host http://localhost:8080 --org <org-id-or-slug> --project <project-id-or-slug>
-npx @modelcontextprotocol/inspector whodb mcp serve --platform
+npx @modelcontextprotocol/inspector whodb mcp serve
 ```
 
 In the inspector, call:

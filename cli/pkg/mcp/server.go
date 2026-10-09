@@ -1208,7 +1208,7 @@ func buildPlatformToolGuide(secOpts *SecurityOptions) platformToolGuideResource 
 			{Tool: "whodb_platform_project_rename", Resources: []string{"project"}},
 			{Tool: "whodb_platform_project_delete", Resources: []string{"project"}},
 		},
-			"whodb_platform_setup_status", "whodb_platform_status", "whodb_platform_orgs", "whodb_platform_projects", "whodb_platform_project_create", "whodb_platform_project_rename", "whodb_platform_project_delete"),
+			"whodb_platform_hosts", "whodb_platform_workspace_resolve", "whodb_platform_setup_status", "whodb_platform_status", "whodb_platform_orgs", "whodb_platform_projects", "whodb_platform_project_create", "whodb_platform_project_rename", "whodb_platform_project_delete"),
 		platformToolCategory(toolByName, "workspace_intelligence", "Workspace-level maps, relationship graph, and suggested next actions.", "Use these before per-resource reads when the user asks what exists, what is connected, or what should happen next.", []string{"counts", "warnings"}, nil,
 			"whodb_platform_workspace_summary", "whodb_platform_build_plan", "whodb_platform_gap_analysis", "whodb_platform_workspace_map", "whodb_platform_resource_graph", "whodb_platform_next_actions", "whodb_platform_project_health", "whodb_platform_data_model_summary", "whodb_platform_runtime_readiness", "whodb_platform_change_impact", "whodb_platform_write_plan"),
 		platformToolCategory(toolByName, "sources", "Hosted source discovery, connection metadata, data previews, and source writes.", "List sources with id/name/type first; inspect config only when needed because secrets are redacted.", []string{"id", "name", "type"}, []platformToolGuideMutation{
@@ -1303,7 +1303,7 @@ func buildPlatformToolGuide(secOpts *SecurityOptions) platformToolGuideResource 
 		FieldProjection:   "Use fields on supported read tools to request only the top-level fields needed, then call again with more fields if needed.",
 		WriteBehavior:     platformResourceWriteBehavior(secOpts) + " Read whodb://platform/schema payload_shapes before using generic write tools.",
 		PermissionModel:   "The hosted platform is authoritative for permissions. Workspace selection only scopes requests after token-backed authorization.",
-		WorkspaceBehavior: "Use whodb_platform_status first. If no workspace is selected, use whodb_platform_orgs and whodb_platform_projects, then run whodb use --org <org> --project <project>.",
+		WorkspaceBehavior: "Use whodb_platform_hosts to discover saved logins. Pass workspace {host, org, project} to whodb_platform_workspace_resolve and subsequent tools. Explicit targets override process/saved defaults without changing them; calls can target different hosts/projects in parallel.",
 		Categories:        filterPlatformToolGuideCategories(categories),
 	}
 }
@@ -1539,7 +1539,7 @@ WhoDB EE is a hosted data workspace and semantic application platform. Do not tr
 
 Only whodb_platform_* tools are available. Local database tools such as whodb_query and whodb_connections are not exposed in this mode.
 
-Use the active whodb hosted login and selected workspace. Start with whodb_platform_setup_status when setup may be unknown, then use whodb_platform_status to confirm host, signed-in user, organization, and project. If no workspace is selected, call whodb_platform_orgs and whodb_platform_projects, then ask the user to run whodb use --org <org> --project <project>.
+Start with whodb_platform_hosts to discover saved hosts. Use whodb_platform_orgs with workspace {host}, then whodb_platform_projects with workspace {host, org}. Resolve the intended workspace with whodb_platform_workspace_resolve and pass workspace {host, org, project} on subsequent tool calls. These targets are per call: one MCP connection supports multiple hosts and projects, including parallel calls, without changing saved defaults. Check returned scope before interpreting results. Omitted workspace uses process overrides then saved defaults. whodb use only changes saved CLI defaults; it is not required for explicit MCP targeting. If a host needs authentication, ask the user to run whodb login --host <host>.
 
 Backend permissions are authoritative. The CLI may select a workspace, but the hosted platform decides what the signed-in user can read or change.
 
@@ -2444,6 +2444,8 @@ mime_type, or deployed, pass them instead of listing the whole project.
 
 Available tools:
 - whodb_platform_setup_status: Diagnose local hosted MCP setup before auth-dependent tools
+- whodb_platform_hosts: List saved hosts and account metadata
+- whodb_platform_workspace_resolve: Resolve an explicit workspace target without changing defaults
 - whodb_platform_status: Show hosted login and selected workspace
 - whodb_platform_orgs: List hosted organizations visible to the user
 - whodb_platform_projects: List hosted projects for an organization
@@ -2498,8 +2500,8 @@ Available tools:
 
 Setup:
 1. Run whodb login
-2. Run whodb use --org <org> --project <project>
-3. Start this server with whodb mcp serve --platform
+2. Discover hosts with whodb_platform_hosts and pass workspace {host, org, project} on tool calls
+3. Start this server with whodb mcp serve
 
 Hosted create, update, delete, and action tools follow the same permission mode
 as local MCP writes. In default confirm-writes mode, they return confirmation

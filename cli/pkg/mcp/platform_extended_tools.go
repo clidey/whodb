@@ -95,59 +95,59 @@ type PlatformAccessInput struct {
 func registerPlatformExtendedReadTool(server *mcp.Server, tool *mcp.Tool) bool {
 	switch tool.Name {
 	case "whodb_platform_app_views":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAppCaptureInput) (*mcp.CallToolResult, PlatformAppViewsOutput, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAppCaptureInput) (*mcp.CallToolResult, PlatformAppViewsOutput, error) {
 			return handlePlatformAppViews(ctx, input)
 		})
 	case "whodb_platform_app_screenshot":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAppCaptureInput) (*mcp.CallToolResult, PlatformAppScreenshotOutput, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAppCaptureInput) (*mcp.CallToolResult, PlatformAppScreenshotOutput, error) {
 			return handlePlatformAppScreenshot(ctx, input)
 		})
 	case "whodb_platform_apps":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAppInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAppInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformExtendedQuery(ctx, "platform_apps", "ProjectApps", map[string]any{}, input.Fields)
 		})
 	case "whodb_platform_app":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAppInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAppInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformExtendedQuery(ctx, "platform_app", "AppDetail", map[string]any{"id": strings.TrimSpace(input.ID)}, input.Fields)
 		})
 	case "whodb_platform_app_files":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAppInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAppInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformExtendedQuery(ctx, "platform_app_files", "AppFiles", map[string]any{"appId": strings.TrimSpace(input.ID)}, input.Fields)
 		})
 	case "whodb_platform_app_view":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAppInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAppInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformExtendedQuery(ctx, "platform_app_view", "AppView", map[string]any{"id": strings.TrimSpace(input.ID), "env": optionalPlatformString(input.Env)}, input.Fields)
 		})
 	case "whodb_platform_app_version_view":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAppInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAppInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformExtendedQuery(ctx, "platform_app_version_view", "AppVersionView", map[string]any{"appId": strings.TrimSpace(input.ID), "version": input.Version}, input.Fields)
 		})
 	case "whodb_platform_packages":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformPackageInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformPackageInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformExtendedQuery(ctx, "platform_packages", "OrganizationPackages", map[string]any{}, input.Fields)
 		})
 	case "whodb_platform_package":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformPackageInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformPackageInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformExtendedQuery(ctx, "platform_package", "OrganizationPackage", map[string]any{"packageId": strings.TrimSpace(input.ID)}, input.Fields)
 		})
 	case "whodb_platform_package_installations":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformPackageInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformPackageInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformExtendedQuery(ctx, "platform_package_installations", "PackageInstallations", map[string]any{}, input.Fields)
 		})
 	case "whodb_platform_package_installation_update":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformPackageInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformPackageInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformExtendedQuery(ctx, "platform_package_installation_update", "PackageInstallationUpdate", map[string]any{"installationId": strings.TrimSpace(input.ID)}, input.Fields)
 		})
 	case "whodb_platform_package_library":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformPackageInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformPackageInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformExtendedQuery(ctx, "platform_package_library", "PackageLibrary", map[string]any{"search": optionalPlatformString(input.Search)}, input.Fields)
 		})
 	case "whodb_platform_shared_package":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformPackageInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformPackageInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformExtendedQuery(ctx, "platform_shared_package", "SharedPackage", map[string]any{"shareToken": strings.TrimSpace(input.ID)}, input.Fields)
 		})
 	case "whodb_platform_preview_create_package", "whodb_platform_preview_install_package", "whodb_platform_preview_import_package", "whodb_platform_preview_shared_install", "whodb_platform_preview_shared_import":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformPackagePreviewInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformPackagePreviewInput) (*mcp.CallToolResult, any, error) {
 			operation := map[string]string{
 				"whodb_platform_preview_create_package":  "PreviewCreatePackage",
 				"whodb_platform_preview_install_package": "PreviewInstallPackage",
@@ -165,79 +165,79 @@ func registerPlatformExtendedReadTool(server *mcp.Server, tool *mcp.Tool) bool {
 			return handlePlatformExtendedQuery(ctx, tool.Name, operation, map[string]any{"input": payload}, input.Fields)
 		})
 	case "whodb_platform_object_versions":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformVersionInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformVersionInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformExtendedQuery(ctx, "platform_object_versions", "ObjectVersions", map[string]any{"objectId": strings.TrimSpace(input.ID), "objectType": strings.TrimSpace(input.ObjectType)}, input.Fields)
 		})
 	case "whodb_platform_active_version":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformVersionInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformVersionInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformExtendedQuery(ctx, "platform_active_version", "ActiveProdVersion", map[string]any{"objectId": strings.TrimSpace(input.ID), "objectType": strings.TrimSpace(input.ObjectType)}, input.Fields)
 		})
 	case "whodb_platform_project_active_versions":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformVersionInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformVersionInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformExtendedQuery(ctx, "platform_project_active_versions", "ProjectActiveProdVersions", map[string]any{}, input.Fields)
 		})
 	case "whodb_platform_resource_access":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAccessInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAccessInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformExtendedQuery(ctx, "platform_resource_access", "WhoHasAccess", map[string]any{"resourceType": strings.TrimSpace(input.ResourceType), "resourceId": strings.TrimSpace(input.ResourceID)}, input.Fields)
 		})
 	case "whodb_platform_resource_permissions":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAccessInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAccessInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformExtendedQuery(ctx, "platform_resource_permissions", "MyPermissions", map[string]any{"resourceType": strings.TrimSpace(input.ResourceType), "resourceId": strings.TrimSpace(input.ResourceID)}, input.Fields)
 		})
 	case "whodb_platform_resource_types_access":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAccessInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAccessInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformExtendedQuery(ctx, "platform_resource_types_access", "WhatCanIAccess", map[string]any{"resourceType": strings.TrimSpace(input.ResourceType)}, input.Fields)
 		})
 	case "whodb_platform_deletion_impact":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAccessInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAccessInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformExtendedQuery(ctx, "platform_deletion_impact", "DeletionImpact", map[string]any{"resourceType": strings.TrimSpace(input.ResourceType), "resourceId": strings.TrimSpace(input.ResourceID)}, input.Fields)
 		})
 	case "whodb_platform_deleted_resources":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAccessInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAccessInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformExtendedQuery(ctx, "platform_deleted_resources", "DeletedResources", map[string]any{}, input.Fields)
 		})
 	case "whodb_platform_project_access":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAccessInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAccessInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformExtendedQuery(ctx, "platform_project_access", "ProjectAccessMatrix", map[string]any{}, input.Fields)
 		})
 	case "whodb_platform_project_resources":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAccessInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAccessInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformExtendedQuery(ctx, "platform_project_resources", "ProjectResourceSummary", map[string]any{}, input.Fields)
 		})
 	case "whodb_platform_org_resources":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAccessInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAccessInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformExtendedQuery(ctx, "platform_org_resources", "OrgResources", map[string]any{}, input.Fields)
 		})
 	case "whodb_platform_org_members":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAccessInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAccessInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformExtendedQuery(ctx, "platform_org_members", "OrgMembers", map[string]any{}, input.Fields)
 		})
 	case "whodb_platform_org_domains":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAccessInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAccessInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformExtendedQuery(ctx, "platform_org_domains", "OrganizationDomains", map[string]any{}, input.Fields)
 		})
 	case "whodb_platform_org_sso":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAccessInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAccessInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformExtendedQuery(ctx, "platform_org_sso", "OrganizationSSOProviders", map[string]any{}, input.Fields)
 		})
 	case "whodb_platform_shared_with_me":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAccessInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAccessInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformExtendedQuery(ctx, "platform_shared_with_me", "SharedWithMe", map[string]any{}, input.Fields)
 		})
 	case "whodb_platform_shared_by_me":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAccessInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAccessInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformExtendedQuery(ctx, "platform_shared_by_me", "SharedByMe", map[string]any{}, input.Fields)
 		})
 	case "whodb_platform_my_grants":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAccessInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAccessInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformExtendedQuery(ctx, "platform_my_grants", "MyGrants", map[string]any{}, input.Fields)
 		})
 	case "whodb_platform_teams":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAccessInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAccessInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformExtendedQuery(ctx, "platform_teams", "Teams", map[string]any{}, input.Fields)
 		})
 	case "whodb_platform_team_members":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAccessInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAccessInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformExtendedQuery(ctx, "platform_team_members", "TeamMembers", map[string]any{"teamId": strings.TrimSpace(input.TeamID)}, input.Fields)
 		})
 	default:

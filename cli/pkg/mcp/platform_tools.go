@@ -100,6 +100,8 @@ type PlatformStatusInput struct{}
 
 // PlatformStatusOutput reports hosted WhoDB login and selected workspace state.
 type PlatformStatusOutput struct {
+	SavedDefault    *PlatformOutputScope     `json:"saved_default,omitempty"`
+	ProcessOverride *PlatformWorkspaceTarget `json:"process_override,omitempty"`
 	PlatformSetupGuidance
 	Host                    string   `json:"host,omitempty"`
 	UserID                  string   `json:"user_id,omitempty"`
@@ -489,6 +491,7 @@ func (o PlatformPendingOutput) MarshalJSON() ([]byte, error) {
 
 // PlatformActionPreview describes a hosted write with secrets redacted and upload source paths visible.
 type PlatformActionPreview struct {
+	AccountID    string                `json:"account_id,omitempty"`
 	Operation    string                `json:"operation"`
 	Resource     string                `json:"resource,omitempty"`
 	Action       string                `json:"action,omitempty"`
@@ -516,6 +519,7 @@ type PlatformFieldChange struct {
 
 // PendingPlatformAction stores a hosted platform write awaiting confirmation.
 type PendingPlatformAction struct {
+	AccountID      string
 	Token          string
 	Operation      string
 	Resource       string
@@ -565,59 +569,63 @@ func registerPlatformTools(server *mcp.Server, secOpts *SecurityOptions) {
 			continue
 		}
 		switch tool.Name {
+		case "whodb_platform_hosts":
+			addPlatformTool(server, tool, handlePlatformHosts)
+		case "whodb_platform_workspace_resolve":
+			addPlatformTool(server, tool, HandlePlatformStatus)
 		case "whodb_platform_status":
-			mcp.AddTool(server, tool, createPlatformStatusHandler())
+			addPlatformTool(server, tool, createPlatformStatusHandler())
 		case "whodb_platform_sources":
-			mcp.AddTool(server, tool, createPlatformSourcesHandler())
+			addPlatformTool(server, tool, createPlatformSourcesHandler())
 		case "whodb_platform_orgs":
-			mcp.AddTool(server, tool, createPlatformOrgsHandler())
+			addPlatformTool(server, tool, createPlatformOrgsHandler())
 		case "whodb_platform_projects":
-			mcp.AddTool(server, tool, createPlatformProjectsHandler())
+			addPlatformTool(server, tool, createPlatformProjectsHandler())
 		case "whodb_platform_project_create":
 			if !secOpts.ReadOnly {
-				mcp.AddTool(server, tool, createPlatformProjectCreateHandler(secOpts))
+				addPlatformTool(server, tool, createPlatformProjectCreateHandler(secOpts))
 			}
 		case "whodb_platform_project_rename":
 			if !secOpts.ReadOnly {
-				mcp.AddTool(server, tool, createPlatformProjectRenameHandler(secOpts))
+				addPlatformTool(server, tool, createPlatformProjectRenameHandler(secOpts))
 			}
 		case "whodb_platform_project_delete":
 			if !secOpts.ReadOnly {
-				mcp.AddTool(server, tool, createPlatformProjectDeleteHandler(secOpts))
+				addPlatformTool(server, tool, createPlatformProjectDeleteHandler(secOpts))
 			}
 		case "whodb_platform_source_types":
-			mcp.AddTool(server, tool, createPlatformSourceTypesHandler())
+			addPlatformTool(server, tool, createPlatformSourceTypesHandler())
 		case "whodb_platform_source_fields":
-			mcp.AddTool(server, tool, createPlatformSourceFieldsHandler())
+			addPlatformTool(server, tool, createPlatformSourceFieldsHandler())
 		case "whodb_platform_source_objects":
-			mcp.AddTool(server, tool, createPlatformSourceObjectsHandler())
+			addPlatformTool(server, tool, createPlatformSourceObjectsHandler())
 		case "whodb_platform_source_columns":
-			mcp.AddTool(server, tool, createPlatformSourceColumnsHandler())
+			addPlatformTool(server, tool, createPlatformSourceColumnsHandler())
 		case "whodb_platform_source_rows":
-			mcp.AddTool(server, tool, createPlatformSourceRowsHandler(secOpts))
+			addPlatformTool(server, tool, createPlatformSourceRowsHandler(secOpts))
 		case "whodb_platform_source_config":
-			mcp.AddTool(server, tool, createPlatformSourceConfigHandler())
+			addPlatformTool(server, tool, createPlatformSourceConfigHandler())
 		case "whodb_platform_source_test":
-			mcp.AddTool(server, tool, createPlatformSourceTestHandler())
+			addPlatformTool(server, tool, createPlatformSourceTestHandler())
 		case "whodb_platform_source_create":
 			if !secOpts.ReadOnly {
-				mcp.AddTool(server, tool, createPlatformSourceCreateHandler(secOpts))
+				addPlatformTool(server, tool, createPlatformSourceCreateHandler(secOpts))
 			}
 		case "whodb_platform_source_update":
 			if !secOpts.ReadOnly {
-				mcp.AddTool(server, tool, createPlatformSourceUpdateHandler(secOpts))
+				addPlatformTool(server, tool, createPlatformSourceUpdateHandler(secOpts))
 			}
 		case "whodb_platform_source_delete":
 			if !secOpts.ReadOnly {
-				mcp.AddTool(server, tool, createPlatformSourceDeleteHandler(secOpts))
+				addPlatformTool(server, tool, createPlatformSourceDeleteHandler(secOpts))
 			}
 		case "whodb_platform_pending":
 			if secOpts.ConfirmWrites {
-				mcp.AddTool(server, tool, createPlatformPendingHandler())
+				addPlatformTool(server, tool, createPlatformPendingHandler())
 			}
 		case "whodb_platform_confirm":
 			if secOpts.ConfirmWrites {
-				mcp.AddTool(server, tool, createPlatformConfirmHandler())
+				addPlatformTool(server, tool, createPlatformConfirmHandler())
 			}
 		default:
 			registerPlatformReadTool(server, tool, secOpts)
@@ -723,6 +731,7 @@ func platformToolDefinitions() []*mcp.Tool {
 			Annotations: platformDestructiveAnnotations("Confirm Hosted Platform Write"),
 		},
 	}
+	tools = append(tools, platformScopeToolDefinitions()...)
 	tools = append(tools, platformGenericWriteToolDefinitions()...)
 	tools = append(tools, platformBundleToolDefinitions()...)
 	tools = append(tools, platformReadToolDefinitions()...)
@@ -863,36 +872,36 @@ func createPlatformConfirmHandler() func(context.Context, *mcp.CallToolRequest, 
 	}
 }
 
-func platformStatusSetupError(err error, requestID string) PlatformStatusOutput {
-	return PlatformStatusOutput{PlatformSetupGuidance: platformSetupGuidanceForCurrentConfig(requestID), Error: err.Error(), RequestID: requestID}
+func platformStatusSetupError(ctx context.Context, err error, requestID string) PlatformStatusOutput {
+	return PlatformStatusOutput{PlatformSetupGuidance: platformSetupGuidanceForCurrentConfig(ctx, requestID), Error: err.Error(), RequestID: requestID}
 }
 
-func platformOrgsSetupError(err error, requestID string) PlatformOrgsOutput {
-	return PlatformOrgsOutput{PlatformSetupGuidance: platformSetupGuidanceForCurrentConfig(requestID), Error: err.Error(), RequestID: requestID}
+func platformOrgsSetupError(ctx context.Context, err error, requestID string) PlatformOrgsOutput {
+	return PlatformOrgsOutput{PlatformSetupGuidance: platformSetupGuidanceForCurrentConfig(ctx, requestID), Error: err.Error(), RequestID: requestID}
 }
 
-func platformProjectsSetupError(err error, requestID string) PlatformProjectsOutput {
-	return PlatformProjectsOutput{PlatformSetupGuidance: platformSetupGuidanceForCurrentConfig(requestID), Error: err.Error(), RequestID: requestID}
+func platformProjectsSetupError(ctx context.Context, err error, requestID string) PlatformProjectsOutput {
+	return PlatformProjectsOutput{PlatformSetupGuidance: platformSetupGuidanceForCurrentConfig(ctx, requestID), Error: err.Error(), RequestID: requestID}
 }
 
-func platformSourcesSetupError(err error, requestID string) PlatformSourcesOutput {
-	return PlatformSourcesOutput{PlatformSetupGuidance: platformSetupGuidanceForCurrentConfig(requestID), Error: err.Error(), RequestID: requestID}
+func platformSourcesSetupError(ctx context.Context, err error, requestID string) PlatformSourcesOutput {
+	return PlatformSourcesOutput{PlatformSetupGuidance: platformSetupGuidanceForCurrentConfig(ctx, requestID), Error: err.Error(), RequestID: requestID}
 }
 
-func platformSourceTypesSetupError(err error, requestID string) PlatformSourceTypesOutput {
-	return PlatformSourceTypesOutput{PlatformSetupGuidance: platformSetupGuidanceForCurrentConfig(requestID), Error: err.Error(), RequestID: requestID}
+func platformSourceTypesSetupError(ctx context.Context, err error, requestID string) PlatformSourceTypesOutput {
+	return PlatformSourceTypesOutput{PlatformSetupGuidance: platformSetupGuidanceForCurrentConfig(ctx, requestID), Error: err.Error(), RequestID: requestID}
 }
 
-func platformSourceFieldsSetupError(err error, requestID string) PlatformSourceFieldsOutput {
-	return PlatformSourceFieldsOutput{PlatformSetupGuidance: platformSetupGuidanceForCurrentConfig(requestID), Error: err.Error(), RequestID: requestID}
+func platformSourceFieldsSetupError(ctx context.Context, err error, requestID string) PlatformSourceFieldsOutput {
+	return PlatformSourceFieldsOutput{PlatformSetupGuidance: platformSetupGuidanceForCurrentConfig(ctx, requestID), Error: err.Error(), RequestID: requestID}
 }
 
-func platformSourceTestSetupError(err error, requestID string) PlatformSourceTestOutput {
-	return PlatformSourceTestOutput{PlatformSetupGuidance: platformSetupGuidanceForCurrentConfig(requestID), Error: err.Error(), RequestID: requestID}
+func platformSourceTestSetupError(ctx context.Context, err error, requestID string) PlatformSourceTestOutput {
+	return PlatformSourceTestOutput{PlatformSetupGuidance: platformSetupGuidanceForCurrentConfig(ctx, requestID), Error: err.Error(), RequestID: requestID}
 }
 
-func platformSourceWriteSetupError(err error, requestID string) PlatformSourceWriteOutput {
-	return PlatformSourceWriteOutput{PlatformSetupGuidance: platformSetupGuidanceForCurrentConfig(requestID), Error: err.Error(), RequestID: requestID}
+func platformSourceWriteSetupError(ctx context.Context, err error, requestID string) PlatformSourceWriteOutput {
+	return PlatformSourceWriteOutput{PlatformSetupGuidance: platformSetupGuidanceForCurrentConfig(ctx, requestID), Error: err.Error(), RequestID: requestID}
 }
 
 // HandlePlatformStatus reports hosted WhoDB login and workspace state.
@@ -903,7 +912,7 @@ func HandlePlatformStatus(ctx context.Context, req *mcp.CallToolRequest, input P
 	session, err := loadPlatformToolSession(ctx)
 	if err != nil {
 		TrackToolCall(ctx, "platform_status", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_session"})
-		return nil, platformStatusSetupError(err, requestID), nil
+		return nil, platformStatusSetupError(ctx, err, requestID), nil
 	}
 	user, err := session.Client.Me(ctx)
 	if err != nil {
@@ -930,6 +939,16 @@ func HandlePlatformStatus(ctx context.Context, req *mcp.CallToolRequest, input P
 		AutoSelected:            session.AutoSelected,
 		RequestID:               requestID,
 	}
+	if cfg, err := config.LoadConfigWithoutSecrets(); err == nil {
+		if saved, ok := cfg.GetPlatformHost(session.Host.URL); ok {
+			output.SavedDefault = platformScope(&platformToolSession{Host: *saved})
+		}
+	}
+	process := platformapi.SessionScopeFromEnvironment()
+	if process.Host != "" || process.Org != "" || process.Project != "" {
+		output.ProcessOverride = &PlatformWorkspaceTarget{Host: process.Host, Org: process.Org, Project: process.Project}
+	}
+
 	TrackToolCall(ctx, "platform_status", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"workspace_selected": output.WorkspaceSelected})
 	return nil, output, nil
 }
@@ -942,7 +961,7 @@ func HandlePlatformSources(ctx context.Context, req *mcp.CallToolRequest, input 
 	session, err := loadPlatformWorkspace(ctx)
 	if err != nil {
 		TrackToolCall(ctx, "platform_sources", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_session"})
-		return nil, platformSourcesSetupError(err, requestID), nil
+		return nil, platformSourcesSetupError(ctx, err, requestID), nil
 	}
 	sources, err := session.Client.ProjectSources(ctx, session.Host.DefaultOrgID, session.Host.DefaultProjectID)
 	if err != nil {
@@ -974,7 +993,7 @@ func HandlePlatformOrgs(ctx context.Context, req *mcp.CallToolRequest, input Pla
 	session, err := loadPlatformToolSession(ctx)
 	if err != nil {
 		TrackToolCall(ctx, "platform_orgs", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_session"})
-		return nil, platformOrgsSetupError(err, requestID), nil
+		return nil, platformOrgsSetupError(ctx, err, requestID), nil
 	}
 	orgs, err := session.Client.Organizations(ctx)
 	if err != nil {
@@ -1005,7 +1024,7 @@ func HandlePlatformProjects(ctx context.Context, req *mcp.CallToolRequest, input
 	session, err := loadPlatformToolSession(ctx)
 	if err != nil {
 		TrackToolCall(ctx, "platform_projects", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_session"})
-		return nil, platformProjectsSetupError(err, requestID), nil
+		return nil, platformProjectsSetupError(ctx, err, requestID), nil
 	}
 	org, err := resolvePlatformToolOrg(ctx, session, input.Org)
 	if err != nil {
@@ -1043,7 +1062,7 @@ func HandlePlatformProjectCreate(ctx context.Context, req *mcp.CallToolRequest, 
 	}
 	session, err := loadPlatformToolSession(ctx)
 	if err != nil {
-		return nil, platformGenericWriteSetupError(err, requestID), nil
+		return nil, platformGenericWriteSetupError(ctx, err, requestID), nil
 	}
 	org, err := resolvePlatformToolOrg(ctx, session, input.Org)
 	if err != nil {
@@ -1055,6 +1074,7 @@ func HandlePlatformProjectCreate(ctx context.Context, req *mcp.CallToolRequest, 
 		"description": strings.TrimSpace(input.Description),
 	}}
 	action := &PendingPlatformAction{
+		AccountID: session.Host.AccountID,
 		Operation: "project_create",
 		Resource:  "project",
 		Action:    "create",
@@ -1076,7 +1096,7 @@ func HandlePlatformProjectRename(ctx context.Context, req *mcp.CallToolRequest, 
 	}
 	session, err := loadPlatformToolSession(ctx)
 	if err != nil {
-		return nil, platformGenericWriteSetupError(err, requestID), nil
+		return nil, platformGenericWriteSetupError(ctx, err, requestID), nil
 	}
 	org, project, err := resolvePlatformToolProject(ctx, session, input.Org, input.Project)
 	if err != nil {
@@ -1087,6 +1107,7 @@ func HandlePlatformProjectRename(ctx context.Context, req *mcp.CallToolRequest, 
 		variables["slug"] = strings.TrimSpace(input.Slug)
 	}
 	action := &PendingPlatformAction{
+		AccountID:   session.Host.AccountID,
 		Operation:   "project_rename",
 		Resource:    "project",
 		Action:      "rename",
@@ -1110,13 +1131,14 @@ func HandlePlatformProjectDelete(ctx context.Context, req *mcp.CallToolRequest, 
 	}
 	session, err := loadPlatformToolSession(ctx)
 	if err != nil {
-		return nil, platformGenericWriteSetupError(err, requestID), nil
+		return nil, platformGenericWriteSetupError(ctx, err, requestID), nil
 	}
 	org, project, err := resolvePlatformToolProject(ctx, session, input.Org, input.Project)
 	if err != nil {
 		return nil, PlatformGenericWriteOutput{Error: err.Error(), RequestID: requestID}, nil
 	}
 	action := &PendingPlatformAction{
+		AccountID:   session.Host.AccountID,
 		Operation:   "project_delete",
 		Resource:    "project",
 		Action:      "delete",
@@ -1140,7 +1162,7 @@ func HandlePlatformSourceTypes(ctx context.Context, req *mcp.CallToolRequest, in
 	session, err := loadPlatformWorkspace(ctx)
 	if err != nil {
 		TrackToolCall(ctx, "platform_source_types", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_session"})
-		return nil, platformSourceTypesSetupError(err, requestID), nil
+		return nil, platformSourceTypesSetupError(ctx, err, requestID), nil
 	}
 	types, err := session.Client.SourceTypes(ctx)
 	if err != nil {
@@ -1169,7 +1191,7 @@ func HandlePlatformSourceFields(ctx context.Context, req *mcp.CallToolRequest, i
 	session, err := loadPlatformWorkspace(ctx)
 	if err != nil {
 		TrackToolCall(ctx, "platform_source_fields", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_session"})
-		return nil, platformSourceFieldsSetupError(err, requestID), nil
+		return nil, platformSourceFieldsSetupError(ctx, err, requestID), nil
 	}
 	sourceType, err := loadPlatformSourceType(ctx, session, input.SourceType)
 	if err != nil {
@@ -1199,7 +1221,7 @@ func HandlePlatformSourceObjects(ctx context.Context, req *mcp.CallToolRequest, 
 	session, source, err := loadPlatformSource(ctx, input.Source)
 	if err != nil {
 		TrackToolCall(ctx, "platform_source_objects", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_source"})
-		return nil, PlatformSourceObjectsOutput{PlatformSetupGuidance: platformSetupGuidanceForError(err, requestID), Error: err.Error(), RequestID: requestID}, nil
+		return nil, PlatformSourceObjectsOutput{PlatformSetupGuidance: platformSetupGuidanceForError(ctx, err, requestID), Error: err.Error(), RequestID: requestID}, nil
 	}
 	parent, err := parsePlatformOptionalRef(input.Parent)
 	if err != nil {
@@ -1246,7 +1268,7 @@ func HandlePlatformSourceColumns(ctx context.Context, req *mcp.CallToolRequest, 
 	session, source, err := loadPlatformSource(ctx, input.Source)
 	if err != nil {
 		TrackToolCall(ctx, "platform_source_columns", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_source"})
-		return nil, PlatformSourceColumnsOutput{PlatformSetupGuidance: platformSetupGuidanceForError(err, requestID), Error: err.Error(), RequestID: requestID}, nil
+		return nil, PlatformSourceColumnsOutput{PlatformSetupGuidance: platformSetupGuidanceForError(ctx, err, requestID), Error: err.Error(), RequestID: requestID}, nil
 	}
 	ref, err := parsePlatformRequiredRef(input.Ref)
 	if err != nil {
@@ -1280,7 +1302,7 @@ func HandlePlatformSourceRows(ctx context.Context, req *mcp.CallToolRequest, inp
 	session, source, err := loadPlatformSource(ctx, input.Source)
 	if err != nil {
 		TrackToolCall(ctx, "platform_source_rows", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_source"})
-		return nil, PlatformSourceRowsOutput{PlatformSetupGuidance: platformSetupGuidanceForError(err, requestID), Error: err.Error(), RequestID: requestID}, nil
+		return nil, PlatformSourceRowsOutput{PlatformSetupGuidance: platformSetupGuidanceForError(ctx, err, requestID), Error: err.Error(), RequestID: requestID}, nil
 	}
 	ref, err := parsePlatformRequiredRef(input.Ref)
 	if err != nil {
@@ -1316,7 +1338,7 @@ func HandlePlatformSourceConfig(ctx context.Context, req *mcp.CallToolRequest, i
 	session, source, err := loadPlatformSource(ctx, input.Source)
 	if err != nil {
 		TrackToolCall(ctx, "platform_source_config", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_source"})
-		return nil, PlatformSourceConfigOutput{PlatformSetupGuidance: platformSetupGuidanceForError(err, requestID), Error: err.Error(), RequestID: requestID}, nil
+		return nil, PlatformSourceConfigOutput{PlatformSetupGuidance: platformSetupGuidanceForError(ctx, err, requestID), Error: err.Error(), RequestID: requestID}, nil
 	}
 	sourceType, err := loadPlatformSourceType(ctx, session, source.DatabaseType)
 	if err != nil {
@@ -1346,7 +1368,7 @@ func HandlePlatformSourceTest(ctx context.Context, req *mcp.CallToolRequest, inp
 		session, source, err := loadPlatformSource(ctx, input.Source)
 		if err != nil {
 			TrackToolCall(ctx, "platform_source_test", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_source"})
-			return nil, PlatformSourceTestOutput{PlatformSetupGuidance: platformSetupGuidanceForError(err, requestID), Error: err.Error(), RequestID: requestID}, nil
+			return nil, PlatformSourceTestOutput{PlatformSetupGuidance: platformSetupGuidanceForError(ctx, err, requestID), Error: err.Error(), RequestID: requestID}, nil
 		}
 		if _, err := session.Client.SourceObjects(ctx, session.Host.DefaultOrgID, session.Host.DefaultProjectID, source.ID, nil, nil, 1, 0); err != nil {
 			TrackToolCall(ctx, "platform_source_test", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_query"})
@@ -1359,7 +1381,7 @@ func HandlePlatformSourceTest(ctx context.Context, req *mcp.CallToolRequest, inp
 	session, err := loadPlatformWorkspace(ctx)
 	if err != nil {
 		TrackToolCall(ctx, "platform_source_test", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_session"})
-		return nil, platformSourceTestSetupError(err, requestID), nil
+		return nil, platformSourceTestSetupError(ctx, err, requestID), nil
 	}
 	sourceType, err := loadPlatformSourceType(ctx, session, input.SourceType)
 	if err != nil {
@@ -1392,7 +1414,7 @@ func handlePlatformSourceCreate(ctx context.Context, req *mcp.CallToolRequest, i
 	session, err := loadPlatformWorkspace(ctx)
 	if err != nil {
 		TrackToolCall(ctx, "platform_source_create", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_session"})
-		return nil, platformSourceWriteSetupError(err, requestID), nil
+		return nil, platformSourceWriteSetupError(ctx, err, requestID), nil
 	}
 	sourceType, err := loadPlatformSourceType(ctx, session, input.SourceType)
 	if err != nil {
@@ -1411,6 +1433,7 @@ func handlePlatformSourceCreate(ctx context.Context, req *mcp.CallToolRequest, i
 
 	actionLabel := fmt.Sprintf("create hosted source %q (%s) in %s", createInput.Name, sourceType.ID, session.Host.DefaultProjectName)
 	action := &PendingPlatformAction{
+		AccountID:   session.Host.AccountID,
 		Operation:   "create_source",
 		Host:        session.Host.URL,
 		OrgID:       session.Host.DefaultOrgID,
@@ -1447,7 +1470,7 @@ func handlePlatformSourceUpdate(ctx context.Context, req *mcp.CallToolRequest, i
 	session, source, err := loadPlatformSource(ctx, input.Source)
 	if err != nil {
 		TrackToolCall(ctx, "platform_source_update", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_source"})
-		return nil, PlatformSourceWriteOutput{PlatformSetupGuidance: platformSetupGuidanceForError(err, requestID), Error: err.Error(), RequestID: requestID}, nil
+		return nil, PlatformSourceWriteOutput{PlatformSetupGuidance: platformSetupGuidanceForError(ctx, err, requestID), Error: err.Error(), RequestID: requestID}, nil
 	}
 
 	updateInput := platformapi.UpdateSourceInput{OrgID: session.Host.DefaultOrgID, ProjectID: session.Host.DefaultProjectID, ID: source.ID}
@@ -1486,6 +1509,7 @@ func handlePlatformSourceUpdate(ctx context.Context, req *mcp.CallToolRequest, i
 
 	actionLabel := fmt.Sprintf("update hosted source %q in %s", source.Name, session.Host.DefaultProjectName)
 	action := &PendingPlatformAction{
+		AccountID:   session.Host.AccountID,
 		Operation:   "update_source",
 		Host:        session.Host.URL,
 		OrgID:       session.Host.DefaultOrgID,
@@ -1548,11 +1572,12 @@ func handlePlatformSourceDelete(ctx context.Context, req *mcp.CallToolRequest, i
 	session, source, err := loadPlatformSource(ctx, input.Source)
 	if err != nil {
 		TrackToolCall(ctx, "platform_source_delete", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_source"})
-		return nil, PlatformSourceWriteOutput{PlatformSetupGuidance: platformSetupGuidanceForError(err, requestID), Error: err.Error(), RequestID: requestID}, nil
+		return nil, PlatformSourceWriteOutput{PlatformSetupGuidance: platformSetupGuidanceForError(ctx, err, requestID), Error: err.Error(), RequestID: requestID}, nil
 	}
 
 	actionLabel := fmt.Sprintf("delete hosted source %q from %s", source.Name, session.Host.DefaultProjectName)
 	action := &PendingPlatformAction{
+		AccountID:   session.Host.AccountID,
 		Operation:   "delete_source",
 		Host:        session.Host.URL,
 		OrgID:       session.Host.DefaultOrgID,
@@ -1582,12 +1607,12 @@ func handlePlatformSourceDelete(ctx context.Context, req *mcp.CallToolRequest, i
 }
 
 func loadHostedPlatformToolSession(ctx context.Context) (*platformToolSession, error) {
-	cfg, err := config.LoadConfig()
+	cfg, err := config.LoadConfigWithoutSecrets()
 	if err != nil {
 		return nil, fmt.Errorf("cannot load hosted WhoDB config: %w", err)
 	}
-	scope := platformapi.SessionScopeFromEnvironment()
-	if err := scope.Validate(); err != nil {
+	scope, explicit, err := platformRequestScope(ctx)
+	if err != nil {
 		return nil, err
 	}
 	hostURL := scope.Host
@@ -1605,6 +1630,7 @@ func loadHostedPlatformToolSession(ctx context.Context) (*platformToolSession, e
 	if !ok || strings.TrimSpace(host.AccountID) == "" {
 		return nil, fmt.Errorf("hosted WhoDB is not logged in for %s. Run: whodb login --host %s", hostURL, hostURL)
 	}
+	recordPlatformScope(ctx, &platformToolSession{Host: config.PlatformHost{URL: host.URL, AccountID: host.AccountID}})
 	tokenSource := platformapi.NewOIDCTokenSource(hostURL, host.AccountID, cfg)
 	client, err := platformapi.NewAuthenticatedClient(hostURL, tokenSource)
 	if err != nil {
@@ -1615,23 +1641,31 @@ func loadHostedPlatformToolSession(ctx context.Context) (*platformToolSession, e
 		return nil, fmt.Errorf("cannot load hosted WhoDB platform manifest: %w", err)
 	}
 	client.SetPlatformManifest(manifest)
-	if scope.HasWorkspace() {
-		session := &platformToolSession{Host: *host, Client: client}
-		return applyPlatformToolSessionScope(ctx, session, scope)
-	}
-	autoSelected, changed, err := autoSelectPlatformToolWorkspace(ctx, client, host)
-	if err != nil {
-		return nil, err
-	}
-	if changed {
-		cfg.UpsertPlatformHost(*host)
-		cfg.SetDefaultPlatformHost(host.URL)
-		if err := cfg.Save(); err != nil {
+	session := &platformToolSession{Host: *host, Client: client}
+	if scope.Org != "" {
+		session.Host.DefaultOrgID, session.Host.DefaultOrgName = "", ""
+		session.Host.DefaultProjectID, session.Host.DefaultProjectName = "", ""
+		org, err := resolvePlatformToolOrg(ctx, session, scope.Org)
+		if err != nil {
 			return nil, err
 		}
+		session.Host.DefaultOrgID, session.Host.DefaultOrgName = org.ID, org.Name
+		if scope.Project != "" {
+			session, err = applyPlatformToolSessionScope(ctx, session, scope)
+			if err != nil {
+				return nil, err
+			}
+		}
+	} else if !explicit {
+		autoSelected, _, err := autoSelectPlatformToolWorkspace(ctx, client, &session.Host)
+		if err != nil {
+			return nil, err
+		}
+		session.AutoSelected = autoSelected
 	}
-	client.SetWorkspaceContext(host.DefaultOrgID, host.DefaultProjectID)
-	return &platformToolSession{Host: *host, Client: client, AutoSelected: autoSelected}, nil
+	client.SetWorkspaceContext(session.Host.DefaultOrgID, session.Host.DefaultProjectID)
+	recordPlatformScope(ctx, session)
+	return session, nil
 }
 
 func applyPlatformToolSessionScope(ctx context.Context, session *platformToolSession, scope platformapi.SessionScope) (*platformToolSession, error) {
@@ -1653,7 +1687,7 @@ func loadPlatformWorkspace(ctx context.Context) (*platformToolSession, error) {
 		return nil, err
 	}
 	if !hasPlatformWorkspace(session) {
-		return nil, fmt.Errorf("no hosted WhoDB workspace selected. Run: %s", platformUseCommand(session.Host.URL))
+		return nil, fmt.Errorf("no hosted WhoDB workspace selected. Discover hosts/orgs/projects and pass workspace {host, org, project} on this call. To save a CLI default instead, run: %s", platformUseCommand(session.Host.URL))
 	}
 	return session, nil
 }
@@ -1782,13 +1816,25 @@ func resolvePlatformToolOrg(ctx context.Context, session *platformToolSession, v
 		needle = orgs[0].ID
 	}
 	if needle == "" {
-		return nil, fmt.Errorf("org is required because no hosted WhoDB organization is selected. Call whodb_platform_orgs, then run whodb use --org <org> --project <project> or pass org")
+		return nil, fmt.Errorf("org is required because no hosted WhoDB organization is selected. Call whodb_platform_orgs with workspace {host}, then pass workspace.org or org")
+	}
+	var match *platformapi.Organization
+	for i := range orgs {
+		if orgs[i].ID == needle {
+			return selectPlatformToolOrg(ctx, session, &orgs[i])
+		}
 	}
 	for i := range orgs {
 		org := &orgs[i]
 		if matchesPlatformSourceIdentifier(needle, org.ID, org.Slug, org.Name) {
-			return org, nil
+			if match != nil {
+				return nil, fmt.Errorf("organization %q is ambiguous; use its ID", needle)
+			}
+			match = org
 		}
+	}
+	if match != nil {
+		return selectPlatformToolOrg(ctx, session, match)
 	}
 	return nil, fmt.Errorf("organization %q not found", needle)
 }
@@ -1806,11 +1852,23 @@ func resolvePlatformToolProject(ctx context.Context, session *platformToolSessio
 	if needle == "" {
 		return nil, nil, fmt.Errorf("project is required")
 	}
+	var match *platformapi.Project
+	for i := range projects {
+		if projects[i].ID == needle {
+			return selectPlatformToolProject(ctx, session, org, &projects[i])
+		}
+	}
 	for i := range projects {
 		project := &projects[i]
 		if matchesPlatformSourceIdentifier(needle, project.ID, project.Slug, project.Name) {
-			return org, project, nil
+			if match != nil {
+				return nil, nil, fmt.Errorf("project %q is ambiguous; use its ID", needle)
+			}
+			match = project
 		}
+	}
+	if match != nil {
+		return selectPlatformToolProject(ctx, session, org, match)
 	}
 	return nil, nil, fmt.Errorf("project %q not found in organization %s", needle, org.Name)
 }
@@ -2194,6 +2252,7 @@ func (action *PendingPlatformAction) Preview() *PlatformActionPreview {
 	}
 	willAffect := platformActionWillAffect(action, changes)
 	return &PlatformActionPreview{
+		AccountID:    action.AccountID,
 		Operation:    action.Operation,
 		Resource:     action.Resource,
 		Action:       action.Action,
@@ -2317,7 +2376,7 @@ func platformMutationWriteOutput(ctx context.Context, requestID, toolName string
 		output, err := executePendingPlatformAction(ctx, action, requestID)
 		if err != nil {
 			TrackToolCall(ctx, toolName, requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_action"})
-			return nil, PlatformGenericWriteOutput{PlatformSetupGuidance: platformSetupGuidanceForError(err, requestID), Error: err.Error(), RequestID: requestID}, nil
+			return nil, PlatformGenericWriteOutput{PlatformSetupGuidance: platformSetupGuidanceForError(ctx, err, requestID), Error: err.Error(), RequestID: requestID}, nil
 		}
 		raw, _ := json.Marshal(output)
 		TrackToolCall(ctx, toolName, requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"confirmation_required": false})
@@ -2333,9 +2392,20 @@ func HandlePlatformPending(ctx context.Context, req *mcp.CallToolRequest, input 
 	requestID := generateRequestID("platform_pending")
 	startTime := time.Now()
 
+	var scope *platformToolSession
+	if request := platformRequestFromContext(ctx); request != nil && request.Target != nil {
+		var err error
+		scope, err = loadPlatformToolSession(ctx)
+		if err != nil {
+			return nil, PlatformPendingOutput{Error: err.Error(), RequestID: requestID}, nil
+		}
+	}
 	actions := listPendingPlatformActions()
 	pending := make([]PlatformPendingInfo, 0, len(actions))
 	for _, action := range actions {
+		if scope != nil && (action.Host != scope.Host.URL || action.AccountID != scope.Host.AccountID || (scope.Host.DefaultOrgID != "" && action.OrgID != scope.Host.DefaultOrgID) || (scope.Host.DefaultProjectID != "" && action.ProjectID != scope.Host.DefaultProjectID)) {
+			continue
+		}
 		preview := action.Preview()
 		if preview == nil {
 			continue
@@ -2371,10 +2441,19 @@ func HandlePlatformConfirm(ctx context.Context, req *mcp.CallToolRequest, input 
 			releasePendingPlatformAction(input.Token)
 		}
 	}()
+	if request := platformRequestFromContext(ctx); request != nil && request.Target != nil {
+		selected, err := loadPlatformToolSession(ctx)
+		if err != nil {
+			return nil, ConfirmOutput{Error: err.Error(), RequestID: requestID}, nil
+		}
+		if selected.Host.URL != action.Host || selected.Host.DefaultOrgID != action.OrgID || selected.Host.DefaultProjectID != action.ProjectID {
+			return nil, ConfirmOutput{Error: "confirmation workspace does not match the preview; omit workspace to use the recorded target", RequestID: requestID}, nil
+		}
+	}
 	output, err := executePendingPlatformAction(ctx, action, requestID)
 	if err != nil {
 		TrackToolCall(ctx, "platform_confirm", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_action"})
-		return nil, ConfirmOutput{PlatformSetupGuidance: platformSetupGuidanceForError(err, requestID), Error: err.Error(), RequestID: requestID}, nil
+		return nil, ConfirmOutput{PlatformSetupGuidance: platformSetupGuidanceForError(ctx, err, requestID), Error: err.Error(), RequestID: requestID}, nil
 	}
 	consumePendingPlatformAction(input.Token)
 	consumed = true
@@ -2383,6 +2462,14 @@ func HandlePlatformConfirm(ctx context.Context, req *mcp.CallToolRequest, input 
 }
 
 func executePendingPlatformAction(ctx context.Context, action *PendingPlatformAction, requestID string) (ConfirmOutput, error) {
+	request := platformRequestFromContext(ctx)
+	pinned := &platformRequest{Target: &PlatformWorkspaceTarget{Host: action.Host, Org: action.OrgID, Project: action.ProjectID}}
+	ctx = context.WithValue(ctx, platformRequestKey{}, pinned)
+	defer func() {
+		if request != nil {
+			request.Scope = pinned.Scope
+		}
+	}()
 	var session *platformToolSession
 	var err error
 	if strings.HasPrefix(action.Operation, "project_") {
@@ -2392,6 +2479,9 @@ func executePendingPlatformAction(ctx context.Context, action *PendingPlatformAc
 	}
 	if err != nil {
 		return ConfirmOutput{}, err
+	}
+	if session.Host.AccountID != action.AccountID {
+		return ConfirmOutput{}, fmt.Errorf("hosted WhoDB account changed before confirmation; prepare a new write preview")
 	}
 	if session.Host.URL != action.Host {
 		return ConfirmOutput{}, fmt.Errorf("hosted WhoDB login changed from %s to %s before confirmation", action.Host, session.Host.URL)
@@ -2533,7 +2623,7 @@ Requires a prior hosted login with whodb login. Use this before other whodb_plat
 
 const descPlatformSources = `List hosted WhoDB sources in the selected organization and project.
 
-Requires whodb login and whodb use --org <org> --project <project>. This tool is read-only and never exposes source credentials.
+Requires a saved login on the target host. Pass workspace {host, org, project}, or omit it to use process/saved defaults. This tool is read-only and never exposes source credentials.
 Prefer fields such as ["id", "name", "type"] for discovery; request more fields only when needed.`
 
 const descPlatformOrgs = `List hosted WhoDB organizations visible to the authenticated user.

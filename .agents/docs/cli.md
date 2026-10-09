@@ -9,7 +9,7 @@ The CLI is an interactive terminal interface for WhoDB with split-pane TUI suppo
 cd cli && go build -o whodb .
 
 # Run interactive mode
-./whodb
+./whodb --tui
 
 # Connect to database
 ./whodb connect --type postgres --host localhost --user postgres --database mydb
@@ -31,7 +31,7 @@ cd cli && go build -o whodb .
 # Mock data
 ./whodb mock-data --connection mydb --table orders --rows 50 --analyze
 
-# MCP server
+# Platform MCP server (standalone database tools: add --database)
 ./whodb mcp serve
 ```
 

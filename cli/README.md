@@ -235,8 +235,8 @@ export WHODB_MYSQL_1='{"alias":"dev","host":"localhost","user":"user","password"
 ### 2. Start Interactive Mode
 
 ```bash
-# Start the TUI (default behavior)
-whodb
+# Start the database TUI
+whodb --tui
 ```
 
 ### 3. Execute a Quick Query
@@ -699,6 +699,17 @@ whodb profiles delete production --format json
 whodb --profile production
 ```
 
+## Startup modes
+
+Bare `whodb` shows saved platform login/workspace metadata and next commands;
+`whodb status` checks the live login. Use `whodb --tui` for the existing database
+terminal UI. Explicit `connect`, `query`, and `--profile` behavior is unchanged.
+
+`whodb mcp serve` now defaults to platform MCP. Existing standalone database MCP
+configurations must add `--database`. Database-only flags are rejected without it.
+`--platform` remains accepted with a notice on stderr. Both modes support stdio
+and HTTP transports; database mode does not imply that the database is local.
+
 ## MCP Server
 
 WhoDB can run as an MCP (Model Context Protocol) server, enabling AI assistants like Claude, Cursor, and others to query your databases.
@@ -713,7 +724,8 @@ whodb mcp serve
 whodb mcp serve --transport=http --port=3000
 ```
 
-This starts an MCP server that exposes these tools:
+Platform mode is the default and exposes `whodb_platform_*` tools.
+For standalone database access, run `whodb mcp serve --database`; that mode exposes these tools:
 
 | Tool | Description |
 |------|-------------|
@@ -730,10 +742,41 @@ This starts an MCP server that exposes these tools:
 | `whodb_audit` | Run data quality audits for a schema or table |
 | `whodb_suggestions` | Get backend-generated starter queries |
 
-Start with `--platform` to run hosted WhoDB platform mode. In this mode, only
-hosted platform tools are exposed; local database tools are not registered.
-Local tool selection flags such as `--tools` and `--disable-tools` do not apply
+Platform mode is the default. In this mode, only
+hosted platform tools are exposed; standalone database tools are not registered.
+Database tool selection flags such as `--tools` and `--disable-tools` do not apply
 to platform mode.
+
+### Per-call workspace targeting
+
+`whodb mcp serve` exposes hosted platform tools. Sign in to each required host with
+`whodb login --host <url>`. Start with `whodb_platform_hosts` to discover saved
+hosts and accounts, then `whodb_platform_orgs` with `workspace: {host}` and
+`whodb_platform_projects` with `workspace: {host, org}`.
+
+Resolve the intended target with `whodb_platform_workspace_resolve`. Pass an
+explicit `workspace: {host, org, project}` on subsequent tools when working across
+UAT, production, or projects. Targets apply to one call, including parallel calls,
+and never change saved defaults. Check the returned `scope`. Do not run `whodb use`
+to switch another session's defaults. Omitted targets use process overrides, then
+saved defaults. Read `whodb://platform/schema` for operations and payloads.
+
+Writes return a preview bound to its host, account, organization, and project.
+Confirm only after approval of that exact preview. Changing defaults does not
+redirect a pending confirmation. Persisted workflow plans from before account
+binding must be recreated before applying them. Ask for `whodb login --host <url>` when a host
+needs authentication; no separate login is needed per project.
+
+Example arguments for `whodb_platform_sources`:
+
+```json
+{"workspace":{"host":"https://uat.whodb.com","org":"acme","project":"analytics"}}
+```
+
+An explicit host uses that host's saved defaults. An explicit organization clears
+any inherited project; project-scoped operations then require a project. Invalid
+or ambiguous selectors fail instead of using another workspace. Host discovery
+reads local metadata; it does not claim the saved login is still valid.
 
 Hosted setup:
 
@@ -741,17 +784,17 @@ Hosted setup:
 # Sign in to app.whodb.com
 whodb login
 
-# Select the hosted workspace used by platform tools
+# Optional: save a default for calls without an explicit workspace
 whodb use --org <org> --project <project>
 
 # Start stdio MCP for your MCP client
-whodb mcp serve --platform
+whodb mcp serve
 
 # Read-only hosted platform MCP
-whodb mcp serve --platform --read-only
+whodb mcp serve --read-only
 
 # Hosted writes without confirmation; use only for trusted automation
-whodb mcp serve --platform --allow-write
+whodb mcp serve --allow-write
 ```
 
 To capture an actual rendered app with its current data, use the app commands
@@ -806,7 +849,7 @@ Local or staging setup:
 ```bash
 whodb login --host http://localhost:8080
 whodb use --host http://localhost:8080 --org <org> --project <project>
-whodb mcp serve --platform
+whodb mcp serve
 ```
 
 Recommended MCP client behavior:
@@ -905,9 +948,11 @@ For source creation, agents should call `whodb_platform_source_types` and
 `whodb_platform_source_fields` first so they use backend-published source type
 ids and field names.
 
-If no workspace is selected yet, agents should call `whodb_platform_orgs` and
-`whodb_platform_projects`, then ask the user to run
-`whodb use --org <org> --project <project>`.
+If no workspace is selected yet, agents should discover saved hosts with
+`whodb_platform_hosts`, then call `whodb_platform_orgs` with `workspace: {host}`
+and `whodb_platform_projects` with `workspace: {host, org}`. Resolve the chosen
+target with `whodb_platform_workspace_resolve` and pass its canonical IDs in
+`workspace` on subsequent calls. `whodb use` is optional for saving a default.
 For single-workspace accounts, hosted `login` or `status` can select the only
 organization/project automatically and report what was selected.
 
@@ -918,7 +963,7 @@ Example hosted platform MCP config:
   "mcpServers": {
     "whodb-platform": {
       "command": "whodb",
-      "args": ["mcp", "serve", "--platform"]
+      "args": ["mcp", "serve"]
     }
   }
 }
@@ -931,7 +976,7 @@ Example read-only hosted platform MCP config:
   "mcpServers": {
     "whodb-platform-readonly": {
       "command": "whodb",
-      "args": ["mcp", "serve", "--platform", "--read-only"]
+      "args": ["mcp", "serve", "--read-only"]
     }
   }
 }
@@ -944,18 +989,19 @@ Example local or staging platform MCP config:
   "mcpServers": {
     "whodb-platform-local": {
       "command": "whodb",
-      "args": ["mcp", "serve", "--platform"]
+      "args": ["mcp", "serve"]
     }
   }
 }
 ```
 
-The server uses the single active hosted login selected by `whodb login` and
-`whodb use`. If you switch hosts, run `login --host ...` and `use --host ...`
-before starting the MCP server. The MCP server does not need a host flag because
-it reads the active hosted login from the CLI config.
+One MCP server can use multiple saved host logins. Sign in to each host with
+`whodb login --host <url>`, then pass `workspace: {host, org, project}` per tool
+call to target local, UAT, or production workspaces without restarting the MCP
+server or changing saved defaults. Without an explicit target, the server uses
+its process overrides and then saved defaults.
 
-Local MCP exposes these resources:
+Standalone database MCP exposes these resources:
 
 | Resource | Description |
 |----------|-------------|
@@ -971,7 +1017,7 @@ Platform MCP exposes these resources instead:
 | `whodb://platform/tool-guide` | Platform tool categories, recommended usage, field projection guidance, and write behavior |
 
 The same metadata is available from `whodb agent schema --format json`.
-Its `platform_mcp` section describes the `--platform` flag, default host,
+Its `platform_mcp` section describes the default platform mode, default host,
 login/workspace requirements, field projection support, platform-only tool
 prefix, platform prompts/resources, and write behavior for confirm, read-only,
 safe, and allow-write modes.
@@ -1058,17 +1104,18 @@ HTTP mode exposes:
 - `--default-connection`: Default connection when not specified (does not restrict access)
 
 **Hosted Platform:**
-- `--platform`: Run hosted platform MCP mode only. Requires `whodb login` and `whodb use --org <org> --project <project>`.
+- `--database`: Expose standalone database tools instead of platform tools.
+- `--platform`: Compatibility alias for the default; prints a notice to stderr.
 
 ```bash
 # Restrict AI to specific connections only
-whodb mcp serve --allowed-connections prod,staging
+whodb mcp serve --database --allowed-connections prod,staging
 
 # Set default without restricting access
-whodb mcp serve --default-connection prod
+whodb mcp serve --database --default-connection prod
 
 # Combine: restrict to prod/staging, default to staging
-whodb mcp serve --allowed-connections prod,staging --default-connection staging
+whodb mcp serve --database --allowed-connections prod,staging --default-connection staging
 ```
 
 When `--allowed-connections` is set:
@@ -1112,7 +1159,7 @@ Example configuration (from `whodb mcp serve --help`):
   "mcpServers": {
       "whodb": {
         "command": "whodb",
-        "args": ["mcp", "serve"],
+        "args": ["mcp", "serve", "--database"],
         "env": {
           "WHODB_POSTGRES_1": "{\"alias\":\"prod\",\"host\":\"localhost\",\"user\":\"user\",\"password\":\"pass\",\"database\":\"db\"}"
         }
@@ -1127,7 +1174,7 @@ Example configuration (from `whodb mcp serve --help`):
 docker run -i --rm \
   -e WHODB_POSTGRES_1='{"alias":"prod","host":"host","user":"user","password":"pass","database":"db"}' \
   --network host \
-  whodb-cli:latest mcp serve
+  whodb-cli:latest mcp serve --database
 ```
 
 ## Interactive Mode Views

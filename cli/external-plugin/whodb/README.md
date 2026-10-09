@@ -1,12 +1,14 @@
 # WhoDB Plugin for Claude Code
 
-Database management tools for Claude Code. Query databases, explore schemas, analyze data, and get optimization recommendations.
+WhoDB platform and standalone database tools for Claude Code. Work across platform hosts and projects, or query databases directly.
 
 ## Installation Methods
 
 This plugin supports multiple installation methods. Choose the one that works best for you:
 
 ### Method 1: npm (Recommended - No pre-install needed)
+
+The default configuration starts platform MCP. Sign in with `whodb login --host <url>`, then use `whodb_platform_hosts` and explicit `workspace` targets. The standalone database examples below add `--database`.
 
 The default configuration uses npx to auto-download and run the MCP server:
 
@@ -19,16 +21,16 @@ The default configuration uses npx to auto-download and run the MCP server:
 }
 ```
 
-### Method 2: Docker (No pre-install needed)
+### Method 2: Docker (Standalone databases)
 
-If you prefer Docker, update your Claude settings (`.claude/settings.local.json`):
+For standalone database access through Docker, update your Claude settings (`.claude/settings.local.json`):
 
 ```json
 {
   "mcpServers": {
     "whodb": {
       "command": "docker",
-      "args": ["run", "-i", "--rm", "--network", "host", "clidey/whodb-cli", "mcp", "serve"]
+      "args": ["run", "-i", "--rm", "--network", "host", "clidey/whodb-cli", "mcp", "serve", "--database"]
     }
   }
 }
@@ -78,9 +80,9 @@ go install github.com/clidey/whodb/cli@latest
 - Elasticsearch
 - And more via WhoDB plugins
 
-## Prerequisites
+## Manual CLI installation
 
-Install the WhoDB CLI before using this plugin:
+For the local binary method, install the CLI using one of these options:
 
 ### Option 1: Download Binary
 
@@ -103,14 +105,17 @@ If you prefer Docker, update your Claude Code settings to use:
 {
   "whodb": {
     "command": "docker",
-    "args": ["run", "-i", "--rm", "--network", "host", "clidey/whodb-cli", "mcp", "serve"]
+    "args": ["run", "-i", "--rm", "--network", "host", "clidey/whodb-cli", "mcp", "serve", "--database"]
   }
 }
 ```
 
 ## Configuration
 
-### Database Connections
+### Standalone database connections
+
+These connection settings apply to `whodb mcp serve --database`. Platform mode
+uses the sources configured in the selected platform workspace.
 
 Configure database connections using environment variables:
 

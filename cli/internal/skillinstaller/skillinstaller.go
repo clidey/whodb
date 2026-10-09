@@ -399,11 +399,11 @@ func geminiContext() string {
 }
 
 func assistantRuleMarkdown() string {
-	return `# WhoDB Database Assistance
+	return `# WhoDB Assistance
 
-Use the WhoDB MCP server for database work. Start with ` + "`whodb_connections`" + ` to find available connections, then inspect schemas with ` + "`whodb_schemas`" + `, ` + "`whodb_tables`" + `, and ` + "`whodb_columns`" + ` before writing queries.
+Platform MCP is the default. Start with whodb_platform_hosts, discover organizations/projects on the intended host, and pass workspace {host, org, project} to whodb_platform_workspace_resolve and subsequent tools. Check the returned scope. Targets are per call and do not change defaults; the same MCP connection can access multiple hosts and projects. Read whodb://platform/schema for the available operations. Confirm writes only after the user approves the exact target and preview.
 
-Prefer read-only exploration queries with explicit limits while investigating data. Use ` + "`whodb_explain`" + ` for query plans, ` + "`whodb_erd`" + ` for relationship metadata, ` + "`whodb_audit`" + ` for data-quality checks, and ` + "`whodb_diff`" + ` for schema comparisons.
+Standalone database tools require whodb mcp serve --database. In that mode, start with whodb_connections, then inspect whodb_schemas, whodb_tables, and whodb_columns before querying. The existing terminal UI is available through whodb --tui.
 `
 }
 
@@ -687,7 +687,7 @@ func mergeContinueConfig(path string, force, dryRun bool) error {
 	}, force); err != nil {
 		return err
 	}
-	appendYAMLStringList(config, "rules", "Use the WhoDB MCP server for database schema exploration, SQL querying, explain plans, data-quality audits, and schema comparisons.")
+	appendYAMLStringList(config, "rules", "Use WhoDB platform MCP with explicit workspace {host, org, project} targets. Discover saved hosts with whodb_platform_hosts; check returned scope. Standalone database tools require --database.")
 	return writeYAMLFile(path, config, dryRun)
 }
 

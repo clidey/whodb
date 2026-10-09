@@ -1,6 +1,6 @@
 ---
 name: whodb
-description: "Query and explore databases via MCP. Use when the user asks to inspect schemas, run SQL, browse tables, analyze data quality, generate ER diagrams, or work with PostgreSQL, MySQL, MariaDB, TiDB, SQLite, MongoDB, Redis, ClickHouse, Elasticsearch, or DuckDB."
+description: "Work with WhoDB platform hosts and project resources via MCP, including multiple environments, or query standalone databases in database mode."
 license: Apache-2.0
 metadata:
   author: clidey
@@ -12,18 +12,43 @@ compatibility: "Requires Node.js (npx) or the whodb binary installed."
 
 Query databases, explore schemas, analyze data quality, and get optimization recommendations through the WhoDB MCP server.
 
-## Setup
+## Platform MCP (default)
+
+`whodb mcp serve` exposes hosted platform tools. Sign in to each required host with
+`whodb login --host <url>`. Start with `whodb_platform_hosts` to discover saved
+hosts and accounts, then `whodb_platform_orgs` with `workspace: {host}` and
+`whodb_platform_projects` with `workspace: {host, org}`.
+
+Resolve the intended target with `whodb_platform_workspace_resolve`. Pass an
+explicit `workspace: {host, org, project}` on subsequent tools when working across
+UAT, production, or projects. Targets apply to one call, including parallel calls,
+and never change saved defaults. Check the returned `scope`. Do not run `whodb use`
+to switch another session's defaults. Omitted targets use process overrides, then
+saved defaults. Read `whodb://platform/schema` for operations and payloads.
+
+Writes return a preview bound to its host, account, organization, and project.
+Confirm only after approval of that exact preview. Changing defaults does not
+redirect a pending confirmation. Ask for `whodb login --host <url>` when a host
+needs authentication; no separate login is needed per project.
+
+## Standalone database MCP
+
+The database tools below are available only with `whodb mcp serve --database`.
+This connects directly to databases without a WhoDB platform server; databases
+can be remote. The terminal UI is available with `whodb --tui`.
+
+## Standalone database setup
 
 If the WhoDB MCP server is not connected, set it up:
 
 1. Add the MCP server (npx, no install needed):
    ```bash
-   codex mcp add whodb -- npx -y whodb mcp serve
+   codex mcp add whodb -- npx -y whodb mcp serve --database
    ```
 
 2. Or if `whodb` is installed locally:
    ```bash
-   codex mcp add whodb -- whodb mcp serve
+   codex mcp add whodb -- whodb mcp serve --database
    ```
 
 3. Configure database connections via environment variables:

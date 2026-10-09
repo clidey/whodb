@@ -1188,6 +1188,7 @@ func buildPlatformChangeImpact(snapshot *platformWorkspaceSnapshot, resource, id
 
 func buildPlatformWritePlan(snapshot *platformWorkspaceSnapshot, session *platformToolSession, spec platformapi.GenericWriteSpec, payload map[string]any, targetID string) PlatformWritePlan {
 	action := &PendingPlatformAction{
+		AccountID:   session.Host.AccountID,
 		Operation:   spec.Mutation,
 		Resource:    spec.Resource,
 		Action:      spec.Action,

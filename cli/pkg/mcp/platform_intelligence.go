@@ -48,7 +48,7 @@ func registerPlatformResourceResolverTool(server *mcp.Server, tool *mcp.Tool) bo
 	if tool.Name != "whodb_platform_resolve_resource" {
 		return false
 	}
-	mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformResolveResourceInput) (*mcp.CallToolResult, PlatformResolveResourceOutput, error) {
+	addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformResolveResourceInput) (*mcp.CallToolResult, PlatformResolveResourceOutput, error) {
 		return HandlePlatformResolveResource(ctx, req, input)
 	})
 	return true
@@ -265,7 +265,7 @@ func platformWritePreflight(ctx context.Context, session *platformToolSession, s
 		if strings.TrimSpace(session.Host.DefaultProjectID) == "" {
 			status, reason = "blocked_by_workspace", "A project must be selected before this operation."
 		}
-		checks = append(checks, PlatformWritePreflight{Name: "workspace", Status: status, Reason: reason, Tool: "whodb_platform_use"})
+		checks = append(checks, PlatformWritePreflight{Name: "workspace", Status: status, Reason: reason, Tool: "whodb_platform_workspace_resolve"})
 	}
 	if targetID != "" {
 		permissions, err := session.Client.PlatformQuery(ctx, "MyPermissions", map[string]any{"resourceType": spec.Resource, "resourceId": targetID})

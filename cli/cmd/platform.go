@@ -2276,5 +2276,5 @@ func printLoginNextSteps(out *output.Writer, workspaceSelected bool) {
 	} else {
 		out.Info("  Select a workspace:              whodb use --org <org> --project <project>")
 	}
-	out.Info("  Start your assistant connection: whodb mcp serve --platform")
+	out.Info("  Start your assistant connection: whodb mcp serve")
 }

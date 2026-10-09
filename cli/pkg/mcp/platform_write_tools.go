@@ -123,51 +123,51 @@ type PlatformGenericWriteOutput struct {
 func registerPlatformGenericWriteTool(server *mcp.Server, tool *mcp.Tool, secOpts *SecurityOptions) bool {
 	switch tool.Name {
 	case "whodb_platform_restore":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformRestoreInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformRestoreInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformGenericWrite(ctx, "platform_restore", PlatformGenericWriteInput{Resource: input.Resource, Action: "restore", ID: input.ID}, "action", secOpts.ConfirmWrites)
 		})
 	case "whodb_platform_create":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformGenericWriteInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformGenericWriteInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformGenericWrite(ctx, "platform_create", input, "create", secOpts.ConfirmWrites)
 		})
 	case "whodb_platform_update":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformGenericWriteInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformGenericWriteInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformGenericWrite(ctx, "platform_update", input, "update", secOpts.ConfirmWrites)
 		})
 	case "whodb_platform_delete":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformGenericWriteInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformGenericWriteInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformGenericWrite(ctx, "platform_delete", input, "delete", secOpts.ConfirmWrites)
 		})
 	case "whodb_platform_action":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformGenericWriteInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformGenericWriteInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformGenericWrite(ctx, "platform_action", input, "action", secOpts.ConfirmWrites)
 		})
 	case "whodb_platform_create_dataset":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformCreateDatasetInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformCreateDatasetInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformCreateDataset(ctx, input, secOpts.ConfirmWrites)
 		})
 	case "whodb_platform_promote_file_to_dataset":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformPromoteFileToDatasetInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformPromoteFileToDatasetInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformPromoteFileToDataset(ctx, input, secOpts.ConfirmWrites)
 		})
 	case "whodb_platform_add_ontology_record":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformOntologyRecordInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformOntologyRecordInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformOntologyRecordWrite(ctx, "whodb_platform_add_ontology_record", input, "add_record", secOpts.ConfirmWrites)
 		})
 	case "whodb_platform_update_ontology_record":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformOntologyRecordInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformOntologyRecordInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformOntologyRecordWrite(ctx, "whodb_platform_update_ontology_record", input, "update_record", secOpts.ConfirmWrites)
 		})
 	case "whodb_platform_delete_ontology_record":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformOntologyRecordInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformOntologyRecordInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformOntologyRecordWrite(ctx, "whodb_platform_delete_ontology_record", input, "delete_record", secOpts.ConfirmWrites)
 		})
 	case "whodb_platform_create_ontology_fast_lookup":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformOntologyFastLookupInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformOntologyFastLookupInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformCreateOntologyFastLookup(ctx, input, secOpts.ConfirmWrites)
 		})
 	case "whodb_platform_delete_ontology_fast_lookup":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformEntityWriteInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformEntityWriteInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformTypedGenericWrite(ctx, "whodb_platform_delete_ontology_fast_lookup", PlatformGenericWriteInput{Resource: "ontology_fast_lookup", ID: input.ID}, "delete", secOpts.ConfirmWrites)
 		})
 	default:
@@ -199,7 +199,7 @@ func handlePlatformGenericWrite(ctx context.Context, toolName string, input Plat
 	session, err := loadPlatformWorkspace(ctx)
 	if err != nil {
 		TrackToolCall(ctx, toolName, requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_session"})
-		return nil, platformGenericWriteSetupError(err, requestID), nil
+		return nil, platformGenericWriteSetupError(ctx, err, requestID), nil
 	}
 	spec, payload, err := buildPlatformGenericWrite(session, input, operationKind)
 	if err != nil {
@@ -215,6 +215,7 @@ func handlePlatformGenericWrite(ctx context.Context, toolName string, input Plat
 		return nil, platformGenericWriteError(err, requestID), nil
 	}
 	action := &PendingPlatformAction{
+		AccountID:      session.Host.AccountID,
 		Operation:      spec.Mutation,
 		Resource:       spec.Resource,
 		Action:         spec.Action,
@@ -263,13 +264,13 @@ func scopedPlatformIdempotencyKey(session *platformToolSession, input PlatformGe
 	if len(key) > 200 {
 		key = key[:200]
 	}
-	return strings.Join([]string{session.Host.URL, session.Host.DefaultOrgID, session.Host.DefaultProjectID, operationKind, normalizePlatformWriteToken(input.Resource), normalizePlatformWriteToken(input.Action), strings.TrimSpace(input.ID), key}, "|")
+	return strings.Join([]string{session.Host.URL, session.Host.AccountID, session.Host.DefaultOrgID, session.Host.DefaultProjectID, operationKind, normalizePlatformWriteToken(input.Resource), normalizePlatformWriteToken(input.Action), strings.TrimSpace(input.ID), key}, "|")
 }
 
-func platformGenericWriteSetupError(err error, requestID string) PlatformGenericWriteOutput {
+func platformGenericWriteSetupError(ctx context.Context, err error, requestID string) PlatformGenericWriteOutput {
 	errorCode, retryable, suggestedTools := platformErrorFields(err)
 	return PlatformGenericWriteOutput{
-		PlatformSetupGuidance: platformSetupGuidanceForCurrentConfig(requestID),
+		PlatformSetupGuidance: platformSetupGuidanceForCurrentConfig(ctx, requestID),
 		Error:                 err.Error(),
 		ErrorCode:             errorCode,
 		Retryable:             retryable,

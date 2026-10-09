@@ -33,7 +33,7 @@ func platformErrorFields(err error) (string, bool, []string) {
 	case strings.Contains(message, "login") || strings.Contains(message, "token") || strings.Contains(message, "authenticated") || strings.Contains(message, "401"):
 		return string(PlatformErrorAuth), false, []string{"whodb_platform_setup_status", "whodb_platform_status"}
 	case strings.Contains(message, "workspace") || strings.Contains(message, "organization") || strings.Contains(message, "project") && strings.Contains(message, "selected"):
-		return string(PlatformErrorWorkspace), false, []string{"whodb_platform_orgs", "whodb_platform_projects", "whodb_platform_use"}
+		return string(PlatformErrorWorkspace), false, []string{"whodb_platform_orgs", "whodb_platform_projects", "whodb_platform_workspace_resolve"}
 	case strings.Contains(message, "permission") || strings.Contains(message, "forbidden") || strings.Contains(message, "403"):
 		return string(PlatformErrorPermission), false, []string{"whodb_platform_resource_permissions"}
 	case strings.Contains(message, "not found") || strings.Contains(message, "does not exist") || strings.Contains(message, "404"):
@@ -60,7 +60,7 @@ func platformRecoveryAdvice(code string, message string) PlatformRecoveryAdvice 
 	case PlatformErrorAuth:
 		return PlatformRecoveryAdvice{"the hosted session is missing or expired", []string{"run whodb_platform_setup_status", "ask the user to run whodb login", "retry the original tool"}}
 	case PlatformErrorWorkspace:
-		return PlatformRecoveryAdvice{"no usable organization or project is selected", []string{"run whodb_platform_orgs", "run whodb_platform_projects", "run whodb_platform_use with the intended workspace"}}
+		return PlatformRecoveryAdvice{"no usable organization or project is selected", []string{"run whodb_platform_orgs", "run whodb_platform_projects", "run whodb_platform_workspace_resolve with the intended workspace"}}
 	case PlatformErrorPermission:
 		return PlatformRecoveryAdvice{"the signed-in user does not have the required platform permission", []string{"run whodb_platform_resource_permissions for the target", "ask the user to use the platform to grant access", "do not retry unchanged"}}
 	case PlatformErrorNotFound:

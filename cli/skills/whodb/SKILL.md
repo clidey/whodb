@@ -1,15 +1,40 @@
 ---
 name: whodb
-description: Database operations including querying, schema exploration, and data analysis. Activates for tasks involving PostgreSQL, MySQL, MariaDB, TiDB, SQLite, MongoDB, Redis, Elasticsearch, or ClickHouse databases.
+description: Work with WhoDB platform hosts, organizations, projects, and resources through MCP, or use standalone database tools when database mode is configured.
 ---
 
 # WhoDB Database Assistant
 
 You have access to WhoDB for database operations. Use these tools and commands to help users with database tasks.
 
-## MCP Tools (Preferred)
+## Platform MCP (default)
 
-When the WhoDB MCP server is available, use these tools directly:
+`whodb mcp serve` exposes hosted platform tools. Sign in to each required host with
+`whodb login --host <url>`. Start with `whodb_platform_hosts` to discover saved
+hosts and accounts, then `whodb_platform_orgs` with `workspace: {host}` and
+`whodb_platform_projects` with `workspace: {host, org}`.
+
+Resolve the intended target with `whodb_platform_workspace_resolve`. Pass an
+explicit `workspace: {host, org, project}` on subsequent tools when working across
+UAT, production, or projects. Targets apply to one call, including parallel calls,
+and never change saved defaults. Check the returned `scope`. Do not run `whodb use`
+to switch another session's defaults. Omitted targets use process overrides, then
+saved defaults. Read `whodb://platform/schema` for operations and payloads.
+
+Writes return a preview bound to its host, account, organization, and project.
+Confirm only after approval of that exact preview. Changing defaults does not
+redirect a pending confirmation. Ask for `whodb login --host <url>` when a host
+needs authentication; no separate login is needed per project.
+
+## Standalone database MCP
+
+The database tools below are available only with `whodb mcp serve --database`.
+This connects directly to databases without a WhoDB platform server; databases
+can be remote. The terminal UI is available with `whodb --tui`.
+
+### Database tools
+
+When standalone database MCP is configured, use these tools directly:
 
 ### whodb_connections
 List all available database connections.

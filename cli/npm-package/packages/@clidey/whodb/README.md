@@ -43,12 +43,12 @@ the `whodb` command.
 
 ```bash
 # Interactive TUI
-whodb
+whodb --tui
 
 # Run a query
 whodb query "SELECT * FROM users LIMIT 10" --connection mydb
 
-# Start as an MCP server
+# Start platform MCP (add --database for standalone database tools)
 whodb mcp serve
 ```
 
