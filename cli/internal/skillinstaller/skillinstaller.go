@@ -403,7 +403,7 @@ func assistantRuleMarkdown() string {
 
 Platform MCP is the default. Start with whodb_platform_hosts, discover organizations/projects on the intended host, and pass workspace {host, org, project} to whodb_platform_workspace_resolve and subsequent tools. Check the returned scope. Targets are per call and do not change defaults; the same MCP connection can access multiple hosts and projects. Read whodb://platform/schema for the available operations. Confirm writes only after the user approves the exact target and preview.
 
-Standalone database tools require whodb mcp serve --database. In that mode, start with whodb_connections, then inspect whodb_schemas, whodb_tables, and whodb_columns before querying. The existing terminal UI is available through whodb --tui.
+Database-only MCP tools require whodb mcp serve --database. In that mode, start with whodb_connections, then inspect whodb_schemas, whodb_tables, and whodb_columns before querying. The existing terminal UI is available through whodb --tui.
 `
 }
 
@@ -687,7 +687,7 @@ func mergeContinueConfig(path string, force, dryRun bool) error {
 	}, force); err != nil {
 		return err
 	}
-	appendYAMLStringList(config, "rules", "Use WhoDB platform MCP with explicit workspace {host, org, project} targets. Discover saved hosts with whodb_platform_hosts; check returned scope. Standalone database tools require --database.")
+	appendYAMLStringList(config, "rules", "Use WhoDB platform MCP with explicit workspace {host, org, project} targets. Discover saved hosts with whodb_platform_hosts; check returned scope. Database-only MCP tools require --database.")
 	return writeYAMLFile(path, config, dryRun)
 }
 

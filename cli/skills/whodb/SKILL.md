@@ -1,6 +1,6 @@
 ---
 name: whodb
-description: Work with WhoDB platform hosts, organizations, projects, and resources through MCP, or use standalone database tools when database mode is configured.
+description: Work with WhoDB platform hosts, organizations, projects, and resources through MCP, or use database-only MCP tools when database mode is configured.
 ---
 
 # WhoDB Database Assistant
@@ -26,7 +26,7 @@ Confirm only after approval of that exact preview. Changing defaults does not
 redirect a pending confirmation. Ask for `whodb login --host <url>` when a host
 needs authentication; no separate login is needed per project.
 
-## Standalone database MCP
+## Database-only MCP
 
 The database tools below are available only with `whodb mcp serve --database`.
 This connects directly to databases without a WhoDB platform server; databases
@@ -34,7 +34,7 @@ can be remote. The terminal UI is available with `whodb --tui`.
 
 ### Database tools
 
-When standalone database MCP is configured, use these tools directly:
+When database-only MCP is configured, use these tools directly:
 
 ### whodb_connections
 List all available database connections.

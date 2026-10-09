@@ -74,7 +74,7 @@ npx @clidey/whodb mcp serve
 Use `workspace: {host, org, project}` on platform tool calls to target a specific
 workspace without changing saved defaults.
 
-For standalone database tools, start with `--database`:
+For database-only MCP tools, start with `--database`:
 
 ```bash
 npx @clidey/whodb mcp serve --database
@@ -88,7 +88,7 @@ Restrict AI access to specific connections with `--allowed-connections`:
 npx @clidey/whodb mcp serve --database --allowed-connections prod,staging
 ```
 
-## Standalone Database MCP Client Configuration
+## Database-only MCP Client Configuration
 
 Example configuration (from `whodb mcp serve --database --help`):
 

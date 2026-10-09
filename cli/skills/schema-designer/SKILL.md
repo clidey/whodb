@@ -7,7 +7,7 @@ description: Help design database schemas, create tables, and plan data models. 
 
 Help users design database schemas, create tables, and model data relationships.
 
-These standalone database tools require `whodb mcp serve --database`. For platform resources, use the WhoDB skill and discover available `whodb_platform_*` tools instead.
+These database-only MCP tools require `whodb mcp serve --database`. For platform resources, use the WhoDB skill and discover available `whodb_platform_*` tools instead.
 
 ## When to Use
 

@@ -1,6 +1,6 @@
 # WhoDB Plugin for Claude Code
 
-WhoDB platform and standalone database tools for Claude Code. Work across platform hosts and projects, or query databases directly.
+WhoDB platform and database-only MCP tools for Claude Code. Work across platform hosts and projects, or query databases directly.
 
 ## Installation Methods
 
@@ -8,7 +8,7 @@ This plugin supports multiple installation methods. Choose the one that works be
 
 ### Method 1: npm (Recommended - No pre-install needed)
 
-The default configuration starts platform MCP. Sign in with `whodb login --host <url>`, then use `whodb_platform_hosts` and explicit `workspace` targets. The standalone database examples below add `--database`.
+The default configuration starts platform MCP. Sign in with `whodb login --host <url>`, then use `whodb_platform_hosts` and explicit `workspace` targets. The database-only MCP examples below add `--database`.
 
 The default configuration uses npx to auto-download and run the MCP server:
 
@@ -21,9 +21,9 @@ The default configuration uses npx to auto-download and run the MCP server:
 }
 ```
 
-### Method 2: Docker (Standalone databases)
+### Method 2: Docker (Database-only MCP)
 
-For standalone database access through Docker, update your Claude settings (`.claude/settings.local.json`):
+For database-only MCP access through Docker, update your Claude settings (`.claude/settings.local.json`):
 
 ```json
 {
@@ -112,7 +112,7 @@ If you prefer Docker, update your Claude Code settings to use:
 
 ## Configuration
 
-### Standalone database connections
+### Database-only MCP connections
 
 These connection settings apply to `whodb mcp serve --database`. Platform mode
 uses the sources configured in the selected platform workspace.

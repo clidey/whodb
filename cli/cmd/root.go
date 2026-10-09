@@ -44,11 +44,11 @@ var rootCmd = &cobra.Command{
 	Use:           "whodb",
 	Short:         "WhoDB platform and database command-line interface",
 	SilenceErrors: true,
-	Long: `WhoDB CLI connects to WhoDB platform hosts and provides standalone database tools.
+	Long: `WhoDB CLI connects to WhoDB platform hosts and provides database-only MCP tools.
 
 Run whodb for saved platform status and next steps. Use whodb --tui for the
 interactive database interface, or whodb mcp serve to connect an AI assistant.
-Use whodb mcp serve --database for standalone database MCP.
+Use whodb mcp serve --database for database-only MCP.
 
 Database interface features:
   - Split-pane TUI layouts (Single, Explore, Query, Full) — Ctrl+L to cycle

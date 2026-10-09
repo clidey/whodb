@@ -48,7 +48,7 @@ whodb --tui
 # Run a query
 whodb query "SELECT * FROM users LIMIT 10" --connection mydb
 
-# Start platform MCP (add --database for standalone database tools)
+# Start platform MCP (add --database for database-only MCP tools)
 whodb mcp serve
 ```
 

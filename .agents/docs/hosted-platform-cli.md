@@ -177,7 +177,7 @@ needs authentication; no separate login is needed per project.
 
 ## MCP Platform Tools
 
-Hosted platform MCP mode is the default (`--database` selects standalone database tools):
+Hosted platform MCP mode is the default (`--database` selects database-only MCP tools):
 
 ```bash
 whodb mcp serve
@@ -301,7 +301,7 @@ whodb use --org <org-id-or-slug> --project <project-id-or-slug>
 ```
 
 In default platform mode, the MCP server exposes only hosted platform tools.
-Standalone database MCP tools such as `whodb_query` and `whodb_connections` are not
+Database-only MCP tools such as `whodb_query` and `whodb_connections` are not
 registered.
 
 Example hosted platform MCP config:

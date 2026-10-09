@@ -134,7 +134,7 @@ All hosted tools accept a workspace target for this call only. One MCP server
 can access multiple hosts/projects without changing saved defaults. Read
 whodb://platform/schema for the complete platform tool contract.
 
-Standalone database tools (--database):
+Database-only MCP tools (--database):
   whodb_query       - Execute SQL queries (security-validated)
   whodb_schemas     - List database schemas
   whodb_tables      - List tables in a schema
@@ -148,10 +148,10 @@ Standalone database tools (--database):
   whodb_confirm     - Confirm pending writes (only with --confirm-writes)
   whodb_pending     - List pending confirmation tokens
 
-Hosted platform mode is the default. Use --database for standalone database tools.
+Hosted platform mode is the default. Use --database for database-only MCP tools.
 Platform mode exposes whodb_platform_* tools backed by saved hosted logins and
 per-call workspace targets or process/saved defaults.
-Standalone database tools such as whodb_query and whodb_connections are not registered
+Database-only MCP tools such as whodb_query and whodb_connections are not registered
 in platform mode. Platform mode uses the same permission modes: default
 confirm-writes returns confirmation tokens, --read-only and --safe-mode hide
 hosted platform write tools, and --allow-write executes hosted platform writes

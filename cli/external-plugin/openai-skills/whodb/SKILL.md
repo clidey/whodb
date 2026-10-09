@@ -1,6 +1,6 @@
 ---
 name: whodb
-description: "Work with WhoDB platform hosts and project resources via MCP, including multiple environments, or query standalone databases in database mode."
+description: "Work with WhoDB platform hosts and project resources via MCP, including multiple environments, or query databases directly in database-only MCP mode."
 license: Apache-2.0
 metadata:
   author: clidey
@@ -31,13 +31,13 @@ Confirm only after approval of that exact preview. Changing defaults does not
 redirect a pending confirmation. Ask for `whodb login --host <url>` when a host
 needs authentication; no separate login is needed per project.
 
-## Standalone database MCP
+## Database-only MCP
 
 The database tools below are available only with `whodb mcp serve --database`.
 This connects directly to databases without a WhoDB platform server; databases
 can be remote. The terminal UI is available with `whodb --tui`.
 
-## Standalone database setup
+## Database-only MCP setup
 
 If the WhoDB MCP server is not connected, set it up:
 

@@ -31,7 +31,7 @@ cd cli && go build -o whodb .
 # Mock data
 ./whodb mock-data --connection mydb --table orders --rows 50 --analyze
 
-# Platform MCP server (standalone database tools: add --database)
+# Platform MCP server (database-only MCP tools: add --database)
 ./whodb mcp serve
 ```
 

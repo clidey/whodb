@@ -705,7 +705,7 @@ Bare `whodb` shows saved platform login/workspace metadata and next commands;
 `whodb status` checks the live login. Use `whodb --tui` for the existing database
 terminal UI. Explicit `connect`, `query`, and `--profile` behavior is unchanged.
 
-`whodb mcp serve` now defaults to platform MCP. Existing standalone database MCP
+`whodb mcp serve` now defaults to platform MCP. Existing database-only MCP
 configurations must add `--database`. Database-only flags are rejected without it.
 `--platform` remains accepted with a notice on stderr. Both modes support stdio
 and HTTP transports; database mode does not imply that the database is local.
@@ -725,7 +725,7 @@ whodb mcp serve --transport=http --port=3000
 ```
 
 Platform mode is the default and exposes `whodb_platform_*` tools.
-For standalone database access, run `whodb mcp serve --database`; that mode exposes these tools:
+For database-only MCP access, run `whodb mcp serve --database`; that mode exposes these tools:
 
 | Tool | Description |
 |------|-------------|
@@ -743,7 +743,7 @@ For standalone database access, run `whodb mcp serve --database`; that mode expo
 | `whodb_suggestions` | Get backend-generated starter queries |
 
 Platform mode is the default. In this mode, only
-hosted platform tools are exposed; standalone database tools are not registered.
+hosted platform tools are exposed; database-only MCP tools are not registered.
 Database tool selection flags such as `--tools` and `--disable-tools` do not apply
 to platform mode.
 
@@ -1001,7 +1001,7 @@ call to target local, UAT, or production workspaces without restarting the MCP
 server or changing saved defaults. Without an explicit target, the server uses
 its process overrides and then saved defaults.
 
-Standalone database MCP exposes these resources:
+Database-only MCP exposes these resources:
 
 | Resource | Description |
 |----------|-------------|
@@ -1104,7 +1104,7 @@ HTTP mode exposes:
 - `--default-connection`: Default connection when not specified (does not restrict access)
 
 **Hosted Platform:**
-- `--database`: Expose standalone database tools instead of platform tools.
+- `--database`: Expose database-only MCP tools instead of platform tools.
 - `--platform`: Compatibility alias for the default; prints a notice to stderr.
 
 ```bash
