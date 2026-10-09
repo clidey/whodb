@@ -1059,7 +1059,7 @@ func buildPlatformConcepts() []platformConceptResource {
 		{Name: "dataset", Description: "Durable project data asset used for previews, modeling, transforms, ontology backing data, and downstream workflows.", Role: "persist", Tools: []string{"whodb_platform_datasets", "whodb_platform_dataset", "whodb_platform_dataset_rows"}},
 		{Name: "ontology", Description: "Semantic/business object model with properties, links, records, fast lookups, and relationships over project data.", Role: "model", Tools: []string{"whodb_platform_ontologies", "whodb_platform_ontology", "whodb_platform_ontology_rows", "whodb_platform_ontology_follow_link"}},
 		{Name: "transform", Description: "Repeatable pipeline that reads, writes, or moves data between files, datasets, ontologies, sources, and functions.", Role: "automate", Tools: []string{"whodb_platform_transforms", "whodb_platform_transform", "whodb_platform_transform_runs"}},
-		{Name: "function", Description: "Executable behavior around ontology/data workflows, optionally using AI providers, secrets, and deployment actions.", Role: "automate", Tools: []string{"whodb_platform_functions", "whodb_platform_function"}},
+		{Name: "function", Description: "Executable behavior around ontology/data workflows, optionally using AI providers, secrets, and deployment actions.", Role: "automate", Tools: []string{"whodb_platform_functions", "whodb_platform_function", "whodb_platform_function_runs"}},
 		{Name: "secret", Description: "Runtime secret metadata for bindings and execution. Values are not exposed through MCP.", Role: "runtime_support", Tools: []string{"whodb_platform_secrets"}},
 		{Name: "ai_provider", Description: "AI provider metadata and model discovery for AI-backed functions and workflows. API keys are not exposed.", Role: "runtime_support", Tools: []string{"whodb_platform_ai_providers", "whodb_platform_ai_provider_models"}},
 		{Name: "lineage", Description: "Relationship and dependency evidence across project resources.", Role: "govern", Tools: []string{"whodb_platform_project_lineage", "whodb_platform_lineage", "whodb_platform_lineage_neighbors", "whodb_platform_resource_graph"}},
@@ -1129,6 +1129,7 @@ func buildPlatformWorkflowRecipes() []platformWorkflowRecipe {
 				{Phase: "inspect", Description: "Read function metadata narrowly first; request files/content only when required.", Tools: []string{"whodb_platform_functions", "whodb_platform_function"}},
 				{Phase: "dependencies", Description: "Check providers, secrets, ontologies, runtime readiness, and graph links.", Tools: []string{"whodb_platform_runtime_readiness", "whodb_platform_ai_providers", "whodb_platform_secrets", "whodb_platform_resource_graph"}},
 				{Phase: "plan_deploy", Description: "Analyze impact and dry-run the deploy/redeploy action.", Tools: []string{"whodb_platform_change_impact", "whodb_platform_write_plan"}, WriteTools: []string{"whodb_platform_action"}, VerifyTools: []string{"whodb_platform_function", "whodb_platform_runtime_readiness"}},
+				{Phase: "run", Description: "Start long work with the start_run action instead of execute, then wait on the returned run id.", WriteTools: []string{"whodb_platform_action"}, VerifyTools: []string{"whodb_platform_function_wait", "whodb_platform_function_runs"}},
 			},
 		},
 		{
@@ -1286,13 +1287,13 @@ func buildPlatformToolGuide(secOpts *SecurityOptions) platformToolGuideResource 
 			{Tool: "whodb_platform_action", Resources: []string{"transform"}, Actions: []string{"run"}},
 		},
 			"whodb_platform_transforms", "whodb_platform_transform", "whodb_platform_transform_runs"),
-		platformToolCategory(toolByName, "functions", "Function metadata, function files, deploy and redeploy actions.", "List functions with narrow fields; request files/content only when needed.", []string{"id", "name"}, []platformToolGuideMutation{
+		platformToolCategory(toolByName, "functions", "Function metadata, function files, deploy and redeploy actions, and persisted runs.", "List functions with narrow fields; request files/content only when needed. Use start_run plus function_wait for work that may outlast one request.", []string{"id", "name"}, []platformToolGuideMutation{
 			{Tool: "whodb_platform_create", Resources: []string{"function"}},
 			{Tool: "whodb_platform_update", Resources: []string{"function"}},
 			{Tool: "whodb_platform_delete", Resources: []string{"function"}},
-			{Tool: "whodb_platform_action", Resources: []string{"function"}, Actions: []string{"deploy", "redeploy"}},
+			{Tool: "whodb_platform_action", Resources: []string{"function"}, Actions: []string{"deploy", "redeploy", "execute", "start_run"}},
 		},
-			"whodb_platform_functions", "whodb_platform_function"),
+			"whodb_platform_functions", "whodb_platform_function", "whodb_platform_function_runs", "whodb_platform_function_wait"),
 		platformToolCategory(toolByName, "files", "Project file browsing, previews, column inspection, search, tabular file discovery, and storage usage.", "Search or list files first; inspect tabular columns before promotion; preview file contents only when required.", []string{"id", "name", "isTabular"}, []platformToolGuideMutation{
 			{Tool: "whodb_platform_create", Resources: []string{"folder"}},
 			{Tool: "whodb_platform_delete", Resources: []string{"file", "folder"}},
@@ -1320,7 +1321,7 @@ func buildPlatformToolGuide(secOpts *SecurityOptions) platformToolGuideResource 
 			{Tool: "whodb_platform_create", Resources: []string{"secret", "ai_provider", "ontology", "ontology_fast_lookup", "dataset", "transform", "folder", "function", "app", "package", "source_object"}},
 			{Tool: "whodb_platform_update", Resources: []string{"secret", "ai_provider", "ontology", "dataset", "transform", "function", "app", "source_object"}},
 			{Tool: "whodb_platform_delete", Resources: []string{"secret", "ai_provider", "ontology", "ontology_fast_lookup", "dataset", "transform", "file", "folder", "function", "app", "source_object"}},
-			{Tool: "whodb_platform_action", Resources: []string{"transform", "file", "folder", "function", "app", "package", "object", "organization", "resource"}, Actions: []string{"run", "upload", "rename", "move", "promote_to_dataset", "deploy", "redeploy", "test", "preview", "execute", "promote", "rollback", "restore", "purge", "generate", "install", "import", "share_by_email"}},
+			{Tool: "whodb_platform_action", Resources: []string{"transform", "file", "folder", "function", "app", "package", "object", "organization", "resource"}, Actions: []string{"run", "upload", "rename", "move", "promote_to_dataset", "deploy", "redeploy", "test", "preview", "execute", "start_run", "promote", "rollback", "restore", "purge", "generate", "install", "import", "share_by_email"}},
 		},
 			"whodb_platform_write_plan", "whodb_platform_create", "whodb_platform_update", "whodb_platform_delete", "whodb_platform_action", "whodb_platform_pending", "whodb_platform_confirm"),
 	}
@@ -2513,6 +2514,7 @@ Available tools:
 - whodb_platform_lineage / whodb_platform_lineage_neighbors / whodb_platform_project_lineage: Inspect lineage
 - whodb_platform_transforms / whodb_platform_transform_runs: List transforms and runs
 - whodb_platform_functions / whodb_platform_function: List or inspect ontology functions
+- whodb_platform_function_runs / whodb_platform_function_wait: Inspect or wait for persisted function runs started with the start_run action
 - whodb_platform_files / whodb_platform_file_preview / whodb_platform_file_inspect / whodb_platform_file_search / whodb_platform_tabular_files: Browse project files
 - whodb_platform_storage_usage: Inspect project storage usage
 - whodb_platform_create_dataset / whodb_platform_promote_file_to_dataset: Typed dataset writes

@@ -162,6 +162,7 @@ var GenericWriteSpecs = map[string]GenericWriteSpec{
 	"action:test:function":                        {Resource: "function", Action: "test", Mutation: "TestFunction", Mode: GenericWriteModeInput, InjectProjectID: true},
 	"action:preview:function":                     {Resource: "function", Action: "preview", Mutation: "PreviewFunction", Mode: GenericWriteModeInput, InjectProjectID: true},
 	"action:execute:function":                     {Resource: "function", Action: "execute", Mutation: "ExecuteFunction", Mode: GenericWriteModeDirect, InjectProjectID: true},
+	"action:start_run:function":                   {Resource: "function", Action: "start_run", Mutation: "StartFunctionRun", Mode: GenericWriteModeDirect, InjectProjectID: true},
 }
 
 // PayloadShapes describes payload_json shapes for common hosted platform writes.
@@ -351,6 +352,15 @@ var PayloadShapes = map[string]PayloadShape{
 	},
 	"action:redeploy:function": {
 		Key: "action:redeploy:function", Resource: "function", Action: "redeploy", Description: "Redeploy an existing function. id and projectId are injected.",
+	},
+	"action:start_run:function": {
+		Key: "action:start_run:function", Resource: "function", Action: "start_run", Description: "Start a persisted function run and return its run record immediately; poll it with whodb_platform_function_wait. Use instead of execute for work that may outlast one request. projectId is injected.",
+		Fields: []PayloadField{
+			{Name: "functionId", Type: "string", Required: true, Description: "Function id"},
+			{Name: "input", Type: "string", Required: true, Description: "JSON input encoded as a string"},
+			{Name: "useActiveVersion", Type: "bool", Description: "Run the promoted production version instead of the draft"},
+		},
+		Examples: []string{`{"functionId":"fn_123","input":"{\"count\":100}"}`},
 	},
 	"action:invite_user:organization": {
 		Key: "action:invite_user:organization", Resource: "organization", Action: "invite_user", Description: "Invite a user to one organization. Resource grants must be provided explicitly and are not inferred from organization membership.",

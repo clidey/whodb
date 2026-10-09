@@ -298,6 +298,7 @@ func buildMCPTools() []MCPTool {
 		{Name: "whodb_platform_transform_runs", Description: "List recent runs for one hosted transform in default platform MCP mode.", ReadOnly: true},
 		{Name: "whodb_platform_functions", Description: "List hosted ontology functions in default platform MCP mode; accepts fields for projection.", ReadOnly: true},
 		{Name: "whodb_platform_function", Description: "Inspect one hosted ontology function in default platform MCP mode; request file content fields only when needed.", ReadOnly: true},
+		{Name: "whodb_platform_function_runs", Description: "Return one persisted hosted function run, or list recent runs of one function, in default platform MCP mode.", ReadOnly: true},
 		{Name: "whodb_platform_files", Description: "List hosted project folders and files in default platform MCP mode; accepts fields for projection.", ReadOnly: true},
 		{Name: "whodb_platform_file_preview", Description: "Preview one hosted project file in default platform MCP mode; request text or tabular payload fields only when needed.", ReadOnly: true},
 		{Name: "whodb_platform_file_inspect", Description: "Inspect hosted tabular file columns and inferred promote-to-dataset mappings in default platform MCP mode.", ReadOnly: true},
@@ -334,6 +335,7 @@ func buildMCPTools() []MCPTool {
 		{Name: "whodb_platform_workflow_list", Description: "List persisted hosted platform workflow plans for the selected workspace.", ReadOnly: true},
 		{Name: "whodb_platform_workflow_apply", Description: "Apply or resume a hosted platform workflow plan; completed steps are skipped on retry.", ReadOnly: false},
 		{Name: "whodb_platform_transform_wait", Description: "Wait for a real hosted transform run to reach a terminal state.", ReadOnly: true},
+		{Name: "whodb_platform_function_wait", Description: "Wait for a persisted hosted function run started with the start_run action to finish.", ReadOnly: true},
 		{Name: "whodb_platform_restore", Description: "Restore a soft-deleted hosted resource through the platform restore path; requires confirmation.", ReadOnly: false},
 		{Name: "whodb_platform_clone", Description: "Clone a hosted dataset, ontology, transform, or function; returns a confirmation token by default and is hidden in --read-only and --safe-mode.", ReadOnly: false},
 	}

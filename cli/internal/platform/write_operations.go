@@ -231,6 +231,7 @@ var platformMutationSpecs = map[string]platformMutationSpec{
 	"RemoveTeamMember":                       mutationSpecWithDirect("RemoveTeamMember", "$teamId: ID!, $userId: ID!", "teamId: $teamId, userId: $userId", statusResponseFields),
 	"SyncAllAppPermissions":                  mutationSpecWithDirect("SyncAllAppPermissions", "", "", statusResponseFields),
 	"ExecuteFunction":                        mutationSpecWithDirect("ExecuteFunction", "$projectId: ID!, $functionId: ID!, $input: String!, $inputFileIds: [ID!]", "projectId: $projectId, functionId: $functionId, input: $input, inputFileIds: $inputFileIds", functionTestResultFields),
+	"StartFunctionRun":                       mutationSpecWithDirect("StartFunctionRun", "$projectId: ID!, $functionId: ID!, $input: String!, $useActiveVersion: Boolean", "projectId: $projectId, functionId: $functionId, input: $input, useActiveVersion: $useActiveVersion", functionRunFields),
 }
 
 // permissionMutationsOmittedByLegacyManifests lists mutations implemented by

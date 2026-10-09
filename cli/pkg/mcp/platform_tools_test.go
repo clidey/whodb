@@ -41,6 +41,8 @@ type fakePlatformClient struct {
 	sourceContentFields     []string
 	functionsFields         []string
 	functionFields          []string
+	functionRunStatuses     []string
+	functionRunPolls        int
 	folderContentsFields    []string
 	filePreviewFields       []string
 	createdSourceName       string
@@ -218,8 +220,8 @@ func testPlatformSession(client platformClient) *platformToolSession {
 
 func TestPlatformToolDefinitions(t *testing.T) {
 	tools := platformToolDefinitions()
-	if len(tools) != 123 {
-		t.Fatalf("len(platformToolDefinitions()) = %d, want 123", len(tools))
+	if len(tools) != 125 {
+		t.Fatalf("len(platformToolDefinitions()) = %d, want 125", len(tools))
 	}
 	for _, tool := range tools {
 		if tool.Annotations == nil {

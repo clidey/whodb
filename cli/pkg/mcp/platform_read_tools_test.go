@@ -151,6 +151,21 @@ func (f *fakePlatformClient) Function(ctx context.Context, projectID, id string,
 	return &platformapi.Function{ID: id, ProjectID: projectID, Name: "Enrich", Files: []platformapi.FunctionFile{{ID: "file-1", Path: "main.py", Content: strings.Repeat("x", defaultPlatformContentLimit+1)}}}, nil
 }
 
+// FunctionRun reports functionRunStatuses in order, one per poll, repeating the last one.
+func (f *fakePlatformClient) FunctionRun(ctx context.Context, projectID, id string) (*platformapi.FunctionRun, error) {
+	status := "completed"
+	if len(f.functionRunStatuses) > 0 {
+		status = f.functionRunStatuses[min(f.functionRunPolls, len(f.functionRunStatuses)-1)]
+	}
+	f.functionRunPolls++
+	output := `{"ok":true}`
+	return &platformapi.FunctionRun{ID: id, FunctionID: "fn-1", Status: status, Output: &output}, nil
+}
+
+func (f *fakePlatformClient) FunctionRuns(ctx context.Context, projectID, functionID string, limit int) ([]platformapi.FunctionRun, error) {
+	return []platformapi.FunctionRun{{ID: "run-2", FunctionID: functionID, Status: "running"}, {ID: "run-1", FunctionID: functionID, Status: "completed"}}, nil
+}
+
 func (f *fakePlatformClient) FolderContents(ctx context.Context, projectID, folderID string, fields []string) (*platformapi.FolderContents, error) {
 	f.folderContentsFields = append([]string(nil), fields...)
 	folderIDValue := "folder-1"
@@ -740,4 +755,71 @@ func hasPlatformPlanPhase(phases []PlatformPlanPhase, phase string) bool {
 		}
 	}
 	return false
+}
+
+func TestHandlePlatformFunctionRunsReadsOneRunOrAList(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := HandlePlatformFunctionRuns(context.Background(), nil, PlatformFunctionRunsInput{})
+	if err != nil || output.Error != "function_id or run_id is required" {
+		t.Fatalf("HandlePlatformFunctionRuns() without ids = %q, %v; want the required-id error", output.Error, err)
+	}
+
+	_, output, err = HandlePlatformFunctionRuns(context.Background(), nil, PlatformFunctionRunsInput{FunctionID: "fn-1", Limit: 5})
+	if err != nil || output.Error != "" {
+		t.Fatalf("HandlePlatformFunctionRuns() list = %q, %v", output.Error, err)
+	}
+	if runs, ok := output.Data.([]platformapi.FunctionRun); !ok || len(runs) != 2 || output.Count != 2 {
+		t.Fatalf("list output = %#v (count %d), want two runs", output.Data, output.Count)
+	}
+
+	_, output, err = HandlePlatformFunctionRuns(context.Background(), nil, PlatformFunctionRunsInput{FunctionID: "fn-1", RunID: "run-9"})
+	if err != nil || output.Error != "" {
+		t.Fatalf("HandlePlatformFunctionRuns() one = %q, %v", output.Error, err)
+	}
+	if run, ok := output.Data.(*platformapi.FunctionRun); !ok || run.ID != "run-9" {
+		t.Fatalf("one-run output = %#v, want run-9", output.Data)
+	}
+}
+
+func TestHandlePlatformFunctionWaitPollsUntilTheRunFinishes(t *testing.T) {
+	client := &fakePlatformClient{functionRunStatuses: []string{"queued", "running", "completed"}}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := HandlePlatformFunctionWait(context.Background(), nil, PlatformFunctionWaitInput{RunID: "run-1", TimeoutSecs: 10, PollSecs: 1})
+	if err != nil || output.Error != "" {
+		t.Fatalf("HandlePlatformFunctionWait() = %q, %v", output.Error, err)
+	}
+	run, ok := output.Data.(*platformapi.FunctionRun)
+	if !ok || run.Status != "completed" || run.Output == nil || *run.Output != `{"ok":true}` {
+		t.Fatalf("output.Data = %#v, want the completed run with its output", output.Data)
+	}
+	if client.functionRunPolls != 3 {
+		t.Fatalf("polls = %d, want 3", client.functionRunPolls)
+	}
+}
+
+func TestHandlePlatformFunctionWaitTimesOutRetryably(t *testing.T) {
+	client := &fakePlatformClient{functionRunStatuses: []string{"running"}}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := HandlePlatformFunctionWait(context.Background(), nil, PlatformFunctionWaitInput{RunID: "run-1", TimeoutSecs: 1, PollSecs: 1})
+	if err != nil {
+		t.Fatalf("HandlePlatformFunctionWait() error = %v", err)
+	}
+	if !output.Retryable || !strings.Contains(output.Error, "still running") {
+		t.Fatalf("output = %#v, want a retryable still-running timeout", output)
+	}
+
+	_, output, _ = HandlePlatformFunctionWait(context.Background(), nil, PlatformFunctionWaitInput{})
+	if output.Error != "run_id is required" {
+		t.Fatalf("missing run id error = %q", output.Error)
+	}
 }

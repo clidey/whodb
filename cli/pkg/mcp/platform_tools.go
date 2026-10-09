@@ -79,6 +79,8 @@ type platformClient interface {
 	TransformRuns(context.Context, string, string, int) ([]platformapi.TransformRun, error)
 	Functions(context.Context, string, []string) ([]platformapi.Function, error)
 	Function(context.Context, string, string, []string) (*platformapi.Function, error)
+	FunctionRun(context.Context, string, string) (*platformapi.FunctionRun, error)
+	FunctionRuns(context.Context, string, string, int) ([]platformapi.FunctionRun, error)
 	FolderContents(context.Context, string, string, []string) (*platformapi.FolderContents, error)
 	FilePreview(context.Context, string, string, *int, []string) (*platformapi.FilePreviewResult, error)
 	SearchProjectFiles(context.Context, string, string) ([]platformapi.ProjectFile, error)

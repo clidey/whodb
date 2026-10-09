@@ -179,6 +179,10 @@ func registerPlatformReadTool(server *mcp.Server, tool *mcp.Tool, secOpts *Secur
 		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformTransformWaitInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformTransformWait(ctx, req, input)
 		})
+	case "whodb_platform_function_wait":
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformFunctionWaitInput) (*mcp.CallToolResult, any, error) {
+			return HandlePlatformFunctionWait(ctx, req, input)
+		})
 	case "whodb_platform_workspace_map":
 		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformWorkspaceMapInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformWorkspaceMap(ctx, req, input)
@@ -311,6 +315,10 @@ func registerPlatformReadTool(server *mcp.Server, tool *mcp.Tool, secOpts *Secur
 		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformEntityInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformFunction(ctx, req, input)
 		})
+	case "whodb_platform_function_runs":
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformFunctionRunsInput) (*mcp.CallToolResult, any, error) {
+			return HandlePlatformFunctionRuns(ctx, req, input)
+		})
 	case "whodb_platform_files":
 		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformFilesInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformFiles(ctx, req, input)
@@ -343,6 +351,7 @@ func platformReadToolDefinitions() []*mcp.Tool {
 		platformResolveResourceToolDefinition(),
 		platformWorkflowRecipeToolDefinition(),
 		platformTransformWaitToolDefinition(),
+		platformFunctionWaitToolDefinition(),
 		{Name: "whodb_platform_workspace_map", Description: descPlatformWorkspaceMap, Annotations: platformReadOnlyAnnotations("Map Hosted Workspace")},
 		{Name: "whodb_platform_resource_graph", Description: descPlatformResourceGraph, Annotations: platformReadOnlyAnnotations("Graph Hosted Resources")},
 		{Name: "whodb_platform_next_actions", Description: descPlatformNextActions, Annotations: platformReadOnlyAnnotations("Suggest Hosted Next Actions")},
@@ -376,6 +385,7 @@ func platformReadToolDefinitions() []*mcp.Tool {
 		{Name: "whodb_platform_transform_runs", Description: descPlatformTransformRuns, Annotations: platformReadOnlyAnnotations("List Hosted Transform Runs")},
 		{Name: "whodb_platform_functions", Description: descPlatformFunctions, Annotations: platformReadOnlyAnnotations("List Hosted Functions")},
 		{Name: "whodb_platform_function", Description: descPlatformFunction, Annotations: platformReadOnlyAnnotations("Inspect Hosted Function")},
+		{Name: "whodb_platform_function_runs", Description: descPlatformFunctionRuns, Annotations: platformReadOnlyAnnotations("List Hosted Function Runs")},
 		{Name: "whodb_platform_files", Description: descPlatformFiles, Annotations: platformReadOnlyAnnotations("List Hosted Files")},
 		{Name: "whodb_platform_file_preview", Description: descPlatformFilePreview, Annotations: platformReadOnlyAnnotations("Preview Hosted File")},
 		{Name: "whodb_platform_file_inspect", Description: descPlatformFileInspect, Annotations: platformReadOnlyAnnotations("Inspect Hosted File Columns")},
@@ -1037,6 +1047,8 @@ const descPlatformTransforms = `List transforms in the selected hosted project. 
 const descPlatformTransform = `Inspect one transform in the selected hosted project. Use fields to request only the top-level fields needed for the current task.`
 
 const descPlatformTransformRuns = `List recent runs for one hosted transform.`
+
+const descPlatformFunctionRuns = `Return one persisted function run by run_id, or list recent runs for one function by function_id. Runs come from the function start_run action; each carries status, output, logs and error.`
 
 const descPlatformFunctions = `List ontology functions in the selected hosted project.
 

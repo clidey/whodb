@@ -522,6 +522,19 @@ func TestPlatformMCP_RealReadWriteLifecycle(t *testing.T) {
 	liveMustGenericWrite(t, ctx, "platform_action", "action", PlatformGenericWriteInput{
 		Resource: "function", Action: "execute", PayloadJSON: liveJSON(t, map[string]any{"functionId": functionID, "input": "{}", "inputFileIds": []string{}}),
 	})
+	functionRunID := liveMustGenericWriteID(t, ctx, "platform_action", "action", PlatformGenericWriteInput{
+		Resource: "function", Action: "start_run", PayloadJSON: liveJSON(t, map[string]any{"functionId": functionID, "input": "{}"}),
+	})
+	_, functionWaitOutput, err := HandlePlatformFunctionWait(ctx, nil, PlatformFunctionWaitInput{RunID: functionRunID, TimeoutSecs: 60, PollSecs: 1, Fields: []string{"id", "status", "error"}})
+	if err != nil || functionWaitOutput.Error != "" {
+		t.Fatalf("HandlePlatformFunctionWait() = %q, %v", functionWaitOutput.Error, err)
+	}
+	liveCoverTool("whodb_platform_function_wait")
+	_, functionRunsOutput, err := HandlePlatformFunctionRuns(ctx, nil, PlatformFunctionRunsInput{FunctionID: functionID, Limit: 5, Fields: []string{"items", "count"}})
+	if err != nil || functionRunsOutput.Error != "" || functionRunsOutput.Count == 0 {
+		t.Fatalf("HandlePlatformFunctionRuns() = count %d, %q, %v; want the started run", functionRunsOutput.Count, functionRunsOutput.Error, err)
+	}
+	liveCoverTool("whodb_platform_function_runs")
 	liveMustGenericWrite(t, ctx, "platform_action", "action", PlatformGenericWriteInput{
 		Resource: "function", Action: "preview", PayloadJSON: liveJSON(t, map[string]any{"language": "python", "entryPoint": "main", "input": "{}", "files": []map[string]any{{"path": "main.py", "content": "def main(input):\n    return input\n"}}, "dependencies": []string{}}),
 	})
