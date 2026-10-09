@@ -237,6 +237,7 @@ func buildCommands() []Command {
 
 func buildMCPTools() []MCPTool {
 	tools := []MCPTool{
+		{Name: "whodb_mcp_setup", Description: "Inspect MCP settings and guidance, preview configuration changes, apply an approved preview, or verify active targets. Skills and shell access are optional.", ReadOnly: false},
 		{Name: "whodb_connections", Description: "List available database connections.", ReadOnly: true},
 		{Name: "whodb_schemas", Description: "List database schemas.", ReadOnly: true},
 		{Name: "whodb_tables", Description: "List tables in a schema.", ReadOnly: true},

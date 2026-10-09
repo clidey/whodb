@@ -206,3 +206,14 @@ bash ../dev/run-cli-tests.sh
 - `cli/README.md` — user-facing usage guide
 - `.agents/docs/hosted-platform-cli.md` — hosted platform login, manifest, source command, automation, and security contract
 - `dev/run-cli-tests.sh` — CLI verification script
+
+### MCP without skills
+
+Skills are optional supplements. MCP initialization instructions, tool schemas,
+and `whodb://mcp/configuration` provide essential guidance directly. Use
+`whodb_mcp_setup` actions `inspect`, `preview` (with a settings patch), `apply`
+(with the exact approved preview token and `approved: true`), and `verify`.
+No shell access is required for these actions. Browser login and credential entry
+remain user actions. Restart after changing settings; verification checks the
+active process. The setup tool follows tool filters and can be disabled when
+configuration should remain outside the agent.

@@ -733,7 +733,35 @@ Keep one entry in your MCP client:
 
 ### Agent-guided setup
 
-Agents can guide the conversation using non-interactive JSON commands:
+**MCP is self-sufficient; skills are optional supplements.** The server supplies
+startup instructions, tool descriptions, schemas, workflow guidance, and recovery
+steps. If a WhoDB skill is installed, agents may use it as additional guidance;
+no essential setup or usage instructions require it.
+
+An agent with MCP access alone can call `whodb_mcp_setup`:
+
+1. `action: "inspect"` returns saved settings, allowed target metadata, choices,
+   schema, active process settings, and usage guidance.
+2. `action: "preview", patch: {...}` validates changes without saving and returns
+   the proposed settings and a confirmation token.
+3. After showing the exact preview and obtaining user approval,
+   `action: "apply", confirmation_token: "...", approved: true` saves that preview.
+   Do not include a patch in apply. Tokens expire after five minutes, are consumed
+   by apply, and are replaced by a newer preview. Changed saved settings invalidate
+   the preview.
+4. Restart the MCP connection after changes, then `action: "verify"` checks active
+   host logins, workspaces, and database connections. Until restart, verification
+   uses the original process settings.
+
+The setup tool manages local MCP configuration, including access restrictions;
+it always requires preview approval to save, even in allow-write mode. It follows
+normal tool filters: include `whodb_mcp_setup` when using an explicit enabled-tool
+list, or disable it to keep configuration management outside the agent. Changes
+never relax the current process's controls. Startup flags still override saved
+settings after restart. Browser sign-in and credential entry remain user actions;
+agents can relay the required commands without needing shell access.
+
+Agents with shell access can also use the non-interactive JSON commands:
 
 ```bash
 whodb setup inspect

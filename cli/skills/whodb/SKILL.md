@@ -28,14 +28,23 @@ needs authentication; no separate login is needed per project.
 
 ## Guided setup
 
-Keep one MCP entry: command `whodb`, args `["mcp", "serve"]`. Use
-`whodb setup inspect` to discover saved settings, targets, tool choices and the
-settings schema. Ask the user which modules and restrictions they want, validate
-a JSON patch with `whodb setup validate --file <path>`, show the proposed settings,
-then use `whodb setup apply --file <path> --yes` after approval. Omitted fields are
-preserved. Verify with `whodb setup verify`; restart MCP when settings change.
-Use browser login through `whodb login --host <url>` and never request credentials
-in chat. Inspect `whodb://mcp/configuration` for active modules and restrictions.
+This skill is optional. WhoDB MCP supplies its own instructions, tool schemas,
+and setup guidance. Prefer live MCP discovery if this skill differs from it.
+Keep one entry: command `whodb`, args `["mcp", "serve"]`.
+
+Use `whodb_mcp_setup` with `action: "inspect"` to discover settings, targets,
+choices, and the settings schema. Ask the user what they want, then use
+`action: "preview"` with a `patch`. Show the proposed settings and obtain approval
+before `action: "apply"` with the returned `confirmation_token` and `approved: true`.
+Do not send a patch with apply. Tokens expire after five minutes; only the latest
+preview is valid. Restart MCP after changed settings, then use `action: "verify"`.
+Verification checks active settings. Omitted patch fields are preserved.
+
+No shell access is required for this flow. Browser sign-in and credential entry
+remain user actions; never request credentials in chat. If setup tools are
+filtered out, ask the user to run `whodb setup`. CLI agents can alternatively use
+`whodb setup inspect`, `validate`, `apply --yes`, and `verify`.
+Inspect `whodb://mcp/configuration` for active modules and restrictions.
 Platform calls target `workspace`; database calls target `connection`.
 
 ## Database-only MCP

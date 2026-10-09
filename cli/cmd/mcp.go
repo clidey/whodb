@@ -344,6 +344,7 @@ Connection Resolution:
 			PlatformPolicy:      policy,
 		}
 
+		opts.SetupHandler = mcpSetupHandler(settings)
 		server := whodbmcp.NewServer(opts)
 
 		// Determine security mode name for tracking

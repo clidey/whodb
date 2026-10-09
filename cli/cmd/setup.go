@@ -11,6 +11,7 @@
 package cmd
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -66,6 +67,10 @@ type setupConnection struct {
 }
 
 func runSetupInspect(cmd *cobra.Command, args []string) error {
+	return runSetupInspectFor(cmd, nil)
+}
+
+func runSetupInspectFor(cmd *cobra.Command, active *config.MCPSettings) error {
 	settings, err := config.LoadMCPSettings()
 	if err != nil {
 		return err
@@ -76,7 +81,14 @@ func runSetupInspect(cmd *cobra.Command, args []string) error {
 	}
 	hosts := make([]setupHost, 0, len(cfg.Platform.Hosts))
 	for _, host := range cfg.Platform.Hosts {
-		hosts = append(hosts, setupHost{host.URL, host.Email, host.DefaultOrgID, host.DefaultProjectID})
+		if active != nil && !setupHostAllowed(*active, host.URL) {
+			continue
+		}
+		org, project := host.DefaultOrgID, host.DefaultProjectID
+		if active != nil && active.PlatformPolicy != nil && len(active.PlatformPolicy.AllowedWorkspaces) > 0 && !slices.Contains(active.PlatformPolicy.AllowedWorkspaces, config.MCPWorkspace{Host: host.URL, Org: org, Project: project}) {
+			org, project = "", ""
+		}
+		hosts = append(hosts, setupHost{host.URL, host.Email, org, project})
 	}
 	manager, err := dbmgr.NewManagerWithConfig(cfg)
 	if err != nil {
@@ -84,6 +96,9 @@ func runSetupInspect(cmd *cobra.Command, args []string) error {
 	}
 	connections := []setupConnection{}
 	for _, conn := range manager.ListConnections() {
+		if active != nil && (!active.HasModule("database") || (len(active.AllowedConnections) > 0 && !slices.Contains(active.AllowedConnections, conn.Name))) {
+			continue
+		}
 		connections = append(connections, setupConnection{conn.Name, conn.Type})
 	}
 	toolChoices := []string{}
@@ -98,12 +113,16 @@ func runSetupInspect(cmd *cobra.Command, args []string) error {
 	if err := validateMCPSettings(&settings); err != nil {
 		validationError = err.Error()
 	}
+	workflow := []string{"Ask the user which modules, targets and access settings they want.", "Validate a JSON patch with whodb setup validate --file <path>.", "Show the proposed settings and obtain user approval.", "Apply with whodb setup apply --file <path> --yes.", "Use whodb login --host <url> for browser sign-in; do not request credentials in chat.", "Run whodb setup verify, then restart the MCP connection if settings changed."}
+	if active != nil {
+		workflow = []string{"Ask which modules, targets and access settings the user wants.", "Call whodb_mcp_setup with action preview and a settings patch.", "Show the exact proposed settings and obtain user approval.", "Call action apply with the returned confirmation_token and approved true; do not send a patch.", "Ask the user to sign in through browser login when needed; never request credentials in chat.", "Restart the MCP connection after changes, then call action verify to check the active settings."}
+	}
 	return writeAutomationEnvelope(cmd, "setup.inspect", map[string]any{
 		"tool_choices": toolChoices,
 		"settings":     settings, "validation_error": validationError, "hosts": hosts, "connections": connections, "settings_schema": schema,
 		"module_choices": []string{"platform", "database"}, "write_mode_choices": []string{"confirm", "read-only", "allow"},
 		"mcp_entry": map[string]any{"command": "whodb", "args": []string{"mcp", "serve"}},
-		"workflow":  []string{"Ask the user which modules, targets and access settings they want.", "Validate a JSON patch with whodb setup validate --file <path>.", "Show the proposed settings and obtain user approval.", "Apply with whodb setup apply --file <path> --yes.", "Use whodb login --host <url> for browser sign-in; do not request credentials in chat.", "Run whodb setup verify, then restart the MCP connection if settings changed."},
+		"workflow":  workflow,
 	})
 }
 
@@ -167,6 +186,10 @@ func runSetupVerify(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	return runSetupVerifySettings(cmd, settings)
+}
+
+func runSetupVerifySettings(cmd *cobra.Command, settings config.MCPSettings) error {
 	if err := validateMCPSettings(&settings); err != nil {
 		return err
 	}
@@ -219,7 +242,11 @@ func runSetupVerify(cmd *cobra.Command, args []string) error {
 					targets := []config.MCPWorkspace{}
 					if p := settings.PlatformPolicy; p != nil {
 						targets = append(targets, p.AllowedWorkspaces...)
-						targets = append(targets, p.ReadOnlyWorkspaces...)
+						for _, target := range p.ReadOnlyWorkspaces {
+							if len(p.AllowedWorkspaces) == 0 || slices.Contains(p.AllowedWorkspaces, target) {
+								targets = append(targets, target)
+							}
+						}
 					}
 					if settings.DefaultWorkspace != nil {
 						targets = append(targets, *settings.DefaultWorkspace)
@@ -322,4 +349,86 @@ func verifySetupWorkspace(ctx context.Context, client setupWorkspaceClient, targ
 		}
 	}
 	return fmt.Errorf("configured project ID is not accessible")
+}
+
+// mcpSetupHandler reuses the noninteractive setup commands in process, without a shell.
+func mcpSetupHandler(active config.MCPSettings) func(context.Context, string, json.RawMessage) (json.RawMessage, error) {
+	return func(ctx context.Context, action string, patch json.RawMessage) (json.RawMessage, error) {
+		command := newSetupCommand()
+		var output bytes.Buffer
+		command.SetOut(&output)
+		command.SetErr(io.Discard)
+		command.SetContext(ctx)
+		var err error
+		switch action {
+		case "inspect":
+			err = runSetupInspectFor(command, &active)
+		case "verify":
+			err = runSetupVerifySettings(command, active)
+		case "apply":
+			err = applyMCPSetupPreview(command, patch)
+		case "validate":
+			args := []string{action, "--file", "-"}
+			command.SetArgs(args)
+			command.SetIn(bytes.NewReader(patch))
+			err = command.ExecuteContext(ctx)
+		default:
+			return nil, fmt.Errorf("unknown setup action %q", action)
+		}
+		return json.RawMessage(output.Bytes()), err
+	}
+}
+
+func setupHostAllowed(settings config.MCPSettings, host string) bool {
+	if !settings.HasModule("platform") {
+		return false
+	}
+	p := settings.PlatformPolicy
+	if p == nil {
+		return true
+	}
+	if len(p.AllowedHosts) > 0 && !slices.Contains(p.AllowedHosts, host) {
+		return false
+	}
+	if len(p.AllowedWorkspaces) == 0 {
+		return true
+	}
+	for _, target := range p.AllowedWorkspaces {
+		if target.Host == host {
+			return true
+		}
+	}
+	return false
+}
+
+// applyMCPSetupPreview saves the complete approved settings rather than remerging a patch.
+func applyMCPSetupPreview(cmd *cobra.Command, preview json.RawMessage) error {
+	var envelope struct {
+		Data struct {
+			Settings config.MCPSettings `json:"settings"`
+			Previous config.MCPSettings `json:"previous_settings"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(preview, &envelope); err != nil {
+		return err
+	}
+	proposed := envelope.Data.Settings
+	if err := validateMCPSettings(&proposed); err != nil {
+		return err
+	}
+	current, err := config.LoadMCPSettings()
+	if err != nil {
+		return err
+	}
+	before, _ := json.Marshal(current)
+	expected, _ := json.Marshal(envelope.Data.Previous)
+	if !bytes.Equal(before, expected) {
+		return fmt.Errorf("saved settings changed since preview; preview again and obtain approval")
+	}
+	after, _ := json.Marshal(proposed)
+	if err := config.SaveMCPSettings(proposed); err != nil {
+		return err
+	}
+	changed := !bytes.Equal(before, after)
+	return writeAutomationEnvelope(cmd, "setup.apply", map[string]any{"settings": proposed, "previous_settings": current, "valid": true, "changed": changed, "applied": true, "restart_required": changed, "restart_instruction": "Restart the MCP connection after applying changed settings; keep mcp.json at whodb mcp serve."})
 }

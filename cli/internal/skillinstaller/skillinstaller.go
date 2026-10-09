@@ -403,7 +403,7 @@ func assistantRuleMarkdown() string {
 
 Platform MCP is the default. Start with whodb_platform_hosts, discover organizations/projects on the intended host, and pass workspace {host, org, project} to whodb_platform_workspace_resolve and subsequent tools. Check the returned scope. Targets are per call and do not change defaults; the same MCP connection can access multiple hosts and projects. Read whodb://platform/schema for the available operations. Confirm writes only after the user approves the exact target and preview.
 
-Use whodb setup inspect, validate, apply --yes after user approval, and verify to configure saved MCP modules. Keep one entry at whodb mcp serve. Enable the database module for database-only tools. In that mode, start with whodb_connections, then inspect whodb_schemas, whodb_tables, and whodb_columns before querying. The existing terminal UI is available through whodb --tui.
+Skills are optional: MCP supplies its own guidance. Use whodb_mcp_setup actions inspect, preview, apply with the exact preview token after user approval, and verify. Restart MCP after changing saved settings. CLI setup commands are also available. Keep one entry at whodb mcp serve. Enable the database module for database-only tools. In that mode, start with whodb_connections, then inspect whodb_schemas, whodb_tables, and whodb_columns before querying. The existing terminal UI is available through whodb --tui.
 `
 }
 

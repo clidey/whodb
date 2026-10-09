@@ -403,3 +403,14 @@ Saved `modules` can contain `platform`, `database`, or both. Policy and tool
 selection are saved alongside them. All use one MCP entry: `whodb mcp serve`.
 Restart MCP after settings changes; per-call host/project switching needs no
 restart. `whodb://mcp/configuration` describes the active modules and restrictions.
+
+### MCP without skills
+
+Skills are optional supplements. MCP initialization instructions, tool schemas,
+and `whodb://mcp/configuration` provide essential guidance directly. Use
+`whodb_mcp_setup` actions `inspect`, `preview` (with a settings patch), `apply`
+(with the exact approved preview token and `approved: true`), and `verify`.
+No shell access is required for these actions. Browser login and credential entry
+remain user actions. Restart after changing settings; verification checks the
+active process. The setup tool follows tool filters and can be disabled when
+configuration should remain outside the agent.

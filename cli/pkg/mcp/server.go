@@ -37,6 +37,9 @@ import (
 
 // ServerOptions configures the MCP server.
 type ServerOptions struct {
+	// SetupHandler runs credential-free setup actions supplied by the CLI.
+	// validate receives a patch; apply receives the complete validated preview.
+	SetupHandler func(context.Context, string, json.RawMessage) (json.RawMessage, error)
 	// Logger for server messages (defaults to stderr).
 	Logger *slog.Logger
 	// Instructions provides guidance to LLMs on how to use this server.
@@ -159,7 +162,7 @@ func NewServer(opts *ServerOptions) *mcp.Server {
 		Name:    "whodb",
 		Version: version.Version,
 	}, &mcp.ServerOptions{
-		Instructions: opts.Instructions,
+		Instructions: mcpUsageInstructions + "\n\n" + opts.Instructions,
 		Logger:       opts.Logger,
 	})
 
@@ -172,6 +175,7 @@ func NewServer(opts *ServerOptions) *mcp.Server {
 	server.AddReceivingMiddleware(toolErrorMiddleware)
 	opts.DefaultConnection = defaultConn
 	registerMCPConfigurationResource(server, opts)
+	registerMCPSetupTool(server, opts)
 
 	// Create security options from server options
 	secOpts := &SecurityOptions{
@@ -2393,9 +2397,8 @@ IMPORTANT: When a write operation requires confirmation, inform the user clearly
 - Explain what it will do in plain language
 - Let them know they'll see a confirmation prompt
 
-If the user wants different security settings, they can restart with:
-- --read-only: No writes allowed at all
-- --allow-write: Full write access without confirmation (not recommended for production)
+Read whodb://mcp/configuration for the actual write mode. Use whodb_mcp_setup
+to preview and confirm saved settings changes, then restart the MCP connection.
 
 Connection names reference either:
 1. Environment profiles, for example:

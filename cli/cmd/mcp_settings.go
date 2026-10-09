@@ -39,6 +39,9 @@ func validateMCPSettings(settings *config.MCPSettings) error {
 	}
 	for _, list := range [][]string{settings.EnabledTools, settings.DisabledTools} {
 		for _, tool := range list {
+			if tool == "whodb_mcp_setup" {
+				continue
+			}
 			if strings.HasPrefix(tool, "whodb_platform_") {
 				if err := whodbmcp.ValidatePlatformTools([]string{tool}, nil); err != nil {
 					return err
@@ -136,6 +139,9 @@ func effectiveMCPSettings(cmd *cobra.Command) (config.MCPSettings, error) {
 		}
 		values, _ := cmd.Flags().GetStringSlice(flag)
 		for _, tool := range values {
+			if tool == "whodb_mcp_setup" {
+				continue
+			}
 			platform := strings.HasPrefix(tool, "whodb_platform_")
 			if (platform && !settings.HasModule("platform")) || (!platform && !settings.HasModule("database")) {
 				return settings, fmt.Errorf("tool %q belongs to a disabled module; configure modules with whodb setup (database module requires --database or saved setup)", tool)
