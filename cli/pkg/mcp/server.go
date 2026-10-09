@@ -200,10 +200,7 @@ func NewServer(opts *ServerOptions) *mcp.Server {
 	if opts.PlatformEnabled {
 		secOpts.ToolEnablement = toolEnablement
 		secOpts.PlatformPolicy = opts.PlatformPolicy
-		server.AddReceivingMiddleware(platformPolicyMiddleware(opts.PlatformPolicy))
-		registerPlatformTools(server, secOpts)
-		registerPlatformPrompts(server)
-		registerPlatformResources(server, secOpts)
+		registerPlatformSurface(server, secOpts)
 		if !opts.DatabaseEnabled {
 			return server
 		}

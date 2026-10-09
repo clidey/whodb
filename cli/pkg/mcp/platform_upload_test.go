@@ -237,9 +237,9 @@ func TestPlatformUploadConfirmationRejectsChangedScopeAndExpiredToken(t *testing
 			case "project":
 				session.Host.DefaultProjectID = "other-project"
 			case "expired":
-				platformPendingMutex.Lock()
-				pendingPlatformActions[pending.ConfirmationToken].ExpiresAt = time.Now().Add(-time.Minute)
-				platformPendingMutex.Unlock()
+				defaultPlatformState.mu.Lock()
+				defaultPlatformState.Pending[pending.ConfirmationToken].ExpiresAt = time.Now().Add(-time.Minute)
+				defaultPlatformState.mu.Unlock()
 			}
 			_, confirmed, err := HandlePlatformConfirm(context.Background(), nil, ConfirmInput{Token: pending.ConfirmationToken})
 			if err != nil || confirmed.Error == "" || client.mutationName != "" {

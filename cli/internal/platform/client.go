@@ -198,6 +198,9 @@ func NewAuthenticatedClient(host string, source AccessTokenSource) (*Client, err
 	}, nil
 }
 
+// SetHTTPClient supplies the transport used for platform operations.
+func (c *Client) SetHTTPClient(client *http.Client) { c.httpClient = client }
+
 // Host returns the canonical hosted WhoDB platform URL.
 func (c *Client) Host() string {
 	return c.host

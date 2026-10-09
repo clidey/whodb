@@ -70,6 +70,9 @@ func IsAnalyticsEnabled() bool {
 
 // TrackToolCall captures an MCP tool invocation event.
 func TrackToolCall(ctx context.Context, toolName, requestID string, success bool, durationMs int64, props map[string]any) {
+	if platformRuntimeFromContext(ctx) != nil {
+		return
+	}
 	analytics.TrackMCPToolCall(ctx, toolName, requestID, success, durationMs, props)
 }
 

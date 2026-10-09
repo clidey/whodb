@@ -188,6 +188,9 @@ func HandlePlatformSetupStatus(ctx context.Context, req *mcp.CallToolRequest, in
 }
 
 func buildPlatformSetupStatusFor(ctx context.Context, requestID string) PlatformSetupStatusOutput {
+	if platformRuntimeFromContext(ctx) != nil {
+		return embeddedPlatformSetupStatus(ctx, requestID)
+	}
 	scope, _, scopeErr := platformRequestScope(ctx)
 	host := platformapi.DefaultHost
 	if scope.Host != "" {
@@ -517,7 +520,7 @@ func HandlePlatformBundleImport(ctx context.Context, req *mcp.CallToolRequest, i
 		TrackToolCall(ctx, "platform_bundle_import", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"confirmation_required": false})
 		return nil, PlatformGenericWriteOutput{Status: "ok", ResultJSON: string(raw), RequestID: requestID}, nil
 	}
-	token, expiresAt := storePendingPlatformAction(action)
+	token, expiresAt := storePendingPlatformAction(action, ctx)
 	TrackToolCall(ctx, "platform_bundle_import", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"confirmation_required": true})
 	return nil, platformGenericConfirmationOutput(requestID, token, expiresAt, "bundle_import", action.Preview()), nil
 }
@@ -676,6 +679,7 @@ func uploadPlatformBundleFileAction(ctx context.Context, session *platformToolSe
 	if err := os.WriteFile(path, []byte(content), 0600); err != nil {
 		return nil, err
 	}
+	ctx = context.WithValue(ctx, generatedPlatformUploadKey{}, path)
 	folderID, _ := action.Payload["folderId"].(string)
 	if strings.TrimSpace(folderID) == "" {
 		return session.Client.UploadProjectFile(ctx, session.Host.DefaultProjectID, nil, path)

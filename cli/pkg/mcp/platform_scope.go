@@ -40,6 +40,23 @@ func platformRequestFromContext(ctx context.Context) *platformRequest {
 
 func platformRequestScope(ctx context.Context) (platformapi.SessionScope, bool, error) {
 	request := platformRequestFromContext(ctx)
+	if runtime := platformRuntimeFromContext(ctx); runtime != nil {
+		target := PlatformWorkspaceTarget{Host: runtime.Host}
+		if request != nil && request.Target != nil {
+			target = *request.Target
+		}
+		if target.Host == "" {
+			target.Host = runtime.Host
+		}
+		if target.Host != runtime.Host {
+			return platformapi.SessionScope{}, true, fmt.Errorf("this server only serves %s", runtime.Host)
+		}
+		scope := platformapi.SessionScope{Host: target.Host, Org: target.Org, Project: target.Project}
+		if scope.Project != "" && scope.Org == "" {
+			return scope, true, fmt.Errorf("workspace.project requires workspace.org")
+		}
+		return scope, true, nil
+	}
 	if request == nil || request.Target == nil {
 		scope := platformapi.SessionScopeFromEnvironment()
 		return scope, false, scope.Validate()
@@ -171,6 +188,9 @@ func platformScopeToolDefinitions() []*mcp.Tool {
 }
 
 func handlePlatformHosts(ctx context.Context, req *mcp.CallToolRequest, input PlatformStatusInput) (*mcp.CallToolResult, PlatformHostsOutput, error) {
+	if runtime := platformRuntimeFromContext(ctx); runtime != nil {
+		return nil, PlatformHostsOutput{Hosts: []PlatformHostInfo{{Host: runtime.Host, AccountID: runtime.UserID, Email: runtime.Email, Default: true}}}, nil
+	}
 	cfg, err := config.LoadConfigWithoutSecrets()
 	if err != nil {
 		return nil, PlatformHostsOutput{}, err

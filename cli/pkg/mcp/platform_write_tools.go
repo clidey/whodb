@@ -230,14 +230,14 @@ func handlePlatformGenericWrite(ctx context.Context, toolName string, input Plat
 		IdempotencyKey: scopedPlatformIdempotencyKey(session, input, operationKind),
 	}
 	if action.IdempotencyKey != "" {
-		if token, ok := pendingPlatformIdempotencyToken(action.IdempotencyKey); ok {
-			pending, err := getPendingPlatformAction(token)
+		if token, ok := pendingPlatformIdempotencyToken(action.IdempotencyKey, ctx); ok {
+			pending, err := getPendingPlatformAction(token, ctx)
 			if err == nil {
-				releasePendingPlatformAction(token)
+				releasePendingPlatformAction(token, ctx)
 				return nil, platformGenericConfirmationOutput(requestID, token, pending.ExpiresAt, pending.Mutation, pending.Preview()), nil
 			}
 		}
-		if platformIdempotencyCompleted(action.IdempotencyKey) {
+		if platformIdempotencyCompleted(action.IdempotencyKey, ctx) {
 			return nil, PlatformGenericWriteOutput{Status: "already_applied", IdempotencyReplayed: true, RequestID: requestID}, nil
 		}
 	}
@@ -248,10 +248,10 @@ func handlePlatformGenericWrite(ctx context.Context, toolName string, input Plat
 			return nil, platformGenericWriteError(err, requestID), nil
 		}
 		TrackToolCall(ctx, toolName, requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"confirmation_required": false, "mutation": spec.Mutation})
-		markPlatformIdempotencyCompleted(action.IdempotencyKey)
+		markPlatformIdempotencyCompleted(action.IdempotencyKey, ctx)
 		return nil, platformGenericWriteCompletedOutput(requestID, spec.Mutation, result, action.Preview()), nil
 	}
-	token, expiresAt := storePendingPlatformAction(action)
+	token, expiresAt := storePendingPlatformAction(action, ctx)
 	TrackToolCall(ctx, toolName, requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"confirmation_required": true, "mutation": spec.Mutation})
 	return nil, platformGenericConfirmationOutput(requestID, token, expiresAt, spec.Mutation, action.Preview()), nil
 }
@@ -568,6 +568,9 @@ func buildPlatformGenericWrite(session *platformToolSession, input PlatformGener
 }
 
 func validatePlatformWriteCapability(ctx context.Context, session *platformToolSession, spec platformapi.GenericWriteSpec) error {
+	if platformRuntimeFromContext(ctx) != nil && spec.Mode == platformapi.GenericWriteModeFileUpload {
+		return fmt.Errorf("local file paths are unavailable over remote MCP; upload through the application or import inline bundle content")
+	}
 	if session == nil || session.Client == nil {
 		return nil
 	}

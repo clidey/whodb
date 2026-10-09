@@ -1135,13 +1135,13 @@ func assertPlatformSetupGuidance(t *testing.T, guidance PlatformSetupGuidance, w
 
 func clearPendingPlatformActions(t *testing.T) {
 	t.Helper()
-	platformPendingMutex.Lock()
-	pendingPlatformActions = map[string]*PendingPlatformAction{}
-	platformPendingMutex.Unlock()
+	defaultPlatformState.mu.Lock()
+	defaultPlatformState.Pending = map[string]*PendingPlatformAction{}
+	defaultPlatformState.mu.Unlock()
 	t.Cleanup(func() {
-		platformPendingMutex.Lock()
-		pendingPlatformActions = map[string]*PendingPlatformAction{}
-		platformPendingMutex.Unlock()
+		defaultPlatformState.mu.Lock()
+		defaultPlatformState.Pending = map[string]*PendingPlatformAction{}
+		defaultPlatformState.mu.Unlock()
 	})
 }
 

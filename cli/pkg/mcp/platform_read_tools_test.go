@@ -438,9 +438,9 @@ func TestHandlePlatformWritePlanDoesNotCreatePendingAction(t *testing.T) {
 	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
 		return testPlatformSession(client), nil
 	})
-	platformPendingMutex.Lock()
-	pendingPlatformActions = map[string]*PendingPlatformAction{}
-	platformPendingMutex.Unlock()
+	defaultPlatformState.mu.Lock()
+	defaultPlatformState.Pending = map[string]*PendingPlatformAction{}
+	defaultPlatformState.mu.Unlock()
 
 	_, output, err := HandlePlatformWritePlan(context.Background(), nil, PlatformWritePlanInput{
 		Operation:   "update",
@@ -461,9 +461,9 @@ func TestHandlePlatformWritePlanDoesNotCreatePendingAction(t *testing.T) {
 	if plan.Mutation == "" || plan.Preview == nil || !plan.ConfirmationRequired {
 		t.Fatalf("plan = %#v, want preview and mutation", plan)
 	}
-	platformPendingMutex.RLock()
-	pendingCount := len(pendingPlatformActions)
-	platformPendingMutex.RUnlock()
+	defaultPlatformState.mu.RLock()
+	pendingCount := len(defaultPlatformState.Pending)
+	defaultPlatformState.mu.RUnlock()
 	if pendingCount != 0 {
 		t.Fatalf("pending action count = %d, want 0", pendingCount)
 	}
