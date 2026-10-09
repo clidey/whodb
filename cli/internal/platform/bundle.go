@@ -34,6 +34,7 @@ type BundleClient interface {
 	Ontologies(context.Context, string) ([]Ontology, error)
 	Transforms(context.Context, string) ([]Transform, error)
 	Functions(context.Context, string, []string) ([]Function, error)
+	Function(context.Context, string, string, []string) (*Function, error)
 	FolderContents(context.Context, string, string, []string) (*FolderContents, error)
 	FilePreview(context.Context, string, string, *int, []string) (*FilePreviewResult, error)
 }
@@ -140,7 +141,7 @@ func BuildProjectBundleWithOptions(ctx context.Context, client BundleClient, hos
 	if err != nil {
 		return nil, err
 	}
-	functions, err := client.Functions(ctx, project.ID, nil)
+	functions, err := loadBundleFunctions(ctx, client, project.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -1235,4 +1236,23 @@ func bundleFunctionImpacts(fn Function) []string {
 		impacts = append(impacts, "Function secret bindings will be remapped when matching imported or existing secrets are available.")
 	}
 	return impacts
+}
+
+// loadBundleFunctions lists the project's functions and fetches each one's full definition on its
+// own. One response carrying every function's source files exceeded the client's response cap on a
+// project with thirty functions that bundle shared modules.
+func loadBundleFunctions(ctx context.Context, client BundleClient, projectID string) ([]Function, error) {
+	summaries, err := client.Functions(ctx, projectID, []string{"id", "name"})
+	if err != nil {
+		return nil, err
+	}
+	functions := make([]Function, 0, len(summaries))
+	for _, summary := range summaries {
+		function, err := client.Function(ctx, projectID, summary.ID, nil)
+		if err != nil {
+			return nil, fmt.Errorf("load function %s: %w", summary.Name, err)
+		}
+		functions = append(functions, *function)
+	}
+	return functions, nil
 }

@@ -21,6 +21,7 @@ import (
 	"context"
 	"encoding/csv"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -132,7 +133,16 @@ var (
 	functionInputJSON           string
 	functionInputFile           string
 	functionInputFileIDs        []string
+	functionRunTimeout          time.Duration
+	functionRunDetach           bool
+	functionRunUseActive        bool
+	functionRunsLimit           int
+	functionRunsWaitTimeout     time.Duration
 )
+
+// functionRunMaxTimeout mirrors the platform server's write timeout: a synchronous ExecuteFunction
+// response cannot arrive later than that, whatever the client is willing to wait.
+const functionRunMaxTimeout = 10 * time.Minute
 
 var secretsCmd = &cobra.Command{Use: "secrets", Short: "Manage hosted WhoDB project secrets"}
 var aiProvidersCmd = &cobra.Command{Use: "ai-providers", Short: "Manage hosted WhoDB AI providers"}
@@ -669,12 +679,21 @@ var functionsRestoreDraftCmd = &cobra.Command{
 }
 
 var functionsRunCmd = &cobra.Command{
-	Use:           "run <function>",
-	Short:         "Run a hosted WhoDB function",
+	Use:   "run <function>",
+	Short: "Run a hosted WhoDB function",
+	Long: `Run a hosted WhoDB function and print its result.
+
+The platform keeps executing a function after the client stops waiting, so a run that outlives
+--timeout (default 30s, at most 10m) still finishes server-side without reporting back. For long
+runs use --detach: the function starts as a persisted run and the command prints the run id;
+follow it with "whodb functions runs wait <run-id>".`,
 	Args:          cobra.ExactArgs(1),
 	SilenceUsage:  true,
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if functionRunTimeout <= 0 || functionRunTimeout > functionRunMaxTimeout {
+			return fmt.Errorf("--timeout must be between 1s and %s", functionRunMaxTimeout)
+		}
 		return runPlatformProjectRead(cmd, func(ctx context.Context, session *platformSession, _ *platform.Project) (any, *output.QueryResult, error) {
 			input, err := readFunctionInput(cmd)
 			if err != nil {
@@ -684,11 +703,103 @@ var functionsRunCmd = &cobra.Command{
 			if err != nil {
 				return nil, nil, err
 			}
-			result, err := session.Client.ExecuteFunction(ctx, session.Host.DefaultProjectID, functionID, input, normalizedStringList(functionInputFileIDs))
+			if functionRunDetach {
+				run, err := session.Client.StartFunctionRun(ctx, session.Host.DefaultProjectID, functionID, input, functionRunUseActive)
+				if err != nil {
+					return nil, nil, err
+				}
+				return run, functionRunTable(run), nil
+			}
+			runCtx, cancel := context.WithTimeout(ctx, functionRunTimeout)
+			defer cancel()
+			result, err := session.Client.ExecuteFunction(runCtx, session.Host.DefaultProjectID, functionID, input, normalizedStringList(functionInputFileIDs))
 			if err != nil {
+				if errors.Is(runCtx.Err(), context.DeadlineExceeded) {
+					return nil, nil, fmt.Errorf("no result within %s; the function keeps running on the platform. Start long runs with --detach and poll them with \"functions runs wait\"", functionRunTimeout)
+				}
 				return nil, nil, err
 			}
 			return result, functionExecutionTable(result), nil
+		})
+	},
+}
+
+var functionsRunsCmd = &cobra.Command{Use: "runs", Short: "Inspect persisted hosted WhoDB function runs"}
+
+var functionsRunsGetCmd = &cobra.Command{
+	Use:           "get <run-id>",
+	Short:         "Show one persisted function run",
+	Args:          cobra.ExactArgs(1),
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return runPlatformProjectRead(cmd, func(ctx context.Context, session *platformSession, _ *platform.Project) (any, *output.QueryResult, error) {
+			run, err := session.Client.FunctionRun(ctx, session.Host.DefaultProjectID, args[0])
+			if err != nil {
+				return nil, nil, err
+			}
+			return run, functionRunTable(run), nil
+		})
+	},
+}
+
+var functionsRunsListCmd = &cobra.Command{
+	Use:           "list <function>",
+	Short:         "List persisted runs of a hosted function, newest first",
+	Args:          cobra.ExactArgs(1),
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return runPlatformProjectRead(cmd, func(ctx context.Context, session *platformSession, _ *platform.Project) (any, *output.QueryResult, error) {
+			functionID, err := resolvePlatformResourceID(ctx, session, session.Host.DefaultProjectID, "function", args[0])
+			if err != nil {
+				return nil, nil, err
+			}
+			runs, err := session.Client.FunctionRuns(ctx, session.Host.DefaultProjectID, functionID, functionRunsLimit)
+			if err != nil {
+				return nil, nil, err
+			}
+			rows := make([][]any, 0, len(runs))
+			for _, run := range runs {
+				rows = append(rows, []any{run.ID, run.Status, run.Attempt, optionalString(run.StartedAt), optionalString(run.CompletedAt), run.Error})
+			}
+			return runs, tableResult([]string{"id", "status", "attempt", "started_at", "completed_at", "error"}, rows), nil
+		})
+	},
+}
+
+var functionsRunsWaitCmd = &cobra.Command{
+	Use:           "wait <run-id>",
+	Short:         "Poll a persisted function run until it finishes and print its result",
+	Args:          cobra.ExactArgs(1),
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if functionRunsWaitTimeout <= 0 {
+			return fmt.Errorf("--timeout must be positive")
+		}
+		return runPlatformProjectRead(cmd, func(ctx context.Context, session *platformSession, _ *platform.Project) (any, *output.QueryResult, error) {
+			deadline := time.Now().Add(functionRunsWaitTimeout)
+			for {
+				run, err := session.Client.FunctionRun(ctx, session.Host.DefaultProjectID, args[0])
+				if err != nil {
+					return nil, nil, err
+				}
+				if run.Finished() {
+					if strings.EqualFold(run.Status, "completed") {
+						return run, functionRunTable(run), nil
+					}
+					return nil, nil, fmt.Errorf("function run %s %s: %s", run.ID, run.Status, strings.TrimSpace(run.Error))
+				}
+				if time.Now().After(deadline) {
+					return nil, nil, fmt.Errorf("function run %s still %s after %s; it keeps running on the platform, poll again with \"functions runs get %s\"", run.ID, run.Status, functionRunsWaitTimeout, run.ID)
+				}
+				select {
+				case <-ctx.Done():
+					return nil, nil, ctx.Err()
+				case <-time.After(2 * time.Second):
+				}
+			}
 		})
 	},
 }
@@ -1109,7 +1220,8 @@ func registerPlatformResourceCommands() {
 	datasetsCmd.AddCommand(datasetsListCmd, datasetGetCmd, datasetDescribeCmd, datasetSchemaCmd, datasetExportCmd, datasetCloneCmd, datasetRowsCmd, datasetQueryCmd, datasetsCreateCmd, datasetsUpdateCmd, datasetsDeleteCmd)
 	lineageCmd.AddCommand(lineageProjectCmd, lineageRootCmd, lineageNeighborsCmd)
 	transformsCmd.AddCommand(transformsListCmd, transformGetCmd, transformDescribeCmd, transformExportCmd, transformCloneCmd, transformRunsCmd, transformsCreateCmd, transformsUpdateCmd, transformsRunCmd, transformsDeleteCmd, transformsApplyCmd, transformsRebindSourceCmd)
-	functionsCmd.AddCommand(functionsListCmd, functionGetCmd, functionDescribeCmd, functionExportCmd, functionCloneCmd, functionsVersionsCmd, functionsActiveCmd, functionsPromoteCmd, functionsSetActiveCmd, functionsRestoreDraftCmd, functionsRunCmd, functionsTestCmd, functionsPreviewCmd, functionsCreateCmd, functionsUpdateCmd, functionsDeployCmd, functionsRedeployCmd, functionsDeleteCmd)
+	functionsCmd.AddCommand(functionsListCmd, functionGetCmd, functionDescribeCmd, functionExportCmd, functionCloneCmd, functionsVersionsCmd, functionsActiveCmd, functionsPromoteCmd, functionsSetActiveCmd, functionsRestoreDraftCmd, functionsRunCmd, functionsRunsCmd, functionsTestCmd, functionsPreviewCmd, functionsCreateCmd, functionsUpdateCmd, functionsDeployCmd, functionsRedeployCmd, functionsDeleteCmd)
+	functionsRunsCmd.AddCommand(functionsRunsGetCmd, functionsRunsListCmd, functionsRunsWaitCmd)
 	filesCmd.AddCommand(filesListCmd, fileGetCmd, fileDescribeCmd, filePreviewCmd, fileInspectCmd, fileColumnsCmd, fileDownloadCmd, fileSearchCmd, tabularFilesCmd, storageUsageCmd, filesUploadCmd, filesPromoteDatasetCmd, filesDeleteCmd, filesRenameCmd, filesMoveCmd)
 	foldersCmd.AddCommand(foldersListCmd, folderGetCmd, folderDescribeCmd, foldersTreeCmd, foldersCreateCmd, foldersRenameCmd, foldersMoveCmd, foldersDeleteCmd)
 	resourcesCmd.AddCommand(resourcesSpecsCmd, resourcesShapeCmd, resourcesQueryCmd, resourcesExportCmd, resourcesDiffCmd, resourcesImportCmd, resourcesCreateCmd, resourcesUpdateCmd, resourcesDeleteCmd, resourcesActionCmd)
@@ -1192,6 +1304,11 @@ func registerPlatformResourceCommands() {
 	functionsRunCmd.Flags().StringVar(&functionInputJSON, "input-json", "{}", "function input JSON string")
 	functionsRunCmd.Flags().StringVar(&functionInputFile, "input-file", "", "path to function input JSON file")
 	functionsRunCmd.Flags().StringArrayVar(&functionInputFileIDs, "input-file-id", nil, "hosted project file id to pass to the function; repeatable")
+	functionsRunCmd.Flags().DurationVar(&functionRunTimeout, "timeout", 30*time.Second, "how long to wait for the synchronous result (max 10m); the function keeps running on the platform after that")
+	functionsRunCmd.Flags().BoolVar(&functionRunDetach, "detach", false, "start a persisted run and return its id immediately instead of waiting for the result")
+	functionsRunCmd.Flags().BoolVar(&functionRunUseActive, "use-active-version", false, "with --detach, run the active promoted version instead of the draft")
+	functionsRunsListCmd.Flags().IntVar(&functionRunsLimit, "limit", 20, "maximum runs to list")
+	functionsRunsWaitCmd.Flags().DurationVar(&functionRunsWaitTimeout, "timeout", 10*time.Minute, "how long to poll before giving up (the run itself is not cancelled)")
 	functionsTestCmd.Flags().StringVar(&functionInputJSON, "input-json", "{}", "function input JSON string")
 	functionsTestCmd.Flags().StringVar(&functionInputFile, "input-file", "", "path to function input JSON file")
 	functionsTestCmd.Flags().StringArrayVar(&functionInputFileIDs, "input-file-id", nil, "hosted project file id to pass to the function; repeatable")
@@ -2868,6 +2985,27 @@ func parseOntologyRecordValues(values []string) ([]map[string]any, error) {
 		records = append(records, map[string]any{"Key": key, "Value": strings.TrimSpace(recordValue)})
 	}
 	return records, nil
+}
+
+func optionalString(value *string) string {
+	if value == nil {
+		return ""
+	}
+	return *value
+}
+
+func functionRunTable(run *platform.FunctionRun) *output.QueryResult {
+	return tableResult([]string{"field", "value"}, [][]any{
+		{"id", run.ID},
+		{"status", run.Status},
+		{"execution_mode", run.ExecutionMode},
+		{"attempt", run.Attempt},
+		{"started_at", optionalString(run.StartedAt)},
+		{"completed_at", optionalString(run.CompletedAt)},
+		{"output", optionalString(run.Output)},
+		{"logs", run.Logs},
+		{"error", run.Error},
+	})
 }
 
 func functionExecutionTable(result *platform.FunctionExecutionResult) *output.QueryResult {

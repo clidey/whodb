@@ -17,6 +17,7 @@
 package platform
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -25,6 +26,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestNormalizeHost(t *testing.T) {
@@ -902,5 +904,79 @@ func TestAuthenticatedClientRefreshesOnceAfterUnauthorized(t *testing.T) {
 	}
 	if !reflect.DeepEqual(authorizations, []string{"Bearer stale-token", "Bearer fresh-token"}) {
 		t.Fatalf("authorizations = %#v", authorizations)
+	}
+}
+
+func TestGraphQLRequestReportsOversizedResponses(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"data":{"ProjectFunctions":[{"content":"`))
+		filler := bytes.Repeat([]byte("x"), 64<<10)
+		for written := 0; written <= maxGraphQLResponseBytes; written += len(filler) {
+			_, _ = w.Write(filler)
+		}
+		_, _ = w.Write([]byte(`"}]}}`))
+	}))
+	defer server.Close()
+	client, err := NewClient(server.URL, "token")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var target map[string]any
+	err = client.graphQL(context.Background(), "query CLIPlatformProjectFunctions($projectId: ID!) { ProjectFunctions(projectId: $projectId) { content } }", nil, &target)
+	if err == nil || !strings.Contains(err.Error(), "CLIPlatformProjectFunctions: platform response exceeded 4 MiB") {
+		t.Fatalf("error = %v, want an explicit response-size error", err)
+	}
+}
+
+func TestGraphQLRequestNamesOperationOnDecodeFailure(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"data":{"Me":`))
+	}))
+	defer server.Close()
+	client, err := NewClient(server.URL, "token")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var target map[string]any
+	err = client.graphQL(context.Background(), "query CLIPlatformMe { Me { id } }", nil, &target)
+	if err == nil || !strings.Contains(err.Error(), "CLIPlatformMe: decode platform response (HTTP 200, 14 bytes): unexpected end of JSON input") {
+		t.Fatalf("error = %v, want operation, status and size in the decode error", err)
+	}
+}
+
+func TestGraphQLRequestLetsContextDeadlineOutliveClientTimeout(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		time.Sleep(150 * time.Millisecond)
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"data":{"Me":{"id":"u-1"}}}`))
+	}))
+	defer server.Close()
+	client, err := NewClient(server.URL, "token")
+	if err != nil {
+		t.Fatal(err)
+	}
+	client.httpClient.Timeout = 50 * time.Millisecond
+	var target struct {
+		Me struct {
+			ID string `json:"id"`
+		} `json:"Me"`
+	}
+	if err := client.graphQL(context.Background(), "query CLIPlatformMe { Me { id } }", nil, &target); err == nil {
+		t.Fatal("expected the client timeout to apply when the context has no deadline")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	if err := client.graphQL(ctx, "query CLIPlatformMe { Me { id } }", nil, &target); err != nil {
+		t.Fatalf("request with a longer context deadline failed: %v", err)
+	}
+	if target.Me.ID != "u-1" {
+		t.Fatalf("decoded id = %q", target.Me.ID)
+	}
+	short, cancelShort := context.WithTimeout(context.Background(), 20*time.Millisecond)
+	defer cancelShort()
+	if err := client.graphQL(short, "query CLIPlatformMe { Me { id } }", nil, &target); err == nil {
+		t.Fatal("expected a short context deadline to cut the request")
 	}
 }

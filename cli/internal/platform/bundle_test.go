@@ -18,11 +18,14 @@ package platform
 
 import (
 	"context"
+	"fmt"
 	"testing"
 )
 
 type fakeBundleClient struct {
-	contents map[string]*FolderContents
+	contents        map[string]*FolderContents
+	functions       []Function
+	functionFetches int
 }
 
 func (c *fakeBundleClient) ProjectSecrets(context.Context, string) ([]ProjectSecret, error) {
@@ -46,7 +49,22 @@ func (c *fakeBundleClient) Transforms(context.Context, string) ([]Transform, err
 }
 
 func (c *fakeBundleClient) Functions(context.Context, string, []string) ([]Function, error) {
-	return nil, nil
+	summaries := make([]Function, 0, len(c.functions))
+	for _, function := range c.functions {
+		summaries = append(summaries, Function{ID: function.ID, Name: function.Name})
+	}
+	return summaries, nil
+}
+
+func (c *fakeBundleClient) Function(_ context.Context, _ string, id string, _ []string) (*Function, error) {
+	c.functionFetches++
+	for _, function := range c.functions {
+		if function.ID == id {
+			copied := function
+			return &copied, nil
+		}
+	}
+	return nil, fmt.Errorf("function %s not found", id)
 }
 
 func (c *fakeBundleClient) FolderContents(_ context.Context, _ string, folderID string, _ []string) (*FolderContents, error) {
@@ -119,5 +137,22 @@ func TestPlanBundleImportPreservesFileFolderPath(t *testing.T) {
 	ApplyBundleDependencyMap(&plan.Actions[1], dependencies)
 	if got := plan.Actions[1].Payload["folderId"]; got != "folder-target" {
 		t.Fatalf("remapped file folderId = %#v, want folder-target", got)
+	}
+}
+
+func TestBuildProjectBundleFetchesEachFunctionSeparately(t *testing.T) {
+	client := &fakeBundleClient{
+		contents:  map[string]*FolderContents{"": {}},
+		functions: []Function{{ID: "fn-1", Name: "post_voucher", Files: []FunctionFile{{Path: "main.py", Content: "print(1)"}}}, {ID: "fn-2", Name: "report", Files: []FunctionFile{{Path: "main.py", Content: "print(2)"}}}},
+	}
+	bundle, err := BuildProjectBundleWithOptions(context.Background(), client, "https://app.example.com", "org-1", "Org", &Project{ID: "project-1", Name: "Books"}, BundleExportOptions{})
+	if err != nil {
+		t.Fatalf("build bundle: %v", err)
+	}
+	if client.functionFetches != 2 {
+		t.Fatalf("function fetches = %d, want one per function", client.functionFetches)
+	}
+	if len(bundle.Functions) != 2 || len(bundle.Functions[0].Files) != 1 || bundle.Functions[1].Files[0].Content != "print(2)" {
+		t.Fatalf("bundle functions = %#v", bundle.Functions)
 	}
 }

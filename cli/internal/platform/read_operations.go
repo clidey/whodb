@@ -500,6 +500,50 @@ mutation CLIPlatformExecuteFunction($projectId: ID!, $functionId: ID!, $input: S
 }
 `
 
+const functionRunFields = `
+  id
+  functionId
+  executionMode
+  liveBehavior
+  status
+  desiredState
+  input
+  output
+  logs
+  error
+  attempt
+  createdBy
+  startedAt
+  heartbeatAt
+  completedAt
+  createdAt
+  updatedAt
+`
+
+const operationStartFunctionRun = `
+mutation CLIPlatformStartFunctionRun($projectId: ID!, $functionId: ID!, $input: String!, $useActiveVersion: Boolean) {
+  StartFunctionRun(projectId: $projectId, functionId: $functionId, input: $input, useActiveVersion: $useActiveVersion) {
+` + functionRunFields + `
+  }
+}
+`
+
+const operationFunctionRun = `
+query CLIPlatformFunctionRun($projectId: ID!, $id: ID!) {
+  FunctionRun(projectId: $projectId, id: $id) {
+` + functionRunFields + `
+  }
+}
+`
+
+const operationFunctionRuns = `
+query CLIPlatformFunctionRuns($projectId: ID!, $functionId: ID!, $limit: Int) {
+  FunctionRuns(projectId: $projectId, functionId: $functionId, limit: $limit) {
+` + functionRunFields + `
+  }
+}
+`
+
 const objectVersionFields = `
   id
   objectId

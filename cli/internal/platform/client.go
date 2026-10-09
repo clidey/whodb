@@ -544,6 +544,26 @@ func (c *Client) graphQLOnce(ctx context.Context, query string, variables any, t
 	return c.graphQLRequest(ctx, query, variables, target, accessToken)
 }
 
+// maxGraphQLResponseBytes bounds one platform response body. Responses that carry whole function
+// bundles or file previews can approach it; a body over the cap is reported as such instead of
+// surfacing as a JSON decode error on a truncated read.
+const maxGraphQLResponseBytes = 4 << 20
+
+// graphQLOperationName extracts the operation name from a query document for error messages.
+func graphQLOperationName(query string) string {
+	fields := strings.Fields(query)
+	for i, field := range fields {
+		if (field == "query" || field == "mutation") && i+1 < len(fields) {
+			name := fields[i+1]
+			if cut := strings.IndexAny(name, "({"); cut > 0 {
+				name = name[:cut]
+			}
+			return name
+		}
+	}
+	return "platform request"
+}
+
 func (c *Client) graphQLRequest(ctx context.Context, query string, variables any, target any, accessToken string) error {
 	body, err := json.Marshal(map[string]any{
 		"query":     query,
@@ -552,6 +572,7 @@ func (c *Client) graphQLRequest(ctx context.Context, query string, variables any
 	if err != nil {
 		return err
 	}
+	operation := graphQLOperationName(query)
 
 	endpoint := c.host + defaultPath
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(body))
@@ -570,15 +591,26 @@ func (c *Client) graphQLRequest(ctx context.Context, query string, variables any
 		req.Header.Set(workspaceProjectHeader, c.workspaceProjectID)
 	}
 
-	resp, err := c.httpClient.Do(req)
+	// The client's fixed timeout is the default for callers that pass no deadline; a context deadline
+	// (for example `functions run --timeout`) takes over, so long synchronous operations can wait.
+	httpClient := c.httpClient
+	if _, hasDeadline := ctx.Deadline(); hasDeadline && httpClient.Timeout > 0 {
+		unbounded := *httpClient
+		unbounded.Timeout = 0
+		httpClient = &unbounded
+	}
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
 
-	raw, err := io.ReadAll(io.LimitReader(resp.Body, 4<<20))
+	raw, err := io.ReadAll(io.LimitReader(resp.Body, maxGraphQLResponseBytes+1))
 	if err != nil {
 		return err
+	}
+	if len(raw) > maxGraphQLResponseBytes {
+		return fmt.Errorf("%s: platform response exceeded %d MiB; fetch fewer items per request", operation, maxGraphQLResponseBytes>>20)
 	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return PlatformHTTPError{StatusCode: resp.StatusCode, Status: resp.Status, Body: strings.TrimSpace(string(raw))}
@@ -594,7 +626,7 @@ func (c *Client) graphQLRequest(ctx context.Context, query string, variables any
 		} `json:"errors"`
 	}
 	if err := json.Unmarshal(raw, &envelope); err != nil {
-		return err
+		return fmt.Errorf("%s: decode platform response (HTTP %d, %d bytes): %w", operation, resp.StatusCode, len(raw), err)
 	}
 	if len(envelope.Errors) > 0 {
 		first := envelope.Errors[0]
