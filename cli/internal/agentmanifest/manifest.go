@@ -208,6 +208,10 @@ func browsePath(values []source.ObjectKind) []string {
 
 func buildCommands() []Command {
 	commands := []Command{
+		{Name: "setup inspect", Description: "Inspect saved MCP settings, available targets and configuration schema as JSON. Never returns credentials.", Formats: []string{"json"}},
+		{Name: "setup validate", Description: "Preview and validate a JSON settings patch without saving. Use --file <path> or --file -.", Formats: []string{"json"}},
+		{Name: "setup apply", Description: "Apply a validated settings patch with --file <path> --yes after user approval. Reports restart requirements.", Formats: []string{"json"}},
+		{Name: "setup verify", Description: "Check enabled platform logins and database connections and return JSON readiness results.", Formats: []string{"json"}},
 		{Name: "agent schema", Description: "Emit WhoDB's machine-readable agent capability manifest.", Formats: []string{"json"}},
 		{Name: "doctor", Description: "Run connection, schema, and metadata diagnostics for one database connection.", Formats: []string{"table", "json"}, RequiresConnection: true},
 		{Name: "runbooks list", Description: "List built-in database workflows.", Formats: []string{"table", "json"}},
@@ -410,6 +414,7 @@ func buildPlatformMCP() PlatformMCP {
 			{Name: "whodb_platform_import_export_workflow", Description: "Prepare bundle export, diff, import planning, and import confirmation workflows."},
 		},
 		Resources: []MCPResource{
+			{URI: "whodb://mcp/configuration", Description: "Active tool modules, access restrictions and setup instructions; contains no credentials", MIMEType: "application/json"},
 			{URI: "whodb://platform/schema", Description: "Machine-readable hosted WhoDB platform MCP contract and enabled platform tools", MIMEType: "application/json"},
 			{URI: "whodb://platform/workspace", Description: "Current hosted WhoDB login and selected workspace metadata", MIMEType: "application/json"},
 			{URI: "whodb://platform/tool-guide", Description: "Hosted WhoDB platform MCP tool categories, read/write behavior, and field projection guidance", MIMEType: "application/json"},

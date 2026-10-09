@@ -48,7 +48,10 @@ whodb --tui
 # Run a query
 whodb query "SELECT * FROM users LIMIT 10" --connection mydb
 
-# Start platform MCP (add --database for database-only MCP tools)
+# Configure platform, database-only, or both modules once
+npx @clidey/whodb setup
+
+# Start the single MCP server
 whodb mcp serve
 ```
 

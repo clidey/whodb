@@ -48,7 +48,8 @@ var rootCmd = &cobra.Command{
 
 Run whodb for saved platform status and next steps. Use whodb --tui for the
 interactive database interface, or whodb mcp serve to connect an AI assistant.
-Use whodb mcp serve --database for database-only MCP.
+Run whodb setup to enable platform tools, database-only tools, or both.
+Agents can start guided configuration with whodb setup inspect.
 
 Database interface features:
   - Split-pane TUI layouts (Single, Explore, Query, Full) — Ctrl+L to cycle

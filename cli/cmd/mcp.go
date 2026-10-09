@@ -25,6 +25,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/clidey/whodb/cli/internal/config"
 	platformapi "github.com/clidey/whodb/cli/internal/platform"
 	whodbmcp "github.com/clidey/whodb/cli/pkg/mcp"
 	"github.com/clidey/whodb/cli/pkg/version"
@@ -89,7 +90,12 @@ var mcpServeCmd = &cobra.Command{
 	Short:         "Start the MCP server",
 	SilenceUsage:  true,
 	SilenceErrors: true,
-	Long: `Start WhoDB as an MCP server.
+	Long: `Start WhoDB as an MCP server using saved setup settings.
+
+Run whodb setup once to enable platform tools, database-only tools, or both.
+Keep one client entry: command whodb, args ["mcp", "serve"]. Advanced flags
+override saved settings for this process. Agents can read the active modules
+and restrictions at whodb://mcp/configuration.
 
 TRANSPORT:
   --transport stdio  (default) Communicate via stdin/stdout for CLI integration
@@ -135,7 +141,7 @@ All hosted tools accept a workspace target for this call only. One MCP server
 can access multiple hosts/projects without changing saved defaults. Read
 whodb://platform/schema for the complete platform tool contract.
 
-Database-only MCP tools (--database):
+Database-only MCP tools (enable the database module in setup):
   whodb_query       - Execute SQL queries (security-validated)
   whodb_schemas     - List database schemas
   whodb_tables      - List tables in a schema
@@ -149,11 +155,10 @@ Database-only MCP tools (--database):
   whodb_confirm     - Confirm pending writes (only with --confirm-writes)
   whodb_pending     - List pending confirmation tokens
 
-Hosted platform mode is the default. Use --database for database-only MCP tools.
-Platform mode exposes whodb_platform_* tools backed by saved hosted logins and
-per-call workspace targets or process/saved defaults.
-Database-only MCP tools such as whodb_query and whodb_connections are not registered
-in platform mode. Platform mode uses the same permission modes: default
+Platform is enabled by default; saved setup can enable either or both modules.
+Platform tools use saved hosted logins and per-call workspace targets. Database
+tools use connection names. --database is an advanced override for database-only
+startup. Both modules use the same permission modes: default
 confirm-writes returns confirmation tokens, --read-only and --safe-mode hide
 hosted platform write tools, and --allow-write executes hosted platform writes
 without confirmation.
@@ -265,7 +270,7 @@ Connection Resolution:
     "mcpServers": {
       "whodb": {
         "command": "whodb",
-        "args": ["mcp", "serve", "--database"],
+        "args": ["mcp", "serve"],
         "env": {
           "WHODB_POSTGRES_1": "{\"alias\":\"prod\",\"host\":\"localhost\",\"user\":\"user\",\"password\":\"pass\",\"database\":\"db\"}"
         }
@@ -277,10 +282,11 @@ Connection Resolution:
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		if err := configureMCPMode(cmd); err != nil {
+		settings, err := configureMCPMode(cmd)
+		if err != nil {
 			return err
 		}
-		if err := configureMCPPlatformScope(); err != nil {
+		if err := configureMCPPlatformScope(settings.DefaultWorkspace); err != nil {
 			return err
 		}
 
@@ -302,8 +308,8 @@ Connection Resolution:
 		// Determine mode based on flags
 		// Default: confirm-writes (human-in-the-loop)
 		// Priority: --safe-mode > --allow-write > --read-only > default (confirm-writes)
-		readOnly := false
-		confirmWrites := true // Default: confirm-writes enabled
+		readOnly := settings.WriteMode == "read-only"
+		confirmWrites := settings.WriteMode == "confirm" // Default: confirm-writes enabled
 		securityLevel := mcpSecurity
 
 		if mcpSafeMode {
@@ -318,29 +324,23 @@ Connection Resolution:
 			confirmWrites = false // Read-only, no writes to confirm
 		}
 
-		var policy *whodbmcp.PlatformPolicy
-		if mcpPlatformPolicy != "" {
-			var err error
-			policy, err = whodbmcp.LoadPlatformPolicy(mcpPlatformPolicy)
-			if err != nil {
-				return fmt.Errorf("load platform policy: %w", err)
-			}
-		}
+		policy := (*whodbmcp.PlatformPolicy)(settings.PlatformPolicy)
 		// Build server options from flags
 		opts := &whodbmcp.ServerOptions{
 			ReadOnly:            readOnly,
 			ConfirmWrites:       confirmWrites,
-			AllowWrite:          mcpAllowWrite,
+			AllowWrite:          settings.WriteMode == "allow",
 			SecurityLevel:       whodbmcp.SecurityLevel(securityLevel),
 			QueryTimeout:        mcpTimeout,
 			MaxRows:             mcpMaxRows,
 			AllowMultiStatement: mcpAllowMultiStatement,
 			AllowDrop:           mcpAllowDrop,
-			EnabledTools:        mcpEnabledTools,
-			DisabledTools:       mcpDisabledTools,
-			DefaultConnection:   mcpConnection,
-			AllowedConnections:  mcpAllowedConnections,
+			EnabledTools:        settings.EnabledTools,
+			DisabledTools:       settings.DisabledTools,
+			DefaultConnection:   settings.DefaultConnection,
+			AllowedConnections:  settings.AllowedConnections,
 			PlatformEnabled:     mcpPlatform,
+			DatabaseEnabled:     settings.HasModule("database"),
 			PlatformPolicy:      policy,
 		}
 
@@ -350,9 +350,9 @@ Connection Resolution:
 		securityModeName := "confirm-writes"
 		if mcpSafeMode {
 			securityModeName = "safe-mode"
-		} else if mcpReadOnly {
+		} else if settings.WriteMode == "read-only" {
 			securityModeName = "read-only"
-		} else if mcpAllowWrite {
+		} else if settings.WriteMode == "allow" {
 			securityModeName = "allow-write"
 		}
 
@@ -455,18 +455,31 @@ func init() {
 	mcpServeCmd.RegisterFlagCompletionFunc("security", completeMCPSecurityLevels)
 }
 
-func configureMCPPlatformScope() error {
+func configureMCPPlatformScope(defaults ...*config.MCPWorkspace) error {
 	if !mcpPlatform {
 		if mcpPlatformHost != "" || mcpPlatformOrg != "" || mcpPlatformProject != "" {
 			return fmt.Errorf("--platform-host, --platform-org, and --platform-project cannot be used with --database")
 		}
 		return nil
 	}
-	for key, value := range map[string]string{
+	values := map[string]string{
 		platformapi.SessionHostEnv:    mcpPlatformHost,
 		platformapi.SessionOrgEnv:     mcpPlatformOrg,
 		platformapi.SessionProjectEnv: mcpPlatformProject,
-	} {
+	}
+	hasOverride := false
+	for key, value := range values {
+		if strings.TrimSpace(value) != "" || strings.TrimSpace(os.Getenv(key)) != "" {
+			hasOverride = true
+		}
+	}
+	if !hasOverride && len(defaults) > 0 && defaults[0] != nil {
+		target := defaults[0]
+		values[platformapi.SessionHostEnv] = target.Host
+		values[platformapi.SessionOrgEnv] = target.Org
+		values[platformapi.SessionProjectEnv] = target.Project
+	}
+	for key, value := range values {
 		if strings.TrimSpace(value) != "" {
 			if err := os.Setenv(key, strings.TrimSpace(value)); err != nil {
 				return fmt.Errorf("set hosted platform session scope: %w", err)
@@ -476,29 +489,14 @@ func configureMCPPlatformScope() error {
 	return platformapi.SessionScopeFromEnvironment().Validate()
 }
 
-func configureMCPMode(cmd *cobra.Command) error {
-	if cmd.Flags().Changed("platform") && mcpDatabase {
-		return fmt.Errorf("--platform and --database cannot be used together")
+func configureMCPMode(cmd *cobra.Command) (config.MCPSettings, error) {
+	settings, err := effectiveMCPSettings(cmd)
+	if err != nil {
+		return settings, err
 	}
-	if cmd.Flags().Changed("platform") && !mcpPlatform {
-		return fmt.Errorf("use --database instead of --platform=false")
-	}
-	mcpPlatform = !mcpDatabase
-	if !mcpPlatform && mcpPlatformPolicy != "" {
-		return fmt.Errorf("--platform-policy requires platform mode")
-	}
-	if mcpPlatform {
-		if err := whodbmcp.ValidatePlatformTools(mcpEnabledTools, mcpDisabledTools); err != nil {
-			return err
-		}
-		for _, name := range []string{"default-connection", "allowed-connections", "allow-drop", "allow-multi-statement"} {
-			if cmd.Flags().Changed(name) {
-				return fmt.Errorf("--%s requires --database; platform MCP is now the default", name)
-			}
-		}
-	}
+	mcpPlatform = settings.HasModule("platform")
 	if cmd.Flags().Changed("platform") {
-		fmt.Fprintln(cmd.ErrOrStderr(), "--platform is no longer necessary: platform MCP is the default.")
+		fmt.Fprintln(cmd.ErrOrStderr(), "--platform is no longer necessary: configure modules once with whodb setup.")
 	}
-	return nil
+	return settings, nil
 }

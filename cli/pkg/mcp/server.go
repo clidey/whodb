@@ -86,6 +86,8 @@ type ServerOptions struct {
 	// PlatformEnabled runs hosted WhoDB platform mode.
 	// When enabled, only hosted platform tools are registered.
 	PlatformEnabled bool
+	// DatabaseEnabled enables database-only tools alongside platform tools.
+	DatabaseEnabled bool
 	// PlatformPolicy restricts accessible platform targets and writes.
 	PlatformPolicy *PlatformPolicy
 }
@@ -140,6 +142,9 @@ func NewServer(opts *ServerOptions) *mcp.Server {
 	}
 	if opts.Instructions == "" && opts.PlatformEnabled {
 		opts.Instructions = platformInstructions
+		if opts.DatabaseEnabled {
+			opts.Instructions += "\n\nDatabase-only tools are also enabled. Use whodb_connections to discover database connections, then pass connection on database tool calls. Platform workspace arguments do not select database-only connections.\n\n" + defaultInstructions
+		}
 	} else if opts.Instructions == "" {
 		opts.Instructions = defaultInstructions
 	}
@@ -165,6 +170,8 @@ func NewServer(opts *ServerOptions) *mcp.Server {
 	}
 
 	server.AddReceivingMiddleware(toolErrorMiddleware)
+	opts.DefaultConnection = defaultConn
+	registerMCPConfigurationResource(server, opts)
 
 	// Create security options from server options
 	secOpts := &SecurityOptions{
@@ -193,7 +200,9 @@ func NewServer(opts *ServerOptions) *mcp.Server {
 		registerPlatformTools(server, secOpts)
 		registerPlatformPrompts(server)
 		registerPlatformResources(server, secOpts)
-		return server
+		if !opts.DatabaseEnabled {
+			return server
+		}
 	}
 
 	// Register tools with security options and enablement
@@ -203,7 +212,7 @@ func NewServer(opts *ServerOptions) *mcp.Server {
 	registerPrompts(server)
 
 	// Register resources
-	registerResources(server)
+	registerResources(server, secOpts)
 
 	return server
 }
@@ -218,7 +227,7 @@ type ToolEnablement struct {
 func (te *ToolEnablement) isToolEnabled(toolName string) bool {
 	// If disabled list contains this tool, it's disabled
 	for _, t := range te.DisabledTools {
-		if t == toolName {
+		if t == toolName || (!strings.HasPrefix(toolName, "whodb_") && t == "whodb_"+toolName) {
 			return false
 		}
 	}
@@ -228,7 +237,7 @@ func (te *ToolEnablement) isToolEnabled(toolName string) bool {
 	}
 	// If enabled list is specified, only those tools are enabled
 	for _, t := range te.EnabledTools {
-		if t == toolName {
+		if t == toolName || (!strings.HasPrefix(toolName, "whodb_") && t == "whodb_"+toolName) {
 			return true
 		}
 	}
@@ -657,7 +666,7 @@ func createSuggestionsHandler(secOpts *SecurityOptions) func(ctx context.Context
 }
 
 // registerResources registers MCP resources for the server.
-func registerResources(server *mcp.Server) {
+func registerResources(server *mcp.Server, secOpts *SecurityOptions) {
 	// Resource: Available connections
 	server.AddResource(&mcp.Resource{
 		Name:        "connections",
@@ -670,7 +679,13 @@ func registerResources(server *mcp.Server) {
 			return nil, err
 		}
 
-		data, _ := json.MarshalIndent(conns, "", "  ")
+		filtered := conns[:0]
+		for _, conn := range conns {
+			if secOpts.isConnectionAllowed(conn) {
+				filtered = append(filtered, conn)
+			}
+		}
+		data, _ := json.MarshalIndent(filtered, "", "  ")
 		return &mcp.ReadResourceResult{
 			Contents: []*mcp.ResourceContents{
 				{Text: string(data)},
@@ -2414,7 +2429,7 @@ Best practices:
 
 const platformInstructions = `WhoDB MCP Server - Hosted Platform Tools
 
-This server is running in hosted platform mode. It exposes only whodb_platform_* tools
+The platform module exposes whodb_platform_* tools
 backed by the current hosted WhoDB login and selected organization/project.
 
 WhoDB EE is a hosted data workspace and semantic application platform, not just

@@ -18,17 +18,13 @@ import (
 	"io"
 	"os"
 
+	"github.com/clidey/whodb/cli/internal/config"
 	platformapi "github.com/clidey/whodb/cli/internal/platform"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
 // PlatformPolicy restricts platform access for one MCP server. Workspace rules use canonical IDs.
-type PlatformPolicy struct {
-	AllowedHosts       []string                  `json:"allowed_hosts,omitempty"`
-	AllowedWorkspaces  []PlatformWorkspaceTarget `json:"allowed_workspaces,omitempty"`
-	ReadOnlyHosts      []string                  `json:"read_only_hosts,omitempty"`
-	ReadOnlyWorkspaces []PlatformWorkspaceTarget `json:"read_only_workspaces,omitempty"`
-}
+type PlatformPolicy config.MCPPlatformPolicy
 
 // LoadPlatformPolicy reads and validates an explicit platform access policy.
 func LoadPlatformPolicy(path string) (*PlatformPolicy, error) {
@@ -48,11 +44,22 @@ func LoadPlatformPolicy(path string) (*PlatformPolicy, error) {
 	if err := dec.Decode(new(any)); err != io.EOF {
 		return nil, fmt.Errorf("platform policy must contain one JSON object")
 	}
+	if err := ValidatePlatformPolicy(&p); err != nil {
+		return nil, err
+	}
+	return &p, nil
+}
+
+// ValidatePlatformPolicy normalizes hosts and validates required workspace identifiers.
+func ValidatePlatformPolicy(p *PlatformPolicy) error {
+	if p == nil {
+		return nil
+	}
 	for _, hosts := range [][]string{p.AllowedHosts, p.ReadOnlyHosts} {
 		for i, host := range hosts {
 			normalized, err := platformapi.NormalizeHost(host)
 			if err != nil || host == "" {
-				return nil, fmt.Errorf("invalid policy host %q", host)
+				return fmt.Errorf("invalid policy host %q", host)
 			}
 			hosts[i] = normalized
 		}
@@ -60,16 +67,16 @@ func LoadPlatformPolicy(path string) (*PlatformPolicy, error) {
 	for _, targets := range [][]PlatformWorkspaceTarget{p.AllowedWorkspaces, p.ReadOnlyWorkspaces} {
 		for i, target := range targets {
 			if target.Host == "" || target.Org == "" || target.Project == "" {
-				return nil, fmt.Errorf("policy workspaces require host, org and project IDs")
+				return fmt.Errorf("policy workspaces require host, org and project IDs")
 			}
 			host, err := platformapi.NormalizeHost(target.Host)
 			if err != nil {
-				return nil, err
+				return err
 			}
 			targets[i].Host = host
 		}
 	}
-	return &p, nil
+	return nil
 }
 
 type platformPolicyKey struct{}

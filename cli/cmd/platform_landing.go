@@ -12,6 +12,7 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/clidey/whodb/cli/internal/config"
 	platformapi "github.com/clidey/whodb/cli/internal/platform"
@@ -31,7 +32,12 @@ func showPlatformLanding(cmd *cobra.Command) error {
 	if err := scope.Validate(); err != nil {
 		return err
 	}
+	settings, err := config.LoadMCPSettings()
+	if err != nil {
+		return err
+	}
 	out := cmd.OutOrStdout()
+	fmt.Fprintf(out, "MCP modules: %s\n", strings.Join(settings.Modules, ", "))
 	fmt.Fprintf(out, "WhoDB platform\nHost: %s\n", host)
 	entry, ok := cfg.GetPlatformHost(host)
 	if !ok || entry.AccountID == "" {
@@ -55,6 +61,6 @@ func showPlatformLanding(cmd *cobra.Command) error {
 		}
 		fmt.Fprintln(out, "Check live login and permissions: whodb status")
 	}
-	fmt.Fprintln(out, "\nDiscover workspaces: whodb orgs list; whodb projects list --org <org>\nConnect an agent:    whodb mcp serve\nDatabase terminal:  whodb --tui\nDatabase MCP:       whodb mcp serve --database")
+	fmt.Fprintln(out, "\nDiscover workspaces: whodb orgs list; whodb projects list --org <org>\nConnect an agent:    whodb mcp serve\nDatabase terminal:  whodb --tui\nConfigure agent:    whodb setup\nInspect setup:      whodb setup inspect")
 	return nil
 }

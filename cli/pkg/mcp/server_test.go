@@ -360,6 +360,7 @@ func TestPlatformPromptContent(t *testing.T) {
 func TestNewServer_PlatformModeListsOnlyPlatformResources(t *testing.T) {
 	result := listServerResources(t, NewServer(&ServerOptions{PlatformEnabled: true}))
 	expectedResources := []string{
+		"whodb://mcp/configuration",
 		"whodb://platform/schema",
 		"whodb://platform/workspace",
 		"whodb://platform/tool-guide",
@@ -369,7 +370,7 @@ func TestNewServer_PlatformModeListsOnlyPlatformResources(t *testing.T) {
 		t.Fatalf("platform mode exposed %d resources, want %d", len(result.Resources), len(expectedResources))
 	}
 	for _, resource := range result.Resources {
-		if !strings.HasPrefix(resource.URI, "whodb://platform/") {
+		if resource.URI != "whodb://mcp/configuration" && !strings.HasPrefix(resource.URI, "whodb://platform/") {
 			t.Fatalf("platform mode exposed non-platform resource %q", resource.URI)
 		}
 		if strings.TrimSpace(resource.Description) == "" {
@@ -620,7 +621,7 @@ func TestAgentManifestIncludesPlatformMCPPromptsAndResources(t *testing.T) {
 		t.Fatalf("agent manifest has %d platform resources, want %d", len(manifest.PlatformMCP.Resources), len(listedResources))
 	}
 	for _, resource := range manifest.PlatformMCP.Resources {
-		if !strings.HasPrefix(resource.URI, "whodb://platform/") {
+		if resource.URI != "whodb://mcp/configuration" && !strings.HasPrefix(resource.URI, "whodb://platform/") {
 			t.Fatalf("platform resource %s does not use platform URI prefix", resource.URI)
 		}
 		if strings.TrimSpace(resource.Description) == "" {

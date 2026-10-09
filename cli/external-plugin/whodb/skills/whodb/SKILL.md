@@ -26,9 +26,21 @@ Confirm only after approval of that exact preview. Changing defaults does not
 redirect a pending confirmation. Ask for `whodb login --host <url>` when a host
 needs authentication; no separate login is needed per project.
 
+## Guided setup
+
+Keep one MCP entry: command `whodb`, args `["mcp", "serve"]`. Use
+`whodb setup inspect` to discover saved settings, targets, tool choices and the
+settings schema. Ask the user which modules and restrictions they want, validate
+a JSON patch with `whodb setup validate --file <path>`, show the proposed settings,
+then use `whodb setup apply --file <path> --yes` after approval. Omitted fields are
+preserved. Verify with `whodb setup verify`; restart MCP when settings change.
+Use browser login through `whodb login --host <url>` and never request credentials
+in chat. Inspect `whodb://mcp/configuration` for active modules and restrictions.
+Platform calls target `workspace`; database calls target `connection`.
+
 ## Database-only MCP
 
-The database tools below are available only with `whodb mcp serve --database`.
+Enable the database module through `whodb setup`; both modules can run in the same `whodb mcp serve` connection. `--database` remains an advanced process override.
 This connects directly to databases without a WhoDB platform server; databases
 can be remote. The terminal UI is available with `whodb --tui`.
 

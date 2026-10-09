@@ -74,10 +74,10 @@ npx @clidey/whodb mcp serve
 Use `workspace: {host, org, project}` on platform tool calls to target a specific
 workspace without changing saved defaults.
 
-For database-only MCP tools, start with `--database`:
+For database-only tools, enable the database module using `npx @clidey/whodb setup`. The server command stays the same:
 
 ```bash
-npx @clidey/whodb mcp serve --database
+npx @clidey/whodb mcp serve
 ```
 
 Write operations require confirmation by default. Use `--allow-write` to disable confirmations or `--read-only` to block writes.
@@ -97,7 +97,7 @@ Example configuration (from `whodb mcp serve --database --help`):
   "mcpServers": {
     "whodb": {
       "command": "whodb",
-      "args": ["mcp", "serve", "--database"],
+      "args": ["mcp", "serve"],
       "env": {
         "WHODB_POSTGRES_1": "{\"alias\":\"prod\",\"host\":\"localhost\",\"user\":\"user\",\"password\":\"pass\",\"database\":\"db\"}"
       }

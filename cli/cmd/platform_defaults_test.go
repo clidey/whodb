@@ -48,7 +48,7 @@ func TestMCPPlatformDefaultAndDatabaseMode(t *testing.T) {
 					t.Fatal(err)
 				}
 			}
-			err := configureMCPMode(mcpServeCmd)
+			_, err := configureMCPMode(mcpServeCmd)
 			if (err != nil) != tc.wantError {
 				t.Fatalf("error = %v", err)
 			}
@@ -85,7 +85,7 @@ func TestPlatformLandingWithoutLogin(t *testing.T) {
 	if err := showPlatformLanding(rootCmd); err != nil {
 		t.Fatal(err)
 	}
-	for _, expected := range []string{"No saved login", "whodb login", "whodb --tui", "whodb mcp serve --database"} {
+	for _, expected := range []string{"No saved login", "whodb login", "whodb --tui", "whodb setup"} {
 		if !strings.Contains(output.String(), expected) {
 			t.Errorf("missing %q in %s", expected, output.String())
 		}

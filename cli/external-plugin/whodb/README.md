@@ -8,7 +8,7 @@ This plugin supports multiple installation methods. Choose the one that works be
 
 ### Method 1: npm (Recommended - No pre-install needed)
 
-The default configuration starts platform MCP. Sign in with `whodb login --host <url>`, then use `whodb_platform_hosts` and explicit `workspace` targets. The database-only MCP examples below add `--database`.
+Run `whodb setup` to enable platform tools, database-only tools, or both. Keep one MCP entry at `whodb mcp serve`; agents can guide setup with `whodb setup inspect`, `validate`, `apply`, and `verify`. Sign in to platform hosts through `whodb login --host <url>` and target workspaces per call. Docker examples below use an explicit database-only override; saved setup applies to the configuration directory of the running CLI.
 
 The default configuration uses npx to auto-download and run the MCP server:
 

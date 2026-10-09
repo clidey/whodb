@@ -25,11 +25,7 @@ import (
 
 // PlatformWorkspaceTarget selects a hosted workspace for one MCP call.
 // A host alone selects that host's saved workspace; org clears any inherited project.
-type PlatformWorkspaceTarget struct {
-	Host    string `json:"host,omitempty" jsonschema:"Saved platform host URL. Does not change the default host."`
-	Org     string `json:"org,omitempty" jsonschema:"Organization ID, slug, or unambiguous name."`
-	Project string `json:"project,omitempty" jsonschema:"Project ID, slug, or unambiguous name. Requires org."`
-}
+type PlatformWorkspaceTarget = config.MCPWorkspace
 
 type platformRequestKey struct{}
 type platformRequest struct {

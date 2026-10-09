@@ -705,10 +705,84 @@ Bare `whodb` shows saved platform login/workspace metadata and next commands;
 `whodb status` checks the live login. Use `whodb --tui` for the existing database
 terminal UI. Explicit `connect`, `query`, and `--profile` behavior is unchanged.
 
-`whodb mcp serve` now defaults to platform MCP. Existing database-only MCP
-configurations must add `--database`. Database-only flags are rejected without it.
-`--platform` remains accepted with a notice on stderr. Both modes support stdio
-and HTTP transports; database mode does not imply that the database is local.
+`whodb setup` saves the modules and access settings used by `whodb mcp serve`.
+Platform tools are enabled by default. Enable database-only tools or both modules
+in setup; every configuration uses the same MCP command. `--database` remains an
+advanced override for a database-only process, and `--platform` remains a
+compatibility override for platform-only tools. Both modules support stdio and
+HTTP transports; database-only does not imply that the database is local.
+
+## Guided MCP setup
+
+Run `whodb setup` once. The wizard lets you choose modules, write access, hosts,
+database connections, and optional restrictions. It previews the settings before
+saving, offers browser sign-in for platform hosts, and can verify connections.
+Existing settings are the defaults when you run the wizard again. You can also
+choose an optional default platform workspace using canonical organization and
+project IDs. Password entry is hidden and passwords are stored through the existing CLI credential store.
+
+Keep one entry in your MCP client:
+
+```json
+{
+  "mcpServers": {
+    "whodb": {"command": "whodb", "args": ["mcp", "serve"]}
+  }
+}
+```
+
+### Agent-guided setup
+
+Agents can guide the conversation using non-interactive JSON commands:
+
+```bash
+whodb setup inspect
+whodb setup validate --file setup.json
+# After the user approves the proposed settings:
+whodb setup apply --file setup.json --yes
+whodb setup verify
+```
+
+`inspect` returns current settings, available target metadata, tool choices and a
+settings schema. `validate` previews the merged settings without saving. `apply`
+requires `--yes` and reports whether a restart is needed. `verify` checks the
+configured host logins and database connections, reporting each failure and next
+command. Authentication is separate: use `whodb login --host <url>` for browser
+sign-in. Agents must not request passwords or tokens in chat or setup JSON.
+
+Example `setup.json` enabling both modules with production read-only:
+
+```json
+{
+  "modules": ["platform", "database"],
+  "write_mode": "confirm",
+  "platform_policy": {
+    "allowed_hosts": ["https://uat.whodb.com", "https://app.whodb.com"],
+    "read_only_hosts": ["https://app.whodb.com"]
+  },
+  "allowed_connections": ["development"]
+}
+```
+
+Settings patches preserve omitted fields; arrays replace existing arrays. Use
+`[]` to clear a tool/connection allowlist and `"platform_policy": null` to clear
+platform restrictions. The empty allowlists mean unrestricted access. Unknown
+fields are rejected. Settings are saved in the `mcp` section of WhoDB's existing
+configuration file; applying a settings patch does not rewrite the credential or
+connection section. Use `--file -` to supply a patch on stdin.
+
+Restart an existing MCP connection after changing modules or access settings.
+An optional `default_workspace` uses `{host, org, project}` with canonical IDs.
+Explicit process flags or session environment variables replace that saved
+default target; calls with `workspace` still override it. Platform policies apply
+to platform tools; database tools use `allowed_connections` and the shared
+`write_mode`.
+
+Host/project targeting remains per-call: platform tools accept `workspace`,
+database-only tools accept `connection`. You do not need another MCP entry or a
+restart to target a different saved host/project. Read `whodb://mcp/configuration`
+for the running server's active modules and restrictions. Explicit startup flags
+override saved settings for that process without saving those overrides.
 
 ## MCP Server
 
@@ -724,8 +798,8 @@ whodb mcp serve
 whodb mcp serve --transport=http --port=3000
 ```
 
-Platform mode is the default and exposes `whodb_platform_*` tools.
-For database-only MCP access, run `whodb mcp serve --database`; that mode exposes these tools:
+The platform module exposes `whodb_platform_*` tools. Enable the database module
+in `whodb setup` to expose the following tools in the same server:
 
 | Tool | Description |
 |------|-------------|
@@ -742,15 +816,16 @@ For database-only MCP access, run `whodb mcp serve --database`; that mode expose
 | `whodb_audit` | Run data quality audits for a schema or table |
 | `whodb_suggestions` | Get backend-generated starter queries |
 
-Platform mode is the default. In this mode, only
-hosted platform tools are exposed; database-only MCP tools are not registered.
+Without saved settings, only the platform module is enabled. Setup can enable
+either module or both together.
 `--tools` and `--disable-tools` work in both modes. Platform mode uses full
 `whodb_platform_*` names; database-only mode uses short names such as `query`.
 
 ### Platform access policy and tool selection
 
-Use `--platform-policy policy.json` to restrict an MCP process independently of
-its saved logins. For example, allow two hosts but keep production read-only:
+Save `platform_policy` through setup to restrict access independently of saved
+logins. The advanced `--platform-policy policy.json` flag overrides that policy
+for one process. For example, allow two hosts but keep production read-only:
 
 ```json
 {
@@ -1021,14 +1096,15 @@ Example hosted platform MCP config:
 }
 ```
 
-Example read-only hosted platform MCP config:
+For read-only access, save `{"write_mode":"read-only"}` through setup. The MCP
+client entry remains the same:
 
 ```json
 {
   "mcpServers": {
     "whodb-platform-readonly": {
       "command": "whodb",
-      "args": ["mcp", "serve", "--read-only"]
+      "args": ["mcp", "serve"]
     }
   }
 }
@@ -1211,7 +1287,7 @@ Example configuration (from `whodb mcp serve --help`):
   "mcpServers": {
       "whodb": {
         "command": "whodb",
-        "args": ["mcp", "serve", "--database"],
+        "args": ["mcp", "serve"],
         "env": {
           "WHODB_POSTGRES_1": "{\"alias\":\"prod\",\"host\":\"localhost\",\"user\":\"user\",\"password\":\"pass\",\"database\":\"db\"}"
         }

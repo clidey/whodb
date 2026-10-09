@@ -7,7 +7,7 @@ description: Convert natural language questions into SQL queries. Activates when
 
 Convert natural language questions into SQL queries using the database schema.
 
-These database-only MCP tools require `whodb mcp serve --database`. For platform resources, use the WhoDB skill and discover available `whodb_platform_*` tools instead.
+These database-only MCP tools require the database module enabled through `whodb setup`. Keep the MCP command at `whodb mcp serve`. For platform resources, use the WhoDB skill and discover available `whodb_platform_*` tools instead.
 
 ## When to Use
 

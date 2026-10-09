@@ -177,7 +177,7 @@ needs authentication; no separate login is needed per project.
 
 ## MCP Platform Tools
 
-Hosted platform MCP mode is the default (`--database` selects database-only MCP tools):
+Saved setup settings select modules. Platform is the default; `whodb setup` can enable database-only tools or both modules in the same server:
 
 ```bash
 whodb mcp serve
@@ -300,9 +300,9 @@ Users can optionally save a default with:
 whodb use --org <org-id-or-slug> --project <project-id-or-slug>
 ```
 
-In default platform mode, the MCP server exposes only hosted platform tools.
-Database-only MCP tools such as `whodb_query` and `whodb_connections` are not
-registered.
+With only the platform module enabled, database-only tools are not registered.
+Enable the database module in setup to expose `whodb_query`, `whodb_connections`,
+and the other database tools alongside platform tools.
 
 Example hosted platform MCP config:
 
@@ -390,3 +390,16 @@ Use `workspace` arguments when a policy is configured; top-level `org` and
 wins. Include confirmation and pending tools when selecting write tools.
 MCP failures set `isError` and retain the handler's structured recovery details.
 See `cli/README.md` for policy examples. Restart MCP after editing the policy file.
+
+### Single-entry guided setup
+
+Use `whodb setup` for the human wizard. Agents use `whodb setup inspect`, then
+`whodb setup validate --file <path>` to preview a settings patch, followed by
+`whodb setup apply --file <path> --yes` after user approval. `whodb setup verify`
+checks configured logins and database connections. Never request credentials in
+chat or include them in setup JSON; use browser login and the CLI credential store.
+
+Saved `modules` can contain `platform`, `database`, or both. Policy and tool
+selection are saved alongside them. All use one MCP entry: `whodb mcp serve`.
+Restart MCP after settings changes; per-call host/project switching needs no
+restart. `whodb://mcp/configuration` describes the active modules and restrictions.
