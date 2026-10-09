@@ -171,13 +171,13 @@ func init() {
 	configureFormatter()
 	logger.AddHook(&serviceHook{})
 
-	if logFilePath := resolveLogPath(env.LogFile, env.DefaultLogFile); logFilePath != "" {
-		logFile = openLogFile(logFilePath)
+	if logFilePath := ResolveLogPath(env.LogFile, env.DefaultLogFile); logFilePath != "" {
+		logFile = OpenLogFile(logFilePath)
 		logger.SetOutput(logFile)
 	}
 
-	if accessLogPath := resolveLogPath(env.AccessLogFile, env.DefaultAccessLogFile); accessLogPath != "" {
-		accessLogFile = openLogFile(accessLogPath)
+	if accessLogPath := ResolveLogPath(env.AccessLogFile, env.DefaultAccessLogFile); accessLogPath != "" {
+		accessLogFile = OpenLogFile(accessLogPath)
 		accessLogger = logrus.New()
 		accessLogger.SetOutput(accessLogFile)
 		accessLogger.SetFormatter(&logrus.TextFormatter{
@@ -187,20 +187,20 @@ func init() {
 	}
 }
 
-// resolveLogPath maps the env var value to an actual file path.
+// ResolveLogPath maps a log-file env var value to an actual file path.
 // "default" (case-insensitive) returns the provided default path;
 // empty stays empty (no file logging); anything else is used as-is.
-func resolveLogPath(value string, defaultPath string) string {
+func ResolveLogPath(value string, defaultPath string) string {
 	if strings.EqualFold(value, "default") {
 		return defaultPath
 	}
 	return value
 }
 
-// openLogFile creates the parent directory and opens the file for appending.
+// OpenLogFile creates the parent directory and opens the file for appending.
 // Exits the process if the directory or file cannot be opened — if file logging
 // was explicitly configured, running without it is a misconfiguration.
-func openLogFile(path string) *os.File {
+func OpenLogFile(path string) *os.File {
 	dir := filepath.Dir(path)
 	if err := os.MkdirAll(dir, 0750); err != nil {
 		fmt.Fprintf(os.Stderr, "whodb: failed to create log directory %s: %v\n", dir, err)

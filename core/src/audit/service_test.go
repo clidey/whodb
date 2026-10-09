@@ -57,3 +57,32 @@ func TestRecordWithContextPreservesExplicitActor(t *testing.T) {
 		t.Fatalf("expected explicit actor type to be preserved, got %q", service.event.Actor.Type)
 	}
 }
+
+func TestRecordWithContextSkipsPreparationWithoutService(t *testing.T) {
+	enriched := false
+	SetEventEnricher(func(_ context.Context, event AuditEvent) AuditEvent {
+		enriched = true
+		return event
+	})
+	t.Cleanup(func() {
+		SetAuditService(nil)
+		SetEventEnricher(nil)
+	})
+
+	SetAuditService(nil)
+	RecordWithContext(context.Background(), AuditEvent{Action: "login.source"})
+	Record(AuditEvent{Action: "login.source"})
+	if enriched {
+		t.Fatal("expected no enrichment when no audit service is registered")
+	}
+
+	service := &testAuditService{}
+	SetAuditService(service)
+	RecordWithContext(context.Background(), AuditEvent{Action: "login.source"})
+	if !enriched {
+		t.Fatal("expected enrichment when an audit service is registered")
+	}
+	if service.event.ID == "" {
+		t.Fatal("expected the recorded event to be prepared")
+	}
+}

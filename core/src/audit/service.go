@@ -45,6 +45,9 @@ var (
 func Record(event AuditEvent) {
 	mu.RLock()
 	defer mu.RUnlock()
+	if isNoOpService() {
+		return
+	}
 	currentService.Record(prepareEvent(context.Background(), event, currentActorProvider, currentEventEnricher))
 }
 
@@ -53,6 +56,9 @@ func Record(event AuditEvent) {
 func RecordWithContext(ctx context.Context, event AuditEvent) {
 	mu.RLock()
 	defer mu.RUnlock()
+	if isNoOpService() {
+		return
+	}
 	currentService.Record(prepareEvent(ctx, event, currentActorProvider, currentEventEnricher))
 }
 
@@ -94,6 +100,13 @@ func SetEventEnricher(enricher EventEnricher) {
 type noOpService struct{}
 
 func (s *noOpService) Record(event AuditEvent) {}
+
+// isNoOpService reports whether no audit service is registered, so callers can
+// skip event preparation. Callers must hold mu.
+func isNoOpService() bool {
+	_, ok := currentService.(*noOpService)
+	return ok
+}
 
 func noOpActorProvider(context.Context) Actor {
 	return Actor{}
