@@ -374,3 +374,19 @@ Use `--quiet` to suppress informational text in human-readable output.
 - Refresh tokens are stored in the OS keyring.
 - Source secrets are never written to the CLI config.
 - `sources config` redacts secret-looking values in human and JSON output.
+
+### MCP process restrictions
+
+`whodb mcp serve --platform-policy policy.json` supports `allowed_hosts`,
+`allowed_workspaces`, `read_only_hosts`, and `read_only_workspaces`. Workspace
+rules use `{host, org, project}` with canonical IDs. Empty allowlists are
+unrestricted; populated host and workspace allowlists intersect. Read-only rules
+also apply to pinned confirmations and override `--allow-write`.
+
+Use `workspace` arguments when a policy is configured; top-level `org` and
+`project` selectors require matching explicit workspace selectors. Inspect
+`whodb://platform/schema` for the active policy and enabled tools. Platform
+`--tools` and `--disable-tools` accept full `whodb_platform_*` names; disabling
+wins. Include confirmation and pending tools when selecting write tools.
+MCP failures set `isError` and retain the handler's structured recovery details.
+See `cli/README.md` for policy examples. Restart MCP after editing the policy file.

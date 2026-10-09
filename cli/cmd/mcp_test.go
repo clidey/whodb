@@ -154,7 +154,7 @@ func TestPlatformMCP_ServeRejectsLocalToolSelection(t *testing.T) {
 			if err == nil {
 				t.Fatal("mcp serve --platform with local tool selection returned nil error")
 			}
-			if !strings.Contains(err.Error(), "requires --database") {
+			if !strings.Contains(err.Error(), "requires --database") && !strings.Contains(err.Error(), "unknown platform tool") {
 				t.Fatalf("error = %q, want local MCP mode rejection", err)
 			}
 		})
@@ -164,7 +164,7 @@ func TestPlatformMCP_ServeRejectsLocalToolSelection(t *testing.T) {
 func resetMCPServeFlagsForTest(t *testing.T) {
 	t.Helper()
 	flags := mcpServeCmd.Flags()
-	for _, name := range []string{"database", "platform", "platform-host", "platform-org", "platform-project", "tools", "disable-tools"} {
+	for _, name := range []string{"database", "platform", "platform-host", "platform-org", "platform-project", "platform-policy", "tools", "disable-tools"} {
 		flag := flags.Lookup(name)
 		if flag == nil {
 			t.Fatalf("missing %s flag", name)
@@ -181,7 +181,7 @@ func resetMCPServeFlagsForTest(t *testing.T) {
 	mcpEnabledTools = nil
 	mcpDisabledTools = nil
 	t.Cleanup(func() {
-		for _, name := range []string{"database", "platform", "platform-host", "platform-org", "platform-project", "tools", "disable-tools"} {
+		for _, name := range []string{"database", "platform", "platform-host", "platform-org", "platform-project", "platform-policy", "tools", "disable-tools"} {
 			flag := flags.Lookup(name)
 			_ = flag.Value.Set(flag.DefValue)
 			flag.Changed = false

@@ -112,10 +112,14 @@ func newScopeTestHost(t *testing.T, name string) *scopeTestHost {
 	return host
 }
 
-func scopeTestClient(t *testing.T) *mcp.ClientSession {
+func scopeTestClient(t *testing.T, options ...*ServerOptions) *mcp.ClientSession {
 	t.Helper()
 	ct, st := mcp.NewInMemoryTransports()
-	server := NewServer(&ServerOptions{PlatformEnabled: true, ConfirmWrites: true})
+	opts := &ServerOptions{PlatformEnabled: true, ConfirmWrites: true}
+	if len(options) > 0 {
+		opts = options[0]
+	}
+	server := NewServer(opts)
 	ss, err := server.Connect(context.Background(), st, nil)
 	if err != nil {
 		t.Fatal(err)
@@ -136,9 +140,7 @@ func scopeCall(t *testing.T, cs *mcp.ClientSession, tool string, args map[string
 	if err != nil {
 		t.Fatal(err)
 	}
-	if result.IsError {
-		t.Fatalf("%s failed: %+v", tool, result.Content)
-	}
+
 	raw, err := json.Marshal(result.StructuredContent)
 	if err != nil {
 		t.Fatal(err)
@@ -146,6 +148,10 @@ func scopeCall(t *testing.T, cs *mcp.ClientSession, tool string, args map[string
 	var out map[string]any
 	if err := json.Unmarshal(raw, &out); err != nil {
 		t.Fatal(err)
+	}
+	message, _ := out["error"].(string)
+	if result.IsError != (message != "") {
+		t.Fatalf("%s error flag does not match payload: %+v", tool, result)
 	}
 	return out
 }

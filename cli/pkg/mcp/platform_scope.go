@@ -114,6 +114,17 @@ func addPlatformTool[In, Out any](server *mcp.Server, tool *mcp.Tool, handler mc
 		if err := json.Unmarshal(arguments, &args); err != nil {
 			return nil, nil, err
 		}
+		if platformPolicyFromContext(ctx).policy != nil {
+			var selectors map[string]json.RawMessage
+			if err := json.Unmarshal(arguments, &selectors); err != nil {
+				return nil, nil, err
+			}
+			for _, key := range []string{"org", "project"} {
+				if value, ok := selectors[key]; ok && string(value) != `""` && (args.Workspace == nil || (key == "org" && args.Workspace.Org == "") || (key == "project" && args.Workspace.Project == "")) {
+					return nil, nil, fmt.Errorf("with a platform policy, include workspace.%s when supplying the top-level selector", key)
+				}
+			}
+		}
 		request := &platformRequest{Target: args.Workspace}
 		ctx = context.WithValue(ctx, platformRequestKey{}, request)
 		if _, _, err := platformRequestScope(ctx); err != nil {
@@ -170,6 +181,12 @@ func handlePlatformHosts(ctx context.Context, req *mcp.CallToolRequest, input Pl
 	}
 	hosts := make([]PlatformHostInfo, 0, len(cfg.Platform.Hosts))
 	for _, host := range cfg.Platform.Hosts {
+		if !platformPolicyFromContext(ctx).policy.allowsHost(host.URL) {
+			continue
+		}
+		if policy := platformPolicyFromContext(ctx).policy; policy != nil && len(policy.AllowedWorkspaces) > 0 && !matchesPolicyWorkspace(policy.AllowedWorkspaces, host.URL, host.DefaultOrgID, host.DefaultProjectID) {
+			host.DefaultOrgID, host.DefaultProjectID = "", ""
+		}
 		hosts = append(hosts, PlatformHostInfo{Host: host.URL, AccountID: host.AccountID, Email: host.Email, Default: host.URL == cfg.Platform.DefaultHost, OrgID: host.DefaultOrgID, ProjectID: host.DefaultProjectID})
 	}
 	return nil, PlatformHostsOutput{Hosts: hosts}, nil

@@ -33,6 +33,8 @@ func TestMCPPlatformDefaultAndDatabaseMode(t *testing.T) {
 		{name: "conflicting modes", flags: map[string]string{"platform": "true", "database": "true"}, wantError: true},
 		{name: "old false mode", flags: map[string]string{"platform": "false"}, wantError: true},
 		{name: "database flags require mode", flags: map[string]string{"tools": "schemas"}, wantError: true},
+		{name: "platform tool selection", flags: map[string]string{"tools": "whodb_platform_hosts"}, platform: true},
+		{name: "policy rejected in database mode", flags: map[string]string{"database": "true", "platform-policy": "policy.json"}, wantError: true},
 		{name: "database tool selection", flags: map[string]string{"database": "true", "tools": "schemas"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

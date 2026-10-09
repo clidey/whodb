@@ -744,8 +744,60 @@ For database-only MCP access, run `whodb mcp serve --database`; that mode expose
 
 Platform mode is the default. In this mode, only
 hosted platform tools are exposed; database-only MCP tools are not registered.
-Database tool selection flags such as `--tools` and `--disable-tools` do not apply
-to platform mode.
+`--tools` and `--disable-tools` work in both modes. Platform mode uses full
+`whodb_platform_*` names; database-only mode uses short names such as `query`.
+
+### Platform access policy and tool selection
+
+Use `--platform-policy policy.json` to restrict an MCP process independently of
+its saved logins. For example, allow two hosts but keep production read-only:
+
+```json
+{
+  "allowed_hosts": ["https://uat.whodb.com", "https://app.whodb.com"],
+  "read_only_hosts": ["https://app.whodb.com"]
+}
+```
+
+```bash
+whodb mcp serve --platform-policy policy.json
+whodb mcp serve --tools whodb_platform_hosts,whodb_platform_workspace_resolve,whodb_platform_sources
+whodb mcp serve --disable-tools whodb_platform_source_delete,whodb_platform_delete
+```
+
+For project restrictions, add `allowed_workspaces` or `read_only_workspaces`:
+
+```json
+{
+  "allowed_workspaces": [
+    {"host": "https://uat.whodb.com", "org": "<org-id>", "project": "<project-id>"},
+    {"host": "https://app.whodb.com", "org": "<org-id>", "project": "<project-id>"}
+  ],
+  "read_only_workspaces": [
+    {"host": "https://app.whodb.com", "org": "<org-id>", "project": "<project-id>"}
+  ]
+}
+```
+
+Policy workspace entries require canonical organization and project IDs, not
+names or slugs. Tool calls can still resolve names through `workspace`.
+When a policy is configured, include matching `workspace.org` and
+`workspace.project` when using tools with top-level `org` or `project` arguments. Host and workspace allowlists intersect; omitted or
+empty allowlists impose no restriction. Read-only rules override `--allow-write`
+and also apply when confirming an earlier preview. Global `--read-only` remains
+stricter than any per-target setting. Discovery lists omit disallowed targets.
+The policy is loaded at startup; restart MCP after changing it.
+
+Tool disabling takes precedence over enabling. Unknown platform tool names are
+rejected at startup. Include `whodb_platform_confirm` and `whodb_platform_pending`
+when selecting tools that need write confirmation. Tool filtering controls tool
+availability; generic write tools can support overlapping operations. Use
+read-only policies to block all writes to a target. Platform authorization still
+applies to every request.
+
+`whodb://platform/schema` reports the active access policy and enabled tools.
+Failed operations set MCP `isError` while preserving structured error details,
+request IDs, scope, and recovery guidance when supplied by the handler.
 
 ### Per-call workspace targeting
 

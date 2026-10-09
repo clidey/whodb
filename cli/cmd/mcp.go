@@ -73,6 +73,7 @@ var mcpAllowedConnections []string
 
 // analytics flags
 var mcpNoAnalytics bool
+var mcpPlatformPolicy string
 
 var mcpCmd = &cobra.Command{
 	Use:   "mcp",
@@ -161,6 +162,7 @@ PLATFORM SESSION SCOPING:
   --platform-host URL       Select the platform host for this MCP process
   --platform-org ORG        Select an organization id, slug, or name
   --platform-project NAME   Select a project id, slug, or name
+  --platform-policy FILE    Restrict hosts/workspaces and configure read-only targets
 
   Organization and project must be provided together. These process-local
   values do not change the workspace saved by whodb use, so separate terminal
@@ -169,9 +171,10 @@ PLATFORM SESSION SCOPING:
   WHODB_PLATFORM_SESSION_PROJECT.
 
 TOOL SELECTION:
-  --tools           - Comma-separated list of local MCP tools to enable (default: all)
-                      Valid: query, schemas, tables, columns, connections, confirm, pending, explain, diff, erd, audit, suggestions
-  --disable-tools   - Comma-separated list of local MCP tools to disable (takes precedence)
+  --tools           - Comma-separated tool names to enable (default: all)
+                      Platform: full names such as whodb_platform_sources
+                      Database-only: query, schemas, tables, columns, connections, etc.
+  --disable-tools   - Comma-separated tool names to disable (takes precedence)
 
 ANALYTICS:
   Anonymous usage analytics are enabled by default to help improve WhoDB.
@@ -315,6 +318,14 @@ Connection Resolution:
 			confirmWrites = false // Read-only, no writes to confirm
 		}
 
+		var policy *whodbmcp.PlatformPolicy
+		if mcpPlatformPolicy != "" {
+			var err error
+			policy, err = whodbmcp.LoadPlatformPolicy(mcpPlatformPolicy)
+			if err != nil {
+				return fmt.Errorf("load platform policy: %w", err)
+			}
+		}
 		// Build server options from flags
 		opts := &whodbmcp.ServerOptions{
 			ReadOnly:            readOnly,
@@ -330,6 +341,7 @@ Connection Resolution:
 			DefaultConnection:   mcpConnection,
 			AllowedConnections:  mcpAllowedConnections,
 			PlatformEnabled:     mcpPlatform,
+			PlatformPolicy:      policy,
 		}
 
 		server := whodbmcp.NewServer(opts)
@@ -407,6 +419,7 @@ func init() {
 		"Require this bearer token on HTTP requests (can also set WHODB_MCP_AUTH_TOKEN); strongly recommended when binding to a network interface")
 
 	// Platform flags
+	mcpServeCmd.Flags().StringVar(&mcpPlatformPolicy, "platform-policy", "", "JSON file restricting platform hosts/workspaces and read-only targets")
 	mcpServeCmd.Flags().BoolVar(&mcpPlatform, "platform", true,
 		"Compatibility alias: platform MCP is now the default")
 	mcpServeCmd.Flags().BoolVar(&mcpDatabase, "database", false, "connect directly to databases without a WhoDB platform server")
@@ -419,9 +432,9 @@ func init() {
 
 	// Tool enablement flags
 	mcpServeCmd.Flags().StringSliceVar(&mcpEnabledTools, "tools", nil,
-		"Comma-separated list of local MCP tools to enable (default: all). Valid: query, schemas, tables, columns, connections, confirm, pending, explain, diff, erd, audit, suggestions")
+		"Comma-separated tool names to enable (default: all); platform uses full whodb_platform_* names, database-only uses names such as query, schemas")
 	mcpServeCmd.Flags().StringSliceVar(&mcpDisabledTools, "disable-tools", nil,
-		"Comma-separated list of local MCP tools to disable (takes precedence over --tools)")
+		"Comma-separated tool names to disable (takes precedence over --tools)")
 
 	// Connection scoping
 	mcpServeCmd.Flags().StringVar(&mcpConnection, "default-connection", "",
@@ -471,8 +484,14 @@ func configureMCPMode(cmd *cobra.Command) error {
 		return fmt.Errorf("use --database instead of --platform=false")
 	}
 	mcpPlatform = !mcpDatabase
+	if !mcpPlatform && mcpPlatformPolicy != "" {
+		return fmt.Errorf("--platform-policy requires platform mode")
+	}
 	if mcpPlatform {
-		for _, name := range []string{"tools", "disable-tools", "default-connection", "allowed-connections", "allow-drop", "allow-multi-statement"} {
+		if err := whodbmcp.ValidatePlatformTools(mcpEnabledTools, mcpDisabledTools); err != nil {
+			return err
+		}
+		for _, name := range []string{"default-connection", "allowed-connections", "allow-drop", "allow-multi-statement"} {
 			if cmd.Flags().Changed(name) {
 				return fmt.Errorf("--%s requires --database; platform MCP is now the default", name)
 			}

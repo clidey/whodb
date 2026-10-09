@@ -69,11 +69,11 @@ type ServerOptions struct {
 	// Default: false
 	AllowDrop bool
 	// EnabledTools specifies which tools to enable. If empty, all tools are enabled.
-	// Valid values: "query", "schemas", "tables", "columns", "connections", "confirm",
+	// Platform mode uses full whodb_platform_* names. Database-only values: "query", "schemas", "tables", "columns", "connections", "confirm",
 	// "pending", "explain", "diff", "erd", "audit", "suggestions"
 	EnabledTools []string
 	// DisabledTools specifies which tools to disable. Takes precedence over EnabledTools.
-	// Valid values: "query", "schemas", "tables", "columns", "connections", "confirm",
+	// Platform mode uses full whodb_platform_* names. Database-only values: "query", "schemas", "tables", "columns", "connections", "confirm",
 	// "pending", "explain", "diff", "erd", "audit", "suggestions"
 	DisabledTools []string
 	// DefaultConnection is the connection to use when none is specified.
@@ -86,10 +86,14 @@ type ServerOptions struct {
 	// PlatformEnabled runs hosted WhoDB platform mode.
 	// When enabled, only hosted platform tools are registered.
 	PlatformEnabled bool
+	// PlatformPolicy restricts accessible platform targets and writes.
+	PlatformPolicy *PlatformPolicy
 }
 
 // SecurityOptions contains runtime security settings for query execution
 type SecurityOptions struct {
+	PlatformPolicy      *PlatformPolicy
+	ToolEnablement      *ToolEnablement
 	ReadOnly            bool
 	ConfirmWrites       bool
 	AllowWrite          bool
@@ -160,6 +164,8 @@ func NewServer(opts *ServerOptions) *mcp.Server {
 		defaultConn = opts.AllowedConnections[0]
 	}
 
+	server.AddReceivingMiddleware(toolErrorMiddleware)
+
 	// Create security options from server options
 	secOpts := &SecurityOptions{
 		ReadOnly:            opts.ReadOnly,
@@ -181,6 +187,9 @@ func NewServer(opts *ServerOptions) *mcp.Server {
 	}
 
 	if opts.PlatformEnabled {
+		secOpts.ToolEnablement = toolEnablement
+		secOpts.PlatformPolicy = opts.PlatformPolicy
+		server.AddReceivingMiddleware(platformPolicyMiddleware(opts.PlatformPolicy))
 		registerPlatformTools(server, secOpts)
 		registerPlatformPrompts(server)
 		registerPlatformResources(server, secOpts)
@@ -702,13 +711,14 @@ func registerPlatformResources(server *mcp.Server, secOpts *SecurityOptions) {
 			}
 		}
 		return jsonResource("whodb://platform/schema", platformSchemaResource{
+			AccessPolicy:      secOpts.PlatformPolicy,
 			Name:              manifest.Name,
 			Version:           manifest.Version,
 			PlatformMCP:       manifest.PlatformMCP,
 			ProductModel:      buildPlatformProductModel(),
 			Concepts:          buildPlatformConcepts(),
 			Lifecycle:         buildPlatformLifecycle(),
-			Recipes:           buildPlatformWorkflowRecipes(),
+			Recipes:           buildPlatformToolGuide(secOpts).Recipes,
 			Tools:             tools,
 			Resources:         manifest.PlatformMCP.Resources,
 			ResourceTemplates: manifest.PlatformMCP.ResourceTemplates,
@@ -817,6 +827,7 @@ func parsePlatformResourceTemplateURI(uri string) (string, string, bool) {
 }
 
 type platformSchemaResource struct {
+	AccessPolicy      *PlatformPolicy                     `json:"access_policy,omitempty"`
 	Name              string                              `json:"name"`
 	Version           string                              `json:"version"`
 	PlatformMCP       agentmanifest.PlatformMCP           `json:"platform_mcp"`
@@ -1379,19 +1390,20 @@ func platformToolEnabledForMode(name string, secOpts *SecurityOptions) bool {
 	if secOpts == nil {
 		secOpts = &SecurityOptions{ConfirmWrites: true}
 	}
-	switch name {
-	case "whodb_platform_project_create", "whodb_platform_project_rename", "whodb_platform_project_delete",
-		"whodb_platform_source_create", "whodb_platform_source_update", "whodb_platform_source_delete",
-		"whodb_platform_create", "whodb_platform_update", "whodb_platform_delete", "whodb_platform_action",
-		"whodb_platform_create_dataset", "whodb_platform_promote_file_to_dataset",
-		"whodb_platform_add_ontology_record", "whodb_platform_update_ontology_record", "whodb_platform_delete_ontology_record",
-		"whodb_platform_create_ontology_fast_lookup", "whodb_platform_delete_ontology_fast_lookup":
-		return !secOpts.ReadOnly
-	case "whodb_platform_pending", "whodb_platform_confirm":
-		return secOpts.ConfirmWrites
-	default:
-		return true
+	if secOpts.ToolEnablement != nil && !secOpts.ToolEnablement.isToolEnabled(name) {
+		return false
 	}
+	if name == "whodb_platform_pending" || name == "whodb_platform_confirm" {
+		return secOpts.ConfirmWrites && !secOpts.ReadOnly
+	}
+	if secOpts.ReadOnly {
+		for _, tool := range platformToolDefinitions() {
+			if tool.Name == name {
+				return tool.Annotations != nil && tool.Annotations.ReadOnlyHint
+			}
+		}
+	}
+	return true
 }
 
 func platformResourceMode(secOpts *SecurityOptions) string {

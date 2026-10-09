@@ -559,6 +559,9 @@ func (o PlatformSourceRowsOutput) MarshalJSON() ([]byte, error) {
 
 func registerPlatformTools(server *mcp.Server, secOpts *SecurityOptions) {
 	for _, tool := range platformToolDefinitions() {
+		if !platformToolEnabledForMode(tool.Name, secOpts) {
+			continue
+		}
 		if registerPlatformBundleTool(server, tool, secOpts) {
 			continue
 		}
@@ -1001,6 +1004,14 @@ func HandlePlatformOrgs(ctx context.Context, req *mcp.CallToolRequest, input Pla
 		return nil, PlatformOrgsOutput{Error: err.Error(), RequestID: requestID}, nil
 	}
 
+	policy := platformPolicyFromContext(ctx).policy
+	filteredOrgs := orgs[:0]
+	for _, org := range orgs {
+		if policy.allowsDiscovery(session.Host.URL, org.ID) {
+			filteredOrgs = append(filteredOrgs, org)
+		}
+	}
+	orgs = filteredOrgs
 	output := PlatformOrgsOutput{
 		Host:      session.Host.URL,
 		Orgs:      platformOrgInfos(orgs, session.Host.DefaultOrgID),
@@ -1037,6 +1048,14 @@ func HandlePlatformProjects(ctx context.Context, req *mcp.CallToolRequest, input
 		return nil, PlatformProjectsOutput{Error: err.Error(), RequestID: requestID}, nil
 	}
 
+	policy := platformPolicyFromContext(ctx).policy
+	filteredProjects := projects[:0]
+	for _, project := range projects {
+		if policy == nil || len(policy.AllowedWorkspaces) == 0 || matchesPolicyWorkspace(policy.AllowedWorkspaces, session.Host.URL, org.ID, project.ID) {
+			filteredProjects = append(filteredProjects, project)
+		}
+	}
+	projects = filteredProjects
 	output := PlatformProjectsOutput{
 		Host:      session.Host.URL,
 		OrgID:     org.ID,
@@ -1626,6 +1645,9 @@ func loadHostedPlatformToolSession(ctx context.Context) (*platformToolSession, e
 	if err != nil {
 		return nil, err
 	}
+	if !platformPolicyFromContext(ctx).policy.allowsHost(hostURL) {
+		return nil, fmt.Errorf("platform policy denies host %s", hostURL)
+	}
 	host, ok := cfg.GetPlatformHost(hostURL)
 	if !ok || strings.TrimSpace(host.AccountID) == "" {
 		return nil, fmt.Errorf("hosted WhoDB is not logged in for %s. Run: whodb login --host %s", hostURL, hostURL)
@@ -1662,6 +1684,9 @@ func loadHostedPlatformToolSession(ctx context.Context) (*platformToolSession, e
 			return nil, err
 		}
 		session.AutoSelected = autoSelected
+	}
+	if err := checkPlatformPolicy(ctx, session.Host.URL, session.Host.DefaultOrgID, session.Host.DefaultProjectID); err != nil {
+		return nil, err
 	}
 	client.SetWorkspaceContext(session.Host.DefaultOrgID, session.Host.DefaultProjectID)
 	recordPlatformScope(ctx, session)
@@ -2372,6 +2397,9 @@ func platformSourceWriteCompletedOutput(requestID, action string, source *platfo
 
 func platformMutationWriteOutput(ctx context.Context, requestID, toolName string, action *PendingPlatformAction, confirmWrites bool) (*mcp.CallToolResult, PlatformGenericWriteOutput, error) {
 	startTime := time.Now()
+	if err := checkPlatformPolicy(ctx, action.Host, action.OrgID, action.ProjectID); err != nil {
+		return nil, PlatformGenericWriteOutput{Error: err.Error(), RequestID: requestID}, nil
+	}
 	if !confirmWrites {
 		output, err := executePendingPlatformAction(ctx, action, requestID)
 		if err != nil {
@@ -2403,6 +2431,9 @@ func HandlePlatformPending(ctx context.Context, req *mcp.CallToolRequest, input 
 	actions := listPendingPlatformActions()
 	pending := make([]PlatformPendingInfo, 0, len(actions))
 	for _, action := range actions {
+		if checkPlatformPolicy(ctx, action.Host, action.OrgID, action.ProjectID) != nil {
+			continue
+		}
 		if scope != nil && (action.Host != scope.Host.URL || action.AccountID != scope.Host.AccountID || (scope.Host.DefaultOrgID != "" && action.OrgID != scope.Host.DefaultOrgID) || (scope.Host.DefaultProjectID != "" && action.ProjectID != scope.Host.DefaultProjectID)) {
 			continue
 		}

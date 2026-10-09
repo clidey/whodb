@@ -497,6 +497,9 @@ func HandlePlatformWorkflowGet(ctx context.Context, req *mcp.CallToolRequest, in
 	if err != nil {
 		return nil, PlatformWorkflowOutput{Error: err.Error(), RequestID: requestID}, nil
 	}
+	if err := checkPlatformPolicy(ctx, plan.Host, plan.OrgID, plan.ProjectID); err != nil {
+		return nil, PlatformWorkflowOutput{Error: err.Error(), RequestID: requestID}, nil
+	}
 	if selected != nil && (plan.AccountID != selected.Host.AccountID || plan.Host != selected.Host.URL || plan.OrgID != selected.Host.DefaultOrgID || plan.ProjectID != selected.Host.DefaultProjectID) {
 		return nil, PlatformWorkflowOutput{Error: "workflow belongs to a different hosted workspace or account", RequestID: requestID}, nil
 	}

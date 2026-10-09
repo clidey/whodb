@@ -223,6 +223,9 @@ func buildPlatformSetupStatusFor(ctx context.Context, requestID string) Platform
 		return output
 	}
 	host = normalizedHost
+	if !platformPolicyFromContext(ctx).policy.allowsHost(host) {
+		return PlatformSetupStatusOutput{Error: "platform policy denies host", RequestID: requestID}
+	}
 	entry, ok := cfg.GetPlatformHost(host)
 	if !ok || strings.TrimSpace(entry.AccountID) == "" {
 		output := platformSetupStatusFor(host, "needs_login")
