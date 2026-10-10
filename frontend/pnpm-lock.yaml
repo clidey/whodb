@@ -163,8 +163,8 @@ importers:
         specifier: 2.11.15
         version: 2.11.15
       js-yaml:
-        specifier: 5.4.1
-        version: 5.4.1
+        specifier: 5.4.2
+        version: 5.4.2
       nyc:
         specifier: 18.0.0
         version: 18.0.0(supports-color@7.2.0)
@@ -3527,8 +3527,8 @@ packages:
     resolution: {integrity: sha512-1td788aAnnZ5qs7V2QIRl1owjtYpbKt749Y3xauqQgwIIGF/xXWz1wMTEBx5O3LK3lXLVuqXPdPxj2BoFHaW9Q==}
     hasBin: true
 
-  js-yaml@5.4.1:
-    resolution: {integrity: sha512-28R/k+NAjeuf7+CKlTxWZVExJGwVVLwY06DgEnOMz2gEpfNkDcD7QvyiVPT0xy0XXhU8vHsd4Ot42OOPdJG7dQ==}
+  js-yaml@5.4.2:
+    resolution: {integrity: sha512-m+aqu+LwO1O6sIopafj8HUVl5aawITwZQe/yHpMCKjaWBaA/d07B/QdMb3529REftiU+RMMHL3Vlsw3hON7vWg==}
     hasBin: true
 
   jsesc@3.1.0:
@@ -8843,7 +8843,7 @@ snapshots:
     dependencies:
       argparse: 2.0.1
 
-  js-yaml@5.4.1:
+  js-yaml@5.4.2:
     dependencies:
       argparse: 2.0.1
 
