@@ -121,7 +121,7 @@ func runChatLoop(
 ) {
 	request := userQuery
 	var lastFailedSQL, lastQueryError string
-	for attempt := 0; attempt < 2; attempt++ {
+	for attempt := range 2 {
 		SendSSEProgress(w, flusher, "plan", "started")
 		stream, err := baml_client.Stream.GenerateSQLQuery(ctx, dbContext, request, callOpts...)
 		if err != nil {
@@ -185,12 +185,13 @@ func runChatLoop(
 			continue
 		}
 		if retryReason != "" {
-			if lastFailedSQL != "" {
+			switch {
+			case lastFailedSQL != "":
 				SendSSESQLFailure(w, flusher, lastFailedSQL, lastQueryError)
-			} else if strings.Contains(retryReason, "cannot invoke named tools") {
+			case strings.Contains(retryReason, "cannot invoke named tools"):
 				SendSSEMessage(w, flusher, &model.AIChatMessage{Type: "scope:error", Text: "unsupported_tool"})
 				SendSSEDone(w, flusher)
-			} else {
+			default:
 				SendSSEError(w, flusher, retryReason)
 			}
 			return
