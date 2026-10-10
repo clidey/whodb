@@ -30,7 +30,7 @@ func runtimeTestClient(t *testing.T, server *mcp.Server) *mcp.ClientSession {
 func TestEmbeddedPlatformCatalogMatchesCLI(t *testing.T) {
 	for _, readOnly := range []bool{false, true} {
 		cli := runtimeTestClient(t, NewServer(&ServerOptions{PlatformEnabled: true, ReadOnly: readOnly, ConfirmWrites: true, MaxRows: 100, DisabledTools: []string{"whodb_platform_app_screenshot"}}))
-		embedded := runtimeTestClient(t, NewPlatformServer(readOnly))
+		embedded := runtimeTestClient(t, NewPlatformServer(readOnly, "runtime-test"))
 		catalog := func(client *mcp.ClientSession) map[string]string {
 			out := map[string]string{}
 			for tool, err := range client.Tools(t.Context(), nil) {

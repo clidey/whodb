@@ -9,7 +9,6 @@ import (
 
 	"github.com/clidey/whodb/cli/internal/config"
 	platformapi "github.com/clidey/whodb/cli/internal/platform"
-	"github.com/clidey/whodb/cli/pkg/version"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -67,9 +66,10 @@ func platformStateFor(contexts ...context.Context) *PlatformState {
 }
 
 // NewPlatformServer registers the shared platform tools, prompts and resources
-// without local database, configuration or browser-capture tools.
-func NewPlatformServer(readOnly bool) *mcp.Server {
-	server := mcp.NewServer(&mcp.Implementation{Name: "whodb", Version: version.Version}, &mcp.ServerOptions{
+// with the embedding application's version and without local database,
+// configuration or browser-capture tools.
+func NewPlatformServer(readOnly bool, applicationVersion string) *mcp.Server {
+	server := mcp.NewServer(&mcp.Implementation{Name: "whodb", Version: applicationVersion}, &mcp.ServerOptions{
 		Instructions: mcpUsageInstructions + "\n\n" + platformInstructions + "\nThis server uses your OAuth identity. Supply workspace {org, project} on workspace calls. Local login settings, local paths and browser capture are unavailable. Writes require preview and confirmation.",
 	})
 	options := &SecurityOptions{ReadOnly: readOnly, ConfirmWrites: true, SecurityLevel: SecurityLevelStandard, MaxRows: 100, QueryTimeout: 30 * time.Second,
