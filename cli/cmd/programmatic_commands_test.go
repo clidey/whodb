@@ -1870,6 +1870,87 @@ func TestBookmarksLoadCmd_NDJSONMatchesJSONShape(t *testing.T) {
 	}
 }
 
+func TestBookmarksSearchCmd(t *testing.T) {
+	cleanup := setupTestEnv(t)
+	defer cleanup()
+
+	bookmarkFormat = "json"
+	bookmarkQuiet = false
+
+	seed := []struct{ name, query string }{
+		{"get-str-table", "SELECT * FROM strtab"},
+		{"get-rec", "SELECT * FROM strtab"},
+		{"get-age", "SELECT age FROM strtab"},
+		{"get-age-gt-ten", "SELECT age FROM strtab"},
+	}
+	for _, s := range seed {
+		saveOut, saveErr := setCommandBuffers(t, bookmarksSaveCmd)
+		if err := bookmarksSaveCmd.RunE(bookmarksSaveCmd, []string{s.name, s.query}); err != nil {
+			t.Fatalf("bookmarks save failed: %v", err)
+		}
+		saveEnvelope := decodeJSONEnvelope[config.SavedQuery](t, saveOut)
+		if saveEnvelope.Command != "bookmarks.save" {
+			t.Fatalf("expected bookmarks.save command, got %q", saveEnvelope.Command)
+		}
+		if saveErr.Len() != 0 {
+			t.Fatalf("expected no stderr from save, got %q", saveErr.String())
+		}
+	}
+
+	t.Run("name_and_query_match", func(t *testing.T) {
+		bookmarkFormat = "json"
+		out, errBuf := setCommandBuffers(t, bookmarksSearchCmd)
+		if err := bookmarksSearchCmd.RunE(bookmarksSearchCmd, []string{"age"}); err != nil {
+			t.Fatalf("bookmarks search failed: %v", err)
+		}
+		var results []struct {
+			Name  string `json:"name"`
+			Query string `json:"query"`
+		}
+		if err := json.Unmarshal(out.Bytes(), &results); err != nil {
+			t.Fatalf("failed to decode search json output: %v", err)
+		}
+		if len(results) != 2 {
+			t.Fatalf("expected 2 matches for 'age', got %d: %+v", len(results), results)
+		}
+		if errBuf.Len() != 0 {
+			t.Fatalf("expected no stderr from search, got %q", errBuf.String())
+		}
+	})
+
+	t.Run("query-only_match_returns_all", func(t *testing.T) {
+		bookmarkFormat = "json"
+		out, errBuf := setCommandBuffers(t, bookmarksSearchCmd)
+		if err := bookmarksSearchCmd.RunE(bookmarksSearchCmd, []string{"SELECT"}); err != nil {
+			t.Fatalf("bookmarks search failed: %v", err)
+		}
+		var results []struct {
+			Name  string `json:"name"`
+			Query string `json:"query"`
+		}
+		if err := json.Unmarshal(out.Bytes(), &results); err != nil {
+			t.Fatalf("failed to decode search json output: %v", err)
+		}
+		if len(results) != 4 {
+			t.Fatalf("expected 4 matches for 'SELECT', got %d: %+v", len(results), results)
+		}
+		if errBuf.Len() != 0 {
+			t.Fatalf("expected no stderr from search, got %q", errBuf.String())
+		}
+	})
+
+	t.Run("no_match_returns_empty_array", func(t *testing.T) {
+		bookmarkFormat = "json"
+		out, _ := setCommandBuffers(t, bookmarksSearchCmd)
+		if err := bookmarksSearchCmd.RunE(bookmarksSearchCmd, []string{"sdfds"}); err != nil {
+			t.Fatalf("bookmarks search failed: %v", err)
+		}
+		if strings.TrimSpace(out.String()) != "[]" {
+			t.Fatalf("expected empty json array, got %q", out.String())
+		}
+	})
+}
+
 func TestProfilesCmd_SaveShowDelete(t *testing.T) {
 	cleanup := setupTestEnv(t)
 	defer cleanup()
