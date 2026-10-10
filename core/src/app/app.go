@@ -142,6 +142,12 @@ type AppConfig struct {
 	// Analytics fields attached to every PostHog event from this instance.
 	AnalyticsDeployment string
 	AnalyticsEdition    string
+
+	// OnShutdown runs, in order, once the termination signal is received and
+	// before the HTTP server starts draining. Hooks share the shutdown deadline
+	// and must return promptly; they exist to hand off work to other
+	// instances, not to finish it.
+	OnShutdown []func(context.Context)
 }
 
 // Run starts the WhoDB server with the given configuration.
@@ -247,13 +253,17 @@ func Run(config AppConfig, staticFiles embed.FS) {
 	<-quit
 	log.Info("Shutting down server...")
 
-	if stopSessionCleanup != nil {
-		stopSessionCleanup()
-	}
-
 	// Create a deadline for graceful shutdown
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
+
+	for _, hook := range config.OnShutdown {
+		hook(ctx)
+	}
+
+	if stopSessionCleanup != nil {
+		stopSessionCleanup()
+	}
 
 	// Shutdown HTTP server and close DB connections in parallel
 	var wg sync.WaitGroup
