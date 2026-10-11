@@ -9,7 +9,7 @@ ontology as in-code function APIs.
 go get github.com/clidey/whodb/sdk/packages/go
 ```
 
-Requires Go ≥ 1.22.
+Requires Go ≥ 1.27.2.
 
 ## Quickstart
 
