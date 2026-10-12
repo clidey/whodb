@@ -122,7 +122,8 @@ try {
   });
   await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
   await page.waitForTimeout(15000);
-  const frame = page.frames().find((item) => item.url().endsWith("/sandbox.html"));
+  // The app frame was /sandbox.html before the inlined kernel; it is a srcdoc frame since.
+  const frame = page.frames().find((item) => item !== page.mainFrame() && (item.url().endsWith("/sandbox.html") || item.url() === "about:srcdoc"));
   if (!frame) throw new Error("App sandbox did not render");
   const waitForContent = async () => {
     const deadline = Date.now() + 60000;
