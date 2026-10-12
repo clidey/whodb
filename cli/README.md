@@ -812,6 +812,16 @@ restart to target a different saved host/project. Read `whodb://mcp/configuratio
 for the running server's active modules and restrictions. Explicit startup flags
 override saved settings for that process without saving those overrides.
 
+To keep one chat on one host (for example UAT in one Claude Code or Codex window
+and production in another) without separate MCP entries, the agent calls
+`whodb_platform_session_use` with `workspace {host, org, project}` once. That
+default applies to later calls in that MCP session only, is never written to
+disk, and is removed with `whodb_platform_session_clear`.
+`whodb_platform_status` shows it as `session_scope`. Resolution order for a call
+without `workspace`: session default, then process flags/environment, then the
+saved CLI default. `whodb use` changes the saved default for every session, so
+it is the wrong tool for switching a single chat.
+
 ## MCP Server
 
 WhoDB can run as an MCP (Model Context Protocol) server, enabling AI assistants like Claude, Cursor, and others to query your databases.

@@ -252,6 +252,10 @@ Connection Resolution:
   whodb mcp serve --platform-host=http://localhost:8080 \
     --platform-org=acme --platform-project=analysis
 
+  # Per-chat host selection without extra MCP entries: the agent calls
+  # whodb_platform_session_use with workspace {host, org, project}. The default
+  # applies to that MCP session only and is never saved.
+
   # Hosted platform MCP config (stdio):
   {
     "mcpServers": {

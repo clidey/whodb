@@ -51,6 +51,9 @@ type PlatformSetupStatusOutput struct {
 	NextSteps         []string `json:"next_steps"`
 	Error             string   `json:"error,omitempty"`
 	RequestID         string   `json:"request_id,omitempty"`
+
+	// SessionScope is the default set by whodb_platform_session_use for this MCP session, if any.
+	SessionScope *PlatformWorkspaceTarget `json:"session_scope,omitempty"`
 }
 
 // PlatformSetupGuidance gives agents recovery instructions for setup-related failures.
@@ -182,6 +185,9 @@ func HandlePlatformSetupStatus(ctx context.Context, req *mcp.CallToolRequest, in
 	requestID := generateRequestID("platform_setup_status")
 	startTime := time.Now()
 	output := buildPlatformSetupStatusFor(ctx, requestID)
+	if request := platformRequestFromContext(ctx); request != nil && request.Session != nil {
+		output.SessionScope = request.Session
+	}
 	success := output.Status == "ready"
 	TrackToolCall(ctx, "platform_setup_status", requestID, success, time.Since(startTime).Milliseconds(), map[string]any{"status": output.Status})
 	return nil, output, nil

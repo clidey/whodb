@@ -19,12 +19,22 @@ Query databases, explore schemas, analyze data quality, and get optimization rec
 hosts and accounts, then `whodb_platform_orgs` with `workspace: {host}` and
 `whodb_platform_projects` with `workspace: {host, org}`.
 
-Resolve the intended target with `whodb_platform_workspace_resolve`. Pass an
-explicit `workspace: {host, org, project}` on subsequent tools when working across
-UAT, production, or projects. Targets apply to one call, including parallel calls,
-and never change saved defaults. Check the returned `scope`. Do not run `whodb use`
-to switch another session's defaults. Omitted targets use process overrides, then
-saved defaults. Read `whodb://platform/schema` for operations and payloads.
+When the user wants the whole conversation on one host (for example UAT or
+production), call `whodb_platform_session_use` once with
+`workspace: {host, org, project}`. It verifies the login, resolves canonical IDs,
+and becomes the default for later calls in this MCP session only. It is never
+saved to disk, so other chats and terminals keep their own defaults. Confirm
+with `whodb_platform_status`, which reports `session_scope`. Use
+`whodb_platform_session_clear` to drop it.
+
+For one-off calls to another host or project, pass an explicit
+`workspace: {host, org, project}` on that call. Resolve it first with
+`whodb_platform_workspace_resolve` if unsure. Per-call targets, including
+parallel calls, never change the session default or saved defaults. Check the
+returned `scope`. Resolution order for an omitted `workspace`: session default,
+then process overrides, then saved defaults. Do not run `whodb use` to switch
+hosts for one chat; it rewrites the saved default for every session. Read
+`whodb://platform/schema` for operations and payloads.
 
 Writes return a preview bound to its host, account, organization, and project.
 Confirm only after approval of that exact preview. Changing defaults does not

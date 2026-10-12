@@ -44,11 +44,15 @@ process's configured targets; run it again after reconnecting to check new setti
 When the setup tool is filtered out, ask the user to configure WhoDB locally.
 
 TARGETING: Discover saved platform hosts with whodb_platform_hosts. List orgs with
-workspace:{host}, then projects with workspace:{host,org}. Resolve the intended
-target using whodb_platform_workspace_resolve. Pass workspace:{host,org,project}
-on subsequent platform calls and check returned scope. This selects only that
-call, including parallel UAT/production calls; never switch shared defaults to
-route a task. Resolve ambiguous names before acting. Database-only tools instead
+workspace:{host}, then projects with workspace:{host,org}. When the whole
+conversation should stay on one host, call whodb_platform_session_use once with
+workspace:{host,org,project}; it is verified, applies only to this MCP session,
+and is never saved. For individual calls elsewhere, pass workspace:{host,org,project}
+on that call and check returned scope. This selects only that call, including
+parallel UAT/production calls. Resolution for an omitted workspace: session
+default, then process flags/environment, then saved defaults. Never switch shared
+defaults (whodb use) to route a task. Resolve ambiguous names before acting.
+Database-only tools instead
 use connection: discover names with whodb_connections, then schemas, tables, and
 columns before querying. Database-only connections can be remote. The two modules
 can run together; platform workspace arguments do not select database connections.

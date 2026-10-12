@@ -95,6 +95,7 @@ type PlatformStatusInput struct{}
 // PlatformStatusOutput reports hosted WhoDB login and selected workspace state.
 type PlatformStatusOutput struct {
 	SavedDefault    *PlatformOutputScope     `json:"saved_default,omitempty"`
+	SessionScope    *PlatformWorkspaceTarget `json:"session_scope,omitempty"`
 	ProcessOverride *PlatformWorkspaceTarget `json:"process_override,omitempty"`
 	PlatformSetupGuidance
 	Host                    string   `json:"host,omitempty"`
@@ -570,6 +571,10 @@ func registerPlatformTools(server *mcp.Server, secOpts *SecurityOptions) {
 			addPlatformTool(server, tool, handlePlatformHosts)
 		case "whodb_platform_workspace_resolve":
 			addPlatformTool(server, tool, HandlePlatformStatus)
+		case "whodb_platform_session_use":
+			addPlatformTool(server, tool, handlePlatformSessionUse)
+		case "whodb_platform_session_clear":
+			mcp.AddTool(server, tool, handlePlatformSessionClear)
 		case "whodb_platform_status":
 			addPlatformTool(server, tool, createPlatformStatusHandler())
 		case "whodb_platform_sources":
@@ -940,6 +945,9 @@ func HandlePlatformStatus(ctx context.Context, req *mcp.CallToolRequest, input P
 		if saved, ok := cfg.GetPlatformHost(session.Host.URL); ok {
 			output.SavedDefault = platformScope(&platformToolSession{Host: *saved})
 		}
+	}
+	if request := platformRequestFromContext(ctx); request != nil && request.Session != nil {
+		output.SessionScope = request.Session
 	}
 	process := platformapi.SessionScope{}
 	if platformRuntimeFromContext(ctx) == nil {
@@ -1712,7 +1720,7 @@ func loadPlatformWorkspace(ctx context.Context) (*platformToolSession, error) {
 		return nil, err
 	}
 	if !hasPlatformWorkspace(session) {
-		return nil, fmt.Errorf("no hosted WhoDB workspace selected. Discover hosts/orgs/projects and pass workspace {host, org, project} on this call. To save a CLI default instead, run: %s", platformUseCommand(session.Host.URL))
+		return nil, fmt.Errorf("no hosted WhoDB workspace selected. Discover hosts/orgs/projects and pass workspace {host, org, project} on this call, or set a default for this MCP session with whodb_platform_session_use. To save a CLI default instead, run: %s", platformUseCommand(session.Host.URL))
 	}
 	return session, nil
 }

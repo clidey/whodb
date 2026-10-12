@@ -252,6 +252,8 @@ func buildMCPTools() []MCPTool {
 		{Name: "whodb_suggestions", Description: "Load backend query suggestions.", ReadOnly: true},
 		{Name: "whodb_platform_hosts", Description: "List saved hosts and login metadata without secrets or network requests.", ReadOnly: true},
 		{Name: "whodb_platform_workspace_resolve", Description: "Resolve an explicit workspace target and verify its login without changing defaults.", ReadOnly: true},
+		{Name: "whodb_platform_session_use", Description: "Set the default host, organization, and project for this MCP session only; verified, resolved to canonical IDs, and never saved to disk.", ReadOnly: true},
+		{Name: "whodb_platform_session_clear", Description: "Clear the session default set by whodb_platform_session_use so calls fall back to process and saved defaults.", ReadOnly: true},
 		{Name: "whodb_platform_setup_status", Description: "Diagnose hosted WhoDB local MCP setup before login or workspace selection in default platform MCP mode.", ReadOnly: true},
 		{Name: "whodb_platform_status", Description: "Show hosted WhoDB login and selected workspace in default platform MCP mode.", ReadOnly: true},
 		{Name: "whodb_platform_orgs", Description: "List hosted WhoDB organizations visible to the signed-in user in default platform MCP mode.", ReadOnly: true},

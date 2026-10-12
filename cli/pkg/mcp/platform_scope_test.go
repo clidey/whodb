@@ -304,6 +304,10 @@ func TestPlatformMCPMultiHostWorkspaceRouting(t *testing.T) {
 func TestPlatformToolSchemasExposeWorkspace(t *testing.T) {
 	tools := listServerTools(t, NewServer(&ServerOptions{PlatformEnabled: true}))
 	for _, tool := range tools.Tools {
+		if tool.Name == "whodb_platform_session_clear" {
+			// Clearing the session default takes no target by design.
+			continue
+		}
 		raw, _ := json.Marshal(tool.InputSchema)
 		var schema map[string]any
 		_ = json.Unmarshal(raw, &schema)
@@ -311,5 +315,90 @@ func TestPlatformToolSchemasExposeWorkspace(t *testing.T) {
 		if properties["workspace"] == nil {
 			t.Errorf("%s missing workspace input", tool.Name)
 		}
+	}
+}
+
+func TestPlatformMCPSessionScopeIsPerSession(t *testing.T) {
+	setupTestEnv(t)
+	uat, prod := newScopeTestHost(t, "uat"), newScopeTestHost(t, "prod")
+	cfg, err := config.LoadConfigWithoutSecrets()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for name, host := range map[string]*scopeTestHost{"uat": uat, "prod": prod} {
+		cfg.UpsertPlatformHost(config.PlatformHost{URL: host.server.URL, AccountID: "account-" + name, Email: name + "@example.test", DefaultOrgID: "org-1", DefaultProjectID: "proj-1"})
+		if err := cfg.SavePlatformRefreshToken(host.server.URL, "account-"+name, "refresh-"+name); err != nil {
+			t.Fatal(err)
+		}
+	}
+	cfg.SetDefaultPlatformHost(prod.server.URL)
+	if err := cfg.Save(); err != nil {
+		t.Fatal(err)
+	}
+	path, _ := config.GetConfigPath()
+	before, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv(platformapi.SessionHostEnv, "")
+	t.Setenv(platformapi.SessionOrgEnv, "")
+	t.Setenv(platformapi.SessionProjectEnv, "")
+
+	// Two MCP sessions on the same server, as two chats would open.
+	uatChat, prodChat := scopeTestClient(t), scopeTestClient(t)
+	noTarget := map[string]any{}
+
+	missing := scopeCall(t, uatChat, "whodb_platform_session_use", noTarget)
+	if !strings.Contains(fmt.Sprint(missing["error"]), "workspace") {
+		t.Fatalf("session_use without workspace accepted: %#v", missing)
+	}
+	set := scopeCall(t, uatChat, "whodb_platform_session_use", map[string]any{"workspace": map[string]any{"host": uat.server.URL, "org": "acme", "project": "operations"}})
+	if set["status"] != "ok" || set["session_scope"].(map[string]any)["project_id"] != "proj-2" {
+		t.Fatalf("session_use: %#v", set)
+	}
+
+	// The chat that set a session default stays on UAT without passing workspace.
+	sources := scopeCall(t, uatChat, "whodb_platform_sources", noTarget)
+	if sources["scope"].(map[string]any)["host"] != uat.server.URL || sources["sources"].([]any)[0].(map[string]any)["id"] != "uat-proj-2" {
+		t.Fatalf("session default not applied: %#v", sources)
+	}
+	status := scopeCall(t, uatChat, "whodb_platform_status", noTarget)
+	if status["host"] != uat.server.URL || status["session_scope"].(map[string]any)["host"] != uat.server.URL || status["default_project_id"] != "proj-2" {
+		t.Fatalf("status does not show session scope: %#v", status)
+	}
+	setup := scopeCall(t, uatChat, "whodb_platform_setup_status", noTarget)
+	if setup["host"] != uat.server.URL || setup["session_scope"] == nil {
+		t.Fatalf("setup_status does not show session scope: %#v", setup)
+	}
+
+	// An explicit per-call target still wins over the session default.
+	explicit := scopeCall(t, uatChat, "whodb_platform_sources", map[string]any{"workspace": map[string]any{"host": prod.server.URL, "org": "acme", "project": "analysis"}})
+	if explicit["scope"].(map[string]any)["host"] != prod.server.URL {
+		t.Fatalf("explicit target ignored: %#v", explicit)
+	}
+
+	// The other chat is unaffected and uses the saved default (prod).
+	other := scopeCall(t, prodChat, "whodb_platform_sources", noTarget)
+	if other["scope"].(map[string]any)["host"] != prod.server.URL {
+		t.Fatalf("session default leaked to another session: %#v", other)
+	}
+	otherStatus := scopeCall(t, prodChat, "whodb_platform_status", noTarget)
+	if otherStatus["session_scope"] != nil {
+		t.Fatalf("other session reports a session scope: %#v", otherStatus)
+	}
+
+	// Clearing returns to saved defaults.
+	cleared := scopeCall(t, uatChat, "whodb_platform_session_clear", noTarget)
+	if cleared["status"] != "cleared" {
+		t.Fatalf("session_clear: %#v", cleared)
+	}
+	back := scopeCall(t, uatChat, "whodb_platform_sources", noTarget)
+	if back["scope"].(map[string]any)["host"] != prod.server.URL {
+		t.Fatalf("session default not cleared: %#v", back)
+	}
+
+	after, _ := os.ReadFile(path)
+	if string(before) != string(after) {
+		t.Fatal("session scope changed saved configuration")
 	}
 }

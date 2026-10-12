@@ -163,12 +163,22 @@ whodb sources delete local-postgres --yes
 hosts and accounts, then `whodb_platform_orgs` with `workspace: {host}` and
 `whodb_platform_projects` with `workspace: {host, org}`.
 
-Resolve the intended target with `whodb_platform_workspace_resolve`. Pass an
-explicit `workspace: {host, org, project}` on subsequent tools when working across
-UAT, production, or projects. Targets apply to one call, including parallel calls,
-and never change saved defaults. Check the returned `scope`. Do not run `whodb use`
-to switch another session's defaults. Omitted targets use process overrides, then
-saved defaults. Read `whodb://platform/schema` for operations and payloads.
+When the user wants the whole conversation on one host (for example UAT or
+production), call `whodb_platform_session_use` once with
+`workspace: {host, org, project}`. It verifies the login, resolves canonical IDs,
+and becomes the default for later calls in this MCP session only. It is never
+saved to disk, so other chats and terminals keep their own defaults. Confirm
+with `whodb_platform_status`, which reports `session_scope`. Use
+`whodb_platform_session_clear` to drop it.
+
+For one-off calls to another host or project, pass an explicit
+`workspace: {host, org, project}` on that call. Resolve it first with
+`whodb_platform_workspace_resolve` if unsure. Per-call targets, including
+parallel calls, never change the session default or saved defaults. Check the
+returned `scope`. Resolution order for an omitted `workspace`: session default,
+then process overrides, then saved defaults. Do not run `whodb use` to switch
+hosts for one chat; it rewrites the saved default for every session. Read
+`whodb://platform/schema` for operations and payloads.
 
 Writes return a preview bound to its host, account, organization, and project.
 Confirm only after approval of that exact preview. Changing defaults does not
@@ -196,6 +206,20 @@ whodb mcp serve \
 The same `WHODB_PLATFORM_SESSION_HOST`, `WHODB_PLATFORM_SESSION_ORG`, and
 `WHODB_PLATFORM_SESSION_PROJECT` environment variables work for MCP processes,
 which is useful for defining several independent MCP server entries.
+
+Flags and environment variables pin a default for the whole process, so every
+chat that launches the same MCP entry gets the same host. To give each chat its
+own host without separate MCP entries, let the agent call
+`whodb_platform_session_use` with `workspace {host, org, project}` at the start
+of the conversation. That default lives in memory for that MCP session only:
+nothing is written to the CLI config, other sessions are unaffected, and
+`whodb_platform_session_clear` removes it. `whodb_platform_status` and
+`whodb_platform_setup_status` report the active `session_scope`.
+
+Resolution order when a call omits `workspace`: session default, then process
+flags/environment, then the saved CLI default. An explicit `workspace` on a call
+always wins for that call. `--platform-policy` still limits which hosts and
+workspaces any of these may select.
 
 Platform tools use saved host logins. Saving a default workspace is optional
 when tools pass an explicit `workspace`:
@@ -293,8 +317,9 @@ only if needed. Avoid broad details such as source content, file previews,
 function files, row previews, and large lineage graphs unless the user asks for
 them or they are required for the task.
 
-Agents can discover and pass explicit workspaces without changing defaults.
-Users can optionally save a default with:
+Agents can discover and pass explicit workspaces without changing defaults, or
+set a per-session default with `whodb_platform_session_use`. Users can
+optionally save a default for every session with:
 
 ```bash
 whodb use --org <org-id-or-slug> --project <project-id-or-slug>
