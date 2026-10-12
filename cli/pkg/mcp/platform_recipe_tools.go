@@ -46,6 +46,25 @@ func recipeForGoal(goal string) PlatformWorkflowRecipeOutput {
 	lower := strings.ToLower(goal)
 	recipe := PlatformWorkflowRecipeOutput{Goal: goal, ReadFirst: []string{"whodb_platform_setup_status", "whodb_platform_workspace_summary", "whodb_platform_gap_analysis"}}
 	switch {
+	case strings.Contains(lower, "how many") || strings.Contains(lower, "question") || strings.Contains(lower, "report") || strings.Contains(lower, "analy") || strings.Contains(lower, "count") || strings.Contains(lower, "total") || strings.Contains(lower, "average"):
+		recipe.Recipe = "data_question"
+		recipe.Description = "Learn the ontology model, then answer the question with bounded queries or exact aggregates and show how the numbers were produced."
+		recipe.Steps = []PlatformRecipeStep{
+			{Order: 1, Name: "understand", Objective: "Learn entity names, properties and relationships before guessing field names.", ReadTools: []string{"whodb_platform_ontology_describe", "whodb_platform_ontologies"}},
+			{Order: 2, Name: "profile", Objective: "Check value ranges and null counts for the properties the question depends on.", ReadTools: []string{"whodb_platform_ontology_stats"}},
+			{Order: 3, Name: "answer", Objective: "Use ontology_aggregate for exact totals and group-bys; use ontology_query for filtered rows, search and joins. State the filter used.", ReadTools: []string{"whodb_platform_ontology_aggregate", "whodb_platform_ontology_query"}, Notes: []string{"ontology_query scans at most scan_limit rows (max 5000); prefer ontology_aggregate when totals must be exact.", "Policy-protected ontologies only allow whodb_platform_ontology_rows."}},
+			{Order: 4, Name: "drill_down", Objective: "Fetch the specific rows or linked records behind a surprising number.", ReadTools: []string{"whodb_platform_ontology_rows", "whodb_platform_ontology_follow_link", "whodb_platform_ontology_similar"}},
+		}
+		recipe.VerifyWith = []string{"whodb_platform_ontology_aggregate", "whodb_platform_ontology_rows"}
+	case strings.Contains(lower, "import") || strings.Contains(lower, "bulk") || strings.Contains(lower, "load rows") || strings.Contains(lower, "insert"):
+		recipe.Recipe = "bulk_import"
+		recipe.Description = "Validate the target ontology, insert rows in batches with an idempotency key, and verify counts."
+		recipe.Steps = []PlatformRecipeStep{
+			{Order: 1, Name: "inspect", Objective: "Confirm the ontology's properties, primary key and writable fields.", ReadTools: []string{"whodb_platform_ontology", "whodb_platform_ontology_record_capabilities"}},
+			{Order: 2, Name: "insert", Objective: "Insert rows in batches with whodb_platform_add_ontology_records and a stable idempotency_key per batch so retries are safe.", WriteTools: []string{"whodb_platform_add_ontology_records"}, VerifyTools: []string{"whodb_platform_ontology_aggregate"}},
+			{Order: 3, Name: "verify", Objective: "Compare the expected and actual row counts and spot-check rows.", VerifyTools: []string{"whodb_platform_ontology_aggregate", "whodb_platform_ontology_rows"}},
+		}
+		recipe.VerifyWith = []string{"whodb_platform_ontology_aggregate", "whodb_platform_ontology_rows"}
 	case strings.Contains(lower, "etl") || strings.Contains(lower, "pipeline") || strings.Contains(lower, "transform"):
 		recipe.Recipe = "etl_pipeline"
 		recipe.Description = "Inspect sources, persist or promote data, build a transform, run it, and verify the resulting workspace."

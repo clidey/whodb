@@ -96,7 +96,7 @@ type PlatformEntityWriteInput struct {
 
 // PlatformRestoreInput restores a soft-deleted hosted platform resource.
 type PlatformRestoreInput struct {
-	Resource string `json:"resource" jsonschema:"Soft-deletable resource: source, ontology, dataset, transform, function, app, folder, or file"`
+	Resource string `json:"resource" jsonschema:"Soft-deletable resource: project, source, ontology, dataset, transform, function, app, folder, or file. Find candidates with whodb_platform_deleted_resources."`
 	ID       string `json:"id" jsonschema:"Deleted resource id"`
 }
 
@@ -162,6 +162,10 @@ func registerPlatformGenericWriteTool(server *mcp.Server, tool *mcp.Tool, secOpt
 		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformOntologyRecordInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformOntologyRecordWrite(ctx, "whodb_platform_delete_ontology_record", input, "delete_record", secOpts.ConfirmWrites)
 		})
+	case "whodb_platform_add_ontology_records":
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformOntologyRecordsInput) (*mcp.CallToolResult, any, error) {
+			return handlePlatformOntologyRecordsWrite(ctx, input, secOpts.ConfirmWrites)
+		})
 	case "whodb_platform_create_ontology_fast_lookup":
 		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformOntologyFastLookupInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformCreateOntologyFastLookup(ctx, input, secOpts.ConfirmWrites)
@@ -186,6 +190,7 @@ func platformGenericWriteToolDefinitions() []*mcp.Tool {
 		{Name: "whodb_platform_create_dataset", Description: descPlatformCreateDataset, Annotations: platformDestructiveAnnotations("Create Hosted Dataset")},
 		{Name: "whodb_platform_promote_file_to_dataset", Description: descPlatformPromoteFileToDataset, Annotations: platformDestructiveAnnotations("Promote Hosted File To Dataset")},
 		{Name: "whodb_platform_add_ontology_record", Description: descPlatformAddOntologyRecord, Annotations: platformDestructiveAnnotations("Add Hosted Ontology Record")},
+		{Name: "whodb_platform_add_ontology_records", Description: descPlatformAddOntologyRecords, Annotations: platformDestructiveAnnotations("Add Hosted Ontology Records")},
 		{Name: "whodb_platform_update_ontology_record", Description: descPlatformUpdateOntologyRecord, Annotations: platformDestructiveAnnotations("Update Hosted Ontology Record")},
 		{Name: "whodb_platform_delete_ontology_record", Description: descPlatformDeleteOntologyRecord, Annotations: platformDestructiveAnnotations("Delete Hosted Ontology Record")},
 		{Name: "whodb_platform_create_ontology_fast_lookup", Description: descPlatformCreateOntologyFastLookup, Annotations: platformDestructiveAnnotations("Create Hosted Ontology Fast Lookup")},
@@ -769,25 +774,25 @@ func platformGenericWriteCompletedOutput(requestID, mutation string, result *pla
 
 const descPlatformCreate = `Create a hosted platform resource through the selected project.
 
-Supported resources: secret, ai_provider, ontology, ontology_fast_lookup, dataset, transform, folder, function, app, package, source_object.
+Supported resources: secret, ai_provider, ontology, ontology_fast_lookup, ontology_reference, dataset, transform, folder, function, app, package, lineage_provider, source_object.
 Pass payload_json as a JSON object matching the hosted platform mutation input. The selected projectId is injected automatically when applicable.
 Default mode returns a confirmation token; do not call whodb_platform_confirm until the user approves the preview. Permission checks are enforced by the hosted platform.`
 
 const descPlatformUpdate = `Update a hosted platform resource through the selected project.
 
-Supported resources: secret, ai_provider, ontology, dataset, transform, function, app, source_object.
+Supported resources: secret, ai_provider, ontology, dataset, transform, function, app, lineage_provider, source_object.
 Pass id when required and payload_json with changed fields only. Secret-like payload fields are never shown in confirmation previews.
 Default mode returns a confirmation token; do not call whodb_platform_confirm until the user approves the preview. Permission checks are enforced by the hosted platform.`
 
 const descPlatformDelete = `Delete a hosted platform resource through the selected project.
 
-Supported resources: secret, ai_provider, ontology, ontology_fast_lookup, dataset, transform, file, folder, function, app, source_object.
+Supported resources: secret, ai_provider, ontology, ontology_fast_lookup, ontology_reference, dataset, transform, file, folder, function, app, lineage_provider, source_object.
 This is destructive. Pass id for normal resources. For source_object, pass payload_json with sourceId, ref, and values.
 Default mode returns a confirmation token; explain exactly what will be deleted and do not call whodb_platform_confirm until the user approves the preview. Permission checks are enforced by the hosted platform.`
 
 const descPlatformAction = `Run a hosted platform resource action through the selected project.
 
-Supported actions include transform/run, file/upload, file/rename, file/move, file/promote_to_dataset, folder/rename, folder/move, function/deploy, function/redeploy, app restore/purge/generate/file operations, object restore/purge/version restore, package installation, and organization/access administration.
+Supported actions include transform run/cancel_run, file upload/rename/move/promote_to_dataset/restore/purge, folder rename/move/restore/purge, function deploy/redeploy/execute/start_run/generate_test_input, function_run cancel, ontology add_records/execute_behavior/share/unshare/reembed/purge_data, dataset purge_data, project restore/purge, app restore/purge/generate/cancel_generation/file operations, object restore/purge/version restore, package installation and add_changelog/add_media/review, and organization administration including service accounts (create_service_account, create_service_account_key, revoke_service_account_key, delete_service_account) and teams. Read whodb://platform/schema for every action and its payload shape.
 Some actions create, move, deploy, or otherwise mutate hosted resources. Pass id and payload_json as required by the action. For file/upload, payload_json requires file_path and may include folderId.
 Default mode returns a confirmation token; do not call whodb_platform_confirm until the user approves the preview. Permission checks are enforced by the hosted platform.`
 

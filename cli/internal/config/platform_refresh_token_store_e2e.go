@@ -18,11 +18,16 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/clidey/whodb/cli/pkg/identity"
 	"github.com/zalando/go-keyring"
 )
 
 const platformE2ETokenDirEnv = "WHODB_CLI_E2E_PLATFORM_TOKEN_DIR"
 
+// filePlatformRefreshTokenStore keeps live e2e refresh tokens in a directory
+// named by WHODB_CLI_E2E_PLATFORM_TOKEN_DIR. When that variable is unset the
+// store falls back to the (mockable) OS keyring so unit tests in the same
+// binary keep working under the e2e_platform build tag.
 type filePlatformRefreshTokenStore struct{}
 
 func init() {
@@ -32,7 +37,7 @@ func init() {
 func (filePlatformRefreshTokenStore) Save(hostURL, accountID, refreshToken string) error {
 	dir, ok := platformE2ETokenDir()
 	if !ok {
-		return keyring.ErrNotFound
+		return keyring.Set(identity.Current().KeyringService, platformRefreshTokenKey(hostURL, accountID), refreshToken)
 	}
 	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return err
@@ -43,7 +48,7 @@ func (filePlatformRefreshTokenStore) Save(hostURL, accountID, refreshToken strin
 func (filePlatformRefreshTokenStore) Get(hostURL, accountID string) (string, error) {
 	dir, ok := platformE2ETokenDir()
 	if !ok {
-		return "", keyring.ErrNotFound
+		return keyring.Get(identity.Current().KeyringService, platformRefreshTokenKey(hostURL, accountID))
 	}
 	raw, err := os.ReadFile(platformE2ETokenPath(dir, hostURL, accountID))
 	if os.IsNotExist(err) {
@@ -58,7 +63,11 @@ func (filePlatformRefreshTokenStore) Get(hostURL, accountID string) (string, err
 func (filePlatformRefreshTokenStore) Delete(hostURL, accountID string) error {
 	dir, ok := platformE2ETokenDir()
 	if !ok {
-		return nil
+		err := keyring.Delete(identity.Current().KeyringService, platformRefreshTokenKey(hostURL, accountID))
+		if err == keyring.ErrNotFound {
+			return nil
+		}
+		return err
 	}
 	err := os.Remove(platformE2ETokenPath(dir, hostURL, accountID))
 	if os.IsNotExist(err) {

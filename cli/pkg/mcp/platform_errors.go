@@ -34,6 +34,10 @@ func platformErrorFields(err error) (string, bool, []string) {
 		return string(PlatformErrorAuth), false, []string{"whodb_platform_setup_status", "whodb_platform_status"}
 	case strings.Contains(message, "workspace") || strings.Contains(message, "organization") || strings.Contains(message, "project") && strings.Contains(message, "selected"):
 		return string(PlatformErrorWorkspace), false, []string{"whodb_platform_orgs", "whodb_platform_projects", "whodb_platform_workspace_resolve", "whodb_platform_session_use"}
+	case strings.Contains(message, "embedding"):
+		return string(PlatformErrorValidation), false, []string{"whodb_platform_ontology", "whodb_platform_ontology_embedding_jobs"}
+	case strings.Contains(message, "policy-protected"):
+		return string(PlatformErrorValidation), false, []string{"whodb_platform_ontology_rows", "whodb_platform_ontology_record_capabilities"}
 	case strings.Contains(message, "permission") || strings.Contains(message, "forbidden") || strings.Contains(message, "403"):
 		return string(PlatformErrorPermission), false, []string{"whodb_platform_resource_permissions"}
 	case strings.Contains(message, "not found") || strings.Contains(message, "does not exist") || strings.Contains(message, "404"):

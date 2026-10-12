@@ -3102,11 +3102,15 @@ func buildGenericResourceVariables(projectID string, input genericResourceWriteI
 			variables["projectId"] = projectID
 		}
 		if spec.NeedsID {
-			switch spec.Mutation {
-			case "OntologyAddRow", "OntologyUpdateRow", "OntologyDeleteRow":
-				variables["entityId"] = id
-			default:
-				variables["id"] = id
+			if spec.IdentityField != "" {
+				variables[spec.IdentityField] = id
+			} else {
+				switch spec.Mutation {
+				case "OntologyAddRow", "OntologyUpdateRow", "OntologyDeleteRow":
+					variables["entityId"] = id
+				default:
+					variables["id"] = id
+				}
 			}
 		}
 	case platform.GenericWriteModeFileUpload:

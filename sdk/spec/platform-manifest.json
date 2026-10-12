@@ -304,6 +304,44 @@
       "returns": "[String!]!"
     },
     {
+      "name": "AgentSession",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "sessionId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "AgentSession!"
+    },
+    {
+      "name": "TypeSafeModels",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "providerId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "JSON!"
+    },
+    {
       "name": "CodeCompletion",
       "kind": "Query",
       "args": [
@@ -1132,9 +1170,46 @@
           "type": "String",
           "required": false,
           "list": false
+        },
+        {
+          "name": "page",
+          "type": "String",
+          "required": false,
+          "list": false
         }
       ],
       "returns": "AppViewResult"
+    },
+    {
+      "name": "AppPageFiles",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "env",
+          "type": "String",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "page",
+          "type": "String",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[AppFile!]!"
     },
     {
       "name": "AppVersionView",
@@ -1504,6 +1579,115 @@
         }
       ],
       "returns": "[TeamMember!]!"
+    },
+    {
+      "name": "UserOwnedResources",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "userId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "orgId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[OrgResourceEntry!]!"
+    },
+    {
+      "name": "UserResourceAccess",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "userId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "orgId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[UserAccessEntry!]!"
+    },
+    {
+      "name": "ShareDependents",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "resourceType",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "resourceId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[ShareDependent!]!"
+    },
+    {
+      "name": "SharedOntologies",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[SharedOntology!]!"
+    },
+    {
+      "name": "DiscoverSharedOntologies",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "consumerProjectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[SharedOntology!]!"
+    },
+    {
+      "name": "OntologyReferences",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[OntologyReference!]!"
+    },
+    {
+      "name": "OntologyReferenceImpact",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "referenceId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "OntologyReferenceImpact!"
     },
     {
       "name": "ProjectResourceSummary",
@@ -2155,6 +2339,491 @@
       "returns": "StatusResponse!"
     },
     {
+      "name": "RestoreProject",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "orgId",
+          "type": "ID",
+          "required": false,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "PurgeProject",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "orgId",
+          "type": "ID",
+          "required": false,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "ShareOntology",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "input",
+          "type": "ShareOntologyInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "SharedOntology!"
+    },
+    {
+      "name": "UnshareOntology",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "ontologyId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "CreateOntologyReference",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "input",
+          "type": "CreateOntologyReferenceInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "OntologyReference!"
+    },
+    {
+      "name": "RemoveOntologyReference",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "referenceId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "RenameOrganization",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "orgId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "slug",
+          "type": "String",
+          "required": false,
+          "list": false
+        }
+      ],
+      "returns": "Organization!"
+    },
+    {
+      "name": "DeleteOrganization",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "orgId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "confirmDeletion",
+          "type": "Boolean",
+          "required": false,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "UpsertOrganizationDomain",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "orgId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "domain",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "isPrimary",
+          "type": "Boolean",
+          "required": false,
+          "list": false
+        }
+      ],
+      "returns": "OrganizationDomain!"
+    },
+    {
+      "name": "DeleteOrganizationDomain",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "CreateOrganizationSSOProvider",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "orgId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "providerType",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "displayName",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "providerAlias",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "enabled",
+          "type": "Boolean",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "isDefault",
+          "type": "Boolean",
+          "required": false,
+          "list": false
+        }
+      ],
+      "returns": "OrganizationSSOProvider!"
+    },
+    {
+      "name": "UpdateOrganizationSSOProvider",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "providerType",
+          "type": "String",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "displayName",
+          "type": "String",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "providerAlias",
+          "type": "String",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "enabled",
+          "type": "Boolean",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "isDefault",
+          "type": "Boolean",
+          "required": false,
+          "list": false
+        }
+      ],
+      "returns": "OrganizationSSOProvider!"
+    },
+    {
+      "name": "DeleteOrganizationSSOProvider",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "ReinviteUser",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "userId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "orgId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "RemoveUser",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "userId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "orgId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "force",
+          "type": "Boolean",
+          "required": false,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "TransferOwnership",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "resourceType",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "resourceId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "newOwnerId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "TransferOwnershipByEmail",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "email",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "resourceType",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "resourceId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "ClaimOrphan",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "resourceType",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "resourceId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "CreateTeam",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "orgId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "Team!"
+    },
+    {
+      "name": "RenameTeam",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "teamId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "DeleteTeam",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "teamId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "AddTeamMember",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "teamId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "userId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "RemoveTeamMember",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "teamId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "userId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "SyncAllAppPermissions",
+      "kind": "Mutation",
+      "args": null,
+      "returns": "StatusResponse!"
+    },
+    {
       "name": "CreateProject",
       "kind": "Mutation",
       "args": [
@@ -2502,6 +3171,62 @@
         }
       ],
       "returns": "PlatformAIProvider!"
+    },
+    {
+      "name": "RenameAgentSession",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "sessionId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "title",
+          "type": "String",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
+      "name": "TypeSafeSystemOne",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "providerId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "request",
+          "type": "JSON",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "sessionId",
+          "type": "ID",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "runId",
+          "type": "ID",
+          "required": false,
+          "list": false
+        }
+      ],
+      "returns": "JSON!"
     },
     {
       "name": "UpdateAIProvider",
@@ -5234,6 +5959,12 @@
           "list": false
         },
         {
+          "name": "liveBehavior",
+          "type": "FunctionLiveBehavior",
+          "required": true,
+          "list": false
+        },
+        {
           "name": "createdBy",
           "type": "String",
           "required": true,
@@ -5331,6 +6062,12 @@
         {
           "name": "executionMode",
           "type": "FunctionExecutionMode",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "liveBehavior",
+          "type": "FunctionLiveBehavior",
           "required": true,
           "list": false
         },
@@ -6163,6 +6900,428 @@
         {
           "name": "Value",
           "type": "String",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "Team",
+      "fields": [
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "orgId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "String",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "OrganizationDomain",
+      "fields": [
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "orgId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "domain",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "isPrimary",
+          "type": "Boolean",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "verifiedAt",
+          "type": "String",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "String",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "OrganizationSSOProvider",
+      "fields": [
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "orgId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "providerType",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "displayName",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "providerAlias",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "enabled",
+          "type": "Boolean",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "isDefault",
+          "type": "Boolean",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "updatedAt",
+          "type": "String",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "OrgResourceEntry",
+      "fields": [
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "resourceType",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "owner",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "String",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "UserAccessEntry",
+      "fields": [
+        {
+          "name": "resourceType",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "resourceId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "resourceName",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "role",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "projectName",
+          "type": "String",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "provenance",
+          "type": "String",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "ShareDependent",
+      "fields": [
+        {
+          "name": "resourceType",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "resourceId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "resourceName",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "defaultRole",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "reason",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "grantable",
+          "type": "Boolean",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "OntologyReferenceConsumer",
+      "fields": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "referenceId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "alias",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "status",
+          "type": "OntologyReferenceStatus",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "SharedOntology",
+      "fields": [
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "ontologyId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "visibility",
+          "type": "SharedOntologyVisibility",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "ontology",
+          "type": "OntologyObjectType",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "consumers",
+          "type": "OntologyReferenceConsumer",
+          "required": true,
+          "list": true
+        },
+        {
+          "name": "createdAt",
+          "type": "Time",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "OntologyReference",
+      "fields": [
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "consumerProjectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "alias",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "ownerProjectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "ontologyId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "status",
+          "type": "OntologyReferenceStatus",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "ontology",
+          "type": "OntologyObjectType",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "createdAt",
+          "type": "Time",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "OntologyReferenceImpact",
+      "fields": [
+        {
+          "name": "referenceId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "dependentLinks",
+          "type": "Int",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "dependentApps",
+          "type": "Int",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "dependentFuncs",
+          "type": "Int",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "dependentXfms",
+          "type": "Int",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "dependentBehavs",
+          "type": "Int",
           "required": true,
           "list": false
         }

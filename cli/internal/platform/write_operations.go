@@ -226,7 +226,7 @@ var platformMutationSpecs = map[string]platformMutationSpec{
 	"TransferOwnership":                      mutationSpecWithDirect("TransferOwnership", "$resourceType: String!, $resourceId: ID!, $newOwnerId: ID!", "resourceType: $resourceType, resourceId: $resourceId, newOwnerId: $newOwnerId", statusResponseFields),
 	"ClaimOrphan":                            mutationSpecWithDirect("ClaimOrphan", "$resourceType: String!, $resourceId: ID!", "resourceType: $resourceType, resourceId: $resourceId", statusResponseFields),
 	"CreateTeam":                             mutationSpecWithDirect("CreateTeam", "$orgId: ID!, $name: String!", "orgId: $orgId, name: $name", "id orgId name createdAt"),
-	"DeleteTeam":                             mutationSpecWithID("DeleteTeam", statusResponseFields),
+	"DeleteTeam":                             mutationSpecWithDirect("DeleteTeam", "$id: ID!", "teamId: $id", statusResponseFields),
 	"AddTeamMember":                          mutationSpecWithDirect("AddTeamMember", "$teamId: ID!, $userId: ID!", "teamId: $teamId, userId: $userId", statusResponseFields),
 	"RemoveTeamMember":                       mutationSpecWithDirect("RemoveTeamMember", "$teamId: ID!, $userId: ID!", "teamId: $teamId, userId: $userId", statusResponseFields),
 	"SyncAllAppPermissions":                  mutationSpecWithDirect("SyncAllAppPermissions", "", "", statusResponseFields),

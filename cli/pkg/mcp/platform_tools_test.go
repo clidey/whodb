@@ -56,6 +56,18 @@ type fakePlatformClient struct {
 	platformQueryOperation  string
 	platformQueryVariables  map[string]any
 	platformQueryResult     any
+
+	ontologyQueryProjectID        string
+	ontologyQueryInput            *platformapi.OntologyQueryInput
+	ontologyAggregateInput        *platformapi.OntologyAggregateInput
+	ontologyStatsProperty         string
+	ontologyDescribeEntities      []string
+	ontologyDescribeInferred      bool
+	ontologySimilarInput          *platformapi.OntologySimilarInput
+	ontologyCapabilitiesRecordKey string
+	ontologyActionPreviewInput    *platformapi.PreviewOntologyActionInput
+	ontologyExecutionsLimit       int
+	transformPreviewGraph         string
 }
 
 func (f *fakePlatformClient) SetWorkspaceContext(orgID, projectID string) {
@@ -220,8 +232,8 @@ func testPlatformSession(client platformClient) *platformToolSession {
 
 func TestPlatformToolDefinitions(t *testing.T) {
 	tools := platformToolDefinitions()
-	if len(tools) != 127 {
-		t.Fatalf("len(platformToolDefinitions()) = %d, want 127", len(tools))
+	if len(tools) != 149 {
+		t.Fatalf("len(platformToolDefinitions()) = %d, want 149", len(tools))
 	}
 	for _, tool := range tools {
 		if tool.Annotations == nil {

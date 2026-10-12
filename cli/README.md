@@ -1067,6 +1067,27 @@ writes immediately without confirmation.
 | `whodb_platform_ontology_fast_lookup_suggestions` | List suggested fast lookups |
 | `whodb_platform_ontology_rows` | Preview rows for one ontology |
 | `whodb_platform_ontology_follow_link` | Follow one ontology link from a row |
+| `whodb_platform_ontology_describe` | Describe ontologies, fields and relationships in text and structure |
+| `whodb_platform_ontology_query` | Filter, search, join, group and compute metrics over ontology rows (bounded scan) |
+| `whodb_platform_ontology_aggregate` | Exact SQL COUNT/SUM/AVG/MIN/MAX over one ontology, grouped and filtered |
+| `whodb_platform_ontology_stats` | Min, max, total and non-null counts for one property |
+| `whodb_platform_ontology_similar` | Similarity search over an ontology with embeddings enabled |
+| `whodb_platform_ontology_embedding_jobs` | Embedding backfill job status for one ontology |
+| `whodb_platform_ontology_record_capabilities` | Readable/writable properties and allowed behavior actions for a record |
+| `whodb_platform_ontology_action_preview` | Preview a behavior action without executing it |
+| `whodb_platform_ontology_action_executions` | Behavior action execution history for a record |
+| `whodb_platform_shared_ontologies` | Ontologies the project shares with other projects |
+| `whodb_platform_discover_shared_ontologies` | Shared ontologies the project may reference |
+| `whodb_platform_ontology_references` | Shared ontologies referenced by the project |
+| `whodb_platform_ontology_reference_impact` | Dependents of one ontology reference |
+| `whodb_platform_transform_preview` | Run a transform graph without saving it |
+| `whodb_platform_service_accounts` | Service accounts and key metadata (no secrets) |
+| `whodb_platform_lineage_providers` | OpenLineage providers for the project |
+| `whodb_platform_user_owned_resources` | Resources owned by one member |
+| `whodb_platform_user_resource_access` | Resources one member can access and why |
+| `whodb_platform_share_dependents` | Resources that must be shared alongside a resource |
+| `whodb_platform_org_package_installations` | Package installations across the organization |
+| `whodb_platform_app_page_files` | Generated files for one app page |
 | `whodb_platform_datasets` | List hosted datasets |
 | `whodb_platform_dataset` | Inspect one hosted dataset |
 | `whodb_platform_dataset_rows` | Preview hosted dataset rows |
@@ -1088,7 +1109,8 @@ writes immediately without confirmation.
 | `whodb_platform_create` | Prepare generic hosted resource creation |
 | `whodb_platform_update` | Prepare generic hosted resource updates |
 | `whodb_platform_delete` | Prepare generic hosted resource deletion |
-| `whodb_platform_action` | Prepare generic hosted actions such as upload, move, run, deploy |
+| `whodb_platform_add_ontology_records` | Add many ontology rows at once with an idempotency key |
+| `whodb_platform_action` | Prepare generic hosted actions such as upload, move, run, cancel_run, deploy, restore, purge, share, reembed, service account and package actions |
 | `whodb_platform_pending` | List pending hosted platform confirmations |
 | `whodb_platform_confirm` | Confirm pending hosted platform writes after user approval |
 
@@ -1097,6 +1119,48 @@ default and do not execute until approved with `whodb_platform_confirm`. Use
 `whodb_platform_pending` to recover active confirmation tokens. Agents should
 explain the returned `confirmation_preview` to the user before confirming,
 especially for delete, deploy, move, and source/object changes.
+
+#### Answering data questions
+
+Agents answer questions about ontology data without paging through rows:
+
+1. `whodb_platform_ontology_describe` to learn entity and property names.
+2. `whodb_platform_ontology_stats` to profile the properties involved.
+3. `whodb_platform_ontology_aggregate` for exact totals and group-bys, or
+   `whodb_platform_ontology_query` for filtered rows, free-text search, joins
+   and in-memory metrics. The query scans at most `scan_limit` rows (default
+   1000, max 5000) before filtering, so prefer the aggregate for large entities.
+4. `whodb_platform_ontology_rows` or `whodb_platform_ontology_follow_link` to
+   drill into the rows behind a number.
+
+The `where` object for `ontology_query` uses `{prop: value}`,
+`{prop: {op: value}}` and `_and` / `_or` lists with operators `eq`, `neq`,
+`gt`, `gte`, `lt`, `lte`, `contains`, `icontains` and `isnull`. The aggregate
+and stats tools take the platform `WhereCondition` object instead.
+
+#### Bulk inserts, run control, restore and purge
+
+- `whodb_platform_add_ontology_records` inserts many rows in one confirmation
+  and accepts an `idempotency_key` so a retried call never duplicates rows.
+- `whodb_platform_action` with resource `function_run` and action `cancel`,
+  resource `transform` and action `cancel_run`, or resource `app` and action
+  `cancel_generation` stops work that is still running.
+- `whodb_platform_restore` now covers `project`, `file` and `folder`; the
+  matching `purge` actions permanently delete soft-deleted resources, and
+  `purge_data` on an `ontology` or `dataset` empties it while keeping the
+  definition.
+- Service accounts are managed through `whodb_platform_action` on the
+  `organization` resource: `create_service_account`,
+  `create_service_account_key` (the `rawKey` is returned once),
+  `revoke_service_account_key` and `delete_service_account`.
+- Ontologies are shared with `share` / `unshare` actions and consumed from
+  another project through the `ontology_reference` resource.
+
+The same capabilities are available from the CLI: `whodb ontologies
+query|aggregate|stats|explain|similar`, `whodb ontologies records add-many`,
+`whodb functions runs cancel`, `whodb transforms cancel-run`, `whodb projects
+restore|purge`, `whodb service-accounts ...`, and generically `whodb resources
+action <resource> <action>` or `whodb resources query <Operation>`.
 
 Security model:
 

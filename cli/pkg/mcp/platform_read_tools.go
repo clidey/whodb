@@ -170,6 +170,9 @@ func registerPlatformReadTool(server *mcp.Server, tool *mcp.Tool, secOpts *Secur
 	if registerPlatformExtendedReadTool(server, tool) {
 		return
 	}
+	if registerPlatformOntologyAnalyticsTool(server, tool, secOpts) {
+		return
+	}
 	switch tool.Name {
 	case "whodb_platform_workflow_recipe":
 		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformWorkflowRecipeInput) (*mcp.CallToolResult, any, error) {
@@ -347,7 +350,7 @@ func registerPlatformReadTool(server *mcp.Server, tool *mcp.Tool, secOpts *Secur
 }
 
 func platformReadToolDefinitions() []*mcp.Tool {
-	return []*mcp.Tool{
+	tools := []*mcp.Tool{
 		platformResolveResourceToolDefinition(),
 		platformWorkflowRecipeToolDefinition(),
 		platformTransformWaitToolDefinition(),
@@ -393,6 +396,7 @@ func platformReadToolDefinitions() []*mcp.Tool {
 		{Name: "whodb_platform_tabular_files", Description: descPlatformTabularFiles, Annotations: platformReadOnlyAnnotations("List Hosted Tabular Files")},
 		{Name: "whodb_platform_storage_usage", Description: descPlatformStorageUsage, Annotations: platformReadOnlyAnnotations("Inspect Hosted Storage Usage")},
 	}
+	return append(tools, platformOntologyAnalyticsToolDefinitions()...)
 }
 
 // HandlePlatformSourceConstraints returns field constraints for one hosted source object.

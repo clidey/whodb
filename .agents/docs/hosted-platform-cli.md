@@ -269,6 +269,23 @@ Hosted MCP tool groups:
   `whodb_platform_ontology`, `whodb_platform_ontology_fast_lookups`,
   `whodb_platform_ontology_fast_lookup_suggestions`,
   `whodb_platform_ontology_rows`, `whodb_platform_ontology_follow_link`
+- Ontology analytics: `whodb_platform_ontology_describe`,
+  `whodb_platform_ontology_query`, `whodb_platform_ontology_aggregate`,
+  `whodb_platform_ontology_stats`, `whodb_platform_ontology_similar`,
+  `whodb_platform_ontology_embedding_jobs`,
+  `whodb_platform_ontology_record_capabilities`,
+  `whodb_platform_ontology_action_preview`,
+  `whodb_platform_ontology_action_executions`,
+  `whodb_platform_add_ontology_records`
+- Ontology sharing: `whodb_platform_shared_ontologies`,
+  `whodb_platform_discover_shared_ontologies`,
+  `whodb_platform_ontology_references`,
+  `whodb_platform_ontology_reference_impact`
+- Service accounts, lineage providers and administration:
+  `whodb_platform_service_accounts`, `whodb_platform_lineage_providers`,
+  `whodb_platform_user_owned_resources`, `whodb_platform_user_resource_access`,
+  `whodb_platform_share_dependents`, `whodb_platform_org_package_installations`,
+  `whodb_platform_app_page_files`, `whodb_platform_transform_preview`
 - Lineage and transforms: `whodb_platform_project_lineage`,
   `whodb_platform_lineage`, `whodb_platform_lineage_neighbors`,
   `whodb_platform_transforms`, `whodb_platform_transform_runs`
@@ -283,6 +300,30 @@ Hosted MCP tool groups:
 
 Read `whodb://platform/schema` at runtime for the authoritative list. Some
 write and confirmation tools are hidden in read-only or safe modes.
+
+Answering a data question: describe first (`whodb_platform_ontology_describe`),
+profile with `whodb_platform_ontology_stats`, then use
+`whodb_platform_ontology_aggregate` for exact totals or
+`whodb_platform_ontology_query` for filtered rows, search and joins. The query
+is a bounded in-memory scan (`scan_limit` default 1000, max 5000) and rejects
+policy-protected ontologies, which only allow `whodb_platform_ontology_rows`.
+`whodb_platform_workflow_recipe` returns the same steps for goals that mention
+counts, totals, reports or questions, and a `bulk_import` recipe built around
+`whodb_platform_add_ontology_records` with an `idempotency_key`.
+
+Writes added for these capabilities go through the generic tools and
+`whodb resources action`: `function_run cancel`, `transform cancel_run`,
+`app cancel_generation`, `project restore|purge`, `file|folder restore|purge`,
+`ontology add_records|share|unshare|reembed|purge_data`, `dataset purge_data`,
+`ontology_reference create|delete`, `lineage_provider create|update|delete`,
+`organization create_service_account|create_service_account_key|revoke_service_account_key|delete_service_account|rename_team`,
+`function generate_test_input`, and `package add_changelog|add_media|review`.
+Payload shapes for all of them are published in `whodb://platform/schema`.
+
+Operations that older hosted deployments do not advertise in their platform
+manifest (project restore and purge, ontology sharing and references, team
+rename, member ownership and access views) return "this WhoDB host does not
+support X yet" until the host is upgraded.
 
 `whodb_platform_source_config` returns redacted configuration only. Secret-looking
 values such as passwords, tokens, client secrets, and private keys are masked.

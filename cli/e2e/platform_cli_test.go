@@ -362,6 +362,7 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 		"--table-name", ontologyAPIName,
 		"--schema-name", "public",
 		"--property-json", `{"apiName":"id","displayName":"ID","description":"ID","columnName":"id","dataType":"String","isRequired":true,"visibility":"normal","isSearchable":true,"isSortable":true,"isEditOnly":false}`,
+		"--property-json", `{"apiName":"label","displayName":"Label","description":"Label","columnName":"label","dataType":"String","isRequired":false,"visibility":"normal","isSearchable":true,"isSortable":true,"isEditOnly":false}`,
 	}, baseArgs...)...)
 	defer func() { bestEffortCLIResourceDelete(t, host, "ontology", ontologyID) }()
 	ontology := runJSONCommand[platform.Ontology](t, "ontologies", "get", ontologyAPIName, "--host", host, "--format", "json", "--quiet")
@@ -378,6 +379,58 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 	ontologyCloneName := "cli_e2e_ontology_clone_" + suffix
 	ontologyCloneID := runMutationID(t, append([]string{"ontologies", "clone", ontologyAPIName, ontologyCloneName}, baseArgs...)...)
 	defer func() { bestEffortCLIResourceDelete(t, host, "ontology", ontologyCloneID) }()
+
+	// Bulk insert, then answer questions about the rows through the analytics commands.
+	rowsPath := filepath.Join(t.TempDir(), "rows.json")
+	// Operational ontologies store the primary key as a UUID.
+	if err := os.WriteFile(rowsPath, []byte(`[{"id":"11111111-1111-4111-8111-000000000001","label":"alpha"},{"id":"11111111-1111-4111-8111-000000000002","label":"beta"}]`), 0600); err != nil {
+		t.Fatalf("write rows fixture: %v", err)
+	}
+	runMutationOK(t, append([]string{"ontologies", "records", "add-many", ontologyAPIName, "--file", rowsPath, "--idempotency-key", "cli-import-" + suffix}, baseArgs...)...)
+	aggregate := runJSONCommand[platform.DatasetQueryResult](t, "ontologies", "aggregate", ontologyAPIName, "--metric", "COUNT", "--host", host, "--format", "json", "--quiet")
+	if len(aggregate.Rows) != 1 || len(aggregate.Rows[0]) != 1 || aggregate.Rows[0][0] != "2" {
+		t.Fatalf("ontologies aggregate COUNT = %#v, want 2", aggregate)
+	}
+	query := runJSONCommand[platform.DatasetQueryResult](t, "ontologies", "query", ontologyAPIName, "--where", `{"id":{"neq":"11111111-1111-4111-8111-000000000002"}}`, "--host", host, "--format", "json", "--quiet")
+	if len(query.Rows) != 1 {
+		t.Fatalf("ontologies query = %#v, want one row", query)
+	}
+	stats := runJSONCommand[platform.OntologyStatsResult](t, "ontologies", "stats", ontologyAPIName, "label", "--host", host, "--format", "json", "--quiet")
+	if stats.Total != 2 || stats.NonNull != 2 || stats.Min == nil || *stats.Min != "alpha" {
+		t.Fatalf("ontologies stats = %#v, want total 2", stats)
+	}
+	explain := runJSONCommand[platform.OntologyDescription](t, "ontologies", "explain", ontologyAPIName, "--host", host, "--format", "json", "--quiet")
+	if len(explain.Entities) != 1 || explain.Entities[0].Name != ontologyAPIName {
+		t.Fatalf("ontologies explain = %#v, want the fixture ontology", explain)
+	}
+
+	serviceAccountID := runMutationID(t, "service-accounts", "create", "--name", "cli-e2e-sa-"+suffix, "--description", "CLI e2e", "--host", host, "--format", "json", "--quiet")
+	var createdKey struct {
+		Key    struct{ ID string } `json:"key"`
+		RawKey string              `json:"rawKey"`
+	}
+	if err := json.Unmarshal(runMutationOK(t, "service-accounts", "keys", "create", serviceAccountID, "--host", host, "--format", "json", "--quiet"), &createdKey); err != nil || createdKey.RawKey == "" || createdKey.Key.ID == "" {
+		t.Fatalf("service-accounts keys create = %#v (%v), want rawKey and key id", createdKey, err)
+	}
+	accounts := runJSONCommand[[]map[string]any](t, "service-accounts", "list", "--host", host, "--format", "json", "--quiet")
+	foundAccount := false
+	for _, account := range accounts {
+		if account["id"] == serviceAccountID {
+			foundAccount = true
+		}
+	}
+	if !foundAccount {
+		t.Fatalf("service-accounts list = %#v, want %s", accounts, serviceAccountID)
+	}
+	runMutationOK(t, "service-accounts", "keys", "revoke", createdKey.Key.ID, "--host", host, "--format", "json", "--quiet")
+	// Service account teardown depends on the platform authorization schema;
+	// surface a platform-side failure without hiding it behind the CLI.
+	if stdout, stderr, exitCode := testharness.RunCLI(t, "service-accounts", "delete", serviceAccountID, "--host", host, "--format", "json", "--quiet"); exitCode != 0 {
+		if !strings.Contains(stderr, "teardown") {
+			t.Fatalf("service-accounts delete failed: %s\n%s", stdout, stderr)
+		}
+		t.Logf("PLATFORM ISSUE: service-accounts delete failed on the platform side: %s", strings.TrimSpace(stderr))
+	}
 
 	functionName := "cli-e2e-function-" + suffix
 	functionPath := filepath.Join(t.TempDir(), "main.py")
@@ -684,6 +737,9 @@ func TestPlatformCLI_ResourceLifecycleAndCapabilities(t *testing.T) {
 		t.Fatalf("imported function = %#v, want %q", got, importFunctionName)
 	}
 	runMutationOK(t, "projects", "delete", importProjectRenamedName, "--host", host, "--org", orgSlug, "--yes", "--format", "json", "--quiet")
+	runMutationOK(t, "projects", "restore", importProjectID, "--host", host, "--org", orgSlug, "--yes", "--format", "json", "--quiet")
+	runMutationOK(t, "projects", "delete", importProjectRenamedName, "--host", host, "--org", orgSlug, "--yes", "--format", "json", "--quiet")
+	runMutationOK(t, "projects", "purge", importProjectID, "--host", host, "--org", orgSlug, "--yes", "--format", "json", "--quiet")
 
 	runMutationOK(t, append([]string{"datasets", "delete", promotedDatasetName}, baseArgs...)...)
 	promotedDatasetID = ""

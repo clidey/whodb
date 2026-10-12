@@ -36,6 +36,14 @@ then process overrides, then saved defaults. Do not run `whodb use` to switch
 hosts for one chat; it rewrites the saved default for every session. Read
 `whodb://platform/schema` for operations and payloads.
 
+To answer a question about ontology data, call `whodb_platform_ontology_describe`
+first to learn entity and property names, then `whodb_platform_ontology_aggregate`
+for exact counts, sums and group-bys, or `whodb_platform_ontology_query` for
+filtered rows, search and joins (bounded scan, max 5000 rows). Drill into rows
+with `whodb_platform_ontology_rows`. For bulk inserts use
+`whodb_platform_add_ontology_records` with an `idempotency_key`. Preview behavior
+actions with `whodb_platform_ontology_action_preview` before executing them.
+
 Writes return a preview bound to its host, account, organization, and project.
 Confirm only after approval of that exact preview. Changing defaults does not
 redirect a pending confirmation. Ask for `whodb login --host <url>` when a host

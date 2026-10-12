@@ -52,6 +52,9 @@ func setupTestEnv(t *testing.T) {
 	if err := os.Setenv("APPDATA", testHome); err != nil {
 		t.Fatalf("Failed to set APPDATA: %v", err)
 	}
+	// Other tests in this binary (the live e2e suite) may have resolved config
+	// paths under a different HOME; recompute them for this test home.
+	config.ResetPathsForTesting()
 
 	cleanupConfigFiles(t)
 

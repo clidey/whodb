@@ -313,7 +313,7 @@ func handlePlatformExtendedQuery(ctx context.Context, toolName, operation string
 }
 
 func validatePlatformExtendedQuery(operation string, variables map[string]any) error {
-	for _, key := range []string{"id", "appId", "packageId", "installationId", "objectId", "teamId", "resourceId"} {
+	for _, key := range []string{"id", "appId", "packageId", "installationId", "objectId", "teamId", "resourceId", "referenceId", "userId"} {
 		if value, ok := variables[key].(string); ok && value == "" {
 			return fmt.Errorf("%s is required", snakeCasePlatformKey(key))
 		}

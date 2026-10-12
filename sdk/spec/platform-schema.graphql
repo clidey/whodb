@@ -374,10 +374,6 @@ type GraphUnit {
 
 type SettingsConfig {
   MetricsEnabled: Boolean
-  CloudProvidersEnabled: Boolean!
-  AWSProviderEnabled: Boolean!
-  AzureProviderEnabled: Boolean!
-  GCPProviderEnabled: Boolean!
   DisableCredentialForm: Boolean!
   EnableNewUI: Boolean!
   MaxPageSize: Int!
@@ -657,7 +653,7 @@ type SourceSessionMetadata {
 }
 
 # Safe UI state for the active source session. Credentials and connection
-# details remain server-side and are never returned to the browser.
+# details are excluded from normal session restoration.
 type SourceSession {
   Id: String
   SourceType: String!
@@ -676,209 +672,6 @@ type SourceQuerySuggestion {
 type SSLStatus {
   IsEnabled: Boolean!
   Mode: String!
-}
-
-# =============================================================================
-# Cloud Provider Types (Generic Infrastructure)
-# =============================================================================
-
-# Supported cloud provider types
-enum CloudProviderType {
-  AWS
-  Azure
-  GCP
-}
-
-# Provider status (shared across all cloud providers)
-enum CloudProviderStatus {
-  Connected
-  Discovering
-  Error
-  Disconnected
-}
-
-# Connection status for discovered resources
-enum ConnectionStatus {
-  Available
-  Starting
-  Stopped
-  Deleting
-  Failed
-  Unknown
-}
-
-# Common fields for all cloud providers
-interface CloudProvider {
-  Id: ID!
-  ProviderType: CloudProviderType!
-  Name: String!
-  Region: String!
-  Status: CloudProviderStatus!
-  LastDiscoveryAt: String
-  DiscoveredCount: Int!
-  Error: String
-}
-
-# =============================================================================
-# AWS Provider
-# =============================================================================
-
-type AWSProvider implements CloudProvider {
-  # Interface fields
-  Id: ID!
-  ProviderType: CloudProviderType!
-  Name: String!
-  Region: String!
-  Status: CloudProviderStatus!
-  LastDiscoveryAt: String
-  DiscoveredCount: Int!
-  Error: String
-  # AWS-specific fields
-  ProfileName: String
-  DiscoverRDS: Boolean!
-  DiscoverElastiCache: Boolean!
-  DiscoverDocumentDB: Boolean!
-  DiscoverS3: Boolean!
-}
-
-input AWSProviderInput {
-  Name: String!
-  Region: String!
-  ProfileName: String
-  DiscoverRDS: Boolean
-  DiscoverElastiCache: Boolean
-  DiscoverDocumentDB: Boolean
-  DiscoverS3: Boolean
-}
-
-# Local AWS profile discovered from ~/.aws/credentials and ~/.aws/config
-type LocalAWSProfile {
-  Name: String!
-  Region: String
-  Source: String!    # "credentials", "config", or "environment"
-  AuthType: String!  # "static", "sso", "assume-role", or "environment"
-  IsDefault: Boolean!
-}
-
-# AWS region with partition grouping
-type AWSRegion {
-  Id: String!
-  Description: String!
-  Partition: String!
-}
-
-# =============================================================================
-# Azure Provider
-# =============================================================================
-
-type AzureProvider implements CloudProvider {
-  # Interface fields
-  Id: ID!
-  ProviderType: CloudProviderType!
-  Name: String!
-  Region: String!
-  Status: CloudProviderStatus!
-  LastDiscoveryAt: String
-  DiscoveredCount: Int!
-  Error: String
-  # Azure-specific fields
-  SubscriptionID: String!
-  TenantID: String
-  ResourceGroup: String
-  DiscoverPostgreSQL: Boolean!
-  DiscoverMySQL: Boolean!
-  DiscoverRedis: Boolean!
-  DiscoverCosmosDB: Boolean!
-}
-
-input AzureProviderInput {
-  Name: String!
-  SubscriptionID: String!
-  TenantID: String
-  ClientID: String
-  ClientSecret: String
-  AuthMethod: String
-  ResourceGroup: String
-  DiscoverPostgreSQL: Boolean
-  DiscoverMySQL: Boolean
-  DiscoverRedis: Boolean
-  DiscoverCosmosDB: Boolean
-}
-
-# Azure subscription discovered via the ARM API
-type AzureSubscription {
-  Id: String!
-  DisplayName: String!
-  State: String!
-  TenantID: String!
-}
-
-# Azure region with geography grouping
-type AzureRegion {
-  Id: String!
-  DisplayName: String!
-  Geography: String!
-}
-
-# =============================================================================
-# GCP Provider
-# =============================================================================
-
-type GCPProvider implements CloudProvider {
-  # Interface fields
-  Id: ID!
-  ProviderType: CloudProviderType!
-  Name: String!
-  Region: String!
-  Status: CloudProviderStatus!
-  LastDiscoveryAt: String
-  DiscoveredCount: Int!
-  Error: String
-  # GCP-specific fields
-  ProjectID: String!
-  ServiceAccountKeyPath: String
-  DiscoverCloudSQL: Boolean!
-  DiscoverAlloyDB: Boolean!
-  DiscoverMemorystore: Boolean!
-}
-
-input GCPProviderInput {
-  Name: String!
-  ProjectID: String!
-  Region: String!
-  ServiceAccountKeyPath: String
-  DiscoverCloudSQL: Boolean
-  DiscoverAlloyDB: Boolean
-  DiscoverMemorystore: Boolean
-}
-
-# Local GCP project discovered from gcloud config and environment variables
-type LocalGCPProject {
-  ProjectID: String!
-  Name: String!
-  Source: String!
-  IsDefault: Boolean!
-}
-
-# GCP region
-type GCPRegion {
-  Id: String!
-  Description: String!
-}
-
-# =============================================================================
-# Discovered Connections (Generic - works with any provider)
-# =============================================================================
-
-type DiscoveredConnection {
-  Id: ID!
-  ProviderType: CloudProviderType!
-  ProviderID: String!
-  Name: String!
-  SourceType: String!
-  Region: String
-  Status: ConnectionStatus!
-  Metadata: [Record!]!
 }
 
 # =============================================================================
@@ -924,27 +717,6 @@ type Query {
   SSLStatus: SSLStatus
   SourceQuerySuggestions(ref: SourceObjectRefInput): [SourceQuerySuggestion!]!
 
-  # Cloud Provider Queries (Generic)
-  CloudProviders: [CloudProvider!]!
-  CloudProvider(id: ID!): CloudProvider
-  DiscoveredConnections: [DiscoveredConnection!]!
-  ProviderConnections(providerID: ID!): [DiscoveredConnection!]!
-
-  # AWS-specific helpers
-  LocalAWSProfiles: [LocalAWSProfile!]!
-  AWSRegions: [AWSRegion!]!
-
-  # Azure-specific helpers
-  AzureProviders: [AzureProvider!]!
-  AzureProvider(id: ID!): AzureProvider
-  AzureSubscriptions: [AzureSubscription!]!
-  AzureRegions: [AzureRegion!]!
-
-  # GCP Provider Queries
-  GCPProviders: [GCPProvider!]!
-  GCPProvider(id: ID!): GCPProvider
-  LocalGCPProjects: [LocalGCPProject!]!
-  GCPRegions: [GCPRegion!]!
 }
 
 input GenerateChatTitleInput {
@@ -965,6 +737,8 @@ type Mutation {
   LoginSource(credentials: SourceLoginInput!): StatusResponse!
   LoginWithSourceProfile(profile: SourceProfileLoginInput!): StatusResponse!
   Logout: StatusResponse!
+  # Explicitly exports the authenticated connection; secrets require consent.
+  ExportSourceConnection(id: String!, includeSecrets: Boolean!): [Record!]!
   TestSourceConnection(credentials: SourceLoginInput!): StatusResponse!
   UpdateSettings(newSettings: SettingsConfigInput!): StatusResponse!
 
@@ -988,32 +762,6 @@ type Mutation {
   ExecuteConfirmedSQL(query: String!, operationType: String!): AIChatMessage!
   GenerateChatTitle(input: GenerateChatTitleInput!): GenerateChatTitleResponse!
 
-  # Cloud Provider Mutations
-  # AWS provider-specific add/update (type-safe inputs)
-  AddAWSProvider(input: AWSProviderInput!): AWSProvider!
-  UpdateAWSProvider(id: ID!, input: AWSProviderInput!): AWSProvider!
-  TestAWSCredentials(input: AWSProviderInput!): CloudProviderStatus!
-  # GCP provider-specific add/update (type-safe inputs)
-  AddGCPProvider(input: GCPProviderInput!): GCPProvider!
-  UpdateGCPProvider(id: ID!, input: GCPProviderInput!): GCPProvider!
-  TestGCPCredentials(input: GCPProviderInput!): CloudProviderStatus!
-  RefreshGCPProvider(id: ID!): GCPProvider!
-  # Generic operations (work with any provider type)
-  RemoveCloudProvider(id: ID!): StatusResponse!
-  TestCloudProvider(id: ID!): CloudProviderStatus!
-  RefreshCloudProvider(id: ID!): CloudProvider!
-  # AWS-specific: Generate a short-lived IAM auth token for RDS database authentication
-  GenerateRDSAuthToken(providerID: ID!, endpoint: String!, port: Int!, region: String!, username: String!): String!
-
-  # Azure provider-specific add/update (type-safe inputs)
-  AddAzureProvider(input: AzureProviderInput!): AzureProvider!
-  UpdateAzureProvider(id: ID!, input: AzureProviderInput!): AzureProvider!
-  TestAzureCredentials(input: AzureProviderInput!): CloudProviderStatus!
-  RefreshAzureProvider(id: ID!): AzureProvider!
-  # Azure-specific: Generate a short-lived Azure AD token for database authentication
-  GenerateAzureADToken(providerID: ID!, sourceType: String!): String!
-  # GCP-specific: Generate an OAuth2 access token for Cloud SQL IAM database authentication
-  GenerateCloudSQLIAMAuthToken(providerID: ID!, username: String!): String!
 }
 
 # --- source: ee/core/graph/schema.extension.graphqls ---
@@ -1042,6 +790,7 @@ type CodeCompletionResult {
 }
 
 type AgentSession {
+  sessionType: String!
   id: ID!
   projectId: ID
   sourceId: ID
@@ -1084,15 +833,59 @@ input SaveDraftAIChatInput {
   expectedVersion: Int!
 }
 
+enum AnalysisArtifactKind { dataset view }
+enum AnalysisArtifactStatus { pending running complete partial failed }
+
+type AnalysisColumn {
+  id: String!
+  label: String!
+  physicalType: String!
+  semanticType: String
+  unit: String
+  nullable: Boolean!
+}
+
+type AnalysisProvenance {
+  id: ID!
+  planHash: String!
+  sources: [JSON!]!
+  warnings: [String!]!
+}
+
+type AnalysisArtifact {
+  id: ID!
+  kind: AnalysisArtifactKind!
+  status: AnalysisArtifactStatus!
+  title: String!
+  datasetId: ID
+  viewType: String
+  encoding: JSON
+  options: JSON
+  schema: [AnalysisColumn!]!
+  warnings: [String!]!
+  provenance: AnalysisProvenance!
+}
+
+type AnalysisArtifactPage {
+  artifactId: ID!
+  rows: [JSON!]!
+  nextCursor: String
+  execution: JSON
+}
+
 extend type Query {
   CodeCompletion(providerId: String, modelType: String!, token: String, ref: SourceObjectRefInput, input: ChatInput!): CodeCompletionResult!
   ExplainQuery(providerId: String, modelType: String!, token: String, ref: SourceObjectRefInput, input: ChatInput!): String!
   GenerateQuery(providerId: String, modelType: String!, token: String, ref: SourceObjectRefInput, input: ChatInput!): String!
+  AgentSession(projectId: ID!, sessionId: ID!): AgentSession!
   AgentSessions(projectId: ID!, limit: Int): [AgentSession!]!
   DraftAIChat(projectId: ID!): DraftAIChat
+  AnalysisArtifact(id: ID!): AnalysisArtifact
+  AnalysisArtifactPage(id: ID!, cursor: String, limit: Int!): AnalysisArtifactPage!
 }
 
 extend type Mutation {
+  RenameAgentSession(sessionId: ID!, title: String!): StatusResponse!
   DeleteAgentSession(sessionId: ID!): StatusResponse!
   CancelAgentSession(sessionId: ID!): StatusResponse!
   SaveDraftAIChat(input: SaveDraftAIChatInput!): DraftAIChat!
@@ -1497,10 +1290,14 @@ input UpdateAIProviderInput {
 extend type Query {
   PlatformAIProviders(projectId: ID!): [PlatformAIProvider!]!
   AIProviderModels(projectId: ID!, providerId: ID!): [String!]!
+  # Native TypeSafe model metadata; credentials come from the saved provider.
+  TypeSafeModels(projectId: ID!, providerId: ID!): JSON!
 }
 
 extend type Mutation {
   CreateAIProvider(input: CreateAIProviderInput!): PlatformAIProvider!
+  # Native TypeSafe model/state/questions request and response.
+  TypeSafeSystemOne(projectId: ID!, providerId: ID!, request: JSON!, sessionId: ID, runId: ID): JSON!
   UpdateAIProvider(input: UpdateAIProviderInput!): PlatformAIProvider!
   DeleteAIProvider(id: ID!): StatusResponse!
 }
@@ -1667,7 +1464,7 @@ input CreateOntologyInput {
   primaryKey:        String!
   sourceId:          ID
   tableName:         String!
-  schemaName:        String!
+  schemaName:        String! = ""
   storageMode:       OntologyStorageMode!
   embeddingEnabled:  Boolean! = false
   embeddingProperties: [String!]! = []
@@ -1686,7 +1483,7 @@ input UpdateOntologyEntityInput {
   primaryKey:        String!
   sourceId:          ID
   tableName:         String!
-  schemaName:        String!
+  schemaName:        String! = ""
   embeddingEnabled:  Boolean!
   embeddingProperties: [String!]!
   status:            OntologyStatus!
@@ -1816,10 +1613,10 @@ extend type Mutation {
   RemoveOntologyFastLookup(projectId: ID!, id: ID!): StatusResponse!
   ReembedOntology(projectId: ID!, entityId: ID!, batchSize: Int = 4): OntologyEmbeddingJob!
   RestoreOntologyVersionToDraft(projectId: ID!, ontologyId: ID!, version: Int!): OntologyObjectType!
-  OntologyAddRow(projectId: ID!, entityId: ID!, values: [RecordInput!]!): StatusResponse!
+  OntologyAddRow(projectId: ID!, entityId: ID!, values: [RecordInput!]!, idempotencyKey: String): StatusResponse!
   OntologyAddRows(projectId: ID!, entityId: ID!, rows: [OntologyCreateRowInput!]!, idempotencyKey: String): OntologyAddRowsResult!
-  OntologyUpdateRow(projectId: ID!, entityId: ID!, values: [RecordInput!]!, updatedColumns: [String!]!): StatusResponse!
-  OntologyDeleteRow(projectId: ID!, entityId: ID!, values: [RecordInput!]!): StatusResponse!
+  OntologyUpdateRow(projectId: ID!, entityId: ID!, values: [RecordInput!]!, updatedColumns: [String!]!, idempotencyKey: String, expectedValues: [RecordInput!]): StatusResponse!
+  OntologyDeleteRow(projectId: ID!, entityId: ID!, values: [RecordInput!]!, idempotencyKey: String, expectedValues: [RecordInput!]): StatusResponse!
   OntologyPurgeData(projectId: ID!, entityId: ID!): StatusResponse!
 }
 
@@ -2247,6 +2044,7 @@ extend type Query {
   PlanFeatures(plan: String!): [BillingPlanFeature!]!
   CanAccessFeature(featureKey: String!): Boolean!
   BillingCurrentUsage: BillingCurrentUsage!
+  BillingCurrentEntitlements: BillingPlanEntitlements!
   PreviewSubscriptionChange(plan: String!, interval: String!): BillingPlanChangePreview!
 }
 
@@ -2277,6 +2075,7 @@ type App {
   createdBy:            String!
   createdAt:            String!
   updatedAt:            String!
+  sourceHidden:         Boolean!
 }
 
 input CreateAppInput {
@@ -2326,13 +2125,17 @@ type AppFile {
 type AppViewResult {
   app: App!
   files: [AppFile!]!
+  pages: [String!]!
+  # Active (promoted) version the files were read from; null for the dev/draft view.
+  version: Int
 }
 
 extend type Query {
   ProjectApps(projectId: ID!): [App!]!
   AppDetail(projectId: ID!, id: ID!): App!
   AppFiles(projectId: ID!, appId: ID!): [AppFile!]!
-  AppView(projectId: ID!, id: ID!, env: String): AppViewResult
+  AppView(projectId: ID!, id: ID!, env: String, page: String): AppViewResult
+  AppPageFiles(projectId: ID!, id: ID!, env: String, page: String!): [AppFile!]!
   AppVersionView(projectId: ID!, appId: ID!, version: Int!): AppViewResult
 }
 
@@ -2356,6 +2159,11 @@ enum FunctionExecutionMode {
   LIVE
 }
 
+enum FunctionLiveBehavior {
+  REQUEST
+  SERVICE
+}
+
 enum FunctionRunStatus {
   QUEUED
   STARTING
@@ -2377,6 +2185,7 @@ type OntologyFunction {
   memory:         String!
   cpu:            String!
   executionMode:  FunctionExecutionMode!
+  liveBehavior:   FunctionLiveBehavior!
   createdBy:      String!
   createdAt:      String!
   updatedAt:      String!
@@ -2397,6 +2206,7 @@ type FunctionRun {
   id:            ID!
   functionId:    ID!
   executionMode: FunctionExecutionMode!
+  liveBehavior:  FunctionLiveBehavior!
   status:        FunctionRunStatus!
   desiredState:  String!
   input:         String!
@@ -2453,6 +2263,7 @@ input CreateFunctionInput {
   memory:         String
   cpu:            String
   executionMode:  FunctionExecutionMode! = SYNC
+  liveBehavior:   FunctionLiveBehavior! = REQUEST
   files:               [FunctionFileInput!]!
   dependencies:        [FunctionDependencyInput!]!
   providerIds:         [ID!]
@@ -2717,6 +2528,7 @@ extend type Mutation {
   TransferOwnership(resourceType: String!, resourceId: ID!, newOwnerId: ID!): StatusResponse!
   ClaimOrphan(resourceType: String!, resourceId: ID!): StatusResponse!
   CreateTeam(orgId: ID!, name: String!): Team!
+  RenameTeam(teamId: ID!, name: String!): StatusResponse!
   DeleteTeam(teamId: ID!): StatusResponse!
   AddTeamMember(teamId: ID!, userId: ID!): StatusResponse!
   RemoveTeamMember(teamId: ID!, userId: ID!): StatusResponse!
@@ -3331,4 +3143,26 @@ extend type Query {
 extend type Mutation {
   SaveBehavior(input: SaveBehaviorInput!): OntologyBehavior!
   ExecuteOntologyAction(input: ExecuteOntologyActionInput!): ExecuteOntologyActionResult!
+}
+# Browser approval for hosted MCP writes. These fields are not part of the CLI manifest.
+type McpPendingApproval {
+  token: ID!
+  operation: String!
+  resource: String!
+  action: String!
+  summary: String!
+  orgId: ID!
+  projectId: ID!
+  projectName: String!
+  changes: [String!]!
+  willAffect: [String!]!
+  expiresAt: String!
+}
+
+extend type Query {
+  McpPendingApprovals: [McpPendingApproval!]!
+}
+
+extend type Mutation {
+  DecideMcpPendingApproval(token: ID!, approve: Boolean!): StatusResponse!
 }

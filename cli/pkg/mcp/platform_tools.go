@@ -79,6 +79,18 @@ type platformClient interface {
 	ProjectTabularFiles(context.Context, string) ([]platformapi.ProjectFile, error)
 	ProjectStorageUsage(context.Context, string) (int, error)
 	PlatformQuery(context.Context, string, map[string]any) (any, error)
+
+	// Ontology analytics and previews (platform_ontology_query_tools.go).
+	OntologyQuery(context.Context, string, platformapi.OntologyQueryInput) (*platformapi.DatasetQueryResult, error)
+	OntologyAggregate(context.Context, string, platformapi.OntologyAggregateInput) (*platformapi.DatasetQueryResult, error)
+	OntologyStats(context.Context, string, string, string, map[string]any) (*platformapi.OntologyStatsResult, error)
+	OntologyDescribe(context.Context, string, []string, bool) (*platformapi.OntologyDescription, error)
+	OntologySimilar(context.Context, string, platformapi.OntologySimilarInput) (*platformapi.OntologySimilarityResult, error)
+	OntologyRecordCapabilities(context.Context, string, string, string) (*platformapi.OntologyRecordCapabilities, error)
+	PreviewOntologyAction(context.Context, platformapi.PreviewOntologyActionInput) (*platformapi.OntologyActionPreview, error)
+	OntologyActionExecutions(context.Context, string, string, string, int) ([]platformapi.OntologyActionExecution, error)
+	OntologyEmbeddingJobs(context.Context, string, string) ([]platformapi.OntologyEmbeddingJob, error)
+	PreviewTransform(context.Context, string, string) (*platformapi.DatasetQueryResult, error)
 }
 
 type platformToolSession struct {

@@ -1372,10 +1372,11 @@ func init() {
 	rootCmd.AddCommand(backupProjectCmd)
 	rootCmd.AddCommand(restoreProjectCmd)
 	rootCmd.AddCommand(cloneProjectCmd)
+	rootCmd.AddCommand(serviceAccountsCmd)
 	rootCmd.AddCommand(useCmd)
 	rootCmd.AddCommand(workspaceCmd)
 
-	for _, command := range []*cobra.Command{loginCmd, logoutCmd, whoamiCmd, manifestCmd, statusCmd, capabilitiesCmd, orgsCmd, projectsCmd, sourcesCmd, secretsCmd, aiProvidersCmd, ontologiesCmd, datasetsCmd, lineageCmd, transformsCmd, functionsCmd, appsCmd, packagesCmd, filesCmd, foldersCmd, resourcesCmd, backupProjectCmd, restoreProjectCmd, cloneProjectCmd, useCmd, workspaceCmd} {
+	for _, command := range []*cobra.Command{loginCmd, logoutCmd, whoamiCmd, manifestCmd, statusCmd, capabilitiesCmd, orgsCmd, projectsCmd, sourcesCmd, secretsCmd, aiProvidersCmd, ontologiesCmd, datasetsCmd, lineageCmd, transformsCmd, functionsCmd, appsCmd, packagesCmd, filesCmd, foldersCmd, resourcesCmd, backupProjectCmd, restoreProjectCmd, cloneProjectCmd, serviceAccountsCmd, useCmd, workspaceCmd} {
 		command.PersistentFlags().StringVar(&platformHost, "host", "", "hosted WhoDB URL (default app.whodb.com)")
 		command.PersistentFlags().StringVarP(&platformFormat, "format", "f", "auto", "output format: auto, table, plain, json, ndjson, csv")
 		command.PersistentFlags().BoolVarP(&platformQuiet, "quiet", "q", false, "suppress informational messages")
@@ -1424,6 +1425,7 @@ func init() {
 	sourcesRowsCmd.Flags().IntVar(&sourceRowsLimit, "limit", 50, "maximum rows to return")
 	sourcesRowsCmd.Flags().IntVar(&sourceRowsOffset, "offset", 0, "row offset")
 	registerPlatformResourceCommands()
+	registerPlatformGapCommands()
 	registerPlatformPackageCommands()
 	useCmd.Flags().StringVar(&useOrg, "org", "", "organization id, slug, or name")
 	useCmd.Flags().StringVar(&useProject, "project", "", "project id, slug, or name")
