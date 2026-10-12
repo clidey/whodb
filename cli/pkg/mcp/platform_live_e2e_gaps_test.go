@@ -141,7 +141,7 @@ func liveMustGapCoverage(t *testing.T, ctx context.Context, fx liveGapFixtures) 
 		ID:      fx.ontologyID,
 		GroupBy: []string{"id"},
 		Metrics: []PlatformOntologyMetricInput{{Op: "COUNT"}},
-		Where:   map[string]any{"Type": "Atomic", "Atomic": map[string]any{"Key": "id", "Operator": "=", "Value": gapRow1, "ColumnType": "String"}},
+		Where:   map[string]any{"id": gapRow1},
 		Sort:    []PlatformSortConditionInput{{Column: "id", Direction: "DESC"}},
 		Limit:   5,
 		Fields:  []string{"data", "count"},
@@ -257,11 +257,10 @@ func liveMustGapCoverage(t *testing.T, ctx context.Context, fx liveGapFixtures) 
 	// Service accounts: the raw key must come back exactly once.
 	serviceAccountID := liveMustGenericWriteID(t, ctx, "platform_action", "action", PlatformGenericWriteInput{
 		Resource: "organization", Action: "create_service_account",
-		PayloadJSON: liveJSON(t, map[string]any{"orgId": orgID, "name": "gap-sa-" + fx.suffix, "description": "MCP e2e service account"}),
+		PayloadJSON: liveJSON(t, map[string]any{"name": "gap-sa-" + fx.suffix, "description": "MCP e2e service account"}),
 	})
 	keyResult := liveMustGenericWrite(t, ctx, "platform_action", "action", PlatformGenericWriteInput{
 		Resource: "organization", Action: "create_service_account_key", ID: serviceAccountID,
-		PayloadJSON: liveJSON(t, map[string]any{"orgId": orgID}),
 	})
 	var createdKey struct {
 		Key    struct{ ID string } `json:"key"`
@@ -271,14 +270,12 @@ func liveMustGapCoverage(t *testing.T, ctx context.Context, fx liveGapFixtures) 
 		t.Fatalf("create_service_account_key result = %s (%v); want rawKey and key id", keyResult, err)
 	}
 	liveMustExtendedRead(t, ctx, "whodb_platform_service_accounts", "ServiceAccounts", nil, true)
-	liveMustGenericWrite(t, ctx, "platform_action", "action", PlatformGenericWriteInput{Resource: "organization", Action: "revoke_service_account_key", ID: createdKey.Key.ID, PayloadJSON: liveJSON(t, map[string]any{"orgId": orgID})})
-	// Service account teardown depends on a service_account resource definition in
-	// the authorization schema; report the platform error instead of hiding it.
-	liveMustGenericWriteAllowing(t, ctx, "platform_action", "action", PlatformGenericWriteInput{Resource: "organization", Action: "delete_service_account", ID: serviceAccountID, PayloadJSON: liveJSON(t, map[string]any{"orgId": orgID})}, "teardown")
+	liveMustGenericWrite(t, ctx, "platform_action", "action", PlatformGenericWriteInput{Resource: "organization", Action: "revoke_service_account_key", ID: createdKey.Key.ID})
+	liveMustGenericWrite(t, ctx, "platform_action", "action", PlatformGenericWriteInput{Resource: "organization", Action: "delete_service_account", ID: serviceAccountID})
 
 	// Teams: create, rename, delete now that the manifest advertises them.
 	teamID := liveMustGenericWriteID(t, ctx, "platform_action", "action", PlatformGenericWriteInput{
-		Resource: "organization", Action: "create_team", PayloadJSON: liveJSON(t, map[string]any{"orgId": orgID, "name": "gap-team-" + fx.suffix}),
+		Resource: "organization", Action: "create_team", PayloadJSON: liveJSON(t, map[string]any{"name": "gap-team-" + fx.suffix}),
 	})
 	liveMustGenericWrite(t, ctx, "platform_action", "action", PlatformGenericWriteInput{Resource: "organization", Action: "rename_team", ID: teamID, PayloadJSON: `{"name":"gap-team-renamed"}`})
 	liveMustGenericWrite(t, ctx, "platform_action", "action", PlatformGenericWriteInput{Resource: "organization", Action: "delete_team", ID: teamID})
@@ -288,11 +285,8 @@ func liveMustGapCoverage(t *testing.T, ctx context.Context, fx liveGapFixtures) 
 	if err != nil {
 		t.Fatalf("Me(): %v", err)
 	}
-	// Ownership and access views walk every resource's relationships in the
-	// authorization service; the isolated stack's Mothergate cannot answer some
-	// of those reads, so a platform-side error is reported rather than hidden.
-	liveMustExtendedRead(t, ctx, "whodb_platform_user_owned_resources", "UserOwnedResources", map[string]any{"userId": me.ID}, false)
-	liveMustExtendedRead(t, ctx, "whodb_platform_user_resource_access", "UserResourceAccess", map[string]any{"userId": me.ID}, false)
+	liveMustExtendedRead(t, ctx, "whodb_platform_user_owned_resources", "UserOwnedResources", map[string]any{"userId": me.ID}, true)
+	liveMustExtendedRead(t, ctx, "whodb_platform_user_resource_access", "UserResourceAccess", map[string]any{"userId": me.ID}, true)
 	liveMustExtendedRead(t, ctx, "whodb_platform_share_dependents", "ShareDependents", map[string]any{"resourceType": "dataset", "resourceId": fx.datasetID}, true)
 
 	// Package polish and app page files.
@@ -381,34 +375,6 @@ func liveMustGenericWriteAttempt(t *testing.T, ctx context.Context, toolName, op
 		t.Fatalf("HandlePlatformConfirm(%s/%s) handler error = %v", input.Resource, input.Action, err)
 	}
 	liveCoverTool("whodb_platform_confirm")
-}
-
-// liveMustGenericWriteAllowing confirms a write and tolerates only a platform
-// error containing allowedError, logging it as a platform-side problem.
-func liveMustGenericWriteAllowing(t *testing.T, ctx context.Context, toolName, operationKind string, input PlatformGenericWriteInput, allowedError string) {
-	t.Helper()
-	_, output, err := handlePlatformGenericWrite(ctx, toolName, input, operationKind, true)
-	if err != nil {
-		t.Fatalf("handlePlatformGenericWrite(%s, %s/%s) error = %v", toolName, input.Resource, input.Action, err)
-	}
-	if output.Error != "" || !output.ConfirmationRequired {
-		t.Fatalf("write output for %s %s/%s = %#v, want pending confirmation", toolName, input.Resource, input.Action, output)
-	}
-	liveCoverTool("whodb_" + toolName)
-	liveCoverGenericWrite(operationKind, input)
-	_, confirm, err := HandlePlatformConfirm(ctx, nil, ConfirmInput{Token: output.ConfirmationToken})
-	if err != nil {
-		t.Fatalf("HandlePlatformConfirm(%s/%s) handler error = %v", input.Resource, input.Action, err)
-	}
-	liveCoverTool("whodb_platform_confirm")
-	if confirm.Error == "" {
-		return
-	}
-	if strings.Contains(confirm.Error, allowedError) {
-		t.Logf("PLATFORM ISSUE: %s/%s failed on the platform side: %s", input.Resource, input.Action, confirm.Error)
-		return
-	}
-	t.Fatalf("confirm output for %s %s/%s = %#v", toolName, input.Resource, input.Action, confirm)
 }
 
 // liveDecodeData converts a projected read-output data value back into a typed struct.

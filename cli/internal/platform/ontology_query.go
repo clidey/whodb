@@ -165,6 +165,9 @@ var OntologyAggregateMetricOps = []string{"COUNT", "SUM", "AVG", "MIN", "MAX"}
 // OntologyQueryMaxScanLimit is the largest scan window the hosted bounded query accepts.
 const OntologyQueryMaxScanLimit = 5000
 
+// OntologyQueryDefaultScanLimit is the scan window used when none is requested.
+const OntologyQueryDefaultScanLimit = 1000
+
 // OntologyMetric is one metric for OntologyQuery or OntologyAggregate.
 type OntologyMetric struct {
 	Op    string `json:"op"`

@@ -1811,7 +1811,7 @@ func runPlatformResourceWrite(cmd *cobra.Command, input genericResourceWriteInpu
 	if err := prepareTypedResourcePayload(ctx, session, project.ID, input, payload); err != nil {
 		return err
 	}
-	spec, variables, err := buildGenericResourceVariables(project.ID, input, payload)
+	spec, variables, err := buildGenericResourceVariables(org.ID, project.ID, input, payload)
 	if err != nil {
 		return err
 	}
@@ -3039,7 +3039,7 @@ func defaultString(value, fallback string) string {
 	return value
 }
 
-func buildGenericResourceVariables(projectID string, input genericResourceWriteInput, payload map[string]any) (platform.GenericWriteSpec, map[string]any, error) {
+func buildGenericResourceVariables(orgID, projectID string, input genericResourceWriteInput, payload map[string]any) (platform.GenericWriteSpec, map[string]any, error) {
 	resource := normalizePlatformResourceToken(input.Resource)
 	action := normalizePlatformResourceToken(input.Action)
 	key := action + ":" + resource
@@ -3059,6 +3059,9 @@ func buildGenericResourceVariables(projectID string, input genericResourceWriteI
 	case platform.GenericWriteModeInput:
 		if spec.InjectProjectID {
 			payload["projectId"] = projectID
+		}
+		if spec.InjectOrgID && (payload["orgId"] == nil || strings.TrimSpace(fmt.Sprint(payload["orgId"])) == "") {
+			payload["orgId"] = orgID
 		}
 		if spec.NeedsID {
 			if spec.Mutation == "PromoteFileToDataset" {
@@ -3100,6 +3103,9 @@ func buildGenericResourceVariables(projectID string, input genericResourceWriteI
 		}
 		if spec.InjectProjectID {
 			variables["projectId"] = projectID
+		}
+		if spec.InjectOrgID && (variables["orgId"] == nil || strings.TrimSpace(fmt.Sprint(variables["orgId"])) == "") {
+			variables["orgId"] = orgID
 		}
 		if spec.NeedsID {
 			if spec.IdentityField != "" {

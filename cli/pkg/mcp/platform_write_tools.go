@@ -505,6 +505,9 @@ func buildPlatformGenericWrite(session *platformToolSession, input PlatformGener
 		if spec.InjectProjectID {
 			payload["projectId"] = session.Host.DefaultProjectID
 		}
+		if spec.InjectOrgID && (payload["orgId"] == nil || strings.TrimSpace(fmt.Sprint(payload["orgId"])) == "") {
+			payload["orgId"] = session.Host.DefaultOrgID
+		}
 		if spec.NeedsID {
 			if spec.Mutation == "PromoteFileToDataset" {
 				payload["fileId"] = firstPayloadString(payload, "fileId", id)
@@ -541,6 +544,9 @@ func buildPlatformGenericWrite(session *platformToolSession, input PlatformGener
 		}
 		if spec.InjectProjectID {
 			variables["projectId"] = session.Host.DefaultProjectID
+		}
+		if spec.InjectOrgID && (variables["orgId"] == nil || strings.TrimSpace(fmt.Sprint(variables["orgId"])) == "") {
+			variables["orgId"] = session.Host.DefaultOrgID
 		}
 		if spec.NeedsID {
 			if spec.IdentityField != "" {

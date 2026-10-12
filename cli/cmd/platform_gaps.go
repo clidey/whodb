@@ -101,12 +101,12 @@ var ontologyAggregateCmd = &cobra.Command{
 	SilenceErrors: true,
 	Example: `  whodb ontologies aggregate orders --metric COUNT
   whodb ontologies aggregate orders --group-by region --metric SUM:amount:total --sort total:desc
-  whodb ontologies aggregate orders --metric COUNT --where '{"Type":"Atomic","Atomic":{"Key":"status","Operator":"=","Value":"open","ColumnType":"String"}}'`,
+  whodb ontologies aggregate orders --metric COUNT --where '{"status":"open"}'`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := validatePlatformPage(platformLimit, platformOffset); err != nil {
 			return err
 		}
-		where, err := parseJSONObjectFlag("--where", ontologyQueryWhere)
+		where, err := parseWhereConditionFlag(ontologyQueryWhere)
 		if err != nil {
 			return err
 		}
@@ -144,7 +144,7 @@ var ontologyStatsCmd = &cobra.Command{
 	SilenceErrors: true,
 	Example:       `  whodb ontologies stats orders amount`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		where, err := parseJSONObjectFlag("--where", ontologyQueryWhere)
+		where, err := parseWhereConditionFlag(ontologyQueryWhere)
 		if err != nil {
 			return err
 		}
@@ -229,7 +229,7 @@ var ontologySimilarCmd = &cobra.Command{
 	SilenceErrors: true,
 	Example:       `  whodb ontologies similar products 42 --top-k 5 --property name`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		where, err := parseJSONObjectFlag("--where", ontologyQueryWhere)
+		where, err := parseWhereConditionFlag(ontologyQueryWhere)
 		if err != nil {
 			return err
 		}
@@ -522,6 +522,16 @@ func parseJSONObjectFlag(flag, value string) (map[string]any, error) {
 	return object, nil
 }
 
+// parseWhereConditionFlag parses --where and translates the shared filter
+// grammar into a platform WhereCondition for aggregate, stats and similar.
+func parseWhereConditionFlag(value string) (map[string]any, error) {
+	object, err := parseJSONObjectFlag("--where", value)
+	if err != nil {
+		return nil, err
+	}
+	return platform.NormalizeWhereCondition(object)
+}
+
 // parseOntologyMetricFlags accepts op, op:field, or op:field:alias.
 func parseOntologyMetricFlags(values []string) ([]platform.OntologyMetric, error) {
 	metrics := make([]platform.OntologyMetric, 0, len(values))
@@ -565,7 +575,7 @@ func registerPlatformGapCommands() {
 	ontologyQueryCmd.Flags().StringArrayVar(&ontologySimilarProperties, "search-field", nil, "restrict search to this property; repeatable")
 	ontologyQueryCmd.Flags().IntVar(&ontologyQueryScanLimit, "scan-limit", 0, "rows scanned before filtering (default 1000, max 5000)")
 	for _, command := range []*cobra.Command{ontologyAggregateCmd, ontologyStatsCmd, ontologySimilarCmd} {
-		command.Flags().StringVar(&ontologyQueryWhere, "where", "", "platform WhereCondition JSON object")
+		command.Flags().StringVar(&ontologyQueryWhere, "where", "", `filter object, for example {"status":"open"} or {"amount":{"gte":100}}`)
 	}
 	ontologyExplainCmd.Flags().BoolVar(&ontologyExplainInferred, "include-inferred", false, "include relationships inferred from data")
 	ontologySimilarCmd.Flags().IntVar(&ontologySimilarTopK, "top-k", 5, "number of similar rows to return")

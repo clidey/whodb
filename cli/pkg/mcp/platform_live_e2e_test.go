@@ -524,6 +524,10 @@ func TestPlatformMCP_RealReadWriteLifecycle(t *testing.T) {
 		Resource: "function", Action: "test", PayloadJSON: liveJSON(t, map[string]any{"functionId": functionID, "input": "{}", "files": []map[string]any{}, "inputFileIds": []string{}}),
 	})
 	if liveFunctionRuntimeAvailable {
+		// Execution runs the active production version, so promote the draft first.
+		liveMustGenericWrite(t, ctx, "platform_action", "action", PlatformGenericWriteInput{
+			Resource: "object", Action: "promote", PayloadJSON: liveJSON(t, map[string]any{"objectId": functionID, "objectType": "function", "message": "MCP e2e"}),
+		})
 		liveFunctionRuntimeAvailable = liveMustGenericWriteUnlessNoRuntime(t, ctx, "platform_action", "action", PlatformGenericWriteInput{
 			Resource: "function", Action: "execute", PayloadJSON: liveJSON(t, map[string]any{"functionId": functionID, "input": "{}", "inputFileIds": []string{}}),
 		})

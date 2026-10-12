@@ -79,7 +79,7 @@ type PlatformOntologyAggregateInput struct {
 	ID      string                        `json:"id" jsonschema:"Ontology id"`
 	GroupBy []string                      `json:"group_by,omitempty" jsonschema:"Properties to group by; empty for a single-row total"`
 	Metrics []PlatformOntologyMetricInput `json:"metrics" jsonschema:"At least one metric: COUNT, SUM, AVG, MIN, MAX"`
-	Where   map[string]any                `json:"where,omitempty" jsonschema:"Platform WhereCondition object, for example {\"Type\":\"Atomic\",\"Atomic\":{\"Key\":\"status\",\"Operator\":\"=\",\"Value\":\"open\",\"ColumnType\":\"String\"}}"`
+	Where   map[string]any                `json:"where,omitempty" jsonschema:"Filter object using the same grammar as whodb_platform_ontology_query: {prop: value}, {prop: {op: value}}, _and/_or lists. Ops: eq, neq, gt, gte, lt, lte, contains, icontains, startswith, in, nin, between, isnull. A raw platform WhereCondition object is also accepted."`
 	Sort    []PlatformSortConditionInput  `json:"sort,omitempty" jsonschema:"Result ordering by group column or metric alias"`
 	Limit   int                           `json:"limit,omitempty" jsonschema:"Maximum groups to return"`
 	Offset  int                           `json:"offset,omitempty" jsonschema:"Group offset"`
@@ -90,7 +90,7 @@ type PlatformOntologyAggregateInput struct {
 type PlatformOntologyStatsInput struct {
 	ID       string         `json:"id" jsonschema:"Ontology id"`
 	Property string         `json:"property" jsonschema:"Ontology property apiName"`
-	Where    map[string]any `json:"where,omitempty" jsonschema:"Optional platform WhereCondition object"`
+	Where    map[string]any `json:"where,omitempty" jsonschema:"Optional filter in the shared grammar, for example {\"status\":\"open\"}"`
 	Fields   []string       `json:"fields,omitempty" jsonschema:"Optional top-level output fields to include"`
 }
 
@@ -107,7 +107,7 @@ type PlatformOntologySimilarInput struct {
 	RowID      string         `json:"row_id" jsonschema:"Primary key of the reference row"`
 	TopK       int            `json:"top_k,omitempty" jsonschema:"Number of neighbours (default 5)"`
 	Properties []string       `json:"properties,omitempty" jsonschema:"Properties to include in results"`
-	Where      map[string]any `json:"where,omitempty" jsonschema:"Optional platform WhereCondition object to pre-filter candidates"`
+	Where      map[string]any `json:"where,omitempty" jsonschema:"Optional filter in the shared grammar to pre-filter candidates"`
 	Fields     []string       `json:"fields,omitempty" jsonschema:"Optional top-level output fields to include"`
 }
 
@@ -305,7 +305,7 @@ func HandlePlatformOntologyQuery(ctx context.Context, req *mcp.CallToolRequest, 
 	if err := validateOntologyMetrics(input.Metrics, platformapi.OntologyQueryMetricOps, strings.ToLower); err != nil {
 		return nil, PlatformReadOutput{Error: err.Error(), RequestID: generateRequestID("platform_ontology_query")}, nil
 	}
-	return platformProjectRead(ctx, "platform_ontology_query", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
+	result, output, err := platformProjectRead(ctx, "platform_ontology_query", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
 		query := platformapi.OntologyQueryInput{
 			Entity:       entity,
 			Where:        input.Where,
@@ -329,6 +329,36 @@ func HandlePlatformOntologyQuery(ctx context.Context, req *mcp.CallToolRequest, 
 		}
 		return rows, len(rows.Rows), rows.Total > len(rows.Rows), err
 	})
+	if output.Error == "" {
+		if scanned := ontologyQueryScanBound(input.ScanLimit, output.Data); scanned > 0 {
+			output.Warnings = append(output.Warnings, fmt.Sprintf("the query matched at least %d rows, which is the scan limit; totals may be partial. Raise scan_limit (max %d) or use whodb_platform_ontology_aggregate for exact counts.", scanned, platformapi.OntologyQueryMaxScanLimit))
+		}
+	}
+	return result, output, err
+}
+
+// ontologyQueryScanBound returns the effective scan limit when the matched total
+// reached it, meaning the in-memory scan may have stopped before every row.
+func ontologyQueryScanBound(requested int, data any) int {
+	limit := requested
+	if limit <= 0 {
+		limit = platformapi.OntologyQueryDefaultScanLimit
+	}
+	total := 0
+	switch typed := data.(type) {
+	case *platformapi.DatasetQueryResult:
+		if typed != nil {
+			total = typed.Total
+		}
+	case map[string]any:
+		if value, ok := typed["total"].(float64); ok {
+			total = int(value)
+		}
+	}
+	if total >= limit {
+		return limit
+	}
+	return 0
 }
 
 // HandlePlatformOntologyAggregate runs a SQL aggregate over one ontology.
@@ -346,12 +376,16 @@ func HandlePlatformOntologyAggregate(ctx context.Context, req *mcp.CallToolReque
 	if err := validateOntologyMetrics(input.Metrics, platformapi.OntologyAggregateMetricOps, strings.ToUpper); err != nil {
 		return nil, PlatformReadOutput{Error: err.Error(), RequestID: generateRequestID("platform_ontology_aggregate")}, nil
 	}
+	where, err := platformapi.NormalizeWhereCondition(input.Where)
+	if err != nil {
+		return nil, PlatformReadOutput{Error: err.Error(), RequestID: generateRequestID("platform_ontology_aggregate")}, nil
+	}
 	return platformProjectRead(ctx, "platform_ontology_aggregate", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
 		aggregate := platformapi.OntologyAggregateInput{
 			ID:         id,
 			GroupBy:    input.GroupBy,
 			Metrics:    ontologyMetrics(input.Metrics),
-			Where:      input.Where,
+			Where:      where,
 			PageSize:   platformRowsLimit(input.Limit, secOpts),
 			PageOffset: input.Offset,
 		}
@@ -404,8 +438,12 @@ func HandlePlatformOntologyStats(ctx context.Context, req *mcp.CallToolRequest, 
 	if property == "" {
 		return nil, PlatformReadOutput{Error: "property is required", RequestID: generateRequestID("platform_ontology_stats")}, nil
 	}
+	where, err := platformapi.NormalizeWhereCondition(input.Where)
+	if err != nil {
+		return nil, PlatformReadOutput{Error: err.Error(), RequestID: generateRequestID("platform_ontology_stats")}, nil
+	}
 	return platformIDRead(ctx, "platform_ontology_stats", input.ID, input.Fields, func(ctx context.Context, session *platformToolSession, id string) (any, int, bool, error) {
-		stats, err := session.Client.OntologyStats(ctx, session.Host.DefaultProjectID, id, property, input.Where)
+		stats, err := session.Client.OntologyStats(ctx, session.Host.DefaultProjectID, id, property, where)
 		if stats == nil {
 			return stats, 0, false, err
 		}
@@ -444,13 +482,17 @@ func HandlePlatformOntologySimilar(ctx context.Context, req *mcp.CallToolRequest
 	if strings.TrimSpace(input.RowID) == "" {
 		return nil, PlatformReadOutput{Error: "row_id is required", RequestID: generateRequestID("platform_ontology_similar")}, nil
 	}
+	where, err := platformapi.NormalizeWhereCondition(input.Where)
+	if err != nil {
+		return nil, PlatformReadOutput{Error: err.Error(), RequestID: generateRequestID("platform_ontology_similar")}, nil
+	}
 	return platformIDRead(ctx, "platform_ontology_similar", input.EntityID, input.Fields, func(ctx context.Context, session *platformToolSession, entityID string) (any, int, bool, error) {
 		result, err := session.Client.OntologySimilar(ctx, session.Host.DefaultProjectID, platformapi.OntologySimilarInput{
 			EntityID:   entityID,
 			RowID:      strings.TrimSpace(input.RowID),
 			TopK:       input.TopK,
 			Properties: input.Properties,
-			Where:      input.Where,
+			Where:      where,
 		})
 		if result == nil {
 			return result, 0, false, err
@@ -575,9 +617,9 @@ where grammar: {"status":"open"}, {"amount":{"gte":100}}, {"_or":[{"region":"EU"
 
 const descPlatformOntologyAggregate = `Compute exact SQL aggregates (COUNT, SUM, AVG, MIN, MAX) over one ontology, optionally grouped and filtered.
 
-Pass group_by for one row per group and metrics for the values; omit group_by for a single total row. where is a platform WhereCondition object (Type Atomic/And/Or). Prefer this over whodb_platform_ontology_query when exact totals matter or the entity is large. Results are capped by limit and the MCP --max-rows setting.`
+Pass group_by for one row per group and metrics for the values; omit group_by for a single total row. where uses the same grammar as whodb_platform_ontology_query (for example {"status":"open","amount":{"gte":100}}); a raw platform WhereCondition object is also accepted. Prefer this over whodb_platform_ontology_query when exact totals matter or the entity is large. Results are capped by limit and the MCP --max-rows setting.`
 
-const descPlatformOntologyStats = `Return min, max, total and non-null counts for one ontology property, optionally filtered by a WhereCondition. Cheap way to profile a column before querying.`
+const descPlatformOntologyStats = `Return min, max, total and non-null counts for one ontology property, optionally filtered with the shared where grammar. Cheap way to profile a column before querying.`
 
 const descPlatformOntologyDescribe = `Describe ontologies in plain text plus structured entities, fields and relationships. Call this first when answering a data question so property names and links are known. Empty entities describes the whole project.`
 

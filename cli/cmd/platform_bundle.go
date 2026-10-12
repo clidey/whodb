@@ -292,7 +292,7 @@ func executePlatformBundlePlanCLI(ctx context.Context, session *platformSession,
 			action.Action = "created"
 			continue
 		}
-		spec, variables, err := buildGenericResourceVariables(projectID, genericResourceWriteInput{Resource: action.Resource, Action: action.Action, ID: action.TargetID}, platform.BundleMutationPayload(action))
+		spec, variables, err := buildGenericResourceVariables(session.Host.DefaultOrgID, projectID, genericResourceWriteInput{Resource: action.Resource, Action: action.Action, ID: action.TargetID}, platform.BundleMutationPayload(action))
 		if err != nil {
 			action.Action = "failed"
 			action.Reason = err.Error()

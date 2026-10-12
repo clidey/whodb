@@ -43,6 +43,9 @@ type GenericWriteSpec struct {
 	NeedsID         bool
 	IdentityField   string
 	InjectProjectID bool
+	// InjectOrgID fills orgId from the selected organization when the payload
+	// does not provide one.
+	InjectOrgID bool
 }
 
 // PayloadShape describes the payload_json object expected for one generic write.
@@ -136,23 +139,23 @@ var GenericWriteSpecs = map[string]GenericWriteSpec{
 	"action:import:package":                       {Resource: "package", Action: "import", Mutation: "ImportPackage", Mode: GenericWriteModeInput},
 	"action:import_shared:package":                {Resource: "package", Action: "import_shared", Mutation: "ImportSharedPackage", Mode: GenericWriteModeInput},
 	"action:create_share:package":                 {Resource: "package", Action: "create_share", Mutation: "CreatePackageShare", Mode: GenericWriteModeInput},
-	"action:rename:organization":                  {Resource: "organization", Action: "rename", Mutation: "RenameOrganization", Mode: GenericWriteModeDirect},
-	"action:delete:organization":                  {Resource: "organization", Action: "delete", Mutation: "DeleteOrganization", Mode: GenericWriteModeDirect},
-	"action:upsert_domain:organization":           {Resource: "organization", Action: "upsert_domain", Mutation: "UpsertOrganizationDomain", Mode: GenericWriteModeDirect},
+	"action:rename:organization":                  {Resource: "organization", Action: "rename", Mutation: "RenameOrganization", Mode: GenericWriteModeDirect, InjectOrgID: true},
+	"action:delete:organization":                  {Resource: "organization", Action: "delete", Mutation: "DeleteOrganization", Mode: GenericWriteModeDirect, InjectOrgID: true},
+	"action:upsert_domain:organization":           {Resource: "organization", Action: "upsert_domain", Mutation: "UpsertOrganizationDomain", Mode: GenericWriteModeDirect, InjectOrgID: true},
 	"action:delete_domain:organization":           {Resource: "organization", Action: "delete_domain", Mutation: "DeleteOrganizationDomain", Mode: GenericWriteModeID, NeedsID: true},
-	"action:create_sso:organization":              {Resource: "organization", Action: "create_sso", Mutation: "CreateOrganizationSSOProvider", Mode: GenericWriteModeDirect},
+	"action:create_sso:organization":              {Resource: "organization", Action: "create_sso", Mutation: "CreateOrganizationSSOProvider", Mode: GenericWriteModeDirect, InjectOrgID: true},
 	"action:update_sso:organization":              {Resource: "organization", Action: "update_sso", Mutation: "UpdateOrganizationSSOProvider", Mode: GenericWriteModeDirect, NeedsID: true},
 	"action:delete_sso:organization":              {Resource: "organization", Action: "delete_sso", Mutation: "DeleteOrganizationSSOProvider", Mode: GenericWriteModeID, NeedsID: true},
-	"action:invite_user:organization":             {Resource: "organization", Action: "invite_user", Mutation: "InviteUser", Mode: GenericWriteModeInput},
-	"action:reinvite_user:organization":           {Resource: "organization", Action: "reinvite_user", Mutation: "ReinviteUser", Mode: GenericWriteModeDirect},
-	"action:remove_user:organization":             {Resource: "organization", Action: "remove_user", Mutation: "RemoveUser", Mode: GenericWriteModeDirect},
+	"action:invite_user:organization":             {Resource: "organization", Action: "invite_user", Mutation: "InviteUser", Mode: GenericWriteModeInput, InjectOrgID: true},
+	"action:reinvite_user:organization":           {Resource: "organization", Action: "reinvite_user", Mutation: "ReinviteUser", Mode: GenericWriteModeDirect, InjectOrgID: true},
+	"action:remove_user:organization":             {Resource: "organization", Action: "remove_user", Mutation: "RemoveUser", Mode: GenericWriteModeDirect, InjectOrgID: true},
 	"action:grant_access:organization":            {Resource: "organization", Action: "grant_access", Mutation: "GrantAccess", Mode: GenericWriteModeInput},
 	"action:revoke_access:organization":           {Resource: "organization", Action: "revoke_access", Mutation: "RevokeAccess", Mode: GenericWriteModeInput},
 	"action:share_by_email:resource":              {Resource: "resource", Action: "share_by_email", Mutation: "ShareByEmail", Mode: GenericWriteModeDirect},
 	"action:transfer_ownership_by_email:resource": {Resource: "resource", Action: "transfer_ownership_by_email", Mutation: "TransferOwnershipByEmail", Mode: GenericWriteModeDirect},
 	"action:transfer_ownership:resource":          {Resource: "resource", Action: "transfer_ownership", Mutation: "TransferOwnership", Mode: GenericWriteModeDirect},
 	"action:claim_orphan:resource":                {Resource: "resource", Action: "claim_orphan", Mutation: "ClaimOrphan", Mode: GenericWriteModeDirect},
-	"action:create_team:organization":             {Resource: "organization", Action: "create_team", Mutation: "CreateTeam", Mode: GenericWriteModeDirect},
+	"action:create_team:organization":             {Resource: "organization", Action: "create_team", Mutation: "CreateTeam", Mode: GenericWriteModeDirect, InjectOrgID: true},
 	"action:delete_team:organization":             {Resource: "organization", Action: "delete_team", Mutation: "DeleteTeam", Mode: GenericWriteModeID, NeedsID: true},
 	"action:add_team_member:organization":         {Resource: "organization", Action: "add_team_member", Mutation: "AddTeamMember", Mode: GenericWriteModeDirect},
 	"action:remove_team_member:organization":      {Resource: "organization", Action: "remove_team_member", Mutation: "RemoveTeamMember", Mode: GenericWriteModeDirect},
@@ -365,7 +368,7 @@ var PayloadShapes = map[string]PayloadShape{
 	"action:invite_user:organization": {
 		Key: "action:invite_user:organization", Resource: "organization", Action: "invite_user", Description: "Invite a user to one organization. Resource grants must be provided explicitly and are not inferred from organization membership.",
 		Fields: []PayloadField{
-			{Name: "orgId", Type: "string", Required: true, Description: "Organization id receiving the member"},
+			{Name: "orgId", Type: "string", Description: "Organization id; defaults to the selected organization"},
 			{Name: "email", Type: "string", Required: true, Description: "Email address to invite"},
 			{Name: "firstName", Type: "string", Description: "Optional first name"},
 			{Name: "lastName", Type: "string", Description: "Optional last name"},

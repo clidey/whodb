@@ -298,7 +298,7 @@ func TestPlatformOntologyFastLookupSubcommandsRegistered(t *testing.T) {
 }
 
 func TestBuildGenericResourceVariablesInjectsProjectAndID(t *testing.T) {
-	spec, variables, err := buildGenericResourceVariables("proj-1", genericResourceWriteInput{
+	spec, variables, err := buildGenericResourceVariables("org-1", "proj-1", genericResourceWriteInput{
 		Resource: "dataset",
 		Action:   "update",
 		ID:       "dataset-1",
@@ -320,7 +320,7 @@ func TestBuildGenericResourceVariablesInjectsProjectAndID(t *testing.T) {
 
 func TestBuildGenericResourceVariablesUsesConfiguredIdentityField(t *testing.T) {
 	payload := map[string]any{"document": map[string]any{"actions": map[string]any{}}, "expectedRevision": 1}
-	spec, variables, err := buildGenericResourceVariables("proj-1", genericResourceWriteInput{
+	spec, variables, err := buildGenericResourceVariables("org-1", "proj-1", genericResourceWriteInput{
 		Resource: "ontology",
 		Action:   "save_behavior",
 		ID:       "ontology-1",
@@ -341,7 +341,7 @@ func TestBuildGenericResourceVariablesUsesConfiguredIdentityField(t *testing.T) 
 }
 
 func TestBuildGenericResourceVariablesSupportsHyphenatedTokens(t *testing.T) {
-	spec, variables, err := buildGenericResourceVariables("proj-1", genericResourceWriteInput{
+	spec, variables, err := buildGenericResourceVariables("org-1", "proj-1", genericResourceWriteInput{
 		Resource: "ai-provider",
 		Action:   "update",
 		ID:       "provider-1",
@@ -362,7 +362,7 @@ func TestBuildGenericResourceVariablesSupportsHyphenatedTokens(t *testing.T) {
 }
 
 func TestBuildGenericResourceVariablesFileUpload(t *testing.T) {
-	spec, variables, err := buildGenericResourceVariables("proj-1", genericResourceWriteInput{
+	spec, variables, err := buildGenericResourceVariables("org-1", "proj-1", genericResourceWriteInput{
 		Resource: "file",
 		Action:   "upload",
 	}, map[string]any{"file_path": "/tmp/report.csv", "folderId": "folder-1"})
@@ -382,7 +382,7 @@ func TestBuildGenericResourceVariablesFileUpload(t *testing.T) {
 }
 
 func TestBuildGenericResourceVariablesPromoteFileToDataset(t *testing.T) {
-	spec, variables, err := buildGenericResourceVariables("proj-1", genericResourceWriteInput{
+	spec, variables, err := buildGenericResourceVariables("org-1", "proj-1", genericResourceWriteInput{
 		Resource: "file",
 		Action:   "promote_to_dataset",
 		ID:       "file-1",
@@ -408,7 +408,7 @@ func TestBuildGenericResourceVariablesPromoteFileToDataset(t *testing.T) {
 }
 
 func TestBuildGenericResourceVariablesFolderDeleteConfirmsNestedDeletion(t *testing.T) {
-	spec, variables, err := buildGenericResourceVariables("proj-1", genericResourceWriteInput{
+	spec, variables, err := buildGenericResourceVariables("org-1", "proj-1", genericResourceWriteInput{
 		Resource: "folder",
 		Action:   "delete",
 		ID:       "folder-1",
@@ -425,7 +425,7 @@ func TestBuildGenericResourceVariablesFolderDeleteConfirmsNestedDeletion(t *test
 }
 
 func TestBuildGenericResourceVariablesOntologyRecordUsesEntityID(t *testing.T) {
-	spec, variables, err := buildGenericResourceVariables("proj-1", genericResourceWriteInput{
+	spec, variables, err := buildGenericResourceVariables("org-1", "proj-1", genericResourceWriteInput{
 		Resource: "ontology",
 		Action:   "add_record",
 		ID:       "ontology-1",

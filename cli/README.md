@@ -1133,10 +1133,13 @@ Agents answer questions about ontology data without paging through rows:
 4. `whodb_platform_ontology_rows` or `whodb_platform_ontology_follow_link` to
    drill into the rows behind a number.
 
-The `where` object for `ontology_query` uses `{prop: value}`,
+Every ontology read tool accepts the same `where` object: `{prop: value}`,
 `{prop: {op: value}}` and `_and` / `_or` lists with operators `eq`, `neq`,
-`gt`, `gte`, `lt`, `lte`, `contains`, `icontains` and `isnull`. The aggregate
-and stats tools take the platform `WhereCondition` object instead.
+`gt`, `gte`, `lt`, `lte`, `contains`, `icontains`, `startswith`, `in`, `nin`,
+`between` and `isnull`. The aggregate, stats and similarity tools translate it
+to the platform `WhereCondition` for you; a raw `WhereCondition` object is still
+accepted. Organization-scoped actions default `orgId` to the selected
+organization, so it only needs to be passed when targeting another organization.
 
 #### Bulk inserts, run control, restore and purge
 

@@ -304,9 +304,12 @@ write and confirmation tools are hidden in read-only or safe modes.
 Answering a data question: describe first (`whodb_platform_ontology_describe`),
 profile with `whodb_platform_ontology_stats`, then use
 `whodb_platform_ontology_aggregate` for exact totals or
-`whodb_platform_ontology_query` for filtered rows, search and joins. The query
-is a bounded in-memory scan (`scan_limit` default 1000, max 5000) and rejects
-policy-protected ontologies, which only allow `whodb_platform_ontology_rows`.
+`whodb_platform_ontology_query` for filtered rows, search and joins. All of them
+share one `where` grammar (`{prop: value}`, `{prop: {op: value}}`, `_and`,
+`_or`). The query is a bounded in-memory scan (`scan_limit` default 1000, max
+5000); when the matched total reaches the scan limit the tool adds a warning so
+the agent switches to the aggregate for exact numbers. Policy-protected
+ontologies only allow `whodb_platform_ontology_rows`.
 `whodb_platform_workflow_recipe` returns the same steps for goals that mention
 counts, totals, reports or questions, and a `bulk_import` recipe built around
 `whodb_platform_add_ontology_records` with an `idempotency_key`.
@@ -319,6 +322,11 @@ Writes added for these capabilities go through the generic tools and
 `organization create_service_account|create_service_account_key|revoke_service_account_key|delete_service_account|rename_team`,
 `function generate_test_input`, and `package add_changelog|add_media|review`.
 Payload shapes for all of them are published in `whodb://platform/schema`.
+
+The isolated CLI e2e stack (`ee/dev/run-cli-platform-e2e.sh`) now includes a
+`function-docker` dind sidecar sharing the backend's `TMPDIR`, so function test,
+execute, start_run, wait and cancel run for real in e2e. Embeddings remain
+opt-in through the dev stack's `embeddings` compose profile.
 
 Operations that older hosted deployments do not advertise in their platform
 manifest (project restore and purge, ontology sharing and references, team

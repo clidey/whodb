@@ -95,8 +95,8 @@ func init() {
 		"action:generate_test_input:function":            {Resource: "function", Action: "generate_test_input", Mutation: "GenerateFunctionTestInput", Mode: GenericWriteModeInput, NeedsID: true, IdentityField: "functionId", InjectProjectID: true},
 		"action:cancel_run:transform":                    {Resource: "transform", Action: "cancel_run", Mutation: "CancelTransformRun", Mode: GenericWriteModeDirect, NeedsID: true, IdentityField: "transformId", InjectProjectID: true},
 		"action:cancel_generation:app":                   {Resource: "app", Action: "cancel_generation", Mutation: "CancelAppGeneration", Mode: GenericWriteModeDirect, NeedsID: true, IdentityField: "appId"},
-		"action:restore:project":                         {Resource: "project", Action: "restore", Mutation: "RestoreProject", Mode: GenericWriteModeDirect, NeedsID: true},
-		"action:purge:project":                           {Resource: "project", Action: "purge", Mutation: "PurgeProject", Mode: GenericWriteModeDirect, NeedsID: true},
+		"action:restore:project":                         {Resource: "project", Action: "restore", Mutation: "RestoreProject", Mode: GenericWriteModeDirect, NeedsID: true, InjectOrgID: true},
+		"action:purge:project":                           {Resource: "project", Action: "purge", Mutation: "PurgeProject", Mode: GenericWriteModeDirect, NeedsID: true, InjectOrgID: true},
 		"action:restore:file":                            {Resource: "file", Action: "restore", Mutation: "RestoreProjectFile", Mode: GenericWriteModeProjectID, NeedsID: true},
 		"action:purge:file":                              {Resource: "file", Action: "purge", Mutation: "PurgeProjectFile", Mode: GenericWriteModeProjectID, NeedsID: true},
 		"action:restore:folder":                          {Resource: "folder", Action: "restore", Mutation: "RestoreProjectFolder", Mode: GenericWriteModeProjectID, NeedsID: true},
@@ -104,10 +104,10 @@ func init() {
 		"create:lineage_provider":                        {Resource: "lineage_provider", Action: "create", Mutation: "SaveLineageProvider", Mode: GenericWriteModeInput, InjectProjectID: true},
 		"update:lineage_provider":                        {Resource: "lineage_provider", Action: "update", Mutation: "SaveLineageProvider", Mode: GenericWriteModeInput, NeedsID: true, InjectProjectID: true},
 		"delete:lineage_provider":                        {Resource: "lineage_provider", Action: "delete", Mutation: "DeleteLineageProvider", Mode: GenericWriteModeDirect, NeedsID: true, IdentityField: "providerId", InjectProjectID: true},
-		"action:create_service_account:organization":     {Resource: "organization", Action: "create_service_account", Mutation: "CreateServiceAccount", Mode: GenericWriteModeDirect},
-		"action:delete_service_account:organization":     {Resource: "organization", Action: "delete_service_account", Mutation: "DeleteServiceAccount", Mode: GenericWriteModeDirect, NeedsID: true},
-		"action:create_service_account_key:organization": {Resource: "organization", Action: "create_service_account_key", Mutation: "CreateServiceAccountKey", Mode: GenericWriteModeDirect, NeedsID: true, IdentityField: "serviceAccountId"},
-		"action:revoke_service_account_key:organization": {Resource: "organization", Action: "revoke_service_account_key", Mutation: "RevokeServiceAccountKey", Mode: GenericWriteModeDirect, NeedsID: true, IdentityField: "keyId"},
+		"action:create_service_account:organization":     {Resource: "organization", Action: "create_service_account", Mutation: "CreateServiceAccount", Mode: GenericWriteModeDirect, InjectOrgID: true},
+		"action:delete_service_account:organization":     {Resource: "organization", Action: "delete_service_account", Mutation: "DeleteServiceAccount", Mode: GenericWriteModeDirect, NeedsID: true, InjectOrgID: true},
+		"action:create_service_account_key:organization": {Resource: "organization", Action: "create_service_account_key", Mutation: "CreateServiceAccountKey", Mode: GenericWriteModeDirect, NeedsID: true, IdentityField: "serviceAccountId", InjectOrgID: true},
+		"action:revoke_service_account_key:organization": {Resource: "organization", Action: "revoke_service_account_key", Mutation: "RevokeServiceAccountKey", Mode: GenericWriteModeDirect, NeedsID: true, IdentityField: "keyId", InjectOrgID: true},
 		"action:rename_team:organization":                {Resource: "organization", Action: "rename_team", Mutation: "RenameTeam", Mode: GenericWriteModeDirect, NeedsID: true, IdentityField: "teamId"},
 		"action:add_changelog:package":                   {Resource: "package", Action: "add_changelog", Mutation: "AddPackageChangelog", Mode: GenericWriteModeInput, NeedsID: true, IdentityField: "packageId"},
 		"action:add_media:package":                       {Resource: "package", Action: "add_media", Mutation: "AddPackageMedia", Mode: GenericWriteModeInput, NeedsID: true, IdentityField: "packageId"},
@@ -117,7 +117,7 @@ func init() {
 		GenericWriteSpecs[key] = spec
 	}
 
-	orgID := PayloadField{Name: "orgId", Type: "string", Required: true, Description: "Organization id (see the scope of whodb_platform_status)"}
+	orgID := PayloadField{Name: "orgId", Type: "string", Description: "Organization id; defaults to the selected organization"}
 	shapes := []PayloadShape{
 		{
 			Key: "action:add_records:ontology", Resource: "ontology", Action: "add_records", Description: "Insert many ontology rows in one call. id becomes entityId and projectId is injected. Pass idempotencyKey so a retry does not insert twice. Prefer whodb_platform_add_ontology_records, which accepts plain objects.",
@@ -172,11 +172,11 @@ func init() {
 		{Key: "action:cancel_generation:app", Resource: "app", Action: "cancel_generation", Description: "Stop an in-progress AI app generation. id becomes appId."},
 		{
 			Key: "action:restore:project", Resource: "project", Action: "restore", Description: "Restore a soft-deleted project. id is the project id. Find candidates with whodb_platform_deleted_resources.",
-			Fields: []PayloadField{{Name: "orgId", Type: "string", Description: "Organization id; defaults to the project's organization"}},
+			Fields: []PayloadField{{Name: "orgId", Type: "string", Description: "Organization id; defaults to the selected organization"}},
 		},
 		{
 			Key: "action:purge:project", Resource: "project", Action: "purge", Description: "Permanently delete a soft-deleted project and all of its data. id is the project id. Irreversible.",
-			Fields: []PayloadField{{Name: "orgId", Type: "string", Description: "Organization id; defaults to the project's organization"}},
+			Fields: []PayloadField{{Name: "orgId", Type: "string", Description: "Organization id; defaults to the selected organization"}},
 		},
 		{Key: "action:restore:file", Resource: "file", Action: "restore", Description: "Restore a soft-deleted project file. id is the file id; projectId is injected."},
 		{Key: "action:purge:file", Resource: "file", Action: "purge", Description: "Permanently delete a soft-deleted project file. id is the file id; projectId is injected. Irreversible."},
