@@ -528,7 +528,7 @@ func HandlePlatformBundleImport(ctx context.Context, req *mcp.CallToolRequest, i
 	}
 	token, expiresAt := storePendingPlatformAction(action, ctx)
 	TrackToolCall(ctx, "platform_bundle_import", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"confirmation_required": true})
-	return nil, platformGenericConfirmationOutput(requestID, token, expiresAt, "bundle_import", action.Preview()), nil
+	return nil, platformGenericConfirmationOutput(ctx, requestID, token, expiresAt, "bundle_import", action.Preview()), nil
 }
 
 // HandlePlatformClone clones a dataset, ontology, transform, or function.

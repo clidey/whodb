@@ -234,7 +234,7 @@ func handlePlatformGenericWrite(ctx context.Context, toolName string, input Plat
 			pending, err := getPendingPlatformAction(token, ctx)
 			if err == nil {
 				releasePendingPlatformAction(token, ctx)
-				return nil, platformGenericConfirmationOutput(requestID, token, pending.ExpiresAt, pending.Mutation, pending.Preview()), nil
+				return nil, platformGenericConfirmationOutput(ctx, requestID, token, pending.ExpiresAt, pending.Mutation, pending.Preview()), nil
 			}
 		}
 		if platformIdempotencyCompleted(action.IdempotencyKey, ctx) {
@@ -253,7 +253,7 @@ func handlePlatformGenericWrite(ctx context.Context, toolName string, input Plat
 	}
 	token, expiresAt := storePendingPlatformAction(action, ctx)
 	TrackToolCall(ctx, toolName, requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"confirmation_required": true, "mutation": spec.Mutation})
-	return nil, platformGenericConfirmationOutput(requestID, token, expiresAt, spec.Mutation, action.Preview()), nil
+	return nil, platformGenericConfirmationOutput(ctx, requestID, token, expiresAt, spec.Mutation, action.Preview()), nil
 }
 
 func scopedPlatformIdempotencyKey(session *platformToolSession, input PlatformGenericWriteInput, operationKind string) string {
@@ -742,14 +742,14 @@ func sensitivePlatformWriteKey(key string) bool {
 	return strings.Contains(key, "password") || strings.Contains(key, "secret") || strings.Contains(key, "key") || strings.Contains(key, "token") || strings.Contains(key, "value") || strings.Contains(key, "content") || strings.Contains(key, "path")
 }
 
-func platformGenericConfirmationOutput(requestID, token string, expiresAt time.Time, mutation string, preview *PlatformActionPreview) PlatformGenericWriteOutput {
+func platformGenericConfirmationOutput(ctx context.Context, requestID, token string, expiresAt time.Time, mutation string, preview *PlatformActionPreview) PlatformGenericWriteOutput {
 	return PlatformGenericWriteOutput{
 		ConfirmationRequired: true,
 		ConfirmationToken:    token,
 		ConfirmationAction:   mutation,
 		ConfirmationPreview:  preview,
 		ConfirmationExpiry:   expiresAt.UTC().Format(time.RFC3339),
-		Warning:              platformConfirmationWarning(preview),
+		Warning:              platformConfirmationWarning(ctx, preview),
 		RequestID:            requestID,
 	}
 }

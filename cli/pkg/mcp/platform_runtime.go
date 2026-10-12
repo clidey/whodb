@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"sort"
 	"sync"
 	"time"
 
@@ -24,6 +25,96 @@ type PlatformState struct {
 	mu                 sync.RWMutex
 }
 
+// PendingApproval describes a hosted write awaiting approval in WhoDB.
+type PendingApproval struct {
+	Token     string
+	Preview   *PlatformActionPreview
+	ExpiresAt time.Time
+}
+
+// PendingApprovals returns unexpired actions for the given account.
+func (s *PlatformState) PendingApprovals(accountID string) []PendingApproval {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	now := time.Now()
+	var result []PendingApproval
+	for token, action := range s.Pending {
+		if action.AccountID == accountID && now.Before(action.ExpiresAt) && !action.BrowserApproved {
+			result = append(result, PendingApproval{Token: token, Preview: action.Preview(), ExpiresAt: action.ExpiresAt})
+		}
+	}
+	sort.Slice(result, func(i, j int) bool { return result[i].ExpiresAt.Before(result[j].ExpiresAt) })
+	return result
+}
+
+// DecidePendingApproval records browser approval or discards a pending action.
+func (s *PlatformState) DecidePendingApproval(accountID, token string, approve bool) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	action := s.Pending[token]
+	if action == nil || action.AccountID != accountID || !time.Now().Before(action.ExpiresAt) || action.InFlight {
+		return false
+	}
+	if approve {
+		action.BrowserApproved = true
+	} else {
+		delete(s.Pending, token)
+		if action.IdempotencyKey != "" {
+			delete(s.IdempotencyPending, action.IdempotencyKey)
+		}
+	}
+	return true
+}
+
+// PruneExpired removes sensitive actions and old workflow state after their lifetime.
+func (s *PlatformState) PruneExpired(now time.Time) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for token, action := range s.Pending {
+		if !now.Before(action.ExpiresAt) {
+			delete(s.Pending, token)
+		}
+	}
+	for key, token := range s.IdempotencyPending {
+		if s.Pending[token] == nil {
+			delete(s.IdempotencyPending, key)
+		}
+	}
+	for key, completed := range s.IdempotencyDone {
+		if !now.Before(completed.Add(30 * 24 * time.Hour)) {
+			delete(s.IdempotencyDone, key)
+		}
+	}
+	plans := s.Workflows[:0]
+	for _, plan := range s.Workflows {
+		if now.Before(plan.UpdatedAt.Add(30 * 24 * time.Hour)) {
+			plans = append(plans, plan)
+		}
+	}
+	s.Workflows = plans
+}
+
+// NextCleanupAt returns when persisted state next needs pruning, or zero if empty.
+// The caller must serialize state access; checkpoints can run while mu is held.
+func (s *PlatformState) NextCleanupAt() time.Time {
+	var next time.Time
+	add := func(t time.Time) {
+		if next.IsZero() || t.Before(next) {
+			next = t
+		}
+	}
+	for _, action := range s.Pending {
+		add(action.ExpiresAt)
+	}
+	for _, completed := range s.IdempotencyDone {
+		add(completed.Add(30 * 24 * time.Hour))
+	}
+	for _, plan := range s.Workflows {
+		add(plan.UpdatedAt.Add(30 * 24 * time.Hour))
+	}
+	return next
+}
+
 var defaultPlatformState = NewPlatformState()
 
 // NewPlatformState creates isolated platform execution state.
@@ -34,11 +125,12 @@ func NewPlatformState() *PlatformState {
 // PlatformRuntime supplies an embedding's identity, transport and principal-owned
 // state. It never reads local login configuration or follows a different host.
 type PlatformRuntime struct {
-	Host      string
-	UserID    string
-	Email     string
-	Transport http.RoundTripper
-	State     *PlatformState
+	Host                   string
+	UserID                 string
+	Email                  string
+	Transport              http.RoundTripper
+	State                  *PlatformState
+	RequireBrowserApproval bool
 }
 
 type platformRuntimeKey struct{}
@@ -77,6 +169,20 @@ func NewPlatformServer(readOnly bool, applicationVersion string) *mcp.Server {
 	server.AddReceivingMiddleware(toolErrorMiddleware)
 	registerPlatformSurface(server, options)
 	return server
+}
+
+// PlatformToolRequiresWrite reports whether a platform tool needs write scope.
+// Unknown names fail closed so newly added tools cannot bypass hosted scope checks.
+func PlatformToolRequiresWrite(name string) bool {
+	if name == "whodb_platform_pending" || name == "whodb_platform_confirm" {
+		return true
+	}
+	for _, tool := range platformToolDefinitions() {
+		if tool.Name == name {
+			return tool.Annotations == nil || !tool.Annotations.ReadOnlyHint
+		}
+	}
+	return true
 }
 
 func (runtime *PlatformRuntime) loadSession(ctx context.Context) (*platformToolSession, error) {

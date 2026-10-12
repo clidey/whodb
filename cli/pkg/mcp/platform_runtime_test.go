@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -98,6 +99,50 @@ func TestEmbeddedStateIsolationAndPersistence(t *testing.T) {
 	consumePendingPlatformAction(token, ctxA)
 	if !platformIdempotencyCompleted("same-key", ctxA) || platformIdempotencyCompleted("same-key", ctxB) {
 		t.Fatal("completion isolation")
+	}
+}
+
+func TestHostedApprovalOwnershipAndExpiry(t *testing.T) {
+	if PlatformToolRequiresWrite("whodb_platform_orgs") || !PlatformToolRequiresWrite("whodb_platform_project_create") || !PlatformToolRequiresWrite("whodb_platform_pending") || !PlatformToolRequiresWrite("unrecognized_tool") {
+		t.Fatal("hosted write scope classification failed")
+	}
+	now := time.Now()
+	state := NewPlatformState()
+	state.Pending["active"] = &PendingPlatformAction{AccountID: "alice", ExpiresAt: now.Add(time.Minute)}
+	state.Pending["expired"] = &PendingPlatformAction{AccountID: "alice", ExpiresAt: now.Add(-time.Minute)}
+	state.IdempotencyPending["expired-key"] = "expired"
+	state.IdempotencyDone["old-key"] = now.Add(-31 * 24 * time.Hour)
+	state.Workflows = []platformWorkflowPlan{{ID: "old", UpdatedAt: now.Add(-31 * 24 * time.Hour)}}
+	if state.DecidePendingApproval("bob", "active", true) || state.DecidePendingApproval("alice", "expired", true) {
+		t.Fatal("cross-account or expired approval accepted")
+	}
+	if !state.DecidePendingApproval("alice", "active", true) || !state.Pending["active"].BrowserApproved {
+		t.Fatal("owner approval not recorded")
+	}
+	state.PruneExpired(now)
+	if state.Pending["expired"] != nil || state.IdempotencyPending["expired-key"] != "" || !state.IdempotencyDone["old-key"].IsZero() || len(state.Workflows) != 0 {
+		t.Fatal("expired sensitive action retained")
+	}
+	if state.NextCleanupAt().IsZero() {
+		t.Fatal("active action has no cleanup deadline")
+	}
+	if !state.DecidePendingApproval("alice", "active", false) || state.Pending["active"] != nil || !state.NextCleanupAt().IsZero() {
+		t.Fatal("rejected action retained")
+	}
+}
+
+func TestHostedCheckpointCanCalculateExpiryDuringClaim(t *testing.T) {
+	state := NewPlatformState()
+	state.Pending["token"] = &PendingPlatformAction{AccountID: "alice", ExpiresAt: time.Now().Add(time.Minute)}
+	state.Checkpoint = func() error {
+		if state.NextCleanupAt().IsZero() {
+			t.Fatal("checkpoint lost cleanup deadline")
+		}
+		return nil
+	}
+	ctx := WithPlatformRuntime(context.Background(), &PlatformRuntime{State: state})
+	if _, err := getPendingPlatformAction("token", ctx); err != nil {
+		t.Fatal(err)
 	}
 }
 

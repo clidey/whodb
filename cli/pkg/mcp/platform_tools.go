@@ -514,30 +514,31 @@ type PlatformFieldChange struct {
 
 // PendingPlatformAction stores a hosted platform write awaiting confirmation.
 type PendingPlatformAction struct {
-	AccountID      string
-	Token          string
-	Operation      string
-	Resource       string
-	Action         string
-	Summary        string
-	Host           string
-	OrgID          string
-	ProjectID      string
-	ProjectName    string
-	SourceID       string
-	SourceName     string
-	SourceType     string
-	Changes        []string
-	CreateInput    platformapi.CreateSourceInput
-	UpdateInput    platformapi.UpdateSourceInput
-	Mutation       string
-	Variables      map[string]any
-	BundlePlan     *platformapi.BundlePlan
-	WorkflowPlanID string
-	WorkflowSteps  int
-	IdempotencyKey string
-	ExpiresAt      time.Time
-	InFlight       bool // true while a confirm is actively executing this action
+	AccountID       string
+	Token           string
+	Operation       string
+	Resource        string
+	Action          string
+	Summary         string
+	Host            string
+	OrgID           string
+	ProjectID       string
+	ProjectName     string
+	SourceID        string
+	SourceName      string
+	SourceType      string
+	Changes         []string
+	CreateInput     platformapi.CreateSourceInput
+	UpdateInput     platformapi.UpdateSourceInput
+	Mutation        string
+	Variables       map[string]any
+	BundlePlan      *platformapi.BundlePlan
+	WorkflowPlanID  string
+	WorkflowSteps   int
+	IdempotencyKey  string
+	ExpiresAt       time.Time
+	InFlight        bool // true while a confirm is actively executing this action
+	BrowserApproved bool
 }
 
 // MarshalJSON ensures nil slices are serialized as [] instead of null.
@@ -1465,6 +1466,7 @@ func handlePlatformSourceCreate(ctx context.Context, req *mcp.CallToolRequest, i
 		ProjectName: session.Host.DefaultProjectName,
 		SourceName:  createInput.Name,
 		SourceType:  sourceType.ID,
+		Summary:     actionLabel,
 		Changes:     []string{"create source"},
 		CreateInput: createInput,
 	}
@@ -1479,7 +1481,7 @@ func handlePlatformSourceCreate(ctx context.Context, req *mcp.CallToolRequest, i
 	}
 	token, expiresAt := storePendingPlatformAction(action, ctx)
 	TrackToolCall(ctx, "platform_source_create", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"confirmation_required": true})
-	return nil, platformSourceConfirmationOutput(requestID, token, expiresAt, actionLabel, action.Preview()), nil
+	return nil, platformSourceConfirmationOutput(ctx, requestID, token, expiresAt, actionLabel, action.Preview()), nil
 }
 
 // HandlePlatformSourceUpdate prepares a hosted source update for confirmation.
@@ -1542,6 +1544,7 @@ func handlePlatformSourceUpdate(ctx context.Context, req *mcp.CallToolRequest, i
 		SourceID:    source.ID,
 		SourceName:  source.Name,
 		SourceType:  source.DatabaseType,
+		Summary:     actionLabel,
 		Changes:     changes,
 		UpdateInput: updateInput,
 	}
@@ -1556,7 +1559,7 @@ func handlePlatformSourceUpdate(ctx context.Context, req *mcp.CallToolRequest, i
 	}
 	token, expiresAt := storePendingPlatformAction(action, ctx)
 	TrackToolCall(ctx, "platform_source_update", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"confirmation_required": true})
-	return nil, platformSourceConfirmationOutput(requestID, token, expiresAt, actionLabel, action.Preview()), nil
+	return nil, platformSourceConfirmationOutput(ctx, requestID, token, expiresAt, actionLabel, action.Preview()), nil
 }
 
 func platformActionFieldChanges(action *PendingPlatformAction) []PlatformFieldChange {
@@ -1610,6 +1613,7 @@ func handlePlatformSourceDelete(ctx context.Context, req *mcp.CallToolRequest, i
 		SourceID:    source.ID,
 		SourceName:  source.Name,
 		SourceType:  source.DatabaseType,
+		Summary:     actionLabel,
 		Changes:     []string{"delete source"},
 	}
 	if !confirmWrites {
@@ -1627,7 +1631,7 @@ func handlePlatformSourceDelete(ctx context.Context, req *mcp.CallToolRequest, i
 	}
 	token, expiresAt := storePendingPlatformAction(action, ctx)
 	TrackToolCall(ctx, "platform_source_delete", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"confirmation_required": true})
-	return nil, platformSourceConfirmationOutput(requestID, token, expiresAt, actionLabel, action.Preview()), nil
+	return nil, platformSourceConfirmationOutput(ctx, requestID, token, expiresAt, actionLabel, action.Preview()), nil
 }
 
 func loadHostedPlatformToolSession(ctx context.Context) (*platformToolSession, error) {
@@ -2208,6 +2212,14 @@ func markPlatformIdempotencyCompletedLocked(key string, contexts ...context.Cont
 	state.IdempotencyDone[key] = time.Now()
 }
 
+func browserApprovedPlatformAction(token string, contexts ...context.Context) bool {
+	state := platformStateFor(contexts...)
+	state.mu.RLock()
+	defer state.mu.RUnlock()
+	action := state.Pending[token]
+	return action != nil && action.BrowserApproved && time.Now().Before(action.ExpiresAt)
+}
+
 // getPendingPlatformAction claims a pending action for execution, marking it
 // in-flight so concurrent confirm calls with the same token are rejected. This
 // prevents a get/consume race from executing the mutation twice. The token is
@@ -2376,19 +2388,22 @@ func platformSourceConfigChangeNames(values, advanced map[string]string) []strin
 	return changes
 }
 
-func platformSourceConfirmationOutput(requestID, token string, expiresAt time.Time, action string, preview *PlatformActionPreview) PlatformSourceWriteOutput {
+func platformSourceConfirmationOutput(ctx context.Context, requestID, token string, expiresAt time.Time, action string, preview *PlatformActionPreview) PlatformSourceWriteOutput {
 	return PlatformSourceWriteOutput{
 		ConfirmationRequired: true,
 		ConfirmationToken:    token,
 		ConfirmationAction:   action,
 		ConfirmationPreview:  preview,
 		ConfirmationExpiry:   expiresAt.UTC().Format(time.RFC3339),
-		Warning:              platformConfirmationWarning(preview),
+		Warning:              platformConfirmationWarning(ctx, preview),
 		RequestID:            requestID,
 	}
 }
 
-func platformConfirmationWarning(preview *PlatformActionPreview) string {
+func platformConfirmationWarning(ctx context.Context, preview *PlatformActionPreview) string {
+	if runtime := platformRuntimeFromContext(ctx); runtime != nil && runtime.RequireBrowserApproval {
+		return "Open " + runtime.Host + "/mcp-approvals in your browser and approve the pending write. Then call whodb_platform_confirm with the confirmation_token before it expires."
+	}
 	if preview == nil {
 		return "This hosted WhoDB platform write requires approval before it runs. Explain the pending change to the user, then call whodb_platform_confirm with the confirmation_token only after the user approves."
 	}
@@ -2435,7 +2450,7 @@ func platformMutationWriteOutput(ctx context.Context, requestID, toolName string
 	}
 	token, expiresAt := storePendingPlatformAction(action, ctx)
 	TrackToolCall(ctx, toolName, requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"confirmation_required": true})
-	return nil, platformGenericConfirmationOutput(requestID, token, expiresAt, action.Operation, action.Preview()), nil
+	return nil, platformGenericConfirmationOutput(ctx, requestID, token, expiresAt, action.Operation, action.Preview()), nil
 }
 
 // HandlePlatformPending lists pending hosted platform confirmations.
@@ -2484,10 +2499,17 @@ func HandlePlatformConfirm(ctx context.Context, req *mcp.CallToolRequest, input 
 		TrackToolCall(ctx, "platform_confirm", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "validation"})
 		return nil, ConfirmOutput{Error: err.Error(), RequestID: requestID}, nil
 	}
+	if runtime := platformRuntimeFromContext(ctx); runtime != nil && runtime.RequireBrowserApproval && !browserApprovedPlatformAction(input.Token, ctx) {
+		return nil, ConfirmOutput{Error: "Approve this write in WhoDB before confirming it here", RequestID: requestID}, nil
+	}
 	action, err := getPendingPlatformAction(input.Token, ctx)
 	if err != nil {
 		TrackToolCall(ctx, "platform_confirm", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "token_invalid"})
 		return nil, ConfirmOutput{Error: err.Error(), RequestID: requestID}, nil
+	}
+	if runtime := platformRuntimeFromContext(ctx); runtime != nil && runtime.RequireBrowserApproval && !action.BrowserApproved {
+		releasePendingPlatformAction(input.Token, ctx)
+		return nil, ConfirmOutput{Error: "Approve this write in WhoDB before confirming it here", RequestID: requestID}, nil
 	}
 	consumed := false
 	defer func() {
