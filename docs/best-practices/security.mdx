@@ -282,6 +282,12 @@ Ensure database management practices comply with relevant regulations:
 
 ## Query Security
 
+### DuckDB File Access
+
+In server mode, WhoDB disables external file access, automatic extension installation/loading, and community extensions on direct DuckDB connections, then locks those settings before running queries. SQL can still read and change tables in the connected DuckDB database, but file readers such as `read_csv` and `read_parquet`, `COPY` to or from external files, external `ATTACH`, and extension installation from external sources are unavailable through that connection. Prepare the DuckDB file with external data before connecting through WhoDB. Desktop and CLI mode retain local file access. DuckDB database paths containing `?` or `#` are unsupported because the DuckDB Go driver interprets those characters as connection-string syntax.
+
+These database settings limit file access through DuckDB SQL. They do not isolate the DuckDB engine from the WhoDB process; run untrusted workloads in a separate process if you need that boundary.
+
 ### SQL Injection Prevention
 
 While WhoDB uses parameterized queries internally, be cautious with:
