@@ -39,7 +39,7 @@ type PlatformSourceConstraintsInput struct {
 // PlatformSourceContentInput is the input for the whodb_platform_source_content tool.
 type PlatformSourceContentInput struct {
 	Source string   `json:"source" jsonschema:"Hosted source id or name"`
-	Ref    string   `json:"ref" jsonschema:"Object ref as kind:path, for example file:notes/report.txt"`
+	Ref    string   `json:"ref" jsonschema:"Object ref as kind:path, for example item:notes/report.txt"`
 	Fields []string `json:"fields,omitempty" jsonschema:"Top-level output fields to include. Prefer only fields needed now; call again with more fields if needed."`
 }
 
@@ -1000,7 +1000,7 @@ Use a source name or id and an object ref such as table:public.users. This tool 
 
 const descPlatformSourceContent = `Read content for one hosted source object when the source supports content reads.
 
-Use a source name or id and an object ref such as file:notes/report.txt. Prefer fields to request only the content metadata or body fields needed now, then call again with more fields only if needed. Text content is capped in MCP output.`
+Use a source name or id and an object ref such as item:notes/report.txt. Prefer fields to request only the content metadata or body fields needed now, then call again with more fields only if needed. Text content is capped in MCP output.`
 
 const descPlatformSecrets = `List hosted project secret metadata and usage. Use name to filter by secret name when known.
 

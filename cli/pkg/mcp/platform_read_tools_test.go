@@ -628,7 +628,7 @@ func TestHandlePlatformSourceContentPassesFieldsToClient(t *testing.T) {
 	})
 
 	fields := []string{"fileName", "sizeBytes"}
-	_, output, err := HandlePlatformSourceContent(context.Background(), nil, PlatformSourceContentInput{Source: "Warehouse", Ref: "file:notes/report.txt", Fields: fields})
+	_, output, err := HandlePlatformSourceContent(context.Background(), nil, PlatformSourceContentInput{Source: "Warehouse", Ref: "item:notes/report.txt", Fields: fields})
 	if err != nil {
 		t.Fatalf("HandlePlatformSourceContent() error = %v", err)
 	}

@@ -2028,26 +2028,7 @@ func parseSourceObjectKinds(values []string) ([]platform.SourceObjectKind, error
 }
 
 func parseSourceObjectKind(value string) (platform.SourceObjectKind, error) {
-	normalized := strings.ToLower(strings.TrimSpace(value))
-	kinds := map[string]platform.SourceObjectKind{
-		"database":   "Database",
-		"schema":     "Schema",
-		"table":      "Table",
-		"view":       "View",
-		"collection": "Collection",
-		"index":      "Index",
-		"key":        "Key",
-		"item":       "Item",
-		"function":   "Function",
-		"procedure":  "Procedure",
-		"trigger":    "Trigger",
-		"sequence":   "Sequence",
-	}
-	kind, ok := kinds[normalized]
-	if !ok {
-		return "", fmt.Errorf("unsupported object kind %q", value)
-	}
-	return kind, nil
+	return platform.ParseSourceObjectKind(value)
 }
 
 func splitSourceObjectPath(value string) []string {

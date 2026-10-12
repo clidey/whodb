@@ -19,6 +19,7 @@ package platform
 import (
 	"fmt"
 	"sort"
+	"strings"
 )
 
 // User is the platform identity returned by WhoDB.
@@ -185,6 +186,30 @@ type SourceConfig struct {
 
 // SourceObjectKind identifies a source hierarchy object kind.
 type SourceObjectKind string
+
+// ParseSourceObjectKind converts a user-facing object kind to the GraphQL enum value.
+func ParseSourceObjectKind(value string) (SourceObjectKind, error) {
+	normalized := strings.ToLower(strings.TrimSpace(value))
+	kinds := map[string]SourceObjectKind{
+		"database":   "Database",
+		"schema":     "Schema",
+		"table":      "Table",
+		"view":       "View",
+		"collection": "Collection",
+		"index":      "Index",
+		"key":        "Key",
+		"item":       "Item",
+		"function":   "Function",
+		"procedure":  "Procedure",
+		"trigger":    "Trigger",
+		"sequence":   "Sequence",
+	}
+	kind, ok := kinds[normalized]
+	if !ok {
+		return "", fmt.Errorf("unsupported object kind %q", value)
+	}
+	return kind, nil
+}
 
 // Record is a key-value metadata entry returned by WhoDB.
 type Record struct {

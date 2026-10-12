@@ -535,6 +535,23 @@ func TestHandlePlatformSourceRowsCapsLimit(t *testing.T) {
 	}
 }
 
+func TestParsePlatformRequiredRefUsesGraphQLEnumKind(t *testing.T) {
+	ref, err := parsePlatformRequiredRef("table:public.users")
+	if err != nil {
+		t.Fatalf("parsePlatformRequiredRef() error = %v", err)
+	}
+	if ref.Kind != "Table" {
+		t.Fatalf("ref.Kind = %q, want Table", ref.Kind)
+	}
+	item, err := parsePlatformRequiredRef("item:notes/report.txt")
+	if err != nil {
+		t.Fatalf("parsePlatformRequiredRef() item error = %v", err)
+	}
+	if item.Kind != "Item" || len(item.Path) != 2 || item.Path[0] != "notes" || item.Path[1] != "report.txt" {
+		t.Fatalf("item ref = %#v, want Item notes/report.txt", item)
+	}
+}
+
 func TestHandlePlatformSourceDeleteAllowWriteExecutesImmediately(t *testing.T) {
 	client := &fakePlatformClient{}
 	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {

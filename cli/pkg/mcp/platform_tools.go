@@ -2667,7 +2667,15 @@ func parsePlatformRequiredRef(value string) (platformapi.SourceObjectRefInput, e
 	if !ok || strings.TrimSpace(kindValue) == "" || strings.TrimSpace(pathValue) == "" {
 		return platformapi.SourceObjectRefInput{}, fmt.Errorf("object ref must use kind:path, for example table:public.users")
 	}
-	parts := strings.Split(pathValue, ".")
+	kind, err := platformapi.ParseSourceObjectKind(kindValue)
+	if err != nil {
+		return platformapi.SourceObjectRefInput{}, err
+	}
+	separator := "."
+	if kind == "Item" || kind == "Key" {
+		separator = "/"
+	}
+	parts := strings.Split(pathValue, separator)
 	path := make([]string, 0, len(parts))
 	for _, part := range parts {
 		part = strings.TrimSpace(part)
@@ -2679,7 +2687,7 @@ func parsePlatformRequiredRef(value string) (platformapi.SourceObjectRefInput, e
 		return platformapi.SourceObjectRefInput{}, fmt.Errorf("object ref path is required")
 	}
 	return platformapi.SourceObjectRefInput{
-		Kind: platformapi.SourceObjectKind(strings.TrimSpace(kindValue)),
+		Kind: kind,
 		Path: path,
 	}, nil
 }
