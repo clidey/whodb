@@ -35,6 +35,43 @@ type ColumnDef struct {
 	IsPrimary  bool   `json:"isPrimary"`
 }
 
+// CreateFunctionInput mirrors the GraphQL type CreateFunctionInput.
+type CreateFunctionInput struct {
+	ProjectId           string                        `json:"projectId"`
+	Name                string                        `json:"name"`
+	Description         string                        `json:"description"`
+	Language            string                        `json:"language"`
+	EntryPoint          string                        `json:"entryPoint"`
+	TimeoutSeconds      *int                          `json:"timeoutSeconds,omitempty"`
+	Memory              *string                       `json:"memory,omitempty"`
+	Cpu                 *string                       `json:"cpu,omitempty"`
+	ExecutionMode       string                        `json:"executionMode"`
+	LiveBehavior        string                        `json:"liveBehavior"`
+	Files               []FunctionFileInput           `json:"files"`
+	Dependencies        []FunctionDependencyInput     `json:"dependencies"`
+	ProviderIds         []string                      `json:"providerIds,omitempty"`
+	OntologyIds         []string                      `json:"ontologyIds,omitempty"`
+	ReadOnlyOntologyIds []string                      `json:"readOnlyOntologyIds,omitempty"`
+	ProviderConfigs     []FunctionProviderConfigInput `json:"providerConfigs,omitempty"`
+	SecretBindings      []FunctionSecretBindingInput  `json:"secretBindings,omitempty"`
+	DefaultMaxTokens    *int                          `json:"defaultMaxTokens,omitempty"`
+	DefaultTemperature  *float64                      `json:"defaultTemperature,omitempty"`
+}
+
+// CreateOntologyReferenceInput mirrors the GraphQL type CreateOntologyReferenceInput.
+type CreateOntologyReferenceInput struct {
+	ConsumerProjectId string `json:"consumerProjectId"`
+	OwnerProjectId    string `json:"ownerProjectId"`
+	OntologyId        string `json:"ontologyId"`
+	Alias             string `json:"alias"`
+}
+
+// CreatedServiceAccountKey mirrors the GraphQL type CreatedServiceAccountKey.
+type CreatedServiceAccountKey struct {
+	Key    ServiceAccountKey `json:"key"`
+	RawKey string            `json:"rawKey"`
+}
+
 // Dataset mirrors the GraphQL type Dataset.
 type Dataset struct {
 	Id          string      `json:"id"`
@@ -79,6 +116,97 @@ type ExecuteOntologyActionResult struct {
 	RecordVersion    *int     `json:"recordVersion,omitempty"`
 	EmittedEventIds  []string `json:"emittedEventIds,omitempty"`
 	ValidationErrors []string `json:"validationErrors,omitempty"`
+}
+
+// FunctionDependencyInput mirrors the GraphQL type FunctionDependencyInput.
+type FunctionDependencyInput struct {
+	Name    string  `json:"name"`
+	Version *string `json:"version,omitempty"`
+}
+
+// FunctionExecutionMode travels as a string on the wire. Values: SYNC, ASYNC, LIVE.
+type FunctionExecutionMode = string
+
+// FunctionFileInput mirrors the GraphQL type FunctionFileInput.
+type FunctionFileInput struct {
+	Path    string `json:"path"`
+	Content string `json:"content"`
+}
+
+// FunctionLiveBehavior travels as a string on the wire. Values: REQUEST, SERVICE.
+type FunctionLiveBehavior = string
+
+// FunctionProviderConfig mirrors the GraphQL type FunctionProviderConfig.
+type FunctionProviderConfig struct {
+	ProviderId string `json:"providerId"`
+	Model      string `json:"model"`
+}
+
+// FunctionProviderConfigInput mirrors the GraphQL type FunctionProviderConfigInput.
+type FunctionProviderConfigInput struct {
+	ProviderId string `json:"providerId"`
+	Model      string `json:"model"`
+}
+
+// FunctionRun mirrors the GraphQL type FunctionRun.
+type FunctionRun struct {
+	Id            string  `json:"id"`
+	FunctionId    string  `json:"functionId"`
+	ExecutionMode string  `json:"executionMode"`
+	LiveBehavior  string  `json:"liveBehavior"`
+	Status        string  `json:"status"`
+	DesiredState  string  `json:"desiredState"`
+	Input         string  `json:"input"`
+	Output        *string `json:"output,omitempty"`
+	Logs          string  `json:"logs"`
+	Error         string  `json:"error"`
+	Attempt       int     `json:"attempt"`
+	CreatedBy     string  `json:"createdBy"`
+	StartedAt     *string `json:"startedAt,omitempty"`
+	HeartbeatAt   *string `json:"heartbeatAt,omitempty"`
+	CompletedAt   *string `json:"completedAt,omitempty"`
+	CreatedAt     string  `json:"createdAt"`
+	UpdatedAt     string  `json:"updatedAt"`
+}
+
+// FunctionRunStatus travels as a string on the wire. Values: QUEUED, STARTING, RUNNING, COMPLETED, FAILED, CANCELING, CANCELED.
+type FunctionRunStatus = string
+
+// FunctionSecretBinding mirrors the GraphQL type FunctionSecretBinding.
+type FunctionSecretBinding struct {
+	Name     string `json:"name"`
+	SecretId string `json:"secretId"`
+	Target   string `json:"target"`
+}
+
+// FunctionSecretBindingInput mirrors the GraphQL type FunctionSecretBindingInput.
+type FunctionSecretBindingInput struct {
+	Name     string `json:"name"`
+	SecretId string `json:"secretId"`
+	Target   string `json:"target"`
+}
+
+// FunctionTestResult mirrors the GraphQL type FunctionTestResult.
+type FunctionTestResult struct {
+	Output     *string `json:"output,omitempty"`
+	Logs       string  `json:"logs"`
+	DurationMs int     `json:"durationMs"`
+	Success    bool    `json:"success"`
+	Error      *string `json:"error,omitempty"`
+}
+
+// LineageProvider mirrors the GraphQL type LineageProvider.
+type LineageProvider struct {
+	Id           string `json:"id"`
+	ProjectId    string `json:"projectId"`
+	Name         string `json:"name"`
+	Endpoint     string `json:"endpoint"`
+	ReadEndpoint string `json:"readEndpoint"`
+	Namespace    string `json:"namespace"`
+	AuthType     string `json:"authType"`
+	Enabled      bool   `json:"enabled"`
+	CreatedAt    string `json:"createdAt"`
+	UpdatedAt    string `json:"updatedAt"`
 }
 
 // OntologyActionCapability mirrors the GraphQL type OntologyActionCapability.
@@ -184,6 +312,49 @@ type OntologyFastLookup struct {
 	Reason      string   `json:"reason"`
 	CreatedAt   string   `json:"createdAt"`
 	UpdatedAt   string   `json:"updatedAt"`
+}
+
+// OntologyFunction mirrors the GraphQL type OntologyFunction.
+type OntologyFunction struct {
+	Id                  string                       `json:"id"`
+	ProjectId           string                       `json:"projectId"`
+	Name                string                       `json:"name"`
+	Description         string                       `json:"description"`
+	Language            string                       `json:"language"`
+	EntryPoint          string                       `json:"entryPoint"`
+	TimeoutSeconds      int                          `json:"timeoutSeconds"`
+	Memory              string                       `json:"memory"`
+	Cpu                 string                       `json:"cpu"`
+	ExecutionMode       string                       `json:"executionMode"`
+	LiveBehavior        string                       `json:"liveBehavior"`
+	CreatedBy           string                       `json:"createdBy"`
+	CreatedAt           string                       `json:"createdAt"`
+	UpdatedAt           string                       `json:"updatedAt"`
+	Files               []OntologyFunctionFile       `json:"files"`
+	Dependencies        []OntologyFunctionDependency `json:"dependencies"`
+	ProviderIds         []string                     `json:"providerIds"`
+	OntologyIds         []string                     `json:"ontologyIds"`
+	ReadOnlyOntologyIds []string                     `json:"readOnlyOntologyIds"`
+	ProviderConfigs     []FunctionProviderConfig     `json:"providerConfigs"`
+	SecretBindings      []FunctionSecretBinding      `json:"secretBindings"`
+	DefaultMaxTokens    int                          `json:"defaultMaxTokens"`
+	DefaultTemperature  float64                      `json:"defaultTemperature"`
+	IsDeployed          bool                         `json:"isDeployed"`
+	CurrentRunStatus    *string                      `json:"currentRunStatus,omitempty"`
+}
+
+// OntologyFunctionDependency mirrors the GraphQL type OntologyFunctionDependency.
+type OntologyFunctionDependency struct {
+	Id      string `json:"id"`
+	Name    string `json:"name"`
+	Version string `json:"version"`
+}
+
+// OntologyFunctionFile mirrors the GraphQL type OntologyFunctionFile.
+type OntologyFunctionFile struct {
+	Id      string `json:"id"`
+	Path    string `json:"path"`
+	Content string `json:"content"`
 }
 
 // OntologyLink mirrors the GraphQL type OntologyLink.
@@ -298,6 +469,39 @@ type OntologyRecordCapabilities struct {
 	WritableProperties []string                   `json:"writableProperties"`
 	Actions            []OntologyActionCapability `json:"actions"`
 }
+
+// OntologyReference mirrors the GraphQL type OntologyReference.
+type OntologyReference struct {
+	Id                string              `json:"id"`
+	ConsumerProjectId string              `json:"consumerProjectId"`
+	Alias             string              `json:"alias"`
+	OwnerProjectId    string              `json:"ownerProjectId"`
+	OntologyId        string              `json:"ontologyId"`
+	Status            string              `json:"status"`
+	Ontology          *OntologyObjectType `json:"ontology,omitempty"`
+	CreatedAt         any                 `json:"createdAt"`
+}
+
+// OntologyReferenceConsumer mirrors the GraphQL type OntologyReferenceConsumer.
+type OntologyReferenceConsumer struct {
+	ProjectId   string `json:"projectId"`
+	ReferenceId string `json:"referenceId"`
+	Alias       string `json:"alias"`
+	Status      string `json:"status"`
+}
+
+// OntologyReferenceImpact mirrors the GraphQL type OntologyReferenceImpact.
+type OntologyReferenceImpact struct {
+	ReferenceId     string `json:"referenceId"`
+	DependentLinks  int    `json:"dependentLinks"`
+	DependentApps   int    `json:"dependentApps"`
+	DependentFuncs  int    `json:"dependentFuncs"`
+	DependentXfms   int    `json:"dependentXfms"`
+	DependentBehavs int    `json:"dependentBehavs"`
+}
+
+// OntologyReferenceStatus travels as a string on the wire. Values: active, broken, revoked.
+type OntologyReferenceStatus = string
 
 // OntologySimilarInput mirrors the GraphQL type OntologySimilarInput.
 type OntologySimilarInput struct {
@@ -418,6 +622,77 @@ type RowsResult struct {
 	TotalCount    int        `json:"TotalCount"`
 }
 
+// SaveLineageProviderInput mirrors the GraphQL type SaveLineageProviderInput.
+type SaveLineageProviderInput struct {
+	Id           *string `json:"id,omitempty"`
+	ProjectId    string  `json:"projectId"`
+	Name         string  `json:"name"`
+	Endpoint     string  `json:"endpoint"`
+	ReadEndpoint string  `json:"readEndpoint"`
+	Namespace    string  `json:"namespace"`
+	AuthType     string  `json:"authType"`
+	ApiKey       *string `json:"apiKey,omitempty"`
+	Enabled      bool    `json:"enabled"`
+}
+
+// SaveTransformInput mirrors the GraphQL type SaveTransformInput.
+type SaveTransformInput struct {
+	Id           *string `json:"id,omitempty"`
+	ProjectId    string  `json:"projectId"`
+	Name         string  `json:"name"`
+	Description  string  `json:"description"`
+	GraphJson    string  `json:"graphJson"`
+	ScheduleCron string  `json:"scheduleCron"`
+	TriggerMode  string  `json:"triggerMode"`
+}
+
+// SecretBindingTarget travels as a string on the wire. Values: ENV.
+type SecretBindingTarget = string
+
+// ServiceAccount mirrors the GraphQL type ServiceAccount.
+type ServiceAccount struct {
+	Id          string              `json:"id"`
+	OrgId       string              `json:"orgId"`
+	Name        string              `json:"name"`
+	Description string              `json:"description"`
+	CreatedBy   string              `json:"createdBy"`
+	CreatedAt   string              `json:"createdAt"`
+	DisabledAt  *string             `json:"disabledAt,omitempty"`
+	Keys        []ServiceAccountKey `json:"keys"`
+}
+
+// ServiceAccountKey mirrors the GraphQL type ServiceAccountKey.
+type ServiceAccountKey struct {
+	Id         string  `json:"id"`
+	KeyPrefix  string  `json:"keyPrefix"`
+	CreatedAt  string  `json:"createdAt"`
+	ExpiresAt  *string `json:"expiresAt,omitempty"`
+	RevokedAt  *string `json:"revokedAt,omitempty"`
+	LastUsedAt *string `json:"lastUsedAt,omitempty"`
+}
+
+// ShareOntologyInput mirrors the GraphQL type ShareOntologyInput.
+type ShareOntologyInput struct {
+	ProjectId         string   `json:"projectId"`
+	OntologyId        string   `json:"ontologyId"`
+	Visibility        string   `json:"visibility"`
+	AllowedProjectIds []string `json:"allowedProjectIds,omitempty"`
+}
+
+// SharedOntology mirrors the GraphQL type SharedOntology.
+type SharedOntology struct {
+	Id         string                      `json:"id"`
+	ProjectId  string                      `json:"projectId"`
+	OntologyId string                      `json:"ontologyId"`
+	Visibility string                      `json:"visibility"`
+	Ontology   *OntologyObjectType         `json:"ontology,omitempty"`
+	Consumers  []OntologyReferenceConsumer `json:"consumers"`
+	CreatedAt  any                         `json:"createdAt"`
+}
+
+// SharedOntologyVisibility travels as a string on the wire. Values: organization, allowlist.
+type SharedOntologyVisibility = string
+
 // SortCondition mirrors the GraphQL type SortCondition.
 type SortCondition struct {
 	Column    string `json:"Column"`
@@ -464,6 +739,67 @@ type SourceObjectRefInput struct {
 // StatusResponse mirrors the GraphQL type StatusResponse.
 type StatusResponse struct {
 	Status bool `json:"Status"`
+}
+
+// TestFunctionInput mirrors the GraphQL type TestFunctionInput.
+type TestFunctionInput struct {
+	ProjectId    string              `json:"projectId"`
+	FunctionId   string              `json:"functionId"`
+	Input        string              `json:"input"`
+	Files        []FunctionFileInput `json:"files,omitempty"`
+	InputFileIds []string            `json:"inputFileIds,omitempty"`
+}
+
+// Transform mirrors the GraphQL type Transform.
+type Transform struct {
+	Id                   string `json:"id"`
+	ProjectId            string `json:"projectId"`
+	Name                 string `json:"name"`
+	Description          string `json:"description"`
+	GraphJson            string `json:"graphJson"`
+	ScheduleCron         string `json:"scheduleCron"`
+	TriggerMode          string `json:"triggerMode"`
+	LastRunStatus        string `json:"lastRunStatus"`
+	LastRunAt            string `json:"lastRunAt"`
+	LiveStatus           string `json:"liveStatus"`
+	LiveLastProcessedAt  string `json:"liveLastProcessedAt"`
+	LiveRecordsProcessed string `json:"liveRecordsProcessed"`
+	LiveLastError        string `json:"liveLastError"`
+	CreatedAt            string `json:"createdAt"`
+	UpdatedAt            string `json:"updatedAt"`
+}
+
+// TransformRun mirrors the GraphQL type TransformRun.
+type TransformRun struct {
+	Id           string `json:"id"`
+	TransformId  string `json:"transformId"`
+	Status       string `json:"status"`
+	ErrorMessage string `json:"errorMessage"`
+	TriggeredBy  string `json:"triggeredBy"`
+	StartedAt    string `json:"startedAt"`
+	CompletedAt  string `json:"completedAt"`
+}
+
+// UpdateFunctionInput mirrors the GraphQL type UpdateFunctionInput.
+type UpdateFunctionInput struct {
+	ProjectId           string                        `json:"projectId"`
+	Id                  string                        `json:"id"`
+	Name                *string                       `json:"name,omitempty"`
+	Description         *string                       `json:"description,omitempty"`
+	Language            *string                       `json:"language,omitempty"`
+	EntryPoint          *string                       `json:"entryPoint,omitempty"`
+	TimeoutSeconds      *int                          `json:"timeoutSeconds,omitempty"`
+	Memory              *string                       `json:"memory,omitempty"`
+	Cpu                 *string                       `json:"cpu,omitempty"`
+	Files               []FunctionFileInput           `json:"files,omitempty"`
+	Dependencies        []FunctionDependencyInput     `json:"dependencies,omitempty"`
+	ProviderIds         []string                      `json:"providerIds,omitempty"`
+	OntologyIds         []string                      `json:"ontologyIds,omitempty"`
+	ReadOnlyOntologyIds []string                      `json:"readOnlyOntologyIds,omitempty"`
+	ProviderConfigs     []FunctionProviderConfigInput `json:"providerConfigs,omitempty"`
+	SecretBindings      []FunctionSecretBindingInput  `json:"secretBindings,omitempty"`
+	DefaultMaxTokens    *int                          `json:"defaultMaxTokens,omitempty"`
+	DefaultTemperature  *float64                      `json:"defaultTemperature,omitempty"`
 }
 
 // WhereCondition mirrors the GraphQL type WhereCondition.

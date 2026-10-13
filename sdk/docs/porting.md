@@ -84,7 +84,14 @@ Mirror the TypeScript package file-for-file in idiomatic naming:
   query with pageSize 1; `list`/`query` go through OntologyQuery, NOT
   OntologyRows; writes convert values to RecordInput pairs, JSON-encoding
   objects and lowercasing booleans), dataset, source, pagination
-  (short page terminates).
+  (short page terminates); transforms/transform and functions/function
+  (handles resolve by name or id from the project list and cache it;
+  `wait` polls until a terminal run status with 60s/2s defaults and raises
+  PlatformError `RUN_TIMEOUT`; function input encodes to a compact JSON
+  string); serviceAccounts (org-scoped, uses the resolved orgId);
+  lineageProviders; sharing (`discover` sends `consumerProjectId`).
+  Every domain exists in every language — a port is complete only when all
+  fixtures pass.
 
 ## 4. Conformance (the gate)
 

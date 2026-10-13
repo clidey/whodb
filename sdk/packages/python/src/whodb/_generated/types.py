@@ -48,6 +48,55 @@ ColumnDef = TypedDict(
     total=False,
 )
 
+#: GraphQL type CreateFunctionInput.
+CreateFunctionInput = TypedDict(
+    "CreateFunctionInput",
+    {
+        "projectId": str,
+        "name": str,
+        "description": str,
+        "language": str,
+        "entryPoint": str,
+        "timeoutSeconds": Optional[int],
+        "memory": Optional[str],
+        "cpu": Optional[str],
+        "executionMode": str,
+        "liveBehavior": str,
+        "files": list["FunctionFileInput"],
+        "dependencies": list["FunctionDependencyInput"],
+        "providerIds": Optional[list[str]],
+        "ontologyIds": Optional[list[str]],
+        "readOnlyOntologyIds": Optional[list[str]],
+        "providerConfigs": Optional[list["FunctionProviderConfigInput"]],
+        "secretBindings": Optional[list["FunctionSecretBindingInput"]],
+        "defaultMaxTokens": Optional[int],
+        "defaultTemperature": Optional[float],
+    },
+    total=False,
+)
+
+#: GraphQL type CreateOntologyReferenceInput.
+CreateOntologyReferenceInput = TypedDict(
+    "CreateOntologyReferenceInput",
+    {
+        "consumerProjectId": str,
+        "ownerProjectId": str,
+        "ontologyId": str,
+        "alias": str,
+    },
+    total=False,
+)
+
+#: GraphQL type CreatedServiceAccountKey.
+CreatedServiceAccountKey = TypedDict(
+    "CreatedServiceAccountKey",
+    {
+        "key": "ServiceAccountKey",
+        "rawKey": str,
+    },
+    total=False,
+)
+
 #: GraphQL type Dataset.
 Dataset = TypedDict(
     "Dataset",
@@ -106,6 +155,130 @@ ExecuteOntologyActionResult = TypedDict(
         "recordVersion": Optional[int],
         "emittedEventIds": Optional[list[str]],
         "validationErrors": Optional[list[str]],
+    },
+    total=False,
+)
+
+#: GraphQL type FunctionDependencyInput.
+FunctionDependencyInput = TypedDict(
+    "FunctionDependencyInput",
+    {
+        "name": str,
+        "version": Optional[str],
+    },
+    total=False,
+)
+
+FunctionExecutionMode = str  # enum: SYNC | ASYNC | LIVE
+
+#: GraphQL type FunctionFileInput.
+FunctionFileInput = TypedDict(
+    "FunctionFileInput",
+    {
+        "path": str,
+        "content": str,
+    },
+    total=False,
+)
+
+FunctionLiveBehavior = str  # enum: REQUEST | SERVICE
+
+#: GraphQL type FunctionProviderConfig.
+FunctionProviderConfig = TypedDict(
+    "FunctionProviderConfig",
+    {
+        "providerId": str,
+        "model": str,
+    },
+    total=False,
+)
+
+#: GraphQL type FunctionProviderConfigInput.
+FunctionProviderConfigInput = TypedDict(
+    "FunctionProviderConfigInput",
+    {
+        "providerId": str,
+        "model": str,
+    },
+    total=False,
+)
+
+#: GraphQL type FunctionRun.
+FunctionRun = TypedDict(
+    "FunctionRun",
+    {
+        "id": str,
+        "functionId": str,
+        "executionMode": str,
+        "liveBehavior": str,
+        "status": str,
+        "desiredState": str,
+        "input": str,
+        "output": Optional[str],
+        "logs": str,
+        "error": str,
+        "attempt": int,
+        "createdBy": str,
+        "startedAt": Optional[str],
+        "heartbeatAt": Optional[str],
+        "completedAt": Optional[str],
+        "createdAt": str,
+        "updatedAt": str,
+    },
+    total=False,
+)
+
+FunctionRunStatus = str  # enum: QUEUED | STARTING | RUNNING | COMPLETED | FAILED | CANCELING | CANCELED
+
+#: GraphQL type FunctionSecretBinding.
+FunctionSecretBinding = TypedDict(
+    "FunctionSecretBinding",
+    {
+        "name": str,
+        "secretId": str,
+        "target": str,
+    },
+    total=False,
+)
+
+#: GraphQL type FunctionSecretBindingInput.
+FunctionSecretBindingInput = TypedDict(
+    "FunctionSecretBindingInput",
+    {
+        "name": str,
+        "secretId": str,
+        "target": str,
+    },
+    total=False,
+)
+
+#: GraphQL type FunctionTestResult.
+FunctionTestResult = TypedDict(
+    "FunctionTestResult",
+    {
+        "output": Optional[str],
+        "logs": str,
+        "durationMs": int,
+        "success": bool,
+        "error": Optional[str],
+    },
+    total=False,
+)
+
+#: GraphQL type LineageProvider.
+LineageProvider = TypedDict(
+    "LineageProvider",
+    {
+        "id": str,
+        "projectId": str,
+        "name": str,
+        "endpoint": str,
+        "readEndpoint": str,
+        "namespace": str,
+        "authType": str,
+        "enabled": bool,
+        "createdAt": str,
+        "updatedAt": str,
     },
     total=False,
 )
@@ -262,6 +435,61 @@ OntologyFastLookup = TypedDict(
     total=False,
 )
 
+#: GraphQL type OntologyFunction.
+OntologyFunction = TypedDict(
+    "OntologyFunction",
+    {
+        "id": str,
+        "projectId": str,
+        "name": str,
+        "description": str,
+        "language": str,
+        "entryPoint": str,
+        "timeoutSeconds": int,
+        "memory": str,
+        "cpu": str,
+        "executionMode": str,
+        "liveBehavior": str,
+        "createdBy": str,
+        "createdAt": str,
+        "updatedAt": str,
+        "files": list["OntologyFunctionFile"],
+        "dependencies": list["OntologyFunctionDependency"],
+        "providerIds": list[str],
+        "ontologyIds": list[str],
+        "readOnlyOntologyIds": list[str],
+        "providerConfigs": list["FunctionProviderConfig"],
+        "secretBindings": list["FunctionSecretBinding"],
+        "defaultMaxTokens": int,
+        "defaultTemperature": float,
+        "isDeployed": bool,
+        "currentRunStatus": Optional[str],
+    },
+    total=False,
+)
+
+#: GraphQL type OntologyFunctionDependency.
+OntologyFunctionDependency = TypedDict(
+    "OntologyFunctionDependency",
+    {
+        "id": str,
+        "name": str,
+        "version": str,
+    },
+    total=False,
+)
+
+#: GraphQL type OntologyFunctionFile.
+OntologyFunctionFile = TypedDict(
+    "OntologyFunctionFile",
+    {
+        "id": str,
+        "path": str,
+        "content": str,
+    },
+    total=False,
+)
+
 #: GraphQL type OntologyLink.
 OntologyLink = TypedDict(
     "OntologyLink",
@@ -404,6 +632,50 @@ OntologyRecordCapabilities = TypedDict(
     },
     total=False,
 )
+
+#: GraphQL type OntologyReference.
+OntologyReference = TypedDict(
+    "OntologyReference",
+    {
+        "id": str,
+        "consumerProjectId": str,
+        "alias": str,
+        "ownerProjectId": str,
+        "ontologyId": str,
+        "status": str,
+        "ontology": Optional["OntologyObjectType"],
+        "createdAt": Any,
+    },
+    total=False,
+)
+
+#: GraphQL type OntologyReferenceConsumer.
+OntologyReferenceConsumer = TypedDict(
+    "OntologyReferenceConsumer",
+    {
+        "projectId": str,
+        "referenceId": str,
+        "alias": str,
+        "status": str,
+    },
+    total=False,
+)
+
+#: GraphQL type OntologyReferenceImpact.
+OntologyReferenceImpact = TypedDict(
+    "OntologyReferenceImpact",
+    {
+        "referenceId": str,
+        "dependentLinks": int,
+        "dependentApps": int,
+        "dependentFuncs": int,
+        "dependentXfms": int,
+        "dependentBehavs": int,
+    },
+    total=False,
+)
+
+OntologyReferenceStatus = str  # enum: active | broken | revoked
 
 #: GraphQL type OntologySimilarInput.
 OntologySimilarInput = TypedDict(
@@ -577,6 +849,99 @@ RowsResult = TypedDict(
     total=False,
 )
 
+#: GraphQL type SaveLineageProviderInput.
+SaveLineageProviderInput = TypedDict(
+    "SaveLineageProviderInput",
+    {
+        "id": Optional[str],
+        "projectId": str,
+        "name": str,
+        "endpoint": str,
+        "readEndpoint": str,
+        "namespace": str,
+        "authType": str,
+        "apiKey": Optional[str],
+        "enabled": bool,
+    },
+    total=False,
+)
+
+#: GraphQL type SaveTransformInput.
+SaveTransformInput = TypedDict(
+    "SaveTransformInput",
+    {
+        "id": Optional[str],
+        "projectId": str,
+        "name": str,
+        "description": str,
+        "graphJson": str,
+        "scheduleCron": str,
+        "triggerMode": str,
+    },
+    total=False,
+)
+
+SecretBindingTarget = str  # enum: ENV
+
+#: GraphQL type ServiceAccount.
+ServiceAccount = TypedDict(
+    "ServiceAccount",
+    {
+        "id": str,
+        "orgId": str,
+        "name": str,
+        "description": str,
+        "createdBy": str,
+        "createdAt": str,
+        "disabledAt": Optional[str],
+        "keys": list["ServiceAccountKey"],
+    },
+    total=False,
+)
+
+#: GraphQL type ServiceAccountKey.
+ServiceAccountKey = TypedDict(
+    "ServiceAccountKey",
+    {
+        "id": str,
+        "keyPrefix": str,
+        "createdAt": str,
+        "expiresAt": Optional[str],
+        "revokedAt": Optional[str],
+        "lastUsedAt": Optional[str],
+    },
+    total=False,
+)
+
+#: GraphQL type ShareOntologyInput.
+ShareOntologyInput = TypedDict(
+    "ShareOntologyInput",
+    {
+        "projectId": str,
+        "ontologyId": str,
+        "visibility": str,
+        "allowedProjectIds": Optional[list[str]],
+    },
+    total=False,
+)
+
+#: GraphQL type SharedOntology.
+SharedOntology = TypedDict(
+    "SharedOntology",
+    {
+        "id": str,
+        "projectId": str,
+        "ontologyId": str,
+        "visibility": str,
+        "ontology": Optional["OntologyObjectType"],
+        "consumers": list["OntologyReferenceConsumer"],
+        "createdAt": Any,
+    },
+    total=False,
+)
+
+SharedOntologyVisibility = str  # enum: organization | allowlist
+
 #: GraphQL type SortCondition.
 SortCondition = TypedDict(
     "SortCondition",
@@ -637,6 +1002,83 @@ StatusResponse = TypedDict(
     "StatusResponse",
     {
         "Status": bool,
+    },
+    total=False,
+)
+
+#: GraphQL type TestFunctionInput.
+TestFunctionInput = TypedDict(
+    "TestFunctionInput",
+    {
+        "projectId": str,
+        "functionId": str,
+        "input": str,
+        "files": Optional[list["FunctionFileInput"]],
+        "inputFileIds": Optional[list[str]],
+    },
+    total=False,
+)
+
+#: GraphQL type Transform.
+Transform = TypedDict(
+    "Transform",
+    {
+        "id": str,
+        "projectId": str,
+        "name": str,
+        "description": str,
+        "graphJson": str,
+        "scheduleCron": str,
+        "triggerMode": str,
+        "lastRunStatus": str,
+        "lastRunAt": str,
+        "liveStatus": str,
+        "liveLastProcessedAt": str,
+        "liveRecordsProcessed": str,
+        "liveLastError": str,
+        "createdAt": str,
+        "updatedAt": str,
+    },
+    total=False,
+)
+
+#: GraphQL type TransformRun.
+TransformRun = TypedDict(
+    "TransformRun",
+    {
+        "id": str,
+        "transformId": str,
+        "status": str,
+        "errorMessage": str,
+        "triggeredBy": str,
+        "startedAt": str,
+        "completedAt": str,
+    },
+    total=False,
+)
+
+#: GraphQL type UpdateFunctionInput.
+UpdateFunctionInput = TypedDict(
+    "UpdateFunctionInput",
+    {
+        "projectId": str,
+        "id": str,
+        "name": Optional[str],
+        "description": Optional[str],
+        "language": Optional[str],
+        "entryPoint": Optional[str],
+        "timeoutSeconds": Optional[int],
+        "memory": Optional[str],
+        "cpu": Optional[str],
+        "files": Optional[list["FunctionFileInput"]],
+        "dependencies": Optional[list["FunctionDependencyInput"]],
+        "providerIds": Optional[list[str]],
+        "ontologyIds": Optional[list[str]],
+        "readOnlyOntologyIds": Optional[list[str]],
+        "providerConfigs": Optional[list["FunctionProviderConfigInput"]],
+        "secretBindings": Optional[list["FunctionSecretBindingInput"]],
+        "defaultMaxTokens": Optional[int],
+        "defaultTemperature": Optional[float],
     },
     total=False,
 )

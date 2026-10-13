@@ -20,7 +20,11 @@ use serde_json::{json, Map, Value};
 use std::io::{self, BufRead, Write};
 use std::sync::Mutex;
 
-use whodb_sdk::{ActionOptions, Client, Config, Error, ListOptions, Transport};
+use std::time::Duration;
+use whodb_sdk::{
+    ActionOptions, Client, Config, DatasetRowsOptions, Error, FunctionTestOptions, ListOptions,
+    RowsPage, SourceObjectsOptions, SourceRowsOptions, Transport, WaitOptions,
+};
 
 /// Replays a fixture's scripted transcript, asserting each request.
 struct MockTransport {
@@ -183,10 +187,8 @@ fn run_fixture(fixture: &Value) -> Value {
         Ok(client) => client,
         Err(error) => return fail(error.to_string()),
     };
-    if call.get("domain").and_then(Value::as_str) != Some("ontology") {
-        return fail("unsupported fixture domain".to_string());
-    }
-    let handle = client.ontology(call.get("handle").and_then(Value::as_str).unwrap_or(""));
+    let domain = call.get("domain").and_then(Value::as_str).unwrap_or("");
+    let handle_name = call.get("handle").and_then(Value::as_str).unwrap_or("");
     let args = call
         .get("args")
         .and_then(Value::as_array)
@@ -195,14 +197,30 @@ fn run_fixture(fixture: &Value) -> Value {
     let method = call.get("method").and_then(Value::as_str).unwrap_or("");
     let collect_pages = call.get("collect").and_then(Value::as_str) == Some("pages");
 
-    let outcome: whodb_sdk::Result<Value> = (|| match method {
+    let outcome: whodb_sdk::Result<Value> = if domain == "ontology" {
+        run_ontology(&client, handle_name, method, &args, collect_pages)
+    } else {
+        run_other(&client, domain, handle_name, method, &args)
+    };
+    compare(name, fixture, outcome)
+}
+
+fn run_ontology(
+    client: &Client,
+    handle_name: &str,
+    method: &str,
+    args: &[Value],
+    collect_pages: bool,
+) -> whodb_sdk::Result<Value> {
+    let handle = client.ontology(handle_name);
+    (|| match method {
         "get" => {
             let pk = args.first().and_then(Value::as_str).unwrap_or("");
             Ok(handle.get(pk)?.map(Value::Object).unwrap_or(Value::Null))
         }
         "describe" => handle.describe(),
         "list" => {
-            let options = list_options_from(&args);
+            let options = list_options_from(args);
             if collect_pages {
                 let mut pages: Vec<Value> = Vec::new();
                 handle.pages(&options, |rows| {
@@ -313,8 +331,238 @@ fn run_fixture(fixture: &Value) -> Value {
         other => Err(Error::Transport(format!(
             "unsupported fixture method: {other}"
         ))),
-    })();
+    })()
+}
 
+fn str_arg(args: &[Value], index: usize) -> &str {
+    args.get(index).and_then(Value::as_str).unwrap_or("")
+}
+
+fn opt_str_arg(args: &[Value], index: usize) -> Option<&str> {
+    args.get(index).and_then(Value::as_str)
+}
+
+fn map_arg(args: &[Value], index: usize) -> Map<String, Value> {
+    args.get(index)
+        .and_then(Value::as_object)
+        .cloned()
+        .unwrap_or_default()
+}
+
+fn string_list_arg(args: &[Value], index: usize) -> Option<Vec<String>> {
+    args.get(index).and_then(Value::as_array).map(|items| {
+        items
+            .iter()
+            .map(|item| item.as_str().unwrap_or("").to_string())
+            .collect()
+    })
+}
+
+fn usize_option(options: &Map<String, Value>, key: &str) -> usize {
+    options.get(key).and_then(Value::as_u64).unwrap_or(0) as usize
+}
+
+fn wait_options(options: &Map<String, Value>) -> WaitOptions {
+    let mut wait = WaitOptions::default();
+    if let Some(timeout) = options.get("timeoutMs").and_then(Value::as_u64) {
+        wait.timeout = Duration::from_millis(timeout);
+    }
+    if let Some(poll) = options.get("pollMs").and_then(Value::as_u64) {
+        wait.poll = Duration::from_millis(poll);
+    }
+    wait
+}
+
+fn page_value(page: RowsPage) -> Value {
+    json!({"rows": rows_to_value(page.rows), "totalCount": page.total_count})
+}
+
+fn unit(result: whodb_sdk::Result<()>) -> whodb_sdk::Result<Value> {
+    result.map(|_| Value::Null)
+}
+
+fn unsupported(domain: &str, method: &str) -> whodb_sdk::Result<Value> {
+    Err(Error::Transport(format!(
+        "unsupported fixture call: {domain}.{method}"
+    )))
+}
+
+/// Dispatches non-ontology fixture calls.
+fn run_other(
+    client: &Client,
+    domain: &str,
+    handle_name: &str,
+    method: &str,
+    args: &[Value],
+) -> whodb_sdk::Result<Value> {
+    match domain {
+        "dataset" => {
+            let handle = client.dataset(handle_name);
+            match method {
+                "meta" => handle.meta(),
+                "rows" => {
+                    let options = map_arg(args, 0);
+                    handle
+                        .rows(DatasetRowsOptions {
+                            page_size: usize_option(&options, "pageSize"),
+                            page_offset: usize_option(&options, "pageOffset"),
+                        })
+                        .map(page_value)
+                }
+                _ => unsupported(domain, method),
+            }
+        }
+        "source" => {
+            let handle = client.source(handle_name);
+            match method {
+                "objects" => {
+                    let options = map_arg(args, 0);
+                    Ok(Value::Array(handle.objects(&SourceObjectsOptions {
+                        parent: options.get("parent").cloned(),
+                        page_size: usize_option(&options, "pageSize"),
+                        page_offset: usize_option(&options, "pageOffset"),
+                    })?))
+                }
+                "columns" => Ok(Value::Array(
+                    handle.columns(args.first().unwrap_or(&Value::Null))?,
+                )),
+                "rows" => {
+                    let options = map_arg(args, 1);
+                    let rows = handle.rows(
+                        args.first().unwrap_or(&Value::Null),
+                        &SourceRowsOptions {
+                            where_filter: options.get("where").cloned(),
+                            sort: options.get("sort").cloned(),
+                            page_size: usize_option(&options, "pageSize"),
+                            offset: usize_option(&options, "offset"),
+                        },
+                    )?;
+                    Ok(rows_to_value(rows))
+                }
+                _ => unsupported(domain, method),
+            }
+        }
+        "transforms" => {
+            let handle = client.transforms();
+            match method {
+                "list" => Ok(Value::Array(handle.list()?)),
+                "create" => handle.create(&map_arg(args, 0)),
+                "preview" => handle.preview(str_arg(args, 0)).map(page_value),
+                _ => unsupported(domain, method),
+            }
+        }
+        "transform" => {
+            let handle = client.transform(handle_name);
+            match method {
+                "meta" => handle.meta(),
+                "runs" => Ok(Value::Array(
+                    handle.runs(usize_option(&map_arg(args, 0), "limit"))?,
+                )),
+                "run" => handle.run(),
+                "cancelRun" => unit(handle.cancel_run(opt_str_arg(args, 0))),
+                "wait" => handle.wait(str_arg(args, 0), wait_options(&map_arg(args, 1))),
+                "update" => handle.update(&map_arg(args, 0)),
+                "delete" => unit(handle.delete()),
+                _ => unsupported(domain, method),
+            }
+        }
+        "functions" => {
+            let handle = client.functions();
+            match method {
+                "list" => Ok(Value::Array(handle.list()?)),
+                "create" => handle.create(&map_arg(args, 0)),
+                _ => unsupported(domain, method),
+            }
+        }
+        "function" => {
+            let handle = client.function(handle_name);
+            let input = args.first().cloned().unwrap_or(Value::Null);
+            match method {
+                "meta" => handle.meta(),
+                "execute" => handle.execute(&input, string_list_arg(args, 1).as_deref()),
+                "test" => {
+                    let options = map_arg(args, 1);
+                    handle.test(
+                        &input,
+                        &FunctionTestOptions {
+                            files: options.get("files").cloned(),
+                            input_file_ids: options
+                                .get("inputFileIds")
+                                .and_then(Value::as_array)
+                                .map(|ids| {
+                                    ids.iter()
+                                        .map(|id| id.as_str().unwrap_or("").to_string())
+                                        .collect()
+                                }),
+                        },
+                    )
+                }
+                "startRun" => handle.start_run(
+                    &input,
+                    map_arg(args, 1)
+                        .get("useActiveVersion")
+                        .and_then(Value::as_bool),
+                ),
+                "run" => handle.run(str_arg(args, 0)),
+                "runs" => Ok(Value::Array(
+                    handle.runs(usize_option(&map_arg(args, 0), "limit"))?,
+                )),
+                "wait" => handle.wait(str_arg(args, 0), wait_options(&map_arg(args, 1))),
+                "cancelRun" => handle.cancel_run(str_arg(args, 0)),
+                "deploy" => unit(handle.deploy()),
+                "redeploy" => unit(handle.redeploy()),
+                "update" => handle.update(&map_arg(args, 0)),
+                "delete" => unit(handle.delete()),
+                _ => unsupported(domain, method),
+            }
+        }
+        "serviceAccounts" => {
+            let handle = client.service_accounts();
+            match method {
+                "list" => Ok(Value::Array(handle.list()?)),
+                "create" => handle.create(str_arg(args, 0), opt_str_arg(args, 1)),
+                "createKey" => handle.create_key(str_arg(args, 0), opt_str_arg(args, 1)),
+                "revokeKey" => unit(handle.revoke_key(str_arg(args, 0))),
+                "delete" => unit(handle.delete(str_arg(args, 0))),
+                _ => unsupported(domain, method),
+            }
+        }
+        "lineageProviders" => {
+            let handle = client.lineage_providers();
+            match method {
+                "list" => Ok(Value::Array(handle.list()?)),
+                "save" => handle.save(&map_arg(args, 0)),
+                "delete" => unit(handle.delete(str_arg(args, 0))),
+                _ => unsupported(domain, method),
+            }
+        }
+        "sharing" => {
+            let handle = client.sharing();
+            match method {
+                "shared" => Ok(Value::Array(handle.shared()?)),
+                "discover" => Ok(Value::Array(handle.discover()?)),
+                "references" => Ok(Value::Array(handle.references()?)),
+                "referenceImpact" => handle.reference_impact(str_arg(args, 0)),
+                "share" => handle.share(
+                    str_arg(args, 0),
+                    str_arg(args, 1),
+                    string_list_arg(args, 2).as_deref(),
+                ),
+                "unshare" => unit(handle.unshare(str_arg(args, 0))),
+                "createReference" => {
+                    handle.create_reference(str_arg(args, 0), str_arg(args, 1), str_arg(args, 2))
+                }
+                "removeReference" => unit(handle.remove_reference(str_arg(args, 0))),
+                _ => unsupported(domain, method),
+            }
+        }
+        _ => unsupported(domain, method),
+    }
+}
+
+/// Compares a call outcome with the fixture's expectation.
+fn compare(name: &str, fixture: &Value, outcome: whodb_sdk::Result<Value>) -> Value {
+    let fail = |reason: String| json!({"name": name, "pass": false, "reason": reason});
     let expect_error = fixture.get("expectError");
     match outcome {
         Err(error) => {

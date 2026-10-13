@@ -25,8 +25,13 @@ from ._manifest_check import interpret_server_error, warn_if_flagged
 from ._transport import HttpTransport, Transport
 from ._version import SDK_VERSION
 from .dataset import DatasetHandle
+from .functions import FunctionHandle, FunctionsHandle
+from .lineage import LineageProvidersHandle
 from .ontology import OntologyHandle
+from .service_accounts import ServiceAccountsHandle
+from .sharing import SharingHandle
 from .source import SourceHandle, list_sources
+from .transforms import TransformHandle, TransformsHandle
 
 DEFAULT_HOST = "https://app.whodb.com"
 
@@ -181,6 +186,9 @@ class WhoDB:
     def _project_id(self) -> str:
         return self._resolve_workspace()[1]
 
+    def _org_id(self) -> str:
+        return self._resolve_workspace()[0]
+
     def ontology(self, name: str) -> OntologyHandle:
         """Return a handle for one ontology entity, addressed by apiName."""
         return OntologyHandle(self._execute, self._project_id, name)
@@ -201,6 +209,34 @@ class WhoDB:
     def sources(self) -> list[dict]:
         """List the project's connected sources."""
         return list_sources(self._execute, self._project_id())
+
+    def transforms(self) -> TransformsHandle:
+        """The project's transform collection: list, create, preview."""
+        return TransformsHandle(self._execute, self._project_id)
+
+    def transform(self, name: str) -> TransformHandle:
+        """Return a handle for one transform, addressed by name or id."""
+        return TransformHandle(self._execute, self._project_id, name)
+
+    def functions(self) -> FunctionsHandle:
+        """The project's function collection: list, create."""
+        return FunctionsHandle(self._execute, self._project_id)
+
+    def function(self, name: str) -> FunctionHandle:
+        """Return a handle for one function, addressed by name or id."""
+        return FunctionHandle(self._execute, self._project_id, name)
+
+    def service_accounts(self) -> ServiceAccountsHandle:
+        """Service accounts and API keys for the organization."""
+        return ServiceAccountsHandle(self._execute, self._org_id)
+
+    def lineage_providers(self) -> LineageProvidersHandle:
+        """OpenLineage providers feeding the project's lineage."""
+        return LineageProvidersHandle(self._execute, self._project_id)
+
+    def sharing(self) -> SharingHandle:
+        """Cross-project ontology sharing and references."""
+        return SharingHandle(self._execute, self._project_id)
 
 
 class AsyncWhoDB:

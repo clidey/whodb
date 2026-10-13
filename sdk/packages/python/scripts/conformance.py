@@ -97,18 +97,20 @@ def run_fixture(fixture: dict) -> dict:
     )
     call = fixture["call"]
     try:
-        domain = getattr(client, call["domain"])
-        handle = domain(call["handle"])
+        domain = getattr(client, _snake(call["domain"]))
+        # Collection domains (transforms, sharing, ...) take no handle.
+        handle = domain(call["handle"]) if call.get("handle") is not None else domain()
         method = getattr(handle, _snake(call["method"]))
         args = call.get("args") or []
         # Fixture args are TS-shaped: trailing options objects become kwargs.
         positional = list(args)
         kwargs: dict[str, Any] = {}
-        if positional and isinstance(positional[-1], dict) and call["method"] in (
-            "list",
-            "createMany",
-            "followLink",
-            "action",
+        options_methods = ("list", "createMany", "followLink", "action", "rows", "objects")
+        # These take a positional value followed by an options object.
+        trailing_options_methods = ("wait", "startRun", "test")
+        if positional and isinstance(positional[-1], dict) and (
+            call["method"] in options_methods
+            or (call["method"] in trailing_options_methods and len(positional) >= 2)
         ):
             options = positional.pop()
             for key, value in options.items():
@@ -118,6 +120,9 @@ def run_fixture(fixture: dict) -> dict:
             result = [page.rows for page in result.pages()]
         elif hasattr(result, "all") and callable(result.all):
             result = result.all()
+        elif isinstance(result, tuple) and len(result) == 2 and isinstance(result[0], list):
+            # (rows, total_count) is the Python shape of {rows, totalCount}.
+            result = {"rows": result[0], "totalCount": result[1]}
         if fixture.get("expectError"):
             return {
                 "name": fixture["name"],

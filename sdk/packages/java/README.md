@@ -1,7 +1,8 @@
 # whodb-sdk (Java)
 
 Official Java SDK for the [WhoDB](https://whodb.com) hosted platform — your
-ontology as in-code function APIs.
+ontology, datasets, sources, transforms, functions, and org administration as
+in-code function APIs.
 
 ## Install
 
@@ -19,8 +20,13 @@ built-in `java.net.http.HttpClient`.
 ## Quickstart
 
 ```java
+import com.clidey.whodb.DatasetHandle;
 import com.clidey.whodb.OntologyHandle;
+import com.clidey.whodb.RowsPage;
+import com.clidey.whodb.TransformHandle;
+import com.clidey.whodb.WaitOptions;
 import com.clidey.whodb.WhoDB;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
@@ -56,6 +62,18 @@ for (List<Map<String, Object>> page :
         users.pages(new OntologyHandle.ListOptions(null, null, 500, 0))) {
     System.out.println(page.size());
 }
+
+// Datasets, transforms, functions:
+RowsPage kpis = client.dataset("weekly_kpis").rows(DatasetHandle.RowsOptions.defaults());
+TransformHandle rollup = client.transform("nightly-rollup");
+Map<String, Object> run = rollup.run();
+rollup.wait((String) run.get("id"), new WaitOptions(Duration.ofMinutes(5), Duration.ofSeconds(2)));
+Map<String, Object> result = client.function("normalize").execute(Map.of("name", "Ada"), null);
+
+// Org administration (requires org manage rights):
+Map<String, Object> sa = client.serviceAccounts().create("ci-deployer", null);
+Map<String, Object> key = client.serviceAccounts().createKey((String) sa.get("id"), null); // key.get("rawKey") is shown once
+client.sharing().share("ont_...", "organization", null);
 ```
 
 Rows are `Map<String, Object>` with native-typed values; timestamps hydrate

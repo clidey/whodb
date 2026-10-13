@@ -1,7 +1,10 @@
 # WhoDB Platform SDKs
 
-Customer-facing SDKs for the WhoDB hosted platform: the ontology, datasets,
-and sources as in-code function APIs.
+Customer-facing SDKs for the WhoDB hosted platform: ontology, datasets,
+sources, transforms, functions, service accounts, lineage providers, and
+ontology sharing as in-code function APIs. All five languages expose the same
+domains and methods; the shared fixtures in `spec/fixtures/` keep them
+behaviorally identical.
 
 | Package | Registry | Path |
 |---|---|---|
@@ -27,7 +30,7 @@ spec/                    # committed sync boundary with the platform backend
 tools/
   generate-core.mjs      # spec → per-language wire cores (--check = drift gate)
   render/                # per-language renderers
-  conformance-runner.mjs # runs fixtures against a language (--lang ts|python)
+  conformance-runner.mjs # runs fixtures against a language (--lang ts|python|go|rust|java)
   sync-versions.mjs      # lockstep version stamping (--set X.Y.Z / --check)
   smoke.mjs              # pre-release staging round-trip (real API key)
 packages/                # the SDKs
@@ -61,4 +64,6 @@ inlined `deploy-sdk-pypi`, `deploy-sdk-cargo`, and `deploy-sdk-maven` jobs
 the top-level workflow), and `deploy-sdk-go-tag`, which tags
 `sdk/packages/go/v<version>` only after all four registry publishes succeed.
 
-Adding a language: `docs/porting.md`.
+Adding a language: `docs/porting.md`. Adding a domain: extend
+`spec/surface.yaml`, add fixtures, then add the facade to every language and
+its conformance runner in the same change.

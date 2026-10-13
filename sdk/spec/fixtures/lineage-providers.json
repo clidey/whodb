@@ -1,0 +1,37 @@
+{
+  "fixtures": [
+    {
+      "name": "lineageProviders.list returns the project's providers",
+      "call": { "domain": "lineageProviders", "handle": null, "method": "list", "args": [] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "ProjectLineageProviders", "variables": { "projectId": "proj-1" } },
+          "response": { "data": { "ProjectLineageProviders": [ { "id": "lp-1", "name": "marquez", "enabled": true } ] } }
+        }
+      ],
+      "expectResult": [ { "id": "lp-1", "name": "marquez", "enabled": true } ]
+    },
+    {
+      "name": "lineageProviders.save injects the project id",
+      "call": { "domain": "lineageProviders", "handle": null, "method": "save", "args": [{ "name": "marquez", "endpoint": "https://m.example.com/api/v1/lineage", "readEndpoint": "https://m.example.com/api/v1", "namespace": "whodb", "authType": "none", "enabled": true }] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "SaveLineageProvider", "inputContains": { "projectId": "proj-1", "name": "marquez", "authType": "none", "enabled": true } },
+          "response": { "data": { "SaveLineageProvider": { "id": "lp-2", "name": "marquez" } } }
+        }
+      ],
+      "expectResult": { "id": "lp-2", "name": "marquez" }
+    },
+    {
+      "name": "lineageProviders.delete targets the provider id",
+      "call": { "domain": "lineageProviders", "handle": null, "method": "delete", "args": ["lp-2"] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "DeleteLineageProvider", "variables": { "projectId": "proj-1", "providerId": "lp-2" } },
+          "response": { "data": { "DeleteLineageProvider": { "Status": true } } }
+        }
+      ],
+      "expectResult": null
+    }
+  ]
+}

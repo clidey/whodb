@@ -1,0 +1,97 @@
+{
+  "fixtures": [
+    {
+      "name": "transforms.list returns the project's transforms",
+      "call": { "domain": "transforms", "handle": null, "method": "list", "args": [] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "ProjectTransforms", "variables": { "projectId": "proj-1" } },
+          "response": { "data": { "ProjectTransforms": [ { "id": "t-1", "name": "nightly", "triggerMode": "manual" } ] } }
+        }
+      ],
+      "expectResult": [ { "id": "t-1", "name": "nightly", "triggerMode": "manual" } ]
+    },
+    {
+      "name": "transform.run resolves the transform by name then starts a run",
+      "call": { "domain": "transform", "handle": "nightly", "method": "run", "args": [] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "ProjectTransforms", "variables": { "projectId": "proj-1" } },
+          "response": { "data": { "ProjectTransforms": [ { "id": "t-1", "name": "nightly" }, { "id": "t-2", "name": "weekly" } ] } }
+        },
+        {
+          "expectRequest": { "operation": "RunTransform", "variables": { "projectId": "proj-1", "id": "t-1" } },
+          "response": { "data": { "RunTransform": { "id": "run-1", "transformId": "t-1", "status": "running" } } }
+        }
+      ],
+      "expectResult": { "id": "run-1", "transformId": "t-1", "status": "running" }
+    },
+    {
+      "name": "transform.wait polls runs until the run is terminal",
+      "call": { "domain": "transform", "handle": "t-1", "method": "wait", "args": ["run-1", { "pollMs": 0, "timeoutMs": 5000 }] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "ProjectTransforms" },
+          "response": { "data": { "ProjectTransforms": [ { "id": "t-1", "name": "nightly" } ] } }
+        },
+        {
+          "expectRequest": { "operation": "TransformRuns", "variablesContain": { "transformId": "t-1" } },
+          "response": { "data": { "TransformRuns": [ { "id": "run-1", "transformId": "t-1", "status": "running" } ] } }
+        },
+        {
+          "expectRequest": { "operation": "TransformRuns", "variablesContain": { "transformId": "t-1" } },
+          "response": { "data": { "TransformRuns": [ { "id": "run-1", "transformId": "t-1", "status": "completed" } ] } }
+        }
+      ],
+      "expectResult": { "id": "run-1", "transformId": "t-1", "status": "completed" }
+    },
+    {
+      "name": "transform.cancelRun targets the transform and returns nothing",
+      "call": { "domain": "transform", "handle": "nightly", "method": "cancelRun", "args": [] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "ProjectTransforms" },
+          "response": { "data": { "ProjectTransforms": [ { "id": "t-1", "name": "nightly" } ] } }
+        },
+        {
+          "expectRequest": { "operation": "CancelTransformRun", "variablesContain": { "projectId": "proj-1", "transformId": "t-1" } },
+          "response": { "data": { "CancelTransformRun": { "Status": true } } }
+        }
+      ],
+      "expectResult": null
+    },
+    {
+      "name": "transforms.preview hydrates the preview rows",
+      "call": { "domain": "transforms", "handle": null, "method": "preview", "args": ["{\"nodes\":[],\"edges\":[]}"] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "PreviewTransform", "variables": { "projectId": "proj-1", "graphJson": "{\"nodes\":[],\"edges\":[]}" } },
+          "response": { "data": { "PreviewTransform": { "columns": ["name", "amount"], "rows": [["a", "1"], ["b", "2"]], "total": 2 } } }
+        }
+      ],
+      "expectResult": { "rows": [ { "name": "a", "amount": "1" }, { "name": "b", "amount": "2" } ], "totalCount": 2 }
+    },
+    {
+      "name": "transforms.create injects the project id",
+      "call": { "domain": "transforms", "handle": null, "method": "create", "args": [{ "name": "rollup", "description": "Roll up", "graphJson": "{\"nodes\":[],\"edges\":[]}", "scheduleCron": "", "triggerMode": "manual" }] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "SaveTransform", "inputContains": { "projectId": "proj-1", "name": "rollup", "triggerMode": "manual" } },
+          "response": { "data": { "SaveTransform": { "id": "t-9", "name": "rollup" } } }
+        }
+      ],
+      "expectResult": { "id": "t-9", "name": "rollup" }
+    },
+    {
+      "name": "transform.runs for an unknown transform is NotFoundError",
+      "call": { "domain": "transform", "handle": "missing", "method": "runs", "args": [] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "ProjectTransforms" },
+          "response": { "data": { "ProjectTransforms": [ { "id": "t-1", "name": "nightly" } ] } }
+        }
+      ],
+      "expectError": { "type": "NotFoundError", "messageContains": "missing" }
+    }
+  ]
+}

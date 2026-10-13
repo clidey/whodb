@@ -1,7 +1,8 @@
 # whodb-sdk (Rust)
 
 Official Rust SDK for the [WhoDB](https://whodb.com) hosted platform — your
-ontology as in-code function APIs.
+ontology, datasets, sources, transforms, functions, and org administration as
+in-code function APIs.
 
 ## Install
 
@@ -15,7 +16,7 @@ Requires Rust ≥ 1.75. Synchronous API; two dependencies (`serde_json`, `ureq`)
 
 ```rust
 use serde_json::{json, Map};
-use whodb_sdk::{ActionOptions, Client, Config, ListOptions};
+use whodb_sdk::{ActionOptions, Client, Config, DatasetRowsOptions, ListOptions, WaitOptions};
 
 // Production: API key (create one in org settings → API keys).
 let client = Client::new(Config {
@@ -59,6 +60,19 @@ users.pages(&ListOptions { page_size: 500, ..Default::default() }, |rows| {
     println!("{}", rows.len());
     true // false stops iteration
 })?;
+
+// Datasets, transforms, functions:
+let kpis = client.dataset("weekly_kpis").rows(DatasetRowsOptions::default())?;
+let rollup = client.transform("nightly-rollup");
+let run = rollup.run()?;
+let run_id = run["id"].as_str().unwrap_or_default();
+rollup.wait(run_id, WaitOptions { timeout: std::time::Duration::from_secs(300), ..Default::default() })?;
+let result = client.function("normalize").execute(&json!({"name": "Ada"}), None)?;
+
+// Org administration (requires org manage rights):
+let sa = client.service_accounts().create("ci-deployer", None)?;
+let key = client.service_accounts().create_key(sa["id"].as_str().unwrap_or_default(), None)?; // key["rawKey"] is shown once
+client.sharing().share("ont_...", "organization", None)?;
 ```
 
 Rows are `serde_json::Map<String, Value>` with native-typed values. Hydrated

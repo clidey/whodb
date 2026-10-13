@@ -154,6 +154,8 @@ func canonical(value any) any {
 			out = append(out, canonical(row))
 		}
 		return out
+	case whodb.RowsPage:
+		return map[string]any{"rows": canonical(typed.Rows), "totalCount": canonical(typed.TotalCount)}
 	case [][]whodb.Row:
 		out := make([]any, 0, len(typed))
 		for _, page := range typed {
@@ -236,7 +238,11 @@ func runFixture(f fixture) result {
 	}
 	ctx := context.Background()
 	if f.Call.Domain != "ontology" {
-		return result{Name: f.Name, Pass: false, Reason: "unsupported fixture domain: " + f.Call.Domain}
+		value, callErr, ok := runOtherDomain(ctx, client, f.Call)
+		if !ok {
+			return result{Name: f.Name, Pass: false, Reason: fmt.Sprintf("unsupported fixture call: %s.%s", f.Call.Domain, f.Call.Method)}
+		}
+		return compare(f, value, callErr)
 	}
 	handle := client.Ontology(f.Call.Handle)
 
@@ -325,6 +331,11 @@ func runFixture(f fixture) result {
 		return result{Name: f.Name, Pass: false, Reason: "unsupported fixture method: " + f.Call.Method}
 	}
 
+	return compare(f, value, callErr)
+}
+
+// compare checks a call outcome against the fixture's expectation.
+func compare(f fixture, value any, callErr error) result {
 	if callErr != nil {
 		if f.Error != nil {
 			gotType := errorType(callErr)
@@ -366,4 +377,230 @@ func main() {
 		}
 		_ = encoder.Encode(runFixture(f))
 	}
+}
+
+func stringArg(args []any, index int) string {
+	if len(args) > index {
+		if text, ok := args[index].(string); ok {
+			return text
+		}
+	}
+	return ""
+}
+
+func mapArg(args []any, index int) map[string]any {
+	if len(args) > index {
+		object, _ := args[index].(map[string]any)
+		return object
+	}
+	return nil
+}
+
+func stringListArg(args []any, index int) []string {
+	if len(args) <= index {
+		return nil
+	}
+	raw, ok := args[index].([]any)
+	if !ok {
+		return nil
+	}
+	out := make([]string, 0, len(raw))
+	for _, entry := range raw {
+		out = append(out, fmt.Sprint(entry))
+	}
+	return out
+}
+
+func waitOptions(options map[string]any) whodb.WaitOptions {
+	out := whodb.WaitOptions{}
+	if timeout, ok := options["timeoutMs"].(float64); ok {
+		out.Timeout = time.Duration(timeout) * time.Millisecond
+		if timeout == 0 {
+			// A zero timeout must still be honoured as "no wait"; use the smallest positive duration.
+			out.Timeout = time.Nanosecond
+		}
+	}
+	if poll, ok := options["pollMs"].(float64); ok {
+		out = out.WithPoll(time.Duration(poll) * time.Millisecond)
+	}
+	return out
+}
+
+// runOtherDomain dispatches non-ontology fixture calls. ok is false when the
+// domain/method pair is not supported by the Go SDK.
+func runOtherDomain(ctx context.Context, client *whodb.Client, call fixtureCall) (value any, err error, ok bool) {
+	args := call.Args
+	switch call.Domain {
+	case "dataset":
+		handle := client.Dataset(call.Handle)
+		switch call.Method {
+		case "meta":
+			value, err = handle.Meta(ctx)
+		case "rows":
+			options := optionsFrom(args, 0)
+			value, err = handle.Rows(ctx, whodb.DatasetRowsOptions{PageSize: intOption(options, "pageSize", 0), PageOffset: intOption(options, "pageOffset", 0)})
+		default:
+			return nil, nil, false
+		}
+	case "source":
+		handle := client.Source(call.Handle)
+		switch call.Method {
+		case "objects":
+			options := optionsFrom(args, 0)
+			parent, _ := options["parent"].(map[string]any)
+			value, err = handle.Objects(ctx, whodb.SourceObjectsOptions{Parent: parent, PageSize: intOption(options, "pageSize", 0), PageOffset: intOption(options, "pageOffset", 0)})
+		case "columns":
+			value, err = handle.Columns(ctx, mapArg(args, 0))
+		case "rows":
+			options := optionsFrom(args, 1)
+			rowOptions := whodb.SourceRowsOptions{PageSize: intOption(options, "pageSize", 0), Offset: intOption(options, "offset", 0)}
+			rowOptions.Where, _ = options["where"].(map[string]any)
+			value, err = handle.Rows(ctx, mapArg(args, 0), rowOptions)
+		default:
+			return nil, nil, false
+		}
+	case "transforms":
+		handle := client.Transforms()
+		switch call.Method {
+		case "list":
+			value, err = handle.List(ctx)
+		case "create":
+			value, err = handle.Create(ctx, mapArg(args, 0))
+		case "preview":
+			value, err = handle.Preview(ctx, stringArg(args, 0))
+		default:
+			return nil, nil, false
+		}
+	case "transform":
+		handle := client.Transform(call.Handle)
+		switch call.Method {
+		case "meta":
+			value, err = handle.Meta(ctx)
+		case "runs":
+			value, err = handle.Runs(ctx, intOption(optionsFrom(args, 0), "limit", 0))
+		case "run":
+			value, err = handle.Run(ctx)
+		case "cancelRun":
+			err = handle.CancelRun(ctx, stringArg(args, 0))
+		case "wait":
+			value, err = handle.Wait(ctx, stringArg(args, 0), waitOptions(optionsFrom(args, 1)))
+		case "update":
+			value, err = handle.Update(ctx, mapArg(args, 0))
+		case "delete":
+			err = handle.Delete(ctx)
+		default:
+			return nil, nil, false
+		}
+	case "functions":
+		handle := client.Functions()
+		switch call.Method {
+		case "list":
+			value, err = handle.List(ctx)
+		case "create":
+			value, err = handle.Create(ctx, mapArg(args, 0))
+		default:
+			return nil, nil, false
+		}
+	case "function":
+		handle := client.Function(call.Handle)
+		switch call.Method {
+		case "meta":
+			value, err = handle.Meta(ctx)
+		case "execute":
+			value, err = handle.Execute(ctx, args[0], stringListArg(args, 1))
+		case "test":
+			options := optionsFrom(args, 1)
+			testOptions := whodb.FunctionTestOptions{}
+			if files, ok := options["files"].([]any); ok {
+				for _, file := range files {
+					object, _ := file.(map[string]any)
+					testOptions.Files = append(testOptions.Files, object)
+				}
+			}
+			if ids, ok := options["inputFileIds"].([]any); ok {
+				for _, id := range ids {
+					testOptions.InputFileIDs = append(testOptions.InputFileIDs, fmt.Sprint(id))
+				}
+			}
+			value, err = handle.Test(ctx, args[0], testOptions)
+		case "startRun":
+			options := optionsFrom(args, 1)
+			var useActive *bool
+			if flag, ok := options["useActiveVersion"].(bool); ok {
+				useActive = &flag
+			}
+			value, err = handle.StartRun(ctx, args[0], useActive)
+		case "run":
+			value, err = handle.Run(ctx, stringArg(args, 0))
+		case "runs":
+			value, err = handle.Runs(ctx, intOption(optionsFrom(args, 0), "limit", 0))
+		case "wait":
+			value, err = handle.Wait(ctx, stringArg(args, 0), waitOptions(optionsFrom(args, 1)))
+		case "cancelRun":
+			value, err = handle.CancelRun(ctx, stringArg(args, 0))
+		case "deploy":
+			err = handle.Deploy(ctx)
+		case "redeploy":
+			err = handle.Redeploy(ctx)
+		case "update":
+			value, err = handle.Update(ctx, mapArg(args, 0))
+		case "delete":
+			err = handle.Delete(ctx)
+		default:
+			return nil, nil, false
+		}
+	case "serviceAccounts":
+		handle := client.ServiceAccounts()
+		switch call.Method {
+		case "list":
+			value, err = handle.List(ctx)
+		case "create":
+			value, err = handle.Create(ctx, stringArg(args, 0), stringArg(args, 1))
+		case "createKey":
+			value, err = handle.CreateKey(ctx, stringArg(args, 0), stringArg(args, 1))
+		case "revokeKey":
+			err = handle.RevokeKey(ctx, stringArg(args, 0))
+		case "delete":
+			err = handle.Delete(ctx, stringArg(args, 0))
+		default:
+			return nil, nil, false
+		}
+	case "lineageProviders":
+		handle := client.LineageProviders()
+		switch call.Method {
+		case "list":
+			value, err = handle.List(ctx)
+		case "save":
+			value, err = handle.Save(ctx, mapArg(args, 0))
+		case "delete":
+			err = handle.Delete(ctx, stringArg(args, 0))
+		default:
+			return nil, nil, false
+		}
+	case "sharing":
+		handle := client.Sharing()
+		switch call.Method {
+		case "shared":
+			value, err = handle.Shared(ctx)
+		case "discover":
+			value, err = handle.Discover(ctx)
+		case "references":
+			value, err = handle.References(ctx)
+		case "referenceImpact":
+			value, err = handle.ReferenceImpact(ctx, stringArg(args, 0))
+		case "share":
+			value, err = handle.Share(ctx, stringArg(args, 0), stringArg(args, 1), stringListArg(args, 2))
+		case "unshare":
+			err = handle.Unshare(ctx, stringArg(args, 0))
+		case "createReference":
+			value, err = handle.CreateReference(ctx, stringArg(args, 0), stringArg(args, 1), stringArg(args, 2))
+		case "removeReference":
+			err = handle.RemoveReference(ctx, stringArg(args, 0))
+		default:
+			return nil, nil, false
+		}
+	default:
+		return nil, nil, false
+	}
+	return value, err, true
 }

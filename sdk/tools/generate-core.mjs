@@ -156,7 +156,13 @@ export function buildIR() {
     .digest('hex');
   const hydrationRules = JSON.parse(readFileSync(join(here, 'hydration-rules.json'), 'utf8'));
 
-  return { schema, operations, typeClosure, manifestHash, hydrationRules, protocolVersion: manifest.manifestProtocolVersion };
+  // Several facade methods may map to one operation (e.g. wait reuses the run
+  // read); wire cores emit each operation once while the surface map keeps
+  // every method.
+  const seen = new Set();
+  const uniqueOperations = operations.filter(op => !seen.has(op.name) && seen.add(op.name));
+
+  return { schema, operations: uniqueOperations, surfaceMethods: operations, typeClosure, manifestHash, hydrationRules, protocolVersion: manifest.manifestProtocolVersion };
 }
 
 function main() {

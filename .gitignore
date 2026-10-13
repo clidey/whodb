@@ -80,3 +80,6 @@ sdk/packages/python/dist/
 sdk/packages/python/src/*.egg-info/
 sdk/packages/rust/target/
 sdk/packages/java/target/
+
+# Python SDK local virtualenv (created on demand by scripts/with-venv.sh)
+sdk/packages/python/.venv

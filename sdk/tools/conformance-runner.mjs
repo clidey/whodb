@@ -15,7 +15,7 @@ const fixturesDir = join(sdkRoot, 'spec/fixtures');
 
 const RUNNERS = {
   ts: { command: 'node', args: [join(sdkRoot, 'packages/typescript/scripts/conformance.mjs')] },
-  python: { command: 'python3', args: [join(sdkRoot, 'packages/python/scripts/conformance.py')] },
+  python: { command: 'bash', args: [join(sdkRoot, 'packages/python/scripts/with-venv.sh'), 'python', join(sdkRoot, 'packages/python/scripts/conformance.py')] },
   go: { command: 'go', args: ['run', './cmd/conformance'], cwd: join(sdkRoot, 'packages/go'), env: { GOWORK: 'off' } },
   rust: { command: 'cargo', args: ['run', '--quiet', '--bin', 'conformance'], cwd: join(sdkRoot, 'packages/rust') },
   java: { command: 'mvn', args: ['-q', 'compile', 'exec:java'], cwd: join(sdkRoot, 'packages/java') },

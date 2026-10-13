@@ -1,7 +1,8 @@
 # @clidey/whodb-sdk
 
 Official TypeScript/JavaScript SDK for the [WhoDB](https://whodb.com) hosted
-platform — your ontology, datasets, and sources as in-code function APIs.
+platform — your ontology, datasets, sources, transforms, functions, and
+org administration as in-code function APIs.
 
 ## Install
 
@@ -51,6 +52,23 @@ for await (const page of users.list({ pageSize: 500 }).pages()) {
 // Datasets and sources:
 const kpis = await whodb.dataset('weekly_kpis').rows();
 const raw = await whodb.source('src_...').rows({ Kind: 'Table', Locator: 'events' });
+
+// Transforms: run a pipeline and wait for it to finish.
+const rollup = whodb.transform('nightly-rollup');
+const run = await rollup.run();
+const finished = await rollup.wait(run.id, { timeoutMs: 300_000 });
+
+// Functions: synchronous execute, or a tracked run.
+const normalize = whodb.function('normalize');
+const result = await normalize.execute({ name: 'Ada' });
+const queued = await normalize.startRun({ batch: 7 });
+await normalize.wait(queued.id);
+
+// Org administration (requires org manage rights):
+const sa = await whodb.serviceAccounts().create('ci-deployer');
+const { rawKey } = await whodb.serviceAccounts().createKey(sa.id); // shown once — store it securely
+await whodb.lineageProviders().save({ name: 'marquez', endpoint: 'https://...', authType: 'none', enabled: true });
+await whodb.sharing().share('ont_...', 'organization');
 ```
 
 ## Authentication

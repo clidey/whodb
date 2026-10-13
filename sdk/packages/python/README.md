@@ -1,7 +1,8 @@
 # whodb-sdk
 
 Official Python SDK for the [WhoDB](https://whodb.com) hosted platform — your
-ontology, datasets, and sources as in-code function APIs.
+ontology, datasets, sources, transforms, functions, and org administration as
+in-code function APIs.
 
 ## Install
 
@@ -46,6 +47,18 @@ history = order.action_executions("order_123")
 # Iterate everything, page by page:
 for page in users.list(page_size=500).pages():
     print(len(page.rows))
+
+# Datasets, transforms, functions:
+kpis = whodb.dataset("weekly_kpis").rows()
+rollup = whodb.transform("nightly-rollup")
+run = rollup.run()
+rollup.wait(run["id"], timeout_ms=300_000)
+result = whodb.function("normalize").execute({"name": "Ada"})
+
+# Org administration (requires org manage rights):
+sa = whodb.service_accounts().create("ci-deployer")
+raw_key = whodb.service_accounts().create_key(sa["id"])["rawKey"]  # shown once — store it securely
+whodb.sharing().share("ont_...", "organization")
 
 # Async client:
 from whodb import AsyncWhoDB

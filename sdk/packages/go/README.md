@@ -1,7 +1,8 @@
 # whodb (Go SDK)
 
 Official Go SDK for the [WhoDB](https://whodb.com) hosted platform — your
-ontology as in-code function APIs.
+ontology, datasets, sources, transforms, functions, and org administration as
+in-code function APIs.
 
 ## Install
 
@@ -50,6 +51,26 @@ err = users.Pages(ctx, whodb.ListOptions{PageSize: 500}, func(rows []whodb.Row) 
     fmt.Println(len(rows))
     return true // false stops iteration
 })
+
+// Datasets and sources:
+kpis, err := client.Dataset("weekly_kpis").Rows(ctx, whodb.DatasetRowsOptions{PageSize: 100})
+raw, err := client.Source("src_...").Rows(ctx, map[string]any{"Kind": "Table", "Locator": "events"}, whodb.SourceRowsOptions{})
+
+// Transforms: run a pipeline and wait for it to finish.
+rollup := client.Transform("nightly-rollup")
+run, err := rollup.Run(ctx)
+finished, err := rollup.Wait(ctx, run["id"].(string), whodb.WaitOptions{Timeout: 5 * time.Minute})
+
+// Functions: synchronous execute, or a tracked run.
+normalize := client.Function("normalize")
+result, err := normalize.Execute(ctx, map[string]any{"name": "Ada"}, nil)
+queued, err := normalize.StartRun(ctx, map[string]any{"batch": 7}, nil)
+_, err = normalize.Wait(ctx, queued["id"].(string), whodb.WaitOptions{})
+
+// Org administration (requires org manage rights):
+sa, err := client.ServiceAccounts().Create(ctx, "ci-deployer", "")
+key, err := client.ServiceAccounts().CreateKey(ctx, sa["id"].(string), "") // key["rawKey"] is shown once
+_, err = client.Sharing().Share(ctx, "ont_...", "organization", nil)
 ```
 
 ## Authentication

@@ -219,5 +219,335 @@ export const surface = {
       "rename": {},
       "paginated": null
     }
+  },
+  "transforms": {
+    "list": {
+      "operation": "ProjectTransforms",
+      "autofill": {
+        "projectId": "$project"
+      },
+      "rename": {},
+      "paginated": null
+    },
+    "create": {
+      "operation": "SaveTransform",
+      "autofill": {
+        "projectId": "$project"
+      },
+      "rename": {},
+      "paginated": null
+    },
+    "preview": {
+      "operation": "PreviewTransform",
+      "autofill": {
+        "projectId": "$project"
+      },
+      "rename": {},
+      "paginated": null
+    }
+  },
+  "transform": {
+    "meta": {
+      "operation": "ProjectTransforms",
+      "autofill": {
+        "projectId": "$project"
+      },
+      "rename": {},
+      "paginated": null
+    },
+    "runs": {
+      "operation": "TransformRuns",
+      "autofill": {
+        "projectId": "$project"
+      },
+      "rename": {},
+      "paginated": null
+    },
+    "run": {
+      "operation": "RunTransform",
+      "autofill": {
+        "projectId": "$project"
+      },
+      "rename": {},
+      "paginated": null
+    },
+    "cancelRun": {
+      "operation": "CancelTransformRun",
+      "autofill": {
+        "projectId": "$project"
+      },
+      "rename": {},
+      "paginated": null
+    },
+    "wait": {
+      "operation": "TransformRuns",
+      "autofill": {
+        "projectId": "$project"
+      },
+      "rename": {},
+      "paginated": null
+    },
+    "update": {
+      "operation": "SaveTransform",
+      "autofill": {
+        "projectId": "$project"
+      },
+      "rename": {},
+      "paginated": null
+    },
+    "delete": {
+      "operation": "DeleteTransform",
+      "autofill": {
+        "projectId": "$project"
+      },
+      "rename": {},
+      "paginated": null
+    }
+  },
+  "functions": {
+    "list": {
+      "operation": "ProjectFunctions",
+      "autofill": {
+        "projectId": "$project"
+      },
+      "rename": {},
+      "paginated": null
+    },
+    "create": {
+      "operation": "CreateFunction",
+      "autofill": {
+        "projectId": "$project"
+      },
+      "rename": {},
+      "paginated": null
+    }
+  },
+  "function": {
+    "meta": {
+      "operation": "FunctionDetail",
+      "autofill": {
+        "projectId": "$project"
+      },
+      "rename": {},
+      "paginated": null
+    },
+    "execute": {
+      "operation": "ExecuteFunction",
+      "autofill": {
+        "projectId": "$project"
+      },
+      "rename": {},
+      "paginated": null
+    },
+    "test": {
+      "operation": "TestFunction",
+      "autofill": {
+        "projectId": "$project"
+      },
+      "rename": {},
+      "paginated": null
+    },
+    "startRun": {
+      "operation": "StartFunctionRun",
+      "autofill": {
+        "projectId": "$project"
+      },
+      "rename": {},
+      "paginated": null
+    },
+    "run": {
+      "operation": "FunctionRun",
+      "autofill": {
+        "projectId": "$project"
+      },
+      "rename": {},
+      "paginated": null
+    },
+    "runs": {
+      "operation": "FunctionRuns",
+      "autofill": {
+        "projectId": "$project"
+      },
+      "rename": {},
+      "paginated": null
+    },
+    "wait": {
+      "operation": "FunctionRun",
+      "autofill": {
+        "projectId": "$project"
+      },
+      "rename": {},
+      "paginated": null
+    },
+    "cancelRun": {
+      "operation": "CancelFunctionRun",
+      "autofill": {
+        "projectId": "$project"
+      },
+      "rename": {},
+      "paginated": null
+    },
+    "deploy": {
+      "operation": "DeployFunction",
+      "autofill": {
+        "projectId": "$project"
+      },
+      "rename": {},
+      "paginated": null
+    },
+    "redeploy": {
+      "operation": "RedeployFunction",
+      "autofill": {
+        "projectId": "$project"
+      },
+      "rename": {},
+      "paginated": null
+    },
+    "update": {
+      "operation": "UpdateFunction",
+      "autofill": {
+        "projectId": "$project"
+      },
+      "rename": {},
+      "paginated": null
+    },
+    "delete": {
+      "operation": "DeleteFunction",
+      "autofill": {
+        "projectId": "$project"
+      },
+      "rename": {},
+      "paginated": null
+    }
+  },
+  "serviceAccounts": {
+    "list": {
+      "operation": "ServiceAccounts",
+      "autofill": {
+        "orgId": "$org"
+      },
+      "rename": {},
+      "paginated": null
+    },
+    "create": {
+      "operation": "CreateServiceAccount",
+      "autofill": {
+        "orgId": "$org"
+      },
+      "rename": {},
+      "paginated": null
+    },
+    "createKey": {
+      "operation": "CreateServiceAccountKey",
+      "autofill": {
+        "orgId": "$org"
+      },
+      "rename": {},
+      "paginated": null
+    },
+    "revokeKey": {
+      "operation": "RevokeServiceAccountKey",
+      "autofill": {
+        "orgId": "$org"
+      },
+      "rename": {},
+      "paginated": null
+    },
+    "delete": {
+      "operation": "DeleteServiceAccount",
+      "autofill": {
+        "orgId": "$org"
+      },
+      "rename": {},
+      "paginated": null
+    }
+  },
+  "lineageProviders": {
+    "list": {
+      "operation": "ProjectLineageProviders",
+      "autofill": {
+        "projectId": "$project"
+      },
+      "rename": {},
+      "paginated": null
+    },
+    "save": {
+      "operation": "SaveLineageProvider",
+      "autofill": {
+        "projectId": "$project"
+      },
+      "rename": {},
+      "paginated": null
+    },
+    "delete": {
+      "operation": "DeleteLineageProvider",
+      "autofill": {
+        "projectId": "$project"
+      },
+      "rename": {},
+      "paginated": null
+    }
+  },
+  "sharing": {
+    "shared": {
+      "operation": "SharedOntologies",
+      "autofill": {
+        "projectId": "$project"
+      },
+      "rename": {},
+      "paginated": null
+    },
+    "discover": {
+      "operation": "DiscoverSharedOntologies",
+      "autofill": {
+        "consumerProjectId": "$project"
+      },
+      "rename": {},
+      "paginated": null
+    },
+    "references": {
+      "operation": "OntologyReferences",
+      "autofill": {
+        "projectId": "$project"
+      },
+      "rename": {},
+      "paginated": null
+    },
+    "referenceImpact": {
+      "operation": "OntologyReferenceImpact",
+      "autofill": {},
+      "rename": {},
+      "paginated": null
+    },
+    "share": {
+      "operation": "ShareOntology",
+      "autofill": {
+        "projectId": "$project"
+      },
+      "rename": {},
+      "paginated": null
+    },
+    "unshare": {
+      "operation": "UnshareOntology",
+      "autofill": {
+        "projectId": "$project"
+      },
+      "rename": {},
+      "paginated": null
+    },
+    "createReference": {
+      "operation": "CreateOntologyReference",
+      "autofill": {
+        "consumerProjectId": "$project"
+      },
+      "rename": {},
+      "paginated": null
+    },
+    "removeReference": {
+      "operation": "RemoveOntologyReference",
+      "autofill": {},
+      "rename": {},
+      "paginated": null
+    }
   }
 } as const;

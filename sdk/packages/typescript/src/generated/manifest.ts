@@ -76,6 +76,114 @@ export const embeddedManifest: Record<string, { kind: string; deprecated?: boole
   "PlatformSourceColumns": {
     "kind": "Query"
   },
+  "ProjectTransforms": {
+    "kind": "Query"
+  },
+  "SaveTransform": {
+    "kind": "Mutation"
+  },
+  "PreviewTransform": {
+    "kind": "Query"
+  },
+  "TransformRuns": {
+    "kind": "Query"
+  },
+  "RunTransform": {
+    "kind": "Mutation"
+  },
+  "CancelTransformRun": {
+    "kind": "Mutation"
+  },
+  "DeleteTransform": {
+    "kind": "Mutation"
+  },
+  "ProjectFunctions": {
+    "kind": "Query"
+  },
+  "CreateFunction": {
+    "kind": "Mutation"
+  },
+  "FunctionDetail": {
+    "kind": "Query"
+  },
+  "ExecuteFunction": {
+    "kind": "Mutation"
+  },
+  "TestFunction": {
+    "kind": "Mutation"
+  },
+  "StartFunctionRun": {
+    "kind": "Mutation"
+  },
+  "FunctionRun": {
+    "kind": "Query"
+  },
+  "FunctionRuns": {
+    "kind": "Query"
+  },
+  "CancelFunctionRun": {
+    "kind": "Mutation"
+  },
+  "DeployFunction": {
+    "kind": "Mutation"
+  },
+  "RedeployFunction": {
+    "kind": "Mutation"
+  },
+  "UpdateFunction": {
+    "kind": "Mutation"
+  },
+  "DeleteFunction": {
+    "kind": "Mutation"
+  },
+  "ServiceAccounts": {
+    "kind": "Query"
+  },
+  "CreateServiceAccount": {
+    "kind": "Mutation"
+  },
+  "CreateServiceAccountKey": {
+    "kind": "Mutation"
+  },
+  "RevokeServiceAccountKey": {
+    "kind": "Mutation"
+  },
+  "DeleteServiceAccount": {
+    "kind": "Mutation"
+  },
+  "ProjectLineageProviders": {
+    "kind": "Query"
+  },
+  "SaveLineageProvider": {
+    "kind": "Mutation"
+  },
+  "DeleteLineageProvider": {
+    "kind": "Mutation"
+  },
+  "SharedOntologies": {
+    "kind": "Query"
+  },
+  "DiscoverSharedOntologies": {
+    "kind": "Query"
+  },
+  "OntologyReferences": {
+    "kind": "Query"
+  },
+  "OntologyReferenceImpact": {
+    "kind": "Query"
+  },
+  "ShareOntology": {
+    "kind": "Mutation"
+  },
+  "UnshareOntology": {
+    "kind": "Mutation"
+  },
+  "CreateOntologyReference": {
+    "kind": "Mutation"
+  },
+  "RemoveOntologyReference": {
+    "kind": "Mutation"
+  },
   "MyOrganizations": {
     "kind": "Query"
   },

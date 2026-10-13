@@ -50,7 +50,7 @@ type Client struct {
 
 	workspaceOnce sync.Once
 	workspaceErr  error
-	orgID         string
+	orgIDValue    string
 	project       string
 }
 
@@ -153,7 +153,7 @@ func (c *Client) resolveWorkspace(ctx context.Context) error {
 			}
 		}
 		if c.skipResolution {
-			c.orgID, c.project = orgInput, projectInput
+			c.orgIDValue, c.project = orgInput, projectInput
 			return
 		}
 		if orgInput == "" || projectInput == "" {
@@ -192,7 +192,7 @@ func (c *Client) resolveWorkspace(ctx context.Context) error {
 		if c.http != nil {
 			c.http.setWorkspace(orgID, projectID)
 		}
-		c.orgID, c.project = orgID, projectID
+		c.orgIDValue, c.project = orgID, projectID
 	})
 	return c.workspaceErr
 }
@@ -221,6 +221,64 @@ func (c *Client) projectID(ctx context.Context) (string, error) {
 func (c *Client) Ontology(name string) *OntologyHandle {
 	return &OntologyHandle{client: c, apiName: name}
 }
+
+func (c *Client) orgID(ctx context.Context) (string, error) {
+	if err := c.resolveWorkspace(ctx); err != nil {
+		return "", err
+	}
+	return c.orgIDValue, nil
+}
+
+// Dataset returns a handle for one dataset, addressed by name.
+func (c *Client) Dataset(name string) *DatasetHandle {
+	return &DatasetHandle{client: c, name: name}
+}
+
+// Source returns a handle for one connected source, addressed by source ID.
+func (c *Client) Source(sourceID string) *SourceHandle {
+	return &SourceHandle{client: c, sourceID: sourceID}
+}
+
+// Sources lists the project's connected sources.
+func (c *Client) Sources(ctx context.Context) ([]map[string]any, error) {
+	projectID, err := c.projectID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	warnIfFlagged("ProjectSources")
+	result, err := c.execute(ctx, gen.NewProjectSourcesRequest(map[string]any{"projectId": projectID}))
+	if err != nil {
+		return nil, err
+	}
+	return asList(result), nil
+}
+
+// Transforms returns the project's transform collection facade.
+func (c *Client) Transforms() *TransformsHandle { return &TransformsHandle{client: c} }
+
+// Transform returns a handle for one transform, addressed by name or id.
+func (c *Client) Transform(name string) *TransformHandle {
+	return &TransformHandle{client: c, name: name}
+}
+
+// Functions returns the project's function collection facade.
+func (c *Client) Functions() *FunctionsHandle { return &FunctionsHandle{client: c} }
+
+// Function returns a handle for one function, addressed by name or id.
+func (c *Client) Function(name string) *FunctionHandle {
+	return &FunctionHandle{client: c, name: name}
+}
+
+// ServiceAccounts returns the organization's service account facade.
+func (c *Client) ServiceAccounts() *ServiceAccountsHandle { return &ServiceAccountsHandle{client: c} }
+
+// LineageProviders returns the project's lineage provider facade.
+func (c *Client) LineageProviders() *LineageProvidersHandle {
+	return &LineageProvidersHandle{client: c}
+}
+
+// Sharing returns the project's ontology sharing facade.
+func (c *Client) Sharing() *SharingHandle { return &SharingHandle{client: c} }
 
 // OntologyEntities lists all ontology entities in the project.
 func (c *Client) OntologyEntities(ctx context.Context) ([]map[string]any, error) {

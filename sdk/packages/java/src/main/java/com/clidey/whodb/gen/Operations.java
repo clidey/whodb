@@ -210,6 +210,294 @@ public final class Operations {
         return new Request("PlatformSourceColumns", PLATFORM_SOURCE_COLUMNS_DOCUMENT, variables);
     }
 
+    /** Wire document for Query ProjectTransforms. */
+    public static final String PROJECT_TRANSFORMS_DOCUMENT = "query ProjectTransforms($projectId: ID!) { ProjectTransforms(projectId: $projectId) { id projectId name description graphJson scheduleCron triggerMode lastRunStatus lastRunAt liveStatus liveLastProcessedAt liveRecordsProcessed liveLastError createdAt updatedAt } }";
+
+    /** Builds the wire request for Query ProjectTransforms. */
+    public static Request projectTransformsRequest(Map<String, Object> variables) {
+        return new Request("ProjectTransforms", PROJECT_TRANSFORMS_DOCUMENT, variables);
+    }
+
+    /** Wire document for Mutation SaveTransform. */
+    public static final String SAVE_TRANSFORM_DOCUMENT = "mutation SaveTransform($input: SaveTransformInput!) { SaveTransform(input: $input) { id projectId name description graphJson scheduleCron triggerMode lastRunStatus lastRunAt liveStatus liveLastProcessedAt liveRecordsProcessed liveLastError createdAt updatedAt } }";
+
+    /** Builds the wire request for Mutation SaveTransform. */
+    public static Request saveTransformRequest(Map<String, Object> variables) {
+        return new Request("SaveTransform", SAVE_TRANSFORM_DOCUMENT, variables);
+    }
+
+    /** Wire document for Query PreviewTransform. */
+    public static final String PREVIEW_TRANSFORM_DOCUMENT = "query PreviewTransform($projectId: ID!, $graphJson: String!) { PreviewTransform(projectId: $projectId, graphJson: $graphJson) { columns rows total } }";
+
+    /** Builds the wire request for Query PreviewTransform. */
+    public static Request previewTransformRequest(Map<String, Object> variables) {
+        return new Request("PreviewTransform", PREVIEW_TRANSFORM_DOCUMENT, variables);
+    }
+
+    /** Wire document for Query TransformRuns. */
+    public static final String TRANSFORM_RUNS_DOCUMENT = "query TransformRuns($projectId: ID!, $transformId: ID!, $limit: Int) { TransformRuns(projectId: $projectId, transformId: $transformId, limit: $limit) { id transformId status errorMessage triggeredBy startedAt completedAt } }";
+
+    /** Builds the wire request for Query TransformRuns. */
+    public static Request transformRunsRequest(Map<String, Object> variables) {
+        return new Request("TransformRuns", TRANSFORM_RUNS_DOCUMENT, variables);
+    }
+
+    /** Wire document for Mutation RunTransform. */
+    public static final String RUN_TRANSFORM_DOCUMENT = "mutation RunTransform($projectId: ID!, $id: ID!) { RunTransform(projectId: $projectId, id: $id) { id transformId status errorMessage triggeredBy startedAt completedAt } }";
+
+    /** Builds the wire request for Mutation RunTransform. */
+    public static Request runTransformRequest(Map<String, Object> variables) {
+        return new Request("RunTransform", RUN_TRANSFORM_DOCUMENT, variables);
+    }
+
+    /** Wire document for Mutation CancelTransformRun. */
+    public static final String CANCEL_TRANSFORM_RUN_DOCUMENT = "mutation CancelTransformRun($projectId: ID!, $transformId: ID!, $runId: ID) { CancelTransformRun(projectId: $projectId, transformId: $transformId, runId: $runId) { Status } }";
+
+    /** Builds the wire request for Mutation CancelTransformRun. */
+    public static Request cancelTransformRunRequest(Map<String, Object> variables) {
+        return new Request("CancelTransformRun", CANCEL_TRANSFORM_RUN_DOCUMENT, variables);
+    }
+
+    /** Wire document for Mutation DeleteTransform. */
+    public static final String DELETE_TRANSFORM_DOCUMENT = "mutation DeleteTransform($projectId: ID!, $id: ID!) { DeleteTransform(projectId: $projectId, id: $id) { Status } }";
+
+    /** Builds the wire request for Mutation DeleteTransform. */
+    public static Request deleteTransformRequest(Map<String, Object> variables) {
+        return new Request("DeleteTransform", DELETE_TRANSFORM_DOCUMENT, variables);
+    }
+
+    /** Wire document for Query ProjectFunctions. */
+    public static final String PROJECT_FUNCTIONS_DOCUMENT = "query ProjectFunctions($projectId: ID!) { ProjectFunctions(projectId: $projectId) { id projectId name description language entryPoint timeoutSeconds memory cpu executionMode liveBehavior createdBy createdAt updatedAt files { id path content } dependencies { id name version } providerIds ontologyIds readOnlyOntologyIds providerConfigs { providerId model } secretBindings { name secretId target } defaultMaxTokens defaultTemperature isDeployed currentRunStatus } }";
+
+    /** Builds the wire request for Query ProjectFunctions. */
+    public static Request projectFunctionsRequest(Map<String, Object> variables) {
+        return new Request("ProjectFunctions", PROJECT_FUNCTIONS_DOCUMENT, variables);
+    }
+
+    /** Wire document for Mutation CreateFunction. */
+    public static final String CREATE_FUNCTION_DOCUMENT = "mutation CreateFunction($input: CreateFunctionInput!) { CreateFunction(input: $input) { id projectId name description language entryPoint timeoutSeconds memory cpu executionMode liveBehavior createdBy createdAt updatedAt files { id path content } dependencies { id name version } providerIds ontologyIds readOnlyOntologyIds providerConfigs { providerId model } secretBindings { name secretId target } defaultMaxTokens defaultTemperature isDeployed currentRunStatus } }";
+
+    /** Builds the wire request for Mutation CreateFunction. */
+    public static Request createFunctionRequest(Map<String, Object> variables) {
+        return new Request("CreateFunction", CREATE_FUNCTION_DOCUMENT, variables);
+    }
+
+    /** Wire document for Query FunctionDetail. */
+    public static final String FUNCTION_DETAIL_DOCUMENT = "query FunctionDetail($projectId: ID!, $id: ID!) { FunctionDetail(projectId: $projectId, id: $id) { id projectId name description language entryPoint timeoutSeconds memory cpu executionMode liveBehavior createdBy createdAt updatedAt files { id path content } dependencies { id name version } providerIds ontologyIds readOnlyOntologyIds providerConfigs { providerId model } secretBindings { name secretId target } defaultMaxTokens defaultTemperature isDeployed currentRunStatus } }";
+
+    /** Builds the wire request for Query FunctionDetail. */
+    public static Request functionDetailRequest(Map<String, Object> variables) {
+        return new Request("FunctionDetail", FUNCTION_DETAIL_DOCUMENT, variables);
+    }
+
+    /** Wire document for Mutation ExecuteFunction. */
+    public static final String EXECUTE_FUNCTION_DOCUMENT = "mutation ExecuteFunction($projectId: ID!, $functionId: ID!, $input: String!, $inputFileIds: [ID!]) { ExecuteFunction(projectId: $projectId, functionId: $functionId, input: $input, inputFileIds: $inputFileIds) { output logs durationMs success error } }";
+
+    /** Builds the wire request for Mutation ExecuteFunction. */
+    public static Request executeFunctionRequest(Map<String, Object> variables) {
+        return new Request("ExecuteFunction", EXECUTE_FUNCTION_DOCUMENT, variables);
+    }
+
+    /** Wire document for Mutation TestFunction. */
+    public static final String TEST_FUNCTION_DOCUMENT = "mutation TestFunction($input: TestFunctionInput!) { TestFunction(input: $input) { output logs durationMs success error } }";
+
+    /** Builds the wire request for Mutation TestFunction. */
+    public static Request testFunctionRequest(Map<String, Object> variables) {
+        return new Request("TestFunction", TEST_FUNCTION_DOCUMENT, variables);
+    }
+
+    /** Wire document for Mutation StartFunctionRun. */
+    public static final String START_FUNCTION_RUN_DOCUMENT = "mutation StartFunctionRun($projectId: ID!, $functionId: ID!, $input: String!, $useActiveVersion: Boolean) { StartFunctionRun(projectId: $projectId, functionId: $functionId, input: $input, useActiveVersion: $useActiveVersion) { id functionId executionMode liveBehavior status desiredState input output logs error attempt createdBy startedAt heartbeatAt completedAt createdAt updatedAt } }";
+
+    /** Builds the wire request for Mutation StartFunctionRun. */
+    public static Request startFunctionRunRequest(Map<String, Object> variables) {
+        return new Request("StartFunctionRun", START_FUNCTION_RUN_DOCUMENT, variables);
+    }
+
+    /** Wire document for Query FunctionRun. */
+    public static final String FUNCTION_RUN_DOCUMENT = "query FunctionRun($projectId: ID!, $id: ID!) { FunctionRun(projectId: $projectId, id: $id) { id functionId executionMode liveBehavior status desiredState input output logs error attempt createdBy startedAt heartbeatAt completedAt createdAt updatedAt } }";
+
+    /** Builds the wire request for Query FunctionRun. */
+    public static Request functionRunRequest(Map<String, Object> variables) {
+        return new Request("FunctionRun", FUNCTION_RUN_DOCUMENT, variables);
+    }
+
+    /** Wire document for Query FunctionRuns. */
+    public static final String FUNCTION_RUNS_DOCUMENT = "query FunctionRuns($projectId: ID!, $functionId: ID!, $limit: Int) { FunctionRuns(projectId: $projectId, functionId: $functionId, limit: $limit) { id functionId executionMode liveBehavior status desiredState input output logs error attempt createdBy startedAt heartbeatAt completedAt createdAt updatedAt } }";
+
+    /** Builds the wire request for Query FunctionRuns. */
+    public static Request functionRunsRequest(Map<String, Object> variables) {
+        return new Request("FunctionRuns", FUNCTION_RUNS_DOCUMENT, variables);
+    }
+
+    /** Wire document for Mutation CancelFunctionRun. */
+    public static final String CANCEL_FUNCTION_RUN_DOCUMENT = "mutation CancelFunctionRun($projectId: ID!, $id: ID!) { CancelFunctionRun(projectId: $projectId, id: $id) { id functionId executionMode liveBehavior status desiredState input output logs error attempt createdBy startedAt heartbeatAt completedAt createdAt updatedAt } }";
+
+    /** Builds the wire request for Mutation CancelFunctionRun. */
+    public static Request cancelFunctionRunRequest(Map<String, Object> variables) {
+        return new Request("CancelFunctionRun", CANCEL_FUNCTION_RUN_DOCUMENT, variables);
+    }
+
+    /** Wire document for Mutation DeployFunction. */
+    public static final String DEPLOY_FUNCTION_DOCUMENT = "mutation DeployFunction($projectId: ID!, $id: ID!) { DeployFunction(projectId: $projectId, id: $id) { Status } }";
+
+    /** Builds the wire request for Mutation DeployFunction. */
+    public static Request deployFunctionRequest(Map<String, Object> variables) {
+        return new Request("DeployFunction", DEPLOY_FUNCTION_DOCUMENT, variables);
+    }
+
+    /** Wire document for Mutation RedeployFunction. */
+    public static final String REDEPLOY_FUNCTION_DOCUMENT = "mutation RedeployFunction($projectId: ID!, $id: ID!) { RedeployFunction(projectId: $projectId, id: $id) { Status } }";
+
+    /** Builds the wire request for Mutation RedeployFunction. */
+    public static Request redeployFunctionRequest(Map<String, Object> variables) {
+        return new Request("RedeployFunction", REDEPLOY_FUNCTION_DOCUMENT, variables);
+    }
+
+    /** Wire document for Mutation UpdateFunction. */
+    public static final String UPDATE_FUNCTION_DOCUMENT = "mutation UpdateFunction($input: UpdateFunctionInput!) { UpdateFunction(input: $input) { id projectId name description language entryPoint timeoutSeconds memory cpu executionMode liveBehavior createdBy createdAt updatedAt files { id path content } dependencies { id name version } providerIds ontologyIds readOnlyOntologyIds providerConfigs { providerId model } secretBindings { name secretId target } defaultMaxTokens defaultTemperature isDeployed currentRunStatus } }";
+
+    /** Builds the wire request for Mutation UpdateFunction. */
+    public static Request updateFunctionRequest(Map<String, Object> variables) {
+        return new Request("UpdateFunction", UPDATE_FUNCTION_DOCUMENT, variables);
+    }
+
+    /** Wire document for Mutation DeleteFunction. */
+    public static final String DELETE_FUNCTION_DOCUMENT = "mutation DeleteFunction($projectId: ID!, $id: ID!) { DeleteFunction(projectId: $projectId, id: $id) { Status } }";
+
+    /** Builds the wire request for Mutation DeleteFunction. */
+    public static Request deleteFunctionRequest(Map<String, Object> variables) {
+        return new Request("DeleteFunction", DELETE_FUNCTION_DOCUMENT, variables);
+    }
+
+    /** Wire document for Query ServiceAccounts. */
+    public static final String SERVICE_ACCOUNTS_DOCUMENT = "query ServiceAccounts($orgId: ID!) { ServiceAccounts(orgId: $orgId) { id orgId name description createdBy createdAt disabledAt keys { id keyPrefix createdAt expiresAt revokedAt lastUsedAt } } }";
+
+    /** Builds the wire request for Query ServiceAccounts. */
+    public static Request serviceAccountsRequest(Map<String, Object> variables) {
+        return new Request("ServiceAccounts", SERVICE_ACCOUNTS_DOCUMENT, variables);
+    }
+
+    /** Wire document for Mutation CreateServiceAccount. */
+    public static final String CREATE_SERVICE_ACCOUNT_DOCUMENT = "mutation CreateServiceAccount($orgId: ID!, $name: String!, $description: String) { CreateServiceAccount(orgId: $orgId, name: $name, description: $description) { id orgId name description createdBy createdAt disabledAt keys { id keyPrefix createdAt expiresAt revokedAt lastUsedAt } } }";
+
+    /** Builds the wire request for Mutation CreateServiceAccount. */
+    public static Request createServiceAccountRequest(Map<String, Object> variables) {
+        return new Request("CreateServiceAccount", CREATE_SERVICE_ACCOUNT_DOCUMENT, variables);
+    }
+
+    /** Wire document for Mutation CreateServiceAccountKey. */
+    public static final String CREATE_SERVICE_ACCOUNT_KEY_DOCUMENT = "mutation CreateServiceAccountKey($orgId: ID!, $serviceAccountId: ID!, $expiresAt: String) { CreateServiceAccountKey(orgId: $orgId, serviceAccountId: $serviceAccountId, expiresAt: $expiresAt) { key { id keyPrefix createdAt expiresAt revokedAt lastUsedAt } rawKey } }";
+
+    /** Builds the wire request for Mutation CreateServiceAccountKey. */
+    public static Request createServiceAccountKeyRequest(Map<String, Object> variables) {
+        return new Request("CreateServiceAccountKey", CREATE_SERVICE_ACCOUNT_KEY_DOCUMENT, variables);
+    }
+
+    /** Wire document for Mutation RevokeServiceAccountKey. */
+    public static final String REVOKE_SERVICE_ACCOUNT_KEY_DOCUMENT = "mutation RevokeServiceAccountKey($orgId: ID!, $keyId: ID!) { RevokeServiceAccountKey(orgId: $orgId, keyId: $keyId) { Status } }";
+
+    /** Builds the wire request for Mutation RevokeServiceAccountKey. */
+    public static Request revokeServiceAccountKeyRequest(Map<String, Object> variables) {
+        return new Request("RevokeServiceAccountKey", REVOKE_SERVICE_ACCOUNT_KEY_DOCUMENT, variables);
+    }
+
+    /** Wire document for Mutation DeleteServiceAccount. */
+    public static final String DELETE_SERVICE_ACCOUNT_DOCUMENT = "mutation DeleteServiceAccount($orgId: ID!, $id: ID!) { DeleteServiceAccount(orgId: $orgId, id: $id) { Status } }";
+
+    /** Builds the wire request for Mutation DeleteServiceAccount. */
+    public static Request deleteServiceAccountRequest(Map<String, Object> variables) {
+        return new Request("DeleteServiceAccount", DELETE_SERVICE_ACCOUNT_DOCUMENT, variables);
+    }
+
+    /** Wire document for Query ProjectLineageProviders. */
+    public static final String PROJECT_LINEAGE_PROVIDERS_DOCUMENT = "query ProjectLineageProviders($projectId: ID!) { ProjectLineageProviders(projectId: $projectId) { id projectId name endpoint readEndpoint namespace authType enabled createdAt updatedAt } }";
+
+    /** Builds the wire request for Query ProjectLineageProviders. */
+    public static Request projectLineageProvidersRequest(Map<String, Object> variables) {
+        return new Request("ProjectLineageProviders", PROJECT_LINEAGE_PROVIDERS_DOCUMENT, variables);
+    }
+
+    /** Wire document for Mutation SaveLineageProvider. */
+    public static final String SAVE_LINEAGE_PROVIDER_DOCUMENT = "mutation SaveLineageProvider($input: SaveLineageProviderInput!) { SaveLineageProvider(input: $input) { id projectId name endpoint readEndpoint namespace authType enabled createdAt updatedAt } }";
+
+    /** Builds the wire request for Mutation SaveLineageProvider. */
+    public static Request saveLineageProviderRequest(Map<String, Object> variables) {
+        return new Request("SaveLineageProvider", SAVE_LINEAGE_PROVIDER_DOCUMENT, variables);
+    }
+
+    /** Wire document for Mutation DeleteLineageProvider. */
+    public static final String DELETE_LINEAGE_PROVIDER_DOCUMENT = "mutation DeleteLineageProvider($projectId: ID!, $providerId: ID!) { DeleteLineageProvider(projectId: $projectId, providerId: $providerId) { Status } }";
+
+    /** Builds the wire request for Mutation DeleteLineageProvider. */
+    public static Request deleteLineageProviderRequest(Map<String, Object> variables) {
+        return new Request("DeleteLineageProvider", DELETE_LINEAGE_PROVIDER_DOCUMENT, variables);
+    }
+
+    /** Wire document for Query SharedOntologies. */
+    public static final String SHARED_ONTOLOGIES_DOCUMENT = "query SharedOntologies($projectId: ID!) { SharedOntologies(projectId: $projectId) { id projectId ontologyId visibility ontology { id projectId apiName displayName pluralDisplayName description primaryKey sourceId tableName schemaName storageMode provisioningStatus embeddingEnabled embeddingProperties status icon color createdAt updatedAt properties { id apiName displayName description columnName dataType arrayElementType isRequired visibility isSearchable isSortable isEditOnly sortOrder } links { id apiName targetOntologyApiName cardinality foreignKeyProperty targetForeignKeyProperty joinTable sourceColumnInJoinTable targetColumnInJoinTable displayName pluralDisplayName reverseDisplayName targetKind targetReferenceId } } consumers { projectId referenceId alias status } createdAt } }";
+
+    /** Builds the wire request for Query SharedOntologies. */
+    public static Request sharedOntologiesRequest(Map<String, Object> variables) {
+        return new Request("SharedOntologies", SHARED_ONTOLOGIES_DOCUMENT, variables);
+    }
+
+    /** Wire document for Query DiscoverSharedOntologies. */
+    public static final String DISCOVER_SHARED_ONTOLOGIES_DOCUMENT = "query DiscoverSharedOntologies($consumerProjectId: ID!) { DiscoverSharedOntologies(consumerProjectId: $consumerProjectId) { id projectId ontologyId visibility ontology { id projectId apiName displayName pluralDisplayName description primaryKey sourceId tableName schemaName storageMode provisioningStatus embeddingEnabled embeddingProperties status icon color createdAt updatedAt properties { id apiName displayName description columnName dataType arrayElementType isRequired visibility isSearchable isSortable isEditOnly sortOrder } links { id apiName targetOntologyApiName cardinality foreignKeyProperty targetForeignKeyProperty joinTable sourceColumnInJoinTable targetColumnInJoinTable displayName pluralDisplayName reverseDisplayName targetKind targetReferenceId } } consumers { projectId referenceId alias status } createdAt } }";
+
+    /** Builds the wire request for Query DiscoverSharedOntologies. */
+    public static Request discoverSharedOntologiesRequest(Map<String, Object> variables) {
+        return new Request("DiscoverSharedOntologies", DISCOVER_SHARED_ONTOLOGIES_DOCUMENT, variables);
+    }
+
+    /** Wire document for Query OntologyReferences. */
+    public static final String ONTOLOGY_REFERENCES_DOCUMENT = "query OntologyReferences($projectId: ID!) { OntologyReferences(projectId: $projectId) { id consumerProjectId alias ownerProjectId ontologyId status ontology { id projectId apiName displayName pluralDisplayName description primaryKey sourceId tableName schemaName storageMode provisioningStatus embeddingEnabled embeddingProperties status icon color createdAt updatedAt properties { id apiName displayName description columnName dataType arrayElementType isRequired visibility isSearchable isSortable isEditOnly sortOrder } links { id apiName targetOntologyApiName cardinality foreignKeyProperty targetForeignKeyProperty joinTable sourceColumnInJoinTable targetColumnInJoinTable displayName pluralDisplayName reverseDisplayName targetKind targetReferenceId } } createdAt } }";
+
+    /** Builds the wire request for Query OntologyReferences. */
+    public static Request ontologyReferencesRequest(Map<String, Object> variables) {
+        return new Request("OntologyReferences", ONTOLOGY_REFERENCES_DOCUMENT, variables);
+    }
+
+    /** Wire document for Query OntologyReferenceImpact. */
+    public static final String ONTOLOGY_REFERENCE_IMPACT_DOCUMENT = "query OntologyReferenceImpact($referenceId: ID!) { OntologyReferenceImpact(referenceId: $referenceId) { referenceId dependentLinks dependentApps dependentFuncs dependentXfms dependentBehavs } }";
+
+    /** Builds the wire request for Query OntologyReferenceImpact. */
+    public static Request ontologyReferenceImpactRequest(Map<String, Object> variables) {
+        return new Request("OntologyReferenceImpact", ONTOLOGY_REFERENCE_IMPACT_DOCUMENT, variables);
+    }
+
+    /** Wire document for Mutation ShareOntology. */
+    public static final String SHARE_ONTOLOGY_DOCUMENT = "mutation ShareOntology($input: ShareOntologyInput!) { ShareOntology(input: $input) { id projectId ontologyId visibility ontology { id projectId apiName displayName pluralDisplayName description primaryKey sourceId tableName schemaName storageMode provisioningStatus embeddingEnabled embeddingProperties status icon color createdAt updatedAt properties { id apiName displayName description columnName dataType arrayElementType isRequired visibility isSearchable isSortable isEditOnly sortOrder } links { id apiName targetOntologyApiName cardinality foreignKeyProperty targetForeignKeyProperty joinTable sourceColumnInJoinTable targetColumnInJoinTable displayName pluralDisplayName reverseDisplayName targetKind targetReferenceId } } consumers { projectId referenceId alias status } createdAt } }";
+
+    /** Builds the wire request for Mutation ShareOntology. */
+    public static Request shareOntologyRequest(Map<String, Object> variables) {
+        return new Request("ShareOntology", SHARE_ONTOLOGY_DOCUMENT, variables);
+    }
+
+    /** Wire document for Mutation UnshareOntology. */
+    public static final String UNSHARE_ONTOLOGY_DOCUMENT = "mutation UnshareOntology($projectId: ID!, $ontologyId: ID!) { UnshareOntology(projectId: $projectId, ontologyId: $ontologyId) { Status } }";
+
+    /** Builds the wire request for Mutation UnshareOntology. */
+    public static Request unshareOntologyRequest(Map<String, Object> variables) {
+        return new Request("UnshareOntology", UNSHARE_ONTOLOGY_DOCUMENT, variables);
+    }
+
+    /** Wire document for Mutation CreateOntologyReference. */
+    public static final String CREATE_ONTOLOGY_REFERENCE_DOCUMENT = "mutation CreateOntologyReference($input: CreateOntologyReferenceInput!) { CreateOntologyReference(input: $input) { id consumerProjectId alias ownerProjectId ontologyId status ontology { id projectId apiName displayName pluralDisplayName description primaryKey sourceId tableName schemaName storageMode provisioningStatus embeddingEnabled embeddingProperties status icon color createdAt updatedAt properties { id apiName displayName description columnName dataType arrayElementType isRequired visibility isSearchable isSortable isEditOnly sortOrder } links { id apiName targetOntologyApiName cardinality foreignKeyProperty targetForeignKeyProperty joinTable sourceColumnInJoinTable targetColumnInJoinTable displayName pluralDisplayName reverseDisplayName targetKind targetReferenceId } } createdAt } }";
+
+    /** Builds the wire request for Mutation CreateOntologyReference. */
+    public static Request createOntologyReferenceRequest(Map<String, Object> variables) {
+        return new Request("CreateOntologyReference", CREATE_ONTOLOGY_REFERENCE_DOCUMENT, variables);
+    }
+
+    /** Wire document for Mutation RemoveOntologyReference. */
+    public static final String REMOVE_ONTOLOGY_REFERENCE_DOCUMENT = "mutation RemoveOntologyReference($referenceId: ID!) { RemoveOntologyReference(referenceId: $referenceId) { Status } }";
+
+    /** Builds the wire request for Mutation RemoveOntologyReference. */
+    public static Request removeOntologyReferenceRequest(Map<String, Object> variables) {
+        return new Request("RemoveOntologyReference", REMOVE_ONTOLOGY_REFERENCE_DOCUMENT, variables);
+    }
+
     /** Wire document for Query MyOrganizations. */
     public static final String MY_ORGANIZATIONS_DOCUMENT = "query MyOrganizations { MyOrganizations { id name slug createdAt } }";
 

@@ -53,6 +53,7 @@ public final class WhoDB {
     private final String projectInput;
 
     private boolean workspaceResolved;
+    private String resolvedOrg;
     private String resolvedProject;
 
     /** Creates a client with all-default configuration. */
@@ -174,6 +175,7 @@ public final class WhoDB {
             }
         }
         if (skipResolution) {
+            resolvedOrg = org;
             resolvedProject = project;
             workspaceResolved = true;
             return;
@@ -202,6 +204,7 @@ public final class WhoDB {
             }
         }
         http.setWorkspace(orgId, projectId);
+        resolvedOrg = orgId;
         resolvedProject = projectId;
         workspaceResolved = true;
     }
@@ -229,9 +232,66 @@ public final class WhoDB {
         return resolvedProject;
     }
 
+    synchronized String orgId() {
+        resolveWorkspace();
+        return resolvedOrg;
+    }
+
     /** Returns a handle for one ontology entity, addressed by apiName. */
     public OntologyHandle ontology(String apiName) {
         return new OntologyHandle(this, apiName);
+    }
+
+    /** Returns a handle for one dataset, addressed by name. */
+    public DatasetHandle dataset(String name) {
+        return new DatasetHandle(this, name);
+    }
+
+    /** Returns a handle for one connected source, addressed by source ID. */
+    public SourceHandle source(String sourceId) {
+        return new SourceHandle(this, sourceId);
+    }
+
+    /** Lists the project's connected sources. */
+    public List<Map<String, Object>> sources() {
+        String projectId = projectId();
+        ManifestCheck.warnIfFlagged("ProjectSources");
+        return Facades.asList(execute(Operations.projectSourcesRequest(Map.of("projectId", projectId))));
+    }
+
+    /** Returns the project's transform collection facade. */
+    public TransformsHandle transforms() {
+        return new TransformsHandle(this);
+    }
+
+    /** Returns a handle for one transform, addressed by name or id. */
+    public TransformHandle transform(String name) {
+        return new TransformHandle(this, name);
+    }
+
+    /** Returns the project's function collection facade. */
+    public FunctionsHandle functions() {
+        return new FunctionsHandle(this);
+    }
+
+    /** Returns a handle for one function, addressed by name or id. */
+    public FunctionHandle function(String name) {
+        return new FunctionHandle(this, name);
+    }
+
+    /** Returns the organization's service account facade. */
+    public ServiceAccountsHandle serviceAccounts() {
+        return new ServiceAccountsHandle(this);
+    }
+
+    /** Returns the project's lineage provider facade. */
+    public LineageProvidersHandle lineageProviders() {
+        return new LineageProvidersHandle(this);
+    }
+
+    /** Returns the project's ontology sharing facade. */
+    public SharingHandle sharing() {
+        return new SharingHandle(this);
     }
 
     /** Lists all ontology entities in the project. */

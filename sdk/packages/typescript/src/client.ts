@@ -6,6 +6,11 @@ import { OntologyHandle } from './ontology.js';
 import { DatasetHandle } from './dataset.js';
 import { SourceHandle, listSources } from './source.js';
 import { FilesHandle } from './files.js';
+import { TransformsHandle, TransformHandle } from './transforms.js';
+import { FunctionsHandle, FunctionHandle } from './functions.js';
+import { ServiceAccountsHandle } from './service-accounts.js';
+import { LineageProvidersHandle } from './lineage.js';
+import { SharingHandle } from './sharing.js';
 import * as ops from './generated/operations.js';
 import type { OntologyObjectType, PlatformSource } from './generated/types.js';
 import { manifestHash } from './generated/manifest.js';
@@ -162,6 +167,7 @@ export class WhoDB {
   }
 
   private projectId = async (): Promise<string> => (await this.workspace()).projectId;
+  private orgId = async (): Promise<string> => (await this.workspace()).orgId;
 
   /** Returns a handle for one ontology entity, addressed by apiName. */
   ontology(name: string): OntologyHandle {
@@ -186,6 +192,41 @@ export class WhoDB {
   /** Lists the project's connected sources. */
   async sources(): Promise<PlatformSource[]> {
     return listSources(this.transport, await this.projectId());
+  }
+
+  /** The project's transform collection: list, create, preview. */
+  transforms(): TransformsHandle {
+    return new TransformsHandle(this.transport, this.projectId);
+  }
+
+  /** Returns a handle for one transform, addressed by name or id. */
+  transform(name: string): TransformHandle {
+    return new TransformHandle(this.transport, this.projectId, name);
+  }
+
+  /** The project's function collection: list, create. */
+  functions(): FunctionsHandle {
+    return new FunctionsHandle(this.transport, this.projectId);
+  }
+
+  /** Returns a handle for one function, addressed by name or id. */
+  function(name: string): FunctionHandle {
+    return new FunctionHandle(this.transport, this.projectId, name);
+  }
+
+  /** Service accounts and API keys for the organization. */
+  serviceAccounts(): ServiceAccountsHandle {
+    return new ServiceAccountsHandle(this.transport, this.orgId);
+  }
+
+  /** OpenLineage providers feeding the project's lineage. */
+  lineageProviders(): LineageProvidersHandle {
+    return new LineageProvidersHandle(this.transport, this.projectId);
+  }
+
+  /** Cross-project ontology sharing and references. */
+  sharing(): SharingHandle {
+    return new SharingHandle(this.transport, this.projectId);
   }
 
   /** File upload/download over the platform's bulk HTTP endpoints. */

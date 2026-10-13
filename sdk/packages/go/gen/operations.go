@@ -209,6 +209,294 @@ func NewPlatformSourceColumnsRequest(variables map[string]any) Request {
 	return Request{Operation: "PlatformSourceColumns", Document: PlatformSourceColumnsDocument, Variables: variables}
 }
 
+// ProjectTransformsDocument is the wire document for Query ProjectTransforms.
+const ProjectTransformsDocument = "query ProjectTransforms($projectId: ID!) { ProjectTransforms(projectId: $projectId) { id projectId name description graphJson scheduleCron triggerMode lastRunStatus lastRunAt liveStatus liveLastProcessedAt liveRecordsProcessed liveLastError createdAt updatedAt } }"
+
+// NewProjectTransformsRequest builds the wire request for Query ProjectTransforms.
+func NewProjectTransformsRequest(variables map[string]any) Request {
+	return Request{Operation: "ProjectTransforms", Document: ProjectTransformsDocument, Variables: variables}
+}
+
+// SaveTransformDocument is the wire document for Mutation SaveTransform.
+const SaveTransformDocument = "mutation SaveTransform($input: SaveTransformInput!) { SaveTransform(input: $input) { id projectId name description graphJson scheduleCron triggerMode lastRunStatus lastRunAt liveStatus liveLastProcessedAt liveRecordsProcessed liveLastError createdAt updatedAt } }"
+
+// NewSaveTransformRequest builds the wire request for Mutation SaveTransform.
+func NewSaveTransformRequest(variables map[string]any) Request {
+	return Request{Operation: "SaveTransform", Document: SaveTransformDocument, Variables: variables}
+}
+
+// PreviewTransformDocument is the wire document for Query PreviewTransform.
+const PreviewTransformDocument = "query PreviewTransform($projectId: ID!, $graphJson: String!) { PreviewTransform(projectId: $projectId, graphJson: $graphJson) { columns rows total } }"
+
+// NewPreviewTransformRequest builds the wire request for Query PreviewTransform.
+func NewPreviewTransformRequest(variables map[string]any) Request {
+	return Request{Operation: "PreviewTransform", Document: PreviewTransformDocument, Variables: variables}
+}
+
+// TransformRunsDocument is the wire document for Query TransformRuns.
+const TransformRunsDocument = "query TransformRuns($projectId: ID!, $transformId: ID!, $limit: Int) { TransformRuns(projectId: $projectId, transformId: $transformId, limit: $limit) { id transformId status errorMessage triggeredBy startedAt completedAt } }"
+
+// NewTransformRunsRequest builds the wire request for Query TransformRuns.
+func NewTransformRunsRequest(variables map[string]any) Request {
+	return Request{Operation: "TransformRuns", Document: TransformRunsDocument, Variables: variables}
+}
+
+// RunTransformDocument is the wire document for Mutation RunTransform.
+const RunTransformDocument = "mutation RunTransform($projectId: ID!, $id: ID!) { RunTransform(projectId: $projectId, id: $id) { id transformId status errorMessage triggeredBy startedAt completedAt } }"
+
+// NewRunTransformRequest builds the wire request for Mutation RunTransform.
+func NewRunTransformRequest(variables map[string]any) Request {
+	return Request{Operation: "RunTransform", Document: RunTransformDocument, Variables: variables}
+}
+
+// CancelTransformRunDocument is the wire document for Mutation CancelTransformRun.
+const CancelTransformRunDocument = "mutation CancelTransformRun($projectId: ID!, $transformId: ID!, $runId: ID) { CancelTransformRun(projectId: $projectId, transformId: $transformId, runId: $runId) { Status } }"
+
+// NewCancelTransformRunRequest builds the wire request for Mutation CancelTransformRun.
+func NewCancelTransformRunRequest(variables map[string]any) Request {
+	return Request{Operation: "CancelTransformRun", Document: CancelTransformRunDocument, Variables: variables}
+}
+
+// DeleteTransformDocument is the wire document for Mutation DeleteTransform.
+const DeleteTransformDocument = "mutation DeleteTransform($projectId: ID!, $id: ID!) { DeleteTransform(projectId: $projectId, id: $id) { Status } }"
+
+// NewDeleteTransformRequest builds the wire request for Mutation DeleteTransform.
+func NewDeleteTransformRequest(variables map[string]any) Request {
+	return Request{Operation: "DeleteTransform", Document: DeleteTransformDocument, Variables: variables}
+}
+
+// ProjectFunctionsDocument is the wire document for Query ProjectFunctions.
+const ProjectFunctionsDocument = "query ProjectFunctions($projectId: ID!) { ProjectFunctions(projectId: $projectId) { id projectId name description language entryPoint timeoutSeconds memory cpu executionMode liveBehavior createdBy createdAt updatedAt files { id path content } dependencies { id name version } providerIds ontologyIds readOnlyOntologyIds providerConfigs { providerId model } secretBindings { name secretId target } defaultMaxTokens defaultTemperature isDeployed currentRunStatus } }"
+
+// NewProjectFunctionsRequest builds the wire request for Query ProjectFunctions.
+func NewProjectFunctionsRequest(variables map[string]any) Request {
+	return Request{Operation: "ProjectFunctions", Document: ProjectFunctionsDocument, Variables: variables}
+}
+
+// CreateFunctionDocument is the wire document for Mutation CreateFunction.
+const CreateFunctionDocument = "mutation CreateFunction($input: CreateFunctionInput!) { CreateFunction(input: $input) { id projectId name description language entryPoint timeoutSeconds memory cpu executionMode liveBehavior createdBy createdAt updatedAt files { id path content } dependencies { id name version } providerIds ontologyIds readOnlyOntologyIds providerConfigs { providerId model } secretBindings { name secretId target } defaultMaxTokens defaultTemperature isDeployed currentRunStatus } }"
+
+// NewCreateFunctionRequest builds the wire request for Mutation CreateFunction.
+func NewCreateFunctionRequest(variables map[string]any) Request {
+	return Request{Operation: "CreateFunction", Document: CreateFunctionDocument, Variables: variables}
+}
+
+// FunctionDetailDocument is the wire document for Query FunctionDetail.
+const FunctionDetailDocument = "query FunctionDetail($projectId: ID!, $id: ID!) { FunctionDetail(projectId: $projectId, id: $id) { id projectId name description language entryPoint timeoutSeconds memory cpu executionMode liveBehavior createdBy createdAt updatedAt files { id path content } dependencies { id name version } providerIds ontologyIds readOnlyOntologyIds providerConfigs { providerId model } secretBindings { name secretId target } defaultMaxTokens defaultTemperature isDeployed currentRunStatus } }"
+
+// NewFunctionDetailRequest builds the wire request for Query FunctionDetail.
+func NewFunctionDetailRequest(variables map[string]any) Request {
+	return Request{Operation: "FunctionDetail", Document: FunctionDetailDocument, Variables: variables}
+}
+
+// ExecuteFunctionDocument is the wire document for Mutation ExecuteFunction.
+const ExecuteFunctionDocument = "mutation ExecuteFunction($projectId: ID!, $functionId: ID!, $input: String!, $inputFileIds: [ID!]) { ExecuteFunction(projectId: $projectId, functionId: $functionId, input: $input, inputFileIds: $inputFileIds) { output logs durationMs success error } }"
+
+// NewExecuteFunctionRequest builds the wire request for Mutation ExecuteFunction.
+func NewExecuteFunctionRequest(variables map[string]any) Request {
+	return Request{Operation: "ExecuteFunction", Document: ExecuteFunctionDocument, Variables: variables}
+}
+
+// TestFunctionDocument is the wire document for Mutation TestFunction.
+const TestFunctionDocument = "mutation TestFunction($input: TestFunctionInput!) { TestFunction(input: $input) { output logs durationMs success error } }"
+
+// NewTestFunctionRequest builds the wire request for Mutation TestFunction.
+func NewTestFunctionRequest(variables map[string]any) Request {
+	return Request{Operation: "TestFunction", Document: TestFunctionDocument, Variables: variables}
+}
+
+// StartFunctionRunDocument is the wire document for Mutation StartFunctionRun.
+const StartFunctionRunDocument = "mutation StartFunctionRun($projectId: ID!, $functionId: ID!, $input: String!, $useActiveVersion: Boolean) { StartFunctionRun(projectId: $projectId, functionId: $functionId, input: $input, useActiveVersion: $useActiveVersion) { id functionId executionMode liveBehavior status desiredState input output logs error attempt createdBy startedAt heartbeatAt completedAt createdAt updatedAt } }"
+
+// NewStartFunctionRunRequest builds the wire request for Mutation StartFunctionRun.
+func NewStartFunctionRunRequest(variables map[string]any) Request {
+	return Request{Operation: "StartFunctionRun", Document: StartFunctionRunDocument, Variables: variables}
+}
+
+// FunctionRunDocument is the wire document for Query FunctionRun.
+const FunctionRunDocument = "query FunctionRun($projectId: ID!, $id: ID!) { FunctionRun(projectId: $projectId, id: $id) { id functionId executionMode liveBehavior status desiredState input output logs error attempt createdBy startedAt heartbeatAt completedAt createdAt updatedAt } }"
+
+// NewFunctionRunRequest builds the wire request for Query FunctionRun.
+func NewFunctionRunRequest(variables map[string]any) Request {
+	return Request{Operation: "FunctionRun", Document: FunctionRunDocument, Variables: variables}
+}
+
+// FunctionRunsDocument is the wire document for Query FunctionRuns.
+const FunctionRunsDocument = "query FunctionRuns($projectId: ID!, $functionId: ID!, $limit: Int) { FunctionRuns(projectId: $projectId, functionId: $functionId, limit: $limit) { id functionId executionMode liveBehavior status desiredState input output logs error attempt createdBy startedAt heartbeatAt completedAt createdAt updatedAt } }"
+
+// NewFunctionRunsRequest builds the wire request for Query FunctionRuns.
+func NewFunctionRunsRequest(variables map[string]any) Request {
+	return Request{Operation: "FunctionRuns", Document: FunctionRunsDocument, Variables: variables}
+}
+
+// CancelFunctionRunDocument is the wire document for Mutation CancelFunctionRun.
+const CancelFunctionRunDocument = "mutation CancelFunctionRun($projectId: ID!, $id: ID!) { CancelFunctionRun(projectId: $projectId, id: $id) { id functionId executionMode liveBehavior status desiredState input output logs error attempt createdBy startedAt heartbeatAt completedAt createdAt updatedAt } }"
+
+// NewCancelFunctionRunRequest builds the wire request for Mutation CancelFunctionRun.
+func NewCancelFunctionRunRequest(variables map[string]any) Request {
+	return Request{Operation: "CancelFunctionRun", Document: CancelFunctionRunDocument, Variables: variables}
+}
+
+// DeployFunctionDocument is the wire document for Mutation DeployFunction.
+const DeployFunctionDocument = "mutation DeployFunction($projectId: ID!, $id: ID!) { DeployFunction(projectId: $projectId, id: $id) { Status } }"
+
+// NewDeployFunctionRequest builds the wire request for Mutation DeployFunction.
+func NewDeployFunctionRequest(variables map[string]any) Request {
+	return Request{Operation: "DeployFunction", Document: DeployFunctionDocument, Variables: variables}
+}
+
+// RedeployFunctionDocument is the wire document for Mutation RedeployFunction.
+const RedeployFunctionDocument = "mutation RedeployFunction($projectId: ID!, $id: ID!) { RedeployFunction(projectId: $projectId, id: $id) { Status } }"
+
+// NewRedeployFunctionRequest builds the wire request for Mutation RedeployFunction.
+func NewRedeployFunctionRequest(variables map[string]any) Request {
+	return Request{Operation: "RedeployFunction", Document: RedeployFunctionDocument, Variables: variables}
+}
+
+// UpdateFunctionDocument is the wire document for Mutation UpdateFunction.
+const UpdateFunctionDocument = "mutation UpdateFunction($input: UpdateFunctionInput!) { UpdateFunction(input: $input) { id projectId name description language entryPoint timeoutSeconds memory cpu executionMode liveBehavior createdBy createdAt updatedAt files { id path content } dependencies { id name version } providerIds ontologyIds readOnlyOntologyIds providerConfigs { providerId model } secretBindings { name secretId target } defaultMaxTokens defaultTemperature isDeployed currentRunStatus } }"
+
+// NewUpdateFunctionRequest builds the wire request for Mutation UpdateFunction.
+func NewUpdateFunctionRequest(variables map[string]any) Request {
+	return Request{Operation: "UpdateFunction", Document: UpdateFunctionDocument, Variables: variables}
+}
+
+// DeleteFunctionDocument is the wire document for Mutation DeleteFunction.
+const DeleteFunctionDocument = "mutation DeleteFunction($projectId: ID!, $id: ID!) { DeleteFunction(projectId: $projectId, id: $id) { Status } }"
+
+// NewDeleteFunctionRequest builds the wire request for Mutation DeleteFunction.
+func NewDeleteFunctionRequest(variables map[string]any) Request {
+	return Request{Operation: "DeleteFunction", Document: DeleteFunctionDocument, Variables: variables}
+}
+
+// ServiceAccountsDocument is the wire document for Query ServiceAccounts.
+const ServiceAccountsDocument = "query ServiceAccounts($orgId: ID!) { ServiceAccounts(orgId: $orgId) { id orgId name description createdBy createdAt disabledAt keys { id keyPrefix createdAt expiresAt revokedAt lastUsedAt } } }"
+
+// NewServiceAccountsRequest builds the wire request for Query ServiceAccounts.
+func NewServiceAccountsRequest(variables map[string]any) Request {
+	return Request{Operation: "ServiceAccounts", Document: ServiceAccountsDocument, Variables: variables}
+}
+
+// CreateServiceAccountDocument is the wire document for Mutation CreateServiceAccount.
+const CreateServiceAccountDocument = "mutation CreateServiceAccount($orgId: ID!, $name: String!, $description: String) { CreateServiceAccount(orgId: $orgId, name: $name, description: $description) { id orgId name description createdBy createdAt disabledAt keys { id keyPrefix createdAt expiresAt revokedAt lastUsedAt } } }"
+
+// NewCreateServiceAccountRequest builds the wire request for Mutation CreateServiceAccount.
+func NewCreateServiceAccountRequest(variables map[string]any) Request {
+	return Request{Operation: "CreateServiceAccount", Document: CreateServiceAccountDocument, Variables: variables}
+}
+
+// CreateServiceAccountKeyDocument is the wire document for Mutation CreateServiceAccountKey.
+const CreateServiceAccountKeyDocument = "mutation CreateServiceAccountKey($orgId: ID!, $serviceAccountId: ID!, $expiresAt: String) { CreateServiceAccountKey(orgId: $orgId, serviceAccountId: $serviceAccountId, expiresAt: $expiresAt) { key { id keyPrefix createdAt expiresAt revokedAt lastUsedAt } rawKey } }"
+
+// NewCreateServiceAccountKeyRequest builds the wire request for Mutation CreateServiceAccountKey.
+func NewCreateServiceAccountKeyRequest(variables map[string]any) Request {
+	return Request{Operation: "CreateServiceAccountKey", Document: CreateServiceAccountKeyDocument, Variables: variables}
+}
+
+// RevokeServiceAccountKeyDocument is the wire document for Mutation RevokeServiceAccountKey.
+const RevokeServiceAccountKeyDocument = "mutation RevokeServiceAccountKey($orgId: ID!, $keyId: ID!) { RevokeServiceAccountKey(orgId: $orgId, keyId: $keyId) { Status } }"
+
+// NewRevokeServiceAccountKeyRequest builds the wire request for Mutation RevokeServiceAccountKey.
+func NewRevokeServiceAccountKeyRequest(variables map[string]any) Request {
+	return Request{Operation: "RevokeServiceAccountKey", Document: RevokeServiceAccountKeyDocument, Variables: variables}
+}
+
+// DeleteServiceAccountDocument is the wire document for Mutation DeleteServiceAccount.
+const DeleteServiceAccountDocument = "mutation DeleteServiceAccount($orgId: ID!, $id: ID!) { DeleteServiceAccount(orgId: $orgId, id: $id) { Status } }"
+
+// NewDeleteServiceAccountRequest builds the wire request for Mutation DeleteServiceAccount.
+func NewDeleteServiceAccountRequest(variables map[string]any) Request {
+	return Request{Operation: "DeleteServiceAccount", Document: DeleteServiceAccountDocument, Variables: variables}
+}
+
+// ProjectLineageProvidersDocument is the wire document for Query ProjectLineageProviders.
+const ProjectLineageProvidersDocument = "query ProjectLineageProviders($projectId: ID!) { ProjectLineageProviders(projectId: $projectId) { id projectId name endpoint readEndpoint namespace authType enabled createdAt updatedAt } }"
+
+// NewProjectLineageProvidersRequest builds the wire request for Query ProjectLineageProviders.
+func NewProjectLineageProvidersRequest(variables map[string]any) Request {
+	return Request{Operation: "ProjectLineageProviders", Document: ProjectLineageProvidersDocument, Variables: variables}
+}
+
+// SaveLineageProviderDocument is the wire document for Mutation SaveLineageProvider.
+const SaveLineageProviderDocument = "mutation SaveLineageProvider($input: SaveLineageProviderInput!) { SaveLineageProvider(input: $input) { id projectId name endpoint readEndpoint namespace authType enabled createdAt updatedAt } }"
+
+// NewSaveLineageProviderRequest builds the wire request for Mutation SaveLineageProvider.
+func NewSaveLineageProviderRequest(variables map[string]any) Request {
+	return Request{Operation: "SaveLineageProvider", Document: SaveLineageProviderDocument, Variables: variables}
+}
+
+// DeleteLineageProviderDocument is the wire document for Mutation DeleteLineageProvider.
+const DeleteLineageProviderDocument = "mutation DeleteLineageProvider($projectId: ID!, $providerId: ID!) { DeleteLineageProvider(projectId: $projectId, providerId: $providerId) { Status } }"
+
+// NewDeleteLineageProviderRequest builds the wire request for Mutation DeleteLineageProvider.
+func NewDeleteLineageProviderRequest(variables map[string]any) Request {
+	return Request{Operation: "DeleteLineageProvider", Document: DeleteLineageProviderDocument, Variables: variables}
+}
+
+// SharedOntologiesDocument is the wire document for Query SharedOntologies.
+const SharedOntologiesDocument = "query SharedOntologies($projectId: ID!) { SharedOntologies(projectId: $projectId) { id projectId ontologyId visibility ontology { id projectId apiName displayName pluralDisplayName description primaryKey sourceId tableName schemaName storageMode provisioningStatus embeddingEnabled embeddingProperties status icon color createdAt updatedAt properties { id apiName displayName description columnName dataType arrayElementType isRequired visibility isSearchable isSortable isEditOnly sortOrder } links { id apiName targetOntologyApiName cardinality foreignKeyProperty targetForeignKeyProperty joinTable sourceColumnInJoinTable targetColumnInJoinTable displayName pluralDisplayName reverseDisplayName targetKind targetReferenceId } } consumers { projectId referenceId alias status } createdAt } }"
+
+// NewSharedOntologiesRequest builds the wire request for Query SharedOntologies.
+func NewSharedOntologiesRequest(variables map[string]any) Request {
+	return Request{Operation: "SharedOntologies", Document: SharedOntologiesDocument, Variables: variables}
+}
+
+// DiscoverSharedOntologiesDocument is the wire document for Query DiscoverSharedOntologies.
+const DiscoverSharedOntologiesDocument = "query DiscoverSharedOntologies($consumerProjectId: ID!) { DiscoverSharedOntologies(consumerProjectId: $consumerProjectId) { id projectId ontologyId visibility ontology { id projectId apiName displayName pluralDisplayName description primaryKey sourceId tableName schemaName storageMode provisioningStatus embeddingEnabled embeddingProperties status icon color createdAt updatedAt properties { id apiName displayName description columnName dataType arrayElementType isRequired visibility isSearchable isSortable isEditOnly sortOrder } links { id apiName targetOntologyApiName cardinality foreignKeyProperty targetForeignKeyProperty joinTable sourceColumnInJoinTable targetColumnInJoinTable displayName pluralDisplayName reverseDisplayName targetKind targetReferenceId } } consumers { projectId referenceId alias status } createdAt } }"
+
+// NewDiscoverSharedOntologiesRequest builds the wire request for Query DiscoverSharedOntologies.
+func NewDiscoverSharedOntologiesRequest(variables map[string]any) Request {
+	return Request{Operation: "DiscoverSharedOntologies", Document: DiscoverSharedOntologiesDocument, Variables: variables}
+}
+
+// OntologyReferencesDocument is the wire document for Query OntologyReferences.
+const OntologyReferencesDocument = "query OntologyReferences($projectId: ID!) { OntologyReferences(projectId: $projectId) { id consumerProjectId alias ownerProjectId ontologyId status ontology { id projectId apiName displayName pluralDisplayName description primaryKey sourceId tableName schemaName storageMode provisioningStatus embeddingEnabled embeddingProperties status icon color createdAt updatedAt properties { id apiName displayName description columnName dataType arrayElementType isRequired visibility isSearchable isSortable isEditOnly sortOrder } links { id apiName targetOntologyApiName cardinality foreignKeyProperty targetForeignKeyProperty joinTable sourceColumnInJoinTable targetColumnInJoinTable displayName pluralDisplayName reverseDisplayName targetKind targetReferenceId } } createdAt } }"
+
+// NewOntologyReferencesRequest builds the wire request for Query OntologyReferences.
+func NewOntologyReferencesRequest(variables map[string]any) Request {
+	return Request{Operation: "OntologyReferences", Document: OntologyReferencesDocument, Variables: variables}
+}
+
+// OntologyReferenceImpactDocument is the wire document for Query OntologyReferenceImpact.
+const OntologyReferenceImpactDocument = "query OntologyReferenceImpact($referenceId: ID!) { OntologyReferenceImpact(referenceId: $referenceId) { referenceId dependentLinks dependentApps dependentFuncs dependentXfms dependentBehavs } }"
+
+// NewOntologyReferenceImpactRequest builds the wire request for Query OntologyReferenceImpact.
+func NewOntologyReferenceImpactRequest(variables map[string]any) Request {
+	return Request{Operation: "OntologyReferenceImpact", Document: OntologyReferenceImpactDocument, Variables: variables}
+}
+
+// ShareOntologyDocument is the wire document for Mutation ShareOntology.
+const ShareOntologyDocument = "mutation ShareOntology($input: ShareOntologyInput!) { ShareOntology(input: $input) { id projectId ontologyId visibility ontology { id projectId apiName displayName pluralDisplayName description primaryKey sourceId tableName schemaName storageMode provisioningStatus embeddingEnabled embeddingProperties status icon color createdAt updatedAt properties { id apiName displayName description columnName dataType arrayElementType isRequired visibility isSearchable isSortable isEditOnly sortOrder } links { id apiName targetOntologyApiName cardinality foreignKeyProperty targetForeignKeyProperty joinTable sourceColumnInJoinTable targetColumnInJoinTable displayName pluralDisplayName reverseDisplayName targetKind targetReferenceId } } consumers { projectId referenceId alias status } createdAt } }"
+
+// NewShareOntologyRequest builds the wire request for Mutation ShareOntology.
+func NewShareOntologyRequest(variables map[string]any) Request {
+	return Request{Operation: "ShareOntology", Document: ShareOntologyDocument, Variables: variables}
+}
+
+// UnshareOntologyDocument is the wire document for Mutation UnshareOntology.
+const UnshareOntologyDocument = "mutation UnshareOntology($projectId: ID!, $ontologyId: ID!) { UnshareOntology(projectId: $projectId, ontologyId: $ontologyId) { Status } }"
+
+// NewUnshareOntologyRequest builds the wire request for Mutation UnshareOntology.
+func NewUnshareOntologyRequest(variables map[string]any) Request {
+	return Request{Operation: "UnshareOntology", Document: UnshareOntologyDocument, Variables: variables}
+}
+
+// CreateOntologyReferenceDocument is the wire document for Mutation CreateOntologyReference.
+const CreateOntologyReferenceDocument = "mutation CreateOntologyReference($input: CreateOntologyReferenceInput!) { CreateOntologyReference(input: $input) { id consumerProjectId alias ownerProjectId ontologyId status ontology { id projectId apiName displayName pluralDisplayName description primaryKey sourceId tableName schemaName storageMode provisioningStatus embeddingEnabled embeddingProperties status icon color createdAt updatedAt properties { id apiName displayName description columnName dataType arrayElementType isRequired visibility isSearchable isSortable isEditOnly sortOrder } links { id apiName targetOntologyApiName cardinality foreignKeyProperty targetForeignKeyProperty joinTable sourceColumnInJoinTable targetColumnInJoinTable displayName pluralDisplayName reverseDisplayName targetKind targetReferenceId } } createdAt } }"
+
+// NewCreateOntologyReferenceRequest builds the wire request for Mutation CreateOntologyReference.
+func NewCreateOntologyReferenceRequest(variables map[string]any) Request {
+	return Request{Operation: "CreateOntologyReference", Document: CreateOntologyReferenceDocument, Variables: variables}
+}
+
+// RemoveOntologyReferenceDocument is the wire document for Mutation RemoveOntologyReference.
+const RemoveOntologyReferenceDocument = "mutation RemoveOntologyReference($referenceId: ID!) { RemoveOntologyReference(referenceId: $referenceId) { Status } }"
+
+// NewRemoveOntologyReferenceRequest builds the wire request for Mutation RemoveOntologyReference.
+func NewRemoveOntologyReferenceRequest(variables map[string]any) Request {
+	return Request{Operation: "RemoveOntologyReference", Document: RemoveOntologyReferenceDocument, Variables: variables}
+}
+
 // MyOrganizationsDocument is the wire document for Query MyOrganizations.
 const MyOrganizationsDocument = "query MyOrganizations { MyOrganizations { id name slug createdAt } }"
 
