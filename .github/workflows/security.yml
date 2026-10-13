@@ -43,9 +43,12 @@ jobs:
       - name: Install Go security tools
         uses: ./.github/actions/install-go-tools
         with:
-          cache-key: go-security-tools-gosec-v2.29.0-govulncheck-v1.8.0
+          cache-key: go-security-tools-gosec-v2.29.1-0.20261012130337-71577268350e-govulncheck-v1.8.0
+          # gosec v2.29.0 (x/tools v0.49) cannot read Go 1.27 export data and reports
+          # "package has type errors" for every package. Pinned to the master commit
+          # that bumps x/tools to v0.52.0 until a tagged release ships.
           tools: |
-            gosec|github.com/securego/gosec/v2/cmd/gosec|v2.29.0
+            gosec|github.com/securego/gosec/v2/cmd/gosec|v2.29.1-0.20261012130337-71577268350e
             govulncheck|golang.org/x/vuln/cmd/govulncheck|v1.8.0
 
       - name: Gitleaks
