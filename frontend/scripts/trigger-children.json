@@ -1,0 +1,47 @@
+{
+  "$comment": "Shared by codemod-trigger-aschild.mjs and check-trigger-children.mjs. Mirrors the slottable markers in @clidey/ux src/lib/slot.ts.",
+  "triggers": [
+    "DropdownMenuTrigger",
+    "TooltipTrigger",
+    "PopoverTrigger",
+    "DialogTrigger",
+    "SheetTrigger",
+    "AlertDialogTrigger",
+    "DrawerTrigger",
+    "ContextMenuTrigger"
+  ],
+  "uxPackage": "@clidey/ux",
+  "inferredUxChildren": [
+    "Button",
+    "Badge",
+    "BreadcrumbLink",
+    "ButtonGroupText",
+    "Kbd",
+    "SidebarMenuButton",
+    "SidebarMenuAction",
+    "SidebarMenuSubButton",
+    "DropdownMenuTrigger",
+    "TooltipTrigger",
+    "PopoverTrigger",
+    "DialogTrigger",
+    "SheetTrigger",
+    "AlertDialogTrigger",
+    "DrawerTrigger",
+    "ContextMenuTrigger"
+  ],
+  "inferredIntrinsics": ["button", "a", "div", "span", "input", "label", "li"],
+  "denyList": [
+    "CopyButton",
+    "ConfirmDialog",
+    "FormSheet",
+    "MultiSearchSelect",
+    "Tree",
+    "ChartContainer",
+    "MapContainer",
+    "MasterDetailPanels",
+    "ResizablePanelGroup",
+    "ResizablePanel",
+    "ResizableHandle",
+    "Toaster"
+  ]
+}

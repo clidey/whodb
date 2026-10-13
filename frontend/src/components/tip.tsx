@@ -15,11 +15,12 @@
  */
 
 import {cn, Tooltip, TooltipContent, TooltipTrigger} from "@clidey/ux";
-import type {FC, ReactNode} from "react";
+import type {FC, ReactElement, ReactNode} from "react";
 
 export const Tip: FC<{
     className?: string;
-    children: [ReactNode, ReactNode]
+    /** [trigger element, tooltip content]. The trigger must be a single element that forwards refs. */
+    children: [ReactElement, ReactNode]
 }> = ({children, className}) => {
     return (
         <Tooltip>

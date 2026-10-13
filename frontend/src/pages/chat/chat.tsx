@@ -300,7 +300,7 @@ const TablePreview: FC<{ type: string, data: TableData, text: string, containerW
             "opacity-100": dropdownOpen,
         }, __WHODB_EDITION__ === 'ce' && 'ce-chat-result-menu')}>
             <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
-                <DropdownMenuTrigger asChild>
+                <DropdownMenuTrigger>
                     <Button variant="outline" size="sm" data-testid="icon-button" aria-label={t('actions')}>
                         <EllipsisHorizontalIcon className="w-5 h-5" aria-hidden="true" />
                     </Button>

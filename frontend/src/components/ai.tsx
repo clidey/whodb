@@ -748,7 +748,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                 {footerAction}
                 <div className="ml-auto">
                     <AlertDialog>
-                        <AlertDialogTrigger asChild>
+                        <AlertDialogTrigger>
                             <Button
                                 data-testid="chat-delete-provider"
                                 variant="secondary"

@@ -62,7 +62,7 @@ export const ConnectionContext: FC = () => {
 
     return (
         <Tooltip>
-            <TooltipTrigger asChild>
+            <TooltipTrigger>
                 <div
                     className={cn(
                         "inline-flex items-center gap-1 px-2 py-1 rounded-md w-fit",

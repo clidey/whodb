@@ -90,7 +90,7 @@ type IPopoverCardProps = {
     className?: string;
     isEditing?: boolean;
     editingIndex?: number;
-    trigger?: React.ReactNode;
+    trigger?: React.ReactElement;
     t: (key: string, params?: Record<string, any>) => string;
 }
 
@@ -120,9 +120,11 @@ const PopoverCard: FC<IPopoverCardProps> = ({
         }
     }, [isEditing, handleSaveFilter, editingIndex, handleAddFilter]);
 
+    const triggerElement = trigger ?? <div />;
+
     return  <Popover open={open} onOpenChange={onOpenChange}>
         <PopoverTrigger asChild>
-            {trigger ?? <div />}
+            {triggerElement}
         </PopoverTrigger>
         <PopoverContent
             className={cn("ce-filter-popover z-[50]", className)}

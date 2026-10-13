@@ -742,7 +742,7 @@ export const Sidebar: FC = () => {
                                     </SidebarMenuButton>
                                     <SidebarMenuButton asChild>
                                         <DropdownMenu>
-                                            <DropdownMenuTrigger asChild className={cn({ "hidden": !open })}>
+                                            <DropdownMenuTrigger className={cn({ "hidden": !open })}>
                                                 <Button
                                                     className="flex items-center justify-center p-1 rounded hover:bg-accent ml-2"
                                                     aria-label={t('moreLogoutOptions')}
@@ -937,7 +937,7 @@ export const Sidebar: FC = () => {
                                         <div className={cn("flex items-center gap-1 shrink-0", pathname === InternalRoutes.Dashboard.StorageUnit.path && "ce-sidebar-logout-extras")}>
                                             <SidebarMenuButton asChild className="w-auto">
                                                 <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild className={cn({
+                                                    <DropdownMenuTrigger className={cn({
                                                         "hidden": !open,
                                                     })}>
                                                         <Button
@@ -959,7 +959,7 @@ export const Sidebar: FC = () => {
                                             {open && (
                                                 <TooltipProvider delayDuration={200}>
                                                     <Tooltip>
-                                                        <TooltipTrigger asChild>
+                                                        <TooltipTrigger>
                                                             <span
                                                                 className="rounded-full p-1 text-muted-foreground/60 hover:text-muted-foreground transition-colors cursor-pointer"
                                                                 data-testid="sidebar-version-info"

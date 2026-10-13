@@ -630,7 +630,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                 </div>
                 <div className="absolute top-1 right-1 z-10" data-testid="scratchpad-cell-options">
                     <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
+                        <DropdownMenuTrigger>
                             <Button
                                 variant="ghost"
                                 className="flex justify-center items-center editor-options-button"
@@ -811,7 +811,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                     <SheetFooter>
                         {history.length > 0 && (
                             <AlertDialog>
-                                <AlertDialogTrigger asChild>
+                                <AlertDialogTrigger>
                                     <Button
                                         variant="outline"
                                         data-testid="clear-history-button"

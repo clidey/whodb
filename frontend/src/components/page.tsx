@@ -96,7 +96,7 @@ const KeyboardShortcutsHint: FC = () => {
 
     return (
         <Tooltip>
-            <TooltipTrigger asChild>
+            <TooltipTrigger>
                 <Button
                     variant="outline"
                     size="sm"

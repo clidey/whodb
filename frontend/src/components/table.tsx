@@ -1718,7 +1718,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                 </TableComponent>
                 {paginatedRows.length === 0 && (
                     <ContextMenu>
-                        <ContextMenuTrigger asChild>
+                        <ContextMenuTrigger>
                             <div className="flex items-center justify-center cursor-pointer border rounded-lg h-[200px]">
                                 <EmptyState className="table-empty-state" title={t('noDataAvailable')} description={t('noDataAvailable')} icon={<DocumentTextIcon className="w-4 h-4" />} />
                             </div>
