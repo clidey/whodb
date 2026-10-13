@@ -27,6 +27,7 @@ import com.clidey.whodb.SharingHandle;
 import com.clidey.whodb.SourceHandle;
 import com.clidey.whodb.TransformHandle;
 import com.clidey.whodb.TransformsHandle;
+import com.clidey.whodb.VersionsHandle;
 import com.clidey.whodb.Transport;
 import com.clidey.whodb.WaitOptions;
 import com.clidey.whodb.WhoDB;
@@ -272,6 +273,8 @@ public final class Main {
                     case "meta" -> handle.meta();
                     case "rows" -> pageValue(handle.rows(
                         new DatasetHandle.RowsOptions(intOf(options, "pageSize"), intOf(options, "pageOffset"))));
+                    case "promote" -> handle.promote(str(args, 0));
+                    case "versions" -> handle.versions();
                     default -> throw new UnsupportedFixture("unsupported fixture call: " + domain + "." + method);
                 };
             }
@@ -312,6 +315,8 @@ public final class Main {
                     case "wait": return handle.wait(str(args, 0), waitOptions(map(args, 1)));
                     case "update": return handle.update(map(args, 0));
                     case "delete": handle.delete(); return null;
+                    case "promote": return handle.promote(str(args, 0));
+                    case "versions": return handle.versions();
                     default: throw new UnsupportedFixture("unsupported fixture call: " + domain + "." + method);
                 }
             }
@@ -345,6 +350,21 @@ public final class Main {
                     case "redeploy": handle.redeploy(); return null;
                     case "update": return handle.update(map(args, 0));
                     case "delete": handle.delete(); return null;
+                    case "promote": return handle.promote(str(args, 0));
+                    case "versions": return handle.versions();
+                    default: throw new UnsupportedFixture("unsupported fixture call: " + domain + "." + method);
+                }
+            }
+            case "versions" -> {
+                VersionsHandle handle = client.versions();
+                int version = args.size() > 2 && args.get(2).isNumber() ? args.get(2).asInt() : 0;
+                switch (method) {
+                    case "list": return handle.list(str(args, 0), str(args, 1));
+                    case "active": return handle.active(str(args, 0), str(args, 1));
+                    case "activeAll": return handle.activeAll();
+                    case "promote": return handle.promote(str(args, 0), str(args, 1), str(args, 2));
+                    case "rollback": return handle.rollback(str(args, 0), str(args, 1), version);
+                    case "restoreToDraft": return handle.restoreToDraft(str(args, 0), str(args, 1), version);
                     default: throw new UnsupportedFixture("unsupported fixture call: " + domain + "." + method);
                 }
             }
@@ -436,6 +456,8 @@ public final class Main {
                 case "update" -> handle.update(
                     JSON.convertValue(args.get(0), Object.class), JSON.convertValue(args.get(1), Map.class));
                 case "delete" -> handle.delete(JSON.convertValue(args.get(0), Object.class));
+                case "promote" -> value = handle.promote(str(args, 0));
+                case "versions" -> value = handle.versions();
                 case "followLink" -> {
                     JsonNode options = args.size() > 2 ? args.get(2) : JSON.createObjectNode();
                     value = handle.followLink(

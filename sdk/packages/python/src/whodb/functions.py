@@ -176,3 +176,15 @@ class FunctionHandle:
         warn_if_flagged("DeleteFunction")
         self._execute(ops.delete_function_request({"projectId": self._project_id(), "id": fn["id"]}))
         self._function_cache = None
+
+    def promote(self, message: str | None = None) -> dict:
+        """Promote the draft function: snapshot it and make it the active production version."""
+        from .versions import VersionsHandle
+
+        return VersionsHandle(self._execute, self._project_id).promote("function", self.meta()["id"], message)
+
+    def versions(self) -> list[dict]:
+        """List the function's promoted versions, newest first."""
+        from .versions import VersionsHandle
+
+        return VersionsHandle(self._execute, self._project_id).list("function", self.meta()["id"])

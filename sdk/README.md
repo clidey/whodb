@@ -1,8 +1,8 @@
 # WhoDB Platform SDKs
 
 Customer-facing SDKs for the WhoDB hosted platform: ontology, datasets,
-sources, transforms, functions, service accounts, lineage providers, and
-ontology sharing as in-code function APIs. All five languages expose the same
+sources, transforms, functions, versioning and promotion, service accounts,
+lineage providers, and ontology sharing as in-code function APIs. All five languages expose the same
 domains and methods; the shared fixtures in `spec/fixtures/` keep them
 behaviorally identical.
 

@@ -294,6 +294,11 @@ public final class WhoDB {
         return new SharingHandle(this);
     }
 
+    /** Returns the versioning and promotion facade. */
+    public VersionsHandle versions() {
+        return new VersionsHandle(this);
+    }
+
     /** Lists all ontology entities in the project. */
     @SuppressWarnings("unchecked")
     public List<Map<String, Object>> ontologyEntities() {

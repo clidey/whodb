@@ -75,4 +75,14 @@ public final class DatasetHandle {
                 "pageOffset", effective.pageOffset())))));
         return new RowsPage(Hydrator.hydrateRows(result, Map.of()), Facades.totalOf(result));
     }
+
+    /** Promotes the draft dataset: snapshots it and makes it the active production version. {@code message} may be null. */
+    public Map<String, Object> promote(String message) {
+        return client.versions().promote("dataset", String.valueOf(meta().get("id")), message);
+    }
+
+    /** Lists the dataset's promoted versions, newest first. */
+    public List<Map<String, Object>> versions() {
+        return client.versions().list("dataset", String.valueOf(meta().get("id")));
+    }
 }

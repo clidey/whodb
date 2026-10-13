@@ -73,3 +73,28 @@ func TestJWTExpiry(t *testing.T) {
 		t.Error("bad base64 payload should yield zero time")
 	}
 }
+
+// TestPrintToken_FormatFlag pins the SDK contract: every SDK execs
+// `whodb auth print-token --format json`, so the flag must parse, and
+// anything other than json must be rejected.
+func TestPrintToken_FormatFlag(t *testing.T) {
+	cleanup := setupTestEnv(t)
+	defer cleanup()
+
+	flag := printTokenCmd.Flags().Lookup("format")
+	if flag == nil {
+		t.Fatal("print-token must accept --format (SDKs pass --format json)")
+	}
+	if flag.DefValue != "json" {
+		t.Errorf("default --format = %q, want json", flag.DefValue)
+	}
+
+	var out, errOut bytes.Buffer
+	rootCmd.SetOut(&out)
+	rootCmd.SetErr(&errOut)
+	rootCmd.SetArgs([]string{"auth", "print-token", "--format", "yaml"})
+	err := rootCmd.Execute()
+	if err == nil || !strings.Contains(err.Error(), "unsupported --format") {
+		t.Fatalf("expected unsupported --format error, got %v", err)
+	}
+}

@@ -58,8 +58,9 @@ const rollup = whodb.transform('nightly-rollup');
 const run = await rollup.run();
 const finished = await rollup.wait(run.id, { timeoutMs: 300_000 });
 
-// Functions: synchronous execute, or a tracked run.
+// Functions: promote the draft so it can execute, then run it.
 const normalize = whodb.function('normalize');
+await normalize.promote('v1');                 // snapshot + set active production version
 const result = await normalize.execute({ name: 'Ada' });
 const queued = await normalize.startRun({ batch: 7 });
 await normalize.wait(queued.id);

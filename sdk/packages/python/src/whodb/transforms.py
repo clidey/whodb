@@ -145,3 +145,15 @@ class TransformHandle:
         warn_if_flagged("DeleteTransform")
         self._execute(ops.delete_transform_request({"projectId": self._project_id(), "id": transform["id"]}))
         self._transform_cache = None
+
+    def promote(self, message: str | None = None) -> dict:
+        """Promote the draft transform: snapshot it and make it the active production version."""
+        from .versions import VersionsHandle
+
+        return VersionsHandle(self._execute, self._project_id).promote("transform", self.meta()["id"], message)
+
+    def versions(self) -> list[dict]:
+        """List the transform's promoted versions, newest first."""
+        from .versions import VersionsHandle
+
+        return VersionsHandle(self._execute, self._project_id).list("transform", self.meta()["id"])

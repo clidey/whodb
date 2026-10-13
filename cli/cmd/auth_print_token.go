@@ -44,6 +44,9 @@ development credentials); the token is written to stdout.`,
 	SilenceUsage:  true,
 	SilenceErrors: false,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if format := strings.ToLower(strings.TrimSpace(printTokenFormat)); format != "" && format != "json" {
+			return fmt.Errorf("unsupported --format %q: print-token only emits json", printTokenFormat)
+		}
 		cfg, err := config.LoadConfig()
 		if err != nil {
 			return fmt.Errorf("cannot load hosted WhoDB config: %w", err)
@@ -104,8 +107,13 @@ func jwtExpiry(token string) time.Time {
 	return time.Unix(claims.Exp, 0)
 }
 
+// printTokenFormat exists so SDK callers can pass --format json explicitly;
+// JSON is the only output format.
+var printTokenFormat string
+
 func init() {
 	printTokenCmd.Flags().StringVar(&platformHost, "host", "", "hosted WhoDB URL (default app.whodb.com)")
+	printTokenCmd.Flags().StringVarP(&printTokenFormat, "format", "f", "json", "output format: json")
 	authCmd.AddCommand(printTokenCmd)
 	rootCmd.AddCommand(authCmd)
 }

@@ -94,3 +94,21 @@ func (h *DatasetHandle) Rows(ctx context.Context, options DatasetRowsOptions) (R
 	rows, total := hydrateRows(asMap(result), nil)
 	return RowsPage{Rows: rows, TotalCount: total}, nil
 }
+
+// Promote snapshots the draft dataset and makes it the active production version.
+func (h *DatasetHandle) Promote(ctx context.Context, message string) (map[string]any, error) {
+	obj, err := h.Meta(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return h.client.Versions().Promote(ctx, ObjectTypeDataset, fmt.Sprint(obj["id"]), message)
+}
+
+// Versions lists the dataset's promoted versions, newest first.
+func (h *DatasetHandle) Versions(ctx context.Context) ([]map[string]any, error) {
+	obj, err := h.Meta(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return h.client.Versions().List(ctx, ObjectTypeDataset, fmt.Sprint(obj["id"]))
+}

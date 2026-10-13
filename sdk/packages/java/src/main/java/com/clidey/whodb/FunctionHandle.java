@@ -156,4 +156,14 @@ public final class FunctionHandle {
         client.execute(Operations.deleteFunctionRequest(Facades.vars("projectId", client.projectId(), "id", id)));
         function = null;
     }
+
+    /** Promotes the draft function: snapshots it and makes it the active production version. {@code message} may be null. */
+    public Map<String, Object> promote(String message) {
+        return client.versions().promote("function", String.valueOf(meta().get("id")), message);
+    }
+
+    /** Lists the function's promoted versions, newest first. */
+    public List<Map<String, Object>> versions() {
+        return client.versions().list("function", String.valueOf(meta().get("id")));
+    }
 }

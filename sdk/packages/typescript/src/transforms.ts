@@ -19,6 +19,8 @@ import * as ops from './generated/operations.js';
 import type { SaveTransformInput, Transform, TransformRun } from './generated/types.js';
 import { hydrateRows, type Row } from './hydrate.js';
 import { warnIfFlagged } from './manifest-check.js';
+import { VersionsHandle } from './versions.js';
+import type { ObjectVersion } from './generated/types.js';
 import { NotFoundError, ValidationError } from './errors.js';
 import { isTerminalRunStatus, pollUntil, type WaitOptions } from './polling.js';
 
@@ -133,6 +135,18 @@ export class TransformHandle {
     });
     this.transformCache = saved;
     return saved;
+  }
+
+  /** Promotes the draft transform: snapshots it and makes it the active production version. */
+  async promote(message?: string): Promise<ObjectVersion> {
+    const transform = await this.meta();
+    return new VersionsHandle(this.transport, this.projectId).promote('transform', transform.id, message);
+  }
+
+  /** Lists the transform's promoted versions, newest first. */
+  async versions(): Promise<ObjectVersion[]> {
+    const transform = await this.meta();
+    return new VersionsHandle(this.transport, this.projectId).list('transform', transform.id);
   }
 
   /** Soft-deletes the transform. */

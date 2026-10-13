@@ -237,4 +237,20 @@ impl<'client> FunctionHandle<'client> {
         *self.function.lock().expect("function lock poisoned") = None;
         Ok(())
     }
+
+    /// Promotes the draft function: snapshots it and makes it the active production version.
+    pub fn promote(&self, message: Option<&str>) -> Result<Value> {
+        let id = str_field(&self.meta()?, "id");
+        self.client
+            .versions()
+            .promote("function", id.as_str().unwrap_or_default(), message)
+    }
+
+    /// Lists the function's promoted versions, newest first.
+    pub fn versions(&self) -> Result<Vec<Value>> {
+        let id = str_field(&self.meta()?, "id");
+        self.client
+            .versions()
+            .list("function", id.as_str().unwrap_or_default())
+    }
 }

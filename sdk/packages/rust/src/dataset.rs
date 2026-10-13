@@ -90,4 +90,20 @@ impl<'client> DatasetHandle<'client> {
         let (rows, total_count) = hydrate_rows(&result, &Map::new());
         Ok(RowsPage { rows, total_count })
     }
+
+    /// Promotes the draft dataset: snapshots it and makes it the active production version.
+    pub fn promote(&self, message: Option<&str>) -> Result<Value> {
+        let id = str_field(&self.meta()?, "id");
+        self.client
+            .versions()
+            .promote("dataset", id.as_str().unwrap_or_default(), message)
+    }
+
+    /// Lists the dataset's promoted versions, newest first.
+    pub fn versions(&self) -> Result<Vec<Value>> {
+        let id = str_field(&self.meta()?, "id");
+        self.client
+            .versions()
+            .list("dataset", id.as_str().unwrap_or_default())
+    }
 }

@@ -2,6 +2,45 @@
 
 export type ActionExecutionStatus = 'committed' | 'failed' | 'denied';
 
+export interface ActiveProdVersion {
+  objectId: string;
+  objectType: string;
+  version: number;
+  activatedAt: string;
+  activatedBy: string;
+}
+
+export interface App {
+  id: string;
+  projectId: string;
+  name: string;
+  description: string;
+  thumbnailUrl: string;
+  useCases: Array<string>;
+  html: string;
+  conversation: string;
+  ontologyIds: Array<string>;
+  readOnlyOntologyIds: Array<string>;
+  functionIds: Array<string>;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  sourceHidden: boolean;
+}
+
+export interface AppFile {
+  path: string;
+  content: string;
+  updatedAt: string;
+}
+
+export interface AppViewResult {
+  app: App;
+  files: Array<AppFile>;
+  pages: Array<string>;
+  version?: number | null;
+}
+
 export interface AtomicWhereCondition {
   ColumnType: string;
   Key: string;
@@ -182,6 +221,17 @@ export interface LineageProvider {
   enabled: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ObjectVersion {
+  id: string;
+  objectId: string;
+  objectType: string;
+  version: number;
+  snapshot: string;
+  message: string;
+  promotedBy: string;
+  createdAt: string;
 }
 
 export interface OntologyActionCapability {
@@ -525,6 +575,13 @@ export interface Project {
   createdAt: string;
 }
 
+export interface PromoteObjectInput {
+  projectId: string;
+  objectId: string;
+  objectType: VersionableObjectType;
+  message?: string | null;
+}
+
 export interface QueryDatasetInput {
   projectId: string;
   datasetId: string;
@@ -541,6 +598,13 @@ export interface RecordInput {
   Key: string;
   Value: string;
   Extra?: Array<RecordInput> | null;
+}
+
+export interface RollbackObjectInput {
+  projectId: string;
+  objectId: string;
+  objectType: VersionableObjectType;
+  version: number;
 }
 
 export interface RowsResult {
@@ -708,6 +772,8 @@ export interface UpdateFunctionInput {
   defaultMaxTokens?: number | null;
   defaultTemperature?: number | null;
 }
+
+export type VersionableObjectType = 'app' | 'function' | 'transform' | 'dataset' | 'ontology';
 
 export interface WhereCondition {
   Type: WhereConditionType;

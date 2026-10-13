@@ -30,6 +30,7 @@ from .service_accounts import ServiceAccountsHandle
 from .sharing import SharingHandle
 from .source import SourceHandle
 from .transforms import TransformHandle, TransformsHandle
+from .versions import VersionsHandle
 
 __version__ = SDK_VERSION
 
@@ -46,6 +47,7 @@ __all__ = [
     "FunctionHandle",
     "ServiceAccountsHandle",
     "LineageProvidersHandle",
+    "VersionsHandle",
     "SharingHandle",
     "ListCall",
     "Page",

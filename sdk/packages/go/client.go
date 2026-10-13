@@ -280,6 +280,9 @@ func (c *Client) LineageProviders() *LineageProvidersHandle {
 // Sharing returns the project's ontology sharing facade.
 func (c *Client) Sharing() *SharingHandle { return &SharingHandle{client: c} }
 
+// Versions returns the versioning and promotion facade.
+func (c *Client) Versions() *VersionsHandle { return &VersionsHandle{client: c} }
+
 // OntologyEntities lists all ontology entities in the project.
 func (c *Client) OntologyEntities(ctx context.Context) ([]map[string]any, error) {
 	projectID, err := c.projectID(ctx)

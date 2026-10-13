@@ -323,6 +323,10 @@ func runFixture(f fixture) result {
 	case "delete":
 		callErr = handle.Delete(ctx, f.Call.Args[0])
 		value = nil
+	case "promote":
+		value, callErr = handle.Promote(ctx, stringArg(f.Call.Args, 0))
+	case "versions":
+		value, callErr = handle.Versions(ctx)
 	case "followLink":
 		link, _ := f.Call.Args[1].(string)
 		options := optionsFrom(f.Call.Args, 2)
@@ -439,6 +443,10 @@ func runOtherDomain(ctx context.Context, client *whodb.Client, call fixtureCall)
 		case "rows":
 			options := optionsFrom(args, 0)
 			value, err = handle.Rows(ctx, whodb.DatasetRowsOptions{PageSize: intOption(options, "pageSize", 0), PageOffset: intOption(options, "pageOffset", 0)})
+		case "promote":
+			value, err = handle.Promote(ctx, stringArg(args, 0))
+		case "versions":
+			value, err = handle.Versions(ctx)
 		default:
 			return nil, nil, false
 		}
@@ -488,6 +496,10 @@ func runOtherDomain(ctx context.Context, client *whodb.Client, call fixtureCall)
 			value, err = handle.Update(ctx, mapArg(args, 0))
 		case "delete":
 			err = handle.Delete(ctx)
+		case "promote":
+			value, err = handle.Promote(ctx, stringArg(args, 0))
+		case "versions":
+			value, err = handle.Versions(ctx)
 		default:
 			return nil, nil, false
 		}
@@ -546,6 +558,38 @@ func runOtherDomain(ctx context.Context, client *whodb.Client, call fixtureCall)
 			value, err = handle.Update(ctx, mapArg(args, 0))
 		case "delete":
 			err = handle.Delete(ctx)
+		case "promote":
+			value, err = handle.Promote(ctx, stringArg(args, 0))
+		case "versions":
+			value, err = handle.Versions(ctx)
+		default:
+			return nil, nil, false
+		}
+	case "versions":
+		handle := client.Versions()
+		version := 0
+		if len(args) > 2 {
+			if raw, ok := args[2].(float64); ok {
+				version = int(raw)
+			}
+		}
+		switch call.Method {
+		case "list":
+			value, err = handle.List(ctx, stringArg(args, 0), stringArg(args, 1))
+		case "active":
+			var active map[string]any
+			active, err = handle.Active(ctx, stringArg(args, 0), stringArg(args, 1))
+			if active != nil {
+				value = active
+			}
+		case "activeAll":
+			value, err = handle.ActiveAll(ctx)
+		case "promote":
+			value, err = handle.Promote(ctx, stringArg(args, 0), stringArg(args, 1), stringArg(args, 2))
+		case "rollback":
+			value, err = handle.Rollback(ctx, stringArg(args, 0), stringArg(args, 1), version)
+		case "restoreToDraft":
+			value, err = handle.RestoreToDraft(ctx, stringArg(args, 0), stringArg(args, 1), version)
 		default:
 			return nil, nil, false
 		}

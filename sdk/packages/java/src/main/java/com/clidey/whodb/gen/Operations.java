@@ -498,6 +498,86 @@ public final class Operations {
         return new Request("RemoveOntologyReference", REMOVE_ONTOLOGY_REFERENCE_DOCUMENT, variables);
     }
 
+    /** Wire document for Query ObjectVersions. */
+    public static final String OBJECT_VERSIONS_DOCUMENT = "query ObjectVersions($projectId: ID!, $objectId: ID!, $objectType: VersionableObjectType!) { ObjectVersions(projectId: $projectId, objectId: $objectId, objectType: $objectType) { id objectId objectType version snapshot message promotedBy createdAt } }";
+
+    /** Builds the wire request for Query ObjectVersions. */
+    public static Request objectVersionsRequest(Map<String, Object> variables) {
+        return new Request("ObjectVersions", OBJECT_VERSIONS_DOCUMENT, variables);
+    }
+
+    /** Wire document for Query ActiveProdVersion. */
+    public static final String ACTIVE_PROD_VERSION_DOCUMENT = "query ActiveProdVersion($projectId: ID!, $objectId: ID!, $objectType: VersionableObjectType!) { ActiveProdVersion(projectId: $projectId, objectId: $objectId, objectType: $objectType) { objectId objectType version activatedAt activatedBy } }";
+
+    /** Builds the wire request for Query ActiveProdVersion. */
+    public static Request activeProdVersionRequest(Map<String, Object> variables) {
+        return new Request("ActiveProdVersion", ACTIVE_PROD_VERSION_DOCUMENT, variables);
+    }
+
+    /** Wire document for Query ProjectActiveProdVersions. */
+    public static final String PROJECT_ACTIVE_PROD_VERSIONS_DOCUMENT = "query ProjectActiveProdVersions($projectId: ID!) { ProjectActiveProdVersions(projectId: $projectId) { objectId objectType version activatedAt activatedBy } }";
+
+    /** Builds the wire request for Query ProjectActiveProdVersions. */
+    public static Request projectActiveProdVersionsRequest(Map<String, Object> variables) {
+        return new Request("ProjectActiveProdVersions", PROJECT_ACTIVE_PROD_VERSIONS_DOCUMENT, variables);
+    }
+
+    /** Wire document for Mutation PromoteObject. */
+    public static final String PROMOTE_OBJECT_DOCUMENT = "mutation PromoteObject($input: PromoteObjectInput!) { PromoteObject(input: $input) { id objectId objectType version snapshot message promotedBy createdAt } }";
+
+    /** Builds the wire request for Mutation PromoteObject. */
+    public static Request promoteObjectRequest(Map<String, Object> variables) {
+        return new Request("PromoteObject", PROMOTE_OBJECT_DOCUMENT, variables);
+    }
+
+    /** Wire document for Mutation RollbackObject. */
+    public static final String ROLLBACK_OBJECT_DOCUMENT = "mutation RollbackObject($input: RollbackObjectInput!) { RollbackObject(input: $input) { objectId objectType version activatedAt activatedBy } }";
+
+    /** Builds the wire request for Mutation RollbackObject. */
+    public static Request rollbackObjectRequest(Map<String, Object> variables) {
+        return new Request("RollbackObject", ROLLBACK_OBJECT_DOCUMENT, variables);
+    }
+
+    /** Wire document for Mutation RestoreOntologyVersionToDraft. */
+    public static final String RESTORE_ONTOLOGY_VERSION_TO_DRAFT_DOCUMENT = "mutation RestoreOntologyVersionToDraft($projectId: ID!, $ontologyId: ID!, $version: Int!) { RestoreOntologyVersionToDraft(projectId: $projectId, ontologyId: $ontologyId, version: $version) { id projectId apiName displayName pluralDisplayName description primaryKey sourceId tableName schemaName storageMode provisioningStatus embeddingEnabled embeddingProperties status icon color createdAt updatedAt properties { id apiName displayName description columnName dataType arrayElementType isRequired visibility isSearchable isSortable isEditOnly sortOrder } links { id apiName targetOntologyApiName cardinality foreignKeyProperty targetForeignKeyProperty joinTable sourceColumnInJoinTable targetColumnInJoinTable displayName pluralDisplayName reverseDisplayName targetKind targetReferenceId } } }";
+
+    /** Builds the wire request for Mutation RestoreOntologyVersionToDraft. */
+    public static Request restoreOntologyVersionToDraftRequest(Map<String, Object> variables) {
+        return new Request("RestoreOntologyVersionToDraft", RESTORE_ONTOLOGY_VERSION_TO_DRAFT_DOCUMENT, variables);
+    }
+
+    /** Wire document for Mutation RestoreDatasetVersionToDraft. */
+    public static final String RESTORE_DATASET_VERSION_TO_DRAFT_DOCUMENT = "mutation RestoreDatasetVersionToDraft($projectId: ID!, $datasetId: ID!, $version: Int!) { RestoreDatasetVersionToDraft(projectId: $projectId, datasetId: $datasetId, version: $version) { id projectId sourceId name description schema { name type isNullable isPrimary } schemaMode storageMode ownerId rowCount sizeBytes createdAt updatedAt } }";
+
+    /** Builds the wire request for Mutation RestoreDatasetVersionToDraft. */
+    public static Request restoreDatasetVersionToDraftRequest(Map<String, Object> variables) {
+        return new Request("RestoreDatasetVersionToDraft", RESTORE_DATASET_VERSION_TO_DRAFT_DOCUMENT, variables);
+    }
+
+    /** Wire document for Mutation RestoreTransformVersionToDraft. */
+    public static final String RESTORE_TRANSFORM_VERSION_TO_DRAFT_DOCUMENT = "mutation RestoreTransformVersionToDraft($projectId: ID!, $transformId: ID!, $version: Int!) { RestoreTransformVersionToDraft(projectId: $projectId, transformId: $transformId, version: $version) { id projectId name description graphJson scheduleCron triggerMode lastRunStatus lastRunAt liveStatus liveLastProcessedAt liveRecordsProcessed liveLastError createdAt updatedAt } }";
+
+    /** Builds the wire request for Mutation RestoreTransformVersionToDraft. */
+    public static Request restoreTransformVersionToDraftRequest(Map<String, Object> variables) {
+        return new Request("RestoreTransformVersionToDraft", RESTORE_TRANSFORM_VERSION_TO_DRAFT_DOCUMENT, variables);
+    }
+
+    /** Wire document for Mutation RestoreFunctionVersionToDraft. */
+    public static final String RESTORE_FUNCTION_VERSION_TO_DRAFT_DOCUMENT = "mutation RestoreFunctionVersionToDraft($projectId: ID!, $functionId: ID!, $version: Int!) { RestoreFunctionVersionToDraft(projectId: $projectId, functionId: $functionId, version: $version) { id projectId name description language entryPoint timeoutSeconds memory cpu executionMode liveBehavior createdBy createdAt updatedAt files { id path content } dependencies { id name version } providerIds ontologyIds readOnlyOntologyIds providerConfigs { providerId model } secretBindings { name secretId target } defaultMaxTokens defaultTemperature isDeployed currentRunStatus } }";
+
+    /** Builds the wire request for Mutation RestoreFunctionVersionToDraft. */
+    public static Request restoreFunctionVersionToDraftRequest(Map<String, Object> variables) {
+        return new Request("RestoreFunctionVersionToDraft", RESTORE_FUNCTION_VERSION_TO_DRAFT_DOCUMENT, variables);
+    }
+
+    /** Wire document for Mutation RestoreAppVersionToDraft. */
+    public static final String RESTORE_APP_VERSION_TO_DRAFT_DOCUMENT = "mutation RestoreAppVersionToDraft($projectId: ID!, $appId: ID!, $version: Int!) { RestoreAppVersionToDraft(projectId: $projectId, appId: $appId, version: $version) { app { id projectId name description thumbnailUrl useCases html conversation ontologyIds readOnlyOntologyIds functionIds createdBy createdAt updatedAt sourceHidden } files { path content updatedAt } pages version } }";
+
+    /** Builds the wire request for Mutation RestoreAppVersionToDraft. */
+    public static Request restoreAppVersionToDraftRequest(Map<String, Object> variables) {
+        return new Request("RestoreAppVersionToDraft", RESTORE_APP_VERSION_TO_DRAFT_DOCUMENT, variables);
+    }
+
     /** Wire document for Query MyOrganizations. */
     public static final String MY_ORGANIZATIONS_DOCUMENT = "query MyOrganizations { MyOrganizations { id name slug createdAt } }";
 

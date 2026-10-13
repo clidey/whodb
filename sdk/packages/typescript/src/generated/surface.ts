@@ -549,5 +549,87 @@ export const surface = {
       "rename": {},
       "paginated": null
     }
+  },
+  "versions": {
+    "list": {
+      "operation": "ObjectVersions",
+      "autofill": {
+        "projectId": "$project"
+      },
+      "rename": {},
+      "paginated": null
+    },
+    "active": {
+      "operation": "ActiveProdVersion",
+      "autofill": {
+        "projectId": "$project"
+      },
+      "rename": {},
+      "paginated": null
+    },
+    "activeAll": {
+      "operation": "ProjectActiveProdVersions",
+      "autofill": {
+        "projectId": "$project"
+      },
+      "rename": {},
+      "paginated": null
+    },
+    "promote": {
+      "operation": "PromoteObject",
+      "autofill": {
+        "projectId": "$project"
+      },
+      "rename": {},
+      "paginated": null
+    },
+    "rollback": {
+      "operation": "RollbackObject",
+      "autofill": {
+        "projectId": "$project"
+      },
+      "rename": {},
+      "paginated": null
+    },
+    "restoreOntologyToDraft": {
+      "operation": "RestoreOntologyVersionToDraft",
+      "autofill": {
+        "projectId": "$project"
+      },
+      "rename": {},
+      "paginated": null
+    },
+    "restoreDatasetToDraft": {
+      "operation": "RestoreDatasetVersionToDraft",
+      "autofill": {
+        "projectId": "$project"
+      },
+      "rename": {},
+      "paginated": null
+    },
+    "restoreTransformToDraft": {
+      "operation": "RestoreTransformVersionToDraft",
+      "autofill": {
+        "projectId": "$project"
+      },
+      "rename": {},
+      "paginated": null
+    },
+    "restoreFunctionToDraft": {
+      "operation": "RestoreFunctionVersionToDraft",
+      "autofill": {
+        "projectId": "$project"
+      },
+      "rename": {},
+      "paginated": null
+    },
+    "restoreAppToDraft": {
+      "operation": "RestoreAppVersionToDraft",
+      "autofill": {
+        "projectId": "$project"
+      },
+      "rename": {},
+      "paginated": null
+    }
   }
 } as const;

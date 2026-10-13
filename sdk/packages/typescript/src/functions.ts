@@ -21,6 +21,8 @@ import type {
   TestFunctionInput, UpdateFunctionInput,
 } from './generated/types.js';
 import { warnIfFlagged } from './manifest-check.js';
+import { VersionsHandle } from './versions.js';
+import type { ObjectVersion } from './generated/types.js';
 import { NotFoundError, ValidationError } from './errors.js';
 import { isTerminalRunStatus, pollUntil, type WaitOptions } from './polling.js';
 
@@ -183,6 +185,18 @@ export class FunctionHandle {
     });
     this.functionCache = updated;
     return updated;
+  }
+
+  /** Promotes the draft function: snapshots it and makes it the active production version. */
+  async promote(message?: string): Promise<ObjectVersion> {
+    const fn = await this.meta();
+    return new VersionsHandle(this.transport, this.projectId).promote('function', fn.id, message);
+  }
+
+  /** Lists the function's promoted versions, newest first. */
+  async versions(): Promise<ObjectVersion[]> {
+    const fn = await this.meta();
+    return new VersionsHandle(this.transport, this.projectId).list('function', fn.id);
   }
 
   /** Soft-deletes the function. */

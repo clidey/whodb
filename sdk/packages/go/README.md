@@ -63,6 +63,7 @@ finished, err := rollup.Wait(ctx, run["id"].(string), whodb.WaitOptions{Timeout:
 
 // Functions: synchronous execute, or a tracked run.
 normalize := client.Function("normalize")
+_, err = normalize.Promote(ctx, "v1") // snapshot + set active production version
 result, err := normalize.Execute(ctx, map[string]any{"name": "Ada"}, nil)
 queued, err := normalize.StartRun(ctx, map[string]any{"batch": 7}, nil)
 _, err = normalize.Wait(ctx, queued["id"].(string), whodb.WaitOptions{})

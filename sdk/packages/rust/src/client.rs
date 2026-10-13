@@ -15,6 +15,7 @@ use crate::ontology::OntologyHandle;
 use crate::source::SourceHandle;
 use crate::transforms::{TransformHandle, TransformsHandle};
 use crate::transport::{HttpTransport, Transport};
+use crate::versions::VersionsHandle;
 
 /// The hosted WhoDB platform endpoint.
 pub const DEFAULT_HOST: &str = "https://app.whodb.com";
@@ -329,6 +330,11 @@ impl Client {
     /// Returns the project's ontology sharing facade.
     pub fn sharing(&self) -> SharingHandle<'_> {
         SharingHandle { client: self }
+    }
+
+    /// Returns the versioning and promotion facade.
+    pub fn versions(&self) -> VersionsHandle<'_> {
+        VersionsHandle { client: self }
     }
 
     /// Returns a handle for one ontology entity, addressed by apiName.

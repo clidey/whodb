@@ -5,6 +5,49 @@ package gen
 // ActionExecutionStatus travels as a string on the wire. Values: committed, failed, denied.
 type ActionExecutionStatus = string
 
+// ActiveProdVersion mirrors the GraphQL type ActiveProdVersion.
+type ActiveProdVersion struct {
+	ObjectId    string `json:"objectId"`
+	ObjectType  string `json:"objectType"`
+	Version     int    `json:"version"`
+	ActivatedAt string `json:"activatedAt"`
+	ActivatedBy string `json:"activatedBy"`
+}
+
+// App mirrors the GraphQL type App.
+type App struct {
+	Id                  string   `json:"id"`
+	ProjectId           string   `json:"projectId"`
+	Name                string   `json:"name"`
+	Description         string   `json:"description"`
+	ThumbnailUrl        string   `json:"thumbnailUrl"`
+	UseCases            []string `json:"useCases"`
+	Html                string   `json:"html"`
+	Conversation        string   `json:"conversation"`
+	OntologyIds         []string `json:"ontologyIds"`
+	ReadOnlyOntologyIds []string `json:"readOnlyOntologyIds"`
+	FunctionIds         []string `json:"functionIds"`
+	CreatedBy           string   `json:"createdBy"`
+	CreatedAt           string   `json:"createdAt"`
+	UpdatedAt           string   `json:"updatedAt"`
+	SourceHidden        bool     `json:"sourceHidden"`
+}
+
+// AppFile mirrors the GraphQL type AppFile.
+type AppFile struct {
+	Path      string `json:"path"`
+	Content   string `json:"content"`
+	UpdatedAt string `json:"updatedAt"`
+}
+
+// AppViewResult mirrors the GraphQL type AppViewResult.
+type AppViewResult struct {
+	App     App       `json:"app"`
+	Files   []AppFile `json:"files"`
+	Pages   []string  `json:"pages"`
+	Version *int      `json:"version,omitempty"`
+}
+
 // AtomicWhereCondition mirrors the GraphQL type AtomicWhereCondition.
 type AtomicWhereCondition struct {
 	ColumnType string `json:"ColumnType"`
@@ -207,6 +250,18 @@ type LineageProvider struct {
 	Enabled      bool   `json:"enabled"`
 	CreatedAt    string `json:"createdAt"`
 	UpdatedAt    string `json:"updatedAt"`
+}
+
+// ObjectVersion mirrors the GraphQL type ObjectVersion.
+type ObjectVersion struct {
+	Id         string `json:"id"`
+	ObjectId   string `json:"objectId"`
+	ObjectType string `json:"objectType"`
+	Version    int    `json:"version"`
+	Snapshot   string `json:"snapshot"`
+	Message    string `json:"message"`
+	PromotedBy string `json:"promotedBy"`
+	CreatedAt  string `json:"createdAt"`
 }
 
 // OntologyActionCapability mirrors the GraphQL type OntologyActionCapability.
@@ -593,6 +648,14 @@ type Project struct {
 	CreatedAt   string `json:"createdAt"`
 }
 
+// PromoteObjectInput mirrors the GraphQL type PromoteObjectInput.
+type PromoteObjectInput struct {
+	ProjectId  string  `json:"projectId"`
+	ObjectId   string  `json:"objectId"`
+	ObjectType string  `json:"objectType"`
+	Message    *string `json:"message,omitempty"`
+}
+
 // QueryDatasetInput mirrors the GraphQL type QueryDatasetInput.
 type QueryDatasetInput struct {
 	ProjectId  string `json:"projectId"`
@@ -612,6 +675,14 @@ type RecordInput struct {
 	Key   string        `json:"Key"`
 	Value string        `json:"Value"`
 	Extra []RecordInput `json:"Extra,omitempty"`
+}
+
+// RollbackObjectInput mirrors the GraphQL type RollbackObjectInput.
+type RollbackObjectInput struct {
+	ProjectId  string `json:"projectId"`
+	ObjectId   string `json:"objectId"`
+	ObjectType string `json:"objectType"`
+	Version    int    `json:"version"`
 }
 
 // RowsResult mirrors the GraphQL type RowsResult.
@@ -801,6 +872,9 @@ type UpdateFunctionInput struct {
 	DefaultMaxTokens    *int                          `json:"defaultMaxTokens,omitempty"`
 	DefaultTemperature  *float64                      `json:"defaultTemperature,omitempty"`
 }
+
+// VersionableObjectType travels as a string on the wire. Values: app, function, transform, dataset, ontology.
+type VersionableObjectType = string
 
 // WhereCondition mirrors the GraphQL type WhereCondition.
 type WhereCondition struct {

@@ -222,3 +222,21 @@ func (h *TransformHandle) Delete(ctx context.Context) error {
 	h.mu.Unlock()
 	return nil
 }
+
+// Promote snapshots the draft transform and makes it the active production version.
+func (h *TransformHandle) Promote(ctx context.Context, message string) (map[string]any, error) {
+	obj, err := h.Meta(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return h.client.Versions().Promote(ctx, ObjectTypeTransform, fmt.Sprint(obj["id"]), message)
+}
+
+// Versions lists the transform's promoted versions, newest first.
+func (h *TransformHandle) Versions(ctx context.Context) ([]map[string]any, error) {
+	obj, err := h.Meta(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return h.client.Versions().List(ctx, ObjectTypeTransform, fmt.Sprint(obj["id"]))
+}

@@ -40,6 +40,7 @@ pub mod source;
 pub mod transforms;
 pub mod transport;
 pub mod transport_ipc;
+pub mod versions;
 
 pub use admin::{LineageProvidersHandle, ServiceAccountsHandle, SharingHandle};
 pub use client::{Client, Config, DEFAULT_HOST};
@@ -52,6 +53,7 @@ pub use ontology::{ActionOptions, ListOptions, OntologyHandle};
 pub use source::{SourceHandle, SourceObjectsOptions, SourceRowsOptions};
 pub use transforms::{TransformHandle, TransformsHandle};
 pub use transport::Transport;
+pub use versions::VersionsHandle;
 
 /// SDK_VERSION is stamped by the release tooling (sync-versions.mjs) and used
 /// only for the User-Agent header — the SDK's sole telemetry.

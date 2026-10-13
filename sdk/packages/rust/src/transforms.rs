@@ -197,4 +197,20 @@ impl<'client> TransformHandle<'client> {
         *self.transform.lock().expect("transform lock poisoned") = None;
         Ok(())
     }
+
+    /// Promotes the draft transform: snapshots it and makes it the active production version.
+    pub fn promote(&self, message: Option<&str>) -> Result<Value> {
+        let id = str_field(&self.meta()?, "id");
+        self.client
+            .versions()
+            .promote("transform", id.as_str().unwrap_or_default(), message)
+    }
+
+    /// Lists the transform's promoted versions, newest first.
+    pub fn versions(&self) -> Result<Vec<Value>> {
+        let id = str_field(&self.meta()?, "id");
+        self.client
+            .versions()
+            .list("transform", id.as_str().unwrap_or_default())
+    }
 }

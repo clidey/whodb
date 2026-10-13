@@ -32,6 +32,7 @@ from .service_accounts import ServiceAccountsHandle
 from .sharing import SharingHandle
 from .source import SourceHandle, list_sources
 from .transforms import TransformHandle, TransformsHandle
+from .versions import VersionsHandle
 
 DEFAULT_HOST = "https://app.whodb.com"
 
@@ -237,6 +238,10 @@ class WhoDB:
     def sharing(self) -> SharingHandle:
         """Cross-project ontology sharing and references."""
         return SharingHandle(self._execute, self._project_id)
+
+    def versions(self) -> VersionsHandle:
+        """Version history, promotion, rollback, and restore-to-draft for any versionable object."""
+        return VersionsHandle(self._execute, self._project_id)
 
 
 class AsyncWhoDB:

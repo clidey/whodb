@@ -10,6 +10,7 @@ import { TransformsHandle, TransformHandle } from './transforms.js';
 import { FunctionsHandle, FunctionHandle } from './functions.js';
 import { ServiceAccountsHandle } from './service-accounts.js';
 import { LineageProvidersHandle } from './lineage.js';
+import { VersionsHandle } from './versions.js';
 import { SharingHandle } from './sharing.js';
 import * as ops from './generated/operations.js';
 import type { OntologyObjectType, PlatformSource } from './generated/types.js';
@@ -227,6 +228,11 @@ export class WhoDB {
   /** Cross-project ontology sharing and references. */
   sharing(): SharingHandle {
     return new SharingHandle(this.transport, this.projectId);
+  }
+
+  /** Version history, promotion, rollback, and restore-to-draft for any versionable object. */
+  versions(): VersionsHandle {
+    return new VersionsHandle(this.transport, this.projectId);
   }
 
   /** File upload/download over the platform's bulk HTTP endpoints. */

@@ -53,7 +53,10 @@ kpis = whodb.dataset("weekly_kpis").rows()
 rollup = whodb.transform("nightly-rollup")
 run = rollup.run()
 rollup.wait(run["id"], timeout_ms=300_000)
-result = whodb.function("normalize").execute({"name": "Ada"})
+fn = whodb.function("normalize")
+fn.promote("v1")  # snapshot + set active production version
+result = fn.execute({"name": "Ada"})
+versions = whodb.versions().list("function", fn.meta()["id"])
 
 # Org administration (requires org manage rights):
 sa = whodb.service_accounts().create("ci-deployer")

@@ -497,6 +497,86 @@ func NewRemoveOntologyReferenceRequest(variables map[string]any) Request {
 	return Request{Operation: "RemoveOntologyReference", Document: RemoveOntologyReferenceDocument, Variables: variables}
 }
 
+// ObjectVersionsDocument is the wire document for Query ObjectVersions.
+const ObjectVersionsDocument = "query ObjectVersions($projectId: ID!, $objectId: ID!, $objectType: VersionableObjectType!) { ObjectVersions(projectId: $projectId, objectId: $objectId, objectType: $objectType) { id objectId objectType version snapshot message promotedBy createdAt } }"
+
+// NewObjectVersionsRequest builds the wire request for Query ObjectVersions.
+func NewObjectVersionsRequest(variables map[string]any) Request {
+	return Request{Operation: "ObjectVersions", Document: ObjectVersionsDocument, Variables: variables}
+}
+
+// ActiveProdVersionDocument is the wire document for Query ActiveProdVersion.
+const ActiveProdVersionDocument = "query ActiveProdVersion($projectId: ID!, $objectId: ID!, $objectType: VersionableObjectType!) { ActiveProdVersion(projectId: $projectId, objectId: $objectId, objectType: $objectType) { objectId objectType version activatedAt activatedBy } }"
+
+// NewActiveProdVersionRequest builds the wire request for Query ActiveProdVersion.
+func NewActiveProdVersionRequest(variables map[string]any) Request {
+	return Request{Operation: "ActiveProdVersion", Document: ActiveProdVersionDocument, Variables: variables}
+}
+
+// ProjectActiveProdVersionsDocument is the wire document for Query ProjectActiveProdVersions.
+const ProjectActiveProdVersionsDocument = "query ProjectActiveProdVersions($projectId: ID!) { ProjectActiveProdVersions(projectId: $projectId) { objectId objectType version activatedAt activatedBy } }"
+
+// NewProjectActiveProdVersionsRequest builds the wire request for Query ProjectActiveProdVersions.
+func NewProjectActiveProdVersionsRequest(variables map[string]any) Request {
+	return Request{Operation: "ProjectActiveProdVersions", Document: ProjectActiveProdVersionsDocument, Variables: variables}
+}
+
+// PromoteObjectDocument is the wire document for Mutation PromoteObject.
+const PromoteObjectDocument = "mutation PromoteObject($input: PromoteObjectInput!) { PromoteObject(input: $input) { id objectId objectType version snapshot message promotedBy createdAt } }"
+
+// NewPromoteObjectRequest builds the wire request for Mutation PromoteObject.
+func NewPromoteObjectRequest(variables map[string]any) Request {
+	return Request{Operation: "PromoteObject", Document: PromoteObjectDocument, Variables: variables}
+}
+
+// RollbackObjectDocument is the wire document for Mutation RollbackObject.
+const RollbackObjectDocument = "mutation RollbackObject($input: RollbackObjectInput!) { RollbackObject(input: $input) { objectId objectType version activatedAt activatedBy } }"
+
+// NewRollbackObjectRequest builds the wire request for Mutation RollbackObject.
+func NewRollbackObjectRequest(variables map[string]any) Request {
+	return Request{Operation: "RollbackObject", Document: RollbackObjectDocument, Variables: variables}
+}
+
+// RestoreOntologyVersionToDraftDocument is the wire document for Mutation RestoreOntologyVersionToDraft.
+const RestoreOntologyVersionToDraftDocument = "mutation RestoreOntologyVersionToDraft($projectId: ID!, $ontologyId: ID!, $version: Int!) { RestoreOntologyVersionToDraft(projectId: $projectId, ontologyId: $ontologyId, version: $version) { id projectId apiName displayName pluralDisplayName description primaryKey sourceId tableName schemaName storageMode provisioningStatus embeddingEnabled embeddingProperties status icon color createdAt updatedAt properties { id apiName displayName description columnName dataType arrayElementType isRequired visibility isSearchable isSortable isEditOnly sortOrder } links { id apiName targetOntologyApiName cardinality foreignKeyProperty targetForeignKeyProperty joinTable sourceColumnInJoinTable targetColumnInJoinTable displayName pluralDisplayName reverseDisplayName targetKind targetReferenceId } } }"
+
+// NewRestoreOntologyVersionToDraftRequest builds the wire request for Mutation RestoreOntologyVersionToDraft.
+func NewRestoreOntologyVersionToDraftRequest(variables map[string]any) Request {
+	return Request{Operation: "RestoreOntologyVersionToDraft", Document: RestoreOntologyVersionToDraftDocument, Variables: variables}
+}
+
+// RestoreDatasetVersionToDraftDocument is the wire document for Mutation RestoreDatasetVersionToDraft.
+const RestoreDatasetVersionToDraftDocument = "mutation RestoreDatasetVersionToDraft($projectId: ID!, $datasetId: ID!, $version: Int!) { RestoreDatasetVersionToDraft(projectId: $projectId, datasetId: $datasetId, version: $version) { id projectId sourceId name description schema { name type isNullable isPrimary } schemaMode storageMode ownerId rowCount sizeBytes createdAt updatedAt } }"
+
+// NewRestoreDatasetVersionToDraftRequest builds the wire request for Mutation RestoreDatasetVersionToDraft.
+func NewRestoreDatasetVersionToDraftRequest(variables map[string]any) Request {
+	return Request{Operation: "RestoreDatasetVersionToDraft", Document: RestoreDatasetVersionToDraftDocument, Variables: variables}
+}
+
+// RestoreTransformVersionToDraftDocument is the wire document for Mutation RestoreTransformVersionToDraft.
+const RestoreTransformVersionToDraftDocument = "mutation RestoreTransformVersionToDraft($projectId: ID!, $transformId: ID!, $version: Int!) { RestoreTransformVersionToDraft(projectId: $projectId, transformId: $transformId, version: $version) { id projectId name description graphJson scheduleCron triggerMode lastRunStatus lastRunAt liveStatus liveLastProcessedAt liveRecordsProcessed liveLastError createdAt updatedAt } }"
+
+// NewRestoreTransformVersionToDraftRequest builds the wire request for Mutation RestoreTransformVersionToDraft.
+func NewRestoreTransformVersionToDraftRequest(variables map[string]any) Request {
+	return Request{Operation: "RestoreTransformVersionToDraft", Document: RestoreTransformVersionToDraftDocument, Variables: variables}
+}
+
+// RestoreFunctionVersionToDraftDocument is the wire document for Mutation RestoreFunctionVersionToDraft.
+const RestoreFunctionVersionToDraftDocument = "mutation RestoreFunctionVersionToDraft($projectId: ID!, $functionId: ID!, $version: Int!) { RestoreFunctionVersionToDraft(projectId: $projectId, functionId: $functionId, version: $version) { id projectId name description language entryPoint timeoutSeconds memory cpu executionMode liveBehavior createdBy createdAt updatedAt files { id path content } dependencies { id name version } providerIds ontologyIds readOnlyOntologyIds providerConfigs { providerId model } secretBindings { name secretId target } defaultMaxTokens defaultTemperature isDeployed currentRunStatus } }"
+
+// NewRestoreFunctionVersionToDraftRequest builds the wire request for Mutation RestoreFunctionVersionToDraft.
+func NewRestoreFunctionVersionToDraftRequest(variables map[string]any) Request {
+	return Request{Operation: "RestoreFunctionVersionToDraft", Document: RestoreFunctionVersionToDraftDocument, Variables: variables}
+}
+
+// RestoreAppVersionToDraftDocument is the wire document for Mutation RestoreAppVersionToDraft.
+const RestoreAppVersionToDraftDocument = "mutation RestoreAppVersionToDraft($projectId: ID!, $appId: ID!, $version: Int!) { RestoreAppVersionToDraft(projectId: $projectId, appId: $appId, version: $version) { app { id projectId name description thumbnailUrl useCases html conversation ontologyIds readOnlyOntologyIds functionIds createdBy createdAt updatedAt sourceHidden } files { path content updatedAt } pages version } }"
+
+// NewRestoreAppVersionToDraftRequest builds the wire request for Mutation RestoreAppVersionToDraft.
+func NewRestoreAppVersionToDraftRequest(variables map[string]any) Request {
+	return Request{Operation: "RestoreAppVersionToDraft", Document: RestoreAppVersionToDraftDocument, Variables: variables}
+}
+
 // MyOrganizationsDocument is the wire document for Query MyOrganizations.
 const MyOrganizationsDocument = "query MyOrganizations { MyOrganizations { id name slug createdAt } }"
 

@@ -746,6 +746,126 @@ def remove_ontology_reference_parse(data: dict[str, Any]) -> Any:
     """Extract the RemoveOntologyReference payload from a GraphQL data object."""
     return data.get("RemoveOntologyReference")
 
+OBJECTVERSIONS_DOCUMENT = "query ObjectVersions($projectId: ID!, $objectId: ID!, $objectType: VersionableObjectType!) { ObjectVersions(projectId: $projectId, objectId: $objectId, objectType: $objectType) { id objectId objectType version snapshot message promotedBy createdAt } }"
+
+
+def object_versions_request(variables: dict[str, Any]) -> Request:
+    """Build the wire request for Query ObjectVersions."""
+    return Request("ObjectVersions", OBJECTVERSIONS_DOCUMENT, variables)
+
+
+def object_versions_parse(data: dict[str, Any]) -> Any:
+    """Extract the ObjectVersions payload from a GraphQL data object."""
+    return data.get("ObjectVersions")
+
+ACTIVEPRODVERSION_DOCUMENT = "query ActiveProdVersion($projectId: ID!, $objectId: ID!, $objectType: VersionableObjectType!) { ActiveProdVersion(projectId: $projectId, objectId: $objectId, objectType: $objectType) { objectId objectType version activatedAt activatedBy } }"
+
+
+def active_prod_version_request(variables: dict[str, Any]) -> Request:
+    """Build the wire request for Query ActiveProdVersion."""
+    return Request("ActiveProdVersion", ACTIVEPRODVERSION_DOCUMENT, variables)
+
+
+def active_prod_version_parse(data: dict[str, Any]) -> Any:
+    """Extract the ActiveProdVersion payload from a GraphQL data object."""
+    return data.get("ActiveProdVersion")
+
+PROJECTACTIVEPRODVERSIONS_DOCUMENT = "query ProjectActiveProdVersions($projectId: ID!) { ProjectActiveProdVersions(projectId: $projectId) { objectId objectType version activatedAt activatedBy } }"
+
+
+def project_active_prod_versions_request(variables: dict[str, Any]) -> Request:
+    """Build the wire request for Query ProjectActiveProdVersions."""
+    return Request("ProjectActiveProdVersions", PROJECTACTIVEPRODVERSIONS_DOCUMENT, variables)
+
+
+def project_active_prod_versions_parse(data: dict[str, Any]) -> Any:
+    """Extract the ProjectActiveProdVersions payload from a GraphQL data object."""
+    return data.get("ProjectActiveProdVersions")
+
+PROMOTEOBJECT_DOCUMENT = "mutation PromoteObject($input: PromoteObjectInput!) { PromoteObject(input: $input) { id objectId objectType version snapshot message promotedBy createdAt } }"
+
+
+def promote_object_request(variables: dict[str, Any]) -> Request:
+    """Build the wire request for Mutation PromoteObject."""
+    return Request("PromoteObject", PROMOTEOBJECT_DOCUMENT, variables)
+
+
+def promote_object_parse(data: dict[str, Any]) -> Any:
+    """Extract the PromoteObject payload from a GraphQL data object."""
+    return data.get("PromoteObject")
+
+ROLLBACKOBJECT_DOCUMENT = "mutation RollbackObject($input: RollbackObjectInput!) { RollbackObject(input: $input) { objectId objectType version activatedAt activatedBy } }"
+
+
+def rollback_object_request(variables: dict[str, Any]) -> Request:
+    """Build the wire request for Mutation RollbackObject."""
+    return Request("RollbackObject", ROLLBACKOBJECT_DOCUMENT, variables)
+
+
+def rollback_object_parse(data: dict[str, Any]) -> Any:
+    """Extract the RollbackObject payload from a GraphQL data object."""
+    return data.get("RollbackObject")
+
+RESTOREONTOLOGYVERSIONTODRAFT_DOCUMENT = "mutation RestoreOntologyVersionToDraft($projectId: ID!, $ontologyId: ID!, $version: Int!) { RestoreOntologyVersionToDraft(projectId: $projectId, ontologyId: $ontologyId, version: $version) { id projectId apiName displayName pluralDisplayName description primaryKey sourceId tableName schemaName storageMode provisioningStatus embeddingEnabled embeddingProperties status icon color createdAt updatedAt properties { id apiName displayName description columnName dataType arrayElementType isRequired visibility isSearchable isSortable isEditOnly sortOrder } links { id apiName targetOntologyApiName cardinality foreignKeyProperty targetForeignKeyProperty joinTable sourceColumnInJoinTable targetColumnInJoinTable displayName pluralDisplayName reverseDisplayName targetKind targetReferenceId } } }"
+
+
+def restore_ontology_version_to_draft_request(variables: dict[str, Any]) -> Request:
+    """Build the wire request for Mutation RestoreOntologyVersionToDraft."""
+    return Request("RestoreOntologyVersionToDraft", RESTOREONTOLOGYVERSIONTODRAFT_DOCUMENT, variables)
+
+
+def restore_ontology_version_to_draft_parse(data: dict[str, Any]) -> Any:
+    """Extract the RestoreOntologyVersionToDraft payload from a GraphQL data object."""
+    return data.get("RestoreOntologyVersionToDraft")
+
+RESTOREDATASETVERSIONTODRAFT_DOCUMENT = "mutation RestoreDatasetVersionToDraft($projectId: ID!, $datasetId: ID!, $version: Int!) { RestoreDatasetVersionToDraft(projectId: $projectId, datasetId: $datasetId, version: $version) { id projectId sourceId name description schema { name type isNullable isPrimary } schemaMode storageMode ownerId rowCount sizeBytes createdAt updatedAt } }"
+
+
+def restore_dataset_version_to_draft_request(variables: dict[str, Any]) -> Request:
+    """Build the wire request for Mutation RestoreDatasetVersionToDraft."""
+    return Request("RestoreDatasetVersionToDraft", RESTOREDATASETVERSIONTODRAFT_DOCUMENT, variables)
+
+
+def restore_dataset_version_to_draft_parse(data: dict[str, Any]) -> Any:
+    """Extract the RestoreDatasetVersionToDraft payload from a GraphQL data object."""
+    return data.get("RestoreDatasetVersionToDraft")
+
+RESTORETRANSFORMVERSIONTODRAFT_DOCUMENT = "mutation RestoreTransformVersionToDraft($projectId: ID!, $transformId: ID!, $version: Int!) { RestoreTransformVersionToDraft(projectId: $projectId, transformId: $transformId, version: $version) { id projectId name description graphJson scheduleCron triggerMode lastRunStatus lastRunAt liveStatus liveLastProcessedAt liveRecordsProcessed liveLastError createdAt updatedAt } }"
+
+
+def restore_transform_version_to_draft_request(variables: dict[str, Any]) -> Request:
+    """Build the wire request for Mutation RestoreTransformVersionToDraft."""
+    return Request("RestoreTransformVersionToDraft", RESTORETRANSFORMVERSIONTODRAFT_DOCUMENT, variables)
+
+
+def restore_transform_version_to_draft_parse(data: dict[str, Any]) -> Any:
+    """Extract the RestoreTransformVersionToDraft payload from a GraphQL data object."""
+    return data.get("RestoreTransformVersionToDraft")
+
+RESTOREFUNCTIONVERSIONTODRAFT_DOCUMENT = "mutation RestoreFunctionVersionToDraft($projectId: ID!, $functionId: ID!, $version: Int!) { RestoreFunctionVersionToDraft(projectId: $projectId, functionId: $functionId, version: $version) { id projectId name description language entryPoint timeoutSeconds memory cpu executionMode liveBehavior createdBy createdAt updatedAt files { id path content } dependencies { id name version } providerIds ontologyIds readOnlyOntologyIds providerConfigs { providerId model } secretBindings { name secretId target } defaultMaxTokens defaultTemperature isDeployed currentRunStatus } }"
+
+
+def restore_function_version_to_draft_request(variables: dict[str, Any]) -> Request:
+    """Build the wire request for Mutation RestoreFunctionVersionToDraft."""
+    return Request("RestoreFunctionVersionToDraft", RESTOREFUNCTIONVERSIONTODRAFT_DOCUMENT, variables)
+
+
+def restore_function_version_to_draft_parse(data: dict[str, Any]) -> Any:
+    """Extract the RestoreFunctionVersionToDraft payload from a GraphQL data object."""
+    return data.get("RestoreFunctionVersionToDraft")
+
+RESTOREAPPVERSIONTODRAFT_DOCUMENT = "mutation RestoreAppVersionToDraft($projectId: ID!, $appId: ID!, $version: Int!) { RestoreAppVersionToDraft(projectId: $projectId, appId: $appId, version: $version) { app { id projectId name description thumbnailUrl useCases html conversation ontologyIds readOnlyOntologyIds functionIds createdBy createdAt updatedAt sourceHidden } files { path content updatedAt } pages version } }"
+
+
+def restore_app_version_to_draft_request(variables: dict[str, Any]) -> Request:
+    """Build the wire request for Mutation RestoreAppVersionToDraft."""
+    return Request("RestoreAppVersionToDraft", RESTOREAPPVERSIONTODRAFT_DOCUMENT, variables)
+
+
+def restore_app_version_to_draft_parse(data: dict[str, Any]) -> Any:
+    """Extract the RestoreAppVersionToDraft payload from a GraphQL data object."""
+    return data.get("RestoreAppVersionToDraft")
+
 MYORGANIZATIONS_DOCUMENT = "query MyOrganizations { MyOrganizations { id name slug createdAt } }"
 
 

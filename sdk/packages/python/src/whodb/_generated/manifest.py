@@ -185,6 +185,36 @@ EMBEDDED_MANIFEST = {
     "RemoveOntologyReference": {
         "kind": "Mutation"
     },
+    "ObjectVersions": {
+        "kind": "Query"
+    },
+    "ActiveProdVersion": {
+        "kind": "Query"
+    },
+    "ProjectActiveProdVersions": {
+        "kind": "Query"
+    },
+    "PromoteObject": {
+        "kind": "Mutation"
+    },
+    "RollbackObject": {
+        "kind": "Mutation"
+    },
+    "RestoreOntologyVersionToDraft": {
+        "kind": "Mutation"
+    },
+    "RestoreDatasetVersionToDraft": {
+        "kind": "Mutation"
+    },
+    "RestoreTransformVersionToDraft": {
+        "kind": "Mutation"
+    },
+    "RestoreFunctionVersionToDraft": {
+        "kind": "Mutation"
+    },
+    "RestoreAppVersionToDraft": {
+        "kind": "Mutation"
+    },
     "MyOrganizations": {
         "kind": "Query"
     },

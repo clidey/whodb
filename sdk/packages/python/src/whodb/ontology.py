@@ -443,3 +443,15 @@ class OntologyHandle:
                 }
             )
         )
+
+    def promote(self, message: str | None = None) -> dict:
+        """Promote the draft ontology: snapshot it and make it the active production version."""
+        from .versions import VersionsHandle
+
+        return VersionsHandle(self._execute, self._project_id).promote("ontology", self.entity_meta()["id"], message)
+
+    def versions(self) -> list[dict]:
+        """List the ontology's promoted versions, newest first."""
+        from .versions import VersionsHandle
+
+        return VersionsHandle(self._execute, self._project_id).list("ontology", self.entity_meta()["id"])

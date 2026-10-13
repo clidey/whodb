@@ -38,6 +38,7 @@ export { FunctionsHandle, FunctionHandle } from './functions.js';
 export type { FunctionDefinition, FunctionUpdate, FunctionTestOptions } from './functions.js';
 export { ServiceAccountsHandle } from './service-accounts.js';
 export { LineageProvidersHandle } from './lineage.js';
+export { VersionsHandle } from './versions.js';
 export type { LineageProviderDefinition } from './lineage.js';
 export { SharingHandle } from './sharing.js';
 export type { WaitOptions } from './polling.js';

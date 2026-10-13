@@ -110,4 +110,14 @@ public final class TransformHandle {
         client.execute(Operations.deleteTransformRequest(Facades.vars("projectId", client.projectId(), "id", id)));
         transform = null;
     }
+
+    /** Promotes the draft transform: snapshots it and makes it the active production version. {@code message} may be null. */
+    public Map<String, Object> promote(String message) {
+        return client.versions().promote("transform", String.valueOf(meta().get("id")), message);
+    }
+
+    /** Lists the transform's promoted versions, newest first. */
+    public List<Map<String, Object>> versions() {
+        return client.versions().list("transform", String.valueOf(meta().get("id")));
+    }
 }

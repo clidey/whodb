@@ -622,6 +622,106 @@ pub const EMBEDDED_MANIFEST: &[(&str, OperationPolicy)] = &[
         },
     ),
     (
+        "ObjectVersions",
+        OperationPolicy {
+            kind: "Query",
+            deprecated: false,
+            sunset_at: "",
+            behavior_changed: false,
+            note: "",
+        },
+    ),
+    (
+        "ActiveProdVersion",
+        OperationPolicy {
+            kind: "Query",
+            deprecated: false,
+            sunset_at: "",
+            behavior_changed: false,
+            note: "",
+        },
+    ),
+    (
+        "ProjectActiveProdVersions",
+        OperationPolicy {
+            kind: "Query",
+            deprecated: false,
+            sunset_at: "",
+            behavior_changed: false,
+            note: "",
+        },
+    ),
+    (
+        "PromoteObject",
+        OperationPolicy {
+            kind: "Mutation",
+            deprecated: false,
+            sunset_at: "",
+            behavior_changed: false,
+            note: "",
+        },
+    ),
+    (
+        "RollbackObject",
+        OperationPolicy {
+            kind: "Mutation",
+            deprecated: false,
+            sunset_at: "",
+            behavior_changed: false,
+            note: "",
+        },
+    ),
+    (
+        "RestoreOntologyVersionToDraft",
+        OperationPolicy {
+            kind: "Mutation",
+            deprecated: false,
+            sunset_at: "",
+            behavior_changed: false,
+            note: "",
+        },
+    ),
+    (
+        "RestoreDatasetVersionToDraft",
+        OperationPolicy {
+            kind: "Mutation",
+            deprecated: false,
+            sunset_at: "",
+            behavior_changed: false,
+            note: "",
+        },
+    ),
+    (
+        "RestoreTransformVersionToDraft",
+        OperationPolicy {
+            kind: "Mutation",
+            deprecated: false,
+            sunset_at: "",
+            behavior_changed: false,
+            note: "",
+        },
+    ),
+    (
+        "RestoreFunctionVersionToDraft",
+        OperationPolicy {
+            kind: "Mutation",
+            deprecated: false,
+            sunset_at: "",
+            behavior_changed: false,
+            note: "",
+        },
+    ),
+    (
+        "RestoreAppVersionToDraft",
+        OperationPolicy {
+            kind: "Mutation",
+            deprecated: false,
+            sunset_at: "",
+            behavior_changed: false,
+            note: "",
+        },
+    ),
+    (
         "MyOrganizations",
         OperationPolicy {
             kind: "Query",

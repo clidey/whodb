@@ -89,7 +89,11 @@ Mirror the TypeScript package file-for-file in idiomatic naming:
   `wait` polls until a terminal run status with 60s/2s defaults and raises
   PlatformError `RUN_TIMEOUT`; function input encodes to a compact JSON
   string); serviceAccounts (org-scoped, uses the resolved orgId);
-  lineageProviders; sharing (`discover` sends `consumerProjectId`).
+  lineageProviders; sharing (`discover` sends `consumerProjectId`);
+  versions (generic over app/function/transform/dataset/ontology; validates
+  the object type as ValidationError; `restoreToDraft` dispatches to the
+  per-type Restore*VersionToDraft operation; `promote`/`versions` shortcuts on
+  the function, transform, dataset, and ontology handles).
   Every domain exists in every language — a port is complete only when all
   fixtures pass.
 

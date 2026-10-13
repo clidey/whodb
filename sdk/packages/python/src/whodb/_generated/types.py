@@ -6,6 +6,65 @@ from typing import Any, Optional, TypedDict
 
 ActionExecutionStatus = str  # enum: committed | failed | denied
 
+#: GraphQL type ActiveProdVersion.
+ActiveProdVersion = TypedDict(
+    "ActiveProdVersion",
+    {
+        "objectId": str,
+        "objectType": str,
+        "version": int,
+        "activatedAt": str,
+        "activatedBy": str,
+    },
+    total=False,
+)
+
+#: GraphQL type App.
+App = TypedDict(
+    "App",
+    {
+        "id": str,
+        "projectId": str,
+        "name": str,
+        "description": str,
+        "thumbnailUrl": str,
+        "useCases": list[str],
+        "html": str,
+        "conversation": str,
+        "ontologyIds": list[str],
+        "readOnlyOntologyIds": list[str],
+        "functionIds": list[str],
+        "createdBy": str,
+        "createdAt": str,
+        "updatedAt": str,
+        "sourceHidden": bool,
+    },
+    total=False,
+)
+
+#: GraphQL type AppFile.
+AppFile = TypedDict(
+    "AppFile",
+    {
+        "path": str,
+        "content": str,
+        "updatedAt": str,
+    },
+    total=False,
+)
+
+#: GraphQL type AppViewResult.
+AppViewResult = TypedDict(
+    "AppViewResult",
+    {
+        "app": "App",
+        "files": list["AppFile"],
+        "pages": list[str],
+        "version": Optional[int],
+    },
+    total=False,
+)
+
 #: GraphQL type AtomicWhereCondition.
 AtomicWhereCondition = TypedDict(
     "AtomicWhereCondition",
@@ -279,6 +338,22 @@ LineageProvider = TypedDict(
         "enabled": bool,
         "createdAt": str,
         "updatedAt": str,
+    },
+    total=False,
+)
+
+#: GraphQL type ObjectVersion.
+ObjectVersion = TypedDict(
+    "ObjectVersion",
+    {
+        "id": str,
+        "objectId": str,
+        "objectType": str,
+        "version": int,
+        "snapshot": str,
+        "message": str,
+        "promotedBy": str,
+        "createdAt": str,
     },
     total=False,
 )
@@ -804,6 +879,18 @@ Project = TypedDict(
     total=False,
 )
 
+#: GraphQL type PromoteObjectInput.
+PromoteObjectInput = TypedDict(
+    "PromoteObjectInput",
+    {
+        "projectId": str,
+        "objectId": str,
+        "objectType": str,
+        "message": Optional[str],
+    },
+    total=False,
+)
+
 #: GraphQL type QueryDatasetInput.
 QueryDatasetInput = TypedDict(
     "QueryDatasetInput",
@@ -833,6 +920,18 @@ RecordInput = TypedDict(
         "Key": str,
         "Value": str,
         "Extra": Optional[list["RecordInput"]],
+    },
+    total=False,
+)
+
+#: GraphQL type RollbackObjectInput.
+RollbackObjectInput = TypedDict(
+    "RollbackObjectInput",
+    {
+        "projectId": str,
+        "objectId": str,
+        "objectType": str,
+        "version": int,
     },
     total=False,
 )
@@ -1082,6 +1181,8 @@ UpdateFunctionInput = TypedDict(
     },
     total=False,
 )
+
+VersionableObjectType = str  # enum: app | function | transform | dataset | ontology
 
 #: GraphQL type WhereCondition.
 WhereCondition = TypedDict(

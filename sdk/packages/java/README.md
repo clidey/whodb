@@ -21,6 +21,7 @@ built-in `java.net.http.HttpClient`.
 
 ```java
 import com.clidey.whodb.DatasetHandle;
+import com.clidey.whodb.FunctionHandle;
 import com.clidey.whodb.OntologyHandle;
 import com.clidey.whodb.RowsPage;
 import com.clidey.whodb.TransformHandle;
@@ -68,7 +69,9 @@ RowsPage kpis = client.dataset("weekly_kpis").rows(DatasetHandle.RowsOptions.def
 TransformHandle rollup = client.transform("nightly-rollup");
 Map<String, Object> run = rollup.run();
 rollup.wait((String) run.get("id"), new WaitOptions(Duration.ofMinutes(5), Duration.ofSeconds(2)));
-Map<String, Object> result = client.function("normalize").execute(Map.of("name", "Ada"), null);
+FunctionHandle normalize = client.function("normalize");
+normalize.promote("v1"); // snapshot + set active production version
+Map<String, Object> result = normalize.execute(Map.of("name", "Ada"), null);
 
 // Org administration (requires org manage rights):
 Map<String, Object> sa = client.serviceAccounts().create("ci-deployer", null);

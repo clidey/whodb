@@ -67,7 +67,9 @@ let rollup = client.transform("nightly-rollup");
 let run = rollup.run()?;
 let run_id = run["id"].as_str().unwrap_or_default();
 rollup.wait(run_id, WaitOptions { timeout: std::time::Duration::from_secs(300), ..Default::default() })?;
-let result = client.function("normalize").execute(&json!({"name": "Ada"}), None)?;
+let normalize = client.function("normalize");
+normalize.promote(Some("v1"))?; // snapshot + set active production version
+let result = normalize.execute(&json!({"name": "Ada"}), None)?;
 
 // Org administration (requires org manage rights):
 let sa = client.service_accounts().create("ci-deployer", None)?;

@@ -293,3 +293,21 @@ func (h *FunctionHandle) Delete(ctx context.Context) error {
 	h.mu.Unlock()
 	return nil
 }
+
+// Promote snapshots the draft function and makes it the active production version.
+func (h *FunctionHandle) Promote(ctx context.Context, message string) (map[string]any, error) {
+	obj, err := h.Meta(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return h.client.Versions().Promote(ctx, ObjectTypeFunction, fmt.Sprint(obj["id"]), message)
+}
+
+// Versions lists the function's promoted versions, newest first.
+func (h *FunctionHandle) Versions(ctx context.Context) ([]map[string]any, error) {
+	obj, err := h.Meta(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return h.client.Versions().List(ctx, ObjectTypeFunction, fmt.Sprint(obj["id"]))
+}

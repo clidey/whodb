@@ -313,6 +313,8 @@ fn run_ontology(
             handle.delete(pk)?;
             Ok(Value::Null)
         }
+        "promote" => handle.promote(opt_str_arg(args, 0)),
+        "versions" => Ok(Value::Array(handle.versions()?)),
         "followLink" => {
             let pk = args.first().and_then(Value::as_str).unwrap_or("");
             let link = args.get(1).and_then(Value::as_str).unwrap_or("");
@@ -409,6 +411,8 @@ fn run_other(
                         })
                         .map(page_value)
                 }
+                "promote" => handle.promote(opt_str_arg(args, 0)),
+                "versions" => Ok(Value::Array(handle.versions()?)),
                 _ => unsupported(domain, method),
             }
         }
@@ -463,6 +467,8 @@ fn run_other(
                 "wait" => handle.wait(str_arg(args, 0), wait_options(&map_arg(args, 1))),
                 "update" => handle.update(&map_arg(args, 0)),
                 "delete" => unit(handle.delete()),
+                "promote" => handle.promote(opt_str_arg(args, 0)),
+                "versions" => Ok(Value::Array(handle.versions()?)),
                 _ => unsupported(domain, method),
             }
         }
@@ -513,6 +519,27 @@ fn run_other(
                 "redeploy" => unit(handle.redeploy()),
                 "update" => handle.update(&map_arg(args, 0)),
                 "delete" => unit(handle.delete()),
+                "promote" => handle.promote(opt_str_arg(args, 0)),
+                "versions" => Ok(Value::Array(handle.versions()?)),
+                _ => unsupported(domain, method),
+            }
+        }
+        "versions" => {
+            let handle = client.versions();
+            let version = args.get(2).and_then(Value::as_i64).unwrap_or(0);
+            match method {
+                "list" => Ok(Value::Array(
+                    handle.list(str_arg(args, 0), str_arg(args, 1))?,
+                )),
+                "active" => handle.active(str_arg(args, 0), str_arg(args, 1)),
+                "activeAll" => Ok(Value::Array(handle.active_all()?)),
+                "promote" => {
+                    handle.promote(str_arg(args, 0), str_arg(args, 1), opt_str_arg(args, 2))
+                }
+                "rollback" => handle.rollback(str_arg(args, 0), str_arg(args, 1), version),
+                "restoreToDraft" => {
+                    handle.restore_to_draft(str_arg(args, 0), str_arg(args, 1), version)
+                }
                 _ => unsupported(domain, method),
             }
         }
