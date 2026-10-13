@@ -143,3 +143,32 @@ func TestBuildPlatformGenericWriteRejectsAmbiguousPayloads(t *testing.T) {
 		t.Fatalf("error = %v, want ambiguous payload error", err)
 	}
 }
+
+func TestHandlePlatformAppFilesReadsPageByPage(t *testing.T) {
+	client := &fakePlatformClient{platformQueryResults: map[string]any{
+		"AppDetail":    map[string]any{"id": "app-1"},
+		"AppView":      map[string]any{"pages": []any{"main"}, "files": []any{map[string]any{"path": "app.json", "content": "{}"}}},
+		"AppPageFiles": []any{map[string]any{"path": "pages/main/tree.json", "content": "{}"}},
+	}}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := handlePlatformAppFiles(context.Background(), PlatformAppInput{ID: "app-1"})
+	if err != nil || output.Error != "" {
+		t.Fatalf("handlePlatformAppFiles() = %v, %q", err, output.Error)
+	}
+	if output.Count != 2 || len(output.Items) != 2 || output.Items[1]["path"] != "pages/main/tree.json" {
+		t.Fatalf("output = %#v, want app.json and the main page file", output)
+	}
+	operations := make([]string, len(client.platformQueryCalls))
+	for i, call := range client.platformQueryCalls {
+		operations[i] = call.operation
+		if call.variables["projectId"] != "proj-1" {
+			t.Fatalf("%s projectId = %v, want the selected project", call.operation, call.variables["projectId"])
+		}
+	}
+	if !reflect.DeepEqual(operations, []string{"AppDetail", "AppView", "AppPageFiles"}) {
+		t.Fatalf("operations = %v, want no single AppFiles request", operations)
+	}
+}

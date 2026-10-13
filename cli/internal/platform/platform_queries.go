@@ -20,13 +20,13 @@ var platformQuerySpecs = map[string]string{
   ProjectApps(projectId: $projectId) { id projectId name description thumbnailUrl useCases ontologyIds readOnlyOntologyIds functionIds createdBy createdAt updatedAt }
 }`,
 	"AppDetail": `query CLIPlatformAppDetail($projectId: ID!, $id: ID!) {
-  AppDetail(projectId: $projectId, id: $id) { id projectId name description thumbnailUrl useCases ontologyIds readOnlyOntologyIds functionIds createdBy createdAt updatedAt }
+  AppDetail(projectId: $projectId, id: $id) { id projectId name description thumbnailUrl useCases ontologyIds readOnlyOntologyIds functionIds createdBy createdAt updatedAt sourceHidden }
 }`,
 	"AppFiles": `query CLIPlatformAppFiles($projectId: ID!, $appId: ID!) {
   AppFiles(projectId: $projectId, appId: $appId) { path content updatedAt }
 }`,
 	"AppView": `query CLIPlatformAppView($projectId: ID!, $id: ID!, $env: String) {
-  AppView(projectId: $projectId, id: $id, env: $env) { app { id projectId name description thumbnailUrl useCases html conversation ontologyIds readOnlyOntologyIds functionIds createdBy createdAt updatedAt } files { path content updatedAt } }
+  AppView(projectId: $projectId, id: $id, env: $env) { pages app { id projectId name description thumbnailUrl useCases html conversation ontologyIds readOnlyOntologyIds functionIds createdBy createdAt updatedAt } files { path content updatedAt } }
 }`,
 	"AppVersionView": `query CLIPlatformAppVersionView($projectId: ID!, $appId: ID!, $version: Int!) {
   AppVersionView(projectId: $projectId, appId: $appId, version: $version) { app { id projectId name description thumbnailUrl useCases html conversation ontologyIds readOnlyOntologyIds functionIds createdBy createdAt updatedAt } files { path content updatedAt } }

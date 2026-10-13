@@ -890,7 +890,10 @@ func liveMustExtendedPlatformReads(t *testing.T, ctx context.Context, appID, pac
 	}
 	read("whodb_platform_apps", "ProjectApps", nil, []string{"data", "count"}, true)
 	read("whodb_platform_app", "AppDetail", map[string]any{"id": appID}, []string{"data", "scope"}, true)
-	read("whodb_platform_app_files", "AppFiles", map[string]any{"appId": appID}, []string{"data", "count"}, true)
+	if _, output, err := handlePlatformAppFiles(ctx, PlatformAppInput{ID: appID}); err != nil || output.Error != "" || output.Count == 0 {
+		t.Fatalf("whodb_platform_app_files = %v, %#v, want the app's draft files", err, output)
+	}
+	liveCoverTool("whodb_platform_app_files")
 	// A newly-created draft app may not have a published view yet; the platform
 	// legitimately returns null data until one exists.
 	read("whodb_platform_app_view", "AppView", map[string]any{"id": appID}, []string{"data", "scope"}, false)

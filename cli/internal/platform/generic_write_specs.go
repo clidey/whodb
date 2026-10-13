@@ -115,6 +115,7 @@ var GenericWriteSpecs = map[string]GenericWriteSpec{
 	"action:restore:app":                          {Resource: "app", Action: "restore", Mutation: "RestoreApp", Mode: GenericWriteModeProjectID, NeedsID: true},
 	"action:purge:app":                            {Resource: "app", Action: "purge", Mutation: "PurgeApp", Mode: GenericWriteModeProjectID, NeedsID: true},
 	"action:generate:app":                         {Resource: "app", Action: "generate", Mutation: "GenerateApp", Mode: GenericWriteModeInput, InjectProjectID: true},
+	"action:clone:app":                            {Resource: "app", Action: "clone", Mutation: "CloneApp", Mode: GenericWriteModeDirect, InjectProjectID: true},
 	"action:upsert_file:app":                      {Resource: "app", Action: "upsert_file", Mutation: "UpsertAppFile", Mode: GenericWriteModeDirect, InjectProjectID: true},
 	"action:delete_file:app":                      {Resource: "app", Action: "delete_file", Mutation: "DeleteAppFile", Mode: GenericWriteModeDirect, InjectProjectID: true},
 	"action:restore_version_to_draft:app":         {Resource: "app", Action: "restore_version_to_draft", Mutation: "RestoreAppVersionToDraft", Mode: GenericWriteModeDirect, InjectProjectID: true},

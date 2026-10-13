@@ -56,6 +56,9 @@ type fakePlatformClient struct {
 	platformQueryOperation  string
 	platformQueryVariables  map[string]any
 	platformQueryResult     any
+	// platformQueryResults answers specific operations; platformQueryCalls records every call.
+	platformQueryResults map[string]any
+	platformQueryCalls   []platformQueryCall
 
 	ontologyQueryProjectID        string
 	ontologyQueryInput            *platformapi.OntologyQueryInput

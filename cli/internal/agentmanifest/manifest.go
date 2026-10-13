@@ -368,7 +368,7 @@ func buildMCPTools() []MCPTool {
 		MCPTool{Name: "whodb_platform_app", Description: "Inspect one hosted app, including its generated definition.", ReadOnly: true},
 		MCPTool{Name: "whodb_platform_app_views", Description: "List pages available in one rendered hosted app.", ReadOnly: true},
 		MCPTool{Name: "whodb_platform_app_screenshot", Description: "Capture a rendered hosted app page after optional browser actions or JavaScript, with console and network diagnostics.", ReadOnly: true},
-		MCPTool{Name: "whodb_platform_app_files", Description: "List files belonging to one hosted app.", ReadOnly: true},
+		MCPTool{Name: "whodb_platform_app_files", Description: "List the draft files of one hosted app, read one page per request so large apps fit.", ReadOnly: true},
 		MCPTool{Name: "whodb_platform_app_view", Description: "Read the current hosted app view and generated files.", ReadOnly: true},
 		MCPTool{Name: "whodb_platform_app_version_view", Description: "Read a promoted hosted app version.", ReadOnly: true},
 		MCPTool{Name: "whodb_platform_packages", Description: "List hosted package versions available in the selected project.", ReadOnly: true},

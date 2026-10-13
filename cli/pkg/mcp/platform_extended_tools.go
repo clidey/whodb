@@ -112,7 +112,7 @@ func registerPlatformExtendedReadTool(server *mcp.Server, tool *mcp.Tool) bool {
 		})
 	case "whodb_platform_app_files":
 		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAppInput) (*mcp.CallToolResult, any, error) {
-			return handlePlatformExtendedQuery(ctx, "platform_app_files", "AppFiles", map[string]any{"appId": strings.TrimSpace(input.ID)}, input.Fields)
+			return handlePlatformAppFiles(ctx, input)
 		})
 	case "whodb_platform_app_view":
 		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAppInput) (*mcp.CallToolResult, any, error) {
@@ -255,7 +255,7 @@ func platformExtendedReadToolDefinitions() []*mcp.Tool {
 		read("whodb_platform_app_views", "List pages in a hosted app by ID or exact name. Use a returned page with whodb_platform_app_screenshot."),
 		read("whodb_platform_app_screenshot", "Capture a rendered app page after optional actions or JavaScript. Returns a WebP image, visible text, console and network errors. Hosted writes are blocked."),
 		read("whodb_platform_app", "Inspect one hosted app, including its generated definition."),
-		read("whodb_platform_app_files", "List the files belonging to one hosted app."),
+		read("whodb_platform_app_files", "List the draft files of one hosted app: app.json, shared files, and every page, read one page per request so large apps fit."),
 		read("whodb_platform_app_view", "Read the current hosted app view and generated files."),
 		read("whodb_platform_app_version_view", "Read a promoted hosted app version."),
 		read("whodb_platform_packages", "List hosted package versions available in the selected project."),
@@ -289,6 +289,15 @@ func platformExtendedReadToolDefinitions() []*mcp.Tool {
 		read("whodb_platform_teams", "List organization teams."),
 		read("whodb_platform_team_members", "List members of one organization team."),
 	}
+}
+
+// handlePlatformAppFiles reads an app's draft files page by page so large apps
+// stay under the platform response size cap.
+func handlePlatformAppFiles(ctx context.Context, input PlatformAppInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
+	return platformIDRead(ctx, "platform_app_files", input.ID, input.Fields, func(ctx context.Context, session *platformToolSession, id string) (any, int, bool, error) {
+		files, err := platformapi.ReadAppFilesByPage(ctx, session.Client, session.Host.DefaultProjectID, id)
+		return files, len(files), false, err
+	})
 }
 
 func handlePlatformExtendedQuery(ctx context.Context, toolName, operation string, variables map[string]any, fields []string) (*mcp.CallToolResult, PlatformReadOutput, error) {

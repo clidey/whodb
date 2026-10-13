@@ -37,22 +37,58 @@ type platformAppFile struct {
 	UpdatedAt string `json:"updatedAt"`
 }
 
+// appCloneServerResult is the CloneApp mutation result.
+type appCloneServerResult struct {
+	Action        string   `json:"action"`
+	Name          string   `json:"name"`
+	TargetAppID   *string  `json:"targetAppId"`
+	FileCount     int      `json:"fileCount"`
+	Warnings      []string `json:"warnings"`
+	BackupVersion *int     `json:"backupVersion"`
+	DryRun        bool     `json:"dryRun"`
+}
+
 type appCloneResult struct {
-	SourceAppID string   `json:"sourceAppId"`
-	TargetAppID string   `json:"targetAppId,omitempty"`
-	Name        string   `json:"name"`
-	Action      string   `json:"action"`
-	Files       int      `json:"files"`
-	Warnings    []string `json:"warnings,omitempty"`
+	SourceAppID   string   `json:"sourceAppId"`
+	TargetAppID   string   `json:"targetAppId,omitempty"`
+	Name          string   `json:"name"`
+	Action        string   `json:"action"`
+	Files         int      `json:"files"`
+	BrandFiles    int      `json:"brandFiles"`
+	BackupVersion *int     `json:"backupVersion,omitempty"`
+	DryRun        bool     `json:"dryRun"`
+	Warnings      []string `json:"warnings,omitempty"`
+	Undo          string   `json:"undo,omitempty"`
+}
+
+// appCloneOptions are the apps clone flags.
+type appCloneOptions struct {
+	SourceOrg     string
+	SourceProject string
+	TargetOrg     string
+	TargetProject string
+	BrandDir      string
+	NamePrefix    string
+	Overwrite     bool
+	Execute       bool
+}
+
+type appUndoCloneResult struct {
+	AppID         string `json:"appId"`
+	Name          string `json:"name"`
+	Action        string `json:"action"`
+	BackupVersion int    `json:"backupVersion,omitempty"`
+	DryRun        bool   `json:"dryRun"`
 }
 
 var (
-	appsCmd            = &cobra.Command{Use: "apps", Short: "Manage hosted WhoDB applications"}
-	appCloneToOrg      string
-	appCloneToProject  string
-	appCloneBrandDir   string
-	appCloneNamePrefix string
-	appCloneOverwrite  bool
+	appsCmd             = &cobra.Command{Use: "apps", Short: "Manage hosted WhoDB applications"}
+	appCloneToOrg       string
+	appCloneToProject   string
+	appCloneBrandDir    string
+	appCloneNamePrefix  string
+	appCloneOverwrite   bool
+	appUndoCloneVersion int
 )
 
 var appsListCmd = platformProjectListCommand("list", "List hosted WhoDB applications", func(ctx context.Context, session *platformSession, project *platform.Project) (any, *output.QueryResult, error) {
@@ -68,12 +104,29 @@ var appsListCmd = platformProjectListCommand("list", "List hosted WhoDB applicat
 })
 
 var appsCloneCmd = &cobra.Command{
-	Use:           "clone <app>",
-	Short:         "Clone an app into another project and remap its resource references",
+	Use:   "clone <app>",
+	Short: "Clone an app into another project and remap its resource references",
+	Long: `Clone an app into another project. The server copies every file and the
+app's metadata in one transaction, so the clone either fully succeeds or leaves
+the target unchanged. Without --yes the server checks everything and prints the
+plan without writing. Overwriting an existing app first saves its draft as a
+backup version; the result prints the apps undo-clone command that reverses it.`,
 	Args:          cobra.ExactArgs(1),
 	SilenceUsage:  true,
 	SilenceErrors: true,
 	RunE:          runPlatformAppClone,
+}
+
+var appsUndoCloneCmd = &cobra.Command{
+	Use:   "undo-clone <app>",
+	Short: "Reverse an apps clone in the selected project",
+	Long: `Reverse an apps clone. With --backup-version, restore the app's draft from
+the backup the overwrite saved. Without it, delete the app the clone created;
+deleted apps stay restorable from the trash. Without --yes, print the plan.`,
+	Args:          cobra.ExactArgs(1),
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE:          runPlatformAppUndoClone,
 }
 
 func registerPlatformAppCommands() {
@@ -85,7 +138,9 @@ func registerPlatformAppCommands() {
 	appsCloneCmd.Flags().StringVar(&appCloneNamePrefix, "name-prefix", "", "prefix added to the cloned app name")
 	appsCloneCmd.Flags().BoolVar(&appCloneOverwrite, "overwrite", false, "update an existing target app with the same name")
 	appsCloneCmd.Flags().BoolVarP(&platformWriteYes, "yes", "y", false, "clone without first printing the plan")
-	appsCmd.AddCommand(appsListCmd, appsCloneCmd)
+	appsUndoCloneCmd.Flags().IntVar(&appUndoCloneVersion, "backup-version", 0, "backup version printed by an overwriting clone; omit to delete a newly created clone")
+	appsUndoCloneCmd.Flags().BoolVarP(&platformWriteYes, "yes", "y", false, "undo without first printing the plan")
+	appsCmd.AddCommand(appsListCmd, appsCloneCmd, appsUndoCloneCmd)
 	registerPlatformAppCaptureCommands()
 }
 
@@ -99,18 +154,6 @@ func readPlatformApps(ctx context.Context, session *platformSession, projectID s
 		return nil, fmt.Errorf("decode project apps: %w", err)
 	}
 	return apps, nil
-}
-
-func readPlatformAppFiles(ctx context.Context, session *platformSession, projectID, appID string) ([]platformAppFile, error) {
-	data, err := session.Client.PlatformQuery(ctx, "AppFiles", map[string]any{"projectId": projectID, "appId": appID})
-	if err != nil {
-		return nil, err
-	}
-	var files []platformAppFile
-	if err := remarshalPlatformData(data, &files); err != nil {
-		return nil, fmt.Errorf("decode app files: %w", err)
-	}
-	return files, nil
 }
 
 func remarshalPlatformData(data any, target any) error {
@@ -143,218 +186,257 @@ func runPlatformAppClone(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	sourceOrg, sourceProject, err := resolvePlatformProject(ctx, session, platformResourceOrg, platformResourceProject)
+	result, err := clonePlatformApp(ctx, session, args[0], appCloneOptions{
+		SourceOrg:     platformResourceOrg,
+		SourceProject: platformResourceProject,
+		TargetOrg:     appCloneToOrg,
+		TargetProject: appCloneToProject,
+		BrandDir:      appCloneBrandDir,
+		NamePrefix:    appCloneNamePrefix,
+		Overwrite:     appCloneOverwrite,
+		Execute:       platformWriteYes,
+	})
 	if err != nil {
 		return err
+	}
+	if format == output.FormatJSON {
+		return writeCommandJSON(cmd, result)
+	}
+	backup := ""
+	if result.BackupVersion != nil {
+		backup = fmt.Sprint(*result.BackupVersion)
+	}
+	return newCommandOutput(cmd, format, platformQuiet).WriteQueryResult(tableResult(
+		[]string{"source_app_id", "target_app_id", "name", "action", "files", "brand_files", "backup_version", "dry_run", "warnings", "undo"},
+		[][]any{{result.SourceAppID, result.TargetAppID, result.Name, result.Action, result.Files, result.BrandFiles, backup, result.DryRun, strings.Join(result.Warnings, "; "), result.Undo}},
+	))
+}
+
+// clonePlatformApp runs CloneApp as a dry run, or for real when options.Execute
+// is set. Brand files travel in the same request, so they commit or roll back
+// with the rest of the clone.
+func clonePlatformApp(ctx context.Context, session *platformSession, appRef string, options appCloneOptions) (*appCloneResult, error) {
+	sourceOrg, sourceProject, err := resolvePlatformProject(ctx, session, options.SourceOrg, options.SourceProject)
+	if err != nil {
+		return nil, err
 	}
 	session.Client.SetWorkspaceContext(sourceOrg.ID, sourceProject.ID)
 	sourceApps, err := readPlatformApps(ctx, session, sourceProject.ID)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	sourceApp := findPlatformApp(sourceApps, args[0])
+	sourceApp := findPlatformApp(sourceApps, appRef)
 	if sourceApp == nil {
-		return fmt.Errorf("app %q not found", args[0])
+		return nil, fmt.Errorf("app %q not found", appRef)
 	}
-	sourceFiles, err := readPlatformAppFiles(ctx, session, sourceProject.ID, sourceApp.ID)
+	brandFiles, err := readAppBrandFiles(options.BrandDir, func() (string, error) {
+		return readPlatformAppJSON(ctx, session, sourceProject.ID, sourceApp.ID)
+	})
 	if err != nil {
-		return err
-	}
-	sourceOntologies, err := session.Client.Ontologies(ctx, sourceProject.ID)
-	if err != nil {
-		return err
-	}
-	sourceFunctions, err := session.Client.Functions(ctx, sourceProject.ID, nil)
-	if err != nil {
-		return err
+		return nil, err
 	}
 
-	targetOrgValue := appCloneToOrg
+	targetOrgValue := options.TargetOrg
 	if strings.TrimSpace(targetOrgValue) == "" {
 		targetOrgValue = sourceOrg.ID
 	}
-	targetOrg, targetProject, err := resolvePlatformProject(ctx, session, targetOrgValue, appCloneToProject)
+	targetOrg, targetProject, err := resolvePlatformProject(ctx, session, targetOrgValue, options.TargetProject)
 	if err != nil {
-		return err
-	}
-	session.Client.SetWorkspaceContext(targetOrg.ID, targetProject.ID)
-	targetOntologies, err := session.Client.Ontologies(ctx, targetProject.ID)
-	if err != nil {
-		return err
-	}
-	targetFunctions, err := session.Client.Functions(ctx, targetProject.ID, nil)
-	if err != nil {
-		return err
-	}
-	targetApps, err := readPlatformApps(ctx, session, targetProject.ID)
-	if err != nil {
-		return err
+		return nil, err
 	}
 
-	warnings := make([]string, 0)
-	ontologyIDs := remapAppOntologyIDs(sourceApp.OntologyIDs, sourceOntologies, targetOntologies, &warnings)
-	readOnlyIDs := remapAppOntologyIDs(sourceApp.ReadOnlyOntologyIDs, sourceOntologies, targetOntologies, &warnings)
-	functionIDs := remapAppFunctionIDs(sourceApp.FunctionIDs, sourceFunctions, targetFunctions, &warnings)
-	targetName := appCloneNamePrefix + sourceApp.Name
-	existing := findPlatformApp(targetApps, targetName)
-	action := "create"
-	if existing != nil {
-		if !appCloneOverwrite {
-			return fmt.Errorf("target app %q already exists; pass --overwrite to update it", targetName)
-		}
-		action = "update"
+	files := make([]map[string]any, len(brandFiles))
+	for i, file := range brandFiles {
+		files[i] = map[string]any{"path": file.Path, "content": file.Content}
 	}
-	files, err := mergeAppBrandFiles(sourceFiles, appCloneBrandDir)
+	variables := map[string]any{
+		"projectId":       sourceProject.ID,
+		"appId":           sourceApp.ID,
+		"targetProjectId": targetProject.ID,
+		"name":            options.NamePrefix + sourceApp.Name,
+		"overwrite":       options.Overwrite,
+		"files":           files,
+		"dryRun":          !options.Execute,
+	}
+	if targetOrg.ID != sourceOrg.ID {
+		variables["targetOrgId"] = targetOrg.ID
+	}
+	// The request runs in the source workspace; the server opens the target.
+	session.Client.SetWorkspaceContext(sourceOrg.ID, sourceProject.ID)
+	mutation, err := session.Client.PlatformMutation(ctx, "CloneApp", variables)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	result := appCloneResult{SourceAppID: sourceApp.ID, Name: targetName, Action: action, Files: len(files), Warnings: warnings}
-	if !platformWriteYes {
-		return writeAppCloneResult(cmd, format, result)
+	var server appCloneServerResult
+	if err := json.Unmarshal(mutation.Data, &server); err != nil {
+		return nil, fmt.Errorf("decode clone result: %w", err)
 	}
-
-	payload := map[string]any{
-		"projectId":           targetProject.ID,
-		"name":                targetName,
-		"description":         sourceApp.Description,
-		"ontologyIds":         ontologyIDs,
-		"readOnlyOntologyIds": readOnlyIDs,
-		"functionIds":         functionIDs,
+	result := &appCloneResult{
+		SourceAppID:   sourceApp.ID,
+		Name:          server.Name,
+		Action:        server.Action,
+		Files:         server.FileCount,
+		BrandFiles:    len(brandFiles),
+		BackupVersion: server.BackupVersion,
+		DryRun:        server.DryRun,
+		Warnings:      server.Warnings,
 	}
-	mutationName := "CreateApp"
-	if existing != nil {
-		mutationName = "UpdateApp"
-		payload["id"] = existing.ID
+	if server.TargetAppID != nil {
+		result.TargetAppID = *server.TargetAppID
 	}
-	mutation, err := session.Client.PlatformMutation(ctx, mutationName, map[string]any{"input": payload})
-	if err != nil {
-		return err
-	}
-	var targetApp platformApp
-	if err := json.Unmarshal(mutation.Data, &targetApp); err != nil {
-		return fmt.Errorf("decode cloned app: %w", err)
-	}
-	for _, file := range files {
-		_, err := session.Client.PlatformMutation(ctx, "UpsertAppFile", map[string]any{
-			"projectId": targetProject.ID,
-			"appId":     targetApp.ID,
-			"path":      file.Path,
-			"content":   file.Content,
-		})
-		if err != nil {
-			return fmt.Errorf("upsert app file %s: %w", file.Path, err)
+	if !server.DryRun {
+		result.Action += "d"
+		result.Undo = fmt.Sprintf("whodb apps undo-clone %s --org %s --project %s", result.TargetAppID, targetOrg.ID, targetProject.ID)
+		if server.BackupVersion != nil {
+			result.Undo += fmt.Sprintf(" --backup-version %d", *server.BackupVersion)
 		}
-	}
-	result.TargetAppID = targetApp.ID
-	result.Action += "d"
-	return writeAppCloneResult(cmd, format, result)
-}
-
-func remapAppOntologyIDs(ids []string, source, target []platform.Ontology, warnings *[]string) []string {
-	sourceNames := make(map[string]string, len(source))
-	for _, ontology := range source {
-		sourceNames[ontology.ID] = ontology.APIName
-	}
-	targetExact := make(map[string]string, len(target))
-	targetFolded := make(map[string]string, len(target))
-	for _, ontology := range target {
-		targetExact[ontology.APIName] = ontology.ID
-		if _, exists := targetFolded[strings.ToLower(ontology.APIName)]; !exists {
-			targetFolded[strings.ToLower(ontology.APIName)] = ontology.ID
-		}
-	}
-	result := make([]string, 0, len(ids))
-	for _, id := range ids {
-		name, ok := sourceNames[id]
-		if !ok {
-			*warnings = append(*warnings, "source ontology reference not found: "+id)
-			continue
-		}
-		targetID, ok := targetExact[name]
-		if !ok {
-			targetID, ok = targetFolded[strings.ToLower(name)]
-		}
-		if !ok {
-			*warnings = append(*warnings, "target ontology not found: "+name)
-			continue
-		}
-		result = append(result, targetID)
-	}
-	return result
-}
-
-func remapAppFunctionIDs(ids []string, source, target []platform.Function, warnings *[]string) []string {
-	sourceNames := make(map[string]string, len(source))
-	for _, function := range source {
-		sourceNames[function.ID] = function.Name
-	}
-	targetIDs := make(map[string]string, len(target))
-	for _, function := range target {
-		targetIDs[strings.ToLower(function.Name)] = function.ID
-	}
-	result := make([]string, 0, len(ids))
-	for _, id := range ids {
-		name, ok := sourceNames[id]
-		if !ok {
-			*warnings = append(*warnings, "source function reference not found: "+id)
-			continue
-		}
-		targetID, ok := targetIDs[strings.ToLower(name)]
-		if !ok {
-			*warnings = append(*warnings, "target function not found: "+name)
-			continue
-		}
-		result = append(result, targetID)
-	}
-	return result
-}
-
-func mergeAppBrandFiles(source []platformAppFile, brandDir string) ([]platformAppFile, error) {
-	files := make(map[string]platformAppFile, len(source))
-	for _, file := range source {
-		files[file.Path] = file
-	}
-	if strings.TrimSpace(brandDir) != "" {
-		root, err := filepath.Abs(brandDir)
-		if err != nil {
-			return nil, err
-		}
-		err = filepath.WalkDir(root, func(path string, entry fs.DirEntry, walkErr error) error {
-			if walkErr != nil || entry.IsDir() {
-				return walkErr
-			}
-			relative, err := filepath.Rel(root, path)
-			if err != nil {
-				return err
-			}
-			content, err := os.ReadFile(path)
-			if err != nil {
-				return err
-			}
-			targetPath := filepath.ToSlash(relative)
-			if targetPath == "app.json" {
-				content, err = mergeAppJSON(files[targetPath].Content, content)
-				if err != nil {
-					return err
-				}
-			}
-			files[targetPath] = platformAppFile{Path: targetPath, Content: string(content)}
-			return nil
-		})
-		if err != nil {
-			return nil, fmt.Errorf("read brand directory: %w", err)
-		}
-	}
-	paths := make([]string, 0, len(files))
-	for path := range files {
-		paths = append(paths, path)
-	}
-	sort.Strings(paths)
-	result := make([]platformAppFile, 0, len(paths))
-	for _, path := range paths {
-		result = append(result, files[path])
 	}
 	return result, nil
+}
+
+func runPlatformAppUndoClone(cmd *cobra.Command, args []string) error {
+	ctx := context.Background()
+	format, err := output.ParseFormat(platformFormat)
+	if err != nil {
+		return err
+	}
+	session, err := loadPlatformSession(ctx, platformHost)
+	if err != nil {
+		return err
+	}
+	result, err := undoPlatformAppClone(ctx, session, args[0], platformResourceOrg, platformResourceProject, appUndoCloneVersion, platformWriteYes)
+	if err != nil {
+		return err
+	}
+	if format == output.FormatJSON {
+		return writeCommandJSON(cmd, result)
+	}
+	backup := ""
+	if result.BackupVersion > 0 {
+		backup = fmt.Sprint(result.BackupVersion)
+	}
+	return newCommandOutput(cmd, format, platformQuiet).WriteQueryResult(tableResult(
+		[]string{"app_id", "name", "action", "backup_version", "dry_run"},
+		[][]any{{result.AppID, result.Name, result.Action, backup, result.DryRun}},
+	))
+}
+
+// undoPlatformAppClone restores an overwritten app from its backup version or,
+// when backupVersion is 0, deletes the app a clone created. It only describes
+// the action unless execute is set.
+func undoPlatformAppClone(ctx context.Context, session *platformSession, appRef, orgRef, projectRef string, backupVersion int, execute bool) (*appUndoCloneResult, error) {
+	if backupVersion < 0 {
+		return nil, fmt.Errorf("--backup-version must be positive")
+	}
+	org, project, err := resolvePlatformProject(ctx, session, orgRef, projectRef)
+	if err != nil {
+		return nil, err
+	}
+	session.Client.SetWorkspaceContext(org.ID, project.ID)
+	apps, err := readPlatformApps(ctx, session, project.ID)
+	if err != nil {
+		return nil, err
+	}
+	app := findPlatformApp(apps, appRef)
+	if app == nil {
+		return nil, fmt.Errorf("app %q not found", appRef)
+	}
+	result := &appUndoCloneResult{AppID: app.ID, Name: app.Name, Action: "delete", BackupVersion: backupVersion, DryRun: !execute}
+	if backupVersion > 0 {
+		result.Action = "restore"
+	}
+	if !execute {
+		return result, nil
+	}
+	if backupVersion > 0 {
+		_, err = session.Client.PlatformMutation(ctx, "RestoreAppVersionToDraft", map[string]any{"projectId": project.ID, "appId": app.ID, "version": backupVersion})
+	} else {
+		_, err = session.Client.PlatformMutation(ctx, "DeleteApp", map[string]any{"projectId": project.ID, "id": app.ID})
+	}
+	if err != nil {
+		return nil, err
+	}
+	result.Action += "d"
+	return result, nil
+}
+
+// readPlatformAppJSON returns the app's draft app.json, or "" when it has none.
+// The draft app view carries app.json alongside shared files and one page.
+func readPlatformAppJSON(ctx context.Context, session *platformSession, projectID, appID string) (string, error) {
+	data, err := session.Client.PlatformQuery(ctx, "AppView", map[string]any{"projectId": projectID, "id": appID, "env": "dev"})
+	if err != nil {
+		return "", err
+	}
+	var view struct {
+		Files []platformAppFile `json:"files"`
+	}
+	if err := remarshalPlatformData(data, &view); err != nil {
+		return "", fmt.Errorf("decode app view: %w", err)
+	}
+	for _, file := range view.Files {
+		if strings.TrimPrefix(file.Path, "/") == "app.json" {
+			return file.Content, nil
+		}
+	}
+	return "", nil
+}
+
+// readAppBrandFiles returns the regular files under brandDir as app files
+// sorted by path. Hidden files and directories are skipped, and symlinks are
+// rejected so nothing outside the directory is uploaded. A brand app.json is
+// merged over the source app.json, which sourceAppJSON loads only when needed.
+func readAppBrandFiles(brandDir string, sourceAppJSON func() (string, error)) ([]platformAppFile, error) {
+	if strings.TrimSpace(brandDir) == "" {
+		return nil, nil
+	}
+	root, err := filepath.Abs(brandDir)
+	if err != nil {
+		return nil, err
+	}
+	files := make([]platformAppFile, 0)
+	err = filepath.WalkDir(root, func(path string, entry fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if path != root && strings.HasPrefix(entry.Name(), ".") {
+			if entry.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if entry.Type()&fs.ModeSymlink != 0 {
+			return fmt.Errorf("%s is a symlink; brand files must be regular files", path)
+		}
+		if entry.IsDir() {
+			return nil
+		}
+		relative, err := filepath.Rel(root, path)
+		if err != nil {
+			return err
+		}
+		content, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		targetPath := filepath.ToSlash(relative)
+		if targetPath == "app.json" {
+			base, err := sourceAppJSON()
+			if err != nil {
+				return err
+			}
+			content, err = mergeAppJSON(base, content)
+			if err != nil {
+				return err
+			}
+		}
+		files = append(files, platformAppFile{Path: targetPath, Content: string(content)})
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("read brand directory: %w", err)
+	}
+	sort.Slice(files, func(i, j int) bool { return files[i].Path < files[j].Path })
+	return files, nil
 }
 
 func mergeAppJSON(baseContent string, overlayContent []byte) ([]byte, error) {
@@ -372,14 +454,4 @@ func mergeAppJSON(baseContent string, overlayContent []byte) ([]byte, error) {
 		base[key] = value
 	}
 	return json.MarshalIndent(base, "", "  ")
-}
-
-func writeAppCloneResult(cmd *cobra.Command, format output.Format, result appCloneResult) error {
-	if format == output.FormatJSON {
-		return writeCommandJSON(cmd, result)
-	}
-	return newCommandOutput(cmd, format, platformQuiet).WriteQueryResult(tableResult(
-		[]string{"source_app_id", "target_app_id", "name", "action", "files", "warnings"},
-		[][]any{{result.SourceAppID, result.TargetAppID, result.Name, result.Action, result.Files, strings.Join(result.Warnings, "; ")}},
-	))
 }
