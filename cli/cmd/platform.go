@@ -561,7 +561,7 @@ var projectsListCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		org, err := resolveOrganization(ctx, session.Client, session.Host, projectsOrg)
+		org, err := resolveDefaultOrganization(ctx, session, projectsOrg)
 		if err != nil {
 			return err
 		}
@@ -615,7 +615,7 @@ var projectsCreateCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		org, err := resolveOrganization(ctx, session.Client, session.Host, projectsOrg)
+		org, err := resolveDefaultOrganization(ctx, session, projectsOrg)
 		if err != nil {
 			return err
 		}
@@ -655,7 +655,7 @@ var projectsRenameCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		org, err := resolveOrganization(ctx, session.Client, session.Host, projectsOrg)
+		org, err := resolveDefaultOrganization(ctx, session, projectsOrg)
 		if err != nil {
 			return err
 		}
@@ -706,7 +706,7 @@ var projectsDeleteCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		org, err := resolveOrganization(ctx, session.Client, session.Host, projectsOrg)
+		org, err := resolveDefaultOrganization(ctx, session, projectsOrg)
 		if err != nil {
 			return err
 		}
@@ -1509,8 +1509,13 @@ func loadPlatformSession(ctx context.Context, hostFlag string) (*platformSession
 		return nil, err
 	}
 	attachPlatformManifestRefresher(cfg, entry, client)
-	if manifest := resolveCachedPlatformManifest(ctx, client, entry.Manifest); manifest != nil {
+	if manifest, verified := resolveCachedPlatformManifest(ctx, client, entry.Manifest); manifest != nil {
 		client.SetPlatformManifest(manifest)
+		if verified {
+			// Remember the check so the following commands skip the version query.
+			cfg.UpsertPlatformHost(*entry)
+			_ = cfg.Save()
+		}
 	} else if manifest := fetchPlatformManifest(ctx, client); manifest != nil {
 		client.SetPlatformManifest(manifest)
 		if err := storePlatformManifest(entry, manifest); err != nil {
@@ -1593,19 +1598,32 @@ func fetchPlatformManifest(ctx context.Context, client *platform.Client) *platfo
 	return manifest
 }
 
-func resolveCachedPlatformManifest(ctx context.Context, client *platform.Client, cache *config.PlatformManifestCache) *platform.PlatformManifest {
+// platformManifestCheckInterval bounds how often a command asks the server
+// whether the cached manifest is still current. A manifest that goes stale in
+// between self-heals: the client refetches it once when the server rejects an
+// operation it does not know.
+const platformManifestCheckInterval = 10 * time.Minute
+
+// resolveCachedPlatformManifest returns the cached manifest when it is usable
+// and reports whether it verified the server version on this call, in which
+// case the caller persists the updated check time.
+func resolveCachedPlatformManifest(ctx context.Context, client *platform.Client, cache *config.PlatformManifestCache) (*platform.PlatformManifest, bool) {
 	manifest := manifestFromCache(cache)
 	if manifest == nil {
-		return nil
+		return nil, false
+	}
+	if checked, err := time.Parse(time.RFC3339, cache.CheckedAt); err == nil && time.Since(checked) < platformManifestCheckInterval {
+		return manifest, false
 	}
 	version, err := client.PlatformVersion(ctx)
 	if err != nil || version == "" {
-		return manifest
+		return manifest, false
 	}
 	if version == cache.PlatformVersion {
-		return manifest
+		cache.CheckedAt = time.Now().UTC().Format(time.RFC3339)
+		return manifest, true
 	}
-	return nil
+	return nil, false
 }
 
 func storePlatformManifest(host *config.PlatformHost, manifest *platform.PlatformManifest) error {
@@ -1617,6 +1635,7 @@ func storePlatformManifest(host *config.PlatformHost, manifest *platform.Platfor
 		PlatformVersion:         manifest.PlatformVersion,
 		ManifestProtocolVersion: manifest.ManifestProtocolVersion,
 		FetchedAt:               time.Now().UTC().Format(time.RFC3339),
+		CheckedAt:               time.Now().UTC().Format(time.RFC3339),
 		Raw:                     raw,
 	}
 	return nil
@@ -1932,7 +1951,24 @@ func localLogoutHint(host string) string {
 	return fmt.Sprintf("If this host is no longer reachable, remove only the local CLI credentials with:\n  whodb logout --host %s --local", host)
 }
 
+// resolvePlatformProject returns the workspace a command targets. When neither
+// an organization nor a project was named and the saved default already has
+// ids and names, it is used as-is without listing organizations and projects
+// first; a deleted default surfaces as the real request's error instead. Callers
+// that need slugs use resolvePlatformProjectDetailed.
 func resolvePlatformProject(ctx context.Context, session *platformSession, orgValue, projectValue string) (*platform.Organization, *platform.Project, error) {
+	host := session.Host
+	if strings.TrimSpace(orgValue) == "" && strings.TrimSpace(projectValue) == "" &&
+		host.DefaultOrgID != "" && host.DefaultProjectID != "" && host.DefaultOrgName != "" && host.DefaultProjectName != "" {
+		return &platform.Organization{ID: host.DefaultOrgID, Name: host.DefaultOrgName},
+			&platform.Project{ID: host.DefaultProjectID, OrgID: host.DefaultOrgID, Name: host.DefaultProjectName}, nil
+	}
+	return resolvePlatformProjectDetailed(ctx, session, orgValue, projectValue)
+}
+
+// resolvePlatformProjectDetailed always lists organizations and projects, so
+// the result carries slugs and reflects the server's current state.
+func resolvePlatformProjectDetailed(ctx context.Context, session *platformSession, orgValue, projectValue string) (*platform.Organization, *platform.Project, error) {
 	org, err := resolveOrganization(ctx, session.Client, session.Host, orgValue)
 	if err != nil {
 		return nil, nil, err
@@ -2171,6 +2207,17 @@ func confirmSourceDelete(out io.Writer, source *platform.Source, skipPrompt bool
 		return false, fmt.Errorf("reading confirmation: %w", err)
 	}
 	return isAffirmativeConfirmation(response), nil
+}
+
+// resolveDefaultOrganization is resolveOrganization with the same shortcut as
+// resolvePlatformProject: an unnamed organization with a saved default needs no
+// listing.
+func resolveDefaultOrganization(ctx context.Context, session *platformSession, value string) (*platform.Organization, error) {
+	host := session.Host
+	if strings.TrimSpace(value) == "" && host.DefaultOrgID != "" && host.DefaultOrgName != "" {
+		return &platform.Organization{ID: host.DefaultOrgID, Name: host.DefaultOrgName}, nil
+	}
+	return resolveOrganization(ctx, session.Client, host, value)
 }
 
 func resolveOrganization(ctx context.Context, client *platform.Client, host config.PlatformHost, value string) (*platform.Organization, error) {

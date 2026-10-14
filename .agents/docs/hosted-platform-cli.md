@@ -88,9 +88,17 @@ compatibility. The manifest tells the CLI which hosted operations and fields are
 available. It is not a permission system; the backend still enforces access for
 every request.
 
-The CLI caches the manifest in the local config with the platform version. When
-the platform version changes, or a GraphQL validation error indicates schema
-drift, the CLI refreshes the manifest and retries the failed request once.
+The CLI caches the manifest in the local config with the platform version. It
+confirms the version against the server at most once every ten minutes rather
+than on every command. When the platform version changes, or a GraphQL
+validation error indicates schema drift, the CLI refreshes the manifest and
+retries the failed request once.
+
+Commands that take `--org` and `--project` use the saved default workspace
+directly when neither flag is given, without listing organizations and projects
+first. Naming an organization or project by id, slug or name still resolves it
+against the server. A default that no longer exists surfaces as the error from
+the command's own request.
 
 ```bash
 whodb manifest

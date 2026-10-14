@@ -89,7 +89,8 @@ func resolveAppCapture(ctx context.Context, appRef string) (*platformSession, ap
 	if err != nil {
 		return nil, appcapture.Options{}, "", err
 	}
-	org, project, err := resolvePlatformProject(ctx, session, platformResourceOrg, platformResourceProject)
+	// Capture builds app URLs from slugs, which the saved default does not keep.
+	org, project, err := resolvePlatformProjectDetailed(ctx, session, platformResourceOrg, platformResourceProject)
 	if err != nil {
 		return nil, appcapture.Options{}, "", err
 	}

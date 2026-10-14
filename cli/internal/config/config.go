@@ -114,10 +114,13 @@ type PlatformHost struct {
 
 // PlatformManifestCache stores non-secret hosted platform contract metadata.
 type PlatformManifestCache struct {
-	PlatformVersion         string          `json:"platform_version"`
-	ManifestProtocolVersion string          `json:"manifest_protocol_version"`
-	FetchedAt               string          `json:"fetched_at"`
-	Raw                     json.RawMessage `json:"raw"`
+	PlatformVersion         string `json:"platform_version"`
+	ManifestProtocolVersion string `json:"manifest_protocol_version"`
+	FetchedAt               string `json:"fetched_at"`
+	// CheckedAt is when the cached manifest was last confirmed current against
+	// the server version; commands skip that check for a while afterwards.
+	CheckedAt string          `json:"checked_at,omitempty"`
+	Raw       json.RawMessage `json:"raw"`
 }
 
 // PlatformConfig stores hosted WhoDB CLI configuration.
