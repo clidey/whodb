@@ -29,34 +29,22 @@ func platformCaptureTarget(ctx context.Context, input PlatformAppCaptureInput) (
 	if orgID == "" || projectID == "" {
 		return nil, appcapture.Options{}, "", fmt.Errorf("select a hosted organization and project first")
 	}
-	orgs, err := session.Client.Organizations(ctx)
+	org, err := cachedOrganizationByID(ctx, session.Client, session.Host.URL, session.Host.AccountID, orgID)
 	if err != nil {
 		return nil, appcapture.Options{}, "", err
 	}
-	orgSlug := ""
-	for _, org := range orgs {
-		if org.ID == orgID {
-			orgSlug = org.Slug
-			break
-		}
-	}
-	if orgSlug == "" {
+	if org == nil || org.Slug == "" {
 		return nil, appcapture.Options{}, "", fmt.Errorf("selected organization is not available")
 	}
-	projects, err := session.Client.Projects(ctx, orgID)
+	orgSlug := org.Slug
+	project, err := cachedProjectByID(ctx, session.Client, session.Host.URL, session.Host.AccountID, orgID, projectID)
 	if err != nil {
 		return nil, appcapture.Options{}, "", err
 	}
-	projectSlug := ""
-	for _, project := range projects {
-		if project.ID == projectID {
-			projectSlug = project.Slug
-			break
-		}
-	}
-	if projectSlug == "" {
+	if project == nil || project.Slug == "" {
 		return nil, appcapture.Options{}, "", fmt.Errorf("selected project is not available")
 	}
+	projectSlug := project.Slug
 	apps, err := appcapture.ListApps(ctx, session.Client, projectID)
 	if err != nil {
 		return nil, appcapture.Options{}, "", err

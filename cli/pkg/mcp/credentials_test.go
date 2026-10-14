@@ -33,6 +33,7 @@ var (
 
 func setupTestEnv(t *testing.T) {
 	t.Helper()
+	platformLookups.reset()
 	testHomeOnce.Do(func() {
 		dir, err := os.MkdirTemp("", "whodb-cli-test-home-")
 		if err != nil {

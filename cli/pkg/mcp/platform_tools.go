@@ -1021,6 +1021,7 @@ func HandlePlatformOrgs(ctx context.Context, req *mcp.CallToolRequest, input Pla
 		TrackToolCall(ctx, "platform_orgs", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_query"})
 		return nil, PlatformOrgsOutput{Error: err.Error(), RequestID: requestID}, nil
 	}
+	platformLookups.storeOrganizations(session.Host.URL, session.Host.AccountID, orgs)
 
 	policy := platformPolicyFromContext(ctx).policy
 	filteredOrgs := orgs[:0]
@@ -1065,6 +1066,7 @@ func HandlePlatformProjects(ctx context.Context, req *mcp.CallToolRequest, input
 		TrackToolCall(ctx, "platform_projects", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_query"})
 		return nil, PlatformProjectsOutput{Error: err.Error(), RequestID: requestID}, nil
 	}
+	platformLookups.storeProjects(session.Host.URL, session.Host.AccountID, org.ID, projects)
 
 	policy := platformPolicyFromContext(ctx).policy
 	filteredProjects := projects[:0]
@@ -1682,7 +1684,7 @@ func loadHostedPlatformToolSession(ctx context.Context) (*platformToolSession, e
 	if err != nil {
 		return nil, err
 	}
-	manifest, err := client.PlatformManifest(ctx)
+	manifest, err := platformLookups.manifest(ctx, hostURL, client.PlatformManifest)
 	if err != nil {
 		return nil, fmt.Errorf("cannot load hosted WhoDB platform manifest: %w", err)
 	}
@@ -1792,7 +1794,7 @@ func autoSelectPlatformToolWorkspace(ctx context.Context, client platformClient,
 	}
 	messages := []string{}
 	changed := false
-	orgs, err := client.Organizations(ctx)
+	orgs, _, err := platformLookups.organizations(ctx, client, host.URL, host.AccountID, false)
 	if err != nil {
 		return nil, false, err
 	}
@@ -1812,7 +1814,7 @@ func autoSelectPlatformToolWorkspace(ctx context.Context, client platformClient,
 		return messages, changed, nil
 	}
 
-	projects, err := client.Projects(ctx, host.DefaultOrgID)
+	projects, _, err := platformLookups.projects(ctx, client, host.URL, host.AccountID, host.DefaultOrgID, false)
 	if err != nil {
 		return messages, changed, err
 	}
@@ -1850,12 +1852,30 @@ func findPlatformToolProjectByID(projects []platformapi.Project, id string) *pla
 }
 
 func resolvePlatformToolOrg(ctx context.Context, session *platformToolSession, value string) (*platformapi.Organization, error) {
-	orgs, err := session.Client.Organizations(ctx)
-	if err != nil {
-		return nil, err
+	// The cached list can be up to a minute old. When it has no match, fetch
+	// once more before failing so a workspace created moments ago resolves.
+	for refresh := false; ; refresh = true {
+		orgs, cached, err := platformLookups.organizations(ctx, session.Client, session.Host.URL, session.Host.AccountID, refresh)
+		if err != nil {
+			return nil, err
+		}
+		org, err := matchPlatformToolOrg(session, orgs, value)
+		if miss, ok := err.(platformLookupMiss); ok {
+			if cached {
+				continue
+			}
+			return nil, miss.error
+		}
+		if err != nil {
+			return nil, err
+		}
+		return selectPlatformToolOrg(ctx, session, org)
 	}
+}
+
+func matchPlatformToolOrg(session *platformToolSession, orgs []platformapi.Organization, value string) (*platformapi.Organization, error) {
 	if len(orgs) == 0 {
-		return nil, fmt.Errorf("signed in, but this account does not belong to any organization on %s", session.Host.URL)
+		return nil, platformLookupMiss{fmt.Errorf("signed in, but this account does not belong to any organization on %s", session.Host.URL)}
 	}
 	needle := strings.TrimSpace(value)
 	if needle == "" {
@@ -1867,12 +1887,12 @@ func resolvePlatformToolOrg(ctx context.Context, session *platformToolSession, v
 	if needle == "" {
 		return nil, fmt.Errorf("org is required because no hosted WhoDB organization is selected. Call whodb_platform_orgs with workspace {host}, then pass workspace.org or org")
 	}
-	var match *platformapi.Organization
 	for i := range orgs {
 		if orgs[i].ID == needle {
-			return selectPlatformToolOrg(ctx, session, &orgs[i])
+			return &orgs[i], nil
 		}
 	}
+	var match *platformapi.Organization
 	for i := range orgs {
 		org := &orgs[i]
 		if matchesPlatformSourceIdentifier(needle, org.ID, org.Slug, org.Name) {
@@ -1883,9 +1903,9 @@ func resolvePlatformToolOrg(ctx context.Context, session *platformToolSession, v
 		}
 	}
 	if match != nil {
-		return selectPlatformToolOrg(ctx, session, match)
+		return match, nil
 	}
-	return nil, fmt.Errorf("organization %q not found", needle)
+	return nil, platformLookupMiss{fmt.Errorf("organization %q not found", needle)}
 }
 
 func resolvePlatformToolProject(ctx context.Context, session *platformToolSession, orgValue, projectValue string) (*platformapi.Organization, *platformapi.Project, error) {
@@ -1893,33 +1913,49 @@ func resolvePlatformToolProject(ctx context.Context, session *platformToolSessio
 	if err != nil {
 		return nil, nil, err
 	}
-	projects, err := session.Client.Projects(ctx, org.ID)
-	if err != nil {
-		return nil, nil, err
-	}
 	needle := strings.TrimSpace(projectValue)
 	if needle == "" {
 		return nil, nil, fmt.Errorf("project is required")
 	}
-	var match *platformapi.Project
+	for refresh := false; ; refresh = true {
+		projects, cached, err := platformLookups.projects(ctx, session.Client, session.Host.URL, session.Host.AccountID, org.ID, refresh)
+		if err != nil {
+			return nil, nil, err
+		}
+		project, err := matchPlatformToolProject(org, projects, needle)
+		if miss, ok := err.(platformLookupMiss); ok {
+			if cached {
+				continue
+			}
+			return nil, nil, miss.error
+		}
+		if err != nil {
+			return nil, nil, err
+		}
+		return selectPlatformToolProject(ctx, session, org, project)
+	}
+}
+
+func matchPlatformToolProject(org *platformapi.Organization, projects []platformapi.Project, needle string) (*platformapi.Project, error) {
 	for i := range projects {
 		if projects[i].ID == needle {
-			return selectPlatformToolProject(ctx, session, org, &projects[i])
+			return &projects[i], nil
 		}
 	}
+	var match *platformapi.Project
 	for i := range projects {
 		project := &projects[i]
 		if matchesPlatformSourceIdentifier(needle, project.ID, project.Slug, project.Name) {
 			if match != nil {
-				return nil, nil, fmt.Errorf("project %q is ambiguous; use its ID", needle)
+				return nil, fmt.Errorf("project %q is ambiguous; use its ID", needle)
 			}
 			match = project
 		}
 	}
 	if match != nil {
-		return selectPlatformToolProject(ctx, session, org, match)
+		return match, nil
 	}
-	return nil, nil, fmt.Errorf("project %q not found in organization %s", needle, org.Name)
+	return nil, platformLookupMiss{fmt.Errorf("project %q not found in organization %s", needle, org.Name)}
 }
 
 func updateSavedPlatformProjectAfterMutation(action *PendingPlatformAction, result *platformapi.PlatformMutationResult) {
@@ -2577,6 +2613,8 @@ func executePendingPlatformAction(ctx context.Context, action *PendingPlatformAc
 	if !strings.HasPrefix(action.Operation, "project_") && (session.Host.DefaultOrgID != action.OrgID || session.Host.DefaultProjectID != action.ProjectID) {
 		return ConfirmOutput{}, fmt.Errorf("hosted WhoDB workspace changed before confirmation")
 	}
+	// Any write may have created, renamed or deleted a workspace.
+	defer platformLookups.invalidate(session.Host.URL, session.Host.AccountID)
 	if action.Mutation != "" {
 		result, err := executePlatformMutation(ctx, session.Client, action.Mutation, action.ProjectID, action.Variables)
 		if err != nil {

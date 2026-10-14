@@ -221,6 +221,16 @@ flags/environment, then the saved CLI default. An explicit `workspace` on a call
 always wins for that call. `--platform-policy` still limits which hosts and
 workspaces any of these may select.
 
+Resolving a workspace needs the host's manifest and the account's organization
+and project lists. The MCP server caches those per process: the manifest per
+host for five minutes, the lists per host and signed-in account for one minute.
+Entries are keyed by account, so hosts, accounts and sessions never share them.
+When a cached list has no match the server fetches it once more before
+reporting "not found", and every write drops the account's cached lists, so a
+workspace created a moment ago resolves immediately. `whodb_platform_orgs` and
+`whodb_platform_projects` always list live and refresh the cache. The tool's
+own query is never cached.
+
 Platform tools use saved host logins. Saving a default workspace is optional
 when tools pass an explicit `workspace`:
 

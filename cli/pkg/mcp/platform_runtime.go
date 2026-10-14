@@ -198,9 +198,11 @@ func (runtime *PlatformRuntime) loadSession(ctx context.Context) (*platformToolS
 		return nil, err
 	}
 	client.SetHTTPClient(&http.Client{Transport: runtime.Transport, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }})
-	if _, err := client.PlatformManifest(ctx); err != nil {
+	manifest, err := platformLookups.manifest(ctx, runtime.Host, client.PlatformManifest)
+	if err != nil {
 		return nil, err
 	}
+	client.SetPlatformManifest(manifest)
 	session := &platformToolSession{Host: config.PlatformHost{URL: runtime.Host, AccountID: runtime.UserID, Email: runtime.Email}, Client: &embeddedPlatformClient{Client: client, runtime: runtime}}
 	if scope.Org != "" {
 		org, err := resolvePlatformToolOrg(ctx, session, scope.Org)
