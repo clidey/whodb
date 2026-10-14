@@ -39,7 +39,7 @@ type IPageProps = {
 }
 
 export const Page: FC<IPageProps> = (props) => {
-    return <div className={twMerge("flex grow px-8 py-6 flex-col h-full w-full", props.wrapperClassName)}>
+    return <div className={twMerge("flex grow min-w-0 px-8 py-6 flex-col h-full w-full", props.wrapperClassName)}>
         <div className={twMerge("flex flex-row grow flex-wrap gap-sm w-full h-full overflow-y-auto", props.className)}
             data-testid="page-scroll-container">
                 {props.children}

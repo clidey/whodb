@@ -41,8 +41,8 @@
 .dark .tour-spotlight-outline { border-color: #5c91ff !important; }
 
 .ce-connect-page { min-height: 100dvh; background: #eae6dd; }
-.ce-connect { --background: #fff; --foreground: #172643; width: 100%; min-height: 100dvh; display: grid; grid-template-columns: 55.4% 44.6%; overflow: hidden; background: #fff; color: #172643; }
-.ce-connect-story { display: flex; flex-direction: column; gap: 7vh; padding: 32px clamp(28px, 3vw, 56px) 32px clamp(28px, 2vw, 44px); background: #faf7f1; }
+.ce-connect { --background: #fff; --foreground: #172643; width: 100%; min-width: 0; min-height: 100dvh; display: grid; grid-template-columns: minmax(0, 55.4%) minmax(0, 44.6%); overflow: hidden; background: #fff; color: #172643; }
+.ce-connect-story { display: flex; flex-direction: column; min-width: 0; gap: 7vh; padding: 32px clamp(28px, 3vw, 56px) 32px clamp(28px, 2vw, 44px); background: #faf7f1; }
 .ce-connect-brand { display: flex; align-items: center; gap: 10px; font-size: 18px; }
 .ce-connect-brand span { border-left: 1px solid #d9d9d6; padding-left: 10px; color: #697487; font-size: 12px; }
 .ce-connect-story-content { width: min(100%, 83dvh); margin: auto; }
@@ -79,32 +79,39 @@
 .ce-connect-showcase-bottom--sample { display: flex; align-items: flex-end; gap: 1cqw; }
 .ce-connect-showcase-bottom--sample > div { min-width: 0; flex: 1; }
 .ce-connect-showcase-bottom button { display: inline-flex; align-items: center; gap: .6cqw; height: 4.76cqw; flex: none; padding: 0 1.2cqw; font-size: 1.59cqw; }
-.ce-connect-form-side { display: flex; align-items: center; justify-content: center; padding: 70px clamp(28px, 5vw, 100px); }
-.ce-connect-form-inner { width: min(100%, clamp(505px, 24vw, 760px)); container-type: inline-size; flex-grow: 0; gap: clamp(18px, .8vw, 28px); }
-.ce-connect-form-header { display: block; margin-bottom: 8px; }
-.ce-connect-form-header .ce-connect-eyebrow { font-size: 2.38cqw; }
-.ce-connect-form-header h2 { font-family: 'Bricolage Grotesque', sans-serif; font-size: 8.71cqw; line-height: 1.1; font-weight: 750; letter-spacing: -.045em; }
-.ce-connect-subtitle { color: #778197; font-size: 3.17cqw; margin-top: 1.98cqw; }
-.ce-connect-form-inner [data-testid="login-form"] { flex-grow: 0; }
+.ce-connect-form-side { display: flex; min-width: 0; align-items: center; justify-content: center; padding: 20px clamp(28px, 4vw, 80px); }
+.ce-connect-form-inner { width: min(100%, 440px); flex-grow: 0; gap: 12px; }
+.ce-connect-form-inner div:has(> label) { gap: 6px; }
+.ce-connect-form-header { display: block; }
+.ce-connect-form-header .ce-connect-eyebrow { font-size: 11px; }
+.ce-connect-form-header h2 { font-family: 'Bricolage Grotesque', sans-serif; font-size: 30px; line-height: 1.1; font-weight: 750; letter-spacing: -.045em; }
+.ce-connect-subtitle { color: #778197; font-size: 14px; margin-top: 4px; }
+.ce-connect-form-inner [data-testid="login-form"] { flex-direction: column; flex-grow: 0; }
 .ce-connect-form-inner [data-testid="login-form"] > div:first-child { width: 100%; }
-.ce-connect-form-inner [data-testid="login-form"] > div:first-child, .ce-connect-form-inner [data-testid="login-form"] > div:first-child > div { gap: 3.96cqw; }
-.ce-connect-form-inner [data-testid="login-form"] label { font-size: 2.77cqw; font-weight: 650; }
-.ce-connect-form-inner [data-testid="login-form"] input, .ce-connect-form-inner [data-testid="database-type-select"], .ce-connect-form-inner [data-slot="password-input-wrapper"] { min-height: 9.9cqw; border-radius: 1.58cqw; background: #faf7f1; font-size: 2.77cqw; }
-.ce-connect-form-inner [data-testid="login-form"] input, .ce-connect-form-inner [data-slot="password-input-wrapper"] { padding-inline: 2.38cqw; }
-.ce-connect-form-inner [data-slot="password-input-wrapper"] input { padding-inline: 0; }
-.ce-connect-form-inner [data-slot="password-input-wrapper"] input { min-height: 0; height: 100%; background: transparent; }
+.ce-connect-form-inner [data-testid="login-form"] > div:first-child, .ce-connect-form-inner [data-testid="login-form"] > div:first-child > div { gap: 14px; }
+.ce-connect-form-inner [data-testid="login-form"] label { font-size: 13px; font-weight: 650; }
+.ce-connect-form-inner [data-testid="login-form"] input, .ce-connect-form-inner [data-testid="database-type-select"], .ce-connect-form-inner [data-testid="ssl-mode-select"], .ce-connect-form-inner [data-slot="password-input-wrapper"] { min-height: 40px; border-radius: 8px; background: #faf7f1; font-size: 14px; }
+.ce-connect-form-inner [data-testid="login-form"] input, .ce-connect-form-inner [data-slot="password-input-wrapper"] { padding-inline: 12px; }
+.ce-connect-form-inner [data-slot="password-input-wrapper"] input { min-height: 0; height: 100%; padding-inline: 0; background: transparent; }
 .ce-connect-form-inner [data-testid="login-form"] input::placeholder { color: transparent; }
-.ce-connect-form-inner .source-connection-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3.96cqw 1.98cqw; }
-.ce-connect-form-inner .source-connection-fields > div:first-child { gap: 1.98cqw; }
-.ce-connect-form-inner .source-connection-fields > div:first-child > div:last-child { width: 24cqw; flex: 0 0 24cqw; }
-.ce-connect-form-inner [data-testid="password-toggle"] svg { width: 3.17cqw; height: 3.17cqw; }
+.ce-connect-form-inner .source-connection-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 12px; }
+.ce-connect-form-inner .source-connection-fields > div:first-child { gap: 10px; }
+.ce-connect-form-inner .source-connection-fields > div:first-child > div:last-child { width: 110px; flex: 0 0 110px; }
+.ce-connect-form-inner [data-testid="password-toggle"] svg { width: 16px; height: 16px; }
 .ce-connect-form-inner .source-connection-fields > div:first-child, .ce-connect-form-inner .source-connection-fields > div:not(:has(label[for="source-username"], label[for="source-password"])) { grid-column: 1 / -1; }
-.ce-connect-form-inner .login-action-buttons { order: 2; justify-content: stretch; gap: 2.38cqw; flex-wrap: wrap; }
-.ce-connect-form-inner .login-action-buttons > button:not(.ce-connect-advanced) { min-height: 11.09cqw; font-size: 3.17cqw; }
-.ce-connect-form-inner .login-action-buttons > button:not(.ce-connect-advanced) .ce-connect-icon { width: 3.4cqw; height: 3.4cqw; }
-.ce-connect-form-inner .login-action-buttons > button:not(.ce-connect-advanced):not([data-testid="login-button"]) { flex: 0 0 16.24cqw; background: transparent; border: 1px solid var(--border); color: var(--foreground); opacity: 1; }
+.ce-connect-form-inner [data-testid="login-form"] > div + div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 12px; height: auto; margin-top: 16px; overflow: visible; }
+.ce-connect-form-inner [data-testid="login-form"] > div + div > div:has([data-testid="ssl-mode-select"]) { display: contents; }
+.ce-connect-form-inner [data-testid="login-form"] > div + div [data-slot="alert"], .ce-connect-form-inner [data-testid="login-form"] > div + div > div > div:has([data-testid$="-choose-file"], [data-testid$="-content"]) { grid-column: 1 / -1; }
+.ce-connect-form-inner > [data-slot="separator"] { margin-block: 0; }
+.ce-connect-form-inner > div:has(> [data-testid="available-profiles-select"]) { gap: 10px; }
+.ce-connect-form-inner [data-testid="profile-access-notice"] { padding: 10px 12px; }
+.ce-connect-form-inner [data-testid="profile-access-notice"] [data-slot="alert-description"] { font-size: 12px; line-height: 1.35; }
+.ce-connect-form-inner .login-action-buttons { justify-content: stretch; gap: 10px; flex-wrap: wrap; }
+.ce-connect-form-inner .login-action-buttons > button:not(.ce-connect-advanced) { min-height: 44px; font-size: 14px; }
+.ce-connect-form-inner .login-action-buttons > button:not(.ce-connect-advanced) .ce-connect-icon { width: 15px; height: 15px; }
+.ce-connect-form-inner .login-action-buttons > button:not(.ce-connect-advanced):not([data-testid="login-button"]) { flex: 0 0 88px; background: transparent; border: 1px solid var(--border); color: var(--foreground); opacity: 1; }
 .ce-connect-form-inner .login-action-buttons > button[data-testid="login-button"] { flex: 1; background: #416bd1; color: #fff; }
-.ce-connect-form-inner .ce-connect-advanced { order: 3; flex-basis: 100%; background: transparent; border: 0; color: #697487; font-size: 2.38cqw; }
+.ce-connect-form-inner .ce-connect-advanced { order: 3; flex-basis: 100%; background: transparent; border: 0; color: #697487; font-size: 12px; }
 .ce-connect-form-inner .ce-connect-advanced-link { color: #416bd1; font-weight: 700; }
 .ce-connect-test-result { display: flex; align-items: flex-start; gap: 9px; padding: 11px 13px; border-radius: 6px; font-size: 12px; }
 .ce-connect-test-result span { display: grid; gap: 2px; }.ce-connect-test-result small { opacity: .8; }
@@ -117,7 +124,7 @@
 .dark .ce-connect-form-inner [data-testid="login-form"] input, .dark .ce-connect-form-inner [data-slot="password-input-wrapper"] { background: #14213f; }
 .dark .ce-connect-form-inner [data-slot="password-input-wrapper"] input { background: transparent; }
 .dark .ce-connect-form-inner .ce-connect-advanced { color: #9aa8c2; }
-.dark .ce-connect button[data-testid="database-type-select"] { background-color: #14213f !important; border-color: #344767 !important; color: #f8f7f2 !important; opacity: 1; }
+.dark .ce-connect button[data-testid="database-type-select"], .dark .ce-connect button[data-testid="ssl-mode-select"] { background-color: #14213f !important; border-color: #344767 !important; color: #f8f7f2 !important; opacity: 1; }
 .dark [data-testid="mode-toggle-login"] button { background: #14213f; border: 1px solid #344767; color: #f8f7f2; }
 .dark .ce-connect-brand span, .dark .ce-connect-subtitle, .dark .ce-connect-showcase-bottom p, .dark .ce-connect-feature-list small { color: #9aa8c2; }
 .dark .ce-connect-showcase, .dark .ce-connect-showcase-panel + .ce-connect-showcase-panel, .dark .ce-connect-engine-list span, .dark .ce-connect-feature-icon { border-color: #324361; }
@@ -126,9 +133,9 @@
 .dark .ce-connect-test-result.is-success { background: #253e31; color: #b8dfb9; }.dark .ce-connect-test-result.is-error { background: #47303c; color: #ff9ca4; }
 .dark .ce-connect-loading { background: #14223f; color: #f7f7f5; }
 @media (min-width: 851px) and (max-width: 1400px) { .ce-connect-showcase-panel { padding: 16px; }.ce-connect-engine-list, .ce-connect-engine-row { gap: 5px; }.ce-connect-engine-list span { gap: 5px; padding: 5px 6px; font-size: 10px; }.ce-connect-feature-list { gap: 6px; }.ce-connect-feature-list > div { gap: 7px; }.ce-connect-feature-icon { width: 26px; height: 26px; }.ce-connect-feature-icon .ce-connect-icon { width: 14px; height: 14px; }.ce-connect-feature-list strong { font-size: 11px; }.ce-connect-feature-list small { font-size: 9px; }.ce-connect-showcase-bottom { min-height: 58px; }.ce-connect-showcase-bottom strong { font-size: 14px; }.ce-connect-showcase-bottom p { font-size: 10px; }.ce-connect-showcase-bottom button { height: 26px; font-size: 10px; } }
-@media (max-width: 850px) { .ce-connect-page { padding: 0; height: auto; overflow: visible; }.ce-connect { display: flex; flex-direction: column; min-height: 100dvh; height: auto; overflow: visible; }.ce-connect-story { gap: 28px; padding: 24px; }.ce-connect-story h1 { font-size: clamp(38px, 8vw, 60px); margin: 14px 0; }.ce-connect-showcase { display: none; }.ce-connect-form-side { padding: 36px 24px 70px; }.ce-connect-form-header h2 { font-size: 32px; }.ce-connect-form-header .ce-connect-eyebrow { font-size: 12px; }.ce-connect-subtitle { font-size: 14px; }.ce-connect-form-inner [data-testid="login-form"] label { font-size: 14px; }.ce-connect-form-inner [data-testid="login-form"] input, .ce-connect-form-inner [data-testid="database-type-select"], .ce-connect-form-inner [data-slot="password-input-wrapper"] { min-height: 44px; font-size: 14px; }.ce-connect-form-inner .login-action-buttons > button:not(.ce-connect-advanced) { min-height: 44px; font-size: 14px; }.ce-connect-form-inner .login-action-buttons > button:not(.ce-connect-advanced):not([data-testid="login-button"]) { flex-basis: 72px; }.ce-connect-form-inner .ce-connect-advanced { font-size: 12px; } }
+@media (max-width: 850px) { .ce-connect-page { padding: 0; height: auto; overflow: visible; }.ce-connect { display: flex; flex-direction: column; min-height: 100dvh; height: auto; overflow: visible; }.ce-connect-story { gap: 28px; padding: 24px; }.ce-connect-story h1 { font-size: clamp(38px, 8vw, 60px); margin: 14px 0; }.ce-connect-showcase { display: none; }.ce-connect-form-side { padding: 36px 24px 70px; }.ce-connect-form-header h2 { font-size: 32px; }.ce-connect-form-inner .source-connection-fields, .ce-connect-form-inner [data-testid="login-form"] > div + div { grid-template-columns: minmax(0, 1fr); }.ce-connect-form-inner .login-action-buttons > button:not(.ce-connect-advanced):not([data-testid="login-button"]) { flex-basis: 72px; } }
 
-.ce-app-content { padding-block: 0; }
+.ce-app-content { padding-block: 0; min-width: 0; }
 .ce-tables-topbar { min-height: 48px; padding: 6px 16px; border-bottom: 1px solid var(--border); }
 .ce-tables-topbar > div:first-child { min-height: 36px; align-items: center; }
 .ce-tables-topbar [data-slot="breadcrumb"] { padding: 0; font-size: 12px; }
@@ -241,7 +248,9 @@
 .ce-chat-toolbar { display: flex; align-items: center; gap: 10px; min-height: 57px; padding: 9px 16px; }
 .ce-chat-toolbar [data-testid="ai-provider"] { flex: 1; width: auto; gap: 0; }
 .ce-chat-toolbar [data-testid="ai-provider"] > div:last-child { flex-wrap: nowrap; }
-.ce-chat-toolbar [data-testid="ai-provider"] button { height: 31px; font-size: 12px; }
+.ce-chat-toolbar [data-testid="ai-provider"] button:not([role="checkbox"]) { height: 31px; font-size: 12px; }
+.ce-chat-toolbar .ce-chat-auto-scroll { height: 31px; gap: 6px; padding-inline: 10px; font-size: 12px; }
+.ce-chat-toolbar .ce-chat-auto-scroll [role="checkbox"] { width: 14px; height: 14px; }
 .ce-chat-toolbar > button { height: 31px; flex: none; gap: 5px; font-size: 12px; }
 .ce-chat-empty { gap: 10px; padding: 0 20px 50px; }
 .ce-chat-empty-logo { width: clamp(32px, 2.1vw, 44px); height: clamp(32px, 2.1vw, 44px); object-fit: contain; }
@@ -410,9 +419,8 @@
 .ce-tables-actions [data-slot="tabs-list"] { height: 32px; }
 .ce-table-grid { display: grid; width: 100%; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; align-content: start; }
 .ce-table-grid > div { min-width: 0; height: 100%; }
+.ce-table-grid.hidden { display: none; }
 .ce-explore-sidebar[data-collapsible="icon"] [data-testid="sidebar-profile"] { display: none; }
-.ce-explore-rail-brand { display: grid; place-items: center; width: 32px; height: 32px; padding: 4px; }
-.ce-explore-rail-brand img { width: 24px; height: 24px; object-fit: contain; }
 .ce-table-card { width: 100%; height: 100%; min-height: 154px; padding: 14px 0; gap: 6px; box-shadow: none; }
 .ce-table-card { position: relative; }
 .ce-table-card [data-slot="badge"]:has(.ce-table-card-type) { display: contents; }

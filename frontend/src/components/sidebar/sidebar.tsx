@@ -569,7 +569,7 @@ export const Sidebar: FC = () => {
             <SidebarComponent
                 variant="sidebar"
                 collapsible="icon"
-                className={cn('z-[50]', !newUIEnabled && (pathname === InternalRoutes.Dashboard.StorageUnit.path || pathname === InternalRoutes.RawExecute.path || pathname === InternalRoutes.Chat.path || pathname === InternalRoutes.Settings?.path || pathname === InternalRoutes.ContactUs?.path) && 'ce-tables-sidebar', !newUIEnabled && pathname.includes(InternalRoutes.Dashboard.ExploreStorageUnit.path) && 'ce-explore-sidebar')}
+                className={cn('z-[50]', !newUIEnabled && 'ce-tables-sidebar', !newUIEnabled && pathname.includes(InternalRoutes.Dashboard.ExploreStorageUnit.path) && 'ce-explore-sidebar')}
             >
                 <SidebarHeader className={cn({ "ml-4": open })}>
                     <div className="flex items-center gap-sm justify-between">
@@ -578,17 +578,12 @@ export const Sidebar: FC = () => {
                             {open && <span className={cn("font-bold", newUIEnabled ? "text-lg" : "text-3xl")} data-testid="app-name">{getAppName()}</span>}
                             {open && !newUIEnabled && <span className="ce-sidebar-edition">{t('communityEditionShort')}</span>}
                         </div>
-                        {!open && pathname.includes(InternalRoutes.Dashboard.ExploreStorageUnit.path) && (
-                            <button type="button" className="ce-explore-rail-brand" onClick={toggleSidebar} aria-label={t('expandNavigation')}>
-                                <img src={logoImage} alt="" />
-                            </button>
-                        )}
-                        {!newUIEnabled && !pathname.includes(InternalRoutes.Dashboard.ExploreStorageUnit.path) && open ? (
+                        {!newUIEnabled && open ? (
                             <button type="button" className="ce-sidebar-toggle" onClick={toggleSidebar} aria-label={t('collapseNavigation')}>
                                 <WhoDBChatIcon name="sidebar" />
                             </button>
                         ) : (
-                            <SidebarTrigger className={cn('px-0', !open && pathname.includes(InternalRoutes.Dashboard.ExploreStorageUnit.path) && 'hidden')} />
+                            <SidebarTrigger className="px-0" />
                         )}
                     </div>
                 </SidebarHeader>
@@ -772,7 +767,7 @@ export const Sidebar: FC = () => {
                             <div className="flex flex-col gap-lg">
                                 <div className="flex flex-col gap-sm w-full ce-sidebar-profile-wrap">
                                     <h2 className={cn("text-sm", { "hidden": !open })}>{t('profile')}</h2>
-                                    {open && !pathname.includes(InternalRoutes.Dashboard.ExploreStorageUnit.path) && current && (
+                                    {open && current && (
                                         <div className="ce-sidebar-profile-display" aria-hidden="true">
                                             <span className="ce-sidebar-profile-icon"><WhoDBChatIcon name="source" /></span>
                                             <span className="ce-sidebar-profile-copy">
@@ -806,7 +801,7 @@ export const Sidebar: FC = () => {
                                             </CommandItem>
                                         ) : undefined}
                                         side={open ? "bottom" : "right"} align="start"
-                                        buttonClassName={cn(ph.mask, !pathname.includes(InternalRoutes.Dashboard.ExploreStorageUnit.path) && 'ce-sidebar-profile-button')}
+                                        buttonClassName={cn(ph.mask, 'ce-sidebar-profile-button')}
                                         buttonProps={{
                                             "data-testid": "sidebar-profile",
                                             "data-collapsed": !open,
@@ -945,12 +940,10 @@ export const Sidebar: FC = () => {
                                                 {open && <span>{t('disconnect')}</span>}
                                             </div>
                                         </SidebarMenuButton>
-                                        <div className={cn("flex items-center gap-1 shrink-0", pathname === InternalRoutes.Dashboard.StorageUnit.path && "ce-sidebar-logout-extras")}>
+                                        {open && <div className={cn("flex items-center gap-1 shrink-0", pathname === InternalRoutes.Dashboard.StorageUnit.path && "ce-sidebar-logout-extras")}>
                                             <SidebarMenuButton asChild className="w-auto">
                                                 <DropdownMenu>
-                                                    <DropdownMenuTrigger className={cn({
-                                                        "hidden": !open,
-                                                    })}>
+                                                    <DropdownMenuTrigger>
                                                         <Button
                                                             className="flex items-center justify-center p-1 rounded hover:bg-accent"
                                                             aria-label={t('moreLogoutOptions')}
@@ -994,7 +987,7 @@ export const Sidebar: FC = () => {
                                                     </Tooltip>
                                                 </TooltipProvider>
                                             )}
-                                        </div>
+                                        </div>}
                                     </SidebarMenuItem>
                                 )}
                             </SidebarMenu>

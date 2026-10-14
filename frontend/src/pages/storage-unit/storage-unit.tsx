@@ -466,19 +466,21 @@ export const StorageUnitPage: FC = () => {
 
     const [filterValue, setFilterValue] = useState("");
 
-    const listViewRef = useRef<HTMLDivElement>(null);
+    const listViewObserver = useRef<ResizeObserver | null>(null);
     const [listViewHeight, setListViewHeight] = useState(0);
 
-    useEffect(() => {
-        const container = listViewRef.current;
+    // Callback ref: the list container mounts after the loading state, so an
+    // effect with empty deps would never see it.
+    const listViewRef = useCallback((container: HTMLDivElement | null) => {
+        listViewObserver.current?.disconnect();
+        listViewObserver.current = null;
         if (!container) return;
 
         const updateHeight = () =>{  setListViewHeight(container.clientHeight); };
         updateHeight();
 
-        const resizeObserver = new ResizeObserver(updateHeight);
-        resizeObserver.observe(container);
-        return () =>{  resizeObserver.disconnect(); };
+        listViewObserver.current = new ResizeObserver(updateHeight);
+        listViewObserver.current.observe(container);
     }, []);
 
     const routes = useMemo(() => {

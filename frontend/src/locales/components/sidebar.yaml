@@ -4,7 +4,6 @@ en_US:
   contact: Contact
   sampleSQLiteName: Sample SQLite
   sampleSQLiteFilename: sample.db
-  expandNavigation: Expand navigation
   collapseNavigation: Collapse navigation
   mainNavigation: Main navigation
   profile: Profile
