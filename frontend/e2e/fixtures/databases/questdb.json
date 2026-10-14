@@ -55,6 +55,7 @@
     "pagination": true,
     "documentEdit": false,
     "crud": false,
+    "scratchpadUpdate": false,
     "schemaManagement": true
   },
   "featureNotes": {
@@ -62,6 +63,7 @@
     "mockData": "Mock data generation not applicable for time-series databases",
     "documentEdit": "QuestDB is append-only, direct row editing is not supported",
     "crud": "QuestDB is append-only, DELETE operations are not supported",
+    "scratchpadUpdate": "QuestDB is append-only, the scratchpad UPDATE test has no applicable query",
     "schemaManagement": "QuestDB only supports column name + type in CREATE TABLE, no constraints"
   },
   "expectedTables": [

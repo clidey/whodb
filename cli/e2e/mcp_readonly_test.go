@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"strconv"
@@ -52,7 +53,7 @@ func TestPostgres_MCPReadOnlyRejectsAdvisoryBypasses(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	t.Cleanup(cancel)
 
-	databaseURL := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.Database)
+	databaseURL := fmt.Sprintf("postgres://%s@%s:%s/%s?sslmode=disable", url.UserPassword(cfg.User, cfg.Password).String(), cfg.Host, cfg.Port, cfg.Database)
 	connection, err := pgx.Connect(ctx, databaseURL)
 	if err != nil {
 		t.Fatalf("connect to PostgreSQL: %v", err)
@@ -82,7 +83,7 @@ func TestPostgres_MCPReadOnlyRejectsAdvisoryBypasses(t *testing.T) {
 
 	var serverLog bytes.Buffer
 	command := exec.CommandContext(context.Background(), testharness.CLIBinaryPath(t),
-		"mcp", "serve", "--read-only", "--transport", "http",
+		"mcp", "serve", "--database", "--read-only", "--transport", "http",
 		"--host", "127.0.0.1", "--port", strconv.Itoa(port),
 	)
 	command.Env = os.Environ()

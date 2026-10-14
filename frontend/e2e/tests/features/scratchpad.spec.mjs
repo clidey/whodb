@@ -102,7 +102,9 @@ test.describe('Scratchpad', () => {
 
                 await test.step('verify update', async () => {
                     await whodb.addCell(0);
-                    const selectQuery = getSqlQuery(db, 'selectUserById');
+                    // Fixtures may point the UPDATE at a row other than id=1 (e.g. DuckDB cannot
+                    // update rows referenced by a foreign key), so prefer a dedicated select.
+                    const selectQuery = db.sql.selectUpdatedUser ?? getSqlQuery(db, 'selectUserById');
                     await whodb.writeCode(1, selectQuery);
                     await whodb.runCode(1);
 
