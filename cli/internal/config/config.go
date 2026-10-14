@@ -26,6 +26,7 @@ import (
 
 	"github.com/clidey/whodb/cli/pkg/identity"
 	"github.com/clidey/whodb/core/graph/model"
+	"github.com/clidey/whodb/core/src/analytics"
 	"github.com/clidey/whodb/core/src/common/config"
 	"github.com/clidey/whodb/core/src/common/datadir"
 	"github.com/clidey/whodb/core/src/env"
@@ -234,6 +235,13 @@ func ResetPathsForTesting() {
 	configDirErr = nil
 	configDirOnce = sync.Once{}
 	config.ResetConfigPath()
+}
+
+// InstallID returns this install's anonymous analytics identifier, a random
+// UUID persisted in the CLI config directory. It identifies the install, not
+// the user or machine; deleting the config resets it.
+func InstallID() string {
+	return analytics.InstallID(getConfigOptions())
 }
 
 func getConfigOptions() datadir.Options {

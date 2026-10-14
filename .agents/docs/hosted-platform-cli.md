@@ -231,6 +231,13 @@ workspace created a moment ago resolves immediately. `whodb_platform_orgs` and
 `whodb_platform_projects` always list live and refresh the cache. The tool's
 own query is never cached.
 
+Every platform request carries an `X-WhoDB-Client` header (`whodb-cli/<version>`
+from commands, `whodb-cli-mcp/<version>` from the MCP server) so the hosted
+audit ledger and analytics can tell CLI traffic from browser and hosted-MCP
+traffic. In database mode, set `WHODB_AUDIT_LOG_FILE` before `whodb mcp serve`
+to keep a local NDJSON record of each statement the MCP server ran (connection,
+database type, statement type and row count; never the SQL text).
+
 Platform tools use saved host logins. Saving a default workspace is optional
 when tools pass an explicit `workspace`:
 

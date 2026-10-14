@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 
-package app
+// Package auditlog writes audit events to a local NDJSON file. It is the audit
+// backend for processes without a ledger: the CE server and the CLI's MCP
+// server. It lives outside package audit because it needs env and log, which
+// audit cannot import.
+package auditlog
 
 import (
 	"encoding/json"
@@ -58,12 +62,12 @@ func (s *fileAuditService) close() error {
 	return s.w.Close()
 }
 
-// initializeAuditFileLog registers a file audit service when
-// WHODB_AUDIT_LOG_FILE is set ("default" uses env.DefaultAuditLogFile) and
-// returns a function that unregisters it and closes the file. When the
-// variable is unset it registers nothing. The process exits if a configured
-// file cannot be opened, matching the other log files.
-func initializeAuditFileLog() func() {
+// Initialize registers a file audit service when WHODB_AUDIT_LOG_FILE is set
+// ("default" uses env.DefaultAuditLogFile) and returns a function that
+// unregisters it and closes the file. When the variable is unset it registers
+// nothing. The process exits if a configured file cannot be opened, matching
+// the other log files.
+func Initialize() func() {
 	path := log.ResolveLogPath(env.AuditLogFile, env.DefaultAuditLogFile)
 	if path == "" {
 		return func() {}

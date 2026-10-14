@@ -665,6 +665,7 @@ func HandleQuery(ctx context.Context, req *mcp.CallToolRequest, input QueryInput
 
 	result, err := executeQuery(ctx, mgr, input.Query, input.Parameters, secOpts.QueryTimeout)
 	if err != nil {
+		recordQueryAudit(startTime, conn.Name, conn.Type, stmtType, 0, false, err)
 		if errors.Is(err, context.DeadlineExceeded) {
 			TrackToolCall(ctx, "query", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "timeout", "db_type": conn.Type})
 			return nil, QueryOutput{Error: fmt.Sprintf("query timed out after %v", secOpts.QueryTimeout), RequestID: requestID}, nil
@@ -682,6 +683,7 @@ func HandleQuery(ctx context.Context, req *mcp.CallToolRequest, input QueryInput
 		output.Warning = fmt.Sprintf("Results truncated to %d rows. Use LIMIT in your query for more control.", secOpts.MaxRows)
 	}
 
+	recordQueryAudit(startTime, conn.Name, conn.Type, stmtType, len(rows), false, nil)
 	TrackToolCall(ctx, "query", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{
 		"statement_type": stmtType,
 		"row_count":      len(rows),
@@ -765,6 +767,7 @@ func HandleConfirm(ctx context.Context, req *mcp.CallToolRequest, input ConfirmI
 	consumed = true
 	result, err := executeQuery(ctx, mgr, pending.Query, pending.Parameters, secOpts.QueryTimeout)
 	if err != nil {
+		recordQueryAudit(startTime, conn.Name, conn.Type, DetectStatementType(pending.Query), 0, true, err)
 		if errors.Is(err, context.DeadlineExceeded) {
 			TrackToolCall(ctx, "confirm", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "timeout", "db_type": conn.Type})
 			return nil, ConfirmOutput{Error: fmt.Sprintf("query timed out after %v", secOpts.QueryTimeout), RequestID: requestID}, nil
@@ -778,6 +781,7 @@ func HandleConfirm(ctx context.Context, req *mcp.CallToolRequest, input ConfirmI
 	rows, _ := convertRows(result, 0) // No row limit for confirmed writes
 
 	stmtType := DetectStatementType(pending.Query)
+	recordQueryAudit(startTime, conn.Name, conn.Type, stmtType, len(rows), true, nil)
 	TrackToolCall(ctx, "confirm", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{
 		"statement_type": stmtType,
 		"db_type":        conn.Type,

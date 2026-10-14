@@ -35,6 +35,7 @@ import (
 
 	"github.com/clidey/whodb/core/src"
 	"github.com/clidey/whodb/core/src/analytics"
+	"github.com/clidey/whodb/core/src/auditlog"
 	"github.com/clidey/whodb/core/src/auth"
 	"github.com/clidey/whodb/core/src/common/datadir"
 	"github.com/clidey/whodb/core/src/engine"
@@ -165,7 +166,7 @@ func Run(config AppConfig, staticFiles embed.FS) {
 
 	defer log.CloseLogFile()
 	if !env.IsEnterpriseEdition {
-		defer initializeAuditFileLog()()
+		defer auditlog.Initialize()()
 	}
 	appVersion := applicationVersion()
 	log.Alwaysf("Starting WhoDB %s (log level: %s, set WHODB_LOG_LEVEL=warn or WHODB_LOG_LEVEL=error for quieter output)", appVersion, log.GetLevel())

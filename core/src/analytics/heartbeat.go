@@ -52,6 +52,13 @@ func heartbeatDisabled() bool {
 	return os.Getenv(HeartbeatDisabledEnv) == "true" || os.Getenv("CI") == "true"
 }
 
+// InstallID returns the persisted anonymous install identifier so events other
+// than the heartbeat can share it. The CLI uses it as its analytics distinct
+// id instead of "anonymous"; it is a random UUID with no relation to the user.
+func InstallID(opts datadir.Options) string {
+	return installID(opts)
+}
+
 // installID returns the persisted anonymous install identifier, creating and
 // persisting a new one on first run. It is a random UUID with no relation to
 // the machine or user; deleting the config file resets it.

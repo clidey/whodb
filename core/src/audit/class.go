@@ -43,6 +43,8 @@ var (
 	classPrefixes = map[string]Class{}
 	defaultExact  = map[string]Class{
 		"http.request":                    ClassTelemetry,
+		"mcp.query.execute":               ClassAccess,
+		"mcp.tool.call":                   ClassAccess,
 		"source.open_session":             ClassTelemetry,
 		"source.invalidate_session":       ClassTelemetry,
 		"source.shutdown_drivers":         ClassTelemetry,

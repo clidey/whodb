@@ -25,6 +25,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/clidey/whodb/cli/internal/config"
+	platformapi "github.com/clidey/whodb/cli/internal/platform"
 	"github.com/clidey/whodb/cli/internal/tui"
 	"github.com/clidey/whodb/cli/pkg/analytics"
 	"github.com/clidey/whodb/cli/pkg/identity"
@@ -203,7 +204,7 @@ func persistWorkspace(model tea.Model) error {
 }
 
 func init() {
-	cobra.OnInitialize(initConfig, initColorMode, initAnalytics)
+	cobra.OnInitialize(initConfig, initColorMode, initAnalytics, initClientName)
 
 	// Disable Cobra's default completion command; we provide our own with install support
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
@@ -222,6 +223,12 @@ func init() {
 	viper.BindPFlag("no-update-check", rootCmd.PersistentFlags().Lookup("no-update-check"))
 
 	rootCmd.RegisterFlagCompletionFunc("profile", completeProfileNames)
+}
+
+// initClientName labels this process's platform requests so the hosted audit
+// ledger and analytics can tell CLI traffic from browser and MCP traffic.
+func initClientName() {
+	platformapi.SetClientName("whodb-cli/" + version.Version)
 }
 
 func initAnalytics() {

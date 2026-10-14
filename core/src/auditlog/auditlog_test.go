@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package app
+package auditlog
 
 import (
 	"bufio"
@@ -33,7 +33,7 @@ func TestAuditFileLogWritesNonTelemetryEvents(t *testing.T) {
 	env.AuditLogFile = path
 	t.Cleanup(func() { env.AuditLogFile = original })
 
-	closeLog := initializeAuditFileLog()
+	closeLog := Initialize()
 	audit.Record(audit.AuditEvent{Action: "http.request"})
 	audit.Record(audit.AuditEvent{Action: "login.source"})
 	closeLog()

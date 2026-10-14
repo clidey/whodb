@@ -29,6 +29,7 @@ import (
 	platformapi "github.com/clidey/whodb/cli/internal/platform"
 	whodbmcp "github.com/clidey/whodb/cli/pkg/mcp"
 	"github.com/clidey/whodb/cli/pkg/version"
+	"github.com/clidey/whodb/core/src/auditlog"
 	"github.com/spf13/cobra"
 )
 
@@ -308,6 +309,10 @@ Connection Resolution:
 			AppVersion: version.Version,
 		})
 		defer whodbmcp.ShutdownAnalytics()
+		platformapi.SetClientName("whodb-cli-mcp/" + version.Version)
+		// Local NDJSON audit trail for database-mode statements when
+		// WHODB_AUDIT_LOG_FILE is set; a no-op otherwise.
+		defer auditlog.Initialize()()
 
 		// Determine mode based on flags
 		// Default: confirm-writes (human-in-the-loop)

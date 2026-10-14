@@ -21,6 +21,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	coreaudit "github.com/clidey/whodb/core/src/audit"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -611,6 +612,7 @@ mutation CLIPlatformUploadProjectFile($projectId: ID!, $folderId: ID, $file: Upl
 		}
 		req.Header.Set("Content-Type", contentType)
 		req.Header.Set("Accept", "application/json")
+		req.Header.Set(coreaudit.ClientHeader, clientName())
 		if accessToken != "" {
 			req.Header.Set("Authorization", "Bearer "+accessToken)
 		}

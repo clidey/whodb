@@ -115,6 +115,9 @@ func mergeRequest(base Request, override Request) Request {
 	if strings.TrimSpace(override.UserAgent) != "" {
 		request.UserAgent = strings.TrimSpace(override.UserAgent)
 	}
+	if strings.TrimSpace(override.Client) != "" {
+		request.Client = strings.TrimSpace(override.Client)
+	}
 	if strings.TrimSpace(override.Protocol) != "" {
 		request.Protocol = strings.TrimSpace(override.Protocol)
 	}

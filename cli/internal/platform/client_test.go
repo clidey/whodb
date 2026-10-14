@@ -21,6 +21,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	coreaudit "github.com/clidey/whodb/core/src/audit"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -301,9 +302,11 @@ func TestProjectSourcesSendsProjectID(t *testing.T) {
 func TestGraphQLSendsWorkspaceContextHeaders(t *testing.T) {
 	var gotOrgID string
 	var gotProjectID string
+	var gotClient string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		gotOrgID = r.Header.Get(workspaceOrgHeader)
 		gotProjectID = r.Header.Get(workspaceProjectHeader)
+		gotClient = r.Header.Get(coreaudit.ClientHeader)
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{"data":{"ProjectSecrets":[]}}`))
 	}))
@@ -322,6 +325,9 @@ func TestGraphQLSendsWorkspaceContextHeaders(t *testing.T) {
 	}
 	if gotProjectID != "proj-1" {
 		t.Fatalf("%s = %q, want proj-1", workspaceProjectHeader, gotProjectID)
+	}
+	if gotClient != "whodb-cli" {
+		t.Fatalf("expected %s header to identify the CLI, got %q", coreaudit.ClientHeader, gotClient)
 	}
 }
 

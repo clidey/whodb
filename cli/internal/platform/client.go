@@ -23,6 +23,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	coreaudit "github.com/clidey/whodb/core/src/audit"
 	"io"
 	"net"
 	"net/http"
@@ -584,6 +585,7 @@ func (c *Client) graphQLRequest(ctx context.Context, query string, variables any
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
+	req.Header.Set(coreaudit.ClientHeader, clientName())
 	if accessToken != "" {
 		req.Header.Set("Authorization", "Bearer "+accessToken)
 	}
