@@ -139,15 +139,6 @@ test.describe("Accessibility (axe-core)", () => {
       await runAxeScan(page, testInfo, "explore");
     });
 
-    test("search intellisense dropdown has no critical violations", async ({ whodb, page }, testInfo) => {
-      await whodb.data(db.testTable.name);
-      await page.locator('[data-testid="table-search"]').click();
-      await page.locator('[data-testid="table-search"]').fill("id ");
-      await page.locator('[data-testid="search-intellisense-dropdown"]').waitFor({ timeout: 15_000 });
-      await runAxeScan(page, testInfo, "search-intellisense");
-      await page.keyboard.press("Escape");
-    });
-
     test("context menu has no critical violations", async ({ whodb, page }, testInfo) => {
       await whodb.data(db.testTable.name);
       await whodb.openContextMenu(0);

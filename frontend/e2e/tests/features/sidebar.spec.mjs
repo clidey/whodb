@@ -392,7 +392,11 @@ test.describe('Sidebar Navigation', () => {
         forEachDatabase('sql', (db) => {
             test.describe(`${db.type}`, () => {
                 test('shows WhoDB version in sidebar footer', async ({ whodb, page }) => {
+                    // The Tables page hides the footer extras, so check from another page.
+                    await whodb.goto('settings');
+                    await page.locator('[data-testid="sidebar-profile"]').waitFor({ timeout: 10000 });
                     const newUIVersionInfo = page.locator('[data-testid="sidebar-version-info"]');
+                    await expect(newUIVersionInfo.or(page.getByText(/Version:\s*development/))).toBeVisible();
 
                     // TODO: Remove this old/new sidebar compatibility branch when WHODB_ENABLE_NEW_UI gating is removed.
                     if (await newUIVersionInfo.count() > 0) {

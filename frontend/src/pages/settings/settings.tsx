@@ -161,14 +161,16 @@ export const SettingsPage: FC = () => {
         <InternalPage routes={[InternalRoutes.Settings as IInternalRoute]}>
             <div className="ce-settings-page w-full">
                 <Tabs value={activeTab} className="ce-settings-tabs" onValueChange={handleTabChange}>
-                    <TabsList className="ce-settings-rail">
+                    <div className="ce-settings-rail">
                         <div className="ce-settings-rail-heading"><h1>{t('settingsTitle')}</h1><p>{t('savedInBrowser')}</p></div>
-                        <TabsTrigger value="appearance"><WhoDBChatIcon name="grid" />{t('tabAppearance')}</TabsTrigger>
-                        <TabsTrigger value="behavior"><WhoDBChatIcon name="sliders" />{t('tabBehavior')}</TabsTrigger>
-                        {hasIntegrations && <TabsTrigger value="integrations">{t('tabIntegrations')}</TabsTrigger>}
-                        <TabsTrigger value="privacy"><WhoDBChatIcon name="secret" />{t('tabPrivacy')}</TabsTrigger>
+                        <TabsList className="ce-settings-rail-list">
+                            <TabsTrigger value="appearance"><WhoDBChatIcon name="grid" />{t('tabAppearance')}</TabsTrigger>
+                            <TabsTrigger value="behavior"><WhoDBChatIcon name="sliders" />{t('tabBehavior')}</TabsTrigger>
+                            {hasIntegrations && <TabsTrigger value="integrations">{t('tabIntegrations')}</TabsTrigger>}
+                            <TabsTrigger value="privacy"><WhoDBChatIcon name="secret" />{t('tabPrivacy')}</TabsTrigger>
+                        </TabsList>
                         <button type="button" onClick={() => void navigate(InternalRoutes.ContactUs?.path ?? '/contact-us')}><WhoDBChatIcon name="mail" />{t('contact')}</button>
-                    </TabsList>
+                    </div>
 
                     <TabsContent value="appearance" className="ce-settings-panel">
                         <div className="ce-settings-panel-heading"><h2>{t('tabAppearance')}</h2><p>{t('appearanceDescription')}</p></div>

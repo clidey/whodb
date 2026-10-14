@@ -728,7 +728,9 @@ export const ExploreStorageUnit: FC = () => {
 
     const handleAddRowSubmit = useCallback(() => {
         if (rows?.Columns == null) return;
-        const missingRequired = constraintsData?.SourceFieldConstraints?.some(constraint =>
+        // Document sources take a single JSON value, so per-field required checks don't apply.
+        const isDocumentInput = isNoSQL && rows.Columns.length === 1 && rows.Columns[0].Type === "Document";
+        const missingRequired = !isDocumentInput && constraintsData?.SourceFieldConstraints?.some(constraint =>
             constraint.Nullable !== true && !constraint.Identity && constraint.DefaultValue == null && !addRowData[constraint.Name]
         );
         if (missingRequired) {
@@ -736,7 +738,7 @@ export const ExploreStorageUnit: FC = () => {
             return;
         }
         const values: RecordInput[] = [];
-        if (isNoSQL && rows.Columns.length === 1 && rows.Columns[0].Type === "Document") {
+        if (isDocumentInput) {
             try {
                 const json = JSON.parse(addRowData.document);
                 for (const key of Object.keys(json)) {
@@ -1040,7 +1042,7 @@ export const ExploreStorageUnit: FC = () => {
                     </div>
                     <div className="ce-explore-run-controls">
                         <Select value={isCustomPageSize ? "custom" : pageSizeString} onValueChange={handlePageSizeChange}>
-                            <SelectTrigger className="w-32" data-testid="table-page-size">
+                            <SelectTrigger className="w-32" data-testid="table-page-size" aria-label={t('pageSizeLabel')}>
                                 <span>{isCustomPageSize ? t('custom') : `${pageSizeString} ${t('rows')}`}</span>
                             </SelectTrigger>
                             <SelectContent align="end">

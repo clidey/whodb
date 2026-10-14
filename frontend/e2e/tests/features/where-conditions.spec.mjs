@@ -15,7 +15,6 @@
  */
 
 import { test, expect, forEachDatabase, conditionalTest } from '../../support/test-fixture.mjs';
-import { hasFeature } from '../../support/database-config.mjs';
 import { getDocumentId, parseDocument } from '../../support/categories/document.mjs';
 import { TIMEOUT } from '../../support/helpers/test-utils.mjs';
 
@@ -69,7 +68,7 @@ test.describe('Where Conditions', () => {
         });
 
         // Skip multi-condition tests for databases where data may be affected by async mutations
-        const multiConditionSupported = hasFeature(db, 'multiConditionFilter') !== false;
+        const multiConditionSupported = db.features?.multiConditionFilter !== false;
 
         conditionalTest(multiConditionSupported, 'applies multiple conditions', async ({ whodb, page }) => {
             await whodb.setWhereConditionMode('sheet');
@@ -100,7 +99,7 @@ test.describe('Where Conditions', () => {
                 [idField, eq, testId2],
             ]);
 
-            await page.locator('[data-testid="where-button"]').click();
+            await whodb.openConditionsSheet();
             const join = page.getByRole('group', { name: 'Join conditions' });
             await join.getByRole('button', { name: 'OR' }).click();
             await expect(join.getByRole('button', { name: 'OR' })).toHaveAttribute('aria-pressed', 'true');
@@ -108,9 +107,10 @@ test.describe('Where Conditions', () => {
             await whodb.saveSheetChanges();
 
             await expect(page.locator('[data-condition-mode]')).toHaveAttribute('data-condition-mode', 'mixed');
-            await page.locator('[data-testid="where-button"]').click();
+            await whodb.openConditionsSheet();
             await expect(page.getByRole('group', { name: 'Join conditions' }).getByRole('button', { name: 'OR' })).toHaveAttribute('aria-pressed', 'true');
-            await page.locator('[data-testid="cancel-manage-conditions"]').click();
+            await page.keyboard.press('Escape');
+            await expect(page.locator('[role="dialog"]')).toHaveCount(0);
         });
 
         test('edits existing condition', async ({ whodb, page }) => {

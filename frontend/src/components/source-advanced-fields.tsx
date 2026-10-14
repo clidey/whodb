@@ -100,8 +100,9 @@ export const SourceAdvancedFields: FC<SourceAdvancedFieldsProps> = ({
                     />
                 ) : (
                     <div className={fieldClassName} key={field.Key}>
-                        <Label>{translate(field.LabelKey)}</Label>
+                        <Label htmlFor={`advanced-field-${field.Key}`}>{translate(field.LabelKey)}</Label>
                         <Input
+                            id={`advanced-field-${field.Key}`}
                             value={value}
                             onChange={(e) => { onAdvancedFormChange(field.Key, e.target.value); }}
                             data-testid={`${field.Key}-input`}
@@ -114,8 +115,9 @@ export const SourceAdvancedFields: FC<SourceAdvancedFieldsProps> = ({
             })}
             {advancedState.fallbackAdvancedEntries.map(([key, value]) => (
                 <div className={fieldClassName} key={key}>
-                    <Label>{translate(`advancedFields.${toCamelCase(key)}`)}</Label>
+                    <Label htmlFor={`advanced-field-${key}`}>{translate(`advancedFields.${toCamelCase(key)}`)}</Label>
                     <Input
+                        id={`advanced-field-${key}`}
                         value={value}
                         onChange={(e) => { onAdvancedFormChange(key, e.target.value); }}
                         data-testid={`${key}-input`}

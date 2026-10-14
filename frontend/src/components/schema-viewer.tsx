@@ -105,6 +105,18 @@ export const SchemaViewer: FC<SchemaViewerProps> = ({ parentRef: explicitParentR
         (unit.Name ?? "").toLowerCase().includes(search.trim().toLowerCase())
     ), [search, storageUnits]);
 
+    // Group by the object's "Type" attribute (e.g. base table vs view); objects without one share a single group.
+    const groupedUnits = useMemo(() => {
+        const groups = new Map<string, SourceBrowserObject[]>();
+        for (const unit of filteredUnits) {
+            const type = unit.Attributes.find(attribute => attribute.Key === "Type")?.Value?.trim() ?? "";
+            const list = groups.get(type) ?? [];
+            list.push(unit);
+            groups.set(type, list);
+        }
+        return [...groups.entries()];
+    }, [filteredUnits]);
+
     const handleSelect = useCallback((tableId: string) => {
         if (tableId == null || tableId === (selectedName ?? state?.unit?.Name)) {
             return
@@ -167,12 +179,15 @@ export const SchemaViewer: FC<SchemaViewerProps> = ({ parentRef: explicitParentR
                             ) : (
                                 <div className={`ce-schema-list ${ph.mask}`}>
                                     <p className="ce-schema-list-label">{currentDatabase} · {storageUnits.length}</p>
-                                    {filteredUnits.map(unit => <SchemaViewerUnit
-                                        key={unit.Name}
-                                        unit={unit}
-                                        selected={unit.Name === (selectedName ?? state?.unit?.Name)}
-                                        onSelect={handleSelect}
-                                    />)}
+                                    {groupedUnits.map(([type, units]) => <div key={type} className="ce-schema-group" data-testid="schema-viewer-group" data-group-type={type}>
+                                        {groupedUnits.length > 1 && type !== "" && <p className="ce-schema-list-label ce-schema-group-label">{type}</p>}
+                                        {units.map(unit => <SchemaViewerUnit
+                                            key={unit.Name}
+                                            unit={unit}
+                                            selected={unit.Name === (selectedName ?? state?.unit?.Name)}
+                                            onSelect={handleSelect}
+                                        />)}
+                                    </div>)}
                                 </div>
                             )
                         }

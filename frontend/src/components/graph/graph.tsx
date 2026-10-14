@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Button, Tabs, TabsList, TabsTrigger } from '@clidey/ux';
+import { Button } from '@clidey/ux';
 import { ArrowDownTrayIcon, RectangleGroupIcon } from '../heroicons';
 import classNames from 'classnames';
 import type { Dispatch, FC, ReactNode, SetStateAction} from "react";
@@ -223,36 +223,30 @@ export const Graph: FC<IGraphProps> = (props) => {
             "hidden": downloading,
         })}>
             <div className="flex flex-col gap-2">
-                <Tabs value={undefined} onValueChange={() => {}}>
-                    <TabsList dir="column" className="px-1">
-                        <TabsTrigger value="download" asChild>
-                            <Tip className="w-[30px]">
-                                <Button
-                                    data-testid="graph-download-button"
-                                    variant="ghost"
-                                    onClick={handleDownloadImage}
-                                    aria-label={t('download')}
-                                >
-                                    <ArrowDownTrayIcon className="w-4 h-4 dark:text-white" />
-                                </Button>
-                                {t('download')}
-                            </Tip>
-                        </TabsTrigger>
-                        <TabsTrigger value="layout" asChild>
-                            <Tip className="w-[30px]">
-                                <Button
-                                    data-testid="graph-layout-button"
-                                    variant="ghost"
-                                    onClick={() => { onLayout("dagre"); }}
-                                    aria-label={t('layout')}
-                                >
-                                    <RectangleGroupIcon className="w-4 h-4 dark:text-white" />
-                                </Button>
-                                {t('layout')}
-                            </Tip>
-                        </TabsTrigger>
-                    </TabsList>
-                </Tabs>
+                <div className="flex flex-col gap-1 rounded-md bg-muted px-1 py-1" role="group" aria-label={t('graphTools')}>
+                    <Tip className="w-[30px]">
+                        <Button
+                            data-testid="graph-download-button"
+                            variant="ghost"
+                            onClick={handleDownloadImage}
+                            aria-label={t('download')}
+                        >
+                            <ArrowDownTrayIcon className="w-4 h-4 dark:text-white" />
+                        </Button>
+                        {t('download')}
+                    </Tip>
+                    <Tip className="w-[30px]">
+                        <Button
+                            data-testid="graph-layout-button"
+                            variant="ghost"
+                            onClick={() => { onLayout("dagre"); }}
+                            aria-label={t('layout')}
+                        >
+                            <RectangleGroupIcon className="w-4 h-4 dark:text-white" />
+                        </Button>
+                        {t('layout')}
+                    </Tip>
+                </div>
             </div>
         </div>
         {children}

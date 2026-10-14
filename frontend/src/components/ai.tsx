@@ -53,8 +53,10 @@ import { v4 as uuidv4 } from 'uuid';
 import { useTranslation } from "../hooks/use-translation";
 import { getAIProviderOverrides } from "../config/ai-provider-registry";
 import { persistAISelection } from "../config/ai-persistence";
+import { ExternalLink } from "../utils/external-links";
 import {
     ArrowPathIcon,
+    ArrowTopRightOnSquareIcon,
     ChevronDownIcon,
     ExclamationCircleIcon,
     LockClosedIcon,
@@ -583,6 +585,10 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
         });
     }, [dispatch, externalModelName, externalModelToken, externalModelType, getAIModels, handleAIModelsError, markProviderAvailable, markProviderUnavailable, t]);
 
+    const handleOpenDocs = useCallback(() => {
+        window.open("https://docs.whodb.com/ai/introduction", "_blank");
+    }, []);
+
     const handleClear = useCallback(() => {
         onClear?.();
     }, [onClear]);
@@ -649,6 +655,26 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                             type="password"
                         />
                         <p className="ce-provider-hint">{t('localProviderHint')}</p>
+                    </div>
+                    <div className="ce-provider-local-setup flex flex-col gap-2 text-xs text-muted-foreground" data-testid="ollama-setup-help">
+                        <div className="font-bold">{t('localSetup')}</div>
+                        <div>
+                            {t('ollamaSetupText').split('<0>')[0]}
+                            <ExternalLink href="https://ollama.com/" className="font-semibold underline text-primary hover:text-primary/80">Ollama</ExternalLink>
+                            {t('ollamaSetupText').split('</0>')[1]}
+                        </div>
+                        <div className="font-semibold">{t('downloadingModel')}</div>
+                        <div>
+                            {t('ollamaDownloadText').split('<0>')[0]}
+                            <ExternalLink href="https://ollama.com/library/llama3.1" className="font-semibold underline text-primary hover:text-primary/80">Llama3.1 8b</ExternalLink>
+                            {t('ollamaDownloadText').split('</0>')[1]}
+                        </div>
+                        <code className="font-mono bg-muted rounded px-2 py-1 w-fit">{t('ollamaRunCommand')}</code>
+                        <div>{t('ollamaDocsText')}</div>
+                        <Button variant="secondary" className="w-fit" onClick={handleOpenDocs}>
+                            {t('docs')}
+                            <ArrowTopRightOnSquareIcon className="w-4 h-4" />
+                        </Button>
                     </div>
                 </div>
             </SheetContent>
@@ -753,7 +779,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                                 data-testid="chat-delete-provider"
                                 variant="secondary"
                                 className={cn({
-                                    "hidden": disableNewChat ?? modelType?.isEnvironmentDefined ?? modelType?.isPlatformProvider,
+                                    "hidden": modelType?.isEnvironmentDefined ?? modelType?.isPlatformProvider,
                                 })}
                             >
                                 <TrashIcon className="w-4 h-4" /> {t('deleteProvider')}

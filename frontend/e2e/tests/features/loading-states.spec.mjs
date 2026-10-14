@@ -431,18 +431,11 @@ test.describe('Loading States & Spinners', () => {
                     await whodb.data(tableName);
                     await page.locator('table tbody tr').first().waitFor({ timeout: 10000 });
 
-                    // Click first row to select/edit
-                    await page.locator('table tbody tr').first().click();
-
-                    // Check if row edit UI appears
+                    // Open the edit sheet from the row's context menu
+                    await whodb.openContextMenu(0);
+                    await page.locator('[data-testid="context-menu-edit-row"]').click({ force: true });
+                    await expect(page.locator('[data-testid="edit-row-dialog"]')).toBeVisible({ timeout: 10000 });
                     const updateBtnCount = await page.locator('[data-testid="update-button"]').count();
-                    const editPanelCount = await page.locator('[data-testid="edit-row-dialog"]').count();
-
-                    if (updateBtnCount === 0 && editPanelCount === 0) {
-                        // Row click may just select, not open edit mode
-                        test.skip();
-                        return;
-                    }
 
                     if (updateBtnCount > 0) {
                         // Update button exists - verify it's visible and functional

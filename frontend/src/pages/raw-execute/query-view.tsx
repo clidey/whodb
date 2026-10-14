@@ -53,13 +53,9 @@ export const QueryView: FC<IPluginProps> = ({ code, handleExecuteRef, containerW
             if (result.error) {
                 throw result.error;
             }
-            const data = result.data?.RawExecute ?? null;
-            if (!isDestructiveQuery(code, currentType)) {
-                return data;
-            }
-            return null;
+            return result.data?.RawExecute ?? null;
         };
-    }, [client, handleExecuteRef, currentType]);
+    }, [client, handleExecuteRef]);
 
     if (data == null) {
         return null;

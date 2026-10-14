@@ -30,9 +30,6 @@ import {
     TableHeader,
     TableHeadRow,
     TableRow,
-    Tabs,
-    TabsList,
-    TabsTrigger
 } from '@clidey/ux';
 import type {
     GetColumnsBatchQuery,
@@ -192,7 +189,23 @@ const StorageUnitCard: FC<{
         return [ unit.Attributes.slice(0,4), unit.Attributes.slice(4) ];
     }, [unit.Attributes]);
 
-    return (<ExpandableCard key={unit.Name} isExpanded={expanded} setExpanded={handleSetExpanded} icon={<TableCellsIcon className="w-4 h-4" />} collapsedTag={<span className="ce-table-card-type">{objectLabel}</span>} className={cn('ce-table-card', {
+    // Prefer the object's own type (e.g. "view") over the generic label so views aren't shown as tables.
+    const objectType = useMemo(() => {
+        const type = unit.Attributes.find(attribute => attribute.Key === "Type")?.Value?.trim();
+        if (type == null || type === "") return objectLabel;
+        return type;
+    }, [objectLabel, unit.Attributes]);
+
+    const cardMeta = useMemo(() => {
+        const parts = introAttributes
+            .filter(attribute => attribute.Key !== "Type")
+            .slice(0, 2)
+            .map(attribute => formatAttributeValue(attribute.Key, attribute.Value));
+        if (columnCount != null) parts.unshift(t('columnCount', { count: columnCount }));
+        return parts.join(' · ');
+    }, [columnCount, introAttributes, t]);
+
+    return (<ExpandableCard key={unit.Name} isExpanded={expanded} setExpanded={handleSetExpanded} icon={<TableCellsIcon className="w-4 h-4" />} collapsedTag={<span className="ce-table-card-type" data-testid="storage-unit-type">{objectType}</span>} className={cn('ce-table-card', {
         "shadow-2xl exploring-storage-unit": expanded,
     })} data-testid="storage-unit-card" data-table-name={unit.Name}>
         <div className="flex flex-col grow cursor-pointer" data-testid="storage-unit-card" data-table-name={unit.Name}>
@@ -207,7 +220,7 @@ const StorageUnitCard: FC<{
                     </h1>
                     <p className={cn("text-xs", ph.mask)}>{unit.Name}</p>
                 </Tip>
-                <p className="ce-table-card-meta">{columnCount != null ? t('columnCount', { count: columnCount }) : introAttributes.slice(0, 2).map(attribute => formatAttributeValue(attribute.Key, attribute.Value)).join(' · ')}</p>
+                <p className="ce-table-card-meta">{cardMeta}</p>
             </div>
             <div className="flex flex-row justify-end gap-xs" onClick={(e) => { e.stopPropagation(); }}>
                 <Button onClick={handleExpand} data-testid="explore-button" variant="secondary">
@@ -493,7 +506,7 @@ export const StorageUnitPage: FC = () => {
                 if (a.HasChildren !== b.HasChildren) {
                     return a.HasChildren ? -1 : 1;
                 }
-                return (a.Name ?? "").localeCompare(b.Name ?? "");
+    return (a.Name ?? "").localeCompare(b.Name ?? "");
             });
     }, [filterValue, storageUnits]);
 
@@ -513,6 +526,14 @@ export const StorageUnitPage: FC = () => {
             },
         });
     }, [item, navigate, trail]);
+
+    const handleViewChange = useCallback((value: 'list' | 'card') => {
+        trackOptionChanged('storage_unit_view', value, {
+            view_mode: value,
+            database_type: currentType ?? 'unknown',
+        });
+        dispatch(SettingsActions.setStorageUnitView(value as 'list' | 'card'));
+    }, [currentType, dispatch]);
 
     const previousBrowserState = useMemo<StorageBrowserState | undefined>(() => {
         if (trail.length === 0) {
@@ -569,24 +590,16 @@ export const StorageUnitPage: FC = () => {
                 <SearchInput value={filterValue} onChange={(e) => { setFilterValue(e.target.value); }} placeholder={t('searchPlaceholder')} />
             </div>
             <div className="ce-tables-actions">
-                <Tabs value={view} onValueChange={value => {
-                    trackOptionChanged('storage_unit_view', value, {
-                        view_mode: value,
-                        database_type: currentType ?? 'unknown',
-                    });
-                    dispatch(SettingsActions.setStorageUnitView(value as 'list' | 'card'));
-                }}>
-                    <TabsList>
-                        <Tip className="w-fit">
-                            <TabsTrigger value="card" data-testid="icon-button" aria-label={t('cardView')}><Squares2X2Icon className="w-4 h-4" /></TabsTrigger>
-                            <p>{t('cardView')}</p>
-                        </Tip>
-                        <Tip className="w-fit">
-                            <TabsTrigger value="list" data-testid="icon-button" aria-label={t('listView')}><Bars3Icon className="w-4 h-4" /></TabsTrigger>
-                            <p>{t('listView')}</p>
-                        </Tip>
-                    </TabsList>
-                </Tabs>
+                <div className="ce-tables-view-toggle" role="group" aria-label={t('viewMode')} data-testid="storage-unit-view-toggle">
+                    <Tip className="w-fit">
+                        <Button variant={view === 'card' ? 'secondary' : 'ghost'} size="icon" onClick={() => { handleViewChange('card'); }} data-testid="icon-button" aria-label={t('cardView')} aria-pressed={view === 'card'}><Squares2X2Icon className="w-4 h-4" /></Button>
+                        <p>{t('cardView')}</p>
+                    </Tip>
+                    <Tip className="w-fit">
+                        <Button variant={view === 'list' ? 'secondary' : 'ghost'} size="icon" onClick={() => { handleViewChange('list'); }} data-testid="icon-button" aria-label={t('listView')} aria-pressed={view === 'list'}><Bars3Icon className="w-4 h-4" /></Button>
+                        <p>{t('listView')}</p>
+                    </Tip>
+                </div>
                 {supportsScratchpad &&
                     <Button onClick={() => { void navigate(InternalRoutes.RawExecute.path); }} data-testid="scratchpad-button" variant="secondary">
                         <CommandLineIcon className="w-4 h-4" /> {t('scratchpad')}

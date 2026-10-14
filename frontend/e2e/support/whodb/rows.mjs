@@ -64,8 +64,13 @@ export const rowsMethods = {
             await editorContainer.locator('[role="textbox"]').fill(jsonString);
         } else {
             for (const [key, value] of Object.entries(data)) {
-                await this.page.locator(`[data-testid="add-row-field-${key}"] input`).clear();
-                await this.page.locator(`[data-testid="add-row-field-${key}"] input`).fill(value);
+                const input = this.page.locator(`[data-testid="add-row-field-${key}"] input`);
+                // Identity columns are auto-generated and their inputs are disabled.
+                if (await input.isDisabled()) {
+                    continue;
+                }
+                await input.clear();
+                await input.fill(value);
             }
         }
 

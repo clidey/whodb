@@ -210,7 +210,7 @@ describeOrSkip('Browser Storage', () => {
         });
 
         test('persists border radius preference', async ({ whodb, page }) => {
-            await whodb.goto('settings');
+            await whodb.gotoSettingsTab('behavior');
             await page.locator('#border-radius').click();
             await page.locator('[data-value="none"]').click();
 
@@ -253,26 +253,21 @@ describeOrSkip('Browser Storage', () => {
             expect(await readPersistedSetting(page, 'defaultPageSize')).toEqual(50);
         });
 
-        // Skipped: language selector is not currently exposed in the settings UI
-        test.skip('persists language preference', async ({ whodb, page }) => {
-            await whodb.goto('settings');
+        test('persists language preference', async ({ whodb, page }) => {
+            await whodb.gotoSettingsTab('behavior');
             await page.locator('#language').click();
-            await page.locator('[data-value="es"]').click();
+            await page.locator('[data-value="es_ES"]').click();
 
             await page.reload();
             await expect(page.locator('[data-testid="sidebar-profile"]')).toBeAttached({ timeout: 10000 });
 
-            expect(await readPersistedSetting(page, 'language')).toEqual('es');
+            expect(await readPersistedSetting(page, 'language')).toEqual('es_ES');
         });
 
         test('persists metrics enabled preference', async ({ whodb, page }) => {
-            await whodb.goto('settings');
-            const toggle = page.locator('button[role="switch"]').first();
-            const count = await toggle.count();
-            if (count === 0) {
-                test.skip();
-                return;
-            }
+            await whodb.gotoSettingsTab('privacy');
+            const toggle = page.locator('#settings-metrics');
+            await expect(toggle).toBeVisible();
 
             // Ensure telemetry is ON, then turn it OFF
             const state = await toggle.getAttribute('data-state');

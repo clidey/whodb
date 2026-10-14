@@ -1281,7 +1281,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                 key={index}
                 data-row-idx={index}
                 role="row"
-                aria-rowindex={index + 1}
+                aria-rowindex={index + 2}
                 aria-selected={isSelected}
                 data-focused={isFocused || undefined}
                 tabIndex={isFocused ? 0 : -1}
@@ -1561,7 +1561,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                     <TableHeader data-column-count={columns.length}>
                         <ContextMenu>
                             <ContextMenuTrigger asChild>
-                                    <TableHeadRow role="row" aria-rowindex={0} className="group relative cursor-context-menu hover:bg-muted/50 transition-colors" title={t('rightClickForOptions')}>
+                                    <TableHeadRow role="row" aria-rowindex={1} className="group relative cursor-context-menu hover:bg-muted/50 transition-colors" title={t('rightClickForOptions')}>
                                         <TableHead className={cn("ce-table-selection-cell min-w-[40px] w-[40px] relative", {
                                             "hidden": disableEdit,
                                         })}>
@@ -1853,7 +1853,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                     columns.map((col, idx) => (
                                         <div key={col} className={cn("flex flex-col gap-2", ph.noCapture)}>
                                             <div className="flex flex-col gap-0.5">
-                                                <Label>{col}</Label>
+                                                <Label htmlFor={`edit-row-field-${idx}`}>{col}</Label>
                                                 {columnTypes?.[idx] && (
                                                     <span className="text-xs text-muted-foreground">
                                                         {t('typeHint', { type: columnTypes[idx] })}
@@ -1864,6 +1864,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                                 editRowInitialLengths[idx] < 50 ?
                                                     <Input
                                                         key={`input-${col}`}
+                                                        id={`edit-row-field-${idx}`}
                                                         value={editRow[idx] ?? ""}
                                                         onChange={e => { handleInputChange(e.target.value, idx); }}
                                                         data-testid={`editable-field-${idx}`}
@@ -1871,6 +1872,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                                     />
                                                     : <TextArea
                                                         key={`textarea-${col}`}
+                                                        id={`edit-row-field-${idx}`}
                                                         value={editRow[idx] ?? ""}
                                                         onChange={e => { handleInputChange(e.target.value, idx); }}
                                                         rows={5}
@@ -1934,7 +1936,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                 />
                                 <Label>{t('method')}</Label>
                                 <Select value={mockDataMethod} onValueChange={setMockDataMethod}>
-                                    <SelectTrigger className="w-full" data-testid="mock-data-method-select">
+                                    <SelectTrigger className="w-full" data-testid="mock-data-method-select" aria-label={t('method')}>
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -1943,7 +1945,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                 </Select>
                                 <Label>{t('dataHandling')}</Label>
                                 <Select value={mockDataOverwriteExisting} onValueChange={setMockDataOverwriteExisting}>
-                                    <SelectTrigger className="w-full" data-testid="mock-data-handling-select">
+                                    <SelectTrigger className="w-full" data-testid="mock-data-handling-select" aria-label={t('dataHandling')}>
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -1958,7 +1960,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                             <p className="text-sm text-muted-foreground mb-2">{t('fkVarietyDescription')}</p>
                                         </div>
                                         <Select value={mockDataFkDensityRatio} onValueChange={setMockDataFkDensityRatio}>
-                                            <SelectTrigger className="w-full" data-testid="mock-data-fk-variety-select">
+                                            <SelectTrigger className="w-full" data-testid="mock-data-fk-variety-select" aria-label={t('fkVariety')}>
                                                 <SelectValue />
                                             </SelectTrigger>
                                             <SelectContent>

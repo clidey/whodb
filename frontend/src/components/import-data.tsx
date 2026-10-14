@@ -523,7 +523,7 @@ export const ImportData: FC<ImportDataProps> = ({
               <div className="space-y-2">
                 <Label>{t("format")}</Label>
                 <Select value={mode} onValueChange={(value) => { setMode(value as ImportModeType); }}>
-                  <SelectTrigger data-testid="import-mode-select">
+                  <SelectTrigger data-testid="import-mode-select" aria-label={t("format")}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -539,7 +539,7 @@ export const ImportData: FC<ImportDataProps> = ({
                     <div className="space-y-2">
                       <Label>{t("delimiter")}</Label>
                       <Select value={delimiter} onValueChange={(value) => { setDelimiter(value); }}>
-                        <SelectTrigger data-testid="import-delimiter-select">
+                        <SelectTrigger data-testid="import-delimiter-select" aria-label={t("delimiter")}>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -562,6 +562,7 @@ export const ImportData: FC<ImportDataProps> = ({
                       type="file"
                       accept=".csv,.xlsx,.xlsm"
                       data-testid="import-data-file-input"
+                      aria-label={t("dataFile")}
                       className="ce-import-file-input"
                       onClick={(event) => {
                         (event.target as HTMLInputElement).value = "";

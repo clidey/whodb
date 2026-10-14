@@ -187,7 +187,7 @@ export const Export: FC<IExportProps> = ({
                                     value={exportFormat}
                                     onValueChange={(value) =>{  setExportFormat(value as 'csv' | 'excel' | 'ndjson'); }}
                                 >
-                                    <SelectTrigger className="w-full" data-testid="export-format-select">
+                                    <SelectTrigger className="w-full" data-testid="export-format-select" aria-label={t('format')}>
                                         <SelectValue>
                                             {
                                                 exportFormatOptions.find(opt => opt.value === exportFormat)?.label
@@ -211,7 +211,7 @@ export const Export: FC<IExportProps> = ({
                                             value={exportDelimiter}
                                             onValueChange={(value) =>{  setExportDelimiter(value); }}
                                         >
-                                            <SelectTrigger className="w-full" data-testid="export-delimiter-select">
+                                            <SelectTrigger className="w-full" data-testid="export-delimiter-select" aria-label={t('delimiter')}>
                                                 <SelectValue>
                                                     {
                                                         exportDelimiterOptions.find(opt => opt.value === exportDelimiter)?.label

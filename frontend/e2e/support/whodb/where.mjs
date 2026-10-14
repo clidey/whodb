@@ -20,6 +20,22 @@ import {TIMEOUT} from "../helpers/test-utils.mjs";
 /** Methods for where-condition management */
 export const whereMethods = {
     /**
+     * Open the "all filters" sheet from the Filter button, retrying once if the click
+     * lands while the previous sheet is still closing.
+     */
+    async openConditionsSheet() {
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await this.page.waitForFunction(() => document.body.style.pointerEvents !== "none");
+            await this.page.locator('[data-testid="where-button"]').click();
+            const dialog = this.page.locator('[role="dialog"]');
+            if (await dialog.waitFor({ state: "visible", timeout: 3000 }).then(() => true).catch(() => false)) {
+                return;
+            }
+        }
+        throw new Error("Conditions sheet did not open");
+    },
+
+    /**
      * Add where conditions to the table
      * @param {Array<[string, string, string]>} fieldArray
      */
@@ -57,6 +73,11 @@ export const whereMethods = {
                 await sheetValueLocator.fill(value);
                 await expect(sheetValueLocator).toHaveValue(value);
             } else {
+                // Adding a condition closes the popover, so reopen it for each additional one.
+                if (index > 0) {
+                    await this.page.locator('[data-testid="where-button"]').click();
+                    await this.page.locator('[data-testid="field-key"]').first().waitFor({ timeout: TIMEOUT.ELEMENT });
+                }
                 await this.page.locator('[data-testid="field-key"]').first().click();
                 await this.page.locator(`[data-value="${key}"]`).click();
 

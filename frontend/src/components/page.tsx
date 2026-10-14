@@ -171,7 +171,7 @@ export const InternalPage: FC<IInternalPageProps> = (props) => {
                                 </div>
                             </div>
                         </div>
-                        {!isTablesPage && !isExplorePage && !isWorkspacePage && <ConnectionContext />}
+                        {!isTablesPage && <ConnectionContext />}
                     </div>
                     {
                         !isLoggedIn

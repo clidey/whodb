@@ -308,6 +308,9 @@ export const coreMethods = {
             return;
         }
 
+        // A closing Radix overlay (e.g. a Select) briefly sets pointer-events: none on body, which swallows forced clicks.
+        await this.page.waitForFunction(() => document.body.style.pointerEvents !== "none", null, { timeout: TIMEOUT.ELEMENT });
+
         const sidebarTriggerVisible = await this.page.locator('[data-sidebar="trigger"]').filter({ visible: true }).count();
         const bodyText = await this.page.locator("body").innerText();
         if (sidebarTriggerVisible > 0 && !bodyText.includes("Logout Profile")) {

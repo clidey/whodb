@@ -305,6 +305,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
     const currentType = useAppSelector(state => state.auth.current?.Type);
     const handleExecute = useRef<(code: string, signal?: AbortSignal) => Promise<any>>(() => Promise.resolve());
     const [historyOpen, setHistoryOpen] = useState(false);
+    const historyHeadingRef = useRef<HTMLDivElement>(null);
     const [error, setError] = useState<Error | null>(null);
     const [loading, setLoading] = useState(false);
     const [elapsed, setElapsed] = useState(0);
@@ -727,13 +728,14 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                 <Button variant="outline" size="sm" onClick={cancelExecute} data-testid="scratchpad-cancel">{t('cancel')}</Button>
             </div>}
             {loading && <div className="ce-scratchpad-skeleton" aria-hidden="true"><span /><span /><span /></div>}
-            {!loading && rows && <div className="ce-scratchpad-result-heading"><span>{t('result')}</span><Badge variant="secondary">{t('rowCount', { count: rows.Rows?.length ?? 0 })}</Badge></div>}
+            {!loading && rows && rows.Columns.length > 0 && <div className="ce-scratchpad-result-heading"><span>{t('result')}</span><Badge variant="secondary">{t('rowCount', { count: rows.Rows?.length ?? 0 })}</Badge></div>}
             {!loading && output}
             <Sheet open={historyOpen} onOpenChange={setHistoryOpen}>
-                <SheetContent className="min-w-[50vw] max-w-[50vw] p-0">
+                {/* Focus the heading on open so the first Escape closes the sheet instead of a focused button's tooltip. */}
+                <SheetContent className="min-w-[50vw] max-w-[50vw] p-0" onOpenAutoFocus={(event) => { event.preventDefault(); historyHeadingRef.current?.focus(); }}>
                     <div className="flex flex-col h-full">
                         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2" ref={historyHeadingRef} tabIndex={-1}>
                                 <ClockIcon className="w-5 h-5" />
                                 <span className="font-semibold text-lg">{t('queryHistory')}</span>
                             </div>
@@ -1145,7 +1147,7 @@ export const RawExecutePage: FC = () => {
                                             <p>{t('addPage')}</p>
                                         </Tip>
                                     </TabsList>
-                                    <div ref={setToolbarTarget} />
+                                    <div ref={setToolbarTarget} data-testid="scratchpad-toolbar" />
                                 </div>
                                 <TabsContent value={activePageId ?? ""} className="h-full w-full mt-2">
                                     <AnimatePresence mode="wait">

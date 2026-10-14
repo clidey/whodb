@@ -248,6 +248,12 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
         });
     }
 
+    // Navigation and table actions stay visible while searching; per-column sort commands are filtered.
+    const searchQuery = search.trim().toLowerCase();
+    const visibleSortActions = sortActions.filter(action => action.label.toLowerCase().includes(searchQuery));
+    // Navigation and table actions always stay available, so "no results" only covers searchable items.
+    const showNoResults = searchQuery !== "" && matchingTables.length === 0 && visibleSortActions.length === 0;
+
     return (
         <Dialog open={open} onOpenChange={handlePaletteOpenChange}>
             <DialogContent className="ce-command-palette p-0 overflow-hidden top-[18vh] translate-y-0" showCloseButton={false} data-testid="command-palette">
@@ -260,6 +266,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
                     />
                     <kbd className="ce-command-escape" aria-hidden="true">esc</kbd>
                     <CommandList className="max-h-[400px]">
+                        {showNoResults && <div className="py-4 text-center text-sm text-muted-foreground" role="status" data-testid="command-palette-empty">{t('noResults')}</div>}
                         {matchingTables.length > 0 && <CommandGroup heading={t('tables')}>
                             {matchingTables.map(unit => <CommandItem key={unit.Name} value={unit.Name} onSelect={() => {
                                 void navigate(InternalRoutes.Dashboard.ExploreStorageUnit.path, {
@@ -307,9 +314,9 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
                             </CommandGroup>
                         )}
 
-                        {sortActions.length > 0 && (
+                        {visibleSortActions.length > 0 && (
                             <CommandGroup heading={t('sortBy')}>
-                                {sortActions.map((action) => (
+                                {visibleSortActions.map((action) => (
                                     <CommandItem
                                         key={action.id}
                                         value={action.label}

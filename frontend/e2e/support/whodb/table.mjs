@@ -224,7 +224,9 @@ export const tableMethods = {
             const table = Array.from(document.querySelectorAll("table"))
                 .find((el) => el.querySelector("tbody tr"));
             if (table) {
-                const columns = Array.from(table.querySelectorAll("th")).map((el) => el.innerText.trim());
+                // Headers also render key badges and the column type, so prefer the column-name attribute.
+                const columns = Array.from(table.querySelectorAll("th"))
+                    .map((el) => el.getAttribute("data-column-name") ?? el.innerText.trim());
                 const rows = Array.from(table.querySelectorAll("tbody tr")).map((row) => {
                     return Array.from(row.querySelectorAll("td")).map((cell) => cell.innerText.trim());
                 });

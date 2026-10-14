@@ -21,6 +21,7 @@ import {
     AlertTitle,
     Button,
     Card,
+    Checkbox,
     cn,
     Dialog,
     DialogContent,
@@ -72,6 +73,7 @@ import {extensions, featureFlags} from "../../config/features";
 import {InternalRoutes} from "../../config/routes";
 import {HoudiniActions, type IChatMessage} from "../../store/chat";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
+import {reduxStorePersistor} from "../../store";
 import {ScratchpadActions} from "../../store/scratchpad";
 import {getComponent} from "../../config/component-registry";
 import {useSourceContract} from "../../hooks/useSourceContract";
@@ -89,6 +91,7 @@ import {
     frontendAnalyticsErrorCode,
     textLengthBucket,
     trackFrontendIntent,
+    trackOptionChanged,
     trackScreenViewed,
 } from "../../config/frontend-analytics";
 
@@ -329,16 +332,16 @@ const TablePreview: FC<{ type: string, data: TableData, text: string, containerW
             </DropdownMenu>
         </div>
         <div className="ce-chat-result-body flex flex-col gap-lg overflow-hidden break-all leading-6 shrink-0 w-full max-w-full min-w-0">
-            {data != null && <div className="ce-chat-result-heading"><strong>{t('result')}</strong><span>{t('rowCount', {count: data.Rows.length})}</span><span className="ce-chat-result-complete">{t('complete')}</span></div>}
+            {data != null && <div className="ce-chat-result-heading" data-testid="chat-result-heading"><strong>{t('result')}</strong><span>{t('rowCount', {count: data.Rows.length})}</span><span className="ce-chat-result-complete">{t('complete')}</span></div>}
             {
                 __WHODB_EDITION__ === 'ce' && data != null
                 ? <>
                     {showSQL
-                        ? <pre className="ce-chat-result-sql">{text}</pre>
+                        ? <pre className="ce-chat-result-sql" data-testid="chat-result-sql">{text}</pre>
                         : data.Rows.length > 0
                             ? <div className="ce-chat-result-grid"><table><thead><tr>{data.Columns.map(column => <th key={column.Name}>{column.Name}</th>)}</tr></thead><tbody>{keyedRows.map(({row, key}) => <tr key={key}>{data.Columns.map((column, index) => <td key={column.Name}>{row[index]}</td>)}</tr>)}</tbody></table></div>
                             : <p className="ce-chat-result-empty">{t('noDataReturned')}</p>}
-                    <div className="ce-chat-result-actions"><button type="button" onClick={handleCodeToggle}><WhoDBChatIcon name="code" />{showSQL ? t('showTable') : t('sql')}</button><button type="button" onClick={handleExport}><WhoDBChatIcon name="download" />{t('export')}</button></div>
+                    <div className="ce-chat-result-actions"><button type="button" onClick={handleCodeToggle}><WhoDBChatIcon name="code" />{showSQL ? t('showTable') : t('sql')}</button><button type="button" onClick={handleExport} data-testid="chat-result-export"><WhoDBChatIcon name="download" />{t('export')}</button>{canMoveToScratchpad && <button type="button" onClick={handleMoveToScratchpad} data-testid="chat-result-move-to-scratchpad"><WhoDBChatIcon name="code" />{t('moveToScratchpad')}</button>}</div>
                 </>
                 : __WHODB_EDITION__ === 'ce' && unhandledTool
                 ? <div className="ce-chat-result-empty"><strong>{t('toolResponseNotExecuted')}</strong><span>{unhandledTool}</span></div>
@@ -1006,6 +1009,25 @@ export const ChatPage: FC = () => {
         setLoading(false);
     }, [dispatch]);
 
+    const handleAutoScrollChange = useCallback((enabled: boolean) => {
+        if (activeSessionId) {
+            dispatch(HoudiniActions.updateSessionAutoScroll({ sessionId: activeSessionId, autoScrollEnabled: enabled }));
+            void reduxStorePersistor.flush();
+        }
+        trackOptionChanged('chat_auto_scroll', enabled);
+        if (!enabled) {
+            return;
+        }
+        setTimeout(() => {
+            if (scrollContainerRef.current != null) {
+                scrollContainerRef.current.scroll({
+                    top: scrollContainerRef.current.scrollHeight,
+                    behavior: "smooth",
+                });
+            }
+        }, 0);
+    }, [activeSessionId, dispatch]);
+
     const handleClear = useCallback(() => {
         trackFrontendIntent('chat.cleared', {
             message_count_bucket: countBucket(chats.length),
@@ -1140,15 +1162,23 @@ export const ChatPage: FC = () => {
     const assistantAvatar = <span className="ce-chat-avatar">{extensions.MetaIcon ?? <img src={logoImage} alt="" />}</span>;
 
     return (
-        <InternalPage routes={[InternalRoutes.Chat]} className="h-full min-w-0 !overflow-hidden" sidebar={__WHODB_EDITION__ === 'ce' ? undefined : <ChatHistorySidebar />} subSidebarWidth="18rem" fullHeight>
+        <InternalPage routes={[InternalRoutes.Chat]} className="h-full min-w-0 !overflow-hidden" sidebar={<ChatHistorySidebar />} subSidebarWidth="18rem" fullHeight>
             <div className="ce-chat-page flex h-full min-h-0 w-full min-w-0 flex-col">
                 <div className="ce-chat-toolbar flex min-h-11 w-full items-center border-b border-border px-3 pb-2">
                     <AIProvider
                         {...aiState}
                         onClear={handleClear}
-                        disableNewChat
+                        footerAction={(
+                            <label className="ce-chat-auto-scroll flex h-9 items-center gap-2 rounded-md border border-input bg-transparent px-3 text-sm text-foreground">
+                                <Checkbox
+                                    checked={autoScrollEnabled}
+                                    onCheckedChange={checked => { handleAutoScrollChange(checked === true); }}
+                                    data-testid="chat-auto-scroll-toggle"
+                                />
+                                <span>{t('autoScroll')}</span>
+                            </label>
+                        )}
                     />
-                    <Button size="sm" variant="outline" onClick={handleClear} data-testid="chat-new-chat"><WhoDBChatIcon name="plus" />{t('newChat')}</Button>
                 </div>
                 <div className="flex min-h-0 w-full flex-1 overflow-hidden">
                     {
@@ -1337,7 +1367,7 @@ export const ChatPage: FC = () => {
                         </div>
                     }
                 </div>
-                {loading && <div className="ce-chat-pinned-progress">
+                {loading && <div className="ce-chat-pinned-progress" data-testid="chat-loading">
                     <div className="ce-chat-thinking" role="status">
                         <div className="ce-chat-thinking-heading"><div><img src={logoImage} alt="" className="ce-chat-working-avatar" /><strong>{t('workingOnIt')}</strong><span className="ce-chat-thinking-count">{progressSteps.filter(item => item.status === 'completed').length}/{progressSteps.length || 1}</span></div><span>{t('runOnSource', {source: authProfile?.Database === 'whodb-sample' ? t('sampleDatabase') : (authProfile?.Database ?? '')})}</span></div>
                         <div className="ce-chat-thinking-list">

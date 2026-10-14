@@ -898,8 +898,8 @@ export const LoginForm: FC<LoginFormProps> = ({
     }, [databaseType, t]);
 
     const promotedConnectionFieldKeys = useMemo(() => {
-        return getPromotedConnectionFieldKeys(databaseType, landing ? { omitKeys: ['Search Path'] } : {});
-    }, [databaseType, landing]);
+        return getPromotedConnectionFieldKeys(databaseType);
+    }, [databaseType]);
 
     const fields = useMemo(() => {
         if (databaseType.customFormRenderer) {

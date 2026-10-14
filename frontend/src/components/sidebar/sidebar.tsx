@@ -810,6 +810,7 @@ export const Sidebar: FC = () => {
                                         buttonProps={{
                                             "data-testid": "sidebar-profile",
                                             "data-collapsed": !open,
+                                            "aria-label": t('profile'),
                                         }}
                                     />
                                 </div>
@@ -864,6 +865,7 @@ export const Sidebar: FC = () => {
                                         <SidebarMenuButton asChild tooltip={open ? undefined : route.title} isActive={pathname === route.path || (pathname.includes(InternalRoutes.Dashboard.ExploreStorageUnit.path) && route.path === InternalRoutes.Dashboard.StorageUnit.path)}>
                                             <Link
                                                 to={route.path}
+                                                aria-label={open ? undefined : route.title}
                                                 className={cn("flex w-full items-center gap-2", {
                                                     "font-bold": pathname === route.path,
                                                 })}
@@ -901,6 +903,7 @@ export const Sidebar: FC = () => {
                                         <SidebarMenuButton asChild tooltip={t('contact')}>
                                             <Link
                                                 to={InternalRoutes.ContactUs.path}
+                                                aria-label={open ? undefined : t('contact')}
                                                 className={cn("flex items-center gap-2", {
                                                     "font-bold": pathname === InternalRoutes.ContactUs.path,
                                                 })}
@@ -916,6 +919,7 @@ export const Sidebar: FC = () => {
                                         <SidebarMenuButton asChild tooltip={t('settings')}>
                                             <Link
                                                 to={InternalRoutes.Settings.path}
+                                                aria-label={open ? undefined : t('settings')}
                                                 className={cn("flex items-center gap-2", {
                                                     "font-bold": pathname === InternalRoutes.Settings.path,
                                                 })}
@@ -929,7 +933,14 @@ export const Sidebar: FC = () => {
                                 {!isEmbedded && (
                                     <SidebarMenuItem className="flex justify-between items-center w-full overflow-hidden">
                                         <SidebarMenuButton asChild tooltip={t('disconnect')} className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-sm text-nowrap w-fit cursor-pointer" onClick={handleLogoutProfile}>
+                                            <div
+                                                className="flex items-center gap-sm text-nowrap w-fit cursor-pointer"
+                                                role="button"
+                                                tabIndex={0}
+                                                aria-label={open ? undefined : t('disconnect')}
+                                                onClick={handleLogoutProfile}
+                                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleLogoutProfile(); } }}
+                                            >
                                                 <WhoDBChatIcon name="signout" />
                                                 {open && <span>{t('disconnect')}</span>}
                                             </div>
