@@ -260,6 +260,10 @@ export const tableMethods = {
     async setTablePageSize(pageSize) {
         await this.page.locator('[data-testid="table-page-size"]').click();
         await this.page.locator(`[role="option"][data-value="${pageSize}"]`).click();
+        // While the listbox is open Radix hides the rest of the page from the accessibility tree,
+        // so make sure it has closed before callers query roles.
+        await this.page.locator('[role="listbox"]').waitFor({ state: "hidden", timeout: TIMEOUT.ELEMENT });
+        await expect(this.page.locator('[data-testid="table-page-size"]')).toContainText(String(pageSize));
     },
 
     /**

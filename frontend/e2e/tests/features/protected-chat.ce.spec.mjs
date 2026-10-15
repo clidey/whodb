@@ -90,7 +90,7 @@ forEachDatabase('sql', (db) => {
                 if (!response.url().endsWith('/api/query')) return false;
                 return response.request().postDataJSON()?.operationName === 'ExecuteConfirmedSQL';
             });
-            await confirmation.getByRole('button', { name: 'Yes', exact: true }).click();
+            await confirmation.getByRole('button', { name: 'Run statement', exact: true }).click();
             const confirmedBody = await (await confirmed).json();
             expect(confirmedBody.errors).toBeUndefined();
             expect(confirmedBody.data.ExecuteConfirmedSQL.Type).not.toBe('error');
