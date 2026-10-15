@@ -144,9 +144,15 @@ Document:
 </Step>
 
 <Step title="Document Index Strategy">
-Review indexes to ensure optimal query performance:
+The table details panel lists each column with its type and key markers. Use it to spot the columns that are likely to need indexes, such as foreign keys:
 
-![Explore Table With Indexes](/images/100-explore-table-with-indexes.png)
+![Order Items Table Details](/images/100-explore-table-with-indexes.png)
+
+The panel does not list indexes. To review them, run a query in the Scratchpad. On PostgreSQL, for example:
+
+```sql
+SELECT indexname, indexdef FROM pg_indexes WHERE tablename = 'order_items';
+```
 
 Check:
 - Are heavily-queried columns indexed?

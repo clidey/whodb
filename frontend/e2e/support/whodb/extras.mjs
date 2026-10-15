@@ -320,7 +320,10 @@ export const extrasMethods = {
         await this.page.evaluate(
             ({ element, borderColor, borderWidth, borderRadius, padding, shadow }) => {
                 if (!element) return;
-                const rect = element.getBoundingClientRect();
+                // body uses CSS zoom; rects are in zoomed pixels but fixed styles are re-zoomed
+                const zoom = parseFloat(getComputedStyle(document.body).zoom) || 1;
+                const r = element.getBoundingClientRect();
+                const rect = { top: r.top / zoom, left: r.left / zoom, width: r.width / zoom, height: r.height / zoom };
                 const overlay = document.createElement("div");
                 const paddingPx = parseInt(padding);
 
