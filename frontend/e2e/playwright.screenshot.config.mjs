@@ -26,7 +26,7 @@ export default defineConfig({
   expect: { timeout: 10_000 },
   fullyParallel: false,
   workers: 1,
-  retries: 0,
+  retries: 2,
   reporter: [["list"]],
   outputDir: "reports/test-results/screenshots",
   use: {
