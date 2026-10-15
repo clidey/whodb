@@ -20,6 +20,8 @@ ee/.github/workflows/
   go-deps.yml             # EE dependency checks
   security.yml            # EE security checks
   release-ee.yml          # EE release orchestrator
+  _build-docker-ee.yml
+  _deploy-docker-ee.yml
   _build-docker-bridge.yml
   _deploy-docker-bridge.yml
 

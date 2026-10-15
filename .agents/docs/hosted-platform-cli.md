@@ -88,9 +88,17 @@ compatibility. The manifest tells the CLI which hosted operations and fields are
 available. It is not a permission system; the backend still enforces access for
 every request.
 
-The CLI caches the manifest in the local config with the platform version. When
-the platform version changes, or a GraphQL validation error indicates schema
-drift, the CLI refreshes the manifest and retries the failed request once.
+The CLI caches the manifest in the local config with the platform version. It
+confirms the version against the server at most once every ten minutes rather
+than on every command. When the platform version changes, or a GraphQL
+validation error indicates schema drift, the CLI refreshes the manifest and
+retries the failed request once.
+
+Commands that take `--org` and `--project` use the saved default workspace
+directly when neither flag is given, without listing organizations and projects
+first. Naming an organization or project by id, slug or name still resolves it
+against the server. A default that no longer exists surfaces as the error from
+the command's own request.
 
 ```bash
 whodb manifest
@@ -156,19 +164,48 @@ whodb sources delete local-postgres
 whodb sources delete local-postgres --yes
 ```
 
+## Platform MCP (default)
+
+`whodb mcp serve` exposes hosted platform tools. Sign in to each required host with
+`whodb login --host <url>`. Start with `whodb_platform_hosts` to discover saved
+hosts and accounts, then `whodb_platform_orgs` with `workspace: {host}` and
+`whodb_platform_projects` with `workspace: {host, org}`.
+
+When the user wants the whole conversation on one host (for example UAT or
+production), call `whodb_platform_session_use` once with
+`workspace: {host, org, project}`. It verifies the login, resolves canonical IDs,
+and becomes the default for later calls in this MCP session only. It is never
+saved to disk, so other chats and terminals keep their own defaults. Confirm
+with `whodb_platform_status`, which reports `session_scope`. Use
+`whodb_platform_session_clear` to drop it.
+
+For one-off calls to another host or project, pass an explicit
+`workspace: {host, org, project}` on that call. Resolve it first with
+`whodb_platform_workspace_resolve` if unsure. Per-call targets, including
+parallel calls, never change the session default or saved defaults. Check the
+returned `scope`. Resolution order for an omitted `workspace`: session default,
+then process overrides, then saved defaults. Do not run `whodb use` to switch
+hosts for one chat; it rewrites the saved default for every session. Read
+`whodb://platform/schema` for operations and payloads.
+
+Writes return a preview bound to its host, account, organization, and project.
+Confirm only after approval of that exact preview. Changing defaults does not
+redirect a pending confirmation. Ask for `whodb login --host <url>` when a host
+needs authentication; no separate login is needed per project.
+
 ## MCP Platform Tools
 
-Hosted platform MCP mode is opt-in:
+Saved setup settings select modules. Platform is the default; `whodb setup` can enable database-only tools or both modules in the same server:
 
 ```bash
-whodb mcp serve --platform
+whodb mcp serve
 ```
 
 Each MCP process can select its own host and workspace without changing the
 global default:
 
 ```bash
-whodb mcp serve --platform \
+whodb mcp serve \
   --platform-host http://localhost:8080 \
   --platform-org acme \
   --platform-project analysis
@@ -178,10 +215,43 @@ The same `WHODB_PLATFORM_SESSION_HOST`, `WHODB_PLATFORM_SESSION_ORG`, and
 `WHODB_PLATFORM_SESSION_PROJECT` environment variables work for MCP processes,
 which is useful for defining several independent MCP server entries.
 
-The platform tools use the existing hosted login and selected workspace:
+Flags and environment variables pin a default for the whole process, so every
+chat that launches the same MCP entry gets the same host. To give each chat its
+own host without separate MCP entries, let the agent call
+`whodb_platform_session_use` with `workspace {host, org, project}` at the start
+of the conversation. That default lives in memory for that MCP session only:
+nothing is written to the CLI config, other sessions are unaffected, and
+`whodb_platform_session_clear` removes it. `whodb_platform_status` and
+`whodb_platform_setup_status` report the active `session_scope`.
+
+Resolution order when a call omits `workspace`: session default, then process
+flags/environment, then the saved CLI default. An explicit `workspace` on a call
+always wins for that call. `--platform-policy` still limits which hosts and
+workspaces any of these may select.
+
+Resolving a workspace needs the host's manifest and the account's organization
+and project lists. The MCP server caches those per process: the manifest per
+host for five minutes, the lists per host and signed-in account for one minute.
+Entries are keyed by account, so hosts, accounts and sessions never share them.
+When a cached list has no match the server fetches it once more before
+reporting "not found", and every write drops the account's cached lists, so a
+workspace created a moment ago resolves immediately. `whodb_platform_orgs` and
+`whodb_platform_projects` always list live and refresh the cache. The tool's
+own query is never cached.
+
+Every platform request carries an `X-WhoDB-Client` header (`whodb-cli/<version>`
+from commands, `whodb-cli-mcp/<version>` from the MCP server) so the hosted
+audit ledger and analytics can tell CLI traffic from browser and hosted-MCP
+traffic. In database mode, set `WHODB_AUDIT_LOG_FILE` before `whodb mcp serve`
+to keep a local NDJSON record of each statement the MCP server ran (connection,
+database type, statement type and row count; never the SQL text).
+
+Platform tools use saved host logins. Saving a default workspace is optional
+when tools pass an explicit `workspace`:
 
 ```bash
 whodb login
+# Optional default for calls without an explicit workspace
 whodb use --org <org-id-or-slug> --project <project-id-or-slug>
 ```
 
@@ -224,6 +294,23 @@ Hosted MCP tool groups:
   `whodb_platform_ontology`, `whodb_platform_ontology_fast_lookups`,
   `whodb_platform_ontology_fast_lookup_suggestions`,
   `whodb_platform_ontology_rows`, `whodb_platform_ontology_follow_link`
+- Ontology analytics: `whodb_platform_ontology_describe`,
+  `whodb_platform_ontology_query`, `whodb_platform_ontology_aggregate`,
+  `whodb_platform_ontology_stats`, `whodb_platform_ontology_similar`,
+  `whodb_platform_ontology_embedding_jobs`,
+  `whodb_platform_ontology_record_capabilities`,
+  `whodb_platform_ontology_action_preview`,
+  `whodb_platform_ontology_action_executions`,
+  `whodb_platform_add_ontology_records`
+- Ontology sharing: `whodb_platform_shared_ontologies`,
+  `whodb_platform_discover_shared_ontologies`,
+  `whodb_platform_ontology_references`,
+  `whodb_platform_ontology_reference_impact`
+- Service accounts, lineage providers and administration:
+  `whodb_platform_service_accounts`, `whodb_platform_lineage_providers`,
+  `whodb_platform_user_owned_resources`, `whodb_platform_user_resource_access`,
+  `whodb_platform_share_dependents`, `whodb_platform_org_package_installations`,
+  `whodb_platform_app_page_files`, `whodb_platform_transform_preview`
 - Lineage and transforms: `whodb_platform_project_lineage`,
   `whodb_platform_lineage`, `whodb_platform_lineage_neighbors`,
   `whodb_platform_transforms`, `whodb_platform_transform_runs`
@@ -238,6 +325,38 @@ Hosted MCP tool groups:
 
 Read `whodb://platform/schema` at runtime for the authoritative list. Some
 write and confirmation tools are hidden in read-only or safe modes.
+
+Answering a data question: describe first (`whodb_platform_ontology_describe`),
+profile with `whodb_platform_ontology_stats`, then use
+`whodb_platform_ontology_aggregate` for exact totals or
+`whodb_platform_ontology_query` for filtered rows, search and joins. All of them
+share one `where` grammar (`{prop: value}`, `{prop: {op: value}}`, `_and`,
+`_or`). The query is a bounded in-memory scan (`scan_limit` default 1000, max
+5000); when the matched total reaches the scan limit the tool adds a warning so
+the agent switches to the aggregate for exact numbers. Policy-protected
+ontologies only allow `whodb_platform_ontology_rows`.
+`whodb_platform_workflow_recipe` returns the same steps for goals that mention
+counts, totals, reports or questions, and a `bulk_import` recipe built around
+`whodb_platform_add_ontology_records` with an `idempotency_key`.
+
+Writes added for these capabilities go through the generic tools and
+`whodb resources action`: `function_run cancel`, `transform cancel_run`,
+`app cancel_generation`, `project restore|purge`, `file|folder restore|purge`,
+`ontology add_records|share|unshare|reembed|purge_data`, `dataset purge_data`,
+`ontology_reference create|delete`, `lineage_provider create|update|delete`,
+`organization create_service_account|create_service_account_key|revoke_service_account_key|delete_service_account|rename_team`,
+`function generate_test_input`, and `package add_changelog|add_media|review`.
+Payload shapes for all of them are published in `whodb://platform/schema`.
+
+The isolated CLI e2e stack (`ee/dev/run-cli-platform-e2e.sh`) now includes a
+`function-docker` dind sidecar sharing the backend's `TMPDIR`, so function test,
+execute, start_run, wait and cancel run for real in e2e. Embeddings remain
+opt-in through the dev stack's `embeddings` compose profile.
+
+Operations that older hosted deployments do not advertise in their platform
+manifest (project restore and purge, ontology sharing and references, team
+rename, member ownership and access views) return "this WhoDB host does not
+support X yet" until the host is upgraded.
 
 `whodb_platform_source_config` returns redacted configuration only. Secret-looking
 values such as passwords, tokens, client secrets, and private keys are masked.
@@ -272,16 +391,17 @@ only if needed. Avoid broad details such as source content, file previews,
 function files, row previews, and large lineage graphs unless the user asks for
 them or they are required for the task.
 
-If no workspace is selected yet, agents should call `whodb_platform_orgs` and
-`whodb_platform_projects`, then ask the user to run:
+Agents can discover and pass explicit workspaces without changing defaults, or
+set a per-session default with `whodb_platform_session_use`. Users can
+optionally save a default for every session with:
 
 ```bash
 whodb use --org <org-id-or-slug> --project <project-id-or-slug>
 ```
 
-When `--platform` is set, the MCP server exposes only hosted platform tools.
-Local database MCP tools such as `whodb_query` and `whodb_connections` are not
-registered.
+With only the platform module enabled, database-only tools are not registered.
+Enable the database module in setup to expose `whodb_query`, `whodb_connections`,
+and the other database tools alongside platform tools.
 
 Example hosted platform MCP config:
 
@@ -290,7 +410,7 @@ Example hosted platform MCP config:
   "mcpServers": {
     "whodb-platform": {
       "command": "whodb",
-      "args": ["mcp", "serve", "--platform"]
+      "args": ["mcp", "serve"]
     }
   }
 }
@@ -301,7 +421,7 @@ Local smoke test with the MCP inspector:
 ```bash
 whodb login --host http://localhost:8080
 whodb use --host http://localhost:8080 --org <org-id-or-slug> --project <project-id-or-slug>
-npx @modelcontextprotocol/inspector whodb mcp serve --platform
+npx @modelcontextprotocol/inspector whodb mcp serve
 ```
 
 In the inspector, call:
@@ -353,3 +473,43 @@ Use `--quiet` to suppress informational text in human-readable output.
 - Refresh tokens are stored in the OS keyring.
 - Source secrets are never written to the CLI config.
 - `sources config` redacts secret-looking values in human and JSON output.
+
+### MCP process restrictions
+
+`whodb mcp serve --platform-policy policy.json` supports `allowed_hosts`,
+`allowed_workspaces`, `read_only_hosts`, and `read_only_workspaces`. Workspace
+rules use `{host, org, project}` with canonical IDs. Empty allowlists are
+unrestricted; populated host and workspace allowlists intersect. Read-only rules
+also apply to pinned confirmations and override `--allow-write`.
+
+Use `workspace` arguments when a policy is configured; top-level `org` and
+`project` selectors require matching explicit workspace selectors. Inspect
+`whodb://platform/schema` for the active policy and enabled tools. Platform
+`--tools` and `--disable-tools` accept full `whodb_platform_*` names; disabling
+wins. Include confirmation and pending tools when selecting write tools.
+MCP failures set `isError` and retain the handler's structured recovery details.
+See `cli/README.md` for policy examples. Restart MCP after editing the policy file.
+
+### Single-entry guided setup
+
+Use `whodb setup` for the human wizard. Agents use `whodb setup inspect`, then
+`whodb setup validate --file <path>` to preview a settings patch, followed by
+`whodb setup apply --file <path> --yes` after user approval. `whodb setup verify`
+checks configured logins and database connections. Never request credentials in
+chat or include them in setup JSON; use browser login and the CLI credential store.
+
+Saved `modules` can contain `platform`, `database`, or both. Policy and tool
+selection are saved alongside them. All use one MCP entry: `whodb mcp serve`.
+Restart MCP after settings changes; per-call host/project switching needs no
+restart. `whodb://mcp/configuration` describes the active modules and restrictions.
+
+### MCP without skills
+
+Skills are optional supplements. MCP initialization instructions, tool schemas,
+and `whodb://mcp/configuration` provide essential guidance directly. Use
+`whodb_mcp_setup` actions `inspect`, `preview` (with a settings patch), `apply`
+(with the exact approved preview token and `approved: true`), and `verify`.
+No shell access is required for these actions. Browser login and credential entry
+remain user actions. Restart after changing settings; verification checks the
+active process. The setup tool follows tool filters and can be disabled when
+configuration should remain outside the agent.

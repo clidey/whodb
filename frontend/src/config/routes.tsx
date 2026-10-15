@@ -68,7 +68,7 @@ const SourceSurfaceRoute: FC<{
     const currentType = useAppSelector(state => state.auth.current?.Type);
     const { loading, supportsChat, supportsGraph, supportsScratchpad } = useSourceContract(currentType);
 
-    if (loading) {
+    if (!currentType || loading) {
         return <LoadingPage />;
     }
 

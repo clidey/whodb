@@ -16,6 +16,8 @@
 
 package platform
 
+import "strings"
+
 // ForeignKeyDefinition describes a source field foreign key target.
 type ForeignKeyDefinition struct {
 	Table  string `json:"table"`
@@ -300,6 +302,37 @@ type FunctionExecutionResult struct {
 	DurationMS int     `json:"durationMs"`
 	Success    bool    `json:"success"`
 	Error      *string `json:"error,omitempty"`
+}
+
+// FunctionRun is one persisted function run: the record a caller polls instead of holding an
+// ExecuteFunction request open. Status is queued, starting, running, completed, failed, canceling or canceled.
+type FunctionRun struct {
+	ID            string  `json:"id"`
+	FunctionID    string  `json:"functionId"`
+	ExecutionMode string  `json:"executionMode"`
+	LiveBehavior  string  `json:"liveBehavior"`
+	Status        string  `json:"status"`
+	DesiredState  string  `json:"desiredState"`
+	Input         string  `json:"input"`
+	Output        *string `json:"output,omitempty"`
+	Logs          string  `json:"logs"`
+	Error         string  `json:"error"`
+	Attempt       int     `json:"attempt"`
+	CreatedBy     string  `json:"createdBy"`
+	StartedAt     *string `json:"startedAt,omitempty"`
+	HeartbeatAt   *string `json:"heartbeatAt,omitempty"`
+	CompletedAt   *string `json:"completedAt,omitempty"`
+	CreatedAt     string  `json:"createdAt"`
+	UpdatedAt     string  `json:"updatedAt"`
+}
+
+// Finished reports whether the run reached a terminal status.
+func (r *FunctionRun) Finished() bool {
+	switch strings.ToLower(r.Status) {
+	case "completed", "failed", "canceled", "cancelled":
+		return true
+	}
+	return false
 }
 
 // ObjectVersion describes one promoted hosted platform object version.

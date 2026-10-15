@@ -96,7 +96,7 @@ type PlatformEntityWriteInput struct {
 
 // PlatformRestoreInput restores a soft-deleted hosted platform resource.
 type PlatformRestoreInput struct {
-	Resource string `json:"resource" jsonschema:"Soft-deletable resource: source, ontology, dataset, transform, function, app, folder, or file"`
+	Resource string `json:"resource" jsonschema:"Soft-deletable resource: project, source, ontology, dataset, transform, function, app, folder, or file. Find candidates with whodb_platform_deleted_resources."`
 	ID       string `json:"id" jsonschema:"Deleted resource id"`
 }
 
@@ -123,51 +123,55 @@ type PlatformGenericWriteOutput struct {
 func registerPlatformGenericWriteTool(server *mcp.Server, tool *mcp.Tool, secOpts *SecurityOptions) bool {
 	switch tool.Name {
 	case "whodb_platform_restore":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformRestoreInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformRestoreInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformGenericWrite(ctx, "platform_restore", PlatformGenericWriteInput{Resource: input.Resource, Action: "restore", ID: input.ID}, "action", secOpts.ConfirmWrites)
 		})
 	case "whodb_platform_create":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformGenericWriteInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformGenericWriteInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformGenericWrite(ctx, "platform_create", input, "create", secOpts.ConfirmWrites)
 		})
 	case "whodb_platform_update":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformGenericWriteInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformGenericWriteInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformGenericWrite(ctx, "platform_update", input, "update", secOpts.ConfirmWrites)
 		})
 	case "whodb_platform_delete":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformGenericWriteInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformGenericWriteInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformGenericWrite(ctx, "platform_delete", input, "delete", secOpts.ConfirmWrites)
 		})
 	case "whodb_platform_action":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformGenericWriteInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformGenericWriteInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformGenericWrite(ctx, "platform_action", input, "action", secOpts.ConfirmWrites)
 		})
 	case "whodb_platform_create_dataset":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformCreateDatasetInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformCreateDatasetInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformCreateDataset(ctx, input, secOpts.ConfirmWrites)
 		})
 	case "whodb_platform_promote_file_to_dataset":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformPromoteFileToDatasetInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformPromoteFileToDatasetInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformPromoteFileToDataset(ctx, input, secOpts.ConfirmWrites)
 		})
 	case "whodb_platform_add_ontology_record":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformOntologyRecordInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformOntologyRecordInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformOntologyRecordWrite(ctx, "whodb_platform_add_ontology_record", input, "add_record", secOpts.ConfirmWrites)
 		})
 	case "whodb_platform_update_ontology_record":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformOntologyRecordInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformOntologyRecordInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformOntologyRecordWrite(ctx, "whodb_platform_update_ontology_record", input, "update_record", secOpts.ConfirmWrites)
 		})
 	case "whodb_platform_delete_ontology_record":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformOntologyRecordInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformOntologyRecordInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformOntologyRecordWrite(ctx, "whodb_platform_delete_ontology_record", input, "delete_record", secOpts.ConfirmWrites)
 		})
+	case "whodb_platform_add_ontology_records":
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformOntologyRecordsInput) (*mcp.CallToolResult, any, error) {
+			return handlePlatformOntologyRecordsWrite(ctx, input, secOpts.ConfirmWrites)
+		})
 	case "whodb_platform_create_ontology_fast_lookup":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformOntologyFastLookupInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformOntologyFastLookupInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformCreateOntologyFastLookup(ctx, input, secOpts.ConfirmWrites)
 		})
 	case "whodb_platform_delete_ontology_fast_lookup":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformEntityWriteInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformEntityWriteInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformTypedGenericWrite(ctx, "whodb_platform_delete_ontology_fast_lookup", PlatformGenericWriteInput{Resource: "ontology_fast_lookup", ID: input.ID}, "delete", secOpts.ConfirmWrites)
 		})
 	default:
@@ -186,6 +190,7 @@ func platformGenericWriteToolDefinitions() []*mcp.Tool {
 		{Name: "whodb_platform_create_dataset", Description: descPlatformCreateDataset, Annotations: platformDestructiveAnnotations("Create Hosted Dataset")},
 		{Name: "whodb_platform_promote_file_to_dataset", Description: descPlatformPromoteFileToDataset, Annotations: platformDestructiveAnnotations("Promote Hosted File To Dataset")},
 		{Name: "whodb_platform_add_ontology_record", Description: descPlatformAddOntologyRecord, Annotations: platformDestructiveAnnotations("Add Hosted Ontology Record")},
+		{Name: "whodb_platform_add_ontology_records", Description: descPlatformAddOntologyRecords, Annotations: platformDestructiveAnnotations("Add Hosted Ontology Records")},
 		{Name: "whodb_platform_update_ontology_record", Description: descPlatformUpdateOntologyRecord, Annotations: platformDestructiveAnnotations("Update Hosted Ontology Record")},
 		{Name: "whodb_platform_delete_ontology_record", Description: descPlatformDeleteOntologyRecord, Annotations: platformDestructiveAnnotations("Delete Hosted Ontology Record")},
 		{Name: "whodb_platform_create_ontology_fast_lookup", Description: descPlatformCreateOntologyFastLookup, Annotations: platformDestructiveAnnotations("Create Hosted Ontology Fast Lookup")},
@@ -199,7 +204,7 @@ func handlePlatformGenericWrite(ctx context.Context, toolName string, input Plat
 	session, err := loadPlatformWorkspace(ctx)
 	if err != nil {
 		TrackToolCall(ctx, toolName, requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_session"})
-		return nil, platformGenericWriteSetupError(err, requestID), nil
+		return nil, platformGenericWriteSetupError(ctx, err, requestID), nil
 	}
 	spec, payload, err := buildPlatformGenericWrite(session, input, operationKind)
 	if err != nil {
@@ -215,6 +220,7 @@ func handlePlatformGenericWrite(ctx context.Context, toolName string, input Plat
 		return nil, platformGenericWriteError(err, requestID), nil
 	}
 	action := &PendingPlatformAction{
+		AccountID:      session.Host.AccountID,
 		Operation:      spec.Mutation,
 		Resource:       spec.Resource,
 		Action:         spec.Action,
@@ -229,14 +235,14 @@ func handlePlatformGenericWrite(ctx context.Context, toolName string, input Plat
 		IdempotencyKey: scopedPlatformIdempotencyKey(session, input, operationKind),
 	}
 	if action.IdempotencyKey != "" {
-		if token, ok := pendingPlatformIdempotencyToken(action.IdempotencyKey); ok {
-			pending, err := getPendingPlatformAction(token)
+		if token, ok := pendingPlatformIdempotencyToken(action.IdempotencyKey, ctx); ok {
+			pending, err := getPendingPlatformAction(token, ctx)
 			if err == nil {
-				releasePendingPlatformAction(token)
-				return nil, platformGenericConfirmationOutput(requestID, token, pending.ExpiresAt, pending.Mutation, pending.Preview()), nil
+				releasePendingPlatformAction(token, ctx)
+				return nil, platformGenericConfirmationOutput(ctx, requestID, token, pending.ExpiresAt, pending.Mutation, pending.Preview()), nil
 			}
 		}
-		if platformIdempotencyCompleted(action.IdempotencyKey) {
+		if platformIdempotencyCompleted(action.IdempotencyKey, ctx) {
 			return nil, PlatformGenericWriteOutput{Status: "already_applied", IdempotencyReplayed: true, RequestID: requestID}, nil
 		}
 	}
@@ -247,12 +253,12 @@ func handlePlatformGenericWrite(ctx context.Context, toolName string, input Plat
 			return nil, platformGenericWriteError(err, requestID), nil
 		}
 		TrackToolCall(ctx, toolName, requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"confirmation_required": false, "mutation": spec.Mutation})
-		markPlatformIdempotencyCompleted(action.IdempotencyKey)
+		markPlatformIdempotencyCompleted(action.IdempotencyKey, ctx)
 		return nil, platformGenericWriteCompletedOutput(requestID, spec.Mutation, result, action.Preview()), nil
 	}
-	token, expiresAt := storePendingPlatformAction(action)
+	token, expiresAt := storePendingPlatformAction(action, ctx)
 	TrackToolCall(ctx, toolName, requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"confirmation_required": true, "mutation": spec.Mutation})
-	return nil, platformGenericConfirmationOutput(requestID, token, expiresAt, spec.Mutation, action.Preview()), nil
+	return nil, platformGenericConfirmationOutput(ctx, requestID, token, expiresAt, spec.Mutation, action.Preview()), nil
 }
 
 func scopedPlatformIdempotencyKey(session *platformToolSession, input PlatformGenericWriteInput, operationKind string) string {
@@ -263,13 +269,13 @@ func scopedPlatformIdempotencyKey(session *platformToolSession, input PlatformGe
 	if len(key) > 200 {
 		key = key[:200]
 	}
-	return strings.Join([]string{session.Host.URL, session.Host.DefaultOrgID, session.Host.DefaultProjectID, operationKind, normalizePlatformWriteToken(input.Resource), normalizePlatformWriteToken(input.Action), strings.TrimSpace(input.ID), key}, "|")
+	return strings.Join([]string{session.Host.URL, session.Host.AccountID, session.Host.DefaultOrgID, session.Host.DefaultProjectID, operationKind, normalizePlatformWriteToken(input.Resource), normalizePlatformWriteToken(input.Action), strings.TrimSpace(input.ID), key}, "|")
 }
 
-func platformGenericWriteSetupError(err error, requestID string) PlatformGenericWriteOutput {
+func platformGenericWriteSetupError(ctx context.Context, err error, requestID string) PlatformGenericWriteOutput {
 	errorCode, retryable, suggestedTools := platformErrorFields(err)
 	return PlatformGenericWriteOutput{
-		PlatformSetupGuidance: platformSetupGuidanceForCurrentConfig(requestID),
+		PlatformSetupGuidance: platformSetupGuidanceForCurrentConfig(ctx, requestID),
 		Error:                 err.Error(),
 		ErrorCode:             errorCode,
 		Retryable:             retryable,
@@ -499,6 +505,9 @@ func buildPlatformGenericWrite(session *platformToolSession, input PlatformGener
 		if spec.InjectProjectID {
 			payload["projectId"] = session.Host.DefaultProjectID
 		}
+		if spec.InjectOrgID && (payload["orgId"] == nil || strings.TrimSpace(fmt.Sprint(payload["orgId"])) == "") {
+			payload["orgId"] = session.Host.DefaultOrgID
+		}
 		if spec.NeedsID {
 			if spec.Mutation == "PromoteFileToDataset" {
 				payload["fileId"] = firstPayloadString(payload, "fileId", id)
@@ -536,6 +545,9 @@ func buildPlatformGenericWrite(session *platformToolSession, input PlatformGener
 		if spec.InjectProjectID {
 			variables["projectId"] = session.Host.DefaultProjectID
 		}
+		if spec.InjectOrgID && (variables["orgId"] == nil || strings.TrimSpace(fmt.Sprint(variables["orgId"])) == "") {
+			variables["orgId"] = session.Host.DefaultOrgID
+		}
 		if spec.NeedsID {
 			if spec.IdentityField != "" {
 				variables[spec.IdentityField] = id
@@ -567,6 +579,9 @@ func buildPlatformGenericWrite(session *platformToolSession, input PlatformGener
 }
 
 func validatePlatformWriteCapability(ctx context.Context, session *platformToolSession, spec platformapi.GenericWriteSpec) error {
+	if platformRuntimeFromContext(ctx) != nil && spec.Mode == platformapi.GenericWriteModeFileUpload {
+		return fmt.Errorf("local file paths are unavailable over remote MCP; upload through the application or import inline bundle content")
+	}
 	if session == nil || session.Client == nil {
 		return nil
 	}
@@ -738,14 +753,14 @@ func sensitivePlatformWriteKey(key string) bool {
 	return strings.Contains(key, "password") || strings.Contains(key, "secret") || strings.Contains(key, "key") || strings.Contains(key, "token") || strings.Contains(key, "value") || strings.Contains(key, "content") || strings.Contains(key, "path")
 }
 
-func platformGenericConfirmationOutput(requestID, token string, expiresAt time.Time, mutation string, preview *PlatformActionPreview) PlatformGenericWriteOutput {
+func platformGenericConfirmationOutput(ctx context.Context, requestID, token string, expiresAt time.Time, mutation string, preview *PlatformActionPreview) PlatformGenericWriteOutput {
 	return PlatformGenericWriteOutput{
 		ConfirmationRequired: true,
 		ConfirmationToken:    token,
 		ConfirmationAction:   mutation,
 		ConfirmationPreview:  preview,
 		ConfirmationExpiry:   expiresAt.UTC().Format(time.RFC3339),
-		Warning:              platformConfirmationWarning(preview),
+		Warning:              platformConfirmationWarning(ctx, preview),
 		RequestID:            requestID,
 	}
 }
@@ -765,25 +780,25 @@ func platformGenericWriteCompletedOutput(requestID, mutation string, result *pla
 
 const descPlatformCreate = `Create a hosted platform resource through the selected project.
 
-Supported resources: secret, ai_provider, ontology, ontology_fast_lookup, dataset, transform, folder, function, app, package, source_object.
+Supported resources: secret, ai_provider, ontology, ontology_fast_lookup, ontology_reference, dataset, transform, folder, function, app, package, lineage_provider, source_object.
 Pass payload_json as a JSON object matching the hosted platform mutation input. The selected projectId is injected automatically when applicable.
 Default mode returns a confirmation token; do not call whodb_platform_confirm until the user approves the preview. Permission checks are enforced by the hosted platform.`
 
 const descPlatformUpdate = `Update a hosted platform resource through the selected project.
 
-Supported resources: secret, ai_provider, ontology, dataset, transform, function, app, source_object.
+Supported resources: secret, ai_provider, ontology, dataset, transform, function, app, lineage_provider, source_object.
 Pass id when required and payload_json with changed fields only. Secret-like payload fields are never shown in confirmation previews.
 Default mode returns a confirmation token; do not call whodb_platform_confirm until the user approves the preview. Permission checks are enforced by the hosted platform.`
 
 const descPlatformDelete = `Delete a hosted platform resource through the selected project.
 
-Supported resources: secret, ai_provider, ontology, ontology_fast_lookup, dataset, transform, file, folder, function, app, source_object.
+Supported resources: secret, ai_provider, ontology, ontology_fast_lookup, ontology_reference, dataset, transform, file, folder, function, app, lineage_provider, source_object.
 This is destructive. Pass id for normal resources. For source_object, pass payload_json with sourceId, ref, and values.
 Default mode returns a confirmation token; explain exactly what will be deleted and do not call whodb_platform_confirm until the user approves the preview. Permission checks are enforced by the hosted platform.`
 
 const descPlatformAction = `Run a hosted platform resource action through the selected project.
 
-Supported actions include transform/run, file/upload, file/rename, file/move, file/promote_to_dataset, folder/rename, folder/move, function/deploy, function/redeploy, app restore/purge/generate/file operations, object restore/purge/version restore, package installation, and organization/access administration.
+Supported actions include transform run/cancel_run, file upload/rename/move/promote_to_dataset/restore/purge, folder rename/move/restore/purge, function deploy/redeploy/execute/start_run/generate_test_input, function_run cancel, ontology add_records/execute_behavior/share/unshare/reembed/purge_data, dataset purge_data, project restore/purge, app restore/purge/generate/cancel_generation/file operations, object restore/purge/version restore, package installation and add_changelog/add_media/review, and organization administration including service accounts (create_service_account, create_service_account_key, revoke_service_account_key, delete_service_account) and teams. Read whodb://platform/schema for every action and its payload shape.
 Some actions create, move, deploy, or otherwise mutate hosted resources. Pass id and payload_json as required by the action. For file/upload, payload_json requires file_path and may include folderId.
 Default mode returns a confirmation token; do not call whodb_platform_confirm until the user approves the preview. Permission checks are enforced by the hosted platform.`
 

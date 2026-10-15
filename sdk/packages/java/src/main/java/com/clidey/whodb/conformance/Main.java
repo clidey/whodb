@@ -16,8 +16,20 @@
 
 package com.clidey.whodb.conformance;
 
+import com.clidey.whodb.DatasetHandle;
+import com.clidey.whodb.FunctionHandle;
+import com.clidey.whodb.FunctionsHandle;
+import com.clidey.whodb.LineageProvidersHandle;
 import com.clidey.whodb.OntologyHandle;
+import com.clidey.whodb.RowsPage;
+import com.clidey.whodb.ServiceAccountsHandle;
+import com.clidey.whodb.SharingHandle;
+import com.clidey.whodb.SourceHandle;
+import com.clidey.whodb.TransformHandle;
+import com.clidey.whodb.TransformsHandle;
+import com.clidey.whodb.VersionsHandle;
 import com.clidey.whodb.Transport;
+import com.clidey.whodb.WaitOptions;
 import com.clidey.whodb.WhoDB;
 import com.clidey.whodb.WhoDBException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -25,6 +37,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -176,21 +189,229 @@ public final class Main {
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("name", name);
         JsonNode call = fixture.path("call");
-        if (!"ontology".equals(call.path("domain").asText())) {
-            result.put("pass", false);
-            result.put("reason", "unsupported fixture domain: " + call.path("domain").asText());
-            return result;
-        }
         MockTransport transport = new MockTransport(fixture.path("transcript"));
         WhoDB client = new WhoDB(new WhoDB.Config(null, null, null,
             "00000000-0000-0000-0000-000000000001", "proj-1", null, transport));
-        OntologyHandle handle = client.ontology(call.path("handle").asText());
+        String domain = call.path("domain").asText();
+        String handleName = call.path("handle").asText("");
+        String method = call.path("method").asText();
         JsonNode args = call.path("args");
 
         Object value = null;
         Throwable callError = null;
         try {
-            switch (call.path("method").asText()) {
+            if ("ontology".equals(domain)) {
+                value = runOntology(client, handleName, method, args, "pages".equals(call.path("collect").asText()));
+            } else {
+                value = runOther(client, domain, handleName, method, args);
+            }
+        } catch (UnsupportedFixture unsupported) {
+            result.put("pass", false);
+            result.put("reason", unsupported.getMessage());
+            return result;
+        } catch (Throwable error) {
+            callError = error;
+        }
+        return compare(fixture, result, value, callError);
+    }
+
+    /** Signals a fixture call the Java SDK does not model. */
+    private static final class UnsupportedFixture extends RuntimeException {
+        UnsupportedFixture(String message) {
+            super(message);
+        }
+    }
+
+    private static String str(JsonNode args, int index) {
+        return args.size() > index && !args.get(index).isNull() ? args.get(index).asText() : null;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> map(JsonNode args, int index) {
+        return args.size() > index && args.get(index).isObject()
+            ? JSON.convertValue(args.get(index), Map.class) : new LinkedHashMap<>();
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<String> strings(JsonNode args, int index) {
+        return args.size() > index && args.get(index).isArray() ? JSON.convertValue(args.get(index), List.class) : null;
+    }
+
+    private static Object any(JsonNode args, int index) {
+        return args.size() > index ? JSON.convertValue(args.get(index), Object.class) : null;
+    }
+
+    private static WaitOptions waitOptions(Map<String, Object> options) {
+        WaitOptions wait = WaitOptions.defaults();
+        if (options.get("timeoutMs") instanceof Number timeout) {
+            wait = new WaitOptions(Duration.ofMillis(timeout.longValue()), wait.poll());
+        }
+        if (options.get("pollMs") instanceof Number poll) {
+            wait = new WaitOptions(wait.timeout(), Duration.ofMillis(poll.longValue()));
+        }
+        return wait;
+    }
+
+    private static int intOf(Map<String, Object> options, String key) {
+        return options.get(key) instanceof Number number ? number.intValue() : 0;
+    }
+
+    private static Map<String, Object> pageValue(RowsPage page) {
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("rows", page.rows());
+        out.put("totalCount", page.totalCount());
+        return out;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Object runOther(WhoDB client, String domain, String handleName, String method, JsonNode args) {
+        switch (domain) {
+            case "dataset" -> {
+                DatasetHandle handle = client.dataset(handleName);
+                Map<String, Object> options = map(args, 0);
+                return switch (method) {
+                    case "meta" -> handle.meta();
+                    case "rows" -> pageValue(handle.rows(
+                        new DatasetHandle.RowsOptions(intOf(options, "pageSize"), intOf(options, "pageOffset"))));
+                    case "promote" -> handle.promote(str(args, 0));
+                    case "versions" -> handle.versions();
+                    default -> throw new UnsupportedFixture("unsupported fixture call: " + domain + "." + method);
+                };
+            }
+            case "source" -> {
+                SourceHandle handle = client.source(handleName);
+                return switch (method) {
+                    case "objects" -> {
+                        Map<String, Object> options = map(args, 0);
+                        yield handle.objects(new SourceHandle.ObjectsOptions(
+                            (Map<String, Object>) options.get("parent"), intOf(options, "pageSize"), intOf(options, "pageOffset")));
+                    }
+                    case "columns" -> handle.columns(map(args, 0));
+                    case "rows" -> {
+                        Map<String, Object> options = map(args, 1);
+                        yield handle.rows(map(args, 0), new SourceHandle.RowsOptions(
+                            (Map<String, Object>) options.get("where"), (List<Map<String, Object>>) options.get("sort"),
+                            intOf(options, "pageSize"), intOf(options, "offset")));
+                    }
+                    default -> throw new UnsupportedFixture("unsupported fixture call: " + domain + "." + method);
+                };
+            }
+            case "transforms" -> {
+                TransformsHandle handle = client.transforms();
+                return switch (method) {
+                    case "list" -> handle.list();
+                    case "create" -> handle.create(map(args, 0));
+                    case "preview" -> pageValue(handle.preview(str(args, 0)));
+                    default -> throw new UnsupportedFixture("unsupported fixture call: " + domain + "." + method);
+                };
+            }
+            case "transform" -> {
+                TransformHandle handle = client.transform(handleName);
+                switch (method) {
+                    case "meta": return handle.meta();
+                    case "runs": return handle.runs(intOf(map(args, 0), "limit"));
+                    case "run": return handle.run();
+                    case "cancelRun": handle.cancelRun(str(args, 0)); return null;
+                    case "wait": return handle.wait(str(args, 0), waitOptions(map(args, 1)));
+                    case "update": return handle.update(map(args, 0));
+                    case "delete": handle.delete(); return null;
+                    case "promote": return handle.promote(str(args, 0));
+                    case "versions": return handle.versions();
+                    default: throw new UnsupportedFixture("unsupported fixture call: " + domain + "." + method);
+                }
+            }
+            case "functions" -> {
+                FunctionsHandle handle = client.functions();
+                return switch (method) {
+                    case "list" -> handle.list();
+                    case "create" -> handle.create(map(args, 0));
+                    default -> throw new UnsupportedFixture("unsupported fixture call: " + domain + "." + method);
+                };
+            }
+            case "function" -> {
+                FunctionHandle handle = client.function(handleName);
+                switch (method) {
+                    case "meta": return handle.meta();
+                    case "execute": return handle.execute(any(args, 0), strings(args, 1));
+                    case "test": {
+                        Map<String, Object> options = map(args, 1);
+                        return handle.test(any(args, 0), new FunctionHandle.TestOptions(
+                            (List<Map<String, Object>>) options.get("files"), (List<String>) options.get("inputFileIds")));
+                    }
+                    case "startRun": {
+                        Object flag = map(args, 1).get("useActiveVersion");
+                        return handle.startRun(any(args, 0), flag instanceof Boolean bool ? bool : null);
+                    }
+                    case "run": return handle.run(str(args, 0));
+                    case "runs": return handle.runs(intOf(map(args, 0), "limit"));
+                    case "wait": return handle.wait(str(args, 0), waitOptions(map(args, 1)));
+                    case "cancelRun": return handle.cancelRun(str(args, 0));
+                    case "deploy": handle.deploy(); return null;
+                    case "redeploy": handle.redeploy(); return null;
+                    case "update": return handle.update(map(args, 0));
+                    case "delete": handle.delete(); return null;
+                    case "promote": return handle.promote(str(args, 0));
+                    case "versions": return handle.versions();
+                    default: throw new UnsupportedFixture("unsupported fixture call: " + domain + "." + method);
+                }
+            }
+            case "versions" -> {
+                VersionsHandle handle = client.versions();
+                int version = args.size() > 2 && args.get(2).isNumber() ? args.get(2).asInt() : 0;
+                switch (method) {
+                    case "list": return handle.list(str(args, 0), str(args, 1));
+                    case "active": return handle.active(str(args, 0), str(args, 1));
+                    case "activeAll": return handle.activeAll();
+                    case "promote": return handle.promote(str(args, 0), str(args, 1), str(args, 2));
+                    case "rollback": return handle.rollback(str(args, 0), str(args, 1), version);
+                    case "restoreToDraft": return handle.restoreToDraft(str(args, 0), str(args, 1), version);
+                    default: throw new UnsupportedFixture("unsupported fixture call: " + domain + "." + method);
+                }
+            }
+            case "serviceAccounts" -> {
+                ServiceAccountsHandle handle = client.serviceAccounts();
+                switch (method) {
+                    case "list": return handle.list();
+                    case "create": return handle.create(str(args, 0), str(args, 1));
+                    case "createKey": return handle.createKey(str(args, 0), str(args, 1));
+                    case "revokeKey": handle.revokeKey(str(args, 0)); return null;
+                    case "delete": handle.delete(str(args, 0)); return null;
+                    default: throw new UnsupportedFixture("unsupported fixture call: " + domain + "." + method);
+                }
+            }
+            case "lineageProviders" -> {
+                LineageProvidersHandle handle = client.lineageProviders();
+                switch (method) {
+                    case "list": return handle.list();
+                    case "save": return handle.save(map(args, 0));
+                    case "delete": handle.delete(str(args, 0)); return null;
+                    default: throw new UnsupportedFixture("unsupported fixture call: " + domain + "." + method);
+                }
+            }
+            case "sharing" -> {
+                SharingHandle handle = client.sharing();
+                switch (method) {
+                    case "shared": return handle.shared();
+                    case "discover": return handle.discover();
+                    case "references": return handle.references();
+                    case "referenceImpact": return handle.referenceImpact(str(args, 0));
+                    case "share": return handle.share(str(args, 0), str(args, 1), strings(args, 2));
+                    case "unshare": handle.unshare(str(args, 0)); return null;
+                    case "createReference": return handle.createReference(str(args, 0), str(args, 1), str(args, 2));
+                    case "removeReference": handle.removeReference(str(args, 0)); return null;
+                    default: throw new UnsupportedFixture("unsupported fixture call: " + domain + "." + method);
+                }
+            }
+            default -> throw new UnsupportedFixture("unsupported fixture domain: " + domain);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Object runOntology(WhoDB client, String handleName, String method, JsonNode args, boolean collectPages) {
+        OntologyHandle handle = client.ontology(handleName);
+        Object value = null;
+        {
+            switch (method) {
                 case "get" -> value = handle.get(JSON.convertValue(args.get(0), Object.class));
                 case "describe" -> value = handle.describe();
                 case "list" -> {
@@ -199,7 +420,7 @@ public final class Main {
                         ? JSON.convertValue(options.get("where"), Map.class) : null;
                     OntologyHandle.ListOptions listOptions = new OntologyHandle.ListOptions(
                         where, null, options.path("pageSize").asInt(0), 0);
-                    if ("pages".equals(call.path("collect").asText())) {
+                    if (collectPages) {
                         value = handle.pages(listOptions);
                     } else {
                         value = handle.list(listOptions);
@@ -235,6 +456,8 @@ public final class Main {
                 case "update" -> handle.update(
                     JSON.convertValue(args.get(0), Object.class), JSON.convertValue(args.get(1), Map.class));
                 case "delete" -> handle.delete(JSON.convertValue(args.get(0), Object.class));
+                case "promote" -> value = handle.promote(str(args, 0));
+                case "versions" -> value = handle.versions();
                 case "followLink" -> {
                     JsonNode options = args.size() > 2 ? args.get(2) : JSON.createObjectNode();
                     value = handle.followLink(
@@ -243,16 +466,13 @@ public final class Main {
                         options.path("pageSize").asInt(0),
                         options.path("offset").asInt(0));
                 }
-                default -> {
-                    result.put("pass", false);
-                    result.put("reason", "unsupported fixture method: " + call.path("method").asText());
-                    return result;
-                }
+                default -> throw new UnsupportedFixture("unsupported fixture method: " + method);
             }
-        } catch (Throwable error) {
-            callError = error;
         }
+        return value;
+    }
 
+    private static Map<String, Object> compare(JsonNode fixture, Map<String, Object> result, Object value, Throwable callError) {
         JsonNode expectError = fixture.path("expectError");
         if (callError != null) {
             if (!expectError.isMissingNode() && !expectError.isNull()) {

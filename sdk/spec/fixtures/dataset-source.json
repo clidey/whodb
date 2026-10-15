@@ -1,0 +1,63 @@
+{
+  "fixtures": [
+    {
+      "name": "dataset.rows resolves the dataset by name and hydrates rows",
+      "call": { "domain": "dataset", "handle": "weekly_kpis", "method": "rows", "args": [{ "pageSize": 2, "pageOffset": 0 }] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "ProjectDatasets", "variables": { "projectId": "proj-1" } },
+          "response": { "data": { "ProjectDatasets": [ { "id": "ds-1", "name": "weekly_kpis" } ] } }
+        },
+        {
+          "expectRequest": { "operation": "QueryDataset", "inputContains": { "projectId": "proj-1", "datasetId": "ds-1", "pageSize": 2, "pageOffset": 0 } },
+          "response": { "data": { "QueryDataset": { "columns": ["week", "revenue"], "rows": [["2026-W01", "10"], ["2026-W02", "12"]], "total": 2 } } }
+        }
+      ],
+      "expectResult": { "rows": [ { "week": "2026-W01", "revenue": "10" }, { "week": "2026-W02", "revenue": "12" } ], "totalCount": 2 }
+    },
+    {
+      "name": "dataset.rows for an unknown dataset is NotFoundError",
+      "call": { "domain": "dataset", "handle": "missing", "method": "rows", "args": [{}] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "ProjectDatasets" },
+          "response": { "data": { "ProjectDatasets": [ { "id": "ds-1", "name": "weekly_kpis" } ] } }
+        }
+      ],
+      "expectError": { "type": "NotFoundError", "messageContains": "missing" }
+    },
+    {
+      "name": "source.objects lists browsable objects",
+      "call": { "domain": "source", "handle": "src-1", "method": "objects", "args": [{}] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "PlatformSourceObjects", "variablesContain": { "projectId": "proj-1", "sourceId": "src-1" } },
+          "response": { "data": { "PlatformSourceObjects": [ { "Kind": "table", "Ref": { "Kind": "table", "Locator": "public.users", "Path": ["public", "users"] } } ] } }
+        }
+      ],
+      "expectResult": [ { "Kind": "table", "Ref": { "Kind": "table", "Locator": "public.users", "Path": ["public", "users"] } } ]
+    },
+    {
+      "name": "source.columns reads one object's columns",
+      "call": { "domain": "source", "handle": "src-1", "method": "columns", "args": [{ "Kind": "table", "Path": ["public", "users"] }] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "PlatformSourceColumns", "variablesContain": { "projectId": "proj-1", "sourceId": "src-1", "ref": { "Kind": "table", "Path": ["public", "users"] } } },
+          "response": { "data": { "PlatformSourceColumns": [ { "Name": "id", "Type": "integer" }, { "Name": "email", "Type": "text" } ] } }
+        }
+      ],
+      "expectResult": [ { "Name": "id", "Type": "integer" }, { "Name": "email", "Type": "text" } ]
+    },
+    {
+      "name": "source.rows hydrates the first page",
+      "call": { "domain": "source", "handle": "src-1", "method": "rows", "args": [{ "Kind": "table", "Path": ["public", "users"] }, { "pageSize": 2 }] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "PlatformSourceRows", "variablesContain": { "projectId": "proj-1", "sourceId": "src-1", "pageSize": 2, "pageOffset": 0 } },
+          "response": { "data": { "PlatformSourceRows": { "Columns": [ { "Name": "id", "Type": "integer" }, { "Name": "active", "Type": "boolean" } ], "Rows": [["1", "true"], ["2", "false"]], "DisableUpdate": false } } }
+        }
+      ],
+      "expectResult": [ { "id": 1, "active": true }, { "id": 2, "active": false } ]
+    }
+  ]
+}

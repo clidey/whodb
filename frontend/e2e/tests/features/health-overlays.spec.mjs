@@ -63,11 +63,11 @@ test.describe('Health Check Overlays', () => {
             await mockHealthResponse(page, { server: 'error', database: 'error' });
             await whodb.goto('storage-unit');
 
-            // Server down overlay should appear with reconnection spinner text
-            const overlay = page.locator('.fixed.inset-0').filter({
-                has: page.locator('.animate-spin'),
-            });
+            // Server down overlay should show the shared spinner and the next retry.
+            const overlay = page.getByTestId('health-overlay');
             await expect(overlay).toBeVisible({ timeout: TIMEOUT.SLOW });
+            await expect(overlay.locator('.whodb-loader-mark')).toBeVisible();
+            await expect(overlay.getByText(/Trying again in \d+s/)).toBeVisible();
         });
 
         test('shows database down overlay when DB connection lost', async ({ whodb, page }) => {
@@ -86,16 +86,15 @@ test.describe('Health Check Overlays', () => {
             await whodb.goto('storage-unit');
 
             // Wait for the overlay to appear
-            const overlay = page.locator('.fixed.inset-0').filter({
-                has: page.locator('.animate-spin'),
-            });
+            const overlay = page.getByTestId('health-overlay');
             await expect(overlay).toBeVisible({ timeout: TIMEOUT.SLOW });
 
             // Now switch to healthy responses — remove old route and add new one
             await page.unrouteAll({ behavior: 'wait' });
             await mockHealthResponse(page, { server: 'healthy', database: 'healthy' });
 
-            // Overlay should disappear once the next health poll returns healthy
+            // Retry now should check health immediately and dismiss the overlay.
+            await overlay.getByRole('button', { name: 'Retry now' }).click();
             await expect(overlay).not.toBeVisible({ timeout: TIMEOUT.SLOW });
         });
     });

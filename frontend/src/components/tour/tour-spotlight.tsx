@@ -35,7 +35,8 @@ export const TourSpotlight: FC<TourSpotlightProps> = ({ targetElement, padding =
         }
 
         const updateRect = () => {
-            setRect(targetElement.getBoundingClientRect());
+            const navItem = targetElement.closest('[data-slot="sidebar-menu-item"]');
+            setRect((navItem ?? targetElement).getBoundingClientRect());
         };
 
         updateRect();
@@ -66,7 +67,7 @@ export const TourSpotlight: FC<TourSpotlightProps> = ({ targetElement, padding =
                     exit: { opacity: 0 },
                     transition: { duration: 0.3, ease: "easeInOut" }
                 })}
-                className="fixed inset-0 z-[9998] pointer-events-none"
+                className="tour-spotlight-overlay fixed inset-0 z-[9998] pointer-events-none"
                 style={{ width: '100vw', height: '100vh' }}
             >
                 <defs>
@@ -87,26 +88,25 @@ export const TourSpotlight: FC<TourSpotlightProps> = ({ targetElement, padding =
                     y="0"
                     width="100%"
                     height="100%"
-                    fill="rgba(0, 0, 0, 0.7)"
+                    fill="currentColor"
                     mask={`url(#tour-spotlight-mask-${rect.left}-${rect.top})`}
                 />
             </motion.svg>
             <motion.div
                 {...(disableAnimations ? {} : {
-                    initial: { opacity: 0, scale: 0.95 },
-                    animate: { opacity: 1, scale: 1 },
-                    exit: { opacity: 0, scale: 0.95 },
+                    initial: { opacity: 0 },
+                    animate: { opacity: 1 },
+                    exit: { opacity: 0 },
                     transition: { duration: 0.3, ease: "easeInOut" }
                 })}
-                className="fixed z-[9999] pointer-events-none"
+                className="tour-spotlight-outline fixed z-[9999] pointer-events-none"
                 style={{
                     left: highlightRect.left,
                     top: highlightRect.top,
                     width: highlightRect.width,
                     height: highlightRect.height,
-                    border: '3px solid hsl(var(--brand))',
+                    border: '2px solid #416bd1',
                     borderRadius: '8px',
-                    boxShadow: '0 0 0 4px rgba(var(--brand-rgb, 59 130 246), 0.1), 0 0 20px hsl(var(--brand))',
                 }}
             />
         </>

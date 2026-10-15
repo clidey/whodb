@@ -15,7 +15,7 @@
  */
 
 import { test, expect, forEachDatabase, skipIfNoFeature } from '../../support/test-fixture.mjs';
-import { getTableConfig, hasFeature } from '../../support/database-config.mjs';
+import {getTableConfig} from '../../support/database-config.mjs';
 import { createUpdatedDocument, parseDocument } from '../../support/categories/document.mjs';
 import { getUniqueTestId, TIMEOUT, waitForMutation } from '../../support/helpers/test-utils.mjs';
 
@@ -67,8 +67,8 @@ test.describe('CRUD Operations', () => {
         const colIndex = testTable.identifierColIndex;
         const mutationDelay = db.mutationDelay || 0;
 
-        // Skip Edit Row tests for databases with async mutations (e.g., ClickHouse)
-        const crudSupported = hasFeature(db, 'crud') !== false;
+        // Skip CRUD tests only when a fixture explicitly opts out (async mutations, e.g. ClickHouse)
+        const crudSupported = db.features?.crud !== false;
 
         test.describe('Edit Row', () => {
             if (!crudSupported) {

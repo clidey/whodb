@@ -23,9 +23,9 @@ jobs:
       - name: Install golangci-lint
         uses: ./.github/actions/install-go-tools
         with:
-          cache-key: golangci-lint-v2.13.2
+          cache-key: golangci-lint-v2.14.0
           tools: |
-            golangci-lint|github.com/golangci/golangci-lint/v2/cmd/golangci-lint|v2.13.2
+            golangci-lint|github.com/golangci/golangci-lint/v2/cmd/golangci-lint|v2.14.0
 
       - name: Lint
         run: |
@@ -46,9 +46,9 @@ jobs:
       - name: Install golangci-lint
         uses: ./.github/actions/install-go-tools
         with:
-          cache-key: golangci-lint-v2.13.2
+          cache-key: golangci-lint-v2.14.0
           tools: |
-            golangci-lint|github.com/golangci/golangci-lint/v2/cmd/golangci-lint|v2.13.2
+            golangci-lint|github.com/golangci/golangci-lint/v2/cmd/golangci-lint|v2.14.0
 
       - name: Lint
         run: |
@@ -206,9 +206,9 @@ jobs:
       - name: Install Go lint/security tools
         uses: ./.github/actions/install-go-tools
         with:
-          cache-key: sdk-go-tools-golangci-v2.13.2-govulncheck-v1.8.0
+          cache-key: sdk-go-tools-golangci-v2.14.0-govulncheck-v1.8.0
           tools: |
-            golangci-lint|github.com/golangci/golangci-lint/v2/cmd/golangci-lint|v2.13.2
+            golangci-lint|github.com/golangci/golangci-lint/v2/cmd/golangci-lint|v2.14.0
             govulncheck|golang.org/x/vuln/cmd/govulncheck|v1.8.0
 
       - name: Go SDK build, vet, test

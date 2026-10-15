@@ -389,6 +389,59 @@ func (c *Client) ExecuteFunction(ctx context.Context, projectID, functionID, inp
 	return resp.ExecuteFunction, nil
 }
 
+// StartFunctionRun starts a persisted run of one hosted function and returns its record immediately.
+func (c *Client) StartFunctionRun(ctx context.Context, projectID, functionID, input string, useActiveVersion bool) (*FunctionRun, error) {
+	if err := c.RequireOperation("Mutation", "StartFunctionRun", "detached function runs"); err != nil {
+		return nil, err
+	}
+	var resp struct {
+		StartFunctionRun *FunctionRun `json:"StartFunctionRun"`
+	}
+	variables := map[string]any{"projectId": projectID, "functionId": functionID, "input": input, "useActiveVersion": useActiveVersion}
+	if err := c.graphQL(ctx, operationStartFunctionRun, variables, &resp); err != nil {
+		return nil, err
+	}
+	if resp.StartFunctionRun == nil {
+		return nil, fmt.Errorf("platform returned no function run")
+	}
+	return resp.StartFunctionRun, nil
+}
+
+// FunctionRun returns one persisted function run.
+func (c *Client) FunctionRun(ctx context.Context, projectID, id string) (*FunctionRun, error) {
+	if err := c.RequireOperation("Query", "FunctionRun", "detached function runs"); err != nil {
+		return nil, err
+	}
+	var resp struct {
+		FunctionRun *FunctionRun `json:"FunctionRun"`
+	}
+	if err := c.graphQL(ctx, operationFunctionRun, map[string]any{"projectId": projectID, "id": id}, &resp); err != nil {
+		return nil, err
+	}
+	if resp.FunctionRun == nil {
+		return nil, fmt.Errorf("platform returned no function run")
+	}
+	return resp.FunctionRun, nil
+}
+
+// FunctionRuns lists persisted runs of one hosted function, newest first.
+func (c *Client) FunctionRuns(ctx context.Context, projectID, functionID string, limit int) ([]FunctionRun, error) {
+	if err := c.RequireOperation("Query", "FunctionRuns", "detached function runs"); err != nil {
+		return nil, err
+	}
+	var resp struct {
+		FunctionRuns []FunctionRun `json:"FunctionRuns"`
+	}
+	variables := map[string]any{"projectId": projectID, "functionId": functionID}
+	if limit > 0 {
+		variables["limit"] = limit
+	}
+	if err := c.graphQL(ctx, operationFunctionRuns, variables, &resp); err != nil {
+		return nil, err
+	}
+	return resp.FunctionRuns, nil
+}
+
 // ObjectVersions returns promoted versions for one hosted platform object.
 func (c *Client) ObjectVersions(ctx context.Context, projectID, objectID, objectType string) ([]ObjectVersion, error) {
 	if err := c.RequireOperation("Query", "ObjectVersions", "object version history"); err != nil {

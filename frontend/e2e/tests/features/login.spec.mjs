@@ -17,6 +17,7 @@
 import { test, expect } from '../../support/test-fixture.mjs';
 import { getDatabaseConfig } from '../../support/database-config.mjs';
 import { clearBrowserState } from '../../support/helpers/animation.mjs';
+import { TIMEOUT } from '../../support/helpers/test-utils.mjs';
 
 async function pasteIntoField(page, testId, value) {
     await page.evaluate(({ selector, text }) => {
@@ -98,13 +99,53 @@ test.describe('Login & Authentication', () => {
     });
 
     test.describe('Form Validation', () => {
-        test('disables login button when required fields are empty', async ({ whodb, page }) => {
+        test('blocks login and shows an error when required fields are empty', async ({ whodb, page }) => {
             // Select PostgreSQL which requires all fields
             await page.locator('[data-testid="database-type-select"]').click();
             await page.locator('[data-value="Postgres"]').click();
 
-            // Login button should be disabled when fields are empty
-            await expect(page.locator('[data-testid="login-button"]')).toBeDisabled();
+            // The landing login button stays enabled and reports missing fields on submit
+            await page.locator('[data-testid="login-button"]').click();
+            await expect(page.getByRole('alert').filter({ hasText: 'All Fields Are Required' })).toBeVisible();
+            await expect(page).toHaveURL(/\/login/);
+        });
+
+        test('toggles password visibility', async ({ whodb, page }) => {
+            await page.locator('[data-testid="database-type-select"]').click();
+            await page.locator('[data-value="Postgres"]').click();
+
+            const password = page.locator('[data-testid="password"]');
+            await password.fill('secret-value');
+            await expect(password).toHaveAttribute('type', 'password');
+
+            await page.locator('[data-testid="password-toggle"]').click();
+            await expect(password).toHaveAttribute('type', 'text');
+            await expect(password).toHaveValue('secret-value');
+
+            await page.locator('[data-testid="password-toggle"]').click();
+            await expect(password).toHaveAttribute('type', 'password');
+        });
+
+        test('tests the connection before logging in', async ({ whodb, page }) => {
+            const db = getDatabaseConfig('postgres');
+            await page.locator('[data-testid="database-type-select"]').click();
+            await page.locator('[data-value="Postgres"]').click();
+
+            await page.locator('[data-testid="hostname"]').fill(db.connection.host);
+            await page.locator('[data-testid="username"]').fill(db.connection.user);
+            await page.locator('[data-testid="password"]').fill('wrong-password');
+            await page.locator('[data-testid="database"]').fill(db.connection.database);
+
+            await page.locator('[data-testid="connection-test-button"]').click();
+            const result = page.locator('[data-testid="connection-test-result"]');
+            await expect(result).toBeVisible({ timeout: TIMEOUT.ACTION });
+            await expect(result).toHaveClass(/is-error/);
+
+            await page.locator('[data-testid="password"]').fill(db.connection.password);
+            await page.locator('[data-testid="connection-test-button"]').click();
+            await expect(result).toContainText('Connection successful', { timeout: TIMEOUT.ACTION });
+            await expect(result).toHaveClass(/is-success/);
+            await expect(page).toHaveURL(/\/login/);
         });
 
         test('enables login button when required fields are filled', async ({ whodb, page }) => {

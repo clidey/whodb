@@ -39,7 +39,7 @@ type PlatformSourceConstraintsInput struct {
 // PlatformSourceContentInput is the input for the whodb_platform_source_content tool.
 type PlatformSourceContentInput struct {
 	Source string   `json:"source" jsonschema:"Hosted source id or name"`
-	Ref    string   `json:"ref" jsonschema:"Object ref as kind:path, for example file:notes/report.txt"`
+	Ref    string   `json:"ref" jsonschema:"Object ref as kind:path, for example item:notes/report.txt"`
 	Fields []string `json:"fields,omitempty" jsonschema:"Top-level output fields to include. Prefer only fields needed now; call again with more fields if needed."`
 }
 
@@ -170,179 +170,191 @@ func registerPlatformReadTool(server *mcp.Server, tool *mcp.Tool, secOpts *Secur
 	if registerPlatformExtendedReadTool(server, tool) {
 		return
 	}
+	if registerPlatformOntologyAnalyticsTool(server, tool, secOpts) {
+		return
+	}
 	switch tool.Name {
 	case "whodb_platform_workflow_recipe":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformWorkflowRecipeInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformWorkflowRecipeInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformWorkflowRecipe(ctx, req, input)
 		})
 	case "whodb_platform_transform_wait":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformTransformWaitInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformTransformWaitInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformTransformWait(ctx, req, input)
 		})
+	case "whodb_platform_function_wait":
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformFunctionWaitInput) (*mcp.CallToolResult, any, error) {
+			return HandlePlatformFunctionWait(ctx, req, input)
+		})
 	case "whodb_platform_workspace_map":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformWorkspaceMapInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformWorkspaceMapInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformWorkspaceMap(ctx, req, input)
 		})
 	case "whodb_platform_resource_graph":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformResourceGraphInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformResourceGraphInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformResourceGraph(ctx, req, input)
 		})
 	case "whodb_platform_next_actions":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformNextActionsInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformNextActionsInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformNextActions(ctx, req, input)
 		})
 	case "whodb_platform_workspace_summary":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformWorkspaceSummaryInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformWorkspaceSummaryInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformWorkspaceSummary(ctx, req, input)
 		})
 	case "whodb_platform_build_plan":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformBuildPlanInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformBuildPlanInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformBuildPlan(ctx, req, input)
 		})
 	case "whodb_platform_gap_analysis":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformGapAnalysisInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformGapAnalysisInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformGapAnalysis(ctx, req, input)
 		})
 	case "whodb_platform_project_health":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformNextActionsInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformNextActionsInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformProjectHealth(ctx, req, input)
 		})
 	case "whodb_platform_data_model_summary":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformResourceGraphInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformResourceGraphInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformDataModelSummary(ctx, req, input)
 		})
 	case "whodb_platform_runtime_readiness":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformNextActionsInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformNextActionsInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformRuntimeReadiness(ctx, req, input)
 		})
 	case "whodb_platform_change_impact":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformChangeImpactInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformChangeImpactInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformChangeImpact(ctx, req, input)
 		})
 	case "whodb_platform_write_plan":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformWritePlanInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformWritePlanInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformWritePlan(ctx, req, input)
 		})
 	case "whodb_platform_source_constraints":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformSourceConstraintsInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformSourceConstraintsInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformSourceConstraints(ctx, req, input)
 		})
 	case "whodb_platform_source_content":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformSourceContentInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformSourceContentInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformSourceContent(ctx, req, input)
 		})
 	case "whodb_platform_secrets":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformSecrets(ctx, req, input)
 		})
 	case "whodb_platform_ai_providers":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformAIProviders(ctx, req, input)
 		})
 	case "whodb_platform_ai_provider_models":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformProviderModelsInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformProviderModelsInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformAIProviderModels(ctx, req, input)
 		})
 	case "whodb_platform_ontologies":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformOntologies(ctx, req, input)
 		})
 	case "whodb_platform_ontology":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformEntityInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformEntityInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformOntology(ctx, req, input)
 		})
 	case "whodb_platform_ontology_fast_lookups":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformEntityInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformEntityInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformOntologyFastLookups(ctx, req, input)
 		})
 	case "whodb_platform_ontology_fast_lookup_suggestions":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformEntityInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformEntityInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformOntologyFastLookupSuggestions(ctx, req, input)
 		})
 	case "whodb_platform_ontology_rows":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformRowsInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformRowsInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformOntologyRows(ctx, req, input, secOpts)
 		})
 	case "whodb_platform_ontology_follow_link":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformOntologyFollowLinkInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformOntologyFollowLinkInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformOntologyFollowLink(ctx, req, input, secOpts)
 		})
 	case "whodb_platform_datasets":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformDatasets(ctx, req, input)
 		})
 	case "whodb_platform_dataset":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformEntityInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformEntityInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformDataset(ctx, req, input)
 		})
 	case "whodb_platform_dataset_rows":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformRowsInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformRowsInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformDatasetRows(ctx, req, input, secOpts)
 		})
 	case "whodb_platform_lineage":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformLineageInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformLineageInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformLineage(ctx, req, input)
 		})
 	case "whodb_platform_lineage_neighbors":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformLineageNeighborsInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformLineageNeighborsInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformLineageNeighbors(ctx, req, input)
 		})
 	case "whodb_platform_project_lineage":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformProjectLineage(ctx, req, input)
 		})
 	case "whodb_platform_transforms":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformTransforms(ctx, req, input)
 		})
 	case "whodb_platform_transform":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformEntityInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformEntityInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformTransform(ctx, req, input)
 		})
 	case "whodb_platform_transform_runs":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformTransformRunsInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformTransformRunsInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformTransformRuns(ctx, req, input)
 		})
 	case "whodb_platform_functions":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformFunctions(ctx, req, input)
 		})
 	case "whodb_platform_function":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformEntityInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformEntityInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformFunction(ctx, req, input)
 		})
+	case "whodb_platform_function_runs":
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformFunctionRunsInput) (*mcp.CallToolResult, any, error) {
+			return HandlePlatformFunctionRuns(ctx, req, input)
+		})
 	case "whodb_platform_files":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformFilesInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformFilesInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformFiles(ctx, req, input)
 		})
 	case "whodb_platform_file_preview":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformFilePreviewInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformFilePreviewInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformFilePreview(ctx, req, input)
 		})
 	case "whodb_platform_file_inspect":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformFileInspectInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformFileInspectInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformFileInspect(ctx, req, input)
 		})
 	case "whodb_platform_file_search":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformFileSearchInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformFileSearchInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformFileSearch(ctx, req, input)
 		})
 	case "whodb_platform_tabular_files":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformTabularFiles(ctx, req, input)
 		})
 	case "whodb_platform_storage_usage":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, any, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformStorageUsage(ctx, req, input)
 		})
 	}
 }
 
 func platformReadToolDefinitions() []*mcp.Tool {
-	return []*mcp.Tool{
+	tools := []*mcp.Tool{
 		platformResolveResourceToolDefinition(),
 		platformWorkflowRecipeToolDefinition(),
 		platformTransformWaitToolDefinition(),
+		platformFunctionWaitToolDefinition(),
 		{Name: "whodb_platform_workspace_map", Description: descPlatformWorkspaceMap, Annotations: platformReadOnlyAnnotations("Map Hosted Workspace")},
 		{Name: "whodb_platform_resource_graph", Description: descPlatformResourceGraph, Annotations: platformReadOnlyAnnotations("Graph Hosted Resources")},
 		{Name: "whodb_platform_next_actions", Description: descPlatformNextActions, Annotations: platformReadOnlyAnnotations("Suggest Hosted Next Actions")},
@@ -376,6 +388,7 @@ func platformReadToolDefinitions() []*mcp.Tool {
 		{Name: "whodb_platform_transform_runs", Description: descPlatformTransformRuns, Annotations: platformReadOnlyAnnotations("List Hosted Transform Runs")},
 		{Name: "whodb_platform_functions", Description: descPlatformFunctions, Annotations: platformReadOnlyAnnotations("List Hosted Functions")},
 		{Name: "whodb_platform_function", Description: descPlatformFunction, Annotations: platformReadOnlyAnnotations("Inspect Hosted Function")},
+		{Name: "whodb_platform_function_runs", Description: descPlatformFunctionRuns, Annotations: platformReadOnlyAnnotations("List Hosted Function Runs")},
 		{Name: "whodb_platform_files", Description: descPlatformFiles, Annotations: platformReadOnlyAnnotations("List Hosted Files")},
 		{Name: "whodb_platform_file_preview", Description: descPlatformFilePreview, Annotations: platformReadOnlyAnnotations("Preview Hosted File")},
 		{Name: "whodb_platform_file_inspect", Description: descPlatformFileInspect, Annotations: platformReadOnlyAnnotations("Inspect Hosted File Columns")},
@@ -383,6 +396,7 @@ func platformReadToolDefinitions() []*mcp.Tool {
 		{Name: "whodb_platform_tabular_files", Description: descPlatformTabularFiles, Annotations: platformReadOnlyAnnotations("List Hosted Tabular Files")},
 		{Name: "whodb_platform_storage_usage", Description: descPlatformStorageUsage, Annotations: platformReadOnlyAnnotations("Inspect Hosted Storage Usage")},
 	}
+	return append(tools, platformOntologyAnalyticsToolDefinitions()...)
 }
 
 // HandlePlatformSourceConstraints returns field constraints for one hosted source object.
@@ -680,7 +694,7 @@ func platformProjectRead(ctx context.Context, toolName string, fields []string, 
 	session, err := loadPlatformWorkspace(ctx)
 	if err != nil {
 		TrackToolCall(ctx, toolName, requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_session"})
-		return nil, PlatformReadOutput{PlatformSetupGuidance: platformSetupGuidanceForCurrentConfig(requestID), Error: err.Error(), RequestID: requestID}, nil
+		return nil, PlatformReadOutput{PlatformSetupGuidance: platformSetupGuidanceForCurrentConfig(ctx, requestID), Error: err.Error(), RequestID: requestID}, nil
 	}
 	data, count, truncated, err := read(ctx, session)
 	if err != nil {
@@ -990,7 +1004,7 @@ Use a source name or id and an object ref such as table:public.users. This tool 
 
 const descPlatformSourceContent = `Read content for one hosted source object when the source supports content reads.
 
-Use a source name or id and an object ref such as file:notes/report.txt. Prefer fields to request only the content metadata or body fields needed now, then call again with more fields only if needed. Text content is capped in MCP output.`
+Use a source name or id and an object ref such as item:notes/report.txt. Prefer fields to request only the content metadata or body fields needed now, then call again with more fields only if needed. Text content is capped in MCP output.`
 
 const descPlatformSecrets = `List hosted project secret metadata and usage. Use name to filter by secret name when known.
 
@@ -1037,6 +1051,8 @@ const descPlatformTransforms = `List transforms in the selected hosted project. 
 const descPlatformTransform = `Inspect one transform in the selected hosted project. Use fields to request only the top-level fields needed for the current task.`
 
 const descPlatformTransformRuns = `List recent runs for one hosted transform.`
+
+const descPlatformFunctionRuns = `Return one persisted function run by run_id, or list recent runs for one function by function_id. Runs come from the function start_run action; each carries status, output, logs and error.`
 
 const descPlatformFunctions = `List ontology functions in the selected hosted project.
 

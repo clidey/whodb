@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
-import {useLazyQuery} from "@apollo/client/react";
+import {useApolloClient} from "@apollo/client/react";
 import type {FC} from "react";
 import React, { useEffect} from "react";
 import {StorageUnitTable} from "../../components/table";
 import {RawExecuteDocument} from "../../generated/graphql";
+import type {RowsResult} from "@graphql";
 import {CheckCircleIcon} from "../../components/heroicons";
 import {useAppSelector} from "../../store/hooks";
 import {isDestructiveQuery} from "../../utils/query-utils";
 
-type PromiseFunction = (code: string) => Promise<any>;
+type PromiseFunction = (code: string, signal?: AbortSignal) => Promise<any>;
 
 export type IPluginProps = {
     code: string;
@@ -33,30 +34,28 @@ export type IPluginProps = {
     token?: string;
     schema: string;
     containerWidth?: number;
+    rowsResult?: RowsResult | null;
 }
 
-export const QueryView: FC<IPluginProps> = ({ code, handleExecuteRef, containerWidth }) => {
-    const [rawExecute, { data }] = useLazyQuery(RawExecuteDocument, {
-        fetchPolicy: 'network-only',
-    });
+export const QueryView: FC<IPluginProps> = ({ code, handleExecuteRef, containerWidth, rowsResult: data }) => {
+    const client = useApolloClient();
     const currentType = useAppSelector(state => state.auth.current?.Type);
 
     // Set the ref to a function that executes the query and returns a promise
     useEffect(() => {
-        handleExecuteRef.current = async (code: string) => {
-            const result = await rawExecute({
+        handleExecuteRef.current = async (code: string, signal?: AbortSignal) => {
+            const result = await client.query({
+                query: RawExecuteDocument,
                 variables: { query: code },
+                context: { fetchOptions: { signal } },
+                fetchPolicy: 'network-only',
             });
             if (result.error) {
                 throw result.error;
             }
-            const data = result.data;
-            if (!isDestructiveQuery(code, currentType)) {
-                return data?.RawExecute ?? null;
-            }
-            return null;
+            return result.data?.RawExecute ?? null;
         };
-    }, [rawExecute, handleExecuteRef, currentType]);
+    }, [client, handleExecuteRef]);
 
     if (data == null) {
         return null;
@@ -66,18 +65,18 @@ export const QueryView: FC<IPluginProps> = ({ code, handleExecuteRef, containerW
         return (
             <div className="flex flex-col w-full" data-testid="cell-query-output">
                 {
-                    data.RawExecute.Columns.length > 0 && (
+                    data.Columns.length > 0 && (
                         <StorageUnitTable
                             key={containerWidth}
-                            columns={data.RawExecute.Columns.map((c: any) => c.Name)}
-                            columnTypes={data.RawExecute.Columns.map((c: any) => c.Type)}
-                            rows={data.RawExecute.Rows}
+                            columns={data.Columns.map((c: any) => c.Name)}
+                            columnTypes={data.Columns.map((c: any) => c.Type)}
+                            rows={data.Rows}
                             disableEdit={true}
                             limitContextMenu={true}
                             height={250}
                             databaseType={currentType}
                             rawQuery={code}
-                            totalCount={data.RawExecute.TotalCount}
+                            totalCount={data.TotalCount}
                         />
                     )
                 }

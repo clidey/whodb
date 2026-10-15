@@ -134,7 +134,8 @@ const errorLink = onError(({error}) => {
         console.error('Network error:', error);
     } else if (!CombinedProtocolErrors.is(error)) {
         if (error && 'message' in error && (error as any).message?.includes('Failed to fetch')) {
-            toast.error('Connection lost. Check your network.');
+            // One toast per outage, not one per failed request.
+            toast.error('Connection lost. Check your network.', {id: 'connection-lost'});
         }
         console.error('Network error:', error);
     }

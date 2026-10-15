@@ -68,6 +68,7 @@ WhoDB supports log environment variables:
 | `WHODB_LOG_FORMAT` | `text` or `json` |
 | `WHODB_LOG_FILE` | Non-HTTP log output. Use `default` for `/var/log/whodb/whodb.log` |
 | `WHODB_ACCESS_LOG_FILE` | HTTP access log output. Use `default` for `/var/log/whodb/whodb.access.log` |
+| `WHODB_AUDIT_LOG_FILE` | Audit log output as NDJSON: logins, data reads and changes, without request telemetry. Use `default` for `/var/log/whodb/whodb.audit.log` |
 
 Docker Compose log example:
 

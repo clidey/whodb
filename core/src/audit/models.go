@@ -17,6 +17,7 @@
 package audit
 
 import (
+	"strings"
 	"time"
 )
 
@@ -70,13 +71,17 @@ type Actor struct {
 
 // Request describes the request envelope for the audited action.
 type Request struct {
-	ID            string `json:"id,omitempty"`
-	Host          string `json:"host,omitempty"`
-	Method        string `json:"method,omitempty"`
-	Path          string `json:"path,omitempty"`
-	Route         string `json:"route,omitempty"`
-	RemoteIP      string `json:"remote_ip,omitempty"`
-	UserAgent     string `json:"user_agent,omitempty"`
+	ID        string `json:"id,omitempty"`
+	Host      string `json:"host,omitempty"`
+	Method    string `json:"method,omitempty"`
+	Path      string `json:"path,omitempty"`
+	Route     string `json:"route,omitempty"`
+	RemoteIP  string `json:"remote_ip,omitempty"`
+	UserAgent string `json:"user_agent,omitempty"`
+	// Client names the calling surface when it identifies itself: the value of
+	// the ClientHeader request header, or a label set by an embedding handler
+	// such as a hosted MCP endpoint. Empty for browsers and unknown clients.
+	Client        string `json:"client,omitempty"`
 	Protocol      string `json:"protocol,omitempty"`
 	OperationName string `json:"operation_name,omitempty"`
 	OperationType string `json:"operation_type,omitempty"`
@@ -89,4 +94,27 @@ type Resource struct {
 	ID   string `json:"id"`
 	Type string `json:"type"` // "source", "role", "user", "config"
 	Name string `json:"name,omitempty"`
+}
+
+// ClientHeader is the request header a first-party client (the CLI, the MCP
+// server) sends to identify itself. Its value becomes Request.Client.
+const ClientHeader = "X-WhoDB-Client"
+
+// maxClientLength bounds the stored client label.
+const maxClientLength = 64
+
+// SanitizeClient normalizes a self-reported client label: trimmed, printable
+// ASCII only, at most maxClientLength characters. Anything else is dropped so a
+// client cannot inject control characters or long payloads into audit rows.
+func SanitizeClient(value string) string {
+	value = strings.TrimSpace(value)
+	if value == "" || len(value) > maxClientLength {
+		return ""
+	}
+	for i := range len(value) {
+		if value[i] < 0x20 || value[i] > 0x7e {
+			return ""
+		}
+	}
+	return value
 }

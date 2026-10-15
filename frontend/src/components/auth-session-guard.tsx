@@ -15,7 +15,7 @@
  */
 
 import { useLazyQuery } from '@apollo/client/react';
-import { Spinner } from '@clidey/ux';
+import { LoadingPage } from './loading';
 import type { FC, ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
@@ -37,7 +37,7 @@ interface AuthSessionGuardProps {
  * *and* across login/logout, so a `loggedIn`-reactive effect would re-fire
  * on every `AuthActions.login()`/`logout()` dispatch — racing with (and
  * clobbering) in-flight profile/database switches, and re-showing the
- * loading spinner mid-navigation on `/logout` right as it navigates to
+ * loading view mid-navigation on `/logout` right as it navigates to
  * `/login` (observed as Playwright `net::ERR_ABORTED` on that navigation).
  * Once the mount check completes, redirect/render decisions read `loggedIn`
  * directly so they still reflect logins/logouts dispatched elsewhere — this
@@ -101,7 +101,7 @@ export const AuthSessionGuard: FC<AuthSessionGuardProps> = ({ children }) => {
   if (checking) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <Spinner className="w-8 h-8" />
+        <LoadingPage />
       </div>
     );
   }

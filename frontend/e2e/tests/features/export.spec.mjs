@@ -105,9 +105,10 @@ test.describe('Data Export', () => {
                 await page.locator('text=Select Row').click({ force: true });
                 await page.waitForTimeout(300); // Wait for selection to register
 
-                // Verify row was selected - button should change to "Export 1 Selected"
-                await expect(page.locator('button', { hasText: 'Export 1 Selected' })).toBeVisible();
-                await page.locator('button', { hasText: 'Export 1 Selected' }).click();
+                // Verify row was selected - the selection bar offers an export for the selected rows
+                const selectionBar = page.locator('[data-testid="selected-rows-bar"]');
+                await expect(selectionBar).toContainText(/1 rows? selected/);
+                await selectionBar.getByRole('button', { name: 'Export' }).click();
 
                 await expect(page.locator('[role="dialog"]')).toBeVisible();
                 await expect(page.locator('text=You are about to export 1 selected row.')).toBeVisible();
@@ -154,7 +155,7 @@ test.describe('Data Export', () => {
                 await page.waitForTimeout(300);
 
                 // Verify row is selected
-                await expect(page.locator('button', { hasText: 'Export 1 Selected' })).toBeVisible();
+                await expect(page.locator('[data-testid="selected-rows-bar"]')).toContainText(/1 rows? selected/);
 
                 // Now right-click again and choose "Export All as CSV"
                 await whodb.dataCell(0, 1).click({ button: 'right', position: { x: 5, y: 5 } });

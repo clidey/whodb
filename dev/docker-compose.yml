@@ -160,6 +160,7 @@ services:
     volumes:
       - e2e_clickhouse:/var/lib/clickhouse
       - ./sample-data/clickhouse/data.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./conf/clickhouse_e2e.xml:/etc/clickhouse-server/config.d/e2e.xml:ro
     networks:
       - db
 
@@ -780,6 +781,7 @@ services:
       - ./certs/server/clickhouse/server-cert.pem:/etc/clickhouse-server/certs/server-cert.pem:ro
       - ./certs/server/clickhouse/server-key.pem:/etc/clickhouse-server/certs/server-key.pem:ro
       - ./conf/clickhouse_ssl.xml:/etc/clickhouse-server/config.d/ssl.xml:ro
+      - ./conf/clickhouse_e2e.xml:/etc/clickhouse-server/config.d/e2e.xml:ro
     networks:
       - db
 

@@ -555,10 +555,12 @@ func (p *Sqlite3Plugin) executeRawSQL(config *engine.PluginConfig, query string,
 				return nil, tx.Error
 			}
 			defer func() { _ = tx.Rollback().Error }()
-			if err := p.SetTransactionReadOnly(tx, true); err != nil {
-				return nil, err
+			if !IsSampleDatabase(config.Credentials.Database) {
+				if err := p.SetTransactionReadOnly(tx, true); err != nil {
+					return nil, err
+				}
+				defer func() { _ = p.SetTransactionReadOnly(tx, false) }()
 			}
-			defer func() { _ = p.SetTransactionReadOnly(tx, false) }()
 			db = tx
 		}
 

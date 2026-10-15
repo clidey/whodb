@@ -51,6 +51,7 @@ const EE_E2E_DIR = process.env.EE_E2E_DIR || "";
 /** Test files that mutate data (INSERT, UPDATE, DELETE, DROP, etc.). */
 const MUTATING_TESTS = [
   /crud\.spec/,
+  /inline-editing\.spec/,
   /mock-data\.spec/,
   /import\.spec/,
   /data-types\.spec/,

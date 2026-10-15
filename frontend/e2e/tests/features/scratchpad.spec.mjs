@@ -15,7 +15,7 @@
  */
 
 import { test, expect, forEachDatabase, conditionalTest } from '../../support/test-fixture.mjs';
-import { hasFeature, getSqlQuery, getErrorPattern } from '../../support/database-config.mjs';
+import {getSqlQuery, getErrorPattern} from '../../support/database-config.mjs';
 
 test.describe('Scratchpad', () => {
 
@@ -79,7 +79,7 @@ test.describe('Scratchpad', () => {
             });
 
             // Skip UPDATE test for databases with async mutations (e.g., ClickHouse)
-            const updateSupported = hasFeature(db, 'scratchpadUpdate') !== false;
+            const updateSupported = db.features?.scratchpadUpdate !== false;
 
             conditionalTest(updateSupported, 'executes UPDATE query', async ({ whodb, page }) => {
                 await whodb.goto('scratchpad');
@@ -102,7 +102,9 @@ test.describe('Scratchpad', () => {
 
                 await test.step('verify update', async () => {
                     await whodb.addCell(0);
-                    const selectQuery = getSqlQuery(db, 'selectUserById');
+                    // Fixtures may point the UPDATE at a row other than id=1 (e.g. DuckDB cannot
+                    // update rows referenced by a foreign key), so prefer a dedicated select.
+                    const selectQuery = db.sql.selectUpdatedUser ?? getSqlQuery(db, 'selectUserById');
                     await whodb.writeCode(1, selectQuery);
                     await whodb.runCode(1);
 

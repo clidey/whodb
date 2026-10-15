@@ -18,6 +18,7 @@ package duckdb
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -41,16 +42,19 @@ func getDefaultDirectory() string {
 
 var errDoesNotExist = errors.New("unauthorized or the database doesn't exist")
 
+const restrictedDSNOptions = "?enable_external_access=false&autoinstall_known_extensions=false&autoload_known_extensions=false&allow_community_extensions=false&lock_configuration=true"
+
 func (p *DuckDBPlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 	connectionInput, err := p.ParseConnectionConfig(config)
 	if err != nil {
 		return nil, err
 	}
 	database := connectionInput.Database
+	localMode := env.GetIsLocalMode()
 
 	var fileNameDatabase string
 
-	if env.GetIsLocalMode() {
+	if localMode {
 		fileNameDatabase = database
 
 		if _, err := os.Stat(fileNameDatabase); errors.Is(err, os.ErrNotExist) {
@@ -86,16 +90,45 @@ func (p *DuckDBPlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 			return nil, errDoesNotExist
 		}
 	}
+	// The driver parses '?' as DSN options and '#' as a URL fragment. Either
+	// character in a path can discard the security options appended below.
+	if strings.ContainsAny(fileNameDatabase, "?#") {
+		return nil, errors.New("DuckDB database path contains unsupported character '?' or '#'")
+	}
 
 	l := log.WithFields(map[string]any{
 		"database": database,
 		"path":     fileNameDatabase,
 	})
 
-	db, err := gorm.Open(Open(fileNameDatabase), &gorm.Config{Logger: logger.Default.LogMode(plugins.GetGormLogConfig())})
+	dsn := fileNameDatabase
+	if !localMode {
+		dsn += restrictedDSNOptions
+	}
+	db, err := gorm.Open(Open(dsn), &gorm.Config{Logger: logger.Default.LogMode(plugins.GetGormLogConfig())})
 	if err != nil {
 		l.WithError(err).Error("Failed to connect to DuckDB database")
 		return nil, err
+	}
+	if !localMode {
+		sqlDB, err := db.DB()
+		if err != nil {
+			return nil, err
+		}
+		var externalAccess, autoInstall, autoLoad, communityExtensions, locked bool
+		err = sqlDB.QueryRowContext(config.OperationContext(), `SELECT
+		current_setting('enable_external_access'),
+		current_setting('autoinstall_known_extensions'),
+		current_setting('autoload_known_extensions'),
+		current_setting('allow_community_extensions'),
+		current_setting('lock_configuration')`).Scan(&externalAccess, &autoInstall, &autoLoad, &communityExtensions, &locked)
+		if err != nil || externalAccess || autoInstall || autoLoad || communityExtensions || !locked {
+			_ = sqlDB.Close()
+			if err != nil {
+				return nil, fmt.Errorf("verify DuckDB security settings: %w", err)
+			}
+			return nil, errors.New("DuckDB security settings were not applied")
+		}
 	}
 
 	if err := plugins.ConfigureConnectionPool(db); err != nil {

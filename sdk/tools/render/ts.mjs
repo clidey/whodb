@@ -134,7 +134,7 @@ function renderSurface(ir) {
   // The facade consumes this to wire domain handles without hand-maintaining
   // the operation list: domain -> method -> generated op metadata.
   const surface = {};
-  for (const op of ir.operations) {
+  for (const op of ir.surfaceMethods ?? ir.operations) {
     if (op.internal) continue;
     surface[op.domain] ??= {};
     surface[op.domain][op.method] = {

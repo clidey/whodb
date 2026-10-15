@@ -306,6 +306,7 @@ func TestNewServer_PlatformModeListsOnlyPlatformPrompts(t *testing.T) {
 		}
 	}
 	expectedPrompts := []string{
+		"whodb_platform_build_app_workflow",
 		"whodb_platform_overview",
 		"whodb_platform_read_workflow",
 		"whodb_platform_write_safety",
@@ -328,6 +329,12 @@ func TestNewServer_PlatformModeListsOnlyPlatformPrompts(t *testing.T) {
 
 func TestPlatformPromptContent(t *testing.T) {
 	server := NewServer(&ServerOptions{PlatformEnabled: true})
+	appWorkflow := promptText(t, getServerPrompt(t, server, "whodb_platform_build_app_workflow"))
+	for _, expected := range []string{"whodb://platform/app-workflow", "ontology schemas", "responsive viewports"} {
+		if !strings.Contains(appWorkflow, expected) {
+			t.Fatalf("app workflow prompt should mention %q", expected)
+		}
+	}
 	writeSafety := promptText(t, getServerPrompt(t, server, "whodb_platform_write_safety"))
 	for _, expected := range []string{"whodb_platform_confirm", "confirmation_preview", "--allow-write"} {
 		if !strings.Contains(writeSafety, expected) {
@@ -360,16 +367,18 @@ func TestPlatformPromptContent(t *testing.T) {
 func TestNewServer_PlatformModeListsOnlyPlatformResources(t *testing.T) {
 	result := listServerResources(t, NewServer(&ServerOptions{PlatformEnabled: true}))
 	expectedResources := []string{
+		"whodb://mcp/configuration",
 		"whodb://platform/schema",
 		"whodb://platform/workspace",
 		"whodb://platform/tool-guide",
 		"whodb://platform/concepts",
+		"whodb://platform/app-workflow",
 	}
 	if len(result.Resources) != len(expectedResources) {
 		t.Fatalf("platform mode exposed %d resources, want %d", len(result.Resources), len(expectedResources))
 	}
 	for _, resource := range result.Resources {
-		if !strings.HasPrefix(resource.URI, "whodb://platform/") {
+		if resource.URI != "whodb://mcp/configuration" && !strings.HasPrefix(resource.URI, "whodb://platform/") {
 			t.Fatalf("platform mode exposed non-platform resource %q", resource.URI)
 		}
 		if strings.TrimSpace(resource.Description) == "" {
@@ -399,6 +408,7 @@ func TestPlatformResourcesReadJSON(t *testing.T) {
 		"whodb://platform/workspace",
 		"whodb://platform/tool-guide",
 		"whodb://platform/concepts",
+		"whodb://platform/app-workflow",
 	} {
 		text := resourceText(t, readServerResource(t, server, uri))
 		var payload map[string]any
@@ -432,6 +442,12 @@ func TestPlatformResourcesReadJSON(t *testing.T) {
 	for _, expected := range []string{`semantic application platform`, `"source"`, `"ontology"`, `"transform"`, `"bundle"`, `"recipes"`, `"zero_to_app"`, `"file_to_dataset_to_ontology"`, `"safe_delete_resource"`, `Treat sources as ingestion endpoints`} {
 		if !strings.Contains(concepts, expected) {
 			t.Fatalf("platform concepts resource should contain %s: %s", expected, concepts)
+		}
+	}
+	appWorkflow := resourceText(t, readServerResource(t, server, "whodb://platform/app-workflow"))
+	for _, expected := range []string{"apps init", "--from", "apps verify", "whodb_platform_app_screenshot", `pages/\u003cpage\u003e/tree.json`, "currently exposes file-level app editing"} {
+		if !strings.Contains(appWorkflow, expected) {
+			t.Fatalf("app workflow resource should contain %q: %s", expected, appWorkflow)
 		}
 	}
 }
@@ -620,7 +636,7 @@ func TestAgentManifestIncludesPlatformMCPPromptsAndResources(t *testing.T) {
 		t.Fatalf("agent manifest has %d platform resources, want %d", len(manifest.PlatformMCP.Resources), len(listedResources))
 	}
 	for _, resource := range manifest.PlatformMCP.Resources {
-		if !strings.HasPrefix(resource.URI, "whodb://platform/") {
+		if resource.URI != "whodb://mcp/configuration" && !strings.HasPrefix(resource.URI, "whodb://platform/") {
 			t.Fatalf("platform resource %s does not use platform URI prefix", resource.URI)
 		}
 		if strings.TrimSpace(resource.Description) == "" {

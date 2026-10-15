@@ -78,15 +78,17 @@ var LogLevel = os.Getenv("WHODB_LOG_LEVEL")
 var AccessLogFile = os.Getenv("WHODB_ACCESS_LOG_FILE") // where to store the http access logs
 var LogFile = os.Getenv("WHODB_LOG_FILE")              // where to store all other non-http logs
 var LogFormat = os.Getenv("WHODB_LOG_FORMAT")          // only option right now is "json". leave blank for default format
+var AuditLogFile = os.Getenv("WHODB_AUDIT_LOG_FILE")   // where to store the NDJSON audit log (CE only)
 
 // BasePath is the optional URL path prefix used when WhoDB serves its bundled
 // frontend, for example "/whodb".
 var BasePath = getBasePath()
 
-// Default log paths used when the AccessLogFile and LogFile vars are set to "default".
+// Default log paths used when the AccessLogFile, LogFile and AuditLogFile vars are set to "default".
 const DefaultLogDir = "/var/log/whodb"
 const DefaultLogFile = DefaultLogDir + "/whodb.log"
 const DefaultAccessLogFile = DefaultLogDir + "/whodb.access.log"
+const DefaultAuditLogFile = DefaultLogDir + "/whodb.audit.log"
 
 // GetDisableUpdateCheck returns true if update checking is disabled.
 func GetDisableUpdateCheck() bool {

@@ -451,16 +451,18 @@ test.describe('Keyboard Shortcuts', () => {
                 // Set page size to a small value to see pagination (2 is available in E2E mode)
                 await whodb.setTablePageSize(2);
                 await page.locator('[data-testid="submit-button"]').click();
-                await expect(page.locator('[data-slot="pagination-link"][data-active]').first()).toBeAttached({ timeout: 10000 });
+                const pager = page.getByRole('navigation', { name: 'Table pagination' });
+                await expect(pager).toContainText('Page 1 of', { timeout: 10000 });
 
                 // Focus a row
                 await page.keyboard.press('ArrowDown');
                 await expect(page.locator('table tbody tr[data-focused="true"]')).toBeAttached();
 
                 // Go to next page (if available)
-                const pageNumbers = await page.locator('[data-slot="pagination-link"][data-active]').count();
-                if (pageNumbers > 1) {
-                    await page.locator('[data-slot="pagination-link"][data-active]').nth(1).click();
+                const nextPage = pager.getByRole('button', { name: 'Next page' });
+                if (await nextPage.isEnabled()) {
+                    await nextPage.click();
+                    await expect(pager).toContainText('Page 2 of');
 
                     // Focus should be reset
                     await expect(page.locator('table tbody tr[data-focused="true"]')).not.toBeAttached();
@@ -475,16 +477,16 @@ test.describe('Keyboard Shortcuts', () => {
                 // Set page size to a small value to see pagination
                 await whodb.setTablePageSize(2);
                 await page.locator('[data-testid="submit-button"]').click();
-                await expect(page.locator('[data-slot="pagination-link"][data-active]').first()).toBeAttached({ timeout: 10000 });
+                const pager = page.getByRole('navigation', { name: 'Table pagination' });
 
                 // Check we're on page 1
-                await expect(page.locator('[data-slot="pagination-link"][data-active]').first()).toHaveAttribute('data-active', 'true');
+                await expect(pager).toContainText('Page 1 of', { timeout: 10000 });
 
                 // Press Cmd+ArrowRight (Mac) or Ctrl+ArrowRight (Win/Linux) to go to next page
                 await whodb.typeCmdShortcut('ArrowRight');
 
                 // Should now be on page 2
-                await expect(page.locator('[data-slot="pagination-link"][data-active]').nth(1)).toHaveAttribute('data-active', 'true');
+                await expect(pager).toContainText('Page 2 of');
             });
 
             test('Cmd/Ctrl+ArrowLeft goes to previous page', async ({ whodb, page }) => {
@@ -493,17 +495,18 @@ test.describe('Keyboard Shortcuts', () => {
                 // Set page size to a small value to see pagination
                 await whodb.setTablePageSize(2);
                 await page.locator('[data-testid="submit-button"]').click();
-                await expect(page.locator('[data-slot="pagination-link"][data-active]').first()).toBeAttached({ timeout: 10000 });
+                const pager = page.getByRole('navigation', { name: 'Table pagination' });
+                await expect(pager).toContainText('Page 1 of', { timeout: 10000 });
 
                 // Go to page 2 first
-                await page.locator('[data-slot="pagination-link"][data-active]').nth(1).click();
-                await expect(page.locator('[data-slot="pagination-link"][data-active]').nth(1)).toHaveAttribute('data-active', 'true');
+                await pager.getByRole('button', { name: 'Next page' }).click();
+                await expect(pager).toContainText('Page 2 of');
 
                 // Press Cmd+ArrowLeft (Mac) or Ctrl+ArrowLeft (Win/Linux) to go to previous page
                 await whodb.typeCmdShortcut('ArrowLeft');
 
                 // Should now be on page 1
-                await expect(page.locator('[data-slot="pagination-link"][data-active]').first()).toHaveAttribute('data-active', 'true');
+                await expect(pager).toContainText('Page 1 of');
             });
 
             test('Cmd/Ctrl+ArrowLeft does nothing on first page', async ({ whodb, page }) => {
@@ -512,16 +515,16 @@ test.describe('Keyboard Shortcuts', () => {
                 // Set page size to a small value to see pagination
                 await whodb.setTablePageSize(2);
                 await page.locator('[data-testid="submit-button"]').click();
-                await expect(page.locator('[data-slot="pagination-link"][data-active]').first()).toBeAttached({ timeout: 10000 });
+                const pager = page.getByRole('navigation', { name: 'Table pagination' });
 
                 // Ensure we're on page 1
-                await expect(page.locator('[data-slot="pagination-link"][data-active]').first()).toHaveAttribute('data-active', 'true');
+                await expect(pager).toContainText('Page 1 of', { timeout: 10000 });
 
                 // Press Cmd/Ctrl+ArrowLeft - should stay on page 1
                 await whodb.typeCmdShortcut('ArrowLeft');
 
                 // Should still be on page 1
-                await expect(page.locator('[data-slot="pagination-link"][data-active]').first()).toHaveAttribute('data-active', 'true');
+                await expect(pager).toContainText('Page 1 of');
             });
         });
 
@@ -719,18 +722,20 @@ test.describe('Keyboard Shortcuts', () => {
                 expect(rowCount).toBeGreaterThanOrEqual(1);
             });
 
-            test('Command palette search filters results', async ({ whodb, page }) => {
+            test('Command palette search filters tables while keeping navigation visible', async ({ whodb, page }) => {
                 await whodb.data(tableName);
 
                 // Open command palette
                 await whodb.typeCmdShortcut('k');
 
                 // Type to search
-                await page.locator('[data-testid="command-palette-input"]').fill('graph');
+                await page.locator('[data-testid="command-palette-input"]').fill('prod');
 
-                // Should filter to show only graph
+                // Matching tables appear above the persistent navigation shortcuts.
+                await expect(page.locator('[data-testid="command-table-products"]')).toBeAttached();
+                await expect(page.locator('[data-testid="command-table-users"]')).not.toBeAttached();
                 await expect(page.locator('[data-testid="command-nav-graph"]')).toBeAttached();
-                await expect(page.locator('[data-testid="command-nav-chat"]')).not.toBeAttached();
+                await expect(page.locator('[data-testid="command-nav-chat"]')).toBeAttached();
 
                 // Close
                 await page.keyboard.press('Escape');

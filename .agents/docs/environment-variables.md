@@ -182,6 +182,7 @@ Connect any OpenAI-compatible provider. Configured via multiple variables per pr
 | `WHODB_LOG_FORMAT` | `text` | Log format: `text` or `json` |
 | `WHODB_LOG_FILE` | unset | Redirect all non-HTTP logs to a file. `default` uses `/var/log/whodb/whodb.log` |
 | `WHODB_ACCESS_LOG_FILE` | unset | Redirect HTTP access logs to a file. `default` uses `/var/log/whodb/whodb.access.log` |
+| `WHODB_AUDIT_LOG_FILE` | unset | Community Edition only. Append-only NDJSON log of audited actions such as logins, data reads and changes. Request telemetry is excluded. `default` uses `/var/log/whodb/whodb.audit.log` |
 | `WHODB_ALLOWED_ORIGINS` | unset | Comma-separated CORS origins (defaults to all) |
 | `WHODB_BASE_PATH` | unset | URL path prefix for bundled WhoDB web builds, e.g. `/whodb`. Applies only when WhoDB serves embedded frontend assets; split frontend/backend dev mode is unchanged. Must be a slash-prefixed path with segments containing only letters, numbers, `.`, `_`, or `-` |
 | `WHODB_DISABLE_CREDENTIAL_FORM` | `false` | Set `true` to hide the source credential form on the login page |

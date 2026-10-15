@@ -26,6 +26,7 @@ import (
 
 // PlatformOutputScope identifies the hosted workspace used for a platform MCP read.
 type PlatformOutputScope struct {
+	AccountID   string `json:"account_id,omitempty"`
 	Host        string `json:"host,omitempty"`
 	OrgID       string `json:"org_id,omitempty"`
 	OrgName     string `json:"org_name,omitempty"`
@@ -38,6 +39,7 @@ func platformScope(session *platformToolSession) *PlatformOutputScope {
 		return nil
 	}
 	return &PlatformOutputScope{
+		AccountID:   session.Host.AccountID,
 		Host:        session.Host.URL,
 		OrgID:       session.Host.DefaultOrgID,
 		OrgName:     session.Host.DefaultOrgName,

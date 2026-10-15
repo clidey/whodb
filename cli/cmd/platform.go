@@ -561,7 +561,7 @@ var projectsListCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		org, err := resolveOrganization(ctx, session.Client, session.Host, projectsOrg)
+		org, err := resolveDefaultOrganization(ctx, session, projectsOrg)
 		if err != nil {
 			return err
 		}
@@ -615,7 +615,7 @@ var projectsCreateCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		org, err := resolveOrganization(ctx, session.Client, session.Host, projectsOrg)
+		org, err := resolveDefaultOrganization(ctx, session, projectsOrg)
 		if err != nil {
 			return err
 		}
@@ -655,7 +655,7 @@ var projectsRenameCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		org, err := resolveOrganization(ctx, session.Client, session.Host, projectsOrg)
+		org, err := resolveDefaultOrganization(ctx, session, projectsOrg)
 		if err != nil {
 			return err
 		}
@@ -706,7 +706,7 @@ var projectsDeleteCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		org, err := resolveOrganization(ctx, session.Client, session.Host, projectsOrg)
+		org, err := resolveDefaultOrganization(ctx, session, projectsOrg)
 		if err != nil {
 			return err
 		}
@@ -1372,10 +1372,11 @@ func init() {
 	rootCmd.AddCommand(backupProjectCmd)
 	rootCmd.AddCommand(restoreProjectCmd)
 	rootCmd.AddCommand(cloneProjectCmd)
+	rootCmd.AddCommand(serviceAccountsCmd)
 	rootCmd.AddCommand(useCmd)
 	rootCmd.AddCommand(workspaceCmd)
 
-	for _, command := range []*cobra.Command{loginCmd, logoutCmd, whoamiCmd, manifestCmd, statusCmd, capabilitiesCmd, orgsCmd, projectsCmd, sourcesCmd, secretsCmd, aiProvidersCmd, ontologiesCmd, datasetsCmd, lineageCmd, transformsCmd, functionsCmd, appsCmd, packagesCmd, filesCmd, foldersCmd, resourcesCmd, backupProjectCmd, restoreProjectCmd, cloneProjectCmd, useCmd, workspaceCmd} {
+	for _, command := range []*cobra.Command{loginCmd, logoutCmd, whoamiCmd, manifestCmd, statusCmd, capabilitiesCmd, orgsCmd, projectsCmd, sourcesCmd, secretsCmd, aiProvidersCmd, ontologiesCmd, datasetsCmd, lineageCmd, transformsCmd, functionsCmd, appsCmd, packagesCmd, filesCmd, foldersCmd, resourcesCmd, backupProjectCmd, restoreProjectCmd, cloneProjectCmd, serviceAccountsCmd, useCmd, workspaceCmd} {
 		command.PersistentFlags().StringVar(&platformHost, "host", "", "hosted WhoDB URL (default app.whodb.com)")
 		command.PersistentFlags().StringVarP(&platformFormat, "format", "f", "auto", "output format: auto, table, plain, json, ndjson, csv")
 		command.PersistentFlags().BoolVarP(&platformQuiet, "quiet", "q", false, "suppress informational messages")
@@ -1424,6 +1425,7 @@ func init() {
 	sourcesRowsCmd.Flags().IntVar(&sourceRowsLimit, "limit", 50, "maximum rows to return")
 	sourcesRowsCmd.Flags().IntVar(&sourceRowsOffset, "offset", 0, "row offset")
 	registerPlatformResourceCommands()
+	registerPlatformGapCommands()
 	registerPlatformPackageCommands()
 	useCmd.Flags().StringVar(&useOrg, "org", "", "organization id, slug, or name")
 	useCmd.Flags().StringVar(&useProject, "project", "", "project id, slug, or name")
@@ -1507,8 +1509,13 @@ func loadPlatformSession(ctx context.Context, hostFlag string) (*platformSession
 		return nil, err
 	}
 	attachPlatformManifestRefresher(cfg, entry, client)
-	if manifest := resolveCachedPlatformManifest(ctx, client, entry.Manifest); manifest != nil {
+	if manifest, verified := resolveCachedPlatformManifest(ctx, client, entry.Manifest); manifest != nil {
 		client.SetPlatformManifest(manifest)
+		if verified {
+			// Remember the check so the following commands skip the version query.
+			cfg.UpsertPlatformHost(*entry)
+			_ = cfg.Save()
+		}
 	} else if manifest := fetchPlatformManifest(ctx, client); manifest != nil {
 		client.SetPlatformManifest(manifest)
 		if err := storePlatformManifest(entry, manifest); err != nil {
@@ -1591,19 +1598,32 @@ func fetchPlatformManifest(ctx context.Context, client *platform.Client) *platfo
 	return manifest
 }
 
-func resolveCachedPlatformManifest(ctx context.Context, client *platform.Client, cache *config.PlatformManifestCache) *platform.PlatformManifest {
+// platformManifestCheckInterval bounds how often a command asks the server
+// whether the cached manifest is still current. A manifest that goes stale in
+// between self-heals: the client refetches it once when the server rejects an
+// operation it does not know.
+const platformManifestCheckInterval = 10 * time.Minute
+
+// resolveCachedPlatformManifest returns the cached manifest when it is usable
+// and reports whether it verified the server version on this call, in which
+// case the caller persists the updated check time.
+func resolveCachedPlatformManifest(ctx context.Context, client *platform.Client, cache *config.PlatformManifestCache) (*platform.PlatformManifest, bool) {
 	manifest := manifestFromCache(cache)
 	if manifest == nil {
-		return nil
+		return nil, false
+	}
+	if checked, err := time.Parse(time.RFC3339, cache.CheckedAt); err == nil && time.Since(checked) < platformManifestCheckInterval {
+		return manifest, false
 	}
 	version, err := client.PlatformVersion(ctx)
 	if err != nil || version == "" {
-		return manifest
+		return manifest, false
 	}
 	if version == cache.PlatformVersion {
-		return manifest
+		cache.CheckedAt = time.Now().UTC().Format(time.RFC3339)
+		return manifest, true
 	}
-	return nil
+	return nil, false
 }
 
 func storePlatformManifest(host *config.PlatformHost, manifest *platform.PlatformManifest) error {
@@ -1615,6 +1635,7 @@ func storePlatformManifest(host *config.PlatformHost, manifest *platform.Platfor
 		PlatformVersion:         manifest.PlatformVersion,
 		ManifestProtocolVersion: manifest.ManifestProtocolVersion,
 		FetchedAt:               time.Now().UTC().Format(time.RFC3339),
+		CheckedAt:               time.Now().UTC().Format(time.RFC3339),
 		Raw:                     raw,
 	}
 	return nil
@@ -1930,7 +1951,24 @@ func localLogoutHint(host string) string {
 	return fmt.Sprintf("If this host is no longer reachable, remove only the local CLI credentials with:\n  whodb logout --host %s --local", host)
 }
 
+// resolvePlatformProject returns the workspace a command targets. When neither
+// an organization nor a project was named and the saved default already has
+// ids and names, it is used as-is without listing organizations and projects
+// first; a deleted default surfaces as the real request's error instead. Callers
+// that need slugs use resolvePlatformProjectDetailed.
 func resolvePlatformProject(ctx context.Context, session *platformSession, orgValue, projectValue string) (*platform.Organization, *platform.Project, error) {
+	host := session.Host
+	if strings.TrimSpace(orgValue) == "" && strings.TrimSpace(projectValue) == "" &&
+		host.DefaultOrgID != "" && host.DefaultProjectID != "" && host.DefaultOrgName != "" && host.DefaultProjectName != "" {
+		return &platform.Organization{ID: host.DefaultOrgID, Name: host.DefaultOrgName},
+			&platform.Project{ID: host.DefaultProjectID, OrgID: host.DefaultOrgID, Name: host.DefaultProjectName}, nil
+	}
+	return resolvePlatformProjectDetailed(ctx, session, orgValue, projectValue)
+}
+
+// resolvePlatformProjectDetailed always lists organizations and projects, so
+// the result carries slugs and reflects the server's current state.
+func resolvePlatformProjectDetailed(ctx context.Context, session *platformSession, orgValue, projectValue string) (*platform.Organization, *platform.Project, error) {
 	org, err := resolveOrganization(ctx, session.Client, session.Host, orgValue)
 	if err != nil {
 		return nil, nil, err
@@ -2028,26 +2066,7 @@ func parseSourceObjectKinds(values []string) ([]platform.SourceObjectKind, error
 }
 
 func parseSourceObjectKind(value string) (platform.SourceObjectKind, error) {
-	normalized := strings.ToLower(strings.TrimSpace(value))
-	kinds := map[string]platform.SourceObjectKind{
-		"database":   "Database",
-		"schema":     "Schema",
-		"table":      "Table",
-		"view":       "View",
-		"collection": "Collection",
-		"index":      "Index",
-		"key":        "Key",
-		"item":       "Item",
-		"function":   "Function",
-		"procedure":  "Procedure",
-		"trigger":    "Trigger",
-		"sequence":   "Sequence",
-	}
-	kind, ok := kinds[normalized]
-	if !ok {
-		return "", fmt.Errorf("unsupported object kind %q", value)
-	}
-	return kind, nil
+	return platform.ParseSourceObjectKind(value)
 }
 
 func splitSourceObjectPath(value string) []string {
@@ -2190,6 +2209,17 @@ func confirmSourceDelete(out io.Writer, source *platform.Source, skipPrompt bool
 	return isAffirmativeConfirmation(response), nil
 }
 
+// resolveDefaultOrganization is resolveOrganization with the same shortcut as
+// resolvePlatformProject: an unnamed organization with a saved default needs no
+// listing.
+func resolveDefaultOrganization(ctx context.Context, session *platformSession, value string) (*platform.Organization, error) {
+	host := session.Host
+	if strings.TrimSpace(value) == "" && host.DefaultOrgID != "" && host.DefaultOrgName != "" {
+		return &platform.Organization{ID: host.DefaultOrgID, Name: host.DefaultOrgName}, nil
+	}
+	return resolveOrganization(ctx, session.Client, host, value)
+}
+
 func resolveOrganization(ctx context.Context, client *platform.Client, host config.PlatformHost, value string) (*platform.Organization, error) {
 	orgs, err := client.Organizations(ctx)
 	if err != nil {
@@ -2276,5 +2306,5 @@ func printLoginNextSteps(out *output.Writer, workspaceSelected bool) {
 	} else {
 		out.Info("  Select a workspace:              whodb use --org <org> --project <project>")
 	}
-	out.Info("  Start your assistant connection: whodb mcp serve --platform")
+	out.Info("  Start your assistant connection: whodb mcp serve")
 }

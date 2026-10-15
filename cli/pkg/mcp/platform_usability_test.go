@@ -69,10 +69,16 @@ func TestValidatePlatformPayloadUsesKnownShapeAndTypes(t *testing.T) {
 }
 
 func TestValidatePlatformPayloadRequiresPermissionTargets(t *testing.T) {
+	// orgId is injected from the selected organization, so it is optional.
 	if err := validatePlatformPayload("action:invite_user:organization", map[string]any{
 		"email": "user@example.com", "relation": "member",
+	}); err != nil {
+		t.Fatalf("organization invite without orgId rejected: %v", err)
+	}
+	if err := validatePlatformPayload("action:invite_user:organization", map[string]any{
+		"orgId": "org-1", "relation": "member",
 	}); err == nil {
-		t.Fatal("organization invite without orgId was accepted")
+		t.Fatal("organization invite without email was accepted")
 	}
 	if err := validatePlatformPayload("action:invite_user:organization", map[string]any{
 		"orgId": "org-1", "email": "user@example.com", "relation": "member",

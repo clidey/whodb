@@ -51,6 +51,9 @@ type PlatformSetupStatusOutput struct {
 	NextSteps         []string `json:"next_steps"`
 	Error             string   `json:"error,omitempty"`
 	RequestID         string   `json:"request_id,omitempty"`
+
+	// SessionScope is the default set by whodb_platform_session_use for this MCP session, if any.
+	SessionScope *PlatformWorkspaceTarget `json:"session_scope,omitempty"`
 }
 
 // PlatformSetupGuidance gives agents recovery instructions for setup-related failures.
@@ -126,37 +129,37 @@ type PlatformCloneInput struct {
 func registerPlatformBundleTool(server *mcp.Server, tool *mcp.Tool, secOpts *SecurityOptions) bool {
 	switch tool.Name {
 	case "whodb_platform_setup_status":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformSetupStatusInput) (*mcp.CallToolResult, PlatformSetupStatusOutput, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformSetupStatusInput) (*mcp.CallToolResult, PlatformSetupStatusOutput, error) {
 			return HandlePlatformSetupStatus(ctx, req, input)
 		})
 	case "whodb_platform_doctor":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformDoctorInput) (*mcp.CallToolResult, PlatformDoctorOutput, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformDoctorInput) (*mcp.CallToolResult, PlatformDoctorOutput, error) {
 			return HandlePlatformDoctor(ctx, req, input)
 		})
 	case "whodb_platform_bundle_export":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformBundleExportInput) (*mcp.CallToolResult, PlatformBundleExportOutput, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformBundleExportInput) (*mcp.CallToolResult, PlatformBundleExportOutput, error) {
 			return HandlePlatformBundleExport(ctx, req, input)
 		})
 	case "whodb_platform_bundle_diff":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformBundlePlanInput) (*mcp.CallToolResult, PlatformBundlePlanOutput, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformBundlePlanInput) (*mcp.CallToolResult, PlatformBundlePlanOutput, error) {
 			return HandlePlatformBundlePlan(ctx, req, input, true, "platform_bundle_diff")
 		})
 	case "whodb_platform_bundle_import_plan":
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformBundlePlanInput) (*mcp.CallToolResult, PlatformBundlePlanOutput, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformBundlePlanInput) (*mcp.CallToolResult, PlatformBundlePlanOutput, error) {
 			return HandlePlatformBundlePlan(ctx, req, input, true, "platform_bundle_import_plan")
 		})
 	case "whodb_platform_bundle_import":
 		if secOpts.ReadOnly {
 			return true
 		}
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformBundlePlanInput) (*mcp.CallToolResult, PlatformGenericWriteOutput, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformBundlePlanInput) (*mcp.CallToolResult, PlatformGenericWriteOutput, error) {
 			return HandlePlatformBundleImport(ctx, req, input, secOpts.ConfirmWrites)
 		})
 	case "whodb_platform_clone":
 		if secOpts.ReadOnly {
 			return true
 		}
-		mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformCloneInput) (*mcp.CallToolResult, PlatformGenericWriteOutput, error) {
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformCloneInput) (*mcp.CallToolResult, PlatformGenericWriteOutput, error) {
 			return HandlePlatformClone(ctx, req, input, secOpts.ConfirmWrites)
 		})
 	default:
@@ -181,19 +184,25 @@ func platformBundleToolDefinitions() []*mcp.Tool {
 func HandlePlatformSetupStatus(ctx context.Context, req *mcp.CallToolRequest, input PlatformSetupStatusInput) (*mcp.CallToolResult, PlatformSetupStatusOutput, error) {
 	requestID := generateRequestID("platform_setup_status")
 	startTime := time.Now()
-	output := buildPlatformSetupStatus(requestID)
+	output := buildPlatformSetupStatusFor(ctx, requestID)
+	if request := platformRequestFromContext(ctx); request != nil && request.Session != nil {
+		output.SessionScope = request.Session
+	}
 	success := output.Status == "ready"
 	TrackToolCall(ctx, "platform_setup_status", requestID, success, time.Since(startTime).Milliseconds(), map[string]any{"status": output.Status})
 	return nil, output, nil
 }
 
-func buildPlatformSetupStatus(requestID string) PlatformSetupStatusOutput {
-	scope := platformapi.SessionScopeFromEnvironment()
+func buildPlatformSetupStatusFor(ctx context.Context, requestID string) PlatformSetupStatusOutput {
+	if platformRuntimeFromContext(ctx) != nil {
+		return embeddedPlatformSetupStatus(ctx, requestID)
+	}
+	scope, _, scopeErr := platformRequestScope(ctx)
 	host := platformapi.DefaultHost
 	if scope.Host != "" {
 		host = scope.Host
 	}
-	if err := scope.Validate(); err != nil {
+	if err := scopeErr; err != nil {
 		output := platformSetupStatusFor(host, "config_error")
 		applyPlatformSessionScopeToSetupStatus(&output, scope)
 		applyPlatformSetupGuidance(&output)
@@ -223,6 +232,9 @@ func buildPlatformSetupStatus(requestID string) PlatformSetupStatusOutput {
 		return output
 	}
 	host = normalizedHost
+	if !platformPolicyFromContext(ctx).policy.allowsHost(host) {
+		return PlatformSetupStatusOutput{Error: "platform policy denies host", RequestID: requestID}
+	}
 	entry, ok := cfg.GetPlatformHost(host)
 	if !ok || strings.TrimSpace(entry.AccountID) == "" {
 		output := platformSetupStatusFor(host, "needs_login")
@@ -258,7 +270,7 @@ func buildPlatformSetupStatus(requestID string) PlatformSetupStatusOutput {
 }
 
 func applyPlatformSessionScopeToSetupStatus(output *PlatformSetupStatusOutput, scope platformapi.SessionScope) {
-	if !scope.HasWorkspace() {
+	if scope.Org == "" {
 		return
 	}
 	output.OrgSelector = scope.Org
@@ -267,7 +279,7 @@ func applyPlatformSessionScopeToSetupStatus(output *PlatformSetupStatusOutput, s
 	output.OrgName = ""
 	output.ProjectID = ""
 	output.ProjectName = ""
-	output.WorkspaceSelected = true
+	output.WorkspaceSelected = scope.HasWorkspace()
 }
 
 func platformSetupStatusFor(host, status string) PlatformSetupStatusOutput {
@@ -287,15 +299,15 @@ func platformSetupGuidanceFromStatus(output PlatformSetupStatusOutput) PlatformS
 	}
 }
 
-func platformSetupGuidanceForCurrentConfig(requestID string) PlatformSetupGuidance {
-	return platformSetupGuidanceFromStatus(buildPlatformSetupStatus(requestID))
+func platformSetupGuidanceForCurrentConfig(ctx context.Context, requestID string) PlatformSetupGuidance {
+	return platformSetupGuidanceFromStatus(buildPlatformSetupStatusFor(ctx, requestID))
 }
 
-func platformSetupGuidanceForError(err error, requestID string) PlatformSetupGuidance {
+func platformSetupGuidanceForError(ctx context.Context, err error, requestID string) PlatformSetupGuidance {
 	if err == nil || !isPlatformSetupError(err) {
 		return PlatformSetupGuidance{}
 	}
-	return platformSetupGuidanceForCurrentConfig(requestID)
+	return platformSetupGuidanceForCurrentConfig(ctx, requestID)
 }
 
 func isPlatformSetupError(err error) bool {
@@ -327,14 +339,14 @@ func applyPlatformSetupGuidance(output *PlatformSetupStatusOutput) {
 		output.NextSteps = []string{
 			"Run whodb_platform_orgs to list available organizations.",
 			"Run whodb_platform_projects with the selected organization.",
-			"Ask the user to run: " + useCommand,
+			"Pass workspace {host, org, project} to whodb_platform_workspace_resolve and subsequent tools; whodb use is optional.",
 		}
 	default:
 		output.Commands = []string{loginCommand}
 		output.NextSteps = []string{"Ask the user to run: " + loginCommand}
 		if !output.WorkspaceSelected {
 			output.Commands = append(output.Commands, useCommand)
-			output.NextSteps = append(output.NextSteps, "Then ask the user to select a workspace with: "+useCommand)
+			output.NextSteps = append(output.NextSteps, "Then discover organizations/projects and pass an explicit workspace target to MCP tools.")
 		}
 		if output.Status == "" {
 			output.Status = "needs_login"
@@ -348,7 +360,7 @@ func HandlePlatformDoctor(ctx context.Context, req *mcp.CallToolRequest, input P
 	startTime := time.Now()
 	session, err := loadPlatformToolSession(ctx)
 	if err != nil {
-		setup := buildPlatformSetupStatus(requestID)
+		setup := buildPlatformSetupStatusFor(ctx, requestID)
 		TrackToolCall(ctx, "platform_doctor", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_session"})
 		return nil, PlatformDoctorOutput{
 			Host:              setup.Host,
@@ -413,7 +425,7 @@ func HandlePlatformBundleExport(ctx context.Context, req *mcp.CallToolRequest, i
 	session, err := loadPlatformWorkspace(ctx)
 	if err != nil {
 		TrackToolCall(ctx, "platform_bundle_export", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_session"})
-		return nil, PlatformBundleExportOutput{PlatformSetupGuidance: platformSetupGuidanceForCurrentConfig(requestID), Error: err.Error(), RequestID: requestID}, nil
+		return nil, PlatformBundleExportOutput{PlatformSetupGuidance: platformSetupGuidanceForCurrentConfig(ctx, requestID), Error: err.Error(), RequestID: requestID}, nil
 	}
 	project := selectedPlatformProject(session)
 	bundle, err := platformapi.BuildProjectBundleWithOptions(ctx, session.Client, session.Host.URL, session.Host.DefaultOrgID, session.Host.DefaultOrgName, project, platformapi.BundleExportOptions{
@@ -445,7 +457,7 @@ func HandlePlatformBundlePlan(ctx context.Context, req *mcp.CallToolRequest, inp
 	session, err := loadPlatformWorkspace(ctx)
 	if err != nil {
 		TrackToolCall(ctx, toolName, requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_session"})
-		return nil, PlatformBundlePlanOutput{PlatformSetupGuidance: platformSetupGuidanceForCurrentConfig(requestID), Error: err.Error(), RequestID: requestID}, nil
+		return nil, PlatformBundlePlanOutput{PlatformSetupGuidance: platformSetupGuidanceForCurrentConfig(ctx, requestID), Error: err.Error(), RequestID: requestID}, nil
 	}
 	plan, err := platformapi.PlanBundleImportWithOptions(ctx, session.Client, session.Host.URL, selectedPlatformProject(session), &bundle, platformapi.BundleImportOptions{
 		DryRun:             dryRun,
@@ -479,7 +491,7 @@ func HandlePlatformBundleImport(ctx context.Context, req *mcp.CallToolRequest, i
 	session, err := loadPlatformWorkspace(ctx)
 	if err != nil {
 		TrackToolCall(ctx, "platform_bundle_import", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_session"})
-		return nil, platformGenericWriteSetupError(err, requestID), nil
+		return nil, platformGenericWriteSetupError(ctx, err, requestID), nil
 	}
 	plan, err := platformapi.PlanBundleImportWithOptions(ctx, session.Client, session.Host.URL, selectedPlatformProject(session), &bundle, platformapi.BundleImportOptions{
 		DryRun:             false,
@@ -492,6 +504,7 @@ func HandlePlatformBundleImport(ctx context.Context, req *mcp.CallToolRequest, i
 		return nil, PlatformGenericWriteOutput{Error: err.Error(), RequestID: requestID}, nil
 	}
 	action := &PendingPlatformAction{
+		AccountID:   session.Host.AccountID,
 		Operation:   "bundle_import",
 		Resource:    "bundle",
 		Action:      "import",
@@ -507,15 +520,15 @@ func HandlePlatformBundleImport(ctx context.Context, req *mcp.CallToolRequest, i
 		output, err := executePendingPlatformAction(ctx, action, requestID)
 		if err != nil {
 			TrackToolCall(ctx, "platform_bundle_import", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_action"})
-			return nil, PlatformGenericWriteOutput{PlatformSetupGuidance: platformSetupGuidanceForError(err, requestID), Error: err.Error(), RequestID: requestID}, nil
+			return nil, PlatformGenericWriteOutput{PlatformSetupGuidance: platformSetupGuidanceForError(ctx, err, requestID), Error: err.Error(), RequestID: requestID}, nil
 		}
 		raw, _ := json.Marshal(output)
 		TrackToolCall(ctx, "platform_bundle_import", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"confirmation_required": false})
 		return nil, PlatformGenericWriteOutput{Status: "ok", ResultJSON: string(raw), RequestID: requestID}, nil
 	}
-	token, expiresAt := storePendingPlatformAction(action)
+	token, expiresAt := storePendingPlatformAction(action, ctx)
 	TrackToolCall(ctx, "platform_bundle_import", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"confirmation_required": true})
-	return nil, platformGenericConfirmationOutput(requestID, token, expiresAt, "bundle_import", action.Preview()), nil
+	return nil, platformGenericConfirmationOutput(ctx, requestID, token, expiresAt, "bundle_import", action.Preview()), nil
 }
 
 // HandlePlatformClone clones a dataset, ontology, transform, or function.
@@ -527,7 +540,7 @@ func HandlePlatformClone(ctx context.Context, req *mcp.CallToolRequest, input Pl
 	}
 	session, err := loadPlatformWorkspace(ctx)
 	if err != nil {
-		return nil, platformGenericWriteSetupError(err, requestID), nil
+		return nil, platformGenericWriteSetupError(ctx, err, requestID), nil
 	}
 	payload, err := platformapi.BuildClonePayload(ctx, session.Client, session.Host.DefaultProjectID, resource, input.Source, input.NewName)
 	if err != nil {
@@ -672,6 +685,7 @@ func uploadPlatformBundleFileAction(ctx context.Context, session *platformToolSe
 	if err := os.WriteFile(path, []byte(content), 0600); err != nil {
 		return nil, err
 	}
+	ctx = context.WithValue(ctx, generatedPlatformUploadKey{}, path)
 	folderID, _ := action.Payload["folderId"].(string)
 	if strings.TrimSpace(folderID) == "" {
 		return session.Client.UploadProjectFile(ctx, session.Host.DefaultProjectID, nil, path)

@@ -38,6 +38,7 @@ import {ServerDownOverlay, DatabaseDownOverlay} from "./components/health/health
 import {HealthActions} from "./store/health";
 import {PageTitleUpdater} from "./hooks/use-page-title";
 import {getEdition} from "./config/edition";
+import {LoadingPage} from "./components/loading";
 
 export const App = () => {
     const [updateSettings] = useMutation(UpdateSettingsDocument);
@@ -45,6 +46,7 @@ export const App = () => {
     const dispatch = useAppDispatch();
   const metricsEnabled = useAppSelector(state => state.settings.metricsEnabled);
   const authStatus = useAppSelector(state => state.auth.status);
+  const serverStatus = useAppSelector(state => state.health.serverStatus);
   const settingsConfig = settingsConfigData?.SettingsConfig;
   const newUIEnabled = settingsDefaults.newUIEnabled === true || settingsConfig?.EnableNewUI === true;
   const telemetryRequired = getEdition() === 'ee';
@@ -144,7 +146,7 @@ export const App = () => {
     if (!featureFlags.healthMonitoring) {
       return;
     }
-    if (authStatus === 'logged-in') {
+    if (authStatus === 'logged-in' || serverStatus === 'error') {
       healthCheckService.start();
     } else {
       healthCheckService.stop();
@@ -152,14 +154,15 @@ export const App = () => {
       dispatch(HealthActions.resetHealth());
     }
 
-    return () => {
-      healthCheckService.stop();
-    };
-  }, [authStatus, dispatch]);
+  }, [authStatus, serverStatus, dispatch]);
+
+  useEffect(() => () => {
+    healthCheckService.stop();
+  }, []);
 
   return (
     <TourProvider>
-      {createPortal(<Toaster position="bottom-center" />, document.body)}
+      {createPortal(<Toaster position="bottom-right" />, document.body)}
       <div className="h-[100vh] w-[100vw]" id="whodb-app-container">
         {KeyboardShortcutsHelpModal}
         {CommandPaletteModal}
@@ -177,9 +180,9 @@ export const App = () => {
               const scopedRoutes = getRegisteredScopedRoutes();
               if (layout && scopedRoutes.length > 0) {
                 return (
-                  <Route path={layout.pathPattern} element={<Suspense fallback={null}><layout.lazyComponent /></Suspense>}>
+                  <Route path={layout.pathPattern} element={<Suspense fallback={<LoadingPage />}><layout.lazyComponent /></Suspense>}>
                     {scopedRoutes.map(route => (
-                      <Route key={route.path} path={route.path} element={<Suspense fallback={null}><route.lazyComponent /></Suspense>} />
+                      <Route key={route.path} path={route.path} element={<Suspense fallback={<LoadingPage />}><route.lazyComponent /></Suspense>} />
                     ))}
                   </Route>
                 );

@@ -25,6 +25,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/clidey/whodb/cli/internal/config"
+	platformapi "github.com/clidey/whodb/cli/internal/platform"
 	"github.com/clidey/whodb/cli/internal/tui"
 	"github.com/clidey/whodb/cli/pkg/analytics"
 	"github.com/clidey/whodb/cli/pkg/identity"
@@ -38,14 +39,20 @@ import (
 )
 
 var cfgFile string
+var startTUI bool
 
 var rootCmd = &cobra.Command{
 	Use:           "whodb",
-	Short:         "WhoDB CLI - Interactive database management tool",
+	Short:         "WhoDB platform and database command-line interface",
 	SilenceErrors: true,
-	Long: `WhoDB CLI is an interactive, production-ready command-line interface for navigating SQL and NoSQL databases.
+	Long: `WhoDB CLI connects to WhoDB platform hosts and provides database-only MCP tools.
 
-Features:
+Run whodb for saved platform status and next steps. Use whodb --tui for the
+interactive database interface, or whodb mcp serve to connect an AI assistant.
+Run whodb setup to enable platform tools, database-only tools, or both.
+Agents can start guided configuration with whodb setup inspect.
+
+Database interface features:
   - Split-pane TUI layouts (Single, Explore, Query, Full) — Ctrl+L to cycle
   - 8 color themes (Default, Monokai, Dracula, Nord, etc.) — Ctrl+T to cycle
   - Multi-database support (PostgreSQL, MySQL, SQLite, MongoDB, Redis, ClickHouse, etc.)
@@ -79,7 +86,10 @@ Press ? in any view for keyboard shortcuts.`,
 		if profileName != "" {
 			return runWithProfile(profileName)
 		}
-		// Start TUI directly
+		if !startTUI {
+			return showPlatformLanding(cmd)
+		}
+		// Start the explicitly requested database TUI
 		m := tui.NewMainModel()
 		p := tea.NewProgram(m)
 		finalModel, err := p.Run()
@@ -194,11 +204,12 @@ func persistWorkspace(model tea.Model) error {
 }
 
 func init() {
-	cobra.OnInitialize(initConfig, initColorMode, initAnalytics)
+	cobra.OnInitialize(initConfig, initColorMode, initAnalytics, initClientName)
 
 	// Disable Cobra's default completion command; we provide our own with install support
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 
+	rootCmd.Flags().BoolVar(&startTUI, "tui", false, "open the interactive database terminal UI")
 	rootCmd.PersistentFlags().String("profile", "", "load a named connection profile")
 	rootCmd.PersistentFlags().Bool("debug", false, "enable debug mode")
 	rootCmd.PersistentFlags().Bool("no-color", false, "disable colored output")
@@ -212,6 +223,12 @@ func init() {
 	viper.BindPFlag("no-update-check", rootCmd.PersistentFlags().Lookup("no-update-check"))
 
 	rootCmd.RegisterFlagCompletionFunc("profile", completeProfileNames)
+}
+
+// initClientName labels this process's platform requests so the hosted audit
+// ledger and analytics can tell CLI traffic from browser and MCP traffic.
+func initClientName() {
+	platformapi.SetClientName("whodb-cli/" + version.Version)
 }
 
 func initAnalytics() {
@@ -234,7 +251,10 @@ func shouldSkipStartupSideEffects() bool {
 func startupCommandName() string {
 	command := firstNonFlagArg(os.Args[1:])
 	if command == "" {
-		return "tui"
+		if startTUI || viper.GetString("profile") != "" {
+			return "tui"
+		}
+		return "platform"
 	}
 	return command
 }

@@ -25,21 +25,35 @@
 //! let user = client.ontology("User").get("u_123").unwrap();
 //! ```
 
+pub mod admin;
 pub mod auth;
 pub mod client;
+pub mod dataset;
 pub mod error;
+mod facade_util;
+pub mod functions;
 pub mod gen;
 mod hydrate;
 mod manifest_check;
 pub mod ontology;
+pub mod source;
+pub mod transforms;
 pub mod transport;
 pub mod transport_ipc;
+pub mod versions;
 
+pub use admin::{LineageProvidersHandle, ServiceAccountsHandle, SharingHandle};
 pub use client::{Client, Config, DEFAULT_HOST};
+pub use dataset::{DatasetHandle, DatasetRowsOptions};
 pub use error::{Error, Result};
+pub use facade_util::{RowsPage, WaitOptions};
+pub use functions::{FunctionHandle, FunctionTestOptions, FunctionsHandle};
 pub use hydrate::Row;
 pub use ontology::{ActionOptions, ListOptions, OntologyHandle};
+pub use source::{SourceHandle, SourceObjectsOptions, SourceRowsOptions};
+pub use transforms::{TransformHandle, TransformsHandle};
 pub use transport::Transport;
+pub use versions::VersionsHandle;
 
 /// SDK_VERSION is stamped by the release tooling (sync-versions.mjs) and used
 /// only for the User-Agent header — the SDK's sole telemetry.

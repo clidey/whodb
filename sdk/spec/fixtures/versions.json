@@ -1,0 +1,158 @@
+{
+  "fixtures": [
+    {
+      "name": "versions.list reads versions for one object",
+      "call": { "domain": "versions", "handle": null, "method": "list", "args": ["function", "f-1"] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "ObjectVersions", "variables": { "projectId": "proj-1", "objectId": "f-1", "objectType": "function" } },
+          "response": { "data": { "ObjectVersions": [ { "id": "v-2", "objectId": "f-1", "objectType": "function", "version": 2, "message": "fix" }, { "id": "v-1", "objectId": "f-1", "objectType": "function", "version": 1, "message": "" } ] } }
+        }
+      ],
+      "expectResult": [ { "id": "v-2", "objectId": "f-1", "objectType": "function", "version": 2, "message": "fix" }, { "id": "v-1", "objectId": "f-1", "objectType": "function", "version": 1, "message": "" } ]
+    },
+    {
+      "name": "versions.active reads the active production version",
+      "call": { "domain": "versions", "handle": null, "method": "active", "args": ["transform", "t-1"] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "ActiveProdVersion", "variables": { "projectId": "proj-1", "objectId": "t-1", "objectType": "transform" } },
+          "response": { "data": { "ActiveProdVersion": { "objectId": "t-1", "objectType": "transform", "version": 3 } } }
+        }
+      ],
+      "expectResult": { "objectId": "t-1", "objectType": "transform", "version": 3 }
+    },
+    {
+      "name": "versions.active is null when nothing is promoted",
+      "call": { "domain": "versions", "handle": null, "method": "active", "args": ["dataset", "ds-1"] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "ActiveProdVersion" },
+          "response": { "data": { "ActiveProdVersion": null } }
+        }
+      ],
+      "expectResult": null
+    },
+    {
+      "name": "versions.activeAll lists every active version in the project",
+      "call": { "domain": "versions", "handle": null, "method": "activeAll", "args": [] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "ProjectActiveProdVersions", "variables": { "projectId": "proj-1" } },
+          "response": { "data": { "ProjectActiveProdVersions": [ { "objectId": "f-1", "objectType": "function", "version": 2 } ] } }
+        }
+      ],
+      "expectResult": [ { "objectId": "f-1", "objectType": "function", "version": 2 } ]
+    },
+    {
+      "name": "versions.promote snapshots and activates with a message",
+      "call": { "domain": "versions", "handle": null, "method": "promote", "args": ["function", "f-1", "ship it"] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "PromoteObject", "inputContains": { "projectId": "proj-1", "objectId": "f-1", "objectType": "function", "message": "ship it" } },
+          "response": { "data": { "PromoteObject": { "id": "v-3", "objectId": "f-1", "objectType": "function", "version": 3, "message": "ship it" } } }
+        }
+      ],
+      "expectResult": { "id": "v-3", "objectId": "f-1", "objectType": "function", "version": 3, "message": "ship it" }
+    },
+    {
+      "name": "versions.rollback activates an earlier version",
+      "call": { "domain": "versions", "handle": null, "method": "rollback", "args": ["app", "app-1", 2] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "RollbackObject", "inputContains": { "projectId": "proj-1", "objectId": "app-1", "objectType": "app", "version": 2 } },
+          "response": { "data": { "RollbackObject": { "objectId": "app-1", "objectType": "app", "version": 2 } } }
+        }
+      ],
+      "expectResult": { "objectId": "app-1", "objectType": "app", "version": 2 }
+    },
+    {
+      "name": "versions.restoreToDraft dispatches to the per-type operation",
+      "call": { "domain": "versions", "handle": null, "method": "restoreToDraft", "args": ["function", "f-1", 1] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "RestoreFunctionVersionToDraft", "variables": { "projectId": "proj-1", "functionId": "f-1", "version": 1 } },
+          "response": { "data": { "RestoreFunctionVersionToDraft": { "id": "f-1", "name": "normalize" } } }
+        }
+      ],
+      "expectResult": { "id": "f-1", "name": "normalize" }
+    },
+    {
+      "name": "versions.restoreToDraft for an ontology uses ontologyId",
+      "call": { "domain": "versions", "handle": null, "method": "restoreToDraft", "args": ["ontology", "ont-1", 4] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "RestoreOntologyVersionToDraft", "variables": { "projectId": "proj-1", "ontologyId": "ont-1", "version": 4 } },
+          "response": { "data": { "RestoreOntologyVersionToDraft": { "id": "ont-1", "apiName": "User" } } }
+        }
+      ],
+      "expectResult": { "id": "ont-1", "apiName": "User" }
+    },
+    {
+      "name": "versions.promote rejects an unknown object type",
+      "call": { "domain": "versions", "handle": null, "method": "promote", "args": ["widget", "w-1"] },
+      "transcript": [],
+      "expectError": { "type": "ValidationError", "messageContains": "must be one of" }
+    },
+    {
+      "name": "function.promote resolves the function then promotes it",
+      "call": { "domain": "function", "handle": "normalize", "method": "promote", "args": ["v1"] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "ProjectFunctions", "variables": { "projectId": "proj-1" } },
+          "response": { "data": { "ProjectFunctions": [ { "id": "f-1", "name": "normalize" } ] } }
+        },
+        {
+          "expectRequest": { "operation": "PromoteObject", "inputContains": { "projectId": "proj-1", "objectId": "f-1", "objectType": "function", "message": "v1" } },
+          "response": { "data": { "PromoteObject": { "id": "v-1", "objectId": "f-1", "objectType": "function", "version": 1, "message": "v1" } } }
+        }
+      ],
+      "expectResult": { "id": "v-1", "objectId": "f-1", "objectType": "function", "version": 1, "message": "v1" }
+    },
+    {
+      "name": "transform.versions lists the transform's versions",
+      "call": { "domain": "transform", "handle": "nightly", "method": "versions", "args": [] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "ProjectTransforms" },
+          "response": { "data": { "ProjectTransforms": [ { "id": "t-1", "name": "nightly" } ] } }
+        },
+        {
+          "expectRequest": { "operation": "ObjectVersions", "variables": { "projectId": "proj-1", "objectId": "t-1", "objectType": "transform" } },
+          "response": { "data": { "ObjectVersions": [ { "id": "v-1", "objectId": "t-1", "objectType": "transform", "version": 1, "message": "" } ] } }
+        }
+      ],
+      "expectResult": [ { "id": "v-1", "objectId": "t-1", "objectType": "transform", "version": 1, "message": "" } ]
+    },
+    {
+      "name": "dataset.promote promotes by dataset id",
+      "call": { "domain": "dataset", "handle": "weekly_kpis", "method": "promote", "args": [] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "ProjectDatasets" },
+          "response": { "data": { "ProjectDatasets": [ { "id": "ds-1", "name": "weekly_kpis" } ] } }
+        },
+        {
+          "expectRequest": { "operation": "PromoteObject", "inputContains": { "objectId": "ds-1", "objectType": "dataset" } },
+          "response": { "data": { "PromoteObject": { "id": "v-1", "objectId": "ds-1", "objectType": "dataset", "version": 1, "message": "" } } }
+        }
+      ],
+      "expectResult": { "id": "v-1", "objectId": "ds-1", "objectType": "dataset", "version": 1, "message": "" }
+    },
+    {
+      "name": "ontology.promote promotes the entity",
+      "call": { "domain": "ontology", "handle": "User", "method": "promote", "args": ["schema v2"] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "OntologyEntities" },
+          "response": { "data": { "OntologyEntities": [ { "id": "ont-1", "apiName": "User", "primaryKey": "id", "properties": [] } ] } }
+        },
+        {
+          "expectRequest": { "operation": "PromoteObject", "inputContains": { "objectId": "ont-1", "objectType": "ontology", "message": "schema v2" } },
+          "response": { "data": { "PromoteObject": { "id": "v-2", "objectId": "ont-1", "objectType": "ontology", "version": 2, "message": "schema v2" } } }
+        }
+      ],
+      "expectResult": { "id": "v-2", "objectId": "ont-1", "objectType": "ontology", "version": 2, "message": "schema v2" }
+    }
+  ]
+}

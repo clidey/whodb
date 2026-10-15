@@ -1,4 +1,15 @@
 en_US:
+  settingsTitle: Settings
+  savedInBrowser: Saved in this browser.
+  appearanceDescription: How WhoDB looks on this device.
+  behaviorDescription: Defaults for grids and menus.
+  privacyDescription: What WhoDB sends us, and how to turn it off.
+  appearanceSection: Appearance
+  gridSection: Grid
+  generalSection: General
+  usageDataSection: Usage data
+  moreSection: More
+  contact: Contact
   platformSectionTitle: WhoDB Platform
   platformSectionDescription: The hosted workspace that builds on your connections — managed sources, shareable datasets, and team access.
   platformSectionLink: Learn more and import your connections
@@ -19,22 +30,44 @@ en_US:
   personalizeTitle: Personalize Your Experience
   personalizeDescription: Make {appName} your own by customizing the appearance and feel of the {appName} interface
   storageUnitView: Storage Unit Default View
+  tableView: Table view
+  tableViewDescription: How the Tables page lists tables.
+  cards: Cards
   list: List
   card: Card
   fontSize: Font Size
+  textSize: Text size
+  textSizeDescription: Text throughout the app, including grids and the editor.
   small: Small
   medium: Medium
   large: Large
   borderRadius: Border Radius
+  cornerRadius: Corner radius
+  cornerRadiusDescription: Shape of controls and panels.
   none: None
   spacing: Spacing
+  density: Density
+  densityDescription: Spacing in grids and panels.
+  animations: Animations
+  animationsDescription: Transitions and the loader.
+  localDates: Local dates
+  localDatesDescription: Dates shown in your browser's locale.
+  readableBooleans: Readable booleans
+  readableBooleansDescription: "t / 1 → true, f / 0 → false"
+  anonymousUsageData: Anonymous usage data
+  anonymousUsageDataDescription: Redacted usage and error reports through PostHog.
+  privacyPolicyDescription: What is collected, how long it is kept, and how to ask for deletion.
+  open: Open
   compact: Compact
   comfortable: Comfortable
   spacious: Spacious
   whereConditionMode: Where Condition Mode
+  whereConditionModeDescription: Open filters in a popover or a sheet.
   popover: Popover
   defaultPageSize: Default Page Size
+  defaultPageSizeDescription: Rows shown before moving to the next page.
   language: Language
+  languageDescription: Language used throughout WhoDB.
   selectView: Select a View
   selectFontSize: Select Font Size
   selectBorderRadius: Select Border Radius
@@ -43,6 +76,7 @@ en_US:
   selectPageSize: Select Page Size
   selectLanguage: Select Language
   databaseSchemaTerminology: Database/Schema Label
+  databaseSchemaTerminologyDescription: Name used for the namespace in the sidebar.
   databaseSchemaTerminologySchema: Schema
   selectDatabaseSchemaTerminology: Select Label
   disableAnimations: Disable Animations

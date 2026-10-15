@@ -51,3 +51,15 @@ class DatasetHandle:
             )
         )
         return hydrate_rows(result)
+
+    def promote(self, message: str | None = None) -> dict:
+        """Promote the draft dataset: snapshot it and make it the active production version."""
+        from .versions import VersionsHandle
+
+        return VersionsHandle(self._execute, self._project_id).promote("dataset", self.meta()["id"], message)
+
+    def versions(self) -> list[dict]:
+        """List the dataset's promoted versions, newest first."""
+        from .versions import VersionsHandle
+
+        return VersionsHandle(self._execute, self._project_id).list("dataset", self.meta()["id"])

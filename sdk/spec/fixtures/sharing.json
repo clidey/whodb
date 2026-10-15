@@ -1,0 +1,92 @@
+{
+  "fixtures": [
+    {
+      "name": "sharing.shared lists ontologies this project shares",
+      "call": { "domain": "sharing", "handle": null, "method": "shared", "args": [] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "SharedOntologies", "variables": { "projectId": "proj-1" } },
+          "response": { "data": { "SharedOntologies": [ { "id": "share-1", "ontologyId": "ont-1", "visibility": "organization", "consumers": [] } ] } }
+        }
+      ],
+      "expectResult": [ { "id": "share-1", "ontologyId": "ont-1", "visibility": "organization", "consumers": [] } ]
+    },
+    {
+      "name": "sharing.discover uses the project as consumer",
+      "call": { "domain": "sharing", "handle": null, "method": "discover", "args": [] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "DiscoverSharedOntologies", "variables": { "consumerProjectId": "proj-1" } },
+          "response": { "data": { "DiscoverSharedOntologies": [] } }
+        }
+      ],
+      "expectResult": []
+    },
+    {
+      "name": "sharing.share sends the share input",
+      "call": { "domain": "sharing", "handle": null, "method": "share", "args": ["ont-1", "allowlist", ["proj-2"]] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "ShareOntology", "inputContains": { "projectId": "proj-1", "ontologyId": "ont-1", "visibility": "allowlist", "allowedProjectIds": ["proj-2"] } },
+          "response": { "data": { "ShareOntology": { "id": "share-2", "ontologyId": "ont-1", "visibility": "allowlist" } } }
+        }
+      ],
+      "expectResult": { "id": "share-2", "ontologyId": "ont-1", "visibility": "allowlist" }
+    },
+    {
+      "name": "sharing.unshare returns nothing",
+      "call": { "domain": "sharing", "handle": null, "method": "unshare", "args": ["ont-1"] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "UnshareOntology", "variables": { "projectId": "proj-1", "ontologyId": "ont-1" } },
+          "response": { "data": { "UnshareOntology": { "Status": true } } }
+        }
+      ],
+      "expectResult": null
+    },
+    {
+      "name": "sharing.createReference uses the project as consumer",
+      "call": { "domain": "sharing", "handle": null, "method": "createReference", "args": ["proj-owner", "ont-1", "shared_customers"] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "CreateOntologyReference", "inputContains": { "consumerProjectId": "proj-1", "ownerProjectId": "proj-owner", "ontologyId": "ont-1", "alias": "shared_customers" } },
+          "response": { "data": { "CreateOntologyReference": { "id": "ref-1", "alias": "shared_customers", "status": "active" } } }
+        }
+      ],
+      "expectResult": { "id": "ref-1", "alias": "shared_customers", "status": "active" }
+    },
+    {
+      "name": "sharing.references and referenceImpact read by project and reference",
+      "call": { "domain": "sharing", "handle": null, "method": "referenceImpact", "args": ["ref-1"] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "OntologyReferenceImpact", "variables": { "referenceId": "ref-1" } },
+          "response": { "data": { "OntologyReferenceImpact": { "referenceId": "ref-1", "dependentLinks": 0, "dependentApps": 1, "dependentFuncs": 0, "dependentXfms": 0, "dependentBehavs": 0 } } }
+        }
+      ],
+      "expectResult": { "referenceId": "ref-1", "dependentLinks": 0, "dependentApps": 1, "dependentFuncs": 0, "dependentXfms": 0, "dependentBehavs": 0 }
+    },
+    {
+      "name": "sharing.references lists references held by the project",
+      "call": { "domain": "sharing", "handle": null, "method": "references", "args": [] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "OntologyReferences", "variables": { "projectId": "proj-1" } },
+          "response": { "data": { "OntologyReferences": [ { "id": "ref-1", "alias": "shared_customers" } ] } }
+        }
+      ],
+      "expectResult": [ { "id": "ref-1", "alias": "shared_customers" } ]
+    },
+    {
+      "name": "sharing.removeReference returns nothing",
+      "call": { "domain": "sharing", "handle": null, "method": "removeReference", "args": ["ref-1"] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "RemoveOntologyReference", "variables": { "referenceId": "ref-1" } },
+          "response": { "data": { "RemoveOntologyReference": { "Status": true } } }
+        }
+      ],
+      "expectResult": null
+    }
+  ]
+}

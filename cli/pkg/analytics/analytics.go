@@ -29,6 +29,7 @@ import (
 	"sync"
 	"time"
 
+	cliconfig "github.com/clidey/whodb/cli/internal/config"
 	"github.com/clidey/whodb/cli/pkg/identity"
 	"github.com/clidey/whodb/core/src/analytics"
 	"github.com/clidey/whodb/core/src/env"
@@ -69,6 +70,10 @@ func Initialize(version string) error {
 		return err
 	}
 
+	// Command and tool events share the heartbeat's anonymous install id
+	// instead of the "anonymous" fallback, so unique installs are countable.
+	installID := cliconfig.InstallID()
+	analytics.SetDistinctIDResolver(func(context.Context) string { return installID })
 	analytics.SetEnabled(true)
 	initialized = true
 	return nil

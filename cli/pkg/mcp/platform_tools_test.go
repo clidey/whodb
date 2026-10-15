@@ -41,6 +41,8 @@ type fakePlatformClient struct {
 	sourceContentFields     []string
 	functionsFields         []string
 	functionFields          []string
+	functionRunStatuses     []string
+	functionRunPolls        int
 	folderContentsFields    []string
 	filePreviewFields       []string
 	createdSourceName       string
@@ -54,6 +56,21 @@ type fakePlatformClient struct {
 	platformQueryOperation  string
 	platformQueryVariables  map[string]any
 	platformQueryResult     any
+	// platformQueryResults answers specific operations; platformQueryCalls records every call.
+	platformQueryResults map[string]any
+	platformQueryCalls   []platformQueryCall
+
+	ontologyQueryProjectID        string
+	ontologyQueryInput            *platformapi.OntologyQueryInput
+	ontologyAggregateInput        *platformapi.OntologyAggregateInput
+	ontologyStatsProperty         string
+	ontologyDescribeEntities      []string
+	ontologyDescribeInferred      bool
+	ontologySimilarInput          *platformapi.OntologySimilarInput
+	ontologyCapabilitiesRecordKey string
+	ontologyActionPreviewInput    *platformapi.PreviewOntologyActionInput
+	ontologyExecutionsLimit       int
+	transformPreviewGraph         string
 }
 
 func (f *fakePlatformClient) SetWorkspaceContext(orgID, projectID string) {
@@ -218,8 +235,8 @@ func testPlatformSession(client platformClient) *platformToolSession {
 
 func TestPlatformToolDefinitions(t *testing.T) {
 	tools := platformToolDefinitions()
-	if len(tools) != 121 {
-		t.Fatalf("len(platformToolDefinitions()) = %d, want 121", len(tools))
+	if len(tools) != 154 {
+		t.Fatalf("len(platformToolDefinitions()) = %d, want 154", len(tools))
 	}
 	for _, tool := range tools {
 		if tool.Annotations == nil {
@@ -530,6 +547,23 @@ func TestHandlePlatformSourceRowsCapsLimit(t *testing.T) {
 	}
 	if !output.Truncated {
 		t.Fatalf("output.Truncated = false, want true")
+	}
+}
+
+func TestParsePlatformRequiredRefUsesGraphQLEnumKind(t *testing.T) {
+	ref, err := parsePlatformRequiredRef("table:public.users")
+	if err != nil {
+		t.Fatalf("parsePlatformRequiredRef() error = %v", err)
+	}
+	if ref.Kind != "Table" {
+		t.Fatalf("ref.Kind = %q, want Table", ref.Kind)
+	}
+	item, err := parsePlatformRequiredRef("item:notes/report.txt")
+	if err != nil {
+		t.Fatalf("parsePlatformRequiredRef() item error = %v", err)
+	}
+	if item.Kind != "Item" || len(item.Path) != 2 || item.Path[0] != "notes" || item.Path[1] != "report.txt" {
+		t.Fatalf("item ref = %#v, want Item notes/report.txt", item)
 	}
 }
 
@@ -1133,13 +1167,13 @@ func assertPlatformSetupGuidance(t *testing.T, guidance PlatformSetupGuidance, w
 
 func clearPendingPlatformActions(t *testing.T) {
 	t.Helper()
-	platformPendingMutex.Lock()
-	pendingPlatformActions = map[string]*PendingPlatformAction{}
-	platformPendingMutex.Unlock()
+	defaultPlatformState.mu.Lock()
+	defaultPlatformState.Pending = map[string]*PendingPlatformAction{}
+	defaultPlatformState.mu.Unlock()
 	t.Cleanup(func() {
-		platformPendingMutex.Lock()
-		pendingPlatformActions = map[string]*PendingPlatformAction{}
-		platformPendingMutex.Unlock()
+		defaultPlatformState.mu.Lock()
+		defaultPlatformState.Pending = map[string]*PendingPlatformAction{}
+		defaultPlatformState.mu.Unlock()
 	})
 }
 

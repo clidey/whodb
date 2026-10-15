@@ -1,0 +1,104 @@
+{
+  "fixtures": [
+    {
+      "name": "functions.list returns the project's functions",
+      "call": { "domain": "functions", "handle": null, "method": "list", "args": [] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "ProjectFunctions", "variables": { "projectId": "proj-1" } },
+          "response": { "data": { "ProjectFunctions": [ { "id": "f-1", "name": "normalize", "language": "python" } ] } }
+        }
+      ],
+      "expectResult": [ { "id": "f-1", "name": "normalize", "language": "python" } ]
+    },
+    {
+      "name": "function.execute encodes the input as compact JSON",
+      "call": { "domain": "function", "handle": "normalize", "method": "execute", "args": [{ "n": 1, "name": "Ada" }] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "ProjectFunctions", "variables": { "projectId": "proj-1" } },
+          "response": { "data": { "ProjectFunctions": [ { "id": "f-1", "name": "normalize" } ] } }
+        },
+        {
+          "expectRequest": { "operation": "ExecuteFunction", "variablesContain": { "projectId": "proj-1", "functionId": "f-1", "input": "{\"n\":1,\"name\":\"Ada\"}" } },
+          "response": { "data": { "ExecuteFunction": { "success": true, "output": "{\"name\":\"ADA\"}" } } }
+        }
+      ],
+      "expectResult": { "success": true, "output": "{\"name\":\"ADA\"}" }
+    },
+    {
+      "name": "function.startRun returns the queued run",
+      "call": { "domain": "function", "handle": "f-1", "method": "startRun", "args": [{ "n": 2 }, { "useActiveVersion": true }] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "ProjectFunctions" },
+          "response": { "data": { "ProjectFunctions": [ { "id": "f-1", "name": "normalize" } ] } }
+        },
+        {
+          "expectRequest": { "operation": "StartFunctionRun", "variablesContain": { "functionId": "f-1", "input": "{\"n\":2}", "useActiveVersion": true } },
+          "response": { "data": { "StartFunctionRun": { "id": "run-1", "functionId": "f-1", "status": "QUEUED" } } }
+        }
+      ],
+      "expectResult": { "id": "run-1", "functionId": "f-1", "status": "QUEUED" }
+    },
+    {
+      "name": "function.wait polls the run until it is terminal",
+      "call": { "domain": "function", "handle": "normalize", "method": "wait", "args": ["run-1", { "pollMs": 0, "timeoutMs": 5000 }] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "FunctionRun", "variables": { "projectId": "proj-1", "id": "run-1" } },
+          "response": { "data": { "FunctionRun": { "id": "run-1", "status": "RUNNING" } } }
+        },
+        {
+          "expectRequest": { "operation": "FunctionRun", "variables": { "projectId": "proj-1", "id": "run-1" } },
+          "response": { "data": { "FunctionRun": { "id": "run-1", "status": "COMPLETED", "output": "{}" } } }
+        }
+      ],
+      "expectResult": { "id": "run-1", "status": "COMPLETED", "output": "{}" }
+    },
+    {
+      "name": "function.wait times out with a PlatformError",
+      "call": { "domain": "function", "handle": "normalize", "method": "wait", "args": ["run-1", { "pollMs": 0, "timeoutMs": 0 }] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "FunctionRun" },
+          "response": { "data": { "FunctionRun": { "id": "run-1", "status": "RUNNING" } } }
+        }
+      ],
+      "expectError": { "type": "PlatformError", "messageContains": "did not finish" }
+    },
+    {
+      "name": "function.cancelRun targets the run id",
+      "call": { "domain": "function", "handle": "normalize", "method": "cancelRun", "args": ["run-1"] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "CancelFunctionRun", "variables": { "projectId": "proj-1", "id": "run-1" } },
+          "response": { "data": { "CancelFunctionRun": { "id": "run-1", "status": "CANCELING" } } }
+        }
+      ],
+      "expectResult": { "id": "run-1", "status": "CANCELING" }
+    },
+    {
+      "name": "functions.create injects the project id",
+      "call": { "domain": "functions", "handle": null, "method": "create", "args": [{ "name": "normalize", "description": "Normalize names", "language": "python", "entryPoint": "main", "files": [{ "path": "main.py", "content": "def main(input):\n    return input\n" }], "dependencies": [] }] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "CreateFunction", "inputContains": { "projectId": "proj-1", "name": "normalize", "language": "python" } },
+          "response": { "data": { "CreateFunction": { "id": "f-9", "name": "normalize" } } }
+        }
+      ],
+      "expectResult": { "id": "f-9", "name": "normalize" }
+    },
+    {
+      "name": "function.delete for an unknown function is NotFoundError",
+      "call": { "domain": "function", "handle": "missing", "method": "delete", "args": [] },
+      "transcript": [
+        {
+          "expectRequest": { "operation": "ProjectFunctions" },
+          "response": { "data": { "ProjectFunctions": [ { "id": "f-1", "name": "normalize" } ] } }
+        }
+      ],
+      "expectError": { "type": "NotFoundError", "messageContains": "missing" }
+    }
+  ]
+}

@@ -45,12 +45,13 @@ func (p *ClickHousePlugin) GetColumnConstraints(config *engine.PluginConfig, sch
 	// Query system.columns for original type strings (case-preserved)
 	_, err = plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
 		var columns []struct {
-			Name string `gorm:"column:name"`
-			Type string `gorm:"column:type"`
+			Name              string `gorm:"column:name"`
+			Type              string `gorm:"column:type"`
+			DefaultExpression string `gorm:"column:default_expression"`
 		}
 
 		if err := db.Table("system.columns").
-			Select("name, type").
+			Select("name, type, default_expression").
 			Where("database = ? AND table = ?", schema, storageUnit).
 			Scan(&columns).Error; err != nil {
 			return false, err
@@ -58,6 +59,20 @@ func (p *ClickHousePlugin) GetColumnConstraints(config *engine.PluginConfig, sch
 
 		for _, col := range columns {
 			enrichConstraintsFromType(constraints, col.Name, col.Type)
+			// GORM's migrator does not surface ClickHouse defaults, so take them from
+			// system.columns; otherwise columns like `created_at DateTime DEFAULT now()`
+			// are reported as required.
+			if col.DefaultExpression != "" {
+				colConstraints := gorm_plugin.EnsureConstraintEntry(constraints, col.Name)
+				colConstraints["default"] = col.DefaultExpression
+			} else if !strings.Contains(strings.ToUpper(col.Type), "NULLABLE(") {
+				// ClickHouse fills omitted non-Nullable columns with the type's zero value
+				// on INSERT, so they are never required even without an explicit DEFAULT.
+				if implicit, ok := implicitClickHouseDefault(unwrapClickHouseModifiers(col.Type)); ok {
+					colConstraints := gorm_plugin.EnsureConstraintEntry(constraints, col.Name)
+					colConstraints["default"] = implicit
+				}
+			}
 		}
 
 		return true, nil
@@ -78,10 +93,8 @@ func enrichConstraintsFromType(constraints map[string]map[string]any, columnName
 	// so its absence is authoritative. Without this, complex types (Tuple, Array, Map)
 	// default to nullable and mock data generation may produce nil for non-nullable columns.
 	upperFull := strings.ToUpper(fullType)
-	if !strings.Contains(upperFull, "NULLABLE(") {
-		colConstraints := gorm_plugin.EnsureConstraintEntry(constraints, columnName)
-		colConstraints["nullable"] = false
-	}
+	colConstraints := gorm_plugin.EnsureConstraintEntry(constraints, columnName)
+	colConstraints["nullable"] = strings.Contains(upperFull, "NULLABLE(")
 
 	// Unwrap Nullable/LowCardinality to find the inner type
 	innerType := unwrapClickHouseModifiers(fullType)
@@ -91,7 +104,6 @@ func enrichConstraintsFromType(constraints map[string]map[string]any, columnName
 	if strings.HasPrefix(upperInner, "ENUM8(") || strings.HasPrefix(upperInner, "ENUM16(") {
 		values := parseClickHouseEnumValues(innerType)
 		if len(values) > 0 {
-			colConstraints := gorm_plugin.EnsureConstraintEntry(constraints, columnName)
 			colConstraints["check_values"] = values
 		}
 		return
@@ -103,7 +115,6 @@ func enrichConstraintsFromType(constraints map[string]map[string]any, columnName
 	if strings.HasPrefix(upperInner, "DECIMAL") {
 		scale, precision := parseClickHouseDecimalParams(innerType)
 		if scale >= 0 || precision > 0 {
-			colConstraints := gorm_plugin.EnsureConstraintEntry(constraints, columnName)
 			if scale >= 0 {
 				colConstraints["scale"] = scale
 			}
@@ -203,4 +214,44 @@ func parseClickHouseDecimalParams(decimalType string) (scale int, precision int)
 	}
 
 	return scale, precision
+}
+
+// implicitClickHouseDefault returns the value ClickHouse inserts for an omitted
+// non-Nullable column of the given (unwrapped) type, rendered as a SQL literal.
+// It reports false for types whose implicit default is not known here.
+func implicitClickHouseDefault(innerType string) (string, bool) {
+	upper := strings.ToUpper(strings.TrimSpace(innerType))
+	switch {
+	case strings.HasPrefix(upper, "INT"), strings.HasPrefix(upper, "UINT"),
+		strings.HasPrefix(upper, "FLOAT"), strings.HasPrefix(upper, "DECIMAL"),
+		strings.HasPrefix(upper, "BFLOAT"):
+		return "0", true
+	case upper == "BOOL", upper == "BOOLEAN":
+		return "false", true
+	case upper == "STRING", strings.HasPrefix(upper, "FIXEDSTRING("):
+		return "''", true
+	case upper == "UUID":
+		return "'00000000-0000-0000-0000-000000000000'", true
+	case upper == "DATE", upper == "DATE32":
+		return "'1970-01-01'", true
+	case strings.HasPrefix(upper, "DATETIME"):
+		return "'1970-01-01 00:00:00'", true
+	case strings.HasPrefix(upper, "ARRAY("):
+		return "[]", true
+	case strings.HasPrefix(upper, "MAP("):
+		return "{}", true
+	case strings.HasPrefix(upper, "TUPLE("):
+		return "()", true
+	case strings.HasPrefix(upper, "ENUM8("), strings.HasPrefix(upper, "ENUM16("):
+		values := parseClickHouseEnumValues(innerType)
+		if len(values) == 0 {
+			return "", false
+		}
+		return "'" + values[0] + "'", true
+	case strings.HasPrefix(upper, "IPV4"):
+		return "'0.0.0.0'", true
+	case strings.HasPrefix(upper, "IPV6"):
+		return "'::'", true
+	}
+	return "", false
 }

@@ -1,4 +1,10 @@
 en_US:
+  communityEditionShort: CE
+  disconnect: Disconnect
+  contact: Contact
+  sampleSQLiteName: Sample SQLite
+  sampleSQLiteFilename: sample.db
+  collapseNavigation: Collapse navigation
   mainNavigation: Main navigation
   profile: Profile
   searchProfile: Search Profile...

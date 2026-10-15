@@ -21,6 +21,7 @@ import (
 	"context"
 	"encoding/csv"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -132,7 +133,16 @@ var (
 	functionInputJSON           string
 	functionInputFile           string
 	functionInputFileIDs        []string
+	functionRunTimeout          time.Duration
+	functionRunDetach           bool
+	functionRunUseActive        bool
+	functionRunsLimit           int
+	functionRunsWaitTimeout     time.Duration
 )
+
+// functionRunMaxTimeout mirrors the platform server's write timeout: a synchronous ExecuteFunction
+// response cannot arrive later than that, whatever the client is willing to wait.
+const functionRunMaxTimeout = 10 * time.Minute
 
 var secretsCmd = &cobra.Command{Use: "secrets", Short: "Manage hosted WhoDB project secrets"}
 var aiProvidersCmd = &cobra.Command{Use: "ai-providers", Short: "Manage hosted WhoDB AI providers"}
@@ -669,12 +679,21 @@ var functionsRestoreDraftCmd = &cobra.Command{
 }
 
 var functionsRunCmd = &cobra.Command{
-	Use:           "run <function>",
-	Short:         "Run a hosted WhoDB function",
+	Use:   "run <function>",
+	Short: "Run a hosted WhoDB function",
+	Long: `Run a hosted WhoDB function and print its result.
+
+The platform keeps executing a function after the client stops waiting, so a run that outlives
+--timeout (default 30s, at most 10m) still finishes server-side without reporting back. For long
+runs use --detach: the function starts as a persisted run and the command prints the run id;
+follow it with "whodb functions runs wait <run-id>".`,
 	Args:          cobra.ExactArgs(1),
 	SilenceUsage:  true,
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if functionRunTimeout <= 0 || functionRunTimeout > functionRunMaxTimeout {
+			return fmt.Errorf("--timeout must be between 1s and %s", functionRunMaxTimeout)
+		}
 		return runPlatformProjectRead(cmd, func(ctx context.Context, session *platformSession, _ *platform.Project) (any, *output.QueryResult, error) {
 			input, err := readFunctionInput(cmd)
 			if err != nil {
@@ -684,11 +703,103 @@ var functionsRunCmd = &cobra.Command{
 			if err != nil {
 				return nil, nil, err
 			}
-			result, err := session.Client.ExecuteFunction(ctx, session.Host.DefaultProjectID, functionID, input, normalizedStringList(functionInputFileIDs))
+			if functionRunDetach {
+				run, err := session.Client.StartFunctionRun(ctx, session.Host.DefaultProjectID, functionID, input, functionRunUseActive)
+				if err != nil {
+					return nil, nil, err
+				}
+				return run, functionRunTable(run), nil
+			}
+			runCtx, cancel := context.WithTimeout(ctx, functionRunTimeout)
+			defer cancel()
+			result, err := session.Client.ExecuteFunction(runCtx, session.Host.DefaultProjectID, functionID, input, normalizedStringList(functionInputFileIDs))
 			if err != nil {
+				if errors.Is(runCtx.Err(), context.DeadlineExceeded) {
+					return nil, nil, fmt.Errorf("no result within %s; the function keeps running on the platform. Start long runs with --detach and poll them with \"functions runs wait\"", functionRunTimeout)
+				}
 				return nil, nil, err
 			}
 			return result, functionExecutionTable(result), nil
+		})
+	},
+}
+
+var functionsRunsCmd = &cobra.Command{Use: "runs", Short: "Inspect persisted hosted WhoDB function runs"}
+
+var functionsRunsGetCmd = &cobra.Command{
+	Use:           "get <run-id>",
+	Short:         "Show one persisted function run",
+	Args:          cobra.ExactArgs(1),
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return runPlatformProjectRead(cmd, func(ctx context.Context, session *platformSession, _ *platform.Project) (any, *output.QueryResult, error) {
+			run, err := session.Client.FunctionRun(ctx, session.Host.DefaultProjectID, args[0])
+			if err != nil {
+				return nil, nil, err
+			}
+			return run, functionRunTable(run), nil
+		})
+	},
+}
+
+var functionsRunsListCmd = &cobra.Command{
+	Use:           "list <function>",
+	Short:         "List persisted runs of a hosted function, newest first",
+	Args:          cobra.ExactArgs(1),
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return runPlatformProjectRead(cmd, func(ctx context.Context, session *platformSession, _ *platform.Project) (any, *output.QueryResult, error) {
+			functionID, err := resolvePlatformResourceID(ctx, session, session.Host.DefaultProjectID, "function", args[0])
+			if err != nil {
+				return nil, nil, err
+			}
+			runs, err := session.Client.FunctionRuns(ctx, session.Host.DefaultProjectID, functionID, functionRunsLimit)
+			if err != nil {
+				return nil, nil, err
+			}
+			rows := make([][]any, 0, len(runs))
+			for _, run := range runs {
+				rows = append(rows, []any{run.ID, run.Status, run.Attempt, optionalString(run.StartedAt), optionalString(run.CompletedAt), run.Error})
+			}
+			return runs, tableResult([]string{"id", "status", "attempt", "started_at", "completed_at", "error"}, rows), nil
+		})
+	},
+}
+
+var functionsRunsWaitCmd = &cobra.Command{
+	Use:           "wait <run-id>",
+	Short:         "Poll a persisted function run until it finishes and print its result",
+	Args:          cobra.ExactArgs(1),
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if functionRunsWaitTimeout <= 0 {
+			return fmt.Errorf("--timeout must be positive")
+		}
+		return runPlatformProjectRead(cmd, func(ctx context.Context, session *platformSession, _ *platform.Project) (any, *output.QueryResult, error) {
+			deadline := time.Now().Add(functionRunsWaitTimeout)
+			for {
+				run, err := session.Client.FunctionRun(ctx, session.Host.DefaultProjectID, args[0])
+				if err != nil {
+					return nil, nil, err
+				}
+				if run.Finished() {
+					if strings.EqualFold(run.Status, "completed") {
+						return run, functionRunTable(run), nil
+					}
+					return nil, nil, fmt.Errorf("function run %s %s: %s", run.ID, run.Status, strings.TrimSpace(run.Error))
+				}
+				if time.Now().After(deadline) {
+					return nil, nil, fmt.Errorf("function run %s still %s after %s; it keeps running on the platform, poll again with \"functions runs get %s\"", run.ID, run.Status, functionRunsWaitTimeout, run.ID)
+				}
+				select {
+				case <-ctx.Done():
+					return nil, nil, ctx.Err()
+				case <-time.After(2 * time.Second):
+				}
+			}
 		})
 	},
 }
@@ -1069,7 +1180,7 @@ var datasetsCreateCmd = withExample(typedResourceWriteCommand("create", "Create 
 var datasetsUpdateCmd = withExample(typedResourceWriteCommand("update <dataset>", "Update a hosted WhoDB dataset", "update", "dataset", "", buildDatasetUpdatePayload), `  whodb datasets update dataset_123 --description "Customer import"
   whodb datasets update dataset_123 --column id:text:primary --column email:text:nullable`)
 var datasetsDeleteCmd = withExample(typedResourceWriteCommand("delete <dataset>", "Delete a hosted WhoDB dataset", "delete", "dataset", "", emptyTypedPayload), `  whodb datasets delete dataset_123 --yes`)
-var ontologiesCreateCmd = withExample(typedResourceWriteCommand("create", "Create a hosted WhoDB ontology", "create", "ontology", "", buildOntologyCreatePayload), `  whodb ontologies create --api-name customer --display-name Customer --plural-display-name Customers --primary-key id --table-name customers --schema-name public --property-json '{"apiName":"id","displayName":"ID","columnName":"id","dataType":"String","isRequired":true,"visibility":"normal","isSearchable":true,"isSortable":true,"isEditOnly":false}'`)
+var ontologiesCreateCmd = withExample(typedResourceWriteCommand("create", "Create a hosted WhoDB ontology", "create", "ontology", "", buildOntologyCreatePayload), `  whodb ontologies create --api-name customer --display-name Customer --plural-display-name Customers --primary-key id --table-name customers --property-json '{"apiName":"id","displayName":"ID","columnName":"id","dataType":"String"}'`)
 var ontologiesUpdateCmd = withExample(typedResourceWriteCommand("update <ontology>", "Update a hosted WhoDB ontology", "update", "ontology", "", buildOntologyUpdatePayload), `  whodb ontologies update ontology_123 --display-name "Customer Account" --status active`)
 var ontologiesDeleteCmd = withExample(typedResourceWriteCommand("delete <ontology>", "Delete a hosted WhoDB ontology", "delete", "ontology", "", emptyTypedPayload), `  whodb ontologies delete ontology_123 --yes`)
 var transformsCreateCmd = withExample(typedResourceWriteCommand("create", "Create a hosted WhoDB transform", "create", "transform", "", buildTransformCreatePayload), `  whodb transforms create --name daily-load --trigger-mode manual --graph-file ./transform.json`)
@@ -1109,7 +1220,8 @@ func registerPlatformResourceCommands() {
 	datasetsCmd.AddCommand(datasetsListCmd, datasetGetCmd, datasetDescribeCmd, datasetSchemaCmd, datasetExportCmd, datasetCloneCmd, datasetRowsCmd, datasetQueryCmd, datasetsCreateCmd, datasetsUpdateCmd, datasetsDeleteCmd)
 	lineageCmd.AddCommand(lineageProjectCmd, lineageRootCmd, lineageNeighborsCmd)
 	transformsCmd.AddCommand(transformsListCmd, transformGetCmd, transformDescribeCmd, transformExportCmd, transformCloneCmd, transformRunsCmd, transformsCreateCmd, transformsUpdateCmd, transformsRunCmd, transformsDeleteCmd, transformsApplyCmd, transformsRebindSourceCmd)
-	functionsCmd.AddCommand(functionsListCmd, functionGetCmd, functionDescribeCmd, functionExportCmd, functionCloneCmd, functionsVersionsCmd, functionsActiveCmd, functionsPromoteCmd, functionsSetActiveCmd, functionsRestoreDraftCmd, functionsRunCmd, functionsTestCmd, functionsPreviewCmd, functionsCreateCmd, functionsUpdateCmd, functionsDeployCmd, functionsRedeployCmd, functionsDeleteCmd)
+	functionsCmd.AddCommand(functionsListCmd, functionGetCmd, functionDescribeCmd, functionExportCmd, functionCloneCmd, functionsVersionsCmd, functionsActiveCmd, functionsPromoteCmd, functionsSetActiveCmd, functionsRestoreDraftCmd, functionsRunCmd, functionsRunsCmd, functionsTestCmd, functionsPreviewCmd, functionsCreateCmd, functionsUpdateCmd, functionsDeployCmd, functionsRedeployCmd, functionsDeleteCmd)
+	functionsRunsCmd.AddCommand(functionsRunsGetCmd, functionsRunsListCmd, functionsRunsWaitCmd)
 	filesCmd.AddCommand(filesListCmd, fileGetCmd, fileDescribeCmd, filePreviewCmd, fileInspectCmd, fileColumnsCmd, fileDownloadCmd, fileSearchCmd, tabularFilesCmd, storageUsageCmd, filesUploadCmd, filesPromoteDatasetCmd, filesDeleteCmd, filesRenameCmd, filesMoveCmd)
 	foldersCmd.AddCommand(foldersListCmd, folderGetCmd, folderDescribeCmd, foldersTreeCmd, foldersCreateCmd, foldersRenameCmd, foldersMoveCmd, foldersDeleteCmd)
 	resourcesCmd.AddCommand(resourcesSpecsCmd, resourcesShapeCmd, resourcesQueryCmd, resourcesExportCmd, resourcesDiffCmd, resourcesImportCmd, resourcesCreateCmd, resourcesUpdateCmd, resourcesDeleteCmd, resourcesActionCmd)
@@ -1192,6 +1304,11 @@ func registerPlatformResourceCommands() {
 	functionsRunCmd.Flags().StringVar(&functionInputJSON, "input-json", "{}", "function input JSON string")
 	functionsRunCmd.Flags().StringVar(&functionInputFile, "input-file", "", "path to function input JSON file")
 	functionsRunCmd.Flags().StringArrayVar(&functionInputFileIDs, "input-file-id", nil, "hosted project file id to pass to the function; repeatable")
+	functionsRunCmd.Flags().DurationVar(&functionRunTimeout, "timeout", 30*time.Second, "how long to wait for the synchronous result (max 10m); the function keeps running on the platform after that")
+	functionsRunCmd.Flags().BoolVar(&functionRunDetach, "detach", false, "start a persisted run and return its id immediately instead of waiting for the result")
+	functionsRunCmd.Flags().BoolVar(&functionRunUseActive, "use-active-version", false, "with --detach, run the active promoted version instead of the draft")
+	functionsRunsListCmd.Flags().IntVar(&functionRunsLimit, "limit", 20, "maximum runs to list")
+	functionsRunsWaitCmd.Flags().DurationVar(&functionRunsWaitTimeout, "timeout", 10*time.Minute, "how long to poll before giving up (the run itself is not cancelled)")
 	functionsTestCmd.Flags().StringVar(&functionInputJSON, "input-json", "{}", "function input JSON string")
 	functionsTestCmd.Flags().StringVar(&functionInputFile, "input-file", "", "path to function input JSON file")
 	functionsTestCmd.Flags().StringArrayVar(&functionInputFileIDs, "input-file-id", nil, "hosted project file id to pass to the function; repeatable")
@@ -1326,7 +1443,7 @@ func registerOntologyWriteFlags(command *cobra.Command, includeStatus bool) {
 	command.Flags().StringVar(&ontologyDescription, "description", "", "ontology description")
 	command.Flags().StringVar(&ontologyPrimaryKey, "primary-key", "", "ontology primary key property")
 	command.Flags().StringVar(&ontologyTableName, "table-name", "", "backing table name")
-	command.Flags().StringVar(&ontologySchemaName, "schema-name", "", "backing schema name")
+	command.Flags().StringVar(&ontologySchemaName, "schema-name", "", "backing schema name for a source-backed ontology (optional for project-managed ontologies)")
 	if !includeStatus {
 		command.Flags().StringVar(&ontologyStorageMode, "storage-mode", platform.DefaultOntologyStorageMode, "ontology storage mode: operational or analytical")
 	}
@@ -1694,7 +1811,7 @@ func runPlatformResourceWrite(cmd *cobra.Command, input genericResourceWriteInpu
 	if err := prepareTypedResourcePayload(ctx, session, project.ID, input, payload); err != nil {
 		return err
 	}
-	spec, variables, err := buildGenericResourceVariables(project.ID, input, payload)
+	spec, variables, err := buildGenericResourceVariables(org.ID, project.ID, input, payload)
 	if err != nil {
 		return err
 	}
@@ -2120,7 +2237,6 @@ func buildOntologyCreatePayload(cmd *cobra.Command) (map[string]any, error) {
 		"plural-display-name": ontologyPluralName,
 		"primary-key":         ontologyPrimaryKey,
 		"table-name":          ontologyTableName,
-		"schema-name":         ontologySchemaName,
 	} {
 		if strings.TrimSpace(value) == "" {
 			return nil, fmt.Errorf("--%s is required", flag)
@@ -2147,8 +2263,10 @@ func buildOntologyCreatePayload(cmd *cobra.Command) (map[string]any, error) {
 	if len(properties) == 0 {
 		return nil, fmt.Errorf("--property-json is required at least once")
 	}
-	for _, property := range properties {
-		applyOntologyPropertyDefaults(property, ontologyPrimaryKey)
+	for i, property := range properties {
+		if err := applyOntologyPropertyDefaults(property, ontologyPrimaryKey); err != nil {
+			return nil, fmt.Errorf("--property-json item %d: %w", i+1, err)
+		}
 	}
 	links, err := parseJSONObjectFlags(ontologyLinksJSON, "link-json")
 	if err != nil {
@@ -2159,14 +2277,26 @@ func buildOntologyCreatePayload(cmd *cobra.Command) (map[string]any, error) {
 	return payload, nil
 }
 
-func applyOntologyPropertyDefaults(property map[string]any, primaryKey string) {
+func applyOntologyPropertyDefaults(property map[string]any, primaryKey string) error {
+	for _, field := range []string{"apiName", "displayName", "columnName", "dataType"} {
+		value, ok := property[field].(string)
+		if !ok || strings.TrimSpace(value) == "" {
+			return fmt.Errorf("%s is required", field)
+		}
+	}
+	if _, ok := property["description"]; !ok {
+		property["description"] = ""
+	}
 	if _, ok := property["visibility"]; !ok {
 		property["visibility"] = "normal"
 	}
 	searchableAndSortable := false
-	apiName := strings.TrimSpace(fmt.Sprint(property["apiName"]))
+	apiName := strings.TrimSpace(property["apiName"].(string))
 	if strings.EqualFold(apiName, "id") || strings.EqualFold(apiName, strings.TrimSpace(primaryKey)) {
 		searchableAndSortable = true
+	}
+	if _, ok := property["isRequired"]; !ok {
+		property["isRequired"] = strings.EqualFold(apiName, strings.TrimSpace(primaryKey))
 	}
 	if _, ok := property["isSearchable"]; !ok {
 		property["isSearchable"] = searchableAndSortable
@@ -2177,6 +2307,7 @@ func applyOntologyPropertyDefaults(property map[string]any, primaryKey string) {
 	if _, ok := property["isEditOnly"]; !ok {
 		property["isEditOnly"] = false
 	}
+	return nil
 }
 
 func buildOntologyUpdatePayload(cmd *cobra.Command) (map[string]any, error) {
@@ -2870,6 +3001,27 @@ func parseOntologyRecordValues(values []string) ([]map[string]any, error) {
 	return records, nil
 }
 
+func optionalString(value *string) string {
+	if value == nil {
+		return ""
+	}
+	return *value
+}
+
+func functionRunTable(run *platform.FunctionRun) *output.QueryResult {
+	return tableResult([]string{"field", "value"}, [][]any{
+		{"id", run.ID},
+		{"status", run.Status},
+		{"execution_mode", run.ExecutionMode},
+		{"attempt", run.Attempt},
+		{"started_at", optionalString(run.StartedAt)},
+		{"completed_at", optionalString(run.CompletedAt)},
+		{"output", optionalString(run.Output)},
+		{"logs", run.Logs},
+		{"error", run.Error},
+	})
+}
+
 func functionExecutionTable(result *platform.FunctionExecutionResult) *output.QueryResult {
 	errorText := ""
 	if result.Error != nil {
@@ -2901,7 +3053,7 @@ func defaultString(value, fallback string) string {
 	return value
 }
 
-func buildGenericResourceVariables(projectID string, input genericResourceWriteInput, payload map[string]any) (platform.GenericWriteSpec, map[string]any, error) {
+func buildGenericResourceVariables(orgID, projectID string, input genericResourceWriteInput, payload map[string]any) (platform.GenericWriteSpec, map[string]any, error) {
 	resource := normalizePlatformResourceToken(input.Resource)
 	action := normalizePlatformResourceToken(input.Action)
 	key := action + ":" + resource
@@ -2921,6 +3073,9 @@ func buildGenericResourceVariables(projectID string, input genericResourceWriteI
 	case platform.GenericWriteModeInput:
 		if spec.InjectProjectID {
 			payload["projectId"] = projectID
+		}
+		if spec.InjectOrgID && (payload["orgId"] == nil || strings.TrimSpace(fmt.Sprint(payload["orgId"])) == "") {
+			payload["orgId"] = orgID
 		}
 		if spec.NeedsID {
 			if spec.Mutation == "PromoteFileToDataset" {
@@ -2963,12 +3118,19 @@ func buildGenericResourceVariables(projectID string, input genericResourceWriteI
 		if spec.InjectProjectID {
 			variables["projectId"] = projectID
 		}
+		if spec.InjectOrgID && (variables["orgId"] == nil || strings.TrimSpace(fmt.Sprint(variables["orgId"])) == "") {
+			variables["orgId"] = orgID
+		}
 		if spec.NeedsID {
-			switch spec.Mutation {
-			case "OntologyAddRow", "OntologyUpdateRow", "OntologyDeleteRow":
-				variables["entityId"] = id
-			default:
-				variables["id"] = id
+			if spec.IdentityField != "" {
+				variables[spec.IdentityField] = id
+			} else {
+				switch spec.Mutation {
+				case "OntologyAddRow", "OntologyUpdateRow", "OntologyDeleteRow":
+					variables["entityId"] = id
+				default:
+					variables["id"] = id
+				}
 			}
 		}
 	case platform.GenericWriteModeFileUpload:

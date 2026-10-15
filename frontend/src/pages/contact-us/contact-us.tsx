@@ -14,78 +14,37 @@
  * limitations under the License.
  */
 
-import {Badge, Button, Label, Separator} from "@clidey/ux";
-import {ChatBubbleLeftRightIcon, EnvelopeIcon, GlobeAltIcon} from "../../components/heroicons";
+import {Button} from "@clidey/ux";
 import type {FC} from "react";
 import {InternalPage} from "../../components/page";
 import {InternalRoutes, type IInternalRoute} from "../../config/routes";
 import {openExternalLink} from "../../utils/external-links";
 import {useTranslation} from '@/hooks/use-translation';
+import {useNavigate} from 'react-router-dom';
+import {WhoDBChatIcon} from '../../components/whodb-chat-icon';
 
 export const ContactUsPage: FC = () => {
     const { t } = useTranslation('pages/contact-us');
+    const navigate = useNavigate();
     return (
         <InternalPage routes={[InternalRoutes.ContactUs as IInternalRoute]}>
-            <div className="flex flex-col items-center w-full max-w-2xl mx-auto py-10 gap-8">
-                <div className="w-full flex flex-col gap-0">
-                    <div className="flex flex-col gap-sm mb-4">
-                        <div className="text-2xl font-bold flex items-center gap-2">
-                            <EnvelopeIcon className="w-6 h-6"/>
-                            {t('contactUs')}
+            <div className="ce-settings-page w-full">
+                <div className="ce-settings-tabs">
+                    <nav className="ce-settings-rail" aria-label={t('settingsTitle')}>
+                        <div className="ce-settings-rail-heading"><h1>{t('settingsTitle')}</h1><p>{t('savedInBrowser')}</p></div>
+                        <button type="button" onClick={() => void navigate('/settings?tab=appearance')}><WhoDBChatIcon name="grid" />{t('appearance')}</button>
+                        <button type="button" onClick={() => void navigate('/settings?tab=behavior')}><WhoDBChatIcon name="sliders" />{t('behavior')}</button>
+                        <button type="button" onClick={() => void navigate('/settings?tab=privacy')}><WhoDBChatIcon name="secret" />{t('privacy')}</button>
+                        <span className="is-active"><WhoDBChatIcon name="mail" />{t('contactUs')}</span>
+                    </nav>
+                    <div className="ce-settings-panel">
+                        <div className="ce-settings-panel-heading"><h2>{t('contactUs')}</h2><p>{t('description')}</p></div>
+                        <div className="ce-settings-contact-list">
+                            <div><span className="ce-settings-contact-icon"><WhoDBChatIcon name="mail" /></span><div><strong>{t('emailTitle')}</strong><small>{t('emailAddress')} · {t('emailDescription')}</small></div><Button size="sm" onClick={() => { window.location.href = `mailto:${t('emailAddress')}`; }} data-testid="contact-email">{t('writeToUs')}</Button></div>
+                            <div><span className="ce-settings-contact-icon"><WhoDBChatIcon name="globe" /></span><div><strong>{t('communityTitle')}</strong><small>{t('communityDescription')}</small></div><Button size="sm" variant="outline" data-testid="github-issue-button" onClick={(e) => { void openExternalLink('https://github.com/clidey/whodb/issues', e); }}>{t('submitIssue')}</Button></div>
+                            <div><span className="ce-settings-contact-icon"><WhoDBChatIcon name="file-text" /></span><div><strong>{t('docsTitle')}</strong><small>{t('docsDescription')}</small></div><Button size="sm" variant="outline" onClick={(e) => { void openExternalLink('https://docs.whodb.com', e); }}>{t('readDocs')}</Button></div>
                         </div>
-                        <p className="mt-2">{t('description')}</p>
-                    </div>
-                    <Separator/>
-                    <div className="flex flex-col gap-xl py-6">
-                        <div className="flex flex-col gap-2">
-                            <Label className="text-lg font-semibold">{t('emailTitle')}</Label>
-                            <Badge>
-                                <a
-                                    href={`mailto:${t('emailAddress')}`}
-                                    className="transition-colors text-base font-medium"
-                                    data-testid="contact-email"
-                                >
-                                    {t('emailAddress')}
-                                </a>
-                            </Badge>
-                            <p className="text-sm">{t('emailDescription')}</p>
-                        </div>
-                        <Separator/>
-                        <div className="flex flex-col gap-2">
-                            <Label className="text-lg font-semibold">{t('communityTitle')}</Label>
-                            <Button
-                                variant="secondary"
-                                className="w-fit gap-2"
-                                data-testid="github-issue-button"
-                                onClick={(e) => { void openExternalLink("https://github.com/clidey/whodb/issues", e); }}
-                            >
-                                <GlobeAltIcon className="w-5 h-5"/>
-                                {t('submitIssue')}
-                            </Button>
-                            <p className="text-sm">{t('communityDescription')}</p>
-                        </div>
-                        <Separator/>
-                        <div className="flex flex-col gap-2">
-                            <Label className="text-lg font-semibold">{t('liveChatTitle')}</Label>
-                            <Button
-                                variant="ghost"
-                                className="w-fit gap-sm cursor-not-allowed opacity-60"
-                                disabled
-                            >
-                                <ChatBubbleLeftRightIcon className="w-5 h-5"/>
-                                {t('chatButton')}
-                            </Button>
-                            <p className="text-sm">{t('liveChatDescription')}</p>
-                        </div>
-                    </div>
-                    <div className="flex flex-col items-start gap-sm text-xs text-gray-500 py-4">
-                        <div>
-                            {t('companyInfo')}
-                        </div>
-                        <div>
-                            {t('urgentNote')} <span
-                            className="font-mono bg-gray-100 px-1 rounded">{t('urgentLabel')}</span> {t('urgentNoteEnd')}
-                        </div>
+                        <p className="ce-settings-contact-note">{t('urgentNote')} <code>{t('urgentLabel')}</code> {t('urgentNoteEnd')}</p>
                     </div>
                 </div>
             </div>

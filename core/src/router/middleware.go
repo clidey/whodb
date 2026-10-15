@@ -53,6 +53,7 @@ func contextMiddleware(next http.Handler) http.Handler {
 			Path:      r.URL.Path,
 			RemoteIP:  clientIPFromRequest(r),
 			UserAgent: metadata.UserAgent,
+			Client:    coreaudit.SanitizeClient(r.Header.Get(coreaudit.ClientHeader)),
 			Protocol:  r.Proto,
 		}
 		spanContext := trace.SpanContextFromContext(ctx)

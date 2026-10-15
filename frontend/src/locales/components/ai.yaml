@@ -1,4 +1,11 @@
 en_US:
+  providerEyebrow: AI providers
+  providerLabel: Provider
+  providerName: Name
+  providerNameHint: Shown in the model picker.
+  apiKey: API key
+  localProviderHint: Running locally? Pick Ollama or LM Studio and WhoDB finds the models on this machine.
+  storedLocally: Stored in this browser only
   title: AI Assistant
   placeholder: Ask AI...
   addExternalModel: Add External Provider

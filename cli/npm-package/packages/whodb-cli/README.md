@@ -40,7 +40,7 @@ Both install methods provide the `whodb` command.
 ### Interactive Mode (TUI)
 
 ```bash
-npx @clidey/whodb
+npx @clidey/whodb --tui
 ```
 
 ### Programmatic Commands
@@ -64,7 +64,17 @@ npx @clidey/whodb export --connection mydb --table users --format csv --output u
 
 ### MCP Server Mode
 
-Start as an MCP server for AI assistant integration:
+Platform MCP is the default. Sign in to each host, then start the server:
+
+```bash
+npx @clidey/whodb login --host <url>
+npx @clidey/whodb mcp serve
+```
+
+Use `workspace: {host, org, project}` on platform tool calls to target a specific
+workspace without changing saved defaults.
+
+For database-only tools, enable the database module using `npx @clidey/whodb setup`. The server command stays the same:
 
 ```bash
 npx @clidey/whodb mcp serve
@@ -75,12 +85,12 @@ Write operations require confirmation by default. Use `--allow-write` to disable
 Restrict AI access to specific connections with `--allowed-connections`:
 
 ```bash
-npx @clidey/whodb mcp serve --allowed-connections prod,staging
+npx @clidey/whodb mcp serve --database --allowed-connections prod,staging
 ```
 
-## MCP Client Configuration (Example)
+## Database-only MCP Client Configuration
 
-Example configuration (from `whodb mcp serve --help`):
+Example configuration (from `whodb mcp serve --database --help`):
 
 ```json
 {

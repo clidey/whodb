@@ -1,4 +1,10 @@
 en_US:
+  history: History
+  run: Run
+  running: Running
+  runningQuery: Running query
+  result: Result
+  rowCount: "{count} rows"
   copyCode: Copy Code
   queryHistory: Query History
   addCell: Add a New Cell

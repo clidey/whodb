@@ -41,6 +41,8 @@ import (
 	"github.com/clidey/whodb/core/src/sourcecatalog"
 )
 
+var errManualCredentialsDisabled = errors.New("login with credentials is disabled; use preconfigured connections")
+
 func performSourceLogin(ctx context.Context, credentials *source.Credentials, profileSource string) (*model.StatusResponse, error) {
 	start := time.Now()
 	hasProfileID := credentials.ID != nil && strings.TrimSpace(*credentials.ID) != ""
@@ -74,7 +76,7 @@ func performSourceLogin(ctx context.Context, credentials *source.Credentials, pr
 	// still be allowed, otherwise enabling the flag makes login impossible.
 	if env.DisableCredentialForm && profileSource == "" {
 		log.WithField("sourceType", credentials.SourceType).Error("Login with credentials is disabled; use preconfigured connections")
-		err := errors.New("login with credentials is disabled; use preconfigured connections")
+		err := errManualCredentialsDisabled
 		recordAudit(err)
 		return nil, err
 	}
@@ -190,6 +192,9 @@ func exportSourceConnection(ctx context.Context, id string, includeSecrets bool)
 	if credentials == nil {
 		return nil, errors.New("authenticated source session required")
 	}
+	if env.DisableCredentialForm {
+		return nil, errors.New("exporting source connections is disabled")
+	}
 	sessionID := "session:" + credentials.SourceType
 	if credentials.ID != nil {
 		sessionID = *credentials.ID
@@ -214,6 +219,9 @@ func exportSourceConnection(ctx context.Context, id string, includeSecrets bool)
 }
 
 func testSourceConnection(ctx context.Context, credentials *source.Credentials) (*model.StatusResponse, error) {
+	if env.DisableCredentialForm {
+		return nil, errManualCredentialsDisabled
+	}
 	spec, ok := sourcecatalog.Find(credentials.SourceType)
 	if !ok {
 		return nil, errors.New("unsupported source type")

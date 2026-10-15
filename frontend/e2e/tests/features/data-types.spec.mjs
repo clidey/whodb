@@ -39,6 +39,23 @@ async function waitForNewRowValue(whodb, columnIndex, expectedValue, existingSig
 }
 
 /**
+ * For databases with asynchronous mutations (e.g. ClickHouse), reload the table until
+ * `isSettled(rows)` holds, waiting `mutationDelay` between reloads. Gives up after `timeout`
+ * so the caller's own assertion reports the mismatch.
+ */
+async function settleAsyncMutation(whodb, page, tableName, mutationDelay, isSettled, timeout = 30000) {
+    if (mutationDelay <= 0) return;
+    const deadline = Date.now() + timeout;
+    for (;;) {
+        await page.waitForTimeout(mutationDelay);
+        await whodb.data(tableName);
+        await whodb.sortBy(0);
+        const { rows } = await whodb.getTableData();
+        if (isSettled(rows) || Date.now() > deadline) return;
+    }
+}
+
+/**
  * Data Types CRUD Operations Test Suite
  *
  * Tests that each SQL database can correctly handle CRUD operations for all
@@ -111,11 +128,8 @@ test.describe('Data Types CRUD Operations', () => {
                     await verifyAdd();
 
                     // Wait for async mutations (e.g., ClickHouse)
-                    if (mutationDelay > 0) {
-                        await page.waitForTimeout(mutationDelay);
-                        await whodb.data(tableName);
-                        await whodb.sortBy(0);
-                    }
+                    await settleAsyncMutation(whodb, page, tableName, mutationDelay, rows =>
+                        rows.some(row => !existingSignatures.has(rowSignature(row)) && String(row[columnIndex + 1] || '').trim() === String(expectedAddDisplay).trim()));
 
                     const rowIndex = await waitForNewRowValue(
                         whodb,
@@ -129,10 +143,8 @@ test.describe('Data Types CRUD Operations', () => {
                     await whodb.deleteRow(rowIndex);
                     await verifyDelete();
 
-                    // Wait for async delete mutation
-                    if (mutationDelay > 0) {
-                        await page.waitForTimeout(mutationDelay);
-                    }
+                    // Wait for the async delete so the next test starts from seed data
+                    await settleAsyncMutation(whodb, page, tableName, mutationDelay, rows => rows.length === existingRows.length);
                 });
 
                 test('UPDATE - edits type value', async ({ whodb, page }) => {
@@ -161,11 +173,8 @@ test.describe('Data Types CRUD Operations', () => {
                         await whodb.updateRow(finalTargetRowIndex, columnIndex, testConfig.updateValue, false);
                         await verifyUpdate();
 
-                        if (mutationDelay > 0) {
-                            await page.waitForTimeout(mutationDelay);
-                            await whodb.data(tableName);
-                            await whodb.sortBy(0);
-                        }
+                        await settleAsyncMutation(whodb, page, tableName, mutationDelay, rows =>
+                            rows.some(r => String(r[columnIndex + 1] || '').trim() === updateDisplayValue));
                     });
 
                     await test.step('verify update', async () => {
@@ -193,11 +202,8 @@ test.describe('Data Types CRUD Operations', () => {
                     await verifyAdd();
 
                     // Wait for async mutations (e.g., ClickHouse)
-                    if (mutationDelay > 0) {
-                        await page.waitForTimeout(mutationDelay);
-                        await whodb.data(tableName);
-                        await whodb.sortBy(0);
-                    }
+                    await settleAsyncMutation(whodb, page, tableName, mutationDelay, rows =>
+                        rows.some(row => !existingSignatures.has(rowSignature(row)) && String(row[columnIndex + 1] || '').trim() === String(expectedDeleteDisplay).trim()));
 
                     const rowIndex = await waitForNewRowValue(
                         whodb,
@@ -215,11 +221,7 @@ test.describe('Data Types CRUD Operations', () => {
                     await verifyDelete();
 
                     // Wait for async mutations (e.g., ClickHouse)
-                    if (mutationDelay > 0) {
-                        await page.waitForTimeout(mutationDelay);
-                        await whodb.data(tableName);
-                        await whodb.sortBy(0);
-                    }
+                    await settleAsyncMutation(whodb, page, tableName, mutationDelay, rows => rows.length === initialCount - 1);
 
                     // Verify row count decreased
                     const { rows: newRows } = await whodb.getTableData();

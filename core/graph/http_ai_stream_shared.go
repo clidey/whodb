@@ -135,15 +135,25 @@ func SendSSEMessage(w http.ResponseWriter, flusher http.Flusher, message *model.
 	flusher.Flush()
 }
 
-// SendSSEChunk sends a streaming chunk via SSE
-func SendSSEChunk(w http.ResponseWriter, flusher http.Flusher, chunk map[string]any) {
-	data, err := json.Marshal(chunk)
+// SendSSEProgress reports a backend chat action and its current status.
+func SendSSEProgress(w http.ResponseWriter, flusher http.Flusher, step, status string) {
+	data, err := json.Marshal(map[string]string{"step": step, "status": status})
 	if err != nil {
-		log.WithError(err).Error("Failed to marshal SSE chunk")
 		return
 	}
-	fmt.Fprintf(w, "event: chunk\ndata: %s\n\n", data)
+	fmt.Fprintf(w, "event: progress\ndata: %s\n\n", data)
 	flusher.Flush()
+}
+
+// SendSSESQLFailure includes the generated query so the chat can show the failed line.
+func SendSSESQLFailure(w http.ResponseWriter, flusher http.Flusher, sql, failure string) {
+	data, err := json.Marshal(map[string]string{"sql": sql, "error": failure})
+	if err != nil {
+		SendSSEError(w, flusher, failure)
+		return
+	}
+	SendSSEMessage(w, flusher, &model.AIChatMessage{Type: "sql:error", Text: string(data)})
+	SendSSEDone(w, flusher)
 }
 
 // SendSSEError sends an error via SSE and completes the stream

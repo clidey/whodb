@@ -77,7 +77,7 @@ func runPlatformClone(cmd *cobra.Command, resource, sourceRef, newName string) e
 		}
 	}
 	variablesPayload := clonePayload(payload)
-	_, variables, err := buildGenericResourceVariables(project.ID, genericResourceWriteInput{Resource: resource, Action: "create"}, variablesPayload)
+	_, variables, err := buildGenericResourceVariables(session.Host.DefaultOrgID, project.ID, genericResourceWriteInput{Resource: resource, Action: "create"}, variablesPayload)
 	if err != nil {
 		return err
 	}

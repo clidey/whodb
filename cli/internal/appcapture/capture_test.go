@@ -16,6 +16,56 @@ import (
 	"time"
 )
 
+func TestEmptyFillValueIsSerialized(t *testing.T) {
+	data, err := json.Marshal(Action{Kind: "fill", Selector: "input", Value: ""})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Contains(data, []byte(`"value":""`)) {
+		t.Fatalf("empty fill value missing from %s", data)
+	}
+}
+
+func TestCaptureRejectsConflictingDeviceModes(t *testing.T) {
+	_, err := Capture(context.Background(), Options{Mobile: true, Tablet: true})
+	if err == nil || !strings.Contains(err.Error(), "cannot be combined") {
+		t.Fatalf("Capture() error = %v, want device mode conflict", err)
+	}
+}
+
+func TestResolveViewportOrientation(t *testing.T) {
+	tests := []struct {
+		name        string
+		width       int
+		height      int
+		mobile      bool
+		tablet      bool
+		orientation string
+		wantWidth   int
+		wantHeight  int
+		wantError   bool
+	}{
+		{name: "mobile portrait", mobile: true, orientation: "portrait", wantWidth: 390, wantHeight: 844},
+		{name: "mobile landscape", mobile: true, orientation: "landscape", wantWidth: 844, wantHeight: 390},
+		{name: "tablet portrait", tablet: true, orientation: "portrait", wantWidth: 820, wantHeight: 1180},
+		{name: "tablet landscape", tablet: true, orientation: "landscape", wantWidth: 1180, wantHeight: 820},
+		{name: "custom landscape", width: 1024, tablet: true, orientation: "landscape", wantWidth: 1024, wantHeight: 820},
+		{name: "conflicting dimensions", width: 700, tablet: true, orientation: "landscape", wantError: true},
+		{name: "invalid orientation", mobile: true, orientation: "sideways", wantError: true},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			width, height, err := ResolveViewport(test.width, test.height, test.mobile, test.tablet, test.orientation)
+			if (err != nil) != test.wantError {
+				t.Fatalf("ResolveViewport() error = %v, wantError %v", err, test.wantError)
+			}
+			if !test.wantError && (width != test.wantWidth || height != test.wantHeight) {
+				t.Fatalf("ResolveViewport() = %dx%d, want %dx%d", width, height, test.wantWidth, test.wantHeight)
+			}
+		})
+	}
+}
+
 // TestBrowserScriptReadOnlyDocument runs the embedded isReadOnlyDocument helper
 // under Node against read-only documents and every known way of smuggling a
 // write: decoy queries, operationName selection, comment and string interleaving,

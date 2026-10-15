@@ -55,7 +55,15 @@ export const rowsMethods = {
      * @param {boolean} isSingleInput
      */
     async addRow(data, isSingleInput = false) {
+        // The sheet fetches column constraints after opening; wait for them so identity columns
+        // are already disabled before we decide which fields to fill.
+        const constraintsLoaded = this.page.waitForResponse(
+            (response) => response.url().includes("/api/query")
+                && response.request().postDataJSON?.()?.operationName === "SourceFieldConstraints",
+            { timeout: TIMEOUT.ACTION },
+        ).catch(() => null);
         await this.page.locator('[data-testid="add-row-button"]').click();
+        await constraintsLoaded;
 
         if (isSingleInput) {
             const jsonString = typeof data === "string" ? data : JSON.stringify(data, null, 2);
@@ -64,8 +72,14 @@ export const rowsMethods = {
             await editorContainer.locator('[role="textbox"]').fill(jsonString);
         } else {
             for (const [key, value] of Object.entries(data)) {
-                await this.page.locator(`[data-testid="add-row-field-${key}"] input`).clear();
-                await this.page.locator(`[data-testid="add-row-field-${key}"] input`).fill(value);
+                const input = this.page.locator(`[data-testid="add-row-field-${key}"] input`);
+                // Identity columns are auto-generated and their inputs are disabled.
+                await input.waitFor({ state: "attached", timeout: TIMEOUT.ELEMENT });
+                if (await input.isDisabled()) {
+                    continue;
+                }
+                await input.clear();
+                await input.fill(value);
             }
         }
 

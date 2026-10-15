@@ -259,7 +259,11 @@ export const chatMethods = {
     },
 
     async verifyChatActionExecuted() {
-        await expect(this.page.getByText("Action Executed")).toBeVisible({ timeout: TIMEOUT.ACTION });
+        // CE shows a completed result heading for mutations; EE shows an "Action Executed" alert.
+        const executed = this.page.getByText("Action Executed")
+            .or(this.page.locator('[data-testid="chat-result-heading"]').filter({ hasText: "Complete" }));
+        await expect(executed.last()).toBeVisible({ timeout: TIMEOUT.ACTION });
+        await expect(this.page.locator('[data-testid="error-state"]')).toHaveCount(0);
     },
 
     async getChatMessages() {
@@ -295,7 +299,8 @@ export const chatMethods = {
     },
 
     async verifyChatSQL(expectedSQL) {
-        const actualText = await this.page.locator('[data-testid="code-editor"]').last().innerText();
+        // CE renders the SQL as plain text; EE uses the code editor.
+        const actualText = await this.page.locator('[data-testid="code-editor"], [data-testid="chat-result-sql"]').last().innerText();
         const normalizedActual = actualText
             .replace(/^\d+>/gm, "")
             .replace(/\s+/g, " ")
@@ -308,6 +313,13 @@ export const chatMethods = {
 
     async openMoveToScratchpad() {
         const group = this.page.locator(".group\\/table-preview").last();
+        // CE exposes the action directly in the result footer; EE keeps it in the result menu.
+        const actionButton = group.locator('[data-testid="chat-result-move-to-scratchpad"]');
+        if (await actionButton.count() > 0) {
+            await actionButton.click();
+            await expect(this.page.locator("h2").filter({ hasText: "Move to Scratchpad" })).toBeVisible({ timeout: TIMEOUT.ELEMENT });
+            return;
+        }
         const button = group.locator('[data-testid="icon-button"]').first();
         // The button wrapper uses opacity-0 → opacity-100 on group-hover.
         // Radix DropdownMenu listens for pointerdown, not click events.
@@ -347,9 +359,9 @@ export const chatMethods = {
     async waitForChatResponse() {
         await this.page.locator('[data-input-message="user"]').first().waitFor({ timeout: TIMEOUT.ELEMENT });
 
-        const loadingCount = await this.page.locator('[data-testid="loading"]').count();
+        const loadingCount = await this.page.locator('[data-testid="chat-loading"]').count();
         if (loadingCount > 0) {
-            await this.page.locator('[data-testid="loading"]').waitFor({ state: "hidden", timeout: TIMEOUT.ACTION });
+            await this.page.locator('[data-testid="chat-loading"]').waitFor({ state: "hidden", timeout: TIMEOUT.ACTION });
         }
 
         await expect(async () => {

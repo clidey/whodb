@@ -1,12 +1,14 @@
 # WhoDB Plugin for Claude Code
 
-Database management tools for Claude Code. Query databases, explore schemas, analyze data, and get optimization recommendations.
+WhoDB platform and database-only MCP tools for Claude Code. Work across platform hosts and projects, or query databases directly.
 
 ## Installation Methods
 
 This plugin supports multiple installation methods. Choose the one that works best for you:
 
 ### Method 1: npm (Recommended - No pre-install needed)
+
+Run `whodb setup` to enable platform tools, database-only tools, or both. Keep one MCP entry at `whodb mcp serve`; agents can guide setup with `whodb setup inspect`, `validate`, `apply`, and `verify`. Sign in to platform hosts through `whodb login --host <url>` and target workspaces per call. Docker examples below use an explicit database-only override; saved setup applies to the configuration directory of the running CLI.
 
 The default configuration uses npx to auto-download and run the MCP server:
 
@@ -19,16 +21,16 @@ The default configuration uses npx to auto-download and run the MCP server:
 }
 ```
 
-### Method 2: Docker (No pre-install needed)
+### Method 2: Docker (Database-only MCP)
 
-If you prefer Docker, update your Claude settings (`.claude/settings.local.json`):
+For database-only MCP access through Docker, update your Claude settings (`.claude/settings.local.json`):
 
 ```json
 {
   "mcpServers": {
     "whodb": {
       "command": "docker",
-      "args": ["run", "-i", "--rm", "--network", "host", "clidey/whodb-cli", "mcp", "serve"]
+      "args": ["run", "-i", "--rm", "--network", "host", "clidey/whodb-cli", "mcp", "serve", "--database"]
     }
   }
 }
@@ -78,9 +80,9 @@ go install github.com/clidey/whodb/cli@latest
 - Elasticsearch
 - And more via WhoDB plugins
 
-## Prerequisites
+## Manual CLI installation
 
-Install the WhoDB CLI before using this plugin:
+For the local binary method, install the CLI using one of these options:
 
 ### Option 1: Download Binary
 
@@ -103,14 +105,17 @@ If you prefer Docker, update your Claude Code settings to use:
 {
   "whodb": {
     "command": "docker",
-    "args": ["run", "-i", "--rm", "--network", "host", "clidey/whodb-cli", "mcp", "serve"]
+    "args": ["run", "-i", "--rm", "--network", "host", "clidey/whodb-cli", "mcp", "serve", "--database"]
   }
 }
 ```
 
 ## Configuration
 
-### Database Connections
+### Database-only MCP connections
+
+These connection settings apply to `whodb mcp serve --database`. Platform mode
+uses the sources configured in the selected platform workspace.
 
 Configure database connections using environment variables:
 
@@ -244,3 +249,14 @@ Help me design a schema for a blog with posts, comments, and tags
 ## License
 
 Apache License 2.0
+
+### MCP without skills
+
+Skills are optional supplements. MCP initialization instructions, tool schemas,
+and `whodb://mcp/configuration` provide essential guidance directly. Use
+`whodb_mcp_setup` actions `inspect`, `preview` (with a settings patch), `apply`
+(with the exact approved preview token and `approved: true`), and `verify`.
+No shell access is required for these actions. Browser login and credential entry
+remain user actions. Restart after changing settings; verification checks the
+active process. The setup tool follows tool filters and can be disabled when
+configuration should remain outside the agent.

@@ -1,6 +1,9 @@
 en_US:
-  serverDownTitle: Server Unavailable
-  serverDownMessage: The {appName} server is currently unreachable. Please check your connection.
+  serverDownTitle: We're having trouble connecting
+  serverDownMessage: Your work is safe. We'll keep trying in the background and pick up right where you left off.
+  reconnecting: Reconnecting...
+  retryingIn: Trying again in {seconds}s
+  retryNow: Retry now
   databaseDownTitle: Database Connection Lost
   databaseDownMessage: The database connection is unavailable. You can switch to another profile or logout.
   selectProfilePlaceholder: Choose a profile...

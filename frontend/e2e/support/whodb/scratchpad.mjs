@@ -73,12 +73,26 @@ export const scratchpadMethods = {
     },
 
     /**
+     * Get the run button for a cell. The first cell of the active page runs from the page toolbar;
+     * later cells keep their own button.
+     * @param {number} index
+     * @returns {import("@playwright/test").Locator}
+     */
+    queryCellButton(index) {
+        if (index === 0) {
+            return this.page.locator('[data-testid="scratchpad-toolbar"] [data-testid="query-cell-button"]');
+        }
+        return this.page
+            .locator(`[role="tabpanel"][data-state="active"] [data-testid="cell-${index}"] [data-testid="query-cell-button"]`)
+            .first();
+    },
+
+    /**
      * Run code in a specific cell
      * @param {number} index
      */
     async runCode(index) {
-        const buttonSelector = `[role="tabpanel"][data-state="active"] [data-testid="cell-${index}"] [data-testid="query-cell-button"]`;
-        await this.page.locator(buttonSelector).first().click({ force: true });
+        await this.queryCellButton(index).click({ force: true });
 
         // If a confirmation dialog appears (destructive queries), click through it
         const confirmBtn = this.page.locator('[data-testid="execute-query-confirm"]');

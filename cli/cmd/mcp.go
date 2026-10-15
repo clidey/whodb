@@ -25,9 +25,11 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/clidey/whodb/cli/internal/config"
 	platformapi "github.com/clidey/whodb/cli/internal/platform"
 	whodbmcp "github.com/clidey/whodb/cli/pkg/mcp"
 	"github.com/clidey/whodb/cli/pkg/version"
+	"github.com/clidey/whodb/core/src/auditlog"
 	"github.com/spf13/cobra"
 )
 
@@ -55,6 +57,7 @@ var (
 // platform flags
 var (
 	mcpPlatform        bool
+	mcpDatabase        bool
 	mcpPlatformHost    string
 	mcpPlatformOrg     string
 	mcpPlatformProject string
@@ -72,6 +75,7 @@ var mcpAllowedConnections []string
 
 // analytics flags
 var mcpNoAnalytics bool
+var mcpPlatformPolicy string
 
 var mcpCmd = &cobra.Command{
 	Use:   "mcp",
@@ -87,7 +91,12 @@ var mcpServeCmd = &cobra.Command{
 	Short:         "Start the MCP server",
 	SilenceUsage:  true,
 	SilenceErrors: true,
-	Long: `Start WhoDB as an MCP server.
+	Long: `Start WhoDB as an MCP server using saved setup settings.
+
+Run whodb setup once to enable platform tools, database-only tools, or both.
+Keep one client entry: command whodb, args ["mcp", "serve"]. Advanced flags
+override saved settings for this process. Agents can read the active modules
+and restrictions at whodb://mcp/configuration.
 
 TRANSPORT:
   --transport stdio  (default) Communicate via stdin/stdout for CLI integration
@@ -122,7 +131,18 @@ SECURITY:
   Note: Permission mode takes priority. --read-only blocks all writes regardless of
   security level. Multi-statement queries are blocked by default (--allow-multi-statement).
 
-Available tools:
+Platform tools (default):
+  whodb_platform_hosts              - Discover saved hosts and account metadata
+  whodb_platform_orgs               - Discover organizations on a host
+  whodb_platform_projects           - Discover projects in an organization
+  whodb_platform_workspace_resolve  - Resolve workspace {host, org, project}
+  whodb_platform_sources            - List sources in the requested workspace
+
+All hosted tools accept a workspace target for this call only. One MCP server
+can access multiple hosts/projects without changing saved defaults. Read
+whodb://platform/schema for the complete platform tool contract.
+
+Database-only MCP tools (enable the database module in setup):
   whodb_query       - Execute SQL queries (security-validated)
   whodb_schemas     - List database schemas
   whodb_tables      - List tables in a schema
@@ -136,10 +156,10 @@ Available tools:
   whodb_confirm     - Confirm pending writes (only with --confirm-writes)
   whodb_pending     - List pending confirmation tokens
 
-Hosted platform mode is disabled by default. Start with --platform to expose only
-whodb_platform_* tools backed by the current hosted login and selected workspace.
-Local database tools such as whodb_query and whodb_connections are not registered
-in platform mode. Platform mode uses the same permission modes: default
+Platform is enabled by default; saved setup can enable either or both modules.
+Platform tools use saved hosted logins and per-call workspace targets. Database
+tools use connection names. --database is an advanced override for database-only
+startup. Both modules use the same permission modes: default
 confirm-writes returns confirmation tokens, --read-only and --safe-mode hide
 hosted platform write tools, and --allow-write executes hosted platform writes
 without confirmation.
@@ -148,6 +168,7 @@ PLATFORM SESSION SCOPING:
   --platform-host URL       Select the platform host for this MCP process
   --platform-org ORG        Select an organization id, slug, or name
   --platform-project NAME   Select a project id, slug, or name
+  --platform-policy FILE    Restrict hosts/workspaces and configure read-only targets
 
   Organization and project must be provided together. These process-local
   values do not change the workspace saved by whodb use, so separate terminal
@@ -156,9 +177,10 @@ PLATFORM SESSION SCOPING:
   WHODB_PLATFORM_SESSION_PROJECT.
 
 TOOL SELECTION:
-  --tools           - Comma-separated list of local MCP tools to enable (default: all)
-                      Valid: query, schemas, tables, columns, connections, confirm, pending, explain, diff, erd, audit, suggestions
-  --disable-tools   - Comma-separated list of local MCP tools to disable (takes precedence)
+  --tools           - Comma-separated tool names to enable (default: all)
+                      Platform: full names such as whodb_platform_sources
+                      Database-only: query, schemas, tables, columns, connections, etc.
+  --disable-tools   - Comma-separated tool names to disable (takes precedence)
 
 ANALYTICS:
   Anonymous usage analytics are enabled by default to help improve WhoDB.
@@ -216,33 +238,37 @@ Connection Resolution:
   whodb mcp serve --transport=http --host=0.0.0.0 --port=8080
 
   # Enable only specific tools (minimal surface for read-only exploration)
-  whodb mcp serve --tools=schemas,tables,columns,connections,suggestions
+  whodb mcp serve --database --tools=schemas,tables,columns,connections,suggestions
 
   # Disable query tool (only schema exploration)
-  whodb mcp serve --disable-tools=query,confirm
+  whodb mcp serve --database --disable-tools=query,confirm
 
   # Restrict to specific connections (first becomes default)
-  whodb mcp serve --allowed-connections=prod,staging
+  whodb mcp serve --database --allowed-connections=prod,staging
 
   # Run hosted WhoDB platform MCP mode only
-  whodb mcp serve --platform
+  whodb mcp serve
 
   # Run an independently scoped platform MCP session
-  whodb mcp serve --platform --platform-host=http://localhost:8080 \
+  whodb mcp serve --platform-host=http://localhost:8080 \
     --platform-org=acme --platform-project=analysis
+
+  # Per-chat host selection without extra MCP entries: the agent calls
+  # whodb_platform_session_use with workspace {host, org, project}. The default
+  # applies to that MCP session only and is never saved.
 
   # Hosted platform MCP config (stdio):
   {
     "mcpServers": {
       "whodb-platform": {
         "command": "whodb",
-        "args": ["mcp", "serve", "--platform"]
+        "args": ["mcp", "serve"]
       }
     }
   }
 
   # Set default connection without restricting access
-  whodb mcp serve --default-connection=prod
+  whodb mcp serve --database --default-connection=prod
 
   # Claude Desktop / Claude Code configuration (stdio):
   {
@@ -261,10 +287,11 @@ Connection Resolution:
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		if mcpPlatform && (cmd.Flags().Changed("tools") || cmd.Flags().Changed("disable-tools")) {
-			return fmt.Errorf("--tools and --disable-tools apply only to local MCP mode; omit them when using --platform")
+		settings, err := configureMCPMode(cmd)
+		if err != nil {
+			return err
 		}
-		if err := configureMCPPlatformScope(); err != nil {
+		if err := configureMCPPlatformScope(settings.DefaultWorkspace); err != nil {
 			return err
 		}
 
@@ -282,12 +309,16 @@ Connection Resolution:
 			AppVersion: version.Version,
 		})
 		defer whodbmcp.ShutdownAnalytics()
+		platformapi.SetClientName("whodb-cli-mcp/" + version.Version)
+		// Local NDJSON audit trail for database-mode statements when
+		// WHODB_AUDIT_LOG_FILE is set; a no-op otherwise.
+		defer auditlog.Initialize()()
 
 		// Determine mode based on flags
 		// Default: confirm-writes (human-in-the-loop)
 		// Priority: --safe-mode > --allow-write > --read-only > default (confirm-writes)
-		readOnly := false
-		confirmWrites := true // Default: confirm-writes enabled
+		readOnly := settings.WriteMode == "read-only"
+		confirmWrites := settings.WriteMode == "confirm" // Default: confirm-writes enabled
 		securityLevel := mcpSecurity
 
 		if mcpSafeMode {
@@ -302,32 +333,36 @@ Connection Resolution:
 			confirmWrites = false // Read-only, no writes to confirm
 		}
 
+		policy := (*whodbmcp.PlatformPolicy)(settings.PlatformPolicy)
 		// Build server options from flags
 		opts := &whodbmcp.ServerOptions{
 			ReadOnly:            readOnly,
 			ConfirmWrites:       confirmWrites,
-			AllowWrite:          mcpAllowWrite,
+			AllowWrite:          settings.WriteMode == "allow",
 			SecurityLevel:       whodbmcp.SecurityLevel(securityLevel),
 			QueryTimeout:        mcpTimeout,
 			MaxRows:             mcpMaxRows,
 			AllowMultiStatement: mcpAllowMultiStatement,
 			AllowDrop:           mcpAllowDrop,
-			EnabledTools:        mcpEnabledTools,
-			DisabledTools:       mcpDisabledTools,
-			DefaultConnection:   mcpConnection,
-			AllowedConnections:  mcpAllowedConnections,
+			EnabledTools:        settings.EnabledTools,
+			DisabledTools:       settings.DisabledTools,
+			DefaultConnection:   settings.DefaultConnection,
+			AllowedConnections:  settings.AllowedConnections,
 			PlatformEnabled:     mcpPlatform,
+			DatabaseEnabled:     settings.HasModule("database"),
+			PlatformPolicy:      policy,
 		}
 
+		opts.SetupHandler = mcpSetupHandler(settings)
 		server := whodbmcp.NewServer(opts)
 
 		// Determine security mode name for tracking
 		securityModeName := "confirm-writes"
 		if mcpSafeMode {
 			securityModeName = "safe-mode"
-		} else if mcpReadOnly {
+		} else if settings.WriteMode == "read-only" {
 			securityModeName = "read-only"
-		} else if mcpAllowWrite {
+		} else if settings.WriteMode == "allow" {
 			securityModeName = "allow-write"
 		}
 
@@ -394,8 +429,10 @@ func init() {
 		"Require this bearer token on HTTP requests (can also set WHODB_MCP_AUTH_TOKEN); strongly recommended when binding to a network interface")
 
 	// Platform flags
-	mcpServeCmd.Flags().BoolVar(&mcpPlatform, "platform", false,
-		"Run hosted platform MCP mode only (requires whodb login and use)")
+	mcpServeCmd.Flags().StringVar(&mcpPlatformPolicy, "platform-policy", "", "JSON file restricting platform hosts/workspaces and read-only targets")
+	mcpServeCmd.Flags().BoolVar(&mcpPlatform, "platform", true,
+		"Compatibility alias: platform MCP is now the default")
+	mcpServeCmd.Flags().BoolVar(&mcpDatabase, "database", false, "connect directly to databases without a WhoDB platform server")
 	mcpServeCmd.Flags().StringVar(&mcpPlatformHost, "platform-host", "",
 		"Hosted platform URL for this MCP process (or WHODB_PLATFORM_SESSION_HOST)")
 	mcpServeCmd.Flags().StringVar(&mcpPlatformOrg, "platform-org", "",
@@ -405,9 +442,9 @@ func init() {
 
 	// Tool enablement flags
 	mcpServeCmd.Flags().StringSliceVar(&mcpEnabledTools, "tools", nil,
-		"Comma-separated list of local MCP tools to enable (default: all). Valid: query, schemas, tables, columns, connections, confirm, pending, explain, diff, erd, audit, suggestions")
+		"Comma-separated tool names to enable (default: all); platform uses full whodb_platform_* names, database-only uses names such as query, schemas")
 	mcpServeCmd.Flags().StringSliceVar(&mcpDisabledTools, "disable-tools", nil,
-		"Comma-separated list of local MCP tools to disable (takes precedence over --tools)")
+		"Comma-separated tool names to disable (takes precedence over --tools)")
 
 	// Connection scoping
 	mcpServeCmd.Flags().StringVar(&mcpConnection, "default-connection", "",
@@ -428,18 +465,31 @@ func init() {
 	mcpServeCmd.RegisterFlagCompletionFunc("security", completeMCPSecurityLevels)
 }
 
-func configureMCPPlatformScope() error {
+func configureMCPPlatformScope(defaults ...*config.MCPWorkspace) error {
 	if !mcpPlatform {
 		if mcpPlatformHost != "" || mcpPlatformOrg != "" || mcpPlatformProject != "" {
-			return fmt.Errorf("--platform-host, --platform-org, and --platform-project require --platform")
+			return fmt.Errorf("--platform-host, --platform-org, and --platform-project cannot be used with --database")
 		}
 		return nil
 	}
-	for key, value := range map[string]string{
+	values := map[string]string{
 		platformapi.SessionHostEnv:    mcpPlatformHost,
 		platformapi.SessionOrgEnv:     mcpPlatformOrg,
 		platformapi.SessionProjectEnv: mcpPlatformProject,
-	} {
+	}
+	hasOverride := false
+	for key, value := range values {
+		if strings.TrimSpace(value) != "" || strings.TrimSpace(os.Getenv(key)) != "" {
+			hasOverride = true
+		}
+	}
+	if !hasOverride && len(defaults) > 0 && defaults[0] != nil {
+		target := defaults[0]
+		values[platformapi.SessionHostEnv] = target.Host
+		values[platformapi.SessionOrgEnv] = target.Org
+		values[platformapi.SessionProjectEnv] = target.Project
+	}
+	for key, value := range values {
 		if strings.TrimSpace(value) != "" {
 			if err := os.Setenv(key, strings.TrimSpace(value)); err != nil {
 				return fmt.Errorf("set hosted platform session scope: %w", err)
@@ -447,4 +497,16 @@ func configureMCPPlatformScope() error {
 		}
 	}
 	return platformapi.SessionScopeFromEnvironment().Validate()
+}
+
+func configureMCPMode(cmd *cobra.Command) (config.MCPSettings, error) {
+	settings, err := effectiveMCPSettings(cmd)
+	if err != nil {
+		return settings, err
+	}
+	mcpPlatform = settings.HasModule("platform")
+	if cmd.Flags().Changed("platform") {
+		fmt.Fprintln(cmd.ErrOrStderr(), "--platform is no longer necessary: configure modules once with whodb setup.")
+	}
+	return settings, nil
 }

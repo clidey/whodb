@@ -498,6 +498,7 @@ When diagnosing server-side problems, WhoDB's logs are the first place to look:
 - `WHODB_LOG_FORMAT=json` switches to JSON logs for log collectors
 - `WHODB_LOG_FILE` redirects application logs to a file (`default` means `/var/log/whodb/whodb.log`)
 - `WHODB_ACCESS_LOG_FILE` redirects HTTP access logs to a file (`default` means `/var/log/whodb/whodb.access.log`)
+- `WHODB_AUDIT_LOG_FILE` writes audited actions such as logins, data reads and changes to an NDJSON file (`default` means `/var/log/whodb/whodb.audit.log`)
 
 See [Installation](/installation) for the full environment variable reference and [Monitoring Integration](/resources/integrations/monitoring) for log shipping examples.
 

@@ -49,7 +49,7 @@ export const DatabaseIconWithBadge: FC<DatabaseIconWithBadgeProps> = ({
             {icon}
             {sslStatus?.IsEnabled && (
                 <Tooltip>
-                    <TooltipTrigger asChild>
+                    <TooltipTrigger>
                         <div
                             data-testid="ssl-badge"
                             className={cn(

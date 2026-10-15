@@ -42,6 +42,7 @@ const DEFAULT_CONFIG: HealthCheckConfig = {
  */
 class HealthCheckService {
     private intervalId: ReturnType<typeof setTimeout> | null = null;
+    private nextCheckAt: number | null = null;
     private currentInterval: number;
     private config: HealthCheckConfig;
     private consecutiveFailures: number = 0;
@@ -166,8 +167,11 @@ class HealthCheckService {
             clearTimeout(this.intervalId);
         }
 
+        this.nextCheckAt = null;
         if (this.isRunning) {
+            this.nextCheckAt = Date.now() + this.currentInterval;
             this.intervalId = setTimeout(async () => {
+                this.nextCheckAt = null;
                 try {
                     await this.performHealthCheck();
                 } finally {
@@ -200,6 +204,7 @@ class HealthCheckService {
      */
     stop(): void {
         this.isRunning = false;
+        this.nextCheckAt = null;
         if (this.intervalId !== null) {
             clearTimeout(this.intervalId);
             this.intervalId = null;
@@ -210,7 +215,18 @@ class HealthCheckService {
      * Forces an immediate health check without waiting for the next scheduled check.
      */
     async forceCheck(): Promise<void> {
-        await this.performHealthCheck();
+        try {
+            await this.performHealthCheck();
+        } finally {
+            this.reschedule();
+        }
+    }
+
+    /** Returns the remaining seconds before the scheduled health check. */
+    getSecondsUntilNextCheck(): number | null {
+        return this.nextCheckAt === null
+            ? null
+            : Math.max(0, Math.ceil((this.nextCheckAt - Date.now()) / 1000));
     }
 }
 

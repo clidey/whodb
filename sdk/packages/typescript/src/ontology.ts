@@ -27,6 +27,8 @@ import type {
 import { hydrateRows, propertyTypesOf, type PropertyTypes, type Row } from './hydrate.js';
 import { ListCall, type Page } from './pagination.js';
 import { warnIfFlagged } from './manifest-check.js';
+import { VersionsHandle } from './versions.js';
+import type { ObjectVersion } from './generated/types.js';
 import { NotFoundError, ValidationError } from './errors.js';
 
 const DEFAULT_PAGE_SIZE = 100;
@@ -370,6 +372,18 @@ export class OntologyHandle {
       entityId: entity.id,
       values: toRecordInputs({ [entity.primaryKey]: String(pk) }),
     });
+  }
+
+  /** Promotes the draft ontology: snapshots it and makes it the active production version. */
+  async promote(message?: string): Promise<ObjectVersion> {
+    const entity = await this.entityMeta();
+    return new VersionsHandle(this.transport, this.projectId).promote('ontology', entity.id, message);
+  }
+
+  /** Lists the ontology's promoted versions, newest first. */
+  async versions(): Promise<ObjectVersion[]> {
+    const entity = await this.entityMeta();
+    return new VersionsHandle(this.transport, this.projectId).list('ontology', entity.id);
   }
 }
 

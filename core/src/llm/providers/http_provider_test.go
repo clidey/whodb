@@ -241,3 +241,47 @@ func TestOllamaProviderModelsAndBAMLClient(t *testing.T) {
 		t.Fatalf("expected trimmed OpenAI-compatible base URL, got %#v", opts["base_url"])
 	}
 }
+
+func TestAnthropicProviderModelsAndBAMLClientShareBaseURL(t *testing.T) {
+	provider := NewAnthropicProvider()
+	tests := []struct {
+		name      string
+		endpoint  string
+		modelsURL string
+		// BAML's Anthropic client appends /v1/messages to base_url; nil keeps BAML's default.
+		baseURL any
+	}{
+		{"default", "", "https://api.anthropic.com/v1/models", nil},
+		{"without v1", "https://gateway.test", "https://gateway.test/v1/models", "https://gateway.test"},
+		{"with v1", "https://gateway.test/v1", "https://gateway.test/v1/models", "https://gateway.test"},
+		{"with v1 and trailing slash", "https://gateway.test/v1/", "https://gateway.test/v1/models", "https://gateway.test"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			withTestHTTPClient(t, func(r *http.Request) (*http.Response, error) {
+				if r.URL.String() != tc.modelsURL {
+					t.Fatalf("unexpected URL %s", r.URL.String())
+				}
+				return httpResponse(http.StatusOK, `{"data":[{"id":"claude-sonnet-4-5"}]}`), nil
+			})
+
+			config := &ProviderConfig{APIKey: "test-key", Endpoint: tc.endpoint}
+			models, err := provider.GetSupportedModels(config)
+			if err != nil {
+				t.Fatalf("GetSupportedModels returned error: %v", err)
+			}
+			if len(models) != 1 || models[0] != "claude-sonnet-4-5" {
+				t.Fatalf("unexpected Anthropic models: %#v", models)
+			}
+
+			_, opts, err := provider.CreateBAMLClient(config, "claude-sonnet-4-5")
+			if err != nil {
+				t.Fatalf("CreateBAMLClient returned error: %v", err)
+			}
+			if opts["base_url"] != tc.baseURL {
+				t.Fatalf("expected base_url %#v, got %#v", tc.baseURL, opts["base_url"])
+			}
+		})
+	}
+}

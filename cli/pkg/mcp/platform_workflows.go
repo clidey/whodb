@@ -81,6 +81,7 @@ type platformWorkflowStep struct {
 }
 
 type platformWorkflowPlan struct {
+	AccountID string                 `json:"account_id,omitempty"`
 	Version   int                    `json:"version"`
 	ID        string                 `json:"id"`
 	Hash      string                 `json:"hash"`
@@ -127,7 +128,10 @@ func defaultPlatformWorkflowPath() (string, error) {
 	return filepath.Join(dir, "platform-workflows.json"), nil
 }
 
-func loadPlatformWorkflowPlans() ([]platformWorkflowPlan, error) {
+func loadPlatformWorkflowPlans(contexts ...context.Context) ([]platformWorkflowPlan, error) {
+	if hasPlatformRuntime(contexts...) {
+		return platformStateFor(contexts...).Workflows, nil
+	}
 	path, err := platformWorkflowPath()
 	if err != nil {
 		return nil, err
@@ -146,7 +150,15 @@ func loadPlatformWorkflowPlans() ([]platformWorkflowPlan, error) {
 	return plans, nil
 }
 
-func savePlatformWorkflowPlans(plans []platformWorkflowPlan) error {
+func savePlatformWorkflowPlans(plans []platformWorkflowPlan, contexts ...context.Context) error {
+	if hasPlatformRuntime(contexts...) {
+		state := platformStateFor(contexts...)
+		state.Workflows = plans
+		if state.Checkpoint != nil {
+			return state.Checkpoint()
+		}
+		return nil
+	}
 	path, err := platformWorkflowPath()
 	if err != nil {
 		return err
@@ -231,6 +243,7 @@ func validatePlatformWorkflowInput(input PlatformWorkflowPlanInput, session *pla
 		return platformWorkflowPlan{}, errors.New("at least one workflow step is required")
 	}
 	plan := platformWorkflowPlan{
+		AccountID: session.Host.AccountID,
 		Version:   platformWorkflowVersion,
 		ID:        generateRequestID("workflow"),
 		Goal:      strings.TrimSpace(input.Goal),
@@ -384,7 +397,7 @@ func workflowOutputPlan(plan platformWorkflowPlan) map[string]any {
 		}
 		steps = append(steps, entry)
 	}
-	return map[string]any{"id": plan.ID, "hash": plan.Hash, "goal": plan.Goal, "host": plan.Host, "org_id": plan.OrgID, "project_id": plan.ProjectID, "project_name": plan.Project, "status": plan.Status, "created_at": plan.CreatedAt, "updated_at": plan.UpdatedAt, "steps": steps}
+	return map[string]any{"account_id": plan.AccountID, "id": plan.ID, "hash": plan.Hash, "goal": plan.Goal, "host": plan.Host, "org_id": plan.OrgID, "project_id": plan.ProjectID, "project_name": plan.Project, "status": plan.Status, "created_at": plan.CreatedAt, "updated_at": plan.UpdatedAt, "steps": steps}
 }
 
 func findPlatformWorkflow(plans []platformWorkflowPlan, id string) (*platformWorkflowPlan, int, error) {
@@ -417,14 +430,14 @@ func createPlatformWorkflowListHandler() func(context.Context, *mcp.CallToolRequ
 func registerPlatformWorkflowTool(server *mcp.Server, tool *mcp.Tool, secOpts *SecurityOptions) bool {
 	switch tool.Name {
 	case "whodb_platform_workflow_plan":
-		mcp.AddTool(server, tool, createPlatformWorkflowHandler())
+		addPlatformTool(server, tool, createPlatformWorkflowHandler())
 	case "whodb_platform_workflow_get":
-		mcp.AddTool(server, tool, createPlatformWorkflowGetHandler())
+		addPlatformTool(server, tool, createPlatformWorkflowGetHandler())
 	case "whodb_platform_workflow_list":
-		mcp.AddTool(server, tool, createPlatformWorkflowListHandler())
+		addPlatformTool(server, tool, createPlatformWorkflowListHandler())
 	case "whodb_platform_workflow_apply":
 		if !secOpts.ReadOnly {
-			mcp.AddTool(server, tool, createPlatformWorkflowApplyHandlerWithConfirmation(secOpts.ConfirmWrites))
+			addPlatformTool(server, tool, createPlatformWorkflowApplyHandlerWithConfirmation(secOpts.ConfirmWrites))
 		}
 	default:
 		return false
@@ -442,7 +455,7 @@ func HandlePlatformWorkflowPlan(ctx context.Context, req *mcp.CallToolRequest, i
 	requestID := generateRequestID("platform_workflow_plan")
 	session, err := loadPlatformWorkspace(ctx)
 	if err != nil {
-		return nil, PlatformWorkflowOutput{PlatformSetupGuidance: platformSetupGuidanceForCurrentConfig(requestID), Error: err.Error(), RequestID: requestID}, nil
+		return nil, PlatformWorkflowOutput{PlatformSetupGuidance: platformSetupGuidanceForCurrentConfig(ctx, requestID), Error: err.Error(), RequestID: requestID}, nil
 	}
 	plan, err := validatePlatformWorkflowInput(input, session)
 	if err != nil {
@@ -461,12 +474,12 @@ func HandlePlatformWorkflowPlan(ctx context.Context, req *mcp.CallToolRequest, i
 	}
 	platformWorkflowMutex.Lock()
 	defer platformWorkflowMutex.Unlock()
-	plans, err := loadPlatformWorkflowPlans()
+	plans, err := loadPlatformWorkflowPlans(ctx)
 	if err != nil {
 		return nil, platformWorkflowError(err, requestID), nil
 	}
 	plans = append(plans, plan)
-	if err := savePlatformWorkflowPlans(plans); err != nil {
+	if err := savePlatformWorkflowPlans(plans, ctx); err != nil {
 		return nil, platformWorkflowError(err, requestID), nil
 	}
 	return nil, PlatformWorkflowOutput{Plan: workflowOutputPlan(plan), Status: "planned", Message: "Workflow plan created. Review it, then apply it when the user approves.", RequestID: requestID}, nil
@@ -477,9 +490,17 @@ func HandlePlatformWorkflowGet(ctx context.Context, req *mcp.CallToolRequest, in
 	if strings.TrimSpace(input.PlanID) == "" {
 		return nil, PlatformWorkflowOutput{Error: "plan_id is required", RequestID: requestID}, nil
 	}
+	var selected *platformToolSession
+	if request := platformRequestFromContext(ctx); request != nil && request.Target != nil {
+		var err error
+		selected, err = loadPlatformWorkspace(ctx)
+		if err != nil {
+			return nil, PlatformWorkflowOutput{Error: err.Error(), RequestID: requestID}, nil
+		}
+	}
 	platformWorkflowMutex.Lock()
 	defer platformWorkflowMutex.Unlock()
-	plans, err := loadPlatformWorkflowPlans()
+	plans, err := loadPlatformWorkflowPlans(ctx)
 	if err != nil {
 		return nil, platformWorkflowError(err, requestID), nil
 	}
@@ -487,6 +508,13 @@ func HandlePlatformWorkflowGet(ctx context.Context, req *mcp.CallToolRequest, in
 	if err != nil {
 		return nil, PlatformWorkflowOutput{Error: err.Error(), RequestID: requestID}, nil
 	}
+	if err := checkPlatformPolicy(ctx, plan.Host, plan.OrgID, plan.ProjectID); err != nil {
+		return nil, PlatformWorkflowOutput{Error: err.Error(), RequestID: requestID}, nil
+	}
+	if selected != nil && (plan.AccountID != selected.Host.AccountID || plan.Host != selected.Host.URL || plan.OrgID != selected.Host.DefaultOrgID || plan.ProjectID != selected.Host.DefaultProjectID) {
+		return nil, PlatformWorkflowOutput{Error: "workflow belongs to a different hosted workspace or account", RequestID: requestID}, nil
+	}
+	recordPlatformScope(ctx, &platformToolSession{Host: config.PlatformHost{URL: plan.Host, AccountID: plan.AccountID, DefaultOrgID: plan.OrgID, DefaultProjectID: plan.ProjectID, DefaultProjectName: plan.Project}})
 	return nil, PlatformWorkflowOutput{Plan: workflowOutputPlan(*plan), Status: plan.Status, RequestID: requestID}, nil
 }
 
@@ -494,17 +522,17 @@ func HandlePlatformWorkflowList(ctx context.Context, req *mcp.CallToolRequest, i
 	requestID := generateRequestID("platform_workflow_list")
 	session, err := loadPlatformWorkspace(ctx)
 	if err != nil {
-		return nil, PlatformWorkflowOutput{PlatformSetupGuidance: platformSetupGuidanceForCurrentConfig(requestID), Error: err.Error(), RequestID: requestID}, nil
+		return nil, PlatformWorkflowOutput{PlatformSetupGuidance: platformSetupGuidanceForCurrentConfig(ctx, requestID), Error: err.Error(), RequestID: requestID}, nil
 	}
 	platformWorkflowMutex.Lock()
 	defer platformWorkflowMutex.Unlock()
-	plans, err := loadPlatformWorkflowPlans()
+	plans, err := loadPlatformWorkflowPlans(ctx)
 	if err != nil {
 		return nil, PlatformWorkflowOutput{Error: err.Error(), RequestID: requestID}, nil
 	}
 	items := make([]map[string]any, 0)
 	for _, plan := range plans {
-		if plan.Host == session.Host.URL && plan.OrgID == session.Host.DefaultOrgID && plan.ProjectID == session.Host.DefaultProjectID {
+		if plan.AccountID == session.Host.AccountID && plan.Host == session.Host.URL && plan.OrgID == session.Host.DefaultOrgID && plan.ProjectID == session.Host.DefaultProjectID {
 			items = append(items, workflowOutputPlan(plan))
 		}
 	}
@@ -522,10 +550,10 @@ func handlePlatformWorkflowApply(ctx context.Context, req *mcp.CallToolRequest, 
 	}
 	session, err := loadPlatformWorkspace(ctx)
 	if err != nil {
-		return nil, PlatformWorkflowOutput{PlatformSetupGuidance: platformSetupGuidanceForCurrentConfig(requestID), Error: err.Error(), RequestID: requestID}, nil
+		return nil, PlatformWorkflowOutput{PlatformSetupGuidance: platformSetupGuidanceForCurrentConfig(ctx, requestID), Error: err.Error(), RequestID: requestID}, nil
 	}
 	platformWorkflowMutex.Lock()
-	plans, err := loadPlatformWorkflowPlans()
+	plans, err := loadPlatformWorkflowPlans(ctx)
 	if err != nil {
 		platformWorkflowMutex.Unlock()
 		return nil, PlatformWorkflowOutput{Error: err.Error(), RequestID: requestID}, nil
@@ -535,16 +563,16 @@ func handlePlatformWorkflowApply(ctx context.Context, req *mcp.CallToolRequest, 
 		platformWorkflowMutex.Unlock()
 		return nil, PlatformWorkflowOutput{Error: err.Error(), RequestID: requestID}, nil
 	}
-	if plan.Host != session.Host.URL || plan.OrgID != session.Host.DefaultOrgID || plan.ProjectID != session.Host.DefaultProjectID {
+	if plan.AccountID != session.Host.AccountID || plan.Host != session.Host.URL || plan.OrgID != session.Host.DefaultOrgID || plan.ProjectID != session.Host.DefaultProjectID {
 		platformWorkflowMutex.Unlock()
-		return nil, PlatformWorkflowOutput{Error: "workflow belongs to a different hosted workspace", RequestID: requestID}, nil
+		return nil, PlatformWorkflowOutput{Error: "workflow belongs to a different hosted workspace or account; create a new plan", RequestID: requestID}, nil
 	}
 	if plan.Status == "completed" {
 		output := workflowOutputPlan(*plan)
 		platformWorkflowMutex.Unlock()
 		return nil, PlatformWorkflowOutput{Plan: output, Status: "completed", Message: "Workflow already completed; no mutations were repeated.", RequestID: requestID}, nil
 	}
-	action := &PendingPlatformAction{Operation: "workflow_apply", Resource: "workflow", Action: "apply", Summary: plan.Goal, Host: plan.Host, OrgID: plan.OrgID, ProjectID: plan.ProjectID, ProjectName: plan.Project, WorkflowPlanID: plan.ID, WorkflowSteps: len(plan.Steps), Changes: []string{fmt.Sprintf("%d workflow steps", len(plan.Steps))}}
+	action := &PendingPlatformAction{AccountID: session.Host.AccountID, Operation: "workflow_apply", Resource: "workflow", Action: "apply", Summary: plan.Goal, Host: plan.Host, OrgID: plan.OrgID, ProjectID: plan.ProjectID, ProjectName: plan.Project, WorkflowPlanID: plan.ID, WorkflowSteps: len(plan.Steps), Changes: []string{fmt.Sprintf("%d workflow steps", len(plan.Steps))}}
 	platformWorkflowMutex.Unlock()
 	if !confirmWrites {
 		result, err := executePlatformWorkflow(ctx, session, plan.ID, requestID)
@@ -553,13 +581,13 @@ func handlePlatformWorkflowApply(ctx context.Context, req *mcp.CallToolRequest, 
 		}
 		return nil, PlatformWorkflowOutput{Status: "completed", Message: result.Message, Plan: workflowOutputPlan(*plan), RequestID: requestID}, nil
 	}
-	token, expiresAt := storePendingPlatformAction(action)
+	token, expiresAt := storePendingPlatformAction(action, ctx)
 	return nil, PlatformWorkflowOutput{ConfirmationRequired: true, ConfirmationToken: token, ConfirmationExpiry: expiresAt.UTC().Format(time.RFC3339), Status: "confirmation_required", Plan: workflowOutputPlan(*plan), Message: "Workflow requires user approval. Call whodb_platform_confirm with confirmation_token after the user approves.", RequestID: requestID}, nil
 }
 
 func executePlatformWorkflow(ctx context.Context, session *platformToolSession, planID, requestID string) (ConfirmOutput, error) {
 	platformWorkflowMutex.Lock()
-	plans, err := loadPlatformWorkflowPlans()
+	plans, err := loadPlatformWorkflowPlans(ctx)
 	if err != nil {
 		platformWorkflowMutex.Unlock()
 		return ConfirmOutput{}, err
@@ -569,9 +597,9 @@ func executePlatformWorkflow(ctx context.Context, session *platformToolSession, 
 		platformWorkflowMutex.Unlock()
 		return ConfirmOutput{}, err
 	}
-	if plan.Host != session.Host.URL || plan.OrgID != session.Host.DefaultOrgID || plan.ProjectID != session.Host.DefaultProjectID {
+	if plan.AccountID != session.Host.AccountID || plan.Host != session.Host.URL || plan.OrgID != session.Host.DefaultOrgID || plan.ProjectID != session.Host.DefaultProjectID {
 		platformWorkflowMutex.Unlock()
-		return ConfirmOutput{}, errors.New("workflow workspace changed before confirmation")
+		return ConfirmOutput{}, errors.New("workflow workspace or account changed before confirmation")
 	}
 	if plan.Status == "completed" {
 		output := workflowOutputPlan(*plan)
@@ -580,8 +608,11 @@ func executePlatformWorkflow(ctx context.Context, session *platformToolSession, 
 	}
 	plan.Status = "running"
 	plan.UpdatedAt = time.Now().UTC()
-	_ = savePlatformWorkflowPlans(plans)
+	saveErr := savePlatformWorkflowPlans(plans, ctx)
 	platformWorkflowMutex.Unlock()
+	if saveErr != nil {
+		return ConfirmOutput{}, saveErr
+	}
 	completed := 0
 	for stepIndex := range plan.Steps {
 		step := &plan.Steps[stepIndex]
@@ -596,7 +627,7 @@ func executePlatformWorkflow(ctx context.Context, session *platformToolSession, 
 				step.Error = fmt.Sprintf("dependency %q is not completed", dependency)
 				plan.Status = "failed"
 				plan.UpdatedAt = time.Now().UTC()
-				_ = persistWorkflowPlan(index, *plan)
+				_ = persistWorkflowPlan(ctx, index, *plan)
 				return ConfirmOutput{}, errors.New(step.Error)
 			}
 		}
@@ -606,7 +637,7 @@ func executePlatformWorkflow(ctx context.Context, session *platformToolSession, 
 			step.Error = err.Error()
 			plan.Status = "failed"
 			plan.UpdatedAt = time.Now().UTC()
-			_ = persistWorkflowPlan(index, *plan)
+			_ = persistWorkflowPlan(ctx, index, *plan)
 			return ConfirmOutput{}, fmt.Errorf("workflow step %s: %w", step.ID, err)
 		}
 		result, err := executePlatformMutation(ctx, session.Client, spec.Mutation, session.Host.DefaultProjectID, payload)
@@ -615,7 +646,7 @@ func executePlatformWorkflow(ctx context.Context, session *platformToolSession, 
 			step.Error = err.Error()
 			plan.Status = "failed"
 			plan.UpdatedAt = time.Now().UTC()
-			_ = persistWorkflowPlan(index, *plan)
+			_ = persistWorkflowPlan(ctx, index, *plan)
 			return ConfirmOutput{}, fmt.Errorf("workflow step %s: %w", step.ID, err)
 		}
 		step.Status = "completed"
@@ -623,13 +654,13 @@ func executePlatformWorkflow(ctx context.Context, session *platformToolSession, 
 		step.ResultID = platformMutationResultID(result)
 		completed++
 		plan.UpdatedAt = time.Now().UTC()
-		if err := persistWorkflowPlan(index, *plan); err != nil {
+		if err := persistWorkflowPlan(ctx, index, *plan); err != nil {
 			return ConfirmOutput{}, err
 		}
 	}
 	plan.Status = "completed"
 	plan.UpdatedAt = time.Now().UTC()
-	if err := persistWorkflowPlan(index, *plan); err != nil {
+	if err := persistWorkflowPlan(ctx, index, *plan); err != nil {
 		return ConfirmOutput{}, err
 	}
 	resultIDs := make([]string, 0, len(plan.Steps))
@@ -641,10 +672,10 @@ func executePlatformWorkflow(ctx context.Context, session *platformToolSession, 
 	return ConfirmOutput{Columns: []string{"workflow_id", "status", "completed_steps", "step_count", "result_ids"}, Rows: [][]any{{plan.ID, plan.Status, completed, len(plan.Steps), strings.Join(resultIDs, ",")}}, Message: fmt.Sprintf("Hosted platform workflow completed: %d steps", completed), RequestID: requestID}, nil
 }
 
-func persistWorkflowPlan(index int, plan platformWorkflowPlan) error {
+func persistWorkflowPlan(ctx context.Context, index int, plan platformWorkflowPlan) error {
 	platformWorkflowMutex.Lock()
 	defer platformWorkflowMutex.Unlock()
-	plans, err := loadPlatformWorkflowPlans()
+	plans, err := loadPlatformWorkflowPlans(ctx)
 	if err != nil {
 		return err
 	}
@@ -652,7 +683,7 @@ func persistWorkflowPlan(index int, plan platformWorkflowPlan) error {
 		return errors.New("workflow plan changed while executing")
 	}
 	plans[index] = plan
-	return savePlatformWorkflowPlans(plans)
+	return savePlatformWorkflowPlans(plans, ctx)
 }
 
 func findWorkflowStep(steps []platformWorkflowStep, id string) *platformWorkflowStep {

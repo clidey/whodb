@@ -15,7 +15,6 @@
  */
 
 import { test, expect, forEachDatabase, conditionalTest } from '../../support/test-fixture.mjs';
-import { hasFeature } from '../../support/database-config.mjs';
 import { getDocumentId, parseDocument } from '../../support/categories/document.mjs';
 import { TIMEOUT } from '../../support/helpers/test-utils.mjs';
 
@@ -69,7 +68,7 @@ test.describe('Where Conditions', () => {
         });
 
         // Skip multi-condition tests for databases where data may be affected by async mutations
-        const multiConditionSupported = hasFeature(db, 'multiConditionFilter') !== false;
+        const multiConditionSupported = db.features?.multiConditionFilter !== false;
 
         conditionalTest(multiConditionSupported, 'applies multiple conditions', async ({ whodb, page }) => {
             await whodb.setWhereConditionMode('sheet');
@@ -90,6 +89,28 @@ test.describe('Where Conditions', () => {
 
             await whodb.clearWhereConditions();
             await whodb.submitTable();
+        });
+
+        conditionalTest(multiConditionSupported, 'keeps OR joins in the all filters sheet', async ({ whodb, page }) => {
+            await whodb.setWhereConditionMode('sheet');
+            await whodb.data(tableName);
+            await whodb.whereTable([
+                [idField, eq, testId1],
+                [idField, eq, testId2],
+            ]);
+
+            await whodb.openConditionsSheet();
+            const join = page.getByRole('group', { name: 'Join conditions' });
+            await join.getByRole('button', { name: 'OR' }).click();
+            await expect(join.getByRole('button', { name: 'OR' })).toHaveAttribute('aria-pressed', 'true');
+            await expect(page.locator('.ce-all-filters-preview code')).toContainText(' OR ');
+            await whodb.saveSheetChanges();
+
+            await expect(page.locator('[data-condition-mode]')).toHaveAttribute('data-condition-mode', 'mixed');
+            await whodb.openConditionsSheet();
+            await expect(page.getByRole('group', { name: 'Join conditions' }).getByRole('button', { name: 'OR' })).toHaveAttribute('aria-pressed', 'true');
+            await page.keyboard.press('Escape');
+            await expect(page.locator('[role="dialog"]')).toHaveCount(0);
         });
 
         test('edits existing condition', async ({ whodb, page }) => {
@@ -151,20 +172,25 @@ test.describe('Where Conditions', () => {
             const thirdVal = whereConfig.thirdValue;
             const expectedName = whereConfig.expectedValue;
 
-            // Add 3 conditions - should show "+1 more" button
+            // Three conditions remain visible; the fourth opens the collapsed sheet.
             await whodb.whereTable([
                 [idField, eq, testId3],
                 [nameField, eq, expectedName],
                 [thirdCol, neq, thirdVal],
             ]);
+            if (await whodb.getWhereConditionMode() === 'popover') {
+                await expect(page.locator('[data-testid="more-conditions-button"]')).toHaveCount(0);
+            }
+            await whodb.whereTable([[idField, neq, testId2]]);
 
             const mode = await whodb.getWhereConditionMode();
             if (mode === 'popover') {
-                // Should show first 2 conditions as badges
+                // Show the first three conditions as badges.
                 const condCount = await whodb.getConditionCount();
-                expect(condCount).toEqual(3);
+                expect(condCount).toEqual(4);
                 await whodb.verifyCondition(0, `${idField} ${eq} ${testId3}`);
                 await whodb.verifyCondition(1, `${nameField} ${eq} ${expectedName}`);
+                await whodb.verifyCondition(2, `${thirdCol} ${neq} ${thirdVal}`);
 
                 // Check for more conditions button
                 await whodb.checkMoreConditionsButton('+1 more');
@@ -183,7 +209,7 @@ test.describe('Where Conditions', () => {
             } else {
                 // In sheet mode, just verify count
                 const condCount = await whodb.getConditionCount();
-                expect(condCount).toEqual(3);
+                expect(condCount).toEqual(4);
             }
 
             await whodb.submitTable();

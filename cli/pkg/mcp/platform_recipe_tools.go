@@ -46,6 +46,25 @@ func recipeForGoal(goal string) PlatformWorkflowRecipeOutput {
 	lower := strings.ToLower(goal)
 	recipe := PlatformWorkflowRecipeOutput{Goal: goal, ReadFirst: []string{"whodb_platform_setup_status", "whodb_platform_workspace_summary", "whodb_platform_gap_analysis"}}
 	switch {
+	case strings.Contains(lower, "how many") || strings.Contains(lower, "question") || strings.Contains(lower, "report") || strings.Contains(lower, "analy") || strings.Contains(lower, "count") || strings.Contains(lower, "total") || strings.Contains(lower, "average"):
+		recipe.Recipe = "data_question"
+		recipe.Description = "Learn the ontology model, then answer the question with bounded queries or exact aggregates and show how the numbers were produced."
+		recipe.Steps = []PlatformRecipeStep{
+			{Order: 1, Name: "understand", Objective: "Learn entity names, properties and relationships before guessing field names.", ReadTools: []string{"whodb_platform_ontology_describe", "whodb_platform_ontologies"}},
+			{Order: 2, Name: "profile", Objective: "Check value ranges and null counts for the properties the question depends on.", ReadTools: []string{"whodb_platform_ontology_stats"}},
+			{Order: 3, Name: "answer", Objective: "Use ontology_aggregate for exact totals and group-bys; use ontology_query for filtered rows, search and joins. State the filter used.", ReadTools: []string{"whodb_platform_ontology_aggregate", "whodb_platform_ontology_query"}, Notes: []string{"ontology_query scans at most scan_limit rows (max 5000); prefer ontology_aggregate when totals must be exact.", "Policy-protected ontologies only allow whodb_platform_ontology_rows."}},
+			{Order: 4, Name: "drill_down", Objective: "Fetch the specific rows or linked records behind a surprising number.", ReadTools: []string{"whodb_platform_ontology_rows", "whodb_platform_ontology_follow_link", "whodb_platform_ontology_similar"}},
+		}
+		recipe.VerifyWith = []string{"whodb_platform_ontology_aggregate", "whodb_platform_ontology_rows"}
+	case strings.Contains(lower, "import") || strings.Contains(lower, "bulk") || strings.Contains(lower, "load rows") || strings.Contains(lower, "insert"):
+		recipe.Recipe = "bulk_import"
+		recipe.Description = "Validate the target ontology, insert rows in batches with an idempotency key, and verify counts."
+		recipe.Steps = []PlatformRecipeStep{
+			{Order: 1, Name: "inspect", Objective: "Confirm the ontology's properties, primary key and writable fields.", ReadTools: []string{"whodb_platform_ontology", "whodb_platform_ontology_record_capabilities"}},
+			{Order: 2, Name: "insert", Objective: "Insert rows in batches with whodb_platform_add_ontology_records and a stable idempotency_key per batch so retries are safe.", WriteTools: []string{"whodb_platform_add_ontology_records"}, VerifyTools: []string{"whodb_platform_ontology_aggregate"}},
+			{Order: 3, Name: "verify", Objective: "Compare the expected and actual row counts and spot-check rows.", VerifyTools: []string{"whodb_platform_ontology_aggregate", "whodb_platform_ontology_rows"}},
+		}
+		recipe.VerifyWith = []string{"whodb_platform_ontology_aggregate", "whodb_platform_ontology_rows"}
 	case strings.Contains(lower, "etl") || strings.Contains(lower, "pipeline") || strings.Contains(lower, "transform"):
 		recipe.Recipe = "etl_pipeline"
 		recipe.Description = "Inspect sources, persist or promote data, build a transform, run it, and verify the resulting workspace."
@@ -67,13 +86,14 @@ func recipeForGoal(goal string) PlatformWorkflowRecipeOutput {
 		recipe.VerifyWith = []string{"whodb_platform_ontology", "whodb_platform_ontology_rows", "whodb_platform_resource_graph"}
 	case strings.Contains(lower, "app") || strings.Contains(lower, "application"):
 		recipe.Recipe = "application"
-		recipe.Description = "Understand the data model and runtime dependencies, then create, generate, and verify an application."
+		recipe.Description = "Inspect real resources, build editable app files, exercise workflows and responsive views, then review before promotion. Read whodb://platform/app-workflow for hosted MCP and local CLI paths."
 		recipe.Steps = []PlatformRecipeStep{
-			{Order: 1, Name: "scope", Objective: "Identify the ontologies, functions, providers, and secrets the app will use.", ReadTools: []string{"whodb_platform_workspace_summary", "whodb_platform_data_model_summary", "whodb_platform_runtime_readiness"}},
-			{Order: 2, Name: "build", Objective: "Create or update the app and its files with an explicit preview.", ReadTools: []string{"whodb_platform_write_plan", "whodb_platform_change_impact"}, WriteTools: []string{"whodb_platform_create", "whodb_platform_update", "whodb_platform_action"}},
-			{Order: 3, Name: "verify", Objective: "Read the app view and files, then inspect affected resources.", VerifyTools: []string{"whodb_platform_app", "whodb_platform_app_view", "whodb_platform_app_files", "whodb_platform_resource_graph"}},
+			{Order: 1, Name: "scope", Objective: "Identify users, jobs, ontologies, functions, and real sample data before planning pages and interactions.", ReadTools: []string{"whodb_platform_workspace_summary", "whodb_platform_ontology_describe", "whodb_platform_ontology_rows", "whodb_platform_functions", "whodb_platform_runtime_readiness"}},
+			{Order: 2, Name: "build", Objective: "Plan page, state, and event flows; look up exact component and SDK capabilities, then create or update the app's editable draft files.", ReadTools: []string{"whodb_platform_apps", "whodb_platform_app", "whodb_platform_app_files", "whodb_platform_app_components", "whodb_platform_app_component", "whodb_platform_app_sdks", "whodb_platform_app_sdk", "whodb_platform_write_plan", "whodb_platform_change_impact"}, WriteTools: []string{"whodb_platform_create", "whodb_platform_update", "whodb_platform_action"}, Notes: []string{"With filesystem access, use whodb apps init --from, apps check, and apps publish --draft for the version-controlled path."}},
+			{Order: 3, Name: "verify", Objective: "Audit event wiring, exercise each promised interaction, inspect rendered desktop/mobile/tablet views and diagnostics, then read back the draft files.", VerifyTools: []string{"whodb_platform_app_view", "whodb_platform_app_files", "whodb_platform_app_logic_graph", "whodb_platform_app_screenshot", "whodb_platform_resource_graph"}, Notes: []string{"With filesystem access, use whodb apps verify for local-file screenshots and a handler-to-bridge flow trace."}},
+			{Order: 4, Name: "promote", Objective: "Review the exact draft and promote only after the workflow passes verification.", ReadTools: []string{"whodb_platform_write_plan"}, WriteTools: []string{"whodb_platform_action"}, VerifyTools: []string{"whodb_platform_object_versions", "whodb_platform_active_version"}},
 		}
-		recipe.VerifyWith = []string{"whodb_platform_app", "whodb_platform_app_view", "whodb_platform_resource_graph"}
+		recipe.VerifyWith = []string{"whodb_platform_app_view", "whodb_platform_app_screenshot", "whodb_platform_object_versions"}
 	default:
 		recipe.Recipe = "platform_discovery"
 		recipe.Description = "Start with a compact workspace summary, identify gaps, and choose a platform-specific workflow before making changes."

@@ -27,6 +27,34 @@ func TestHandlePlatformExtendedQueryInjectsSelectedWorkspace(t *testing.T) {
 	}
 }
 
+func TestHandlePlatformAppReferenceUsesHostedContract(t *testing.T) {
+	client := &fakePlatformClient{platformQueryResult: "exact SDK documentation"}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+	_, output, err := handlePlatformExtendedQuery(context.Background(), "whodb_platform_app_sdk", "AppBuilderReference", map[string]any{"kind": "lookup_sdk", "name": "data"}, nil)
+	if err != nil || output.Error != "" || output.Data != "exact SDK documentation" {
+		t.Fatalf("reference output = %#v, err = %v", output, err)
+	}
+	if client.platformQueryOperation != "AppBuilderReference" || client.platformQueryVariables["kind"] != "lookup_sdk" || client.platformQueryVariables["name"] != "data" {
+		t.Fatalf("reference variables = %#v", client.platformQueryVariables)
+	}
+}
+
+func TestHandlePlatformAppLogicGraphUsesSelectedProject(t *testing.T) {
+	client := &fakePlatformClient{platformQueryResult: "interaction report"}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+	_, output, err := handlePlatformExtendedQuery(context.Background(), "whodb_platform_app_logic_graph", "AppLogicGraph", map[string]any{"appId": "app-1", "page": "main"}, nil)
+	if err != nil || output.Error != "" || output.Data != "interaction report" {
+		t.Fatalf("logic graph output = %#v, err = %v", output, err)
+	}
+	if client.platformQueryOperation != "AppLogicGraph" || client.platformQueryVariables["projectId"] != "proj-1" || client.platformQueryVariables["appId"] != "app-1" || client.platformQueryVariables["page"] != "main" {
+		t.Fatalf("logic graph variables = %#v", client.platformQueryVariables)
+	}
+}
+
 func TestHandlePlatformExtendedQueryProjectsFieldsAndScope(t *testing.T) {
 	client := &fakePlatformClient{platformQueryResult: map[string]any{
 		"id": "app-1", "name": "Customer App", "private": "must-not-be-returned",
@@ -141,5 +169,34 @@ func TestBuildPlatformGenericWriteRejectsAmbiguousPayloads(t *testing.T) {
 	}, "create")
 	if err == nil || err.Error() != "provide payload or payload_json, not both" {
 		t.Fatalf("error = %v, want ambiguous payload error", err)
+	}
+}
+
+func TestHandlePlatformAppFilesReadsPageByPage(t *testing.T) {
+	client := &fakePlatformClient{platformQueryResults: map[string]any{
+		"AppDetail":    map[string]any{"id": "app-1"},
+		"AppView":      map[string]any{"pages": []any{"main"}, "files": []any{map[string]any{"path": "app.json", "content": "{}"}}},
+		"AppPageFiles": []any{map[string]any{"path": "pages/main/tree.json", "content": "{}"}},
+	}}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+
+	_, output, err := handlePlatformAppFiles(context.Background(), PlatformAppInput{ID: "app-1"})
+	if err != nil || output.Error != "" {
+		t.Fatalf("handlePlatformAppFiles() = %v, %q", err, output.Error)
+	}
+	if output.Count != 2 || len(output.Items) != 2 || output.Items[1]["path"] != "pages/main/tree.json" {
+		t.Fatalf("output = %#v, want app.json and the main page file", output)
+	}
+	operations := make([]string, len(client.platformQueryCalls))
+	for i, call := range client.platformQueryCalls {
+		operations[i] = call.operation
+		if call.variables["projectId"] != "proj-1" {
+			t.Fatalf("%s projectId = %v, want the selected project", call.operation, call.variables["projectId"])
+		}
+	}
+	if !reflect.DeepEqual(operations, []string{"AppDetail", "AppView", "AppPageFiles"}) {
+		t.Fatalf("operations = %v, want no single AppFiles request", operations)
 	}
 }

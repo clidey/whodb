@@ -46,6 +46,7 @@ Before using an unfamiliar component, read its source directly:
 - Use `cn()` from `@clidey/ux` for class merging (Tailwind + clsx)
 - Use `toast()` from `@clidey/ux` for notifications (Sonner-based)
 - Import from `@clidey/ux` directly, not from internal paths
+- Wrap interactive children in ux triggers (`DropdownMenuTrigger`, `TooltipTrigger`, `PopoverTrigger`, `DialogTrigger`, ...) **without** `asChild`; the library infers it for `Button`, `Badge`, `SidebarMenuButton` and intrinsic `button`/`a`/`span`/`div`, so one DOM button is rendered. Only pass `asChild` for non-ux elements that forward refs (react-router `Link`, your own `forwardRef` components). Never slot a fragment, text, array, conditional, or a component from the deny list in `frontend/scripts/trigger-children.json`; `pnpm lint` runs `check-trigger-children.mjs` to enforce this.
 - For new shared UI patterns not in `@clidey/ux`, add to `frontend/src/components/` and mention it may be a candidate for upstream
 
 ## GraphQL

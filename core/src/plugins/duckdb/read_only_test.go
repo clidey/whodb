@@ -20,7 +20,25 @@ func readOnlyFixture(t *testing.T) (*DuckDBPlugin, *engine.PluginConfig, *gorm.D
 	t.Helper()
 	t.Setenv("WHODB_CLI", "true")
 	path := filepath.Join(t.TempDir(), "guard.duckdb")
-	db, err := gorm.Open(Open(path), &gorm.Config{})
+	seed, err := gorm.Open(Open(path), &gorm.Config{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := seed.Exec("CREATE TABLE guard (id INTEGER PRIMARY KEY); INSERT INTO guard VALUES (1)").Error; err != nil {
+		t.Fatal(err)
+	}
+	seedSQLDB, err := seed.DB()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := seedSQLDB.Close(); err != nil {
+		t.Fatal(err)
+	}
+	p := NewDuckDBPlugin().PluginFunctions.(*DuckDBPlugin)
+	config := engine.NewPluginConfig(&engine.Credentials{Type: string(engine.DatabaseType_DuckDB), Database: path})
+	config.Context = t.Context()
+	t.Cleanup(func() { plugins.RemoveConnection(config) })
+	db, err := p.DB(config)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -29,13 +47,6 @@ func readOnlyFixture(t *testing.T) (*DuckDBPlugin, *engine.PluginConfig, *gorm.D
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = sqlDB.Close() })
-	if err := db.Exec("CREATE TABLE guard (id INTEGER PRIMARY KEY); INSERT INTO guard VALUES (1)").Error; err != nil {
-		t.Fatal(err)
-	}
-	p := NewDuckDBPlugin().PluginFunctions.(*DuckDBPlugin)
-	config := engine.NewPluginConfig(&engine.Credentials{Type: string(engine.DatabaseType_DuckDB), Database: path})
-	config.Context = t.Context()
-	t.Cleanup(func() { plugins.RemoveConnection(config) })
 	return p, config, db
 }
 
@@ -142,21 +153,36 @@ func TestDuckDBProtectedConcurrentRequests(t *testing.T) {
 	}
 }
 
-func TestDuckDBProtectedSideEffects(t *testing.T) {
-	p, config, db := readOnlyFixture(t)
+func TestDuckDBNativeReadOnlyAllowsCopy(t *testing.T) {
+	db, err := gorm.Open(Open(":memory:"), &gorm.Config{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	sqlDB, err := db.DB()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = sqlDB.Close() })
+	if err := db.Exec("CREATE TABLE guard (id INTEGER); INSERT INTO guard VALUES (1)").Error; err != nil {
+		t.Fatal(err)
+	}
 	output := filepath.Join(t.TempDir(), "output.csv")
 	copyQuery := "COPY guard TO '" + strings.ReplaceAll(output, "'", "''") + "' (HEADER)"
-	// COPY TO is allowed even by the native read-only transaction. The classifier
-	// is necessary, and a successful export proves the negative check is meaningful.
+	// The native read-only mode still permits exports, so protected reads also
+	// need the SQL classifier.
+	p := NewDuckDBPlugin().PluginFunctions.(*DuckDBPlugin)
 	if _, err := p.executeReadOnly(db.WithContext(t.Context()), copyQuery); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := os.Stat(output); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.Remove(output); err != nil {
-		t.Fatal(err)
-	}
+}
+
+func TestDuckDBProtectedSideEffects(t *testing.T) {
+	p, config, _ := readOnlyFixture(t)
+	output := filepath.Join(t.TempDir(), "output.csv")
+	copyQuery := "COPY guard TO '" + strings.ReplaceAll(output, "'", "''") + "' (HEADER)"
 	config.ReadOnly = true
 	for _, query := range []string{
 		copyQuery, "INSERT INTO guard VALUES (2)",

@@ -16,6 +16,20 @@
 
 import { test, expect, forEachDatabase } from '../../support/test-fixture.mjs';
 
+/**
+ * Set the app theme with the header toggle, which flips between light and dark.
+ * @param {import('@playwright/test').Page} page
+ * @param {'light' | 'dark'} mode
+ */
+async function setThemeMode(page, mode) {
+    const html = page.locator('html');
+    const classes = (await html.getAttribute('class') ?? '').split(/\s+/);
+    if (!classes.includes(mode)) {
+        await page.locator('[data-testid="mode-toggle"] button').first().click();
+    }
+    await expect(html).toHaveClass(new RegExp(`\\b${mode}\\b`));
+}
+
 // Helper to assert a setting value in localStorage (redux-persist format)
 const assertPersistedSetting = async (page, key, expectedValue) => {
     const value = await page.evaluate(([k]) => {
@@ -83,6 +97,10 @@ test.describe('Settings', () => {
         });
 
         test.describe('Border Radius', () => {
+            test.beforeEach(async ({ whodb }) => {
+                await whodb.gotoSettingsTab('behavior');
+            });
+
             test('can change border radius to none', async ({ whodb, page }) => {
                 // First set to medium to ensure we're changing from a known state
                 await page.locator('#border-radius').click();
@@ -447,74 +465,40 @@ test.describe('Settings', () => {
                 await whodb.goto('storage-unit');
                 await page.locator('[data-testid="scratchpad-button"]').waitFor({ state: 'visible', timeout: 10000 });
 
-                // Click the mode toggle button - use first() in case multiple found, scrollIntoView for visibility
-                await page.locator('[data-testid="mode-toggle"] button').first().scrollIntoViewIfNeeded();
+                // The toggle flips directly between light and dark
+                const wasDark = /\bdark\b/.test(await page.locator('html').getAttribute('class') ?? '');
                 await page.locator('[data-testid="mode-toggle"] button').first().click();
-
-                // A dropdown menu should appear with theme options
-                await expect(page.locator('[role="menu"]')).toBeVisible();
-
-                // Should have exactly 3 options: Light, Dark, System
-                await expect(page.locator('[role="menuitem"]')).toHaveCount(3);
-
-                // Verify all options exist
-                await expect(page.locator('[role="menuitem"]').filter({ hasText: /light/i })).toBeVisible();
-                await expect(page.locator('[role="menuitem"]').filter({ hasText: /dark/i })).toBeVisible();
-                await expect(page.locator('[role="menuitem"]').filter({ hasText: /system/i })).toBeVisible();
-
-                // Close the menu by pressing Escape
-                await page.keyboard.press('Escape');
+                await expect(page.locator('html')).toHaveClass(wasDark ? /\blight\b/ : /\bdark\b/);
             });
 
             test('can switch to light mode', async ({ whodb, page }) => {
                 await whodb.goto('storage-unit');
                 await page.locator('[data-testid="scratchpad-button"]').waitFor({ state: 'visible', timeout: 10000 });
 
-                // Click the mode toggle
-                await page.locator('[data-testid="mode-toggle"] button').first().scrollIntoViewIfNeeded();
-                await page.locator('[data-testid="mode-toggle"] button').first().click();
-
-                // Click light mode option
-                await page.locator('[role="menuitem"]').filter({ hasText: /light/i }).click();
-
-                // Verify theme changed (html element should have class)
-                await expect(page.locator('html')).toHaveClass(/light/);
+                await setThemeMode(page, 'light');
             });
 
             test('can switch to dark mode', async ({ whodb, page }) => {
                 await whodb.goto('storage-unit');
                 await page.locator('[data-testid="scratchpad-button"]').waitFor({ state: 'visible', timeout: 10000 });
 
-                // Click the mode toggle
-                await page.locator('[data-testid="mode-toggle"] button').first().scrollIntoViewIfNeeded();
-                await page.locator('[data-testid="mode-toggle"] button').first().click();
-
-                // Click dark mode option
-                await page.locator('[role="menuitem"]').filter({ hasText: /dark/i }).click();
-
-                // Verify theme changed
-                await expect(page.locator('html')).toHaveClass(/dark/);
+                await setThemeMode(page, 'dark');
             });
 
             test('theme persists after navigation', async ({ whodb, page }) => {
                 await whodb.goto('storage-unit');
                 await page.locator('[data-testid="scratchpad-button"]').waitFor({ state: 'visible', timeout: 10000 });
 
-                // Switch to light mode
-                await page.locator('[data-testid="mode-toggle"] button').first().scrollIntoViewIfNeeded();
-                await page.locator('[data-testid="mode-toggle"] button').first().click();
-                await page.locator('[role="menuitem"]').filter({ hasText: /light/i }).click();
+                await setThemeMode(page, 'light');
 
                 // Navigate to settings
                 await whodb.goto('settings');
 
                 // Theme should still be light
-                await expect(page.locator('html')).toHaveClass(/light/);
+                await expect(page.locator('html')).toHaveClass(/\blight\b/);
 
                 // Switch back to dark for other tests
-                await page.locator('[data-testid="mode-toggle"] button').first().scrollIntoViewIfNeeded();
-                await page.locator('[data-testid="mode-toggle"] button').first().click();
-                await page.locator('[role="menuitem"]').filter({ hasText: /dark/i }).click();
+                await setThemeMode(page, 'dark');
             });
         });
     });

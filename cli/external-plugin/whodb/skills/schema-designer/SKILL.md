@@ -7,6 +7,8 @@ description: Help design database schemas, create tables, and plan data models. 
 
 Help users design database schemas, create tables, and model data relationships.
 
+These database-only MCP tools require the database module enabled through `whodb setup`. Keep the MCP command at `whodb mcp serve`. For platform resources, use the WhoDB skill and discover available `whodb_platform_*` tools instead.
+
 ## When to Use
 
 Activate when user asks:

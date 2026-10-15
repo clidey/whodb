@@ -43,6 +43,9 @@ type GenericWriteSpec struct {
 	NeedsID         bool
 	IdentityField   string
 	InjectProjectID bool
+	// InjectOrgID fills orgId from the selected organization when the payload
+	// does not provide one.
+	InjectOrgID bool
 }
 
 // PayloadShape describes the payload_json object expected for one generic write.
@@ -112,6 +115,7 @@ var GenericWriteSpecs = map[string]GenericWriteSpec{
 	"action:restore:app":                          {Resource: "app", Action: "restore", Mutation: "RestoreApp", Mode: GenericWriteModeProjectID, NeedsID: true},
 	"action:purge:app":                            {Resource: "app", Action: "purge", Mutation: "PurgeApp", Mode: GenericWriteModeProjectID, NeedsID: true},
 	"action:generate:app":                         {Resource: "app", Action: "generate", Mutation: "GenerateApp", Mode: GenericWriteModeInput, InjectProjectID: true},
+	"action:clone:app":                            {Resource: "app", Action: "clone", Mutation: "CloneApp", Mode: GenericWriteModeDirect, InjectProjectID: true},
 	"action:upsert_file:app":                      {Resource: "app", Action: "upsert_file", Mutation: "UpsertAppFile", Mode: GenericWriteModeDirect, InjectProjectID: true},
 	"action:delete_file:app":                      {Resource: "app", Action: "delete_file", Mutation: "DeleteAppFile", Mode: GenericWriteModeDirect, InjectProjectID: true},
 	"action:restore_version_to_draft:app":         {Resource: "app", Action: "restore_version_to_draft", Mutation: "RestoreAppVersionToDraft", Mode: GenericWriteModeDirect, InjectProjectID: true},
@@ -136,23 +140,23 @@ var GenericWriteSpecs = map[string]GenericWriteSpec{
 	"action:import:package":                       {Resource: "package", Action: "import", Mutation: "ImportPackage", Mode: GenericWriteModeInput},
 	"action:import_shared:package":                {Resource: "package", Action: "import_shared", Mutation: "ImportSharedPackage", Mode: GenericWriteModeInput},
 	"action:create_share:package":                 {Resource: "package", Action: "create_share", Mutation: "CreatePackageShare", Mode: GenericWriteModeInput},
-	"action:rename:organization":                  {Resource: "organization", Action: "rename", Mutation: "RenameOrganization", Mode: GenericWriteModeDirect},
-	"action:delete:organization":                  {Resource: "organization", Action: "delete", Mutation: "DeleteOrganization", Mode: GenericWriteModeDirect},
-	"action:upsert_domain:organization":           {Resource: "organization", Action: "upsert_domain", Mutation: "UpsertOrganizationDomain", Mode: GenericWriteModeDirect},
+	"action:rename:organization":                  {Resource: "organization", Action: "rename", Mutation: "RenameOrganization", Mode: GenericWriteModeDirect, InjectOrgID: true},
+	"action:delete:organization":                  {Resource: "organization", Action: "delete", Mutation: "DeleteOrganization", Mode: GenericWriteModeDirect, InjectOrgID: true},
+	"action:upsert_domain:organization":           {Resource: "organization", Action: "upsert_domain", Mutation: "UpsertOrganizationDomain", Mode: GenericWriteModeDirect, InjectOrgID: true},
 	"action:delete_domain:organization":           {Resource: "organization", Action: "delete_domain", Mutation: "DeleteOrganizationDomain", Mode: GenericWriteModeID, NeedsID: true},
-	"action:create_sso:organization":              {Resource: "organization", Action: "create_sso", Mutation: "CreateOrganizationSSOProvider", Mode: GenericWriteModeDirect},
+	"action:create_sso:organization":              {Resource: "organization", Action: "create_sso", Mutation: "CreateOrganizationSSOProvider", Mode: GenericWriteModeDirect, InjectOrgID: true},
 	"action:update_sso:organization":              {Resource: "organization", Action: "update_sso", Mutation: "UpdateOrganizationSSOProvider", Mode: GenericWriteModeDirect, NeedsID: true},
 	"action:delete_sso:organization":              {Resource: "organization", Action: "delete_sso", Mutation: "DeleteOrganizationSSOProvider", Mode: GenericWriteModeID, NeedsID: true},
-	"action:invite_user:organization":             {Resource: "organization", Action: "invite_user", Mutation: "InviteUser", Mode: GenericWriteModeInput},
-	"action:reinvite_user:organization":           {Resource: "organization", Action: "reinvite_user", Mutation: "ReinviteUser", Mode: GenericWriteModeDirect},
-	"action:remove_user:organization":             {Resource: "organization", Action: "remove_user", Mutation: "RemoveUser", Mode: GenericWriteModeDirect},
+	"action:invite_user:organization":             {Resource: "organization", Action: "invite_user", Mutation: "InviteUser", Mode: GenericWriteModeInput, InjectOrgID: true},
+	"action:reinvite_user:organization":           {Resource: "organization", Action: "reinvite_user", Mutation: "ReinviteUser", Mode: GenericWriteModeDirect, InjectOrgID: true},
+	"action:remove_user:organization":             {Resource: "organization", Action: "remove_user", Mutation: "RemoveUser", Mode: GenericWriteModeDirect, InjectOrgID: true},
 	"action:grant_access:organization":            {Resource: "organization", Action: "grant_access", Mutation: "GrantAccess", Mode: GenericWriteModeInput},
 	"action:revoke_access:organization":           {Resource: "organization", Action: "revoke_access", Mutation: "RevokeAccess", Mode: GenericWriteModeInput},
 	"action:share_by_email:resource":              {Resource: "resource", Action: "share_by_email", Mutation: "ShareByEmail", Mode: GenericWriteModeDirect},
 	"action:transfer_ownership_by_email:resource": {Resource: "resource", Action: "transfer_ownership_by_email", Mutation: "TransferOwnershipByEmail", Mode: GenericWriteModeDirect},
 	"action:transfer_ownership:resource":          {Resource: "resource", Action: "transfer_ownership", Mutation: "TransferOwnership", Mode: GenericWriteModeDirect},
 	"action:claim_orphan:resource":                {Resource: "resource", Action: "claim_orphan", Mutation: "ClaimOrphan", Mode: GenericWriteModeDirect},
-	"action:create_team:organization":             {Resource: "organization", Action: "create_team", Mutation: "CreateTeam", Mode: GenericWriteModeDirect},
+	"action:create_team:organization":             {Resource: "organization", Action: "create_team", Mutation: "CreateTeam", Mode: GenericWriteModeDirect, InjectOrgID: true},
 	"action:delete_team:organization":             {Resource: "organization", Action: "delete_team", Mutation: "DeleteTeam", Mode: GenericWriteModeID, NeedsID: true},
 	"action:add_team_member:organization":         {Resource: "organization", Action: "add_team_member", Mutation: "AddTeamMember", Mode: GenericWriteModeDirect},
 	"action:remove_team_member:organization":      {Resource: "organization", Action: "remove_team_member", Mutation: "RemoveTeamMember", Mode: GenericWriteModeDirect},
@@ -162,6 +166,7 @@ var GenericWriteSpecs = map[string]GenericWriteSpec{
 	"action:test:function":                        {Resource: "function", Action: "test", Mutation: "TestFunction", Mode: GenericWriteModeInput, InjectProjectID: true},
 	"action:preview:function":                     {Resource: "function", Action: "preview", Mutation: "PreviewFunction", Mode: GenericWriteModeInput, InjectProjectID: true},
 	"action:execute:function":                     {Resource: "function", Action: "execute", Mutation: "ExecuteFunction", Mode: GenericWriteModeDirect, InjectProjectID: true},
+	"action:start_run:function":                   {Resource: "function", Action: "start_run", Mutation: "StartFunctionRun", Mode: GenericWriteModeDirect, InjectProjectID: true},
 }
 
 // PayloadShapes describes payload_json shapes for common hosted platform writes.
@@ -228,7 +233,7 @@ var PayloadShapes = map[string]PayloadShape{
 		Examples: []string{`{"description":"Customer import","schemaMode":"manual"}`},
 	},
 	"create:ontology": {
-		Key: "create:ontology", Resource: "ontology", Action: "create", Description: "Create an ontology. projectId is injected from the selected workspace. Property defaults match the platform: normal visibility, false searchable/sortable/edit-only flags; primary-key and link foreign-key properties are searchable and sortable.",
+		Key: "create:ontology", Resource: "ontology", Action: "create", Description: "Create an ontology. projectId is injected from the selected workspace. Property defaults match the platform: normal visibility, false searchable/sortable/edit-only flags; primary-key and link foreign-key properties are searchable and sortable. Operational ontologies store a property whose column is \"id\" as a UUID; give it another columnName (for example \"source_id\") to keep non-UUID keys.",
 		Fields: []PayloadField{
 			{Name: "apiName", Type: "string", Required: true, Description: "Stable ontology API name"},
 			{Name: "displayName", Type: "string", Required: true, Description: "Ontology display name"},
@@ -236,14 +241,34 @@ var PayloadShapes = map[string]PayloadShape{
 			{Name: "description", Type: "string", Required: true, Description: "Ontology description"},
 			{Name: "primaryKey", Type: "string", Required: true, Description: "Primary property API name"},
 			{Name: "tableName", Type: "string", Required: true, Description: "Backing table name"},
-			{Name: "schemaName", Type: "string", Required: true, Description: "Backing schema name"},
+			{Name: "schemaName", Type: "string", Description: "Source schema name; only used with sourceId, defaults to empty"},
 			{Name: "storageMode", Type: "OntologyStorageMode", Required: true, Description: "Immutable storage mode: operational or analytical"},
 			{Name: "icon", Type: "string", Required: true, Description: "Ontology icon"},
 			{Name: "color", Type: "string", Required: true, Description: "Ontology color"},
 			{Name: "properties", Type: "[OntologyPropertyInput!]", Required: true, Description: "Properties; visibility is prominent, normal, or hidden"},
 			{Name: "links", Type: "[OntologyLinkInput!]", Required: true, Description: "Ontology links"},
 		},
-		Examples: []string{`{"apiName":"customer","displayName":"Customer","pluralDisplayName":"Customers","description":"","primaryKey":"id","tableName":"customers","schemaName":"public","storageMode":"operational","icon":"table","color":"#3366ff","properties":[{"apiName":"id","displayName":"ID","description":"","columnName":"id","dataType":"String","isRequired":true,"visibility":"normal","isSearchable":true,"isSortable":true,"isEditOnly":false}],"links":[]}`},
+		Examples: []string{`{"apiName":"customer","displayName":"Customer","pluralDisplayName":"Customers","description":"","primaryKey":"id","tableName":"customers","storageMode":"operational","icon":"table","color":"#3366ff","properties":[{"apiName":"id","displayName":"ID","description":"","columnName":"id","dataType":"String","isRequired":true,"visibility":"normal","isSearchable":true,"isSortable":true,"isEditOnly":false}],"links":[]}`},
+	},
+	"update:ontology": {
+		Key: "update:ontology", Resource: "ontology", Action: "update", Description: "Replace an ontology definition. id and projectId are injected. Every field below except sourceId and schemaName is sent as a whole, so read the ontology first and send it back with your changes. apiName and storageMode cannot change.",
+		Fields: []PayloadField{
+			{Name: "displayName", Type: "string", Required: true, Description: "Ontology display name"},
+			{Name: "pluralDisplayName", Type: "string", Required: true, Description: "Plural display name"},
+			{Name: "description", Type: "string", Required: true, Description: "Ontology description"},
+			{Name: "primaryKey", Type: "string", Required: true, Description: "Primary property API name"},
+			{Name: "sourceId", Type: "string", Description: "Backing source id for source-backed ontologies"},
+			{Name: "tableName", Type: "string", Required: true, Description: "Backing table name"},
+			{Name: "schemaName", Type: "string", Description: "Source schema name; only used with sourceId, defaults to empty"},
+			{Name: "status", Type: "OntologyStatus", Required: true, Description: "Ontology status"},
+			{Name: "embeddingEnabled", Type: "boolean", Required: true, Description: "Whether rows are embedded for similarity search"},
+			{Name: "embeddingProperties", Type: "[string]", Required: true, Description: "Properties included in the embedding text"},
+			{Name: "icon", Type: "string", Required: true, Description: "Ontology icon"},
+			{Name: "color", Type: "string", Required: true, Description: "Ontology color"},
+			{Name: "properties", Type: "[OntologyPropertyInput!]", Required: true, Description: "Full replacement property list"},
+			{Name: "links", Type: "[OntologyLinkInput!]", Required: true, Description: "Full replacement link list"},
+		},
+		Examples: []string{`{"displayName":"Customer","pluralDisplayName":"Customers","description":"","primaryKey":"id","tableName":"customers","status":"active","embeddingEnabled":false,"embeddingProperties":[],"icon":"table","color":"#3366ff","properties":[{"apiName":"id","displayName":"ID","description":"","columnName":"id","dataType":"String","isRequired":true,"visibility":"normal","isSearchable":true,"isSortable":true,"isEditOnly":false}],"links":[]}`},
 	},
 	"create:ontology_fast_lookup": {
 		Key: "create:ontology_fast_lookup", Resource: "ontology_fast_lookup", Action: "create", Description: "Create an ontology fast lookup. projectId is injected from the selected workspace.",
@@ -332,10 +357,19 @@ var PayloadShapes = map[string]PayloadShape{
 	"action:redeploy:function": {
 		Key: "action:redeploy:function", Resource: "function", Action: "redeploy", Description: "Redeploy an existing function. id and projectId are injected.",
 	},
+	"action:start_run:function": {
+		Key: "action:start_run:function", Resource: "function", Action: "start_run", Description: "Start a persisted function run and return its run record immediately; poll it with whodb_platform_function_wait. Use instead of execute for work that may outlast one request. projectId is injected.",
+		Fields: []PayloadField{
+			{Name: "functionId", Type: "string", Required: true, Description: "Function id"},
+			{Name: "input", Type: "string", Required: true, Description: "JSON input encoded as a string"},
+			{Name: "useActiveVersion", Type: "bool", Description: "Run the promoted production version instead of the draft"},
+		},
+		Examples: []string{`{"functionId":"fn_123","input":"{\"count\":100}"}`},
+	},
 	"action:invite_user:organization": {
 		Key: "action:invite_user:organization", Resource: "organization", Action: "invite_user", Description: "Invite a user to one organization. Resource grants must be provided explicitly and are not inferred from organization membership.",
 		Fields: []PayloadField{
-			{Name: "orgId", Type: "string", Required: true, Description: "Organization id receiving the member"},
+			{Name: "orgId", Type: "string", Description: "Organization id; defaults to the selected organization"},
 			{Name: "email", Type: "string", Required: true, Description: "Email address to invite"},
 			{Name: "firstName", Type: "string", Description: "Optional first name"},
 			{Name: "lastName", Type: "string", Description: "Optional last name"},

@@ -21,6 +21,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	coreaudit "github.com/clidey/whodb/core/src/audit"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -180,9 +181,10 @@ var platformMutationSpecs = map[string]platformMutationSpec{
 	"RestoreApp":                             mutationSpecWithProjectID("RestoreApp", statusResponseFields),
 	"PurgeApp":                               mutationSpecWithProjectID("PurgeApp", statusResponseFields),
 	"GenerateApp":                            mutationSpecWithInput("GenerateApp", "GenerateAppInput", "html\n  message"),
+	"CloneApp":                               mutationSpecWithDirect("CloneApp", "$projectId: ID!, $appId: ID!, $targetProjectId: ID!, $targetOrgId: ID, $name: String!, $overwrite: Boolean, $files: [AppFileInput!], $dryRun: Boolean", "projectId: $projectId, appId: $appId, targetProjectId: $targetProjectId, targetOrgId: $targetOrgId, name: $name, overwrite: $overwrite, files: $files, dryRun: $dryRun", "app {\n"+appFields+"\n  }\n  action\n  name\n  targetAppId\n  fileCount\n  ontologyIds\n  readOnlyOntologyIds\n  functionIds\n  warnings\n  backupVersion\n  dryRun"),
 	"UpsertAppFile":                          mutationSpecWithDirect("UpsertAppFile", "$projectId: ID!, $appId: ID!, $path: String!, $content: String!", "projectId: $projectId, appId: $appId, path: $path, content: $content", appFileFields),
 	"DeleteAppFile":                          mutationSpecWithDirect("DeleteAppFile", "$projectId: ID!, $appId: ID!, $path: String!", "projectId: $projectId, appId: $appId, path: $path", statusResponseFields),
-	"RestoreAppVersionToDraft":               mutationSpecWithDirect("RestoreAppVersionToDraft", "$projectId: ID!, $appId: ID!, $version: Int!", "projectId: $projectId, appId: $appId, version: $version", "app {\n"+appFields+"\n  }\n  files {\n"+appFileFields+"\n  }"),
+	"RestoreAppVersionToDraft":               mutationSpecWithDirect("RestoreAppVersionToDraft", "$projectId: ID!, $appId: ID!, $version: Int!", "projectId: $projectId, appId: $appId, version: $version", "app {\n"+appFields+"\n  }\n  pages\n  files {\n    path\n  }"),
 	"RestoreSource":                          mutationSpecWithProjectID("RestoreSource", statusResponseFields),
 	"PurgeSource":                            mutationSpecWithProjectID("PurgeSource", statusResponseFields),
 	"RestoreOntology":                        mutationSpecWithProjectID("RestoreOntology", statusResponseFields),
@@ -226,11 +228,12 @@ var platformMutationSpecs = map[string]platformMutationSpec{
 	"TransferOwnership":                      mutationSpecWithDirect("TransferOwnership", "$resourceType: String!, $resourceId: ID!, $newOwnerId: ID!", "resourceType: $resourceType, resourceId: $resourceId, newOwnerId: $newOwnerId", statusResponseFields),
 	"ClaimOrphan":                            mutationSpecWithDirect("ClaimOrphan", "$resourceType: String!, $resourceId: ID!", "resourceType: $resourceType, resourceId: $resourceId", statusResponseFields),
 	"CreateTeam":                             mutationSpecWithDirect("CreateTeam", "$orgId: ID!, $name: String!", "orgId: $orgId, name: $name", "id orgId name createdAt"),
-	"DeleteTeam":                             mutationSpecWithID("DeleteTeam", statusResponseFields),
+	"DeleteTeam":                             mutationSpecWithDirect("DeleteTeam", "$id: ID!", "teamId: $id", statusResponseFields),
 	"AddTeamMember":                          mutationSpecWithDirect("AddTeamMember", "$teamId: ID!, $userId: ID!", "teamId: $teamId, userId: $userId", statusResponseFields),
 	"RemoveTeamMember":                       mutationSpecWithDirect("RemoveTeamMember", "$teamId: ID!, $userId: ID!", "teamId: $teamId, userId: $userId", statusResponseFields),
 	"SyncAllAppPermissions":                  mutationSpecWithDirect("SyncAllAppPermissions", "", "", statusResponseFields),
 	"ExecuteFunction":                        mutationSpecWithDirect("ExecuteFunction", "$projectId: ID!, $functionId: ID!, $input: String!, $inputFileIds: [ID!]", "projectId: $projectId, functionId: $functionId, input: $input, inputFileIds: $inputFileIds", functionTestResultFields),
+	"StartFunctionRun":                       mutationSpecWithDirect("StartFunctionRun", "$projectId: ID!, $functionId: ID!, $input: String!, $useActiveVersion: Boolean", "projectId: $projectId, functionId: $functionId, input: $input, useActiveVersion: $useActiveVersion", functionRunFields),
 }
 
 // permissionMutationsOmittedByLegacyManifests lists mutations implemented by
@@ -609,6 +612,7 @@ mutation CLIPlatformUploadProjectFile($projectId: ID!, $folderId: ID, $file: Upl
 		}
 		req.Header.Set("Content-Type", contentType)
 		req.Header.Set("Accept", "application/json")
+		req.Header.Set(coreaudit.ClientHeader, clientName())
 		if accessToken != "" {
 			req.Header.Set("Authorization", "Bearer "+accessToken)
 		}

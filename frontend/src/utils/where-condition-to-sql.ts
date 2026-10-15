@@ -45,6 +45,14 @@ export function whereConditionToSql(condition: WhereCondition | undefined): stri
                 if (Operator === '!=') return `${Key} IS NOT NULL`;
             }
 
+            if (/^(NOT IN|IN)$/i.test(Operator)) {
+                const values = Value.split(',').map(value => value.trim()).filter(Boolean);
+                const formattedValues = values.map(value => !isNaN(Number(value))
+                    ? value
+                    : `'${escapeSqlString(value)}'`);
+                return `${Key} ${Operator} (${formattedValues.join(', ')})`;
+            }
+
             // For numeric types, don't quote the value
             const isNumeric = !isNaN(Number(Value)) && Value.trim() !== '';
             const formattedValue = isNumeric ? Value : `'${escapeSqlString(Value)}'`;

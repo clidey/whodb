@@ -22,7 +22,7 @@ func TestValidatePlatformWorkflowInputBuildsStablePlan(t *testing.T) {
 		Goal: "Create a dataset and then a transform",
 		Steps: []PlatformWorkflowStepInput{
 			{ID: "dataset", Operation: "create", Resource: "dataset", Payload: map[string]any{"name": "customers", "description": "customer dataset"}},
-			{ID: "transform", Operation: "create", Resource: "transform", DependsOn: []string{"dataset"}, Payload: map[string]any{"name": "normalize"}},
+			{ID: "transform", Operation: "create", Resource: "transform", DependsOn: []string{"dataset"}, Payload: map[string]any{"name": "normalize", "graphJson": `{"nodes":[],"edges":[]}`}},
 		},
 	}, workflowTestSession())
 	if err != nil {

@@ -32,10 +32,7 @@ test.describe('Error Handling', () => {
             }
 
             test.describe(`${db.type}`, () => {
-                // TODO: This test is flaky in Playwright due to card view not persisting after
-                // clearBrowserState + manual login. The sidebar table tree also takes too long
-                // to load in some environments. Needs investigation with the actual UI.
-                test.fixme('gracefully handles network failure during query', async ({ whodb, page }) => {
+                test('gracefully handles network failure during query', async ({ whodb, page }) => {
                     // Suppress uncaught page errors from network failures
 
 
@@ -50,12 +47,13 @@ test.describe('Error Handling', () => {
                         conn.advanced || {}
                     );
 
-                    // Navigate to a table using the sidebar tree (avoids card view dependency)
-                    const testTable = db.testTable;
-                    const tableBtn = page.locator(`button:has-text("${testTable.name}")`).first();
-                    await tableBtn.waitFor({ timeout: 15000 });
-                    await tableBtn.click();
-                    await page.waitForURL(/\/storage-unit\/explore/, { timeout: 10000 });
+                    // A fresh login lands on the default schema; switch to the fixture schema first.
+                    if (db.schema) {
+                        await page.locator('[data-testid="sidebar-schema"]').click();
+                        await page.locator(`[data-value="${db.schema}"]`).first().click();
+                    }
+                    await page.locator('[data-testid="storage-unit-card"]').first().waitFor({ timeout: 15000 });
+                    await whodb.data(db.testTable.name);
 
                     // Wait for table to load
                     await page.locator('table').first().waitFor({ timeout: 10000 });
@@ -361,9 +359,7 @@ test.describe('Error Handling', () => {
                     });
 
                     // Click run button directly instead of using runCode (which waits for completion)
-                    await page.locator('[role="tabpanel"][data-state="active"] [data-testid="cell-0"] [data-testid="query-cell-button"]')
-                        .first()
-                        .click({ force: true });
+                    await whodb.queryCellButton(0).click({ force: true });
 
                     // Wait for the slow query to complete
                     await page.waitForTimeout(3000);

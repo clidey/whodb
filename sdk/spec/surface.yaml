@@ -102,7 +102,191 @@ domains:
         operation: PlatformSourceColumns
         autofill: { projectId: $project }
 
+  # Project-level transform collection: whodb.transforms()
+  transforms:
+    methods:
+      list:
+        operation: ProjectTransforms
+        autofill: { projectId: $project }
+      create:
+        operation: SaveTransform
+        autofill: { projectId: $project }
+      preview:
+        operation: PreviewTransform
+        autofill: { projectId: $project }
+
+  # One transform: whodb.transform(name) — resolved to id via ProjectTransforms
+  transform:
+    handleArg: name
+    methods:
+      meta:
+        operation: ProjectTransforms
+        autofill: { projectId: $project }
+      runs:
+        operation: TransformRuns
+        autofill: { projectId: $project }
+      run:
+        operation: RunTransform
+        autofill: { projectId: $project }
+      cancelRun:
+        operation: CancelTransformRun
+        autofill: { projectId: $project }
+      wait:
+        operation: TransformRuns
+        autofill: { projectId: $project }
+      update:
+        operation: SaveTransform
+        autofill: { projectId: $project }
+      delete:
+        operation: DeleteTransform
+        autofill: { projectId: $project }
+
+  # Project-level function collection: whodb.functions()
+  functions:
+    methods:
+      list:
+        operation: ProjectFunctions
+        autofill: { projectId: $project }
+      create:
+        operation: CreateFunction
+        autofill: { projectId: $project }
+
+  # One function: whodb.function(name) — resolved to id via ProjectFunctions
+  function:
+    handleArg: name
+    methods:
+      meta:
+        operation: FunctionDetail
+        autofill: { projectId: $project }
+      execute:
+        operation: ExecuteFunction
+        autofill: { projectId: $project }
+      test:
+        operation: TestFunction
+        autofill: { projectId: $project }
+      startRun:
+        operation: StartFunctionRun
+        autofill: { projectId: $project }
+      run:
+        operation: FunctionRun
+        autofill: { projectId: $project }
+      runs:
+        operation: FunctionRuns
+        autofill: { projectId: $project }
+      wait:
+        operation: FunctionRun
+        autofill: { projectId: $project }
+      cancelRun:
+        operation: CancelFunctionRun
+        autofill: { projectId: $project }
+      deploy:
+        operation: DeployFunction
+        autofill: { projectId: $project }
+      redeploy:
+        operation: RedeployFunction
+        autofill: { projectId: $project }
+      update:
+        operation: UpdateFunction
+        autofill: { projectId: $project }
+      delete:
+        operation: DeleteFunction
+        autofill: { projectId: $project }
+
+  # Organization-level API access: whodb.serviceAccounts()
+  serviceAccounts:
+    methods:
+      list:
+        operation: ServiceAccounts
+        autofill: { orgId: $org }
+      create:
+        operation: CreateServiceAccount
+        autofill: { orgId: $org }
+      createKey:
+        operation: CreateServiceAccountKey
+        autofill: { orgId: $org }
+      revokeKey:
+        operation: RevokeServiceAccountKey
+        autofill: { orgId: $org }
+      delete:
+        operation: DeleteServiceAccount
+        autofill: { orgId: $org }
+
+  # OpenLineage providers feeding project lineage: whodb.lineageProviders()
+  lineageProviders:
+    methods:
+      list:
+        operation: ProjectLineageProviders
+        autofill: { projectId: $project }
+      save:
+        operation: SaveLineageProvider
+        autofill: { projectId: $project }
+      delete:
+        operation: DeleteLineageProvider
+        autofill: { projectId: $project }
+
+  # Cross-project ontology sharing and references: whodb.sharing()
+  sharing:
+    methods:
+      shared:
+        operation: SharedOntologies
+        autofill: { projectId: $project }
+      discover:
+        operation: DiscoverSharedOntologies
+        autofill: { consumerProjectId: $project }
+      references:
+        operation: OntologyReferences
+        autofill: { projectId: $project }
+      referenceImpact:
+        operation: OntologyReferenceImpact
+      share:
+        operation: ShareOntology
+        autofill: { projectId: $project }
+      unshare:
+        operation: UnshareOntology
+        autofill: { projectId: $project }
+      createReference:
+        operation: CreateOntologyReference
+        autofill: { consumerProjectId: $project }
+      removeReference:
+        operation: RemoveOntologyReference
+
   # Init-time workspace resolution only — not exposed as a public facade domain.
+  # Versioning and promotion for any versionable object (app, function,
+  # transform, dataset, ontology): whodb.versions(). PromoteObject snapshots the
+  # draft and sets it as the active production version in one step.
+  versions:
+    methods:
+      list:
+        operation: ObjectVersions
+        autofill: { projectId: $project }
+      active:
+        operation: ActiveProdVersion
+        autofill: { projectId: $project }
+      activeAll:
+        operation: ProjectActiveProdVersions
+        autofill: { projectId: $project }
+      promote:
+        operation: PromoteObject
+        autofill: { projectId: $project }
+      rollback:
+        operation: RollbackObject
+        autofill: { projectId: $project }
+      restoreOntologyToDraft:
+        operation: RestoreOntologyVersionToDraft
+        autofill: { projectId: $project }
+      restoreDatasetToDraft:
+        operation: RestoreDatasetVersionToDraft
+        autofill: { projectId: $project }
+      restoreTransformToDraft:
+        operation: RestoreTransformVersionToDraft
+        autofill: { projectId: $project }
+      restoreFunctionToDraft:
+        operation: RestoreFunctionVersionToDraft
+        autofill: { projectId: $project }
+      restoreAppToDraft:
+        operation: RestoreAppVersionToDraft
+        autofill: { projectId: $project }
+
   workspace:
     internal: true
     methods:

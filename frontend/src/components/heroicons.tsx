@@ -39,6 +39,7 @@ import {
   ChatBubbleLeftRightIcon as ChatBubbleLeftRightIconCE,
   CheckCircleIcon as CheckCircleIconCE,
   ChevronDownIcon as ChevronDownIconCE,
+  ChevronLeftIcon as ChevronLeftIconCE,
   ChevronRightIcon as ChevronRightIconCE,
   ChevronUpIcon as ChevronUpIconCE,
   CircleStackIcon as CircleStackIconCE,
@@ -124,6 +125,7 @@ export const ChartBarIcon = iconOverrides.ChartBarIcon ?? ChartBarIconCE;
 export const ChatBubbleLeftRightIcon = iconOverrides.ChatBubbleLeftRightIcon ?? ChatBubbleLeftRightIconCE;
 export const CheckCircleIcon = iconOverrides.CheckCircleIcon ?? CheckCircleIconCE;
 export const ChevronDownIcon = iconOverrides.ChevronDownIcon ?? ChevronDownIconCE;
+export const ChevronLeftIcon = iconOverrides.ChevronLeftIcon ?? ChevronLeftIconCE;
 export const ChevronRightIcon = iconOverrides.ChevronRightIcon ?? ChevronRightIconCE;
 export const ChevronUpIcon = iconOverrides.ChevronUpIcon ?? ChevronUpIconCE;
 export const CircleStackIcon = iconOverrides.CircleStackIcon ?? CircleStackIconCE;

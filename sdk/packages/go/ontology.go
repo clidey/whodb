@@ -480,3 +480,21 @@ func (h *OntologyHandle) FollowLink(ctx context.Context, pk any, linkAPIName str
 	rows, _ := hydrateRows(wire, nil)
 	return rows, nil
 }
+
+// Promote snapshots the draft ontology and makes it the active production version.
+func (h *OntologyHandle) Promote(ctx context.Context, message string) (map[string]any, error) {
+	obj, err := h.EntityMeta(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return h.client.Versions().Promote(ctx, ObjectTypeOntology, fmt.Sprint(obj["id"]), message)
+}
+
+// Versions lists the ontology's promoted versions, newest first.
+func (h *OntologyHandle) Versions(ctx context.Context) ([]map[string]any, error) {
+	obj, err := h.EntityMeta(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return h.client.Versions().List(ctx, ObjectTypeOntology, fmt.Sprint(obj["id"]))
+}

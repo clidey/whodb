@@ -18,6 +18,9 @@ import (
 )
 
 func platformCaptureTarget(ctx context.Context, input PlatformAppCaptureInput) (*platformToolSession, appcapture.Options, string, error) {
+	if input.Mobile && input.Tablet {
+		return nil, appcapture.Options{}, "", fmt.Errorf("mobile and tablet modes cannot be combined")
+	}
 	if strings.TrimSpace(input.App) == "" {
 		return nil, appcapture.Options{}, "", fmt.Errorf("app is required")
 	}
@@ -29,34 +32,22 @@ func platformCaptureTarget(ctx context.Context, input PlatformAppCaptureInput) (
 	if orgID == "" || projectID == "" {
 		return nil, appcapture.Options{}, "", fmt.Errorf("select a hosted organization and project first")
 	}
-	orgs, err := session.Client.Organizations(ctx)
+	org, err := cachedOrganizationByID(ctx, session.Client, session.Host.URL, session.Host.AccountID, orgID)
 	if err != nil {
 		return nil, appcapture.Options{}, "", err
 	}
-	orgSlug := ""
-	for _, org := range orgs {
-		if org.ID == orgID {
-			orgSlug = org.Slug
-			break
-		}
-	}
-	if orgSlug == "" {
+	if org == nil || org.Slug == "" {
 		return nil, appcapture.Options{}, "", fmt.Errorf("selected organization is not available")
 	}
-	projects, err := session.Client.Projects(ctx, orgID)
+	orgSlug := org.Slug
+	project, err := cachedProjectByID(ctx, session.Client, session.Host.URL, session.Host.AccountID, orgID, projectID)
 	if err != nil {
 		return nil, appcapture.Options{}, "", err
 	}
-	projectSlug := ""
-	for _, project := range projects {
-		if project.ID == projectID {
-			projectSlug = project.Slug
-			break
-		}
-	}
-	if projectSlug == "" {
+	if project == nil || project.Slug == "" {
 		return nil, appcapture.Options{}, "", fmt.Errorf("selected project is not available")
 	}
+	projectSlug := project.Slug
 	apps, err := appcapture.ListApps(ctx, session.Client, projectID)
 	if err != nil {
 		return nil, appcapture.Options{}, "", err
@@ -72,7 +63,11 @@ func platformCaptureTarget(ctx context.Context, input PlatformAppCaptureInput) (
 	options := appcapture.Options{
 		Host: session.Host.URL, OrgSlug: orgSlug, ProjectSlug: projectSlug,
 		OrgID: orgID, ProjectID: projectID, AppID: app.ID, Env: env,
-		Page: input.Page, Tab: input.Tab, Actions: input.Actions, Script: input.Script, Width: input.Width, Height: input.Height,
+		Page: input.Page, Tab: input.Tab, Actions: input.Actions, Script: input.Script, Trace: input.Trace, Width: input.Width, Height: input.Height, Mobile: input.Mobile, Tablet: input.Tablet, Orientation: input.Orientation,
+	}
+	options.Width, options.Height, err = appcapture.ResolveViewport(options.Width, options.Height, options.Mobile, options.Tablet, options.Orientation)
+	if err != nil {
+		return nil, appcapture.Options{}, "", err
 	}
 	if _, err := options.URL(); err != nil {
 		return nil, appcapture.Options{}, "", err
@@ -118,5 +113,18 @@ func handlePlatformAppScreenshot(ctx context.Context, input PlatformAppCaptureIn
 		return nil, PlatformAppScreenshotOutput{Error: err.Error(), RequestID: requestID}, nil
 	}
 	return &mcp.CallToolResult{Content: []mcp.Content{&mcp.ImageContent{Data: captured.Image, MIMEType: captured.MIMEType}}},
-		PlatformAppScreenshotOutput{App: appName, AppID: options.AppID, Env: options.Env, Page: captured.Page, Tab: captured.Tab, Width: captured.Width, Height: captured.Height, MIMEType: captured.MIMEType, VisibleText: captured.Text, Diagnostics: captured.Diagnostics, ScriptResultJSON: captured.ScriptResultJSON, ChecksPassed: len(captured.Diagnostics.ActionErrors) == 0 && len(captured.Diagnostics.ScriptErrors) == 0, RequestID: requestID}, nil
+		PlatformAppScreenshotOutput{App: appName, AppID: options.AppID, Env: options.Env, Page: captured.Page, Tab: captured.Tab, Width: captured.Width, Height: captured.Height, Mobile: options.Mobile, Tablet: options.Tablet, Orientation: options.Orientation, MIMEType: captured.MIMEType, VisibleText: captured.Text, Diagnostics: captured.Diagnostics, Trace: captured.Trace, ScriptResultJSON: captured.ScriptResultJSON, ChecksPassed: appCaptureChecksPassed(captured), RequestID: requestID}, nil
+}
+
+func appCaptureChecksPassed(captured *appcapture.Result) bool {
+	diagnostics := captured.Diagnostics
+	if len(diagnostics.ActionErrors)+len(diagnostics.ScriptErrors)+len(diagnostics.PageErrors)+len(diagnostics.ConsoleErrors) > 0 {
+		return false
+	}
+	for _, step := range captured.Trace {
+		if step.Kind == "error" || step.Kind == "handler-error" || step.Kind == "bridge-error" {
+			return false
+		}
+	}
+	return true
 }

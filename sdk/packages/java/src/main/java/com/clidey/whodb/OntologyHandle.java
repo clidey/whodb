@@ -343,4 +343,14 @@ public final class OntologyHandle {
         Map<String, Object> wire = result instanceof Map<?, ?> ? (Map<String, Object>) result : Map.of();
         return Hydrator.hydrateRows(wire, null);
     }
+
+    /** Promotes the draft ontology: snapshots it and makes it the active production version. {@code message} may be null. */
+    public Map<String, Object> promote(String message) {
+        return client.versions().promote("ontology", String.valueOf(entityMeta().get("id")), message);
+    }
+
+    /** Lists the ontology's promoted versions, newest first. */
+    public List<Map<String, Object>> versions() {
+        return client.versions().list("ontology", String.valueOf(entityMeta().get("id")));
+    }
 }

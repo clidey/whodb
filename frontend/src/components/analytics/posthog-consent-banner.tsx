@@ -21,6 +21,7 @@ import {SettingsActions} from '../../store/settings';
 import {getStoredConsentState, optInUser, optOutUser} from '../../config/posthog';
 import {featureFlags, getAppName} from '../../config/features';
 import {useTranslation} from '../../hooks/use-translation';
+import {XMarkIcon} from '../heroicons';
 
 export const PosthogConsentBanner = () => {
     const { t } = useTranslation('components/posthog-consent-banner');
@@ -59,18 +60,17 @@ export const PosthogConsentBanner = () => {
     }
 
     return (
-        <div className="fixed bottom-3 left-1/2 z-50 w-full max-w-xl -translate-x-1/2 px-4">
+        <div className="ce-telemetry-notice fixed bottom-4 right-4 z-50 w-[min(360px,calc(100vw-32px))]">
             <div
                 className={cn(
-                    'rounded-lg border border-neutral-200 bg-background/95 p-4 shadow-xl',
-                    'backdrop-blur supports-[backdrop-filter]:bg-background/80',
-                    'dark:border-neutral-800'
+                    'relative rounded-lg border border-border bg-card p-4 shadow-xl'
                 )}
             >
-                <div className="flex flex-col gap-3 text-sm">
+                <Button variant="ghost" size="icon" onClick={() => { setVisible(false); }} className="absolute right-1 top-1 size-7" aria-label={t('dismiss')}><XMarkIcon className="size-3" /></Button>
+                <div className="flex flex-col gap-3 pr-2 text-sm">
                     <div>
-                        <p className="text-base font-semibold">{t('title')}</p>
-                        <p className="text-muted-foreground mt-1 leading-relaxed">
+                        <p className="text-sm font-semibold">{t('title')}</p>
+                        <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
                             {t('message', { appName })}
                         </p>
                     </div>

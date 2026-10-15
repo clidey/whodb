@@ -21,6 +21,7 @@ use std::sync::Mutex;
 
 use crate::client::Client;
 use crate::error::{Error, Result};
+use crate::facade_util::str_field;
 use crate::gen::operations as ops;
 use crate::hydrate::{hydrate_rows, property_types_of, Row};
 use crate::manifest_check::warn_if_flagged;
@@ -414,6 +415,22 @@ impl<'client> OntologyHandle<'client> {
             .execute(ops::ontology_follow_link_request(variables))?;
         let (rows, _) = hydrate_rows(&result, &Map::new());
         Ok(rows)
+    }
+
+    /// Promotes the draft ontology: snapshots it and makes it the active production version.
+    pub fn promote(&self, message: Option<&str>) -> Result<Value> {
+        let id = str_field(&self.entity_meta()?, "id");
+        self.client
+            .versions()
+            .promote("ontology", id.as_str().unwrap_or_default(), message)
+    }
+
+    /// Lists the ontology's promoted versions, newest first.
+    pub fn versions(&self) -> Result<Vec<Value>> {
+        let id = str_field(&self.entity_meta()?, "id");
+        self.client
+            .versions()
+            .list("ontology", id.as_str().unwrap_or_default())
     }
 }
 

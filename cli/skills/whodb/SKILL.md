@@ -1,15 +1,79 @@
 ---
 name: whodb
-description: Database operations including querying, schema exploration, and data analysis. Activates for tasks involving PostgreSQL, MySQL, MariaDB, TiDB, SQLite, MongoDB, Redis, Elasticsearch, or ClickHouse databases.
+description: Work with WhoDB platform hosts, organizations, projects, and resources through MCP, or use database-only MCP tools when database mode is configured.
 ---
 
 # WhoDB Database Assistant
 
 You have access to WhoDB for database operations. Use these tools and commands to help users with database tasks.
 
-## MCP Tools (Preferred)
+## Platform MCP (default)
 
-When the WhoDB MCP server is available, use these tools directly:
+`whodb mcp serve` exposes hosted platform tools. Sign in to each required host with
+`whodb login --host <url>`. Start with `whodb_platform_hosts` to discover saved
+hosts and accounts, then `whodb_platform_orgs` with `workspace: {host}` and
+`whodb_platform_projects` with `workspace: {host, org}`.
+
+When the user wants the whole conversation on one host (for example UAT or
+production), call `whodb_platform_session_use` once with
+`workspace: {host, org, project}`. It verifies the login, resolves canonical IDs,
+and becomes the default for later calls in this MCP session only. It is never
+saved to disk, so other chats and terminals keep their own defaults. Confirm
+with `whodb_platform_status`, which reports `session_scope`. Use
+`whodb_platform_session_clear` to drop it.
+
+For one-off calls to another host or project, pass an explicit
+`workspace: {host, org, project}` on that call. Resolve it first with
+`whodb_platform_workspace_resolve` if unsure. Per-call targets, including
+parallel calls, never change the session default or saved defaults. Check the
+returned `scope`. Resolution order for an omitted `workspace`: session default,
+then process overrides, then saved defaults. Do not run `whodb use` to switch
+hosts for one chat; it rewrites the saved default for every session. Read
+`whodb://platform/schema` for operations and payloads.
+
+To answer a question about ontology data, call `whodb_platform_ontology_describe`
+first to learn entity and property names, then `whodb_platform_ontology_aggregate`
+for exact counts, sums and group-bys, or `whodb_platform_ontology_query` for
+filtered rows, search and joins (bounded scan, max 5000 rows). Drill into rows
+with `whodb_platform_ontology_rows`. For bulk inserts use
+`whodb_platform_add_ontology_records` with an `idempotency_key`. Preview behavior
+actions with `whodb_platform_ontology_action_preview` before executing them.
+
+Writes return a preview bound to its host, account, organization, and project.
+Confirm only after approval of that exact preview. Changing defaults does not
+redirect a pending confirmation. Ask for `whodb login --host <url>` when a host
+needs authentication; no separate login is needed per project.
+
+## Guided setup
+
+This skill is optional. WhoDB MCP supplies its own instructions, tool schemas,
+and setup guidance. Prefer live MCP discovery if this skill differs from it.
+Keep one entry: command `whodb`, args `["mcp", "serve"]`.
+
+Use `whodb_mcp_setup` with `action: "inspect"` to discover settings, targets,
+choices, and the settings schema. Ask the user what they want, then use
+`action: "preview"` with a `patch`. Show the proposed settings and obtain approval
+before `action: "apply"` with the returned `confirmation_token` and `approved: true`.
+Do not send a patch with apply. Tokens expire after five minutes; only the latest
+preview is valid. Restart MCP after changed settings, then use `action: "verify"`.
+Verification checks active settings. Omitted patch fields are preserved.
+
+No shell access is required for this flow. Browser sign-in and credential entry
+remain user actions; never request credentials in chat. If setup tools are
+filtered out, ask the user to run `whodb setup`. CLI agents can alternatively use
+`whodb setup inspect`, `validate`, `apply --yes`, and `verify`.
+Inspect `whodb://mcp/configuration` for active modules and restrictions.
+Platform calls target `workspace`; database calls target `connection`.
+
+## Database-only MCP
+
+Enable the database module through `whodb setup`; both modules can run in the same `whodb mcp serve` connection. `--database` remains an advanced process override.
+This connects directly to databases without a WhoDB platform server; databases
+can be remote. The terminal UI is available with `whodb --tui`.
+
+### Database tools
+
+When database-only MCP is configured, use these tools directly:
 
 ### whodb_connections
 List all available database connections.

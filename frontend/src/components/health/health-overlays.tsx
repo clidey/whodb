@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-import { Button, cn, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, toast } from '@clidey/ux';
+import { Button, Card, CardContent, CardFooter, cn, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, toast } from '@clidey/ux';
+import { Spinner } from '@/components/loading';
+import { healthCheckService } from '@/services/health-check';
 import { createPortal } from 'react-dom';
 import { useTranslation } from '@/hooks/use-translation';
 import { useAppSelector } from '@/store/hooks';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { PublicRoutes } from '@/config/routes';
 import { performLogout } from '@/config/logout-handler';
-import { XCircleIcon } from '@heroicons/react/24/outline';
-import { useState } from 'react';
+import { ArrowPathIcon, SignalSlashIcon, XCircleIcon } from '@heroicons/react/24/outline';
+import { useEffect, useState } from 'react';
 import type { LocalLoginProfile } from '@/store/auth';
 import { useProfileSwitch } from '@/hooks/use-profile-switch';
 import { getAppName } from '@/config/features';
@@ -50,7 +52,7 @@ function getProfileLabel(profile: LocalLoginProfile): string {
 
 /**
  * ServerDownOverlay displays when the backend server is unreachable.
- * Shows a reconnection message with a spinner.
+ * Shows reconnection status and offers an immediate retry.
  * On login page: shows when login fails with network error
  * When logged in: shows when health check detects server down
  */
@@ -58,6 +60,8 @@ export const ServerDownOverlay = () => {
     const { t } = useTranslation('components/health-overlay');
     const appName = getAppName();
     const serverStatus = useAppSelector(state => state.health.serverStatus);
+    const [secondsUntilRetry, setSecondsUntilRetry] = useState<number | null>(null);
+    const [isRetrying, setIsRetrying] = useState(false);
 
     // Show overlay whenever server status is explicitly 'error'
     // This happens when:
@@ -65,35 +69,72 @@ export const ServerDownOverlay = () => {
     // 2. Health check detects server down (when logged in)
     const shouldShow = serverStatus === 'error';
 
+    useEffect(() => {
+        if (!shouldShow) return;
+
+        const updateRetryTime = () => {
+            setSecondsUntilRetry(healthCheckService.getSecondsUntilNextCheck());
+        };
+        updateRetryTime();
+        const intervalId = setInterval(updateRetryTime, 250);
+        return () => {
+            clearInterval(intervalId);
+        };
+    }, [shouldShow]);
+
+    const handleRetry = async () => {
+        setIsRetrying(true);
+        try {
+            await healthCheckService.forceCheck();
+        } finally {
+            setIsRetrying(false);
+        }
+    };
+
     if (!shouldShow) {
         return null;
     }
 
     return createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm">
-            <div
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/60 px-4 backdrop-blur-[3px]">
+            <Card
                 data-testid="health-overlay"
+                role="alertdialog"
+                aria-modal="true"
+                aria-labelledby="server-down-title"
+                aria-describedby="server-down-message"
                 className={cn(
-                    'w-full max-w-md rounded-lg border border-destructive/50 bg-background p-6 shadow-2xl',
+                    'w-full max-w-sm gap-0 overflow-hidden rounded-xl border-border bg-card py-0 shadow-2xl',
                     'animate-in fade-in zoom-in-95 duration-300'
                 )}
             >
-                <div className="flex flex-col items-center gap-4 text-center">
-                    <XCircleIcon className="h-12 w-12 text-destructive" />
-                    <div>
-                        <h2 className="text-xl font-semibold text-foreground">
-                            {t('serverDownTitle')}
-                        </h2>
-                        <p className="mt-2 text-sm text-muted-foreground">
-                            {t('serverDownMessage', { appName })}
-                        </p>
+                <CardContent className="px-5 pb-4 pt-5">
+                    <div className="flex size-9 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
+                        <SignalSlashIcon className="size-5" aria-hidden="true" />
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                        <span>{t('reconnecting')}</span>
+                    <h2 id="server-down-title" className="mt-3 text-lg font-semibold text-foreground">
+                        {t('serverDownTitle')}
+                    </h2>
+                    <p id="server-down-message" className="mt-1 text-sm text-muted-foreground">
+                        {t('serverDownMessage', { appName })}
+                    </p>
+                    <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
+                        <Spinner className="size-5" aria-hidden="true" />
+                        <span className="font-medium text-foreground">{t('reconnecting')}</span>
+                        {secondsUntilRetry !== null && (
+                            <span className="ml-auto tabular-nums">
+                                {t('retryingIn', { seconds: secondsUntilRetry })}
+                            </span>
+                        )}
                     </div>
-                </div>
-            </div>
+                </CardContent>
+                <CardFooter className="justify-end border-t border-border px-5 pb-3 !pt-3">
+                    <Button size="sm" onClick={() => void handleRetry()} disabled={isRetrying}>
+                        <ArrowPathIcon className="size-3.5" aria-hidden="true" />
+                        {t('retryNow')}
+                    </Button>
+                </CardFooter>
+            </Card>
         </div>,
         document.body
     );
@@ -186,7 +227,7 @@ export const DatabaseDownOverlay = () => {
                         </div>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground pl-9">
-                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                        <Spinner className="size-4" />
                         <span>{t('reconnecting')}</span>
                     </div>
 

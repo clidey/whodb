@@ -24,6 +24,7 @@ export type IChatMessage = AiChatMessage & {
     isUserInput?: boolean;
     isStreaming?: boolean;
     id?: number;
+    activity?: string[];
 };
 
 export type ChatSession = {
@@ -103,6 +104,12 @@ export const houdiniSlice = createSlice({
                 message.Text = action.payload.Text;
             }
         }
+    },
+    setChatActivity: (state, action: PayloadAction<{ id: number; activity: string[]; sessionId?: string }>) => {
+        const targetId = action.payload.sessionId ?? state.activeSessionId;
+        const messages = targetId ? state.sessions.find(session => session.id === targetId)?.messages : state.chats;
+        const message = messages?.find(chat => chat.id === action.payload.id);
+        if (message) message.activity = action.payload.activity;
     },
     completeStreamingMessage: (state, action: PayloadAction<{ id: number; message: Partial<IChatMessage>; sessionId?: string }>) => {
         const targetId = action.payload.sessionId ?? state.activeSessionId;

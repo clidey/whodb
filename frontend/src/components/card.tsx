@@ -23,8 +23,8 @@ import {
   Sheet,
   SheetContent,
   SheetTitle,
-  Spinner,
-} from "@clidey/ux";
+  } from "@clidey/ux";
+import { Spinner } from '@/components/loading';
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import type { FC, ReactElement, ReactNode} from "react";
 import {cloneElement, useEffect, useState,} from "react";

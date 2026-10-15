@@ -17,6 +17,9 @@
 import { test, expect, forEachDatabase } from '../../support/test-fixture.mjs';
 import { TIMEOUT } from '../../support/helpers/test-utils.mjs';
 
+// EE runs set EE_E2E_DIR; CE renders a simplified chat result view without the data grid or history sidebar.
+const isCE = !process.env.EE_E2E_DIR;
+
 async function waitForPersistedProviderSelection(page) {
     await expect.poll(
         () => page.evaluate(() => {
@@ -265,10 +268,12 @@ test.describe('Chat AI Integration', () => {
                 let exportResponsePromise;
 
                 await test.step('set up export listener and generate query results', async () => {
-                    exportResponsePromise = page.waitForResponse(
-                        (response) => response.url().includes('/api/export'),
-                        { timeout: 15000 }
-                    );
+                    if (!isCE) {
+                        exportResponsePromise = page.waitForResponse(
+                            (response) => response.url().includes('/api/export'),
+                            { timeout: 15000 }
+                        );
+                    }
 
                     await whodb.mockChatResponse([{
                         type: 'sql:get',
@@ -285,6 +290,25 @@ test.describe('Chat AI Integration', () => {
                     await whodb.sendChatMessage('Show me all users');
                     await whodb.waitForChatResponse();
                 });
+
+                if (isCE) {
+                    await test.step('download CSV from the result actions', async () => {
+                        const downloadPromise = page.waitForEvent('download');
+                        await page.locator('[data-testid="chat-result-export"]').last().click();
+                        const download = await downloadPromise;
+                        expect(download.suggestedFilename()).toEqual('chat-result.csv');
+
+                        const stream = await download.createReadStream();
+                        const chunks = [];
+                        for await (const chunk of stream) {
+                            chunks.push(chunk);
+                        }
+                        expect(Buffer.concat(chunks).toString('utf-8')).toEqual(
+                            '"id","username"\n"1","john_doe"\n"2","jane_smith"'
+                        );
+                    });
+                    return;
+                }
 
                 await test.step('open export dialog and confirm', async () => {
                     await page.locator('[data-testid="export-all-button"]').last().click();
@@ -307,6 +331,7 @@ test.describe('Chat AI Integration', () => {
             });
 
             test('does not show "Export Selected" options in context menu', async ({ whodb, page }) => {
+                test.skip(isCE, 'CE chat results have no context menu');
                 await whodb.gotoChat();
 
                 await whodb.mockChatResponse([{
@@ -340,6 +365,7 @@ test.describe('Chat AI Integration', () => {
             });
 
             test('preselects Excel when "Export All as Excel" is chosen from context menu', async ({ whodb, page }) => {
+                test.skip(isCE, 'CE chat results have no context menu');
                 await whodb.gotoChat();
 
                 await whodb.mockChatResponse([{
@@ -447,7 +473,7 @@ test.describe('Chat AI Integration', () => {
                 await test.step('open add provider dialog', async () => {
                     await page.locator('[data-testid="ai-provider-select"]').click();
                     await page.getByText('Add a provider').click();
-                    await expect(page.locator('h2, .text-lg').filter({ hasText: /add.*external.*(model|provider)/i })).toBeVisible({ timeout: 5000 });
+                    await expect(page.locator('h2, .text-lg').filter({ hasText: /add.*provider/i })).toBeVisible({ timeout: 5000 });
                 });
 
                 await test.step('verify available external providers', async () => {
@@ -497,7 +523,7 @@ test.describe('Chat AI Integration', () => {
                     await page.locator('[data-testid="ai-provider-select"]').click();
                     await page.getByText('Add a provider').click();
 
-                    await expect(page.locator('label').filter({ hasText: /token/i })).toBeVisible();
+                    await expect(page.locator('label').filter({ hasText: /token|api key/i })).toBeVisible();
                     await expect(page.locator('input[type="password"]')).toBeVisible();
                 });
 
@@ -519,21 +545,21 @@ test.describe('Chat AI Integration', () => {
                     await page.locator('[data-testid="ai-provider-select"]').click();
                     await page.waitForTimeout(500); // Wait for dropdown to fully open
                     await page.getByText('Add a provider').click();
-                    await expect(page.locator('h2, .text-lg').filter({ hasText: /add.*external.*(model|provider)/i })).toBeVisible({ timeout: 5000 });
+                    await expect(page.locator('h2, .text-lg').filter({ hasText: /add.*provider/i })).toBeVisible({ timeout: 5000 });
                 });
 
                 await test.step('select provider and verify token input', async () => {
                     await page.locator('[data-testid="external-model-type-select"]').click();
                     await page.locator('[role="option"]').filter({ hasText: 'Anthropic' }).click();
 
-                    await expect(page.locator('label').filter({ hasText: /token/i })).toBeVisible();
+                    await expect(page.locator('label').filter({ hasText: /token|api key/i })).toBeVisible();
                     await expect(page.locator('input[type="password"]')).toBeVisible();
                     await expect(page.locator('[data-testid="external-model-submit"]')).toBeVisible();
                 });
 
                 await test.step('submit without token and verify validation', async () => {
                     await page.locator('[data-testid="external-model-submit"]').click();
-                    await expect(page.locator('h2, .text-lg').filter({ hasText: /add.*external.*(model|provider)/i })).toBeVisible();
+                    await expect(page.locator('h2, .text-lg').filter({ hasText: /add.*provider/i })).toBeVisible();
 
                     await page.locator('[data-testid="external-model-cancel"]').click();
                 });

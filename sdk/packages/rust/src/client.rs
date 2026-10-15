@@ -3,12 +3,19 @@
 use serde_json::{Map, Value};
 use std::sync::{Mutex, OnceLock};
 
+use crate::admin::{LineageProvidersHandle, ServiceAccountsHandle, SharingHandle};
 use crate::auth::{CliCredentials, CredentialProvider, StaticCredentials};
+use crate::dataset::DatasetHandle;
 use crate::error::{interpret_server_error, Error, Result};
+use crate::facade_util::as_list;
+use crate::functions::{FunctionHandle, FunctionsHandle};
 use crate::gen::operations as ops;
 use crate::manifest_check::warn_if_flagged;
 use crate::ontology::OntologyHandle;
+use crate::source::SourceHandle;
+use crate::transforms::{TransformHandle, TransformsHandle};
 use crate::transport::{HttpTransport, Transport};
+use crate::versions::VersionsHandle;
 
 /// The hosted WhoDB platform endpoint.
 pub const DEFAULT_HOST: &str = "https://app.whodb.com";
@@ -248,6 +255,86 @@ impl Client {
 
     pub(crate) fn project_id(&self) -> Result<String> {
         Ok(self.resolve_workspace()?.1)
+    }
+
+    pub(crate) fn org_id(&self) -> Result<String> {
+        Ok(self.resolve_workspace()?.0)
+    }
+
+    /// Returns a handle for one dataset, addressed by name.
+    pub fn dataset(&self, name: &str) -> DatasetHandle<'_> {
+        DatasetHandle {
+            client: self,
+            name: name.to_string(),
+            dataset: Mutex::new(None),
+        }
+    }
+
+    /// Returns a handle for one connected source, addressed by source ID.
+    pub fn source(&self, source_id: &str) -> SourceHandle<'_> {
+        SourceHandle {
+            client: self,
+            source_id: source_id.to_string(),
+        }
+    }
+
+    /// Lists the project's connected sources.
+    pub fn sources(&self) -> Result<Vec<Value>> {
+        let project_id = self.project_id()?;
+        warn_if_flagged("ProjectSources");
+        let mut variables = Map::new();
+        variables.insert("projectId".to_string(), Value::String(project_id));
+        Ok(as_list(
+            self.execute(ops::project_sources_request(variables))?,
+        ))
+    }
+
+    /// Returns the project's transform collection facade.
+    pub fn transforms(&self) -> TransformsHandle<'_> {
+        TransformsHandle { client: self }
+    }
+
+    /// Returns a handle for one transform, addressed by name or id.
+    pub fn transform(&self, name: &str) -> TransformHandle<'_> {
+        TransformHandle {
+            client: self,
+            name: name.to_string(),
+            transform: Mutex::new(None),
+        }
+    }
+
+    /// Returns the project's function collection facade.
+    pub fn functions(&self) -> FunctionsHandle<'_> {
+        FunctionsHandle { client: self }
+    }
+
+    /// Returns a handle for one function, addressed by name or id.
+    pub fn function(&self, name: &str) -> FunctionHandle<'_> {
+        FunctionHandle {
+            client: self,
+            name: name.to_string(),
+            function: Mutex::new(None),
+        }
+    }
+
+    /// Returns the organization's service account facade.
+    pub fn service_accounts(&self) -> ServiceAccountsHandle<'_> {
+        ServiceAccountsHandle { client: self }
+    }
+
+    /// Returns the project's lineage provider facade.
+    pub fn lineage_providers(&self) -> LineageProvidersHandle<'_> {
+        LineageProvidersHandle { client: self }
+    }
+
+    /// Returns the project's ontology sharing facade.
+    pub fn sharing(&self) -> SharingHandle<'_> {
+        SharingHandle { client: self }
+    }
+
+    /// Returns the versioning and promotion facade.
+    pub fn versions(&self) -> VersionsHandle<'_> {
+        VersionsHandle { client: self }
     }
 
     /// Returns a handle for one ontology entity, addressed by apiName.

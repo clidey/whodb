@@ -1,4 +1,17 @@
 en_US:
+  filter: Filter
+  filters: Filters
+  clearAll: Clear all
+  and: AND
+  or: OR
+  joinConditions: Join conditions
+  whereClause: WHERE CLAUSE
+  whereKeyword: WHERE
+  applyFilters: Apply {count} filters
+  applyFilters_one: Apply {count} filter
+  addFilter: Add a filter
+  applyFilter: Apply filter
+  columnTypeHint: "{column} is a {type} column."
   field: Field
   operator: Operator
   value: Value

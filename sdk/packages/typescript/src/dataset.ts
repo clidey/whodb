@@ -3,6 +3,8 @@ import * as ops from './generated/operations.js';
 import type { Dataset } from './generated/types.js';
 import { hydrateRows, type Row } from './hydrate.js';
 import { warnIfFlagged } from './manifest-check.js';
+import { VersionsHandle } from './versions.js';
+import type { ObjectVersion } from './generated/types.js';
 import { NotFoundError } from './errors.js';
 
 /** Options for dataset row reads. */
@@ -51,5 +53,16 @@ export class DatasetHandle {
       },
     });
     return hydrateRows(result);
+  }
+  /** Promotes the draft dataset: snapshots it and makes it the active production version. */
+  async promote(message?: string): Promise<ObjectVersion> {
+    const dataset = await this.meta();
+    return new VersionsHandle(this.transport, this.projectId).promote('dataset', dataset.id, message);
+  }
+
+  /** Lists the dataset's promoted versions, newest first. */
+  async versions(): Promise<ObjectVersion[]> {
+    const dataset = await this.meta();
+    return new VersionsHandle(this.transport, this.projectId).list('dataset', dataset.id);
   }
 }

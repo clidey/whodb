@@ -35,6 +35,19 @@ func init() {
 			{Name: "token", Type: "string", Secret: true, Description: "Optional provider token"},
 		},
 	}
+	PayloadShapes["action:clone:app"] = PayloadShape{
+		Key: "action:clone:app", Resource: "app", Action: "clone", Description: "Copy an app and all of its draft files into a target project on the server, all or nothing. projectId is the source project and is injected. Ontology and function bindings are remapped by name; unmatched bindings are dropped and reported as warnings. Undo an overwrite with action:restore_version_to_draft:app and the returned backupVersion.",
+		Fields: []PayloadField{
+			{Name: "appId", Type: "ID", Required: true, Description: "Source app id"},
+			{Name: "targetProjectId", Type: "ID", Required: true, Description: "Project that receives the copy"},
+			{Name: "targetOrgId", Type: "ID", Description: "Organization of the target project when it differs from the selected organization"},
+			{Name: "name", Type: "string", Required: true, Description: "Name of the cloned app"},
+			{Name: "overwrite", Type: "boolean", Description: "Update an existing target app with the same name instead of failing; its draft is first saved as backupVersion"},
+			{Name: "files", Type: "[AppFileInput!]", Description: "Files as [{\"path\":\"app.json\",\"content\":\"...\"}] that replace source files by path in the same transaction"},
+			{Name: "dryRun", Type: "boolean", Description: "Run every check and return the plan without writing"},
+		},
+		Examples: []string{`{"appId":"app-id","targetProjectId":"project-id","name":"Customer portal (copy)"}`},
+	}
 	PayloadShapes["action:upsert_file:app"] = PayloadShape{
 		Key: "action:upsert_file:app", Resource: "app", Action: "upsert_file", Description: "Create or replace an app file.",
 		Fields: []PayloadField{{Name: "appId", Type: "ID", Required: true, Description: "App id"}, {Name: "path", Type: "string", Required: true, Description: "File path"}, {Name: "content", Type: "string", Required: true, Description: "File content"}},

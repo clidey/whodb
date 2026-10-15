@@ -224,7 +224,9 @@ export const tableMethods = {
             const table = Array.from(document.querySelectorAll("table"))
                 .find((el) => el.querySelector("tbody tr"));
             if (table) {
-                const columns = Array.from(table.querySelectorAll("th")).map((el) => el.innerText.trim());
+                // Headers also render key badges and the column type, so prefer the column-name attribute.
+                const columns = Array.from(table.querySelectorAll("th"))
+                    .map((el) => el.getAttribute("data-column-name") ?? el.innerText.trim());
                 const rows = Array.from(table.querySelectorAll("tbody tr")).map((row) => {
                     return Array.from(row.querySelectorAll("td")).map((cell) => cell.innerText.trim());
                 });
@@ -258,6 +260,10 @@ export const tableMethods = {
     async setTablePageSize(pageSize) {
         await this.page.locator('[data-testid="table-page-size"]').click();
         await this.page.locator(`[role="option"][data-value="${pageSize}"]`).click();
+        // While the listbox is open Radix hides the rest of the page from the accessibility tree,
+        // so make sure it has closed before callers query roles.
+        await this.page.locator('[role="listbox"]').waitFor({ state: "hidden", timeout: TIMEOUT.ELEMENT });
+        await expect(this.page.locator('[data-testid="table-page-size"]')).toContainText(String(pageSize));
     },
 
     /**

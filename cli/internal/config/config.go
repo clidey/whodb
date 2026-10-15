@@ -26,6 +26,7 @@ import (
 
 	"github.com/clidey/whodb/cli/pkg/identity"
 	"github.com/clidey/whodb/core/graph/model"
+	"github.com/clidey/whodb/core/src/analytics"
 	"github.com/clidey/whodb/core/src/common/config"
 	"github.com/clidey/whodb/core/src/common/datadir"
 	"github.com/clidey/whodb/core/src/env"
@@ -33,7 +34,7 @@ import (
 )
 
 var (
-	globalUseKeyring                  bool
+	keyringMu                         sync.Mutex
 	keyringAvailable                  *bool // Cached result of keyring availability check
 	platformRefreshTokenStoreOverride platformRefreshTokenStore
 )
@@ -113,10 +114,13 @@ type PlatformHost struct {
 
 // PlatformManifestCache stores non-secret hosted platform contract metadata.
 type PlatformManifestCache struct {
-	PlatformVersion         string          `json:"platform_version"`
-	ManifestProtocolVersion string          `json:"manifest_protocol_version"`
-	FetchedAt               string          `json:"fetched_at"`
-	Raw                     json.RawMessage `json:"raw"`
+	PlatformVersion         string `json:"platform_version"`
+	ManifestProtocolVersion string `json:"manifest_protocol_version"`
+	FetchedAt               string `json:"fetched_at"`
+	// CheckedAt is when the cached manifest was last confirmed current against
+	// the server version; commands skip that check for a while afterwards.
+	CheckedAt string          `json:"checked_at,omitempty"`
+	Raw       json.RawMessage `json:"raw"`
 }
 
 // PlatformConfig stores hosted WhoDB CLI configuration.
@@ -236,6 +240,13 @@ func ResetPathsForTesting() {
 	config.ResetConfigPath()
 }
 
+// InstallID returns this install's anonymous analytics identifier, a random
+// UUID persisted in the CLI config directory. It identifies the install, not
+// the user or machine; deleting the config resets it.
+func InstallID() string {
+	return analytics.InstallID(getConfigOptions())
+}
+
 func getConfigOptions() datadir.Options {
 	return datadir.Options{
 		AppName:           "whodb",
@@ -262,6 +273,8 @@ func GetConfigPath() (string, error) {
 
 // isKeyringAvailable tests if the OS keyring is accessible
 func isKeyringAvailable() bool {
+	keyringMu.Lock()
+	defer keyringMu.Unlock()
 	if keyringAvailable != nil {
 		return *keyringAvailable
 	}
@@ -290,7 +303,6 @@ func loadConfig(includeSecrets, showWarnings bool) (*Config, error) {
 	}
 
 	useKeyring := isKeyringAvailable()
-	globalUseKeyring = useKeyring
 
 	cfg := DefaultConfig()
 	cfg.useKeyring = useKeyring
@@ -336,7 +348,7 @@ func (c *Config) showKeyringWarning() {
 }
 
 func (c *Config) Save() error {
-	globalUseKeyring = c.useKeyring
+	useKeyring := c.useKeyring
 
 	if c.useKeyring {
 		for _, conn := range c.Connections {
@@ -347,14 +359,14 @@ func (c *Config) Save() error {
 				if err := keyring.Set(identity.Current().KeyringService, "connection:"+conn.Name, conn.Password); err != nil {
 					fmt.Fprintf(os.Stderr, "Warning: Could not save password to keyring for %s: %v\n", conn.Name, err)
 					fmt.Fprintf(os.Stderr, "Password will be saved in config file.\n")
-					globalUseKeyring = false
+					useKeyring = false
 				}
 			}
 			if conn.SSHPassword != "" {
 				if err := keyring.Set(identity.Current().KeyringService, "connection-ssh:"+conn.Name, conn.SSHPassword); err != nil {
 					fmt.Fprintf(os.Stderr, "Warning: Could not save SSH password to keyring for %s: %v\n", conn.Name, err)
 					fmt.Fprintf(os.Stderr, "SSH password will be saved in config file.\n")
-					globalUseKeyring = false
+					useKeyring = false
 				}
 			}
 		}
@@ -362,7 +374,7 @@ func (c *Config) Save() error {
 
 	// Prepare section for saving (strip secrets if using keyring)
 	section := c.CLISection
-	if globalUseKeyring {
+	if useKeyring {
 		// Create a copy with secrets stripped so they are not written to disk.
 		section.Connections = make([]Connection, len(c.Connections))
 		for i, conn := range c.Connections {

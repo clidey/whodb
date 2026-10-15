@@ -39,8 +39,8 @@ func TestResolveLogPath(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			if got := resolveLogPath(tc.input, fallback); got != tc.expected {
-				t.Fatalf("resolveLogPath(%q, %q) = %q, expected %q", tc.input, fallback, got, tc.expected)
+			if got := ResolveLogPath(tc.input, fallback); got != tc.expected {
+				t.Fatalf("ResolveLogPath(%q, %q) = %q, expected %q", tc.input, fallback, got, tc.expected)
 			}
 		})
 	}

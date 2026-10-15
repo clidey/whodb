@@ -235,8 +235,8 @@ export WHODB_MYSQL_1='{"alias":"dev","host":"localhost","user":"user","password"
 ### 2. Start Interactive Mode
 
 ```bash
-# Start the TUI (default behavior)
-whodb
+# Start the database TUI
+whodb --tui
 ```
 
 ### 3. Execute a Quick Query
@@ -699,6 +699,129 @@ whodb profiles delete production --format json
 whodb --profile production
 ```
 
+## Startup modes
+
+Bare `whodb` shows saved platform login/workspace metadata and next commands;
+`whodb status` checks the live login. Use `whodb --tui` for the existing database
+terminal UI. Explicit `connect`, `query`, and `--profile` behavior is unchanged.
+
+`whodb setup` saves the modules and access settings used by `whodb mcp serve`.
+Platform tools are enabled by default. Enable database-only tools or both modules
+in setup; every configuration uses the same MCP command. `--database` remains an
+advanced override for a database-only process, and `--platform` remains a
+compatibility override for platform-only tools. Both modules support stdio and
+HTTP transports; database-only does not imply that the database is local.
+
+## Guided MCP setup
+
+Run `whodb setup` once. The wizard lets you choose modules, write access, hosts,
+database connections, and optional restrictions. It previews the settings before
+saving, offers browser sign-in for platform hosts, and can verify connections.
+Existing settings are the defaults when you run the wizard again. You can also
+choose an optional default platform workspace using canonical organization and
+project IDs. Password entry is hidden and passwords are stored through the existing CLI credential store.
+
+Keep one entry in your MCP client:
+
+```json
+{
+  "mcpServers": {
+    "whodb": {"command": "whodb", "args": ["mcp", "serve"]}
+  }
+}
+```
+
+### Agent-guided setup
+
+**MCP is self-sufficient; skills are optional supplements.** The server supplies
+startup instructions, tool descriptions, schemas, workflow guidance, and recovery
+steps. If a WhoDB skill is installed, agents may use it as additional guidance;
+no essential setup or usage instructions require it.
+
+An agent with MCP access alone can call `whodb_mcp_setup`:
+
+1. `action: "inspect"` returns saved settings, allowed target metadata, choices,
+   schema, active process settings, and usage guidance.
+2. `action: "preview", patch: {...}` validates changes without saving and returns
+   the proposed settings and a confirmation token.
+3. After showing the exact preview and obtaining user approval,
+   `action: "apply", confirmation_token: "...", approved: true` saves that preview.
+   Do not include a patch in apply. Tokens expire after five minutes, are consumed
+   by apply, and are replaced by a newer preview. Changed saved settings invalidate
+   the preview.
+4. Restart the MCP connection after changes, then `action: "verify"` checks active
+   host logins, workspaces, and database connections. Until restart, verification
+   uses the original process settings.
+
+The setup tool manages local MCP configuration, including access restrictions;
+it always requires preview approval to save, even in allow-write mode. It follows
+normal tool filters: include `whodb_mcp_setup` when using an explicit enabled-tool
+list, or disable it to keep configuration management outside the agent. Changes
+never relax the current process's controls. Startup flags still override saved
+settings after restart. Browser sign-in and credential entry remain user actions;
+agents can relay the required commands without needing shell access.
+
+Agents with shell access can also use the non-interactive JSON commands:
+
+```bash
+whodb setup inspect
+whodb setup validate --file setup.json
+# After the user approves the proposed settings:
+whodb setup apply --file setup.json --yes
+whodb setup verify
+```
+
+`inspect` returns current settings, available target metadata, tool choices and a
+settings schema. `validate` previews the merged settings without saving. `apply`
+requires `--yes` and reports whether a restart is needed. `verify` checks the
+configured host logins and database connections, reporting each failure and next
+command. Authentication is separate: use `whodb login --host <url>` for browser
+sign-in. Agents must not request passwords or tokens in chat or setup JSON.
+
+Example `setup.json` enabling both modules with production read-only:
+
+```json
+{
+  "modules": ["platform", "database"],
+  "write_mode": "confirm",
+  "platform_policy": {
+    "allowed_hosts": ["https://uat.whodb.com", "https://app.whodb.com"],
+    "read_only_hosts": ["https://app.whodb.com"]
+  },
+  "allowed_connections": ["development"]
+}
+```
+
+Settings patches preserve omitted fields; arrays replace existing arrays. Use
+`[]` to clear a tool/connection allowlist and `"platform_policy": null` to clear
+platform restrictions. The empty allowlists mean unrestricted access. Unknown
+fields are rejected. Settings are saved in the `mcp` section of WhoDB's existing
+configuration file; applying a settings patch does not rewrite the credential or
+connection section. Use `--file -` to supply a patch on stdin.
+
+Restart an existing MCP connection after changing modules or access settings.
+An optional `default_workspace` uses `{host, org, project}` with canonical IDs.
+Explicit process flags or session environment variables replace that saved
+default target; calls with `workspace` still override it. Platform policies apply
+to platform tools; database tools use `allowed_connections` and the shared
+`write_mode`.
+
+Host/project targeting remains per-call: platform tools accept `workspace`,
+database-only tools accept `connection`. You do not need another MCP entry or a
+restart to target a different saved host/project. Read `whodb://mcp/configuration`
+for the running server's active modules and restrictions. Explicit startup flags
+override saved settings for that process without saving those overrides.
+
+To keep one chat on one host (for example UAT in one Claude Code or Codex window
+and production in another) without separate MCP entries, the agent calls
+`whodb_platform_session_use` with `workspace {host, org, project}` once. That
+default applies to later calls in that MCP session only, is never written to
+disk, and is removed with `whodb_platform_session_clear`.
+`whodb_platform_status` shows it as `session_scope`. Resolution order for a call
+without `workspace`: session default, then process flags/environment, then the
+saved CLI default. `whodb use` changes the saved default for every session, so
+it is the wrong tool for switching a single chat.
+
 ## MCP Server
 
 WhoDB can run as an MCP (Model Context Protocol) server, enabling AI assistants like Claude, Cursor, and others to query your databases.
@@ -713,7 +836,8 @@ whodb mcp serve
 whodb mcp serve --transport=http --port=3000
 ```
 
-This starts an MCP server that exposes these tools:
+The platform module exposes `whodb_platform_*` tools. Enable the database module
+in `whodb setup` to expose the following tools in the same server:
 
 | Tool | Description |
 |------|-------------|
@@ -730,10 +854,94 @@ This starts an MCP server that exposes these tools:
 | `whodb_audit` | Run data quality audits for a schema or table |
 | `whodb_suggestions` | Get backend-generated starter queries |
 
-Start with `--platform` to run hosted WhoDB platform mode. In this mode, only
-hosted platform tools are exposed; local database tools are not registered.
-Local tool selection flags such as `--tools` and `--disable-tools` do not apply
-to platform mode.
+Without saved settings, only the platform module is enabled. Setup can enable
+either module or both together.
+`--tools` and `--disable-tools` work in both modes. Platform mode uses full
+`whodb_platform_*` names; database-only mode uses short names such as `query`.
+
+### Platform access policy and tool selection
+
+Save `platform_policy` through setup to restrict access independently of saved
+logins. The advanced `--platform-policy policy.json` flag overrides that policy
+for one process. For example, allow two hosts but keep production read-only:
+
+```json
+{
+  "allowed_hosts": ["https://uat.whodb.com", "https://app.whodb.com"],
+  "read_only_hosts": ["https://app.whodb.com"]
+}
+```
+
+```bash
+whodb mcp serve --platform-policy policy.json
+whodb mcp serve --tools whodb_platform_hosts,whodb_platform_workspace_resolve,whodb_platform_sources
+whodb mcp serve --disable-tools whodb_platform_source_delete,whodb_platform_delete
+```
+
+For project restrictions, add `allowed_workspaces` or `read_only_workspaces`:
+
+```json
+{
+  "allowed_workspaces": [
+    {"host": "https://uat.whodb.com", "org": "<org-id>", "project": "<project-id>"},
+    {"host": "https://app.whodb.com", "org": "<org-id>", "project": "<project-id>"}
+  ],
+  "read_only_workspaces": [
+    {"host": "https://app.whodb.com", "org": "<org-id>", "project": "<project-id>"}
+  ]
+}
+```
+
+Policy workspace entries require canonical organization and project IDs, not
+names or slugs. Tool calls can still resolve names through `workspace`.
+When a policy is configured, include matching `workspace.org` and
+`workspace.project` when using tools with top-level `org` or `project` arguments. Host and workspace allowlists intersect; omitted or
+empty allowlists impose no restriction. Read-only rules override `--allow-write`
+and also apply when confirming an earlier preview. Global `--read-only` remains
+stricter than any per-target setting. Discovery lists omit disallowed targets.
+The policy is loaded at startup; restart MCP after changing it.
+
+Tool disabling takes precedence over enabling. Unknown platform tool names are
+rejected at startup. Include `whodb_platform_confirm` and `whodb_platform_pending`
+when selecting tools that need write confirmation. Tool filtering controls tool
+availability; generic write tools can support overlapping operations. Use
+read-only policies to block all writes to a target. Platform authorization still
+applies to every request.
+
+`whodb://platform/schema` reports the active access policy and enabled tools.
+Failed operations set MCP `isError` while preserving structured error details,
+request IDs, scope, and recovery guidance when supplied by the handler.
+
+### Per-call workspace targeting
+
+`whodb mcp serve` exposes hosted platform tools. Sign in to each required host with
+`whodb login --host <url>`. Start with `whodb_platform_hosts` to discover saved
+hosts and accounts, then `whodb_platform_orgs` with `workspace: {host}` and
+`whodb_platform_projects` with `workspace: {host, org}`.
+
+Resolve the intended target with `whodb_platform_workspace_resolve`. Pass an
+explicit `workspace: {host, org, project}` on subsequent tools when working across
+UAT, production, or projects. Targets apply to one call, including parallel calls,
+and never change saved defaults. Check the returned `scope`. Do not run `whodb use`
+to switch another session's defaults. Omitted targets use process overrides, then
+saved defaults. Read `whodb://platform/schema` for operations and payloads.
+
+Writes return a preview bound to its host, account, organization, and project.
+Confirm only after approval of that exact preview. Changing defaults does not
+redirect a pending confirmation. Persisted workflow plans from before account
+binding must be recreated before applying them. Ask for `whodb login --host <url>` when a host
+needs authentication; no separate login is needed per project.
+
+Example arguments for `whodb_platform_sources`:
+
+```json
+{"workspace":{"host":"https://uat.whodb.com","org":"acme","project":"analytics"}}
+```
+
+An explicit host uses that host's saved defaults. An explicit organization clears
+any inherited project; project-scoped operations then require a project. Invalid
+or ambiguous selectors fail instead of using another workspace. Host discovery
+reads local metadata; it does not claim the saved login is still valid.
 
 Hosted setup:
 
@@ -741,17 +949,17 @@ Hosted setup:
 # Sign in to app.whodb.com
 whodb login
 
-# Select the hosted workspace used by platform tools
+# Optional: save a default for calls without an explicit workspace
 whodb use --org <org> --project <project>
 
 # Start stdio MCP for your MCP client
-whodb mcp serve --platform
+whodb mcp serve
 
 # Read-only hosted platform MCP
-whodb mcp serve --platform --read-only
+whodb mcp serve --read-only
 
 # Hosted writes without confirmation; use only for trusted automation
-whodb mcp serve --platform --allow-write
+whodb mcp serve --allow-write
 ```
 
 To capture an actual rendered app with its current data, use the app commands
@@ -770,11 +978,14 @@ whodb apps screenshot "Clidey Sales" --install --org clidey-erp --project erp-de
 
 For a specific page or interactive state, list pages first, then pass `--page`.
 Use `--click` for a visible app control, or `--actions` for an ordered sequence.
-Selectors are Playwright selectors inside the app frame. `--js` evaluates a
+Selectors are Playwright selectors inside the app frame. Each action selector
+must match one element; scope repeated text to a node or table row. `--js` evaluates a
 JavaScript expression or IIFE in that frame after the actions; `--script-file`
 reads the expression from a file. JSON output includes the screenshot path,
 visible text, browser console errors, page errors, failed requests, HTTP error
 responses, and the JavaScript result.
+For content loaded after mount, include a `wait_for` action on an expected row
+or control so the screenshot captures the loaded state.
 An assertion in `--js` can throw an error. The command still saves the screenshot
 and JSON diagnostics, sets `checks_passed` to `false`, and exits nonzero.
 `checks_passed` confirms that actions ran and explicit `wait_for` or JavaScript
@@ -786,27 +997,127 @@ whodb apps screenshot "Clidey Sales" --org clidey-erp --project erp-demo \
   --env dev --page main --click 'text=Orders' \
   --js '(() => ({ rows: document.querySelectorAll("tr").length }))()' \
   --output sales-orders.webp --format json
+
+# Capture the same app with mobile viewport and touch behavior.
+whodb apps screenshot "Clidey Sales" --mobile --org clidey-erp --project erp-demo \
+  --output sales-orders-mobile.webp
+
+# Capture a tablet in landscape orientation.
+whodb apps screenshot "Clidey Sales" --tablet --orientation landscape \
+  --org clidey-erp --project erp-demo --output sales-orders-tablet.webp
 ```
 
-The MCP screenshot tool accepts the same `page`, `tab`, `actions`, and `script`
+The MCP screenshot tool accepts the same `page`, `tab`, `actions`, `script`, `mobile`, `tablet`, and `orientation`
 inputs, so an agent can click, fill, press, wait for a selector, or inspect DOM
 state without creating a Playwright script. For example, use an action
 `{"kind":"click","selector":"text=Orders"}` followed by a script
 `"(() => document.querySelectorAll('tr').length)()"`.
+Set `trace: true` to request an interaction trace from a compatible hosted runtime.
 
 App capture needs Node.js and npm. `setup-capture` installs Playwright and
 Chromium in the user's cache; `--install` does the same before capturing.
 Without them, the command and MCP tool return setup instructions. Existing
 Playwright installations in the WhoDB source checkout work without setup.
-Captures only allow hosted GraphQL reads and never upload or publish the image.
+Captures only allow hosted GraphQL reads by default. Use `--allow-writes` when
+the action needs a function call or another mutation. Captures never upload or
+publish the image.
 Inspect sample data and loading states before using a capture as product media.
+
+### Build an app from a local folder
+
+An app folder contains `app.json`, `pages/<page>/tree.json`, page scripts and
+state, and optional `shared/` files. `app.json` declares `name`, `defaultPage`,
+and optional `ontologies`, `readOnlyOntologies`, and `functions` arrays. Resource
+entries use the ontology API name or function name; the CLI resolves them to IDs
+in the selected project. App scripts use the normal `ctx.whodb` browser API for
+ontology and function calls.
+
+```bash
+whodb apps init ./orders --name Orders
+whodb apps check ./orders --format json
+
+# Or start from an existing hosted app's draft files and bindings.
+whodb apps init ./existing-orders --from <app-id-or-name> --org <org> --project <project>
+
+# Create the hosted app identity and bind its resources without promoting it.
+whodb apps publish ./orders --draft --org <org> --project <project>
+
+# Files are read from disk on each reload; edits are not uploaded.
+whodb apps dev ./orders --org <org> --project <project>
+
+# Replay the generated scenario, save a WebP, and return a JSON flow trace.
+whodb apps verify ./orders --scenario ./orders/scenarios/smoke.json \
+  --output /tmp/orders.webp --format json --org <org> --project <project>
+
+# Replay the same flow at a phone viewport.
+whodb apps verify ./orders --mobile --scenario ./orders/scenarios/smoke.json \
+  --output /tmp/orders-mobile.webp --format json --org <org> --project <project>
+
+# Replay at the default tablet viewport.
+whodb apps verify ./orders --tablet --scenario ./orders/scenarios/smoke.json \
+  --output /tmp/orders-tablet.webp --format json --org <org> --project <project>
+
+# Sync changed and deleted files, then promote the resulting app version.
+whodb apps publish ./orders --message "Orders v1" --org <org> --project <project>
+```
+
+`apps dev` and `apps verify` use the hosted app runner and its existing resource
+permissions while replacing app files with the local folder in the browser.
+`apps init --from` creates a new local folder from the selected app's readable
+draft files, preserving existing `app.json` settings and writing resource names
+for version control. It refuses to overwrite an existing folder. The hosted app
+is unchanged; pass its ID with `--app` to `apps dev`, `apps verify`, or
+`apps publish` if you rename the local app.
+
+`apps dev` and `apps verify` require an app in the selected project with the same resource bindings as
+`app.json`. Use `--app <id-or-name>` when the hosted name differs. Both commands
+allow app actions to write to the selected project's data by default; pass
+`--allow-writes=false` for a read-only preview. They require Node.js and the
+optional capture browser (`apps setup-capture` or `--install`).
+`--mobile` on `apps screenshot` or `apps verify` uses a 390x844 viewport with
+mobile and touch emulation. Pass `--width` and `--height` with it to test another
+phone size. `--tablet` uses an 820x1180 touch viewport. Add `--orientation
+landscape` to rotate either device preset; explicit `--width` and `--height`
+can set another size. Default filenames include `-landscape` when applicable.
+When testing a locally built app runtime, pass the directory containing
+`sandbox.html`, `sandbox-kernel.js`, and `sandbox-kernel.css` with `--kernel-dir`
+or `WHODB_APP_KERNEL_DIR`. Flow tracing requires a compatible runtime;
+`apps dev` can use the hosted runtime for visual preview.
+
+A scenario is JSON with an `actions` array. It accepts `click`, `fill`, `press`,
+`wait_for`, `wait`, `expect_text`, and `expect_not_text` actions. Selectors run
+inside the app frame; stable node IDs can be selected with
+`[data-node-id='save-button']`. For text repeated in multiple tables, scope the
+selector to a table, such as `[data-node-id='attention-table'] tbody tr:first-child`.
+An empty `value` on `fill` clears an input. `apps verify` waits for handlers and bridge calls
+to settle, then outputs visible text, browser diagnostics, and a trace of
+handlers, state writes, navigation, and WhoDB calls. It exits nonzero on a failed
+assertion or runtime error. `apps publish --dry-run` reports file changes without
+writing them. File writes update the draft one at a time; an interrupted sync
+can be completed by rerunning the command. Published file content changes only
+after promotion; changes to the app's resource bindings take effect when the
+draft metadata is updated.
+
+MCP clients can read `whodb://platform/app-workflow` or request the
+`whodb_platform_build_app_workflow` prompt for the app build sequence. The
+`whodb_platform_workflow_recipe` tool also returns an app-specific plan. Hosted
+MCP tools can inspect and edit hosted draft files and capture hosted views.
+`whodb_platform_app_screenshot` accepts `trace: true` on runtimes that support
+interaction tracing. `whodb_platform_app_components`,
+`whodb_platform_app_component`, `whodb_platform_app_sdks`, and
+`whodb_platform_app_sdk` read the same reference material as the in-app builder
+when the hosted platform advertises that capability.
+`whodb_platform_app_logic_graph` runs the builder's interaction and function
+contract audit on an authorized hosted draft. A
+client needs local filesystem and CLI access to use `apps init`, `apps dev`,
+`apps verify`, and `apps publish` against a version-controlled folder.
 
 Local or staging setup:
 
 ```bash
 whodb login --host http://localhost:8080
 whodb use --host http://localhost:8080 --org <org> --project <project>
-whodb mcp serve --platform
+whodb mcp serve
 ```
 
 Recommended MCP client behavior:
@@ -859,6 +1170,27 @@ writes immediately without confirmation.
 | `whodb_platform_ontology_fast_lookup_suggestions` | List suggested fast lookups |
 | `whodb_platform_ontology_rows` | Preview rows for one ontology |
 | `whodb_platform_ontology_follow_link` | Follow one ontology link from a row |
+| `whodb_platform_ontology_describe` | Describe ontologies, fields and relationships in text and structure |
+| `whodb_platform_ontology_query` | Filter, search, join, group and compute metrics over ontology rows (bounded scan) |
+| `whodb_platform_ontology_aggregate` | Exact SQL COUNT/SUM/AVG/MIN/MAX over one ontology, grouped and filtered |
+| `whodb_platform_ontology_stats` | Min, max, total and non-null counts for one property |
+| `whodb_platform_ontology_similar` | Similarity search over an ontology with embeddings enabled |
+| `whodb_platform_ontology_embedding_jobs` | Embedding backfill job status for one ontology |
+| `whodb_platform_ontology_record_capabilities` | Readable/writable properties and allowed behavior actions for a record |
+| `whodb_platform_ontology_action_preview` | Preview a behavior action without executing it |
+| `whodb_platform_ontology_action_executions` | Behavior action execution history for a record |
+| `whodb_platform_shared_ontologies` | Ontologies the project shares with other projects |
+| `whodb_platform_discover_shared_ontologies` | Shared ontologies the project may reference |
+| `whodb_platform_ontology_references` | Shared ontologies referenced by the project |
+| `whodb_platform_ontology_reference_impact` | Dependents of one ontology reference |
+| `whodb_platform_transform_preview` | Run a transform graph without saving it |
+| `whodb_platform_service_accounts` | Service accounts and key metadata (no secrets) |
+| `whodb_platform_lineage_providers` | OpenLineage providers for the project |
+| `whodb_platform_user_owned_resources` | Resources owned by one member |
+| `whodb_platform_user_resource_access` | Resources one member can access and why |
+| `whodb_platform_share_dependents` | Resources that must be shared alongside a resource |
+| `whodb_platform_org_package_installations` | Package installations across the organization |
+| `whodb_platform_app_page_files` | Generated files for one app page |
 | `whodb_platform_datasets` | List hosted datasets |
 | `whodb_platform_dataset` | Inspect one hosted dataset |
 | `whodb_platform_dataset_rows` | Preview hosted dataset rows |
@@ -880,7 +1212,8 @@ writes immediately without confirmation.
 | `whodb_platform_create` | Prepare generic hosted resource creation |
 | `whodb_platform_update` | Prepare generic hosted resource updates |
 | `whodb_platform_delete` | Prepare generic hosted resource deletion |
-| `whodb_platform_action` | Prepare generic hosted actions such as upload, move, run, deploy |
+| `whodb_platform_add_ontology_records` | Add many ontology rows at once with an idempotency key |
+| `whodb_platform_action` | Prepare generic hosted actions such as upload, move, run, cancel_run, deploy, restore, purge, share, reembed, service account and package actions |
 | `whodb_platform_pending` | List pending hosted platform confirmations |
 | `whodb_platform_confirm` | Confirm pending hosted platform writes after user approval |
 
@@ -889,6 +1222,51 @@ default and do not execute until approved with `whodb_platform_confirm`. Use
 `whodb_platform_pending` to recover active confirmation tokens. Agents should
 explain the returned `confirmation_preview` to the user before confirming,
 especially for delete, deploy, move, and source/object changes.
+
+#### Answering data questions
+
+Agents answer questions about ontology data without paging through rows:
+
+1. `whodb_platform_ontology_describe` to learn entity and property names.
+2. `whodb_platform_ontology_stats` to profile the properties involved.
+3. `whodb_platform_ontology_aggregate` for exact totals and group-bys, or
+   `whodb_platform_ontology_query` for filtered rows, free-text search, joins
+   and in-memory metrics. The query scans at most `scan_limit` rows (default
+   1000, max 5000) before filtering, so prefer the aggregate for large entities.
+4. `whodb_platform_ontology_rows` or `whodb_platform_ontology_follow_link` to
+   drill into the rows behind a number.
+
+Every ontology read tool accepts the same `where` object: `{prop: value}`,
+`{prop: {op: value}}` and `_and` / `_or` lists with operators `eq`, `neq`,
+`gt`, `gte`, `lt`, `lte`, `contains`, `icontains`, `startswith`, `in`, `nin`,
+`between` and `isnull`. The aggregate, stats and similarity tools translate it
+to the platform `WhereCondition` for you; a raw `WhereCondition` object is still
+accepted. Organization-scoped actions default `orgId` to the selected
+organization, so it only needs to be passed when targeting another organization.
+
+#### Bulk inserts, run control, restore and purge
+
+- `whodb_platform_add_ontology_records` inserts many rows in one confirmation
+  and accepts an `idempotency_key` so a retried call never duplicates rows.
+- `whodb_platform_action` with resource `function_run` and action `cancel`,
+  resource `transform` and action `cancel_run`, or resource `app` and action
+  `cancel_generation` stops work that is still running.
+- `whodb_platform_restore` now covers `project`, `file` and `folder`; the
+  matching `purge` actions permanently delete soft-deleted resources, and
+  `purge_data` on an `ontology` or `dataset` empties it while keeping the
+  definition.
+- Service accounts are managed through `whodb_platform_action` on the
+  `organization` resource: `create_service_account`,
+  `create_service_account_key` (the `rawKey` is returned once),
+  `revoke_service_account_key` and `delete_service_account`.
+- Ontologies are shared with `share` / `unshare` actions and consumed from
+  another project through the `ontology_reference` resource.
+
+The same capabilities are available from the CLI: `whodb ontologies
+query|aggregate|stats|explain|similar`, `whodb ontologies records add-many`,
+`whodb functions runs cancel`, `whodb transforms cancel-run`, `whodb projects
+restore|purge`, `whodb service-accounts ...`, and generically `whodb resources
+action <resource> <action>` or `whodb resources query <Operation>`.
 
 Security model:
 
@@ -905,9 +1283,11 @@ For source creation, agents should call `whodb_platform_source_types` and
 `whodb_platform_source_fields` first so they use backend-published source type
 ids and field names.
 
-If no workspace is selected yet, agents should call `whodb_platform_orgs` and
-`whodb_platform_projects`, then ask the user to run
-`whodb use --org <org> --project <project>`.
+If no workspace is selected yet, agents should discover saved hosts with
+`whodb_platform_hosts`, then call `whodb_platform_orgs` with `workspace: {host}`
+and `whodb_platform_projects` with `workspace: {host, org}`. Resolve the chosen
+target with `whodb_platform_workspace_resolve` and pass its canonical IDs in
+`workspace` on subsequent calls. `whodb use` is optional for saving a default.
 For single-workspace accounts, hosted `login` or `status` can select the only
 organization/project automatically and report what was selected.
 
@@ -918,20 +1298,21 @@ Example hosted platform MCP config:
   "mcpServers": {
     "whodb-platform": {
       "command": "whodb",
-      "args": ["mcp", "serve", "--platform"]
+      "args": ["mcp", "serve"]
     }
   }
 }
 ```
 
-Example read-only hosted platform MCP config:
+For read-only access, save `{"write_mode":"read-only"}` through setup. The MCP
+client entry remains the same:
 
 ```json
 {
   "mcpServers": {
     "whodb-platform-readonly": {
       "command": "whodb",
-      "args": ["mcp", "serve", "--platform", "--read-only"]
+      "args": ["mcp", "serve"]
     }
   }
 }
@@ -944,18 +1325,19 @@ Example local or staging platform MCP config:
   "mcpServers": {
     "whodb-platform-local": {
       "command": "whodb",
-      "args": ["mcp", "serve", "--platform"]
+      "args": ["mcp", "serve"]
     }
   }
 }
 ```
 
-The server uses the single active hosted login selected by `whodb login` and
-`whodb use`. If you switch hosts, run `login --host ...` and `use --host ...`
-before starting the MCP server. The MCP server does not need a host flag because
-it reads the active hosted login from the CLI config.
+One MCP server can use multiple saved host logins. Sign in to each host with
+`whodb login --host <url>`, then pass `workspace: {host, org, project}` per tool
+call to target local, UAT, or production workspaces without restarting the MCP
+server or changing saved defaults. Without an explicit target, the server uses
+its process overrides and then saved defaults.
 
-Local MCP exposes these resources:
+Database-only MCP exposes these resources:
 
 | Resource | Description |
 |----------|-------------|
@@ -971,7 +1353,7 @@ Platform MCP exposes these resources instead:
 | `whodb://platform/tool-guide` | Platform tool categories, recommended usage, field projection guidance, and write behavior |
 
 The same metadata is available from `whodb agent schema --format json`.
-Its `platform_mcp` section describes the `--platform` flag, default host,
+Its `platform_mcp` section describes the default platform mode, default host,
 login/workspace requirements, field projection support, platform-only tool
 prefix, platform prompts/resources, and write behavior for confirm, read-only,
 safe, and allow-write modes.
@@ -1058,17 +1440,18 @@ HTTP mode exposes:
 - `--default-connection`: Default connection when not specified (does not restrict access)
 
 **Hosted Platform:**
-- `--platform`: Run hosted platform MCP mode only. Requires `whodb login` and `whodb use --org <org> --project <project>`.
+- `--database`: Expose database-only MCP tools instead of platform tools.
+- `--platform`: Compatibility alias for the default; prints a notice to stderr.
 
 ```bash
 # Restrict AI to specific connections only
-whodb mcp serve --allowed-connections prod,staging
+whodb mcp serve --database --allowed-connections prod,staging
 
 # Set default without restricting access
-whodb mcp serve --default-connection prod
+whodb mcp serve --database --default-connection prod
 
 # Combine: restrict to prod/staging, default to staging
-whodb mcp serve --allowed-connections prod,staging --default-connection staging
+whodb mcp serve --database --allowed-connections prod,staging --default-connection staging
 ```
 
 When `--allowed-connections` is set:
@@ -1127,7 +1510,7 @@ Example configuration (from `whodb mcp serve --help`):
 docker run -i --rm \
   -e WHODB_POSTGRES_1='{"alias":"prod","host":"host","user":"user","password":"pass","database":"db"}' \
   --network host \
-  whodb-cli:latest mcp serve
+  whodb-cli:latest mcp serve --database
 ```
 
 ## Interactive Mode Views

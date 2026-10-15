@@ -1,9 +1,21 @@
 en_US:
   title: Explore Table
+  rows: rows
+  loadingRows: Loading rows
+  run: Run
   searchPlaceholder: Search query...
   pageSizeLabel: Page Size
   showPrefix: Show
-  addRowTitle: Add New Row
+  addRowTitle: Add a row
+  requiredFields_one: "{count} required field"
+  requiredFields_other: "{count} required fields"
+  loadingReferencedRows: Loading options
+  selectReferencedRow: Select a row
+  enterReferencedKey: Enter a key manually
+  defaultValuePlaceholder: "Default: {value}"
+  enterValueFor: "Enter value for {column}"
+  fillRequiredFields: Fill all required fields.
+  foreignKeyPickerHelp: Foreign keys list rows from the linked table.
   addRowButton: Add Row
   documentJson: Document JSON
   documentJsonHelp: Enter the document as a JSON object. All fields will be indexed.

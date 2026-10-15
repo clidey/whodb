@@ -7,7 +7,9 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/clidey/whodb/core/baml_client"
 	"github.com/clidey/whodb/core/baml_client/types"
+	"github.com/clidey/whodb/core/src/llm/providers"
 	"github.com/clidey/whodb/core/src/source"
 )
 
@@ -215,6 +217,50 @@ func TestSetupAIClientAndCreateDynamicBAMLClient(t *testing.T) {
 
 	if got := SetupAIClient(model); len(got) != 1 {
 		t.Fatalf("expected one call option when model is configured, got %d", len(got))
+	}
+}
+
+// Checks the URL BAML itself builds, so a BAML upgrade that changes how its
+// Anthropic client uses base_url fails here rather than for gateway users.
+func TestAnthropicMessagesURLBuiltByBAML(t *testing.T) {
+	originalResolver := bamlConfigResolver
+	t.Cleanup(func() {
+		bamlConfigResolver = originalResolver
+	})
+	providers.RegisterProvider(providers.NewAnthropicProvider())
+	RegisterBAMLConfigResolver(providers.GetBAMLConfig)
+
+	tests := []struct {
+		name     string
+		endpoint string
+		wantURL  string
+	}{
+		{"default", "https://api.anthropic.com/v1", "https://api.anthropic.com/v1/messages"},
+		{"without v1", "https://gateway.test", "https://gateway.test/v1/messages"},
+		{"with v1", "https://gateway.test/v1", "https://gateway.test/v1/messages"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			model := &source.ExternalModel{
+				Type:     "Anthropic",
+				Token:    "test-key",
+				Model:    "claude-sonnet-4-5",
+				Endpoint: tc.endpoint,
+			}
+
+			req, err := baml_client.StreamRequest.GenerateChatTitle("Sales by region", SetupAIClient(model)...)
+			if err != nil {
+				t.Fatalf("building request failed: %v", err)
+			}
+			got, err := req.Url()
+			if err != nil {
+				t.Fatalf("reading request URL failed: %v", err)
+			}
+			if got != tc.wantURL {
+				t.Fatalf("expected %s, got %s", tc.wantURL, got)
+			}
+		})
 	}
 }
 
