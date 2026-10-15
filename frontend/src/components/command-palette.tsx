@@ -30,7 +30,7 @@ import { useCallback, useEffect, useMemo, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {useTranslation} from "@/hooks/use-translation";
 import {useAppSelector} from "@/store/hooks";
-import {getKeyDisplay} from "@/utils/platform";
+import {getKeyDisplay, isMacPlatform} from "@/utils/platform";
 import {matchesShortcut, resolveShortcut, SHORTCUTS} from "@/utils/shortcuts";
 import {useEffectiveIsMac} from "@/hooks/useEffectiveIsMac";
 import {useSourceContract} from "@/hooks/useSourceContract";
@@ -352,24 +352,15 @@ export const useCommandPalette = () => {
         // Only allow when logged in
         if (!isLoggedIn) return;
 
-        // Skip if typing in an input
-        if (
-            event.target instanceof HTMLInputElement ||
-            event.target instanceof HTMLTextAreaElement ||
-            (event.target as HTMLElement)?.isContentEditable
-        ) {
-            return;
-        }
-
-        if (matchesShortcut(event, SHORTCUTS.commandPalette)) {
+        if (matchesShortcut(event, SHORTCUTS.commandPalette, isMacPlatform)) {
             event.preventDefault();
             setOpen(prev => !prev);
         }
     }, [isLoggedIn]);
 
     useEffect(() => {
-        window.addEventListener('keydown', handleKeyDown);
-        return () => { window.removeEventListener('keydown', handleKeyDown); };
+        window.addEventListener('keydown', handleKeyDown, true);
+        return () => { window.removeEventListener('keydown', handleKeyDown, true); };
     }, [handleKeyDown]);
 
     useEffect(() => {

@@ -126,14 +126,14 @@ export const SHORTCUTS = {
  * Check whether a keyboard event matches a shortcut definition.
  *
  * Handles platform-specific "mod" resolution (Cmd on Mac, Ctrl on Win/Linux).
- * For PlatformShortcutDef, call resolveShortcut() first.
+ * For PlatformShortcutDef, call resolveShortcut() first. Pass isMac when a
+ * shortcut must use the detected platform rather than the settings override.
  */
 export function matchesShortcut(
     event: KeyboardEvent | React.KeyboardEvent,
     def: ShortcutDef,
+    isMac = getEffectiveIsMac(),
 ): boolean {
-    const isMac = getEffectiveIsMac();
-
     // Check key match (case-insensitive).
     // Special case: "?" can arrive as "/" with shiftKey on some browsers/platforms.
     const keyMatches =
