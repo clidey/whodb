@@ -1,0 +1,43 @@
+<!--
+  ~ Copyright 2026 Clidey, Inc.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<!-- ClickHouse server limits for E2E testing -->
+<!-- DO NOT USE IN PRODUCTION -->
+<!--
+  By default ClickHouse derives its total memory ceiling from the memory visible
+  to the container. On a busy CI runner that came out at ~370 MiB, and the
+  data-types suite (dozens of ALTER UPDATE / DELETE mutations) then failed with
+  "memory limit exceeded" while reading table columns. Pin an explicit ceiling
+  and shrink the caches, which the tiny E2E datasets never need.
+-->
+<clickhouse>
+    <!--
+      ClickHouse caps the server at min(max_server_memory_usage, visible RAM * ratio).
+      A ratio of 0 makes it log "lowered max_server_memory_usage to 0", which disables
+      the server-wide cap, so the process is bounded only by the container/OS. The E2E
+      datasets are a few KiB, so this never matters locally; it only stops a starved CI
+      runner from rejecting ordinary column reads.
+    -->
+    <max_server_memory_usage_to_ram_ratio>0</max_server_memory_usage_to_ram_ratio>
+
+    <!-- Caches sized for E2E data instead of the multi-GiB defaults. -->
+    <mark_cache_size>67108864</mark_cache_size>
+    <uncompressed_cache_size>67108864</uncompressed_cache_size>
+    <index_mark_cache_size>16777216</index_mark_cache_size>
+    <index_uncompressed_cache_size>16777216</index_uncompressed_cache_size>
+    <mmap_cache_size>256</mmap_cache_size>
+
+</clickhouse>
