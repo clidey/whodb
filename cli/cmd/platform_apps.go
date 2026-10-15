@@ -142,6 +142,7 @@ func registerPlatformAppCommands() {
 	appsUndoCloneCmd.Flags().BoolVarP(&platformWriteYes, "yes", "y", false, "undo without first printing the plan")
 	appsCmd.AddCommand(appsListCmd, appsCloneCmd, appsUndoCloneCmd)
 	registerPlatformAppCaptureCommands()
+	registerPlatformLocalAppCommands()
 }
 
 func readPlatformApps(ctx context.Context, session *platformSession, projectID string) ([]platformApp, error) {

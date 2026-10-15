@@ -248,7 +248,7 @@ var PayloadShapes = map[string]PayloadShape{
 			{Name: "properties", Type: "[OntologyPropertyInput!]", Required: true, Description: "Properties; visibility is prominent, normal, or hidden"},
 			{Name: "links", Type: "[OntologyLinkInput!]", Required: true, Description: "Ontology links"},
 		},
-		Examples: []string{`{"apiName":"customer","displayName":"Customer","pluralDisplayName":"Customers","description":"","primaryKey":"id","tableName":"customers","schemaName":"public","storageMode":"operational","icon":"table","color":"#3366ff","properties":[{"apiName":"id","displayName":"ID","description":"","columnName":"id","dataType":"String","isRequired":true,"visibility":"normal","isSearchable":true,"isSortable":true,"isEditOnly":false}],"links":[]}`},
+		Examples: []string{`{"apiName":"customer","displayName":"Customer","pluralDisplayName":"Customers","description":"","primaryKey":"id","tableName":"customers","storageMode":"operational","icon":"table","color":"#3366ff","properties":[{"apiName":"id","displayName":"ID","description":"","columnName":"id","dataType":"String","isRequired":true,"visibility":"normal","isSearchable":true,"isSortable":true,"isEditOnly":false}],"links":[]}`},
 	},
 	"update:ontology": {
 		Key: "update:ontology", Resource: "ontology", Action: "update", Description: "Replace an ontology definition. id and projectId are injected. Every field below except sourceId and schemaName is sent as a whole, so read the ontology first and send it back with your changes. apiName and storageMode cannot change.",

@@ -1180,7 +1180,7 @@ var datasetsCreateCmd = withExample(typedResourceWriteCommand("create", "Create 
 var datasetsUpdateCmd = withExample(typedResourceWriteCommand("update <dataset>", "Update a hosted WhoDB dataset", "update", "dataset", "", buildDatasetUpdatePayload), `  whodb datasets update dataset_123 --description "Customer import"
   whodb datasets update dataset_123 --column id:text:primary --column email:text:nullable`)
 var datasetsDeleteCmd = withExample(typedResourceWriteCommand("delete <dataset>", "Delete a hosted WhoDB dataset", "delete", "dataset", "", emptyTypedPayload), `  whodb datasets delete dataset_123 --yes`)
-var ontologiesCreateCmd = withExample(typedResourceWriteCommand("create", "Create a hosted WhoDB ontology", "create", "ontology", "", buildOntologyCreatePayload), `  whodb ontologies create --api-name customer --display-name Customer --plural-display-name Customers --primary-key id --table-name customers --schema-name public --property-json '{"apiName":"id","displayName":"ID","columnName":"id","dataType":"String","isRequired":true,"visibility":"normal","isSearchable":true,"isSortable":true,"isEditOnly":false}'`)
+var ontologiesCreateCmd = withExample(typedResourceWriteCommand("create", "Create a hosted WhoDB ontology", "create", "ontology", "", buildOntologyCreatePayload), `  whodb ontologies create --api-name customer --display-name Customer --plural-display-name Customers --primary-key id --table-name customers --property-json '{"apiName":"id","displayName":"ID","columnName":"id","dataType":"String"}'`)
 var ontologiesUpdateCmd = withExample(typedResourceWriteCommand("update <ontology>", "Update a hosted WhoDB ontology", "update", "ontology", "", buildOntologyUpdatePayload), `  whodb ontologies update ontology_123 --display-name "Customer Account" --status active`)
 var ontologiesDeleteCmd = withExample(typedResourceWriteCommand("delete <ontology>", "Delete a hosted WhoDB ontology", "delete", "ontology", "", emptyTypedPayload), `  whodb ontologies delete ontology_123 --yes`)
 var transformsCreateCmd = withExample(typedResourceWriteCommand("create", "Create a hosted WhoDB transform", "create", "transform", "", buildTransformCreatePayload), `  whodb transforms create --name daily-load --trigger-mode manual --graph-file ./transform.json`)
@@ -1443,7 +1443,7 @@ func registerOntologyWriteFlags(command *cobra.Command, includeStatus bool) {
 	command.Flags().StringVar(&ontologyDescription, "description", "", "ontology description")
 	command.Flags().StringVar(&ontologyPrimaryKey, "primary-key", "", "ontology primary key property")
 	command.Flags().StringVar(&ontologyTableName, "table-name", "", "backing table name")
-	command.Flags().StringVar(&ontologySchemaName, "schema-name", "", "backing schema name")
+	command.Flags().StringVar(&ontologySchemaName, "schema-name", "", "backing schema name for a source-backed ontology (optional for project-managed ontologies)")
 	if !includeStatus {
 		command.Flags().StringVar(&ontologyStorageMode, "storage-mode", platform.DefaultOntologyStorageMode, "ontology storage mode: operational or analytical")
 	}
@@ -2237,7 +2237,6 @@ func buildOntologyCreatePayload(cmd *cobra.Command) (map[string]any, error) {
 		"plural-display-name": ontologyPluralName,
 		"primary-key":         ontologyPrimaryKey,
 		"table-name":          ontologyTableName,
-		"schema-name":         ontologySchemaName,
 	} {
 		if strings.TrimSpace(value) == "" {
 			return nil, fmt.Errorf("--%s is required", flag)
@@ -2264,8 +2263,10 @@ func buildOntologyCreatePayload(cmd *cobra.Command) (map[string]any, error) {
 	if len(properties) == 0 {
 		return nil, fmt.Errorf("--property-json is required at least once")
 	}
-	for _, property := range properties {
-		applyOntologyPropertyDefaults(property, ontologyPrimaryKey)
+	for i, property := range properties {
+		if err := applyOntologyPropertyDefaults(property, ontologyPrimaryKey); err != nil {
+			return nil, fmt.Errorf("--property-json item %d: %w", i+1, err)
+		}
 	}
 	links, err := parseJSONObjectFlags(ontologyLinksJSON, "link-json")
 	if err != nil {
@@ -2276,14 +2277,26 @@ func buildOntologyCreatePayload(cmd *cobra.Command) (map[string]any, error) {
 	return payload, nil
 }
 
-func applyOntologyPropertyDefaults(property map[string]any, primaryKey string) {
+func applyOntologyPropertyDefaults(property map[string]any, primaryKey string) error {
+	for _, field := range []string{"apiName", "displayName", "columnName", "dataType"} {
+		value, ok := property[field].(string)
+		if !ok || strings.TrimSpace(value) == "" {
+			return fmt.Errorf("%s is required", field)
+		}
+	}
+	if _, ok := property["description"]; !ok {
+		property["description"] = ""
+	}
 	if _, ok := property["visibility"]; !ok {
 		property["visibility"] = "normal"
 	}
 	searchableAndSortable := false
-	apiName := strings.TrimSpace(fmt.Sprint(property["apiName"]))
+	apiName := strings.TrimSpace(property["apiName"].(string))
 	if strings.EqualFold(apiName, "id") || strings.EqualFold(apiName, strings.TrimSpace(primaryKey)) {
 		searchableAndSortable = true
+	}
+	if _, ok := property["isRequired"]; !ok {
+		property["isRequired"] = strings.EqualFold(apiName, strings.TrimSpace(primaryKey))
 	}
 	if _, ok := property["isSearchable"]; !ok {
 		property["isSearchable"] = searchableAndSortable
@@ -2294,6 +2307,7 @@ func applyOntologyPropertyDefaults(property map[string]any, primaryKey string) {
 	if _, ok := property["isEditOnly"]; !ok {
 		property["isEditOnly"] = false
 	}
+	return nil
 }
 
 func buildOntologyUpdatePayload(cmd *cobra.Command) (map[string]any, error) {
