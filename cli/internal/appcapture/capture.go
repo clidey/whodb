@@ -83,6 +83,7 @@ type Options struct {
 	Tab         string
 	Actions     []Action
 	Script      string
+	Trace       bool
 	LocalDir    string
 	KernelDir   string
 	Interactive bool

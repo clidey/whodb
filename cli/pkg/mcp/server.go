@@ -782,6 +782,15 @@ func registerPlatformResources(server *mcp.Server, secOpts *SecurityOptions) {
 		})
 	})
 
+	server.AddResource(&mcp.Resource{
+		Name:        "platform-app-workflow",
+		URI:         "whodb://platform/app-workflow",
+		Description: "App folder format and supported hosted and local build, preview, verification, and publish paths",
+		MIMEType:    "application/json",
+	}, func(ctx context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
+		return jsonResource("whodb://platform/app-workflow", buildPlatformAppWorkflow())
+	})
+
 	for _, template := range platformResourceTemplates() {
 		server.AddResourceTemplate(template, readPlatformTemplatedResource)
 	}
@@ -1071,7 +1080,7 @@ func buildPlatformWorkflowRecipes() []platformWorkflowRecipe {
 			Name:        "zero_to_app",
 			Description: "End-to-end WhoDB EE path from an empty or unknown project to a modeled, automated, runtime-ready application workspace.",
 			Goal:        "Create a project-level semantic app from source/file data with datasets, ontologies, transforms, functions, runtime support, lineage checks, and safe write confirmation.",
-			Stages:      []string{"workspace_scope", "ingest", "persist", "model", "automate", "runtime_support", "govern_and_change", "package"},
+			Stages:      []string{"workspace_scope", "ingest", "persist", "model", "automate", "runtime_support", "compose", "govern_and_change", "package"},
 			Steps: []platformWorkflowRecipeStep{
 				{Phase: "scope", Description: "Confirm setup, login, organization, project, high-level summary, gaps, and the build path before drilling into resources.", Tools: []string{"whodb_platform_setup_status", "whodb_platform_status", "whodb_platform_workspace_summary", "whodb_platform_gap_analysis", "whodb_platform_build_plan"}},
 				{Phase: "ingest", Description: "Choose whether data starts from a hosted source or uploaded files; inspect shape before creating durable assets.", Tools: []string{"whodb_platform_sources", "whodb_platform_source_objects", "whodb_platform_source_columns", "whodb_platform_files", "whodb_platform_file_inspect"}, WriteTools: []string{"whodb_platform_source_create", "whodb_platform_action", "whodb_platform_promote_file_to_dataset"}, Notes: []string{"Use file upload or source creation only after user supplies required connection/file details."}},
@@ -1079,6 +1088,7 @@ func buildPlatformWorkflowRecipes() []platformWorkflowRecipe {
 				{Phase: "model", Description: "Create or refine ontologies, properties, links, records, and fast lookups over datasets.", Tools: []string{"whodb_platform_ontologies", "whodb_platform_ontology", "whodb_platform_ontology_fast_lookup_suggestions"}, WriteTools: []string{"whodb_platform_create", "whodb_platform_update", "whodb_platform_create_ontology_fast_lookup", "whodb_platform_add_ontology_record"}, VerifyTools: []string{"whodb_platform_ontology", "whodb_platform_ontology_rows", "whodb_platform_ontology_fast_lookups"}},
 				{Phase: "automate", Description: "Add transforms and functions only after the data model is understood.", Tools: []string{"whodb_platform_runtime_readiness", "whodb_platform_transforms", "whodb_platform_functions"}, WriteTools: []string{"whodb_platform_create", "whodb_platform_update", "whodb_platform_action"}, VerifyTools: []string{"whodb_platform_transform_runs", "whodb_platform_function"}},
 				{Phase: "runtime_support", Description: "Configure secret metadata and AI provider metadata for runtime behavior without exposing values.", Tools: []string{"whodb_platform_secrets", "whodb_platform_ai_providers", "whodb_platform_ai_provider_models"}, WriteTools: []string{"whodb_platform_create", "whodb_platform_update"}, VerifyTools: []string{"whodb_platform_runtime_readiness"}},
+				{Phase: "compose", Description: "Build editable app pages and scripts from real bindings, verify interactions and responsive views, then review the draft for promotion.", Tools: []string{"whodb_platform_apps", "whodb_platform_app_files", "whodb_platform_app_view"}, WriteTools: []string{"whodb_platform_create", "whodb_platform_update", "whodb_platform_action"}, VerifyTools: []string{"whodb_platform_app_logic_graph", "whodb_platform_app_screenshot", "whodb_platform_object_versions"}, Notes: []string{"Read whodb://platform/app-workflow for the hosted MCP path and the local version-controlled CLI path."}},
 				{Phase: "govern_change", Description: "Before any mutating operation, understand relationships, plan the write, then use confirmation flow.", Tools: []string{"whodb_platform_resource_graph", "whodb_platform_change_impact", "whodb_platform_write_plan"}, WriteTools: []string{"whodb_platform_create", "whodb_platform_update", "whodb_platform_delete", "whodb_platform_action"}, VerifyTools: []string{"whodb_platform_workspace_summary", "whodb_platform_resource_graph"}, Notes: []string{"Never call whodb_platform_confirm without explicit user approval of the exact preview."}},
 				{Phase: "package", Description: "Optionally export, diff, import, or clone project metadata for reuse.", Tools: []string{"whodb_platform_bundle_export", "whodb_platform_bundle_diff", "whodb_platform_bundle_import_plan"}, WriteTools: []string{"whodb_platform_bundle_import", "whodb_platform_clone"}, VerifyTools: []string{"whodb_platform_workspace_summary", "whodb_platform_resource_graph"}},
 			},
@@ -1314,13 +1324,13 @@ func buildPlatformToolGuide(secOpts *SecurityOptions) platformToolGuideResource 
 			{Tool: "whodb_platform_promote_file_to_dataset", Resources: []string{"file"}},
 		},
 			"whodb_platform_files", "whodb_platform_file_preview", "whodb_platform_file_inspect", "whodb_platform_file_search", "whodb_platform_tabular_files", "whodb_platform_storage_usage", "whodb_platform_promote_file_to_dataset"),
-		platformToolCategory(toolByName, "apps", "Ontology-powered application definitions, generated files, views, and promoted versions.", "Inspect the app and its ontology/function dependencies before changing or generating it. App HTML and file content can be large, so request them only when needed.", []string{"id", "name", "description"}, []platformToolGuideMutation{
+		platformToolCategory(toolByName, "apps", "Ontology-powered application definitions, generated files, views, and promoted versions.", "Inspect the app and its ontology/function dependencies. Look up exact component and SDK contracts before editing files. App HTML and file content can be large, so request them only when needed.", []string{"id", "name", "description"}, []platformToolGuideMutation{
 			{Tool: "whodb_platform_create", Resources: []string{"app"}},
 			{Tool: "whodb_platform_update", Resources: []string{"app"}},
 			{Tool: "whodb_platform_delete", Resources: []string{"app"}},
 			{Tool: "whodb_platform_action", Resources: []string{"app"}, Actions: []string{"restore", "purge", "generate", "upsert_file", "delete_file", "restore_version_to_draft"}},
 		},
-			"whodb_platform_apps", "whodb_platform_app", "whodb_platform_app_files", "whodb_platform_app_view", "whodb_platform_app_version_view"),
+			"whodb_platform_app_components", "whodb_platform_app_component", "whodb_platform_app_sdks", "whodb_platform_app_sdk", "whodb_platform_apps", "whodb_platform_app", "whodb_platform_app_files", "whodb_platform_app_logic_graph", "whodb_platform_app_view", "whodb_platform_app_version_view"),
 		platformToolCategory(toolByName, "versions_and_packages", "Promoted versions, active production state, package creation, installation, sharing, and updates.", "Preview package operations and inspect requirements before installing or importing. Use object version reads before promote or rollback actions.", []string{"id", "name", "version", "status"}, []platformToolGuideMutation{
 			{Tool: "whodb_platform_create", Resources: []string{"package"}},
 			{Tool: "whodb_platform_action", Resources: []string{"package"}, Actions: []string{"install", "install_shared", "update_installation", "uninstall", "import", "import_shared", "create_share"}},
@@ -1534,6 +1544,12 @@ func registerPrompts(server *mcp.Server) {
 
 func registerPlatformPrompts(server *mcp.Server) {
 	server.AddPrompt(&mcp.Prompt{
+		Name:        "whodb_platform_build_app_workflow",
+		Title:       "Build and Verify a WhoDB App",
+		Description: "Build and verify a hosted app, with guidance for the local app folder workflow when filesystem access is available.",
+	}, handlePlatformBuildAppWorkflowPrompt)
+
+	server.AddPrompt(&mcp.Prompt{
 		Name:        "whodb_platform_overview",
 		Title:       "WhoDB Platform Overview",
 		Description: "Understand hosted WhoDB platform MCP mode, workspace selection, permissions, and field projection.",
@@ -1586,6 +1602,10 @@ func registerPlatformPrompts(server *mcp.Server) {
 		Title:       "WhoDB Platform Import Export Workflow",
 		Description: "Prepare bundle export, diff, import planning, and import confirmation workflows.",
 	}, handlePlatformImportExportWorkflowPrompt)
+}
+
+func handlePlatformBuildAppWorkflowPrompt(ctx context.Context, req *mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
+	return platformPromptResult("WhoDB app build and verification workflow", `Read whodb://platform/app-workflow for the app folder format, hosted MCP path, local CLI path, verification steps, and current limits. Use whodb://platform/schema for exact hosted write payloads. Inspect real ontology schemas, representative rows, and functions before building. Call whodb_platform_app_components/whodb_platform_app_component and whodb_platform_app_sdks/whodb_platform_app_sdk for exact component and SDK contracts. Plan pages, state, overlays, and interactions; build editable component trees and scripts; use whodb_platform_app_logic_graph to audit flows; exercise workflows and responsive viewports; promote only after reviewing the verified draft. Check tools/list and the available filesystem capabilities before choosing a path. Do not claim local file access or in-app builder node tools that are not available in this MCP session.`)
 }
 
 func platformPromptResult(description, content string) (*mcp.GetPromptResult, error) {
@@ -2483,7 +2503,8 @@ a source connector. Agents should understand the project lifecycle:
 7. Govern change: lineage, resource graphs, change impact, and write plans explain dependencies.
 8. Package: bundles and clone workflows move or reproduce project metadata.
 
-Use whodb://platform/concepts for the machine-readable product model. Prefer
+Use whodb://platform/concepts for the machine-readable product model and
+whodb://platform/app-workflow for app building, local file editing, and verification. Prefer
 the first-pass project tools before drilling into a single resource unless the
 user already named the exact resource:
 - whodb_platform_workspace_summary for "what exists", "where should we start",
@@ -2562,6 +2583,8 @@ Available tools:
 - whodb_platform_lineage / whodb_platform_lineage_neighbors / whodb_platform_project_lineage: Inspect lineage
 - whodb_platform_transforms / whodb_platform_transform_runs: List transforms and runs
 - whodb_platform_functions / whodb_platform_function: List or inspect ontology functions
+- whodb_platform_app_components / whodb_platform_app_component / whodb_platform_app_sdks / whodb_platform_app_sdk: Read exact app component and SDK reference contracts
+- whodb_platform_app_logic_graph: Audit component events, scripts, bindings, navigation, overlays, and function contracts in a hosted draft
 - whodb_platform_function_runs / whodb_platform_function_wait: Inspect or wait for persisted function runs started with the start_run action
 - whodb_platform_files / whodb_platform_file_preview / whodb_platform_file_inspect / whodb_platform_file_search / whodb_platform_tabular_files: Browse project files
 - whodb_platform_storage_usage: Inspect project storage usage

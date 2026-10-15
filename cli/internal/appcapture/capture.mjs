@@ -262,13 +262,13 @@ try {
 		throw new Error("App actions did not become idle within 60 seconds");
 	};
   await waitForContent();
-	if (options.LocalDir) {
+	if (options.LocalDir || options.Trace) {
 		await frame.evaluate(() => window.postMessage({ __ux_sandbox: true, id: "local-verify-trace", direction: "host-to-sandbox", cmd: "setTracing", enabled: true }, "*"));
 		try {
 			await page.waitForFunction(() => window.__whodbTraceAck !== null, null, { timeout: 2000 });
 			if (!(await page.evaluate(() => window.__whodbTraceAck))) throw new Error("runtime rejected tracing");
 		} catch {
-			record(diagnostics.script_errors, "App runtime tracing is unavailable; build the sandbox and pass --kernel-dir, or use a server with tracing support");
+			record(diagnostics.script_errors, "App runtime tracing is unavailable; use a compatible hosted runtime or pass locally built runtime assets with --kernel-dir");
 		}
 	}
 	await waitForIdle();

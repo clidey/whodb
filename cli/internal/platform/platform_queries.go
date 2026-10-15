@@ -16,6 +16,12 @@ import (
 // It is deliberately not a general GraphQL passthrough: callers can select a
 // known operation, while the CLI owns the query document and field set.
 var platformQuerySpecs = map[string]string{
+	"AppBuilderReference": `query CLIPlatformAppBuilderReference($kind: String!, $name: String) {
+  AppBuilderReference(kind: $kind, name: $name)
+}`,
+	"AppLogicGraph": `query CLIPlatformAppLogicGraph($projectId: ID!, $appId: ID!, $page: String) {
+  AppLogicGraph(projectId: $projectId, appId: $appId, page: $page)
+}`,
 	"ProjectApps": `query CLIPlatformProjectApps($projectId: ID!) {
   ProjectApps(projectId: $projectId) { id projectId name description thumbnailUrl useCases ontologyIds readOnlyOntologyIds functionIds createdBy createdAt updatedAt }
 }`,
