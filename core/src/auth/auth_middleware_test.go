@@ -148,6 +148,10 @@ func TestAuthMiddlewareRejectsInvalidTokenEncodings(t *testing.T) {
 }
 
 func TestAuthMiddlewareResolvesIDOnlyCredentialsFromProfiles(t *testing.T) {
+	originalDisableCredentialForm := env.DisableCredentialForm
+	env.DisableCredentialForm = true
+	t.Cleanup(func() { env.DisableCredentialForm = originalDisableCredentialForm })
+
 	origEngine := src.MainEngine
 	src.MainEngine = &engine.Engine{}
 	t.Cleanup(func() { src.MainEngine = origEngine })
@@ -155,6 +159,7 @@ func TestAuthMiddlewareResolvesIDOnlyCredentialsFromProfiles(t *testing.T) {
 	src.MainEngine.AddLoginProfile(types.DatabaseCredentials{
 		CustomId: "profile-1",
 		Type:     "Postgres",
+		Source:   "environment",
 		Hostname: "db.local",
 		Username: "alice",
 		Password: "pw",
@@ -184,8 +189,99 @@ func TestAuthMiddlewareResolvesIDOnlyCredentialsFromProfiles(t *testing.T) {
 	if rr.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d", rr.Code)
 	}
-	if got == nil || got.SourceType != "Postgres" || got.Values["Username"] != "alice" || got.Values["Database"] != "override" {
+	if got == nil || !got.PreconfiguredProfile || got.SourceType != "Postgres" || got.Values["Username"] != "alice" || got.Values["Database"] != "override" {
 		t.Fatalf("expected resolved credentials with overridden database, got %+v", got)
+	}
+}
+
+func TestAuthMiddlewareDisabledCredentialFormRejectsInlineTokens(t *testing.T) {
+	originalDisableCredentialForm := env.DisableCredentialForm
+	env.DisableCredentialForm = true
+	t.Cleanup(func() { env.DisableCredentialForm = originalDisableCredentialForm })
+
+	credentials := testSourceCredentials("Postgres", "attacker.example", "reader", "secret", "app")
+	credentials.PreconfiguredProfile = true // A client-provided profile marker has no authority.
+	payload, err := json.Marshal(credentials)
+	if err != nil {
+		t.Fatal(err)
+	}
+	token := base64.StdEncoding.EncodeToString(payload)
+
+	for _, tt := range []struct {
+		name   string
+		cookie bool
+	}{
+		{name: "bearer"},
+		{name: "legacy cookie", cookie: true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/api/private", nil)
+			if tt.cookie {
+				req.AddCookie(&http.Cookie{Name: string(AuthKey_Token), Value: token})
+			} else {
+				req.Header.Set("Authorization", "Bearer "+token)
+			}
+			called := false
+			rr := httptest.NewRecorder()
+			AuthMiddleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+				called = true
+			})).ServeHTTP(rr, req)
+			if rr.Code != http.StatusUnauthorized || called {
+				t.Fatalf("inline token was accepted: status=%d, called=%v", rr.Code, called)
+			}
+		})
+	}
+
+	req := httptest.NewRequest(http.MethodPost, "/api/query", bytes.NewBufferString(`{"query":"query { Health { Server } }"}`))
+	req.Header.Set("Authorization", "Bearer "+token)
+	rr := httptest.NewRecorder()
+	AuthMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if GetSourceCredentials(r.Context()) != nil {
+			t.Fatal("inline token must not become GraphQL credentials")
+		}
+		w.WriteHeader(http.StatusOK)
+	})).ServeHTTP(rr, req)
+	if rr.Code != http.StatusOK {
+		t.Fatalf("public GraphQL request should remain available, got %d", rr.Code)
+	}
+}
+
+func TestAuthMiddlewareDisabledCredentialFormRejectsUnconfiguredReferences(t *testing.T) {
+	originalDisableCredentialForm := env.DisableCredentialForm
+	env.DisableCredentialForm = true
+	t.Cleanup(func() { env.DisableCredentialForm = originalDisableCredentialForm })
+	keyring.MockInit()
+	t.Setenv("WHODB_DESKTOP", "true")
+
+	originalEngine := src.MainEngine
+	src.MainEngine = &engine.Engine{}
+	t.Cleanup(func() { src.MainEngine = originalEngine })
+	src.MainEngine.AddLoginProfile(types.DatabaseCredentials{
+		CustomId: "unclassified", Type: "Postgres", Hostname: "db.internal",
+	})
+	if err := SaveCredentials("keyring", &source.Credentials{
+		SourceType: "Postgres", Values: map[string]string{"Hostname": "old-client.example"},
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, id := range []string{"unclassified", "keyring"} {
+		t.Run(id, func(t *testing.T) {
+			payload, err := json.Marshal(source.Credentials{ID: &id})
+			if err != nil {
+				t.Fatal(err)
+			}
+			req := httptest.NewRequest(http.MethodGet, "/api/private", nil)
+			req.Header.Set("Authorization", "Bearer "+base64.StdEncoding.EncodeToString(payload))
+			rr := httptest.NewRecorder()
+			called := false
+			AuthMiddleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+				called = true
+			})).ServeHTTP(rr, req)
+			if rr.Code != http.StatusUnauthorized || called {
+				t.Fatalf("unconfigured reference was accepted: status=%d called=%v", rr.Code, called)
+			}
+		})
 	}
 }
 

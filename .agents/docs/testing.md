@@ -214,7 +214,7 @@ Location: `dev/docker-compose.yml`
 | `e2e_mongo` | 27017 | MongoDB |
 | `e2e_redis` | 6379 | Redis |
 | `e2e_elasticsearch` | 9200 | Elasticsearch |
-| `e2e_clickhouse` | 8123 | ClickHouse |
+| `e2e_clickhouse` | 8123 | ClickHouse (server limits from `dev/conf/clickhouse_e2e.xml`; the default RAM-ratio cap starved CI runs) |
 
 SQLite uses a local file (`core/tmp/e2e_test.db`), no container needed.
 

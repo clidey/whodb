@@ -28,6 +28,7 @@ import (
 	"sync"
 
 	"github.com/clidey/whodb/core/src"
+	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/source"
 	"github.com/clidey/whodb/core/src/sourcecatalog"
@@ -166,15 +167,20 @@ func AuthMiddleware(next http.Handler) http.Handler {
 
 		// Profile trust comes only from server-side resolution, never the token.
 		credentials.IsProfile = false
+		credentials.PreconfiguredProfile = false
 		inline := true
 		isSavedProfileReference := credentials.ID != nil && credentials.SourceType == ""
+		if env.DisableCredentialForm && !isSavedProfileReference {
+			serveWithoutSourceCredentials(w, r, next)
+			return
+		}
 
 		if isSavedProfileReference {
 			// Client sent a saved-profile reference. Resolve the stored credentials and
 			// apply any field overrides carried in the request payload.
 			matched := false
 			_, storedProfile, ok := src.FindSourceProfile(*credentials.ID)
-			if ok {
+			if ok && (!env.DisableCredentialForm || storedProfile.PreconfiguredProfile) {
 				storedProfile.ID = credentials.ID
 				storedProfile.Values, err = MergeSourceProfileValues(storedProfile.SourceType, storedProfile.Values, credentials.Values)
 				if err != nil {
@@ -187,6 +193,10 @@ func AuthMiddleware(next http.Handler) http.Handler {
 				onceProfile.Do(func() { log.Info("Auth: credentials resolved via saved profile") })
 			}
 			if !matched {
+				if env.DisableCredentialForm {
+					serveWithoutSourceCredentials(w, r, next)
+					return
+				}
 				if stored, err := LoadCredentials(*credentials.ID); err == nil && stored != nil {
 					stored.ID = credentials.ID
 					stored.Values, err = MergeSourceProfileValues(stored.SourceType, stored.Values, credentials.Values)
@@ -225,6 +235,14 @@ func AuthMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+func serveWithoutSourceCredentials(w http.ResponseWriter, r *http.Request, next http.Handler) {
+	if isGraphQLRequest(r) {
+		next.ServeHTTP(w, r)
+		return
+	}
+	http.Error(w, "Unauthorized", http.StatusUnauthorized)
+}
+
 // serveWithSessionCookie resolves an opaque session token and injects its
 // credentials into the request context. GraphQL CSRF enforcement is deferred
 // until gqlgen has selected the operation; other HTTP requests are rejected
@@ -245,6 +263,9 @@ func serveWithSessionCookie(w http.ResponseWriter, r *http.Request, next http.Ha
 			next.ServeHTTP(w, r.WithContext(ctx))
 			return true
 		}
+		return false
+	}
+	if env.DisableCredentialForm && (credentials == nil || !credentials.PreconfiguredProfile) {
 		return false
 	}
 

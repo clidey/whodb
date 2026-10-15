@@ -127,6 +127,9 @@ func isPublicGraphQLField(opCtx *graphql.OperationContext, field graphql.Collect
 }
 
 func sourceFieldOptionsArePublic(args map[string]any) bool {
+	if env.DisableCredentialForm {
+		return false
+	}
 	sourceType, _ := args["sourceType"].(string)
 	fieldKey, _ := args["fieldKey"].(string)
 	spec, ok := sourcecatalog.Find(sourceType)

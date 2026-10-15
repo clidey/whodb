@@ -40,7 +40,7 @@ func initAppFromHosted(ctx context.Context, session *platformSession, projectID,
 	if len(remote) == 0 {
 		return nil, 0, fmt.Errorf("app %q has no readable draft files", ref)
 	}
-	files := make(map[string]string, len(remote)+1)
+	files := make(map[string]string, len(remote))
 	for _, file := range remote {
 		if !localAppFilePath(file.Path) {
 			return nil, 0, fmt.Errorf("app contains unsupported or unsafe file path %q", file.Path)
