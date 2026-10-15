@@ -367,9 +367,9 @@ const ensureInitializedClient = async (): Promise<PostHog | null> => {
             //@ts-ignore
             opt_out_capturing_by_default: !enabled,
             loaded: (client) => {
-                activeClient = client as PostHog;
-                registerContext(client as PostHog);
-                registerGlobalHandlers(client as PostHog);
+                activeClient = posthog;
+                registerContext(posthog);
+                registerGlobalHandlers(posthog);
 
                 if (enabled) {
                     client.opt_in_capturing();

@@ -109,7 +109,7 @@
     "baseline-browser-mapping": "2.11.27",
     "js-yaml": "5.4.3",
     "nyc": "18.0.0",
-    "oxlint": "1.78.0",
+    "oxlint": "1.87.0",
     "oxlint-tsgolint": "7.0.2003",
     "typescript": "6.0.3",
     "vite": "8.3.3",
