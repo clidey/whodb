@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@apollo/client':
-        specifier: 4.3.2
-        version: 4.3.2(graphql-ws@6.3.0(graphql@16.11.0)(ws@8.22.0))(graphql@16.11.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(rxjs@7.8.2)
+        specifier: 4.3.3
+        version: 4.3.3(graphql-ws@6.3.0(graphql@16.11.0)(ws@8.22.0))(graphql@16.11.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(rxjs@7.8.2)
       '@clidey/connparse':
         specifier: 0.10.0
         version: 0.10.0
@@ -61,7 +61,7 @@ importers:
         version: 2.13.0(react-redux@9.3.0(@types/react@19.3.0)(react@19.3.0)(redux@5.0.1))(react@19.3.0)
       '@tailwindcss/vite':
         specifier: 4.3.3
-        version: 4.3.3(vite@8.3.3(@types/node@26.6.4)(jiti@2.7.0)(yaml@2.9.1))
+        version: 4.3.3(vite@8.3.4(@types/node@26.6.4)(jiti@2.7.0)(yaml@2.9.1))
       '@types/react':
         specifier: 19.3.0
         version: 19.3.0
@@ -87,8 +87,8 @@ importers:
         specifier: 4.18.1
         version: 4.18.1
       posthog-js:
-        specifier: 1.438.2
-        version: 1.438.2(@types/react@19.3.0)(react@19.3.0)
+        specifier: 1.438.3
+        version: 1.438.3(@types/react@19.3.0)(react@19.3.0)
       react:
         specifier: 19.3.0
         version: 19.3.0
@@ -128,7 +128,7 @@ importers:
     devDependencies:
       '@axe-core/playwright':
         specifier: 4.13.0
-        version: 4.13.0(playwright-core@1.63.0)
+        version: 4.13.0(playwright-core@1.64.0)
       '@graphql-codegen/cli':
         specifier: 7.4.5
         version: 7.4.5(@types/node@26.6.4)(graphql@16.11.0)(supports-color@7.2.0)(typescript@6.0.3)
@@ -151,14 +151,14 @@ importers:
         specifier: 1.87.0
         version: 1.87.0
       '@playwright/test':
-        specifier: 1.63.0
-        version: 1.63.0
+        specifier: 1.64.0
+        version: 1.64.0
       '@types/lodash':
         specifier: 4.17.25
         version: 4.17.25
       '@vitejs/plugin-react':
         specifier: 6.1.2
-        version: 6.1.2(vite@8.3.3(@types/node@26.6.4)(jiti@2.7.0)(yaml@2.9.1))
+        version: 6.1.2(vite@8.3.4(@types/node@26.6.4)(jiti@2.7.0)(yaml@2.9.1))
       baseline-browser-mapping:
         specifier: 2.11.27
         version: 2.11.27
@@ -178,16 +178,16 @@ importers:
         specifier: 6.0.3
         version: 6.0.3
       vite:
-        specifier: 8.3.3
-        version: 8.3.3(@types/node@26.6.4)(jiti@2.7.0)(yaml@2.9.1)
+        specifier: 8.3.4
+        version: 8.3.4(@types/node@26.6.4)(jiti@2.7.0)(yaml@2.9.1)
       vite-plugin-istanbul:
         specifier: 9.0.1
-        version: 9.0.1(supports-color@7.2.0)(vite@8.3.3(@types/node@26.6.4)(jiti@2.7.0)(yaml@2.9.1))
+        version: 9.0.1(supports-color@7.2.0)(vite@8.3.4(@types/node@26.6.4)(jiti@2.7.0)(yaml@2.9.1))
 
 packages:
 
-  '@apollo/client@4.3.2':
-    resolution: {integrity: sha512-ra6f8NhP4b5Wznw6VpRGOGF6Q6a8rORToQeIx5BMC5Rc7mRVZ9wCN+01ynIZPjmlGPNif2Lqt0LRD+futfNgIw==}
+  '@apollo/client@4.3.3':
+    resolution: {integrity: sha512-wMfOUaFKLgNsu0OMCg50gfhEHTV9/GyO7DxQvut7iSBUoePy0kvll3oWeY8KVPRfnVhYEzcwPJ/Jwz4uSe3fQA==}
     peerDependencies:
       graphql: ^16.0.0 || ^17.0.0
       graphql-ws: ^5.5.5 || ^6.0.3
@@ -1205,8 +1205,8 @@ packages:
   '@paulirish/trace_engine@0.0.53':
     resolution: {integrity: sha512-PUl/vlfo08Oj804VI5nDPeSk9vyslnBlVzDDwFt8SUVxY8+KdGMkra/vrXjEEHe8gb7+RqVTfOIlGw0nyrEelA==}
 
-  '@playwright/test@1.63.0':
-    resolution: {integrity: sha512-oxMK4vllB9RK5NQ2l1pq1IfOf2AvnEuj/vYGDj0H2nMtmtZpKtCwt/l00GEO6xjGfpBNAvjovvYdCm50dRQkpQ==}
+  '@playwright/test@1.64.0':
+    resolution: {integrity: sha512-oTN9FNYuN6bqQMwiho6jJKLCG2/QOYCixGXuCjRmzOq23eODeukuY2XiAVoVpAECbuezMt1MHQjAiQxK8F+Y+g==}
     engines: {node: '>=20'}
     hasBin: true
 
@@ -1216,8 +1216,8 @@ packages:
   '@posthog/core@1.57.2':
     resolution: {integrity: sha512-dfxeSjUvR+j4M7odvyf/KVdcKTZZ87u/l9swJtDt9vFkI2km3RhEveOkIHtFcZEQ1cllx7YaKJfdw6c8zfIEvg==}
 
-  '@posthog/types@1.415.1':
-    resolution: {integrity: sha512-7Qs2wcqipl8KcFpIkIKE1Wcj1djX4dEB3cfq907HrNpKK7/xKh3U4N4bkOD6h9+8j3SxWWrj9JNpE8CZXsE35w==}
+  '@posthog/types@1.415.2':
+    resolution: {integrity: sha512-BIIHPyXcPZuNTImrR1qLqLKFw7j9o8co6LG/9OpLtpWJ3RT0y89Lx6VCtd37N9/dkr/qW7y0uPjJxAxjsALHtw==}
 
   '@puppeteer/browsers@2.13.2':
     resolution: {integrity: sha512-5EUZSUIc37H6aIXyWO0Z4y8NlF8NnjgmqeQgOGiswAU7pY0HOo16ho4+alIWmSfdZnjqBRawMsP3I5YqLSn6kw==}
@@ -4288,13 +4288,13 @@ packages:
     resolution: {integrity: sha512-HRDzbaKjC+AOWVXxAU/x54COGeIv9eb+6CkDSQoNTt4XyWoIJvuPsXizxu/Fr23EiekbtZwmh1IcIG/l/a10GQ==}
     engines: {node: '>=8'}
 
-  playwright-core@1.63.0:
-    resolution: {integrity: sha512-rYCsBF/M5HjUch52bbtVONEFjv6Xu8sm8h72dNlR5bzIE1fvC/bxgspzkjSfU+MweEMmPM8KJebG6nnyxo5mCg==}
+  playwright-core@1.64.0:
+    resolution: {integrity: sha512-T9r+MZkTECl2+oUcZ26YgZzTrYidTsIhYYkJix+6iDOymOb1FB2RLLSOxRGnZGv5DStt+aduIVbt+E8WygXYpg==}
     engines: {node: '>=20'}
     hasBin: true
 
-  playwright@1.63.0:
-    resolution: {integrity: sha512-+7ziBLidS4NaNCdt57SUDT+wYmmd5fmiQejUic/kb+YsYSCPyOOE9sebzMjNmQrsnNpDJqd4WHvV/8lfKfUDUg==}
+  playwright@1.64.0:
+    resolution: {integrity: sha512-kVzTnYFYEyQ9RGzBjNCd2+yEqWmVbxl3AHPynv3qQ6JTjv4a+kwRcnqQwIpuP3NnrnIrE/Q6wWAIAvMfIE2/Yg==}
     engines: {node: '>=20'}
     hasBin: true
 
@@ -4302,8 +4302,8 @@ packages:
     resolution: {integrity: sha512-49cGhUbXj8Qenv0iTMxA1cFBzxXoctpC9Ujd77t1WcbJIr6nF/eI7g/8MgxrYldFRuAXvja7xQRwavoW7kgrxQ==}
     engines: {node: ^10 || ^12 || >=14}
 
-  posthog-js@1.438.2:
-    resolution: {integrity: sha512-4AbEQ0lJp4WupgA+y5fiBnepSril+qA1rAYuFy9oKQ0xd8yg19p5XNKDgZW/nGwJF2KVx/joy4vKWhyuJNoCVw==}
+  posthog-js@1.438.3:
+    resolution: {integrity: sha512-3G+Dq/9iUgLMYK6R16Czi4IK+qzWXwqapVvyj65lieRJbO67Y0FDCWnz+1j3Tu9EFJ24Nl2dV+pYVLjI4tp4ZQ==}
     peerDependencies:
       '@types/react': '>=16.8.0'
       react: '>=16.8.0'
@@ -5126,8 +5126,8 @@ packages:
     peerDependencies:
       vite: '>=7'
 
-  vite@8.3.3:
-    resolution: {integrity: sha512-cTAldKPImjg6c+gk48U19POPn3GCBzZwpdsN8ZMEEcbpes+6/wvfqUd0C2y3qYY4wsj8PwgFwrZ/1jBPVttMSg==}
+  vite@8.3.4:
+    resolution: {integrity: sha512-IftLE8phJhdNRIGNEV4JCCvfNScoZQVfcXaN8TQropWGJtOHcu+iAB9pHcuGvmEb/kddw0LBe/jS8ztdC6xdiQ==}
     engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
     peerDependencies:
@@ -5344,7 +5344,7 @@ packages:
 
 snapshots:
 
-  '@apollo/client@4.3.2(graphql-ws@6.3.0(graphql@16.11.0)(ws@8.22.0))(graphql@16.11.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(rxjs@7.8.2)':
+  '@apollo/client@4.3.3(graphql-ws@6.3.0(graphql@16.11.0)(ws@8.22.0))(graphql@16.11.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(rxjs@7.8.2)':
     dependencies:
       '@graphql-typed-document-node/core': 3.2.0(graphql@16.11.0)
       '@wry/caches': 1.0.1
@@ -5367,10 +5367,10 @@ snapshots:
       immutable: 5.1.9
       invariant: 2.2.4
 
-  '@axe-core/playwright@4.13.0(playwright-core@1.63.0)':
+  '@axe-core/playwright@4.13.0(playwright-core@1.64.0)':
     dependencies:
       axe-core: 4.13.0
-      playwright-core: 1.63.0
+      playwright-core: 1.64.0
 
   '@babel/code-frame@7.29.7':
     dependencies:
@@ -6588,20 +6588,20 @@ snapshots:
       legacy-javascript: 0.0.3
       third-party-web: 0.30.0
 
-  '@playwright/test@1.63.0':
+  '@playwright/test@1.64.0':
     dependencies:
-      playwright: 1.63.0
+      playwright: 1.64.0
 
   '@posthog/browser-common@0.9.2':
     dependencies:
       '@posthog/core': 1.57.2
-      '@posthog/types': 1.415.1
+      '@posthog/types': 1.415.2
 
   '@posthog/core@1.57.2':
     dependencies:
-      '@posthog/types': 1.415.1
+      '@posthog/types': 1.415.2
 
-  '@posthog/types@1.415.1': {}
+  '@posthog/types@1.415.2': {}
 
   '@puppeteer/browsers@2.13.2(supports-color@7.2.0)':
     dependencies:
@@ -7383,12 +7383,12 @@ snapshots:
       '@tailwindcss/oxide-win32-arm64-msvc': 4.3.3
       '@tailwindcss/oxide-win32-x64-msvc': 4.3.3
 
-  '@tailwindcss/vite@4.3.3(vite@8.3.3(@types/node@26.6.4)(jiti@2.7.0)(yaml@2.9.1))':
+  '@tailwindcss/vite@4.3.3(vite@8.3.4(@types/node@26.6.4)(jiti@2.7.0)(yaml@2.9.1))':
     dependencies:
       '@tailwindcss/node': 4.3.3
       '@tailwindcss/oxide': 4.3.3
       tailwindcss: 4.3.3
-      vite: 8.3.3(@types/node@26.6.4)(jiti@2.7.0)(yaml@2.9.1)
+      vite: 8.3.4(@types/node@26.6.4)(jiti@2.7.0)(yaml@2.9.1)
 
   '@tootallnate/quickjs-emscripten@0.23.0': {}
 
@@ -7586,10 +7586,10 @@ snapshots:
     optionalDependencies:
       maplibre-gl: 6.12.0
 
-  '@vitejs/plugin-react@6.1.2(vite@8.3.3(@types/node@26.6.4)(jiti@2.7.0)(yaml@2.9.1))':
+  '@vitejs/plugin-react@6.1.2(vite@8.3.4(@types/node@26.6.4)(jiti@2.7.0)(yaml@2.9.1))':
     dependencies:
       '@rolldown/pluginutils': 1.0.1
-      vite: 8.3.3(@types/node@26.6.4)(jiti@2.7.0)(yaml@2.9.1)
+      vite: 8.3.4(@types/node@26.6.4)(jiti@2.7.0)(yaml@2.9.1)
 
   '@whatwg-node/disposablestack@0.0.6':
     dependencies:
@@ -9876,11 +9876,11 @@ snapshots:
     dependencies:
       find-up: 4.1.0
 
-  playwright-core@1.63.0: {}
+  playwright-core@1.64.0: {}
 
-  playwright@1.63.0:
+  playwright@1.64.0:
     dependencies:
-      playwright-core: 1.63.0
+      playwright-core: 1.64.0
 
   postcss@8.5.29:
     dependencies:
@@ -9888,11 +9888,11 @@ snapshots:
       picocolors: 1.1.1
       source-map-js: 1.2.2
 
-  posthog-js@1.438.2(@types/react@19.3.0)(react@19.3.0):
+  posthog-js@1.438.3(@types/react@19.3.0)(react@19.3.0):
     dependencies:
       '@posthog/browser-common': 0.9.2
       '@posthog/core': 1.57.2
-      '@posthog/types': 1.415.1
+      '@posthog/types': 1.415.2
       core-js: 3.50.0
       dompurify: 3.4.16
       fflate: 0.4.9
@@ -10796,7 +10796,7 @@ snapshots:
       d3-time: 3.1.0
       d3-timer: 3.0.1
 
-  vite-plugin-istanbul@9.0.1(supports-color@7.2.0)(vite@8.3.3(@types/node@26.6.4)(jiti@2.7.0)(yaml@2.9.1)):
+  vite-plugin-istanbul@9.0.1(supports-color@7.2.0)(vite@8.3.4(@types/node@26.6.4)(jiti@2.7.0)(yaml@2.9.1)):
     dependencies:
       '@babel/generator': 7.29.7
       '@istanbuljs/load-nyc-config': 1.1.0
@@ -10806,11 +10806,11 @@ snapshots:
       picocolors: 1.1.1
       source-map: 0.7.6
       test-exclude: 8.0.0
-      vite: 8.3.3(@types/node@26.6.4)(jiti@2.7.0)(yaml@2.9.1)
+      vite: 8.3.4(@types/node@26.6.4)(jiti@2.7.0)(yaml@2.9.1)
     transitivePeerDependencies:
       - supports-color
 
-  vite@8.3.3(@types/node@26.6.4)(jiti@2.7.0)(yaml@2.9.1):
+  vite@8.3.4(@types/node@26.6.4)(jiti@2.7.0)(yaml@2.9.1):
     dependencies:
       lightningcss: 1.33.0
       picomatch: 4.0.7

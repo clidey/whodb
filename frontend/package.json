@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@apollo/client": "4.3.2",
+    "@apollo/client": "4.3.3",
     "@clidey/connparse": "0.10.0",
     "@clidey/ux": "1.5.1",
     "@codemirror/autocomplete": "6.20.3",
@@ -30,7 +30,7 @@
     "graphql": "16.11.0",
     "html-to-image": "1.11.13",
     "lodash": "4.18.1",
-    "posthog-js": "1.438.2",
+    "posthog-js": "1.438.3",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "react-markdown": "10.1.0",
@@ -103,7 +103,7 @@
     "@graphql-typed-document-node/core": "3.2.0",
     "@lhci/cli": "0.15.1",
     "@oxlint/migrate": "1.87.0",
-    "@playwright/test": "1.63.0",
+    "@playwright/test": "1.64.0",
     "@types/lodash": "4.17.25",
     "@vitejs/plugin-react": "6.1.2",
     "baseline-browser-mapping": "2.11.27",
@@ -112,7 +112,7 @@
     "oxlint": "1.87.0",
     "oxlint-tsgolint": "7.0.2003",
     "typescript": "6.0.3",
-    "vite": "8.3.3",
+    "vite": "8.3.4",
     "vite-plugin-istanbul": "9.0.1"
   },
   "packageManager": "pnpm@11.17.0+sha512.cca3cea332ad254bb84145f966d19f4879615210346fc92c79a047f23a0d7b3cca3c3792f0076ba1f1831d277efbcf0a9119b31a9a60eca7fb3d6231f331ef72"
