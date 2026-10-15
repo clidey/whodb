@@ -415,18 +415,12 @@ parts:
       - -**/*.pyo
       - -**/*.pyc
     override-build: |
-      # The Snap Store has no go/1.27 channel yet. Use the official Go
-      # distribution and verify it against the checksum published at go.dev/dl.
-      GO_VERSION=1.27.2
+      # Use the official Go distribution at the version pinned in go.mod, and
+      # verify it against the checksum Go publishes next to each archive.
+      GO_VERSION=$(awk '$1 == "go" {print $2; exit}' "${SNAPCRAFT_PART_SRC}/desktop-ce/go.mod")
       case "$(uname -m)" in
-        x86_64)
-          GO_ARCH=amd64
-          GO_SHA256=ecbadb99091a3f46e31f5f934b068b1864eafa7995211b39eaddf76996045fe5
-          ;;
-        aarch64)
-          GO_ARCH=arm64
-          GO_SHA256=94f3e30b8e374bc285e7dadc11e0865726b9bc6e85b841ccceaabc0214c6b7c8
-          ;;
+        x86_64) GO_ARCH=amd64 ;;
+        aarch64) GO_ARCH=arm64 ;;
         *)
           echo "Unsupported Go build architecture: $(uname -m)" >&2
           exit 1
@@ -437,6 +431,8 @@ parts:
       curl --fail --location --retry 3 \
         --output "/tmp/${GO_ARCHIVE}" \
         "https://go.dev/dl/${GO_ARCHIVE}"
+      GO_SHA256=$(curl --fail --location --retry 3 --silent \
+        "https://dl.google.com/go/${GO_ARCHIVE}.sha256")
       echo "${GO_SHA256}  /tmp/${GO_ARCHIVE}" | sha256sum --check -
 
       rm -rf "${CRAFT_PART_BUILD}/go"
