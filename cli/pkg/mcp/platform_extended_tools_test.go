@@ -27,6 +27,34 @@ func TestHandlePlatformExtendedQueryInjectsSelectedWorkspace(t *testing.T) {
 	}
 }
 
+func TestHandlePlatformAppReferenceUsesHostedContract(t *testing.T) {
+	client := &fakePlatformClient{platformQueryResult: "exact SDK documentation"}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+	_, output, err := handlePlatformExtendedQuery(context.Background(), "whodb_platform_app_sdk", "AppBuilderReference", map[string]any{"kind": "lookup_sdk", "name": "data"}, nil)
+	if err != nil || output.Error != "" || output.Data != "exact SDK documentation" {
+		t.Fatalf("reference output = %#v, err = %v", output, err)
+	}
+	if client.platformQueryOperation != "AppBuilderReference" || client.platformQueryVariables["kind"] != "lookup_sdk" || client.platformQueryVariables["name"] != "data" {
+		t.Fatalf("reference variables = %#v", client.platformQueryVariables)
+	}
+}
+
+func TestHandlePlatformAppLogicGraphUsesSelectedProject(t *testing.T) {
+	client := &fakePlatformClient{platformQueryResult: "interaction report"}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+	_, output, err := handlePlatformExtendedQuery(context.Background(), "whodb_platform_app_logic_graph", "AppLogicGraph", map[string]any{"appId": "app-1", "page": "main"}, nil)
+	if err != nil || output.Error != "" || output.Data != "interaction report" {
+		t.Fatalf("logic graph output = %#v, err = %v", output, err)
+	}
+	if client.platformQueryOperation != "AppLogicGraph" || client.platformQueryVariables["projectId"] != "proj-1" || client.platformQueryVariables["appId"] != "app-1" || client.platformQueryVariables["page"] != "main" {
+		t.Fatalf("logic graph variables = %#v", client.platformQueryVariables)
+	}
+}
+
 func TestHandlePlatformExtendedQueryProjectsFieldsAndScope(t *testing.T) {
 	client := &fakePlatformClient{platformQueryResult: map[string]any{
 		"id": "app-1", "name": "Customer App", "private": "must-not-be-returned",

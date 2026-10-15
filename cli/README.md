@@ -1012,6 +1012,7 @@ inputs, so an agent can click, fill, press, wait for a selector, or inspect DOM
 state without creating a Playwright script. For example, use an action
 `{"kind":"click","selector":"text=Orders"}` followed by a script
 `"(() => document.querySelectorAll('tr').length)()"`.
+Set `trace: true` to request an interaction trace from a compatible hosted runtime.
 
 App capture needs Node.js and npm. `setup-capture` installs Playwright and
 Chromium in the user's cache; `--install` does the same before capturing.
@@ -1096,6 +1097,20 @@ writing them. File writes update the draft one at a time; an interrupted sync
 can be completed by rerunning the command. Published file content changes only
 after promotion; changes to the app's resource bindings take effect when the
 draft metadata is updated.
+
+MCP clients can read `whodb://platform/app-workflow` or request the
+`whodb_platform_build_app_workflow` prompt for the app build sequence. The
+`whodb_platform_workflow_recipe` tool also returns an app-specific plan. Hosted
+MCP tools can inspect and edit hosted draft files and capture hosted views.
+`whodb_platform_app_screenshot` accepts `trace: true` on runtimes that support
+interaction tracing. `whodb_platform_app_components`,
+`whodb_platform_app_component`, `whodb_platform_app_sdks`, and
+`whodb_platform_app_sdk` read the same reference material as the in-app builder
+when the hosted platform advertises that capability.
+`whodb_platform_app_logic_graph` runs the builder's interaction and function
+contract audit on an authorized hosted draft. A
+client needs local filesystem and CLI access to use `apps init`, `apps dev`,
+`apps verify`, and `apps publish` against a version-controlled folder.
 
 Local or staging setup:
 

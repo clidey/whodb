@@ -86,13 +86,14 @@ func recipeForGoal(goal string) PlatformWorkflowRecipeOutput {
 		recipe.VerifyWith = []string{"whodb_platform_ontology", "whodb_platform_ontology_rows", "whodb_platform_resource_graph"}
 	case strings.Contains(lower, "app") || strings.Contains(lower, "application"):
 		recipe.Recipe = "application"
-		recipe.Description = "Understand the data model and runtime dependencies, then create, generate, and verify an application."
+		recipe.Description = "Inspect real resources, build editable app files, exercise workflows and responsive views, then review before promotion. Read whodb://platform/app-workflow for hosted MCP and local CLI paths."
 		recipe.Steps = []PlatformRecipeStep{
-			{Order: 1, Name: "scope", Objective: "Identify the ontologies, functions, providers, and secrets the app will use.", ReadTools: []string{"whodb_platform_workspace_summary", "whodb_platform_data_model_summary", "whodb_platform_runtime_readiness"}},
-			{Order: 2, Name: "build", Objective: "Create or update the app and its files with an explicit preview.", ReadTools: []string{"whodb_platform_write_plan", "whodb_platform_change_impact"}, WriteTools: []string{"whodb_platform_create", "whodb_platform_update", "whodb_platform_action"}},
-			{Order: 3, Name: "verify", Objective: "Read the app view and files, then inspect affected resources.", VerifyTools: []string{"whodb_platform_app", "whodb_platform_app_view", "whodb_platform_app_files", "whodb_platform_resource_graph"}},
+			{Order: 1, Name: "scope", Objective: "Identify users, jobs, ontologies, functions, and real sample data before planning pages and interactions.", ReadTools: []string{"whodb_platform_workspace_summary", "whodb_platform_ontology_describe", "whodb_platform_ontology_rows", "whodb_platform_functions", "whodb_platform_runtime_readiness"}},
+			{Order: 2, Name: "build", Objective: "Plan page, state, and event flows; look up exact component and SDK capabilities, then create or update the app's editable draft files.", ReadTools: []string{"whodb_platform_apps", "whodb_platform_app", "whodb_platform_app_files", "whodb_platform_app_components", "whodb_platform_app_component", "whodb_platform_app_sdks", "whodb_platform_app_sdk", "whodb_platform_write_plan", "whodb_platform_change_impact"}, WriteTools: []string{"whodb_platform_create", "whodb_platform_update", "whodb_platform_action"}, Notes: []string{"With filesystem access, use whodb apps init --from, apps check, and apps publish --draft for the version-controlled path."}},
+			{Order: 3, Name: "verify", Objective: "Audit event wiring, exercise each promised interaction, inspect rendered desktop/mobile/tablet views and diagnostics, then read back the draft files.", VerifyTools: []string{"whodb_platform_app_view", "whodb_platform_app_files", "whodb_platform_app_logic_graph", "whodb_platform_app_screenshot", "whodb_platform_resource_graph"}, Notes: []string{"With filesystem access, use whodb apps verify for local-file screenshots and a handler-to-bridge flow trace."}},
+			{Order: 4, Name: "promote", Objective: "Review the exact draft and promote only after the workflow passes verification.", ReadTools: []string{"whodb_platform_write_plan"}, WriteTools: []string{"whodb_platform_action"}, VerifyTools: []string{"whodb_platform_object_versions", "whodb_platform_active_version"}},
 		}
-		recipe.VerifyWith = []string{"whodb_platform_app", "whodb_platform_app_view", "whodb_platform_resource_graph"}
+		recipe.VerifyWith = []string{"whodb_platform_app_view", "whodb_platform_app_screenshot", "whodb_platform_object_versions"}
 	default:
 		recipe.Recipe = "platform_discovery"
 		recipe.Description = "Start with a compact workspace summary, identify gaps, and choose a platform-specific workflow before making changes."
