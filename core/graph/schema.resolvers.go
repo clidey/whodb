@@ -504,18 +504,34 @@ func (r *queryResolver) SourceTypes(ctx context.Context) ([]*model.SourceType, e
 
 // SourceFieldOptions is the resolver for the SourceFieldOptions field.
 func (r *queryResolver) SourceFieldOptions(ctx context.Context, sourceType string, fieldKey string, values []*model.RecordInput) ([]string, error) {
+	requested := recordInputsToMap(values)
+	if env.DisableCredentialForm {
+		current := auth.GetAuthenticatedSourceCredentials(ctx)
+		if current == nil || !current.PreconfiguredProfile || current.SourceType != sourceType {
+			return nil, errors.New("authenticated source profile required")
+		}
+		merged, err := auth.MergeSourceProfileValues(current.SourceType, current.Values, requested)
+		if err != nil {
+			return nil, err
+		}
+		requested = merged
+	} else if current := auth.GetSourceCredentials(ctx); current != nil && current.SourceType == sourceType {
+		requested = mergeCurrentSourceValues(current, requested)
+	}
+
 	spec, ok := sourcecatalog.Find(sourceType)
 	if !ok {
 		return nil, fmt.Errorf("unsupported source type: %s", sourceType)
 	}
-
-	credentials := &source.Credentials{
-		SourceType: sourceType,
-		Values:     recordInputsToMap(values),
+	if env.DisableCredentialForm {
+		field, ok := spec.ConnectionFieldByKey(fieldKey)
+		// Database options also power the authenticated database selector for
+		// network sources, whose catalog field does not advertise SupportsOptions.
+		if !ok || (!field.SupportsOptions && field.Key != "Database") {
+			return []string{}, nil
+		}
 	}
-	if current := auth.GetSourceCredentials(ctx); current != nil && current.SourceType == sourceType {
-		credentials.Values = mergeCurrentSourceValues(current, credentials.Values)
-	}
+	credentials := &source.Credentials{SourceType: sourceType, Values: requested}
 
 	session, err := source.Open(ctx, spec, credentials)
 	if err != nil {

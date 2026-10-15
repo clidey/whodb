@@ -23,7 +23,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/clidey/whodb/core/src"
+	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/source"
+	"github.com/clidey/whodb/core/src/types"
 )
 
 func TestAuthMiddlewareSessionCookieInjectsCredentials(t *testing.T) {
@@ -49,6 +53,59 @@ func TestAuthMiddlewareSessionCookieInjectsCredentials(t *testing.T) {
 	}
 	if got == nil || got.SourceType != "Postgres" || got.Values["Password"] != "s3cr3t" {
 		t.Fatalf("expected credentials from session, got %+v", got)
+	}
+}
+
+func TestAuthMiddlewareDisabledCredentialFormRequiresProfileSession(t *testing.T) {
+	newTestStore(t)
+	originalDisableCredentialForm := env.DisableCredentialForm
+	env.DisableCredentialForm = true
+	t.Cleanup(func() { env.DisableCredentialForm = originalDisableCredentialForm })
+	originalEngine := src.MainEngine
+	src.MainEngine = &engine.Engine{}
+	t.Cleanup(func() { src.MainEngine = originalEngine })
+	src.MainEngine.AddLoginProfile(types.DatabaseCredentials{
+		CustomId: "profile-1", Type: "Postgres", Source: "environment",
+		Hostname: "db.internal", Password: "s3cr3t",
+	})
+	_, profileCredentials, ok := src.FindSourceProfile("profile-1")
+	if !ok {
+		t.Fatal("configured profile was not found")
+	}
+
+	for _, tt := range []struct {
+		name       string
+		profile    bool
+		wantStatus int
+	}{
+		{name: "old manual session", wantStatus: http.StatusUnauthorized},
+		{name: "configured profile session", profile: true, wantStatus: http.StatusOK},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			credentials := testCredentials()
+			if tt.profile {
+				credentials = profileCredentials
+			}
+			token, csrf, _, err := CreateSession(credentials, time.Hour)
+			if err != nil {
+				t.Fatal(err)
+			}
+			req := httptest.NewRequest(http.MethodPost, "/api/private", nil)
+			req.AddCookie(&http.Cookie{Name: sessionCookieName, Value: token})
+			req.Header.Set(csrfHeaderName, csrf)
+			rr := httptest.NewRecorder()
+			called := false
+			AuthMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				called = true
+				if GetSourceCredentials(r.Context()) == nil {
+					t.Fatal("accepted session has no credentials")
+				}
+				w.WriteHeader(http.StatusOK)
+			})).ServeHTTP(rr, req)
+			if rr.Code != tt.wantStatus || called != tt.profile {
+				t.Fatalf("unexpected session result: status=%d, called=%v", rr.Code, called)
+			}
+		})
 	}
 }
 

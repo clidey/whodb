@@ -20,6 +20,7 @@ import (
 	"maps"
 
 	"github.com/clidey/whodb/core/src/common/ssl"
+	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/source"
 	"github.com/clidey/whodb/core/src/types"
 )
@@ -86,6 +87,7 @@ func FindSourceProfile(id string) (*source.Profile, *source.Credentials, bool) {
 		}
 		credentials := GetSourceCredentials(profile)
 		credentials.ID = &sourceProfile.ID
+		credentials.PreconfiguredProfile = profile.Source != ""
 		return sourceProfile, credentials, true
 	}
 
@@ -128,6 +130,9 @@ func displayValuesForProfile(profile types.DatabaseCredentials) map[string]strin
 	}
 	if profile.Port != "" {
 		values["Port"] = profile.Port
+	}
+	if env.DisableCredentialForm {
+		return values
 	}
 	for key, value := range profile.Advanced {
 		if key == ssl.KeySSLCACertContent || key == ssl.KeySSLClientCertContent || key == ssl.KeySSLClientKeyContent {

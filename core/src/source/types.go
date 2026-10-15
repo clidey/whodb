@@ -485,6 +485,9 @@ type Credentials struct {
 	Values      map[string]string `json:"Values,omitempty"`
 	AccessToken *string           `json:"AccessToken,omitempty"`
 	IsProfile   bool              `json:"IsProfile,omitempty"`
+	// PreconfiguredProfile marks a server-supplied profile in opaque sessions.
+	// Credential tokens must never be allowed to set it.
+	PreconfiguredProfile bool `json:"PreconfiguredProfile,omitempty"`
 }
 
 // CloneValues returns a copy of the stored credential values.
