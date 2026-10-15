@@ -134,7 +134,7 @@ export const InternalPage: FC<IInternalPageProps> = (props) => {
     return (
         <Container>
             <div className="flex flex-row grow">
-                <SidebarProvider open={sidebarOpen} onOpenChange={(open) => dispatch(SettingsActions.setSidebarOpen(open))} style={isTablesPage ? { '--sidebar-width': '240px' } as CSSProperties : undefined}>
+                <SidebarProvider open={sidebarOpen} onOpenChange={(open) => dispatch(SettingsActions.setSidebarOpen(open))}>
                     <Sidebar />
                 </SidebarProvider>
                 {props.sidebar && <SidebarProvider style={props.subSidebarWidth ? { '--sidebar-width': props.subSidebarWidth } as CSSProperties : undefined}>

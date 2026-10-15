@@ -855,7 +855,7 @@ export const Sidebar: FC = () => {
                             </div>
 
                             <SidebarMenu className="grow mt-8 gap-4">
-                                {sidebarRoutes.map((route, index) => (
+                                {sidebarRoutes.map((route) => (
                                     <SidebarMenuItem key={route.title}>
                                         <SidebarMenuButton asChild tooltip={open ? undefined : route.title} isActive={pathname === route.path || (pathname.includes(InternalRoutes.Dashboard.ExploreStorageUnit.path) && route.path === InternalRoutes.Dashboard.StorageUnit.path)}>
                                             <Link
@@ -868,7 +868,6 @@ export const Sidebar: FC = () => {
                                             >
                                                 {route.icon}
                                                 {open && <span>{route.title}</span>}
-                                                {open && pathname === InternalRoutes.Dashboard.StorageUnit.path && <span className="ce-sidebar-shortcut" aria-hidden="true">^{index + 1}</span>}
                                             </Link>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
@@ -929,7 +928,7 @@ export const Sidebar: FC = () => {
                                     <SidebarMenuItem className="flex justify-between items-center w-full overflow-hidden">
                                         <SidebarMenuButton asChild tooltip={t('disconnect')} className="flex-1 min-w-0">
                                             <div
-                                                className="flex items-center gap-sm text-nowrap w-fit cursor-pointer"
+                                                className="flex items-center gap-2 text-nowrap w-fit cursor-pointer"
                                                 role="button"
                                                 tabIndex={0}
                                                 aria-label={open ? undefined : t('disconnect')}
