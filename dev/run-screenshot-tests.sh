@@ -17,6 +17,9 @@
 
 set -e
 
+# Separate compose project so teardown never touches the dev stack
+export COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-whodb-screenshot}"
+
 # Get the script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"

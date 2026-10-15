@@ -316,9 +316,9 @@ export const extrasMethods = {
         await el.scrollIntoViewIfNeeded();
         await el.waitFor({ state: "visible" });
 
+        const element = await el.elementHandle();
         await this.page.evaluate(
-            ({ sel, borderColor, borderWidth, borderRadius, padding, shadow }) => {
-                const element = document.querySelector(sel);
+            ({ element, borderColor, borderWidth, borderRadius, padding, shadow }) => {
                 if (!element) return;
                 const rect = element.getBoundingClientRect();
                 const overlay = document.createElement("div");
@@ -341,7 +341,7 @@ export const extrasMethods = {
                 overlay.setAttribute("data-testid", "e2e-highlight-overlay");
                 document.body.appendChild(overlay);
             },
-            { sel: selector, borderColor, borderWidth, borderRadius, padding, shadow }
+            { element, borderColor, borderWidth, borderRadius, padding, shadow }
         );
     },
 

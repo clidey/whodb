@@ -30,6 +30,18 @@ test.describe("Postgres Screenshot Generation", () => {
     return `${screenshotDir}/${name}`;
   }
 
+  async function focusGraphNode(page, nodeId) {
+    const pane = await page.locator(".react-flow").boundingBox();
+    const node = await page.locator(`[data-testid="rf__node-${nodeId}"]`).boundingBox();
+    await page.mouse.move(pane.x + pane.width / 2, pane.y + pane.height / 2);
+    await page.mouse.wheel(node.x + node.width / 2 - (pane.x + pane.width / 2), node.y + node.height / 2 - (pane.y + pane.height / 2));
+    await page.waitForTimeout(300);
+    for (let i = 0; i < 2; i++) {
+      await page.locator(".react-flow__controls-zoomin").click();
+      await page.waitForTimeout(300);
+    }
+  }
+
   // Tests that need clean login page (01-04)
   test.describe("Login Flow Screenshots", () => {
     test.beforeEach(async ({ whodb }) => {
@@ -219,7 +231,7 @@ test.describe("Postgres Screenshot Generation", () => {
 
     test("20 - Data View - Export Dialog", async ({ whodb, page }) => {
       await whodb.data("users");
-      await page.getByRole("button", { name: "Export All" }).click();
+      await page.getByRole("button", { name: "Export", exact: true }).click();
       await page.waitForTimeout(500);
       await page.screenshot({ path: ssPath("20-data-view-export-dialog") });
       await page.keyboard.press("Escape");
@@ -227,7 +239,7 @@ test.describe("Postgres Screenshot Generation", () => {
 
     test("21 - Data View - Export Format Dropdown", async ({ whodb, page }) => {
       await whodb.data("users");
-      await page.getByRole("button", { name: "Export All" }).click();
+      await page.getByRole("button", { name: "Export", exact: true }).click();
       await page.waitForTimeout(300);
       await page.locator('[data-testid="export-format-select"]').click();
       await page.waitForTimeout(300);
@@ -661,7 +673,7 @@ test.describe("Postgres Screenshot Generation", () => {
 
     test("65 - Export Format - CSV Option Highlighted", async ({ whodb, page }) => {
       await whodb.data("users");
-      await page.getByRole("button", { name: "Export All" }).click();
+      await page.getByRole("button", { name: "Export", exact: true }).click();
       await page.waitForTimeout(300);
       await page.locator('[data-testid="export-format-select"]').click();
       await page.waitForTimeout(300);
@@ -671,7 +683,7 @@ test.describe("Postgres Screenshot Generation", () => {
 
     test("66 - Export Format - Excel Option Highlighted", async ({ whodb, page }) => {
       await whodb.data("users");
-      await page.getByRole("button", { name: "Export All" }).click();
+      await page.getByRole("button", { name: "Export", exact: true }).click();
       await page.waitForTimeout(300);
       await page.locator('[data-testid="export-format-select"]').click();
       await page.waitForTimeout(300);
@@ -681,7 +693,7 @@ test.describe("Postgres Screenshot Generation", () => {
 
     test("67 - Export Delimiter - Comma Option", async ({ whodb, page }) => {
       await whodb.data("users");
-      await page.getByRole("button", { name: "Export All" }).click();
+      await page.getByRole("button", { name: "Export", exact: true }).click();
       await page.waitForTimeout(300);
       await page.locator('[data-testid="export-delimiter-select"]').click();
       await page.waitForTimeout(300);
@@ -692,7 +704,7 @@ test.describe("Postgres Screenshot Generation", () => {
     test("68 - Export Delimiter - Semicolon Option", async ({ whodb, page }) => {
       await whodb.data("users");
       await page.waitForTimeout(800);
-      await page.getByRole("button", { name: "Export All" }).click({ force: true });
+      await page.getByRole("button", { name: "Export", exact: true }).click({ force: true });
       await page.waitForTimeout(500);
       await page.locator('[data-testid="export-delimiter-select"]').click({ force: true });
       await page.waitForTimeout(500);
@@ -707,7 +719,7 @@ test.describe("Postgres Screenshot Generation", () => {
     test("69 - Export Delimiter - Pipe Option", async ({ whodb, page }) => {
       await whodb.data("users");
       await page.waitForTimeout(800);
-      await page.getByRole("button", { name: "Export All" }).click({ force: true });
+      await page.getByRole("button", { name: "Export", exact: true }).click({ force: true });
       await page.waitForTimeout(500);
       await page.locator('[data-testid="export-delimiter-select"]').click({ force: true });
       await page.waitForTimeout(500);
@@ -831,7 +843,7 @@ test.describe("Postgres Screenshot Generation", () => {
       await whodb.setTablePageSize(1);
       await whodb.submitTable();
       await page.waitForTimeout(1000);
-      await expect(page.locator('[data-slot="pagination-link"]').first()).toBeVisible();
+      await expect(page.getByText("Page 1 of 4", { exact: true })).toBeVisible();
       await page.waitForTimeout(300);
       await page.screenshot({ path: ssPath("83-pagination-first-page") });
     });
@@ -842,7 +854,8 @@ test.describe("Postgres Screenshot Generation", () => {
       await whodb.setTablePageSize(1);
       await whodb.submitTable();
       await page.waitForTimeout(1000);
-      await page.locator('[data-slot="pagination-link"]').filter({ hasText: "2" }).click({ force: true });
+      await page.getByRole("button", { name: "Next page" }).click();
+      await expect(page.getByText("Page 2 of 4", { exact: true })).toBeVisible();
       await page.waitForTimeout(800);
       await page.screenshot({ path: ssPath("84-pagination-middle-page") });
     });
@@ -853,7 +866,10 @@ test.describe("Postgres Screenshot Generation", () => {
       await whodb.setTablePageSize(1);
       await whodb.submitTable();
       await page.waitForTimeout(1000);
-      await page.locator('[data-slot="pagination-link"]').last().click({ force: true });
+      for (let i = 0; i < 3; i++) {
+        await page.getByRole("button", { name: "Next page" }).click();
+      }
+      await expect(page.getByText("Page 4 of 4", { exact: true })).toBeVisible();
       await page.waitForTimeout(800);
       await page.screenshot({ path: ssPath("85-pagination-last-page") });
     });
@@ -905,33 +921,29 @@ test.describe("Postgres Screenshot Generation", () => {
     test("91 - Graph - Simple Table No Relations", async ({ whodb, page }) => {
       await whodb.goto("graph");
       await page.waitForTimeout(1500);
-      await page.locator('[data-testid="rf__node-test_casting"]').scrollIntoViewIfNeeded();
-      await page.waitForTimeout(500);
-      await page.screenshot({ path: ssPath("91-graph-isolated-table-node") });
+      await focusGraphNode(page, "test_casting");
+      await whodb.screenshotWithHighlight('[data-testid="rf__node-test_casting"]', ssName("91-graph-isolated-table-node"));
     });
 
     test("92 - Graph - One to Many Relationship", async ({ whodb, page }) => {
       await whodb.goto("graph");
       await page.waitForTimeout(1500);
-      await page.locator('[data-testid="rf__node-users"]').scrollIntoViewIfNeeded();
-      await page.waitForTimeout(500);
-      await page.screenshot({ path: ssPath("92-graph-one-to-many-relationship") });
+      await focusGraphNode(page, "users");
+      await whodb.screenshotWithHighlight('[data-testid="rf__node-users"]', ssName("92-graph-one-to-many-relationship"));
     });
 
     test("93 - Graph - Many to One Relationship", async ({ whodb, page }) => {
       await whodb.goto("graph");
       await page.waitForTimeout(1500);
-      await page.locator('[data-testid="rf__node-order_items"]').scrollIntoViewIfNeeded();
-      await page.waitForTimeout(500);
-      await page.screenshot({ path: ssPath("93-graph-many-to-one-relationship") });
+      await focusGraphNode(page, "order_items");
+      await whodb.screenshotWithHighlight('[data-testid="rf__node-order_items"]', ssName("93-graph-many-to-one-relationship"));
     });
 
     test("94 - Graph - Multiple Foreign Keys", async ({ whodb, page }) => {
       await whodb.goto("graph");
       await page.waitForTimeout(1500);
-      await page.locator('[data-testid="rf__node-orders"]').scrollIntoViewIfNeeded();
-      await page.waitForTimeout(500);
-      await page.screenshot({ path: ssPath("94-graph-multiple-foreign-keys") });
+      await focusGraphNode(page, "orders");
+      await whodb.screenshotWithHighlight('[data-testid="rf__node-orders"]', ssName("94-graph-multiple-foreign-keys"));
     });
 
     test("95 - Graph - Zoom In View", async ({ whodb, page }) => {
@@ -1077,7 +1089,7 @@ test.describe("Postgres Screenshot Generation", () => {
       }]);
       await whodb.sendChatMessage("Show me all users");
       await whodb.waitForChatResponse();
-      await page.locator('[data-testid="icon-button"]').first().click();
+      await page.locator('.ce-chat-result-actions button', { hasText: "SQL" }).first().click();
       await page.waitForTimeout(500);
       await page.screenshot({ path: ssPath("107-chat-sql-code-view") });
     });
@@ -1196,12 +1208,7 @@ test.describe("Postgres Screenshot Generation", () => {
       }]);
       await whodb.sendChatMessage("Show me all users");
       await whodb.waitForChatResponse();
-      // Hover over the table to reveal the actions button, click it, then click Move to Scratchpad
-      const tablePreview = page.locator('.group\\/table-preview').last();
-      await tablePreview.hover();
-      await page.waitForTimeout(300);
-      await tablePreview.locator('[data-testid="icon-button"]').click();
-      await page.locator('[data-testid="move-to-scratchpad-option"]').click();
+      await page.getByTestId("chat-result-move-to-scratchpad").last().click();
       await page.waitForTimeout(500);
       await page.screenshot({ path: ssPath("113-chat-move-to-scratchpad-dialog") });
     });
