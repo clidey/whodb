@@ -503,12 +503,12 @@ func TestBuildOntologyCreatePayloadDefaultsRequiredPropertyFields(t *testing.T) 
 	ontologyPluralName = "Customers"
 	ontologyPrimaryKey = "id"
 	ontologyTableName = "customers"
-	ontologySchemaName = "public"
+	ontologySchemaName = ""
 	ontologyDescription = ""
 	ontologyIcon = ""
 	ontologyColor = ""
 	ontologyStatus = ""
-	ontologyPropertiesJSON = []string{`{"apiName":"id","displayName":"ID","columnName":"id","dataType":"String","isRequired":true}`}
+	ontologyPropertiesJSON = []string{`{"apiName":"id","displayName":"ID","columnName":"id","dataType":"String"}`}
 	ontologyLinksJSON = nil
 	t.Cleanup(func() {
 		ontologyAPIName = ""
@@ -537,8 +537,40 @@ func TestBuildOntologyCreatePayloadDefaultsRequiredPropertyFields(t *testing.T) 
 	if payload["storageMode"] != platform.DefaultOntologyStorageMode {
 		t.Fatalf("storageMode = %#v, want %q", payload["storageMode"], platform.DefaultOntologyStorageMode)
 	}
+	if payload["schemaName"] != "" {
+		t.Fatalf("schemaName = %#v, want empty for project-managed ontology", payload["schemaName"])
+	}
+	if property["description"] != "" || property["isRequired"] != true {
+		t.Fatalf("property defaults = %#v, want empty description and required primary key", property)
+	}
 	if property["visibility"] != "normal" || property["isSearchable"] != true || property["isSortable"] != true || property["isEditOnly"] != false {
 		t.Fatalf("property defaults = %#v, want normal/true/true/false", property)
+	}
+}
+
+func TestBuildOntologyCreatePayloadRejectsMissingPropertyField(t *testing.T) {
+	ontologyAPIName = "customer"
+	ontologyDisplayName = "Customer"
+	ontologyPluralName = "Customers"
+	ontologyPrimaryKey = "id"
+	ontologyTableName = "customers"
+	ontologySchemaName = ""
+	ontologyPropertiesJSON = []string{`{"apiName":"id","displayName":"ID","dataType":"String"}`}
+	ontologyLinksJSON = nil
+	t.Cleanup(func() {
+		ontologyAPIName = ""
+		ontologyDisplayName = ""
+		ontologyPluralName = ""
+		ontologyPrimaryKey = ""
+		ontologyTableName = ""
+		ontologySchemaName = ""
+		ontologyPropertiesJSON = nil
+		ontologyLinksJSON = nil
+	})
+
+	_, err := buildOntologyCreatePayload(&cobra.Command{})
+	if err == nil || !strings.Contains(err.Error(), "--property-json item 1: columnName is required") {
+		t.Fatalf("buildOntologyCreatePayload() error = %v, want missing columnName", err)
 	}
 }
 
@@ -549,7 +581,7 @@ func TestBuildOntologyCreatePayloadDefaultsOrdinaryPropertyFlagsToFalse(t *testi
 	ontologyPrimaryKey = "id"
 	ontologyTableName = "customers"
 	ontologySchemaName = "public"
-	ontologyPropertiesJSON = []string{`{"apiName":"name","displayName":"Name","columnName":"name","dataType":"String","isRequired":false}`}
+	ontologyPropertiesJSON = []string{`{"apiName":"name","displayName":"Name","columnName":"name","dataType":"String"}`}
 	ontologyLinksJSON = nil
 	t.Cleanup(func() {
 		ontologyAPIName = ""
@@ -567,8 +599,8 @@ func TestBuildOntologyCreatePayloadDefaultsOrdinaryPropertyFlagsToFalse(t *testi
 		t.Fatalf("buildOntologyCreatePayload() error = %v", err)
 	}
 	property := payload["properties"].([]map[string]any)[0]
-	if property["isSearchable"] != false || property["isSortable"] != false {
-		t.Fatalf("property flags = %#v, want searchable=false and sortable=false", property)
+	if property["isRequired"] != false || property["isSearchable"] != false || property["isSortable"] != false {
+		t.Fatalf("property flags = %#v, want required=false, searchable=false, and sortable=false", property)
 	}
 }
 

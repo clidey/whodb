@@ -978,11 +978,14 @@ whodb apps screenshot "Clidey Sales" --install --org clidey-erp --project erp-de
 
 For a specific page or interactive state, list pages first, then pass `--page`.
 Use `--click` for a visible app control, or `--actions` for an ordered sequence.
-Selectors are Playwright selectors inside the app frame. `--js` evaluates a
+Selectors are Playwright selectors inside the app frame. Each action selector
+must match one element; scope repeated text to a node or table row. `--js` evaluates a
 JavaScript expression or IIFE in that frame after the actions; `--script-file`
 reads the expression from a file. JSON output includes the screenshot path,
 visible text, browser console errors, page errors, failed requests, HTTP error
 responses, and the JavaScript result.
+For content loaded after mount, include a `wait_for` action on an expected row
+or control so the screenshot captures the loaded state.
 An assertion in `--js` can throw an error. The command still saves the screenshot
 and JSON diagnostics, sets `checks_passed` to `false`, and exits nonzero.
 `checks_passed` confirms that actions ran and explicit `wait_for` or JavaScript
@@ -994,9 +997,17 @@ whodb apps screenshot "Clidey Sales" --org clidey-erp --project erp-demo \
   --env dev --page main --click 'text=Orders' \
   --js '(() => ({ rows: document.querySelectorAll("tr").length }))()' \
   --output sales-orders.webp --format json
+
+# Capture the same app with mobile viewport and touch behavior.
+whodb apps screenshot "Clidey Sales" --mobile --org clidey-erp --project erp-demo \
+  --output sales-orders-mobile.webp
+
+# Capture a tablet in landscape orientation.
+whodb apps screenshot "Clidey Sales" --tablet --orientation landscape \
+  --org clidey-erp --project erp-demo --output sales-orders-tablet.webp
 ```
 
-The MCP screenshot tool accepts the same `page`, `tab`, `actions`, and `script`
+The MCP screenshot tool accepts the same `page`, `tab`, `actions`, `script`, `mobile`, `tablet`, and `orientation`
 inputs, so an agent can click, fill, press, wait for a selector, or inspect DOM
 state without creating a Playwright script. For example, use an action
 `{"kind":"click","selector":"text=Orders"}` followed by a script
@@ -1006,8 +1017,85 @@ App capture needs Node.js and npm. `setup-capture` installs Playwright and
 Chromium in the user's cache; `--install` does the same before capturing.
 Without them, the command and MCP tool return setup instructions. Existing
 Playwright installations in the WhoDB source checkout work without setup.
-Captures only allow hosted GraphQL reads and never upload or publish the image.
+Captures only allow hosted GraphQL reads by default. Use `--allow-writes` when
+the action needs a function call or another mutation. Captures never upload or
+publish the image.
 Inspect sample data and loading states before using a capture as product media.
+
+### Build an app from a local folder
+
+An app folder contains `app.json`, `pages/<page>/tree.json`, page scripts and
+state, and optional `shared/` files. `app.json` declares `name`, `defaultPage`,
+and optional `ontologies`, `readOnlyOntologies`, and `functions` arrays. Resource
+entries use the ontology API name or function name; the CLI resolves them to IDs
+in the selected project. App scripts use the normal `ctx.whodb` browser API for
+ontology and function calls.
+
+```bash
+whodb apps init ./orders --name Orders
+whodb apps check ./orders --format json
+
+# Or start from an existing hosted app's draft files and bindings.
+whodb apps init ./existing-orders --from <app-id-or-name> --org <org> --project <project>
+
+# Create the hosted app identity and bind its resources without promoting it.
+whodb apps publish ./orders --draft --org <org> --project <project>
+
+# Files are read from disk on each reload; edits are not uploaded.
+whodb apps dev ./orders --org <org> --project <project>
+
+# Replay the generated scenario, save a WebP, and return a JSON flow trace.
+whodb apps verify ./orders --scenario ./orders/scenarios/smoke.json \
+  --output /tmp/orders.webp --format json --org <org> --project <project>
+
+# Replay the same flow at a phone viewport.
+whodb apps verify ./orders --mobile --scenario ./orders/scenarios/smoke.json \
+  --output /tmp/orders-mobile.webp --format json --org <org> --project <project>
+
+# Replay at the default tablet viewport.
+whodb apps verify ./orders --tablet --scenario ./orders/scenarios/smoke.json \
+  --output /tmp/orders-tablet.webp --format json --org <org> --project <project>
+
+# Sync changed and deleted files, then promote the resulting app version.
+whodb apps publish ./orders --message "Orders v1" --org <org> --project <project>
+```
+
+`apps dev` and `apps verify` use the hosted app runner and its existing resource
+permissions while replacing app files with the local folder in the browser.
+`apps init --from` creates a new local folder from the selected app's readable
+draft files, preserving existing `app.json` settings and writing resource names
+for version control. It refuses to overwrite an existing folder. The hosted app
+is unchanged; pass its ID with `--app` to `apps dev`, `apps verify`, or
+`apps publish` if you rename the local app.
+
+`apps dev` and `apps verify` require an app in the selected project with the same resource bindings as
+`app.json`. Use `--app <id-or-name>` when the hosted name differs. Both commands
+allow app actions to write to the selected project's data by default; pass
+`--allow-writes=false` for a read-only preview. They require Node.js and the
+optional capture browser (`apps setup-capture` or `--install`).
+`--mobile` on `apps screenshot` or `apps verify` uses a 390x844 viewport with
+mobile and touch emulation. Pass `--width` and `--height` with it to test another
+phone size. `--tablet` uses an 820x1180 touch viewport. Add `--orientation
+landscape` to rotate either device preset; explicit `--width` and `--height`
+can set another size. Default filenames include `-landscape` when applicable.
+When testing a locally built app runtime, pass the directory containing
+`sandbox.html`, `sandbox-kernel.js`, and `sandbox-kernel.css` with `--kernel-dir`
+or `WHODB_APP_KERNEL_DIR`. Flow tracing requires a compatible runtime;
+`apps dev` can use the hosted runtime for visual preview.
+
+A scenario is JSON with an `actions` array. It accepts `click`, `fill`, `press`,
+`wait_for`, `wait`, `expect_text`, and `expect_not_text` actions. Selectors run
+inside the app frame; stable node IDs can be selected with
+`[data-node-id='save-button']`. For text repeated in multiple tables, scope the
+selector to a table, such as `[data-node-id='attention-table'] tbody tr:first-child`.
+An empty `value` on `fill` clears an input. `apps verify` waits for handlers and bridge calls
+to settle, then outputs visible text, browser diagnostics, and a trace of
+handlers, state writes, navigation, and WhoDB calls. It exits nonzero on a failed
+assertion or runtime error. `apps publish --dry-run` reports file changes without
+writing them. File writes update the draft one at a time; an interrupted sync
+can be completed by rerunning the command. Published file content changes only
+after promotion; changes to the app's resource bindings take effect when the
+draft metadata is updated.
 
 Local or staging setup:
 

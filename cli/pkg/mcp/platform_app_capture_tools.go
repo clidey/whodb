@@ -18,6 +18,9 @@ import (
 )
 
 func platformCaptureTarget(ctx context.Context, input PlatformAppCaptureInput) (*platformToolSession, appcapture.Options, string, error) {
+	if input.Mobile && input.Tablet {
+		return nil, appcapture.Options{}, "", fmt.Errorf("mobile and tablet modes cannot be combined")
+	}
 	if strings.TrimSpace(input.App) == "" {
 		return nil, appcapture.Options{}, "", fmt.Errorf("app is required")
 	}
@@ -60,7 +63,11 @@ func platformCaptureTarget(ctx context.Context, input PlatformAppCaptureInput) (
 	options := appcapture.Options{
 		Host: session.Host.URL, OrgSlug: orgSlug, ProjectSlug: projectSlug,
 		OrgID: orgID, ProjectID: projectID, AppID: app.ID, Env: env,
-		Page: input.Page, Tab: input.Tab, Actions: input.Actions, Script: input.Script, Width: input.Width, Height: input.Height,
+		Page: input.Page, Tab: input.Tab, Actions: input.Actions, Script: input.Script, Width: input.Width, Height: input.Height, Mobile: input.Mobile, Tablet: input.Tablet, Orientation: input.Orientation,
+	}
+	options.Width, options.Height, err = appcapture.ResolveViewport(options.Width, options.Height, options.Mobile, options.Tablet, options.Orientation)
+	if err != nil {
+		return nil, appcapture.Options{}, "", err
 	}
 	if _, err := options.URL(); err != nil {
 		return nil, appcapture.Options{}, "", err
@@ -106,5 +113,5 @@ func handlePlatformAppScreenshot(ctx context.Context, input PlatformAppCaptureIn
 		return nil, PlatformAppScreenshotOutput{Error: err.Error(), RequestID: requestID}, nil
 	}
 	return &mcp.CallToolResult{Content: []mcp.Content{&mcp.ImageContent{Data: captured.Image, MIMEType: captured.MIMEType}}},
-		PlatformAppScreenshotOutput{App: appName, AppID: options.AppID, Env: options.Env, Page: captured.Page, Tab: captured.Tab, Width: captured.Width, Height: captured.Height, MIMEType: captured.MIMEType, VisibleText: captured.Text, Diagnostics: captured.Diagnostics, ScriptResultJSON: captured.ScriptResultJSON, ChecksPassed: len(captured.Diagnostics.ActionErrors) == 0 && len(captured.Diagnostics.ScriptErrors) == 0, RequestID: requestID}, nil
+		PlatformAppScreenshotOutput{App: appName, AppID: options.AppID, Env: options.Env, Page: captured.Page, Tab: captured.Tab, Width: captured.Width, Height: captured.Height, Mobile: options.Mobile, Tablet: options.Tablet, Orientation: options.Orientation, MIMEType: captured.MIMEType, VisibleText: captured.Text, Diagnostics: captured.Diagnostics, ScriptResultJSON: captured.ScriptResultJSON, ChecksPassed: len(captured.Diagnostics.ActionErrors) == 0 && len(captured.Diagnostics.ScriptErrors) == 0, RequestID: requestID}, nil
 }

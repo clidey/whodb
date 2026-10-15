@@ -27,7 +27,11 @@ var (
 	appCaptureOutput      string
 	appCaptureWidth       int
 	appCaptureHeight      int
+	appCaptureMobile      bool
+	appCaptureTablet      bool
+	appCaptureOrientation string
 	appCaptureInstall     bool
+	appCaptureAllowWrites bool
 	appCaptureClicks      []string
 	appCaptureActionsJSON string
 	appCaptureJS          string
@@ -76,7 +80,11 @@ func registerPlatformAppCaptureCommands() {
 	appsScreenshotCmd.Flags().StringVar(&appCaptureOutput, "output", "", "output WebP file (defaults to the app name and page)")
 	appsScreenshotCmd.Flags().IntVar(&appCaptureWidth, "width", 1440, "capture viewport width in pixels")
 	appsScreenshotCmd.Flags().IntVar(&appCaptureHeight, "height", 900, "capture viewport height in pixels")
+	appsScreenshotCmd.Flags().BoolVar(&appCaptureMobile, "mobile", false, "emulate a touch-enabled mobile browser (default viewport 390x844)")
+	appsScreenshotCmd.Flags().BoolVar(&appCaptureTablet, "tablet", false, "emulate a touch-enabled tablet browser (default viewport 820x1180)")
+	appsScreenshotCmd.Flags().StringVar(&appCaptureOrientation, "orientation", "", "viewport orientation: portrait or landscape (defaults to the device preset)")
 	appsScreenshotCmd.Flags().BoolVar(&appCaptureInstall, "install", false, "install the optional capture browser before screenshotting")
+	appsScreenshotCmd.Flags().BoolVar(&appCaptureAllowWrites, "allow-writes", false, "allow app actions to mutate hosted data while capturing")
 	appsScreenshotCmd.Flags().StringArrayVar(&appCaptureClicks, "click", nil, "click a Playwright selector in the app; repeat for sequential clicks")
 	appsScreenshotCmd.Flags().StringVar(&appCaptureActionsJSON, "actions", "", "ordered JSON array of click, fill, press, wait_for, or wait actions")
 	appsScreenshotCmd.Flags().StringVar(&appCaptureJS, "js", "", "JavaScript expression or IIFE to evaluate in the app frame")
@@ -145,8 +153,20 @@ func runPlatformAppScreenshot(cmd *cobra.Command, args []string) error {
 	}
 	options.Page = appCapturePage
 	options.Tab = appCaptureTab
-	options.Width = appCaptureWidth
-	options.Height = appCaptureHeight
+	options.Mobile = appCaptureMobile
+	options.Tablet = appCaptureTablet
+	options.Orientation = appCaptureOrientation
+	if cmd.Flags().Changed("width") {
+		options.Width = appCaptureWidth
+	}
+	if cmd.Flags().Changed("height") {
+		options.Height = appCaptureHeight
+	}
+	options.Width, options.Height, err = appcapture.ResolveViewport(options.Width, options.Height, options.Mobile, options.Tablet, options.Orientation)
+	if err != nil {
+		return err
+	}
+	options.AllowWrites = appCaptureAllowWrites
 	if appCaptureJS != "" && appCaptureScriptFile != "" {
 		return fmt.Errorf("use either --js or --script-file")
 	}
@@ -183,6 +203,14 @@ func runPlatformAppScreenshot(cmd *cobra.Command, args []string) error {
 		if options.Page != "" {
 			filename += "-" + options.Page
 		}
+		if options.Mobile {
+			filename += "-mobile"
+		} else if options.Tablet {
+			filename += "-tablet"
+		}
+		if (options.Mobile || options.Tablet) && options.Width > options.Height {
+			filename += "-landscape"
+		}
 		filename += ".webp"
 	}
 	if strings.ToLower(filepath.Ext(filename)) != ".webp" {
@@ -204,7 +232,7 @@ func runPlatformAppScreenshot(cmd *cobra.Command, args []string) error {
 	if format == output.FormatJSON {
 		if err := json.NewEncoder(cmd.OutOrStdout()).Encode(map[string]any{
 			"app": appName, "path": filename, "width": capture.Width,
-			"height": capture.Height, "page": capture.Page, "tab": capture.Tab,
+			"height": capture.Height, "mobile": options.Mobile, "tablet": options.Tablet, "orientation": options.Orientation, "page": capture.Page, "tab": capture.Tab,
 			"visible_text": capture.Text, "diagnostics": capture.Diagnostics,
 			"script_result_json": capture.ScriptResultJSON, "checks_passed": checksPassed,
 		}); err != nil {

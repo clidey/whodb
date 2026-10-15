@@ -26,14 +26,17 @@ type PlatformAppInput struct {
 
 // PlatformAppCaptureInput selects a rendered app view without browser scripting.
 type PlatformAppCaptureInput struct {
-	App     string              `json:"app" jsonschema:"App ID or exact name in the selected project"`
-	Env     string              `json:"env,omitempty" jsonschema:"published (default) or dev"`
-	Page    string              `json:"page,omitempty" jsonschema:"Optional page returned by whodb_platform_app_views"`
-	Tab     string              `json:"tab,omitempty" jsonschema:"Optional visible tab or button label to open before capture"`
-	Actions []appcapture.Action `json:"actions,omitempty" jsonschema:"Ordered actions inside the app frame: click, fill, press, wait_for, or wait"`
-	Script  string              `json:"script,omitempty" jsonschema:"Optional JavaScript expression or IIFE evaluated inside the app frame after actions"`
-	Width   int                 `json:"width,omitempty" jsonschema:"Viewport width, default 1440"`
-	Height  int                 `json:"height,omitempty" jsonschema:"Viewport height, default 900"`
+	App         string              `json:"app" jsonschema:"App ID or exact name in the selected project"`
+	Env         string              `json:"env,omitempty" jsonschema:"published (default) or dev"`
+	Page        string              `json:"page,omitempty" jsonschema:"Optional page returned by whodb_platform_app_views"`
+	Tab         string              `json:"tab,omitempty" jsonschema:"Optional visible tab or button label to open before capture"`
+	Actions     []appcapture.Action `json:"actions,omitempty" jsonschema:"Ordered actions inside the app frame: click, fill, press, wait_for, or wait"`
+	Script      string              `json:"script,omitempty" jsonschema:"Optional JavaScript expression or IIFE evaluated inside the app frame after actions"`
+	Width       int                 `json:"width,omitempty" jsonschema:"Viewport width, default 1440"`
+	Height      int                 `json:"height,omitempty" jsonschema:"Viewport height, default 900"`
+	Mobile      bool                `json:"mobile,omitempty" jsonschema:"Emulate a touch-enabled mobile browser; default viewport 390x844 unless width or height is set"`
+	Tablet      bool                `json:"tablet,omitempty" jsonschema:"Emulate a touch-enabled tablet browser; default viewport 820x1180 unless width or height is set"`
+	Orientation string              `json:"orientation,omitempty" jsonschema:"Optional viewport orientation: portrait or landscape; rotates the device preset"`
 }
 
 // PlatformAppViewsOutput lists actual pages available in one hosted app.
@@ -55,6 +58,9 @@ type PlatformAppScreenshotOutput struct {
 	Tab              string                 `json:"tab,omitempty"`
 	Width            int                    `json:"width,omitempty"`
 	Height           int                    `json:"height,omitempty"`
+	Mobile           bool                   `json:"mobile,omitempty"`
+	Tablet           bool                   `json:"tablet,omitempty"`
+	Orientation      string                 `json:"orientation,omitempty"`
 	MIMEType         string                 `json:"mime_type,omitempty"`
 	VisibleText      string                 `json:"visible_text,omitempty"`
 	Diagnostics      appcapture.Diagnostics `json:"diagnostics"`
@@ -253,7 +259,7 @@ func platformExtendedReadToolDefinitions() []*mcp.Tool {
 	return []*mcp.Tool{
 		read("whodb_platform_apps", "List hosted ontology-powered apps in the selected project."),
 		read("whodb_platform_app_views", "List pages in a hosted app by ID or exact name. Use a returned page with whodb_platform_app_screenshot."),
-		read("whodb_platform_app_screenshot", "Capture a rendered app page after optional actions or JavaScript. Returns a WebP image, visible text, console and network errors. Hosted writes are blocked."),
+		read("whodb_platform_app_screenshot", "Capture a rendered app page at desktop, mobile, or tablet size after optional actions or JavaScript. Returns a WebP image, visible text, console and network errors. Hosted writes are blocked."),
 		read("whodb_platform_app", "Inspect one hosted app, including its generated definition."),
 		read("whodb_platform_app_files", "List the draft files of one hosted app: app.json, shared files, and every page, read one page per request so large apps fit."),
 		read("whodb_platform_app_view", "Read the current hosted app view and generated files."),
