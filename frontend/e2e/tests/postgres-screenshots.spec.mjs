@@ -30,6 +30,18 @@ test.describe("Postgres Screenshot Generation", () => {
     return `${screenshotDir}/${name}`;
   }
 
+  async function focusGraphNode(page, nodeId) {
+    const pane = await page.locator(".react-flow").boundingBox();
+    const node = await page.locator(`[data-testid="rf__node-${nodeId}"]`).boundingBox();
+    await page.mouse.move(pane.x + pane.width / 2, pane.y + pane.height / 2);
+    await page.mouse.wheel(node.x + node.width / 2 - (pane.x + pane.width / 2), node.y + node.height / 2 - (pane.y + pane.height / 2));
+    await page.waitForTimeout(300);
+    for (let i = 0; i < 2; i++) {
+      await page.locator(".react-flow__controls-zoomin").click();
+      await page.waitForTimeout(300);
+    }
+  }
+
   // Tests that need clean login page (01-04)
   test.describe("Login Flow Screenshots", () => {
     test.beforeEach(async ({ whodb }) => {
@@ -909,33 +921,29 @@ test.describe("Postgres Screenshot Generation", () => {
     test("91 - Graph - Simple Table No Relations", async ({ whodb, page }) => {
       await whodb.goto("graph");
       await page.waitForTimeout(1500);
-      await page.locator('[data-testid="rf__node-test_casting"]').scrollIntoViewIfNeeded();
-      await page.waitForTimeout(500);
-      await page.screenshot({ path: ssPath("91-graph-isolated-table-node") });
+      await focusGraphNode(page, "test_casting");
+      await whodb.screenshotWithHighlight('[data-testid="rf__node-test_casting"]', ssName("91-graph-isolated-table-node"));
     });
 
     test("92 - Graph - One to Many Relationship", async ({ whodb, page }) => {
       await whodb.goto("graph");
       await page.waitForTimeout(1500);
-      await page.locator('[data-testid="rf__node-users"]').scrollIntoViewIfNeeded();
-      await page.waitForTimeout(500);
-      await page.screenshot({ path: ssPath("92-graph-one-to-many-relationship") });
+      await focusGraphNode(page, "users");
+      await whodb.screenshotWithHighlight('[data-testid="rf__node-users"]', ssName("92-graph-one-to-many-relationship"));
     });
 
     test("93 - Graph - Many to One Relationship", async ({ whodb, page }) => {
       await whodb.goto("graph");
       await page.waitForTimeout(1500);
-      await page.locator('[data-testid="rf__node-order_items"]').scrollIntoViewIfNeeded();
-      await page.waitForTimeout(500);
-      await page.screenshot({ path: ssPath("93-graph-many-to-one-relationship") });
+      await focusGraphNode(page, "order_items");
+      await whodb.screenshotWithHighlight('[data-testid="rf__node-order_items"]', ssName("93-graph-many-to-one-relationship"));
     });
 
     test("94 - Graph - Multiple Foreign Keys", async ({ whodb, page }) => {
       await whodb.goto("graph");
       await page.waitForTimeout(1500);
-      await page.locator('[data-testid="rf__node-orders"]').scrollIntoViewIfNeeded();
-      await page.waitForTimeout(500);
-      await page.screenshot({ path: ssPath("94-graph-multiple-foreign-keys") });
+      await focusGraphNode(page, "orders");
+      await whodb.screenshotWithHighlight('[data-testid="rf__node-orders"]', ssName("94-graph-multiple-foreign-keys"));
     });
 
     test("95 - Graph - Zoom In View", async ({ whodb, page }) => {
