@@ -28,8 +28,7 @@ import {Sidebar} from "./sidebar/sidebar";
 import {useTranslation} from "@/hooks/use-translation";
 import {Bars3Icon} from "./heroicons";
 import {WhoDBChatIcon} from "./whodb-chat-icon";
-import {getKeyDisplay} from "@/utils/platform";
-import {useEffectiveIsMac} from "@/hooks/useEffectiveIsMac";
+import {isMacPlatform} from "@/utils/platform";
 import {useSourceSessionMetadata} from "@/hooks/useSourceSessionMetadata";
 
 type IPageProps = {
@@ -57,15 +56,9 @@ type IInternalPageProps = IPageProps & {
 
 const CommandPaletteTrigger: FC = () => {
     const { t } = useTranslation('components/command-palette');
-    const isMac = useEffectiveIsMac();
 
     const handleClick = () => {
-        // Dispatch a keyboard event to trigger the command palette
-        window.dispatchEvent(new KeyboardEvent('keydown', {
-            key: 'k',
-            metaKey: isMac,
-            ctrlKey: !isMac,
-        }));
+        window.dispatchEvent(new CustomEvent('command-palette:open'));
     };
 
     return (
@@ -80,7 +73,7 @@ const CommandPaletteTrigger: FC = () => {
             <WhoDBChatIcon name="search" />
             <span className="ce-command-label hidden sm:inline text-xs text-neutral-500 dark:text-neutral-400">{t('triggerLabel')}</span>
             <kbd className="ce-command-shortcut hidden sm:inline-flex items-center justify-center h-5 px-1 text-xs font-medium bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded">
-                {getKeyDisplay("Mod")}{isMac ? '' : '+'}K
+                {isMacPlatform ? '⌘K' : 'Ctrl+K'}
             </kbd>
         </Button>
     );
