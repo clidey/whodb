@@ -75,6 +75,9 @@ COPY ./core/go.mod ./core/go.sum ./
 RUN go mod download
 COPY ./core/ ./
 
+# COPY merges into an existing directory, so clear any local build that came in with
+# ./core/ first; otherwise files the fresh build no longer has would still be embedded.
+RUN rm -rf ./cmd/whodb/build
 COPY --from=build-stage /app/build/ ./cmd/whodb/build/
 
 # Build CE backend from the new entry point
