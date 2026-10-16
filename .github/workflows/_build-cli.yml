@@ -24,7 +24,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             arch: amd64
             make_target: ci-build-linux-amd64
             binary_name: whodb-cli-linux-amd64
@@ -83,7 +83,7 @@ jobs:
 
   build-cli-linux-armv7:
     name: Build CLI (Linux armv7)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment: permission-required
     steps:
       - name: Harden Runner

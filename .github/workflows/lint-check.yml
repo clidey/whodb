@@ -19,6 +19,7 @@ jobs:
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: core/go.mod
+          cache-dependency-path: core/go.sum
 
       - name: Install golangci-lint
         uses: ./.github/actions/install-go-tools
@@ -42,6 +43,7 @@ jobs:
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: cli/go.mod
+          cache-dependency-path: cli/go.sum
 
       - name: Install golangci-lint
         uses: ./.github/actions/install-go-tools
@@ -64,6 +66,7 @@ jobs:
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: core/go.mod
+          cache-dependency-path: core/go.sum
 
       - name: Vet
         run: cd core && go vet ./...
@@ -77,6 +80,7 @@ jobs:
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: core/go.mod
+          cache-dependency-path: core/go.sum
 
       - name: Build
         run: cd core && go build ./cmd/whodb
@@ -90,6 +94,7 @@ jobs:
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: core/go.mod
+          cache-dependency-path: core/go.sum
 
       - name: Unit Tests (CE)
         run: |
@@ -107,6 +112,7 @@ jobs:
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: cli/go.mod
+          cache-dependency-path: cli/go.sum
 
       - name: Unit Tests (CLI)
         run: |
@@ -128,7 +134,7 @@ jobs:
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: '25.6.0'
+          node-version-file: '.nvmrc'
           cache: pnpm
           cache-dependency-path: frontend/pnpm-lock.yaml
 
@@ -151,7 +157,7 @@ jobs:
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: '25.6.0'
+          node-version-file: '.nvmrc'
           cache: pnpm
           cache-dependency-path: sdk/pnpm-lock.yaml
 
@@ -286,7 +292,7 @@ jobs:
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: '25.6.0'
+          node-version-file: '.nvmrc'
           cache: pnpm
           cache-dependency-path: frontend/pnpm-lock.yaml
 

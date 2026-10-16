@@ -69,6 +69,7 @@ jobs:
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: core/go.mod
+          cache-dependency-path: core/go.sum
 
       - name: Create frontend build placeholder
         run: mkdir -p core/build && echo '<!doctype html>' > core/build/index.html
@@ -123,7 +124,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: '25.6.0'
+          node-version-file: '.nvmrc'
           cache: pnpm
           cache-dependency-path: frontend/pnpm-lock.yaml
 
@@ -305,7 +306,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: '25.6.0'
+          node-version-file: '.nvmrc'
           cache: pnpm
           cache-dependency-path: frontend/pnpm-lock.yaml
 

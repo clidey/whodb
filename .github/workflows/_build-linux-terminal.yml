@@ -18,7 +18,7 @@ permissions:
 jobs:
   build-server:
     name: Build Linux Server Binaries (CE)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment: permission-required
     steps:
       - name: Harden Runner
