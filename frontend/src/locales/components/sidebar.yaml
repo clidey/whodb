@@ -121,6 +121,12 @@ ar_AE:
   platformBackupNudgeText: "هل تحتاج إلى مشاركة هذه الاتصالات مع فريقك؟ أحضرهم إلى منصة WhoDB وقم بإدارة الوصول هناك."
   platformBackupNudgeAction: "استكشاف وصول الفريق"
   platformBackupNudgeDismiss: "رفض"
+  communityEditionShort: "م"
+  disconnect: "قطع الاتصال"
+  contact: "اتصال"
+  sampleSQLiteName: "عينة SQLite"
+  sampleSQLiteFilename: "عينة.db"
+  collapseNavigation: "طي التنقل"
 
 de_DE:
   mainNavigation: "Hauptnavigation"
@@ -180,6 +186,12 @@ de_DE:
   platformBackupNudgeText: "Müssen Sie diese Verbindungen mit Ihrem Team teilen? Bringen Sie sie zur WhoDB-Plattform und verwalten Sie dort den Zugriff."
   platformBackupNudgeAction: "Entdecken Sie den Teamzugang"
   platformBackupNudgeDismiss: "Zurückweisen"
+  communityEditionShort: "CE"
+  disconnect: "Trennen"
+  contact: "Kontakt"
+  sampleSQLiteName: "Beispiel SQLite"
+  sampleSQLiteFilename: "sample.db"
+  collapseNavigation: "Navigation einklappen"
 
 el_GR:
   mainNavigation: "Κύρια πλοήγηση"
@@ -239,6 +251,12 @@ el_GR:
   platformBackupNudgeText: "Θέλετε να μοιραστείτε αυτές τις συνδέσεις με την ομάδα σας; Φέρτε τα στην πλατφόρμα WhoDB και διαχειριστείτε την πρόσβαση εκεί."
   platformBackupNudgeAction: "Εξερευνήστε την πρόσβαση της ομάδας"
   platformBackupNudgeDismiss: "Απολύω"
+  communityEditionShort: "CE"
+  disconnect: "Αποσυνδέω"
+  contact: "Επαφή"
+  sampleSQLiteName: "Δείγμα SQLite"
+  sampleSQLiteFilename: "δείγμα.db"
+  collapseNavigation: "Σύμπτυξη πλοήγησης"
 
 en_GB:
   mainNavigation: "Main navigation"
@@ -298,6 +316,12 @@ en_GB:
   platformBackupNudgeText: "Need to share these connections with your team? Bring them to WhoDB Platform and manage access there."
   platformBackupNudgeAction: "Explore team access"
   platformBackupNudgeDismiss: "Dismiss"
+  communityEditionShort: "CE"
+  disconnect: "Disconnect"
+  contact: "Contact"
+  sampleSQLiteName: "Sample SQLite"
+  sampleSQLiteFilename: "sample.db"
+  collapseNavigation: "Collapse navigation"
 
 es_ES:
   mainNavigation: "Navegación principal"
@@ -357,6 +381,12 @@ es_ES:
   platformBackupNudgeText: "¿Necesitas compartir estas conexiones con tu equipo? Llévalos a la plataforma WhoDB y gestiona el acceso allí."
   platformBackupNudgeAction: "Explorar el acceso al equipo"
   platformBackupNudgeDismiss: "Despedir"
+  communityEditionShort: "CE"
+  disconnect: "Desconectar"
+  contact: "Contacto"
+  sampleSQLiteName: "Muestra SQLite"
+  sampleSQLiteFilename: "muestra.db"
+  collapseNavigation: "Contraer navegación"
 
 fi_FI:
   mainNavigation: "Päänavigointi"
@@ -416,6 +446,12 @@ fi_FI:
   platformBackupNudgeText: "Haluatko jakaa nämä yhteydet tiimisi kanssa? Tuo heidät WhoDB-alustalle ja hallinnoi pääsyä siellä."
   platformBackupNudgeAction: "Tutustu tiimin käyttöoikeuksiin"
   platformBackupNudgeDismiss: "Hylkää"
+  communityEditionShort: "CE"
+  disconnect: "Katkaise yhteys"
+  contact: "Ota yhteyttä"
+  sampleSQLiteName: "Esimerkki SQLite"
+  sampleSQLiteFilename: "sample.db"
+  collapseNavigation: "Tiivistä navigointi"
 
 fr_FR:
   mainNavigation: "Navigation principale"
@@ -475,6 +511,12 @@ fr_FR:
   platformBackupNudgeText: "Besoin de partager ces connexions avec votre équipe ? Amenez-les sur la plateforme WhoDB et gérez-y l'accès."
   platformBackupNudgeAction: "Explorer l'accès des équipes"
   platformBackupNudgeDismiss: "Rejeter"
+  communityEditionShort: "CE"
+  disconnect: "Déconnecter"
+  contact: "Contact"
+  sampleSQLiteName: "Échantillon SQLite"
+  sampleSQLiteFilename: "exemple.db"
+  collapseNavigation: "Réduire la navigation"
 
 it_IT:
   mainNavigation: "Navigazione principale"
@@ -534,6 +576,12 @@ it_IT:
   platformBackupNudgeText: "Hai bisogno di condividere queste connessioni con il tuo team? Portali sulla piattaforma WhoDB e gestisci l'accesso da lì."
   platformBackupNudgeAction: "Esplora l'accesso al team"
   platformBackupNudgeDismiss: "Congedare"
+  communityEditionShort: "CE"
+  disconnect: "Disconnetti"
+  contact: "Contatto"
+  sampleSQLiteName: "Esempio SQLite"
+  sampleSQLiteFilename: "campione.db"
+  collapseNavigation: "Comprimi la navigazione"
 
 iw_IL:
   mainNavigation: "ניווט ראשי"
@@ -593,6 +641,12 @@ iw_IL:
   platformBackupNudgeText: "צריך לחלוק את הקשרים האלה עם הצוות שלך? הבא אותם לפלטפורמה WhoDB ונהל את הגישה לשם."
   platformBackupNudgeAction: "חקור את הגישה לצוות"
   platformBackupNudgeDismiss: "לְפַטֵר"
+  communityEditionShort: "לִספִירַת הַנוֹצרִים"
+  disconnect: "לְנַתֵק"
+  contact: "מַגָע"
+  sampleSQLiteName: "דוגמה SQLite"
+  sampleSQLiteFilename: "sample.db"
+  collapseNavigation: "כווץ הניווט"
 
 ja_JP:
   mainNavigation: "メインナビゲーション"
@@ -652,6 +706,12 @@ ja_JP:
   platformBackupNudgeText: "これらのつながりをチームと共有する必要がありますか? 彼らを WhoDB プラットフォームに連れて行き、そこでアクセスを管理します。"
   platformBackupNudgeAction: "チームアクセスを調べる"
   platformBackupNudgeDismiss: "却下する"
+  communityEditionShort: "CE"
+  disconnect: "切断する"
+  contact: "接触"
+  sampleSQLiteName: "サンプル SQLite"
+  sampleSQLiteFilename: "サンプル.db"
+  collapseNavigation: "ナビゲーションを折りたたむ"
 
 ko_KR:
   mainNavigation: "메인 네비게이션"
@@ -711,6 +771,12 @@ ko_KR:
   platformBackupNudgeText: "이러한 연결을 팀과 공유해야 합니까? WhoDB 플랫폼으로 가져와 그곳에서 액세스를 관리하세요."
   platformBackupNudgeAction: "팀 액세스 살펴보기"
   platformBackupNudgeDismiss: "해고하다"
+  communityEditionShort: "CE"
+  disconnect: "연결 끊기"
+  contact: "연락하다"
+  sampleSQLiteName: "샘플 SQLite"
+  sampleSQLiteFilename: "샘플.db"
+  collapseNavigation: "탐색 접기"
 
 nl_NL:
   mainNavigation: "Hoofdnavigatie"
@@ -770,6 +836,12 @@ nl_NL:
   platformBackupNudgeText: "Wilt u deze verbindingen met uw team delen? Breng ze naar het WhoDB-platform en beheer daar de toegang."
   platformBackupNudgeAction: "Ontdek teamtoegang"
   platformBackupNudgeDismiss: "Afwijzen"
+  communityEditionShort: "CE"
+  disconnect: "Verbreek de verbinding"
+  contact: "Contact"
+  sampleSQLiteName: "Voorbeeld SQLite"
+  sampleSQLiteFilename: "voorbeeld.db"
+  collapseNavigation: "Navigatie samenvouwen"
 
 pl_PL:
   mainNavigation: "Główna nawigacja"
@@ -829,6 +901,12 @@ pl_PL:
   platformBackupNudgeText: "Chcesz podzielić się tymi kontaktami ze swoim zespołem? Przenieś ich na platformę WhoDB i zarządzaj tam dostępem."
   platformBackupNudgeAction: "Poznaj dostęp do zespołu"
   platformBackupNudgeDismiss: "Odrzucać"
+  communityEditionShort: "CE"
+  disconnect: "Odłączyć"
+  contact: "Kontakt"
+  sampleSQLiteName: "Próbka SQLite"
+  sampleSQLiteFilename: "próbka.db"
+  collapseNavigation: "Zwiń nawigację"
 
 pt_BR:
   mainNavigation: "Navegação principal"
@@ -888,6 +966,12 @@ pt_BR:
   platformBackupNudgeText: "Precisa compartilhar essas conexões com sua equipe? Traga-os para a plataforma WhoDB e gerencie o acesso lá."
   platformBackupNudgeAction: "Explore o acesso da equipe"
   platformBackupNudgeDismiss: "Liberar"
+  communityEditionShort: "CE"
+  disconnect: "Desconectar"
+  contact: "Contato"
+  sampleSQLiteName: "Amostra SQLite"
+  sampleSQLiteFilename: "amostra.db"
+  collapseNavigation: "Recolher navegação"
 
 ro_RO:
   mainNavigation: "Navigație principală"
@@ -947,6 +1031,12 @@ ro_RO:
   platformBackupNudgeText: "Trebuie să împărtășiți aceste conexiuni cu echipa dvs.? Aduceți-i pe platforma WhoDB și gestionați accesul acolo."
   platformBackupNudgeAction: "Explorați accesul la echipă"
   platformBackupNudgeDismiss: "Respingeți"
+  communityEditionShort: "CE"
+  disconnect: "Deconecta"
+  contact: "Contact"
+  sampleSQLiteName: "Exemplu SQLite"
+  sampleSQLiteFilename: "eșantion.db"
+  collapseNavigation: "Restrângeți navigarea"
 
 ru_RU:
   mainNavigation: "Основная навигация"
@@ -1006,6 +1096,12 @@ ru_RU:
   platformBackupNudgeText: "Хотите поделиться этими связями со своей командой? Перенесите их на платформу WhoDB и управляйте доступом там."
   platformBackupNudgeAction: "Изучите доступ к команде"
   platformBackupNudgeDismiss: "Увольнять"
+  communityEditionShort: "CE"
+  disconnect: "Отключить"
+  contact: "Контакт"
+  sampleSQLiteName: "Образец SQLite"
+  sampleSQLiteFilename: "образец.db"
+  collapseNavigation: "Свернуть навигацию"
 
 sk_SK:
   mainNavigation: "Hlavná navigácia"
@@ -1065,6 +1161,12 @@ sk_SK:
   platformBackupNudgeText: "Potrebujete zdieľať tieto spojenia so svojím tímom? Preneste ich na platformu WhoDB a spravujte tam prístup."
   platformBackupNudgeAction: "Preskúmajte tímový prístup"
   platformBackupNudgeDismiss: "Odmietnuť"
+  communityEditionShort: "CE"
+  disconnect: "Odpojiť"
+  contact: "Kontaktovať"
+  sampleSQLiteName: "Ukážka SQLite"
+  sampleSQLiteFilename: "vzorka.db"
+  collapseNavigation: "Zbaliť navigáciu"
 
 sv_SE:
   mainNavigation: "Huvudnavigering"
@@ -1124,6 +1226,12 @@ sv_SE:
   platformBackupNudgeText: "Behöver du dela dessa kontakter med ditt team? Ta med dem till WhoDB-plattformen och hantera åtkomst där."
   platformBackupNudgeAction: "Utforska teamåtkomst"
   platformBackupNudgeDismiss: "Avfärda"
+  communityEditionShort: "CE"
+  disconnect: "Koppla från"
+  contact: "Kontakta"
+  sampleSQLiteName: "Exempel SQLite"
+  sampleSQLiteFilename: "sample.db"
+  collapseNavigation: "Komprimera navigeringen"
 
 zh_CN:
   mainNavigation: "主导航"
@@ -1183,6 +1291,12 @@ zh_CN:
   platformBackupNudgeText: "需要与您的团队分享这些联系吗？ 将它们带到 WhoDB 平台并管理那里的访问。"
   platformBackupNudgeAction: "探索团队访问权限"
   platformBackupNudgeDismiss: "解雇"
+  communityEditionShort: "CE"
+  disconnect: "断开"
+  contact: "接触"
+  sampleSQLiteName: "示例 SQLite"
+  sampleSQLiteFilename: "样本数据库"
+  collapseNavigation: "折叠导航"
 
 zh_TW:
   mainNavigation: "主導航"
@@ -1242,6 +1356,12 @@ zh_TW:
   platformBackupNudgeText: "需要與您的團隊分享這些聯繫嗎？ 將它們帶到 WhoDB 平台並管理那裡的訪問。"
   platformBackupNudgeAction: "探索團隊存取權限"
   platformBackupNudgeDismiss: "解僱"
+  communityEditionShort: "CE"
+  disconnect: "斷開"
+  contact: "接觸"
+  sampleSQLiteName: "例 SQLite"
+  sampleSQLiteFilename: "樣本資料庫"
+  collapseNavigation: "折疊導航"
 
 bg_BG:
   mainNavigation: "Основна навигация"
@@ -1301,6 +1421,12 @@ bg_BG:
   platformBackupNudgeText: "Трябва да споделите тези връзки с вашия екип? Пренесете ги в платформата WhoDB и управлявайте достъпа там."
   platformBackupNudgeAction: "Разгледайте екипния достъп"
   platformBackupNudgeDismiss: "Отхвърляне"
+  communityEditionShort: "CE"
+  disconnect: "Прекъснете връзката"
+  contact: "Контакт"
+  sampleSQLiteName: "Пример SQLite"
+  sampleSQLiteFilename: "sample.db"
+  collapseNavigation: "Свиване на навигацията"
 
 bn_BD:
   mainNavigation: "প্রধান নেভিগেশন"
@@ -1360,6 +1486,12 @@ bn_BD:
   platformBackupNudgeText: "আপনার দলের সাথে এই সংযোগগুলি ভাগ করতে হবে? তাদের WhoDB প্ল্যাটফর্মে নিয়ে আসুন এবং সেখানে অ্যাক্সেস পরিচালনা করুন।"
   platformBackupNudgeAction: "টিম অ্যাক্সেস অন্বেষণ"
   platformBackupNudgeDismiss: "খারিজ"
+  communityEditionShort: "সিই"
+  disconnect: "সংযোগ বিচ্ছিন্ন করুন"
+  contact: "যোগাযোগ"
+  sampleSQLiteName: "নমুনা SQLite"
+  sampleSQLiteFilename: "sample.db"
+  collapseNavigation: "নেভিগেশন সঙ্কুচিত করুন"
 
 ca_ES:
   mainNavigation: "Navegació principal"
@@ -1419,6 +1551,12 @@ ca_ES:
   platformBackupNudgeText: "Necessites compartir aquestes connexions amb el teu equip? Porteu-los a la plataforma WhoDB i gestioneu-hi l'accés."
   platformBackupNudgeAction: "Exploreu l'accés a l'equip"
   platformBackupNudgeDismiss: "Descartar"
+  communityEditionShort: "CE"
+  disconnect: "Desconnecta"
+  contact: "Contacte"
+  sampleSQLiteName: "Mostra SQLite"
+  sampleSQLiteFilename: "mostra.db"
+  collapseNavigation: "Redueix la navegació"
 
 cs_CZ:
   mainNavigation: "Hlavní navigace"
@@ -1478,6 +1616,12 @@ cs_CZ:
   platformBackupNudgeText: "Potřebujete tato spojení sdílet se svým týmem? Přeneste je na platformu WhoDB a spravujte přístup tam."
   platformBackupNudgeAction: "Prozkoumejte týmový přístup"
   platformBackupNudgeDismiss: "Propustit"
+  communityEditionShort: "CE"
+  disconnect: "Odpojit"
+  contact: "Kontakt"
+  sampleSQLiteName: "Ukázka SQLite"
+  sampleSQLiteFilename: "vzorek.db"
+  collapseNavigation: "Sbalit navigaci"
 
 da_DK:
   mainNavigation: "Hovednavigation"
@@ -1537,6 +1681,12 @@ da_DK:
   platformBackupNudgeText: "Har du brug for at dele disse forbindelser med dit team? Bring dem til WhoDB platformen og administrer adgang der."
   platformBackupNudgeAction: "Udforsk teamadgang"
   platformBackupNudgeDismiss: "Afskedige"
+  communityEditionShort: "CE"
+  disconnect: "Afbryde"
+  contact: "Kontakte"
+  sampleSQLiteName: "Eksempel SQLite"
+  sampleSQLiteFilename: "sample.db"
+  collapseNavigation: "Skjul navigationen"
 
 fa_IR:
   mainNavigation: "ناوبری اصلی"
@@ -1596,6 +1746,12 @@ fa_IR:
   platformBackupNudgeText: "آیا باید این ارتباطات را با تیم خود به اشتراک بگذارید؟ آنها را به پلتفرم WhoDB بیاورید و دسترسی به آنجا را مدیریت کنید."
   platformBackupNudgeAction: "دسترسی تیم را کاوش کنید"
   platformBackupNudgeDismiss: "رد کردن"
+  communityEditionShort: "CE"
+  disconnect: "قطع کن"
+  contact: "تماس بگیرید"
+  sampleSQLiteName: "نمونه SQLite"
+  sampleSQLiteFilename: "نمونه.db"
+  collapseNavigation: "کوچک کردن پیمایش"
 
 hi_IN:
   mainNavigation: "मुख्य नेविगेशन"
@@ -1655,6 +1811,12 @@ hi_IN:
   platformBackupNudgeText: "क्या आपको इन कनेक्शनों को अपनी टीम के साथ साझा करने की आवश्यकता है? उन्हें WhoDB प्लेटफ़ॉर्म पर लाएँ और वहाँ पहुँच का प्रबंधन करें।"
   platformBackupNudgeAction: "टीम पहुंच का अन्वेषण करें"
   platformBackupNudgeDismiss: "नकार देना"
+  communityEditionShort: "सीई"
+  disconnect: "डिस्कनेक्ट"
+  contact: "संपर्क"
+  sampleSQLiteName: "नमूना SQLite"
+  sampleSQLiteFilename: "नमूना.डीबी"
+  collapseNavigation: "नेविगेशन संक्षिप्त करें"
 
 hr_HR:
   mainNavigation: "Glavna navigacija"
@@ -1714,6 +1876,12 @@ hr_HR:
   platformBackupNudgeText: "Trebate podijeliti te veze sa svojim timom? Dovedite ih na WhoDB platformu i tamo upravljajte pristupom."
   platformBackupNudgeAction: "Istražite timski pristup"
   platformBackupNudgeDismiss: "Odbaciti"
+  communityEditionShort: "CE"
+  disconnect: "Prekini vezu"
+  contact: "Kontakt"
+  sampleSQLiteName: "Uzorak SQLite"
+  sampleSQLiteFilename: "uzorak.db"
+  collapseNavigation: "Sažmi navigaciju"
 
 hu_HU:
   mainNavigation: "Fő navigáció"
@@ -1773,6 +1941,12 @@ hu_HU:
   platformBackupNudgeText: "Meg kell osztania ezeket a kapcsolatokat a csapatával? Vidd őket a WhoDB platformra, és ott kezeld a hozzáférést."
   platformBackupNudgeAction: "Fedezze fel a csapat hozzáférését"
   platformBackupNudgeDismiss: "Elvetés"
+  communityEditionShort: "CE"
+  disconnect: "Leválasztás"
+  contact: "Érintkezés"
+  sampleSQLiteName: "Minta SQLite"
+  sampleSQLiteFilename: "minta.db"
+  collapseNavigation: "Navigáció összecsukása"
 
 id_ID:
   mainNavigation: "Navigasi utama"
@@ -1832,6 +2006,12 @@ id_ID:
   platformBackupNudgeText: "Perlu berbagi koneksi ini dengan tim Anda? Bawa mereka ke WhoDB Platform dan kelola akses di sana."
   platformBackupNudgeAction: "Jelajahi akses tim"
   platformBackupNudgeDismiss: "Membubarkan"
+  communityEditionShort: "CE"
+  disconnect: "Memutuskan"
+  contact: "Kontak"
+  sampleSQLiteName: "Contoh SQLite"
+  sampleSQLiteFilename: "sampel.db"
+  collapseNavigation: "Ciutkan navigasi"
 
 ms_MY:
   mainNavigation: "Navigasi utama"
@@ -1891,6 +2071,12 @@ ms_MY:
   platformBackupNudgeText: "Perlu berkongsi hubungan ini dengan pasukan anda? Bawa mereka ke WhoDB Platform dan uruskan akses di sana."
   platformBackupNudgeAction: "Terokai akses pasukan"
   platformBackupNudgeDismiss: "Tolak"
+  communityEditionShort: "CE"
+  disconnect: "Putuskan sambungan"
+  contact: "Kenalan"
+  sampleSQLiteName: "Sampel SQLite"
+  sampleSQLiteFilename: "sampel.db"
+  collapseNavigation: "Runtuhkan navigasi"
 
 nb_NO:
   mainNavigation: "Hovednavigasjon"
@@ -1950,6 +2136,12 @@ nb_NO:
   platformBackupNudgeText: "Trenger du å dele disse forbindelsene med teamet ditt? Ta dem til WhoDB-plattformen og administrer tilgangen der."
   platformBackupNudgeAction: "Utforsk teamtilgang"
   platformBackupNudgeDismiss: "Avskjedige"
+  communityEditionShort: "CE"
+  disconnect: "Frakople"
+  contact: "Kontakt"
+  sampleSQLiteName: "Eksempel SQLite"
+  sampleSQLiteFilename: "sample.db"
+  collapseNavigation: "Skjul navigasjonen"
 
 sw_KE:
   mainNavigation: "Urambazaji mkuu"
@@ -2009,6 +2201,12 @@ sw_KE:
   platformBackupNudgeText: "Je, unahitaji kushiriki miunganisho hii na timu yako? Walete kwenye WhoDB Jukwaa na udhibiti ufikiaji huko."
   platformBackupNudgeAction: "Gundua ufikiaji wa timu"
   platformBackupNudgeDismiss: "Ondoa"
+  communityEditionShort: "CE"
+  disconnect: "Tenganisha"
+  contact: "Wasiliana"
+  sampleSQLiteName: "Sampuli SQLite"
+  sampleSQLiteFilename: "sampuli.db"
+  collapseNavigation: "Kunja urambazaji"
 
 ta_IN:
   mainNavigation: "முக்கிய வழிசெலுத்தல்"
@@ -2068,6 +2266,12 @@ ta_IN:
   platformBackupNudgeText: "இந்த இணைப்புகளை உங்கள் குழுவுடன் பகிர்ந்து கொள்ள வேண்டுமா? அவற்றை WhoDB பிளாட்ஃபார்மிற்கு கொண்டு வந்து அங்கு அணுகலை நிர்வகிக்கவும்."
   platformBackupNudgeAction: "குழு அணுகலை ஆராயுங்கள்"
   platformBackupNudgeDismiss: "நிராகரி"
+  communityEditionShort: "CE"
+  disconnect: "துண்டிக்கவும்"
+  contact: "தொடர்பு கொள்ளவும்"
+  sampleSQLiteName: "மாதிரி SQLite"
+  sampleSQLiteFilename: "மாதிரி.db"
+  collapseNavigation: "வழிசெலுத்தலைச் சுருக்கவும்"
 
 th_TH:
   mainNavigation: "การนำทางหลัก"
@@ -2127,6 +2331,12 @@ th_TH:
   platformBackupNudgeText: "ต้องการแชร์การเชื่อมต่อเหล่านี้กับทีมของคุณหรือไม่? นำพวกเขาไปที่แพลตฟอร์ม WhoDB และจัดการการเข้าถึงที่นั่น"
   platformBackupNudgeAction: "สำรวจการเข้าถึงของทีม"
   platformBackupNudgeDismiss: "อนุญาตให้ออกไป"
+  communityEditionShort: "ซีอี"
+  disconnect: "ตัดการเชื่อมต่อ"
+  contact: "ติดต่อ"
+  sampleSQLiteName: "ตัวอย่าง SQLite"
+  sampleSQLiteFilename: "ตัวอย่าง.db"
+  collapseNavigation: "ยุบการนำทาง"
 
 tr_TR:
   mainNavigation: "Ana gezinme"
@@ -2186,6 +2396,12 @@ tr_TR:
   platformBackupNudgeText: "Bu bağlantıları ekibinizle paylaşmanız mı gerekiyor? Onları WhoDB Platformuna getirin ve erişimi orada yönetin."
   platformBackupNudgeAction: "Ekip erişimini keşfedin"
   platformBackupNudgeDismiss: "Azletmek"
+  communityEditionShort: "CE"
+  disconnect: "Bağlantıyı kes"
+  contact: "Temas etmek"
+  sampleSQLiteName: "Örnek SQLite"
+  sampleSQLiteFilename: "örnek.db"
+  collapseNavigation: "Gezinmeyi daralt"
 
 uk_UA:
   mainNavigation: "Основна навігація"
@@ -2245,6 +2461,12 @@ uk_UA:
   platformBackupNudgeText: "Потрібно поділитися цими зв’язками зі своєю командою? Перенесіть їх на платформу WhoDB і керуйте там доступом."
   platformBackupNudgeAction: "Досліджуйте командний доступ"
   platformBackupNudgeDismiss: "Відхилити"
+  communityEditionShort: "CE"
+  disconnect: "Відключити"
+  contact: "контакт"
+  sampleSQLiteName: "Зразок SQLite"
+  sampleSQLiteFilename: "sample.db"
+  collapseNavigation: "Згорнути навігацію"
 
 ur_PK:
   mainNavigation: "مین نیویگیشن"
@@ -2304,6 +2526,12 @@ ur_PK:
   platformBackupNudgeText: "اپنی ٹیم کے ساتھ ان رابطوں کا اشتراک کرنے کی ضرورت ہے؟ انہیں WhoDB پلیٹ فارم پر لائیں اور وہاں رسائی کا انتظام کریں۔"
   platformBackupNudgeAction: "ٹیم تک رسائی دریافت کریں۔"
   platformBackupNudgeDismiss: "برطرف کرنا"
+  communityEditionShort: "عیسوی"
+  disconnect: "منقطع کرنا"
+  contact: "رابطہ کریں۔"
+  sampleSQLiteName: "نمونہ SQLite"
+  sampleSQLiteFilename: "نمونہ ڈی بی"
+  collapseNavigation: "نیویگیشن کو سکیڑیں۔"
 
 vi_VN:
   mainNavigation: "Điều hướng chính"
@@ -2363,6 +2591,12 @@ vi_VN:
   platformBackupNudgeText: "Cần chia sẻ những kết nối này với nhóm của bạn? Đưa họ đến Nền tảng WhoDB và quản lý quyền truy cập tại đó."
   platformBackupNudgeAction: "Khám phá quyền truy cập của nhóm"
   platformBackupNudgeDismiss: "Miễn nhiệm"
+  communityEditionShort: "CN"
+  disconnect: "Ngắt kết nối"
+  contact: "Liên hệ"
+  sampleSQLiteName: "Mẫu SQLite"
+  sampleSQLiteFilename: "mẫu.db"
+  collapseNavigation: "Thu gọn điều hướng"
 
 af_ZA:
   mainNavigation: "Hoofnavigasie"
@@ -2422,6 +2656,12 @@ af_ZA:
   platformBackupNudgeText: "Moet jy hierdie verbindings met jou span deel? Bring hulle na WhoDB platform en bestuur toegang daar."
   platformBackupNudgeAction: "Verken spantoegang"
   platformBackupNudgeDismiss: "Verwerp"
+  communityEditionShort: "CE"
+  disconnect: "Ontkoppel"
+  contact: "Kontak"
+  sampleSQLiteName: "Voorbeeld SQLite"
+  sampleSQLiteFilename: "monster.db"
+  collapseNavigation: "Vou navigasie in"
 
 am_ET:
   mainNavigation: "ዋና አሰሳ"
@@ -2481,6 +2721,12 @@ am_ET:
   platformBackupNudgeText: "እነዚህን ግንኙነቶች ለቡድንዎ ማጋራት ይፈልጋሉ? ወደ WhoDB አምጣቸው እና እዚያ መድረስን ያስተዳድሩ።"
   platformBackupNudgeAction: "የቡድን መዳረሻን ያስሱ"
   platformBackupNudgeDismiss: "አሰናብት"
+  communityEditionShort: "ዓ.ም"
+  disconnect: "ግንኙነት አቋርጥ"
+  contact: "ተገናኝ"
+  sampleSQLiteName: "ናሙና SQLite"
+  sampleSQLiteFilename: "ናሙና.ዲቢ"
+  collapseNavigation: "አሰሳ ሰብስብ"
 
 az_AZ:
   mainNavigation: "Əsas naviqasiya"
@@ -2540,6 +2786,12 @@ az_AZ:
   platformBackupNudgeText: "Bu əlaqələri komandanızla bölüşmək lazımdırmı? Onları WhoDB Platformasına gətirin və orada girişi idarə edin."
   platformBackupNudgeAction: "Komanda girişini araşdırın"
   platformBackupNudgeDismiss: "Rədd et"
+  communityEditionShort: "CE"
+  disconnect: "Bağlantını kəsin"
+  contact: "Əlaqə"
+  sampleSQLiteName: "Nümunə SQLite"
+  sampleSQLiteFilename: "nümunə.db"
+  collapseNavigation: "Naviqasiyanı yığcamlaşdırın"
 
 et_EE:
   mainNavigation: "Peamine navigeerimine"
@@ -2599,6 +2851,12 @@ et_EE:
   platformBackupNudgeText: "Kas soovite neid sidemeid oma meeskonnaga jagada? Viige nad WhoDB platvormile ja haldage seal juurdepääsu."
   platformBackupNudgeAction: "Uurige meeskonna juurdepääsu"
   platformBackupNudgeDismiss: "Loobu"
+  communityEditionShort: "CE"
+  disconnect: "Katkesta ühendus"
+  contact: "Võtke ühendust"
+  sampleSQLiteName: "Näidis SQLite"
+  sampleSQLiteFilename: "näidis.db"
+  collapseNavigation: "Ahenda navigeerimist"
 
 gu_IN:
   mainNavigation: "મુખ્ય નેવિગેશન"
@@ -2658,6 +2916,12 @@ gu_IN:
   platformBackupNudgeText: "તમારી ટીમ સાથે આ જોડાણો શેર કરવાની જરૂર છે? તેમને WhoDB પ્લેટફોર્મ પર લાવો અને ત્યાં એક્સેસ મેનેજ કરો."
   platformBackupNudgeAction: "ટીમના ઍક્સેસનું અન્વેષણ કરો"
   platformBackupNudgeDismiss: "કાઢી નાખો"
+  communityEditionShort: "ઈ.સ"
+  disconnect: "ડિસ્કનેક્ટ કરો"
+  contact: "સંપર્ક કરો"
+  sampleSQLiteName: "નમૂના SQLite"
+  sampleSQLiteFilename: "સેમ્પલ.ડીબી"
+  collapseNavigation: "નેવિગેશન સંકુચિત કરો"
 
 ha_NG:
   mainNavigation: "Babban kewayawa"
@@ -2717,6 +2981,12 @@ ha_NG:
   platformBackupNudgeText: "Kuna buƙatar raba waɗannan haɗin gwiwa tare da ƙungiyar ku? Kawo su zuwa WhoDB dandali kuma sarrafa shiga can."
   platformBackupNudgeAction: "Nemo hanyar shiga ƙungiya"
   platformBackupNudgeDismiss: "Korar"
+  communityEditionShort: "CE"
+  disconnect: "Cire haɗin"
+  contact: "Tuntuɓar"
+  sampleSQLiteName: "Misali SQLite"
+  sampleSQLiteFilename: "misali.db"
+  collapseNavigation: "Rushe kewayawa"
 
 ka_GE:
   mainNavigation: "მთავარი ნავიგაცია"
@@ -2776,6 +3046,12 @@ ka_GE:
   platformBackupNudgeText: "გჭირდებათ ამ კავშირების გაზიარება თქვენს გუნდთან? მიიტანეთ ისინი WhoDB პლატფორმაზე და მართეთ იქ წვდომა."
   platformBackupNudgeAction: "გამოიკვლიეთ გუნდის წვდომა"
   platformBackupNudgeDismiss: "გაუქმება"
+  communityEditionShort: "CE"
+  disconnect: "გათიშვა"
+  contact: "კონტაქტი"
+  sampleSQLiteName: "ნიმუში SQLite"
+  sampleSQLiteFilename: "ნიმუში.დბ"
+  collapseNavigation: "ნავიგაციის ჩაკეცვა"
 
 km_KH:
   mainNavigation: "ការរុករកចម្បង"
@@ -2835,6 +3111,12 @@ km_KH:
   platformBackupNudgeText: "ត្រូវការចែករំលែកការតភ្ជាប់ទាំងនេះជាមួយក្រុមរបស់អ្នក? នាំពួកគេទៅកាន់ WhoDB វេទិកា ហើយគ្រប់គ្រងការចូលប្រើនៅទីនោះ។"
   platformBackupNudgeAction: "រុករកការចូលប្រើក្រុម"
   platformBackupNudgeDismiss: "ច្រានចោល"
+  communityEditionShort: "គ.ស"
+  disconnect: "ផ្តាច់"
+  contact: "ទំនាក់ទំនង"
+  sampleSQLiteName: "គំរូ SQLite"
+  sampleSQLiteFilename: "sample.db"
+  collapseNavigation: "បង្រួមការរុករក"
 
 kn_IN:
   mainNavigation: "ಮುಖ್ಯ ಸಂಚರಣೆ"
@@ -2894,6 +3176,12 @@ kn_IN:
   platformBackupNudgeText: "ನಿಮ್ಮ ತಂಡದೊಂದಿಗೆ ಈ ಸಂಪರ್ಕಗಳನ್ನು ಹಂಚಿಕೊಳ್ಳಬೇಕೇ? ಅವರನ್ನು WhoDB ಪ್ಲಾಟ್‌ಫಾರ್ಮ್‌ಗೆ ತನ್ನಿ ಮತ್ತು ಅಲ್ಲಿ ಪ್ರವೇಶವನ್ನು ನಿರ್ವಹಿಸಿ."
   platformBackupNudgeAction: "ತಂಡದ ಪ್ರವೇಶವನ್ನು ಅನ್ವೇಷಿಸಿ"
   platformBackupNudgeDismiss: "ವಜಾಗೊಳಿಸಿ"
+  communityEditionShort: "ಸಿಇ"
+  disconnect: "ಸಂಪರ್ಕ ಕಡಿತಗೊಳಿಸಿ"
+  contact: "ಸಂಪರ್ಕಿಸಿ"
+  sampleSQLiteName: "ಮಾದರಿ SQLite"
+  sampleSQLiteFilename: "ಮಾದರಿ.ಡಿಬಿ"
+  collapseNavigation: "ಸಂಕುಚಿಸಿ ನ್ಯಾವಿಗೇಷನ್"
 
 lt_LT:
   mainNavigation: "Pagrindinė navigacija"
@@ -2953,6 +3241,12 @@ lt_LT:
   platformBackupNudgeText: "Norite pasidalinti šiais ryšiais su savo komanda? Perkelkite juos į WhoDB platformą ir tvarkykite prieigą ten."
   platformBackupNudgeAction: "Ištirkite komandos prieigą"
   platformBackupNudgeDismiss: "Atsisakyti"
+  communityEditionShort: "CE"
+  disconnect: "Atsijungti"
+  contact: "Susisiekite"
+  sampleSQLiteName: "Pavyzdys SQLite"
+  sampleSQLiteFilename: "pavyzdys.db"
+  collapseNavigation: "Sutraukti navigaciją"
 
 lv_LV:
   mainNavigation: "Galvenā navigācija"
@@ -3012,6 +3306,12 @@ lv_LV:
   platformBackupNudgeText: "Vai vēlaties dalīties ar šiem sakariem ar savu komandu? Nogādājiet tos WhoDB platformā un pārvaldiet tur piekļuvi."
   platformBackupNudgeAction: "Izpētiet komandas piekļuvi"
   platformBackupNudgeDismiss: "Atlaist"
+  communityEditionShort: "CE"
+  disconnect: "Atvienot"
+  contact: "Sazināties"
+  sampleSQLiteName: "Paraugs SQLite"
+  sampleSQLiteFilename: "paraugs.db"
+  collapseNavigation: "Sakļaut navigāciju"
 
 ml_IN:
   mainNavigation: "പ്രധാന നാവിഗേഷൻ"
@@ -3071,6 +3371,12 @@ ml_IN:
   platformBackupNudgeText: "ഈ കണക്ഷനുകൾ നിങ്ങളുടെ ടീമുമായി പങ്കിടേണ്ടതുണ്ടോ? അവരെ WhoDB പ്ലാറ്റ്‌ഫോമിലേക്ക് കൊണ്ടുവന്ന് അവിടെയുള്ള ആക്‌സസ് മാനേജ് ചെയ്യുക."
   platformBackupNudgeAction: "ടീം ആക്‌സസ് പര്യവേക്ഷണം ചെയ്യുക"
   platformBackupNudgeDismiss: "പിരിച്ചുവിടുക"
+  communityEditionShort: "സി.ഇ"
+  disconnect: "വിച്ഛേദിക്കുക"
+  contact: "ബന്ധപ്പെടുക"
+  sampleSQLiteName: "സാമ്പിൾ SQLite"
+  sampleSQLiteFilename: "സാമ്പിൾ.ഡിബി"
+  collapseNavigation: "നാവിഗേഷൻ ചുരുക്കുക"
 
 mr_IN:
   mainNavigation: "मुख्य नेव्हिगेशन"
@@ -3130,6 +3436,12 @@ mr_IN:
   platformBackupNudgeText: "आपल्या कार्यसंघासह हे कनेक्शन सामायिक करण्याची आवश्यकता आहे? त्यांना WhoDB प्लॅटफॉर्मवर आणा आणि तेथे प्रवेश व्यवस्थापित करा."
   platformBackupNudgeAction: "संघ प्रवेश एक्सप्लोर करा"
   platformBackupNudgeDismiss: "डिसमिस करा"
+  communityEditionShort: "इ.स"
+  disconnect: "डिस्कनेक्ट करा"
+  contact: "संपर्क करा"
+  sampleSQLiteName: "नमुना SQLite"
+  sampleSQLiteFilename: "नमुना.db"
+  collapseNavigation: "नेव्हिगेशन कोलॅप्स करा"
 
 ne_NP:
   mainNavigation: "मुख्य नेभिगेसन"
@@ -3189,6 +3501,12 @@ ne_NP:
   platformBackupNudgeText: "तपाईंको टोलीसँग यी जडानहरू साझेदारी गर्न आवश्यक छ? तिनीहरूलाई WhoDB प्लेटफर्ममा ल्याउनुहोस् र त्यहाँ पहुँच व्यवस्थापन गर्नुहोस्।"
   platformBackupNudgeAction: "टोली पहुँच अन्वेषण गर्नुहोस्"
   platformBackupNudgeDismiss: "खारेज गर्नुहोस्"
+  communityEditionShort: "CE"
+  disconnect: "जडान विच्छेद गर्नुहोस्"
+  contact: "सम्पर्क गर्नुहोस्"
+  sampleSQLiteName: "नमूना SQLite"
+  sampleSQLiteFilename: "नमूना.db"
+  collapseNavigation: "नेभिगेसन संक्षिप्त गर्नुहोस्"
 
 pa_IN:
   mainNavigation: "ਮੁੱਖ ਨੈਵੀਗੇਸ਼ਨ"
@@ -3248,6 +3566,12 @@ pa_IN:
   platformBackupNudgeText: "ਕੀ ਇਹਨਾਂ ਕਨੈਕਸ਼ਨਾਂ ਨੂੰ ਆਪਣੀ ਟੀਮ ਨਾਲ ਸਾਂਝਾ ਕਰਨ ਦੀ ਲੋੜ ਹੈ? ਉਹਨਾਂ ਨੂੰ WhoDB ਪਲੇਟਫਾਰਮ 'ਤੇ ਲਿਆਓ ਅਤੇ ਉੱਥੇ ਪਹੁੰਚ ਦਾ ਪ੍ਰਬੰਧਨ ਕਰੋ।"
   platformBackupNudgeAction: "ਟੀਮ ਪਹੁੰਚ ਦੀ ਪੜਚੋਲ ਕਰੋ"
   platformBackupNudgeDismiss: "ਖਾਰਜ ਕਰੋ"
+  communityEditionShort: "ਸੀ.ਈ"
+  disconnect: "ਡਿਸਕਨੈਕਟ ਕਰੋ"
+  contact: "ਸੰਪਰਕ ਕਰੋ"
+  sampleSQLiteName: "ਨਮੂਨਾ SQLite"
+  sampleSQLiteFilename: "ਨਮੂਨਾ.ਡੀ.ਬੀ"
+  collapseNavigation: "ਨੈਵੀਗੇਸ਼ਨ ਨੂੰ ਸਮੇਟੋ"
 
 si_LK:
   mainNavigation: "ප්රධාන සංචලනය"
@@ -3307,6 +3631,12 @@ si_LK:
   platformBackupNudgeText: "ඔබේ කණ්ඩායම සමඟ මෙම සම්බන්ධතා බෙදා ගැනීමට අවශ්‍යද? ඒවා WhoDB වේදිකාවට ගෙන ගොස් එහි ප්‍රවේශය කළමනාකරණය කරන්න."
   platformBackupNudgeAction: "කණ්ඩායම් ප්‍රවේශය ගවේෂණය කරන්න"
   platformBackupNudgeDismiss: "අස් කරන්න"
+  communityEditionShort: "ක්රි.ව"
+  disconnect: "විසන්ධි කරන්න"
+  contact: "අමතන්න"
+  sampleSQLiteName: "නියැදිය SQLite"
+  sampleSQLiteFilename: "සාම්පල්.db"
+  collapseNavigation: "සංචලනය හකුළන්න"
 
 sl_SI:
   mainNavigation: "Glavna navigacija"
@@ -3366,6 +3696,12 @@ sl_SI:
   platformBackupNudgeText: "Need to share these connections with your team? Bring them to WhoDB Platform and manage access there."
   platformBackupNudgeAction: "Raziščite dostop ekipe"
   platformBackupNudgeDismiss: "Odpusti"
+  communityEditionShort: "CE"
+  disconnect: "Prekini povezavo"
+  contact: "Kontakt"
+  sampleSQLiteName: "Vzorec SQLite"
+  sampleSQLiteFilename: "vzorec.db"
+  collapseNavigation: "Strni navigacijo"
 
 sr_RS:
   mainNavigation: "Главна навигација"
@@ -3425,6 +3761,12 @@ sr_RS:
   platformBackupNudgeText: "Требате да поделите ове везе са својим тимом? Доведите их на WhoDB платформу и тамо управљајте приступом."
   platformBackupNudgeAction: "Истражите приступ тиму"
   platformBackupNudgeDismiss: "Одбаци"
+  communityEditionShort: "ЦЕ"
+  disconnect: "Прекини везу"
+  contact: "Контакт"
+  sampleSQLiteName: "Пример SQLite"
+  sampleSQLiteFilename: "сампле.дб"
+  collapseNavigation: "Скупи навигацију"
 
 te_IN:
   mainNavigation: "ప్రధాన నావిగేషన్"
@@ -3484,6 +3826,12 @@ te_IN:
   platformBackupNudgeText: "ఈ కనెక్షన్‌లను మీ బృందంతో పంచుకోవాలా? వారిని WhoDB ప్లాట్‌ఫారమ్‌కి తీసుకురండి మరియు అక్కడ యాక్సెస్‌ని నిర్వహించండి."
   platformBackupNudgeAction: "టీమ్ యాక్సెస్‌ను అన్వేషించండి"
   platformBackupNudgeDismiss: "తొలగించు"
+  communityEditionShort: "CE"
+  disconnect: "డిస్‌కనెక్ట్ చేయండి"
+  contact: "సంప్రదించండి"
+  sampleSQLiteName: "నమూనా SQLite"
+  sampleSQLiteFilename: "నమూనా.db"
+  collapseNavigation: "నావిగేషన్‌ను కుదించు"
 
 tl_PH:
   mainNavigation: "Pangunahing nabigasyon"
@@ -3543,6 +3891,12 @@ tl_PH:
   platformBackupNudgeText: "Kailangang ibahagi ang mga koneksyong ito sa iyong koponan? Dalhin sila sa WhoDB Platform at pamahalaan ang access doon."
   platformBackupNudgeAction: "I-explore ang access ng team"
   platformBackupNudgeDismiss: "I-dismiss"
+  communityEditionShort: "CE"
+  disconnect: "Idiskonekta"
+  contact: "Makipag-ugnayan"
+  sampleSQLiteName: "Sample SQLite"
+  sampleSQLiteFilename: "sample.db"
+  collapseNavigation: "I-collapse ang nabigasyon"
 
 uz_UZ:
   mainNavigation: "Asosiy navigatsiya"
@@ -3602,6 +3956,12 @@ uz_UZ:
   platformBackupNudgeText: "Ushbu aloqalarni jamoangiz bilan baham ko'rish kerakmi? Ularni WhoDB platformasiga olib keling va u yerdan kirishni boshqaring."
   platformBackupNudgeAction: "Jamoaga kirish imkoniyatini o'rganing"
   platformBackupNudgeDismiss: "Rad etish"
+  communityEditionShort: "Idoralar"
+  disconnect: "Ulanishni uzing"
+  contact: "Aloqa"
+  sampleSQLiteName: "Namuna SQLite"
+  sampleSQLiteFilename: "sample.db"
+  collapseNavigation: "Navigatsiyani yig‘ish"
 
 yo_NG:
   mainNavigation: "Lilọ kiri akọkọ"
@@ -3661,3 +4021,9 @@ yo_NG:
   platformBackupNudgeText: "Ṣe o nilo lati pin awọn asopọ wọnyi pẹlu ẹgbẹ rẹ? Mu wọn wá si WhoDB Platform ki o ṣakoso wiwọle sibẹ."
   platformBackupNudgeAction: "Ye egbe wiwọle"
   platformBackupNudgeDismiss: "Yọọ kuro"
+  communityEditionShort: "CE"
+  disconnect: "Ge asopọ"
+  contact: "Olubasọrọ"
+  sampleSQLiteName: "Ayẹwo SQLite"
+  sampleSQLiteFilename: "ayẹwo.db"
+  collapseNavigation: "Pa lilọ kiri"

@@ -4,245 +4,306 @@ en_US:
   gettingThingsReady: Getting things ready...
 
 ar_AE:
-  loading: تحميل...
-  pleaseWait: انتظر من فضلك
+  loading: "تحميل..."
+  pleaseWait: "انتظر من فضلك"
+  gettingThingsReady: "تجهيز الأمور..."
 
 de_DE:
-  loading: Laden...
-  pleaseWait: Bitte warten
+  loading: "Laden..."
+  pleaseWait: "Bitte warten"
+  gettingThingsReady: "Alles vorbereiten..."
 
 el_GR:
-  loading: Φόρτωση...
-  pleaseWait: Παρακαλώ περιμένετε
+  loading: "Φόρτωση..."
+  pleaseWait: "Παρακαλώ περιμένετε"
+  gettingThingsReady: "Ετοιμάζοντας τα πράγματα..."
 
 en_GB:
-  loading: Loading...
-  pleaseWait: Please Wait
+  loading: "Loading..."
+  pleaseWait: "Please Wait"
+  gettingThingsReady: "Getting things ready..."
 
 es_ES:
-  loading: Cargando...
-  pleaseWait: Espere por favor
+  loading: "Cargando..."
+  pleaseWait: "Espere por favor"
+  gettingThingsReady: "Preparando las cosas..."
 
 fi_FI:
-  loading: Ladataan...
-  pleaseWait: Odota
+  loading: "Ladataan..."
+  pleaseWait: "Odota"
+  gettingThingsReady: "Valmistellaan asioita..."
 
 fr_FR:
-  loading: Chargement...
-  pleaseWait: Veuillez patienter
+  loading: "Chargement..."
+  pleaseWait: "Veuillez patienter"
+  gettingThingsReady: "Préparer les choses..."
 
 it_IT:
-  loading: Caricamento...
-  pleaseWait: Attendere prego
+  loading: "Caricamento..."
+  pleaseWait: "Attendere prego"
+  gettingThingsReady: "Preparare le cose..."
 
 iw_IL:
-  loading: טְעִינָה...
-  pleaseWait: אנא המתן
+  loading: "טְעִינָה..."
+  pleaseWait: "אנא המתן"
+  gettingThingsReady: "מכינים דברים..."
 
 ja_JP:
-  loading: 読み込み中...
-  pleaseWait: お待ちください
+  loading: "読み込み中..."
+  pleaseWait: "お待ちください"
+  gettingThingsReady: "準備を整えています..."
 
 ko_KR:
-  loading: 로드 중...
-  pleaseWait: 기다리세요
+  loading: "로드 중..."
+  pleaseWait: "기다리세요"
+  gettingThingsReady: "준비하는 중..."
 
 nl_NL:
-  loading: Laden...
-  pleaseWait: Wacht alstublieft
+  loading: "Laden..."
+  pleaseWait: "Wacht alstublieft"
+  gettingThingsReady: "Dingen klaarmaken..."
 
 pl_PL:
-  loading: Załadunek...
-  pleaseWait: Proszę czekać
+  loading: "Załadunek..."
+  pleaseWait: "Proszę czekać"
+  gettingThingsReady: "Przygotowywanie rzeczy..."
 
 pt_BR:
-  loading: Carregando...
-  pleaseWait: Por favor, aguarde
+  loading: "Carregando..."
+  pleaseWait: "Por favor, aguarde"
+  gettingThingsReady: "Preparando as coisas..."
 
 ro_RO:
-  loading: Încărcare...
-  pleaseWait: Va rugam asteptati
+  loading: "Încărcare..."
+  pleaseWait: "Va rugam asteptati"
+  gettingThingsReady: "Pregătesc lucrurile..."
 
 ru_RU:
-  loading: Загрузка...
-  pleaseWait: Пожалуйста, подождите
+  loading: "Загрузка..."
+  pleaseWait: "Пожалуйста, подождите"
+  gettingThingsReady: "Готовим вещи..."
 
 sk_SK:
-  loading: Načítava sa...
-  pleaseWait: Čakajte prosím
+  loading: "Načítava sa..."
+  pleaseWait: "Čakajte prosím"
+  gettingThingsReady: "Príprava vecí..."
 
 sv_SE:
-  loading: Belastning...
-  pleaseWait: Vänligen vänta
+  loading: "Belastning..."
+  pleaseWait: "Vänligen vänta"
+  gettingThingsReady: "Förbereder saker..."
 
 zh_CN:
-  loading: 加载中...
-  pleaseWait: 请稍等
+  loading: "加载中..."
+  pleaseWait: "请稍等"
+  gettingThingsReady: "准备好东西..."
 
 zh_TW:
-  loading: 載入中...
-  pleaseWait: 請稍等
+  loading: "載入中..."
+  pleaseWait: "請稍等"
+  gettingThingsReady: "準備好東西..."
 
 bg_BG:
-  loading: Зареждане...
-  pleaseWait: Моля изчакайте
+  loading: "Зареждане..."
+  pleaseWait: "Моля изчакайте"
+  gettingThingsReady: "Подготвяме нещата..."
 
 bn_BD:
-  loading: লোড হচ্ছে...
-  pleaseWait: অপেক্ষা করুন
+  loading: "লোড হচ্ছে..."
+  pleaseWait: "অপেক্ষা করুন"
+  gettingThingsReady: "জিনিস প্রস্তুত করা হচ্ছে..."
 
 ca_ES:
-  loading: Carregant...
-  pleaseWait: Si us plau, espereu
+  loading: "Carregant..."
+  pleaseWait: "Si us plau, espereu"
+  gettingThingsReady: "Preparant les coses..."
 
 cs_CZ:
-  loading: Načítání...
-  pleaseWait: Prosím čekejte
+  loading: "Načítání..."
+  pleaseWait: "Prosím čekejte"
+  gettingThingsReady: "Příprava věcí..."
 
 da_DK:
-  loading: Indlæser...
-  pleaseWait: Vent venligst
+  loading: "Indlæser..."
+  pleaseWait: "Vent venligst"
+  gettingThingsReady: "Gør tingene klar..."
 
 fa_IR:
-  loading: در حال بارگیری...
-  pleaseWait: لطفا صبر کنید
+  loading: "در حال بارگیری..."
+  pleaseWait: "لطفا صبر کنید"
+  gettingThingsReady: "آماده کردن کارها..."
 
 hi_IN:
-  loading: लोड हो रहा है...
-  pleaseWait: कृपया प्रतीक्षा करें
+  loading: "लोड हो रहा है..."
+  pleaseWait: "कृपया प्रतीक्षा करें"
+  gettingThingsReady: "चीजें तैयार हो रही हैं..."
 
 hr_HR:
-  loading: Učitavanje...
-  pleaseWait: Molimo pričekajte
+  loading: "Učitavanje..."
+  pleaseWait: "Molimo pričekajte"
+  gettingThingsReady: "Priprema stvari..."
 
 hu_HU:
-  loading: Terhelés...
-  pleaseWait: Kérem, várjon
+  loading: "Terhelés..."
+  pleaseWait: "Kérem, várjon"
+  gettingThingsReady: "A dolgok előkészítése..."
 
 id_ID:
-  loading: Memuat...
-  pleaseWait: Harap tunggu
+  loading: "Memuat..."
+  pleaseWait: "Harap tunggu"
+  gettingThingsReady: "Mempersiapkan segalanya..."
 
 ms_MY:
-  loading: Memuatkan...
-  pleaseWait: Sila Tunggu
+  loading: "Memuatkan..."
+  pleaseWait: "Sila Tunggu"
+  gettingThingsReady: "Menyiapkan barang..."
 
 nb_NO:
-  loading: Laster inn...
-  pleaseWait: Vennligst vent
+  loading: "Laster inn..."
+  pleaseWait: "Vennligst vent"
+  gettingThingsReady: "Klargjør ting..."
 
 sw_KE:
-  loading: Inapakia...
-  pleaseWait: Tafadhali Subiri
+  loading: "Inapakia..."
+  pleaseWait: "Tafadhali Subiri"
+  gettingThingsReady: "Inatayarisha mambo..."
 
 ta_IN:
-  loading: ஏற்றுகிறது...
-  pleaseWait: தயவுசெய்து காத்திருங்கள்
+  loading: "ஏற்றுகிறது..."
+  pleaseWait: "தயவுசெய்து காத்திருங்கள்"
+  gettingThingsReady: "பொருட்களை தயார் செய்கிறோம்..."
 
 th_TH:
-  loading: กำลังโหลด...
-  pleaseWait: โปรดรอ
+  loading: "กำลังโหลด..."
+  pleaseWait: "โปรดรอ"
+  gettingThingsReady: "เตรียมของให้พร้อม..."
 
 tr_TR:
-  loading: Yükleniyor...
-  pleaseWait: Lütfen bekleyin
+  loading: "Yükleniyor..."
+  pleaseWait: "Lütfen bekleyin"
+  gettingThingsReady: "Eşyalar hazırlanıyor..."
 
 uk_UA:
-  loading: Завантаження...
-  pleaseWait: Будь ласка, зачекайте
+  loading: "Завантаження..."
+  pleaseWait: "Будь ласка, зачекайте"
+  gettingThingsReady: "Готуємо речі..."
 
 ur_PK:
-  loading: لوڈ ہو رہا ہے...
-  pleaseWait: برائے مہربانی انتظار کریں۔
+  loading: "لوڈ ہو رہا ہے..."
+  pleaseWait: "برائے مہربانی انتظار کریں۔"
+  gettingThingsReady: "چیزیں تیار ہو رہی ہیں..."
 
 vi_VN:
-  loading: Đang tải...
-  pleaseWait: Vui lòng chờ
+  loading: "Đang tải..."
+  pleaseWait: "Vui lòng chờ"
+  gettingThingsReady: "Đang chuẩn bị đồ đạc..."
 
 af_ZA:
   loading: "Laai tans..."
   pleaseWait: "Wag asseblief"
+  gettingThingsReady: "Maak dinge gereed..."
 
 am_ET:
   loading: "በመጫን ላይ..."
   pleaseWait: "እባክህ ጠብቅ"
+  gettingThingsReady: "ነገሮችን በማዘጋጀት ላይ..."
 
 az_AZ:
   loading: "Yüklənir..."
   pleaseWait: "Zəhmət olmasa gözləyin"
+  gettingThingsReady: "İşlər hazırlanır..."
 
 et_EE:
   loading: "Laadimine..."
   pleaseWait: "Palun oodake"
+  gettingThingsReady: "Asjade valmistamine..."
 
 gu_IN:
   loading: "લોડ કરી રહ્યું છે..."
   pleaseWait: "કૃપા કરીને રાહ જુઓ"
+  gettingThingsReady: "વસ્તુઓ તૈયાર કરી રહ્યાં છીએ..."
 
 ha_NG:
   loading: "Ana lodawa..."
   pleaseWait: "Don Allah jira"
+  gettingThingsReady: "Ana shirya abubuwa..."
 
 ka_GE:
   loading: "იტვირთება..."
   pleaseWait: "გთხოვთ დაელოდეთ"
+  gettingThingsReady: "ნივთების მომზადება..."
 
 km_KH:
   loading: "កំពុង​ផ្ទុក..."
   pleaseWait: "សូមរង់ចាំ"
+  gettingThingsReady: "រៀបចំអីវ៉ាន់..."
 
 kn_IN:
   loading: "ಲೋಡ್ ಆಗುತ್ತಿದೆ..."
   pleaseWait: "ದಯವಿಟ್ಟು ನಿರೀಕ್ಷಿಸಿ"
+  gettingThingsReady: "ವಿಷಯಗಳನ್ನು ಸಿದ್ಧಪಡಿಸಲಾಗುತ್ತಿದೆ..."
 
 lt_LT:
   loading: "Įkeliama..."
   pleaseWait: "Prašome palaukti"
+  gettingThingsReady: "Ruošiamasi..."
 
 lv_LV:
   loading: "Notiek ielāde..."
   pleaseWait: "Lūdzu, uzgaidiet"
+  gettingThingsReady: "Notiek lietu sagatavošana..."
 
 ml_IN:
   loading: "ലോഡ് ചെയ്യുന്നു..."
   pleaseWait: "കാത്തിരിക്കൂ"
+  gettingThingsReady: "കാര്യങ്ങൾ തയ്യാറാക്കുന്നു..."
 
 mr_IN:
   loading: "लोड करत आहे..."
   pleaseWait: "कृपया प्रतीक्षा करा"
+  gettingThingsReady: "गोष्टी तयार करत आहे..."
 
 ne_NP:
   loading: "लोड गर्दै..."
   pleaseWait: "कृपया प्रतीक्षा गर्नुहोस्"
+  gettingThingsReady: "सामानहरू तयार गर्दै..."
 
 pa_IN:
   loading: "ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ..."
   pleaseWait: "ਕ੍ਰਿਪਾ ਕਰਕੇ ਉਡੀਕ ਕਰੋ"
+  gettingThingsReady: "ਚੀਜ਼ਾਂ ਤਿਆਰ ਕੀਤੀਆਂ ਜਾ ਰਹੀਆਂ ਹਨ..."
 
 si_LK:
   loading: "පූරණය වෙමින්..."
   pleaseWait: "කරුණාකර රැඳී සිටින්න"
+  gettingThingsReady: "දේවල් සූදානම් කරමින්..."
 
 sl_SI:
   loading: "Nalaganje..."
   pleaseWait: "prosim počakajte"
+  gettingThingsReady: "Priprava stvari ..."
 
 sr_RS:
   loading: "Учитавање..."
   pleaseWait: "Молим сачекајте"
+  gettingThingsReady: "Припрема ствари..."
 
 te_IN:
   loading: "లోడ్ అవుతోంది..."
   pleaseWait: "దయచేసి వేచి ఉండండి"
+  gettingThingsReady: "విషయాలను సిద్ధం చేస్తోంది..."
 
 tl_PH:
   loading: "Naglo-load..."
   pleaseWait: "Mangyaring Maghintay"
+  gettingThingsReady: "Inihahanda ang mga gamit..."
 
 uz_UZ:
   loading: "Yuklanmoqda..."
   pleaseWait: "Iltimos kuting"
+  gettingThingsReady: "Ishlar tayyorlanmoqda..."
 
 yo_NG:
   loading: "Nkojọpọ..."
   pleaseWait: "Jọwọ duro"
+  gettingThingsReady: "Nmuradi nkan..."

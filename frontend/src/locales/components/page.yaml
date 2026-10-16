@@ -6,243 +6,304 @@ en_US:
 ar_AE:
   skipToContent: "انتقل إلى المحتوى الرئيسي"
   openNavigation: "افتح التنقل"
+  theme: "سمة"
 
 de_DE:
   skipToContent: "Zum Hauptinhalt springen"
   openNavigation: "Navigation öffnen"
+  theme: "Thema"
 
 el_GR:
   skipToContent: "Μετάβαση στο κύριο περιεχόμενο"
   openNavigation: "Ανοίξτε την πλοήγηση"
+  theme: "Θέμα"
 
 en_GB:
   skipToContent: "Skip to main content"
   openNavigation: "Open navigation"
+  theme: "Theme"
 
 es_ES:
   skipToContent: "Saltar al contenido principal"
   openNavigation: "Abrir navegación"
+  theme: "Tema"
 
 fi_FI:
   skipToContent: "Siirry pääsisältöön"
   openNavigation: "Avaa navigointi"
+  theme: "Teema"
 
 fr_FR:
   skipToContent: "Passer au contenu principal"
   openNavigation: "Ouvrir la navigation"
+  theme: "Thème"
 
 it_IT:
   skipToContent: "Passa al contenuto principale"
   openNavigation: "Apri la navigazione"
+  theme: "Tema"
 
 iw_IL:
   skipToContent: "דלג לתוכן הראשי"
   openNavigation: "פתח את הניווט"
+  theme: "נוֹשֵׂא"
 
 ja_JP:
   skipToContent: "メインコンテンツにスキップ"
   openNavigation: "ナビゲーションを開く"
+  theme: "テーマ"
 
 ko_KR:
   skipToContent: "주요 콘텐츠로 건너뛰기"
   openNavigation: "탐색 열기"
+  theme: "주제"
 
 nl_NL:
   skipToContent: "Ga naar de hoofdinhoud"
   openNavigation: "Navigatie openen"
+  theme: "Thema"
 
 pl_PL:
   skipToContent: "Przejdź do głównej treści"
   openNavigation: "Otwórz nawigację"
+  theme: "Temat"
 
 pt_BR:
   skipToContent: "Pular para o conteúdo principal"
   openNavigation: "Abrir navegação"
+  theme: "Tema"
 
 ro_RO:
   skipToContent: "Treci la conținutul principal"
   openNavigation: "Deschideți navigarea"
+  theme: "Temă"
 
 ru_RU:
   skipToContent: "Перейти к основному содержанию"
   openNavigation: "Открыть навигацию"
+  theme: "Тема"
 
 sk_SK:
   skipToContent: "Preskočiť na hlavný obsah"
   openNavigation: "Otvorte navigáciu"
+  theme: "Téma"
 
 sv_SE:
   skipToContent: "Hoppa till huvudinnehållet"
   openNavigation: "Öppna navigering"
+  theme: "Tema"
 
 zh_CN:
   skipToContent: "跳至主要内容"
   openNavigation: "打开导航"
+  theme: "主题"
 
 zh_TW:
   skipToContent: "跳至主要內容"
   openNavigation: "打開導航"
+  theme: "主題"
 
 bg_BG:
   skipToContent: "Преминете към основното съдържание"
   openNavigation: "Отворете навигацията"
+  theme: "Тема"
 
 bn_BD:
   skipToContent: "প্রধান বিষয়বস্তু এড়িয়ে যান"
   openNavigation: "নেভিগেশন খুলুন"
+  theme: "থিম"
 
 ca_ES:
   skipToContent: "Skip to main content"
   openNavigation: "Navegació oberta"
+  theme: "Tema"
 
 cs_CZ:
   skipToContent: "Přejít na hlavní obsah"
   openNavigation: "Otevřete navigaci"
+  theme: "Téma"
 
 da_DK:
   skipToContent: "Spring til hovedindhold"
   openNavigation: "Åbn navigation"
+  theme: "Tema"
 
 fa_IR:
   skipToContent: "به محتوای اصلی بروید"
   openNavigation: "ناوبری را باز کنید"
+  theme: "تم"
 
 hi_IN:
   skipToContent: "मुख्य सामग्री पर जाएँ"
   openNavigation: "नेविगेशन खोलें"
+  theme: "विषय"
 
 hr_HR:
   skipToContent: "Prijeđi na glavni sadržaj"
   openNavigation: "Otvorite navigaciju"
+  theme: "Tema"
 
 hu_HU:
   skipToContent: "Ugrás a fő tartalomhoz"
   openNavigation: "Nyissa meg a navigációt"
+  theme: "Téma"
 
 id_ID:
   skipToContent: "Lompat ke konten utama"
   openNavigation: "Buka navigasi"
+  theme: "Tema"
 
 ms_MY:
   skipToContent: "Langkau ke kandungan utama"
   openNavigation: "Buka navigasi"
+  theme: "Tema"
 
 nb_NO:
   skipToContent: "Gå til hovedinnhold"
   openNavigation: "Åpne navigasjon"
+  theme: "Tema"
 
 sw_KE:
   skipToContent: "Ruka hadi kwa yaliyomo kuu"
   openNavigation: "Fungua urambazaji"
+  theme: "Mandhari"
 
 ta_IN:
   skipToContent: "முக்கிய உள்ளடக்கத்திற்கு செல்க"
   openNavigation: "வழிசெலுத்தலைத் திறக்கவும்"
+  theme: "தீம்"
 
 th_TH:
   skipToContent: "ข้ามไปที่เนื้อหาหลัก"
   openNavigation: "เปิดการนำทาง"
+  theme: "ธีม"
 
 tr_TR:
   skipToContent: "Ana içeriğe atla"
   openNavigation: "Gezinmeyi aç"
+  theme: "Tema"
 
 uk_UA:
   skipToContent: "Перейти до основного вмісту"
   openNavigation: "Відкрити навігацію"
+  theme: "Тема"
 
 ur_PK:
   skipToContent: "مرکزی مواد پر جائیں۔"
   openNavigation: "نیویگیشن کھولیں۔"
+  theme: "تھیم"
 
 vi_VN:
   skipToContent: "Chuyển đến nội dung chính"
   openNavigation: "Mở điều hướng"
+  theme: "chủ đề"
 
 af_ZA:
   skipToContent: "Slaan oor na hoofinhoud"
   openNavigation: "Maak navigasie oop"
+  theme: "Tema"
 
 am_ET:
   skipToContent: "ወደ ዋናው ይዘት ዝለል"
   openNavigation: "አሰሳ ክፈት"
+  theme: "ጭብጥ"
 
 az_AZ:
   skipToContent: "Əsas məzmuna keçin"
   openNavigation: "Naviqasiyanı açın"
+  theme: "Mövzu"
 
 et_EE:
   skipToContent: "Mine põhisisu juurde"
   openNavigation: "Ava navigeerimine"
+  theme: "Teema"
 
 gu_IN:
   skipToContent: "મુખ્ય સામગ્રી પર જાઓ"
   openNavigation: "નેવિગેશન ખોલો"
+  theme: "થીમ"
 
 ha_NG:
   skipToContent: "Tsallake zuwa babban abun ciki"
   openNavigation: "Buɗe kewayawa"
+  theme: "Jigo"
 
 ka_GE:
   skipToContent: "გადადით მთავარ შინაარსზე"
   openNavigation: "გახსენით ნავიგაცია"
+  theme: "თემა"
 
 km_KH:
   skipToContent: "រំលងទៅមាតិកាសំខាន់"
   openNavigation: "បើកការរុករក"
+  theme: "ប្រធានបទ"
 
 kn_IN:
   skipToContent: "ಮುಖ್ಯ ವಿಷಯಕ್ಕೆ ತೆರಳಿ"
   openNavigation: "ನ್ಯಾವಿಗೇಶನ್ ತೆರೆಯಿರಿ"
+  theme: "ಥೀಮ್"
 
 lt_LT:
   skipToContent: "Pereiti prie pagrindinio turinio"
   openNavigation: "Atidaryti navigaciją"
+  theme: "tema"
 
 lv_LV:
   skipToContent: "Pāriet uz galveno saturu"
   openNavigation: "Atveriet navigāciju"
+  theme: "Tēma"
 
 ml_IN:
   skipToContent: "പ്രധാന ഉള്ളടക്കത്തിലേക്ക് പോകുക"
   openNavigation: "നാവിഗേഷൻ തുറക്കുക"
+  theme: "തീം"
 
 mr_IN:
   skipToContent: "मुख्य सामग्रीवर जा"
   openNavigation: "नेव्हिगेशन उघडा"
+  theme: "थीम"
 
 ne_NP:
   skipToContent: "मुख्य सामग्रीमा जानुहोस्"
   openNavigation: "नेभिगेसन खोल्नुहोस्"
+  theme: "विषयवस्तु"
 
 pa_IN:
   skipToContent: "ਮੁੱਖ ਸਮੱਗਰੀ 'ਤੇ ਜਾਓ"
   openNavigation: "ਨੈਵੀਗੇਸ਼ਨ ਖੋਲ੍ਹੋ"
+  theme: "ਥੀਮ"
 
 si_LK:
   skipToContent: "ප්‍රධාන අන්තර්ගතය වෙත යන්න"
   openNavigation: "සංචාලනය විවෘත කරන්න"
+  theme: "තේමාව"
 
 sl_SI:
   skipToContent: "Preskoči na glavno vsebino"
   openNavigation: "Odpri navigacijo"
+  theme: "Tema"
 
 sr_RS:
   skipToContent: "Пређи на главни садржај"
   openNavigation: "Отворите навигацију"
+  theme: "Тема"
 
 te_IN:
   skipToContent: "ప్రధాన కంటెంట్‌కి దాటవేయండి"
   openNavigation: "నావిగేషన్ తెరవండి"
+  theme: "థీమ్"
 
 tl_PH:
   skipToContent: "Lumaktaw sa pangunahing nilalaman"
   openNavigation: "Buksan ang nabigasyon"
+  theme: "Tema"
 
 uz_UZ:
   skipToContent: "Asosiy tarkibga o'tish"
   openNavigation: "Navigatsiyani oching"
+  theme: "Mavzu"
 
 yo_NG:
   skipToContent: "Rekọja si akoonu akọkọ"
   openNavigation: "Ṣii lilọ kiri"
+  theme: "Akori"
