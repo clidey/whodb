@@ -20,7 +20,7 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import type { Plugin, ResolvedConfig } from 'vite';
 import tailwindcss from '@tailwindcss/vite'
-import yamlPlugin from './plugins/vite-plugin-yaml';
+import localePacksPlugin from './plugins/vite-plugin-locale-packs.mjs';
 
 const baseHrefPlaceholder = '__WHODB_BASE_HREF__';
 const frontendEditionMarkerFile = '.whodb-edition';
@@ -100,7 +100,10 @@ export default defineConfig(async ({command}) => {
 
     return {
       plugins: [
-        yamlPlugin(),
+        localePacksPlugin({
+          roots: [{ layer: 'base', dir: path.resolve(__dirname, 'src/locales') }],
+          defaultLanguage: 'en_US',
+        }),
         react(),
         tailwindcss(),
         {

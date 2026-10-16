@@ -4,7 +4,7 @@ This document defines the localization requirements for the WhoDB frontend.
 
 ## Overview
 
-WhoDB uses a YAML-based localization system with the `useTranslation` hook. All user-facing strings MUST be localized. Translations are loaded at build time via Vite's `import.meta.glob()`.
+WhoDB uses a YAML-based localization system with the `useTranslation` hook. All user-facing strings MUST be localized. At build time `frontend/plugins/vite-plugin-locale-packs.mjs` splits the YAML files into one pack per language: `en_US` is bundled with the app (it is the fallback), and every other language is downloaded on demand.
 
 ## How It Works
 
@@ -12,6 +12,7 @@ WhoDB uses a YAML-based localization system with the `useTranslation` hook. All 
 2. Components load translations via `useTranslation('component-path')`
 3. The `t()` function retrieves strings by key, with automatic pluralization and interpolation
 4. Translation merge order: **common → component → extension (EE)**. Every component automatically inherits all keys from `common.yaml`, then its own YAML file overrides/extends, then EE translations override on top
+5. The app waits for the saved language's pack before its first render. Change the language only with `changeLanguage()` from `frontend/src/utils/change-language.ts`: it downloads the pack (showing "Switching language…" for at least one loader animation cycle) and then switches, so text never falls back to English mid-switch. `pnpm lint` fails on direct `SettingsActions.setLanguage` calls
 
 ## File Structure
 
