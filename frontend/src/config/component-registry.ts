@@ -22,15 +22,24 @@ import React from 'react';
  * Extensions register components at boot.
  * CE code renders from the registry — if a component isn't registered, it's not shown.
  */
-const registry = new Map<string, React.LazyExoticComponent<any>>();
+const registry = new Map<string, React.ComponentType<any>>();
 
 /** Register a lazy-loaded component by name. Called by extension modules at boot. */
 export const registerComponent = (name: string, loader: () => Promise<{ default: any }>) => {
     registry.set(name, React.lazy(loader));
 };
 
+/**
+ * Register an already-loaded component by name, for components on the start-up critical path.
+ * A lazy component suspends on its first render even when its code is already available, and
+ * React then holds the fallback for a moment before revealing it; an eager one renders at once.
+ */
+export const registerEagerComponent = (name: string, component: React.ComponentType<any>) => {
+    registry.set(name, component);
+};
+
 /** Get a registered component by name. Returns undefined if not registered (CE build). */
-export const getComponent = (name: string): React.LazyExoticComponent<any> | undefined => {
+export const getComponent = (name: string): React.ComponentType<any> | undefined => {
     return registry.get(name);
 };
 
