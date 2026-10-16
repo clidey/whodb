@@ -20,6 +20,7 @@ import (
 	"context"
 	"embed"
 	"fmt"
+	"io"
 	"net/http"
 	"reflect"
 	"sort"
@@ -31,6 +32,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
+	"github.com/andybalholm/brotli"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
@@ -354,14 +356,19 @@ func sseAwareThrottle(limit, backlog int, timeout time.Duration) func(http.Handl
 	}
 }
 
-// sseAwareCompress applies gzip compression to all responses except SSE streaming endpoints.
-// SSE payloads are tiny text fragments where compression saves nothing meaningful, and
-// buffering inside the compressor can prevent heartbeat bytes from reaching the wire —
-// causing load balancers to close idle connections.
-func sseAwareCompress(level int) func(http.Handler) http.Handler {
-	compressMiddleware := middleware.Compress(level)
+// sseAwareCompress applies Brotli or gzip compression to all responses except SSE streaming
+// endpoints. Brotli is preferred when the client accepts it because it is noticeably smaller
+// for the frontend bundles. SSE payloads are tiny text fragments where compression saves
+// nothing meaningful, and buffering inside the compressor can prevent heartbeat bytes from
+// reaching the wire — causing load balancers to close idle connections.
+func sseAwareCompress() func(http.Handler) http.Handler {
+	// Level 5 balances size and CPU for both gzip and Brotli.
+	compressor := middleware.NewCompressor(5)
+	compressor.SetEncoder("br", func(w io.Writer, level int) io.Writer {
+		return brotli.NewWriterLevel(w, level)
+	})
 	return func(next http.Handler) http.Handler {
-		compressedHandler := compressMiddleware(next)
+		compressedHandler := compressor.Handler(next)
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if graph.IsLongLivedHTTPRoute(r.URL.Path) {
 				next.ServeHTTP(w, r)
@@ -489,7 +496,7 @@ func setupMiddlewares(router *chi.Mux, additionalMiddlewares []func(http.Handler
 		middleware.ClientIPFromRemoteAddr,
 		middleware.RedirectSlashes,
 		middleware.Recoverer,
-		sseAwareCompress(5),
+		sseAwareCompress(),
 		sseAwareTimeout(90 * time.Second),
 		cors.Handler(cors.Options{
 			AllowedOrigins:   allowedOrigins,
