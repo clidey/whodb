@@ -41,7 +41,7 @@ jobs:
             arch: arm64
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@351661ca32ac09a36dc5ee2d536e3128f2a3c8ed # v2.22.0
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
         with:
           egress-policy: block
           allowed-endpoints: >
@@ -116,7 +116,7 @@ jobs:
       - name: Upload Trivy SARIF report
         if: always() && hashFiles('trivy-results.sarif') != ''
         continue-on-error: true
-        uses: github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4
+        uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4
         with:
           sarif_file: trivy-results.sarif
           category: whodb-cli-docker-${{ matrix.arch }}
@@ -124,14 +124,14 @@ jobs:
       - name: Upload Trivy SARIF artifact
         if: always() && hashFiles('trivy-results.sarif') != ''
         continue-on-error: true
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: trivy-sarif-whodb-cli-docker-${{ matrix.arch }}
           path: trivy-results.sarif
           retention-days: 7
 
       - name: Upload Docker artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: docker-cli-image-${{ matrix.arch }}
           path: /tmp/whodb-cli-docker-${{ matrix.arch }}.tar
