@@ -502,7 +502,7 @@ func setupMiddlewares(router *chi.Mux, additionalMiddlewares []func(http.Handler
 			AllowedOrigins:   allowedOrigins,
 			AllowOriginFunc:  allowOriginFunc,
 			AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-			AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+			AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-Csrf-Token"},
 			ExposedHeaders:   []string{},
 			AllowCredentials: allowCredentials,
 			MaxAge:           300,
