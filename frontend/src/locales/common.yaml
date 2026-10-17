@@ -194,6 +194,9 @@ af_ZA:
   postgresqlDesc: "Azure-databasis vir PostgreSQL buigsame bedieners"
   redisDesc: "Azure Cache vir Redis-gevalle"
   servicePrincipal: "Dienshoof"
+  completionColumn: "kolom"
+  completionKeyword: "sleutelwoord"
+  completionTable: "tafel"
 
 am_ET:
   actions: "ድርጊቶች"
@@ -291,6 +294,9 @@ am_ET:
   postgresqlDesc: "Azure Database ለ PostgreSQL ተለዋዋጭ አገልጋዮች"
   redisDesc: "Azure Cache ለRedis ምሳሌዎች"
   servicePrincipal: "የአገልግሎት ርዕሰ መምህር"
+  completionColumn: "አምድ"
+  completionKeyword: "ቁልፍ ቃል"
+  completionTable: "ጠረጴዛ"
 
 ar_AE:
   actions: "الإجراءات"
@@ -388,6 +394,9 @@ ar_AE:
   postgresqlDesc: "قاعدة بيانات Azure لخوادم PostgreSQL المرنة"
   redisDesc: "Azure Cache لمثيلات Redis"
   servicePrincipal: "مدير الخدمة"
+  completionColumn: "عمود"
+  completionKeyword: "الكلمة الرئيسية"
+  completionTable: "طاولة"
 
 az_AZ:
   actions: "Fəaliyyətlər"
@@ -485,6 +494,9 @@ az_AZ:
   postgresqlDesc: "PostgreSQL çevik serverləri üçün Azure verilənlər bazası"
   redisDesc: "Redis nümunələri üçün Azure Cache"
   servicePrincipal: "Xidmət direktoru"
+  completionColumn: "sütun"
+  completionKeyword: "açar söz"
+  completionTable: "masa"
 
 bg_BG:
   actions: "Действия"
@@ -582,6 +594,9 @@ bg_BG:
   postgresqlDesc: "База данни на Azure за гъвкави сървъри на PostgreSQL"
   redisDesc: "Azure Cache за екземпляри на Redis"
   servicePrincipal: "Главен сервиз"
+  completionColumn: "колона"
+  completionKeyword: "ключова дума"
+  completionTable: "маса"
 
 bn_BD:
   actions: "কর্ম"
@@ -679,6 +694,9 @@ bn_BD:
   postgresqlDesc: "PostgreSQL নমনীয় সার্ভারের জন্য Azure ডেটাবেস"
   redisDesc: "Redis উদাহরণের জন্য Azure ক্যাশে"
   servicePrincipal: "সার্ভিস প্রিন্সিপাল"
+  completionColumn: "কলাম"
+  completionKeyword: "কীওয়ার্ড"
+  completionTable: "টেবিল"
 
 ca_ES:
   actions: "Accions"
@@ -776,6 +794,9 @@ ca_ES:
   postgresqlDesc: "Azure Database per a servidors flexibles PostgreSQL"
   redisDesc: "Azure Cache per a instàncies de Redis"
   servicePrincipal: "Principal del Servei"
+  completionColumn: "columna"
+  completionKeyword: "paraula clau"
+  completionTable: "taula"
 
 cs_CZ:
   actions: "Akce"
@@ -873,6 +894,9 @@ cs_CZ:
   postgresqlDesc: "Azure Database for PostgreSQL flexibilní servery"
   redisDesc: "Mezipaměť Azure pro instance Redis"
   servicePrincipal: "Vedoucí služby"
+  completionColumn: "sloupec"
+  completionKeyword: "klíčové slovo"
+  completionTable: "tabulka"
 
 da_DK:
   actions: "Handlinger"
@@ -970,6 +994,9 @@ da_DK:
   postgresqlDesc: "Azure Database til PostgreSQL fleksible servere"
   redisDesc: "Azure Cache til Redis-forekomster"
   servicePrincipal: "Serviceleder"
+  completionColumn: "kolonne"
+  completionKeyword: "søgeord"
+  completionTable: "tabel"
 
 de_DE:
   actions: "Aktionen"
@@ -1067,6 +1094,9 @@ de_DE:
   postgresqlDesc: "Azure Database for PostgreSQL flexible servers"
   redisDesc: "Azure Cache for Redis instances"
   servicePrincipal: "Service Principal"
+  completionColumn: "Spalte"
+  completionKeyword: "Stichwort"
+  completionTable: "Tisch"
 
 el_GR:
   actions: "Δράσεις"
@@ -1164,6 +1194,9 @@ el_GR:
   postgresqlDesc: "Βάση δεδομένων Azure για ευέλικτους διακομιστές PostgreSQL"
   redisDesc: "Azure Cache για περιπτώσεις Redis"
   servicePrincipal: "Υπεύθυνος υπηρεσίας"
+  completionColumn: "στήλη"
+  completionKeyword: "λέξη-κλειδί"
+  completionTable: "τραπέζι"
 
 en_GB:
   actions: "Actions"
@@ -1261,6 +1294,9 @@ en_GB:
   postgresqlDesc: "Azure Database for PostgreSQL flexible servers"
   redisDesc: "Azure Cache for Redis instances"
   servicePrincipal: "Service Principal"
+  completionColumn: "column"
+  completionKeyword: "keyword"
+  completionTable: "table"
 
 es_ES:
   actions: "Comportamiento"
@@ -1358,6 +1394,9 @@ es_ES:
   postgresqlDesc: "Base de datos Azure para servidores flexibles PostgreSQL"
   redisDesc: "Azure Cache para instancias de Redis"
   servicePrincipal: "Director de servicio"
+  completionColumn: "columna"
+  completionKeyword: "palabra clave"
+  completionTable: "mesa"
 
 et_EE:
   actions: "Tegevused"
@@ -1455,6 +1494,9 @@ et_EE:
   postgresqlDesc: "Azure'i andmebaas PostgreSQL-i paindlike serverite jaoks"
   redisDesc: "Azure'i vahemälu Redise eksemplaride jaoks"
   servicePrincipal: "Teenuse juhataja"
+  completionColumn: "veerus"
+  completionKeyword: "märksõna"
+  completionTable: "laud"
 
 fa_IR:
   actions: "اقدامات"
@@ -1552,6 +1594,9 @@ fa_IR:
   postgresqlDesc: "پایگاه داده Azure برای سرورهای انعطاف پذیر PostgreSQL"
   redisDesc: "Azure Cache برای نمونه های Redis"
   servicePrincipal: "مدیر سرویس"
+  completionColumn: "ستون"
+  completionKeyword: "کلمه کلیدی"
+  completionTable: "جدول"
 
 fi_FI:
   actions: "Toiminnot"
@@ -1649,6 +1694,9 @@ fi_FI:
   postgresqlDesc: "Azure Database joustaville PostgreSQL-palvelimille"
   redisDesc: "Azure Cache Redis-esiintymille"
   servicePrincipal: "Palvelupäällikkö"
+  completionColumn: "sarakkeessa"
+  completionKeyword: "avainsana"
+  completionTable: "taulukko"
 
 fr_FR:
   actions: "Actions"
@@ -1746,6 +1794,9 @@ fr_FR:
   postgresqlDesc: "Azure Database pour les serveurs flexibles PostgreSQL"
   redisDesc: "Cache Azure pour les instances Redis"
   servicePrincipal: "Responsable du service"
+  completionColumn: "colonne"
+  completionKeyword: "mot-clé"
+  completionTable: "tableau"
 
 gu_IN:
   actions: "ક્રિયાઓ"
@@ -1843,6 +1894,9 @@ gu_IN:
   postgresqlDesc: "PostgreSQL લવચીક સર્વર્સ માટે Azure ડેટાબેઝ"
   redisDesc: "Redis ઉદાહરણો માટે Azure Cache"
   servicePrincipal: "સેવા આચાર્ય"
+  completionColumn: "કૉલમ"
+  completionKeyword: "કીવર્ડ"
+  completionTable: "ટેબલ"
 
 ha_NG:
   actions: "Ayyuka"
@@ -1940,6 +1994,9 @@ ha_NG:
   postgresqlDesc: "Database Azure don sabar masu sassauƙa na PostgreSQL"
   redisDesc: "Cache na Azure don misalin Redis"
   servicePrincipal: "Shugaban Makarantar"
+  completionColumn: "shafi"
+  completionKeyword: "keyword"
+  completionTable: "tebur"
 
 hi_IN:
   actions: "कार्रवाई"
@@ -2037,6 +2094,9 @@ hi_IN:
   postgresqlDesc: "PostgreSQL लचीले सर्वर के लिए Azure डेटाबेस"
   redisDesc: "Redis उदाहरणों के लिए Azure कैश"
   servicePrincipal: "सेवा प्राचार्य"
+  completionColumn: "स्तंभ"
+  completionKeyword: "कीवर्ड"
+  completionTable: "मेज़"
 
 hr_HR:
   actions: "Radnje"
@@ -2134,6 +2194,9 @@ hr_HR:
   postgresqlDesc: "Azure Database za PostgreSQL fleksibilne poslužitelje"
   redisDesc: "Azure Cache za Redis instance"
   servicePrincipal: "Voditelj službe"
+  completionColumn: "stupac"
+  completionKeyword: "ključna riječ"
+  completionTable: "stol"
 
 hu_HU:
   actions: "Akciók"
@@ -2231,6 +2294,9 @@ hu_HU:
   postgresqlDesc: "Azure Database rugalmas PostgreSQL-kiszolgálókhoz"
   redisDesc: "Azure Cache Redis-példányokhoz"
   servicePrincipal: "Szolgáltatási igazgató"
+  completionColumn: "oszlop"
+  completionKeyword: "kulcsszó"
+  completionTable: "táblázat"
 
 id_ID:
   actions: "Tindakan"
@@ -2328,6 +2394,9 @@ id_ID:
   postgresqlDesc: "Server fleksibel Azure Database for PostgreSQL"
   redisDesc: "Instans Azure Cache for Redis"
   servicePrincipal: "Kepala Layanan"
+  completionColumn: "kolom"
+  completionKeyword: "kata kunci"
+  completionTable: "meja"
 
 it_IT:
   actions: "Azioni"
@@ -2425,6 +2494,9 @@ it_IT:
   postgresqlDesc: "Database di Azure per server flessibili PostgreSQL"
   redisDesc: "Cache di Azure per istanze Redis"
   servicePrincipal: "Ente del servizio"
+  completionColumn: "colonna"
+  completionKeyword: "parola chiave"
+  completionTable: "tavolo"
 
 iw_IL:
   actions: "פעולות"
@@ -2522,6 +2594,9 @@ iw_IL:
   postgresqlDesc: "Azure Database עבור שרתים גמישים של PostgreSQL"
   redisDesc: "Azure Cache עבור מופעי Redis"
   servicePrincipal: "מנהל שירות"
+  completionColumn: "עַמוּדָה"
+  completionKeyword: "מילת מפתח"
+  completionTable: "לוּחַ"
 
 ja_JP:
   actions: "アクション"
@@ -2619,6 +2694,9 @@ ja_JP:
   postgresqlDesc: "Azure Database for PostgreSQL フレキシブル サーバー"
   redisDesc: "Azure Cache for Redis インスタンス"
   servicePrincipal: "サービスプリンシパル"
+  completionColumn: "カラム"
+  completionKeyword: "キーワード"
+  completionTable: "テーブル"
 
 ka_GE:
   actions: "მოქმედებები"
@@ -2716,6 +2794,9 @@ ka_GE:
   postgresqlDesc: "Azure მონაცემთა ბაზა PostgreSQL მოქნილი სერვერებისთვის"
   redisDesc: "Azure Cache Redis-ის შემთხვევებისთვის"
   servicePrincipal: "სერვისის დირექტორი"
+  completionColumn: "სვეტი"
+  completionKeyword: "საკვანძო სიტყვა"
+  completionTable: "მაგიდა"
 
 km_KH:
   actions: "សកម្មភាព"
@@ -2813,6 +2894,9 @@ km_KH:
   postgresqlDesc: "មូលដ្ឋានទិន្នន័យ Azure សម្រាប់ម៉ាស៊ីនមេដែលអាចបត់បែនបាន PostgreSQL"
   redisDesc: "Azure Cache for Redis instances"
   servicePrincipal: "នាយកសេវាកម្ម"
+  completionColumn: "ជួរឈរ"
+  completionKeyword: "ពាក្យគន្លឹះ"
+  completionTable: "តុ"
 
 kn_IN:
   actions: "ಕ್ರಿಯೆಗಳು"
@@ -2910,6 +2994,9 @@ kn_IN:
   postgresqlDesc: "PostgreSQL ಹೊಂದಿಕೊಳ್ಳುವ ಸರ್ವರ್‌ಗಳಿಗಾಗಿ ಅಜೂರ್ ಡೇಟಾಬೇಸ್"
   redisDesc: "ರೆಡಿಸ್ ನಿದರ್ಶನಗಳಿಗಾಗಿ ಅಜೂರ್ ಸಂಗ್ರಹ"
   servicePrincipal: "ಸೇವಾ ಪ್ರಾಂಶುಪಾಲರು"
+  completionColumn: "ಕಾಲಮ್"
+  completionKeyword: "ಕೀವರ್ಡ್"
+  completionTable: "ಟೇಬಲ್"
 
 ko_KR:
   actions: "행위"
@@ -3007,6 +3094,9 @@ ko_KR:
   postgresqlDesc: "Azure Database for PostgreSQL 유연한 서버"
   redisDesc: "Redis 인스턴스용 Azure 캐시"
   servicePrincipal: "서비스 주체"
+  completionColumn: "열"
+  completionKeyword: "예어"
+  completionTable: "테이블"
 
 lt_LT:
   actions: "Veiksmai"
@@ -3104,6 +3194,9 @@ lt_LT:
   postgresqlDesc: "„Azure“ duomenų bazė, skirta „PostgreSQL“ lankstiems serveriams"
   redisDesc: "Azure Cache, skirta Redis egzemplioriams"
   servicePrincipal: "Paslaugos vadovas"
+  completionColumn: "stulpelyje"
+  completionKeyword: "raktažodį"
+  completionTable: "stalo"
 
 lv_LV:
   actions: "Darbības"
@@ -3201,6 +3294,9 @@ lv_LV:
   postgresqlDesc: "Azure datu bāze PostgreSQL elastīgajiem serveriem"
   redisDesc: "Azure Cache Redis gadījumiem"
   servicePrincipal: "Pakalpojuma direktors"
+  completionColumn: "kolonnu"
+  completionKeyword: "atslēgvārds"
+  completionTable: "galds"
 
 ml_IN:
   actions: "പ്രവർത്തനങ്ങൾ"
@@ -3298,6 +3394,9 @@ ml_IN:
   postgresqlDesc: "PostgreSQL ഫ്ലെക്സിബിൾ സെർവറുകൾക്കുള്ള അസൂർ ഡാറ്റാബേസ്"
   redisDesc: "റെഡിസ് സംഭവങ്ങൾക്കുള്ള അസൂർ കാഷെ"
   servicePrincipal: "സർവീസ് പ്രിൻസിപ്പൽ"
+  completionColumn: "കോളം"
+  completionKeyword: "കീവേഡ്"
+  completionTable: "മേശ"
 
 mr_IN:
   actions: "क्रिया"
@@ -3395,6 +3494,9 @@ mr_IN:
   postgresqlDesc: "PostgreSQL लवचिक सर्व्हरसाठी Azure डेटाबेस"
   redisDesc: "Redis उदाहरणांसाठी Azure कॅशे"
   servicePrincipal: "सेवा प्राचार्य"
+  completionColumn: "स्तंभ"
+  completionKeyword: "कीवर्ड"
+  completionTable: "टेबल"
 
 ms_MY:
   actions: "Tindakan"
@@ -3492,6 +3594,9 @@ ms_MY:
   postgresqlDesc: "Pangkalan Data Azure untuk pelayan fleksibel PostgreSQL"
   redisDesc: "Azure Cache untuk kejadian Redis"
   servicePrincipal: "Pengetua Perkhidmatan"
+  completionColumn: "lajur"
+  completionKeyword: "kata kunci"
+  completionTable: "meja"
 
 nb_NO:
   actions: "Handlinger"
@@ -3589,6 +3694,9 @@ nb_NO:
   postgresqlDesc: "Azure Database for PostgreSQL fleksible servere"
   redisDesc: "Azure Cache for Redis-forekomster"
   servicePrincipal: "Tjenesteleder"
+  completionColumn: "søyle"
+  completionKeyword: "nøkkelord"
+  completionTable: "bord"
 
 ne_NP:
   actions: "कार्यहरू"
@@ -3686,6 +3794,9 @@ ne_NP:
   postgresqlDesc: "PostgreSQL लचिलो सर्भरहरूको लागि Azure डाटाबेस"
   redisDesc: "Redis उदाहरणहरूको लागि Azure क्यास"
   servicePrincipal: "सेवा प्रिन्सिपल"
+  completionColumn: "स्तम्भ"
+  completionKeyword: "कीवर्ड"
+  completionTable: "तालिका"
 
 nl_NL:
   actions: "Acties"
@@ -3783,6 +3894,9 @@ nl_NL:
   postgresqlDesc: "Azure Database for PostgreSQL flexibele servers"
   redisDesc: "Azure-cache voor Redis-instanties"
   servicePrincipal: "Diensthoofd"
+  completionColumn: "kolom"
+  completionKeyword: "trefwoord"
+  completionTable: "tafel"
 
 pa_IN:
   actions: "ਕਾਰਵਾਈਆਂ"
@@ -3880,6 +3994,9 @@ pa_IN:
   postgresqlDesc: "PostgreSQL ਲਚਕਦਾਰ ਸਰਵਰਾਂ ਲਈ Azure ਡਾਟਾਬੇਸ"
   redisDesc: "Redis ਮੌਕੇ ਲਈ Azure ਕੈਸ਼"
   servicePrincipal: "ਸੇਵਾ ਪ੍ਰਿੰਸੀਪਲ"
+  completionColumn: "ਕਾਲਮ"
+  completionKeyword: "ਕੀਵਰਡ"
+  completionTable: "ਟੇਬਲ"
 
 pl_PL:
   actions: "Działania"
@@ -3977,6 +4094,9 @@ pl_PL:
   postgresqlDesc: "Elastyczne serwery Azure Database for PostgreSQL"
   redisDesc: "Pamięć podręczna platformy Azure dla wystąpień Redis"
   servicePrincipal: "Szef serwisu"
+  completionColumn: "kolumna"
+  completionKeyword: "słowo kluczowe"
+  completionTable: "tabela"
 
 pt_BR:
   actions: "Ações"
@@ -4074,6 +4194,9 @@ pt_BR:
   postgresqlDesc: "Banco de dados do Azure para servidores flexíveis PostgreSQL"
   redisDesc: "Cache do Azure para instâncias Redis"
   servicePrincipal: "Diretor de serviço"
+  completionColumn: "coluna"
+  completionKeyword: "palavra-chave"
+  completionTable: "mesa"
 
 ro_RO:
   actions: "Acțiuni"
@@ -4171,6 +4294,9 @@ ro_RO:
   postgresqlDesc: "Baza de date Azure pentru servere flexibile PostgreSQL"
   redisDesc: "Azure Cache pentru instanțe Redis"
   servicePrincipal: "Principalul serviciului"
+  completionColumn: "coloană"
+  completionKeyword: "cuvânt cheie"
+  completionTable: "masă"
 
 ru_RU:
   actions: "Действия"
@@ -4268,6 +4394,9 @@ ru_RU:
   postgresqlDesc: "База данных Azure для гибких серверов PostgreSQL"
   redisDesc: "Кэш Azure для экземпляров Redis"
   servicePrincipal: "Директор службы"
+  completionColumn: "столбец"
+  completionKeyword: "ключевое слово"
+  completionTable: "стол"
 
 si_LK:
   actions: "ක්රියාවන්"
@@ -4365,6 +4494,9 @@ si_LK:
   postgresqlDesc: "PostgreSQL නම්‍යශීලී සේවාදායකයන් සඳහා Azure දත්ත සමුදාය"
   redisDesc: "Redis අවස්ථා සඳහා Azure Cache"
   servicePrincipal: "සේවා විදුහල්පති"
+  completionColumn: "තීරුව"
+  completionKeyword: "මූල පදය"
+  completionTable: "මේසය"
 
 sk_SK:
   actions: "Akcie"
@@ -4462,6 +4594,9 @@ sk_SK:
   postgresqlDesc: "Azure Database for PostgreSQL flexibilné servery"
   redisDesc: "Azure Cache pre inštancie Redis"
   servicePrincipal: "Service Principal"
+  completionColumn: "stĺpec"
+  completionKeyword: "kľúčové slovo"
+  completionTable: "tabuľky"
 
 sl_SI:
   actions: "Dejanja"
@@ -4559,6 +4694,9 @@ sl_SI:
   postgresqlDesc: "Zbirka podatkov Azure za prilagodljive strežnike PostgreSQL"
   redisDesc: "Azure Cache za primerke Redis"
   servicePrincipal: "Vodja službe"
+  completionColumn: "stolpec"
+  completionKeyword: "ključna beseda"
+  completionTable: "tabela"
 
 sr_RS:
   actions: "Акције"
@@ -4656,6 +4794,9 @@ sr_RS:
   postgresqlDesc: "Азуре база података за ПостгреСКЛ флексибилне сервере"
   redisDesc: "Азуре кеш за Редис инстанце"
   servicePrincipal: "Директор услуге"
+  completionColumn: "колона"
+  completionKeyword: "кључна реч"
+  completionTable: "сто"
 
 sv_SE:
   actions: "Åtgärder"
@@ -4753,6 +4894,9 @@ sv_SE:
   postgresqlDesc: "Azure Database för PostgreSQL flexibla servrar"
   redisDesc: "Azure Cache för Redis-instanser"
   servicePrincipal: "Servicechef"
+  completionColumn: "kolumn"
+  completionKeyword: "nyckelord"
+  completionTable: "tabell"
 
 sw_KE:
   actions: "Vitendo"
@@ -4850,6 +4994,9 @@ sw_KE:
   postgresqlDesc: "Hifadhidata ya Azure ya seva zinazobadilika za PostgreSQL"
   redisDesc: "Cache ya Azure kwa matukio ya Redis"
   servicePrincipal: "Mkuu wa Huduma"
+  completionColumn: "safu"
+  completionKeyword: "neno kuu"
+  completionTable: "meza"
 
 ta_IN:
   actions: "செயல்கள்"
@@ -4947,6 +5094,9 @@ ta_IN:
   postgresqlDesc: "PostgreSQL நெகிழ்வான சேவையகங்களுக்கான அசூர் தரவுத்தளம்"
   redisDesc: "ரெடிஸ் நிகழ்வுகளுக்கான அசூர் கேச்"
   servicePrincipal: "சேவை அதிபர்"
+  completionColumn: "நெடுவரிசை"
+  completionKeyword: "முக்கிய வார்த்தை"
+  completionTable: "அட்டவணை"
 
 te_IN:
   actions: "చర్యలు"
@@ -5044,6 +5194,9 @@ te_IN:
   postgresqlDesc: "PostgreSQL ఫ్లెక్సిబుల్ సర్వర్‌ల కోసం అజూర్ డేటాబేస్"
   redisDesc: "రెడిస్ ఉదంతాల కోసం అజూర్ కాష్"
   servicePrincipal: "సర్వీస్ ప్రిన్సిపాల్"
+  completionColumn: "కాలమ్"
+  completionKeyword: "కీవర్డ్"
+  completionTable: "పట్టిక"
 
 th_TH:
   actions: "การดำเนินการ"
@@ -5141,6 +5294,9 @@ th_TH:
   postgresqlDesc: "ฐานข้อมูล Azure สำหรับเซิร์ฟเวอร์ PostgreSQL ที่ยืดหยุ่น"
   redisDesc: "Azure Cache สำหรับอินสแตนซ์ Redis"
   servicePrincipal: "บริการหลัก"
+  completionColumn: "คอลัมน์"
+  completionKeyword: "คำหลัก"
+  completionTable: "โต๊ะ"
 
 tl_PH:
   actions: "Mga aksyon"
@@ -5238,6 +5394,9 @@ tl_PH:
   postgresqlDesc: "Azure Database para sa mga flexible na server ng PostgreSQL"
   redisDesc: "Azure Cache para sa mga pagkakataon ng Redis"
   servicePrincipal: "Punong-guro ng Serbisyo"
+  completionColumn: "hanay"
+  completionKeyword: "keyword"
+  completionTable: "mesa"
 
 tr_TR:
   actions: "Eylemler"
@@ -5335,6 +5494,9 @@ tr_TR:
   postgresqlDesc: "PostgreSQL esnek sunucuları için Azure Veritabanı"
   redisDesc: "Redis örnekleri için Azure Önbelleği"
   servicePrincipal: "Hizmet Sorumlusu"
+  completionColumn: "kolon"
+  completionKeyword: "anahtar kelime"
+  completionTable: "masa"
 
 uk_UA:
   actions: "Дії"
@@ -5432,6 +5594,9 @@ uk_UA:
   postgresqlDesc: "База даних Azure для гнучких серверів PostgreSQL"
   redisDesc: "Кеш Azure для екземплярів Redis"
   servicePrincipal: "Керівник служби"
+  completionColumn: "колонка"
+  completionKeyword: "ключове слово"
+  completionTable: "стіл"
 
 ur_PK:
   actions: "اعمال"
@@ -5529,6 +5694,9 @@ ur_PK:
   postgresqlDesc: "PostgreSQL لچکدار سرورز کے لیے Azure ڈیٹا بیس"
   redisDesc: "Redis مثالوں کے لئے Azure Cache"
   servicePrincipal: "سروس پرنسپل"
+  completionColumn: "کالم"
+  completionKeyword: "کلیدی لفظ"
+  completionTable: "میز"
 
 uz_UZ:
   actions: "Harakatlar"
@@ -5626,6 +5794,9 @@ uz_UZ:
   postgresqlDesc: "PostgreSQL moslashuvchan serverlari uchun Azure ma'lumotlar bazasi"
   redisDesc: "Redis misollari uchun Azure keshi"
   servicePrincipal: "Xizmat ko'rsatuvchi direktor"
+  completionColumn: "ustun"
+  completionKeyword: "kalit so'z"
+  completionTable: "stol"
 
 vi_VN:
   actions: "hành động"
@@ -5723,6 +5894,9 @@ vi_VN:
   postgresqlDesc: "Cơ sở dữ liệu Azure cho máy chủ linh hoạt PostgreSQL"
   redisDesc: "Bộ nhớ đệm Azure cho phiên bản Redis"
   servicePrincipal: "Hiệu trưởng dịch vụ"
+  completionColumn: "cột"
+  completionKeyword: "từ khóa"
+  completionTable: "bàn"
 
 yo_NG:
   actions: "Awọn iṣe"
@@ -5820,6 +5994,9 @@ yo_NG:
   postgresqlDesc: "Aaye aaye data Azure fun awọn olupin rọ PostgreSQL"
   redisDesc: "Kaṣe Azure fun awọn iṣẹlẹ Redis"
   servicePrincipal: "Alakoso Iṣẹ"
+  completionColumn: "ọwọn"
+  completionKeyword: "koko"
+  completionTable: "tabili"
 
 zh_CN:
   actions: "行动"
@@ -5917,6 +6094,9 @@ zh_CN:
   postgresqlDesc: "Azure Database for PostgreSQL 灵活服务器"
   redisDesc: "用于 Redis 实例的 Azure 缓存"
   servicePrincipal: "服务负责人"
+  completionColumn: "柱子"
+  completionKeyword: "关键词"
+  completionTable: "桌子"
 
 zh_TW:
   actions: "行動"
@@ -6014,3 +6194,6 @@ zh_TW:
   postgresqlDesc: "Azure Database for PostgreSQL 彈性伺服器"
   redisDesc: "用於 Redis 執行個體的 Azure 快取"
   servicePrincipal: "服務負責人"
+  completionColumn: "柱子"
+  completionKeyword: "關鍵字"
+  completionTable: "桌子"

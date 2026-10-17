@@ -65,7 +65,8 @@ export const registerAsyncAuthExtraHeadersProvider = (fn: () => Promise<Record<s
 
 const analyticsHeaderName = 'X-WhoDB-Analytics-Id';
 const csrfCookieName = 'whodb_csrf';
-const csrfHeaderName = 'X-CSRF-Token';
+/** Request header carrying the CSRF token, spelled as Go canonicalizes it so client and server match. */
+export const CSRF_HEADER_NAME = 'X-Csrf-Token';
 
 /**
  * Reads the readable CSRF cookie set at login for the double-submit CSRF check.
@@ -79,6 +80,18 @@ function readCSRFCookie(): string | null {
         .split('; ')
         .find(row => row.startsWith(`${csrfCookieName}=`));
     return match ? decodeURIComponent(match.slice(csrfCookieName.length + 1)) : null;
+}
+
+/**
+ * Adds the CSRF cookie's token unless the request or an extension already set one. An
+ * extension's session token must win: browsers share cookies across ports, so a CSRF cookie
+ * left by another WhoDB on the same host would otherwise replace it and fail every request.
+ */
+function withCSRFCookieFallback(headers: Record<string, string>): Record<string, string> {
+    const hasToken = Object.keys(headers).some(key => key.toLowerCase() === CSRF_HEADER_NAME.toLowerCase());
+    if (hasToken) return headers;
+    const csrf = readCSRFCookie();
+    return csrf ? { ...headers, [CSRF_HEADER_NAME]: csrf } : headers;
 }
 
 /**
@@ -177,10 +190,6 @@ export function addAuthHeader(headers: HeadersInit = {}): HeadersInit {
         ...headers,
         [analyticsHeaderName]: id ?? ""
     }
-    const csrf = readCSRFCookie();
-    if (csrf) {
-        headers = { ...headers, [csrfHeaderName]: csrf };
-    }
     if (extraHeadersProvider) {
         // Headers set explicitly on a request take precedence over extension defaults.
         headers = {
@@ -188,6 +197,7 @@ export function addAuthHeader(headers: HeadersInit = {}): HeadersInit {
             ...headers,
         };
     }
+    headers = withCSRFCookieFallback(headers as Record<string, string>);
     if (authHeader) {
         return {
             ...headers,
@@ -210,10 +220,6 @@ export async function addAuthHeaderAsync(headers: HeadersInit = {}): Promise<Hea
         ...headers,
         [analyticsHeaderName]: id ?? ""
     }
-    const csrf = readCSRFCookie();
-    if (csrf) {
-        headers = { ...headers, [csrfHeaderName]: csrf };
-    }
     // Headers set explicitly on a request take precedence over extension defaults.
     if (asyncExtraHeadersProvider) {
         headers = {
@@ -226,6 +232,7 @@ export async function addAuthHeaderAsync(headers: HeadersInit = {}): Promise<Hea
             ...headers,
         };
     }
+    headers = withCSRFCookieFallback(headers as Record<string, string>);
     if (authHeader) {
         return {
             ...headers,

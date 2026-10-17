@@ -1,4 +1,5 @@
-FROM node:26-alpine3.24 AS builder
+# Keep the Node version in sync with .nvmrc at the CE repo root (CI reads it).
+FROM node:26.12.0-alpine3.24 AS builder
 
 WORKDIR /app
 

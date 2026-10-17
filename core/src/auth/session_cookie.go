@@ -34,12 +34,11 @@ const (
 	// Secure, no Domain, and Path=/, hardening it against subdomain/scheme attacks.
 	secureSessionCookieName = "__Host-whodb_ce_session"
 	// csrfCookieName holds the CSRF token. It is intentionally readable by JS
-	// (not HttpOnly) so the frontend can echo it back in the X-CSRF-Token header
+	// (not HttpOnly) so the frontend can echo it back in the X-Csrf-Token header
 	// (double-submit pattern).
 	csrfCookieName = "whodb_csrf"
 	// csrfHeaderName is the request header carrying the CSRF token on unsafe
-	// cookie-authenticated requests. HTTP header names are case-insensitive; the
-	// canonical casing is used so it matches the "X-CSRF-Token" sent by clients.
+	// cookie-authenticated requests. The frontend sends the same canonical spelling.
 	csrfHeaderName = "X-Csrf-Token"
 
 	// defaultSessionTTL is the sliding idle timeout when WHODB_SESSION_TTL is unset.
@@ -122,7 +121,7 @@ func setSessionCookie(w http.ResponseWriter, r *http.Request, token string, expi
 }
 
 // setCSRFCookie writes the readable CSRF cookie the frontend echoes back in the
-// X-CSRF-Token header.
+// X-Csrf-Token header.
 func setCSRFCookie(w http.ResponseWriter, r *http.Request, csrfToken string, expiresAt time.Time) {
 	secure := isSecureRequest(r)
 	maxAge := int(time.Until(expiresAt).Seconds())
@@ -166,7 +165,7 @@ func expireCookie(w http.ResponseWriter, name string) {
 	})
 }
 
-// validateCSRF reports whether the request carries an X-CSRF-Token header whose
+// validateCSRF reports whether the request carries an X-Csrf-Token header whose
 // SHA-256 hash matches the stored csrfHash, using a constant-time comparison.
 func validateCSRF(r *http.Request, csrfHash string) bool {
 	provided := strings.TrimSpace(r.Header.Get(csrfHeaderName))

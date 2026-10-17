@@ -57,6 +57,7 @@ import {AuthActions} from "../../store/auth";
 import {DatabaseActions} from "../../store/database";
 import {TourActions} from "../../store/tour";
 import {SettingsActions} from "../../store/settings";
+import {changeLanguage} from "../../utils/change-language";
 import {isSupportedLanguage} from "@/utils/languages";
 import {HealthActions} from "../../store/health";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
@@ -697,7 +698,7 @@ export const LoginForm: FC<LoginFormProps> = ({
         if (searchParams.has("locale")) {
             const locale = searchParams.get("locale");
             if (locale && isSupportedLanguage(locale)) {
-                dispatch(SettingsActions.setLanguage(locale));
+                void changeLanguage(locale);
             }
         }
     }, [searchParams, dispatch]);

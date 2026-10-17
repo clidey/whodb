@@ -17,12 +17,15 @@
 package router
 
 import (
+	"crypto/sha256"
 	"embed"
+	"encoding/hex"
 	"io"
 	"io/fs"
 	"net/http"
 	"path"
 	"strings"
+	"sync"
 
 	"github.com/go-chi/chi/v5"
 
@@ -77,10 +80,14 @@ func hasEmbeddedFrontend(staticFiles fs.FS) bool {
 
 func newStaticFileHandler(staticFS fs.FS, baseHref string) http.Handler {
 	server := http.FileServer(http.FS(staticFS))
+	var etags sync.Map
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if hasExtension(r.URL.Path) {
-			if isHashedAsset(r.URL.Path) {
-				w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+			// Cache headers are only set for existing files so a 404 for a not-yet-deployed
+			// hashed asset is never cached by browsers or the CDN.
+			if etag, ok := staticFileETag(staticFS, &etags, r.URL.Path); ok {
+				w.Header().Set("Cache-Control", staticCacheControl(r.URL.Path))
+				w.Header().Set("ETag", etag)
 			}
 			server.ServeHTTP(w, r)
 		} else {
@@ -129,4 +136,36 @@ func hasExtension(pathFile string) bool {
 
 func isHashedAsset(urlPath string) bool {
 	return strings.Contains(urlPath, "/assets/")
+}
+
+// staticCacheControl returns the Cache-Control policy for an existing static file.
+// Hashed build assets never change, fonts and images rarely change, and every other
+// file keeps a stable name across deploys so browsers must revalidate it.
+func staticCacheControl(urlPath string) string {
+	switch {
+	case isHashedAsset(urlPath):
+		return "public, max-age=31536000, immutable"
+	case strings.HasPrefix(urlPath, "/fonts/"), strings.HasPrefix(urlPath, "/images/"):
+		return "public, max-age=86400"
+	default:
+		return "no-cache"
+	}
+}
+
+// staticFileETag returns a content-based weak ETag for a static file, caching it per path.
+// Embedded files have no modification time, so without an ETag browsers cannot revalidate
+// them and re-download the full file. The ETag is weak because responses may be compressed.
+func staticFileETag(staticFS fs.FS, cache *sync.Map, urlPath string) (string, bool) {
+	name := strings.TrimPrefix(path.Clean("/"+urlPath), "/")
+	if cached, ok := cache.Load(name); ok {
+		return cached.(string), true
+	}
+	data, err := fs.ReadFile(staticFS, name)
+	if err != nil {
+		return "", false
+	}
+	sum := sha256.Sum256(data)
+	etag := `W/"` + hex.EncodeToString(sum[:16]) + `"`
+	cache.Store(name, etag)
+	return etag, true
 }

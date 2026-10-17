@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM node:26-alpine3.24 AS build-stage
+# Keep the Node version in sync with .nvmrc at the CE repo root (CI reads it).
+FROM node:26.12.0-alpine3.24 AS build-stage
 RUN npm i -g pnpm@11.15.1
 WORKDIR /app
 COPY ./frontend/package.json ./frontend/pnpm-lock.yaml ./
@@ -74,6 +75,9 @@ COPY ./core/go.mod ./core/go.sum ./
 RUN go mod download
 COPY ./core/ ./
 
+# COPY merges into an existing directory, so clear any local build that came in with
+# ./core/ first; otherwise files the fresh build no longer has would still be embedded.
+RUN rm -rf ./cmd/whodb/build
 COPY --from=build-stage /app/build/ ./cmd/whodb/build/
 
 # Build CE backend from the new entry point

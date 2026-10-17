@@ -22,7 +22,9 @@ import (
 	"io/fs"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
+	"testing/fstest"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -59,6 +61,64 @@ func TestFileServerServesIndexAndAssets(t *testing.T) {
 	r.ServeHTTP(rr, req)
 	if rr.Code != http.StatusOK {
 		t.Fatalf("expected static asset to be served, got status %d", rr.Code)
+	}
+}
+
+func TestStaticFileHandlerCacheHeaders(t *testing.T) {
+	staticFS := fstest.MapFS{
+		"index.html":             {Data: []byte("<html></html>")},
+		"assets/index-abc123.js": {Data: []byte("console.log(1)")},
+		"fonts/brand/font.woff2": {Data: []byte("font")},
+		"images/logo.svg":        {Data: []byte("<svg/>")},
+		"sandbox-kernel.js":      {Data: []byte("kernel")},
+	}
+	handler := newStaticFileHandler(staticFS, "/")
+
+	cases := []struct {
+		path         string
+		cacheControl string
+	}{
+		{"/assets/index-abc123.js", "public, max-age=31536000, immutable"},
+		{"/fonts/brand/font.woff2", "public, max-age=86400"},
+		{"/images/logo.svg", "public, max-age=86400"},
+		{"/sandbox-kernel.js", "no-cache"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.path, func(t *testing.T) {
+			rr := httptest.NewRecorder()
+			handler.ServeHTTP(rr, httptest.NewRequest(http.MethodGet, tc.path, nil))
+			if rr.Code != http.StatusOK {
+				t.Fatalf("expected 200, got %d", rr.Code)
+			}
+			if got := rr.Header().Get("Cache-Control"); got != tc.cacheControl {
+				t.Fatalf("expected Cache-Control %q, got %q", tc.cacheControl, got)
+			}
+			etag := rr.Header().Get("ETag")
+			if !strings.HasPrefix(etag, `W/"`) {
+				t.Fatalf("expected weak ETag, got %q", etag)
+			}
+
+			req := httptest.NewRequest(http.MethodGet, tc.path, nil)
+			req.Header.Set("If-None-Match", etag)
+			rr = httptest.NewRecorder()
+			handler.ServeHTTP(rr, req)
+			if rr.Code != http.StatusNotModified {
+				t.Fatalf("expected 304 for matching ETag, got %d", rr.Code)
+			}
+		})
+	}
+}
+
+func TestStaticFileHandlerMissingFileHasNoCacheHeaders(t *testing.T) {
+	handler := newStaticFileHandler(fstest.MapFS{"index.html": {Data: []byte("<html></html>")}}, "/")
+
+	rr := httptest.NewRecorder()
+	handler.ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/assets/index-missing.js", nil))
+	if rr.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d", rr.Code)
+	}
+	if got := rr.Header().Get("Cache-Control"); got != "" {
+		t.Fatalf("expected no Cache-Control on a missing asset, got %q", got)
 	}
 }
 

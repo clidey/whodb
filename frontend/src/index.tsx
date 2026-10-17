@@ -29,6 +29,7 @@ import {ThemeProvider} from '@clidey/ux'
 import {isDesktopApp} from './utils/external-links';
 import {PosthogConsentBanner} from './components/analytics/posthog-consent-banner';
 import {ErrorBoundary} from './components/error-boundary';
+import {LanguageGate} from './components/language-switch';
 import {getBasePath} from './utils/base-path';
 import {clearPersistedAuthStateV10, migrateAuthSessionCookieV9} from './store/migrations';
 
@@ -69,8 +70,10 @@ const AppWithProviders = () => {
 
     return (
         <ThemeProvider>
-            <App />
-            <PosthogConsentBanner/>
+            <LanguageGate>
+                <App />
+                <PosthogConsentBanner/>
+            </LanguageGate>
         </ThemeProvider>
     );
 };

@@ -20,6 +20,7 @@ import {InternalPage} from "../../components/page";
 import {InternalRoutes, type IInternalRoute} from "../../config/routes";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {SettingsActions} from "../../store/settings";
+import {changeLanguage} from "../../utils/change-language";
 import {useTranslation} from "@/hooks/use-translation";
 import {
     Input,
@@ -125,8 +126,8 @@ export const SettingsPage: FC = () => {
 
     const handleLanguageChange = useCallback((lang: SupportedLanguage) => {
         trackOptionChanged('language', lang);
-        dispatch(SettingsActions.setLanguage(lang));
-    }, [dispatch]);
+        void changeLanguage(lang);
+    }, []);
 
     const handleDatabaseSchemaTerminologyChange = useCallback((terminology: 'database' | 'schema') => {
         trackOptionChanged('database_schema_terminology', terminology);

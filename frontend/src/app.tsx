@@ -39,6 +39,7 @@ import {HealthActions} from "./store/health";
 import {PageTitleUpdater} from "./hooks/use-page-title";
 import {getEdition} from "./config/edition";
 import {LoadingPage} from "./components/loading";
+import {LanguageSwitchOverlay} from "./components/language-switch";
 
 export const App = () => {
     const [updateSettings] = useMutation(UpdateSettingsDocument);
@@ -163,6 +164,7 @@ export const App = () => {
   return (
     <TourProvider>
       {createPortal(<Toaster position="bottom-right" />, document.body)}
+      <LanguageSwitchOverlay />
       <div className="h-[100vh] w-[100vw]" id="whodb-app-container">
         {KeyboardShortcutsHelpModal}
         {CommandPaletteModal}

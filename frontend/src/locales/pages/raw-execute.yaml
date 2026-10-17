@@ -55,6 +55,12 @@ ar_AE:
   options: "خيارات"
   addPage: "إضافة صفحة"
   confirmExecutionDescription: "سيقوم هذا الاستعلام بتعديل قاعدة البيانات الخاصة بك. لا يمكن التراجع عن هذا."
+  history: "تاريخ"
+  run: "يجري"
+  running: "جري"
+  runningQuery: "تشغيل الاستعلام"
+  result: "نتيجة"
+  rowCount: "{count} صفوف"
 
 de_DE:
   copyCode: "Code kopieren"
@@ -81,6 +87,12 @@ de_DE:
   options: "Optionen"
   addPage: "Seite hinzufügen"
   confirmExecutionDescription: "Diese Abfrage ändert Ihre Datenbank. Dies kann nicht rückgängig gemacht werden."
+  history: "Geschichte"
+  run: "Laufen"
+  running: "Läuft"
+  runningQuery: "Abfrage wird ausgeführt"
+  result: "Ergebnis"
+  rowCount: "{count} Zeilen"
 
 el_GR:
   copyCode: "Αντιγραφή Κωδικού"
@@ -107,6 +119,12 @@ el_GR:
   options: "Επιλογές"
   addPage: "Προσθήκη σελίδας"
   confirmExecutionDescription: "Αυτό το ερώτημα θα τροποποιήσει τη βάση δεδομένων σας. Αυτό δεν μπορεί να αναιρεθεί."
+  history: "Ιστορία"
+  run: "Τρέξιμο"
+  running: "Τρέξιμο"
+  runningQuery: "Εκτέλεση ερωτήματος"
+  result: "Αποτέλεσμα"
+  rowCount: "{count} σειρές"
 
 en_GB:
   copyCode: "Copy Code"
@@ -133,6 +151,12 @@ en_GB:
   options: "Options"
   addPage: "Add Page"
   confirmExecutionDescription: "This query will modify your database. This can't be undone."
+  history: "History"
+  run: "Run"
+  running: "Running"
+  runningQuery: "Running query"
+  result: "Result"
+  rowCount: "{count} rows"
 
 es_ES:
   copyCode: "Copiar código"
@@ -159,6 +183,12 @@ es_ES:
   options: "Opciones"
   addPage: "Agregar página"
   confirmExecutionDescription: "Esta consulta modificará su base de datos. Esto no se puede deshacer."
+  history: "Historia"
+  run: "Correr"
+  running: "Correr"
+  runningQuery: "Consulta en ejecución"
+  result: "Resultado"
+  rowCount: "{count} filas"
 
 fi_FI:
   copyCode: "Kopioi koodi"
@@ -185,6 +215,12 @@ fi_FI:
   options: "Vaihtoehdot"
   addPage: "Lisää sivu"
   confirmExecutionDescription: "Tämä kysely muuttaa tietokantaasi. Tätä ei voi kumota."
+  history: "Historia"
+  run: "Juokse"
+  running: "Juoksemassa"
+  runningQuery: "Käynnissä kysely"
+  result: "Tulos"
+  rowCount: "{count} riviä"
 
 fr_FR:
   copyCode: "Copier le code"
@@ -211,6 +247,12 @@ fr_FR:
   options: "Options"
   addPage: "Ajouter une page"
   confirmExecutionDescription: "Cette requête modifiera votre base de données. Cela ne peut pas être annulé."
+  history: "Histoire"
+  run: "Courir"
+  running: "En cours d'exécution"
+  runningQuery: "Requête en cours d'exécution"
+  result: "Résultat"
+  rowCount: "{count} lignes"
 
 it_IT:
   copyCode: "Copia codice"
@@ -237,6 +279,12 @@ it_IT:
   options: "Opzioni"
   addPage: "Aggiungi pagina"
   confirmExecutionDescription: "Questa query modificherà il tuo database. L'operazione non può essere annullata."
+  history: "Storia"
+  run: "Correre"
+  running: "Corsa"
+  runningQuery: "Interrogazione in esecuzione"
+  result: "Risultato"
+  rowCount: "{count} righe"
 
 iw_IL:
   copyCode: "העתק קוד"
@@ -263,6 +311,12 @@ iw_IL:
   options: "אפשרויות"
   addPage: "הוסף עמוד"
   confirmExecutionDescription: "שאילתה זו תשנה את מסד הנתונים שלך. לא ניתן לבטל את זה."
+  history: "הִיסטוֹרִיָה"
+  run: "לָרוּץ"
+  running: "רִיצָה"
+  runningQuery: "הפעלת שאילתה"
+  result: "תוֹצָאָה"
+  rowCount: "{count} שורות"
 
 ja_JP:
   copyCode: "コードをコピーする"
@@ -289,6 +343,12 @@ ja_JP:
   options: "オプション"
   addPage: "ページを追加"
   confirmExecutionDescription: "このクエリはデータベースを変更します。 これを元に戻すことはできません。"
+  history: "歴史"
+  run: "走る"
+  running: "ランニング"
+  runningQuery: "クエリの実行"
+  result: "結果"
+  rowCount: "{count} 行"
 
 ko_KR:
   copyCode: "코드 복사"
@@ -315,6 +375,12 @@ ko_KR:
   options: "옵션"
   addPage: "페이지 추가"
   confirmExecutionDescription: "이 쿼리는 데이터베이스를 수정합니다. 이 작업은 취소할 수 없습니다."
+  history: "역사"
+  run: "달리다"
+  running: "달리기"
+  runningQuery: "쿼리 실행 중"
+  result: "결과"
+  rowCount: "{count} 행"
 
 nl_NL:
   copyCode: "Kopieer code"
@@ -341,6 +407,12 @@ nl_NL:
   options: "Opties"
   addPage: "Pagina toevoegen"
   confirmExecutionDescription: "Deze zoekopdracht zal uw database wijzigen. Dit kan niet ongedaan worden gemaakt."
+  history: "Geschiedenis"
+  run: "Loop"
+  running: "Rennen"
+  runningQuery: "Query wordt uitgevoerd"
+  result: "Resultaat"
+  rowCount: "{count} rijen"
 
 pl_PL:
   copyCode: "Skopiuj kod"
@@ -367,6 +439,12 @@ pl_PL:
   options: "Opcje"
   addPage: "Dodaj stronę"
   confirmExecutionDescription: "To zapytanie zmodyfikuje Twoją bazę danych. Tego nie można cofnąć."
+  history: "Historia"
+  run: "Uruchomić"
+  running: "Działanie"
+  runningQuery: "Uruchomione zapytanie"
+  result: "Wynik"
+  rowCount: "{count} wierszy"
 
 pt_BR:
   copyCode: "Copiar código"
@@ -393,6 +471,12 @@ pt_BR:
   options: "Opções"
   addPage: "Adicionar página"
   confirmExecutionDescription: "Esta consulta modificará seu banco de dados. Isso não pode ser desfeito."
+  history: "História"
+  run: "Correr"
+  running: "Correndo"
+  runningQuery: "Consulta em execução"
+  result: "Resultado"
+  rowCount: "{count} linhas"
 
 ro_RO:
   copyCode: "Copiați codul"
@@ -419,6 +503,12 @@ ro_RO:
   options: "Opțiuni"
   addPage: "Adăugați o pagină"
   confirmExecutionDescription: "Această interogare va modifica baza de date. Acest lucru nu poate fi anulat."
+  history: "Istorie"
+  run: "Fugi"
+  running: "Funcţionare"
+  runningQuery: "Interogare în curs de desfășurare"
+  result: "Rezultat"
+  rowCount: "{count} rânduri"
 
 ru_RU:
   copyCode: "Копировать код"
@@ -445,6 +535,12 @@ ru_RU:
   options: "Параметры"
   addPage: "Добавить страницу"
   confirmExecutionDescription: "Этот запрос изменит вашу базу данных. Это невозможно отменить."
+  history: "История"
+  run: "Бегать"
+  running: "Бег"
+  runningQuery: "Выполнение запроса"
+  result: "Результат"
+  rowCount: "{count} строк"
 
 sk_SK:
   copyCode: "Kopírovať kód"
@@ -471,6 +567,12 @@ sk_SK:
   options: "Možnosti"
   addPage: "Pridať stránku"
   confirmExecutionDescription: "Tento dotaz upraví vašu databázu. Toto sa nedá vrátiť späť."
+  history: "História"
+  run: "Bežať"
+  running: "Beh"
+  runningQuery: "Spustený dopyt"
+  result: "Výsledok"
+  rowCount: "{count} riadkov"
 
 sv_SE:
   copyCode: "Kopiera kod"
@@ -497,6 +599,12 @@ sv_SE:
   options: "Alternativ"
   addPage: "Lägg till sida"
   confirmExecutionDescription: "Denna fråga kommer att ändra din databas. Detta kan inte ångras."
+  history: "Historia"
+  run: "Sikt"
+  running: "Spring"
+  runningQuery: "Kör fråga"
+  result: "Resultat"
+  rowCount: "{count} rader"
 
 zh_CN:
   copyCode: "复制代码"
@@ -523,6 +631,12 @@ zh_CN:
   options: "选项"
   addPage: "添加页面"
   confirmExecutionDescription: "此查询将修改您的数据库。 这无法撤消。"
+  history: "历史"
+  run: "跑步"
+  running: "跑步"
+  runningQuery: "运行查询"
+  result: "结果"
+  rowCount: "{count} 行"
 
 zh_TW:
   copyCode: "複製程式碼"
@@ -549,6 +663,12 @@ zh_TW:
   options: "選項"
   addPage: "新增頁面"
   confirmExecutionDescription: "此查詢將修改您的資料庫。 這無法撤消。"
+  history: "歷史"
+  run: "跑步"
+  running: "跑步"
+  runningQuery: "執行查詢"
+  result: "結果"
+  rowCount: "{count} 行"
 
 bg_BG:
   copyCode: "Копиране на код"
@@ -575,6 +695,12 @@ bg_BG:
   options: "Опции"
   addPage: "Добавяне на страница"
   confirmExecutionDescription: "Тази заявка ще промени вашата база данни. Това не може да бъде отменено."
+  history: "История"
+  run: "Бягай"
+  running: "бягане"
+  runningQuery: "Изпълнява се заявка"
+  result: "Резултат"
+  rowCount: "{count} реда"
 
 bn_BD:
   copyCode: "কোড কপি করুন"
@@ -601,6 +727,12 @@ bn_BD:
   options: "অপশন"
   addPage: "পৃষ্ঠা যোগ করুন"
   confirmExecutionDescription: "এই প্রশ্নটি আপনার ডাটাবেস পরিবর্তন করবে। এটি পূর্বাবস্থায় ফেরানো যাবে না।"
+  history: "ইতিহাস"
+  run: "চালান"
+  running: "চলমান"
+  runningQuery: "কোয়েরি চলছে"
+  result: "ফলাফল"
+  rowCount: "{count} সারি"
 
 ca_ES:
   copyCode: "Copia el codi"
@@ -627,6 +759,12 @@ ca_ES:
   options: "Opcions"
   addPage: "Afegeix pàgina"
   confirmExecutionDescription: "Aquesta consulta modificarà la vostra base de dades. Això no es pot desfer."
+  history: "Història"
+  run: "Corre"
+  running: "Córrer"
+  runningQuery: "Consulta en execució"
+  result: "Resultat"
+  rowCount: "{count} files"
 
 cs_CZ:
   copyCode: "Kopírovat kód"
@@ -653,6 +791,12 @@ cs_CZ:
   options: "Možnosti"
   addPage: "Přidat stránku"
   confirmExecutionDescription: "Tento dotaz upraví vaši databázi. Toto nelze vrátit zpět."
+  history: "Dějiny"
+  run: "Běh"
+  running: "Běh"
+  runningQuery: "Spuštěný dotaz"
+  result: "Výsledek"
+  rowCount: "{count} řádků"
 
 da_DK:
   copyCode: "Kopiér kode"
@@ -679,6 +823,12 @@ da_DK:
   options: "Valgmuligheder"
   addPage: "Tilføj side"
   confirmExecutionDescription: "Denne forespørgsel vil ændre din database. Dette kan ikke fortrydes."
+  history: "Historie"
+  run: "Løbe"
+  running: "Løb"
+  runningQuery: "Kører forespørgsel"
+  result: "Resultat"
+  rowCount: "{count} rækker"
 
 fa_IR:
   copyCode: "کد را کپی کنید"
@@ -705,6 +855,12 @@ fa_IR:
   options: "گزینه ها"
   addPage: "افزودن صفحه"
   confirmExecutionDescription: "این پرس و جو پایگاه داده شما را تغییر می دهد. این قابل واگرد نیست."
+  history: "تاریخچه"
+  run: "اجرا کنید"
+  running: "در حال دویدن"
+  runningQuery: "در حال اجرا پرس و جو"
+  result: "نتیجه"
+  rowCount: "{count} ردیف"
 
 hi_IN:
   copyCode: "कोड कॉपी करें"
@@ -731,6 +887,12 @@ hi_IN:
   options: "विकल्प"
   addPage: "पृष्ठ जोड़ें"
   confirmExecutionDescription: "यह क्वेरी आपके डेटाबेस को संशोधित करेगी. इसे पूर्ववत नहीं किया जा सकता."
+  history: "इतिहास"
+  run: "दौड़ना"
+  running: "दौड़ना"
+  runningQuery: "चल रही क्वेरी"
+  result: "परिणाम"
+  rowCount: "{count} पंक्तियाँ"
 
 hr_HR:
   copyCode: "Kopiraj kod"
@@ -757,6 +919,12 @@ hr_HR:
   options: "Mogućnosti"
   addPage: "Dodaj stranicu"
   confirmExecutionDescription: "Ovaj će upit izmijeniti vašu bazu podataka. Ovo se ne može poništiti."
+  history: "Povijest"
+  run: "Trčanje"
+  running: "Trčanje"
+  runningQuery: "Pokretanje upita"
+  result: "Proizlaziti"
+  rowCount: "{count} redaka"
 
 hu_HU:
   copyCode: "Kód másolása"
@@ -783,6 +951,12 @@ hu_HU:
   options: "Opciók"
   addPage: "Oldal hozzáadása"
   confirmExecutionDescription: "Ez a lekérdezés módosítja az adatbázist. Ezt nem lehet visszavonni."
+  history: "Történelem"
+  run: "Fut"
+  running: "Futás"
+  runningQuery: "Lekérdezés fut"
+  result: "Eredmény"
+  rowCount: "{count} sor"
 
 id_ID:
   copyCode: "Salin Kode"
@@ -809,6 +983,12 @@ id_ID:
   options: "Pilihan"
   addPage: "Tambahkan Halaman"
   confirmExecutionDescription: "Kueri ini akan mengubah database Anda. Hal ini tidak dapat dibatalkan."
+  history: "Sejarah"
+  run: "Berlari"
+  running: "Berlari"
+  runningQuery: "Menjalankan kueri"
+  result: "Hasil"
+  rowCount: "{count} baris"
 
 ms_MY:
   copyCode: "Salin Kod"
@@ -835,6 +1015,12 @@ ms_MY:
   options: "Pilihan"
   addPage: "Tambah Halaman"
   confirmExecutionDescription: "Pertanyaan ini akan mengubah suai pangkalan data anda. Ini tidak boleh dibuat asal."
+  history: "Sejarah"
+  run: "Lari"
+  running: "Berlari"
+  runningQuery: "Menjalankan pertanyaan"
+  result: "Hasilnya"
+  rowCount: "{count} baris"
 
 nb_NO:
   copyCode: "Kopier kode"
@@ -861,6 +1047,12 @@ nb_NO:
   options: "Alternativer"
   addPage: "Legg til side"
   confirmExecutionDescription: "Denne spørringen vil endre databasen din. Dette kan ikke angres."
+  history: "Historie"
+  run: "Løp"
+  running: "Løper"
+  runningQuery: "Kjører spørring"
+  result: "Resultat"
+  rowCount: "{count} rader"
 
 sw_KE:
   copyCode: "Nakili Kanuni"
@@ -887,6 +1079,12 @@ sw_KE:
   options: "Chaguo"
   addPage: "Ongeza Ukurasa"
   confirmExecutionDescription: "Hoja hii itarekebisha hifadhidata yako. Hili haliwezi kutenduliwa."
+  history: "Historia"
+  run: "Kimbia"
+  running: "Kukimbia"
+  runningQuery: "Inaendesha swali"
+  result: "Matokeo"
+  rowCount: "{count} safu mlalo"
 
 ta_IN:
   copyCode: "நகல் குறியீடு"
@@ -913,6 +1111,12 @@ ta_IN:
   options: "விருப்பங்கள்"
   addPage: "பக்கத்தைச் சேர்"
   confirmExecutionDescription: "இந்த வினவல் உங்கள் தரவுத்தளத்தை மாற்றும். இதை செயல்தவிர்க்க முடியாது."
+  history: "வரலாறு"
+  run: "ஓடவும்"
+  running: "ஓடுகிறது"
+  runningQuery: "வினவல் இயங்குகிறது"
+  result: "முடிவு"
+  rowCount: "{count} வரிசைகள்"
 
 th_TH:
   copyCode: "คัดลอกรหัส"
@@ -939,6 +1143,12 @@ th_TH:
   options: "ตัวเลือก"
   addPage: "เพิ่มหน้า"
   confirmExecutionDescription: "แบบสอบถามนี้จะแก้ไขฐานข้อมูลของคุณ การดำเนินการนี้ไม่สามารถยกเลิกได้"
+  history: "ประวัติศาสตร์"
+  run: "วิ่ง"
+  running: "วิ่ง"
+  runningQuery: "กำลังดำเนินการค้นหา"
+  result: "ผลลัพธ์"
+  rowCount: "{count} แถว"
 
 tr_TR:
   copyCode: "Kodu Kopyala"
@@ -965,6 +1175,12 @@ tr_TR:
   options: "Seçenekler"
   addPage: "Sayfa Ekle"
   confirmExecutionDescription: "Bu sorgu veritabanınızı değiştirecek. Bu geri alınamaz."
+  history: "Tarih"
+  run: "Koşmak"
+  running: "Koşma"
+  runningQuery: "Sorgu çalıştırılıyor"
+  result: "Sonuç"
+  rowCount: "{count} satır"
 
 uk_UA:
   copyCode: "Копіювати код"
@@ -991,6 +1207,12 @@ uk_UA:
   options: "Опції"
   addPage: "Додати сторінку"
   confirmExecutionDescription: "Цей запит змінить вашу базу даних. Цю дію не можна скасувати."
+  history: "історія"
+  run: "бігти"
+  running: "Біг"
+  runningQuery: "Виконується запит"
+  result: "Результат"
+  rowCount: "{count} рядків"
 
 ur_PK:
   copyCode: "کوڈ کاپی کریں۔"
@@ -1017,6 +1239,12 @@ ur_PK:
   options: "اختیارات"
   addPage: "صفحہ شامل کریں۔"
   confirmExecutionDescription: "یہ استفسار آپ کے ڈیٹا بیس میں ترمیم کرے گا۔ اسے کالعدم نہیں کیا جا سکتا۔"
+  history: "تاریخ"
+  run: "دوڑو"
+  running: "چل رہا ہے۔"
+  runningQuery: "استفسار جاری ہے۔"
+  result: "نتیجہ"
+  rowCount: "{count} قطاریں"
 
 vi_VN:
   copyCode: "Sao chép mã"
@@ -1043,6 +1271,12 @@ vi_VN:
   options: "Tùy chọn"
   addPage: "Thêm trang"
   confirmExecutionDescription: "Truy vấn này sẽ sửa đổi cơ sở dữ liệu của bạn. Không thể hoàn tác việc này."
+  history: "Lịch sử"
+  run: "Chạy"
+  running: "Đang chạy"
+  runningQuery: "Chạy truy vấn"
+  result: "Kết quả"
+  rowCount: "{count} hàng"
 
 af_ZA:
   copyCode: "Kopieer kode"
@@ -1069,6 +1303,12 @@ af_ZA:
   options: "Opsies"
   addPage: "Voeg bladsy by"
   confirmExecutionDescription: "Hierdie navraag sal jou databasis wysig. Dit kan nie ongedaan gemaak word nie."
+  history: "Geskiedenis"
+  run: "Hardloop"
+  running: "Hardloop"
+  runningQuery: "Loop navraag"
+  result: "Resultaat"
+  rowCount: "{count} rye"
 
 am_ET:
   copyCode: "ኮድ ቅዳ"
@@ -1095,6 +1335,12 @@ am_ET:
   options: "አማራጮች"
   addPage: "ገጽ ያክሉ"
   confirmExecutionDescription: "ይህ መጠይቅ የውሂብ ጎታህን ይለውጠዋል። ይህ ሊቀለበስ አይችልም።"
+  history: "ታሪክ"
+  run: "ሩጡ"
+  running: "መሮጥ"
+  runningQuery: "ጥያቄን በማስኬድ ላይ"
+  result: "ውጤት"
+  rowCount: "{count} ረድፎች"
 
 az_AZ:
   copyCode: "Kodu kopyalayın"
@@ -1121,6 +1367,12 @@ az_AZ:
   options: "Seçimlər"
   addPage: "Səhifə əlavə et"
   confirmExecutionDescription: "Bu sorğu verilənlər bazanızı dəyişdirəcək. Bu geri qaytarıla bilməz."
+  history: "Tarix"
+  run: "Qaç"
+  running: "Qaçış"
+  runningQuery: "Çalışan sorğu"
+  result: "Nəticə"
+  rowCount: "{count} sıra"
 
 et_EE:
   copyCode: "Kopeeri kood"
@@ -1147,6 +1399,12 @@ et_EE:
   options: "Valikud"
   addPage: "Lisa leht"
   confirmExecutionDescription: "See päring muudab teie andmebaasi. Seda ei saa tagasi võtta."
+  history: "Ajalugu"
+  run: "Jookse"
+  running: "Jooksmine"
+  runningQuery: "Käimas päringut"
+  result: "Tulemus"
+  rowCount: "{count} rida"
 
 gu_IN:
   copyCode: "કોડ કૉપિ કરો"
@@ -1173,6 +1431,12 @@ gu_IN:
   options: "વિકલ્પો"
   addPage: "પૃષ્ઠ ઉમેરો"
   confirmExecutionDescription: "આ ક્વેરી તમારા ડેટાબેઝમાં ફેરફાર કરશે. આ પૂર્વવત્ કરી શકાતું નથી."
+  history: "ઈતિહાસ"
+  run: "ચલાવો"
+  running: "ચાલી રહી છે"
+  runningQuery: "ક્વેરી ચાલી રહી છે"
+  result: "પરિણામ"
+  rowCount: "{count} પંક્તિઓ"
 
 ha_NG:
   copyCode: "Kwafi Code"
@@ -1199,6 +1463,12 @@ ha_NG:
   options: "Zabuka"
   addPage: "Ƙara Shafi"
   confirmExecutionDescription: "Wannan tambayar za ta canza bayananku. Ba za a iya soke wannan ba."
+  history: "Tarihi"
+  run: "Gudu"
+  running: "Gudu"
+  runningQuery: "Tambayar gudana"
+  result: "Sakamako"
+  rowCount: "{count} layuka"
 
 ka_GE:
   copyCode: "დააკოპირეთ კოდი"
@@ -1225,6 +1495,12 @@ ka_GE:
   options: "ოფციები"
   addPage: "გვერდის დამატება"
   confirmExecutionDescription: "ეს შეკითხვა შეცვლის თქვენს მონაცემთა ბაზას. ამის გაუქმება შეუძლებელია."
+  history: "ისტორია"
+  run: "გაიქეცი"
+  running: "სირბილი"
+  runningQuery: "მიმდინარეობს შეკითხვა"
+  result: "შედეგი"
+  rowCount: "{count} რიგები"
 
 km_KH:
   copyCode: "ចម្លងកូដ"
@@ -1251,6 +1527,12 @@ km_KH:
   options: "ជម្រើស"
   addPage: "បន្ថែមទំព័រ"
   confirmExecutionDescription: "សំណួរនេះនឹងកែប្រែមូលដ្ឋានទិន្នន័យរបស់អ្នក។ នេះមិនអាចត្រឡប់វិញបានទេ។"
+  history: "ប្រវត្តិសាស្ត្រ"
+  run: "រត់"
+  running: "កំពុងរត់"
+  runningQuery: "កំពុងដំណើរការសំណួរ"
+  result: "លទ្ធផល"
+  rowCount: "{count} ជួរ"
 
 kn_IN:
   copyCode: "ಕೋಡ್ ನಕಲಿಸಿ"
@@ -1277,6 +1559,12 @@ kn_IN:
   options: "ಆಯ್ಕೆಗಳು"
   addPage: "ಪುಟವನ್ನು ಸೇರಿಸಿ"
   confirmExecutionDescription: "ಈ ಪ್ರಶ್ನೆಯು ನಿಮ್ಮ ಡೇಟಾಬೇಸ್ ಅನ್ನು ಮಾರ್ಪಡಿಸುತ್ತದೆ. ಇದನ್ನು ರದ್ದುಗೊಳಿಸಲಾಗುವುದಿಲ್ಲ."
+  history: "ಇತಿಹಾಸ"
+  run: "ಓಡು"
+  running: "ಓಡುತ್ತಿದೆ"
+  runningQuery: "ಚಾಲನೆಯಲ್ಲಿರುವ ಪ್ರಶ್ನೆ"
+  result: "ಫಲಿತಾಂಶ"
+  rowCount: "{count} ಸಾಲುಗಳು"
 
 lt_LT:
   copyCode: "Kopijuoti kodą"
@@ -1303,6 +1591,12 @@ lt_LT:
   options: "Parinktys"
   addPage: "Pridėti puslapį"
   confirmExecutionDescription: "Ši užklausa pakeis jūsų duomenų bazę. To negalima anuliuoti."
+  history: "Istorija"
+  run: "Bėk"
+  running: "Bėgimas"
+  runningQuery: "Vykdoma užklausa"
+  result: "Rezultatas"
+  rowCount: "{count} eilučių"
 
 lv_LV:
   copyCode: "Kopēt kodu"
@@ -1329,6 +1623,12 @@ lv_LV:
   options: "Iespējas"
   addPage: "Pievienot lapu"
   confirmExecutionDescription: "Šis vaicājums mainīs jūsu datu bāzi. Šo darbību nevar atsaukt."
+  history: "Vēsture"
+  run: "Skrien"
+  running: "Skriešana"
+  runningQuery: "Notiek vaicājums"
+  result: "Rezultāts"
+  rowCount: "{count} rindas"
 
 ml_IN:
   copyCode: "കോഡ് പകർത്തുക"
@@ -1355,6 +1655,12 @@ ml_IN:
   options: "ഓപ്ഷനുകൾ"
   addPage: "പേജ് ചേർക്കുക"
   confirmExecutionDescription: "ഈ ചോദ്യം നിങ്ങളുടെ ഡാറ്റാബേസിൽ മാറ്റം വരുത്തും. ഇത് പഴയപടിയാക്കാനാകില്ല."
+  history: "ചരിത്രം"
+  run: "ഓടുക"
+  running: "ഓടുന്നു"
+  runningQuery: "അന്വേഷണം പ്രവർത്തിക്കുന്നു"
+  result: "ഫലം"
+  rowCount: "{count} വരികൾ"
 
 mr_IN:
   copyCode: "कोड कॉपी करा"
@@ -1381,6 +1687,12 @@ mr_IN:
   options: "पर्याय"
   addPage: "पृष्ठ जोडा"
   confirmExecutionDescription: "ही क्वेरी तुमच्या डेटाबेसमध्ये बदल करेल. हे पूर्ववत केले जाऊ शकत नाही."
+  history: "इतिहास"
+  run: "धावा"
+  running: "धावत आहे"
+  runningQuery: "क्वेरी चालू आहे"
+  result: "परिणाम"
+  rowCount: "{count} पंक्ती"
 
 ne_NP:
   copyCode: "कोड प्रतिलिपि गर्नुहोस्"
@@ -1407,6 +1719,12 @@ ne_NP:
   options: "विकल्पहरू"
   addPage: "पृष्ठ थप्नुहोस्"
   confirmExecutionDescription: "यो क्वेरीले तपाईको डाटाबेस परिमार्जन गर्नेछ। यसलाई अन्डू गर्न सकिँदैन।"
+  history: "इतिहास"
+  run: "दौड्नुहोस्"
+  running: "दौडिरहेको"
+  runningQuery: "चलिरहेको क्वेरी"
+  result: "नतिजा"
+  rowCount: "{count} पङ्क्तिहरू"
 
 pa_IN:
   copyCode: "ਕੋਡ ਕਾਪੀ ਕਰੋ"
@@ -1433,6 +1751,12 @@ pa_IN:
   options: "ਵਿਕਲਪ"
   addPage: "ਪੰਨਾ ਸ਼ਾਮਲ ਕਰੋ"
   confirmExecutionDescription: "ਇਹ ਪੁੱਛਗਿੱਛ ਤੁਹਾਡੇ ਡੇਟਾਬੇਸ ਨੂੰ ਸੰਸ਼ੋਧਿਤ ਕਰੇਗੀ। ਇਸ ਨੂੰ ਅਣਕੀਤਾ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਦਾ।"
+  history: "ਇਤਿਹਾਸ"
+  run: "ਚਲਾਓ"
+  running: "ਚੱਲ ਰਿਹਾ ਹੈ"
+  runningQuery: "ਪੁੱਛਗਿੱਛ ਚੱਲ ਰਹੀ ਹੈ"
+  result: "ਨਤੀਜਾ"
+  rowCount: "{count} ਕਤਾਰਾਂ"
 
 si_LK:
   copyCode: "කේතය පිටපත් කරන්න"
@@ -1459,6 +1783,12 @@ si_LK:
   options: "විකල්ප"
   addPage: "පිටුව එක් කරන්න"
   confirmExecutionDescription: "මෙම විමසුම ඔබගේ දත්ත සමුදාය වෙනස් කරනු ඇත. මෙය පසුගමනය කළ නොහැක."
+  history: "ඉතිහාසය"
+  run: "දුවන්න"
+  running: "දුවනවා"
+  runningQuery: "ධාවනය වන විමසුම"
+  result: "ප්රතිඵලය"
+  rowCount: "{count} පේළි"
 
 sl_SI:
   copyCode: "Kopiraj kodo"
@@ -1485,6 +1815,12 @@ sl_SI:
   options: "Možnosti"
   addPage: "Dodaj stran"
   confirmExecutionDescription: "Ta poizvedba bo spremenila vašo bazo podatkov. Tega ni mogoče razveljaviti."
+  history: "Zgodovina"
+  run: "Teči"
+  running: "tek"
+  runningQuery: "Teče poizvedba"
+  result: "Rezultat"
+  rowCount: "{count} vrstic"
 
 sr_RS:
   copyCode: "Копирај код"
@@ -1511,6 +1847,12 @@ sr_RS:
   options: "Опције"
   addPage: "Додај страницу"
   confirmExecutionDescription: "Овај упит ће модификовати вашу базу података. Ово се не може поништити."
+  history: "Историја"
+  run: "Трчи"
+  running: "Трчање"
+  runningQuery: "Покретање упита"
+  result: "Резултат"
+  rowCount: "{count} редова"
 
 te_IN:
   copyCode: "కాపీ కోడ్"
@@ -1537,6 +1879,12 @@ te_IN:
   options: "ఎంపికలు"
   addPage: "పేజీని జోడించండి"
   confirmExecutionDescription: "ఈ ప్రశ్న మీ డేటాబేస్‌ను మారుస్తుంది. దీన్ని రద్దు చేయడం సాధ్యం కాదు."
+  history: "చరిత్ర"
+  run: "పరుగు"
+  running: "నడుస్తోంది"
+  runningQuery: "ప్రశ్న అమలులో ఉంది"
+  result: "ఫలితం"
+  rowCount: "{count} అడ్డు వరుసలు"
 
 tl_PH:
   copyCode: "Kopyahin ang Code"
@@ -1563,6 +1911,12 @@ tl_PH:
   options: "Mga pagpipilian"
   addPage: "Magdagdag ng Pahina"
   confirmExecutionDescription: "Babaguhin ng query na ito ang iyong database. Hindi na ito maaaring bawiin."
+  history: "Kasaysayan"
+  run: "Takbo"
+  running: "Tumatakbo"
+  runningQuery: "Tumatakbo ng query"
+  result: "Resulta"
+  rowCount: "{count} mga hilera"
 
 uz_UZ:
   copyCode: "Kodni nusxalash"
@@ -1589,6 +1943,12 @@ uz_UZ:
   options: "Variantlar"
   addPage: "Sahifani qo'shish"
   confirmExecutionDescription: "Ushbu so'rov ma'lumotlar bazasini o'zgartiradi. Buni ortga qaytarib bo‘lmaydi."
+  history: "Tarix"
+  run: "Yugurish"
+  running: "Yugurish"
+  runningQuery: "Ishlayotgan so'rov"
+  result: "Natija"
+  rowCount: "{count} qatorlar"
 
 yo_NG:
   copyCode: "Da koodu"
@@ -1615,3 +1975,9 @@ yo_NG:
   options: "Awọn aṣayan"
   addPage: "Fi Oju-iwe kun"
   confirmExecutionDescription: "Ibeere yii yoo ṣe atunṣe aaye data rẹ. Eyi ko le ṣe atunṣe."
+  history: "Itan"
+  run: "Ṣiṣe"
+  running: "Nṣiṣẹ"
+  runningQuery: "Ṣiṣe ibeere"
+  result: "Abajade"
+  rowCount: "{count} awọn ila"
