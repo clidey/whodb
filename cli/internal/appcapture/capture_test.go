@@ -159,3 +159,46 @@ process.stdout.write(JSON.stringify(documents.map(isReadOnlyDocument)));
 		}
 	}
 }
+
+func TestBlockedWriteReplyExplainsPreviewPolicy(t *testing.T) {
+	if _, err := exec.LookPath("node"); err != nil {
+		t.Skip("node is not installed")
+	}
+	start := strings.Index(browserScript, "const blockedWriteReply =")
+	if start < 0 {
+		t.Fatal("blockedWriteReply helper not found in capture.mjs")
+	}
+	end := strings.Index(browserScript[start:], "\n};\n")
+	if end < 0 {
+		t.Fatal("blockedWriteReply helper is not terminated")
+	}
+	help := browserScript[start : start+end+4]
+	script := help + `
+process.stdout.write(JSON.stringify([
+  blockedWriteReply("mutation ExecuteFunction { ExecuteFunction { success } }"),
+  blockedWriteReply("")
+]));
+`
+	output, err := exec.Command("node", "--eval", script).Output()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var replies []struct {
+		Status int    `json:"status"`
+		Body   string `json:"body"`
+	}
+	if err := json.Unmarshal(output, &replies); err != nil {
+		t.Fatal(err)
+	}
+	if len(replies) != 2 || replies[0].Status != 200 || replies[1].Status != 403 {
+		t.Fatalf("blocked write responses = %#v", replies)
+	}
+	for _, reply := range replies {
+		if !strings.Contains(reply.Body, "--allow-writes=false") || !strings.Contains(reply.Body, "ctx.whodb.call()") {
+			t.Fatalf("missing actionable preview error: %s", reply.Body)
+		}
+	}
+	if !strings.Contains(replies[0].Body, `"errors"`) {
+		t.Fatalf("GraphQL mutation response lacks errors: %s", replies[0].Body)
+	}
+}

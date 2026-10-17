@@ -58,7 +58,7 @@ type appPublishPlan struct {
 
 var appsCheckCmd = &cobra.Command{
 	Use:           "check <folder>",
-	Short:         "Validate a local app folder and its event references",
+	Short:         "Validate local app files and event references; use apps verify for rendered layout",
 	Args:          cobra.ExactArgs(1),
 	SilenceUsage:  true,
 	SilenceErrors: true,
@@ -184,7 +184,7 @@ func registerPlatformLocalAppCommands() {
 	appsPublishCmd.Flags().StringVar(&appPublishNote, "message", "", "message attached to the promoted version")
 	appsDevCmd.Flags().StringVar(&appLocalRef, "app", "", "existing hosted app ID or name; defaults to app.json name")
 	appsDevCmd.Flags().StringVar(&appVerifyPage, "page", "", "page to open first")
-	appsDevCmd.Flags().BoolVar(&appAllowWrites, "allow-writes", true, "allow app actions to mutate hosted development data")
+	appsDevCmd.Flags().BoolVar(&appAllowWrites, "allow-writes", true, "allow hosted mutations, including all ctx.whodb.call() function calls; false blocks them even when a function only reads data")
 	appsDevCmd.Flags().BoolVar(&appCaptureInstall, "install", false, "install the optional capture browser")
 	appsDevCmd.Flags().StringVar(&appKernelDir, "kernel-dir", os.Getenv("WHODB_APP_KERNEL_DIR"), "local built sandbox assets, for testing runtime changes before server deployment")
 	appsVerifyCmd.Flags().StringVar(&appLocalRef, "app", "", "existing hosted app ID or name; defaults to app.json name")
@@ -196,7 +196,7 @@ func registerPlatformLocalAppCommands() {
 	appsVerifyCmd.Flags().BoolVar(&appVerifyMobile, "mobile", false, "emulate a touch-enabled mobile browser (default viewport 390x844)")
 	appsVerifyCmd.Flags().BoolVar(&appVerifyTablet, "tablet", false, "emulate a touch-enabled tablet browser (default viewport 820x1180)")
 	appsVerifyCmd.Flags().StringVar(&appVerifyOrientation, "orientation", "", "viewport orientation: portrait or landscape (defaults to the device preset)")
-	appsVerifyCmd.Flags().BoolVar(&appAllowWrites, "allow-writes", true, "allow scenario actions to mutate hosted development data")
+	appsVerifyCmd.Flags().BoolVar(&appAllowWrites, "allow-writes", true, "allow hosted mutations, including all ctx.whodb.call() function calls; false blocks them even when a function only reads data")
 	appsVerifyCmd.Flags().BoolVar(&appCaptureInstall, "install", false, "install the optional capture browser")
 	appsVerifyCmd.Flags().StringVar(&appKernelDir, "kernel-dir", os.Getenv("WHODB_APP_KERNEL_DIR"), "local built sandbox assets, for testing runtime changes before server deployment")
 	appsCmd.AddCommand(appsInitCmd, appsCheckCmd, appsPublishCmd, appsDevCmd, appsVerifyCmd)
@@ -253,9 +253,12 @@ func sameStrings(left, right []string) bool {
 }
 
 func runPlatformAppDev(cmd *cobra.Command, args []string) error {
-	_, session, options, err := localAppCapture(cmd.Context(), args[0])
+	workspace, session, options, err := localAppCapture(cmd.Context(), args[0])
 	if err != nil {
 		return err
+	}
+	if !options.AllowWrites && len(workspace.Manifest.Functions) > 0 {
+		_, _ = fmt.Fprintln(cmd.ErrOrStderr(), "Read-only preview blocks all ctx.whodb.call() function calls, including reporting functions. Use --allow-writes=true in a workspace where function execution is permitted.")
 	}
 	if appCaptureInstall {
 		if _, err := appcapture.SetupRuntime(cmd.Context()); err != nil {
@@ -275,6 +278,9 @@ func runPlatformAppVerify(cmd *cobra.Command, args []string) error {
 	workspace, session, options, err := localAppCapture(cmd.Context(), args[0])
 	if err != nil {
 		return err
+	}
+	if !options.AllowWrites && len(workspace.Manifest.Functions) > 0 {
+		_, _ = fmt.Fprintln(cmd.ErrOrStderr(), "Read-only preview blocks all ctx.whodb.call() function calls, including reporting functions. Use --allow-writes=true in a workspace where function execution is permitted.")
 	}
 	options.Mobile = appVerifyMobile
 	options.Tablet = appVerifyTablet

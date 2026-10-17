@@ -449,7 +449,7 @@ func buildPlatformMCP() PlatformMCP {
 			{Name: "whodb_platform_debug_missing_data", Description: "Trace missing or unexpected hosted project data across sources, files, datasets, ontologies, transforms, and lineage."},
 			{Name: "whodb_platform_build_ontology_workflow", Description: "Create or improve ontology workflows from hosted sources, files, datasets, and relationships."},
 			{Name: "whodb_platform_import_export_workflow", Description: "Prepare bundle export, diff, import planning, and import confirmation workflows."},
-			{Name: "whodb_platform_build_app_workflow", Description: "Build and verify a hosted app, with guidance for the local app folder workflow when filesystem access is available."},
+			{Name: "whodb_platform_build_app_workflow", Description: "Design a distinctive app from its brief and real project data, build working flows, and critique screenshots before promotion. Includes hosted MCP and local folder paths."},
 		},
 		Resources: []MCPResource{
 			{URI: "whodb://mcp/configuration", Description: "Active tool modules, access restrictions and setup instructions; contains no credentials", MIMEType: "application/json"},

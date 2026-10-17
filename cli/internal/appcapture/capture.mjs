@@ -53,6 +53,16 @@ const isReadOnlyDocument = (raw) => {
   return /^(query\b|\{)/.test(query) && !/\b(mutation|subscription)\b/.test(query);
 };
 
+const blockedWriteReply = (query) => {
+  const message = "WhoDB preview blocked this request: --allow-writes=false blocks GraphQL mutations, including ctx.whodb.call() function calls. Use --allow-writes=true only in a workspace where those actions may run.";
+  const graphql = typeof query === "string" && query.trim() !== "";
+  return {
+    status: graphql ? 200 : 403,
+    contentType: "application/json",
+    body: JSON.stringify(graphql ? { errors: [{ message }] } : { error: message }),
+  };
+};
+
 const browser = await chromium.launch({ headless: !options.Interactive });
 try {
   const context = await browser.newContext({
@@ -104,8 +114,12 @@ try {
         // Non-GraphQL writes are blocked below.
       }
       const platformAPI = parsed.origin === origin && (parsed.pathname.startsWith("/api/") || parsed.pathname === "/graphql");
-      if (!platformAPI || (!options.AllowWrites && !isReadOnlyDocument(query))) {
+      if (!platformAPI) {
         return route.abort();
+      }
+      if (!options.AllowWrites && !isReadOnlyDocument(query)) {
+        process.stderr.write(`Blocked local preview request: ${request.method()} ${parsed.pathname} (--allow-writes=false)\n`);
+        return route.fulfill(blockedWriteReply(query));
       }
     }
     if (parsed.origin === origin && (parsed.pathname.startsWith("/api/") || parsed.pathname === "/graphql")) {

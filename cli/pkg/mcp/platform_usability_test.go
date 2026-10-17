@@ -43,6 +43,16 @@ func TestPlatformWorkflowRecipeChoosesGoalSpecificPlan(t *testing.T) {
 	}
 }
 
+func TestPlatformApplicationRecipeIncludesDesignReview(t *testing.T) {
+	output := recipeForGoal("build an app")
+	if len(output.Steps) != 5 || output.Steps[1].Name != "design" || output.Steps[3].Name != "verify" {
+		t.Fatalf("application recipe steps = %#v", output.Steps)
+	}
+	if output.Steps[1].Objective == "" || output.Steps[3].Objective == "" {
+		t.Fatal("application design and verification steps need objectives")
+	}
+}
+
 func TestMatchPlatformResourcesPrefersExactIDsAndNames(t *testing.T) {
 	items := []PlatformResolvedResource{{ID: "ds-1", Name: "Customers"}, {ID: "ds-2", Name: "Customer Events"}}
 	if got := matchPlatformResources(items, "ds-1"); len(got) != 1 || got[0].Match != "id" {
