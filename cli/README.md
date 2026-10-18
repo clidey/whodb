@@ -826,6 +826,22 @@ it is the wrong tool for switching a single chat.
 
 WhoDB can run as an MCP (Model Context Protocol) server, enabling AI assistants like Claude, Cursor, and others to query your databases.
 
+### Access modes
+
+The default supports reads and writes, with confirmation required before writes
+execute. Platform tools always enforce the signed-in user's platform permissions.
+For direct database tools, access is limited by the configured database account's
+privileges; platform permissions do not apply to those connections.
+
+- Default (`whodb mcp serve`): reads and confirmed writes.
+- `--read-only`: restrict operations to reads.
+- `--safe-mode`: read-only with strict security checks.
+- `--allow-write`: execute writes without the MCP confirmation step, for trusted
+  automation. Database and platform permissions still apply.
+
+Saved setup settings can select a different default. Inspect them with
+`whodb setup inspect`; restart the MCP connection after changing access modes.
+
 ### Start the MCP Server
 
 ```bash
