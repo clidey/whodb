@@ -1285,12 +1285,12 @@ func buildPlatformToolGuide(secOpts *SecurityOptions) platformToolGuideResource 
 			{Tool: "whodb_platform_action", Resources: []string{"ontology"}, Actions: []string{"reembed"}},
 		},
 			"whodb_platform_ontology_describe", "whodb_platform_ontology_query", "whodb_platform_ontology_aggregate", "whodb_platform_ontology_stats", "whodb_platform_ontology_similar", "whodb_platform_ontology_embedding_jobs", "whodb_platform_ontology_record_capabilities", "whodb_platform_ontology_action_preview", "whodb_platform_ontology_action_executions"),
-		platformToolCategory(toolByName, "ontology_sharing", "Share ontologies across projects in the organization and reference shared ontologies locally.", "Discover shared ontologies before creating a reference; check reference impact before removing one.", nil, []platformToolGuideMutation{
+		platformToolCategory(toolByName, "ontology_sharing", "Share ontologies across projects in the organization and reference shared ontologies locally.", "Discover the owner ontology and create a reference first. A cross-project link needs targetKind=reference, targetReferenceId=<returned reference id>, and targetOntologyApiName=<owner apiName>; the local alias is not the link target. Verify with ontology_follow_link. Check reference impact before removing one.", nil, []platformToolGuideMutation{
 			{Tool: "whodb_platform_action", Resources: []string{"ontology"}, Actions: []string{"share", "unshare"}},
 			{Tool: "whodb_platform_create", Resources: []string{"ontology_reference"}},
 			{Tool: "whodb_platform_delete", Resources: []string{"ontology_reference"}},
 		},
-			"whodb_platform_shared_ontologies", "whodb_platform_discover_shared_ontologies", "whodb_platform_ontology_references", "whodb_platform_ontology_reference_impact"),
+			"whodb_platform_shared_ontologies", "whodb_platform_discover_shared_ontologies", "whodb_platform_ontology_references", "whodb_platform_ontology_reference_impact", "whodb_platform_ontology_follow_link"),
 		platformToolCategory(toolByName, "datasets", "Dataset metadata and dataset row previews.", "List datasets first; preview rows only when needed for the user request.", []string{"id", "name"}, []platformToolGuideMutation{
 			{Tool: "whodb_platform_create", Resources: []string{"dataset"}},
 			{Tool: "whodb_platform_update", Resources: []string{"dataset"}},
@@ -1780,9 +1780,11 @@ func handlePlatformBuildOntologyWorkflowPrompt(ctx context.Context, req *mcp.Get
 3. Use whodb_platform_data_model_summary to inspect existing sources, datasets, ontologies, and relationships.
 4. Inspect candidate datasets with whodb_platform_dataset and preview rows only when needed.
 5. Inspect existing ontologies with whodb_platform_ontology and whodb_platform_ontology_fast_lookup_suggestions.
-6. Use whodb_platform_change_impact before changing ontology definitions or linked resources.
-7. Use whodb_platform_write_plan before creating or updating ontology resources, records, or fast lookups.
-8. Keep backend permissions authoritative and use confirmation flow for every write.`
+6. For a cross-project link, call whodb_platform_discover_shared_ontologies and inspect the owner ontology's actual apiName. Create an ontology_reference in the consumer project, then read its returned id. In OntologyLinkInput set targetKind="reference", targetReferenceId to that id, and targetOntologyApiName to the owner ontology apiName. The local reference alias is not targetOntologyApiName. Preserve the source/target foreign-key properties and compatible storage mode.
+7. Use whodb_platform_change_impact before changing ontology definitions or linked resources.
+8. Use whodb_platform_write_plan before creating or updating ontology resources, records, or fast lookups.
+9. After saving a link, call whodb_platform_ontology_follow_link with a representative source row. A saved definition alone does not prove traversal works.
+10. Keep backend permissions authoritative and use confirmation flow for every write.`
 
 	return platformPromptResult("WhoDB hosted platform ontology workflow", content)
 }

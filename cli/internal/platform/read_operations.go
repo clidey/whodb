@@ -92,6 +92,8 @@ const ontologyFields = `
     displayName
     pluralDisplayName
     reverseDisplayName
+    targetKind
+    targetReferenceId
   }
 `
 

@@ -78,6 +78,27 @@ func TestValidatePlatformPayloadUsesKnownShapeAndTypes(t *testing.T) {
 	}
 }
 
+func TestValidateOntologyLinkPayloadRequiresReferenceContract(t *testing.T) {
+	for _, test := range []struct {
+		name    string
+		link    map[string]any
+		wantErr bool
+	}{
+		{name: "reference missing id", link: map[string]any{"targetKind": "reference", "targetOntologyApiName": "ProductPrice"}, wantErr: true},
+		{name: "id without reference kind", link: map[string]any{"targetReferenceId": "ref-1", "targetOntologyApiName": "ProductPrice"}, wantErr: true},
+		{name: "invalid kind", link: map[string]any{"targetKind": "shared", "targetOntologyApiName": "ProductPrice"}, wantErr: true},
+		{name: "reference with id", link: map[string]any{"targetKind": "reference", "targetReferenceId": "ref-1", "targetOntologyApiName": "ProductPrice"}},
+		{name: "local link", link: map[string]any{"targetOntologyApiName": "ProductPrice"}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			err := validateOntologyLinkPayload([]any{test.link})
+			if (err != nil) != test.wantErr {
+				t.Fatalf("validateOntologyLinkPayload() error = %v, want error %v", err, test.wantErr)
+			}
+		})
+	}
+}
+
 func TestValidatePlatformPayloadRequiresPermissionTargets(t *testing.T) {
 	// orgId is injected from the selected organization, so it is optional.
 	if err := validatePlatformPayload("action:invite_user:organization", map[string]any{

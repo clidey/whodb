@@ -120,6 +120,8 @@ type OntologyLink struct {
 	DisplayName              string `json:"displayName"`
 	PluralDisplayName        string `json:"pluralDisplayName"`
 	ReverseDisplayName       string `json:"reverseDisplayName"`
+	TargetKind               string `json:"targetKind"`
+	TargetReferenceID        string `json:"targetReferenceId"`
 }
 
 // Ontology describes one hosted ontology object type.

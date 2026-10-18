@@ -216,6 +216,36 @@ func validatePlatformPayload(key string, payload map[string]any) error {
 			return fmt.Errorf("payload.%s must be a %s", field.Name, field.Type)
 		}
 	}
+	if key == "create:ontology" || key == "update:ontology" {
+		if err := validateOntologyLinkPayload(payload["links"]); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func validateOntologyLinkPayload(value any) error {
+	links, ok := value.([]any)
+	if !ok {
+		return nil
+	}
+	for i, raw := range links {
+		link, ok := raw.(map[string]any)
+		if !ok {
+			continue
+		}
+		kind, _ := link["targetKind"].(string)
+		refID, _ := link["targetReferenceId"].(string)
+		if kind != "" && kind != "local" && kind != "reference" {
+			return fmt.Errorf("payload.links[%d].targetKind must be local or reference", i)
+		}
+		if kind == "reference" && strings.TrimSpace(refID) == "" {
+			return fmt.Errorf("payload.links[%d].targetReferenceId is required when targetKind is reference; use the id returned by create:ontology_reference", i)
+		}
+		if kind != "reference" && strings.TrimSpace(refID) != "" {
+			return fmt.Errorf("payload.links[%d].targetKind must be reference when targetReferenceId is set", i)
+		}
+	}
 	return nil
 }
 

@@ -126,6 +126,37 @@ func TestMeMatchesPlatformUserSchema(t *testing.T) {
 	}
 }
 
+func TestOntologyReadPreservesCrossProjectLinkTarget(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var request struct {
+			Query string `json:"query"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		for _, field := range []string{"targetKind", "targetReferenceId"} {
+			if !strings.Contains(request.Query, field) {
+				t.Errorf("ontology query does not request %s", field)
+			}
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"data":{"OntologyEntity":{"id":"entity-1","links":[{"apiName":"product","targetOntologyApiName":"Product","targetKind":"reference","targetReferenceId":"ref-1"}]}}}`))
+	}))
+	defer server.Close()
+
+	client, err := NewClient(server.URL, "token")
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
+	}
+	entity, err := client.Ontology(context.Background(), "project-1", "entity-1")
+	if err != nil {
+		t.Fatalf("Ontology() error = %v", err)
+	}
+	if len(entity.Links) != 1 || entity.Links[0].TargetKind != "reference" || entity.Links[0].TargetReferenceID != "ref-1" {
+		t.Fatalf("Ontology() links = %#v, want cross-project reference", entity.Links)
+	}
+}
+
 func TestPlatformManifestFetchesContract(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

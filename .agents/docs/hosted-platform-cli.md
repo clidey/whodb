@@ -306,6 +306,12 @@ Hosted MCP tool groups:
   `whodb_platform_discover_shared_ontologies`,
   `whodb_platform_ontology_references`,
   `whodb_platform_ontology_reference_impact`
+  For a cross-project ontology link, create the consumer's ontology reference
+  first. Set `OntologyLinkInput.targetKind` to `reference`,
+  `targetReferenceId` to the returned reference ID, and
+  `targetOntologyApiName` to the owner's ontology `apiName`. The local alias is
+  for resolving the reference in the consumer project; it is not the link target
+  name. Verify traversal with `whodb_platform_ontology_follow_link` after saving.
 - Service accounts, lineage providers and administration:
   `whodb_platform_service_accounts`, `whodb_platform_lineage_providers`,
   `whodb_platform_user_owned_resources`, `whodb_platform_user_resource_access`,

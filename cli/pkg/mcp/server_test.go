@@ -329,6 +329,12 @@ func TestNewServer_PlatformModeListsOnlyPlatformPrompts(t *testing.T) {
 
 func TestPlatformPromptContent(t *testing.T) {
 	server := NewServer(&ServerOptions{PlatformEnabled: true})
+	ontologyWorkflow := promptText(t, getServerPrompt(t, server, "whodb_platform_build_ontology_workflow"))
+	for _, expected := range []string{"targetKind=\"reference\"", "targetReferenceId", "owner ontology apiName", "whodb_platform_ontology_follow_link"} {
+		if !strings.Contains(ontologyWorkflow, expected) {
+			t.Fatalf("ontology workflow prompt should mention %q", expected)
+		}
+	}
 	appWorkflow := promptText(t, getServerPrompt(t, server, "whodb_platform_build_app_workflow"))
 	for _, expected := range []string{"whodb://platform/app-workflow", "ontology schemas", "audience", "visual direction", "type hierarchy", "color tokens", "first screen", "real ontology/function bindings", "keyboard", "desktop, mobile, tablet, and landscape", "Inspect the image itself", "whodb_platform_app_logic_graph", "--allow-writes=false"} {
 		if !strings.Contains(appWorkflow, expected) {

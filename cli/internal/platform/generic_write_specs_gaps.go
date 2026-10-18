@@ -147,7 +147,7 @@ func init() {
 			Fields: []PayloadField{
 				{Name: "ownerProjectId", Type: "string", Required: true, Description: "Project that owns the shared ontology"},
 				{Name: "ontologyId", Type: "string", Required: true, Description: "Shared ontology id"},
-				{Name: "alias", Type: "string", Required: true, Description: "Local apiName for the referenced ontology"},
+				{Name: "alias", Type: "string", Required: true, Description: "Local name for the shared ontology reference. Do not use this as an ontology link's targetOntologyApiName; use the owner ontology apiName, targetKind=reference, and this mutation's returned reference id as targetReferenceId."},
 			},
 			Examples: []string{`{"ownerProjectId":"owner-project-id","ontologyId":"ontology-id","alias":"shared_customers"}`},
 		},
