@@ -234,6 +234,24 @@ func TestPlatformCLI_AppCloneLargeAppLifecycle(t *testing.T) {
 		if detail := cloneE2EAppDetail(t, ctx, otherAPI, otherID, crossOrg.TargetAppID); !reflect.DeepEqual(detail.OntologyIDs, []string{otherCustomer}) {
 			t.Fatalf("cross-org bindings = %v, want %s", detail.OntologyIDs, otherCustomer)
 		}
+		// Source visibility does not grant write access to another organization.
+		for _, dryRun := range []bool{true, false} {
+			_, err := memberAPI.PlatformMutation(ctx, "CloneApp", map[string]any{
+				"projectId": srcID, "appId": srcAppID, "targetOrgId": otherOrgID,
+				"targetProjectId": otherID, "name": "Denied Cross Org", "dryRun": dryRun,
+			})
+			if err == nil || !strings.Contains(strings.ToLower(err.Error()), "forbidden") {
+				t.Fatalf("unauthorized cross-org clone (dryRun=%t): %v", dryRun, err)
+			}
+		}
+		memberAPI.SetWorkspaceContext(otherOrgID, otherID)
+		if _, err := memberAPI.PlatformQuery(ctx, "AppFiles", map[string]any{"projectId": otherID, "appId": crossOrg.TargetAppID}); err == nil {
+			t.Fatal("forged target workspace headers exposed cross-org app files")
+		}
+		if apps := cloneE2EApps(t, append([]string{"--org", targetOrg, "--project", otherID}, queryArgs...)); len(apps) != 1 {
+			t.Fatalf("denied cross-org clone changed target apps: %#v", apps)
+		}
+		t.Log("cross-organization clone preserved files and remapped bindings; unauthorized preview, write and file read were denied")
 	} else {
 		t.Log("WHODB_PLATFORM_E2E_CLONE_TARGET_ORG unset; skipping the cross-organization clone")
 	}
