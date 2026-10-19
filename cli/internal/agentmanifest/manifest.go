@@ -293,6 +293,7 @@ func buildMCPTools() []MCPTool {
 		{Name: "whodb_platform_gap_analysis", Description: "Return goal-aware ready areas, missing platform capabilities, suggested tools, and next actions for the selected hosted project.", ReadOnly: true},
 		{Name: "whodb_platform_project_health", Description: "Summarize selected hosted project health, readiness checks, warnings, scope, and next steps.", ReadOnly: true},
 		{Name: "whodb_platform_data_model_summary", Description: "Summarize selected hosted project sources, datasets, ontologies, relationships, modeling gaps, and suggested reads.", ReadOnly: true},
+		{Name: "whodb_platform_security_audit", Description: "Search security events, inspect export delivery and verify organization audit chains; organization management required.", ReadOnly: true},
 		{Name: "whodb_platform_runtime_readiness", Description: "Summarize selected hosted project runtime readiness across AI providers, secrets, functions, and transforms.", ReadOnly: true},
 		{Name: "whodb_platform_change_impact", Description: "Analyze direct graph impact for a planned hosted resource change without mutating state.", ReadOnly: true},
 		{Name: "whodb_platform_write_plan", Description: "Validate and preview a hosted platform write without executing it or creating a confirmation token.", ReadOnly: true},

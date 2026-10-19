@@ -176,6 +176,10 @@ func registerPlatformReadTool(server *mcp.Server, tool *mcp.Tool, secOpts *Secur
 		return
 	}
 	switch tool.Name {
+	case "whodb_platform_security_audit":
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformSecurityAuditInput) (*mcp.CallToolResult, any, error) {
+			return HandlePlatformSecurityAudit(ctx, req, input)
+		})
 	case "whodb_platform_workflow_recipe":
 		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformWorkflowRecipeInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformWorkflowRecipe(ctx, req, input)
@@ -353,6 +357,7 @@ func registerPlatformReadTool(server *mcp.Server, tool *mcp.Tool, secOpts *Secur
 
 func platformReadToolDefinitions() []*mcp.Tool {
 	tools := []*mcp.Tool{
+		{Name: "whodb_platform_security_audit", Description: "Search the canonical security ledger, correlate requests/runs, inspect export backlog or verify the organization hash chain. Requires organization management. Distinct from data-quality audit. Modes: events, exports, verify.", Annotations: platformReadOnlyAnnotations("Inspect Security Ledger")},
 		platformResolveResourceToolDefinition(),
 		platformWorkflowRecipeToolDefinition(),
 		platformTransformWaitToolDefinition(),
@@ -1033,7 +1038,7 @@ Use this before ontology, dataset, or lineage work. It returns sources, datasets
 
 const descPlatformRuntimeReadiness = `Summarize selected-project runtime readiness.
 
-Use this before function, transform, AI provider, or secret work. It returns runtime resources, deployment/readiness checks, and warnings without exposing secret values.`
+Use this before function, transform, AI provider, or secret work. It returns configured resources and timestamped evidence. Reachability and verification stay unknown unless supported by evidence. Optional function_id inspects the latest persisted run without executing it; historical success is not current worker health. Unavailable inventories are partial results with warnings.`
 
 const descPlatformChangeImpact = `Analyze direct graph impact for a planned change.
 

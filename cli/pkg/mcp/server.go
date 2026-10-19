@@ -40,6 +40,8 @@ import (
 
 // ServerOptions configures the MCP server.
 type ServerOptions struct {
+	// ToolProfile narrows discovery to a task; it does not grant permissions.
+	ToolProfile string
 	// SetupHandler runs credential-free setup actions supplied by the CLI.
 	// validate receives a patch; apply receives the complete validated preview.
 	SetupHandler func(context.Context, string, json.RawMessage) (json.RawMessage, error)
@@ -196,6 +198,7 @@ func NewServer(opts *ServerOptions) *mcp.Server {
 
 	// Create tool enablement from server options
 	toolEnablement := &ToolEnablement{
+		ToolProfile:   opts.ToolProfile,
 		EnabledTools:  opts.EnabledTools,
 		DisabledTools: opts.DisabledTools,
 	}
@@ -223,6 +226,7 @@ func NewServer(opts *ServerOptions) *mcp.Server {
 
 // ToolEnablement tracks which tools should be registered.
 type ToolEnablement struct {
+	ToolProfile   string
 	EnabledTools  []string
 	DisabledTools []string
 }
@@ -234,6 +238,9 @@ func (te *ToolEnablement) isToolEnabled(toolName string) bool {
 		if t == toolName || (!strings.HasPrefix(toolName, "whodb_") && t == "whodb_"+toolName) {
 			return false
 		}
+	}
+	if !profileAllowsTool(te.ToolProfile, toolName) {
+		return false
 	}
 	// If enabled list is empty, all tools are enabled by default
 	if len(te.EnabledTools) == 0 {

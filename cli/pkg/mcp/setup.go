@@ -88,7 +88,7 @@ type mcpSetupInput struct {
 }
 
 func registerMCPSetupTool(server *mcp.Server, opts *ServerOptions) {
-	filters := &ToolEnablement{EnabledTools: opts.EnabledTools, DisabledTools: opts.DisabledTools}
+	filters := &ToolEnablement{ToolProfile: opts.ToolProfile, EnabledTools: opts.EnabledTools, DisabledTools: opts.DisabledTools}
 	if opts.SetupHandler == nil || !filters.isToolEnabled("whodb_mcp_setup") {
 		return
 	}

@@ -36,6 +36,7 @@ type MCPPlatformPolicy struct {
 
 // MCPSettings stores credential-free settings for the single MCP server entry.
 type MCPSettings struct {
+	ToolProfile        string             `json:"tool_profile,omitempty" jsonschema:"Optional discovery profile: data, functions, workspace, or all. Does not grant permissions."`
 	Modules            []string           `json:"modules"`
 	WriteMode          string             `json:"write_mode"`
 	EnabledTools       []string           `json:"enabled_tools,omitempty"`

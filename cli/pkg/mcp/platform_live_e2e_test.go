@@ -1201,6 +1201,13 @@ func liveMustBundleTools(t *testing.T, ctx context.Context, suffix string) {
 }
 
 func liveMustWorkspaceIntelligence(t *testing.T, ctx context.Context, datasetID string) {
+	for _, mode := range []string{"events", "exports", "verify"} {
+		_, out, err := HandlePlatformSecurityAudit(ctx, nil, PlatformSecurityAuditInput{Mode: mode, Limit: 2})
+		if err != nil || out.Error != "" {
+			t.Fatalf("security audit %s: %v %s", mode, err, out.Error)
+		}
+	}
+	liveCoverTool("whodb_platform_security_audit")
 	t.Helper()
 	_, workspaceMap, err := HandlePlatformWorkspaceMap(ctx, nil, PlatformWorkspaceMapInput{Fields: []string{"counts", "warnings", "lineage"}})
 	if err != nil {

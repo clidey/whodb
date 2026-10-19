@@ -66,6 +66,7 @@ var (
 
 // tool enablement flags
 var (
+	mcpToolProfile   string
 	mcpEnabledTools  []string
 	mcpDisabledTools []string
 )
@@ -345,6 +346,7 @@ Connection Resolution:
 			MaxRows:             mcpMaxRows,
 			AllowMultiStatement: mcpAllowMultiStatement,
 			AllowDrop:           mcpAllowDrop,
+			ToolProfile:         settings.ToolProfile,
 			EnabledTools:        settings.EnabledTools,
 			DisabledTools:       settings.DisabledTools,
 			DefaultConnection:   settings.DefaultConnection,
@@ -442,6 +444,7 @@ func init() {
 		"Hosted project id, slug, or name for this MCP process (or WHODB_PLATFORM_SESSION_PROJECT)")
 
 	// Tool enablement flags
+	mcpServeCmd.Flags().StringVar(&mcpToolProfile, "tool-profile", "", "Focus discovery: all, data, functions, workspace (permissions unchanged)")
 	mcpServeCmd.Flags().StringSliceVar(&mcpEnabledTools, "tools", nil,
 		"Comma-separated tool names to enable (default: all); platform uses full whodb_platform_* names, database-only uses names such as query, schemas")
 	mcpServeCmd.Flags().StringSliceVar(&mcpDisabledTools, "disable-tools", nil,

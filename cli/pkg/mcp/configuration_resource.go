@@ -33,6 +33,7 @@ func mcpConfiguration(opts *ServerOptions) map[string]any {
 	return map[string]any{
 		"modules": modules, "read_only": opts.ReadOnly, "confirm_writes": opts.ConfirmWrites,
 		"platform_policy": opts.PlatformPolicy, "allowed_connections": opts.AllowedConnections, "default_connection": opts.DefaultConnection,
+		"tool_profile": opts.ToolProfile, "available_tool_profiles": []string{"all", "data", "functions", "workspace"},
 		"enabled_tools": opts.EnabledTools, "disabled_tools": opts.DisabledTools,
 		"setup_tool": "whodb_mcp_setup", "setup_command": "whodb setup inspect",
 		"restart_required_after_settings_change": true,

@@ -24,6 +24,9 @@ import (
 var databaseMCPTools = []string{"query", "schemas", "tables", "columns", "connections", "confirm", "pending", "explain", "diff", "erd", "audit", "suggestions"}
 
 func validateMCPSettings(settings *config.MCPSettings) error {
+	if err := whodbmcp.ValidateToolProfile(settings.ToolProfile); err != nil {
+		return err
+	}
 	if len(settings.Modules) == 0 {
 		return fmt.Errorf("enable at least one module: platform or database")
 	}
@@ -96,6 +99,9 @@ func effectiveMCPSettings(cmd *cobra.Command) (config.MCPSettings, error) {
 		settings.Modules = []string{"database"}
 	} else if cmd.Flags().Changed("platform") {
 		settings.Modules = []string{"platform"}
+	}
+	if cmd.Flags().Changed("tool-profile") {
+		settings.ToolProfile = mcpToolProfile
 	}
 	if cmd.Flags().Changed("tools") {
 		settings.EnabledTools = mcpEnabledTools

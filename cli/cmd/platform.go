@@ -72,9 +72,10 @@ var (
 )
 
 type platformSession struct {
-	Config *config.Config
-	Host   config.PlatformHost
-	Client *platform.Client
+	Automation bool
+	Config     *config.Config
+	Host       config.PlatformHost
+	Client     *platform.Client
 }
 
 type loginOutput struct {
@@ -345,9 +346,11 @@ var whoamiCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		updatePlatformHostUser(session.Config, &session.Host, user)
-		if err := session.Config.Save(); err != nil {
-			return err
+		if !session.Automation {
+			updatePlatformHostUser(session.Config, &session.Host, user)
+			if err := session.Config.Save(); err != nil {
+				return err
+			}
 		}
 
 		data := whoamiOutput{
@@ -438,6 +441,13 @@ var statusCmd = &cobra.Command{
 		user, err := session.Client.Me(ctx)
 		if err != nil {
 			return err
+		}
+		if session.Automation {
+			data := map[string]any{"host": session.Host.URL, "authentication": "api_key", "account_id": user.ID, "display_name": user.DisplayName, "org_id": session.Host.DefaultOrgID, "project_id": session.Host.DefaultProjectID}
+			if format == output.FormatJSON {
+				return writeCommandJSON(cmd, data)
+			}
+			return newCommandOutput(cmd, format, platformQuiet).WriteQueryResult(tableResult([]string{"host", "authentication", "account_id", "org_id", "project_id"}, [][]any{{session.Host.URL, "api_key", user.ID, session.Host.DefaultOrgID, session.Host.DefaultProjectID}}))
 		}
 		updatePlatformHostUser(session.Config, &session.Host, user)
 
@@ -1474,6 +1484,19 @@ func registerSourceInputFlags(command *cobra.Command, includeName bool, includeT
 }
 
 func loadPlatformSession(ctx context.Context, hostFlag string) (*platformSession, error) {
+	client, scope, err := platform.AutomationClient(hostFlag)
+	if err != nil {
+		return nil, err
+	}
+	if client != nil {
+		cfg, err := config.LoadConfigWithoutSecrets()
+		if err != nil {
+			return nil, err
+		}
+		return &platformSession{Automation: true, Config: cfg, Host: config.PlatformHost{
+			URL: scope.Host, DefaultOrgID: scope.Org, DefaultProjectID: scope.Project,
+		}, Client: client}, nil
+	}
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		return nil, fmt.Errorf("cannot load config: %w", err)
@@ -1490,7 +1513,7 @@ func loadPlatformSession(ctx context.Context, hostFlag string) (*platformSession
 	if _, err := tokenSource.Token(ctx); err != nil {
 		return nil, err
 	}
-	client, err := platform.NewAuthenticatedClient(host, tokenSource)
+	client, err = platform.NewAuthenticatedClient(host, tokenSource)
 	if err != nil {
 		return nil, err
 	}
@@ -1518,7 +1541,7 @@ func loadPlatformSession(ctx context.Context, hostFlag string) (*platformSession
 		Host:   *entry,
 		Client: client,
 	}
-	scope := platform.SessionScopeFromEnvironment()
+	scope = platform.SessionScopeFromEnvironment()
 	if err := scope.Validate(); err != nil {
 		return nil, err
 	}
@@ -1549,6 +1572,11 @@ func refreshPlatformManifest(ctx context.Context, cfg *config.Config, host *conf
 	}
 	if err := storePlatformManifest(host, manifest); err != nil {
 		return nil, err
+	}
+	// Automation sessions have no saved account and must not replace a personal
+	// host entry while refreshing capability metadata.
+	if host.AccountID == "" {
+		return manifest, nil
 	}
 	cfg.UpsertPlatformHost(*host)
 	if err := cfg.Save(); err != nil {
@@ -1944,6 +1972,12 @@ func localLogoutHint(host string) string {
 // that need slugs use resolvePlatformProjectDetailed.
 func resolvePlatformProject(ctx context.Context, session *platformSession, orgValue, projectValue string) (*platform.Organization, *platform.Project, error) {
 	host := session.Host
+	if session.Automation {
+		if (orgValue != "" && orgValue != host.DefaultOrgID) || (projectValue != "" && projectValue != host.DefaultProjectID) {
+			return nil, nil, fmt.Errorf("automation workspace flags must match the canonical IDs in %s and %s", platform.SessionOrgEnv, platform.SessionProjectEnv)
+		}
+		return &platform.Organization{ID: host.DefaultOrgID}, &platform.Project{ID: host.DefaultProjectID, OrgID: host.DefaultOrgID}, nil
+	}
 	if strings.TrimSpace(orgValue) == "" && strings.TrimSpace(projectValue) == "" &&
 		host.DefaultOrgID != "" && host.DefaultProjectID != "" && host.DefaultOrgName != "" && host.DefaultProjectName != "" {
 		return &platform.Organization{ID: host.DefaultOrgID, Name: host.DefaultOrgName},
