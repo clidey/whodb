@@ -46,6 +46,8 @@ jobs:
             nodejs.org:443
             objects.githubusercontent.com:443
             registry.npmjs.org:443
+            posthog-cloud-prod-us-east-1-app-assets.s3-accelerate.amazonaws.com:443
+            s3.us-east-1.amazonaws.com:443
             release-assets.githubusercontent.com:443
             releases.posthog.com:443
             us.i.posthog.com:443
