@@ -107,6 +107,9 @@ func TestGraphQLAuthorizationRequiresCSRFForAuthenticatedPrivateField(t *testing
 	if err == nil || err.Extensions["code"] != "FORBIDDEN" {
 		t.Fatalf("authorization error = %#v, want FORBIDDEN", err)
 	}
+	if err.Extensions["reason"] != "csrf_token_required" {
+		t.Fatalf("authorization error reason = %#v, want csrf_token_required", err.Extensions["reason"])
+	}
 }
 
 func TestGraphQLAuthorizationAllowsAuthenticatedPrivateField(t *testing.T) {

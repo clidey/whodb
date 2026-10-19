@@ -63,10 +63,12 @@ export function useSourceTypeItems(
     options: SourceTypeFilterOptions & { skip?: boolean } = {}
 ): UseSourceTypeItemsResult {
     const [cachedCatalog] = useState<BackendSourceType[]>(() => readCachedSourceCatalog());
+    // The catalog is fixed for a given server build, so one fetch per page load is enough: every
+    // consumer (the sidebar remounts on each route) then reads it from the Apollo cache. A deploy
+    // reloads the app, which refetches it; the local-storage copy is keyed by app version too.
     const { data, loading, error } = useQuery(SourceTypesDocument, {
         skip: options.skip,
-        fetchPolicy: import.meta.env.DEV ? "network-only" : "cache-and-network",
-        nextFetchPolicy: "cache-first",
+        fetchPolicy: import.meta.env.DEV ? "network-only" : "cache-first",
     });
     const includePlatformOnly = options.includePlatformOnly;
 
