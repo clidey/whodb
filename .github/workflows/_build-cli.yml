@@ -34,7 +34,7 @@ jobs:
             binary_name: whodb-cli-linux-arm64
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@351661ca32ac09a36dc5ee2d536e3128f2a3c8ed # v2.22.0
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
         with:
           egress-policy: block
           allowed-endpoints: >
@@ -75,7 +75,7 @@ jobs:
         run: make ${{ matrix.make_target }} VERSION=${{ inputs.version }}
 
       - name: Upload artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: cli-binary-${{ matrix.binary_name }}
           path: cli/build/${{ matrix.binary_name }}
@@ -87,7 +87,7 @@ jobs:
     environment: permission-required
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@351661ca32ac09a36dc5ee2d536e3128f2a3c8ed # v2.22.0
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
         with:
           egress-policy: block
           allowed-endpoints: >
@@ -154,7 +154,7 @@ jobs:
         run: make ci-build-linux-armv7 VERSION=${{ inputs.version }}
 
       - name: Upload artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: cli-binary-whodb-cli-linux-armv7
           path: cli/build/whodb-cli-linux-armv7
@@ -166,7 +166,7 @@ jobs:
     environment: permission-required
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@351661ca32ac09a36dc5ee2d536e3128f2a3c8ed # v2.22.0
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
         with:
           egress-policy: block
           allowed-endpoints: >
@@ -268,14 +268,14 @@ jobs:
           make ci-build-darwin-amd64 VERSION="$VERSION"
 
       - name: Upload ARM64 artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: cli-binary-whodb-cli-darwin-arm64
           path: cli/build/whodb-cli-darwin-arm64
           retention-days: 7
 
       - name: Upload AMD64 artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: cli-binary-whodb-cli-darwin-amd64
           path: cli/build/whodb-cli-darwin-amd64
@@ -299,7 +299,7 @@ jobs:
           #   binary_name: whodb-cli-windows-arm64.exe
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@351661ca32ac09a36dc5ee2d536e3128f2a3c8ed # v2.22.0
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
         with:
           egress-policy: block
           allowed-endpoints: >
@@ -353,7 +353,7 @@ jobs:
         run: make ${{ matrix.make_target }} VERSION=${{ inputs.version }}
 
       - name: Upload artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: cli-binary-${{ matrix.binary_name }}
           path: cli/build/${{ matrix.binary_name }}
@@ -366,7 +366,7 @@ jobs:
     needs: [build-cli-linux, build-cli-linux-armv7, build-cli-macos, build-cli-windows]
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@351661ca32ac09a36dc5ee2d536e3128f2a3c8ed # v2.22.0
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
         with:
           egress-policy: block
           allowed-endpoints: >
@@ -377,7 +377,7 @@ jobs:
             release-assets.githubusercontent.com:443
 
       - name: Download CLI artifacts
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           digest-mismatch: warn
           pattern: cli-binary-*
@@ -390,7 +390,7 @@ jobs:
           ls -la binaries/
 
       - name: Upload combined artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: cli-binaries
           path: binaries/
