@@ -193,9 +193,13 @@ type Dataset struct {
 
 // DatasetQueryResult contains tabular dataset or ontology rows.
 type DatasetQueryResult struct {
-	Columns []string   `json:"columns"`
-	Rows    [][]string `json:"rows"`
-	Total   int        `json:"total"`
+	// Partial reports incomplete source scans; nil means completeness is unknown.
+	Partial *bool `json:"partial,omitempty"`
+	// ScannedRows includes lookahead rows across all bounded query sources.
+	ScannedRows *int       `json:"scannedRows,omitempty"`
+	Columns     []string   `json:"columns"`
+	Rows        [][]string `json:"rows"`
+	Total       int        `json:"total"`
 }
 
 // LineageNode describes one lineage graph node.

@@ -62,6 +62,7 @@ type fakePlatformClient struct {
 
 	ontologyQueryProjectID        string
 	ontologyQueryInput            *platformapi.OntologyQueryInput
+	ontologyQueryResult           *platformapi.DatasetQueryResult
 	ontologyAggregateInput        *platformapi.OntologyAggregateInput
 	ontologyStatsProperty         string
 	ontologyDescribeEntities      []string

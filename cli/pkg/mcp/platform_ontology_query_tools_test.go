@@ -30,6 +30,9 @@ import (
 func (f *fakePlatformClient) OntologyQuery(ctx context.Context, projectID string, input platformapi.OntologyQueryInput) (*platformapi.DatasetQueryResult, error) {
 	f.ontologyQueryProjectID = projectID
 	f.ontologyQueryInput = &input
+	if f.ontologyQueryResult != nil {
+		return f.ontologyQueryResult, nil
+	}
 	return &platformapi.DatasetQueryResult{Columns: []string{"region", "count"}, Rows: [][]string{{"EU", "3"}, {"UK", "2"}}, Total: 2}, nil
 }
 
@@ -264,5 +267,31 @@ func TestOntologyAnalyticsExtendedReadsInjectScope(t *testing.T) {
 	_, output, _ = handlePlatformExtendedQuery(context.Background(), "platform_ontology_reference_impact", "OntologyReferenceImpact", map[string]any{"referenceId": ""}, nil)
 	if output.Error == "" {
 		t.Fatalf("empty referenceId accepted")
+	}
+}
+
+func TestOntologyQueryCompletenessSurvivesGroupingAndProjection(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		partial *bool
+		rows    [][]string
+		warn    bool
+	}{
+		{"partial group", new(true), [][]string{{"1000"}}, true},
+		{"partial empty filter", new(true), [][]string{}, true},
+		{"complete group", new(false), [][]string{{"1000"}}, false},
+		{"old server unknown", nil, [][]string{{"1000"}}, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			client := newOntologyToolsFake(t)
+			client.ontologyQueryResult = &platformapi.DatasetQueryResult{Columns: []string{"count"}, Rows: tc.rows, Total: len(tc.rows), Partial: tc.partial, ScannedRows: new(1001)}
+			_, output, err := HandlePlatformOntologyQuery(context.Background(), nil, PlatformOntologyQueryInput{Entity: "Sales", Fields: []string{"rows"}, Metrics: []PlatformOntologyMetricInput{{Op: "count"}}}, nil)
+			if err != nil || output.Error != "" {
+				t.Fatalf("query failed: %v %s", err, output.Error)
+			}
+			if output.Truncated != tc.warn || (len(output.Warnings) > 0) != tc.warn {
+				t.Fatalf("incorrect completeness after projection: %+v", output)
+			}
+		})
 	}
 }
