@@ -25,12 +25,13 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/spf13/cobra"
+
 	"github.com/clidey/whodb/cli/internal/config"
 	platformapi "github.com/clidey/whodb/cli/internal/platform"
 	whodbmcp "github.com/clidey/whodb/cli/pkg/mcp"
 	"github.com/clidey/whodb/cli/pkg/version"
 	"github.com/clidey/whodb/core/src/auditlog"
-	"github.com/spf13/cobra"
 )
 
 // security flags
@@ -426,7 +427,7 @@ func init() {
 	mcpServeCmd.Flags().IntVar(&mcpPort, "port", 3000,
 		"Port to listen on (only used with --transport=http)")
 	mcpServeCmd.Flags().StringVar(&mcpAuthToken, "auth-token", "",
-		"Require this bearer token on HTTP requests (can also set WHODB_MCP_AUTH_TOKEN); strongly recommended when binding to a network interface")
+		"Require this bearer token on HTTP requests (can also set WHODB_MCP_AUTH_TOKEN); required when binding outside localhost")
 
 	// Platform flags
 	mcpServeCmd.Flags().StringVar(&mcpPlatformPolicy, "platform-policy", "", "JSON file restricting platform hosts/workspaces and read-only targets")

@@ -23,16 +23,19 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
+
+	"github.com/modelcontextprotocol/go-sdk/mcp"
 
 	"github.com/clidey/whodb/cli/internal/agentmanifest"
 	platformapi "github.com/clidey/whodb/cli/internal/platform"
 	"github.com/clidey/whodb/cli/pkg/version"
-	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
 // ServerOptions configures the MCP server.
@@ -2112,7 +2115,7 @@ type HTTPOptions struct {
 	// Port to listen on (default: 3000).
 	Port int
 	// AuthToken, when non-empty, requires every /mcp request to present a matching
-	// "Authorization: Bearer <token>" header. Recommended whenever the server binds
+	// "Authorization: Bearer <token>" header. Required whenever the server binds
 	// to a non-loopback interface.
 	AuthToken string
 }
@@ -2138,6 +2141,14 @@ func Run(ctx context.Context, server *mcp.Server) error {
 	return server.Run(ctx, &mcp.StdioTransport{})
 }
 
+func validateHTTPBind(host, token string) error {
+	ip := net.ParseIP(host)
+	if host != "localhost" && (ip == nil || !ip.IsLoopback()) && strings.TrimSpace(token) == "" {
+		return errors.New("authentication is required when binding outside localhost: set --auth-token or WHODB_MCP_AUTH_TOKEN")
+	}
+	return nil
+}
+
 // RunHTTP starts the MCP server as an HTTP service.
 func RunHTTP(ctx context.Context, server *mcp.Server, opts *HTTPOptions, logger *slog.Logger) error {
 	if opts == nil {
@@ -2153,13 +2164,10 @@ func RunHTTP(ctx context.Context, server *mcp.Server, opts *HTTPOptions, logger 
 		logger = slog.New(slog.NewTextHandler(os.Stderr, nil))
 	}
 
-	// Warn about network exposure. Binding to a non-loopback interface without a
-	// token exposes full configured database access to anyone who can reach it.
-	isLoopback := opts.Host == "localhost" || opts.Host == "127.0.0.1"
-	if !isLoopback && opts.AuthToken == "" {
-		logger.Warn("MCP server binding to a network interface with NO authentication configured",
-			"host", opts.Host,
-			"recommendation", "Set --auth-token (or WHODB_MCP_AUTH_TOKEN), or use --host=localhost")
+	opts.Host = strings.Trim(strings.TrimSpace(opts.Host), "[]")
+	opts.AuthToken = strings.TrimSpace(opts.AuthToken)
+	if err := validateHTTPBind(opts.Host, opts.AuthToken); err != nil {
+		return err
 	}
 
 	// Create HTTP handler for MCP
@@ -2179,10 +2187,12 @@ func RunHTTP(ctx context.Context, server *mcp.Server, opts *HTTPOptions, logger 
 	})
 	mux.Handle("/mcp", handler)
 
-	addr := fmt.Sprintf("%s:%d", opts.Host, opts.Port)
+	addr := net.JoinHostPort(opts.Host, strconv.Itoa(opts.Port))
 	httpServer := &http.Server{
-		Addr:    addr,
-		Handler: mux,
+		Addr:              addr,
+		Handler:           mux,
+		ReadHeaderTimeout: 10 * time.Second,
+		IdleTimeout:       60 * time.Second,
 	}
 
 	go func() {

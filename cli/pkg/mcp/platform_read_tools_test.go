@@ -814,7 +814,7 @@ func TestHandlePlatformFunctionWaitPollsUntilTheRunFinishes(t *testing.T) {
 	}
 }
 
-func TestHandlePlatformFunctionWaitTimesOutRetryably(t *testing.T) {
+func TestHandlePlatformFunctionWaitReturnsRunningStatus(t *testing.T) {
 	client := &fakePlatformClient{functionRunStatuses: []string{"running"}}
 	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
 		return testPlatformSession(client), nil
@@ -824,8 +824,8 @@ func TestHandlePlatformFunctionWaitTimesOutRetryably(t *testing.T) {
 	if err != nil {
 		t.Fatalf("HandlePlatformFunctionWait() error = %v", err)
 	}
-	if !output.Retryable || !strings.Contains(output.Error, "still running") {
-		t.Fatalf("output = %#v, want a retryable still-running timeout", output)
+	if output.Error != "" || len(output.Warnings) == 0 || output.Data.(*platformapi.FunctionRun).Status != "running" {
+		t.Fatalf("output = %#v, want latest running status", output)
 	}
 
 	_, output, _ = HandlePlatformFunctionWait(context.Background(), nil, PlatformFunctionWaitInput{})

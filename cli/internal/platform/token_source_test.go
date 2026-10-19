@@ -110,3 +110,24 @@ func TestOIDCTokenSourceExpiresAndRefreshes(t *testing.T) {
 		t.Fatalf("refreshes = %d, want 2 after expiry", got)
 	}
 }
+
+func TestOIDCTokenSourceConcurrentRefreshUsesOneRotation(t *testing.T) {
+	resetAccessTokenCache(t)
+	server, refreshes := newOIDCTestServer(t, 900)
+	store := &testRefreshTokenStore{token: "initial"}
+	var wg sync.WaitGroup
+	for range 20 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			token, err := NewOIDCTokenSource(server.URL, "same", store).Token(context.Background())
+			if err != nil || token != "access-1" {
+				t.Errorf("%s %v", token, err)
+			}
+		}()
+	}
+	wg.Wait()
+	if refreshes.Load() != 1 {
+		t.Fatalf("refreshes=%d", refreshes.Load())
+	}
+}

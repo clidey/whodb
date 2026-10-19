@@ -18,10 +18,11 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/clidey/whodb/cli/internal/config"
-	platformapi "github.com/clidey/whodb/cli/internal/platform"
 	"github.com/google/jsonschema-go/jsonschema"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+
+	"github.com/clidey/whodb/cli/internal/config"
+	platformapi "github.com/clidey/whodb/cli/internal/platform"
 )
 
 // PlatformWorkspaceTarget selects a hosted workspace for one MCP call.
@@ -166,6 +167,16 @@ func addPlatformTool[In, Out any](server *mcp.Server, tool *mcp.Tool, handler mc
 	}
 	outputSchema.Properties["scope"] = scopeSchema
 	outputSchema.Properties["workspace"] = targetSchema
+	outputSchema.Properties["error_code"] = &jsonschema.Schema{Type: "string"}
+	outputSchema.Properties["retryable"] = &jsonschema.Schema{Type: "boolean"}
+	outputSchema.Properties["request_id"] = &jsonschema.Schema{Type: "string"}
+	outputSchema.Properties["suggested_tools"] = &jsonschema.Schema{Type: "array", Items: &jsonschema.Schema{Type: "string"}}
+	recoverySchema, err := jsonschema.For[PlatformRecoveryAdvice](nil)
+	if err != nil {
+		panic(err)
+	}
+	outputSchema.Properties["recovery"] = recoverySchema
+
 	scopedTool := *tool
 	scopedTool.InputSchema = inputSchema
 	if reflect.TypeFor[Out]() != reflect.TypeFor[any]() {
@@ -215,6 +226,13 @@ func addPlatformTool[In, Out any](server *mcp.Server, tool *mcp.Tool, handler mc
 		}
 		if args.Workspace != nil {
 			output["workspace"] = args.Workspace
+		}
+		if message, ok := output["error"].(string); ok && message != "" {
+			normalizePlatformErrorOutput(output, message)
+			if result == nil {
+				result = &mcp.CallToolResult{}
+			}
+			result.IsError = true
 		}
 		return result, output, nil
 	})

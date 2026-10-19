@@ -26,11 +26,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/spf13/cobra"
+	"golang.org/x/term"
+
 	"github.com/clidey/whodb/cli/internal/config"
 	"github.com/clidey/whodb/cli/internal/platform"
 	"github.com/clidey/whodb/cli/pkg/output"
-	"github.com/spf13/cobra"
-	"golang.org/x/term"
 )
 
 var (
@@ -1485,26 +1486,11 @@ func loadPlatformSession(ctx context.Context, hostFlag string) (*platformSession
 	if !ok || entry.AccountID == "" {
 		return nil, fmt.Errorf("not logged in to %s; run whodb login --host %s", host, host)
 	}
-	refreshToken, err := cfg.GetPlatformRefreshToken(host, entry.AccountID)
-	if err != nil {
-		return nil, fmt.Errorf("cannot load hosted WhoDB refresh token: %w", err)
-	}
-	tokens, err := platform.RefreshToken(ctx, host, refreshToken)
-	if err != nil {
-		if platform.IsInvalidGrant(err) {
-			if clearErr := clearPlatformLogin(cfg, host, entry.AccountID); clearErr != nil {
-				return nil, fmt.Errorf("hosted WhoDB session expired and local credentials could not be removed: %w", clearErr)
-			}
-			return nil, fmt.Errorf("hosted WhoDB session expired; run whodb login --host %s", host)
-		}
+	tokenSource := platform.NewOIDCTokenSource(host, entry.AccountID, cfg)
+	if _, err := tokenSource.Token(ctx); err != nil {
 		return nil, err
 	}
-	if tokens.RefreshToken != "" && tokens.RefreshToken != refreshToken {
-		if err := cfg.SavePlatformRefreshToken(host, entry.AccountID, tokens.RefreshToken); err != nil {
-			return nil, err
-		}
-	}
-	client, err := platform.NewClient(host, tokens.AccessToken)
+	client, err := platform.NewAuthenticatedClient(host, tokenSource)
 	if err != nil {
 		return nil, err
 	}

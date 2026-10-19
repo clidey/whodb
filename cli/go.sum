@@ -289,8 +289,8 @@ github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10/go.mod h1
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 h1:Jamvg5psRIccs7FGNTlIRMkT8wgtp5eCXdBlqhYGL6U=
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
-github.com/posthog/posthog-go v1.33.0 h1:9JOKPyfkF2MutQkf/pc2CEEPx8CFQLD516V6E0rQh2s=
-github.com/posthog/posthog-go v1.33.0/go.mod h1:rN0C9Urenhytgo3KQ/QVorGkyGfpouquDTSs2Ujzr+g=
+github.com/posthog/posthog-go v1.34.0 h1:vHVkrnFw4Bz34UFriZPEqfolpzfLEq39AlOcLeea6io=
+github.com/posthog/posthog-go v1.34.0/go.mod h1:rN0C9Urenhytgo3KQ/QVorGkyGfpouquDTSs2Ujzr+g=
 github.com/redis/go-redis/v9 v9.23.0 h1:/TTVdJa8BRNsybwwGGnmiYktHNlUXtbOQxlWpHBPL3s=
 github.com/redis/go-redis/v9 v9.23.0/go.mod h1:EWP2UUk+XDaI1s5nQB5mablZN6vccXlmBQTyfnF87D0=
 github.com/richardlehane/mscfb v1.0.7 h1:oeoiM0WE79vHwE8RpIYYvIAc8ajTH2mb6UZm55/+EB0=

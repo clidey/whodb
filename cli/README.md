@@ -1927,3 +1927,29 @@ golangci-lint run ./...
 ## License
 
 Apache License 2.0 - See LICENSE file for details.
+
+### HTTP MCP authentication and credential storage
+
+HTTP MCP listeners bound outside loopback require `--auth-token` or
+`WHODB_MCP_AUTH_TOKEN`. Clients send that value as a bearer token on `/mcp`.
+Loopback HTTP and stdio retain their local defaults.
+
+Saving database or SSH passwords requires the OS keyring. If it is unavailable,
+plaintext storage requires the explicit environment setting
+`WHODB_CLI_ALLOW_PLAINTEXT_CREDENTIALS=true`; the config file has mode 0600.
+A failed keyring write aborts saving instead of copying passwords to disk.
+Hosted login refresh tokens always require secure storage.
+
+Platform collection tools use server-side metadata pages when the host advertises
+`PlatformResources`: 50 items by default, at most 100, with `offset` and
+`truncated` indicating continuation. Filters run before pagination and access
+checks run before rows are selected. Use the corresponding detail tool for full
+source, schema, bindings, or usage. Explicit function, ontology, dataset, and app
+fields can fetch details for the selected page. Older hosts retain their existing
+list contract.
+
+Platform wait tools return the latest observed running status with a warning when
+their wait budget expires; repeat with the same run ID. Write idempotency keys are
+limited to 200 bytes and scoped to the account, workspace, and operation. Matching
+completed requests replay bounded identifiers/status for 30 days; secret values
+and job output are never retained for replay. Conflicting payloads are rejected.

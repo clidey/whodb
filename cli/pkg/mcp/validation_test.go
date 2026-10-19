@@ -125,7 +125,7 @@ func TestValidateSQLStatement_MultiStatement(t *testing.T) {
 		{"trailing semicolon ok", "SELECT * FROM users;", false, false},
 		{"multi blocked", "SELECT 1; DROP TABLE users", false, true},
 		{"multi allowed", "SELECT 1; SELECT 2", true, false},
-		{"semicolon in string blocked", "SELECT 'a;b' FROM users", false, true},
+		{"semicolon in string allowed", "SELECT 'a;b' FROM users", false, false},
 	}
 
 	for _, tc := range cases {
@@ -599,4 +599,17 @@ func containsSubstring(s, substr string) bool {
 		}
 	}
 	return false
+}
+
+func TestSQLMarkersInsideLiterals(t *testing.T) {
+	for _, query := range []string{"SELECT 'a--b'", "SELECT 'a;b'", "SELECT '/*text*/'", "SELECT 'it''s;--text'", "SELECT $$a;--b/*c*/$$", "SELECT $tag$a;--b$tag$", "SELECT 1 AS `a;--b`", `SELECT 1 AS "a;--b"`} {
+		if err := ValidateSQLStatement(query, true, SecurityLevelStandard, false, false); err != nil {
+			t.Errorf("%s: %v", query, err)
+		}
+	}
+	for _, query := range []string{"SELECT 1 --comment", "SELECT 1 /*comment*/", "SELECT 1 # comment", "SELECT 'a;b'; DELETE FROM t"} {
+		if err := ValidateSQLStatement(query, true, SecurityLevelStandard, false, false); err == nil {
+			t.Errorf("accepted %s", query)
+		}
+	}
 }

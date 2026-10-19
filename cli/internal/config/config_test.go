@@ -17,11 +17,15 @@
 package config
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/zalando/go-keyring"
 
 	"github.com/clidey/whodb/core/src/common/config"
 )
@@ -317,6 +321,7 @@ func TestSaveAndLoadConfig(t *testing.T) {
 }
 
 func TestSaveAndLoad_SSHPasswordRoundTrip(t *testing.T) {
+	t.Setenv("WHODB_CLI_ALLOW_PLAINTEXT_CREDENTIALS", "true")
 	tempDir := t.TempDir()
 	origHome := os.Getenv("HOME")
 	os.Setenv("HOME", tempDir)
@@ -817,5 +822,45 @@ func TestProfiles_SaveAndLoad(t *testing.T) {
 	}
 	if profiles[1].Name != "prod" || profiles[1].Connection != "prod-db" {
 		t.Errorf("Unexpected second profile after reload: %+v", profiles[1])
+	}
+}
+
+func TestSaveKeyringFailureDoesNotSpillSecrets(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	resetConfigDir()
+	t.Cleanup(resetConfigDir)
+	keyring.MockInitWithError(errors.New("keyring unavailable"))
+	t.Cleanup(keyring.MockInit)
+	cfg := DefaultConfig()
+	cfg.useKeyring = true
+	cfg.Connections = []Connection{{Name: "first", Password: "private-first"}, {Name: "other", Password: "private-other", SSHPassword: "private-ssh"}}
+	if err := cfg.Save(); err == nil {
+		t.Fatal("save succeeded after keyring failure")
+	}
+	path, err := GetConfigPath()
+	if err != nil {
+		t.Fatal(err)
+	}
+	content, _ := os.ReadFile(path)
+	for _, secret := range []string{"private-first", "private-other", "private-ssh"} {
+		if strings.Contains(string(content), secret) {
+			t.Fatalf("credential written to disk: %s", secret)
+		}
+	}
+}
+
+func TestSavePlaintextRequiresOptIn(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	resetConfigDir()
+	t.Cleanup(resetConfigDir)
+	t.Setenv("WHODB_CLI_ALLOW_PLAINTEXT_CREDENTIALS", "")
+	cfg := DefaultConfig()
+	cfg.Connections = []Connection{{Name: "db", Password: "secret"}}
+	if err := cfg.Save(); err == nil {
+		t.Fatal("silently stored plaintext")
+	}
+	t.Setenv("WHODB_CLI_ALLOW_PLAINTEXT_CREDENTIALS", "true")
+	if err := cfg.Save(); err != nil {
+		t.Fatal(err)
 	}
 }
