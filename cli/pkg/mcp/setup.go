@@ -43,6 +43,11 @@ Process flags still override saved settings. action="verify" checks the current
 process's configured targets; run it again after reconnecting to check new settings.
 When the setup tool is filtered out, ask the user to configure WhoDB locally.
 
+DISCOVERY: tool_profile selects all (default), data, functions, or workspace.
+Profiles narrow tools/list without granting permissions or changing write mode;
+explicit tool filters still apply. Inspect available_tool_profiles at
+whodb://mcp/configuration and use the approved setup flow to change a profile.
+
 TARGETING: Discover saved platform hosts with whodb_platform_hosts. List orgs with
 workspace:{host}, then projects with workspace:{host,org}. When the whole
 conversation should stay on one host, call whodb_platform_session_use once with
@@ -78,7 +83,27 @@ whodb://platform/app-workflow before choosing hosted tools or the local CLI.
 For databases, explore schema before queries, use
 bounded results and specific columns, parameterize user values, and send one query
 at a time. Use explain, diff, erd, audit, and suggestions when relevant. Never
-invent a tool, table, field, relationship, or successful verification.`
+invent a tool, table, field, relationship, or successful verification.
+
+RESULTS: Read warnings and completeness metadata before drawing conclusions.
+Bounded ontology queries can return partial grouped counts or filtered results;
+few returned rows do not prove a complete scan. Follow collection pagination and
+use detail tools when metadata pages omit source, schemas, or bindings.
+runtime_readiness separates configuration from reachability and verification.
+Unknown or unavailable inventory is not absence. Optional function_id evidence
+comes from a persisted run, not a live capacity check; report its timestamp.
+Wait tools can return a running status when their wait budget expires. Continue
+with the same run ID; do not start a duplicate run. For retried writes, preserve
+the idempotency key and payload; a conflicting payload is rejected.
+
+SECURITY AUDIT: Use whodb_platform_security_audit for organization security events,
+request/run correlation, export status, or chain verification when available.
+Organization management permission is required. Follow nextCursor for event
+pages. Export observations describe the responding process; chain verification
+compares retained rows with the stored tip, not an independent external anchor.
+The database audit tool instead checks data quality. Service-account API-key
+environment authentication is a CLI platform-command path; hosted MCP uses OAuth.
+Never ask the user to paste an API key into a tool call or chat.`
 
 type mcpSetupInput struct {
 	Action            string         `json:"action" jsonschema:"inspect, preview, apply, or verify; begin with inspect"`

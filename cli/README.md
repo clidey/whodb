@@ -1720,7 +1720,11 @@ Query history is stored alongside the config as `history.json`.
 }
 ```
 
-Passwords are stored in the OS keyring when available. If not available, they are written to `config.json` (new files are created with `0600` permissions).
+Database and SSH passwords are stored in the OS keyring. If it is unavailable,
+saving passwords requires explicitly setting
+`WHODB_CLI_ALLOW_PLAINTEXT_CREDENTIALS=true`; they are then written to
+`config.json` (new files are created with `0600` permissions). A failed keyring
+write aborts saving. Hosted login refresh tokens always require secure storage.
 
 ### Environment Variables
 

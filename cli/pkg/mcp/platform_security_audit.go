@@ -14,13 +14,13 @@ type PlatformSecurityAuditInput struct {
 	ProjectID string `json:"project_id,omitempty"`
 	ActorID   string `json:"actor_id,omitempty"`
 	Action    string `json:"action,omitempty"`
-	Outcome   string `json:"outcome,omitempty"`
+	Outcome   string `json:"outcome,omitempty" jsonschema:"Exact event outcome: SUCCESS, FAILURE, or DENIED."`
 	RequestID string `json:"request_id,omitempty"`
 	RunID     string `json:"run_id,omitempty"`
 	Since     string `json:"since,omitempty" jsonschema:"Inclusive RFC3339 start time."`
 	Until     string `json:"until,omitempty" jsonschema:"Inclusive RFC3339 end time."`
 	Limit     int    `json:"limit,omitempty" jsonschema:"Events per page, 1-200; default 50."`
-	Cursor    string `json:"cursor,omitempty"`
+	Cursor    string `json:"cursor,omitempty" jsonschema:"Continue event pagination with nextCursor from the preceding response."`
 }
 
 // HandlePlatformSecurityAudit reads the security ledger through authorized GraphQL.
