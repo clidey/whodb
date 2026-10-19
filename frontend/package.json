@@ -29,7 +29,7 @@
     "graphql": "17.0.2",
     "html-to-image": "1.11.13",
     "lodash": "4.18.1",
-    "posthog-js": "1.438.7",
+    "posthog-js": "1.438.8",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "react-markdown": "10.1.0",
@@ -96,7 +96,7 @@
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",
     "@graphql-codegen/cli": "7.4.6",
-    "@graphql-codegen/typed-document-node": "7.1.1",
+    "@graphql-codegen/typed-document-node": "7.2.0",
     "@graphql-codegen/typescript": "6.1.2",
     "@graphql-codegen/typescript-operations": "6.1.10",
     "@graphql-typed-document-node/core": "3.2.0",
