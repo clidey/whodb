@@ -53,6 +53,7 @@ var functionSelectionFields = map[string]string{
 	"isDeployed":          "isDeployed",
 	"scheduleCron":        "scheduleCron",
 	"scheduleInput":       "scheduleInput",
+	"scheduleVersion":     "scheduleVersion",
 	"scheduleLastRunAt":   "scheduleLastRunAt",
 }
 

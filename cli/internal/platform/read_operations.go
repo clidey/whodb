@@ -190,6 +190,7 @@ const functionFields = `
   isDeployed
   scheduleCron
   scheduleInput
+  scheduleVersion
   scheduleLastRunAt
 `
 

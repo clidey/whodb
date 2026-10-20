@@ -301,6 +301,7 @@ type Function struct {
 	IsDeployed          bool                     `json:"isDeployed"`
 	ScheduleCron        string                   `json:"scheduleCron"`
 	ScheduleInput       string                   `json:"scheduleInput"`
+	ScheduleVersion     int                      `json:"scheduleVersion"`
 	ScheduleLastRunAt   *string                  `json:"scheduleLastRunAt,omitempty"`
 }
 

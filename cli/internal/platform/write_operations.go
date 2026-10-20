@@ -311,6 +311,7 @@ const functionWriteFields = `
   isDeployed
   scheduleCron
   scheduleInput
+  scheduleVersion
   scheduleLastRunAt
 `
 
