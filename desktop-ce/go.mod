@@ -115,7 +115,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/posthog/posthog-go v1.34.0 // indirect
 	github.com/redis/go-redis/v9 v9.23.0 // indirect
-	github.com/richardlehane/mscfb v1.0.7 // indirect
+	github.com/richardlehane/mscfb v1.0.8 // indirect
 	github.com/richardlehane/msoleps v1.0.6 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/samber/lo v1.49.1 // indirect
@@ -135,8 +135,8 @@ require (
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.2.0 // indirect
 	github.com/xdg-go/stringprep v1.0.4 // indirect
-	github.com/xuri/efp v0.0.1 // indirect
-	github.com/xuri/excelize/v2 v2.11.0 // indirect
+	github.com/xuri/efp v0.0.2 // indirect
+	github.com/xuri/excelize/v2 v2.11.1-0.20261003002531-6258dcebc4e2 // indirect
 	github.com/xuri/nfp v0.0.2-0.20250530014748-2ddeb826f9a9 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78 // indirect
 	github.com/zalando/go-keyring v0.2.8 // indirect

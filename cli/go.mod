@@ -20,7 +20,9 @@ require (
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/vektah/gqlparser/v2 v2.5.62
-	github.com/xuri/excelize/v2 v2.11.0
+	// Pinned pseudo-version (no v2.11.1 tag yet): fixes GO-2026-6684/6685/6688/6689 and CVE-2026-107211.
+	// Swap to the v2.11.1 tag once released.
+	github.com/xuri/excelize/v2 v2.11.1-0.20261003002531-6258dcebc4e2
 	github.com/zalando/go-keyring v0.2.8
 	go.yaml.in/yaml/v3 v3.0.5
 	golang.org/x/crypto v0.58.0
@@ -129,7 +131,7 @@ require (
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/posthog/posthog-go v1.34.0 // indirect
 	github.com/redis/go-redis/v9 v9.23.0 // indirect
-	github.com/richardlehane/mscfb v1.0.7 // indirect
+	github.com/richardlehane/mscfb v1.0.8 // indirect
 	github.com/richardlehane/msoleps v1.0.6 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/sagikazarmark/locafero v0.12.0 // indirect
@@ -148,7 +150,7 @@ require (
 	github.com/xdg-go/scram v1.2.0 // indirect
 	github.com/xdg-go/stringprep v1.0.4 // indirect
 	github.com/xo/terminfo v1.0.0 // indirect
-	github.com/xuri/efp v0.0.1 // indirect
+	github.com/xuri/efp v0.0.2 // indirect
 	github.com/xuri/nfp v0.0.2-0.20250530014748-2ddeb826f9a9 // indirect
 	github.com/yosida95/uritemplate/v3 v3.0.2 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78 // indirect
