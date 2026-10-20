@@ -188,6 +188,9 @@ const functionFields = `
   defaultMaxTokens
   defaultTemperature
   isDeployed
+  scheduleCron
+  scheduleInput
+  scheduleLastRunAt
 `
 
 const projectFileFields = `

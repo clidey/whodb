@@ -48,6 +48,8 @@ func init() {
 		{Name: "secretBindings", Type: "array", Description: "Secrets exposed to the function as [{\"name\":\"API_KEY\",\"secretId\":\"...\",\"target\":\"ENV\"}]"},
 		{Name: "defaultMaxTokens", Type: "integer", Description: "Default max tokens for provider calls"},
 		{Name: "defaultTemperature", Type: "number", Description: "Default temperature for provider calls"},
+		str("scheduleCron", "Five-field cron schedule for automatic runs; empty string clears it"),
+		str("scheduleInput", "JSON object passed as input to every scheduled run"),
 	}
 	bindings := PayloadField{Name: "bindings", Type: "array", Description: "Requirement bindings as [{\"key\":\"source\",\"targetId\":\"...\"}] or [{\"key\":\"region\",\"value\":\"EU\"}]"}
 

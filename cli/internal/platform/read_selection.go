@@ -51,6 +51,9 @@ var functionSelectionFields = map[string]string{
 	"defaultMaxTokens":    "defaultMaxTokens",
 	"defaultTemperature":  "defaultTemperature",
 	"isDeployed":          "isDeployed",
+	"scheduleCron":        "scheduleCron",
+	"scheduleInput":       "scheduleInput",
+	"scheduleLastRunAt":   "scheduleLastRunAt",
 }
 
 var folderContentsSelectionFields = map[string]string{
