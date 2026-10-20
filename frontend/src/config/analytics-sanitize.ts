@@ -58,6 +58,38 @@ const isSafePropertyKey = (key: string) => {
     return SAFE_ANALYTICS_PROPERTY_KEYS.has(key) || SAFE_ANALYTICS_PROPERTY_SUFFIXES.some(suffix => key.endsWith(suffix));
 };
 
+const STACK_LOCATION_PATTERN = /([^/\\\s()]+\.[cm]?js):(\d+):(\d+)/;
+
+/**
+ * Reduces an error stack to the bundle file name, line and column of the first
+ * in-app frame, e.g. "index-abc123.js:120:45". Frames from other origins and the
+ * message line are skipped so no URL, origin or message text is reported.
+ */
+export const summarizeErrorLocation = (stack: unknown, origin: string): string | undefined => {
+    if (typeof stack !== 'string' || !origin) {
+        return undefined;
+    }
+    for (const line of stack.split('\n')) {
+        if (!line.includes(origin)) {
+            continue;
+        }
+        const match = STACK_LOCATION_PATTERN.exec(line);
+        if (match) {
+            return `${match[1]}:${match[2]}:${match[3]}`;
+        }
+    }
+    return undefined;
+};
+
+/** Returns the innermost component name from a React component stack. */
+export const summarizeComponentStack = (componentStack: unknown): string | undefined => {
+    if (typeof componentStack !== 'string') {
+        return undefined;
+    }
+    const match = /^\s*(?:at\s+|in\s+)?([A-Za-z_$][\w$.]*)/m.exec(componentStack.trim());
+    return match?.[1];
+};
+
 /** Sanitizes event properties and attaches non-sensitive runtime context. */
 export const sanitizeAnalyticsProperties = (
     properties: Record<string, unknown> | undefined,

@@ -21,6 +21,8 @@ import { ANALYTICS_EVENTS } from './analytics-events';
 import {
     sanitizeAnalyticsIdentityProperties,
     sanitizeAnalyticsProperties,
+    summarizeComponentStack,
+    summarizeErrorLocation,
     type AnalyticsRuntimeContext,
     type SafeAnalyticsPropertyValue,
 } from './analytics-sanitize';
@@ -260,8 +262,14 @@ const captureClientException = (client: PostHog, error: unknown, properties: Rec
         safeError.stack = undefined;
         const reference = typeof properties.reference === 'string' && /^ERR-[A-F0-9]{8}$/.test(properties.reference)
             ? properties.reference : undefined;
+        // Only the bundle file:line:column and component name are kept; both are build
+        // identifiers, not user data, and the message and stack stay in the console.
         client.captureException(safeError, {
-            ...sanitizeEventProperties({ error_code: 'internal_error' }),
+            ...sanitizeEventProperties({
+                error_code: 'internal_error',
+                error_frame: error instanceof Error ? summarizeErrorLocation(error.stack, window.location.origin) : undefined,
+                error_component: summarizeComponentStack(properties.componentStack),
+            }),
             ...(reference ? { reference } : {}),
         });
     } catch (captureError) {

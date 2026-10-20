@@ -102,6 +102,8 @@ export const SAFE_ANALYTICS_PROPERTY_KEYS = new Set([
     'direction',
     'enabled',
     'error_code',
+    'error_component',
+    'error_frame',
     'field',
     'form',
     'group_type',
