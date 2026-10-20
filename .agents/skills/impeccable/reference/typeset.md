@@ -24,7 +24,7 @@ When a sub-agent tool is available and permitted, run these independently; other
 2. **Mechanical scan:** run:
 
 ```bash
-node .agents/skills/impeccable/scripts/detect.mjs --json --scope type [target files or dirs]
+.agents/skills/impeccable/scripts/impeccable detect --json --scope type [target files or dirs]
 ```
 
 Also inspect dynamic or arbitrary font values the detector cannot interpret. Synthesize both assessments before editing, noting what each caught alone. A clean scan is a floor, not proof of good typography.
@@ -55,6 +55,16 @@ Use the fewest roles and families that make the hierarchy unmistakable. Combine 
 - Use paragraph spacing or first-line indentation as the primary paragraph rhythm; combining both usually double-marks the boundary.
 
 Do not make type decorative at the expense of comprehension, or introduce a second family without a clear role it alone can perform.
+
+## Line breaks
+
+After Matthew Butterick's *Practical Typography*, paraphrased; where his numbers differ from these, these stand.
+
+- Set `text-wrap: balance` on headings and short centered blocks, and `text-wrap: pretty` on body copy. Both are progressive: a browser that ignores them keeps its default wrap.
+- `pretty` pulls a word down beside a lone last word. It does not fill the last line, and a two-word tail is fine.
+- In a column too narrow for either to help, edit the copy or widen the column.
+- Break a heading by hand only between phrases, and check the break at every width the heading renders at. A hard break that lands mid-line on a phone is worse than the default wrap.
+- An uneven break can carry meaning: a headline that lands on one word for weight, a poster line, a pull quote. Make it deliberate with a hard break or a wrap set on that element, and keep it rare. The detector's `straggler` and `unbalanced-heading` findings are advisory for this reason; say which breaks are intended.
 
 ## Verify
 
