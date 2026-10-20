@@ -76,6 +76,8 @@ func SetupEnv(t *testing.T, cfg PostgresConfig) func() {
 	os.Setenv("USERPROFILE", tempHome)
 	// Disable analytics during tests
 	os.Setenv("WHODB_CLI_ANALYTICS_DISABLED", "true")
+	// CI runners have no OS keyring; allow saved connections to store passwords in the temp config.
+	os.Setenv("WHODB_CLI_ALLOW_PLAINTEXT_CREDENTIALS", "true")
 
 	return func() {
 		// Restore original values
@@ -89,6 +91,7 @@ func SetupEnv(t *testing.T, cfg PostgresConfig) func() {
 			os.Setenv("USERPROFILE", origHome)
 		}
 		os.Unsetenv("WHODB_CLI_ANALYTICS_DISABLED")
+		os.Unsetenv("WHODB_CLI_ALLOW_PLAINTEXT_CREDENTIALS")
 		// Clean up temp directory
 		os.RemoveAll(tempHome)
 	}
@@ -275,6 +278,8 @@ func SetupCleanEnv(t *testing.T) func() {
 	os.Setenv("HOME", tempHome)
 	os.Setenv("USERPROFILE", tempHome)
 	os.Setenv("WHODB_CLI_ANALYTICS_DISABLED", "true")
+	// CI runners have no OS keyring; allow saved connections to store passwords in the temp config.
+	os.Setenv("WHODB_CLI_ALLOW_PLAINTEXT_CREDENTIALS", "true")
 
 	return func() {
 		// Clear any env vars that were set during test
@@ -298,6 +303,7 @@ func SetupCleanEnv(t *testing.T) func() {
 			}
 		}
 		os.Unsetenv("WHODB_CLI_ANALYTICS_DISABLED")
+		os.Unsetenv("WHODB_CLI_ALLOW_PLAINTEXT_CREDENTIALS")
 		os.Unsetenv("BAML_LIBRARY_PATH")
 		os.RemoveAll(tempHome)
 	}
@@ -331,6 +337,8 @@ func SetupMultipleConnections(t *testing.T, connections map[string]PostgresConfi
 	os.Setenv("HOME", tempHome)
 	os.Setenv("USERPROFILE", tempHome)
 	os.Setenv("WHODB_CLI_ANALYTICS_DISABLED", "true")
+	// CI runners have no OS keyring; allow saved connections to store passwords in the temp config.
+	os.Setenv("WHODB_CLI_ALLOW_PLAINTEXT_CREDENTIALS", "true")
 
 	return func() {
 		if origPostgres != "" {
@@ -343,6 +351,7 @@ func SetupMultipleConnections(t *testing.T, connections map[string]PostgresConfi
 			os.Setenv("USERPROFILE", origHome)
 		}
 		os.Unsetenv("WHODB_CLI_ANALYTICS_DISABLED")
+		os.Unsetenv("WHODB_CLI_ALLOW_PLAINTEXT_CREDENTIALS")
 		os.RemoveAll(tempHome)
 	}
 }
