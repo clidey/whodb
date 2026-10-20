@@ -77,7 +77,6 @@ func isGraphQLRequest(r *http.Request) bool {
 
 func AuthMiddleware(next http.Handler) http.Handler {
 	var onceHeader sync.Once
-	var onceCookie sync.Once
 	var onceSession sync.Once
 	var onceKeyring sync.Once
 	var onceInline sync.Once
@@ -127,16 +126,6 @@ func AuthMiddleware(next http.Handler) http.Handler {
 				}
 				http.Error(w, "Unauthorized", http.StatusUnauthorized)
 				return
-			}
-		}
-
-		// Fallback to the legacy base64-credentials cookie when no header/session.
-		if token == "" {
-			if dbCookie, err := r.Cookie(string(AuthKey_Token)); err == nil {
-				token = dbCookie.Value
-				onceCookie.Do(func() { log.Info("Auth: using cookie-based auth") })
-			} else {
-				log.Debugf("[Auth] Cookie not found: %v", err)
 			}
 		}
 
