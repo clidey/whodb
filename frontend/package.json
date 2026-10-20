@@ -105,7 +105,7 @@
     "@types/lodash": "4.17.26",
     "@vitejs/plugin-react": "6.1.2",
     "baseline-browser-mapping": "2.11.28",
-    "js-yaml": "5.4.3",
+    "js-yaml": "5.5.0",
     "nyc": "18.0.0",
     "oxlint": "1.87.0",
     "oxlint-tsgolint": "7.0.2004",
