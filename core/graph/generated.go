@@ -17727,10 +17727,6 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) marshalNAIChatMessage2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIChatMessage(ctx context.Context, sel ast.SelectionSet, v model.AIChatMessage) graphql.Marshaler {
-	return ec._AIChatMessage(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNAIChatMessage2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIChatMessage(ctx context.Context, sel ast.SelectionSet, v *model.AIChatMessage) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -17889,10 +17885,6 @@ func (ec *executionContext) unmarshalNGenerateChatTitleInput2githubᚗcomᚋclid
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNGenerateChatTitleResponse2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐGenerateChatTitleResponse(ctx context.Context, sel ast.SelectionSet, v model.GenerateChatTitleResponse) graphql.Marshaler {
-	return ec._GenerateChatTitleResponse(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNGenerateChatTitleResponse2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐGenerateChatTitleResponse(ctx context.Context, sel ast.SelectionSet, v *model.GenerateChatTitleResponse) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -17963,10 +17955,6 @@ func (ec *executionContext) unmarshalNGraphUnitRelationshipType2githubᚗcomᚋc
 
 func (ec *executionContext) marshalNGraphUnitRelationshipType2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐGraphUnitRelationshipType(ctx context.Context, sel ast.SelectionSet, v model.GraphUnitRelationshipType) graphql.Marshaler {
 	return v
-}
-
-func (ec *executionContext) marshalNHealthStatus2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐHealthStatus(ctx context.Context, sel ast.SelectionSet, v model.HealthStatus) graphql.Marshaler {
-	return ec._HealthStatus(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNHealthStatus2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐHealthStatus(ctx context.Context, sel ast.SelectionSet, v *model.HealthStatus) graphql.Marshaler {
@@ -18043,10 +18031,6 @@ func (ec *executionContext) marshalNImportMode2githubᚗcomᚋclideyᚋwhodbᚋc
 	return v
 }
 
-func (ec *executionContext) marshalNImportPreview2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐImportPreview(ctx context.Context, sel ast.SelectionSet, v model.ImportPreview) graphql.Marshaler {
-	return ec._ImportPreview(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNImportPreview2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐImportPreview(ctx context.Context, sel ast.SelectionSet, v *model.ImportPreview) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -18055,10 +18039,6 @@ func (ec *executionContext) marshalNImportPreview2ᚖgithubᚗcomᚋclideyᚋwho
 		return graphql.Null
 	}
 	return ec._ImportPreview(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNImportResult2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐImportResult(ctx context.Context, sel ast.SelectionSet, v model.ImportResult) graphql.Marshaler {
-	return ec._ImportResult(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNImportResult2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐImportResult(ctx context.Context, sel ast.SelectionSet, v *model.ImportResult) graphql.Marshaler {
@@ -18092,10 +18072,6 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
-func (ec *executionContext) marshalNMockDataDependencyAnalysis2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐMockDataDependencyAnalysis(ctx context.Context, sel ast.SelectionSet, v model.MockDataDependencyAnalysis) graphql.Marshaler {
-	return ec._MockDataDependencyAnalysis(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNMockDataDependencyAnalysis2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐMockDataDependencyAnalysis(ctx context.Context, sel ast.SelectionSet, v *model.MockDataDependencyAnalysis) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -18109,10 +18085,6 @@ func (ec *executionContext) marshalNMockDataDependencyAnalysis2ᚖgithubᚗcom�
 func (ec *executionContext) unmarshalNMockDataGenerationInput2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐMockDataGenerationInput(ctx context.Context, v any) (model.MockDataGenerationInput, error) {
 	res, err := ec.unmarshalInputMockDataGenerationInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNMockDataGenerationStatus2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐMockDataGenerationStatus(ctx context.Context, sel ast.SelectionSet, v model.MockDataGenerationStatus) graphql.Marshaler {
-	return ec._MockDataGenerationStatus(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNMockDataGenerationStatus2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐMockDataGenerationStatus(ctx context.Context, sel ast.SelectionSet, v *model.MockDataGenerationStatus) graphql.Marshaler {
@@ -18159,10 +18131,6 @@ func (ec *executionContext) marshalNMockDataTableInfo2ᚖgithubᚗcomᚋclidey�
 		return graphql.Null
 	}
 	return ec._MockDataTableInfo(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNObjectCreationMetadata2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐObjectCreationMetadata(ctx context.Context, sel ast.SelectionSet, v model.ObjectCreationMetadata) graphql.Marshaler {
-	return ec._ObjectCreationMetadata(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNObjectCreationMetadata2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐObjectCreationMetadata(ctx context.Context, sel ast.SelectionSet, v *model.ObjectCreationMetadata) graphql.Marshaler {
@@ -18220,10 +18188,6 @@ func (ec *executionContext) unmarshalNRecordInput2ᚖgithubᚗcomᚋclideyᚋwho
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNRowsResult2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐRowsResult(ctx context.Context, sel ast.SelectionSet, v model.RowsResult) graphql.Marshaler {
-	return ec._RowsResult(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNRowsResult2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐRowsResult(ctx context.Context, sel ast.SelectionSet, v *model.RowsResult) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -18232,10 +18196,6 @@ func (ec *executionContext) marshalNRowsResult2ᚖgithubᚗcomᚋclideyᚋwhodb�
 		return graphql.Null
 	}
 	return ec._RowsResult(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNSettingsConfig2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSettingsConfig(ctx context.Context, sel ast.SelectionSet, v model.SettingsConfig) graphql.Marshaler {
-	return ec._SettingsConfig(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNSettingsConfig2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSettingsConfig(ctx context.Context, sel ast.SelectionSet, v *model.SettingsConfig) graphql.Marshaler {
@@ -18953,10 +18913,6 @@ func (ec *executionContext) marshalNSourceView2ᚕgithubᚗcomᚋclideyᚋwhodb�
 	return ret
 }
 
-func (ec *executionContext) marshalNStatusResponse2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐStatusResponse(ctx context.Context, sel ast.SelectionSet, v model.StatusResponse) graphql.Marshaler {
-	return ec._StatusResponse(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNStatusResponse2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐStatusResponse(ctx context.Context, sel ast.SelectionSet, v *model.StatusResponse) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -19085,10 +19041,6 @@ func (ec *executionContext) marshalNTypeDefinition2ᚖgithubᚗcomᚋclideyᚋwh
 		return graphql.Null
 	}
 	return ec._TypeDefinition(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNUpdateInfo2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐUpdateInfo(ctx context.Context, sel ast.SelectionSet, v model.UpdateInfo) graphql.Marshaler {
-	return ec._UpdateInfo(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNUpdateInfo2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐUpdateInfo(ctx context.Context, sel ast.SelectionSet, v *model.UpdateInfo) graphql.Marshaler {

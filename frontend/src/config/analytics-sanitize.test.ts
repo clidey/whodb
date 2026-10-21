@@ -104,6 +104,8 @@ const run = () => {
     assertEqual(summarizeComponentStack('\n    at RunRow (https://app.example.com/assets/index.js:1:2)\n    at DashboardPage'), 'RunRow', 'innermost component name is extracted');
     assertEqual(summarizeComponentStack('\n    in RunRow\n    in div'), 'RunRow', 'legacy "in" component stacks are supported');
     assertEqual(summarizeComponentStack(''), undefined, 'empty component stack yields nothing');
+    assertEqual(summarizeComponentStack('secret'), undefined, 'bare text is not a component stack');
+    assertEqual(summarizeComponentStack('private SQL and credentials'), undefined, 'message text is not a component stack');
 
     const exceptionProperties = sanitizeAnalyticsProperties({
         error_code: 'internal_error',

@@ -581,7 +581,7 @@ func (e *DataShape) UnmarshalGQL(v any) error {
 }
 
 func (e DataShape) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *DataShape) UnmarshalJSON(b []byte) error {
@@ -642,7 +642,7 @@ func (e *GraphUnitRelationshipType) UnmarshalGQL(v any) error {
 }
 
 func (e GraphUnitRelationshipType) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *GraphUnitRelationshipType) UnmarshalJSON(b []byte) error {
@@ -697,7 +697,7 @@ func (e *ImportFileFormat) UnmarshalGQL(v any) error {
 }
 
 func (e ImportFileFormat) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *ImportFileFormat) UnmarshalJSON(b []byte) error {
@@ -754,7 +754,7 @@ func (e *ImportMode) UnmarshalGQL(v any) error {
 }
 
 func (e ImportMode) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *ImportMode) UnmarshalJSON(b []byte) error {
@@ -809,7 +809,7 @@ func (e *SortDirection) UnmarshalGQL(v any) error {
 }
 
 func (e SortDirection) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *SortDirection) UnmarshalJSON(b []byte) error {
@@ -888,7 +888,7 @@ func (e *SourceAction) UnmarshalGQL(v any) error {
 }
 
 func (e SourceAction) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *SourceAction) UnmarshalJSON(b []byte) error {
@@ -949,7 +949,7 @@ func (e *SourceCategory) UnmarshalGQL(v any) error {
 }
 
 func (e SourceCategory) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *SourceCategory) UnmarshalJSON(b []byte) error {
@@ -1008,7 +1008,7 @@ func (e *SourceConnectionFieldKind) UnmarshalGQL(v any) error {
 }
 
 func (e SourceConnectionFieldKind) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *SourceConnectionFieldKind) UnmarshalJSON(b []byte) error {
@@ -1063,7 +1063,7 @@ func (e *SourceConnectionFieldSection) UnmarshalGQL(v any) error {
 }
 
 func (e SourceConnectionFieldSection) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *SourceConnectionFieldSection) UnmarshalJSON(b []byte) error {
@@ -1120,7 +1120,7 @@ func (e *SourceConnectionTransport) UnmarshalGQL(v any) error {
 }
 
 func (e SourceConnectionTransport) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *SourceConnectionTransport) UnmarshalJSON(b []byte) error {
@@ -1177,7 +1177,7 @@ func (e *SourceHostInputMode) UnmarshalGQL(v any) error {
 }
 
 func (e SourceHostInputMode) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *SourceHostInputMode) UnmarshalJSON(b []byte) error {
@@ -1234,7 +1234,7 @@ func (e *SourceHostInputURLParser) UnmarshalGQL(v any) error {
 }
 
 func (e SourceHostInputURLParser) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *SourceHostInputURLParser) UnmarshalJSON(b []byte) error {
@@ -1299,7 +1299,7 @@ func (e *SourceMetadataFidelity) UnmarshalGQL(v any) error {
 }
 
 func (e SourceMetadataFidelity) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *SourceMetadataFidelity) UnmarshalJSON(b []byte) error {
@@ -1362,7 +1362,7 @@ func (e *SourceModel) UnmarshalGQL(v any) error {
 }
 
 func (e SourceModel) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *SourceModel) UnmarshalJSON(b []byte) error {
@@ -1437,7 +1437,7 @@ func (e *SourceObjectKind) UnmarshalGQL(v any) error {
 }
 
 func (e SourceObjectKind) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *SourceObjectKind) UnmarshalJSON(b []byte) error {
@@ -1494,7 +1494,7 @@ func (e *SourceProfileLabelStrategy) UnmarshalGQL(v any) error {
 }
 
 func (e SourceProfileLabelStrategy) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *SourceProfileLabelStrategy) UnmarshalJSON(b []byte) error {
@@ -1553,7 +1553,7 @@ func (e *SourceQueryExplainMode) UnmarshalGQL(v any) error {
 }
 
 func (e SourceQueryExplainMode) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *SourceQueryExplainMode) UnmarshalJSON(b []byte) error {
@@ -1608,7 +1608,7 @@ func (e *SourceSchemaFidelity) UnmarshalGQL(v any) error {
 }
 
 func (e SourceSchemaFidelity) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *SourceSchemaFidelity) UnmarshalJSON(b []byte) error {
@@ -1667,7 +1667,7 @@ func (e *SourceSurface) UnmarshalGQL(v any) error {
 }
 
 func (e SourceSurface) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *SourceSurface) UnmarshalJSON(b []byte) error {
@@ -1732,7 +1732,7 @@ func (e *SourceView) UnmarshalGQL(v any) error {
 }
 
 func (e SourceView) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *SourceView) UnmarshalJSON(b []byte) error {
@@ -1797,7 +1797,7 @@ func (e *TypeCategory) UnmarshalGQL(v any) error {
 }
 
 func (e TypeCategory) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *TypeCategory) UnmarshalJSON(b []byte) error {
@@ -1854,7 +1854,7 @@ func (e *WhereConditionType) UnmarshalGQL(v any) error {
 }
 
 func (e WhereConditionType) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *WhereConditionType) UnmarshalJSON(b []byte) error {

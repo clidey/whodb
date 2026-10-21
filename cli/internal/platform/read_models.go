@@ -299,6 +299,10 @@ type Function struct {
 	DefaultMaxTokens    int                      `json:"defaultMaxTokens"`
 	DefaultTemperature  float64                  `json:"defaultTemperature"`
 	IsDeployed          bool                     `json:"isDeployed"`
+	ScheduleCron        string                   `json:"scheduleCron"`
+	ScheduleInput       string                   `json:"scheduleInput"`
+	ScheduleVersion     int                      `json:"scheduleVersion"`
+	ScheduleLastRunAt   *string                  `json:"scheduleLastRunAt,omitempty"`
 }
 
 // FunctionExecutionResult describes one hosted function execution result.

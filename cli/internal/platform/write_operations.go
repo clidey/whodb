@@ -309,6 +309,10 @@ const functionWriteFields = `
   defaultMaxTokens
   defaultTemperature
   isDeployed
+  scheduleCron
+  scheduleInput
+  scheduleVersion
+  scheduleLastRunAt
 `
 
 const functionTestResultFields = `

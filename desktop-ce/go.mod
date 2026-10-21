@@ -1,6 +1,6 @@
 module github.com/clidey/whodb/desktop-ce
 
-go 1.27.2
+go 1.27.3
 
 require (
 	github.com/clidey/whodb/core v0.0.0
