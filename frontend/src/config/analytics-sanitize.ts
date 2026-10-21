@@ -86,7 +86,7 @@ export const summarizeComponentStack = (componentStack: unknown): string | undef
     if (typeof componentStack !== 'string') {
         return undefined;
     }
-    const match = /^\s*(?:at\s+|in\s+)?([A-Za-z_$][\w$.]*)/m.exec(componentStack.trim());
+    const match = /^\s*(?:at\s+|in\s+)([A-Za-z_$][\w$.]*)/m.exec(componentStack.trim());
     return match?.[1];
 };
 
