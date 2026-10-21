@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-import type { ComponentType, LazyExoticComponent } from "react";
+import type { ComponentType, LazyExoticComponent, ReactNode } from "react";
 import { lazy } from "react";
 
 type RouteFactory = () => Promise<{ default: ComponentType<any> }>;
 
 export type RouteOptions = {
     scoped?: boolean;
+    loadingFallback?: ReactNode;
 };
 
 export type RegisteredRoute = {
@@ -30,6 +31,7 @@ export type RegisteredRoute = {
     lazyComponent: LazyExoticComponent<ComponentType<any>>;
     /** If true, this route is scoped under /:orgSlug/:projectSlug */
     scoped?: boolean;
+    loadingFallback?: ReactNode;
 };
 
 const registrations: RegisteredRoute[] = [];
@@ -57,7 +59,7 @@ export function isUnscopedRouteEnabled(path: string): boolean {
  * React sees a stable component reference across re-renders.
  */
 export function registerRoute(name: string, path: string, factory: RouteFactory, options?: RouteOptions): void {
-    registrations.push({ name, path, lazyComponent: lazy(factory), scoped: options?.scoped });
+    registrations.push({ name, path, lazyComponent: lazy(factory), scoped: options?.scoped, loadingFallback: options?.loadingFallback });
 }
 
 /** Registers a public route (no auth required). */
@@ -95,12 +97,13 @@ type ScopedLayoutConfig = {
     pathPattern: string;
     layoutFactory: () => Promise<{ default: ComponentType<any> }>;
     lazyComponent: LazyExoticComponent<ComponentType<any>>;
+    loadingFallback?: ReactNode;
 };
 
 let scopedLayout: ScopedLayoutConfig | null = null;
 
-export function registerScopedLayout(pathPattern: string, layoutFactory: () => Promise<{ default: ComponentType<any> }>): void {
-    scopedLayout = { pathPattern, layoutFactory, lazyComponent: lazy(layoutFactory) };
+export function registerScopedLayout(pathPattern: string, layoutFactory: () => Promise<{ default: ComponentType<any> }>, loadingFallback?: ReactNode): void {
+    scopedLayout = { pathPattern, layoutFactory, lazyComponent: lazy(layoutFactory), loadingFallback };
 }
 
 export function getScopedLayout(): ScopedLayoutConfig | null {

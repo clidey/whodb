@@ -182,9 +182,9 @@ export const App = () => {
               const scopedRoutes = getRegisteredScopedRoutes();
               if (layout && scopedRoutes.length > 0) {
                 return (
-                  <Route path={layout.pathPattern} element={<Suspense fallback={<LoadingPage />}><layout.lazyComponent /></Suspense>}>
+                  <Route path={layout.pathPattern} element={<Suspense fallback={layout.loadingFallback === undefined ? <LoadingPage /> : layout.loadingFallback}><layout.lazyComponent /></Suspense>}>
                     {scopedRoutes.map(route => (
-                      <Route key={route.path} path={route.path} element={<Suspense fallback={<LoadingPage />}><route.lazyComponent /></Suspense>} />
+                      <Route key={route.path} path={route.path} element={<Suspense fallback={route.loadingFallback === undefined ? <LoadingPage /> : route.loadingFallback}><route.lazyComponent /></Suspense>} />
                     ))}
                   </Route>
                 );
