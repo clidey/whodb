@@ -31,6 +31,8 @@ const operationOntologyQuery = `
 query CLIPlatformOntologyQuery($projectId: ID!, $input: OntologyQueryInput!) {
   OntologyQuery(projectId: $projectId, input: $input) {
 ` + datasetQueryResultFields + `
+    partial
+    scannedRows
   }
 }`
 
@@ -164,9 +166,6 @@ var OntologyAggregateMetricOps = []string{"COUNT", "SUM", "AVG", "MIN", "MAX"}
 
 // OntologyQueryMaxScanLimit is the largest scan window the hosted bounded query accepts.
 const OntologyQueryMaxScanLimit = 5000
-
-// OntologyQueryDefaultScanLimit is the scan window used when none is requested.
-const OntologyQueryDefaultScanLimit = 1000
 
 // OntologyMetric is one metric for OntologyQuery or OntologyAggregate.
 type OntologyMetric struct {
@@ -420,7 +419,14 @@ func (c *Client) OntologyQuery(ctx context.Context, projectID string, input Onto
 	var resp struct {
 		OntologyQuery *DatasetQueryResult `json:"OntologyQuery"`
 	}
-	if err := c.graphQL(ctx, operationOntologyQuery, map[string]any{"projectId": projectID, "input": gqlInput}, &resp); err != nil {
+	if err := c.graphQLWithRetry(ctx, func() string {
+		query := operationOntologyQuery
+		if c.manifest != nil {
+			fields := c.manifest.SelectFields("DatasetQueryResult", []string{"partial", "scannedRows"})
+			query = strings.Replace(query, "    partial\n    scannedRows", strings.Join(fields, "\n"), 1)
+		}
+		return query
+	}, map[string]any{"projectId": projectID, "input": gqlInput}, &resp); err != nil {
 		return nil, err
 	}
 	if resp.OntologyQuery == nil {

@@ -57,7 +57,7 @@ forEachDatabase('sql', (db) => {
             };
             const observe = async query => {
                 const response = await page.request.post('/api/query', {
-                    headers: { 'X-CSRF-Token': streamHeaders['x-csrf-token'] ?? '' },
+                    headers: { 'X-Csrf-Token': streamHeaders['x-csrf-token'] ?? '' },
                     data: {
                         operationName: 'ObserveProtectedChat',
                         query: 'query ObserveProtectedChat($query: String!) { RunSourceQuery(query: $query) { Rows } }',

@@ -25,12 +25,13 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/spf13/cobra"
+
 	"github.com/clidey/whodb/cli/internal/config"
 	platformapi "github.com/clidey/whodb/cli/internal/platform"
 	whodbmcp "github.com/clidey/whodb/cli/pkg/mcp"
 	"github.com/clidey/whodb/cli/pkg/version"
 	"github.com/clidey/whodb/core/src/auditlog"
-	"github.com/spf13/cobra"
 )
 
 // security flags
@@ -65,6 +66,7 @@ var (
 
 // tool enablement flags
 var (
+	mcpToolProfile   string
 	mcpEnabledTools  []string
 	mcpDisabledTools []string
 )
@@ -344,6 +346,7 @@ Connection Resolution:
 			MaxRows:             mcpMaxRows,
 			AllowMultiStatement: mcpAllowMultiStatement,
 			AllowDrop:           mcpAllowDrop,
+			ToolProfile:         settings.ToolProfile,
 			EnabledTools:        settings.EnabledTools,
 			DisabledTools:       settings.DisabledTools,
 			DefaultConnection:   settings.DefaultConnection,
@@ -426,7 +429,7 @@ func init() {
 	mcpServeCmd.Flags().IntVar(&mcpPort, "port", 3000,
 		"Port to listen on (only used with --transport=http)")
 	mcpServeCmd.Flags().StringVar(&mcpAuthToken, "auth-token", "",
-		"Require this bearer token on HTTP requests (can also set WHODB_MCP_AUTH_TOKEN); strongly recommended when binding to a network interface")
+		"Require this bearer token on HTTP requests (can also set WHODB_MCP_AUTH_TOKEN); required when binding outside localhost")
 
 	// Platform flags
 	mcpServeCmd.Flags().StringVar(&mcpPlatformPolicy, "platform-policy", "", "JSON file restricting platform hosts/workspaces and read-only targets")
@@ -441,6 +444,7 @@ func init() {
 		"Hosted project id, slug, or name for this MCP process (or WHODB_PLATFORM_SESSION_PROJECT)")
 
 	// Tool enablement flags
+	mcpServeCmd.Flags().StringVar(&mcpToolProfile, "tool-profile", "", "Focus discovery: all, data, functions, workspace (permissions unchanged)")
 	mcpServeCmd.Flags().StringSliceVar(&mcpEnabledTools, "tools", nil,
 		"Comma-separated tool names to enable (default: all); platform uses full whodb_platform_* names, database-only uses names such as query, schemas")
 	mcpServeCmd.Flags().StringSliceVar(&mcpDisabledTools, "disable-tools", nil,

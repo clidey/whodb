@@ -19,6 +19,7 @@ package router
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -26,6 +27,7 @@ import (
 	"testing"
 
 	"github.com/99designs/gqlgen/graphql"
+	"github.com/andybalholm/brotli"
 	"github.com/go-chi/chi/v5"
 	"github.com/vektah/gqlparser/v2/ast"
 
@@ -85,7 +87,7 @@ func TestSetupMiddlewaresPublicPathsBypassAuth(t *testing.T) {
 func TestSSEAwareCompressUsesLongLivedRouteRegistry(t *testing.T) {
 	graphapi.RegisterLongLivedHTTPRoute("/api/test-long-lived")
 
-	handler := sseAwareCompress(5)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := sseAwareCompress()(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusAccepted)
 		_, _ = w.Write([]byte(strings.Repeat("long-lived ", 100)))
@@ -105,7 +107,7 @@ func TestSSEAwareCompressUsesLongLivedRouteRegistry(t *testing.T) {
 }
 
 func TestSSEAwareCompressDoesNotBypassByStreamSuffix(t *testing.T) {
-	handler := sseAwareCompress(5)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := sseAwareCompress()(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusAccepted)
 		_, _ = w.Write([]byte(strings.Repeat("ordinary stream ", 100)))
@@ -118,6 +120,43 @@ func TestSSEAwareCompressDoesNotBypassByStreamSuffix(t *testing.T) {
 
 	if encoding := rr.Header().Get("Content-Encoding"); encoding != "gzip" {
 		t.Fatalf("expected unregistered /stream suffix route to use compression middleware, got %q", encoding)
+	}
+}
+
+func TestSSEAwareCompressPrefersBrotliAndFallsBackToGzip(t *testing.T) {
+	body := strings.Repeat("compressible body ", 100)
+	handler := sseAwareCompress()(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain")
+		_, _ = w.Write([]byte(body))
+	}))
+
+	cases := []struct {
+		acceptEncoding string
+		want           string
+	}{
+		{"gzip, deflate, br, zstd", "br"},
+		{"gzip", "gzip"},
+		{"", ""},
+	}
+	for _, tc := range cases {
+		req := httptest.NewRequest(http.MethodGet, "/assets/app.js", nil)
+		req.Header.Set("Accept-Encoding", tc.acceptEncoding)
+		rr := httptest.NewRecorder()
+		handler.ServeHTTP(rr, req)
+
+		if encoding := rr.Header().Get("Content-Encoding"); encoding != tc.want {
+			t.Fatalf("Accept-Encoding %q: expected Content-Encoding %q, got %q", tc.acceptEncoding, tc.want, encoding)
+		}
+		if tc.want != "br" {
+			continue
+		}
+		decoded, err := io.ReadAll(brotli.NewReader(rr.Body))
+		if err != nil {
+			t.Fatalf("failed to decode brotli response: %v", err)
+		}
+		if string(decoded) != body {
+			t.Fatalf("brotli response did not round-trip")
+		}
 	}
 }
 

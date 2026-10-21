@@ -1,0 +1,239 @@
+@echo off
+setlocal
+rem Impeccable launcher (Windows). Runs bin\windows-<arch>\impeccable.exe next
+rem to this file, else a cached or freshly downloaded engine binary.
+rem
+rem Structure notes (this file is exercised by dry parsing and string-level
+rem tests, not yet on a real Windows machine):
+rem - No multi-line parenthesized blocks: cmd expands %var% at block parse
+rem   time, which made the old download path read back empty %url%/%cached%.
+rem   Linear goto flow keeps every expansion on its own line, and avoids
+rem   delayed expansion eating ! characters in user arguments.
+rem - The unversioned user binary and the PATH candidate are validated with
+rem   the engine-probe handshake (see :probe) so the retired 3.x npm CLI,
+rem   whose bin is also named impeccable, is never exec'd. IMPECCABLE_BIN,
+rem   the sibling binary, and the version-pinned cache stay trusted.
+rem - Downloads are verified against the .sha256 sidecar via certutil and
+rem   fail closed: a missing sidecar or hash tool refuses the download. On
+rem   ARM64 the arm64 asset is tried first and the x64 asset is the
+rem   fallback (Windows on ARM runs x64 binaries).
+if not defined IMPECCABLE_SKILL_DIR set "IMPECCABLE_SKILL_DIR=%~dp0.."
+if not defined IMPECCABLE_SELF set "IMPECCABLE_SELF=%~f0"
+set "arch=x64"
+if /I "%PROCESSOR_ARCHITECTURE%"=="ARM64" set "arch=arm64"
+
+if not defined IMPECCABLE_BIN goto no_env_bin
+if not exist "%IMPECCABLE_BIN%" goto no_env_bin
+set "run=%IMPECCABLE_BIN%"
+goto run
+:no_env_bin
+
+set "bin=%~dp0bin\windows-%arch%\impeccable.exe"
+if not exist "%bin%" goto no_sibling
+set "run=%bin%"
+goto run
+:no_sibling
+
+set "home_bin=%USERPROFILE%\.impeccable\bin\impeccable.exe"
+if not exist "%home_bin%" goto no_home_bin
+if defined IMPECCABLE_LAUNCHER_PROBE goto no_home_bin
+call :probe "%home_bin%"
+if not "%probe_ok%"=="1" goto no_home_bin
+set "run=%home_bin%"
+goto run
+:no_home_bin
+
+set "version="
+if exist "%~dp0VERSION" set /p version=<"%~dp0VERSION"
+if not defined IMPECCABLE_HOME set "IMPECCABLE_HOME=%USERPROFILE%\.impeccable"
+set "cached=%IMPECCABLE_HOME%\bin\%version%\impeccable.exe"
+if not defined version goto no_cache
+if not exist "%cached%" goto no_cache
+set "run=%cached%"
+goto run
+:no_cache
+
+if defined IMPECCABLE_LAUNCHER_PROBE goto download
+where impeccable >nul 2>nul
+if errorlevel 1 goto download
+call :probe impeccable
+if not "%probe_ok%"=="1" goto download
+impeccable %*
+exit /b %errorlevel%
+
+:download
+rem Last resort: fetch this version's binary from the release channel into
+rem the version-pinned user cache, verify it, then run it. Never inside
+rem another launcher's probe: fail fast and quiet instead.
+if defined IMPECCABLE_LAUNCHER_PROBE exit /b 127
+if not defined version goto fail
+where curl.exe >nul 2>nul
+if errorlevel 1 goto curl_missing
+if not defined IMPECCABLE_DOWNLOAD_BASE set "IMPECCABLE_DOWNLOAD_BASE=https://github.com/pbakaus/impeccable/releases/download"
+if exist "%IMPECCABLE_HOME%\bin\%version%\" goto cache_ready
+mkdir "%IMPECCABLE_HOME%\bin\%version%" >nul 2>nul
+if errorlevel 1 goto cache_directory_failed
+:cache_ready
+rem Stage the download in a directory only this run owns, as the sh launcher
+rem does with .impeccable.part.$$: concurrent first runs (parallel hooks, two
+rem agents) must never write, hash or move each other's files. mkdir fails
+rem when the name exists, so it claims the name atomically. RANDOM alone is
+rem not enough because cmd seeds it from the clock in whole seconds; the
+rem timestamp and the retry on collision keep same-second runs apart. A cache
+rem directory that refuses every mkdir is reported as unwritable.
+set "attempt=0"
+:claim_staging
+set /a attempt+=1
+if %attempt% GTR 20 goto cache_write_failed
+set "stamp=%TIME: =0%"
+set "stamp=%stamp::=%"
+set "stamp=%stamp:.=%"
+set "stamp=%stamp:,=%"
+set "staging=%IMPECCABLE_HOME%\bin\%version%\.impeccable.part.%stamp%-%RANDOM%%RANDOM%"
+mkdir "%staging%" >nul 2>nul
+if errorlevel 1 goto claim_staging
+set "part=%staging%\impeccable.exe"
+set "sidecar=%staging%\impeccable.sha256"
+rem Redirection failures do not reliably update ERRORLEVEL in cmd.exe;
+rem branch on the command's failure directly.
+(type nul >"%part%") 2>nul || goto staging_write_failed
+set "asset=impeccable-windows-%arch%.exe"
+set "url=%IMPECCABLE_DOWNLOAD_BASE%/engine-v%version%/%asset%"
+curl.exe -fsSL -o "%part%" "%url%" >nul 2>nul
+if not errorlevel 1 goto verify
+if not "%arch%"=="arm64" goto download_failed
+set "asset=impeccable-windows-x64.exe"
+set "url=%IMPECCABLE_DOWNLOAD_BASE%/engine-v%version%/%asset%"
+curl.exe -fsSL -o "%part%" "%url%" >nul 2>nul
+if errorlevel 1 goto download_failed
+
+:verify
+call :check_download
+if errorlevel 1 exit /b 127
+rem Mirrors the sh launcher and fails closed: a freshly downloaded binary
+rem runs only after verifying against its .sha256 sidecar. A sidecar that
+rem cannot be fetched, or an empty certutil result, refuses the download
+rem instead of running an unverified binary.
+curl.exe -fsSL -o "%sidecar%" "%url%.sha256" >nul 2>nul
+if errorlevel 1 goto verify_refuse
+set "expected="
+set /p expected=<"%sidecar%"
+for /f "tokens=1" %%h in ("%expected%") do set "expected=%%h"
+call :check_download
+if errorlevel 1 exit /b 127
+set "actual="
+rem Reuse the sidecar staging file after reading expected. Check certutil's
+rem status before parsing: its error text on stdout is not a digest.
+certutil -hashfile "%part%" SHA256 >"%sidecar%" 2>nul
+if errorlevel 1 goto verify_refuse
+call :check_download
+if errorlevel 1 exit /b 127
+for /f "usebackq skip=1 delims=" %%h in ("%sidecar%") do if not defined actual set "actual=%%h"
+del "%sidecar%" >nul 2>nul
+if not defined expected goto verify_refuse
+if not defined actual goto verify_refuse
+set "actual=%actual: =%"
+if /I "%actual%"=="%expected%" goto place
+call :discard_staging
+echo impeccable: checksum mismatch downloading %url% 1>&2
+exit /b 127
+
+:verify_refuse
+call :check_download
+if errorlevel 1 exit /b 127
+call :discard_staging
+echo impeccable: cannot verify %url% against %url%.sha256; refusing the unverified download 1>&2
+exit /b 127
+
+:check_download
+set "download_file=%~1"
+if not defined download_file set "download_file=%part%"
+if not exist "%download_file%" goto download_missing
+for %%f in ("%download_file%") do if %%~zf==0 goto download_empty
+exit /b 0
+
+:download_missing
+call :discard_staging
+echo impeccable: download completed but the file was removed before execution: %url%; check your antivirus quarantine or logs. Refusing to continue; do not disable protection. 1>&2
+exit /b 127
+
+:download_empty
+del "%download_file%" >nul 2>nul
+call :discard_staging
+echo impeccable: downloaded file is empty: %url%; refusing the unverified download 1>&2
+exit /b 127
+
+:discard_staging
+rem Removes this run's staging directory and whatever is left in it. Never
+rem touches another run's staging directory or the cached binary.
+if defined staging rd /s /q "%staging%" >nul 2>nul
+exit /b 0
+
+:place
+call :check_download
+if errorlevel 1 exit /b 127
+move /y "%part%" "%cached%" >nul 2>nul
+if errorlevel 1 goto place_failed
+call :discard_staging
+call :check_download "%cached%"
+if errorlevel 1 exit /b 127
+set "run=%cached%"
+goto run
+
+:place_failed
+call :check_download
+if errorlevel 1 exit /b 127
+call :discard_staging
+echo impeccable: could not cache the verified download: %url% 1>&2
+exit /b 127
+
+:run
+"%run%" %*
+exit /b %errorlevel%
+
+:probe
+rem Sets probe_ok=1 when %1 answers the engine handshake: prints
+rem "impeccable-engine <version>" and exits 0. The 3.x npm CLI answers any
+rem unknown verb with "Unknown command", exit 1, so it never passes.
+set "probe_ok="
+set "probe_tmp=%TEMP%\impeccable-probe-%RANDOM%%RANDOM%.txt"
+set "IMPECCABLE_LAUNCHER_PROBE=1"
+"%~1" engine-probe >"%probe_tmp%" 2>nul
+set "probe_err=%ERRORLEVEL%"
+set "IMPECCABLE_LAUNCHER_PROBE="
+if not "%probe_err%"=="0" goto probe_done
+findstr /b /c:"impeccable-engine" "%probe_tmp%" >nul 2>nul
+if not errorlevel 1 set "probe_ok=1"
+:probe_done
+del "%probe_tmp%" >nul 2>nul
+exit /b 0
+
+:cache_directory_failed
+echo impeccable: engine %version% is not installed; cannot create cache directory: "%IMPECCABLE_HOME%\bin\%version%" 1>&2
+goto setup_failed
+
+:staging_write_failed
+call :discard_staging
+
+:cache_write_failed
+echo impeccable: engine %version% is not installed; cannot write to cache directory: "%IMPECCABLE_HOME%\bin\%version%" 1>&2
+goto setup_failed
+
+:curl_missing
+echo impeccable: cannot download engine %version%; curl.exe is unavailable. 1>&2
+goto setup_failed
+
+:download_failed
+call :discard_staging
+echo impeccable: could not download engine %version% from %url%; check network access and the release URL. 1>&2
+
+:setup_failed
+echo Engine %version% setup needs network access and write permission to "%IMPECCABLE_HOME%\bin\%version%". 1>&2
+echo Run this launcher ("%~f0") with engine-probe in a terminal that has those permissions, then retry the original command. 1>&2
+echo Alternatively, set IMPECCABLE_HOME to a writable cache location, or IMPECCABLE_BIN to a preinstalled engine binary. 1>&2
+exit /b 127
+
+:fail
+echo impeccable: no engine binary found (looked in %bin%, %cached%, PATH). 1>&2
+echo Download impeccable-windows-%arch%.exe from https://github.com/pbakaus/impeccable/releases (tag engine-v%version%) and save it as %cached%, or set IMPECCABLE_BIN to a preinstalled engine binary. Docs: https://impeccable.style 1>&2
+exit /b 127

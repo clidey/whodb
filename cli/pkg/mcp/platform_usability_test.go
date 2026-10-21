@@ -43,6 +43,16 @@ func TestPlatformWorkflowRecipeChoosesGoalSpecificPlan(t *testing.T) {
 	}
 }
 
+func TestPlatformApplicationRecipeIncludesDesignReview(t *testing.T) {
+	output := recipeForGoal("build an app")
+	if len(output.Steps) != 5 || output.Steps[1].Name != "design" || output.Steps[3].Name != "verify" {
+		t.Fatalf("application recipe steps = %#v", output.Steps)
+	}
+	if output.Steps[1].Objective == "" || output.Steps[3].Objective == "" {
+		t.Fatal("application design and verification steps need objectives")
+	}
+}
+
 func TestMatchPlatformResourcesPrefersExactIDsAndNames(t *testing.T) {
 	items := []PlatformResolvedResource{{ID: "ds-1", Name: "Customers"}, {ID: "ds-2", Name: "Customer Events"}}
 	if got := matchPlatformResources(items, "ds-1"); len(got) != 1 || got[0].Match != "id" {
@@ -65,6 +75,27 @@ func TestValidatePlatformPayloadUsesKnownShapeAndTypes(t *testing.T) {
 	}
 	if err := validatePlatformPayload("create:secret", map[string]any{"name": "KEY", "value": "secret"}); err != nil {
 		t.Fatalf("valid secret payload rejected: %v", err)
+	}
+}
+
+func TestValidateOntologyLinkPayloadRequiresReferenceContract(t *testing.T) {
+	for _, test := range []struct {
+		name    string
+		link    map[string]any
+		wantErr bool
+	}{
+		{name: "reference missing id", link: map[string]any{"targetKind": "reference", "targetOntologyApiName": "ProductPrice"}, wantErr: true},
+		{name: "id without reference kind", link: map[string]any{"targetReferenceId": "ref-1", "targetOntologyApiName": "ProductPrice"}, wantErr: true},
+		{name: "invalid kind", link: map[string]any{"targetKind": "shared", "targetOntologyApiName": "ProductPrice"}, wantErr: true},
+		{name: "reference with id", link: map[string]any{"targetKind": "reference", "targetReferenceId": "ref-1", "targetOntologyApiName": "ProductPrice"}},
+		{name: "local link", link: map[string]any{"targetOntologyApiName": "ProductPrice"}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			err := validateOntologyLinkPayload([]any{test.link})
+			if (err != nil) != test.wantErr {
+				t.Fatalf("validateOntologyLinkPayload() error = %v, want error %v", err, test.wantErr)
+			}
+		})
 	}
 }
 

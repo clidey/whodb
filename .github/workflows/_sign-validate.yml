@@ -58,7 +58,7 @@ jobs:
       id-token: write
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
         with:
           egress-policy: block
           allowed-endpoints: >
@@ -72,13 +72,13 @@ jobs:
             tuf-repo-cdn.sigstore.dev:443
 
       - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: false
 
       - name: Download Snap amd64 package
         if: inputs.validate-snap
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           digest-mismatch: warn
           name: snap-package-amd64
@@ -86,7 +86,7 @@ jobs:
 
       - name: Download Snap arm64 package
         if: inputs.validate-snap
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           digest-mismatch: warn
           name: snap-package-arm64
@@ -94,7 +94,7 @@ jobs:
 
       - name: Download Windows desktop build
         if: inputs.validate-windows
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           digest-mismatch: warn
           name: desktop-windows-amd64
@@ -102,7 +102,7 @@ jobs:
 
       - name: Download macOS DMG
         if: inputs.validate-apple
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           digest-mismatch: warn
           name: desktop-darwin-dmg
@@ -110,7 +110,7 @@ jobs:
 
       - name: Download macOS App Store bundle
         if: inputs.validate-apple
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           digest-mismatch: warn
           name: desktop-darwin-mas-app
@@ -118,7 +118,7 @@ jobs:
 
       - name: Download Linux server binaries
         if: inputs.validate-linux-terminal
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           digest-mismatch: warn
           name: server-binaries-ce
@@ -126,7 +126,7 @@ jobs:
 
       - name: Download CLI binaries
         if: inputs.validate-cli
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           digest-mismatch: warn
           name: cli-binaries
@@ -160,7 +160,7 @@ jobs:
           tar czf signatures.tar.gz signatures/
 
       - name: Upload signatures
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: signatures
           path: signatures.tar.gz
@@ -174,7 +174,7 @@ jobs:
       contents: read
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
         with:
           egress-policy: block
           allowed-endpoints: >
@@ -186,13 +186,13 @@ jobs:
             release-assets.githubusercontent.com:443
 
       - name: Checkout for scripts
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: false
 
       - name: Download Snap amd64 package
         if: inputs.validate-snap
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           digest-mismatch: warn
           name: snap-package-amd64
@@ -200,7 +200,7 @@ jobs:
 
       - name: Download Snap arm64 package
         if: inputs.validate-snap
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           digest-mismatch: warn
           name: snap-package-arm64
@@ -208,7 +208,7 @@ jobs:
 
       - name: Download Windows desktop build
         if: inputs.validate-windows
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           digest-mismatch: warn
           name: desktop-windows-amd64
@@ -216,7 +216,7 @@ jobs:
 
       - name: Download macOS DMG
         if: inputs.validate-apple
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           digest-mismatch: warn
           name: desktop-darwin-dmg
@@ -224,7 +224,7 @@ jobs:
 
       - name: Download macOS App Store bundle
         if: inputs.validate-apple
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           digest-mismatch: warn
           name: desktop-darwin-mas-app
@@ -232,14 +232,14 @@ jobs:
 
       - name: Download Linux server binaries
         if: inputs.validate-linux-terminal
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           digest-mismatch: warn
           name: server-binaries-ce
           path: artifacts/server-binaries-ce/
 
       - name: Download signatures
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           digest-mismatch: warn
           name: signatures
@@ -367,7 +367,7 @@ jobs:
           EOF
 
       - name: Upload validation manifest
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: deployment-manifest-validated
           path: validation_manifest.json

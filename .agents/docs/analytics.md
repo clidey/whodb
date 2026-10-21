@@ -52,6 +52,10 @@ If the backend already records it, the frontend must not.
 
 - Never send raw error messages. Map errors through `analytics.ErrorCode`
   (Go) or the frontend error-code helpers to a fixed taxonomy.
+- Frontend exception captures may include `error_frame` (bundle file name with
+  line and column of the first same-origin stack frame) and `error_component`
+  (innermost React component name). Both are build identifiers; never add the
+  message, full stack, or URL.
 - New properties must pass the sanitizer allowlists
   (`SAFE_ANALYTICS_PROPERTY_KEYS` in `frontend/src/config/analytics-events.ts`;
   backend detail allowlists in the edition analytics wrappers). No hostnames,

@@ -17,6 +17,7 @@
 package mysql
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"strconv"
@@ -29,6 +30,7 @@ import (
 
 	"github.com/clidey/whodb/core/src/common/ssl"
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 )
@@ -94,7 +96,18 @@ func (p *MySQLPlugin) openDB(config *engine.PluginConfig, multiStatements bool) 
 		"sslMode":  sslMode,
 	})
 
-	db, err := gorm.Open(mysql.Open(mysqlConfig.FormatDSN()), &gorm.Config{Logger: logger.Default.LogMode(plugins.GetGormLogConfig())})
+	dsn := mysqlConfig.FormatDSN()
+	if !env.GetIsLocalMode() {
+		// Check the effective DSN because option keys can contain parameter delimiters.
+		parsedConfig, err := mysqldriver.ParseDSN(dsn)
+		if err != nil {
+			return nil, err
+		}
+		if parsedConfig.AllowAllFiles {
+			return nil, errors.New("allowAllFiles is disabled in server mode")
+		}
+	}
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{Logger: logger.Default.LogMode(plugins.GetGormLogConfig())})
 	if err != nil {
 		l.WithError(err).Error("Failed to connect to MySQL database")
 		return nil, err

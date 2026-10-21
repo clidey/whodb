@@ -35,6 +35,7 @@ type accessTokenEntry struct {
 
 var (
 	accessTokenCacheMu sync.Mutex
+	accessTokenLocks   sync.Map
 	accessTokenCache   = map[string]accessTokenEntry{}
 )
 
@@ -54,11 +55,30 @@ func NewOIDCTokenSource(hostURL, accountID string, store RefreshTokenStore) *OID
 // Token returns a cached access token or refreshes it through standard OIDC.
 func (s *OIDCTokenSource) Token(ctx context.Context) (string, error) {
 	key := s.cacheKey()
+	lock, _ := accessTokenLocks.LoadOrStore(key, make(chan struct{}, 1))
+	gate := lock.(chan struct{})
+	select {
+	case gate <- struct{}{}:
+	case <-ctx.Done():
+		return "", ctx.Err()
+	}
+	defer func() { <-gate }()
 	accessTokenCacheMu.Lock()
-	defer accessTokenCacheMu.Unlock()
-
-	if entry, ok := accessTokenCache[key]; ok && time.Until(entry.expiresAt) > accessTokenSkew {
+	entry, ok := accessTokenCache[key]
+	accessTokenCacheMu.Unlock()
+	if ok && time.Until(entry.expiresAt) > accessTokenSkew {
 		return entry.accessToken, nil
+	}
+	if coordinator, ok := s.store.(interface {
+		WithPlatformRefreshLock(context.Context, string, string, func() error) error
+	}); ok {
+		var token string
+		err := coordinator.WithPlatformRefreshLock(ctx, s.hostURL, s.accountID, func() error {
+			var err error
+			token, err = s.refreshLocked(ctx, key)
+			return err
+		})
+		return token, err
 	}
 	return s.refreshLocked(ctx, key)
 }
@@ -91,8 +111,8 @@ func (s *OIDCTokenSource) refreshLocked(ctx context.Context, key string) (string
 		}
 	}
 	if err != nil {
-		delete(accessTokenCache, key)
-		return "", fmt.Errorf("cannot refresh hosted WhoDB login. Run: whodb login --host %s", s.hostURL)
+		s.Invalidate()
+		return "", fmt.Errorf("cannot refresh hosted WhoDB login for %s: %w", s.hostURL, err)
 	}
 	if tokens.RefreshToken != "" && tokens.RefreshToken != refreshToken {
 		if err := s.store.SavePlatformRefreshToken(s.hostURL, s.accountID, tokens.RefreshToken); err != nil {
@@ -100,12 +120,14 @@ func (s *OIDCTokenSource) refreshLocked(ctx context.Context, key string) (string
 		}
 	}
 	if tokens.ExpiresIn <= 0 {
-		delete(accessTokenCache, key)
+		s.Invalidate()
 		return tokens.AccessToken, nil
 	}
+	accessTokenCacheMu.Lock()
 	accessTokenCache[key] = accessTokenEntry{
 		accessToken: tokens.AccessToken,
 		expiresAt:   time.Now().Add(time.Duration(tokens.ExpiresIn) * time.Second),
 	}
+	accessTokenCacheMu.Unlock()
 	return tokens.AccessToken, nil
 }

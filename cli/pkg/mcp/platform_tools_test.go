@@ -62,6 +62,7 @@ type fakePlatformClient struct {
 
 	ontologyQueryProjectID        string
 	ontologyQueryInput            *platformapi.OntologyQueryInput
+	ontologyQueryResult           *platformapi.DatasetQueryResult
 	ontologyAggregateInput        *platformapi.OntologyAggregateInput
 	ontologyStatsProperty         string
 	ontologyDescribeEntities      []string
@@ -235,8 +236,8 @@ func testPlatformSession(client platformClient) *platformToolSession {
 
 func TestPlatformToolDefinitions(t *testing.T) {
 	tools := platformToolDefinitions()
-	if len(tools) != 154 {
-		t.Fatalf("len(platformToolDefinitions()) = %d, want 154", len(tools))
+	if len(tools) != 155 {
+		t.Fatalf("len(platformToolDefinitions()) = %d, want 155", len(tools))
 	}
 	for _, tool := range tools {
 		if tool.Annotations == nil {

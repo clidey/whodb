@@ -102,6 +102,8 @@ var (
 	functionProviderConfigs     []string
 	functionSecretBindings      []string
 	functionDefaultMaxTokens    int
+	functionScheduleCron        string
+	functionScheduleInputJSON   string
 	functionDefaultTemperature  float64
 	functionVersion             int
 	functionPromoteMessage      string
@@ -1480,6 +1482,8 @@ func registerFunctionWriteFlags(command *cobra.Command) {
 	command.Flags().StringArrayVar(&functionSecretBindings, "secret-binding", nil, "secret binding as NAME=secret-id[:target]; target defaults to ENV; repeatable")
 	command.Flags().IntVar(&functionDefaultMaxTokens, "default-max-tokens", 0, "default max tokens for function AI calls")
 	command.Flags().Float64Var(&functionDefaultTemperature, "default-temperature", 0, "default temperature for function AI calls")
+	command.Flags().StringVar(&functionScheduleCron, "schedule-cron", "", "five-field cron schedule for automatic runs; pass \"\" to clear")
+	command.Flags().StringVar(&functionScheduleInputJSON, "schedule-input-json", "", "JSON object passed as input to every scheduled run")
 }
 
 func platformProjectListCommand(use, short string, read func(context.Context, *platformSession, *platform.Project) (any, *output.QueryResult, error)) *cobra.Command {
@@ -2495,6 +2499,12 @@ func addFunctionConfigPayload(cmd *cobra.Command, payload map[string]any) {
 	}
 	if cmd.Flags().Changed("default-temperature") {
 		payload["defaultTemperature"] = functionDefaultTemperature
+	}
+	if cmd.Flags().Changed("schedule-cron") {
+		payload["scheduleCron"] = strings.TrimSpace(functionScheduleCron)
+	}
+	if cmd.Flags().Changed("schedule-input-json") {
+		payload["scheduleInput"] = strings.TrimSpace(functionScheduleInputJSON)
 	}
 }
 

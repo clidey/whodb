@@ -11,9 +11,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/modelcontextprotocol/go-sdk/mcp"
+
 	"github.com/clidey/whodb/cli/internal/appcapture"
 	platformapi "github.com/clidey/whodb/cli/internal/platform"
-	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
 // PlatformAppInput selects one hosted app or app-related view.
@@ -136,8 +137,14 @@ func registerPlatformExtendedReadTool(server *mcp.Server, tool *mcp.Tool) bool {
 			return handlePlatformAppScreenshot(ctx, input)
 		})
 	case "whodb_platform_apps":
-		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAppInput) (*mcp.CallToolResult, any, error) {
-			return handlePlatformExtendedQuery(ctx, "platform_apps", "ProjectApps", map[string]any{}, input.Fields)
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, any, error) {
+			return platformProjectListRead(ctx, "platform_apps", input, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
+				result, err := session.Client.PlatformQuery(ctx, "ProjectApps", map[string]any{"projectId": session.Host.DefaultProjectID})
+				if err != nil {
+					return nil, 0, false, err
+				}
+				return result, 0, false, nil
+			})
 		})
 	case "whodb_platform_app":
 		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAppInput) (*mcp.CallToolResult, any, error) {
@@ -194,7 +201,7 @@ func registerPlatformExtendedReadTool(server *mcp.Server, tool *mcp.Tool) bool {
 			}[tool.Name]
 			payload, err := parsePayloadJSON(input.InputJSON)
 			if err != nil {
-				return nil, PlatformReadOutput{Error: err.Error(), RequestID: generateRequestID(tool.Name)}, nil
+				return nil, platformReadErrorOutput(err, generateRequestID(tool.Name)), nil
 			}
 			if operation != "PreviewCreatePackage" {
 				payload["targetProjectId"] = "selected"
@@ -344,7 +351,7 @@ func handlePlatformAppFiles(ctx context.Context, input PlatformAppInput) (*mcp.C
 
 func handlePlatformExtendedQuery(ctx context.Context, toolName, operation string, variables map[string]any, fields []string) (*mcp.CallToolResult, PlatformReadOutput, error) {
 	if err := validatePlatformExtendedQuery(operation, variables); err != nil {
-		return nil, PlatformReadOutput{Error: err.Error(), RequestID: generateRequestID(toolName)}, nil
+		return nil, platformReadErrorOutput(err, generateRequestID(toolName)), nil
 	}
 	if variables == nil {
 		variables = make(map[string]any)

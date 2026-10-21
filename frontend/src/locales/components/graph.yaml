@@ -4,245 +4,306 @@ en_US:
   graphTools: Graph tools
 
 ar_AE:
-  download: تحميل
-  layout: تَخطِيط
+  download: "تحميل"
+  layout: "تَخطِيط"
+  graphTools: "أدوات الرسم البياني"
 
 de_DE:
-  download: Herunterladen
-  layout: Layout
+  download: "Herunterladen"
+  layout: "Layout"
+  graphTools: "Diagrammwerkzeuge"
 
 el_GR:
-  download: Λήψη
-  layout: Σχέδιο
+  download: "Λήψη"
+  layout: "Σχέδιο"
+  graphTools: "Γραφικά εργαλεία"
 
 en_GB:
-  download: Download
-  layout: Layout
+  download: "Download"
+  layout: "Layout"
+  graphTools: "Graph tools"
 
 es_ES:
-  download: Descargar
-  layout: Disposición
+  download: "Descargar"
+  layout: "Disposición"
+  graphTools: "Herramientas gráficas"
 
 fi_FI:
-  download: Lataa
-  layout: Layout
+  download: "Lataa"
+  layout: "Layout"
+  graphTools: "Graafityökalut"
 
 fr_FR:
-  download: Télécharger
-  layout: Disposition
+  download: "Télécharger"
+  layout: "Disposition"
+  graphTools: "Outils graphiques"
 
 it_IT:
-  download: Scaricamento
-  layout: Disposizione
+  download: "Scaricamento"
+  layout: "Disposizione"
+  graphTools: "Strumenti grafici"
 
 iw_IL:
-  download: הורד
-  layout: מַעֲרָך
+  download: "הורד"
+  layout: "מַעֲרָך"
+  graphTools: "כלי גרפים"
 
 ja_JP:
-  download: ダウンロード
-  layout: レイアウト
+  download: "ダウンロード"
+  layout: "レイアウト"
+  graphTools: "グラフツール"
 
 ko_KR:
-  download: 다운로드
-  layout: 공들여 나열한 것
+  download: "다운로드"
+  layout: "공들여 나열한 것"
+  graphTools: "그래프 도구"
 
 nl_NL:
-  download: Downloaden
-  layout: Indeling
+  download: "Downloaden"
+  layout: "Indeling"
+  graphTools: "Grafiekhulpmiddelen"
 
 pl_PL:
-  download: Pobierać
-  layout: Układ
+  download: "Pobierać"
+  layout: "Układ"
+  graphTools: "Narzędzia graficzne"
 
 pt_BR:
-  download: Download
-  layout: Disposição
+  download: "Download"
+  layout: "Disposição"
+  graphTools: "Ferramentas gráficas"
 
 ro_RO:
-  download: Descărcați
-  layout: Aspect
+  download: "Descărcați"
+  layout: "Aspect"
+  graphTools: "Instrumente grafice"
 
 ru_RU:
-  download: Скачать
-  layout: Макет
+  download: "Скачать"
+  layout: "Макет"
+  graphTools: "Инструменты для работы с графиками"
 
 sk_SK:
-  download: Stiahnuť
-  layout: Rozloženie
+  download: "Stiahnuť"
+  layout: "Rozloženie"
+  graphTools: "Nástroje grafov"
 
 sv_SE:
-  download: Ladda ner
-  layout: Layout
+  download: "Ladda ner"
+  layout: "Layout"
+  graphTools: "Grafverktyg"
 
 zh_CN:
-  download: 下载
-  layout: 布局
+  download: "下载"
+  layout: "布局"
+  graphTools: "图表工具"
 
 zh_TW:
-  download: 下載
-  layout: 佈局
+  download: "下載"
+  layout: "佈局"
+  graphTools: "圖表工具"
 
 bg_BG:
-  download: Изтегляне
-  layout: Оформление
+  download: "Изтегляне"
+  layout: "Оформление"
+  graphTools: "Графични инструменти"
 
 bn_BD:
-  download: ডাউনলোড করুন
-  layout: লেআউট
+  download: "ডাউনলোড করুন"
+  layout: "লেআউট"
+  graphTools: "গ্রাফ টুলস"
 
 ca_ES:
-  download: Download
-  layout: Disseny
+  download: "Download"
+  layout: "Disseny"
+  graphTools: "Eines de gràfics"
 
 cs_CZ:
-  download: Stáhnout
-  layout: Rozložení
+  download: "Stáhnout"
+  layout: "Rozložení"
+  graphTools: "Nástroje grafů"
 
 da_DK:
-  download: Download
-  layout: Layout
+  download: "Download"
+  layout: "Layout"
+  graphTools: "Grafværktøjer"
 
 fa_IR:
-  download: دانلود کنید
-  layout: طرح بندی
+  download: "دانلود کنید"
+  layout: "طرح بندی"
+  graphTools: "ابزارهای نمودار"
 
 hi_IN:
-  download: डाउनलोड करना
-  layout: लेआउट
+  download: "डाउनलोड करना"
+  layout: "लेआउट"
+  graphTools: "ग्राफ़ उपकरण"
 
 hr_HR:
-  download: preuzimanje
-  layout: Izgled
+  download: "preuzimanje"
+  layout: "Izgled"
+  graphTools: "Alati za grafikone"
 
 hu_HU:
-  download: Letöltés
-  layout: Elrendezés
+  download: "Letöltés"
+  layout: "Elrendezés"
+  graphTools: "Grafikon eszközök"
 
 id_ID:
-  download: Unduh
-  layout: Tata Letak
+  download: "Unduh"
+  layout: "Tata Letak"
+  graphTools: "Alat grafik"
 
 ms_MY:
-  download: Muat turun
-  layout: Susun atur
+  download: "Muat turun"
+  layout: "Susun atur"
+  graphTools: "Alat graf"
 
 nb_NO:
-  download: Last ned
-  layout: Oppsett
+  download: "Last ned"
+  layout: "Oppsett"
+  graphTools: "Grafverktøy"
 
 sw_KE:
-  download: Pakua
-  layout: Mpangilio
+  download: "Pakua"
+  layout: "Mpangilio"
+  graphTools: "Zana za grafu"
 
 ta_IN:
-  download: பதிவிறக்கவும்
-  layout: தளவமைப்பு
+  download: "பதிவிறக்கவும்"
+  layout: "தளவமைப்பு"
+  graphTools: "வரைபட கருவிகள்"
 
 th_TH:
-  download: ดาวน์โหลด
-  layout: เค้าโครง
+  download: "ดาวน์โหลด"
+  layout: "เค้าโครง"
+  graphTools: "เครื่องมือกราฟ"
 
 tr_TR:
-  download: İndirmek
-  layout: Düzen
+  download: "İndirmek"
+  layout: "Düzen"
+  graphTools: "Grafik araçları"
 
 uk_UA:
-  download: Завантажити
-  layout: Макет
+  download: "Завантажити"
+  layout: "Макет"
+  graphTools: "Графічні інструменти"
 
 ur_PK:
-  download: ڈاؤن لوڈ کریں۔
-  layout: لے آؤٹ
+  download: "ڈاؤن لوڈ کریں۔"
+  layout: "لے آؤٹ"
+  graphTools: "گراف ٹولز"
 
 vi_VN:
-  download: Tải xuống
-  layout: Cách trình bày
+  download: "Tải xuống"
+  layout: "Cách trình bày"
+  graphTools: "Công cụ đồ thị"
 
 af_ZA:
   download: "Laai af"
   layout: "Uitleg"
+  graphTools: "Grafiek gereedskap"
 
 am_ET:
   download: "አውርድ"
   layout: "አቀማመጥ"
+  graphTools: "የግራፍ መሳሪያዎች"
 
 az_AZ:
   download: "Yüklə"
   layout: "Layout"
+  graphTools: "Qrafik alətlər"
 
 et_EE:
   download: "Laadi alla"
   layout: "Paigutus"
+  graphTools: "Graafiku tööriistad"
 
 gu_IN:
   download: "ડાઉનલોડ કરો"
   layout: "લેઆઉટ"
+  graphTools: "ગ્રાફ સાધનો"
 
 ha_NG:
   download: "Zazzagewa"
   layout: "Tsarin tsari"
+  graphTools: "Kayan aikin zane"
 
 ka_GE:
   download: "ჩამოტვირთვა"
   layout: "განლაგება"
+  graphTools: "გრაფიკის ხელსაწყოები"
 
 km_KH:
   download: "ទាញយក"
   layout: "ប្លង់"
+  graphTools: "ឧបករណ៍ក្រាហ្វិក"
 
 kn_IN:
   download: "ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ"
   layout: "ಲೇಔಟ್"
+  graphTools: "ಗ್ರಾಫ್ ಉಪಕರಣಗಳು"
 
 lt_LT:
   download: "Atsisiųsti"
   layout: "Išdėstymas"
+  graphTools: "Grafiko įrankiai"
 
 lv_LV:
   download: "Lejupielādēt"
   layout: "Izkārtojums"
+  graphTools: "Grafiku rīki"
 
 ml_IN:
   download: "ഡൗൺലോഡ് ചെയ്യുക"
   layout: "ലേഔട്ട്"
+  graphTools: "ഗ്രാഫ് ഉപകരണങ്ങൾ"
 
 mr_IN:
   download: "डाउनलोड करा"
   layout: "मांडणी"
+  graphTools: "आलेख साधने"
 
 ne_NP:
   download: "डाउनलोड गर्नुहोस्"
   layout: "लेआउट"
+  graphTools: "ग्राफ उपकरण"
 
 pa_IN:
   download: "ਡਾਊਨਲੋਡ ਕਰੋ"
   layout: "ਖਾਕਾ"
+  graphTools: "ਗ੍ਰਾਫ਼ ਟੂਲ"
 
 si_LK:
   download: "බාගන්න"
   layout: "පිරිසැලසුම"
+  graphTools: "ප්‍රස්තාර මෙවලම්"
 
 sl_SI:
   download: "Prenos"
   layout: "Postavitev"
+  graphTools: "Grafna orodja"
 
 sr_RS:
   download: "Преузми"
   layout: "Лаиоут"
+  graphTools: "Алати за графике"
 
 te_IN:
   download: "డౌన్‌లోడ్ చేయండి"
   layout: "లేఅవుట్"
+  graphTools: "గ్రాఫ్ సాధనాలు"
 
 tl_PH:
   download: "I-download"
   layout: "Layout"
+  graphTools: "Mga tool sa graph"
 
 uz_UZ:
   download: "Yuklab olish"
   layout: "Tartib"
+  graphTools: "Grafik asboblar"
 
 yo_NG:
   download: "Gba lati ayelujara"
   layout: "Ìfilélẹ"
+  graphTools: "Awọn irinṣẹ aworan"

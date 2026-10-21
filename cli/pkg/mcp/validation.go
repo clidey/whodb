@@ -99,17 +99,12 @@ func ValidateSQLStatement(query string, allowWrite bool, securityLevel SecurityL
 		}
 	}
 
-	// Block SQL comments
-	if strings.Contains(query, "--") || strings.Contains(query, "/*") {
+	cls := sqlguard.Classify(query)
+	if cls.HasComments {
 		return errors.New("SQL comments are not allowed")
 	}
-
-	// Block multiple statements: no semicolons except optional trailing one
-	if !allowMultiStatement {
-		trimmed := strings.TrimSuffix(strings.TrimSpace(query), ";")
-		if strings.Contains(trimmed, ";") {
-			return ErrMultipleStatements
-		}
+	if !allowMultiStatement && cls.MultiStatement {
+		return ErrMultipleStatements
 	}
 
 	// Block dangerous functions in strict mode
@@ -122,7 +117,6 @@ func ValidateSQLStatement(query string, allowWrite bool, securityLevel SecurityL
 		}
 	}
 
-	cls := sqlguard.Classify(query)
 	stmtType := cls.Type
 
 	// Allow writes - only apply minimal restrictions

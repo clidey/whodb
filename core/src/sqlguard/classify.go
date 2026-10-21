@@ -69,6 +69,8 @@ type Classification struct {
 	// tracked separately from Mutating because execution paths differ: a single
 	// write still runs as a normal query, while a batch needs script execution.
 	MultiStatement bool
+	// HasComments reports SQL comments outside quoted values and identifiers.
+	HasComments bool
 	// Reason explains the verdict in one clause, for audit and error messages.
 	Reason string
 }
@@ -117,9 +119,9 @@ var leadingKeywords = map[string]StatementType{
 // Classify reports whether SQL requires approval. Only the bounded read grammar
 // is automatic; unsupported syntax and ambiguous dialect semantics fail closed.
 func Classify(query string) Classification {
-	stripped := stripNoise(query)
+	stripped, comments := stripSQLNoise(query)
 	tokens := tokenize(stripped)
-	cls := Classification{Type: StatementUnknown, MultiStatement: isMultiStatement(stripped)}
+	cls := Classification{Type: StatementUnknown, MultiStatement: isMultiStatement(stripped), HasComments: comments}
 	if len(tokens) > 0 {
 		cls.Type = statementType(tokens)
 	}
@@ -214,17 +216,25 @@ func tokenize(query string) []string {
 // statement's own structure: a keyword inside a comment or literal cannot
 // trigger a verdict, and a keyword hidden behind one cannot escape it.
 func stripNoise(query string) string {
+	stripped, _ := stripSQLNoise(query)
+	return stripped
+}
+
+func stripSQLNoise(query string) (string, bool) {
+	comments := false
 	var b strings.Builder
 	b.Grow(len(query))
 	for i := 0; i < len(query); {
 		switch c := query[i]; {
 		case c == '-' && i+1 < len(query) && query[i+1] == '-',
 			c == '#':
+			comments = true
 			for i < len(query) && query[i] != '\n' {
 				i++
 			}
 			b.WriteByte(' ')
 		case c == '/' && i+1 < len(query) && query[i+1] == '*':
+			comments = true
 			i += 2
 			for i+1 < len(query) && (query[i] != '*' || query[i+1] != '/') {
 				i++
@@ -257,7 +267,7 @@ func stripNoise(query string) string {
 			i++
 		}
 	}
-	return b.String()
+	return b.String(), comments
 }
 
 // skipQuoted returns the index just past a quoted run that starts at i,

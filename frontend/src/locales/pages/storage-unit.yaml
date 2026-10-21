@@ -92,6 +92,11 @@ ar_AE:
   foreignColumnLabel: "العمود الأجنبي"
   foreignColumnPlaceholder: "العمود المشار إليه"
   remove: "يزيل"
+  loadingTables: "تحميل الجداول"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} أعمدة"
+  newObject: "جديد {object}"
+  viewMode: "وضع العرض"
 
 de_DE:
   title: "Tische"
@@ -137,6 +142,11 @@ de_DE:
   foreignColumnLabel: "Ausländische Kolumne"
   foreignColumnPlaceholder: "Referenzierte Spalte"
   remove: "Entfernen"
+  loadingTables: "Laden von Tabellen"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} Spalten"
+  newObject: "Neu {object}"
+  viewMode: "Ansichtsmodus"
 
 el_GR:
   title: "Πίνακες"
@@ -182,6 +192,11 @@ el_GR:
   foreignColumnLabel: "Ξένη Στήλη"
   foreignColumnPlaceholder: "Αναφερόμενη στήλη"
   remove: "Αφαιρώ"
+  loadingTables: "Φόρτωση πινάκων"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} στήλες"
+  newObject: "Νέο {object}"
+  viewMode: "Λειτουργία προβολής"
 
 en_GB:
   title: "Tables"
@@ -227,6 +242,11 @@ en_GB:
   foreignColumnLabel: "Foreign Column"
   foreignColumnPlaceholder: "Referenced column"
   remove: "Remove"
+  loadingTables: "Loading tables"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} columns"
+  newObject: "New {object}"
+  viewMode: "View mode"
 
 es_ES:
   title: "Mesas"
@@ -272,6 +292,11 @@ es_ES:
   foreignColumnLabel: "Columna extranjera"
   foreignColumnPlaceholder: "Columna referenciada"
   remove: "Eliminar"
+  loadingTables: "Cargando tablas"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} columnas"
+  newObject: "Nuevo {object}"
+  viewMode: "Modo de visualización"
 
 fi_FI:
   title: "Taulukot"
@@ -317,6 +342,11 @@ fi_FI:
   foreignColumnLabel: "Ulkomainen sarake"
   foreignColumnPlaceholder: "Viitattu sarake"
   remove: "Poistaa"
+  loadingTables: "Pöytien lataus"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} sarakkeita"
+  newObject: "Uusi {object}"
+  viewMode: "Näytä tila"
 
 fr_FR:
   title: "Tables"
@@ -362,6 +392,11 @@ fr_FR:
   foreignColumnLabel: "Colonne étrangère"
   foreignColumnPlaceholder: "Colonne référencée"
   remove: "Retirer"
+  loadingTables: "Chargement des tableaux"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} colonnes"
+  newObject: "Nouveau {object}"
+  viewMode: "Mode d'affichage"
 
 it_IT:
   title: "Tabelle"
@@ -407,6 +442,11 @@ it_IT:
   foreignColumnLabel: "Colonna straniera"
   foreignColumnPlaceholder: "Colonna referenziata"
   remove: "Rimuovere"
+  loadingTables: "Caricamento tabelle"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} colonne"
+  newObject: "Nuovo {object}"
+  viewMode: "Modalità di visualizzazione"
 
 iw_IL:
   title: "טבלאות"
@@ -452,6 +492,11 @@ iw_IL:
   foreignColumnLabel: "טור זר"
   foreignColumnPlaceholder: "עמודה עם הפניה"
   remove: "לְהַסִיר"
+  loadingTables: "טוען טבלאות"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} עמודות"
+  newObject: "חדש {object}"
+  viewMode: "מצב תצוגה"
 
 ja_JP:
   title: "テーブル"
@@ -497,6 +542,11 @@ ja_JP:
   foreignColumnLabel: "外部列"
   foreignColumnPlaceholder: "参照された列"
   remove: "取り除く"
+  loadingTables: "テーブルのロード"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} 列"
+  newObject: "新しい{object}"
+  viewMode: "ビューモード"
 
 ko_KR:
   title: "테이블"
@@ -542,6 +592,11 @@ ko_KR:
   foreignColumnLabel: "외국칼럼"
   foreignColumnPlaceholder: "참조된 열"
   remove: "제거하다"
+  loadingTables: "테이블 로드 중"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} 열"
+  newObject: "신규 {object}"
+  viewMode: "보기 모드"
 
 nl_NL:
   title: "Tafels"
@@ -587,6 +642,11 @@ nl_NL:
   foreignColumnLabel: "Buitenlandse Kolom"
   foreignColumnPlaceholder: "Kolom waarnaar wordt verwezen"
   remove: "Verwijderen"
+  loadingTables: "Tabellen laden"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} kolommen"
+  newObject: "Nieuw {object}"
+  viewMode: "Bekijk modus"
 
 pl_PL:
   title: "Stoły"
@@ -632,6 +692,11 @@ pl_PL:
   foreignColumnLabel: "Kolumna zagraniczna"
   foreignColumnPlaceholder: "Kolumna odniesienia"
   remove: "Usunąć"
+  loadingTables: "Ładowanie tabel"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} kolumny"
+  newObject: "Nowy {object}"
+  viewMode: "Tryb przeglądania"
 
 pt_BR:
   title: "Tabelas"
@@ -677,6 +742,11 @@ pt_BR:
   foreignColumnLabel: "Coluna Estrangeira"
   foreignColumnPlaceholder: "Coluna referenciada"
   remove: "Remover"
+  loadingTables: "Carregando tabelas"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} colunas"
+  newObject: "Novo {object}"
+  viewMode: "Modo de visualização"
 
 ro_RO:
   title: "Mesele"
@@ -722,6 +792,11 @@ ro_RO:
   foreignColumnLabel: "Coloana străină"
   foreignColumnPlaceholder: "Coloana de referință"
   remove: "Elimina"
+  loadingTables: "Se încarcă tabele"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} coloane"
+  newObject: "Nou {object}"
+  viewMode: "Modul vizualizare"
 
 ru_RU:
   title: "Таблицы"
@@ -767,6 +842,11 @@ ru_RU:
   foreignColumnLabel: "Иностранная колонка"
   foreignColumnPlaceholder: "Ссылочный столбец"
   remove: "Удалять"
+  loadingTables: "Загрузка таблиц"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} столбцы"
+  newObject: "Новый {object}"
+  viewMode: "Режим просмотра"
 
 sk_SK:
   title: "Tabuľky"
@@ -812,6 +892,11 @@ sk_SK:
   foreignColumnLabel: "Zahraničný stĺpec"
   foreignColumnPlaceholder: "Odkazovaný stĺpec"
   remove: "Odstrániť"
+  loadingTables: "Načítavacie tabuľky"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} stĺpcov"
+  newObject: "Nové {object}"
+  viewMode: "Režim zobrazenia"
 
 sv_SE:
   title: "Tabeller"
@@ -857,6 +942,11 @@ sv_SE:
   foreignColumnLabel: "Utländsk kolumn"
   foreignColumnPlaceholder: "Refererad kolumn"
   remove: "Ta bort"
+  loadingTables: "Laddar bord"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} kolumner"
+  newObject: "Ny {object}"
+  viewMode: "Visningsläge"
 
 zh_CN:
   title: "表格"
@@ -902,6 +992,11 @@ zh_CN:
   foreignColumnLabel: "国外专栏"
   foreignColumnPlaceholder: "参考栏目"
   remove: "消除"
+  loadingTables: "装载表"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} 列"
+  newObject: "新{object}"
+  viewMode: "查看模式"
 
 zh_TW:
   title: "表格"
@@ -947,6 +1042,11 @@ zh_TW:
   foreignColumnLabel: "國外專欄"
   foreignColumnPlaceholder: "參考欄目"
   remove: "消除"
+  loadingTables: "Loading tables"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} columns"
+  newObject: "新{object}"
+  viewMode: "View mode"
 
 bg_BG:
   title: "Маси"
@@ -992,6 +1092,11 @@ bg_BG:
   foreignColumnLabel: "Чуждестранна колона"
   foreignColumnPlaceholder: "Реферирана колона"
   remove: "Премахнете"
+  loadingTables: "Зареждане на маси"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} колони"
+  newObject: "Ново {object}"
+  viewMode: "Режим на преглед"
 
 bn_BD:
   title: "টেবিল"
@@ -1037,6 +1142,11 @@ bn_BD:
   foreignColumnLabel: "বিদেশী কলাম"
   foreignColumnPlaceholder: "উল্লেখিত কলাম"
   remove: "সরান"
+  loadingTables: "টেবিল লোড হচ্ছে"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} কলাম"
+  newObject: "নতুন {object}"
+  viewMode: "মোড দেখুন"
 
 ca_ES:
   title: "Taules"
@@ -1082,6 +1192,11 @@ ca_ES:
   foreignColumnLabel: "Columna Estrangera"
   foreignColumnPlaceholder: "Columna referenciada"
   remove: "Eliminar"
+  loadingTables: "Carregant taules"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} columnes"
+  newObject: "Nou {object}"
+  viewMode: "Mode de visualització"
 
 cs_CZ:
   title: "Tabulky"
@@ -1127,6 +1242,11 @@ cs_CZ:
   foreignColumnLabel: "Zahraniční sloupec"
   foreignColumnPlaceholder: "Odkazovaný sloupec"
   remove: "Odstranit"
+  loadingTables: "Načítání tabulek"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} sloupců"
+  newObject: "Nové {object}"
+  viewMode: "Režim zobrazení"
 
 da_DK:
   title: "Tabeller"
@@ -1172,6 +1292,11 @@ da_DK:
   foreignColumnLabel: "Udenlandsk kolonne"
   foreignColumnPlaceholder: "Refereret kolonne"
   remove: "Fjerne"
+  loadingTables: "Indlæser borde"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} kolonner"
+  newObject: "Ny {object}"
+  viewMode: "Visningstilstand"
 
 fa_IR:
   title: "جداول"
@@ -1217,6 +1342,11 @@ fa_IR:
   foreignColumnLabel: "ستون خارجی"
   foreignColumnPlaceholder: "ستون ارجاع شده"
   remove: "حذف کنید"
+  loadingTables: "در حال بارگذاری جداول"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} ستون"
+  newObject: "جدید {object}"
+  viewMode: "حالت مشاهده"
 
 hi_IN:
   title: "टेबल"
@@ -1262,6 +1392,11 @@ hi_IN:
   foreignColumnLabel: "विदेशी स्तम्भ"
   foreignColumnPlaceholder: "संदर्भित स्तंभ"
   remove: "निकालना"
+  loadingTables: "टेबल लोड हो रहा है"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} कॉलम"
+  newObject: "नया {object}"
+  viewMode: "दृश्य मोड"
 
 hr_HR:
   title: "Stolovi"
@@ -1307,6 +1442,11 @@ hr_HR:
   foreignColumnLabel: "Strana kolumna"
   foreignColumnPlaceholder: "Referencirani stupac"
   remove: "Ukloniti"
+  loadingTables: "Učitavanje tablica"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} stupaca"
+  newObject: "Novo {object}"
+  viewMode: "Način prikaza"
 
 hu_HU:
   title: "Táblázatok"
@@ -1352,6 +1492,11 @@ hu_HU:
   foreignColumnLabel: "Idegen oszlop"
   foreignColumnPlaceholder: "Hivatkozott oszlop"
   remove: "Távolítsa el"
+  loadingTables: "Táblázatok betöltése"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} oszlopok"
+  newObject: "Új {object}"
+  viewMode: "Nézet mód"
 
 id_ID:
   title: "Tabel"
@@ -1397,6 +1542,11 @@ id_ID:
   foreignColumnLabel: "Kolom Asing"
   foreignColumnPlaceholder: "Kolom yang direferensikan"
   remove: "Menghapus"
+  loadingTables: "Memuat tabel"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} kolom"
+  newObject: "Baru {object}"
+  viewMode: "Modus tampilan"
 
 ms_MY:
   title: "Meja"
@@ -1442,6 +1592,11 @@ ms_MY:
   foreignColumnLabel: "Foreign Column"
   foreignColumnPlaceholder: "Lajur yang dirujuk"
   remove: "Alih keluar"
+  loadingTables: "Memuatkan jadual"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} lajur"
+  newObject: "Baharu {object}"
+  viewMode: "Mod lihat"
 
 nb_NO:
   title: "Tabeller"
@@ -1487,6 +1642,11 @@ nb_NO:
   foreignColumnLabel: "Utenlandsk kolonne"
   foreignColumnPlaceholder: "Referert kolonne"
   remove: "Fjerne"
+  loadingTables: "Laster tabeller"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} kolonner"
+  newObject: "Ny {object}"
+  viewMode: "Visningsmodus"
 
 sw_KE:
   title: "Majedwali"
@@ -1532,6 +1692,11 @@ sw_KE:
   foreignColumnLabel: "Safu ya Nje"
   foreignColumnPlaceholder: "Safu wima iliyorejelewa"
   remove: "Ondoa"
+  loadingTables: "Inapakia meza"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} safu wima"
+  newObject: "Mpya {object}"
+  viewMode: "Hali ya kutazama"
 
 ta_IN:
   title: "அட்டவணைகள்"
@@ -1577,6 +1742,11 @@ ta_IN:
   foreignColumnLabel: "வெளிநாட்டு நெடுவரிசை"
   foreignColumnPlaceholder: "குறிப்பிடப்பட்ட நெடுவரிசை"
   remove: "அகற்று"
+  loadingTables: "அட்டவணைகளை ஏற்றுகிறது"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} நெடுவரிசைகள்"
+  newObject: "புதிய {object}"
+  viewMode: "பார்வை முறை"
 
 th_TH:
   title: "ตาราง"
@@ -1622,6 +1792,11 @@ th_TH:
   foreignColumnLabel: "คอลัมน์ต่างประเทศ"
   foreignColumnPlaceholder: "คอลัมน์อ้างอิง"
   remove: "ลบ"
+  loadingTables: "กำลังโหลดตาราง"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} คอลัมน์"
+  newObject: "ใหม่ {object}"
+  viewMode: "โหมดดู"
 
 tr_TR:
   title: "Tablolar"
@@ -1667,6 +1842,11 @@ tr_TR:
   foreignColumnLabel: "Yabancı Sütun"
   foreignColumnPlaceholder: "Başvurulan sütun"
   remove: "Kaldırmak"
+  loadingTables: "Tablolar yükleniyor"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} sütunlar"
+  newObject: "Yeni {object}"
+  viewMode: "Görünüm modu"
 
 uk_UA:
   title: "Таблиці"
@@ -1712,6 +1892,11 @@ uk_UA:
   foreignColumnLabel: "Іноземна колонка"
   foreignColumnPlaceholder: "Посилання на стовпець"
   remove: "видалити"
+  loadingTables: "Завантаження столів"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} стовпців"
+  newObject: "Новий {object}"
+  viewMode: "Режим перегляду"
 
 ur_PK:
   title: "میزیں"
@@ -1757,6 +1942,11 @@ ur_PK:
   foreignColumnLabel: "غیر ملکی کالم"
   foreignColumnPlaceholder: "حوالہ شدہ کالم"
   remove: "ہٹا دیں۔"
+  loadingTables: "میزیں لوڈ ہو رہی ہیں۔"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} کالم"
+  newObject: "نیا {object}"
+  viewMode: "موڈ دیکھیں"
 
 vi_VN:
   title: "Bàn"
@@ -1802,6 +1992,11 @@ vi_VN:
   foreignColumnLabel: "Cột nước ngoài"
   foreignColumnPlaceholder: "Cột được tham chiếu"
   remove: "Di dời"
+  loadingTables: "Đang tải bảng"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} cột"
+  newObject: "Mới {object}"
+  viewMode: "Chế độ xem"
 
 af_ZA:
   title: "Tabelle"
@@ -1847,6 +2042,11 @@ af_ZA:
   foreignColumnLabel: "Buitelandse Kolom"
   foreignColumnPlaceholder: "Verwysde kolom"
   remove: "Verwyder"
+  loadingTables: "Laai tafels"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} kolomme"
+  newObject: "Nuwe {object}"
+  viewMode: "Kykmodus"
 
 am_ET:
   title: "ጠረጴዛዎች"
@@ -1892,6 +2092,11 @@ am_ET:
   foreignColumnLabel: "የውጭ አምድ"
   foreignColumnPlaceholder: "የተጠቀሰው አምድ"
   remove: "አስወግድ"
+  loadingTables: "ጠረጴዛዎችን በመጫን ላይ"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} አምዶች"
+  newObject: "አዲስ {object}"
+  viewMode: "የእይታ ሁነታ"
 
 az_AZ:
   title: "Cədvəllər"
@@ -1937,6 +2142,11 @@ az_AZ:
   foreignColumnLabel: "Xarici sütun"
   foreignColumnPlaceholder: "İstinad edilmiş sütun"
   remove: "Sil"
+  loadingTables: "Cədvəllər yüklənir"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} sütun"
+  newObject: "Yeni {object}"
+  viewMode: "Baxış rejimi"
 
 et_EE:
   title: "Tabelid"
@@ -1982,6 +2192,11 @@ et_EE:
   foreignColumnLabel: "Välismaa veerg"
   foreignColumnPlaceholder: "Viidatud veerg"
   remove: "Eemalda"
+  loadingTables: "Tabelite laadimine"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} veergu"
+  newObject: "Uus {object}"
+  viewMode: "Vaatamise režiim"
 
 gu_IN:
   title: "કોષ્ટકો"
@@ -2027,6 +2242,11 @@ gu_IN:
   foreignColumnLabel: "વિદેશી કૉલમ"
   foreignColumnPlaceholder: "સંદર્ભિત કૉલમ"
   remove: "દૂર કરો"
+  loadingTables: "કોષ્ટકો લોડ કરી રહ્યું છે"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} કૉલમ"
+  newObject: "નવી {object}"
+  viewMode: "જુઓ મોડ"
 
 ha_NG:
   title: "Tables"
@@ -2072,6 +2292,11 @@ ha_NG:
   foreignColumnLabel: "Rukunin Ƙasashen Waje"
   foreignColumnPlaceholder: "Rukunin magana"
   remove: "Cire"
+  loadingTables: "Ana ɗaukar tebur"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} ginshiƙai"
+  newObject: "Sabo {object}"
+  viewMode: "Yanayin duba"
 
 ka_GE:
   title: "მაგიდები"
@@ -2117,6 +2342,11 @@ ka_GE:
   foreignColumnLabel: "უცხოური სვეტი"
   foreignColumnPlaceholder: "მითითებული სვეტი"
   remove: "ამოღება"
+  loadingTables: "ცხრილების ჩატვირთვა"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} სვეტი"
+  newObject: "ახალი {object}"
+  viewMode: "ნახვის რეჟიმი"
 
 km_KH:
   title: "តុ"
@@ -2162,6 +2392,11 @@ km_KH:
   foreignColumnLabel: "ជួរបរទេស"
   foreignColumnPlaceholder: "ជួរឈរយោង"
   remove: "ដកចេញ"
+  loadingTables: "កំពុងផ្ទុកតារាង"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} ជួរឈរ"
+  newObject: "ថ្មី {object}"
+  viewMode: "របៀបមើល"
 
 kn_IN:
   title: "ಕೋಷ್ಟಕಗಳು"
@@ -2207,6 +2442,11 @@ kn_IN:
   foreignColumnLabel: "ವಿದೇಶಿ ಕಾಲಮ್"
   foreignColumnPlaceholder: "ಉಲ್ಲೇಖಿತ ಕಾಲಮ್"
   remove: "ತೆಗೆದುಹಾಕಿ"
+  loadingTables: "ಕೋಷ್ಟಕಗಳನ್ನು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} ಕಾಲಮ್‌ಗಳು"
+  newObject: "ಹೊಸ {object}"
+  viewMode: "ವೀಕ್ಷಣೆ ಮೋಡ್"
 
 lt_LT:
   title: "Lentelės"
@@ -2252,6 +2492,11 @@ lt_LT:
   foreignColumnLabel: "Užsienio stulpelis"
   foreignColumnPlaceholder: "Nurodytas stulpelis"
   remove: "Pašalinti"
+  loadingTables: "Lentelių krovimas"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} stulpelių"
+  newObject: "Naujas {object}"
+  viewMode: "Žiūrėjimo režimas"
 
 lv_LV:
   title: "Tabulas"
@@ -2297,6 +2542,11 @@ lv_LV:
   foreignColumnLabel: "Ārzemju kolonna"
   foreignColumnPlaceholder: "Atsauces kolonna"
   remove: "Noņemt"
+  loadingTables: "Tabulu ielāde"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} kolonnas"
+  newObject: "Jauns {object}"
+  viewMode: "Skatīšanas režīms"
 
 ml_IN:
   title: "പട്ടികകൾ"
@@ -2342,6 +2592,11 @@ ml_IN:
   foreignColumnLabel: "വിദേശ കോളം"
   foreignColumnPlaceholder: "പരാമർശിച്ച കോളം"
   remove: "നീക്കം ചെയ്യുക"
+  loadingTables: "പട്ടികകൾ ലോഡ് ചെയ്യുന്നു"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} നിരകൾ"
+  newObject: "പുതിയ {object}"
+  viewMode: "കാഴ്ച മോഡ്"
 
 mr_IN:
   title: "टेबल्स"
@@ -2387,6 +2642,11 @@ mr_IN:
   foreignColumnLabel: "परदेशी स्तंभ"
   foreignColumnPlaceholder: "संदर्भित स्तंभ"
   remove: "काढा"
+  loadingTables: "टेबल लोड करत आहे"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} स्तंभ"
+  newObject: "नवीन {object}"
+  viewMode: "पहा मोड"
 
 ne_NP:
   title: "तालिकाहरू"
@@ -2432,6 +2692,11 @@ ne_NP:
   foreignColumnLabel: "विदेशी स्तम्भ"
   foreignColumnPlaceholder: "सन्दर्भित स्तम्भ"
   remove: "हटाउनुहोस्"
+  loadingTables: "तालिकाहरू लोड गर्दै"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} स्तम्भहरू"
+  newObject: "नयाँ {object}"
+  viewMode: "मोड हेर्नुहोस्"
 
 pa_IN:
   title: "ਟੇਬਲ"
@@ -2477,6 +2742,11 @@ pa_IN:
   foreignColumnLabel: "ਵਿਦੇਸ਼ੀ ਕਾਲਮ"
   foreignColumnPlaceholder: "ਹਵਾਲਾ ਦਿੱਤਾ ਕਾਲਮ"
   remove: "ਹਟਾਓ"
+  loadingTables: "ਟੇਬਲ ਲੋਡ ਕੀਤੇ ਜਾ ਰਹੇ ਹਨ"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} ਕਾਲਮ"
+  newObject: "ਨਵਾਂ {object}"
+  viewMode: "ਮੋਡ ਦੇਖੋ"
 
 si_LK:
   title: "වගු"
@@ -2522,6 +2792,11 @@ si_LK:
   foreignColumnLabel: "විදේශීය තීරුව"
   foreignColumnPlaceholder: "යොමු තීරුව"
   remove: "ඉවත් කරන්න"
+  loadingTables: "වගු පැටවීම"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} තීරු"
+  newObject: "නව {object}"
+  viewMode: "දර්ශන මාදිලිය"
 
 sl_SI:
   title: "Mize"
@@ -2567,6 +2842,11 @@ sl_SI:
   foreignColumnLabel: "Tuja rubrika"
   foreignColumnPlaceholder: "Referenčni stolpec"
   remove: "Odstrani"
+  loadingTables: "Nakladalne mize"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} stolpcev"
+  newObject: "Novo {object}"
+  viewMode: "Način pogleda"
 
 sr_RS:
   title: "Табле"
@@ -2612,6 +2892,11 @@ sr_RS:
   foreignColumnLabel: "Фореигн Цолумн"
   foreignColumnPlaceholder: "Референтна колона"
   remove: "Уклони"
+  loadingTables: "Учитавање табела"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} колоне"
+  newObject: "Ново {object}"
+  viewMode: "Режим прегледа"
 
 te_IN:
   title: "పట్టికలు"
@@ -2657,6 +2942,11 @@ te_IN:
   foreignColumnLabel: "విదేశీ కాలమ్"
   foreignColumnPlaceholder: "సూచించబడిన నిలువు వరుస"
   remove: "తొలగించు"
+  loadingTables: "పట్టికలు లోడ్ అవుతోంది"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} నిలువు వరుసలు"
+  newObject: "కొత్త {object}"
+  viewMode: "వీక్షణ మోడ్"
 
 tl_PH:
   title: "Mga mesa"
@@ -2702,6 +2992,11 @@ tl_PH:
   foreignColumnLabel: "Dayuhang Hanay"
   foreignColumnPlaceholder: "Tinutukoy na column"
   remove: "Alisin"
+  loadingTables: "Naglo-load ng mga talahanayan"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} mga column"
+  newObject: "Bago {object}"
+  viewMode: "View mode"
 
 uz_UZ:
   title: "Jadvallar"
@@ -2747,6 +3042,11 @@ uz_UZ:
   foreignColumnLabel: "Chet el ustuni"
   foreignColumnPlaceholder: "Havola qilingan ustun"
   remove: "O'chirish"
+  loadingTables: "Jadvallar yuklanmoqda"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} ustunlar"
+  newObject: "Yangi {object}"
+  viewMode: "Ko'rish rejimi"
 
 yo_NG:
   title: "Awọn tabili"
@@ -2792,3 +3092,8 @@ yo_NG:
   foreignColumnLabel: "Origun Ajeji"
   foreignColumnPlaceholder: "Ọwọn itọkasi"
   remove: "Yọ kuro"
+  loadingTables: "Awọn tabili ikojọpọ"
+  objectCount: "{count} {objects}"
+  columnCount: "{count} ọwọn"
+  newObject: "Tuntun {object}"
+  viewMode: "Ipo wiwo"

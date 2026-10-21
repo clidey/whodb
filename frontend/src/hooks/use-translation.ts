@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { type ReactNode, useCallback, useEffect, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { useAppSelector } from '@/store/hooks';
-import { loadTranslationsSync, getTranslation, getPluralCategory } from '@/utils/i18n';
+import { loadTranslationsSync, getTranslation, getPluralCategory, getLanguagePackVersion, subscribeToLanguagePacks } from '@/utils/i18n';
 
 /**
  * Hook for loading and using translations from YAML locale files.
@@ -38,12 +38,15 @@ import { loadTranslationsSync, getTranslation, getPluralCategory } from '@/utils
  */
 export const useTranslation = (componentPath: string) => {
     const language = useAppSelector(state => state.settings.language);
+    // Re-read when a language pack finishes loading, in case this language was set before
+    // its translations arrived (changeLanguage normally loads them first).
+    const languagePackVersion = useSyncExternalStore(subscribeToLanguagePacks, getLanguagePackVersion);
     const [translations, setTranslations] = useState<Record<string, string>>(() =>
         loadTranslationsSync(componentPath, language)
     );
     useEffect(() => {
         setTranslations(loadTranslationsSync(componentPath, language));
-    }, [componentPath, language]);
+    }, [componentPath, language, languagePackVersion]);
 
     /**
      * Translates a key with optional interpolation and automatic pluralization.

@@ -17,6 +17,8 @@
 import {
     sanitizeAnalyticsIdentityProperties,
     sanitizeAnalyticsProperties,
+    summarizeComponentStack,
+    summarizeErrorLocation,
     type AnalyticsRuntimeContext,
 } from './analytics-sanitize';
 
@@ -86,6 +88,32 @@ const run = () => {
     for (const key of ['org_id', 'project_id', 'email', 'name']) {
         assertMissing(identityProperties, key);
     }
+
+    const origin = 'https://app.example.com';
+    const stack = [
+        "TypeError: Cannot read properties of undefined (reading 'id') for SELECT secret FROM t",
+        '    at https://cdn.vendor.net/lib/react.production.min.js:12:34',
+        '    at DashboardPage (https://app.example.com/assets/index-abc123.js:120:45)',
+        '    at https://app.example.com/assets/vendor-def456.js:1:2',
+    ].join('\n');
+    assertEqual(summarizeErrorLocation(stack, origin), 'index-abc123.js:120:45', 'first in-app frame is reduced to file:line:column');
+    assertEqual(summarizeErrorLocation('Error: no frames', origin), undefined, 'stack without in-app frames yields nothing');
+    assertEqual(summarizeErrorLocation(undefined, origin), undefined, 'missing stack yields nothing');
+    assertEqual(summarizeErrorLocation(stack, ''), undefined, 'missing origin yields nothing');
+
+    assertEqual(summarizeComponentStack('\n    at RunRow (https://app.example.com/assets/index.js:1:2)\n    at DashboardPage'), 'RunRow', 'innermost component name is extracted');
+    assertEqual(summarizeComponentStack('\n    in RunRow\n    in div'), 'RunRow', 'legacy "in" component stacks are supported');
+    assertEqual(summarizeComponentStack(''), undefined, 'empty component stack yields nothing');
+    assertEqual(summarizeComponentStack('secret'), undefined, 'bare text is not a component stack');
+    assertEqual(summarizeComponentStack('private SQL and credentials'), undefined, 'message text is not a component stack');
+
+    const exceptionProperties = sanitizeAnalyticsProperties({
+        error_code: 'internal_error',
+        error_frame: 'index-abc123.js:120:45',
+        error_component: 'RunRow',
+    }, context);
+    assertEqual(exceptionProperties.error_frame, 'index-abc123.js:120:45', 'error_frame is an allowed property');
+    assertEqual(exceptionProperties.error_component, 'RunRow', 'error_component is an allowed property');
 };
 
 run();

@@ -19,14 +19,16 @@ package mcp
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
 	"time"
 
+	"github.com/modelcontextprotocol/go-sdk/mcp"
+
 	"github.com/clidey/whodb/cli/internal/config"
 	platformapi "github.com/clidey/whodb/cli/internal/platform"
-	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
 const defaultPlatformRowLimit = 50
@@ -548,6 +550,7 @@ type PendingPlatformAction struct {
 	WorkflowPlanID  string
 	WorkflowSteps   int
 	IdempotencyKey  string
+	PayloadHash     string
 	ExpiresAt       time.Time
 	InFlight        bool // true while a confirm is actively executing this action
 	BrowserApproved bool
@@ -2205,7 +2208,7 @@ func storePendingPlatformAction(action *PendingPlatformAction, contexts ...conte
 	state.mu.Lock()
 	defer state.mu.Unlock()
 	for key, pending := range state.Pending {
-		if pending.ExpiresAt.Before(now) {
+		if pending.ExpiresAt.Before(now) && !pending.InFlight {
 			delete(state.Pending, key)
 		}
 	}
@@ -2237,35 +2240,17 @@ func platformIdempotencyCompleted(key string, contexts ...context.Context) bool 
 	if !ok {
 		return false
 	}
-	if completedAt.Add(24 * time.Hour).Before(time.Now()) {
+	if completedAt.Add(30 * 24 * time.Hour).Before(time.Now()) {
 		delete(state.IdempotencyDone, key)
 		return false
 	}
 	return true
 }
 
-func markPlatformIdempotencyCompleted(key string, contexts ...context.Context) {
-	state := platformStateFor(contexts...)
-	if key == "" {
-		return
-	}
-	state.mu.Lock()
-	defer state.mu.Unlock()
-	markPlatformIdempotencyCompletedLocked(key, contexts...)
-}
-
 func markPlatformIdempotencyCompletedLocked(key string, contexts ...context.Context) {
 	state := platformStateFor(contexts...)
 	delete(state.IdempotencyPending, key)
 	state.IdempotencyDone[key] = time.Now()
-}
-
-func browserApprovedPlatformAction(token string, contexts ...context.Context) bool {
-	state := platformStateFor(contexts...)
-	state.mu.RLock()
-	defer state.mu.RUnlock()
-	action := state.Pending[token]
-	return action != nil && action.BrowserApproved && time.Now().Before(action.ExpiresAt)
 }
 
 // getPendingPlatformAction claims a pending action for execution, marking it
@@ -2280,12 +2265,12 @@ func getPendingPlatformAction(token string, contexts ...context.Context) (*Pendi
 	if !ok {
 		return nil, fmt.Errorf("confirmation token not found or expired")
 	}
+	if action.InFlight {
+		return nil, errors.New("confirmation is already being executed")
+	}
 	if action.ExpiresAt.Before(time.Now()) {
 		delete(state.Pending, token)
 		return nil, fmt.Errorf("confirmation token has expired")
-	}
-	if action.InFlight {
-		return nil, fmt.Errorf("confirmation is already being executed")
 	}
 	action.InFlight = true
 	if state.Checkpoint != nil {
@@ -2309,12 +2294,22 @@ func releasePendingPlatformAction(token string, contexts ...context.Context) {
 }
 
 func consumePendingPlatformAction(token string, contexts ...context.Context) {
+	consumePendingPlatformActionResult(token, "", contexts...)
+}
+
+func consumePendingPlatformActionResult(token, resultJSON string, contexts ...context.Context) {
 	state := platformStateFor(contexts...)
 	state.mu.Lock()
 	defer state.mu.Unlock()
 	if action, ok := state.Pending[token]; ok {
 		delete(state.Pending, token)
-		markPlatformIdempotencyCompletedLocked(action.IdempotencyKey, contexts...)
+		if action.IdempotencyKey != "" {
+			markPlatformIdempotencyCompletedLocked(action.IdempotencyKey, contexts...)
+			if state.IdempotencyResults == nil {
+				state.IdempotencyResults = map[string]platformIdempotencyResult{}
+			}
+			state.IdempotencyResults[action.IdempotencyKey] = platformIdempotencyResult{PayloadHash: action.PayloadHash, ResultJSON: safePlatformReplayResult(resultJSON)}
+		}
 	}
 }
 
@@ -2327,7 +2322,9 @@ func listPendingPlatformActions(contexts ...context.Context) []*PendingPlatformA
 	actions := make([]*PendingPlatformAction, 0, len(state.Pending))
 	for token, action := range state.Pending {
 		if action.ExpiresAt.Before(now) {
-			delete(state.Pending, token)
+			if !action.InFlight {
+				delete(state.Pending, token)
+			}
 			continue
 		}
 		actions = append(actions, action)
@@ -2547,9 +2544,6 @@ func HandlePlatformConfirm(ctx context.Context, req *mcp.CallToolRequest, input 
 		TrackToolCall(ctx, "platform_confirm", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "validation"})
 		return nil, ConfirmOutput{Error: err.Error(), RequestID: requestID}, nil
 	}
-	if runtime := platformRuntimeFromContext(ctx); runtime != nil && runtime.RequireBrowserApproval && !browserApprovedPlatformAction(input.Token, ctx) {
-		return nil, ConfirmOutput{Error: "Approve this write in WhoDB before confirming it here", RequestID: requestID}, nil
-	}
 	action, err := getPendingPlatformAction(input.Token, ctx)
 	if err != nil {
 		TrackToolCall(ctx, "platform_confirm", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "token_invalid"})
@@ -2579,7 +2573,13 @@ func HandlePlatformConfirm(ctx context.Context, req *mcp.CallToolRequest, input 
 		TrackToolCall(ctx, "platform_confirm", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_action"})
 		return nil, ConfirmOutput{PlatformSetupGuidance: platformSetupGuidanceForError(ctx, err, requestID), Error: err.Error(), RequestID: requestID}, nil
 	}
-	consumePendingPlatformAction(input.Token, ctx)
+	resultJSON := ""
+	for i, column := range output.Columns {
+		if column == "result_json" && len(output.Rows) > 0 && i < len(output.Rows[0]) {
+			resultJSON, _ = output.Rows[0][i].(string)
+		}
+	}
+	consumePendingPlatformActionResult(input.Token, resultJSON, ctx)
 	consumed = true
 	TrackToolCall(ctx, "platform_confirm", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"action": action.Operation})
 	return nil, output, nil

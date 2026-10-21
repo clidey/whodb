@@ -20,9 +20,11 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	platformapi "github.com/clidey/whodb/cli/internal/platform"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -44,6 +46,7 @@ type PlatformResourceGraphInput struct {
 
 // PlatformNextActionsInput is the input for the whodb_platform_next_actions tool.
 type PlatformNextActionsInput struct {
+	FunctionID  string   `json:"function_id,omitempty" jsonschema:"For runtime readiness, inspect the latest persisted run of this function without executing it."`
 	Goal        string   `json:"goal,omitempty" jsonschema:"Optional user goal used to keep suggested actions relevant."`
 	OmitFiles   bool     `json:"omit_files,omitempty" jsonschema:"Omit root folder file and folder summaries. Defaults to false."`
 	OmitLineage bool     `json:"omit_lineage,omitempty" jsonschema:"Omit project lineage summary. Defaults to false."`
@@ -114,6 +117,8 @@ type PlatformLineageSummary struct {
 
 // PlatformWorkspaceMap is a project-level map of hosted platform resources.
 type PlatformWorkspaceMap struct {
+	Apps        any                     `json:"apps"`
+	Packages    any                     `json:"packages"`
 	Host        string                  `json:"host,omitempty"`
 	OrgID       string                  `json:"org_id,omitempty"`
 	OrgName     string                  `json:"org_name,omitempty"`
@@ -259,12 +264,14 @@ type PlatformDataModelSummary struct {
 
 // PlatformRuntimeReadiness summarizes executable/runtime readiness.
 type PlatformRuntimeReadiness struct {
-	AIProviders []PlatformWorkspaceItem `json:"ai_providers"`
-	Secrets     []PlatformWorkspaceItem `json:"secrets"`
-	Functions   []PlatformWorkspaceItem `json:"functions"`
-	Transforms  []PlatformWorkspaceItem `json:"transforms"`
-	Checks      []PlatformWorkflowCheck `json:"checks"`
-	Warnings    []string                `json:"warnings"`
+	ObservedAt  string                      `json:"observed_at"`
+	Evidence    []PlatformReadinessEvidence `json:"evidence"`
+	AIProviders []PlatformWorkspaceItem     `json:"ai_providers"`
+	Secrets     []PlatformWorkspaceItem     `json:"secrets"`
+	Functions   []PlatformWorkspaceItem     `json:"functions"`
+	Transforms  []PlatformWorkspaceItem     `json:"transforms"`
+	Checks      []PlatformWorkflowCheck     `json:"checks"`
+	Warnings    []string                    `json:"warnings"`
 }
 
 // PlatformChangeImpact summarizes direct graph impact for a planned change.
@@ -293,6 +300,11 @@ type PlatformWritePlan struct {
 }
 
 type platformWorkspaceSnapshot struct {
+	unavailable map[string]bool
+	omitted     map[string]bool
+	observedAt  string
+	apps        any
+	packages    any
 	session     *platformToolSession
 	sources     []platformapi.Source
 	secrets     []platformapi.ProjectSecret
@@ -416,7 +428,7 @@ func HandlePlatformProjectHealth(ctx context.Context, req *mcp.CallToolRequest, 
 // HandlePlatformDataModelSummary returns an agent-focused data model summary.
 func HandlePlatformDataModelSummary(ctx context.Context, req *mcp.CallToolRequest, input PlatformResourceGraphInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
 	return platformProjectRead(ctx, "platform_data_model_summary", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
-		snapshot, err := loadPlatformWorkspaceSnapshot(ctx, session, input.OmitFiles, input.OmitLineage)
+		snapshot, err := loadPlatformWorkspaceSnapshot(ctx, session, input.OmitFiles, input.OmitLineage, "sources", "datasets", "ontologies", "transforms", "files", "lineage")
 		if err != nil {
 			return nil, 0, false, err
 		}
@@ -428,11 +440,14 @@ func HandlePlatformDataModelSummary(ctx context.Context, req *mcp.CallToolReques
 // HandlePlatformRuntimeReadiness returns an agent-focused runtime readiness summary.
 func HandlePlatformRuntimeReadiness(ctx context.Context, req *mcp.CallToolRequest, input PlatformNextActionsInput) (*mcp.CallToolResult, PlatformReadOutput, error) {
 	return platformProjectRead(ctx, "platform_runtime_readiness", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
-		snapshot, err := loadPlatformWorkspaceSnapshot(ctx, session, input.OmitFiles, input.OmitLineage)
+		snapshot, err := loadPlatformWorkspaceSnapshot(ctx, session, true, true, "ai_providers", "secrets", "functions", "transforms")
 		if err != nil {
 			return nil, 0, false, err
 		}
 		readiness := buildPlatformRuntimeReadiness(snapshot)
+		if input.FunctionID != "" {
+			addFunctionReadinessEvidence(ctx, session, input.FunctionID, &readiness)
+		}
 		return readiness, len(readiness.Checks), false, nil
 	})
 }
@@ -485,40 +500,69 @@ func HandlePlatformWritePlan(ctx context.Context, req *mcp.CallToolRequest, inpu
 	})
 }
 
-func loadPlatformWorkspaceSnapshot(ctx context.Context, session *platformToolSession, omitFiles, omitLineage bool) (*platformWorkspaceSnapshot, error) {
+func loadPlatformWorkspaceSnapshot(ctx context.Context, session *platformToolSession, omitFiles, omitLineage bool, areas ...string) (*platformWorkspaceSnapshot, error) {
 	projectID := session.Host.DefaultProjectID
 	snapshot := &platformWorkspaceSnapshot{
 		session:     session,
+		omitted:     map[string]bool{},
+		unavailable: map[string]bool{}, observedAt: time.Now().UTC().Format(time.RFC3339), storageUsed: -1,
 		omitFiles:   omitFiles,
 		omitLineage: omitLineage,
 	}
 
+	wanted := func(area string) bool {
+		included := len(areas) == 0 || slices.Contains(areas, area)
+		snapshot.omitted[area] = !included
+		return included
+	}
+	var authenticationError error
+	failed := func(area string, err error) {
+		if code, _, _ := platformErrorFields(err); code == string(PlatformErrorAuth) {
+			authenticationError = err
+		}
+		snapshot.unavailable[area] = true
+		snapshot.warnings = append(snapshot.warnings, area+": metadata unavailable ("+err.Error()+"); absence is not established")
+	}
 	var err error
-	if snapshot.sources, err = session.Client.ProjectSources(ctx, session.Host.DefaultOrgID, projectID); err != nil {
-		return nil, err
+	if wanted("sources") {
+		if snapshot.sources, err = session.Client.ProjectSources(ctx, session.Host.DefaultOrgID, projectID); err != nil {
+			failed("sources", err)
+		}
 	}
-	if snapshot.secrets, err = session.Client.ProjectSecrets(ctx, projectID); err != nil {
-		return nil, err
+	if wanted("secrets") {
+		if snapshot.secrets, err = session.Client.ProjectSecrets(ctx, projectID); err != nil {
+			failed("secrets", err)
+		}
 	}
-	if snapshot.providers, err = session.Client.AIProviders(ctx, projectID); err != nil {
-		return nil, err
+	if wanted("ai_providers") {
+		if snapshot.providers, err = session.Client.AIProviders(ctx, projectID); err != nil {
+			failed("ai_providers", err)
+		}
 	}
-	if snapshot.datasets, err = session.Client.Datasets(ctx, projectID); err != nil {
-		return nil, err
+	if wanted("datasets") {
+		if snapshot.datasets, err = session.Client.Datasets(ctx, projectID); err != nil {
+			failed("datasets", err)
+		}
 	}
-	if snapshot.ontologies, err = session.Client.Ontologies(ctx, projectID); err != nil {
-		return nil, err
+	if wanted("ontologies") {
+		if snapshot.ontologies, err = session.Client.Ontologies(ctx, projectID); err != nil {
+			failed("ontologies", err)
+		}
 	}
-	if snapshot.transforms, err = session.Client.Transforms(ctx, projectID); err != nil {
-		return nil, err
+	if wanted("transforms") {
+		if snapshot.transforms, err = session.Client.Transforms(ctx, projectID); err != nil {
+			failed("transforms", err)
+		}
 	}
-	if snapshot.functions, err = session.Client.Functions(ctx, projectID, []string{"id", "name", "language", "entryPoint", "isDeployed", "providerIds", "ontologyIds", "readOnlyOntologyIds", "providerConfigs", "secretBindings"}); err != nil {
-		return nil, err
+	if wanted("functions") {
+		if snapshot.functions, err = session.Client.Functions(ctx, projectID, []string{"id", "name", "language", "entryPoint", "isDeployed", "providerIds", "ontologyIds", "readOnlyOntologyIds", "providerConfigs", "secretBindings"}); err != nil {
+			failed("functions", err)
+		}
 	}
-	if !omitFiles {
+	if wanted("files") && !omitFiles {
 		contents, err := session.Client.FolderContents(ctx, projectID, "", []string{"folders", "files", "storageUsed"})
 		if err != nil {
-			return nil, err
+			failed("files", err)
 		}
 		if contents != nil {
 			snapshot.folders = contents.Folders
@@ -526,24 +570,46 @@ func loadPlatformWorkspaceSnapshot(ctx context.Context, session *platformToolSes
 			snapshot.storageUsed = contents.StorageUsed
 		}
 	}
-	usage, err := session.Client.ProjectStorageUsage(ctx, projectID)
-	if err != nil {
-		return nil, err
-	}
-	snapshot.storageUsed = usage
-	if !omitLineage {
-		snapshot.lineage, err = session.Client.ProjectLineage(ctx, projectID)
+	if wanted("storage") {
+		usage, err := session.Client.ProjectStorageUsage(ctx, projectID)
 		if err != nil {
-			return nil, err
+			failed("storage", err)
+		} else {
+			snapshot.storageUsed = usage
 		}
 	}
-	snapshot.warnings = platformWorkspaceWarnings(snapshot)
+	if wanted("lineage") && !omitLineage {
+		snapshot.lineage, err = session.Client.ProjectLineage(ctx, projectID)
+		if err != nil {
+			failed("lineage", err)
+		}
+	}
+	if wanted("apps") {
+		snapshot.apps, err = session.Client.PlatformQuery(ctx, "ProjectApps", map[string]any{"projectId": projectID})
+		if err != nil {
+			failed("apps", err)
+		}
+	}
+	if wanted("packages") {
+		snapshot.packages, err = session.Client.PlatformQuery(ctx, "PackageInstallations", map[string]any{"projectId": projectID})
+		if err != nil {
+			failed("packages", err)
+		}
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	if authenticationError != nil {
+		return nil, authenticationError
+	}
+	snapshot.warnings = append(snapshot.warnings, platformWorkspaceWarnings(snapshot)...)
 	return snapshot, nil
 }
 
 func buildPlatformWorkspaceMap(snapshot *platformWorkspaceSnapshot) PlatformWorkspaceMap {
 	scope := platformScope(snapshot.session)
 	workspaceMap := PlatformWorkspaceMap{
+		Apps: snapshot.apps, Packages: snapshot.packages,
 		Host:        scope.Host,
 		OrgID:       scope.OrgID,
 		OrgName:     scope.OrgName,
@@ -821,6 +887,12 @@ func buildPlatformProjectHealth(snapshot *platformWorkspaceSnapshot) PlatformPro
 	} else {
 		checks = append(checks, PlatformWorkflowCheck{Name: "lineage", Status: "unknown", Reason: "Lineage was omitted or unavailable.", ToolHint: "whodb_platform_project_lineage"})
 	}
+	if len(snapshot.unavailable) > 0 {
+		for i := range checks {
+			checks[i].Status = "unknown"
+			checks[i].Reason = "Partial inventory; consult warnings and available counts."
+		}
+	}
 	next := buildPlatformNextActions(snapshot, "").Actions
 	if len(next) > 5 {
 		next = next[:5]
@@ -893,7 +965,7 @@ func buildPlatformGapAnalysis(snapshot *platformWorkspaceSnapshot, goal string) 
 func platformWorkspaceHighlights(snapshot *platformWorkspaceSnapshot) []string {
 	highlights := make([]string, 0)
 	if len(snapshot.sources) > 0 {
-		highlights = append(highlights, intString(len(snapshot.sources))+" source(s) connected")
+		highlights = append(highlights, intString(len(snapshot.sources))+" source(s) configured")
 	}
 	if len(snapshot.datasets) > 0 {
 		highlights = append(highlights, intString(len(snapshot.datasets))+" dataset(s) available")
@@ -915,6 +987,11 @@ func platformWorkspaceHighlights(snapshot *platformWorkspaceSnapshot) []string {
 	}
 	if snapshot.lineage != nil && len(snapshot.lineage.Edges) > 0 {
 		highlights = append(highlights, intString(len(snapshot.lineage.Edges))+" lineage edge(s) found")
+	}
+	for _, area := range []string{"apps", "packages"} {
+		if n := platformWorkspaceCounts(snapshot)[area]; n > 0 {
+			highlights = append(highlights, intString(n)+" "+area+" available")
+		}
 	}
 	if len(highlights) == 0 {
 		highlights = append(highlights, "no major platform resources returned for the selected project")
@@ -993,6 +1070,17 @@ func platformBuildPlanPhases(goal string) []PlatformPlanPhase {
 func platformWorkflowGaps(snapshot *platformWorkspaceSnapshot, goal string) []PlatformWorkflowGap {
 	goal = strings.ToLower(strings.TrimSpace(goal))
 	gaps := make([]PlatformWorkflowGap, 0)
+	if len(snapshot.unavailable) > 0 {
+		areas := make([]string, 0, len(snapshot.unavailable))
+		for area := range snapshot.unavailable {
+			areas = append(areas, area)
+		}
+		sort.Strings(areas)
+		for _, area := range areas {
+			gaps = append(gaps, PlatformWorkflowGap{Area: area, Severity: "unknown", Missing: "unknown", Reason: "Inventory unavailable; absence has not been established."})
+		}
+		return gaps
+	}
 	add := func(area, severity, missing, reason string, tools ...string) {
 		gaps = append(gaps, PlatformWorkflowGap{Area: area, Severity: severity, Missing: missing, Reason: reason, SuggestedTools: tools})
 	}
@@ -1126,7 +1214,16 @@ func buildPlatformRuntimeReadiness(snapshot *platformWorkspaceSnapshot) Platform
 	if undeployed > 0 {
 		warnings = append(warnings, intString(undeployed)+" function(s) are not deployed")
 	}
+	for i := range checks {
+		if snapshot.unavailable[checks[i].Name] {
+			checks[i].Status = "unknown"
+			checks[i].Reason = "Metadata unavailable; configuration and runtime state are unknown."
+		} else if checks[i].Status == "ok" {
+			checks[i].Status = "configured"
+		}
+	}
 	return PlatformRuntimeReadiness{
+		ObservedAt: snapshot.observedAt, Evidence: runtimeMetadataEvidence(snapshot),
 		AIProviders: providerItems(snapshot.providers),
 		Secrets:     secretItems(snapshot.secrets),
 		Functions:   functionItems(snapshot.functions),
@@ -1328,6 +1425,19 @@ func platformWorkspaceCounts(snapshot *platformWorkspaceSnapshot) map[string]int
 		counts["lineage_nodes"] = len(snapshot.lineage.Nodes)
 		counts["lineage_edges"] = len(snapshot.lineage.Edges)
 	}
+	for name, value := range map[string]any{"apps": snapshot.apps, "packages": snapshot.packages} {
+		if items, ok := value.([]any); ok {
+			counts[name] = len(items)
+		}
+	}
+	for area := range snapshot.unavailable {
+		delete(counts, area)
+	}
+	for area, omitted := range snapshot.omitted {
+		if omitted {
+			delete(counts, area)
+		}
+	}
 	return counts
 }
 
@@ -1350,10 +1460,10 @@ func platformWorkspaceWarnings(snapshot *platformWorkspaceSnapshot) []string {
 	if snapshot.omitLineage {
 		warnings = append(warnings, "lineage summary omitted by request")
 	}
-	if len(snapshot.sources) == 0 {
+	if !snapshot.omitted["sources"] && !snapshot.unavailable["sources"] && len(snapshot.sources) == 0 {
 		warnings = append(warnings, "no hosted sources returned for the selected project")
 	}
-	if len(snapshot.datasets) == 0 && len(snapshot.files) == 0 {
+	if !snapshot.omitted["datasets"] && !snapshot.omitted["files"] && !snapshot.unavailable["datasets"] && !snapshot.unavailable["files"] && len(snapshot.datasets) == 0 && len(snapshot.files) == 0 {
 		warnings = append(warnings, "no datasets or root files returned for the selected project")
 	}
 	return warnings

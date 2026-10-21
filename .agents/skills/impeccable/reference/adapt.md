@@ -28,7 +28,7 @@ Understand what needs adaptation and why:
    - What won't work? (Hover states on touch, tiny touch targets)
    - What's inappropriate? (Desktop patterns on mobile, mobile patterns on desktop)
 
-**CRITICAL**: Adaptation is rethinking the experience for the new context, not scaling pixels.
+Adaptation is rethinking the experience for the new context, not scaling pixels.
 
 ## Plan Adaptation Strategy
 
@@ -165,9 +165,9 @@ Choose appropriate breakpoints:
 - Persistent side navigation on desktop
 - Breadcrumbs on smaller screens for context
 
-**IMPORTANT**: Test on real devices. Device emulation in DevTools is helpful but not perfect.
+Test on real devices. DevTools emulation is a useful first pass but misses real touch, performance, and browser chrome.
 
-**NEVER**:
+**Avoid**:
 - Hide core functionality on mobile (if it matters, make it work)
 - Assume desktop = powerful device (consider accessibility, older machines)
 - Use different information architecture across contexts (confusing)
@@ -187,6 +187,12 @@ Test thoroughly across contexts:
 - **Different input methods**: Touch, mouse, keyboard
 - **Edge cases**: Very small screens (320px), very large screens (4K)
 - **Slow connections**: Test on throttled network
+
+**Custom controls** (sliders, drag surfaces, scrollable control strips): a before/after slider can pass every width check above and still refuse to drag on iOS, so exercise each one in scope in the same batched round as the checks above:
+
+- **Primary gesture**: Tap it and confirm it responds as designed, then drag it with the target input method; the drag must complete, not just start
+- **Scroll across it**: A swipe along the page's scroll axis across the control scrolls the page or container without activating it; a drag that starts on the control along its axis moves the control, not the page. Neither failure throws an error, so try both
+- **Evidence**: Say what produced the evidence: an emulated viewport, synthesized touch input through a browser tool, which engine ran it (Chromium is not Safari), or a physical device. Screenshots and resized viewports verify layout, never a gesture. Name what stayed untested and move on; unreachable hardware is a reported gap, not a blocker
 
 When the adaptation feels native to each context, hand off to `$impeccable polish` for the final pass.
 

@@ -23,7 +23,7 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-dev = ["ruff==0.16.9"]
+dev = ["ruff==0.17.0"]
 
 [project.urls]
 Homepage = "https://whodb.com"

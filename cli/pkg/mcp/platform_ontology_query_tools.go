@@ -22,8 +22,9 @@ import (
 	"fmt"
 	"strings"
 
-	platformapi "github.com/clidey/whodb/cli/internal/platform"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+
+	platformapi "github.com/clidey/whodb/cli/internal/platform"
 )
 
 // Ontology analytics, sharing, service account, lineage provider and package
@@ -303,8 +304,9 @@ func HandlePlatformOntologyQuery(ctx context.Context, req *mcp.CallToolRequest, 
 		return nil, PlatformReadOutput{Error: fmt.Sprintf("scan_limit must be at most %d", platformapi.OntologyQueryMaxScanLimit), RequestID: generateRequestID("platform_ontology_query")}, nil
 	}
 	if err := validateOntologyMetrics(input.Metrics, platformapi.OntologyQueryMetricOps, strings.ToLower); err != nil {
-		return nil, PlatformReadOutput{Error: err.Error(), RequestID: generateRequestID("platform_ontology_query")}, nil
+		return nil, platformReadErrorOutput(err, generateRequestID("platform_ontology_query")), nil
 	}
+	var partial *bool
 	result, output, err := platformProjectRead(ctx, "platform_ontology_query", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
 		query := platformapi.OntologyQueryInput{
 			Entity:       entity,
@@ -327,38 +329,17 @@ func HandlePlatformOntologyQuery(ctx context.Context, req *mcp.CallToolRequest, 
 		if rows == nil {
 			return rows, 0, false, err
 		}
-		return rows, len(rows.Rows), rows.Total > len(rows.Rows), err
+		partial = rows.Partial
+		return rows, len(rows.Rows), partial == nil || *partial || rows.Total > len(rows.Rows), err
 	})
 	if output.Error == "" {
-		if scanned := ontologyQueryScanBound(input.ScanLimit, output.Data); scanned > 0 {
-			output.Warnings = append(output.Warnings, fmt.Sprintf("the query matched at least %d rows, which is the scan limit; totals may be partial. Raise scan_limit (max %d) or use whodb_platform_ontology_aggregate for exact counts.", scanned, platformapi.OntologyQueryMaxScanLimit))
+		if partial == nil {
+			output.Warnings = append(output.Warnings, "the server did not report query completeness; results and totals may be partial.")
+		} else if *partial {
+			output.Warnings = append(output.Warnings, fmt.Sprintf("one or more source scans reached the scan limit; results and totals are partial. Raise scan_limit (max %d) or use whodb_platform_ontology_aggregate for exact counts.", platformapi.OntologyQueryMaxScanLimit))
 		}
 	}
 	return result, output, err
-}
-
-// ontologyQueryScanBound returns the effective scan limit when the matched total
-// reached it, meaning the in-memory scan may have stopped before every row.
-func ontologyQueryScanBound(requested int, data any) int {
-	limit := requested
-	if limit <= 0 {
-		limit = platformapi.OntologyQueryDefaultScanLimit
-	}
-	total := 0
-	switch typed := data.(type) {
-	case *platformapi.DatasetQueryResult:
-		if typed != nil {
-			total = typed.Total
-		}
-	case map[string]any:
-		if value, ok := typed["total"].(float64); ok {
-			total = int(value)
-		}
-	}
-	if total >= limit {
-		return limit
-	}
-	return 0
 }
 
 // HandlePlatformOntologyAggregate runs a SQL aggregate over one ontology.
@@ -374,11 +355,11 @@ func HandlePlatformOntologyAggregate(ctx context.Context, req *mcp.CallToolReque
 		return nil, PlatformReadOutput{Error: "offset must be non-negative", RequestID: generateRequestID("platform_ontology_aggregate")}, nil
 	}
 	if err := validateOntologyMetrics(input.Metrics, platformapi.OntologyAggregateMetricOps, strings.ToUpper); err != nil {
-		return nil, PlatformReadOutput{Error: err.Error(), RequestID: generateRequestID("platform_ontology_aggregate")}, nil
+		return nil, platformReadErrorOutput(err, generateRequestID("platform_ontology_aggregate")), nil
 	}
 	where, err := platformapi.NormalizeWhereCondition(input.Where)
 	if err != nil {
-		return nil, PlatformReadOutput{Error: err.Error(), RequestID: generateRequestID("platform_ontology_aggregate")}, nil
+		return nil, platformReadErrorOutput(err, generateRequestID("platform_ontology_aggregate")), nil
 	}
 	return platformProjectRead(ctx, "platform_ontology_aggregate", input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
 		aggregate := platformapi.OntologyAggregateInput{
@@ -440,7 +421,7 @@ func HandlePlatformOntologyStats(ctx context.Context, req *mcp.CallToolRequest, 
 	}
 	where, err := platformapi.NormalizeWhereCondition(input.Where)
 	if err != nil {
-		return nil, PlatformReadOutput{Error: err.Error(), RequestID: generateRequestID("platform_ontology_stats")}, nil
+		return nil, platformReadErrorOutput(err, generateRequestID("platform_ontology_stats")), nil
 	}
 	return platformIDRead(ctx, "platform_ontology_stats", input.ID, input.Fields, func(ctx context.Context, session *platformToolSession, id string) (any, int, bool, error) {
 		stats, err := session.Client.OntologyStats(ctx, session.Host.DefaultProjectID, id, property, where)
@@ -484,7 +465,7 @@ func HandlePlatformOntologySimilar(ctx context.Context, req *mcp.CallToolRequest
 	}
 	where, err := platformapi.NormalizeWhereCondition(input.Where)
 	if err != nil {
-		return nil, PlatformReadOutput{Error: err.Error(), RequestID: generateRequestID("platform_ontology_similar")}, nil
+		return nil, platformReadErrorOutput(err, generateRequestID("platform_ontology_similar")), nil
 	}
 	return platformIDRead(ctx, "platform_ontology_similar", input.EntityID, input.Fields, func(ctx context.Context, session *platformToolSession, entityID string) (any, int, bool, error) {
 		result, err := session.Client.OntologySimilar(ctx, session.Host.DefaultProjectID, platformapi.OntologySimilarInput{

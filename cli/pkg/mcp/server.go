@@ -23,20 +23,25 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
+
+	"github.com/modelcontextprotocol/go-sdk/mcp"
 
 	"github.com/clidey/whodb/cli/internal/agentmanifest"
 	platformapi "github.com/clidey/whodb/cli/internal/platform"
 	"github.com/clidey/whodb/cli/pkg/version"
-	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
 // ServerOptions configures the MCP server.
 type ServerOptions struct {
+	// ToolProfile narrows discovery to a task; it does not grant permissions.
+	ToolProfile string
 	// SetupHandler runs credential-free setup actions supplied by the CLI.
 	// validate receives a patch; apply receives the complete validated preview.
 	SetupHandler func(context.Context, string, json.RawMessage) (json.RawMessage, error)
@@ -193,6 +198,7 @@ func NewServer(opts *ServerOptions) *mcp.Server {
 
 	// Create tool enablement from server options
 	toolEnablement := &ToolEnablement{
+		ToolProfile:   opts.ToolProfile,
 		EnabledTools:  opts.EnabledTools,
 		DisabledTools: opts.DisabledTools,
 	}
@@ -220,6 +226,7 @@ func NewServer(opts *ServerOptions) *mcp.Server {
 
 // ToolEnablement tracks which tools should be registered.
 type ToolEnablement struct {
+	ToolProfile   string
 	EnabledTools  []string
 	DisabledTools []string
 }
@@ -231,6 +238,9 @@ func (te *ToolEnablement) isToolEnabled(toolName string) bool {
 		if t == toolName || (!strings.HasPrefix(toolName, "whodb_") && t == "whodb_"+toolName) {
 			return false
 		}
+	}
+	if !profileAllowsTool(te.ToolProfile, toolName) {
+		return false
 	}
 	// If enabled list is empty, all tools are enabled by default
 	if len(te.EnabledTools) == 0 {
@@ -1285,12 +1295,12 @@ func buildPlatformToolGuide(secOpts *SecurityOptions) platformToolGuideResource 
 			{Tool: "whodb_platform_action", Resources: []string{"ontology"}, Actions: []string{"reembed"}},
 		},
 			"whodb_platform_ontology_describe", "whodb_platform_ontology_query", "whodb_platform_ontology_aggregate", "whodb_platform_ontology_stats", "whodb_platform_ontology_similar", "whodb_platform_ontology_embedding_jobs", "whodb_platform_ontology_record_capabilities", "whodb_platform_ontology_action_preview", "whodb_platform_ontology_action_executions"),
-		platformToolCategory(toolByName, "ontology_sharing", "Share ontologies across projects in the organization and reference shared ontologies locally.", "Discover shared ontologies before creating a reference; check reference impact before removing one.", nil, []platformToolGuideMutation{
+		platformToolCategory(toolByName, "ontology_sharing", "Share ontologies across projects in the organization and reference shared ontologies locally.", "Discover the owner ontology and create a reference first. A cross-project link needs targetKind=reference, targetReferenceId=<returned reference id>, and targetOntologyApiName=<owner apiName>; the local alias is not the link target. Verify with ontology_follow_link. Check reference impact before removing one.", nil, []platformToolGuideMutation{
 			{Tool: "whodb_platform_action", Resources: []string{"ontology"}, Actions: []string{"share", "unshare"}},
 			{Tool: "whodb_platform_create", Resources: []string{"ontology_reference"}},
 			{Tool: "whodb_platform_delete", Resources: []string{"ontology_reference"}},
 		},
-			"whodb_platform_shared_ontologies", "whodb_platform_discover_shared_ontologies", "whodb_platform_ontology_references", "whodb_platform_ontology_reference_impact"),
+			"whodb_platform_shared_ontologies", "whodb_platform_discover_shared_ontologies", "whodb_platform_ontology_references", "whodb_platform_ontology_reference_impact", "whodb_platform_ontology_follow_link"),
 		platformToolCategory(toolByName, "datasets", "Dataset metadata and dataset row previews.", "List datasets first; preview rows only when needed for the user request.", []string{"id", "name"}, []platformToolGuideMutation{
 			{Tool: "whodb_platform_create", Resources: []string{"dataset"}},
 			{Tool: "whodb_platform_update", Resources: []string{"dataset"}},
@@ -1545,8 +1555,8 @@ func registerPrompts(server *mcp.Server) {
 func registerPlatformPrompts(server *mcp.Server) {
 	server.AddPrompt(&mcp.Prompt{
 		Name:        "whodb_platform_build_app_workflow",
-		Title:       "Build and Verify a WhoDB App",
-		Description: "Build and verify a hosted app, with guidance for the local app folder workflow when filesystem access is available.",
+		Title:       "Design, Build, and Verify a WhoDB App",
+		Description: "Design a distinctive app from its brief and real project data, build working flows, and critique screenshots before promotion. Includes hosted MCP and local folder paths.",
 	}, handlePlatformBuildAppWorkflowPrompt)
 
 	server.AddPrompt(&mcp.Prompt{
@@ -1605,7 +1615,17 @@ func registerPlatformPrompts(server *mcp.Server) {
 }
 
 func handlePlatformBuildAppWorkflowPrompt(ctx context.Context, req *mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
-	return platformPromptResult("WhoDB app build and verification workflow", `Read whodb://platform/app-workflow for the app folder format, hosted MCP path, local CLI path, verification steps, and current limits. Use whodb://platform/schema for exact hosted write payloads. Inspect real ontology schemas, representative rows, and functions before building. Call whodb_platform_app_components/whodb_platform_app_component and whodb_platform_app_sdks/whodb_platform_app_sdk for exact component and SDK contracts. Plan pages, state, overlays, and interactions; build editable component trees and scripts; use whodb_platform_app_logic_graph to audit flows; exercise workflows and responsive viewports; promote only after reviewing the verified draft. Check tools/list and the available filesystem capabilities before choosing a path. Do not claim local file access or in-app builder node tools that are not available in this MCP session.`)
+	return platformPromptResult("Design, build, and verify a WhoDB app", `Build the app the user actually described. Treat visual quality and working behavior as equal requirements. Read whodb://platform/app-workflow for the complete hosted MCP and local CLI paths; read whodb://platform/schema for exact hosted write payloads. Check tools/list and filesystem access before choosing a path. Do not claim local file access or in-app builder node tools that are unavailable in this session.
+
+1. Ground the brief. Identify the audience, primary job, most important screen, and any brand or reference image. Preserve the user's stated aesthetic. If the subject is missing, propose one concrete subject and get clarification. Inspect an existing app when redesigning. Inspect real ontology schemas, representative rows, functions, and runtime dependencies before designing data views or actions. Use real field names and domain language, not invented data contracts.
+
+2. Set a visual direction before writing files. In a compact plan, choose a context-specific layout concept, type hierarchy, 4-6 named color tokens, spacing/density, and one memorable detail. State how the first screen directs attention to the user's main job. Review the plan against the brief: replace choices that could fit any unrelated app. Use a coherent design system across pages. Let borders, labels, color, and motion communicate information; avoid decorative card grids, generic gradients, repeated all-caps labels, and motion on every element unless the brief calls for them. Keep copy concrete and action labels consistent with what their handlers do. Prefer a strong composition with restrained supporting details over visual noise.
+
+3. Build a complete working draft. Plan pages, shared navigation, state, overlays, loading/empty/error states, and event-to-result flows. Call whodb_platform_app_components/whodb_platform_app_component and whodb_platform_app_sdks/whodb_platform_app_sdk for exact component and SDK contracts before writing unfamiliar trees or scripts. Use editable component trees and scripts with the real ontology/function bindings. Make controls keyboard reachable with visible focus and readable contrast. Do not leave placeholder actions or fake success states. For a pinned desktop sidebar, make the main pane the scroll container so long pages do not move the sidebar.
+
+4. Critique the rendered app. Use whodb_platform_app_view and whodb_platform_app_screenshot for desktop, mobile, tablet, and landscape views; when working from local files use whodb apps verify and inspect its screenshot and trace. Inspect the image itself for hierarchy, legibility, spacing, clipping, density, and the intended focal point. Check the longest page's scrolling, each page and overlay, and at least one complete user task. Use whodb_platform_app_logic_graph plus interaction traces and console/network diagnostics to follow a button from event through handler, state or SDK call, and visible result. Fix the specific issues found, then capture again. Read back draft files and bindings before promotion; promote only after review.
+
+For local CLI previews, align --host, --org, and --project with the intended MCP workspace: local files are overlaid, but ontology and function calls use the hosted project. Choose an isolated workspace for actions. --allow-writes=false blocks ctx.whodb.call() even for reporting functions because execution uses a GraphQL mutation. Use function calls only where execution is permitted. Follow the active MCP write confirmation mode.`)
 }
 
 func platformPromptResult(description, content string) (*mcp.GetPromptResult, error) {
@@ -1770,9 +1790,11 @@ func handlePlatformBuildOntologyWorkflowPrompt(ctx context.Context, req *mcp.Get
 3. Use whodb_platform_data_model_summary to inspect existing sources, datasets, ontologies, and relationships.
 4. Inspect candidate datasets with whodb_platform_dataset and preview rows only when needed.
 5. Inspect existing ontologies with whodb_platform_ontology and whodb_platform_ontology_fast_lookup_suggestions.
-6. Use whodb_platform_change_impact before changing ontology definitions or linked resources.
-7. Use whodb_platform_write_plan before creating or updating ontology resources, records, or fast lookups.
-8. Keep backend permissions authoritative and use confirmation flow for every write.`
+6. For a cross-project link, call whodb_platform_discover_shared_ontologies and inspect the owner ontology's actual apiName. Create an ontology_reference in the consumer project, then read its returned id. In OntologyLinkInput set targetKind="reference", targetReferenceId to that id, and targetOntologyApiName to the owner ontology apiName. The local reference alias is not targetOntologyApiName. Preserve the source/target foreign-key properties and compatible storage mode.
+7. Use whodb_platform_change_impact before changing ontology definitions or linked resources.
+8. Use whodb_platform_write_plan before creating or updating ontology resources, records, or fast lookups.
+9. After saving a link, call whodb_platform_ontology_follow_link with a representative source row. A saved definition alone does not prove traversal works.
+10. Keep backend permissions authoritative and use confirmation flow for every write.`
 
 	return platformPromptResult("WhoDB hosted platform ontology workflow", content)
 }
@@ -2100,7 +2122,7 @@ type HTTPOptions struct {
 	// Port to listen on (default: 3000).
 	Port int
 	// AuthToken, when non-empty, requires every /mcp request to present a matching
-	// "Authorization: Bearer <token>" header. Recommended whenever the server binds
+	// "Authorization: Bearer <token>" header. Required whenever the server binds
 	// to a non-loopback interface.
 	AuthToken string
 }
@@ -2126,6 +2148,14 @@ func Run(ctx context.Context, server *mcp.Server) error {
 	return server.Run(ctx, &mcp.StdioTransport{})
 }
 
+func validateHTTPBind(host, token string) error {
+	ip := net.ParseIP(host)
+	if host != "localhost" && (ip == nil || !ip.IsLoopback()) && strings.TrimSpace(token) == "" {
+		return errors.New("authentication is required when binding outside localhost: set --auth-token or WHODB_MCP_AUTH_TOKEN")
+	}
+	return nil
+}
+
 // RunHTTP starts the MCP server as an HTTP service.
 func RunHTTP(ctx context.Context, server *mcp.Server, opts *HTTPOptions, logger *slog.Logger) error {
 	if opts == nil {
@@ -2141,13 +2171,10 @@ func RunHTTP(ctx context.Context, server *mcp.Server, opts *HTTPOptions, logger 
 		logger = slog.New(slog.NewTextHandler(os.Stderr, nil))
 	}
 
-	// Warn about network exposure. Binding to a non-loopback interface without a
-	// token exposes full configured database access to anyone who can reach it.
-	isLoopback := opts.Host == "localhost" || opts.Host == "127.0.0.1"
-	if !isLoopback && opts.AuthToken == "" {
-		logger.Warn("MCP server binding to a network interface with NO authentication configured",
-			"host", opts.Host,
-			"recommendation", "Set --auth-token (or WHODB_MCP_AUTH_TOKEN), or use --host=localhost")
+	opts.Host = strings.Trim(strings.TrimSpace(opts.Host), "[]")
+	opts.AuthToken = strings.TrimSpace(opts.AuthToken)
+	if err := validateHTTPBind(opts.Host, opts.AuthToken); err != nil {
+		return err
 	}
 
 	// Create HTTP handler for MCP
@@ -2167,10 +2194,12 @@ func RunHTTP(ctx context.Context, server *mcp.Server, opts *HTTPOptions, logger 
 	})
 	mux.Handle("/mcp", handler)
 
-	addr := fmt.Sprintf("%s:%d", opts.Host, opts.Port)
+	addr := net.JoinHostPort(opts.Host, strconv.Itoa(opts.Port))
 	httpServer := &http.Server{
-		Addr:    addr,
-		Handler: mux,
+		Addr:              addr,
+		Handler:           mux,
+		ReadHeaderTimeout: 10 * time.Second,
+		IdleTimeout:       60 * time.Second,
 	}
 
 	go func() {
@@ -2503,8 +2532,11 @@ a source connector. Agents should understand the project lifecycle:
 7. Govern change: lineage, resource graphs, change impact, and write plans explain dependencies.
 8. Package: bundles and clone workflows move or reproduce project metadata.
 
-Use whodb://platform/concepts for the machine-readable product model and
-whodb://platform/app-workflow for app building, local file editing, and verification. Prefer
+Use whodb://platform/concepts for the machine-readable product model. For app
+building, request the whodb_platform_build_app_workflow prompt and read
+whodb://platform/app-workflow before writing files. The prompt covers visual
+direction, real data, interaction design, and screenshot critique; the resource
+covers hosted MCP and local folder paths. Prefer
 the first-pass project tools before drilling into a single resource unless the
 user already named the exact resource:
 - whodb_platform_workspace_summary for "what exists", "where should we start",

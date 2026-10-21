@@ -126,6 +126,8 @@ whodb --help
 
 For hosted WhoDB platform login and source management, see
 [the hosted platform CLI guide](../.agents/docs/hosted-platform-cli.md).
+For task-oriented MCP catalogs, unattended service-account jobs and security
+ledger access, see [platform operations](docs/platform-operations.md).
 
 ### 1. Connect to a Database
 
@@ -826,6 +828,22 @@ it is the wrong tool for switching a single chat.
 
 WhoDB can run as an MCP (Model Context Protocol) server, enabling AI assistants like Claude, Cursor, and others to query your databases.
 
+### Access modes
+
+The default supports reads and writes, with confirmation required before writes
+execute. Platform tools always enforce the signed-in user's platform permissions.
+For direct database tools, access is limited by the configured database account's
+privileges; platform permissions do not apply to those connections.
+
+- Default (`whodb mcp serve`): reads and confirmed writes.
+- `--read-only`: restrict operations to reads.
+- `--safe-mode`: read-only with strict security checks.
+- `--allow-write`: execute writes without the MCP confirmation step, for trusted
+  automation. Database and platform permissions still apply.
+
+Saved setup settings can select a different default. Inspect them with
+`whodb setup inspect`; restart the MCP connection after changing access modes.
+
 ### Start the MCP Server
 
 ```bash
@@ -1018,9 +1036,10 @@ App capture needs Node.js and npm. `setup-capture` installs Playwright and
 Chromium in the user's cache; `--install` does the same before capturing.
 Without them, the command and MCP tool return setup instructions. Existing
 Playwright installations in the WhoDB source checkout work without setup.
-Captures only allow hosted GraphQL reads by default. Use `--allow-writes` when
-the action needs a function call or another mutation. Captures never upload or
-publish the image.
+`apps screenshot` and the MCP screenshot tool only allow hosted GraphQL reads
+by default. Use `--allow-writes` for a function call or another mutation.
+`apps dev` and `apps verify` have their own write setting, described below.
+Captures never upload or publish the image.
 Inspect sample data and loading states before using a capture as product media.
 
 ### Build an app from a local folder
@@ -1061,8 +1080,16 @@ whodb apps verify ./orders --tablet --scenario ./orders/scenarios/smoke.json \
 whodb apps publish ./orders --message "Orders v1" --org <org> --project <project>
 ```
 
+`apps check` validates file structure and handler references; it does not render
+the app or verify scroll behavior.
 `apps dev` and `apps verify` use the hosted app runner and its existing resource
 permissions while replacing app files with the local folder in the browser.
+For a desktop app with a sidebar that should stay visible, make the main pane
+the scroll container: set the root `Row` to viewport height with hidden overflow,
+the sidebar to full height with auto overflow, and the main `Col` to full height
+with `minH: 0` and auto overflow. Test a page longer than the viewport by
+scrolling the main pane; a full-height root with overflowing content makes a
+sticky sidebar move with the outer app viewport.
 `apps init --from` creates a new local folder from the selected app's readable
 draft files, preserving existing `app.json` settings and writing resource names
 for version control. It refuses to overwrite an existing folder. The hosted app
@@ -1072,8 +1099,15 @@ is unchanged; pass its ID with `--app` to `apps dev`, `apps verify`, or
 `apps dev` and `apps verify` require an app in the selected project with the same resource bindings as
 `app.json`. Use `--app <id-or-name>` when the hosted name differs. Both commands
 allow app actions to write to the selected project's data by default; pass
-`--allow-writes=false` for a read-only preview. They require Node.js and the
-optional capture browser (`apps setup-capture` or `--install`).
+`--allow-writes=false` only when the preview needs GraphQL queries and no
+function calls. Every `ctx.whodb.call()` uses a GraphQL mutation, including
+reporting functions, and is blocked by that flag. Local app files are overlaid
+in the browser, while ontology and function calls still use the selected hosted
+project. Select an isolated development project for workflow tests, and keep
+`--host`, `--org`, and `--project` aligned with the MCP workspace you inspected.
+MCP read-only mode does not change the CLI preview's write setting. Both CLI
+commands require Node.js and the optional capture browser (`apps setup-capture`
+or `--install`).
 `--mobile` on `apps screenshot` or `apps verify` uses a 390x844 viewport with
 mobile and touch emulation. Pass `--width` and `--height` with it to test another
 phone size. `--tablet` uses an 820x1180 touch viewport. Add `--orientation
@@ -1099,8 +1133,11 @@ after promotion; changes to the app's resource bindings take effect when the
 draft metadata is updated.
 
 MCP clients can read `whodb://platform/app-workflow` or request the
-`whodb_platform_build_app_workflow` prompt for the app build sequence. The
-`whodb_platform_workflow_recipe` tool also returns an app-specific plan. Hosted
+`whodb_platform_build_app_workflow` prompt for the app build sequence. The prompt
+guides the agent through a brief-specific visual plan, real data and SDK contracts,
+working interactions, and screenshot critique across viewports. MCP prompts are
+client-requested; the server instructions point app-building agents to this prompt.
+The `whodb_platform_workflow_recipe` tool also returns an app-specific plan. Hosted
 MCP tools can inspect and edit hosted draft files and capture hosted views.
 `whodb_platform_app_screenshot` accepts `trace: true` on runtimes that support
 interaction tracing. `whodb_platform_app_components`,
@@ -1683,7 +1720,11 @@ Query history is stored alongside the config as `history.json`.
 }
 ```
 
-Passwords are stored in the OS keyring when available. If not available, they are written to `config.json` (new files are created with `0600` permissions).
+Database and SSH passwords are stored in the OS keyring. If it is unavailable,
+saving passwords requires explicitly setting
+`WHODB_CLI_ALLOW_PLAINTEXT_CREDENTIALS=true`; they are then written to
+`config.json` (new files are created with `0600` permissions). A failed keyring
+write aborts saving. Hosted login refresh tokens always require secure storage.
 
 ### Environment Variables
 
@@ -1892,3 +1933,29 @@ golangci-lint run ./...
 ## License
 
 Apache License 2.0 - See LICENSE file for details.
+
+### HTTP MCP authentication and credential storage
+
+HTTP MCP listeners bound outside loopback require `--auth-token` or
+`WHODB_MCP_AUTH_TOKEN`. Clients send that value as a bearer token on `/mcp`.
+Loopback HTTP and stdio retain their local defaults.
+
+Saving database or SSH passwords requires the OS keyring. If it is unavailable,
+plaintext storage requires the explicit environment setting
+`WHODB_CLI_ALLOW_PLAINTEXT_CREDENTIALS=true`; the config file has mode 0600.
+A failed keyring write aborts saving instead of copying passwords to disk.
+Hosted login refresh tokens always require secure storage.
+
+Platform collection tools use server-side metadata pages when the host advertises
+`PlatformResources`: 50 items by default, at most 100, with `offset` and
+`truncated` indicating continuation. Filters run before pagination and access
+checks run before rows are selected. Use the corresponding detail tool for full
+source, schema, bindings, or usage. Explicit function, ontology, dataset, and app
+fields can fetch details for the selected page. Older hosts retain their existing
+list contract.
+
+Platform wait tools return the latest observed running status with a warning when
+their wait budget expires; repeat with the same run ID. Write idempotency keys are
+limited to 200 bytes and scoped to the account, workspace, and operation. Matching
+completed requests replay bounded identifiers/status for 30 days; secret values
+and job output are never retained for replay. Conflicting payloads are rejected.

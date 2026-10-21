@@ -21,10 +21,11 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/clidey/whodb/cli/internal/config"
-	platformapi "github.com/clidey/whodb/cli/internal/platform"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/zalando/go-keyring"
+
+	"github.com/clidey/whodb/cli/internal/config"
+	platformapi "github.com/clidey/whodb/cli/internal/platform"
 )
 
 // Unit tests must never use the developer's OS keyring.
@@ -243,6 +244,9 @@ func TestPlatformMCPMultiHostWorkspaceRouting(t *testing.T) {
 	denied := scopeCall(t, client, "whodb_platform_sources", target(uat.server.URL, "analysis"))
 	if !strings.Contains(fmt.Sprint(denied["error"]), "permission denied") {
 		t.Fatalf("permission error: %#v", denied)
+	}
+	if denied["error_code"] != "permission_denied" || denied["recovery"] == nil || denied["request_id"] == "" {
+		t.Fatalf("permission recovery missing: %#v", denied)
 	}
 	uat.mu.Lock()
 	uat.deny = false

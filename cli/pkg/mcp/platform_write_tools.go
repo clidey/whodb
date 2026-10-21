@@ -19,14 +19,16 @@ package mcp
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"sort"
 	"strings"
 	"time"
 
-	platformapi "github.com/clidey/whodb/cli/internal/platform"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+
+	platformapi "github.com/clidey/whodb/cli/internal/platform"
 )
 
 // PlatformGenericWriteInput describes a hosted platform create, update, delete, or action request.
@@ -200,6 +202,9 @@ func platformGenericWriteToolDefinitions() []*mcp.Tool {
 
 func handlePlatformGenericWrite(ctx context.Context, toolName string, input PlatformGenericWriteInput, operationKind string, confirmWrites bool) (*mcp.CallToolResult, PlatformGenericWriteOutput, error) {
 	requestID := generateRequestID(toolName)
+	if len(strings.TrimSpace(input.IdempotencyKey)) > 200 {
+		return nil, platformGenericWriteError(errors.New("idempotency_key is invalid: maximum length is 200 bytes"), requestID), nil
+	}
 	startTime := time.Now()
 	session, err := loadPlatformWorkspace(ctx)
 	if err != nil {
@@ -234,29 +239,40 @@ func handlePlatformGenericWrite(ctx context.Context, toolName string, input Plat
 		Variables:      payload,
 		IdempotencyKey: scopedPlatformIdempotencyKey(session, input, operationKind),
 	}
+	var reservedToken string
 	if action.IdempotencyKey != "" {
-		if token, ok := pendingPlatformIdempotencyToken(action.IdempotencyKey, ctx); ok {
-			pending, err := getPendingPlatformAction(token, ctx)
-			if err == nil {
-				releasePendingPlatformAction(token, ctx)
-				return nil, platformGenericConfirmationOutput(ctx, requestID, token, pending.ExpiresAt, pending.Mutation, pending.Preview()), nil
-			}
+		replay, err := reservePlatformIdempotency(ctx, action, confirmWrites, requestID)
+		if err != nil {
+			return nil, platformGenericWriteError(err, requestID), nil
 		}
-		if platformIdempotencyCompleted(action.IdempotencyKey, ctx) {
-			return nil, PlatformGenericWriteOutput{Status: "already_applied", IdempotencyReplayed: true, RequestID: requestID}, nil
+		if replay != nil {
+			return nil, *replay, nil
 		}
+		reservedToken = action.Token
 	}
 	if !confirmWrites {
 		result, err := executePlatformMutation(ctx, session.Client, spec.Mutation, session.Host.DefaultProjectID, payload)
 		if err != nil {
 			TrackToolCall(ctx, toolName, requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_action"})
+			if reservedToken != "" {
+				releasePendingPlatformAction(reservedToken, ctx)
+			}
 			return nil, platformGenericWriteError(err, requestID), nil
 		}
 		TrackToolCall(ctx, toolName, requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"confirmation_required": false, "mutation": spec.Mutation})
-		markPlatformIdempotencyCompleted(action.IdempotencyKey, ctx)
+		resultJSON := ""
+		if result != nil {
+			resultJSON = string(result.Data)
+		}
+		if reservedToken != "" {
+			consumePendingPlatformActionResult(reservedToken, resultJSON, ctx)
+		}
 		return nil, platformGenericWriteCompletedOutput(requestID, spec.Mutation, result, action.Preview()), nil
 	}
-	token, expiresAt := storePendingPlatformAction(action, ctx)
+	token, expiresAt := action.Token, action.ExpiresAt
+	if token == "" {
+		token, expiresAt = storePendingPlatformAction(action, ctx)
+	}
 	TrackToolCall(ctx, toolName, requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"confirmation_required": true, "mutation": spec.Mutation})
 	return nil, platformGenericConfirmationOutput(ctx, requestID, token, expiresAt, spec.Mutation, action.Preview()), nil
 }
@@ -267,7 +283,7 @@ func scopedPlatformIdempotencyKey(session *platformToolSession, input PlatformGe
 		return ""
 	}
 	if len(key) > 200 {
-		key = key[:200]
+		return ""
 	}
 	return strings.Join([]string{session.Host.URL, session.Host.AccountID, session.Host.DefaultOrgID, session.Host.DefaultProjectID, operationKind, normalizePlatformWriteToken(input.Resource), normalizePlatformWriteToken(input.Action), strings.TrimSpace(input.ID), key}, "|")
 }

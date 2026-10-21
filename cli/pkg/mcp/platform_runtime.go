@@ -8,9 +8,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/modelcontextprotocol/go-sdk/mcp"
+
 	"github.com/clidey/whodb/cli/internal/config"
 	platformapi "github.com/clidey/whodb/cli/internal/platform"
-	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
 // PlatformState holds one principal's confirmations and workflow plans. Embedders
@@ -21,6 +22,7 @@ type PlatformState struct {
 	Pending            map[string]*PendingPlatformAction
 	IdempotencyPending map[string]string
 	IdempotencyDone    map[string]time.Time
+	IdempotencyResults map[string]platformIdempotencyResult
 	Workflows          []platformWorkflowPlan
 	mu                 sync.RWMutex
 }
@@ -71,7 +73,7 @@ func (s *PlatformState) PruneExpired(now time.Time) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	for token, action := range s.Pending {
-		if !now.Before(action.ExpiresAt) {
+		if !now.Before(action.ExpiresAt) && (!action.InFlight || !now.Before(action.ExpiresAt.Add(30*24*time.Hour))) {
 			delete(s.Pending, token)
 		}
 	}
@@ -83,6 +85,7 @@ func (s *PlatformState) PruneExpired(now time.Time) {
 	for key, completed := range s.IdempotencyDone {
 		if !now.Before(completed.Add(30 * 24 * time.Hour)) {
 			delete(s.IdempotencyDone, key)
+			delete(s.IdempotencyResults, key)
 		}
 	}
 	plans := s.Workflows[:0]
@@ -104,7 +107,11 @@ func (s *PlatformState) NextCleanupAt() time.Time {
 		}
 	}
 	for _, action := range s.Pending {
-		add(action.ExpiresAt)
+		if action.InFlight {
+			add(action.ExpiresAt.Add(30 * 24 * time.Hour))
+		} else {
+			add(action.ExpiresAt)
+		}
 	}
 	for _, completed := range s.IdempotencyDone {
 		add(completed.Add(30 * 24 * time.Hour))
@@ -183,6 +190,28 @@ func PlatformToolRequiresWrite(name string) bool {
 		}
 	}
 	return true
+}
+
+// PlatformToolRequiresState reports whether a tool reads or changes durable MCP
+// execution state. Independent reads can run while another call holds that state.
+func PlatformToolRequiresState(name string) bool {
+	switch name {
+	case "whodb_platform_workflow_plan", "whodb_platform_workflow_get", "whodb_platform_workflow_list":
+		return true
+	default:
+		return PlatformToolRequiresWrite(name)
+	}
+}
+
+// PlatformResourceRequiresState keeps known metadata resources independent of
+// execution locks. Unknown resources fail closed as the surface evolves.
+func PlatformResourceRequiresState(uri string) bool {
+	switch uri {
+	case "whodb://platform/schema", "whodb://platform/workspace", "whodb://platform/tool-guide", "whodb://platform/concepts", "whodb://platform/app-workflow":
+		return false
+	}
+	_, _, known := parsePlatformResourceTemplateURI(uri)
+	return !known
 }
 
 func (runtime *PlatformRuntime) loadSession(ctx context.Context) (*platformToolSession, error) {

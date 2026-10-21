@@ -402,6 +402,10 @@
 .ce-tables-sidebar .ce-sidebar-profile-button { position: absolute; inset: 0; z-index: 1; width: 100%; height: 54px; opacity: 0; }
 .ce-tables-sidebar :is([data-testid="sidebar-database"], [data-testid="sidebar-schema"]) { border-color: #30415f; background: transparent; color: #f8f7f2; }
 .ce-tables-sidebar :is([data-testid="sidebar-database"], [data-testid="sidebar-schema"]):hover { background: #1c2637; color: #f8f7f2; }
+[data-testid="chat-history-sidebar"] [data-testid="add-chat-session-button"] { border-color: #30415f; background: transparent; color: #f8f7f2; }
+[data-testid="chat-history-sidebar"] [data-testid="add-chat-session-button"]:hover { background: #1c2637; color: #f8f7f2; }
+[data-testid="chat-history-sidebar"] [data-testid^="chat-session-name-"] { color: #f8f7f2; }
+[data-testid="chat-history-sidebar"] [data-testid^="chat-session-item-"] .text-muted-foreground { color: #9aa5bb; }
 .ce-tables-sidebar [data-slot="sidebar-menu"] { margin-top: 13px; gap: 2px; }
 .ce-tables-sidebar [data-slot="sidebar-menu-item"] { width: 100%; }
 .ce-tables-sidebar [data-slot="sidebar-menu-button"] { width: 100%; height: 36px; padding: 7px 10px; font-size: 14px; }

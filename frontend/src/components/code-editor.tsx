@@ -1,0 +1,467 @@
+/*
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import {useTheme} from "@clidey/ux";
+import {json} from "@codemirror/lang-json";
+import {markdown} from "@codemirror/lang-markdown";
+import {sql, type SQLNamespace} from "@codemirror/lang-sql";
+import {Compartment, EditorState, RangeSet} from "@codemirror/state";
+import {oneDark} from "@codemirror/theme-one-dark";
+import {EditorView, gutter, GutterMarker, lineNumbers} from "@codemirror/view";
+import {EyeIcon, EyeSlashIcon} from "./heroicons";
+import classNames from "classnames";
+import {basicSetup} from "codemirror";
+import type {FC} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState} from "react";
+import ReactJson from "@microlink/react-json-view";
+import MarkdownPreview from 'react-markdown';
+import remarkGfm from "remark-gfm";
+import {useApolloClient} from "@apollo/client/react";
+import { useTranslation } from "@/hooks/use-translation";
+import { editorExtensions } from "./editor-registry";
+
+const sqlLanguage = (schema: SQLNamespace | undefined, keywordDetail: string) => sql({
+  schema,
+  upperCaseKeywords: true,
+  keywordCompletion: (label, type) => ({
+    label,
+    type,
+    detail: type === 'keyword' ? keywordDetail : undefined,
+    boost: -1,
+  }),
+});
+
+import { useAppSelector } from "@/store/hooks";
+import { matchesShortcut, SHORTCUTS } from "@/utils/shortcuts";
+import { Tip } from "./tip";
+import { isValidSQLQuery } from '@/utils/query-utils';
+
+const findValidQueriesWithPositions = (doc: any): Array<{query: string, startLine: number}> => {
+  const fullText = doc.toString();
+  const lines = fullText.split('\n');
+  const results: Array<{query: string, startLine: number}> = [];
+  
+  let currentQuery = '';
+  let queryStartLine = 1;
+  let inQuery = false;
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmedLine = line.trim();
+    
+    if (!trimmedLine && !inQuery) {
+      continue;
+    }
+
+    if (!inQuery && isValidSQLQuery(trimmedLine)) {
+      currentQuery = trimmedLine;
+      queryStartLine = i + 1; // Convert to 1-based line number
+      inQuery = true;
+    }
+    else if (inQuery) {
+      currentQuery += '\n' + line;
+    }
+    
+    // Check if this line ends the current query (contains semicolon)
+    if (inQuery && line.includes(';')) {
+      // Remove the semicolon and trim for validation
+      const queryWithoutSemicolon = currentQuery.replace(/;$/, '').trim();
+      
+      if (isValidSQLQuery(queryWithoutSemicolon)) {
+        results.push({
+          query: queryWithoutSemicolon,
+          startLine: queryStartLine
+        });
+      }
+      
+      // Reset for next query
+      currentQuery = '';
+      inQuery = false;
+    }
+  }
+  
+  // Handle case where there's no semicolon at the end
+  if (inQuery && currentQuery.trim()) {
+    const queryWithoutSemicolon = currentQuery.trim();
+    if (isValidSQLQuery(queryWithoutSemicolon)) {
+      results.push({
+        query: queryWithoutSemicolon,
+        startLine: queryStartLine
+      });
+    }
+  }
+  return results;
+};
+
+export type ICodeEditorProps = {
+  value: string;
+  setValue?: (value: string) => void;
+  language?: string;
+  onRun?: (lineText?: string) => void;
+  defaultShowPreview?: boolean;
+  disabled?: boolean;
+  sqlSchema?: SQLNamespace;
+};
+
+class PlayButtonMarker extends GutterMarker {
+  constructor(private onRun: (lineText?: string) => void, private queryText: string, private label: string) {
+    super();
+  }
+
+  toDOM() {
+    const button = document.createElement("div");
+    button.className = "cm-play-button";
+    button.setAttribute("role", "button");
+    button.setAttribute("aria-label", this.label);
+    button.setAttribute("title", this.label);
+
+    const svgNS = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(svgNS, "svg");
+    svg.setAttribute("xmlns", svgNS);
+    svg.setAttribute("fill", "none");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("stroke-width", "1.5");
+    svg.setAttribute("stroke", "currentColor");
+    svg.setAttribute("class", "w-4 h-4");
+
+    const path = document.createElementNS(svgNS, "path");
+    path.setAttribute("stroke-linecap", "round");
+    path.setAttribute("stroke-linejoin", "round");
+    path.setAttribute(
+        "d",
+        "M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347c-.75.412-1.667-.13-1.667-.986V5.653Z"
+    );
+
+    svg.appendChild(path);
+    button.appendChild(svg);
+    
+    button.addEventListener("mouseenter", () => {
+      button.style.opacity = "1";
+      button.style.cursor = "pointer";
+      button.style.backgroundColor = "rgba(0,0,0,0.05)";
+    });
+    
+    button.addEventListener("mouseleave", () => {
+      button.style.opacity = "0.6";
+      button.style.cursor = "default";
+      button.style.backgroundColor = "transparent";
+    });
+    
+    button.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.onRun(this.queryText);
+    });
+    
+    return button;
+  }
+}
+
+export const CodeEditor: FC<ICodeEditorProps> = ({
+  value,
+  setValue,
+  language,
+  onRun,
+  defaultShowPreview = false,
+  disabled,
+  sqlSchema,
+}) => {
+  const { t } = useTranslation('components/editor');
+  const [showPreview, setShowPreview] = useState(defaultShowPreview);
+  const editorRef = useRef<HTMLDivElement>(null);
+  const viewRef = useRef<EditorView | null>(null);
+  const languageCompartment = useMemo(() => new Compartment(), []);
+  const onRunReference = useRef<Function | undefined>(undefined);
+  const { theme } = useTheme();
+  const darkModeEnabled = theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  const apolloClient = useApolloClient();
+  const currentSchema = useAppSelector(state => state.database.schema);
+  const currentDatabase = useAppSelector(state => state.auth.current?.Database);
+  const runQueryLabel = t('runQuery');
+  const keywordDetail = t('completionKeyword');
+
+  // For databases like MySQL where database and schema are the same,
+  // use the connection database as fallback if no schema is selected
+  const defaultSchema = currentSchema ?? currentDatabase ?? '';
+
+  useEffect(() => {
+    onRunReference.current = onRun;
+  }, [onRun]);
+
+
+  // Listen for menu execute query trigger
+  useEffect(() => {
+    const handleExecuteTrigger = () => {
+      // Execute the entire content when triggered from menu
+      if (!disabled && onRun && value) {
+        onRun(value);
+      }
+    };
+
+    window.addEventListener('menu:trigger-execute-query', handleExecuteTrigger);
+    return () => {
+      window.removeEventListener('menu:trigger-execute-query', handleExecuteTrigger);
+    };
+  }, [disabled, value, onRun]);
+
+  useEffect(() => {
+    if (viewRef.current && value !== viewRef.current.state.doc.toString()) {
+      viewRef.current.dispatch({
+        changes: { from: 0, to: viewRef.current.state.doc.length, insert: value },
+      });
+    }
+  }, [value]);
+
+  useEffect(() => {
+    if (editorRef.current === null) {
+        return;
+    }
+
+    const languageExtension = (() => {
+      switch (language) {
+        case "json":
+          return json();
+        case "markdown":
+          return markdown();
+        case "sql":
+          return sqlLanguage(sqlSchema, keywordDetail);
+        default:
+          if (language && editorExtensions.languages[language]) {
+            return editorExtensions.languages[language]();
+          }
+          return sql();
+      }
+    })();
+
+    // Create custom gutter for SQL queries
+    const createPlayButtonGutter = () => {
+      if (disabled || language !== "sql" || !onRun) {
+        return [];
+      }
+
+      return [
+        gutter({
+          class: "cm-play-gutter",
+          markers: (view) => {
+            const doc = view.state.doc;
+            const ranges = [];
+            
+            // Find all valid queries with their starting positions
+            const validQueries = findValidQueriesWithPositions(doc);
+            
+            // Add play buttons for each valid query
+            for (const { query, startLine } of validQueries) {
+              const startLineObj = doc.line(startLine);
+              if (startLineObj && startLineObj.text.trim().length > 0) {
+                // Create a unique marker for each query with the specific query text
+                const playMarker = new PlayButtonMarker((lineText) => {
+                  if (lineText) {
+                    onRunReference.current?.(lineText);
+                  }
+                }, query, runQueryLabel);
+                
+                ranges.push({ from: startLineObj.from, to: startLineObj.from, value: playMarker });
+              }
+            }
+            
+            return RangeSet.of(ranges);
+          },
+        }),
+      ];
+    };
+
+    const state = EditorState.create({
+        doc: value,
+        extensions: [
+          EditorView.domEventHandlers({
+              keydown(event) {
+                if (!disabled && matchesShortcut(event, SHORTCUTS.clearEditor) && setValue != null) {
+                  view.dispatch({
+                    changes: { from: 0, to: view.state.doc.length, insert: "" }
+                  });
+                  event.preventDefault();
+                  event.stopPropagation();
+                  return true;
+                }
+
+                if (!disabled && matchesShortcut(event, SHORTCUTS.executeQuery) && onRunReference.current != null) {
+                      // Get the selected text if any, otherwise use the entire content
+                      const selection = view.state.selection;
+                      let textToExecute = '';
+
+                      if (selection.main.empty) {
+                        // No selection, execute entire content
+                        textToExecute = view.state.doc.toString();
+                      } else {
+                        // Has selection, execute only the selected text
+                        textToExecute = view.state.sliceDoc(selection.main.from, selection.main.to);
+                      }
+
+                      onRunReference.current?.(textToExecute);
+                      event.preventDefault();
+                      event.stopPropagation();
+                  }
+              },
+          }),
+            basicSetup,
+            EditorState.readOnly.of(!!disabled),
+            EditorView.editable.of(!disabled),
+            languageCompartment.of(languageExtension ?? []),
+            // Add autocomplete for SQL in EE mode, but allow disabling it during E2E tests to prevent flakiness.
+            (language === "sql" && editorExtensions.createSQLAutocomplete && !(window as any).__E2E_DISABLE_AUTOCOMPLETE) ? editorExtensions.createSQLAutocomplete({apolloClient, defaultSchema}) : [],
+            darkModeEnabled ? [oneDark, EditorView.theme({
+              ".cm-activeLine": { backgroundColor: "rgba(0,0,0,0.05) !important" },
+              ".cm-activeLineGutter": { backgroundColor: "rgba(0,0,0,0.05) !important" },
+              ".cm-play-gutter": { 
+                width: "24px",
+                backgroundColor: "transparent",
+                borderRight: "1px solid rgba(0,0,0,0.1)",
+              },
+              ".cm-play-button": {
+                color: "var(--primary)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                height: "100%",
+              },
+              ".dark .cm-play-gutter": {
+                borderRight: "1px solid rgba(255,255,255,0.1)",
+              },
+            })] : [EditorView.theme({
+              ".cm-activeLine": { backgroundColor: "rgba(0,0,0,0.05) !important" },
+              ".cm-activeLineGutter": { backgroundColor: "rgba(0,0,0,0.05) !important" },
+              ".cm-play-gutter": { 
+                width: "24px",
+                backgroundColor: "transparent",
+                borderRight: "1px solid rgba(0,0,0,0.1)",
+              },
+              ".cm-play-button": {
+                color: "var(--primary)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                height: "100%",
+              },
+            })],
+            EditorView.updateListener.of((update) => {
+              if (!disabled && update.docChanged && update.changes && setValue != null) {
+                  setValue(update.state.doc.toString());
+              }
+            }),
+            lineNumbers(),
+            EditorView.lineWrapping,
+            createPlayButtonGutter(),
+        ],
+    });
+ 
+    const view = new EditorView({
+        state,
+        parent: editorRef.current,
+    });
+    viewRef.current = view;
+
+    return () => {
+      view.destroy();
+      viewRef.current = null;
+    };
+  }, [language, apolloClient, darkModeEnabled, defaultSchema, disabled, runQueryLabel, keywordDetail, languageCompartment]);
+
+  useEffect(() => {
+    if (language === 'sql' && viewRef.current) {
+      viewRef.current.dispatch({
+        effects: languageCompartment.reconfigure(sqlLanguage(sqlSchema, keywordDetail)),
+      });
+    }
+  }, [language, languageCompartment, sqlSchema, keywordDetail]);
+
+  const handlePreviewToggle = useCallback(() => {
+    setShowPreview((prev) => !prev);
+  }, []);
+
+  const hidePreview = useMemo(() => {
+    return language !== "markdown" && language !== "json";
+  }, [language]);
+
+  const children = useMemo(() => {
+    if (showPreview) {
+      if (language === "markdown") {
+        return (
+          <div className="h-full bg-white p-4 pl-8 dark:bg-card dark:backdrop-blur-md markdown-preview dark:*:text-neutral-300 overflow-y-auto">
+            {/* TODO: Links in markdown don't render correctly with this library version */}
+            <MarkdownPreview remarkPlugins={[remarkGfm]}>{value}</MarkdownPreview>
+          </div>
+        );
+      }
+      if (language === "json") {
+        let parsed: object = {};
+        let isValidJson = true;
+        try {
+          parsed = JSON.parse(value);
+        } catch {
+          isValidJson = false;
+        }
+
+        return (
+          <div className="h-full bg-white p-4 pl-8 dark:bg-card dark:backdrop-blur-md overflow-y-auto">
+            {isValidJson ? (
+              <ReactJson
+                src={parsed}
+                theme={darkModeEnabled ? "bright" : undefined}
+                style={{ height: "100%", backgroundColor: "unset" }}
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full gap-2">
+                  <p className="text-sm text-red-500 font-medium">{t('invalidJson')}</p>
+                  <p className="text-xs text-muted-foreground">{t('invalidJsonDescription')}</p>
+              </div>
+            )}
+          </div>
+        );
+      }
+    }
+    return null;
+  }, [darkModeEnabled, showPreview, value, language]);
+
+  const actionButtons = useMemo(() => {
+    const label = showPreview ? t('hidePreview') : t('showPreview');
+    return (
+      <Tip className="w-fit">
+        <button
+          className="transition-all cursor-pointer hover:scale-110 hover:bg-gray-100/50 rounded-full p-1"
+          onClick={handlePreviewToggle}
+          aria-label={label}
+        >
+          {showPreview ? <EyeSlashIcon className="stroke-icon w-8 h-8" /> : <EyeIcon className="stroke-icon w-8 h-8" />}
+        </button>
+        <p>{label}</p>
+      </Tip>
+    );
+  }, [handlePreviewToggle, showPreview, t]);
+
+  return (
+    <div className="relative h-full w-full">
+      {children}
+      <div ref={editorRef} className="h-full w-full [&>.cm-editor]:h-full [&>.cm-editor]:p-2 transition-all opacity-100" data-testid="code-editor"></div>
+      <div
+        className={classNames("absolute right-6 bottom-2 z-20", {
+          hidden: hidePreview,
+        })}>
+        {actionButtons}
+      </div>
+      
+    </div>
+  );
+};

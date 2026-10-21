@@ -97,29 +97,47 @@ func TestAuthMiddlewareAllowsPublicRouteInDev(t *testing.T) {
 	}
 }
 
-func TestAuthMiddlewareFallsBackToCookieWhenHeaderMissing(t *testing.T) {
+func TestAuthMiddlewareIgnoresLegacyTokenCookie(t *testing.T) {
 	creds := testSourceCredentials("Postgres", "db.local", "alice", "pw", "app")
 	payload, _ := json.Marshal(&creds)
 	token := base64.StdEncoding.EncodeToString(payload)
 
-	body := `{"operationName":"Other"}`
-	req := httptest.NewRequest(http.MethodPost, "/api/query", bytes.NewBufferString(body))
-	req.AddCookie(&http.Cookie{Name: string(AuthKey_Token), Value: token})
-	rr := httptest.NewRecorder()
+	t.Run("graphql request ignores legacy cookie", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodPost, "/api/query", bytes.NewBufferString(`{"operationName":"Other"}`))
+		req.AddCookie(&http.Cookie{Name: string(AuthKey_Token), Value: token})
+		rr := httptest.NewRecorder()
 
-	var got *source.Credentials
-	handler := AuthMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		got = GetSourceCredentials(r.Context())
-		w.WriteHeader(http.StatusOK)
-	}))
-	handler.ServeHTTP(rr, req)
+		var got *source.Credentials
+		authenticated := false
+		handler := AuthMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			got = GetSourceCredentials(r.Context())
+			if _, ok := r.Context().Value(authenticatedSourceKey{}).(bool); ok {
+				authenticated = true
+			}
+			w.WriteHeader(http.StatusOK)
+		}))
+		handler.ServeHTTP(rr, req)
 
-	if rr.Code != http.StatusOK {
-		t.Fatalf("expected request to pass, got status %d", rr.Code)
-	}
-	if got == nil || got.Values["Username"] != "alice" {
-		t.Fatalf("expected credentials from cookie, got %+v", got)
-	}
+		if rr.Code != http.StatusOK {
+			t.Fatalf("expected graphql passthrough, got status %d", rr.Code)
+		}
+		if got != nil || authenticated {
+			t.Fatalf("legacy token cookie must no longer authenticate requests, got credentials=%v authenticated=%v", got, authenticated)
+		}
+	})
+
+	t.Run("non-graphql request rejects legacy cookie", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/api/private", nil)
+		req.AddCookie(&http.Cookie{Name: string(AuthKey_Token), Value: token})
+		rr := httptest.NewRecorder()
+
+		handler := AuthMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+		handler.ServeHTTP(rr, req)
+
+		if rr.Code != http.StatusUnauthorized {
+			t.Fatalf("expected 401 for legacy-cookie-only request, got %d", rr.Code)
+		}
+	})
 }
 
 func TestAuthMiddlewareRejectsInvalidTokenEncodings(t *testing.T) {

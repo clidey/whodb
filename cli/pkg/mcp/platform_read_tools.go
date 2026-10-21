@@ -19,12 +19,14 @@ package mcp
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"strconv"
 	"strings"
 	"time"
 
-	platformapi "github.com/clidey/whodb/cli/internal/platform"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+
+	platformapi "github.com/clidey/whodb/cli/internal/platform"
 )
 
 const defaultPlatformContentLimit = 64 * 1024
@@ -174,6 +176,10 @@ func registerPlatformReadTool(server *mcp.Server, tool *mcp.Tool, secOpts *Secur
 		return
 	}
 	switch tool.Name {
+	case "whodb_platform_security_audit":
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformSecurityAuditInput) (*mcp.CallToolResult, any, error) {
+			return HandlePlatformSecurityAudit(ctx, req, input)
+		})
 	case "whodb_platform_workflow_recipe":
 		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformWorkflowRecipeInput) (*mcp.CallToolResult, any, error) {
 			return HandlePlatformWorkflowRecipe(ctx, req, input)
@@ -351,6 +357,7 @@ func registerPlatformReadTool(server *mcp.Server, tool *mcp.Tool, secOpts *Secur
 
 func platformReadToolDefinitions() []*mcp.Tool {
 	tools := []*mcp.Tool{
+		{Name: "whodb_platform_security_audit", Description: "Search the canonical security ledger, correlate requests/runs, inspect export backlog or verify the organization hash chain. Requires organization management. Distinct from data-quality audit. Modes: events, exports, verify.", Annotations: platformReadOnlyAnnotations("Inspect Security Ledger")},
 		platformResolveResourceToolDefinition(),
 		platformWorkflowRecipeToolDefinition(),
 		platformTransformWaitToolDefinition(),
@@ -694,12 +701,14 @@ func platformProjectRead(ctx context.Context, toolName string, fields []string, 
 	session, err := loadPlatformWorkspace(ctx)
 	if err != nil {
 		TrackToolCall(ctx, toolName, requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_session"})
-		return nil, PlatformReadOutput{PlatformSetupGuidance: platformSetupGuidanceForCurrentConfig(ctx, requestID), Error: err.Error(), RequestID: requestID}, nil
+		out := platformReadErrorOutput(err, requestID)
+		out.PlatformSetupGuidance = platformSetupGuidanceForCurrentConfig(ctx, requestID)
+		return nil, out, nil
 	}
 	data, count, truncated, err := read(ctx, session)
 	if err != nil {
 		TrackToolCall(ctx, toolName, requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_query"})
-		return nil, PlatformReadOutput{Error: err.Error(), RequestID: requestID}, nil
+		return nil, platformReadErrorOutput(err, requestID), nil
 	}
 	TrackToolCall(ctx, toolName, requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"count": count, "truncated": truncated})
 	return nil, platformReadOutput(session, toolName, data, count, truncated, requestID, fields), nil
@@ -711,6 +720,47 @@ func platformProjectListRead(ctx context.Context, toolName string, input Platfor
 		search = input.Name
 	}
 	return platformProjectRead(ctx, toolName, input.Fields, func(ctx context.Context, session *platformToolSession) (any, int, bool, error) {
+		if client, ok := session.Client.(interface {
+			SupportsResourcePages() bool
+			ResourcePage(context.Context, string, platformapi.ResourcePageInput) (*platformapi.ResourcePage, error)
+		}); ok && client.SupportsResourcePages() {
+			resources := map[string]string{"platform_secrets": "secret", "platform_ai_providers": platformResourceAIProvider, "platform_ontologies": platformResourceOntology, "platform_datasets": platformResourceDataset, "platform_transforms": "transform", "platform_functions": platformResourceFunction, "platform_apps": "app"} //nolint:goconst // Collection identifiers match the GraphQL contract.
+			if resource := resources[toolName]; resource != "" {
+				var deployed *bool
+				if strings.TrimSpace(input.Deployed) != "" {
+					value, err := strconv.ParseBool(input.Deployed)
+					if err != nil {
+						return nil, 0, false, errors.New("invalid deployed filter: expected true or false")
+					}
+					deployed = &value
+				}
+				limit := input.Limit
+				if limit == 0 {
+					limit = 50
+				}
+				page, err := client.ResourcePage(ctx, session.Host.DefaultProjectID, platformapi.ResourcePageInput{Resource: resource, Limit: limit, Offset: input.Offset, Search: search, Name: input.Name, Type: input.Type, Status: input.Status, SchemaMode: input.SchemaMode, Deployed: deployed})
+				if err != nil {
+					return nil, 0, false, err
+				}
+				if page == nil {
+					return nil, 0, false, errors.New("platform returned no resource page")
+				}
+				for _, item := range page.Items {
+					switch resource {
+					case platformResourceOntology:
+						item["displayName"] = item["name"]
+					case platformResourceFunction:
+						item["language"] = item["type"]
+					case platformResourceAIProvider:
+						item["providerType"] = item["type"]
+					case "transform":
+						item["triggerMode"] = item["type"]
+					}
+				}
+				data, clipped, err := platformPageDetails(ctx, session, resource, page.Items, input.Fields)
+				return data, len(page.Items), page.HasMore || clipped, err
+			}
+		}
 		data, _, truncated, err := read(ctx, session)
 		if err != nil {
 			return data, 0, truncated, err
@@ -754,17 +804,17 @@ func platformSourceRefRead(ctx context.Context, toolName, sourceValue, refValue 
 	session, source, err := loadPlatformSource(ctx, sourceValue)
 	if err != nil {
 		TrackToolCall(ctx, toolName, requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_source"})
-		return nil, PlatformReadOutput{Error: err.Error(), RequestID: requestID}, nil
+		return nil, platformReadErrorOutput(err, requestID), nil
 	}
 	ref, err := parsePlatformRequiredRef(refValue)
 	if err != nil {
 		TrackToolCall(ctx, toolName, requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "validation"})
-		return nil, PlatformReadOutput{Error: err.Error(), RequestID: requestID}, nil
+		return nil, platformReadErrorOutput(err, requestID), nil
 	}
 	data, count, truncated, err := read(ctx, session, source, ref)
 	if err != nil {
 		TrackToolCall(ctx, toolName, requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "platform_query"})
-		return nil, PlatformReadOutput{Error: err.Error(), RequestID: requestID}, nil
+		return nil, platformReadErrorOutput(err, requestID), nil
 	}
 	TrackToolCall(ctx, toolName, requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"count": count, "truncated": truncated})
 	return nil, platformReadOutput(session, toolName, data, count, truncated, requestID, fields), nil
@@ -988,7 +1038,7 @@ Use this before ontology, dataset, or lineage work. It returns sources, datasets
 
 const descPlatformRuntimeReadiness = `Summarize selected-project runtime readiness.
 
-Use this before function, transform, AI provider, or secret work. It returns runtime resources, deployment/readiness checks, and warnings without exposing secret values.`
+Use this before function, transform, AI provider, or secret work. It returns configured resources and timestamped evidence. Reachability and verification stay unknown unless supported by evidence. Optional function_id inspects the latest persisted run without executing it; historical success is not current worker health. Unavailable inventories are partial results with warnings.`
 
 const descPlatformChangeImpact = `Analyze direct graph impact for a planned change.
 

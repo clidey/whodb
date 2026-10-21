@@ -24,13 +24,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/zalando/go-keyring"
+
 	"github.com/clidey/whodb/cli/pkg/identity"
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/analytics"
 	"github.com/clidey/whodb/core/src/common/config"
 	"github.com/clidey/whodb/core/src/common/datadir"
 	"github.com/clidey/whodb/core/src/env"
-	"github.com/zalando/go-keyring"
 )
 
 var (
@@ -341,7 +342,7 @@ func (c *Config) UsesKeyring() bool {
 func (c *Config) showKeyringWarning() {
 	if !c.useKeyring && !c.keyringWarningShown {
 		fmt.Fprintf(os.Stderr, "\n⚠️  WARNING: OS keyring not available.\n")
-		fmt.Fprintf(os.Stderr, "   Database and SSH passwords will be stored in plaintext in config file.\n")
+		fmt.Fprintf(os.Stderr, "   Saving database and SSH passwords requires a keyring or explicit WHODB_CLI_ALLOW_PLAINTEXT_CREDENTIALS=true.\n")
 		fmt.Fprintf(os.Stderr, "   File permissions: 0600 (user read/write only)\n\n")
 		c.keyringWarningShown = true
 	}
@@ -349,6 +350,14 @@ func (c *Config) showKeyringWarning() {
 
 func (c *Config) Save() error {
 	useKeyring := c.useKeyring
+	if !useKeyring && os.Getenv("WHODB_CLI_ALLOW_PLAINTEXT_CREDENTIALS") != "true" {
+		for i := range c.Connections {
+			conn := &c.Connections[i]
+			if conn.Password != "" || conn.SSHPassword != "" {
+				return errors.New("OS keyring is unavailable; to explicitly allow plaintext database and SSH passwords in the config file, set WHODB_CLI_ALLOW_PLAINTEXT_CREDENTIALS=true")
+			}
+		}
+	}
 
 	if c.useKeyring {
 		for _, conn := range c.Connections {
@@ -357,16 +366,12 @@ func (c *Config) Save() error {
 			}
 			if conn.Password != "" {
 				if err := keyring.Set(identity.Current().KeyringService, "connection:"+conn.Name, conn.Password); err != nil {
-					fmt.Fprintf(os.Stderr, "Warning: Could not save password to keyring for %s: %v\n", conn.Name, err)
-					fmt.Fprintf(os.Stderr, "Password will be saved in config file.\n")
-					useKeyring = false
+					return fmt.Errorf("cannot save password to keyring for %s: %w", conn.Name, err)
 				}
 			}
 			if conn.SSHPassword != "" {
 				if err := keyring.Set(identity.Current().KeyringService, "connection-ssh:"+conn.Name, conn.SSHPassword); err != nil {
-					fmt.Fprintf(os.Stderr, "Warning: Could not save SSH password to keyring for %s: %v\n", conn.Name, err)
-					fmt.Fprintf(os.Stderr, "SSH password will be saved in config file.\n")
-					useKeyring = false
+					return fmt.Errorf("cannot save SSH password to keyring for %s: %w", conn.Name, err)
 				}
 			}
 		}

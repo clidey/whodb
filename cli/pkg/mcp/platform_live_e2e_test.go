@@ -34,10 +34,11 @@ import (
 	"testing"
 	"time"
 
+	_ "github.com/jackc/pgx/v5/stdlib"
+
 	"github.com/clidey/whodb/cli/e2e/testharness"
 	"github.com/clidey/whodb/cli/internal/config"
 	platformapi "github.com/clidey/whodb/cli/internal/platform"
-	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 const (
@@ -772,6 +773,20 @@ func TestPlatformMCP_RealReadWriteLifecycle(t *testing.T) {
 	secretID = ""
 	liveMustDeleteSource(t, ctx, sourceName)
 	_ = sourceID
+	for _, reference := range []struct{ tool, kind, name string }{
+		{"whodb_platform_app_components", "list_components", ""}, {"whodb_platform_app_component", "lookup_component", "button"}, {"whodb_platform_app_sdks", "list_sdk", ""}, {"whodb_platform_app_sdk", "lookup_sdk", "data"},
+	} {
+		_, out, err := handlePlatformExtendedQuery(ctx, reference.tool, "AppBuilderReference", map[string]any{"kind": reference.kind, "name": optionalPlatformString(reference.name)}, nil)
+		if err != nil || out.Error != "" {
+			t.Fatalf("%s: %+v %v", reference.tool, out, err)
+		}
+		liveCoverTool(reference.tool)
+	}
+	_, logic, logicErr := handlePlatformExtendedQuery(ctx, "whodb_platform_app_logic_graph", "AppLogicGraph", map[string]any{"appId": appID}, nil)
+	if logicErr != nil || logic.Error != "" {
+		t.Fatalf("app logic graph: %+v %v", logic, logicErr)
+	}
+	liveCoverTool("whodb_platform_app_logic_graph")
 	liveMustScopeAndCaptureTools(t, ctx, appID)
 	liveMustExerciseExtendedWriteBuilders(t, ctx)
 	coverage.Assert(t)
@@ -1186,6 +1201,13 @@ func liveMustBundleTools(t *testing.T, ctx context.Context, suffix string) {
 }
 
 func liveMustWorkspaceIntelligence(t *testing.T, ctx context.Context, datasetID string) {
+	for _, mode := range []string{"events", "exports", "verify"} {
+		_, out, err := HandlePlatformSecurityAudit(ctx, nil, PlatformSecurityAuditInput{Mode: mode, Limit: 2})
+		if err != nil || out.Error != "" {
+			t.Fatalf("security audit %s: %v %s", mode, err, out.Error)
+		}
+	}
+	liveCoverTool("whodb_platform_security_audit")
 	t.Helper()
 	_, workspaceMap, err := HandlePlatformWorkspaceMap(ctx, nil, PlatformWorkspaceMapInput{Fields: []string{"counts", "warnings", "lineage"}})
 	if err != nil {

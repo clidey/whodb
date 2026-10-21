@@ -39,6 +39,7 @@ import {HealthActions} from "./store/health";
 import {PageTitleUpdater} from "./hooks/use-page-title";
 import {getEdition} from "./config/edition";
 import {LoadingPage} from "./components/loading";
+import {LanguageSwitchOverlay} from "./components/language-switch";
 
 export const App = () => {
     const [updateSettings] = useMutation(UpdateSettingsDocument);
@@ -163,6 +164,7 @@ export const App = () => {
   return (
     <TourProvider>
       {createPortal(<Toaster position="bottom-right" />, document.body)}
+      <LanguageSwitchOverlay />
       <div className="h-[100vh] w-[100vw]" id="whodb-app-container">
         {KeyboardShortcutsHelpModal}
         {CommandPaletteModal}
@@ -180,9 +182,9 @@ export const App = () => {
               const scopedRoutes = getRegisteredScopedRoutes();
               if (layout && scopedRoutes.length > 0) {
                 return (
-                  <Route path={layout.pathPattern} element={<Suspense fallback={<LoadingPage />}><layout.lazyComponent /></Suspense>}>
+                  <Route path={layout.pathPattern} element={<Suspense fallback={layout.loadingFallback === undefined ? <LoadingPage /> : layout.loadingFallback}><layout.lazyComponent /></Suspense>}>
                     {scopedRoutes.map(route => (
-                      <Route key={route.path} path={route.path} element={<Suspense fallback={<LoadingPage />}><route.lazyComponent /></Suspense>} />
+                      <Route key={route.path} path={route.path} element={<Suspense fallback={route.loadingFallback === undefined ? <LoadingPage /> : route.loadingFallback}><route.lazyComponent /></Suspense>} />
                     ))}
                   </Route>
                 );

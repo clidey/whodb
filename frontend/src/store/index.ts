@@ -169,15 +169,11 @@ const authPersistTransform = createTransform(
   { whitelist: ['current', 'profiles'] }
 );
 
-const settingsPersistTransform = createTransform(
-  (inboundState: any) => {
-    if (!inboundState) return inboundState;
-    const { newUIEnabled: _newUIEnabled, ...settingsToPersist } = inboundState;
-    return settingsToPersist;
-  },
-  (outboundState: any) => outboundState,
-  { whitelist: ['settings'] }
-);
+const migrateSettings = async (state: any) => {
+  if (!state) return state;
+  const { os: _os, newUIEnabled: _newUIEnabled, ...settings } = state;
+  return settings;
+};
 
 const PERSIST_THROTTLE = 2000;
 
@@ -188,7 +184,7 @@ const authReducer: Reducer<IAuthState> = isDesktopApp()
 const ceReducerMap = {
   auth: authReducer,
   database: persistReducer({ key: "database", storage }, databaseReducers),
-  settings: persistReducer({ key: "settings", storage, transforms: [settingsPersistTransform] }, settingsReducers),
+  settings: persistReducer({ key: "settings", storage, blacklist: ['os', 'newUIEnabled'], migrate: migrateSettings }, settingsReducers),
   houdini: persistReducer({ key: "houdini", storage, transforms: [chatTransform], throttle: PERSIST_THROTTLE }, houdiniReducers),
   aiModels: persistReducer({ key: "aiModels", storage }, aiModelsReducers),
   scratchpad: persistReducer({ key: "scratchpad", storage, transforms: [scratchpadTransform], throttle: PERSIST_THROTTLE }, scratchpadReducers),

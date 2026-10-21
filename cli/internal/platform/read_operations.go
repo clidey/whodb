@@ -92,6 +92,8 @@ const ontologyFields = `
     displayName
     pluralDisplayName
     reverseDisplayName
+    targetKind
+    targetReferenceId
   }
 `
 
@@ -186,6 +188,10 @@ const functionFields = `
   defaultMaxTokens
   defaultTemperature
   isDeployed
+  scheduleCron
+  scheduleInput
+  scheduleVersion
+  scheduleLastRunAt
 `
 
 const projectFileFields = `

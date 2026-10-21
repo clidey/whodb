@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import {ApolloClient, InMemoryCache} from '@apollo/client';
+import {ApolloClient, type ApolloLink, InMemoryCache} from '@apollo/client';
 import {CombinedGraphQLErrors, CombinedProtocolErrors, ServerError} from '@apollo/client/errors';
 import {setContext} from '@apollo/client/link/context';
 import {onError} from '@apollo/client/link/error';
 import {HttpLink} from '@apollo/client/link/http';
 import {RetryLink} from '@apollo/client/link/retry';
-import {getMainDefinition} from '@apollo/client/utilities';
+import {getMainDefinition, Observable} from '@apollo/client/utilities';
 import {toast} from '@clidey/ux';
 import {print} from 'graphql';
 import type {
@@ -58,6 +58,20 @@ let onUnauthorizedHandler: (() => Promise<boolean>) | null = null;
 /** Registers an extension handler for 401 responses. */
 export const registerOnUnauthorized = (fn: () => Promise<boolean>): void => {
     onUnauthorizedHandler = fn;
+};
+
+let onCSRFRejectedHandler: (() => Promise<boolean>) | null = null;
+
+// extensions.reason the backend sets on a FORBIDDEN error caused by a missing or stale CSRF token.
+const CSRF_REJECTED_REASON = 'csrf_token_required';
+
+/**
+ * Registers a handler for operations the server rejected because their CSRF token was missing
+ * or stale. The handler should refresh the session token and resolve true; the failed operation
+ * is then retried once, with its headers rebuilt from the refreshed token.
+ */
+export const registerOnCSRFRejected = (fn: () => Promise<boolean>): void => {
+    onCSRFRejectedHandler = fn;
 };
 
 type GraphQLClientTranslationKey = 'sessionExpired' | 'autoLoginSuccess' | 'autoLoginFailed';
@@ -115,10 +129,26 @@ const handleUnauthorized = () => {
     fallbackAutoLogin();
 };
 
-const errorLink = onError(({error}) => {
+const errorLink = onError(({error, operation, forward}) => {
     if (CombinedGraphQLErrors.is(error)) {
         if (error.errors.some(graphQLError => graphQLError.extensions?.code === 'UNAUTHENTICATED')) {
             handleUnauthorized();
+            return;
+        }
+        const csrfRejected = error.errors.some(graphQLError => graphQLError.extensions?.reason === CSRF_REJECTED_REASON);
+        if (csrfRejected && onCSRFRejectedHandler && !operation.getContext().csrfRetried) {
+            const handler = onCSRFRejectedHandler;
+            // Retried once: forward() re-runs authLink, which rebuilds the headers with the refreshed token.
+            return new Observable<ApolloLink.Result>(observer => {
+                handler().then(refreshed => {
+                    if (!refreshed) {
+                        observer.error(error);
+                        return;
+                    }
+                    operation.setContext({...operation.getContext(), csrfRetried: true});
+                    forward(operation).subscribe(observer);
+                }).catch(() => { observer.error(error); });
+            });
         }
         return;
     }

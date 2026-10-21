@@ -120,6 +120,8 @@ type OntologyLink struct {
 	DisplayName              string `json:"displayName"`
 	PluralDisplayName        string `json:"pluralDisplayName"`
 	ReverseDisplayName       string `json:"reverseDisplayName"`
+	TargetKind               string `json:"targetKind"`
+	TargetReferenceID        string `json:"targetReferenceId"`
 }
 
 // Ontology describes one hosted ontology object type.
@@ -191,9 +193,13 @@ type Dataset struct {
 
 // DatasetQueryResult contains tabular dataset or ontology rows.
 type DatasetQueryResult struct {
-	Columns []string   `json:"columns"`
-	Rows    [][]string `json:"rows"`
-	Total   int        `json:"total"`
+	// Partial reports incomplete source scans; nil means completeness is unknown.
+	Partial *bool `json:"partial,omitempty"`
+	// ScannedRows includes lookahead rows across all bounded query sources.
+	ScannedRows *int       `json:"scannedRows,omitempty"`
+	Columns     []string   `json:"columns"`
+	Rows        [][]string `json:"rows"`
+	Total       int        `json:"total"`
 }
 
 // LineageNode describes one lineage graph node.
@@ -293,6 +299,10 @@ type Function struct {
 	DefaultMaxTokens    int                      `json:"defaultMaxTokens"`
 	DefaultTemperature  float64                  `json:"defaultTemperature"`
 	IsDeployed          bool                     `json:"isDeployed"`
+	ScheduleCron        string                   `json:"scheduleCron"`
+	ScheduleInput       string                   `json:"scheduleInput"`
+	ScheduleVersion     int                      `json:"scheduleVersion"`
+	ScheduleLastRunAt   *string                  `json:"scheduleLastRunAt,omitempty"`
 }
 
 // FunctionExecutionResult describes one hosted function execution result.

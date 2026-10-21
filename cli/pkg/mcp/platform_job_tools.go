@@ -8,8 +8,12 @@ package mcp
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"strings"
 	"time"
+
+	platformapi "github.com/clidey/whodb/cli/internal/platform"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -44,29 +48,18 @@ func HandlePlatformTransformWait(ctx context.Context, req *mcp.CallToolRequest, 
 	if err != nil {
 		return nil, platformReadErrorOutput(err, requestID), nil
 	}
-	deadline := time.NewTimer(timeout)
-	defer deadline.Stop()
-	for {
+	return waitForPlatformRun(ctx, session, "platform_transform_wait", requestID, input.Fields, timeout, poll, func(ctx context.Context) (*platformapi.TransformRun, bool, error) {
 		runs, err := session.Client.TransformRuns(ctx, session.Host.DefaultProjectID, input.TransformID, 100)
 		if err != nil {
-			return nil, platformReadErrorOutput(err, requestID), nil
+			return nil, false, err
 		}
 		for _, run := range runs {
-			if run.ID != input.RunID {
-				continue
-			}
-			if isTerminalTransformRunStatus(run.Status) {
-				return nil, platformReadOutput(session, "platform_transform_wait", run, 1, false, requestID, input.Fields), nil
+			if run.ID == input.RunID {
+				return &run, isTerminalTransformRunStatus(run.Status), nil
 			}
 		}
-		select {
-		case <-ctx.Done():
-			return nil, platformReadErrorOutput(ctx.Err(), requestID), nil
-		case <-deadline.C:
-			return nil, PlatformReadOutput{Error: "transform run did not reach a terminal state before timeout", ErrorCode: string(PlatformErrorRateLimited), Retryable: true, RequestID: requestID}, nil
-		case <-time.After(poll):
-		}
-	}
+		return nil, false, nil
+	})
 }
 
 func isTerminalTransformRunStatus(status string) bool {
@@ -134,26 +127,61 @@ func HandlePlatformFunctionWait(ctx context.Context, req *mcp.CallToolRequest, i
 	if err != nil {
 		return nil, platformReadErrorOutput(err, requestID), nil
 	}
-	deadline := time.NewTimer(timeout)
-	defer deadline.Stop()
-	for {
+	return waitForPlatformRun(ctx, session, "platform_function_wait", requestID, input.Fields, timeout, poll, func(ctx context.Context) (*platformapi.FunctionRun, bool, error) {
 		run, err := session.Client.FunctionRun(ctx, session.Host.DefaultProjectID, input.RunID)
 		if err != nil {
-			return nil, platformReadErrorOutput(err, requestID), nil
+			return nil, false, err
 		}
-		if run.Finished() {
-			return nil, platformReadOutput(session, "platform_function_wait", run, 1, false, requestID, input.Fields), nil
-		}
-		select {
-		case <-ctx.Done():
-			return nil, platformReadErrorOutput(ctx.Err(), requestID), nil
-		case <-deadline.C:
-			return nil, PlatformReadOutput{Error: "function run is still " + run.Status + " after the timeout; call again with the same run_id", ErrorCode: string(PlatformErrorRateLimited), Retryable: true, RequestID: requestID}, nil
-		case <-time.After(poll):
-		}
-	}
+		return run, run.Finished(), nil
+	})
 }
 
 func platformFunctionWaitToolDefinition() *mcp.Tool {
 	return &mcp.Tool{Name: "whodb_platform_function_wait", Description: "Wait for a persisted hosted function run to complete, fail or be canceled, then return its output, logs and error. Use the run id returned by the function start_run action and keep the timeout bounded; a run keeps going after a timed-out wait.", Annotations: platformReadOnlyAnnotations("Wait For Hosted Function Run")}
+}
+
+// Leave response-serialization time inside the transport deadline, including
+// when a polling request itself stalls. A wait never cancels the hosted job.
+func waitForPlatformRun[T any](ctx context.Context, session *platformToolSession, operation, requestID string, fields []string, timeout, poll time.Duration, fetch func(context.Context) (*T, bool, error)) (*mcp.CallToolResult, PlatformReadOutput, error) {
+	if end, ok := ctx.Deadline(); ok {
+		remaining := time.Until(end)
+		reserve := min(time.Second, remaining/10)
+		timeout = min(timeout, remaining-reserve)
+	}
+	waitCtx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+	var latest *T
+	finish := func() (*mcp.CallToolResult, PlatformReadOutput, error) {
+		if ctx.Err() != nil {
+			return nil, platformReadErrorOutput(ctx.Err(), requestID), nil //nolint:nilerr // MCP errors are returned in the structured result.
+		}
+		if latest == nil {
+			return nil, platformReadErrorOutput(fmt.Errorf("no run status available before wait deadline: %w", context.DeadlineExceeded), requestID), nil
+		}
+		out := platformReadOutput(session, operation, latest, 1, false, requestID, fields)
+		out.Warnings = append(out.Warnings, "The run was still in progress at the last poll. Call again with the same run_id to check its status.")
+		return nil, out, nil
+	}
+	for {
+		run, terminal, err := fetch(waitCtx)
+		if err != nil {
+			if errors.Is(waitCtx.Err(), context.DeadlineExceeded) {
+				return finish()
+			}
+			return nil, platformReadErrorOutput(err, requestID), nil
+		}
+		if run != nil {
+			latest = run
+		}
+		if terminal {
+			return nil, platformReadOutput(session, operation, run, 1, false, requestID, fields), nil
+		}
+		timer := time.NewTimer(poll)
+		select {
+		case <-waitCtx.Done():
+			timer.Stop()
+			return finish()
+		case <-timer.C:
+		}
+	}
 }

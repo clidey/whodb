@@ -258,6 +258,10 @@ describeOrSkip('Browser Storage', () => {
             await page.locator('#language').click();
             await page.locator('[data-value="es_ES"]').click();
 
+            // Switching downloads the language pack before the setting is dispatched; wait for
+            // it to land in storage before reloading.
+            await expect.poll(() => readPersistedSetting(page, 'language'), { timeout: 15000 }).toEqual('es_ES');
+
             await page.reload();
             await expect(page.locator('[data-testid="sidebar-profile"]')).toBeAttached({ timeout: 10000 });
 

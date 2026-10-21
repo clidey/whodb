@@ -31,16 +31,24 @@ test.describe("Postgres Screenshot Generation", () => {
   }
 
   async function focusGraphNode(page, nodeId) {
-    const pane = await page.locator(".react-flow").boundingBox();
-    const node = await page.locator(`[data-testid="rf__node-${nodeId}"]`).boundingBox();
-    await page.mouse.move(pane.x + pane.width / 2, pane.y + pane.height / 2);
-    await page.mouse.wheel(node.x + node.width / 2 - (pane.x + pane.width / 2), node.y + node.height / 2 - (pane.y + pane.height / 2));
-    await page.waitForTimeout(300);
     for (let i = 0; i < 2; i++) {
       await page.locator(".react-flow__controls-zoomin").click();
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(400);
+    }
+    const node = page.locator(`[data-testid="rf__node-${nodeId}"]`);
+    for (let i = 0; i < 4; i++) {
+      const pane = await page.locator(".react-flow").boundingBox();
+      const box = await node.boundingBox();
+      const dx = box.x + box.width / 2 - (pane.x + pane.width / 2);
+      const dy = box.y + box.height / 2 - (pane.y + pane.height / 2);
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) break;
+      await page.mouse.move(pane.x + pane.width / 2, pane.y + pane.height / 2);
+      // React Flow scales scroll-pan deltas by panOnScrollSpeed (0.5)
+      await page.mouse.wheel(dx * 2, dy * 2);
+      await page.waitForTimeout(400);
     }
   }
+
 
   // Tests that need clean login page (01-04)
   test.describe("Login Flow Screenshots", () => {
@@ -1222,7 +1230,7 @@ test.describe("Postgres Screenshot Generation", () => {
       }]);
       await whodb.sendChatMessage("Hello");
       await whodb.waitForChatResponse();
-      await whodb.screenshotWithHighlight('[data-testid="chat-new-chat"]', ssName("114-chat-new-chat-button"));
+      await whodb.screenshotWithHighlight('[data-testid="add-chat-session-button"]', ssName("114-chat-new-chat-button"));
     });
 
     test("115 - Chat - Delete Provider Button", async ({ whodb, page }) => {

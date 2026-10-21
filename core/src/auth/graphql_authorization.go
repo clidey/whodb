@@ -85,7 +85,11 @@ func authorizeGraphQLOperation(ctx context.Context) *gqlerror.Error {
 		return newGraphQLAuthorizationError("UNAUTHENTICATED", "authentication required")
 	}
 	if failed, _ := ctx.Value(csrfFailedKey{}).(bool); failed {
-		return newGraphQLAuthorizationError("FORBIDDEN", "csrf token required")
+		err := newGraphQLAuthorizationError("FORBIDDEN", "csrf token required")
+		// Lets a client tell a missing or stale CSRF token apart from other FORBIDDEN errors,
+		// so it can refresh its session token and retry instead of surfacing a failure.
+		err.Extensions["reason"] = CSRFTokenRequiredReason
+		return err
 	}
 	return nil
 }
@@ -139,6 +143,11 @@ func sourceFieldOptionsArePublic(args map[string]any) bool {
 	field, ok := spec.ConnectionFieldByKey(fieldKey)
 	return ok && field.SupportsOptions
 }
+
+// CSRFTokenRequiredReason is the extensions.reason value on the FORBIDDEN GraphQL error returned
+// when an authenticated request lacks a valid CSRF token. Clients use it to refresh their session
+// token and retry; editions that run their own authorization step must set the same value.
+const CSRFTokenRequiredReason = "csrf_token_required" // #nosec G101 -- error reason label, not a credential.
 
 func newGraphQLAuthorizationError(code, message string) *gqlerror.Error {
 	err := gqlerror.Errorf("%s", message)

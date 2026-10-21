@@ -19,7 +19,7 @@ Fix the cause at the narrowest correct level. Ask when a binding system principl
 
 ## 2. Gather the evidence
 
-Use the feature yourself at representative desktop and mobile sizes. Determine:
+Use the feature yourself at the surface's representative sizes: desktop and mobile on the web; on a native platform (`ios` / `android` / `adaptive`), the shipped device classes on the simulator, emulator, or hardware, captured per the platform reference's Verifying the build section. Determine:
 
 - whether the path is functionally complete;
 - the intended quality bar and time available;
@@ -29,10 +29,10 @@ Use the feature yourself at representative desktop and mobile sizes. Determine:
 If a prior critique exists, use it as one input:
 
 ```bash
-node .agents/skills/impeccable/scripts/critique-storage.mjs latest "<resolved target>"
+.agents/skills/impeccable/scripts/impeccable critique-storage latest "<resolved target>" --json
 ```
 
-Exit 0 returns the latest snapshot; incorporate relevant P0/P1 findings and name the snapshot read. Exit 2 means none exists. Perform an independent pass either way.
+Exit 0 returns JSON with the latest snapshot's `body` and an exact `snapshot_file` identity. Retain `snapshot_file` until the end of the pass. For a local file target, the helper compares the file's exact current content fingerprint with the fingerprint captured by critique. Unchanged staged, unstaged, or untracked content remains current; any byte change, deletion, or replacement with a non-file closes the backlog it identified while preserving its trend history and exits 2. A URL target has no local fingerprint and remains current until explicitly closed. When current, incorporate relevant P0/P1 findings from `body` and name the snapshot read. Exit 2 means none exists or the target changed. Perform an independent pass either way.
 
 ## 3. Triage
 
@@ -86,12 +86,20 @@ Do not perfect one corner while leaving the rest below the same quality bar.
 
 Walk the complete path again with mouse, keyboard, and touch where applicable. Check:
 
-- mobile, intermediate, and wide layouts;
+- mobile, intermediate, and wide layouts on the web; phone and tablet size classes in both supported orientations on native;
 - loading, empty, error, success, disabled, long-content, and missing-content states;
 - zoom, contrast, focus, semantics, and screen-reader names;
-- console errors, layout shift, interaction latency, image loading, and supported browsers;
+- console errors, layout shift, interaction latency, and image loading everywhere; supported browsers on the web; supported OS versions, runtime warnings, and dropped frames on native;
 - agreement with DESIGN.md, neighboring features, and the user's scope.
 
-Follow the quality guidance supplied by `context.mjs` and hooks, then run any other relevant QA commands. Context requests a manual scan only when no automatic detector is active; never add another detector pass. Fix real defects and document only narrow intentional exceptions. A clean scan does not replace visual judgment.
+Follow the quality guidance supplied by `impeccable context` and hooks, then run any other relevant QA commands. Context requests a manual scan only when no automatic detector is active; never add another detector pass. Fix real defects and document only narrow intentional exceptions. A clean scan does not replace visual judgment.
 
 Finish with a source diff: remove accidental churn, orphaned code, redundant values, and temporary artifacts. Ship only when the feature is functionally complete and consistently finished across the path.
+
+When this pass clears every Priority Issue it took from a snapshot, close that snapshot:
+
+```bash
+.agents/skills/impeccable/scripts/impeccable critique-storage close "<resolved target>" "<snapshot_file returned by latest>"
+```
+
+This closes only the snapshot this pass actually processed; if a newer critique landed meanwhile, its backlog stays live. Do not close when no snapshot was read, when `snapshot_file` was not retained, or when Priority Issues remain.
