@@ -53,7 +53,8 @@ aws cloudformation create-stack \
   --template-body file://dev/aws-prod-stack.yml \
   --capabilities CAPABILITY_IAM \
   --parameters \
-    ParameterKey=CertificateArn,ParameterValue=arn:aws:acm:us-east-1:123456789:certificate/your-cert-id
+    ParameterKey=CertificateArn,ParameterValue=arn:aws:acm:us-east-1:123456789:certificate/your-cert-id \
+    ParameterKey=AllowedCIDR,ParameterValue=203.0.113.50/32
 ```
 </Step>
 <Step title="Wait for completion (~5 minutes)">
@@ -76,11 +77,11 @@ aws cloudformation describe-stacks \
 | Parameter | Required | Default | Description |
 |-----------|----------|---------|-------------|
 | `CertificateArn` | Yes | — | ACM certificate ARN for HTTPS |
-| `AllowedCIDR` | No | `0.0.0.0/0` | CIDR range allowed to access the ALB |
+| `AllowedCIDR` | Yes | — | CIDR range allowed to access the ALB |
 | `WhoDBImage` | No | `clidey/whodb:latest` | Docker image for WhoDB |
 
 <Tip>
-Restrict `AllowedCIDR` to your office or VPN IP range for better security (e.g., `203.0.113.50/32`)
+Replace the example `AllowedCIDR` with your office or VPN IP range.
 </Tip>
 
 ### Tear down
@@ -114,7 +115,8 @@ More flexibility than the production stack. Supports using an existing VPC, HTTP
 aws cloudformation create-stack \
   --stack-name whodb \
   --template-body file://dev/aws-selfhosted-stack.yml \
-  --capabilities CAPABILITY_IAM
+  --capabilities CAPABILITY_IAM \
+  --parameters ParameterKey=AllowedCIDR,ParameterValue=203.0.113.50/32
 ```
 </Accordion>
 <Accordion title="With HTTPS">
@@ -124,7 +126,8 @@ aws cloudformation create-stack \
   --template-body file://dev/aws-selfhosted-stack.yml \
   --capabilities CAPABILITY_IAM \
   --parameters \
-    ParameterKey=CertificateArn,ParameterValue=arn:aws:acm:us-east-1:123456789:certificate/your-cert-id
+    ParameterKey=CertificateArn,ParameterValue=arn:aws:acm:us-east-1:123456789:certificate/your-cert-id \
+    ParameterKey=AllowedCIDR,ParameterValue=203.0.113.50/32
 ```
 </Accordion>
 <Accordion title="Into an existing VPC (private ALB)">
@@ -138,7 +141,8 @@ aws cloudformation create-stack \
     ParameterKey=PublicSubnetIds,ParameterValue="subnet-aaa\,subnet-bbb" \
     ParameterKey=PrivateSubnetIds,ParameterValue="subnet-ccc\,subnet-ddd" \
     ParameterKey=CertificateArn,ParameterValue=arn:aws:acm:us-east-1:123456789:certificate/your-cert-id \
-    ParameterKey=ALBScheme,ParameterValue=internal
+    ParameterKey=ALBScheme,ParameterValue=internal \
+    ParameterKey=AllowedCIDR,ParameterValue=203.0.113.50/32
 ```
 </Accordion>
 </AccordionGroup>
@@ -152,7 +156,7 @@ aws cloudformation create-stack \
 | `VpcId` | No | *(empty)* | Existing VPC (empty = create new) |
 | `PublicSubnetIds` | No | *(empty)* | Existing public subnets (2+, required if VpcId set) |
 | `PrivateSubnetIds` | No | *(empty)* | Existing private subnets (2+, required if VpcId set) |
-| `AllowedCIDR` | No | `0.0.0.0/0` | CIDR range allowed to access the ALB |
+| `AllowedCIDR` | Yes | — | CIDR range allowed to access the ALB |
 | `ALBScheme` | No | `internet-facing` | `internet-facing` or `internal` |
 | `TaskCpu` | No | `512` | Fargate CPU units (256-4096) |
 | `TaskMemory` | No | `1024` | Fargate memory in MB (512-16384) |
@@ -188,7 +192,8 @@ aws cloudformation create-stack \
   --template-body file://dev/aws-demo-stack.yml \
   --capabilities CAPABILITY_IAM \
   --parameters \
-    ParameterKey=CertificateArn,ParameterValue=arn:aws:acm:us-east-1:123456789:certificate/your-cert-id
+    ParameterKey=CertificateArn,ParameterValue=arn:aws:acm:us-east-1:123456789:certificate/your-cert-id \
+    ParameterKey=AllowedCIDR,ParameterValue=203.0.113.50/32
 ```
 </Step>
 <Step title="Wait for completion (15-20 minutes)">
@@ -212,7 +217,7 @@ aws cloudformation describe-stacks \
 |-----------|----------|---------|-------------|
 | `CertificateArn` | Yes | — | ACM certificate ARN for HTTPS |
 | `WhoDBImage` | No | `clidey/whodb:latest` | Docker image for WhoDB |
-| `AllowedCIDR` | No | `0.0.0.0/0` | CIDR range allowed to access the ALB |
+| `AllowedCIDR` | Yes | — | CIDR range allowed to access the ALB |
 | `DeletionProtection` | No | `true` | Database deletion protection |
 | `AlarmSNSTopicArn` | No | *(empty)* | SNS topic for CloudWatch alarm notifications |
 
