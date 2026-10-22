@@ -3,12 +3,12 @@ module github.com/clidey/whodb/core
 go 1.27.3
 
 require (
-	cloud.google.com/go/alloydb v1.31.0
+	cloud.google.com/go/alloydb v1.32.0
 	cloud.google.com/go/memcache v1.18.0
-	cloud.google.com/go/redis v1.26.0
+	cloud.google.com/go/redis v1.27.0
 	github.com/99designs/gqlgen v0.17.95
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.23.3
-	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.14.1
+	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.15.0
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/cosmos/armcosmos/v3 v3.4.0
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/mysql/armmysqlflexibleservers v1.2.0
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/postgresql/armpostgresqlflexibleservers v1.1.0
@@ -44,7 +44,7 @@ require (
 	github.com/shopspring/decimal v1.5.0
 	github.com/sirupsen/logrus v1.10.2
 	github.com/twpayne/go-geom v1.7.0
-	github.com/vektah/gqlparser/v2 v2.5.62
+	github.com/vektah/gqlparser/v2 v2.5.63
 	// Pinned pseudo-version (no v2.11.1 tag yet): fixes GO-2026-6684/6685/6688/6689 and CVE-2026-107211.
 	// Swap to the v2.11.1 tag once released.
 	github.com/xuri/excelize/v2 v2.11.1-0.20261003002531-6258dcebc4e2
@@ -54,7 +54,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.47.0
 	golang.org/x/oauth2 v0.37.0
 	golang.org/x/sync v0.24.0
-	google.golang.org/api v0.303.0
+	google.golang.org/api v0.304.0
 	google.golang.org/grpc v1.84.0
 	gorm.io/driver/clickhouse v0.7.0
 	gorm.io/driver/mysql v1.6.0
@@ -71,7 +71,7 @@ require (
 	cloud.google.com/go/longrunning v1.2.0 // indirect
 	filippo.io/edwards25519 v1.2.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.13.0 // indirect
-	github.com/AzureAD/microsoft-authentication-library-for-go v1.8.0 // indirect
+	github.com/AzureAD/microsoft-authentication-library-for-go v1.10.1 // indirect
 	github.com/ClickHouse/ch-go v0.74.0 // indirect
 	github.com/agnivade/levenshtein v1.2.1 // indirect
 	github.com/apache/arrow-go/v18 v18.5.2 // indirect
