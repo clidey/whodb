@@ -23,6 +23,13 @@ func profileAllowsTool(profile, name string) bool {
 		return false
 	}
 	name = strings.TrimPrefix(name, "whodb_")
+	if profile == "workspace" {
+		for _, extension := range platformExtensions {
+			if extension.Name == "whodb_"+name {
+				return true
+			}
+		}
+	}
 	if name == "mcp_setup" {
 		return true
 	}

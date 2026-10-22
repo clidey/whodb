@@ -236,6 +236,18 @@ var platformMutationSpecs = map[string]platformMutationSpec{
 	"StartFunctionRun":                       mutationSpecWithDirect("StartFunctionRun", "$projectId: ID!, $functionId: ID!, $input: String!, $useActiveVersion: Boolean", "projectId: $projectId, functionId: $functionId, input: $input, useActiveVersion: $useActiveVersion", functionRunFields),
 }
 
+// RegisterPlatformMutation adds a static document supplied by an embedding edition.
+// Registration must finish before the client starts serving requests.
+func RegisterPlatformMutation(operation, document string) {
+	if operation == "" || document == "" {
+		panic("platform mutation registration requires an operation and document")
+	}
+	if _, exists := platformMutationSpecs[operation]; exists {
+		panic("platform mutation already registered: " + operation)
+	}
+	platformMutationSpecs[operation] = platformMutationSpec{Operation: operation, Query: document}
+}
+
 // permissionMutationsOmittedByLegacyManifests lists mutations implemented by
 // older hosted schemas but accidentally absent from their platform manifest.
 // Keep this compatibility list narrow; the server remains the authorization

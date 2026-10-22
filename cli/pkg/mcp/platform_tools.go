@@ -573,6 +573,9 @@ func registerPlatformTools(server *mcp.Server, secOpts *SecurityOptions) {
 		if !platformToolEnabledForMode(tool.Name, secOpts) {
 			continue
 		}
+		if registerPlatformExtension(server, tool, secOpts) {
+			continue
+		}
 		if registerPlatformBundleTool(server, tool, secOpts) {
 			continue
 		}
@@ -754,6 +757,7 @@ func platformToolDefinitions() []*mcp.Tool {
 	tools = append(tools, platformBundleToolDefinitions()...)
 	tools = append(tools, platformReadToolDefinitions()...)
 	tools = append(tools, platformExtendedReadToolDefinitions()...)
+	tools = append(tools, platformExtensionDefinitions()...)
 	return append(tools, platformWorkflowToolDefinitions()...)
 }
 
