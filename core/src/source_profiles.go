@@ -20,7 +20,6 @@ import (
 	"maps"
 
 	"github.com/clidey/whodb/core/src/common/ssl"
-	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/source"
 	"github.com/clidey/whodb/core/src/types"
 )
@@ -130,15 +129,6 @@ func displayValuesForProfile(profile types.DatabaseCredentials) map[string]strin
 	}
 	if profile.Port != "" {
 		values["Port"] = profile.Port
-	}
-	if env.DisableCredentialForm {
-		return values
-	}
-	for key, value := range profile.Advanced {
-		if key == ssl.KeySSLCACertContent || key == ssl.KeySSLClientCertContent || key == ssl.KeySSLClientKeyContent {
-			continue
-		}
-		values[key] = value
 	}
 	return values
 }
