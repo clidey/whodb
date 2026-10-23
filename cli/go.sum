@@ -340,8 +340,8 @@ github.com/tiendc/go-deepcopy v1.7.2 h1:Ut2yYR7W9tWjTQitganoIue4UGxZwCcJy3orjrrI
 github.com/tiendc/go-deepcopy v1.7.2/go.mod h1:4bKjNC2r7boYOkD2IOuZpYjmlDdzjbpTRyCx+goBCJQ=
 github.com/twpayne/go-geom v1.7.0 h1:zMHTHNlenoHAc2ZSiHFh7SMoG0Wdw8gF0orBnrBhfjE=
 github.com/twpayne/go-geom v1.7.0/go.mod h1:y9Q2YcKKaC2PHXwtRvwEunOPx5Oa+U8aAxPmFvscROk=
-github.com/vektah/gqlparser/v2 v2.5.62 h1:GJP/emj1wIWKs0U3SHcAgzknWgylTqQ1qH2gNL+wSWc=
-github.com/vektah/gqlparser/v2 v2.5.62/go.mod h1:JNK+plRwKdXLsF/qPFPe5tE0z4s1WeroD9S5LR8um/Q=
+github.com/vektah/gqlparser/v2 v2.5.63 h1:vzHg/+/z7kZA3N4FhbGtF1pRo99KUpPzwXahk1bQtYk=
+github.com/vektah/gqlparser/v2 v2.5.63/go.mod h1:JNK+plRwKdXLsF/qPFPe5tE0z4s1WeroD9S5LR8um/Q=
 github.com/xdg-go/pbkdf2 v1.0.0 h1:Su7DPu48wXMwC3bs7MCNG+z4FhcyEuz5dlvchbq0B0c=
 github.com/xdg-go/pbkdf2 v1.0.0/go.mod h1:jrpuAogTd400dnrH08LKmI/xc1MbPOebTwRqcT5RDeI=
 github.com/xdg-go/scram v1.2.0 h1:bYKF2AEwG5rqd1BumT4gAnvwU/M9nBp2pTSxeZw7Wvs=

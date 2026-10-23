@@ -19,7 +19,7 @@ require (
 	github.com/sahilm/fuzzy v0.1.3
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
-	github.com/vektah/gqlparser/v2 v2.5.62
+	github.com/vektah/gqlparser/v2 v2.5.63
 	// Pinned pseudo-version (no v2.11.1 tag yet): fixes GO-2026-6684/6685/6688/6689 and CVE-2026-107211.
 	// Swap to the v2.11.1 tag once released.
 	github.com/xuri/excelize/v2 v2.11.1-0.20261003002531-6258dcebc4e2
