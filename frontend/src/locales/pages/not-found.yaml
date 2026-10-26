@@ -1,0 +1,6 @@
+en_US:
+  eyebrow: 404 · Page not found
+  title: This page hit a wall.
+  description: The address doesn't match anything here. Check the link, or head back to where you were.
+  goHome: Take me back
+  sceneLabel: The WhoDB mark runs into a large 404 and bounces off

@@ -82,10 +82,11 @@ func newStaticFileHandler(staticFS fs.FS, baseHref string) http.Handler {
 	server := http.FileServer(http.FS(staticFS))
 	var etags sync.Map
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if hasExtension(r.URL.Path) {
-			// Cache headers are only set for existing files so a 404 for a not-yet-deployed
-			// hashed asset is never cached by browsers or the CDN.
-			if etag, ok := staticFileETag(staticFS, &etags, r.URL.Path); ok {
+		// Cache headers are only set for existing files so a 404 for a not-yet-deployed
+		// hashed asset is never cached by browsers or the CDN.
+		etag, exists := staticFileETag(staticFS, &etags, r.URL.Path)
+		if exists || isAssetRequest(r.URL.Path) {
+			if exists {
 				w.Header().Set("Cache-Control", staticCacheControl(r.URL.Path))
 				w.Header().Set("ETag", etag)
 			}
@@ -129,9 +130,28 @@ func renderIndexHTML(staticFS fs.FS, baseHref string) ([]byte, error) {
 	return []byte(html), nil
 }
 
-func hasExtension(pathFile string) bool {
-	ext := strings.ToLower(path.Ext(pathFile))
-	return ext != ""
+// assetExtensions are file types that only ever name build output or static
+// files, never an app route. A request for one that does not exist stays a 404
+// so a browser or CDN is never handed index.html in place of a script or style.
+var assetExtensions = map[string]struct{}{
+	".js": {}, ".mjs": {}, ".css": {}, ".map": {}, ".json": {}, ".webmanifest": {},
+	".txt": {}, ".xml": {}, ".ico": {}, ".png": {}, ".jpg": {}, ".jpeg": {}, ".gif": {},
+	".svg": {}, ".webp": {}, ".avif": {}, ".woff": {}, ".woff2": {}, ".ttf": {}, ".otf": {},
+	".wasm": {}, ".onnx": {}, ".pdf": {}, ".zip": {}, ".mp4": {}, ".webm": {},
+}
+
+// isAssetRequest reports whether a path that is not an existing file should
+// still be answered by the file server (as a 404) rather than by the app
+// shell. Anything under the build's asset directories or with a known asset
+// extension qualifies; a page route whose last segment happens to contain a
+// dot, such as /platform/report.v2, falls through to the app so its own
+// not-found page renders instead of a bare "404 page not found".
+func isAssetRequest(urlPath string) bool {
+	if isHashedAsset(urlPath) || strings.Contains(urlPath, "/fonts/") || strings.Contains(urlPath, "/images/") {
+		return true
+	}
+	_, ok := assetExtensions[strings.ToLower(path.Ext(urlPath))]
+	return ok
 }
 
 func isHashedAsset(urlPath string) bool {

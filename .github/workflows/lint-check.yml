@@ -307,3 +307,6 @@ jobs:
 
       - name: Unit Tests (analytics)
         run: cd frontend && pnpm test:analytics
+
+      - name: Unit Tests (404 motion)
+        run: cd frontend && pnpm test:not-found
