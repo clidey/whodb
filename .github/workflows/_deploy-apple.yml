@@ -595,14 +595,14 @@ jobs:
                 echo "  • Verify API key ID and Issuer ID are correct"
                 echo "  • Check API key has 'App Manager' or 'Admin' role"
                 echo "  • Ensure API key hasn't been revoked"
-              elif grep -q "network" "$LOG_FILE" || grep -q "timed out" "$LOG_FILE"; then
-                echo ""
-                echo "🔍 Network error detected - will retry"
-              elif grep -q "Package already exists" "$LOG_FILE"; then
+              elif grep -q "Package already exists" "$LOG_FILE" || grep -q "ENTITY_ERROR.ATTRIBUTE.INVALID.DUPLICATE" "$LOG_FILE"; then
                 echo ""
                 echo "🔍 Package version already exists in App Store Connect"
                 echo "This may be expected if re-running the workflow"
                 UPLOAD_SUCCESS=true  # Don't fail on duplicate upload
+              elif grep -q "network" "$LOG_FILE" || grep -q "timed out" "$LOG_FILE"; then
+                echo ""
+                echo "🔍 Network error detected - will retry"
               elif grep -q "Invalid package" "$LOG_FILE" || grep -q "not valid" "$LOG_FILE"; then
                 echo ""
                 echo "🔍 Invalid package error detected"
