@@ -48,6 +48,8 @@ const (
 const maxRequestBodySize = 1024 * 1024      // Limit request body size to 1MB
 const maxUploadBodySize = 250 * 1024 * 1024 // Limit multipart upload body size to 250MB
 
+var multipartUploadSlots = make(chan struct{}, 4)
+
 // GetSourceCredentials returns the source-first credentials from the current request context.
 func GetSourceCredentials(ctx context.Context) *source.Credentials {
 	credentials := ctx.Value(AuthKey_Source)
@@ -99,6 +101,29 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 			return
 		}
+		requestNext := next
+		if isGraphQLRequest(r) && strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/form-data") {
+			requestNext = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if GetAuthenticatedSourceCredentials(r.Context()) == nil {
+					http.Error(w, "Unauthorized", http.StatusUnauthorized)
+					return
+				}
+				if failed, _ := r.Context().Value(csrfFailedKey{}).(bool); failed {
+					http.Error(w, "Forbidden", http.StatusForbidden)
+					return
+				}
+				select {
+				case multipartUploadSlots <- struct{}{}:
+					defer func() { <-multipartUploadSlots }()
+				case <-r.Context().Done():
+					return
+				default:
+					http.Error(w, "Too many uploads", http.StatusTooManyRequests)
+					return
+				}
+				next.ServeHTTP(w, r)
+			})
+		}
 
 		var token string
 		// Prefer Authorization header if present to support desktop/webview environments
@@ -117,11 +142,11 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		if token == "" {
 			if sessionToken, ok := sessionTokenFromRequest(r); ok {
 				onceSession.Do(func() { log.Info("Auth: using session cookie") })
-				if serveWithSessionCookie(w, r, next, sessionToken, isGraphQLRequest(r)) {
+				if serveWithSessionCookie(w, r, requestNext, sessionToken, isGraphQLRequest(r)) {
 					return
 				}
 				if isGraphQLRequest(r) {
-					next.ServeHTTP(w, r)
+					requestNext.ServeHTTP(w, r)
 					return
 				}
 				http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -130,7 +155,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		}
 
 		if token == "" && isGraphQLRequest(r) {
-			next.ServeHTTP(w, r)
+			requestNext.ServeHTTP(w, r)
 			return
 		}
 		if token == "" {
@@ -160,7 +185,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		inline := true
 		isSavedProfileReference := credentials.ID != nil && credentials.SourceType == ""
 		if env.DisableCredentialForm && !isSavedProfileReference {
-			serveWithoutSourceCredentials(w, r, next)
+			serveWithoutSourceCredentials(w, r, requestNext)
 			return
 		}
 
@@ -183,7 +208,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			}
 			if !matched {
 				if env.DisableCredentialForm {
-					serveWithoutSourceCredentials(w, r, next)
+					serveWithoutSourceCredentials(w, r, requestNext)
 					return
 				}
 				if stored, err := LoadCredentials(*credentials.ID); err == nil && stored != nil {
@@ -220,7 +245,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		ctx := r.Context()
 		ctx = context.WithValue(ctx, AuthKey_Source, credentials)
 		ctx = context.WithValue(ctx, authenticatedSourceKey{}, true)
-		next.ServeHTTP(w, r.WithContext(ctx))
+		requestNext.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 

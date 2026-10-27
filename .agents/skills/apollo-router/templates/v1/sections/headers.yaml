@@ -1,0 +1,6 @@
+# Header Propagation (v1 and v2 — identical schema)
+headers:
+  all:
+    request:
+      - propagate:
+          matching: "^(authorization|x-.*)$"

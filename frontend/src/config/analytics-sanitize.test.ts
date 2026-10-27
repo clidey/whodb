@@ -27,6 +27,7 @@ const context: AnalyticsRuntimeContext = {
     buildEnvironment: 'production',
     appType: 'web',
     platform: 'browser',
+    appVersion: '1.2.3',
     deployment: 'test-deployment',
 };
 
@@ -67,12 +68,34 @@ const run = () => {
     assertEqual(eventProperties.app_type, 'web', 'app type is attached');
     assertEqual(eventProperties.platform, 'browser', 'platform is attached');
     assertEqual(eventProperties.deployment, 'test-deployment', 'deployment is attached');
+    assertEqual(eventProperties.app_version, '1.2.3', 'release version is attached');
+    assertEqual(eventProperties.client_type, 'browser', 'browser caller is classified');
     assertEqual(eventProperties.database_type, 'postgres', 'safe property is retained');
     assertEqual(eventProperties.input_length_bucket, '32_127', 'safe bucket property is retained');
 
     for (const key of ['sql', 'query', 'prompt', 'token', 'api_key', 'email', 'username', 'path', 'url', 'password', 'secret', 'unsafe_object']) {
         assertMissing(eventProperties, key);
     }
+
+    const protectedContext = sanitizeAnalyticsProperties({
+        source: 'cli',
+        build_edition: 'ce',
+        build_environment: 'development',
+        app_type: 'other',
+        platform: 'other',
+        client_type: 'sdk',
+        app_version: 'other',
+        deployment: 'other',
+    }, context);
+    for (const key of ['source', 'build_edition', 'build_environment', 'app_type', 'platform', 'client_type', 'app_version', 'deployment']) {
+        assertEqual(protectedContext[key], eventProperties[key], `runtime ${key} cannot be overwritten by event properties`);
+    }
+
+    const desktopProperties = sanitizeAnalyticsProperties({}, {...context, appType: 'desktop', platform: 'wails'});
+    assertEqual(desktopProperties.client_type, 'desktop', 'desktop caller is classified');
+    assertEqual(desktopProperties.source, 'web', 'frontend remains the emitting process');
+    const noDeployment = sanitizeAnalyticsProperties({deployment: 'invented'}, {...context, deployment: null});
+    assertMissing(noDeployment, 'deployment');
 
     const identityProperties = sanitizeAnalyticsIdentityProperties({
         is_super_admin: true,

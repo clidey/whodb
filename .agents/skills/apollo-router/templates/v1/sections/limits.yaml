@@ -1,0 +1,11 @@
+# Operation Limits (v1.17+ and v2 — identical schema)
+# Tip: Start with warn_only: true to observe real traffic, then enforce.
+# Router default for max_depth is 100; 50 is a balanced starting point.
+# For v1 < 1.17, use `preview_operation_limits` instead of `limits`.
+limits:
+  http_max_request_bytes: 2000000
+  max_depth: 50
+  max_height: 200
+  max_aliases: 30
+  max_root_fields: 20
+  # warn_only: true  # Uncomment during initial rollout to log without rejecting

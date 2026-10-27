@@ -28,6 +28,7 @@ import (
 	"github.com/clidey/whodb/cli/pkg/analytics"
 	"github.com/clidey/whodb/cli/pkg/mcp"
 	"github.com/clidey/whodb/cli/pkg/output"
+	coreanalytics "github.com/clidey/whodb/core/src/analytics"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/spf13/cobra"
 )
@@ -93,7 +94,6 @@ Streaming:
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := context.Background()
-		startTime := time.Now()
 		sql := args[0]
 
 		if sql == "-" {
@@ -144,13 +144,16 @@ Streaming:
 			spinner = output.NewSpinner(fmt.Sprintf("Connecting to %s...", conn.Type))
 			spinner.Start()
 		}
+		connectionStart := time.Now()
+		analytics.TrackConnectAttempt(ctx, conn.Type)
 		if err := mgr.Connect(conn); err != nil {
 			if spinner != nil {
 				spinner.StopWithError("Connection failed")
 			}
-			analytics.TrackConnectError(ctx, conn.Type, "connection_failed", time.Since(startTime).Milliseconds())
+			analytics.TrackConnectError(ctx, conn.Type, "connection_failed", time.Since(connectionStart).Milliseconds())
 			return fmt.Errorf("cannot connect to database: %w", err)
 		}
+		analytics.TrackConnectSuccess(ctx, conn.Type, time.Since(connectionStart).Milliseconds())
 		if spinner != nil {
 			spinner.Stop()
 		}
@@ -169,21 +172,22 @@ Streaming:
 				if spinner != nil {
 					spinner.StopWithError("Query failed")
 				}
-				analytics.TrackQueryError(ctx, conn.Type, "execution_failed", time.Since(queryStart).Milliseconds())
+				analytics.TrackQueryError(ctx, conn.Type, coreanalytics.ErrorCode(err), time.Since(queryStart).Milliseconds(), map[string]any{
+					"streaming": true, "statement_type": string(mcp.DetectStatementType(sql)),
+				})
 				return fmt.Errorf("query failed: %w", err)
 			}
 			if spinner != nil {
 				spinner.Stop()
 			}
-			if err := streamWriter.Close(); err != nil {
-				return fmt.Errorf("finalizing streamed output: %w", err)
-			}
-
 			analytics.TrackQueryExecute(ctx, conn.Type, string(mcp.DetectStatementType(sql)), true,
 				time.Since(queryStart).Milliseconds(), rowCount, map[string]any{
 					"format":    string(format),
 					"streaming": true,
 				})
+			if err := streamWriter.Close(); err != nil {
+				return fmt.Errorf("finalizing streamed output: %w", err)
+			}
 			return nil
 		}
 
@@ -192,7 +196,9 @@ Streaming:
 			if spinner != nil {
 				spinner.StopWithError("Query failed")
 			}
-			analytics.TrackQueryError(ctx, conn.Type, "execution_failed", time.Since(queryStart).Milliseconds())
+			analytics.TrackQueryError(ctx, conn.Type, coreanalytics.ErrorCode(err), time.Since(queryStart).Milliseconds(), map[string]any{
+				"streaming": false, "statement_type": string(mcp.DetectStatementType(sql)),
+			})
 			return fmt.Errorf("query failed: %w", err)
 		}
 		if spinner != nil {
@@ -207,8 +213,9 @@ Streaming:
 		// Track successful query execution
 		analytics.TrackQueryExecute(ctx, conn.Type, string(mcp.DetectStatementType(sql)), true,
 			time.Since(queryStart).Milliseconds(), len(result.Rows), map[string]any{
-				"format":    string(format),
-				"streaming": false,
+				"format":       string(format),
+				"streaming":    false,
+				"column_count": len(result.Columns),
 			})
 
 		queryResult := &output.StringQueryResult{

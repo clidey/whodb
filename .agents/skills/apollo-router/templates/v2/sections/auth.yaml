@@ -1,0 +1,13 @@
+# JWT Authentication — v2 (issuers is plural, array)
+# BREAKING CHANGE from v1: `issuer` (string) → `issuers` (array).
+# `issuer` is v1-only; use `issuers` in v2.
+authentication:
+  router:
+    jwt:
+      jwks:
+        - url: ${env.JWKS_URL}
+          issuers:
+            - ${env.JWT_ISSUER}
+
+authorization:
+  require_authentication: true

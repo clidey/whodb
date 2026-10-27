@@ -81,12 +81,13 @@ type GroupIdentity struct {
 }
 
 var (
+	// clientMu guards client and cfg. A non-nil client is the single record
+	// that analytics is initialized; Shutdown clears it so Initialize can run again.
 	clientMu sync.RWMutex
 	client   posthog.Client
 	cfg      Config
 
-	initOnce sync.Once
-	enabled  atomic.Bool
+	enabled atomic.Bool
 
 	// distinctIDResolver, when set, is consulted first to derive the analytics
 	// distinct id from a request context. Set once during process startup,
@@ -101,33 +102,32 @@ func SetDistinctIDResolver(resolver func(ctx context.Context) string) {
 	distinctIDResolver = resolver
 }
 
-// Initialize prepares the global PostHog client. It is safe to invoke multiple times.
+// Initialize prepares the global PostHog client. It is safe to invoke multiple
+// times: calls while a client is active are no-ops, and calling it after
+// Shutdown configures a new client.
 func Initialize(config Config) error {
-	var initErr error
-	initOnce.Do(func() {
-		cfg = config
-		enabled.Store(false)
-
-		posthogConfig := posthog.Config{
-			Endpoint: config.Host,
-		}
-		if config.SuppressClientLogs {
-			posthogConfig.Logger = silentPosthogLogger{}
-		}
-
-		c, err := posthog.NewWithConfig(config.APIKey, posthogConfig)
-		if err != nil {
-			initErr = err
-			return
-		}
-		storeClient(c)
-	})
-
-	if initErr != nil {
-		enabled.Store(false)
+	clientMu.Lock()
+	defer clientMu.Unlock()
+	if client != nil {
+		return nil
 	}
 
-	return initErr
+	enabled.Store(false)
+
+	posthogConfig := posthog.Config{
+		Endpoint: config.Host,
+	}
+	if config.SuppressClientLogs {
+		posthogConfig.Logger = silentPosthogLogger{}
+	}
+
+	c, err := posthog.NewWithConfig(config.APIKey, posthogConfig)
+	if err != nil {
+		return err
+	}
+	client = c
+	cfg = config
+	return nil
 }
 
 type silentPosthogLogger struct{}
@@ -321,6 +321,9 @@ func deriveDomain(r *http.Request) string {
 func buildProperties(ctx context.Context, properties map[string]any) posthog.Properties {
 	props := posthog.NewProperties()
 	for key, value := range properties {
+		if key == "path" || key == "referer" || key == "user_agent" {
+			continue
+		}
 		props.Set(key, value)
 	}
 
@@ -336,24 +339,9 @@ func buildProperties(ctx context.Context, properties map[string]any) posthog.Pro
 			props.Set("$host", metadata.Domain)
 		}
 	}
-	if metadata.Path != "" {
-		if _, exists := props["path"]; !exists {
-			props.Set("path", metadata.Path)
-		}
-	}
 	if metadata.Method != "" {
 		if _, exists := props["method"]; !exists {
 			props.Set("method", metadata.Method)
-		}
-	}
-	if metadata.UserAgent != "" {
-		if _, exists := props["user_agent"]; !exists {
-			props.Set("user_agent", metadata.UserAgent)
-		}
-	}
-	if metadata.Referer != "" {
-		if _, exists := props["referer"]; !exists {
-			props.Set("referer", metadata.Referer)
 		}
 	}
 	if metadata.RequestID != "" {
@@ -362,6 +350,7 @@ func buildProperties(ctx context.Context, properties map[string]any) posthog.Pro
 		}
 	}
 
+	cfg := loadConfig()
 	if cfg.Environment != "" {
 		if _, exists := props["build_environment"]; !exists {
 			props.Set("build_environment", cfg.Environment)
@@ -432,6 +421,7 @@ func buildIdentifyTraits(ctx context.Context, traits map[string]any) posthog.Pro
 			properties.Set("last_seen_domain", metadata.Domain)
 		}
 	}
+	cfg := loadConfig()
 	if cfg.Environment != "" {
 		if _, exists := properties["build_environment"]; !exists {
 			properties.Set("build_environment", cfg.Environment)
@@ -465,6 +455,12 @@ func loadClient() posthog.Client {
 	clientMu.RLock()
 	defer clientMu.RUnlock()
 	return client
+}
+
+func loadConfig() Config {
+	clientMu.RLock()
+	defer clientMu.RUnlock()
+	return cfg
 }
 
 func storeClient(c posthog.Client) posthog.Client {

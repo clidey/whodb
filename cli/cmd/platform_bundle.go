@@ -72,8 +72,10 @@ var resourcesImportCmd = &cobra.Command{
 }
 
 var backupProjectCmd = &cobra.Command{
-	Use:           "backup-project",
-	Short:         "Back up the selected hosted WhoDB project as a portable bundle",
+	Use:           "export-project",
+	Aliases:       []string{"backup-project"},
+	Short:         "Export the selected hosted WhoDB project's metadata as a portable bundle",
+	Long:          "Export project metadata for migration. Secret values and provider keys are omitted; uploaded file bytes require --include-files.",
 	SilenceUsage:  true,
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -82,8 +84,10 @@ var backupProjectCmd = &cobra.Command{
 }
 
 var restoreProjectCmd = &cobra.Command{
-	Use:           "restore-project",
-	Short:         "Restore a hosted WhoDB project from a portable bundle",
+	Use:           "import-project",
+	Aliases:       []string{"restore-project"},
+	Short:         "Import a portable metadata bundle into the selected hosted WhoDB project",
+	Long:          "Import a project export into the selected project.",
 	SilenceUsage:  true,
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, args []string) error {

@@ -1,0 +1,17 @@
+# CORS — v2 policies schema
+# v2 uses a policies array instead of flat origins.
+# max_age uses duration strings (e.g., 24h) not integers.
+cors:
+  allow_credentials: true
+  methods:
+    - GET
+    - POST
+    - OPTIONS
+  max_age: 24h
+  policies:
+    - origins:
+        - https://app.example.com
+        - https://studio.apollographql.com
+      allow_headers:
+        - Content-Type
+        - Authorization

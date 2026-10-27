@@ -35,6 +35,9 @@ import (
 )
 
 func TestQueryProfilesMapsAliasCustomIDAndSSL(t *testing.T) {
+	originalDisableCredentialForm := env.DisableCredentialForm
+	env.DisableCredentialForm = false
+	t.Cleanup(func() { env.DisableCredentialForm = originalDisableCredentialForm })
 	originalEngine := src.MainEngine
 	src.MainEngine = &engine.Engine{}
 	t.Cleanup(func() {
@@ -49,6 +52,7 @@ func TestQueryProfilesMapsAliasCustomIDAndSSL(t *testing.T) {
 		Source:   "environment",
 		Advanced: map[string]string{
 			ssl.KeySSLMode: string(ssl.SSLModeRequired),
+			"API Key":      "synthetic-private-api-key",
 		},
 	})
 	src.MainEngine.AddLoginProfile(types.DatabaseCredentials{
@@ -80,6 +84,11 @@ func TestQueryProfilesMapsAliasCustomIDAndSSL(t *testing.T) {
 	}
 	if !reportingProfile.SSLConfigured {
 		t.Fatal("expected SSLConfigured to be true when SSL mode is enabled")
+	}
+	for _, value := range reportingProfile.Values {
+		if value.Key == "API Key" || value.Key == ssl.KeySSLMode {
+			t.Fatalf("public profile includes advanced connection value %q", value.Key)
+		}
 	}
 	if mysqlProfile == nil {
 		t.Fatalf("expected custom ID profile to be present, got %#v", profiles)

@@ -1,0 +1,51 @@
+# ═══════════════════════════════════════════════════════════════
+# Apollo GraphOS Router — Development Configuration (v2.x)
+# NOTE: Use `router --dev` to auto-enable introspection + sandbox.
+#   This file is for explicit dev configuration without --dev flag.
+# ═══════════════════════════════════════════════════════════════
+
+supergraph:
+  listen: 127.0.0.1:4000
+  path: /graphql
+  introspection: true
+
+sandbox:
+  enabled: true
+
+homepage:
+  enabled: false
+
+health_check:
+  enabled: true
+  listen: 127.0.0.1:8088
+  path: /health
+
+include_subgraph_errors:
+  all: true
+
+# ── CORS (v2 wildcard dev mode) ─────────────────────────────────
+cors:
+  allow_any_origin: true
+  methods:
+    - GET
+    - POST
+    - OPTIONS
+  max_age: 24h
+  allow_headers:
+    - Content-Type
+    - Authorization
+
+# ── Header Propagation ─────────────────────────────────────────
+headers:
+  all:
+    request:
+      - propagate:
+          matching: ".*"
+
+# ── Telemetry (human-readable logs, no exporters) ──────────────
+telemetry:
+  exporters:
+    logging:
+      stdout:
+        enabled: true
+        format: text

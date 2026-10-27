@@ -1,0 +1,433 @@
+en_US:
+  eyebrow: 404 · Page not found
+  title: This page hit a wall.
+  description: The address doesn't match anything here. Check the link, or head back to where you were.
+  goHome: Take me back
+  sceneLabel: The WhoDB mark runs into a large 404 and bounces off
+
+af_ZA:
+  eyebrow: "404 · Bladsy nie gevind nie"
+  title: "Hierdie bladsy het 'n muur getref."
+  description: "Die adres pas by niks hier nie. Gaan die skakel na, of gaan terug na waar jy was."
+  goHome: "Vat my terug"
+  sceneLabel: "Die WhoDB merk loop in 'n groot 404 en bons weg"
+
+am_ET:
+  eyebrow: "404 · ገጽ አልተገኘም።"
+  title: "ይህ ገጽ ግድግዳ ነካ።"
+  description: "አድራሻው እዚህ ምንም አይዛመድም። አገናኙን ይፈትሹ ወይም ወደነበሩበት ይመለሱ።"
+  goHome: "መልሼ ውሰደኝ።"
+  sceneLabel: "WhoDB ምልክቱ ወደ ትልቅ 404 ይሄዳል እና ይወጣል"
+
+ar_AE:
+  eyebrow: "404 · الصفحة غير موجودة"
+  title: "وصلت هذه الصفحة إلى الحائط."
+  description: "العنوان لا يطابق أي شيء هنا. تحقق من الرابط، أو عد إلى حيث كنت."
+  goHome: "أعدني"
+  sceneLabel: "تصل علامة WhoDB إلى علامة 404 كبيرة وترتد"
+
+az_AZ:
+  eyebrow: "404 · Səhifə tapılmadı"
+  title: "Bu səhifə divara dəydi."
+  description: "Ünvan burada heç nə ilə uyğun gəlmir. Linki yoxlayın və ya olduğunuz yerə qayıdın."
+  goHome: "Məni geri götür"
+  sceneLabel: "WhoDB işarəsi böyük 404-ə daxil olur və sıçrayır"
+
+bg_BG:
+  eyebrow: "404 · Страницата не е намерена"
+  title: "Тази страница удари стената."
+  description: "Адресът не съвпада с нищо тук. Проверете връзката или се върнете там, където сте били."
+  goHome: "Върни ме обратно"
+  sceneLabel: "Знакът WhoDB преминава в голямо 404 и отскача"
+
+bn_BD:
+  eyebrow: "404 · পৃষ্ঠা পাওয়া যায়নি"
+  title: "এই পাতা একটি দেয়ালে আঘাত."
+  description: "ঠিকানা এখানে কিছু মেলে না. লিঙ্ক চেক করুন, অথবা আপনি যেখানে ছিলেন সেখানে ফিরে যান।"
+  goHome: "আমাকে ফিরিয়ে নিয়ে যান"
+  sceneLabel: "WhoDB চিহ্নটি একটি বড় 404 এ চলে এবং বাউন্স হয়ে যায়"
+
+ca_ES:
+  eyebrow: "404 · No s'ha trobat la pàgina"
+  title: "Aquesta pàgina va colpejar un mur."
+  description: "L'adreça no coincideix amb res aquí. Comproveu l'enllaç o torneu a on erau."
+  goHome: "Porta'm enrere"
+  sceneLabel: "La marca WhoDB arriba a un gran 404 i rebota"
+
+cs_CZ:
+  eyebrow: "404 · Stránka nenalezena"
+  title: "Tato stránka narazila na zeď."
+  description: "Adresa zde nic neodpovídá. Zkontrolujte odkaz nebo se vraťte tam, kde jste byli."
+  goHome: "Vezmi mě zpátky"
+  sceneLabel: "Značka WhoDB narazí na velkou 404 a odrazí se"
+
+da_DK:
+  eyebrow: "404 · Siden blev ikke fundet"
+  title: "Denne side ramte en væg."
+  description: "Adressen matcher ikke noget her. Tjek linket, eller gå tilbage til hvor du var."
+  goHome: "Tag mig tilbage"
+  sceneLabel: "Mærket WhoDB løber ind i en stor 404 og hopper af"
+
+de_DE:
+  eyebrow: "404 · Seite nicht gefunden"
+  title: "Diese Seite ist an eine Wand gestoßen."
+  description: "Die Adresse stimmt hier mit nichts überein. Überprüfen Sie den Link oder kehren Sie dorthin zurück, wo Sie waren."
+  goHome: "Bring mich zurück"
+  sceneLabel: "Die WhoDB-Marke trifft auf einen großen 404-Wert und prallt davon ab"
+
+el_GR:
+  eyebrow: "404 · Η σελίδα δεν βρέθηκε"
+  title: "Αυτή η σελίδα χτύπησε σε τοίχο."
+  description: "Η διεύθυνση δεν ταιριάζει με τίποτα εδώ. Ελέγξτε τον σύνδεσμο ή επιστρέψτε εκεί που ήσασταν."
+  goHome: "Πάρε με πίσω"
+  sceneLabel: "Η ένδειξη WhoDB τρέχει σε ένα μεγάλο 404 και αναπηδά"
+
+en_GB:
+  eyebrow: "404 · Page not found"
+  title: "This page hit a wall."
+  description: "The address doesn't match anything here. Check the link, or head back to where you were."
+  goHome: "Take me back"
+  sceneLabel: "The WhoDB mark runs into a large 404 and bounces off"
+
+es_ES:
+  eyebrow: "404 · Página no encontrada"
+  title: "Esta página chocó contra una pared."
+  description: "La dirección no coincide con nada aquí. Consulta el enlace o regresa a donde estabas."
+  goHome: "Llévame de vuelta"
+  sceneLabel: "La marca WhoDB se topa con un 404 grande y rebota"
+
+et_EE:
+  eyebrow: "404 · Lehekülge ei leitud"
+  title: "See leht tabas seina."
+  description: "Aadress ei ühti siin mitte millegagi. Kontrollige linki või minge tagasi kohta, kus olite."
+  goHome: "Vii mind tagasi"
+  sceneLabel: "Märk WhoDB jookseb suurele 404-le ja põrkab tagasi"
+
+fa_IR:
+  eyebrow: "404 · صفحه یافت نشد"
+  title: "این صفحه به دیوار برخورد کرد."
+  description: "آدرس اینجا با هیچ چیز مطابقت ندارد. لینک را بررسی کنید یا به جایی که بودید برگردید."
+  goHome: "منو برگردون"
+  sceneLabel: "علامت WhoDB به یک 404 بزرگ وارد می‌شود و باز می‌گردد"
+
+fi_FI:
+  eyebrow: "404 · Sivua ei löydy"
+  title: "Tämä sivu osui seinään."
+  description: "Osoite ei vastaa mitään tässä. Tarkista linkki tai palaa sinne, missä olit."
+  goHome: "Take me back"
+  sceneLabel: "Merkki WhoDB osuu suureen 404:ään ja pomppaa pois"
+
+fr_FR:
+  eyebrow: "404 · Page non trouvée"
+  title: "Cette page s'est heurtée à un mur."
+  description: "L'adresse ne correspond à rien ici. Vérifiez le lien ou retournez là où vous étiez."
+  goHome: "Ramène-moi"
+  sceneLabel: "La marque WhoDB se heurte à un grand 404 et rebondit"
+
+gu_IN:
+  eyebrow: "404 · પૃષ્ઠ મળ્યું નથી"
+  title: "આ પૃષ્ઠ દિવાલ પર અથડાયું."
+  description: "સરનામું અહીં કંઈપણ મેળ ખાતું નથી. લિંક તપાસો, અથવા તમે જ્યાં હતા ત્યાં પાછા જાઓ."
+  goHome: "મને પાછા લઈ જાઓ"
+  sceneLabel: "WhoDB માર્ક મોટા 404 માં ચાલે છે અને બાઉન્સ થાય છે"
+
+ha_NG:
+  eyebrow: "404 · Ba a sami shafi ba"
+  title: "Wannan shafin ya buga bango."
+  description: "Adireshin bai yi daidai da komai ba a nan. Duba hanyar haɗin yanar gizon, ko komawa zuwa inda kuka kasance."
+  goHome: "A mayar da ni"
+  sceneLabel: "Alamar WhoDB tana shiga cikin babban 404 kuma ta tashi"
+
+hi_IN:
+  eyebrow: "404 · पेज नहीं मिला"
+  title: "यह पेज दीवार से टकरा गया."
+  description: "यहां का पता किसी भी चीज़ से मेल नहीं खाता. लिंक की जाँच करें, या जहाँ आप थे वहाँ वापस जाएँ।"
+  goHome: "मुझे वापस ले"
+  sceneLabel: "WhoDB चिह्न एक बड़े 404 में चला जाता है और उछल जाता है"
+
+hr_HR:
+  eyebrow: "404 · Stranica nije pronađena"
+  title: "Ova je stranica udarila u zid."
+  description: "Adresa ovdje ne odgovara ničemu. Provjerite vezu ili se vratite tamo gdje ste bili."
+  goHome: "Odvedi me natrag"
+  sceneLabel: "Oznaka WhoDB prelazi u veliko 404 i odbija se"
+
+hu_HU:
+  eyebrow: "404 · Az oldal nem található"
+  title: "Ez az oldal falnak ütközött."
+  description: "A cím nem egyezik itt semmivel. Ellenőrizze a linket, vagy menjen vissza oda, ahol volt."
+  goHome: "Vigyél vissza"
+  sceneLabel: "A WhoDB jel belefut egy nagy 404-be, és visszapattan"
+
+id_ID:
+  eyebrow: "404 · Halaman tidak ditemukan"
+  title: "Halaman ini menemui jalan buntu."
+  description: "Alamatnya tidak cocok dengan apa pun di sini. Periksa tautannya, atau kembali ke tempat Anda sebelumnya."
+  goHome: "Bawa aku kembali"
+  sceneLabel: "Tanda WhoDB mencapai angka 404 besar dan memantul"
+
+it_IT:
+  eyebrow: "404 · Pagina non trovata"
+  title: "Questa pagina ha colpito un muro."
+  description: "L'indirizzo non corrisponde a nulla qui. Controlla il collegamento o torna al punto in cui ti trovavi."
+  goHome: "Riportami indietro"
+  sceneLabel: "Il segno WhoDB incontra un grande 404 e rimbalza"
+
+iw_IL:
+  eyebrow: "404 · הדף לא נמצא"
+  title: "הדף הזה פגע בקיר."
+  description: "הכתובת לא תואמת לשום דבר כאן. בדוק את הקישור, או חזור למקום שבו היית."
+  goHome: "קח אותי בחזרה"
+  sceneLabel: "הסימן WhoDB נתקל ב-404 גדול ומקפיץ"
+
+ja_JP:
+  eyebrow: "404 · ページが見つかりません"
+  title: "このページは壁にぶつかりました。"
+  description: "ここのアドレスは何も一致しません。 リンクを確認するか、元の場所に戻ってください。"
+  goHome: "私を連れ戻してください"
+  sceneLabel: "WhoDB マークが大きな 404 にぶつかり跳ね返される"
+
+ka_GE:
+  eyebrow: "404 · გვერდი ვერ მოიძებნა"
+  title: "ეს გვერდი კედელს შეეჯახა."
+  description: "მისამართი აქ არაფერს ემთხვევა. შეამოწმეთ ბმული, ან დაბრუნდით იქ, სადაც იყავით."
+  goHome: "უკან წამიყვანე"
+  sceneLabel: "WhoDB ნიშანი ეშვება დიდ 404-ში და ბრუნდება"
+
+km_KH:
+  eyebrow: "404 · រកមិនឃើញទំព័រ"
+  title: "ទំព័រនេះបុកជញ្ជាំង។"
+  description: "អាសយដ្ឋាននេះមិនត្រូវគ្នានឹងអ្វីទាំងអស់នៅទីនេះ។ សូមពិនិត្យមើលតំណ ឬត្រឡប់ទៅកន្លែងដែលអ្នកនៅ។"
+  goHome: "យកខ្ញុំមកវិញ"
+  sceneLabel: "សញ្ញា WhoDB រត់ចូលទៅក្នុង 404 ដ៏ធំ ហើយលោតចេញ"
+
+kn_IN:
+  eyebrow: "404 · ಪುಟ ಕಂಡುಬಂದಿಲ್ಲ"
+  title: "ಈ ಪುಟವು ಗೋಡೆಯನ್ನು ಹೊಡೆದಿದೆ."
+  description: "ವಿಳಾಸವು ಇಲ್ಲಿ ಯಾವುದಕ್ಕೂ ಹೊಂದಿಕೆಯಾಗುವುದಿಲ್ಲ. ಲಿಂಕ್ ಅನ್ನು ಪರಿಶೀಲಿಸಿ ಅಥವಾ ನೀವು ಇದ್ದ ಸ್ಥಳಕ್ಕೆ ಹಿಂತಿರುಗಿ."
+  goHome: "ನನ್ನನ್ನು ಹಿಂದಕ್ಕೆ ಕರೆದುಕೊಂಡು ಹೋಗು"
+  sceneLabel: "WhoDB ಗುರುತು ದೊಡ್ಡ 404 ರೊಳಗೆ ಸಾಗುತ್ತದೆ ಮತ್ತು ಪುಟಿಯುತ್ತದೆ"
+
+ko_KR:
+  eyebrow: "404 · 페이지를 찾을 수 없습니다"
+  title: "이 페이지는 벽에 부딪혔습니다."
+  description: "주소가 여기에 일치하는 항목이 없습니다. 링크를 확인하거나 원래 있던 곳으로 돌아가세요."
+  goHome: "날 다시 데려가줘"
+  sceneLabel: "WhoDB 표시가 큰 404에 부딪혀 튕겨 나옵니다."
+
+lt_LT:
+  eyebrow: "404 · Puslapis nerastas"
+  title: "Šis puslapis atsitrenkė į sieną."
+  description: "Adresas čia nieko nesutampa. Patikrinkite nuorodą arba grįžkite ten, kur buvote."
+  goHome: "Paimk mane atgal"
+  sceneLabel: "Ženklas WhoDB patenka į didelį 404 ir atšoka"
+
+lv_LV:
+  eyebrow: "404 · Lapa nav atrasta"
+  title: "Šī lapa atsitās pret sienu."
+  description: "Adrese šeit neko nesakrīt. Pārbaudiet saiti vai atgriezieties tur, kur bijāt."
+  goHome: "Ņem mani atpakaļ"
+  sceneLabel: "Atzīme WhoDB iekļūst lielajā 404 un atlec"
+
+ml_IN:
+  eyebrow: "404 · പേജ് കണ്ടെത്തിയില്ല"
+  title: "ഈ പേജ് ഒരു ചുവരിൽ തട്ടി."
+  description: "വിലാസം ഇവിടെ ഒന്നിനോടും പൊരുത്തപ്പെടുന്നില്ല. ലിങ്ക് പരിശോധിക്കുക, അല്ലെങ്കിൽ നിങ്ങൾ ഉണ്ടായിരുന്നിടത്തേക്ക് മടങ്ങുക."
+  goHome: "എന്നെ തിരികെ കൊണ്ടുപോകൂ"
+  sceneLabel: "WhoDB മാർക്ക് ഒരു വലിയ 404-ലേക്ക് ഓടുകയും ബൗൺസ് ഓഫ് ചെയ്യുകയും ചെയ്യുന്നു"
+
+mr_IN:
+  eyebrow: "404 · पृष्ठ सापडले नाही"
+  title: "हे पान भिंतीवर आदळले."
+  description: "पत्ता येथे काहीही जुळत नाही. लिंक तपासा किंवा तुम्ही जिथे होता तिथे परत जा."
+  goHome: "मला परत घेऊन जा"
+  sceneLabel: "WhoDB चिन्ह मोठ्या 404 मध्ये धावते आणि बाउन्स होते"
+
+ms_MY:
+  eyebrow: "404 · Halaman tidak ditemui"
+  title: "Halaman ini terkena dinding."
+  description: "Alamat tidak sepadan dengan apa-apa di sini. Semak pautan, atau kembali ke tempat anda berada."
+  goHome: "Bawa saya balik"
+  sceneLabel: "Tanda WhoDB menuju ke 404 besar dan melantun"
+
+nb_NO:
+  eyebrow: "404 · Siden ble ikke funnet"
+  title: "Denne siden traff en vegg."
+  description: "Adressen samsvarer ikke med noe her. Sjekk lenken, eller gå tilbake til der du var."
+  goHome: "Ta meg tilbake"
+  sceneLabel: "WhoDB-merket løper inn i en stor 404 og spretter av"
+
+ne_NP:
+  eyebrow: "404 · पृष्ठ फेला परेन"
+  title: "यो पृष्ठ भित्तामा ठोकियो।"
+  description: "ठेगाना यहाँ केहि मेल खाँदैन। लिङ्क जाँच गर्नुहोस्, वा तपाईं जहाँ हुनुहुन्थ्यो त्यहाँ फर्कनुहोस्।"
+  goHome: "मलाई फिर्ता लिनुहोस्"
+  sceneLabel: "WhoDB मार्क ठूलो ४०४ मा चल्छ र बाउन्स हुन्छ"
+
+nl_NL:
+  eyebrow: "404 · Pagina niet gevonden"
+  title: "Deze pagina liep tegen een muur aan."
+  description: "Het adres komt hier nergens mee overeen. Controleer de link of ga terug naar waar je was."
+  goHome: "Breng mij terug"
+  sceneLabel: "De WhoDB-markering komt in een grote 404 terecht en stuitert weg"
+
+pa_IN:
+  eyebrow: "404 · ਪੰਨਾ ਨਹੀਂ ਮਿਲਿਆ"
+  title: "ਇਹ ਪੰਨਾ ਇੱਕ ਕੰਧ ਨੂੰ ਮਾਰਿਆ."
+  description: "ਪਤਾ ਇੱਥੇ ਕਿਸੇ ਵੀ ਚੀਜ਼ ਨਾਲ ਮੇਲ ਨਹੀਂ ਖਾਂਦਾ। ਲਿੰਕ ਦੀ ਜਾਂਚ ਕਰੋ, ਜਾਂ ਉੱਥੇ ਵਾਪਸ ਜਾਓ ਜਿੱਥੇ ਤੁਸੀਂ ਸੀ।"
+  goHome: "ਮੈਨੂੰ ਵਾਪਸ ਲੈ ਜਾਓ"
+  sceneLabel: "WhoDB ਦਾ ਨਿਸ਼ਾਨ ਇੱਕ ਵੱਡੇ 404 ਵਿੱਚ ਚਲਦਾ ਹੈ ਅਤੇ ਉਛਾਲਦਾ ਹੈ"
+
+pl_PL:
+  eyebrow: "404 · Nie znaleziono strony"
+  title: "Ta strona uderzyła w ścianę."
+  description: "Adres tu do niczego nie pasuje. Sprawdź link lub wróć do miejsca, w którym byłeś."
+  goHome: "Zabierz mnie z powrotem"
+  sceneLabel: "Znak WhoDB wpada na dużą cyfrę 404 i odbija się"
+
+pt_BR:
+  eyebrow: "404 · Página não encontrada"
+  title: "Esta página bateu na parede."
+  description: "O endereço não corresponde a nada aqui. Verifique o link ou volte para onde você estava."
+  goHome: "Leve-me de volta"
+  sceneLabel: "A marca WhoDB atinge um grande 404 e ricocheteia"
+
+ro_RO:
+  eyebrow: "404 · Pagina nu a fost găsită"
+  title: "Această pagină a lovit un perete."
+  description: "Adresa nu corespunde cu nimic aici. Verificați linkul sau întoarceți-vă unde ați fost."
+  goHome: "Du-mă înapoi"
+  sceneLabel: "Marcajul WhoDB ajunge într-un 404 mare și revine"
+
+ru_RU:
+  eyebrow: "404 · Страница не найдена"
+  title: "Эта страница врезалась в стену."
+  description: "Адрес здесь ни к чему не относится. Проверьте ссылку или вернитесь туда, где вы были."
+  goHome: "Верни меня обратно"
+  sceneLabel: "Знак WhoDB натыкается на большую цифру 404 и отскакивает."
+
+si_LK:
+  eyebrow: "404 · පිටුව හමු නොවීය"
+  title: "මෙම පිටුව බිත්තියක වැදී ඇත."
+  description: "ලිපිනය මෙහි කිසිම දෙයකට නොගැලපේ. සබැඳිය පරීක්ෂා කරන්න, නැතහොත් ඔබ සිටි ස්ථානයට ආපසු යන්න."
+  goHome: "මාව ආපහු ගන්න"
+  sceneLabel: "WhoDB ලකුණ විශාල 404ක් දක්වා දිවෙන අතර ඉවතට පැන යයි"
+
+sk_SK:
+  eyebrow: "404 · Stránka sa nenašla"
+  title: "Táto stránka narazila na stenu."
+  description: "Adresa tu ničomu nezodpovedá. Skontrolujte odkaz alebo sa vráťte tam, kde ste boli."
+  goHome: "Vezmi ma späť"
+  sceneLabel: "Značka WhoDB nabehne na veľkú 404 a odrazí sa"
+
+sl_SI:
+  eyebrow: "404 · Stran ni najdena"
+  title: "Ta stran je udarila ob zid."
+  description: "Naslov se tukaj ne ujema z ničemer. Preverite povezavo ali se vrnite tja, kjer ste bili."
+  goHome: "Pelji me nazaj"
+  sceneLabel: "Oznaka WhoDB naleti na veliko 404 in se odbije"
+
+sr_RS:
+  eyebrow: "404 · Страница није пронађена"
+  title: "Ова страница је ударила у зид."
+  description: "Адреса се овде не поклапа ни са чим. Проверите везу или се вратите тамо где сте били."
+  goHome: "Врати ме назад"
+  sceneLabel: "Ознака WhoDB налеће на велики 404 и одскочи"
+
+sv_SE:
+  eyebrow: "404 · Sidan hittades inte"
+  title: "Den här sidan träffade en vägg."
+  description: "Adressen matchar ingenting här. Kolla länken eller gå tillbaka till där du var."
+  goHome: "Ta mig tillbaka"
+  sceneLabel: "Markeringen WhoDB springer in i en stor 404:a och studsar av"
+
+sw_KE:
+  eyebrow: "404 · Ukurasa haujapatikana"
+  title: "Ukurasa huu uligonga ukuta."
+  description: "Anwani hailingani na chochote hapa. Angalia kiungo, au rudi mahali ulipokuwa."
+  goHome: "Nirudishe"
+  sceneLabel: "Alama ya WhoDB huingia kwenye 404 kubwa na kurukaruka"
+
+ta_IN:
+  eyebrow: "404 · பக்கம் கிடைக்கவில்லை"
+  title: "இந்தப் பக்கம் சுவரில் மோதியது."
+  description: "முகவரி இங்கு எதனுடனும் பொருந்தவில்லை. இணைப்பைச் சரிபார்க்கவும் அல்லது நீங்கள் இருந்த இடத்திற்குச் செல்லவும்."
+  goHome: "Take me back"
+  sceneLabel: "WhoDB குறி ஒரு பெரிய 404 ஆக இயங்கி குதிக்கிறது"
+
+te_IN:
+  eyebrow: "404 · పేజీ కనుగొనబడలేదు"
+  title: "ఈ పేజీ గోడను తాకింది."
+  description: "చిరునామా ఇక్కడ దేనికీ సరిపోలడం లేదు. లింక్‌ని తనిఖీ చేయండి లేదా మీరు ఉన్న చోటికి తిరిగి వెళ్లండి."
+  goHome: "నన్ను వెనక్కి తీసుకో"
+  sceneLabel: "WhoDB మార్క్ పెద్ద 404కి పరుగులు తీస్తుంది మరియు బౌన్స్ ఆఫ్ అవుతుంది"
+
+th_TH:
+  eyebrow: "404 · ไม่พบหน้า"
+  title: "หน้านี้โดนกำแพง"
+  description: "ที่อยู่ไม่ตรงกับสิ่งใดที่นี่ ตรวจสอบลิงก์หรือมุ่งหน้ากลับไปยังที่ที่คุณอยู่"
+  goHome: "พาฉันกลับไป"
+  sceneLabel: "เครื่องหมาย WhoDB ชนเข้ากับ 404 ขนาดใหญ่และกระเด็นออกไป"
+
+tl_PH:
+  eyebrow: "404 · Hindi natagpuan ang pahina"
+  title: "Ang pahinang ito ay tumama sa isang pader."
+  description: "Walang tugma ang address dito. Tingnan ang link, o bumalik sa kung nasaan ka."
+  goHome: "Ibalik mo ako"
+  sceneLabel: "Ang WhoDB mark ay tumatakbo sa isang malaking 404 at tumalbog"
+
+tr_TR:
+  eyebrow: "404 · Sayfa bulunamadı"
+  title: "Bu sayfa duvara çarptı."
+  description: "Adres buradaki hiçbir şeyle eşleşmiyor. Bağlantıyı kontrol edin veya kaldığınız yere geri dönün."
+  goHome: "Beni geri götür"
+  sceneLabel: "WhoDB işareti büyük bir 404'e çarpıyor ve sekiyor"
+
+uk_UA:
+  eyebrow: "404 · Сторінка не знайдена"
+  title: "Ця сторінка потрапила в стіну."
+  description: "Адреса тут ні з чим не відповідає. Перевірте посилання або поверніться туди, де ви були."
+  goHome: "Відвези мене назад"
+  sceneLabel: "Знак WhoDB переходить у великий 404 і відскакує"
+
+ur_PK:
+  eyebrow: "404 · صفحہ نہیں ملا"
+  title: "یہ صفحہ دیوار سے ٹکرا گیا۔"
+  description: "پتہ یہاں کسی چیز سے میل نہیں کھاتا۔ لنک چیک کریں، یا واپس جائیں جہاں آپ تھے۔"
+  goHome: "مجھے واپس لے جاؤ"
+  sceneLabel: "WhoDB نشان ایک بڑے 404 میں چلتا ہے اور اچھالتا ہے۔"
+
+uz_UZ:
+  eyebrow: "404 · Sahifa topilmadi"
+  title: "Bu sahifa devorga tegdi."
+  description: "Manzil bu yerda hech narsaga mos kelmaydi. Havolani tekshiring yoki bo'lgan joyingizga qayting."
+  goHome: "Meni qaytarib ol"
+  sceneLabel: "WhoDB belgisi katta 404 ga tushadi va sakrab tushadi"
+
+vi_VN:
+  eyebrow: "404 · Không tìm thấy trang"
+  title: "Trang này chạm vào một bức tường."
+  description: "Địa chỉ không khớp với bất cứ điều gì ở đây. Hãy kiểm tra liên kết hoặc quay lại vị trí hiện tại của bạn."
+  goHome: "Đưa tôi trở lại"
+  sceneLabel: "Dấu WhoDB chạy thành số 404 lớn và bật ra"
+
+yo_NG:
+  eyebrow: "404 · Oju-iwe ko ri"
+  title: "Oju-iwe yii lu odi kan."
+  description: "Adirẹsi naa ko baramu ohunkohun nibi. Ṣayẹwo ọna asopọ, tabi pada si ibiti o wa."
+  goHome: "Mu mi pada"
+  sceneLabel: "Aami WhoDB n lọ sinu 404 nla ati bounces ni pipa"
+
+zh_CN:
+  eyebrow: "404 · 页面未找到"
+  title: "这个页面碰壁了。"
+  description: "该地址与此处的任何内容都不匹配。 检查链接，或返回您所在的位置。"
+  goHome: "带我回去"
+  sceneLabel: "WhoDB 标记遇到大 404 并弹开"
+
+zh_TW:
+  eyebrow: "404 · 頁面未找到"
+  title: "這個頁面碰壁了。"
+  description: "該地址與此處的任何內容都不符。 檢查鏈接，或返回您所在的位置。"
+  goHome: "帶我回去"
+  sceneLabel: "WhoDB 標記遇到大 404 並彈開"

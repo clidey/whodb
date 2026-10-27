@@ -1,3 +1,247 @@
 en_US:
   switchingLanguage: Switching language...
   switchFailed: Couldn't switch language. Check your connection and try again.
+
+af_ZA:
+  switchingLanguage: "Wissel tans taal …"
+  switchFailed: "Kon nie van taal verander nie. Gaan jou verbinding na en probeer weer."
+
+am_ET:
+  switchingLanguage: "ቋንቋ በመቀየር ላይ..."
+  switchFailed: "ቋንቋ መቀየር አልተቻለም። ግንኙነትዎን ይፈትሹ እና እንደገና ይሞክሩ።"
+
+ar_AE:
+  switchingLanguage: "تبديل اللغة..."
+  switchFailed: "تعذر تبديل اللغة. تحقق من اتصالك وحاول مرة أخرى."
+
+az_AZ:
+  switchingLanguage: "Dil dəyişdirilir..."
+  switchFailed: "Dili dəyişmək mümkün olmadı. Bağlantınızı yoxlayın və yenidən cəhd edin."
+
+bg_BG:
+  switchingLanguage: "Превключване на език..."
+  switchFailed: "Езикът не можа да се превключи. Проверете връзката си и опитайте отново."
+
+bn_BD:
+  switchingLanguage: "ভাষা পরিবর্তন করা হচ্ছে..."
+  switchFailed: "ভাষা পরিবর্তন করা যায়নি। আপনার সংযোগ পরীক্ষা করুন এবং আবার চেষ্টা করুন."
+
+ca_ES:
+  switchingLanguage: "S'està canviant d'idioma..."
+  switchFailed: "No s'ha pogut canviar d'idioma. Comprova la teva connexió i torna-ho a provar."
+
+cs_CZ:
+  switchingLanguage: "Přepínání jazyka..."
+  switchFailed: "Jazyk se nepodařilo přepnout. Zkontrolujte připojení a zkuste to znovu."
+
+da_DK:
+  switchingLanguage: "Skifter sprog..."
+  switchFailed: "Kunne ikke skifte sprog. Tjek din forbindelse, og prøv igen."
+
+de_DE:
+  switchingLanguage: "Sprache wechseln..."
+  switchFailed: "Die Sprache konnte nicht gewechselt werden. Überprüfen Sie Ihre Verbindung und versuchen Sie es erneut."
+
+el_GR:
+  switchingLanguage: "Αλλαγή γλώσσας..."
+  switchFailed: "Δεν ήταν δυνατή η αλλαγή γλώσσας. Ελέγξτε τη σύνδεσή σας και δοκιμάστε ξανά."
+
+en_GB:
+  switchingLanguage: "Switching language..."
+  switchFailed: "Couldn't switch language. Check your connection and try again."
+
+es_ES:
+  switchingLanguage: "Cambiando de idioma..."
+  switchFailed: "No se pudo cambiar de idioma. Comprueba tu conexión y vuelve a intentarlo."
+
+et_EE:
+  switchingLanguage: "Keele vahetamine..."
+  switchFailed: "Keelt ei saanud vahetada. Kontrollige ühendust ja proovige uuesti."
+
+fa_IR:
+  switchingLanguage: "تغییر زبان..."
+  switchFailed: "تغییر زبان انجام نشد. اتصال خود را بررسی کنید و دوباره امتحان کنید."
+
+fi_FI:
+  switchingLanguage: "Vaihdetaan kieltä..."
+  switchFailed: "Kieltä ei voitu vaihtaa. Tarkista yhteys ja yritä uudelleen."
+
+fr_FR:
+  switchingLanguage: "Changer de langue..."
+  switchFailed: "Impossible de changer de langue. Vérifiez votre connexion et réessayez."
+
+gu_IN:
+  switchingLanguage: "ભાષા સ્વિચ કરી રહ્યાં છીએ..."
+  switchFailed: "ભાષા બદલી શકાઈ નથી. તમારું કનેક્શન તપાસો અને ફરી પ્રયાસ કરો."
+
+ha_NG:
+  switchingLanguage: "Canja harshe..."
+  switchFailed: "An kasa canza harshe. Duba haɗin ku kuma sake gwadawa."
+
+hi_IN:
+  switchingLanguage: "भाषा बदल रही है..."
+  switchFailed: "भाषा नहीं बदली जा सकी. अपना कनेक्शन जांचें और पुनः प्रयास करें।"
+
+hr_HR:
+  switchingLanguage: "Promjena jezika..."
+  switchFailed: "Nije moguće promijeniti jezik. Provjerite vezu i pokušajte ponovno."
+
+hu_HU:
+  switchingLanguage: "Nyelvváltás..."
+  switchFailed: "Nem sikerült nyelvet váltani. Ellenőrizze a kapcsolatot, és próbálja újra."
+
+id_ID:
+  switchingLanguage: "Beralih bahasa..."
+  switchFailed: "Tidak dapat mengganti bahasa. Periksa koneksi Anda dan coba lagi."
+
+it_IT:
+  switchingLanguage: "Cambiare lingua..."
+  switchFailed: "Impossibile cambiare lingua. Controlla la connessione e riprova."
+
+iw_IL:
+  switchingLanguage: "מחליף שפה..."
+  switchFailed: "לא ניתן היה להחליף שפה. בדוק את החיבור שלך ונסה שוב."
+
+ja_JP:
+  switchingLanguage: "言語を切り替えています..."
+  switchFailed: "言語を切り替えることができませんでした。 接続を確認して、もう一度試してください。"
+
+ka_GE:
+  switchingLanguage: "ენის შეცვლა..."
+  switchFailed: "ენის შეცვლა ვერ მოხერხდა. შეამოწმეთ თქვენი კავშირი და სცადეთ ხელახლა."
+
+km_KH:
+  switchingLanguage: "កំពុងប្តូរភាសា..."
+  switchFailed: "មិនអាចប្តូរភាសាបានទេ។ ពិនិត្យការតភ្ជាប់របស់អ្នក ហើយព្យាយាមម្តងទៀត។"
+
+kn_IN:
+  switchingLanguage: "ಭಾಷೆಯನ್ನು ಬದಲಾಯಿಸಲಾಗುತ್ತಿದೆ..."
+  switchFailed: "ಭಾಷೆಯನ್ನು ಬದಲಾಯಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ನಿಮ್ಮ ಸಂಪರ್ಕವನ್ನು ಪರಿಶೀಲಿಸಿ ಹಾಗೂ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ."
+
+ko_KR:
+  switchingLanguage: "언어 전환 중..."
+  switchFailed: "언어를 전환할 수 없습니다. 연결을 확인하고 다시 시도하세요."
+
+lt_LT:
+  switchingLanguage: "Perjungiama kalba..."
+  switchFailed: "Nepavyko perjungti kalbos. Patikrinkite ryšį ir bandykite dar kartą."
+
+lv_LV:
+  switchingLanguage: "Notiek valodas maiņa..."
+  switchFailed: "Nevarēja pārslēgt valodu. Pārbaudiet savienojumu un mēģiniet vēlreiz."
+
+ml_IN:
+  switchingLanguage: "ഭാഷ മാറ്റുന്നു..."
+  switchFailed: "ഭാഷ മാറ്റാനായില്ല. നിങ്ങളുടെ കണക്ഷൻ പരിശോധിച്ച് വീണ്ടും ശ്രമിക്കുക."
+
+mr_IN:
+  switchingLanguage: "भाषा बदलत आहे..."
+  switchFailed: "भाषा बदलू शकलो नाही. तुमचे कनेक्शन तपासा आणि पुन्हा प्रयत्न करा."
+
+ms_MY:
+  switchingLanguage: "Menukar bahasa..."
+  switchFailed: "Tidak dapat menukar bahasa. Semak sambungan anda dan cuba lagi."
+
+nb_NO:
+  switchingLanguage: "Bytter språk..."
+  switchFailed: "Kunne ikke bytte språk. Sjekk tilkoblingen og prøv igjen."
+
+ne_NP:
+  switchingLanguage: "भाषा बदल्दै..."
+  switchFailed: "भाषा बदल्न सकिएन। आफ्नो जडान जाँच गर्नुहोस् र फेरि प्रयास गर्नुहोस्।"
+
+nl_NL:
+  switchingLanguage: "Taal wijzigen..."
+  switchFailed: "Kan niet van taal wisselen. Controleer uw verbinding en probeer het opnieuw."
+
+pa_IN:
+  switchingLanguage: "ਭਾਸ਼ਾ ਬਦਲੀ ਜਾ ਰਹੀ ਹੈ..."
+  switchFailed: "ਭਾਸ਼ਾ ਬਦਲੀ ਨਹੀਂ ਜਾ ਸਕੀ। ਆਪਣੇ ਕਨੈਕਸ਼ਨ ਦੀ ਜਾਂਚ ਕਰੋ ਅਤੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।"
+
+pl_PL:
+  switchingLanguage: "Przełączanie języka..."
+  switchFailed: "Nie udało się zmienić języka. Sprawdź połączenie i spróbuj ponownie."
+
+pt_BR:
+  switchingLanguage: "Mudando de idioma..."
+  switchFailed: "Não foi possível mudar o idioma. Verifique sua conexão e tente novamente."
+
+ro_RO:
+  switchingLanguage: "Se schimbă limba..."
+  switchFailed: "Nu s-a putut schimba limba. Verificați conexiunea și încercați din nou."
+
+ru_RU:
+  switchingLanguage: "Переключение языка..."
+  switchFailed: "Не удалось переключить язык. Проверьте подключение и повторите попытку."
+
+si_LK:
+  switchingLanguage: "භාෂාව මාරු කරමින්..."
+  switchFailed: "භාෂාව මාරු කිරීමට නොහැකි විය. ඔබගේ සම්බන්ධතාවය පරීක්ෂා කර නැවත උත්සාහ කරන්න."
+
+sk_SK:
+  switchingLanguage: "Prepína sa jazyk..."
+  switchFailed: "Jazyk sa nepodarilo prepnúť. Skontrolujte pripojenie a skúste to znova."
+
+sl_SI:
+  switchingLanguage: "Preklop jezika ..."
+  switchFailed: "Jezika ni bilo mogoče zamenjati. Preverite povezavo in poskusite znova."
+
+sr_RS:
+  switchingLanguage: "Промена језика..."
+  switchFailed: "Није могуће променити језик. Проверите своју везу и покушајте поново."
+
+sv_SE:
+  switchingLanguage: "Byter språk..."
+  switchFailed: "Det gick inte att byta språk. Kontrollera din anslutning och försök igen."
+
+sw_KE:
+  switchingLanguage: "Inabadilisha lugha..."
+  switchFailed: "Haikuweza kubadilisha lugha. Angalia muunganisho wako na ujaribu tena."
+
+ta_IN:
+  switchingLanguage: "மொழி மாறுகிறது..."
+  switchFailed: "மொழியை மாற்ற முடியவில்லை. உங்கள் இணைப்பைச் சரிபார்த்து மீண்டும் முயலவும்."
+
+te_IN:
+  switchingLanguage: "భాష మారుతోంది..."
+  switchFailed: "భాషను మార్చడం సాధ్యపడలేదు. మీ కనెక్షన్‌ని తనిఖీ చేసి, మళ్లీ ప్రయత్నించండి."
+
+th_TH:
+  switchingLanguage: "กำลังเปลี่ยนภาษา..."
+  switchFailed: "ไม่สามารถเปลี่ยนภาษาได้ ตรวจสอบการเชื่อมต่อของคุณแล้วลองอีกครั้ง"
+
+tl_PH:
+  switchingLanguage: "Nagpapalit ng wika..."
+  switchFailed: "Hindi mailipat ang wika. Suriin ang iyong koneksyon at subukang muli."
+
+tr_TR:
+  switchingLanguage: "Dil değiştiriliyor..."
+  switchFailed: "Dil değiştirilemedi. Bağlantınızı kontrol edip tekrar deneyin."
+
+uk_UA:
+  switchingLanguage: "Зміна мови..."
+  switchFailed: "Не вдалося змінити мову. Перевірте підключення та повторіть спробу."
+
+ur_PK:
+  switchingLanguage: "زبان تبدیل ہو رہی ہے..."
+  switchFailed: "زبان کو تبدیل نہیں کیا جا سکا۔ اپنا کنکشن چیک کریں اور دوبارہ کوشش کریں۔"
+
+uz_UZ:
+  switchingLanguage: "Til almashtirilmoqda..."
+  switchFailed: "Tilni almashtirib bo‘lmadi. Ulanishingizni tekshiring va qaytadan urining."
+
+vi_VN:
+  switchingLanguage: "Chuyển đổi ngôn ngữ..."
+  switchFailed: "Không thể chuyển đổi ngôn ngữ. Hãy kiểm tra kết nối của bạn và thử lại."
+
+yo_NG:
+  switchingLanguage: "N yi ede pada..."
+  switchFailed: "Ko le yi ede pada. Ṣayẹwo asopọ rẹ ki o tun gbiyanju lẹẹkansi."
+
+zh_CN:
+  switchingLanguage: "切换语言..."
+  switchFailed: "无法切换语言。 检查您的连接并重试。"
+
+zh_TW:
+  switchingLanguage: "切換語言..."
+  switchFailed: "無法切換語言。 檢查您的連線並重試。"

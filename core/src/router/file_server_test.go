@@ -142,3 +142,40 @@ func TestFileServerFallsBackToIndexForNestedRoute(t *testing.T) {
 		t.Fatalf("expected nested route to serve index.html, got status %d", rr.Code)
 	}
 }
+
+// A page route whose last segment contains a dot is still a page route: it must
+// get the app shell so the frontend's own not-found page renders, while anything
+// that names a static asset keeps a real 404.
+func TestStaticFileHandlerDottedRouteFallsBackToApp(t *testing.T) {
+	handler := newStaticFileHandler(fstest.MapFS{
+		"index.html":          {Data: []byte("<html>app</html>")},
+		"manifest.json":       {Data: []byte("{}")},
+		"assets/index-abc.js": {Data: []byte("console.log(1)")},
+		"images/logo.svg":     {Data: []byte("<svg/>")},
+	}, "/")
+
+	serve := func(path string) *httptest.ResponseRecorder {
+		rr := httptest.NewRecorder()
+		handler.ServeHTTP(rr, httptest.NewRequest(http.MethodGet, path, nil))
+		return rr
+	}
+
+	for _, route := range []string{"/test/replica-tests/platform/dashboardd.dd", "/platform/report.v2", "/org/project.name/apps"} {
+		rr := serve(route)
+		if rr.Code != http.StatusOK || !strings.Contains(rr.Body.String(), "app") {
+			t.Fatalf("%s: expected the app shell, got %d %q", route, rr.Code, rr.Body.String())
+		}
+	}
+
+	for _, asset := range []string{"/assets/index-old.js", "/images/missing.png", "/fonts/missing.woff2", "/sitemap.xml", "/favicon.ico", "/platform/data.json"} {
+		if rr := serve(asset); rr.Code != http.StatusNotFound {
+			t.Fatalf("%s: expected 404 for a missing asset, got %d", asset, rr.Code)
+		}
+	}
+
+	for _, existing := range []string{"/manifest.json", "/assets/index-abc.js", "/images/logo.svg"} {
+		if rr := serve(existing); rr.Code != http.StatusOK || rr.Header().Get("ETag") == "" {
+			t.Fatalf("%s: expected the file with an ETag, got %d", existing, rr.Code)
+		}
+	}
+}

@@ -550,6 +550,25 @@ body:has(.ce-telemetry-notice) [data-sonner-toaster][data-y-position="bottom"] {
 @media (max-width: 1150px) { .ce-table-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }@media (max-width: 800px) { .ce-table-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }@media (max-width: 540px) { .ce-table-grid { grid-template-columns: 1fr; } }
 @media (max-width: 1250px) { .ce-tables-toolbar { align-items: flex-start; flex-direction: column; }.ce-tables-controls { justify-content: flex-start; } }
 
+/* 404 page: the WhoDB mark runs into the "404". Motion is driven per frame by
+   components/not-found/pose.ts; these styles only lay out the stage. */
+.whodb-404 { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 48px 24px; text-align: center; overflow: hidden; }
+.whodb-404-stage { position: relative; width: 100%; max-width: 560px; height: 190px; margin-bottom: 20px; overflow: hidden; }
+.whodb-404-mark { position: absolute; bottom: 0; width: 140px; height: 112px; transform-origin: 50% 95%; will-change: transform, opacity; }
+.whodb-404-mark__squash { width: 100%; height: 100%; transform-origin: 100% 50%; }
+.whodb-404-mark svg { display: block; overflow: visible; }
+.whodb-404-wall { position: absolute; right: 0; bottom: 0; color: var(--foreground); font-family: 'Bricolage Grotesque', sans-serif; font-weight: 750; font-size: clamp(112px, 24vw, 176px); line-height: .74; letter-spacing: -.06em; user-select: none; }
+.whodb-404-track { stroke: var(--primary); opacity: .2; }
+.whodb-404-track--stem { stroke: #F4781C; }
+.whodb-404-arm { stroke: var(--primary); }
+.whodb-404-stem { stroke: #F4781C; }
+.whodb-404-ring { stroke: var(--primary); fill: var(--background); }
+.whodb-404-head { fill: #FFC233; }
+.whodb-404-impact { stroke: var(--muted-foreground); }
+.whodb-404-eyebrow { margin: 0; color: var(--muted-foreground); font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; }
+.whodb-404-title { margin: 0; color: var(--foreground); font-family: 'Bricolage Grotesque', sans-serif; font-size: clamp(30px, 4vw, 44px); font-weight: 750; line-height: 1.05; letter-spacing: -.045em; }
+.whodb-404-copy { max-width: 30rem; margin: 0 0 12px; color: var(--muted-foreground); font-size: 15px; line-height: 1.6; }
+
 .whodb-loader-mark {
   --whodb-loader-blue: #4b7fe5;
   --whodb-loader-orange: #e98128;

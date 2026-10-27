@@ -102,6 +102,39 @@ func TestMergeProps_NilInput(t *testing.T) {
 	}
 }
 
+func TestOperationPropertiesDistinguishFailureConfirmationAndUnknownSizes(t *testing.T) {
+	t.Run("query failure", func(t *testing.T) {
+		props := mergeProps(map[string]any{
+			"success": false, "duration_ms": int64(3500), "execution_mode": "tui",
+			"row_count": 0, "error_code": "timeout",
+		})
+		if props["outcome"] != "failure" || props["client_type"] != "cli" || props["execution_mode"] != "tui" {
+			t.Fatalf("incorrect failure attribution: %#v", props)
+		}
+		if props["duration_bucket"] != "3s_10s" || props["slow"] != true || props["row_count_bucket"] != "zero" {
+			t.Fatalf("incorrect workload buckets: %#v", props)
+		}
+	})
+	t.Run("write awaiting confirmation", func(t *testing.T) {
+		props := mergeProps(map[string]any{
+			"client_type": "mcp", "execution_mode": "mcp", "success": true,
+			"confirmation_required": true, "duration_ms": int64(0),
+		})
+		if props["outcome"] != "confirmation_required" || props["client_type"] != "mcp" || props["slow"] != false {
+			t.Fatalf("confirmation was classified as an executed operation: %#v", props)
+		}
+	})
+	t.Run("unknown export size", func(t *testing.T) {
+		props := mergeProps(map[string]any{"row_count": -1})
+		if _, exists := props["row_count_bucket"]; exists {
+			t.Fatal("unknown result size must not become a zero-row result")
+		}
+		if _, exists := props["outcome"]; exists {
+			t.Fatal("an event without an outcome must remain unclassified")
+		}
+	})
+}
+
 // Test that tracking functions don't panic when analytics is not initialized
 func TestTrackFunctions_NoPanicWhenUninitialized(t *testing.T) {
 	ctx := context.Background()

@@ -12,6 +12,7 @@
 # production
 /build
 /.analytics-test-build
+/.not-found-test-build
 
 # misc
 .DS_Store

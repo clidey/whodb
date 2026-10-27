@@ -23,13 +23,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	coreaudit "github.com/clidey/whodb/core/src/audit"
 	"io"
 	"net"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	coreaudit "github.com/clidey/whodb/core/src/audit"
 )
 
 const (
@@ -201,6 +202,52 @@ func NewAuthenticatedClient(host string, source AccessTokenSource) (*Client, err
 
 // SetHTTPClient supplies the transport used for platform operations.
 func (c *Client) SetHTTPClient(client *http.Client) { c.httpClient = client }
+
+// ExecuteGraphQL sends a caller-owned document through this authenticated client.
+func (c *Client) ExecuteGraphQL(ctx context.Context, document string, variables, target any) error {
+	return c.graphQL(ctx, document, variables, target)
+}
+
+// DoAuthenticated sends a request only to this client's configured host.
+// Callers own and must close the response body.
+func (c *Client) DoAuthenticated(request *http.Request) (*http.Response, error) {
+	if request == nil || request.URL == nil || request.URL.Scheme+"://"+request.URL.Host != c.host || request.URL.User != nil {
+		return nil, errors.New("request must target the authenticated host")
+	}
+	accessToken := c.accessToken
+	if c.tokenSource != nil {
+		var err error
+		accessToken, err = c.tokenSource.Token(request.Context())
+		if err != nil {
+			return nil, err
+		}
+	}
+	request = request.Clone(request.Context())
+	request.Header.Set("Authorization", "Bearer "+accessToken)
+	request.Header.Set(coreaudit.ClientHeader, clientName())
+	if c.workspaceOrgID != "" {
+		request.Header.Set(workspaceOrgHeader, c.workspaceOrgID)
+	}
+	if c.workspaceProjectID != "" {
+		request.Header.Set(workspaceProjectHeader, c.workspaceProjectID)
+	}
+	httpClient := *c.httpClient
+	httpClient.Timeout = 0 // Streaming callers are bounded by their request context.
+	previousRedirect := httpClient.CheckRedirect
+	httpClient.CheckRedirect = func(next *http.Request, via []*http.Request) error {
+		if next.URL.Scheme+"://"+next.URL.Host != c.host {
+			return errors.New("authenticated request cannot redirect to another host")
+		}
+		if previousRedirect != nil {
+			return previousRedirect(next, via)
+		}
+		if len(via) >= 10 {
+			return errors.New("too many redirects")
+		}
+		return nil
+	}
+	return httpClient.Do(request)
+}
 
 // Host returns the canonical hosted WhoDB platform URL.
 func (c *Client) Host() string {

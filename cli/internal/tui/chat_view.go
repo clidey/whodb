@@ -492,7 +492,7 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 				}
 				// Execute mutation that requires confirmation
 				if chatMsg.RequiresConfirmation {
-					result, err := v.parent.dbManager.ExecuteQuery(chatMsg.Content)
+					result, err := v.parent.executeTrackedQuery(context.Background(), chatMsg.Content, "chat_confirmation")
 					if err != nil {
 						chatMsg.Type = "error"
 						chatMsg.Content = err.Error()

@@ -24,6 +24,7 @@ import {getStoredConsentState, optInUser, optOutUser, resetAnalyticsIdentity} fr
 import {getRoutes, PrivateRoute, PublicRoutes} from './config/routes';
 import {getRegisteredPublicRoutes, getRegisteredScopedRoutes, getScopedLayout} from './config/route-registry';
 import {NavigateToDefault} from "./pages/chat/default-chat-route";
+import {NotFoundPage} from "./pages/not-found/not-found-page";
 import {useAppDispatch, useAppSelector} from "./store/hooks";
 import {SettingsActions} from "./store/settings";
 import {featureFlags, settingsDefaults} from "./config/features";
@@ -186,6 +187,7 @@ export const App = () => {
                     {scopedRoutes.map(route => (
                       <Route key={route.path} path={route.path} element={<Suspense fallback={route.loadingFallback === undefined ? <LoadingPage /> : route.loadingFallback}><route.lazyComponent /></Suspense>} />
                     ))}
+                    <Route path="*" element={<NotFoundPage />} />
                   </Route>
                 );
               }
@@ -195,6 +197,7 @@ export const App = () => {
               <Route key={route.path} path={route.path} element={route.component} />
             ))}
             <Route path="/" element={<NavigateToDefault />} />
+            <Route path="*" element={<NotFoundPage />} />
           </Route>
           <Route path={PublicRoutes.Login.path} element={PublicRoutes.Login.component} />
           {getRegisteredPublicRoutes().map(route => (

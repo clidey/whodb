@@ -24,6 +24,7 @@ import (
 
 var (
 	appLocalRef          string
+	appLocalEnv          string
 	appDryRun            bool
 	appDraftOnly         bool
 	appPublishNote       string
@@ -184,6 +185,7 @@ func registerPlatformLocalAppCommands() {
 	appsPublishCmd.Flags().StringVar(&appPublishNote, "message", "", "message attached to the promoted version")
 	appsDevCmd.Flags().StringVar(&appLocalRef, "app", "", "existing hosted app ID or name; defaults to app.json name")
 	appsDevCmd.Flags().StringVar(&appVerifyPage, "page", "", "page to open first")
+	appsDevCmd.Flags().StringVar(&appLocalEnv, "env", "dev", "function environment: dev uses drafts; published uses active functions (required for managed packages)")
 	appsDevCmd.Flags().BoolVar(&appAllowWrites, "allow-writes", true, "allow hosted mutations, including all ctx.whodb.call() function calls; false blocks them even when a function only reads data")
 	appsDevCmd.Flags().BoolVar(&appCaptureInstall, "install", false, "install the optional capture browser")
 	appsDevCmd.Flags().StringVar(&appKernelDir, "kernel-dir", os.Getenv("WHODB_APP_KERNEL_DIR"), "local built sandbox assets, for testing runtime changes before server deployment")
@@ -198,6 +200,7 @@ func registerPlatformLocalAppCommands() {
 	appsVerifyCmd.Flags().StringVar(&appVerifyOrientation, "orientation", "", "viewport orientation: portrait or landscape (defaults to the device preset)")
 	appsVerifyCmd.Flags().BoolVar(&appAllowWrites, "allow-writes", true, "allow hosted mutations, including all ctx.whodb.call() function calls; false blocks them even when a function only reads data")
 	appsVerifyCmd.Flags().BoolVar(&appCaptureInstall, "install", false, "install the optional capture browser")
+	appsVerifyCmd.Flags().StringVar(&appLocalEnv, "env", "dev", "function environment: dev uses drafts; published uses active functions (required for managed packages)")
 	appsVerifyCmd.Flags().StringVar(&appKernelDir, "kernel-dir", os.Getenv("WHODB_APP_KERNEL_DIR"), "local built sandbox assets, for testing runtime changes before server deployment")
 	appsCmd.AddCommand(appsInitCmd, appsCheckCmd, appsPublishCmd, appsDevCmd, appsVerifyCmd)
 }
@@ -215,7 +218,10 @@ func localAppCapture(ctx context.Context, folder string) (*appfolder.Workspace, 
 	if err != nil {
 		return nil, nil, appcapture.Options{}, err
 	}
-	options.Env = "dev"
+	options.Env = appLocalEnv
+	if options.Env != "dev" && options.Env != "published" {
+		return nil, nil, appcapture.Options{}, fmt.Errorf("env must be dev or published")
+	}
 	options.Page = appVerifyPage
 	options.LocalDir = folder
 	options.KernelDir = appKernelDir

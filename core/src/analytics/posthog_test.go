@@ -21,7 +21,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
-	"sync"
+	"sync/atomic"
 	"testing"
 
 	"github.com/posthog/posthog-go"
@@ -84,7 +84,6 @@ func (f *fakePosthogClient) GetLastCapturedEvent() *posthog.Capture {
 func resetAnalyticsState() {
 	storeClient(nil)
 	enabled.Store(false)
-	initOnce = sync.Once{}
 	distinctIDResolver = nil
 	cfg = Config{}
 }
@@ -168,8 +167,8 @@ func TestBuildPropertiesMergesMetadataAndConfig(t *testing.T) {
 	if props["$host"] != "frontend.local" {
 		t.Fatalf("expected $host to be added from metadata domain, got %v", props["$host"])
 	}
-	if props["path"] != "override" {
-		t.Fatalf("expected explicit path property to be preserved, got %v", props["path"])
+	if _, exists := props["path"]; exists {
+		t.Fatal("raw request paths must not be captured")
 	}
 	if props["build_environment"] != "prod" || props["app_version"] != "1.2.3" {
 		t.Fatalf("expected config metadata to be included")
@@ -179,6 +178,27 @@ func TestBuildPropertiesMergesMetadataAndConfig(t *testing.T) {
 	}
 	if props["custom"] != "value" {
 		t.Fatalf("expected custom properties to be retained")
+	}
+}
+
+func TestBuildPropertiesDropsRawRequestContext(t *testing.T) {
+	t.Cleanup(resetAnalyticsState)
+	ctx := WithMetadata(context.Background(), Metadata{
+		Path: "/api/private-resource", Referer: "https://example.com/?query=private-sql",
+		UserAgent: "custom-client/private-machine-name", Method: http.MethodPost,
+		RequestID: "internal-request-id",
+	})
+	props := buildProperties(ctx, map[string]any{
+		"path": "/private-file", "referer": "https://private.example.com",
+		"user_agent": "private-client", "source_type": "Postgres",
+	})
+	for _, key := range []string{"path", "referer", "user_agent"} {
+		if _, exists := props[key]; exists {
+			t.Errorf("raw request context %q reached the analytics payload", key)
+		}
+	}
+	if props["method"] != http.MethodPost || props["request_id"] != "internal-request-id" || props["source_type"] != "Postgres" {
+		t.Fatalf("safe operation context was lost: %#v", props)
 	}
 }
 
@@ -340,5 +360,52 @@ func TestIdentifyGroupEnqueuesGroupIdentify(t *testing.T) {
 	}
 	if groupIdentify.Properties["plan"] != "team" {
 		t.Fatalf("expected group properties to be preserved, got %#v", groupIdentify.Properties)
+	}
+}
+
+func TestInitializeAfterShutdownUsesNewConfig(t *testing.T) {
+	t.Cleanup(resetAnalyticsState)
+
+	captureServer := func() (*httptest.Server, *atomic.Int32) {
+		var batches atomic.Int32
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			batches.Add(1)
+			w.WriteHeader(http.StatusOK)
+		}))
+		t.Cleanup(server.Close)
+		return server, &batches
+	}
+	first, firstBatches := captureServer()
+	second, secondBatches := captureServer()
+
+	initialize := func(host, edition string) {
+		t.Helper()
+		if err := Initialize(Config{APIKey: "test-key", Host: host, Edition: edition, SuppressClientLogs: true}); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	initialize(first.URL, "first")
+	initialize(second.URL, "ignored")
+	if got := loadConfig().Edition; got != "first" {
+		t.Fatalf("Initialize while active must be a no-op, got edition %q", got)
+	}
+	SetEnabled(true)
+	CaptureWithDistinctID(context.Background(), "install", "first.event", nil)
+	Shutdown()
+	if Configured() || Enabled() {
+		t.Fatal("Shutdown must leave analytics unconfigured and disabled")
+	}
+
+	initialize(second.URL, "second")
+	if got := loadConfig().Edition; got != "second" {
+		t.Fatalf("Initialize after Shutdown must apply the new config, got edition %q", got)
+	}
+	SetEnabled(true)
+	CaptureWithDistinctID(context.Background(), "install", "second.event", nil)
+	Shutdown()
+
+	if firstBatches.Load() != 1 || secondBatches.Load() != 1 {
+		t.Fatalf("expected one batch per client lifetime, got first=%d second=%d", firstBatches.Load(), secondBatches.Load())
 	}
 }

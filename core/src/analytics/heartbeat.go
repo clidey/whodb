@@ -91,6 +91,7 @@ func sendHeartbeat(id string, now time.Time) {
 	// means a source/dev build (go run, local compile). Tag rather than skip:
 	// some people genuinely run from source, so keep them countable but
 	// filterable.
+	cfg := loadConfig()
 	version := cfg.AppVersion
 	if version == "" {
 		version = "dev"

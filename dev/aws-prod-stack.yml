@@ -12,9 +12,8 @@ Parameters:
     ConstraintDescription: Must be a valid ACM certificate ARN
   AllowedCIDR:
     Type: String
-    Default: 0.0.0.0/0
     AllowedPattern: "(\\d{1,3}\\.){3}\\d{1,3}/\\d{1,2}"
-    Description: CIDR range allowed to access the ALB (restrict for security)
+    Description: Required CIDR range allowed to access the ALB
   WhoDBImage:
     Type: String
     Default: clidey/whodb:latest

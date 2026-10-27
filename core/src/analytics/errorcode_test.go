@@ -17,9 +17,24 @@
 package analytics
 
 import (
+	"context"
 	"fmt"
 	"testing"
 )
+
+func TestErrorCodeKeepsCancellationSeparateFromExecutionFailure(t *testing.T) {
+	for _, tc := range []struct {
+		err  error
+		want string
+	}{
+		{fmt.Errorf("query interrupted: %w", context.Canceled), "canceled"},
+		{fmt.Errorf("query interrupted: %w", context.DeadlineExceeded), "timeout"},
+	} {
+		if got := ErrorCode(tc.err); got != tc.want {
+			t.Errorf("ErrorCode(%v) = %q; want %q", tc.err, got, tc.want)
+		}
+	}
+}
 
 type fakeCodedError struct{ code string }
 

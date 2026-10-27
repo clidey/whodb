@@ -20,10 +20,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"regexp"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -42,6 +44,41 @@ import (
 )
 
 var errManualCredentialsDisabled = errors.New("login with credentials is disabled; use preconfigured connections")
+var errConnectionAttemptLimited = errors.New("too many connection attempts; try again later")
+var errConnectionTestFailed = errors.New("unable to connect: check your credentials and that the database is running")
+
+var connectionAttempts = struct {
+	sync.Mutex
+	windowStart time.Time
+	total       int
+	byIP        map[string]int
+}{byIP: make(map[string]int)}
+
+func allowConnectionAttempt(ctx context.Context) bool {
+	r, ok := ctx.Value(common.RouterKey_Request).(*http.Request)
+	if !ok {
+		return true
+	}
+	ip, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil || net.ParseIP(ip) == nil {
+		ip = r.RemoteAddr
+	}
+
+	connectionAttempts.Lock()
+	defer connectionAttempts.Unlock()
+	now := time.Now()
+	if now.Sub(connectionAttempts.windowStart) >= time.Minute {
+		connectionAttempts.windowStart = now
+		connectionAttempts.total = 0
+		connectionAttempts.byIP = make(map[string]int)
+	}
+	if connectionAttempts.total >= 180 || connectionAttempts.byIP[ip] >= 30 {
+		return false
+	}
+	connectionAttempts.total++
+	connectionAttempts.byIP[ip]++
+	return true
+}
 
 func performSourceLogin(ctx context.Context, credentials *source.Credentials, profileSource string) (*model.StatusResponse, error) {
 	start := time.Now()
@@ -80,6 +117,9 @@ func performSourceLogin(ctx context.Context, credentials *source.Credentials, pr
 		recordAudit(err)
 		return nil, err
 	}
+	if profileSource == "" && !allowConnectionAttempt(ctx) {
+		return nil, errConnectionAttemptLimited
+	}
 
 	spec, ok := sourcecatalog.Find(credentials.SourceType)
 	if !ok {
@@ -90,7 +130,7 @@ func performSourceLogin(ctx context.Context, credentials *source.Credentials, pr
 	session, err := source.Open(ctx, spec, credentials)
 	if err != nil {
 		recordAudit(err)
-		return nil, err
+		return nil, errConnectionTestFailed
 	}
 	availability, ok := source.AsAvailabilityChecker(source.AuditScopeFromCredentials(spec, credentials), session)
 	if !ok {
@@ -222,12 +262,15 @@ func testSourceConnection(ctx context.Context, credentials *source.Credentials) 
 	if env.DisableCredentialForm {
 		return nil, errManualCredentialsDisabled
 	}
+	if !allowConnectionAttempt(ctx) {
+		return nil, errConnectionAttemptLimited
+	}
 	spec, ok := sourcecatalog.Find(credentials.SourceType)
 	if !ok {
 		return nil, errors.New("unsupported source type")
 	}
 
-	testCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	testCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
 	// Invalidate any cached connection so we get a fresh one for the test.
@@ -237,7 +280,7 @@ func testSourceConnection(ctx context.Context, credentials *source.Credentials) 
 
 	session, err := source.Open(testCtx, spec, credentials)
 	if err != nil {
-		return nil, err
+		return nil, errConnectionTestFailed
 	}
 
 	availability, ok := source.AsAvailabilityChecker(source.AuditScopeFromCredentials(spec, credentials), session)
@@ -246,7 +289,7 @@ func testSourceConnection(ctx context.Context, credentials *source.Credentials) 
 	}
 
 	if !availability.IsAvailable(testCtx) {
-		return nil, errors.New("unable to connect: check your credentials and that the database is running")
+		return nil, errConnectionTestFailed
 	}
 
 	return &model.StatusResponse{Status: true}, nil

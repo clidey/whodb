@@ -13,6 +13,7 @@ import (
 
 	"github.com/clidey/whodb/cli/internal/appfolder"
 	"github.com/clidey/whodb/cli/internal/platform"
+	"github.com/spf13/cobra"
 )
 
 func TestPublishAppFolderSyncsBindingsFilesAndPromotesLast(t *testing.T) {
@@ -161,5 +162,27 @@ func TestWriteImportedAppFolderRejectsInvalidPathsWithoutCreatingFolder(t *testi
 	}
 	if _, err := os.Stat(folder); !os.IsNotExist(err) {
 		t.Fatalf("folder should not exist after validation failure: %v", err)
+	}
+}
+
+// TestLocalAppFunctionEnvironment ensures managed previews can select active
+// functions without changing the default environment of hosted screenshots.
+func TestLocalAppFunctionEnvironment(t *testing.T) {
+	for _, command := range []*cobra.Command{appsDevCmd, appsVerifyCmd} {
+		flag := command.Flags().Lookup("env")
+		if flag == nil || flag.DefValue != "dev" {
+			t.Fatalf("%s env default = %v, want dev", command.Name(), flag)
+		}
+		prior := appLocalEnv
+		if err := flag.Value.Set("published"); err != nil {
+			t.Fatal(err)
+		}
+		if appLocalEnv != "published" {
+			t.Fatalf("local environment = %q, want published", appLocalEnv)
+		}
+		if appCaptureEnv != "published" {
+			t.Fatalf("hosted screenshot environment changed to %q", appCaptureEnv)
+		}
+		_ = flag.Value.Set(prior)
 	}
 }

@@ -273,37 +273,18 @@ if [ "$SQLITE_NEEDS_INIT" = "true" ]; then
     echo "✅ SQLite E2E database ready at core/tmp/e2e_test.db"
 fi
 
-# Setup DuckDB (with smart initialization check, uses Docker CLI)
+# Setup DuckDB. Seeded through the Go driver so the file's storage format always
+# matches the DuckDB version the server links (see core/go.mod); the duckdb/duckdb
+# Docker image can be newer than that and produce unreadable files.
 DUCKDB_DB="$PROJECT_ROOT/core/tmp/e2e_test.duckdb"
-DUCKDB_NEEDS_INIT=true
-DOCKER_HOST_USER="$(id -u):$(id -g)"
 
-if [ -f "$DUCKDB_DB" ]; then
-    # Check if database has expected structure
-    if docker run --rm \
-        --user "$DOCKER_HOST_USER" \
-        -v "$PROJECT_ROOT/core/tmp:/db" \
-        --entrypoint /duckdb \
-        duckdb/duckdb /db/e2e_test.duckdb \
-        -c "SELECT table_name FROM information_schema.tables WHERE table_schema='main' AND table_name='users';" 2>/dev/null | grep -q users; then
-        echo "✅ DuckDB E2E database already initialized, skipping setup"
-        DUCKDB_NEEDS_INIT=false
-    else
-        echo "⚠️ DuckDB database exists but is incomplete, reinitializing..."
-        rm -f "$DUCKDB_DB"
-    fi
-fi
-
-if [ "$DUCKDB_NEEDS_INIT" = "true" ]; then
+if [ "$TARGET_DB" = "all" ] || [ "$TARGET_DB" = "duckdb" ]; then
     echo "🔧 Setting up DuckDB E2E database..."
 
     mkdir -p "$PROJECT_ROOT/core/tmp"
+    rm -f "$DUCKDB_DB" "$DUCKDB_DB.wal"
 
-    docker run --rm -i \
-        --user "$DOCKER_HOST_USER" \
-        -v "$PROJECT_ROOT/core/tmp:/db" \
-        --entrypoint /duckdb \
-        duckdb/duckdb /db/e2e_test.duckdb < "$SCRIPT_DIR/sample-data/duckdb/data.sql"
+    (cd "$PROJECT_ROOT/core" && go run "$SCRIPT_DIR/sample-data/duckdb/seed_duckdb.go" "$DUCKDB_DB" "$SCRIPT_DIR/sample-data/duckdb/data.sql")
 
     chmod 644 "$DUCKDB_DB"
 

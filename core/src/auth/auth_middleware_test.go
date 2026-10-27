@@ -40,6 +40,36 @@ func testSourceCredentials(sourceType, hostname, username, password, database st
 	}
 }
 
+func TestAuthMiddlewareChecksMultipartBeforeReadingBody(t *testing.T) {
+	body := bytes.NewBufferString("multipart body must remain unread")
+	initialLength := body.Len()
+	req := httptest.NewRequest(http.MethodPost, "/api/query", body)
+	req.Header.Set("Content-Type", "multipart/form-data; boundary=test")
+	called := false
+	w := httptest.NewRecorder()
+	AuthMiddleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+		called = true
+	})).ServeHTTP(w, req)
+	if w.Code != http.StatusUnauthorized || called || body.Len() != initialLength {
+		t.Fatalf("anonymous multipart request reached parser or read body: status=%d called=%v remaining=%d", w.Code, called, body.Len())
+	}
+
+	credentials := testSourceCredentials("Postgres", "db.local", "alice", "pw", "app")
+	payload, _ := json.Marshal(credentials)
+	req = httptest.NewRequest(http.MethodPost, "/api/query", bytes.NewBufferString("multipart body"))
+	req.Header.Set("Content-Type", "multipart/form-data; boundary=test")
+	req.Header.Set("Authorization", "Bearer "+base64.StdEncoding.EncodeToString(payload))
+	called = false
+	w = httptest.NewRecorder()
+	AuthMiddleware(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		called = true
+		w.WriteHeader(http.StatusNoContent)
+	})).ServeHTTP(w, req)
+	if w.Code != http.StatusNoContent || !called {
+		t.Fatalf("credentialed multipart request was blocked: status=%d called=%v", w.Code, called)
+	}
+}
+
 func TestAuthMiddlewarePrefersAuthorizationHeader(t *testing.T) {
 	creds := testSourceCredentials("Postgres", "db.local", "alice", "pw", "app")
 	payload, _ := json.Marshal(&creds)

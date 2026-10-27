@@ -1,0 +1,39 @@
+# Telemetry — v1
+# v1 uses FTV1 reporting by default to GraphOS Studio.
+# OTLP tracing is available but not the default reporting format.
+telemetry:
+  apollo:
+    client_name_header: apollographql-client-name
+    client_version_header: apollographql-client-version
+
+  exporters:
+    logging:
+      stdout:
+        enabled: true
+        format: json
+
+    metrics:
+      prometheus:
+        enabled: true
+        listen: 0.0.0.0:9090
+        path: /metrics
+
+    tracing:
+      otlp:
+        enabled: true
+        endpoint: ${env.OTEL_COLLECTOR_ENDPOINT:-http://otel-collector:4317}
+        protocol: grpc
+      common:
+        service_name: apollo-router
+        sampler: 0.1
+      propagation:
+        trace_context: true
+
+  instrumentation:
+    spans:
+      router:
+        attributes:
+          environment:
+            static_value: ${env.ENVIRONMENT:-production}
+          client:
+            request_header: x-client-id
