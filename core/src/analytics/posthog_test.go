@@ -21,7 +21,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
-	"sync"
+	"sync/atomic"
 	"testing"
 
 	"github.com/posthog/posthog-go"
@@ -84,7 +84,6 @@ func (f *fakePosthogClient) GetLastCapturedEvent() *posthog.Capture {
 func resetAnalyticsState() {
 	storeClient(nil)
 	enabled.Store(false)
-	initOnce = sync.Once{}
 	distinctIDResolver = nil
 	cfg = Config{}
 }
@@ -361,5 +360,52 @@ func TestIdentifyGroupEnqueuesGroupIdentify(t *testing.T) {
 	}
 	if groupIdentify.Properties["plan"] != "team" {
 		t.Fatalf("expected group properties to be preserved, got %#v", groupIdentify.Properties)
+	}
+}
+
+func TestInitializeAfterShutdownUsesNewConfig(t *testing.T) {
+	t.Cleanup(resetAnalyticsState)
+
+	captureServer := func() (*httptest.Server, *atomic.Int32) {
+		var batches atomic.Int32
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			batches.Add(1)
+			w.WriteHeader(http.StatusOK)
+		}))
+		t.Cleanup(server.Close)
+		return server, &batches
+	}
+	first, firstBatches := captureServer()
+	second, secondBatches := captureServer()
+
+	initialize := func(host, edition string) {
+		t.Helper()
+		if err := Initialize(Config{APIKey: "test-key", Host: host, Edition: edition, SuppressClientLogs: true}); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	initialize(first.URL, "first")
+	initialize(second.URL, "ignored")
+	if got := loadConfig().Edition; got != "first" {
+		t.Fatalf("Initialize while active must be a no-op, got edition %q", got)
+	}
+	SetEnabled(true)
+	CaptureWithDistinctID(context.Background(), "install", "first.event", nil)
+	Shutdown()
+	if Configured() || Enabled() {
+		t.Fatal("Shutdown must leave analytics unconfigured and disabled")
+	}
+
+	initialize(second.URL, "second")
+	if got := loadConfig().Edition; got != "second" {
+		t.Fatalf("Initialize after Shutdown must apply the new config, got edition %q", got)
+	}
+	SetEnabled(true)
+	CaptureWithDistinctID(context.Background(), "install", "second.event", nil)
+	Shutdown()
+
+	if firstBatches.Load() != 1 || secondBatches.Load() != 1 {
+		t.Fatalf("expected one batch per client lifetime, got first=%d second=%d", firstBatches.Load(), secondBatches.Load())
 	}
 }
