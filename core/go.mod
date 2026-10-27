@@ -28,7 +28,7 @@ require (
 	github.com/boundaryml/baml v0.226.2
 	github.com/brianvoe/gofakeit/v7 v7.18.0
 	github.com/deckarep/golang-set/v2 v2.9.0
-	github.com/dromara/carbon/v2 v2.6.18
+	github.com/dromara/carbon/v2 v2.7.0
 	github.com/duckdb/duckdb-go/v2 v2.10506.0
 	github.com/elastic/elastic-transport-go/v8 v8.11.0
 	github.com/elastic/go-elasticsearch/v9 v9.5.2
@@ -39,9 +39,9 @@ require (
 	github.com/hashicorp/go-version v1.9.0
 	github.com/jackc/pgx/v5 v5.11.0
 	github.com/mattn/go-sqlite3 v1.14.52
-	github.com/posthog/posthog-go v1.35.0
+	github.com/posthog/posthog-go v1.35.1
 	github.com/redis/go-redis/v9 v9.23.0
-	github.com/shopspring/decimal v1.5.0
+	github.com/shopspring/decimal v1.6.0
 	github.com/sirupsen/logrus v1.10.2
 	github.com/twpayne/go-geom v1.7.0
 	github.com/vektah/gqlparser/v2 v2.5.63
@@ -54,7 +54,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.47.0
 	golang.org/x/oauth2 v0.37.0
 	golang.org/x/sync v0.24.0
-	google.golang.org/api v0.304.0
+	google.golang.org/api v0.305.0
 	google.golang.org/grpc v1.84.0
 	gorm.io/driver/clickhouse v0.7.0
 	gorm.io/driver/mysql v1.6.0
