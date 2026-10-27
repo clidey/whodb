@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "skills": {
+    "apollo-client": {
+      "source": "apollographql/skills",
+      "sourceType": "github",
+      "skillPath": "skills/apollo-client/SKILL.md",
+      "computedHash": "008c067a3d480ab905aa37aab113b8dc54028e29e593610866b7ea8131377ce1"
+    },
+    "apollo-mcp-server": {
+      "source": "apollographql/skills",
+      "sourceType": "github",
+      "skillPath": "skills/apollo-mcp-server/SKILL.md",
+      "computedHash": "17a40a497a6e02f9f0c67382fc73a919d6b02b311599720acc6782132d3a2b27"
+    },
+    "apollo-router": {
+      "source": "apollographql/skills",
+      "sourceType": "github",
+      "skillPath": "skills/apollo-router/SKILL.md",
+      "computedHash": "fe0ca97e47381fa7edc12501bcf354a16353c93080ebc12b52bbdfef2aecb401"
+    },
+    "apollo-router-plugin-creator": {
+      "source": "apollographql/skills",
+      "sourceType": "github",
+      "skillPath": "skills/apollo-router-plugin-creator/SKILL.md",
+      "computedHash": "dae6c2958115ffc842f73fee0da3364bc5582f80f04bc905048b49f4794fa8f2"
+    },
+    "apollo-server": {
+      "source": "apollographql/skills",
+      "sourceType": "github",
+      "skillPath": "skills/apollo-server/SKILL.md",
+      "computedHash": "48e0099a2515d5c3b905f5c3891e8d5291a3466d194524b5a8b49e56e0689533"
+    },
+    "graphql-schema": {
+      "source": "apollographql/skills",
+      "sourceType": "github",
+      "skillPath": "skills/graphql-schema/SKILL.md",
+      "computedHash": "f09f5117528041abf9098c5ecf2e62ffb0c158fa7098cb1a745515d9ef4aeb67"
+    }
+  }
+}

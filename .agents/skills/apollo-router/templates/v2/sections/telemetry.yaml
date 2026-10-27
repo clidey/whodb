@@ -1,0 +1,40 @@
+# Telemetry — v2
+# v2 uses OTLP-first reporting to GraphOS Studio (otlp_tracing_sampler defaults to 1.0).
+# Legacy FTV1 reporting is still available but secondary.
+# `experimental_when_header` is removed in v2 — use custom telemetry events instead.
+telemetry:
+  apollo:
+    client_name_header: apollographql-client-name
+    client_version_header: apollographql-client-version
+
+  exporters:
+    logging:
+      stdout:
+        enabled: true
+        format: json
+
+    metrics:
+      prometheus:
+        enabled: true
+        listen: 0.0.0.0:9090
+        path: /metrics
+
+    tracing:
+      otlp:
+        enabled: true
+        endpoint: ${env.OTEL_COLLECTOR_ENDPOINT:-http://otel-collector:4317}
+        protocol: grpc
+      common:
+        service_name: apollo-router
+        sampler: 0.1
+      propagation:
+        trace_context: true
+
+  instrumentation:
+    spans:
+      router:
+        attributes:
+          environment:
+            static_value: ${env.ENVIRONMENT:-production}
+          client:
+            request_header: x-client-id

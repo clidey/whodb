@@ -1,0 +1,10 @@
+# Connectors — v2 (GA)
+# Use `connectors` for current Router v2.
+# Early v2 preview used `preview_connectors`.
+# Key format is `<subgraph>.<source>`.
+connectors:
+  sources:
+    my_subgraph.my_api:
+      $config:
+        api_version: "v2"
+        feature_flag: true

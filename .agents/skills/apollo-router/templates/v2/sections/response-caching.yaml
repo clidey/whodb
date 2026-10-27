@@ -1,0 +1,28 @@
+# Response Caching — v2 (v2.6.0+)
+# Requires Redis. Entity-level and root-field caching for subgraph responses.
+# Subgraphs must return Cache-Control headers for caching to take effect.
+# See references/response-caching.md for full setup, invalidation, and observability.
+response_cache:
+  enabled: true
+  subgraph:
+    all:
+      enabled: true
+      ttl: ${env.CACHE_DEFAULT_TTL:-5m}
+      redis:
+        urls:
+          - ${env.CACHE_REDIS_URL:-redis://localhost:6379}
+    # SECURITY: If any subgraph serves user-specific data, configure private_id
+    # so the router can cache per-user.  The subgraph must also return
+    # Cache-Control: private (via @cacheControl(scope: PRIVATE) in Apollo Server,
+    # or by setting the header directly in other frameworks).
+    # subgraphs:
+    #   accounts:
+    #     private_id: "user_id"
+    #
+    # Remove the invalidation block below if not using active invalidation.
+      invalidation:
+        enabled: true
+        shared_key: ${env.INVALIDATION_SHARED_KEY}
+  invalidation:
+    listen: 127.0.0.1:4000
+    path: /invalidation

@@ -1,0 +1,10 @@
+# JWT Authentication — v1 (issuer is a singular string)
+authentication:
+  router:
+    jwt:
+      jwks:
+        - url: ${env.JWKS_URL}
+          issuer: ${env.JWT_ISSUER}
+
+authorization:
+  require_authentication: true

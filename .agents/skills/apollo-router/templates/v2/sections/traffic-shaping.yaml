@@ -1,0 +1,12 @@
+# Traffic Shaping (v2 — identical schema to v1)
+# NOTE: global_rate_limit under `router:` limits CLIENT requests.
+#       Under `all:` it limits SUBGRAPH requests from the router.
+# v2 returns HTTP 429 for rate-limited requests (v2.1.0+).
+traffic_shaping:
+  router:
+    timeout: 60s
+    global_rate_limit:
+      capacity: 1000
+      interval: 1s
+  all:
+    timeout: 30s

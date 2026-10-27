@@ -1,0 +1,14 @@
+# CORS — v1 flat schema
+cors:
+  origins:
+    - https://app.example.com
+    - https://studio.apollographql.com
+  allow_headers:
+    - Content-Type
+    - Authorization
+  methods:
+    - GET
+    - POST
+    - OPTIONS
+  allow_credentials: true
+  max_age: 24h

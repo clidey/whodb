@@ -1,0 +1,129 @@
+# ═══════════════════════════════════════════════════════════════
+# Apollo Router Core — Production Configuration (v1.x)
+# Generated for Router v1.17+ (operation limits GA)
+# NOTE: v1.x has reached end-of-support. Migrate to v2.x.
+#   Run: router config upgrade router.yaml
+# ═══════════════════════════════════════════════════════════════
+
+supergraph:
+  listen: 0.0.0.0:4000
+  path: /graphql
+  introspection: false
+  query_planning:
+    cache:
+      in_memory:
+        limit: 512
+
+sandbox:
+  enabled: false
+
+homepage:
+  enabled: false
+
+health_check:
+  enabled: true
+  listen: 0.0.0.0:8088
+  path: /health
+
+include_subgraph_errors:
+  all: false
+
+# ── CORS (v1 flat schema) ──────────────────────────────────────
+cors:
+  origins:
+    - https://app.example.com
+    - https://studio.apollographql.com
+  allow_headers:
+    - Content-Type
+    - Authorization
+  methods:
+    - GET
+    - POST
+    - OPTIONS
+  allow_credentials: true
+  max_age: 24h
+
+# ── Authentication (v1: issuer is singular string) ─────────────
+authentication:
+  router:
+    jwt:
+      jwks:
+        - url: ${env.JWKS_URL}
+          issuer: ${env.JWT_ISSUER}
+
+authorization:
+  require_authentication: true
+
+# ── Operation Limits (v1.17+ uses `limits`, not `preview_operation_limits`) ──
+# Tip: Start with warn_only: true to observe real traffic, then enforce.
+# Router default for max_depth is 100; 50 is a balanced starting point.
+limits:
+  http_max_request_bytes: 2000000
+  max_depth: 50
+  max_height: 200
+  max_aliases: 30
+  max_root_fields: 20
+  # warn_only: true  # Uncomment during initial rollout to log without rejecting
+
+# ── Traffic Shaping ────────────────────────────────────────────
+traffic_shaping:
+  router:
+    timeout: 60s
+    global_rate_limit:
+      capacity: 1000
+      interval: 1s
+  all:
+    timeout: 30s
+
+# ── Header Propagation ─────────────────────────────────────────
+headers:
+  all:
+    request:
+      - propagate:
+          matching: "^(authorization|x-.*)$"
+
+# ── APQ ────────────────────────────────────────────────────────
+apq:
+  enabled: true
+  router:
+    cache:
+      in_memory:
+        limit: 512
+
+# ── Telemetry ──────────────────────────────────────────────────
+telemetry:
+  apollo:
+    client_name_header: apollographql-client-name
+    client_version_header: apollographql-client-version
+
+  exporters:
+    logging:
+      stdout:
+        enabled: true
+        format: json
+
+    metrics:
+      prometheus:
+        enabled: true
+        listen: 0.0.0.0:9090
+        path: /metrics
+
+    tracing:
+      otlp:
+        enabled: true
+        endpoint: ${env.OTEL_COLLECTOR_ENDPOINT:-http://otel-collector:4317}
+        protocol: grpc
+      common:
+        service_name: apollo-router
+        sampler: 0.1
+      propagation:
+        trace_context: true
+
+  instrumentation:
+    spans:
+      router:
+        attributes:
+          environment:
+            static_value: ${env.ENVIRONMENT:-production}
+          client:
+            request_header: x-client-id

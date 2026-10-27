@@ -1,0 +1,51 @@
+# ═══════════════════════════════════════════════════════════════
+# Apollo Router Core — Development Configuration (v1.x)
+# NOTE: Use `router --dev` to auto-enable introspection + sandbox.
+#   This file is for explicit dev configuration without --dev flag.
+# ═══════════════════════════════════════════════════════════════
+
+supergraph:
+  listen: 127.0.0.1:4000
+  path: /graphql
+  introspection: true
+
+sandbox:
+  enabled: true
+
+homepage:
+  enabled: true
+
+health_check:
+  enabled: true
+  listen: 127.0.0.1:8088
+  path: /health
+
+include_subgraph_errors:
+  all: true
+
+# ── CORS (v1 flat schema — permissive for development) ─────────
+cors:
+  origins:
+    - "*"
+  allow_headers:
+    - Content-Type
+    - Authorization
+  methods:
+    - GET
+    - POST
+    - OPTIONS
+
+# ── Header Propagation ─────────────────────────────────────────
+headers:
+  all:
+    request:
+      - propagate:
+          matching: ".*"
+
+# ── Telemetry (human-readable logs, no exporters) ──────────────
+telemetry:
+  exporters:
+    logging:
+      stdout:
+        enabled: true
+        format: text
