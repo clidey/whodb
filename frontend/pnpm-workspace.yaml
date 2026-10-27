@@ -55,3 +55,6 @@ minimumReleaseAgeExclude:
   - '@clidey/ux'
   - '@clidey/deptrust'
   - '@clidey/connparse'
+permissions:
+  '@apollo/client':
+    skills: true
