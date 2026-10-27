@@ -725,6 +725,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                         )
                     }
                     rightIcon={<ChevronDownIcon className="w-4 h-4" />}
+                    className="w-auto"
                     buttonProps={{
                         "data-testid": "ai-provider-select",
                     }}
@@ -757,6 +758,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                         side="right"
                         align="start"
                         rightIcon={<ChevronDownIcon className="w-4 h-4" />}
+                        className="w-auto"
                         buttonProps={{
                             "data-testid": "ai-model-select",
                         }}
