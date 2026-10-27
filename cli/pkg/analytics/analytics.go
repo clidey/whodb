@@ -98,7 +98,9 @@ func IsEnabled() bool {
 // edition are stamped centrally by the core analytics package.
 func baseProps() map[string]any {
 	return map[string]any{
-		"cli_version": cliVersion,
+		"cli_version":    cliVersion,
+		"client_type":    "cli",
+		"execution_mode": "command",
 	}
 }
 
@@ -107,6 +109,25 @@ func mergeProps(additional map[string]any) map[string]any {
 	props := baseProps()
 	for k, v := range additional {
 		props[k] = v
+	}
+	if durationMs, ok := props["duration_ms"].(int64); ok && durationMs >= 0 {
+		duration := time.Duration(durationMs) * time.Millisecond
+		props["duration_bucket"] = analytics.DurationBucket(duration)
+		props["slow"] = duration >= 3*time.Second
+	}
+	for _, key := range []string{"row_count", "column_count", "schema_count", "table_count", "query_count"} {
+		if count, ok := props[key].(int); ok && count >= 0 {
+			props[key+"_bucket"] = analytics.CountBucket(int64(count))
+		}
+	}
+	if success, ok := props["success"].(bool); ok {
+		props["outcome"] = "failure"
+		if success {
+			props["outcome"] = "success"
+			if props["confirmation_required"] == true {
+				props["outcome"] = "confirmation_required"
+			}
+		}
 	}
 	return props
 }
@@ -155,6 +176,7 @@ func TrackConnectAttempt(ctx context.Context, dbType string) {
 func TrackConnectSuccess(ctx context.Context, dbType string, durationMs int64) {
 	analytics.Capture(ctx, "cli.connect.success", mergeProps(map[string]any{
 		"db_type":     dbType,
+		"success":     true,
 		"duration_ms": durationMs,
 	}))
 }
@@ -163,7 +185,9 @@ func TrackConnectSuccess(ctx context.Context, dbType string, durationMs int64) {
 func TrackConnectError(ctx context.Context, dbType string, errorType string, durationMs int64) {
 	analytics.Capture(ctx, "cli.connect.error", mergeProps(map[string]any{
 		"db_type":     dbType,
+		"success":     false,
 		"error_type":  errorType,
+		"error_code":  errorType,
 		"duration_ms": durationMs,
 	}))
 }
@@ -195,26 +219,34 @@ func TrackConnectionTest(ctx context.Context, dbType string, success bool, durat
 
 // TrackQueryExecute captures query execution.
 func TrackQueryExecute(ctx context.Context, dbType string, statementType string, success bool, durationMs int64, rowCount int, props map[string]any) {
-	eventProps := mergeProps(map[string]any{
+	eventProps := map[string]any{
 		"db_type":        dbType,
 		"statement_type": statementType,
 		"success":        success,
 		"duration_ms":    durationMs,
 		"row_count":      rowCount,
-	})
+	}
 	for k, v := range props {
 		eventProps[k] = v
 	}
-	analytics.Capture(ctx, "cli.query.execute", eventProps)
+	analytics.Capture(ctx, "cli.query.execute", mergeProps(eventProps))
 }
 
-// TrackQueryError captures query failure.
-func TrackQueryError(ctx context.Context, dbType string, errorType string, durationMs int64) {
-	analytics.Capture(ctx, "cli.query.error", mergeProps(map[string]any{
+// TrackQueryError captures query failure with optional execution context.
+func TrackQueryError(ctx context.Context, dbType string, errorType string, durationMs int64, properties ...map[string]any) {
+	eventProps := map[string]any{
 		"db_type":     dbType,
+		"success":     false,
 		"error_type":  errorType,
+		"error_code":  errorType,
 		"duration_ms": durationMs,
-	}))
+	}
+	for _, props := range properties {
+		for key, value := range props {
+			eventProps[key] = value
+		}
+	}
+	analytics.Capture(ctx, "cli.query.error", mergeProps(eventProps))
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -268,29 +300,33 @@ func TrackExport(ctx context.Context, dbType string, format string, rowCount int
 
 // TrackMCPServerStart captures MCP server start.
 func TrackMCPServerStart(ctx context.Context, transport string, securityMode string, props map[string]any) {
-	eventProps := mergeProps(map[string]any{
-		"transport":     transport,
-		"security_mode": securityMode,
-		"timestamp":     time.Now().UTC().Format(time.RFC3339),
-	})
+	eventProps := map[string]any{
+		"client_type":    "mcp",
+		"execution_mode": "mcp",
+		"transport":      transport,
+		"security_mode":  securityMode,
+		"timestamp":      time.Now().UTC().Format(time.RFC3339),
+	}
 	for k, v := range props {
 		eventProps[k] = v
 	}
-	analytics.Capture(ctx, "mcp.server.start", eventProps)
+	analytics.Capture(ctx, "mcp.server.start", mergeProps(eventProps))
 }
 
 // TrackMCPToolCall captures MCP tool invocation.
 func TrackMCPToolCall(ctx context.Context, toolName string, requestID string, success bool, durationMs int64, props map[string]any) {
-	eventProps := mergeProps(map[string]any{
-		"tool_name":   toolName,
-		"request_id":  requestID,
-		"success":     success,
-		"duration_ms": durationMs,
-	})
+	eventProps := map[string]any{
+		"client_type":    "mcp",
+		"execution_mode": "mcp",
+		"tool_name":      toolName,
+		"request_id":     requestID,
+		"success":        success,
+		"duration_ms":    durationMs,
+	}
 	for k, v := range props {
 		eventProps[k] = v
 	}
-	analytics.Capture(ctx, "mcp.tool.call", eventProps)
+	analytics.Capture(ctx, "mcp.tool.call", mergeProps(eventProps))
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -26,6 +26,7 @@ export type AnalyticsRuntimeContext = {
     buildEnvironment: string;
     appType: string;
     platform: string;
+    appVersion: string;
     deployment?: string | null;
 };
 
@@ -95,16 +96,7 @@ export const sanitizeAnalyticsProperties = (
     properties: Record<string, unknown> | undefined,
     context: AnalyticsRuntimeContext
 ): Record<string, SafeAnalyticsPropertyValue> => {
-    const base: Record<string, SafeAnalyticsPropertyValue> = {
-        source: 'web',
-        build_edition: context.buildEdition,
-        build_environment: context.buildEnvironment,
-        app_type: context.appType,
-        platform: context.platform,
-    };
-    if (context.deployment) {
-        base.deployment = context.deployment;
-    }
+    const base: Record<string, SafeAnalyticsPropertyValue> = {};
 
     for (const [key, value] of Object.entries(properties ?? {})) {
         if (!isSafePropertyKey(key)) {
@@ -114,6 +106,20 @@ export const sanitizeAnalyticsProperties = (
         if (safeValue !== undefined) {
             base[key] = safeValue;
         }
+    }
+    Object.assign(base, {
+        source: 'web',
+        build_edition: context.buildEdition,
+        build_environment: context.buildEnvironment,
+        app_type: context.appType,
+        platform: context.platform,
+        app_version: context.appVersion,
+        client_type: context.platform === 'wails' ? 'desktop' : 'browser',
+    });
+    if (context.deployment) {
+        base.deployment = context.deployment;
+    } else {
+        delete base.deployment;
     }
     return base;
 };

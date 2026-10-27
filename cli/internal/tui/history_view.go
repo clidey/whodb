@@ -155,7 +155,7 @@ func (v *HistoryView) Update(msg tea.Msg) (*HistoryView, tea.Cmd) {
 
 				return v, func() tea.Msg {
 					defer cancel()
-					result, err := v.parent.dbManager.ExecuteQueryWithContext(ctx, query)
+					result, err := v.parent.executeTrackedQuery(ctx, query, "history")
 					return HistoryQueryMsg{Result: result, Query: query, Err: err}
 				}
 			}
@@ -310,7 +310,7 @@ func (v *HistoryView) executeQueryWithTimeout(query string, timeout time.Duratio
 
 	return func() tea.Msg {
 		defer cancel()
-		result, err := v.parent.dbManager.ExecuteQueryWithContext(ctx, query)
+		result, err := v.parent.executeTrackedQuery(ctx, query, "history")
 		return HistoryQueryMsg{Result: result, Query: query, Err: err}
 	}
 }

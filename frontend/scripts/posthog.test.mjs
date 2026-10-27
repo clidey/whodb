@@ -12,6 +12,7 @@ async function harness({ consent = 'granted', host = 'app.whodb.com', enabled = 
         init: () => { initCount++; },
         register() {}, identify() {}, group() {},
         captureException: (error, props) => captured.push({ error, props }),
+        capture: (event, props) => captured.push({ event, props }),
         opt_in_capturing() {}, opt_out_capturing() {}, reset() {},
         get_distinct_id: () => 'test-id',
     };
@@ -20,6 +21,7 @@ async function harness({ consent = 'granted', host = 'app.whodb.com', enabled = 
         console, URL, setTimeout: () => 0, clearTimeout() {},
         window: { location: { hostname: host }, localStorage: browserStorage, sessionStorage: browserStorage, addEventListener() {} },
         navigator: {},
+        __APP_VERSION__: '1.2.3',
     });
     const modules = new Map();
     async function synthetic(id, exports) {
@@ -72,11 +74,28 @@ test('hosted initialization and crash reporting work with the sample tour disabl
     assert.ok(!serialized.includes('private') && !serialized.includes('secret'));
 });
 
+test('product events retain runtime attribution and exclude private content', async () => {
+    const h = await harness();
+    await h.api.trackFrontendEvent('ui.screen_viewed', {
+        source: 'cli', build_edition: 'ce', client_type: 'sdk',
+        sql: 'SELECT private_data', email: 'private@example.com', section: 'sources',
+    });
+    assert.equal(h.captured.length, 1);
+    const {props} = h.captured[0];
+    assert.equal(props.source, 'web');
+    assert.equal(props.build_edition, 'ee');
+    assert.equal(props.client_type, 'browser');
+    assert.equal(props.app_version, '1.2.3');
+    assert.equal(props.section, 'sources');
+    assert.ok(!JSON.stringify(h.captured).includes('private'));
+});
+
 for (const [name, options] of Object.entries({ 'denied consent': { consent: 'denied' }, 'disabled build': { enabled: false }, 'E2E': { e2e: true }, 'local host': { host: 'localhost' } })) {
     test(`${name} still prevents remote initialization and crash capture`, async () => {
         const h = await harness(options);
         assert.equal(await h.api.initPosthog(), null);
         await h.api.captureException(new Error('secret'));
+        await h.api.trackFrontendEvent('ui.screen_viewed', {section: 'sources'});
         assert.equal(h.initCount, 0);
         assert.equal(h.captured.length, 0);
     });

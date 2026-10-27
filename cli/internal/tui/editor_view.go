@@ -532,7 +532,7 @@ func (v *EditorView) executeQuery() tea.Cmd {
 	return func() tea.Msg {
 		defer cancel()
 
-		result, err := v.parent.dbManager.ExecuteQueryWithContext(ctx, query)
+		result, err := v.parent.executeTrackedQuery(ctx, query, "editor")
 		if err != nil {
 			if errors.Is(err, context.DeadlineExceeded) {
 				return QueryTimeoutMsg{Query: query, Timeout: timeout}
@@ -570,7 +570,7 @@ func (v *EditorView) executeQueryWithTimeout(query string, timeout time.Duration
 	return func() tea.Msg {
 		defer cancel()
 
-		result, err := v.parent.dbManager.ExecuteQueryWithContext(ctx, query)
+		result, err := v.parent.executeTrackedQuery(ctx, query, "editor")
 		if err != nil {
 			if errors.Is(err, context.DeadlineExceeded) {
 				return QueryTimeoutMsg{Query: query, Timeout: timeout}

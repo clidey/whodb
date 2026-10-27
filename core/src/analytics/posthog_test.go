@@ -168,8 +168,8 @@ func TestBuildPropertiesMergesMetadataAndConfig(t *testing.T) {
 	if props["$host"] != "frontend.local" {
 		t.Fatalf("expected $host to be added from metadata domain, got %v", props["$host"])
 	}
-	if props["path"] != "override" {
-		t.Fatalf("expected explicit path property to be preserved, got %v", props["path"])
+	if _, exists := props["path"]; exists {
+		t.Fatal("raw request paths must not be captured")
 	}
 	if props["build_environment"] != "prod" || props["app_version"] != "1.2.3" {
 		t.Fatalf("expected config metadata to be included")
@@ -179,6 +179,27 @@ func TestBuildPropertiesMergesMetadataAndConfig(t *testing.T) {
 	}
 	if props["custom"] != "value" {
 		t.Fatalf("expected custom properties to be retained")
+	}
+}
+
+func TestBuildPropertiesDropsRawRequestContext(t *testing.T) {
+	t.Cleanup(resetAnalyticsState)
+	ctx := WithMetadata(context.Background(), Metadata{
+		Path: "/api/private-resource", Referer: "https://example.com/?query=private-sql",
+		UserAgent: "custom-client/private-machine-name", Method: http.MethodPost,
+		RequestID: "internal-request-id",
+	})
+	props := buildProperties(ctx, map[string]any{
+		"path": "/private-file", "referer": "https://private.example.com",
+		"user_agent": "private-client", "source_type": "Postgres",
+	})
+	for _, key := range []string{"path", "referer", "user_agent"} {
+		if _, exists := props[key]; exists {
+			t.Errorf("raw request context %q reached the analytics payload", key)
+		}
+	}
+	if props["method"] != http.MethodPost || props["request_id"] != "internal-request-id" || props["source_type"] != "Postgres" {
+		t.Fatalf("safe operation context was lost: %#v", props)
 	}
 }
 

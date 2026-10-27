@@ -131,6 +131,7 @@ const analyticsRuntimeContext = (): AnalyticsRuntimeContext => ({
     buildEnvironment: getEnvEnvironment(),
     appType: isDesktopApp() ? 'desktop' : 'web',
     platform: isDesktopApp() ? 'wails' : 'browser',
+    appVersion: __APP_VERSION__,
     deployment: deploymentName,
 });
 

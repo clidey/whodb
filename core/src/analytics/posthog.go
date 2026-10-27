@@ -321,6 +321,9 @@ func deriveDomain(r *http.Request) string {
 func buildProperties(ctx context.Context, properties map[string]any) posthog.Properties {
 	props := posthog.NewProperties()
 	for key, value := range properties {
+		if key == "path" || key == "referer" || key == "user_agent" {
+			continue
+		}
 		props.Set(key, value)
 	}
 
@@ -336,24 +339,9 @@ func buildProperties(ctx context.Context, properties map[string]any) posthog.Pro
 			props.Set("$host", metadata.Domain)
 		}
 	}
-	if metadata.Path != "" {
-		if _, exists := props["path"]; !exists {
-			props.Set("path", metadata.Path)
-		}
-	}
 	if metadata.Method != "" {
 		if _, exists := props["method"]; !exists {
 			props.Set("method", metadata.Method)
-		}
-	}
-	if metadata.UserAgent != "" {
-		if _, exists := props["user_agent"]; !exists {
-			props.Set("user_agent", metadata.UserAgent)
-		}
-	}
-	if metadata.Referer != "" {
-		if _, exists := props["referer"]; !exists {
-			props.Set("referer", metadata.Referer)
 		}
 	}
 	if metadata.RequestID != "" {

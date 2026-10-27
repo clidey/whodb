@@ -17,6 +17,7 @@
 package analytics
 
 import (
+	"context"
 	"errors"
 	"strings"
 )
@@ -40,6 +41,12 @@ func ErrorCode(err error) string {
 		if code := strings.TrimSpace(coded.Code()); code != "" {
 			return code
 		}
+	}
+	if errors.Is(err, context.Canceled) {
+		return "canceled"
+	}
+	if errors.Is(err, context.DeadlineExceeded) {
+		return "timeout"
 	}
 	message := strings.ToLower(strings.TrimSpace(err.Error()))
 	switch {
