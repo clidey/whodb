@@ -206,8 +206,8 @@ importers:
         specifier: 2.2.0
         version: 2.2.0(react@19.3.1)
       '@microlink/react-json-view':
-        specifier: 1.31.40
-        version: 1.31.40(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+        specifier: 1.31.41
+        version: 1.31.41(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@radix-ui/react-visually-hidden':
         specifier: 1.2.13
         version: 1.2.13(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -242,8 +242,8 @@ importers:
         specifier: 4.18.1
         version: 4.18.1
       posthog-js:
-        specifier: 1.438.12
-        version: 1.438.12(@types/react@19.3.0)(react@19.3.1)
+        specifier: 1.438.13
+        version: 1.438.13(@types/react@19.3.0)(react@19.3.1)
       react:
         specifier: 19.3.1
         version: 19.3.1
@@ -1017,8 +1017,8 @@ packages:
   '@marijn/find-cluster-break@1.0.4':
     resolution: {integrity: sha512-Wy0V7+SGUjnF9/TkiM1hKVDPj7jKXduPNboMVtHTA8dySMURWqfg/JZ9E2Sq8JgSJmkl7k7Qe9FLeMSrSraWmQ==}
 
-  '@microlink/react-json-view@1.31.40':
-    resolution: {integrity: sha512-IqeoQMppY8bL/y2ghr3NH6ARq8wTlhcONBkIH7gY2jkWC7T5Rj5wB+pDAlyMn77TZ8kpiPKsRCOqAvbvc75HGA==}
+  '@microlink/react-json-view@1.31.41':
+    resolution: {integrity: sha512-d/T7/KrRlJ8Gi84Cyr39QXui71lauue/ewVYkX3xUO2opzQlx5pqaA5TAixO+jHlsyGGz5+1O3PHK8mEHN08TQ==}
     engines: {node: '>=17'}
     peerDependencies:
       react: '>= 15'
@@ -4261,8 +4261,8 @@ packages:
     resolution: {integrity: sha512-YUbWYCgErwnMAVkjUnYa+KlMBzGpHwiIt/DE7f0G33AuX2LH9UcTk6KgWxd3zRU+pN3u/C+Xl3EnMLM4Hea7Sg==}
     engines: {node: ^10 || ^12 || >=14}
 
-  posthog-js@1.438.12:
-    resolution: {integrity: sha512-hjhvrtqbk6pFlbtNEGk0FrWKKFdeXe/WWA/LppN0f+uDoHKR9/SZJOxUHSVCGYbGTJvNRoDjjQvZuTcq4oKSlg==}
+  posthog-js@1.438.13:
+    resolution: {integrity: sha512-fcRhMZ/TKvpDjmDGTlf4KCBqqTnpLWLplZ76NfeLNEE1P6N6qCGGZzqZ6gEzJoOfYLNLgjd0sRM5fC8F/Ky9fA==}
     peerDependencies:
       '@types/react': '>=16.8.0'
       react: '>=16.8.0'
@@ -6311,7 +6311,7 @@ snapshots:
 
   '@marijn/find-cluster-break@1.0.4': {}
 
-  '@microlink/react-json-view@1.31.40(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
+  '@microlink/react-json-view@1.31.41(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
     dependencies:
       react: 19.3.1
       react-base16-styling: 0.10.0
@@ -9674,7 +9674,7 @@ snapshots:
       picocolors: 1.1.1
       source-map-js: 1.2.2
 
-  posthog-js@1.438.12(@types/react@19.3.0)(react@19.3.1):
+  posthog-js@1.438.13(@types/react@19.3.0)(react@19.3.1):
     dependencies:
       '@posthog/browser-common': 0.9.5
       '@posthog/core': 1.59.1
