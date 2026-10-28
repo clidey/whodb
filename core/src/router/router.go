@@ -428,6 +428,14 @@ const cspReportOnlyPolicy = "default-src 'self'; " +
 	"base-uri 'self'; " +
 	"form-action 'self'"
 
+// permissionsPolicy limits the powerful browser features pages may request.
+// Camera (barcode scanning), Bluetooth (local device connections), Web Share
+// and fullscreen stay available to the app's own origin; everything else is
+// disabled for the page and any frames it embeds.
+const permissionsPolicy = "camera=(self), bluetooth=(self), web-share=(self), fullscreen=(self), " +
+	"microphone=(), geolocation=(), payment=(), usb=(), serial=(), hid=(), " +
+	"display-capture=(), accelerometer=(), gyroscope=(), magnetometer=(), browsing-topics=()"
+
 // securityHeadersMiddleware adds defense-in-depth response headers:
 //   - X-Frame-Options/frame-ancestors: block clickjacking by disallowing framing
 //   - X-Content-Type-Options: stop MIME sniffing
@@ -435,6 +443,14 @@ const cspReportOnlyPolicy = "default-src 'self'; " +
 //   - Strict-Transport-Security: enforce HTTPS once seen over TLS
 //   - Content-Security-Policy: enforced frame-ancestors (safe) + a full policy
 //     in Report-Only mode (observe-before-enforce)
+//   - Permissions-Policy: see permissionsPolicy
+//   - Cross-Origin-Opener-Policy: same-origin-allow-popups isolates the page
+//     from cross-origin windows that open it while keeping the new tabs and
+//     popups it opens itself working
+//
+// Cross-Origin-Embedder-Policy is not set because require-corp would block the
+// arbitrary https images the app renders, and Cross-Origin-Resource-Policy is
+// not set because it would block legitimate cross-site image loads.
 //
 // HSTS is only emitted when the request arrived over TLS so local HTTP dev is
 // unaffected.
@@ -448,6 +464,8 @@ func securityHeadersMiddleware(next http.Handler) http.Handler {
 		// loading). The full resource policy ships Report-Only until validated.
 		h.Set("Content-Security-Policy", "frame-ancestors 'none'")
 		h.Set("Content-Security-Policy-Report-Only", cspReportOnlyPolicy)
+		h.Set("Permissions-Policy", permissionsPolicy)
+		h.Set("Cross-Origin-Opener-Policy", "same-origin-allow-popups")
 		if r.TLS != nil || strings.EqualFold(r.Header.Get("X-Forwarded-Proto"), "https") {
 			h.Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
 		}
