@@ -25,7 +25,7 @@
     "@types/react-dom": "19.3.0",
     "classnames": "2.5.1",
     "codemirror": "6.0.2",
-    "framer-motion": "14.4.0",
+    "framer-motion": "14.5.0",
     "graphql": "17.0.2",
     "html-to-image": "1.11.13",
     "lodash": "4.18.1",
@@ -103,7 +103,7 @@
     "@graphql-typed-document-node/core": "3.2.0",
     "@lhci/cli": "0.15.1",
     "@playwright/test": "1.64.1",
-    "@types/lodash": "4.17.26",
+    "@types/lodash": "4.17.27",
     "@vitejs/plugin-react": "6.1.2",
     "baseline-browser-mapping": "2.11.30",
     "js-yaml": "5.5.0",
@@ -111,7 +111,7 @@
     "oxlint": "1.89.0",
     "oxlint-tsgolint": "7.0.2004",
     "typescript": "6.0.3",
-    "vite": "8.3.4",
+    "vite": "8.3.5",
     "vite-plugin-istanbul": "9.0.1"
   },
   "packageManager": "pnpm@12.15.0+sha512.b3951d6d6ff4a9f13dc7cf56cd28d2b8eb37dbcc9c68e52e1e1191873ea9f82a017287ab50baadc5ccc494f036c67c0e47eb13608c2fa36f47711b61ea128e61"
