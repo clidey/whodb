@@ -1,4 +1,4 @@
-FROM nginx:alpine
+FROM nginx/nginx-unprivileged:alpine
 
 ARG GITHUB_SHA=""
 ARG GITHUB_RUN_ID=""
@@ -7,6 +7,8 @@ LABEL org.opencontainers.image.title="WhoDB A11y Reports"
 LABEL org.opencontainers.image.source="whodb"
 LABEL org.opencontainers.image.revision=$GITHUB_SHA
 LABEL org.opencontainers.image.version=$GITHUB_RUN_ID
+
+USER root
 
 RUN rm /etc/nginx/conf.d/default.conf && \
     rm -rf /usr/share/nginx/html/*
@@ -98,8 +100,8 @@ EOF
 
 RUN cat > /etc/nginx/conf.d/a11y-report.conf <<'EOF'
 server {
-  listen 80;
-  listen [::]:80;
+  listen 8080;
+  listen [::]:8080;
   server_name localhost;
 
   location = / {
@@ -127,6 +129,8 @@ server {
 }
 EOF
 
-EXPOSE 80
+USER nginx
+
+EXPOSE 8080
 
 CMD ["nginx", "-g", "daemon off;"]

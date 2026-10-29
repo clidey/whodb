@@ -1,5 +1,5 @@
 # Keep the Node version in sync with .nvmrc at the CE repo root (CI reads it).
-FROM node:26.12.0-alpine3.24 AS builder
+FROM node:26.12.1-alpine3.24 AS builder
 
 WORKDIR /app
 
@@ -10,7 +10,7 @@ COPY . .
 # (an unpinned install gets cached by Docker layers and silently goes stale).
 RUN npm install -g @clidey/dory@1.0.5 && dory build
 
-FROM nginxinc/nginx-unprivileged:alpine
+FROM nginx/nginx-unprivileged:alpine
 
 USER root
 

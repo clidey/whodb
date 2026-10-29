@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # Keep the Node version in sync with .nvmrc at the CE repo root (CI reads it).
-FROM node:26.12.0-alpine3.24 AS build-stage
+FROM node:26.12.1-alpine3.24 AS build-stage
 RUN npm i -g pnpm@11.15.1
 WORKDIR /app
 COPY ./frontend/package.json ./frontend/pnpm-lock.yaml ./
