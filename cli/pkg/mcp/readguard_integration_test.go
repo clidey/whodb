@@ -233,7 +233,7 @@ func readGuardEndpoint(t *testing.T, ctx context.Context, binary string, opts *S
 	if err := listener.Close(); err != nil {
 		t.Fatal(err)
 	}
-	args := []string{"mcp", "serve", "--transport", "http", "--host", "127.0.0.1", "--port", strconv.Itoa(port), "--allow-multi-statement"}
+	args := []string{"mcp", "serve", "--database", "--transport", "http", "--host", "127.0.0.1", "--port", strconv.Itoa(port), "--allow-multi-statement"}
 	if opts.ReadOnly {
 		args = append(args, "--read-only")
 	}
