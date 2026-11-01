@@ -94,6 +94,9 @@ const run = () => {
     const desktopProperties = sanitizeAnalyticsProperties({}, {...context, appType: 'desktop', platform: 'wails'});
     assertEqual(desktopProperties.client_type, 'desktop', 'desktop caller is classified');
     assertEqual(desktopProperties.source, 'web', 'frontend remains the emitting process');
+    const mobileProperties = sanitizeAnalyticsProperties({}, {...context, appType: 'mobile', platform: 'ios'});
+    assertEqual(mobileProperties.client_type, 'mobile', 'mobile app caller is classified');
+    assertEqual(mobileProperties.platform, 'ios', 'mobile app platform is stamped');
     const noDeployment = sanitizeAnalyticsProperties({deployment: 'invented'}, {...context, deployment: null});
     assertMissing(noDeployment, 'deployment');
 

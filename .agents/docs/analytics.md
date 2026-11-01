@@ -15,7 +15,7 @@ call sites, and do not bypass the choke points:
 | `build_edition` | `ce`, `ee` | Go: `Config.Edition` (required — never leave unset); TS: runtime context |
 | `build_environment` | e.g. `production`, `cli` | Go: `Config.Environment`; TS: runtime context |
 | `app_version` | release version, or `dev`/`development` for unstamped builds | Go config; TS: compiled `__APP_VERSION__` |
-| `platform` | `browser`, `wails` | Web events only (TS runtime context) |
+| `platform` | `browser`, `wails`, `ios`, `android` | Web events only (TS runtime context; `ios`/`android` when a native mobile app hosts the web UI, set with `setMobileAppPlatform`) |
 | `$host` | request/browser host | Go: from request metadata; TS: auto-captured by posthog-js |
 
 Choke points:
@@ -26,7 +26,7 @@ Choke points:
 
 Frontend event properties cannot override the runtime source, edition,
 environment, platform, caller, version or deployment. Frontend events carry
-`client_type: browser` or `desktop`; local CLI/MCP events use `cli` or `mcp`.
+`client_type: browser`, `desktop` or `mobile`; local CLI/MCP events use `cli` or `mcp`.
 These are calling surfaces, distinct from the emitting `source`. Server calls
 without a known caller remain unclassified rather than guessing from an ID.
 

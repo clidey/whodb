@@ -60,6 +60,13 @@ let cachedDistinctId: string | null = null;
 const configuredDeploymentName = import.meta.env.VITE_POSTHOG_DEPLOYMENT?.trim();
 
 let deploymentName: string | null = configuredDeploymentName?.length ? configuredDeploymentName : null;
+let mobileAppPlatform: MobileAppPlatform | null = null;
+
+/** Operating system of a native mobile app that hosts this web UI in a web view. */
+export type MobileAppPlatform = 'ios' | 'android';
+
+const runtimeAppType = () => isDesktopApp() ? 'desktop' : mobileAppPlatform ? 'mobile' : 'web';
+const runtimePlatform = () => isDesktopApp() ? 'wails' : mobileAppPlatform ?? 'browser';
 let remoteAnalyticsHostAllowlist: readonly string[] | null = null;
 
 const posthogKey = "phc_hbXcCoPTdxm5ADL8PmLSYTIUvS6oRWFM2JAK8SMbfnH";
@@ -129,8 +136,8 @@ export const remoteAnalyticsAllowed = () => {
 const analyticsRuntimeContext = (): AnalyticsRuntimeContext => ({
     buildEdition: getBuildEdition(),
     buildEnvironment: getEnvEnvironment(),
-    appType: isDesktopApp() ? 'desktop' : 'web',
-    platform: isDesktopApp() ? 'wails' : 'browser',
+    appType: runtimeAppType(),
+    platform: runtimePlatform(),
     appVersion: __APP_VERSION__,
     deployment: deploymentName,
 });
@@ -235,15 +242,13 @@ const registerContext = (client: PostHog) => {
     }
     const domain = window.location.hostname || 'localhost';
 
-    const isDesktop = isDesktopApp();
-
     const properties: Record<string, string> = {
         source: 'web',
         site_domain: domain,
         build_environment: getEnvEnvironment(),
         build_edition: getBuildEdition(),
-        app_type: isDesktop ? 'desktop' : 'web',
-        platform: isDesktop ? 'wails' : 'browser',
+        app_type: runtimeAppType(),
+        platform: runtimePlatform(),
         session_replay_enabled: String(isSessionReplayEnabled()),
     };
     if (deploymentName) {
@@ -581,4 +586,12 @@ export const captureException = async (error: unknown, properties?: Record<strin
 
 export const setDeploymentName = (name: string) => {
     deploymentName = name;
+};
+
+/**
+ * Marks this page as running inside a native mobile app's web view, so events carry
+ * that platform. Call at boot, before analytics initializes.
+ */
+export const setMobileAppPlatform = (platform: MobileAppPlatform | null) => {
+    mobileAppPlatform = platform;
 };
