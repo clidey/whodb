@@ -59,8 +59,25 @@ import {
     TableHeadRow,
     TableRow,
     TextArea,
-    toast
-} from "@clidey/ux";
+    toast,
+    IconArrowDownCircle as ArrowDownCircleIcon,
+    IconDownload as ArrowDownTrayIcon,
+    IconArrowUpCircle as ArrowUpCircleIcon,
+    IconCalculator as CalculatorIcon,
+    IconCheckCircle as CheckCircleIcon,
+    IconChevronDown as ChevronDownIcon,
+    IconChevronUp as ChevronUpIcon,
+    IconSource as CircleStackIcon,
+    IconCursor as CursorArrowRaysIcon,
+    IconCopy as DocumentDuplicateIcon,
+    IconFile as DocumentIcon,
+    IconFileText as DocumentTextIcon,
+    IconMoreV as EllipsisVerticalIcon,
+    IconSearch as MagnifyingGlassIcon,
+    IconEdit as PencilSquareIcon,
+    IconTrash as TrashIcon,
+    IconClose as XMarkIcon,
+} from '@clidey/ux';
 import { Spinner } from '@/components/loading';
 import {
     AnalyzeMockDataDependenciesDocument,
@@ -81,25 +98,6 @@ import {copyToClipboard} from '@/services/clipboard';
 import {useSourceContract} from "@/hooks/useSourceContract";
 import {sourceObjectSupportsAction} from "@/config/source-types";
 import {ph} from '@/utils/privacy';
-import {
-    ArrowDownCircleIcon,
-    ArrowDownTrayIcon,
-    ArrowUpCircleIcon,
-    CalculatorIcon,
-    CheckCircleIcon,
-    ChevronDownIcon,
-    ChevronUpIcon,
-    CircleStackIcon,
-    CursorArrowRaysIcon,
-    DocumentDuplicateIcon,
-    DocumentIcon,
-    DocumentTextIcon,
-    EllipsisVerticalIcon,
-    MagnifyingGlassIcon,
-    PencilSquareIcon,
-    TrashIcon,
-    XMarkIcon
-} from "./heroicons";
 import {Tip} from "./tip";
 import {WhoDBChatIcon} from "./whodb-chat-icon";
 import {formatShortcut} from "@/utils/platform";
@@ -606,8 +604,6 @@ export const StorageUnitTable: FC<TableProps> = ({
             const toastOptions = isRowInsertSupported ? {
                 description: t('rowsDeletedFrom', {table: storageUnit ?? '', source: sourceLabel ?? ''}),
                 duration: 7000,
-                className: 'ce-delete-toast',
-                icon: <span className="ce-delete-success-icon"><span className="ce-whodb-icon ce-whodb-icon-check" /></span>,
                 action: {
                     label: t('undo'),
                     onClick: () => {
@@ -628,7 +624,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                         })();
                     },
                 },
-            } : {description: t('rowsDeletedFrom', {table: storageUnit ?? '', source: sourceLabel ?? ''}), duration: 7000, className: 'ce-delete-toast', icon: <span className="ce-delete-success-icon"><span className="ce-whodb-icon ce-whodb-icon-check" /></span>};
+            } : {description: t('rowsDeletedFrom', {table: storageUnit ?? '', source: sourceLabel ?? ''}), duration: 7000};
             toast.success(t('rowsDeleted', {count: deletedRows.length}), toastOptions);
         }
         onRefresh?.();

@@ -46,10 +46,12 @@ import {
     SidebarContent,
     SidebarGroup,
     SidebarHeader,
-    toTitleCase
-} from "@clidey/ux";
+    toTitleCase,
+    IconFolder as FolderIcon,
+    IconApp as RectangleGroupIcon,
+    IconTable as TableCellsIcon,
+} from '@clidey/ux';
 import {useNavigate} from "react-router-dom";
-import {FolderIcon, RectangleGroupIcon, TableCellsIcon} from "../../components/heroicons";
 import {buildSourceScopeRef, getObjectNameFromRef} from "../../utils/source-refs";
 import {ph} from "../../utils/privacy";
 

@@ -43,7 +43,10 @@ import {
     StackList,
     StackListItem,
     toast,
-} from "@clidey/ux";
+    IconCheckCircle as CheckCircleIcon,
+    IconTerminal as CommandLineIcon,
+    IconClose as XMarkIcon,
+} from '@clidey/ux';
 import {skipToken, useLazyQuery, useMutation, useQuery} from "@apollo/client/react";
 import type {
     GetStorageUnitsQuery,
@@ -70,11 +73,6 @@ import { useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {Navigate, useLocation, useNavigate} from "react-router-dom";
 import {CodeEditor} from "../../components/editor";
 import {ErrorState} from "../../components/error-state";
-import {
-    CheckCircleIcon,
-    CommandLineIcon,
-    XMarkIcon
-} from "../../components/heroicons";
 import {Loading, LoadingPage, Spinner} from "../../components/loading";
 import {InternalPage} from "../../components/page";
 import {SchemaViewer} from "../../components/schema-viewer";

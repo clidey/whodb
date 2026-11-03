@@ -59,6 +59,25 @@ test.describe('Login & Authentication', () => {
         }
     });
 
+    test('shows a visible error when the source catalog cannot load', async ({ page }) => {
+        await page.route('**/api/query', async route => {
+            if (route.request().postDataJSON()?.operationName !== 'SourceTypes') {
+                await route.continue();
+                return;
+            }
+            await route.fulfill({
+                json: {
+                    errors: [{ message: 'authentication required', extensions: { code: 'UNAUTHENTICATED' } }],
+                    data: null,
+                },
+            });
+        });
+        await page.reload();
+
+        await expect(page.getByTestId('source-catalog-error')).toBeVisible();
+        await expect(page.getByTestId('source-catalog-error')).toContainText('Could not load available connections');
+    });
+
     test.describe('Database Type Selection', () => {
         test('shows database type dropdown with options', async ({ whodb, page }) => {
             await expect(page.locator('[data-testid="database-type-select"]')).toBeVisible();

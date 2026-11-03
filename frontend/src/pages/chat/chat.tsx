@@ -40,20 +40,18 @@ import {
     SelectItem,
     SelectTrigger,
     SelectValue,
-    toast
-} from "@clidey/ux";
+    toast,
+    IconCheckCircle as CheckCircleIcon,
+    IconCode as CodeBracketIcon,
+    IconTerminal as CommandLineIcon,
+    IconCopy as DocumentDuplicateIcon,
+    IconMore as EllipsisHorizontalIcon,
+    IconAi as SparklesIcon,
+    IconTable as TableCellsIcon,
+} from '@clidey/ux';
 import {ChatHistorySidebar} from "./chat-history-sidebar";
 import type {RowsResult} from '@graphql';
 import {ExecuteConfirmedSqlDocument, GenerateChatTitleDocument, GetDatabaseQuerySuggestionsDocument} from '@graphql';
-import {
-    CheckCircleIcon,
-    CodeBracketIcon,
-    CommandLineIcon,
-    DocumentDuplicateIcon,
-    EllipsisHorizontalIcon,
-    SparklesIcon,
-    TableCellsIcon
-} from "../../components/heroicons";
 import classNames from "classnames";
 import type { FC, KeyboardEventHandler} from "react";
 import {memo, useCallback, useEffect, useMemo, useRef, useState} from "react";

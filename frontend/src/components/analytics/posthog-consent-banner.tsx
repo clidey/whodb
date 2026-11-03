@@ -15,14 +15,14 @@
  */
 
 import {useCallback, useEffect, useState} from 'react';
-import {Button, cn} from '@clidey/ux';
+import {Button, toast} from '@clidey/ux';
 import {useAppDispatch, useAppSelector} from '../../store/hooks';
 import {SettingsActions} from '../../store/settings';
 import {getStoredConsentState, optInUser, optOutUser} from '../../config/posthog';
 import {featureFlags, getAppName} from '../../config/features';
 import {useTranslation} from '../../hooks/use-translation';
-import {XMarkIcon} from '../heroicons';
 
+/** Presents the telemetry choice using the shared UX toast stack. */
 export const PosthogConsentBanner = () => {
     const { t } = useTranslation('components/posthog-consent-banner');
     const appName = getAppName();
@@ -55,35 +55,26 @@ export const PosthogConsentBanner = () => {
         setVisible(false);
     }, [dispatch]);
 
-    if (!visible) {
-        return null;
-    }
+    useEffect(() => {
+        if (!visible) return;
 
-    return (
-        <div className="ce-telemetry-notice fixed bottom-4 right-4 z-50 w-[min(360px,calc(100vw-32px))]">
-            <div
-                className={cn(
-                    'relative rounded-lg border border-border bg-card p-4 shadow-xl'
-                )}
-            >
-                <Button variant="ghost" size="icon" onClick={() => { setVisible(false); }} className="absolute right-1 top-1 size-7" aria-label={t('dismiss')}><XMarkIcon className="size-3" /></Button>
-                <div className="flex flex-col gap-3 pr-2 text-sm">
-                    <div>
-                        <p className="text-sm font-semibold">{t('title')}</p>
-                        <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
-                            {t('message', { appName })}
-                        </p>
-                    </div>
-                    <div className="flex flex-wrap justify-end gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => { void handleDecline(); }}>
-                            {t('decline')}
-                        </Button>
-                        <Button size="sm" onClick={() => { void handleAllow(); }}>
-                            {t('accept')}
-                        </Button>
-                    </div>
+        const id = toast(t('title'), {
+            id: 'posthog-consent-notice',
+            testId: 'posthog-consent-notice',
+            description: <>
+                <p>{t('message', { appName })}</p>
+                <div className="mt-3 flex justify-end gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => { void handleDecline(); }}>{t('decline')}</Button>
+                    <Button size="sm" onClick={() => { void handleAllow(); }}>{t('accept')}</Button>
                 </div>
-            </div>
-        </div>
-    );
+            </>,
+            duration: Infinity,
+            closeButton: true,
+            onDismiss: () => { setVisible(false); },
+        });
+
+        return () => { toast.dismiss(id); };
+    }, [appName, handleAllow, handleDecline, t, visible]);
+
+    return null;
 };

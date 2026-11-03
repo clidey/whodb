@@ -39,9 +39,17 @@ import {
     SheetContent,
     Separator,
     SheetFooter,
-    toast
-} from "@clidey/ux";
-import { SearchSelect } from "./ux";
+    toast,
+    IconRefresh as ArrowPathIcon,
+    IconExternal as ArrowTopRightOnSquareIcon,
+    IconChevronDown as ChevronDownIcon,
+    IconAlertCircle as ExclamationCircleIcon,
+    IconLock as LockClosedIcon,
+    IconPlusCircle as PlusCircleIcon,
+    IconAi as SparklesIcon,
+    IconTrash as TrashIcon,
+    SearchSelect,
+} from '@clidey/ux';
 import type { FC, ReactElement, ReactNode} from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GetAiModelsDocument, GetAiProvidersDocument } from "@graphql";
@@ -54,16 +62,6 @@ import { useTranslation } from "../hooks/use-translation";
 import { getAIProviderOverrides } from "../config/ai-provider-registry";
 import { persistAISelection } from "../config/ai-persistence";
 import { ExternalLink } from "../utils/external-links";
-import {
-    ArrowPathIcon,
-    ArrowTopRightOnSquareIcon,
-    ChevronDownIcon,
-    ExclamationCircleIcon,
-    LockClosedIcon,
-    PlusCircleIcon,
-    SparklesIcon,
-    TrashIcon
-} from "./heroicons";
 import { Icons } from "./icons";
 
 export const externalModelTypes = availableExternalModelTypes.map((model) => ({
@@ -436,12 +434,15 @@ export const useAI = () => {
     }
 }
 
+/** Renders provider and model selection with provider management actions. */
 export const AIProvider: FC<ReturnType<typeof useAI> & {
     disableNewChat?: boolean;
     disableClear?: boolean;
     onClear?: () => void;
     onAddExternalModel?: () => void;
     footerAction?: ReactNode;
+    /** Keeps the provider and model on one row, truncating long names. */
+    inlineSelectors?: boolean;
 }> = ({
     modelType,
     modelTypes: _modelTypes,
@@ -467,6 +468,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
     onClear,
     onAddExternalModel,
     footerAction,
+    inlineSelectors = false,
 }) => {
     const { t } = useTranslation('components/ai');
     const newUIEnabled = useAppSelector(state => state.settings.newUIEnabled);
@@ -680,7 +682,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
             </SheetContent>
         </Sheet>
         <div className="flex w-full flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap gap-2">
+            <div className={cn("flex flex-wrap gap-2", inlineSelectors && "min-w-0 flex-1 flex-nowrap")}>
                 <SearchSelect
                     options={modelTypesDropdownItems.map(item => ({
                         value: item.id,
@@ -725,7 +727,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                         )
                     }
                     rightIcon={<ChevronDownIcon className="w-4 h-4" />}
-                    className="w-auto"
+                    className={cn("w-auto", inlineSelectors && "min-w-0 flex-1")}
                     buttonProps={{
                         "data-testid": "ai-provider-select",
                     }}
@@ -758,7 +760,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                         side="right"
                         align="start"
                         rightIcon={<ChevronDownIcon className="w-4 h-4" />}
-                        className="w-auto"
+                        className={cn("w-auto", inlineSelectors && "min-w-0 flex-1")}
                         buttonProps={{
                             "data-testid": "ai-model-select",
                         }}

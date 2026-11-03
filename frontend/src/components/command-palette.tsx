@@ -22,7 +22,11 @@ import {
     CommandList,
     Dialog,
     DialogContent,
-} from "@clidey/ux";
+    Kbd,
+    IconRefresh as ArrowPathIcon,
+    IconUpDown as ChevronUpDownIcon,
+    IconSettings as CogIcon,
+} from '@clidey/ux';
 import {useQuery} from '@apollo/client/react';
 import {GetStorageUnitsDocument} from '@graphql';
 import type {FC} from "react";
@@ -38,11 +42,6 @@ import {InternalRoutes} from "@/config/routes";
 import {performLogout} from "@/config/logout-handler";
 import {WhoDBChatIcon} from './whodb-chat-icon';
 import {buildSourceParentObjectRef, buildSourceParentRef} from '../utils/source-refs';
-import {
-    ArrowPathIcon,
-    ChevronUpDownIcon,
-    CogIcon,
-} from "./heroicons";
 
 export interface CommandPaletteProps {
     open: boolean;
@@ -57,9 +56,9 @@ export const CommandPaletteShortcut: FC<{ keys: string[]; isMac: boolean }> = ({
     <div className="ml-auto flex items-center gap-0.5">
         {keys.map((key, idx) => (
             <span key={key} className="flex items-center gap-0.5">
-                <kbd className="inline-flex items-center justify-center min-w-[1.5rem] h-6 px-1.5 text-xs font-medium bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded shadow-sm">
+                <Kbd>
                     {getKeyDisplay(key)}
-                </kbd>
+                </Kbd>
                 {idx < keys.length - 1 && !isMac && (
                     <span className="text-neutral-400 text-xs">+</span>
                 )}
@@ -264,7 +263,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
                         value={search}
                         onValueChange={setSearch}
                     />
-                    <kbd className="ce-command-escape" aria-hidden="true">esc</kbd>
+                    <Kbd className="ce-command-escape" aria-hidden="true">esc</Kbd>
                     <CommandList className="max-h-[400px]">
                         {showNoResults && <div className="py-4 text-center text-sm text-muted-foreground" role="status" data-testid="command-palette-empty">{t('noResults')}</div>}
                         {matchingTables.length > 0 && <CommandGroup heading={t('tables')}>
@@ -274,7 +273,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
                                 });
                                 handlePaletteOpenChange(false);
                             }} data-testid={`command-table-${unit.Name}`}>
-                                <WhoDBChatIcon name="table" /><span>{unit.Name}</span><kbd className="ce-command-enter" aria-hidden="true">↵</kbd>
+                                <WhoDBChatIcon name="table" /><span>{unit.Name}</span><Kbd className="ce-command-enter" aria-hidden="true">↵</Kbd>
                             </CommandItem>)}
                         </CommandGroup>}
 

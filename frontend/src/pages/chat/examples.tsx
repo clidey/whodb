@@ -16,7 +16,7 @@
 
 import type { ReactNode} from "react";
 import { useMemo } from "react";
-import { CircleStackIcon, UsersIcon, UserGroupIcon, InformationCircleIcon, PresentationChartLineIcon, ShoppingBagIcon, BuildingStorefrontIcon, BanknotesIcon, PresentationChartBarIcon } from "../../components/heroicons";
+import { IconSource as CircleStackIcon, IconUsers as UsersIcon, IconTeam as UserGroupIcon, IconInfo as InformationCircleIcon, IconPresentLine as PresentationChartLineIcon, IconBag as ShoppingBagIcon, IconStore as BuildingStorefrontIcon, IconBanknotes as BanknotesIcon, IconPresentBar as PresentationChartBarIcon } from '@clidey/ux';
 import { useTranslation } from "@/hooks/use-translation";
 
 export interface ChatExample {

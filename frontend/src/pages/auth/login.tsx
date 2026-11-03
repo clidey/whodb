@@ -15,8 +15,7 @@
  */
 
 import { useLazyQuery, useMutation, useQuery } from "@apollo/client/react";
-import {Alert, AlertDescription, AlertTitle, Badge, Button, Card, cn, Label, ModeToggle, Separator, toast, useTheme} from '@clidey/ux';
-import {SearchSelect} from '../../components/ux';
+import { Alert, AlertDescription, AlertTitle, Badge, Button, Card, cn, Label, ModeToggle, Separator, toast, useTheme, IconSliders as AdjustmentsHorizontalIcon, IconChat as ChatBubbleLeftRightIcon, IconCheckCircle as CheckCircleIcon, IconChevronDown as ChevronDownIcon, IconCode as CodeBracketIcon, IconInfo as InformationCircleIcon, IconShare as ShareIcon, IconAi as SparklesIcon, IconTable as TableCellsIcon, SearchSelect } from '@clidey/ux';
 import {
     SettingsConfigDocument,
     SourceFieldOptionsDocument,
@@ -31,17 +30,6 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState} from "reac
 import {getComponent} from "../../config/component-registry";
 import {useNavigate, useSearchParams} from "react-router-dom";
 import logoImage from "../../../public/images/logo.svg";
-import {
-    AdjustmentsHorizontalIcon,
-    ChatBubbleLeftRightIcon,
-    CheckCircleIcon,
-    ChevronDownIcon,
-    CodeBracketIcon,
-    InformationCircleIcon,
-    ShareIcon,
-    SparklesIcon,
-    TableCellsIcon
-} from '../../components/heroicons';
 import {Icons} from "../../components/icons";
 import {Loading, Spinner} from "../../components/loading";
 import {Container} from "../../components/page";
@@ -208,7 +196,7 @@ export const LoginForm: FC<LoginFormProps> = ({
     const [testConnection, { loading: testConnectionLoading }] = useMutation(TestSourceConnectionDocument);
     const [loginWithSourceProfile, { loading: loginWithSourceProfileLoading }] = useMutation(LoginWithSourceProfileDocument);
     const [getDatabases, { loading: databasesLoading, data: foundDatabases }] = useLazyQuery(SourceFieldOptionsDocument);
-    const { loading: profilesLoading, data: profiles } = useQuery(SourceProfilesDocument);
+    const { loading: profilesLoading, data: profiles, error: profilesError } = useQuery(SourceProfilesDocument);
     const { data: settingsData } = useQuery(SettingsConfigDocument);
     const disableCredentialForm = settingsData?.SettingsConfig?.DisableCredentialForm ?? false;
     const maxPageSize = settingsData?.SettingsConfig?.MaxPageSize ?? 10000;
@@ -1129,10 +1117,16 @@ export const LoginForm: FC<LoginFormProps> = ({
                         </div>
                     }
                 </div>
-                {testResult && <div id="login-error" className={cn('ce-connect-test-result', testResult.status === 'success' ? 'is-success' : 'is-error')} role="status" data-testid="connection-test-result">
+                {(databaseTypesError ?? profilesError) && <Alert variant="destructive" role="alert" data-testid="source-catalog-error">
+                    <InformationCircleIcon className="size-4" />
+                    <AlertTitle>{t('sourceCatalogUnavailable')}</AlertTitle>
+                    <AlertDescription>{t('sourceCatalogUnavailableDescription')}</AlertDescription>
+                </Alert>}
+                {testResult && <Alert id="login-error" variant={testResult.status === 'success' ? 'success' : 'destructive'} role="status" data-testid="connection-test-result">
                     {testResult.status === 'success' ? <CheckCircleIcon className="size-4" /> : <InformationCircleIcon className="size-4" />}
-                    <span><strong>{testResult.message}</strong>{testResult.duration != null && <small>{t('roundTrip', { duration: testResult.duration })}</small>}</span>
-                </div>}
+                    <AlertTitle>{testResult.message}</AlertTitle>
+                    {testResult.duration != null && <AlertDescription>{t('roundTrip', { duration: testResult.duration })}</AlertDescription>}
+                </Alert>}
                 <div className={classNames("flex login-action-buttons", {
                     "justify-end": advancedForm == null,
                     "justify-between": advancedForm != null,

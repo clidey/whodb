@@ -30,9 +30,9 @@ import {
     Sidebar as SidebarComponent,
     SidebarContent,
     SidebarGroup,
-    SidebarHeader
-} from "@clidey/ux";
-import { TrashIcon } from "../../components/heroicons";
+    SidebarHeader,
+    IconTrash as TrashIcon,
+} from '@clidey/ux';
 import { WhoDBChatIcon } from "../../components/whodb-chat-icon";
 import { Tip } from "../../components/tip";
 import type { ChangeEvent, FC} from "react";

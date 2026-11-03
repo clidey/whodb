@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Button, Card, CardContent, CardFooter, cn, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, toast } from '@clidey/ux';
+import { Button, Card, CardContent, CardFooter, cn, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, toast, IconRefresh as ArrowPathIcon, IconOffline as SignalSlashIcon, IconXCircle as XCircleIcon } from '@clidey/ux';
 import { Spinner } from '@/components/loading';
 import { healthCheckService } from '@/services/health-check';
 import { createPortal } from 'react-dom';
@@ -23,7 +23,6 @@ import { useAppSelector } from '@/store/hooks';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { PublicRoutes } from '@/config/routes';
 import { performLogout } from '@/config/logout-handler';
-import { ArrowPathIcon, SignalSlashIcon, XCircleIcon } from '@heroicons/react/24/outline';
 import { useEffect, useState } from 'react';
 import type { LocalLoginProfile } from '@/store/auth';
 import { useProfileSwitch } from '@/hooks/use-profile-switch';

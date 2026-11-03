@@ -47,8 +47,20 @@ import {
     TabsContent,
     TabsList,
     TabsTrigger,
-    toast
-} from "@clidey/ux";
+    toast,
+    IconRefresh as ArrowPathIcon,
+    IconCheckCircle as CheckCircleIcon,
+    IconSource as CircleStackIcon,
+    IconClipboardDoc as ClipboardDocumentIcon,
+    IconClock as ClockIcon,
+    IconMore as EllipsisHorizontalIcon,
+    IconMoreV as EllipsisVerticalIcon,
+    IconEdit as PencilIcon,
+    IconPlay as PlayIcon,
+    IconPlusCircle as PlusCircleIcon,
+    IconXCircle as XCircleIcon,
+    IconClose as XMarkIcon,
+} from '@clidey/ux';
 import {GetColumnsBatchDocument, GetStorageUnitsDocument, type RowsResult} from '@graphql';
 import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
@@ -70,20 +82,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { useAI } from "../../components/ai";
 import { CodeEditor } from "../../components/editor";
 import { ErrorState } from "../../components/error-state";
-import {
-    ArrowPathIcon,
-    CheckCircleIcon,
-    CircleStackIcon,
-    ClipboardDocumentIcon,
-    ClockIcon,
-    EllipsisHorizontalIcon,
-    EllipsisVerticalIcon,
-    PencilIcon,
-    PlayIcon,
-    PlusCircleIcon,
-    XCircleIcon,
-    XMarkIcon
-} from "../../components/heroicons";
 import { Loading, Spinner } from "../../components/loading";
 import { InternalPage } from "../../components/page";
 import { Tip } from "../../components/tip";

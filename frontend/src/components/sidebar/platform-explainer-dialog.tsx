@@ -23,7 +23,12 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-} from "@clidey/ux";
+    IconExternal as ArrowTopRightOnSquareIcon,
+    IconChevronRight as ChevronRightIcon,
+    IconSource as CircleStackIcon,
+    IconApp as RectangleGroupIcon,
+    IconGrid as Squares2X2Icon,
+} from '@clidey/ux';
 import type { FC, ReactNode } from "react";
 import { useCallback, useEffect, useState } from "react";
 import logoImage from "../../../public/images/logo.svg";
@@ -32,7 +37,6 @@ import { trackPlatformFunnel } from "@/config/frontend-analytics";
 import { useTranslation } from "@/hooks/use-translation";
 import { useAppSelector } from "@/store/hooks";
 import { buildPlatformUrl, type PlatformFunnelTrigger } from "@/utils/platform-funnel";
-import { ArrowTopRightOnSquareIcon, ChevronRightIcon, CircleStackIcon, RectangleGroupIcon, Squares2X2Icon } from "../heroicons";
 import { PlatformImportSheet } from "./platform-import-sheet";
 
 /** Props for the platform explainer dialog. */

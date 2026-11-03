@@ -23,7 +23,7 @@ export type RegisteredSidebarItem = {
     title: string;
     /** Route path to navigate to. */
     path: string;
-    /** Icon element (e.g. Heroicon, 16x16). */
+    /** Icon element from the UX catalog (16x16). */
     icon: ReactElement;
     /** If true, the item is shown but not clickable. */
     disabled?: boolean;

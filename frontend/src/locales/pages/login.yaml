@@ -1,4 +1,6 @@
 en_US:
+  sourceCatalogUnavailable: Could not load available connections
+  sourceCatalogUnavailableDescription: Check that the frontend is connected to the correct WhoDB backend, then reload this page.
   storyLabel: About WhoDB
   communityEdition: Community Edition
   openSourceExplorer: Open-source database explorer

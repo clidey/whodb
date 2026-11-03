@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import { Button } from '@clidey/ux';
-import { ArrowDownTrayIcon, RectangleGroupIcon } from '../heroicons';
+import { Button, IconDownload as ArrowDownTrayIcon, IconApp as RectangleGroupIcon } from '@clidey/ux';
 import classNames from 'classnames';
 import type { Dispatch, FC, ReactNode, SetStateAction} from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";

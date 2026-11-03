@@ -26,16 +26,18 @@ import {
     Sheet,
     SheetContent,
     SheetFooter,
-    SheetTitle
-} from "@clidey/ux";
-import { SearchSelect } from "../../components/ux";
+    SheetTitle,
+    IconPlusCircle as PlusCircleIcon,
+    IconXCircle as XCircleIcon,
+    IconClose as XMarkIcon,
+    SearchSelect,
+} from '@clidey/ux';
 import type { AtomicWhereCondition, WhereCondition} from '@graphql';
 import { WhereConditionType } from '@graphql';
 import classNames from "classnames";
 import type { FC} from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { twMerge } from "tailwind-merge";
-import { PlusCircleIcon, XCircleIcon, XMarkIcon } from "../../components/heroicons";
 import {WhoDBChatIcon} from "../../components/whodb-chat-icon";
 import { useTranslation } from "@/hooks/use-translation";
 import {whereConditionToSql} from "../../utils/where-condition-to-sql";

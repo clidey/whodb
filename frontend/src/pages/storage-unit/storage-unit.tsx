@@ -30,6 +30,16 @@ import {
     TableHeader,
     TableHeadRow,
     TableRow,
+    IconRefresh as ArrowPathRoundedSquareIcon,
+    IconMenu as Bars3Icon,
+    IconSource as CircleStackIcon,
+    IconTerminal as CommandLineIcon,
+    IconInfo as InformationCircleIcon,
+    IconSearch as MagnifyingGlassIcon,
+    IconPlusCircle as PlusCircleIcon,
+    IconGrid as Squares2X2Icon,
+    IconTable as TableCellsIcon,
+    IconClose as XMarkIcon,
 } from '@clidey/ux';
 import type {
     GetColumnsBatchQuery,
@@ -42,18 +52,6 @@ import {
     SourceSchemaFidelity,
     SourceAction,
 } from '@graphql';
-import {
-    ArrowPathRoundedSquareIcon,
-    Bars3Icon,
-    CircleStackIcon,
-    CommandLineIcon,
-    InformationCircleIcon,
-    MagnifyingGlassIcon,
-    PlusCircleIcon,
-    Squares2X2Icon,
-    TableCellsIcon,
-    XMarkIcon
-} from '../../components/heroicons';
 import type {FC} from "react";
 import { useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {useLocation, useNavigate, useSearchParams} from "react-router-dom";
@@ -223,7 +221,7 @@ const StorageUnitCard: FC<{
                 <p className="ce-table-card-meta">{cardMeta}</p>
             </div>
             <div className="flex flex-row justify-end gap-xs" onClick={(e) => { e.stopPropagation(); }}>
-                <Button onClick={handleExpand} data-testid="explore-button" variant="secondary">
+                <Button onClick={handleExpand} data-testid="explore-button" variant="ghost">
                     <MagnifyingGlassIcon className="w-4 h-4" /> {t('describe')}
                 </Button>
                 <Button onClick={handleNavigateToObject} data-testid="data-button" variant="secondary">

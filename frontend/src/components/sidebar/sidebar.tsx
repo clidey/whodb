@@ -44,9 +44,20 @@ import {
     TooltipContent,
     TooltipProvider,
     TooltipTrigger,
-    useSidebar
-} from "@clidey/ux";
-import {SearchSelect} from "../ux";
+    useSidebar,
+    IconSignout as ArrowLeftStartOnRectangleIcon,
+    IconChevronDown as ChevronDownIcon,
+    IconCloud as CloudIcon,
+    IconSettings as CogIcon,
+    IconTerminal as CommandLineIcon,
+    IconMail as EnvelopeIcon,
+    IconInfo as InformationCircleIcon,
+    IconPlusCircle as PlusCircleIcon,
+    IconApp as RectangleGroupIcon,
+    IconTable as TableCellsIcon,
+    IconClose as XMarkIcon,
+    SearchSelect,
+} from '@clidey/ux';
 import {
     GetSchemaDocument,
     GetSslStatusDocument,
@@ -78,19 +89,6 @@ import {dismissBackupHint, hasDismissedBackupHint} from "../../utils/platform-hi
 import {ph} from "../../utils/privacy";
 import {useSourceContract} from "../../hooks/useSourceContract";
 import {useSourceTypeItems} from "../../hooks/useSourceCatalog";
-import {
-    ArrowLeftStartOnRectangleIcon,
-    ChevronDownIcon,
-    CloudIcon,
-    CogIcon,
-    CommandLineIcon,
-    EnvelopeIcon,
-    InformationCircleIcon,
-    PlusCircleIcon,
-    RectangleGroupIcon,
-    TableCellsIcon,
-    XMarkIcon
-} from "../heroicons";
 import {PlatformExplainerDialog} from "./platform-explainer-dialog";
 import {Icons} from "../icons";
 import {Loading} from "../loading";

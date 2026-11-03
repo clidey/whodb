@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-import { Alert, AlertDescription, Button, Input, Label, TextArea, cn } from '@clidey/ux';
+import { Alert, AlertDescription, Button, Input, Label, TextArea, cn, IconFileText as DocumentTextIcon, IconAlertCircle as ExclamationCircleIcon, IconFolder as FolderIcon, SearchSelect } from '@clidey/ux';
 import type { FC} from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { SearchSelect } from './ux';
-import { DocumentTextIcon, ExclamationCircleIcon, FolderIcon } from './heroicons';
 import { useTranslation } from '@/hooks/use-translation';
 import type { SSLModeOption } from '@/config/source-types';
 import { SSL_KEYS } from '@/utils/source-ssl';

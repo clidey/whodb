@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {Button, cn, SidebarProvider, Tooltip, TooltipContent, TooltipTrigger, useTheme} from "@clidey/ux";
+import { Button, cn, Kbd, SidebarProvider, Tooltip, TooltipContent, TooltipTrigger, useTheme, IconMenu as Bars3Icon } from '@clidey/ux';
 import classNames from "classnames";
 import type {CSSProperties, FC, ReactNode} from "react";
 import {twMerge} from "tailwind-merge";
@@ -26,7 +26,6 @@ import {ConnectionContext} from "./connection-context";
 import {Loading} from "./loading";
 import {Sidebar} from "./sidebar/sidebar";
 import {useTranslation} from "@/hooks/use-translation";
-import {Bars3Icon} from "./heroicons";
 import {WhoDBChatIcon} from "./whodb-chat-icon";
 import {isMacPlatform} from "@/utils/platform";
 import {useSourceSessionMetadata} from "@/hooks/useSourceSessionMetadata";
@@ -72,9 +71,9 @@ const CommandPaletteTrigger: FC = () => {
         >
             <WhoDBChatIcon name="search" />
             <span className="ce-command-label hidden sm:inline text-xs text-neutral-500 dark:text-neutral-400">{t('triggerLabel')}</span>
-            <kbd className="ce-command-shortcut hidden sm:inline-flex items-center justify-center h-5 px-1 text-xs font-medium bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded">
+            <Kbd className="ce-command-shortcut hidden sm:inline-flex h-5 px-1">
                 {isMacPlatform ? '⌘K' : 'Ctrl+K'}
-            </kbd>
+            </Kbd>
         </Button>
     );
 };

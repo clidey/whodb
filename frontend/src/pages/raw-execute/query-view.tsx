@@ -20,7 +20,7 @@ import React, { useEffect} from "react";
 import {StorageUnitTable} from "../../components/table";
 import {RawExecuteDocument} from "../../generated/graphql";
 import type {RowsResult} from "@graphql";
-import {CheckCircleIcon} from "../../components/heroicons";
+import { IconCheckCircle as CheckCircleIcon } from '@clidey/ux';
 import {useAppSelector} from "../../store/hooks";
 import {isDestructiveQuery} from "../../utils/query-utils";
 

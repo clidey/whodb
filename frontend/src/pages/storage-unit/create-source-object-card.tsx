@@ -32,7 +32,10 @@ import {
     Separator,
     SheetTitle,
     toast,
-} from "@clidey/ux";
+    IconCheckCircle as CheckCircleIcon,
+    IconPlusCircle as PlusCircleIcon,
+    IconXCircle as XCircleIcon,
+} from '@clidey/ux';
 import {
     CreateSourceObjectFromDefinitionDocument,
     SourceObjectCreationMetadataDocument,
@@ -44,7 +47,6 @@ import {
 import type { FC} from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { TypeSelector } from "../../components/type-selector";
-import { CheckCircleIcon, PlusCircleIcon, XCircleIcon } from "../../components/heroicons";
 import { findColumnTypeDefinition } from "../../utils/source-column-types";
 import { trackFrontendEvent } from "../../config/posthog";
 import { useTranslation } from "../../hooks/use-translation";

@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-import { cn, Tooltip, TooltipContent, TooltipTrigger } from "@clidey/ux";
+import { cn, Tooltip, TooltipContent, TooltipTrigger, IconChevronRight as ChevronRightIcon } from '@clidey/ux';
 import type { FC } from "react";
 import { cloneElement } from "react";
 import { useLocation } from "react-router-dom";
 import { useAppSelector } from "../store/hooks";
 import { useSourceContract } from "../hooks/useSourceContract";
 import { useSourceTypeItem } from "../hooks/useSourceCatalog";
-import { ChevronRightIcon } from "./heroicons";
 
 /**
  * Persistent connection context indicator shown in the page header.

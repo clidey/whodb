@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-import { Input, Label } from '@clidey/ux';
+import { Input, Label, SearchSelect } from '@clidey/ux';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from '../hooks/use-translation';
-import { SearchSelect } from './ux';
 import {
     findColumnTypeDefinition,
     formatTypeSpec,
