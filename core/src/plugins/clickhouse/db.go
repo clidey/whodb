@@ -20,6 +20,7 @@ import (
 	"context"
 	"log/slog"
 	"net"
+	"net/http"
 	"strconv"
 	"time"
 
@@ -104,6 +105,11 @@ func (p *ClickHousePlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 				return sourcedial.DialTLS(ctx, dial, "tcp", addr, options.TLS)
 			}
 			return dial(ctx, "tcp", addr)
+		}
+		// Through a proxy (HTTP_PROXY) the dialer would only see the proxy.
+		options.TransportFunc = func(transport *http.Transport) (http.RoundTripper, error) {
+			transport.Proxy = nil
+			return transport, nil
 		}
 	}
 

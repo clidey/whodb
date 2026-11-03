@@ -116,6 +116,18 @@ func (p *MySQLPlugin) openDB(config *engine.PluginConfig, multiStatements bool) 
 	})
 
 	dsn := mysqlConfig.FormatDSN()
+	// The DSN is parsed again on open, so a hostname carrying DSN syntax (for
+	// example "x@tcp(10.0.0.5:3306") could switch the network back to plain
+	// tcp and skip the registered dialer. Require the parsed DSN to keep both.
+	if mysqlConfig.Net == sourceNetwork {
+		parsedConfig, err := mysqldriver.ParseDSN(dsn)
+		if err != nil {
+			return nil, err
+		}
+		if parsedConfig.Net != sourceNetwork || parsedConfig.Addr != mysqlConfig.Addr {
+			return nil, errors.New("invalid MySQL hostname")
+		}
+	}
 	if !env.GetIsLocalMode() {
 		// Check the effective DSN because option keys can contain parameter delimiters.
 		parsedConfig, err := mysqldriver.ParseDSN(dsn)

@@ -118,3 +118,22 @@ func TestConnectorsDialThroughTheRegisteredSourceDialer(t *testing.T) {
 		})
 	}
 }
+
+// MySQL connections reach the dialer through a named network in the DSN. A
+// hostname carrying DSN syntax must not switch that network back to plain
+// tcp, which would skip the registered dialer.
+func TestMySQLHostnameCannotRewriteTheDSNNetwork(t *testing.T) {
+	refuseDials(t)
+	config := engine.NewPluginConfig(&engine.Credentials{
+		Type:     engine.DatabaseType_MySQL,
+		Hostname: "x@tcp(" + testHost + ":3306",
+		Username: "user",
+		Password: "password",
+		Database: "db",
+		Advanced: []engine.Record{{Key: "Port", Value: "3306"}},
+	})
+	_, err := mysql.NewMySQLPlugin().PluginFunctions.(*mysql.MySQLPlugin).DB(config)
+	if err == nil || !strings.Contains(err.Error(), "invalid MySQL hostname") {
+		t.Fatalf("MySQL connect error = %v, want the hostname refused", err)
+	}
+}
