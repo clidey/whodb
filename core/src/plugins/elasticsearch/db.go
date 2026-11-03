@@ -33,6 +33,7 @@ import (
 	"github.com/clidey/whodb/core/src/common/ssl"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
+	"github.com/clidey/whodb/core/src/sourcedial"
 )
 
 func DB(config *engine.PluginConfig) (*elasticsearch.Client, error) {
@@ -83,15 +84,16 @@ func DB(config *engine.PluginConfig) (*elasticsearch.Client, error) {
 	}
 
 	// Configure TLS if enabled
+	var transport *http.Transport
 	if sslConfig != nil && sslConfig.IsEnabled() {
 		// For insecure mode, skip certificate verification
 		if sslConfig.Mode == ssl.SSLModeInsecure {
 			log.Debug("[ES DB] Insecure mode: skipping certificate verification")
-			opts = append(opts, elasticsearch.WithTransportOptions(elastictransport.WithTransport(&http.Transport{
+			transport = &http.Transport{
 				TLSClientConfig: &tls.Config{
 					InsecureSkipVerify: true, // #nosec G402 -- enabled only when the user explicitly selects insecure SSL mode.
 				},
-			})))
+			}
 		} else {
 			// For enabled mode, use the native CACert option if CA is provided
 			caCertPEM, err := sslConfig.CACert.Load()
@@ -118,9 +120,9 @@ func DB(config *engine.PluginConfig) (*elasticsearch.Client, error) {
 						rootCAs.AppendCertsFromPEM(caCertPEM)
 						tlsConfig.RootCAs = rootCAs
 					}
-					opts = append(opts, elasticsearch.WithTransportOptions(elastictransport.WithTransport(&http.Transport{
+					transport = &http.Transport{
 						TLSClientConfig: tlsConfig,
-					})))
+					}
 					useCACertOption = false // Clear this since we're using transport
 				}
 			}
@@ -130,6 +132,20 @@ func DB(config *engine.PluginConfig) (*elasticsearch.Client, error) {
 				opts = append(opts, elasticsearch.WithCACert(caCertPEM))
 			}
 		}
+	}
+
+	// Route every connection through a registered source dialer. Proxies are
+	// disabled with it: through a proxy the dialer would only see the proxy.
+	if dial := sourcedial.Dialer(); dial != nil {
+		if transport == nil {
+			// Same base the client would clone; WithCACert adds to its TLS config.
+			transport = http.DefaultTransport.(*http.Transport).Clone()
+		}
+		transport.DialContext = dial
+		transport.Proxy = nil
+	}
+	if transport != nil {
+		opts = append(opts, elasticsearch.WithTransportOptions(elastictransport.WithTransport(transport)))
 	}
 
 	log.Debug("[ES DB] Creating Elasticsearch client instance")

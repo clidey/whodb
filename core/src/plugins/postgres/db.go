@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/stdlib"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -30,6 +31,7 @@ import (
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
+	"github.com/clidey/whodb/core/src/sourcedial"
 )
 
 func (p *PostgresPlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
@@ -59,6 +61,11 @@ func (p *PostgresPlugin) openDB(config *engine.PluginConfig, multiStatement bool
 	pgxConfig.Password = connectionInput.Password
 	pgxConfig.Database = connectionInput.Database
 	pgxConfig.ConnectTimeout = time.Duration(connectionInput.ConnectionTimeout) * time.Second
+	// pgx dials each address it resolved for the host, so a registered dialer
+	// sees the real destination of every connection.
+	if dial := sourcedial.Dialer(); dial != nil {
+		pgxConfig.DialFunc = pgconn.DialFunc(dial)
+	}
 
 	// Use simpler protocol for multi-statement SQL scripts
 	if multiStatement {
