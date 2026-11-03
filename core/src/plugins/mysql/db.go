@@ -17,10 +17,12 @@
 package mysql
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net"
 	"strconv"
+	"sync"
 	"time"
 
 	mysqldriver "github.com/go-sql-driver/mysql"
@@ -33,7 +35,14 @@ import (
 	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
+	"github.com/clidey/whodb/core/src/sourcedial"
 )
+
+// sourceNetwork is the MySQL driver network name that dials through the
+// registered source dialer.
+const sourceNetwork = "whodb-source"
+
+var registerSourceNetwork sync.Once
 
 func (p *MySQLPlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 	return p.openDB(config, false)
@@ -49,6 +58,16 @@ func (p *MySQLPlugin) openDB(config *engine.PluginConfig, multiStatements bool) 
 	mysqlConfig.User = connectionInput.Username
 	mysqlConfig.Passwd = connectionInput.Password
 	mysqlConfig.Net = "tcp"
+	// The config becomes a DSN, which cannot carry a dial function, so a
+	// registered dialer is reached through a named network instead.
+	if sourcedial.Dialer() != nil {
+		registerSourceNetwork.Do(func() {
+			mysqldriver.RegisterDialContext(sourceNetwork, func(ctx context.Context, addr string) (net.Conn, error) {
+				return sourcedial.Dialer()(ctx, "tcp", addr)
+			})
+		})
+		mysqlConfig.Net = sourceNetwork
+	}
 	mysqlConfig.Addr = net.JoinHostPort(connectionInput.Hostname, strconv.Itoa(connectionInput.Port))
 	mysqlConfig.DBName = connectionInput.Database
 	mysqlConfig.AllowCleartextPasswords = connectionInput.AllowClearTextPasswords

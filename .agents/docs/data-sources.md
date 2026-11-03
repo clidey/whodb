@@ -382,6 +382,14 @@ The string value must be globally unique and becomes the source's ID everywhere.
 
 Create your plugin package in `core/src/plugins/<name>/` (CE) or `ee/core/src/plugins/<name>/` (EE).
 
+**Open network connections through `sourcedial`.** When `sourcedial.Dialer()`
+is non-nil, pass it to the driver's dial hook (for example pgx `DialFunc`,
+go-redis `Dialer`, mongo `SetDialer` with `sourcedial.ContextDialer`); when it
+is nil, leave the driver's own dialing untouched. If the hook replaces the
+driver's TLS setup, use `sourcedial.DialTLS`. Add the connector to
+`core/src/plugins/sourcedial_test.go`, which fails when a connector bypasses
+the registered dialer.
+
 #### For SQL databases: Embed `GormPlugin`
 
 ```go

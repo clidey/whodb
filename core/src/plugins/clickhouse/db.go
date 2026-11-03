@@ -17,6 +17,7 @@
 package clickhouse
 
 import (
+	"context"
 	"log/slog"
 	"net"
 	"strconv"
@@ -32,6 +33,7 @@ import (
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
+	"github.com/clidey/whodb/core/src/sourcedial"
 )
 
 func (p *ClickHousePlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
@@ -92,6 +94,17 @@ func (p *ClickHousePlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 			return nil, err
 		}
 		options.TLS = tlsConfig
+	}
+
+	// A custom DialContext replaces the native protocol's own dialing, TLS
+	// included; over HTTP the transport still adds TLS itself.
+	if dial := sourcedial.Dialer(); dial != nil {
+		options.DialContext = func(ctx context.Context, addr string) (net.Conn, error) {
+			if options.Protocol != clickhouse.HTTP && options.TLS != nil {
+				return sourcedial.DialTLS(ctx, dial, "tcp", addr, options.TLS)
+			}
+			return dial(ctx, "tcp", addr)
+		}
 	}
 
 	conn := clickhouse.OpenDB(options)
