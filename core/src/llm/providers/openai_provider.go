@@ -165,6 +165,80 @@ func (p *OpenAIProvider) CreateBAMLClient(config *ProviderConfig, model string) 
 	return clientType, opts, nil
 }
 
+// DecisionModels returns gpt-6-luna, the only model the Decisions API accepts while it is in beta.
+func (p *OpenAIProvider) DecisionModels() []string {
+	return []string{"gpt-6-luna"}
+}
+
+// CreateDecision sends the request to the Decisions API and returns the answers in question order.
+func (p *OpenAIProvider) CreateDecision(ctx context.Context, config *ProviderConfig, request *DecisionRequest) ([]DecisionAnswer, error) {
+	if err := p.ValidateConfig(config); err != nil {
+		return nil, err
+	}
+	body, err := json.Marshal(request)
+	if err != nil {
+		return nil, err
+	}
+
+	url := strings.TrimRight(config.Endpoint, "/") + "/decisions"
+	headers := map[string]string{
+		"Authorization": "Bearer " + config.APIKey,
+		"Content-Type":  "application/json",
+	}
+
+	resp, err := sendHTTPRequestWithContext(ctx, "POST", url, body, headers)
+	if err != nil {
+		log.WithError(err).Errorf("Failed to send decision request to OpenAI at %s", redactURL(url))
+		return nil, err
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		// The body can quote the request, which may hold row data, so nothing from
+		// it is logged; only the API's error message reaches the caller.
+		var failure struct {
+			Error struct {
+				Message string `json:"message"`
+			} `json:"error"`
+		}
+		_ = json.NewDecoder(resp.Body).Decode(&failure)
+		log.Errorf("OpenAI decisions endpoint returned non-OK status: %d", resp.StatusCode)
+		if failure.Error.Message == "" {
+			return nil, fmt.Errorf("failed to create decision: HTTP %d", resp.StatusCode)
+		}
+		return nil, fmt.Errorf("failed to create decision: %s", failure.Error.Message)
+	}
+
+	var decision struct {
+		Answers []struct {
+			DecisionAnswer
+			Probabilities json.RawMessage `json:"probabilities"`
+		} `json:"answers"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&decision); err != nil {
+		log.WithError(err).Error("Failed to decode OpenAI decisions response")
+		return nil, err
+	}
+
+	answers := make([]DecisionAnswer, 0, len(decision.Answers))
+	for i := range decision.Answers {
+		decoded := &decision.Answers[i]
+		answer := decoded.DecisionAnswer
+		switch answer.Type {
+		case DecisionAnswerChoice:
+			if err := json.Unmarshal(decoded.Probabilities, &answer.ChoiceProbabilities); err != nil {
+				return nil, err
+			}
+		case DecisionAnswerScore:
+			if err := json.Unmarshal(decoded.Probabilities, &answer.ScoreProbabilities); err != nil {
+				return nil, err
+			}
+		}
+		answers = append(answers, answer)
+	}
+	return answers, nil
+}
+
 // supportsResponsesAPI probes the endpoint to check for Responses API support.
 // Results are cached in responsesAPICache (keyed by endpoint URL).
 //
@@ -245,10 +319,15 @@ func isNonChatModel(name string) bool {
 // This is duplicated from http_client.go to avoid circular dependencies.
 // TODO: Consider refactoring to a shared utility package.
 func sendHTTPRequest(method, url string, body []byte, headers map[string]string) (*http.Response, error) {
+	return sendHTTPRequestWithContext(context.Background(), method, url, body, headers)
+}
+
+// sendHTTPRequestWithContext sends an HTTP request that is canceled when ctx is done.
+func sendHTTPRequestWithContext(ctx context.Context, method, url string, body []byte, headers map[string]string) (*http.Response, error) {
 	if err := security.EnforceOutboundURL(url); err != nil {
 		return nil, fmt.Errorf("blocked outbound request: %w", err)
 	}
-	req, err := http.NewRequestWithContext(context.Background(), method, url, strings.NewReader(string(body)))
+	req, err := http.NewRequestWithContext(ctx, method, url, strings.NewReader(string(body)))
 	if err != nil {
 		return nil, err
 	}

@@ -21,11 +21,20 @@ import (
 )
 
 var typeMap = map[string]reflect.Type{
-	"TYPES.ChatResponse":           reflect.TypeFor[types.ChatResponse](),
-	"STREAM_TYPES.ChatResponse":    reflect.TypeFor[stream_types.ChatResponse](),
-	"TYPES.DatabaseContext":        reflect.TypeFor[types.DatabaseContext](),
-	"STREAM_TYPES.DatabaseContext": reflect.TypeFor[stream_types.DatabaseContext](),
+	"TYPES.ChatResponse":                reflect.TypeFor[types.ChatResponse](),
+	"STREAM_TYPES.ChatResponse":         reflect.TypeFor[stream_types.ChatResponse](),
+	"TYPES.DatabaseContext":             reflect.TypeFor[types.DatabaseContext](),
+	"STREAM_TYPES.DatabaseContext":      reflect.TypeFor[stream_types.DatabaseContext](),
+	"TYPES.DecisionChoicePlan":          reflect.TypeFor[types.DecisionChoicePlan](),
+	"STREAM_TYPES.DecisionChoicePlan":   reflect.TypeFor[stream_types.DecisionChoicePlan](),
+	"TYPES.DecisionLevelPlan":           reflect.TypeFor[types.DecisionLevelPlan](),
+	"STREAM_TYPES.DecisionLevelPlan":    reflect.TypeFor[stream_types.DecisionLevelPlan](),
+	"TYPES.DecisionPlan":                reflect.TypeFor[types.DecisionPlan](),
+	"STREAM_TYPES.DecisionPlan":         reflect.TypeFor[stream_types.DecisionPlan](),
+	"TYPES.DecisionQuestionPlan":        reflect.TypeFor[types.DecisionQuestionPlan](),
+	"STREAM_TYPES.DecisionQuestionPlan": reflect.TypeFor[stream_types.DecisionQuestionPlan](),
 
-	"TYPES.ChatMessageType": reflect.TypeFor[types.ChatMessageType](),
-	"TYPES.OperationType":   reflect.TypeFor[types.OperationType](),
+	"TYPES.ChatMessageType":      reflect.TypeFor[types.ChatMessageType](),
+	"TYPES.DecisionQuestionKind": reflect.TypeFor[types.DecisionQuestionKind](),
+	"TYPES.OperationType":        reflect.TypeFor[types.OperationType](),
 }

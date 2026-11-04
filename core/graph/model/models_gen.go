@@ -11,11 +11,91 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 )
 
+type AIChatDecision struct {
+	Model     string                `json:"Model"`
+	Query     string                `json:"Query"`
+	Questions []*AIDecisionQuestion `json:"Questions"`
+	Truncated bool                  `json:"Truncated"`
+}
+
 type AIChatMessage struct {
-	Type                 string      `json:"Type"`
-	Result               *RowsResult `json:"Result,omitempty"`
-	Text                 string      `json:"Text"`
-	RequiresConfirmation bool        `json:"RequiresConfirmation"`
+	Type                 string          `json:"Type"`
+	Result               *RowsResult     `json:"Result,omitempty"`
+	Text                 string          `json:"Text"`
+	RequiresConfirmation bool            `json:"RequiresConfirmation"`
+	Decision             *AIChatDecision `json:"Decision,omitempty"`
+}
+
+type AIDecisionAnswer struct {
+	Type                AIDecisionAnswerType           `json:"Type"`
+	Name                string                         `json:"Name"`
+	Probability         *float64                       `json:"Probability,omitempty"`
+	Choice              *string                        `json:"Choice,omitempty"`
+	Score               *float64                       `json:"Score,omitempty"`
+	Confidence          *float64                       `json:"Confidence,omitempty"`
+	ChoiceProbabilities []*AIDecisionChoiceProbability `json:"ChoiceProbabilities,omitempty"`
+	ScoreProbabilities  []*AIDecisionScoreProbability  `json:"ScoreProbabilities,omitempty"`
+}
+
+type AIDecisionChoice struct {
+	Value       string  `json:"Value"`
+	Description *string `json:"Description,omitempty"`
+}
+
+type AIDecisionChoiceInput struct {
+	Value       string  `json:"Value"`
+	Description *string `json:"Description,omitempty"`
+}
+
+type AIDecisionChoiceProbability struct {
+	Value       string  `json:"Value"`
+	Probability float64 `json:"Probability"`
+}
+
+type AIDecisionInput struct {
+	ModelType  string                     `json:"ModelType"`
+	ProviderID *string                    `json:"ProviderId,omitempty"`
+	Token      *string                    `json:"Token,omitempty"`
+	Model      string                     `json:"Model"`
+	Endpoint   *string                    `json:"Endpoint,omitempty"`
+	Input      string                     `json:"Input"`
+	Questions  []*AIDecisionQuestionInput `json:"Questions"`
+}
+
+type AIDecisionLevel struct {
+	Label       string  `json:"Label"`
+	Description *string `json:"Description,omitempty"`
+}
+
+type AIDecisionLevelInput struct {
+	Label       string  `json:"Label"`
+	Description *string `json:"Description,omitempty"`
+}
+
+type AIDecisionQuestion struct {
+	Type         AIDecisionQuestionType `json:"Type"`
+	Name         string                 `json:"Name"`
+	Instructions string                 `json:"Instructions"`
+	Choices      []*AIDecisionChoice    `json:"Choices,omitempty"`
+	Levels       []*AIDecisionLevel     `json:"Levels,omitempty"`
+}
+
+type AIDecisionQuestionInput struct {
+	Type         AIDecisionQuestionType   `json:"Type"`
+	Name         string                   `json:"Name"`
+	Instructions string                   `json:"Instructions"`
+	Choices      []*AIDecisionChoiceInput `json:"Choices,omitempty"`
+	Levels       []*AIDecisionLevelInput  `json:"Levels,omitempty"`
+}
+
+type AIDecisionResponse struct {
+	Answers []*AIDecisionAnswer `json:"Answers"`
+}
+
+type AIDecisionScoreProbability struct {
+	Value       int     `json:"Value"`
+	Label       string  `json:"Label"`
+	Probability float64 `json:"Probability"`
 }
 
 type AIProvider struct {
@@ -537,6 +617,122 @@ type WhereCondition struct {
 	Or     *OperationWhereCondition `json:"Or,omitempty"`
 }
 
+type AIDecisionAnswerType string
+
+const (
+	AIDecisionAnswerTypePredicate AIDecisionAnswerType = "Predicate"
+	AIDecisionAnswerTypeChoice    AIDecisionAnswerType = "Choice"
+	AIDecisionAnswerTypeScore     AIDecisionAnswerType = "Score"
+	AIDecisionAnswerTypeRefusal   AIDecisionAnswerType = "Refusal"
+)
+
+var AllAIDecisionAnswerType = []AIDecisionAnswerType{
+	AIDecisionAnswerTypePredicate,
+	AIDecisionAnswerTypeChoice,
+	AIDecisionAnswerTypeScore,
+	AIDecisionAnswerTypeRefusal,
+}
+
+func (e AIDecisionAnswerType) IsValid() bool {
+	switch e {
+	case AIDecisionAnswerTypePredicate, AIDecisionAnswerTypeChoice, AIDecisionAnswerTypeScore, AIDecisionAnswerTypeRefusal:
+		return true
+	}
+	return false
+}
+
+func (e AIDecisionAnswerType) String() string {
+	return string(e)
+}
+
+func (e *AIDecisionAnswerType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = AIDecisionAnswerType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid AIDecisionAnswerType", str)
+	}
+	return nil
+}
+
+func (e AIDecisionAnswerType) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *AIDecisionAnswerType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e AIDecisionAnswerType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type AIDecisionQuestionType string
+
+const (
+	AIDecisionQuestionTypePredicate AIDecisionQuestionType = "Predicate"
+	AIDecisionQuestionTypeChoice    AIDecisionQuestionType = "Choice"
+	AIDecisionQuestionTypeScore     AIDecisionQuestionType = "Score"
+)
+
+var AllAIDecisionQuestionType = []AIDecisionQuestionType{
+	AIDecisionQuestionTypePredicate,
+	AIDecisionQuestionTypeChoice,
+	AIDecisionQuestionTypeScore,
+}
+
+func (e AIDecisionQuestionType) IsValid() bool {
+	switch e {
+	case AIDecisionQuestionTypePredicate, AIDecisionQuestionTypeChoice, AIDecisionQuestionTypeScore:
+		return true
+	}
+	return false
+}
+
+func (e AIDecisionQuestionType) String() string {
+	return string(e)
+}
+
+func (e *AIDecisionQuestionType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = AIDecisionQuestionType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid AIDecisionQuestionType", str)
+	}
+	return nil
+}
+
+func (e AIDecisionQuestionType) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *AIDecisionQuestionType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e AIDecisionQuestionType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
 type DataShape string
 
 const (
@@ -581,7 +777,7 @@ func (e *DataShape) UnmarshalGQL(v any) error {
 }
 
 func (e DataShape) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *DataShape) UnmarshalJSON(b []byte) error {
@@ -642,7 +838,7 @@ func (e *GraphUnitRelationshipType) UnmarshalGQL(v any) error {
 }
 
 func (e GraphUnitRelationshipType) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *GraphUnitRelationshipType) UnmarshalJSON(b []byte) error {
@@ -697,7 +893,7 @@ func (e *ImportFileFormat) UnmarshalGQL(v any) error {
 }
 
 func (e ImportFileFormat) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *ImportFileFormat) UnmarshalJSON(b []byte) error {
@@ -754,7 +950,7 @@ func (e *ImportMode) UnmarshalGQL(v any) error {
 }
 
 func (e ImportMode) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *ImportMode) UnmarshalJSON(b []byte) error {
@@ -809,7 +1005,7 @@ func (e *SortDirection) UnmarshalGQL(v any) error {
 }
 
 func (e SortDirection) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *SortDirection) UnmarshalJSON(b []byte) error {
@@ -888,7 +1084,7 @@ func (e *SourceAction) UnmarshalGQL(v any) error {
 }
 
 func (e SourceAction) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *SourceAction) UnmarshalJSON(b []byte) error {
@@ -949,7 +1145,7 @@ func (e *SourceCategory) UnmarshalGQL(v any) error {
 }
 
 func (e SourceCategory) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *SourceCategory) UnmarshalJSON(b []byte) error {
@@ -1008,7 +1204,7 @@ func (e *SourceConnectionFieldKind) UnmarshalGQL(v any) error {
 }
 
 func (e SourceConnectionFieldKind) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *SourceConnectionFieldKind) UnmarshalJSON(b []byte) error {
@@ -1063,7 +1259,7 @@ func (e *SourceConnectionFieldSection) UnmarshalGQL(v any) error {
 }
 
 func (e SourceConnectionFieldSection) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *SourceConnectionFieldSection) UnmarshalJSON(b []byte) error {
@@ -1120,7 +1316,7 @@ func (e *SourceConnectionTransport) UnmarshalGQL(v any) error {
 }
 
 func (e SourceConnectionTransport) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *SourceConnectionTransport) UnmarshalJSON(b []byte) error {
@@ -1177,7 +1373,7 @@ func (e *SourceHostInputMode) UnmarshalGQL(v any) error {
 }
 
 func (e SourceHostInputMode) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *SourceHostInputMode) UnmarshalJSON(b []byte) error {
@@ -1234,7 +1430,7 @@ func (e *SourceHostInputURLParser) UnmarshalGQL(v any) error {
 }
 
 func (e SourceHostInputURLParser) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *SourceHostInputURLParser) UnmarshalJSON(b []byte) error {
@@ -1299,7 +1495,7 @@ func (e *SourceMetadataFidelity) UnmarshalGQL(v any) error {
 }
 
 func (e SourceMetadataFidelity) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *SourceMetadataFidelity) UnmarshalJSON(b []byte) error {
@@ -1362,7 +1558,7 @@ func (e *SourceModel) UnmarshalGQL(v any) error {
 }
 
 func (e SourceModel) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *SourceModel) UnmarshalJSON(b []byte) error {
@@ -1437,7 +1633,7 @@ func (e *SourceObjectKind) UnmarshalGQL(v any) error {
 }
 
 func (e SourceObjectKind) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *SourceObjectKind) UnmarshalJSON(b []byte) error {
@@ -1494,7 +1690,7 @@ func (e *SourceProfileLabelStrategy) UnmarshalGQL(v any) error {
 }
 
 func (e SourceProfileLabelStrategy) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *SourceProfileLabelStrategy) UnmarshalJSON(b []byte) error {
@@ -1553,7 +1749,7 @@ func (e *SourceQueryExplainMode) UnmarshalGQL(v any) error {
 }
 
 func (e SourceQueryExplainMode) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *SourceQueryExplainMode) UnmarshalJSON(b []byte) error {
@@ -1608,7 +1804,7 @@ func (e *SourceSchemaFidelity) UnmarshalGQL(v any) error {
 }
 
 func (e SourceSchemaFidelity) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *SourceSchemaFidelity) UnmarshalJSON(b []byte) error {
@@ -1667,7 +1863,7 @@ func (e *SourceSurface) UnmarshalGQL(v any) error {
 }
 
 func (e SourceSurface) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *SourceSurface) UnmarshalJSON(b []byte) error {
@@ -1732,7 +1928,7 @@ func (e *SourceView) UnmarshalGQL(v any) error {
 }
 
 func (e SourceView) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *SourceView) UnmarshalJSON(b []byte) error {
@@ -1797,7 +1993,7 @@ func (e *TypeCategory) UnmarshalGQL(v any) error {
 }
 
 func (e TypeCategory) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *TypeCategory) UnmarshalJSON(b []byte) error {
@@ -1854,7 +2050,7 @@ func (e *WhereConditionType) UnmarshalGQL(v any) error {
 }
 
 func (e WhereConditionType) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *WhereConditionType) UnmarshalJSON(b []byte) error {

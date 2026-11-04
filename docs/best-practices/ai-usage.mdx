@@ -173,7 +173,7 @@ Using AI assistants safely requires understanding what data is shared, potential
 Different AI providers have different data handling policies.
 
 <Warning>
-Your database schema structure and query text are sent to AI providers. However, actual data values and query results are not transmitted.
+Your database schema structure and query text are sent to AI providers. Actual data values and query results are not transmitted, except in a [Decisions](/ai/decisions) run that you approve.
 </Warning>
 
 **What Gets Sent to AI Providers:**
@@ -188,6 +188,8 @@ Your database schema structure and query text are sent to AI providers. However,
 - Query result contents
 - Stored data values
 - Connection credentials
+
+**The exception: Decisions runs.** When you approve a [Decisions](/ai/decisions) run, WhoDB sends the rows and columns shown on its review card, with the run's questions, to OpenAI. Nothing is sent until you choose Send, and declining sends nothing.
 
 **For Maximum Privacy:**
 - Use local models (Ollama, LM Studio) for complete data isolation

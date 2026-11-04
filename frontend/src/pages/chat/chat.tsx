@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {useLazyQuery, useMutation} from "@apollo/client/react";
+import {skipToken, useLazyQuery, useMutation, useQuery} from "@apollo/client/react";
 import {
     Alert,
     AlertDescription,
@@ -44,7 +44,7 @@ import {
 } from "@clidey/ux";
 import {ChatHistorySidebar} from "./chat-history-sidebar";
 import type {RowsResult} from '@graphql';
-import {ExecuteConfirmedSqlDocument, GenerateChatTitleDocument, GetDatabaseQuerySuggestionsDocument} from '@graphql';
+import {ExecuteConfirmedSqlDocument, GenerateChatTitleDocument, GetAiDecisionModelsDocument, GetDatabaseQuerySuggestionsDocument} from '@graphql';
 import {
     CheckCircleIcon,
     CodeBracketIcon,
@@ -79,6 +79,7 @@ import {getComponent} from "../../config/component-registry";
 import {useSourceContract} from "../../hooks/useSourceContract";
 import {useNavigate} from "react-router-dom";
 import {useChatExamples} from "./examples";
+import {DecisionCard} from "./decision-card";
 import {useTranslation} from '@/hooks/use-translation';
 import {addAuthHeader} from "../../utils/auth-headers";
 import {withBasePath} from "../../utils/base-path";
@@ -190,7 +191,7 @@ const CodeBlock: FC<{ children: string }> = ({ children }) => {
 
 type TableData = RowsResult | null | undefined;
 
-const TablePreview: FC<{ type: string, data: TableData, text: string, containerWidth?: number }> = memo(({ type, data, text, containerWidth }) => {
+const TablePreview: FC<{ type: string, data: TableData, text: string, containerWidth?: number, complete?: boolean }> = memo(({ type, data, text, containerWidth, complete = true }) => {
     const { t } = useTranslation('pages/chat');
     const dispatch = useAppDispatch();
     const [showSQL, setShowSQL] = useState(false);
@@ -332,7 +333,7 @@ const TablePreview: FC<{ type: string, data: TableData, text: string, containerW
             </DropdownMenu>
         </div>
         <div className="ce-chat-result-body flex flex-col gap-lg overflow-hidden break-all leading-6 shrink-0 w-full max-w-full min-w-0">
-            {data != null && <div className="ce-chat-result-heading" data-testid="chat-result-heading"><strong>{t('result')}</strong><span>{t('rowCount', {count: data.Rows.length})}</span><span className="ce-chat-result-complete">{t('complete')}</span></div>}
+            {data != null && <div className="ce-chat-result-heading" data-testid="chat-result-heading"><strong>{t('result')}</strong><span>{t('rowCount', {count: data.Rows.length})}</span>{complete && <span className="ce-chat-result-complete">{t('complete')}</span>}</div>}
             {
                 __WHODB_EDITION__ === 'ce' && data != null
                 ? <>
@@ -505,6 +506,11 @@ export const ChatPage: FC = () => {
 
     const aiState = useAI();
     const { modelType, currentModel, modelAvailable, models } = aiState;
+    // Decisions mode stays on only for the provider it was turned on with.
+    const [decisionsProviderId, setDecisionsProviderId] = useState<string>();
+    const { data: decisionModelsData } = useQuery(GetAiDecisionModelsDocument, modelType?.modelType ? { variables: { modelType: modelType.modelType } } : skipToken);
+    const decisionsAvailable = (decisionModelsData?.AIDecisionModels.length ?? 0) > 0;
+    const decisionsActive = decisionsAvailable && modelType != null && decisionsProviderId === modelType.id;
 
     const chatExamples = useChatExamples();
 
@@ -658,6 +664,7 @@ export const ChatPage: FC = () => {
                     providerId: modelType.id ?? '',
                     token: modelType.token ?? '',
                     model: currentModel ?? '',
+                    mode: decisionsActive ? 'decisions' : undefined,
                     input: {
                         Query: sanitizedQuery,
                         PreviousConversation: displayChats.filter(chat => chat.Type !== 'activity' && chat.id !== retryMessageId).map(chat =>
@@ -757,7 +764,7 @@ export const ChatPage: FC = () => {
                                     dispatch(HoudiniActions.updateChatMessage({id: streamingMessageId, Text: streamingText}));
                                     continue;
                                 }
-                                if (parsed.Type?.startsWith("sql") || parsed.Type === "error" || parsed.Type === 'provider:error' || parsed.Type === 'scope:error') {
+                                if (parsed.Type?.startsWith("sql") || parsed.Type === "decision" || parsed.Type === "error" || parsed.Type === 'provider:error' || parsed.Type === 'scope:error') {
                                     if (parsed.Type?.startsWith("sql") && unsupportedToolName(parsed.Text ?? '')) {
                                         rejectedTool = true;
                                         continue;
@@ -770,12 +777,14 @@ export const ChatPage: FC = () => {
                                         addedSqlMessages.add(messageKey);
 
                                         const messageId = getUniqueMessageId();
-                                        if (parsed.Type.startsWith('sql:') && firstSqlMessageId == null) firstSqlMessageId = messageId;
+                                        if ((parsed.Type.startsWith('sql:') || parsed.Type === 'decision') && firstSqlMessageId == null) firstSqlMessageId = messageId;
                                         dispatch(HoudiniActions.addChatMessage({
                                             Type: parsed.Type,
                                             Text: parsed.Text,
                                             Result: parsed.Result,
                                             RequiresConfirmation: parsed.RequiresConfirmation ?? false,
+                                            Decision: parsed.Decision,
+                                            decisionProvider: parsed.Type === 'decision' ? { id: modelType.id, name: modelType.name ?? modelType.modelType } : undefined,
                                             id: messageId,
                                         }));
 
@@ -887,7 +896,7 @@ export const ChatPage: FC = () => {
             setLoading(false);
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [chats, currentModel, modelType, query, sourceScopeRef, dispatch, t, scrollContainerRef, getUniqueMessageId, activeSession, activeSessionId, autoScrollEnabled, displayChats]);
+    }, [chats, currentModel, modelType, query, sourceScopeRef, dispatch, t, scrollContainerRef, getUniqueMessageId, activeSession, activeSessionId, autoScrollEnabled, displayChats, decisionsActive]);
 
     // Helper function to generate and update chat title
     const generateChatTitle = useCallback(async (userQuery: string) => {
@@ -1307,6 +1316,16 @@ export const ChatPage: FC = () => {
                                                     {/* @ts-ignore */}
                                                     {chat.Type === "sql:line-chart" && LineChart && <LineChart columns={chat.Result?.Columns?.map(col => col.Name) ?? []} data={chat.Result?.Rows ?? []} text={chat.Text} />}
                                                 </div>
+                                            } else if (chat.Type === 'decision') {
+                                                return <div key={`chat-${chat.id}`} className="flex gap-lg w-full max-w-full min-w-0 pt-4 relative">
+                                                    {firstReply ? assistantAvatar : <div className="ce-chat-avatar-spacer" />}
+                                                    <DecisionCard
+                                                        message={chat}
+                                                        sessionId={activeSessionId ?? ''}
+                                                        activity={activity}
+                                                        renderTable={(data, complete) => <TablePreview type={chat.Type} text={chat.Decision?.Query ?? ''} data={data} containerWidth={containerWidth} complete={complete} />}
+                                                    />
+                                                </div>;
                                             } else if (chat.RequiresConfirmation) {
                                                 // Show confirmation UI inline
                                                 const isExecuting = executingConfirmedId === chat.id;
@@ -1384,10 +1403,28 @@ export const ChatPage: FC = () => {
                     "opacity-10": disableAll,
                 })}>
                     <div className="mx-auto flex w-full max-w-4xl items-center gap-2 rounded-lg border border-border bg-card p-1.5 shadow-sm">
+                        {decisionsAvailable && <Tip className="w-fit">
+                            <Button
+                                type="button"
+                                variant={decisionsActive ? "default" : "outline"}
+                                size="sm"
+                                aria-pressed={decisionsActive}
+                                onClick={() => {
+                                    setDecisionsProviderId(decisionsActive ? undefined : modelType?.id);
+                                    trackOptionChanged('chat_decisions_mode', !decisionsActive);
+                                }}
+                                disabled={disableAll}
+                                className="ce-chat-decisions-toggle"
+                                data-testid="chat-decisions-toggle"
+                            >
+                                <WhoDBChatIcon name="list" />{t('decisionsToggle')}
+                            </Button>
+                            <p>{t('decisionsToggleHint')}</p>
+                        </Tip>}
                         <Input
                             value={query}
                             onChange={e =>{  setQuery(e.target.value); }}
-                            placeholder={t('placeholder')}
+                            placeholder={decisionsActive ? t('decisionsPlaceholder') : t('placeholder')}
                             onSubmit={() => { void handleSubmitQuery(); }}
                             disabled={disableAll}
                             onKeyDown={handleKeyDown}

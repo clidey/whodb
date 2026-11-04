@@ -12,6 +12,7 @@
 # production
 /build
 /.analytics-test-build
+/.chat-decision-test-build
 
 # misc
 .DS_Store

@@ -51,7 +51,8 @@
               "ai/setup-providers",
               "ai/querying-data",
               "ai/modifying-data",
-              "ai/conversation-features"
+              "ai/conversation-features",
+              "ai/decisions"
             ]
           },
           {

@@ -41,6 +41,8 @@ type StreamRequest struct {
 	Ref        *model.SourceObjectRefInput `json:"ref"`
 	ProviderId string                      `json:"providerId"`
 	Input      model.ChatInput             `json:"input"`
+	// Mode is "decisions" to plan a Decisions run instead of answering with SQL.
+	Mode string `json:"mode"`
 }
 
 // ParseStreamRequest parses and validates the SSE request

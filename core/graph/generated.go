@@ -37,11 +37,63 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	AIChatDecision struct {
+		Model     func(childComplexity int) int
+		Query     func(childComplexity int) int
+		Questions func(childComplexity int) int
+		Truncated func(childComplexity int) int
+	}
+
 	AIChatMessage struct {
+		Decision             func(childComplexity int) int
 		RequiresConfirmation func(childComplexity int) int
 		Result               func(childComplexity int) int
 		Text                 func(childComplexity int) int
 		Type                 func(childComplexity int) int
+	}
+
+	AIDecisionAnswer struct {
+		Choice              func(childComplexity int) int
+		ChoiceProbabilities func(childComplexity int) int
+		Confidence          func(childComplexity int) int
+		Name                func(childComplexity int) int
+		Probability         func(childComplexity int) int
+		Score               func(childComplexity int) int
+		ScoreProbabilities  func(childComplexity int) int
+		Type                func(childComplexity int) int
+	}
+
+	AIDecisionChoice struct {
+		Description func(childComplexity int) int
+		Value       func(childComplexity int) int
+	}
+
+	AIDecisionChoiceProbability struct {
+		Probability func(childComplexity int) int
+		Value       func(childComplexity int) int
+	}
+
+	AIDecisionLevel struct {
+		Description func(childComplexity int) int
+		Label       func(childComplexity int) int
+	}
+
+	AIDecisionQuestion struct {
+		Choices      func(childComplexity int) int
+		Instructions func(childComplexity int) int
+		Levels       func(childComplexity int) int
+		Name         func(childComplexity int) int
+		Type         func(childComplexity int) int
+	}
+
+	AIDecisionResponse struct {
+		Answers func(childComplexity int) int
+	}
+
+	AIDecisionScoreProbability struct {
+		Label       func(childComplexity int) int
+		Probability func(childComplexity int) int
+		Value       func(childComplexity int) int
 	}
 
 	AIProvider struct {
@@ -188,6 +240,7 @@ type ComplexityRoot struct {
 		LoginSource                      func(childComplexity int, credentials model.SourceLoginInput) int
 		LoginWithSourceProfile           func(childComplexity int, profile model.SourceProfileLoginInput) int
 		Logout                           func(childComplexity int) int
+		RunAIDecision                    func(childComplexity int, input model.AIDecisionInput) int
 		TestSourceConnection             func(childComplexity int, credentials model.SourceLoginInput) int
 		UpdateSettings                   func(childComplexity int, newSettings model.SettingsConfigInput) int
 		UpdateSourceObject               func(childComplexity int, ref model.SourceObjectRefInput, values []*model.RecordInput, updatedColumns []string) int
@@ -205,6 +258,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
+		AIDecisionModels             func(childComplexity int, modelType string) int
 		AIModel                      func(childComplexity int, providerID *string, modelType string, token *string) int
 		AIProviders                  func(childComplexity int) int
 		AnalyzeMockDataDependencies  func(childComplexity int, ref model.SourceObjectRefInput, rowCount int, fkDensityRatio *int) int
@@ -500,6 +554,7 @@ type MutationResolver interface {
 	ImportSourceObjectFile(ctx context.Context, input model.ImportFileInput) (*model.ImportResult, error)
 	ExecuteConfirmedSQL(ctx context.Context, query string, operationType string) (*model.AIChatMessage, error)
 	GenerateChatTitle(ctx context.Context, input model.GenerateChatTitleInput) (*model.GenerateChatTitleResponse, error)
+	RunAIDecision(ctx context.Context, input model.AIDecisionInput) (*model.AIDecisionResponse, error)
 }
 type QueryResolver interface {
 	Version(ctx context.Context) (string, error)
@@ -522,6 +577,7 @@ type QueryResolver interface {
 	SourceGraph(ctx context.Context, ref *model.SourceObjectRefInput) ([]*model.GraphUnit, error)
 	AIProviders(ctx context.Context) ([]*model.AIProvider, error)
 	AIModel(ctx context.Context, providerID *string, modelType string, token *string) ([]string, error)
+	AIDecisionModels(ctx context.Context, modelType string) ([]string, error)
 	SettingsConfig(ctx context.Context) (*model.SettingsConfig, error)
 	MockDataMaxRowCount(ctx context.Context) (int, error)
 	AnalyzeMockDataDependencies(ctx context.Context, ref model.SourceObjectRefInput, rowCount int, fkDensityRatio *int) (*model.MockDataDependencyAnalysis, error)
@@ -547,6 +603,37 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 	_ = ec
 	switch typeName + "." + field {
 
+	case "AIChatDecision.Model":
+		if e.ComplexityRoot.AIChatDecision.Model == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIChatDecision.Model(childComplexity), true
+	case "AIChatDecision.Query":
+		if e.ComplexityRoot.AIChatDecision.Query == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIChatDecision.Query(childComplexity), true
+	case "AIChatDecision.Questions":
+		if e.ComplexityRoot.AIChatDecision.Questions == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIChatDecision.Questions(childComplexity), true
+	case "AIChatDecision.Truncated":
+		if e.ComplexityRoot.AIChatDecision.Truncated == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIChatDecision.Truncated(childComplexity), true
+
+	case "AIChatMessage.Decision":
+		if e.ComplexityRoot.AIChatMessage.Decision == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIChatMessage.Decision(childComplexity), true
 	case "AIChatMessage.RequiresConfirmation":
 		if e.ComplexityRoot.AIChatMessage.RequiresConfirmation == nil {
 			break
@@ -571,6 +658,151 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AIChatMessage.Type(childComplexity), true
+
+	case "AIDecisionAnswer.Choice":
+		if e.ComplexityRoot.AIDecisionAnswer.Choice == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIDecisionAnswer.Choice(childComplexity), true
+	case "AIDecisionAnswer.ChoiceProbabilities":
+		if e.ComplexityRoot.AIDecisionAnswer.ChoiceProbabilities == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIDecisionAnswer.ChoiceProbabilities(childComplexity), true
+	case "AIDecisionAnswer.Confidence":
+		if e.ComplexityRoot.AIDecisionAnswer.Confidence == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIDecisionAnswer.Confidence(childComplexity), true
+	case "AIDecisionAnswer.Name":
+		if e.ComplexityRoot.AIDecisionAnswer.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIDecisionAnswer.Name(childComplexity), true
+	case "AIDecisionAnswer.Probability":
+		if e.ComplexityRoot.AIDecisionAnswer.Probability == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIDecisionAnswer.Probability(childComplexity), true
+	case "AIDecisionAnswer.Score":
+		if e.ComplexityRoot.AIDecisionAnswer.Score == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIDecisionAnswer.Score(childComplexity), true
+	case "AIDecisionAnswer.ScoreProbabilities":
+		if e.ComplexityRoot.AIDecisionAnswer.ScoreProbabilities == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIDecisionAnswer.ScoreProbabilities(childComplexity), true
+	case "AIDecisionAnswer.Type":
+		if e.ComplexityRoot.AIDecisionAnswer.Type == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIDecisionAnswer.Type(childComplexity), true
+
+	case "AIDecisionChoice.Description":
+		if e.ComplexityRoot.AIDecisionChoice.Description == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIDecisionChoice.Description(childComplexity), true
+	case "AIDecisionChoice.Value":
+		if e.ComplexityRoot.AIDecisionChoice.Value == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIDecisionChoice.Value(childComplexity), true
+
+	case "AIDecisionChoiceProbability.Probability":
+		if e.ComplexityRoot.AIDecisionChoiceProbability.Probability == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIDecisionChoiceProbability.Probability(childComplexity), true
+	case "AIDecisionChoiceProbability.Value":
+		if e.ComplexityRoot.AIDecisionChoiceProbability.Value == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIDecisionChoiceProbability.Value(childComplexity), true
+
+	case "AIDecisionLevel.Description":
+		if e.ComplexityRoot.AIDecisionLevel.Description == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIDecisionLevel.Description(childComplexity), true
+	case "AIDecisionLevel.Label":
+		if e.ComplexityRoot.AIDecisionLevel.Label == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIDecisionLevel.Label(childComplexity), true
+
+	case "AIDecisionQuestion.Choices":
+		if e.ComplexityRoot.AIDecisionQuestion.Choices == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIDecisionQuestion.Choices(childComplexity), true
+	case "AIDecisionQuestion.Instructions":
+		if e.ComplexityRoot.AIDecisionQuestion.Instructions == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIDecisionQuestion.Instructions(childComplexity), true
+	case "AIDecisionQuestion.Levels":
+		if e.ComplexityRoot.AIDecisionQuestion.Levels == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIDecisionQuestion.Levels(childComplexity), true
+	case "AIDecisionQuestion.Name":
+		if e.ComplexityRoot.AIDecisionQuestion.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIDecisionQuestion.Name(childComplexity), true
+	case "AIDecisionQuestion.Type":
+		if e.ComplexityRoot.AIDecisionQuestion.Type == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIDecisionQuestion.Type(childComplexity), true
+
+	case "AIDecisionResponse.Answers":
+		if e.ComplexityRoot.AIDecisionResponse.Answers == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIDecisionResponse.Answers(childComplexity), true
+
+	case "AIDecisionScoreProbability.Label":
+		if e.ComplexityRoot.AIDecisionScoreProbability.Label == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIDecisionScoreProbability.Label(childComplexity), true
+	case "AIDecisionScoreProbability.Probability":
+		if e.ComplexityRoot.AIDecisionScoreProbability.Probability == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIDecisionScoreProbability.Probability(childComplexity), true
+	case "AIDecisionScoreProbability.Value":
+		if e.ComplexityRoot.AIDecisionScoreProbability.Value == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIDecisionScoreProbability.Value(childComplexity), true
 
 	case "AIProvider.Icon":
 		if e.ComplexityRoot.AIProvider.Icon == nil {
@@ -1206,6 +1438,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.Logout(childComplexity), true
+	case "Mutation.RunAIDecision":
+		if e.ComplexityRoot.Mutation.RunAIDecision == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_RunAIDecision_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.RunAIDecision(childComplexity, args["input"].(model.AIDecisionInput)), true
 	case "Mutation.TestSourceConnection":
 		if e.ComplexityRoot.Mutation.TestSourceConnection == nil {
 			break
@@ -1289,6 +1532,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.ObjectCreationMetadata.TypeDefinitions(childComplexity), true
 
+	case "Query.AIDecisionModels":
+		if e.ComplexityRoot.Query.AIDecisionModels == nil {
+			break
+		}
+
+		args, err := ec.field_Query_AIDecisionModels_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AIDecisionModels(childComplexity, args["modelType"].(string)), true
 	case "Query.AIModel":
 		if e.ComplexityRoot.Query.AIModel == nil {
 			break
@@ -2445,6 +2699,10 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	opCtx := graphql.GetOperationContext(ctx)
 	ec := newExecutionContext(opCtx, e, make(chan graphql.DeferredResult))
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputAIDecisionChoiceInput,
+		ec.unmarshalInputAIDecisionInput,
+		ec.unmarshalInputAIDecisionLevelInput,
+		ec.unmarshalInputAIDecisionQuestionInput,
 		ec.unmarshalInputAtomicWhereCondition,
 		ec.unmarshalInputChatInput,
 		ec.unmarshalInputColumnDefinitionInput,
@@ -2558,6 +2816,20 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // Each function is generated once per unique object type, deduplicating the
 // switch statements that were previously inlined in every fieldContext_* function.
 
+func (ec *executionContext) childFields_AIChatDecision(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "Model":
+		return ec.fieldContext_AIChatDecision_Model(ctx, field)
+	case "Query":
+		return ec.fieldContext_AIChatDecision_Query(ctx, field)
+	case "Questions":
+		return ec.fieldContext_AIChatDecision_Questions(ctx, field)
+	case "Truncated":
+		return ec.fieldContext_AIChatDecision_Truncated(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AIChatDecision", field.Name)
+}
+
 func (ec *executionContext) childFields_AIChatMessage(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "Type":
@@ -2568,8 +2840,98 @@ func (ec *executionContext) childFields_AIChatMessage(ctx context.Context, field
 		return ec.fieldContext_AIChatMessage_Text(ctx, field)
 	case "RequiresConfirmation":
 		return ec.fieldContext_AIChatMessage_RequiresConfirmation(ctx, field)
+	case "Decision":
+		return ec.fieldContext_AIChatMessage_Decision(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type AIChatMessage", field.Name)
+}
+
+func (ec *executionContext) childFields_AIDecisionAnswer(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "Type":
+		return ec.fieldContext_AIDecisionAnswer_Type(ctx, field)
+	case "Name":
+		return ec.fieldContext_AIDecisionAnswer_Name(ctx, field)
+	case "Probability":
+		return ec.fieldContext_AIDecisionAnswer_Probability(ctx, field)
+	case "Choice":
+		return ec.fieldContext_AIDecisionAnswer_Choice(ctx, field)
+	case "Score":
+		return ec.fieldContext_AIDecisionAnswer_Score(ctx, field)
+	case "Confidence":
+		return ec.fieldContext_AIDecisionAnswer_Confidence(ctx, field)
+	case "ChoiceProbabilities":
+		return ec.fieldContext_AIDecisionAnswer_ChoiceProbabilities(ctx, field)
+	case "ScoreProbabilities":
+		return ec.fieldContext_AIDecisionAnswer_ScoreProbabilities(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AIDecisionAnswer", field.Name)
+}
+
+func (ec *executionContext) childFields_AIDecisionChoice(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "Value":
+		return ec.fieldContext_AIDecisionChoice_Value(ctx, field)
+	case "Description":
+		return ec.fieldContext_AIDecisionChoice_Description(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AIDecisionChoice", field.Name)
+}
+
+func (ec *executionContext) childFields_AIDecisionChoiceProbability(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "Value":
+		return ec.fieldContext_AIDecisionChoiceProbability_Value(ctx, field)
+	case "Probability":
+		return ec.fieldContext_AIDecisionChoiceProbability_Probability(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AIDecisionChoiceProbability", field.Name)
+}
+
+func (ec *executionContext) childFields_AIDecisionLevel(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "Label":
+		return ec.fieldContext_AIDecisionLevel_Label(ctx, field)
+	case "Description":
+		return ec.fieldContext_AIDecisionLevel_Description(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AIDecisionLevel", field.Name)
+}
+
+func (ec *executionContext) childFields_AIDecisionQuestion(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "Type":
+		return ec.fieldContext_AIDecisionQuestion_Type(ctx, field)
+	case "Name":
+		return ec.fieldContext_AIDecisionQuestion_Name(ctx, field)
+	case "Instructions":
+		return ec.fieldContext_AIDecisionQuestion_Instructions(ctx, field)
+	case "Choices":
+		return ec.fieldContext_AIDecisionQuestion_Choices(ctx, field)
+	case "Levels":
+		return ec.fieldContext_AIDecisionQuestion_Levels(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AIDecisionQuestion", field.Name)
+}
+
+func (ec *executionContext) childFields_AIDecisionResponse(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "Answers":
+		return ec.fieldContext_AIDecisionResponse_Answers(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AIDecisionResponse", field.Name)
+}
+
+func (ec *executionContext) childFields_AIDecisionScoreProbability(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "Value":
+		return ec.fieldContext_AIDecisionScoreProbability_Value(ctx, field)
+	case "Label":
+		return ec.fieldContext_AIDecisionScoreProbability_Label(ctx, field)
+	case "Probability":
+		return ec.fieldContext_AIDecisionScoreProbability_Probability(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AIDecisionScoreProbability", field.Name)
 }
 
 func (ec *executionContext) childFields_AIProvider(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -3710,6 +4072,20 @@ func (ec *executionContext) field_Mutation_LoginWithSourceProfile_args(ctx conte
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_RunAIDecision_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (model.AIDecisionInput, error) {
+			return ec.unmarshalNAIDecisionInput2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_TestSourceConnection_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -3765,6 +4141,20 @@ func (ec *executionContext) field_Mutation_UpdateSourceObject_args(ctx context.C
 		return nil, err
 	}
 	args["updatedColumns"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_AIDecisionModels_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "modelType",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNString2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["modelType"] = arg0
 	return args, nil
 }
 
@@ -4126,6 +4516,107 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 
 // region    **************************** field.gotpl *****************************
 
+func (ec *executionContext) _AIChatDecision_Model(ctx context.Context, field graphql.CollectedField, obj *model.AIChatDecision) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIChatDecision_Model(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Model, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIChatDecision_Model(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIChatDecision", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AIChatDecision_Query(ctx context.Context, field graphql.CollectedField, obj *model.AIChatDecision) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIChatDecision_Query(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Query, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIChatDecision_Query(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIChatDecision", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AIChatDecision_Questions(ctx context.Context, field graphql.CollectedField, obj *model.AIChatDecision) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIChatDecision_Questions(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Questions, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.AIDecisionQuestion) graphql.Marshaler {
+			return ec.marshalNAIDecisionQuestion2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionQuestionᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIChatDecision_Questions(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AIChatDecision",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AIDecisionQuestion(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AIChatDecision_Truncated(ctx context.Context, field graphql.CollectedField, obj *model.AIChatDecision) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIChatDecision_Truncated(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Truncated, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIChatDecision_Truncated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIChatDecision", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
 func (ec *executionContext) _AIChatMessage_Type(ctx context.Context, field graphql.CollectedField, obj *model.AIChatMessage) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -4225,6 +4716,612 @@ func (ec *executionContext) _AIChatMessage_RequiresConfirmation(ctx context.Cont
 }
 func (ec *executionContext) fieldContext_AIChatMessage_RequiresConfirmation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("AIChatMessage", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _AIChatMessage_Decision(ctx context.Context, field graphql.CollectedField, obj *model.AIChatMessage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIChatMessage_Decision(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Decision, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.AIChatDecision) graphql.Marshaler {
+			return ec.marshalOAIChatDecision2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIChatDecision(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AIChatMessage_Decision(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AIChatMessage",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AIChatDecision(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AIDecisionAnswer_Type(ctx context.Context, field graphql.CollectedField, obj *model.AIDecisionAnswer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIDecisionAnswer_Type(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Type, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v model.AIDecisionAnswerType) graphql.Marshaler {
+			return ec.marshalNAIDecisionAnswerType2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionAnswerType(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIDecisionAnswer_Type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIDecisionAnswer", field, false, false, errors.New("field of type AIDecisionAnswerType does not have child fields"))
+}
+
+func (ec *executionContext) _AIDecisionAnswer_Name(ctx context.Context, field graphql.CollectedField, obj *model.AIDecisionAnswer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIDecisionAnswer_Name(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIDecisionAnswer_Name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIDecisionAnswer", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AIDecisionAnswer_Probability(ctx context.Context, field graphql.CollectedField, obj *model.AIDecisionAnswer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIDecisionAnswer_Probability(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Probability, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *float64) graphql.Marshaler {
+			return ec.marshalOFloat2ᚖfloat64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AIDecisionAnswer_Probability(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIDecisionAnswer", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _AIDecisionAnswer_Choice(ctx context.Context, field graphql.CollectedField, obj *model.AIDecisionAnswer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIDecisionAnswer_Choice(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Choice, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AIDecisionAnswer_Choice(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIDecisionAnswer", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AIDecisionAnswer_Score(ctx context.Context, field graphql.CollectedField, obj *model.AIDecisionAnswer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIDecisionAnswer_Score(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Score, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *float64) graphql.Marshaler {
+			return ec.marshalOFloat2ᚖfloat64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AIDecisionAnswer_Score(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIDecisionAnswer", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _AIDecisionAnswer_Confidence(ctx context.Context, field graphql.CollectedField, obj *model.AIDecisionAnswer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIDecisionAnswer_Confidence(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Confidence, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *float64) graphql.Marshaler {
+			return ec.marshalOFloat2ᚖfloat64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AIDecisionAnswer_Confidence(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIDecisionAnswer", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _AIDecisionAnswer_ChoiceProbabilities(ctx context.Context, field graphql.CollectedField, obj *model.AIDecisionAnswer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIDecisionAnswer_ChoiceProbabilities(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ChoiceProbabilities, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.AIDecisionChoiceProbability) graphql.Marshaler {
+			return ec.marshalOAIDecisionChoiceProbability2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionChoiceProbabilityᚄ(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AIDecisionAnswer_ChoiceProbabilities(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AIDecisionAnswer",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AIDecisionChoiceProbability(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AIDecisionAnswer_ScoreProbabilities(ctx context.Context, field graphql.CollectedField, obj *model.AIDecisionAnswer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIDecisionAnswer_ScoreProbabilities(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ScoreProbabilities, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.AIDecisionScoreProbability) graphql.Marshaler {
+			return ec.marshalOAIDecisionScoreProbability2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionScoreProbabilityᚄ(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AIDecisionAnswer_ScoreProbabilities(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AIDecisionAnswer",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AIDecisionScoreProbability(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AIDecisionChoice_Value(ctx context.Context, field graphql.CollectedField, obj *model.AIDecisionChoice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIDecisionChoice_Value(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Value, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIDecisionChoice_Value(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIDecisionChoice", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AIDecisionChoice_Description(ctx context.Context, field graphql.CollectedField, obj *model.AIDecisionChoice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIDecisionChoice_Description(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Description, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AIDecisionChoice_Description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIDecisionChoice", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AIDecisionChoiceProbability_Value(ctx context.Context, field graphql.CollectedField, obj *model.AIDecisionChoiceProbability) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIDecisionChoiceProbability_Value(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Value, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIDecisionChoiceProbability_Value(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIDecisionChoiceProbability", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AIDecisionChoiceProbability_Probability(ctx context.Context, field graphql.CollectedField, obj *model.AIDecisionChoiceProbability) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIDecisionChoiceProbability_Probability(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Probability, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v float64) graphql.Marshaler {
+			return ec.marshalNFloat2float64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIDecisionChoiceProbability_Probability(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIDecisionChoiceProbability", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _AIDecisionLevel_Label(ctx context.Context, field graphql.CollectedField, obj *model.AIDecisionLevel) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIDecisionLevel_Label(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Label, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIDecisionLevel_Label(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIDecisionLevel", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AIDecisionLevel_Description(ctx context.Context, field graphql.CollectedField, obj *model.AIDecisionLevel) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIDecisionLevel_Description(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Description, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AIDecisionLevel_Description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIDecisionLevel", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AIDecisionQuestion_Type(ctx context.Context, field graphql.CollectedField, obj *model.AIDecisionQuestion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIDecisionQuestion_Type(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Type, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v model.AIDecisionQuestionType) graphql.Marshaler {
+			return ec.marshalNAIDecisionQuestionType2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionQuestionType(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIDecisionQuestion_Type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIDecisionQuestion", field, false, false, errors.New("field of type AIDecisionQuestionType does not have child fields"))
+}
+
+func (ec *executionContext) _AIDecisionQuestion_Name(ctx context.Context, field graphql.CollectedField, obj *model.AIDecisionQuestion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIDecisionQuestion_Name(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIDecisionQuestion_Name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIDecisionQuestion", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AIDecisionQuestion_Instructions(ctx context.Context, field graphql.CollectedField, obj *model.AIDecisionQuestion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIDecisionQuestion_Instructions(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Instructions, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIDecisionQuestion_Instructions(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIDecisionQuestion", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AIDecisionQuestion_Choices(ctx context.Context, field graphql.CollectedField, obj *model.AIDecisionQuestion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIDecisionQuestion_Choices(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Choices, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.AIDecisionChoice) graphql.Marshaler {
+			return ec.marshalOAIDecisionChoice2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionChoiceᚄ(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AIDecisionQuestion_Choices(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AIDecisionQuestion",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AIDecisionChoice(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AIDecisionQuestion_Levels(ctx context.Context, field graphql.CollectedField, obj *model.AIDecisionQuestion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIDecisionQuestion_Levels(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Levels, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.AIDecisionLevel) graphql.Marshaler {
+			return ec.marshalOAIDecisionLevel2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionLevelᚄ(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AIDecisionQuestion_Levels(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AIDecisionQuestion",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AIDecisionLevel(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AIDecisionResponse_Answers(ctx context.Context, field graphql.CollectedField, obj *model.AIDecisionResponse) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIDecisionResponse_Answers(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Answers, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.AIDecisionAnswer) graphql.Marshaler {
+			return ec.marshalNAIDecisionAnswer2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionAnswerᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIDecisionResponse_Answers(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AIDecisionResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AIDecisionAnswer(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AIDecisionScoreProbability_Value(ctx context.Context, field graphql.CollectedField, obj *model.AIDecisionScoreProbability) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIDecisionScoreProbability_Value(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Value, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIDecisionScoreProbability_Value(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIDecisionScoreProbability", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _AIDecisionScoreProbability_Label(ctx context.Context, field graphql.CollectedField, obj *model.AIDecisionScoreProbability) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIDecisionScoreProbability_Label(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Label, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIDecisionScoreProbability_Label(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIDecisionScoreProbability", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AIDecisionScoreProbability_Probability(ctx context.Context, field graphql.CollectedField, obj *model.AIDecisionScoreProbability) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIDecisionScoreProbability_Probability(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Probability, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v float64) graphql.Marshaler {
+			return ec.marshalNFloat2float64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIDecisionScoreProbability_Probability(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIDecisionScoreProbability", field, false, false, errors.New("field of type Float does not have child fields"))
 }
 
 func (ec *executionContext) _AIProvider_Type(ctx context.Context, field graphql.CollectedField, obj *model.AIProvider) (ret graphql.Marshaler) {
@@ -6802,6 +7899,50 @@ func (ec *executionContext) fieldContext_Mutation_GenerateChatTitle(ctx context.
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_RunAIDecision(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_RunAIDecision(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().RunAIDecision(ctx, fc.Args["input"].(model.AIDecisionInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.AIDecisionResponse) graphql.Marshaler {
+			return ec.marshalNAIDecisionResponse2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionResponse(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_RunAIDecision(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AIDecisionResponse(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_RunAIDecision_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _ObjectCreationMetadata_Supported(ctx context.Context, field graphql.CollectedField, obj *model.ObjectCreationMetadata) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -7800,6 +8941,50 @@ func (ec *executionContext) fieldContext_Query_AIModel(ctx context.Context, fiel
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_AIModel_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_AIDecisionModels(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_AIDecisionModels(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().AIDecisionModels(ctx, fc.Args["modelType"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []string) graphql.Marshaler {
+			return ec.marshalNString2ᚕstringᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_AIDecisionModels(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_AIDecisionModels_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -12750,6 +13935,210 @@ func (ec *executionContext) fieldContext___Type_isOneOf(_ context.Context, field
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputAIDecisionChoiceInput(ctx context.Context, obj any) (model.AIDecisionChoiceInput, error) {
+	var it model.AIDecisionChoiceInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"Value", "Description"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "Value":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Value"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Value = data
+		case "Description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Description"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputAIDecisionInput(ctx context.Context, obj any) (model.AIDecisionInput, error) {
+	var it model.AIDecisionInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"ModelType", "ProviderId", "Token", "Model", "Endpoint", "Input", "Questions"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "ModelType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ModelType"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ModelType = data
+		case "ProviderId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ProviderId"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ProviderID = data
+		case "Token":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Token"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Token = data
+		case "Model":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Model"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Model = data
+		case "Endpoint":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Endpoint"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Endpoint = data
+		case "Input":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Input"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Input = data
+		case "Questions":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Questions"))
+			data, err := ec.unmarshalNAIDecisionQuestionInput2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionQuestionInputᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Questions = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputAIDecisionLevelInput(ctx context.Context, obj any) (model.AIDecisionLevelInput, error) {
+	var it model.AIDecisionLevelInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"Label", "Description"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "Label":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Label"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Label = data
+		case "Description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Description"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputAIDecisionQuestionInput(ctx context.Context, obj any) (model.AIDecisionQuestionInput, error) {
+	var it model.AIDecisionQuestionInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"Type", "Name", "Instructions", "Choices", "Levels"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "Type":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Type"))
+			data, err := ec.unmarshalNAIDecisionQuestionType2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionQuestionType(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Type = data
+		case "Name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Name"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "Instructions":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Instructions"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Instructions = data
+		case "Choices":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Choices"))
+			data, err := ec.unmarshalOAIDecisionChoiceInput2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionChoiceInputᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Choices = data
+		case "Levels":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Levels"))
+			data, err := ec.unmarshalOAIDecisionLevelInput2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionLevelInputᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Levels = data
+		}
+	}
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputAtomicWhereCondition(ctx context.Context, obj any) (model.AtomicWhereCondition, error) {
 	var it model.AtomicWhereCondition
 	if obj == nil {
@@ -13692,6 +15081,59 @@ func (ec *executionContext) unmarshalInputWhereCondition(ctx context.Context, ob
 
 // region    **************************** object.gotpl ****************************
 
+var aIChatDecisionImplementors = []string{"AIChatDecision"}
+
+func (ec *executionContext) _AIChatDecision(ctx context.Context, sel ast.SelectionSet, obj *model.AIChatDecision) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, aIChatDecisionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AIChatDecision")
+		case "Model":
+			out.Values[i] = ec._AIChatDecision_Model(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Query":
+			out.Values[i] = ec._AIChatDecision_Query(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Questions":
+			out.Values[i] = ec._AIChatDecision_Questions(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Truncated":
+			out.Values[i] = ec._AIChatDecision_Truncated(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var aIChatMessageImplementors = []string{"AIChatMessage"}
 
 func (ec *executionContext) _AIChatMessage(ctx context.Context, sel ast.SelectionSet, obj *model.AIChatMessage) graphql.Marshaler {
@@ -13721,6 +15163,357 @@ func (ec *executionContext) _AIChatMessage(ctx context.Context, sel ast.Selectio
 			}
 		case "RequiresConfirmation":
 			out.Values[i] = ec._AIChatMessage_RequiresConfirmation(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Decision":
+			out.Values[i] = ec._AIChatMessage_Decision(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var aIDecisionAnswerImplementors = []string{"AIDecisionAnswer"}
+
+func (ec *executionContext) _AIDecisionAnswer(ctx context.Context, sel ast.SelectionSet, obj *model.AIDecisionAnswer) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, aIDecisionAnswerImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AIDecisionAnswer")
+		case "Type":
+			out.Values[i] = ec._AIDecisionAnswer_Type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Name":
+			out.Values[i] = ec._AIDecisionAnswer_Name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Probability":
+			out.Values[i] = ec._AIDecisionAnswer_Probability(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "Choice":
+			out.Values[i] = ec._AIDecisionAnswer_Choice(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "Score":
+			out.Values[i] = ec._AIDecisionAnswer_Score(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "Confidence":
+			out.Values[i] = ec._AIDecisionAnswer_Confidence(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "ChoiceProbabilities":
+			out.Values[i] = ec._AIDecisionAnswer_ChoiceProbabilities(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "ScoreProbabilities":
+			out.Values[i] = ec._AIDecisionAnswer_ScoreProbabilities(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var aIDecisionChoiceImplementors = []string{"AIDecisionChoice"}
+
+func (ec *executionContext) _AIDecisionChoice(ctx context.Context, sel ast.SelectionSet, obj *model.AIDecisionChoice) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, aIDecisionChoiceImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AIDecisionChoice")
+		case "Value":
+			out.Values[i] = ec._AIDecisionChoice_Value(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Description":
+			out.Values[i] = ec._AIDecisionChoice_Description(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var aIDecisionChoiceProbabilityImplementors = []string{"AIDecisionChoiceProbability"}
+
+func (ec *executionContext) _AIDecisionChoiceProbability(ctx context.Context, sel ast.SelectionSet, obj *model.AIDecisionChoiceProbability) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, aIDecisionChoiceProbabilityImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AIDecisionChoiceProbability")
+		case "Value":
+			out.Values[i] = ec._AIDecisionChoiceProbability_Value(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Probability":
+			out.Values[i] = ec._AIDecisionChoiceProbability_Probability(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var aIDecisionLevelImplementors = []string{"AIDecisionLevel"}
+
+func (ec *executionContext) _AIDecisionLevel(ctx context.Context, sel ast.SelectionSet, obj *model.AIDecisionLevel) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, aIDecisionLevelImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AIDecisionLevel")
+		case "Label":
+			out.Values[i] = ec._AIDecisionLevel_Label(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Description":
+			out.Values[i] = ec._AIDecisionLevel_Description(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var aIDecisionQuestionImplementors = []string{"AIDecisionQuestion"}
+
+func (ec *executionContext) _AIDecisionQuestion(ctx context.Context, sel ast.SelectionSet, obj *model.AIDecisionQuestion) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, aIDecisionQuestionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AIDecisionQuestion")
+		case "Type":
+			out.Values[i] = ec._AIDecisionQuestion_Type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Name":
+			out.Values[i] = ec._AIDecisionQuestion_Name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Instructions":
+			out.Values[i] = ec._AIDecisionQuestion_Instructions(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Choices":
+			out.Values[i] = ec._AIDecisionQuestion_Choices(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "Levels":
+			out.Values[i] = ec._AIDecisionQuestion_Levels(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var aIDecisionResponseImplementors = []string{"AIDecisionResponse"}
+
+func (ec *executionContext) _AIDecisionResponse(ctx context.Context, sel ast.SelectionSet, obj *model.AIDecisionResponse) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, aIDecisionResponseImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AIDecisionResponse")
+		case "Answers":
+			out.Values[i] = ec._AIDecisionResponse_Answers(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var aIDecisionScoreProbabilityImplementors = []string{"AIDecisionScoreProbability"}
+
+func (ec *executionContext) _AIDecisionScoreProbability(ctx context.Context, sel ast.SelectionSet, obj *model.AIDecisionScoreProbability) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, aIDecisionScoreProbabilityImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AIDecisionScoreProbability")
+		case "Value":
+			out.Values[i] = ec._AIDecisionScoreProbability_Value(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Label":
+			out.Values[i] = ec._AIDecisionScoreProbability_Label(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Probability":
+			out.Values[i] = ec._AIDecisionScoreProbability_Probability(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -14835,6 +16628,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "RunAIDecision":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_RunAIDecision(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -15377,6 +17177,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_AIModel(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "AIDecisionModels":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_AIDecisionModels(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -17727,10 +19549,6 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) marshalNAIChatMessage2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIChatMessage(ctx context.Context, sel ast.SelectionSet, v model.AIChatMessage) graphql.Marshaler {
-	return ec._AIChatMessage(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNAIChatMessage2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIChatMessage(ctx context.Context, sel ast.SelectionSet, v *model.AIChatMessage) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -17739,6 +19557,162 @@ func (ec *executionContext) marshalNAIChatMessage2ᚖgithubᚗcomᚋclideyᚋwho
 		return graphql.Null
 	}
 	return ec._AIChatMessage(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNAIDecisionAnswer2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionAnswerᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.AIDecisionAnswer) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNAIDecisionAnswer2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionAnswer(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNAIDecisionAnswer2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionAnswer(ctx context.Context, sel ast.SelectionSet, v *model.AIDecisionAnswer) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AIDecisionAnswer(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNAIDecisionAnswerType2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionAnswerType(ctx context.Context, v any) (model.AIDecisionAnswerType, error) {
+	var res model.AIDecisionAnswerType
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNAIDecisionAnswerType2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionAnswerType(ctx context.Context, sel ast.SelectionSet, v model.AIDecisionAnswerType) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) marshalNAIDecisionChoice2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionChoice(ctx context.Context, sel ast.SelectionSet, v *model.AIDecisionChoice) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AIDecisionChoice(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNAIDecisionChoiceInput2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionChoiceInput(ctx context.Context, v any) (*model.AIDecisionChoiceInput, error) {
+	res, err := ec.unmarshalInputAIDecisionChoiceInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNAIDecisionChoiceProbability2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionChoiceProbability(ctx context.Context, sel ast.SelectionSet, v *model.AIDecisionChoiceProbability) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AIDecisionChoiceProbability(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNAIDecisionInput2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionInput(ctx context.Context, v any) (model.AIDecisionInput, error) {
+	res, err := ec.unmarshalInputAIDecisionInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNAIDecisionLevel2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionLevel(ctx context.Context, sel ast.SelectionSet, v *model.AIDecisionLevel) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AIDecisionLevel(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNAIDecisionLevelInput2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionLevelInput(ctx context.Context, v any) (*model.AIDecisionLevelInput, error) {
+	res, err := ec.unmarshalInputAIDecisionLevelInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNAIDecisionQuestion2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionQuestionᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.AIDecisionQuestion) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNAIDecisionQuestion2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionQuestion(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNAIDecisionQuestion2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionQuestion(ctx context.Context, sel ast.SelectionSet, v *model.AIDecisionQuestion) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AIDecisionQuestion(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNAIDecisionQuestionInput2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionQuestionInputᚄ(ctx context.Context, v any) ([]*model.AIDecisionQuestionInput, error) {
+	vSlice := graphql.CoerceList(v)
+	var err error
+	res := make([]*model.AIDecisionQuestionInput, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNAIDecisionQuestionInput2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionQuestionInput(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) unmarshalNAIDecisionQuestionInput2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionQuestionInput(ctx context.Context, v any) (*model.AIDecisionQuestionInput, error) {
+	res, err := ec.unmarshalInputAIDecisionQuestionInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNAIDecisionQuestionType2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionQuestionType(ctx context.Context, v any) (model.AIDecisionQuestionType, error) {
+	var res model.AIDecisionQuestionType
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNAIDecisionQuestionType2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionQuestionType(ctx context.Context, sel ast.SelectionSet, v model.AIDecisionQuestionType) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) marshalNAIDecisionResponse2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionResponse(ctx context.Context, sel ast.SelectionSet, v *model.AIDecisionResponse) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AIDecisionResponse(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNAIDecisionScoreProbability2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionScoreProbability(ctx context.Context, sel ast.SelectionSet, v *model.AIDecisionScoreProbability) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AIDecisionScoreProbability(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNAIProvider2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIProviderᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.AIProvider) graphql.Marshaler {
@@ -17884,13 +19858,25 @@ func (ec *executionContext) marshalNDataShape2githubᚗcomᚋclideyᚋwhodbᚋco
 	return v
 }
 
-func (ec *executionContext) unmarshalNGenerateChatTitleInput2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐGenerateChatTitleInput(ctx context.Context, v any) (model.GenerateChatTitleInput, error) {
-	res, err := ec.unmarshalInputGenerateChatTitleInput(ctx, v)
+func (ec *executionContext) unmarshalNFloat2float64(ctx context.Context, v any) (float64, error) {
+	res, err := graphql.UnmarshalFloatContext(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNGenerateChatTitleResponse2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐGenerateChatTitleResponse(ctx context.Context, sel ast.SelectionSet, v model.GenerateChatTitleResponse) graphql.Marshaler {
-	return ec._GenerateChatTitleResponse(ctx, sel, &v)
+func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.SelectionSet, v float64) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalFloatContext(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return graphql.WrapContextMarshaler(ctx, res)
+}
+
+func (ec *executionContext) unmarshalNGenerateChatTitleInput2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐGenerateChatTitleInput(ctx context.Context, v any) (model.GenerateChatTitleInput, error) {
+	res, err := ec.unmarshalInputGenerateChatTitleInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNGenerateChatTitleResponse2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐGenerateChatTitleResponse(ctx context.Context, sel ast.SelectionSet, v *model.GenerateChatTitleResponse) graphql.Marshaler {
@@ -17963,10 +19949,6 @@ func (ec *executionContext) unmarshalNGraphUnitRelationshipType2githubᚗcomᚋc
 
 func (ec *executionContext) marshalNGraphUnitRelationshipType2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐGraphUnitRelationshipType(ctx context.Context, sel ast.SelectionSet, v model.GraphUnitRelationshipType) graphql.Marshaler {
 	return v
-}
-
-func (ec *executionContext) marshalNHealthStatus2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐHealthStatus(ctx context.Context, sel ast.SelectionSet, v model.HealthStatus) graphql.Marshaler {
-	return ec._HealthStatus(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNHealthStatus2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐHealthStatus(ctx context.Context, sel ast.SelectionSet, v *model.HealthStatus) graphql.Marshaler {
@@ -18043,10 +20025,6 @@ func (ec *executionContext) marshalNImportMode2githubᚗcomᚋclideyᚋwhodbᚋc
 	return v
 }
 
-func (ec *executionContext) marshalNImportPreview2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐImportPreview(ctx context.Context, sel ast.SelectionSet, v model.ImportPreview) graphql.Marshaler {
-	return ec._ImportPreview(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNImportPreview2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐImportPreview(ctx context.Context, sel ast.SelectionSet, v *model.ImportPreview) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -18055,10 +20033,6 @@ func (ec *executionContext) marshalNImportPreview2ᚖgithubᚗcomᚋclideyᚋwho
 		return graphql.Null
 	}
 	return ec._ImportPreview(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNImportResult2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐImportResult(ctx context.Context, sel ast.SelectionSet, v model.ImportResult) graphql.Marshaler {
-	return ec._ImportResult(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNImportResult2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐImportResult(ctx context.Context, sel ast.SelectionSet, v *model.ImportResult) graphql.Marshaler {
@@ -18092,10 +20066,6 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
-func (ec *executionContext) marshalNMockDataDependencyAnalysis2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐMockDataDependencyAnalysis(ctx context.Context, sel ast.SelectionSet, v model.MockDataDependencyAnalysis) graphql.Marshaler {
-	return ec._MockDataDependencyAnalysis(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNMockDataDependencyAnalysis2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐMockDataDependencyAnalysis(ctx context.Context, sel ast.SelectionSet, v *model.MockDataDependencyAnalysis) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -18109,10 +20079,6 @@ func (ec *executionContext) marshalNMockDataDependencyAnalysis2ᚖgithubᚗcom�
 func (ec *executionContext) unmarshalNMockDataGenerationInput2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐMockDataGenerationInput(ctx context.Context, v any) (model.MockDataGenerationInput, error) {
 	res, err := ec.unmarshalInputMockDataGenerationInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNMockDataGenerationStatus2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐMockDataGenerationStatus(ctx context.Context, sel ast.SelectionSet, v model.MockDataGenerationStatus) graphql.Marshaler {
-	return ec._MockDataGenerationStatus(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNMockDataGenerationStatus2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐMockDataGenerationStatus(ctx context.Context, sel ast.SelectionSet, v *model.MockDataGenerationStatus) graphql.Marshaler {
@@ -18159,10 +20125,6 @@ func (ec *executionContext) marshalNMockDataTableInfo2ᚖgithubᚗcomᚋclidey�
 		return graphql.Null
 	}
 	return ec._MockDataTableInfo(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNObjectCreationMetadata2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐObjectCreationMetadata(ctx context.Context, sel ast.SelectionSet, v model.ObjectCreationMetadata) graphql.Marshaler {
-	return ec._ObjectCreationMetadata(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNObjectCreationMetadata2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐObjectCreationMetadata(ctx context.Context, sel ast.SelectionSet, v *model.ObjectCreationMetadata) graphql.Marshaler {
@@ -18220,10 +20182,6 @@ func (ec *executionContext) unmarshalNRecordInput2ᚖgithubᚗcomᚋclideyᚋwho
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNRowsResult2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐRowsResult(ctx context.Context, sel ast.SelectionSet, v model.RowsResult) graphql.Marshaler {
-	return ec._RowsResult(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNRowsResult2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐRowsResult(ctx context.Context, sel ast.SelectionSet, v *model.RowsResult) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -18232,10 +20190,6 @@ func (ec *executionContext) marshalNRowsResult2ᚖgithubᚗcomᚋclideyᚋwhodb�
 		return graphql.Null
 	}
 	return ec._RowsResult(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNSettingsConfig2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSettingsConfig(ctx context.Context, sel ast.SelectionSet, v model.SettingsConfig) graphql.Marshaler {
-	return ec._SettingsConfig(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNSettingsConfig2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSettingsConfig(ctx context.Context, sel ast.SelectionSet, v *model.SettingsConfig) graphql.Marshaler {
@@ -18953,10 +20907,6 @@ func (ec *executionContext) marshalNSourceView2ᚕgithubᚗcomᚋclideyᚋwhodb�
 	return ret
 }
 
-func (ec *executionContext) marshalNStatusResponse2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐStatusResponse(ctx context.Context, sel ast.SelectionSet, v model.StatusResponse) graphql.Marshaler {
-	return ec._StatusResponse(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNStatusResponse2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐStatusResponse(ctx context.Context, sel ast.SelectionSet, v *model.StatusResponse) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -19085,10 +21035,6 @@ func (ec *executionContext) marshalNTypeDefinition2ᚖgithubᚗcomᚋclideyᚋwh
 		return graphql.Null
 	}
 	return ec._TypeDefinition(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNUpdateInfo2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐUpdateInfo(ctx context.Context, sel ast.SelectionSet, v model.UpdateInfo) graphql.Marshaler {
-	return ec._UpdateInfo(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNUpdateInfo2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐUpdateInfo(ctx context.Context, sel ast.SelectionSet, v *model.UpdateInfo) graphql.Marshaler {
@@ -19284,6 +21230,123 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalOAIChatDecision2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIChatDecision(ctx context.Context, sel ast.SelectionSet, v *model.AIChatDecision) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._AIChatDecision(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOAIDecisionChoice2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionChoiceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.AIDecisionChoice) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNAIDecisionChoice2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionChoice(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalOAIDecisionChoiceInput2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionChoiceInputᚄ(ctx context.Context, v any) ([]*model.AIDecisionChoiceInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	vSlice := graphql.CoerceList(v)
+	var err error
+	res := make([]*model.AIDecisionChoiceInput, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNAIDecisionChoiceInput2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionChoiceInput(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOAIDecisionChoiceProbability2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionChoiceProbabilityᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.AIDecisionChoiceProbability) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNAIDecisionChoiceProbability2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionChoiceProbability(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalOAIDecisionLevel2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionLevelᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.AIDecisionLevel) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNAIDecisionLevel2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionLevel(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalOAIDecisionLevelInput2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionLevelInputᚄ(ctx context.Context, v any) ([]*model.AIDecisionLevelInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	vSlice := graphql.CoerceList(v)
+	var err error
+	res := make([]*model.AIDecisionLevelInput, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNAIDecisionLevelInput2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionLevelInput(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOAIDecisionScoreProbability2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionScoreProbabilityᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.AIDecisionScoreProbability) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNAIDecisionScoreProbability2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAIDecisionScoreProbability(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalOAtomicWhereCondition2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAtomicWhereCondition(ctx context.Context, v any) (*model.AtomicWhereCondition, error) {
