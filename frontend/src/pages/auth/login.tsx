@@ -26,8 +26,7 @@ import {
 } from '@graphql';
 import classNames from "classnames";
 import type {FC, ReactElement} from "react";
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState} from "react";
-import {getComponent} from "../../config/component-registry";
+import { useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {useNavigate, useSearchParams} from "react-router-dom";
 import logoImage from "../../../public/images/logo.svg";
 import {Icons} from "../../components/icons";
@@ -215,7 +214,6 @@ export const LoginForm: FC<LoginFormProps> = ({
     const [password, setPassword] = useState("");
     const [error, setError] = useState<string>();
     const [testResult, setTestResult] = useState<{ status: 'success' | 'error'; message: string; duration?: number }>();
-    const [missingDriver, setMissingDriver] = useState<string | null>(null);
     const [advancedForm, setAdvancedForm] = useState<Record<string, string>>({});
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [formResetKey, setFormResetKey] = useState(0);
@@ -306,21 +304,13 @@ export const LoginForm: FC<LoginFormProps> = ({
         }
     }, [isFirstLogin, FIRST_LOGIN_KEY]);
 
-    const handleLoginError = useCallback((loginError: unknown, allowDriverInstallPrompt = false) => {
+    const handleLoginError = useCallback((loginError: unknown) => {
         trackFrontendIntent('auth.login_failed', {
             ...loginAnalyticsPropsRef.current,
             error_code: frontendAnalyticsErrorCode(loginError),
         });
 
         const errorMessage = loginError instanceof Error ? loginError.message : String(loginError);
-
-        if (allowDriverInstallPrompt) {
-            const driverMatch = errorMessage.match(/driver_not_installed:(\w+)/);
-            if (driverMatch) {
-                setMissingDriver(driverMatch[1]);
-                return;
-            }
-        }
 
         const lowerCaseMessage = errorMessage.toLowerCase();
         const isNetworkError = lowerCaseMessage.includes('network') ||
@@ -419,7 +409,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                 }
                 toast.success(t('loginSuccessful'));
             } catch (error) {
-                handleLoginError(error, true);
+                handleLoginError(error);
             }
         })();
     }, [advancedForm, database, databaseType, dispatch, handleLoginError, hostName, login, markFirstLoginComplete, navigate, onLoginSuccess, password, searchParams, setSearchParams, t, username]);
@@ -1285,22 +1275,6 @@ export const LoginForm: FC<LoginFormProps> = ({
             sourceType={platformSourceType?.label}
             sourceTypeId={platformSourceType?.id}
         />
-        {(() => {
-            const DriverInstallDialog = getComponent('driver-install-dialog') as React.LazyExoticComponent<FC<{driverName: string; onInstalled: () => void; onCancel: () => void}>> | undefined;
-            if (!DriverInstallDialog || !missingDriver) return null;
-            return (
-                <Suspense fallback={null}>
-                    <DriverInstallDialog
-                        driverName={missingDriver}
-                        onInstalled={() => {
-                            setMissingDriver(null);
-                            handleSubmit();
-                        }}
-                        onCancel={() =>{  setMissingDriver(null); }}
-                    />
-                </Suspense>
-            );
-        })()}
             </section>
         </div>
     );
