@@ -18,10 +18,12 @@ package llm
 
 import (
 	"context"
+	"net/http"
 	"reflect"
 	"strings"
 	"testing"
 
+	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/llm/providers"
 	"github.com/clidey/whodb/core/src/source"
 )
@@ -42,5 +44,26 @@ func TestCreateDecisionRejectsProvidersWithoutDecisions(t *testing.T) {
 	_, err := CreateDecision(context.Background(), model, "text", nil)
 	if err == nil || !strings.Contains(err.Error(), "does not support decisions") {
 		t.Fatalf("expected unsupported provider error, got %v", err)
+	}
+}
+
+func TestDecisionsCanBeTurnedOff(t *testing.T) {
+	original := env.DisableAIDecisions
+	env.DisableAIDecisions = true
+	t.Cleanup(func() { env.DisableAIDecisions = original })
+	originalFactory := providers.HTTPClientFactory
+	providers.HTTPClientFactory = func() *http.Client {
+		t.Fatal("expected no request to the provider")
+		return nil
+	}
+	t.Cleanup(func() { providers.HTTPClientFactory = originalFactory })
+
+	if got := DecisionModels(string(providers.OpenAI_LLMType)); got != nil {
+		t.Fatalf("expected no decision models, got %v", got)
+	}
+	model := &source.ExternalModel{Type: string(providers.OpenAI_LLMType), Token: "key", Model: "gpt-6-luna"}
+	_, err := CreateDecision(context.Background(), model, "text", []providers.DecisionQuestion{{Type: "predicate", Name: "urgent", Instructions: "Is this urgent?"}})
+	if err == nil || err.Error() != "decisions are turned off on this server" {
+		t.Fatalf("expected the turned-off error, got %v", err)
 	}
 }
