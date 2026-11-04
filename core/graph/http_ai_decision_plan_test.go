@@ -35,6 +35,7 @@ import (
 	"github.com/clidey/whodb/core/baml_client/types"
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/bamlconfig"
+	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/source"
 )
 
@@ -444,5 +445,20 @@ func TestDecisionsModeRequiresADecisionProvider(t *testing.T) {
 	}
 	if strings.Contains(stream, "event: progress") {
 		t.Fatalf("expected no planning work, got %s", stream)
+	}
+}
+
+func TestDecisionsModeTurnedOff(t *testing.T) {
+	original := env.DisableAIDecisions
+	env.DisableAIDecisions = true
+	t.Cleanup(func() { env.DisableAIDecisions = original })
+	body := `{"modelType":"OpenAI","token":"test-key","model":"gpt-6-luna","mode":"decisions","input":{"Query":"Route each ticket","PreviousConversation":""}}`
+	w := httptest.NewRecorder()
+
+	ceAIChatStreamHandler(w, httptest.NewRequest(http.MethodPost, "/api/ai-chat/stream", strings.NewReader(body)))
+
+	stream := w.Body.String()
+	if !strings.Contains(stream, `"Text":"Decisions are turned off on this server"`) || strings.Contains(stream, "event: progress") {
+		t.Fatalf("expected Decisions to be refused before planning, got %s", stream)
 	}
 }

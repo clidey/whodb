@@ -29,6 +29,7 @@ import (
 	"github.com/clidey/whodb/core/baml_client/types"
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/bamlconfig"
+	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/envconfig"
 	"github.com/clidey/whodb/core/src/llm"
 	"github.com/clidey/whodb/core/src/log"
@@ -69,6 +70,10 @@ func ceAIChatStreamHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	var decisionModel string
 	if req.Mode == chatModeDecisions {
+		if env.DisableAIDecisions {
+			SendSSEError(w, flusher, "Decisions are turned off on this server")
+			return
+		}
 		decisionModels := llm.DecisionModels(creds.ModelType)
 		if len(decisionModels) == 0 {
 			SendSSEError(w, flusher, "Decisions are not available for this AI provider")

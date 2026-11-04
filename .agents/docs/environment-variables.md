@@ -159,6 +159,7 @@ export WHODB_POSTGRES_1='{
 | `WHODB_ANTHROPIC_NAME` | unset | Display name for Anthropic in the provider dropdown |
 | `WHODB_BLOCK_INTERNAL_AI_ENDPOINTS` | `false` | Set `true` to reject AI endpoints that resolve to loopback, link-local, private, metadata, or standardized IPv6 transition ranges |
 | `WHODB_AI_ENDPOINT_BLOCKED_CIDRS` | unset | Comma-separated deployment-specific CIDRs that AI endpoints must not reach, including network-specific NAT64 prefixes |
+| `WHODB_DISABLE_AI_DECISIONS` | `false` | Set `true` to turn off chat Decisions, which send user-approved query rows to the AI provider |
 
 ### Generic AI providers
 

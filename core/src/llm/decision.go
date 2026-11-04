@@ -18,15 +18,21 @@ package llm
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
+	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/llm/providers"
 	"github.com/clidey/whodb/core/src/source"
 )
 
 // DecisionModels returns the models the provider type can answer decisions with,
-// preferred first, or nil when the provider does not support decisions.
+// preferred first, or nil when the provider does not support decisions or the
+// server has turned them off.
 func DecisionModels(modelType string) []string {
+	if env.DisableAIDecisions {
+		return nil
+	}
 	provider, err := providers.GetProvider(providers.LLMType(modelType))
 	if err != nil {
 		return nil
@@ -40,8 +46,11 @@ func DecisionModels(modelType string) []string {
 
 // CreateDecision answers questions about input with the Decisions API of the model's
 // provider and returns the answers in question order. It fails for providers that do
-// not implement providers.DecisionProvider.
+// not implement providers.DecisionProvider, and when the server has turned decisions off.
 func CreateDecision(ctx context.Context, model *source.ExternalModel, input string, questions []providers.DecisionQuestion) ([]providers.DecisionAnswer, error) {
+	if env.DisableAIDecisions {
+		return nil, errors.New("decisions are turned off on this server")
+	}
 	provider, err := providers.GetProvider(providers.LLMType(model.Type))
 	if err != nil {
 		return nil, err

@@ -67,9 +67,13 @@ OpenAI's data controls apply to everything a run sends. OpenAI states that the D
 - Runs only read data. A plan whose query is not a supported read-only query is refused before it runs, and answers are never written back to the database.
 - A stopped run can't be resumed. Plan a new run for the remaining rows.
 
+## Turn off Decisions
+
+Server admins can turn Decisions off by setting `WHODB_DISABLE_AI_DECISIONS=true`. The toggle is then hidden for every provider, including those users add in the app, and the server refuses Decisions planning and runs. Regular chat is not affected.
+
 ## Troubleshooting
 
-- **There is no Decisions toggle:** the selected provider has no Decisions API. Switch to an OpenAI provider.
+- **There is no Decisions toggle:** the selected provider has no Decisions API, or the server admin has turned Decisions off. Switch to an OpenAI provider, or ask the admin.
 - **A row shows "failed to create decision":** OpenAI rejected that row, and the rest of the message is OpenAI's explanation. Check that your API key has access to the Decisions API.
 - **"Decisions only read data":** the planned query was not a supported read-only query. Rephrase the request, or ask for a simpler query.
 - **Send is disabled:** the provider that planned the run has been removed. Plan the run again.

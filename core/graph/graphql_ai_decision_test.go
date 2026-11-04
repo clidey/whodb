@@ -28,6 +28,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql/handler"
 
+	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/llm/providers"
 )
 
@@ -165,6 +166,32 @@ func TestGraphQLAIDecisionModelsQuery(t *testing.T) {
 	} {
 		w := serveGraphQL(t, `query AIDecisionModels($modelType: String!) { AIDecisionModels(modelType: $modelType) }`, `{"modelType":"`+modelType+`"}`)
 		requireJSONEqual(t, modelType+" decision models", w.Body.Bytes(), want)
+	}
+}
+
+func TestGraphQLDecisionsTurnedOff(t *testing.T) {
+	original := env.DisableAIDecisions
+	env.DisableAIDecisions = true
+	t.Cleanup(func() { env.DisableAIDecisions = original })
+	originalFactory := providers.HTTPClientFactory
+	providers.HTTPClientFactory = func() *http.Client {
+		t.Fatal("expected no request to the provider")
+		return nil
+	}
+	t.Cleanup(func() { providers.HTTPClientFactory = originalFactory })
+
+	w := serveGraphQL(t, `query AIDecisionModels($modelType: String!) { AIDecisionModels(modelType: $modelType) }`, `{"modelType":"OpenAI"}`)
+	requireJSONEqual(t, "decision models", w.Body.Bytes(), `{"data":{"AIDecisionModels":[]}}`)
+
+	w = serveGraphQL(t, `mutation RunAIDecision($input: AIDecisionInput!) { RunAIDecision(input: $input) { Answers { Name } } }`, `{"input":{
+		"ModelType":"OpenAI",
+		"Token":"test-key",
+		"Model":"gpt-6-luna",
+		"Input":"The site is down.",
+		"Questions":[{"Type":"Predicate","Name":"urgent","Instructions":"Is this urgent?"}]
+	}}`)
+	if !strings.Contains(w.Body.String(), "decisions are turned off on this server") || strings.Contains(w.Body.String(), `"Answers"`) {
+		t.Fatalf("expected the mutation to be refused, got %s", w.Body.String())
 	}
 }
 
