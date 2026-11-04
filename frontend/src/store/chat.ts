@@ -18,13 +18,21 @@ import type { PayloadAction} from '@reduxjs/toolkit';
 import { createSlice } from '@reduxjs/toolkit';
 import type { AiChatMessage } from '@graphql';
 import { v4 as uuidv4 } from 'uuid';
+import type { DecisionRowResult } from '../pages/chat/decisions';
 
+
+/** Where a Decisions run is: sending rows, stopped part way, finished, or declined before anything was sent. */
+export type DecisionRunStatus = 'running' | 'stopped' | 'complete' | 'declined';
 
 export type IChatMessage = AiChatMessage & {
     isUserInput?: boolean;
     isStreaming?: boolean;
     id?: number;
     activity?: string[];
+    // The provider that planned a decision message; its rows only go to this provider.
+    decisionProvider?: { id: string; name: string };
+    // One result per row of the message's Result, filled in as answers arrive.
+    decisionRun?: { status: DecisionRunStatus; results: Array<DecisionRowResult | null> };
 };
 
 export type ChatSession = {
@@ -56,6 +64,10 @@ const initialState: IChatState = {
     chats: [],
     sessions: [],
     activeSessionId: null,
+}
+
+function findSessionMessage(state: IChatState, sessionId: string, id: number): IChatMessage | undefined {
+    return state.sessions.find(session => session.id === sessionId)?.messages.find(chat => chat.id === id);
 }
 
 export const houdiniSlice = createSlice({
@@ -274,6 +286,33 @@ export const houdiniSlice = createSlice({
     clearAllChatSessions: (state) => {
         state.sessions = [];
         state.activeSessionId = null;
+    },
+    // Decisions actions name their session, because a run keeps writing after the user switches chats.
+    startDecisionRun: (state, action: PayloadAction<{ sessionId: string; id: number; rowCount: number }>) => {
+        const message = findSessionMessage(state, action.payload.sessionId, action.payload.id);
+        if (message) {
+            message.RequiresConfirmation = false;
+            message.decisionRun = { status: 'running', results: Array<DecisionRowResult | null>(action.payload.rowCount).fill(null) };
+        }
+    },
+    setDecisionRowResult: (state, action: PayloadAction<{ sessionId: string; id: number; index: number; result: DecisionRowResult | null }>) => {
+        const run = findSessionMessage(state, action.payload.sessionId, action.payload.id)?.decisionRun;
+        if (run) {
+            run.results[action.payload.index] = action.payload.result;
+        }
+    },
+    finishDecisionRun: (state, action: PayloadAction<{ sessionId: string; id: number; status: 'stopped' | 'complete' }>) => {
+        const run = findSessionMessage(state, action.payload.sessionId, action.payload.id)?.decisionRun;
+        if (run) {
+            run.status = action.payload.status;
+        }
+    },
+    declineDecision: (state, action: PayloadAction<{ sessionId: string; id: number }>) => {
+        const message = findSessionMessage(state, action.payload.sessionId, action.payload.id);
+        if (message) {
+            message.RequiresConfirmation = false;
+            message.decisionRun = { status: 'declined', results: [] };
+        }
     },
   },
 });

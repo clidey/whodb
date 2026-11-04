@@ -26,7 +26,7 @@ import { houdiniReducers } from './chat';
 import { aiModelsReducers } from './ai-models';
 import type { IScratchpadState } from './scratchpad';
 import { scratchpadReducers } from './scratchpad';
-import type { IChatState } from './chat';
+import type { IChatMessage, IChatState } from './chat';
 import { tourReducers } from './tour';
 import { healthReducers } from './health';
 import { exploreConditionsReducers } from './explore-conditions';
@@ -141,9 +141,14 @@ const chatTransform = createTransform(
       if (isNaN(createdAt.getTime())) {
         createdAt = new Date();
       }
+      // A run cannot continue after a reload; it is never resumed, so show it as stopped.
+      const messages = session.messages?.map((message: IChatMessage) => message.decisionRun?.status === 'running'
+        ? { ...message, decisionRun: { ...message.decisionRun, status: 'stopped' } }
+        : message);
       return {
         ...session,
-        createdAt
+        createdAt,
+        messages,
       };
     });
 

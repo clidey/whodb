@@ -415,6 +415,11 @@ func (r *mutationResolver) GenerateChatTitle(ctx context.Context, input model.Ge
 	return generateChatTitleImpl(ctx, input)
 }
 
+// RunAIDecision is the resolver for the RunAIDecision field.
+func (r *mutationResolver) RunAIDecision(ctx context.Context, input model.AIDecisionInput) (*model.AIDecisionResponse, error) {
+	return runAIDecision(ctx, input)
+}
+
 // Version is the resolver for the Version field.
 func (r *queryResolver) Version(ctx context.Context) (string, error) {
 	if env.ApplicationVersion != "" {
@@ -909,6 +914,11 @@ func (r *queryResolver) AIModel(ctx context.Context, providerID *string, modelTy
 		return nil, err
 	}
 	return models, nil
+}
+
+// AIDecisionModels is the resolver for the AIDecisionModels field.
+func (r *queryResolver) AIDecisionModels(ctx context.Context, modelType string) ([]string, error) {
+	return llm.DecisionModels(modelType), nil
 }
 
 // SettingsConfig is the resolver for the SettingsConfig field.

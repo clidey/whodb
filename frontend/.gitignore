@@ -13,6 +13,7 @@
 /build
 /.analytics-test-build
 /.not-found-test-build
+/.chat-decision-test-build
 
 # misc
 .DS_Store
