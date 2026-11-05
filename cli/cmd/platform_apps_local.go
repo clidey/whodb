@@ -203,6 +203,7 @@ func registerPlatformLocalAppCommands() {
 	appsVerifyCmd.Flags().StringVar(&appLocalEnv, "env", "dev", "function environment: dev uses drafts; published uses active functions (required for managed packages)")
 	appsVerifyCmd.Flags().StringVar(&appKernelDir, "kernel-dir", os.Getenv("WHODB_APP_KERNEL_DIR"), "local built sandbox assets, for testing runtime changes before server deployment")
 	appsCmd.AddCommand(appsInitCmd, appsCheckCmd, appsPublishCmd, appsDevCmd, appsVerifyCmd)
+	registerAppSyncPlanCommand()
 }
 
 func localAppCapture(ctx context.Context, folder string) (*appfolder.Workspace, *platformSession, appcapture.Options, error) {
