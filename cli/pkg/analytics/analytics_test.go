@@ -135,6 +135,51 @@ func TestOperationPropertiesDistinguishFailureConfirmationAndUnknownSizes(t *tes
 	})
 }
 
+func TestMCPToolCallPropertiesClassifyFailuresWithoutRawErrors(t *testing.T) {
+	tests := []struct {
+		name    string
+		success bool
+		props   map[string]any
+		code    string
+		denied  bool
+	}{
+		{name: "query execution failure", props: map[string]any{"error_type": "execution"}, code: "execution"},
+		{name: "platform session failure", props: map[string]any{"error_type": "platform_session"}, code: "platform_session"},
+		{name: "blocked SQL", props: map[string]any{"error_type": "security"}, code: "security", denied: true},
+		{name: "disallowed connection", props: map[string]any{"error_type": "connection_not_allowed"}, code: "connection_not_allowed", denied: true},
+		{name: "unrecognized failure", props: map[string]any{"error_type": "connection string with secrets"}, code: "internal_error"},
+		{name: "failure without type", code: "internal_error"},
+		{name: "successful tool response", success: true, props: map[string]any{"confirmation_required": true}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			props := mcpToolCallProperties("query", "request-1", tt.success, 42, tt.props)
+			if props["client_type"] != "mcp" || props["execution_mode"] != "mcp" {
+				t.Fatalf("missing MCP attribution: %#v", props)
+			}
+			if tt.success {
+				if _, exists := props["error_code"]; exists {
+					t.Fatalf("successful tool call must not have an error code: %#v", props)
+				}
+				if props["outcome"] != "confirmation_required" {
+					t.Fatalf("confirmation preview was misclassified: %#v", props)
+				}
+				return
+			}
+			outcome := "failure"
+			if tt.denied {
+				outcome = "denied"
+			}
+			if props["error_code"] != tt.code || props["error_type"] != tt.code || props["outcome"] != outcome {
+				t.Fatalf("failure classification = %#v, want code %q", props, tt.code)
+			}
+			if got := props["denied"] == true; got != tt.denied {
+				t.Fatalf("denied = %t, want %t: %#v", got, tt.denied, props)
+			}
+		})
+	}
+}
+
 // Test that tracking functions don't panic when analytics is not initialized
 func TestTrackFunctions_NoPanicWhenUninitialized(t *testing.T) {
 	ctx := context.Background()

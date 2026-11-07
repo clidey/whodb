@@ -85,6 +85,11 @@ stopped executing.
 A local MCP response awaiting write approval has
 `outcome: confirmation_required`. Its successful tool response is not an
 executed write or a completed user task.
+Failed local MCP tool-call events include `error_code` from the tool's fixed
+`error_type` category; unrecognized categories become `internal_error`. Raw
+error messages are never included in either field. Security-policy and
+disallowed-connection responses also set `denied: true` and `outcome: denied`,
+so dashboards can separate them from execution failures.
 
 ## Identity
 
