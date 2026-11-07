@@ -455,3 +455,32 @@ func TestSQLiteProtectedConnectionCannotEnableWrites(t *testing.T) {
 		t.Fatalf("unexpected protected state: %d %v", count, err)
 	}
 }
+
+func TestSQLiteGetRowsPageSizeZeroReturnsAllRows(t *testing.T) {
+	plugin, config, _ := newSQLiteRuntimeTestFixture(t,
+		"CREATE TABLE customers (id INTEGER PRIMARY KEY, name TEXT)",
+		"INSERT INTO customers (name) VALUES ('a'), ('b'), ('c')",
+		"CREATE TABLE orders (id INTEGER PRIMARY KEY, total INTEGER) STRICT",
+		"INSERT INTO orders (total) VALUES (1), (2), (3)",
+	)
+
+	for _, table := range []string{"customers", "orders"} {
+		t.Run(table, func(t *testing.T) {
+			all, err := plugin.GetRows(config, &engine.GetRowsRequest{StorageUnit: table, PageSize: 0})
+			if err != nil {
+				t.Fatalf("GetRows with page size 0: %v", err)
+			}
+			if len(all.Rows) != 3 {
+				t.Fatalf("page size 0 returned %d rows, want all 3", len(all.Rows))
+			}
+
+			page, err := plugin.GetRows(config, &engine.GetRowsRequest{StorageUnit: table, PageSize: 2, PageOffset: 2})
+			if err != nil {
+				t.Fatalf("GetRows with page size 2: %v", err)
+			}
+			if len(page.Rows) != 1 {
+				t.Fatalf("second page of 2 returned %d rows, want 1", len(page.Rows))
+			}
+		})
+	}
+}
