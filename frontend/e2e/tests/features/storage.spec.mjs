@@ -465,7 +465,8 @@ describeOrSkip('Browser Storage', () => {
             expect(consent).toEqual('denied');
         });
 
-        test('analytics consent persists across page navigation', async ({ whodb, page }) => {
+        test('analytics consent persists across page navigation', async ({ whodb, page }, testInfo) => {
+            test.skip(testInfo.project.metadata.uiFeatures?.optionalAnalyticsConsent === false, 'Analytics consent is managed by this UI');
             const conn = db.connection;
             await whodb.login(
                 db.uiType || db.type,

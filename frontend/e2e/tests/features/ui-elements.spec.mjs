@@ -56,11 +56,13 @@ test.describe('UI Elements', () => {
             await expect(page.locator('[data-testid="connection-context"]')).toBeVisible();
         });
 
-        test('keeps the sidebar footer extras on the Tables page', async ({ whodb, page }) => {
+        test('keeps the sidebar footer extras on the Tables page', async ({ whodb, page }, testInfo) => {
+            test.skip(testInfo.project.metadata.uiFeatures?.sourceVersionFooter === false, 'This UI does not use the source version footer');
             await expect(page.locator('[data-testid="sidebar-version-info"]')).toBeVisible();
         });
 
-        test('shows a no-results state in the command palette', async ({ whodb, page }) => {
+        test('shows a no-results state in the command palette', async ({ whodb, page }, testInfo) => {
+            test.skip(testInfo.project.metadata.uiFeatures?.sourceCommandPalette === false, 'This UI supplies its own command palette');
             await whodb.typeCmdShortcut('k');
             await page.locator('[data-testid="command-palette-input"]').fill('zzz-no-such-table-zzz');
             // Navigation stays available while searching; the empty state covers tables and sort commands.

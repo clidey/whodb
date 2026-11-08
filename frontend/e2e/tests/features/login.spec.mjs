@@ -146,6 +146,7 @@ test.describe('Login & Authentication', () => {
         });
 
         test('tests the connection before logging in', async ({ whodb, page }) => {
+            test.skip(process.env.DATABASE && process.env.DATABASE.toLowerCase() !== 'postgres', 'Uses the PostgreSQL fixture');
             const db = getDatabaseConfig('postgres');
             await page.locator('[data-testid="database-type-select"]').click();
             await page.locator('[data-value="Postgres"]').click();
@@ -154,16 +155,17 @@ test.describe('Login & Authentication', () => {
             await page.locator('[data-testid="username"]').fill(db.connection.user);
             await page.locator('[data-testid="password"]').fill('wrong-password');
             await page.locator('[data-testid="database"]').fill(db.connection.database);
+            await page.locator('[data-testid="port"]').fill(String(db.connection.advanced?.Port ?? db.connection.port));
 
             await page.locator('[data-testid="connection-test-button"]').click();
             const result = page.locator('[data-testid="connection-test-result"]');
             await expect(result).toBeVisible({ timeout: TIMEOUT.ACTION });
-            await expect(result).toHaveClass(/is-error/);
+            await expect(result).toHaveAttribute('data-variant', 'destructive');
 
             await page.locator('[data-testid="password"]').fill(db.connection.password);
             await page.locator('[data-testid="connection-test-button"]').click();
             await expect(result).toContainText('Connection successful', { timeout: TIMEOUT.ACTION });
-            await expect(result).toHaveClass(/is-success/);
+            await expect(result).toHaveAttribute('data-variant', 'success');
             await expect(page).toHaveURL(/\/login/);
         });
 
@@ -318,6 +320,7 @@ test.describe('Login & Authentication', () => {
 
     test.describe('Direct Credentials Login', () => {
         test('successfully logs in with valid credentials', async ({ whodb, page }) => {
+            test.skip(process.env.DATABASE && process.env.DATABASE.toLowerCase() !== 'postgres', 'Uses the PostgreSQL fixture');
             // Use PostgreSQL config from fixtures
             const db = getDatabaseConfig('postgres');
 
@@ -325,6 +328,7 @@ test.describe('Login & Authentication', () => {
             await page.locator(`[data-value="${db.type}"]`).click();
 
             await page.locator('[data-testid="hostname"]').fill(db.connection.host);
+            await page.locator('[data-testid="port"]').fill(String(db.connection.advanced?.Port ?? db.connection.port));
             await page.locator('[data-testid="username"]').fill(db.connection.user);
             await page.locator('[data-testid="password"]').fill(db.connection.password);
             await page.locator('[data-testid="database"]').fill(db.connection.database);
@@ -333,13 +337,14 @@ test.describe('Login & Authentication', () => {
             if (db.connection.advanced && Object.keys(db.connection.advanced).length > 0) {
                 await page.locator('[data-testid="advanced-button"]').click();
                 for (const [key, value] of Object.entries(db.connection.advanced)) {
+                    if (key.toLowerCase() === 'port') continue;
                     await page.locator(`[data-testid="${key}-input"]`).clear();
                     await page.locator(`[data-testid="${key}-input"]`).fill(String(value));
                 }
             }
 
             const loginResponsePromise = page.waitForResponse(resp =>
-                resp.url().includes('/api/query') && resp.request().method() === 'POST'
+                resp.url().includes('/api/query') && resp.request().method() === 'POST' && resp.request().postDataJSON()?.operationName === 'LoginSource'
             );
             await page.locator('[data-testid="login-button"]').click();
 
@@ -353,16 +358,19 @@ test.describe('Login & Authentication', () => {
         });
 
         test('shows error message on invalid credentials', async ({ whodb, page }) => {
+            test.skip(process.env.DATABASE && process.env.DATABASE.toLowerCase() !== 'postgres', 'Uses the PostgreSQL fixture');
+            const db = getDatabaseConfig('postgres');
             await page.locator('[data-testid="database-type-select"]').click();
             await page.locator('[data-value="Postgres"]').click();
 
-            await page.locator('[data-testid="hostname"]').fill('localhost');
+            await page.locator('[data-testid="hostname"]').fill(db.connection.host);
+            await page.locator('[data-testid="port"]').fill(String(db.connection.advanced?.Port ?? db.connection.port));
             await page.locator('[data-testid="username"]').fill('invalid_user');
             await page.locator('[data-testid="password"]').fill('wrong_password');
             await page.locator('[data-testid="database"]').fill('nonexistent_db');
 
             const loginResponsePromise = page.waitForResponse(resp =>
-                resp.url().includes('/api/query') && resp.request().method() === 'POST'
+                resp.url().includes('/api/query') && resp.request().method() === 'POST' && resp.request().postDataJSON()?.operationName === 'LoginSource'
             );
             await page.locator('[data-testid="login-button"]').click();
 

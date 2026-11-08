@@ -529,7 +529,8 @@ test.describe('Keyboard Shortcuts', () => {
         });
 
         test.describe('Keyboard Shortcuts Help Modal', () => {
-            test('pressing ? key opens the shortcuts modal', async ({ whodb, page }) => {
+            test('pressing ? key opens the shortcuts modal', async ({ whodb, page }, testInfo) => {
+                test.skip(testInfo.project.metadata.uiFeatures?.keyboardShortcutsHelp === false, 'Shortcut help is disabled in this UI');
                 await whodb.data(tableName);
 
                 // Press ? key (Shift+/)
@@ -610,6 +611,9 @@ test.describe('Keyboard Shortcuts', () => {
         });
 
         test.describe('Command Palette (Cmd/Ctrl+K)', () => {
+            test.beforeEach(({ page: _page }, testInfo) => {
+                test.skip(testInfo.project.metadata.uiFeatures?.sourceCommandPalette === false, 'This UI supplies its own command palette');
+            });
             test('Cmd/Ctrl+K opens command palette', async ({ whodb, page }) => {
                 await whodb.data(tableName);
 
@@ -951,6 +955,9 @@ test.describe('Keyboard Shortcuts', () => {
         });
 
         test.describe('Command Palette Sort Commands', () => {
+            test.beforeEach(({ page: _page }, testInfo) => {
+                test.skip(testInfo.project.metadata.uiFeatures?.sourceCommandPalette === false, 'This UI supplies its own command palette');
+            });
             test('command palette shows sort options when on table view', async ({ whodb, page }) => {
                 await whodb.data(tableName);
 

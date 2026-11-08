@@ -391,7 +391,8 @@ test.describe('Sidebar Navigation', () => {
     test.describe('Version Display', () => {
         forEachDatabase('sql', (db) => {
             test.describe(`${db.type}`, () => {
-                test('shows WhoDB version in sidebar footer', async ({ whodb, page }) => {
+                test('shows WhoDB version in sidebar footer', async ({ whodb, page }, testInfo) => {
+                    test.skip(testInfo.project.metadata.uiFeatures?.sourceVersionFooter === false, 'This UI does not use the source version footer');
                     // The Tables page hides the footer extras, so check from another page.
                     await whodb.goto('settings');
                     await page.locator('[data-testid="sidebar-profile"]').waitFor({ timeout: 10000 });
