@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {expect} from "@playwright/test";
+import {expect, test} from "@playwright/test";
 import {TIMEOUT, fetchSourceSession} from "../helpers/test-utils.mjs";
 
 const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
@@ -82,6 +82,9 @@ export const coreMethods = {
      * @param {string} route
      */
     async goto(route) {
+        if (route === "settings") {
+            test.skip(test.info().project.metadata.uiFeatures?.settingsPage === false, "The source settings page is disabled in this UI");
+        }
         await this.page.goto(this.url(`/${route}`));
     },
 

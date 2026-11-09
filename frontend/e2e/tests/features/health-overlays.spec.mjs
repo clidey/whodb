@@ -18,6 +18,9 @@ import { test, expect, forEachDatabase } from '../../support/test-fixture.mjs';
 import { TIMEOUT } from '../../support/helpers/test-utils.mjs';
 
 test.describe('Health Check Overlays', () => {
+    test.beforeEach(({ page: _page }, testInfo) => {
+        test.skip(testInfo.project.metadata.uiFeatures?.healthMonitoring === false, 'Health monitoring is disabled in this UI');
+    });
 
     // Health overlays are global UI behavior — only test with Postgres
     forEachDatabase('sql', (db) => {

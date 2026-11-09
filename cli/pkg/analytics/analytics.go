@@ -315,6 +315,10 @@ func TrackMCPServerStart(ctx context.Context, transport string, securityMode str
 
 // TrackMCPToolCall captures MCP tool invocation.
 func TrackMCPToolCall(ctx context.Context, toolName string, requestID string, success bool, durationMs int64, props map[string]any) {
+	analytics.Capture(ctx, "mcp.tool.call", mcpToolCallProperties(toolName, requestID, success, durationMs, props))
+}
+
+func mcpToolCallProperties(toolName string, requestID string, success bool, durationMs int64, props map[string]any) map[string]any {
 	eventProps := map[string]any{
 		"client_type":    "mcp",
 		"execution_mode": "mcp",
@@ -326,7 +330,33 @@ func TrackMCPToolCall(ctx context.Context, toolName string, requestID string, su
 	for k, v := range props {
 		eventProps[k] = v
 	}
-	analytics.Capture(ctx, "mcp.tool.call", mergeProps(eventProps))
+	if !success {
+		code := mcpErrorCode(eventProps["error_type"])
+		eventProps["error_type"] = code
+		eventProps["error_code"] = code
+		if code == "security" || code == "connection_not_allowed" {
+			eventProps["denied"] = true
+		}
+	}
+	merged := mergeProps(eventProps)
+	if merged["denied"] == true {
+		merged["outcome"] = "denied"
+	}
+	return merged
+}
+
+func mcpErrorCode(value any) string {
+	code, _ := value.(string)
+	switch code {
+	case "audit", "columns", "compare", "connection", "connection_not_allowed", "connection_resolve",
+		"execution", "fetch", "graph", "manager_init", "schema", "security", "suggestions",
+		"timeout", "token_invalid", "validation", "platform_action", "platform_capability",
+		"platform_manifest", "platform_org", "platform_query", "platform_session", "platform_source",
+		"platform_user", "source_type":
+		return code
+	default:
+		return "internal_error"
+	}
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

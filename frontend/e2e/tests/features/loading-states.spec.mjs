@@ -43,6 +43,7 @@ test.describe('Loading States & Spinners', () => {
         });
 
         test('shows loading indicator during login submission', async ({ whodb, page }) => {
+            test.skip(process.env.DATABASE && process.env.DATABASE.toLowerCase() !== 'postgres', 'Uses the PostgreSQL fixture');
             const db = getDatabaseConfig('postgres');
 
             // Fill login form
@@ -50,6 +51,7 @@ test.describe('Loading States & Spinners', () => {
             await page.locator(`[data-value="${db.type}"]`).click();
 
             await page.locator('[data-testid="hostname"]').fill(db.connection.host);
+            await page.locator('[data-testid="port"]').fill(String(db.connection.advanced?.Port ?? db.connection.port));
             await page.locator('[data-testid="username"]').fill(db.connection.user);
             await page.locator('[data-testid="password"]').fill(db.connection.password);
             await page.locator('[data-testid="database"]').fill(db.connection.database);
