@@ -1185,7 +1185,7 @@ export const LoginForm: FC<LoginFormProps> = ({
             </div>
             {
                 showSidePanel && !landing && advancedDirection === "horizontal" && (
-                    <Card className="flex flex-col gap-6 p-8 w-full md:w-[380px] shadow-xl" data-testid="sample-database-panel" aria-labelledby="sample-db-heading">
+                    <Card className="flex flex-col w-full md:w-[380px]" data-testid="sample-database-panel" aria-labelledby="sample-db-heading">
                         <div className="flex flex-col gap-4">
                             <div className="flex items-center gap-3">
                                 <div className="h-14 w-14 rounded-2xl flex justify-center items-center bg-gradient-to-br from-brand to-brand/80 shadow-lg" aria-hidden="true">

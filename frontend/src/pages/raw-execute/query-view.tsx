@@ -20,7 +20,8 @@ import React, { useEffect} from "react";
 import {StorageUnitTable} from "../../components/table";
 import {RawExecuteDocument} from "../../generated/graphql";
 import type {RowsResult} from "@graphql";
-import { IconCheckCircle as CheckCircleIcon } from '@clidey/ux';
+import { Alert, AlertTitle, IconInfo } from '@clidey/ux';
+import {useTranslation} from '@/hooks/use-translation';
 import {useAppSelector} from "../../store/hooks";
 import {isDestructiveQuery} from "../../utils/query-utils";
 
@@ -37,8 +38,10 @@ export type IPluginProps = {
     rowsResult?: RowsResult | null;
 }
 
+/** Renders source query rows or the completed-statement information alert. */
 export const QueryView: FC<IPluginProps> = ({ code, handleExecuteRef, containerWidth, rowsResult: data }) => {
     const client = useApolloClient();
+    const {t} = useTranslation('pages/raw-execute');
     const currentType = useAppSelector(state => state.auth.current?.Type);
 
     // Set the ref to a function that executes the query and returns a promise
@@ -85,9 +88,11 @@ export const QueryView: FC<IPluginProps> = ({ code, handleExecuteRef, containerW
     }
 
     return (
-        <div className="bg-white/10 text-neutral-800 dark:text-neutral-300 rounded-lg p-2 flex gap-sm self-start items-center my-4" data-testid="cell-action-output">
-            Action Executed
-            <CheckCircleIcon className="w-4 h-4" />
+        <div className="my-4 w-fit max-w-full self-start" data-testid="cell-action-output">
+            <Alert variant="info">
+                <IconInfo />
+                <AlertTitle>{t('actionExecuted')}</AlertTitle>
+            </Alert>
         </div>
     );
 };

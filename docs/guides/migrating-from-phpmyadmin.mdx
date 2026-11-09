@@ -1,77 +1,41 @@
 ---
-title: "Migrating From phpMyAdmin"
-description: "Switch from phpMyAdmin to WhoDB: map familiar workflows to WhoDB's UI, from browsing tables to running SQL and exporting data"
+title: "Move a MySQL workflow to WhoDB"
+description: "Recreate your MySQL browsing and query workflow without moving the database."
 ---
 
-# Migrating From phpMyAdmin
+# Move a MySQL workflow to WhoDB
 
-WhoDB uses a source-first UI with Storage Units, a data grid, Scratchpad, and Graph. This page maps common phpMyAdmin habits to current WhoDB behavior.
+WhoDB can connect to the MySQL or MariaDB server you already use through phpMyAdmin. You do not need to export and reimport the database just to change the client you use for daily inspection.
 
-## Connect
+## Connect from the WhoDB server
 
-Open WhoDB, choose MySQL or MariaDB, enter connection details, and click **Connect**.
+Get the database host, port, database name, account credentials, and required TLS settings. Open WhoDB and choose the corresponding source type. Use [First connection](/first-login) for the connection form.
 
-![Login Form](/images/03-login-form-filled.png)
+A hostname used by phpMyAdmin may only be valid inside its hosting network. If WhoDB runs in a different container or on another machine, use an endpoint reachable from that location. A hosting control panel may need to allow the new client's address.
 
-## Browse Databases And Tables
+<div className="ce-screenshot-light">
 
-Use the sidebar database selector when the source supports database switching. Use **Storage Units** to browse tables and views.
+![Connection settings in WhoDB](/images/light/03-login-form-filled.png)
 
-![Storage Unit List](/images/05-storage-unit-list.png)
+</div>
+<div className="ce-screenshot-dark">
 
-Click **Describe** for table metadata and **Data** for rows.
+![Connection settings in WhoDB](/images/dark/03-login-form-filled.png)
 
-![Explore Users Table](/images/07-explore-users-table.png)
+</div>
 
-This is the main metadata workflow.
+After connecting, select the application database. Find a known table and compare its fields and a few records. The account must have access to that database even if connection to the server succeeds.
 
-## Search And Filter
+## Inspect and query the same data
 
-In a data grid:
+Open a table's **Info** to check fields and **Data** to inspect rows. Use **Filter** to retrieve a particular record from the database; text Search only checks loaded rows.
 
-- Search finds values in currently loaded rows.
-- WHERE conditions filter server-side after you click **Query**.
+Paste an existing MySQL query into **Scratchpad** and test a small read. WhoDB sends source-specific query syntax, so keep MySQL quoting and functions in queries for this connection. Save important scripts outside the browser.
 
-![Where Conditions Popover](/images/16-data-view-where-conditions-popover.png)
+## Choose the right transfer path
 
-## Run SQL
+For a spreadsheet-sized set of records, run a bounded query and export its result. To load CSV or Excel, open **Import** on the target object and inspect the preview and mode before execution.
 
-Use **Scratchpad** for SQL and run with `Cmd/Ctrl + Enter`.
+A SQL dump needs different handling from a table of records. Review [Importing data](/data/importing) for SQL import behavior and limits, and use database-native tools for a complete backup or restore. Do not assume a CSV export preserves schema, routines, or permissions.
 
-![Scratchpad Main View](/images/27-scratchpad-main-view.png)
-
-Use the visible Scratchpad page and cell controls to organize queries.
-
-## Export
-
-WhoDB exports CSV, Excel `.xlsx`, and JSON Lines for records from sources like MongoDB when supported.
-
-![Export Dialog](/images/20-data-view-export-dialog.png)
-
-For full MySQL or MariaDB backups, use native tools:
-
-```bash
-mysqldump --host "$MYSQL_HOST" --user "$MYSQL_USER" --password="$MYSQL_PASSWORD" "$MYSQL_DATABASE" > backup.sql
-```
-
-## Useful Shortcuts
-
-| Action | Current WhoDB Shortcut |
-|--------|------------------------|
-| Run Scratchpad query | `Cmd/Ctrl + Enter` |
-| Clear Scratchpad editor | `Cmd/Ctrl + U` |
-| Toggle sidebar | `Cmd/Ctrl + B` |
-| Command palette | `Cmd/Ctrl + K` |
-| Table export | `Cmd/Ctrl + Shift + E` |
-| Select visible rows | `Cmd/Ctrl + A` |
-
-## Related Pages
-
-<CardGroup cols={2}>
-<Card title="Quick Start" icon="rocket" href="/quick-start">
-Learn the current UI quickly.
-</Card>
-<Card title="Export Options" icon="file-export" href="/advanced/export-options">
-See current export formats.
-</Card>
-</CardGroup>
+Continue with [MySQL usage](/best-practices/mysql), [schema changes](/features/schema-management), or [data exploration](/guides/tutorials/data-exploration-workflow).

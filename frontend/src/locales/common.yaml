@@ -1,4 +1,5 @@
 en_US:
+  actionExecuted: "Action Executed"
   actions: "Actions"
   add: "Add"
   addAwsAccount: "Add AWS Account"

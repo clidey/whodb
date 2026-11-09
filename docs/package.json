@@ -1,0 +1,16 @@
+{
+  "name": "whodb-community-docs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "dory dev",
+    "check": "dory check",
+    "build": "dory check && dory build && node scripts/check-build.mjs",
+    "build:pages": "node scripts/build-pages.mjs",
+    "preview": "dory preview"
+  },
+  "devDependencies": {
+    "@clidey/dory": "1.11.0"
+  },
+  "packageManager": "pnpm@12.15.0"
+}

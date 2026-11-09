@@ -1,0 +1,8 @@
+ignoreScripts: true
+
+allowBuilds:
+  '@parcel/watcher': false
+  esbuild: false
+
+minimumReleaseAgeExclude:
+  - '@clidey/dory@1.11.0'

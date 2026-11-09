@@ -45,6 +45,73 @@ test.describe('UI Elements', () => {
             await expect(page.locator('[data-testid="schema-viewer-group"][data-group-type*="view" i]')).toHaveCount(1);
         });
 
+        test('keeps secondary navigation below the shared header in both themes', async ({ whodb, page }) => {
+            await whodb.data(tableName);
+            for (const colorScheme of ['light', 'dark']) {
+                await page.emulateMedia({ colorScheme });
+                const list = page.getByTestId('schema-viewer');
+                const header = page.getByTestId('connection-context');
+                await expect(list).toBeVisible();
+                const listBox = await list.boundingBox();
+                const headerBox = await header.boundingBox();
+                expect(listBox.y).toBeGreaterThanOrEqual(headerBox.y + headerBox.height);
+                const colors = await list.evaluate(element => ({
+                    list: getComputedStyle(element).backgroundColor,
+                    primary: getComputedStyle(document.querySelector('[data-slot="sidebar-inner"]')).backgroundColor,
+                }));
+                expect(colors.list).not.toBe(colors.primary);
+            }
+        });
+
+        test('opens the object list on mobile and returns to the selected object', async ({ whodb, page }) => {
+            await whodb.data(tableName);
+            await page.setViewportSize({ width: 390, height: 844 });
+            await page.getByRole('button', { name: 'Browse items', exact: true }).click();
+            const list = page.getByTestId('schema-viewer');
+            await expect(list).toBeVisible();
+            await expect(list.getByRole('textbox')).toBeFocused();
+            await list.locator('button[aria-current="page"]').click();
+            await expect(list).toBeHidden();
+            await expect(page.getByTestId('page-content')).toBeVisible();
+            await expect(page.getByTestId('page-content')).toBeFocused();
+        });
+
+        test('keeps chat renaming reachable from the mobile list', async ({ whodb, page }) => {
+            await whodb.goto('chat');
+            await page.setViewportSize({ width: 390, height: 844 });
+            await page.getByRole('button', { name: 'Browse items', exact: true }).click();
+            const list = page.getByTestId('chat-history-sidebar');
+            await list.getByTestId('add-chat-session-button').click();
+            await page.getByRole('button', { name: 'Browse items', exact: true }).click();
+            await list.getByRole('button', { name: 'Rename chat', exact: true }).first().click();
+            const input = list.locator('[data-testid^="chat-session-name-input-"]');
+            await input.fill('Renamed session');
+            await input.press('Enter');
+            const session = list.locator('[data-testid^="chat-session-item-"]').filter({ hasText: 'Renamed session' });
+            await expect(session).toBeVisible();
+            await session.getByRole('button', { name: 'Delete Chat', exact: true }).click();
+            await expect(page.getByRole('alertdialog')).toBeVisible();
+            await page.getByTestId('delete-chat-cancel').click();
+            await session.click();
+            await expect(list).toBeHidden();
+            await expect(page.getByTestId('page-content')).toBeFocused();
+        });
+
+        test('preserves pending cell edits while browsing the mobile object list', async ({ whodb, page }) => {
+            await page.setViewportSize({ width: 390, height: 844 });
+            await whodb.data(tableName);
+            await whodb.dataCell(0, db.testTable.identifierColIndex + 1).dblclick();
+            const editor = page.getByTestId('cell-editor');
+            await editor.fill('pending_mobile_change');
+            await editor.press('Enter');
+            const saveBar = page.getByTestId('cell-save-bar');
+            await expect(saveBar).toBeVisible();
+            await page.getByRole('button', { name: 'Browse items', exact: true }).click();
+            await page.getByRole('button', { name: 'View content', exact: true }).click();
+            await expect(saveBar).toBeVisible();
+            await saveBar.getByRole('button', { name: 'Discard', exact: true }).click();
+        });
+
         test('shows the connection breadcrumb outside the Tables page', async ({ whodb, page }) => {
             await whodb.data(tableName);
             await expect(page.locator('[data-testid="connection-context"]')).toBeVisible();
@@ -67,6 +134,31 @@ test.describe('UI Elements', () => {
             await expect(page.locator('[data-testid="command-palette-empty"]')).toBeVisible();
             await expect(page.locator('[data-testid="command-nav-chat"]')).toBeAttached();
             await page.keyboard.press('Escape');
+        });
+
+        test('shows completed statements as compact information alerts', async ({ whodb, page }) => {
+            await page.route('**/api/query', async route => {
+                if (route.request().postDataJSON()?.operationName !== 'RawExecute') {
+                    await route.fallback();
+                    return;
+                }
+                await route.fulfill({ json: { data: { RawExecute: {
+                    Columns: [], Rows: [], DisableUpdate: true, TotalCount: 0, __typename: 'RowsResult',
+                } } } });
+            });
+            await whodb.goto('scratchpad');
+            await whodb.writeCode(0, 'UPDATE docs_preview SET value = value WHERE 1 = 0;');
+            await whodb.runCode(0);
+            const output = page.getByTestId('cell-action-output');
+            const alert = output.getByRole('alert');
+            await expect(alert).toHaveAttribute('data-variant', 'info');
+            await expect(alert).toContainText('Action Executed');
+            for (const width of [390, 1440]) {
+                await page.setViewportSize({ width, height: 900 });
+                const box = await output.boundingBox();
+                const cell = await page.getByTestId('cell-0').boundingBox();
+                expect(box.width).toBeLessThan(cell.width * 0.8);
+            }
         });
 
         test('offers the embedded scratchpad on the data view', async ({ whodb, page }) => {

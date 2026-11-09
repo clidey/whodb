@@ -63,7 +63,6 @@ export const Card: FC<ICardProps> = ({
   return (
     <UxCard
       className={cn(
-        "py-4 gap-2",
         {
           "shadow-2xl z-10": highlightStatus,
         },
@@ -74,7 +73,7 @@ export const Card: FC<ICardProps> = ({
       ) : (
         <>
           {(propsIcon ?? tag) && (
-            <CardHeader className="flex flex-row justify-between items-start px-4">
+            <CardHeader className="flex flex-row justify-between items-start">
               {propsIcon && <div className="h-[40px] w-[40px] rounded-lg flex justify-center items-center bg-icon">
                 {cloneElement(propsIcon, {
                   className: "w-6 h-6 text-icon-foreground stroke-icon-foreground",
@@ -83,7 +82,7 @@ export const Card: FC<ICardProps> = ({
               {tag && <Badge variant="secondary">{tag}</Badge>}
             </CardHeader>
           )}
-          <CardContent className="px-4 flex flex-col grow justify-between">{children}</CardContent>
+          <CardContent className="flex flex-col grow justify-between">{children}</CardContent>
         </>
       )}
     </UxCard>
@@ -126,11 +125,11 @@ export const ExpandableCard: FC<IExpandableCardProps> = (props) => {
           {props.loading ? null : props.children[0]}
         </Card>
       </div>
-      <SheetContent side="right" className="p-0">
+      <SheetContent side="right">
         <VisuallyHidden>
           <SheetTitle>{t('details')}</SheetTitle>
         </VisuallyHidden>
-        <div className="flex flex-col w-full justify-center p-8 h-full">
+        <div className="flex flex-col w-full justify-center h-full">
           {props.loading ? null : props.children[1]}
         </div>
       </SheetContent>

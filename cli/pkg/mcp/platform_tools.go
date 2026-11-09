@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 	"time"
@@ -1659,6 +1660,14 @@ func loadHostedPlatformToolSession(ctx context.Context) (*platformToolSession, e
 	if runtime := platformRuntimeFromContext(ctx); runtime != nil {
 		return runtime.loadSession(ctx)
 	}
+	if _, present := os.LookupEnv(platformapi.APIKeyEnv); present {
+		scope, _, err := platformRequestScope(ctx)
+		if err != nil {
+			return nil, err
+		}
+		return loadAutomationPlatformToolSession(ctx, scope)
+	}
+
 	cfg, err := config.LoadConfigWithoutSecrets()
 	if err != nil {
 		return nil, fmt.Errorf("cannot load hosted WhoDB config: %w", err)

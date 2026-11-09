@@ -1,101 +1,58 @@
 ---
-title: "Data Exploration Workflow"
-description: "Explore data with Storage Units, Describe, Data, filters, sorting, and Scratchpad"
+title: "Explore an unfamiliar database"
+description: "Go from object discovery to a filtered result and a repeatable query."
 ---
 
-# Data Exploration Workflow
+# Explore an unfamiliar database
 
-This workflow follows the current WhoDB CE interface.
+Suppose you need to find an order's owner in a database you have never used. Start by finding the relevant records and checking their relationship. You do not need to understand every table before answering this question.
 
-## 1. Choose The Object
+Use a connection with read access to the development or reporting database. This walkthrough only reads data.
 
-Open **Storage Units** and use search to find the object you need.
+## Find the starting table
 
-![Storage Unit List](/images/05-storage-unit-list.png)
+Open **Tables** and search for the name that best matches your question, such as `orders`. Expand **Info** to inspect its fields and types. Look for the order identifier and a field that may refer to its owner, such as `user_id`.
 
-Use **Describe** to inspect structure and metadata.
+<div className="ce-screenshot-light">
 
-![Explore Users Table](/images/07-explore-users-table.png)
+![Inspecting table structure](/images/light/07-explore-users-table.png)
 
-Use **Data** to open rows.
+</div>
+<div className="ce-screenshot-dark">
 
-![Data View Users Table](/images/09-data-view-users-table.png)
+![Inspecting table structure](/images/dark/07-explore-users-table.png)
 
-## 2. Inspect Rows
+</div>
 
-The data grid loads rows automatically. Use page size and pagination to control how much data is visible.
+Open **Data** and inspect a small page of records. Check whether identifiers, dates, and missing values look as expected. The screenshots use a sample users table; follow the same process with your own objects.
 
-![Data View Table Content](/images/10-data-view-table-content.png)
+## Isolate the record
 
-![Page Size Dropdown](/images/15-data-view-page-size-dropdown.png)
+Open **Filter** and add an equality condition for the order ID you are investigating. Click **Run**. Confirm the returned identifier before following any related record.
 
-## 3. Search Visible Rows
+<div className="ce-screenshot-light">
 
-The Search field searches the rows currently loaded in the grid and highlights/scrolls matches.
+![Filtering rows in the data view](/images/light/16-data-view-where-conditions-popover.png)
 
-![Search Highlight](/images/19-data-view-search-highlight.png)
+</div>
+<div className="ce-screenshot-dark">
 
-Use WHERE conditions when you want to reduce the result count.
+![Filtering rows in the data view](/images/dark/16-data-view-where-conditions-popover.png)
 
-## 4. Add WHERE Conditions
+</div>
 
-Use WHERE conditions to filter server-side.
+The separate **Search** field helps locate text in loaded rows. It does not search the whole database. Use Filter when the matching record may be on another page.
 
-<Steps>
-<Step title="Open Condition UI">
-Click **Add** beside **Where condition**.
-</Step>
-<Step title="Build Condition">
-Select field, operator, and value.
-</Step>
-<Step title="Add Condition">
-Add the condition to the list.
-</Step>
-<Step title="Run Query">
-Click **Query** to reload the grid.
-</Step>
-</Steps>
+## Check the relationship
 
-![Where Conditions Popover](/images/16-data-view-where-conditions-popover.png)
+Open **Graph** and select the order and user tables. A declared foreign key can show which fields connect them. If there is no edge, inspect the schema or application code before assuming that similarly named fields form a relationship.
 
-![Multiple Conditions](/images/39-data-view-multiple-conditions.png)
+Return to Data and look up the referenced user. You should now be able to explain which record owns the order and which key establishes that connection.
 
-## 5. Sort Columns
+## Save the answer as a query
 
-Click a column header to sort. Shift-click additional headers for multi-column sorting.
+Put the lookup in **Scratchpad** using the names you verified. Save an initial sample in one cell and the related-record query in another. Test against a known order before using the query for other cases.
 
-![Sorted Column](/images/38-data-view-sorted-column.png)
+Copy the useful SQL into your issue, report, or repository with the connection context. Scratchpad helps you work through the question, but its browser-local state should not be the only copy of a query your team needs.
 
-## 6. Use Scratchpad For Custom Questions
-
-Open **Scratchpad** from the sidebar or the Storage Units shortcut and run SQL for custom analysis.
-
-![Scratchpad Code Editor](/images/28-scratchpad-code-editor.png)
-
-```sql
-SELECT status, COUNT(*) AS total
-FROM users
-GROUP BY status
-ORDER BY total DESC;
-```
-
-![Scratchpad Query Results](/images/29-scratchpad-query-results.png)
-
-## 7. Export When Needed
-
-Use export from the grid after applying filters or selecting rows.
-
-![Export Dialog](/images/20-data-view-export-dialog.png)
-
-Current formats are CSV, Excel, and JSON Lines for records from sources like MongoDB when supported.
-
-## Related Pages
-
-<CardGroup cols={2}>
-<Card title="Filtering And Searching" icon="filter" href="/data/filtering-searching">
-Compare search and WHERE conditions.
-</Card>
-<Card title="Scratchpad Introduction" icon="code" href="/query/scratchpad-intro">
-Run custom SQL.
-</Card>
-</CardGroup>
+Continue with [Build a query one step at a time](/guides/tutorials/building-complex-queries) to combine the records in a join.

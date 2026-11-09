@@ -1,36 +1,52 @@
 ---
-title: "Adding Records"
-description: "Insert rows through the current WhoDB Add Row sheet"
+title: "Add a record"
+description: "Create a row with the table form or a document with the source-specific editor."
 ---
 
-# Adding Records
+# Add a record
 
-WhoDB shows **Add Row** only when the connected source and selected object expose insert support.
+Use **Add Row** when you need to create one record and want to see the object's fields before writing it. This is useful for a small development fixture or a deliberate data correction. For a file containing many records, use [Import](/data/importing) instead.
 
-## Add A Row
+## Open the form
 
-<Steps>
-<Step title="Open Data">
-Open a storage unit and click **Data**.
-</Step>
-<Step title="Open Add Row">
-Click **Add Row** below the grid, near the pagination area.
-</Step>
-<Step title="Enter Values">
-For SQL tables, fill the right-side sheet fields. For JSON-based sources like MongoDB, enter a JSON object.
-</Step>
-<Step title="Submit">
-Click **Submit**. WhoDB sends the row to the backend and refreshes the grid on success.
-</Step>
-</Steps>
+Open the object's **Data** view and choose **Add Row** in the toolbar. The action appears when the source supports inserting records. The write uses the current connection's database permissions.
 
-## Field Behavior
+<div className="ce-screenshot-light">
 
-- Numeric column types use numeric HTML inputs where possible.
-- Long or special database-specific conversions are handled by the backend plugin.
-- Fields left empty are skipped and not sent to the backend. Submitting with every field empty is rejected with a message asking you to fill at least one value.
-- For document sources, invalid JSON is rejected before submission.
+![The Add Row sheet open beside the table](/images/light/11-data-view-add-row-dialog.png)
 
-## If Add Row Is Missing
+</div>
+<div className="ce-screenshot-dark">
 
-The **Add Row** action appears for objects that support inserts. Views, read-only sources, and some non-tabular objects usually hide it.
+![The Add Row sheet open beside the table](/images/dark/11-data-view-add-row-dialog.png)
+
+</div>
+
+Before entering values, check the object name and connection context. An object with the same name can exist in more than one environment or schema.
+
+## Fill the record
+
+Review the field names, types, and any required values. Let the database generate identity values where the form marks them as generated. Do not copy an ID from an existing record just to make the form look complete.
+
+For example, when creating a test user, enter a new username and email address, and leave a generated ID to the database. Use values that distinguish this fixture from real records so you can find and remove it later.
+
+<div className="ce-screenshot-light">
+
+![A completed Add Row form](/images/light/12-data-view-add-row-filled.png)
+
+</div>
+<div className="ce-screenshot-dark">
+
+![A completed Add Row form](/images/dark/12-data-view-add-row-filled.png)
+
+</div>
+
+The database's rules still apply. A value that looks like a date in a spreadsheet may not be valid for the target field, and a non-empty value can still violate a unique constraint. For document sources, use the JSON controls provided by the source rather than treating the object as a fixed SQL row.
+
+## Submit and verify
+
+Submit the form and read any validation error. If the write succeeds, refresh the grid or filter for the new record using a value you entered. Check the stored result, including values supplied by the database.
+
+If the new row is not on the current page, that alone does not mean insertion failed. The grid's sort order, filters, and page size determine which records are visible. Use an exact lookup before submitting the same record again.
+
+For repeatable tests, keep the fixture in a file or script as well as creating it in the UI. See [testing and development](/use-cases/testing-development).

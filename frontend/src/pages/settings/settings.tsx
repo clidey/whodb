@@ -23,6 +23,7 @@ import {SettingsActions} from "../../store/settings";
 import {changeLanguage} from "../../utils/change-language";
 import {useTranslation} from "@/hooks/use-translation";
 import {
+    Button,
     Input,
     Label,
     Select,
@@ -164,13 +165,15 @@ export const SettingsPage: FC = () => {
                 <Tabs value={activeTab} className="ce-settings-tabs" onValueChange={handleTabChange}>
                     <div className="ce-settings-rail">
                         <div className="ce-settings-rail-heading"><h1>{t('settingsTitle')}</h1><p>{t('savedInBrowser')}</p></div>
-                        <TabsList className="ce-settings-rail-list">
-                            <TabsTrigger value="appearance"><WhoDBChatIcon name="grid" />{t('tabAppearance')}</TabsTrigger>
-                            <TabsTrigger value="behavior"><WhoDBChatIcon name="sliders" />{t('tabBehavior')}</TabsTrigger>
-                            {hasIntegrations && <TabsTrigger value="integrations">{t('tabIntegrations')}</TabsTrigger>}
-                            <TabsTrigger value="privacy"><WhoDBChatIcon name="secret" />{t('tabPrivacy')}</TabsTrigger>
-                        </TabsList>
-                        <button type="button" onClick={() => void navigate(InternalRoutes.ContactUs?.path ?? '/contact-us')}><WhoDBChatIcon name="mail" />{t('contact')}</button>
+                        <div className="flex flex-wrap items-center gap-3">
+                            <TabsList>
+                                <TabsTrigger value="appearance"><WhoDBChatIcon name="grid" />{t('tabAppearance')}</TabsTrigger>
+                                <TabsTrigger value="behavior"><WhoDBChatIcon name="sliders" />{t('tabBehavior')}</TabsTrigger>
+                                {hasIntegrations && <TabsTrigger value="integrations">{t('tabIntegrations')}</TabsTrigger>}
+                                <TabsTrigger value="privacy"><WhoDBChatIcon name="secret" />{t('tabPrivacy')}</TabsTrigger>
+                            </TabsList>
+                            <Button variant="ghost" onClick={() => void navigate(InternalRoutes.ContactUs?.path ?? '/contact-us')}><WhoDBChatIcon name="mail" />{t('contact')}</Button>
+                        </div>
                     </div>
 
                     <TabsContent value="appearance" className="ce-settings-panel">

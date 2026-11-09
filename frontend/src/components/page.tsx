@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-import { Button, cn, Kbd, SidebarProvider, Tooltip, TooltipContent, TooltipTrigger, useTheme, IconMenu as Bars3Icon } from '@clidey/ux';
+import { Button, cn, Kbd, ResizableHandle, ResizablePanel, ResizablePanelGroup, SidebarProvider, Tooltip, TooltipContent, TooltipTrigger, useIsMobile, useTheme, IconChevronLeftAlt, IconMenu as Bars3Icon } from '@clidey/ux';
 import classNames from "classnames";
-import type {CSSProperties, FC, ReactNode} from "react";
+import type {FC, ReactNode} from "react";
+import {useEffect, useRef, useState} from "react";
 import {twMerge} from "tailwind-merge";
 import {InternalRoutes, type IInternalRoute} from "../config/routes";
 import {useAppDispatch, useAppSelector} from "../store/hooks";
@@ -46,11 +47,10 @@ export const Page: FC<IPageProps> = (props) => {
 }
 
 type IInternalPageProps = IPageProps & {
-    sidebar?: ReactNode;
+    sidebar?: ReactNode | ((onSelect: () => void) => ReactNode);
     children: ReactNode;
     routes?: IInternalRoute[];
     fullHeight?: boolean;
-    subSidebarWidth?: string;
 }
 
 const CommandPaletteTrigger: FC = () => {
@@ -65,7 +65,7 @@ const CommandPaletteTrigger: FC = () => {
             variant="outline"
             size="sm"
             onClick={handleClick}
-            className="gap-2 h-9"
+            className="gap-2"
             aria-label={t('triggerLabel')}
             data-testid="command-palette-trigger"
         >
@@ -93,7 +93,7 @@ const KeyboardShortcutsHint: FC = () => {
                     variant="outline"
                     size="sm"
                     onClick={handleClick}
-                    className="ce-help-trigger gap-1.5 h-9"
+                    className="ce-help-trigger gap-1.5"
                     aria-label={t('showShortcuts')}
                 >
                     <WhoDBChatIcon name="help" />
@@ -116,9 +116,20 @@ const ThemeToggle: FC = () => {
     </Button>;
 };
 
-/** Renders the authenticated app shell and optional full-height content panels. */
+/** Renders the app shell with persistent list/detail panes so navigation retains unsaved edits. */
 export const InternalPage: FC<IInternalPageProps> = (props) => {
     const { t } = useTranslation('components/page');
+    const [detailOpen, setDetailOpen] = useState(true);
+    const hasSidebar = Boolean(props.sidebar);
+    const isMobile = useIsMobile();
+    const detailRef = useRef<HTMLElement>(null);
+    const listRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!hasSidebar || !isMobile) return;
+        if (detailOpen) detailRef.current?.focus({ preventScroll: true });
+        else listRef.current?.querySelector('input')?.focus({ preventScroll: true });
+    }, [detailOpen, hasSidebar, isMobile]);
     const isLoggedIn = useAppSelector(state => state.auth.current != null);
     const sidebarOpen = useAppSelector(state => state.settings.sidebarOpen);
     const isTablesPage = props.routes?.at(-1)?.path === InternalRoutes.Dashboard.StorageUnit.path;
@@ -130,19 +141,28 @@ export const InternalPage: FC<IInternalPageProps> = (props) => {
     // for source-operator and column-type helpers.
     useSourceSessionMetadata();
 
+    const detail = (
+        <main
+            ref={detailRef}
+            id="main-content"
+            className={cn("flex grow flex-wrap gap-sm py-4 content-start relative px-8", props.fullHeight && "min-h-0 !flex-nowrap !px-4 !pt-3 !pb-0", isWorkspacePage && 'ce-workspace-content', hasSidebar && 'min-h-0 flex-1')}
+            data-testid="page-content"
+            tabIndex={-1}
+        >
+            {props.children}
+        </main>
+    );
+
     return (
         <Container>
             <div className="flex flex-row grow">
                 <SidebarProvider open={sidebarOpen} onOpenChange={(open) => dispatch(SettingsActions.setSidebarOpen(open))}>
                     <Sidebar />
                 </SidebarProvider>
-                {props.sidebar && <SidebarProvider style={props.subSidebarWidth ? { '--sidebar-width': props.subSidebarWidth } as CSSProperties : undefined}>
-                    {props.sidebar}
-                </SidebarProvider>}
             </div>
             <Page {...props} wrapperClassName={cn('p-0', isTablesPage && 'ce-tables-shell', isExplorePage && 'ce-explore-shell', isWorkspacePage && 'ce-workspace-shell')}>
-                <div className={cn("flex flex-col grow py-6", (isTablesPage || isExplorePage || isWorkspacePage) && 'ce-app-content', props.fullHeight && "min-h-0 !py-0")}>
-                    <div className={cn("flex flex-col gap-1 px-8", (isTablesPage || isExplorePage || isWorkspacePage) && 'ce-tables-topbar', props.fullHeight && !isWorkspacePage && "px-4 py-5")}>
+                <div className={cn("flex min-h-0 flex-col grow py-6", (isTablesPage || isExplorePage || isWorkspacePage || hasSidebar) && 'ce-app-content', props.fullHeight && "min-h-0 !py-0")}>
+                    <div className={cn("flex flex-col gap-1 px-8", (isTablesPage || isExplorePage || isWorkspacePage || hasSidebar) && 'ce-tables-topbar', props.fullHeight && !isWorkspacePage && "px-4 py-5")}>
                         <div className="flex w-full justify-between items-center gap-2">
                             <Button
                                 variant="outline"
@@ -165,20 +185,28 @@ export const InternalPage: FC<IInternalPageProps> = (props) => {
                         </div>
                         {!isTablesPage && <ConnectionContext />}
                     </div>
-                    {
-                        !isLoggedIn
-                        ? <div className="flex justify-center items-center h-full">
-                            <Loading size="lg" />
-                        </div>
-                            : <main
-                                id="main-content"
-                                className={cn("flex grow flex-wrap gap-sm py-4 content-start relative px-8", props.fullHeight && "min-h-0 !flex-nowrap !px-4 !pt-3 !pb-0", isWorkspacePage && 'ce-workspace-content')}
-                                data-testid="page-content"
-                                tabIndex={-1}
-                            >
-                            {props.children}
-                        </main>
-                    }
+                    {!isLoggedIn ? <div className="flex justify-center items-center h-full">
+                        <Loading size="lg" />
+                    </div> : props.sidebar ? <div className="ce-master-detail flex min-h-0 flex-1 flex-col" data-detail-open={detailOpen}>
+                        {detailOpen && <Button variant="ghost" size="sm" className="m-2 w-fit md:hidden" onClick={() => { setDetailOpen(false); }}>
+                            <IconChevronLeftAlt className="size-4" />
+                            {t('browseItems')}
+                        </Button>}
+                        <ResizablePanelGroup direction="horizontal" className="min-h-0 flex-1">
+                            <ResizablePanel defaultSize={25} minSize={18} maxSize={40} className="ce-secondary-panel">
+                                <div ref={listRef} className="flex h-full min-h-0 flex-col">
+                                    <Button variant="ghost" size="sm" className="md:hidden m-2 w-fit" onClick={() => { setDetailOpen(true); }}>
+                                        {t('viewContent')}
+                                    </Button>
+                                    {typeof props.sidebar === 'function' ? props.sidebar(() => { setDetailOpen(true); }) : props.sidebar}
+                                </div>
+                            </ResizablePanel>
+                            <ResizableHandle withHandle className="hidden md:flex" />
+                            <ResizablePanel defaultSize={75} className="flex min-w-0 flex-col">
+                                {detail}
+                            </ResizablePanel>
+                        </ResizablePanelGroup>
+                    </div> : detail}
                 </div>
             </Page>
         </Container>

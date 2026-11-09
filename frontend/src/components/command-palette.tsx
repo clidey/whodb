@@ -48,9 +48,6 @@ export interface CommandPaletteProps {
     onOpenChange: (open: boolean) => void;
 }
 
-/** Shared command palette styling for command-group headings. */
-export const COMMAND_PALETTE_GROUP_CLASS = "[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-neutral-500 dark:[&_[cmdk-group-heading]]:text-neutral-400";
-
 /** Renders platform-aware keyboard shortcut keycaps in a command palette item. */
 export const CommandPaletteShortcut: FC<{ keys: string[]; isMac: boolean }> = ({keys, isMac}) => (
     <div className="ml-auto flex items-center gap-0.5">
@@ -255,8 +252,8 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
 
     return (
         <Dialog open={open} onOpenChange={handlePaletteOpenChange}>
-            <DialogContent className="ce-command-palette p-0 overflow-hidden top-[18vh] translate-y-0" showCloseButton={false} data-testid="command-palette">
-                <Command className={COMMAND_PALETTE_GROUP_CLASS} shouldFilter={false}>
+            <DialogContent className="ce-command-palette overflow-hidden top-[18vh] translate-y-0" showCloseButton={false} data-testid="command-palette">
+                <Command shouldFilter={false}>
                     <CommandInput
                         placeholder={t('searchPlaceholder')}
                         data-testid="command-palette-input"

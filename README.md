@@ -31,12 +31,12 @@
 [![Snap](https://img.shields.io/badge/Snap-available-brightgreen)](https://snapcraft.io/whodb)
 [![CLI](https://img.shields.io/badge/CLI-available-brightgreen)](https://github.com/clidey/whodb/blob/main/cli/README.md)
 
-[Quick start](https://github.com/clidey/whodb/blob/main/README.md#quick-start) · [Documentation](https://docs.whodb.com/) · [Live demo](https://demo.whodb.com/) · [Community](https://github.com/clidey/whodb/discussions)
+[Quick start](https://github.com/clidey/whodb/blob/main/README.md#quick-start) · [Documentation](https://clidey.github.io/whodb/) · [Live demo](https://demo.whodb.com/) · [Community](https://github.com/clidey/whodb/discussions)
 
 </div>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/clidey/whodb/main/docs/images/06-storage-unit-list-with-sidebar.png" alt="WhoDB showing a database table" width="100%" />
+  <img src="https://raw.githubusercontent.com/clidey/whodb/main/docs/images/light/06-storage-unit-list-with-sidebar.png" alt="WhoDB showing a database table" width="100%" />
 </p>
 
 WhoDB gives you one place to explore your databases, edit data, run queries, and understand how a schema fits together. It runs in the browser, is easy to self-host, and is available as a desktop app or terminal CLI too.
@@ -67,10 +67,10 @@ Want to look around first? Try the [live demo](https://demo.whodb.com/) or watch
 <table>
 <tr>
 <td width="50%">
-  <img src="https://raw.githubusercontent.com/clidey/whodb/main/docs/images/09-data-view-users-table.png" alt="Browsing rows in the WhoDB data grid" width="100%" />
+  <img src="https://raw.githubusercontent.com/clidey/whodb/main/docs/images/light/09-data-view-users-table.png" alt="Browsing rows in the WhoDB data grid" width="100%" />
 </td>
 <td width="50%">
-  <img src="https://raw.githubusercontent.com/clidey/whodb/main/docs/images/24-graph-view-schema-topology.png" alt="Exploring database relationships in the WhoDB schema graph" width="100%" />
+  <img src="https://raw.githubusercontent.com/clidey/whodb/main/docs/images/light/24-graph-view-schema-topology.png" alt="Exploring database relationships in the WhoDB schema graph" width="100%" />
 </td>
 </tr>
 <tr>
@@ -114,7 +114,7 @@ docker run -it -p 8080:8080 \
 
 Keep that key somewhere safe. Changing it invalidates existing sessions. If WhoDB is served through an HTTPS reverse proxy, also set `WHODB_SECURE=true` so browsers only send the session cookie over HTTPS.
 
-See the [documentation](https://docs.whodb.com/) for Docker Compose, connection profiles, SSL, AI providers, and other configuration options.
+See the [documentation](https://clidey.github.io/whodb/) for Docker Compose, connection profiles, SSL, AI providers, and other configuration options.
 
 ### Desktop
 
@@ -158,7 +158,7 @@ Environment variables let deployment administrators declare providers when the s
 - `WHODB_LMSTUDIO_*` for LM Studio connection settings
 - `WHODB_AI_GENERIC_<ID>_*` for OpenAI-compatible providers
 
-See the [installation guide](https://github.com/clidey/whodb/blob/main/docs/installation.mdx#ai-providers) for the complete environment variable list and the [AI provider guide](https://github.com/clidey/whodb/blob/main/docs/ai/setup-providers.mdx) for setup examples.
+See the [installation guide](https://clidey.github.io/whodb/installation#ai-providers) for the complete environment variable list and the [AI provider guide](https://clidey.github.io/whodb/ai/setup-providers) for setup examples.
 
 ## WhoDB Community and WhoDB Platform
 
@@ -207,25 +207,25 @@ Bug reports, feature ideas, documentation improvements, and code contributions a
 
 ### Query scratchpad
 
-<img src="https://raw.githubusercontent.com/clidey/whodb/main/docs/images/27-scratchpad-main-view.png" alt="Writing queries in the WhoDB scratchpad" width="100%" />
+<img src="https://raw.githubusercontent.com/clidey/whodb/main/docs/images/light/27-scratchpad-main-view.png" alt="Writing queries in the WhoDB scratchpad" width="100%" />
 
 ### Add and edit records
 
-<img src="https://raw.githubusercontent.com/clidey/whodb/main/docs/images/11-data-view-add-row-dialog.png" alt="Adding a row in WhoDB" width="100%" />
+<img src="https://raw.githubusercontent.com/clidey/whodb/main/docs/images/light/11-data-view-add-row-dialog.png" alt="Adding a row in WhoDB" width="100%" />
 
 ### Build filters visually
 
-<img src="https://raw.githubusercontent.com/clidey/whodb/main/docs/images/16-data-view-where-conditions-popover.png" alt="Building WHERE conditions in WhoDB" width="100%" />
+<img src="https://raw.githubusercontent.com/clidey/whodb/main/docs/images/light/16-data-view-where-conditions-popover.png" alt="Building WHERE conditions in WhoDB" width="100%" />
 
 ### Export data
 
-<img src="https://raw.githubusercontent.com/clidey/whodb/main/docs/images/20-data-view-export-dialog.png" alt="Exporting data from WhoDB" width="100%" />
+<img src="https://raw.githubusercontent.com/clidey/whodb/main/docs/images/light/20-data-view-export-dialog.png" alt="Exporting data from WhoDB" width="100%" />
 
 </details>
 
 ## Support
 
-- [Documentation](https://docs.whodb.com/)
+- [Documentation](https://clidey.github.io/whodb/)
 - [GitHub Issues](https://github.com/clidey/whodb/issues)
 - [support@clidey.com](mailto:support@clidey.com)
 

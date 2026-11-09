@@ -1,64 +1,43 @@
 ---
-title: "Using WhoDB with MySQL"
-description: "How to connect, browse, and query MySQL and MariaDB databases in WhoDB"
+title: "Use WhoDB with MySQL and MariaDB"
+description: "Connect, inspect, and query MySQL and MariaDB using the matching CE source workflow."
 ---
 
-# Using WhoDB with MySQL
+# Use WhoDB with MySQL and MariaDB
 
-This page covers what is specific to MySQL and MariaDB when you use them through WhoDB: connecting, database switching, and which WhoDB features apply.
+Use WhoDB's MySQL or MariaDB connection type to browse a database, inspect records, and run the SQL accepted by that server. Choose the entry for the actual product before copying connection settings from another environment.
 
-## Connecting
+## Connect and choose a database
 
-Select **MySQL** or **MariaDB** on the login page. The form asks for:
+Enter the host, port, database, credentials, and required TLS options. These sources use database selection rather than PostgreSQL-style schema switching in the WhoDB sidebar.
 
-- **Hostname**, **Username**, **Password**, and **Database** (all required).
+A successful connection does not establish that you chose the intended database. Check a familiar table and a few known records before making changes.
 
-Advanced options include:
+Server-configured profiles use `WHODB_MYSQL`, `WHODB_MARIADB`, or their numbered variants. For compatible products such as TiDB, use the corresponding catalog entry when available.
 
-- **Port** — defaults to `3306`.
-- **Parse Time** (`True`) and **Loc** (`UTC`) — control how the driver handles date/time values.
-- **Allow clear text passwords** (`0`).
-- **SSL mode** — `DISABLED`, `PREFERRED`, `REQUIRED`, `VERIFY_CA`, or `VERIFY_IDENTITY`.
+## Explore an object
 
-<Tip>
-For production databases, connect with a read-only account. WhoDB edits rows directly from the grid, so browsing with a read-only user prevents accidental changes.
-</Tip>
+Use **Tables** to find the object and **Info** to inspect its metadata. Open **Data** for filters, sorting, and the supported row actions.
 
-## How WhoDB Presents MySQL
+For a custom query, open Scratchpad. A small MySQL sample might be:
 
-- MySQL has no schema layer inside a database, so instead of a schema dropdown the sidebar offers **database switching**: pick a different database on the same server without logging in again. System databases (`information_schema`, `mysql`, `performance_schema`, `sys`) are hidden.
-- **Tables** and **views** appear as storage units. Tables support row viewing, inserts, updates, deletes, and data import; views are read-only.
-- Column types, primary keys, and foreign keys are read from the catalog, so the grid and graph reflect your actual schema.
+```sql
+SELECT id, username, email
+FROM users
+ORDER BY id
+LIMIT 25;
+```
 
-## WhoDB Features with MySQL
+Use fields from your actual table. If it exists in a different database, confirm the sidebar selection or qualify the object using syntax accepted by the server.
 
-- **Scratchpad** — run MySQL SQL, including multiple statements in one cell. See [Scratchpad](/query/scratchpad-intro).
-- **Graph view** — visualizes foreign-key relationships between tables in the current database. See [Graph View](/visualization/graph-view).
-- **Where conditions** — the filter builder offers MySQL operators such as `=`, `LIKE`, `BETWEEN`, `IN`, and `IS NULL`. See [Where Conditions](/advanced/where-conditions).
-- **Mock data generation** — generates rows for tables and follows foreign-key dependencies so parent rows are created first. See [Mock Data](/advanced/mock-data).
-- **Export** — CSV and Excel from the grid or Scratchpad results. See [Export Options](/advanced/export-options).
+## Keep dialect differences visible
 
-## Tips
+WhoDB sends queries to the connected source. It does not make SQL from another database engine automatically compatible. When moving a saved query, check its functions, quoted identifiers, types, and any server-specific syntax.
 
-- Add a `LIMIT` to exploratory Scratchpad queries on large tables; unbounded `SELECT` statements pull every row.
-- Foreign keys drive both the graph view and mock data ordering — tables without declared foreign keys show no relationships.
-- Filter with the where-condition builder before exporting so the file contains only the rows you need.
+For a failed query, read the source's error and test a smaller statement before changing connection settings. See [MySQL's reference manual](https://dev.mysql.com/doc/refman/8.4/en/) or [MariaDB's documentation](https://mariadb.com/docs/server) for engine behavior.
 
-## Compatible Databases
+## Verify writes and exports
 
-TiDB is MySQL-compatible and appears as its own entry on the login page (default port `4000`) with the same MySQL-style experience in WhoDB.
+Read a record again after editing it. For an export that needs a filter, run a query and export its result rather than relying on the grid's filter to limit a whole-object export.
 
-## Further Reading
-
-For server tuning, storage engines, replication, and backup guidance, see the official [MySQL documentation](https://dev.mysql.com/doc/) or the [MariaDB documentation](https://mariadb.com/kb/en/documentation/).
-
-## Related Pages
-
-<CardGroup cols={2}>
-<Card title="Database Connectivity" icon="plug" href="/features/database-connectivity">
-Connection details for all supported databases.
-</Card>
-<Card title="Scratchpad" icon="terminal" href="/query/scratchpad-intro">
-Write and run SQL against your connection.
-</Card>
-</CardGroup>
+Continue with [Connection options](/features/database-connectivity), [Import](/data/importing), or [Move a MySQL workflow to WhoDB](/guides/migrating-from-phpmyadmin).

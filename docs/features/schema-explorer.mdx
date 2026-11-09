@@ -1,75 +1,68 @@
 ---
-title: "Schema Explorer"
-description: "Inspect object metadata through Storage Unit Describe and Graph"
+title: "Inspect a schema"
+description: "Read object metadata, column types, and key relationships before querying."
 ---
 
-# Schema Explorer
+# Inspect a schema
 
-WhoDB's schema exploration flow starts in Storage Units.
+Inspect an object's structure before deciding which fields to query or change. **Info** shows metadata supplied by the connected source, including the field and key information it exposes. This helps you avoid guessing from a table name or a sample row.
 
-Use:
+<div className="ce-screenshot-light">
 
-- **Storage Units** to browse objects.
-- **Describe** to inspect object metadata and columns.
-- **Graph** to view object relationships.
-- **Scratchpad** to run metadata queries manually.
+![Table metadata and columns in the Info view](/images/light/08-explore-table-metadata.png)
 
-![Explore View](/images/07-explore-users-table.png)
+</div>
+<div className="ce-screenshot-dark">
 
-## Inspect Object Metadata
+![Table metadata and columns in the Info view](/images/dark/08-explore-table-metadata.png)
 
-Open **Storage Units** and click **Describe** on an object card. The expanded card shows attributes exposed by the source plugin.
+</div>
 
-![Table Metadata](/images/08-explore-table-metadata.png)
+## Inspect an object
 
-For tabular sources, columns can include type information and relationship markers when the source exposes them.
+1. Open **Tables** and find the object.
+2. Switch to card view if necessary.
+3. Choose **Info** to expand its metadata and fields.
+4. Read the field names, types, and available key information.
+5. Choose **Data** when you need to compare that structure to actual records.
 
-![Primary Key Column](/images/98-explore-primary-key-column.png)
+For an unfamiliar users table, start by finding the identifier and the fields your question needs. A readable username can be useful in a report, but it may not be the field other objects use as a reference.
 
-![Foreign Key Columns](/images/99-explore-foreign-key-columns.png)
+Types and metadata vary across sources. Use the information reported for the actual object rather than assuming every connector exposes the same attributes.
 
-![Order Items Table Details](/images/100-explore-table-with-indexes.png)
+## See relationships in context
 
-<Note>
-The exact metadata depends on the database plugin and the privileges of the connected user.
-</Note>
+Open [Graph](/visualization/graph-view) and select the related objects. Foreign-key edges help identify which fields connect them.
 
-## Open Rows
+<div className="ce-screenshot-light">
 
-Click **Data** on a Storage Unit card to open the row grid.
+![Foreign-key fields on an expanded object](/images/light/99-explore-foreign-key-columns.png)
 
-![Data View](/images/09-data-view-users-table.png)
+</div>
+<div className="ce-screenshot-dark">
 
-The data grid is where you search visible rows, add WHERE conditions, sort columns, paginate, edit rows, delete rows, and export.
+![Foreign-key fields on an expanded object](/images/dark/99-explore-foreign-key-columns.png)
 
-## Explore Relationships
+</div>
 
-Open **Graph** from the sidebar to view relationships visually.
+If an edge is missing, inspect the database metadata. The application might join two fields without a declared foreign key, or the source might not expose the relationship. Similar field names alone do not establish a constraint.
 
-![Graph View](/images/24-graph-view-schema-topology.png)
+## Inspect more detail with a query
 
-Graph nodes render metadata and loaded columns directly in each card. Clicking a node can load columns, and the **Data** button opens that object's data page.
-
-## Metadata Queries
-
-For deeper database-specific metadata, use Scratchpad and your database's system catalogs.
-
-Example for PostgreSQL indexes:
+Use [Scratchpad](/query/scratchpad-intro) when you need metadata that is easier to read as a query result. This PostgreSQL example lists the columns of one table in their defined order:
 
 ```sql
-SELECT *
-FROM pg_indexes
-WHERE schemaname = 'public'
-  AND tablename = 'users';
+SELECT column_name, data_type, is_nullable
+FROM information_schema.columns
+WHERE table_schema = 'public'
+  AND table_name = 'users'
+ORDER BY ordinal_position;
 ```
 
-## Related Pages
+Replace the schema and table names with the object you are inspecting. Other sources have their own metadata queries and syntax.
 
-<CardGroup cols={2}>
-<Card title="Storage Units" icon="database" href="/features/storage-units">
-Use Describe and Data actions.
-</Card>
-<Card title="Graph View" icon="diagram-project" href="/visualization/graph-view">
-Inspect relationships visually.
-</Card>
-</CardGroup>
+## Use the structure to plan a change
+
+Before adding or editing a record, check required fields, keys, and generated values. Before changing the schema, consider the application queries and imports that depend on it. Keep application schema changes in migrations so the definition can be reviewed and reproduced.
+
+To create a new object through the UI, see [Create tables and fields](/features/schema-management).

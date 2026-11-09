@@ -1,62 +1,41 @@
 ---
-title: "Using WhoDB with PostgreSQL"
-description: "How to connect, browse, and query PostgreSQL databases in WhoDB"
+title: "Use WhoDB with PostgreSQL"
+description: "Connect, inspect, and query PostgreSQL using the matching CE source workflow."
 ---
 
-# Using WhoDB with PostgreSQL
+# Use WhoDB with PostgreSQL
 
-This page covers what is specific to PostgreSQL when you use it through WhoDB: connecting, how the sidebar and grid present your data, and which WhoDB features apply.
+Use the PostgreSQL workflow when you need to browse a schema, inspect a few records, and run SQL against a PostgreSQL database. Start by choosing the correct database and schema; a valid connection can still be looking at the wrong set of objects.
 
-## Connecting
+## Connect to the intended database
 
-Select **Postgres** on the login page. The form asks for:
+Choose **Postgres** and enter the endpoint, port, database, credentials, and required TLS options. After connecting, select the schema in the sidebar.
 
-- **Hostname** (required) — you can also paste a full `postgres://` connection URL and WhoDB parses it into the fields.
-- **Username** and **Password** (required).
-- **Database** (required).
-- **Search Path** (optional) — restrict browsing to specific schemas.
+For a server-configured profile, use `WHODB_POSTGRES` or its numbered variant. See [Connection options](/features/database-connectivity) for profiles, certificate paths, and container networking.
 
-Advanced options include **Port** (defaults to `5432`) and an **SSL mode** selector ranging from disabled to full certificate verification (PostgreSQL's `disable`, `require`, verify CA, and `verify-full`).
+If you use a PostgreSQL-compatible product, choose its catalog entry when one is available. Compatibility does not mean every product has the same port, options, or supported operations.
 
-<Tip>
-For production databases, connect with a read-only role. WhoDB edits rows directly from the grid, so browsing with a read-only user prevents accidental changes.
-</Tip>
+## Inspect before querying
 
-## How WhoDB Presents PostgreSQL
+Find a table in **Tables** and open **Info** to read its columns and keys. Open **Data** for a row sample. Use Graph when you need to follow declared relationships to another table.
 
-- The sidebar shows a **schema dropdown**; browsing is scoped to the selected schema. System schemas such as `information_schema`, `pg_catalog`, and `sys` are hidden automatically.
-- **Tables** and **views** appear as storage units. Tables support row viewing, inserts, updates, deletes, and data import; views are read-only and expose their definition.
-- Column types, primary keys, and foreign keys are read from the catalog, so the grid and graph reflect your actual schema.
+Qualify the object name when the schema matters. For example, the documentation's PostgreSQL demo uses `test_schema.users`; that is different from a table named `users` in another schema.
 
-## WhoDB Features with PostgreSQL
+```sql
+SELECT id, username, email
+FROM test_schema.users
+ORDER BY id
+LIMIT 25;
+```
 
-- **Scratchpad** — run PostgreSQL SQL, including multiple statements in one cell. See [Scratchpad](/query/scratchpad-intro).
-- **Graph view** — visualizes foreign-key relationships between tables in the selected schema. See [Graph View](/visualization/graph-view).
-- **Where conditions** — the filter builder offers PostgreSQL operators, including `ILIKE`/`NOT ILIKE` for case-insensitive matching alongside `LIKE`, `BETWEEN`, `IN`, and `IS NULL`. See [Where Conditions](/advanced/where-conditions).
-- **Mock data generation** — generates rows for tables and follows foreign-key dependencies so parent rows are created first. See [Mock Data](/advanced/mock-data).
-- **Export** — CSV and Excel from the grid or Scratchpad results. See [Export Options](/advanced/export-options).
+Replace the demo names with your own. An explicit field list and order make a sample easier to inspect and compare later.
 
-## Tips
+## Make a small change deliberately
 
-- Add a `LIMIT` to exploratory Scratchpad queries on large tables; unbounded `SELECT` statements pull every row.
-- Use **Search Path** at login to keep the schema dropdown focused when a database has many schemas.
-- Filter with the where-condition builder before exporting so the file contains only the rows you need.
+For a one-record correction, filter by its key and use the Data view's editing controls. Save the change, then read the record again. For an application schema change, keep the definition in a migration instead of relying on a browser session as the record of the change.
 
-## Compatible Databases
+## Investigate a slow query
 
-CockroachDB, YugabyteDB, and QuestDB speak the PostgreSQL wire protocol and appear as their own entries on the login page, with the same PostgreSQL-style experience (QuestDB is table-scoped and has no schema dropdown).
+Keep the original statement, check a smaller result, and inspect the plan when needed. Read [PostgreSQL's explain documentation](https://www.postgresql.org/docs/current/using-explain.html) before choosing options that execute the statement.
 
-## Further Reading
-
-For server tuning, indexing strategy, replication, and backup guidance, see the official [PostgreSQL documentation](https://www.postgresql.org/docs/).
-
-## Related Pages
-
-<CardGroup cols={2}>
-<Card title="Database Connectivity" icon="plug" href="/features/database-connectivity">
-Connection details for all supported databases.
-</Card>
-<Card title="Scratchpad" icon="terminal" href="/query/scratchpad-intro">
-Write and run SQL against your connection.
-</Card>
-</CardGroup>
+The [PostgreSQL manual](https://www.postgresql.org/docs/current/) is the reference for server-specific SQL and administration. Use WhoDB's [database catalog](/resources/supported-databases) to check the connection types exposed by CE.

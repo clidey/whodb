@@ -1,96 +1,60 @@
 ---
-title: "Scratchpad Introduction"
-description: "WhoDB's Scratchpad is a notebook-style query workspace with pages, cells, and history for SQL, MongoDB, and Redis queries"
+title: "Scratchpad"
+description: "Investigate data with query pages, cells, inline results, and per-cell history."
 ---
 
-# Scratchpad Introduction
+# Scratchpad
 
-Scratchpad is WhoDB's query workspace for connections that support raw queries — SQL databases, plus shell-style commands for MongoDB and commands for Redis. It gives you page-based query organization, one or more query cells per page, query execution, result grids, action-query confirmations, and per-cell query history.
+Use Scratchpad when a question needs a query rather than a table filter. You can inspect a sample, check a count, and join related data in separate cells while keeping each result next to the query that produced it.
+
+Scratchpad uses the language supported by the connected source: SQL for SQL sources, shell-style commands for MongoDB, and native commands for Redis.
+
+<div className="ce-screenshot-light">
+
+![Scratchpad with executed queries and inline results](/images/light/48-scratchpad-multiple-cells-results.png)
+
+</div>
+<div className="ce-screenshot-dark">
+
+![Scratchpad with executed queries and inline results](/images/dark/48-scratchpad-multiple-cells-results.png)
+
+</div>
+
+## Run your first cell
+
+Open **Scratchpad** from the sidebar. Confirm the connection and schema shown in the page header, then enter a small read query. For the PostgreSQL demo schema:
+
+```sql
+SELECT id, username, email
+FROM test_schema.users
+ORDER BY id
+LIMIT 25;
+```
+
+Replace the schema, table, and fields with names from your own source. Click the cell's play button or press `Mod + Enter`. Returned rows, an action result, or an error appear below that cell.
+
+A small, ordered sample is a useful first check: it confirms the object exists and lets you inspect the values before writing a more complicated query.
+
+## Keep related work together
+
+A **page** is a tab containing one or more **cells**. Use a page for an investigation, such as checking a customer's orders. Put the sample query in one cell and the aggregate or join in another. Rename the page so you can recognize the investigation later.
+
+Use the plus tab to create another page and the add-cell control to extend the active page. See [Pages and cells](/query/multiple-cells) for the controls.
+
+## Reuse what worked
+
+Open **Query History** from a cell's menu to find earlier executions. Copy an entry, load it into the editor, or run it again. Check the active connection before replaying a query: history records the old query, but rerunning it acts on the current source.
+
+Pages and history are browser-local workspace state. Save important queries in a file or repository so they remain available outside that browser.
+
+## Review changes before running them
+
+Scratchpad can execute writes when the source and credentials allow them. Inspect the table, values, and predicate before running a change. WhoDB prompts for queries detected as destructive, but a confirmation does not establish that the statement expresses your intended rule.
+
+Do not assume separate cells share a database transaction. Use a reviewed, source-appropriate script when a change needs transactional guarantees.
 
 <Tip>
-Use Scratchpad for custom SQL. Use the Storage Unit data page when you want the guided grid, search, WHERE condition builder, row editing, export, and mock data actions.
+If the same preparation query becomes recurring work, bring the connection to WhoDB Platform and build a reusable pipeline with **Transforms**. [Move from a query to a pipeline](/guides/move-to-platform#turn-a-query-into-a-data-pipeline).
 </Tip>
 
-## Open Scratchpad
-
-Open **Scratchpad** from the left sidebar. The route is `/scratchpad`.
-
-![Scratchpad Main View](/images/27-scratchpad-main-view.png)
-
-The current layout is vertical:
-
-- The SQL editor is at the top of each cell.
-- Query results or action status render below the editor.
-- Multiple cells stack vertically within the active page.
-- Scratchpad pages appear as tabs above the cells.
-
-## Run Queries
-
-Type SQL into the editor and run it with any of:
-
-- The run button at the bottom-right of the cell. It appears on hover (or when the page has a single cell) and is hidden while the editor is empty.
-- The per-statement play buttons in the editor's left gutter, which run one statement at a time.
-- `Cmd/Ctrl + Enter`.
-
-![Scratchpad Query Results](/images/29-scratchpad-query-results.png)
-
-`SELECT` queries show a results grid below the editor. Action queries such as `INSERT`, `UPDATE`, and `DELETE` show an action result after confirmation.
-
-![Scratchpad Action Result](/images/40-scratchpad-action-result.png)
-
-<Warning>
-WhoDB prompts before executing destructive SQL detected in Scratchpad. Review the SQL before confirming.
-</Warning>
-
-## Errors
-
-Database errors are shown below the editor for the cell that failed.
-
-![Scratchpad Query Error](/images/30-scratchpad-query-error.png)
-
-Start with a small query such as `SELECT 1;`, then add complexity back until the error is isolated.
-
-## Pages And Cells
-
-Scratchpad has two levels of organization:
-
-- **Pages** are tabs across the top. Use the plus tab to add a page. Double-click a page name to rename it. Use the close button on a page tab to delete it.
-- **Cells** are query editors inside a page. Hover over a cell to reveal the add, clear, delete, and run controls.
-
-![Scratchpad Multiple Pages](/images/31-scratchpad-multiple-pages.png)
-
-The cell options menu currently contains **Clear**, **Copy Code**, and **Query History**.
-
-![Scratchpad Cell Options Menu](/images/32-scratchpad-cell-options-menu.png)
-
-Use the visible page tabs and cell controls to organize Scratchpad work.
-
-## Query History
-
-Open query history from the cell options menu or the history button on the cell.
-
-![Query History Panel](/images/33-scratchpad-query-history.png)
-
-History is stored per cell. Entries show the query text, success/error status, and timestamp. From a history entry you can copy the SQL, load it back into the current editor, or run it again.
-
-<Note>
-Loading a history entry puts that SQL into the current editor.
-</Note>
-
-## Editor Shortcuts
-
-| Shortcut | Action |
-|----------|--------|
-| `Cmd/Ctrl + Enter` | Run the current query or selected SQL |
-| `Cmd/Ctrl + U` | Clear the current editor |
-
-## Related Pages
-
-<CardGroup cols={2}>
-<Card title="Writing Queries" icon="code" href="/query/writing-queries">
-Learn the editor behavior and SQL execution flow.
-</Card>
-<Card title="Query History" icon="clock" href="/query/query-history">
-See what history stores and how to reuse entries.
-</Card>
-</CardGroup>
+Next: [Write queries](/query/writing-queries) · [Read results](/query/query-results)

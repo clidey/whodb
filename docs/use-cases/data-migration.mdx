@@ -1,104 +1,41 @@
 ---
-title: "Data Migration"
-description: "Use WhoDB as an inspection and validation tool during migrations"
+title: "Validate a data migration"
+description: "Use previews, counts, sample records, and queries to verify a planned data move."
 ---
 
-# Data Migration
+# Validate a data migration
 
-WhoDB helps you inspect source and destination databases, run validation SQL, and export small or moderate datasets.
+Use WhoDB to inspect and validate a planned transfer of records. A successful import means the operation was accepted; comparing the target with the intended source data establishes whether the move was correct.
 
-## Migration Workflow
+## Define the transfer
 
-1. Connect to the source database.
-2. Use **Storage Units** and **Describe** to inspect objects.
-3. Use **Data** and WHERE conditions to sample rows.
-4. Use **Scratchpad** for row counts, quality checks, and post-migration validation.
-5. Use native database tools for large exports/imports.
-6. Reconnect to the destination database and validate.
+Record the source and target objects, columns, key handling, and expected row count. Decide how to treat existing target records and missing values. Test with a small disposable target before moving important data.
 
-## Inspect Source Structure
+For a bounded tabular transfer, export a query result as CSV or Excel. Select only the fields needed by the target. Use database-native tools for full backups, restores, or large bulk transfers that need database-specific handling.
 
-Open **Storage Units** and click **Describe** on important objects.
+## Preview the target import
 
-![Explore Schema](/images/08-explore-table-metadata.png)
+Open **Import** on the target object and review the preview, field mapping, and parsed values. Check identifiers, dates, and empty cells carefully.
 
-Use **Describe** for structure and **Data** for rows.
+<div className="ce-screenshot-light">
 
-## Run Pre-Migration Checks
+![Reviewing file columns and sample rows before import](/images/light/116-import-preview.png)
 
-Open **Scratchpad** and run source validation queries.
+</div>
+<div className="ce-screenshot-dark">
 
-```sql
-SELECT COUNT(*) AS total_users
-FROM users;
-```
+![Reviewing file columns and sample rows before import](/images/dark/116-import-preview.png)
 
-```sql
-SELECT email, COUNT(*) AS duplicates
-FROM users
-GROUP BY email
-HAVING COUNT(*) > 1;
-```
+</div>
 
-```sql
-SELECT COUNT(*) AS missing_email
-FROM users
-WHERE email IS NULL OR email = '';
-```
+Choose the mode based on the target's existing data. Append adds new records and can skip conflicting primary keys for SQL sources. Upsert requires keys and updates matching records where supported. Relational overwrite can clear entire referencing tables as well as the target, so it needs a recovery plan for those tables too.
 
-## Export From WhoDB
+See [Importing data](/data/importing) for supported formats, limits, and mode details.
 
-Use WhoDB export for grid-sized workflows.
+## Verify the outcome
 
-![Export Dialog](/images/20-data-view-export-dialog.png)
+Compare source and target counts, then inspect known records. Check relationships and missing values rather than relying on counts alone. Two datasets can have equal counts and different contents.
 
-Current CE formats are:
+Review parser and constraint errors before retrying. A retry without knowing what was already written can duplicate records or leave a mixed result. Keep the original export and recovery path until validation is complete.
 
-- CSV.
-- Excel `.xlsx`.
-- JSON Lines for records from sources like MongoDB when supported.
-
-For SQL dumps and large migrations, use native database tools.
-
-For large migrations, prefer native tools:
-
-- PostgreSQL: `pg_dump`, `pg_restore`, `COPY`.
-- MySQL/MariaDB: `mysqldump`, `mysql`, `LOAD DATA`.
-- SQLite: `.backup`, `.dump`.
-- MongoDB: `mongodump`, `mongorestore`.
-
-## Validate Destination
-
-After importing into the destination, connect WhoDB to the destination database and run comparable checks:
-
-```sql
-SELECT COUNT(*) AS total_users
-FROM users;
-```
-
-```sql
-SELECT COUNT(*) AS orphan_payments
-FROM payments p
-LEFT JOIN users u ON u.id = p.user_id
-WHERE u.id IS NULL;
-```
-
-```sql
-SELECT *
-FROM users
-ORDER BY id
-LIMIT 20;
-```
-
-Document source and destination row counts, orphan checks, duplicate checks, and any known transformations.
-
-## Related Pages
-
-<CardGroup cols={2}>
-<Card title="Backup Tools" icon="box-archive" href="/resources/integrations/backup-tools">
-Use native database backup and restore tools.
-</Card>
-<Card title="Scratchpad Introduction" icon="code" href="/query/scratchpad-intro">
-Run migration validation SQL.
-</Card>
-</CardGroup>
+For application schema changes, preserve a versioned migration. For recovery copies, use [native backup tools](/resources/integrations/backup-tools).

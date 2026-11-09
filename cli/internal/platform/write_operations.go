@@ -124,6 +124,9 @@ type platformMutationSpec struct {
 }
 
 var platformMutationSpecs = map[string]platformMutationSpec{
+	"ApplyOntologyBehaviors": {Operation: "ApplyOntologyBehaviors", Query: `mutation CLIApplyOntologyBehaviors($projectId: ID!, $manifest: JSON!) {
+  ApplyOntologyBehaviors(projectId:$projectId, manifest:$manifest)
+ }`},
 	"CreateProject":            mutationSpecWithInput("CreateProject", "CreateProjectInput", projectFields),
 	"RenameProject":            mutationSpecWithDirect("RenameProject", "$id: ID!, $name: String!, $slug: String", "id: $id, name: $name, slug: $slug", projectFields),
 	"DeleteProject":            mutationSpecWithDirect("DeleteProject", "$id: ID!, $orgId: ID, $confirmDeletion: Boolean", "id: $id, orgId: $orgId, confirmDeletion: $confirmDeletion", statusResponseFields),

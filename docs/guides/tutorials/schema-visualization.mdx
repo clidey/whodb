@@ -1,62 +1,43 @@
 ---
-title: "Schema Visualization"
-description: "Use the current Graph view to inspect objects and relationships"
+title: "Map a schema visually"
+description: "Choose related objects, inspect their fields, and export a focused diagram."
 ---
 
-# Schema Visualization
+# Map a schema visually
 
-The Graph view shows selected database objects and relationships on an interactive canvas.
+Use Graph when a question spans several tables and you need to see how their keys connect. This walkthrough creates a diagram of an order workflow that you can inspect and share.
 
-## Open Graph
+Connect to a relational database containing declared foreign keys. Graph shows relationships reported by the source; it does not infer every relationship used by your application.
 
-Use the sidebar **Graph** route.
+## Select the tables for one question
 
-![Graph View Schema Topology](/images/24-graph-view-schema-topology.png)
+Open **Graph**. Use its object sidebar to select the central table, such as `orders`, and the tables it refers to, such as `users` and `order_items`. Search by name if the schema is large.
 
-## Select Objects
+Start with this small group. Selecting every object can make the diagram too dense to read and can hide the relationship you are investigating.
 
-Use the graph sidebar to search and select the objects you want on the canvas. WhoDB initially selects a small set for convenience.
+<div className="ce-screenshot-light">
 
-## Navigate The Canvas
+![A schema graph in WhoDB](/images/light/24-graph-view-schema-topology.png)
 
-Graph controls are in the lower-left corner:
+</div>
+<div className="ce-screenshot-dark">
 
-- Zoom in.
-- Zoom out.
-- Fit view.
-- Toggle interaction lock/pan mode.
+![A schema graph in WhoDB](/images/dark/24-graph-view-schema-topology.png)
 
-![Graph View With Controls](/images/25-graph-view-with-controls.png)
+</div>
 
-The download and layout actions are in the lower-right corner.
+## Read a relationship
 
-## Read Nodes
+Click a node to inspect its fields. Follow an edge and check the fields at both ends. For example, an edge from `orders.user_id` to `users.id` explains which user an order references.
 
-Each node card shows object metadata and loaded columns. Click a node to load its columns if they have not been loaded yet.
+Use a node's **Data** action to open its records. Compare a known foreign-key value with the referenced record. This helps confirm that you understand the diagram before writing a join.
 
-Node details appear directly in the card.
+If an expected edge is missing, inspect **Info** and check whether the database declares the foreign key. A field called `user_id` can be used by application code without a database constraint. Its name alone does not establish the relationship.
 
-Use the node's **Data** button to open the object data page.
+## Make the view readable
 
-![Graph Node Data Button](/images/50-graph-node-data-button-hover.png)
+Use the layout action to arrange the selected nodes, then fit the diagram to the canvas. Adjust the selection or zoom until the important field names are readable. Remove unrelated objects rather than shrinking the entire schema to fit.
 
-## Relationship Examples
+Download the diagram when the selected relationships answer your question. Include the source, schema, and capture date when sharing it, since a static image does not track later schema changes.
 
-![Graph One To Many Relationship](/images/92-graph-one-to-many-relationship.png)
-
-![Graph Many To One Relationship](/images/93-graph-many-to-one-relationship.png)
-
-![Graph Multiple Foreign Keys](/images/94-graph-multiple-foreign-keys.png)
-
-![Graph Isolated Table Node](/images/91-graph-isolated-table-node.png)
-
-## Related Pages
-
-<CardGroup cols={2}>
-<Card title="Graph View" icon="diagram-project" href="/visualization/graph-view">
-Detailed graph controls and behavior.
-</Card>
-<Card title="Storage Units" icon="database" href="/features/storage-units">
-Use Describe and Data actions.
-</Card>
-</CardGroup>
+Continue with [relationship interpretation](/visualization/relationships) for key semantics, or [build a join](/guides/tutorials/building-complex-queries) to use the relationship in a query.

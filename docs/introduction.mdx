@@ -1,123 +1,91 @@
 ---
-title: "Welcome to WhoDB"
-description: "A lightweight, modern database management tool for exploring, querying, and visualizing your data"
+title: "Your databases, in one workspace"
+description: "Explore, query, edit, and visualize your data with WhoDB Community."
 ---
 
-# Welcome to WhoDB
+# Your databases, in one workspace
 
-WhoDB is a powerful, intuitive database management tool designed to simplify how you interact with your databases. Whether you're a developer, data analyst, or database administrator, WhoDB provides a streamlined interface for exploring schemas, managing data, and visualizing relationships.
+WhoDB Community helps you answer questions about data you already own. Connect to a database, find a record, inspect the tables around it, and build a query you can run again. You can work in a browser, desktop app, or terminal.
 
-![WhoDB Login Page](/images/01-login-page.png)
+For example, investigating an order might start with its ID in the data grid. You can check the order's fields, follow its foreign keys in Graph, and write a join in Scratchpad to see the related user and items together.
 
-## What is WhoDB?
+<div className="ce-screenshot-light">
 
-WhoDB is an open-source database management solution that combines the power of traditional database clients with modern visualization and query capabilities. It provides a unified interface for working with multiple database types while maintaining a focus on simplicity and user experience.
+![WhoDB Community showing database tables and its navigation sidebar](/images/light/06-storage-unit-list-with-sidebar.png)
 
-<CardGroup cols={2}>
-<Card title="Multi-Database Support" icon="database">
-Connect to PostgreSQL, MySQL, SQLite, MongoDB, Redis, and more with a single interface
-</Card>
-<Card title="Visual Schema Explorer" icon="sitemap">
-Explore your database structure with interactive graph visualizations showing table relationships
-</Card>
-<Card title="Powerful Query Interface" icon="code">
-Write and execute SQL queries with syntax highlighting, history tracking, and result visualization
-</Card>
-<Card title="Data Management" icon="table">
-View, add, edit, and delete records with an intuitive spreadsheet-like interface
-</Card>
-</CardGroup>
+</div>
+<div className="ce-screenshot-dark">
 
-## Key Features
+![WhoDB Community showing database tables and its navigation sidebar](/images/dark/06-storage-unit-list-with-sidebar.png)
 
-<AccordionGroup>
-<Accordion title="Database Connectivity">
-WhoDB supports multiple database engines out of the box. Connect with standard host/database credentials or environment-defined profiles, and use advanced options such as SSL/TLS certificates when your database requires them.
-</Accordion>
-<Accordion title="Schema Explorer">
-Navigate source objects through Storage Units. Use **Describe** for metadata and columns, and **Data** for rows.
-</Accordion>
-<Accordion title="Interactive Data Grid">
-View and edit data in a familiar grid. Sort columns, filter rows with WHERE conditions, search loaded values, and use selected-row actions where the source supports them.
-</Accordion>
-<Accordion title="Scratchpad Query Editor">
-Write SQL queries in a syntax-highlighted editor with page and cell organization. Execute queries, view results, and reuse entries from cell history.
-</Accordion>
-<Accordion title="Graph Visualization">
-Visualize your database schema as an interactive graph. See table relationships and foreign keys at a glance, pan and zoom around the canvas, and open a node's Data action when you want to inspect rows.
-</Accordion>
-<Accordion title="Mock Data Generation">
-Generate realistic test data for development and testing. Configure the number of rows, choose between append or overwrite modes, and let WhoDB populate your tables with sample data.
-</Accordion>
-<Accordion title="Export Capabilities">
-Export grid and query-result data as CSV or Excel, plus JSON Lines for records from sources like MongoDB when supported. Apply filters before export and select CSV delimiters.
-</Accordion>
-</AccordionGroup>
+</div>
 
-## Why Choose WhoDB?
+## Start with the task you need to complete
 
-WhoDB is fast, lightweight, and fully open source, with a clean interface that puts your data front and center instead of burying it under menus. One tool covers all your databases, so there's less context switching and nothing to install per user.
+| Your task | Where to begin |
+| --- | --- |
+| Connect a database | [Install WhoDB](/installation), then [make your first connection](/first-login) |
+| Understand an unfamiliar schema | [Inspect objects](/features/schema-explorer) and [follow relationships](/visualization/graph-view) |
+| Find or change a record | [Open the data grid](/data/viewing-data) and [filter rows](/data/filtering-searching) |
+| Answer a question with SQL | [Use Scratchpad](/query/scratchpad-intro) |
+| Draft a query in everyday language | [Configure an AI provider](/ai/setup-providers) and [use Chat](/ai/querying-data) |
+| Run terminal checks or connect an assistant | [Use the CLI and MCP server](/features/cli-and-mcp) |
 
-<Card title="Why WhoDB?" icon="circle-question" href="/why-whodb">
-See how WhoDB compares to traditional database tools and what makes it different
-</Card>
+## Inspect the structure before writing the query
 
-## Use Cases
+Use **Tables** to find an object, **Info** to inspect its fields, and **Data** to read its records. Open **Graph** when the question depends on related tables. Its edges show relationships reported by the source, and a node's Data action takes you back to the records.
 
-<Tip>
-WhoDB is perfect for a wide range of database management tasks
-</Tip>
+<div className="ce-screenshot-light">
 
-**Development & Testing**
-- Quickly inspect database state during development
-- Generate test data for your applications
-- Debug SQL queries and view results instantly
-- Explore schema changes and relationships
+![A database schema rendered as connected table nodes in Graph](/images/light/24-graph-view-schema-topology.png)
 
-**Data Analysis**
-- Export data for further analysis in Excel or other tools
-- Run ad-hoc queries to answer business questions
-- Filter and sort large datasets to find specific records
-- Visualize table relationships to understand data flow
+</div>
+<div className="ce-screenshot-dark">
 
-**Database Administration**
-- Monitor table structures and indexes
-- Browse and edit data across multiple databases
-- Run ad-hoc queries against any connected database
-- Maintain data quality with filtering and validation
+![A database schema rendered as connected table nodes in Graph](/images/dark/24-graph-view-schema-topology.png)
 
-**Learning & Education**
-- Explore database structures to learn SQL
-- Visualize relationships between tables
-- Practice queries in a safe environment
-- Understand database design patterns
+</div>
 
-## Getting Started
+## Keep the steps of an investigation together
 
-<CardGroup cols={3}>
-<Card title="Installation" icon="download" href="/installation">
-Learn how to install WhoDB on your system
-</Card>
-<Card title="First Login" icon="right-to-bracket" href="/first-login">
-Connect to your first database
-</Card>
-<Card title="Quick Start" icon="rocket" href="/quick-start">
-Get up and running in minutes
-</Card>
-</CardGroup>
+A **Scratchpad** page holds several query cells. Keep a sample in one cell, a join in another, and the final aggregate beside them. Results appear below the query that produced them, and each cell has its own history.
 
-<Note>
-WhoDB is under active development. New features and improvements are added regularly. Check our GitHub repository for the latest updates and release notes.
-</Note>
+<div className="ce-screenshot-light">
 
-## Community & Support
+![Scratchpad with two query cells and their results](/images/light/48-scratchpad-multiple-cells-results.png)
 
-Join our growing community of users and contributors:
+</div>
+<div className="ce-screenshot-dark">
 
-- **GitHub**: Report issues, request features, and contribute code
-- **Documentation**: Comprehensive guides and API references
-- **GitHub Discussions & Issues**: Ask questions, share tips, and report problems
+![Scratchpad with two query cells and their results](/images/dark/48-scratchpad-multiple-cells-results.png)
 
-<Info>
-Ready to start exploring your databases? Continue to the **Installation** page to get WhoDB running on your system.
-</Info>
+</div>
+
+Pages and history belong to your browser. Save important queries in files or version control when they need to be shared or retained.
+
+## Get help drafting a query
+
+**Chat** uses a configured model to help with questions about the connected source. Read the generated SQL, check the returned records, and move a useful query into Scratchpad when you want to edit it yourself.
+
+<div className="ce-screenshot-light">
+
+![Chat showing a generated query and example results](/images/light/106-chat-sql-query-results.png)
+
+</div>
+<div className="ce-screenshot-dark">
+
+![Chat showing a generated query and example results](/images/dark/106-chat-sql-query-results.png)
+
+</div>
+
+Chat is optional. You can browse and query without a model. Its documentation screenshots use fixed demonstration responses; a live answer depends on your provider, model, and data.
+
+## Use the operations your source supports
+
+CE includes SQL databases, local database files, document stores, caches, and search sources. A PostgreSQL table and a Redis key have different operations, so the available actions change with the connection. See [Supported databases](/resources/supported-databases) for the CE catalog.
+
+## Continue when the work becomes recurring
+
+If an investigation becomes a repeated preparation task or team workflow, bring the connection to **WhoDB Platform**. Use **Transforms** for data pipelines, **Apps** for operational workflows, and **Ontology** for shared business models. [Choose a next step](/guides/move-to-platform) based on the work you want to repeat.
+
+WhoDB Community is Apache-2.0 licensed. [Browse the source](https://github.com/clidey/whodb), [report a problem](https://github.com/clidey/whodb/issues), or [join a discussion](https://github.com/clidey/whodb/discussions).

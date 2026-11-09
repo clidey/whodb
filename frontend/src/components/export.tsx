@@ -127,7 +127,7 @@ export const Export: FC<IExportProps> = ({
 
     return (
             <Sheet open={open} onOpenChange={onOpenChange}>
-                <SheetContent side="right" className="max-w-md w-full p-8" data-testid="export-dialog" footer={
+                <SheetContent side="right" className="max-w-md w-full" data-testid="export-dialog" footer={
                     <SheetFooter className="flex gap-sm px-0">
                         <div className="text-xs text-muted-foreground mb-8">
                             <p className="font-medium mb-1">{t('exportDetailsTitle')}</p>

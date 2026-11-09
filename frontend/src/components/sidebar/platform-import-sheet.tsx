@@ -148,7 +148,7 @@ export const PlatformImportSheet: FC<PlatformImportSheetProps> = ({ open, onOpen
 
     return (
         <Sheet open={open} onOpenChange={handleSheetOpenChange}>
-            <SheetContent side="right" className="p-8 flex flex-col gap-6">
+            <SheetContent side="right" className="flex flex-col gap-6">
                 <SheetHeader>
                     <SheetTitle>{t("platformImportTitle")}</SheetTitle>
                     <SheetDescription>{t("platformImportDescription")}</SheetDescription>

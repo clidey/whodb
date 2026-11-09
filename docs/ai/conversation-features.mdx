@@ -1,486 +1,62 @@
 ---
-title: "Conversation Management & Advanced Features"
-description: "Master multi-turn conversations, chat history navigation, scratchpad integration, and provider management in WhoDB's AI assistant"
+title: "Keep a useful conversation"
+description: "Refine questions, manage chat sessions, and move generated queries into Scratchpad."
 ---
 
-# Conversation Management & Advanced Features
+# Keep a useful conversation
 
-WhoDB's AI Chat Assistant is designed for interactive, contextual conversations that build on previous exchanges. This guide covers advanced features that help you work more efficiently with the AI, including conversation history, chat navigation, scratchpad integration, and provider management.
+Keep related questions in one conversation when you are working toward a single answer. The context helps you refine a query, but you should still name the records and rules that matter as the investigation changes.
 
-<Tip>
-The AI assistant maintains full context throughout your conversation, allowing natural follow-up questions without repeating information
-</Tip>
+<div className="ce-screenshot-light">
 
-<Warning>
-Conversation features require a selected AI model. If the model dropdown is empty, configure a provider before testing chat history, generated SQL, or Move to Scratchpad.
-</Warning>
+![A conversation with follow-up questions](/images/light/112-chat-multiple-messages.png)
 
-## Understanding Conversational Context
+</div>
+<div className="ce-screenshot-dark">
 
-Unlike traditional SQL editors where each query is independent, WhoDB's AI assistant maintains conversational context throughout your session. This enables a natural, iterative approach to data exploration and analysis.
+![A conversation with follow-up questions](/images/dark/112-chat-multiple-messages.png)
 
-### How Context Works
-
-When you ask a question, the AI assistant considers:
-1. Your current question
-2. All previous messages in the conversation
-3. Your database schema
-4. Previous query results (implicitly)
-
-This context awareness allows the assistant to:
-- Understand pronouns and references ("show me that data", "what about the previous month?")
-- Refine previous queries based on feedback
-- Build complex analyses through multiple steps
-- Maintain topic continuity across questions
-
-![Multiple Messages Conversation](/images/112-chat-multiple-messages.png)
-
-### Context Window Limitations
-
-Each AI provider and model has limits on how much conversation history can be maintained. Context window sizes vary by model — check your provider's documentation for the models you use.
-
-<Info>
-One token is approximately 4 characters. Longer schemas and verbose queries consume more tokens
-</Info>
-
-When the context window approaches its limit, consider starting a new conversation to maintain optimal performance.
-
-## Multi-Turn Conversations
-
-Multi-turn conversations allow you to build complex analyses through natural dialogue, refining and iterating on results.
-
-### Follow-Up Questions and Refinement
-
-After receiving initial results, ask follow-up questions that reference previous context:
-
-```text
-You: Show me recent orders
-AI: [Returns orders from the last 30 days]
-
-You: Actually, just from the last week
-AI: [Adjusts the query to show 7 days instead]
-
-You: Sort by total amount descending
-AI: [Adds ORDER BY clause to the refined query]
-```
-
-The assistant understands that "them", "those", or "that query" refer to results from earlier in the conversation.
-
-### Building Complex Analysis
-
-Break down complex questions into multiple steps:
-
-<Steps>
-<Step title="Start Broad">
-**You**: "What tables contain customer information?"
-</Step>
-<Step title="Explore Structure">
-**You**: "Show me the structure of the customers table"
-</Step>
-<Step title="Retrieve Data">
-**You**: "Get all customers from California"
-</Step>
-<Step title="Analyze">
-**You**: "What's the average order value for these customers?"
-</Step>
-<Step title="Extend">
-**You**: "Show me monthly trends"
-</Step>
-</Steps>
-
-Each step builds on previous context, so you never repeat information the assistant already knows.
-
-### Conversation Patterns
-
-<AccordionGroup>
-<Accordion title="Exploration Pattern">
-Discover database contents through iterative questions:
-
-1. "What tables exist in this database?"
-2. "Tell me about the products table"
-3. "Show me a sample of products"
-4. "How many products are out of stock?"
-</Accordion>
-
-<Accordion title="Refinement Pattern">
-Start general and narrow down results:
-
-1. "Show me all sales data"
-2. "Just from Q4 2024"
-3. "Only sales over $10,000"
-4. "Show only the top 10 performers"
-</Accordion>
-
-<Accordion title="Comparison Pattern">
-Compare different data sets:
-
-1. "Show me revenue for January"
-2. "Now show me February"
-3. "What's the percentage difference?"
-4. "Which products drove the increase?"
-</Accordion>
-
-<Accordion title="Investigation Pattern">
-Drill down into specific issues:
-
-1. "Are there any duplicate email addresses?"
-2. "Show me the duplicates"
-3. "Which accounts were created most recently?"
-4. "Generate a query to merge the duplicates"
-</Accordion>
-</AccordionGroup>
-
-## Chat History Navigation
-
-WhoDB provides keyboard shortcuts to quickly access your previous questions, making it easy to rerun or modify earlier queries.
-
-### Keyboard Shortcuts
-
-| Shortcut | Action | Description |
-|----------|--------|-------------|
-| <kbd>↑</kbd> (Arrow Up) | Previous message | Navigate backward through your message history |
-| <kbd>↓</kbd> (Arrow Down) | Next message | Navigate forward through your message history |
-| <kbd>Enter</kbd> | Send message | Submit your current message to the AI |
-
-### Using Arrow Keys
-
-<Steps>
-<Step title="Focus the Input">
-Click in the chat input field at the bottom of the screen.
-</Step>
-<Step title="Navigate History">
-Press <kbd>↑</kbd> to load your most recent message, and continue pressing to move backward through your history. Press <kbd>↓</kbd> to move forward.
-</Step>
-<Step title="Modify or Resend">
-Edit the message if needed, then press <kbd>Enter</kbd> to send. Or press <kbd>Enter</kbd> without changes to rerun the exact same query.
-</Step>
-</Steps>
-
-This is useful for rerunning queries after data modifications, adjusting date ranges or filters in a previous question, and recalling phrasing that worked well.
-
-<Tip>
-Use <kbd>↑</kbd> to quickly access and modify your last query instead of retyping similar questions
-</Tip>
-
-## Starting New Conversations
-
-When you need to start fresh or when your current conversation becomes too long, use the New Chat feature to clear context and begin a new session.
-
-### When to Start a New Chat
-
-<CardGroup cols={2}>
-<Card title="Context Shift" icon="arrow-right-arrow-left">
-You're switching to a completely different topic or database area
-</Card>
-<Card title="Long Conversations" icon="messages">
-Your conversation has 30+ messages and performance is slowing
-</Card>
-<Card title="Confusion Detected" icon="circle-question">
-The AI seems confused by mixed context from different topics
-</Card>
-<Card title="Fresh Start" icon="rotate">
-You want to approach a problem with a clean slate
-</Card>
-</CardGroup>
-
-### Creating a New Chat
-
-<Steps>
-<Step title="Locate the New Chat Button">
-Find the **New Chat** (+) button in the header of the Chat History sidebar.
-
-![New Chat Button](/images/114-chat-new-chat-button.png)
-</Step>
-<Step title="Click New Chat">
-Click the button to create a new session. It is added to the Chat History sidebar, and your other sessions remain available there.
-</Step>
-<Step title="Start Fresh">
-The new session opens in the initial state with example prompts.
-
-Your provider and model selections remain unchanged.
-</Step>
-</Steps>
-
-<Tip>
-To clear the messages in the current session instead of starting a new one, click **Clear Chat** next to the AI provider dropdowns.
-</Tip>
-
-### Chat Sessions
-
-WhoDB supports multiple chat sessions, shown in a chat history sidebar:
-
-- **Create**: Click the add-session button in the sidebar to start a new session
-- **Switch**: Click any session in the sidebar to resume that conversation with its context intact
-- **Rename**: Edit a session's title directly; titles can also be auto-generated by the AI based on the conversation
-
-Use separate sessions for separate topics instead of mixing everything into one long conversation.
-
-### Preserving Important Queries
-
-Before clearing a session, consider saving important queries to Scratchpad:
-
-1. Find the query result you want to keep
-2. Click **Move to Scratchpad** below the result
-3. Choose or create a page for the query
-4. Start your new chat
-
-## Moving Queries to Scratchpad
-
-The Scratchpad integration allows you to save generated SQL queries for later use, modification, or documentation. This bridges the gap between conversational exploration and traditional SQL editing.
-
-![Move to Scratchpad Dialog](/images/113-chat-move-to-scratchpad-dialog.png)
-
-### Moving a Query to Scratchpad
-
-<Steps>
-<Step title="Generate a Query">
-Ask the AI assistant a question that generates SQL. Wait for the query to execute and display results.
+</div>
 
 <Note>
-Only SQL queries can be moved to Scratchpad. Text responses and errors cannot be transferred
-</Note>
-</Step>
-<Step title="Find the Result">
-Locate the query result you want to save. Its actions appear in the row below the result.
-</Step>
-<Step title="Select Move to Scratchpad">
-Click **Move to Scratchpad**. This opens the "Move to Scratchpad" dialog.
-</Step>
-<Step title="Choose Destination">
-Select where to add the query:
-
-**Option A: Existing Page** — select a page from the dropdown; the query is added as a new cell at the bottom.
-
-**Option B: New Page** — select "Create new page" and enter a descriptive name (e.g., "User Analysis Queries").
-</Step>
-<Step title="Confirm">
-Click **Move to Scratchpad** to complete the transfer. WhoDB saves the query to the selected page, navigates you to the Scratchpad, and highlights the newly added query.
-</Step>
-</Steps>
-
-### Database Support
-
-The **Move to Scratchpad** option appears for SQL sources whose connection supports raw query execution — for example PostgreSQL, MySQL, MariaDB, SQLite, ClickHouse, and DuckDB. It is not shown for sources without a SQL query surface, such as Redis and MongoDB.
-
-<Info>
-For non-SQL sources, copy the generated query manually if needed for documentation
-</Info>
-
-### Organizing Scratchpad Queries
-
-Develop a structure for organizing Scratchpad pages — by functionality (User Queries, Order Analysis, Data Cleanup), by frequency (Daily Reports, Monthly Summaries), or by complexity. Create descriptive page names that make it easy to find queries later, add comments documenting what each query accomplishes, and copy important SQL into your normal shared docs, runbooks, or repository.
-
-## Managing Conversation History
-
-As you work with the AI assistant, managing your conversation history becomes important for maintaining clarity and performance.
-
-### Conversation Lifecycle
-
-A conversation starts with minimal context and quick responses. As you build on previous questions, context accumulates — enabling sophisticated follow-ups but gradually increasing processing time. After 20-30 messages, performance may slow slightly; as you approach the model's context limit, consider starting a new chat or being more concise.
-
-### Signs You Should Start a New Chat
-
-- Responses become noticeably slower
-- The AI references incorrect previous context
-- You're switching to a completely different task
-- Error messages about context length
-- You've had 50+ messages in one conversation
-
-### Strategies for Long Sessions
-
-If you need extended conversations:
-
-**Use Models with Large Context Windows**: Some models support much larger context windows than others — check your provider's documentation for context sizes.
-
-**Be Concise**: Use shorthand in follow-ups ("show top 10" vs. "can you please show me the top 10 results") and reference previous results by position ("those top 3" instead of repeating criteria).
-
-**Periodically Summarize**:
-```text
-Summarize what we've learned about the users table so far
-```
-
-**Save to Scratchpad**: Move important queries to Scratchpad, then start a new chat with a fresh context.
-
-## Provider Management
-
-Managing your AI providers allows you to switch between different AI services, update credentials, and remove unused providers.
-
-### Viewing Current Provider
-
-Your active provider and model are displayed in two dropdowns at the top of the Chat interface:
-- **Left dropdown**: AI Provider (OpenAI, Anthropic, Gemini, Ollama, LM Studio, etc.)
-- **Right dropdown**: Specific model, from the list fetched from that provider
-
-### Switching Providers
-
-<Steps>
-<Step title="Click Provider Dropdown">
-Click the AI Provider dropdown on the left. All configured providers appear in the list.
-</Step>
-<Step title="Select Different Provider">
-Click on another provider to switch immediately. The model dropdown will update with available models for that provider.
-</Step>
-<Step title="Select Model">
-Choose the desired model from the updated model dropdown. You can now chat using the new provider and model.
-</Step>
-</Steps>
-
-<Info>
-Switching providers does NOT clear your conversation history. The new provider will have access to previous messages
-</Info>
-
-### Adding New Providers
-
-Click the AI Provider dropdown and select the green **"Add a provider"** option at the bottom. Choose the provider type, enter the required credentials, and click Submit. See [Setting Up AI Providers](/ai/setup-providers) for detailed configuration instructions, provider comparisons, and troubleshooting.
-
-### Deleting Providers
-
-When you no longer need a provider (e.g., expired API key, switching to a different service), you can remove it:
-
-![Delete Provider Button](/images/115-chat-delete-provider-button.png)
-
-<Steps>
-<Step title="Select Provider to Delete">
-Use the provider dropdown to select the provider you want to remove.
-</Step>
-<Step title="Click Delete Provider">
-Click the **Delete Provider** button at the right end of the chat toolbar. This button is available for manually added providers.
-</Step>
-<Step title="Confirm Deletion">
-Click **Delete** in the confirmation dialog.
-
-<Warning>
-This action cannot be undone. You'll need to re-enter credentials to use this provider again
-</Warning>
-</Step>
-</Steps>
-
-<Note>
-Environment-defined providers are managed by deployment configuration.
+The screenshots use fixed demonstration responses to illustrate the controls.
 </Note>
 
-### Managing Multiple Providers
+## Refine with context
 
-You can configure multiple providers simultaneously, useful for:
+Start with a sample, then ask for a specific filter, grouping, or comparison. “Count paid orders only” gives the model a usable rule. “Use the usual revenue definition” leaves that rule unstated.
 
-- **Flexibility**: Use a smaller, cheaper model for simple queries and a more capable model for complex analysis
-- **Redundancy**: Have backup providers if the primary service is down or rate-limited
-- **Privacy**: Use local models (Ollama, LM Studio) for sensitive queries and cloud providers for faster responses on non-sensitive data
+If a follow-up changes the population, say so directly. For example, moving from all orders to orders in a particular date range changes the meaning of a count, even when the returned columns look the same.
 
-For provider selection strategy and cost considerations, see [AI Chat Assistant Best Practices](/best-practices/ai-usage); for setup details, see [Setting Up AI Providers](/ai/setup-providers).
+Long conversations can exceed a model's available context. If an answer starts using old assumptions or unrelated objects, start a new session and restate the source, question, and relevant rules.
 
-<Tip>
-Keep at least two providers configured for reliability and flexibility
-</Tip>
+## Manage sessions
 
-## Advanced Conversation Patterns
+Use the chat history sidebar to create and switch sessions. Rename a session for the question it contains so it is easier to return to later. Choose **Rename chat** to edit its name; on desktop you can also double-click the name.
 
-### Context Anchoring
+Deletion asks for confirmation. Review the selected conversation before deleting it, and copy any query you need to keep. On a small screen, choose **Browse items** to open the session list.
 
-Reference specific previous results:
+A new session is useful when the question or source context changes. It also keeps a long exploratory conversation separate from the final query you want to verify.
 
-```text
-Take that query and add a filter for...
-Apply the same logic to the orders table instead
-```
+## Continue in Scratchpad
 
-### Explaining AI Decisions
+On a query result, choose **Move to Scratchpad** where supported and select its destination. You can then edit the query in a normal cell and compare it with your own checks.
 
-Ask the AI to explain its query choices:
+<div className="ce-screenshot-light">
 
-```text
-Why did you use a LEFT JOIN instead of INNER JOIN?
-Is there a more efficient way to write this?
-```
+![Choosing where to move a Chat query](/images/light/113-chat-move-to-scratchpad-dialog.png)
 
-This helps you learn SQL while using the assistant.
+</div>
+<div className="ce-screenshot-dark">
 
-### Multi-Step Workflows
+![Choosing where to move a Chat query](/images/dark/113-chat-move-to-scratchpad-dialog.png)
 
-Combine conversation with Scratchpad for complex workflows:
+</div>
 
-1. **Explore with AI**: Ask questions to understand data structure
-2. **Generate Base Query**: Get AI to create the initial query
-3. **Move to Scratchpad**: Save the query for refinement
-4. **Refine Manually**: Add complexity or optimization
-5. **Iterate**: Return to the AI with follow-up questions as needed
+Use this when you want precise control over a join, a date boundary, or a calculated value. Save the finished query outside browser storage when it needs to be shared or reused.
 
-This hybrid approach combines AI speed with manual control.
+## Change providers
 
-## Troubleshooting Conversation Issues
+Use the provider and model controls to select the endpoint for the next request. Check the selection before sending data to a different provider.
 
-<AccordionGroup>
-<Accordion title="AI Misunderstands My Question">
-**Symptoms**: Incorrect query generated, wrong table used, unexpected results
-
-**Solutions**:
-- Be more specific with table and column names
-- Break complex questions into smaller parts
-- Use full names instead of pronouns in early messages
-
-**Example Fix**:
-- ❌ "Show me the data" (too vague)
-- ✅ "Show me all rows from the users table"
-</Accordion>
-
-<Accordion title="Slow Response Times">
-**Solutions**:
-- Start a new chat to clear context
-- Switch to a faster model from your provider's lineup
-- Save important queries to Scratchpad and start fresh
-- Use models with larger context windows for long sessions
-</Accordion>
-
-<Accordion title="AI References Wrong Previous Context">
-**Symptoms**: Follow-up questions use incorrect table or data from earlier in the conversation
-
-**Solutions**:
-- Be explicit in your question (mention the table name)
-- Start a new chat if context is too mixed
-
-**Example Fix**:
-- ❌ "Now show me those records" (ambiguous)
-- ✅ "Show me users from the last query who have orders"
-</Accordion>
-
-<Accordion title="Cannot Move Query to Scratchpad">
-**Reasons**:
-- Current database doesn't support SQL (Redis, MongoDB)
-- Message is a text response or an error, not a SQL query
-
-**Solutions**: Only SQL query results can be moved to Scratchpad. For NoSQL databases, manually copy the query text.
-</Accordion>
-
-<Accordion title="History Navigation Not Working">
-**Solutions**:
-- Ensure the input field is focused (click in the input box)
-- Verify messages were actually sent (look for user messages in chat)
-
-**Note**: Arrow keys only navigate through your sent messages, not AI responses
-</Accordion>
-</AccordionGroup>
-
-For provider connection issues (invalid API keys, rate limits, Ollama not running), see [Setting Up AI Providers](/ai/setup-providers).
-
-## Next Steps
-
-Now that you understand conversation management and advanced features:
-
-<CardGroup cols={2}>
-<Card title="Querying Data" icon="magnifying-glass" href="/ai/querying-data">
-Learn techniques for effective data retrieval with natural language
-</Card>
-<Card title="Modifying Data" icon="pen-to-square" href="/ai/modifying-data">
-Safely update, insert, and delete data with AI assistance
-</Card>
-<Card title="Scratchpad Guide" icon="code" href="/query/scratchpad-intro">
-Master the Scratchpad for advanced SQL editing and query management
-</Card>
-<Card title="Best Practices" icon="star" href="/best-practices/ai-usage">
-Discover tips for optimal AI assistant usage
-</Card>
-</CardGroup>
-
-<Check>
-Mastering conversation features transforms the AI assistant from a query generator into a powerful collaborative partner for database work
-</Check>
+Provider-management actions can remove a provider where allowed. Environment-defined provider settings remain managed by the server configuration. See [Provider setup](/ai/setup-providers) when the intended model or endpoint is missing.

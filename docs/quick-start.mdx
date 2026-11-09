@@ -1,140 +1,69 @@
 ---
-title: "Quick Start Guide"
-description: "Use the current WhoDB interface to browse data, run queries, visualize schema, and export results"
+title: "Quick start"
+description: "Connect, inspect a schema, filter rows, run a query, and export an answer."
 ---
 
-# Quick Start Guide
+# Quick start
 
-This guide starts after WhoDB is running and you have connected to a database.
+Connect a development database, find a record, and export a query result. This walkthrough uses PostgreSQL; other sources show the operations they support. Follow [Installation](/installation) first if WhoDB is not running.
 
-<Tip>
-WhoDB uses source-first terminology. Most database tables, collections, buckets, or equivalent objects are shown as **Storage Units**.
-</Tip>
+## Connect and find a table
 
-## Current Interface
+Choose **Postgres** on the connection page and enter your database's host, port, username, password, and database name. Configure required TLS options under **Advanced**, connect, and select the intended schema in the sidebar.
 
-After login, the left sidebar is the primary navigation surface. Depending on the connected source, it can show:
+Open **Tables** and search for a table you recognize. Expand **Info** to inspect its columns, then choose **Data** to browse rows. Check a few familiar values to confirm you are in the right database.
 
-- **Chat** when AI chat is supported and a provider/model is configured
-- **Storage Units** for browsing tables, collections, views, or similar objects
-- **Graph** when relationship visualization is supported
-- **Scratchpad** when custom query execution is supported
-- **Settings** when the settings page is enabled
+## Retrieve a matching record
 
-The Storage Units page is the default browse view. It can show cards or a list. Use the search field at the top of the page to filter object names.
+Open **Filter**, choose a column and comparison, and enter a known value. Click **Run** to retrieve matching records from the database. Start with an identifier so the expected result is easy to check.
 
-## First Five Minutes
+The separate **Search** field highlights text in the loaded rows. Use Filter when the record may be on another page.
 
-<Steps>
-<Step title="Browse Storage Units">
-Open **Storage Units** from the sidebar. Use the profile, database, and schema selectors in the sidebar when they are available for the current source.
-</Step>
-<Step title="Inspect Object Metadata">
-In card view, click **Describe** on a storage unit. The card expands and shows metadata attributes. For tabular objects, WhoDB also loads column names and types.
-</Step>
-<Step title="Open Data">
-Click **Data** on a storage unit. WhoDB opens the object data page with row data, total count, search, page size, Where conditions, and query controls.
-</Step>
-<Step title="Run A Query">
-Open **Scratchpad** from the sidebar or use the Scratchpad button on a data page. Type SQL and click the run button, the gutter play button, or press `Mod + Enter`.
-</Step>
-<Step title="Visualize Relationships">
-Open **Graph**. Select the storage units you want to show from the graph sidebar. The canvas renders selected nodes and foreign-key relationships when the source exposes them.
-</Step>
-</Steps>
+## Run a query
 
-## Viewing And Filtering Data
+Open **Scratchpad** and enter a query for your own schema. For the documentation's sample PostgreSQL database, a small query is:
 
-On a storage unit data page:
+```sql
+SELECT id, username, email
+FROM test_schema.users
+ORDER BY id
+LIMIT 10;
+```
 
-- **Search** highlights and scrolls to matching values in currently loaded rows. Use WHERE conditions when you want to filter the result set.
-- **Where condition** opens the condition builder. Add field/operator/value conditions, then click **Query** on the page to reload data with those conditions.
-- **Page Size** controls how many rows WhoDB asks the backend for per page. Built-in options include `10`, `25`, `50`, `100`, `250`, `500`, `1000`, and `Custom`, subject to the configured maximum.
-- **Pagination** appears at the bottom when more pages are available.
-- **Column headers** can be clicked to sort. Sorting is sent back through the data request.
+Use the play button or `Mod + Enter` to execute the cell. `Mod` means `Cmd` on macOS and `Ctrl` on Windows/Linux. Results appear below the editor.
 
-## Managing Rows
+<div className="ce-screenshot-light">
 
-Row write actions are only shown when the connected source and object allow them.
+![A query and its result in Scratchpad](/images/light/29-scratchpad-query-results.png)
 
-- **Add Row** is below the table, beside pagination. It opens a right-side sheet with one input per column, or a JSON editor for records from sources like MongoDB.
-- **Edit Row** is available from a row context menu or by focusing a row and pressing `Enter`/`Mod + E`. It opens a right-side edit sheet.
-- **Delete Row** is available from a row context menu or `Mod + Delete`/`Mod + Backspace` on a focused row. Current CE code shows a confirmation dialog before deleting.
-- **Select rows** with checkboxes. The header checkbox toggles all currently loaded rows.
+</div>
+<div className="ce-screenshot-dark">
 
-<Warning>
-Writes are sent to the connected database. Test changes on a development database and keep backups for important data.
-</Warning>
+![A query and its result in Scratchpad](/images/dark/29-scratchpad-query-results.png)
 
-## Scratchpad Basics
+</div>
 
-Scratchpad is organized as **pages**. Each page contains one or more query cells.
+Check the returned columns and a known record. Use **Export All** on that query result to download it as CSV or Excel. For a filtered report, export the query result rather than relying on a whole-table export to inherit the Data view's filters.
 
-- Click the `+` tab to add a new page.
-- Double-click a page name to rename it.
-- Use the `+` button that appears on a cell to add another cell below it.
-- Use the cell three-dot menu for **Clear**, **Copy Code**, and **Query History**.
-- Query results render below the editor. Action statements show an action-executed result after confirmation.
-- Query history is stored per cell and contains status, timestamp, copy, clone-to-editor, rerun, and clear-history actions.
+## Inspect a relationship
 
-## Graph Basics
+Open **Graph** and choose a small set of related objects in its sidebar. Follow an edge and inspect the keys at each end. A node's **Data** action opens the table's records.
 
-The Graph page has two parts:
+<div className="ce-screenshot-light">
 
-- A left graph sidebar with a search field and checkboxes for selecting storage units.
-- A React Flow canvas showing selected nodes and relationship edges.
+![Graph showing table relationships](/images/light/24-graph-view-schema-topology.png)
 
-Graph controls are on the canvas:
+</div>
+<div className="ce-screenshot-dark">
 
-- React Flow zoom, fit, and lock/pan controls are at the lower-left.
-- WhoDB download and layout buttons are at the lower-right.
-- Holding `Space` enables drag-pan behavior; scroll/pinch gestures zoom or pan according to browser and React Flow behavior.
-- Clicking a node loads that node's columns when needed. Node cards show metadata and columns directly.
-- Use the **Data** button inside a node to open the storage unit data page.
+![Graph showing table relationships](/images/dark/24-graph-view-schema-topology.png)
 
-## Export Basics
+</div>
 
-Use the table **Export All** button, or selected-row export from the table context menu.
+The graph uses relationships reported by the source. An absent edge can mean that an application relationship has no declared database foreign key.
 
-Current CE formats are:
+## Keep the useful work
 
-- **CSV** for tabular exports, with delimiter options `,`, `;`, and `|`
-- **Excel** (`.xlsx`) for tabular exports
-- **JSON Lines (NDJSON)** for records from sources like MongoDB when supported
+Rename a Scratchpad page for the investigation and put related queries in separate cells. Copy important SQL to your own files or repository because pages and history are browser-local.
 
-For full SQL backups or migration dumps, use your database's native tools such as `pg_dump`, `mysqldump`, or `mongodump`.
-
-## Useful Shortcuts
-
-`Mod` means `Cmd` on macOS and `Ctrl` on Windows/Linux.
-
-| Shortcut | Action |
-|----------|--------|
-| `?` | Open shortcut help |
-| `Mod + K` | Open command palette |
-| `Mod + B` | Toggle sidebar |
-| `Mod + Enter` | Run the current Scratchpad editor |
-| `Mod + U` | Clear the current editor |
-| `Mod + R` | Refresh table data |
-| `Mod + Shift + E` | Open export |
-| `Mod + I` | Open import when supported |
-| `Mod + Shift + G` | Open mock data generation when supported |
-
-See [Keyboard Shortcuts](/resources/keyboard-shortcuts) for the full current list.
-
-## Next Steps
-
-<CardGroup cols={2}>
-<Card title="Viewing Data" icon="table" href="/data/viewing-data">
-Learn the storage unit data page.
-</Card>
-<Card title="Scratchpad" icon="code" href="/query/scratchpad-intro">
-Run and organize SQL queries.
-</Card>
-<Card title="Graph View" icon="diagram-project" href="/visualization/graph-view">
-Understand the graph canvas and controls.
-</Card>
-<Card title="Export Options" icon="download" href="/advanced/export-options">
-Export current table or selected rows.
-</Card>
-</CardGroup>
+Next, [write a more specific query](/query/writing-queries), [configure Chat](/ai/setup-providers), or [use the CLI and MCP server](/features/cli-and-mcp).

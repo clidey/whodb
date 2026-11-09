@@ -25,12 +25,12 @@ import {
     AlertDialogTitle,
     Button,
     cn,
-    Input,
+    SearchInput,
     ScrollArea,
-    Sidebar as SidebarComponent,
     SidebarContent,
     SidebarGroup,
     SidebarHeader,
+    IconEdit,
     IconTrash as TrashIcon,
 } from '@clidey/ux';
 import { WhoDBChatIcon } from "../../components/whodb-chat-icon";
@@ -124,7 +124,10 @@ const EditableSessionName: FC<EditableSessionNameProps> = ({ session, isActive, 
     };
 
     return (
-        <div className="flex-1 min-w-0 overflow-hidden w-full" onClick={() => inputRef.current?.focus()} onDoubleClick={handleDoubleClick}>
+        <div className="flex min-w-0 w-full items-center gap-1" onClick={event => {
+            if (isEditing) event.stopPropagation();
+            inputRef.current?.focus();
+        }} onDoubleClick={handleDoubleClick}>
             {isEditing ? (
                 <input
                     ref={inputRef}
@@ -141,14 +144,16 @@ const EditableSessionName: FC<EditableSessionNameProps> = ({ session, isActive, 
                         }
                     }}
                     autoFocus
-                    className="w-full border-b border-gray-400 bg-transparent text-sm outline-none transition-colors"
+                    className="w-full border-b border-border bg-transparent text-sm outline-none transition-colors"
                     data-testid={`chat-session-name-input-${session.id}`}
                     style={{ height: '20px' }}
                 />
             ) : (
-                <span
-                    className={cn("block w-full text-sm font-semibold", {
-                        "text-foreground": isActive,
+                <Button
+                    variant="ghost"
+                    type="button"
+                    aria-current={isActive ? 'page' : undefined}
+                    className={cn("min-w-0 flex-1 justify-start text-left", {
                         "truncate": displayContent === currentContent,
                     })}
                     data-testid={`chat-session-name-${session.id}`}
@@ -158,14 +163,26 @@ const EditableSessionName: FC<EditableSessionNameProps> = ({ session, isActive, 
                     {displayContent !== currentContent && displayContent.length > 0 && (
                         <span className="animate-pulse ml-px">|</span>
                     )}
-                </span>
+                </Button>
             )}
+            {!isEditing && <Button
+                variant="ghost"
+                size="icon"
+                className="shrink-0 md:opacity-0 md:group-hover/session:opacity-100 md:group-focus-within/session:opacity-100"
+                aria-label={t('renameChat')}
+                onClick={event => {
+                    event.stopPropagation();
+                    handleDoubleClick();
+                }}
+            >
+                <IconEdit className="size-3.5" />
+            </Button>}
         </div>
     );
 };
 
 /** Renders searchable chat sessions beside the conversation panel. */
-export const ChatHistorySidebar: FC = () => {
+export const ChatHistorySidebar: FC<{ onSelect?: () => void }> = ({ onSelect }) => {
     const { t } = useTranslation('pages/chat');
     const dispatch = useAppDispatch();
     const { sessions, activeSessionId } = useAppSelector(state => state.houdini);
@@ -178,7 +195,8 @@ export const ChatHistorySidebar: FC = () => {
             session_count_bucket: countBucket(sessions.length + 1),
         });
         dispatch(HoudiniActions.addChatSession({ name: `Chat ${sessions.length + 1}` }));
-    }, [dispatch, sessions.length]);
+        onSelect?.();
+    }, [dispatch, onSelect, sessions.length]);
 
     const handleSelectSession = useCallback((sessionId: string) => {
         const session = sessions.find(item => item.id === sessionId);
@@ -187,7 +205,8 @@ export const ChatHistorySidebar: FC = () => {
             session_count_bucket: countBucket(sessions.length),
         });
         dispatch(HoudiniActions.setActiveSession({ sessionId }));
-    }, [dispatch, sessions]);
+        onSelect?.();
+    }, [dispatch, onSelect, sessions]);
 
     const promptDelete = useCallback((sessionId: string) => {
         setSessionToDelete(sessionId);
@@ -214,85 +233,82 @@ export const ChatHistorySidebar: FC = () => {
 
     return (
         <>
-            <div className="flex h-full min-h-0" data-testid="chat-history-sidebar">
-                <SidebarComponent variant="embed" className="flex h-full w-72 flex-col border-r border-border">
-                    <SidebarHeader className="gap-2 p-3">
-                        <div className="flex items-center justify-between">
-                            <h1 className="text-sm font-semibold">{t('chatHistory')}</h1>
-                            <Tip className="w-fit">
-                                <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="size-7"
-                                    onClick={handleAddSession}
-                                    data-testid="add-chat-session-button"
-                                    aria-label={t('newChat')}
-                                >
-                                    <WhoDBChatIcon name="plus" className="size-4" />
-                                </Button>
-                                <p>{t('newChat')}</p>
-                            </Tip>
-                        </div>
-                        <div className="relative">
-                            <WhoDBChatIcon name="search" className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                            <Input value={sessionSearch} onChange={event => { setSessionSearch(event.target.value); }} placeholder={t('searchChats')} aria-label={t('searchChats')} className="h-9 bg-card !pl-8 text-sm" />
-                        </div>
-                    </SidebarHeader>
-                    <SidebarContent className="min-h-0">
-                        <SidebarGroup className="min-h-0 grow">
-                            <ScrollArea className="h-full min-h-0">
-                                <div className="flex flex-col gap-1 p-2">
-                                {sessions.filter(session => session.name.toLocaleLowerCase().includes(sessionSearch.trim().toLocaleLowerCase())).map((session) => {
-                                    const isActive = session.id === activeSessionId;
-                                    const messageCount = session.messages.length;
+            <aside className="ce-secondary-panel flex h-full min-h-0 w-full flex-col" data-testid="chat-history-sidebar" aria-label={t('chatHistory')}>
+                <SidebarHeader className="gap-2 p-3">
+                    <div className="flex items-center justify-between">
+                        <h1 className="text-sm font-semibold">{t('chatHistory')}</h1>
+                        <Tip className="w-fit">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={handleAddSession}
+                                data-testid="add-chat-session-button"
+                                aria-label={t('newChat')}
+                            >
+                                <WhoDBChatIcon name="plus" className="size-4" />
+                            </Button>
+                            <p>{t('newChat')}</p>
+                        </Tip>
+                    </div>
+                    <div className="relative">
+                        <SearchInput value={sessionSearch} onChange={event => { setSessionSearch(event.target.value); }} placeholder={t('searchChats')} aria-label={t('searchChats')} />
+                    </div>
+                </SidebarHeader>
+                <SidebarContent className="min-h-0">
+                    <SidebarGroup className="min-h-0 grow">
+                        <ScrollArea className="h-full min-h-0">
+                            <div className="flex flex-col gap-1 p-2">
+                            {sessions.filter(session => session.name.toLocaleLowerCase().includes(sessionSearch.trim().toLocaleLowerCase())).map((session) => {
+                                const isActive = session.id === activeSessionId;
+                                const messageCount = session.messages.length;
 
-                                    return (
-                                        <div
-                                            key={session.id}
-                                            className={cn(
-                                                "group/session relative flex w-full max-w-full cursor-pointer items-center gap-3 rounded-md px-3 py-2 transition-colors hover:bg-muted/50",
-                                                {
-                                                    "bg-primary/10 dark:bg-primary/25": isActive,
-                                                }
-                                            )}
-                                            onClick={() => { handleSelectSession(session.id); }}
-                                            data-testid={`chat-session-item-${session.id}`}
-                                        >
-                                            <span className="flex size-6 shrink-0 items-center justify-center rounded bg-primary/10 text-primary dark:bg-primary/20"><WhoDBChatIcon name="chat" className="size-4" /></span>
-                                            <div className="flex-1 min-w-0 flex flex-col overflow-hidden max-w-[calc(100%-3rem)] hover:max-w-[calc(100%-3rem)]">
-                                                <EditableSessionName
-                                                    session={session}
-                                                    isActive={isActive}
-                                                    onUpdate={handleUpdateSessionName}
-                                                />
-                                                <div className="text-xs text-muted-foreground truncate w-full" title="">
-                                                    {messageCount > 0 ? t('messageCount', { count: messageCount }) : t('noMessages')}
-                                                </div>
+                                return (
+                                    <div
+                                        key={session.id}
+                                        aria-current={isActive ? 'page' : undefined}
+                                        className={cn(
+                                            "group/session relative flex w-full max-w-full cursor-pointer items-center gap-3 rounded-md px-4 py-3 transition-colors hover:bg-muted",
+                                            {
+                                                "bg-accent text-accent-foreground": isActive,
+                                            }
+                                        )}
+                                        onClick={() => { handleSelectSession(session.id); }}
+                                        data-testid={`chat-session-item-${session.id}`}
+                                    >
+                                        <span className="flex size-6 shrink-0 items-center justify-center rounded bg-primary/10 text-primary dark:bg-primary/20"><WhoDBChatIcon name="chat" className="size-4" /></span>
+                                        <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
+                                            <EditableSessionName
+                                                session={session}
+                                                isActive={isActive}
+                                                onUpdate={handleUpdateSessionName}
+                                            />
+                                            <div className="text-xs text-muted-foreground truncate w-full" title="">
+                                                {messageCount > 0 ? t('messageCount', { count: messageCount }) : t('noMessages')}
                                             </div>
-                                            {sessions.length > 1 && (
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="shrink-0 hidden group-hover/session:flex absolute right-4"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        promptDelete(session.id);
-                                                    }}
-                                                    data-testid={`delete-chat-session-${session.id}`}
-                                                    aria-label={t('deleteChat')}
-                                                >
-                                                    <TrashIcon className="w-4 h-4 text-destructive" />
-                                                </Button>
-                                            )}
                                         </div>
-                                    );
-                                })}
-                            </div>
-                        </ScrollArea>
-                    </SidebarGroup>
-                </SidebarContent>
-            </SidebarComponent>
-            </div>
+                                        {sessions.length > 1 && (
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="shrink-0 md:opacity-0 md:group-hover/session:opacity-100 md:group-focus-within/session:opacity-100"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    promptDelete(session.id);
+                                                }}
+                                                data-testid={`delete-chat-session-${session.id}`}
+                                                aria-label={t('deleteChat')}
+                                            >
+                                                <TrashIcon className="w-4 h-4 text-destructive" />
+                                            </Button>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </ScrollArea>
+                </SidebarGroup>
+            </SidebarContent>
+            </aside>
 
             <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
                 <AlertDialogContent>

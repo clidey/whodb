@@ -1,81 +1,39 @@
 ---
-title: "Database Exploration"
-description: "Explore a database with Storage Units, Describe, Data, Graph, and Scratchpad"
+title: "Explore a database"
+description: "Understand an unfamiliar source using metadata, sample rows, filters, and relationships."
 ---
 
-# Database Exploration
+# Explore a database
 
-Use this workflow to understand an unfamiliar database in the current WhoDB UI.
+Use WhoDB to understand the part of an unfamiliar database that answers your question. Start with one object and a known record, then follow the fields and relationships you need.
 
-## 1. Start With Storage Units
+## Locate the starting object
 
-After connecting, open **Storage Units**.
+Check the active database and schema, open **Tables**, and search for a likely name. Expand **Info** to inspect fields and types. An identifier, creation date, or foreign-key field often gives you a useful starting point.
 
-![Storage Unit List](/images/05-storage-unit-list.png)
+<div className="ce-screenshot-light">
 
-Use the search field to find likely objects.
+![Inspecting an object before querying](/images/light/07-explore-users-table.png)
 
-## 2. Describe Interesting Objects
+</div>
+<div className="ce-screenshot-dark">
 
-Click **Describe** on an object card to inspect metadata and columns.
+![Inspecting an object before querying](/images/dark/07-explore-users-table.png)
 
-![Explore Table](/images/07-explore-users-table.png)
+</div>
 
-![Explore Metadata](/images/08-explore-table-metadata.png)
+Open **Data** for a small sample. Note which values are missing, how identifiers are represented, and whether dates include a time component. These details affect the filters and comparisons you write next.
 
-Use **Describe** for structure and **Data** for rows.
+## Follow a specific record
 
-## 3. Open Data
+Use **Filter** to retrieve a known identifier from the source. The separate text Search only highlights loaded rows, so it is not a substitute for a database filter.
 
-Click **Data** to inspect rows.
+If the question spans tables, open **Graph** and select the relevant objects. Check the fields on both ends of a declared relationship. Missing edges can mean the application uses a relationship without declaring a database foreign key; inspect the schema or application definition before guessing the join.
 
-![Data View](/images/09-data-view-users-table.png)
+## Keep a repeatable answer
 
-Use Search to find values in currently loaded rows. Use WHERE conditions and **Query** to change the server-side result set.
+Move the lookup into **Scratchpad**. Keep the initial sample and the refined query in separate cells so you can see how the answer was reached. Verify at least one known record before using the query more broadly.
 
-![Filter UI](/images/16-data-view-where-conditions-popover.png)
+Save the useful SQL outside the browser with the source context and a short explanation. The outcome is a query another person can run, together with enough context to interpret its result.
 
-## 4. Inspect Relationships
-
-Open **Graph** from the sidebar.
-
-![Graph View](/images/24-graph-view-schema-topology.png)
-
-Select objects in the graph sidebar. Nodes render metadata and loaded columns directly. Clicking a node can load its columns, and the node **Data** button opens the object data page.
-
-## 5. Ask Custom Questions In Scratchpad
-
-Open **Scratchpad** for SQL queries.
-
-![Scratchpad](/images/23-data-view-embedded-scratchpad.png)
-
-Examples:
-
-```sql
-SELECT COUNT(*) AS total_users
-FROM users;
-```
-
-```sql
-SELECT status, COUNT(*) AS total
-FROM users
-GROUP BY status
-ORDER BY total DESC;
-```
-
-## 6. Export Findings
-
-Export from the grid or Scratchpad result table when you need to hand off data.
-
-Current formats are CSV, Excel, and JSON Lines for records from sources like MongoDB when supported.
-
-## Related Pages
-
-<CardGroup cols={2}>
-<Card title="Data Exploration Workflow" icon="magnifying-glass" href="/guides/tutorials/data-exploration-workflow">
-Follow the step-by-step UI workflow.
-</Card>
-<Card title="Graph View" icon="diagram-project" href="/visualization/graph-view">
-Understand current graph behavior.
-</Card>
-</CardGroup>
+Follow [Explore an unfamiliar database](/guides/tutorials/data-exploration-workflow) for a worked investigation, or [Map a schema visually](/guides/tutorials/schema-visualization) for a diagram you can share.

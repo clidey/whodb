@@ -1,337 +1,41 @@
 ---
-title: "AI-Powered Data Exploration"
-description: "Discover how to use WhoDB's AI Chat Assistant to rapidly explore and understand unfamiliar databases without writing SQL"
+title: "Explore with an AI assistant"
+description: "Draft a query in Chat, inspect its meaning, and refine it with real source context."
 ---
 
-# AI-Powered Data Exploration
+# Explore with an AI assistant
 
-Exploring an unfamiliar database typically involves hours of reading documentation, writing test queries, and piecing together relationships. WhoDB's AI Chat Assistant transforms this time-consuming process into a natural conversation, allowing you to understand database structure, discover data patterns, and map relationships quickly.
+Use Chat when you need help drafting a query for a question you can describe in words. Give the model enough source context to produce a checkable answer, then inspect the SQL before relying on the result.
 
-<Tip>
-This guide demonstrates a complete exploration workflow using AI to understand a new database from scratch
-</Tip>
+## Start with a small question
 
-## The Challenge: Understanding Unfamiliar Databases
+Connect to the intended database and choose a configured provider and model. Name the real object, the fields you need, and a result size. For example:
 
-Whether you're a new developer onboarding onto a mature system, an analyst facing an urgent report on a database you've never seen, or a DBA auditing an acquired system, traditional exploration is slow:
+> Show the first ten rows in test_schema.users ordered by id, with id, username, and email.
 
-- **Manual query writing**: Each question requires crafting SQL from scratch
-- **Schema navigation**: Finding relationships means manually tracing foreign keys through information schema tables
-- **Trial and error**: Understanding data patterns requires multiple query iterations
-- **Context switching**: Constantly switching between documentation, schema viewers, and query tools
+Use your own schema's names. A narrow request makes an incorrect field or unexpected result easier to spot. Follow your organization's rules for sending schema and data context to the selected provider.
 
-The AI Chat Assistant eliminates these barriers by letting you explore databases through natural conversation:
+## Inspect what the model ran
 
-<CardGroup cols={2}>
-<Card title="Natural Language" icon="message-square-text">
-Ask questions in plain English without SQL knowledge
-</Card>
-<Card title="Schema Awareness" icon="sitemap">
-AI understands your tables, columns, and relationships automatically
-</Card>
-<Card title="Instant Sampling" icon="bolt">
-See data immediately without writing queries
-</Card>
-<Card title="Relationship Discovery" icon="diagram-project">
-Ask about connections and get comprehensive answers
-</Card>
-</CardGroup>
+Open the SQL behind the answer. Check the selected objects, join keys, filters, and limit. Compare a known record with the Data view. If you asked for a business measure, check its definition as well as its arithmetic.
 
-![Chat Interface](/images/101-chat-initial-page.png)
+<div className="ce-screenshot-light">
 
-## Complete AI Exploration Workflow
+![Inspecting generated SQL in Chat](/images/light/107-chat-sql-code-view.png)
 
-Let's walk through exploring an unfamiliar e-commerce database using only the AI Chat Assistant.
+</div>
+<div className="ce-screenshot-dark">
 
-### Phase 1: Discovery - What Exists?
+![Inspecting generated SQL in Chat](/images/dark/107-chat-sql-code-view.png)
 
-Start by understanding what's in the database at a high level.
+</div>
 
-<Steps>
-<Step title="Ask About Available Tables">
-```text
-What tables are available in this database?
-```
+A plausible explanation does not prove that the model selected the intended records. If a field or relationship is wrong, supply the correct information and inspect the revised query. A database error is useful evidence about the query, not a reason to keep retrying without a diagnosis.
 
-The assistant lists all tables — for our example: users, products, categories, orders, order_items, payments, reviews, shipping_addresses, inventory, wishlists, and promotions.
+## Keep the query you can explain
 
-![Simple Text Response](/images/105-chat-simple-text-response.png)
-</Step>
+Ask a follow-up that changes one rule at a time. Use **Move to Scratchpad** to take over editing and retain the useful SQL outside the browser.
 
-<Step title="Understand Table Purposes">
-```text
-What does the orders table contain?
-```
+If the model proposes a data change, review the statement in its confirmation card before running it. See [Chat changes](/ai/modifying-data) for the approval flow.
 
-The assistant describes the table's role and high-level contents — order IDs, user references, dates, statuses, totals — without you viewing actual data yet.
-</Step>
-
-<Step title="Check Table Sizes">
-```text
-How many rows are in each table?
-```
-
-Row counts reveal the scale of data and which tables are central. Large `order_items` counts relative to `orders` make sense (each order has multiple items); tiny tables like `categories` are reference data.
-
-![SQL Query Results](/images/106-chat-sql-query-results.png)
-</Step>
-</Steps>
-
-<Info>
-In just a few questions, you understand what exists, the purpose of each table, and the scale of data
-</Info>
-
-### Phase 2: Structure Analysis - How is Data Organized?
-
-<Steps>
-<Step title="Examine Key Tables">
-```text
-Show me the structure of the users table
-```
-
-The response reveals column names, data types, and constraints — how entities are defined and what validation exists.
-</Step>
-
-<Step title="Identify Keys and Constraints">
-```text
-Show me the primary key columns for all tables
-What columns have unique constraints?
-```
-
-Primary keys tell you how records are identified; unique constraints (like `users.email` or `products.sku`) reveal business rules.
-</Step>
-
-<Step title="Find Required vs. Optional Fields">
-```text
-Which columns in the users table allow NULL values?
-```
-
-Non-nullable columns show what data is required at creation; nullable columns suggest optional or progressively-collected data.
-</Step>
-</Steps>
-
-### Phase 3: Data Sampling - What's Actually in There?
-
-Structure tells you what can exist. Sampling shows what actually exists.
-
-<Steps>
-<Step title="Sample Core Tables">
-```text
-Show me 5 sample users
-```
-
-Real data reveals patterns: ID sequences, date ranges, common statuses, and whether this is production data that must be handled carefully.
-</Step>
-
-<Step title="Check Data Distributions">
-```text
-Count users by status
-What are the most common user email domains?
-```
-
-Distributions show how the data is actually used — which statuses dominate, which categories are populated.
-</Step>
-
-<Step title="Examine Date Ranges">
-```text
-What's the date range of orders in the database?
-Show me order count by month for the last 6 months
-```
-
-This reveals the temporal scope of the data and recent trends.
-
-![Aggregation Query](/images/109-chat-aggregation-query.png)
-</Step>
-
-<Step title="Spot Check Data Quality">
-```text
-Show me users with missing email addresses
-Find products with null or zero prices
-```
-
-Targeted checks reveal whether there are data integrity issues to be aware of before relying on the data.
-</Step>
-</Steps>
-
-<Tip>
-The AI assistant generates appropriate aggregation queries automatically. Toggle to SQL view to see how grouping and counting work.
-</Tip>
-
-### Phase 4: Relationship Mapping - How Do Tables Connect?
-
-<Steps>
-<Step title="Discover Foreign Keys">
-```text
-How is the orders table related to other tables?
-```
-
-The assistant maps relationships: orders reference users and shipping addresses, and are referenced by order_items and payments.
-</Step>
-
-<Step title="Trace Data Flow">
-```text
-For user id 5, show their orders with shipping addresses
-```
-
-Multi-table joins let you trace a complete customer journey from user record through orders to shipping and payment.
-</Step>
-
-<Step title="Find Many-to-Many Relationships">
-```text
-Are there any many-to-many relationships?
-```
-
-Junction tables (like a wishlists table connecting users and products) reveal more complex parts of the data model.
-</Step>
-
-<Step title="Test Relationship Integrity">
-```text
-Find any orders with no matching user
-Find order_items with no matching product
-```
-
-Zero orphaned records means foreign key constraints are enforced — good database design you can rely on.
-</Step>
-</Steps>
-
-<Check>
-At this point, you have a working understanding of the database structure, relationships, and data quality—all without writing a single SQL query yourself
-</Check>
-
-### Phase 5: Quality Assessment - Is Data Clean?
-
-Before relying on this data, assess its completeness and consistency:
-
-```text
-What percentage of users have verified emails?
-How many users have never placed an order?
-Show me products with unusually high or low prices
-Are there any orders where the total doesn't match the sum of order items?
-When was the most recent order placed?
-```
-
-These checks reveal incomplete data that affects analysis, outliers that might be errors, logical inconsistencies that could indicate application bugs, and whether the database is live and current.
-
-<Warning>
-If you discover data quality issues during exploration, document them but avoid attempting fixes without proper authorization, especially on production databases
-</Warning>
-
-## Best Practices for AI-Powered Exploration
-
-**Start broad, then narrow.** Begin with inventory questions (what tables exist, how many rows), identify the key business tables, and only then deep-dive into specific structures and relationships.
-
-**Use follow-up questions.** The AI remembers your conversation context, so each question can build on the last without repeating "the users table" every time. See [Conversation Features](/ai/conversation-features) for details.
-
-**Toggle to SQL view for learning.** Every AI response that returns data can show you the generated SQL — click **SQL** below the result. Use it to learn SQL syntax naturally, verify the AI understood correctly, and copy queries for documentation.
-
-![SQL Code View](/images/107-chat-sql-code-view.png)
-
-**Save useful queries to Scratchpad.** When exploration surfaces a query worth keeping — a complex join, a data quality check worth repeating — click **Move to Scratchpad** below the result to preserve it.
-
-![Move to Scratchpad](/images/113-chat-move-to-scratchpad-dialog.png)
-
-**Ask about data, not just structure.** "What are common user email domains?" and "Are there any data quality issues?" reveal how the database is actually used, beyond what columns exist.
-
-**Verify AI responses with samples.** When the AI makes a claim ("orders always have a payment record"), verify it with a targeted query ("show me orders without payments").
-
-## Common Exploration Questions
-
-Use these question templates for efficient exploration:
-
-### Discovery Phase
-```text
-What tables are available?
-How many rows are in each table?
-What are the largest tables?
-Which tables were most recently modified?
-```
-
-### Structure Phase
-```text
-What's the structure of the [table] table?
-What columns are in [table]?
-Which columns in [table] are required vs. optional?
-What are the primary keys?
-```
-
-### Data Phase
-```text
-Show me 10 sample rows from [table]
-What are the most common values in [column]?
-What's the date range of data in [table]?
-Count records by [category column]
-```
-
-### Relationship Phase
-```text
-How is [table1] related to [table2]?
-What foreign keys exist in [table]?
-Show me [entity] with its related [other entities]
-Are there any many-to-many relationships?
-```
-
-### Quality Phase
-```text
-Find rows with missing [column] values
-Show me duplicate records in [table]
-Are there any orphaned records in [table]?
-What percentage of [table] has [condition]?
-```
-
-## Handling Errors During Exploration
-
-![Error Message](/images/108-chat-error-message.png)
-
-Even with AI, you might encounter errors:
-
-<AccordionGroup>
-<Accordion title="Table Not Found">
-**Error**: `relation "tablename" does not exist`
-
-**Solution**: Ask "What tables are available?" and verify the correct table name, spelling, and schema.
-</Accordion>
-
-<Accordion title="Slow Queries on Large Tables">
-**Symptom**: A query on a very large table takes a long time to return
-
-**Solution**: Always add limits and filters for large tables — "Show me just 100 rows from [large table]".
-</Accordion>
-
-<Accordion title="Permission Denied">
-**Error**: `permission denied for table`
-
-**Solution**: Contact your database administrator for read access. In production, you should have read-only credentials.
-</Accordion>
-
-<Accordion title="Ambiguous Question">
-**Symptom**: AI returns unexpected results
-
-**Solution**: Rephrase more specifically — "Show me users created in the last 7 days" instead of "Show me recent records".
-</Accordion>
-</AccordionGroup>
-
-## Next Steps
-
-Now that you've seen the AI-powered exploration workflow, take your skills further:
-
-<CardGroup cols={2}>
-<Card title="AI Data Analysis" icon="chart-line" href="/use-cases/data-analysis">
-Use AI to generate complex analysis queries and business reports
-</Card>
-
-<Card title="AI Query Features" icon="robot" href="/ai/querying-data">
-Master advanced AI querying techniques and conversation patterns
-</Card>
-
-<Card title="Traditional Exploration" icon="map" href="/use-cases/database-exploration">
-Learn manual exploration techniques using WhoDB's schema visualization
-</Card>
-
-<Card title="Scratchpad Integration" icon="code" href="/query/scratchpad-intro">
-Save and refine AI-generated queries in the Scratchpad
-</Card>
-</CardGroup>
-
-<Check>
-You're now equipped to explore any unfamiliar database rapidly using AI—inventory the tables, examine structure, sample data, map relationships, and assess quality, all through natural conversation
-</Check>
+The documentation's Chat images use fixed demonstration responses. Follow [AI setup](/ai/setup-providers) and [your first Chat query](/guides/tutorials/ai-first-query) to try the workflow with a live provider.

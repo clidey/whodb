@@ -1,0 +1,52 @@
+.ce-screenshot-light,
+.ce-screenshot-dark {
+  width: 100%;
+  max-width: 100%;
+  margin-inline: auto;
+}
+
+.ce-screenshot-dark { display: none; }
+:root.dark .ce-screenshot-light { display: none; }
+:root.dark .ce-screenshot-dark { display: block; }
+
+.dory-mdx-code {
+  display: inline-block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.dory-topbar > a:first-child > .font-heading {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.dory-topbar > a:first-child > .font-heading::after {
+  content: "CE";
+  display: block;
+  margin-inline-start: 0.5rem;
+  padding: 3px 6px;
+  border-radius: 4px;
+  background: #1a2639;
+  color: #a9b8d2;
+  font: 700 10px/1 var(--font-mono);
+  letter-spacing: 0.08em;
+}
+
+@media (max-width: 640px) {
+  .ce-screenshot-light,
+  .ce-screenshot-dark {
+    width: 100%;
+  }
+}
+
+@media (max-width: 767px) {
+  .dory-topbar > a:first-child {
+    width: auto;
+  }
+
+  .dory-topbar .dory-docs-pill {
+    display: none;
+  }
+}

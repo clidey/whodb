@@ -1,88 +1,36 @@
 ---
-title: Team Collaboration
-description: Practical patterns for using WhoDB as a team - shared deployments, per-user database accounts, version-controlled queries, and data exports
+title: "Share reproducible database work"
+description: "Share SQL, context, and diagrams while keeping browser-local workspace state in perspective."
 ---
 
-# Team Collaboration
+# Share reproducible database work
 
-In WhoDB, collaboration happens through a shared deployment, database-side access control, version control for SQL, and exports. This guide covers the patterns that work.
+Share enough context for another person to reproduce the finding, not just a screenshot of the answer. A useful handoff includes the query, the source environment, the question it answers, and the checks used to verify it.
 
-## Run One Shared Deployment
+## Share the query with its meaning
 
-Deploy a single WhoDB instance for the team instead of everyone running their own copy. Everyone gets the same version, the same connection profiles, and one place to secure and monitor.
+Save SQL in the team's repository or investigation record. State the database and schema, input parameters, and the definition of the result. For example, say which order states are included in a total and which timestamp defines its date range.
 
-Define the team's connections as environment-defined profiles on the deployment so they appear on the login page for everyone:
+Remove credentials and sensitive literal values before sharing the file. Use placeholders for values another person must supply, and explain how to choose them.
 
-```bash
-export WHODB_POSTGRES_1='{"alias":"staging","host":"staging-db.internal","user":"whodb_readonly","database":"myapp","port":"5432","password":"..."}'
-```
+If the query depends on a particular schema version, record that too. A query that ran last month might not describe the current database after a migration.
 
-This keeps connection details in deployment config (one source of truth) rather than in chat messages and wikis. See the [Team Setup Guide](/guides/team-setup) for full deployment instructions and [Database Connectivity](/features/database-connectivity) for the profile format.
+## Attach focused evidence
 
-## Use Per-User Database Accounts
+Include the smallest result or diagram that explains the finding. A few relevant records are often more useful than an entire exported table.
 
-Access control in WhoDB is the database's access control. Give each person their own database account scoped to what they actually need, rather than sharing one credential:
+Record the extraction time and source environment. If a file contains sensitive records, use your team's approved sharing location. A CSV copied out of a database no longer benefits from the database account's access controls.
 
-```sql
--- PostgreSQL: read-only account for an analyst
-CREATE USER analyst_jane WITH PASSWORD 'unique_strong_password';
-GRANT CONNECT ON DATABASE myapp TO analyst_jane;
-GRANT USAGE ON SCHEMA public TO analyst_jane;
-GRANT SELECT ON ALL TABLES IN SCHEMA public TO analyst_jane;
-```
+Use [Graph](/visualization/graph-view) to save a focused relationship diagram when the join path is important. Keep the query next to the image so readers can check the actual record logic.
 
-Why per-user accounts matter for collaboration:
+## Keep browser state in perspective
 
-- **Least privilege**: analysts get `SELECT`, developers get read-write on dev, only operators get production write access
-- **Attribution**: database-native audit and statement logs show who ran what
-- **Clean offboarding**: disable one account instead of rotating a shared password
+A shared CE URL gives people access to the same running application. It does not make Scratchpad pages, per-cell history, and local preferences into shared documents. Those remain browser-local.
 
-See [Access Control](/best-practices/access-control) for detailed role setups.
+Copy the final work to a durable location before handing it off. Do not ask a colleague to reconstruct the answer from a browser session they cannot access.
 
-## Share Queries Through Version Control
+## Review changes through the team's process
 
-WhoDB's [Scratchpad](/query/scratchpad-intro) state is stored per-browser — pages and cells are not visible to teammates. Use Scratchpad to build and test queries, then share the SQL itself through your normal channels:
+Put schema changes in migrations and repeatable data repairs in reviewed scripts. Test the statement on a suitable development environment, record how to verify it, and follow the team's production change process.
 
-1. **Develop** the query in Scratchpad against a development or staging database
-2. **Document** it with a short header comment (purpose, dependencies, expected runtime)
-3. **Review** it in a pull request like any other code — especially `UPDATE`/`DELETE` statements and anything touching production
-4. **Store** it in a shared repository:
-
-```
-queries/
-├── analytics/
-│   └── daily_sales_summary.sql
-├── reporting/
-│   └── customer_invoices.sql
-└── operational/
-    └── health_checks.sql
-```
-
-Anyone who needs the query pastes it back into their own Scratchpad. Cell history in Scratchpad helps you recover your own recent SQL, but the repository is the team's memory.
-
-<Tip>
-Treat destructive queries like code changes: peer review before they run against production, and keep the reviewed version in the repository so the next person doesn't rewrite it from scratch.
-</Tip>
-
-## Share Data Through Exports
-
-For sharing results rather than queries, use WhoDB's [export options](/advanced/export-options):
-
-- **CSV or Excel** from the data grid or query results — attach to tickets, drop into Slack, or feed into spreadsheets
-- **JSON Lines** for records from sources like MongoDB, where supported
-- Apply filters before exporting so the snapshot contains only what the discussion needs
-
-When you share an export, include the SQL that produced it and when it was run — a CSV without provenance goes stale silently.
-
-## Collaboration Checklist
-
-- [ ] One shared WhoDB deployment, secured per the [Team Setup Guide](/guides/team-setup)
-- [ ] Connections defined as environment profiles, secrets in a password manager
-- [ ] Per-user database accounts with least-privilege grants
-- [ ] Team query repository in version control, with review for destructive SQL
-- [ ] Exports shared with the query and timestamp that produced them
-- [ ] Accounts disabled and shared credentials rotated when someone leaves
-
-## Summary
-
-Use WhoDB for inspection, querying, and repeatable exports; use database accounts for access control; and use your normal source control and review practices for long-lived team knowledge. The Scratchpad is each person's workbench — version control is the team's shared surface.
+Next: [Team setup](/guides/team-setup) · [Document investigations](/best-practices/documentation)

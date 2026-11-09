@@ -51,11 +51,12 @@ cli/.gocache
 !cli/external-plugin/whodb/.mcp.json
 .serena
 docs/images/1440x900
+/dist/docs-pages/
 ee/dev/translation-tool/.venv
 frontend/.pnpm-store
 frontend/e2e/reports
 frontend/e2e/logs
-frontend/e2e/.auth
+**/.auth/
 tools/docs-agent/.venv
 tools/docs-agent/runs/
 # Anchored: only the repo-root tools/ — an unanchored "tools/" also swallowed sdk/tools/.
