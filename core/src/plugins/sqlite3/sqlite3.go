@@ -443,7 +443,10 @@ func (p *Sqlite3Plugin) GetRows(config *engine.PluginConfig, req *engine.GetRows
 				}
 			}
 
-			query = query.Limit(pageSize).Offset(pageOffset)
+			// pageSize <= 0 means fetch all rows, as in the shared GORM GetRows
+			if pageSize > 0 {
+				query = query.Limit(pageSize).Offset(pageOffset)
+			}
 
 			rows, err := query.Rows() //nolint:rowserrcheck
 			if err != nil {
@@ -501,7 +504,10 @@ func (p *Sqlite3Plugin) GetRows(config *engine.PluginConfig, req *engine.GetRows
 				}
 			}
 
-			query = query.Limit(pageSize).Offset(pageOffset)
+			// pageSize <= 0 means fetch all rows, as in the shared GORM GetRows
+			if pageSize > 0 {
+				query = query.Limit(pageSize).Offset(pageOffset)
+			}
 
 			rows, err := query.Rows()
 			if err != nil {
