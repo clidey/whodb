@@ -16,8 +16,8 @@
 
 import { skipToken, useQuery } from "@apollo/client/react";
 import {
+    Button,
     SearchInput,
-    Sidebar as SidebarComponent,
     SidebarContent,
     SidebarGroup,
     SidebarHeader,
@@ -42,6 +42,7 @@ type SchemaViewerProps = {
     parentRef?: SourceObjectRefInput;
     selectedName?: string;
     trail?: SourceBrowserObject[];
+    onSelect?: () => void;
 };
 
 const SchemaViewerUnit: FC<{unit: SourceBrowserObject; selected: boolean; onSelect: (name: string) => void}> = ({unit, selected, onSelect}) => {
@@ -52,19 +53,21 @@ const SchemaViewerUnit: FC<{unit: SourceBrowserObject; selected: boolean; onSele
         : skipToken);
     const count = knownCount ?? data?.Row.TotalCount;
 
-    return <button
+    return <Button
         type="button"
-        className={selected ? 'is-selected' : ''}
+        variant={selected ? 'secondary' : 'ghost'}
+        className="w-full justify-start text-left"
         onClick={() => { onSelect(unit.Name); }}
         aria-current={selected ? 'page' : undefined}
     >
         <WhoDBChatIcon name="table" />
-        <span>{unit.Name}</span>
+        <span className="min-w-0 flex-1 truncate" title={unit.Name}>{unit.Name}</span>
         {count != null && <span className="ce-schema-row-count">{count}</span>}
-    </button>;
+    </Button>;
 };
 
-export const SchemaViewer: FC<SchemaViewerProps> = ({ parentRef: explicitParentRef, selectedName, trail = [] }) => {
+/** Renders searchable source objects beside the selected object. */
+export const SchemaViewer: FC<SchemaViewerProps> = ({ parentRef: explicitParentRef, selectedName, trail = [], onSelect }) => {
     const { t } = useTranslation('components/schema-viewer');
     const current = useAppSelector(state => state.auth.current);
     const currentType = current?.Type;
@@ -119,12 +122,14 @@ export const SchemaViewer: FC<SchemaViewerProps> = ({ parentRef: explicitParentR
 
     const handleSelect = useCallback((tableId: string) => {
         if (tableId == null || tableId === (selectedName ?? state?.unit?.Name)) {
+            onSelect?.();
             return
         }
         const unit = storageUnits.find(u => u.Name === tableId);
         if (unit == null) {
             return;
         }
+        onSelect?.();
         if (unit.Actions.includes(SourceAction.Browse) && unit.HasChildren) {
             void navigate(InternalRoutes.Dashboard.StorageUnit.path, {
                 state: {
@@ -141,7 +146,7 @@ export const SchemaViewer: FC<SchemaViewerProps> = ({ parentRef: explicitParentR
                 trail,
             },
         });
-    }, [navigate, parentRef, selectedName, state?.unit?.Name, storageUnits, trail]);
+    }, [navigate, onSelect, parentRef, selectedName, state?.unit?.Name, storageUnits, trail]);
 
     // Only hide sidebar if there's truly no data (no connection, no schema, etc.)
     // Don't hide when search returns empty results
@@ -150,50 +155,48 @@ export const SchemaViewer: FC<SchemaViewerProps> = ({ parentRef: explicitParentR
     }
 
     return (
-        <div className="flex h-full ce-schema-viewer" data-testid="schema-viewer">
-            <SidebarComponent variant="embed" className="w-64 h-full flex flex-col">
-                <SidebarContent>
-                    <SidebarHeader>
-                        <h1 className="text-lg font-semibold pt-8 px-4">
-                            {storageUnitLabel}
-                        </h1>
-                    </SidebarHeader>
-                    <div className="px-4">
-                        <SearchInput
-                            value={search}
-                            onChange={(e) => { setSearch(e.target.value); }}
-                            placeholder={t('searchTables')}
-                            aria-label={t('searchTables')}
-                        />
-                    </div>
-                    <SidebarGroup>
-                        {
-                            loading ? (
-                                <div className="flex-1 flex items-center justify-center">
-                                    <Loading />
-                                </div>
-                            ) : filteredUnits.length === 0 ? (
-                                <div className="flex-1 flex items-center justify-center px-4 text-center text-sm text-muted-foreground mt-4">
-                                    {t('noResults')}
-                                </div>
-                            ) : (
-                                <div className={`ce-schema-list ${ph.mask}`}>
-                                    <p className="ce-schema-list-label">{currentDatabase} · {storageUnits.length}</p>
-                                    {groupedUnits.map(([type, units]) => <div key={type} className="ce-schema-group" data-testid="schema-viewer-group" data-group-type={type}>
-                                        {groupedUnits.length > 1 && type !== "" && <p className="ce-schema-list-label ce-schema-group-label">{type}</p>}
-                                        {units.map(unit => <SchemaViewerUnit
-                                            key={unit.Name}
-                                            unit={unit}
-                                            selected={unit.Name === (selectedName ?? state?.unit?.Name)}
-                                            onSelect={handleSelect}
-                                        />)}
-                                    </div>)}
-                                </div>
-                            )
-                        }
-                    </SidebarGroup>
-                </SidebarContent>
-            </SidebarComponent>
-        </div>
+        <aside className="ce-secondary-panel ce-schema-viewer flex h-full w-full flex-col" data-testid="schema-viewer" aria-label={storageUnitLabel}>
+            <SidebarContent>
+                <SidebarHeader>
+                    <h1 className="text-sm font-semibold">
+                        {storageUnitLabel}
+                    </h1>
+                </SidebarHeader>
+                <div className="px-4">
+                    <SearchInput
+                        value={search}
+                        onChange={(e) => { setSearch(e.target.value); }}
+                        placeholder={t('searchTables')}
+                        aria-label={t('searchTables')}
+                    />
+                </div>
+                <SidebarGroup>
+                    {
+                        loading ? (
+                            <div className="flex-1 flex items-center justify-center">
+                                <Loading />
+                            </div>
+                        ) : filteredUnits.length === 0 ? (
+                            <div className="flex-1 flex items-center justify-center px-4 text-center text-sm text-muted-foreground mt-4">
+                                {t('noResults')}
+                            </div>
+                        ) : (
+                            <div className={`ce-schema-list ${ph.mask}`}>
+                                <p className="ce-schema-list-label">{currentDatabase} · {storageUnits.length}</p>
+                                {groupedUnits.map(([type, units]) => <div key={type} className="ce-schema-group" data-testid="schema-viewer-group" data-group-type={type}>
+                                    {groupedUnits.length > 1 && type !== "" && <p className="ce-schema-list-label ce-schema-group-label">{type}</p>}
+                                    {units.map(unit => <SchemaViewerUnit
+                                        key={unit.Name}
+                                        unit={unit}
+                                        selected={unit.Name === (selectedName ?? state?.unit?.Name)}
+                                        onSelect={handleSelect}
+                                    />)}
+                                </div>)}
+                            </div>
+                        )
+                    }
+                </SidebarGroup>
+            </SidebarContent>
+        </aside>
     );
 };

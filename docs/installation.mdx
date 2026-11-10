@@ -1,38 +1,23 @@
 ---
-title: "Installation"
-description: "Install, run, and configure WhoDB using the current repository layout"
+title: "Install and configure CE"
+description: "Run CE in Docker, as a binary, on the desktop, or from source; configure profiles and persistent sessions."
 ---
 
-# Installation Guide
+# Install and configure CE
 
-WhoDB can run as a container, a standalone binary, a desktop app, or a local source checkout.
+Install WhoDB where it can reach the databases you want to inspect. The browser interface connects through the WhoDB server, so database endpoints and file paths must be accessible from that server.
 
-## Installation Methods
+Choose Docker for a self-hosted browser workspace, a release binary for a local server, or the desktop app for native file dialogs. The CLI is installed separately; see [CLI & MCP](/features/cli-and-mcp).
 
-<CardGroup cols={2}>
-<Card title="Docker" icon="container">
-Run the published image and expose the web UI on port 8080.
-</Card>
-<Card title="Binary" icon="file-zipper">
-Download a release binary and run it directly.
-</Card>
-<Card title="Build From Source" icon="code-branch">
-Build the frontend and backend from this repository.
-</Card>
-<Card title="Desktop App" icon="desktop">
-Use the Wails desktop shell around the same core app.
-</Card>
-</CardGroup>
-
-## Docker (Recommended)
+## Docker (recommended)
 
 <Steps>
-<Step title="Pull The Image">
+<Step title="Pull the image">
 ```bash
 docker pull clidey/whodb:latest
 ```
 </Step>
-<Step title="Run The Container">
+<Step title="Run the container">
 ```bash
 docker run -d \
   --name whodb \
@@ -40,7 +25,7 @@ docker run -d \
   clidey/whodb:latest
 ```
 </Step>
-<Step title="Open The UI">
+<Step title="Open the UI">
 Visit `http://localhost:8080`.
 </Step>
 </Steps>
@@ -69,22 +54,22 @@ volumes:
 
 ### Session Storage
 
-WhoDB keeps login sessions server-side. When you log in from a browser, WhoDB stores your database credentials encrypted (AES-256-GCM) in a local SQLite file under its data directory, and the browser only holds an opaque, `HttpOnly` session cookie — never the credentials themselves.
+WhoDB keeps login sessions on the server. The session store holds database credentials encrypted in a local SQLite file under the data directory. The browser uses an opaque, `HttpOnly` cookie to identify that session.
 
-Without any configuration, this works out of the box: a plain `docker run` generates an encryption key on first start and keeps you logged in until the container is recreated (at which point you simply log in again). To keep sessions valid across upgrades and restarts:
+On first start, WhoDB generates an encryption key if none is configured. With a plain `docker run`, replacing the container also replaces its local session storage, so users need to connect again. To retain sessions across replacement:
 
 - Mount `/data` as a volume so the encrypted session database and generated key persist.
 - Set `WHODB_ENCRYPTION_KEY` to a stable 64-character hex string (`openssl rand -hex 32`) so the key does not depend on the container's filesystem.
 
 <Warning>
-Keep `WHODB_ENCRYPTION_KEY` safe and stable. Changing or losing it invalidates every existing session — sessions encrypted with the old key can no longer be decrypted, so users are simply logged out and need to sign in again.
+Keep `WHODB_ENCRYPTION_KEY` safe and stable. Changing or losing it makes sessions encrypted with the old key unreadable. Users will need to connect again.
 </Warning>
 
-If WhoDB sits behind an HTTPS-terminating reverse proxy (nginx, Traefik, Caddy, a cloud load balancer), also set `WHODB_SECURE=true` so the session cookie is marked `Secure`. Leave it unset for plain HTTP, including local development — WhoDB does not infer HTTPS from proxy headers, and setting it on an HTTP deployment causes the browser to drop the cookie.
+If WhoDB sits behind an HTTPS-terminating reverse proxy (nginx, Traefik, Caddy, a cloud load balancer), also set `WHODB_SECURE=true` so the session cookie is marked `Secure`. Leave it unset for plain HTTP, including local development. WhoDB does not infer this setting from proxy headers. Enabling it for an HTTP deployment prevents the browser from using the cookie correctly.
 
-## Binary Installation
+## Binary installation
 
-Download the appropriate release artifact from GitHub Releases, make it executable if needed, and run it:
+Download the artifact for your operating system and architecture from [WhoDB releases](https://github.com/clidey/whodb/releases). Extract it if needed, make it executable, and run it:
 
 ```bash
 chmod +x whodb
@@ -95,23 +80,23 @@ chmod +x whodb
 The default port is `8080`. Override it with `PORT=3000 ./whodb` if you want a different listener port.
 </Note>
 
-## Build From Source
+## Build from source
 
 ### Prerequisites
 
-- Go `1.26.1` or newer
-- Node.js and `pnpm`
+- Go matching `core/go.mod` (currently `1.27.3`)
+- Node.js matching `.nvmrc` (currently `26.12.1`) and the frontend's pinned `pnpm` version
 
-### Build Steps
+### Build steps
 
 <Steps>
-<Step title="Clone The Repository">
+<Step title="Clone the repository">
 ```bash
 git clone https://github.com/clidey/whodb.git
 cd whodb
 ```
 </Step>
-<Step title="Build The Frontend">
+<Step title="Build the frontend">
 ```bash
 cd frontend
 pnpm install
@@ -119,10 +104,12 @@ pnpm run build:ce
 cd ..
 ```
 </Step>
-<Step title="Build The Backend">
+<Step title="Build the backend">
 ```bash
+mkdir -p core/cmd/whodb/build
+cp -R frontend/build/. core/cmd/whodb/build/
 cd core
-go build ./cmd/whodb
+go build -tags prod ./cmd/whodb
 ```
 </Step>
 <Step title="Run WhoDB">
@@ -132,7 +119,7 @@ go build ./cmd/whodb
 </Step>
 </Steps>
 
-### Development Mode
+### Development mode
 
 Use two terminals:
 
@@ -148,11 +135,11 @@ pnpm start
 
 The frontend dev server runs on `http://localhost:3000` and proxies its backend requests to the WhoDB server.
 
-## Desktop App
+## Desktop app
 
-The desktop app lives in `desktop-ce/` and uses the same frontend and backend codepaths. See [Desktop App](/features/desktop-app) for the current behavior.
+Choose the desktop app when you want to work locally with native file dialogs and application menus. Follow [Desktop app](/features/desktop-app) for installation and file access behavior.
 
-## Common Environment Variables
+## Common environment variables
 
 ### Server
 
@@ -183,7 +170,7 @@ The `default` log paths write to `/var/log/whodb/`. That works naturally in Dock
 `WHODB_BASE_PATH` only applies to production versions, such as the Docker image or a production binary build. It is intended for reverse-proxy subpath hosting like `/whodb/`, not split frontend/backend dev mode.
 </Note>
 
-### AI Providers
+### AI providers
 
 | Variable | Description | Default |
 |----------|-------------|---------|
@@ -200,9 +187,9 @@ The `default` log paths write to `/var/log/whodb/`. That works naturally in Dock
 | `WHODB_LMSTUDIO_API_KEY` | LM Studio API key | unset |
 | `WHODB_LMSTUDIO_NAME` | Display name for LM Studio | unset |
 
-Generic OpenAI-compatible providers can be added with the `WHODB_AI_GENERIC_<ID>_*` pattern. See [Setting Up AI Providers](/ai/setup-providers).
+Generic OpenAI-compatible providers can be added with the `WHODB_AI_GENERIC_<ID>_*` pattern. See [Setting Up AI providers](/ai/setup-providers).
 
-### CLI Cloud Providers
+### CLI cloud providers
 
 | Variable | Description | Default |
 |----------|-------------|---------|
@@ -213,11 +200,11 @@ Generic OpenAI-compatible providers can be added with the `WHODB_AI_GENERIC_<ID>
 | `WHODB_ENABLE_GCP_PROVIDER` | Enable GCP provider support in the CLI | `false` |
 | `WHODB_GCP_PROVIDER` | JSON array of GCP provider definitions | unset |
 
-These variables do not enable provider operations in the CE web server. See [Cloud Providers](/features/cloud-providers) for the local CLI workflow.
+These variables do not enable provider operations in the CE web server. See [Cloud providers](/features/cloud-providers) for the local CLI workflow.
 
-## Database Connection Profiles
+## Database connection profiles
 
-WhoDB can preload connection profiles from environment variables so they appear on the login page.
+Use configured profiles when instance users should connect without entering the same endpoint and credentials each time. WhoDB loads these profiles from environment variables and displays their aliases on the connection page.
 
 <Warning>
 In Community Edition, connection profiles are shared with everyone who can reach the WhoDB instance. A user can select a profile and connect with its server-configured credentials without entering the database password. Profile names and IDs are not authentication factors. When profiles grant access to private or sensitive data, expose WhoDB only to trusted users and use a least-privileged database account.
@@ -245,14 +232,14 @@ Two formats are supported:
 <CodeGroup>
 ```bash Array Format
 export WHODB_POSTGRES='[
-  {"alias":"prod","host":"db.example.com","user":"postgres","password":"secret","database":"app","port":"5432"},
-  {"alias":"staging","host":"staging.example.com","user":"postgres","password":"secret","database":"app","port":"5432"}
+  {"alias":"development","host":"db.example.com","user":"postgres","password":"replace-me","database":"app","port":"5432"},
+  {"alias":"staging","host":"staging.example.com","user":"postgres","password":"replace-me","database":"app","port":"5432"}
 ]'
 ```
 
 ```bash Numbered Format
-export WHODB_POSTGRES_1='{"alias":"prod","host":"db.example.com","user":"postgres","password":"secret","database":"app","port":"5432"}'
-export WHODB_POSTGRES_2='{"alias":"staging","host":"staging.example.com","user":"postgres","password":"secret","database":"app","port":"5432"}'
+export WHODB_POSTGRES_1='{"alias":"development","host":"db.example.com","user":"postgres","password":"replace-me","database":"app","port":"5432"}'
+export WHODB_POSTGRES_2='{"alias":"staging","host":"staging.example.com","user":"postgres","password":"replace-me","database":"app","port":"5432"}'
 ```
 </CodeGroup>
 
@@ -270,16 +257,16 @@ Each profile object supports these common fields:
 
 Setting `WHODB_DISABLE_CREDENTIAL_FORM=true` hides manual credential entry, but it does not add authentication in front of configured profiles. Users who can reach the instance can still select and use them.
 
-### SSL Example
+### TLS example
 
 For profile-based connections, the backend accepts both certificate content keys and server-side file-path keys:
 
 ```bash
 export WHODB_POSTGRES_1='{
-  "alias": "prod",
+  "alias": "development",
   "host": "db.example.com",
   "user": "postgres",
-  "password": "secret",
+  "password": "replace-me",
   "database": "app",
   "port": "5432",
   "advanced": {
@@ -296,10 +283,10 @@ Cloud-managed variants such as `DocumentDB` and `ElastiCache` accept `WHODB_<TYP
 </Note>
 
 <Note>
-Those provider-discovery paths are still not production-ready in the current CE build, which is why the provider integrations stay disabled unless you explicitly turn them on.
+Provider discovery is opt-in. Verify the provider configuration, network route, and database account independently before relying on a discovered connection.
 </Note>
 
-## Custom Port Example
+## Custom port example
 
 ```bash
 PORT=3000 ./whodb
@@ -322,16 +309,16 @@ docker run -d \
   clidey/whodb:latest
 ```
 
-## Verify The Install
+## Verify the install
 
 <Steps>
-<Step title="Open The UI">
+<Step title="Open the UI">
 Visit `http://localhost:8080` or your configured port.
 </Step>
-<Step title="Check The Login Page">
+<Step title="Check the connection page">
 You should see the login page with the current database catalog.
 </Step>
-<Step title="Test A Connection">
+<Step title="Test a connection">
 Connect to a known local or development database to confirm network reachability and credentials.
 </Step>
 </Steps>
@@ -357,13 +344,13 @@ Verify:
 </Accordion>
 </AccordionGroup>
 
-## Related Pages
+## Continue after installation
 
 <CardGroup cols={2}>
-<Card title="First Login" icon="right-to-bracket" href="/first-login">
+<Card title="First connection" icon="database" href="/first-login">
 Walk through the connection flow after WhoDB is running.
 </Card>
-<Card title="Cloud Providers" icon="cloud" href="/features/cloud-providers">
+<Card title="Cloud providers" icon="cloud" href="/features/cloud-providers">
 Use local CLI discovery for AWS, Azure, and GCP.
 </Card>
 </CardGroup>

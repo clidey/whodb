@@ -513,7 +513,7 @@ export const ImportData: FC<ImportDataProps> = ({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="ce-import-sheet flex flex-col h-full"
+        className="ce-import-sheet flex flex-col"
         data-testid="import-dialog"
       >
         <div className="ce-import-header"><span>{objectRef?.Path?.at(-1)}</span><SheetTitle>{mode === "data" ? t("importRows") : t("importData")}</SheetTitle></div>

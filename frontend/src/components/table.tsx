@@ -1824,7 +1824,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                         setEditRowInitialLengths([]);
                     }
                 }}>
-                    <SheetContent side="right" className="w-[400px] max-w-full p-8 flex flex-col" data-testid="edit-row-dialog" footer={
+                    <SheetContent side="right" className="w-[400px] max-w-full flex flex-col" data-testid="edit-row-dialog" footer={
                         <SheetFooter className="flex gap-sm px-0">
                             <Button
                                 className="flex-1"
@@ -1888,7 +1888,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                         setShowMockDataConfirmation(false);
                     }
                 }}>
-                <SheetContent side="right" className="p-8" data-testid="mock-data-sheet" footer={
+                <SheetContent side="right" data-testid="mock-data-sheet" footer={
                     <SheetFooter className="flex gap-sm px-0">
                         <Alert variant={supportsMockDataRelations ? "info" : "default"} className="mb-4">
                             <AlertTitle>{t('mockDataNote')}</AlertTitle>

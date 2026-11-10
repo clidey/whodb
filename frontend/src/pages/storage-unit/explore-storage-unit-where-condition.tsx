@@ -34,10 +34,8 @@ import {
 } from '@clidey/ux';
 import type { AtomicWhereCondition, WhereCondition} from '@graphql';
 import { WhereConditionType } from '@graphql';
-import classNames from "classnames";
 import type { FC} from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { twMerge } from "tailwind-merge";
 import {WhoDBChatIcon} from "../../components/whodb-chat-icon";
 import { useTranslation } from "@/hooks/use-translation";
 import {whereConditionToSql} from "../../utils/where-condition-to-sql";
@@ -137,7 +135,7 @@ const PopoverCard: FC<IPopoverCardProps> = ({
             <strong className="ce-filter-popover-title">{t(isEditing ? 'editCondition' : 'addFilter')}</strong>
             <div className="ce-filter-fields">
             <div className="ce-filter-field">
-                <Label className="text-xs">
+                <Label>
                     {t('field')}
                 </Label>
                 <SearchSelect
@@ -151,7 +149,7 @@ const PopoverCard: FC<IPopoverCardProps> = ({
                 />
             </div>
             <div className="ce-filter-field">
-                <Label className="text-xs">
+                <Label>
                     {t('operator')}
                 </Label>
                 <SearchSelect
@@ -164,7 +162,7 @@ const PopoverCard: FC<IPopoverCardProps> = ({
                 />
             </div>
             <div className="ce-filter-field">
-                <Label className="text-xs">
+                <Label>
                     {t('value')}
                 </Label>
                 <Input
@@ -437,19 +435,14 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                         data-condition-value={filter.Value}
                     >
                         <Badge
-                            className={twMerge(
-                                classNames(
-                                    "flex items-center gap-xs pl-4 pr-2 h-full max-w-[350px] truncate cursor-pointer py-0",
-                                    { "ring-2 ring-primary-500 dark:ring-primary-400": editingFilter === i }
-                                )
-                            )}
+                            className="max-w-[350px] truncate cursor-pointer"
                             onClick={() => { if (sheetOnly) handleOpenSheet(); else handleEdit(i); }}
                             data-testid="where-condition-badge"
-                            variant="secondary"
+                            variant={editingFilter === i ? "default" : "secondary"}
                         >
                             <div className="flex items-center gap-xs h-full">
                                 {filter.Key} {filter.Operator} {filter.Value}
-                                <Button className="size-8 h-full" onClick={event => { event.stopPropagation(); handleRemove(i); }} data-testid="remove-where-condition-button" variant="ghost" size="icon" aria-label={t('removeCondition')}>
+                                <Button onClick={event => { event.stopPropagation(); handleRemove(i); }} data-testid="remove-where-condition-button" variant="ghost" size="icon" aria-label={t('removeCondition')}>
                                     <XCircleIcon aria-hidden="true" />
                                 </Button>
                             </div>
@@ -501,7 +494,7 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
 
             {/* Sheet for managing all conditions */}
             <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-                <SheetContent side="right" className="ce-all-filters-sheet w-[min(380px,100vw)] max-w-full p-0" footer={
+                <SheetContent side="right" className="ce-all-filters-sheet w-[min(380px,100vw)] max-w-full" footer={
                     <SheetFooter className="ce-all-filters-footer">
                         <Button variant="ghost" size="sm" onClick={() => { setSheetFilters([]); setSheetJoins([]); setSheetRowIds([]); }}>
                             {t('clearAll')}

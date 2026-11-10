@@ -1,390 +1,118 @@
 ---
-title: "CLI & MCP"
-description: "Interactive CLI, terminal commands, SSH tunnels, assistant integrations, and MCP server support"
+title: "CLI and MCP"
+description: "Browse databases in a terminal, automate work, and connect assistants to local database tools."
 ---
 
-# CLI & MCP
+# CLI and MCP
 
-WhoDB ships a separate CLI alongside the web app. Use it when you want a terminal UI, scriptable database checks, SSH tunneling, assistant integration setup, or an MCP server for local tooling.
+Use the CLI when database work belongs in a terminal or script. You can inspect a source interactively, run a repeatable command that returns structured output, or expose database tools to an assistant through MCP.
 
-<Note>
-The CLI and MCP server are the supported automation surfaces. The WhoDB web app's internal backend endpoints are not documented as a public integration API.
-</Note>
+These are different ways to work with the same local CLI. Choose the one that fits the task before configuring an integration.
 
-## Install Or Run
+## Install
+
+Install the CLI package and confirm its available commands:
 
 ```bash
-# Run without installing
-npx @clidey/whodb --help
-
-# Install from npm
 npm install -g @clidey/whodb
-
-# Build from source
-cd cli
-go build -o whodb .
+whodb --help
 ```
 
-Running `whodb` with no subcommand opens the interactive TUI.
-
-## Interactive TUI
-
-The TUI includes:
-
-- database connection and saved connection management
-- split-pane layouts and theme switching
-- schema and table browsing
-- SQL editor with autocomplete, formatting, multi-tab buffers, and external editor support
-- query results, pagination, column selection, and WHERE builders
-- query history, bookmarks, and profiles
-- CSV and Excel import/export flows
-- ER diagram metadata view
-- database-native `EXPLAIN`
-- schema diff between saved connections
-- FK-aware mock data generation
-- data-quality audit checks
-- AI chat when a provider is configured
-- SSH tunnel support
-- SSL mode and certificate-file support
-- Docker database auto-detection
-- cloud provider discovery commands when provider support is enabled
-
-## Command Surface
-
-The current CLI command tree includes:
-
-| Command | Purpose |
-|---------|---------|
-| `connect` | Connect to a database and optionally save the connection. Supports `--docker`, `--discovered`, SSL flags, and stdin passwords. |
-| `connections` | List, add, remove, and test saved connections. |
-| `schemas` | List schemas for a connection. |
-| `tables` | List tables/storage units in a schema. |
-| `columns` | Describe table columns. |
-| `query` | Execute SQL. Supports `--format` and streaming output. |
-| `suggestions` | Show backend-generated starter queries for a connection. |
-| `explain` | Run database-native `EXPLAIN` for a query. |
-| `export` | Export a table or query result to CSV or Excel. |
-| `import` | Import CSV or Excel into a table. |
-| `audit` | Run data-quality checks on one table or a schema. |
-| `mock-data` | Generate FK-aware mock data with dependency analysis. |
-| `diff` | Compare schema metadata between two connections. |
-| `erd` | Render graph/relationship metadata as text or JSON. |
-| `history` | List, search, or clear query history. |
-| `bookmarks` | List, save, load, and delete saved query bookmarks. |
-| `profiles` | List, save, show, and delete TUI profiles. |
-| `cloud` | Inspect configured cloud providers and discovered resources. |
-| `agent` | Emit machine-readable metadata about CLI commands, MCP tools, source types, and built-in workflows. |
-| `doctor` | Run redacted connection, schema, and metadata diagnostics for one connection. |
-| `runbooks` | List, describe, and run built-in database workflows such as connection checks, schema audits, and schema diffs. |
-| `skills` | List bundled assistant skills and install native assistant integrations. |
-| `completion` | Generate, install, or uninstall shell completions. |
-| `guide` | Print the full CLI usage guide. |
-| `version` | Print version information. |
-| `mcp` | Start the Model Context Protocol server. |
-
-Most read/list commands support structured output with `--format json`; many also support `table`, `plain`, `ndjson`, or `csv` depending on the command.
-
-## Common Examples
+You can also inspect it without a global installation:
 
 ```bash
-# Launch the TUI
-whodb
+npx @clidey/whodb --help
+```
 
-# Connect directly and save the connection
-whodb connect \
-  --type postgres \
-  --host localhost \
-  --port 5432 \
-  --user alice \
-  --database app \
-  --name local-postgres
+Run `whodb` without a subcommand to open the interactive terminal UI. Use explicit subcommands when you need a scriptable operation.
 
-# Use an existing connection
+## Connect and inspect
+
+This example creates a named PostgreSQL connection, then inspects its schemas, tables, and fields:
+
+```bash
+whodb connect --type postgres --host localhost --port 5432 \
+  --user alice --database app --name local-postgres
+
 whodb schemas --connection local-postgres --format json
 whodb tables --connection local-postgres --schema public --format json
 whodb columns --connection local-postgres --schema public --table users --format json
+```
 
-# Run a query
-whodb query "SELECT * FROM users LIMIT 10" --connection local-postgres --format table
+Replace the endpoint, account, and database with your own values. Use the password input method documented by `--help` rather than embedding a secret in a command you will share or commit.
 
-# Stream query rows
-whodb query "SELECT * FROM events" --connection local-postgres --format ndjson --stream
+A named connection makes repeated commands easier to read. Before automating a write, verify which endpoint that name resolves to and use an account with the intended database permissions.
 
-# Export table data or query results
-whodb export --connection local-postgres --table users --format csv --output users.csv
-whodb export --connection local-postgres --query "SELECT * FROM users" --output users.xlsx
+## Choose a command
 
-# Import CSV or Excel
-whodb import --connection local-postgres --file users.csv --table users
-whodb import --connection local-postgres --file orders.xlsx --table orders --sheet Q1 --mode overwrite
+| Task | Commands |
+| --- | --- |
+| Manage connections | `connect`, `connections`, `profiles` |
+| Inspect structure | `schemas`, `tables`, `columns`, `erd`, `diff` |
+| Investigate with queries | `query`, `explain`, `suggestions`, `history`, `bookmarks` |
+| Move or generate data | `import`, `export`, `mock-data` |
+| Check a source | `doctor`, `audit`, `runbooks` |
+| Discover cloud resources | `cloud` |
+| Connect an assistant | `skills`, `agent`, `mcp` |
 
-# Analyze before generating mock data
-whodb mock-data --connection local-postgres --table orders --rows 50 --analyze
+Use `whodb <command> --help` for required arguments and output formats. `whodb guide` prints the broader command guide.
 
-# Generate mock data after confirmation
-whodb mock-data --connection local-postgres --table orders --rows 50 --yes
+## Work interactively
 
-# Run quality checks
-whodb audit --connection local-postgres --schema public --format json
+The TUI provides schema browsing, a query editor, result grids, history, bookmarks, themes, split panes, and saved connections. Use it when you want to move between objects and queries without building a shell command for each step.
 
-# Compare environments
-whodb diff --from staging --to prod --schema public --format json
+The CLI/TUI also supports SSH tunnels for databases reached through a bastion. This tunnel management belongs to the terminal workflow; it is not a setting in the CE browser form.
 
-# Render relationship metadata
-whodb erd --connection local-postgres --schema public --format json
+## Diagnose a connection
 
-# Emit agent-facing CLI and MCP metadata
-whodb agent schema --format json
+Use diagnostics before treating a missing table or failed query as a data problem:
 
-# Diagnose a connection without exposing secrets
+```bash
 whodb doctor --connection local-postgres --schema public --format json
-
-# Preview a built-in workflow before running it
-whodb runbooks run schema-audit --connection local-postgres --dry-run
-
-# Preview assistant integration files without writing them
-whodb skills install --target cursor --dry-run
-```
-
-## Import And Export
-
-CLI export supports:
-
-- CSV
-- Excel `.xlsx`
-- table exports
-- query-result exports
-- CSV streaming with `--stream`
-
-CLI import supports:
-
-- CSV
-- Excel `.xlsx`
-- delimiter auto-detection or `--delimiter`
-- Excel sheet selection with `--sheet`
-- append, overwrite, and upsert modes
-- optional table creation with `--create-table`
-- positional mapping with `--header=false --mapping position`
-- explicit auto-generated column import with `--allow-auto-generated`
-
-For SQL seed files, use the database-native client for the target engine, such as `psql -f seed.sql` or `mysql database < seed.sql`.
-
-## Connections
-
-The CLI can use saved connections and environment-defined profiles.
-
-```bash
-# Saved connection
-whodb connections add \
-  --name local-postgres \
-  --type postgres \
-  --host localhost \
-  --user alice \
-  --database app
-
-# Environment profile
-export WHODB_POSTGRES_1='{"alias":"ci-postgres","host":"localhost","user":"postgres","password":"postgres","database":"app_test","port":"5432"}'
-whodb tables --connection ci-postgres --format json
-```
-
-Cloud-discovered resources can prefill connect and save flows:
-
-```bash
-whodb cloud providers list
-whodb cloud connections list
-whodb connect --discovered aws-prod-us-west-2/prod-db
-whodb connections add --from-discovered aws-prod-us-west-2/prod-db --user alice --database app
-```
-
-## SSH Tunneling
-
-Built-in SSH tunneling belongs to the CLI/TUI surface in this codebase. If your database sits behind a bastion host and you want WhoDB tooling to manage the tunnel, use the CLI rather than the web login page. SSH passwords for saved connections are stored in the OS keyring, with a `0600` plaintext config fallback only when no keyring is available.
-
-## Agent Metadata, Diagnostics, And Runbooks
-
-The CLI includes command surfaces designed for operators and AI agents that need a stable, scriptable view of WhoDB capabilities.
-
-```bash
-# Machine-readable command, source, MCP, workflow, and safety metadata
-whodb agent schema --format json
-
-# Redacted diagnostics for one connection
-whodb doctor --connection local-postgres --schema public --format json
-
-# List and inspect built-in workflows
 whodb runbooks list
 whodb runbooks describe schema-audit
-
-# Preview or run workflows
 whodb runbooks run connection-doctor --connection local-postgres --dry-run
-whodb runbooks run schema-audit --connection local-postgres --schema public --format json
-whodb runbooks run schema-diff --from staging --to prod --format json
+whodb agent schema --format json
 ```
 
-Built-in runbooks are intentionally limited to WhoDB operations:
+Built-in runbooks cover connection diagnostics, schema audits, and schema comparisons. Read a runbook's description and preview it before execution so you understand its intended scope.
 
-- `connection-doctor`: runs the same diagnostics as `doctor`
-- `schema-audit`: loads storage units and runs data-quality checks
-- `schema-diff`: compares schema metadata between two connections
+## Connect an assistant with MCP
 
-## Assistant Integrations
-
-The CLI can install bundled WhoDB assistant skills and native assistant configuration files.
+Start the MCP server with the query mode needed for the task:
 
 ```bash
-# List bundled skills and agents
-whodb skills list
-whodb skills list --format json
-
-# Install all bundled skills into an explicit skills directory
-whodb skills install --target-dir ~/.codex/skills
-
-# Install skills and bundled Markdown agents for Claude Code
-whodb skills install --target claude-code --include-agents
-
-# Install native MCP configuration for an assistant
-whodb skills install --target cursor
-whodb skills install --target vscode
-whodb skills install --target gemini-cli
-
-# Preview files and backup paths without modifying disk
-whodb skills install --target cursor --dry-run
-```
-
-Supported assistant targets:
-
-| Target | Files installed |
-|--------|-----------------|
-| `codex` | Skills under `~/.codex/skills` |
-| `claude-code` | Skills under `~/.claude/skills`, plus Markdown agents under `~/.claude/agents` with `--include-agents` |
-| `cursor` | `~/.cursor/mcp.json` |
-| `vscode` | VS Code user `mcp.json` |
-| `github-copilot` | GitHub Copilot CLI `~/.copilot/mcp-config.json` |
-| `gemini-cli` | `~/.gemini/extensions/whodb/gemini-extension.json` and `GEMINI.md` |
-| `windsurf` | `~/.codeium/mcp_config.json` |
-| `opencode` | `~/.config/opencode/opencode.json` with `mcp.whodb` |
-| `cline` | Cline MCP settings plus `~/Documents/Cline/Rules/whodb.md` |
-| `zed` | `~/.config/zed/settings.json` with `context_servers.whodb` |
-| `continue` | `~/.continue/config.yaml` |
-| `aider` | `~/.aider.conf.yml` plus `~/.aider/whodb-conventions.md` |
-
-Existing JSON and JSONC configuration files are merged in place and rewritten as formatted JSON. Before an existing JSON or YAML assistant config is rewritten, the original file is saved beside it as `<filename>.whodb.bak`.
-
-Use `--dry-run` to preview created or updated files and any backup paths without writing changes.
-
-## MCP Server
-
-The CLI can run as an MCP server:
-
-```bash
-whodb mcp serve
-```
-
-Current MCP tools include:
-
-- `whodb_connections`
-- `whodb_schemas`
-- `whodb_tables`
-- `whodb_columns`
-- `whodb_query`
-- `whodb_confirm`
-- `whodb_pending`
-- `whodb_explain`
-- `whodb_diff`
-- `whodb_erd`
-- `whodb_audit`
-- `whodb_suggestions`
-
-Writes require confirmation by default. Use the mode that matches your risk level:
-
-```bash
-# Default: writes require confirmation
+# Review queries outside the automatically accepted read subset.
 whodb mcp serve
 
-# Read-only plus strict validation
-whodb mcp serve --safe-mode
-
-# Read-only mode
+# Limit the assistant to accepted reads.
 whodb mcp serve --read-only
 
-# Allow writes without confirmation
-whodb mcp serve --allow-write
-
-# Allow DROP/TRUNCATE as well
-whodb mcp serve --allow-write --allow-drop
+# Use read-only execution with strict validation.
+whodb mcp serve --safe-mode
 ```
 
-Useful MCP options:
+Tools include connection and schema discovery, table and column inspection, query execution, confirmation, explain, relationships, schema diff, audits, and suggestions. Review [MCP permissions](/features/mcp-permissions) before allowing writes.
 
-- `--transport stdio|http`
-- `--host`
-- `--port`
-- `--auth-token` (or `WHODB_MCP_AUTH_TOKEN`) — require a Bearer token on `/mcp` requests; strongly recommended when binding to a network interface
-- `--confirm-writes` (default on)
-- `--timeout`
-- `--max-rows`
-- `--allow-multi-statement`
-- `--security strict|standard|minimal`
-- `--tools`
-- `--disable-tools`
-- `--default-connection`
-- `--allowed-connections`
-- `--no-analytics`
-
-HTTP mode is part of the CLI MCP server, not the WhoDB web app:
+For HTTP transport, set an authentication token and keep the listener limited to the clients that need it:
 
 ```bash
-whodb mcp serve --transport=http --host=0.0.0.0 --port=3000 --auth-token your-secret-token
+whodb mcp serve --transport=http --host=127.0.0.1 --port=3001 \
+  --auth-token "$WHODB_MCP_AUTH_TOKEN"
 ```
 
-It exposes:
+Set `WHODB_MCP_AUTH_TOKEN` to a secret before running that command. HTTP transport exposes `/mcp` and `/health`. Check the host, enabled tools, and allowed connections before exposing it beyond the local machine.
 
-- `/mcp`
-- `/health`
+## Install an assistant integration
 
-## Hosted Platform MCP
-
-Hosted WhoDB platform MCP mode is opt-in and uses the existing CLI hosted login:
+Preview the files an integration will create before installing it:
 
 ```bash
-whodb login
-whodb use --org <org-id-or-slug> --project <project-id-or-slug>
-whodb mcp serve --platform
+whodb skills list
+whodb skills install --target cursor --dry-run
+whodb skills install --target cursor
 ```
 
-When `--platform` is set, the MCP server exposes hosted platform tools only.
-Local database tools such as `whodb_query` and `whodb_connections` are not
-registered.
+Use `whodb skills install --help` for supported targets. The command can install bundled skills and native MCP configuration for compatible assistants. Check the preview's file and backup paths so you know which assistant configuration will change.
 
-Platform MCP clients should read these resources before selecting tools:
-
-- `whodb://platform/workspace` for the current host, signed-in user,
-  organization, project, and readiness state
-- `whodb://platform/schema` for enabled tools, resources, prompts, generic
-  write specs, and payload shapes
-- `whodb://platform/tool-guide` for read/write behavior, confirmation behavior,
-  row limits, and field projection guidance
-
-For tools that accept `fields`, request only the fields needed for the current
-answer and request more only when needed. Hosted platform writes return a
-confirmation token by default and execute only after confirmation.
-
-See `.agents/docs/hosted-platform-cli.md` in the repository for the full hosted
-platform CLI and MCP workflow.
-
-## Related Pages
-
-<CardGroup cols={2}>
-<Card title="Keyboard Shortcuts" icon="code" href="/resources/keyboard-shortcuts">
-The web frontend shortcut list is separate from the CLI/TUI keymap.
-</Card>
-<Card title="Importing Data" icon="table" href="/data/importing">
-Compare the in-app import panel with the CLI import command.
-</Card>
-<Card title="CI/CD Integration" icon="code" href="/resources/integrations/ci-cd">
-Use `whodb` for supported scripting and pipeline workflows.
-</Card>
-<Card title="Database Connectivity" icon="database" href="/features/database-connectivity">
-Understand web and CLI connection behavior.
-</Card>
-</CardGroup>
+Next: [CI/CD workflows](/resources/integrations/ci-cd) · [Cloud discovery](/features/cloud-providers)

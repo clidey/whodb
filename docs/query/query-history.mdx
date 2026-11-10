@@ -1,60 +1,54 @@
 ---
-title: "Query History"
-description: "Understand Scratchpad query history in the current WhoDB UI"
+title: "Reuse query history"
+description: "Find successful and failed queries saved in each Scratchpad cell."
 ---
 
-# Query History
+# Reuse query history
 
-Scratchpad stores query history per cell. Each history entry includes the SQL text, execution status, and timestamp.
+Use query history when you need a statement that ran earlier, such as the last working version before a change or a failed query whose error you want to investigate. Each Scratchpad cell has its own history of query text, timestamps, and execution status.
 
-![Query History Panel](/images/33-scratchpad-query-history.png)
+## Open and reuse an entry
 
-## Open History
+Open the cell's history control, or choose **Query History** from its menu. Look for the relevant execution by its text, time, and status.
 
-Use either of these current UI paths:
+<div className="ce-screenshot-light">
 
-- Click the history button in the Scratchpad cell controls.
-- Open the cell options menu and choose **Query History**.
+![History entries for a Scratchpad cell](/images/light/33-scratchpad-query-history.png)
 
-![Cell Options Menu](/images/32-scratchpad-cell-options-menu.png)
+</div>
+<div className="ce-screenshot-dark">
 
-Use the in-app history controls rather than browser history shortcuts.
+![History entries for a Scratchpad cell](/images/dark/33-scratchpad-query-history.png)
 
-## What Gets Saved
+</div>
 
-WhoDB adds an entry after a query is executed from the cell. History records whether execution succeeded or failed.
+Copy an entry when you want to inspect it somewhere else. Load it into the editor when you want to revise it. Loading replaces the current editor content, so keep a copy of an unfinished query before replacing it.
 
-<Note>
-History belongs to the cell where the query was run. Other cells and pages have their own history.
-</Note>
+<div className="ce-screenshot-light">
 
-## Reuse A Query
+![Load a historical query into the editor](/images/light/49-scratchpad-history-clone-button.png)
 
-From a history entry you can:
+</div>
+<div className="ce-screenshot-dark">
 
-- Copy the SQL.
-- Load the SQL into the current editor.
-- Run the SQL again.
+![Load a historical query into the editor](/images/dark/49-scratchpad-history-clone-button.png)
 
-![Clone Button](/images/49-scratchpad-history-clone-button.png)
+</div>
 
-Loading a history entry puts that SQL into the current editor.
+You can also run an entry again. Check the active connection and query before doing so, especially for a write. A previously successful query may fail or have a different effect after a schema or data change.
 
-## Clear History
+## Use status as a starting point
 
-Use the history panel control to clear the current cell's history.
+A successful entry tells you the source accepted that execution. It does not prove that its join, filter, or business definition was correct. Compare a result to known records before treating a successful query as the final answer.
 
-## Where History Is Stored
+A failed entry is still useful. Load it into a new working cell, reduce it to a smaller statement, and use the displayed error to find the problem.
 
-Scratchpad pages, cells, and per-cell history are saved in the browser's localStorage. They survive page reloads, but they are per-browser and per-machine and are never stored on the server.
+## Keep durable copies
 
-## Related Pages
+History and Scratchpad state are local to the browser. They survive an ordinary reload, but they are not shared team documents or a server-side audit log. Clearing browser storage can remove them.
 
-<CardGroup cols={2}>
-<Card title="Scratchpad Introduction" icon="code" href="/query/scratchpad-intro">
-Get oriented with pages, cells, execution, and history.
-</Card>
-<Card title="Multiple Cells" icon="window-restore" href="/query/multiple-cells">
-Use cells and pages to organize related SQL.
-</Card>
-</CardGroup>
+Save important SQL in a file or repository with the source environment, purpose, and any input parameters. This also makes it possible for someone else to review the query without using your browser.
+
+The history panel's clear action removes the current cell's history. Export or copy useful entries before clearing it.
+
+Next: [Pages and cells](/query/multiple-cells) · [Document investigations](/best-practices/documentation)

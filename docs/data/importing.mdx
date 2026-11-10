@@ -1,129 +1,67 @@
 ---
-title: "Importing Data"
-description: "Import CSV, Excel, or SQL using the current WhoDB import flow"
+title: "Import data"
+description: "Preview CSV and Excel files, choose an import mode, or execute a reviewed SQL script."
 ---
 
-# Importing Data
+# Import data
 
-WhoDB's current import flow lives inside the table view and supports two paths:
+Use Import to load records from a file into an existing object, or to run a SQL script you have already reviewed. The target matters: structured data is written to the object open in the current **Data** view.
 
-- structured file import for CSV and Excel
-- SQL import from a pasted script or `.sql` file
+Before starting, check the connection, schema, and object name. Open **Import**, or press `Mod + I`.
 
-## Open The Import Flow
+## Prepare a CSV or Excel file
 
-Open a table, then use the **Import** button in the grid's bottom footer area, next to **Export All**, or press `Mod + I`.
+Use `.csv`, `.xlsx`, or `.xlsm` for a structured import. The first row should contain headers matching the target column names. Inspect those columns in **Info** before preparing the file.
 
-<Note>
-Structured file imports target the table you currently have open.
-</Note>
+Leave database-generated values out of the file unless you deliberately need to preserve them. For example, a fixture with usernames and emails can let the database generate user IDs. Importing an ID copied from another environment can cause a key conflict.
 
-## Supported Modes
+## Preview and choose a mode
 
-<CardGroup cols={2}>
-<Card title="Data Import" icon="table">
-Upload CSV or Excel files, review the preview, and import rows into the current table.
-</Card>
-<Card title="SQL Import" icon="code">
-Paste SQL or upload a `.sql` file and run it through the import panel.
-</Card>
-</CardGroup>
+1. Select the import format and upload the file.
+2. Check the detected fields and sample records.
+3. Set the CSV delimiter or Excel sheet if the format needs one.
+4. Choose a mode offered for the source.
+5. Explicitly allow auto-generated column values only when the import requires them.
+6. Submit after the preview validates.
 
-## CSV And Excel Import
+<div className="ce-screenshot-light">
 
-<Steps>
-<Step title="Choose The File Type">
-The current UI supports:
+![CSV import preview with detected columns and sample records](/images/light/116-import-preview.png)
 
-- `.csv`
-- `.xlsx`
-- `.xlsm`
-</Step>
-<Step title="Use Headers">
-For in-app CSV and Excel imports, the first row is treated as the header row.
+</div>
+<div className="ce-screenshot-dark">
 
-Match those headers to the target table's column names. If the file includes an auto-generated column such as an ID, WhoDB shows a checkbox so you can explicitly allow that column.
-</Step>
-<Step title="Review The Preview">
-WhoDB loads a preview before import and shows:
+![CSV import preview with detected columns and sample records](/images/dark/116-import-preview.png)
 
-- detected columns
-- up to three sample rows
-- validation messages when the file and table do not line up
-- detected Excel sheet name when applicable
-</Step>
-<Step title="Adjust File Options">
-The current import panel supports:
+</div>
 
-- automatic or manual CSV delimiter selection
-- automatic Excel sheet detection
-- append, overwrite, and upsert import modes
-- a toggle for allowing auto-generated columns when required by validation
-</Step>
-<Step title="Run The Import">
-Once the preview is valid, submit the import to write the rows into the current table.
-</Step>
-</Steps>
+The preview shows up to 20 rows. Use it to catch a wrong delimiter, a wrong worksheet, or headers that do not match the target. A valid sample is not proof that every row in the file will satisfy the database's constraints.
 
-## SQL Import
+**Append** adds records to the existing data. For SQL imports with a primary key, rows that conflict with existing primary keys can be skipped. **Upsert** requires primary keys and updates matching records while inserting new ones.
 
-SQL import can start from either:
+<Warning>
+For relational imports, **Overwrite** can clear tables that reference the target as well as the target itself. Check the relationships and prepare a recovery plan before choosing it. It is not limited to replacing rows present in the uploaded file.
+</Warning>
 
-- a pasted SQL script
-- an uploaded SQL file
+Choose the mode for the intended outcome. Do not retry a failed append with overwrite just to remove a key conflict.
 
-Use one source at a time: either paste SQL or upload a file. The current flow requires an explicit confirmation checkbox before execution.
+Uploads are limited to 50 MB, and structured imports to 100,000 rows. Database permissions and constraints still apply. After importing, check a few known keys and compare counts to your expected result before importing the same file again.
 
-## Current Limits
+## Import SQL
 
-The import panel uses these limits:
+Select SQL import, paste a script or upload a `.sql` file, and review the full statement text. Select the execution confirmation checkbox before submitting. SQL uses the active source's syntax and permissions.
 
-- maximum file size: `50 MB`
-- maximum row count: `100,000`
-- preview rows shown in the UI: `3`
+A SQL script can change more than the currently visible rows. Review its object names and write statements as you would a migration or repair script.
 
-## Validation Behavior
+## Import from the terminal
 
-WhoDB stops the import and shows a validation message for issues such as:
-
-- invalid or missing column mapping
-- auto-generated columns that require explicit consent
-- parser or file-format errors
-
-Use the preview result to fix the file or adjust the import mode before retrying.
-
-## Related Tools
-
-If you need scriptable or terminal-based CSV and Excel imports, use the CLI:
+For a repeatable file load, the CLI supports an explicit connection, schema, table, and mode:
 
 ```bash
-whodb import --connection mydb --file data.csv --table users
+whodb import --connection local-postgres --schema public \
+  --table users --file users.csv --mode append
 ```
 
-Useful CLI flags include:
+Check `whodb import --help` for delimiter, sheet, mapping, table-creation, and generated-column options. Keep the input file and command with the test or migration that uses them.
 
-- `--schema`
-- `--delimiter`
-- `--sheet`
-- `--header=false`
-- `--mapping position`
-- `--mode append`
-- `--mode overwrite`
-- `--mode upsert`
-- `--create-table`
-- `--allow-auto-generated`
-
-For scriptable SQL imports, use the native database client for your engine, such as `psql -f seed.sql` or `mysql database < seed.sql`.
-
-See [CLI & MCP](/features/cli-and-mcp) for the current command surface.
-
-## Related Pages
-
-<CardGroup cols={2}>
-<Card title="Viewing Data" icon="table" href="/data/viewing-data">
-Return to the table view after importing.
-</Card>
-<Card title="CLI & MCP" icon="code" href="/features/cli-and-mcp">
-Use terminal import commands and other scripted workflows.
-</Card>
-</CardGroup>
+Next: [Export data](/advanced/export-options) · [Data migration workflow](/use-cases/data-migration)

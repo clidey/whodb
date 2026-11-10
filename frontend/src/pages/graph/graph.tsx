@@ -42,7 +42,6 @@ import {
     cn,
     EmptyState,
     SearchInput,
-    Sidebar as SidebarComponent,
     SidebarContent,
     SidebarGroup,
     SidebarHeader,
@@ -108,7 +107,7 @@ const GraphSidebar: FC<GraphSidebarProps> = ({
                 {units.map(u => {
                     const checked = selectedUnits.has(u.Name);
                     return (
-                        <label key={u.Name} className="flex items-center gap-2 px-4 py-1 cursor-pointer select-none">
+                        <label key={u.Name} data-selected={checked} className={cn("ce-graph-object flex min-h-12 items-center gap-3 rounded-md px-4 py-2 cursor-pointer select-none hover:bg-muted", checked && "bg-accent text-accent-foreground")}>
                             <Checkbox checked={checked} onCheckedChange={(checked) => {
                                 setSelectedUnits((prev: Set<string>) => {
                                     const next = new Set(prev);
@@ -128,34 +127,32 @@ const GraphSidebar: FC<GraphSidebarProps> = ({
     }, [search, selectedUnits, setSelectedUnits, storageUnits, t]);
 
     return (
-        <div className="dark flex grow">
-            <SidebarComponent variant="embed" className="w-64 h-full flex flex-col">
-                <SidebarContent data-testid="graph-sidebar-content">
-                    <SidebarHeader>
-                        <h1 className="text-lg font-semibold pt-8 px-4">
-                            {storageUnitLabel}
-                        </h1>
-                    </SidebarHeader>
-                    <div className="px-4">
-                        <SearchInput
-                            value={search}
-                            onChange={(e) => { setSearch(e.target.value); }}
-                            placeholder={t('searchTables')}
-                            aria-label={t('searchTables')}
-                        />
-                    </div>
-                    <SidebarGroup>
-                        {
-                            unitsLoading
-                                ? <div className="flex-1 flex items-center justify-center"><LoadingPage /></div>
-                                : <div className="flex-1 overflow-y-auto px-2 py-2">
-                                    {children}
-                                </div>
-                        }
-                    </SidebarGroup>
-                </SidebarContent>
-            </SidebarComponent>
-        </div>
+        <aside className="ce-secondary-panel flex h-full w-full flex-col" aria-label={storageUnitLabel}>
+            <SidebarContent data-testid="graph-sidebar-content">
+                <SidebarHeader>
+                    <h1 className="text-sm font-semibold">
+                        {storageUnitLabel}
+                    </h1>
+                </SidebarHeader>
+                <div className="px-4">
+                    <SearchInput
+                        value={search}
+                        onChange={(e) => { setSearch(e.target.value); }}
+                        placeholder={t('searchTables')}
+                        aria-label={t('searchTables')}
+                    />
+                </div>
+                <SidebarGroup>
+                    {
+                        unitsLoading
+                            ? <div className="flex-1 flex items-center justify-center"><LoadingPage /></div>
+                            : <div className="flex-1 overflow-y-auto px-2 py-2">
+                                {children}
+                            </div>
+                    }
+                </SidebarGroup>
+            </SidebarContent>
+        </aside>
     );
 };
 

@@ -738,7 +738,6 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                         size="sm"
                         onClick={() =>{  retryProvider(modelType.id); }}
                         title={t('providerUnavailable')}
-                        className="px-2"
                     >
                         <ArrowPathIcon className="w-4 h-4 text-[var(--brand-readable)]" />
                     </Button>

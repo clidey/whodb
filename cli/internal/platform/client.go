@@ -24,6 +24,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net"
 	"net/http"
 	"net/url"
@@ -625,12 +626,36 @@ func (c *Client) graphQLRequest(ctx context.Context, query string, variables any
 	}
 	operation := graphQLOperationName(query)
 
+	// The API bounds ordinary JSON requests at 1 MiB. Its existing GraphQL
+	// multipart transport also accepts operations with no files. Select it
+	// before sending so a large mutation is still exactly one request.
+	contentType := "application/json"
+	if len(body) > 1<<20 {
+		var encoded bytes.Buffer
+		form := multipart.NewWriter(&encoded)
+		operations, err := form.CreateFormField("operations")
+		if err != nil {
+			return err
+		}
+		if _, err := operations.Write(body); err != nil {
+			return err
+		}
+		if err := form.WriteField("map", "{}"); err != nil {
+			return err
+		}
+		if err := form.Close(); err != nil {
+			return err
+		}
+		body = encoded.Bytes()
+		contentType = form.FormDataContentType()
+	}
+
 	endpoint := c.host + defaultPath
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(body))
 	if err != nil {
 		return err
 	}
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", contentType)
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set(coreaudit.ClientHeader, clientName())
 	if accessToken != "" {

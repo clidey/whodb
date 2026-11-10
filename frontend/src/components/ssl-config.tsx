@@ -327,7 +327,6 @@ const CertificateInput: FC<CertificateInputProps> = ({
           variant="ghost"
           size="sm"
           onClick={onToggleMode}
-          className="h-6 px-2 text-xs"
           title={inputMode === 'file' ? t('switchToPaste') : t('switchToFile')}
         >
           {inputMode === 'file' ? (
@@ -386,7 +385,7 @@ const CertificateInput: FC<CertificateInputProps> = ({
                   variant="ghost"
                   size="sm"
                   onClick={handleClearFile}
-                  className="h-6 px-2 text-xs flex-shrink-0"
+                  className="flex-shrink-0"
                 >
                   {t('clear')}
                 </Button>
@@ -408,7 +407,7 @@ const CertificateInput: FC<CertificateInputProps> = ({
           value={contentValue}
           onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>{  onContentChange(e.target.value); }}
           placeholder={"-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"}
-          className="font-mono text-xs h-24"
+          className="font-mono"
           data-testid={`${testIdPrefix}-content`}
         />
       )}

@@ -165,30 +165,22 @@ export const NavItem: FC<{
 
     const inner = (
         <>
-            <span className={cn(
-                "flex shrink-0 items-center justify-center",
-                isActive ? "text-primary" : "text-sidebar-foreground"
-            )}>{icon}</span>
+            <span className="flex shrink-0 items-center justify-center">{icon}</span>
             {open && <span className="text-sm">{label}</span>}
         </>
     );
 
-    const className = cn(
-        "flex w-full items-center gap-2 font-medium transition-all duration-150",
-        isActive
-            ? "text-primary"
-            : "text-sidebar-foreground/90 hover:text-sidebar-accent-foreground"
-    );
+    const className = "flex w-full items-center gap-2";
 
     return (
         <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={isActive} tooltip={tooltip}>
                 {onClick != null ? (
-                    <button type="button" onClick={onClick} className={cn(className, "w-full cursor-pointer")} style={isActive ? { color: 'var(--primary)' } : undefined} data-testid={dataTestId}>
+                    <button type="button" onClick={onClick} className={cn(className, "w-full cursor-pointer")} data-testid={dataTestId}>
                         {inner}
                     </button>
                 ) : (
-                    <Link to={path ?? "#"} className={className} style={isActive ? { color: 'var(--primary)' } : undefined} data-testid={dataTestId} aria-current={isActive ? "page" : undefined}>
+                    <Link to={path ?? "#"} className={className} data-testid={dataTestId} aria-current={isActive ? "page" : undefined}>
                         {inner}
                     </Link>
                 )}
@@ -569,23 +561,21 @@ export const Sidebar: FC = () => {
                 collapsible="icon"
                 className={cn('z-[50]', !newUIEnabled && 'ce-tables-sidebar', !newUIEnabled && pathname.includes(InternalRoutes.Dashboard.ExploreStorageUnit.path) && 'ce-explore-sidebar')}
             >
-                <SidebarHeader className={cn({ "ml-4": open })}>
-                    <div className="flex items-center gap-sm justify-between">
-                        <div className={cn("flex items-center gap-sm mt-2", { "hidden": !open })}>
-                            {extensions.Logo ?? <img src={logoImage} alt="clidey logo" className={cn("w-auto", newUIEnabled ? "h-6" : "h-8")} />}
-                            {open && <span className={cn("font-bold", newUIEnabled ? "text-lg" : "text-3xl")} data-testid="app-name">{getAppName()}</span>}
+                <SidebarHeader>
+                    <div className="flex items-center gap-2 justify-between">
+                        <div className={cn("flex items-center gap-2", { "hidden": !open })}>
+                            {extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="h-6 w-auto" />}
+                            {open && <span className="text-lg font-bold" data-testid="app-name">{getAppName()}</span>}
                             {open && !newUIEnabled && <span className="ce-sidebar-edition">{t('communityEditionShort')}</span>}
                         </div>
                         {!newUIEnabled && open ? (
-                            <button type="button" className="ce-sidebar-toggle" onClick={toggleSidebar} aria-label={t('collapseNavigation')}>
-                                <WhoDBChatIcon name="sidebar" />
-                            </button>
+                            <SidebarTrigger aria-label={t('collapseNavigation')} />
                         ) : (
-                            <SidebarTrigger className="px-0" />
+                            <SidebarTrigger />
                         )}
                     </div>
                 </SidebarHeader>
-                <SidebarContent className={cn("mt-4 mb-4 overflow-y-auto", { "mx-4": open })}>
+                <SidebarContent>
                     {newUIEnabled ? (
                     <SidebarGroup className="grow">
                         <SidebarMenu className="gap-0 grow">
@@ -737,7 +727,7 @@ export const Sidebar: FC = () => {
                                         <DropdownMenu>
                                             <DropdownMenuTrigger className={cn({ "hidden": !open })}>
                                                 <Button
-                                                    className="flex items-center justify-center p-1 rounded hover:bg-accent ml-2"
+                                                    className="flex items-center justify-center ml-2"
                                                     aria-label={t('moreLogoutOptions')}
                                                     variant="ghost"
                                                 >
@@ -807,10 +797,8 @@ export const Sidebar: FC = () => {
                                         }}
                                     />
                                 </div>
-                                {supportsDatabaseSwitching && (
-                                    <div className={cn("flex flex-col gap-sm w-full", {
-                                        "opacity-0 pointer-events-none": !open,
-                                    })}>
+                                {open && supportsDatabaseSwitching && (
+                                    <div className="flex flex-col gap-sm w-full">
                                         <h2 className="text-sm" data-testid="sidebar-database-label">{databaseDropdownLabel}</h2>
                                         <SearchSelect
                                             label={databaseDropdownLabel}
@@ -825,14 +813,13 @@ export const Sidebar: FC = () => {
                                             buttonProps={{
                                                 "data-testid": "sidebar-database",
                                                 "aria-label": databaseDropdownLabel,
+                                                variant: "ghost",
                                             }}
                                         />
                                     </div>
                                 )}
-                                {supportsSchema && (
-                                    <div className={cn("flex flex-col gap-sm w-full", {
-                                        "opacity-0 pointer-events-none": !open || pathname.includes(InternalRoutes.RawExecute.path),
-                                    })}>
+                                {open && supportsSchema && !pathname.includes(InternalRoutes.RawExecute.path) && (
+                                    <div className="flex flex-col gap-sm w-full">
                                         <h2 className="text-sm">{t('schema')}</h2>
                                         <SearchSelect
                                             label={t('schema')}
@@ -846,13 +833,14 @@ export const Sidebar: FC = () => {
                                             buttonClassName={ph.mask}
                                             buttonProps={{
                                                 "data-testid": "sidebar-schema",
+                                                variant: "ghost",
                                             }}
                                         />
                                     </div>
                                 )}
                             </div>
 
-                            <SidebarMenu className="grow mt-8 gap-4">
+                            <SidebarMenu className="grow mt-4">
                                 {sidebarRoutes.map((route) => (
                                     <SidebarMenuItem key={route.title}>
                                         <SidebarMenuButton asChild tooltip={open ? undefined : route.title} isActive={pathname === route.path || (pathname.includes(InternalRoutes.Dashboard.ExploreStorageUnit.path) && route.path === InternalRoutes.Dashboard.StorageUnit.path)}>
@@ -942,7 +930,7 @@ export const Sidebar: FC = () => {
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger>
                                                         <Button
-                                                            className="flex items-center justify-center p-1 rounded hover:bg-accent"
+                                                            className="flex items-center justify-center"
                                                             aria-label={t('moreLogoutOptions')}
                                                             variant="ghost"
                                                         >
@@ -993,7 +981,7 @@ export const Sidebar: FC = () => {
                 </SidebarContent>
             </SidebarComponent>
             <Sheet open={showLoginCard} onOpenChange={setShowLoginCard}>
-                <SheetContent side="right" className="p-8">
+                <SheetContent side="right">
                     <VisuallyHidden>
                         <SheetTitle>{t('databaseLogin')}</SheetTitle>
                     </VisuallyHidden>

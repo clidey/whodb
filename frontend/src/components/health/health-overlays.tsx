@@ -103,11 +103,11 @@ export const ServerDownOverlay = () => {
                 aria-labelledby="server-down-title"
                 aria-describedby="server-down-message"
                 className={cn(
-                    'w-full max-w-sm gap-0 overflow-hidden rounded-xl border-border bg-card py-0 shadow-2xl',
+                    'w-full max-w-sm overflow-hidden',
                     'animate-in fade-in zoom-in-95 duration-300'
                 )}
             >
-                <CardContent className="px-5 pb-4 pt-5">
+                <CardContent>
                     <div className="flex size-9 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
                         <SignalSlashIcon className="size-5" aria-hidden="true" />
                     </div>
@@ -127,7 +127,7 @@ export const ServerDownOverlay = () => {
                         )}
                     </div>
                 </CardContent>
-                <CardFooter className="justify-end border-t border-border px-5 pb-3 !pt-3">
+                <CardFooter className="justify-end">
                     <Button size="sm" onClick={() => void handleRetry()} disabled={isRetrying}>
                         <ArrowPathIcon className="size-3.5" aria-hidden="true" />
                         {t('retryNow')}

@@ -285,7 +285,7 @@ const StorageUnitCard: FC<{
                                     return (
                                         <div key={col.Name} className={ph.mask} data-field-key={col.Name} data-field-value={col.Type?.toLowerCase()} data-is-foreign-key={isForeignKey || undefined}>
                                             <StackListItem item={isForeignKey ?
-                                                <Badge className="text-lg" data-testid="foreign-key-attribute" variant="secondary">{col.Name}</Badge> : col.Name}>
+                                                <Badge data-testid="foreign-key-attribute" variant="secondary">{col.Name}</Badge> : col.Name}>
                                                 {col.Type?.toLowerCase()}
                                             </StackListItem>
                                         </div>
@@ -724,7 +724,7 @@ export const StorageUnitPage: FC = () => {
                                                     return (
                                                         <div key={col.Name} data-field-key={col.Name} data-field-value={col.Type?.toLowerCase()} data-is-foreign-key={isForeignKey ?? undefined}>
                                                             <StackListItem item={isForeignKey ?
-                                                                <Badge className="text-lg" data-testid="foreign-key-attribute">{col.Name}</Badge> : col.Name}>
+                                                                <Badge data-testid="foreign-key-attribute">{col.Name}</Badge> : col.Name}>
                                                                 {col.Type?.toLowerCase()}
                                                             </StackListItem>
                                                         </div>
@@ -850,7 +850,7 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnitGraphCardData>>
                                                 />
                                             )}
                                             <StackListItem rowClassName="items-start"
-                                                           item={isFKColumn ? <Badge variant="secondary" className="text-lg">{name}</Badge> : name}>
+                                                           item={isFKColumn ? <Badge variant="secondary">{name}</Badge> : name}>
                                                 {value}
                                             </StackListItem>
                                         </div>

@@ -16,6 +16,9 @@ import (
 // It is deliberately not a general GraphQL passthrough: callers can select a
 // known operation, while the CLI owns the query document and field set.
 var platformQuerySpecs = map[string]string{
+	"ValidateOntologyBehaviors": `query CLIValidateOntologyBehaviors($projectId: ID!, $manifest: JSON!) {
+  ValidateOntologyBehaviors(projectId: $projectId, manifest: $manifest)
+ }`,
 	"AppBuilderReference": `query CLIPlatformAppBuilderReference($kind: String!, $name: String) {
   AppBuilderReference(kind: $kind, name: $name)
 }`,

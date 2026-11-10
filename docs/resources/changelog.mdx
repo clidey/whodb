@@ -1,56 +1,22 @@
 ---
-title: "WhoDB Changelog"
-description: "Where to find release history and the current CE feature status"
+title: "Follow releases"
+description: "Find published versions, release notes, artifacts, and the current source."
 ---
 
-# WhoDB Changelog
+# Follow releases
 
-Use GitHub releases as the source of truth for version-by-version release notes.
+Use [WhoDB releases](https://github.com/clidey/whodb/releases) to find published versions, release notes, and downloadable artifacts. Check the notes for the version you plan to install, including any configuration or compatibility changes relevant to your deployment.
 
-<Card title="GitHub Releases" icon="github" href="https://github.com/clidey/whodb/releases">
-View published releases, tags, binaries, and release notes.
-</Card>
+## Prepare an update
 
-## Current CE Status
+Record your current image tag or binary version and retain the deployment configuration. Use a specific published tag when you need a deployment that can be reproduced rather than following `latest` automatically.
 
-This documentation site tracks the current Community Edition code in this repository. The current CE surface includes:
+Keep the WhoDB data directory and encryption key if existing login sessions must survive replacement. Keep database backups independently: updating the database client and protecting the connected database are separate tasks.
 
-- Web app for connecting to supported sources, browsing Storage Units, describing objects, viewing rows, filtering, sorting, editing rows, importing, exporting, and generating mock data where the source supports it.
-- Scratchpad for SQL execution, multi-page and multi-cell query organization, destructive-query confirmation, query history, and result grids.
-- Graph view for relationship visualization, node cards, column loading, pan/zoom controls, layout, and PNG download.
-- CLI and MCP server for terminal workflows, scriptable checks, import/export, audit, mock data, schema diff, ERD output, SSH tunneling, and safe MCP tool access.
-- Desktop CE app built on the same core frontend/backend surfaces.
-- Health endpoint at `GET /health`, returning plain text `ok` for process-level checks.
+## Verify the updated instance
 
-<Note>
-The WhoDB web app's backend endpoints are internal to the app. For automation, use the `whodb` CLI, native database clients, or the CLI MCP server.
-</Note>
+Open a fresh browser session and connect to a development source. Inspect a known object's fields and run a small read query. Test the operations your team uses, such as importing a fixture, exporting a query result, or reaching a configured model endpoint.
 
-## Feature Notes
+If behavior differs from these docs, record the installed version and source type before reporting it. The documentation follows current CE source behavior; the catalog and available actions can vary by version and build target.
 
-| Area | Current Behavior |
-|------|------------------|
-| Storage Units | Browse source objects, describe metadata/columns, and open row data when available. |
-| Import | Web import supports CSV, Excel, and SQL script flows. CLI import supports CSV and Excel. |
-| Export | Web export supports CSV and Excel for tabular rows, plus JSON Lines for document-style records when supported. CLI export supports CSV and Excel. |
-| Scratchpad | Web editor supports syntax highlighting, run/clear shortcuts, pages, cells, and query history. CLI TUI adds terminal autocomplete, SQL formatting, bookmarks, and external editor support. |
-| Graph | Shows selected Storage Units, relationships, node metadata, columns after load, controls, layout, and PNG download. |
-| AI | Chat requires a configured provider and selected model. If no model is available, generated SQL and chat result workflows are not available. |
-| Cloud Providers | Provider discovery is available through the local CLI and is not exposed by the CE web server. |
-
-## Related Pages
-
-<CardGroup cols={2}>
-<Card title="Installation" icon="download" href="/installation">
-Install or run the current CE build.
-</Card>
-<Card title="CLI & MCP" icon="code" href="/features/cli-and-mcp">
-Review the supported automation surface.
-</Card>
-<Card title="Supported Databases" icon="database" href="/resources/supported-databases">
-See the current CE source catalog.
-</Card>
-<Card title="FAQ" icon="circle-question" href="/resources/faq">
-Find current behavior notes and troubleshooting links.
-</Card>
-</CardGroup>
+[Installation](/installation) explains the deployment options. [Report an issue](https://github.com/clidey/whodb/issues) with a minimal reproduction if an update breaks a workflow.

@@ -1,0 +1,56 @@
+---
+title: "Move to WhoDB Platform"
+description: "Bring your CE connection to WhoDB Platform and build data pipelines, operational apps, and an ontology."
+---
+
+# Move to WhoDB Platform
+
+Use WhoDB Community to explore a source and work out the query or change you need. When you are repeatedly preparing the same data or asking teammates to perform the same manual steps, bring the connection to **WhoDB Platform** and turn that work into a pipeline, business model, or app.
+
+[Open WhoDB Platform](https://app.whodb.com/?utm_source=ce_docs&utm_medium=documentation&utm_campaign=move_to_platform) or [explore the Platform](https://whodb.com/features).
+
+## Turn a query into a data pipeline
+
+Use **Transforms** to build visual data pipelines over connected sources. Move from manually rerunning an investigation to defining reusable transformation steps and inspecting their runs. Keep the query you validated in CE as a reference when building and checking the pipeline.
+
+For example, an order analysis can become a pipeline that joins orders with customers and prepares a dataset for reporting. Start with a small output and compare it with the query you already verified. Check row counts, keys, and a few known records before expanding the pipeline.
+
+## Turn manual work into an app
+
+Use **Apps** to build an interface for an operational workflow. Give teammates a place to review and act on records, using the models and functions in your Platform project.
+
+For example, a repeated task of finding an order and updating its status can become an order-management app. Start with the records the user must review and the action they need to take. Check that action against the underlying source before adding more screens.
+
+## Give your data business meaning
+
+Use **Ontology** to model business entities and their relationships across connected data. Bring concepts such as Customer, Order, and Product into a shared model that apps and functions can use.
+
+CE's Graph helps you understand declared database relationships. Use that as a starting point, then define the business meaning explicitly. For example, decide which source record represents a Customer and how it relates to Orders before building an app around those concepts.
+
+## Bring your connection across
+
+### Import from CE
+
+If your CE instance shows **WhoDB Platform** in the sidebar:
+
+1. Open **WhoDB Platform** and choose **Import connection**.
+2. Select the saved connections to bring across.
+3. Choose whether to **Include passwords and other connection secrets**. This is off by default; you can enter secrets in Platform instead.
+4. Click **Import in Platform**. Platform opens in a new tab; sign in or create an account if prompted.
+5. Choose the destination organization and project. Review each connection, enter any missing credentials, and complete the import.
+
+<Note>
+This imports connection settings as managed sources. Your CE connections stay available. Database rows, local Scratchpad pages, and query history are not transferred by this flow.
+</Note>
+
+### Connect directly in Platform
+
+If the import action is unavailable, [open Platform](https://app.whodb.com/?utm_source=ce_docs&utm_medium=documentation&utm_campaign=move_to_platform&utm_content=connect_directly), choose or create your project, and add the connection under **Sources**. Use the source type, host, database, and credentials you already use in CE.
+
+Platform must be able to reach the source. A `localhost` address, local file path, or private-network address that works from your CE host needs a connection arrangement reachable from Platform.
+
+## Build your first Platform workflow
+
+Verify the connected source, then choose one next step: a Transform for recurring data preparation, an Ontology entity for a shared business model, or an App for work your team repeats. Validate the output against the records you explored in CE before expanding the workflow.
+
+[Continue in WhoDB Platform](https://app.whodb.com/?utm_source=ce_docs&utm_medium=documentation&utm_campaign=move_to_platform&utm_content=next_step).

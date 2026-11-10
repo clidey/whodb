@@ -1,81 +1,63 @@
 ---
-title: "Storage Units"
-description: "Navigate database objects through WhoDB's current Storage Units view"
+title: "Browse tables and source objects"
+description: "Find tables, collections, and other source objects; inspect their structure or open their data."
 ---
 
-# Storage Units
+# Browse tables and source objects
 
-Storage Units are the source objects WhoDB can inspect or open for data. Depending on the source, a storage unit can represent a SQL table, view, collection, keyspace object, or another object exposed by the source plugin.
+Start in the object browser when you need to find where data lives. For SQL sources it is labeled **Tables**. Other sources use their own terms for objects such as collections or keys.
 
-![Storage Unit List](/images/05-storage-unit-list.png)
+An object can be a table, a view, a collection, or another unit exposed by the source. Its available actions depend on what the source supports.
 
-## Open Storage Units
+<div className="ce-screenshot-light">
 
-Use the left sidebar item named **Storage Units**, **Tables**, or the source-specific label shown for your database type. The route is `/storage-unit`.
+![Storage Units and the application sidebar](/images/light/06-storage-unit-list-with-sidebar.png)
 
-The page includes:
+</div>
+<div className="ce-screenshot-dark">
 
-- A search field for filtering visible storage-unit cards.
-- A Scratchpad shortcut when the source supports Scratchpad.
-- Card and list view toggles.
-- Object cards with **Describe** and **Data** actions.
+![Storage Units and the application sidebar](/images/dark/06-storage-unit-list-with-sidebar.png)
 
-![Storage Unit List With Sidebar](/images/06-storage-unit-list-with-sidebar.png)
+</div>
 
-## Card View
+## Find an object
 
-Card view shows each object as an expandable card.
+Choose the database and schema in the sidebar where those selectors are available. Search by the object's name. This search narrows the object list; it does not search the values inside records.
 
-Use **Describe** to expand the card and inspect metadata. For sources that expose columns or fields, WhoDB loads and displays them inside the expanded card.
+If an expected object is missing, check the connection context and the database account's access before assuming it was deleted. An object in a different schema will not appear just because its name matches your search.
 
-![Explore Table](/images/07-explore-users-table.png)
+Switch between card and list views to suit the number of objects. Card view gives you room to inspect metadata. List view is useful for scanning names in a larger catalog.
 
-![Explore Metadata](/images/08-explore-table-metadata.png)
+## Inspect structure or open records
 
-Use **Data** to open the object's data page.
+In card view, **Info** expands an object's metadata and fields. Use it to check names, types, and key information before writing a query. **Data** opens the object's records. In list view, hover over the row to reveal its data action.
 
-## List View
+<div className="ce-screenshot-light">
 
-List view displays objects in a compact table. It includes shared metadata attributes and an action column. Hover a row to reveal the **Data** button.
+![An expanded table card showing metadata and columns](/images/light/07-explore-users-table.png)
 
-If you need per-object attributes and columns, switch to card view and use **Describe** on the object's card.
+</div>
+<div className="ce-screenshot-dark">
 
-## Searching Storage Units
+![An expanded table card showing metadata and columns](/images/dark/07-explore-users-table.png)
 
-The Storage Units search box filters object names on the current page. It is for finding objects, not for filtering rows inside an object.
+</div>
 
-To filter rows, open an object's **Data** page and use WHERE conditions.
+Use the secondary object list beside a data view when you need to move between related objects. Search that list by name and select the next object. The main page header keeps the active context visible while you work.
 
-## Data Page
+## Choose the tool for the question
 
-The **Data** button opens `/storage-unit/explore` for that object. The data page provides:
+| You need to | Open |
+| --- | --- |
+| Check fields, types, and metadata | **Info** |
+| Find, filter, or edit actual records | **Data** |
+| Understand how objects relate | **Graph** |
+| Join, aggregate, or run a custom statement | **Scratchpad** |
 
-- Row grid.
-- Search across currently loaded rows.
-- Page size and pagination.
-- WHERE condition builder.
-- Sorting.
-- Add Row, Edit Row, Delete Row when the source and credentials allow writes.
-- Export and mock data actions when supported.
+For example, inspect an order table's fields in Info, read one order in Data, then use Graph to find its relationship to users. You do not need to start with a custom query for every task.
 
-![Data View](/images/09-data-view-users-table.png)
+## Create an object
 
-## Pick The Right View
+For sources that support creation, use the create action on the Tables page. Define its name and fields using the options from the connected source. Creating an object changes the database; see [Create tables and fields](/features/schema-management) before submitting a definition.
 
-Use:
-
-- **Describe** on a Storage Unit card for structure and metadata.
-- **Data** for rows and grid actions.
-- Sidebar **Graph** for schema visualization.
-- Sidebar **Scratchpad** for SQL.
-
-## Related Pages
-
-<CardGroup cols={2}>
-<Card title="Viewing Data" icon="table" href="/data/viewing-data">
-Use the Storage Unit data grid.
-</Card>
-<Card title="Graph View" icon="diagram-project" href="/visualization/graph-view">
-Visualize selected objects and relationships.
-</Card>
-</CardGroup>
+If you are looking for records rather than object names, continue with [Filter and Search](/data/filtering-searching).

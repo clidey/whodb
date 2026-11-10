@@ -1,390 +1,59 @@
 ---
-title: "Why Choose WhoDB?"
-description: "Discover why WhoDB is the best lightweight database management tool for developers, data analysts, and teams. Fast, intuitive, and powerful."
+title: "Why WhoDB?"
+description: "See how browsing, schema graphs, query notebooks, AI, and terminal tooling fit together."
 ---
 
-# Why Choose WhoDB?
-
-**WhoDB is the modern database management tool that developers actually want to use.** Unlike bloated legacy tools, WhoDB delivers a lightning-fast, intuitive experience that makes working with databases enjoyable instead of frustrating.
-
-## The Problem with Traditional Database Tools
-
-Traditional database management tools like phpMyAdmin, pgAdmin, and others were built for a different era. They're:
-
-- **Slow and Resource-Intensive**: Heavy desktop applications that consume gigabytes of RAM
-- **Cluttered Interfaces**: Dozens of menus, toolbars, and options that hide what you actually need
-- **Difficult to Learn**: Steep learning curves that waste hours of productive time
-- **Poor Visualization**: Limited or non-existent schema visualization capabilities
-- **Inconsistent Experience**: Different tools for different databases, each with unique quirks
-
-<Warning>
-Context switching between tools and wrestling with clunky interfaces costs real development time every week.
-</Warning>
-
-## The WhoDB Difference
-
-WhoDB was built from the ground up to solve these problems with a focus on **speed, simplicity, and developer experience**.
-
-### 1. Lightning Fast Performance
-
-<CardGroup cols={2}>
-<Card title="Instant Startup" icon="bolt">
-Lightweight Go backend and browser UI, without a heavy desktop client
-</Card>
-<Card title="Focused Query Results" icon="gauge-high">
-Query views stay focused on the current result set, page size, and filters
-</Card>
-<Card title="Minimal Resource Usage" icon="microchip">
-Small server process compared with full desktop database IDEs
-</Card>
-<Card title="Browser-Based" icon="window-maximize">
-No installation required - access from any device with a browser
-</Card>
-</CardGroup>
-
-### 2. Beautifully Simple Interface
-
-WhoDB's clean, modern interface eliminates clutter and puts your data front and center.
-
-![WhoDB Interface](/images/09-data-view-users-table.png)
-
-<Tip>
-New users become productive in minutes, not hours. No training required.
-</Tip>
-
-<AccordionGroup>
-<Accordion title="Intuitive Navigation">
-Everything you need is exactly where you expect it. Sidebar navigation, context menus, and keyboard shortcuts make navigating databases effortless.
-
-- **Clear browse flow**: Connect, open Storage Units, then use Describe or Data
-- **Quick search**: Find source objects and visible row values quickly
-- **Simple navigation**: Sidebar routes, Storage Unit cards, and Scratchpad pages keep work organized
-</Accordion>
-<Accordion title="Spreadsheet-Like Data Grid">
-Work with database data in a familiar grid. Click column headers to sort, right-click rows for actions, search loaded rows, and use WHERE conditions for server-side filtering.
-
-- **Familiar interface**: If you can use Excel, you can use WhoDB
-- **Edit sheets**: Open row values in a side sheet before saving changes
-- **Selected-row actions**: Select rows for supported export and delete workflows
-</Accordion>
-<Accordion title="Powerful Query Editor">
-Write SQL with syntax highlighting, query history, and page/cell organization in the web Scratchpad. Use the CLI TUI when you want terminal autocomplete, formatting, bookmarks, and external editor support.
-
-- **Syntax highlighting**: Color-coded SQL for easy reading
-- **Query history**: Reuse previous cell queries
-- **Multi-cell support**: Organize queries into logical sections
-- **CLI editor features**: Autocomplete and SQL formatting in the terminal TUI
-</Accordion>
-</AccordionGroup>
-
-### 3. Visual Schema Explorer
-
-![Graph Visualization](/images/24-graph-view-schema-topology.png)
-
-Understanding database relationships has never been easier. WhoDB's interactive graph view shows your entire schema at a glance.
-
-<Steps>
-<Step title="Instant Understanding">
-See all tables and relationships in a visual diagram - no need to read through pages of schema definitions
-</Step>
-<Step title="Interactive Exploration">
-Click any table to see its columns, indexes, and foreign keys. Follow relationships to explore data flow
-</Step>
-<Step title="Pattern Recognition">
-Identify hub tables, isolated tables, and complex relationship patterns instantly
-</Step>
-<Step title="Documentation Aid">
-Export schema diagrams for team documentation and onboarding
-</Step>
-</Steps>
-
-### 4. Multi-Database Support
-
-**One tool for all your databases.** Why juggle multiple database tools when WhoDB supports them all?
-
-<CardGroup cols={3}>
-<Card title="PostgreSQL" icon="database">
-Full support for PostgreSQL
-</Card>
-<Card title="MySQL / MariaDB" icon="database">
-Complete MySQL and MariaDB compatibility
-</Card>
-<Card title="SQLite" icon="database">
-Local and embedded databases
-</Card>
-<Card title="MongoDB" icon="database">
-NoSQL document databases
-</Card>
-<Card title="Redis" icon="database">
-Key-value data stores
-</Card>
-<Card title="ClickHouse, DuckDB & More" icon="plus">
-Additional support for ClickHouse, DuckDB, OpenSearch, Memcached, and compatible managed variants
-</Card>
-</CardGroup>
-
-### 5. Developer-Friendly Features
-
-WhoDB includes features that developers actually use every day:
-
-<AccordionGroup>
-<Accordion title="Mock Data Generation">
-Generate realistic test data in seconds. Perfect for development and testing environments.
-
-- Configure row counts (1 to 10,000+)
-- Smart data type handling
-- Append or overwrite modes
-- Realistic fake data for supported column types
-</Accordion>
-<Accordion title="Flexible Export Options">
-Export data in the format you need:
-
-- **CSV**: For Excel and spreadsheet tools
-- **Excel (.xlsx)**: Native Excel format with formatting
-- **JSON Lines**: For records from sources like MongoDB when supported
-
-Configure CSV delimiters and apply filters before export. Use database-native tools for full backup and migration exports.
-</Accordion>
-<Accordion title="Advanced Filtering">
-Build complex WHERE conditions with a visual interface:
-
-- Multiple conditions with AND/OR logic
-- All standard operators (`=`, `!=`, `>`, `<`, `>=`, `<=`)
-- Date range filtering
-- Text pattern matching
-- NULL value handling
-</Accordion>
-<Accordion title="Query History & Reuse">
-Scratchpad keeps history for each web cell so you can reload SQL you already ran. The CLI also has searchable history and bookmarks for terminal workflows.
-
-- **Cell history**: Reload or rerun SQL from the current cell
-- **Query reuse**: Copy previous SQL into the editor and adjust it
-- **Execution details**: Review result status and timing with the query output
-- **CLI bookmarks**: Save named queries when working in the terminal
-</Accordion>
-</AccordionGroup>
-
-## Who Uses WhoDB?
-
-### Developers
-
-<Icon icon="code" /> **"Finally, a database tool that doesn't get in my way."**
-
-Developers love WhoDB's speed and keyboard-driven workflow. Connect to any database, run queries, inspect data, and move on - all in seconds.
-
-**Perfect for:**
-- Local development workflows
-- Debugging production issues
-- API development and testing
-- Schema exploration for new projects
-
-### Data Analysts
-
-<Icon icon="chart-line" /> **"I can explore data and export results faster than ever before."**
-
-Analysts appreciate WhoDB's filtering, sorting, and export capabilities. Build complex queries, filter results, and export to Excel - all without leaving the browser.
-
-**Perfect for:**
-- Ad-hoc data analysis
-- Report generation
-- Data quality checks
-- Business intelligence queries
-
-### Database Administrators
-
-<Icon icon="server" /> **"Managing multiple databases has never been easier."**
-
-DBAs use WhoDB to monitor schemas, manage data, and perform administrative tasks across multiple database servers from a single interface.
-
-**Perfect for:**
-- Schema management
-- Data maintenance
-- Performance monitoring
-- Multi-database administration
-
-### QA Engineers
-
-<Icon icon="flask" /> **"Mock data generation saves me hours every sprint."**
-
-QA teams use WhoDB to generate test data, verify database states, and debug test failures quickly.
-
-**Perfect for:**
-- Test data generation
-- Database state verification
-- Test debugging
-- Test automation support
-
-## Comparison with Alternatives
-
-<CardGroup cols={2}>
-<Card title="vs phpMyAdmin" href="/resources/comparisons/vs-phpmyadmin">
-See how WhoDB compares to phpMyAdmin
-</Card>
-<Card title="vs pgAdmin" href="/resources/comparisons/vs-pgadmin">
-See how WhoDB compares to pgAdmin
-</Card>
-<Card title="vs DBeaver" href="/resources/comparisons/vs-dbeaver">
-See how WhoDB compares to DBeaver
-</Card>
-<Card title="vs TablePlus" href="/resources/comparisons/vs-tableplus">
-See how WhoDB compares to TablePlus
-</Card>
-</CardGroup>
-
-## Real-World Benefits
-
-<Steps>
-<Step title="Save Time">
-**Spend less time fighting tools, more time building features.**
-
-WhoDB's speed and intuitive interface cut down the time spent wrestling with database tools compared to traditional alternatives.
-</Step>
-<Step title="Reduce Errors">
-**Visual schema exploration prevents relationship mistakes.**
-
-Understanding database relationships visually reduces data integrity errors by catching relationship issues before they become problems.
-</Step>
-<Step title="Improve Productivity">
-**Get more done with fewer context switches.**
-
-One unified tool for all databases means less context switching and faster workflow.
-</Step>
-<Step title="Lower Onboarding Time">
-**New team members become productive immediately.**
-
-WhoDB's intuitive interface requires no training. New developers can start exploring databases on day one.
-</Step>
-</Steps>
-
-## Open Source & Community
-
-WhoDB is **fully open source** under a permissive license, giving you:
-
-<CardGroup cols={2}>
-<Card title="Transparency" icon="eye">
-Audit the code and ensure it meets your security requirements
-</Card>
-<Card title="Extensibility" icon="puzzle-piece">
-Customize and extend WhoDB for your specific needs
-</Card>
-<Card title="No Vendor Lock-In" icon="unlock">
-Self-host without dependencies on external services
-</Card>
-<Card title="Community Support" icon="users">
-Use GitHub issues and discussions to follow the project and report problems
-</Card>
-</CardGroup>
-
-## Team Usage
-
-Teams usually run WhoDB behind their normal network controls and connect with database accounts that match each environment's access policy. Use read-only database credentials where possible, native database audit logging for compliance trails, and the CLI for repeatable checks.
-
-<Card title="Team Setup" icon="users" href="/guides/team-setup">
-Set up a shared CE deployment using Docker, database credentials, and operational guardrails.
-</Card>
-
-## Getting Started
-
-<Check>
-Ready to experience the fastest, most intuitive database tool you've ever used?
-</Check>
-
-<CardGroup cols={3}>
-<Card title="Try WhoDB" icon="rocket" href="/installation">
-Install the current CE build
-</Card>
-<Card title="Watch Demo" icon="play" href="https://whodb.com/demo">
-See WhoDB in action
-</Card>
-<Card title="Read Docs" icon="book" href="/quick-start">
-Complete documentation
-</Card>
-</CardGroup>
-
-## Frequently Asked Questions
-
-<AccordionGroup>
-<Accordion title="Is WhoDB really free?">
-Yes! WhoDB Community Edition is completely free and open source. You can use it for personal projects, commercial projects, and everything in between. No hidden costs, no usage limits.
-
-If you are evaluating a separate commercial package, use that product channel for exact packaging and support terms. This documentation focuses on the CE code in this repository.
-</Accordion>
-<Accordion title="How does WhoDB compare to [other tool]?">
-We've created detailed comparison guides:
-
-- [WhoDB vs phpMyAdmin](/resources/comparisons/vs-phpmyadmin)
-- [WhoDB vs pgAdmin](/resources/comparisons/vs-pgadmin)
-- [WhoDB vs DBeaver](/resources/comparisons/vs-dbeaver)
-- [WhoDB vs TablePlus](/resources/comparisons/vs-tableplus)
-
-The short answer: WhoDB is faster, simpler, and more modern while supporting multiple database types.
-</Accordion>
-<Accordion title="Can I use WhoDB in production?">
-Yes. For production access, use read-only database accounts where possible, enable SSL/TLS, and put the app behind your normal network and authentication controls.
-</Accordion>
-<Accordion title="Does WhoDB store my database credentials?">
-Credentials are kept server-side: after login, WhoDB stores them encrypted (AES-256-GCM) in a local SQLite session database, and your browser only holds an opaque, `HttpOnly` session cookie. Secrets are stripped from anything the frontend persists — only non-secret display details (connection name, host, database) remain in the browser so the profile switcher survives a reload. Environment-defined profiles are another option when you want connection details supplied by the server environment instead of typed manually.
-</Accordion>
-<Accordion title="Can I self-host WhoDB?">
-Yes! WhoDB is designed for self-hosting. You can run it on your own servers, in Docker containers, on Kubernetes, or even on your local machine. You have complete control over where your data goes.
-
-Check our [Installation Guide](/installation) for deployment options.
-</Accordion>
-<Accordion title="What databases does WhoDB support?">
-WhoDB Community Edition supports:
-- PostgreSQL
-- MySQL / MariaDB
-- SQLite 3
-- MongoDB
-- Redis
-
-The current CE catalog also covers engines and compatible variants such as CockroachDB, TiDB, DuckDB, OpenSearch, Memcached, Valkey, Dragonfly, YugabyteDB, QuestDB, and FerretDB. See the [full list](/resources/supported-databases).
-</Accordion>
-<Accordion title="How do I migrate from my current tool?">
-Migration is simple because WhoDB works with your existing databases - no data migration required! Just:
-
-1. Install WhoDB
-2. Connect to your existing databases
-3. Start using WhoDB alongside your current tool
-4. Switch completely when you're comfortable
-
-We have migration guides for users coming from [phpMyAdmin](/guides/migrating-from-phpmyadmin) and [pgAdmin](/guides/migrating-from-pgadmin).
-</Accordion>
-</AccordionGroup>
-
-## What Developers Say
-
-<Info>
-"WhoDB has become my go-to tool for database work. It's fast, it's beautiful, and it just works. I recommend it to every developer on my team."
-
-**— Sarah Chen, Senior Backend Developer**
-</Info>
-
-<Info>
-"The graph visualization alone makes WhoDB worth it. Understanding complex schemas used to take hours. Now it takes minutes."
-
-**— Michael Rodriguez, Database Architect**
-</Info>
-
-<Info>
-"Finally, a database tool that doesn't make me want to pull my hair out. WhoDB is what database management should have been all along."
-
-**— Alex Thompson, Full-Stack Developer**
-</Info>
-
-## Ready to Try WhoDB?
-
-Start with the current CE build and validate it against your databases and workflows.
-
-<CardGroup cols={2}>
-<Card title="Get Started Free" icon="download" href="/installation">
-Install the current CE build
-</Card>
-<Card title="View on GitHub" icon="github" href="https://github.com/clidey/whodb">
-Star us on GitHub ⭐
-</Card>
-</CardGroup>
-
-<Tip>
-**No credit card required. No account needed. Start using WhoDB immediately.**
-</Tip>
+# Why WhoDB?
+
+A database investigation often moves between a schema browser, row editor, query window, and diagram. WhoDB puts those steps in one workspace so you can follow a question from an object to a verified answer.
+
+## Move from an object to its records
+
+Find a table in **Tables**, expand **Info** to check its fields, and open **Data** to inspect a sample. Use **Filter** to ask the source for matching rows. If the question involves another table, **Graph** helps you inspect declared relationships before writing the join.
+
+<div className="ce-screenshot-light">
+
+![Table metadata expanded inside a storage unit](/images/light/08-explore-table-metadata.png)
+
+</div>
+<div className="ce-screenshot-dark">
+
+![Table metadata expanded inside a storage unit](/images/dark/08-explore-table-metadata.png)
+
+</div>
+
+The same navigation works across supported source families, with actions adapted to the source. You can inspect PostgreSQL and MySQL tables, SQLite and DuckDB files, MongoDB documents, Redis keys, and search indexes. [Check the source catalog](/resources/supported-databases) for the connection you need.
+
+## Keep intermediate queries beside the answer
+
+Use a **Scratchpad** page for one investigation. A sample, join, and aggregate can stay in separate cells with their results and per-cell history. This makes it easier to revisit the step that introduced an unexpected count.
+
+<div className="ce-screenshot-light">
+
+![Multiple Scratchpad cells with query results](/images/light/48-scratchpad-multiple-cells-results.png)
+
+</div>
+<div className="ce-screenshot-dark">
+
+![Multiple Scratchpad cells with query results](/images/dark/48-scratchpad-multiple-cells-results.png)
+
+</div>
+
+Save durable SQL externally. The browser workspace is useful while working through a question, but it does not automatically share queries with your team.
+
+## Ask for help without losing the query
+
+Chat can draft SQL from a question and the connected source's context. Inspect that SQL and its result before relying on the answer. Move the query into Scratchpad when you want direct control of it.
+
+You choose the provider, including a reachable local Ollama or LM Studio endpoint. [Set up Chat](/ai/setup-providers) if you want to use it; the rest of the workspace does not require AI.
+
+## Choose where to work
+
+| Surface | When it fits |
+| --- | --- |
+| Browser | You want a self-hosted workspace reachable from a browser |
+| Desktop | You want the core workflow with native file dialogs and application menus |
+| CLI | You need terminal inspection, repeatable commands, imports, or diagnostics |
+| MCP | You want an assistant to use database tools with explicit query permissions |
+
+[Try the quick start](/quick-start) with a development database to see whether the workflow fits your daily work.

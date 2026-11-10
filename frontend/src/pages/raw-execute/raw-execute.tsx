@@ -663,15 +663,13 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                 })}>
                     <div className="flex gap-sm pointer-events-auto">
                         <Tip className="w-fit">
-                            <Button onClick={handleAdd} data-testid="add-cell-button" variant="secondary"
-                                    className="border border-input" aria-label={t('addCell')}>
+                            <Button onClick={handleAdd} data-testid="add-cell-button" variant="secondary" aria-label={t('addCell')}>
                                 <PlusCircleIcon className="w-4 h-4 text-primary" />
                             </Button>
                             <p>{t('addCell')}</p>
                         </Tip>
                         <Tip className="w-fit">
-                            <Button onClick={() =>{  setCode(""); }} data-testid="clear-cell-button" variant="secondary"
-                                    className="border border-input" aria-label={t('clearEditor')}>
+                            <Button onClick={() =>{  setCode(""); }} data-testid="clear-cell-button" variant="secondary" aria-label={t('clearEditor')}>
                                 <ArrowPathIcon className="w-4 h-4" />
                             </Button>
                             <p>{t('clearEditor')}</p>
@@ -679,8 +677,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                         {
                             onDelete != null &&
                             <Tip className="w-fit">
-                                <Button variant="secondary" onClick={handleDelete} data-testid="delete-cell-button"
-                                        className="border border-input" aria-label={t('deleteCell')}>
+                                <Button variant="secondary" onClick={handleDelete} data-testid="delete-cell-button" aria-label={t('deleteCell')}>
                                     <XCircleIcon className="w-4 h-4 text-destructive"/>
                                 </Button>
                                 <p>{t('deleteCell')}</p>
@@ -692,7 +689,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                             <Button
                                 onClick={() =>{  setHistoryOpen(true); }}
                                 data-testid="history-button"
-                                className={cn("pointer-events-auto border border-input", {
+                                className={cn("pointer-events-auto", {
                                     "hidden": history.length === 0,
                                 })}
                                 variant="secondary"
@@ -730,27 +727,24 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
             {!loading && output}
             <Sheet open={historyOpen} onOpenChange={setHistoryOpen}>
                 {/* Focus the heading on open so the first Escape closes the sheet instead of a focused button's tooltip. */}
-                <SheetContent className="min-w-[50vw] max-w-[50vw] p-0" onOpenAutoFocus={(event) => { event.preventDefault(); historyHeadingRef.current?.focus(); }}>
+                <SheetContent className="min-w-[50vw] max-w-[50vw]" onOpenAutoFocus={(event) => { event.preventDefault(); historyHeadingRef.current?.focus(); }}>
                     <div className="flex flex-col h-full">
-                        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+                        <div className="flex items-center justify-between pb-3 border-b border-border">
                             <div className="flex items-center gap-2" ref={historyHeadingRef} tabIndex={-1}>
                                 <ClockIcon className="w-5 h-5" />
                                 <span className="font-semibold text-lg">{t('queryHistory')}</span>
                             </div>
                         </div>
-                        <div className="flex-1 px-2 py-4 overflow-y-auto">
+                        <div className="flex-1 py-4 overflow-y-auto">
                             {history.length === 0 ? (
                                 <EmptyState title={t('noHistoryTitle')} description={t('noHistoryDescription')} icon={<ClockIcon className="w-10 h-10" />} />
                             ) : (
-                                <div className="flex flex-col gap-lg p-4">
+                                <div className="flex flex-col gap-lg">
                                     {history.map(({ id, item, status, date }) => (
                                         <Card className="w-full p-4 relative" key={id}>
                                             <Badge
-                                                variant={status ? "default" : "destructive"}
-                                                className={cn("absolute top-0 -translate-y-1/2 right-2", {
-                                                    "!bg-green-600 !text-white": status,
-                                                    "!bg-red-600 !text-white": !status,
-                                                })}
+                                                variant={status ? "secondary" : "destructive"}
+                                                className="absolute top-0 -translate-y-1/2 right-2"
                                             >
                                                 {status ? t('success') : t('error')}
                                             </Badge>
@@ -774,7 +768,6 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                                                             <Button
                                                                 size="icon"
                                                                 variant="secondary"
-                                                                className="border border-input"
                                                                 onClick={() => {
                                                                     setHistoryOpen(false);
                                                                     setCode(item);
@@ -790,7 +783,6 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                                                             <Button
                                                                 size="icon"
                                                                 variant="secondary"
-                                                                className="border border-input"
                                                                 onClick={() =>{  handleRawExecute(item); }}
                                                                 aria-label={t('run')}
                                                                 data-testid="run-history-button"

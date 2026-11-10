@@ -1,90 +1,67 @@
 ---
-title: "Data Export Analysis"
-description: "Filter, review, and export data with current WhoDB export options"
+title: "Export an answer for analysis"
+description: "Prepare a bounded result, export it, and record how it was produced."
 ---
 
-# Data Export Analysis
+# Export an answer for analysis
 
-This tutorial shows the current export workflow.
+Use this workflow when someone needs a spreadsheet containing a specific answer, such as a list of customers with their order counts. First define the result in a query, then export and check the file.
 
-## 1. Open The Data Grid
+## Prepare exactly the records you need
 
-Open **Storage Units**, then click **Data** for the object you want to export.
+Open **Scratchpad** and run a query that selects the required columns. Add the filters, joins, and ordering needed for the report. Avoid exporting fields such as passwords or private notes when the recipient only needs names and totals.
 
-![Data View Users Table](/images/09-data-view-users-table.png)
+For the demo PostgreSQL database, this produces a small user list:
 
-## 2. Narrow The Dataset
-
-For server-side filtering:
-
-1. Click **Add** beside **Where condition**.
-2. Choose field, operator, and value.
-3. Add the condition.
-4. Click **Query**.
-
-![Where Conditions Popover](/images/16-data-view-where-conditions-popover.png)
-
-![Multiple Conditions](/images/39-data-view-multiple-conditions.png)
-
-For quick visible-row lookup, use Search. For exports, apply WHERE conditions first so the grid contains the dataset you want.
-
-## 3. Export All Filtered Rows
-
-After the grid shows the data you want, click **Export All**.
-
-![Export Dialog](/images/20-data-view-export-dialog.png)
-
-Choose a current CE format:
-
-- CSV.
-- Excel `.xlsx`.
-- JSON Lines for records from sources like MongoDB when supported.
-
-![Export Format CSV Option](/images/65-export-format-csv-option.png)
-
-![Export Format Excel Option](/images/66-export-format-excel-option.png)
-
-CSV delimiter options are comma, semicolon, and pipe.
-
-![Export Delimiter Comma](/images/67-export-delimiter-comma.png)
-
-## 4. Export Selected Rows
-
-Select rows with checkboxes or table shortcuts, then use the selected-row export action.
-
-![Table Row Selection Single](/images/44-table-row-selection-single.png)
-
-![Export Selected Rows Dialog](/images/46-export-selected-rows-dialog.png)
-
-The export starts from the rows you selected in the grid.
-
-## Backups And Migration Dumps
-
-Use database-native tools when you need a full backup, SQL dump, or migration archive:
-
-```bash
-pg_dump --format custom --file backup.dump "$DATABASE_URL"
+```sql
+SELECT id, username, email
+FROM test_schema.users
+ORDER BY id
+LIMIT 10;
 ```
 
-## Verify Downloads
+Use your own schema and fields. Review the result's column names, count, and a few known values before exporting.
 
-Use local tools after download:
+<div className="ce-screenshot-light">
 
-```bash
-ls -lh downloads/
-head -n 5 downloads/export.csv
-wc -l downloads/export.csv
-```
+![A query result ready for inspection](/images/light/29-scratchpad-query-results.png)
 
-Adjust the path and filename to match your browser download location.
+</div>
+<div className="ce-screenshot-dark">
 
-## Related Pages
+![A query result ready for inspection](/images/dark/29-scratchpad-query-results.png)
 
-<CardGroup cols={2}>
-<Card title="Export Options" icon="file-export" href="/advanced/export-options">
-See supported formats and entry points.
-</Card>
-<Card title="WHERE Conditions" icon="filter" href="/advanced/where-conditions">
-Filter before export.
-</Card>
-</CardGroup>
+</div>
+
+<Note>
+An object's whole-table export does not inherit the Data view's filters. Use a query result for a filtered report, or select specific rows in the object's Data view and use their selection export action. See [Export options](/advanced/export-options) for the scope of each action.
+</Note>
+
+## Choose the file format
+
+Use **Export All** on the query result to export that result. Choose CSV for a text file that other data tools can read, or Excel for an XLSX workbook. For CSV, select the delimiter expected by the receiving tool.
+
+<div className="ce-screenshot-light">
+
+![Export settings](/images/light/20-data-view-export-dialog.png)
+
+</div>
+<div className="ce-screenshot-dark">
+
+![Export settings](/images/dark/20-data-view-export-dialog.png)
+
+</div>
+
+If the file needs fewer records, narrow the query with the appropriate condition or limit and run it again before exporting. For a few individual stored records, use row selection in the object's Data view instead.
+
+## Validate and deliver the file
+
+Open the downloaded file. Confirm its headers, row count, and several known records. Check values that spreadsheet software may reinterpret, such as identifiers with leading zeroes and date fields.
+
+Keep the query, source environment, and extraction date beside the file so another person can reproduce it. Share the file through the channel appropriate for that data's sensitivity. The export is a copy of the data and will not update when the source changes.
+
+Use [native backup tools](/resources/integrations/backup-tools) when you need a restorable database backup.
+
+<Tip>
+If preparing this file has become recurring work, use **Transforms** in WhoDB Platform to build a reusable data pipeline. [Move beyond a manual export](/guides/move-to-platform#turn-a-query-into-a-data-pipeline).
+</Tip>

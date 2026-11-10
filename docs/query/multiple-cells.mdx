@@ -1,76 +1,60 @@
 ---
-title: "Scratchpad Pages And Cells"
-description: "Organize Scratchpad work with the current page and cell controls"
+title: "Organize pages and cells"
+description: "Keep investigations in named Scratchpad pages and separate related questions into cells."
 ---
 
-# Scratchpad Pages And Cells
+# Organize pages and cells
 
-Scratchpad organizes SQL into pages and cells.
+Use separate Scratchpad cells to keep the steps of an investigation visible. A sample, a count, and a join answer different questions; placing them in their own cells makes it easier to compare each statement with its output.
 
-- **Pages** are tabs across the top of Scratchpad.
-- **Cells** are individual SQL editors stacked inside a page.
+A **page** is a Scratchpad tab. Each page contains one or more query **cells**. Use pages to separate investigations and cells to organize the questions within one investigation.
 
-![Scratchpad Multiple Cells](/images/31-scratchpad-multiple-pages.png)
+## Manage pages
 
-## Pages
+Click the plus tab to create a page. Double-click its name to rename it, for example “Order count check” instead of leaving several indistinguishable numbered tabs.
 
-Use pages to separate workflows, investigations, or database tasks.
+<div className="ce-screenshot-light">
 
-<Steps>
-<Step title="Create A Page">
-Click the plus tab in the Scratchpad page bar.
-</Step>
-<Step title="Switch Pages">
-Click a page tab.
-</Step>
-<Step title="Rename A Page">
-Double-click the page name and type the new name.
-</Step>
-<Step title="Delete A Page">
-Click the close button on the page tab and confirm deletion.
-</Step>
-</Steps>
+![Several Scratchpad pages](/images/light/31-scratchpad-multiple-pages.png)
 
-## Cells
+</div>
+<div className="ce-screenshot-dark">
 
-Use cells to keep related queries visible in one page.
+![Several Scratchpad pages](/images/dark/31-scratchpad-multiple-pages.png)
 
-<Steps>
-<Step title="Add A Cell">
-Hover over an existing cell and click the add-cell control.
-</Step>
-<Step title="Run A Cell">
-Use the blue run button or press `Cmd/Ctrl + Enter` while focused in the cell.
-</Step>
-<Step title="Clear A Cell">
-Use the clear-cell control or press `Cmd/Ctrl + U`.
-</Step>
-<Step title="Delete A Cell">
-Use the delete-cell control. A page must keep at least one cell.
-</Step>
-</Steps>
+</div>
 
-![Multiple Cells Results](/images/48-scratchpad-multiple-cells-results.png)
+Use a page's close action to delete it and review the confirmation. If the queries matter beyond the current investigation, copy them to a file before deleting the page.
 
-## Cell Options Menu
+## Manage cells
 
-The cell options menu currently contains:
+Hover over a cell to reveal its controls. You can add a cell below it, run it, clear it, or delete it. A page keeps at least one cell. The cell menu also provides **Clear**, **Copy Code**, and **Query History**.
 
-- **Clear**
-- **Copy Code**
-- **Query History**
+Running a cell updates that cell's result. It does not mean the other cells have been rerun against the same version of the data. When comparing results, remember which queries you executed after a data change.
 
-![Cell Options Menu](/images/32-scratchpad-cell-options-menu.png)
+## An investigation layout
 
-Use the visible page tabs and cell controls for Scratchpad organization.
+For an order-count problem, try this sequence:
 
-## Related Pages
+1. Read a few orders and inspect their user identifiers.
+2. Count orders by user to find an unexpected total.
+3. Join the affected user to its orders to inspect the individual records.
 
-<CardGroup cols={2}>
-<Card title="Writing Queries" icon="code" href="/query/writing-queries">
-Run SQL from a Scratchpad cell.
-</Card>
-<Card title="Query History" icon="clock" href="/query/query-history">
-Reuse SQL previously executed in a cell.
-</Card>
-</CardGroup>
+<div className="ce-screenshot-light">
+
+![Multiple cells and their independent results](/images/light/48-scratchpad-multiple-cells-results.png)
+
+</div>
+<div className="ce-screenshot-dark">
+
+![Multiple cells and their independent results](/images/dark/48-scratchpad-multiple-cells-results.png)
+
+</div>
+
+Keep a working query in one cell while testing a revision in another. This gives you a visible baseline instead of repeatedly overwriting the only version that worked.
+
+Cells do not promise a shared database transaction. A statement in one cell can change what a later cell reads, but you should not spread a `BEGIN` and `COMMIT` sequence across cells and assume they use one database session.
+
+## Keep a durable record
+
+Scratchpad pages and per-cell history live in browser storage. Save the final query, the source environment, and the interpretation of its result in your usual repository or investigation note. See [Document an investigation](/best-practices/documentation).

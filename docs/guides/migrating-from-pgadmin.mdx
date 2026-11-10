@@ -1,84 +1,47 @@
 ---
-title: "Migrating From pgAdmin"
-description: "Map common pgAdmin workflows to the current WhoDB UI"
+title: "Move a PostgreSQL workflow to WhoDB"
+description: "Recreate your PostgreSQL browsing and query workflow without moving the database."
 ---
 
-# Migrating From pgAdmin
+# Move a PostgreSQL workflow to WhoDB
 
-WhoDB focuses on fast data inspection, Storage Unit browsing, Scratchpad SQL, and graph visualization. Keep using PostgreSQL-native tools for server administration and backup tasks.
+You can try WhoDB against the PostgreSQL database you already use in pgAdmin. Changing clients does not move or copy the database. Start with the browsing and query tasks you use most, then keep any specialist administration tools you still need.
 
-## Connect
+## Recreate the connection
 
-Open WhoDB, choose PostgreSQL, enter host, port, username, password, and database, then click **Connect**.
+Collect the host, port, maintenance or application database, username, and TLS settings from the existing connection. You may need to obtain the password separately rather than copying a saved credential.
 
-![Login Form](/images/03-login-form-filled.png)
+Open WhoDB, select **Postgres**, and enter the connection details. If WhoDB runs on another machine or in a container, verify that the same host is reachable from there. A local socket or `localhost` connection in one client may need a different endpoint in the other.
 
-## Browse Objects
+<div className="ce-screenshot-light">
 
-In WhoDB, use **Storage Units** instead of pgAdmin's object tree.
+![Connection settings in WhoDB](/images/light/03-login-form-filled.png)
 
-![Storage Unit List With Sidebar](/images/06-storage-unit-list-with-sidebar.png)
+</div>
+<div className="ce-screenshot-dark">
 
-Use **Describe** for metadata and columns. Use **Data** for rows.
+![Connection settings in WhoDB](/images/dark/03-login-form-filled.png)
 
-![Explore Table Metadata](/images/08-explore-table-metadata.png)
+</div>
 
-This is the main metadata workflow.
+Select the intended database and schema. Compare a known table's columns and a few records before continuing.
 
-## View And Filter Data
+## Bring over a query
 
-Click **Data** on an object, then use Search for visible rows or WHERE conditions for server-side filtering.
+Open **Scratchpad** and paste a PostgreSQL query you already understand. Run a bounded read first. Qualified names such as `public.orders` make the intended schema explicit when several schemas contain similar objects.
 
-![Where Conditions Popover](/images/16-data-view-where-conditions-popover.png)
+Keep related queries in separate cells. Each cell has its own result and history. Copy scripts you need to retain into your repository as well; Scratchpad state is local to the browser.
 
-## Run SQL
+## Rebuild the daily workflow
 
-Open **Scratchpad** and run SQL with the blue run button or `Cmd/Ctrl + Enter`.
+| Task | WhoDB location |
+| --- | --- |
+| Find a table | **Tables**, then search by name |
+| Inspect columns and keys | **Info** on the object |
+| Read or edit rows | **Data**, subject to source support and account permissions |
+| Explore declared foreign keys | **Graph** |
+| Export a report | Run the report in Scratchpad and export its result |
 
-![Scratchpad Main View](/images/27-scratchpad-main-view.png)
+Check exports by their scope: a whole-object export does not inherit a grid filter. Use a query result for a filtered report.
 
-Scratchpad history opens from the cell history button or cell options menu.
-
-## Graph Relationships
-
-Open **Graph** from the sidebar to visualize selected objects and relationships.
-
-![Graph View Schema Topology](/images/24-graph-view-schema-topology.png)
-
-Nodes render metadata and loaded columns directly. Clicking a node can load columns. Use the node **Data** button to open rows.
-
-## Export And Backup
-
-WhoDB export supports CSV, Excel `.xlsx`, and JSON Lines for records from sources like MongoDB when supported.
-
-For PostgreSQL backups, continue using PostgreSQL-native tools:
-
-```bash
-pg_dump --format custom --file backup.dump "$DATABASE_URL"
-```
-
-```bash
-pg_restore --dbname "$RESTORE_DATABASE_URL" backup.dump
-```
-
-## Shortcut Mapping
-
-| Action | Current WhoDB Shortcut |
-|--------|------------------------|
-| Run Scratchpad query | `Cmd/Ctrl + Enter` |
-| Clear Scratchpad editor | `Cmd/Ctrl + U` |
-| Toggle sidebar | `Cmd/Ctrl + B` |
-| Command palette | `Cmd/Ctrl + K` |
-| Table refresh | `Cmd/Ctrl + R` |
-| Table export | `Cmd/Ctrl + Shift + E` |
-
-## Related Pages
-
-<CardGroup cols={2}>
-<Card title="Storage Units" icon="database" href="/features/storage-units">
-Browse and describe objects.
-</Card>
-<Card title="Backup Tools" icon="box-archive" href="/resources/integrations/backup-tools">
-Use native PostgreSQL backup workflows.
-</Card>
-</CardGroup>
+Use your existing PostgreSQL tools for server administration and complete backup or restore workflows. See [PostgreSQL usage](/best-practices/postgresql) and [native backups](/resources/integrations/backup-tools).

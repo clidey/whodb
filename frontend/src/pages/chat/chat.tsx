@@ -21,6 +21,7 @@ import {
     AlertTitle,
     Button,
     Card,
+    CardContent,
     Checkbox,
     cn,
     Dialog,
@@ -1160,7 +1161,7 @@ export const ChatPage: FC = () => {
     const assistantAvatar = <span className="ce-chat-avatar">{extensions.MetaIcon ?? <img src={logoImage} alt="" />}</span>;
 
     return (
-        <InternalPage routes={[InternalRoutes.Chat]} className="h-full min-w-0 !overflow-hidden" sidebar={<ChatHistorySidebar />} subSidebarWidth="18rem" fullHeight>
+        <InternalPage routes={[InternalRoutes.Chat]} className="h-full min-w-0 !overflow-hidden" sidebar={onSelect => <ChatHistorySidebar onSelect={onSelect} />} fullHeight>
             <div className="ce-chat-page flex h-full min-h-0 w-full min-w-0 flex-col">
                 <div className="ce-chat-toolbar flex min-h-11 w-full items-center border-b border-border px-3 pb-2">
                     <AIProvider
@@ -1199,10 +1200,12 @@ export const ChatPage: FC = () => {
                                     <div className="ce-chat-examples flex flex-wrap justify-center items-center gap-4" data-testid="chat-examples-list">
                                         {
                                             examples.slice(0, 3).map((example) => (
-                                                <Card key={example.description} className="flex flex-col gap-sm w-[250px] h-[120px] p-4 text-sm cursor-pointer hover:opacity-80 transition-all"
+                                                <Card key={example.description} className="flex flex-col w-[250px] cursor-pointer"
                                                     onClick={() =>{  handleSelectExample(example.description); }}>
-                                                    {example.icon}
-                                                    {example.description}
+                                                    <CardContent className="flex flex-col gap-6">
+                                                        {example.icon}
+                                                        {example.description}
+                                                    </CardContent>
                                                 </Card>
                                             ))
                                         }
@@ -1392,10 +1395,9 @@ export const ChatPage: FC = () => {
                             onKeyUp={handleKeyUp}
                             autoComplete="off"
                             data-testid="chat-input"
-                            className="!border-0 !bg-transparent !shadow-none !ring-0"
                         />
                         <Tip className="w-fit">
-                            <Button tabIndex={0} onClick={loading ? handleStop : () => { void handleSubmitQuery(); }} className="size-9 rounded-md p-0" disabled={disableChat && !loading} variant={disableChat && !loading ? "secondary" : undefined} data-testid="icon-button" aria-label={loading ? t('stop') : t('sendMessage')}>
+                            <Button size="icon" tabIndex={0} onClick={loading ? handleStop : () => { void handleSubmitQuery(); }} disabled={disableChat && !loading} variant={disableChat && !loading ? "secondary" : undefined} data-testid="icon-button" aria-label={loading ? t('stop') : t('sendMessage')}>
                                 {loading ? <span className="size-2 rounded-sm bg-current" /> : <WhoDBChatIcon name="send" className="size-4" />}
                             </Button>
                             <p>{loading ? t('stop') : t('sendMessage')}</p>

@@ -1,166 +1,34 @@
 ---
-title: "Monitoring Integration"
-description: "Monitor WhoDB with health checks, logs, and external exporters"
+title: "Observe a CE instance"
+description: "Check process health, collect logs, and test source reachability separately."
 ---
 
-# Monitoring Integration
+# Observe a CE instance
 
-WhoDB CE exposes a simple HTTP health endpoint and structured logging controls.
+Monitor WhoDB's availability separately from the databases it connects to. This lets you distinguish a stopped workspace from a running workspace that cannot reach one source.
 
-<Warning>
-Configure monitors for `GET /health`, which returns plain text `ok` with HTTP 200.
-</Warning>
+## Check the process
 
-## Health Checks
+Request `GET /health`. A running WhoDB server returns the plain text `ok`. Use this for process availability; it does not open every configured database or verify application records.
 
-Use `/health` for process-level checks:
+For a database-path check, use a representative low-cost read from the backend's network. For a CLI connection, `whodb doctor --connection <name> --format json` provides redacted diagnostics.
 
-```bash
-curl -fsS http://localhost:8080/health
-```
-
-Expected response:
-
-```text
-ok
-```
-
-Docker health check:
-
-```yaml
-services:
-  whodb:
-    image: clidey/whodb:latest
-    ports:
-      - "8080:8080"
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health | grep -qx ok"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 20s
-```
-
-Kubernetes probes:
-
-```yaml
-livenessProbe:
-  httpGet:
-    path: /health
-    port: 8080
-  initialDelaySeconds: 20
-  periodSeconds: 30
-readinessProbe:
-  httpGet:
-    path: /health
-    port: 8080
-  initialDelaySeconds: 5
-  periodSeconds: 10
-```
-
-## Logs
-
-WhoDB supports log environment variables:
+## Collect useful logs
 
 | Variable | Purpose |
-|----------|---------|
-| `WHODB_LOG_LEVEL` | `debug`, `info`, `warn`, `error`, or `none` |
-| `WHODB_LOG_FORMAT` | `text` or `json` |
-| `WHODB_LOG_FILE` | Non-HTTP log output. Use `default` for `/var/log/whodb/whodb.log` |
-| `WHODB_ACCESS_LOG_FILE` | HTTP access log output. Use `default` for `/var/log/whodb/whodb.access.log` |
-| `WHODB_AUDIT_LOG_FILE` | Audit log output as NDJSON: logins, data reads and changes, without request telemetry. Use `default` for `/var/log/whodb/whodb.audit.log` |
+| --- | --- |
+| `WHODB_LOG_LEVEL` | Choose logging verbosity |
+| `WHODB_LOG_FORMAT=json` | Produce structured log output |
+| `WHODB_LOG_FILE` | Set the non-HTTP application log destination |
+| `WHODB_ACCESS_LOG_FILE` | Set the HTTP access log destination |
+| `WHODB_AUDIT_LOG_FILE` | Write append-only NDJSON for supported audited actions |
 
-Docker Compose log example:
+Choose file paths writable by the WhoDB process. Use your deployment's logging system to collect and rotate them. Restrict access to logs because errors and operational context can contain sensitive information.
 
-```yaml
-services:
-  whodb:
-    image: clidey/whodb:latest
-    ports:
-      - "8080:8080"
-    environment:
-      WHODB_LOG_LEVEL: info
-      WHODB_LOG_FORMAT: json
-      WHODB_LOG_FILE: default
-      WHODB_ACCESS_LOG_FILE: default
-    volumes:
-      - ./logs:/var/log/whodb
-```
+Different logs answer different questions. HTTP access logs show requests, application logs help diagnose failures, and the audit destination covers supported audited actions. Do not treat one as proof of every action performed directly against the database.
 
-## Prometheus And Grafana
+## Investigate an alert
 
-For Prometheus and Grafana setups, monitor WhoDB with:
+Record the failing action, its time, selected source, and visible error. Check process health, then the source route, then authentication and query behavior. Correlate the relevant logs before changing settings.
 
-- HTTP blackbox checks against `/health`.
-- Container metrics from cAdvisor, Docker, Kubernetes, or node exporters.
-- Database-specific exporters for PostgreSQL, MySQL, Redis, MongoDB, and other backing stores.
-- Log-based metrics from your log pipeline.
-
-Complete standalone Compose example with Prometheus and Grafana:
-
-```yaml
-services:
-  whodb:
-    image: clidey/whodb:latest
-    ports:
-      - "8080:8080"
-
-  prometheus:
-    image: prom/prometheus:latest
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
-
-  grafana:
-    image: grafana/grafana:latest
-    ports:
-      - "3000:3000"
-    depends_on:
-      - prometheus
-    volumes:
-      - grafana-data:/var/lib/grafana
-
-volumes:
-  grafana-data:
-```
-
-Example `prometheus.yml` files depend on your exporter deployment. Use blackbox exporter for HTTP checks, and scrape database/container exporters for runtime metrics.
-
-## Alerting
-
-Alert on signals that exist in the current app and platform:
-
-- `/health` returns anything other than HTTP 200 with body `ok`.
-- Container restarts.
-- Elevated HTTP 5xx access logs.
-- High CPU or memory from container/runtime metrics.
-- Database exporter errors for the connected database.
-
-## Health Check Script
-
-```bash
-#!/usr/bin/env bash
-set -euo pipefail
-
-WHODB_URL="${WHODB_URL:-http://localhost:8080}"
-
-body="$(curl -fsS "$WHODB_URL/health")"
-if [ "$body" != "ok" ]; then
-  echo "unexpected health response: $body" >&2
-  exit 1
-fi
-
-echo "WhoDB is healthy"
-```
-
-## Related Pages
-
-<CardGroup cols={2}>
-<Card title="Docker Integration" icon="container" href="/resources/integrations/docker">
-Run WhoDB with Docker health checks and logs.
-</Card>
-<Card title="Troubleshooting" icon="wrench" href="/resources/troubleshooting">
-Debug connectivity, performance, and UI issues.
-</Card>
-</CardGroup>
+For a slow operation, record result size and compare a small request on the same connection. See [Performance tuning](/resources/performance-tuning). For a failed operation, follow [Troubleshooting](/resources/troubleshooting) and [server configuration](/installation#common-environment-variables).

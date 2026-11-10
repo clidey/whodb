@@ -1,58 +1,47 @@
 ---
-title: "Settings"
-description: "Current settings and personalization options in WhoDB"
+title: "Make the workspace yours"
+description: "Adjust appearance, data defaults, integrations, and privacy from Settings."
 ---
 
-# Settings
+# Make the workspace yours
 
-The current CE build includes a dedicated settings page. It is enabled in the default CE feature flags and covers telemetry, UI personalization, table defaults, and language.
+Use Settings to make the workspace easier to read and to choose defaults that fit your usual database work. For example, you can prefer a compact object list, a smaller result page, or a larger condition editor.
 
-The page is organized into **Appearance**, **Behavior**, **Integrations**, and **Privacy** tabs.
+Open **Settings** from the sidebar. Its tabs group **Appearance**, **Behavior**, **Integrations**, and **Privacy**.
 
-## Settings Sections
+<div className="ce-screenshot-light">
 
-### Telemetry
+![The appearance settings page](/images/light/118-settings-appearance.png)
 
-The settings page includes a telemetry toggle that lets you opt in or out of client analytics collection.
+</div>
+<div className="ce-screenshot-dark">
 
-### Personalization
+![The appearance settings page](/images/dark/118-settings-appearance.png)
 
-Current appearance and interaction settings include:
+</div>
 
-- storage unit view: `list` or `card`
-- font size: `small`, `medium`, or `large`
-- border radius: `none`, `small`, `medium`, or `large`
-- spacing: `compact`, `comfortable`, or `spacious`
-- disable animations toggle
+## Appearance
 
-### Data Display
+Choose a storage-unit list or card view, font size, border radius, and spacing. Use a density that leaves field names and values readable at your screen size. Turn animations off if you prefer less motion.
 
-The Appearance tab also includes data display toggles:
+Data-display preferences include localized dates and readable boolean values. If you are comparing a displayed value with a query, export, or application log, check the display preference before treating a different presentation as a different stored value.
 
-- format dates using your locale
-- format booleans as readable values
+The view preference changes how objects are presented. It does not change the source's schema or the records in it.
 
-### Query And Data Defaults
+## Behavior
 
-The current page also exposes:
+Set a default page size for browsing. A smaller page is useful while learning an object or working with many columns. You can request a larger page when you need to compare more records at once.
 
-- where-condition mode: `popover` or `sheet`
-- default page size
-- database vs schema terminology preference
-- language selection
+The server's `WHODB_MAX_PAGE_SIZE` remains the upper limit. A browser preference cannot raise a limit enforced by the server.
 
-<Note>
-The backend still enforces the global maximum page size through `WHODB_MAX_PAGE_SIZE`. The settings page controls the default page size within that limit.
-</Note>
+Choose whether the condition builder opens in a popover or a larger sheet. Use the larger editor when a set of conditions is difficult to read in the compact view. The available controls also include database/schema terminology and language preferences.
 
-## Related Configuration
+## Integrations and privacy
 
-Use environment variables for deployment-level configuration such as connection profiles, log output, and maximum page size.
+Review the integration controls provided by your build. Under **Privacy**, use the telemetry control to choose the available reporting preference.
 
-## Related Pages
+Browser settings are local preferences. They are not a shared team configuration or a way to change deployment policy. Server profiles, logs, session persistence, and request limits are configured by the person running WhoDB. See [server configuration](/installation#common-environment-variables) for those settings.
 
-<CardGroup cols={2}>
-<Card title="Keyboard Shortcuts" icon="code" href="/resources/keyboard-shortcuts">
-Review the current shortcut map used by the frontend.
-</Card>
-</CardGroup>
+If a preference seems to have reset, check whether you changed browsers, browser profiles, or cleared local storage. Keep important query work outside browser-local state.
+
+Next: [Keyboard shortcuts](/resources/keyboard-shortcuts) · [Sidebar navigation](/features/sidebar-navigation)

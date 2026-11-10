@@ -1,42 +1,49 @@
 ---
-title: "Deleting Records"
-description: "Delete one or more rows from the current WhoDB data grid"
+title: "Delete a record"
+description: "Delete a focused row using the context menu and review the confirmation."
 ---
 
-# Deleting Records
+# Delete a record
 
-WhoDB shows delete actions only when the connected source and selected object expose delete support.
+Delete a record when you have identified the exact row that should no longer exist. Start with a lookup using its key or another precise identifier. A similar-looking name is a poor basis for deleting data.
 
-## Delete A Row
+## Open the delete action
 
-<Steps>
-<Step title="Open Row Actions">
-Right-click the row you want to delete.
-</Step>
-<Step title="Select Delete Row">
-Choose **Delete Row** from the context menu.
-</Step>
-<Step title="Confirm">
-Current CE code opens a confirmation dialog before deletion.
-</Step>
-<Step title="Review Result">
-WhoDB deletes the row through the backend plugin, shows a toast, and refreshes the grid.
-</Step>
-</Steps>
+1. Open the object's **Data** view.
+2. Find the record and check its identifying fields.
+3. Right-click the row and choose **Delete Row**.
 
-## Delete Selected Rows
+You can also focus a row and press `Mod + Delete` or `Mod + Backspace`.
 
-Use row checkboxes to select multiple loaded rows. When any rows are selected, the delete action operates on the selected rows.
+<div className="ce-screenshot-light">
 
-## Keyboard Delete
+![Delete Row in the row context menu](/images/light/43-context-menu-delete-option.png)
 
-When table shortcuts are active, focus a row and press:
+</div>
+<div className="ce-screenshot-dark">
 
-- `Mod + Delete`
-- `Mod + Backspace`
+![Delete Row in the row context menu](/images/dark/43-context-menu-delete-option.png)
 
-Both open the same confirmation flow.
+</div>
+
+If rows are selected, the delete action can apply to that selection. Clear an old selection when your intention is to remove only the row you are inspecting.
+
+## Review the confirmation
+
+Check the connection, object, and record identifiers in the confirmation before accepting it. The database may reject deletion because another record references the row or because the connected account lacks permission. Read the error before trying a different action.
+
+After deletion, repeat your lookup. Confirm the intended row is gone and inspect related data when the database applies additional behavior such as cascades.
+
+## Understand Undo
+
+After a successful grid deletion, sources that support inserting rows can show **Undo** in the success notification for seven seconds. Undo attempts to reinsert the captured records. It can fail if constraints or other database changes prevent restoration.
 
 <Warning>
-Deletes are permanent in the connected database. Use filters carefully and verify the selected rows before confirming.
+Undo is not a database rollback. Do not rely on it to restore related rows, trigger effects, or changes made through Scratchpad. Use a recoverable backup and your database's recovery tools for important data.
 </Warning>
+
+## Delete a set defined by a rule
+
+For a small loaded selection, see [Select rows and apply actions](/advanced/batch-operations). For a set defined by a condition, use [Scratchpad](/query/writing-queries).
+
+First run a read query with the same condition and inspect its records. Then review the deletion statement, including its table and predicate, before execution. Keep the selection query with the change record so another person can understand what was removed and why.

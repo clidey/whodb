@@ -131,7 +131,7 @@ export const PlatformExplainerDialog: FC<PlatformExplainerDialogProps> = ({ open
         <Dialog open={open} onOpenChange={handleDialogOpenChange}>
             <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle className="text-xl">{t("platformExplainerTitle")}</DialogTitle>
+                    <DialogTitle>{t("platformExplainerTitle")}</DialogTitle>
                     <DialogDescription>
                         {sourceType
                             ? t("platformExplainerSourceIntro", { sourceType })
