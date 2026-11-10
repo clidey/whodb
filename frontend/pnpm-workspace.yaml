@@ -18,9 +18,5 @@ auditLevel: high
 verifyStoreIntegrity: true
 minimumReleaseAgeExclude:
   - '@clidey/ux'
-  # semver 6.3.2 and 5.7.3 restore provenance for the old lines Babel and
-  # lighthouse need; drop after 2026-11-09.
-  - semver@6.3.2
-  - semver@5.7.3
   - '@clidey/deptrust'
   - '@clidey/connparse'
