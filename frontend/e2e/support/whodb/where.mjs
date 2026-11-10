@@ -197,7 +197,10 @@ export const whereMethods = {
     async clickConditionToEdit(index) {
         const mode = await this.getWhereConditionMode();
         if (mode === "popover") {
-            await this.page.locator('[data-testid="where-condition-badge"]').nth(index).click();
+            const badge = this.page.locator('[data-testid="where-condition-badge"]').nth(index);
+            // The remove button sits inside the badge and can cover its centre, so click the label edge.
+            const box = await badge.boundingBox();
+            await badge.click({ position: { x: 8, y: box.height / 2 } });
             await this.page.locator('[data-testid="update-condition-button"]').waitFor({ timeout: TIMEOUT.ELEMENT });
         } else {
             console.log("Sheet mode: Cannot click individual conditions - need to open sheet");
