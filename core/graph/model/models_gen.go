@@ -349,14 +349,16 @@ type SourceFieldConstraints struct {
 	Primary          bool                   `json:"Primary"`
 	Unique           bool                   `json:"Unique"`
 	Identity         bool                   `json:"Identity"`
-	DefaultValue     *string                `json:"DefaultValue,omitempty"`
-	AllowedValues    []string               `json:"AllowedValues"`
-	CheckMin         *float64               `json:"CheckMin,omitempty"`
-	CheckMax         *float64               `json:"CheckMax,omitempty"`
-	ForeignKey       *ForeignKeyDefinition  `json:"ForeignKey,omitempty"`
-	Length           *int                   `json:"Length,omitempty"`
-	Precision        *int                   `json:"Precision,omitempty"`
-	Scale            *int                   `json:"Scale,omitempty"`
+	// Whether the database manages this field and explicit insert values must be omitted.
+	Computed      bool                  `json:"Computed"`
+	DefaultValue  *string               `json:"DefaultValue,omitempty"`
+	AllowedValues []string              `json:"AllowedValues"`
+	CheckMin      *float64              `json:"CheckMin,omitempty"`
+	CheckMax      *float64              `json:"CheckMax,omitempty"`
+	ForeignKey    *ForeignKeyDefinition `json:"ForeignKey,omitempty"`
+	Length        *int                  `json:"Length,omitempty"`
+	Precision     *int                  `json:"Precision,omitempty"`
+	Scale         *int                  `json:"Scale,omitempty"`
 }
 
 type SourceLoginInput struct {

@@ -667,6 +667,8 @@ export type SourceFieldConstraints = {
   AllowedValues: Array<Scalars['String']['output']>;
   CheckMax?: Maybe<Scalars['Float']['output']>;
   CheckMin?: Maybe<Scalars['Float']['output']>;
+  /** Whether the database manages this field and explicit insert values must be omitted. */
+  Computed: Scalars['Boolean']['output'];
   DefaultValue?: Maybe<Scalars['String']['output']>;
   ForeignKey?: Maybe<ForeignKeyDefinition>;
   Identity: Scalars['Boolean']['output'];

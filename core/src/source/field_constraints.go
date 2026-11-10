@@ -82,6 +82,7 @@ func enrichFieldConstraintWithColumn(field FieldConstraints, column Column) Fiel
 	if column.IsPrimary {
 		field.Primary = true
 	}
+	field.Computed = field.Computed || column.IsComputed
 	if column.IsAutoIncrement {
 		field.Identity = true
 	}

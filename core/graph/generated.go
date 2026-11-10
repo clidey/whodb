@@ -316,6 +316,7 @@ type ComplexityRoot struct {
 		AllowedValues    func(childComplexity int) int
 		CheckMax         func(childComplexity int) int
 		CheckMin         func(childComplexity int) int
+		Computed         func(childComplexity int) int
 		DefaultValue     func(childComplexity int) int
 		ForeignKey       func(childComplexity int) int
 		Identity         func(childComplexity int) int
@@ -1822,6 +1823,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.SourceFieldConstraints.CheckMin(childComplexity), true
+	case "SourceFieldConstraints.Computed":
+		if e.ComplexityRoot.SourceFieldConstraints.Computed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SourceFieldConstraints.Computed(childComplexity), true
 	case "SourceFieldConstraints.DefaultValue":
 		if e.ComplexityRoot.SourceFieldConstraints.DefaultValue == nil {
 			break
@@ -3030,6 +3037,8 @@ func (ec *executionContext) childFields_SourceFieldConstraints(ctx context.Conte
 		return ec.fieldContext_SourceFieldConstraints_Unique(ctx, field)
 	case "Identity":
 		return ec.fieldContext_SourceFieldConstraints_Identity(ctx, field)
+	case "Computed":
+		return ec.fieldContext_SourceFieldConstraints_Computed(ctx, field)
 	case "DefaultValue":
 		return ec.fieldContext_SourceFieldConstraints_DefaultValue(ctx, field)
 	case "AllowedValues":
@@ -9334,6 +9343,29 @@ func (ec *executionContext) _SourceFieldConstraints_Identity(ctx context.Context
 	)
 }
 func (ec *executionContext) fieldContext_SourceFieldConstraints_Identity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SourceFieldConstraints", field, false, false, "Boolean")
+}
+
+func (ec *executionContext) _SourceFieldConstraints_Computed(ctx context.Context, field graphql.CollectedField, obj *model.SourceFieldConstraints) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SourceFieldConstraints_Computed(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Computed, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SourceFieldConstraints_Computed(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("SourceFieldConstraints", field, false, false, "Boolean")
 }
 
@@ -15845,6 +15877,11 @@ func (ec *executionContext) _SourceFieldConstraints(ctx context.Context, sel ast
 			}
 		case "Identity":
 			out.Values[i] = ec._SourceFieldConstraints_Identity(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Computed":
+			out.Values[i] = ec._SourceFieldConstraints_Computed(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

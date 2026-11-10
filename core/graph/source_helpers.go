@@ -467,6 +467,7 @@ func MapFieldConstraintsToModel(fields []source.FieldConstraints) []*model.Sourc
 			Primary:          field.Primary,
 			Unique:           field.Unique,
 			Identity:         field.Identity,
+			Computed:         field.Computed,
 			DefaultValue:     field.DefaultValue,
 			AllowedValues:    slices.Clone(field.AllowedValues),
 			CheckMin:         field.CheckMin,
