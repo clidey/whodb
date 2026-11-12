@@ -21,6 +21,7 @@ import (
 
 	"github.com/clidey/whodb/core/src/common/ssl"
 	"github.com/clidey/whodb/core/src/source"
+	"github.com/clidey/whodb/core/src/sourcecatalog"
 	"github.com/clidey/whodb/core/src/types"
 )
 
@@ -53,6 +54,7 @@ func GetSourceProfiles() []source.Profile {
 			IsEnvironmentDefined: profile.Source == "environment",
 			Source:               profile.Source,
 			SSLConfigured:        sslConfigured,
+			RequiresPassword:     profileRequiresPassword(profile),
 		})
 	}
 	return profiles
@@ -83,6 +85,7 @@ func FindSourceProfile(id string) (*source.Profile, *source.Credentials, bool) {
 			Values:               displayValuesForProfile(profile),
 			IsEnvironmentDefined: profile.Source == "environment",
 			Source:               profile.Source,
+			RequiresPassword:     profileRequiresPassword(profile),
 		}
 		credentials := GetSourceCredentials(profile)
 		credentials.ID = &sourceProfile.ID
@@ -131,4 +134,18 @@ func displayValuesForProfile(profile types.DatabaseCredentials) map[string]strin
 		values["Port"] = profile.Port
 	}
 	return values
+}
+
+// profileRequiresPassword reports whether the profile's source type takes a
+// password that the profile itself does not store.
+func profileRequiresPassword(profile types.DatabaseCredentials) bool {
+	if profile.Password != "" {
+		return false
+	}
+	spec, ok := sourcecatalog.Find(profile.Type)
+	if !ok {
+		return false
+	}
+	_, hasPasswordField := spec.ConnectionFieldByKey("Password")
+	return hasPasswordField
 }

@@ -322,9 +322,20 @@ func RegisterAuthBypass(fn func(*http.Request) bool) {
 
 // MergeSourceProfileValues applies the database selection supported by a
 // stored profile while keeping every connection target and secret server-owned.
+// A password may be supplied only for a profile that stores none, so the client
+// can complete a profile whose secret was deliberately left out of its definition.
 func MergeSourceProfileValues(sourceType string, base map[string]string, overrides map[string]string) (map[string]string, error) {
 	for key := range overrides {
-		if key != "Database" || !sourceSupportsDatabaseSwitching(sourceType) {
+		switch key {
+		case "Database":
+			if !sourceSupportsDatabaseSwitching(sourceType) {
+				return nil, errors.New("source profile connection fields cannot be overridden")
+			}
+		case "Password":
+			if base["Password"] != "" {
+				return nil, errors.New("source profile connection fields cannot be overridden")
+			}
+		default:
 			return nil, errors.New("source profile connection fields cannot be overridden")
 		}
 	}

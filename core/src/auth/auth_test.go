@@ -71,6 +71,32 @@ func TestMergeSourceProfileValuesRestrictsOverridesToDatabaseSwitching(t *testin
 	}
 }
 
+func TestMergeSourceProfileValuesAcceptsPasswordOnlyWhenProfileStoresNone(t *testing.T) {
+	withoutPassword := map[string]string{
+		"Hostname": "db.internal",
+		"Port":     "5432",
+		"Username": "reader",
+		"Database": "default",
+	}
+
+	merged, err := MergeSourceProfileValues("Postgres", withoutPassword, map[string]string{"Password": "typed"})
+	if err != nil {
+		t.Fatalf("expected password to be accepted for a profile without one: %v", err)
+	}
+	if merged["Password"] != "typed" || merged["Hostname"] != "db.internal" {
+		t.Fatalf("expected only the password to be added, got %#v", merged)
+	}
+
+	if _, err := MergeSourceProfileValues("Postgres", withoutPassword, map[string]string{"Password": "typed", "Hostname": "attacker.example"}); err == nil {
+		t.Fatal("expected hostname override to be rejected alongside a password")
+	}
+
+	withPassword := map[string]string{"Hostname": "db.internal", "Password": "secret"}
+	if _, err := MergeSourceProfileValues("Postgres", withPassword, map[string]string{"Password": "typed"}); err == nil {
+		t.Fatal("expected password override to be rejected when the profile stores one")
+	}
+}
+
 func TestAuthMiddlewareExtractsCredentialsFromBearer(t *testing.T) {
 	originalDev := env.IsDevelopment
 	env.IsDevelopment = false

@@ -242,6 +242,58 @@ func TestAuthMiddlewareResolvesIDOnlyCredentialsFromProfiles(t *testing.T) {
 	}
 }
 
+func TestAuthMiddlewareIDOnlyTokenCarriesPasswordForProfileWithoutOne(t *testing.T) {
+	origEngine := src.MainEngine
+	src.MainEngine = &engine.Engine{}
+	t.Cleanup(func() { src.MainEngine = origEngine })
+
+	src.MainEngine.AddLoginProfile(types.DatabaseCredentials{
+		CustomId: "no-password",
+		Type:     "Postgres",
+		Source:   "environment",
+		Hostname: "db.local",
+		Username: "alice",
+		Database: "app",
+		Port:     "5432",
+	})
+	src.MainEngine.AddLoginProfile(types.DatabaseCredentials{
+		CustomId: "with-password",
+		Type:     "Postgres",
+		Source:   "environment",
+		Hostname: "db.local",
+		Username: "alice",
+		Password: "pw",
+		Database: "app",
+		Port:     "5432",
+	})
+
+	serve := func(id string) (int, *source.Credentials) {
+		creds := source.Credentials{ID: &id, Values: map[string]string{"Password": "typed"}}
+		payload, _ := json.Marshal(&creds)
+		token := base64.StdEncoding.EncodeToString(payload)
+		req := httptest.NewRequest(http.MethodPost, "/api/query", bytes.NewBufferString(`{"operationName":"Other"}`))
+		req.Header.Set("Authorization", "Bearer "+token)
+		rr := httptest.NewRecorder()
+
+		var got *source.Credentials
+		AuthMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			got = GetSourceCredentials(r.Context())
+			w.WriteHeader(http.StatusOK)
+		})).ServeHTTP(rr, req)
+		return rr.Code, got
+	}
+
+	code, got := serve("no-password")
+	if code != http.StatusOK || got == nil || got.Values["Password"] != "typed" || got.Values["Hostname"] != "db.local" {
+		t.Fatalf("expected the token password to complete the profile, got status %d credentials %+v", code, got)
+	}
+
+	code, _ = serve("with-password")
+	if code != http.StatusBadRequest {
+		t.Fatalf("expected a password override of a stored secret to be rejected, got %d", code)
+	}
+}
+
 func TestAuthMiddlewareDisabledCredentialFormRejectsInlineTokens(t *testing.T) {
 	originalDisableCredentialForm := env.DisableCredentialForm
 	env.DisableCredentialForm = true

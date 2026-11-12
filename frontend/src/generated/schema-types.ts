@@ -806,6 +806,7 @@ export type SourceProfile = {
   DisplayName: Scalars['String']['output'];
   Id: Scalars['String']['output'];
   IsEnvironmentDefined: Scalars['Boolean']['output'];
+  RequiresPassword: Scalars['Boolean']['output'];
   SSLConfigured: Scalars['Boolean']['output'];
   Source: Scalars['String']['output'];
   SourceType: Scalars['String']['output'];

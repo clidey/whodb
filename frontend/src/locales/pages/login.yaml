@@ -56,6 +56,7 @@ en_US:
   profileAccessNoticeTitle: Profiles provide shared access
   profileAccessNoticeDescription: Selecting a profile uses credentials configured by this WhoDB instance. Anyone who can access this Community Edition instance can use its available profiles.
   selectProfile: Select a Profile
+  profilePasswordHint: This profile has no stored password. Enter it to connect.
   allFieldsRequired: All Fields Are Required
   loginSuccessful: Login Successful
   loginFailed: Login Failed

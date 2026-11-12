@@ -575,6 +575,7 @@ func sourceProfilesToModel(profiles []source.Profile) []*model.SourceProfile {
 			IsEnvironmentDefined: profile.IsEnvironmentDefined,
 			Source:               profile.Source,
 			SSLConfigured:        profile.SSLConfigured,
+			RequiresPassword:     profile.RequiresPassword,
 		})
 	}
 	return mapped

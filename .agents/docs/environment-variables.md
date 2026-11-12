@@ -37,7 +37,7 @@ export WHODB_POSTGRES_2='{"alias":"staging","host":"staging-db.example.com","use
 | `alias` | string | Display name for the connection |
 | `host` | string | Hostname or IP address |
 | `user` | string | Username |
-| `password` | string | Password |
+| `password` | string | Password. Optional: when omitted for a source type that takes one, the login page asks the user for it and never stores it in the profile |
 | `database` | string | Database name |
 | `port` | string | Port number |
 | `advanced` | object | Key-value map of advanced options (see below) |
