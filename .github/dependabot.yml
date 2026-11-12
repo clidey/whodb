@@ -1,7 +1,11 @@
+# Version updates come from Renovate. Every entry has
+# open-pull-requests-limit: 0, which stops Dependabot version updates while
+# keeping this file (and its registries) for security updates.
 version: 2
 
 updates:
   - package-ecosystem: "gomod"
+    open-pull-requests-limit: 0
     directory: "/core"
     schedule:
       interval: "daily"
@@ -15,6 +19,7 @@ updates:
         update-types: ["minor", "patch"]
 
   - package-ecosystem: "gomod"
+    open-pull-requests-limit: 0
     directory: "/desktop-ce"
     schedule:
       interval: "daily"
@@ -28,6 +33,7 @@ updates:
         update-types: ["minor", "patch"]
 
   - package-ecosystem: "gomod"
+    open-pull-requests-limit: 0
     directory: "/desktop-common"
     schedule:
       interval: "daily"
@@ -41,6 +47,7 @@ updates:
         update-types: ["minor", "patch"]
 
   - package-ecosystem: "gomod"
+    open-pull-requests-limit: 0
     directory: "/cli"
     schedule:
       interval: "daily"
@@ -54,6 +61,7 @@ updates:
         update-types: ["minor", "patch"]
 
   - package-ecosystem: "npm"
+    open-pull-requests-limit: 0
     directory: "/frontend"
     schedule:
       interval: "daily"
@@ -68,6 +76,7 @@ updates:
 
   # Platform SDK workspace (tools deps: graphql, yaml; TS package devDeps).
   - package-ecosystem: "npm"
+    open-pull-requests-limit: 0
     directory: "/sdk"
     schedule:
       interval: "daily"
@@ -82,6 +91,7 @@ updates:
 
   # Python SDK (runtime dep: httpx).
   - package-ecosystem: "pip"
+    open-pull-requests-limit: 0
     directory: "/sdk/packages/python"
     schedule:
       interval: "daily"
@@ -96,6 +106,7 @@ updates:
 
   # Go SDK (zero deps today; covers any future additions).
   - package-ecosystem: "gomod"
+    open-pull-requests-limit: 0
     directory: "/sdk/packages/go"
     schedule:
       interval: "daily"
@@ -110,6 +121,7 @@ updates:
 
   # Rust SDK (runtime deps: serde, serde_json, ureq).
   - package-ecosystem: "cargo"
+    open-pull-requests-limit: 0
     directory: "/sdk/packages/rust"
     schedule:
       interval: "daily"
@@ -124,6 +136,7 @@ updates:
 
   # Java SDK (runtime dep: jackson-databind; build plugins).
   - package-ecosystem: "maven"
+    open-pull-requests-limit: 0
     directory: "/sdk/packages/java"
     schedule:
       interval: "daily"
@@ -137,6 +150,7 @@ updates:
         update-types: ["minor", "patch"]
 
   - package-ecosystem: "docker"
+    open-pull-requests-limit: 0
     directory: "/core"
     schedule:
       interval: "weekly"
@@ -151,6 +165,7 @@ updates:
         update-types: ["minor", "patch"]
 
   - package-ecosystem: "docker"
+    open-pull-requests-limit: 0
     directory: "/docs"
     schedule:
       interval: "weekly"
@@ -165,6 +180,7 @@ updates:
         update-types: ["minor", "patch"]
 
   - package-ecosystem: "github-actions"
+    open-pull-requests-limit: 0
     directory: "/"
     schedule:
       interval: "weekly"
