@@ -15,7 +15,7 @@
  */
 
 import { useLazyQuery, useMutation, useQuery } from "@apollo/client/react";
-import { Alert, AlertDescription, AlertTitle, Badge, Button, Card, cn, Label, ModeToggle, Separator, toast, useTheme, IconSliders as AdjustmentsHorizontalIcon, IconChat as ChatBubbleLeftRightIcon, IconCheckCircle as CheckCircleIcon, IconChevronDown as ChevronDownIcon, IconCode as CodeBracketIcon, IconInfo as InformationCircleIcon, IconShare as ShareIcon, IconAi as SparklesIcon, IconTable as TableCellsIcon, SearchSelect } from '@clidey/ux';
+import { Alert, AlertDescription, AlertTitle, Badge, Button, Card, cn, Input, Label, ModeToggle, Separator, toast, useTheme, IconSliders as AdjustmentsHorizontalIcon, IconChat as ChatBubbleLeftRightIcon, IconCheckCircle as CheckCircleIcon, IconChevronDown as ChevronDownIcon, IconCode as CodeBracketIcon, IconInfo as InformationCircleIcon, IconShare as ShareIcon, IconAi as SparklesIcon, IconTable as TableCellsIcon, SearchSelect } from '@clidey/ux';
 import {
     SettingsConfigDocument,
     SourceFieldOptionsDocument,
@@ -219,6 +219,7 @@ export const LoginForm: FC<LoginFormProps> = ({
     const [formResetKey, setFormResetKey] = useState(0);
     const [platformSourceType, setPlatformSourceType] = useState<{ id: string; label: string }>();
     const [selectedAvailableProfile, setSelectedAvailableProfile] = useState<string>();
+    const [profilePassword, setProfilePassword] = useState("");
     const [isEmbedded] = useState(() => {
         return searchParams.has("credentials");
     });
@@ -473,6 +474,7 @@ export const LoginForm: FC<LoginFormProps> = ({
         setError(undefined);
 
         const profile = profiles?.SourceProfiles.find(p => p.Id === profileId);
+        const suppliedPassword = profile?.RequiresPassword && profilePassword.trim() !== "" ? profilePassword : undefined;
 
         void (async () => {
             try {
@@ -480,6 +482,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                     variables: {
                         profile: {
                             Id:  profileId,
+                            ...(suppliedPassword != null ? { Values: [{ Key: "Password", Value: suppliedPassword }] } : {}),
                         },
                     },
                 });
@@ -497,8 +500,15 @@ export const LoginForm: FC<LoginFormProps> = ({
                 updateProfileLastAccessed(profileId);
                 await clearGraphqlStore();
                 if (profile != null) {
-                    dispatch(AuthActions.login(createProfilePayloadFromSourceProfile(profile)));
+                    const payload = createProfilePayloadFromSourceProfile(profile);
+                    // Desktop re-sends the profile reference on every request, so the
+                    // typed password has to travel with it; browsers keep it in the session.
+                    if (isDesktop && suppliedPassword != null) {
+                        payload.Values = [...payload.Values, { Key: "Password", Value: suppliedPassword }];
+                    }
+                    dispatch(AuthActions.login(payload));
                 }
+                setProfilePassword("");
                 markFirstLoginComplete();
                 loginSucceededRef.current = true;
                 trackFrontendIntent('auth.login_succeeded', {
@@ -520,7 +530,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                 handleLoginError(error);
             }
         })();
-    }, [dispatch, handleLoginError, loginWithSourceProfile, markFirstLoginComplete, navigate, onLoginSuccess, profiles?.SourceProfiles, searchParams, selectedAvailableProfile, setSearchParams, t]);
+    }, [dispatch, handleLoginError, isDesktop, loginWithSourceProfile, markFirstLoginComplete, navigate, onLoginSuccess, profilePassword, profiles?.SourceProfiles, searchParams, selectedAvailableProfile, setSearchParams, t]);
 
     const handleSampleDatabaseLogin = useCallback(() => {
         const sampleProfile = profiles?.SourceProfiles.find(p => p.Source === "builtin");
@@ -639,6 +649,7 @@ export const LoginForm: FC<LoginFormProps> = ({
             has_profile: true,
         });
         setSelectedAvailableProfile(itemId);
+        setProfilePassword("");
     }, []);
 
     const handleBrowseDatabaseFile = useCallback(async () => {
@@ -737,6 +748,10 @@ export const LoginForm: FC<LoginFormProps> = ({
     }, [profiles?.SourceProfiles]);
 
     const hasAvailableProfiles = availableProfiles.length > 0;
+
+    const selectedProfileRequiresPassword = useMemo(() => {
+        return profiles?.SourceProfiles.find(p => p.Id === selectedAvailableProfile)?.RequiresPassword ?? false;
+    }, [profiles?.SourceProfiles, selectedAvailableProfile]);
 
     const sampleProfile = useMemo(() => {
         return profiles?.SourceProfiles.find(p => p.Source === "builtin");
@@ -1176,6 +1191,21 @@ export const LoginForm: FC<LoginFormProps> = ({
                                 }}
                                 rightIcon={<ChevronDownIcon className="w-4 h-4"/>}
                             />
+                            {selectedProfileRequiresPassword && (
+                                <div className="flex flex-col gap-sm">
+                                    <Label htmlFor="profile-password">{t('password')}</Label>
+                                    <Input
+                                        id="profile-password"
+                                        value={profilePassword}
+                                        onChange={(e) => { setProfilePassword(e.target.value); }}
+                                        type="password"
+                                        data-testid="profile-password"
+                                        placeholder={t('enterPassword')}
+                                        showPasswordToggle={!isEmbedded}
+                                    />
+                                    <p className="text-sm text-muted-foreground">{t('profilePasswordHint')}</p>
+                                </div>
+                            )}
                             <Button onClick={() =>{  handleLoginWithSourceProfileSubmit(); }} data-testid="login-with-profile-button" variant={loginWithSourceProfileEnabled ? "default" : "secondary"} disabled={!loginWithSourceProfileEnabled}>
                                 <CheckCircleIcon className="w-4 h-4" /> {t('title')}
                             </Button>

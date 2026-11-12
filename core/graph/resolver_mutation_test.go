@@ -426,6 +426,122 @@ func TestLoginWithSourceProfileRejectsAnonymousConnectionRedirection(t *testing.
 	}
 }
 
+func TestLoginWithSourceProfileAcceptsPasswordForProfileWithoutOne(t *testing.T) {
+	mock := testutil.NewPluginMock(engine.DatabaseType("Postgres"))
+	var attempted *engine.Credentials
+	mock.IsAvailableFunc = func(_ context.Context, config *engine.PluginConfig) bool {
+		attempted = config.Credentials
+		return true
+	}
+	setEngineMock(t, mock)
+	src.MainEngine.AddLoginProfile(types.DatabaseCredentials{
+		CustomId:  "no-password",
+		Type:      "Postgres",
+		Hostname:  "db.internal",
+		Port:      "5432",
+		Username:  "reader",
+		Database:  "app",
+		Source:    "environment",
+		IsProfile: true,
+	})
+
+	graphQLServer := handler.NewDefaultServer(NewExecutableSchema(Config{Resolvers: &Resolver{}}))
+	graphQLServer.AroundOperations(auth.GraphQLAuthorizationMiddleware)
+	srv := auth.AuthMiddleware(graphQLServer)
+	body := `{"operationName":"LoginWithSourceProfile","query":"mutation LoginWithSourceProfile($profile: SourceProfileLoginInput!) { LoginWithSourceProfile(profile: $profile) { Status } }","variables":{"profile":{"Id":"no-password","Values":[{"Key":"Password","Value":"typed-secret"}]}}}`
+	req := httptest.NewRequest(http.MethodPost, "/api/query", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	srv.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK || !strings.Contains(w.Body.String(), `"Status":true`) {
+		t.Fatalf("expected profile login with supplied password to succeed, got status %d body %s", w.Code, w.Body.String())
+	}
+	if attempted == nil || attempted.Password != "typed-secret" || attempted.Hostname != "db.internal" || attempted.Username != "reader" {
+		t.Fatalf("expected connection with the profile target and the supplied password, got %#v", attempted)
+	}
+}
+
+func TestLoginWithSourceProfileRejectsPasswordWhenProfileStoresOne(t *testing.T) {
+	mock := testutil.NewPluginMock(engine.DatabaseType("Postgres"))
+	connectionAttempts := 0
+	mock.IsAvailableFunc = func(context.Context, *engine.PluginConfig) bool {
+		connectionAttempts++
+		return true
+	}
+	setEngineMock(t, mock)
+	src.MainEngine.AddLoginProfile(types.DatabaseCredentials{
+		CustomId:  "with-password",
+		Type:      "Postgres",
+		Hostname:  "db.internal",
+		Port:      "5432",
+		Username:  "reader",
+		Password:  "server-owned-secret",
+		Database:  "app",
+		Source:    "environment",
+		IsProfile: true,
+	})
+
+	_, err := (&Resolver{}).Mutation().LoginWithSourceProfile(context.Background(), model.SourceProfileLoginInput{
+		ID:     "with-password",
+		Values: []*model.RecordInput{{Key: "Password", Value: "guess"}},
+	})
+	if err == nil || !strings.Contains(err.Error(), "cannot be overridden") {
+		t.Fatalf("expected password override to be rejected, got %v", err)
+	}
+	if connectionAttempts != 0 {
+		t.Fatalf("expected rejection before any connection attempt, got %d attempts", connectionAttempts)
+	}
+}
+
+func TestLoginWithSourceProfileReusesSessionPasswordForSameProfile(t *testing.T) {
+	mock := testutil.NewPluginMock(engine.DatabaseType("Postgres"))
+	var attempted *engine.Credentials
+	mock.IsAvailableFunc = func(_ context.Context, config *engine.PluginConfig) bool {
+		attempted = config.Credentials
+		return true
+	}
+	setEngineMock(t, mock)
+	src.MainEngine.AddLoginProfile(types.DatabaseCredentials{
+		CustomId:  "no-password",
+		Type:      "Postgres",
+		Hostname:  "db.internal",
+		Port:      "5432",
+		Username:  "reader",
+		Database:  "app",
+		Source:    "environment",
+		IsProfile: true,
+	})
+
+	sameProfile := "no-password"
+	otherProfile := "other-profile"
+	sessionFor := func(id *string) context.Context {
+		return context.WithValue(context.Background(), auth.AuthKey_Source, &source.Credentials{
+			ID:         id,
+			SourceType: "Postgres",
+			Values:     map[string]string{"Hostname": "db.internal", "Username": "reader", "Password": "session-secret", "Database": "app"},
+		})
+	}
+	switchDatabase := model.SourceProfileLoginInput{
+		ID:     "no-password",
+		Values: []*model.RecordInput{{Key: "Database", Value: "reporting"}},
+	}
+
+	if _, err := (&Resolver{}).Mutation().LoginWithSourceProfile(sessionFor(&sameProfile), switchDatabase); err != nil {
+		t.Fatalf("expected database switch within the same profile to succeed: %v", err)
+	}
+	if attempted == nil || attempted.Password != "session-secret" || attempted.Database != "reporting" {
+		t.Fatalf("expected the session password to be reused for the same profile, got %#v", attempted)
+	}
+
+	attempted = nil
+	_, _ = (&Resolver{}).Mutation().LoginWithSourceProfile(sessionFor(&otherProfile), switchDatabase)
+	if attempted == nil || attempted.Password != "" {
+		t.Fatalf("expected a different profile's session password not to be reused, got %#v", attempted)
+	}
+}
+
 func TestLoginSourceDoesNotReuseSessionSecretsForConnectionRedirection(t *testing.T) {
 	mock := testutil.NewPluginMock(engine.DatabaseType("Postgres"))
 	var attempted *engine.Credentials

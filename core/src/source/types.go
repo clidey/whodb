@@ -543,4 +543,7 @@ type Profile struct {
 	IsEnvironmentDefined bool
 	Source               string
 	SSLConfigured        bool
+	// RequiresPassword is true when the source type takes a password and the
+	// profile stores none, so the client must collect it at login.
+	RequiresPassword bool
 }

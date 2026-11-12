@@ -434,6 +434,7 @@ type SourceProfile struct {
 	IsEnvironmentDefined bool      `json:"IsEnvironmentDefined"`
 	Source               string    `json:"Source"`
 	SSLConfigured        bool      `json:"SSLConfigured"`
+	RequiresPassword     bool      `json:"RequiresPassword"`
 }
 
 type SourceProfileLoginInput struct {
