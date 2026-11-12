@@ -1,0 +1,79 @@
+---
+title: "Decisions (beta)"
+description: "Ask typed questions about each row of a query with the OpenAI Decisions API, after reviewing exactly what will be sent"
+---
+
+# Decisions (beta)
+
+Decisions answers the same questions about every row a query returns. You describe in chat what you want decided. WhoDB plans a read-only query and a set of typed questions, shows you the rows, and sends them to OpenAI only after you approve. Each answer is a probability, a category with a confidence, or a score on levels you define.
+
+<Warning>
+Decisions sends row data to OpenAI. Regular chat sends only your messages and the database schema. Every Decisions run first shows the rows, the columns and where they go, and nothing is sent until you choose Send.
+</Warning>
+
+## Requirements
+
+- An OpenAI provider in chat, either configured on the server or added in the app. The Decisions toggle appears only for providers that support the Decisions API, which today means OpenAI.
+- An OpenAI API key with access to the Decisions API, which is in public beta. Runs use `gpt-6-luna`, the only model the API accepts.
+- A data source that chat can query with SQL.
+
+## Run decisions
+
+1. In Chat, select an OpenAI provider and a chat model. The chat model plans the run, and `gpt-6-luna` answers the questions. `gpt-6-luna` is also the recommended chat model for planning: in testing it selected fewer columns and declined requests the schema couldn't support, where smaller models guessed.
+2. Turn on **Decisions (beta)** next to the message box.
+3. Describe what to decide about which records. For example: "For each open ticket, which team should handle it, and does the customer ask for a refund?"
+4. Review the card. It shows:
+   - each question, its type, and its categories or levels, with **Show descriptions** for what each one means;
+   - where the rows go: the provider's name and `gpt-6-luna`;
+   - the columns and the number of rows;
+   - the query, and the exact rows that will be sent.
+5. Choose **Send** to start the run, or **Don't send** to discard it. To change the plan instead, reply in chat, for example "leave out the email column" or "add an other category".
+
+During a run, WhoDB sends one request per row, four at a time, and shows its progress. **Stop sending** sends no more rows and stops waiting for the requests in flight. Those rows may already have reached OpenAI and been billed, so they show as **Stopped before an answer**.
+
+## Question types
+
+- **Yes / no**: the answer is the probability, from 0 to 1, that the statement is true for the row.
+- **Category**: picks one of the listed categories and gives a confidence. Plans include an "other" category when the listed ones may not cover every row.
+- **Score**: rates the row on levels ordered from lowest to highest. The score is the probability-weighted average of the level positions, counted from 0, so it can fall between levels. WhoDB also shows the nearest level.
+
+Any question can be refused instead of answered. Refused answers show as **Refused**.
+
+## Read the results
+
+The results appear in chat as a table of the rows you sent, followed by answer columns:
+
+- **Yes / no** questions add the probability.
+- **Category** questions add the category and its confidence.
+- **Score** questions add the score, the nearest level and the confidence.
+
+A **Decision status** column appears when a row failed, showing the error, or when a stopped run left rows that were not sent or not answered. Use **Export** to download the table as CSV.
+
+Answers are model estimates, not facts. Check them before acting on them, and set any thresholds using examples you have labeled yourself.
+
+## What is sent, and where
+
+- **Planning:** the chat model receives your message, the conversation so far and the database schema, the same as regular chat. It never sees row values.
+- **The run:** after you choose Send, each row goes to OpenAI with the questions, as a JSON object of column names and values. Only the rows and columns shown on the card are sent.
+- **Later messages:** the conversation keeps a summary of the plan, meaning the query and the question names, but not the rows or the answers.
+- **Storage:** results are saved with your chat history in the browser, like other query results, and are removed when you clear or delete the chat. WhoDB does not log row data or answers.
+
+OpenAI's data controls apply to everything a run sends. OpenAI states that the Decisions API supports Zero Data Retention for eligible accounts.
+
+## Limits
+
+- A run sends at most 100 rows. If the query returns more, the card says so and includes only the first 100.
+- Each row is a separate request, and OpenAI bills Decisions by input tokens. See OpenAI's pricing for current rates.
+- Runs only read data. A plan whose query is not a supported read-only query is refused before it runs, and answers are never written back to the database.
+- A stopped run can't be resumed. Plan a new run for the remaining rows.
+
+## Turn off Decisions
+
+Server admins can turn Decisions off by setting `WHODB_DISABLE_AI_DECISIONS=true`. The toggle is then hidden for every provider, including those users add in the app, and the server refuses Decisions planning and runs. Regular chat is not affected.
+
+## Troubleshooting
+
+- **There is no Decisions toggle:** the selected provider has no Decisions API, or the server admin has turned Decisions off. Switch to an OpenAI provider, or ask the admin.
+- **A row shows "failed to create decision":** OpenAI rejected that row, and the rest of the message is OpenAI's explanation. Check that your API key has access to the Decisions API.
+- **"Decisions only read data":** the planned query was not a supported read-only query. Rephrase the request, or ask for a simpler query.
+- **Send is disabled:** the provider that planned the run has been removed. Plan the run again.

@@ -314,6 +314,27 @@
 .ce-chat-change-sql code { display: block; overflow-x: auto; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 10px; }
 .ce-chat-change-sql button { display: flex; align-items: center; }
 .ce-chat-change-card > div:last-child { padding: 0 10px; }
+.ce-chat-decision-body { display: flex; flex-direction: column; gap: 10px; padding: 0 10px; font-size: 11px; line-height: 1.5; }
+.ce-chat-decision-body p { margin: 0; }
+.ce-chat-decision-facts { display: flex; flex-direction: column; gap: 2px; margin: 0; padding: 0; list-style: none; color: var(--muted-foreground); font: 500 10px/1.5 'JetBrains Mono', monospace; overflow-wrap: anywhere; }
+.ce-chat-decision-questions { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.ce-chat-decision-questions > li { padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--background); }
+.ce-chat-decision-question-heading { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.ce-chat-decision-question-heading code { font-size: 11px; font-weight: 650; }
+.ce-chat-decision-question-heading b { padding: 1px 5px; border-radius: 3px; background: var(--muted); color: var(--muted-foreground); font: 700 9px/1.3 'JetBrains Mono', monospace; text-transform: uppercase; }
+.ce-chat-decision-questions > li > p { margin-top: 3px; }
+.ce-chat-decision-options { display: flex; flex-direction: column; gap: 2px; margin: 5px 0 0; padding-left: 18px; color: var(--muted-foreground); }
+.ce-chat-decision-options li span { margin-left: 6px; }
+.ce-chat-decision-options-compact { flex-direction: row; flex-wrap: wrap; gap: 4px 10px; padding-left: 0; list-style: none; }
+.ce-chat-decision-descriptions-toggle { width: fit-content; color: var(--muted-foreground); cursor: pointer; }
+.ce-chat-decision-query summary { width: fit-content; color: var(--muted-foreground); cursor: pointer; }
+.ce-chat-decision-query pre { margin-top: 6px; border: 1px solid var(--border); border-radius: 6px; background: var(--background); }
+.ce-chat-decision-body .ce-chat-result-card { width: 100%; }
+.ce-chat-decision-body .ce-chat-result-grid :is(th, td) { word-break: normal; white-space: nowrap; }
+.ce-chat-decision-note { color: var(--muted-foreground); }
+.ce-chat-decision-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.ce-chat-composer .ce-chat-decisions-toggle { gap: 5px; border-radius: 6px; white-space: nowrap; }
+.ce-chat-composer .ce-chat-decisions-toggle [data-whodb-icon] { width: 13px; height: 13px; }
 .ce-provider-sheet { width: min(380px, 100vw); max-width: min(380px, 100vw); }
 .ce-provider-sheet-heading { display: flex; flex-direction: column; gap: 3px; padding-bottom: 15px; border-bottom: 1px solid var(--border); }
 .ce-provider-sheet-heading small { color: var(--muted-foreground); font: 700 10px/1 'JetBrains Mono', monospace; letter-spacing: .13em; text-transform: uppercase; }

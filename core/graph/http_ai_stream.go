@@ -29,7 +29,9 @@ import (
 	"github.com/clidey/whodb/core/baml_client/types"
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/bamlconfig"
+	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/envconfig"
+	"github.com/clidey/whodb/core/src/llm"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/source"
 	"github.com/clidey/whodb/core/src/sqlguard"
@@ -57,6 +59,29 @@ func ceAIChatStreamHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Streaming unsupported", http.StatusInternalServerError)
 		return
 	}
+
+	// Build ExternalModel, resolving credentials from environment if providerId is set
+	creds := envconfig.ResolveProviderCredentials(req.ProviderId, req.Token, req.Endpoint, req.ModelType)
+	modelConfig := &source.ExternalModel{
+		Type:     creds.ModelType,
+		Token:    creds.Token,
+		Model:    req.Model,
+		Endpoint: creds.Endpoint,
+	}
+	var decisionModel string
+	if req.Mode == chatModeDecisions {
+		if env.DisableAIDecisions {
+			SendSSEError(w, flusher, "Decisions are turned off on this server")
+			return
+		}
+		decisionModels := llm.DecisionModels(creds.ModelType)
+		if len(decisionModels) == 0 {
+			SendSSEError(w, flusher, "Decisions are not available for this AI provider")
+			return
+		}
+		decisionModel = decisionModels[0]
+	}
+
 	chatContext, cancel := stdctx.WithTimeout(r.Context(), 90*time.Second)
 	defer cancel()
 
@@ -71,15 +96,6 @@ func ceAIChatStreamHandler(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		SendSSEError(w, flusher, "Source queries are not supported")
 		return
-	}
-
-	// Build ExternalModel, resolving credentials from environment if providerId is set
-	creds := envconfig.ResolveProviderCredentials(req.ProviderId, req.Token, req.Endpoint, req.ModelType)
-	modelConfig := &source.ExternalModel{
-		Type:     creds.ModelType,
-		Token:    creds.Token,
-		Model:    req.Model,
-		Endpoint: creds.Endpoint,
 	}
 
 	SendSSEProgress(w, flusher, "schema", "started")
@@ -107,6 +123,10 @@ func ceAIChatStreamHandler(w http.ResponseWriter, r *http.Request) {
 	log.Debugf("AI Chat Stream: BAML context created")
 
 	callOpts := bamlconfig.SetupAIClient(modelConfig)
+	if req.Mode == chatModeDecisions {
+		runDecisionPlan(chatContext, w, flusher, dbContext, req.Input.Query, callOpts, queryRunner, decisionModel)
+		return
+	}
 	runChatLoop(chatContext, w, flusher, dbContext, req.Input.Query, callOpts, queryRunner)
 }
 

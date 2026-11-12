@@ -1,0 +1,3 @@
+query GetAIDecisionModels($modelType: String!) {
+  AIDecisionModels(modelType: $modelType)
+}

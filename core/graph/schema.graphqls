@@ -477,6 +477,8 @@ type AIChatMessage {
   Result: RowsResult
   Text: String!
   RequiresConfirmation: Boolean!
+  # Set on "decision" messages: the questions to answer about each row of Result.
+  Decision: AIChatDecision
 }
 
 type AIProvider {
@@ -711,6 +713,8 @@ type Query {
   SourceGraph(ref: SourceObjectRefInput): [GraphUnit!]!
   AIProviders: [AIProvider!]!
   AIModel(providerId: String, modelType: String!, token: String): [String!]!
+  # Models that answer decisions for the provider type; empty when it has no Decisions API.
+  AIDecisionModels(modelType: String!): [String!]!
   SettingsConfig: SettingsConfig!
   MockDataMaxRowCount: Int!
   AnalyzeMockDataDependencies(ref: SourceObjectRefInput!, rowCount: Int!, fkDensityRatio: Int): MockDataDependencyAnalysis!
@@ -731,6 +735,110 @@ input GenerateChatTitleInput {
 
 type GenerateChatTitleResponse {
   Title: String!
+}
+
+enum AIDecisionQuestionType {
+  Predicate
+  Choice
+  Score
+}
+
+input AIDecisionChoiceInput {
+  Value: String!
+  Description: String
+}
+
+input AIDecisionLevelInput {
+  Label: String!
+  Description: String
+}
+
+input AIDecisionQuestionInput {
+  Type: AIDecisionQuestionType!
+  Name: String!
+  Instructions: String!
+  # Choice questions only.
+  Choices: [AIDecisionChoiceInput!]
+  # Score questions only, ordered from lowest to highest.
+  Levels: [AIDecisionLevelInput!]
+}
+
+input AIDecisionInput {
+  ModelType: String!
+  ProviderId: String
+  Token: String
+  Model: String!
+  Endpoint: String
+  # Text evidence that every question is answered about.
+  Input: String!
+  Questions: [AIDecisionQuestionInput!]!
+}
+
+enum AIDecisionAnswerType {
+  Predicate
+  Choice
+  Score
+  Refusal
+}
+
+type AIDecisionChoiceProbability {
+  Value: String!
+  Probability: Float!
+}
+
+# Value is the zero-based index of the score level.
+type AIDecisionScoreProbability {
+  Value: Int!
+  Label: String!
+  Probability: Float!
+}
+
+# Predicate answers set Probability; Choice answers set Choice, Confidence, and
+# ChoiceProbabilities; Score answers set Score, Confidence, and ScoreProbabilities;
+# Refusal answers set only Name.
+type AIDecisionAnswer {
+  Type: AIDecisionAnswerType!
+  Name: String!
+  Probability: Float
+  Choice: String
+  Score: Float
+  Confidence: Float
+  ChoiceProbabilities: [AIDecisionChoiceProbability!]
+  ScoreProbabilities: [AIDecisionScoreProbability!]
+}
+
+type AIDecisionResponse {
+  Answers: [AIDecisionAnswer!]!
+}
+
+type AIDecisionChoice {
+  Value: String!
+  Description: String
+}
+
+type AIDecisionLevel {
+  Label: String!
+  Description: String
+}
+
+type AIDecisionQuestion {
+  Type: AIDecisionQuestionType!
+  Name: String!
+  Instructions: String!
+  # Choice questions only.
+  Choices: [AIDecisionChoice!]
+  # Score questions only, ordered from lowest to highest.
+  Levels: [AIDecisionLevel!]
+}
+
+# A planned Decisions run that nothing has been sent for yet. Query is the read-only
+# query whose rows are the evidence; Truncated is set when it returned more rows than
+# one run sends.
+type AIChatDecision {
+  Model: String!
+  Query: String!
+  Questions: [AIDecisionQuestion!]!
+  Truncated: Boolean!
 }
 
 type Mutation {
@@ -761,5 +869,7 @@ type Mutation {
   # AI Chat Mutations
   ExecuteConfirmedSQL(query: String!, operationType: String!): AIChatMessage!
   GenerateChatTitle(input: GenerateChatTitleInput!): GenerateChatTitleResponse!
+  # Answers each question about Input, in order, with the provider's Decisions API (OpenAI only).
+  RunAIDecision(input: AIDecisionInput!): AIDecisionResponse!
 
 }
