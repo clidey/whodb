@@ -52,11 +52,17 @@ def load_config(repo):
 
 
 def owning_repo(path):
+    """Return the repo that owns path: this one or a submodule inside it. Files
+    in any other repository are not ours to run hooks for."""
     directory = path.parent
     while not directory.is_dir():
         directory = directory.parent
     top = git(directory, "rev-parse", "--show-toplevel").strip()
-    return Path(top).resolve() if top else None
+    if not top:
+        return None
+    top = Path(top).resolve()
+    root = ROOT.resolve()
+    return top if top == root or root in top.parents else None
 
 
 def edited_files(payload):
