@@ -7,7 +7,9 @@
 
 set -uo pipefail
 
-repo="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0
+# WHODB_ROOT is set by the forwarding shims used when the session runs inside a
+# submodule, where git rev-parse would resolve to the submodule instead.
+repo="${WHODB_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null)}" || exit 0
 [[ -z "$repo" ]] && exit 0
 
 payload="$(cat 2>/dev/null || true)"
@@ -30,6 +32,17 @@ changed_in() {
 main_changes="$(changed_in "$repo")"
 ee_changes=""
 [[ -d "$repo/ee" ]] && ee_changes="$(changed_in "$repo/ee")"
+
+# Skip when nothing changed since the last passing run.
+pass_file="$repo/.git/.whodb-verify-build-pass"
+tree_state() {
+	git -C "$1" diff HEAD
+	git -C "$1" ls-files -z --others --exclude-standard | (cd "$1" && xargs -0 shasum)
+}
+state="$( { tree_state "$repo"; [[ -d "$repo/ee" ]] && tree_state "$repo/ee"; } 2>/dev/null | shasum | awk '{print $1}')"
+if [[ -f "$pass_file" && "$(cat "$pass_file" 2>/dev/null)" == "$state" ]]; then
+	exit 0
+fi
 
 need_core_go=0 need_ce_ts=0 need_ee_go=0 need_ee_ts=0
 grep -qE '^core/.*\.go$'          <<<"$main_changes" && need_core_go=1
@@ -62,7 +75,10 @@ if [[ "$need_ee_ts" == 1 ]] && command -v pnpm >/dev/null 2>&1; then
 	run_check "EE typecheck" ee/frontend pnpm typecheck
 fi
 
-[[ -z "$errors" ]] && exit 0
+if [[ -z "$errors" ]]; then
+	[[ -n "$state" ]] && printf '%s' "$state" >"$pass_file" 2>/dev/null
+	exit 0
+fi
 
 # Debounce so a genuinely unfixable error can't trap the agent in a loop on
 # harnesses that don't send stop_hook_active: if the identical error set was

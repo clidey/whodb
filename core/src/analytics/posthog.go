@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 
+// Package analytics sends PostHog events from Go senders (server, CLI,
+// desktop). Every capture goes through buildProperties, which stamps the
+// source, edition, environment and version from Config and drops raw path,
+// referer and user_agent values. The install heartbeat in heartbeat.go
+// deliberately bypasses Enabled and buildProperties and sends a fixed payload.
 package analytics
 
 import (

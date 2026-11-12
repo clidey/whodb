@@ -1,0 +1,13 @@
+# Team rules (see AGENTS.md): commits and pushes happen only when the user asks.
+prefix_rule(
+    pattern = ["git", "commit"],
+    decision = "prompt",
+    justification = "Team rule: commit only when the user explicitly asks",
+    match = ["git commit -m msg"],
+)
+prefix_rule(
+    pattern = ["git", "push"],
+    decision = "prompt",
+    justification = "Team rule: push only when the user explicitly asks",
+    match = ["git push origin main"],
+)

@@ -67,6 +67,7 @@ tools/docs-agent/runs/
 *__pycache__
 .codex/*
 !.codex/hooks.json
+!.codex/rules/
 frontend/build-ee
 frontend/.pi-lens
 core/.pi-lens
@@ -84,3 +85,6 @@ sdk/packages/java/target/
 
 # Python SDK local virtualenv (created on demand by scripts/with-venv.sh)
 sdk/packages/python/.venv
+
+# Personal Claude Code settings
+.claude/settings.local.json

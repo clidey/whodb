@@ -125,7 +125,7 @@ whodb --help
 ## Quick Start
 
 For hosted WhoDB platform login and source management, see
-[the hosted platform CLI guide](../.agents/docs/hosted-platform-cli.md).
+[the hosted platform CLI guide](docs/hosted-platform.md).
 For task-oriented MCP catalogs, unattended service-account jobs and security
 ledger access, see [platform operations](docs/platform-operations.md).
 

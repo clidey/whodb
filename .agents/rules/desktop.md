@@ -7,22 +7,22 @@ paths:
 # Desktop App Rules
 
 ## Build System
-- Uses Wails with Go workspace files: `go.work.desktop-ce`
+- Uses Wails with the Go workspace file `go.work.desktop-ce`
 - Frontend is embedded via `//go:embed all:frontend/dist/*`
-- Build flow: `make prepare` → builds frontend → copies to `desktop-*/frontend/dist/` → Wails builds native app
+- `make prepare` builds the frontend with `pnpm run $(FRONTEND_BUILD_CMD)` (`build:ce`) and copies `frontend/build/*` into `desktop-ce/frontend/dist` (build output); Wails then builds the native app
 
 ## Key Commands
 ```bash
 cd desktop-ce && make dev          # Dev mode with hot reload
 cd desktop-ce && make build        # Build for current platform
 cd desktop-ce && make build-all    # All platforms
+cd desktop-ce && make help         # All targets (packaging, signing, server binaries)
 ```
 
 ## Rules
-- Desktop mode detected at runtime via `env.IsDesktopApp()`
+- Desktop mode is detected at runtime with `env.GetIsDesktopMode()`; `WHODB_DESKTOP=true` is set automatically by the app
 - Keyboard shortcuts that have Wails accelerators in `desktop-common/app.go` must be updated separately from frontend shortcuts
-- Do not use build tags for edition control — edition is determined by entry point
-- `WHODB_DESKTOP=true` is set automatically at runtime
+- Do not use build tags for edition control — edition is determined by entry point (`common.RunApp(common.RunConfig{Edition: ...})`)
 
 ## Verification
 ```bash

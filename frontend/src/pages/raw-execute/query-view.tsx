@@ -18,7 +18,7 @@ import {useApolloClient} from "@apollo/client/react";
 import type {FC} from "react";
 import React, { useEffect} from "react";
 import {StorageUnitTable} from "../../components/table";
-import {RawExecuteDocument} from "../../generated/graphql";
+import {RawExecuteDocument} from "@graphql";
 import type {RowsResult} from "@graphql";
 import { Alert, AlertTitle, IconInfo } from '@clidey/ux';
 import {useTranslation} from '@/hooks/use-translation';

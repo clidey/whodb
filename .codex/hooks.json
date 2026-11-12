@@ -48,6 +48,17 @@
             "statusMessage": "Checking UI changes"
           }
         ]
+      },
+      {
+        "matcher": "^apply_patch$|Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$(git rev-parse --show-toplevel)/.agents/hooks/repo-hooks.py\"",
+            "timeout": 300,
+            "statusMessage": "Running repository hooks"
+          }
+        ]
       }
     ],
     "Stop": [
@@ -69,6 +80,29 @@
             "commandWindows": "cmd /c if exist \".agents\\skills\\impeccable\\scripts\\impeccable.cmd\" \".agents\\skills\\impeccable\\scripts\\impeccable.cmd\" hook",
             "timeout": 30,
             "statusMessage": "Design deep pass"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$(git rev-parse --show-toplevel)/.agents/hooks/repo-hooks.py\"",
+            "timeout": 600,
+            "statusMessage": "Running repository checks"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "^apply_patch$|Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$(git rev-parse --show-toplevel)/.agents/hooks/repo-hooks.py\"",
+            "timeout": 30,
+            "statusMessage": "Checking edit rules"
           }
         ]
       }

@@ -19,7 +19,7 @@ import { LoadingPage } from './loading';
 import type { FC, ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { SourceSessionDocument } from '../generated/graphql';
+import { SourceSessionDocument } from '@graphql';
 import { AuthActions } from '../store/auth';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { isDesktopApp } from '../utils/external-links';

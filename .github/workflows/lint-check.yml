@@ -2,15 +2,63 @@ name: Lint, Test & Typecheck
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
   push:
     branches: [main, release]
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
 
 jobs:
+  changes:
+    name: Changed areas
+    if: github.event.pull_request.draft != true
+    runs-on: ubuntu-latest
+    outputs:
+      core: ${{ steps.areas.outputs.core }}
+      cli: ${{ steps.areas.outputs.cli }}
+      frontend: ${{ steps.areas.outputs.frontend }}
+      codegen: ${{ steps.areas.outputs.codegen }}
+      sdk: ${{ steps.areas.outputs.sdk }}
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Map changed files to areas
+        id: areas
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          # Pull requests run only the areas they touch; pushes and manual runs,
+          # and any change under .github/, run everything.
+          files=ALL
+          if [ -n "$BASE" ]; then
+            git fetch --no-tags --depth=1 origin "$BASE"
+            files="$(git diff --name-only "$BASE" HEAD)"
+          fi
+          area() {
+            if [ "$files" = ALL ] || grep -qE "^\.github/|$2" <<<"$files"; then echo "$1=true"; else echo "$1=false"; fi
+          }
+          {
+            area core '^(core/|go\.work)'
+            area cli '^(cli/|core/)'
+            area frontend '^(frontend/|core/graph/)'
+            area codegen '^(core/graph/|core/go\.(mod|sum)|frontend/)'
+            area sdk '^(sdk/|core/graph/)'
+          } >> "$GITHUB_OUTPUT"
+
   go-lint:
+    needs: changes
+    if: needs.changes.outputs.core == 'true'
     name: Go Lint (Core)
     runs-on: ubuntu-latest
     steps:
@@ -35,6 +83,8 @@ jobs:
           ./custom-gcl run ./...
 
   cli-lint:
+    needs: changes
+    if: needs.changes.outputs.cli == 'true'
     name: Go Lint (CLI)
     runs-on: ubuntu-latest
     steps:
@@ -58,6 +108,8 @@ jobs:
           golangci-lint run --config .golangci.yml ./...
 
   go-vet:
+    needs: changes
+    if: needs.changes.outputs.core == 'true'
     name: Go Vet
     runs-on: ubuntu-latest
     steps:
@@ -72,6 +124,8 @@ jobs:
         run: cd core && go vet ./...
 
   go-build:
+    needs: changes
+    if: needs.changes.outputs.core == 'true'
     name: Go Build
     runs-on: ubuntu-latest
     steps:
@@ -86,6 +140,8 @@ jobs:
         run: cd core && go build ./cmd/whodb
 
   go-test:
+    needs: changes
+    if: needs.changes.outputs.core == 'true'
     name: Go Test (-race)
     runs-on: ubuntu-latest
     steps:
@@ -104,6 +160,8 @@ jobs:
           go test -race -count=10 ./src/... ./graph/...
 
   cli-test:
+    needs: changes
+    if: needs.changes.outputs.cli == 'true'
     name: Go Test (CLI)
     runs-on: ubuntu-latest
     steps:
@@ -122,6 +180,8 @@ jobs:
           go test ./cmd/... ./internal/... ./pkg/...
 
   frontend-build:
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
     name: Frontend Build
     runs-on: ubuntu-latest
     steps:
@@ -144,7 +204,46 @@ jobs:
       - name: Build
         run: cd frontend && pnpm build:ce
 
+  graphql-codegen-drift:
+    needs: changes
+    if: needs.changes.outputs.codegen == 'true'
+    name: GraphQL Codegen Up To Date
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: core/go.mod
+
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          package_json_file: frontend/package.json
+          run_install: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install
+        run: cd frontend && pnpm install --frozen-lockfile
+
+      - name: Regenerate and compare
+        run: |
+          (cd core && go generate .)
+          (cd frontend && pnpm run generate)
+          git diff --exit-code -- core/graph frontend/src/generated
+
   sdk-check:
+    needs: changes
+    if: needs.changes.outputs.sdk == 'true'
     name: SDK Generate Check & Tests
     runs-on: ubuntu-latest
     steps:
@@ -180,7 +279,7 @@ jobs:
 
       # Installs the SDK's own dependencies from pyproject.toml (httpx, plus
       # ruff via the dev extra) so versions have one source of truth that
-      # dependabot already watches.
+      # Renovate already watches.
       - name: Install Python deps
         run: python3 -m pip install --user -e 'sdk/packages/python[dev]'
 
@@ -280,6 +379,8 @@ jobs:
         run: cd sdk && node tools/conformance-runner.mjs --lang java
 
   frontend-lint:
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
     name: Frontend Lint & Typecheck
     runs-on: ubuntu-latest
     steps:

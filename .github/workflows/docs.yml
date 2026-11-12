@@ -2,6 +2,7 @@ name: Documentation (CE)
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - 'docs/**'
       - '.nvmrc'
@@ -24,6 +25,7 @@ concurrency:
 jobs:
   build:
     name: Build CE documentation
+    if: github.event.pull_request.draft != true
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

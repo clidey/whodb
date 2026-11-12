@@ -12,11 +12,7 @@ cd core && ./lint.sh && go build ./cmd/whodb
 ```
 
 ## SQL Security
-- Never `fmt.Sprintf` with user input — use `db.Raw("... WHERE x = ?", val)` or GORM builder
-- For identifiers, configure `GormPlugin.ConfigureIdentifierQuoting(...)` and
-  render raw schema/table/column components through `core/src/sqlident`; never
-  concatenate an identifier or rely on `StorageUnitExists` as the SQL safety boundary
-- Always close `*sql.Rows` with `defer rows.Close()`
+- Values are parameters; identifiers go through `core/src/sqlident` after `GormPlugin.ConfigureIdentifierQuoting(...)`. Never concatenate an identifier or treat `StorageUnitExists` as the safety boundary. See `.agents/docs/sql-security.md`.
 
 ## Plugin Patterns
 - Use `plugins.WithConnection(config, p.DB, func(db *gorm.DB) (...) { ... })` for all DB operations
@@ -25,7 +21,10 @@ cd core && ./lint.sh && go build ./cmd/whodb
 - Self-register in `init()` via `engine.RegisterPlugin(...)` — add blank import in entry point
 
 ## Code Style
-- `any` not `interface{}`
 - `env` package: pure declarations only (no `log` import). Parsing + error reporting → `envconfig`
 - Delete build binaries after testing
 - Never log passwords, API keys, tokens, or connection strings
+
+## Documentation
+- Exported functions and types need a doc comment that starts with the name. The `revive` `exported` check is disabled, so review this by hand.
+- Comments explain why: edge cases, database quirks, security or performance trade-offs. Don't restate the code or annotate each item in a data list.

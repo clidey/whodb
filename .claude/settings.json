@@ -1,15 +1,10 @@
 {
+  "attribution": {
+    "commit": "",
+    "pr": "",
+    "sessionUrl": false
+  },
   "hooks": {
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"$(git rev-parse --show-toplevel)/.agents/hooks/session-context.sh\""
-          }
-        ]
-      }
-    ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write",
@@ -27,6 +22,16 @@
             "command": "bash \"$(git rev-parse --show-toplevel)/.agents/hooks/auto-graphql-codegen.sh\""
           }
         ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$(git rev-parse --show-toplevel)/.agents/hooks/repo-hooks.py\"",
+            "timeout": 300
+          }
+        ]
       }
     ],
     "Stop": [
@@ -37,7 +42,36 @@
             "command": "bash \"$(git rev-parse --show-toplevel)/.agents/hooks/verify-build.sh\""
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$(git rev-parse --show-toplevel)/.agents/hooks/repo-hooks.py\"",
+            "timeout": 600
+          }
+        ]
       }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$(git rev-parse --show-toplevel)/.agents/hooks/repo-hooks.py\"",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "ask": [
+      "Bash(git commit *)",
+      "Bash(git * commit *)",
+      "Bash(git push *)",
+      "Bash(git * push *)"
     ]
   }
 }

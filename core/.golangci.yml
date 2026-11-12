@@ -56,6 +56,16 @@ linters:
           - forbidigo
         path: _test\.go$
         text: "fmt\\.Print"
+      # Database-specific code may name database types; shared code may not.
+      - linters:
+          - forbidigo
+        path: (^|/)src/(plugins|providers|dbcatalog|sourcecatalog|engine)/|_test\.go$
+        text: "DatabaseType_"
+      # Existing violation: query languages should come from the source spec.
+      - linters:
+          - forbidigo
+        path: src/source/adapters/database_connector\.go$
+        text: "DatabaseType_(MongoDB|Redis)"
       # Allow fmt.Print* in CLI/main packages
       - linters:
           - forbidigo
@@ -134,6 +144,8 @@ linters:
         # Ban fmt.Sprintf patterns that assemble SQL keywords — catches SQL injection attempts
         - pattern: 'fmt\.Sprintf\(.*(%[^v].*(?i)(INSERT\s+INTO|SELECT\s+.*FROM|UPDATE\s+\w+\s+SET|DELETE\s+FROM|CREATE\s+(TABLE|DATABASE|INDEX)|DROP\s+(TABLE|DATABASE|INDEX)|ALTER\s+TABLE)).*'
           msg: "DO NOT use fmt.Sprintf to assemble SQL queries. Use parameterized queries or GORM builders instead. See .agents/docs/sql-security.md"
+        - pattern: '^engine\.DatabaseType_\w+$'
+          msg: "Shared code must not branch on a database type; put the behaviour in the plugin (see .agents/rules/plugin-architecture.md)"
     revive:
       rules:
         - name: exported
@@ -158,6 +170,7 @@ linters:
         - name: unexported-return
         - name: unnecessary-stmt
         - name: unreachable-code
+        - name: use-any
     gosec:
       excludes:
         # G104: Errors unhandled — too many false positives

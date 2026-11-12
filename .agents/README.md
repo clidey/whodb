@@ -1,36 +1,55 @@
 # Agent Instructions Index
 
-This directory contains shared agent guidance for WhoDB. It is intentionally tool-neutral so Codex, Claude Code, opencode, Pi, and other coding agents can use the same source of truth.
+Shared, tool-neutral agent guidance for WhoDB (Codex, Claude Code, and other
+agents). Start with `../AGENTS.md`; open only what matches the task. If `ee/` is
+present, `ee/.agents/README.md` indexes the EE overlay.
 
-Start with `../AGENTS.md`. Use this index only to find the one or two deeper references that match the task.
-
-## Directory Layout
+## Layout
 
 | Path | Purpose |
 |------|---------|
-| `.agents/docs/` | Detailed runbooks and reference material for specific systems or policies. |
-| `.agents/rules/` | Domain-specific rules for backend, frontend, GraphQL, localization, and E2E work. |
-| `.agents/workflows/` | Step-by-step procedures for recurring implementation, review, handoff, and research tasks. |
+| `.agents/rules/` | Area rules with `paths:` frontmatter. Claude Code loads one when it works on matching files (through a symlink under `.claude/`); Codex users read the one for their area. |
+| `.agents/skills/` | Procedures (`<name>/SKILL.md`) plus installed third-party skills. Codex reads this directory; Claude Code reads it through symlinks under `.claude/`. Both list skills by `description` and load the body when a task matches. |
+| `.agents/docs/` | `sql-security.md` only (linked from the golangci lint message). |
+| `.agents/hooks/` | Format, lint, codegen and build-check hooks wired into `.claude/settings.json` and `.codex/hooks.json`. |
 
-If `ee/` is present, also read `ee/AGENTS.md` for Enterprise Edition boundaries and use `ee/.agents/` for EE-specific rules, workflows, and docs.
+## Rules
 
-## Common Workflows
+| Rule | Applies to |
+|------|-----------|
+| `go-backend.md` | Go in `core/` and `cli/`: SQL safety, plugin context, doc comments |
+| `plugin-architecture.md` | Plugins, source contracts, catalogs: no database-type switches |
+| `graphql.md` | Schema and resolvers: source-first API, operation authorization |
+| `react-frontend.md` | Frontend: `@clidey/ux`, GraphQL hooks, JSDoc, test ids |
+| `localization.md` | `t()` keys, `en_US` only; missing keys render silently |
+| `e2e-tests.md` | Playwright conventions; adding an E2E database |
+| `analytics.md` | PostHog contract: choke points, privacy, heartbeat |
+| `cli.md` | CLI: plugins directly, identity, output, TUI gotchas |
+| `desktop.md` | Wails build flow, `GetIsDesktopMode`, accelerators |
+| `ci-cd.md` | Release triggers, SHA pins, arm/riscv64 stub rule |
 
-| Task | Read |
-|------|------|
-| Add a database plugin | `.agents/workflows/new-plugin.md` |
-| Add a GraphQL field end-to-end | `.agents/workflows/new-graphql-field.md` |
-| Add a frontend page | `.agents/workflows/new-frontend-page.md` |
-| Add translation keys | `.agents/workflows/add-translation.md` |
-| Add CLI behavior | `.agents/workflows/cli-feature.md` |
-| Prepare or consume a handoff | `.agents/workflows/task-handoff.md` |
-| Prove claims about external behavior | `.agents/workflows/research-proof.md` |
-| Verify before finishing | `.agents/workflows/review-checklist.md` |
+## Procedure skills
 
-## Usage Rules
+| Task | Skill |
+|------|-------|
+| Add a database plugin or source-first connector | `.agents/skills/new-plugin/SKILL.md` |
+| Add a GraphQL field end-to-end | `.agents/skills/new-graphql-field/SKILL.md` |
+| Add a frontend page | `.agents/skills/new-frontend-page/SKILL.md` |
+| Add translation keys | `.agents/skills/add-translation/SKILL.md` |
+| Add CLI behavior | `.agents/skills/cli-feature/SKILL.md` |
+| Add or modify desktop functionality | `.agents/skills/desktop-feature/SKILL.md` |
+| Add a platform-constrained HTTP handler | `.agents/skills/platform-constrained-handler/SKILL.md` |
+| Verify before finishing | `.agents/skills/review-checklist/SKILL.md` |
+| Prove claims about external behavior | `.agents/skills/research-proof/SKILL.md` |
+| Prepare or consume a handoff | `.agents/skills/task-handoff/SKILL.md` |
 
-- Do not read the whole `.agents` tree by default. Start with `AGENTS.md`, then open only the relevant rule, workflow, or doc.
-- Keep tool-specific instructions in adapter files such as `CLAUDE.md`; keep shared behavior here.
-- Do not move user-facing product documentation into this directory. Public docs belong under `docs/`.
-- When adding new agent guidance, prefer a focused workflow or rule over expanding always-loaded instructions.
-- After changing agent instructions, run `dev/check-agent-instructions.sh`.
+To add a procedure, create `.agents/skills/<name>/SKILL.md` with `name` and a
+`description` that says when to use it, then link it for Claude Code:
+`ln -s ../../.agents/skills/<name> .claude/skills/<name>` from the repo root.
+
+## Usage
+
+- Keep guidance where it is used: area gotchas in rules, procedures in skills,
+  package facts in Go package comments. Don't restate what the code shows.
+- Name files by their path from the repo root; the checker verifies they exist.
+- After changing agent guidance, run `dev/check-agent-instructions.sh`.

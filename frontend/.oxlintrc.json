@@ -51,6 +51,23 @@
         "typescript/no-floating-promises": "error",
         "typescript/no-misused-promises": "error",
 
+        // Imports: GraphQL operations live in .graphql files and are imported through
+        // the @graphql alias; @clidey/ux is imported from its entry point (or its
+        // public icons export), with its cn() and toast().
+        "no-restricted-imports": ["error", {
+          "paths": [
+            { "name": "@apollo/client", "importNames": ["gql"], "message": "Define operations in .graphql files and import the generated hooks from @graphql." },
+            { "name": "graphql-tag", "message": "Define operations in .graphql files and import the generated hooks from @graphql." },
+            { "name": "tailwind-merge", "message": "Use cn() from @clidey/ux." },
+            { "name": "clsx", "message": "Use cn() from @clidey/ux." },
+            { "name": "sonner", "message": "Use toast() from @clidey/ux." }
+          ],
+          "patterns": [
+            { "group": ["@clidey/ux/**", "!@clidey/ux/icons", "!@clidey/ux/icons/**"], "message": "Import from @clidey/ux (or @clidey/ux/icons), never from its internal paths." },
+            { "group": ["@/generated/**", "**/generated/graphql", "**/generated/schema-types"], "message": "Import generated GraphQL code from the @graphql alias." }
+          ]
+        }],
+
         // TypeScript — TODO: enable once any types are replaced with proper types
         "typescript/no-unnecessary-condition": "off",
         "typescript/no-unsafe-assignment": "off",
