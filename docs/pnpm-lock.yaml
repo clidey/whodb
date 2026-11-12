@@ -167,8 +167,8 @@ importers:
   .:
     devDependencies:
       '@clidey/dory':
-        specifier: 1.11.0
-        version: 1.11.0(@algolia/client-search@5.61.0)(@babel/core@7.29.13(supports-color@8.1.1))(algoliasearch@5.61.0)(esbuild@0.28.2)(jiti@2.7.0)(react-dom@19.3.1(react@19.3.1))(react-is@19.3.1)(react@19.3.1)(redux@5.0.1)(rollup@4.67.5)(sass@1.107.0)(search-insights@2.17.3)(supports-color@8.1.1)
+        specifier: 1.13.0
+        version: 1.13.0(@algolia/client-search@5.61.0)(@babel/core@7.29.13(supports-color@8.1.1))(algoliasearch@5.61.0)(esbuild@0.28.2)(jiti@2.7.0)(react-dom@19.3.1(react@19.3.1))(react-is@19.3.1)(react@19.3.1)(redux@5.0.1)(rollup@4.67.5)(sass@1.107.0)(search-insights@2.17.3)(supports-color@8.1.1)
 
 packages:
 
@@ -359,8 +359,8 @@ packages:
   '@chevrotain/utils@13.2.0':
     resolution: {integrity: sha512-SzKYY68rseOrb9KILVzPsl6SjkQtdWw01SRGB5aCVI5kFcHltQsOYV3JB0Ffst72DgkvHCyDQ0NLwxtmCCf97Q==}
 
-  '@clidey/dory@1.11.0':
-    resolution: {integrity: sha512-nSBCKi0rJ07/dhffU/zoBpfhSyT0pCIH3s4b22qUuLhSwC/ZE1g0s4/hlXCcdtV5A2wWp5vk//NsH6qoKcVdXA==}
+  '@clidey/dory@1.13.0':
+    resolution: {integrity: sha512-/bjNQAVXDV/a6eDjxAZgckTzVJhbS29VELY/rKyTtPP9sA8ofgBpZ2TPnWYVn9quhnBaE+4rLOdS7wKBKQNJGw==}
     hasBin: true
 
   '@clidey/ux@1.6.4':
@@ -3976,7 +3976,7 @@ snapshots:
 
   '@chevrotain/utils@13.2.0': {}
 
-  '@clidey/dory@1.11.0(@algolia/client-search@5.61.0)(@babel/core@7.29.13(supports-color@8.1.1))(algoliasearch@5.61.0)(esbuild@0.28.2)(jiti@2.7.0)(react-dom@19.3.1(react@19.3.1))(react-is@19.3.1)(react@19.3.1)(redux@5.0.1)(rollup@4.67.5)(sass@1.107.0)(search-insights@2.17.3)(supports-color@8.1.1)':
+  '@clidey/dory@1.13.0(@algolia/client-search@5.61.0)(@babel/core@7.29.13(supports-color@8.1.1))(algoliasearch@5.61.0)(esbuild@0.28.2)(jiti@2.7.0)(react-dom@19.3.1(react@19.3.1))(react-is@19.3.1)(react@19.3.1)(redux@5.0.1)(rollup@4.67.5)(sass@1.107.0)(search-insights@2.17.3)(supports-color@8.1.1)':
     dependencies:
       '@algolia/autocomplete-core': 1.19.12(@algolia/client-search@5.61.0)(algoliasearch@5.61.0)(search-insights@2.17.3)
       '@clidey/ux': 1.6.4(react-dom@19.3.1(react@19.3.1))(react-is@19.3.1)(react@19.3.1)(redux@5.0.1)
@@ -4004,11 +4004,13 @@ snapshots:
       react-highlight-words: 1.0.0(react@19.3.1)
       rehype-slug: 6.0.0
       remark-gfm: 4.0.1(supports-color@8.1.1)
+      remark-parse: 11.0.0(supports-color@8.1.1)
       sass-embedded: 1.107.0
       sirv: 3.0.2
       tailwindcss: 4.3.3
       tsx: 4.23.15
       typescript: 7.0.2
+      unified: 11.0.5
       unist-util-visit: 5.2.0
       vite: 8.3.5(esbuild@0.28.2)(jiti@2.7.0)(sass-embedded@1.107.0)(sass@1.107.0)(tsx@4.23.15)
       wouter-preact: 3.13.0(preact@11.1.0)

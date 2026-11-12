@@ -10,7 +10,7 @@
     "preview": "dory preview"
   },
   "devDependencies": {
-    "@clidey/dory": "1.11.0"
+    "@clidey/dory": "1.13.0"
   },
   "packageManager": "pnpm@12.15.0"
 }
