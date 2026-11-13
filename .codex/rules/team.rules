@@ -29,6 +29,8 @@ prefix_rule(pattern = ["helm", "install"], decision = "forbidden", justification
 prefix_rule(pattern = ["helm", "uninstall"], decision = "forbidden", justification = "Agents don't change clusters; prepare the command and hand it to the user.")
 prefix_rule(pattern = ["helm", "rollback"], decision = "forbidden", justification = "Agents don't change clusters; prepare the command and hand it to the user.")
 prefix_rule(pattern = ["helm", "test"], decision = "forbidden", justification = "This runs test pods in a cluster; hand it to the user.")
+prefix_rule(pattern = ["pkill"], decision = "forbidden", justification = "Stop only processes you started, by their saved PID (`kill <pid>`); never pkill or killall, which match other people's processes.")
+prefix_rule(pattern = ["killall"], decision = "forbidden", justification = "Stop only processes you started, by their saved PID (`kill <pid>`); never pkill or killall, which match other people's processes.")
 prefix_rule(pattern = ["npm"], decision = "forbidden", justification = "Use pnpm (pnpm install / add / exec / dlx / view), never npm.")
 prefix_rule(pattern = ["npx"], decision = "forbidden", justification = "Use pnpm dlx or pnpm exec, never npx.")
 prefix_rule(pattern = ["yarn"], decision = "forbidden", justification = "Use pnpm, never yarn.")

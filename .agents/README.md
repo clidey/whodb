@@ -10,7 +10,7 @@ present, `ee/.agents/README.md` indexes the EE overlay.
 |------|---------|
 | `.agents/rules/` | Area rules with `paths:` frontmatter. Claude Code loads one when it works on matching files (through a symlink under `.claude/`); Codex users read the one for their area. |
 | `.agents/skills/` | Procedures (`<name>/SKILL.md`) plus installed third-party skills. Codex reads this directory; Claude Code reads it through symlinks under `.claude/`. Both list skills by `description` and load the body when a task matches. |
-| `.agents/docs/` | `sql-security.md` only (linked from the golangci lint message). |
+| `.agents/docs/` | `sql-security.md` (linked from the golangci lint message) and `security-advisories.md` (advisory triage). |
 | `.agents/hooks/` | Format, lint, codegen and build-check hooks wired into `.claude/settings.json` and `.codex/hooks.json`. |
 
 ## Rules
@@ -24,9 +24,9 @@ present, `ee/.agents/README.md` indexes the EE overlay.
 | `localization.md` | `t()` keys, `en_US` only; missing keys render silently |
 | `e2e-tests.md` | Playwright conventions; adding an E2E database |
 | `analytics.md` | PostHog contract: choke points, privacy, heartbeat |
-| `cli.md` | CLI: plugins directly, identity, output, TUI gotchas |
+| `cli.md` | CLI: plugins directly, identity, output, TUI gotchas, hosted MCP |
 | `desktop.md` | Wails build flow, `GetIsDesktopMode`, accelerators |
-| `ci-cd.md` | Release triggers, SHA pins, arm/riscv64 stub rule |
+| `ci-cd.md` | Release triggers, SHA pins, arm/riscv64 stub rule, MAS certs |
 
 ## Procedure skills
 

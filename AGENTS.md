@@ -12,6 +12,7 @@ These apply in every clidey repository, for people and agents alike.
 
 - **Commits:** ask once before the first commit. Once the user says yes, keep committing that work without asking again; push only when they've asked for it.
 - **No AI attribution, anywhere:** commits, PRs, issues, comments and releases carry no `Co-Authored-By:` for Claude, Codex or any other agent, and no "Generated with" lines.
+- **External posts:** before posting anything outside this machine (GitHub issues, PRs, comments and reviews, advisory comments or edits, chat or email), show the user the exact text and wait for a yes.
 - **Never, whatever the instruction:** publish packages or releases, push images, deploy to UAT or production, or run anything against production. Build images and run build scripts only locally, to test. Prepare the command and hand it to the user.
 - **Cluster and cloud commands:** read-only `kubectl`, `helm` and `gcloud` commands run without asking, and in UAT so do day-to-day operations: restarting a rollout, deleting pods, config maps and jobs, scaling, `exec`, `cp` and port-forwarding. Never anything against production. Anything else that writes, deletes or shows secret values (including `apply`, `patch`, `set` and rollbacks), and anything that writes to a WhoDB organisation: show the exact command and wait for a yes.
 - **Branches and worktrees:** never create a branch or worktree, or switch branches, unless the user asked. If the work seems to need one, ask first; this is a required question.
@@ -59,6 +60,6 @@ bash dev/run-cli-tests.sh              # CLI tests (lint: cd cli && make lint)
 
 - Plugins self-register in `init()` via `engine.RegisterPlugin`; the entry point's blank imports choose which register.
 - Import cycle `src` → `router` → `graph` → `src`: `Run()` lives in `core/src/app/`; never import router or graph from `core/src/`.
-- CE HTTP routes are set up in `core/graph` (`SetupHTTPServer`); add-ons register theirs with `graph.RegisterHTTPRoutes`.
+- CE HTTP routes are set up in `core/graph` (`SetupHTTPServer`); add-ons register theirs with `graph.RegisterHTTPRoutes`. GraphQL is at `/api/query` (no `/graphql`); readiness is `GET /health` (no `/api/health`).
 - The frontend renders from registries (`registerComponent`, `registerSourceTypeOverrides`, `registerIcons`, `registerSourceUtilities`); unregistered things don't show.
 - `sdk/` is its own pnpm project; its wire cores are generated from `sdk/spec/`.

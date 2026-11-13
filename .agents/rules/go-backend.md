@@ -24,6 +24,7 @@ cd core && ./lint.sh && go build ./cmd/whodb
 - `env` package: pure declarations only (no `log` import). Parsing + error reporting → `envconfig`
 - Delete build binaries after testing
 - Never log passwords, API keys, tokens, or connection strings
+- The server binds all interfaces (`core/src/app/app.go`) and `core/Dockerfile` runs as root, on purpose: a loopback default and a non-root image were tried and dropped because they break existing access and bind-mount ownership. Change either only with a migration plan.
 
 ## Documentation
 - Exported functions and types need a doc comment that starts with the name. The `revive` `exported` check is disabled, so review this by hand.

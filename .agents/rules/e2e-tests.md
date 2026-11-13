@@ -18,6 +18,7 @@ cd frontend && pnpm screenshot              # Docs screenshots (excluded from no
 ## Key Conventions
 - Never write to localStorage directly for Redux state — use the settings page UI (redux-persist rehydration race)
 - Use fixture config for conditional tests: `db.sidebar?.showsDatabaseDropdown`, `db.features`, etc.
+- `hasFeature()` (`frontend/e2e/support/database-config.mjs`) treats a missing key as unsupported. For features on by default, gate on `db.features?.x !== false`.
 - Use whodb helpers: `whodb.data()`, `whodb.setTablePageSize()`, `whodb.goto()`
 - Filter by fixture capabilities, not hardcoded type names
 - A spec that changes data must be listed in `MUTATING_TESTS` in `frontend/e2e/playwright.config.mjs`; those run after the read-only specs, with no retries.
@@ -34,3 +35,4 @@ cd frontend && pnpm screenshot              # Docs screenshots (excluded from no
 - Databases run one after another with one worker, because they share backend state. Each gets its own Playwright invocation with `DATABASE=<name>`, and the blob reports merge into one HTML report.
 - Adding a database means a fixture in `frontend/e2e/fixtures/databases/`, a service in `dev/docker-compose.yml`, and entries in `DEFAULT_DATABASES` and `DEFAULT_CATEGORIES` in `dev/run-e2e.sh` and the `ALL` list in `.github/workflows/e2e-ce.yml`.
 - SSL variants live under the compose `ssl` profile; SQLite uses `core/tmp/e2e_test.db` instead of a container.
+- Never start a second E2E run while one is active: `dev/setup-e2e.sh` runs `docker compose up -d --remove-orphans` on the whole `dev` compose project and recreates every e2e container. `dev/docker-compose.screenshot.yaml` is in the same project and uses the same ports (5432), so stop the screenshot stack first, and any other stack on those ports.
