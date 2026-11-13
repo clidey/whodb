@@ -34,7 +34,7 @@ prefix_rule(pattern = ["npx"], decision = "forbidden", justification = "Use pnpm
 prefix_rule(pattern = ["yarn"], decision = "forbidden", justification = "Use pnpm, never yarn.")
 prefix_rule(pattern = ["bun"], decision = "forbidden", justification = "Use pnpm, never bun.")
 prefix_rule(pattern = ["bunx"], decision = "forbidden", justification = "Use pnpm dlx, never bunx.")
-prefix_rule(pattern = ["kubectl", ["apply", "create", "delete", "patch", "replace", "edit", "scale", "autoscale", "set", "label", "annotate", "taint", "cordon", "uncordon", "drain", "expose", "run", "exec", "cp", "attach", "debug", "port-forward", "proxy"]], decision = "forbidden", justification = "This kubectl command writes or deletes; show the user the exact command and wait for them to run it.")
+prefix_rule(pattern = ["kubectl", ["apply", "create", "patch", "replace", "edit", "autoscale", "set", "label", "annotate", "taint", "cordon", "uncordon", "drain", "expose", "run", "proxy"]], decision = "forbidden", justification = "This kubectl command writes or deletes; show the user the exact command and wait for them to run it.")
 
 # Read-only kubectl, helm and gcloud commands run. Commands that write: show the
 # user the exact command and wait (AGENTS.md, Team Rules).
