@@ -14,6 +14,7 @@ These apply in every clidey repository, for people and agents alike.
 - **No AI attribution, anywhere:** commits, PRs, issues, comments and releases carry no `Co-Authored-By:` for Claude, Codex or any other agent, and no "Generated with" lines.
 - **Never, whatever the instruction:** publish packages or releases, push images, deploy to UAT or production, or run anything against production. Build images and run build scripts only locally, to test. Prepare the command and hand it to the user.
 - **Cluster and cloud commands:** read-only `kubectl`, `helm` and `gcloud` commands run without asking (never against production). Anything that writes, deletes or shows secret values, and anything that writes to a WhoDB organisation: show the exact command and wait for a yes.
+- **Branches and worktrees:** never create a branch or worktree, or switch branches, unless the user asked. If the work seems to need one, ask first; this is a required question.
 - **Untracked files:** ask before deleting untracked or gitignored files; they often hold secrets or local state.
 - **pnpm only:** never npm, npx, yarn or bun.
 - **Stay in the workspace:** use only the clones in the workspace; never read or run checkouts elsewhere, such as old ones in `~/Documents`.
