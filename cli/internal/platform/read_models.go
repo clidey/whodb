@@ -277,6 +277,10 @@ type FunctionDependency struct {
 
 // Function describes one hosted ontology function.
 type Function struct {
+	ExecutionMode       string                   `json:"executionMode"`
+	LiveBehavior        string                   `json:"liveBehavior"`
+	EdgeRunnerID        string                   `json:"edgeRunnerId"`
+	CurrentRunStatus    *string                  `json:"currentRunStatus"`
 	ID                  string                   `json:"id"`
 	ProjectID           string                   `json:"projectId"`
 	Name                string                   `json:"name"`

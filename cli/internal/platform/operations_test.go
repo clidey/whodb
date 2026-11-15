@@ -27,7 +27,14 @@ import (
 
 func TestPlatformOperationsMatchEESchema(t *testing.T) {
 	schema := loadPlatformSchema(t)
-	for name, operation := range platformOperations {
+	operations := make(map[string]string)
+	for name, document := range platformOperations {
+		operations[name] = document
+	}
+	for name, document := range platformQuerySpecs {
+		operations[name] = document
+	}
+	for name, operation := range operations {
 		t.Run(name, func(t *testing.T) {
 			if _, err := gqlparser.LoadQuery(schema, operation); err != nil {
 				t.Fatalf("operation no longer matches platform schema: %v", err)

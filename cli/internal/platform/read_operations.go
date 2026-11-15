@@ -160,6 +160,10 @@ const functionFields = `
   timeoutSeconds
   memory
   cpu
+  executionMode
+  liveBehavior
+  edgeRunnerId
+  currentRunStatus
   createdBy
   createdAt
   updatedAt

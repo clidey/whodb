@@ -43,11 +43,11 @@ func profileAllowsTool(profile, name string) bool {
 	var names string
 	switch profile {
 	case "data":
-		names = "sources source_types source_fields source_objects source_columns source_rows source_constraints source_content source_workflow datasets dataset dataset_preview ontologies ontology ontology_describe ontology_rows ontology_query ontology_aggregate ontology_stats ontology_follow_link ontology_record_capabilities data_model_summary read_workflow"
+		names = "sources source_types source_fields source_objects source_columns source_rows source_constraints source_content source_workflow datasets dataset dataset_preview ontologies ontology ontology_describe ontology_rows ontology_query ontology_aggregate ontology_stats ontology_follow_link ontology_record_capabilities data_model_summary analysis_artifact analysis_artifact_page read_workflow"
 	case "functions":
-		names = "functions function function_runs function_wait runtime_readiness ai_providers secrets ontologies ontology_describe create update delete action restore object_versions"
+		names = "edge_runners edge_run edge_runs edge_schedules functions function function_runs function_wait runtime_readiness ai_providers secrets ontologies ontology_describe create update delete action restore object_versions"
 	case "workspace":
-		names = "workspace_summary workspace_map resource_graph project_health next_actions build_plan gap_analysis project_resources project_create project_rename project_delete service_accounts resource_access resource_permissions apps packages package_installations org_resources org_members teams team_members security_audit"
+		names = "workspace_summary workspace_map resource_graph project_health next_actions build_plan gap_analysis project_resources project_create project_rename project_delete service_accounts resource_access resource_permissions apps packages package_installations org_resources org_members teams team_members app_access project_transform_runs agent_sessions agent_session analysis_artifact analysis_artifact_page usage entitlements feature_access security_audit"
 	}
 	return slices.Contains(strings.Fields(names), name)
 }

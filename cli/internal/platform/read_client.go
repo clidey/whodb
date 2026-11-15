@@ -345,7 +345,7 @@ func (c *Client) Functions(ctx context.Context, projectID string, fields []strin
 	var resp struct {
 		ProjectFunctions []Function `json:"ProjectFunctions"`
 	}
-	err := c.graphQL(ctx, operationProjectFunctionsForFields(fields), map[string]any{"projectId": projectID}, &resp)
+	err := c.graphQL(ctx, operationProjectFunctionsForFields(c.functionReadFields(fields)), map[string]any{"projectId": projectID}, &resp)
 	return resp.ProjectFunctions, err
 }
 
@@ -357,7 +357,7 @@ func (c *Client) Function(ctx context.Context, projectID, id string, fields []st
 	var resp struct {
 		FunctionDetail *Function `json:"FunctionDetail"`
 	}
-	if err := c.graphQL(ctx, operationFunctionDetailForFields(fields), map[string]any{"projectId": projectID, "id": id}, &resp); err != nil {
+	if err := c.graphQL(ctx, operationFunctionDetailForFields(c.functionReadFields(fields)), map[string]any{"projectId": projectID, "id": id}, &resp); err != nil {
 		return nil, err
 	}
 	if resp.FunctionDetail == nil {

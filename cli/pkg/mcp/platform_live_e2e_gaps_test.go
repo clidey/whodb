@@ -48,11 +48,29 @@ type liveGapFixtures struct {
 // cancellation, restore/purge, sharing, lineage provider, service account,
 // team and package-polish capabilities against the real platform.
 func liveMustGapCoverage(t *testing.T, ctx context.Context, fx liveGapFixtures) {
+	liveMustCapabilityCatalog(t, ctx, fx)
 	t.Helper()
 	session, err := loadPlatformWorkspace(ctx)
 	if err != nil {
 		t.Fatalf("load workspace for gap coverage: %v", err)
 	}
+
+	protocolClient := scopeTestClient(t)
+	currentBehavior := scopeCall(t, protocolClient, "whodb_platform_ontology_behavior", map[string]any{"id": fx.ontologyID})
+	if currentBehavior["error"] != nil {
+		t.Fatalf("ontology_behavior: %v", currentBehavior["error"])
+	}
+	behaviorData := currentBehavior["data"].(map[string]any)
+	behaviorPreview := scopeCall(t, protocolClient, "whodb_platform_ontology_behaviors_validate", map[string]any{"manifest": map[string]any{"version": 1, "behaviors": []any{map[string]any{"api_name": fx.ontologyAPIName, "document": behaviorData["document"], "expected_revision": behaviorData["revision"]}}}})
+	if behaviorPreview["error"] != nil {
+		t.Fatalf("ontology_behaviors_validate: %v", behaviorPreview["error"])
+	}
+	afterPreview := scopeCall(t, protocolClient, "whodb_platform_ontology_behavior", map[string]any{"id": fx.ontologyID})
+	if afterPreview["data"].(map[string]any)["revision"] != behaviorData["revision"] {
+		t.Fatal("validation activated behavior changes")
+	}
+	liveCoverTool("whodb_platform_ontology_behavior")
+	liveCoverTool("whodb_platform_ontology_behaviors_validate")
 	projectID := session.Host.DefaultProjectID
 	orgID := session.Host.DefaultOrgID
 
