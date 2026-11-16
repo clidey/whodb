@@ -115,11 +115,11 @@ jobs:
       - name: Check for MAS app bundle
         id: check_app
         run: |
-          # Look for the MAS app bundle (should be WhoDB.app with proper case)
+          # Look for the MAS app bundle (WhoDB Community.app)
           APP_PATHS=(
-            "desktop-builds/WhoDB.app"
-            "desktop-builds/build/darwin/universal/WhoDB.app"
-            "desktop-builds/darwin/universal/WhoDB.app"
+            "desktop-builds/WhoDB Community.app"
+            "desktop-builds/build/darwin/universal/WhoDB Community.app"
+            "desktop-builds/darwin/universal/WhoDB Community.app"
           )
 
           APP_PATH=""
@@ -650,7 +650,7 @@ jobs:
           echo ""
           echo "Even though the upload reported success, please verify:"
           echo "  1. Go to https://appstoreconnect.apple.com/apps"
-          echo "  2. Click on 'WhoDB'"
+          echo "  2. Click on 'WhoDB Community'"
           echo "  3. Go to 'TestFlight' or 'App Store' tab"
           echo "  4. Look for build version ${{ inputs.version }}"
           echo ""

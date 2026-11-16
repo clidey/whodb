@@ -25,7 +25,7 @@ base: core24
 confinement: strict
 grade: stable
 compression: xz
-title: WhoDB
+title: WhoDB Community
 license: Apache-2.0
 contact: mailto:support@whodb.com
 website: https://whodb.com
