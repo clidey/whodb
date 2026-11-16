@@ -314,6 +314,19 @@ func liveMustGapCoverage(t *testing.T, ctx context.Context, fx liveGapFixtures) 
 	liveMustExtendedRead(t, ctx, "whodb_platform_org_package_installations", "OrganizationPackageInstallations", map[string]any{"packageId": fx.packageID}, true)
 	liveMustExtendedRead(t, ctx, "whodb_platform_app_page_files", "AppPageFiles", map[string]any{"id": fx.appID, "page": "index", "env": optionalPlatformString("")}, false)
 
+	// Detail projections must return all the richer package metadata, even when
+	// a fixture has no entries in a collection.
+	packageRead := scopeCall(t, protocolClient, "whodb_platform_package", map[string]any{"id": fx.packageID})
+	if packageRead["error"] != nil {
+		t.Fatal(packageRead["error"])
+	}
+	packageData := packageRead["data"].(map[string]any)
+	for _, key := range []string{"sourceProjectId", "thumbnailUrl", "useCases", "teams", "lineage", "reviews", "media", "changelog"} {
+		if _, ok := packageData[key]; !ok {
+			t.Errorf("package detail omitted %s", key)
+		}
+	}
+
 	// Data purges run last. The platform refuses to purge an ontology with an
 	// active behavior, so that rule is asserted on the fixture entity and the
 	// purge itself is proven on the behavior-free target ontology.

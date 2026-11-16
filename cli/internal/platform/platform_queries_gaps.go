@@ -49,7 +49,7 @@ func init() {
   ShareDependents(resourceType: $resourceType, resourceId: $resourceId) { resourceType resourceId resourceName defaultRole reason grantable }
 }`,
 		"OrganizationPackageInstallations": `query CLIPlatformOrganizationPackageInstallations($organizationId: ID!, $packageId: ID) {
-  OrganizationPackageInstallations(organizationId: $organizationId, packageId: $packageId) { id sourceOrgId sourceProjectId targetProjectId packageId packageName packageVersion packageChannel status installedBy installedAt updatedAt updateInfo { available latestVersion } }
+  OrganizationPackageInstallations(organizationId: $organizationId, packageId: $packageId) { id sourceOrgId sourceProjectId sourceScopeProjectId targetProjectId packageId packageName packageVersion packageChannel status installedBy installedAt updatedAt updateInfo { available latestVersion } }
 }`,
 		"AppPageFiles": `query CLIPlatformAppPageFiles($projectId: ID!, $id: ID!, $env: String, $page: String!) {
   AppPageFiles(projectId: $projectId, id: $id, env: $env, page: $page) { path content updatedAt }

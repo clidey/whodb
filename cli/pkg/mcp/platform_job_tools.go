@@ -49,16 +49,14 @@ func HandlePlatformTransformWait(ctx context.Context, req *mcp.CallToolRequest, 
 		return nil, platformReadErrorOutput(err, requestID), nil
 	}
 	return waitForPlatformRun(ctx, session, "platform_transform_wait", requestID, input.Fields, timeout, poll, func(ctx context.Context) (*platformapi.TransformRun, bool, error) {
-		runs, err := session.Client.TransformRuns(ctx, session.Host.DefaultProjectID, input.TransformID, 100)
+		run, err := session.Client.TransformRun(ctx, session.Host.DefaultProjectID, input.TransformID, input.RunID)
 		if err != nil {
 			return nil, false, err
 		}
-		for _, run := range runs {
-			if run.ID == input.RunID {
-				return &run, isTerminalTransformRunStatus(run.Status), nil
-			}
+		if run == nil {
+			return nil, false, fmt.Errorf("transform run %s was not found for this transform", input.RunID)
 		}
-		return nil, false, nil
+		return run, isTerminalTransformRunStatus(run.Status), nil
 	})
 }
 

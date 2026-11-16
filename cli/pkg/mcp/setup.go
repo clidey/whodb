@@ -57,6 +57,18 @@ app_access returns paged effective users and direct team grants; sharing permiss
 is required. project_transform_runs gives recent project-wide history. usage,
 entitlements and feature_access are read-only diagnostics, with host permissions.
 
+SCRIPT PREVIEWS: script_packages, script_package_search and script_package inspect
+curated dependencies without installing them. Use action with resource=script,
+action=execute and payload {language, script, dependencies, sampleData?}; the normal
+confirmation flow applies. sampleData is JSON {columns, rows} with string cells;
+omit it only to use the platform's built-in sample. Inspect success, runtime and
+error. An unavailable runtime is a failure, never simulated success.
+BILLING READS: subscription, plans, plan_features and subscription_preview inspect
+current plan state, catalog prices and change blockers. They do not open checkout
+or change subscriptions. Unconfigured billing returns an explicit error.
+TRANSFORM RUNS: transform_run reads one run by transform_id and id regardless of
+recent history size; transform_wait uses that lookup. Keep the original run id.
+
 DISCOVERY: tool_profile selects all (default), data, functions, or workspace.
 Profiles narrow tools/list without granting permissions or changing write mode;
 explicit tool filters still apply. Inspect available_tool_profiles at

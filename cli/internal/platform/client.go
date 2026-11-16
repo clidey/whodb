@@ -561,7 +561,7 @@ func (c *Client) SourceRows(ctx context.Context, orgID, projectID, sourceID stri
 }
 
 func (c *Client) graphQL(ctx context.Context, query string, variables any, target any) error {
-	return c.graphQLWithRetry(ctx, func() string { return query }, variables, target)
+	return c.graphQLWithRetry(ctx, func() string { return c.platformReadDocument("", query) }, variables, target)
 }
 
 func (c *Client) graphQLWithRetry(ctx context.Context, query func() string, variables any, target any) error {

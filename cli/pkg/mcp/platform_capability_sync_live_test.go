@@ -222,6 +222,7 @@ func TestPlatformCapabilities_RealStack(t *testing.T) {
 		return out
 	}
 	for _, args := range [][]string{
+		{"scripts", "packages", "--language", "python"}, {"scripts", "search", "--language", "python", "--query", "pandas"}, {"scripts", "package", "python", "pandas"}, {"usage", "subscription"}, {"usage", "plan-features", "free"}, {"usage", "preview-plan", "free", "monthly"},
 		{"edge", "runners"}, {"edge", "runs", fn}, {"edge", "run", run}, {"edge", "schedules", fn},
 		{"apps", "access", app, "--limit", "1"}, {"transforms", "history"}, {"agent-sessions", "list"}, {"agent-sessions", "get", sid},
 		{"analysis", "get", artifact}, {"analysis", "rows", datasetArtifact, "--limit", "1"}, {"usage", "current"}, {"usage", "entitlements"}, {"usage", "feature", "functions"},
@@ -256,9 +257,9 @@ func TestPlatformCapabilities_RealStack(t *testing.T) {
 func liveMustCapabilityCatalog(t *testing.T, ctx context.Context, fx liveGapFixtures) {
 	t.Helper()
 	for _, c := range platformapi.CapabilityReads {
-		in := PlatformCapabilityReadInput{ID: uuid.NewString(), FunctionID: fx.functionID, AppID: fx.appID, SessionID: uuid.NewString(), FeatureKey: "functions", Limit: 2}
+		in := PlatformCapabilityReadInput{Language: "python", Name: "pandas", Plan: "free", Interval: "monthly", TransformID: fx.transformID, ID: uuid.NewString(), FunctionID: fx.functionID, AppID: fx.appID, SessionID: uuid.NewString(), FeatureKey: "functions", Limit: 2}
 		_, out, err := handlePlatformCapabilityRead(ctx, c, in, &SecurityOptions{MaxRows: 2})
-		expectDenied := c.Operation == "AgentSession" || c.Operation == "AnalysisArtifact" || c.Operation == "AnalysisArtifactPage" || c.Operation == "EdgeFunctionRun"
+		expectDenied := c.Operation == "AvailablePlans" || c.Operation == "AgentSession" || c.Operation == "AnalysisArtifact" || c.Operation == "AnalysisArtifactPage" || c.Operation == "EdgeFunctionRun"
 		if err != nil || (out.Error != "") != expectDenied {
 			t.Fatalf("%s output error %q; expected denial %v, err %v", c.Operation, out.Error, expectDenied, err)
 		}
@@ -271,5 +272,6 @@ func liveMustCapabilityCatalog(t *testing.T, ctx context.Context, fx liveGapFixt
 	} {
 		liveMustGenericWriteConfirmError(t, ctx, "platform_action", "action", in)
 	}
+	liveMustGenericWrite(t, ctx, "platform_action", "action", PlatformGenericWriteInput{Resource: "script", Action: "execute", Payload: map[string]any{"language": "python", "script": "return input", "dependencies": []any{}}})
 	liveMustGenericWriteConfirmError(t, ctx, "platform_create", "create", PlatformGenericWriteInput{Resource: "edge_schedule", Payload: map[string]any{"functionId": fx.functionID, "runnerId": uuid.NewString(), "input": "{}", "intervalSeconds": 60}})
 }

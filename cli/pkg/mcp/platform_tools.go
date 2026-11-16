@@ -71,6 +71,7 @@ type platformClient interface {
 	LineageNeighbors(context.Context, string, string, string) (*platformapi.LineageGraph, error)
 	ProjectLineage(context.Context, string) (*platformapi.LineageGraph, error)
 	Transforms(context.Context, string) ([]platformapi.Transform, error)
+	TransformRun(context.Context, string, string, string) (*platformapi.TransformRun, error)
 	TransformRuns(context.Context, string, string, int) ([]platformapi.TransformRun, error)
 	Functions(context.Context, string, []string) ([]platformapi.Function, error)
 	Function(context.Context, string, string, []string) (*platformapi.Function, error)

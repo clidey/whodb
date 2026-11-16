@@ -17,3 +17,6 @@ func PlatformAutomationOperations() map[string][]string {
 
 // PlatformAutomationFunctionFields reports the function fields understood by automation.
 func PlatformAutomationFunctionFields() []string { return platformapi.AutomationFunctionFields() }
+
+// PlatformAutomationDocuments exposes fixed client documents for contract validation.
+func PlatformAutomationDocuments() map[string]string { return platformapi.AutomationDocuments() }

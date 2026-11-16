@@ -166,6 +166,8 @@ type SourceFieldConstraints {
   Primary: Boolean!
   Unique: Boolean!
   Identity: Boolean!
+  "Whether the database manages this field and explicit insert values must be omitted."
+  Computed: Boolean!
   DefaultValue: String
   AllowedValues: [String!]!
   CheckMin: Float
@@ -941,6 +943,18 @@ type Organization {
   createdAt: String!
 }
 
+"""
+Everything the web app needs to resolve its workspace in one round trip: the user's
+organizations and, for one of them, the projects the user can see.
+"""
+type WorkspaceBootstrap {
+  organizations: [Organization!]!
+  """The organization matched by orgSlug, else by orgId, else the first one; null when a given slug matches none."""
+  organization: Organization
+  """Projects in `organization` visible to the user; empty when organization is null."""
+  projects: [Project!]!
+}
+
 type OrganizationDomain {
   id:         ID!
   orgId:      ID!
@@ -978,6 +992,12 @@ type PlatformUser {
   createdAt:        String!
   lastSeenAt:       String
   twoFactorEnabled: Boolean!
+  """
+  Organization relation recorded for this user when listed through OrgMembers
+  (owner, admin, member or app_user). Null outside an organization listing.
+  Display only: authorization always comes from Mothergate.
+  """
+  orgRole:          String
 }
 
 """
@@ -1108,6 +1128,12 @@ input CreateSourceInput {
   advanced:     [RecordInput!]
 }
 
+"""
+InviteUserInput creates (or re-uses) a Keycloak identity and attaches it to the
+organization. relation is "member" for a billed seat with platform access, or
+"app_user" for a seatless person who can only run the apps granted to them.
+App-user grants may only be app viewer or function executor.
+"""
 input InviteUserInput {
   orgId:     ID!
   email:     String!
@@ -1199,6 +1225,8 @@ input UpdateSecretInput {
 extend type Query {
   MyOrganization: Organization
   MyOrganizations: [Organization!]!
+  """Organizations and one organization's projects in a single request; see WorkspaceBootstrap."""
+  WorkspaceBootstrap(orgSlug: String, orgId: ID): WorkspaceBootstrap!
   OrganizationDomains(orgId: ID!): [OrganizationDomain!]!
   OrganizationSSOProviders(orgId: ID!): [OrganizationSSOProvider!]!
   Projects(orgId: ID!): [Project!]!
@@ -1222,7 +1250,8 @@ extend type Query {
 
 extend type Mutation {
   RenameOrganization(orgId: ID!, name: String!, slug: String): Organization!
-  DeleteOrganization(orgId: ID!, confirmDeletion: Boolean): StatusResponse!
+  """Delete an organization. Stored backups and archive uploads require separate explicit deleteBackups consent."""
+  DeleteOrganization(orgId: ID!, confirmDeletion: Boolean, deleteBackups: Boolean = false): StatusResponse!
   UpsertOrganizationDomain(orgId: ID!, domain: String!, isPrimary: Boolean): OrganizationDomain!
   DeleteOrganizationDomain(id: ID!): StatusResponse!
   CreateOrganizationSSOProvider(orgId: ID!, providerType: String!, displayName: String!, providerAlias: String!, enabled: Boolean, isDefault: Boolean): OrganizationSSOProvider!
@@ -1646,6 +1675,10 @@ type Dataset {
 }
 
 type DatasetQueryResult {
+  "Whether a bounded query omitted source rows. Null when not reported."
+  partial: Boolean
+  "Rows read across all query sources, including one lookahead row per bounded source."
+  scannedRows: Int
   columns: [String!]!
   rows:    [[String!]!]!
   total:   Int!
@@ -1768,6 +1801,19 @@ type TransformRun {
   completedAt:  String!
 }
 
+"""
+One of a project's most recent transform runs, for the dashboard. It carries no error message
+or triggering user: those stay behind the per-transform TransformRuns query and its view check.
+"""
+type ProjectTransformRun {
+  id:            ID!
+  transformId:   ID!
+  transformName: String!
+  status:        String!
+  startedAt:     String!
+  completedAt:   String!
+}
+
 input SaveTransformInput {
   id:           ID
   projectId:    ID!
@@ -1787,7 +1833,13 @@ extend type Query {
   ProjectLineage(projectId: ID!): LineageGraphGQL!
   ProjectLineageProviders(projectId: ID!): [LineageProvider!]!
   ProjectTransforms(projectId: ID!): [Transform!]!
+  TransformRun(projectId: ID!, transformId: ID!, id: ID!): TransformRun
   TransformRuns(projectId: ID!, transformId: ID!, limit: Int): [TransformRun!]!
+  """
+  The project's newest runs across all transforms, newest first: at most perTransform per
+  transform (default 3) and limit in total (default 8). One request replaces one per transform.
+  """
+  ProjectTransformRuns(projectId: ID!, perTransform: Int, limit: Int): [ProjectTransformRun!]!
   PreviewTransform(projectId: ID!, graphJson: String!): DatasetQueryResult!
 }
 
@@ -1835,6 +1887,17 @@ type ProjectFile {
   uploadedBy:  ID!
   createdAt:   String!
   updatedAt:   String!
+}
+
+"""
+A short-lived, signed download URL for a project file. App iframes use it to
+load media directly because their opaque origin never carries the session.
+"""
+type ProjectFileSignedURL {
+  url:       String!
+  expiresAt: Time!
+  mimeType:  String!
+  name:      String!
 }
 
 type FolderContents {
@@ -1908,6 +1971,11 @@ extend type Query {
   FilePreview(projectId: ID!, fileId: ID!, sheetIndex: Int): FilePreviewResult!
   SearchProjectFiles(projectId: ID!, query: String!): [ProjectFile!]!
   ProjectTabularFiles(projectId: ID!): [ProjectFile!]!
+  """
+  Issue a signed download URL for a project file the caller may view. ttlSeconds
+  is clamped to ten minutes, which is also the default.
+  """
+  ProjectFileSignedURL(projectId: ID!, id: ID!, ttlSeconds: Int): ProjectFileSignedURL!
   ProjectStorageUsage(projectId: ID!): Int!
 }
 
@@ -2062,6 +2130,8 @@ extend type Mutation {
 
 type App {
   id:                   ID!
+  """Historical references scoped to this app's recovered resource bindings."""
+  recoveryBindings: JSON!
   projectId:            ID!
   name:                 String!
   description:          String!
@@ -2076,6 +2146,11 @@ type App {
   createdAt:            String!
   updatedAt:            String!
   sourceHidden:         Boolean!
+  """
+  The active published version's app.json declares offline support, so phones can save
+  the app to the device before it is first opened.
+  """
+  offlineCapable:       Boolean!
 }
 
 input CreateAppInput {
@@ -2122,6 +2197,30 @@ type AppFile {
   updatedAt: String!
 }
 
+input AppFileInput {
+  path: String!
+  content: String!
+}
+
+type CloneAppResult {
+  # The cloned app; null for a dry run.
+  app: App
+  # "create" or "update".
+  action: String!
+  name: String!
+  # Existing target app being updated, or the new app after a real run.
+  targetAppId: ID
+  fileCount: Int!
+  ontologyIds: [ID!]!
+  readOnlyOntologyIds: [ID!]!
+  functionIds: [ID!]!
+  # Source bindings the target project cannot satisfy; they are not bound.
+  warnings: [String!]!
+  # Version holding the target's previous draft when an existing app was updated.
+  backupVersion: Int
+  dryRun: Boolean!
+}
+
 type AppViewResult {
   app: App!
   files: [AppFile!]!
@@ -2132,6 +2231,8 @@ type AppViewResult {
 
 extend type Query {
   ProjectApps(projectId: ID!): [App!]!
+  AppBuilderReference(kind: String!, name: String): String!
+  AppLogicGraph(projectId: ID!, appId: ID!, page: String): String!
   AppDetail(projectId: ID!, id: ID!): App!
   AppFiles(projectId: ID!, appId: ID!): [AppFile!]!
   AppView(projectId: ID!, id: ID!, env: String, page: String): AppViewResult
@@ -2146,6 +2247,12 @@ extend type Mutation {
   RestoreApp(projectId: ID!, id: ID!): StatusResponse!
   PurgeApp(projectId: ID!, id: ID!): StatusResponse!
   GenerateApp(input: GenerateAppInput!): GenerateAppResult!
+  # Copies an app and all of its draft files into targetProjectId on the server,
+  # all or nothing. targetOrgId defaults to the request's organization. files
+  # override source files by path in the same transaction. dryRun runs every
+  # check and returns the plan without writing. Overwriting first stores the
+  # target's draft as backupVersion, restorable with RestoreAppVersionToDraft.
+  CloneApp(projectId: ID!, appId: ID!, targetProjectId: ID!, targetOrgId: ID, name: String!, overwrite: Boolean = false, files: [AppFileInput!], dryRun: Boolean = false): CloneAppResult!
   UpsertAppFile(projectId: ID!, appId: ID!, path: String!, content: String!): AppFile!
   DeleteAppFile(projectId: ID!, appId: ID!, path: String!): StatusResponse!
   RestoreAppVersionToDraft(projectId: ID!, appId: ID!, version: Int!): AppViewResult!
@@ -2186,6 +2293,7 @@ type OntologyFunction {
   cpu:            String!
   executionMode:  FunctionExecutionMode!
   liveBehavior:   FunctionLiveBehavior!
+  edgeRunnerId:   ID!
   createdBy:      String!
   createdAt:      String!
   updatedAt:      String!
@@ -2200,6 +2308,14 @@ type OntologyFunction {
   defaultTemperature:   Float!
   isDeployed:           Boolean!
   currentRunStatus:     FunctionRunStatus
+  """Five-field cron expression; empty when the function is not scheduled."""
+  scheduleCron:         String!
+  """JSON object passed as input to every scheduled run."""
+  scheduleInput:        String!
+  """Active version the schedule was approved for; promoting another version pauses the schedule until it is saved again."""
+  scheduleVersion:      Int!
+  """When the scheduler last enqueued a run, RFC 3339; null until the first firing."""
+  scheduleLastRunAt:    String
 }
 
 type FunctionRun {
@@ -2220,6 +2336,66 @@ type FunctionRun {
   completedAt:   String
   createdAt:     String!
   updatedAt:     String!
+}
+
+type EdgeRunner {
+  id: ID!
+  name: String!
+  online: Boolean!
+  canManage: Boolean!
+  canExecute: Boolean!
+  lastSeenAt: String
+  createdAt: String!
+}
+
+type EdgeRunnerDownload {
+  target: String!
+  os: String!
+  arch: String!
+  version: String!
+  filename: String!
+  sha256: String!
+  sizeBytes: Int!
+  downloadUrl: String!
+}
+
+type EdgeDeviceRegistration {
+  runner: EdgeRunner!
+  token: String!
+}
+
+type EdgeFunctionRun {
+  id: ID!
+  functionId: ID!
+  runnerId: ID!
+  scheduleId: ID
+  status: String!
+  input: String!
+  output: String
+  logs: String!
+  error: String!
+  functionVersion: Int!
+  startedAt: String
+  completedAt: String
+  createdAt: String!
+}
+
+type EdgeSchedule {
+  id: ID!
+  functionId: ID!
+  runnerId: ID!
+  intervalSeconds: Int!
+  nextAt: String!
+  active: Boolean!
+  functionVersion: Int!
+  createdAt: String!
+}
+
+type EdgeWork {
+  runId: ID!
+  leaseToken: String!
+  input: String!
+  bundle: String!
 }
 
 type FunctionSecretBinding {
@@ -2264,6 +2440,7 @@ input CreateFunctionInput {
   cpu:            String
   executionMode:  FunctionExecutionMode! = SYNC
   liveBehavior:   FunctionLiveBehavior! = REQUEST
+  edgeRunnerId:   ID
   files:               [FunctionFileInput!]!
   dependencies:        [FunctionDependencyInput!]!
   providerIds:         [ID!]
@@ -2285,6 +2462,7 @@ input UpdateFunctionInput {
   timeoutSeconds:      Int
   memory:              String
   cpu:                 String
+  edgeRunnerId:        ID
   files:               [FunctionFileInput!]
   dependencies:        [FunctionDependencyInput!]
   providerIds:         [ID!]
@@ -2294,6 +2472,10 @@ input UpdateFunctionInput {
   secretBindings:      [FunctionSecretBindingInput!]
   defaultMaxTokens:    Int
   defaultTemperature:  Float
+  """Set a five-field cron schedule, or an empty string to clear it. Scheduled runs are attributed to the caller."""
+  scheduleCron:        String
+  """JSON object passed as input to every scheduled run."""
+  scheduleInput:       String
 }
 
 input FunctionSecretBindingInput {
@@ -2352,6 +2534,11 @@ extend type Query {
   FunctionDetail(projectId: ID!, id: ID!): OntologyFunction!
   FunctionRuns(projectId: ID!, functionId: ID!, limit: Int): [FunctionRun!]!
   FunctionRun(projectId: ID!, id: ID!): FunctionRun!
+  EdgeFunctionRun(projectId: ID!, id: ID!): EdgeFunctionRun!
+  EdgeFunctionRuns(projectId: ID!, functionId: ID!, limit: Int): [EdgeFunctionRun!]!
+  EdgeSchedules(projectId: ID!, functionId: ID!): [EdgeSchedule!]!
+  EdgeRunners(projectId: ID!): [EdgeRunner!]!
+  EdgeRunnerDownloads: [EdgeRunnerDownload!]!
 }
 
 # ─── Authorization & Permission Management ──────────────────────────────────
@@ -2522,6 +2709,19 @@ extend type Mutation {
   ExecuteFunction(projectId: ID!, functionId: ID!, input: String!, inputFileIds: [ID!]): FunctionTestResult!
   StartFunctionRun(projectId: ID!, functionId: ID!, input: String!, useActiveVersion: Boolean = false): FunctionRun!
   CancelFunctionRun(projectId: ID!, id: ID!): FunctionRun!
+  RegisterEdgeDevice(projectId: ID!, name: String!): EdgeDeviceRegistration!
+  PairEdgeDevice(projectId: ID!, runnerId: ID!): Boolean!
+  SetMyEdgeExecutionAccess(projectId: ID!, runnerId: ID!, enabled: Boolean!): Boolean!
+  EnrollEdgeRunner(projectId: ID!, name: String!): EdgeRunner!
+  CreateEdgeDeviceToken(projectId: ID!, runnerId: ID!): String!
+  RevokeEdgeDeviceToken(projectId: ID!, runnerId: ID!): Boolean!
+  StartEdgeFunctionRun(projectId: ID!, functionId: ID!, runnerId: ID!, input: String!): EdgeFunctionRun!
+  CreateEdgeSchedule(projectId: ID!, functionId: ID!, runnerId: ID!, input: String!, intervalSeconds: Int!): EdgeSchedule!
+  StopEdgeSchedule(projectId: ID!, id: ID!): EdgeSchedule!
+  ClaimEdgeWork(projectId: ID!, runnerId: ID!): EdgeWork
+  HeartbeatEdgeWork(projectId: ID!, runnerId: ID!, runId: ID!, leaseToken: String!): Boolean!
+  EdgeFunctionData(projectId: ID!, runnerId: ID!, runId: ID!, leaseToken: String!, operation: String!, payload: String!): String!
+  CompleteEdgeWork(projectId: ID!, runnerId: ID!, runId: ID!, leaseToken: String!, output: String!, logs: String!, error: String!): EdgeFunctionRun!
   RestoreFunctionVersionToDraft(projectId: ID!, functionId: ID!, version: Int!): OntologyFunction!
   ShareByEmail(emails: [String!]!, role: String!, resourceType: String!, resourceId: ID!, expiresIn: String, dependents: [ShareDependentInput!]): ShareResult!
   TransferOwnershipByEmail(email: String!, resourceType: String!, resourceId: ID!): StatusResponse!
@@ -2993,6 +3193,7 @@ type SharedOntology {
 
 type OntologyReferenceConsumer {
   projectId:    ID!
+  projectName:  String!
   referenceId:  ID!
   alias:        String!
   status:       OntologyReferenceStatus!
@@ -3087,6 +3288,7 @@ type OntologyActionPreview {
 }
 
 type ExecuteOntologyActionResult {
+  output: JSON
   executionId:     ID!
   allowed:         Boolean!
   denialCode:      String
@@ -3123,6 +3325,10 @@ input ExecuteOntologyActionInput {
   values:          JSON!
   expectedVersion: Int
   idempotencyKey:  String
+  """Optional app action alias; required for app-scoped named commands."""
+  binding: String
+  """App binding environment: prod by default; dev requires app editing access."""
+  env: String
 }
 
 input PreviewOntologyActionInput {
@@ -3135,6 +3341,7 @@ input PreviewOntologyActionInput {
 
 extend type Query {
   OntologyBehavior(projectId: ID!, ontologyId: ID!): OntologyBehavior
+  ValidateOntologyBehaviors(projectId: ID!, manifest: JSON!): JSON!
   OntologyRecordCapabilities(projectId: ID!, ontologyId: ID!, recordKey: String): OntologyRecordCapabilities!
   PreviewOntologyAction(input: PreviewOntologyActionInput!): OntologyActionPreview!
   OntologyActionExecutions(projectId: ID!, ontologyId: ID!, recordKey: String!, limit: Int): [OntologyActionExecution!]!
@@ -3142,6 +3349,7 @@ extend type Query {
 
 extend type Mutation {
   SaveBehavior(input: SaveBehaviorInput!): OntologyBehavior!
+  ApplyOntologyBehaviors(projectId: ID!, manifest: JSON!): JSON!
   ExecuteOntologyAction(input: ExecuteOntologyActionInput!): ExecuteOntologyActionResult!
 }
 # Browser approval for hosted MCP writes. These fields are not part of the CLI manifest.
@@ -3165,4 +3373,325 @@ extend type Query {
 
 extend type Mutation {
   DecideMcpPendingApproval(token: ID!, approve: Boolean!): StatusResponse!
+}
+
+"""Bounded metadata listing; use the resource detail query for source and bindings."""
+type PlatformResourceSummary {
+  id: ID!
+  name: String!
+  description: String!
+  type: String!
+  status: String!
+  schemaMode: String!
+  isDeployed: Boolean!
+  apiName: String!
+}
+
+type PlatformResourcePage {
+  items: [PlatformResourceSummary!]!
+  hasMore: Boolean!
+}
+
+input PlatformResourcePageInput {
+  resource: String!
+  limit: Int = 50
+  offset: Int = 0
+  search: String
+  name: String
+  type: String
+  status: String
+  schemaMode: String
+  deployed: Boolean
+}
+
+extend type Query {
+  PlatformResources(projectId: ID!, input: PlatformResourcePageInput!): PlatformResourcePage!
+}
+
+# Organization-manager-only access to the canonical security ledger.
+extend type Query {
+    SecurityAudit(input: SecurityAuditInput!): JSON!
+}
+
+input SecurityAuditInput {
+    orgId: ID!
+    mode: String! = "events"
+    projectId: ID
+    actorId: ID
+    action: String
+    outcome: String
+    requestId: String
+    runId: ID
+    since: Time
+    until: Time
+    limit: Int! = 50
+    cursor: String
+}
+
+# Organization recovery authority is checked against current owner/admin permissions.
+extend type Query {
+  OrganizationBackups(orgId: ID!): OrganizationBackupOverview!
+  OrganizationBackupScope(orgId: ID!, selection: OrganizationBackupSelectionInput!): OrganizationBackupScope!
+}
+
+extend type Mutation {
+  GenerateOrganizationBackupKey(orgId: ID!): OrganizationBackupRecoveryKey!
+  ConfirmOrganizationBackupKey(orgId: ID!, keyId: ID!): StatusResponse!
+  SaveOrganizationBackupPolicy(input: OrganizationBackupPolicyInput!): StatusResponse!
+  CreateOrganizationBackup(orgId: ID!, requestId: ID!, selection: OrganizationBackupSelectionInput): OrganizationBackup!
+  ExtendOrganizationBackupExpiry(orgId: ID!, backupId: ID!, expiresAt: Time!): StatusResponse!
+  DeleteOrganizationBackup(orgId: ID!, backupId: ID!): StatusResponse!
+  """Cancel a requested backup deletion before physical cleanup begins."""
+  CancelOrganizationBackupDeletion(orgId: ID!, backupId: ID!): StatusResponse!
+}
+
+input OrganizationBackupResourceInput {
+  projectId: ID!
+  type: String!
+  id: ID!
+}
+input OrganizationBackupSelectionInput {
+  projects: [ID!]!
+  resources: [OrganizationBackupResourceInput!]!
+}
+input OrganizationBackupPolicyInput {
+  orgId: ID!
+  """Omit for the organization schedule; otherwise configure this project's single schedule."""
+  projectId: ID
+  enabled: Boolean!
+  schedule: String!
+  timeZone: String!
+  retentionDays: Int!
+  selection: OrganizationBackupSelectionInput!
+  notificationUsers: [ID!]!
+}
+
+type OrganizationBackupRecoveryKey {
+  id: ID!
+  recipient: String!
+  identity: String
+  confirmedAt: Time
+}
+
+type OrganizationBackupPolicy {
+  """Stable schedule identifier, retained in backup history."""
+  id: ID!
+  """Null for the organization schedule."""
+  projectId: ID
+  enabled: Boolean!
+  schedule: String!
+  timeZone: String!
+  retentionDays: Int!
+  selection: JSON!
+  notificationUsers: [ID!]!
+  nextRunAt: Time
+}
+
+type OrganizationBackup {
+  id: ID!
+  keyId: ID!
+  """Schedule that created this backup, when applicable."""
+  scheduleId: ID
+  """Project schedule scope; null for organization and manual backups."""
+  projectId: ID
+  kind: String!
+  """When an owner requested early deletion."""
+  deletionRequestedAt: Time
+  """Earliest physical deletion time; owners can cancel while deletion is pending."""
+  deleteAfter: Time
+  state: String!
+  createdAt: Time!
+  capturedAt: Time
+  scheduledFor: Time
+  completedAt: Time
+  expiresAt: Time
+  retentionDays: Int!
+  sizeBytes: String!
+  sha256: String!
+  errorCode: String!
+}
+
+type OrganizationBackupOverview {
+  """True when deleting a backup requires a new interactive sign-in."""
+  reauthenticationRequired: Boolean!
+  canCreate: Boolean!
+  notificationRecipients: [OrganizationBackupNotificationRecipient!]!
+  isOwner: Boolean!
+  key: OrganizationBackupRecoveryKey
+  policy: OrganizationBackupPolicy
+  """Project schedules, visible only to the organization owner."""
+  projectPolicies: [OrganizationBackupPolicy!]!
+  jobs: [OrganizationBackup!]!
+  storedBytes: String!
+  maxArchiveBytes: String!
+  emailConfigured: Boolean!
+}
+
+type OrganizationBackupResource {
+  projectId: ID!
+  type: String!
+  id: ID!
+  name: String!
+  automatic: Boolean!
+}
+
+type OrganizationBackupRequirement {
+  kind: String!
+  projectId: ID!
+  id: ID!
+  version: String!
+}
+
+type OrganizationBackupScope {
+  full: Boolean!
+  projects: [ID!]!
+  projectNames: JSON!
+  resources: [OrganizationBackupResource!]!
+  requirements: [OrganizationBackupRequirement!]!
+}
+
+extend type Query {
+  OrganizationBackupRestores(orgId: ID!): [OrganizationBackupRestore!]!
+  OrganizationBackupNotifications(orgId: ID!): [OrganizationBackupNotification!]!
+}
+extend type Mutation {
+  PreviewOrganizationBackupRestore(orgId: ID!, backupId: ID!, identity: String!, mode: String!, targetProjectId: ID): OrganizationBackupRestore!
+  StartOrganizationBackupRestore(orgId: ID!, restoreId: ID!, previewDigest: String!, confirmReplacement: Boolean!): StatusResponse!
+  ReadOrganizationBackupNotification(orgId: ID!, notificationId: ID!): StatusResponse!
+}
+type OrganizationBackupRestore {
+  id: ID!
+  backupId: ID!
+  mode: String!
+  state: String!
+  previewDigest: String!
+  preview: OrganizationBackupRestorePreview!
+  safetyBackupId: ID
+  errorCode: String!
+  createdAt: Time!
+  completedAt: Time
+}
+type OrganizationBackupReferenceWarning {
+ resourceId: ID!
+ field: String!
+ originalId: ID!
+ recoveredId: ID!
+}
+type OrganizationBackupIDMapping {
+ originalId: ID!
+ recoveredId: ID!
+}
+type OrganizationBackupRestoreDestination {
+ sourceProjectId: ID!
+ sourceName: String!
+ projectId: ID!
+ name: String!
+}
+type OrganizationBackupRestorePreview {
+ destinations: [OrganizationBackupRestoreDestination!]!
+ referenceWarnings: [OrganizationBackupReferenceWarning!]!
+ idMapping: [OrganizationBackupIDMapping!]!
+  sourceOrganizationId: ID!
+  capturedAt: Time!
+  projects: [String!]!
+  resources: [OrganizationBackupResource!]!
+  files: Int!
+  rows: String!
+  requirements: [OrganizationBackupRequirement!]!
+  excluded: [String!]!
+}
+type OrganizationBackupNotification {
+  id: ID!
+  backupId: ID!
+  errorCode: String!
+  createdAt: Time!
+  readAt: Time
+}
+
+extend type Mutation {
+  BeginOrganizationBackupUpload(orgId: ID!, sizeBytes: String!, retentionDays: Int!): OrganizationBackupUpload!
+  UploadOrganizationBackupPart(orgId: ID!, uploadId: ID!, part: Int!, file: Upload!): StatusResponse!
+  CompleteOrganizationBackupUpload(orgId: ID!, uploadId: ID!): OrganizationBackup!
+  CancelOrganizationBackupUpload(orgId: ID!, uploadId: ID!): StatusResponse!
+}
+type OrganizationBackupUpload {
+  id: ID!
+  partBytes: Int!
+  expiresAt: Time!
+}
+
+type OrganizationBackupNotificationRecipient {
+  id: ID!
+  name: String!
+  email: String!
+}
+
+"""A person with effective app access. Visible only to app sharing managers."""
+type AppAccessUser {
+  id: ID!
+  email: String!
+  displayName: String!
+}
+
+extend type Query {
+  """Resolve direct and inherited app access to individual people."""
+  AppAccessUsers(projectId: ID!, appId: ID!): [AppAccessUser!]!
+}
+
+"""A team shared directly with this app; effective inherited users are also listed."""
+type AppAccessTeam { id: ID!, name: String!, memberCount: Int! }
+"""A bounded page of effective app access and direct team grants."""
+type AppAccessDirectory { users: [AppAccessUser!]!, teams: [AppAccessTeam!]!, total: Int!, pageSize: Int!, offset: Int! }
+extend type Query {
+ AppAccessDirectory(projectId: ID!, appId: ID!, search: String, pageSize: Int, offset: Int): AppAccessDirectory!
+}
+
+# Account deletion. The account owner requests it, confirms it, and after the
+# grace period every organization they own is deleted, they leave the others
+# (their resources there pass to each organization's owner), and their
+# personal data and identity are deleted. Signing in again first cancels it.
+type AccountDeletionOrganization {
+  id: ID!
+  name: String!
+  "Organization URL slug for opening its backup settings."
+  slug: String!
+  "Everyone with access to the organization, including the account itself."
+  memberCount: Int!
+}
+
+type AccountDeletionPreview {
+  "Organizations deleted with the account; every one must be accepted."
+  ownedOrganizations: [AccountDeletionOrganization!]!
+  "Organizations the account leaves; its resources there pass to their owners."
+  memberOrganizationCount: Int!
+  "Time between confirming and the permanent deletion."
+  graceDays: Int!
+  "True when confirmation is sent by email; false when the email address is typed instead."
+  confirmByEmail: Boolean!
+}
+
+enum AccountDeletionState {
+  "Waiting for confirmation."
+  REQUESTED
+  "Confirmed; the account is deleted at purgeAfter unless its owner signs in."
+  SCHEDULED
+}
+
+type AccountDeletionStatus {
+  state: AccountDeletionState!
+  purgeAfter: Time
+}
+
+extend type Query {
+  AccountDeletionPreview: AccountDeletionPreview!
+  "The caller's pending account deletion, or null."
+  AccountDeletionStatus: AccountDeletionStatus
+}
+
+extend type Mutation {
+  "Requests deletion of the caller's account. acceptedOrganizationIds lists every owned organization; deleteBackups separately accepts deleting their backups when the account is purged."
+  RequestAccountDeletion(acceptedOrganizationIds: [ID!]!, deleteBackups: Boolean = false): AccountDeletionStatus!
+  "Confirms with the emailed token, or with the typed email address when no email is sent."
+  ConfirmAccountDeletion(token: String, email: String): AccountDeletionStatus!
+  CancelAccountDeletion: StatusResponse!
 }

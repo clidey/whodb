@@ -10,6 +10,14 @@ type CapabilityRead struct {
 
 // CapabilityReads documents the platform operations added to the automation surface.
 var CapabilityReads = []CapabilityRead{
+	{"MySubscription", "subscription", "Read the selected organization's current subscription and renewal/cancellation status; does not change billing.", nil},
+	{"AvailablePlans", "plans", "Inspect configured plans, prices and entitlements. Returns a configuration error when billing is unavailable.", nil},
+	{"PlanFeatures", "plan_features", "Inspect the feature grants for one plan key.", []string{"plan"}},
+	{"PreviewSubscriptionChange", "subscription_preview", "Preview plan eligibility and blockers without opening checkout or changing the subscription.", []string{"plan", "interval"}},
+	{"ListScriptPackages", "script_packages", "List the platform's curated script package catalog; this does not install packages.", nil},
+	{"SearchScriptPackages", "script_package_search", "Search the curated script package catalog by language, query and runtime; this does not install packages.", nil},
+	{"GetScriptPackage", "script_package", "Inspect a curated script package by language and name; this does not install packages.", []string{"language", "name"}},
+	{"TransformRun", "transform_run", "Inspect one authorized transform run by id, including runs outside the recent history window.", []string{"transformId", "id"}},
 	{"EdgeRunners", "edge_runners", "List visible edge devices, presence and the caller's manage/execute permissions.", nil},
 	{"EdgeFunctionRun", "edge_run", "Inspect one edge run, including status, logs, output and pinned function version.", []string{"id"}},
 	{"EdgeFunctionRuns", "edge_runs", "List recent edge runs for a function. Use edge_run to inspect a run again; do not start a duplicate run after a timeout.", []string{"functionId"}},
@@ -31,6 +39,14 @@ const entitlementFields = `limits { key value unlimited } features { key enabled
 
 func init() {
 	queries := map[string]string{
+		"MySubscription":             `query CLISubscription { MySubscription { id orgId plan billingInterval pendingPlan pendingBillingInterval pendingChangeEffectiveAt status seatCount cancelAtPeriodEnd currentPeriodStart currentPeriodEnd gracePeriodEnd } }`,
+		"AvailablePlans":             `query CLIPlans { AvailablePlans { id name description prices { stripePriceId interval unitAmount currency } entitlements { ` + entitlementFields + ` } } }`,
+		"PlanFeatures":               `query CLIPlanFeatures($plan:String!) { PlanFeatures(plan:$plan) { featureKey allowed } }`,
+		"PreviewSubscriptionChange":  `query CLISubscriptionPreview($plan:String!,$interval:String!) { PreviewSubscriptionChange(plan:$plan,interval:$interval) { currentPlan targetPlan targetInterval eligible targetEntitlements { ` + entitlementFields + ` } blockers { key scopeType scopeId scopeName currentValue limitValue } } }`,
+		"ListScriptPackages":         `query CLIListScriptPackages($language:String) { ListScriptPackages(language:$language) { name version description language runtime categories } }`,
+		"SearchScriptPackages":       `query CLISearchScriptPackages($language:String,$query:String,$runtime:String) { SearchScriptPackages(language:$language,query:$query,runtime:$runtime) { name version description language runtime categories } }`,
+		"GetScriptPackage":           `query CLIGetScriptPackage($language:String!,$name:String!) { GetScriptPackage(language:$language,name:$name) { name version description language runtime categories } }`,
+		"TransformRun":               operationTransformRun,
 		"EdgeRunners":                `query CLIEdgeRunners($projectId: ID!) { EdgeRunners(projectId: $projectId) { id name online canManage canExecute lastSeenAt createdAt } }`,
 		"EdgeFunctionRun":            `query CLIEdgeFunctionRun($projectId: ID!, $id: ID!) { EdgeFunctionRun(projectId: $projectId, id: $id) { ` + edgeRunFields + ` } }`,
 		"EdgeFunctionRuns":           `query CLIEdgeFunctionRuns($projectId: ID!, $functionId: ID!, $limit: Int) { EdgeFunctionRuns(projectId: $projectId, functionId: $functionId, limit: $limit) { ` + edgeRunFields + ` } }`,
@@ -72,5 +88,17 @@ func init() {
 
 // OrganizationScoped reports reads whose authority does not require a project.
 func (c CapabilityRead) OrganizationScoped() bool {
-	return c.Operation == "BillingCurrentUsage" || c.Operation == "BillingCurrentEntitlements" || c.Operation == "CanAccessFeature"
+	return c.Operation == "MySubscription" || c.Operation == "AvailablePlans" || c.Operation == "PlanFeatures" || c.Operation == "PreviewSubscriptionChange" || c.Operation == "BillingCurrentUsage" || c.Operation == "BillingCurrentEntitlements" || c.Operation == "CanAccessFeature"
+}
+
+func init() {
+	const key = "action:execute:script"
+	GenericWriteSpecs[key] = GenericWriteSpec{Resource: "script", Action: "execute", Mutation: "ExecuteScript", Mode: GenericWriteModeInput, InjectProjectID: true}
+	PayloadShapes[key] = PayloadShape{Key: key, Resource: "script", Action: "execute", Description: "Execute a script preview in the configured isolated runtime with project edit permission and confirmation. sampleData is JSON with columns and rows; omitted sampleData uses the platform's built-in sample. Check success, runtime and error in the result.", Fields: []PayloadField{
+		{Name: "language", Type: "String", Required: true, Description: "Script language: python, r or julia"},
+		{Name: "script", Type: "String", Required: true, Description: "Script source code; executed on the platform, never in the CLI process"},
+		{Name: "dependencies", Type: "[String!]", Required: true, Description: "Curated package names required by the script"},
+		{Name: "sampleData", Type: "String", Description: "Optional JSON object with columns and rows of string cells"},
+	}}
+	platformMutationSpecs["ExecuteScript"] = mutationSpecWithInput("ExecuteScript", "ExecuteScriptInput", "success runtime executionTimeMs output error inputRowCount outputRowCount")
 }

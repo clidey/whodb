@@ -556,3 +556,13 @@ func optionalPositiveInt(value int) any {
 	}
 	return value
 }
+
+// TransformRun returns one authorized transform run independent of recent history.
+func (c *Client) TransformRun(ctx context.Context, projectID, transformID, id string) (*TransformRun, error) {
+	if err := c.RequireOperation("Query", "TransformRun", "transform run lookup"); err != nil {
+		return nil, err
+	}
+	var response struct{ TransformRun *TransformRun }
+	err := c.graphQL(ctx, operationTransformRun, map[string]any{"projectId": projectID, "transformId": transformID, "id": id}, &response)
+	return response.TransformRun, err
+}

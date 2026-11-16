@@ -110,6 +110,7 @@ const datasetFields = `
     isPrimary
   }
   schemaMode
+  storageMode
   ownerId
   rowCount
   sizeBytes
@@ -127,6 +128,7 @@ const lineageGraphFields = `
   nodes {
     id
     nodeType
+    providerId
     name
   }
   edges {
@@ -146,6 +148,12 @@ const transformFields = `
   graphJson
   scheduleCron
   triggerMode
+  lastRunStatus
+  lastRunAt
+  liveStatus
+  liveLastProcessedAt
+  liveRecordsProcessed
+  liveLastError
   createdAt
   updatedAt
 `
@@ -620,3 +628,9 @@ func init() {
 	platformOperations["object_versions"] = operationObjectVersions
 	platformOperations["active_prod_version"] = operationActiveProdVersion
 }
+
+const operationTransformRun = `query CLITransformRun($projectId: ID!, $transformId: ID!, $id: ID!) {
+ TransformRun(projectId: $projectId, transformId: $transformId, id: $id) { id transformId status errorMessage triggeredBy startedAt completedAt }
+}`
+
+func init() { platformOperations["transform_run"] = operationTransformRun }

@@ -21,6 +21,7 @@ import (
 type PlatformAppInput struct {
 	ID      string   `json:"id,omitempty" jsonschema:"App id for detail, files, or version view"`
 	Version int      `json:"version,omitempty" jsonschema:"App version for a version view"`
+	Page    string   `json:"page,omitempty" jsonschema:"Optional app page for the current view"`
 	Env     string   `json:"env,omitempty" jsonschema:"Optional app environment for the current view"`
 	Fields  []string `json:"fields,omitempty" jsonschema:"Optional top-level output fields"`
 }
@@ -36,7 +37,7 @@ type PlatformAppLogicGraphInput struct {
 	Page string `json:"page,omitempty" jsonschema:"Optional page name; omit to map every page"`
 }
 
-// PlatformAppCaptureInput selects a rendered app view without browser scripting.
+// PlatformAppCaptureInput selects a rendered app view with optional interaction checks.
 type PlatformAppCaptureInput struct {
 	App         string              `json:"app" jsonschema:"App ID or exact name in the selected project"`
 	Env         string              `json:"env,omitempty" jsonschema:"published (default) or dev"`
@@ -160,7 +161,7 @@ func registerPlatformExtendedReadTool(server *mcp.Server, tool *mcp.Tool) bool {
 		})
 	case "whodb_platform_app_view":
 		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAppInput) (*mcp.CallToolResult, any, error) {
-			return handlePlatformExtendedQuery(ctx, "platform_app_view", "AppView", map[string]any{"id": strings.TrimSpace(input.ID), "env": optionalPlatformString(input.Env)}, input.Fields)
+			return handlePlatformExtendedQuery(ctx, "platform_app_view", "AppView", map[string]any{"id": strings.TrimSpace(input.ID), "env": optionalPlatformString(input.Env), "page": optionalPlatformString(input.Page)}, input.Fields)
 		})
 	case "whodb_platform_app_version_view":
 		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformAppInput) (*mcp.CallToolResult, any, error) {

@@ -61,3 +61,21 @@ func AutomationFunctionFields() []string {
 	sort.Strings(fields)
 	return fields
 }
+
+// AutomationDocuments returns independent copies of the bounded query and write
+// documents so host-side tests can validate the complete automation contract.
+func AutomationDocuments() map[string]string {
+	documents := map[string]string{}
+	for key, document := range platformOperations {
+		documents[key] = document
+	}
+	for key, document := range platformQuerySpecs {
+		documents[key] = document
+	}
+	for key, spec := range platformMutationSpecs {
+		documents[key] = spec.Query
+	}
+	documents["FunctionRun"] = operationFunctionRun
+	documents["FunctionRuns"] = operationFunctionRuns
+	return documents
+}

@@ -13,6 +13,13 @@ import (
 
 // PlatformCapabilityReadInput selects bounded operational metadata or result pages.
 type PlatformCapabilityReadInput struct {
+	Language     string   `json:"language,omitempty" jsonschema:"Script language filter, or required language for script_package"`
+	Name         string   `json:"name,omitempty" jsonschema:"Curated package name for script_package"`
+	Query        string   `json:"query,omitempty" jsonschema:"Script package search text"`
+	Runtime      string   `json:"runtime,omitempty" jsonschema:"Script runtime filter"`
+	Plan         string   `json:"plan,omitempty" jsonschema:"Plan key for plan_features or subscription_preview"`
+	Interval     string   `json:"interval,omitempty" jsonschema:"Billing interval for subscription_preview"`
+	TransformID  string   `json:"transform_id,omitempty" jsonschema:"Owning transform id; required for transform_run"`
 	ID           string   `json:"id,omitempty" jsonschema:"Run or analysis artifact id; required for edge_run and analysis tools"`
 	FunctionID   string   `json:"function_id,omitempty" jsonschema:"Function id; required for edge_runs and edge_schedules"`
 	AppID        string   `json:"app_id,omitempty" jsonschema:"App id; required for app_access"`
@@ -55,7 +62,7 @@ func handlePlatformCapabilityRead(ctx context.Context, c platformapi.CapabilityR
 	if c.Operation == "AppAccessDirectory" && in.Limit > 100 {
 		return fail(fmt.Errorf("app access limit must be at most 100"))
 	}
-	vars := map[string]any{"id": strings.TrimSpace(in.ID), "functionId": strings.TrimSpace(in.FunctionID), "appId": strings.TrimSpace(in.AppID), "sessionId": strings.TrimSpace(in.SessionID), "featureKey": strings.TrimSpace(in.FeatureKey)}
+	vars := map[string]any{"language": strings.TrimSpace(in.Language), "name": strings.TrimSpace(in.Name), "plan": strings.TrimSpace(in.Plan), "interval": strings.TrimSpace(in.Interval), "transformId": strings.TrimSpace(in.TransformID), "id": strings.TrimSpace(in.ID), "functionId": strings.TrimSpace(in.FunctionID), "appId": strings.TrimSpace(in.AppID), "sessionId": strings.TrimSpace(in.SessionID), "featureKey": strings.TrimSpace(in.FeatureKey)}
 	for _, key := range c.Required {
 		if vars[key] == "" {
 			return fail(fmt.Errorf("%s is required", snakeCasePlatformKey(key)))
@@ -85,6 +92,12 @@ func handlePlatformCapabilityRead(ctx context.Context, c platformapi.CapabilityR
 	if in.Cursor != "" {
 		vars["cursor"] = in.Cursor
 	}
+	if in.Query != "" {
+		vars["query"] = in.Query
+	}
+	if in.Runtime != "" {
+		vars["runtime"] = in.Runtime
+	}
 	if in.Search != "" {
 		vars["search"] = in.Search
 	}
@@ -95,7 +108,7 @@ func handlePlatformCapabilityRead(ctx context.Context, c platformapi.CapabilityR
 		truncated := false
 		if list, ok := data.([]any); ok {
 			start := 0
-			if c.Operation == "EdgeRunners" || c.Operation == "EdgeSchedules" {
+			if c.Operation == "EdgeRunners" || c.Operation == "EdgeSchedules" || c.Operation == "ListScriptPackages" || c.Operation == "SearchScriptPackages" || c.Operation == "PlanFeatures" || c.Operation == "AvailablePlans" {
 				start = min(in.Offset, len(list))
 			}
 			end := min(start+limit, len(list))
@@ -154,6 +167,19 @@ func capabilityReadSchema(c platformapi.CapabilityRead) *jsonschema.Schema {
 		schema.Required = append(schema.Required, name)
 	}
 	switch c.Operation {
+	case "AvailablePlans", "PlanFeatures":
+		allowed["limit"] = true
+		allowed["offset"] = true
+	case "ListScriptPackages":
+		allowed["language"] = true
+		allowed["limit"] = true
+		allowed["offset"] = true
+	case "SearchScriptPackages":
+		allowed["language"] = true
+		allowed["query"] = true
+		allowed["runtime"] = true
+		allowed["limit"] = true
+		allowed["offset"] = true
 	case "EdgeRunners", "EdgeSchedules":
 		allowed["limit"] = true
 		allowed["offset"] = true
