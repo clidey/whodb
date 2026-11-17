@@ -559,7 +559,7 @@ export const Sidebar: FC = () => {
             <SidebarComponent
                 variant="sidebar"
                 collapsible="icon"
-                className={cn('z-[50]', !newUIEnabled && 'ce-tables-sidebar', !newUIEnabled && pathname.includes(InternalRoutes.Dashboard.ExploreStorageUnit.path) && 'ce-explore-sidebar')}
+                className={cn('z-[50]', !EESidebarNav && 'ce-source-sidebar', !newUIEnabled && 'ce-tables-sidebar', !newUIEnabled && pathname.includes(InternalRoutes.Dashboard.ExploreStorageUnit.path) && 'ce-explore-sidebar')}
             >
                 <SidebarHeader>
                     <div className="flex items-center gap-2 justify-between">

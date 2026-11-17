@@ -1,4 +1,16 @@
 en_US:
+  all: All
+  navigation: Navigation
+  filterResults: Filter results
+  tabCycles: Tab cycles
+  escapeKey: esc
+  tableType: Table
+  openTable: Open table
+  move: Move
+  openItem: Open
+  commandsHint: commands
+  importSql: Import SQL / create tables
+  importSqlKeywords: .sql script restore dump
   tables: Tables
   triggerLabel: Search or run a command
   searchPlaceholder: Search or run a command

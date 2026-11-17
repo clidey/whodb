@@ -156,7 +156,7 @@ export const useDesktopMenu = () => {
       }),
       'menu:import-data': safeHandler(() => {
         // Emit custom event that the table component can listen to
-        window.dispatchEvent(new CustomEvent('menu:trigger-import'));
+        window.dispatchEvent(new CustomEvent('menu:trigger-import', {cancelable: true}));
       }),
 
       'menu:refresh': safeHandler(() => {

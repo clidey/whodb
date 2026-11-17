@@ -1,4 +1,9 @@
 en_US:
+  selectTableToImport: Open a table to import CSV or Excel data.
+  sqlImportHelp: Create tables or import data by dropping a SQL file or pasting a script below. No existing table is needed.
+  dropSqlPrompt: Drop a SQL file
+  browseSqlFile: Browse SQL files
+  sqlFileLimit: "Up to {size} MB"
   importRows: Import rows
   format: Format
   csvOrExcel: CSV or Excel
