@@ -24,6 +24,7 @@ These apply in every clidey repository, for people and agents alike.
 - **The machine:** don't keep it awake or change power settings (`caffeinate`, `pmset`); recommend it to the user instead.
 - **Agent replies:** lead with the answer or result. No preamble, no restating the question, no recap unless asked. Keep it short and explain only what isn't obvious; if you need something from the user, ask in one line.
 - **Clarify first:** before starting, ask about anything where a different answer would change the work: scope, behaviour, which repo or environment, or anything hard to undo. Ask all your questions at once, then wait. Don't ask what the code or docs already answer; for small choices that are easy to change later, pick one and say which in your reply.
+- **Answers that raise questions:** if any of the user's answers to your questions is itself a question or a follow-up, answer it and wait. Don't start any of the work, including the parts they already answered, until every answer is settled and they're happy with it.
 <!-- team-rules:end -->
 
 ## Rules
