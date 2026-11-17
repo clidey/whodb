@@ -1,123 +1,78 @@
 ---
-title: "Writing Queries"
-description: "Write and run SQL in the current WhoDB Scratchpad editor"
+title: "Write and run queries"
+description: "Execute an editor, a selection, or an individual statement and inspect its output."
 ---
 
-# Writing Queries
+# Write and run queries
 
-Scratchpad uses a SQL code editor for custom database queries. It supports SQL syntax highlighting, statement execution from the editor, query history, and result rendering below the cell.
+Start with a query that returns a few known records. Once the object names, fields, and values are correct, add the conditions or joins needed to answer your question. This makes errors easier to locate than starting with a large statement and guessing which part is wrong.
 
-![Scratchpad Code Editor](/images/28-scratchpad-code-editor.png)
+Open **Scratchpad** and write in the active cell. Confirm the connection and schema before running it.
 
-## Basic Query Flow
+<div className="ce-screenshot-light">
 
-<Steps>
-<Step title="Open Scratchpad">
-Use the sidebar **Scratchpad** item.
-</Step>
-<Step title="Write SQL">
-Type a query in the active cell.
-</Step>
-<Step title="Run">
-Click the run button at the bottom-right of the cell (it appears on hover and is hidden while the editor is empty), use a per-statement play button in the editor's left gutter, or press `Cmd/Ctrl + Enter`.
-</Step>
-<Step title="Review Output">
-Results, action status, or errors appear below the editor.
-</Step>
-</Steps>
+![A SQL query in the Scratchpad editor](/images/light/28-scratchpad-code-editor.png)
 
-```sql
-SELECT *
-FROM users
-LIMIT 10;
-```
+</div>
+<div className="ce-screenshot-dark">
 
-## Running Part Of A Query
+![A SQL query in the Scratchpad editor](/images/dark/28-scratchpad-code-editor.png)
 
-If you select SQL text in the editor and press `Cmd/Ctrl + Enter`, WhoDB runs the selected SQL. If nothing is selected, it runs the editor content.
+</div>
 
-This is useful for keeping related statements in one cell while testing only one statement at a time.
+## Choose what to run
 
-## SELECT Queries
+| Action | What runs |
+| --- | --- |
+| Cell play button | The cell's query |
+| `Mod + Enter` with selected text | Only the selection |
+| `Mod + Enter` without a selection | The editor content |
+| Play control in the editor gutter | The associated statement |
 
-`SELECT` queries return an interactive grid.
+Selection is useful when checking part of a script. Before pressing the shortcut, look at the selected text so you do not accidentally execute a different statement. `Mod + U` clears the editor.
 
-![Select Query Result](/images/86-scratchpad-select-query-result.png)
+## Start with a bounded result
+
+For the PostgreSQL demo schema, this query returns user identifiers and contact fields in a predictable order:
 
 ```sql
 SELECT id, username, email
-FROM users
+FROM test_schema.users
 ORDER BY id
 LIMIT 25;
 ```
 
-## Aggregate Queries
+Use your source's schema, field names, and syntax. Return the fields needed for the question instead of copying every column into a result or export.
 
-Aggregate queries work like any other SQL your database accepts.
+## Join related data
 
-![Count Query Result](/images/87-scratchpad-count-query-result.png)
-
-```sql
-SELECT COUNT(*) AS total_users
-FROM users;
-```
-
-## Joins
-
-Use normal SQL joins for your database engine.
-
-![Join Query Result](/images/88-scratchpad-join-query-result.png)
+Suppose you need the number of orders belonging to each user. Inspect the declared keys in [Graph](/visualization/graph-view), then write the join explicitly:
 
 ```sql
-SELECT u.id, u.username, p.amount
-FROM users u
-JOIN payments p ON p.user_id = u.id
-ORDER BY p.amount DESC
-LIMIT 25;
+SELECT u.id, u.username, COUNT(o.id) AS order_count
+FROM test_schema.users AS u
+LEFT JOIN test_schema.orders AS o ON o.user_id = u.id
+GROUP BY u.id, u.username
+ORDER BY order_count DESC, u.id;
 ```
 
-## Action Queries
+This PostgreSQL example keeps users with no matching orders because it uses a left join. Counting `o.id` gives those users a count of zero. Check that this matches the business question before using the result.
 
-Action queries such as `INSERT`, `UPDATE`, and `DELETE` are supported when your database credentials allow them.
+<div className="ce-screenshot-light">
 
-```sql
-UPDATE users
-SET status = 'inactive'
-WHERE id = 42;
-```
+![A join query and its result](/images/light/88-scratchpad-join-query-result.png)
 
-WhoDB detects destructive SQL and asks for confirmation before execution.
+</div>
+<div className="ce-screenshot-dark">
 
-![Scratchpad Action Result](/images/40-scratchpad-action-result.png)
+![A join query and its result](/images/dark/88-scratchpad-join-query-result.png)
 
-## Errors
+</div>
 
-Syntax errors and database runtime errors are displayed below the editor.
+## Handle errors and writes
 
-![Query Error](/images/30-scratchpad-query-error.png)
+Read the error below the failed cell. Check the object names and active schema, then remove the last condition or join you added. Once the smaller query works, add one part at a time until you identify the problem.
 
-Use a smaller query to isolate the failure:
+Before an update or deletion, run a read query with the same predicate. Inspect the keys and count of its target records, then review the write. Separate Scratchpad cells should not be treated as one persistent database transaction.
 
-```sql
-SELECT 1;
-```
-
-Then add tables, joins, filters, and ordering back one step at a time.
-
-## Current Shortcuts
-
-| Shortcut | Action |
-|----------|--------|
-| `Cmd/Ctrl + Enter` | Run current query or selected SQL |
-| `Cmd/Ctrl + U` | Clear current editor |
-
-## Related Pages
-
-<CardGroup cols={2}>
-<Card title="Query Results" icon="table" href="/query/query-results">
-Understand result grids, action outputs, and export entry points.
-</Card>
-<Card title="Query History" icon="clock" href="/query/query-history">
-Reuse queries saved in cell history.
-</Card>
-</CardGroup>
+Continue with [Query results](/query/query-results) to interpret the output, or [Query history](/query/query-history) to recover an earlier statement.

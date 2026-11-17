@@ -184,6 +184,7 @@ type Dataset struct {
 	Description string      `json:"description"`
 	Schema      []ColumnDef `json:"schema"`
 	SchemaMode  string      `json:"schemaMode"`
+	StorageMode string      `json:"storageMode"`
 	OwnerID     string      `json:"ownerId"`
 	RowCount    int         `json:"rowCount"`
 	SizeBytes   int         `json:"sizeBytes"`
@@ -204,9 +205,10 @@ type DatasetQueryResult struct {
 
 // LineageNode describes one lineage graph node.
 type LineageNode struct {
-	ID       string `json:"id"`
-	NodeType string `json:"nodeType"`
-	Name     string `json:"name"`
+	ID         string  `json:"id"`
+	NodeType   string  `json:"nodeType"`
+	ProviderID *string `json:"providerId,omitempty"`
+	Name       string  `json:"name"`
 }
 
 // LineageEdge describes one lineage graph edge.
@@ -226,15 +228,21 @@ type LineageGraph struct {
 
 // Transform describes one hosted transform.
 type Transform struct {
-	ID           string `json:"id"`
-	ProjectID    string `json:"projectId"`
-	Name         string `json:"name"`
-	Description  string `json:"description"`
-	GraphJSON    string `json:"graphJson"`
-	ScheduleCron string `json:"scheduleCron"`
-	TriggerMode  string `json:"triggerMode"`
-	CreatedAt    string `json:"createdAt"`
-	UpdatedAt    string `json:"updatedAt"`
+	ID                   string `json:"id"`
+	ProjectID            string `json:"projectId"`
+	Name                 string `json:"name"`
+	Description          string `json:"description"`
+	GraphJSON            string `json:"graphJson"`
+	ScheduleCron         string `json:"scheduleCron"`
+	TriggerMode          string `json:"triggerMode"`
+	LastRunStatus        string `json:"lastRunStatus"`
+	LastRunAt            string `json:"lastRunAt"`
+	LiveStatus           string `json:"liveStatus"`
+	LiveLastProcessedAt  string `json:"liveLastProcessedAt"`
+	LiveRecordsProcessed string `json:"liveRecordsProcessed"`
+	LiveLastError        string `json:"liveLastError"`
+	CreatedAt            string `json:"createdAt"`
+	UpdatedAt            string `json:"updatedAt"`
 }
 
 // TransformRun describes one hosted transform run.
@@ -277,6 +285,10 @@ type FunctionDependency struct {
 
 // Function describes one hosted ontology function.
 type Function struct {
+	ExecutionMode       string                   `json:"executionMode"`
+	LiveBehavior        string                   `json:"liveBehavior"`
+	EdgeRunnerID        string                   `json:"edgeRunnerId"`
+	CurrentRunStatus    *string                  `json:"currentRunStatus"`
 	ID                  string                   `json:"id"`
 	ProjectID           string                   `json:"projectId"`
 	Name                string                   `json:"name"`

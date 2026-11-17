@@ -48,11 +48,29 @@ type liveGapFixtures struct {
 // cancellation, restore/purge, sharing, lineage provider, service account,
 // team and package-polish capabilities against the real platform.
 func liveMustGapCoverage(t *testing.T, ctx context.Context, fx liveGapFixtures) {
+	liveMustCapabilityCatalog(t, ctx, fx)
 	t.Helper()
 	session, err := loadPlatformWorkspace(ctx)
 	if err != nil {
 		t.Fatalf("load workspace for gap coverage: %v", err)
 	}
+
+	protocolClient := scopeTestClient(t)
+	currentBehavior := scopeCall(t, protocolClient, "whodb_platform_ontology_behavior", map[string]any{"id": fx.ontologyID})
+	if currentBehavior["error"] != nil {
+		t.Fatalf("ontology_behavior: %v", currentBehavior["error"])
+	}
+	behaviorData := currentBehavior["data"].(map[string]any)
+	behaviorPreview := scopeCall(t, protocolClient, "whodb_platform_ontology_behaviors_validate", map[string]any{"manifest": map[string]any{"version": 1, "behaviors": []any{map[string]any{"api_name": fx.ontologyAPIName, "document": behaviorData["document"], "expected_revision": behaviorData["revision"]}}}})
+	if behaviorPreview["error"] != nil {
+		t.Fatalf("ontology_behaviors_validate: %v", behaviorPreview["error"])
+	}
+	afterPreview := scopeCall(t, protocolClient, "whodb_platform_ontology_behavior", map[string]any{"id": fx.ontologyID})
+	if afterPreview["data"].(map[string]any)["revision"] != behaviorData["revision"] {
+		t.Fatal("validation activated behavior changes")
+	}
+	liveCoverTool("whodb_platform_ontology_behavior")
+	liveCoverTool("whodb_platform_ontology_behaviors_validate")
 	projectID := session.Host.DefaultProjectID
 	orgID := session.Host.DefaultOrgID
 
@@ -295,6 +313,19 @@ func liveMustGapCoverage(t *testing.T, ctx context.Context, fx liveGapFixtures) 
 	liveMustGenericWriteAttempt(t, ctx, "platform_action", "action", PlatformGenericWriteInput{Resource: "package", Action: "review", ID: fx.packageID, PayloadJSON: `{"rating":5,"body":"MCP e2e review"}`})
 	liveMustExtendedRead(t, ctx, "whodb_platform_org_package_installations", "OrganizationPackageInstallations", map[string]any{"packageId": fx.packageID}, true)
 	liveMustExtendedRead(t, ctx, "whodb_platform_app_page_files", "AppPageFiles", map[string]any{"id": fx.appID, "page": "index", "env": optionalPlatformString("")}, false)
+
+	// Detail projections must return all the richer package metadata, even when
+	// a fixture has no entries in a collection.
+	packageRead := scopeCall(t, protocolClient, "whodb_platform_package", map[string]any{"id": fx.packageID})
+	if packageRead["error"] != nil {
+		t.Fatal(packageRead["error"])
+	}
+	packageData := packageRead["data"].(map[string]any)
+	for _, key := range []string{"sourceProjectId", "thumbnailUrl", "useCases", "teams", "lineage", "reviews", "media", "changelog"} {
+		if _, ok := packageData[key]; !ok {
+			t.Errorf("package detail omitted %s", key)
+		}
+	}
 
 	// Data purges run last. The platform refuses to purge an ontology with an
 	// active behavior, so that rule is asserted on the fixture entity and the

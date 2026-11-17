@@ -1,73 +1,69 @@
 ---
-title: "Query Results"
-description: "Read and work with Scratchpad query results in WhoDB — result grids, copying cells and rows, and exporting query output"
+title: "Read query results"
+description: "Inspect returned rows, distinguish action results from data, and export query output."
 ---
 
-# Query Results
+# Read query results
 
-Scratchpad renders query output below the cell that ran the SQL.
+Read the output below a Scratchpad cell to see what that execution returned. WhoDB distinguishes returned records, action results, and errors. Understanding which kind of output you have helps you decide whether to inspect data, verify a write, or correct the statement.
 
-![Query Results](/images/29-scratchpad-query-results.png)
+## Returned rows
 
-## SELECT Results
+A read query displays a grid with the returned field names and records. Compare a few values to records you already understand before relying on an aggregate or join.
 
-`SELECT` queries show a table grid with columns, rows, and pagination controls when enough rows are returned.
+<div className="ce-screenshot-light">
 
-```sql
-SELECT *
-FROM users
-LIMIT 10;
-```
+![A Scratchpad result grid](/images/light/29-scratchpad-query-results.png)
 
-![Select Query Result](/images/86-scratchpad-select-query-result.png)
+</div>
+<div className="ce-screenshot-dark">
 
-The grid uses the same table component as Storage Unit data pages, but in a read-only mode: you can copy a cell, copy a row, and export the results.
+![A Scratchpad result grid](/images/dark/29-scratchpad-query-results.png)
 
-## Action Results
+</div>
 
-Action queries such as `INSERT`, `UPDATE`, and `DELETE` show an action result after execution.
+Pay attention to the query itself. A result from `LIMIT 25` contains the requested sample, not every record in the object. A count after a join can be larger than a count of orders if each order joins to several items.
 
-![Action Result](/images/40-scratchpad-action-result.png)
+You can copy values and rows and export the result. Query result grids are read-only. To change a stored record, open the object's [Data view](/data/editing-records) and identify it by its key.
 
-For destructive SQL, WhoDB asks for confirmation before running the query.
+A successful query with no records displays an empty state. Check its predicate, joins, and active schema before concluding that data is missing.
 
-## Empty Results
+## Action results
 
-Queries that run successfully but return no rows show an empty result state rather than a table full of blank rows.
+An update, deletion, or other write displays an action result after execution.
+
+<div className="ce-screenshot-light">
+
+![An action query result](/images/light/40-scratchpad-action-result.png)
+
+</div>
+<div className="ce-screenshot-dark">
+
+![An action query result](/images/dark/40-scratchpad-action-result.png)
+
+</div>
+
+A success message means the statement executed. Read the affected records again to check that it changed the intended set and values. Keep the verification query beside the write so you can explain the result later.
 
 ## Errors
 
-Syntax and runtime errors render below the editor.
+Errors appear below the editor that ran the query. Read the message together with the query and the current connection context.
 
-![Query Error](/images/30-scratchpad-query-error.png)
+<div className="ce-screenshot-light">
 
-Examples:
+![A database error below a Scratchpad cell](/images/light/30-scratchpad-query-error.png)
 
-```sql
-SELECT * FROM missing_table;
-```
+</div>
+<div className="ce-screenshot-dark">
 
-```sql
-SELECT FROM users;
-```
+![A database error below a Scratchpad cell](/images/dark/30-scratchpad-query-error.png)
 
-## Exporting Query Results
+</div>
 
-Use the export action available from the results table. CE export formats are:
+For an unknown field or object, inspect its metadata and check spelling and qualification. For a permissions error, check the database account rather than changing the query until it happens to succeed. Reduce a complicated statement to a smaller read when the cause is unclear.
 
-- CSV
-- Excel `.xlsx`
-- JSON Lines for records from sources like MongoDB when supported
+## Export the answer
 
-For SQL backups, migration dumps, and advanced export formatting, use your database's native tools.
+Use the result grid's export action when the returned set is what you want to share. CSV and Excel are available for tabular output; supported document results can use JSON Lines.
 
-## Related Pages
-
-<CardGroup cols={2}>
-<Card title="Viewing Data" icon="table" href="/data/viewing-data">
-Understand the shared data grid.
-</Card>
-<Card title="Export Options" icon="file-export" href="/advanced/export-options">
-See the current export formats and entry points.
-</Card>
-</CardGroup>
+Check the file's headers and a known record after downloading. Keep the query and extraction date with the result so another person can reproduce the answer. See [Export options](/advanced/export-options) for object, selection, and result-export scopes.

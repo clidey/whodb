@@ -1,5 +1,5 @@
 #!/bin/bash
-# Generate 1440x900 (16:10) screenshots from docs/images
+# Generate 1440x900 (16:10) screenshots from docs/images/light
 # Used for Apple App Store submission images
 # Uses blurred background letterboxing technique
 # Requires: ImageMagick (brew install imagemagick)
@@ -7,7 +7,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SOURCE_DIR="${SCRIPT_DIR}/docs/images"
+SOURCE_DIR="${SCRIPT_DIR}/docs/images/light"
 OUT_DIR="${SCRIPT_DIR}/docs/images/1440x900"
 
 TARGET_WIDTH=1440

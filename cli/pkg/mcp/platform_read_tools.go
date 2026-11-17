@@ -169,6 +169,9 @@ func registerPlatformReadTool(server *mcp.Server, tool *mcp.Tool, secOpts *Secur
 	if registerPlatformResourceResolverTool(server, tool) {
 		return
 	}
+	if registerPlatformCapabilityRead(server, tool, secOpts) {
+		return
+	}
 	if registerPlatformExtendedReadTool(server, tool) {
 		return
 	}

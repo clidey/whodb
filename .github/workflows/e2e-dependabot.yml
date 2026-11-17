@@ -1,6 +1,7 @@
 name: E2E Tests (Dependabot)
 
-# Runs selective E2E tests for Dependabot PRs that update a known DB driver in
+# Runs selective E2E tests for dependency-update PRs (Dependabot security
+# updates, or Renovate branches under renovate/) that update a known DB driver in
 # core/go.mod. Detects which module changed, maps it to the relevant matrix
 # database(s), and calls the reusable e2e-ce.yml with only those databases.
 #
@@ -9,8 +10,13 @@ name: E2E Tests (Dependabot)
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - 'core/go.mod'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -18,7 +24,7 @@ permissions:
 jobs:
   detect:
     name: Detect Changed DB Packages
-    if: github.actor == 'dependabot[bot]'
+    if: (github.actor == 'dependabot[bot]' || startsWith(github.head_ref, 'renovate/')) && github.event.pull_request.draft != true
     runs-on: ubuntu-latest
     outputs:
       databases: ${{ steps.map.outputs.databases }}

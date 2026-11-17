@@ -15,8 +15,7 @@
  */
 
 import { useLazyQuery, useMutation, useQuery } from "@apollo/client/react";
-import {Alert, AlertDescription, AlertTitle, Badge, Button, Card, cn, Label, ModeToggle, Separator, toast, useTheme} from '@clidey/ux';
-import {SearchSelect} from '../../components/ux';
+import { Alert, AlertDescription, AlertTitle, Badge, Button, Card, cn, Label, ModeToggle, Separator, toast, useTheme, IconSliders as AdjustmentsHorizontalIcon, IconChat as ChatBubbleLeftRightIcon, IconCheckCircle as CheckCircleIcon, IconChevronDown as ChevronDownIcon, IconCode as CodeBracketIcon, IconInfo as InformationCircleIcon, IconShare as ShareIcon, IconAi as SparklesIcon, IconTable as TableCellsIcon, SearchSelect } from '@clidey/ux';
 import {
     SettingsConfigDocument,
     SourceFieldOptionsDocument,
@@ -27,21 +26,9 @@ import {
 } from '@graphql';
 import classNames from "classnames";
 import type {FC, ReactElement} from "react";
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState} from "react";
-import {getComponent} from "../../config/component-registry";
+import { useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {useNavigate, useSearchParams} from "react-router-dom";
 import logoImage from "../../../public/images/logo.svg";
-import {
-    AdjustmentsHorizontalIcon,
-    ChatBubbleLeftRightIcon,
-    CheckCircleIcon,
-    ChevronDownIcon,
-    CodeBracketIcon,
-    InformationCircleIcon,
-    ShareIcon,
-    SparklesIcon,
-    TableCellsIcon
-} from '../../components/heroicons';
 import {Icons} from "../../components/icons";
 import {Loading, Spinner} from "../../components/loading";
 import {Container} from "../../components/page";
@@ -208,7 +195,7 @@ export const LoginForm: FC<LoginFormProps> = ({
     const [testConnection, { loading: testConnectionLoading }] = useMutation(TestSourceConnectionDocument);
     const [loginWithSourceProfile, { loading: loginWithSourceProfileLoading }] = useMutation(LoginWithSourceProfileDocument);
     const [getDatabases, { loading: databasesLoading, data: foundDatabases }] = useLazyQuery(SourceFieldOptionsDocument);
-    const { loading: profilesLoading, data: profiles } = useQuery(SourceProfilesDocument);
+    const { loading: profilesLoading, data: profiles, error: profilesError } = useQuery(SourceProfilesDocument);
     const { data: settingsData } = useQuery(SettingsConfigDocument);
     const disableCredentialForm = settingsData?.SettingsConfig?.DisableCredentialForm ?? false;
     const maxPageSize = settingsData?.SettingsConfig?.MaxPageSize ?? 10000;
@@ -227,7 +214,6 @@ export const LoginForm: FC<LoginFormProps> = ({
     const [password, setPassword] = useState("");
     const [error, setError] = useState<string>();
     const [testResult, setTestResult] = useState<{ status: 'success' | 'error'; message: string; duration?: number }>();
-    const [missingDriver, setMissingDriver] = useState<string | null>(null);
     const [advancedForm, setAdvancedForm] = useState<Record<string, string>>({});
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [formResetKey, setFormResetKey] = useState(0);
@@ -318,21 +304,13 @@ export const LoginForm: FC<LoginFormProps> = ({
         }
     }, [isFirstLogin, FIRST_LOGIN_KEY]);
 
-    const handleLoginError = useCallback((loginError: unknown, allowDriverInstallPrompt = false) => {
+    const handleLoginError = useCallback((loginError: unknown) => {
         trackFrontendIntent('auth.login_failed', {
             ...loginAnalyticsPropsRef.current,
             error_code: frontendAnalyticsErrorCode(loginError),
         });
 
         const errorMessage = loginError instanceof Error ? loginError.message : String(loginError);
-
-        if (allowDriverInstallPrompt) {
-            const driverMatch = errorMessage.match(/driver_not_installed:(\w+)/);
-            if (driverMatch) {
-                setMissingDriver(driverMatch[1]);
-                return;
-            }
-        }
 
         const lowerCaseMessage = errorMessage.toLowerCase();
         const isNetworkError = lowerCaseMessage.includes('network') ||
@@ -431,7 +409,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                 }
                 toast.success(t('loginSuccessful'));
             } catch (error) {
-                handleLoginError(error, true);
+                handleLoginError(error);
             }
         })();
     }, [advancedForm, database, databaseType, dispatch, handleLoginError, hostName, login, markFirstLoginComplete, navigate, onLoginSuccess, password, searchParams, setSearchParams, t, username]);
@@ -1129,10 +1107,16 @@ export const LoginForm: FC<LoginFormProps> = ({
                         </div>
                     }
                 </div>
-                {testResult && <div id="login-error" className={cn('ce-connect-test-result', testResult.status === 'success' ? 'is-success' : 'is-error')} role="status" data-testid="connection-test-result">
+                {(databaseTypesError ?? profilesError) && <Alert variant="destructive" role="alert" data-testid="source-catalog-error">
+                    <InformationCircleIcon className="size-4" />
+                    <AlertTitle>{t('sourceCatalogUnavailable')}</AlertTitle>
+                    <AlertDescription>{t('sourceCatalogUnavailableDescription')}</AlertDescription>
+                </Alert>}
+                {testResult && <Alert id="login-error" variant={testResult.status === 'success' ? 'success' : 'destructive'} role="status" data-testid="connection-test-result">
                     {testResult.status === 'success' ? <CheckCircleIcon className="size-4" /> : <InformationCircleIcon className="size-4" />}
-                    <span><strong>{testResult.message}</strong>{testResult.duration != null && <small>{t('roundTrip', { duration: testResult.duration })}</small>}</span>
-                </div>}
+                    <AlertTitle>{testResult.message}</AlertTitle>
+                    {testResult.duration != null && <AlertDescription>{t('roundTrip', { duration: testResult.duration })}</AlertDescription>}
+                </Alert>}
                 <div className={classNames("flex login-action-buttons", {
                     "justify-end": advancedForm == null,
                     "justify-between": advancedForm != null,
@@ -1201,7 +1185,7 @@ export const LoginForm: FC<LoginFormProps> = ({
             </div>
             {
                 showSidePanel && !landing && advancedDirection === "horizontal" && (
-                    <Card className="flex flex-col gap-6 p-8 w-full md:w-[380px] shadow-xl" data-testid="sample-database-panel" aria-labelledby="sample-db-heading">
+                    <Card className="flex flex-col w-full md:w-[380px]" data-testid="sample-database-panel" aria-labelledby="sample-db-heading">
                         <div className="flex flex-col gap-4">
                             <div className="flex items-center gap-3">
                                 <div className="h-14 w-14 rounded-2xl flex justify-center items-center bg-gradient-to-br from-brand to-brand/80 shadow-lg" aria-hidden="true">
@@ -1291,22 +1275,6 @@ export const LoginForm: FC<LoginFormProps> = ({
             sourceType={platformSourceType?.label}
             sourceTypeId={platformSourceType?.id}
         />
-        {(() => {
-            const DriverInstallDialog = getComponent('driver-install-dialog') as React.LazyExoticComponent<FC<{driverName: string; onInstalled: () => void; onCancel: () => void}>> | undefined;
-            if (!DriverInstallDialog || !missingDriver) return null;
-            return (
-                <Suspense fallback={null}>
-                    <DriverInstallDialog
-                        driverName={missingDriver}
-                        onInstalled={() => {
-                            setMissingDriver(null);
-                            handleSubmit();
-                        }}
-                        onCancel={() =>{  setMissingDriver(null); }}
-                    />
-                </Suspense>
-            );
-        })()}
             </section>
         </div>
     );

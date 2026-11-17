@@ -9,8 +9,8 @@ GOWORK := go.work.desktop-ce
 BUILD_TAGS :=
 OUTPUT_PREFIX := whodb
 FRONTEND_BUILD_CMD := build:ce
-APP_NAME := WhoDB.app
-DMG_VOLNAME := WhoDB
+APP_NAME := WhoDB Community.app
+DMG_VOLNAME := WhoDB Community
 LINUX_TAGS := -tags webkit2_41
 
 # Include common build logic

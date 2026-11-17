@@ -40,6 +40,7 @@ import {type SupportedLanguage, DEFAULT_LANGUAGE} from '../utils/languages';
 import {clearSourceSessionMetadata} from '../utils/source-session-metadata-cache';
 import {ANALYTICS_EVENTS} from './analytics-events';
 import {trackFrontendIntent} from './frontend-analytics';
+import {graphqlFetch} from '../utils/graphql-fetch';
 
 // Always use an application-relative URI so that:
 // - Desktop/Wails uses the embedded router handler
@@ -94,6 +95,7 @@ const redirectToLoginWithMessage = (
 
 const httpLink = new HttpLink({
   uri,
+  fetch: graphqlFetch,
   credentials: "include",
 });
 

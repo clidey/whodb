@@ -1,177 +1,38 @@
 ---
-title: "Backup Tool Integration"
-description: "Use database-native tools to back up databases you manage with WhoDB"
+title: "Keep a real recovery path"
+description: "Distinguish row exports from complete database backups and verify restoration independently."
 ---
 
-# Backup Tool Integration
+# Keep a real recovery path
 
-Use your database engine's native backup tools for scheduled backups. WhoDB is useful for inspecting data before or after backup and restore work.
+Use a row export when you need to share a result. Use a database backup when you need to restore the database after a failure or unwanted change. The files serve different purposes.
 
-<Warning>
-Always test restore procedures so every backup path is proven before an incident.
-</Warning>
+## Choose the artifact you need
 
-## PostgreSQL
+| Goal | Appropriate workflow |
+| --- | --- |
+| Share a report | Export a bounded query result |
+| Move a small structured fixture | CSV or Excel export and validated import |
+| Recover a complete database | Use database-native backup and restore tools |
+| Apply the same schema change elsewhere | Keep a reviewed migration in version control |
 
-Full logical backup:
+A complete recovery may need schema, constraints, routines, privileges, and engine-specific metadata as well as records. A CSV does not preserve all of these.
 
-```bash
-pg_dump \
-  --host "$PGHOST" \
-  --port "${PGPORT:-5432}" \
-  --username "$PGUSER" \
-  --dbname "$PGDATABASE" \
-  --format custom \
-  --file "backup-${PGDATABASE}-$(date +%Y%m%d-%H%M%S).dump"
-```
+## Follow your engine's procedure
 
-Restore into a test database:
+Use the official instructions for the database and deployment you run:
 
-```bash
-createdb "$PGDATABASE_RESTORE"
-pg_restore \
-  --host "$PGHOST" \
-  --port "${PGPORT:-5432}" \
-  --username "$PGUSER" \
-  --dbname "$PGDATABASE_RESTORE" \
-  --clean \
-  --if-exists \
-  "backup-${PGDATABASE}.dump"
-```
+- [PostgreSQL backup and restore](https://www.postgresql.org/docs/current/backup.html)
+- [MySQL backup and recovery](https://dev.mysql.com/doc/refman/8.4/en/backup-and-recovery.html)
+- [MongoDB database tools](https://www.mongodb.com/docs/database-tools/)
+- [SQLite backup API and tools](https://www.sqlite.org/backup.html)
 
-Verify row counts for a configurable schema:
+For a managed database, include the provider's backup retention and restoration procedure in your recovery plan. Choose the procedure based on the recovery you need rather than assuming one export command covers every failure.
 
-```bash
-#!/usr/bin/env bash
-set -euo pipefail
+## Test the restoration
 
-SCHEMA_NAME="${SCHEMA_NAME:-public}"
-DATABASE_NAME="${DATABASE_NAME:-$PGDATABASE}"
+Restore into a separate target. Follow the backup tool's verification procedure, then use WhoDB to inspect expected objects, counts, keys, and known records. Test the application against the restored target when application behavior is part of the recovery requirement.
 
-psql --dbname "$DATABASE_NAME" --tuples-only --no-align --set schema_name="$SCHEMA_NAME" <<'SQL'
-SELECT table_schema, COUNT(*)
-FROM information_schema.tables
-WHERE table_schema = :'schema_name'
-  AND table_type = 'BASE TABLE'
-GROUP BY table_schema;
-SQL
-```
+Record the commands, required credentials, storage location, and validation checks with the backup configuration. A file that has never been restored leaves an important part of the recovery process untested.
 
-<Note>
-Do not hardcode `public` unless your database really stores application tables there. Many test and production databases use schemas such as `test_schema`, `app`, or tenant-specific names.
-</Note>
-
-## MySQL And MariaDB
-
-Full logical backup:
-
-```bash
-mysqldump \
-  --host "$MYSQL_HOST" \
-  --port "${MYSQL_PORT:-3306}" \
-  --user "$MYSQL_USER" \
-  --password \
-  --single-transaction \
-  --routines \
-  --triggers \
-  "$MYSQL_DATABASE" \
-  > "backup-${MYSQL_DATABASE}-$(date +%Y%m%d-%H%M%S).sql"
-```
-
-Restore into a test database:
-
-```bash
-mysql \
-  --host "$MYSQL_HOST" \
-  --port "${MYSQL_PORT:-3306}" \
-  --user "$MYSQL_USER" \
-  --password \
-  "$MYSQL_RESTORE_DATABASE" \
-  < backup.sql
-```
-
-## SQLite
-
-Use SQLite's online backup command when possible:
-
-```bash
-sqlite3 production.db ".backup 'backup-$(date +%Y%m%d-%H%M%S).db'"
-```
-
-For offline databases, copying the file is acceptable only when no process is writing to it.
-
-## MongoDB
-
-Use `mongodump` and `mongorestore`:
-
-```bash
-mongodump \
-  --uri "$MONGODB_URI" \
-  --archive="backup-$(date +%Y%m%d-%H%M%S).archive" \
-  --gzip
-```
-
-```bash
-mongorestore \
-  --uri "$MONGODB_RESTORE_URI" \
-  --archive="backup.archive" \
-  --gzip
-```
-
-## Retention
-
-Example retention cleanup:
-
-```bash
-find "$BACKUP_DIR" -type f -mtime +"${RETENTION_DAYS:-30}" -delete
-```
-
-## Checksums
-
-Record checksums after backup creation:
-
-```bash
-sha256sum backup-file > backup-file.sha256
-```
-
-Verify later:
-
-```bash
-sha256sum -c backup-file.sha256
-```
-
-## Scheduling
-
-Use your platform scheduler:
-
-- `cron` or systemd timers on a VM.
-- Kubernetes `CronJob`.
-- Managed backup jobs from your cloud/database provider.
-- CI/CD scheduled workflows only for non-production or carefully controlled environments.
-
-## Using WhoDB In The Backup Workflow
-
-WhoDB is useful for backup-adjacent checks:
-
-- Inspect table counts and recent records before a backup.
-- Run validation queries in Scratchpad.
-- Inspect restored test databases.
-- Compare source and restored rows with read-only queries.
-
-Example validation query:
-
-```sql
-SELECT COUNT(*) AS total_rows
-FROM users;
-```
-
-## Related Pages
-
-<CardGroup cols={2}>
-<Card title="Data Migration" icon="right-left" href="/use-cases/data-migration">
-Use validation queries when moving data.
-</Card>
-<Card title="Troubleshooting" icon="wrench" href="/resources/troubleshooting">
-Debug database connectivity before backup jobs.
-</Card>
-</CardGroup>
+Continue with [Export options](/advanced/export-options) for report files or [Migration validation](/use-cases/data-migration) for checking a planned transfer.

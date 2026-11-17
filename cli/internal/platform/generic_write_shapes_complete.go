@@ -39,6 +39,7 @@ func init() {
 		{Name: "timeoutSeconds", Type: "integer", Description: "Execution timeout"},
 		str("memory", "Memory limit, for example 512Mi"),
 		str("cpu", "CPU limit, for example 500m"),
+		str("edgeRunnerId", "Assigned edge runner id; discover with whodb_platform_edge_runners"),
 		functionFiles,
 		functionDependencies,
 		{Name: "providerIds", Type: "array", Description: "AI provider ids the function may use"},

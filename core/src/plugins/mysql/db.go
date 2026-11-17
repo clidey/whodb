@@ -17,10 +17,12 @@
 package mysql
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net"
 	"strconv"
+	"sync"
 	"time"
 
 	mysqldriver "github.com/go-sql-driver/mysql"
@@ -33,7 +35,14 @@ import (
 	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
+	"github.com/clidey/whodb/core/src/sourcedial"
 )
+
+// sourceNetwork is the MySQL driver network name that dials through the
+// registered source dialer.
+const sourceNetwork = "whodb-source"
+
+var registerSourceNetwork sync.Once
 
 func (p *MySQLPlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 	return p.openDB(config, false)
@@ -49,6 +58,16 @@ func (p *MySQLPlugin) openDB(config *engine.PluginConfig, multiStatements bool) 
 	mysqlConfig.User = connectionInput.Username
 	mysqlConfig.Passwd = connectionInput.Password
 	mysqlConfig.Net = "tcp"
+	// The config becomes a DSN, which cannot carry a dial function, so a
+	// registered dialer is reached through a named network instead.
+	if sourcedial.Dialer() != nil {
+		registerSourceNetwork.Do(func() {
+			mysqldriver.RegisterDialContext(sourceNetwork, func(ctx context.Context, addr string) (net.Conn, error) {
+				return sourcedial.Dialer()(ctx, "tcp", addr)
+			})
+		})
+		mysqlConfig.Net = sourceNetwork
+	}
 	mysqlConfig.Addr = net.JoinHostPort(connectionInput.Hostname, strconv.Itoa(connectionInput.Port))
 	mysqlConfig.DBName = connectionInput.Database
 	mysqlConfig.AllowCleartextPasswords = connectionInput.AllowClearTextPasswords
@@ -97,6 +116,18 @@ func (p *MySQLPlugin) openDB(config *engine.PluginConfig, multiStatements bool) 
 	})
 
 	dsn := mysqlConfig.FormatDSN()
+	// The DSN is parsed again on open, so a hostname carrying DSN syntax (for
+	// example "x@tcp(10.0.0.5:3306") could switch the network back to plain
+	// tcp and skip the registered dialer. Require the parsed DSN to keep both.
+	if mysqlConfig.Net == sourceNetwork {
+		parsedConfig, err := mysqldriver.ParseDSN(dsn)
+		if err != nil {
+			return nil, err
+		}
+		if parsedConfig.Net != sourceNetwork || parsedConfig.Addr != mysqlConfig.Addr {
+			return nil, errors.New("invalid MySQL hostname")
+		}
+	}
 	if !env.GetIsLocalMode() {
 		// Check the effective DSN because option keys can contain parameter delimiters.
 		parsedConfig, err := mysqldriver.ParseDSN(dsn)

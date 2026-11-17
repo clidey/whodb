@@ -24,7 +24,8 @@ import {
     SheetFooter,
     SheetHeader,
     SheetTitle,
-} from "@clidey/ux";
+    IconExternal as ArrowTopRightOnSquareIcon,
+} from '@clidey/ux';
 import { useApolloClient } from "@apollo/client/react";
 import { ExportSourceConnectionDocument } from "@graphql";
 import type { FC } from "react";
@@ -35,7 +36,6 @@ import { useTranslation } from "@/hooks/use-translation";
 import { useAppSelector } from "@/store/hooks";
 import { buildImportConnection, buildPlatformImportLandingUrl, PLATFORM_URL, type PlatformFunnelTrigger, postConnectionsToPlatform } from "@/utils/platform-funnel";
 import { ph } from "@/utils/privacy";
-import { ArrowTopRightOnSquareIcon } from "../heroicons";
 
 /** Props for the platform import sheet. */
 export type PlatformImportSheetProps = {
@@ -148,7 +148,7 @@ export const PlatformImportSheet: FC<PlatformImportSheetProps> = ({ open, onOpen
 
     return (
         <Sheet open={open} onOpenChange={handleSheetOpenChange}>
-            <SheetContent side="right" className="p-8 flex flex-col gap-6">
+            <SheetContent side="right" className="flex flex-col gap-6">
                 <SheetHeader>
                     <SheetTitle>{t("platformImportTitle")}</SheetTitle>
                     <SheetDescription>{t("platformImportDescription")}</SheetDescription>

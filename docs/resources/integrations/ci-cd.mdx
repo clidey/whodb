@@ -1,258 +1,38 @@
 ---
-title: "CI/CD Integration"
-description: "Use WhoDB and the whodb in CI/CD pipelines for database validation, exports, imports, and data-quality checks"
+title: "Use the CLI in CI"
+description: "Inspect disposable databases and keep structured verification output in a pipeline."
 ---
 
-# CI/CD Integration
+# Use the CLI in CI
 
-Use CI/CD for repeatable database work. With WhoDB today, the practical paths are:
+Use the CLI to inspect a disposable database after your pipeline applies migrations and loads fixtures. A useful check verifies the objects and values the application expects, not only that the database process is running.
 
-- Run `clidey/whodb:latest` as a temporary web UI for inspecting a test or staging database.
-- Run `whodb` for scriptable checks such as listing schemas, listing tables, running validation queries, exporting rows, importing CSV or Excel fixtures, and running data-quality audits.
-- Keep migrations, full backups, restores, and large bulk loads in your database-native tooling such as `psql`, `mysql`, `pg_dump`, `mysqldump`, `COPY`, or `LOAD DATA`.
+## Provide the test connection
 
-<Note>
-`GET /health` returns plain text `ok` when the WhoDB server is running. Validate database state separately with a database client or `whodb query`.
-</Note>
-
-## Common Pipeline Patterns
-
-<CardGroup cols={2}>
-<Card title="Schema Checks" icon="database">
-Apply migrations to a disposable database, then verify the expected tables, columns, and constraints.
-</Card>
-<Card title="Fixture Loading" icon="table">
-Use native SQL seed files or `whodb import` for CSV and Excel fixtures.
-</Card>
-<Card title="Data Validation" icon="check">
-Run row counts, orphan checks, and business-rule queries after migrations or imports.
-</Card>
-<Card title="Debug UI" icon="desktop">
-Start the WhoDB web container while reproducing a pipeline failure locally.
-</Card>
-</CardGroup>
-
-## GitHub Actions Example
-
-This workflow starts PostgreSQL and WhoDB, applies migrations with `psql`, checks the WhoDB process health endpoint, and validates the database with SQL.
-
-```yaml
-name: Database CI
-
-on:
-  pull_request:
-    paths:
-      - "migrations/**"
-      - "schema/**"
-      - "test/fixtures/**"
-
-jobs:
-  postgres:
-    runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: app_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-      whodb:
-        image: clidey/whodb:latest
-        ports:
-          - 8080:8080
-        env:
-          WHODB_POSTGRES: >-
-            [{"alias":"ci-postgres","host":"postgres","user":"postgres","password":"postgres","database":"app_test","port":"5432"}]
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install PostgreSQL client
-        run: sudo apt-get update && sudo apt-get install -y postgresql-client
-
-      - name: Wait for WhoDB
-        run: |
-          timeout 60 bash -c 'until curl -fsS http://localhost:8080/health | grep -qx ok; do sleep 2; done'
-
-      - name: Apply migrations
-        env:
-          PGPASSWORD: postgres
-        run: |
-          psql -h localhost -U postgres -d app_test -f migrations/001_initial_schema.sql
-
-      - name: Verify schema
-        env:
-          PGPASSWORD: postgres
-        run: |
-          psql -h localhost -U postgres -d app_test -c "\dt"
-          psql -h localhost -U postgres -d app_test -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public';"
-
-      - name: Run application tests
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/app_test
-        run: |
-          npm ci
-          npm run test
-```
-
-## Scriptable Checks With whodb
-
-The CLI can read the same environment-defined connection profile format used by the web app.
+Install the [CLI](/features/cli-and-mcp) in the runner. Supply connection credentials through the CI secret environment. A numbered environment profile avoids an interactive connection-save step:
 
 ```bash
-export WHODB_POSTGRES_1='{"alias":"ci-postgres","host":"localhost","user":"postgres","password":"postgres","database":"app_test","port":"5432"}'
+export WHODB_POSTGRES_1='{"alias":"ci-postgres","host":"localhost","user":"postgres","password":"local-test-only","database":"app_test","port":"5432"}'
 ```
 
-Use the CLI when you want a WhoDB-flavored command surface in a pipeline:
+The example password is for a disposable local database. Replace the whole profile through your secret source for a real environment. The host must be reachable from the runner; a service container may use a service hostname instead of `localhost`.
+
+## Check the expected state
+
+Run a small connection diagnostic, then inspect the required objects and fields:
 
 ```bash
-# List schemas and tables
-npx @clidey/whodb schemas --connection ci-postgres --format json
-npx @clidey/whodb tables --connection ci-postgres --schema public --format json
-
-# Run validation SQL
-npx @clidey/whodb query "SELECT COUNT(*) FROM users" --connection ci-postgres --format json
-
-# Export a table for artifacts or downstream checks
-npx @clidey/whodb export --connection ci-postgres --table users --format csv --output users.csv
-
-# Import CSV or Excel fixtures
-npx @clidey/whodb import --connection ci-postgres --file test/fixtures/users.csv --table users
-
-# Run data-quality checks
-npx @clidey/whodb audit --connection ci-postgres --schema public --format json
+whodb doctor --connection ci-postgres --schema public --format json
+whodb tables --connection ci-postgres --schema public --format json
+whodb columns --connection ci-postgres --schema public --table users --format json
 ```
 
-<Tip>
-For SQL seed files, use the database client for the target engine. For example, use `psql -f seed.sql` for PostgreSQL and `mysql database < seed.sql` for MySQL.
-</Tip>
+Use `audit` for supported data-quality checks and `diff` for schema comparisons when they fit the pipeline. Read each command's help and exit behavior before making it a gate. Capturing JSON is useful evidence, but the pipeline still needs an assertion that distinguishes the expected result from a failure.
 
-## Import Fixtures In CI
+Keep migrations and backup operations in the tooling designed for those tasks. A healthy WhoDB process does not prove that a migration created the required table or that the fixture has the expected values.
 
-Use the path that matches your fixture format:
+## Reproduce a failing check
 
-### CSV Or Excel
+Retain redacted structured output with the job's fixture and migration versions. Connect the browser app to the disposable database when you need to inspect the failed state interactively. Save the query that explains the failure so the same check can run in the next job.
 
-```bash
-npx @clidey/whodb import \
-  --connection ci-postgres \
-  --file test/fixtures/users.csv \
-  --table users \
-  --mode append
-```
-
-Useful flags include `--schema`, `--delimiter`, `--sheet`, `--header=false`, `--mapping position`, `--mode overwrite`, `--mode upsert`, `--create-table`, and `--allow-auto-generated`.
-
-### SQL
-
-```bash
-PGPASSWORD=postgres \
-psql -h localhost -U postgres -d app_test -f test/fixtures/seed.sql
-```
-
-The in-app import panel also supports pasted SQL and `.sql` uploads for manual workflows.
-
-## Local Reproduction With Docker Compose
-
-This is useful when a pipeline failure needs a browser-based inspection pass.
-
-```yaml
-services:
-  postgres:
-    image: postgres:16
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: app_test
-    ports:
-      - "5432:5432"
-
-  whodb:
-    image: clidey/whodb:latest
-    ports:
-      - "8080:8080"
-    environment:
-      WHODB_POSTGRES: >-
-        [{"alias":"local-ci-postgres","host":"postgres","user":"postgres","password":"postgres","database":"app_test","port":"5432"}]
-    depends_on:
-      - postgres
-```
-
-Run:
-
-```bash
-docker compose up -d
-curl -fsS http://localhost:8080/health
-```
-
-Open `http://localhost:8080` and choose the preloaded profile.
-
-## Validation Script
-
-Keep validation scripts small and database-specific:
-
-```bash
-#!/usr/bin/env bash
-set -euo pipefail
-
-DATABASE_URL="${DATABASE_URL:?DATABASE_URL is required}"
-
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
-SELECT COUNT(*) AS user_count FROM users;
-
-SELECT COUNT(*) AS orphaned_orders
-FROM orders o
-LEFT JOIN users u ON u.id = o.user_id
-WHERE u.id IS NULL;
-SQL
-```
-
-## Best Practices
-
-<AccordionGroup>
-<Accordion title="Use Disposable Databases">
-Create a fresh database for each pipeline run so tests are repeatable.
-</Accordion>
-
-<Accordion title="Keep Secrets In CI Secret Storage">
-Pass database credentials, tokens, and cloud credentials through the CI provider's secret store.
-</Accordion>
-
-<Accordion title="Prefer Native Tools For Large Jobs">
-Use database-native clients for large imports, exports, backups, restores, and migration execution.
-</Accordion>
-
-<Accordion title="Use WhoDB For Inspection">
-Run the web container when a human needs to inspect the CI database state or reproduce a failure locally.
-</Accordion>
-
-<Accordion title="Save Artifacts">
-Store exported CSV files, validation logs, and test reports as CI artifacts when they help debug failures.
-</Accordion>
-</AccordionGroup>
-
-## Related Pages
-
-<CardGroup cols={2}>
-<Card title="Importing Data" icon="table" href="/data/importing">
-Use the in-app and CLI import flows.
-</Card>
-<Card title="Docker Integration" icon="container" href="/resources/integrations/docker">
-Run WhoDB with Docker and Docker Compose.
-</Card>
-<Card title="Monitoring Integration" icon="chart-line" href="/resources/integrations/monitoring">
-Monitor the `/health` endpoint and logs.
-</Card>
-<Card title="Backup Tools" icon="database" href="/resources/integrations/backup-tools">
-Use database-native backup and restore workflows.
-</Card>
-</CardGroup>
+Continue with [Testing workflows](/use-cases/testing-development).

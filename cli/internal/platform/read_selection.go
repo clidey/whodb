@@ -16,7 +16,10 @@
 
 package platform
 
-import "strings"
+import (
+	"sort"
+	"strings"
+)
 
 var sourceContentSelectionFields = map[string]string{
 	"text":       "text: Text",
@@ -29,6 +32,10 @@ var sourceContentSelectionFields = map[string]string{
 }
 
 var functionSelectionFields = map[string]string{
+	"executionMode":       "executionMode",
+	"liveBehavior":        "liveBehavior",
+	"edgeRunnerId":        "edgeRunnerId",
+	"currentRunStatus":    "currentRunStatus",
 	"id":                  "id",
 	"projectId":           "projectId",
 	"name":                "name",
@@ -191,4 +198,21 @@ func indentSelection(selection string, spaces int) string {
 		lines[i] = prefix + lines[i]
 	}
 	return strings.Join(lines, "\n")
+}
+
+func (c *Client) functionReadFields(fields []string) []string {
+	if c.manifest == nil {
+		return fields
+	}
+	if len(fields) == 0 {
+		for name := range functionSelectionFields {
+			fields = append(fields, name)
+		}
+		sort.Strings(fields)
+	}
+	selected := c.manifest.SelectFields("OntologyFunction", fields)
+	if len(selected) == 0 {
+		return []string{"id"}
+	}
+	return selected
 }

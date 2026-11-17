@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import type { LocalLoginProfile } from "../store/auth";
 import { useSourceTypeItem } from "../hooks/useSourceCatalog";
-import { InformationCircleIcon } from "./heroicons";
+import { IconInfo as InformationCircleIcon } from '@clidey/ux';
 import { useTranslation } from "@/hooks/use-translation";
 
 interface ProfileInfoTooltipProps {

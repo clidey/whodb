@@ -1,64 +1,58 @@
 ---
-title: "Batch Operations"
-description: "Use current table grid selection and batch actions"
+title: "Select rows and apply actions"
+description: "Select the loaded records you need and use their supported context-menu actions."
 ---
 
-# Batch Operations
+# Select rows and apply actions
 
-The table grid supports row selection and selection-based actions for sources that expose those capabilities.
+Use row selection when you need to work with a few records together, such as exporting the orders involved in a support case. Selection tells WhoDB which loaded records an action should use. It does not create a database query for every matching record.
 
-![Row Selection Single](/images/44-table-row-selection-single.png)
+## Select the records you need
 
-## Select Rows
+Open the object's **Data** view and use the checkbox at the start of each row. You can also right-click a row and choose **Select Row**. The selection bar shows how many records you have selected.
 
-Use any of these current selection methods:
+<div className="ce-screenshot-light">
 
-- Click a row checkbox.
-- Use the header checkbox to select or deselect the visible page.
-- Focus a row and press `Space`.
-- Use `Shift + Arrow Up/Down` to extend selection.
-- Use `Cmd/Ctrl + A` to select all rows in the current view.
-- Use the row context menu action **Select Row**.
+![A selected row in the grid](/images/light/44-table-row-selection-single.png)
 
-![Select Row From Context Menu](/images/45-context-menu-select-row.png)
+</div>
+<div className="ce-screenshot-dark">
 
-Use the header checkbox, row checkboxes, shortcuts, and context menus to select or clear rows.
+![A selected row in the grid](/images/dark/44-table-row-selection-single.png)
 
-## Export Selected Rows
+</div>
 
-After selecting rows, use the selected-row export action.
+The header checkbox selects the loaded page. If your table contains 5,000 records and the page shows 50, the header checkbox selects those 50 records. To work with a larger set defined by a condition, use a query rather than selecting a sample and assuming it covers the table.
 
-![Export Selected Rows](/images/46-export-selected-rows-dialog.png)
+## Use the keyboard
 
-The export starts from the selected rows you chose in the grid.
+Focus a row and press `Space` to toggle its selection. Use `Shift + Arrow Up` or `Shift + Arrow Down` to extend a selection. `Mod + A` selects rows in the current view.
 
-## Edit And Delete
+Review the selected count before taking an action. In particular, check whether records left over from an earlier selection are still included.
 
-If the connected source allows writes:
+## Export a selection
 
-- `Enter` or `Cmd/Ctrl + E` opens edit for the focused row.
-- `Cmd/Ctrl + Delete` or `Cmd/Ctrl + Backspace` starts delete for the focused row.
-- The row context menu also exposes **Edit Row** and **Delete Row** when supported.
+Choose **Export** in the selection bar. This exports the selected records, which is useful when a colleague needs the exact examples you are investigating. Choose a format and inspect the downloaded file before sharing it.
 
-Delete actions show a confirmation dialog before the mutation is submitted.
+<div className="ce-screenshot-light">
 
-## Context Menus
+![Exporting selected records](/images/light/46-export-selected-rows-dialog.png)
 
-Right-click a grid row to open the row context menu.
+</div>
+<div className="ce-screenshot-dark">
 
-![Context Menu](/images/13-data-view-context-menu.png)
+![Exporting selected records](/images/dark/46-export-selected-rows-dialog.png)
 
-Header context menus expose table-level actions such as refresh, export, select/deselect all visible rows, and mock data when supported.
+</div>
 
-![Table Header Context Menu](/images/37-table-header-context-menu.png)
+Use the selection bar's export action for this task. The context menu's **Export All as CSV** and **Export All as Excel** actions have a different scope: they export the object's contents rather than your selected subset. See [Export data](/advanced/export-options) for the difference between object, selection, and query-result exports.
 
-## Related Pages
+## Delete selected records
 
-<CardGroup cols={2}>
-<Card title="Editing Records" icon="pen" href="/data/editing-records">
-Modify rows from the grid.
-</Card>
-<Card title="Deleting Records" icon="trash" href="/data/deleting-records">
-Delete rows with confirmation.
-</Card>
-</CardGroup>
+Where deletion is available, the selection bar offers a delete action. Read the confirmation's source, table, and record identifiers before accepting it. The action can affect every selected row, even if you opened the menu on just one of them.
+
+After deletion, repeat the lookup to check the stored result. See [Delete a record](/data/deleting-records) for the short-lived Undo action and its limits.
+
+## Update a set with a query
+
+Row selection is not a general bulk-edit form. Use [Scratchpad](/query/writing-queries) for a change such as updating all orders with a particular status. Run a read query with the same condition first, check the target set, then review the update before running it.

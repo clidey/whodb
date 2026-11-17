@@ -105,3 +105,11 @@ func TestMergeFieldConstraintsWithColumnsFillsTypeAndMissingFields(t *testing.T)
 		t.Fatalf("expected missing column to be added, got %#v", merged[1])
 	}
 }
+
+// TestMergeFieldConstraintsPreservesComputedColumns keeps computed status distinct from identity.
+func TestMergeFieldConstraintsPreservesComputedColumns(t *testing.T) {
+	fields := MergeFieldConstraintsWithColumns([]FieldConstraints{{Name: "rv"}}, []Column{{Name: "rv", IsComputed: true}})
+	if len(fields) != 1 || !fields[0].Computed || fields[0].Identity {
+		t.Fatalf("expected computed field without identity, got %#v", fields)
+	}
+}

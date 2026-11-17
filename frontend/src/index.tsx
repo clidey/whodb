@@ -69,7 +69,7 @@ const AppWithProviders = () => {
     }, []);
 
     return (
-        <ThemeProvider>
+        <ThemeProvider defaultPalette="paper-ink">
             <LanguageGate>
                 <App />
                 <PosthogConsentBanner/>

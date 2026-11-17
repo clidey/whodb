@@ -1,50 +1,71 @@
 ---
-title: "Viewing Data"
-description: "Open storage units and inspect rows in the current WhoDB data grid"
+title: "Browse and inspect rows"
+description: "Use the data grid to inspect values, navigate results, and open row actions."
 ---
 
-# Viewing Data
+# Browse and inspect rows
 
-WhoDB opens table, collection, and equivalent source objects from the **Storage Units** page.
+Open an object's data when you need to inspect actual values, find a record, or make a small correction. From **Tables**, choose **Data** on the object. WhoDB shows the rows together with the filtering, sorting, and write actions supported by the source.
 
-## Open A Storage Unit
+<div className="ce-screenshot-light">
 
-<Steps>
-<Step title="Go To Storage Units">
-Use the sidebar **Storage Units** item.
-</Step>
-<Step title="Find The Object">
-Use the page search field to filter storage unit names. Switch between card and list view if that helps.
-</Step>
-<Step title="Inspect Or Open">
-Click **Describe** on a card to expand metadata and columns. Click **Data** to open the object data page.
-</Step>
-</Steps>
+![Rows in the data grid](/images/light/09-data-view-users-table.png)
 
-## Data Page Layout
+</div>
+<div className="ce-screenshot-dark">
 
-The data page shows:
+![Rows in the data grid](/images/dark/09-data-view-users-table.png)
 
-- Object name and total row count
-- Search input for currently loaded row values
-- Page size selector
-- Where condition builder
-- **Query** button for reloading data
-- Optional embedded Scratchpad drawer
-- Data grid with row checkboxes, sortable headers, row context menu, pagination, import, export, and Add Row when supported
+</div>
 
-## Search Versus Query
+## Read the grid
 
-The **Search** field searches the rows currently loaded in the grid and scrolls/highlights matching cells. Use WHERE conditions when you want the backend query to return a smaller result set.
+Check the object name and connection context before interpreting the data. Use the column headers to identify fields and the row count and pagination controls to understand the current result.
 
-Use **Where condition** plus **Query** when you want the database to filter rows.
+The loaded page is a sample of what the source returned for the current request. If you need one specific record, use **Filter** and **Run** rather than paging until it happens to appear. **Search** highlights text only in the records already loaded.
 
-## Table Cells
+A sortable column header changes the requested ordering. Use a small page size while exploring, then increase it when more records help you compare values.
 
-- Click a cell to copy its value.
-- Double-click a row cell to copy the whole row as tab-separated values.
-- Right-click a row to open actions such as copy cell, copy row, select row, edit row, export, mock data, or delete row depending on source capabilities.
+## Copy and inspect values
 
-## Empty Results
+Click a cell to copy its value. In an editable object grid, double-click a cell to change it inline. The save bar distinguishes pending changes from values already written to the source.
 
-If the table shows **No Data Available**, the object may be empty, the current filter may match no rows, or the selected page may be beyond available results. Clear conditions and click **Query** to reload the unfiltered page.
+Right-click a row to open the actions available for that record. Selection, editing, deletion, export, and other actions depend on the source and the connected account's permissions.
+
+<div className="ce-screenshot-light">
+
+![A row context menu](/images/light/13-data-view-context-menu.png)
+
+</div>
+<div className="ce-screenshot-dark">
+
+![A row context menu](/images/dark/13-data-view-context-menu.png)
+
+</div>
+
+Query result grids in Scratchpad are read-only and keep their row-copy behavior on double-click. Return to the object's Data view when you need to edit a stored record.
+
+## Go further without losing the table
+
+Use the embedded Scratchpad action to open an editor beside the data view. This is useful for checking a count or a related record while the object remains in view.
+
+<div className="ce-screenshot-light">
+
+![The embedded Scratchpad beside a data view](/images/light/23-data-view-embedded-scratchpad.png)
+
+</div>
+<div className="ce-screenshot-dark">
+
+![The embedded Scratchpad beside a data view](/images/dark/23-data-view-embedded-scratchpad.png)
+
+</div>
+
+For an investigation with several queries, use the full [Scratchpad](/query/scratchpad-intro). Put each question in its own cell so you can compare the query with its result.
+
+## Understand an empty result
+
+An empty grid can mean the object contains no records, the current filter matches nothing, or you opened a different database or schema than intended. Clear the filters, run the request again, and check the connection context before treating the result as evidence of missing data.
+
+If you can see the object but a write action is absent, inspect its metadata and account permissions. A view, a source without that write capability, and a read-only account can require different next steps.
+
+Next: [Filter rows](/data/filtering-searching) · [Edit a row](/data/editing-records) · [Export data](/advanced/export-options)

@@ -15,8 +15,7 @@
  */
 
 import type { FC, ReactElement } from "react";
-import { cn, Tooltip, TooltipContent, TooltipTrigger } from "@clidey/ux";
-import { ShieldCheckIcon } from "./heroicons";
+import { cn, Tooltip, TooltipContent, TooltipTrigger, IconShield as ShieldCheckIcon } from '@clidey/ux';
 import { useTranslation } from "@/hooks/use-translation";
 
 interface DatabaseIconWithBadgeProps {

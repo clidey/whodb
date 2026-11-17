@@ -1,36 +1,75 @@
 ---
-title: "Editing Records"
-description: "Edit database records inline from WhoDB's data grid — update cell values, preview changes, and save with keyboard shortcuts"
+title: "Edit a record"
+description: "Edit cells inline or open the row editor, review pending changes, and verify the saved result."
 ---
 
-# Editing Records
+# Edit a record
 
-WhoDB shows edit actions only when the connected source and selected object expose update support.
+Use the data grid to correct a value in a specific record. You can edit individual cells and review them together before saving, or open the row editor when you need the record's fields in a form.
 
-## Edit From The Context Menu
+First find the row by its key and confirm the active connection. This page describes changes to an object's **Data** view. Scratchpad result grids are read-only.
 
-<Steps>
-<Step title="Open A Data Page">
-Open a storage unit and click **Data**.
-</Step>
-<Step title="Open Row Actions">
-Right-click a row, or hover the row and use the row actions button.
-</Step>
-<Step title="Choose Edit Row">
-Select **Edit Row**. A right-side sheet opens with the current row values.
-</Step>
-<Step title="Update Values">
-Change fields and click **Update**.
-</Step>
-</Steps>
+## Edit cells inline
 
-## Keyboard Editing
+Double-click an editable cell, enter its new value, then press `Enter` or move focus to finish editing that cell. The value remains pending until you choose **Save** in the save bar.
 
-When table shortcuts are active, focus a row and press `Enter` or `Mod + E` to open the edit sheet.
+<div className="ce-screenshot-light">
 
-## Notes
+![Inline editing with pending changes and the save bar](/images/light/120-inline-cell-editing.png)
 
-- The edit sheet keeps original row values so the backend can identify the target row.
-- Long values render in a textarea; shorter values render in inputs.
-- The grid refreshes after a successful update.
-- If the source cannot identify or update the row, the backend returns an error toast.
+</div>
+<div className="ce-screenshot-dark">
+
+![Inline editing with pending changes and the save bar](/images/dark/120-inline-cell-editing.png)
+
+</div>
+
+Use this flow when you want to correct a few values and review them before writing. Choose **Discard** to remove pending changes. While a cell's editor is open, `Escape` restores that cell's original value.
+
+For example, find a test user by ID, change its email, and check the row again before saving. Review both the new value and the identifier: a correct email saved against the wrong user is still an incorrect change.
+
+## Edit a whole row
+
+Right-click a row and choose **Edit Row**, or focus it and press `Enter` or `Mod + E`. The sheet opens beside the grid when the source supports updates.
+
+<div className="ce-screenshot-light">
+
+![The Edit Row sheet](/images/light/14-data-view-edit-row-dialog.png)
+
+</div>
+<div className="ce-screenshot-dark">
+
+![The Edit Row sheet](/images/dark/14-data-view-edit-row-dialog.png)
+
+</div>
+
+Read the current values before changing them. Check types, required fields, and keys in **Info** if you are unsure how a value should be represented. For a document source, use its document editing controls.
+
+## Make the change
+
+Submit the intended update and read any database error. Type checks, unique constraints, permissions, and other source rules still apply.
+
+<div className="ce-screenshot-light">
+
+![The update action in an edit sheet](/images/light/42-edit-row-update-hover.png)
+
+</div>
+<div className="ce-screenshot-dark">
+
+![The update action in an edit sheet](/images/dark/42-edit-row-update-hover.png)
+
+</div>
+
+After saving, refresh or query the record by its key. Confirm the stored value rather than relying only on the success message. The database can apply defaults or other behavior during a write.
+
+## Update several records
+
+For a change defined by a rule, such as changing a status across a group of orders, use an explicit query in [Scratchpad](/query/writing-queries). Read the target records with the same predicate first and compare the result to your intended scope.
+
+Keep repeatable data repairs in a reviewed script. Browser-local changes and query history are useful while investigating, but they are not a durable record of a team change.
+
+<Tip>
+If your team repeats the same review and update task, build an **App** in WhoDB Platform for those records and actions. [Turn manual work into an app](/guides/move-to-platform#turn-manual-work-into-an-app).
+</Tip>
+
+Next: [Delete a record](/data/deleting-records) · [Import records](/data/importing)

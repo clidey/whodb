@@ -1,199 +1,40 @@
 ---
-title: "Docker Integration"
-description: "Run WhoDB with Docker and Docker Compose: images, environment variables, volumes, health checks, and networking"
+title: "Run CE with Docker"
+description: "Give the container access to databases, files, and persistent session storage."
 ---
 
-# Docker Integration
+# Run CE with Docker
 
-Docker is the fastest way to run WhoDB.
+Use Docker to run a self-hosted browser workspace without installing the frontend and backend toolchains. The container needs a reachable database and persistent storage if you want to retain login sessions across replacement.
 
-## Run WhoDB
-
-```bash
-docker run -d \
-  --name whodb \
-  -p 8080:8080 \
-  clidey/whodb:latest
-```
-
-Open `http://localhost:8080`.
-
-## Docker Compose
-
-Save as `docker-compose.yml`:
-
-```yaml
-services:
-  whodb:
-    image: clidey/whodb:latest
-    container_name: whodb
-    ports:
-      - "8080:8080"
-    environment:
-      WHODB_LOG_LEVEL: info
-    restart: unless-stopped
-```
-
-Run:
-
-```bash
-docker compose up -d
-```
-
-## Host Port 3000
-
-If you only want the host URL to be `http://localhost:3000`, keep the container listener on `8080` and change the host-side port:
+## Start a local instance
 
 ```bash
 docker run -d \
   --name whodb \
-  -p 3000:8080 \
+  -p 127.0.0.1:8080:8080 \
+  -v whodb-data:/data \
   clidey/whodb:latest
 ```
 
-Compose:
+Open `http://localhost:8080`. This example binds browser access to the local machine and keeps the session data in a named volume. Use a specific published image tag when the deployment needs a fixed version.
 
-```yaml
-services:
-  whodb:
-    image: clidey/whodb:latest
-    ports:
-      - "3000:8080"
-```
+## Give the container a database route
 
-If you intentionally change WhoDB's internal listener, set `PORT` and map that internal port:
+For a database in the same Compose network, use its service name and internal port in the connection form. For a database on the host, use the host address supported by your Docker setup.
 
-```yaml
-services:
-  whodb:
-    image: clidey/whodb:latest
-    environment:
-      PORT: "3000"
-    ports:
-      - "3000:3000"
-```
+Do not enter `localhost` for a database running outside the WhoDB container. Test the host and port from the container's network if the connection times out.
 
-## Persistent Login Sessions
+For SQLite or DuckDB, mount the directory containing the database file and enter its container path. Certificate paths in connection profiles also refer to files inside the container, so mount those files when required.
 
-WhoDB encrypts login sessions and stores them in `/data` inside the container. Without a mounted volume, a plain `docker run` still works, but sessions reset whenever the container is recreated. To keep sessions across restarts and upgrades, mount `/data` and set a stable encryption key:
+## Preserve sessions and configure access
 
-```yaml
-services:
-  whodb:
-    image: clidey/whodb:latest
-    ports:
-      - "8080:8080"
-    volumes:
-      - whodb-data:/data
-    environment:
-      # Generate once with: openssl rand -hex 32
-      WHODB_ENCRYPTION_KEY: replace_with_openssl_rand_hex_32
+Keep `/data` across container replacements. If you explicitly set `WHODB_ENCRYPTION_KEY`, retain that same key as well. Losing the stored session data or its encryption key means users need to connect again.
 
-volumes:
-  whodb-data:
-```
+For remote access, configure the intended network boundary and HTTPS. Set `WHODB_SECURE=true` when serving over HTTPS. Server-configured profiles can be used by anyone who reaches the instance, so use database credentials appropriate for that audience.
 
-If WhoDB is reachable only over HTTPS (typically via a reverse proxy or load balancer in front of the container), also set `WHODB_SECURE: "true"` so the session cookie is marked `Secure`. Leave it unset for plain HTTP.
+## Check that it works
 
-See [Session Storage](/installation#session-storage) for the full explanation of how sessions are encrypted and stored.
+`GET /health` checks whether the WhoDB process is available. Open the connection page and connect to a development database to verify the separate database path. Inspect a known table and run a small read query.
 
-## Connect To Host Databases
-
-From inside a container, `localhost` means the WhoDB container itself. Use the right hostname for your database:
-
-- Another Compose service: use the service name, such as `postgres`.
-- Database running on the Docker host: use `host.docker.internal` where supported.
-- Remote database: use its network hostname or IP.
-
-Example with PostgreSQL:
-
-```yaml
-services:
-  whodb:
-    image: clidey/whodb:latest
-    ports:
-      - "8080:8080"
-    depends_on:
-      - postgres
-
-  postgres:
-    image: postgres:16
-    environment:
-      POSTGRES_USER: whodb
-      POSTGRES_PASSWORD: whodb
-      POSTGRES_DB: whodb
-    ports:
-      - "5432:5432"
-```
-
-Use `postgres` as the host in the WhoDB login form.
-
-## Health Check
-
-WhoDB CE exposes `GET /health`, returning plain text `ok`.
-
-```yaml
-services:
-  whodb:
-    image: clidey/whodb:latest
-    ports:
-      - "8080:8080"
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health | grep -qx ok"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 20s
-```
-
-## Logs
-
-Use standard Docker logs:
-
-```bash
-docker logs -f whodb
-```
-
-Or write WhoDB logs to mounted files:
-
-```yaml
-services:
-  whodb:
-    image: clidey/whodb:latest
-    ports:
-      - "8080:8080"
-    environment:
-      WHODB_LOG_FORMAT: json
-      WHODB_LOG_FILE: default
-      WHODB_ACCESS_LOG_FILE: default
-    volumes:
-      - ./logs:/var/log/whodb
-```
-
-## AI Providers
-
-Pass provider credentials or endpoints as environment variables:
-
-```yaml
-services:
-  whodb:
-    image: clidey/whodb:latest
-    ports:
-      - "8080:8080"
-    environment:
-      WHODB_OPENAI_API_KEY: ${WHODB_OPENAI_API_KEY}
-      WHODB_ANTHROPIC_API_KEY: ${WHODB_ANTHROPIC_API_KEY}
-      WHODB_OLLAMA_HOST: host.docker.internal
-      WHODB_OLLAMA_PORT: "11434"
-```
-
-## Related Pages
-
-<CardGroup cols={2}>
-<Card title="Installation" icon="download" href="/installation">
-See non-Docker install options.
-</Card>
-<Card title="Monitoring Integration" icon="chart-line" href="/resources/integrations/monitoring">
-Configure health checks and logging.
-</Card>
-</CardGroup>
+See [Installation](/installation) for Compose, configuration variables, and port examples, then follow [First connection](/first-login).

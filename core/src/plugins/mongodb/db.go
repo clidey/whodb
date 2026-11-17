@@ -32,6 +32,7 @@ import (
 	"github.com/clidey/whodb/core/src/common/ssl"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
+	"github.com/clidey/whodb/core/src/sourcedial"
 )
 
 // DefaultOperationTimeout is the default timeout for MongoDB operations.
@@ -122,6 +123,11 @@ func DB(config *engine.PluginConfig) (*mongo.Client, error) {
 	}
 
 	clientOptions.SetBSONOptions(&options.BSONOptions{DefaultDocumentMap: true})
+	// Covers every host in the URI, SRV results and replica set members the
+	// driver discovers; the driver adds TLS on top of the dialed connection.
+	if dial := sourcedial.Dialer(); dial != nil {
+		clientOptions.SetDialer(sourcedial.ContextDialer(dial))
+	}
 
 	client, err := mongo.Connect(clientOptions)
 	if err != nil {

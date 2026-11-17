@@ -679,11 +679,11 @@ services:
         cp /certs-src/client-key.pem /certs/client.root.key &&
         chmod 600 /certs/node.key /certs/client.root.key &&
         chmod 644 /certs/ca.crt /certs/node.crt /certs/client.root.crt &&
-        exec /cockroach/cockroach start --certs-dir=/certs --listen-addr=e2e_cockroachdb_ssl:26357 --advertise-addr=e2e_cockroachdb_ssl:26357 --sql-addr=e2e_cockroachdb_ssl:26257 --http-addr=e2e_cockroachdb_ssl:8080 --join=e2e_cockroachdb_ssl:26357 --max-offset=5s
+        exec /cockroach/cockroach start-single-node --certs-dir=/certs --listen-addr=e2e_cockroachdb_ssl:26357 --advertise-addr=e2e_cockroachdb_ssl:26357 --sql-addr=e2e_cockroachdb_ssl:26257 --http-addr=e2e_cockroachdb_ssl:8080 --cache=128MiB --max-sql-memory=128MiB
     ports:
       - "26258:26257"
     volumes:
-      - e2e_cockroachdb_ssl:/cockroach/cockroach-data
+      - e2e_cockroachdb_ssl_single_node:/cockroach/cockroach-data
       - ./certs/ca/cockroachdb/ca.pem:/certs-src/ca.pem:ro
       - ./certs/server/cockroachdb/server-cert.pem:/certs-src/server-cert.pem:ro
       - ./certs/server/cockroachdb/server-key.pem:/certs-src/server-key.pem:ro
@@ -706,6 +706,7 @@ services:
     environment:
       COCKROACH_HOST: e2e_cockroachdb_ssl
       COCKROACH_PORT: "26257"
+      COCKROACH_SKIP_INIT: "true"
     entrypoint: >
       sh -c "
         cp /certs/client.root.key /tmp/client.root.key &&
@@ -874,7 +875,7 @@ volumes:
   e2e_mongo_noauth:
   e2e_mongo_ssl:
   e2e_cockroachdb:
-  e2e_cockroachdb_ssl:
+  e2e_cockroachdb_ssl_single_node:
   e2e_clickhouse:
   e2e_clickhouse_ssl:
   e2e_redis:

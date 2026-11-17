@@ -529,7 +529,8 @@ test.describe('Keyboard Shortcuts', () => {
         });
 
         test.describe('Keyboard Shortcuts Help Modal', () => {
-            test('pressing ? key opens the shortcuts modal', async ({ whodb, page }) => {
+            test('pressing ? key opens the shortcuts modal', async ({ whodb, page }, testInfo) => {
+                test.skip(testInfo.project.metadata.uiFeatures?.keyboardShortcutsHelp === false, 'Shortcut help is disabled in this UI');
                 await whodb.data(tableName);
 
                 // Press ? key (Shift+/)
@@ -610,6 +611,9 @@ test.describe('Keyboard Shortcuts', () => {
         });
 
         test.describe('Command Palette (Cmd/Ctrl+K)', () => {
+            test.beforeEach(({ page: _page }, testInfo) => {
+                test.skip(testInfo.project.metadata.uiFeatures?.sourceCommandPalette === false, 'This UI supplies its own command palette');
+            });
             test('Cmd/Ctrl+K opens command palette', async ({ whodb, page }) => {
                 await whodb.data(tableName);
 
@@ -722,7 +726,7 @@ test.describe('Keyboard Shortcuts', () => {
                 expect(rowCount).toBeGreaterThanOrEqual(1);
             });
 
-            test('Command palette search filters tables while keeping navigation visible', async ({ whodb, page }) => {
+            test('Command palette search filters tables and unrelated navigation', async ({ whodb, page }) => {
                 await whodb.data(tableName);
 
                 // Open command palette
@@ -731,14 +735,45 @@ test.describe('Keyboard Shortcuts', () => {
                 // Type to search
                 await page.locator('[data-testid="command-palette-input"]').fill('prod');
 
-                // Matching tables appear above the persistent navigation shortcuts.
+                // The results contain matching tables and commands.
                 await expect(page.locator('[data-testid="command-table-products"]')).toBeAttached();
                 await expect(page.locator('[data-testid="command-table-users"]')).not.toBeAttached();
-                await expect(page.locator('[data-testid="command-nav-graph"]')).toBeAttached();
-                await expect(page.locator('[data-testid="command-nav-chat"]')).toBeAttached();
+                await expect(page.locator('[data-testid="command-nav-graph"]')).not.toBeAttached();
+                await expect(page.locator('[data-testid="command-nav-chat"]')).not.toBeAttached();
+                await page.getByTestId('command-palette-input').clear();
+                await expect(page.getByTestId('command-nav-graph')).toBeVisible();
+                await expect(page.getByTestId('command-nav-chat')).toBeVisible();
 
                 // Close
                 await page.keyboard.press('Escape');
+            });
+
+            test('Command palette filters tables and previews the keyboard selection', async ({whodb, page}) => {
+                await whodb.data(tableName);
+                await whodb.typeCmdShortcut('k');
+                await page.getByTestId('command-category-tables').click();
+                await page.getByTestId('command-palette-input').fill(tableName);
+                await expect(page.getByTestId(`command-table-${tableName}`)).toHaveAttribute('data-selected', 'true');
+                await expect(page.getByTestId('command-table-preview')).toContainText(tableName);
+                await expect(page.getByTestId('command-action-refresh')).not.toBeAttached();
+                await page.getByRole('button', {name: 'Open table', exact: true}).click();
+                await expect(page.getByTestId('command-palette')).not.toBeAttached();
+                await expect(page.getByTestId('table-container')).toBeVisible();
+            });
+
+            test('Command palette cycles filters and searches commands with a prefix', async ({whodb, page}) => {
+                await whodb.data(tableName);
+                await whodb.typeCmdShortcut('k');
+                const input = page.getByTestId('command-palette-input');
+                await input.press('Tab');
+                await expect(page.getByTestId('command-category-tables')).toHaveAttribute('aria-pressed', 'true');
+                await input.press('Shift+Tab');
+                await expect(page.getByTestId('command-category-all')).toHaveAttribute('aria-pressed', 'true');
+                await input.fill('>refresh');
+                await expect(page.getByTestId('command-action-refresh')).toBeVisible();
+                await expect(page.getByTestId('command-category-all')).not.toBeAttached();
+                await input.press('Enter');
+                await expect(page.getByTestId('command-palette')).not.toBeAttached();
             });
         });
 
@@ -951,6 +986,9 @@ test.describe('Keyboard Shortcuts', () => {
         });
 
         test.describe('Command Palette Sort Commands', () => {
+            test.beforeEach(({ page: _page }, testInfo) => {
+                test.skip(testInfo.project.metadata.uiFeatures?.sourceCommandPalette === false, 'This UI supplies its own command palette');
+            });
             test('command palette shows sort options when on table view', async ({ whodb, page }) => {
                 await whodb.data(tableName);
 

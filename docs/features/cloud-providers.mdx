@@ -1,15 +1,32 @@
 ---
-title: "Cloud Providers"
-description: "Inspect cloud providers and discovered database resources from the WhoDB CLI"
+title: "Discover cloud databases from the CLI"
+description: "List configured providers and discovered resources, then connect with the local CLI."
 ---
 
-# Cloud Providers
+# Discover cloud databases from the CLI
 
-Cloud-provider management and discovery are available only through the local WhoDB CLI. The CE web server does not load provider credentials or expose provider management, discovery, or database-token operations through GraphQL.
+Use cloud discovery when you know a database is available through your cloud account but need to find its endpoint from the terminal. Discovery lists resources that the configured provider can see, then lets you choose one for a local CLI connection.
 
-The CLI uses the provider configuration and credential sources available to the user running it. Provider support remains disabled by default and must be explicitly enabled for local CLI use.
+This is an opt-in CLI feature. It does not add cloud-provider administration to the CE browser workspace.
 
-## CLI Commands
+## Enable the provider you need
+
+Configure the environment for the process that runs the CLI. Provider support is disabled by default.
+
+| Variable | Purpose |
+| --- | --- |
+| `WHODB_ENABLE_AWS_PROVIDER=true` | Enable AWS discovery |
+| `WHODB_AWS_PROVIDER` | AWS provider definitions as JSON |
+| `WHODB_ENABLE_AZURE_PROVIDER=true` | Enable Azure discovery |
+| `WHODB_AZURE_PROVIDER` | Azure provider definitions as JSON |
+| `WHODB_ENABLE_GCP_PROVIDER=true` | Enable GCP discovery |
+| `WHODB_GCP_PROVIDER` | GCP provider definitions as JSON |
+
+Use `whodb cloud --help` and the provider-specific configuration for the required definition fields. The CLI uses the credential sources available to the user running it, so run the check in the same environment you will use for discovery.
+
+## Inspect discovery
+
+Start by listing provider definitions and testing the one you intend to use:
 
 ```bash
 whodb cloud providers list
@@ -18,27 +35,20 @@ whodb cloud providers refresh --all
 whodb cloud connections list
 ```
 
-See [CLI and MCP](/features/cli-and-mcp) for the complete command reference.
+Replace `<provider-id>` with an ID returned by the first command. Review the account and resource details in the output before connecting. A similarly named development and production resource can be easy to confuse.
 
-## Provider Flags
+If the list is empty, check whether the provider is enabled and whether its configured credentials can discover the intended resources. Discovery permissions and database login permissions are separate checks.
 
-| Variable | Purpose |
-|----------|---------|
-| `WHODB_ENABLE_AWS_PROVIDER=true` | Enable AWS providers for CLI discovery |
-| `WHODB_ENABLE_AZURE_PROVIDER=true` | Enable Azure providers for CLI discovery |
-| `WHODB_ENABLE_GCP_PROVIDER=true` | Enable GCP providers for CLI discovery |
+## Connect to a discovered resource
 
-These variables do not enable cloud-provider functionality in the CE web server.
+Use the resource ID returned by discovery:
 
-## Web Connections
+```bash
+whodb connect --discovered <discovered-resource-id>
+```
 
-To connect through the CE web interface, enter the database endpoint and database credentials directly or use a server-configured source profile. The web interface does not request or store cloud-account credentials.
+To save a connection from the discovered resource, inspect `whodb connections add --help` for the available options.
 
-<CardGroup cols={2}>
-<Card title="CLI and MCP" icon="terminal" href="/features/cli-and-mcp">
-Use local cloud-provider discovery commands.
-</Card>
-<Card title="Database Connectivity" icon="database" href="/features/database-connectivity">
-Configure direct database connections and source profiles.
-</Card>
-</CardGroup>
+Discovery finds connection information. It does not create a network route, open a firewall, or prove that database credentials will be accepted. Verify reachability and database authentication if the connection fails.
+
+For a browser connection, enter the discovered endpoint in the normal source form. See [Connection options](/features/database-connectivity) and [CLI & MCP](/features/cli-and-mcp).

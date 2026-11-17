@@ -59,8 +59,25 @@ import {
     TableHeadRow,
     TableRow,
     TextArea,
-    toast
-} from "@clidey/ux";
+    toast,
+    IconArrowDownCircle as ArrowDownCircleIcon,
+    IconDownload as ArrowDownTrayIcon,
+    IconArrowUpCircle as ArrowUpCircleIcon,
+    IconCalculator as CalculatorIcon,
+    IconCheckCircle as CheckCircleIcon,
+    IconChevronDown as ChevronDownIcon,
+    IconChevronUp as ChevronUpIcon,
+    IconSource as CircleStackIcon,
+    IconCursor as CursorArrowRaysIcon,
+    IconCopy as DocumentDuplicateIcon,
+    IconFile as DocumentIcon,
+    IconFileText as DocumentTextIcon,
+    IconMoreV as EllipsisVerticalIcon,
+    IconSearch as MagnifyingGlassIcon,
+    IconEdit as PencilSquareIcon,
+    IconTrash as TrashIcon,
+    IconClose as XMarkIcon,
+} from '@clidey/ux';
 import { Spinner } from '@/components/loading';
 import {
     AnalyzeMockDataDependenciesDocument,
@@ -81,25 +98,6 @@ import {copyToClipboard} from '@/services/clipboard';
 import {useSourceContract} from "@/hooks/useSourceContract";
 import {sourceObjectSupportsAction} from "@/config/source-types";
 import {ph} from '@/utils/privacy';
-import {
-    ArrowDownCircleIcon,
-    ArrowDownTrayIcon,
-    ArrowUpCircleIcon,
-    CalculatorIcon,
-    CheckCircleIcon,
-    ChevronDownIcon,
-    ChevronUpIcon,
-    CircleStackIcon,
-    CursorArrowRaysIcon,
-    DocumentDuplicateIcon,
-    DocumentIcon,
-    DocumentTextIcon,
-    EllipsisVerticalIcon,
-    MagnifyingGlassIcon,
-    PencilSquareIcon,
-    TrashIcon,
-    XMarkIcon
-} from "./heroicons";
 import {Tip} from "./tip";
 import {WhoDBChatIcon} from "./whodb-chat-icon";
 import {formatShortcut} from "@/utils/platform";
@@ -606,8 +604,6 @@ export const StorageUnitTable: FC<TableProps> = ({
             const toastOptions = isRowInsertSupported ? {
                 description: t('rowsDeletedFrom', {table: storageUnit ?? '', source: sourceLabel ?? ''}),
                 duration: 7000,
-                className: 'ce-delete-toast',
-                icon: <span className="ce-delete-success-icon"><span className="ce-whodb-icon ce-whodb-icon-check" /></span>,
                 action: {
                     label: t('undo'),
                     onClick: () => {
@@ -628,7 +624,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                         })();
                     },
                 },
-            } : {description: t('rowsDeletedFrom', {table: storageUnit ?? '', source: sourceLabel ?? ''}), duration: 7000, className: 'ce-delete-toast', icon: <span className="ce-delete-success-icon"><span className="ce-whodb-icon ce-whodb-icon-check" /></span>};
+            } : {description: t('rowsDeletedFrom', {table: storageUnit ?? '', source: sourceLabel ?? ''}), duration: 7000};
             toast.success(t('rowsDeleted', {count: deletedRows.length}), toastOptions);
         }
         onRefresh?.();
@@ -918,8 +914,9 @@ export const StorageUnitTable: FC<TableProps> = ({
 
     // Listen for menu import trigger
     useEffect(() => {
-        const handleImportTrigger = () => {
+        const handleImportTrigger = (event: Event) => {
             if (isImportSupported && allowImport) {
+                event.preventDefault();
                 setShowImport(true);
             }
         };
@@ -1028,13 +1025,6 @@ export const StorageUnitTable: FC<TableProps> = ({
             }
 
             // Mod combos (no Shift)
-            if (matchesShortcut(event, SHORTCUTS.importData)) {
-                if (isImportSupported && allowImport) {
-                    event.preventDefault();
-                    setShowImport(true);
-                }
-                return;
-            }
             if (matchesShortcut(event, SHORTCUTS.refresh)) {
                 event.preventDefault();
                 onRefresh?.();
@@ -1828,7 +1818,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                         setEditRowInitialLengths([]);
                     }
                 }}>
-                    <SheetContent side="right" className="w-[400px] max-w-full p-8 flex flex-col" data-testid="edit-row-dialog" footer={
+                    <SheetContent side="right" className="w-[400px] max-w-full flex flex-col" data-testid="edit-row-dialog" footer={
                         <SheetFooter className="flex gap-sm px-0">
                             <Button
                                 className="flex-1"
@@ -1892,7 +1882,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                         setShowMockDataConfirmation(false);
                     }
                 }}>
-                <SheetContent side="right" className="p-8" data-testid="mock-data-sheet" footer={
+                <SheetContent side="right" data-testid="mock-data-sheet" footer={
                     <SheetFooter className="flex gap-sm px-0">
                         <Alert variant={supportsMockDataRelations ? "info" : "default"} className="mb-4">
                             <AlertTitle>{t('mockDataNote')}</AlertTitle>

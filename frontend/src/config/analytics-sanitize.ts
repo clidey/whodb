@@ -114,7 +114,7 @@ export const sanitizeAnalyticsProperties = (
         app_type: context.appType,
         platform: context.platform,
         app_version: context.appVersion,
-        client_type: context.platform === 'wails' ? 'desktop' : 'browser',
+        client_type: context.appType === 'desktop' ? 'desktop' : context.appType === 'mobile' ? 'mobile' : 'browser',
     });
     if (context.deployment) {
         base.deployment = context.deployment;

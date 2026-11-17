@@ -359,9 +359,13 @@ Documentation: https://docs.whodb.com`,
 		goruntime.GOOS,
 		goruntime.GOARCH)
 
+	title := "About WhoDB Community"
+	if a.edition == "ee" {
+		title = "About WhoDB"
+	}
 	runtime.MessageDialog(a.ctx, runtime.MessageDialogOptions{
 		Type:    runtime.InfoDialog,
-		Title:   "About WhoDB",
+		Title:   title,
 		Message: message,
 	})
 }
@@ -436,7 +440,7 @@ func (a *App) SetupApplicationMenu() {
 	helpMenu.AddSeparator()
 
 	// Edition-specific about text
-	aboutText := "About WhoDB"
+	aboutText := "About WhoDB Community"
 	if a.edition == "ee" {
 		aboutText = "About WhoDB Enterprise"
 	}

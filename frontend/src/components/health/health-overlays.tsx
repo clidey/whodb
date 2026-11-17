@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Button, Card, CardContent, CardFooter, cn, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, toast } from '@clidey/ux';
+import { Button, Card, CardContent, CardFooter, cn, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, toast, IconRefresh as ArrowPathIcon, IconOffline as SignalSlashIcon, IconXCircle as XCircleIcon } from '@clidey/ux';
 import { Spinner } from '@/components/loading';
 import { healthCheckService } from '@/services/health-check';
 import { createPortal } from 'react-dom';
@@ -23,7 +23,6 @@ import { useAppSelector } from '@/store/hooks';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { PublicRoutes } from '@/config/routes';
 import { performLogout } from '@/config/logout-handler';
-import { ArrowPathIcon, SignalSlashIcon, XCircleIcon } from '@heroicons/react/24/outline';
 import { useEffect, useState } from 'react';
 import type { LocalLoginProfile } from '@/store/auth';
 import { useProfileSwitch } from '@/hooks/use-profile-switch';
@@ -104,11 +103,11 @@ export const ServerDownOverlay = () => {
                 aria-labelledby="server-down-title"
                 aria-describedby="server-down-message"
                 className={cn(
-                    'w-full max-w-sm gap-0 overflow-hidden rounded-xl border-border bg-card py-0 shadow-2xl',
+                    'w-full max-w-sm overflow-hidden',
                     'animate-in fade-in zoom-in-95 duration-300'
                 )}
             >
-                <CardContent className="px-5 pb-4 pt-5">
+                <CardContent>
                     <div className="flex size-9 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
                         <SignalSlashIcon className="size-5" aria-hidden="true" />
                     </div>
@@ -128,7 +127,7 @@ export const ServerDownOverlay = () => {
                         )}
                     </div>
                 </CardContent>
-                <CardFooter className="justify-end border-t border-border px-5 pb-3 !pt-3">
+                <CardFooter className="justify-end">
                     <Button size="sm" onClick={() => void handleRetry()} disabled={isRetrying}>
                         <ArrowPathIcon className="size-3.5" aria-hidden="true" />
                         {t('retryNow')}

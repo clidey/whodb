@@ -124,8 +124,6 @@ export default defineConfig(async ({command}) => {
       alias: {
         '@': path.resolve(__dirname, './src'),
         '@graphql': path.resolve(__dirname, './src/generated/graphql-index.ts'),
-        '@heroicons/react/24/outline': path.resolve(__dirname, './src/components/whodb-heroicons.tsx'),
-        'lucide-react': path.resolve(__dirname, './src/components/whodb-heroicons.tsx'),
       },
       dedupe: [
         '@codemirror/state',

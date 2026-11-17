@@ -1,22 +1,27 @@
 {
   "name": "WhoDB",
   "url": "https://docs.whodb.com",
-  "description": "WhoDB documentation — a lightweight database management tool for exploring, querying, and visualizing your data",
+  "description": "Connect, explore, query, edit, and visualize your databases with WhoDB Community.",
   "seo": {
-    "titleTemplate": "%s — WhoDB Docs",
-    "keywords": ["whodb", "database management", "database gui", "sql client", "postgresql", "mysql", "mongodb", "redis", "database tool"],
+    "titleTemplate": "%s | WhoDB Community",
+    "keywords": [
+      "whodb",
+      "database management",
+      "database gui",
+      "sql client",
+      "postgresql",
+      "mysql",
+      "mongodb",
+      "redis",
+      "database tool"
+    ],
     "author": "Clidey",
     "locale": "en_US"
   },
   "colors": {
-    "primary": "#ca6f1e",
-    "light": "#ca6f1e",
-    "dark": "#F18D3B"
-  },
-  "fonts": {
-    "family": "Montserrat",
-    "source": "https://fonts.gstatic.com/s/googlesansflex/v5/t5sJIQcYNIWbFgDgAAzZ34auoVyXkJCOvp3SFWJbN5hF8Ju1x6sKCyp0l9sI40swNJwGpVd4AZzz0v6lJ4qFXNZhGjLvDSkV4USKMo6qQzwliVdHAy9jxTDHg_ugnAakpwGc-cxgUqDCIUI.woff2",
-    "format": "woff2"
+    "primary": "#2C6BD4",
+    "light": "#2C6BD4",
+    "dark": "#5091FD"
   },
   "navigation": {
     "tabs": [
@@ -30,7 +35,8 @@
               "why-whodb",
               "installation",
               "first-login",
-              "quick-start"
+              "quick-start",
+              "guides/move-to-platform"
             ]
           },
           {
@@ -39,6 +45,7 @@
               "features/database-connectivity",
               "features/cloud-providers",
               "features/schema-explorer",
+              "features/schema-management",
               "features/sidebar-navigation",
               "features/storage-units",
               "features/settings"
@@ -94,10 +101,11 @@
             ]
           },
           {
-            "group": "Platform & Tooling",
+            "group": "Desktop, CLI & Assistants",
             "pages": [
               "features/desktop-app",
-              "features/cli-and-mcp"
+              "features/cli-and-mcp",
+              "features/mcp-permissions"
             ]
           }
         ]
@@ -217,7 +225,6 @@
               "resources/keyboard-shortcuts",
               "resources/glossary",
               "resources/supported-databases",
-              "resources/enterprise-edition",
               "resources/changelog"
             ]
           }
@@ -230,10 +237,21 @@
     "dark": "./logo/logo.svg"
   },
   "favicon": "./favicon.svg",
+  "styles": ["./custom.css"],
   "analytics": {
     "posthog": {
       "token": "phc_hxwfcMiIgSXYKkbWl9zpQE0HaPPmlRaVXCWODricYu1",
       "apiHost": "https://us.i.posthog.com"
     }
+  },
+  "title": "WhoDB Community documentation",
+  "copyright": "Clidey",
+  "repository": {
+    "url": "https://github.com/clidey/whodb",
+    "branch": "main",
+    "path": "docs"
+  },
+  "theme": {
+    "mode": "system"
   }
 }

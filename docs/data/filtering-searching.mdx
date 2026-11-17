@@ -1,51 +1,69 @@
 ---
-title: "Filtering and Searching"
-description: "Use visible-row search and server-side Where conditions in WhoDB"
+title: "Find the right rows"
+description: "Use server-side conditions to filter results and Search to locate values in the loaded page."
 ---
 
-# Filtering And Searching
+# Find the right rows
 
-WhoDB has two different data-finding tools on a storage unit data page.
+Use **Filter** to ask the database for matching records. Use **Search** to find a value in the page you already loaded. Choosing the right one prevents a common mistake: assuming that a record does not exist because Search cannot find it on the current page.
 
-## Visible-Row Search
+## Filter at the database
 
-The **Search** input looks through rows currently loaded in the grid.
+1. Open the object's **Data** view.
+2. Click **Filter**.
+3. Choose a field, an operator, and a value.
+4. Add other conditions if needed.
+5. Click **Run** to load matching rows.
 
-- Typing calls the grid search helper immediately.
-- Matching cells are scrolled into view and temporarily highlighted.
-- Repeating the same search advances through matches.
-- Use it for quick lookup in the rows already visible.
-- Use WHERE conditions for SQL `WHERE` clauses.
-- Move through pages or raise the page size when you need to search more loaded rows.
+<div className="ce-screenshot-light">
 
-## Where Conditions
+![The WHERE condition builder](/images/light/16-data-view-where-conditions-popover.png)
 
-Use **Where condition** when you need the database to filter rows.
+</div>
+<div className="ce-screenshot-dark">
 
-<Steps>
-<Step title="Open Conditions">
-Click the **Add** button under **Where condition** to open the condition popover. Existing conditions appear as badges next to the button, with a "+N more" button once more than two exist. An alternative sheet mode, which opens conditions in a side panel, can be enabled in Settings.
-</Step>
-<Step title="Choose Field Operator Value">
-Select a field, select an operator, and enter a value.
-</Step>
-<Step title="Add The Condition">
-Click **Add Condition** inside the condition sheet or popover.
-</Step>
-<Step title="Run The Query">
-Click **Query** on the data page. This reloads rows using the saved conditions.
-</Step>
-</Steps>
+![The WHERE condition builder](/images/dark/16-data-view-where-conditions-popover.png)
 
-## Multiple Conditions
+</div>
 
-Current CE conditions are combined with AND logic. Existing conditions can be edited or removed from the condition sheet.
+For example, to investigate orders belonging to a particular user, add a condition on the user identifier. This asks the source for the relevant records instead of loading arbitrary pages and looking through them manually.
 
-## When To Use Each Tool
+Operators depend on the source and field type. Choose an operator from the builder and enter a comparison value, not a SQL expression. Review whether a boundary includes or excludes the value itself.
 
-| Need | Use |
-|------|-----|
-| Jump to a value in the visible grid | Search |
-| Filter millions of rows in the database | Where condition + Query |
-| Export a filtered result set | Apply Where conditions, click Query, then export |
-| Find values on a later page | Change page or use a Where condition |
+<div className="ce-screenshot-light">
+
+![Multiple conditions in the data view](/images/light/39-data-view-multiple-conditions.png)
+
+</div>
+<div className="ce-screenshot-dark">
+
+![Multiple conditions in the data view](/images/dark/39-data-view-multiple-conditions.png)
+
+</div>
+
+The condition badge shows that filters are configured. If you change a condition, click **Run** again to apply it. Compare the returned records to a known example before relying on the result.
+
+## Search the loaded page
+
+Enter text in **Search** to highlight matches and move between matching values. Search does not request unloaded records or change the database result count.
+
+<div className="ce-screenshot-light">
+
+![Search highlighting a value in loaded rows](/images/light/19-data-view-search-highlight.png)
+
+</div>
+<div className="ce-screenshot-dark">
+
+![Search highlighting a value in loaded rows](/images/dark/19-data-view-search-highlight.png)
+
+</div>
+
+If you know a record's key but cannot find it with Search, add a database filter for that key. If you are checking a value you can already see in the grid, Search is the quicker tool.
+
+## Clear or extend the query
+
+Remove conditions and click **Run** to return to the unfiltered result. If a filter returns no records, check one condition at a time and confirm the active database and schema.
+
+Use [Scratchpad](/query/writing-queries) for joins, calculated fields, or a more complex predicate. If you need an exported file containing only the matching set, export that query's result. A whole-object export, including **Export** with no rows selected, exports the object's contents rather than carrying the grid filter into the file.
+
+The condition builder can open as a popover or a larger sheet. Choose that preference in [Settings](/features/settings), or read [WHERE condition details](/advanced/where-conditions).

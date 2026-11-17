@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import {Alert, AlertDescription, AlertTitle, CopyButton, toast} from "@clidey/ux";
-import {BellAlertIcon} from "./heroicons";
+import { Alert, AlertDescription, AlertTitle, CopyButton, toast, IconBell as BellAlertIcon } from '@clidey/ux';
 import {useTranslation} from "@/hooks/use-translation";
 
 interface ErrorStateProps {

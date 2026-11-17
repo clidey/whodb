@@ -23,6 +23,7 @@ import {SettingsActions} from "../../store/settings";
 import {changeLanguage} from "../../utils/change-language";
 import {useTranslation} from "@/hooks/use-translation";
 import {
+    Button,
     Input,
     Label,
     Select,
@@ -164,13 +165,15 @@ export const SettingsPage: FC = () => {
                 <Tabs value={activeTab} className="ce-settings-tabs" onValueChange={handleTabChange}>
                     <div className="ce-settings-rail">
                         <div className="ce-settings-rail-heading"><h1>{t('settingsTitle')}</h1><p>{t('savedInBrowser')}</p></div>
-                        <TabsList className="ce-settings-rail-list">
-                            <TabsTrigger value="appearance"><WhoDBChatIcon name="grid" />{t('tabAppearance')}</TabsTrigger>
-                            <TabsTrigger value="behavior"><WhoDBChatIcon name="sliders" />{t('tabBehavior')}</TabsTrigger>
-                            {hasIntegrations && <TabsTrigger value="integrations">{t('tabIntegrations')}</TabsTrigger>}
-                            <TabsTrigger value="privacy"><WhoDBChatIcon name="secret" />{t('tabPrivacy')}</TabsTrigger>
-                        </TabsList>
-                        <button type="button" onClick={() => void navigate(InternalRoutes.ContactUs?.path ?? '/contact-us')}><WhoDBChatIcon name="mail" />{t('contact')}</button>
+                        <div className="flex flex-wrap items-center gap-3">
+                            <TabsList>
+                                <TabsTrigger value="appearance"><WhoDBChatIcon name="grid" />{t('tabAppearance')}</TabsTrigger>
+                                <TabsTrigger value="behavior"><WhoDBChatIcon name="sliders" />{t('tabBehavior')}</TabsTrigger>
+                                {hasIntegrations && <TabsTrigger value="integrations">{t('tabIntegrations')}</TabsTrigger>}
+                                <TabsTrigger value="privacy"><WhoDBChatIcon name="secret" />{t('tabPrivacy')}</TabsTrigger>
+                            </TabsList>
+                            <Button variant="ghost" onClick={() => void navigate(InternalRoutes.ContactUs?.path ?? '/contact-us')}><WhoDBChatIcon name="mail" />{t('contact')}</Button>
+                        </div>
                     </div>
 
                     <TabsContent value="appearance" className="ce-settings-panel">
@@ -178,7 +181,7 @@ export const SettingsPage: FC = () => {
                         <p className="ce-settings-section-label">{t('appearanceSection')}</p>
                         <div className="flex justify-between">
                             <div className="ce-settings-row-copy"><Label htmlFor="storage-unit-view">{t('tableView')}</Label><p>{t('tableViewDescription')}</p></div>
-                            <Select value={storageUnitView} onValueChange={handleStorageUnitViewToggle}>
+                            <Select value={storageUnitView} onValueChange={value => { handleStorageUnitViewToggle(value as typeof storageUnitView); }}>
                                 <SelectTrigger id="storage-unit-view" className="w-[165px]">
                                     <SelectValue placeholder={t('selectView')} />
                                 </SelectTrigger>
@@ -190,7 +193,7 @@ export const SettingsPage: FC = () => {
                         </div>
                         <div className="flex justify-between">
                             <div className="ce-settings-row-copy"><Label htmlFor="font-size">{t('textSize')}</Label><p>{t('textSizeDescription')}</p></div>
-                            <Select value={fontSize} onValueChange={handleFontSizeChange}>
+                            <Select value={fontSize} onValueChange={value => { handleFontSizeChange(value as typeof fontSize); }}>
                                 <SelectTrigger id="font-size" className="w-[165px]">
                                     <SelectValue placeholder={t('selectFontSize')} />
                                 </SelectTrigger>
@@ -203,7 +206,7 @@ export const SettingsPage: FC = () => {
                         </div>
                         <div className="flex justify-between">
                             <div className="ce-settings-row-copy"><Label htmlFor="spacing">{t('density')}</Label><p>{t('densityDescription')}</p></div>
-                            <Select value={spacing} onValueChange={handleSpacingChange}>
+                            <Select value={spacing} onValueChange={value => { handleSpacingChange(value as typeof spacing); }}>
                                 <SelectTrigger id="spacing" className="w-[165px]">
                                     <SelectValue placeholder={t('selectSpacing')} />
                                 </SelectTrigger>
@@ -234,7 +237,7 @@ export const SettingsPage: FC = () => {
                         <p className="ce-settings-section-label">{t('gridSection')}</p>
                         <div className="flex justify-between">
                             <div className="ce-settings-row-copy"><Label htmlFor="where-condition-mode">{t('whereConditionMode')}</Label><p>{t('whereConditionModeDescription')}</p></div>
-                            <Select value={whereConditionMode} onValueChange={handleWhereConditionModeChange}>
+                            <Select value={whereConditionMode} onValueChange={value => { handleWhereConditionModeChange(value as typeof whereConditionMode); }}>
                                 <SelectTrigger id="where-condition-mode" className="w-[165px]">
                                     <SelectValue placeholder={t('selectMode')} />
                                 </SelectTrigger>
@@ -285,7 +288,7 @@ export const SettingsPage: FC = () => {
                         <p className="ce-settings-section-label">{t('generalSection')}</p>
                         <div className="flex justify-between">
                             <div className="ce-settings-row-copy"><Label htmlFor="border-radius">{t('cornerRadius')}</Label><p>{t('cornerRadiusDescription')}</p></div>
-                            <Select value={borderRadius} onValueChange={handleBorderRadiusChange}>
+                            <Select value={borderRadius} onValueChange={value => { handleBorderRadiusChange(value as typeof borderRadius); }}>
                                 <SelectTrigger id="border-radius" className="w-[165px]">
                                     <SelectValue placeholder={t('selectBorderRadius')} />
                                 </SelectTrigger>
@@ -299,7 +302,7 @@ export const SettingsPage: FC = () => {
                         </div>
                         <div className="flex justify-between">
                             <div className="ce-settings-row-copy"><Label htmlFor="database-schema-terminology">{t('databaseSchemaTerminology')}</Label><p>{t('databaseSchemaTerminologyDescription')}</p></div>
-                            <Select value={databaseSchemaTerminology} onValueChange={handleDatabaseSchemaTerminologyChange}>
+                            <Select value={databaseSchemaTerminology} onValueChange={value => { handleDatabaseSchemaTerminologyChange(value as typeof databaseSchemaTerminology); }}>
                                 <SelectTrigger id="database-schema-terminology" className="w-[165px]">
                                     <SelectValue placeholder={t('selectDatabaseSchemaTerminology')} />
                                 </SelectTrigger>
@@ -311,7 +314,7 @@ export const SettingsPage: FC = () => {
                         </div>
                         <div className="flex justify-between">
                             <div className="ce-settings-row-copy"><Label htmlFor="language">{t('language')}</Label><p>{t('languageDescription')}</p></div>
-                            <Select value={language} onValueChange={handleLanguageChange}>
+                            <Select value={language} onValueChange={value => { handleLanguageChange(value as typeof language); }}>
                                 <SelectTrigger id="language" className="w-[200px]">
                                     <SelectValue placeholder={t('selectLanguage')} />
                                 </SelectTrigger>

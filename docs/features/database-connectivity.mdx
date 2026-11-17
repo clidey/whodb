@@ -1,138 +1,70 @@
 ---
-title: "Database Connectivity"
-description: "How WhoDB connects to databases in the current Community Edition build"
+title: "Connect your sources"
+description: "Connect using credentials, parsed connection strings, profiles, TLS options, or local database files."
 ---
 
-# Database Connectivity
+# Connect your sources
 
-WhoDB builds its connection catalog from the database plugins registered in the current build. In the current Community Edition codebase, that catalog is broader than the older docs suggested and covers relational, document, cache, search, and file-backed databases.
+Connect WhoDB to the source that contains the records you need to inspect. For a browser deployment, the WhoDB backend makes the connection. It needs access to the database's network address or file path even if your own browser can already reach it.
 
-![WhoDB Login Page](/images/01-login-page.png)
+Before filling the form, identify the source type and where WhoDB is running. These two details explain many connection failures.
+
+<div className="ce-screenshot-light">
+
+![Database types in the connection form](/images/light/02-login-database-type-dropdown.png)
+
+</div>
+<div className="ce-screenshot-dark">
+
+![Database types in the connection form](/images/dark/02-login-database-type-dropdown.png)
+
+</div>
+
+## Choose a connection method
+
+| Method | Use it when |
+| --- | --- |
+| Manual form | You have the host, port, database name, and credentials |
+| Connection string | You have a URI that the form can parse |
+| Server-configured profile | An administrator has provided connection details under an alias |
+| File path | You use SQLite or DuckDB and the file is accessible to WhoDB |
+| CLI discovery | You have enabled a cloud provider in the local CLI and want to find an endpoint |
+
+Choose the entry for the actual database or compatible product. The source type determines the form fields and the tools available after connection. The [database reference](/resources/supported-databases) lists the CE catalog and explains availability.
+
+For a first connection, follow [Connect your first database](/first-login). After using a connection string, review the parsed fields rather than assuming every URI option was interpreted as intended.
+
+## Configure TLS
+
+Open **Advanced** for the SSL/TLS options supported by the connector. Depending on the source, these can include an SSL mode, CA certificate, client certificate, client key, and server name.
+
+<div className="ce-screenshot-light">
+
+![Advanced connection settings](/images/light/04-login-advanced-options.png)
+
+</div>
+<div className="ce-screenshot-dark">
+
+![Advanced connection settings](/images/dark/04-login-advanced-options.png)
+
+</div>
+
+Use the requirements supplied for the endpoint. Do not switch off verification simply because a certificate error disappears when you do. Check the intended trust chain and hostname instead.
+
+Environment profiles can also specify server-side certificate paths, including `SSL CA Path`, `SSL Client Cert Path`, and `SSL Client Key Path`. Those paths refer to the WhoDB host. In a container, mount the required files and use their paths inside the container.
+
+## Reuse profiles
+
+Administrators can configure shared profiles with `WHODB_<TYPE>` JSON arrays or numbered variables such as `WHODB_<TYPE>_1`. A profile lets a person select an alias instead of entering all connection details.
+
+These server-configured profiles are available to people who can reach that CE instance. They are different from browser-local saved workspace state, and an alias is not a per-user access rule. See [profile configuration](/installation#database-connection-profiles) before sharing an instance.
+
+## Reach private databases
+
+Use a network path available to the WhoDB backend, such as your existing VPN, private network, or externally managed forwarding. For terminal work, the [CLI/TUI](/features/cli-and-mcp) also supports SSH tunneling.
+
+Cloud discovery finds endpoints through the [local CLI](/features/cloud-providers). It does not add cloud-provider administration to the CE browser form or make a private endpoint reachable.
 
 <Tip>
-Use this page with [First Login](/first-login) and [Supported Databases](/resources/supported-databases) when you need the current web connection flow.
+The same connection can become a managed source for pipelines, apps, and an ontology in WhoDB Platform. [Bring your connection across](/guides/move-to-platform#bring-your-connection-across).
 </Tip>
-
-## Connection Paths
-
-<CardGroup cols={2}>
-<Card title="Manual Login" icon="database">
-Pick a database type, fill in the fields shown for that type, and connect directly from the login page.
-</Card>
-<Card title="Saved Profiles" icon="link">
-Reuse local or environment-defined profiles from the login page instead of retyping every field.
-</Card>
-<Card title="CLI Cloud Discovery" icon="cloud">
-Use the local WhoDB CLI to inspect configured AWS, Azure, and GCP resources.
-</Card>
-<Card title="File Databases" icon="desktop">
-SQLite and DuckDB connect through file paths instead of host and port fields.
-</Card>
-</CardGroup>
-
-## Current CE Catalog
-
-The current connectable catalog exposed by the app includes:
-
-- PostgreSQL
-- MySQL
-- MariaDB
-- CockroachDB
-- SQLite3
-- MongoDB
-- Redis
-- ElasticSearch
-- ClickHouse
-- DuckDB
-- Memcached
-- TiDB
-- Valkey
-- Dragonfly
-- OpenSearch
-- YugabyteDB
-- QuestDB
-- FerretDB
-
-<Note>
-DuckDB availability depends on the build target. In this repository it is registered conditionally, so some architectures will not expose it.
-</Note>
-
-## What The Login Page Supports
-
-<Steps>
-<Step title="Choose a Database Type or Profile">
-The login page can start from a manual database type selection, a saved/local profile, or an environment-defined profile.
-
-![Database Type Dropdown](/images/02-login-database-type-dropdown.png)
-</Step>
-<Step title="Fill the Standard Fields">
-The main form shows the fields required for the selected database type. Typical combinations are:
-
-- Host, username, password, and database for most network databases
-- Database/file path only for SQLite and DuckDB
-- Search path for PostgreSQL-family connections that expose schemas
-</Step>
-<Step title="Open Advanced Options When Needed">
-The web app's advanced panel is used for SSL/TLS settings and backend-defined database-specific fields.
-
-![Advanced Options](/images/04-login-advanced-options.png)
-</Step>
-<Step title="Connect or Prefill From Cloud">
-Cloud discovery fills the standard login form with the discovered endpoint and database-specific metadata, then connects through the same flow as a manual login.
-</Step>
-</Steps>
-
-## Direct Reachability
-
-WhoDB's web app expects the WhoDB process to be able to reach the target database directly over the network or filesystem.
-
-- For remote databases, give the WhoDB server or desktop app network access to the endpoint.
-- For browser-based deployments, set up VPN, peering, bastion forwarding, or another external network path before connecting.
-- If you want built-in SSH tunneling, use the [CLI & MCP](/features/cli-and-mcp) tooling. SSH tunneling is a CLI feature in this codebase, not a web login form feature.
-
-## Advanced Options Reference
-
-The advanced panel is database-aware. The exact keys depend on the selected database type, but the shared SSL/TLS keys are:
-
-| Key | Purpose |
-|-----|---------|
-| `SSL Mode` | Selects the TLS mode for the database family |
-| `SSL CA Content` | PEM CA certificate content uploaded from the client |
-| `SSL Client Cert Content` | PEM client certificate content for mutual TLS |
-| `SSL Client Key Content` | PEM private key content for mutual TLS |
-| `SSL Server Name` | Overrides the TLS server name / hostname verification target |
-
-For environment-defined profiles, the backend also accepts server-side certificate path keys:
-
-| Key | Purpose |
-|-----|---------|
-| `SSL CA Path` | CA certificate file path on the WhoDB host |
-| `SSL Client Cert Path` | Client certificate file path on the WhoDB host |
-| `SSL Client Key Path` | Client key file path on the WhoDB host |
-
-Database-specific fields come from the connectable catalog and can include values such as:
-
-- `Port`
-- `Search Path`
-- `Region`
-- `URL Params`
-- `DNS Enabled`
-- `HTTP Protocol`
-- `Readonly`
-
-## Related Pages
-
-<CardGroup cols={2}>
-<Card title="First Login" icon="right-to-bracket" href="/first-login">
-Walk through the actual login page and connection flow.
-</Card>
-<Card title="Supported Databases" icon="database" href="/resources/supported-databases">
-See the current CE database catalog grouped by compatibility family.
-</Card>
-<Card title="Cloud Providers" icon="cloud" href="/features/cloud-providers">
-Use local CLI discovery for AWS, Azure, and GCP.
-</Card>
-<Card title="CLI & MCP" icon="code" href="/features/cli-and-mcp">
-Use the TUI, scripted subcommands, built-in SSH tunnels, and the MCP server.
-</Card>
-</CardGroup>

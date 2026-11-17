@@ -1,74 +1,64 @@
 ---
-title: "Sidebar Navigation"
-description: "Navigate WhoDB's current sidebar routes, profiles, databases, and schemas"
+title: "Navigate the workspace"
+description: "Switch connections, schemas, and working views from the sidebar and command palette."
 ---
 
-# Sidebar Navigation
+# Navigate the workspace
 
-The sidebar controls the active connection context and the primary WhoDB routes available for that source.
+Use the sidebar to keep track of the connection you are working on and move between its data tools. Before running a query or changing a record, check that the database and schema are the ones you intended.
 
-![Sidebar With Storage Units](/images/06-storage-unit-list-with-sidebar.png)
+Collapse or expand the primary sidebar with `Mod + B` when you need more room for a grid or query result.
 
-## Collapse And Expand
+<div className="ce-screenshot-light">
 
-Use the sidebar trigger or `Cmd/Ctrl + B` to collapse and expand the sidebar.
+![Sidebar navigation and the selected schema](/images/light/36-sidebar-navigation-menu.png)
 
-## Profile Selector
+</div>
+<div className="ce-screenshot-dark">
 
-The profile selector shows the active connection profile. Use it to switch profiles, add another profile, or leave the current connection.
+![Sidebar navigation and the selected schema](/images/dark/36-sidebar-navigation-menu.png)
 
-![Database Selector](/images/34-sidebar-database-selector.png)
+</div>
 
-Profile labels are derived from saved profile name, hostname, database name, username, or source type depending on the source configuration.
+## Select the working context
 
-## Database Selector
+Use the profile, database, and schema selectors offered by the source. A database account can have access to several databases or schemas, and matching table names can appear in more than one of them.
 
-Some source types support switching databases after connection. When supported, the sidebar shows a database selector.
+<div className="ce-screenshot-light">
 
-Changing the database updates the current context and returns you to Storage Units when needed.
+![Schema selector in the sidebar](/images/light/35-sidebar-schema-selector.png)
 
-## Schema Selector
+</div>
+<div className="ce-screenshot-dark">
 
-Sources with schemas show a schema selector. PostgreSQL commonly exposes schemas this way.
+![Schema selector in the sidebar](/images/dark/35-sidebar-schema-selector.png)
 
-![Schema Selector](/images/35-sidebar-schema-selector.png)
+</div>
 
-Changing schema updates the Storage Units list for the selected schema.
+Treat the context as part of the task. For example, when checking a test fixture, confirm the development connection before opening the table. A familiar object name does not identify the environment by itself.
 
-## Primary Routes
+## Open a view
 
-The route list is capability-based. Not every source exposes every route.
+| View | Use it to |
+| --- | --- |
+| Chat | Ask a question using a configured AI provider |
+| Tables / source object list | Find objects, inspect metadata, and open records |
+| Graph | Follow relationships exposed by the source |
+| Scratchpad | Run custom queries in pages and cells |
+| Settings | Adjust your workspace preferences |
 
-Typical SQL-capable sources show:
+Views depend on the source's capabilities. Numbered navigation shortcuts follow the views available in the current workspace. Press `?` to check the shortcuts rather than assuming a particular number always opens the same view.
 
-- **Chat** when AI chat is supported.
-- **Storage Units** or the source-specific object label.
-- **Graph** when graph metadata is supported.
-- **Scratchpad** when custom SQL execution is supported.
-- **Settings** in the lower sidebar.
+## Browse beside your work
 
-![Navigation Menu](/images/36-sidebar-navigation-menu.png)
+Chat, object data views, and Graph use a secondary list beside the main content. Search that list to find a conversation or object. Drag the divider when you need more room for long names or for the content you are inspecting.
 
-## Navigation Shortcuts
+On a small screen, choose **Browse items** to open the list. Selecting a chat or object returns to its content. In Graph, change the object selection and choose **View content** to return to the canvas.
 
-Numbered route shortcuts are platform-specific:
+The secondary panel follows the selected light or dark theme. The dark primary sidebar keeps the main navigation visually separate from the work area.
 
-- macOS: `Ctrl + 1` through `Ctrl + 4`.
-- Windows/Linux: `Alt + 1` through `Alt + 4`.
+## Jump to an action
 
-Use `Cmd/Ctrl + B` for the sidebar.
+Open the command palette with `Mod + K` when you know the action you want but do not want to find it in the navigation. Search the available commands and choose the matching action.
 
-## Storage Unit Search
-
-Use the search field on the Storage Units page to filter object names. Row search lives inside each data grid.
-
-## Related Pages
-
-<CardGroup cols={2}>
-<Card title="Storage Units" icon="database" href="/features/storage-units">
-Browse objects and open Describe or Data.
-</Card>
-<Card title="Keyboard Shortcuts" icon="keyboard" href="/resources/keyboard-shortcuts">
-See the current shortcut map.
-</Card>
-</CardGroup>
+Continue with [Browse objects](/features/storage-units), or use [Keyboard shortcuts](/resources/keyboard-shortcuts) for the full key reference.

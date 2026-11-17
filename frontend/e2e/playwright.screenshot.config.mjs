@@ -37,19 +37,16 @@ export default defineConfig({
     video: "retain-on-failure",
     trace: "retain-on-failure",
   },
-  projects: [
-    {
-      name: "screenshots",
-      use: {
-        browserName: "chromium",
-        viewport: { width: 1920, height: 1080 },
-        launchOptions: {
-          args: [
-            "--window-size=1920,1080",
-            "--force-device-scale-factor=1",
-          ],
-        },
+  projects: ["light", "dark"].map(theme => ({
+    name: `screenshots-${theme}`,
+    use: {
+      browserName: "chromium",
+      colorScheme: theme,
+      reducedMotion: "reduce",
+      viewport: { width: 1920, height: 1080 },
+      launchOptions: {
+        args: ["--window-size=1920,1080", "--force-device-scale-factor=1"],
       },
     },
-  ],
+  })),
 });

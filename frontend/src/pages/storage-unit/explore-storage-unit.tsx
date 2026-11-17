@@ -15,6 +15,9 @@
  */
 
 import {
+    Alert,
+    AlertTitle,
+    IconInfo,
     AlertDialog,
     AlertDialogAction,
     AlertDialogCancel,
@@ -43,7 +46,9 @@ import {
     StackList,
     StackListItem,
     toast,
-} from "@clidey/ux";
+    IconTerminal as CommandLineIcon,
+    IconClose as XMarkIcon,
+} from '@clidey/ux';
 import {skipToken, useLazyQuery, useMutation, useQuery} from "@apollo/client/react";
 import type {
     GetStorageUnitsQuery,
@@ -70,11 +75,6 @@ import { useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {Navigate, useLocation, useNavigate} from "react-router-dom";
 import {CodeEditor} from "../../components/editor";
 import {ErrorState} from "../../components/error-state";
-import {
-    CheckCircleIcon,
-    CommandLineIcon,
-    XMarkIcon
-} from "../../components/heroicons";
 import {Loading, LoadingPage, Spinner} from "../../components/loading";
 import {InternalPage} from "../../components/page";
 import {SchemaViewer} from "../../components/schema-viewer";
@@ -731,7 +731,7 @@ export const ExploreStorageUnit: FC = () => {
         // Document sources take a single JSON value, so per-field required checks don't apply.
         const isDocumentInput = isNoSQL && rows.Columns.length === 1 && rows.Columns[0].Type === "Document";
         const missingRequired = !isDocumentInput && constraintsData?.SourceFieldConstraints?.some(constraint =>
-            constraint.Nullable !== true && !constraint.Identity && constraint.DefaultValue == null && !addRowData[constraint.Name]
+            constraint.Nullable !== true && !constraint.Identity && !constraint.Computed && constraint.DefaultValue == null && !addRowData[constraint.Name]
         );
         if (missingRequired) {
             setAddRowError(t('fillRequiredFields'));
@@ -758,6 +758,9 @@ export const ExploreStorageUnit: FC = () => {
             }
         } else {
             for (const col of rows.Columns) {
+                if (constraintsData?.SourceFieldConstraints?.some(c => c.Name === col.Name && (c.Computed || c.Identity))) {
+                    continue;
+                }
                 if (addRowData[col.Name] !== undefined && addRowData[col.Name] !== "") {
                     values.push({
                         Key: col.Name,
@@ -937,7 +940,7 @@ export const ExploreStorageUnit: FC = () => {
             <InternalPage
                 routes={routes}
                 className="relative"
-                sidebar={<SchemaViewer parentRef={currentParentRef} selectedName={unit.Name} trail={browserTrail} />}
+                sidebar={onSelect => <SchemaViewer parentRef={currentParentRef} selectedName={unit.Name} trail={browserTrail} onSelect={onSelect} />}
             >
                 <div className="flex flex-col grow gap-lg h-[calc(100%-100px)]">
                     <div className="flex items-center justify-between">
@@ -986,7 +989,7 @@ export const ExploreStorageUnit: FC = () => {
         );
     }
 
-    return <InternalPage routes={routes} className="relative" sidebar={<SchemaViewer parentRef={currentParentRef} selectedName={unit.Name} trail={browserTrail} />}>
+    return <InternalPage routes={routes} className="relative" sidebar={onSelect => <SchemaViewer parentRef={currentParentRef} selectedName={unit.Name} trail={browserTrail} onSelect={onSelect} />}>
         <div className="ce-explore-content flex flex-col grow gap-lg h-[calc(100%-100px)]">
             <div className="ce-explore-heading flex items-center justify-between">
                 <div className="flex gap-sm items-center">
@@ -1089,7 +1092,7 @@ export const ExploreStorageUnit: FC = () => {
                         }}
                         footer={
                             <SheetFooter className="ce-add-row-footer">
-                                <span className="ce-add-row-required-count">{t('requiredFields', {count: constraintsData?.SourceFieldConstraints?.filter(c => c.Nullable !== true && !c.Identity && c.DefaultValue == null).length ?? 0})}</span>
+                                <span className="ce-add-row-required-count">{t('requiredFields', {count: constraintsData?.SourceFieldConstraints?.filter(c => c.Nullable !== true && !c.Identity && !c.Computed && c.DefaultValue == null).length ?? 0})}</span>
                                 <Button
                                     variant="secondary"
                                     onClick={() =>{  setShowAdd(false); }}
@@ -1123,8 +1126,9 @@ export const ExploreStorageUnit: FC = () => {
                                 <div className="flex flex-col gap-4">
                                     {rows?.Columns?.map((col) => {
                                         const constraint = constraintsData?.SourceFieldConstraints?.find(c => c.Name === col.Name);
-                                        const isRequired = constraint ? (constraint.Nullable !== true && !constraint.Identity && constraint.DefaultValue == null) : false;
+                                        const isRequired = constraint ? (constraint.Nullable !== true && !constraint.Identity && !constraint.Computed && constraint.DefaultValue == null) : false;
                                         const isIdentity = constraint?.Identity === true;
+                                        const isGenerated = isIdentity || constraint?.Computed === true;
                                         const hasDefault = constraint?.DefaultValue != null;
                                         return (
                                             <div key={col.Name} className="ce-add-row-field flex flex-col gap-2"
@@ -1134,9 +1138,9 @@ export const ExploreStorageUnit: FC = () => {
                                                         <Label className="w-fit" htmlFor={`add-row-${col.Name}`}>
                                                             {col.Name}
                                                         </Label>
-                                                        {isRequired && <Badge variant="secondary" className="text-[10px] px-1 py-0">{t('required')}</Badge>}
-                                                        {isIdentity && <Badge variant="outline" className="text-[10px] px-1 py-0">{t('autoGenerated')}</Badge>}
-                                                        {hasDefault && !isIdentity && <Badge variant="outline" className="text-[10px] px-1 py-0">{t('hasDefault')}</Badge>}
+                                                        {isRequired && <Badge variant="secondary">{t('required')}</Badge>}
+                                                        {isGenerated && <Badge variant="outline">{t('autoGenerated')}</Badge>}
+                                                        {hasDefault && !isGenerated && <Badge variant="outline">{t('hasDefault')}</Badge>}
                                                     </div>
                                                     <span>{col.IsForeignKey && col.ReferencedTable && col.ReferencedColumn ? `→ ${col.ReferencedTable}.${col.ReferencedColumn}` : col.Type?.toLowerCase()}</span>
                                                 </div>
@@ -1152,8 +1156,8 @@ export const ExploreStorageUnit: FC = () => {
                                                     id={`add-row-${col.Name}`}
                                                     value={addRowData[col.Name] ?? ""}
                                                     onChange={e =>{  handleAddRowFieldChange(col.Name, e.target.value); }}
-                                                    placeholder={hasDefault ? t('defaultValuePlaceholder', {value: constraint?.DefaultValue ?? ''}) : isIdentity ? t('autoGeneratedPlaceholder') : t('enterValueFor', {column: col.Name})}
-                                                    disabled={isIdentity}
+                                                    placeholder={hasDefault ? t('defaultValuePlaceholder', {value: constraint?.DefaultValue ?? ''}) : isGenerated ? t('autoGeneratedPlaceholder') : t('enterValueFor', {column: col.Name})}
+                                                    disabled={isGenerated}
                                                     {...getInputPropsForColumnType(col.Type || '')}
                                                 />}
                                             </div>
@@ -1279,9 +1283,11 @@ export const ExploreStorageUnit: FC = () => {
                                 totalCount={Number.parseInt(totalCount, 10)}
                             />
                         ) : (
-                            <div className="bg-white/10 text-neutral-800 dark:text-neutral-300 rounded-lg p-2 flex gap-sm self-start items-center my-4">
-                                Action Executed
-                                <CheckCircleIcon className="w-4 h-4" />
+                            <div className="my-4 w-fit max-w-full self-start" data-testid="embedded-action-output">
+                                <Alert variant="info">
+                                    <IconInfo />
+                                    <AlertTitle>{t('actionExecuted')}</AlertTitle>
+                                </Alert>
                             </div>
                         )
                     )}
@@ -1310,7 +1316,7 @@ export const ExploreStorageUnit: FC = () => {
             </DrawerContent>
         </Drawer>
         <Sheet open={showEntitySearchSheet} onOpenChange={setShowEntitySearchSheet}>
-            <SheetContent side="right" className="flex flex-col p-8 min-w-[600px]" footer={
+            <SheetContent side="right" className="flex flex-col min-w-[600px]" footer={
                 <SheetFooter>
                     <Button onClick={handleCloseEntitySearchSheet} variant="outline">
                         {t('close')}
@@ -1340,7 +1346,7 @@ export const ExploreStorageUnit: FC = () => {
                                         key={column.Name} 
                                         item={
                                             isValidForeignKey(column.Name) ? (
-                                                <Badge className="text-lg" data-testid="foreign-key-attribute">
+                                                <Badge data-testid="foreign-key-attribute">
                                                     {column.Name}
                                                 </Badge>
                                             ) : column.Name

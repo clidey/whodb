@@ -1,0 +1,41 @@
+---
+title: "MCP query permissions"
+description: "Understand automatic reads, confirmation tokens, read-only mode, and connector enforcement."
+---
+
+# MCP query permissions
+
+Choose an MCP query mode before giving an assistant access to a database. The mode determines whether a query can run automatically, needs confirmation, or is rejected. The database account still needs appropriate permissions for the task.
+
+For an assistant that only needs to inspect a schema and answer read questions, start with read-only mode. Use the default confirmation mode when you want to review proposed writes individually.
+
+## Choose a mode
+
+| Command | Query behavior |
+| --- | --- |
+| `whodb mcp serve` | Accepted reads use protected execution; other queries require confirmation |
+| `whodb mcp serve --read-only` | Rejects writes and queries outside the accepted read subset |
+| `whodb mcp serve --safe-mode` | Adds strict validation to read-only execution |
+| `whodb mcp serve --allow-write` | Allows writes without the default confirmation flow |
+
+Review `whodb mcp serve --help` before changing a mode. Destructive operations have additional controls, including `--allow-drop`. Do not enable a broader mode just to make an unexplained rejection disappear.
+
+## What counts as an automatic read?
+
+WhoDB checks the query rather than trusting the assistant's description or just its first keyword. Ordinary reads, supported CTEs, joins, grouping, and ordering can qualify for automatic execution.
+
+Some dialect-specific or unrecognized statements require approval even when they appear to read data. Treat that as a request to inspect the statement, not proof that it is harmful or safe.
+
+Protected reads also depend on connector support. If the connector cannot provide the required protected execution, WhoDB rejects the request instead of quietly running it as an ordinary writable query.
+
+## Review a pending query
+
+Read the proposed query and resolved connection before using the confirmation tool. Check the table, predicate, values, and expected effect. Approval is tied to that query, its parameters, and the connection. A changed target needs new approval.
+
+If an execution times out or reports an error after dispatch, inspect the database outcome before asking the assistant to try again. The query might already have taken effect. A confirmation token prevents reuse of that approval; it does not make an arbitrary database operation safe to repeat.
+
+## Keep the access boundary clear
+
+MCP query controls do not replace a restricted database account. Read queries can still expose data or consume substantial database resources. Connect only the sources and credentials the assistant needs.
+
+If you expose HTTP transport, review the host, authentication token, and reachable clients as well. See [CLI & MCP](/features/cli-and-mcp) for setup. The [read-only execution reference](https://github.com/clidey/whodb/blob/main/docs/read-only-execution.md) contains the technical contract and verification details.

@@ -6,6 +6,7 @@ query SourceFieldConstraints($ref: SourceObjectRefInput!) {
     Nullable
     Primary
     Unique
+    Computed
     Identity
     DefaultValue
     AllowedValues

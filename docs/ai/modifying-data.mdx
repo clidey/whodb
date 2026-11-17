@@ -1,449 +1,67 @@
 ---
-title: "Modifying Data with AI Chat Assistant"
-description: "Learn how to safely insert, update, and delete data using WhoDB's AI Chat Assistant with built-in confirmation safeguards"
+title: "Review changes proposed by Chat"
+description: "Inspect a generated statement before allowing it to change the connected database."
 ---
 
-# Modifying Data with AI Chat Assistant
+# Review changes proposed by Chat
 
-WhoDB's AI Chat Assistant enables you to modify database records using natural language while maintaining strict safety controls. Every data modification operation requires explicit confirmation before execution, preventing accidental changes to your database.
+Use Chat to help draft a data change when you can state exactly which records should change and what the new values should be. Treat the generated statement as a proposal to review, just as you would a query written by another person.
 
-<Warning>
-Data modification operations are permanent and affect your actual database. Always review confirmation prompts carefully before proceeding.
-</Warning>
+Chat can propose writes and schema changes where the source supports them. Statements that require approval appear in an execution card before they run.
+
+<div className="ce-screenshot-light">
+
+![A generated statement waiting for review](/images/light/110-chat-action-confirmation.png)
+
+</div>
+<div className="ce-screenshot-dark">
+
+![A generated statement waiting for review](/images/dark/110-chat-action-confirmation.png)
+
+</div>
 
 <Note>
-This workflow requires an active AI provider and selected model. If the Chat input is disabled or no model is available, configure the provider before testing data modifications.
+The illustration uses a fixed demonstration response to show the review controls.
 </Note>
 
-## Understanding AI-Powered Data Modification
-
-The AI Chat Assistant translates your natural language instructions into SQL statements for data modifications and schema changes (INSERT, UPDATE, DELETE, CREATE, ALTER, DROP). Unlike read-only queries, these operations follow a confirmation workflow to ensure safety.
-
-### Key Safety Features
-
-<CardGroup cols={2}>
-<Card title="Explicit Confirmation Required" icon="shield-check">
-All data modifications and schema changes (INSERT, UPDATE, DELETE, CREATE, ALTER, DROP) require manual confirmation before execution
-</Card>
-<Card title="Operation Preview" icon="eye">
-See exactly what SQL will execute before confirming
-</Card>
-<Card title="Action Feedback" icon="circle-check">
-Clear confirmation when operations complete successfully
-</Card>
-<Card title="Error Handling" icon="triangle-exclamation">
-Detailed error messages if modifications fail
-</Card>
-</CardGroup>
-
-### How the Confirmation Workflow Works
-
-<Steps>
-<Step title="You Request a Modification">
-Ask the AI assistant to insert, update, or delete data (or change the schema) using natural language.
-</Step>
-<Step title="AI Generates SQL">
-The assistant analyzes your request and generates the appropriate SQL statement. Nothing executes yet.
-</Step>
-<Step title="Confirmation Prompt Appears">
-An inline alert appears in the chat warning that the operation will modify your database, with a **Show Query** toggle to view the SQL and Confirm/Cancel buttons.
-
-![Action Confirmation Dialog](/images/110-chat-action-confirmation.png)
-</Step>
-<Step title="You Review and Confirm">
-Click **Show Query** to review the SQL statement carefully. Confirm to proceed or cancel to abort.
-</Step>
-<Step title="Operation Executes">
-After confirmation, the SQL executes against your database.
-</Step>
-<Step title="Success Feedback">
-An "Action Executed" message appears confirming the operation completed.
-
-![Action Executed Feedback](/images/111-chat-action-executed.png)
-</Step>
-</Steps>
-
-<Info>
-The confirmation workflow ensures you always know exactly what changes will be made before they occur. The same workflow applies to schema changes (DDL): asking the assistant to CREATE, ALTER, or DROP a table produces the same inline confirmation before anything executes.
-</Info>
-
-## INSERT Operations - Adding Records
-
-Use natural language to add new records to your tables. The AI assistant generates appropriate INSERT statements based on your table schema.
-
-```text User Request
-Create a new product named Laptop with price 999.99, category Electronics, and stock 50
-```
-
-The AI generates:
-```sql Generated SQL
-INSERT INTO products (name, price, category, stock)
-VALUES ('Laptop', 999.99, 'Electronics', 50)
-```
-
-The inline confirmation appears; click **Show Query** to verify the table, columns, and values before confirming.
-
-### Best Practices for INSERT Operations
-
-<AccordionGroup>
-<Accordion title="Specify All Required Fields">
-Mention all columns that don't have default values or aren't auto-generated.
-
-**Good**: "Add a user with name, email, and status"
-**Avoid**: "Add a user" (missing required fields)
-</Accordion>
-<Accordion title="Include Table Names for Clarity">
-In databases with multiple schemas or similar table names, specify the full table path, e.g. "Add to test_schema.users".
-</Accordion>
-<Accordion title="Be Explicit with Data Types">
-Provide values in the expected format for the column type.
-
-**Good**: "Add order with date 2025-01-15"
-**Avoid**: "Add order with date next Monday" (ambiguous)
-</Accordion>
-<Accordion title="Review Generated SQL">
-Always check the generated INSERT statement in the confirmation prompt (via **Show Query**) to ensure the correct table is targeted, all required columns are included, and data types match expectations.
-</Accordion>
-</AccordionGroup>
-
-## UPDATE Operations - Modifying Records
-
-Update existing records by describing what should change and which records to affect.
-
-```text User Request
-Update the email for user with id 5 to newemail@example.com
-```
-
-The AI generates:
-```sql Generated SQL
-UPDATE users SET email = 'newemail@example.com' WHERE id = 5
-```
-
-Conditional and bulk updates work the same way: "Set all products in Electronics category to have discount 10" generates an UPDATE with the matching WHERE clause.
-
-When the confirmation appears, pay special attention to the WHERE clause.
-
-<Warning>
-Missing WHERE clauses will update ALL records in the table. Always verify the WHERE condition before confirming.
-</Warning>
-
-After confirming, verify the "Action Executed" message, then run a follow-up SELECT to confirm the intended records changed.
-
-### Best Practices for UPDATE Operations
-
-<AccordionGroup>
-<Accordion title="Always Specify WHERE Conditions">
-Be explicit about which records to update to avoid accidentally modifying all records.
-
-**Good**: "Update user with id 5"
-**Dangerous**: "Update all users" (only if you mean all records)
-</Accordion>
-<Accordion title="Use Unique Identifiers">
-Reference records by primary keys or unique columns when possible.
-
-**Good**: "Update user with id 123"
-**Risky**: "Update user named John" (may match multiple records)
-</Accordion>
-<Accordion title="Test with SELECT First">
-For complex updates, first run a SELECT with the same criteria to see which records will be affected.
-
-**Step 1**: "Show me all inactive users"
-**Step 2** (after reviewing): "Set all inactive users to status deleted"
-</Accordion>
-<Accordion title="Avoid Updating Primary Keys">
-Generally avoid updating primary key columns, as this can break foreign key relationships.
-</Accordion>
-</AccordionGroup>
-
-## DELETE Operations - Removing Records
-
-Delete operations require the most caution as they permanently remove data. Like all modifications, DELETE requests go through the inline confirmation before anything executes.
-
-```text User Request
-Delete user with id 5
-```
-
-The AI generates the statement and shows the inline confirmation:
-```sql Generated SQL
-DELETE FROM users WHERE id = 5
-```
-
-Conditional deletions ("Delete all inactive users", "Remove all log entries older than 90 days") follow the same pattern. Click **Show Query** to review the DELETE statement and its WHERE clause, then Confirm to execute or Cancel to abort. Afterwards, run a follow-up SELECT to confirm the records are gone.
-
-<Warning>
-DELETE operations are permanent and cannot be undone through WhoDB. Only database backups can restore deleted data.
-</Warning>
-
-### Best Practices for DELETE Operations
-
-<AccordionGroup>
-<Accordion title="Always Use WHERE Clauses">
-Never delete without specifying which records to remove.
-
-**Good**: "Delete user with id 5"
-**Extremely Dangerous**: "Delete all users" (removes all records)
-</Accordion>
-<Accordion title="SELECT Before DELETE">
-Run a SELECT query first to verify which records will be deleted.
-
-**Step 1**: "Show me all users with status inactive"
-**Step 2** (after reviewing): "Delete all users with status inactive"
-</Accordion>
-<Accordion title="Understand Cascade Rules and Dependencies">
-If your schema has CASCADE DELETE rules, deleting one record might remove related records in other tables. Conversely, foreign key constraints may block the deletion until referencing records are handled. Verify your schema's constraints before deleting.
-</Accordion>
-<Accordion title="Consider Soft Deletes">
-For recoverable deletions, use UPDATE to set a deleted flag instead of DELETE: "Update user with id 5 to set deleted true".
-</Accordion>
-<Accordion title="Backup Before Bulk Deletes">
-Before deleting thousands of records, verify your database backup is current and tested.
-</Accordion>
-</AccordionGroup>
-
-## Understanding Confirmation Prompts
-
-The inline confirmation is your final checkpoint before data modification.
-
-### What the Confirmation Shows
-
-<Steps>
-<Step title="Operation Warning">
-An inline alert warning that the operation will modify your database.
-</Step>
-<Step title="SQL Statement">
-Click **Show Query** to see the exact SQL that will execute, including the target table, columns being affected, WHERE conditions, and values being set.
-</Step>
-<Step title="Action Buttons">
-- **Confirm**: Proceeds with the operation
-- **Cancel**: Aborts the operation
-</Step>
-</Steps>
-
-### Checklist Before Confirming
-
-- [ ] The SQL targets the intended table and schema
-- [ ] For UPDATE and DELETE, the WHERE clause targets the correct records
-- [ ] For INSERT and UPDATE, values are correct and properly formatted
-- [ ] The number of rows likely affected matches your expectation
-- [ ] A WHERE clause exists unless you truly intend to affect all records
-
-<Tip>
-If anything in the confirmation looks unexpected, click Cancel and rephrase your request to the AI assistant.
-</Tip>
-
-## Verifying Modifications
-
-After executing a modification, verify the changes were applied correctly.
-
-<Steps>
-<Step title="Check Action Executed Message">
-Look for the "Action Executed" confirmation in the chat. The success message shows which operation ran (for example, "DELETE" or "UPDATE").
-
-![Action Executed Feedback](/images/111-chat-action-executed.png)
-</Step>
-<Step title="Query the Modified Data">
-Run a SELECT query to verify the changes:
-
-**After INSERT**: "Show me the user with email newemail@example.com"
-**After UPDATE**: "Show user with id 5"
-**After DELETE**: "Count how many log entries are older than 90 days" (expect 0)
-</Step>
-</Steps>
-
-## Rollback Strategies
-
-Plan recovery before making data modifications.
-
-### Prevention is Best
-
-<CardGroup cols={2}>
-<Card title="Test in Development" icon="flask">
-Practice modifications in a development database first
-</Card>
-<Card title="Use Transactions" icon="rotate-left">
-Run critical operations in transaction blocks (via Scratchpad)
-</Card>
-<Card title="Regular Backups" icon="clock-rotate-left">
-Maintain frequent database backups for recovery
-</Card>
-<Card title="Soft Deletes" icon="eye-slash">
-Use status flags instead of permanent deletion where possible
-</Card>
-</CardGroup>
-
-### If You Make a Mistake
-
-<Steps>
-<Step title="Stop and Assess">
-Don't make additional changes. Note exactly what operation was executed, how many records were affected, and which tables.
-</Step>
-<Step title="Consider Manual Correction">
-For small mistakes (wrong value in one record), correct it with another UPDATE:
-
-```text
-Update product_id 123 to set price 10
-```
-</Step>
-<Step title="Restore from Backup">
-For significant data loss, restore the database from the most recent backup before the mistake.
-
-<Warning>
-Restoring from backup will lose any changes made after the backup was created.
-</Warning>
-</Step>
-</Steps>
-
-### Using Transactions for Safety
-
-For critical modifications, use the Scratchpad to wrap operations in transactions:
-
-```sql Transaction Example
-BEGIN;
-
-UPDATE users SET status = 'inactive' WHERE last_login < '2023-01-01';
-
--- Review the affected rows
-SELECT * FROM users WHERE status = 'inactive' AND last_login < '2023-01-01';
-
--- If everything looks correct:
-COMMIT;
-
--- If something is wrong:
-ROLLBACK;
-```
-
-<Info>
-The AI Chat Assistant executes operations immediately after confirmation. For transaction control, use the Scratchpad query interface where you can manually manage BEGIN, COMMIT, and ROLLBACK.
-</Info>
-
-## Safety Practices for Production Data
-
-The essentials when modifying production databases:
-
-- **Verify your connection** — confirm you're on the correct database (production vs. development)
-- **SELECT before you modify** — understand the current state and estimate the affected row count
-- **Check backups** — ensure recent backups exist and have been tested
-- **Start small** — for bulk operations, test with a single record first
-- **Verify each step** — check results after each modification before proceeding
-- **Schedule bulk operations** — perform large modifications during maintenance windows
-
-For the full set of production guidelines, change management checklists, and audit considerations, see [AI Chat Assistant Best Practices](/best-practices/ai-usage).
-
-## Common Modification Patterns
-
-The core pattern for every safe modification is **preview → modify → verify**:
-
-<Steps>
-<Step title="Preview Target Records">
-```text
-Show all orders with status pending older than 30 days
-```
-Review (and optionally count) the records that will be affected.
-</Step>
-<Step title="Perform the Modification">
-```text
-Update all orders with status pending older than 30 days to status cancelled
-```
-Review the confirmation and confirm.
-</Step>
-<Step title="Verify the Result">
-```text
-Show all orders with status cancelled from the last 30 days
-```
-Confirm the change was applied correctly.
-</Step>
-</Steps>
-
-The same three-step shape applies to inserts (check the record doesn't exist, insert, confirm it was created), deletions (preview, delete, confirm records are gone), and cleanups. For records with dependencies — such as deleting a user who has orders — handle the related records first, then the parent record.
-
-## Troubleshooting
-
-<AccordionGroup>
-<Accordion title="Confirmation Doesn't Appear">
-**Symptom**: You request a modification, but no confirmation prompt shows.
-
-**Possible Causes**: The AI generated a read-only query instead, or the request wasn't recognized as a modification.
-
-**Solutions**: Rephrase your request more explicitly ("Delete user with id 5"), check the AI response for error messages, or try a simpler, more direct modification request.
-</Accordion>
-<Accordion title="Foreign Key Constraint Error">
-**Symptom**: "Foreign key constraint violation" error when deleting or updating.
-
-**Cause**: Other tables have records referencing the record you're trying to modify.
-
-**Solutions**: Delete or update referencing records first, check foreign key relationships, and consider CASCADE rules in your schema.
-</Accordion>
-<Accordion title="WHERE Clause Missing Warning">
-**Symptom**: AI warns "This will affect all records in the table".
-
-**Solutions**: Cancel the operation and rephrase with specific conditions ("Delete user with id 5" not "Delete user"). If you truly want to affect all records, explicitly confirm.
-</Accordion>
-<Accordion title="Wrong Records Modified">
-**Symptom**: The operation modified different records than intended.
-
-**Solutions**: Check what was actually modified with a SELECT query. If correctable, run a compensating UPDATE; if serious, restore from backup. In future, use SELECT first to verify target records.
-</Accordion>
-<Accordion title="Permission Denied Error">
-**Symptom**: "Permission denied" or "Insufficient privileges" error.
-
-**Solutions**: Verify your database user has INSERT/UPDATE/DELETE permissions, contact your database administrator, or check if the connection is read-only.
-</Accordion>
-<Accordion title="Data Type Mismatch">
-**Symptom**: "Data type mismatch" or "Invalid input syntax" error.
-
-**Solutions**: Check the table schema for column types. Format dates as 'YYYY-MM-DD', use numbers without quotes for numeric columns, and proper boolean values (true/false).
-</Accordion>
-<Accordion title="Large Modifications Are Slow">
-**Solutions**: Break the operation into smaller batches, use the Scratchpad to run batched statements with transaction control, and schedule large modifications during low-traffic periods.
-</Accordion>
-</AccordionGroup>
-
-## Comparing AI Chat vs. Traditional Methods
-
-| Scenario | AI Chat Assistant | Traditional UI | Scratchpad SQL |
-|----------|-------------------|----------------|----------------|
-| **Quick single record change** | Fast and convenient | Multiple clicks required | Overkill for simple changes |
-| **Bulk updates with conditions** | Natural language, easy | Must use SQL | Most control and visibility |
-| **Complex multi-table operations** | May require multiple steps | Not supported | Best option |
-| **Production-critical changes** | Good with careful review | Limited capabilities | Recommended for control |
-
-<Tip>
-Use AI Chat for quick modifications and exploration. Use Scratchpad for complex operations requiring transaction control or multiple related statements.
-</Tip>
-
-## Security Considerations
-
-<Warning>
-Your modification requests and table/column names may be sent to external AI providers. However, actual data values are not sent.
-</Warning>
-
-**What's Sent to AI Providers**: your natural language request, database schema (table and column names), and database type.
-
-**What's NOT Sent**: actual data values, query results, or existing record contents.
-
-For maximum privacy, use local models (Ollama, LM Studio) for complete data isolation, avoid mentioning sensitive values in your requests, and use Scratchpad for modifications involving sensitive data.
-
-**Audit and Compliance**: Modifications are associated with the database user credentials used, so database-level logs can attribute changes. Enable your database's audit or query logging for comprehensive tracking.
-
-**Permission Management**: Follow the principle of least privilege — use database users with only necessary permissions, read-only users for exploration, and separate credentials for production vs. development. See [AI Chat Assistant Best Practices](/best-practices/ai-usage) for read-only user setup.
-
-## Next Steps
-
-<CardGroup cols={2}>
-<Card title="Querying Data" icon="magnifying-glass" href="/ai/querying-data">
-Learn how to retrieve and analyze data without modifications
-</Card>
-<Card title="Conversation Features" icon="comments" href="/ai/conversation-features">
-Master multi-turn conversations for complex operations
-</Card>
-<Card title="Scratchpad Queries" icon="code" href="/query/writing-queries">
-Use SQL directly for complex modifications requiring transactions
-</Card>
-<Card title="AI Best Practices" icon="star" href="/best-practices/ai-usage">
-The canonical guide to safe and effective AI assistant usage
-</Card>
-</CardGroup>
-
-<Check>
-Every data modification and schema change (INSERT, UPDATE, DELETE, CREATE, ALTER, DROP) requires explicit confirmation, with full visibility into the SQL before it executes. Review carefully, verify with follow-up queries, and maintain backups for recovery.
-</Check>
+## Review the proposed statement
+
+Read the statement shown in the card, not just the model's explanation. Check:
+
+- The active source, database, and schema.
+- The object being changed.
+- The predicate identifying the target records.
+- The values being written or the structure being changed.
+
+For example, a request to change one order's status should identify that order by its key. A statement filtering only on a common status could affect many unrelated orders.
+
+Choose **Run statement** only when the proposal matches the intended change. Choose **Don't run** to cancel. A conversational reply saying “yes” is not a replacement for reviewing the execution card.
+
+## Inspect the target before writing
+
+Ask for a read of the intended records first, or inspect them in the object's Data view. Check both the identifiers and the count. Use a development connection when trying the workflow for the first time.
+
+The connected database account determines which operations can succeed. A review card does not grant permissions or turn a production connection into a safe test environment.
+
+## Verify the result
+
+After execution, read the action result and query the affected records again. Confirm the actual stored values.
+
+<div className="ce-screenshot-light">
+
+![An executed action shown in Chat](/images/light/111-chat-action-executed.png)
+
+</div>
+<div className="ce-screenshot-dark">
+
+![An executed action shown in Chat](/images/dark/111-chat-action-executed.png)
+
+</div>
+
+A successful statement can still apply an incorrect business rule. Keep the verification query with the change so the outcome is reviewable later.
+
+## Keep recovery and repeatability explicit
+
+Chat does not provide a general rollback of executed statements. Do not rely on a conversation to restore previous data. Use your normal backup and change process when the records matter.
+
+For an application schema change or a repair you will repeat, put the reviewed statement in a migration or script. See [Scratchpad](/query/writing-queries) for manual query work and [row editing](/data/editing-records) for small corrections.

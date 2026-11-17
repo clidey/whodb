@@ -1,6 +1,6 @@
 import type { FC} from 'react';
 import { useCallback, useState } from 'react';
-import { CheckCircleIcon, DocumentDuplicateIcon } from './heroicons';
+import { IconCheckCircle as CheckCircleIcon, IconCopy as DocumentDuplicateIcon } from '@clidey/ux';
 import { copyToClipboard } from '../services/clipboard';
 
 export const MessageCopyAction: FC<{ text: string }> = ({ text }) => {

@@ -5,13 +5,11 @@ description: "Current Community Edition database catalog and compatibility famil
 
 # Supported Databases
 
-The current Community Edition database catalog is defined in the shared connectable database catalog used by the frontend, desktop app, and CLI. This page reflects that catalog instead of older marketing-era summaries.
+Use this catalog to choose the source type for your connection and check its main workflows. CE connects to SQL databases, local database files, document stores, caches, and search systems.
 
-<Tip>
-Some entries are native plugins and others are compatibility entries that reuse an existing plugin family.
-</Tip>
+Choose the entry matching the actual product when one is available. Compatible entries share a connector family, but differences in the server can still affect syntax, metadata, and supported operations. Test the queries and changes you need against your own source version.
 
-## Current CE Catalog
+## Choose a source type
 
 | Database Type | Family Used By WhoDB | Connection Style | Scratchpad | Mock Data | Notes |
 |---------------|----------------------|------------------|------------|-----------|-------|
@@ -27,26 +25,26 @@ Some entries are native plugins and others are compatibility entries that reuse 
 | `ClickHouse` | ClickHouse | Network | Yes | Yes | Analytical SQL workflow |
 | `MongoDB` | MongoDB | Network | Yes | Yes | Scratchpad uses shell-style commands (e.g. `db.collection.find({})`) instead of SQL |
 | `FerretDB` | MongoDB-compatible | Network | Yes | Yes | Uses MongoDB-family behavior |
-| `DocumentDB` | MongoDB-compatible | Network | Yes | Yes | AWS-managed, shown through provider discovery |
+| `DocumentDB` | MongoDB-compatible | Network | Yes | Yes | AWS-managed catalog entry |
 | `Redis` | Redis | Network | Yes | No | Scratchpad uses Redis commands (e.g. `TYPE key`) instead of SQL |
 | `Valkey` | Redis-compatible | Network | Yes | No | Uses Redis-family behavior |
 | `Dragonfly` | Redis-compatible | Network | Yes | No | Uses Redis-family behavior |
-| `ElastiCache` | Redis-compatible | Network | Yes | No | AWS-managed, shown through provider discovery |
+| `ElastiCache` | Redis-compatible | Network | Yes | No | AWS-managed catalog entry |
 | `Memcached` | Memcached | Network | No | No | Cache/key browsing workflow |
 | `ElasticSearch` | ElasticSearch | Network | No | No | Search/index workflow |
 | `OpenSearch` | ElasticSearch-compatible | Network | No | No | Uses ElasticSearch-family behavior |
 
-## Important Notes
+## Understand the differences
 
-### Cloud-Managed Variants
+### Managed cloud variants
 
-`DocumentDB` and `ElastiCache` are part of the CE catalog, but they are marked as AWS-managed entries and are available through local CLI cloud discovery rather than the CE web connection form.
+`DocumentDB` and `ElastiCache` are marked as AWS-managed catalog entries. They can be introduced through configured profiles or opt-in CLI discovery; they are not ordinary choices in the web credential form.
 
-### File-Based Databases
+### Local database files
 
-`SQLite3` and `DuckDB` use a database file path instead of host and port fields. The desktop app adds native file-picker support for these.
+`SQLite3` and `DuckDB` use a database file path instead of host and port fields. The file must be accessible to the WhoDB process. In Docker, mount its directory and enter the container path. The desktop app offers a native file picker.
 
-### Capability Differences
+### Available operations
 
 Not every database type exposes the same feature set:
 
@@ -55,25 +53,23 @@ Not every database type exposes the same feature set:
 - Memcached and search systems use narrower capability sets
 - Database switching and schema support vary by family
 
-### Build-Specific Availability
+### Build availability
 
-DuckDB availability depends on the build target.
+DuckDB availability depends on the build target. Check that it appears in the connection form for the artifact you installed before planning a file-based workflow around it.
 
-## Profiles vs Catalog Entries
+## Connection profiles
 
-The connection catalog is broader than the environment-profile system.
+Profiles use `WHODB_<TYPE>` JSON arrays or numbered variables such as `WHODB_POSTGRES_1`. The type name is uppercased. Cloud-managed entries also accept this profile pattern; local CLI discovery is another way to find their endpoints.
 
-- The catalog defines what the UI can connect to
-- Environment profiles are loaded from registered plugins and currently target the core registered types such as Postgres, CockroachDB, MySQL, MariaDB, TiDB, SQLite3, MongoDB, Redis, ElasticSearch, ClickHouse, DuckDB, and Memcached
-- Cloud-managed variants are available through local CLI provider discovery rather than ordinary `WHODB_<TYPE>` profile prefixes
+See [Installation](/installation#database-connection-profiles) for examples and shared-profile access implications.
 
-## Related Pages
+## Connect the source
 
 <CardGroup cols={2}>
 <Card title="Database Connectivity" icon="database" href="/features/database-connectivity">
-See how the login flow and advanced options work in the current app.
+Enter credentials, configure TLS, or use a connection string.
 </Card>
 <Card title="Cloud Providers" icon="cloud" href="/features/cloud-providers">
-Use local CLI discovery for managed resources.
+Find supported managed resources through opt-in CLI discovery.
 </Card>
 </CardGroup>

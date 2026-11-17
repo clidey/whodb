@@ -83,6 +83,7 @@ var GenericWriteSpecs = map[string]GenericWriteSpec{
 	"action:add_record:ontology":                  {Resource: "ontology", Action: "add_record", Mutation: "OntologyAddRow", Mode: GenericWriteModeDirect, NeedsID: true, InjectProjectID: true},
 	"action:update_record:ontology":               {Resource: "ontology", Action: "update_record", Mutation: "OntologyUpdateRow", Mode: GenericWriteModeDirect, NeedsID: true, InjectProjectID: true},
 	"action:delete_record:ontology":               {Resource: "ontology", Action: "delete_record", Mutation: "OntologyDeleteRow", Mode: GenericWriteModeDirect, NeedsID: true, InjectProjectID: true},
+	"action:apply_behaviors:ontology":             {Resource: "ontology", Action: "apply_behaviors", Mutation: "ApplyOntologyBehaviors", Mode: GenericWriteModeDirect, InjectProjectID: true},
 	"action:save_behavior:ontology":               {Resource: "ontology", Action: "save_behavior", Mutation: "SaveBehavior", Mode: GenericWriteModeInput, NeedsID: true, IdentityField: "ontologyId", InjectProjectID: true},
 	"action:execute_behavior:ontology":            {Resource: "ontology", Action: "execute_behavior", Mutation: "ExecuteOntologyAction", Mode: GenericWriteModeInput, NeedsID: true, IdentityField: "ontologyId", InjectProjectID: true},
 	"create:dataset":                              {Resource: "dataset", Action: "create", Mutation: "CreateDataset", Mode: GenericWriteModeInput, InjectProjectID: true},

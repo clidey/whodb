@@ -182,12 +182,100 @@ test.describe('Data Import', () => {
         const supportsSqlFileImport = db.import.supportsSqlFileImport !== false;
 
         test.describe('SQL Import', () => {
+            test('shows the database error when source SQL import fails', async ({whodb, page}) => {
+                const message = 'cannot execute CREATE TABLE in a read-only transaction';
+                await page.route('**/api/query', async route => {
+                    if (route.request().postDataJSON().query?.includes('mutation ImportSQL')) {
+                        await route.fulfill({json: {data: {ImportSQL: {
+                            Status: false, Message: message, Detail: 'import.error.sql_failed',
+                        }}}});
+                        return;
+                    }
+                    await route.fallback();
+                });
+                await whodb.goto('storage-unit');
+                await page.getByTestId('source-import-button').click();
+                await whodb.typeSqlInEditor('CREATE TABLE import_failure_test (id INTEGER);');
+                await whodb.confirmSqlImport();
+                await expect(page.getByText(message, {exact: false})).toBeVisible();
+                await expect(page.getByTestId('import-dialog')).toBeVisible();
+            });
+
+            for (const entry of ['button', 'palette', 'shortcut', 'menu']) {
+                test(`opens source SQL import from ${entry} with no tables`, async ({whodb, page}) => {
+                    await page.route('**/api/query', async route => {
+                        const body = route.request().postDataJSON();
+                        if (body.operationName === 'GetStorageUnits') {
+                            await route.fulfill({json: {data: {StorageUnit: []}}});
+                            return;
+                        }
+                        await route.fallback();
+                    });
+                    await whodb.goto('storage-unit');
+                    await expect(page.getByTestId('source-import-button')).toBeVisible();
+                    if (entry === 'button') await page.getByTestId('source-import-button').click();
+                    if (entry === 'palette') {
+                        await page.getByTestId('command-palette-trigger').click();
+                        await page.getByTestId('command-palette-input').fill('create table');
+                        await expect(page.getByTestId('command-palette-empty')).not.toBeAttached();
+                        await page.keyboard.press('Enter');
+                    }
+                    if (entry === 'shortcut') {
+                        await page.locator('#main-content').focus();
+                        await whodb.typeCmdShortcut('i');
+                    }
+                    if (entry === 'menu') await page.evaluate(() => window.dispatchEvent(new CustomEvent('menu:trigger-import', {cancelable: true})));
+                    await expect(page.getByTestId('import-dialog')).toHaveCount(1);
+                    await expect(page.getByTestId('import-sql-drop-zone')).toBeVisible();
+                    await expect(page.getByTestId('import-data-file-input')).not.toBeAttached();
+                    await expect(page.getByTestId('import-submit-button')).toBeDisabled();
+                });
+            }
+
+            for (const input of ['drop', 'paste']) {
+                test(`imports source SQL by ${input} and refreshes the table list`, async ({whodb, page}) => {
+                    test.skip(input === 'drop' && !supportsSqlFileImport, 'SQL file import is not supported');
+                    let listRequests = 0;
+                    let imported = false;
+                    const sql = 'CREATE TABLE source_import_test (id INTEGER);';
+                    await page.route('**/api/query', async route => {
+                        const body = route.request().postData() ?? '';
+                        if (body.includes('ImportSQL')) {
+                            expect(body).toContain(sql);
+                            imported = true;
+                            await route.fulfill({json: {data: {ImportSQL: {Status: true, Message: '', Detail: null}}}});
+                        } else if (route.request().postDataJSON().operationName === 'GetStorageUnits') {
+                            listRequests++;
+                            await route.fulfill({json: {data: {StorageUnit: []}}});
+                        } else {
+                            await route.fallback();
+                        }
+                    });
+                    await whodb.goto('storage-unit');
+                    await page.getByTestId('source-import-button').click();
+                    if (input === 'drop') {
+                        const dataTransfer = await page.evaluateHandle(script => {
+                            const transfer = new DataTransfer();
+                            transfer.items.add(new File([script], 'create-table.sql', {type: 'text/sql'}));
+                            return transfer;
+                        }, sql);
+                        await page.getByTestId('import-sql-drop-zone').dispatchEvent('drop', {dataTransfer});
+                        await expect(page.getByTestId('import-sql-drop-zone')).toContainText('create-table.sql');
+                    } else {
+                        await whodb.typeSqlInEditor(sql);
+                    }
+                    const beforeImport = listRequests;
+                    await whodb.confirmSqlImport();
+                    await expect(page.getByTestId('import-dialog')).not.toBeAttached();
+                    expect(imported).toBe(true);
+                    await expect.poll(() => listRequests).toBeGreaterThan(beforeImport);
+                });
+            }
+
             if (supportsSqlFileImport) {
                 test('imports single-statement SQL file', async ({ whodb, page }) => {
-                    await whodb.openImport(db.import.csvTable);
-
-                    // Switch to SQL mode
-                    await whodb.selectImportMode('sql');
+                    await whodb.goto('storage-unit');
+                    await page.getByTestId('source-import-button').click();
 
                     // Upload single-statement SQL
                     await whodb.uploadSqlFile(samplePath(db, 'import_data_types.sql'));

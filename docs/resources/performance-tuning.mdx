@@ -1,202 +1,34 @@
 ---
-title: "Performance Tuning Guide"
-description: "Optimize WhoDB performance for faster results and better resource utilization"
+title: "Diagnose slow work"
+description: "Separate database execution, network transfer, and browser rendering before changing settings."
 ---
 
-# Performance Tuning Guide
+# Diagnose slow work
 
-Learn how to get the best performance out of WhoDB when working with large datasets. This guide covers WhoDB's page size settings, connection pooling behavior, caching, and practical advice for queries and exports.
+A slow action can be delayed by database execution, network transfer, or browser rendering. Identify which part is slow before increasing limits or changing connection settings.
 
-For general SQL tuning — indexing, EXPLAIN plans, and query rewriting — see [Query Optimization](/best-practices/query-optimization) and your database's official documentation.
+## Compare a small request
 
-## Page Size and Pagination
+Repeat the action with a modest page size or a query that returns a few narrow columns. Use a known identifier as a filter if possible. Compare this with the original request on the same connection.
 
-<AccordionGroup>
-<Accordion title="Tuning page size">
+If the small request is fast, look at the original result's row count and width. Large text or document fields can make a small number of records expensive to transfer and display. Select only the fields needed for the task.
 
-### How Pagination Works
+A query's row limit does not guarantee a cheap database operation. The source may still need to scan, join, or sort many records before returning that limited result.
 
-WhoDB paginates table views and query results automatically. Two settings control it:
+## Check the source's execution
 
-- **Default page size** — set in [Settings](/features/settings); applies to new table views
-- **`WHODB_MAX_PAGE_SIZE`** — server-side environment variable capping the maximum rows per page request (default `10000`)
+Run an equivalent bounded query through another database client from the same network. If it is slow there too, inspect the query and the source's workload. Use a source-supported query plan to understand scans, joins, and sorts.
 
-The settings page controls the default within the limit the backend enforces. See [Sorting and Pagination](/data/sorting-pagination) for the UI controls.
+Check the engine's documentation before using plan options that execute the query. [Query optimization](/best-practices/query-optimization) explains how to approach that check.
 
-### Practical Guidance
+## Separate transfer and display work
 
-- **Lower the page size** (100–500) when working with wide tables, large text/JSON columns, or a slow network — less data per request keeps the UI responsive
-- **Raise the page size** only when you genuinely need to scan more rows at once and the rows are small
-- If you need more than `WHODB_MAX_PAGE_SIZE` rows in one request, raise the env var and restart WhoDB:
+If the database responds quickly but the browser remains busy, reduce the result width and page size. For Graph, select the objects involved in the investigation rather than rendering the entire schema.
 
-```yaml
-environment:
-  - WHODB_MAX_PAGE_SIZE=20000
-```
+For an export, check its scope first. A whole-object export can read far more data than the grid page you were viewing. Use a bounded query result for a report and native tools for large bulk transfers or full backups.
 
-Prefer filters over huge pages — a filtered 100-row page is faster than an unfiltered 10,000-row page in every respect.
+## Record the evidence
 
-</Accordion>
-</AccordionGroup>
+Keep the query or action, source type, approximate result size, observed delay, and relevant redacted logs. Note whether the small comparison request and another client were also slow. This gives the next person enough evidence to investigate the right layer.
 
-## Connection Pool
-
-<AccordionGroup>
-<Accordion title="Connection management in the current CE build">
-
-The current CE server keeps an internal SQL connection pool with conservative defaults:
-
-- Max open connections: `10`
-- Max idle connections: `5`
-- Max connection lifetime: `30 minutes`
-- Max idle lifetime: `5 minutes`
-
-These values are fixed defaults in the server.
-
-### Practical Tuning Guidance
-
-- Keep default WhoDB usage focused on filtered reads, not full-table scans
-- Lower result sizes and page sizes before assuming the pool is the bottleneck
-- Raise database-side connection limits only when the database server is the actual constraint
-- Use a database-side pooling layer such as PgBouncer or ProxySQL when multiple apps share the same database
-
-### Database-Side Connection Limits
-
-WhoDB's pool counts against your database server's own limit, alongside every other client:
-
-```sql
--- PostgreSQL
-SHOW max_connections;
-
--- MySQL
-SHOW VARIABLES LIKE 'max_connections';
-```
-
-Monitor actual usage on the database server and don't assume WhoDB is the consumer — an application connection leak elsewhere produces the same symptoms.
-
-</Accordion>
-</AccordionGroup>
-
-## Scratchpad Query Tips
-
-<AccordionGroup>
-<Accordion title="Keeping Scratchpad queries fast">
-
-### Use LIMIT and Filters
-
-```sql
--- Unbounded: may transfer millions of rows to the browser
-SELECT * FROM orders;
-
--- Bounded: fast and predictable
-SELECT * FROM orders
-WHERE created_at > '2024-01-01'
-LIMIT 100;
-```
-
-### Select Only Needed Columns
-
-```sql
--- Transfers all columns, including large JSON/text
-SELECT * FROM products;
-
--- Transfers only what you need
-SELECT id, name, price FROM products;
-```
-
-### Aggregate in the Database
-
-```sql
--- Let the database do the work instead of pulling rows out
-SELECT COUNT(*) FROM orders;
-SELECT AVG(amount) FROM orders WHERE user_id = 5;
-```
-
-### Diagnose Slow Queries
-
-If a filtered, limited query is still slow, the fix is database-side — indexes and execution plans. Run `EXPLAIN` in a Scratchpad cell and see [Query Optimization](/best-practices/query-optimization), or consult your database's documentation.
-
-</Accordion>
-</AccordionGroup>
-
-## Exporting Large Datasets
-
-<AccordionGroup>
-<Accordion title="Export batching strategies">
-
-### In WhoDB
-
-1. Use filters to reduce the result set before exporting
-2. Export in smaller batches if memory is limited — split by date range or key range:
-
-```sql
-SELECT * FROM orders WHERE created_at BETWEEN '2024-01-01' AND '2024-01-31';
-SELECT * FROM orders WHERE created_at BETWEEN '2024-02-01' AND '2024-02-28';
-```
-
-3. Export only needed columns rather than `SELECT *`
-4. CSV is usually faster and smaller than other formats for large data
-5. Multiple exports with different filters beat one huge export
-
-### When to Use Native Tools
-
-For full backups, restores, or migration-scale dumps, use your database's native tooling (`pg_dump`, `mysqldump`, `COPY`, and so on) — WhoDB exports are designed for small-to-medium result sets. See [Export Options](/advanced/export-options).
-
-</Accordion>
-</AccordionGroup>
-
-## Caching
-
-<AccordionGroup>
-<Accordion title="What WhoDB caches">
-
-The frontend caches GraphQL responses (schema metadata, table lists, column definitions) in memory for the duration of your browser session, so repeat navigation does not re-query the database. Refreshing the page or using the refresh action re-fetches everything from the database — use that if the UI looks stale after a schema change.
-
-</Accordion>
-</AccordionGroup>
-
-## Memory Usage
-
-<AccordionGroup>
-<Accordion title="Keeping memory usage predictable">
-
-- Lower the default page size in [Settings](/features/settings)
-- Use `LIMIT`, filters, and column selection in the Scratchpad
-- Export large datasets in batches rather than in one pass
-- Generate mock data in smaller runs (for example 1,000 rows at a time)
-- Prefer database-native backup and bulk-export tools for very large jobs
-
-Monitor the container while working:
-
-```bash
-docker stats whodb
-```
-
-</Accordion>
-</AccordionGroup>
-
-## Quick Checklist
-
-- [ ] Page size suits your data width (lower for wide rows, large text/JSON)
-- [ ] `WHODB_MAX_PAGE_SIZE` raised only if you actually need bigger pages
-- [ ] Queries use WHERE, LIMIT, and explicit column lists
-- [ ] Large exports split into filtered batches
-- [ ] Database server's `max_connections` accounts for all clients, not just WhoDB
-- [ ] Slow queries investigated with EXPLAIN and indexes on the database side
-
-## Additional Resources
-
-<CardGroup cols={2}>
-<Card title="Query Optimization" icon="magnifying-glass-chart" href="/best-practices/query-optimization">
-Indexing, EXPLAIN, and SQL tuning best practices
-</Card>
-<Card title="Troubleshooting Guide" icon="wrench" href="/resources/troubleshooting">
-Solve common performance issues and errors
-</Card>
-<Card title="Common Errors" icon="triangle-exclamation" href="/resources/common-errors">
-Understand and fix error messages
-</Card>
-<Card title="GitHub Discussions" icon="github" href="https://github.com/clidey/whodb/discussions">
-Ask community for performance advice
-</Card>
-</CardGroup>
+Continue with [Sorting and pagination](/data/sorting-pagination), [Monitoring](/resources/integrations/monitoring), or [Troubleshooting](/resources/troubleshooting).

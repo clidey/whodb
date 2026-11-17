@@ -33,6 +33,10 @@ desktop-ce/build/*
 !desktop-ce/build/darwin/
 !desktop-ce/build/darwin/*.plist
 !desktop-ce/build/appicon.png
+# Fixed Windows manifest identity, so the app name (which has a space) never reaches it.
+!desktop-ce/build/windows/
+desktop-ce/build/windows/*
+!desktop-ce/build/windows/wails.exe.manifest
 *.bak
 frontend/package.json.md5
 frontend/wailsjs/
@@ -51,11 +55,12 @@ cli/.gocache
 !cli/external-plugin/whodb/.mcp.json
 .serena
 docs/images/1440x900
+/dist/docs-pages/
 ee/dev/translation-tool/.venv
 frontend/.pnpm-store
 frontend/e2e/reports
 frontend/e2e/logs
-frontend/e2e/.auth
+**/.auth/
 tools/docs-agent/.venv
 tools/docs-agent/runs/
 # Anchored: only the repo-root tools/ — an unanchored "tools/" also swallowed sdk/tools/.
@@ -66,6 +71,7 @@ tools/docs-agent/runs/
 *__pycache__
 .codex/*
 !.codex/hooks.json
+!.codex/rules/
 frontend/build-ee
 frontend/.pi-lens
 core/.pi-lens
@@ -83,3 +89,6 @@ sdk/packages/java/target/
 
 # Python SDK local virtualenv (created on demand by scripts/with-venv.sh)
 sdk/packages/python/.venv
+
+# Personal Claude Code settings
+.claude/settings.local.json

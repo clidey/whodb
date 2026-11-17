@@ -3,6 +3,7 @@ package router
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/go-chi/chi/v5"
@@ -123,5 +124,24 @@ func TestCORSOriginPolicy(t *testing.T) {
 				})
 			}
 		})
+	}
+}
+
+func TestSecurityHeadersMiddlewareSetsBrowserPolicies(t *testing.T) {
+	rr := httptest.NewRecorder()
+	handler := securityHeadersMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	handler.ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "http://app.local/", nil))
+
+	if got := rr.Header().Get("Cross-Origin-Opener-Policy"); got != "same-origin-allow-popups" {
+		t.Fatalf("Cross-Origin-Opener-Policy = %q", got)
+	}
+	policy := rr.Header().Get("Permissions-Policy")
+	for _, directive := range []string{"camera=(self)", "bluetooth=(self)", "web-share=(self)", "microphone=()", "geolocation=()", "payment=()"} {
+		if !strings.Contains(policy, directive) {
+			t.Fatalf("Permissions-Policy %q is missing %q", policy, directive)
+		}
+	}
+	if rr.Header().Get("Cross-Origin-Embedder-Policy") != "" {
+		t.Fatal("Cross-Origin-Embedder-Policy must not be set; require-corp would block https images")
 	}
 }

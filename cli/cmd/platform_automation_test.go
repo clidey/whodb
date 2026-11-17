@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"github.com/spf13/cobra"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -40,5 +41,27 @@ func TestAutomationManifestPreservesPersonalLogin(t *testing.T) {
 	entry, ok := cfg.GetPlatformHost(server.URL)
 	if !ok || entry.AccountID != "personal-account" {
 		t.Fatal("automation replaced saved identity")
+	}
+}
+
+func TestCapabilityCommandsAreRegistered(t *testing.T) {
+	found := map[string]bool{}
+	var visit func(*cobra.Command)
+	visit = func(command *cobra.Command) {
+		if operation := command.Annotations["platform_operation"]; operation != "" {
+			if command.RunE == nil {
+				t.Errorf("%s has no handler", command.CommandPath())
+			}
+			found[operation] = true
+		}
+		for _, child := range command.Commands() {
+			visit(child)
+		}
+	}
+	visit(rootCmd)
+	for _, capability := range platform.CapabilityReads {
+		if !found[capability.Operation] {
+			t.Errorf("%s has no registered CLI command", capability.Operation)
+		}
 	}
 }

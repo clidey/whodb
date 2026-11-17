@@ -1,111 +1,43 @@
 ---
-title: "Schema Topology"
-description: "Understanding how WhoDB visualizes and organizes your database schema"
+title: "Read a schema topology"
+description: "Use a focused schema graph to understand a database before joining or changing data."
 ---
 
-# Schema Topology
+# Read a schema topology
 
-Schema topology refers to the overall structure and organization of tables and relationships within your database. WhoDB visualizes this topology using an interactive graph that automatically arranges tables to show their connections and dependencies.
+A schema diagram helps you answer a practical question: which objects do I need to read to understand this record or result? Use it when joining an unfamiliar database, investigating an unexpected count, or explaining a data path to a colleague.
 
-<Info>
-Understanding your schema topology is crucial for making informed database design decisions and optimizing queries
-</Info>
+In WhoDB, open **Graph** and choose the objects relevant to that question. The diagram reflects relationships supplied by the source.
 
-## What is Schema Topology?
+<div className="ce-screenshot-light">
 
-Schema topology is the complete picture of:
-- **Tables**: All database objects (tables, views, materialized views)
-- **Relationships**: Connections between tables via foreign keys
-- **Cardinality**: The nature of relationships (one-to-one, one-to-many, many-to-many)
-- **Organization**: How tables are logically grouped and dependent on each other
+![A schema topology in Graph](/images/light/24-graph-view-schema-topology.png)
 
-## The Graph Visualization
+</div>
+<div className="ce-screenshot-dark">
 
-![Graph View - Schema Topology](/images/24-graph-view-schema-topology.png)
+![A schema topology in Graph](/images/dark/24-graph-view-schema-topology.png)
 
-WhoDB displays your schema topology as a graph where:
-- Each **node** represents a table
-- Each **edge** (connecting line) represents a foreign key relationship
-- **Node positioning** is algorithmically optimized to minimize visual complexity
-- **Line directions** show the direction of the relationship
+</div>
 
-## Table Nodes
+## Start with the central object
 
-Each table node in the graph displays:
+Select the object your question concerns, then add its immediate neighbors. For an order problem, begin with orders and users. Add order items or payments only when the question requires them.
 
-### Node Content
+Use fit view after changing the selection. If the diagram becomes hard to read, remove objects that are not part of the path you are following rather than zooming farther out until every label is tiny.
 
-<CardGroup cols={2}>
-<Card title="Table Name">
-The name of the database table displayed prominently at the node's center
-</Card>
-<Card title="Object Type">
-The object type (table, view, and so on) shown as a metadata row on the card
-</Card>
-<Card title="Key Columns">
-Primary key columns highlighted with a special marker
-</Card>
-<Card title="Foreign Keys">
-Columns that reference other tables shown with connection indicators
-</Card>
-</CardGroup>
+## Inspect the keys
 
-### Node Interaction
+Open node details and compare the relevant fields on both sides of an edge. Confirm the join key in metadata before writing a query.
 
-- Each node card shows the table name, metadata attributes, and a **Data** button that is always visible.
-- Clicking a node lazy-loads its column list into the card if it has not been loaded yet.
+A declared foreign key tells you how the database relates records. The business question still determines filters and aggregation. For example, the schema can show how payments relate to orders, but you must still decide which payment states count toward the amount you are calculating.
 
-## Understanding Node Positioning
+Verify a proposed path with a small query. Inspect individual records before building a larger aggregate, especially when a path includes more than one one-to-many relationship.
 
-The graph uses dagre, a hierarchical (layered) layout algorithm that:
+## Save a useful view
 
-1. **Arranges nodes in layers**: Tables are placed in ranks based on the direction of their relationships
-2. **Reduces line crossings**: Node ordering within layers minimizes crossing edges
-3. **Keeps components separate**: Disconnected groups of tables are laid out independently and packed into a grid
+Download a focused diagram when it helps explain an investigation or onboard someone to the schema. Include the database, schema, and capture date with the image. A diagram of a development database is not evidence of the current production schema.
 
-### Navigating the Graph
+Keep the query and your interpretation beside the diagram. If the schema changes, recapture the view and check whether the query's assumptions still hold.
 
-- **Initial load**: All nodes position based on the complete schema
-- **Zoom in**: Focused view emphasizes nearby relationships
-- **Zoom out**: High-level view shows overall patterns and clusters
-- **Pan**: Navigate to different areas while maintaining relative positions
-
-## Exploring Your Schema
-
-<Steps>
-<Step title="View Complete Topology">
-Start with a zoomed-out view using the fit view control. This shows the overall structure and any obvious patterns.
-</Step>
-<Step title="Identify Clusters">
-Look for groups of closely related tables. These usually represent specific business areas or features.
-</Step>
-<Step title="Find Central Tables">
-Locate tables with many connections. These are often critical to your application's functionality.
-</Step>
-<Step title="Drill Down">
-Zoom in on areas of interest and click nodes to load their column details.
-</Step>
-</Steps>
-
-## Sharing the Topology
-
-- **PNG Download**: Use the built-in download button in the graph's lower-right controls to save the diagram as `clidey-whodb-diagram.png`
-- **PDF Export**: Use browser print-to-PDF for sharing
-- **Screenshots**: Document different zoom levels
-
-## Related Topics
-
-<CardGroup cols={2}>
-<Card title="Graph View" icon="chart-network" href="/visualization/graph-view">
-Learn how to interact with the graph visualization
-</Card>
-<Card title="Relationships" icon="link" href="/visualization/relationships">
-Deep dive into foreign keys and relationship types
-</Card>
-<Card title="Schema Explorer" icon="book" href="/features/schema-explorer">
-Navigate and explore schema structure
-</Card>
-<Card title="Query Optimization" icon="rocket" href="/best-practices/query-optimization">
-Use topology understanding to write better queries
-</Card>
-</CardGroup>
+Next: [Relationships](/visualization/relationships) explains join keys and missing edges. [Write a query](/query/writing-queries) shows how to check the path against actual records.

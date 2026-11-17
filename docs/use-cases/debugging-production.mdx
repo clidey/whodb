@@ -1,350 +1,39 @@
 ---
-title: "Debugging Production Issues"
-description: "Use WhoDB to safely debug production database issues. Read-only access, query patterns for troubleshooting, and methods to find root causes without risking data."
+title: "Investigate production data"
+description: "Use a bounded read workflow and keep evidence that explains the incident."
 ---
 
-# Debugging Production Issues
+# Investigate production data
 
-Production database issues are stressful and urgent. When users report problems, data looks corrupt, or queries are slow, you need to diagnose the root cause quickly. WhoDB provides a safe way to inspect production databases when used with read-only database credentials, without risking data integrity or performance.
+Use WhoDB to investigate a production symptom with a bounded read query and preserve evidence of what happened. Start from an incident identifier, affected record, or time interval rather than browsing the entire database.
 
-<Tip>
-This guide covers safe debugging techniques, SQL patterns for investigation, and systematic approaches to finding and understanding production issues.
-</Tip>
+## Confirm where you are reading
 
-## The Challenge of Production Debugging
+Check the active connection, database, and schema. Use a database account with read-only permissions for inspection. A connection alias helps identify the environment, but the account's actual database grants determine which operations are allowed.
 
-Production databases contain real, critical data. This reality shapes how you investigate issues:
+Find the relevant object and inspect its fields before writing a query. Prefer known identifiers and a small result. A row limit reduces returned data; it does not guarantee that the database can answer the query cheaply.
 
-**Constraints**:
-- Read-only access only (you shouldn't modify production data)
-- Performance matters (heavy queries affect users)
-- Interruptions cost money (downtime is unacceptable)
-- High stakes (wrong diagnosis leads to wrong solutions)
+## Compare expected and actual state
 
-**Objectives**:
-- Understand the root cause quickly
-- Minimize impact on production traffic
-- Provide evidence-based diagnosis
-- Enable targeted fixes
+Keep the initial lookup in **Scratchpad**. Add a separate query for related records or a narrow time interval, then compare the fields involved in the symptom. For an order incident, that might be the order state, payment record, and associated items.
 
-WhoDB — connected with read-only database credentials — plus its efficient querying and data visualization make it well suited for this challenging task.
+<div className="ce-screenshot-light">
 
-## Before You Start: Connection Setup
+![Query history for an investigation](/images/light/33-scratchpad-query-history.png)
 
-### Use a Read-Only Connection
+</div>
+<div className="ce-screenshot-dark">
 
-Never debug production with write access. Set up a read-only database user:
+![Query history for an investigation](/images/dark/33-scratchpad-query-history.png)
 
-```sql
--- PostgreSQL: Create read-only role
-CREATE ROLE readonly_debugger WITH LOGIN PASSWORD 'secure_password';
-GRANT CONNECT ON DATABASE production TO readonly_debugger;
-GRANT USAGE ON SCHEMA public TO readonly_debugger;
-GRANT SELECT ON ALL TABLES IN SCHEMA public TO readonly_debugger;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO readonly_debugger;
+</div>
 
--- MySQL: Create read-only user
-CREATE USER 'readonly_debugger'@'%' IDENTIFIED BY 'secure_password';
-GRANT SELECT ON production.* TO 'readonly_debugger'@'%';
-FLUSH PRIVILEGES;
-```
+Use history to recover an intermediate query, but save the final evidence in your incident system. Per-cell query history is a browser convenience, not a complete audit trail of database activity.
 
-Connect to production in WhoDB using this read-only account:
+## Record a useful finding
 
-![Database Types](/images/01-login-page.png)
+Include the environment, observation time, exact query, and a redacted result. Explain what the evidence establishes and what remains uncertain. For example, a missing related record is an observation; the application path that failed to create it may need logs or a reproduction to establish.
 
-This prevents accidental modifications while you're investigating.
+Handle exports as production data and retain only the fields needed for the investigation. Use your established change and recovery process for a repair rather than experimenting with writes during inspection.
 
-### Understand Performance Impact
-
-Even SELECT queries impact production if they're heavy. Follow these guidelines:
-
-- **Add LIMIT**: Always limit result sets (LIMIT 1000 not LIMIT 1000000)
-- **Use WHERE clauses**: Filter aggressively to reduce rows scanned
-- **Check indexes**: Use indexed columns in WHERE conditions
-- **Test first**: Run queries in non-peak hours when possible
-- **Monitor queries**: Watch for slow-running investigations
-
-```sql
--- GOOD: Targets specific data with LIMIT
-SELECT * FROM user_events
-WHERE user_id = 12345
-AND created_at > NOW() - INTERVAL '1 hour'
-LIMIT 1000;
-
--- BAD: Could scan entire table and return millions
-SELECT * FROM user_events;
-```
-
-## Common Debugging Approaches
-
-### Missing or Corrupt Data
-
-When users report data problems, first establish the scope, then look for a pattern.
-
-```sql
--- How widespread is it, and when did it start?
-SELECT
-  DATE_TRUNC('hour', created_at) as hour,
-  COUNT(*) as record_count,
-  COUNT(CASE WHEN status = 'lost' THEN 1 END) as affected_count
-FROM user_events
-WHERE created_at > NOW() - INTERVAL '72 hours'
-GROUP BY DATE_TRUNC('hour', created_at)
-ORDER BY hour DESC;
-```
-
-A sharp change in the affected percentage marks when the problem started — correlate that hour with deployments, imports, or configuration changes. Then sample affected records (`WHERE status = 'lost' LIMIT 10`) next to normal ones and use WhoDB's data view to spot the differences: missing fields, wrong values, encoding issues, truncated text.
-
-![Data View](/images/09-data-view-users-table.png)
-
-### Slow Queries or Performance Degradation
-
-Use the Scratchpad to time a known query and compare it with its usual performance:
-
-![Scratchpad Code Editor](/images/27-scratchpad-main-view.png)
-
-If it's slower than expected, check the execution plan and index usage:
-
-```sql
--- PostgreSQL: See how the query executes
-EXPLAIN ANALYZE
-SELECT * FROM orders WHERE customer_id = 123;
-
--- PostgreSQL: Are indexes being used?
-SELECT schemaname, tablename, indexname, idx_scan
-FROM pg_stat_user_indexes
-ORDER BY idx_scan DESC
-LIMIT 20;
-
--- MySQL equivalents
-EXPLAIN SELECT * FROM orders WHERE customer_id = 123;
-SHOW INDEX FROM orders;
-```
-
-Look for sequential scans on large tables that should use indexes, and indexes with near-zero `idx_scan` counts (possibly dropped or unused). Also check for lock contention and long-running transactions:
-
-```sql
--- PostgreSQL: Long-running queries
-SELECT pid, now() - query_start AS duration, state, query
-FROM pg_stat_activity
-WHERE state != 'idle'
-AND (now() - query_start) > interval '5 minutes';
-
--- MySQL
-SHOW PROCESSLIST;
-```
-
-### Data Inconsistency and Referential Integrity
-
-Broken relationships between tables cause failing queries or wrong results.
-
-![Where Conditions](/images/16-data-view-where-conditions-popover.png)
-
-```sql
--- Orphaned records: children with no matching parent
-SELECT o.id, o.customer_id, o.created_at
-FROM orders o
-LEFT JOIN customers c ON o.customer_id = c.id
-WHERE c.id IS NULL
-LIMIT 100;
-
--- Duplicates that should be unique
-SELECT email, COUNT(*) as cnt
-FROM customers
-GROUP BY email
-HAVING COUNT(*) > 1
-ORDER BY cnt DESC;
-
--- Values that violate expectations
-SELECT * FROM orders WHERE total_amount < 0 LIMIT 10;
-SELECT * FROM orders WHERE created_at > NOW() LIMIT 10;
-```
-
-Orphans and duplicates usually point to failed constraint enforcement, race conditions, or import errors. Group the problem records by creation date to find when the issue began, then correlate with deployments and data changes.
-
-### Recently Changed Data
-
-When something "just broke", recent modifications are the first suspects:
-
-```sql
--- Records modified today
-SELECT * FROM orders
-WHERE DATE(updated_at) = CURRENT_DATE
-ORDER BY updated_at DESC
-LIMIT 100;
-
--- Bulk operations (many updates at the same instant)
-SELECT updated_at, COUNT(*) as update_count
-FROM orders
-WHERE updated_at > NOW() - INTERVAL '24 hours'
-GROUP BY updated_at
-ORDER BY update_count DESC
-LIMIT 20;
-```
-
-## Safe Query Patterns for Production Debugging
-
-Always use these patterns when debugging production:
-
-<AccordionGroup>
-<Accordion title="Pattern 1: Sample Data with LIMIT">
-```sql
--- Always limit result sets
-SELECT * FROM large_table LIMIT 100;
-
-SELECT * FROM orders
-WHERE created_at > NOW() - INTERVAL '7 days'
-LIMIT 1000;  -- Don't do LIMIT 1000000
-```
-</Accordion>
-
-<Accordion title="Pattern 2: Aggregates First">
-```sql
--- Always run counts/aggregates before drilling into details
-SELECT COUNT(*) as total_records FROM user_events;
-SELECT COUNT(*) as affected_records FROM user_events WHERE status = 'error';
-
--- Only then drill into specific rows
-SELECT * FROM user_events WHERE status = 'error' LIMIT 10;
-```
-</Accordion>
-
-<Accordion title="Pattern 3: Use WHERE Clauses">
-```sql
--- Bad: Scans entire table
-SELECT * FROM orders;
-
--- Good: Filters to relevant records
-SELECT * FROM orders
-WHERE created_at > NOW() - INTERVAL '24 hours'
-LIMIT 100;
-
--- Best: Even more specific
-SELECT * FROM orders
-WHERE customer_id = 123
-AND created_at > NOW() - INTERVAL '7 days'
-ORDER BY created_at DESC
-LIMIT 100;
-```
-</Accordion>
-
-<Accordion title="Pattern 4: Index-Friendly Queries">
-```sql
--- Queries that use indexes run fast
-SELECT * FROM orders WHERE customer_id = 123;
-SELECT * FROM users WHERE email = 'test@example.com';
-
--- Avoid functions on indexed columns (prevents index use)
-SELECT * FROM orders
-WHERE MONTH(created_at) = 10;  -- Can't use index on created_at
-
--- Better: Use ranges
-SELECT * FROM orders
-WHERE created_at >= '2024-10-01'
-AND created_at < '2024-11-01';  -- Can use index
-```
-</Accordion>
-
-<Accordion title="Pattern 5: Explain First">
-```sql
--- Always check execution plan before running slow query
-EXPLAIN
-SELECT * FROM orders WHERE customer_id = 123;
-
--- Look for:
--- - Sequential Scan (bad on large tables - no index used)
--- - Index Scan (good - uses index)
--- - Nested Loop Join (ok for small tables, bad for large)
--- - Hash Join (good for large joins)
-```
-</Accordion>
-</AccordionGroup>
-
-## Debugging Workflow Checklist
-
-Use this systematic approach when debugging production:
-
-<AccordionGroup>
-<Accordion title="1. Understand the Problem">
-- [ ] Get exact description of the problem from user
-- [ ] Determine which users/data are affected
-- [ ] Note when problem started
-- [ ] Determine impact (how many users, lost revenue, etc.)
-</Accordion>
-
-<Accordion title="2. Scope the Investigation">
-- [ ] Check row counts and data volume
-- [ ] Determine if problem is widespread or localized
-- [ ] Look for time-based patterns
-- [ ] Check if similar problems exist elsewhere
-</Accordion>
-
-<Accordion title="3. Find the Root Cause">
-- [ ] Query for affected records
-- [ ] Compare with unaffected records
-- [ ] Look for patterns in the differences
-- [ ] Correlate with application deployments
-- [ ] Check query performance
-- [ ] Look for data integrity issues
-</Accordion>
-
-<Accordion title="4. Create Evidence Report">
-- [ ] Document all queries run
-- [ ] Save query results
-- [ ] Take screenshots of WhoDB views
-- [ ] Note timings and scope
-- [ ] List possible causes and evidence
-</Accordion>
-
-<Accordion title="5. Recommend Action">
-- [ ] Propose solution with confidence level
-- [ ] Explain expected outcome
-- [ ] Note any risks or side effects
-- [ ] Suggest monitoring after fix
-</Accordion>
-</AccordionGroup>
-
-## Monitoring After a Fix
-
-After the issue is fixed, re-run your investigation queries to verify:
-
-```sql
--- The affected count should be zero or much lower
-SELECT
-  DATE_TRUNC('hour', created_at) as hour,
-  COUNT(*) as record_count,
-  COUNT(CASE WHEN status = 'lost' THEN 1 END) as affected_count
-FROM user_events
-WHERE created_at > NOW() - INTERVAL '24 hours'
-GROUP BY DATE_TRUNC('hour', created_at)
-ORDER BY hour DESC;
-```
-
-Save these queries for future reference. When similar issues occur, you can quickly run the same diagnostics.
-
-## Next Steps
-
-Master debugging with these related guides:
-
-<CardGroup cols={2}>
-<Card title="Query Interface" href="/query/scratchpad-intro">
-Learn advanced SQL techniques for investigation
-</Card>
-
-<Card title="Data Analysis" href="/use-cases/data-analysis">
-Apply analytical patterns to diagnosis
-</Card>
-
-<Card title="Where Conditions" href="/advanced/where-conditions">
-Master filtering for targeted queries
-</Card>
-
-<Card title="Schema Explorer" href="/features/schema-explorer">
-Understand your database structure for debugging
-</Card>
-</CardGroup>
-
-<Check>
-Systematic, evidence-based debugging transforms you from guessing to knowing. With read-only credentials, efficient queries, and WhoDB's data visualization, you can safely investigate production issues without risking your data. By following these patterns and maintaining a library of debugging queries, you'll become the person who solves production problems with confidence, armed with data and clear analysis.
-</Check>
+Continue with [Access control](/best-practices/access-control), [Query performance](/best-practices/query-optimization), or [Backup tools](/resources/integrations/backup-tools).

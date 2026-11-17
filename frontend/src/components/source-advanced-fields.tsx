@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-import { Input, Label, Switch } from '@clidey/ux';
+import { Input, Label, Switch, SearchSelect } from '@clidey/ux';
 import { useQuery } from '@apollo/client/react';
-import { SearchSelect } from '@/components/ux';
 import { SourceConnectionFieldKind, SourceConnectionFieldOptionsDocument } from '@graphql';
 import { useMemo, type FC } from 'react';
 import type { SourceTypeItem } from '@/config/source-types';

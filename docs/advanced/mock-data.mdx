@@ -1,82 +1,68 @@
 ---
-title: "Mock Data"
-description: "Generate mock rows from the current table grid actions"
+title: "Generate test data"
+description: "Populate a disposable object using append or overwrite mode."
 ---
 
-# Mock Data
+# Generate test data
 
-Mock data generation is available from the table grid when the connected source, object, and deployment configuration allow it.
+A new table is difficult to test when it has no records. Mock data generation lets you populate a disposable development object so you can try filters, pagination, forms, and queries before loading a real dataset.
 
-![Mock Data Dialog](/images/22-data-view-mock-data-dialog.png)
+Use it with a development connection. Generated rows are written to the connected source; this is not a browser-only preview.
 
-## Open Mock Data
+## Open the generator
 
-Use one of the current entry points:
+Open the object's **Data** view and choose the mock data action. It appears when the source and object support generation. Set a row count and choose how existing data should be handled.
 
-- Right-click the table header and choose the mock data action.
-- Use the row/header context menu where the mock data action appears.
-- Press `Cmd/Ctrl + Shift + G` while the table has focus.
+<div className="ce-screenshot-light">
 
-Use the grid context menu for mock data actions.
+![The mock data generation dialog](/images/light/22-data-view-mock-data-dialog.png)
 
-## Configure Generation
+</div>
+<div className="ce-screenshot-dark">
 
-The mock data sheet lets you choose:
+![The mock data generation dialog](/images/dark/22-data-view-mock-data-dialog.png)
 
-- Row count.
-- Generation method.
-- Data handling mode.
-- Foreign-key variety when the source supports it.
+</div>
 
-![Mock Data Handling Options](/images/72-mock-data-handling-options.png)
+The interface limits a request to 200 rows. Start with a small number so you can inspect the generated values before adding more.
 
-## Append Or Overwrite
+## Choose append or overwrite
 
-Use **Append** to add generated rows to existing data.
+**Append** keeps the current records and adds generated ones. Use it when you have fixtures that must remain, such as a few accounts with known IDs.
 
-![Append Mode](/images/71-mock-data-append-mode.png)
+**Overwrite** replaces existing data and asks for confirmation. For relational sources, clearing an object can also clear entire tables that reference it. Use it only with a disposable dataset whose related tables can also be recreated. Check the connection and relationships before confirming.
 
-Use **Overwrite** only when you intentionally want generated data to replace existing rows. WhoDB shows an overwrite confirmation before proceeding.
+<div className="ce-screenshot-light">
 
-![Overwrite Confirmation](/images/47-mock-data-overwrite-confirm.png)
+![Append and overwrite choices](/images/light/72-mock-data-handling-options.png)
 
-## Row Counts
+</div>
+<div className="ce-screenshot-dark">
 
-The row-count field accepts a positive number up to the current backend limit of 200 rows per generation.
+![Append and overwrite choices](/images/dark/72-mock-data-handling-options.png)
 
-![Row Count Minimum](/images/73-mock-data-row-count-min.png)
+</div>
 
-![Row Count Medium](/images/74-mock-data-row-count-medium.png)
+Generated values must still satisfy the source's types and constraints. A required value, unique key, or relationship can cause generation to fail. Read the returned error and inspect the relevant metadata in **Info** rather than repeatedly increasing the requested row count.
 
-![Row Count Maximum](/images/75-mock-data-row-count-max-clamped.png)
+## Check the result
 
-## Disable Mock Data
+After generation, reload the object and inspect several records. Check fields your test depends on, such as dates, identifiers, and null values. Random-looking records are useful for exercising a UI, but a test for a specific business rule usually needs a deliberate fixture with known expected results.
 
-Administrators can disable mock data with the `WHODB_DISABLE_MOCK_DATA_GENERATION` environment variable. It has three modes:
+Use [Import](/data/importing) when you already have such a fixture in a file.
 
-- Unset or empty: mock data is allowed for all objects.
-- `*`: mock data is disabled everywhere.
-- A comma-separated list of object names: mock data is disabled only for those objects.
+## Disable generation on an instance
 
-To disable globally:
+Administrators can set `WHODB_DISABLE_MOCK_DATA_GENERATION` on the WhoDB server:
 
-```bash
-WHODB_DISABLE_MOCK_DATA_GENERATION="*"
-```
-
-or a comma-separated object list:
+| Value | Behavior |
+| --- | --- |
+| Unset or empty | Allow generation where supported |
+| `*` | Disable generation for every object |
+| Comma-separated object names | Disable generation for the named objects |
 
 ```bash
 WHODB_DISABLE_MOCK_DATA_GENERATION=users,payments
 ```
 
-## Related Pages
-
-<CardGroup cols={2}>
-<Card title="Viewing Data" icon="table" href="/data/viewing-data">
-Open the table grid that exposes mock data actions.
-</Card>
-<Card title="Batch Operations" icon="list-check" href="/advanced/batch-operations">
-Use row selection and context-menu actions.
-</Card>
-</CardGroup>
+This controls the generation feature. Database permissions remain the authority for writes made through other tools, including Scratchpad. See [testing workflows](/use-cases/testing-development) for a complete fixture-and-verification loop.

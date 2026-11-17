@@ -1,17 +1,17 @@
 ---
-title: "Keyboard Shortcuts Reference"
+title: "Keyboard shortcuts"
 description: "Complete reference of WhoDB keyboard shortcuts for navigation, table actions, editing, and the Scratchpad"
 ---
 
-# Keyboard Shortcuts Reference
+# Keyboard shortcuts
 
-This page tracks the current frontend shortcut map defined in the app. The CLI has its own separate keymap and workflow surface; see [CLI & MCP](/features/cli-and-mcp) for that tooling.
+Use these shortcuts to move between views, inspect records, and run queries without leaving the keyboard. Press `?` in the app for help or `Mod + K` to find an available action. The [CLI/TUI](/features/cli-and-mcp) has its own keymap.
 
 <Tip>
 `Mod` means `Cmd` on macOS and `Ctrl` on Windows/Linux.
 </Tip>
 
-## Global Shortcuts
+## Global shortcuts
 
 | Shortcut | Action |
 |----------|--------|
@@ -20,7 +20,7 @@ This page tracks the current frontend shortcut map defined in the app. The CLI h
 | `Esc` | Close dialogs and overlays |
 | `Mod + B` | Toggle the sidebar |
 
-## Navigation Shortcuts
+## Navigation shortcuts
 
 The numbered navigation shortcuts are platform-specific:
 
@@ -30,13 +30,15 @@ The numbered navigation shortcuts are platform-specific:
 These shortcuts move through the primary routes that are available for the current database type. On SQL databases that typically means:
 
 1. Chat
-2. Storage Units
+2. Tables
 3. Graph
 4. Scratchpad
 
 On NoSQL or reduced-capability databases, the numbering shifts because not every route is available.
 
-## Table Navigation
+## Table navigation
+
+Focus the grid before using its navigation keys. Moving the focused row and loading another results page are separate actions.
 
 | Shortcut | Action |
 |----------|--------|
@@ -49,7 +51,9 @@ On NoSQL or reduced-capability databases, the numbering shifts because not every
 | `Mod + Arrow Right` | Go to the next results page |
 | `Mod + Arrow Left` | Go to the previous results page |
 
-## Table Selection
+## Table selection
+
+Selection applies to records in the current view. Check the selected-row count before exporting or deleting records.
 
 | Shortcut | Action |
 |----------|--------|
@@ -58,7 +62,9 @@ On NoSQL or reduced-capability databases, the numbering shifts because not every
 | `Shift + Arrow Up` | Extend selection upward |
 | `Mod + A` | Select all rows in the current view |
 
-## Table Actions
+## Table actions
+
+Actions depend on the source, object, and database account. A shortcut does not add an operation that the current source does not support.
 
 | Shortcut | Action |
 |----------|--------|
@@ -71,7 +77,9 @@ On NoSQL or reduced-capability databases, the numbering shifts because not every
 | `Mod + Shift + E` | Open export |
 | `Mod + I` | Open import |
 
-## Scratchpad Editor
+## Scratchpad editor
+
+These editor shortcuts apply to the active query cell. Check its connection context before executing a statement.
 
 | Shortcut | Action |
 |----------|--------|
@@ -80,17 +88,15 @@ On NoSQL or reduced-capability databases, the numbering shifts because not every
 
 ## Notes
 
-- The frontend shortcut list above is the same set shown by the in-app shortcuts modal.
-- Some of these actions also have desktop menu accelerators in the Wails desktop app.
-- Use the in-app shortcuts help for the active shortcut list.
+If a key does not trigger the expected action, check focus and open the in-app help for the active list. Your browser or operating system may also handle a key combination. Desktop menus expose accelerators for supported application actions.
 
 ## Related Pages
 
 <CardGroup cols={2}>
-<Card title="Settings" icon="cog" href="/features/settings">
-Review the current personalization and app settings surface.
+<Card title="Settings" icon="settings" href="/features/settings">
+Adjust appearance, behavior, integrations, and privacy settings.
 </Card>
 <Card title="CLI & MCP" icon="code" href="/features/cli-and-mcp">
-See the separate CLI/TUI command surface and MCP server.
+Use terminal commands or connect an assistant to database tools.
 </Card>
 </CardGroup>

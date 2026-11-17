@@ -1,44 +1,63 @@
 ---
-title: "Sorting and Pagination"
-description: "Sort storage unit data and control page size in WhoDB"
+title: "Sort and page through data"
+description: "Control row ordering and page size when browsing source data."
 ---
 
-# Sorting And Pagination
+# Sort and page through data
 
-The storage unit data grid sends sorting and pagination back through the row request for the current object.
+Sort data when the order of records matters to your question, such as finding the newest entries or the largest amounts. Use pagination to inspect the result in manageable pages rather than loading an entire table into the browser.
 
-## Sorting
+## Sort rows
 
-Click a column header to change sorting for that column. WhoDB displays a sort indicator on sorted headers and reloads data for the current object.
+Click a sortable column header to change the ordering. WhoDB includes that sort in the data request, so the source determines which records appear first.
 
-The current table component tracks sort direction per column. If multiple sorted columns are active, each sorted header keeps its indicator.
+<div className="ce-screenshot-light">
 
-## Page Size
+![A sorted column in the grid](/images/light/38-data-view-sorted-column.png)
 
-Use **Page Size** above the grid.
+</div>
+<div className="ce-screenshot-dark">
 
-Built-in options are:
+![A sorted column in the grid](/images/dark/38-data-view-sorted-column.png)
 
-- `10`
-- `25`
-- `50`
-- `100`
-- `250`
-- `500`
-- `1000`
-- `Custom`
+</div>
 
-The maximum accepted page size is controlled by the app setting `WHODB_MAX_PAGE_SIZE` and the frontend max-page-size setting.
+For example, sort by an order date when looking for recent orders. If several records share the same date and you need a repeatable order, use a query with an additional sort field such as the record's key. Use `ORDER BY` in [Scratchpad](/query/writing-queries) when you need explicit ordering across fields.
 
-## Pagination
+## Set a page size
 
-When the backend reports more rows than the page size, pagination appears below the grid.
+Open the row-count selector and choose a preset or **Custom**. Presets include 10, 25, 50, 100, 250, 500, and 1,000 rows. The server's `WHODB_MAX_PAGE_SIZE` setting defaults to 10,000 and limits requests.
 
-- Use previous/next controls to move one page.
-- Click a visible page number to jump directly.
-- `Mod + Arrow Right` moves to the next page when table keyboard shortcuts are active.
-- `Mod + Arrow Left` moves to the previous page when table keyboard shortcuts are active.
+<div className="ce-screenshot-light">
 
-## Selection And Page Changes
+![Page size choices](/images/light/55-page-size-all-options.png)
 
-The grid clears focused row state and selected row checkboxes when rows change, including after sort, page changes, refreshes, or filters.
+</div>
+<div className="ce-screenshot-dark">
+
+![Page size choices](/images/dark/55-page-size-all-options.png)
+
+</div>
+
+Start with 25 or 50 rows. Increase the page size when seeing more records together helps the investigation. A larger page also transfers and renders more data, which can make a wide table harder to work with.
+
+You can set a preferred default in [Settings](/features/settings).
+
+## Move between pages
+
+Use the pagination controls below the grid. Check the displayed page and total when deciding whether you have reached the end of the current result.
+
+<div className="ce-screenshot-light">
+
+![Pagination on a table](/images/light/84-pagination-middle-page.png)
+
+</div>
+<div className="ce-screenshot-dark">
+
+![Pagination on a table](/images/dark/84-pagination-middle-page.png)
+
+</div>
+
+If records are being added or changed while you browse, the result can change between requests. Do not use the position of a row on a page as its identity. Use the record's key when making a correction or recording a finding.
+
+Changing a filter changes the result set. Run the revised request and check its count before selecting, exporting, or editing records. **Search** only locates values in the page currently loaded; use [Filter](/data/filtering-searching) for a lookup across the object.

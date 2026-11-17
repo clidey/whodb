@@ -16,6 +16,13 @@
 
 // Package ssl provides SSL/TLS configuration types and source-backed
 // normalization helpers for database connections.
+//
+// Each source type declares its modes in the source catalog, with native names
+// such as Postgres "verify-full" listed in source.SSLModeInfo.Aliases;
+// NormalizeSSLMode maps them to the unified values. Plugins should call
+// ParseSSLConfig and BuildTLSConfig rather than reading the SSL advanced keys
+// themselves. Certificate file paths are honored only for admin-configured
+// profiles; credentials typed into the login form must use the content keys.
 package ssl
 
 import (

@@ -164,6 +164,8 @@ type SourceFieldConstraints {
   Primary: Boolean!
   Unique: Boolean!
   Identity: Boolean!
+  "Whether the database manages this field and explicit insert values must be omitted."
+  Computed: Boolean!
   DefaultValue: String
   AllowedValues: [String!]!
   CheckMin: Float

@@ -99,6 +99,8 @@ func TestDuckDBNativeReadOnlyTransaction(t *testing.T) {
 		"INSERT INTO guard VALUES (2)", "UPDATE guard SET id = 2",
 		"DELETE FROM guard", "CREATE TABLE bad AS SELECT * FROM guard",
 		"ALTER TABLE guard ADD COLUMN extra INTEGER", "DROP TABLE guard",
+		"WITH d AS (DELETE FROM guard RETURNING *) SELECT count(*) FROM d",
+		"MERGE INTO guard USING (SELECT 1 AS id) s ON guard.id = s.id WHEN MATCHED THEN DELETE",
 	} {
 		t.Run(query, func(t *testing.T) {
 			if _, err := p.executeReadOnly(db.WithContext(t.Context()), query); err == nil || !strings.Contains(err.Error(), "read-only mode") {
@@ -191,6 +193,10 @@ func TestDuckDBProtectedSideEffects(t *testing.T) {
 		"SELECT 1; " + copyQuery, "SELECT nextval('sequence')",
 		"ATTACH ':memory:' AS other", "SET enable_external_access = true",
 		"SELECT * FROM read_csv('" + strings.ReplaceAll(output, "'", "''") + "')",
+		"WITH d AS (DELETE FROM guard RETURNING *) SELECT * FROM d",
+		"MERGE INTO guard USING (SELECT 1 AS id) s ON guard.id = s.id WHEN MATCHED THEN DELETE",
+		"CREATE TRIGGER guard_insert AFTER INSERT ON guard FOR EACH ROW EXECUTE FUNCTION noop()",
+		"CONNECT memory",
 	} {
 		if _, err := p.RawExecute(config, query); err == nil || !strings.Contains(err.Error(), "read-only query rejected") {
 			t.Fatalf("expected classifier rejection for %s: %v", query, err)

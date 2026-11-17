@@ -19,6 +19,8 @@ set -e
 
 # Separate compose project so teardown never touches the dev stack
 export COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-whodb-screenshot}"
+BACKEND_PORT="${WHODB_SCREENSHOT_BACKEND_PORT:-8086}"
+FRONTEND_PORT="${WHODB_SCREENSHOT_FRONTEND_PORT:-3106}"
 
 # Get the script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -89,7 +91,7 @@ mkdir -p "$GOCACHE" "$GOTMPDIR"
 # Always rebuild the test binary to ensure the latest schema changes are included
 BINARY_PATH="$PROJECT_ROOT/core/server.test"
 echo "   Building test binary..."
-go test -coverpkg=./... -c -o server.test ./cmd/whodb
+go test -c -o server.test ./cmd/whodb
 echo "   ✅ Test binary built"
 
 # Step 2: Setup SQLite database
@@ -150,7 +152,7 @@ echo ""
 echo "🚀 Starting backend test server..."
 cd "$PROJECT_ROOT/core"
 mkdir -p "$LOG_DIR" "$SCREENSHOT_DIR"
-ENVIRONMENT=dev WHODB_DISABLE_MOCK_DATA_GENERATION='' \
+PORT="$BACKEND_PORT" ENVIRONMENT=dev WHODB_DISABLE_MOCK_DATA_GENERATION='' \
     ./server.test -test.run=^TestMain$ \
     > "$BACKEND_LOG" 2>&1 &
 TEST_SERVER_PID=$!
@@ -167,7 +169,7 @@ while [ $COUNTER -lt $MAX_WAIT ]; do
         tail -n 80 "$BACKEND_LOG" || true
         exit 1
     fi
-    if curl -sf http://localhost:8080/health >/dev/null 2>&1; then
+    if curl -sf "http://localhost:$BACKEND_PORT/health" >/dev/null 2>&1; then
         echo "   ✅ Backend server is ready (PID: $TEST_SERVER_PID)"
         break
     fi
@@ -184,7 +186,7 @@ fi
 echo ""
 echo "🎨 Starting frontend dev server..."
 cd "$PROJECT_ROOT/frontend"
-VITE_E2E_TEST=true NODE_ENV=test pnpm exec vite --host 127.0.0.1 --port 3000 --strictPort > "$FRONTEND_LOG" 2>&1 &
+VITE_BACKEND_PORT="$BACKEND_PORT" VITE_E2E_TEST=true NODE_ENV=test pnpm exec vite --host 127.0.0.1 --port "$FRONTEND_PORT" --strictPort > "$FRONTEND_LOG" 2>&1 &
 FRONTEND_PID=$!
 
 # Wait for frontend to be ready
@@ -198,7 +200,7 @@ while [ $COUNTER -lt $MAX_WAIT ]; do
         tail -n 80 "$FRONTEND_LOG" || true
         exit 1
     fi
-    if curl -sf http://localhost:3000 >/dev/null 2>&1; then
+    if curl -sf "http://localhost:$FRONTEND_PORT" >/dev/null 2>&1; then
         echo "   ✅ Frontend server is ready (PID: $FRONTEND_PID)"
         break
     fi
@@ -221,9 +223,9 @@ echo "   Test spec: tests/postgres-screenshots.spec.mjs"
 
 cd "$PROJECT_ROOT/frontend/e2e"
 set +e
-WHODB_SCREENSHOT_DIR="$SCREENSHOT_DIR" NODE_ENV=test pnpm exec playwright test \
+BASE_URL="http://localhost:$FRONTEND_PORT" WHODB_SCREENSHOT_DIR="$SCREENSHOT_DIR" NODE_ENV=test pnpm exec playwright test \
     --config=playwright.screenshot.config.mjs \
-    --project=screenshots \
+    --project=screenshots-light --project=screenshots-dark \
     tests/postgres-screenshots.spec.mjs
 PW_EXIT_CODE=$?
 set -e

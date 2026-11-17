@@ -1,133 +1,61 @@
 ---
-title: "Relationships"
-description: "Understanding foreign keys, cardinality, and relationship types in your database"
+title: "Understand table relationships"
+description: "Interpret foreign-key edges and check the metadata behind a join."
 ---
 
-# Relationships
+# Understand table relationships
 
-Database relationships define how tables connect to each other through foreign keys. WhoDB detects these relationships and visualizes them as edges in the graph view, so you can see how your schema fits together at a glance.
+Use a relationship to work out how one record refers to another. For example, an order can carry the identifier of the user who placed it. Knowing that key is necessary before joining the records or deciding what a deletion might affect.
 
-<Tip>
-Use the graph view to understand your data model before writing queries against unfamiliar tables
-</Tip>
+Graph displays the relationships exposed by the source. In relational databases, these generally come from declared foreign keys.
 
-## What is a Relationship?
+## Read both sides
 
-A relationship is a connection between two tables created when a column in one table references a column (usually the primary key) in another table. This connection is enforced by a **foreign key constraint**.
+In the demo schema, an order's `user_id` refers to a user's `id`. Several orders can refer to the same user, which gives the relationship its one-to-many shape.
 
-### Key Components
+<div className="ce-screenshot-light">
 
-<CardGroup cols={2}>
-<Card title="Parent Table">
-The table being referenced. Its primary key is the target of the relationship.
-</Card>
-<Card title="Child Table">
-The table doing the referencing. Contains the foreign key column.
-</Card>
-<Card title="Foreign Key">
-One or more columns that reference the parent table's primary key
-</Card>
-<Card title="Cardinality">
-Describes how many rows in each table can participate in the relationship
-</Card>
-</CardGroup>
+![Related table nodes in Graph](/images/light/92-graph-one-to-many-relationship.png)
 
-## Relationship Types
+</div>
+<div className="ce-screenshot-dark">
 
-WhoDB visualizes four standard relationship types:
+![Related table nodes in Graph](/images/dark/92-graph-one-to-many-relationship.png)
 
-### One-to-Many (1:N)
+</div>
 
-The most common relationship type.
+Inspect the fields on both objects and confirm the actual constraint in **Info** or the source's metadata. A field's name alone is not enough to establish that it references the key you expect.
 
-![Graph - One to Many Relationship](/images/92-graph-one-to-many-relationship.png)
+For a PostgreSQL read of the demo data, you could verify the relationship with:
 
-- One row in the parent table can relate to many rows in the child table
-- One row in the child table relates to exactly one row in the parent table
-
-**Example**
-```
-Department (1) ─── (N) Employee
-- Each department can have multiple employees
-- Each employee belongs to exactly one department
+```sql
+SELECT o.id AS order_id, u.id AS user_id, u.username
+FROM test_schema.orders AS o
+JOIN test_schema.users AS u ON u.id = o.user_id
+ORDER BY o.id;
 ```
 
-Typical cases: one user has many orders, one category has many products, one post has many comments.
+Use your own object names and source syntax. Check whether a different join type is needed when records without a match should remain in the result.
 
-### Many-to-One (N:1)
+## Follow more than one relationship
 
-The reverse perspective of one-to-many.
+An order can relate to a user, several order items, and payments. Those relationships answer different questions. Add only the objects needed for the current investigation so you can follow the intended path.
 
-![Graph - Many to One Relationship](/images/93-graph-many-to-one-relationship.png)
+<div className="ce-screenshot-light">
 
-- Many rows in one table relate to one row in another table
-- This is the same as one-to-many, viewed from the child table's perspective
+![A table participating in several relationships](/images/light/94-graph-multiple-foreign-keys.png)
 
-**Example**
-```
-Employee (N) ─── (1) Department
-- Many employees belong to one department
-```
+</div>
+<div className="ce-screenshot-dark">
 
-The graph labels the edge from whichever table's perspective it was detected, so the same foreign key may appear as one-to-many from the parent and many-to-one from the child.
+![A table participating in several relationships](/images/dark/94-graph-multiple-foreign-keys.png)
 
-### One-to-One (1:1)
+</div>
 
-Each row in one table relates to exactly one row in another, typically enforced by a unique constraint on the foreign key column.
+Before counting records after a join, check whether a relationship multiplies rows. One order joined to three items produces three joined records even though it is still one order.
 
-**Example**
-```
-User (1) ─── (1) Profile
-- Each user has exactly one profile
-- Each profile belongs to exactly one user
-```
+## When an edge is absent
 
-Typical cases: one user has one account profile, one employee has one personnel file.
+A missing edge can mean the database has no declared foreign key, the connector does not expose that relationship, or an object is outside the current graph selection. Graph does not infer a relationship just because two columns have similar names.
 
-### Many-to-Many (N:N)
-
-Multiple rows in one table relate to multiple rows in another. In relational databases this is mediated by a **junction table**, so in the graph a many-to-many relationship appears as two one-to-many edges meeting at the junction table.
-
-**Example**
-```
-Student (N) ─┬─ (N) Course
-             │
-        Enrollment (junction table)
-- Each student can take many courses
-- Each course can have many students
-```
-
-Typical cases: users and roles, articles and tags, products and categories.
-
-## Reading Relationships in the Graph
-
-Each edge (connecting line) in the graph represents a foreign key relationship between two tables. Follow an edge from a node to see which table it references; the cardinality tells you which side is the parent and which is the child.
-
-### Multiple Foreign Keys Between Tables
-
-Two tables can have more than one relationship — for example, a `bookings` table referencing `customers` once as the booker and once as an alternate contact. Each foreign key appears as its own edge.
-
-![Graph - Multiple Foreign Keys](/images/94-graph-multiple-foreign-keys.png)
-
-### Isolated Table Node
-
-![Graph - Isolated Table Node](/images/91-graph-isolated-table-node.png)
-
-A table with no incoming or outgoing foreign key relationships appears with no connection lines. It stands alone in the schema but may still be important for data organization.
-
-## Related Topics
-
-<CardGroup cols={2}>
-<Card title="Graph View" icon="chart-network" href="/visualization/graph-view">
-Visualize relationships in your schema
-</Card>
-<Card title="Schema Topology" icon="sitemap" href="/visualization/schema-topology">
-Understand overall schema organization
-</Card>
-<Card title="Data Integrity" icon="shield" href="/best-practices/data-management">
-Maintain data consistency with relationships
-</Card>
-<Card title="Advanced Queries" icon="code" href="/query/writing-queries">
-Master complex queries with multiple relationships
-</Card>
-</CardGroup>
+Inspect **Info** and the database metadata, then test the proposed join with a few known records. If the application needs a new constraint, maintain it through your normal schema migration process. Drawing or selecting a node does not create a database relationship.

@@ -1,106 +1,60 @@
 ---
-title: "Graph View"
-description: "Visualize your database schema as an interactive graph in WhoDB — explore tables, relationships, and foreign keys visually"
+title: "Explore relationships in Graph"
+description: "Choose source objects, inspect their relationships, and open data from the graph."
 ---
 
-# Graph View
+# Explore relationships in Graph
 
-The Graph view visualizes database objects and relationships. It is useful for understanding how tables or collections connect before opening their data.
+Use Graph when you need to understand how objects connect before writing a join or investigating a record. A diagram can make an unfamiliar schema easier to follow than opening tables one at a time.
 
-![Graph View - Schema Topology](/images/24-graph-view-schema-topology.png)
+Open **Graph** from the sidebar when the source exposes graph relationships. The canvas is based on source metadata.
 
-## Open Graph
+<div className="ce-screenshot-light">
 
-Open **Graph** from the left sidebar. The route is `/graph`.
+![The schema graph with connected objects](/images/light/24-graph-view-schema-topology.png)
 
-The Graph page has two main areas:
+</div>
+<div className="ce-screenshot-dark">
 
-- A left graph sidebar with search and object checkboxes grouped by type.
-- A canvas with selected storage-unit nodes and relationship edges.
+![The schema graph with connected objects](/images/dark/24-graph-view-schema-topology.png)
 
-## Selecting Objects
+</div>
 
-Use the graph sidebar to choose which objects appear on the canvas.
+## Build the view
 
-- Search filters the object list in the graph sidebar.
-- Check or uncheck objects to add or remove them from the graph.
-- WhoDB auto-selects an initial set of objects so small schemas render immediately.
+Search the secondary list for the objects involved in your question and select their checkboxes. Nodes represent objects, and edges represent the relationships reported by the source.
 
-## Node Content
+Start with a small set. For an order investigation, choose orders, users, and order items before adding less relevant objects. Selecting the entire schema can make the important path difficult to see.
 
-Each node renders object information directly in the card:
+Consecutive selected objects share a highlighted group in the list. A gap in the selection starts a separate group. On a small screen, use **Browse items** to change the selection, then **View content** to return to the canvas.
 
-- Object name.
-- Metadata attributes exposed by the source.
-- Column or field names when they have been loaded.
-- A visible **Data** button.
+## Inspect a node
 
-![Graph View - With Controls](/images/25-graph-view-with-controls.png)
+Click a node to load its field details where needed. Inspect the keys and column names on both sides of a relationship. Use the node's **Data** action when you want to read the object's records.
 
-Clicking a node loads its columns when needed. Node details live directly in the card.
+<div className="ce-screenshot-light">
 
-## Opening Data From A Node
+![An object node with its Data action](/images/light/26-graph-view-node-details.png)
 
-Use the **Data** button inside a node to open that object's Storage Unit data page.
+</div>
+<div className="ce-screenshot-dark">
 
-![Graph Node Data Button](/images/50-graph-node-data-button-hover.png)
+![An object node with its Data action](/images/dark/26-graph-view-node-details.png)
 
-The button is part of the node card.
+</div>
 
-## Canvas Controls
+A declared relationship helps identify a join key. It does not decide which records belong in a report. For example, an order-to-user relationship does not tell you whether to include cancelled orders in a count.
 
-The graph uses React Flow controls:
+## Move around
 
-- Zoom in.
-- Zoom out.
-- Fit view.
-- Toggle interaction lock/pan mode.
+Use the zoom and fit controls to bring the selected objects into view. The layout action rearranges the nodes, and the download action saves a diagram. The lock/pan control and holding `Space` help you move around the canvas.
 
-These controls are in the lower-left corner of the canvas.
+If a connection you expect is missing, confirm that both objects are selected and inspect their metadata. Matching column names alone do not create an edge. See [Relationships](/visualization/relationships) for the common causes.
 
-![Graph Fit View Control](/images/97-graph-fit-view-control.png)
+## Use the diagram in an investigation
 
-WhoDB also adds graph actions in the lower-right corner, including download/export and layout controls.
+Once you have identified a likely relationship, verify it with a small query in [Scratchpad](/query/writing-queries). When sharing a downloaded diagram, record the source environment and date so readers know which schema it represents.
 
-<Note>
-Use **Fit View** when you want to recenter the graph.
-</Note>
-
-## Pan And Zoom
-
-- Use the mouse wheel or zoom controls to zoom.
-- Use fit view to center the selected graph.
-- Drag the canvas to pan when interaction mode allows it.
-- Hold Space while interacting if you need temporary drag-pan behavior.
-
-![Graph Zoomed In View](/images/95-graph-zoomed-in-view.png)
-
-![Graph Zoomed Out View](/images/96-graph-zoomed-out-view.png)
-
-## Relationship Examples
-
-![Graph - One To Many Relationship](/images/92-graph-one-to-many-relationship.png)
-
-![Graph - Many To One Relationship](/images/93-graph-many-to-one-relationship.png)
-
-![Graph - Multiple Foreign Keys](/images/94-graph-multiple-foreign-keys.png)
-
-## Troubleshooting
-
-If the graph is empty:
-
-- Confirm the current connection supports graph data.
-- Select objects in the graph sidebar.
-- Verify your database has relationship metadata available to the connected user.
-- Refresh the page after schema changes.
-
-## Related Pages
-
-<CardGroup cols={2}>
-<Card title="Storage Units" icon="database" href="/features/storage-units">
-Understand object cards, Describe, and Data actions.
-</Card>
-<Card title="Viewing Data" icon="table" href="/data/viewing-data">
-Open a node's data page and use the grid.
-</Card>
-</CardGroup>
+<Tip>
+Use **Ontology** in WhoDB Platform when you need a shared model of business entities over connected data. [Build on your schema knowledge](/guides/move-to-platform#give-your-data-business-meaning).
+</Tip>

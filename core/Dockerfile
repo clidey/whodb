@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # Keep the Node version in sync with .nvmrc at the CE repo root (CI reads it).
-FROM node:26.12.0-alpine3.24 AS build-stage
+FROM node:26.12.1-alpine3.24 AS build-stage
 RUN npm i -g pnpm@11.15.1
 WORKDIR /app
 COPY ./frontend/package.json ./frontend/pnpm-lock.yaml ./
@@ -36,7 +36,7 @@ RUN if [ "${USE_PREBUILT_FRONTEND}" = "true" ]; then \
 ARG TARGETARCH
 ARG PLATFORM=docker
 
-FROM golang:1.27.3-alpine3.24 AS backend-stage
+FROM golang:1.27.4-alpine3.24 AS backend-stage
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 RUN apk add --no-cache \
 	gcc \
@@ -61,12 +61,12 @@ RUN ENCODED=$(grep 'github.com/duckdb/duckdb-go/v2 ' /tmp/go.mod | awk '{print $
     elif [ "$TARGETARCH" = "arm64" ]; then DUCKDB_ARCH="linux-arm64"; \
     else echo "Unsupported architecture: $TARGETARCH" && exit 1; fi && \
     mkdir -p /usr/local/include && \
-    curl --fail --location --retry 3 -o /tmp/libduckdb-musl.zip \
-        "https://github.com/duckdb/duckdb/releases/download/${DUCKDB_VERSION}/libduckdb-${DUCKDB_ARCH}-musl.zip" && \
-    unzip -j /tmp/libduckdb-musl.zip libduckdb.so -d /usr/local/lib/ && \
-    unzip -j /tmp/libduckdb-musl.zip duckdb.h -d /usr/local/include/ && \
+    curl --fail --location --retry 3 -o /tmp/libduckdb-musl.tar.gz \
+        "https://github.com/duckdb/duckdb/releases/download/${DUCKDB_VERSION}/duckdb-shared-libs-${DUCKDB_ARCH}-musl.tar.gz" && \
+    tar -xzf /tmp/libduckdb-musl.tar.gz -C /usr/local/lib libduckdb.so && \
+    tar -xzf /tmp/libduckdb-musl.tar.gz -C /usr/local/include duckdb.h && \
     strip --strip-unneeded /usr/local/lib/libduckdb.so && \
-    rm /tmp/libduckdb-musl.zip
+    rm /tmp/libduckdb-musl.tar.gz
 
 WORKDIR /app
 

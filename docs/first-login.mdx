@@ -1,113 +1,60 @@
 ---
-title: "First Login"
-description: "Connect to your first database with the current WhoDB login flow"
+title: "Connect your first database"
+description: "Enter credentials, use a connection string, or select a configured profile."
 ---
 
-# First Login
+# Connect your first database
 
-The login page is the entry point for the web app and desktop app. It adapts to the selected database type and can show saved or environment-defined profiles.
+Connect WhoDB to a database you already have. You will need the source type, endpoint, credentials, and any TLS settings required by that database. Use a development or read-only connection for your first session.
 
-![WhoDB Login Page](/images/01-login-page.png)
+CE's connection page uses database credentials or server-configured profiles. It does not create a separate WhoDB user account.
 
-<Info>
-In the web app, a successful login is kept server-side: WhoDB stores your database credentials encrypted in a local session database and gives your browser only an opaque, `HttpOnly` session cookie — the credentials themselves never reach browser storage. Non-secret display details (connection name, host, database) are kept in the browser so the profile switcher and login state survive a page reload.
+<div className="ce-screenshot-light">
 
-The desktop app, which cannot rely on cookies, stores saved credentials in the OS keyring instead (for example, macOS Keychain); if no keyring is available, it warns and continues without persisting credentials. For shared or sensitive machines, prefer managed database accounts and environment-defined profiles either way.
-</Info>
+![The CE connection form](/images/light/03-login-form-filled.png)
 
-## Ways To Start A Connection
+</div>
+<div className="ce-screenshot-dark">
 
-<CardGroup cols={2}>
-<Card title="Manual Credentials" icon="database">
-Pick a database type and fill in the fields shown for that type.
-</Card>
-<Card title="Saved Profiles" icon="link">
-Choose from previously saved local profiles or profiles injected through environment variables.
-</Card>
-<Card title="Cloud Pickers" icon="cloud">
-When enabled, AWS, Azure, and GCP pickers can prefill the login form from discovered resources.
-</Card>
-<Card title="Sample Database" icon="sparkles">
-First-time users can be offered a built-in sample database flow and guided tour.
-</Card>
-</CardGroup>
+![The CE connection form](/images/dark/03-login-form-filled.png)
 
-## Step-By-Step
+</div>
 
-<Steps>
-<Step title="Choose A Database Type">
-Open the database type dropdown and select the system you want to connect to.
+## Enter your connection details
 
-![Database Type Dropdown](/images/02-login-database-type-dropdown.png)
+Select the database type first. The form changes to show that source's fields. For a network database, enter the hostname, port, database name, username, and password requested by the form. See [Supported databases](/resources/supported-databases) if you are unsure which type to choose.
 
-The available catalog in the current CE codebase includes PostgreSQL, MySQL, MariaDB, CockroachDB, SQLite3, MongoDB, Redis, ElasticSearch, ClickHouse, DuckDB, Memcached, TiDB, Valkey, Dragonfly, OpenSearch, YugabyteDB, QuestDB, and FerretDB.
-</Step>
-<Step title="Fill The Main Fields">
-The main form changes by database type:
+The hostname must be reachable from the WhoDB server. A database running on your laptop is not necessarily at `localhost` from a Docker container or a remote server. Use the address that works from the machine running WhoDB.
 
-- Most network databases use host, username, password, and database
-- PostgreSQL-family databases can also expose search path / schema behavior
-- SQLite and DuckDB use a database file path instead of host and port
-- Some document and cache systems only require a host and optional credentials
+Open **Advanced** for source-specific settings and TLS configuration. Use your administrator's required settings, then submit the connection form.
 
-![Login Form Filled](/images/03-login-form-filled.png)
-</Step>
-<Step title="Open Advanced Options If Needed">
-The web app advanced panel is for SSL/TLS and backend-defined database-specific fields.
+<div className="ce-screenshot-light">
 
-![Advanced Options](/images/04-login-advanced-options.png)
+![Advanced connection options](/images/light/04-login-advanced-options.png)
 
-Shared SSL fields include:
+</div>
+<div className="ce-screenshot-dark">
 
-- `SSL Mode`
-- `SSL CA Content`
-- `SSL Client Cert Content`
-- `SSL Client Key Content`
-- `SSL Server Name`
+![Advanced connection options](/images/dark/04-login-advanced-options.png)
 
-<Note>
-If you need SSH tunneling, set up an external tunnel first or use the [CLI & MCP](/features/cli-and-mcp) tooling. SSH tunneling is not a web login form control in this codebase.
-</Note>
-</Step>
-<Step title="Connect Or Use A Profile">
-Click the main connect button for manual credentials, or choose a saved profile and log in through that profile flow.
-</Step>
-</Steps>
+</div>
 
-## Saved Profiles
+## Choose the data you intend to inspect
 
-Profiles can appear from two places:
+After connecting, check the database and schema selectors where available. Open **Tables** and find an object you recognize. Use **Info** to check its fields and **Data** to inspect a few records. This verifies the context before you run queries or make changes.
 
-- Local profiles saved by the app
-- Environment-defined profiles such as `WHODB_POSTGRES_1`, `WHODB_MYSQL_1`, or `WHODB_REDIS_1`
+If you use connection-string input, review the parsed fields before connecting. A configured profile preloads server-managed details; select its alias to use that connection.
 
 <Warning>
-WhoDB Community Edition treats access to the instance as the trust boundary for profiles. Anyone who can reach the instance can list and use its available profiles with the database permissions configured for those profiles. The database password is used by the server, so users do not need to know or enter it. Only make a profile available on instances restricted to trusted users.
+Anyone who can reach a CE instance can use its configured profiles. Restrict access to trusted users and give profile credentials only the database permissions that audience should have.
 </Warning>
 
-When the manual credential form is disabled with `WHODB_DISABLE_CREDENTIAL_FORM=true`, the login page can still work through managed profiles.
+## Connect a local database file
 
-## File-Based Databases
+For SQLite or DuckDB, the file path belongs to the machine running WhoDB. In Docker, mount the containing directory and use the container path. The desktop app offers a native file picker.
 
-SQLite3 and DuckDB behave differently from host-based systems:
+## If connection fails
 
-- The required field is the database file path
-- The desktop app can open a native file picker for these databases
-- DuckDB is only available on supported builds
+A timeout suggests a reachability problem. Authentication errors point to credentials or the database's authentication requirements. Missing tables after a successful connection usually need a check of the database, schema, and account permissions. See [Troubleshooting](/resources/troubleshooting) for the next diagnostic steps.
 
-## Next Steps
-
-<CardGroup cols={2}>
-<Card title="Database Connectivity" icon="database" href="/features/database-connectivity">
-See the current CE connection model and advanced option reference.
-</Card>
-<Card title="Supported Databases" icon="database" href="/resources/supported-databases">
-Review the current database catalog grouped by compatibility family.
-</Card>
-<Card title="Cloud Providers" icon="cloud" href="/features/cloud-providers">
-Use local CLI discovery for AWS, Azure, and GCP.
-</Card>
-<Card title="Quick Start" icon="rocket" href="/quick-start">
-Move from login to exploring data and writing queries.
-</Card>
-</CardGroup>
+Continue with [Quick start](/quick-start) once a known object is visible.

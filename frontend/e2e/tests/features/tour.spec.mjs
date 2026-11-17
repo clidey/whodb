@@ -34,6 +34,9 @@ const shouldRun = !targetDb || targetDb.toLowerCase() === 'postgres';
 const describeOrSkip = shouldRun ? test.describe : test.describe.skip;
 
 describeOrSkip('Tour & Onboarding', () => {
+    test.beforeEach(({ page: _page }, testInfo) => {
+        test.skip(testInfo.project.metadata.uiFeatures?.sampleDatabaseTour === false, 'The sample database tour is disabled in this UI');
+    });
     /**
      * Helper function to log into the sample database
      * The sample database is a built-in profile that triggers the tour on first login

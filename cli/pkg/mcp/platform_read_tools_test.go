@@ -126,6 +126,10 @@ func (f *fakePlatformClient) Transforms(ctx context.Context, projectID string) (
 	}}, nil
 }
 
+func (f *fakePlatformClient) TransformRun(ctx context.Context, projectID, transformID, id string) (*platformapi.TransformRun, error) {
+	return &platformapi.TransformRun{ID: id, TransformID: transformID, Status: "success"}, nil
+}
+
 func (f *fakePlatformClient) TransformRuns(ctx context.Context, projectID, transformID string, limit int) ([]platformapi.TransformRun, error) {
 	return []platformapi.TransformRun{{ID: "run-1", TransformID: transformID, Status: "success"}}, nil
 }

@@ -111,7 +111,7 @@ test.describe('Inline Editing', () => {
             await page.locator('[data-testid="confirm-delete-row-button"]').click();
             await verifyDelete();
 
-            const toast = page.locator('.ce-delete-toast');
+            const toast = page.locator('[data-sonner-toast][data-type="success"]').filter({ hasText: /1 rows? deleted/ });
             await expect(toast).toBeVisible({ timeout: TIMEOUT.ACTION });
             await expect(toast).toContainText(/1 rows? deleted/);
 

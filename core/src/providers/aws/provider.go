@@ -24,12 +24,19 @@
 //
 // Supported AWS services (CE):
 //   - RDS: MySQL, PostgreSQL, MariaDB instances
-//   - ElastiCache: Redis clusters
+//   - ElastiCache: Redis and Valkey clusters, plus Memcached clusters
 //   - DocumentDB: MongoDB-compatible clusters
+//   - OpenSearch: domains, always discovered (there is no discovery toggle)
 //
 // Authentication methods:
 //   - default: AWS SDK default credential chain (env → shared config → IAM role)
 //   - profile: Named AWS profile from ~/.aws/credentials
+//
+// Persisted provider config holds the name, region, auth method, profile name
+// and discovery flags, never credentials. A discovery flag added after a config
+// was saved (currently DiscoverS3) loads as enabled, and WHODB_AWS_PROVIDER
+// entries treat every omitted flag as enabled. In CE the provider is used only
+// by the CLI, and only when WHODB_ENABLE_AWS_PROVIDER=true.
 //
 // # Extension Points
 //

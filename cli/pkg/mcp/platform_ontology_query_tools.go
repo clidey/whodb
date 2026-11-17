@@ -173,6 +173,8 @@ func platformOntologyAnalyticsToolDefinitions() []*mcp.Tool {
 		{Name: "whodb_platform_ontology_stats", Description: descPlatformOntologyStats, Annotations: platformReadOnlyAnnotations("Summarize Hosted Ontology Property")},
 		{Name: "whodb_platform_ontology_describe", Description: descPlatformOntologyDescribe, Annotations: platformReadOnlyAnnotations("Describe Hosted Ontologies")},
 		{Name: "whodb_platform_ontology_similar", Description: descPlatformOntologySimilar, Annotations: platformReadOnlyAnnotations("Find Similar Hosted Ontology Rows")},
+		{Name: "whodb_platform_ontology_behavior", Description: "Read the current behavior definition and revision before editing.", Annotations: platformReadOnlyAnnotations("Read Ontology Behavior")},
+		{Name: "whodb_platform_ontology_behaviors_validate", Description: "Compile and test an entire version 1 behavior manifest without activation; temporary changes roll back. Use ontology action apply_behaviors to atomically activate reviewed revisions.", Annotations: platformReadOnlyAnnotations("Validate Ontology Behaviors")},
 		{Name: "whodb_platform_ontology_record_capabilities", Description: descPlatformOntologyRecordCapabilities, Annotations: platformReadOnlyAnnotations("Inspect Hosted Ontology Record Capabilities")},
 		{Name: "whodb_platform_ontology_action_preview", Description: descPlatformOntologyActionPreview, Annotations: platformReadOnlyAnnotations("Preview Hosted Ontology Action")},
 		{Name: "whodb_platform_ontology_action_executions", Description: descPlatformOntologyActionExecutions, Annotations: platformReadOnlyAnnotations("List Hosted Ontology Action Executions")},
@@ -253,6 +255,15 @@ func registerPlatformOntologyAnalyticsTool(server *mcp.Server, tool *mcp.Tool, s
 	case "whodb_platform_ontology_references":
 		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformEmptyInput) (*mcp.CallToolResult, any, error) {
 			return handlePlatformExtendedQuery(ctx, "platform_ontology_references", "OntologyReferences", map[string]any{}, input.Fields)
+		})
+
+	case "whodb_platform_ontology_behavior":
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformEntityInput) (*mcp.CallToolResult, any, error) {
+			return handlePlatformExtendedQuery(ctx, "platform_ontology_behavior", "OntologyBehavior", map[string]any{"ontologyId": strings.TrimSpace(input.ID)}, input.Fields)
+		})
+	case "whodb_platform_ontology_behaviors_validate":
+		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformBehaviorManifestInput) (*mcp.CallToolResult, any, error) {
+			return handlePlatformExtendedQuery(ctx, "platform_ontology_behaviors_validate", "ValidateOntologyBehaviors", map[string]any{"manifest": input.Manifest}, input.Fields)
 		})
 	case "whodb_platform_ontology_reference_impact":
 		addPlatformTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input PlatformEntityInput) (*mcp.CallToolResult, any, error) {
@@ -619,3 +630,9 @@ const descPlatformTransformPreview = `Run a transform graph without saving it an
 const descPlatformAddOntologyRecords = `Add many rows to a hosted ontology in one call.
 
 rows are plain objects keyed by ontology property. Pass idempotency_key so a retried call never inserts duplicates. Default mode returns a confirmation token; do not call whodb_platform_confirm until the user approves the preview.`
+
+// PlatformBehaviorManifestInput supplies portable definitions for read-only validation.
+type PlatformBehaviorManifestInput struct {
+	Manifest map[string]any `json:"manifest" jsonschema:"Version 1 manifest with behaviors entries containing api_name, document and optional expected_revision; validation never activates"`
+	Fields   []string       `json:"fields,omitempty" jsonschema:"Optional top-level output field projection"`
+}

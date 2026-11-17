@@ -213,6 +213,12 @@ func buildCommands() []Command {
 		{Name: "setup apply", Description: "Apply a validated settings patch with --file <path> --yes after user approval. Reports restart requirements.", Formats: []string{"json"}},
 		{Name: "setup verify", Description: "Check enabled platform logins and database connections and return JSON readiness results.", Formats: []string{"json"}},
 		{Name: "agent schema", Description: "Emit WhoDB's machine-readable agent capability manifest.", Formats: []string{"json"}},
+
+		{Name: "ontologies behaviors pull", Description: "Export portable behavior definitions for Git using --output <new-file>.", Formats: []string{"plain"}},
+		{Name: "ontologies behaviors diff", Description: "Show changed behavior paths and dependency-ordered activations without saving a --manifest.", Formats: []string{"plain", "json"}},
+		{Name: "ontologies behaviors plan", Description: "Validate a --manifest without activation and show dependency-ordered changes.", Formats: []string{"plain", "json"}},
+		{Name: "ontologies behaviors validate", Description: "Compile and run embedded tests for a --manifest without persisting writes. Preparation and related-call workflows additionally require native integration tests.", Formats: []string{"plain", "json"}},
+		{Name: "ontologies behaviors apply", Description: "Atomically activate a --manifest with --yes; without --yes only validate/preview. Missing ontologies, stale revisions or invalid definitions fail the entire apply.", Formats: []string{"plain", "json"}},
 		{Name: "apps init", Description: "Create a local app folder, or import an existing hosted app with --from <app-id-or-name>.", Formats: []string{"plain"}},
 		{Name: "apps check", Description: "Validate local app files, pages, event handlers, and scripts.", Formats: []string{"plain", "json"}},
 		{Name: "apps dev", Description: "Preview local app files in the hosted runtime with reload on edits.", Formats: []string{"plain"}},
@@ -237,6 +243,34 @@ func buildCommands() []Command {
 		{Name: "suggestions", Description: "Load backend-generated starter queries.", Formats: []string{"table", "json"}, RequiresConnection: true},
 		{Name: "export", Description: "Export table or query data.", Formats: []string{"csv"}, RequiresConnection: true},
 	}
+	commands = append(commands, []Command{
+		{Name: "edge runners", Description: "Inspect devices, runs and interval schedules; execution requires explicit device access and a promoted function.", Formats: []string{"table", "json", "ndjson", "csv"}},
+		{Name: "edge start", Description: "Inspect devices, runs and interval schedules; execution requires explicit device access and a promoted function.", Formats: []string{"table", "json", "ndjson", "csv"}},
+		{Name: "edge run", Description: "Inspect devices, runs and interval schedules; execution requires explicit device access and a promoted function.", Formats: []string{"table", "json", "ndjson", "csv"}},
+		{Name: "edge runs", Description: "Inspect devices, runs and interval schedules; execution requires explicit device access and a promoted function.", Formats: []string{"table", "json", "ndjson", "csv"}},
+		{Name: "edge schedule", Description: "Inspect devices, runs and interval schedules; execution requires explicit device access and a promoted function.", Formats: []string{"table", "json", "ndjson", "csv"}},
+		{Name: "edge schedules", Description: "Inspect devices, runs and interval schedules; execution requires explicit device access and a promoted function.", Formats: []string{"table", "json", "ndjson", "csv"}},
+		{Name: "edge stop-schedule", Description: "Inspect devices, runs and interval schedules; execution requires explicit device access and a promoted function.", Formats: []string{"table", "json", "ndjson", "csv"}},
+		{Name: "apps access", Description: "Inspect paged effective app users and direct team grants.", Formats: []string{"table", "json", "ndjson", "csv"}},
+		{Name: "transforms get-run", Description: "Inspect one transform run independent of recent history.", Formats: []string{"table", "json", "ndjson", "csv"}},
+		{Name: "scripts packages", Description: "List curated script dependencies without installing packages.", Formats: []string{"table", "json", "ndjson", "csv"}},
+		{Name: "scripts search", Description: "Search curated script dependencies by language, query and runtime.", Formats: []string{"table", "json", "ndjson", "csv"}},
+		{Name: "scripts package", Description: "Inspect one curated script package.", Formats: []string{"table", "json", "ndjson", "csv"}},
+		{Name: "scripts run", Description: "Run a confirmed isolated script preview with a source file and optional sample data.", Formats: []string{"table", "json", "ndjson", "csv"}},
+		{Name: "usage subscription", Description: "Inspect the selected organization's subscription.", Formats: []string{"table", "json", "ndjson", "csv"}},
+		{Name: "usage plans", Description: "Inspect configured plan prices and entitlements.", Formats: []string{"table", "json", "ndjson", "csv"}},
+		{Name: "usage plan-features", Description: "Inspect feature grants for a plan key.", Formats: []string{"table", "json", "ndjson", "csv"}},
+		{Name: "usage preview-plan", Description: "Preview plan eligibility without changing billing.", Formats: []string{"table", "json", "ndjson", "csv"}},
+		{Name: "transforms history", Description: "Inspect recent project-wide transform history.", Formats: []string{"table", "json", "ndjson", "csv"}},
+		{Name: "agent-sessions list", Description: "Inspect and cancel the signed-in user's platform AI sessions.", Formats: []string{"table", "json", "ndjson", "csv"}},
+		{Name: "agent-sessions get", Description: "Inspect and cancel the signed-in user's platform AI sessions.", Formats: []string{"table", "json", "ndjson", "csv"}},
+		{Name: "agent-sessions cancel", Description: "Inspect and cancel the signed-in user's platform AI sessions.", Formats: []string{"table", "json", "ndjson", "csv"}},
+		{Name: "analysis get", Description: "Inspect analysis artifact provenance and bounded result pages.", Formats: []string{"table", "json", "ndjson", "csv"}},
+		{Name: "analysis rows", Description: "Inspect analysis artifact provenance and bounded result pages.", Formats: []string{"table", "json", "ndjson", "csv"}},
+		{Name: "usage current", Description: "Inspect current organization usage and effective feature entitlements.", Formats: []string{"table", "json", "ndjson", "csv"}},
+		{Name: "usage entitlements", Description: "Inspect current organization usage and effective feature entitlements.", Formats: []string{"table", "json", "ndjson", "csv"}},
+		{Name: "usage feature", Description: "Inspect current organization usage and effective feature entitlements.", Formats: []string{"table", "json", "ndjson", "csv"}},
+	}...)
 	return commands
 }
 
@@ -264,8 +298,11 @@ func buildMCPTools() []MCPTool {
 		{Name: "whodb_platform_ontology_stats", Description: "Return min, max, total and non-null counts for one ontology property.", ReadOnly: true},
 		{Name: "whodb_platform_ontology_describe", Description: "Describe ontologies in plain text plus structured entities, fields and relationships.", ReadOnly: true},
 		{Name: "whodb_platform_ontology_similar", Description: "Find rows similar to one row using ontology embeddings.", ReadOnly: true},
+
+		{Name: "whodb_platform_ontology_behavior", Description: "Read an ontology behavior definition and revision before editing. SaveBehavior activates immediately; use behaviors validation before atomic apply.", ReadOnly: true},
+		{Name: "whodb_platform_ontology_behaviors_validate", Description: "Validate, compile and test a version 1 behavior manifest in dependency order without activation. All temporary versions and changes roll back. Activate with ontology action apply_behaviors, supplying reviewed expected_revision values.", ReadOnly: true},
 		{Name: "whodb_platform_ontology_record_capabilities", Description: "Report readable and writable properties and allowed behavior actions for an ontology record.", ReadOnly: true},
-		{Name: "whodb_platform_ontology_action_preview", Description: "Preview a behavior action without executing it.", ReadOnly: true},
+		{Name: "whodb_platform_ontology_action_preview", Description: "Execute guarded behavior effects in a rollback-only preview; no business rows, receipts or events commit.", ReadOnly: true},
 		{Name: "whodb_platform_ontology_action_executions", Description: "List recorded behavior action executions for one record.", ReadOnly: true},
 		{Name: "whodb_platform_ontology_embedding_jobs", Description: "List embedding backfill jobs for one ontology.", ReadOnly: true},
 		{Name: "whodb_platform_transform_preview", Description: "Run a transform graph without saving it and return the resulting rows.", ReadOnly: true},
@@ -413,6 +450,9 @@ func buildMCPTools() []MCPTool {
 		MCPTool{Name: "whodb_platform_teams", Description: "List organization teams.", ReadOnly: true},
 		MCPTool{Name: "whodb_platform_team_members", Description: "List members of one organization team.", ReadOnly: true},
 	)
+	for _, capability := range platformapi.CapabilityReads {
+		tools = append(tools, MCPTool{Name: "whodb_platform_" + capability.Tool, Description: capability.Description, ReadOnly: true})
+	}
 	return tools
 }
 

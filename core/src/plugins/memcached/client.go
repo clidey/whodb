@@ -28,6 +28,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/clidey/whodb/core/src/sourcedial"
 )
 
 // Client is a lightweight memcached text protocol client.
@@ -63,7 +65,11 @@ const maxMemcachedKeyLength = 250
 func Dial(address string) (*Client, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dialTimeout)
 	defer cancel()
-	conn, err := (&net.Dialer{}).DialContext(ctx, "tcp", address)
+	dial := (&net.Dialer{}).DialContext
+	if registered := sourcedial.Dialer(); registered != nil {
+		dial = registered
+	}
+	conn, err := dial(ctx, "tcp", address)
 	if err != nil {
 		return nil, fmt.Errorf("memcached dial: %w", err)
 	}
@@ -78,7 +84,13 @@ func DialTLS(address string, tlsConfig *tls.Config) (*Client, error) {
 	dialer := &net.Dialer{Timeout: dialTimeout}
 	ctx, cancel := context.WithTimeout(context.Background(), dialTimeout)
 	defer cancel()
-	conn, err := (&tls.Dialer{NetDialer: dialer, Config: tlsConfig}).DialContext(ctx, "tcp", address)
+	var conn net.Conn
+	var err error
+	if registered := sourcedial.Dialer(); registered != nil {
+		conn, err = sourcedial.DialTLS(ctx, registered, "tcp", address, tlsConfig)
+	} else {
+		conn, err = (&tls.Dialer{NetDialer: dialer, Config: tlsConfig}).DialContext(ctx, "tcp", address)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("memcached TLS dial: %w", err)
 	}

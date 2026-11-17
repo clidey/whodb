@@ -1,90 +1,58 @@
 ---
-title: "WHERE Conditions"
-description: "Filter Storage Unit data with the current WHERE condition builder"
+title: "Build WHERE conditions"
+description: "Compose typed conditions in the grid and apply them to the database request."
 ---
 
-# WHERE Conditions
+# Build WHERE conditions
 
-WHERE conditions add server-side filters to the Storage Unit data page. They are separate from the Search field, which only searches currently loaded grid rows.
+Use the condition builder when you know which records you need but do not want to write a query. A condition is a rule such as “ID equals 12” or “order total is greater than 100.” WhoDB sends that rule to the source when you run the data request.
 
-![Where Conditions](/images/16-data-view-where-conditions-popover.png)
+## Add a condition
 
-## Add A Condition
+1. Open the object's **Data** view and click **Filter**.
+2. Choose a field from the list.
+3. Choose an operator offered for that field.
+4. Enter the comparison value, if the operator needs one.
+5. Add other conditions if needed, then click **Run** on the data page.
 
-<Steps>
-<Step title="Open A Data Page">
-Open a table or collection from Storage Units.
-</Step>
-<Step title="Open Where Condition">
-Click **Add** beside the **Where condition** label.
-</Step>
-<Step title="Choose Field">
-Select a field from the field dropdown.
-</Step>
-<Step title="Choose Operator And Value">
-Pick an operator and enter the value.
-</Step>
-<Step title="Add The Condition">
-Click **Add Condition** or the add control in the condition UI.
-</Step>
-<Step title="Run The Query">
-Click the page-level **Query** button to reload the grid with the condition applied.
-</Step>
-</Steps>
+<div className="ce-screenshot-light">
 
-![Where Field Dropdown](/images/17-data-view-where-field-dropdown.png)
+![A field selector inside the condition builder](/images/light/17-data-view-where-field-dropdown.png)
 
-## Operators
+</div>
+<div className="ce-screenshot-dark">
 
-The operator dropdown lists the database's own operator tokens, provided by the backend for the connected source. For a typical SQL database such as PostgreSQL, the set includes:
+![A field selector inside the condition builder](/images/dark/17-data-view-where-field-dropdown.png)
 
-- `=`, `!=`, `<>`
-- `>`, `>=`, `<`, `<=`
-- `BETWEEN`, `NOT BETWEEN`
-- `LIKE`, `NOT LIKE`, `ILIKE`, `NOT ILIKE`
-- `IN`, `NOT IN`
-- `IS NULL`, `IS NOT NULL`
+</div>
 
-The exact list varies by database.
+Choose the field first. The source and field type determine which comparisons are available. A numeric comparison on an amount has a different meaning from a text comparison on a name.
 
-![Equals Operator](/images/59-where-operator-equals.png)
+## Check the rule against known records
 
-![Not Equals Operator](/images/62-where-operator-not-equals.png)
+For an exact lookup, use an identifier and equality. For a range, choose the boundary deliberately. “Greater than 100” excludes 100, while “greater than or equal to 100” includes it.
 
-![Greater Than Operator](/images/60-where-operator-greater-than.png)
+When combining conditions, review how the builder groups them. A rule that requires both conditions can return a very different set from a rule that accepts either one. Run the filter and compare a few records to the question you are trying to answer.
 
-![Less Than Operator](/images/61-where-operator-less-than.png)
+<div className="ce-screenshot-light">
 
-![Greater Than Or Equal Operator](/images/63-where-operator-gte.png)
+![An applied condition badge](/images/light/18-data-view-where-conditions-badge.png)
 
-![Less Than Or Equal Operator](/images/64-where-operator-lte.png)
+</div>
+<div className="ce-screenshot-dark">
 
-## Multiple Conditions
+![An applied condition badge](/images/dark/18-data-view-where-conditions-badge.png)
 
-Add multiple conditions when you need a narrower result set. Conditions are combined by the current builder logic and applied when you click **Query**.
+</div>
 
-![Multiple Where Conditions](/images/39-data-view-multiple-conditions.png)
+The condition badge tells you filters are configured. It does not tell you whether the values are correct or whether you have run the revised request yet. After editing a condition, click **Run** again.
 
-## Edit Or Remove Conditions
+## Remove or troubleshoot a condition
 
-Use the condition controls in the WHERE condition UI to edit or remove an existing condition, then click **Query** again to refresh the grid.
+Remove the condition and run the request again to return to the unfiltered result. If a filter returns no records, try one condition at a time. Check the value's type and spelling, and confirm you are viewing the intended database and schema.
 
-## Search Versus WHERE
+The builder can open in a popover or a larger sheet. Change that preference in [Settings](/features/settings).
 
-| Feature | Behavior |
-|---------|----------|
-| Search field | Searches/highlights values in the currently loaded rows |
-| WHERE condition | Sends a server-side filter and changes the result set after **Query** |
+## Choose a query for more complex work
 
-Use WHERE conditions for real filtering. Use Search to quickly find a value in the rows already visible.
-
-## Related Pages
-
-<CardGroup cols={2}>
-<Card title="Filtering And Searching" icon="filter" href="/data/filtering-searching">
-Compare quick search and server-side filters.
-</Card>
-<Card title="Data Export Analysis" icon="file-export" href="/guides/tutorials/data-export-analysis">
-Filter before exporting.
-</Card>
-</CardGroup>
+Use [Scratchpad](/query/writing-queries) for joins, grouping, calculated fields, or a predicate that is easier to read as a query. The grid's **Search** field serves a different purpose: it locates text in the page already loaded and does not add a database condition.

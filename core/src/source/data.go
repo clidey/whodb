@@ -68,6 +68,7 @@ type FieldConstraints struct {
 	Primary          bool
 	Unique           bool
 	Identity         bool
+	Computed         bool
 	DefaultValue     *string
 	AllowedValues    []string
 	CheckMin         *float64

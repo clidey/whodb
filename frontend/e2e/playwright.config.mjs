@@ -99,6 +99,7 @@ const gatewayBrowser = {
 };
 
 export default defineConfig({
+  metadata: { uiFeatures: JSON.parse(process.env.WHODB_E2E_UI_FEATURES ?? "{}") },
   globalSetup: "./support/global-setup.mjs",
   testDir: "./tests",
   testIgnore: ["**/postgres-screenshots*", "**/accessibility*"],

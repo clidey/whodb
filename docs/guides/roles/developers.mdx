@@ -1,155 +1,39 @@
 ---
-title: "Developers"
-description: "Use WhoDB in development workflows with the current UI"
+title: "WhoDB for developers"
+description: "Trace application state from schema to records, then keep a reproducible query."
 ---
 
-# Developers
+# WhoDB for developers
 
-WhoDB is useful during development for inspecting database state, running SQL, generating test data, and validating changes.
+When an application behaves unexpectedly, WhoDB helps you follow a request into the database and see the state it actually produced. Use a development connection for experiments and a read-only account when investigating an environment you should not change.
 
-## Recommended Setup
+## Trace a request to its records
 
-Use a dedicated development database separate from production.
+Take an identifier from the application's response or logs. Open **Tables**, find the relevant object, and inspect **Info** to check the identifier's field name and type. In **Data**, use **Filter** to retrieve that record from the database.
 
-Examples:
+Follow related records through **Graph** or a join in Scratchpad. For an order endpoint, this might mean checking the order, its items, and the referenced user. Check the active connection before each investigation, particularly when development and production have similar schemas.
 
-```bash
-createdb myapp_dev
-```
+## Keep a reproduction you can rerun
 
-```bash
-mysql -e "CREATE DATABASE myapp_dev;"
-```
+Create a Scratchpad page for the issue. Put the initial lookup, related-record query, and final verification query in separate cells. Rerun the verification after making the application request through your usual API client or test runner.
 
-```bash
-touch myapp_dev.sqlite
-```
+<div className="ce-screenshot-light">
 
-Connect WhoDB to development credentials, not production write credentials.
+![Queries and results kept in separate Scratchpad cells](/images/light/48-scratchpad-multiple-cells-results.png)
 
-![Login Form](/images/03-login-form-filled.png)
+</div>
+<div className="ce-screenshot-dark">
 
-## Inspect Schema And Rows
+![Queries and results kept in separate Scratchpad cells](/images/dark/48-scratchpad-multiple-cells-results.png)
 
-Open **Storage Units**.
+</div>
 
-![Storage Unit List](/images/05-storage-unit-list.png)
+Copy the final SQL into the issue or test repository with sensitive values removed. Include the fixture and the expected result. Scratchpad pages and history are local to the browser, so another developer does not automatically receive them.
 
-Use **Describe** to inspect metadata and columns. Use **Data** to inspect rows.
+## Prepare test state
 
-![Explore Table](/images/07-explore-users-table.png)
+Use [Import](/data/importing) to load a known CSV or Excel fixture into a disposable table. Use [mock data](/advanced/mock-data) when approximate values are enough. Review keys and relationships before using generated data to test application behavior.
 
-![Data View](/images/10-data-view-table-content.png)
+Keep application schema changes in migrations under version control. A successful manual edit proves that a database accepted the change; the migration is what lets teammates and deployment environments reproduce it.
 
-This is the main structure-and-data workflow.
-
-## Debug With Scratchpad
-
-Open **Scratchpad** from the sidebar and run SQL with the blue run button or `Cmd/Ctrl + Enter`.
-
-![Scratchpad Query](/images/28-scratchpad-code-editor.png)
-
-Useful development checks:
-
-```sql
-SELECT COUNT(*) AS total
-FROM users;
-```
-
-```sql
-SELECT *
-FROM orders
-WHERE status = 'failed'
-ORDER BY created_at DESC
-LIMIT 50;
-```
-
-Scratchpad history opens from the cell history button or the cell options menu.
-
-![Query History](/images/33-scratchpad-query-history.png)
-
-## Generate Test Data
-
-When supported for a table, open mock data generation from the table/header context menu or press `Cmd/Ctrl + Shift + G` while the table is focused.
-
-![Mock Data Dialog](/images/22-data-view-mock-data-dialog.png)
-
-Use append for most development workflows. Use overwrite only when you intentionally want to replace existing rows.
-
-![Append Mode](/images/71-mock-data-append-mode.png)
-
-## Edit Development Data
-
-Use row context menus or keyboard shortcuts when your credentials allow writes:
-
-- `Enter` or `Cmd/Ctrl + E` edits the focused row.
-- `Cmd/Ctrl + Delete` or `Cmd/Ctrl + Backspace` starts delete for the focused row.
-- **Add Row** opens a right-side sheet from below the grid.
-
-![Edit Row](/images/14-data-view-edit-row-dialog.png)
-
-## Export Samples
-
-Use grid export for sample data.
-
-![Export Dialog](/images/20-data-view-export-dialog.png)
-
-Export formats are CSV, Excel `.xlsx`, and JSON Lines for records from sources like MongoDB when supported.
-
-For reproducible local fixtures, prefer native database tools or checked-in seed scripts.
-
-## Visualize Relationships
-
-Use **Graph** to understand relationships before writing joins.
-
-![Graph View](/images/24-graph-view-schema-topology.png)
-
-Graph nodes render metadata and loaded columns directly in each card.
-
-## Current Shortcuts To Know
-
-| Area | Shortcut | Action |
-|------|----------|--------|
-| Global | `Cmd/Ctrl + B` | Toggle sidebar |
-| Global | `Cmd/Ctrl + K` | Command palette |
-| Table | `Cmd/Ctrl + R` | Refresh data |
-| Table | `Cmd/Ctrl + A` | Select visible rows |
-| Table | `Cmd/Ctrl + E` | Edit focused row |
-| Table | `Cmd/Ctrl + Shift + E` | Open export |
-| Table | `Cmd/Ctrl + Shift + G` | Open mock data |
-| Scratchpad | `Cmd/Ctrl + Enter` | Run query |
-| Scratchpad | `Cmd/Ctrl + U` | Clear editor |
-
-## Docker Development Example
-
-```yaml
-services:
-  db:
-    image: postgres:16
-    environment:
-      POSTGRES_DB: myapp_dev
-      POSTGRES_USER: dev
-      POSTGRES_PASSWORD: dev123
-    ports:
-      - "5432:5432"
-
-  whodb:
-    image: clidey/whodb:latest
-    ports:
-      - "8080:8080"
-    depends_on:
-      - db
-```
-
-Use `db` as the host in WhoDB.
-
-## Related Pages
-
-<CardGroup cols={2}>
-<Card title="Scratchpad Introduction" icon="code" href="/query/scratchpad-intro">
-Run and organize SQL.
-</Card>
-<Card title="Mock Data" icon="wand" href="/advanced/mock-data">
-Generate development data.
-</Card>
-</CardGroup>
+For terminal inspection and assistant integrations, continue with [CLI & MCP](/features/cli-and-mcp). For an endpoint investigation, use [Inspect the data behind an API](/use-cases/api-development).

@@ -1,122 +1,42 @@
 ---
-title: Database Documentation
-description: Practical ways to document your databases using WhoDB - database comments, schema diagram exports, and version-controlled SQL
+title: "Document a database investigation"
+description: "Keep diagrams, SQL, assumptions, and verification together in version control."
 ---
 
-# Database Documentation
+# Document a database investigation
 
-Good database documentation lives as close to the data as possible. This guide covers the documentation practices that work well alongside WhoDB: database-side comments, exported schema diagrams, and version-controlled SQL.
+Document an investigation so someone else can understand the question and repeat the check without your browser session. The record should explain what you looked at, why you chose that query, and what the result establishes.
 
-## Use Database Comments
+## Record the question and context
 
-The most durable place to document a table or column is the database itself. Comments stored in the catalog travel with the schema, survive tool changes, and are always one query away — run them from WhoDB's [Scratchpad](/query/scratchpad-intro) whenever you need to read or update them:
+Start with the source environment, database, schema, date, and question. State any business definition the query relies on.
 
-```sql
--- PostgreSQL
-COMMENT ON TABLE customers IS
-  'Core customer accounts. Owned by Sales Ops. Soft-delete only.';
+For example, a note about an order total should say whether cancelled orders count, which currency or amount field is used, and which timestamp defines the reporting period. Those choices are part of the answer, not incidental details.
 
-COMMENT ON COLUMN customers.customer_tier IS
-  'Subscription level: free, standard, professional, enterprise. Default free.';
+If you are investigating one record, include its non-sensitive identifier and the reason it was selected. Avoid copying unrelated personal or business data into the note.
+
+## Keep executable evidence
+
+Save the query as text, along with the parameters needed to run it. Include a small redacted result or a description of the expected outcome.
+
+A practical investigation record can use this structure:
+
+```text
+Question: What needs to be established?
+Source: Environment, database, and schema.
+Query: The statement and its input parameters.
+Checks: Known records or counts used for verification.
+Result: What the evidence shows and what remains unresolved.
 ```
 
-```sql
--- MySQL / MariaDB
-ALTER TABLE customers
-  COMMENT = 'Core customer accounts. Owned by Sales Ops. Soft-delete only.';
+Keep important SQL outside browser history. A screenshot of a query can help a discussion, but text is easier to run, review, and maintain.
 
-ALTER TABLE customers
-  MODIFY COLUMN customer_tier VARCHAR(50)
-  COMMENT 'Subscription level: free, standard, professional, enterprise.';
-```
+## Add a focused diagram
 
-What to capture in comments:
+Use Graph to select the relevant objects and download the view. Explain the join path beside it. A diagram records the metadata available at capture time, so update it when the schema or investigation changes.
 
-- Business purpose of the table and who owns it
-- Valid values and defaults for enum-like columns
-- Known data quality issues ("nulls possible in pre-2016 rows")
-- Sensitivity flags for PII columns
+## Document access without secrets
 
-<Tip>
-Keep comments short and factual. Longer context — retention policies, runbooks, incident history — belongs in your team's regular documentation system, linked from a short pointer in the comment if needed.
-</Tip>
+Record connection aliases and network requirements without including passwords, tokens, private keys, or credential-bearing URLs. For server-configured CE profiles, explain which instance provides the profile and who is allowed to reach it.
 
-## Export Schema Diagrams from the Graph View
-
-WhoDB's [graph view](/visualization/graph-view) renders your schema as an interactive diagram of tables and foreign-key relationships. Use the download/export action in the lower-right graph controls to save the diagram as an image for your documentation.
-
-Good uses for exported diagrams:
-
-- Architecture and onboarding docs — a current picture of the schema beats prose
-- Design review artifacts before and after a migration
-- Spotting undocumented or missing relationships while you write schema docs
-
-Re-export after schema changes so diagrams in your docs don't drift from reality.
-
-## Share SQL Through Version Control
-
-WhoDB's [Scratchpad](/query/scratchpad-intro) is where you build and refine queries, but Scratchpad pages are stored per-browser — they are not shared between team members or machines. Treat Scratchpad as a workbench, and store the finished SQL in version control.
-
-A simple repository layout works well:
-
-```
-queries/
-├── analytics/
-│   ├── daily_sales_summary.sql
-│   └── user_retention.sql
-├── reporting/
-│   └── customer_invoices.sql
-└── operational/
-    └── health_checks.sql
-```
-
-Give each committed query a short header so the next reader has context:
-
-```sql
--- Query: Monthly revenue by region
--- Purpose: Finance reporting dashboard
--- Dependencies: sales, customers
--- Expected runtime: < 5 seconds
-
-SELECT
-  c.region,
-  DATE_TRUNC('month', s.sale_date) AS month,
-  SUM(s.amount) AS total_revenue
-FROM sales s
-JOIN customers c ON s.customer_id = c.id
-GROUP BY c.region, DATE_TRUNC('month', s.sale_date)
-ORDER BY month DESC, total_revenue DESC;
-```
-
-The workflow:
-
-1. Build and test the query in Scratchpad against a development database
-2. Copy the final SQL into your repository with a header comment
-3. Review it like any other code change (pull request)
-4. Paste it back into Scratchpad whenever someone needs to run it
-
-## Document Connections with Environment-Defined Profiles
-
-Connection details are documentation too. Instead of a wiki page of hosts and ports that goes stale, define connection profiles as environment variables on your WhoDB deployment — they appear on the login page for everyone, and the deployment config becomes the single source of truth:
-
-```bash
-export WHODB_POSTGRES_1='{"alias":"prod-readonly","host":"prod-db.internal","user":"whodb_readonly","database":"myapp_prod","port":"5432","password":"..."}'
-```
-
-See [Database Connectivity](/features/database-connectivity) for the full profile format, and keep the actual secrets in your secret manager rather than committed files.
-
-## Keep It Current
-
-<Warning>
-Outdated documentation is worse than no documentation. Update comments and re-export diagrams as part of the same change that alters the schema, not as a separate cleanup task.
-</Warning>
-
-A lightweight cadence is enough:
-
-- **With every schema migration**: update affected table/column comments
-- **After notable schema changes**: re-export the graph diagram used in docs
-- **Quarterly**: prune queries in the repository that are no longer used
-
-## Summary
-
-Documentation that lives in the database (comments), in version control (SQL files), and in exported diagrams stays useful because it sits in the same workflow as the changes themselves. WhoDB produces the diagrams from the graph view and gives you the Scratchpad to develop and read the SQL you commit.
+Use [Collaboration](/best-practices/collaboration) for sharing practices, and [Query history](/query/query-history) when you need to recover an earlier working statement.

@@ -20,12 +20,23 @@ type File struct {
 
 // Manifest is the app.json metadata used by the local CLI.
 type Manifest struct {
-	Name               string   `json:"name"`
-	Description        string   `json:"description"`
-	DefaultPage        string   `json:"defaultPage"`
-	Ontologies         []string `json:"ontologies"`
-	ReadOnlyOntologies []string `json:"readOnlyOntologies"`
-	Functions          []string `json:"functions"`
+	Behaviors          map[string]BehaviorBinding `json:"behaviors,omitempty"`
+	Runtime            *RuntimeMetadata           `json:"runtime,omitempty"`
+	Name               string                     `json:"name"`
+	Description        string                     `json:"description"`
+	DefaultPage        string                     `json:"defaultPage"`
+	Ontologies         []string                   `json:"ontologies"`
+	ReadOnlyOntologies []string                   `json:"readOnlyOntologies"`
+	Functions          []string                   `json:"functions"`
+}
+
+// BehaviorBinding exposes one named ontology command, independently of UI handlers.
+// Existing app ontology grants and native behaviour policies remain mandatory.
+type BehaviorBinding struct {
+	Values   map[string]json.RawMessage `json:"values,omitempty"`
+	Output   map[string]json.RawMessage `json:"output,omitempty"`
+	Ontology string                     `json:"ontology"`
+	Action   string                     `json:"action"`
 }
 
 // Workspace is a checked app folder and its publishable files.
@@ -36,6 +47,7 @@ type Workspace struct {
 }
 
 type pageTree struct {
+	Layout  string    `json:"layout"`
 	Version int       `json:"version"`
 	Root    *treeNode `json:"root"`
 	Effects []struct {
@@ -44,6 +56,9 @@ type pageTree struct {
 }
 
 type treeNode struct {
+	Props struct {
+		Ref string `json:"ref"`
+	} `json:"props"`
 	ID       string            `json:"id"`
 	Type     string            `json:"type"`
 	On       map[string]string `json:"on"`
@@ -144,6 +159,12 @@ func Read(dir string) (*Workspace, error) {
 	if _, ok := contents["pages/"+workspace.Manifest.DefaultPage+"/tree.json"]; !ok {
 		return nil, fmt.Errorf("app.json: defaultPage %q has no tree.json", workspace.Manifest.DefaultPage)
 	}
+	if err := checkBehaviorBindings(workspace.Manifest.Behaviors); err != nil {
+		return nil, err
+	}
+	if err := checkRuntimeAssets(workspace, contents); err != nil {
+		return nil, err
+	}
 	for _, page := range workspace.Pages {
 		path := "pages/" + page + "/tree.json"
 		var tree pageTree
@@ -152,6 +173,18 @@ func Read(dir string) (*Workspace, error) {
 		}
 		if tree.Version != 1 || tree.Root == nil {
 			return nil, fmt.Errorf("%s: expected version 1 and a root node", path)
+		}
+		if tree.Layout != "" {
+			var layout treeNode
+			if err := jsonFile(contents, "shared/trees/"+tree.Layout+".json", &layout); err != nil {
+				return nil, err
+			}
+			tree.Root, err = expandAppTree(contents, &layout, []string{tree.Layout}, tree.Root)
+		} else {
+			tree.Root, err = expandAppTree(contents, tree.Root, nil, nil)
+		}
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", path, err)
 		}
 		seen := map[string]bool{}
 		var visit func(*treeNode) error
@@ -200,6 +233,21 @@ func jsonFile(files map[string]string, path string, target any) error {
 }
 
 func checkHandler(files map[string]string, page, handler string) error {
+
+	directory := "pages/" + page + "/scripts/"
+	name := handler
+	if strings.HasPrefix(handler, "shared:") {
+		directory = "shared/scripts/"
+		name = strings.TrimPrefix(handler, "shared:")
+	}
+	if _, exists := files[directory+name+".js"]; exists {
+		return nil
+	}
+	if module, _, qualified := strings.Cut(name, "."); qualified {
+		if _, exists := files[directory+module+".js"]; exists {
+			return nil
+		}
+	}
 	if handler == "" {
 		return fmt.Errorf("handler name is empty")
 	}
@@ -222,6 +270,59 @@ func checkHandler(files map[string]string, page, handler string) error {
 	}
 	if _, ok := files["pages/"+page+"/scripts/"+handler+".js"]; !ok {
 		return fmt.Errorf("script %q is missing at pages/%s/scripts/%s.js", handler, page, handler)
+	}
+	return nil
+}
+
+func expandAppTree(files map[string]string, node *treeNode, stack []string, slot *treeNode) (*treeNode, error) {
+	if node == nil {
+		return nil, fmt.Errorf("tree node is missing")
+	}
+	if node.Type == "Slot" {
+		if slot == nil {
+			return nil, fmt.Errorf("layout content slot has no page root")
+		}
+		return expandAppTree(files, slot, stack, nil)
+	}
+	if node.Type == "Include" {
+		ref := node.Props.Ref
+		for _, parent := range stack {
+			if parent == ref {
+				return nil, fmt.Errorf("shared tree cycle: %v -> %s", stack, ref)
+			}
+		}
+		var fragment treeNode
+		if err := jsonFile(files, "shared/trees/"+ref+".json", &fragment); err != nil {
+			return nil, err
+		}
+		fragment.ID = node.ID
+		var content *treeNode
+		if len(node.Children) == 1 {
+			content = node.Children[0]
+		}
+		return expandAppTree(files, &fragment, append(append([]string{}, stack...), ref), content)
+	}
+	result := *node
+	result.Children = nil
+	for _, child := range node.Children {
+		expanded, err := expandAppTree(files, child, stack, slot)
+		if err != nil {
+			return nil, err
+		}
+		result.Children = append(result.Children, expanded)
+	}
+	return &result, nil
+}
+
+func checkBehaviorBindings(bindings map[string]BehaviorBinding) error {
+	for name, binding := range bindings {
+		if strings.TrimSpace(name) == "" || strings.TrimSpace(binding.Ontology) == "" || strings.TrimSpace(binding.Action) == "" {
+			return fmt.Errorf("app.json: behaviour %q requires a name, ontology and action", name)
+		}
+		switch binding.Action {
+		case "create", "update", "delete":
+			return fmt.Errorf("app.json: behaviour %q must expose a named command, not CRUD", name)
+		}
 	}
 	return nil
 }

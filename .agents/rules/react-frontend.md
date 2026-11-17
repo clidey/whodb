@@ -12,53 +12,16 @@ paths:
 cd frontend && pnpm lint && pnpm typecheck && pnpm run build:ce
 ```
 
-## Lint Tooling
-- **Lint**: `oxlint` (Rust-based, 50-100x faster than ESLint) — `pnpm lint` / `pnpm lint:fix`
-- **Type check**: `tsc --noEmit` — `pnpm typecheck`
-- **Formatting**: `gofmt` (Go), `pnpm lint:fix` (TS/TSX via oxlint)
-
 ## UI Component Library: @clidey/ux
-
-WhoDB uses `@clidey/ux` (Clidey's shared component library). **Always use existing components before creating custom ones.**
-
-### Available Components (import from `@clidey/ux`)
-- **Layout**: Sidebar, Card, Tabs, Accordion, Resizable panels, ScrollArea, Separator
-- **Forms**: Input, SearchInput, TextArea, Select, SearchSelect, Checkbox, Switch, Label
-- **Feedback**: Alert, AlertDialog, Dialog, Drawer, Sheet, Toaster/toast, Spinner, Skeleton, Progress, EmptyState
-- **Navigation**: Breadcrumb, Pagination, Command palette, ContextMenu, DropdownMenu, Tooltip
-- **Data**: Table, VirtualizedTableBody, Tree, StackList, Badge, Chart
-- **Actions**: Button, ButtonGroup
-- **Theme**: ThemeProvider, useTheme, ModeToggle
-
-### Usage Pattern
-```typescript
-import { Button, Card, CardHeader, CardTitle, CardContent, Input, toast } from '@clidey/ux';
-```
-
-### Component Source (always up to date)
-Before using an unfamiliar component, read its source directly:
-- Installed: `frontend/node_modules/@clidey/ux/dist/` (type declarations)
-- Full source: `../ux/src/components/ui/<component>.tsx` (if the repo is cloned as a sibling)
-- Each component uses CVA (class-variance-authority) for variants — read the `variants` object to see all options
-
-### Rules
-- Never reimplement what `@clidey/ux` already provides (buttons, inputs, dialogs, cards, tables, etc.)
-- Use `cn()` from `@clidey/ux` for class merging (Tailwind + clsx)
-- Use `toast()` from `@clidey/ux` for notifications (Sonner-based)
-- Import from `@clidey/ux` directly, not from internal paths
-- Wrap interactive children in ux triggers (`DropdownMenuTrigger`, `TooltipTrigger`, `PopoverTrigger`, `DialogTrigger`, ...) **without** `asChild`; the library infers it for `Button`, `Badge`, `SidebarMenuButton` and intrinsic `button`/`a`/`span`/`div`, so one DOM button is rendered. Only pass `asChild` for non-ux elements that forward refs (react-router `Link`, your own `forwardRef` components). Never slot a fragment, text, array, conditional, or a component from the deny list in `frontend/scripts/trigger-children.json`; `pnpm lint` runs `check-trigger-children.mjs` to enforce this.
-- For new shared UI patterns not in `@clidey/ux`, add to `frontend/src/components/` and mention it may be a candidate for upstream
+- Use `@clidey/ux` components before writing custom ones. Read the installed types in `frontend/node_modules/@clidey/ux/dist/`; variants live in each component's CVA `variants` object.
+- Wrap interactive children in ux triggers (`DropdownMenuTrigger`, `TooltipTrigger`, `PopoverTrigger`, `DialogTrigger`, ...) **without** `asChild`; the library infers it for `Button`, `Badge`, `SidebarMenuButton` and intrinsic `button`/`a`/`span`/`div`, so one DOM button is rendered. Pass `asChild` only for non-ux elements that forward refs (react-router `Link`, your own `forwardRef` components). Never slot a fragment, text, array, conditional, or a component on the deny list in `frontend/scripts/trigger-children.json`; `pnpm lint` enforces this.
+- New shared UI patterns go in `frontend/src/components/`; mention when one may belong upstream in `@clidey/ux`.
 
 ## GraphQL
-- Define operations in `.graphql` files, then `pnpm run generate`
-- Import generated hooks from `@graphql` alias — never inline `gql` strings
+- Define operations in `.graphql` files under `frontend/src/`; the agent hook regenerates after operation and schema edits (`pnpm run generate` otherwise). `pnpm lint` rejects inline `gql`, imports that bypass the `@graphql` alias, ux internal paths, and `tailwind-merge`/`clsx`/`sonner` in place of ux's `cn()`/`toast()`.
 
-## Localization
-- All user-facing strings use `t('key')` from `useTranslation('component-path')`
-- No fallback strings — `t('key', 'fallback')` is a compile error
-- Check `common.yaml` first before adding keys — shared terms live there
-- Add or update `en_US` keys only unless the user explicitly asks for other languages
-- Do not run translation tooling automatically; non-English translation is manual
+## Documentation
+- Exported functions, components and types need JSDoc. No lint rule checks this.
 
 ## Keyboard Shortcuts
 - Centralized in `frontend/src/utils/shortcuts.ts`
@@ -67,8 +30,7 @@ Before using an unfamiliar component, read its source directly:
 - Wails accelerators in `desktop-common/app.go` must be updated separately
 
 ## Testing
-- Preserve all `data-testid` attributes when refactoring — E2E tests depend on them
-- Search `grep -r "data-testid" frontend/e2e/` to see what selectors tests use
+- Keep every `data-testid` when extracting or refactoring components; E2E selectors depend on them. Check `grep -r "data-testid" frontend/e2e/` before changing markup.
 
 ## UI Change Verification
 After any visible UI change:

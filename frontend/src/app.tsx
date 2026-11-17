@@ -41,8 +41,11 @@ import {PageTitleUpdater} from "./hooks/use-page-title";
 import {getEdition} from "./config/edition";
 import {LoadingPage} from "./components/loading";
 import {LanguageSwitchOverlay} from "./components/language-switch";
+import {useTranslation} from "./hooks/use-translation";
+import {SourceImport} from "./components/source-import";
 
 export const App = () => {
+    const {t} = useTranslation('common');
     const [updateSettings] = useMutation(UpdateSettingsDocument);
     const {data: settingsConfigData} = useQuery(SettingsConfigDocument);
     const dispatch = useAppDispatch();
@@ -164,11 +167,12 @@ export const App = () => {
 
   return (
     <TourProvider>
-      {createPortal(<Toaster position="bottom-right" />, document.body)}
+      {createPortal(<Toaster position="bottom-right" richColors={false} toastOptions={{closeButtonAriaLabel: t('close')}} />, document.body)}
       <LanguageSwitchOverlay />
       <div className="h-[100vh] w-[100vw]" id="whodb-app-container">
         {KeyboardShortcutsHelpModal}
         {CommandPaletteModal}
+        <SourceImport />
         {featureFlags.healthMonitoring && (
           <>
             <ServerDownOverlay />

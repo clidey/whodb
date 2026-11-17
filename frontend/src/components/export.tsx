@@ -26,13 +26,13 @@ import {
     SheetContent,
     SheetFooter,
     SheetTitle,
-    toast
-} from "@clidey/ux";
+    toast,
+    IconShare as ShareIcon,
+} from '@clidey/ux';
 import { type SourceObjectRefInput } from "@graphql";
 import type {FC} from "react";
 import { useCallback, useEffect, useMemo, useState} from "react";
 import {useExportToCSV} from "./hooks";
-import {ShareIcon} from "./heroicons";
 import {VisuallyHidden} from "@radix-ui/react-visually-hidden";
 import {useTranslation} from "@/hooks/use-translation";
 import {useSourceContract} from "@/hooks/useSourceContract";
@@ -127,7 +127,7 @@ export const Export: FC<IExportProps> = ({
 
     return (
             <Sheet open={open} onOpenChange={onOpenChange}>
-                <SheetContent side="right" className="max-w-md w-full p-8" data-testid="export-dialog" footer={
+                <SheetContent side="right" className="max-w-md w-full" data-testid="export-dialog" footer={
                     <SheetFooter className="flex gap-sm px-0">
                         <div className="text-xs text-muted-foreground mb-8">
                             <p className="font-medium mb-1">{t('exportDetailsTitle')}</p>

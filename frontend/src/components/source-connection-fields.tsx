@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-import { Button, cn, Input, Label, Switch } from '@clidey/ux';
+import { Button, cn, Input, Label, Switch, IconChevronDown as ChevronDownIcon, IconSource as CircleStackIcon, SearchSelect } from '@clidey/ux';
 import { ph } from '@/utils/privacy';
 import {
     SourceConnectionFieldKind,
     SourceConnectionFieldSection,
 } from '@graphql';
 import type { ReactElement, Ref } from 'react';
-import { SearchSelect } from '@/components/ux';
-import { ChevronDownIcon, CircleStackIcon } from '@/components/heroicons';
 import type { SourceTypeItem } from '@/config/source-types';
 import {
     findConnectionFieldByKey,

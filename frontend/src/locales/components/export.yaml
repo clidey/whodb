@@ -9,6 +9,7 @@ en_US:
   exportFailed: Export Failed
   exportDetailsTitle: "Export Details:"
   csvHeaders: Headers Include Column Names
+  utf8Encoding: UTF-8 Encoding
   csvDelimiter: Customizable Delimiter
   excelFormat: Excel XLSX Format
   excelHeaders: Formatted Headers with Styling

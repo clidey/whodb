@@ -1,88 +1,62 @@
 ---
-title: "Export Options"
-description: "Export table data and query results from WhoDB as CSV or Excel, with delimiter options and full-table or selected-row exports"
+title: "Export data"
+description: "Choose the rows and format you need: CSV, Excel, or supported JSON Lines."
 ---
 
-# Export Options
+# Export data
 
-WhoDB exports data from the table grid and Scratchpad result grids. The export mode is determined by where you start the export, not by a mode selector inside the dialog.
+Export data when you need a file for a spreadsheet, a script, or another person. Start by deciding which records belong in that file. WhoDB can export a whole object, selected rows, or a query result, and those choices have different scopes.
 
-![Export Dialog](/images/20-data-view-export-dialog.png)
+## Choose the scope
 
-## Entry Points
+| You need | Use |
+| --- | --- |
+| All records in an object | Clear row selection, then choose **Export** in its Data view |
+| A few specific loaded records | Select the rows, then **Export** in the selection bar |
+| Records matching a condition, a join, or an aggregate | Run a query in Scratchpad and export its result |
 
-Current export entry points include:
+The Data toolbar's **Export** action uses the current selection when records are selected. With no selection, it requests the object's contents from the backend. The context menu also offers explicit **Export All as CSV** and **Export All as Excel** actions that export the whole object. It does not carry the grid's current filters into the export. A filtered grid is therefore not proof that an all-data export will contain only those rows. Use a query result when the file needs a specific predicate or set of columns.
 
-- **Export All** from the table footer/action area.
-- **Export Selected** after selecting rows in the grid.
-- Header or row context-menu export actions.
-- Export from Scratchpad result grids.
+<div className="ce-screenshot-light">
 
-![Export Selected Rows](/images/46-export-selected-rows-dialog.png)
+![The export dialog](/images/light/20-data-view-export-dialog.png)
 
-## Formats
+</div>
+<div className="ce-screenshot-dark">
 
-CE currently supports:
+![The export dialog](/images/dark/20-data-view-export-dialog.png)
 
-- **CSV** for tabular rows.
-- **Excel `.xlsx`** for tabular rows.
-- **JSON Lines (NDJSON)** for records from sources like MongoDB when supported.
+</div>
 
-![CSV Format Option](/images/65-export-format-csv-option.png)
+For example, to send a colleague only a customer's orders, run a query for that customer and export the returned result. Avoid exporting the entire orders table and relying on the recipient to remove unrelated records.
 
-![Excel Format Option](/images/66-export-format-excel-option.png)
+## Choose a format
 
-<Note>
-For SQL backups or migration dumps, use your database's native tools such as `pg_dump`, `mysqldump`, or `mongodump`.
-</Note>
+| Format | Use it for |
+| --- | --- |
+| CSV | Tabular data that another tool will read |
+| Excel (`.xlsx`) | A workbook that a person will review in a spreadsheet application |
+| JSON Lines / NDJSON | Supported document-source records where each line represents one record |
 
-## CSV Delimiters
+<div className="ce-screenshot-light">
 
-CSV export supports delimiter choices:
+![Export format choices](/images/light/21-data-view-export-format-dropdown.png)
 
-- Comma
-- Semicolon
-- Pipe
+</div>
+<div className="ce-screenshot-dark">
 
-![Comma Delimiter](/images/67-export-delimiter-comma.png)
+![Export format choices](/images/dark/21-data-view-export-format-dropdown.png)
 
-![Semicolon Delimiter](/images/68-export-delimiter-semicolon.png)
+</div>
 
-![Pipe Delimiter](/images/69-export-delimiter-pipe.png)
+For CSV, choose the delimiter expected by the receiving tool. Comma, semicolon, and pipe are available. If a file opens as one long column, check the delimiter selected by the spreadsheet importer before changing the source data.
 
-## Excel Export
+CSV and Excel contain exported values. They are not complete database backups: they do not preserve the full schema, permissions, indexes, or a database-native restore process.
 
-Excel export creates an `.xlsx` file from tabular data.
+## Download and check the file
 
-Choose Excel to download an `.xlsx` file from the current grid or result set.
+Confirm the format, then export. In a browser, the file is downloaded through the browser's normal download flow. Desktop builds use a native save dialog.
 
-## Filtering Before Export
+Open the file and check its headers, a few known records, and its scope. For a report, keep the query and extraction date with the file so someone can reproduce it later. Query results in Chat also offer export, but you should inspect the generated query before using its output.
 
-To export filtered data:
-
-1. Add WHERE conditions or adjust the grid query.
-2. Click **Query** so the grid reloads.
-3. Use **Export All** from the filtered grid.
-
-Use the grid and the downloaded file to verify row counts, selected columns, and file size.
-
-## Selected Rows
-
-To export selected rows:
-
-1. Select one or more rows with the row checkboxes or table selection shortcuts.
-2. Use the export action for selected rows.
-3. Choose a supported format.
-
-![Row Selection](/images/44-table-row-selection-single.png)
-
-## Related Pages
-
-<CardGroup cols={2}>
-<Card title="Viewing Data" icon="table" href="/data/viewing-data">
-Open the grid that provides export actions.
-</Card>
-<Card title="Batch Operations" icon="list-check" href="/advanced/batch-operations">
-Select rows and apply grid-level actions.
-</Card>
-</CardGroup>
+For repeatable terminal exports, see [CLI & MCP](/features/cli-and-mcp). For a restorable database copy, use [native backup tools](/resources/integrations/backup-tools).

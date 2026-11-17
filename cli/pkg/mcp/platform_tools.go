@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 	"time"
@@ -70,6 +71,7 @@ type platformClient interface {
 	LineageNeighbors(context.Context, string, string, string) (*platformapi.LineageGraph, error)
 	ProjectLineage(context.Context, string) (*platformapi.LineageGraph, error)
 	Transforms(context.Context, string) ([]platformapi.Transform, error)
+	TransformRun(context.Context, string, string, string) (*platformapi.TransformRun, error)
 	TransformRuns(context.Context, string, string, int) ([]platformapi.TransformRun, error)
 	Functions(context.Context, string, []string) ([]platformapi.Function, error)
 	Function(context.Context, string, string, []string) (*platformapi.Function, error)
@@ -757,6 +759,7 @@ func platformToolDefinitions() []*mcp.Tool {
 	tools = append(tools, platformBundleToolDefinitions()...)
 	tools = append(tools, platformReadToolDefinitions()...)
 	tools = append(tools, platformExtendedReadToolDefinitions()...)
+	tools = append(tools, platformCapabilityReadDefinitions()...)
 	tools = append(tools, platformExtensionDefinitions()...)
 	return append(tools, platformWorkflowToolDefinitions()...)
 }
@@ -1659,6 +1662,14 @@ func loadHostedPlatformToolSession(ctx context.Context) (*platformToolSession, e
 	if runtime := platformRuntimeFromContext(ctx); runtime != nil {
 		return runtime.loadSession(ctx)
 	}
+	if _, present := os.LookupEnv(platformapi.APIKeyEnv); present {
+		scope, _, err := platformRequestScope(ctx)
+		if err != nil {
+			return nil, err
+		}
+		return loadAutomationPlatformToolSession(ctx, scope)
+	}
+
 	cfg, err := config.LoadConfigWithoutSecrets()
 	if err != nil {
 		return nil, fmt.Errorf("cannot load hosted WhoDB config: %w", err)

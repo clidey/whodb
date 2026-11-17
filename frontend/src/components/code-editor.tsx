@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-import {useTheme} from "@clidey/ux";
+import { useTheme, IconEye as EyeIcon, IconEyeOff as EyeSlashIcon } from '@clidey/ux';
 import {json} from "@codemirror/lang-json";
 import {markdown} from "@codemirror/lang-markdown";
 import {sql, type SQLNamespace} from "@codemirror/lang-sql";
 import {Compartment, EditorState, RangeSet} from "@codemirror/state";
 import {oneDark} from "@codemirror/theme-one-dark";
 import {EditorView, gutter, GutterMarker, lineNumbers} from "@codemirror/view";
-import {EyeIcon, EyeSlashIcon} from "./heroicons";
 import classNames from "classnames";
 import {basicSetup} from "codemirror";
 import type {FC} from "react";

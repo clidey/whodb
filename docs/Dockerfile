@@ -1,5 +1,5 @@
 # Keep the Node version in sync with .nvmrc at the CE repo root (CI reads it).
-FROM node:26.12.0-alpine3.24 AS builder
+FROM node:26.12.1-alpine3.24 AS builder
 
 WORKDIR /app
 
@@ -8,9 +8,9 @@ COPY . .
 # Install dory globally and build docs.
 # Pin the version so rebuilds are deterministic and upgrades are explicit
 # (an unpinned install gets cached by Docker layers and silently goes stale).
-RUN npm install -g @clidey/dory@1.0.5 && dory build
+RUN npm install -g @clidey/dory@1.13.0 && dory check && dory build && node scripts/check-build.mjs
 
-FROM nginxinc/nginx-unprivileged:alpine
+FROM nginx/nginx-unprivileged:alpine
 
 USER root
 

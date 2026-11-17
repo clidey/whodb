@@ -1,168 +1,47 @@
 ---
-title: "Complete Beginner Guide"
-description: "Step-by-step beginner walkthrough of WhoDB: connect a database, browse tables, run your first queries, and explore your schema"
+title: "Start with your first database"
+description: "Learn what WhoDB connects to and how to inspect data without writing a query first."
 ---
 
-# Complete Beginner Guide
+# Start with your first database
 
-This guide walks through the current WhoDB CE interface from login to data viewing, filtering, Scratchpad, export, and graph exploration.
+WhoDB is a client for a database you already have. It gives you a way to inspect that database's structure and records before you need to write a query.
 
-## 1. Open WhoDB
+## Understand the connection
 
-Start WhoDB and open the web UI:
+A network database runs on a server and accepts connections at a hostname and port. Your database account determines which data you can read or change. Ask the person who manages the database for its type, host, port, database name, username, password, and TLS settings.
 
-```text
-http://localhost:8080
+For SQLite or DuckDB, you may have a database file instead. That file must be accessible to the machine running WhoDB. Opening WhoDB in your browser does not give a remote server access to files on your laptop.
+
+Install WhoDB with [Installation](/installation), then follow [First connection](/first-login). Use a development database or an account limited to reading while learning.
+
+## Read your first table
+
+After connecting, open **Tables** and choose an object you recognize. For a SQL database, a table holds records in rows and named fields in columns. For example, a users table might have one row per user and columns for ID, username, and email.
+
+Expand **Info** to see the field definitions, then choose **Data** to inspect records.
+
+<div className="ce-screenshot-light">
+
+![A table opened in the grid](/images/light/09-data-view-users-table.png)
+
+</div>
+<div className="ce-screenshot-dark">
+
+![A table opened in the grid](/images/dark/09-data-view-users-table.png)
+
+</div>
+
+A page only shows part of a large table. Use pagination to move through it. To find a particular record, open **Filter**, choose a field such as ID, enter a value, and click **Run**. Text Search only looks through the rows already loaded.
+
+## Try a small query
+
+Open **Scratchpad** on a SQL source and run:
+
+```sql
+SELECT 1;
 ```
 
-![WhoDB Login Page](/images/01-login-page.png)
+This checks query execution without depending on a table. Continue with [Writing queries](/query/writing-queries) to select records from your own schema. The result appears directly below the editor.
 
-Choose a database type, enter connection details, and click **Connect**.
-
-![Database Type Dropdown](/images/02-login-database-type-dropdown.png)
-
-![Login Form Filled](/images/03-login-form-filled.png)
-
-Advanced options are optional and depend on the selected database.
-
-![Advanced Options](/images/04-login-advanced-options.png)
-
-## 2. Understand The Sidebar
-
-After connecting, the sidebar shows the active profile, optional database/schema selectors, and the primary routes available for the connected source.
-
-![Storage Unit List With Sidebar](/images/06-storage-unit-list-with-sidebar.png)
-
-Common routes are:
-
-- **Chat** when AI chat is available.
-- **Storage Units** for objects such as tables, views, and collections.
-- **Graph** when relationship metadata is available.
-- **Scratchpad** for SQL queries.
-- **Settings** in the lower sidebar.
-
-Use `Cmd/Ctrl + B` to toggle the sidebar.
-
-## 3. Browse Storage Units
-
-Open **Storage Units**. Search filters object names on this page.
-
-![Storage Unit List](/images/05-storage-unit-list.png)
-
-Each card has:
-
-- **Describe** to expand object metadata and columns.
-- **Data** to open rows for that object.
-
-![Explore Users Table](/images/07-explore-users-table.png)
-
-Use **Describe** for structure and **Data** for rows.
-
-## 4. View Table Data
-
-Click **Data** on an object card.
-
-![Data View Users Table](/images/09-data-view-users-table.png)
-
-The data page includes:
-
-- Search for currently loaded rows.
-- Page size and pagination.
-- WHERE conditions.
-- Query button.
-- Sortable columns.
-- Row context menu.
-- Add Row when inserts are supported.
-- Export and mock data actions when supported.
-
-## 5. Search And Filter
-
-Use the search field to find values in the rows currently loaded in the grid. Search scrolls/highlights matches; use WHERE conditions for server-side filtering.
-
-![Search Highlight](/images/19-data-view-search-highlight.png)
-
-Use WHERE conditions for real filtering:
-
-1. Click **Add** beside **Where condition**.
-2. Select field, operator, and value.
-3. Add the condition.
-4. Click **Query** to reload the grid.
-
-![Where Conditions Popover](/images/16-data-view-where-conditions-popover.png)
-
-## 6. Sort And Paginate
-
-Click a column header to sort. Shift-click another header to add a secondary sort.
-
-![Sorted Column](/images/38-data-view-sorted-column.png)
-
-Use the page-size dropdown and pagination controls at the bottom of the grid.
-
-![Page Size Dropdown](/images/15-data-view-page-size-dropdown.png)
-
-## 7. Add, Edit, And Delete Rows
-
-When the source and credentials allow writes:
-
-- **Add Row** opens a right-side sheet below the grid controls.
-- Row context menu **Edit Row** opens an edit sheet.
-- Row context menu **Delete Row** opens a confirmation dialog.
-
-![Data View Add Row Dialog](/images/11-data-view-add-row-dialog.png)
-
-![Data View Edit Row Dialog](/images/14-data-view-edit-row-dialog.png)
-
-![Context Menu](/images/13-data-view-context-menu.png)
-
-## 8. Use Scratchpad
-
-Open **Scratchpad** from the sidebar.
-
-![Scratchpad Main View](/images/27-scratchpad-main-view.png)
-
-Type SQL and run it with the blue run button or `Cmd/Ctrl + Enter`.
-
-![Query Results](/images/29-scratchpad-query-results.png)
-
-Scratchpad supports pages and stacked cells. Add pages with the plus tab. Add cells from the hover controls inside a page.
-
-![Scratchpad Multiple Pages](/images/31-scratchpad-multiple-pages.png)
-
-The main editor shortcuts are `Cmd/Ctrl + Enter` to run and `Cmd/Ctrl + U` to clear.
-
-## 9. Export Data
-
-Use export from the grid or Scratchpad result table.
-
-![Export Dialog](/images/20-data-view-export-dialog.png)
-
-Current CE formats are:
-
-- CSV.
-- Excel `.xlsx`.
-- JSON Lines for records from sources like MongoDB when supported.
-
-For SQL backups and migration dumps, use native database tools.
-
-## 10. Explore Graph
-
-Open **Graph** from the sidebar.
-
-![Graph View Schema Topology](/images/24-graph-view-schema-topology.png)
-
-Use the graph sidebar to select objects. Nodes render metadata and loaded columns directly in the card. The lower-left controls zoom, fit view, and interaction mode. The lower-right actions include download/export and layout controls.
-
-![Graph View With Controls](/images/25-graph-view-with-controls.png)
-
-Clicking a graph node can load columns. Use the node's **Data** button to open the object's data page.
-
-## Related Pages
-
-<CardGroup cols={2}>
-<Card title="Quick Start" icon="rocket" href="/quick-start">
-Shorter path through the same current UI.
-</Card>
-<Card title="Keyboard Shortcuts" icon="keyboard" href="/resources/keyboard-shortcuts">
-See the implemented shortcut map.
-</Card>
-</CardGroup>
+You can browse and query without AI. If you want help drafting SQL in plain language, [configure a Chat provider](/ai/setup-providers) after you are comfortable identifying the right tables and fields.

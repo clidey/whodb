@@ -17,6 +17,7 @@
 package redis
 
 import (
+	"context"
 	"net"
 	"strconv"
 
@@ -26,6 +27,7 @@ import (
 	"github.com/clidey/whodb/core/src/common/ssl"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
+	"github.com/clidey/whodb/core/src/sourcedial"
 )
 
 func DB(config *engine.PluginConfig) (*redis.Client, error) {
@@ -67,6 +69,16 @@ func DB(config *engine.PluginConfig) (*redis.Client, error) {
 			return nil, err
 		}
 		opts.TLSConfig = tlsConfig
+	}
+
+	// A custom Dialer replaces go-redis's own dialing, TLS included.
+	if dial := sourcedial.Dialer(); dial != nil {
+		opts.Dialer = func(ctx context.Context, network, addr string) (net.Conn, error) {
+			if opts.TLSConfig != nil {
+				return sourcedial.DialTLS(ctx, dial, network, addr, opts.TLSConfig)
+			}
+			return dial(ctx, network, addr)
+		}
 	}
 
 	client := redis.NewClient(opts)

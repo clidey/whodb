@@ -1,70 +1,38 @@
 ---
-title: "Desktop App"
-description: "Current desktop-specific behavior in the Wails-based WhoDB app"
+title: "Use WhoDB on your desktop"
+description: "Work with native database file pickers, save dialogs, menus, and window persistence."
 ---
 
-# Desktop App
+# Use WhoDB on your desktop
 
-WhoDB ships a desktop app built with Wails. It uses the same frontend and backend logic as the web app, but adds native desktop integrations for files, menus, dialogs, and window management.
+Use the desktop app when your database work benefits from native file selection, save dialogs, and application menus. It provides the same core browsing and query workflow as the browser app while running as a local application.
 
-## Desktop-Specific Features
+For example, you can open a local SQLite file, inspect its rows, and save an exported result to a chosen folder without configuring a separate browser-hosted server.
 
-<CardGroup cols={2}>
-<Card title="Native File Dialogs" icon="desktop">
-Use native save dialogs for exports and native open dialogs for SQLite and DuckDB file selection.
-</Card>
-<Card title="Application Menu" icon="table">
-The desktop shell adds File, View, Database, Window, and Help menus with native accelerators.
-</Card>
-<Card title="Window State" icon="desktop">
-Window size and position are persisted between launches.
-</Card>
-<Card title="About Dialog" icon="question">
-The Help menu exposes a native About dialog.
-</Card>
-</CardGroup>
+## Install or update
 
-## Current Menu Actions
+Choose the desktop artifact for your operating system from [WhoDB releases](https://github.com/clidey/whodb/releases). Follow the installation flow for that artifact, then use [First connection](/first-login) to connect to a database.
 
-The desktop menu currently wires native actions for:
+When updating, install the newer desktop release over the existing app. Keep a copy of important queries and the connection details needed to reconnect; browser-style workspace state is not a replacement for those records.
 
-- new connection
-- export data
-- import data (Cmd/Ctrl + I)
-- refresh
-- toggle sidebar
-- execute query
-- new scratchpad page
-- disconnect
-- documentation and issue links
-- About dialog
+## Work with local files
 
-A standard Edit menu (cut, copy, paste, and related actions) is also included for native clipboard handling.
+Use the native file picker for SQLite or DuckDB files. Check the file you selected before making a write, especially if you keep several copies of the same development database.
 
-## File-Based Databases
+Exports use a native save dialog. Choose a filename and destination that identify the result, then check the saved file. For a report or investigation, keep the query and extraction date alongside it.
 
-The desktop app adds native file pickers for:
+## Use native menus
 
-- SQLite database files
-- DuckDB database files
+Application menus provide connection, import/export, refresh, sidebar, query execution, Scratchpad page, and disconnect actions. The standard Edit menu provides native clipboard operations.
 
-This makes file-based logins smoother than the plain browser flow.
+Use the menu when you want to discover an available command or confirm its keyboard shortcut. The Help menu opens documentation and issue reporting, and the About dialog identifies the application version.
 
-## Credential Storage
+Window size and position persist between launches, so you can return to a layout that suits your work.
 
-The desktop app stores saved connection credentials in the operating system keyring (under the service name "WhoDB"). It falls back to local config storage only if no keyring is available on the machine.
+## Saved credentials
 
-## Updates
+Desktop saved connections use the operating system keyring where available, with local configuration storage when a keyring is unavailable. Access to your operating system account therefore matters to the security of those connections.
 
-Update the desktop app by downloading the latest version from the [GitHub releases page](https://github.com/clidey/whodb/releases) and installing it over your existing copy.
+Use database accounts with the permissions needed for the task, just as you would in a browser deployment. A local application does not limit what the connected database account can do.
 
-## Related Pages
-
-<CardGroup cols={2}>
-<Card title="Installation" icon="download" href="/installation">
-Choose between Docker, binary, source, and desktop workflows.
-</Card>
-<Card title="CLI & MCP" icon="code" href="/features/cli-and-mcp">
-See the separate terminal and MCP tooling surface.
-</Card>
-</CardGroup>
+The [CLI](/features/cli-and-mcp) is a separate terminal interface. Use it when you need shell commands, scripts, or an MCP server rather than a desktop window.

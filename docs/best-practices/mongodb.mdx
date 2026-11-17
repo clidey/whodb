@@ -1,65 +1,38 @@
 ---
-title: "Using WhoDB with MongoDB"
-description: "How to connect, browse, and query MongoDB databases in WhoDB"
+title: "Use WhoDB with MongoDB"
+description: "Connect, inspect, and query MongoDB using the matching CE source workflow."
 ---
 
-# Using WhoDB with MongoDB
+# Use WhoDB with MongoDB
 
-This page covers what is specific to MongoDB when you use it through WhoDB: connecting, browsing collections, and running shell-style commands in the Scratchpad.
+Use the MongoDB workflow when you need to inspect documents whose fields can vary between records. Begin with a small sample, identify the fields relevant to the question, and check more than one document before assuming the collection has one fixed shape.
 
-## Connecting
+## Connect to the collection's database
 
-Select **MongoDB** on the login page. The form asks for:
+Choose **MongoDB** and enter the endpoint, database, credentials, and advanced options required by the deployment. Use the matching compatible-product entry when connecting to a catalog product such as FerretDB.
 
-- **Hostname** (required) — you can also paste a full `mongodb://` or `mongodb+srv://` connection URL and WhoDB parses it into the fields.
-- **Username**, **Password**, and **Database** (optional, depending on your server's auth setup).
+For a server-configured profile, use `WHODB_MONGODB` or its numbered variant. Authentication and TLS requirements belong to the actual endpoint; do not copy them from an unrelated deployment merely because it is also MongoDB-compatible.
 
-Advanced options include:
+## Inspect documents
 
-- **Port** — defaults to `27017`.
-- **URL Params** — extra connection-string parameters such as `?authSource=admin`.
-- **DNS Enabled** (`false`) — set to `true` for SRV (`mongodb+srv`) connections such as MongoDB Atlas.
-- **SSL mode** — Disabled, Enabled (TLS with certificate verification), or Insecure (TLS without certificate verification).
+Open a collection's **Data** view and read several records. Look for missing fields, null values, nested structures, and differences in value type. A field present in the first document may be absent from the next one.
 
-<Tip>
-For production databases, connect with a read-only user. WhoDB edits documents directly from the grid, so browsing with a read-only user prevents accidental changes.
-</Tip>
+Use an exact identifier or a source-supported condition when investigating one record. A text search of the loaded page does not establish that a matching document is absent from the collection.
 
-## How WhoDB Presents MongoDB
+## Query with native syntax
 
-- **Collections** are the storage units, scoped to the selected database; `system.*` collections are hidden. Views appear read-only, and indexes are listed as metadata.
-- Documents can be browsed as a grid or as JSON, and edited, inserted, or deleted from the UI.
-- Because documents are schema-less, field and type information is **sampled** from existing documents rather than read from a fixed schema.
+Scratchpad uses shell-style MongoDB commands rather than SQL. Start with a query for a known collection, such as:
 
-## WhoDB Features with MongoDB
+```javascript
+db.users.find({})
+```
 
-- **Scratchpad** — runs shell-style commands like `db.users.find({age: {$gt: 30}})`. Supported methods: `find`, `findOne`, `insertOne`, `insertMany`, `updateOne`, `updateMany`, `deleteOne`, `deleteMany`, `countDocuments`, `aggregate`, `distinct`, `createIndex`, `drop`, and `db.dropDatabase()`. `find` results are capped at 1,000 documents, and aggregation pipelines may not use `$where`, `$function`, `$accumulator`, `$out`, or `$merge`. See [Scratchpad](/query/scratchpad-intro).
-- **Where conditions** — the filter builder offers MongoDB query operators such as `eq`, `ne`, `gt`, `lt`, `in`, `exists`, `regex`, and `elemMatch`. See [Where Conditions](/advanced/where-conditions).
-- **Graph view** — relationships between collections are inferred from naming conventions (for example, a `user_id` field pointing at `users`), since MongoDB has no declared foreign keys. See [Graph View](/visualization/graph-view).
-- **Mock data generation** — generates documents for collections. See [Mock Data](/advanced/mock-data).
-- **Export** — CSV, Excel, and additionally **NDJSON** (JSON Lines), which preserves nested document structure. See [Export Options](/advanced/export-options).
+Replace `users` with your collection. Add filtering using the syntax supported by the connected source. Check the [MongoDB manual](https://www.mongodb.com/docs/manual/) for the operators you intend to use.
 
-## Tips
+## Edit and move document data
 
-- Prefer NDJSON export when documents contain nested objects or arrays; flat CSV cells stringify them.
-- Use a filter in `find` or the where-condition builder before browsing very large collections.
-- Sampled field lists may miss fields that only appear in rare documents — check the JSON view of individual documents when in doubt.
+Use the document editing controls provided by the source for supported writes, then read the stored document again. Check the structure as well as the changed value.
 
-## Compatible Databases
+JSON Lines export is available for supported document records. Inspect the file before passing it to another tool, especially when documents have different fields or nested values.
 
-FerretDB and Amazon DocumentDB speak the MongoDB wire protocol and appear as their own entries on the login page, with the same collection-based experience in WhoDB.
-
-## Further Reading
-
-For index design, replica sets, sharding, and backup guidance, see the official [MongoDB documentation](https://www.mongodb.com/docs/).
-
-## Related Pages
-
-<CardGroup cols={2}>
-<Card title="Database Connectivity" icon="plug" href="/features/database-connectivity">
-Connection details for all supported databases.
-</Card>
-<Card title="Export Options" icon="download" href="/advanced/export-options">
-CSV, Excel, and NDJSON export.
-</Card>
-</CardGroup>
+See [Connection options](/features/database-connectivity) and [Supported databases](/resources/supported-databases) for catalog availability and the tools shown for each source.

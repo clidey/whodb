@@ -40,7 +40,7 @@ var assets embed.FS
 func main() {
 	common.RunApp(common.RunConfig{
 		Edition: "ce",
-		Title:   "WhoDB",
+		Title:   "WhoDB Community",
 		Assets:  assets,
 		Schema:  graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}}),
 		InitializeEngine: func() {
