@@ -33,6 +33,10 @@ desktop-ce/build/*
 !desktop-ce/build/darwin/
 !desktop-ce/build/darwin/*.plist
 !desktop-ce/build/appicon.png
+# Fixed Windows manifest identity, so the app name (which has a space) never reaches it.
+!desktop-ce/build/windows/
+desktop-ce/build/windows/*
+!desktop-ce/build/windows/wails.exe.manifest
 *.bak
 frontend/package.json.md5
 frontend/wailsjs/

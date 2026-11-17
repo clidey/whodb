@@ -152,6 +152,9 @@ func addPlatformTool[In, Out any](server *mcp.Server, tool *mcp.Tool, handler mc
 	if err != nil {
 		panic(fmt.Sprintf("%s input schema: %v", tool.Name, err))
 	}
+	if supplied, ok := tool.InputSchema.(*jsonschema.Schema); ok {
+		inputSchema = supplied
+	}
 	targetSchema, err := jsonschema.For[PlatformWorkspaceTarget](nil)
 	if err != nil {
 		panic(err)

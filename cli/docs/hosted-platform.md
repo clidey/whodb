@@ -142,3 +142,54 @@ Policies, tool selection and per-call workspace targeting are covered in the
   to the CLI config.
 - `sources config` and `whodb_platform_source_config` redact secret-looking
   values in human and JSON output.
+
+## Edge execution and operational visibility
+
+Function reads include execution mode, live behavior, assigned runner and current
+run status when the host advertises those fields. Set `--execution-mode ASYNC`
+(or `LIVE` with `--live-behavior SERVICE`) when creating a Python edge function;
+assign it with `functions update <id> --edge-runner-id <runner-id>`. Clearing the
+assignment uses `--edge-runner-id ""`. Promote the reviewed function before running it.
+The device owner must separately enroll/pair the device and grant execution access.
+Device credentials, consent and runner downloads remain in the browser/device flow.
+
+```bash
+whodb edge runners --format json
+whodb edge start <function-id> --runner-id <runner-id> --input '{"task":"refresh"}'
+whodb edge runs <function-id>
+whodb edge run <run-id> --format json
+whodb edge schedule --function-id <function-id> --runner-id <runner-id> --interval-seconds 60
+whodb edge schedules <function-id>
+whodb edge stop-schedule <schedule-id>
+whodb apps access <app-id> --search alice --limit 20 --offset 0
+whodb transforms history --per-transform 5 --limit 20
+whodb agent-sessions list
+whodb agent-sessions get <session-id>
+whodb agent-sessions cancel <session-id>
+whodb analysis get <artifact-id>
+whodb analysis rows <dataset-artifact-id> --limit 20
+whodb analysis rows <dataset-artifact-id> --limit 20 --cursor '<nextCursor>'
+whodb usage current --org acme --format json
+whodb usage entitlements --org acme
+whodb usage feature <feature-key> --org acme
+```
+
+Writes retain the existing confirmation prompt (`--yes` explicitly approves the
+CLI action). Edge intervals range from 10 to 3600 seconds and are pinned to a
+promoted function version. Inspect the same run after a timeout rather than
+starting a duplicate. App access requires sharing permission and returns effective
+users and direct team grants; follow offsets until the returned total is reached.
+AI sessions belong to the signed-in user; inspection does not resume AI generation.
+Analysis artifacts preserve warnings and provenance. Follow `nextCursor` until it
+is absent and inspect execution metadata before treating results as complete.
+Usage and entitlements require only an organization and never modify billing.
+
+MCP exposes the corresponding `whodb_platform_edge_*`, `app_access`,
+`project_transform_runs`, `agent_sessions`, `agent_session`, `analysis_artifact`,
+`analysis_artifact_page`, `usage`, `entitlements` and `feature_access` tools.
+MCP writes reuse the confirmed generic tools: `action` with resource
+`edge_function`/action `run`, `create` with resource `edge_schedule`, and `action`
+with resource `edge_schedule`/action `stop` or `agent_session`/action `cancel`.
+Read `whodb://platform/schema` for payloads. Preserve `idempotency_key` across
+MCP retries. All tools accept per-call workspace targeting; task profiles filter
+discovery without granting permissions.

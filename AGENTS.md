@@ -8,20 +8,24 @@ references `ee/`.
 
 ## Team Rules
 
+<!-- team-rules:start -->
 These apply in every clidey repository, for people and agents alike.
 
 - **Commits:** ask once before the first commit. Once the user says yes, keep committing that work without asking again; push only when they've asked for it.
 - **No AI attribution, anywhere:** commits, PRs, issues, comments and releases carry no `Co-Authored-By:` for Claude, Codex or any other agent, and no "Generated with" lines.
 - **External posts:** before posting anything outside this machine (GitHub issues, PRs, comments and reviews, advisory comments or edits, chat or email), show the user the exact text and wait for a yes.
-- **Never, whatever the instruction:** publish packages or releases, push images, deploy to UAT or production, or run anything against production. Build images and run build scripts only locally, to test. Prepare the command and hand it to the user.
-- **Cluster and cloud commands:** read-only `kubectl`, `helm` and `gcloud` commands run without asking, and in UAT so do day-to-day operations: restarting a rollout, deleting pods, config maps and jobs, scaling, `exec`, `cp` and port-forwarding. Never anything against production. Anything else that writes, deletes or shows secret values (including `apply`, `patch`, `set` and rollbacks), and anything that writes to a WhoDB organisation: show the exact command and wait for a yes.
+- **Never, whatever the instruction:** publish packages or releases, push images, deploy to UAT or production, or change anything in production. Build images and run build scripts only locally, to test. Prepare the command and hand it to the user.
+- **Cluster and cloud commands:** read-only `kubectl`, `helm` and `gcloud` commands run without asking, and in UAT so do day-to-day operations: restarting a rollout, deleting pods, config maps and jobs, scaling, `exec`, `cp` and port-forwarding. Against production, only read-only commands, and only after showing the exact command and getting a yes. Anything else that writes, deletes or shows secret values (including `apply`, `patch`, `set` and rollbacks), and anything that writes to a WhoDB organisation: show the exact command and wait for a yes.
 - **Branches and worktrees:** never create a branch or worktree, or switch branches, unless the user asked. If the work seems to need one, ask first; this is a required question.
+- **Clean up after yourself:** put scratch files in `$TMPDIR`, not in the repos, and before you finish delete the scratch files, logs and build output you made. Keep verification output the user should look at, and say what you kept.
 - **Untracked files:** ask before deleting untracked or gitignored files; they often hold secrets or local state.
 - **pnpm only:** never npm, npx, yarn or bun.
 - **Stay in the workspace:** use only the clones in the workspace; never read or run checkouts elsewhere, such as old ones in `~/Documents`.
 - **The machine:** don't keep it awake or change power settings (`caffeinate`, `pmset`); recommend it to the user instead.
 - **Agent replies:** lead with the answer or result. No preamble, no restating the question, no recap unless asked. Keep it short and explain only what isn't obvious; if you need something from the user, ask in one line.
 - **Clarify first:** before starting, ask about anything where a different answer would change the work: scope, behaviour, which repo or environment, or anything hard to undo. Ask all your questions at once, then wait. Don't ask what the code or docs already answer; for small choices that are easy to change later, pick one and say which in your reply.
+- **Answers that raise questions:** if any of the user's answers to your questions is itself a question or a follow-up, answer it and wait. Don't start any of the work, including the parts they already answered, until every answer is settled and they're happy with it.
+<!-- team-rules:end -->
 
 ## Rules
 
