@@ -39,7 +39,7 @@
     "remark-gfm": "4.0.1",
     "rxjs": "7.8.2",
     "tailwind-merge": "3.7.0",
-    "tailwindcss": "4.3.3",
+    "tailwindcss": "4.3.5",
     "uuid": "14.0.3"
   },
   "scripts": {
