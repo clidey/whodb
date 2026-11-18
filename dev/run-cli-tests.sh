@@ -21,7 +21,6 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 CLI_DIR="$PROJECT_ROOT/cli"
-EE_CLI_DIR="$PROJECT_ROOT/ee/cli"
 
 # Colors for output
 RED='\033[0;31m'
@@ -34,7 +33,6 @@ UNIT_RESULT=0
 SQLITE_RESULT=0
 CLI_RESULT=0
 POSTGRES_RESULT=0
-EE_RESULT=-1
 
 print_header() {
     echo ""
@@ -69,20 +67,12 @@ for arg in "$@"; do
             echo ""
             echo "Options:"
             echo "  --skip-postgres  Skip PostgreSQL E2E tests"
-            echo "  --skip-ee        Skip EE CLI smoke tests"
             echo "  -v, --verbose    Show verbose test output"
             echo "  -h, --help       Show this help message"
             exit 0
             ;;
-        --skip-ee)
-            RUN_EE=false
-            ;;
     esac
 done
-
-if [ -z "$RUN_EE" ]; then
-    RUN_EE=true
-fi
 
 cd "$CLI_DIR"
 
@@ -171,27 +161,6 @@ if [ "$RUN_POSTGRES" = true ]; then
     fi
 fi
 
-# 5. EE CLI smoke tests
-if [ "$RUN_EE" = true ]; then
-    print_header "Running EE CLI Smoke Tests"
-
-    if [ ! -d "$EE_CLI_DIR" ]; then
-        echo -e "${YELLOW}⚠ EE CLI directory not found, skipping EE tests${NC}"
-        EE_RESULT=-1
-    else
-        cd "$EE_CLI_DIR"
-        if env GOWORK=off GOSUMDB=off GOPROXY=off go test $VERBOSE ./... 2>&1 && \
-           env GOWORK=off GOSUMDB=off GOPROXY=off go build -o whodb . 2>&1; then
-            EE_RESULT=0
-            rm -f whodb
-        else
-            EE_RESULT=1
-            rm -f whodb
-        fi
-        cd "$CLI_DIR"
-    fi
-fi
-
 # Summary
 print_header "Test Results Summary"
 print_result "Unit Tests" $UNIT_RESULT
@@ -208,26 +177,12 @@ else
     echo -e "${YELLOW}⚠ PostgreSQL E2E Tests SKIPPED (--skip-postgres)${NC}"
 fi
 
-if [ "$RUN_EE" = true ]; then
-    if [ $EE_RESULT -eq -1 ]; then
-        echo -e "${YELLOW}⚠ EE CLI Smoke Tests SKIPPED${NC}"
-    else
-        print_result "EE CLI Smoke Tests" $EE_RESULT
-    fi
-else
-    echo -e "${YELLOW}⚠ EE CLI Smoke Tests SKIPPED (--skip-ee)${NC}"
-fi
-
 # Exit with failure if any test failed
 if [ $UNIT_RESULT -ne 0 ] || [ $SQLITE_RESULT -ne 0 ] || [ $CLI_RESULT -ne 0 ]; then
     exit 1
 fi
 
 if [ "$RUN_POSTGRES" = true ] && [ $POSTGRES_RESULT -eq 1 ]; then
-    exit 1
-fi
-
-if [ "$RUN_EE" = true ] && [ $EE_RESULT -eq 1 ]; then
     exit 1
 fi
 

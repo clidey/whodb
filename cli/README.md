@@ -1222,6 +1222,9 @@ writes immediately without confirmation.
 | `whodb_platform_ontology_reference_impact` | Dependents of one ontology reference |
 | `whodb_platform_transform_preview` | Run a transform graph without saving it |
 | `whodb_platform_service_accounts` | Service accounts and key metadata (no secrets) |
+| `whodb_platform_org_backup_status` | Organization backup jobs and permitted settings |
+| `whodb_platform_org_backup_scope` | Content and dependencies a backup selection covers (owner only) |
+| `whodb_platform_org_backup_notifications` | Backup failure notices addressed to the caller |
 | `whodb_platform_lineage_providers` | OpenLineage providers for the project |
 | `whodb_platform_user_owned_resources` | Resources owned by one member |
 | `whodb_platform_user_resource_access` | Resources one member can access and why |
@@ -1425,6 +1428,29 @@ Upload source paths are intentionally visible to the MCP client for review.
 They are excluded from WhoDB upload telemetry; client-side logging and retention
 are controlled by the MCP host. Other sensitive fields remain redacted, and
 persisted workflow payloads still reject local file paths.
+
+#### Organization backups
+
+Organization backups are encrypted recovery archives of WhoDB-owned organization content. They
+need a signed-in owner or admin; service accounts are refused. Commands print JSON and take
+`--host` and `--org`.
+
+```bash
+whodb backups status --org my-org
+whodb backups scope --org my-org --selection-file selection.json
+whodb backups create --org my-org
+whodb backups key generate --org my-org --out ./recovery-key.txt
+whodb backups key confirm --org my-org --id <key-id>
+whodb backups policy set --org my-org --file policy.json
+whodb backups download --org my-org --id <backup-id> --out ./backup.age
+whodb backups upload --org my-org --file ./backup.age --retention-days 30
+whodb backups restore preview --org my-org --id <backup-id> --key-file ./recovery-key.txt --mode copy
+whodb backups restore start --org my-org --id <restore-id> --digest <preview-digest> --yes
+```
+
+MCP has `whodb_platform_org_backup_status`, `_scope` and `_notifications` for reads and
+`_create` and `_policy_set` as confirmed writes. Recovery keys, archive transfer and restore are
+CLI and web UI only, so recovery material never enters a tool conversation.
 
 ### Transport Modes
 
