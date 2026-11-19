@@ -2,9 +2,14 @@ name: Security
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
   schedule:
     - cron: "0 6 * * 1"
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -12,6 +17,7 @@ permissions:
 
 jobs:
   security-scan:
+    if: github.event.pull_request.draft != true
     name: Security Scan
     runs-on: ubuntu-latest
 

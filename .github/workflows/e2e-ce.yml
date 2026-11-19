@@ -220,7 +220,7 @@ jobs:
         run: docker compose version
 
       - name: Run CLI tests
-        run: bash dev/run-cli-tests.sh --skip-ee -v
+        run: bash dev/run-cli-tests.sh -v
 
   backend-integration:
     name: Backend Integration Tests

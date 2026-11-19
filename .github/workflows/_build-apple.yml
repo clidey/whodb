@@ -301,7 +301,7 @@ jobs:
         if: matrix.enabled != false
         working-directory: ./desktop-ce
         run: |
-          APP_PATH="build/darwin/universal/WhoDB.app"
+          APP_PATH="build/darwin/universal/WhoDB Community.app"
           FRAMEWORKS_DIR="$APP_PATH/Contents/Frameworks"
           BAML_VERSION=$(grep 'github.com/boundaryml/baml ' ../core/go.mod | awk '{print $2}' | sed 's/^v//')
 
@@ -357,7 +357,7 @@ jobs:
           APPLE_DEVELOPER_ID_APPLICATION: ${{ secrets.APPLE_DEVELOPER_ID_APPLICATION }}
         working-directory: ./desktop-ce
         run: |
-          APP_PATH="build/darwin/universal/WhoDB.app"
+          APP_PATH="build/darwin/universal/WhoDB Community.app"
 
           if [ ! -d "$APP_PATH" ]; then
             echo "❌ ERROR: App bundle not found at $APP_PATH"
@@ -501,7 +501,7 @@ jobs:
         if: matrix.build-type == 'mas' && matrix.enabled != false
         working-directory: ./desktop-ce
         run: |
-          APP_PATH="build/darwin/universal/WhoDB.app"
+          APP_PATH="build/darwin/universal/WhoDB Community.app"
 
           if [ ! -d "$APP_PATH" ]; then
             echo "❌ ERROR: App bundle not found at $APP_PATH"

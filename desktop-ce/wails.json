@@ -1,6 +1,6 @@
 {
   "$schema": "https://wails.io/schemas/config.v2.json",
-  "name": "WhoDB",
+  "name": "WhoDB Community",
   "outputfilename": "whodb",
   "frontend:dir": "frontend",
   "frontend:install": "echo 'Frontend already built'",
@@ -12,7 +12,7 @@
   },
   "info": {
     "companyName": "Clidey Inc",
-    "productName": "WhoDB",
+    "productName": "WhoDB Community",
     "productVersion": "1.0.0",
     "copyright": "Copyright 2025 Clidey, Inc.",
     "comments": "Database Management Tool"

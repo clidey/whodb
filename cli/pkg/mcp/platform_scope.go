@@ -88,6 +88,13 @@ func platformRequestFromContext(ctx context.Context) *platformRequest {
 	return request
 }
 
+// platformRequestScope resolves the hosted workspace for one tool call and
+// reports whether the call named it explicitly. Precedence: the call's own
+// workspace argument, then the session default set by
+// whodb_platform_session_use, then the process scope from the
+// WHODB_PLATFORM_SESSION_* variables (which the mcp serve --platform-* flags
+// set). Fields still empty fall back to the saved CLI default in
+// loadHostedPlatformToolSession. A hosted runtime only serves its own host.
 func platformRequestScope(ctx context.Context) (platformapi.SessionScope, bool, error) {
 	request := platformRequestFromContext(ctx)
 	if runtime := platformRuntimeFromContext(ctx); runtime != nil {
@@ -144,6 +151,9 @@ func addPlatformTool[In, Out any](server *mcp.Server, tool *mcp.Tool, handler mc
 	inputSchema, err := jsonschema.For[In](nil)
 	if err != nil {
 		panic(fmt.Sprintf("%s input schema: %v", tool.Name, err))
+	}
+	if supplied, ok := tool.InputSchema.(*jsonschema.Schema); ok {
+		inputSchema = supplied
 	}
 	targetSchema, err := jsonschema.For[PlatformWorkspaceTarget](nil)
 	if err != nil {

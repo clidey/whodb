@@ -1,0 +1,16 @@
+{
+  "generated": [
+    {"paths": ["core/graph/generated.go", "core/graph/model/models_gen.go"], "source": "edit core/graph/schema.graphqls; the codegen hook then runs `go generate .` in core/"},
+    {"paths": ["frontend/src/generated/graphql.ts", "frontend/src/generated/schema-types.ts"], "source": "edit the schema or a frontend/src .graphql operation; the codegen hook then runs `pnpm run generate` in frontend/"},
+    {"paths": ["sdk/packages/go/gen/*", "sdk/packages/java/src/main/java/com/clidey/whodb/gen/*", "sdk/packages/python/src/whodb/_generated/*", "sdk/packages/rust/src/gen/*", "sdk/packages/typescript/src/generated/*"], "source": "edit sdk/spec/ or sdk/tools/render/, then run `node sdk/tools/generate-core.mjs`"},
+    {"paths": ["core/baml_client/*"], "source": "edit core/baml_src/*.baml, then run `baml-cli generate` (BAML 0.222.0) from core/"}
+  ],
+  "notes": [
+    {"paths": ["frontend/src/locales/*"], "run": "python3 dev/check-locale-edits.py {files}"}
+  ],
+  "before_finish": [
+    {"paths": ["cli/*"], "run": "cd cli && go build ./..."},
+    {"paths": ["frontend/src/*.ts", "frontend/src/*.tsx"], "run": "python3 dev/check-translation-keys.py {files}"},
+    {"paths": ["AGENTS.md", "CLAUDE.md", ".agents/*", ".claude/*", "dev/check-agent-*"], "run": "bash dev/check-agent-instructions.sh"}
+  ]
+}

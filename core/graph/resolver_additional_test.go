@@ -439,6 +439,26 @@ func TestMutationImportSQLValidatesSourcesAndExecutesScripts(t *testing.T) {
 		}
 	})
 
+	t.Run("preserves database execution errors in the result", func(t *testing.T) {
+		mock := testutil.NewPluginMock(engine.DatabaseType("Postgres"))
+		mock.RawExecuteFunc = func(*engine.PluginConfig, string, ...any) (*engine.GetRowsResult, error) {
+			return nil, errors.New("cannot execute CREATE TABLE in a read-only transaction")
+		}
+		setEngineMock(t, mock)
+
+		script := "CREATE TABLE demo(id INT);"
+		result, err := mutation.ImportSQL(ctx, model.ImportSQLInput{Script: &script})
+		if err != nil {
+			t.Fatalf("expected execution error to be returned as result, got %v", err)
+		}
+		if result.Status || result.Detail == nil || *result.Detail != importErrorSQLFailed {
+			t.Fatalf("expected SQL execution failure, got %#v", result)
+		}
+		if result.Message != "cannot execute CREATE TABLE in a read-only transaction" {
+			t.Fatalf("expected database error in message, got %q", result.Message)
+		}
+	})
+
 	t.Run("rejects sources without script execution", func(t *testing.T) {
 		mock := testutil.NewPluginMock(engine.DatabaseType("Memcached"))
 		setEngineMock(t, mock)

@@ -914,8 +914,9 @@ export const StorageUnitTable: FC<TableProps> = ({
 
     // Listen for menu import trigger
     useEffect(() => {
-        const handleImportTrigger = () => {
+        const handleImportTrigger = (event: Event) => {
             if (isImportSupported && allowImport) {
+                event.preventDefault();
                 setShowImport(true);
             }
         };
@@ -1024,13 +1025,6 @@ export const StorageUnitTable: FC<TableProps> = ({
             }
 
             // Mod combos (no Shift)
-            if (matchesShortcut(event, SHORTCUTS.importData)) {
-                if (isImportSupported && allowImport) {
-                    event.preventDefault();
-                    setShowImport(true);
-                }
-                return;
-            }
             if (matchesShortcut(event, SHORTCUTS.refresh)) {
                 event.preventDefault();
                 onRefresh?.();

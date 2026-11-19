@@ -37,7 +37,6 @@ run_tidy "CE desktop-ce" "$ROOT_DIR/desktop-ce"
 
 if [ -f "$ROOT_DIR/ee/go.mod" ]; then
   run_tidy "EE root" "$ROOT_DIR/ee"
-  run_tidy "EE cli" "$ROOT_DIR/ee/cli"
   run_tidy "EE desktop" "$ROOT_DIR/ee/desktop"
 else
   echo "EE module not present, skipping EE go mod tidy"

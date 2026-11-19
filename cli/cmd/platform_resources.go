@@ -93,6 +93,9 @@ var (
 	functionEntryPoint          string
 	functionTimeoutSeconds      int
 	functionMemory              string
+	functionEdgeRunnerID        string
+	functionExecutionMode       string
+	functionLiveBehavior        string
 	functionCPU                 string
 	functionFiles               []string
 	functionDependencies        []string
@@ -582,7 +585,7 @@ var functionGetCmd = platformIDCommand("get <function>", "Show hosted WhoDB func
 	if err != nil {
 		return nil, nil, err
 	}
-	rows := [][]any{{"id", fn.ID}, {"name", fn.Name}, {"language", fn.Language}, {"entry_point", fn.EntryPoint}, {"deployed", fn.IsDeployed}, {"files", len(fn.Files)}, {"dependencies", len(fn.Dependencies)}}
+	rows := [][]any{{"id", fn.ID}, {"name", fn.Name}, {"language", fn.Language}, {"entry_point", fn.EntryPoint}, {"execution_mode", fn.ExecutionMode}, {"live_behavior", fn.LiveBehavior}, {"edge_runner_id", fn.EdgeRunnerID}, {"current_run_status", optionalString(fn.CurrentRunStatus)}, {"deployed", fn.IsDeployed}, {"files", len(fn.Files)}, {"dependencies", len(fn.Dependencies)}}
 	return fn, tableResult([]string{"field", "value"}, rows), nil
 })
 var functionDescribeCmd = platformIDCommand("describe <function>", "Describe a hosted WhoDB function", readPlatformFunctionDetail)
@@ -1473,6 +1476,11 @@ func registerFunctionWriteFlags(command *cobra.Command) {
 	command.Flags().IntVar(&functionTimeoutSeconds, "timeout-seconds", 0, "function timeout in seconds")
 	command.Flags().StringVar(&functionMemory, "memory", "", "function memory request")
 	command.Flags().StringVar(&functionCPU, "cpu", "", "function CPU request")
+	command.Flags().StringVar(&functionEdgeRunnerID, "edge-runner-id", "", "assigned edge runner id; empty clears assignment")
+	if command == functionsCreateCmd {
+		command.Flags().StringVar(&functionExecutionMode, "execution-mode", "SYNC", "SYNC, ASYNC, or LIVE")
+		command.Flags().StringVar(&functionLiveBehavior, "live-behavior", "REQUEST", "REQUEST or SERVICE for LIVE execution")
+	}
 	command.Flags().StringArrayVar(&functionFiles, "file", nil, "function file as target-path=local-path; repeatable")
 	command.Flags().StringArrayVar(&functionDependencies, "dependency", nil, "function dependency as name[:version]; repeatable")
 	command.Flags().StringArrayVar(&functionProviderIDs, "provider-id", nil, "AI provider id allowed for the function; repeatable")
@@ -2422,9 +2430,12 @@ func buildFunctionCreatePayload(cmd *cobra.Command) (map[string]any, error) {
 		"timeoutSeconds": timeoutSeconds,
 		"memory":         defaultString(strings.TrimSpace(functionMemory), "256Mi"),
 		"cpu":            defaultString(strings.TrimSpace(functionCPU), "100m"),
+		"executionMode":  functionExecutionMode,
+		"liveBehavior":   functionLiveBehavior,
 		"files":          files,
 		"dependencies":   deps,
 	}
+	addChangedStringPayload(cmd, payload, "edge-runner-id", "edgeRunnerId", functionEdgeRunnerID)
 	addFunctionConfigPayload(cmd, payload)
 	if len(providerConfigs) > 0 {
 		payload["providerConfigs"] = providerConfigs
@@ -2443,6 +2454,7 @@ func buildFunctionUpdatePayload(cmd *cobra.Command) (map[string]any, error) {
 	addChangedStringPayload(cmd, payload, "entry-point", "entryPoint", functionEntryPoint)
 	addChangedStringPayload(cmd, payload, "memory", "memory", functionMemory)
 	addChangedStringPayload(cmd, payload, "cpu", "cpu", functionCPU)
+	addChangedStringPayload(cmd, payload, "edge-runner-id", "edgeRunnerId", functionEdgeRunnerID)
 	if cmd.Flags().Changed("timeout-seconds") {
 		if functionTimeoutSeconds <= 0 {
 			return nil, fmt.Errorf("--timeout-seconds must be positive")

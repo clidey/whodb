@@ -56,7 +56,7 @@ type View struct {
 type Action struct {
 	Kind         string `json:"kind"`
 	Selector     string `json:"selector,omitempty"`
-	Value        string `json:"value"`
+	Value        string `json:"value,omitempty"`
 	Milliseconds int    `json:"milliseconds,omitempty"`
 }
 
@@ -68,6 +68,20 @@ type Diagnostics struct {
 	HTTPResponses  []string `json:"http_error_responses,omitempty"`
 	ActionErrors   []string `json:"action_errors,omitempty"`
 	ScriptErrors   []string `json:"script_errors,omitempty"`
+}
+
+// MarshalJSON keeps an explicitly empty fill value while leaving actions that
+// do not take a value optional in generated MCP input schemas.
+func (a Action) MarshalJSON() ([]byte, error) {
+	type action Action
+	var value *string
+	if a.Kind == "fill" || a.Value != "" {
+		value = &a.Value
+	}
+	return json.Marshal(struct {
+		action
+		Value *string `json:"value,omitempty"`
+	}{action: action(a), Value: value})
 }
 
 // Options select one rendered app view for a local browser capture.
