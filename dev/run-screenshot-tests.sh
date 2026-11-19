@@ -34,6 +34,15 @@ echo "📸 WhoDB Screenshot Generation Environment"
 echo "=========================================="
 echo ""
 
+# Print every descendant PID of the given process, deepest first.
+descendant_pids() {
+    local child
+    for child in $(pgrep -P "$1" || true); do
+        descendant_pids "$child"
+        echo "$child"
+    done
+}
+
 # Cleanup function
 cleanup() {
     echo ""
@@ -60,14 +69,18 @@ cleanup() {
     fi
     rm -f "$PROJECT_ROOT/core/tmp/screenshot-server.pid"
 
-    # Stop frontend dev server
+    # Stop frontend dev server. FRONTEND_PID is the pnpm wrapper; Vite runs below
+    # it and survives the wrapper being killed, so stop its descendants too.
     if [ -n "${FRONTEND_PID:-}" ] && ps -p "$FRONTEND_PID" > /dev/null 2>&1; then
         echo "   Stopping frontend dev server (PID: $FRONTEND_PID)..."
-        kill "$FRONTEND_PID" || true
+        FRONTEND_PIDS="$(descendant_pids "$FRONTEND_PID") $FRONTEND_PID"
+        kill $FRONTEND_PIDS 2>/dev/null || true
         sleep 2
-        if ps -p "$FRONTEND_PID" > /dev/null 2>&1; then
-            kill -9 "$FRONTEND_PID" || true
-        fi
+        for pid in $FRONTEND_PIDS; do
+            if ps -p "$pid" > /dev/null 2>&1; then
+                kill -9 "$pid" || true
+            fi
+        done
     fi
 
     # Stop Docker services

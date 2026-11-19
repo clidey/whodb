@@ -46,7 +46,7 @@ for img in "$SOURCE_DIR"/*.png; do
     -quality 95 \
     "${OUT_DIR}/${filename}"
 
-  ((count++))
+  count=$((count + 1))
 done
 
 echo ""
