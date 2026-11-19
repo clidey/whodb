@@ -72,6 +72,8 @@ require_file_contains() {
   fi
 }
 
+# .claude/rules and .claude/skills hold only symlinks into .agents/ (Claude Code
+# reads rules and skills there); real files belong in .agents/.
 check_legacy_dir_has_no_files() {
   local dir="$1"
 
@@ -91,20 +93,15 @@ check_stale_paths() {
   local output
   local pattern
 
-  pattern='(^|[^~[:alnum:]_/.-])((\./)?(ee/)?\.claude/(docs|rules|skills)|(\./)?ee/docs/BILLING\.md|(\./)?docs/BILLING\.md)'
+  pattern='(^|[^~[:alnum:]_/.-])((\./)?\.claude/docs|(\./)?docs/BILLING\.md)'
 
-  if output="$(rg --hidden --line-number --color never "$pattern" . \
-    --glob '!.git/**' \
-    --glob '!**/node_modules/**' \
-    --glob '!**/dist/**' \
-    --glob '!**/build/**' \
-    --glob '!**/.cache/**' \
-    --glob '!**/coverage/**' \
-    --glob '!frontend/src/generated/**' \
-    --glob '!ee/frontend/src/generated/**' \
-    --glob '!**/.agents/skills/**' \
-    --glob '!dev/check-agent-instructions.sh' \
-    --glob '!.gitignore' 2>/dev/null)"; then
+  # Only this repository's files (tracked, plus untracked and not ignored);
+  # submodule contents (mode 160000 entries) are checked by their own
+  # repositories.
+  if output="$({ git ls-files -s | awk '$1 != "160000" { sub(/^[^\t]*\t/, ""); print }'; git ls-files --others --exclude-standard; } \
+    | grep -vE '(^|/)(node_modules|dist|build|coverage)/|^frontend/src/generated/|(^|/)\.agents/skills/|^dev/check-agent-instructions\.sh$|^\.gitignore$' \
+    | tr '\n' '\0' \
+    | xargs -0 rg --hidden --line-number --color never --no-messages "$pattern" 2>/dev/null)"; then
     printf '%s\n' "$output" >&2
     fail "stale legacy agent paths found"
   else
@@ -123,14 +120,6 @@ check_trailing_whitespace() {
     dev/check-agent-instructions.sh
   )
 
-  if [ -d ee ]; then
-    targets+=(
-      ee/AGENTS.md
-      ee/CLAUDE.md
-      ee/.agents
-    )
-  fi
-
   if output="$(rg --hidden --line-number --color never '[[:blank:]]+$' "${targets[@]}" \
     --glob '!**/.agents/skills/**' 2>/dev/null)"; then
     printf '%s\n' "$output" >&2
@@ -145,42 +134,31 @@ require_command rg
 require_file AGENTS.md
 require_file CLAUDE.md
 require_file .agents/README.md
-require_dir .agents/docs
 require_dir .agents/rules
-require_dir .agents/workflows
-require_file .agents/workflows/task-handoff.md
-require_file .agents/workflows/research-proof.md
-require_file .agents/workflows/review-checklist.md
+require_dir .agents/skills
+require_file .agents/skills/task-handoff/SKILL.md
+require_file .agents/skills/research-proof/SKILL.md
+require_file .agents/skills/review-checklist/SKILL.md
 
 require_file_contains AGENTS.md '\.agents/README\.md' 'AGENTS.md links the shared agent index'
-require_file_contains .agents/README.md '\.agents/docs/' '.agents/README.md links agent docs'
 require_file_contains .agents/README.md '\.agents/rules/' '.agents/README.md links agent rules'
-require_file_contains .agents/README.md '\.agents/workflows/' '.agents/README.md links agent workflows'
-require_file_contains .agents/README.md '\.agents/workflows/task-handoff\.md' '.agents/README.md links task handoff workflow'
-require_file_contains .agents/README.md '\.agents/workflows/research-proof\.md' '.agents/README.md links research proof workflow'
-
-if [ -d ee ]; then
-  require_file ee/AGENTS.md
-  require_file ee/CLAUDE.md
-  require_file ee/.agents/README.md
-  require_dir ee/.agents/docs
-  require_dir ee/.agents/rules
-  require_dir ee/.agents/workflows
-  require_file_contains ee/AGENTS.md 'ee/\.agents/README\.md' 'ee/AGENTS.md links the EE agent index'
-fi
+require_file_contains .agents/README.md '\.agents/skills/' '.agents/README.md links agent skills'
+require_file_contains .agents/README.md '\.agents/skills/task-handoff/SKILL\.md' '.agents/README.md links task handoff skill'
+require_file_contains .agents/README.md '\.agents/skills/research-proof/SKILL\.md' '.agents/README.md links research proof skill'
 
 check_legacy_dir_has_no_files .claude/docs
 check_legacy_dir_has_no_files .claude/rules
 check_legacy_dir_has_no_files .claude/skills
 
-if [ -d ee ]; then
-  check_legacy_dir_has_no_files ee/.claude/docs
-  check_legacy_dir_has_no_files ee/.claude/rules
-  check_legacy_dir_has_no_files ee/.claude/skills
-fi
-
 check_stale_paths
 check_trailing_whitespace
+
+# Every repository path named in agent guidance must exist.
+if python3 dev/check-agent-doc-paths.py --root . --exclude-skill impeccable AGENTS.md CLAUDE.md .agents; then
+  ok "agent guidance names only existing paths"
+else
+  fail "agent guidance names paths that don't exist"
+fi
 
 if [ "$FAILURES" -eq 0 ]; then
   printf 'Agent instruction checks passed.\n'

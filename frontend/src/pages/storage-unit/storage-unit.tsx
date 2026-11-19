@@ -321,6 +321,7 @@ export const StorageUnitPage: FC = () => {
         singularStorageUnitLabel,
         storageUnitLabel,
         supportsScratchpad,
+        supportsSqlImport,
         usesDatabaseInsteadOfSchema,
     } = useSourceContract(currentType);
     const view = useAppSelector(state => state.settings.storageUnitView);
@@ -605,6 +606,9 @@ export const StorageUnitPage: FC = () => {
                         <CommandLineIcon className="w-4 h-4" /> {t('scratchpad')}
                     </Button>
                 }
+                {supportsSqlImport && <Button variant="secondary" data-testid="source-import-button" onClick={() => {
+                    window.dispatchEvent(new CustomEvent('menu:trigger-sql-import'));
+                }}>{tCommon('importSql')}</Button>}
                 {canCreateObjects && <div data-testid="create-storage-unit-card"><Button onClick={() => { setCreate(true); }}><PlusCircleIcon className="size-4" />{t('newObject', { object: singularStorageUnitLabel.toLowerCase() })}<span className="sr-only" aria-hidden="true">{t('create')}</span></Button></div>}
             </div>
         </div>

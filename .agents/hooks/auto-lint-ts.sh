@@ -2,7 +2,9 @@
 # After editing a .ts/.tsx file, runs oxlint --fix on it.
 
 hook_dir="$(cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-repo_root="$(git rev-parse --show-toplevel 2>/dev/null)"
+# WHODB_ROOT is set by the forwarding shims used when the session runs inside a
+# submodule, where git rev-parse would resolve to the submodule instead.
+repo_root="${WHODB_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null)}"
 
 resolve_file() {
 	local file_path="$1"

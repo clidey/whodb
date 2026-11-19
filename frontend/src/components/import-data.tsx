@@ -86,7 +86,8 @@ export const ImportData: FC<ImportDataProps> = ({
   const { t } = useTranslation("components/import-data");
   const { supportsSqlImport } = useSourceContract(databaseType);
   const importSizeMB = Math.round(importLimits.maxFileSizeBytes / (1024 * 1024));
-  const [mode, setMode] = useState<ImportModeType>("data");
+  const [selectedMode, setMode] = useState<ImportModeType>("data");
+  const mode = objectRef ? selectedMode : "sql";
 
   const [dataFormat, setDataFormat] = useState<DataFormatType>("csv");
   const [dataFile, setDataFile] = useState<File | null>(null);
@@ -106,6 +107,7 @@ export const ImportData: FC<ImportDataProps> = ({
   const [loadingImport, setLoadingImport] = useState(false);
 
   const [sqlFile, setSqlFile] = useState<File | null>(null);
+  const sqlFileInputRef = useRef<HTMLInputElement>(null);
   const [sqlText, setSqlText] = useState("");
   const [loadingSQL, setLoadingSQL] = useState(false);
   const [sqlConfirmed, setSqlConfirmed] = useState(false);
@@ -123,10 +125,18 @@ export const ImportData: FC<ImportDataProps> = ({
   const supportsSQLImport = supportsSqlImport;
 
   useEffect(() => {
-    if (!supportsSQLImport && mode === "sql") {
+    if (!supportsSQLImport && selectedMode === "sql") {
       setMode("data");
     }
-  }, [mode, supportsSQLImport]);
+  }, [selectedMode, supportsSQLImport]);
+
+  const handleSqlFile = (file: File | null) => {
+    if (file && file.size > importLimits.maxFileSizeBytes) {
+      toast.error(t("fileTooLarge", { size: importSizeMB }));
+      return;
+    }
+    setSqlFile(file);
+  };
 
   const delimiterOptions = useMemo(
     () => [
@@ -485,7 +495,7 @@ export const ImportData: FC<ImportDataProps> = ({
         onOpenChange(false);
         onImportSuccess?.();
       } else {
-        const message = translateKey(result?.Detail) ?? t("unknownError");
+        const message = result?.Message || (translateKey(result?.Detail) ?? t("unknownError"));
         toast.error(t("importFailed", { message }));
       }
     } catch (error: any) {
@@ -516,11 +526,11 @@ export const ImportData: FC<ImportDataProps> = ({
         className="ce-import-sheet flex flex-col"
         data-testid="import-dialog"
       >
-        <div className="ce-import-header"><span>{objectRef?.Path?.at(-1)}</span><SheetTitle>{mode === "data" ? t("importRows") : t("importData")}</SheetTitle></div>
+        <div className="ce-import-header"><span>{objectRef?.Path?.at(-1)}</span><SheetTitle>{mode === "data" ? t("importRows") : t("importSql")}</SheetTitle></div>
         <div className="ce-import-body flex-1 overflow-y-auto">
           <div className="flex flex-col gap-lg">
             <div className="space-y-4">
-              <div className="space-y-2">
+              {objectRef && <div className="space-y-2">
                 <Label>{t("format")}</Label>
                 <Select value={mode} onValueChange={(value) => { setMode(value as ImportModeType); }}>
                   <SelectTrigger data-testid="import-mode-select" aria-label={t("format")}>
@@ -531,7 +541,7 @@ export const ImportData: FC<ImportDataProps> = ({
                     {supportsSQLImport && <SelectItem value="sql" data-value="sql">{t("modeSql")}</SelectItem>}
                   </SelectContent>
                 </Select>
-              </div>
+              </div>}
 
               {mode === "data" ? (
                 <>
@@ -717,25 +727,39 @@ export const ImportData: FC<ImportDataProps> = ({
                 </>
               ) : (
                 <>
+                  <p className="ce-import-note">{t("sqlImportHelp")}</p>
                   <div className="space-y-2">
                     <Label>{t("sqlFile")}</Label>
                     <Input
+                      ref={sqlFileInputRef}
                       type="file"
+                      tabIndex={-1}
+                      className="ce-import-file-input"
                       accept=".sql,text/sql"
                       data-testid="import-sql-file-input"
+                      aria-label={t("sqlFile")}
                       onClick={(event) => {
                         (event.target as HTMLInputElement).value = "";
                       }}
                       onChange={(event) => {
-                        const file = event.target.files?.[0] ?? null;
-                        if (file && file.size > importLimits.maxFileSizeBytes) {
-                          toast.error(t("fileTooLarge", { size: importSizeMB }));
-                          event.target.value = "";
-                          return;
-                        }
-                        setSqlFile(file);
+                        handleSqlFile(event.target.files?.[0] ?? null);
                       }}
                     />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className={`ce-import-drop-zone w-full h-auto${draggingFile ? " is-dragging" : ""}`}
+                      data-testid="import-sql-drop-zone"
+                      onClick={() => { sqlFileInputRef.current?.click(); }}
+                      onDragOver={event => { event.preventDefault(); setDraggingFile(true); }}
+                      onDragLeave={() => { setDraggingFile(false); }}
+                      onDrop={event => { event.preventDefault(); setDraggingFile(false); handleSqlFile(event.dataTransfer.files[0] ?? null); }}
+                    >
+                      <span className="ce-whodb-icon ce-whodb-icon-upload" aria-hidden="true" />
+                      <strong>{sqlFile?.name ?? t("dropSqlPrompt")}</strong>
+                      <span>{t("browseSqlFile")}</span>
+                      <span>{t("sqlFileLimit", {size: importSizeMB})}</span>
+                    </Button>
                   </div>
 
                   <div className="space-y-2">
@@ -768,7 +792,7 @@ export const ImportData: FC<ImportDataProps> = ({
         </div>
 
         <SheetFooter className="ce-import-footer">
-          <span>{dataFile?.name ?? t("noFileYet")}</span>
+          <span>{(mode === "sql" ? sqlFile?.name : dataFile?.name) ?? t("noFileYet")}</span>
           <Button variant="secondary" onClick={() => { onOpenChange(false); }} data-testid="import-cancel-button">
             {t("cancel")}
           </Button>

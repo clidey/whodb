@@ -75,22 +75,31 @@ jobs:
       - name: Test
         run: cd sdk/packages/typescript && pnpm test
 
+      # npm refuses to publish a version twice, so a re-run of a release whose
+      # publish already went through skips it and goes straight to verifying.
       - name: Publish
-        run: cd sdk/packages/typescript && npm publish --access public --provenance
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          if npm view "@clidey/whodb-sdk@$VERSION" version; then
+            echo "@clidey/whodb-sdk@$VERSION is already published; skipping"
+            exit 0
+          fi
+          cd sdk/packages/typescript && npm publish --access public --provenance
 
-      # npm read replicas can lag the publish by more than a few seconds, so
-      # poll instead of a single fixed sleep (a 0.127.2 publish succeeded but
-      # this step 404'd at 10s and failed the whole job).
+      # npm accepts the publish and then processes it; the version stays 404
+      # until that finishes. 0.127.2 was still 404 at 10s and 0.139.0 took
+      # 5m09s, one second longer than the 5 minutes this step then waited.
       - name: Verify publish
         env:
           VERSION: ${{ inputs.version }}
         run: |
-          for attempt in $(seq 1 30); do
+          for attempt in $(seq 1 90); do
             if npm view "@clidey/whodb-sdk@$VERSION" version; then
               exit 0
             fi
-            echo "not visible yet (attempt $attempt/30); retrying in 10s"
+            echo "not visible yet (attempt $attempt/90); retrying in 10s"
             sleep 10
           done
-          echo "package @clidey/whodb-sdk@$VERSION not visible after 5 minutes" >&2
+          echo "package @clidey/whodb-sdk@$VERSION not visible after 15 minutes" >&2
           exit 1

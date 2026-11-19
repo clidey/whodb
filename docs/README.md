@@ -1,6 +1,6 @@
 # WhoDB Community documentation
 
-The public CE site is authored in this directory. `dory.json` defines its navigation and appearance; MDX pages keep their existing public routes. Dory **1.11.0** is required for global styles and is pinned in `package.json` and the Docker build.
+The public CE site is authored in this directory. `dory.json` defines its navigation and appearance; MDX pages keep their existing public routes. Dory **1.13.0** is pinned in `package.json` and the Docker build.
 
 ## Global styles
 

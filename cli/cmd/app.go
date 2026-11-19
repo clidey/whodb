@@ -53,7 +53,8 @@ found, this command opens the WhoDB download page instead.`,
 func launchDesktopApp() error {
 	switch runtime.GOOS {
 	case "darwin":
-		return exec.Command("open", "-a", "WhoDB").Run()
+		// By bundle ID, so it finds the app whatever its file name (WhoDB Community.app, or WhoDB.app from older installs).
+		return exec.Command("open", "-b", "com.clidey.whodb").Run()
 	case "windows":
 		for _, dir := range []string{os.Getenv("LOCALAPPDATA"), os.Getenv("ProgramFiles")} {
 			if dir == "" {

@@ -111,9 +111,9 @@ Binaries are generated in `build/` organized by platform:
 
 ### Community Edition (desktop-ce)
 - Windows: `build/windows/[arch]/whodb-ce.exe`
-- macOS Universal: `build/darwin/universal/WhoDB.app`
-- macOS ARM64: `build/darwin/arm64/WhoDB.app`
-- macOS AMD64: `build/darwin/amd64/WhoDB.app`
+- macOS Universal: `build/darwin/universal/WhoDB Community.app`
+- macOS ARM64: `build/darwin/arm64/WhoDB Community.app`
+- macOS AMD64: `build/darwin/amd64/WhoDB Community.app`
 - Linux: `build/linux/[arch]/whodb-ce`
 
 ### Enterprise Edition (ee/desktop)

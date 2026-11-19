@@ -247,7 +247,7 @@ jobs:
                       Version="$windowsVersion"
                       ProcessorArchitecture="$MsixArchitecture" />
             <Properties>
-              <DisplayName>WhoDB</DisplayName>
+              <DisplayName>WhoDB Community</DisplayName>
               <PublisherDisplayName>$packagePublisherDisplayName</PublisherDisplayName>
               <Logo>Assets\StoreLogo.png</Logo>
             </Properties>
@@ -259,7 +259,7 @@ jobs:
             </Resources>
             <Applications>
               <Application Id="App" Executable="whodb.exe" EntryPoint="Windows.FullTrustApplication">
-                <uap:VisualElements DisplayName="WhoDB"
+                <uap:VisualElements DisplayName="WhoDB Community"
                                     Description="Database management tool"
                                     BackgroundColor="transparent"
                                     Square150x150Logo="Assets\Square150x150Logo.png"

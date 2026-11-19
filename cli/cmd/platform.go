@@ -1380,6 +1380,7 @@ func init() {
 	rootCmd.AddCommand(filesCmd)
 	rootCmd.AddCommand(foldersCmd)
 	rootCmd.AddCommand(resourcesCmd)
+	rootCmd.AddCommand(newBackupsCommand())
 	rootCmd.AddCommand(backupProjectCmd)
 	rootCmd.AddCommand(restoreProjectCmd)
 	rootCmd.AddCommand(cloneProjectCmd)

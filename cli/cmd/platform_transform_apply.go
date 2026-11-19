@@ -369,16 +369,13 @@ func waitForTransformRun(ctx context.Context, client *platform.Client, projectID
 	latest := platform.TransformRun{ID: runID, TransformID: transformID, Status: "running"}
 	var lastQueryError error
 	for {
-		runs, err := client.TransformRuns(ctx, projectID, transformID, 20)
+		run, err := client.TransformRun(ctx, projectID, transformID, runID)
 		if err != nil {
 			lastQueryError = err
+		} else if run == nil {
+			return latest, fmt.Errorf("transform run %s was not found for this transform", runID)
 		} else {
-			for _, candidate := range runs {
-				if candidate.ID == runID {
-					latest = candidate
-					break
-				}
-			}
+			latest = *run
 			if isTerminalTransformRunStatus(latest.Status) {
 				return latest, nil
 			}

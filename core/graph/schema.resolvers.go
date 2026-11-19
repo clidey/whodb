@@ -364,7 +364,9 @@ func (r *mutationResolver) ImportSQL(ctx context.Context, input model.ImportSQLI
 			return importResult(false, importErrorSQLMultiStatementUnsupported), nil
 		}
 		log.WithError(err).Error("SQL import failed")
-		return importResult(false, importErrorSQLFailed), nil
+		result := importResult(false, importErrorSQLFailed)
+		result.Message = err.Error()
+		return result, nil
 	}
 
 	return importResult(true, ""), nil

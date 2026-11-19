@@ -6,6 +6,9 @@ importers:
   .:
     configDependencies: {}
     packageManagerDependencies:
+      '@pnpm/exe':
+        specifier: 12.15.0
+        version: 12.15.0
       pnpm:
         specifier: 12.15.0
         version: 12.15.0
@@ -89,6 +92,11 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  '@pnpm/exe@12.15.0':
+    resolution: {integrity: sha512-TB8j1Xzjl7KIuq+kWkPuEPNaQSECL+cFO+1BBhKmeDJo6zKNkgCAlm7gl8Dezz+sP5rnqDjDYKdISvC5j2lKwQ==}
+    engines: {node: '>=18'}
+    hasBin: true
+
   pnpm@12.15.0:
     resolution: {integrity: sha512-s5UdbW/0qfE9x89WzSjSuOs328ycaOUuHhGRhz6p+CoBcoerULqtxczElPA2xnwOR+sTYIwvo29HcRth6hKOYQ==}
     engines: {node: '>=18'}
@@ -138,6 +146,23 @@ snapshots:
   '@pnpm/exe.win32-x64@12.15.0':
     optional: true
 
+  '@pnpm/exe@12.15.0':
+    optionalDependencies:
+      '@pnpm/exe.android-arm64': 12.15.0
+      '@pnpm/exe.android-x64': 12.15.0
+      '@pnpm/exe.darwin-arm64': 12.15.0
+      '@pnpm/exe.darwin-x64': 12.15.0
+      '@pnpm/exe.freebsd-x64': 12.15.0
+      '@pnpm/exe.linux-arm64': 12.15.0
+      '@pnpm/exe.linux-arm64-musl': 12.15.0
+      '@pnpm/exe.linux-ppc64': 12.15.0
+      '@pnpm/exe.linux-riscv64': 12.15.0
+      '@pnpm/exe.linux-s390x': 12.15.0
+      '@pnpm/exe.linux-x64': 12.15.0
+      '@pnpm/exe.linux-x64-musl': 12.15.0
+      '@pnpm/exe.win32-arm64': 12.15.0
+      '@pnpm/exe.win32-x64': 12.15.0
+
   pnpm@12.15.0:
     optionalDependencies:
       '@pnpm/exe.android-arm64': 12.15.0
@@ -167,8 +192,8 @@ importers:
   .:
     devDependencies:
       '@clidey/dory':
-        specifier: 1.11.0
-        version: 1.11.0(@algolia/client-search@5.61.0)(@babel/core@7.29.13(supports-color@8.1.1))(algoliasearch@5.61.0)(esbuild@0.28.2)(jiti@2.7.0)(react-dom@19.3.1(react@19.3.1))(react-is@19.3.1)(react@19.3.1)(redux@5.0.1)(rollup@4.67.5)(sass@1.107.0)(search-insights@2.17.3)(supports-color@8.1.1)
+        specifier: 1.15.0
+        version: 1.15.0(@algolia/client-search@5.61.0)(@babel/core@7.29.13(supports-color@8.1.1))(algoliasearch@5.61.0)(esbuild@0.28.2)(jiti@2.7.0)(react-dom@19.3.1(react@19.3.1))(react-is@19.3.1)(react@19.3.1)(redux@5.0.1)(rollup@4.67.5)(sass@1.107.0)(search-insights@2.17.3)(supports-color@8.1.1)
 
 packages:
 
@@ -359,8 +384,8 @@ packages:
   '@chevrotain/utils@13.2.0':
     resolution: {integrity: sha512-SzKYY68rseOrb9KILVzPsl6SjkQtdWw01SRGB5aCVI5kFcHltQsOYV3JB0Ffst72DgkvHCyDQ0NLwxtmCCf97Q==}
 
-  '@clidey/dory@1.11.0':
-    resolution: {integrity: sha512-nSBCKi0rJ07/dhffU/zoBpfhSyT0pCIH3s4b22qUuLhSwC/ZE1g0s4/hlXCcdtV5A2wWp5vk//NsH6qoKcVdXA==}
+  '@clidey/dory@1.15.0':
+    resolution: {integrity: sha512-K3/372Hoxjcn4eSh8XujeHwDsn+wEj6bCZ5uwp/+9dLcv1W4i2bK//KUEl66WYdrvU4dEYWZgbfiO4xI2gTcwA==}
     hasBin: true
 
   '@clidey/ux@1.6.4':
@@ -2019,6 +2044,9 @@ packages:
 
   argparse@1.0.10:
     resolution: {integrity: sha512-o5Roy6tNG4SL/FOkCAN6RzjiakZS25RLYFrcMttJqbdd8BWrnA+fGz57iN5Pb06pvBGvl5gQ0B48dJlslXvoTg==}
+
+  argparse@2.0.1:
+    resolution: {integrity: sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==}
 
   aria-hidden@1.2.6:
     resolution: {integrity: sha512-ik3ZgC9dY/lYVVM++OISsaYDeg1tb0VtP5uL3ouh1koGOaUMDPpbFIei4JkFimWUFPn90sbMNMXQAIVOlnYKJA==}
@@ -3698,6 +3726,10 @@ packages:
       yaml:
         optional: true
 
+  wawoff2@2.0.1:
+    resolution: {integrity: sha512-r0CEmvpH63r4T15ebFqeOjGqU4+EgTx4I510NtK35EMciSdcTxCw3Byy3JnBonz7iyIFZ0AbVo0bbFpEVuhCYA==}
+    hasBin: true
+
   wouter-preact@3.13.0:
     resolution: {integrity: sha512-fRDI34kdE20xE6MEyAJ9J8wa5sNmVnBGg8SLzHq0bZFlewRKxh/OoXMiLyX+xqlSfqZmUzYfsOvSIppPeBictg==}
     peerDependencies:
@@ -3976,7 +4008,7 @@ snapshots:
 
   '@chevrotain/utils@13.2.0': {}
 
-  '@clidey/dory@1.11.0(@algolia/client-search@5.61.0)(@babel/core@7.29.13(supports-color@8.1.1))(algoliasearch@5.61.0)(esbuild@0.28.2)(jiti@2.7.0)(react-dom@19.3.1(react@19.3.1))(react-is@19.3.1)(react@19.3.1)(redux@5.0.1)(rollup@4.67.5)(sass@1.107.0)(search-insights@2.17.3)(supports-color@8.1.1)':
+  '@clidey/dory@1.15.0(@algolia/client-search@5.61.0)(@babel/core@7.29.13(supports-color@8.1.1))(algoliasearch@5.61.0)(esbuild@0.28.2)(jiti@2.7.0)(react-dom@19.3.1(react@19.3.1))(react-is@19.3.1)(react@19.3.1)(redux@5.0.1)(rollup@4.67.5)(sass@1.107.0)(search-insights@2.17.3)(supports-color@8.1.1)':
     dependencies:
       '@algolia/autocomplete-core': 1.19.12(@algolia/client-search@5.61.0)(algoliasearch@5.61.0)(search-insights@2.17.3)
       '@clidey/ux': 1.6.4(react-dom@19.3.1(react@19.3.1))(react-is@19.3.1)(react@19.3.1)(redux@5.0.1)
@@ -4004,13 +4036,16 @@ snapshots:
       react-highlight-words: 1.0.0(react@19.3.1)
       rehype-slug: 6.0.0
       remark-gfm: 4.0.1(supports-color@8.1.1)
+      remark-parse: 11.0.0(supports-color@8.1.1)
       sass-embedded: 1.107.0
       sirv: 3.0.2
       tailwindcss: 4.3.3
       tsx: 4.23.15
       typescript: 7.0.2
+      unified: 11.0.5
       unist-util-visit: 5.2.0
       vite: 8.3.5(esbuild@0.28.2)(jiti@2.7.0)(sass-embedded@1.107.0)(sass@1.107.0)(tsx@4.23.15)
+      wawoff2: 2.0.1
       wouter-preact: 3.13.0(preact@11.1.0)
       zod: 4.6.7
     transitivePeerDependencies:
@@ -5402,6 +5437,8 @@ snapshots:
   argparse@1.0.10:
     dependencies:
       sprintf-js: 1.0.3
+
+  argparse@2.0.1: {}
 
   aria-hidden@1.2.6:
     dependencies:
@@ -7415,6 +7452,10 @@ snapshots:
       sass: 1.107.0
       sass-embedded: 1.107.0
       tsx: 4.23.15
+
+  wawoff2@2.0.1:
+    dependencies:
+      argparse: 2.0.1
 
   wouter-preact@3.13.0(preact@11.1.0):
     dependencies:

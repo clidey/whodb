@@ -18,7 +18,6 @@ import { Button, cn, Kbd, ResizableHandle, ResizablePanel, ResizablePanelGroup, 
 import classNames from "classnames";
 import type {FC, ReactNode} from "react";
 import {useEffect, useRef, useState} from "react";
-import {twMerge} from "tailwind-merge";
 import {InternalRoutes, type IInternalRoute} from "../config/routes";
 import {useAppDispatch, useAppSelector} from "../store/hooks";
 import {SettingsActions} from "../store/settings";
@@ -38,8 +37,8 @@ type IPageProps = {
 }
 
 export const Page: FC<IPageProps> = (props) => {
-    return <div className={twMerge("flex grow min-w-0 px-8 py-6 flex-col h-full w-full", props.wrapperClassName)}>
-        <div className={twMerge("flex flex-row grow flex-wrap gap-sm w-full h-full overflow-y-auto", props.className)}
+    return <div className={cn("flex grow min-w-0 px-8 py-6 flex-col h-full w-full", props.wrapperClassName)}>
+        <div className={cn("flex flex-row grow flex-wrap gap-sm w-full h-full overflow-y-auto", props.className)}
             data-testid="page-scroll-container">
                 {props.children}
         </div>
