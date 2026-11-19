@@ -1031,7 +1031,18 @@ test.describe("Postgres Screenshot Generation", () => {
 
     test("119 - Navigation - Command Palette", async ({ whodb, page }) => {
       await whodb.typeCmdShortcut("k");
-      await expect(page.getByRole("dialog")).toBeVisible();
+      const dialog = page.getByRole("dialog");
+      await expect(dialog).toBeVisible();
+      // Icons are CSS masks fetched on first use; wait for them so none render as blank squares.
+      await dialog.evaluate((el) => Promise.all(
+        [...el.querySelectorAll("[data-whodb-icon]")].map((icon) => {
+          const url = getComputedStyle(icon).webkitMaskImage.match(/url\("?(.*?)"?\)/)?.[1];
+          if (!url) return null;
+          const img = new Image();
+          img.src = url;
+          return img.decode().catch(() => null);
+        }),
+      ));
       await page.screenshot({ animations: "disabled", path: ssPath("119-command-palette") });
     });
 
