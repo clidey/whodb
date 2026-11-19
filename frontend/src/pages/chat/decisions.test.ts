@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
+// oxlint-disable-next-line no-restricted-imports -- the standalone tsc test build (scripts/run-chat-decision-tests.mjs) has no @graphql path alias
 import type {AiDecisionQuestion, RowsResult} from '../../generated/schema-types';
+// oxlint-disable-next-line no-restricted-imports -- the standalone tsc test build (scripts/run-chat-decision-tests.mjs) has no @graphql path alias
 import {AiDecisionAnswerType, AiDecisionQuestionType, SourceMetadataFidelity} from '../../generated/schema-types';
 import {decisionInput, decisionQuestionInputs, decisionResultTable, nearestLevelLabel, type DecisionTableLabels} from './decisions';
 
