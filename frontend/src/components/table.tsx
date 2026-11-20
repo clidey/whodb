@@ -152,6 +152,7 @@ const floatTypes = new Set([
     "REAL", "NUMERIC", "DOUBLE PRECISION", "FLOAT", "NUMBER", "DOUBLE", "DECIMAL",
     "FLOAT4", "FLOAT8",
     "FLOAT32", "FLOAT64",
+    "BFLOAT16",
     "DECIMAL32", "DECIMAL64", "DECIMAL128", "DECIMAL256",
     "MONEY",
 ]);
@@ -170,6 +171,7 @@ const dateTimeTypes = new Set([
     "TIMETZ", "TIMESTAMPTZ",
     "INTERVAL",
     "DATETIME64",
+    "TIME64",
     "YEAR",
 ]);
 const uuidTypes = new Set([
@@ -190,6 +192,7 @@ const geometryTypes = new Set([
     "POINT", "LINE", "LSEG", "BOX", "PATH", "POLYGON", "CIRCLE",
     "GEOMETRY", "GEOGRAPHY",
     "LINESTRING", "MULTIPOINT", "MULTILINESTRING", "MULTIPOLYGON", "GEOMETRYCOLLECTION",
+    "RING", 
 ]);
 const xmlTypes = new Set([
     "XML",
