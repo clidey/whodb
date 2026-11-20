@@ -154,7 +154,11 @@ export function getAuthorizationHeader(): string | null {
     // profile still has secrets in memory, retain the full-header fallback.
     const tokenPayload = current.Saved || (current.Id && !hasInlineSecrets) ? {
       Id: current.Id,
-      Values: current.Database ? { Database: current.Database } : {},
+      Values: {
+        ...(current.Database ? { Database: current.Database } : {}),
+        // A password typed for a profile that stores none must be re-sent with the reference.
+        ...(values.Password ? { Password: values.Password } : {}),
+      },
     } : {
       SourceType: current.SourceType,
       Values: values,

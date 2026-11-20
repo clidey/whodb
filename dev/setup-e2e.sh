@@ -562,6 +562,7 @@ ENVIRONMENT=dev \
     WHODB_LOG_LEVEL="${WHODB_LOG_LEVEL:-error}" \
     WHODB_DISABLE_MOCK_DATA_GENERATION='DEPARTMENTS' \
     WHODB_BRIDGE_URL="${WHODB_BRIDGE_URL:-}" \
+    WHODB_POSTGRES='[{"alias":"e2e-password-prompt","host":"localhost","port":"5432","user":"user","database":"test_db"}]' \
     stdbuf -oL -eL ./server.test -test.run=^TestMain$ -test.coverprofile=coverage.out \
     > "$PROJECT_ROOT/frontend/e2e/logs/backend.log" 2>&1 &
 TEST_SERVER_PID=$!

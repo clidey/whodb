@@ -381,6 +381,7 @@ type ComplexityRoot struct {
 		DisplayName          func(childComplexity int) int
 		ID                   func(childComplexity int) int
 		IsEnvironmentDefined func(childComplexity int) int
+		RequiresPassword     func(childComplexity int) int
 		SSLConfigured        func(childComplexity int) int
 		Source               func(childComplexity int) int
 		SourceType           func(childComplexity int) int
@@ -2077,6 +2078,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.SourceProfile.IsEnvironmentDefined(childComplexity), true
+	case "SourceProfile.RequiresPassword":
+		if e.ComplexityRoot.SourceProfile.RequiresPassword == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SourceProfile.RequiresPassword(childComplexity), true
 	case "SourceProfile.SSLConfigured":
 		if e.ComplexityRoot.SourceProfile.SSLConfigured == nil {
 			break
@@ -3167,6 +3174,8 @@ func (ec *executionContext) childFields_SourceProfile(ctx context.Context, field
 		return ec.fieldContext_SourceProfile_Source(ctx, field)
 	case "SSLConfigured":
 		return ec.fieldContext_SourceProfile_SSLConfigured(ctx, field)
+	case "RequiresPassword":
+		return ec.fieldContext_SourceProfile_RequiresPassword(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type SourceProfile", field.Name)
 }
@@ -10343,6 +10352,29 @@ func (ec *executionContext) fieldContext_SourceProfile_SSLConfigured(_ context.C
 	return graphql.NewScalarFieldContext("SourceProfile", field, false, false, "Boolean")
 }
 
+func (ec *executionContext) _SourceProfile_RequiresPassword(ctx context.Context, field graphql.CollectedField, obj *model.SourceProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SourceProfile_RequiresPassword(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RequiresPassword, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SourceProfile_RequiresPassword(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SourceProfile", field, false, false, "Boolean")
+}
+
 func (ec *executionContext) _SourceQuerySuggestion_description(ctx context.Context, field graphql.CollectedField, obj *model.SourceQuerySuggestion) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -16306,6 +16338,11 @@ func (ec *executionContext) _SourceProfile(ctx context.Context, sel ast.Selectio
 			}
 		case "SSLConfigured":
 			out.Values[i] = ec._SourceProfile_SSLConfigured(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "RequiresPassword":
+			out.Values[i] = ec._SourceProfile_RequiresPassword(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

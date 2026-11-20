@@ -10,5 +10,6 @@ query SourceProfiles {
     IsEnvironmentDefined
     Source
     SSLConfigured
+    RequiresPassword
   }
 }

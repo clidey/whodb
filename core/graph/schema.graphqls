@@ -403,6 +403,8 @@ type SourceProfile {
   IsEnvironmentDefined: Boolean!
   Source: String!
   SSLConfigured: Boolean!
+  # True when the source type takes a password and the profile stores none; the client collects it at login.
+  RequiresPassword: Boolean!
 }
 
 type StatusResponse {

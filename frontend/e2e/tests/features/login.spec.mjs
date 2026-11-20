@@ -399,6 +399,30 @@ test.describe('Login & Authentication', () => {
                 await expect(page.locator('[data-testid="login-with-profile-button"]')).toBeAttached();
             }
         });
+
+        // The e2e backend defines a Postgres env profile without a password (dev/setup-e2e.sh).
+        test('prompts for a password on an env profile that stores none', async ({ whodb, page }) => {
+            test.skip(process.env.DATABASE && process.env.DATABASE.toLowerCase() !== 'postgres', 'Uses the PostgreSQL fixture');
+            const db = getDatabaseConfig('postgres');
+
+            await page.locator('[data-testid="available-profiles-select"]').click();
+            await page.locator('[data-value="e2e-password-prompt"]').click();
+
+            const passwordInput = page.locator('[data-testid="profile-password"]');
+            await expect(passwordInput).toBeVisible();
+
+            await passwordInput.fill('wrong_password');
+            const failedLogin = page.waitForResponse(resp =>
+                resp.url().includes('/api/query') && resp.request().method() === 'POST' && resp.request().postDataJSON()?.operationName === 'LoginWithSourceProfile'
+            );
+            await page.locator('[data-testid="login-with-profile-button"]').click();
+            await failedLogin;
+            await expect(page).toHaveURL(/\/login/);
+
+            await passwordInput.fill(db.connection.password);
+            await page.locator('[data-testid="login-with-profile-button"]').click();
+            await expect(page).toHaveURL(/\/storage-unit/);
+        });
     });
 
     test.describe('Sample Database', () => {
