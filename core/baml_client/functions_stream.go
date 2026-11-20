@@ -190,3 +190,77 @@ func (*stream) GenerateSQLQuery(ctx context.Context, db_context types.DatabaseCo
 	}()
 	return channel, nil
 }
+
+// / Streaming version of PlanDecisions
+func (*stream) PlanDecisions(ctx context.Context, db_context types.DatabaseContext, user_request string, max_rows int64, opts ...CallOptionFunc) (<-chan StreamValue[stream_types.DecisionPlan, types.DecisionPlan], error) {
+
+	var callOpts callOption
+	for _, opt := range opts {
+		opt(&callOpts)
+	}
+
+	args := baml.BamlFunctionArguments{
+		Kwargs: map[string]any{"db_context": db_context, "user_request": user_request, "max_rows": max_rows},
+		Env:    getEnvVars(callOpts.env),
+	}
+
+	if callOpts.clientRegistry != nil {
+		args.ClientRegistry = callOpts.clientRegistry
+	}
+
+	if callOpts.collectors != nil {
+		args.Collectors = callOpts.collectors
+	}
+
+	if callOpts.typeBuilder != nil {
+		args.TypeBuilder = callOpts.typeBuilder
+	}
+
+	if callOpts.tags != nil {
+		args.Tags = callOpts.tags
+	}
+
+	encoded, err := args.Encode()
+	if err != nil {
+		// This should never happen. if it does, please file an issue at https://github.com/boundaryml/baml/issues
+		// and include the type of the args you're passing in.
+		wrapped_err := fmt.Errorf("BAML INTERNAL ERROR: PlanDecisions: %w", err)
+		panic(wrapped_err)
+	}
+
+	internal_channel, err := bamlRuntime.CallFunctionStream(ctx, "PlanDecisions", encoded, callOpts.onTick)
+	if err != nil {
+		return nil, err
+	}
+
+	channel := make(chan StreamValue[stream_types.DecisionPlan, types.DecisionPlan])
+	go func() {
+		for result := range internal_channel {
+			if result.Error != nil {
+				channel <- StreamValue[stream_types.DecisionPlan, types.DecisionPlan]{
+					IsError: true,
+					Error:   result.Error,
+				}
+				close(channel)
+				return
+			}
+			if result.HasData {
+				data := (result.Data).(types.DecisionPlan)
+				channel <- StreamValue[stream_types.DecisionPlan, types.DecisionPlan]{
+					IsFinal:  true,
+					as_final: &data,
+				}
+			} else {
+				data := (result.StreamData).(stream_types.DecisionPlan)
+				channel <- StreamValue[stream_types.DecisionPlan, types.DecisionPlan]{
+					IsFinal:   false,
+					as_stream: &data,
+				}
+			}
+		}
+
+		// when internal_channel is closed, close the output too
+		close(channel)
+	}()
+	return channel, nil
+}

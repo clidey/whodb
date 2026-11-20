@@ -10,12 +10,113 @@ export type Scalars = {
   Upload: { input: unknown; output: unknown; }
 };
 
+export type AiChatDecision = {
+  __typename?: 'AIChatDecision';
+  Model: Scalars['String']['output'];
+  Query: Scalars['String']['output'];
+  Questions: Array<AiDecisionQuestion>;
+  Truncated: Scalars['Boolean']['output'];
+};
+
 export type AiChatMessage = {
   __typename?: 'AIChatMessage';
+  Decision?: Maybe<AiChatDecision>;
   RequiresConfirmation: Scalars['Boolean']['output'];
   Result?: Maybe<RowsResult>;
   Text: Scalars['String']['output'];
   Type: Scalars['String']['output'];
+};
+
+export type AiDecisionAnswer = {
+  __typename?: 'AIDecisionAnswer';
+  Choice?: Maybe<Scalars['String']['output']>;
+  ChoiceProbabilities?: Maybe<Array<AiDecisionChoiceProbability>>;
+  Confidence?: Maybe<Scalars['Float']['output']>;
+  Name: Scalars['String']['output'];
+  Probability?: Maybe<Scalars['Float']['output']>;
+  Score?: Maybe<Scalars['Float']['output']>;
+  ScoreProbabilities?: Maybe<Array<AiDecisionScoreProbability>>;
+  Type: AiDecisionAnswerType;
+};
+
+export enum AiDecisionAnswerType {
+  Choice = 'Choice',
+  Predicate = 'Predicate',
+  Refusal = 'Refusal',
+  Score = 'Score'
+}
+
+export type AiDecisionChoice = {
+  __typename?: 'AIDecisionChoice';
+  Description?: Maybe<Scalars['String']['output']>;
+  Value: Scalars['String']['output'];
+};
+
+export type AiDecisionChoiceInput = {
+  Description?: InputMaybe<Scalars['String']['input']>;
+  Value: Scalars['String']['input'];
+};
+
+export type AiDecisionChoiceProbability = {
+  __typename?: 'AIDecisionChoiceProbability';
+  Probability: Scalars['Float']['output'];
+  Value: Scalars['String']['output'];
+};
+
+export type AiDecisionInput = {
+  Endpoint?: InputMaybe<Scalars['String']['input']>;
+  Input: Scalars['String']['input'];
+  Model: Scalars['String']['input'];
+  ModelType: Scalars['String']['input'];
+  ProviderId?: InputMaybe<Scalars['String']['input']>;
+  Questions: Array<AiDecisionQuestionInput>;
+  Token?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type AiDecisionLevel = {
+  __typename?: 'AIDecisionLevel';
+  Description?: Maybe<Scalars['String']['output']>;
+  Label: Scalars['String']['output'];
+};
+
+export type AiDecisionLevelInput = {
+  Description?: InputMaybe<Scalars['String']['input']>;
+  Label: Scalars['String']['input'];
+};
+
+export type AiDecisionQuestion = {
+  __typename?: 'AIDecisionQuestion';
+  Choices?: Maybe<Array<AiDecisionChoice>>;
+  Instructions: Scalars['String']['output'];
+  Levels?: Maybe<Array<AiDecisionLevel>>;
+  Name: Scalars['String']['output'];
+  Type: AiDecisionQuestionType;
+};
+
+export type AiDecisionQuestionInput = {
+  Choices?: InputMaybe<Array<AiDecisionChoiceInput>>;
+  Instructions: Scalars['String']['input'];
+  Levels?: InputMaybe<Array<AiDecisionLevelInput>>;
+  Name: Scalars['String']['input'];
+  Type: AiDecisionQuestionType;
+};
+
+export enum AiDecisionQuestionType {
+  Choice = 'Choice',
+  Predicate = 'Predicate',
+  Score = 'Score'
+}
+
+export type AiDecisionResponse = {
+  __typename?: 'AIDecisionResponse';
+  Answers: Array<AiDecisionAnswer>;
+};
+
+export type AiDecisionScoreProbability = {
+  __typename?: 'AIDecisionScoreProbability';
+  Label: Scalars['String']['output'];
+  Probability: Scalars['Float']['output'];
+  Value: Scalars['Int']['output'];
 };
 
 export type AiProvider = {
@@ -285,6 +386,7 @@ export type Mutation = {
   LoginSource: StatusResponse;
   LoginWithSourceProfile: StatusResponse;
   Logout: StatusResponse;
+  RunAIDecision: AiDecisionResponse;
   TestSourceConnection: StatusResponse;
   UpdateSettings: StatusResponse;
   UpdateSourceObject: StatusResponse;
@@ -366,6 +468,11 @@ export type MutationLoginWithSourceProfileArgs = {
 };
 
 
+export type MutationRunAiDecisionArgs = {
+  input: AiDecisionInput;
+};
+
+
 export type MutationTestSourceConnectionArgs = {
   credentials: SourceLoginInput;
 };
@@ -400,6 +507,7 @@ export type OperationWhereCondition = {
 
 export type Query = {
   __typename?: 'Query';
+  AIDecisionModels: Array<Scalars['String']['output']>;
   AIModel: Array<Scalars['String']['output']>;
   AIProviders: Array<AiProvider>;
   AnalyzeMockDataDependencies: MockDataDependencyAnalysis;
@@ -425,6 +533,11 @@ export type Query = {
   SourceTypes: Array<SourceType>;
   UpdateInfo: UpdateInfo;
   Version: Scalars['String']['output'];
+};
+
+
+export type QueryAiDecisionModelsArgs = {
+  modelType: Scalars['String']['input'];
 };
 
 

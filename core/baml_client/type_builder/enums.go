@@ -55,6 +55,46 @@ func (t *ChatMessageTypeEnumView) Type() (baml.Type, error) {
 	return t.inner.Type()
 }
 
+type DecisionQuestionKindEnumView struct {
+	inner baml.EnumBuilder
+}
+
+func (t *DecisionQuestionKindEnumView) ListValues() ([]EnumValueView, error) {
+	result, err := t.inner.ListValues()
+	if err != nil {
+		return nil, err
+	}
+	builders := make([]EnumValueView, len(result))
+	for i, p := range result {
+		builders[i] = p
+	}
+	return builders, nil
+}
+
+func (t *DecisionQuestionKindEnumView) ValuePREDICATE() (EnumValueView, error) {
+	return t.inner.Value("PREDICATE")
+}
+
+func (t *DecisionQuestionKindEnumView) ValueCHOICE() (EnumValueView, error) {
+	return t.inner.Value("CHOICE")
+}
+
+func (t *DecisionQuestionKindEnumView) ValueSCORE() (EnumValueView, error) {
+	return t.inner.Value("SCORE")
+}
+
+func (t *TypeBuilder) DecisionQuestionKind() (*DecisionQuestionKindEnumView, error) {
+	bld, err := t.inner.Enum("DecisionQuestionKind")
+	if err != nil {
+		return nil, err
+	}
+	return &DecisionQuestionKindEnumView{inner: bld}, nil
+}
+
+func (t *DecisionQuestionKindEnumView) Type() (baml.Type, error) {
+	return t.inner.Type()
+}
+
 type OperationTypeEnumView struct {
 	inner baml.EnumBuilder
 }

@@ -1,0 +1,21 @@
+mutation RunAIDecision($input: AIDecisionInput!) {
+  RunAIDecision(input: $input) {
+    Answers {
+      Type
+      Name
+      Probability
+      Choice
+      Score
+      Confidence
+      ChoiceProbabilities {
+        Value
+        Probability
+      }
+      ScoreProbabilities {
+        Value
+        Label
+        Probability
+      }
+    }
+  }
+}

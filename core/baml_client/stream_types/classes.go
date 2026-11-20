@@ -135,3 +135,219 @@ func (c DatabaseContext) Encode() (*cffi.HostValue, error) {
 func (c DatabaseContext) BamlTypeName() string {
 	return "DatabaseContext"
 }
+
+type DecisionChoicePlan struct {
+	Value       *string `json:"value"`
+	Description *string `json:"description"`
+}
+
+func (c *DecisionChoicePlan) Decode(holder *cffi.CFFIValueClass, typeMap baml.TypeMap) {
+	typeName := holder.Name
+	if typeName.Namespace != cffi.CFFITypeNamespace_STREAM_TYPES {
+		panic("expected cffi.CFFITypeNamespace_STREAM_TYPES, got " + string(typeName.Namespace.String()))
+	}
+	if typeName.Name != "DecisionChoicePlan" {
+		panic("expected DecisionChoicePlan, got " + typeName.Name)
+	}
+
+	for _, field := range holder.Fields {
+		key := field.Key
+		valueHolder := field.Value
+		switch key {
+
+		case "value":
+			c.Value = baml.Decode(valueHolder).Interface().(*string)
+
+		case "description":
+			c.Description = baml.Decode(valueHolder).Interface().(*string)
+
+		default:
+
+			panic(fmt.Sprintf("unexpected field: %s in class DecisionChoicePlan", key))
+
+		}
+	}
+
+}
+
+func (c DecisionChoicePlan) Encode() (*cffi.HostValue, error) {
+	fields := map[string]any{}
+
+	fields["value"] = c.Value
+
+	fields["description"] = c.Description
+
+	return baml.EncodeClass("DecisionChoicePlan", fields, nil)
+}
+
+func (c DecisionChoicePlan) BamlTypeName() string {
+	return "DecisionChoicePlan"
+}
+
+type DecisionLevelPlan struct {
+	Label       *string `json:"label"`
+	Description *string `json:"description"`
+}
+
+func (c *DecisionLevelPlan) Decode(holder *cffi.CFFIValueClass, typeMap baml.TypeMap) {
+	typeName := holder.Name
+	if typeName.Namespace != cffi.CFFITypeNamespace_STREAM_TYPES {
+		panic("expected cffi.CFFITypeNamespace_STREAM_TYPES, got " + string(typeName.Namespace.String()))
+	}
+	if typeName.Name != "DecisionLevelPlan" {
+		panic("expected DecisionLevelPlan, got " + typeName.Name)
+	}
+
+	for _, field := range holder.Fields {
+		key := field.Key
+		valueHolder := field.Value
+		switch key {
+
+		case "label":
+			c.Label = baml.Decode(valueHolder).Interface().(*string)
+
+		case "description":
+			c.Description = baml.Decode(valueHolder).Interface().(*string)
+
+		default:
+
+			panic(fmt.Sprintf("unexpected field: %s in class DecisionLevelPlan", key))
+
+		}
+	}
+
+}
+
+func (c DecisionLevelPlan) Encode() (*cffi.HostValue, error) {
+	fields := map[string]any{}
+
+	fields["label"] = c.Label
+
+	fields["description"] = c.Description
+
+	return baml.EncodeClass("DecisionLevelPlan", fields, nil)
+}
+
+func (c DecisionLevelPlan) BamlTypeName() string {
+	return "DecisionLevelPlan"
+}
+
+type DecisionPlan struct {
+	Message   *string                `json:"message"`
+	Sql       *string                `json:"sql"`
+	Questions []DecisionQuestionPlan `json:"questions"`
+}
+
+func (c *DecisionPlan) Decode(holder *cffi.CFFIValueClass, typeMap baml.TypeMap) {
+	typeName := holder.Name
+	if typeName.Namespace != cffi.CFFITypeNamespace_STREAM_TYPES {
+		panic("expected cffi.CFFITypeNamespace_STREAM_TYPES, got " + string(typeName.Namespace.String()))
+	}
+	if typeName.Name != "DecisionPlan" {
+		panic("expected DecisionPlan, got " + typeName.Name)
+	}
+
+	for _, field := range holder.Fields {
+		key := field.Key
+		valueHolder := field.Value
+		switch key {
+
+		case "message":
+			c.Message = baml.Decode(valueHolder).Interface().(*string)
+
+		case "sql":
+			c.Sql = baml.Decode(valueHolder).Interface().(*string)
+
+		case "questions":
+			c.Questions = baml.Decode(valueHolder).Interface().([]DecisionQuestionPlan)
+
+		default:
+
+			panic(fmt.Sprintf("unexpected field: %s in class DecisionPlan", key))
+
+		}
+	}
+
+}
+
+func (c DecisionPlan) Encode() (*cffi.HostValue, error) {
+	fields := map[string]any{}
+
+	fields["message"] = c.Message
+
+	fields["sql"] = c.Sql
+
+	fields["questions"] = c.Questions
+
+	return baml.EncodeClass("DecisionPlan", fields, nil)
+}
+
+func (c DecisionPlan) BamlTypeName() string {
+	return "DecisionPlan"
+}
+
+type DecisionQuestionPlan struct {
+	Type         *types.DecisionQuestionKind `json:"type"`
+	Name         *string                     `json:"name"`
+	Instructions *string                     `json:"instructions"`
+	Choices      []DecisionChoicePlan        `json:"choices"`
+	Levels       []DecisionLevelPlan         `json:"levels"`
+}
+
+func (c *DecisionQuestionPlan) Decode(holder *cffi.CFFIValueClass, typeMap baml.TypeMap) {
+	typeName := holder.Name
+	if typeName.Namespace != cffi.CFFITypeNamespace_STREAM_TYPES {
+		panic("expected cffi.CFFITypeNamespace_STREAM_TYPES, got " + string(typeName.Namespace.String()))
+	}
+	if typeName.Name != "DecisionQuestionPlan" {
+		panic("expected DecisionQuestionPlan, got " + typeName.Name)
+	}
+
+	for _, field := range holder.Fields {
+		key := field.Key
+		valueHolder := field.Value
+		switch key {
+
+		case "type":
+			c.Type = baml.Decode(valueHolder).Interface().(*types.DecisionQuestionKind)
+
+		case "name":
+			c.Name = baml.Decode(valueHolder).Interface().(*string)
+
+		case "instructions":
+			c.Instructions = baml.Decode(valueHolder).Interface().(*string)
+
+		case "choices":
+			c.Choices = baml.Decode(valueHolder).Interface().([]DecisionChoicePlan)
+
+		case "levels":
+			c.Levels = baml.Decode(valueHolder).Interface().([]DecisionLevelPlan)
+
+		default:
+
+			panic(fmt.Sprintf("unexpected field: %s in class DecisionQuestionPlan", key))
+
+		}
+	}
+
+}
+
+func (c DecisionQuestionPlan) Encode() (*cffi.HostValue, error) {
+	fields := map[string]any{}
+
+	fields["type"] = c.Type
+
+	fields["name"] = c.Name
+
+	fields["instructions"] = c.Instructions
+
+	fields["choices"] = c.Choices
+
+	fields["levels"] = c.Levels
+
+	return baml.EncodeClass("DecisionQuestionPlan", fields, nil)
+}
+
+func (c DecisionQuestionPlan) BamlTypeName() string {
+	return "DecisionQuestionPlan"
+}

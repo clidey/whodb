@@ -98,3 +98,163 @@ func (t *TypeBuilder) DatabaseContext() (*DatabaseContextClassView, error) {
 func (t *DatabaseContextClassView) Type() (baml.Type, error) {
 	return t.inner.Type()
 }
+
+type DecisionChoicePlanClassView struct {
+	inner baml.ClassBuilder
+}
+
+func (t *DecisionChoicePlanClassView) ListProperties() ([]ClassPropertyView, error) {
+	result, err := t.inner.ListProperties()
+	if err != nil {
+		return nil, err
+	}
+	builders := make([]ClassPropertyView, len(result))
+	for i, p := range result {
+		builders[i] = p
+	}
+	return builders, nil
+}
+
+func (t *DecisionChoicePlanClassView) PropertyValue() (ClassPropertyView, error) {
+	return t.inner.Property("value")
+}
+
+func (t *DecisionChoicePlanClassView) PropertyDescription() (ClassPropertyView, error) {
+	return t.inner.Property("description")
+}
+
+func (t *TypeBuilder) DecisionChoicePlan() (*DecisionChoicePlanClassView, error) {
+	bld, err := t.inner.Class("DecisionChoicePlan")
+	if err != nil {
+		return nil, err
+	}
+	return &DecisionChoicePlanClassView{inner: bld}, nil
+}
+
+func (t *DecisionChoicePlanClassView) Type() (baml.Type, error) {
+	return t.inner.Type()
+}
+
+type DecisionLevelPlanClassView struct {
+	inner baml.ClassBuilder
+}
+
+func (t *DecisionLevelPlanClassView) ListProperties() ([]ClassPropertyView, error) {
+	result, err := t.inner.ListProperties()
+	if err != nil {
+		return nil, err
+	}
+	builders := make([]ClassPropertyView, len(result))
+	for i, p := range result {
+		builders[i] = p
+	}
+	return builders, nil
+}
+
+func (t *DecisionLevelPlanClassView) PropertyLabel() (ClassPropertyView, error) {
+	return t.inner.Property("label")
+}
+
+func (t *DecisionLevelPlanClassView) PropertyDescription() (ClassPropertyView, error) {
+	return t.inner.Property("description")
+}
+
+func (t *TypeBuilder) DecisionLevelPlan() (*DecisionLevelPlanClassView, error) {
+	bld, err := t.inner.Class("DecisionLevelPlan")
+	if err != nil {
+		return nil, err
+	}
+	return &DecisionLevelPlanClassView{inner: bld}, nil
+}
+
+func (t *DecisionLevelPlanClassView) Type() (baml.Type, error) {
+	return t.inner.Type()
+}
+
+type DecisionPlanClassView struct {
+	inner baml.ClassBuilder
+}
+
+func (t *DecisionPlanClassView) ListProperties() ([]ClassPropertyView, error) {
+	result, err := t.inner.ListProperties()
+	if err != nil {
+		return nil, err
+	}
+	builders := make([]ClassPropertyView, len(result))
+	for i, p := range result {
+		builders[i] = p
+	}
+	return builders, nil
+}
+
+func (t *DecisionPlanClassView) PropertyMessage() (ClassPropertyView, error) {
+	return t.inner.Property("message")
+}
+
+func (t *DecisionPlanClassView) PropertySql() (ClassPropertyView, error) {
+	return t.inner.Property("sql")
+}
+
+func (t *DecisionPlanClassView) PropertyQuestions() (ClassPropertyView, error) {
+	return t.inner.Property("questions")
+}
+
+func (t *TypeBuilder) DecisionPlan() (*DecisionPlanClassView, error) {
+	bld, err := t.inner.Class("DecisionPlan")
+	if err != nil {
+		return nil, err
+	}
+	return &DecisionPlanClassView{inner: bld}, nil
+}
+
+func (t *DecisionPlanClassView) Type() (baml.Type, error) {
+	return t.inner.Type()
+}
+
+type DecisionQuestionPlanClassView struct {
+	inner baml.ClassBuilder
+}
+
+func (t *DecisionQuestionPlanClassView) ListProperties() ([]ClassPropertyView, error) {
+	result, err := t.inner.ListProperties()
+	if err != nil {
+		return nil, err
+	}
+	builders := make([]ClassPropertyView, len(result))
+	for i, p := range result {
+		builders[i] = p
+	}
+	return builders, nil
+}
+
+func (t *DecisionQuestionPlanClassView) PropertyType() (ClassPropertyView, error) {
+	return t.inner.Property("type")
+}
+
+func (t *DecisionQuestionPlanClassView) PropertyName() (ClassPropertyView, error) {
+	return t.inner.Property("name")
+}
+
+func (t *DecisionQuestionPlanClassView) PropertyInstructions() (ClassPropertyView, error) {
+	return t.inner.Property("instructions")
+}
+
+func (t *DecisionQuestionPlanClassView) PropertyChoices() (ClassPropertyView, error) {
+	return t.inner.Property("choices")
+}
+
+func (t *DecisionQuestionPlanClassView) PropertyLevels() (ClassPropertyView, error) {
+	return t.inner.Property("levels")
+}
+
+func (t *TypeBuilder) DecisionQuestionPlan() (*DecisionQuestionPlanClassView, error) {
+	bld, err := t.inner.Class("DecisionQuestionPlan")
+	if err != nil {
+		return nil, err
+	}
+	return &DecisionQuestionPlanClassView{inner: bld}, nil
+}
+
+func (t *DecisionQuestionPlanClassView) Type() (baml.Type, error) {
+	return t.inner.Type()
+}
