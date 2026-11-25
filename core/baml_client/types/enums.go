@@ -84,6 +84,68 @@ func (e ChatMessageType) BamlTypeName() string {
 	return "ChatMessageType"
 }
 
+type DecisionQuestionKind string
+
+const (
+	DecisionQuestionKindPREDICATE DecisionQuestionKind = "PREDICATE"
+	DecisionQuestionKindCHOICE    DecisionQuestionKind = "CHOICE"
+	DecisionQuestionKindSCORE     DecisionQuestionKind = "SCORE"
+)
+
+// Values returns all allowed values for the DecisionQuestionKind type.
+func (DecisionQuestionKind) Values() []DecisionQuestionKind {
+	return []DecisionQuestionKind{
+		DecisionQuestionKindPREDICATE,
+		DecisionQuestionKindCHOICE,
+		DecisionQuestionKindSCORE,
+	}
+}
+
+// IsValid checks whether the given DecisionQuestionKind value is valid.
+func (e DecisionQuestionKind) IsValid() bool {
+
+	return slices.Contains(e.Values(), e)
+
+}
+
+// MarshalJSON customizes JSON marshaling for DecisionQuestionKind.
+func (e DecisionQuestionKind) MarshalJSON() ([]byte, error) {
+	if !e.IsValid() {
+		return nil, fmt.Errorf("invalid DecisionQuestionKind: %q", e)
+	}
+	return json.Marshal(string(e))
+}
+
+// UnmarshalJSON customizes JSON unmarshaling for DecisionQuestionKind.
+func (e *DecisionQuestionKind) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+	*e = DecisionQuestionKind(s)
+	if !e.IsValid() {
+		return fmt.Errorf("invalid DecisionQuestionKind: %q", s)
+	}
+	return nil
+}
+
+func (e *DecisionQuestionKind) Decode(holder *cffi.CFFIValueEnum, typeMap baml.TypeMap) {
+	name := holder.Name
+	if name.Name != "DecisionQuestionKind" && name.Namespace != cffi.CFFITypeNamespace_TYPES {
+		panic(fmt.Sprintf("expected types.DecisionQuestionKind, got %s.%s", string(name.Namespace.String()), string(name.Name)))
+	}
+	value := holder.Value
+	*e = DecisionQuestionKind(value)
+}
+
+func (e DecisionQuestionKind) Encode() (*cffi.HostValue, error) {
+	return baml.EncodeEnum("DecisionQuestionKind", string(e), false)
+}
+
+func (e DecisionQuestionKind) BamlTypeName() string {
+	return "DecisionQuestionKind"
+}
+
 type OperationType string
 
 const (

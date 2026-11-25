@@ -22,6 +22,8 @@ The backend accepts the following environment settings. Set the values in the en
 
 Use the provider's credentials and endpoint for your deployment. Keep API keys in your deployment's secret configuration rather than in a shared example or repository.
 
+To turn off [Decisions](/ai/decisions), which sends approved query rows to the provider, set `WHODB_DISABLE_AI_DECISIONS=true` in the same environment.
+
 Provider choices and credentials can also be configured through the controls offered in the app. Open **Chat** and use its provider controls to select or add a provider.
 
 <div className="ce-screenshot-light">

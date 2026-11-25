@@ -30,6 +30,49 @@ en_US:
   dontRun: Don't run
   runStatement: Run statement
   running: Running
+  decisionsToggle: Decisions (beta)
+  decisionsToggleHint: Ask typed questions about each row with OpenAI Decisions. Rows are sent only after you review them.
+  decisionsPlaceholder: Describe what to decide about each row...
+  reviewDecisions: Review decisions
+  decisionsNeedsConsent: NOT SENT YET · NEEDS YOUR OK
+  decisionsConsentNotice: Regular chat only sends your messages and the schema. Sending this run shares the rows below, with these questions, with {provider}.
+  decisionsDestination: "To: {provider} · {model}"
+  decisionsColumns: "Columns: {columns}"
+  decisionsRowCount: "{count} rows, one request each"
+  decisionsRowCount_one: "{count} row, one request"
+  decisionsTruncated: The query returned more rows than one run sends, so only the first {count} are included.
+  decisionsQuestions: Questions
+  decisionsShowDescriptions: Show descriptions
+  decisionsHideDescriptions: Hide descriptions
+  decisionsQuery: Query
+  decisionTypePredicate: Yes / no
+  decisionTypeChoice: Category
+  decisionTypeScore: Score
+  decisionsSend: Send {count} rows
+  decisionsSend_one: Send {count} row
+  decisionsDontSend: Don't send
+  decisionsProviderMissing: The provider that planned this run is no longer available, so it can't be sent.
+  decisionsNoRowsTitle: No rows to decide
+  decisionsNothingToSend: NOTHING TO SEND
+  decisionsNoRows: The query returned no rows, so there is nothing to send.
+  decisionsRunningTitle: Sending rows
+  decisionsProgress: "{answered} OF {total} ANSWERED"
+  decisionsTitle: Decisions
+  decisionsAnswered: "{count} ROWS ANSWERED"
+  decisionsAnswered_one: "{count} ROW ANSWERED"
+  decisionsStoppedTitle: Decisions stopped
+  decisionsStopped: "STOPPED · {sent} OF {total} SENT"
+  decisionsDeclinedTitle: Decisions not sent
+  decisionsNothingSent: NOTHING LEFT WHODB
+  decisionsEstimateNote: Answers are model estimates. Check them before acting on them.
+  decisionsStop: Stop sending
+  decisionConfidenceColumn: "{name} confidence"
+  decisionLevelColumn: "{name} level"
+  decisionStatusColumn: Decision status
+  decisionRefused: Refused
+  decisionNotSent: Not sent
+  decisionNoAnswer: Stopped before an answer
+  decisionRowFailed: The request failed.
   copied: Copied
   copy: Copy
   placeholder: Type Your Message Here...

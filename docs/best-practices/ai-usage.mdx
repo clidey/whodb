@@ -36,4 +36,6 @@ If the target is unclear, cancel the proposal and inspect a read of those record
 
 Prompts, schema context, and included data can reach the configured model endpoint. Choose a provider and deployment appropriate for that data. Check the provider's current retention and usage terms directly rather than treating a local UI as evidence that requests stay local.
 
+**Decisions runs are the one case where rows leave WhoDB.** When you approve a [Decisions](/ai/decisions) run, WhoDB sends the rows and columns shown on its review card, with the run's questions, to OpenAI. Nothing is sent until you choose Send, and declining sends nothing.
+
 For setup or failed responses, see [Provider setup](/ai/setup-providers) and [Chat troubleshooting](/resources/troubleshooting#chat-cannot-answer).

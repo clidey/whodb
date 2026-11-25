@@ -131,6 +131,10 @@ var IsNewUIEnabled = os.Getenv("WHODB_ENABLE_NEW_UI") == "true"
 // DisableCredentialForm controls whether the credential form is disabled.
 var DisableCredentialForm = os.Getenv("WHODB_DISABLE_CREDENTIAL_FORM") == "true"
 
+// DisableAIDecisions turns off chat Decisions, which send approved query rows to
+// the AI provider. Set via WHODB_DISABLE_AI_DECISIONS.
+var DisableAIDecisions = os.Getenv("WHODB_DISABLE_AI_DECISIONS") == "true"
+
 var BridgeURL = os.Getenv("WHODB_BRIDGE_URL")
 
 // EncryptionKey is the 64-char hex (32-byte) key used to encrypt stored session

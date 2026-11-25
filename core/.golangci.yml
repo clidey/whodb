@@ -127,6 +127,7 @@ linters:
           - revive
           - gocritic
           - unparam
+          - goconst
   settings:
     custom:
       gounslop:
