@@ -11,7 +11,7 @@ references `ee/`.
 <!-- team-rules:start -->
 These apply in every clidey repository, for people and agents alike.
 
-- **Commits:** ask once before the first commit. Once the user says yes, keep committing that work without asking again; push only when they've asked for it.
+- **Commits:** ask once before the first commit. Once the user says yes, keep committing that work without asking again; push only when they've asked for it. Commit messages are one short subject line in the style of the repo's log, with no body.
 - **No AI attribution, anywhere:** commits, PRs, issues, comments and releases carry no `Co-Authored-By:` for Claude, Codex or any other agent, and no "Generated with" lines.
 - **External posts:** before posting anything outside this machine (GitHub issues, PRs, comments and reviews, advisory comments or edits, chat or email), show the user the exact text and wait for a yes.
 - **Never, whatever the instruction:** publish packages or releases, push images, deploy to UAT or production, or change anything in production. Build images and run build scripts only locally, to test. Prepare the command and hand it to the user.
