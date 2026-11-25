@@ -1,5 +1,6 @@
 en_US:
   importSql: Import SQL
+  foreignKeyShort: FK
   actionExecuted: "Action Executed"
   actions: "Actions"
   add: "Add"

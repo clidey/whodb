@@ -42,13 +42,13 @@ import {
     Sheet,
     SheetContent,
     SheetFooter,
-    SheetTitle,
     StackList,
     StackListItem,
     toast,
     IconTerminal as CommandLineIcon,
     IconClose as XMarkIcon,
 } from '@clidey/ux';
+import {SheetActions, SheetHeading} from '../../components/sheet-layout';
 import {skipToken, useLazyQuery, useMutation, useQuery} from "@apollo/client/react";
 import type {
     GetStorageUnitsQuery,
@@ -994,7 +994,7 @@ export const ExploreStorageUnit: FC = () => {
             <div className="ce-explore-heading flex items-center justify-between">
                 <div className="flex gap-sm items-center">
                     <h1 className="text-xl font-bold">{unitName}</h1>
-                    <span className="ce-explore-count" data-testid="total-count-top">{totalCount} {t('rows')}</span>
+                    <span className="ce-explore-count" data-testid="total-count-top">{totalCount === "unknown" ? t('rowCountUnknown') : t('rowCount', { count: Number(totalCount) })}</span>
                 </div>
                 <div className="ce-explore-heading-actions" ref={setTableActionsTarget} />
             </div>
@@ -1042,11 +1042,14 @@ export const ExploreStorageUnit: FC = () => {
                             onChange={handleFilterChange}
                             columnTypes={whereColumnTypes ?? []}
                         />}
+                        <Button onClick={handleQuery} data-testid="submit-button">
+                            <WhoDBChatIcon name="play" /> {t('run')}
+                        </Button>
                     </div>
                     <div className="ce-explore-run-controls">
                         <Select value={isCustomPageSize ? "custom" : pageSizeString} onValueChange={handlePageSizeChange}>
                             <SelectTrigger className="w-32" data-testid="table-page-size" aria-label={t('pageSizeLabel')}>
-                                <span>{isCustomPageSize ? t('custom') : `${pageSizeString} ${t('rows')}`}</span>
+                                <span>{isCustomPageSize ? t('custom') : t('rowCount', { count: Number(pageSizeString) })}</span>
                             </SelectTrigger>
                             <SelectContent align="end">
                                 {import.meta.env.VITE_E2E_TEST === "true" && <SelectItem value="1" data-value="1">1</SelectItem>}
@@ -1068,9 +1071,6 @@ export const ExploreStorageUnit: FC = () => {
                                 onKeyDown={(e) => { if (e.key === "Enter") handleCustomPageSizeApply(); }}
                                 data-testid="table-page-size-custom" />
                         )}
-                        <Button onClick={handleQuery} data-testid="submit-button">
-                            <WhoDBChatIcon name="play" /> {t('run')}
-                        </Button>
                     </div>
                     <Button onClick={handleOpenScratchpad} data-testid="embedded-scratchpad-button" variant="secondary"
                         className={cn({
@@ -1082,7 +1082,7 @@ export const ExploreStorageUnit: FC = () => {
                 <Sheet open={showAdd} onOpenChange={setShowAdd}>
                     <SheetContent
                         side="right"
-                        className="ce-add-row-sheet flex flex-col"
+                        className="ce-sheet flex flex-col"
                         onKeyDown={(e) => {
                             if (e.key === 'Escape') {
                                 e.preventDefault();
@@ -1091,8 +1091,7 @@ export const ExploreStorageUnit: FC = () => {
                             }
                         }}
                         footer={
-                            <SheetFooter className="ce-add-row-footer">
-                                <span className="ce-add-row-required-count">{t('requiredFields', {count: constraintsData?.SourceFieldConstraints?.filter(c => c.Nullable !== true && !c.Identity && !c.Computed && c.DefaultValue == null).length ?? 0})}</span>
+                            <SheetActions hint={t('requiredFields', {count: constraintsData?.SourceFieldConstraints?.filter(c => c.Nullable !== true && !c.Identity && !c.Computed && c.DefaultValue == null).length ?? 0})}>
                                 <Button
                                     variant="secondary"
                                     onClick={() =>{  setShowAdd(false); }}
@@ -1103,11 +1102,11 @@ export const ExploreStorageUnit: FC = () => {
                                 <Button onClick={handleAddRowSubmit} data-testid="submit-add-row-button" disabled={adding}>
                                     {adding && <Spinner className="size-4" aria-hidden="true" />} {t('addRowButton')}
                                 </Button>
-                            </SheetFooter>
+                            </SheetActions>
                         }
                     >
-                        <div className="ce-add-row-header"><span>{unitName}</span><SheetTitle>{t('addRowTitle')}</SheetTitle></div>
-                        <div className="ce-add-row-body flex-1 overflow-y-auto">
+                        <SheetHeading context={unitName} title={t('addRowTitle')} />
+                        <div className="ce-sheet-body flex-1 overflow-y-auto">
                             {/* NoSQL Document input - show JSON editor */}
                             {isNoSQL && rows?.Columns?.length === 1 && rows?.Columns?.[0]?.Type === "Document" ? (
                                 <div className="flex flex-col gap-4" data-testid="add-row-field-document">

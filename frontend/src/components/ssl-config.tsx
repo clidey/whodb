@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Alert, AlertDescription, Button, Input, Label, TextArea, cn, IconFileText as DocumentTextIcon, IconAlertCircle as ExclamationCircleIcon, IconFolder as FolderIcon, SearchSelect } from '@clidey/ux';
+import { Alert, AlertDescription, Button, Input, Label, TextArea, cn, IconFileText as DocumentTextIcon, IconAlertCircle as ExclamationCircleIcon, IconFolder as FolderIcon, IconChevronDown as ChevronDownIcon, SearchSelect } from '@clidey/ux';
 import type { FC} from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from '@/hooks/use-translation';
@@ -172,6 +172,8 @@ export const SSLConfig: FC<SSLConfigProps> = ({
           buttonProps={{
             "data-testid": "ssl-mode-select",
           }}
+          contentClassName="w-[var(--radix-popover-trigger-width)]"
+          rightIcon={<ChevronDownIcon className="w-4 h-4" />}
         />
         {currentModeInfo && (
           <span className="text-xs text-muted-foreground">

@@ -1,6 +1,8 @@
 en_US:
   title: Explore Table
-  rows: rows
+  rowCount_one: "{count} row"
+  rowCount_other: "{count} rows"
+  rowCountUnknown: Unknown rows
   loadingRows: Loading rows
   run: Run
   searchPlaceholder: Search query...

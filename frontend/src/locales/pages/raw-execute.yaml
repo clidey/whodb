@@ -5,8 +5,11 @@ en_US:
   runningQuery: Running query
   result: Result
   rowCount: "{count} rows"
+  rowCount_one: "{count} row"
   copyCode: Copy Code
   queryHistory: Query History
+  historyCount_one: "{count} query"
+  historyCount_other: "{count} queries"
   addCell: Add a New Cell
   clearEditor: Clear the Editor
   deleteCell: Delete the Cell

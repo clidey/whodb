@@ -13,6 +13,8 @@ en_US:
   sampledSchemaBadge: Schema inferred from sample
   create: Create
   createTitle: Create a {storageUnit}
+  fieldCount_one: "{count} field"
+  fieldCount_other: "{count} fields"
   nameLabel: Name
   namePlaceholder: Enter Name...
   fieldNameLabel: Field Name

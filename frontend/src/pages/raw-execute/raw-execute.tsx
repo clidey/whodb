@@ -42,7 +42,6 @@ import {
     Separator,
     Sheet,
     SheetContent,
-    SheetFooter,
     Tabs,
     TabsContent,
     TabsList,
@@ -61,6 +60,7 @@ import {
     IconXCircle as XCircleIcon,
     IconClose as XMarkIcon,
 } from '@clidey/ux';
+import { SheetActions, SheetHeading } from '@/components/sheet-layout';
 import {GetColumnsBatchDocument, GetStorageUnitsDocument, type RowsResult} from '@graphql';
 import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
@@ -727,15 +727,49 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
             {!loading && output}
             <Sheet open={historyOpen} onOpenChange={setHistoryOpen}>
                 {/* Focus the heading on open so the first Escape closes the sheet instead of a focused button's tooltip. */}
-                <SheetContent className="min-w-[50vw] max-w-[50vw]" onOpenAutoFocus={(event) => { event.preventDefault(); historyHeadingRef.current?.focus(); }}>
+                <SheetContent className="ce-sheet ce-history-sheet flex flex-col" onOpenAutoFocus={(event) => { event.preventDefault(); historyHeadingRef.current?.focus(); }} footer={history.length > 0 ? (
+                    <SheetActions hint={t('historyCount', { count: history.length })}>
+                        <AlertDialog>
+                            <AlertDialogTrigger>
+                                <Button
+                                    variant="outline"
+                                    data-testid="clear-history-button"
+                                >
+                                    <ArrowPathIcon className="w-4 h-4" />
+                                    {t('clearHistory')}
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>{t('clearHistoryTitle')}</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        {t('clearHistoryDescription')}
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel data-testid="clear-history-cancel">{t('cancel')}</AlertDialogCancel>
+                                    <AlertDialogAction asChild>
+                                        <Button
+                                            variant="destructive"
+                                            onClick={() => {
+                                                setHistory([]);
+                                                dispatch(ScratchpadActions.clearCellHistory({ cellId }));
+                                            }}
+                                            data-testid="clear-history-confirm"
+                                        >
+                                            {t('clearHistory')}
+                                        </Button>
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                    </SheetActions>
+                ) : undefined}>
                     <div className="flex flex-col h-full">
-                        <div className="flex items-center justify-between pb-3 border-b border-border">
-                            <div className="flex items-center gap-2" ref={historyHeadingRef} tabIndex={-1}>
-                                <ClockIcon className="w-5 h-5" />
-                                <span className="font-semibold text-lg">{t('queryHistory')}</span>
-                            </div>
+                        <div ref={historyHeadingRef} tabIndex={-1} className="outline-none">
+                            <SheetHeading title={t('queryHistory')} />
                         </div>
-                        <div className="flex-1 py-4 overflow-y-auto">
+                        <div className="ce-sheet-body flex-1">
                             {history.length === 0 ? (
                                 <EmptyState title={t('noHistoryTitle')} description={t('noHistoryDescription')} icon={<ClockIcon className="w-10 h-10" />} />
                             ) : (
@@ -800,45 +834,6 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                             )}
                         </div>
                     </div>
-                    <SheetFooter>
-                        {history.length > 0 && (
-                            <AlertDialog>
-                                <AlertDialogTrigger>
-                                    <Button
-                                        variant="outline"
-                                        data-testid="clear-history-button"
-                                        className="self-end"
-                                    >
-                                        <ArrowPathIcon className="w-4 h-4 mr-1" />
-                                        {t('clearHistory')}
-                                    </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                        <AlertDialogTitle>{t('clearHistoryTitle')}</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            {t('clearHistoryDescription')}
-                                        </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel data-testid="clear-history-cancel">{t('cancel')}</AlertDialogCancel>
-                                        <AlertDialogAction asChild>
-                                            <Button
-                                                variant="destructive"
-                                                onClick={() => {
-                                                    setHistory([]);
-                                                    dispatch(ScratchpadActions.clearCellHistory({ cellId }));
-                                                }}
-                                                data-testid="clear-history-confirm"
-                                            >
-                                                {t('clearHistory')}
-                                            </Button>
-                                        </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
-                        )}
-                    </SheetFooter>
                 </SheetContent>
             </Sheet>
             <AlertDialog open={pendingExecuteCode != null} onOpenChange={(open) => { if (!open) handleCancelExecute(); }}>

@@ -20,7 +20,6 @@ import {
     Button,
     cn,
     SearchInput,
-    SheetTitle,
     StackList,
     StackListItem,
     Table,
@@ -73,6 +72,18 @@ import {formatAttributeValue} from '../../utils/functions';
 import { findSourceObjectType, type SourceTypeItem } from '../../config/source-types';
 import { CreateSourceObjectCard } from './create-source-object-card';
 import {ph} from '../../utils/privacy';
+import {SheetActions, SheetHeading} from '../../components/sheet-layout';
+
+/** Column name followed by the "FK" marker used for foreign key columns. */
+const ForeignKeyColumnName: FC<{ name: string }> = ({ name }) => {
+    const { t } = useTranslation('common');
+    return (
+        <span className="ce-column-name-fk" data-testid="foreign-key-attribute">
+            {name}
+            <span className="ce-column-key">{t('foreignKeyShort')}</span>
+        </span>
+    );
+};
 
 type SourceBrowserObject = GetStorageUnitsQuery['StorageUnit'][number];
 type SourceColumn = GetColumnsBatchQuery['ColumnsBatch'][number]['Columns'][number];
@@ -230,10 +241,7 @@ const StorageUnitCard: FC<{
             </div>
         </div>
         <div className="flex flex-col grow gap-lg justify-between h-full overflow-y-auto">
-            <SheetTitle className={cn("flex items-center gap-2 mb-4", ph.mask)}>
-                <TableCellsIcon className="w-5 h-5" />
-                {unit.Name}
-            </SheetTitle>
+            <SheetHeading context={objectType} title={unit.Name} className={ph.mask} />
             {schemaFidelity === SourceSchemaFidelity.Sampled && (
                 <div className="mb-2" data-testid="sampled-schema-warning">
                     <div className="flex items-center gap-xs text-sm">
@@ -285,7 +293,7 @@ const StorageUnitCard: FC<{
                                     return (
                                         <div key={col.Name} className={ph.mask} data-field-key={col.Name} data-field-value={col.Type?.toLowerCase()} data-is-foreign-key={isForeignKey || undefined}>
                                             <StackListItem item={isForeignKey ?
-                                                <Badge data-testid="foreign-key-attribute" variant="secondary">{col.Name}</Badge> : col.Name}>
+                                                <ForeignKeyColumnName name={col.Name} /> : col.Name}>
                                                 {col.Type?.toLowerCase()}
                                             </StackListItem>
                                         </div>
@@ -296,11 +304,11 @@ const StorageUnitCard: FC<{
                     )}
                 </div>
             </div>
-            <div className="flex items-end grow">
-                <Button onClick={handleNavigateToObject} data-testid="data-button" variant="secondary" className="w-full">
+            <SheetActions>
+                <Button onClick={handleNavigateToObject} data-testid="data-button">
                     <CircleStackIcon className="w-4 h-4" /> {t('data')}
                 </Button>
-            </div>
+            </SheetActions>
         </div>
     </ExpandableCard>);
 }
@@ -728,7 +736,7 @@ export const StorageUnitPage: FC = () => {
                                                     return (
                                                         <div key={col.Name} data-field-key={col.Name} data-field-value={col.Type?.toLowerCase()} data-is-foreign-key={isForeignKey ?? undefined}>
                                                             <StackListItem item={isForeignKey ?
-                                                                <Badge data-testid="foreign-key-attribute">{col.Name}</Badge> : col.Name}>
+                                                                <ForeignKeyColumnName name={col.Name} /> : col.Name}>
                                                                 {col.Type?.toLowerCase()}
                                                             </StackListItem>
                                                         </div>
@@ -854,7 +862,7 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnitGraphCardData>>
                                                 />
                                             )}
                                             <StackListItem rowClassName="items-start"
-                                                           item={isFKColumn ? <Badge variant="secondary">{name}</Badge> : name}>
+                                                           item={isFKColumn ? <ForeignKeyColumnName name={name} /> : name}>
                                                 {value}
                                             </StackListItem>
                                         </div>

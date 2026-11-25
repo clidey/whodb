@@ -49,8 +49,6 @@ import {
     SelectValue,
     Sheet,
     SheetContent,
-    SheetFooter,
-    SheetTitle,
     Table as TableComponent,
     TableBody,
     TableCell,
@@ -76,8 +74,8 @@ import {
     IconSearch as MagnifyingGlassIcon,
     IconEdit as PencilSquareIcon,
     IconTrash as TrashIcon,
-    IconClose as XMarkIcon,
 } from '@clidey/ux';
+import {SheetActions, SheetHeading} from './sheet-layout';
 import { Spinner } from '@/components/loading';
 import {
     AnalyzeMockDataDependenciesDocument,
@@ -411,6 +409,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     // Mock data state
     const [showMockDataSheet, setShowMockDataSheet] = useState(false);
     const [mockDataRowCount, setMockDataRowCount] = useState("100");
+    const [mockDataRowCountClamped, setMockDataRowCountClamped] = useState(false);
     const [mockDataMethod, setMockDataMethod] = useState("Normal");
     const [mockDataOverwriteExisting, setMockDataOverwriteExisting] = useState("append");
     const [mockDataFkDensityRatio, setMockDataFkDensityRatio] = useState("20");
@@ -771,11 +770,12 @@ export const StorageUnitTable: FC<TableProps> = ({
         // Enforce max limit
         if (parsedValue > maxRowCount) {
             setMockDataRowCount(maxRowCount.toString());
-            toast.error(t('maximumRowCount', { max: maxRowCount }));
+            setMockDataRowCountClamped(true);
         } else {
             setMockDataRowCount(numericValue);
+            setMockDataRowCountClamped(false);
         }
-    }, [maxRowCount, t]);
+    }, [maxRowCount]);
 
     const handleMockDataGenerate = useCallback(async () => {
         // For databases without schemas (like SQLite), only storageUnit is required
@@ -1710,7 +1710,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                     <ContextMenu>
                         <ContextMenuTrigger>
                             <div className="flex items-center justify-center cursor-pointer border rounded-lg h-[200px]">
-                                <EmptyState className="table-empty-state" title={t('noDataAvailable')} description={t('noDataAvailable')} icon={<DocumentTextIcon className="w-4 h-4" />} />
+                                <EmptyState className="table-empty-state" title={t('noDataAvailable')} description={t('noDataAvailableDescription')} icon={<DocumentTextIcon className="w-4 h-4" />} />
                             </div>
                         </ContextMenuTrigger>
                         <ContextMenuContent
@@ -1818,10 +1818,9 @@ export const StorageUnitTable: FC<TableProps> = ({
                         setEditRowInitialLengths([]);
                     }
                 }}>
-                    <SheetContent side="right" className="w-[400px] max-w-full flex flex-col" data-testid="edit-row-dialog" footer={
-                        <SheetFooter className="flex gap-sm px-0">
+                    <SheetContent side="right" className="ce-sheet flex flex-col" data-testid="edit-row-dialog" footer={
+                        <SheetActions>
                             <Button
-                                className="flex-1"
                                 variant="secondary"
                                 onClick={() => {
                                     setEditIndex(null);
@@ -1832,23 +1831,19 @@ export const StorageUnitTable: FC<TableProps> = ({
                             >
                                 {t('cancel')}
                             </Button>
-                            <Button className="flex-1" onClick={handleUpdate} disabled={!editRow} data-testid="update-button">
+                            <Button onClick={handleUpdate} disabled={!editRow} data-testid="update-button">
                                 {t('update')}
                             </Button>
-                        </SheetFooter>
+                        </SheetActions>
                     }>
-                        <SheetTitle>{t('editRow')}</SheetTitle>
-                        <div className="flex flex-col gap-lg mt-4">
+                        <SheetHeading context={storageUnit} title={t('editRow')} />
+                        <div className="ce-sheet-body flex flex-col gap-lg">
                                 {editRow &&
                                     columns.map((col, idx) => (
-                                        <div key={col} className={cn("flex flex-col gap-2", ph.noCapture)}>
-                                            <div className="flex flex-col gap-0.5">
+                                        <div key={col} className={cn("ce-add-row-field flex flex-col", ph.noCapture)}>
+                                            <div className="ce-add-row-field-heading">
                                                 <Label htmlFor={`edit-row-field-${idx}`}>{col}</Label>
-                                                {columnTypes?.[idx] && (
-                                                    <span className="text-xs text-muted-foreground">
-                                                        {t('typeHint', { type: columnTypes[idx] })}
-                                                    </span>
-                                                )}
+                                                {columnTypes?.[idx] && <span>{columnTypes[idx].toLowerCase()}</span>}
                                             </div>
                                             {
                                                 editRowInitialLengths[idx] < 50 ?
@@ -1880,18 +1875,12 @@ export const StorageUnitTable: FC<TableProps> = ({
                 setShowMockDataSheet(open);
                     if (!open) {
                         setShowMockDataConfirmation(false);
+                        setMockDataRowCountClamped(false);
                     }
                 }}>
-                <SheetContent side="right" data-testid="mock-data-sheet" footer={
-                    <SheetFooter className="flex gap-sm px-0">
-                        <Alert variant={supportsMockDataRelations ? "info" : "default"} className="mb-4">
-                            <AlertTitle>{t('mockDataNote')}</AlertTitle>
-                            <AlertDescription>
-                                {supportsMockDataRelations ? t('mockDataWarning') : t('mockDataWarningClickHouse')}
-                            </AlertDescription>
-                        </Alert>
+                <SheetContent side="right" className="ce-sheet flex flex-col" data-testid="mock-data-sheet" footer={
+                    <SheetActions>
                         <Button
-                            className="flex-1"
                             variant="secondary"
                             onClick={() => { setShowMockDataSheet(false); }}
                             data-testid="cancel-mock-data"
@@ -1899,18 +1888,18 @@ export const StorageUnitTable: FC<TableProps> = ({
                             {t('cancel')}
                         </Button>
                         {!showMockDataConfirmation ? (
-                            <Button className="flex-1" onClick={() => { void handleMockDataGenerate(); }} disabled={generatingMockData || !mockDataRowCount || parseInt(mockDataRowCount) < 1} data-testid="mock-data-generate-button">
+                            <Button onClick={() => { void handleMockDataGenerate(); }} disabled={generatingMockData || !mockDataRowCount || parseInt(mockDataRowCount) < 1} data-testid="mock-data-generate-button">
                                 {t('generate')}
                             </Button>
                         ) : (
-                            <Button className="flex-1" onClick={() => { void handleMockDataGenerate(); }} disabled={generatingMockData || !mockDataRowCount || parseInt(mockDataRowCount) < 1} variant="destructive" data-testid="mock-data-overwrite-button">
+                            <Button onClick={() => { void handleMockDataGenerate(); }} disabled={generatingMockData || !mockDataRowCount || parseInt(mockDataRowCount) < 1} variant="destructive" data-testid="mock-data-overwrite-button">
                                 {t('yesOverwrite')}
                             </Button>
                         )}
-                    </SheetFooter>
+                    </SheetActions>
                 }>
-                    <div className="flex flex-col gap-lg">
-                        <SheetTitle className="flex items-center gap-2"><CalculatorIcon className="w-4 h-4" /> {t('mockData')}</SheetTitle>
+                    <SheetHeading context={storageUnit} title={t('mockData')} />
+                    <div className="ce-sheet-body flex flex-col gap-lg">
                         {!showMockDataConfirmation ? (
                             <div className="space-y-4">
                                 <Label>{t('numberOfRows', { max: maxRowCount })}</Label>
@@ -1923,7 +1912,10 @@ export const StorageUnitTable: FC<TableProps> = ({
                                     max={maxRowCount.toString()}
                                     placeholder={t('enterNumberOfRows', { max: maxRowCount })}
                                     data-testid="mock-data-rows-input"
+                                    aria-invalid={mockDataRowCountClamped || undefined}
+                                    aria-describedby={mockDataRowCountClamped ? "mock-data-rows-error" : undefined}
                                 />
+                                {mockDataRowCountClamped && <p id="mock-data-rows-error" className="-mt-2 text-xs text-destructive" role="alert" data-testid="mock-data-rows-error">{t('maximumRowCount', { max: maxRowCount })}</p>}
                                 <Label>{t('method')}</Label>
                                 <Select value={mockDataMethod} onValueChange={setMockDataMethod}>
                                     <SelectTrigger className="w-full" data-testid="mock-data-method-select" aria-label={t('method')}>
@@ -1979,7 +1971,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                                 <li key={tbl.Table} className="flex items-center gap-2">
                                                     <span className="font-mono">{tbl.Table}</span>
                                                     <span className="text-muted-foreground">
-                                                        ({tbl.RowsToGenerate} {t('rows')})
+                                                        ({t('rowsToGenerate', { count: tbl.RowsToGenerate })})
                                                     </span>
                                                     {tbl.UsesExistingData && (
                                                         <span className="text-xs px-1.5 py-0.5 rounded bg-secondary text-secondary-foreground">
@@ -2006,17 +1998,16 @@ export const StorageUnitTable: FC<TableProps> = ({
                                 )}
                             </div>
                         ) : (
-                            <div className="space-y-4">
-                                <div className="flex items-center justify-center mb-4">
-                                    <div className="w-16 h-16 bg-highlight/25 rounded-full flex items-center justify-center">
-                                        <XMarkIcon className="w-8 h-8 text-[var(--brand-readable)]" />
-                                    </div>
-                                </div>
-                                <p className="text-center text-gray-700 dark:text-gray-300">
-                                    {t('overwriteConfirmation', { storageUnit })}
-                                </p>
-                            </div>
+                            <Alert variant="destructive">
+                                <AlertDescription>{t('overwriteConfirmation', { storageUnit })}</AlertDescription>
+                            </Alert>
                         )}
+                        <Alert variant={supportsMockDataRelations ? "info" : "default"}>
+                            <AlertTitle>{t('mockDataNote')}</AlertTitle>
+                            <AlertDescription>
+                                {supportsMockDataRelations ? t('mockDataWarning') : t('mockDataWarningClickHouse')}
+                            </AlertDescription>
+                        </Alert>
                     </div>
                 </SheetContent>
             </Sheet>

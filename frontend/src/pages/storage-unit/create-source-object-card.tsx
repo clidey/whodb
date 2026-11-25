@@ -30,7 +30,6 @@ import {
     SelectTrigger,
     SelectValue,
     Separator,
-    SheetTitle,
     toast,
     IconCheckCircle as CheckCircleIcon,
     IconPlusCircle as PlusCircleIcon,
@@ -46,6 +45,7 @@ import {
 } from "@graphql";
 import type { FC} from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { SheetActions, SheetHeading } from "../../components/sheet-layout";
 import { TypeSelector } from "../../components/type-selector";
 import { findColumnTypeDefinition } from "../../utils/source-column-types";
 import { trackFrontendEvent } from "../../config/posthog";
@@ -334,10 +334,7 @@ export const CreateSourceObjectCard: FC<CreateSourceObjectCardProps> = ({
 
     return <div className="flex h-full min-h-0 grow flex-col my-2 gap-4 overflow-hidden">
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overflow-x-hidden pr-1">
-            <SheetTitle className="flex items-center gap-2">
-                <PlusCircleIcon className="w-5 h-5" />
-                {t("createTitle", { storageUnit: singularStorageUnitLabel })}
-            </SheetTitle>
+            <SheetHeading context={parentRef?.Path.at(-1)} title={t("createTitle", { storageUnit: singularStorageUnitLabel })} />
             <div className="flex flex-col gap-2">
                 <Label>{t("nameLabel")}</Label>
                 <Input value={name} onChange={event =>{  setName(event.target.value); }} placeholder={t("namePlaceholder")} />
@@ -470,9 +467,14 @@ export const CreateSourceObjectCard: FC<CreateSourceObjectCardProps> = ({
                 </Button>
             </div>}
         </div>
-        <Button onClick={handleSubmit} data-testid="submit-button" className="w-full">
-            <CheckCircleIcon className="w-4 h-4" /> {t("create")}
-        </Button>
+        <SheetActions hint={t("fieldCount", { count: columns.length })}>
+            <Button variant="secondary" onClick={onClose} data-testid="cancel-create-button">
+                {t("cancel")}
+            </Button>
+            <Button onClick={handleSubmit} data-testid="submit-button">
+                <CheckCircleIcon className="w-4 h-4" /> {t("create")}
+            </Button>
+        </SheetActions>
     </div>;
 };
 

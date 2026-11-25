@@ -1,6 +1,5 @@
 en_US:
   primaryKeyShort: PK
-  foreignKeyShort: FK
   rowsSummary_one: "{count} row"
   rowsSummary_other: "{count} rows"
   rowCopiedToClipboard: Row Copied to Clipboard
@@ -65,7 +64,6 @@ en_US:
   rightClickForOptions: Right-Click for Table Options
   exportSelected: Export {count} Selected
   exportAll: Export All
-  typeHint: "{type}"
   numberOfRows: "Number of Rows (max: {max})"
   enterNumberOfRows: Enter Number of Rows (1-{max})
   method: Method
@@ -86,7 +84,8 @@ en_US:
   mockDataWarningClickHouse: "ClickHouse doesn't support foreign keys. Mock data will be generated for this table only."
   dependencyError: "Can't Generate"
   tablesToPopulate: "Tables to populate:"
-  rows: rows
+  rowsToGenerate_one: "{count} row"
+  rowsToGenerate_other: "{count} rows"
   usingExisting: using existing
   totalRows: "Total: {count} rows"
   totalRows_one: "Total: {count} row"

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Input, Label, SearchSelect } from '@clidey/ux';
+import { Input, Label, SearchSelect, IconChevronDown as ChevronDownIcon } from '@clidey/ux';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from '../hooks/use-translation';
 import {
@@ -185,6 +185,8 @@ export function TypeSelector({
                 placeholder={placeholder}
                 searchPlaceholder={searchPlaceholder}
                 buttonProps={buttonProps}
+                contentClassName="w-[var(--radix-popover-trigger-width)]"
+                rightIcon={<ChevronDownIcon className="w-4 h-4" />}
             />
 
             {currentTypeDef?.hasLength && (
