@@ -126,6 +126,12 @@
           "type": "ID",
           "required": true,
           "list": false
+        },
+        {
+          "name": "restoreId",
+          "type": "ID",
+          "required": false,
+          "list": false
         }
       ],
       "returns": "[OrganizationBackupRestore!]!"
@@ -883,6 +889,25 @@
         }
       ],
       "returns": "JSON!"
+    },
+    {
+      "name": "DecisionModels",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "providerId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "[String!]!"
     },
     {
       "name": "CodeCompletion",
@@ -3391,6 +3416,31 @@
       "returns": "StatusResponse!"
     },
     {
+      "name": "SetOrganizationMemberRole",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "orgId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "userId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "role",
+          "type": "OrganizationMemberRole",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "StatusResponse!"
+    },
+    {
       "name": "TransferOwnership",
       "kind": "Mutation",
       "args": [
@@ -3726,6 +3776,120 @@
       "returns": "PlatformSource!"
     },
     {
+      "name": "OAuthSecretProviders",
+      "kind": "Query",
+      "args": null,
+      "returns": "[OAuthSecretProvider!]!"
+    },
+    {
+      "name": "OAuthSecretStatus",
+      "kind": "Query",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "OAuthSecretStatus"
+    },
+    {
+      "name": "CreateOAuthSecret",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "input",
+          "type": "CreateOAuthSecretInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "PlatformSecret!"
+    },
+    {
+      "name": "UpdateOAuthSecret",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "input",
+          "type": "CreateOAuthSecretInput",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "PlatformSecret!"
+    },
+    {
+      "name": "AuthorizeOAuthSecret",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "String!"
+    },
+    {
+      "name": "RefreshOAuthSecret",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "OAuthSecretStatus!"
+    },
+    {
+      "name": "DisconnectOAuthSecret",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        }
+      ],
+      "returns": "OAuthSecretStatus!"
+    },
+    {
       "name": "CreateSecret",
       "kind": "Mutation",
       "args": [
@@ -3924,6 +4088,43 @@
     },
     {
       "name": "TypeSafeSystemOne",
+      "kind": "Mutation",
+      "args": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "providerId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "request",
+          "type": "JSON",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "sessionId",
+          "type": "ID",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "runId",
+          "type": "ID",
+          "required": false,
+          "list": false
+        }
+      ],
+      "returns": "JSON!"
+    },
+    {
+      "name": "RunDecision",
       "kind": "Mutation",
       "args": [
         {
@@ -7548,6 +7749,71 @@
       ]
     },
     {
+      "name": "CreateOAuthSecretInput",
+      "fields": [
+        {
+          "name": "projectId",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "provider",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "clientId",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "clientSecret",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "scopes",
+          "type": "String",
+          "required": true,
+          "list": true
+        },
+        {
+          "name": "accessToken",
+          "type": "String",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "refreshToken",
+          "type": "String",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "expiresAt",
+          "type": "String",
+          "required": false,
+          "list": false
+        }
+      ]
+    },
+    {
       "name": "CreateOntologyFastLookupInput",
       "fields": [
         {
@@ -9383,6 +9649,136 @@
           "name": "newParentId",
           "type": "ID",
           "required": false,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "OAuthSecretProvider",
+      "fields": [
+        {
+          "name": "id",
+          "type": "ID",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "scopes",
+          "type": "String",
+          "required": true,
+          "list": true
+        },
+        {
+          "name": "callbackURL",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "category",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "defaultScopes",
+          "type": "String",
+          "required": true,
+          "list": true
+        },
+        {
+          "name": "documentationURL",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "setupHint",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "expiryOptional",
+          "type": "Boolean",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "scopeOptional",
+          "type": "Boolean",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "renewal",
+          "type": "String",
+          "required": true,
+          "list": false
+        }
+      ]
+    },
+    {
+      "name": "OAuthSecretStatus",
+      "fields": [
+        {
+          "name": "provider",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "state",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "scopes",
+          "type": "String",
+          "required": true,
+          "list": true
+        },
+        {
+          "name": "expiresAt",
+          "type": "String",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "lastRenewedAt",
+          "type": "String",
+          "required": false,
+          "list": false
+        },
+        {
+          "name": "renewable",
+          "type": "Boolean",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "callbackURL",
+          "type": "String",
+          "required": true,
+          "list": false
+        },
+        {
+          "name": "requestedScopes",
+          "type": "String",
+          "required": true,
+          "list": true
+        },
+        {
+          "name": "scopesVerified",
+          "type": "Boolean",
+          "required": true,
           "list": false
         }
       ]

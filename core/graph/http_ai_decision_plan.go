@@ -121,8 +121,8 @@ func validateDecisionPlan(query string, questions []types.DecisionQuestionPlan) 
 	if classification := sqlguard.Classify(query); classification.Mutating {
 		return fmt.Errorf("decisions only read data: %s", classification.Reason)
 	}
-	if len(questions) == 0 || len(questions) > 200 {
-		return errors.New("a plan needs between 1 and 200 questions")
+	if len(questions) == 0 || len(questions) > 400 {
+		return errors.New("a plan needs between 1 and 400 questions")
 	}
 	names := make(map[string]bool, len(questions))
 	for i := range questions {
@@ -149,8 +149,8 @@ func validateDecisionPlan(query string, questions []types.DecisionQuestionPlan) 
 				values[choice.Value] = true
 			}
 		case types.DecisionQuestionKindSCORE:
-			if len(question.Levels) < 2 {
-				return fmt.Errorf("score question %q needs at least 2 levels", name)
+			if len(question.Levels) < 2 || len(question.Levels) > 10 {
+				return fmt.Errorf("score question %q needs between 2 and 10 levels", name)
 			}
 			for _, level := range question.Levels {
 				if level.Label == "" {

@@ -479,6 +479,8 @@ type AIChatMessage {
   Result: RowsResult
   Text: String!
   RequiresConfirmation: Boolean!
+  # Set on "decision" messages: the questions to answer about each row of Result.
+  Decision: AIChatDecision
 }
 
 type AIProvider {
@@ -713,6 +715,8 @@ type Query {
   SourceGraph(ref: SourceObjectRefInput): [GraphUnit!]!
   AIProviders: [AIProvider!]!
   AIModel(providerId: String, modelType: String!, token: String): [String!]!
+  # Models that answer decisions for the provider type; empty when it has no Decisions API.
+  AIDecisionModels(modelType: String!): [String!]!
   SettingsConfig: SettingsConfig!
   MockDataMaxRowCount: Int!
   AnalyzeMockDataDependencies(ref: SourceObjectRefInput!, rowCount: Int!, fkDensityRatio: Int): MockDataDependencyAnalysis!
@@ -733,6 +737,110 @@ input GenerateChatTitleInput {
 
 type GenerateChatTitleResponse {
   Title: String!
+}
+
+enum AIDecisionQuestionType {
+  Predicate
+  Choice
+  Score
+}
+
+input AIDecisionChoiceInput {
+  Value: String!
+  Description: String
+}
+
+input AIDecisionLevelInput {
+  Label: String!
+  Description: String
+}
+
+input AIDecisionQuestionInput {
+  Type: AIDecisionQuestionType!
+  Name: String!
+  Instructions: String!
+  # Choice questions only.
+  Choices: [AIDecisionChoiceInput!]
+  # Score questions only, ordered from lowest to highest.
+  Levels: [AIDecisionLevelInput!]
+}
+
+input AIDecisionInput {
+  ModelType: String!
+  ProviderId: String
+  Token: String
+  Model: String!
+  Endpoint: String
+  # Text evidence that every question is answered about.
+  Input: String!
+  Questions: [AIDecisionQuestionInput!]!
+}
+
+enum AIDecisionAnswerType {
+  Predicate
+  Choice
+  Score
+  Refusal
+}
+
+type AIDecisionChoiceProbability {
+  Value: String!
+  Probability: Float!
+}
+
+# Value is the zero-based index of the score level.
+type AIDecisionScoreProbability {
+  Value: Int!
+  Label: String!
+  Probability: Float!
+}
+
+# Predicate answers set Probability; Choice answers set Choice, Confidence, and
+# ChoiceProbabilities; Score answers set Score, Confidence, and ScoreProbabilities;
+# Refusal answers set only Name.
+type AIDecisionAnswer {
+  Type: AIDecisionAnswerType!
+  Name: String!
+  Probability: Float
+  Choice: String
+  Score: Float
+  Confidence: Float
+  ChoiceProbabilities: [AIDecisionChoiceProbability!]
+  ScoreProbabilities: [AIDecisionScoreProbability!]
+}
+
+type AIDecisionResponse {
+  Answers: [AIDecisionAnswer!]!
+}
+
+type AIDecisionChoice {
+  Value: String!
+  Description: String
+}
+
+type AIDecisionLevel {
+  Label: String!
+  Description: String
+}
+
+type AIDecisionQuestion {
+  Type: AIDecisionQuestionType!
+  Name: String!
+  Instructions: String!
+  # Choice questions only.
+  Choices: [AIDecisionChoice!]
+  # Score questions only, ordered from lowest to highest.
+  Levels: [AIDecisionLevel!]
+}
+
+# A planned Decisions run that nothing has been sent for yet. Query is the read-only
+# query whose rows are the evidence; Truncated is set when it returned more rows than
+# one run sends.
+type AIChatDecision {
+  Model: String!
+  Query: String!
+  Questions: [AIDecisionQuestion!]!
+  Truncated: Boolean!
 }
 
 type Mutation {
@@ -763,6 +871,8 @@ type Mutation {
   # AI Chat Mutations
   ExecuteConfirmedSQL(query: String!, operationType: String!): AIChatMessage!
   GenerateChatTitle(input: GenerateChatTitleInput!): GenerateChatTitleResponse!
+  # Answers each question about Input, in order, with the provider's Decisions API (OpenAI only).
+  RunAIDecision(input: AIDecisionInput!): AIDecisionResponse!
 
 }
 
@@ -1150,6 +1260,13 @@ input UpdateAccessInput {
   relation:     String!
 }
 
+"""A role an Account Owner can assign to an existing organization user."""
+enum OrganizationMemberRole {
+  ADMIN
+  MEMBER
+  APP_ONLY
+}
+
 input SourceConfigInput {
   hostname: String
   port:     String
@@ -1280,6 +1397,8 @@ extend type Mutation {
   InviteUser(input: InviteUserInput!): StatusResponse!
   ReinviteUser(userId: ID!, orgId: ID!): StatusResponse!
   RemoveUser(userId: ID!, orgId: ID!, force: Boolean): StatusResponse!
+  """Changes the role of an existing organization user. Requires the Account Owner."""
+  SetOrganizationMemberRole(orgId: ID!, userId: ID!, role: OrganizationMemberRole!): StatusResponse!
   GrantAccess(input: UpdateAccessInput!): StatusResponse!
   RevokeAccess(input: UpdateAccessInput!): StatusResponse!
   DeleteMyCredential(credentialId: ID!): StatusResponse!
@@ -1321,12 +1440,16 @@ extend type Query {
   AIProviderModels(projectId: ID!, providerId: ID!): [String!]!
   # Native TypeSafe model metadata; credentials come from the saved provider.
   TypeSafeModels(projectId: ID!, providerId: ID!): JSON!
+  # Models a saved provider answers OpenAI Decisions with; empty when it has no Decisions API.
+  DecisionModels(projectId: ID!, providerId: ID!): [String!]!
 }
 
 extend type Mutation {
   CreateAIProvider(input: CreateAIProviderInput!): PlatformAIProvider!
   # Native TypeSafe model/state/questions request and response.
   TypeSafeSystemOne(projectId: ID!, providerId: ID!, request: JSON!, sessionId: ID, runId: ID): JSON!
+  # Native OpenAI Decisions model/input/questions request and response, with the saved provider's credentials.
+  RunDecision(projectId: ID!, providerId: ID!, request: JSON!, sessionId: ID, runId: ID): JSON!
   UpdateAIProvider(input: UpdateAIProviderInput!): PlatformAIProvider!
   DeleteAIProvider(id: ID!): StatusResponse!
 }
@@ -3161,6 +3284,10 @@ extend type Query {
   ActiveProdVersion(projectId: ID!, objectId: ID!, objectType: VersionableObjectType!): ActiveProdVersion
   ProjectActiveProdVersions(projectId: ID!): [ActiveProdVersion!]!
   OrganizationPackages(organizationId: ID!): [Package!]!
+  """List visible package families owned by an organization, or releases in one family."""
+  OrganizationPackageCatalog(organizationId: ID!, input: PackageCatalogInput!): PackageCatalogPage!
+  """List visible shared package families, or releases from a specific publisher."""
+  PackageLibraryCatalog(input: PackageCatalogInput!, publisherId: ID): PackageCatalogPage!
   OrganizationPackage(organizationId: ID!, packageId: ID!): Package
   PackageInstallations(projectId: ID!): [PackageInstallation!]!
   OrganizationPackageInstallations(organizationId: ID!, packageId: ID): [PackageInstallation!]!
@@ -3173,6 +3300,51 @@ extend type Query {
   PreviewImportPackage(input: ImportPackageInput!): PackagePreview!
   PreviewSharedPackageInstall(input: SharedPackageOperationInput!): PackagePreview!
   PreviewSharedPackageImport(input: SharedPackageOperationInput!): PackagePreview!
+}
+
+"""Filters and pagination for a package catalog."""
+input PackageCatalogInput {
+  """Return releases of this exact package name instead of listing families."""
+  family: String
+  """Search visible releases and their asset names."""
+  search: String
+  """Sort families by name instead of newest release."""
+  sortByName: Boolean = false
+  """Number of entries to skip."""
+  offset: Int = 0
+  """Maximum entries to return, between 1 and 100."""
+  limit: Int = 20
+}
+
+"""A page of package families or release history."""
+type PackageCatalogPage {
+  """Entries in catalog order."""
+  entries: [PackageCatalogEntry!]!
+  """Total visible entries matching the filters."""
+  totalCount: Int!
+}
+
+"""List metadata for one package release."""
+type PackageCatalogEntry {
+  releaseId: ID!
+  sourceProjectId: ID!
+  sourceOrgId: ID!
+  """Publisher name, when listing shares."""
+  sourceOrgName: String
+  """Share token, when listing shares."""
+  shareToken: String
+  name: String!
+  version: String!
+  channel: String!
+  description: String!
+  installable: Boolean!
+  createdAt: Time!
+  """Number of assets in this release."""
+  itemCount: Int!
+  """Name of an asset matching the current search."""
+  matchingItemName: String
+  """Type of the matching asset."""
+  matchingItemType: String
 }
 
 # ─── Cross-Project Ontology Sharing ──────────────────────────────────────────
@@ -3551,7 +3723,7 @@ type OrganizationBackupScope {
 }
 
 extend type Query {
-  OrganizationBackupRestores(orgId: ID!): [OrganizationBackupRestore!]!
+  OrganizationBackupRestores(orgId: ID!, restoreId: ID): [OrganizationBackupRestore!]!
   OrganizationBackupNotifications(orgId: ID!): [OrganizationBackupNotification!]!
 }
 extend type Mutation {
@@ -3694,4 +3866,59 @@ extend type Mutation {
   "Confirms with the emailed token, or with the typed email address when no email is sent."
   ConfirmAccountDeletion(token: String, email: String): AccountDeletionStatus!
   CancelAccountDeletion: StatusResponse!
+}
+
+
+"""A reviewed OAuth provider. Client credentials remain encrypted in the project Secret."""
+type OAuthSecretProvider {
+  id: ID!
+  name: String!
+  scopes: [String!]!
+  callbackURL: String!
+  category: String!
+  defaultScopes: [String!]!
+  documentationURL: String!
+  setupHint: String!
+  expiryOptional: Boolean!
+  scopeOptional: Boolean!
+  renewal: String!
+}
+
+"""Credential health without tokens, client credentials, or pending authorization state."""
+type OAuthSecretStatus {
+  provider: String!
+  state: String!
+  scopes: [String!]!
+  expiresAt: String
+  lastRenewedAt: String
+  renewable: Boolean!
+  callbackURL: String!
+  requestedScopes: [String!]!
+  scopesVerified: Boolean!
+}
+
+input CreateOAuthSecretInput {
+  projectId: ID!
+  name: String!
+  description: String
+  provider: String!
+  clientId: String!
+  clientSecret: String!
+  scopes: [String!]!
+  accessToken: String
+  refreshToken: String
+  expiresAt: String
+}
+
+extend type Query {
+  OAuthSecretProviders: [OAuthSecretProvider!]!
+  OAuthSecretStatus(projectId: ID!, id: ID!): OAuthSecretStatus
+}
+
+extend type Mutation {
+  CreateOAuthSecret(input: CreateOAuthSecretInput!): PlatformSecret!
+  UpdateOAuthSecret(id: ID!, input: CreateOAuthSecretInput!): PlatformSecret!
+  AuthorizeOAuthSecret(projectId: ID!, id: ID!): String!
+  RefreshOAuthSecret(projectId: ID!, id: ID!): OAuthSecretStatus!
+  DisconnectOAuthSecret(projectId: ID!, id: ID!): OAuthSecretStatus!
 }

@@ -165,7 +165,7 @@ func (p *OpenAIProvider) CreateBAMLClient(config *ProviderConfig, model string) 
 	return clientType, opts, nil
 }
 
-// DecisionModels returns gpt-6-luna, the only model the Decisions API accepts while it is in beta.
+// DecisionModels returns gpt-6-luna, the only model the Decisions API accepts.
 func (p *OpenAIProvider) DecisionModels() []string {
 	return []string{"gpt-6-luna"}
 }
