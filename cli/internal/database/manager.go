@@ -1208,6 +1208,8 @@ func loadStorageUnitMetadata[T any](storageUnitNames []string, load func(string)
 	return results, nil
 }
 
+// ExportToCSV writes every row of a storage unit to a CSV file, streaming them
+// through the plugin's export so no row limit or page size applies.
 func (m *Manager) ExportToCSV(schema, storageUnit, filename, delimiter string) error {
 	start := time.Now()
 	defer func() {
@@ -1216,11 +1218,6 @@ func (m *Manager) ExportToCSV(schema, storageUnit, filename, delimiter string) e
 
 	if m.currentConnection == nil {
 		return fmt.Errorf("not connected to any database")
-	}
-
-	result, err := m.GetRows(schema, storageUnit, nil, 0, 0)
-	if err != nil {
-		return fmt.Errorf("failed to fetch data: %w", err)
 	}
 
 	// Write to a temp file first for atomic replace
@@ -1234,20 +1231,11 @@ func (m *Manager) ExportToCSV(schema, storageUnit, filename, delimiter string) e
 	delimRune := rune(delimiter[0])
 	writer.Comma = delimRune
 
-	// Write headers
-	headers := make([]string, len(result.Columns))
-	for i, col := range result.Columns {
-		headers[i] = col.Name
-	}
-	if err := writer.Write(headers); err != nil {
-		return fmt.Errorf("failed to write headers: %w", err)
-	}
-
-	// Write rows
-	for _, row := range result.Rows {
-		if err := writer.Write(row); err != nil {
-			return fmt.Errorf("failed to write row: %w", err)
-		}
+	// The first record the export writes is the header row
+	if _, err := m.ExportDataStream(schema, storageUnit, writer.Write); err != nil {
+		_ = tmp.Close()
+		_ = os.Remove(tmpPath)
+		return fmt.Errorf("failed to fetch data: %w", err)
 	}
 
 	writer.Flush()
@@ -1321,6 +1309,8 @@ func (m *Manager) ExportDataStream(schema, storageUnit string, writer func([]str
 	return rowCount, nil
 }
 
+// ExportToExcel writes every row of a storage unit to an Excel file, streaming
+// them through the plugin's export so no row limit or page size applies.
 func (m *Manager) ExportToExcel(schema, storageUnit, filename string) error {
 	start := time.Now()
 	defer func() {
@@ -1329,11 +1319,6 @@ func (m *Manager) ExportToExcel(schema, storageUnit, filename string) error {
 
 	if m.currentConnection == nil {
 		return fmt.Errorf("not connected to any database")
-	}
-
-	result, err := m.GetRows(schema, storageUnit, nil, 0, 0)
-	if err != nil {
-		return fmt.Errorf("failed to fetch data: %w", err)
 	}
 
 	// Create Excel file
@@ -1346,18 +1331,17 @@ func (m *Manager) ExportToExcel(schema, storageUnit, filename string) error {
 		return fmt.Errorf("failed to create sheet: %w", err)
 	}
 
-	// Write headers
-	for i, col := range result.Columns {
-		cell, _ := excelize.CoordinatesToCellName(i+1, 1)
-		_ = f.SetCellValue(sheetName, cell, col.Name)
-	}
-
-	// Write rows
-	for rowIdx, row := range result.Rows {
-		for colIdx, value := range row {
-			cell, _ := excelize.CoordinatesToCellName(colIdx+1, rowIdx+2)
+	// The first record the export writes is the header row
+	sheetRow := 0
+	if _, err := m.ExportDataStream(schema, storageUnit, func(record []string) error {
+		sheetRow++
+		for colIdx, value := range record {
+			cell, _ := excelize.CoordinatesToCellName(colIdx+1, sheetRow)
 			_ = f.SetCellValue(sheetName, cell, value)
 		}
+		return nil
+	}); err != nil {
+		return fmt.Errorf("failed to fetch data: %w", err)
 	}
 
 	f.SetActiveSheet(index)

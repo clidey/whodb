@@ -17,11 +17,13 @@
 package database
 
 import (
+	"encoding/csv"
 	"os"
 	"testing"
 
 	"github.com/clidey/whodb/cli/internal/config"
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/xuri/excelize/v2"
 )
 
 func TestSQLiteIntegration(t *testing.T) {
@@ -253,8 +255,17 @@ func TestExportIntegration(t *testing.T) {
 		t.Fatalf("ExportToCSV failed: %v", err)
 	}
 
-	if _, err := os.Stat(csvPath); os.IsNotExist(err) {
-		t.Errorf("CSV file was not created: %s", csvPath)
+	csvFile, err := os.Open(csvPath)
+	if err != nil {
+		t.Fatalf("CSV file was not created: %v", err)
+	}
+	csvRecords, err := csv.NewReader(csvFile).ReadAll()
+	_ = csvFile.Close()
+	if err != nil {
+		t.Fatalf("Reading exported CSV failed: %v", err)
+	}
+	if len(csvRecords) != 4 {
+		t.Fatalf("CSV export has %d records, want the header and 3 rows", len(csvRecords))
 	}
 
 	xlsxPath := tempDir + "/export.xlsx"
@@ -263,8 +274,17 @@ func TestExportIntegration(t *testing.T) {
 		t.Fatalf("ExportToExcel failed: %v", err)
 	}
 
-	if _, err := os.Stat(xlsxPath); os.IsNotExist(err) {
-		t.Errorf("Excel file was not created: %s", xlsxPath)
+	xlsxFile, err := excelize.OpenFile(xlsxPath)
+	if err != nil {
+		t.Fatalf("Excel file was not created: %v", err)
+	}
+	xlsxRows, err := xlsxFile.GetRows("Sheet1")
+	_ = xlsxFile.Close()
+	if err != nil {
+		t.Fatalf("Reading exported Excel file failed: %v", err)
+	}
+	if len(xlsxRows) != 4 {
+		t.Fatalf("Excel export has %d rows, want the header and 3 rows", len(xlsxRows))
 	}
 
 	result, err := mgr.ExecuteQuery("SELECT * FROM export_test")
