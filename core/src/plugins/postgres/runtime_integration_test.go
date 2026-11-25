@@ -500,3 +500,65 @@ func TestQuestDBReadPathsAcceptQuotedTableName(t *testing.T) {
 		t.Fatalf("QuestDB guard table was modified: rows=%#v err=%v", guard, err)
 	}
 }
+
+func TestPostgresFamilyMixedCaseNamesAreFound(t *testing.T) {
+	tests := []struct {
+		name   string
+		plugin engine.PluginFunctions
+		config *engine.PluginConfig
+	}{
+		{name: "Postgres", plugin: NewPostgresPlugin().PluginFunctions, config: postgresIntegrationConfig()},
+		{name: "CockroachDB", plugin: NewCockroachDBPlugin().PluginFunctions, config: postgresFamilyIntegrationConfig(engine.DatabaseType_CockroachDB, "26257")},
+		{name: "YugabyteDB", plugin: NewYugabyteDBPlugin().PluginFunctions, config: postgresFamilyIntegrationConfig(engine.DatabaseType_YugabyteDB, "5434")},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			testPostgresFamilyMixedCaseNamesAreFound(t, test.plugin, test.config)
+		})
+	}
+}
+
+func testPostgresFamilyMixedCaseNamesAreFound(t *testing.T, plugin engine.PluginFunctions, config *engine.PluginConfig) {
+	t.Helper()
+	waitForPostgresFamilyConnection(t, plugin, config)
+
+	schema := fmt.Sprintf("Mixed_Case_%d", time.Now().UnixNano()%1_000_000)
+	table := "Dish"
+	quotedSchema := `"` + schema + `"`
+	qualified := quotedSchema + `."` + table + `"`
+	_, _ = plugin.RawExecute(config, `DROP SCHEMA IF EXISTS `+quotedSchema+` CASCADE`)
+	t.Cleanup(func() {
+		_, _ = plugin.RawExecute(config, `DROP SCHEMA IF EXISTS `+quotedSchema+` CASCADE`)
+	})
+
+	setup := []string{
+		`CREATE SCHEMA ` + quotedSchema,
+		`CREATE TABLE ` + qualified + ` (id INTEGER PRIMARY KEY, status TEXT CHECK (status IN ('open', 'closed')))`,
+	}
+	for _, statement := range setup {
+		if _, err := plugin.RawExecute(config, statement); err != nil {
+			t.Fatalf("failed to prepare mixed-case %s table with %q: %v", config.Credentials.Type, statement, err)
+		}
+	}
+
+	exists, err := plugin.StorageUnitExists(config, schema, table)
+	if err != nil || !exists {
+		t.Fatalf("expected mixed-case %s table %s to exist, exists=%t err=%v", config.Credentials.Type, qualified, exists, err)
+	}
+	exists, err = plugin.StorageUnitExists(config, schema, strings.ToLower(table))
+	if err != nil || exists {
+		t.Fatalf("expected lowercase %s table name not to match %s, exists=%t err=%v", config.Credentials.Type, qualified, exists, err)
+	}
+
+	constraints, err := plugin.GetColumnConstraints(config, schema, table)
+	if err != nil {
+		t.Fatalf("failed to read constraints of mixed-case %s table: %v", config.Credentials.Type, err)
+	}
+	if constraints["id"]["primary"] != true {
+		t.Fatalf("mixed-case %s table lost its primary key: %#v", config.Credentials.Type, constraints)
+	}
+	if values, _ := constraints["status"]["check_values"].([]string); len(values) != 2 {
+		t.Fatalf("mixed-case %s table lost its CHECK constraint: %#v", config.Credentials.Type, constraints)
+	}
+}

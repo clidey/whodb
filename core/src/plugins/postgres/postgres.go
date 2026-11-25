@@ -84,8 +84,10 @@ func (p *PostgresPlugin) GetTableInfoQuery() string {
 	`
 }
 
+// GetStorageUnitExistsQuery quotes both names: to_regclass parses its argument
+// as SQL identifiers, so unquoted names are folded to lowercase.
 func (p *PostgresPlugin) GetStorageUnitExistsQuery() string {
-	return `SELECT to_regclass($1 || '.' || $2) IS NOT NULL`
+	return `SELECT to_regclass(quote_ident($1) || '.' || quote_ident($2)) IS NOT NULL`
 }
 
 func (p *PostgresPlugin) GetPlaceholder(index int) string {
