@@ -209,7 +209,9 @@ func validatePlatformPayload(key string, payload map[string]any) error {
 		// Dataset descriptions are historically optional in the typed CLI input even
 		// though older hosted schemas published them as non-null. Keep that compatible
 		// while enforcing the other published required fields.
-		if field.Required && field.Name != "description" && (!exists || value == nil || (field.Type == "string" && strings.TrimSpace(fmt.Sprint(value)) == "")) {
+		emptyContentAllowed := key == "action:upsert_file:app" && field.Name == "content"
+		blank := field.Type == "string" && strings.TrimSpace(fmt.Sprint(value)) == "" && !emptyContentAllowed
+		if field.Required && field.Name != "description" && (!exists || value == nil || blank) {
 			return fmt.Errorf("payload.%s is required", field.Name)
 		}
 		if exists && value != nil && !platformPayloadTypeMatches(field.Type, value) {

@@ -88,6 +88,7 @@ func (s *PlatformState) PruneExpired(now time.Time) {
 			delete(s.IdempotencyResults, key)
 		}
 	}
+	pruneWorkflowPayloads(s.Workflows, now)
 	plans := s.Workflows[:0]
 	for _, plan := range s.Workflows {
 		if now.Before(plan.UpdatedAt.Add(30 * 24 * time.Hour)) {
@@ -117,6 +118,9 @@ func (s *PlatformState) NextCleanupAt() time.Time {
 		add(completed.Add(30 * 24 * time.Hour))
 	}
 	for _, plan := range s.Workflows {
+		if plan.StagedUntil != nil && plan.Status != "expired" && plan.Status != "completed" {
+			add(*plan.StagedUntil)
+		}
 		add(plan.UpdatedAt.Add(30 * 24 * time.Hour))
 	}
 	return next

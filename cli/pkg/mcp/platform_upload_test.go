@@ -124,11 +124,6 @@ func TestPlatformUploadPreviewPreservesSensitiveFieldRules(t *testing.T) {
 			}
 		})
 	}
-	for _, field := range []string{"file_path", "filePath", "outputPath", "password", "token", "content"} {
-		if _, err := redactWorkflowPayload(map[string]any{field: "private"}); err == nil {
-			t.Fatalf("workflow accepted sensitive field %q", field)
-		}
-	}
 }
 
 func TestPlatformUploadConfirmationTransmitsStoredFile(t *testing.T) {

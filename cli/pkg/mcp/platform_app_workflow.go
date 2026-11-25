@@ -39,7 +39,7 @@ func buildPlatformAppWorkflow() platformAppWorkflow {
 			"Call whodb_platform_app_components and whodb_platform_app_component before using unfamiliar components; call whodb_platform_app_sdks and whodb_platform_app_sdk before writing app data or function integrations.",
 			"Use whodb_platform_apps and whodb_platform_app_files to inspect an existing draft. Read whodb://platform/schema for exact app create, update, file action, and promotion payloads.",
 			"Use whodb_platform_app_logic_graph to inspect event-to-script and cross-page flows or find broken wiring before editing and after publishing a draft.",
-			"Use whodb_platform_create, whodb_platform_update, and whodb_platform_action for hosted draft changes. Follow the active MCP write confirmation mode.",
+			"Batch related writes with whodb_platform_workflow_plan and whodb_platform_workflow_apply. Set target_from_step on file writes to the app creation step. To publish in the same review, use action:promote:object with objectType app and an objectId of {\"$step_id\":\"create-app\"}.",
 			"Use whodb_platform_app_view and whodb_platform_app_screenshot to inspect rendered hosted pages at desktop, mobile, and tablet viewports. Request trace=true when the hosted runtime supports tracing.",
 			"Read back files and promoted versions after writes; do not claim a flow works from file content alone.",
 		},

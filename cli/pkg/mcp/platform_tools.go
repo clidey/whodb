@@ -2416,6 +2416,9 @@ func platformActionWillAffect(action *PendingPlatformAction, changes []string) [
 		}
 		targets = append(targets, target)
 	}
+	if action.WorkflowPlanID != "" {
+		return targets
+	}
 	for _, change := range changes {
 		if strings.TrimSpace(change) != "" {
 			targets = append(targets, change)
@@ -2650,7 +2653,7 @@ func executePendingPlatformAction(ctx context.Context, action *PendingPlatformAc
 		}, nil
 	}
 	if action.WorkflowPlanID != "" {
-		return executePlatformWorkflow(ctx, session, action.WorkflowPlanID, requestID)
+		return executePlatformWorkflow(ctx, session, action.WorkflowPlanID, action.PayloadHash, requestID)
 	}
 	if action.BundlePlan != nil {
 		return executePlatformBundlePlan(ctx, session, action.BundlePlan, requestID)

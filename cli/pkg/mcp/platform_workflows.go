@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -28,22 +29,25 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-const platformWorkflowVersion = 1
+const platformWorkflowVersion = 2
+const workflowPayloadLifetime = time.Hour
 
 var (
 	platformWorkflowMutex sync.Mutex
+	workflowExecutions    sync.Map
 	platformWorkflowPath  = defaultPlatformWorkflowPath
 )
 
 // PlatformWorkflowStepInput describes one validated generic platform write in a workflow.
 type PlatformWorkflowStepInput struct {
-	ID        string         `json:"id" jsonschema:"Stable step id used for dependencies and retries."`
-	Operation string         `json:"operation" jsonschema:"create, update, delete, or action"`
-	Resource  string         `json:"resource" jsonschema:"Platform resource such as dataset, transform, function, or app"`
-	Action    string         `json:"action,omitempty" jsonschema:"Action name when operation is action"`
-	TargetID  string         `json:"target_id,omitempty" jsonschema:"Existing resource id for update, delete, or action"`
-	Payload   map[string]any `json:"payload,omitempty" jsonschema:"Structured non-secret mutation payload"`
-	DependsOn []string       `json:"depends_on,omitempty" jsonschema:"Step ids that must complete first"`
+	ID             string         `json:"id" jsonschema:"Stable step id used for dependencies and retries."`
+	Operation      string         `json:"operation" jsonschema:"create, update, delete, or action"`
+	Resource       string         `json:"resource" jsonschema:"Platform resource such as dataset, transform, function, or app"`
+	Action         string         `json:"action,omitempty" jsonschema:"Action name when operation is action"`
+	TargetID       string         `json:"target_id,omitempty" jsonschema:"Existing resource id for update, delete, or action"`
+	TargetFromStep string         `json:"target_from_step,omitempty" jsonschema:"Use the result ID of this earlier create step as target_id."`
+	Payload        map[string]any `json:"payload,omitempty" jsonschema:"Structured mutation payload. Use an object with only $step_id set to an earlier create step name wherever its result ID is needed."`
+	DependsOn      []string       `json:"depends_on,omitempty" jsonschema:"Step ids that must complete first"`
 }
 
 // PlatformWorkflowPlanInput creates a persisted plan without executing it.
@@ -66,34 +70,38 @@ type PlatformWorkflowGetInput struct {
 type PlatformWorkflowListInput struct{}
 
 type platformWorkflowStep struct {
-	ID        string                   `json:"id"`
-	Operation string                   `json:"operation"`
-	Resource  string                   `json:"resource"`
-	Action    string                   `json:"action,omitempty"`
-	TargetID  string                   `json:"target_id,omitempty"`
-	Payload   map[string]any           `json:"payload,omitempty"`
-	DependsOn []string                 `json:"depends_on,omitempty"`
-	Status    string                   `json:"status"`
-	ResultID  string                   `json:"result_id,omitempty"`
-	Error     string                   `json:"error,omitempty"`
-	Changes   []string                 `json:"changes,omitempty"`
-	Preflight []PlatformWritePreflight `json:"preflight,omitempty"`
+	ID             string                   `json:"id"`
+	Operation      string                   `json:"operation"`
+	Resource       string                   `json:"resource"`
+	Action         string                   `json:"action,omitempty"`
+	TargetID       string                   `json:"target_id,omitempty"`
+	TargetFromStep string                   `json:"target_from_step,omitempty"`
+	PayloadHash    string                   `json:"payload_hash,omitempty"`
+	Review         string                   `json:"review,omitempty"`
+	Payload        map[string]any           `json:"payload,omitempty"`
+	DependsOn      []string                 `json:"depends_on,omitempty"`
+	Status         string                   `json:"status"`
+	ResultID       string                   `json:"result_id,omitempty"`
+	Error          string                   `json:"error,omitempty"`
+	Changes        []string                 `json:"changes,omitempty"`
+	Preflight      []PlatformWritePreflight `json:"preflight,omitempty"`
 }
 
 type platformWorkflowPlan struct {
-	AccountID string                 `json:"account_id,omitempty"`
-	Version   int                    `json:"version"`
-	ID        string                 `json:"id"`
-	Hash      string                 `json:"hash"`
-	Goal      string                 `json:"goal"`
-	Host      string                 `json:"host"`
-	OrgID     string                 `json:"org_id"`
-	ProjectID string                 `json:"project_id"`
-	Project   string                 `json:"project_name,omitempty"`
-	Status    string                 `json:"status"`
-	CreatedAt time.Time              `json:"created_at"`
-	UpdatedAt time.Time              `json:"updated_at"`
-	Steps     []platformWorkflowStep `json:"steps"`
+	AccountID   string                 `json:"account_id,omitempty"`
+	Version     int                    `json:"version"`
+	ID          string                 `json:"id"`
+	Hash        string                 `json:"hash"`
+	Goal        string                 `json:"goal"`
+	Host        string                 `json:"host"`
+	OrgID       string                 `json:"org_id"`
+	ProjectID   string                 `json:"project_id"`
+	Project     string                 `json:"project_name,omitempty"`
+	Status      string                 `json:"status"`
+	CreatedAt   time.Time              `json:"created_at"`
+	UpdatedAt   time.Time              `json:"updated_at"`
+	StagedUntil *time.Time             `json:"staged_until,omitempty"`
+	Steps       []platformWorkflowStep `json:"steps"`
 }
 
 // PlatformWorkflowOutput is the compact, non-secret workflow response.
@@ -147,6 +155,11 @@ func loadPlatformWorkflowPlans(contexts ...context.Context) ([]platformWorkflowP
 	if err := json.Unmarshal(data, &plans); err != nil {
 		return nil, fmt.Errorf("read platform workflow state: %w", err)
 	}
+	if pruneWorkflowPayloads(plans, time.Now()) {
+		if err := savePlatformWorkflowPlans(plans); err != nil {
+			return nil, err
+		}
+	}
 	return plans, nil
 }
 
@@ -194,45 +207,112 @@ func savePlatformWorkflowPlans(plans []platformWorkflowPlan, contexts ...context
 	return os.Rename(tmpName, path)
 }
 
-func redactWorkflowPayload(payload map[string]any) (map[string]any, error) {
-	copyPayload := cloneWorkflowMap(payload)
-	if workflowPayloadContainsSecret(copyPayload) {
-		return nil, errors.New("workflow payloads cannot contain secrets; execute secret writes directly so credentials are not persisted")
-	}
-	return copyPayload, nil
-}
-
-func cloneWorkflowMap(input map[string]any) map[string]any {
-	if input == nil {
-		return map[string]any{}
-	}
-	data, _ := json.Marshal(input)
-	var output map[string]any
-	if json.Unmarshal(data, &output) != nil || output == nil {
-		return map[string]any{}
-	}
-	return output
-}
-
-func workflowPayloadContainsSecret(value any) bool {
-	switch typed := value.(type) {
+// Step references are explicit JSON objects so ordinary strings always stay literal.
+func workflowValue(field string, value any, lookup func(string) (string, error)) (any, error) {
+	switch v := value.(type) {
 	case map[string]any:
-		for key, child := range typed {
-			if sensitivePlatformWriteKey(key) {
-				return true
+		if ref, ok := v["$step_id"]; ok {
+			if field != "id" && !strings.HasSuffix(field, "Id") && !strings.HasSuffix(field, "Ids") {
+				return nil, fmt.Errorf("field %q does not take a step result ID", field)
 			}
-			if workflowPayloadContainsSecret(child) {
-				return true
+			id, ok := ref.(string)
+			if !ok || id == "" || len(v) != 1 {
+				return nil, errors.New("expected a single $step_id string")
 			}
+			return lookup(id)
 		}
-	case []any:
-		for _, child := range typed {
-			if workflowPayloadContainsSecret(child) {
-				return true
+		out := make(map[string]any, len(v))
+		for key, child := range v {
+			switch strings.ToLower(strings.ReplaceAll(key, "_", "")) {
+			case "password", "apikey", "clientsecret", "privatekey", "token", "accesstoken", "refreshtoken", "sharetoken":
+				return nil, fmt.Errorf("workflow payloads cannot contain secrets (%s)", key)
 			}
+			resolved, err := workflowValue(key, child, lookup)
+			if err != nil {
+				return nil, err
+			}
+			out[key] = resolved
+		}
+		return out, nil
+	case []any:
+		out := make([]any, len(v))
+		for i, child := range v {
+			resolved, err := workflowValue(field, child, lookup)
+			if err != nil {
+				return nil, err
+			}
+			out[i] = resolved
+		}
+		return out, nil
+	}
+	return value, nil
+}
+
+func workflowWriteInput(step platformWorkflowStep, lookup func(string) (string, error)) (PlatformGenericWriteInput, error) {
+	input := PlatformGenericWriteInput{Resource: step.Resource, Action: step.Action, ID: step.TargetID, Payload: make(map[string]any, len(step.Payload))}
+	if step.TargetFromStep != "" {
+		id, err := lookup(step.TargetFromStep)
+		if err != nil {
+			return input, err
+		}
+		input.ID = id
+	}
+	for k, v := range step.Payload {
+		resolved, err := workflowValue(k, v, lookup)
+		if err != nil {
+			return input, err
+		}
+		input.Payload[k] = resolved
+	}
+	return input, nil
+}
+
+func workflowDigest(value any) string {
+	data, _ := json.Marshal(value)
+	sum := sha256.Sum256(data)
+	return hex.EncodeToString(sum[:])
+}
+
+func pruneWorkflowPayloads(plans []platformWorkflowPlan, now time.Time) bool {
+	changed := false
+	for i := range plans {
+		p := &plans[i]
+		if p.StagedUntil == nil || p.Status == "completed" || now.Before(*p.StagedUntil) || p.Status == "expired" {
+			continue
+		}
+		for j := range p.Steps {
+			p.Steps[j].Payload = nil
+		}
+		p.Status = "expired"
+		changed = true
+	}
+	return changed
+}
+
+func workflowReview(step platformWorkflowStep, input PlatformGenericWriteInput) string {
+	operation := step.Operation
+	if step.Operation == "action" {
+		operation = step.Action
+	}
+	summary := operation + " " + step.Resource
+	if step.Resource == "ontology" && operation == "add_record" {
+		summary = "add row to ontology"
+	}
+	if operation == "promote" {
+		summary = "publish " + fmt.Sprint(input.Payload["objectType"])
+	}
+	if input.ID != "" {
+		summary += fmt.Sprintf(" %q", input.ID)
+	}
+	for _, field := range []string{"objectId", "appId", "targetProjectId", "targetOrgId", "apiName", "name", "path"} {
+		if value, ok := input.Payload[field].(string); ok {
+			summary += fmt.Sprintf(" %s=%q", field, value)
 		}
 	}
-	return false
+	if content, ok := input.Payload["content"].(string); ok {
+		summary += fmt.Sprintf(" (%d bytes, SHA-256 %x)", len(content), sha256.Sum256([]byte(content)))
+	}
+	return summary
 }
 
 func validatePlatformWorkflowInput(input PlatformWorkflowPlanInput, session *platformToolSession) (platformWorkflowPlan, error) {
@@ -272,6 +352,9 @@ func validatePlatformWorkflowInput(input PlatformWorkflowPlanInput, session *pla
 		}
 		resource := normalizePlatformWriteToken(stepInput.Resource)
 		action := normalizePlatformWriteToken(stepInput.Action)
+		if operation != "action" && action != "" {
+			return platformWorkflowPlan{}, fmt.Errorf("step %q has an action on a %s operation", id, operation)
+		}
 		key := operation + ":" + resource
 
 		if operation == "action" {
@@ -280,24 +363,80 @@ func validatePlatformWorkflowInput(input PlatformWorkflowPlanInput, session *pla
 			}
 			key = "action:" + action + ":" + resource
 		}
-		if _, ok := platformapi.GenericWriteSpecs[key]; !ok {
+		spec, ok := platformapi.GenericWriteSpecs[key]
+		if !ok {
 			return platformWorkflowPlan{}, fmt.Errorf("step %q uses unsupported platform write %q", id, key)
 		}
-		payload, err := redactWorkflowPayload(stepInput.Payload)
+		if spec.Mode == platformapi.GenericWriteModeFileUpload {
+			return platformWorkflowPlan{}, fmt.Errorf("step %q: local file uploads require direct confirmation", id)
+		}
+		// Normalize programmatic callers to the JSON types used by the MCP transport.
+		raw, err := json.Marshal(stepInput.Payload)
 		if err != nil {
 			return platformWorkflowPlan{}, fmt.Errorf("step %q: %w", id, err)
 		}
-		if operation != "create" && strings.TrimSpace(stepInput.TargetID) == "" {
-			return platformWorkflowPlan{}, fmt.Errorf("step %q requires target_id", id)
-		}
-		if _, _, err := buildPlatformGenericWrite(session, PlatformGenericWriteInput{Resource: resource, Action: action, ID: strings.TrimSpace(stepInput.TargetID), Payload: payload}, operation); err != nil {
+		var payload map[string]any
+		if err := json.Unmarshal(raw, &payload); err != nil {
 			return platformWorkflowPlan{}, fmt.Errorf("step %q: %w", id, err)
 		}
-		if err := validateWorkflowPayloadShape(key, payload); err != nil {
+		fields := platformapi.PayloadShapes[key].Fields
+		for name := range payload {
+			index := slices.IndexFunc(fields, func(f platformapi.PayloadField) bool { return f.Name == name })
+			if index < 0 {
+				return platformWorkflowPlan{}, fmt.Errorf("step %q: field %q is not declared in the write schema", id, name)
+			}
+			if fields[index].Secret {
+				return platformWorkflowPlan{}, fmt.Errorf("step %q: workflow payloads cannot contain secrets (%s)", id, name)
+			}
+		}
+		step := platformWorkflowStep{
+			ID: id, Operation: operation, Resource: resource, Action: action,
+			TargetID: strings.TrimSpace(stepInput.TargetID), TargetFromStep: stepInput.TargetFromStep,
+			DependsOn: slices.Clone(stepInput.DependsOn), Status: "pending", Payload: payload,
+		}
+		appFile := resource == "app" && (action == "upsert_file" || action == "delete_file")
+		if step.TargetFromStep != "" && !spec.NeedsID && !appFile {
+			return platformWorkflowPlan{}, fmt.Errorf("step %q: use a payload $step_id reference for this operation", id)
+		}
+		if step.TargetFromStep != "" && step.TargetID != "" {
+			return platformWorkflowPlan{}, fmt.Errorf("step %q: choose target_id or target_from_step", id)
+		}
+		if appFile && (step.TargetFromStep != "" || step.TargetID != "") && step.Payload["appId"] != nil && (step.TargetFromStep != "" || step.Payload["appId"] != step.TargetID) {
+			return platformWorkflowPlan{}, fmt.Errorf("step %q: appId conflicts with the step target", id)
+		}
+		input, err := workflowWriteInput(step, func(ref string) (string, error) {
+			prior := findWorkflowStep(plan.Steps, ref)
+			if prior == nil || prior.Operation != "create" {
+				return "", fmt.Errorf("step %q references %q; expected an earlier create step", id, ref)
+			}
+			if !slices.Contains(step.DependsOn, ref) {
+				step.DependsOn = append(step.DependsOn, ref)
+			}
+			return "result of " + ref, nil
+		})
+		if err != nil {
+			return platformWorkflowPlan{}, err
+		}
+		slices.Sort(step.DependsOn)
+		if spec.NeedsID && input.ID == "" {
+			return platformWorkflowPlan{}, fmt.Errorf("step %q requires target_id or target_from_step", id)
+		}
+		if _, _, err := buildPlatformGenericWrite(session, input, operation); err != nil {
 			return platformWorkflowPlan{}, fmt.Errorf("step %q: %w", id, err)
 		}
-		changes := genericWriteChanges(payload)
-		plan.Steps = append(plan.Steps, platformWorkflowStep{ID: id, Operation: operation, Resource: resource, Action: action, TargetID: strings.TrimSpace(stepInput.TargetID), Payload: payload, DependsOn: append([]string(nil), stepInput.DependsOn...), Status: "pending", Changes: changes})
+		if err := validatePlatformWriteInput(input, operation, spec); err != nil {
+			return platformWorkflowPlan{}, fmt.Errorf("step %q: %w", id, err)
+		}
+		step.Changes = genericWriteChanges(step.Payload)
+		step.Review = workflowReview(step, input)
+		if (resource == "app" && step.Payload["content"] != nil) || step.Payload["files"] != nil {
+			expires := plan.CreatedAt.Add(workflowPayloadLifetime)
+			plan.StagedUntil = &expires
+		}
+		if len(step.Payload) > 0 {
+			step.PayloadHash = workflowDigest(step.Payload)
+		}
+		plan.Steps = append(plan.Steps, step)
 	}
 	for _, step := range plan.Steps {
 		for _, dependency := range step.DependsOn {
@@ -314,23 +453,6 @@ func validatePlatformWorkflowInput(input PlatformWorkflowPlanInput, session *pla
 	}
 	plan.Hash = hashWorkflowPlan(plan)
 	return plan, nil
-}
-
-func validateWorkflowPayloadShape(key string, payload map[string]any) error {
-	shape, ok := platformapi.PayloadShapes[key]
-	if !ok {
-		return nil
-	}
-	for _, field := range shape.Fields {
-		if !field.Required {
-			continue
-		}
-		value, exists := payload[field.Name]
-		if !exists || value == nil || (field.Type == "string" && strings.TrimSpace(fmt.Sprint(value)) == "") {
-			return fmt.Errorf("payload.%s is required", field.Name)
-		}
-	}
-	return nil
 }
 
 func validateWorkflowDAG(steps []platformWorkflowStep) error {
@@ -368,15 +490,29 @@ func hashWorkflowPlan(plan platformWorkflowPlan) string {
 	copyPlan := plan
 	copyPlan.ID, copyPlan.Hash, copyPlan.Status = "", "", ""
 	copyPlan.CreatedAt, copyPlan.UpdatedAt = time.Time{}, time.Time{}
-	data, _ := json.Marshal(copyPlan)
-	sum := sha256.Sum256(data)
-	return hex.EncodeToString(sum[:])
+	copyPlan.StagedUntil = nil
+	copyPlan.Steps = slices.Clone(plan.Steps)
+	for i := range copyPlan.Steps {
+		s := &copyPlan.Steps[i]
+		s.Status, s.ResultID, s.Error = "", "", ""
+		s.Preflight = nil
+		if plan.Version >= 2 {
+			s.Payload = nil
+		}
+	}
+	return workflowDigest(copyPlan)
 }
 
 func workflowOutputPlan(plan platformWorkflowPlan) map[string]any {
 	steps := make([]map[string]any, 0, len(plan.Steps))
 	for _, step := range plan.Steps {
 		entry := map[string]any{"id": step.ID, "operation": step.Operation, "resource": step.Resource, "status": step.Status, "changes": step.Changes}
+		if step.Review != "" {
+			entry["review"] = step.Review
+		}
+		if step.TargetFromStep != "" {
+			entry["target_from_step"] = step.TargetFromStep
+		}
 		if step.Action != "" {
 			entry["action"] = step.Action
 		}
@@ -397,7 +533,11 @@ func workflowOutputPlan(plan platformWorkflowPlan) map[string]any {
 		}
 		steps = append(steps, entry)
 	}
-	return map[string]any{"account_id": plan.AccountID, "id": plan.ID, "hash": plan.Hash, "goal": plan.Goal, "host": plan.Host, "org_id": plan.OrgID, "project_id": plan.ProjectID, "project_name": plan.Project, "status": plan.Status, "created_at": plan.CreatedAt, "updated_at": plan.UpdatedAt, "steps": steps}
+	output := map[string]any{"account_id": plan.AccountID, "id": plan.ID, "hash": plan.Hash, "goal": plan.Goal, "host": plan.Host, "org_id": plan.OrgID, "project_id": plan.ProjectID, "project_name": plan.Project, "status": plan.Status, "created_at": plan.CreatedAt, "updated_at": plan.UpdatedAt, "steps": steps}
+	if plan.StagedUntil != nil {
+		output["staged_until"] = *plan.StagedUntil
+	}
+	return output
 }
 
 func findPlatformWorkflow(plans []platformWorkflowPlan, id string) (*platformWorkflowPlan, int, error) {
@@ -463,7 +603,11 @@ func HandlePlatformWorkflowPlan(ctx context.Context, req *mcp.CallToolRequest, i
 	}
 	for index := range plan.Steps {
 		step := &plan.Steps[index]
-		spec, payload, buildErr := buildPlatformGenericWrite(session, PlatformGenericWriteInput{Resource: step.Resource, Action: step.Action, ID: step.TargetID, Payload: step.Payload}, step.Operation)
+		input, err := workflowWriteInput(*step, func(ref string) (string, error) { return "result of " + ref, nil })
+		if err != nil {
+			return nil, platformWorkflowError(err, requestID), nil
+		}
+		spec, payload, buildErr := buildPlatformGenericWrite(session, input, step.Operation)
 		if buildErr != nil {
 			return nil, platformWorkflowError(fmt.Errorf("step %s: %w", step.ID, buildErr), requestID), nil
 		}
@@ -572,20 +716,62 @@ func handlePlatformWorkflowApply(ctx context.Context, req *mcp.CallToolRequest, 
 		platformWorkflowMutex.Unlock()
 		return nil, PlatformWorkflowOutput{Plan: output, Status: "completed", Message: "Workflow already completed; no mutations were repeated.", RequestID: requestID}, nil
 	}
-	action := &PendingPlatformAction{AccountID: session.Host.AccountID, Operation: "workflow_apply", Resource: "workflow", Action: "apply", Summary: plan.Goal, Host: plan.Host, OrgID: plan.OrgID, ProjectID: plan.ProjectID, ProjectName: plan.Project, WorkflowPlanID: plan.ID, WorkflowSteps: len(plan.Steps), Changes: []string{fmt.Sprintf("%d workflow steps", len(plan.Steps))}}
+	if plan.Status == "expired" || (plan.StagedUntil != nil && !time.Now().Before(*plan.StagedUntil)) {
+		platformWorkflowMutex.Unlock()
+		return nil, platformWorkflowError(errors.New("workflow inputs expired; create a new plan"), requestID), nil
+	}
+	changes := make([]string, 0, len(plan.Steps))
+	for i := 0; i < len(plan.Steps); i++ {
+		step := plan.Steps[i]
+		if step.Status == "completed" {
+			continue
+		}
+		review := step.Review
+		if review == "" {
+			review = workflowReview(step, PlatformGenericWriteInput{ID: step.TargetID, Payload: step.Payload})
+		}
+		if step.Resource == "ontology" && step.Action == "add_record" {
+			count := 1
+			for i+1 < len(plan.Steps) {
+				next := plan.Steps[i+1]
+				if next.Resource != step.Resource || next.Action != step.Action || next.TargetID != step.TargetID || next.TargetFromStep != step.TargetFromStep || next.Status == "completed" {
+					break
+				}
+				i++
+				count++
+			}
+			if count > 1 {
+				review = fmt.Sprintf("%s (%d rows)", review, count)
+			}
+		}
+		changes = append(changes, review)
+	}
+	action := &PendingPlatformAction{
+		PayloadHash: hashWorkflowPlan(*plan), AccountID: session.Host.AccountID,
+		Operation: "workflow_apply", Resource: "workflow", Action: "apply", Summary: plan.Goal,
+		Host: plan.Host, OrgID: plan.OrgID, ProjectID: plan.ProjectID, ProjectName: plan.Project,
+		WorkflowPlanID: plan.ID, WorkflowSteps: len(plan.Steps), Changes: changes,
+	}
 	platformWorkflowMutex.Unlock()
 	if !confirmWrites {
-		result, err := executePlatformWorkflow(ctx, session, plan.ID, requestID)
+		result, err := executePlatformWorkflow(ctx, session, plan.ID, action.PayloadHash, requestID)
 		if err != nil {
 			return nil, PlatformWorkflowOutput{Status: "failed", Error: err.Error(), RequestID: requestID}, nil
 		}
-		return nil, PlatformWorkflowOutput{Status: "completed", Message: result.Message, Plan: workflowOutputPlan(*plan), RequestID: requestID}, nil
+		_, output, err := HandlePlatformWorkflowGet(ctx, req, PlatformWorkflowGetInput{PlanID: plan.ID})
+		output.Message = result.Message
+		output.RequestID = requestID
+		return nil, output, err
 	}
 	token, expiresAt := storePendingPlatformAction(action, ctx)
 	return nil, PlatformWorkflowOutput{ConfirmationRequired: true, ConfirmationToken: token, ConfirmationExpiry: expiresAt.UTC().Format(time.RFC3339), Status: "confirmation_required", Plan: workflowOutputPlan(*plan), Message: "Workflow requires user approval. Call whodb_platform_confirm with confirmation_token after the user approves.", RequestID: requestID}, nil
 }
 
-func executePlatformWorkflow(ctx context.Context, session *platformToolSession, planID, requestID string) (ConfirmOutput, error) {
+func executePlatformWorkflow(ctx context.Context, session *platformToolSession, planID, approvedHash, requestID string) (ConfirmOutput, error) {
+	if _, busy := workflowExecutions.LoadOrStore(planID, true); busy {
+		return ConfirmOutput{}, errors.New("workflow is already executing")
+	}
+	defer workflowExecutions.Delete(planID)
 	platformWorkflowMutex.Lock()
 	plans, err := loadPlatformWorkflowPlans(ctx)
 	if err != nil {
@@ -600,6 +786,29 @@ func executePlatformWorkflow(ctx context.Context, session *platformToolSession, 
 	if plan.AccountID != session.Host.AccountID || plan.Host != session.Host.URL || plan.OrgID != session.Host.DefaultOrgID || plan.ProjectID != session.Host.DefaultProjectID {
 		platformWorkflowMutex.Unlock()
 		return ConfirmOutput{}, errors.New("workflow workspace or account changed before confirmation")
+	}
+	if approvedHash == "" || approvedHash != hashWorkflowPlan(*plan) {
+		platformWorkflowMutex.Unlock()
+		return ConfirmOutput{}, errors.New("workflow changed; request a new approval")
+	}
+	if plan.Version >= 2 && plan.Status != "completed" {
+		if plan.StagedUntil != nil && !time.Now().Before(*plan.StagedUntil) {
+			platformWorkflowMutex.Unlock()
+			return ConfirmOutput{}, errors.New("workflow inputs expired; create a new plan")
+		}
+		for _, step := range plan.Steps {
+			if step.Status == "completed" {
+				continue
+			}
+			digest := ""
+			if len(step.Payload) > 0 {
+				digest = workflowDigest(step.Payload)
+			}
+			if digest != step.PayloadHash {
+				platformWorkflowMutex.Unlock()
+				return ConfirmOutput{}, errors.New("workflow payload changed; create a new plan")
+			}
+		}
 	}
 	if plan.Status == "completed" {
 		output := workflowOutputPlan(*plan)
@@ -631,7 +840,21 @@ func executePlatformWorkflow(ctx context.Context, session *platformToolSession, 
 				return ConfirmOutput{}, errors.New(step.Error)
 			}
 		}
-		spec, payload, err := buildPlatformGenericWrite(session, PlatformGenericWriteInput{Resource: step.Resource, Action: step.Action, ID: step.TargetID, Payload: step.Payload}, step.Operation)
+		input := PlatformGenericWriteInput{Resource: step.Resource, Action: step.Action, ID: step.TargetID, Payload: step.Payload}
+		if plan.Version >= 2 {
+			input, err = workflowWriteInput(*step, func(ref string) (string, error) {
+				prior := findWorkflowStep(plan.Steps, ref)
+				if prior == nil || prior.Status != "completed" || prior.ResultID == "" {
+					return "", fmt.Errorf("step %q has no completed result ID", ref)
+				}
+				return prior.ResultID, nil
+			})
+		}
+		var spec platformapi.GenericWriteSpec
+		var payload map[string]any
+		if err == nil {
+			spec, payload, err = buildPlatformGenericWrite(session, input, step.Operation)
+		}
 		if err != nil {
 			step.Status = "failed"
 			step.Error = err.Error()
@@ -643,11 +866,15 @@ func executePlatformWorkflow(ctx context.Context, session *platformToolSession, 
 		result, err := executePlatformMutation(ctx, session.Client, spec.Mutation, session.Host.DefaultProjectID, payload)
 		if err != nil {
 			step.Status = "failed"
-			step.Error = err.Error()
+			// Remote diagnostics can quote mutation inputs, including file contents.
+			step.Error = fmt.Sprintf("%s failed", spec.Mutation)
 			plan.Status = "failed"
 			plan.UpdatedAt = time.Now().UTC()
 			_ = persistWorkflowPlan(ctx, index, *plan)
 			return ConfirmOutput{}, fmt.Errorf("workflow step %s: %w", step.ID, err)
+		}
+		if plan.Version >= 2 {
+			step.Payload = nil
 		}
 		step.Status = "completed"
 		step.Error = ""
@@ -697,7 +924,7 @@ func findWorkflowStep(steps []platformWorkflowStep, id string) *platformWorkflow
 
 func platformWorkflowToolDefinitions() []*mcp.Tool {
 	return []*mcp.Tool{
-		{Name: "whodb_platform_workflow_plan", Description: "Validate and persist a multi-step hosted WhoDB workflow without executing writes. Use this for end-to-end goals such as source to dataset to transform to app.", Annotations: platformReadOnlyAnnotations("Plan Hosted Platform Workflow")},
+		{Name: "whodb_platform_workflow_plan", Description: "Validate and persist a multi-step hosted WhoDB workflow without executing writes. Batch related writes for one review. Use target_from_step or payload objects like {\"$step_id\":\"create-app\"} for prior create results. Plans with staged file contents expire after one hour.", Annotations: platformReadOnlyAnnotations("Plan Hosted Platform Workflow")},
 		{Name: "whodb_platform_workflow_get", Description: "Read one hosted WhoDB workflow plan and its step status without returning payload values.", Annotations: platformReadOnlyAnnotations("Get Hosted Workflow Plan")},
 		{Name: "whodb_platform_workflow_list", Description: "List persisted hosted WhoDB workflow plans for the selected workspace.", Annotations: platformReadOnlyAnnotations("List Hosted Workflow Plans")},
 		{Name: "whodb_platform_workflow_apply", Description: "Request confirmation to apply or resume a hosted WhoDB workflow plan. Completed steps are skipped on retry.", Annotations: platformDestructiveAnnotations("Apply Hosted Platform Workflow")},

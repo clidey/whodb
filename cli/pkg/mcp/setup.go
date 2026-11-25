@@ -106,6 +106,7 @@ WORKFLOWS: For platform projects, use workspace_summary, build_plan, or gap_anal
 first; whodb://platform/concepts and whodb://platform/schema explain the product
 model and operation payloads. For app building, read
 whodb://platform/app-workflow before choosing hosted tools or the local CLI.
+Batch related hosted writes with workflow_plan and workflow_apply for one review.
 For databases, explore schema before queries, use
 bounded results and specific columns, parameterize user values, and send one query
 at a time. Use explain, diff, erd, audit, and suggestions when relevant. Never
