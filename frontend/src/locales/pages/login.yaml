@@ -223,6 +223,8 @@ ar_AE:
   testingConnection: "اختبار"
   roundTrip: "{duration} مللي ثانية ذهابًا وإيابًا"
   advancedHint: "المخطط، SSL والمزيد في"
+  sourceCatalogUnavailable: "لا يمكن تحميل الاتصالات المتاحة"
+  sourceCatalogUnavailableDescription: "تأكد من أن الواجهة الأمامية متصلة بالواجهة الخلفية الصحيحة WhoDB، ثم أعد تحميل هذه الصفحة."
 
 de_DE:
   enterHostName: "Geben Sie den Hostnamen ein"
@@ -335,6 +337,8 @@ de_DE:
   testingConnection: "Testen"
   roundTrip: "{duration} ms Hin- und Rückfahrt"
   advancedHint: "Schema, SSL und mehr in"
+  sourceCatalogUnavailable: "Die verfügbaren Verbindungen konnten nicht geladen werden"
+  sourceCatalogUnavailableDescription: "Überprüfen Sie, ob das Frontend mit dem richtigen WhoDB-Backend verbunden ist, und laden Sie dann diese Seite neu."
 
 el_GR:
   enterHostName: "Εισαγάγετε Όνομα κεντρικού υπολογιστή"
@@ -447,6 +451,8 @@ el_GR:
   testingConnection: "Δοκιμές"
   roundTrip: "{duration} ms μετ' επιστροφής"
   advancedHint: "Σχήμα, SSL και άλλα στο"
+  sourceCatalogUnavailable: "Δεν ήταν δυνατή η φόρτωση των διαθέσιμων συνδέσεων"
+  sourceCatalogUnavailableDescription: "Βεβαιωθείτε ότι η διεπαφή είναι συνδεδεμένη στο σωστό WhoDB backend και, στη συνέχεια, φορτώστε ξανά αυτήν τη σελίδα."
 
 en_GB:
   enterHostName: "Enter Host Name"
@@ -559,6 +565,8 @@ en_GB:
   testingConnection: "Testing"
   roundTrip: "{duration} ms round trip"
   advancedHint: "Schema, SSL and more in"
+  sourceCatalogUnavailable: "Could not load available connections"
+  sourceCatalogUnavailableDescription: "Check that the frontend is connected to the correct WhoDB backend, then reload this page."
 
 es_ES:
   enterHostName: "Introduzca el nombre del host"
@@ -671,6 +679,8 @@ es_ES:
   testingConnection: "Pruebas"
   roundTrip: "{duration} ms ida y vuelta"
   advancedHint: "Esquema, SSL y más en"
+  sourceCatalogUnavailable: "No se pudieron cargar las conexiones disponibles"
+  sourceCatalogUnavailableDescription: "Verifique que la interfaz esté conectada al backend WhoDB correcto y luego vuelva a cargar esta página."
 
 fi_FI:
   enterHostName: "Anna isäntänimi"
@@ -783,6 +793,8 @@ fi_FI:
   testingConnection: "Testaus"
   roundTrip: "{duration} ms edestakainen matka"
   advancedHint: "Schema, SSL ja paljon muuta sisään"
+  sourceCatalogUnavailable: "Ei voitu ladata käytettävissä olevia yhteyksiä"
+  sourceCatalogUnavailableDescription: "Tarkista, että käyttöliittymä on yhdistetty oikeaan WhoDB-taustajärjestelmään, ja lataa sitten tämä sivu uudelleen."
 
 fr_FR:
   enterHostName: "Entrez le nom d'hôte"
@@ -895,6 +907,8 @@ fr_FR:
   testingConnection: "Essai"
   roundTrip: "{duration} ms aller-retour"
   advancedHint: "Schéma, SSL et plus dans"
+  sourceCatalogUnavailable: "Impossible de charger les connexions disponibles"
+  sourceCatalogUnavailableDescription: "Vérifiez que le frontend est connecté au bon backend WhoDB, puis rechargez cette page."
 
 it_IT:
   enterHostName: "Inserisci il nome host"
@@ -1007,6 +1021,8 @@ it_IT:
   testingConnection: "Test"
   roundTrip: "{duration} ms andata e ritorno"
   advancedHint: "Schema, SSL e altro in"
+  sourceCatalogUnavailable: "Impossibile caricare le connessioni disponibili"
+  sourceCatalogUnavailableDescription: "Controlla che il frontend sia connesso al backend WhoDB corretto, quindi ricarica questa pagina."
 
 iw_IL:
   enterHostName: "הזן את שם המארח"
@@ -1119,6 +1135,8 @@ iw_IL:
   testingConnection: "בּוֹחֵן"
   roundTrip: "{duration} אלפיות השנייה הלוך ושוב"
   advancedHint: "סכימה, SSL ועוד ב"
+  sourceCatalogUnavailable: "לא ניתן לטעון חיבורים זמינים"
+  sourceCatalogUnavailableDescription: "בדוק שהקצה הקדמי מחובר לקצה האחורי הנכון WhoDB ולאחר מכן טען מחדש את הדף הזה."
 
 ja_JP:
   enterHostName: "ホスト名を入力してください"
@@ -1231,6 +1249,8 @@ ja_JP:
   testingConnection: "テスト"
   roundTrip: "往復 {duration} ミリ秒"
   advancedHint: "スキーマ、SSL など"
+  sourceCatalogUnavailable: "利用可能な接続を読み込めませんでした"
+  sourceCatalogUnavailableDescription: "フロントエンドが正しい WhoDB バックエンドに接続されていることを確認してから、このページをリロードしてください。"
 
 ko_KR:
   enterHostName: "호스트 이름을 입력하세요"
@@ -1343,6 +1363,8 @@ ko_KR:
   testingConnection: "테스트"
   roundTrip: "{duration} ms 왕복"
   advancedHint: "스키마, SSL 등"
+  sourceCatalogUnavailable: "사용 가능한 연결을 로드할 수 없습니다."
+  sourceCatalogUnavailableDescription: "프런트엔드가 올바른 WhoDB 백엔드에 연결되어 있는지 확인한 후 이 페이지를 다시 로드하세요."
 
 nl_NL:
   enterHostName: "Voer de hostnaam in"
@@ -1455,6 +1477,8 @@ nl_NL:
   testingConnection: "Testen"
   roundTrip: "{duration} ms retour"
   advancedHint: "Schema, SSL en meer in"
+  sourceCatalogUnavailable: "Kan beschikbare verbindingen niet laden"
+  sourceCatalogUnavailableDescription: "Controleer of de frontend is verbonden met de juiste WhoDB backend en laad vervolgens deze pagina opnieuw."
 
 pl_PL:
   enterHostName: "Wprowadź nazwę hosta"
@@ -1567,6 +1591,8 @@ pl_PL:
   testingConnection: "Testowanie"
   roundTrip: "{duration} ms w obie strony"
   advancedHint: "Schemat, SSL i więcej w"
+  sourceCatalogUnavailable: "Nie można wczytać dostępnych połączeń"
+  sourceCatalogUnavailableDescription: "Sprawdź, czy frontend jest podłączony do prawidłowego backendu WhoDB, a następnie załaduj ponownie tę stronę."
 
 pt_BR:
   enterHostName: "Digite o nome do host"
@@ -1679,6 +1705,8 @@ pt_BR:
   testingConnection: "Teste"
   roundTrip: "{duration} ms ida e volta"
   advancedHint: "Esquema, SSL e mais em"
+  sourceCatalogUnavailable: "Não foi possível carregar as conexões disponíveis"
+  sourceCatalogUnavailableDescription: "Verifique se o frontend está conectado ao backend WhoDB correto e recarregue esta página."
 
 ro_RO:
   enterHostName: "Introduceți numele gazdei"
@@ -1791,6 +1819,8 @@ ro_RO:
   testingConnection: "Testare"
   roundTrip: "{duration} ms dus-întors"
   advancedHint: "Schema, SSL și multe altele în"
+  sourceCatalogUnavailable: "Nu s-au putut încărca conexiunile disponibile"
+  sourceCatalogUnavailableDescription: "Verificați dacă interfața este conectată la backend-ul corect WhoDB, apoi reîncărcați această pagină."
 
 ru_RU:
   enterHostName: "Введите имя хоста"
@@ -1903,6 +1933,8 @@ ru_RU:
   testingConnection: "Тестирование"
   roundTrip: "{duration} мс туда и обратно"
   advancedHint: "Схема, SSL и многое другое в"
+  sourceCatalogUnavailable: "Не удалось загрузить доступные подключения"
+  sourceCatalogUnavailableDescription: "Убедитесь, что интерфейс подключен к правильному серверу WhoDB, затем перезагрузите эту страницу."
 
 sk_SK:
   enterHostName: "Zadajte názov hostiteľa"
@@ -2015,6 +2047,8 @@ sk_SK:
   testingConnection: "Testovanie"
   roundTrip: "{duration} ms tam a späť"
   advancedHint: "Schéma, SSL a ďalšie v"
+  sourceCatalogUnavailable: "Nepodarilo sa načítať dostupné pripojenia"
+  sourceCatalogUnavailableDescription: "Skontrolujte, či je frontend pripojený k správnemu backendu WhoDB a potom znova načítajte túto stránku."
 
 sv_SE:
   enterHostName: "Ange värdnamn"
@@ -2127,6 +2161,8 @@ sv_SE:
   testingConnection: "Testning"
   roundTrip: "{duration} ms tur och retur"
   advancedHint: "Schema, SSL och mer i"
+  sourceCatalogUnavailable: "Det gick inte att ladda tillgängliga anslutningar"
+  sourceCatalogUnavailableDescription: "Kontrollera att frontend är ansluten till rätt WhoDB backend och ladda sedan om den här sidan."
 
 zh_CN:
   enterHostName: "输入主机名"
@@ -2239,6 +2275,8 @@ zh_CN:
   testingConnection: "测试"
   roundTrip: "{duration} 毫秒往返"
   advancedHint: "架构、SSL 等"
+  sourceCatalogUnavailable: "无法加载可用连接"
+  sourceCatalogUnavailableDescription: "检查前端是否连接到正确的 WhoDB 后端，然后重新加载此页面。"
 
 zh_TW:
   enterHostName: "輸入主機名稱"
@@ -2351,6 +2389,8 @@ zh_TW:
   testingConnection: "測試"
   roundTrip: "{duration} 毫秒往返"
   advancedHint: "架構、SSL 等"
+  sourceCatalogUnavailable: "無法載入可用連接"
+  sourceCatalogUnavailableDescription: "檢查前端是否連接到正確的 WhoDB 後端，然後重新載入此頁面。"
 
 bg_BG:
   enterHostName: "Въведете име на хост"
@@ -2463,6 +2503,8 @@ bg_BG:
   testingConnection: "Тестване"
   roundTrip: "{duration} ms отиване и връщане"
   advancedHint: "Схема, SSL и още в"
+  sourceCatalogUnavailable: "Неуспешно зареждане на наличните връзки"
+  sourceCatalogUnavailableDescription: "Проверете дали интерфейсът е свързан с правилния WhoDB бекенд, след което презаредете тази страница."
 
 bn_BD:
   enterHostName: "হোস্টের নাম লিখুন"
@@ -2575,6 +2617,8 @@ bn_BD:
   testingConnection: "টেস্টিং"
   roundTrip: "{duration} এমএস রাউন্ড ট্রিপ"
   advancedHint: "স্কিমা, SSL এবং আরও অনেক কিছুতে"
+  sourceCatalogUnavailable: "উপলব্ধ সংযোগ লোড করা যায়নি"
+  sourceCatalogUnavailableDescription: "ফ্রন্টএন্ডটি সঠিক WhoDB ব্যাকএন্ডের সাথে সংযুক্ত আছে কিনা পরীক্ষা করুন, তারপর এই পৃষ্ঠাটি পুনরায় লোড করুন।"
 
 ca_ES:
   enterHostName: "Introduïu el nom de l'amfitrió"
@@ -2687,6 +2731,8 @@ ca_ES:
   testingConnection: "Prova"
   roundTrip: "{duration} ms d'anada i tornada"
   advancedHint: "Esquema, SSL i més a"
+  sourceCatalogUnavailable: "No s'han pogut carregar les connexions disponibles"
+  sourceCatalogUnavailableDescription: "Comproveu que l'interfície estigui connectada a la xarxa WhoDB correcta i, a continuació, torneu a carregar aquesta pàgina."
 
 cs_CZ:
   enterHostName: "Zadejte název hostitele"
@@ -2799,6 +2845,8 @@ cs_CZ:
   testingConnection: "Testování"
   roundTrip: "{duration} ms zpáteční cesta"
   advancedHint: "Schéma, SSL a další v"
+  sourceCatalogUnavailable: "Nelze načíst dostupná připojení"
+  sourceCatalogUnavailableDescription: "Zkontrolujte, zda je frontend připojen ke správnému backendu WhoDB a poté znovu načtěte tuto stránku."
 
 da_DK:
   enterHostName: "Indtast værtsnavn"
@@ -2911,6 +2959,8 @@ da_DK:
   testingConnection: "Afprøvning"
   roundTrip: "{duration} ms tur/retur"
   advancedHint: "Skema, SSL og mere i"
+  sourceCatalogUnavailable: "Kunne ikke indlæse tilgængelige forbindelser"
+  sourceCatalogUnavailableDescription: "Tjek, at frontenden er forbundet til den korrekte WhoDB backend, og genindlæs derefter denne side."
 
 fa_IR:
   enterHostName: "نام میزبان را وارد کنید"
@@ -3023,6 +3073,8 @@ fa_IR:
   testingConnection: "تست کردن"
   roundTrip: "{duration} ms رفت و برگشت"
   advancedHint: "طرحواره، SSL و بیشتر در"
+  sourceCatalogUnavailable: "اتصالات موجود بارگیری نشد"
+  sourceCatalogUnavailableDescription: "بررسی کنید که صفحه اصلی به پشتیبان صحیح WhoDB متصل باشد، سپس این صفحه را دوباره بارگیری کنید."
 
 hi_IN:
   enterHostName: "होस्ट नाम दर्ज करें"
@@ -3135,6 +3187,8 @@ hi_IN:
   testingConnection: "परीक्षण"
   roundTrip: "{duration} एमएस राउंड ट्रिप"
   advancedHint: "स्कीमा, SSL और भी बहुत कुछ"
+  sourceCatalogUnavailable: "उपलब्ध कनेक्शन लोड नहीं किये जा सके"
+  sourceCatalogUnavailableDescription: "जांचें कि फ्रंटएंड सही WhoDB बैकएंड से जुड़ा है, फिर इस पेज को पुनः लोड करें।"
 
 hr_HR:
   enterHostName: "Unesite naziv glavnog računala"
@@ -3247,6 +3301,8 @@ hr_HR:
   testingConnection: "Testiranje"
   roundTrip: "{duration} ms povratno putovanje"
   advancedHint: "Shema, SSL i više u"
+  sourceCatalogUnavailable: "Nije moguće učitati dostupne veze"
+  sourceCatalogUnavailableDescription: "Provjerite je li sučelje povezano s ispravnom WhoDB pozadinom, a zatim ponovno učitajte ovu stranicu."
 
 hu_HU:
   enterHostName: "Írja be a gazdagép nevét"
@@ -3359,6 +3415,8 @@ hu_HU:
   testingConnection: "Tesztelés"
   roundTrip: "{duration} ms oda-vissza út"
   advancedHint: "Schema, SSL és egyebek itt"
+  sourceCatalogUnavailable: "Nem sikerült betölteni az elérhető kapcsolatokat"
+  sourceCatalogUnavailableDescription: "Ellenőrizze, hogy a kezelőfelület a megfelelő WhoDB háttérrendszerhez csatlakozik-e, majd töltse be újra ezt az oldalt."
 
 id_ID:
   enterHostName: "Masukkan Nama Host"
@@ -3471,6 +3529,8 @@ id_ID:
   testingConnection: "Pengujian"
   roundTrip: "{duration} ms perjalanan pulang pergi"
   advancedHint: "Skema, SSL dan lainnya di"
+  sourceCatalogUnavailable: "Tidak dapat memuat koneksi yang tersedia"
+  sourceCatalogUnavailableDescription: "Periksa apakah frontend terhubung ke backend WhoDB yang benar, lalu muat ulang halaman ini."
 
 ms_MY:
   enterHostName: "Masukkan Nama Hos"
@@ -3583,6 +3643,8 @@ ms_MY:
   testingConnection: "Menguji"
   roundTrip: "{duration} ms pergi dan balik"
   advancedHint: "Skema, SSL dan banyak lagi dalam"
+  sourceCatalogUnavailable: "Tidak dapat memuatkan sambungan yang tersedia"
+  sourceCatalogUnavailableDescription: "Semak sama ada bahagian hadapan disambungkan ke bahagian belakang WhoDB yang betul, kemudian muat semula halaman ini."
 
 nb_NO:
   enterHostName: "Skriv inn vertsnavn"
@@ -3695,6 +3757,8 @@ nb_NO:
   testingConnection: "Testing"
   roundTrip: "{duration} ms tur/retur"
   advancedHint: "Skjema, SSL og mer i"
+  sourceCatalogUnavailable: "Kunne ikke laste inn tilgjengelige tilkoblinger"
+  sourceCatalogUnavailableDescription: "Sjekk at frontend er koblet til riktig WhoDB backend, og last deretter inn denne siden på nytt."
 
 sw_KE:
   enterHostName: "Ingiza Jina la Mwenyeji"
@@ -3807,6 +3871,8 @@ sw_KE:
   testingConnection: "Kupima"
   roundTrip: "{duration} ms safari ya kwenda na kurudi"
   advancedHint: "Schema, SSL na zaidi ndani"
+  sourceCatalogUnavailable: "Haikuweza kupakia miunganisho inayopatikana"
+  sourceCatalogUnavailableDescription: "Hakikisha kuwa sehemu ya mbele imeunganishwa kwenye WhoDB iliyo sahihi, kisha upakie upya ukurasa huu."
 
 ta_IN:
   enterHostName: "ஹோஸ்ட் பெயரை உள்ளிடவும்"
@@ -3919,6 +3985,8 @@ ta_IN:
   testingConnection: "சோதனை"
   roundTrip: "{duration} ms சுற்றுப் பயணம்"
   advancedHint: "ஸ்கீமா, SSL மற்றும் பல"
+  sourceCatalogUnavailable: "கிடைக்கக்கூடிய இணைப்புகளை ஏற்ற முடியவில்லை"
+  sourceCatalogUnavailableDescription: "முன்பக்கம் சரியான WhoDB பின்தளத்துடன் இணைக்கப்பட்டுள்ளதா எனச் சரிபார்த்து, இந்தப் பக்கத்தை மீண்டும் ஏற்றவும்."
 
 th_TH:
   enterHostName: "ป้อนชื่อโฮสต์"
@@ -4031,6 +4099,8 @@ th_TH:
   testingConnection: "การทดสอบ"
   roundTrip: "{duration} มิลลิวินาที ไป-กลับ"
   advancedHint: "สคีมา SSL และอื่นๆ ใน"
+  sourceCatalogUnavailable: "ไม่สามารถโหลดการเชื่อมต่อที่มีอยู่"
+  sourceCatalogUnavailableDescription: "ตรวจสอบว่าส่วนหน้าเชื่อมต่อกับแบ็กเอนด์ WhoDB ที่ถูกต้อง จากนั้นโหลดหน้านี้ซ้ำ"
 
 tr_TR:
   enterHostName: "Ana Bilgisayar Adını Girin"
@@ -4143,6 +4213,8 @@ tr_TR:
   testingConnection: "Test"
   roundTrip: "{duration} ms gidiş dönüş"
   advancedHint: "Şema, SSL ve daha fazlası"
+  sourceCatalogUnavailable: "Kullanılabilir bağlantılar yüklenemedi"
+  sourceCatalogUnavailableDescription: "Ön ucun doğru WhoDB arka uca bağlandığını kontrol edin, ardından bu sayfayı yeniden yükleyin."
 
 uk_UA:
   enterHostName: "Введіть ім'я хоста"
@@ -4255,6 +4327,8 @@ uk_UA:
   testingConnection: "Тестування"
   roundTrip: "{duration} мс туди й назад"
   advancedHint: "Схема, SSL і багато іншого в"
+  sourceCatalogUnavailable: "Не вдалося завантажити доступні підключення"
+  sourceCatalogUnavailableDescription: "Переконайтеся, що зовнішній інтерфейс підключено до правильного WhoDB серверного модуля, а потім перезавантажте цю сторінку."
 
 ur_PK:
   enterHostName: "میزبان کا نام درج کریں۔"
@@ -4367,6 +4441,8 @@ ur_PK:
   testingConnection: "ٹیسٹنگ"
   roundTrip: "{duration} ایم ایس راؤنڈ ٹرپ"
   advancedHint: "اسکیما، SSL اور مزید میں"
+  sourceCatalogUnavailable: "دستیاب کنکشن لوڈ نہیں ہو سکے۔"
+  sourceCatalogUnavailableDescription: "چیک کریں کہ فرنٹ اینڈ درست WhoDB بیک اینڈ سے منسلک ہے، پھر اس صفحہ کو دوبارہ لوڈ کریں۔"
 
 vi_VN:
   enterHostName: "Nhập tên máy chủ"
@@ -4479,6 +4555,8 @@ vi_VN:
   testingConnection: "Kiểm tra"
   roundTrip: "{duration} mili giây khứ hồi"
   advancedHint: "Lược đồ, SSL và hơn thế nữa trong"
+  sourceCatalogUnavailable: "Không thể tải các kết nối có sẵn"
+  sourceCatalogUnavailableDescription: "Kiểm tra xem giao diện người dùng đã được kết nối với đúng phụ trợ WhoDB chưa, sau đó tải lại trang này."
 
 af_ZA:
   enterHostName: "Voer gasheernaam in"
@@ -4591,6 +4669,8 @@ af_ZA:
   testingConnection: "Toets"
   roundTrip: "{duration} ms retoer"
   advancedHint: "Skema, SSL en meer in"
+  sourceCatalogUnavailable: "Kon nie beskikbare verbindings laai nie"
+  sourceCatalogUnavailableDescription: "Kontroleer dat die voorkant aan die korrekte WhoDB agterkant gekoppel is, en herlaai dan hierdie bladsy."
 
 am_ET:
   enterHostName: "የአስተናጋጅ ስም ያስገቡ"
@@ -4703,6 +4783,8 @@ am_ET:
   testingConnection: "መሞከር"
   roundTrip: "{duration} ms የክብ ጉዞ"
   advancedHint: "እቅድ፣ SSL እና ሌሎችም በ ውስጥ"
+  sourceCatalogUnavailable: "የሚገኙ ግንኙነቶችን መጫን አልተቻለም"
+  sourceCatalogUnavailableDescription: "የፊት ለፊቱ ከትክክለኛው WhoDB ጋር መገናኘቱን ያረጋግጡ እና ይህን ገጽ እንደገና ይጫኑት።"
 
 az_AZ:
   enterHostName: "Host adını daxil edin"
@@ -4815,6 +4897,8 @@ az_AZ:
   testingConnection: "Test"
   roundTrip: "{duration} ms gediş-dönüş"
   advancedHint: "Sxem, SSL və daha çox"
+  sourceCatalogUnavailable: "Mövcud bağlantıları yükləmək mümkün olmadı"
+  sourceCatalogUnavailableDescription: "Frontendin düzgün WhoDB arxa hissəyə qoşulduğunu yoxlayın, sonra bu səhifəni yenidən yükləyin."
 
 et_EE:
   enterHostName: "Sisestage hosti nimi"
@@ -4927,6 +5011,8 @@ et_EE:
   testingConnection: "Testimine"
   roundTrip: "{duration} ms edasi-tagasi reis"
   advancedHint: "Skeem, SSL ja palju muud"
+  sourceCatalogUnavailable: "Saadaolevaid ühendusi ei saanud laadida"
+  sourceCatalogUnavailableDescription: "Kontrolli, kas esiserv on ühendatud õige WhoDB taustaprogrammiga, seejärel laadi see leht uuesti."
 
 gu_IN:
   enterHostName: "હોસ્ટનું નામ દાખલ કરો"
@@ -5039,6 +5125,8 @@ gu_IN:
   testingConnection: "પરીક્ષણ"
   roundTrip: "{duration} ms રાઉન્ડ ટ્રીપ"
   advancedHint: "સ્કીમા, SSL અને વધુ માં"
+  sourceCatalogUnavailable: "ઉપલબ્ધ કનેક્શન લોડ કરી શકાયા નથી"
+  sourceCatalogUnavailableDescription: "તપાસો કે આગળનો ભાગ સાચા WhoDB બેકએન્ડ સાથે જોડાયેલ છે, પછી આ પૃષ્ઠને ફરીથી લોડ કરો."
 
 ha_NG:
   enterHostName: "Shigar da Sunan Mai watsa shiri"
@@ -5151,6 +5239,8 @@ ha_NG:
   testingConnection: "Gwaji"
   roundTrip: "{duration} ms zagaye"
   advancedHint: "Tsari, SSL da ƙari a ciki"
+  sourceCatalogUnavailable: "An kasa loda samammun haɗin kai"
+  sourceCatalogUnavailableDescription: "Bincika cewa an haɗa gaban gaba zuwa madaidaicin WhoDB, sannan sake loda wannan shafin."
 
 ka_GE:
   enterHostName: "შეიყვანეთ ჰოსტის სახელი"
@@ -5263,6 +5353,8 @@ ka_GE:
   testingConnection: "ტესტირება"
   roundTrip: "{duration} ms ორმხრივი მოგზაურობა"
   advancedHint: "სქემა, SSL და სხვა"
+  sourceCatalogUnavailable: "ხელმისაწვდომი კავშირების ჩატვირთვა ვერ მოხერხდა"
+  sourceCatalogUnavailableDescription: "შეამოწმეთ, რომ წინა ნაწილი დაკავშირებულია სწორ WhoDB საყრდენთან, შემდეგ გადატვირთეთ ეს გვერდი."
 
 km_KH:
   enterHostName: "បញ្ចូលឈ្មោះម៉ាស៊ីន"
@@ -5375,6 +5467,8 @@ km_KH:
   testingConnection: "ការធ្វើតេស្ត"
   roundTrip: "{duration} ដំណើរកំសាន្តទៅមក"
   advancedHint: "គ្រោងការណ៍ SSL និងច្រើនទៀតនៅក្នុង"
+  sourceCatalogUnavailable: "មិនអាចផ្ទុកការតភ្ជាប់ដែលមាន"
+  sourceCatalogUnavailableDescription: "ពិនិត្យមើលថាផ្នែកខាងមុខត្រូវបានភ្ជាប់ទៅផ្នែកខាងក្រោយ WhoDB ត្រឹមត្រូវ បន្ទាប់មកផ្ទុកទំព័រនេះឡើងវិញ។"
 
 kn_IN:
   enterHostName: "ಹೋಸ್ಟ್ ಹೆಸರನ್ನು ನಮೂದಿಸಿ"
@@ -5487,6 +5581,8 @@ kn_IN:
   testingConnection: "ಪರೀಕ್ಷೆ"
   roundTrip: "{duration} ms ರೌಂಡ್ ಟ್ರಿಪ್"
   advancedHint: "ಸ್ಕೀಮಾ, SSL ಮತ್ತು ಇನ್ನಷ್ಟು"
+  sourceCatalogUnavailable: "ಲಭ್ಯವಿರುವ ಸಂಪರ್ಕಗಳನ್ನು ಲೋಡ್ ಮಾಡಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ"
+  sourceCatalogUnavailableDescription: "ಮುಂಭಾಗವು ಸರಿಯಾದ WhoDB ಬ್ಯಾಕೆಂಡ್‌ಗೆ ಸಂಪರ್ಕಗೊಂಡಿದೆಯೇ ಎಂದು ಪರಿಶೀಲಿಸಿ, ನಂತರ ಈ ಪುಟವನ್ನು ಮರುಲೋಡ್ ಮಾಡಿ."
 
 lt_LT:
   enterHostName: "Įveskite pagrindinio kompiuterio pavadinimą"
@@ -5599,6 +5695,8 @@ lt_LT:
   testingConnection: "Testavimas"
   roundTrip: "{duration} ms kelionė pirmyn ir atgal"
   advancedHint: "Schema, SSL ir kt"
+  sourceCatalogUnavailable: "Nepavyko įkelti galimų jungčių"
+  sourceCatalogUnavailableDescription: "Patikrinkite, ar sąsaja prijungta prie tinkamos WhoDB užpakalinės dalies, tada iš naujo įkelkite šį puslapį."
 
 lv_LV:
   enterHostName: "Ievadiet resursdatora nosaukumu"
@@ -5711,6 +5809,8 @@ lv_LV:
   testingConnection: "Testēšana"
   roundTrip: "{duration} ms turp un atpakaļ"
   advancedHint: "Shēma, SSL un citi"
+  sourceCatalogUnavailable: "Nevarēja ielādēt pieejamos savienojumus"
+  sourceCatalogUnavailableDescription: "Pārbaudiet, vai priekšgals ir savienots ar pareizo WhoDB aizmugursistēmu, pēc tam atkārtoti ielādējiet šo lapu."
 
 ml_IN:
   enterHostName: "ഹോസ്റ്റിൻ്റെ പേര് നൽകുക"
@@ -5823,6 +5923,8 @@ ml_IN:
   testingConnection: "ടെസ്റ്റിംഗ്"
   roundTrip: "{duration} ms റൗണ്ട് ട്രിപ്പ്"
   advancedHint: "സ്കീമ, SSL എന്നിവയും അതിൽ കൂടുതലും"
+  sourceCatalogUnavailable: "ലഭ്യമായ കണക്ഷനുകൾ ലോഡ് ചെയ്യാനായില്ല"
+  sourceCatalogUnavailableDescription: "മുൻഭാഗം ശരിയായ WhoDB ബാക്കെൻഡുമായി ബന്ധിപ്പിച്ചിട്ടുണ്ടോയെന്ന് പരിശോധിക്കുക, തുടർന്ന് ഈ പേജ് വീണ്ടും ലോഡുചെയ്യുക."
 
 mr_IN:
   enterHostName: "होस्ट नाव प्रविष्ट करा"
@@ -5935,6 +6037,8 @@ mr_IN:
   testingConnection: "चाचणी"
   roundTrip: "{duration} ms राउंड ट्रिप"
   advancedHint: "स्कीमा, SSL आणि बरेच काही मध्ये"
+  sourceCatalogUnavailable: "उपलब्ध कनेक्शन लोड करू शकलो नाही"
+  sourceCatalogUnavailableDescription: "फ्रंटएंड योग्य WhoDB बॅकएंडशी जोडलेला आहे का ते तपासा, नंतर हे पृष्ठ रीलोड करा."
 
 ne_NP:
   enterHostName: "होस्ट नाम प्रविष्ट गर्नुहोस्"
@@ -6047,6 +6151,8 @@ ne_NP:
   testingConnection: "परीक्षण"
   roundTrip: "{duration} मिस राउन्ड ट्रिप"
   advancedHint: "स्कीमा, SSL र थप मा"
+  sourceCatalogUnavailable: "उपलब्ध जडानहरू लोड गर्न सकिएन"
+  sourceCatalogUnavailableDescription: "जाँच गर्नुहोस् कि फ्रन्टएन्ड सही WhoDB ब्याकइन्डमा जडान भएको छ, त्यसपछि यो पृष्ठ पुन: लोड गर्नुहोस्।"
 
 pa_IN:
   enterHostName: "ਮੇਜ਼ਬਾਨ ਦਾ ਨਾਮ ਦਰਜ ਕਰੋ"
@@ -6159,6 +6265,8 @@ pa_IN:
   testingConnection: "ਟੈਸਟਿੰਗ"
   roundTrip: "{duration} ms ਰਾਊਂਡ ਟ੍ਰਿਪ"
   advancedHint: "ਸਕੀਮਾ, SSL ਅਤੇ ਹੋਰ ਵਿੱਚ"
+  sourceCatalogUnavailable: "ਉਪਲਬਧ ਕਨੈਕਸ਼ਨਾਂ ਨੂੰ ਲੋਡ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ"
+  sourceCatalogUnavailableDescription: "ਜਾਂਚ ਕਰੋ ਕਿ ਫਰੰਟਐਂਡ ਸਹੀ WhoDB ਬੈਕਐਂਡ ਨਾਲ ਜੁੜਿਆ ਹੋਇਆ ਹੈ, ਫਿਰ ਇਸ ਪੰਨੇ ਨੂੰ ਮੁੜ ਲੋਡ ਕਰੋ।"
 
 si_LK:
   enterHostName: "සත්කාරක නාමය ඇතුළත් කරන්න"
@@ -6271,6 +6379,8 @@ si_LK:
   testingConnection: "පරීක්ෂා කිරීම"
   roundTrip: "{duration} ms වට සංචාරය"
   advancedHint: "Schema, SSL සහ තවත්"
+  sourceCatalogUnavailable: "පවතින සම්බන්ධතා පූරණය කළ නොහැකි විය"
+  sourceCatalogUnavailableDescription: "ඉදිරිපස නිවැරදි WhoDB පසුබිමට සම්බන්ධ වී ඇත්දැයි පරීක්ෂා කරන්න, ඉන්පසු මෙම පිටුව නැවත පූරණය කරන්න."
 
 sl_SI:
   enterHostName: "Vnesite ime gostitelja"
@@ -6383,6 +6493,8 @@ sl_SI:
   testingConnection: "Testiranje"
   roundTrip: "{duration} ms povratno potovanje"
   advancedHint: "Shema, SSL in več v"
+  sourceCatalogUnavailable: "Could not load available connections"
+  sourceCatalogUnavailableDescription: "Preverite, ali je sprednji del povezan s pravilnim zadnjim delom WhoDB, nato znova naložite to stran."
 
 sr_RS:
   enterHostName: "Унесите име хоста"
@@ -6495,6 +6607,8 @@ sr_RS:
   testingConnection: "Тестирање"
   roundTrip: "{duration} мс повратно путовање"
   advancedHint: "Шема, SSL и више у"
+  sourceCatalogUnavailable: "Није могуће учитати доступне везе"
+  sourceCatalogUnavailableDescription: "Проверите да ли је фронтенд повезан са исправним WhoDB бацкенд-ом, а затим поново учитајте ову страницу."
 
 te_IN:
   enterHostName: "హోస్ట్ పేరును నమోదు చేయండి"
@@ -6607,6 +6721,8 @@ te_IN:
   testingConnection: "పరీక్షిస్తోంది"
   roundTrip: "{duration} ms రౌండ్ ట్రిప్"
   advancedHint: "స్కీమా, SSL మరియు మరిన్ని"
+  sourceCatalogUnavailable: "అందుబాటులో ఉన్న కనెక్షన్‌లను లోడ్ చేయడం సాధ్యపడలేదు"
+  sourceCatalogUnavailableDescription: "ఫ్రంటెండ్ సరైన WhoDB బ్యాకెండ్‌కు కనెక్ట్ చేయబడిందో లేదో తనిఖీ చేయండి, ఆపై ఈ పేజీని మళ్లీ లోడ్ చేయండి."
 
 tl_PH:
   enterHostName: "Ilagay ang Host Name"
@@ -6719,6 +6835,8 @@ tl_PH:
   testingConnection: "Pagsubok"
   roundTrip: "{duration} ms round trip"
   advancedHint: "Schema, SSL at higit pa sa"
+  sourceCatalogUnavailable: "Hindi ma-load ang mga available na koneksyon"
+  sourceCatalogUnavailableDescription: "Tingnan kung nakakonekta ang frontend sa tamang WhoDB backend, pagkatapos ay i-reload ang page na ito."
 
 uz_UZ:
   enterHostName: "Xost nomini kiriting"
@@ -6831,6 +6949,8 @@ uz_UZ:
   testingConnection: "Sinov"
   roundTrip: "qaytish {duration} ms"
   advancedHint: "Sxema, SSL va boshqalar"
+  sourceCatalogUnavailable: "Mavjud ulanishlarni yuklab bo‘lmadi"
+  sourceCatalogUnavailableDescription: "Frontend toʻgʻri WhoDB backendga ulanganligini tekshiring, soʻngra ushbu sahifani qayta yuklang."
 
 yo_NG:
   enterHostName: "Tẹ Orukọ ogun sii"
@@ -6943,3 +7063,5 @@ yo_NG:
   testingConnection: "Idanwo"
   roundTrip: "{duration} ms irin ajo"
   advancedHint: "Eto, SSL ati diẹ sii ninu"
+  sourceCatalogUnavailable: "Ko le kojọpọ awọn isopọ to wa"
+  sourceCatalogUnavailableDescription: "Ṣayẹwo pe iwaju ti wa ni asopọ si WhoDB ti o tọ, lẹhinna tun gbee si oju-iwe yii."

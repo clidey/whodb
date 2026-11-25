@@ -99,6 +99,8 @@ ar_AE:
   columnCount: "{count} أعمدة"
   newObject: "جديد {object}"
   viewMode: "وضع العرض"
+  fieldCount_one: "{count} الحقل"
+  fieldCount_other: "{count} الحقول"
 
 de_DE:
   title: "Tische"
@@ -149,6 +151,8 @@ de_DE:
   columnCount: "{count} Spalten"
   newObject: "Neu {object}"
   viewMode: "Ansichtsmodus"
+  fieldCount_one: "{count}-Feld"
+  fieldCount_other: "{count} Felder"
 
 el_GR:
   title: "Πίνακες"
@@ -199,6 +203,8 @@ el_GR:
   columnCount: "{count} στήλες"
   newObject: "Νέο {object}"
   viewMode: "Λειτουργία προβολής"
+  fieldCount_one: "πεδίο {count}"
+  fieldCount_other: "{count} πεδία"
 
 en_GB:
   title: "Tables"
@@ -249,6 +255,8 @@ en_GB:
   columnCount: "{count} columns"
   newObject: "New {object}"
   viewMode: "View mode"
+  fieldCount_one: "{count} field"
+  fieldCount_other: "{count} fields"
 
 es_ES:
   title: "Mesas"
@@ -299,6 +307,8 @@ es_ES:
   columnCount: "{count} columnas"
   newObject: "Nuevo {object}"
   viewMode: "Modo de visualización"
+  fieldCount_one: "{count} campo"
+  fieldCount_other: "{count} campos"
 
 fi_FI:
   title: "Taulukot"
@@ -349,6 +359,8 @@ fi_FI:
   columnCount: "{count} sarakkeita"
   newObject: "Uusi {object}"
   viewMode: "Näytä tila"
+  fieldCount_one: "{count}-kenttään"
+  fieldCount_other: "{count} kenttiä"
 
 fr_FR:
   title: "Tables"
@@ -399,6 +411,8 @@ fr_FR:
   columnCount: "{count} colonnes"
   newObject: "Nouveau {object}"
   viewMode: "Mode d'affichage"
+  fieldCount_one: "Champ {count}"
+  fieldCount_other: "{count} champs"
 
 it_IT:
   title: "Tabelle"
@@ -449,6 +463,8 @@ it_IT:
   columnCount: "{count} colonne"
   newObject: "Nuovo {object}"
   viewMode: "Modalità di visualizzazione"
+  fieldCount_one: "campo {count}."
+  fieldCount_other: "{count} campi"
 
 iw_IL:
   title: "טבלאות"
@@ -499,6 +515,8 @@ iw_IL:
   columnCount: "{count} עמודות"
   newObject: "חדש {object}"
   viewMode: "מצב תצוגה"
+  fieldCount_one: "שדה {count}"
+  fieldCount_other: "{count} שדות"
 
 ja_JP:
   title: "テーブル"
@@ -549,6 +567,8 @@ ja_JP:
   columnCount: "{count} 列"
   newObject: "新しい{object}"
   viewMode: "ビューモード"
+  fieldCount_one: "{count} フィールド"
+  fieldCount_other: "{count} フィールド"
 
 ko_KR:
   title: "테이블"
@@ -599,6 +619,8 @@ ko_KR:
   columnCount: "{count} 열"
   newObject: "신규 {object}"
   viewMode: "보기 모드"
+  fieldCount_one: "{count} 필드"
+  fieldCount_other: "{count} 필드"
 
 nl_NL:
   title: "Tafels"
@@ -649,6 +671,8 @@ nl_NL:
   columnCount: "{count} kolommen"
   newObject: "Nieuw {object}"
   viewMode: "Bekijk modus"
+  fieldCount_one: "{count}-veld"
+  fieldCount_other: "{count} velden"
 
 pl_PL:
   title: "Stoły"
@@ -699,6 +723,8 @@ pl_PL:
   columnCount: "{count} kolumny"
   newObject: "Nowy {object}"
   viewMode: "Tryb przeglądania"
+  fieldCount_one: "pole {count}."
+  fieldCount_other: "{count} pola"
 
 pt_BR:
   title: "Tabelas"
@@ -749,6 +775,8 @@ pt_BR:
   columnCount: "{count} colunas"
   newObject: "Novo {object}"
   viewMode: "Modo de visualização"
+  fieldCount_one: "campo {count}"
+  fieldCount_other: "{count} campos"
 
 ro_RO:
   title: "Mesele"
@@ -799,6 +827,8 @@ ro_RO:
   columnCount: "{count} coloane"
   newObject: "Nou {object}"
   viewMode: "Modul vizualizare"
+  fieldCount_one: "câmpul {count}."
+  fieldCount_other: "{count} câmpuri"
 
 ru_RU:
   title: "Таблицы"
@@ -849,6 +879,8 @@ ru_RU:
   columnCount: "{count} столбцы"
   newObject: "Новый {object}"
   viewMode: "Режим просмотра"
+  fieldCount_one: "Поле {count}"
+  fieldCount_other: "{count} поля"
 
 sk_SK:
   title: "Tabuľky"
@@ -899,6 +931,8 @@ sk_SK:
   columnCount: "{count} stĺpcov"
   newObject: "Nové {object}"
   viewMode: "Režim zobrazenia"
+  fieldCount_one: "{count} pole"
+  fieldCount_other: "{count} polia"
 
 sv_SE:
   title: "Tabeller"
@@ -949,6 +983,8 @@ sv_SE:
   columnCount: "{count} kolumner"
   newObject: "Ny {object}"
   viewMode: "Visningsläge"
+  fieldCount_one: "{count} fält"
+  fieldCount_other: "{count} fält"
 
 zh_CN:
   title: "表格"
@@ -999,6 +1035,8 @@ zh_CN:
   columnCount: "{count} 列"
   newObject: "新{object}"
   viewMode: "查看模式"
+  fieldCount_one: "{count} 字段"
+  fieldCount_other: "{count} 字段"
 
 zh_TW:
   title: "表格"
@@ -1049,6 +1087,8 @@ zh_TW:
   columnCount: "{count} columns"
   newObject: "新{object}"
   viewMode: "View mode"
+  fieldCount_one: "{count} 字段"
+  fieldCount_other: "{count} 字段"
 
 bg_BG:
   title: "Маси"
@@ -1099,6 +1139,8 @@ bg_BG:
   columnCount: "{count} колони"
   newObject: "Ново {object}"
   viewMode: "Режим на преглед"
+  fieldCount_one: "{count} поле"
+  fieldCount_other: "{count} полета"
 
 bn_BD:
   title: "টেবিল"
@@ -1149,6 +1191,8 @@ bn_BD:
   columnCount: "{count} কলাম"
   newObject: "নতুন {object}"
   viewMode: "মোড দেখুন"
+  fieldCount_one: "{count} ক্ষেত্র"
+  fieldCount_other: "{count} ক্ষেত্র"
 
 ca_ES:
   title: "Taules"
@@ -1199,6 +1243,8 @@ ca_ES:
   columnCount: "{count} columnes"
   newObject: "Nou {object}"
   viewMode: "Mode de visualització"
+  fieldCount_one: "camp {count}."
+  fieldCount_other: "{count} camps"
 
 cs_CZ:
   title: "Tabulky"
@@ -1249,6 +1295,8 @@ cs_CZ:
   columnCount: "{count} sloupců"
   newObject: "Nové {object}"
   viewMode: "Režim zobrazení"
+  fieldCount_one: "{count} pole"
+  fieldCount_other: "{count} pole"
 
 da_DK:
   title: "Tabeller"
@@ -1299,6 +1347,8 @@ da_DK:
   columnCount: "{count} kolonner"
   newObject: "Ny {object}"
   viewMode: "Visningstilstand"
+  fieldCount_one: "{count} felt"
+  fieldCount_other: "{count} felter"
 
 fa_IR:
   title: "جداول"
@@ -1349,6 +1399,8 @@ fa_IR:
   columnCount: "{count} ستون"
   newObject: "جدید {object}"
   viewMode: "حالت مشاهده"
+  fieldCount_one: "فیلد {count}"
+  fieldCount_other: "{count} فیلد"
 
 hi_IN:
   title: "टेबल"
@@ -1399,6 +1451,8 @@ hi_IN:
   columnCount: "{count} कॉलम"
   newObject: "नया {object}"
   viewMode: "दृश्य मोड"
+  fieldCount_one: "{count} फ़ील्ड"
+  fieldCount_other: "{count} फ़ील्ड"
 
 hr_HR:
   title: "Stolovi"
@@ -1449,6 +1503,8 @@ hr_HR:
   columnCount: "{count} stupaca"
   newObject: "Novo {object}"
   viewMode: "Način prikaza"
+  fieldCount_one: "{count} polje"
+  fieldCount_other: "{count} polja"
 
 hu_HU:
   title: "Táblázatok"
@@ -1499,6 +1555,8 @@ hu_HU:
   columnCount: "{count} oszlopok"
   newObject: "Új {object}"
   viewMode: "Nézet mód"
+  fieldCount_one: "{count} mezőben"
+  fieldCount_other: "{count} mezők"
 
 id_ID:
   title: "Tabel"
@@ -1549,6 +1607,8 @@ id_ID:
   columnCount: "{count} kolom"
   newObject: "Baru {object}"
   viewMode: "Modus tampilan"
+  fieldCount_one: "bidang {count}"
+  fieldCount_other: "{count} bidang"
 
 ms_MY:
   title: "Meja"
@@ -1599,6 +1659,8 @@ ms_MY:
   columnCount: "{count} lajur"
   newObject: "Baharu {object}"
   viewMode: "Mod lihat"
+  fieldCount_one: "{count} medan"
+  fieldCount_other: "{count} medan"
 
 nb_NO:
   title: "Tabeller"
@@ -1649,6 +1711,8 @@ nb_NO:
   columnCount: "{count} kolonner"
   newObject: "Ny {object}"
   viewMode: "Visningsmodus"
+  fieldCount_one: "{count}-feltet"
+  fieldCount_other: "{count} felt"
 
 sw_KE:
   title: "Majedwali"
@@ -1699,6 +1763,8 @@ sw_KE:
   columnCount: "{count} safu wima"
   newObject: "Mpya {object}"
   viewMode: "Hali ya kutazama"
+  fieldCount_one: "{count} uwanja"
+  fieldCount_other: "{count} sehemu"
 
 ta_IN:
   title: "அட்டவணைகள்"
@@ -1749,6 +1815,8 @@ ta_IN:
   columnCount: "{count} நெடுவரிசைகள்"
   newObject: "புதிய {object}"
   viewMode: "பார்வை முறை"
+  fieldCount_one: "{count} புலம்"
+  fieldCount_other: "{count} புலங்கள்"
 
 th_TH:
   title: "ตาราง"
@@ -1799,6 +1867,8 @@ th_TH:
   columnCount: "{count} คอลัมน์"
   newObject: "ใหม่ {object}"
   viewMode: "โหมดดู"
+  fieldCount_one: "ช่อง {count}"
+  fieldCount_other: "{count} ช่อง"
 
 tr_TR:
   title: "Tablolar"
@@ -1849,6 +1919,8 @@ tr_TR:
   columnCount: "{count} sütunlar"
   newObject: "Yeni {object}"
   viewMode: "Görünüm modu"
+  fieldCount_one: "{count} alanı"
+  fieldCount_other: "{count} alanlar"
 
 uk_UA:
   title: "Таблиці"
@@ -1899,6 +1971,8 @@ uk_UA:
   columnCount: "{count} стовпців"
   newObject: "Новий {object}"
   viewMode: "Режим перегляду"
+  fieldCount_one: "{count} поле"
+  fieldCount_other: "{count} поля"
 
 ur_PK:
   title: "میزیں"
@@ -1949,6 +2023,8 @@ ur_PK:
   columnCount: "{count} کالم"
   newObject: "نیا {object}"
   viewMode: "موڈ دیکھیں"
+  fieldCount_one: "{count} فیلڈ"
+  fieldCount_other: "{count} فیلڈز"
 
 vi_VN:
   title: "Bàn"
@@ -1999,6 +2075,8 @@ vi_VN:
   columnCount: "{count} cột"
   newObject: "Mới {object}"
   viewMode: "Chế độ xem"
+  fieldCount_one: "trường {count}"
+  fieldCount_other: "trường {count}"
 
 af_ZA:
   title: "Tabelle"
@@ -2049,6 +2127,8 @@ af_ZA:
   columnCount: "{count} kolomme"
   newObject: "Nuwe {object}"
   viewMode: "Kykmodus"
+  fieldCount_one: "{count} veld"
+  fieldCount_other: "{count} velde"
 
 am_ET:
   title: "ጠረጴዛዎች"
@@ -2099,6 +2179,8 @@ am_ET:
   columnCount: "{count} አምዶች"
   newObject: "አዲስ {object}"
   viewMode: "የእይታ ሁነታ"
+  fieldCount_one: "{count} መስክ"
+  fieldCount_other: "{count} መስኮች"
 
 az_AZ:
   title: "Cədvəllər"
@@ -2149,6 +2231,8 @@ az_AZ:
   columnCount: "{count} sütun"
   newObject: "Yeni {object}"
   viewMode: "Baxış rejimi"
+  fieldCount_one: "{count} sahəsi"
+  fieldCount_other: "{count} sahələri"
 
 et_EE:
   title: "Tabelid"
@@ -2199,6 +2283,8 @@ et_EE:
   columnCount: "{count} veergu"
   newObject: "Uus {object}"
   viewMode: "Vaatamise režiim"
+  fieldCount_one: "{count} väljal"
+  fieldCount_other: "{count} väljad"
 
 gu_IN:
   title: "કોષ્ટકો"
@@ -2249,6 +2335,8 @@ gu_IN:
   columnCount: "{count} કૉલમ"
   newObject: "નવી {object}"
   viewMode: "જુઓ મોડ"
+  fieldCount_one: "{count} ફીલ્ડ"
+  fieldCount_other: "{count} ફીલ્ડ"
 
 ha_NG:
   title: "Tables"
@@ -2299,6 +2387,8 @@ ha_NG:
   columnCount: "{count} ginshiƙai"
   newObject: "Sabo {object}"
   viewMode: "Yanayin duba"
+  fieldCount_one: "{count} filin"
+  fieldCount_other: "{count} filayen"
 
 ka_GE:
   title: "მაგიდები"
@@ -2349,6 +2439,8 @@ ka_GE:
   columnCount: "{count} სვეტი"
   newObject: "ახალი {object}"
   viewMode: "ნახვის რეჟიმი"
+  fieldCount_one: "{count} ველი"
+  fieldCount_other: "{count} ველი"
 
 km_KH:
   title: "តុ"
@@ -2399,6 +2491,8 @@ km_KH:
   columnCount: "{count} ជួរឈរ"
   newObject: "ថ្មី {object}"
   viewMode: "របៀបមើល"
+  fieldCount_one: "{count} វាល"
+  fieldCount_other: "{count} វាល"
 
 kn_IN:
   title: "ಕೋಷ್ಟಕಗಳು"
@@ -2449,6 +2543,8 @@ kn_IN:
   columnCount: "{count} ಕಾಲಮ್‌ಗಳು"
   newObject: "ಹೊಸ {object}"
   viewMode: "ವೀಕ್ಷಣೆ ಮೋಡ್"
+  fieldCount_one: "{count} ಕ್ಷೇತ್ರ"
+  fieldCount_other: "{count} ಕ್ಷೇತ್ರಗಳು"
 
 lt_LT:
   title: "Lentelės"
@@ -2499,6 +2595,8 @@ lt_LT:
   columnCount: "{count} stulpelių"
   newObject: "Naujas {object}"
   viewMode: "Žiūrėjimo režimas"
+  fieldCount_one: "{count} lauke"
+  fieldCount_other: "{count} laukai"
 
 lv_LV:
   title: "Tabulas"
@@ -2549,6 +2647,8 @@ lv_LV:
   columnCount: "{count} kolonnas"
   newObject: "Jauns {object}"
   viewMode: "Skatīšanas režīms"
+  fieldCount_one: "{count} lauks"
+  fieldCount_other: "{count} lauki"
 
 ml_IN:
   title: "പട്ടികകൾ"
@@ -2599,6 +2699,8 @@ ml_IN:
   columnCount: "{count} നിരകൾ"
   newObject: "പുതിയ {object}"
   viewMode: "കാഴ്ച മോഡ്"
+  fieldCount_one: "{count} ഫീൽഡ്"
+  fieldCount_other: "{count} ഫീൽഡുകൾ"
 
 mr_IN:
   title: "टेबल्स"
@@ -2649,6 +2751,8 @@ mr_IN:
   columnCount: "{count} स्तंभ"
   newObject: "नवीन {object}"
   viewMode: "पहा मोड"
+  fieldCount_one: "{count} फील्ड"
+  fieldCount_other: "{count} फील्ड"
 
 ne_NP:
   title: "तालिकाहरू"
@@ -2699,6 +2803,8 @@ ne_NP:
   columnCount: "{count} स्तम्भहरू"
   newObject: "नयाँ {object}"
   viewMode: "मोड हेर्नुहोस्"
+  fieldCount_one: "{count} क्षेत्र"
+  fieldCount_other: "{count} क्षेत्रहरू"
 
 pa_IN:
   title: "ਟੇਬਲ"
@@ -2749,6 +2855,8 @@ pa_IN:
   columnCount: "{count} ਕਾਲਮ"
   newObject: "ਨਵਾਂ {object}"
   viewMode: "ਮੋਡ ਦੇਖੋ"
+  fieldCount_one: "{count} ਖੇਤਰ"
+  fieldCount_other: "{count} ਖੇਤਰ"
 
 si_LK:
   title: "වගු"
@@ -2799,6 +2907,8 @@ si_LK:
   columnCount: "{count} තීරු"
   newObject: "නව {object}"
   viewMode: "දර්ශන මාදිලිය"
+  fieldCount_one: "{count} ක්ෂේත්‍රය"
+  fieldCount_other: "{count} ක්ෂේත්‍ර"
 
 sl_SI:
   title: "Mize"
@@ -2849,6 +2959,8 @@ sl_SI:
   columnCount: "{count} stolpcev"
   newObject: "Novo {object}"
   viewMode: "Način pogleda"
+  fieldCount_one: "{count} polje"
+  fieldCount_other: "{count} polja"
 
 sr_RS:
   title: "Табле"
@@ -2899,6 +3011,8 @@ sr_RS:
   columnCount: "{count} колоне"
   newObject: "Ново {object}"
   viewMode: "Режим прегледа"
+  fieldCount_one: "{count} field"
+  fieldCount_other: "{count} fields"
 
 te_IN:
   title: "పట్టికలు"
@@ -2949,6 +3063,8 @@ te_IN:
   columnCount: "{count} నిలువు వరుసలు"
   newObject: "కొత్త {object}"
   viewMode: "వీక్షణ మోడ్"
+  fieldCount_one: "{count} ఫీల్డ్"
+  fieldCount_other: "{count} ఫీల్డ్‌లు"
 
 tl_PH:
   title: "Mga mesa"
@@ -2999,6 +3115,8 @@ tl_PH:
   columnCount: "{count} mga column"
   newObject: "Bago {object}"
   viewMode: "View mode"
+  fieldCount_one: "{count} field"
+  fieldCount_other: "{count} mga field"
 
 uz_UZ:
   title: "Jadvallar"
@@ -3049,6 +3167,8 @@ uz_UZ:
   columnCount: "{count} ustunlar"
   newObject: "Yangi {object}"
   viewMode: "Ko'rish rejimi"
+  fieldCount_one: "{count} maydoni"
+  fieldCount_other: "{count} maydonlar"
 
 yo_NG:
   title: "Awọn tabili"
@@ -3099,3 +3219,5 @@ yo_NG:
   columnCount: "{count} ọwọn"
   newObject: "Tuntun {object}"
   viewMode: "Ipo wiwo"
+  fieldCount_one: "{count} aaye"
+  fieldCount_other: "{count} awọn aaye"

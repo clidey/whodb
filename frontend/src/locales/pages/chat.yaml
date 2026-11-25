@@ -314,6 +314,7 @@ ar_AE:
   retry: "أعد المحاولة"
   streamInterrupted: "توقفت استجابة الدردشة قبل أن تنتهي. حاول ثانية."
   searchChats: "بحث في المحادثات..."
+  renameChat: "إعادة تسمية الدردشة"
 
 de_DE:
   placeholder: "Geben Sie hier Ihre Nachricht ein..."
@@ -472,6 +473,7 @@ de_DE:
   retry: "Wiederholen"
   streamInterrupted: "Die Chat-Antwort wurde gestoppt, bevor sie beendet war. Versuchen Sie es erneut."
   searchChats: "Chats durchsuchen..."
+  renameChat: "Chat umbenennen"
 
 el_GR:
   placeholder: "Πληκτρολογήστε το μήνυμά σας εδώ..."
@@ -630,6 +632,7 @@ el_GR:
   retry: "Δοκιμάζω πάλι"
   streamInterrupted: "Η απάντηση της συνομιλίας σταμάτησε πριν ολοκληρωθεί. Προσπαθήστε ξανά."
   searchChats: "Αναζήτηση συνομιλιών..."
+  renameChat: "Μετονομασία συνομιλίας"
 
 en_GB:
   placeholder: "Type Your Message Here..."
@@ -788,6 +791,7 @@ en_GB:
   retry: "Retry"
   streamInterrupted: "The chat response stopped before it finished. Try again."
   searchChats: "Search chats..."
+  renameChat: "Rename chat"
 
 es_ES:
   placeholder: "Escriba su mensaje aquí..."
@@ -946,6 +950,7 @@ es_ES:
   retry: "Rever"
   streamInterrupted: "La respuesta del chat se detuvo antes de terminar. Intentar otra vez."
   searchChats: "Buscar chats..."
+  renameChat: "Cambiar el nombre del chat"
 
 fi_FI:
   placeholder: "Kirjoita viestisi tähän..."
@@ -1104,6 +1109,7 @@ fi_FI:
   retry: "Yritä uudelleen"
   streamInterrupted: "Chat-vastaus pysähtyi ennen kuin se päättyi. Yritä uudelleen."
   searchChats: "Hae chateista..."
+  renameChat: "Nimeä chat uudelleen"
 
 fr_FR:
   placeholder: "Tapez votre message ici..."
@@ -1262,6 +1268,7 @@ fr_FR:
   retry: "Réessayer"
   streamInterrupted: "La réponse du chat s'est arrêtée avant la fin. Essayer à nouveau."
   searchChats: "Rechercher des discussions..."
+  renameChat: "Renommer la discussion"
 
 it_IT:
   placeholder: "Scrivi qui il tuo messaggio..."
@@ -1420,6 +1427,7 @@ it_IT:
   retry: "Riprova"
   streamInterrupted: "La risposta della chat si è interrotta prima del termine. Riprova."
   searchChats: "Cerca chat..."
+  renameChat: "Rinomina la chat"
 
 iw_IL:
   placeholder: "הקלד את הודעתך כאן..."
@@ -1578,6 +1586,7 @@ iw_IL:
   retry: "נסה שוב"
   streamInterrupted: "תגובת הצ'אט נעצרה לפני שסיימה. נסה שוב."
   searchChats: "חפש בצ'אטים..."
+  renameChat: "שנה את שם הצ'אט"
 
 ja_JP:
   placeholder: "ここにメッセージを入力してください..."
@@ -1736,6 +1745,7 @@ ja_JP:
   retry: "リトライ"
   streamInterrupted: "チャットの応答が終了する前に停止しました。 もう一度やり直してください。"
   searchChats: "チャットを検索..."
+  renameChat: "チャットの名前を変更する"
 
 ko_KR:
   placeholder: "여기에 메시지를 입력하세요..."
@@ -1894,6 +1904,7 @@ ko_KR:
   retry: "다시 해 보다"
   streamInterrupted: "채팅 응답이 완료되기 전에 중지되었습니다. 다시 시도해 보세요."
   searchChats: "채팅 검색..."
+  renameChat: "채팅 이름 바꾸기"
 
 nl_NL:
   placeholder: "Typ hier uw bericht..."
@@ -2052,6 +2063,7 @@ nl_NL:
   retry: "Opnieuw proberen"
   streamInterrupted: "Het chatantwoord stopte voordat het klaar was. Probeer het opnieuw."
   searchChats: "Zoek chats..."
+  renameChat: "Chat hernoemen"
 
 pl_PL:
   placeholder: "Wpisz tutaj swoją wiadomość..."
@@ -2210,6 +2222,7 @@ pl_PL:
   retry: "Spróbować ponownie"
   streamInterrupted: "Odpowiedź na czacie zatrzymała się przed zakończeniem. Spróbuj ponownie."
   searchChats: "Wyszukaj czaty..."
+  renameChat: "Zmień nazwę czatu"
 
 pt_BR:
   placeholder: "Digite sua mensagem aqui..."
@@ -2368,6 +2381,7 @@ pt_BR:
   retry: "Tentar novamente"
   streamInterrupted: "A resposta do chat parou antes de terminar. Tente novamente."
   searchChats: "Pesquisar bate-papos..."
+  renameChat: "Renomear bate-papo"
 
 ro_RO:
   placeholder: "Introduceți mesajul dvs. aici..."
@@ -2526,6 +2540,7 @@ ro_RO:
   retry: "Reîncercați"
   streamInterrupted: "Răspunsul prin chat s-a oprit înainte de a se termina. Încearcă din nou."
   searchChats: "Caută în chat-uri..."
+  renameChat: "Redenumiți chatul"
 
 ru_RU:
   placeholder: "Введите здесь свое сообщение..."
@@ -2684,6 +2699,7 @@ ru_RU:
   retry: "Повторить попытку"
   streamInterrupted: "Ответ в чате прекратился, не успев закончиться. Попробуйте еще раз."
   searchChats: "Поиск в чатах..."
+  renameChat: "Переименовать чат"
 
 sk_SK:
   placeholder: "Sem napíšte svoju správu..."
@@ -2842,6 +2858,7 @@ sk_SK:
   retry: "Skúste to znova"
   streamInterrupted: "Odpoveď na čet sa zastavila pred dokončením. Skúste to znova."
   searchChats: "Hľadať rozhovory..."
+  renameChat: "Premenovať čet"
 
 sv_SE:
   placeholder: "Skriv ditt meddelande här..."
@@ -3000,6 +3017,7 @@ sv_SE:
   retry: "Försöka igen"
   streamInterrupted: "Chattsvaret avbröts innan det avslutades. Försök igen."
   searchChats: "Sök chattar..."
+  renameChat: "Byt namn på chatten"
 
 zh_CN:
   placeholder: "在此输入您的消息..."
@@ -3158,6 +3176,7 @@ zh_CN:
   retry: "重试"
   streamInterrupted: "聊天回复还没结束就停止了。 再试一次。"
   searchChats: "搜索聊天记录..."
+  renameChat: "重命名聊天"
 
 zh_TW:
   placeholder: "在此輸入您的訊息..."
@@ -3316,6 +3335,7 @@ zh_TW:
   retry: "重試"
   streamInterrupted: "聊天回覆還沒結束就停止了。 再試一次。"
   searchChats: "搜尋聊天記錄..."
+  renameChat: "重新命名聊天"
 
 bg_BG:
   placeholder: "Въведете вашето съобщение тук..."
@@ -3474,6 +3494,7 @@ bg_BG:
   retry: "Опитайте отново"
   streamInterrupted: "Отговорът в чата спря, преди да приключи. Опитайте отново."
   searchChats: "Търсене в чатове..."
+  renameChat: "Преименувайте чата"
 
 bn_BD:
   placeholder: "এখানে আপনার বার্তা টাইপ করুন..."
@@ -3632,6 +3653,7 @@ bn_BD:
   retry: "আবার চেষ্টা করুন"
   streamInterrupted: "চ্যাটের প্রতিক্রিয়া শেষ হওয়ার আগেই থেমে গেল। আবার চেষ্টা করুন"
   searchChats: "চ্যাট খুঁজুন..."
+  renameChat: "চ্যাটের নাম পরিবর্তন করুন"
 
 ca_ES:
   placeholder: "Escriu el teu missatge aquí..."
@@ -3790,6 +3812,7 @@ ca_ES:
   retry: "Torna-ho a provar"
   streamInterrupted: "La resposta del xat es va aturar abans d'acabar. Torna-ho a provar."
   searchChats: "Cerca xats..."
+  renameChat: "Canvia el nom del xat"
 
 cs_CZ:
   placeholder: "Sem napište svou zprávu..."
@@ -3948,6 +3971,7 @@ cs_CZ:
   retry: "Zkuste to znovu"
   streamInterrupted: "Odpověď chatu se zastavila před dokončením. Zkuste to znovu."
   searchChats: "Hledat chaty..."
+  renameChat: "Přejmenovat chat"
 
 da_DK:
   placeholder: "Skriv din besked her..."
@@ -4106,6 +4130,7 @@ da_DK:
   retry: "Prøv igen"
   streamInterrupted: "Chat-svaret stoppede, før det sluttede. Prøv igen."
   searchChats: "Søg i chats..."
+  renameChat: "Omdøb chat"
 
 fa_IR:
   placeholder: "پیام خود را اینجا تایپ کنید..."
@@ -4264,6 +4289,7 @@ fa_IR:
   retry: "دوباره امتحان کنید"
   streamInterrupted: "پاسخ چت قبل از اتمام متوقف شد. دوباره امتحان کنید."
   searchChats: "جستجو در چت ها..."
+  renameChat: "تغییر نام چت"
 
 hi_IN:
   placeholder: "यहाँ आपके संदेश लिखें..."
@@ -4422,6 +4448,7 @@ hi_IN:
   retry: "पुन: प्रयास करें"
   streamInterrupted: "चैट का जवाब ख़त्म होने से पहले ही बंद हो गया. पुनः प्रयास करें।"
   searchChats: "चैट खोजें..."
+  renameChat: "चैट का नाम बदलें"
 
 hr_HR:
   placeholder: "Ovdje upišite svoju poruku..."
@@ -4580,6 +4607,7 @@ hr_HR:
   retry: "Pokušaj ponovo"
   streamInterrupted: "Odgovor na chat prestao je prije nego što je završio. Pokušajte ponovno."
   searchChats: "Pretraži chatove..."
+  renameChat: "Preimenuj chat"
 
 hu_HU:
   placeholder: "Írja be üzenetét ide..."
@@ -4738,6 +4766,7 @@ hu_HU:
   retry: "Próbálja újra"
   streamInterrupted: "A csevegési válasz leállt, mielőtt befejeződött volna. Próbáld újra."
   searchChats: "Csevegés keresése..."
+  renameChat: "Csevegés átnevezése"
 
 id_ID:
   placeholder: "Ketik Pesan Anda Disini..."
@@ -4896,6 +4925,7 @@ id_ID:
   retry: "Mencoba kembali"
   streamInterrupted: "Respons obrolan berhenti sebelum selesai. Coba lagi."
   searchChats: "Telusuri obrolan..."
+  renameChat: "Ganti nama obrolan"
 
 ms_MY:
   placeholder: "Taip Mesej Anda Di Sini..."
@@ -5054,6 +5084,7 @@ ms_MY:
   retry: "Cuba semula"
   streamInterrupted: "Balasan sembang berhenti sebelum ia selesai. Cuba lagi."
   searchChats: "Cari sembang..."
+  renameChat: "Namakan semula sembang"
 
 nb_NO:
   placeholder: "Skriv inn meldingen din her..."
@@ -5212,6 +5243,7 @@ nb_NO:
   retry: "Prøv på nytt"
   streamInterrupted: "Chat-svaret stoppet før det var ferdig. Prøv igjen."
   searchChats: "Søk i chatter..."
+  renameChat: "Gi nytt navn til chat"
 
 sw_KE:
   placeholder: "Andika Ujumbe wako Hapa..."
@@ -5370,6 +5402,7 @@ sw_KE:
   retry: "Jaribu tena"
   streamInterrupted: "Jibu la gumzo lilisimama kabla halijakamilika. Jaribu tena."
   searchChats: "Tafuta gumzo..."
+  renameChat: "Badilisha jina la gumzo"
 
 ta_IN:
   placeholder: "உங்கள் செய்தியை இங்கே தட்டச்சு செய்யவும்..."
@@ -5528,6 +5561,7 @@ ta_IN:
   retry: "மீண்டும் முயற்சிக்கவும்"
   streamInterrupted: "அரட்டை பதில் முடிவதற்குள் நிறுத்தப்பட்டது. மீண்டும் முயற்சிக்கவும்."
   searchChats: "அரட்டைகளைத் தேடு..."
+  renameChat: "அரட்டையின் பெயரை மாற்றவும்"
 
 th_TH:
   placeholder: "พิมพ์ข้อความของคุณที่นี่..."
@@ -5686,6 +5720,7 @@ th_TH:
   retry: "ลองอีกครั้ง"
   streamInterrupted: "การตอบกลับแชทหยุดก่อนที่จะเสร็จสิ้น ลองอีกครั้ง"
   searchChats: "ค้นหาแชท..."
+  renameChat: "เปลี่ยนชื่อแชท"
 
 tr_TR:
   placeholder: "Mesajınızı Buraya Yazın..."
@@ -5844,6 +5879,7 @@ tr_TR:
   retry: "Yeniden dene"
   streamInterrupted: "Sohbet yanıtı bitmeden durduruldu. Tekrar deneyin."
   searchChats: "Sohbetlerde ara..."
+  renameChat: "Sohbeti yeniden adlandır"
 
 uk_UA:
   placeholder: "Введіть своє повідомлення тут..."
@@ -6002,6 +6038,7 @@ uk_UA:
   retry: "Повторіть спробу"
   streamInterrupted: "Відповідь чату зупинилася, не закінчившись. Спробуйте знову."
   searchChats: "Шукати в чатах..."
+  renameChat: "Перейменувати чат"
 
 ur_PK:
   placeholder: "اپنا پیغام یہاں ٹائپ کریں..."
@@ -6160,6 +6197,7 @@ ur_PK:
   retry: "دوبارہ کوشش کریں۔"
   streamInterrupted: "چیٹ کا جواب ختم ہونے سے پہلے ہی رک گیا۔ دوبارہ کوشش کریں۔"
   searchChats: "چیٹس تلاش کریں..."
+  renameChat: "چیٹ کا نام تبدیل کریں۔"
 
 vi_VN:
   placeholder: "Nhập tin nhắn của bạn ở đây..."
@@ -6318,6 +6356,7 @@ vi_VN:
   retry: "Thử lại"
   streamInterrupted: "Phản hồi trò chuyện đã dừng trước khi kết thúc. Hãy thử lại."
   searchChats: "Tìm kiếm cuộc trò chuyện..."
+  renameChat: "Đổi tên cuộc trò chuyện"
 
 af_ZA:
   placeholder: "Tik jou boodskap hier..."
@@ -6476,6 +6515,7 @@ af_ZA:
   retry: "Probeer weer"
   streamInterrupted: "Die kletsreaksie het gestop voordat dit klaar was. Probeer weer."
   searchChats: "Soek kletse..."
+  renameChat: "Hernoem klets"
 
 am_ET:
   placeholder: "መልእክትህን እዚህ ፃፍ..."
@@ -6634,6 +6674,7 @@ am_ET:
   retry: "እንደገና ይሞክሩ"
   streamInterrupted: "የቻቱ ምላሽ ሳይጠናቀቅ ቆሟል። እንደገና ይሞክሩ።"
   searchChats: "ውይይቶችን ፈልግ..."
+  renameChat: "ውይይትን እንደገና ሰይም"
 
 az_AZ:
   placeholder: "Mesajınızı Bura Yazın..."
@@ -6792,6 +6833,7 @@ az_AZ:
   retry: "Yenidən cəhd edin"
   streamInterrupted: "Çat cavabı bitməmiş dayandı. Yenidən cəhd edin."
   searchChats: "Söhbətləri axtarın..."
+  renameChat: "Söhbətin adını dəyişdirin"
 
 et_EE:
   placeholder: "Sisestage oma sõnum siia..."
@@ -6950,6 +6992,7 @@ et_EE:
   retry: "Proovi uuesti"
   streamInterrupted: "Vestluse vastus peatus enne selle lõppemist. Proovi uuesti."
   searchChats: "Otsi vestlustest..."
+  renameChat: "Nimeta vestlus ümber"
 
 gu_IN:
   placeholder: "તમારો સંદેશ અહીં લખો..."
@@ -7108,6 +7151,7 @@ gu_IN:
   retry: "ફરી પ્રયાસ કરો"
   streamInterrupted: "ચેટ પ્રતિસાદ સમાપ્ત થાય તે પહેલાં બંધ થઈ ગયો. ફરી પ્રયાસ કરો."
   searchChats: "ચેટ્સ શોધો..."
+  renameChat: "ચેટનું નામ બદલો"
 
 ha_NG:
   placeholder: "Buga Saƙonku Anan..."
@@ -7266,6 +7310,7 @@ ha_NG:
   retry: "Sake gwadawa"
   streamInterrupted: "Amsar hira ta tsaya kafin ta gama. Gwada kuma."
   searchChats: "Nemo taɗi..."
+  renameChat: "Sake suna hira"
 
 ka_GE:
   placeholder: "ჩაწერეთ თქვენი შეტყობინება აქ..."
@@ -7424,6 +7469,7 @@ ka_GE:
   retry: "ხელახლა სცადეთ"
   streamInterrupted: "ჩეთის პასუხი მის დასრულებამდე შეწყდა. სცადეთ ხელახლა."
   searchChats: "ჩეთებში ძიება..."
+  renameChat: "გადარქმევა ჩატი"
 
 km_KH:
   placeholder: "វាយបញ្ចូលសាររបស់អ្នកនៅទីនេះ..."
@@ -7582,6 +7628,7 @@ km_KH:
   retry: "ព្យាយាមម្តងទៀត"
   streamInterrupted: "ការឆ្លើយតបការជជែកបានឈប់មុនពេលវាបញ្ចប់។ ព្យាយាមម្តងទៀត។"
   searchChats: "ស្វែងរកការជជែក..."
+  renameChat: "ប្តូរឈ្មោះការជជែក"
 
 kn_IN:
   placeholder: "ನಿಮ್ಮ ಸಂದೇಶವನ್ನು ಇಲ್ಲಿ ಟೈಪ್ ಮಾಡಿ..."
@@ -7740,6 +7787,7 @@ kn_IN:
   retry: "ಮರುಪ್ರಯತ್ನಿಸಿ"
   streamInterrupted: "ಚಾಟ್ ಪ್ರತಿಕ್ರಿಯೆಯು ಮುಗಿಯುವ ಮೊದಲು ನಿಂತುಹೋಯಿತು. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ."
   searchChats: "ಚಾಟ್‌ಗಳನ್ನು ಹುಡುಕಿ..."
+  renameChat: "ಚಾಟ್ ಅನ್ನು ಮರುಹೆಸರಿಸಿ"
 
 lt_LT:
   placeholder: "Įveskite savo žinutę čia..."
@@ -7898,6 +7946,7 @@ lt_LT:
   retry: "Bandykite dar kartą"
   streamInterrupted: "Pokalbio atsakymas sustojo jam nepasibaigus. Bandykite dar kartą."
   searchChats: "Ieškoti pokalbių..."
+  renameChat: "Pervardyti pokalbį"
 
 lv_LV:
   placeholder: "Ierakstiet savu ziņojumu šeit..."
@@ -8056,6 +8105,7 @@ lv_LV:
   retry: "Mēģiniet vēlreiz"
   streamInterrupted: "Tērzēšanas atbilde apstājās, pirms tā tika pabeigta. Mēģiniet vēlreiz."
   searchChats: "Meklēt tērzēšanu..."
+  renameChat: "Pārdēvēt tērzēšanu"
 
 ml_IN:
   placeholder: "നിങ്ങളുടെ സന്ദേശം ഇവിടെ ടൈപ്പ് ചെയ്യുക..."
@@ -8214,6 +8264,7 @@ ml_IN:
   retry: "വീണ്ടും ശ്രമിക്കുക"
   streamInterrupted: "ചാറ്റ് പ്രതികരണം അവസാനിക്കുന്നതിന് മുമ്പ് നിർത്തി. വീണ്ടും ശ്രമിക്കുക."
   searchChats: "ചാറ്റുകൾ തിരയുക..."
+  renameChat: "ചാറ്റിൻ്റെ പേര് മാറ്റുക"
 
 mr_IN:
   placeholder: "तुमचा संदेश येथे टाइप करा..."
@@ -8372,6 +8423,7 @@ mr_IN:
   retry: "पुन्हा प्रयत्न करा"
   streamInterrupted: "चॅटचा प्रतिसाद संपण्यापूर्वीच थांबला. पुन्हा प्रयत्न करा."
   searchChats: "चॅट्स शोधा..."
+  renameChat: "चॅटचे नाव बदला"
 
 ne_NP:
   placeholder: "यहाँ आफ्नो सन्देश टाइप गर्नुहोस्..."
@@ -8530,6 +8582,7 @@ ne_NP:
   retry: "पुन: प्रयास गर्नुहोस्"
   streamInterrupted: "च्याट प्रतिक्रिया समाप्त हुनु अघि रोकियो। पुन: प्रयास गर्नुहोस्।"
   searchChats: "च्याटहरू खोज्नुहोस्..."
+  renameChat: "च्याट पुन: नामाकरण गर्नुहोस्"
 
 pa_IN:
   placeholder: "ਆਪਣਾ ਸੁਨੇਹਾ ਇੱਥੇ ਟਾਈਪ ਕਰੋ..."
@@ -8688,6 +8741,7 @@ pa_IN:
   retry: "ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ"
   streamInterrupted: "ਚੈਟ ਦਾ ਜਵਾਬ ਖਤਮ ਹੋਣ ਤੋਂ ਪਹਿਲਾਂ ਹੀ ਬੰਦ ਹੋ ਗਿਆ। ਫਿਰ ਕੋਸ਼ਿਸ਼ ਕਰੋ."
   searchChats: "ਚੈਟ ਖੋਜੋ..."
+  renameChat: "ਚੈਟ ਦਾ ਨਾਮ ਬਦਲੋ"
 
 si_LK:
   placeholder: "ඔබගේ පණිවිඩය මෙහි ටයිප් කරන්න..."
@@ -8846,6 +8900,7 @@ si_LK:
   retry: "නැවත උත්සාහ කරන්න"
   streamInterrupted: "කතාබස් ප්‍රතිචාරය අවසන් වීමට පෙර නතර විය. නැවත උත්සාහ කරන්න."
   searchChats: "කතාබස් සොයන්න..."
+  renameChat: "කතාබස් නැවත නම් කරන්න"
 
 sl_SI:
   placeholder: "Tukaj vnesite svoje sporočilo ..."
@@ -9004,6 +9059,7 @@ sl_SI:
   retry: "Poskusite znova"
   streamInterrupted: "Odziv na klepet se je ustavil, preden se je končal. poskusi ponovno"
   searchChats: "Iskanje klepetov ..."
+  renameChat: "Preimenuj klepet"
 
 sr_RS:
   placeholder: "Унесите своју поруку овде..."
@@ -9162,6 +9218,7 @@ sr_RS:
   retry: "Покушајте поново"
   streamInterrupted: "Одговор ћаскања је заустављен пре него што се завршио. Покушајте поново."
   searchChats: "Претражи ћаскања..."
+  renameChat: "Преименујте ћаскање"
 
 te_IN:
   placeholder: "మీ సందేశాన్ని ఇక్కడ టైప్ చేయండి..."
@@ -9320,6 +9377,7 @@ te_IN:
   retry: "మళ్లీ ప్రయత్నించండి"
   streamInterrupted: "చాట్ ప్రతిస్పందన పూర్తికాకముందే ఆగిపోయింది. మళ్లీ ప్రయత్నించండి."
   searchChats: "చాట్‌లను శోధించండి..."
+  renameChat: "చాట్ పేరు మార్చండి"
 
 tl_PH:
   placeholder: "I-type ang Iyong Mensahe Dito..."
@@ -9478,6 +9536,7 @@ tl_PH:
   retry: "Subukan muli"
   streamInterrupted: "Huminto ang tugon sa chat bago ito natapos. Subukan muli."
   searchChats: "Maghanap ng mga chat..."
+  renameChat: "Palitan ang pangalan ng chat"
 
 uz_UZ:
   placeholder: "Xabaringizni shu yerga yozing..."
@@ -9636,6 +9695,7 @@ uz_UZ:
   retry: "Qayta urinish"
   streamInterrupted: "Chatga javob berish tugashidan oldin toʻxtadi. Qayta urinib ko'ring."
   searchChats: "Chatlarni qidirish..."
+  renameChat: "Chat nomini o'zgartiring"
 
 yo_NG:
   placeholder: "Tẹ ifiranṣẹ rẹ Nibi ..."
@@ -9794,3 +9854,4 @@ yo_NG:
   retry: "Tun gbiyanju"
   streamInterrupted: "Idahun iwiregbe duro ṣaaju ki o to pari. Gbiyanju lẹẹkansi."
   searchChats: "Wa awọn iwiregbe..."
+  renameChat: "Fun lorukọ iwiregbe"

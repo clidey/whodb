@@ -200,6 +200,9 @@ af_ZA:
   completionColumn: "kolom"
   completionKeyword: "sleutelwoord"
   completionTable: "tafel"
+  importSql: "Voer SQL in"
+  foreignKeyShort: "FK"
+  actionExecuted: "Aksie uitgevoer"
 
 am_ET:
   actions: "ድርጊቶች"
@@ -300,6 +303,9 @@ am_ET:
   completionColumn: "አምድ"
   completionKeyword: "ቁልፍ ቃል"
   completionTable: "ጠረጴዛ"
+  importSql: "አስመጣ SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "ድርጊት ተፈፀመ"
 
 ar_AE:
   actions: "الإجراءات"
@@ -400,6 +406,9 @@ ar_AE:
   completionColumn: "عمود"
   completionKeyword: "الكلمة الرئيسية"
   completionTable: "طاولة"
+  importSql: "استيراد SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "تم تنفيذ الإجراء"
 
 az_AZ:
   actions: "Fəaliyyətlər"
@@ -500,6 +509,9 @@ az_AZ:
   completionColumn: "sütun"
   completionKeyword: "açar söz"
   completionTable: "masa"
+  importSql: "Import SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "Fəaliyyət icra edildi"
 
 bg_BG:
   actions: "Действия"
@@ -600,6 +612,9 @@ bg_BG:
   completionColumn: "колона"
   completionKeyword: "ключова дума"
   completionTable: "маса"
+  importSql: "Импортиране SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "Действието е изпълнено"
 
 bn_BD:
   actions: "কর্ম"
@@ -700,6 +715,9 @@ bn_BD:
   completionColumn: "কলাম"
   completionKeyword: "কীওয়ার্ড"
   completionTable: "টেবিল"
+  importSql: "আমদানি SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "কর্ম সম্পাদিত"
 
 ca_ES:
   actions: "Accions"
@@ -800,6 +818,9 @@ ca_ES:
   completionColumn: "columna"
   completionKeyword: "paraula clau"
   completionTable: "taula"
+  importSql: "Importa SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "Acció executada"
 
 cs_CZ:
   actions: "Akce"
@@ -900,6 +921,9 @@ cs_CZ:
   completionColumn: "sloupec"
   completionKeyword: "klíčové slovo"
   completionTable: "tabulka"
+  importSql: "Importovat SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "Akce provedena"
 
 da_DK:
   actions: "Handlinger"
@@ -1000,6 +1024,9 @@ da_DK:
   completionColumn: "kolonne"
   completionKeyword: "søgeord"
   completionTable: "tabel"
+  importSql: "Importer SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "Handling udført"
 
 de_DE:
   actions: "Aktionen"
@@ -1100,6 +1127,9 @@ de_DE:
   completionColumn: "Spalte"
   completionKeyword: "Stichwort"
   completionTable: "Tisch"
+  importSql: "SQL importieren"
+  foreignKeyShort: "FK"
+  actionExecuted: "Aktion ausgeführt"
 
 el_GR:
   actions: "Δράσεις"
@@ -1200,6 +1230,9 @@ el_GR:
   completionColumn: "στήλη"
   completionKeyword: "λέξη-κλειδί"
   completionTable: "τραπέζι"
+  importSql: "Εισαγωγή SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "Εκτελέστηκε ενέργεια"
 
 en_GB:
   actions: "Actions"
@@ -1300,6 +1333,9 @@ en_GB:
   completionColumn: "column"
   completionKeyword: "keyword"
   completionTable: "table"
+  importSql: "Import SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "Action Executed"
 
 es_ES:
   actions: "Comportamiento"
@@ -1400,6 +1436,9 @@ es_ES:
   completionColumn: "columna"
   completionKeyword: "palabra clave"
   completionTable: "mesa"
+  importSql: "Importar SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "Acción ejecutada"
 
 et_EE:
   actions: "Tegevused"
@@ -1500,6 +1539,9 @@ et_EE:
   completionColumn: "veerus"
   completionKeyword: "märksõna"
   completionTable: "laud"
+  importSql: "Import SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "Toiming teostatud"
 
 fa_IR:
   actions: "اقدامات"
@@ -1600,6 +1642,9 @@ fa_IR:
   completionColumn: "ستون"
   completionKeyword: "کلمه کلیدی"
   completionTable: "جدول"
+  importSql: "واردات SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "اقدام اجرا شد"
 
 fi_FI:
   actions: "Toiminnot"
@@ -1700,6 +1745,9 @@ fi_FI:
   completionColumn: "sarakkeessa"
   completionKeyword: "avainsana"
   completionTable: "taulukko"
+  importSql: "Tuo SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "Toimenpide suoritettu"
 
 fr_FR:
   actions: "Actions"
@@ -1800,6 +1848,9 @@ fr_FR:
   completionColumn: "colonne"
   completionKeyword: "mot-clé"
   completionTable: "tableau"
+  importSql: "Importer SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "Action exécutée"
 
 gu_IN:
   actions: "ક્રિયાઓ"
@@ -1900,6 +1951,9 @@ gu_IN:
   completionColumn: "કૉલમ"
   completionKeyword: "કીવર્ડ"
   completionTable: "ટેબલ"
+  importSql: "આયાત કરો SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "ક્રિયા ચલાવવામાં આવી"
 
 ha_NG:
   actions: "Ayyuka"
@@ -2000,6 +2054,9 @@ ha_NG:
   completionColumn: "shafi"
   completionKeyword: "keyword"
   completionTable: "tebur"
+  importSql: "Shigo SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "An Kammala Mataki"
 
 hi_IN:
   actions: "कार्रवाई"
@@ -2100,6 +2157,9 @@ hi_IN:
   completionColumn: "स्तंभ"
   completionKeyword: "कीवर्ड"
   completionTable: "मेज़"
+  importSql: "आयात SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "कार्यवाही निष्पादित"
 
 hr_HR:
   actions: "Radnje"
@@ -2200,6 +2260,9 @@ hr_HR:
   completionColumn: "stupac"
   completionKeyword: "ključna riječ"
   completionTable: "stol"
+  importSql: "Uvezi SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "Radnja izvršena"
 
 hu_HU:
   actions: "Akciók"
@@ -2300,6 +2363,9 @@ hu_HU:
   completionColumn: "oszlop"
   completionKeyword: "kulcsszó"
   completionTable: "táblázat"
+  importSql: "Import SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "Művelet végrehajtva"
 
 id_ID:
   actions: "Tindakan"
@@ -2400,6 +2466,9 @@ id_ID:
   completionColumn: "kolom"
   completionKeyword: "kata kunci"
   completionTable: "meja"
+  importSql: "Impor SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "Tindakan Dieksekusi"
 
 it_IT:
   actions: "Azioni"
@@ -2500,6 +2569,9 @@ it_IT:
   completionColumn: "colonna"
   completionKeyword: "parola chiave"
   completionTable: "tavolo"
+  importSql: "Importa SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "Azione eseguita"
 
 iw_IL:
   actions: "פעולות"
@@ -2600,6 +2672,9 @@ iw_IL:
   completionColumn: "עַמוּדָה"
   completionKeyword: "מילת מפתח"
   completionTable: "לוּחַ"
+  importSql: "ייבוא ​​SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "הפעולה בוצעה"
 
 ja_JP:
   actions: "アクション"
@@ -2700,6 +2775,9 @@ ja_JP:
   completionColumn: "カラム"
   completionKeyword: "キーワード"
   completionTable: "テーブル"
+  importSql: "インポート SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "アクションが実行されました"
 
 ka_GE:
   actions: "მოქმედებები"
@@ -2800,6 +2878,9 @@ ka_GE:
   completionColumn: "სვეტი"
   completionKeyword: "საკვანძო სიტყვა"
   completionTable: "მაგიდა"
+  importSql: "იმპორტი SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "მოქმედება შესრულებულია"
 
 km_KH:
   actions: "សកម្មភាព"
@@ -2900,6 +2981,9 @@ km_KH:
   completionColumn: "ជួរឈរ"
   completionKeyword: "ពាក្យគន្លឹះ"
   completionTable: "តុ"
+  importSql: "នាំចូល SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "សកម្មភាពត្រូវបានប្រតិបត្តិ"
 
 kn_IN:
   actions: "ಕ್ರಿಯೆಗಳು"
@@ -3000,6 +3084,9 @@ kn_IN:
   completionColumn: "ಕಾಲಮ್"
   completionKeyword: "ಕೀವರ್ಡ್"
   completionTable: "ಟೇಬಲ್"
+  importSql: "ಆಮದು SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "ಕಾರ್ಯಗತಗೊಳಿಸಲಾಗಿದೆ"
 
 ko_KR:
   actions: "행위"
@@ -3100,6 +3187,9 @@ ko_KR:
   completionColumn: "열"
   completionKeyword: "예어"
   completionTable: "테이블"
+  importSql: "SQL 가져오기"
+  foreignKeyShort: "FK"
+  actionExecuted: "실행된 작업"
 
 lt_LT:
   actions: "Veiksmai"
@@ -3200,6 +3290,9 @@ lt_LT:
   completionColumn: "stulpelyje"
   completionKeyword: "raktažodį"
   completionTable: "stalo"
+  importSql: "Importuoti SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "Veiksmas atliktas"
 
 lv_LV:
   actions: "Darbības"
@@ -3300,6 +3393,9 @@ lv_LV:
   completionColumn: "kolonnu"
   completionKeyword: "atslēgvārds"
   completionTable: "galds"
+  importSql: "Importēt SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "Darbība izpildīta"
 
 ml_IN:
   actions: "പ്രവർത്തനങ്ങൾ"
@@ -3400,6 +3496,9 @@ ml_IN:
   completionColumn: "കോളം"
   completionKeyword: "കീവേഡ്"
   completionTable: "മേശ"
+  importSql: "SQL ഇറക്കുമതി ചെയ്യുക"
+  foreignKeyShort: "FK"
+  actionExecuted: "ആക്ഷൻ എക്സിക്യൂട്ട് ചെയ്തു"
 
 mr_IN:
   actions: "क्रिया"
@@ -3500,6 +3599,9 @@ mr_IN:
   completionColumn: "स्तंभ"
   completionKeyword: "कीवर्ड"
   completionTable: "टेबल"
+  importSql: "आयात SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "कृती अंमलात आणली"
 
 ms_MY:
   actions: "Tindakan"
@@ -3600,6 +3702,9 @@ ms_MY:
   completionColumn: "lajur"
   completionKeyword: "kata kunci"
   completionTable: "meja"
+  importSql: "Import SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "Tindakan Dilaksanakan"
 
 nb_NO:
   actions: "Handlinger"
@@ -3700,6 +3805,9 @@ nb_NO:
   completionColumn: "søyle"
   completionKeyword: "nøkkelord"
   completionTable: "bord"
+  importSql: "Importer SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "Handling utført"
 
 ne_NP:
   actions: "कार्यहरू"
@@ -3800,6 +3908,9 @@ ne_NP:
   completionColumn: "स्तम्भ"
   completionKeyword: "कीवर्ड"
   completionTable: "तालिका"
+  importSql: "आयात SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "कारबाही गरियो"
 
 nl_NL:
   actions: "Acties"
@@ -3900,6 +4011,9 @@ nl_NL:
   completionColumn: "kolom"
   completionKeyword: "trefwoord"
   completionTable: "tafel"
+  importSql: "Importeren SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "Actie uitgevoerd"
 
 pa_IN:
   actions: "ਕਾਰਵਾਈਆਂ"
@@ -4000,6 +4114,9 @@ pa_IN:
   completionColumn: "ਕਾਲਮ"
   completionKeyword: "ਕੀਵਰਡ"
   completionTable: "ਟੇਬਲ"
+  importSql: "ਆਯਾਤ SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "ਕਾਰਵਾਈ ਕੀਤੀ ਗਈ"
 
 pl_PL:
   actions: "Działania"
@@ -4100,6 +4217,9 @@ pl_PL:
   completionColumn: "kolumna"
   completionKeyword: "słowo kluczowe"
   completionTable: "tabela"
+  importSql: "Importuj SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "Akcja wykonana"
 
 pt_BR:
   actions: "Ações"
@@ -4200,6 +4320,9 @@ pt_BR:
   completionColumn: "coluna"
   completionKeyword: "palavra-chave"
   completionTable: "mesa"
+  importSql: "Importar SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "Ação executada"
 
 ro_RO:
   actions: "Acțiuni"
@@ -4300,6 +4423,9 @@ ro_RO:
   completionColumn: "coloană"
   completionKeyword: "cuvânt cheie"
   completionTable: "masă"
+  importSql: "Importă SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "Acțiune executată"
 
 ru_RU:
   actions: "Действия"
@@ -4400,6 +4526,9 @@ ru_RU:
   completionColumn: "столбец"
   completionKeyword: "ключевое слово"
   completionTable: "стол"
+  importSql: "Импортировать SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "Действие выполнено"
 
 si_LK:
   actions: "ක්රියාවන්"
@@ -4500,6 +4629,9 @@ si_LK:
   completionColumn: "තීරුව"
   completionKeyword: "මූල පදය"
   completionTable: "මේසය"
+  importSql: "ආයාත කරන්න SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "ක්‍රියාව ක්‍රියාත්මක කළා"
 
 sk_SK:
   actions: "Akcie"
@@ -4600,6 +4732,9 @@ sk_SK:
   completionColumn: "stĺpec"
   completionKeyword: "kľúčové slovo"
   completionTable: "tabuľky"
+  importSql: "Importovať SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "Akcia vykonaná"
 
 sl_SI:
   actions: "Dejanja"
@@ -4700,6 +4835,9 @@ sl_SI:
   completionColumn: "stolpec"
   completionKeyword: "ključna beseda"
   completionTable: "tabela"
+  importSql: "Uvoz SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "Akcija izvedena"
 
 sr_RS:
   actions: "Акције"
@@ -4800,6 +4938,9 @@ sr_RS:
   completionColumn: "колона"
   completionKeyword: "кључна реч"
   completionTable: "сто"
+  importSql: "Увези SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "Акција је извршена"
 
 sv_SE:
   actions: "Åtgärder"
@@ -4900,6 +5041,9 @@ sv_SE:
   completionColumn: "kolumn"
   completionKeyword: "nyckelord"
   completionTable: "tabell"
+  importSql: "Importera SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "Åtgärd utförd"
 
 sw_KE:
   actions: "Vitendo"
@@ -5000,6 +5144,9 @@ sw_KE:
   completionColumn: "safu"
   completionKeyword: "neno kuu"
   completionTable: "meza"
+  importSql: "Leta SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "Kitendo Kimetekelezwa"
 
 ta_IN:
   actions: "செயல்கள்"
@@ -5100,6 +5247,9 @@ ta_IN:
   completionColumn: "நெடுவரிசை"
   completionKeyword: "முக்கிய வார்த்தை"
   completionTable: "அட்டவணை"
+  importSql: "இறக்குமதி SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "செயல் நிறைவேற்றப்பட்டது"
 
 te_IN:
   actions: "చర్యలు"
@@ -5200,6 +5350,9 @@ te_IN:
   completionColumn: "కాలమ్"
   completionKeyword: "కీవర్డ్"
   completionTable: "పట్టిక"
+  importSql: "దిగుమతి SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "చర్య అమలు చేయబడింది"
 
 th_TH:
   actions: "การดำเนินการ"
@@ -5300,6 +5453,9 @@ th_TH:
   completionColumn: "คอลัมน์"
   completionKeyword: "คำหลัก"
   completionTable: "โต๊ะ"
+  importSql: "นำเข้า SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "ดำเนินการแล้ว"
 
 tl_PH:
   actions: "Mga aksyon"
@@ -5400,6 +5556,9 @@ tl_PH:
   completionColumn: "hanay"
   completionKeyword: "keyword"
   completionTable: "mesa"
+  importSql: "Mag-import SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "Naisasagawa ang Aksyon"
 
 tr_TR:
   actions: "Eylemler"
@@ -5500,6 +5659,9 @@ tr_TR:
   completionColumn: "kolon"
   completionKeyword: "anahtar kelime"
   completionTable: "masa"
+  importSql: "SQL'ı içe aktar"
+  foreignKeyShort: "FK"
+  actionExecuted: "İşlem Gerçekleştirildi"
 
 uk_UA:
   actions: "Дії"
@@ -5600,6 +5762,9 @@ uk_UA:
   completionColumn: "колонка"
   completionKeyword: "ключове слово"
   completionTable: "стіл"
+  importSql: "Імпорт SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "Дія виконана"
 
 ur_PK:
   actions: "اعمال"
@@ -5700,6 +5865,9 @@ ur_PK:
   completionColumn: "کالم"
   completionKeyword: "کلیدی لفظ"
   completionTable: "میز"
+  importSql: "درآمد کریں SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "کارروائی عمل میں لائی گئی۔"
 
 uz_UZ:
   actions: "Harakatlar"
@@ -5800,6 +5968,9 @@ uz_UZ:
   completionColumn: "ustun"
   completionKeyword: "kalit so'z"
   completionTable: "stol"
+  importSql: "Import qilish SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "Amal bajarildi"
 
 vi_VN:
   actions: "hành động"
@@ -5900,6 +6071,9 @@ vi_VN:
   completionColumn: "cột"
   completionKeyword: "từ khóa"
   completionTable: "bàn"
+  importSql: "Nhập SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "Hành động đã thực hiện"
 
 yo_NG:
   actions: "Awọn iṣe"
@@ -6000,6 +6174,9 @@ yo_NG:
   completionColumn: "ọwọn"
   completionKeyword: "koko"
   completionTable: "tabili"
+  importSql: "gbe wọle SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "Ti ṣe igbese"
 
 zh_CN:
   actions: "行动"
@@ -6100,6 +6277,9 @@ zh_CN:
   completionColumn: "柱子"
   completionKeyword: "关键词"
   completionTable: "桌子"
+  importSql: "导入 SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "已执行的操作"
 
 zh_TW:
   actions: "行動"
@@ -6200,3 +6380,6 @@ zh_TW:
   completionColumn: "柱子"
   completionKeyword: "關鍵字"
   completionTable: "桌子"
+  importSql: "導入 SQL"
+  foreignKeyShort: "FK"
+  actionExecuted: "已執行的操作"

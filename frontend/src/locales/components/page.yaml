@@ -9,303 +9,425 @@ ar_AE:
   skipToContent: "انتقل إلى المحتوى الرئيسي"
   openNavigation: "افتح التنقل"
   theme: "سمة"
+  browseItems: "تصفح العناصر"
+  viewContent: "عرض المحتوى"
 
 de_DE:
   skipToContent: "Zum Hauptinhalt springen"
   openNavigation: "Navigation öffnen"
   theme: "Thema"
+  browseItems: "Artikel durchsuchen"
+  viewContent: "Inhalte ansehen"
 
 el_GR:
   skipToContent: "Μετάβαση στο κύριο περιεχόμενο"
   openNavigation: "Ανοίξτε την πλοήγηση"
   theme: "Θέμα"
+  browseItems: "Περιήγηση στοιχείων"
+  viewContent: "Προβολή περιεχομένου"
 
 en_GB:
   skipToContent: "Skip to main content"
   openNavigation: "Open navigation"
   theme: "Theme"
+  browseItems: "Browse items"
+  viewContent: "View content"
 
 es_ES:
   skipToContent: "Saltar al contenido principal"
   openNavigation: "Abrir navegación"
   theme: "Tema"
+  browseItems: "Explorar artículos"
+  viewContent: "Ver contenido"
 
 fi_FI:
   skipToContent: "Siirry pääsisältöön"
   openNavigation: "Avaa navigointi"
   theme: "Teema"
+  browseItems: "Selaa kohteita"
+  viewContent: "Näytä sisältö"
 
 fr_FR:
   skipToContent: "Passer au contenu principal"
   openNavigation: "Ouvrir la navigation"
   theme: "Thème"
+  browseItems: "Parcourir les articles"
+  viewContent: "Afficher le contenu"
 
 it_IT:
   skipToContent: "Passa al contenuto principale"
   openNavigation: "Apri la navigazione"
   theme: "Tema"
+  browseItems: "Sfoglia gli elementi"
+  viewContent: "Visualizza contenuto"
 
 iw_IL:
   skipToContent: "דלג לתוכן הראשי"
   openNavigation: "פתח את הניווט"
   theme: "נוֹשֵׂא"
+  browseItems: "עיין בפריטים"
+  viewContent: "הצג תוכן"
 
 ja_JP:
   skipToContent: "メインコンテンツにスキップ"
   openNavigation: "ナビゲーションを開く"
   theme: "テーマ"
+  browseItems: "アイテムを参照する"
+  viewContent: "コンテンツを見る"
 
 ko_KR:
   skipToContent: "주요 콘텐츠로 건너뛰기"
   openNavigation: "탐색 열기"
   theme: "주제"
+  browseItems: "항목 찾아보기"
+  viewContent: "콘텐츠 보기"
 
 nl_NL:
   skipToContent: "Ga naar de hoofdinhoud"
   openNavigation: "Navigatie openen"
   theme: "Thema"
+  browseItems: "Blader door artikelen"
+  viewContent: "Bekijk inhoud"
 
 pl_PL:
   skipToContent: "Przejdź do głównej treści"
   openNavigation: "Otwórz nawigację"
   theme: "Temat"
+  browseItems: "Przeglądaj elementy"
+  viewContent: "Zobacz zawartość"
 
 pt_BR:
   skipToContent: "Pular para o conteúdo principal"
   openNavigation: "Abrir navegação"
   theme: "Tema"
+  browseItems: "Procurar itens"
+  viewContent: "Ver conteúdo"
 
 ro_RO:
   skipToContent: "Treci la conținutul principal"
   openNavigation: "Deschideți navigarea"
   theme: "Temă"
+  browseItems: "Răsfoiți articole"
+  viewContent: "Vizualizați conținutul"
 
 ru_RU:
   skipToContent: "Перейти к основному содержанию"
   openNavigation: "Открыть навигацию"
   theme: "Тема"
+  browseItems: "Просмотр элементов"
+  viewContent: "Посмотреть контент"
 
 sk_SK:
   skipToContent: "Preskočiť na hlavný obsah"
   openNavigation: "Otvorte navigáciu"
   theme: "Téma"
+  browseItems: "Prehľadávať položky"
+  viewContent: "Zobraziť obsah"
 
 sv_SE:
   skipToContent: "Hoppa till huvudinnehållet"
   openNavigation: "Öppna navigering"
   theme: "Tema"
+  browseItems: "Bläddra bland objekt"
+  viewContent: "Visa innehåll"
 
 zh_CN:
   skipToContent: "跳至主要内容"
   openNavigation: "打开导航"
   theme: "主题"
+  browseItems: "浏览项目"
+  viewContent: "查看内容"
 
 zh_TW:
   skipToContent: "跳至主要內容"
   openNavigation: "打開導航"
   theme: "主題"
+  browseItems: "瀏覽項目"
+  viewContent: "查看內容"
 
 bg_BG:
   skipToContent: "Преминете към основното съдържание"
   openNavigation: "Отворете навигацията"
   theme: "Тема"
+  browseItems: "Преглед на елементи"
+  viewContent: "Вижте съдържанието"
 
 bn_BD:
   skipToContent: "প্রধান বিষয়বস্তু এড়িয়ে যান"
   openNavigation: "নেভিগেশন খুলুন"
   theme: "থিম"
+  browseItems: "আইটেম ব্রাউজ করুন"
+  viewContent: "বিষয়বস্তু দেখুন"
 
 ca_ES:
   skipToContent: "Skip to main content"
   openNavigation: "Navegació oberta"
   theme: "Tema"
+  browseItems: "Navega per elements"
+  viewContent: "Veure contingut"
 
 cs_CZ:
   skipToContent: "Přejít na hlavní obsah"
   openNavigation: "Otevřete navigaci"
   theme: "Téma"
+  browseItems: "Procházet položky"
+  viewContent: "Zobrazit obsah"
 
 da_DK:
   skipToContent: "Spring til hovedindhold"
   openNavigation: "Åbn navigation"
   theme: "Tema"
+  browseItems: "Gennemse elementer"
+  viewContent: "Se indhold"
 
 fa_IR:
   skipToContent: "به محتوای اصلی بروید"
   openNavigation: "ناوبری را باز کنید"
   theme: "تم"
+  browseItems: "موارد را مرور کنید"
+  viewContent: "مشاهده مطالب"
 
 hi_IN:
   skipToContent: "मुख्य सामग्री पर जाएँ"
   openNavigation: "नेविगेशन खोलें"
   theme: "विषय"
+  browseItems: "आइटम ब्राउज़ करें"
+  viewContent: "सामग्री देखें"
 
 hr_HR:
   skipToContent: "Prijeđi na glavni sadržaj"
   openNavigation: "Otvorite navigaciju"
   theme: "Tema"
+  browseItems: "Pregledavanje stavki"
+  viewContent: "Pogledajte sadržaj"
 
 hu_HU:
   skipToContent: "Ugrás a fő tartalomhoz"
   openNavigation: "Nyissa meg a navigációt"
   theme: "Téma"
+  browseItems: "Böngésszen az elemek között"
+  viewContent: "Tartalom megtekintése"
 
 id_ID:
   skipToContent: "Lompat ke konten utama"
   openNavigation: "Buka navigasi"
   theme: "Tema"
+  browseItems: "Telusuri item"
+  viewContent: "Lihat konten"
 
 ms_MY:
   skipToContent: "Langkau ke kandungan utama"
   openNavigation: "Buka navigasi"
   theme: "Tema"
+  browseItems: "Semak imbas item"
+  viewContent: "Lihat kandungan"
 
 nb_NO:
   skipToContent: "Gå til hovedinnhold"
   openNavigation: "Åpne navigasjon"
   theme: "Tema"
+  browseItems: "Bla gjennom elementer"
+  viewContent: "Se innhold"
 
 sw_KE:
   skipToContent: "Ruka hadi kwa yaliyomo kuu"
   openNavigation: "Fungua urambazaji"
   theme: "Mandhari"
+  browseItems: "Vinjari vitu"
+  viewContent: "Tazama maudhui"
 
 ta_IN:
   skipToContent: "முக்கிய உள்ளடக்கத்திற்கு செல்க"
   openNavigation: "வழிசெலுத்தலைத் திறக்கவும்"
   theme: "தீம்"
+  browseItems: "பொருட்களை உலாவவும்"
+  viewContent: "உள்ளடக்கத்தைப் பார்க்கவும்"
 
 th_TH:
   skipToContent: "ข้ามไปที่เนื้อหาหลัก"
   openNavigation: "เปิดการนำทาง"
   theme: "ธีม"
+  browseItems: "เรียกดูรายการ"
+  viewContent: "ดูเนื้อหา"
 
 tr_TR:
   skipToContent: "Ana içeriğe atla"
   openNavigation: "Gezinmeyi aç"
   theme: "Tema"
+  browseItems: "Öğelere göz atın"
+  viewContent: "İçeriği görüntüle"
 
 uk_UA:
   skipToContent: "Перейти до основного вмісту"
   openNavigation: "Відкрити навігацію"
   theme: "Тема"
+  browseItems: "Перегляд елементів"
+  viewContent: "Переглянути вміст"
 
 ur_PK:
   skipToContent: "مرکزی مواد پر جائیں۔"
   openNavigation: "نیویگیشن کھولیں۔"
   theme: "تھیم"
+  browseItems: "آئٹمز کو براؤز کریں۔"
+  viewContent: "مواد دیکھیں"
 
 vi_VN:
   skipToContent: "Chuyển đến nội dung chính"
   openNavigation: "Mở điều hướng"
   theme: "chủ đề"
+  browseItems: "Duyệt các mục"
+  viewContent: "Xem nội dung"
 
 af_ZA:
   skipToContent: "Slaan oor na hoofinhoud"
   openNavigation: "Maak navigasie oop"
   theme: "Tema"
+  browseItems: "Blaai deur items"
+  viewContent: "Bekyk inhoud"
 
 am_ET:
   skipToContent: "ወደ ዋናው ይዘት ዝለል"
   openNavigation: "አሰሳ ክፈት"
   theme: "ጭብጥ"
+  browseItems: "ንጥሎችን ያስሱ"
+  viewContent: "ይዘት ይመልከቱ"
 
 az_AZ:
   skipToContent: "Əsas məzmuna keçin"
   openNavigation: "Naviqasiyanı açın"
   theme: "Mövzu"
+  browseItems: "Elementləri nəzərdən keçirin"
+  viewContent: "Məzmuna baxın"
 
 et_EE:
   skipToContent: "Mine põhisisu juurde"
   openNavigation: "Ava navigeerimine"
   theme: "Teema"
+  browseItems: "Sirvige üksusi"
+  viewContent: "Vaata sisu"
 
 gu_IN:
   skipToContent: "મુખ્ય સામગ્રી પર જાઓ"
   openNavigation: "નેવિગેશન ખોલો"
   theme: "થીમ"
+  browseItems: "વસ્તુઓ બ્રાઉઝ કરો"
+  viewContent: "સામગ્રી જુઓ"
 
 ha_NG:
   skipToContent: "Tsallake zuwa babban abun ciki"
   openNavigation: "Buɗe kewayawa"
   theme: "Jigo"
+  browseItems: "Nemo abubuwa"
+  viewContent: "Duba abun ciki"
 
 ka_GE:
   skipToContent: "გადადით მთავარ შინაარსზე"
   openNavigation: "გახსენით ნავიგაცია"
   theme: "თემა"
+  browseItems: "ნივთების დათვალიერება"
+  viewContent: "შინაარსის ნახვა"
 
 km_KH:
   skipToContent: "រំលងទៅមាតិកាសំខាន់"
   openNavigation: "បើកការរុករក"
   theme: "ប្រធានបទ"
+  browseItems: "រកមើលធាតុ"
+  viewContent: "មើលមាតិកា"
 
 kn_IN:
   skipToContent: "ಮುಖ್ಯ ವಿಷಯಕ್ಕೆ ತೆರಳಿ"
   openNavigation: "ನ್ಯಾವಿಗೇಶನ್ ತೆರೆಯಿರಿ"
   theme: "ಥೀಮ್"
+  browseItems: "ಐಟಂಗಳನ್ನು ಬ್ರೌಸ್ ಮಾಡಿ"
+  viewContent: "ವಿಷಯವನ್ನು ವೀಕ್ಷಿಸಿ"
 
 lt_LT:
   skipToContent: "Pereiti prie pagrindinio turinio"
   openNavigation: "Atidaryti navigaciją"
   theme: "tema"
+  browseItems: "Naršyti elementus"
+  viewContent: "Žiūrėti turinį"
 
 lv_LV:
   skipToContent: "Pāriet uz galveno saturu"
   openNavigation: "Atveriet navigāciju"
   theme: "Tēma"
+  browseItems: "Pārlūkot vienumus"
+  viewContent: "Skatīt saturu"
 
 ml_IN:
   skipToContent: "പ്രധാന ഉള്ളടക്കത്തിലേക്ക് പോകുക"
   openNavigation: "നാവിഗേഷൻ തുറക്കുക"
   theme: "തീം"
+  browseItems: "ഇനങ്ങൾ ബ്രൗസ് ചെയ്യുക"
+  viewContent: "ഉള്ളടക്കം കാണുക"
 
 mr_IN:
   skipToContent: "मुख्य सामग्रीवर जा"
   openNavigation: "नेव्हिगेशन उघडा"
   theme: "थीम"
+  browseItems: "आयटम ब्राउझ करा"
+  viewContent: "सामग्री पहा"
 
 ne_NP:
   skipToContent: "मुख्य सामग्रीमा जानुहोस्"
   openNavigation: "नेभिगेसन खोल्नुहोस्"
   theme: "विषयवस्तु"
+  browseItems: "वस्तुहरू ब्राउज गर्नुहोस्"
+  viewContent: "सामग्री हेर्नुहोस्"
 
 pa_IN:
   skipToContent: "ਮੁੱਖ ਸਮੱਗਰੀ 'ਤੇ ਜਾਓ"
   openNavigation: "ਨੈਵੀਗੇਸ਼ਨ ਖੋਲ੍ਹੋ"
   theme: "ਥੀਮ"
+  browseItems: "ਆਈਟਮਾਂ ਬ੍ਰਾਊਜ਼ ਕਰੋ"
+  viewContent: "ਸਮੱਗਰੀ ਦੇਖੋ"
 
 si_LK:
   skipToContent: "ප්‍රධාන අන්තර්ගතය වෙත යන්න"
   openNavigation: "සංචාලනය විවෘත කරන්න"
   theme: "තේමාව"
+  browseItems: "අයිතම පිරික්සන්න"
+  viewContent: "අන්තර්ගතය බලන්න"
 
 sl_SI:
   skipToContent: "Preskoči na glavno vsebino"
   openNavigation: "Odpri navigacijo"
   theme: "Tema"
+  browseItems: "Brskanje po predmetih"
+  viewContent: "Ogled vsebine"
 
 sr_RS:
   skipToContent: "Пређи на главни садржај"
   openNavigation: "Отворите навигацију"
   theme: "Тема"
+  browseItems: "Прегледајте ставке"
+  viewContent: "Погледајте садржај"
 
 te_IN:
   skipToContent: "ప్రధాన కంటెంట్‌కి దాటవేయండి"
   openNavigation: "నావిగేషన్ తెరవండి"
   theme: "థీమ్"
+  browseItems: "అంశాలను బ్రౌజ్ చేయండి"
+  viewContent: "కంటెంట్‌ని వీక్షించండి"
 
 tl_PH:
   skipToContent: "Lumaktaw sa pangunahing nilalaman"
   openNavigation: "Buksan ang nabigasyon"
   theme: "Tema"
+  browseItems: "Mag-browse ng mga item"
+  viewContent: "Tingnan ang nilalaman"
 
 uz_UZ:
   skipToContent: "Asosiy tarkibga o'tish"
   openNavigation: "Navigatsiyani oching"
   theme: "Mavzu"
+  browseItems: "Elementlarni ko'rib chiqish"
+  viewContent: "Kontentni ko'rish"
 
 yo_NG:
   skipToContent: "Rekọja si akoonu akọkọ"
   openNavigation: "Ṣii lilọ kiri"
   theme: "Akori"
+  browseItems: "Ṣawakiri awọn nkan"
+  viewContent: "Wo akoonu"

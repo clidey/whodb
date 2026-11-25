@@ -64,6 +64,9 @@ ar_AE:
   runningQuery: "تشغيل الاستعلام"
   result: "نتيجة"
   rowCount: "{count} صفوف"
+  rowCount_one: "{count} الصف"
+  historyCount_one: "{count} استعلام"
+  historyCount_other: "{count} استعلامات"
 
 de_DE:
   copyCode: "Code kopieren"
@@ -96,6 +99,9 @@ de_DE:
   runningQuery: "Abfrage wird ausgeführt"
   result: "Ergebnis"
   rowCount: "{count} Zeilen"
+  rowCount_one: "{count} Zeile"
+  historyCount_one: "{count} Abfrage"
+  historyCount_other: "{count} Abfragen"
 
 el_GR:
   copyCode: "Αντιγραφή Κωδικού"
@@ -128,6 +134,9 @@ el_GR:
   runningQuery: "Εκτέλεση ερωτήματος"
   result: "Αποτέλεσμα"
   rowCount: "{count} σειρές"
+  rowCount_one: "{count} σειρά"
+  historyCount_one: "{count} ερώτημα"
+  historyCount_other: "{count} ερωτήματα"
 
 en_GB:
   copyCode: "Copy Code"
@@ -160,6 +169,9 @@ en_GB:
   runningQuery: "Running query"
   result: "Result"
   rowCount: "{count} rows"
+  rowCount_one: "{count} row"
+  historyCount_one: "{count} query"
+  historyCount_other: "{count} queries"
 
 es_ES:
   copyCode: "Copiar código"
@@ -192,6 +204,9 @@ es_ES:
   runningQuery: "Consulta en ejecución"
   result: "Resultado"
   rowCount: "{count} filas"
+  rowCount_one: "{count} fila"
+  historyCount_one: "{count} consulta"
+  historyCount_other: "{count} consultas"
 
 fi_FI:
   copyCode: "Kopioi koodi"
@@ -224,6 +239,9 @@ fi_FI:
   runningQuery: "Käynnissä kysely"
   result: "Tulos"
   rowCount: "{count} riviä"
+  rowCount_one: "{count} rivi"
+  historyCount_one: "{count} kysely"
+  historyCount_other: "{count} kyselyitä"
 
 fr_FR:
   copyCode: "Copier le code"
@@ -256,6 +274,9 @@ fr_FR:
   runningQuery: "Requête en cours d'exécution"
   result: "Résultat"
   rowCount: "{count} lignes"
+  rowCount_one: "{count} ligne"
+  historyCount_one: "{count} requête"
+  historyCount_other: "{count} requêtes"
 
 it_IT:
   copyCode: "Copia codice"
@@ -288,6 +309,9 @@ it_IT:
   runningQuery: "Interrogazione in esecuzione"
   result: "Risultato"
   rowCount: "{count} righe"
+  rowCount_one: "{count} riga"
+  historyCount_one: "{count}interrogazione"
+  historyCount_other: "{count} query"
 
 iw_IL:
   copyCode: "העתק קוד"
@@ -320,6 +344,9 @@ iw_IL:
   runningQuery: "הפעלת שאילתה"
   result: "תוֹצָאָה"
   rowCount: "{count} שורות"
+  rowCount_one: "{count} שורה"
+  historyCount_one: "{count} שאילתה"
+  historyCount_other: "{count} שאילתות"
 
 ja_JP:
   copyCode: "コードをコピーする"
@@ -352,6 +379,9 @@ ja_JP:
   runningQuery: "クエリの実行"
   result: "結果"
   rowCount: "{count} 行"
+  rowCount_one: "{count} 行"
+  historyCount_one: "{count} クエリ"
+  historyCount_other: "{count} クエリ"
 
 ko_KR:
   copyCode: "코드 복사"
@@ -384,6 +414,9 @@ ko_KR:
   runningQuery: "쿼리 실행 중"
   result: "결과"
   rowCount: "{count} 행"
+  rowCount_one: "{count} 행"
+  historyCount_one: "{count} 쿼리"
+  historyCount_other: "{count} 쿼리"
 
 nl_NL:
   copyCode: "Kopieer code"
@@ -416,6 +449,9 @@ nl_NL:
   runningQuery: "Query wordt uitgevoerd"
   result: "Resultaat"
   rowCount: "{count} rijen"
+  rowCount_one: "{count} rij"
+  historyCount_one: "{count} zoekopdracht"
+  historyCount_other: "{count} zoekopdrachten"
 
 pl_PL:
   copyCode: "Skopiuj kod"
@@ -448,6 +484,9 @@ pl_PL:
   runningQuery: "Uruchomione zapytanie"
   result: "Wynik"
   rowCount: "{count} wierszy"
+  rowCount_one: "{count} wiersz"
+  historyCount_one: "{count} zapytanie"
+  historyCount_other: "{count} zapytania"
 
 pt_BR:
   copyCode: "Copiar código"
@@ -480,6 +519,9 @@ pt_BR:
   runningQuery: "Consulta em execução"
   result: "Resultado"
   rowCount: "{count} linhas"
+  rowCount_one: "{count} linha"
+  historyCount_one: "{count} consulta"
+  historyCount_other: "{count} consultas"
 
 ro_RO:
   copyCode: "Copiați codul"
@@ -512,6 +554,9 @@ ro_RO:
   runningQuery: "Interogare în curs de desfășurare"
   result: "Rezultat"
   rowCount: "{count} rânduri"
+  rowCount_one: "{count} rând"
+  historyCount_one: "{count} interogare"
+  historyCount_other: "{count} interogări"
 
 ru_RU:
   copyCode: "Копировать код"
@@ -544,6 +589,9 @@ ru_RU:
   runningQuery: "Выполнение запроса"
   result: "Результат"
   rowCount: "{count} строк"
+  rowCount_one: "{count} строка"
+  historyCount_one: "{count} запрос"
+  historyCount_other: "{count} запросов"
 
 sk_SK:
   copyCode: "Kopírovať kód"
@@ -576,6 +624,9 @@ sk_SK:
   runningQuery: "Spustený dopyt"
   result: "Výsledok"
   rowCount: "{count} riadkov"
+  rowCount_one: "{count} riadok"
+  historyCount_one: "{count} dopyt"
+  historyCount_other: "{count} dopytov"
 
 sv_SE:
   copyCode: "Kopiera kod"
@@ -608,6 +659,9 @@ sv_SE:
   runningQuery: "Kör fråga"
   result: "Resultat"
   rowCount: "{count} rader"
+  rowCount_one: "{count} rad"
+  historyCount_one: "{count} fråga"
+  historyCount_other: "{count} frågor"
 
 zh_CN:
   copyCode: "复制代码"
@@ -640,6 +694,9 @@ zh_CN:
   runningQuery: "运行查询"
   result: "结果"
   rowCount: "{count} 行"
+  rowCount_one: "{count} 行"
+  historyCount_one: "{count}查询"
+  historyCount_other: "{count} 查询"
 
 zh_TW:
   copyCode: "複製程式碼"
@@ -672,6 +729,9 @@ zh_TW:
   runningQuery: "執行查詢"
   result: "結果"
   rowCount: "{count} 行"
+  rowCount_one: "{count} 行"
+  historyCount_one: "{count} query"
+  historyCount_other: "{count} 查詢"
 
 bg_BG:
   copyCode: "Копиране на код"
@@ -704,6 +764,9 @@ bg_BG:
   runningQuery: "Изпълнява се заявка"
   result: "Резултат"
   rowCount: "{count} реда"
+  rowCount_one: "{count} ред"
+  historyCount_one: "{count} заявка"
+  historyCount_other: "{count} заявки"
 
 bn_BD:
   copyCode: "কোড কপি করুন"
@@ -736,6 +799,9 @@ bn_BD:
   runningQuery: "কোয়েরি চলছে"
   result: "ফলাফল"
   rowCount: "{count} সারি"
+  rowCount_one: "{count} সারি"
+  historyCount_one: "{count} প্রশ্ন"
+  historyCount_other: "{count} প্রশ্ন"
 
 ca_ES:
   copyCode: "Copia el codi"
@@ -768,6 +834,9 @@ ca_ES:
   runningQuery: "Consulta en execució"
   result: "Resultat"
   rowCount: "{count} files"
+  rowCount_one: "{count} fila"
+  historyCount_one: "{count} consulta"
+  historyCount_other: "{count} consultes"
 
 cs_CZ:
   copyCode: "Kopírovat kód"
@@ -800,6 +869,9 @@ cs_CZ:
   runningQuery: "Spuštěný dotaz"
   result: "Výsledek"
   rowCount: "{count} řádků"
+  rowCount_one: "{count} řádek"
+  historyCount_one: "{count} dotaz"
+  historyCount_other: "{count} dotazů"
 
 da_DK:
   copyCode: "Kopiér kode"
@@ -832,6 +904,9 @@ da_DK:
   runningQuery: "Kører forespørgsel"
   result: "Resultat"
   rowCount: "{count} rækker"
+  rowCount_one: "{count} række"
+  historyCount_one: "{count} forespørgsel"
+  historyCount_other: "{count} forespørgsler"
 
 fa_IR:
   copyCode: "کد را کپی کنید"
@@ -864,6 +939,9 @@ fa_IR:
   runningQuery: "در حال اجرا پرس و جو"
   result: "نتیجه"
   rowCount: "{count} ردیف"
+  rowCount_one: "{count} ردیف"
+  historyCount_one: "{count} پرس و جو"
+  historyCount_other: "{count} پرس و جو"
 
 hi_IN:
   copyCode: "कोड कॉपी करें"
@@ -896,6 +974,9 @@ hi_IN:
   runningQuery: "चल रही क्वेरी"
   result: "परिणाम"
   rowCount: "{count} पंक्तियाँ"
+  rowCount_one: "{count} पंक्ति"
+  historyCount_one: "{count} क्वेरी"
+  historyCount_other: "{count} प्रश्न"
 
 hr_HR:
   copyCode: "Kopiraj kod"
@@ -928,6 +1009,9 @@ hr_HR:
   runningQuery: "Pokretanje upita"
   result: "Proizlaziti"
   rowCount: "{count} redaka"
+  rowCount_one: "{count} red"
+  historyCount_one: "{count} upit"
+  historyCount_other: "{count} upita"
 
 hu_HU:
   copyCode: "Kód másolása"
@@ -960,6 +1044,9 @@ hu_HU:
   runningQuery: "Lekérdezés fut"
   result: "Eredmény"
   rowCount: "{count} sor"
+  rowCount_one: "{count} sor"
+  historyCount_one: "{count} lekérdezés"
+  historyCount_other: "{count} lekérdezések"
 
 id_ID:
   copyCode: "Salin Kode"
@@ -992,6 +1079,9 @@ id_ID:
   runningQuery: "Menjalankan kueri"
   result: "Hasil"
   rowCount: "{count} baris"
+  rowCount_one: "{count} baris"
+  historyCount_one: "{count} permintaan"
+  historyCount_other: "{count} pertanyaan"
 
 ms_MY:
   copyCode: "Salin Kod"
@@ -1024,6 +1114,9 @@ ms_MY:
   runningQuery: "Menjalankan pertanyaan"
   result: "Hasilnya"
   rowCount: "{count} baris"
+  rowCount_one: "{count} baris"
+  historyCount_one: "{count} pertanyaan"
+  historyCount_other: "{count} pertanyaan"
 
 nb_NO:
   copyCode: "Kopier kode"
@@ -1056,6 +1149,9 @@ nb_NO:
   runningQuery: "Kjører spørring"
   result: "Resultat"
   rowCount: "{count} rader"
+  rowCount_one: "{count} rad"
+  historyCount_one: "{count} spørring"
+  historyCount_other: "{count} spørringer"
 
 sw_KE:
   copyCode: "Nakili Kanuni"
@@ -1088,6 +1184,9 @@ sw_KE:
   runningQuery: "Inaendesha swali"
   result: "Matokeo"
   rowCount: "{count} safu mlalo"
+  rowCount_one: "{count} safu mlalo"
+  historyCount_one: "{count} hoja"
+  historyCount_other: "{count} hoja"
 
 ta_IN:
   copyCode: "நகல் குறியீடு"
@@ -1120,6 +1219,9 @@ ta_IN:
   runningQuery: "வினவல் இயங்குகிறது"
   result: "முடிவு"
   rowCount: "{count} வரிசைகள்"
+  rowCount_one: "{count} வரிசை"
+  historyCount_one: "{count} வினவல்"
+  historyCount_other: "{count} வினவல்கள்"
 
 th_TH:
   copyCode: "คัดลอกรหัส"
@@ -1152,6 +1254,9 @@ th_TH:
   runningQuery: "กำลังดำเนินการค้นหา"
   result: "ผลลัพธ์"
   rowCount: "{count} แถว"
+  rowCount_one: "{count} แถว"
+  historyCount_one: "{count} สอบถาม"
+  historyCount_other: "{count} แบบสอบถาม"
 
 tr_TR:
   copyCode: "Kodu Kopyala"
@@ -1184,6 +1289,9 @@ tr_TR:
   runningQuery: "Sorgu çalıştırılıyor"
   result: "Sonuç"
   rowCount: "{count} satır"
+  rowCount_one: "{count} satır"
+  historyCount_one: "{count} sorgu"
+  historyCount_other: "{count} sorgu"
 
 uk_UA:
   copyCode: "Копіювати код"
@@ -1216,6 +1324,9 @@ uk_UA:
   runningQuery: "Виконується запит"
   result: "Результат"
   rowCount: "{count} рядків"
+  rowCount_one: "{count} рядок"
+  historyCount_one: "{count} запит"
+  historyCount_other: "{count} запитів"
 
 ur_PK:
   copyCode: "کوڈ کاپی کریں۔"
@@ -1248,6 +1359,9 @@ ur_PK:
   runningQuery: "استفسار جاری ہے۔"
   result: "نتیجہ"
   rowCount: "{count} قطاریں"
+  rowCount_one: "{count} قطار"
+  historyCount_one: "{count} استفسار"
+  historyCount_other: "{count} سوالات"
 
 vi_VN:
   copyCode: "Sao chép mã"
@@ -1280,6 +1394,9 @@ vi_VN:
   runningQuery: "Chạy truy vấn"
   result: "Kết quả"
   rowCount: "{count} hàng"
+  rowCount_one: "{count} hàng"
+  historyCount_one: "{count} truy vấn"
+  historyCount_other: "{count} truy vấn"
 
 af_ZA:
   copyCode: "Kopieer kode"
@@ -1312,6 +1429,9 @@ af_ZA:
   runningQuery: "Loop navraag"
   result: "Resultaat"
   rowCount: "{count} rye"
+  rowCount_one: "{count} ry"
+  historyCount_one: "{count} navraag"
+  historyCount_other: "{count} navrae"
 
 am_ET:
   copyCode: "ኮድ ቅዳ"
@@ -1344,6 +1464,9 @@ am_ET:
   runningQuery: "ጥያቄን በማስኬድ ላይ"
   result: "ውጤት"
   rowCount: "{count} ረድፎች"
+  rowCount_one: "{count} ረድፍ"
+  historyCount_one: "{count} ጥያቄ"
+  historyCount_other: "{count} መጠይቆች"
 
 az_AZ:
   copyCode: "Kodu kopyalayın"
@@ -1376,6 +1499,9 @@ az_AZ:
   runningQuery: "Çalışan sorğu"
   result: "Nəticə"
   rowCount: "{count} sıra"
+  rowCount_one: "{count} sıra"
+  historyCount_one: "{count} sorğu"
+  historyCount_other: "{count} sorğular"
 
 et_EE:
   copyCode: "Kopeeri kood"
@@ -1408,6 +1534,9 @@ et_EE:
   runningQuery: "Käimas päringut"
   result: "Tulemus"
   rowCount: "{count} rida"
+  rowCount_one: "{count} rida"
+  historyCount_one: "{count} päring"
+  historyCount_other: "{count} päringud"
 
 gu_IN:
   copyCode: "કોડ કૉપિ કરો"
@@ -1440,6 +1569,9 @@ gu_IN:
   runningQuery: "ક્વેરી ચાલી રહી છે"
   result: "પરિણામ"
   rowCount: "{count} પંક્તિઓ"
+  rowCount_one: "{count} પંક્તિ"
+  historyCount_one: "{count} ક્વેરી"
+  historyCount_other: "{count} પ્રશ્નો"
 
 ha_NG:
   copyCode: "Kwafi Code"
@@ -1472,6 +1604,9 @@ ha_NG:
   runningQuery: "Tambayar gudana"
   result: "Sakamako"
   rowCount: "{count} layuka"
+  rowCount_one: "{count} jere"
+  historyCount_one: "{count} tambaya"
+  historyCount_other: "{count} tambayoyi"
 
 ka_GE:
   copyCode: "დააკოპირეთ კოდი"
@@ -1504,6 +1639,9 @@ ka_GE:
   runningQuery: "მიმდინარეობს შეკითხვა"
   result: "შედეგი"
   rowCount: "{count} რიგები"
+  rowCount_one: "{count} მწკრივი"
+  historyCount_one: "{count} შეკითხვა"
+  historyCount_other: "{count} შეკითხვა"
 
 km_KH:
   copyCode: "ចម្លងកូដ"
@@ -1536,6 +1674,9 @@ km_KH:
   runningQuery: "កំពុងដំណើរការសំណួរ"
   result: "លទ្ធផល"
   rowCount: "{count} ជួរ"
+  rowCount_one: "{count} ជួរ"
+  historyCount_one: "{count} សំណួរ"
+  historyCount_other: "{count} សំណួរ"
 
 kn_IN:
   copyCode: "ಕೋಡ್ ನಕಲಿಸಿ"
@@ -1568,6 +1709,9 @@ kn_IN:
   runningQuery: "ಚಾಲನೆಯಲ್ಲಿರುವ ಪ್ರಶ್ನೆ"
   result: "ಫಲಿತಾಂಶ"
   rowCount: "{count} ಸಾಲುಗಳು"
+  rowCount_one: "{count} ಸಾಲು"
+  historyCount_one: "{count} ಪ್ರಶ್ನೆ"
+  historyCount_other: "{count} ಪ್ರಶ್ನೆಗಳು"
 
 lt_LT:
   copyCode: "Kopijuoti kodą"
@@ -1600,6 +1744,9 @@ lt_LT:
   runningQuery: "Vykdoma užklausa"
   result: "Rezultatas"
   rowCount: "{count} eilučių"
+  rowCount_one: "{count} eilutė"
+  historyCount_one: "{count} užklausa"
+  historyCount_other: "{count} užklausų"
 
 lv_LV:
   copyCode: "Kopēt kodu"
@@ -1632,6 +1779,9 @@ lv_LV:
   runningQuery: "Notiek vaicājums"
   result: "Rezultāts"
   rowCount: "{count} rindas"
+  rowCount_one: "{count} rinda"
+  historyCount_one: "{count} vaicājums"
+  historyCount_other: "{count} vaicājumi"
 
 ml_IN:
   copyCode: "കോഡ് പകർത്തുക"
@@ -1664,6 +1814,9 @@ ml_IN:
   runningQuery: "അന്വേഷണം പ്രവർത്തിക്കുന്നു"
   result: "ഫലം"
   rowCount: "{count} വരികൾ"
+  rowCount_one: "{count} വരി"
+  historyCount_one: "{count} അന്വേഷണം"
+  historyCount_other: "{count} ചോദ്യങ്ങൾ"
 
 mr_IN:
   copyCode: "कोड कॉपी करा"
@@ -1696,6 +1849,9 @@ mr_IN:
   runningQuery: "क्वेरी चालू आहे"
   result: "परिणाम"
   rowCount: "{count} पंक्ती"
+  rowCount_one: "{count} पंक्ती"
+  historyCount_one: "{count} क्वेरी"
+  historyCount_other: "{count} प्रश्न"
 
 ne_NP:
   copyCode: "कोड प्रतिलिपि गर्नुहोस्"
@@ -1728,6 +1884,9 @@ ne_NP:
   runningQuery: "चलिरहेको क्वेरी"
   result: "नतिजा"
   rowCount: "{count} पङ्क्तिहरू"
+  rowCount_one: "{count} पङ्क्ति"
+  historyCount_one: "{count} प्रश्न"
+  historyCount_other: "{count} प्रश्नहरू"
 
 pa_IN:
   copyCode: "ਕੋਡ ਕਾਪੀ ਕਰੋ"
@@ -1760,6 +1919,9 @@ pa_IN:
   runningQuery: "ਪੁੱਛਗਿੱਛ ਚੱਲ ਰਹੀ ਹੈ"
   result: "ਨਤੀਜਾ"
   rowCount: "{count} ਕਤਾਰਾਂ"
+  rowCount_one: "{count} ਕਤਾਰ"
+  historyCount_one: "{count} ਪੁੱਛਗਿੱਛ"
+  historyCount_other: "{count} ਸਵਾਲ"
 
 si_LK:
   copyCode: "කේතය පිටපත් කරන්න"
@@ -1792,6 +1954,9 @@ si_LK:
   runningQuery: "ධාවනය වන විමසුම"
   result: "ප්රතිඵලය"
   rowCount: "{count} පේළි"
+  rowCount_one: "{count} පේළිය"
+  historyCount_one: "{count} විමසුම"
+  historyCount_other: "{count} විමසුම්"
 
 sl_SI:
   copyCode: "Kopiraj kodo"
@@ -1824,6 +1989,9 @@ sl_SI:
   runningQuery: "Teče poizvedba"
   result: "Rezultat"
   rowCount: "{count} vrstic"
+  rowCount_one: "{count} vrstica"
+  historyCount_one: "{count} poizvedba"
+  historyCount_other: "{count} poizvedb"
 
 sr_RS:
   copyCode: "Копирај код"
@@ -1856,6 +2024,9 @@ sr_RS:
   runningQuery: "Покретање упита"
   result: "Резултат"
   rowCount: "{count} редова"
+  rowCount_one: "{count} ред"
+  historyCount_one: "{count} упит"
+  historyCount_other: "{count} упита"
 
 te_IN:
   copyCode: "కాపీ కోడ్"
@@ -1888,6 +2059,9 @@ te_IN:
   runningQuery: "ప్రశ్న అమలులో ఉంది"
   result: "ఫలితం"
   rowCount: "{count} అడ్డు వరుసలు"
+  rowCount_one: "{count} అడ్డు వరుస"
+  historyCount_one: "{count} ప్రశ్న"
+  historyCount_other: "{count} ప్రశ్నలు"
 
 tl_PH:
   copyCode: "Kopyahin ang Code"
@@ -1920,6 +2094,9 @@ tl_PH:
   runningQuery: "Tumatakbo ng query"
   result: "Resulta"
   rowCount: "{count} mga hilera"
+  rowCount_one: "{count} hilera"
+  historyCount_one: "{count} query"
+  historyCount_other: "{count} mga query"
 
 uz_UZ:
   copyCode: "Kodni nusxalash"
@@ -1952,6 +2129,9 @@ uz_UZ:
   runningQuery: "Ishlayotgan so'rov"
   result: "Natija"
   rowCount: "{count} qatorlar"
+  rowCount_one: "{count} qator"
+  historyCount_one: "{count} soʻrovi"
+  historyCount_other: "{count} soʻrovlar"
 
 yo_NG:
   copyCode: "Da koodu"
@@ -1984,3 +2164,6 @@ yo_NG:
   runningQuery: "Ṣiṣe ibeere"
   result: "Abajade"
   rowCount: "{count} awọn ila"
+  rowCount_one: "{count} ila"
+  historyCount_one: "{count} ibeere"
+  historyCount_other: "{count} ibeere"

@@ -181,6 +181,11 @@ ar_AE:
   browseFileHelp: "أو تصفح · ما يصل إلى {rows} من الصفوف، {size} MB"
   matchColumnsNote: "تتم مطابقة الأعمدة بالاسم. قم بمعاينة ما يصل إلى 20 صفًا قبل كتابة أي شيء."
   noFileYet: "لا يوجد ملف حتى الآن"
+  selectTableToImport: "افتح جدولاً لاستيراد بيانات CSV أو بيانات Excel."
+  sqlImportHelp: "قم بإنشاء الجداول أو استيراد البيانات عن طريق إسقاط ملف SQL أو لصق برنامج نصي أدناه. ليست هناك حاجة إلى جدول موجود."
+  dropSqlPrompt: "قم بإسقاط ملف SQL"
+  browseSqlFile: "تصفح SQL الملفات"
+  sqlFileLimit: "ما يصل إلى {size} MB"
 
 de_DE:
   importType: "Importtyp"
@@ -267,6 +272,11 @@ de_DE:
   browseFileHelp: "oder durchsuchen · bis zu {rows} Zeilen, {size} MB"
   matchColumnsNote: "Spalten werden nach Namen zugeordnet. Sehen Sie sich bis zu 20 Zeilen in der Vorschau an, bevor etwas geschrieben wird."
   noFileYet: "Noch keine Datei"
+  selectTableToImport: "Öffnen Sie eine Tabelle, um CSV- oder Excel-Daten zu importieren."
+  sqlImportHelp: "Erstellen Sie Tabellen oder importieren Sie Daten, indem Sie eine SQL-Datei ablegen oder unten ein Skript einfügen. Es ist keine vorhandene Tabelle erforderlich."
+  dropSqlPrompt: "Legen Sie eine SQL-Datei ab"
+  browseSqlFile: "Durchsuchen Sie SQL Dateien"
+  sqlFileLimit: "Bis zu {size} MB"
 
 el_GR:
   importType: "Τύπος εισαγωγής"
@@ -353,6 +363,11 @@ el_GR:
   browseFileHelp: "ή περιήγηση · έως {rows} σειρές, {size} MB"
   matchColumnsNote: "Οι στήλες αντιστοιχίζονται με το όνομα. Κάντε προεπισκόπηση έως και 20 σειρών πριν γραφτεί οτιδήποτε."
   noFileYet: "Κανένα αρχείο ακόμα"
+  selectTableToImport: "Ανοίξτε έναν πίνακα για εισαγωγή δεδομένων CSV ή Excel."
+  sqlImportHelp: "Δημιουργήστε πίνακες ή εισάγετε δεδομένα αφήνοντας ένα αρχείο SQL ή επικολλώντας ένα σενάριο παρακάτω. Δεν απαιτείται υπάρχων πίνακας."
+  dropSqlPrompt: "Ρίξτε ένα αρχείο SQL"
+  browseSqlFile: "Περιηγηθείτε στα αρχεία SQL"
+  sqlFileLimit: "Έως {size} MB"
 
 en_GB:
   importType: "Import Type"
@@ -439,6 +454,11 @@ en_GB:
   browseFileHelp: "or browse · up to {rows} rows, {size} MB"
   matchColumnsNote: "Columns are matched by name. Preview up to 20 rows before anything is written."
   noFileYet: "No file yet"
+  selectTableToImport: "Open a table to import CSV or Excel data."
+  sqlImportHelp: "Create tables or import data by dropping a SQL file or pasting a script below. No existing table is needed."
+  dropSqlPrompt: "Drop a SQL file"
+  browseSqlFile: "Browse SQL files"
+  sqlFileLimit: "Up to {size} MB"
 
 es_ES:
   importType: "Tipo de importación"
@@ -525,6 +545,11 @@ es_ES:
   browseFileHelp: "o navegar · hasta {rows} filas, {size} MB"
   matchColumnsNote: "Las columnas coinciden por nombre. Obtenga una vista previa de hasta 20 filas antes de escribir algo."
   noFileYet: "Ningún archivo todavía"
+  selectTableToImport: "Abra una tabla para importar CSV o datos de Excel."
+  sqlImportHelp: "Cree tablas o importe datos soltando un archivo SQL o pegando un script a continuación. No se necesita ninguna tabla existente."
+  dropSqlPrompt: "Soltar un archivo SQL"
+  browseSqlFile: "Explorar archivos SQL"
+  sqlFileLimit: "Hasta {size} MB"
 
 fi_FI:
   importType: "Tuontityyppi"
@@ -611,6 +636,11 @@ fi_FI:
   browseFileHelp: "tai selaa · enintään {rows} riviä, {size} MB"
   matchColumnsNote: "Sarakkeet täsmäävät nimen mukaan. Esikatsele jopa 20 riviä ennen kuin kirjoitat mitään."
   noFileYet: "Ei tiedostoa vielä"
+  selectTableToImport: "Avaa taulukko tuodaksesi CSV- tai Excel-tietoja."
+  sqlImportHelp: "Luo taulukoita tai tuo tietoja pudottamalla SQL-tiedosto tai liittämällä alla oleva komentosarja. Olemassa olevaa taulukkoa ei tarvita."
+  dropSqlPrompt: "Pudota SQL-tiedosto"
+  browseSqlFile: "Selaa SQL tiedostoa"
+  sqlFileLimit: "Jopa {size} MB"
 
 fr_FR:
   importType: "Type d'importation"
@@ -697,6 +727,11 @@ fr_FR:
   browseFileHelp: "ou parcourez · jusqu'à {rows} lignes, {size} MB"
   matchColumnsNote: "Les colonnes correspondent par nom. Prévisualisez jusqu'à 20 lignes avant que quoi que ce soit ne soit écrit."
   noFileYet: "Pas encore de fichier"
+  selectTableToImport: "Ouvrez un tableau pour importer des données CSV ou Excel."
+  sqlImportHelp: "Créez des tables ou importez des données en déposant un fichier SQL ou en collant un script ci-dessous. Aucune table existante n'est nécessaire."
+  dropSqlPrompt: "Déposez un fichier SQL"
+  browseSqlFile: "Parcourir SQL fichiers"
+  sqlFileLimit: "Jusqu'à {size} MB"
 
 it_IT:
   importType: "Tipo di importazione"
@@ -783,6 +818,11 @@ it_IT:
   browseFileHelp: "oppure sfoglia · fino a {rows} righe, {size} MB"
   matchColumnsNote: "Le colonne corrispondono per nome. Anteprima fino a 20 righe prima che venga scritto qualsiasi cosa."
   noFileYet: "Nessun file ancora"
+  selectTableToImport: "Apri una tabella per importare CSV o dati Excel."
+  sqlImportHelp: "Crea tabelle o importa dati rilasciando un file SQL o incollando uno script di seguito. Non è necessaria alcuna tabella esistente."
+  dropSqlPrompt: "Rilascia un file SQL."
+  browseSqlFile: "Sfoglia SQL file"
+  sqlFileLimit: "Fino a {size} MB"
 
 iw_IL:
   importType: "סוג ייבוא"
@@ -869,6 +909,11 @@ iw_IL:
   browseFileHelp: "או דפדף · עד {rows} שורות, {size} MB"
   matchColumnsNote: "עמודות מותאמות לפי שם. הצג תצוגה מקדימה של עד 20 שורות לפני שמשהו נכתב."
   noFileYet: "אין עדיין קובץ"
+  selectTableToImport: "פתח טבלה כדי לייבא נתוני CSV או Excel."
+  sqlImportHelp: "צור טבלאות או ייבוא ​​נתונים על ידי שחרור קובץ SQL או הדבקת סקריפט למטה. אין צורך בטבלה קיימת."
+  dropSqlPrompt: "שחרר קובץ SQL"
+  browseSqlFile: "עיין בקבצים SQL"
+  sqlFileLimit: "עד {size} MB"
 
 ja_JP:
   importType: "インポートタイプ"
@@ -955,6 +1000,11 @@ ja_JP:
   browseFileHelp: "または、最大 {rows} 行、{size} MB まで参照します"
   matchColumnsNote: "列は名前で照合されます。 何かが書き込まれる前に最大 20 行をプレビューします。"
   noFileYet: "まだファイルがありません"
+  selectTableToImport: "CSV または Excel データをインポートするテーブルを開きます。"
+  sqlImportHelp: "SQL ファイルをドロップするか、以下のスクリプトを貼り付けて、テーブルを作成するか、データをインポートします。 既存のテーブルは必要ありません。"
+  dropSqlPrompt: "SQL ファイルをドロップします"
+  browseSqlFile: "SQL ファイルを参照する"
+  sqlFileLimit: "最大 {size} MB"
 
 ko_KR:
   importType: "가져오기 유형"
@@ -1041,6 +1091,11 @@ ko_KR:
   browseFileHelp: "또는 최대 {rows} 행, {size} MB 찾아보기"
   matchColumnsNote: "열은 이름과 일치합니다. 내용을 작성하기 전에 최대 20개 행을 미리 볼 수 있습니다."
   noFileYet: "아직 파일이 없습니다"
+  selectTableToImport: "CSV 또는 Excel 데이터를 가져올 테이블을 엽니다."
+  sqlImportHelp: "SQL 파일을 삭제하거나 아래에 스크립트를 붙여넣어 테이블을 생성하거나 데이터를 가져옵니다. 기존 테이블이 필요하지 않습니다."
+  dropSqlPrompt: "SQL 파일 삭제"
+  browseSqlFile: "SQL 파일 찾아보기"
+  sqlFileLimit: "최대 {size} MB"
 
 nl_NL:
   importType: "Importtype"
@@ -1127,6 +1182,11 @@ nl_NL:
   browseFileHelp: "of blader door · maximaal {rows} rijen, {size} MB"
   matchColumnsNote: "Kolommen worden op naam gematcht. Bekijk een voorbeeld van maximaal 20 rijen voordat er iets wordt geschreven."
   noFileYet: "Nog geen bestand"
+  selectTableToImport: "Open een tabel om CSV- of Excel-gegevens te importeren."
+  sqlImportHelp: "Maak tabellen of importeer gegevens door een SQL-bestand neer te zetten of hieronder een script te plakken. Er is geen bestaande tabel nodig."
+  dropSqlPrompt: "Zet een SQL-bestand neer"
+  browseSqlFile: "Blader door SQL-bestanden"
+  sqlFileLimit: "Tot {size} MB"
 
 pl_PL:
   importType: "Typ importu"
@@ -1213,6 +1273,11 @@ pl_PL:
   browseFileHelp: "lub przeglądaj · do {rows} wierszy, {size} MB"
   matchColumnsNote: "Kolumny są dopasowywane według nazwy. Wyświetl podgląd do 20 wierszy, zanim cokolwiek zostanie zapisane."
   noFileYet: "Jeszcze nie ma pliku"
+  selectTableToImport: "Otwórz tabelę, aby zaimportować dane CSV lub Excel."
+  sqlImportHelp: "Utwórz tabele lub importuj dane, upuszczając plik SQL lub wklejając skrypt poniżej. Nie jest potrzebny żaden istniejący stół."
+  dropSqlPrompt: "Upuść plik SQL."
+  browseSqlFile: "Przeglądaj SQL pliki"
+  sqlFileLimit: "Do {size} MB"
 
 pt_BR:
   importType: "Tipo de importação"
@@ -1299,6 +1364,11 @@ pt_BR:
   browseFileHelp: "ou navegue · até {rows} linhas, {size} MB"
   matchColumnsNote: "As colunas são correspondidas por nome. Visualize até 20 linhas antes de qualquer coisa ser escrita."
   noFileYet: "Nenhum arquivo ainda"
+  selectTableToImport: "Abra uma tabela para importar dados CSV ou Excel."
+  sqlImportHelp: "Crie tabelas ou importe dados soltando um arquivo SQL ou colando um script abaixo. Nenhuma tabela existente é necessária."
+  dropSqlPrompt: "Solte um arquivo SQL"
+  browseSqlFile: "Procure arquivos SQL"
+  sqlFileLimit: "Até {size} MB"
 
 ro_RO:
   importType: "Tip de import"
@@ -1385,6 +1455,11 @@ ro_RO:
   browseFileHelp: "sau răsfoiți · până la {rows} rânduri, {size} MB"
   matchColumnsNote: "Coloanele sunt potrivite după nume. Previzualizează până la 20 de rânduri înainte de a scrie ceva."
   noFileYet: "Niciun fișier încă"
+  selectTableToImport: "Deschideți un tabel pentru a importa CSV sau date Excel."
+  sqlImportHelp: "Creați tabele sau importați date prin plasarea unui fișier SQL sau lipirea unui script mai jos. Nu este nevoie de un tabel existent."
+  dropSqlPrompt: "Aruncă un fișier SQL."
+  browseSqlFile: "Răsfoiți SQL fișiere"
+  sqlFileLimit: "Până la {size} MB"
 
 ru_RU:
   importType: "Тип импорта"
@@ -1471,6 +1546,11 @@ ru_RU:
   browseFileHelp: "или просмотрите · до {rows} строк, {size} MB"
   matchColumnsNote: "Столбцы сопоставляются по имени. Предварительный просмотр до 20 строк, прежде чем что-либо будет написано."
   noFileYet: "Файла еще нет"
+  selectTableToImport: "Откройте таблицу, чтобы импортировать данные CSV или Excel."
+  sqlImportHelp: "Создайте таблицы или импортируйте данные, перетащив файл SQL или вставив скрипт ниже. Никакая существующая таблица не требуется."
+  dropSqlPrompt: "Перетащите файл SQL"
+  browseSqlFile: "Просмотрите SQL файлов"
+  sqlFileLimit: "До {size} MB"
 
 sk_SK:
   importType: "Typ importu"
@@ -1557,6 +1637,11 @@ sk_SK:
   browseFileHelp: "alebo prehliadať · až {rows} riadkov, {size} MB"
   matchColumnsNote: "Stĺpce sa zhodujú podľa názvu. Ukážka až 20 riadkov predtým, ako niečo napíšete."
   noFileYet: "Zatiaľ žiadny súbor"
+  selectTableToImport: "Ak chcete importovať údaje CSV alebo Excel, otvorte tabuľku."
+  sqlImportHelp: "Vytvorte tabuľky alebo importujte údaje odstránením súboru SQL alebo vložením skriptu nižšie. Nie je potrebná žiadna existujúca tabuľka."
+  dropSqlPrompt: "Pustite súbor SQL"
+  browseSqlFile: "Prehľadávať SQL súbory"
+  sqlFileLimit: "Do {size} MB"
 
 sv_SE:
   importType: "Importtyp"
@@ -1643,6 +1728,11 @@ sv_SE:
   browseFileHelp: "eller bläddra · upp till {rows} rader, {size} MB"
   matchColumnsNote: "Kolumner matchas efter namn. Förhandsgranska upp till 20 rader innan något skrivs."
   noFileYet: "Ingen fil ännu"
+  selectTableToImport: "Öppna en tabell för att importera CSV- eller Excel-data."
+  sqlImportHelp: "Skapa tabeller eller importera data genom att släppa en SQL-fil eller klistra in ett skript nedan. Ingen befintlig tabell behövs."
+  dropSqlPrompt: "Släpp en SQL fil"
+  browseSqlFile: "Bläddra bland SQL filer"
+  sqlFileLimit: "Upp till {size} MB"
 
 zh_CN:
   importType: "进口类型"
@@ -1729,6 +1819,11 @@ zh_CN:
   browseFileHelp: "或浏览 · 最多 {rows} 行，{size} MB"
   matchColumnsNote: "列按名称匹配。 在写入任何内容之前预览最多 20 行。"
   noFileYet: "还没有文件"
+  selectTableToImport: "打开表格以导入 CSV 或 Excel 数据。"
+  sqlImportHelp: "通过删除 SQL 文件或粘贴下面的脚本来创建表或导入数据。 不需要现有的表。"
+  dropSqlPrompt: "删除 SQL 文件"
+  browseSqlFile: "浏览 SQL 文件"
+  sqlFileLimit: "最多 {size} MB"
 
 zh_TW:
   importType: "進口類型"
@@ -1815,6 +1910,11 @@ zh_TW:
   browseFileHelp: "或瀏覽 · 最多 {rows} 行，{size} MB"
   matchColumnsNote: "列按名稱匹配。 在寫入任何內容之前預覽最多 20 行。"
   noFileYet: "還沒有文件"
+  selectTableToImport: "開啟表格以匯入 CSV 或 Excel 資料。"
+  sqlImportHelp: "透過刪除 SQL 檔案或貼上下面的腳本來建立表格或匯入資料。 不需要現有的表。"
+  dropSqlPrompt: "刪除 SQL 文件"
+  browseSqlFile: "瀏覽 SQL 文件"
+  sqlFileLimit: "Up to {size} MB"
 
 bg_BG:
   importType: "Тип импортиране"
@@ -1901,6 +2001,11 @@ bg_BG:
   browseFileHelp: "или прегледайте · до {rows} реда, {size} MB"
   matchColumnsNote: "Колоните се съпоставят по име. Визуализирайте до 20 реда, преди да бъде написано нещо."
   noFileYet: "Все още няма файл"
+  selectTableToImport: "Отворете таблица, за да импортирате CSV или данни от Excel."
+  sqlImportHelp: "Създавайте таблици или импортирайте данни, като пуснете SQL файл или поставите скрипт по-долу. Не е необходима съществуваща таблица."
+  dropSqlPrompt: "Пуснете SQL файл"
+  browseSqlFile: "Преглед на SQL файлове"
+  sqlFileLimit: "До {size} MB"
 
 bn_BD:
   importType: "আমদানি প্রকার"
@@ -1987,6 +2092,11 @@ bn_BD:
   browseFileHelp: "অথবা ব্রাউজ করুন · পর্যন্ত {rows} সারি, {size} MB"
   matchColumnsNote: "কলাম নামের সাথে মিলে যায়। কিছু লেখার আগে 20 সারি পর্যন্ত পূর্বরূপ দেখুন।"
   noFileYet: "এখনো কোনো ফাইল নেই"
+  selectTableToImport: "CSV বা এক্সেল ডেটা আমদানি করতে একটি টেবিল খুলুন।"
+  sqlImportHelp: "একটি SQL ফাইল ফেলে বা নীচে একটি স্ক্রিপ্ট আটকে টেবিল তৈরি করুন বা ডেটা আমদানি করুন৷ কোন বিদ্যমান টেবিল প্রয়োজন নেই."
+  dropSqlPrompt: "একটি SQL ফাইল ফেলে দিন"
+  browseSqlFile: "SQL ফাইল ব্রাউজ করুন"
+  sqlFileLimit: "{size} MB পর্যন্ত"
 
 ca_ES:
   importType: "Import Type"
@@ -2073,6 +2183,11 @@ ca_ES:
   browseFileHelp: "o navegar · fins a {rows} files, {size} MB"
   matchColumnsNote: "Les columnes coincideixen pel nom. Previsualitza fins a 20 files abans d'escriure res."
   noFileYet: "Encara no hi ha cap fitxer"
+  selectTableToImport: "Obriu una taula per importar dades de CSV o d'Excel."
+  sqlImportHelp: "Creeu taules o importeu dades deixant anar un fitxer SQL o enganxar un script a continuació. No es necessita cap taula existent."
+  dropSqlPrompt: "Deixa anar un fitxer SQL."
+  browseSqlFile: "Exploreu SQL fitxers"
+  sqlFileLimit: "Fins a {size} MB"
 
 cs_CZ:
   importType: "Typ importu"
@@ -2159,6 +2274,11 @@ cs_CZ:
   browseFileHelp: "nebo procházet · až {rows} řádků, {size} MB"
   matchColumnsNote: "Sloupce se shodují podle názvu. Náhled až 20 řádků, než je něco napsáno."
   noFileYet: "Zatím žádný soubor"
+  selectTableToImport: "Otevřete tabulku a importujte data CSV nebo Excel."
+  sqlImportHelp: "Vytvářejte tabulky nebo importujte data vypuštěním souboru SQL nebo vložením skriptu níže. Není potřeba žádná existující tabulka."
+  dropSqlPrompt: "Přetáhněte soubor SQL"
+  browseSqlFile: "Procházet SQL soubory"
+  sqlFileLimit: "Až {size} MB"
 
 da_DK:
   importType: "Importtype"
@@ -2245,6 +2365,11 @@ da_DK:
   browseFileHelp: "eller gennemse · op til {rows} rækker, {size} MB"
   matchColumnsNote: "Kolonner matches efter navn. Forhåndsvis op til 20 rækker, før der skrives noget."
   noFileYet: "Ingen fil endnu"
+  selectTableToImport: "Åbn en tabel for at importere CSV- eller Excel-data."
+  sqlImportHelp: "Opret tabeller eller importer data ved at slippe en SQL fil eller indsætte et script nedenfor. Der kræves ingen eksisterende tabel."
+  dropSqlPrompt: "Slip en SQL fil"
+  browseSqlFile: "Gennemse SQL filer"
+  sqlFileLimit: "Op til {size} MB"
 
 fa_IR:
   importType: "نوع واردات"
@@ -2331,6 +2456,11 @@ fa_IR:
   browseFileHelp: "یا مرور · تا {rows} ردیف، {size} MB"
   matchColumnsNote: "ستون ها با نام مطابقت دارند. قبل از نوشتن هر چیزی، حداکثر 20 ردیف را پیش‌نمایش کنید."
   noFileYet: "هنوز فایلی وجود ندارد"
+  selectTableToImport: "برای وارد کردن داده‌های CSV یا اکسل، جدولی را باز کنید."
+  sqlImportHelp: "با انداختن یک فایل SQL یا چسباندن یک اسکریپت در زیر، جداول ایجاد کنید یا داده‌ها را وارد کنید. هیچ جدول موجود مورد نیاز نیست."
+  dropSqlPrompt: "یک فایل SQL را رها کنید"
+  browseSqlFile: "فایل‌های SQL را مرور کنید"
+  sqlFileLimit: "حداکثر {size} MB"
 
 hi_IN:
   importType: "आयात प्रकार"
@@ -2417,6 +2547,11 @@ hi_IN:
   browseFileHelp: "या ब्राउज़ करें · {rows} पंक्तियों तक, {size} MB"
   matchColumnsNote: "कॉलम नाम से मेल खाते हैं। कुछ भी लिखने से पहले 20 पंक्तियों तक पूर्वावलोकन करें।"
   noFileYet: "अभी तक कोई फ़ाइल नहीं"
+  selectTableToImport: "CSV या एक्सेल डेटा आयात करने के लिए एक तालिका खोलें।"
+  sqlImportHelp: "SQL फ़ाइल को हटाकर या नीचे एक स्क्रिप्ट चिपकाकर तालिकाएँ बनाएँ या डेटा आयात करें। किसी मौजूदा तालिका की आवश्यकता नहीं है."
+  dropSqlPrompt: "एक SQL फ़ाइल छोड़ें"
+  browseSqlFile: "SQL फ़ाइलें ब्राउज़ करें"
+  sqlFileLimit: "{size} तक MB"
 
 hr_HR:
   importType: "Vrsta uvoza"
@@ -2503,6 +2638,11 @@ hr_HR:
   browseFileHelp: "ili pregledajte · do {rows} redaka, {size} MB"
   matchColumnsNote: "Stupci se podudaraju po nazivu. Pregledajte do 20 redaka prije nego što se bilo što napiše."
   noFileYet: "Još nema datoteke"
+  selectTableToImport: "Otvorite tablicu za uvoz CSV ili Excel podataka."
+  sqlImportHelp: "Stvorite tablice ili uvezite podatke ispuštanjem SQL datoteke ili lijepljenjem skripte ispod. Nije potrebna postojeća tablica."
+  dropSqlPrompt: "Ispustite SQL datoteku"
+  browseSqlFile: "Pregledajte SQL datoteke"
+  sqlFileLimit: "Do {size} MB"
 
 hu_HU:
   importType: "Importálás típusa"
@@ -2589,6 +2729,11 @@ hu_HU:
   browseFileHelp: "vagy tallózás · legfeljebb {rows} sor, {size} MB"
   matchColumnsNote: "Az oszlopok név szerint illeszkednek. Tekintse meg akár 20 sor előnézetét, mielőtt bármit is írna."
   noFileYet: "Még nincs fájl"
+  selectTableToImport: "Nyisson meg egy táblázatot CSV vagy Excel adatok importálásához."
+  sqlImportHelp: "Hozzon létre táblázatokat vagy importáljon adatokat egy SQL fájl eldobásával vagy egy szkript beillesztésével. Nincs szükség meglévő táblázatra."
+  dropSqlPrompt: "Dobj el egy SQL fájlt"
+  browseSqlFile: "Böngésszen SQL fájlban"
+  sqlFileLimit: "Legfeljebb {size} MB"
 
 id_ID:
   importType: "Jenis Impor"
@@ -2675,6 +2820,11 @@ id_ID:
   browseFileHelp: "atau telusuri · hingga {rows} baris, {size} MB"
   matchColumnsNote: "Kolom dicocokkan berdasarkan nama. Pratinjau hingga 20 baris sebelum apa pun ditulis."
   noFileYet: "Belum ada berkasnya"
+  selectTableToImport: "Buka tabel untuk mengimpor data CSV atau Excel."
+  sqlImportHelp: "Buat tabel atau impor data dengan meletakkan file SQL atau menempelkan skrip di bawah. Tidak diperlukan tabel yang ada."
+  dropSqlPrompt: "Jatuhkan file SQL"
+  browseSqlFile: "Telusuri file SQL"
+  sqlFileLimit: "Hingga {size} MB"
 
 ms_MY:
   importType: "Jenis Import"
@@ -2761,6 +2911,11 @@ ms_MY:
   browseFileHelp: "atau semak imbas · sehingga {rows} baris, {size} MB"
   matchColumnsNote: "Lajur dipadankan dengan nama. Pratonton sehingga 20 baris sebelum apa-apa ditulis."
   noFileYet: "Tiada fail lagi"
+  selectTableToImport: "Buka jadual untuk mengimport CSV atau data Excel."
+  sqlImportHelp: "Buat jadual atau import data dengan menjatuhkan fail SQL atau menampal skrip di bawah. Tiada meja sedia ada diperlukan."
+  dropSqlPrompt: "Lepaskan fail SQL."
+  browseSqlFile: "Semak imbas fail SQL."
+  sqlFileLimit: "Sehingga {size} MB"
 
 nb_NO:
   importType: "Importtype"
@@ -2847,6 +3002,11 @@ nb_NO:
   browseFileHelp: "eller bla gjennom · opptil {rows} rader, {size} MB"
   matchColumnsNote: "Kolonner matches etter navn. Forhåndsvis opptil 20 rader før noe skrives."
   noFileYet: "Ingen fil ennå"
+  selectTableToImport: "Åpne en tabell for å importere CSV- eller Excel-data."
+  sqlImportHelp: "Lag tabeller eller importer data ved å slippe en SQL-fil eller lime inn et skript nedenfor. Ingen eksisterende tabell er nødvendig."
+  dropSqlPrompt: "Slipp en SQL fil"
+  browseSqlFile: "Bla gjennom SQL filer"
+  sqlFileLimit: "Opptil {size} MB"
 
 sw_KE:
   importType: "Aina ya Kuingiza"
@@ -2933,6 +3093,11 @@ sw_KE:
   browseFileHelp: "au vinjari · hadi safu mlalo {rows}, {size} MB"
   matchColumnsNote: "Safu wima zinalingana kwa jina. Hakiki hadi safu 20 kabla ya chochote kuandikwa."
   noFileYet: "Bado hakuna faili"
+  selectTableToImport: "Fungua jedwali ili kuleta CSV au data ya Excel."
+  sqlImportHelp: "Unda majedwali au leta data kwa kudondosha faili ya SQL au kubandika hati hapa chini. Hakuna meza iliyopo inahitajika."
+  dropSqlPrompt: "Dondosha faili SQL"
+  browseSqlFile: "Vinjari faili SQL"
+  sqlFileLimit: "Hadi {size} MB"
 
 ta_IN:
   importType: "இறக்குமதி வகை"
@@ -3019,6 +3184,11 @@ ta_IN:
   browseFileHelp: "அல்லது உலாவவும் · வரை {rows} வரிசைகள், {size} MB"
   matchColumnsNote: "நெடுவரிசைகள் பெயரால் பொருந்துகின்றன. எதையும் எழுதும் முன் 20 வரிசைகள் வரை முன்னோட்டம் பார்க்கவும்."
   noFileYet: "இதுவரை கோப்பு இல்லை"
+  selectTableToImport: "CSV அல்லது எக்செல் தரவை இறக்குமதி செய்ய அட்டவணையைத் திறக்கவும்."
+  sqlImportHelp: "SQL கோப்பை கைவிடுவதன் மூலம் அல்லது கீழே ஒரு ஸ்கிரிப்டை ஒட்டுவதன் மூலம் அட்டவணைகளை உருவாக்கவும் அல்லது தரவை இறக்குமதி செய்யவும். தற்போதுள்ள அட்டவணை தேவையில்லை."
+  dropSqlPrompt: "SQL கோப்பை கைவிடவும்"
+  browseSqlFile: "SQL கோப்புகளை உலாவவும்"
+  sqlFileLimit: "{size} MB வரை"
 
 th_TH:
   importType: "ประเภทการนำเข้า"
@@ -3105,6 +3275,11 @@ th_TH:
   browseFileHelp: "หรือเรียกดู · สูงสุด {rows} แถว, {size} MB"
   matchColumnsNote: "คอลัมน์จะถูกจับคู่ตามชื่อ ดูตัวอย่างได้สูงสุด 20 แถวก่อนที่จะเขียนสิ่งใดๆ"
   noFileYet: "ยังไม่มีไฟล์"
+  selectTableToImport: "เปิดตารางเพื่อนำเข้า CSV หรือข้อมูล Excel"
+  sqlImportHelp: "สร้างตารางหรือนำเข้าข้อมูลโดยวางไฟล์ SQL หรือวางสคริปต์ด้านล่าง ไม่จำเป็นต้องมีตารางที่มีอยู่"
+  dropSqlPrompt: "วางไฟล์ SQL"
+  browseSqlFile: "เรียกดูไฟล์ SQL"
+  sqlFileLimit: "สูงสุด {size} MB"
 
 tr_TR:
   importType: "İthalat Türü"
@@ -3191,6 +3366,11 @@ tr_TR:
   browseFileHelp: "veya göz atın · en fazla {rows} satıra kadar, {size} MB"
   matchColumnsNote: "Sütunlar ada göre eşleştirilir. Herhangi bir şey yazılmadan önce 20 satıra kadar önizleme yapın."
   noFileYet: "Henüz dosya yok"
+  selectTableToImport: "CSV veya Excel verilerini içe aktarmak için bir tablo açın."
+  sqlImportHelp: "Aşağıya bir SQL dosyası bırakarak veya bir komut dosyası yapıştırarak tablolar oluşturun veya verileri içe aktarın. Mevcut bir tabloya gerek yoktur."
+  dropSqlPrompt: "Bir SQL dosyasını bırakın"
+  browseSqlFile: "SQL dosyalara göz atın"
+  sqlFileLimit: "En fazla {size} MB"
 
 uk_UA:
   importType: "Тип імпорту"
@@ -3277,6 +3457,11 @@ uk_UA:
   browseFileHelp: "або перегляньте · до {rows} рядків, {size} MB"
   matchColumnsNote: "Стовпці зіставляються за назвою. Попередній перегляд до 20 рядків, перш ніж щось написати."
   noFileYet: "Файла ще немає"
+  selectTableToImport: "Відкрийте таблицю, щоб імпортувати CSV або дані Excel."
+  sqlImportHelp: "Створіть таблиці або імпортуйте дані, перекинувши файл SQL або вставивши сценарій нижче. Існуюча таблиця не потрібна."
+  dropSqlPrompt: "Перетягніть SQL файл"
+  browseSqlFile: "Перегляньте SQL файли"
+  sqlFileLimit: "До {size} MB"
 
 ur_PK:
   importType: "درآمد کی قسم"
@@ -3363,6 +3548,11 @@ ur_PK:
   browseFileHelp: "یا براؤز کریں · {rows} تک قطاریں، {size} MB"
   matchColumnsNote: "کالم نام سے مماثل ہیں۔ کچھ بھی لکھنے سے پہلے 20 قطاروں تک کا جائزہ لیں۔"
   noFileYet: "ابھی تک کوئی فائل نہیں ہے۔"
+  selectTableToImport: "CSV یا ایکسل ڈیٹا درآمد کرنے کے لیے ٹیبل کھولیں۔"
+  sqlImportHelp: "ٹیبل بنائیں یا SQL فائل چھوڑ کر یا نیچے اسکرپٹ چسپاں کرکے ڈیٹا درآمد کریں۔ کسی موجودہ میز کی ضرورت نہیں ہے۔"
+  dropSqlPrompt: "ایک SQL فائل چھوڑیں۔"
+  browseSqlFile: "SQL فائلوں کو براؤز کریں۔"
+  sqlFileLimit: "{size} MB تک"
 
 vi_VN:
   importType: "Loại nhập khẩu"
@@ -3449,6 +3639,11 @@ vi_VN:
   browseFileHelp: "hoặc duyệt · tối đa {rows} hàng, {size} MB"
   matchColumnsNote: "Các cột được khớp theo tên. Xem trước tối đa 20 hàng trước khi viết bất cứ điều gì."
   noFileYet: "Chưa có tập tin nào"
+  selectTableToImport: "Mở bảng để nhập dữ liệu CSV hoặc Excel."
+  sqlImportHelp: "Tạo bảng hoặc nhập dữ liệu bằng cách thả tệp SQL hoặc dán tập lệnh bên dưới. Không có bảng hiện có là cần thiết."
+  dropSqlPrompt: "Thả tệp SQL"
+  browseSqlFile: "Duyệt qua tệp SQL"
+  sqlFileLimit: "Lên đến {size} MB"
 
 af_ZA:
   importType: "Tipe invoer"
@@ -3535,6 +3730,11 @@ af_ZA:
   browseFileHelp: "of blaai · tot by {rows} rye, {size} MB"
   matchColumnsNote: "Kolomme word volgens naam ooreenstem. Voorbeskou tot 20 rye voordat enigiets geskryf word."
   noFileYet: "Nog geen lêer nie"
+  selectTableToImport: "Maak 'n tabel oop om CSV- of Excel-data in te voer."
+  sqlImportHelp: "Skep tabelle of voer data in deur 'n SQL-lêer te laat val of 'n skrip hieronder te plak. Geen bestaande tabel is nodig nie."
+  dropSqlPrompt: "Los 'n SQL lêer"
+  browseSqlFile: "Blaai deur SQL lêers"
+  sqlFileLimit: "Tot {size} MB"
 
 am_ET:
   importType: "የማስመጣት አይነት"
@@ -3621,6 +3821,11 @@ am_ET:
   browseFileHelp: "ወይም አስስ · እስከ {rows} ረድፎችን፣ {size} MB)"
   matchColumnsNote: "አምዶች በስም ይዛመዳሉ። ምንም ነገር ከመጻፉ በፊት እስከ 20 ረድፎችን አስቀድመው ይመልከቱ።"
   noFileYet: "እስካሁን ምንም ፋይል የለም።"
+  selectTableToImport: "CSV ወይም የ Excel ውሂብን ለማስመጣት ሠንጠረዥ ክፈት።"
+  sqlImportHelp: "SQL ፋይል በመጣል ወይም ከዚህ በታች ስክሪፕት በመለጠፍ ሰንጠረዦችን ይፍጠሩ ወይም ውሂብ ያስመጡ። ምንም ነባር ሠንጠረዥ አያስፈልግም."
+  dropSqlPrompt: "SQL ፋይል ጣል ያድርጉ"
+  browseSqlFile: "SQL ፋይሎችን ያስሱ"
+  sqlFileLimit: "እስከ {size} MB"
 
 az_AZ:
   importType: "İdxal növü"
@@ -3707,6 +3912,11 @@ az_AZ:
   browseFileHelp: "və ya gözdən keçirin · {rows} sıraya qədər, {size} MB"
   matchColumnsNote: "Sütunlar adla uyğunlaşdırılır. Hər şey yazılmamışdan əvvəl 20-ə qədər sətirə baxın."
   noFileYet: "Hələ fayl yoxdur"
+  selectTableToImport: "CSV və ya Excel məlumatlarını idxal etmək üçün cədvəl açın."
+  sqlImportHelp: "Cədvəllər yaradın və ya SQL faylını ataraq və ya skripti aşağıda yerləşdirərək məlumatları idxal edin. Mövcud cədvələ ehtiyac yoxdur."
+  dropSqlPrompt: "SQL faylı buraxın"
+  browseSqlFile: "SQL faylları nəzərdən keçirin"
+  sqlFileLimit: "{size} MB-ə qədər"
 
 et_EE:
   importType: "Impordi tüüp"
@@ -3793,6 +4003,11 @@ et_EE:
   browseFileHelp: "või sirvige · kuni {rows} rida, {size} MB"
   matchColumnsNote: "Veerud on sobitatud nime järgi. Enne kui midagi kirjutatakse, vaadake kuni 20 rea eelvaadet."
   noFileYet: "Faili veel pole"
+  selectTableToImport: "Avage tabel CSV või Exceli andmete importimiseks."
+  sqlImportHelp: "Looge tabeleid või importige andmeid, pukseerides faili SQL või kleepides alla skripti. Olemasolevat tabelit pole vaja."
+  dropSqlPrompt: "Loobuge SQL-failist"
+  browseSqlFile: "Sirvige SQL faili"
+  sqlFileLimit: "Kuni {size} MB"
 
 gu_IN:
   importType: "આયાત પ્રકાર"
@@ -3879,6 +4094,11 @@ gu_IN:
   browseFileHelp: "અથવા બ્રાઉઝ કરો · {rows} સુધી પંક્તિઓ, {size} MB"
   matchColumnsNote: "કૉલમ નામ સાથે મેળ ખાય છે. કંઈપણ લખાય તે પહેલાં 20 પંક્તિઓ સુધીનું પૂર્વાવલોકન કરો."
   noFileYet: "હજી સુધી કોઈ ફાઇલ નથી"
+  selectTableToImport: "CSV અથવા એક્સેલ ડેટા આયાત કરવા માટે કોષ્ટક ખોલો."
+  sqlImportHelp: "કોષ્ટકો બનાવો અથવા SQL ફાઇલ છોડીને અથવા નીચે સ્ક્રિપ્ટ પેસ્ટ કરીને ડેટા આયાત કરો. હાલના ટેબલની જરૂર નથી."
+  dropSqlPrompt: "SQL ફાઇલ મૂકો"
+  browseSqlFile: "SQL ફાઇલો બ્રાઉઝ કરો"
+  sqlFileLimit: "{size} MB સુધી"
 
 ha_NG:
   importType: "Nau'in Shigo"
@@ -3965,6 +4185,11 @@ ha_NG:
   browseFileHelp: "ko bincika · har zuwa {rows} layuka, {size} MB"
   matchColumnsNote: "An daidaita ginshiƙai da suna. Dubawa har zuwa layuka 20 kafin a rubuta wani abu."
   noFileYet: "Babu fayil tukuna"
+  selectTableToImport: "Bude tebur don shigo da CSV ko bayanan Excel."
+  sqlImportHelp: "Ƙirƙiri teburi ko shigo da bayanai ta hanyar jefar da fayil SQL ko liƙa rubutun ƙasa. Babu tebur data kasance da ake buƙata."
+  dropSqlPrompt: "Ajiye fayil SQL"
+  browseSqlFile: "Bincika SQL fayiloli"
+  sqlFileLimit: "Har zuwa {size} MB"
 
 ka_GE:
   importType: "იმპორტის ტიპი"
@@ -4051,6 +4276,11 @@ ka_GE:
   browseFileHelp: "ან დაათვალიერეთ · {rows} მდე რიგები, {size} MB"
   matchColumnsNote: "სვეტები ემთხვევა სახელს. წინასწარ გადახედეთ 20 სტრიქონს, სანამ რამე დაიწერება."
   noFileYet: "ფაილი ჯერ არ არის"
+  selectTableToImport: "გახსენით ცხრილი CSV ან Excel მონაცემების იმპორტისთვის."
+  sqlImportHelp: "შექმენით ცხრილები ან მონაცემების იმპორტი SQL ფაილის ჩამოშვებით ან სკრიპტის ჩასმით ქვემოთ. არ არის საჭირო არსებული ცხრილი."
+  dropSqlPrompt: "ჩამოაგდეთ SQL ფაილი"
+  browseSqlFile: "დაათვალიერეთ SQL ფაილი"
+  sqlFileLimit: "{size} MB-მდე"
 
 km_KH:
   importType: "ប្រភេទនាំចូល"
@@ -4137,6 +4367,11 @@ km_KH:
   browseFileHelp: "ឬរុករក · រហូតដល់ {rows} ជួរ {size} MB"
   matchColumnsNote: "ជួរ​ឈរ​ត្រូវ​បាន​ផ្គូផ្គង​តាម​ឈ្មោះ។ មើលជាមុនរហូតដល់ 20 ជួរ មុនពេលអ្វីដែលត្រូវបានសរសេរ។"
   noFileYet: "មិនទាន់មានឯកសារនៅឡើយ"
+  selectTableToImport: "បើកតារាងដើម្បីនាំចូល CSV ឬទិន្នន័យ Excel ។"
+  sqlImportHelp: "បង្កើតតារាង ឬនាំចូលទិន្នន័យដោយទម្លាក់ឯកសារ SQL ឬបិទភ្ជាប់ស្គ្រីបខាងក្រោម។ មិនត្រូវការតារាងដែលមានស្រាប់ទេ។"
+  dropSqlPrompt: "ទម្លាក់ឯកសារ SQL"
+  browseSqlFile: "រកមើលឯកសារ SQL"
+  sqlFileLimit: "រហូតដល់ {size} MB"
 
 kn_IN:
   importType: "ಆಮದು ಪ್ರಕಾರ"
@@ -4223,6 +4458,11 @@ kn_IN:
   browseFileHelp: "ಅಥವಾ ಬ್ರೌಸ್ · ವರೆಗೆ {rows} ಸಾಲುಗಳು, {size} MB"
   matchColumnsNote: "ಕಾಲಮ್‌ಗಳು ಹೆಸರಿನಿಂದ ಹೊಂದಾಣಿಕೆಯಾಗುತ್ತವೆ. ಏನನ್ನೂ ಬರೆಯುವ ಮೊದಲು 20 ಸಾಲುಗಳವರೆಗೆ ಪೂರ್ವವೀಕ್ಷಣೆ ಮಾಡಿ."
   noFileYet: "ಇನ್ನೂ ಯಾವುದೇ ಫೈಲ್ ಇಲ್ಲ"
+  selectTableToImport: "CSV ಅಥವಾ ಎಕ್ಸೆಲ್ ಡೇಟಾವನ್ನು ಆಮದು ಮಾಡಿಕೊಳ್ಳಲು ಟೇಬಲ್ ತೆರೆಯಿರಿ."
+  sqlImportHelp: "SQL ಫೈಲ್ ಅನ್ನು ಬಿಡುವ ಮೂಲಕ ಅಥವಾ ಕೆಳಗೆ ಸ್ಕ್ರಿಪ್ಟ್ ಅನ್ನು ಅಂಟಿಸುವ ಮೂಲಕ ಕೋಷ್ಟಕಗಳನ್ನು ರಚಿಸಿ ಅಥವಾ ಡೇಟಾವನ್ನು ಆಮದು ಮಾಡಿ. ಅಸ್ತಿತ್ವದಲ್ಲಿರುವ ಟೇಬಲ್ ಅಗತ್ಯವಿಲ್ಲ."
+  dropSqlPrompt: "SQL ಫೈಲ್ ಅನ್ನು ಬಿಡಿ"
+  browseSqlFile: "SQL ಫೈಲ್‌ಗಳನ್ನು ಬ್ರೌಸ್ ಮಾಡಿ"
+  sqlFileLimit: "{size} MB ವರೆಗೆ"
 
 lt_LT:
   importType: "Importo tipas"
@@ -4309,6 +4549,11 @@ lt_LT:
   browseFileHelp: "arba naršyti · iki {rows} eilučių, {size} MB"
   matchColumnsNote: "Stulpeliai suderinami pagal pavadinimą. Peržiūrėkite iki 20 eilučių prieš ką nors parašydami."
   noFileYet: "Failo dar nėra"
+  selectTableToImport: "Atidarykite lentelę, kad importuotumėte CSV arba „Excel“ duomenis."
+  sqlImportHelp: "Kurkite lenteles arba importuokite duomenis numesdami SQL failą arba įklijuodami toliau pateiktą scenarijų. Esamos lentelės nereikia."
+  dropSqlPrompt: "Numeskite SQL failą"
+  browseSqlFile: "Naršykite SQL failus"
+  sqlFileLimit: "Iki {size} MB"
 
 lv_LV:
   importType: "Importa veids"
@@ -4395,6 +4640,11 @@ lv_LV:
   browseFileHelp: "vai pārlūkojiet · līdz {rows} rindām, {size} MB"
   matchColumnsNote: "Kolonnas ir saskaņotas pēc nosaukuma. Priekšskatiet līdz 20 rindām, pirms kaut kas tiek rakstīts."
   noFileYet: "Failu vēl nav"
+  selectTableToImport: "Atveriet tabulu, lai importētu CSV vai Excel datus."
+  sqlImportHelp: "Izveidojiet tabulas vai importējiet datus, nometot SQL failu vai ielīmējot tālāk norādīto skriptu. Esoša tabula nav nepieciešama."
+  dropSqlPrompt: "Nometiet SQL failu"
+  browseSqlFile: "Pārlūkojiet SQL failus"
+  sqlFileLimit: "Līdz {size} MB"
 
 ml_IN:
   importType: "ഇറക്കുമതി തരം"
@@ -4481,6 +4731,11 @@ ml_IN:
   browseFileHelp: "അല്ലെങ്കിൽ ബ്രൗസ് ചെയ്യുക · {rows} വരെ വരികൾ, {size} MB"
   matchColumnsNote: "കോളങ്ങൾ പേരിനനുസരിച്ച് പൊരുത്തപ്പെടുന്നു. എന്തെങ്കിലും എഴുതുന്നതിന് മുമ്പ് 20 വരികൾ വരെ പ്രിവ്യൂ ചെയ്യുക."
   noFileYet: "ഇതുവരെ ഫയലില്ല"
+  selectTableToImport: "CSV അല്ലെങ്കിൽ Excel ഡാറ്റ ഇറക്കുമതി ചെയ്യാൻ ഒരു പട്ടിക തുറക്കുക."
+  sqlImportHelp: "ഒരു SQL ഫയൽ ഇടുകയോ സ്ക്രിപ്റ്റ് ഒട്ടിക്കുകയോ ചെയ്തുകൊണ്ട് പട്ടികകൾ സൃഷ്‌ടിക്കുക അല്ലെങ്കിൽ ഡാറ്റ ഇറക്കുമതി ചെയ്യുക. നിലവിലുള്ള പട്ടിക ആവശ്യമില്ല."
+  dropSqlPrompt: "ഒരു SQL ഫയൽ ഡ്രോപ്പ് ചെയ്യുക"
+  browseSqlFile: "SQL ഫയലുകൾ ബ്രൗസ് ചെയ്യുക"
+  sqlFileLimit: "{size} MB വരെ"
 
 mr_IN:
   importType: "आयात प्रकार"
@@ -4567,6 +4822,11 @@ mr_IN:
   browseFileHelp: "किंवा ब्राउझ करा · {rows} पंक्ती, {size} MB"
   matchColumnsNote: "स्तंभ नावाने जुळतात. काहीही लिहिण्यापूर्वी 20 पंक्तीपर्यंत पूर्वावलोकन करा."
   noFileYet: "अजून फाईल नाही"
+  selectTableToImport: "CSV किंवा Excel डेटा इंपोर्ट करण्यासाठी टेबल उघडा."
+  sqlImportHelp: "टेबल तयार करा किंवा SQL फाइल टाकून किंवा खाली स्क्रिप्ट पेस्ट करून डेटा आयात करा. विद्यमान टेबलची आवश्यकता नाही."
+  dropSqlPrompt: "एक SQL फाईल टाका"
+  browseSqlFile: "SQL फाइल्स ब्राउझ करा"
+  sqlFileLimit: "{size} MB पर्यंत"
 
 ne_NP:
   importType: "आयात प्रकार"
@@ -4653,6 +4913,11 @@ ne_NP:
   browseFileHelp: "वा ब्राउज गर्नुहोस् · माथि {rows} पङ्क्तिहरू, {size} MB"
   matchColumnsNote: "स्तम्भहरू नामसँग मेल खान्छ। केहि लेख्नु अघि 20 पङ्क्तिहरू सम्म पूर्वावलोकन गर्नुहोस्।"
   noFileYet: "अहिलेसम्म कुनै फाइल छैन"
+  selectTableToImport: "CSV वा एक्सेल डाटा आयात गर्न तालिका खोल्नुहोस्।"
+  sqlImportHelp: "तालिकाहरू सिर्जना गर्नुहोस् वा SQL फाइल छोडेर वा तलको स्क्रिप्ट टाँस्दै डाटा आयात गर्नुहोस्। कुनै अवस्थित तालिका आवश्यक छैन।"
+  dropSqlPrompt: "एउटा SQL फाइल छोड्नुहोस्"
+  browseSqlFile: "SQL फाइलहरू ब्राउज गर्नुहोस्"
+  sqlFileLimit: "{size} MB सम्म"
 
 pa_IN:
   importType: "ਆਯਾਤ ਦੀ ਕਿਸਮ"
@@ -4739,6 +5004,11 @@ pa_IN:
   browseFileHelp: "ਜਾਂ ਬ੍ਰਾਊਜ਼ ਕਰੋ · {rows} ਤੱਕ ਕਤਾਰਾਂ, {size} MB"
   matchColumnsNote: "ਕਾਲਮ ਨਾਮ ਨਾਲ ਮੇਲ ਖਾਂਦੇ ਹਨ। ਕੁਝ ਵੀ ਲਿਖੇ ਜਾਣ ਤੋਂ ਪਹਿਲਾਂ 20 ਕਤਾਰਾਂ ਤੱਕ ਪੂਰਵਦਰਸ਼ਨ ਕਰੋ।"
   noFileYet: "ਅਜੇ ਤੱਕ ਕੋਈ ਫਾਈਲ ਨਹੀਂ ਹੈ"
+  selectTableToImport: "CSV ਜਾਂ ਐਕਸਲ ਡੇਟਾ ਨੂੰ ਆਯਾਤ ਕਰਨ ਲਈ ਇੱਕ ਸਾਰਣੀ ਖੋਲ੍ਹੋ।"
+  sqlImportHelp: "ਇੱਕ SQL ਫਾਈਲ ਨੂੰ ਛੱਡ ਕੇ ਜਾਂ ਹੇਠਾਂ ਇੱਕ ਸਕ੍ਰਿਪਟ ਪੇਸਟ ਕਰਕੇ ਟੇਬਲ ਬਣਾਓ ਜਾਂ ਡੇਟਾ ਆਯਾਤ ਕਰੋ। ਕਿਸੇ ਮੌਜੂਦਾ ਸਾਰਣੀ ਦੀ ਲੋੜ ਨਹੀਂ ਹੈ।"
+  dropSqlPrompt: "ਇੱਕ SQL ਫਾਈਲ ਸੁੱਟੋ"
+  browseSqlFile: "SQL ਫਾਈਲਾਂ ਬ੍ਰਾਊਜ਼ ਕਰੋ"
+  sqlFileLimit: "{size} MB ਤੱਕ"
 
 si_LK:
   importType: "ආයාත වර්ගය"
@@ -4825,6 +5095,11 @@ si_LK:
   browseFileHelp: "හෝ බ්‍රවුස් කරන්න · {rows} පේළි දක්වා, {size} MB"
   matchColumnsNote: "තීරු නමට ගැලපේ. ඕනෑම දෙයක් ලිවීමට පෙර පේළි 20ක් දක්වා පෙරදසුන් කරන්න."
   noFileYet: "තවමත් ගොනුවක් නැත"
+  selectTableToImport: "CSV හෝ Excel දත්ත ආයාත කිරීමට වගුවක් විවෘත කරන්න."
+  sqlImportHelp: "වගු සාදන්න හෝ SQL ගොනුවක් දැමීමෙන් හෝ ස්ක්‍රිප්ට් එකක් පහතින් ඇලවීමෙන් දත්ත ආයාත කරන්න. පවතින වගුවක් අවශ්‍ය නොවේ."
+  dropSqlPrompt: "SQL ගොනුවක් අතහරින්න"
+  browseSqlFile: "SQL ගොනු බ්‍රවුස් කරන්න"
+  sqlFileLimit: "{size} MB දක්වා"
 
 sl_SI:
   importType: "Vrsta uvoza"
@@ -4911,6 +5186,11 @@ sl_SI:
   browseFileHelp: "ali prebrskajte · do {rows} vrstic, {size} MB"
   matchColumnsNote: "Stolpci se ujemajo z imenom. Predogled do 20 vrstic, preden se kaj napiše."
   noFileYet: "Ni datoteke še"
+  selectTableToImport: "Odprite tabelo za uvoz CSV ali Excelovih podatkov."
+  sqlImportHelp: "Ustvarite tabele ali uvozite podatke tako, da spustite datoteko SQL ali spodaj prilepite skript. Obstoječa tabela ni potrebna."
+  dropSqlPrompt: "Spustite SQL datoteko"
+  browseSqlFile: "Brskajte po SQL datotekah"
+  sqlFileLimit: "Do {size} MB"
 
 sr_RS:
   importType: "Тип увоза"
@@ -4997,6 +5277,11 @@ sr_RS:
   browseFileHelp: "или прегледајте · до {rows} редова, {size} MB"
   matchColumnsNote: "Колоне се подударају по имену. Прегледајте до 20 редова пре него што се било шта напише."
   noFileYet: "Још нема датотеке"
+  selectTableToImport: "Отворите табелу да бисте увезли CSV или Екцел податке."
+  sqlImportHelp: "Креирајте табеле или увезите податке тако што ћете испустити SQL датотеку или налепити скрипт испод. Није потребна постојећа табела."
+  dropSqlPrompt: "Испустите SQL датотеку"
+  browseSqlFile: "Прегледајте SQL датотеке"
+  sqlFileLimit: "До {size} MB"
 
 te_IN:
   importType: "దిగుమతి రకం"
@@ -5083,6 +5368,11 @@ te_IN:
   browseFileHelp: "లేదా బ్రౌజ్ చేయండి · గరిష్టంగా {rows} అడ్డు వరుసలు, {size} MB"
   matchColumnsNote: "నిలువు వరుసలు పేరుతో సరిపోలాయి. ఏదైనా వ్రాయడానికి ముందు 20 వరుసల వరకు ప్రివ్యూ చేయండి."
   noFileYet: "ఇంకా ఫైల్ లేదు"
+  selectTableToImport: "CSV లేదా ఎక్సెల్ డేటాను దిగుమతి చేయడానికి పట్టికను తెరవండి."
+  sqlImportHelp: "పట్టికలను సృష్టించండి లేదా SQL ఫైల్‌ను వదలడం ద్వారా లేదా దిగువన స్క్రిప్ట్‌ను అతికించడం ద్వారా డేటాను దిగుమతి చేయండి. ఇప్పటికే ఉన్న పట్టిక అవసరం లేదు."
+  dropSqlPrompt: "SQL ఫైల్‌ను వదలండి"
+  browseSqlFile: "SQL ఫైళ్లను బ్రౌజ్ చేయండి"
+  sqlFileLimit: "{size} MB వరకు"
 
 tl_PH:
   importType: "Uri ng Pag-import"
@@ -5169,6 +5459,11 @@ tl_PH:
   browseFileHelp: "o mag-browse · hanggang {rows} row, {size} MB"
   matchColumnsNote: "Itinutugma ang mga column ayon sa pangalan. I-preview ang hanggang 20 row bago magsulat ng anuman."
   noFileYet: "Wala pang file"
+  selectTableToImport: "Magbukas ng talahanayan para mag-import ng CSV o data ng Excel."
+  sqlImportHelp: "Gumawa ng mga talahanayan o mag-import ng data sa pamamagitan ng pag-drop ng SQL file o pag-paste ng script sa ibaba. Walang umiiral na talahanayan ang kailangan."
+  dropSqlPrompt: "Mag-drop ng SQL file"
+  browseSqlFile: "Mag-browse ng SQL na mga file"
+  sqlFileLimit: "Hanggang {size} MB"
 
 uz_UZ:
   importType: "Import turi"
@@ -5255,6 +5550,11 @@ uz_UZ:
   browseFileHelp: "yoki koʻring · {rows} gacha qatorlar, {size} MB"
   matchColumnsNote: "Ustunlar nomga mos keladi. Biror narsa yozilishidan oldin 20 tagacha qatorni ko'rib chiqing."
   noFileYet: "Hali fayl yo'q"
+  selectTableToImport: "CSV yoki Excel ma'lumotlarini import qilish uchun jadvalni oching."
+  sqlImportHelp: "SQL faylni tashlab yoki skriptni quyida joylashtirish orqali jadvallar yarating yoki maʼlumotlarni import qiling. Mavjud jadval kerak emas."
+  dropSqlPrompt: "SQL faylni tashlang"
+  browseSqlFile: "SQL fayllarni koʻrib chiqish"
+  sqlFileLimit: "{size} gacha MB"
 
 yo_NG:
   importType: "Gbe wọle Iru"
@@ -5341,3 +5641,8 @@ yo_NG:
   browseFileHelp: "tabi lọ kiri · to {rows} awọn ori ila, {size} MB"
   matchColumnsNote: "Awọn ọwọn ti wa ni ibamu pẹlu orukọ. Ṣe awotẹlẹ to awọn ori ila 20 ṣaaju kikọ ohunkohun."
   noFileYet: "Ko si faili sibẹsibẹ"
+  selectTableToImport: "Ṣii tabili lati gbe wọle CSV tabi data Excel."
+  sqlImportHelp: "Ṣẹda awọn tabili tabi gbe wọle data nipa sisọ faili SQL kan silẹ tabi sisẹ iwe afọwọkọ ni isalẹ. Ko si tẹlẹ tabili wa ni ti nilo."
+  dropSqlPrompt: "Ju SQL faili silẹ"
+  browseSqlFile: "Ṣawakiri SQL awọn faili"
+  sqlFileLimit: "Titi di {size} MB"
