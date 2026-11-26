@@ -58,7 +58,7 @@ services:
       - db
 
   e2e_mysql_842:
-    image: mysql:8.4.2
+    image: mysql:8.4.11
     environment:
       MYSQL_USER: user
       MYSQL_PASSWORD: password
