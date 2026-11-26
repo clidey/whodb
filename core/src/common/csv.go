@@ -16,9 +16,19 @@
 
 package common
 
+import "regexp"
+
+// plainNumber matches a decimal number such as -1200.5, +15 or -3e-7
+var plainNumber = regexp.MustCompile(`^[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?$`)
+
 // EscapeFormula escapes values that could be interpreted as formulas in spreadsheet applications
 func EscapeFormula(value string) string {
 	if len(value) == 0 {
+		return value
+	}
+
+	// A plain number such as -1200.5 is data, not a formula
+	if plainNumber.MatchString(value) {
 		return value
 	}
 
