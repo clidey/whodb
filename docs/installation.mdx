@@ -52,6 +52,18 @@ volumes:
   whodb-data:
 ```
 
+### Older CPUs
+
+On x86-64, `clidey/whodb:latest` needs a CPU with AVX2, BMI2 and FMA (Intel Haswell, AMD Excavator or newer). Without them the container exits at startup with a message saying so. Virtual machines can hide these features even on a recent host, depending on the configured CPU type.
+
+Use the compatibility image on those machines. It has the same features and is available for `linux/amd64` only:
+
+```bash
+docker pull clidey/whodb:latest-compat
+```
+
+Versioned tags follow the same pattern, for example `clidey/whodb:<version>-compat`. To check a Linux host, run `grep -o -w -E 'avx2|bmi2|fma' /proc/cpuinfo | sort -u`; the default image needs all three listed.
+
 ### Session Storage
 
 WhoDB keeps login sessions on the server. The session store holds database credentials encrypted in a local SQLite file under the data directory. The browser uses an opaque, `HttpOnly` cookie to identify that session.

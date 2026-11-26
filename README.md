@@ -116,6 +116,10 @@ Keep that key somewhere safe. Changing it invalidates existing sessions. If WhoD
 
 See the [documentation](https://clidey.github.io/whodb/) for Docker Compose, connection profiles, SSL, AI providers, and other configuration options.
 
+### Docker on older CPUs
+
+On x86-64 the default image needs a CPU with AVX2, BMI2 and FMA (Intel Haswell, AMD Excavator or newer). On older CPUs, or virtual machines that hide those features, use `clidey/whodb:latest-compat`.
+
 ### Desktop
 
 - [macOS](https://apps.apple.com/app/whodb/id6754566536)

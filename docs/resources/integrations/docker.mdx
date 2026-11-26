@@ -19,6 +19,8 @@ docker run -d \
 
 Open `http://localhost:8080`. This example binds browser access to the local machine and keeps the session data in a named volume. Use a specific published image tag when the deployment needs a fixed version.
 
+On an x86-64 CPU without AVX2, BMI2 and FMA, use `clidey/whodb:latest-compat` instead. See [Older CPUs](/installation#older-cpus).
+
 ## Give the container a database route
 
 For a database in the same Compose network, use its service name and internal port in the connection form. For a database on the host, use the host address supported by your Docker setup.

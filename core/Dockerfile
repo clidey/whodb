@@ -12,6 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# IMAGE_VARIANT=default links DuckDB's prebuilt library, which on amd64 needs a CPU
+# with AVX2, BMI2 and FMA (x86-64-v3). IMAGE_VARIANT=compat builds DuckDB from
+# source without that requirement, for older CPUs; it is published as the
+# `-compat` tags.
+ARG IMAGE_VARIANT=default
+
 # Keep the Node version in sync with .nvmrc at the CE repo root (CI reads it).
 FROM node:26.12.1-alpine3.24 AS build-stage
 RUN npm i -g pnpm@11.15.1
@@ -48,25 +54,44 @@ RUN apk add --no-cache \
 	binutils \
 	upx
 
-# Download official musl-compiled DuckDB shared library.
-# Native musl build — no glibc stubs or compatibility hacks needed.
-# Extract DuckDB version from go.mod: duckdb-go/v2 v2.XYYYZ.0 → vX.YY.Z
+# DuckDB shared library, musl build. Version comes from go.mod:
+# duckdb-go/v2 v2.XYYYZ.0 → vX.YY.Z
+# default: the official prebuilt library.
+# compat: built from source with the same extension set as the official one, but
+# with DUCKDB_OPTIMIZATION_PROFILE=NONE so it does not target x86-64-v3.
 COPY ./core/go.mod /tmp/go.mod
 ARG TARGETARCH
+ARG IMAGE_VARIANT
 RUN ENCODED=$(grep 'github.com/duckdb/duckdb-go/v2 ' /tmp/go.mod | awk '{print $2}' | sed 's/v2\.//;s/\.[0-9]*$//') && \
     MAJOR=$((ENCODED / 10000)) && MINOR=$(( (ENCODED % 10000) / 100 )) && PATCH=$((ENCODED % 100)) && \
     DUCKDB_VERSION="v${MAJOR}.${MINOR}.${PATCH}" && \
-    echo "DuckDB version: $DUCKDB_VERSION" && \
-    if [ "$TARGETARCH" = "amd64" ]; then DUCKDB_ARCH="linux-amd64"; \
-    elif [ "$TARGETARCH" = "arm64" ]; then DUCKDB_ARCH="linux-arm64"; \
-    else echo "Unsupported architecture: $TARGETARCH" && exit 1; fi && \
+    echo "DuckDB version: $DUCKDB_VERSION (${IMAGE_VARIANT})" && \
     mkdir -p /usr/local/include && \
-    curl --fail --location --retry 3 -o /tmp/libduckdb-musl.tar.gz \
-        "https://github.com/duckdb/duckdb/releases/download/${DUCKDB_VERSION}/duckdb-shared-libs-${DUCKDB_ARCH}-musl.tar.gz" && \
-    tar -xzf /tmp/libduckdb-musl.tar.gz -C /usr/local/lib libduckdb.so && \
-    tar -xzf /tmp/libduckdb-musl.tar.gz -C /usr/local/include duckdb.h && \
-    strip --strip-unneeded /usr/local/lib/libduckdb.so && \
-    rm /tmp/libduckdb-musl.tar.gz
+    if [ "$IMAGE_VARIANT" = "compat" ]; then \
+        apk add --no-cache cmake samurai make python3 linux-headers bash && \
+        git clone --depth 1 --branch "${DUCKDB_VERSION}" https://github.com/duckdb/duckdb.git /tmp/duckdb && \
+        make -C /tmp/duckdb release \
+            GEN=ninja \
+            DUCKDB_VERSION="${DUCKDB_VERSION}" \
+            DUCKDB_OPTIMIZATION_PROFILE=NONE \
+            EXTENSION_CONFIGS=/tmp/duckdb/.github/config/bundled_extensions.cmake \
+            DUCKDB_CAPABILITIES="httplib loadable_extensions" \
+            DISABLE_SHELL=1 \
+            DISABLE_CPP_UNITTESTS=1 && \
+        cp /tmp/duckdb/build/release/src/libduckdb.so /usr/local/lib/ && \
+        cp /tmp/duckdb/src/include/duckdb.h /usr/local/include/ && \
+        rm -rf /tmp/duckdb; \
+    elif [ "$IMAGE_VARIANT" = "default" ]; then \
+        if [ "$TARGETARCH" = "amd64" ]; then DUCKDB_ARCH="linux-amd64"; \
+        elif [ "$TARGETARCH" = "arm64" ]; then DUCKDB_ARCH="linux-arm64"; \
+        else echo "Unsupported architecture: $TARGETARCH" && exit 1; fi && \
+        curl --fail --location --retry 3 -o /tmp/libduckdb-musl.tar.gz \
+            "https://github.com/duckdb/duckdb/releases/download/${DUCKDB_VERSION}/duckdb-shared-libs-${DUCKDB_ARCH}-musl.tar.gz" && \
+        tar -xzf /tmp/libduckdb-musl.tar.gz -C /usr/local/lib libduckdb.so && \
+        tar -xzf /tmp/libduckdb-musl.tar.gz -C /usr/local/include duckdb.h && \
+        rm /tmp/libduckdb-musl.tar.gz; \
+    else echo "Unsupported IMAGE_VARIANT: $IMAGE_VARIANT" && exit 1; fi && \
+    strip --strip-unneeded /usr/local/lib/libduckdb.so
 
 WORKDIR /app
 
@@ -93,6 +118,10 @@ RUN CGO_CFLAGS="-Os -ffunction-sections -fdata-sections -fno-asynchronous-unwind
 RUN chmod +x /core && \
     upx --best /core
 
+# Start command of the default image: checks the CPU, then runs /core.
+RUN gcc -static -Os -o /docker-start ./docker/start.c && \
+    strip /docker-start
+
 RUN mkdir -p /runtime-libs && \
     chmod +x /usr/local/lib/libduckdb.so && \
     cp /usr/local/lib/libduckdb.so /runtime-libs/
@@ -116,7 +145,7 @@ RUN BAML_VERSION=$(grep 'github.com/boundaryml/baml ' go.mod | awk '{print $2}' 
     cp /baml-lib/libbaml_cffi.so /runtime-libs/ && \
     echo "Downloaded BAML musl library for ${BAML_ARCH}"
 
-FROM alpine:3.24
+FROM alpine:3.24 AS runtime
 RUN apk add --no-cache ca-certificates libgcc libstdc++
 WORKDIR /app
 COPY --from=backend-stage /core /core
@@ -131,4 +160,13 @@ ENV BAML_LIBRARY_PATH=/usr/local/lib/libbaml_cffi.so
 ENV WHODB_DATA_DIR=/data
 VOLUME /data
 
+# On a CPU without AVX2/BMI2/FMA the default image dies while loading DuckDB,
+# before /core can log anything. /docker-start reports that instead.
+FROM runtime AS variant-default
+COPY --from=backend-stage /docker-start /docker-start
+CMD ["/docker-start"]
+
+FROM runtime AS variant-compat
 CMD ["/core"]
+
+FROM variant-${IMAGE_VARIANT}

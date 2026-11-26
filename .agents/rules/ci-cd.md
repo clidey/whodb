@@ -27,3 +27,4 @@ paths:
 
 ## Docker Images
 - `clidey/whodb` (server) and `clidey/whodb-cli`, built for linux/amd64 and linux/arm64 on native runners.
+- `clidey/whodb` also has `-compat` tags (`<version>-compat`, `latest-compat`), amd64 only: `core/Dockerfile` with `IMAGE_VARIANT=compat` builds DuckDB from source so it runs on CPUs without AVX2/BMI2/FMA. The default image's start command (`core/docker/start.c`) exits with a message on such CPUs; it executes the instructions instead of reading CPUID or `/proc/cpuinfo`, because Rosetta runs them without advertising them.

@@ -23,7 +23,7 @@ permissions:
 
 jobs:
   push-docker:
-    name: Push Docker (${{ matrix.arch }})
+    name: Push Docker (${{ matrix.arch }}${{ matrix.suffix }})
     runs-on: ${{ matrix.runner }}
     environment: deploy-docker
     strategy:
@@ -32,9 +32,19 @@ jobs:
           - runner: ubuntu-latest
             platform: linux/amd64
             arch: amd64
+            variant: default
+            suffix: ''
           - runner: ubuntu-24.04-arm
             platform: linux/arm64
             arch: arm64
+            variant: default
+            suffix: ''
+          # For x86-64 CPUs without AVX2/BMI2/FMA: DuckDB built from source.
+          - runner: ubuntu-latest
+            platform: linux/amd64
+            arch: amd64
+            variant: compat
+            suffix: '-compat'
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
@@ -91,12 +101,13 @@ jobs:
           push: true
           sbom: true
           provenance: mode=max
-          tags: clidey/whodb:${{ inputs.version }}-${{ matrix.arch }}
-          cache-from: type=gha,scope=ce-docker-${{ matrix.arch }}
+          tags: clidey/whodb:${{ inputs.version }}-${{ matrix.arch }}${{ matrix.suffix }}
+          cache-from: type=gha,scope=ce-docker-${{ matrix.arch }}${{ matrix.suffix }}
           build-args: |
             VERSION=${{ inputs.version }}
             PLATFORM=docker
             USE_PREBUILT_FRONTEND=true
+            IMAGE_VARIANT=${{ matrix.variant }}
 
   create-manifest:
     name: Create multi-arch manifest
@@ -141,12 +152,20 @@ jobs:
             "clidey/whodb:${VERSION}-amd64" \
             "clidey/whodb:${VERSION}-arm64"
 
+          # The compat image is amd64 only.
+          docker buildx imagetools create \
+            -t "clidey/whodb:${VERSION}-compat" \
+            "clidey/whodb:${VERSION}-amd64-compat"
+
           if [ "${STAGE_ONLY}" != "true" ]; then
-            echo "Updating latest tag..."
+            echo "Updating latest tags..."
             docker buildx imagetools create \
               -t clidey/whodb:latest \
               "clidey/whodb:${VERSION}-amd64" \
               "clidey/whodb:${VERSION}-arm64"
+            docker buildx imagetools create \
+              -t clidey/whodb:latest-compat \
+              "clidey/whodb:${VERSION}-amd64-compat"
           fi
 
           echo "Docker images deployed successfully"
@@ -161,9 +180,11 @@ jobs:
         run: |
           echo "Signing Docker images..."
           cosign sign --yes "clidey/whodb:${VERSION}"
+          cosign sign --yes "clidey/whodb:${VERSION}-compat"
 
           if [ "${STAGE_ONLY}" != "true" ]; then
             cosign sign --yes clidey/whodb:latest
+            cosign sign --yes clidey/whodb:latest-compat
           fi
 
           echo "Docker images signed"
