@@ -19,7 +19,7 @@
     "@microlink/react-json-view": "1.31.51",
     "@radix-ui/react-visually-hidden": "1.2.13",
     "@reduxjs/toolkit": "2.13.0",
-    "@tailwindcss/vite": "4.3.3",
+    "@tailwindcss/vite": "4.3.5",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "classnames": "2.5.1",
