@@ -49,7 +49,21 @@ func (r *mutationResolver) LoginWithSourceProfile(ctx context.Context, profile m
 		return nil, errors.New("login profile does not exist or is not authorized")
 	}
 
-	values, err := auth.MergeSourceProfileValues(credentials.SourceType, credentials.Values, recordInputsToMap(profile.Values))
+	overrides := recordInputsToMap(profile.Values)
+	if _, supplied := overrides["Password"]; supplied {
+		// A client-typed password is a credential guess like the manual form.
+		if !allowConnectionAttempt(ctx) {
+			return nil, errConnectionAttemptLimited
+		}
+	} else if credentials.Values["Password"] == "" {
+		// Re-logins into the same profile (database switching) keep the password
+		// the current session already supplied for it.
+		if current := auth.GetSourceCredentials(ctx); current != nil && current.ID != nil && *current.ID == profile.ID && current.Values["Password"] != "" {
+			overrides["Password"] = current.Values["Password"]
+		}
+	}
+
+	values, err := auth.MergeSourceProfileValues(credentials.SourceType, credentials.Values, overrides)
 	if err != nil {
 		return nil, err
 	}

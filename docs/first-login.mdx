@@ -43,7 +43,7 @@ Open **Advanced** for source-specific settings and TLS configuration. Use your a
 
 After connecting, check the database and schema selectors where available. Open **Tables** and find an object you recognize. Use **Info** to check its fields and **Data** to inspect a few records. This verifies the context before you run queries or make changes.
 
-If you use connection-string input, review the parsed fields before connecting. A configured profile preloads server-managed details; select its alias to use that connection.
+If you use connection-string input, review the parsed fields before connecting. A configured profile preloads server-managed details; select its alias to use that connection. If the profile was defined without a password, the page shows a password field for it. The value you enter is used for your session only and is never written back to the profile.
 
 <Warning>
 Anyone who can reach a CE instance can use its configured profiles. Restrict access to trusted users and give profile credentials only the database permissions that audience should have.
