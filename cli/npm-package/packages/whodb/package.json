@@ -30,6 +30,6 @@
     "node": ">=14"
   },
   "dependencies": {
-    "@clidey/whodb-cli": "0.1.0"
+    "@clidey/whodb-cli": "0.139.0"
   }
 }
