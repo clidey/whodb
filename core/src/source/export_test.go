@@ -56,6 +56,12 @@ func TestFreeTextColumnsFollowDeclaredCategories(t *testing.T) {
 	if got := FreeTextColumns(nil, []Column{{Type: "INTEGER"}}); !reflect.DeepEqual(got, []bool{true}) {
 		t.Fatalf("expected every column to be free text without metadata, got %v", got)
 	}
+
+	loose := *metadata
+	loose.LooseColumnTypes = true
+	if got := FreeTextColumns(&loose, []Column{{Type: "INTEGER"}}); !reflect.DeepEqual(got, []bool{true}) {
+		t.Fatalf("expected a loosely typed source to trust no declared type, got %v", got)
+	}
 }
 
 func TestExportSelectionColumnNames(t *testing.T) {

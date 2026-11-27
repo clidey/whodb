@@ -179,6 +179,10 @@ type TypeSessionMetadata struct {
 	TypeDefinitions []TypeDefinition
 	Operators       []string
 	AliasMap        map[string]string
+	// LooseColumnTypes marks a source that can store any value in a column
+	// whatever its declared type, so a declared type says nothing about what a
+	// cell holds.
+	LooseColumnTypes bool
 }
 
 // DiscoveryPrefill describes how cloud-discovered resources should prefill a

@@ -69,7 +69,9 @@ func (s *ExportSelection) ColumnNames() []string {
 // FreeTextColumns reports, per column, whether its values are free text. A
 // column is not free text only when its type is declared numeric, date/time or
 // boolean: those values are produced by the source and cannot carry a formula.
-// Undeclared types count as text so an unknown column is never left unguarded.
+// Undeclared types count as text so an unknown column is never left unguarded,
+// and so does every column of a source with loose column types, where a
+// declared type does not constrain the stored value.
 func FreeTextColumns(metadata *TypeSessionMetadata, columns []Column) []bool {
 	text := make([]bool, len(columns))
 	for i, column := range columns {
@@ -79,7 +81,7 @@ func FreeTextColumns(metadata *TypeSessionMetadata, columns []Column) []bool {
 }
 
 func isFreeTextType(metadata *TypeSessionMetadata, typeName string) bool {
-	if metadata == nil {
+	if metadata == nil || metadata.LooseColumnTypes {
 		return true
 	}
 

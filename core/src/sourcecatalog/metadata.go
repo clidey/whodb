@@ -125,7 +125,7 @@ func registerSessionMetadata() {
 	)
 	RegisterSessionMetadata(
 		string(engine.DatabaseType_Sqlite3),
-		SessionMetadataFromOperatorMap(specs.SQLiteTypeDefinitions, specs.SQLiteSupportedOperators, specs.SQLiteAliasMap),
+		sqliteSessionMetadata(),
 	)
 	RegisterSessionMetadata(
 		string(engine.DatabaseType_DuckDB),
@@ -381,11 +381,20 @@ func SessionMetadataFromOperatorMap(
 	return SessionMetadataFromOperators(typeDefinitions, keys, aliasMap)
 }
 
+// sqliteSessionMetadata marks SQLite's column types as loose: outside STRICT
+// tables a column accepts any value, whatever type it declares.
+func sqliteSessionMetadata() source.TypeSessionMetadata {
+	metadata := SessionMetadataFromOperatorMap(specs.SQLiteTypeDefinitions, specs.SQLiteSupportedOperators, specs.SQLiteAliasMap)
+	metadata.LooseColumnTypes = true
+	return metadata
+}
+
 func cloneSessionMetadata(metadata source.TypeSessionMetadata) source.TypeSessionMetadata {
 	return source.TypeSessionMetadata{
-		TypeDefinitions: slices.Clone(metadata.TypeDefinitions),
-		Operators:       slices.Clone(metadata.Operators),
-		AliasMap:        cloneAliasMap(metadata.AliasMap),
+		TypeDefinitions:  slices.Clone(metadata.TypeDefinitions),
+		Operators:        slices.Clone(metadata.Operators),
+		AliasMap:         cloneAliasMap(metadata.AliasMap),
+		LooseColumnTypes: metadata.LooseColumnTypes,
 	}
 }
 

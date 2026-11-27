@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -235,10 +236,13 @@ func formatBSONValue(val any) (string, bool) {
 	}
 	rendered := strings.TrimSuffix(strings.TrimPrefix(string(data), `{"v":`), "}")
 
-	var wrapped map[string]string
-	if json.Unmarshal([]byte(rendered), &wrapped) == nil && len(wrapped) == 1 {
-		for _, key := range []string{"$oid", "$date", "$numberDecimal"} {
-			if inner, ok := wrapped[key]; ok {
+	// Unwrap by the value's own type, never by the shape of the JSON: a stored
+	// sub-document can look like {"$oid": "..."} and hold any text.
+	switch val.(type) {
+	case bson.ObjectID, bson.DateTime, time.Time, bson.Decimal128:
+		var wrapped map[string]string
+		if json.Unmarshal([]byte(rendered), &wrapped) == nil && len(wrapped) == 1 {
+			for _, inner := range wrapped {
 				return inner, false
 			}
 		}
