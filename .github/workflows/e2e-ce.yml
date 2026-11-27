@@ -66,7 +66,7 @@ jobs:
           submodules: false
 
       - name: Setup Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
         with:
           go-version-file: core/go.mod
           cache-dependency-path: core/go.sum
@@ -117,7 +117,7 @@ jobs:
 
       # Go is needed to seed the DuckDB E2E fixture (dev/setup-e2e.sh)
       - name: Setup Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
         with:
           go-version-file: core/go.mod
           cache-dependency-path: core/go.sum
@@ -208,7 +208,7 @@ jobs:
           submodules: false
 
       - name: Setup Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
         with:
           go-version-file: cli/go.mod
           cache-dependency-path: cli/go.sum
@@ -239,7 +239,7 @@ jobs:
           submodules: false
 
       - name: Setup Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
         with:
           go-version-file: core/go.mod
           cache-dependency-path: core/go.sum
@@ -271,7 +271,7 @@ jobs:
           submodules: false
 
       - name: Setup Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
         with:
           go-version-file: core/go.mod
           cache-dependency-path: core/go.sum
